@@ -40,7 +40,7 @@ export const gradientColor = (tab: TIntroTab) => {
       return 'linear-gradient(rgb(255 250 242 / 76%) 0%, rgb(255 255 255) 100%)'
     }
 
-    case DSB_ROUTE.HEADER: {
+    case DSB_ROUTE.CLASSIC: {
       // brown
       return 'linear-gradient(rgb(231 206 195 / 12%) 0%, rgb(255 255 255) 100%)'
     }

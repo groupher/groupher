@@ -1,7 +1,7 @@
 'use client'
 
 import AvatarLayout from '~/unit/DashboardThread/Layout/AvatarLayout'
-import BannerLayout from '~/unit/DashboardThread/Layout/BannerLayout'
+import CommunityLayout from '~/unit/DashboardThread/Layout/CommunityLayout'
 import BrandLayout from '~/unit/DashboardThread/Layout/BrandLayout'
 import InlineTagLayout from '~/unit/DashboardThread/Layout/InlineTagLayout'
 import TagLayout from '~/unit/DashboardThread/Layout/TagLayout'
@@ -14,7 +14,7 @@ export default function Page() {
 
   return (
     <>
-      <BannerLayout />
+      <CommunityLayout />
       <div className={s.divider} />
       <BrandLayout />
       <div className={s.divider} />

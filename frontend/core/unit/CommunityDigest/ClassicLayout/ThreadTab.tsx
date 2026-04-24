@@ -9,7 +9,7 @@ import useCommunity from '~/stores/community/hooks'
 import CustomHeaderLinks from '~/unit/HeaderLinks'
 import { path2Thread } from '~/utils/thread'
 
-import useSalon from '../salon/header_layout/thread_tab'
+import useSalon from '../salon/classic_layout/thread_tab'
 
 type TProps = TSpace
 

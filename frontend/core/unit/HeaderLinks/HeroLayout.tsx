@@ -7,7 +7,7 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import LinkSVG from '~/icons/Link'
 import type { TLinkItem } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
-import useSalon, { cn } from './salon/tabber_layout'
+import useSalon, { cn } from './salon/hero_layout'
 import type { TLinkGroup, TProps } from './spec'
 
 const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {

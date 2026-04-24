@@ -1,7 +1,7 @@
 import { KANBAN_LAYOUT } from '~/const/layout'
 import type { TKanbanLayout } from '~/spec'
 
-import useSalon, { cnMerge } from '../../salon/layout/kanban_layout/global_layout'
+import useSalon, { cnMerge } from '../../salon/layout/kanban_layout/layout_selector'
 
 const CLASSIC_COLUMNS = [
   ['opacity-35', 'opacity-20'],
@@ -78,7 +78,7 @@ function WaterfallPreview() {
   )
 }
 
-export default function GlobalLayoutPreview({ layout }: TProps) {
+export default function KanbanLayoutPreview({ layout }: TProps) {
   if (layout === KANBAN_LAYOUT.WATERFALL) {
     return <WaterfallPreview />
   }

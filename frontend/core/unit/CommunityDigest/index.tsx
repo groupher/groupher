@@ -6,23 +6,23 @@
 
 import { Fragment } from 'react'
 
-import { BANNER_LAYOUT } from '~/const/layout'
+import { COMMUNITY_LAYOUT } from '~/const/layout'
 // import { ROUTE } from '~/const/route'
 import useLayout from '~/hooks/useLayout'
 
-import HeaderLayout from './HeaderLayout'
+import ClassicLayout from './ClassicLayout'
 import SidebarLayout from './SidebarLayout'
-import TabberLayout from './TabberLayout'
+import HeroLayout from './HeroLayout'
 
 export default function CommunityDigest() {
   // const router = useRouter()
-  const { globalLayout } = useLayout()
+  const { communityLayout } = useLayout()
 
   return (
     <Fragment>
-      {globalLayout === BANNER_LAYOUT.TABBER && <TabberLayout />}
-      {globalLayout === BANNER_LAYOUT.SIDEBAR && <SidebarLayout />}
-      {globalLayout === BANNER_LAYOUT.HEADER && <HeaderLayout />}
+      {communityLayout === COMMUNITY_LAYOUT.HERO && <HeroLayout />}
+      {communityLayout === COMMUNITY_LAYOUT.SIDEBAR && <SidebarLayout />}
+      {communityLayout === COMMUNITY_LAYOUT.CLASSIC && <ClassicLayout />}
     </Fragment>
   )
 }

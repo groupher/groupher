@@ -5,14 +5,14 @@
  *
  */
 
-import { BANNER_LAYOUT } from '~/const/layout'
+import { COMMUNITY_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
 
 import ClassicLayout from './ClassicLayout'
 import SimpleLayout from './SimpleLayout'
 
 export default function ChangelogThread() {
-  const { globalLayout } = useLayout()
+  const { communityLayout } = useLayout()
 
-  return globalLayout === BANNER_LAYOUT.TABBER ? <ClassicLayout /> : <SimpleLayout />
+  return communityLayout === COMMUNITY_LAYOUT.HERO ? <ClassicLayout /> : <SimpleLayout />
 }

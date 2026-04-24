@@ -1,4 +1,4 @@
-import { BANNER_LAYOUT } from '~/const'
+import { COMMUNITY_LAYOUT } from '~/const'
 
 import useLayout from '~/hooks/useLayout'
 import useTwBelt from '~/hooks/useTwBelt'
@@ -11,13 +11,13 @@ type TProps = {
 
 export default function useSalon({ isSidebarLayout }: TProps) {
   const { cn, fg, sexyBorder } = useTwBelt()
-  const { globalLayout } = useLayout()
+  const { communityLayout } = useLayout()
 
   return {
     wrapper: cn(
       'row align-start w-full mt-6',
-      globalLayout === BANNER_LAYOUT.SIDEBAR && 'pl-24',
-      globalLayout === BANNER_LAYOUT.TABBER && 'px-1.5',
+      communityLayout === COMMUNITY_LAYOUT.SIDEBAR && 'pl-24',
+      communityLayout === COMMUNITY_LAYOUT.HERO && 'px-1.5',
     ),
     main: cn('w-auto min-h-3/5 bg-transparent mt-6', isSidebarLayout && 'pl-16'),
     intro: 'w-[620px] pb-14',

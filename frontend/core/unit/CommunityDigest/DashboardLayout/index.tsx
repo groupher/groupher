@@ -13,7 +13,7 @@ export default function DashboardLayout() {
   const { enterView, leaveView } = useCommunityDigestViewport()
 
   return (
-    <div className={s.wrapper} id={ANCHOR.GLOBAL_HEADER_ID}>
+    <div className={s.wrapper} id={ANCHOR.GLOBAL_CLASSIC_ID}>
       <div className={s.inner}>
         <div className={s.content}>
           <div className={s.baseInfo}>

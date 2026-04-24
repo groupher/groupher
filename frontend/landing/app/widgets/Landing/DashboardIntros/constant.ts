@@ -93,7 +93,7 @@ export default {
     ],
   },
 
-  [DSB_ROUTE.HEADER]: {
+  [DSB_ROUTE.CLASSIC]: {
     title: '页头 & 页脚',
     desc: '链接及分组管理，展示模板设置',
     color: COLOR.BROWN,

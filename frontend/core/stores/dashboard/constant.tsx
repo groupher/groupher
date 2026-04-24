@@ -5,11 +5,11 @@ import { GLOW_OPACITY } from '~/const/glow_effect'
 import { LOCALE } from '~/const/i18n'
 import {
   AVATAR_LAYOUT,
-  BANNER_LAYOUT,
   BRAND_LAYOUT,
   BROADCAST_ARTICLE_LAYOUT,
   BROADCAST_LAYOUT,
   CHANGELOG_LAYOUT,
+  COMMUNITY_LAYOUT,
   DOC_COVER_LAYOUT,
   DOC_FAQ_LAYOUT,
   FOOTER_LAYOUT,
@@ -109,7 +109,7 @@ export const FIELDS: TDsbFieldMap = {
   inlineTagLayout: INLINE_TAG_LAYOUT.BORDER,
   avatarLayout: AVATAR_LAYOUT.SQUARE,
   brandLayout: BRAND_LAYOUT.BOTH,
-  globalLayout: BANNER_LAYOUT.HEADER,
+  communityLayout: COMMUNITY_LAYOUT.CLASSIC,
   topbarEnabled: false,
   topbarBg: COLOR.ORANGE,
   topbarBgCustomColor: '',

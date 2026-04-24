@@ -150,7 +150,7 @@ export default function WorkplaceCoversPage() {
               {
                 title: '页头',
                 desc: '页头自定义链接，编组等',
-                seg: `${DSB_ROUTE.HEADER}`,
+                seg: `${DSB_ROUTE.CLASSIC}`,
                 Icon: PostSVG,
               },
               {

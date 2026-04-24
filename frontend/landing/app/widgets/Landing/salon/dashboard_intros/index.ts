@@ -43,7 +43,7 @@ export default function useSalon({ tab }: TProps) {
     bgGradientBrown: cn(
       bgGradient,
       'landing-gradient-brown',
-      tab === DSB_ROUTE.HEADER && 'opacity-100',
+      tab === DSB_ROUTE.CLASSIC && 'opacity-100',
     ),
     bgGradientRed: cn(
       bgGradient,

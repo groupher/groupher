@@ -49,7 +49,7 @@ export default function DashboardIntros() {
             {tab === DSB_ROUTE.POST && <CMSTab />}
             {tab === DSB_ROUTE.TAGS && <TagsTab />}
             {tab === DSB_ROUTE.ADMINS && <AdminsTab />}
-            {tab === DSB_ROUTE.HEADER && <LinksTab />}
+            {tab === DSB_ROUTE.CLASSIC && <LinksTab />}
             {tab === DSB_ROUTE.WIDGETS && <IntegrateTab />}
             {tab === DSB_ROUTE.INOUT && <ImportTab />}
             {tab === DSB_ROUTE.TREND && <TrendTab />}

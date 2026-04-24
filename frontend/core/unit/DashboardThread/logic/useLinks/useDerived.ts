@@ -10,7 +10,7 @@ export type TRet = {
   threads: TCommunityThread[]
   isHeaderLinksTouched: boolean
   isFooterLinksTouched: boolean
-  isHeaderLayoutTouched: boolean
+  isClassicLayoutTouched: boolean
   isFooterLayoutTouched: boolean
 }
 
@@ -38,14 +38,14 @@ export default function useDerived(): TRet {
     return isChanged('headerLinks') && editingLink === null
   }, [editingLink])
 
-  const isHeaderLayoutTouched = isChanged('headerLayout')
+  const isClassicLayoutTouched = isChanged('headerLayout')
   const isFooterLayoutTouched = isChanged('footerLayout')
 
   return {
     threads,
     isHeaderLinksTouched,
     isFooterLinksTouched,
-    isHeaderLayoutTouched,
+    isClassicLayoutTouched,
     isFooterLayoutTouched,
   }
 }

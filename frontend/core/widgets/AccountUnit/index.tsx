@@ -5,7 +5,7 @@
  */
 
 import { type FC, useState } from 'react'
-import { BANNER_LAYOUT } from '~/const/layout'
+import { COMMUNITY_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
 import AccountSVG from '~/icons/Account'
 import type { TSpace } from '~/spec'
@@ -24,7 +24,7 @@ const AccountUnit: FC<TProps> = ({ withName = false, ...spacing }) => {
   const s = useSalon({ ...spacing })
 
   const { isLogin, user, loading } = useAccount()
-  const { globalLayout } = useLayout()
+  const { communityLayout } = useLayout()
 
   const [showPanel, setShowPanel] = useState(false)
 
@@ -49,7 +49,7 @@ const AccountUnit: FC<TProps> = ({ withName = false, ...spacing }) => {
       )}
       {!isLogin && withName && <div className={s.nickname}>未登入</div>}
       {isLogin && withName && <div className={s.nickname}>{user?.nickname}</div>}
-      {globalLayout === BANNER_LAYOUT.SIDEBAR && <div className='grow' />}
+      {communityLayout === COMMUNITY_LAYOUT.SIDEBAR && <div className='grow' />}
       <Panel show={showPanel} onClose={() => setShowPanel(false)} />
     </div>
   )

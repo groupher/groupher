@@ -1,32 +1,32 @@
 import type { FC } from 'react'
-import { BANNER_LAYOUT } from '~/const/layout'
+import { COMMUNITY_LAYOUT } from '~/const/layout'
 import { THREAD } from '~/const/thread'
 import useLayout from '~/hooks/useLayout'
 import useViewingThread from '~/hooks/useViewingThread'
-import HeaderLayout from './HeaderLayout'
+import ClassicLayout from './ClassicLayout'
 import SidebarLayout from './SidebarLayout'
 import type { TProps } from './spec'
-import TabberLayout from './TabberLayout'
+import HeroLayout from './HeroLayout'
 
 const CustomHeaderLinks: FC<TProps> = (props) => {
-  const { globalLayout } = useLayout()
+  const { communityLayout } = useLayout()
   const activeThread = useViewingThread()
 
   if (activeThread === THREAD.DASHBOARD) {
-    return <HeaderLayout {...props} />
+    return <ClassicLayout {...props} />
   }
 
-  switch (globalLayout) {
-    case BANNER_LAYOUT.HEADER: {
-      return <HeaderLayout {...props} />
+  switch (communityLayout) {
+    case COMMUNITY_LAYOUT.CLASSIC: {
+      return <ClassicLayout {...props} />
     }
 
-    case BANNER_LAYOUT.SIDEBAR: {
+    case COMMUNITY_LAYOUT.SIDEBAR: {
       return <SidebarLayout {...props} />
     }
 
     default: {
-      return <TabberLayout {...props} />
+      return <HeroLayout {...props} />
     }
   }
 }

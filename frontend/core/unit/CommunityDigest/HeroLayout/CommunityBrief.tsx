@@ -12,7 +12,7 @@ import Button from '~/widgets/Buttons/Button'
 import PublishButton from '~/widgets/Buttons/PublishButton'
 import ImgFallback from '~/widgets/ImgFallback'
 
-import useSalon from '../salon/tabber_layout/community_brief'
+import useSalon from '../salon/hero_layout/community_brief'
 
 export default function CommunityBrief() {
   const s = useSalon()
@@ -24,7 +24,7 @@ export default function CommunityBrief() {
   const COVER_IMAGE = '/banner-cover.webp'
 
   return (
-    <div className={s.wrapper} id={ANCHOR.GLOBAL_HEADER_ID}>
+    <div className={s.wrapper} id={ANCHOR.GLOBAL_CLASSIC_ID}>
       <div className={s.accountWrapper}>
         <AccountUnit />
       </div>

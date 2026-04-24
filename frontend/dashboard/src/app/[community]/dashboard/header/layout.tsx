@@ -7,7 +7,7 @@ import type { TCrumbConfig } from '~/spec'
 import Portal from '~/unit/DashboardThread/Portal'
 import useSalon, { cnMerge } from '~/unit/DashboardThread/salon'
 
-const seg = DSB_ROUTE.HEADER
+const seg = DSB_ROUTE.CLASSIC
 const CRUMB_CONFIG = {
   title: 'dsb.crumb.workplace',
   seg,

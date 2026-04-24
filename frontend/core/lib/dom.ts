@@ -20,7 +20,7 @@ const getDocument = () => (isBrowser() ? document : null)
  * scroll to page top
  */
 export const scrollToTop = (): void => {
-  scrollIntoEle(ANCHOR.GLOBAL_HEADER_ID)
+  scrollIntoEle(ANCHOR.GLOBAL_CLASSIC_ID)
 }
 
 /**
@@ -35,8 +35,8 @@ export const scrollIntoEle = (eleID: string): void => {
   }
 }
 
-export const scrollToHeader = (): void => scrollIntoEle(ANCHOR.GLOBAL_HEADER_ID)
-export const scrollToTabber = (): void => scrollIntoEle(ANCHOR.GLOBAL_TABBER_ID)
+export const scrollToHeader = (): void => scrollIntoEle(ANCHOR.GLOBAL_CLASSIC_ID)
+export const scrollToTabber = (): void => scrollIntoEle(ANCHOR.GLOBAL_HERO_ID)
 
 export const scrollDrawerToTop = (): void => {
   if (typeof window !== 'object') return

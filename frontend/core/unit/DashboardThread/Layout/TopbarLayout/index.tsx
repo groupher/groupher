@@ -4,12 +4,12 @@ import CheckLabel from '~/widgets/CheckLabel'
 import ColorSelector from '~/widgets/ColorSelector'
 
 import { FIELD } from '../../constant'
-import useBanner from '../../logic/useBanner'
+import useCommunityLayout from '../../logic/useCommunityLayout'
 import useTopbar from '../../logic/useTopbar'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import useSalon, { cn } from '../../salon/layout/topbar_layout'
-import BannerLayoutPreviewContent from '../BannerLayout/BannerLayoutPreviewContent'
+import CommunityLayoutPreviewContent from '../CommunityLayout/CommunityLayoutPreviewContent'
 
 const TOPBAR_LAYOUT_OPTIONS = [
   {
@@ -28,7 +28,7 @@ export default function TopbarLayout() {
   const { title } = useCommunity()
 
   const { edit, enabled, isBgTouched, isLayoutTouched, bg } = useTopbar()
-  const { layout: globalLayout } = useBanner()
+  const { layout: communityLayout } = useCommunityLayout()
 
   return (
     <div className={s.wrapper}>
@@ -52,7 +52,7 @@ export default function TopbarLayout() {
               {value && <div className={s.topBar} />}
               <div className={cn(s.block, isActive && s.blockActive)}>
                 <div className='mb-2' />
-                <BannerLayoutPreviewContent layout={globalLayout} title={title} />
+                <CommunityLayoutPreviewContent layout={communityLayout} title={title} />
               </div>
               <CheckLabel title={t(titleKey)} active={isActive} top={4} />
             </button>

@@ -19,7 +19,7 @@ const Templates: FC = () => {
   const { t } = useTrans()
 
   const {
-    isHeaderLayoutTouched: isLayoutTouched,
+    isClassicLayoutTouched: isLayoutTouched,
     headerLayout,
     saving,
     headerLinks: links,
