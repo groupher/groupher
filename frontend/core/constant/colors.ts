@@ -28,7 +28,7 @@ export const getDefaultCustomColor = (theme: TThemeName): string => {
 
 export const STACKED_COLOR = {
   RED: 'RED',
-  YELLOW: 'YELLOW',
+  ORANGE: 'ORANGE',
   GREEN: 'GREEN',
   BLUE: 'BLUE',
   PURPLE: 'PURPLE',

@@ -115,7 +115,7 @@ export const community = `
           glowType
           glowFixed
           glowOpacity
-          darkFloat
+          overlayDark
           gaussBlur
           gaussBlurDark
           broadcastEnable

@@ -14,9 +14,9 @@ export default function Page() {
 
   return (
     <>
-      <BrandLayout />
-      <div className={s.divider} />
       <BannerLayout />
+      <div className={s.divider} />
+      <BrandLayout />
       <div className={s.divider} />
       <AvatarLayout />
       <div className={s.divider} />

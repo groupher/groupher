@@ -1,10 +1,14 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default function useSalon() {
-  const { cn, fg, fill } = useTwBelt()
+type TProps = {
+  active?: boolean
+}
+
+export default function useSalon({ active = false }: TProps = {}) {
+  const { cn, fg, fill, bg } = useTwBelt()
 
   return {
-    wrapper: 'row items-start pt-3 mb-8',
+    wrapper: cn('row items-start pt-3 mb-8', active && bg('hoverBg')),
     dateTime: cn('text-sm mt-1 w-48', fg('digest')),
     main: 'grow w-full min-h-[220px] pb-7.5',
     title: cn('text-lg mb-2 block no-underline', 'hover:underline pointer', fg('title')),

@@ -1,6 +1,10 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default function useSalon() {
+type TProps = {
+  active?: boolean
+}
+
+export default function useSalon({ active = false }: TProps = {}) {
   const { cn, fg } = useTwBelt()
 
   return {
@@ -9,6 +13,7 @@ export default function useSalon() {
       'row relative w-full py-2 mb-1.5',
       'before:z-[-1] before:absolute before:top-0 before:left-[-15px] before:w-full before:h-full before:rounded-xl before:transition-all before:duration-200 before:opacity-0',
       'hover:before:opacity-100 pointer',
+      active && 'before:opacity-100',
       'article-hover-linear',
     ),
     hoverTitle: cn(

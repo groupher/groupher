@@ -14,16 +14,15 @@ export default function useSalon() {
       `hover:${bg('card')}`,
     ),
     title: cn('row-center text-sm bold-sm ml-1.5 max-w-32 truncate', fg('digest')),
-    slash: cn('text-xs ml-2 mr-1.5', fg('digest')),
+    slash: cn('text-xs ml-1 mr-0.5', fg('digest')),
     optArrowIcon: cn('size-3 mr-1.5 group-smoky-80', fg('digest')),
     //
-    topPanel: cn('border w-40 min-h-28', br('divider')),
+    topPanel: cn('border w-36 min-h-28 pl-1 py-2', br('divider')),
     arrowIcon: cn('size-3.5', fill('digest')),
-
-    panelItem: cn(menu('bar'), 'h-8 mt-1'),
-
+    panelItem: menu('bar'),
     outside: 'hover-underline',
-    icon: cn('size-3.5 mr-3 pointer', fill('digest'), `group-hover:${fill('title')}`),
+    // icon: cn('size-3.5 mr-3 pointer', fill('digest'), `group-hover:${fill('title')}`),
+    icon: cn(menu('icon')),
     //
     divider: cn(sexyBorder(), 'my-1.5'),
     //

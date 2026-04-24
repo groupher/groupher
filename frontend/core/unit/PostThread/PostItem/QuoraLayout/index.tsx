@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { FC } from 'react'
 import { THREAD_PATH } from '~/const/thread'
+import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import type { TPost } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useSalon from '../salon/quora_layout'
@@ -12,7 +13,8 @@ type TProps = {
 }
 
 const PostItem: FC<TProps> = ({ article }) => {
-  const s = useSalon()
+  const isActive = usePreviewItemActive(article.innerId, THREAD_PATH.POST)
+  const s = useSalon({ active: isActive })
   const { slug } = useCommunity()
 
   return (

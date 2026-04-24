@@ -22,9 +22,9 @@ export default function useSalon({ stacked }) {
       primary('borderSoft'),
       shadow('md'),
     ),
-    backIcon: cn('size-4 pointer', fill('button.fg')),
+    backIcon: cn('size-4 pointer', fill('digest')),
     checkIcon: cn('size-3', fill('button.fg')),
     customBlock: 'mt-1.5 px-1.5 pb-1.5',
-    customTitle: cn('mb-2 text-base opacity-65', fg('digest')),
+    customTitle: cn('mb-2 text-base', fg('digest')),
   }
 }

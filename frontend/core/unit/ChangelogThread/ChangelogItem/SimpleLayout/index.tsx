@@ -7,6 +7,7 @@
 import Link from 'next/link'
 import { type FC, memo } from 'react'
 import { THREAD_PATH } from '~/const/thread'
+import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import ShareSVG from '~/icons/Share'
 import type { TChangelog } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -24,7 +25,8 @@ type TProps = {
 }
 
 const SimpleLayout: FC<TProps> = ({ article }) => {
-  const s = useSalon()
+  const isActive = usePreviewItemActive(article.innerId, THREAD_PATH.CHANGELOG)
+  const s = useSalon({ active: isActive })
   const { slug } = useCommunity()
 
   return (

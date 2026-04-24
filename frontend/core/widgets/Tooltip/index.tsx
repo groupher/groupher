@@ -10,7 +10,7 @@ import { type FC, memo, type ReactNode, useEffect, useMemo, useRef, useState } f
 import type { Instance } from 'tippy.js'
 import { hideAll } from 'tippy.js'
 import THEME from '~/const/theme'
-import useDarkFloat from '~/hooks/useDarkFloat'
+import useOverlayDark from '~/hooks/useOverlayDark'
 import useOutsideClick from '~/hooks/useOutsideClick'
 import useTheme from '~/hooks/useTheme'
 import type { TThemeName, TTooltipPlacement } from '~/spec'
@@ -86,10 +86,10 @@ const Tooltip: FC<TProps> = ({
   forceZIndex = false,
 }) => {
   const s = useSalon()
-  const darkFloat = useDarkFloat()
+  const overlayDark = useOverlayDark()
 
   const { theme } = useTheme()
-  const tooltipTheme = darkFloat ? THEME.DARK : theme
+  const tooltipTheme = overlayDark ? THEME.DARK : theme
 
   const instanceRef = useRef<Instance | null>(null)
   const [active, setActive] = useState(false)
@@ -105,13 +105,14 @@ const Tooltip: FC<TProps> = ({
   })
 
   // Theme switch / route transition safety: destroy transient UI to avoid flicker/residual popper.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (instanceRef.current) {
       instanceRef.current.destroy()
       instanceRef.current = null
       setActive(false)
     }
-  }, [])
+  }, [theme, overlayDark, tooltipTheme])
 
   // Unmount cleanup
   useEffect(() => {
@@ -194,6 +195,12 @@ const Tooltip: FC<TProps> = ({
         // avoid fighting controlled tooltips
         if (visible === null) hideAll({ exclude: ins })
 
+        const tippyBox = ins.popper.querySelector('.tippy-box')
+        if (tippyBox) {
+          tippyBox.setAttribute('data-overlay-dark', String(overlayDark))
+          tippyBox.setAttribute('data-page-theme', theme)
+        }
+
         instanceRef.current = ins
         setActive(true)
         onShow?.()
@@ -212,6 +219,8 @@ const Tooltip: FC<TProps> = ({
     duration,
     trigger,
     interactive,
+    theme,
+    overlayDark,
     tooltipTheme,
     visible,
     onHide,

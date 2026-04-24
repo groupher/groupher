@@ -614,7 +614,7 @@ type RootMutationType {
 
   "update layout in dashboard"
   updateDashboardLayout(
-    community: String!, dashboardSection: DashboardSection, pageBg: String, pageBgDark: String, pageCustomBg: Int, pageCustomBgDark: Int, pageCustomIntensity: Int, pageCustomIntensityDark: Int, primaryColor: RainbowColor, primaryCustomColor: String, primaryCustomColorDark: String, subPrimaryColor: RainbowColor, subPrimaryCustomColor: String, subPrimaryCustomColorDark: String, kanbanBgColors: [RainbowColor], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docCoverLayout: DsbDocCoverLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, globalLayout: DsbGlobalLayout, topbarEnabled: Boolean, topbarBg: RainbowColor, topbarBgCustomColor: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: RainbowColor, broadcastCustomBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: RainbowColor, broadcastArticleCustomBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, glowType: String, glowFixed: Boolean, glowOpacity: String, darkFloat: Boolean, gaussBlur: Int, gaussBlurDark: Int
+    community: String!, dashboardSection: DashboardSection, pageBg: String, pageBgDark: String, pageCustomBg: Int, pageCustomBgDark: Int, pageCustomIntensity: Int, pageCustomIntensityDark: Int, primaryColor: RainbowColor, primaryCustomColor: String, primaryCustomColorDark: String, subPrimaryColor: RainbowColor, subPrimaryCustomColor: String, subPrimaryCustomColorDark: String, kanbanBgColors: [RainbowColor], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docCoverLayout: DsbDocCoverLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, globalLayout: DsbGlobalLayout, topbarEnabled: Boolean, topbarBg: RainbowColor, topbarBgCustomColor: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: RainbowColor, broadcastCustomBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: RainbowColor, broadcastArticleCustomBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, glowType: String, glowFixed: Boolean, glowOpacity: String, overlayDark: Boolean, gaussBlur: Int, gaussBlurDark: Int
   ): Community
 
   "update rss in dashboard"
@@ -912,7 +912,7 @@ type DashboardLayout {
   glowType: String
   glowFixed: Boolean
   glowOpacity: String
-  darkFloat: Boolean
+  overlayDark: Boolean
   gaussBlur: Int
   gaussBlurDark: Int
 }
