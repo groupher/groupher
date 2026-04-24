@@ -34,9 +34,9 @@ export const BRAND_LAYOUT = {
   TEXT: 'TEXT',
 } as const
 
-export const BANNER_LAYOUT = {
-  HEADER: 'HEADER',
-  TABBER: 'TABBER',
+export const COMMUNITY_LAYOUT = {
+  CLASSIC: 'CLASSIC',
+  HERO: 'HERO',
   SIDEBAR: 'SIDEBAR',
 } as const
 

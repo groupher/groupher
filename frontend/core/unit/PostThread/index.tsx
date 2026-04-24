@@ -6,7 +6,7 @@
  *
  */
 
-import { BANNER_LAYOUT } from '~/const/layout'
+import { COMMUNITY_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
 import useFetchPagedPosts from '~/hooks/usePagedPosts/useFetchPagedPosts'
 import ArticlesFilter from './ArticlesFilter'
@@ -17,7 +17,7 @@ import TagNote from './TagNote'
 import ThreadSidebar from './ThreadSidebar'
 
 export default function PostThread() {
-  const { globalLayout } = useLayout()
+  const { communityLayout } = useLayout()
   const s = useSalon()
   useFetchPagedPosts()
 
@@ -29,7 +29,7 @@ export default function PostThread() {
         <PagedPosts />
       </div>
 
-      {globalLayout !== BANNER_LAYOUT.SIDEBAR && <ThreadSidebar />}
+      {communityLayout !== COMMUNITY_LAYOUT.SIDEBAR && <ThreadSidebar />}
     </div>
   )
 }

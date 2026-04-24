@@ -8,10 +8,10 @@ export { default as GALLERY } from './gallery'
 export { ARTICLE_CAT, ARTICLE_CAT_MODE, ARTICLE_CAT_REJECT, ARTICLE_STATE } from './gtd'
 export { default as GUIDE } from './guide'
 export {
-  BANNER_LAYOUT,
   BRAND_LAYOUT,
   BROADCAST_LAYOUT,
   CHANGELOG_LAYOUT,
+  COMMUNITY_LAYOUT,
   DOC_COVER_LAYOUT,
   DOC_FAQ_LAYOUT,
   DSB_DESC_LAYOUT,

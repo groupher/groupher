@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { BANNER_LAYOUT, BRAND_LAYOUT } from '~/const/layout'
+import { COMMUNITY_LAYOUT, BRAND_LAYOUT } from '~/const/layout'
 import { THREAD } from '~/const/thread'
 import { prettyURL } from '~/fmt'
 import { assetSrc } from '~/helper'
@@ -21,7 +21,7 @@ export default function CommunityBrief() {
   const router = useRouter()
   const { logo, slug, title, desc, dashboard } = useCommunity()
   const activeThread = useViewingThread()
-  const { globalLayout, brandLayout } = useLayout()
+  const { communityLayout, brandLayout } = useLayout()
 
   const { baseInfo } = dashboard
 
@@ -36,7 +36,7 @@ export default function CommunityBrief() {
       {brandLayout !== BRAND_LAYOUT.LOGO && <h2 className={s.title}>{title}</h2>}
       <div className={s.desc}>{desc}</div>
 
-      {globalLayout === BANNER_LAYOUT.SIDEBAR && activeThread === THREAD.DOC && (
+      {communityLayout === COMMUNITY_LAYOUT.SIDEBAR && activeThread === THREAD.DOC && (
         <ArrowButton top={12} left={-2} leftLayout onClick={() => router.push(`/${slug}`)}>
           返回社区
         </ArrowButton>

@@ -29,8 +29,8 @@ import useSalon, { cn } from '../../salon/cms/communities'
 import FilterBar from '../FilterBar'
 
 const SORTABLE_COLUMN = ['subscribersCount', 'views', 'articlesCount']
-const HEADER_ALIGN_LEFT = ['name', 'desc']
-const HEADER_ALIGN_RIGHT = ['timestamps']
+const CLASSIC_ALIGN_LEFT = ['name', 'desc']
+const CLASSIC_ALIGN_RIGHT = ['timestamps']
 
 export default function Communities() {
   const { loading, pagedCommunities } = useCMSInfo()
@@ -180,8 +180,8 @@ export default function Communities() {
                     type='button'
                     className={cn(
                       s.table.actionBtn,
-                      HEADER_ALIGN_LEFT.includes(col.id) && '!justify-start',
-                      HEADER_ALIGN_RIGHT.includes(col.id) && '!justify-end',
+                      CLASSIC_ALIGN_LEFT.includes(col.id) && '!justify-start',
+                      CLASSIC_ALIGN_RIGHT.includes(col.id) && '!justify-end',
                       canSort && s.table.canSort,
                       isSelectCol && 'table-col-select',
                       p.className,

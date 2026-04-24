@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { type FC, lazy, Suspense } from 'react'
-import { BANNER_LAYOUT } from '~/const/layout'
+import { COMMUNITY_LAYOUT } from '~/const/layout'
 import SIZE from '~/const/size'
 import { THREAD_PATH } from '~/const/thread'
 import useLayout from '~/hooks/useLayout'
@@ -23,7 +23,7 @@ type TProps = {
 
 const Header: FC<TProps> = ({ article }) => {
   const { slug } = useCommunity()
-  const { globalLayout } = useLayout()
+  const { communityLayout } = useLayout()
   const { isPinned } = article
 
   const s = useSalon({ isPinned })
@@ -69,7 +69,7 @@ const Header: FC<TProps> = ({ article }) => {
           <CommentsCount
             count={commentsCount}
             size={SIZE.MEDIUM}
-            right={globalLayout === BANNER_LAYOUT.SIDEBAR ? 4 : 0}
+            right={communityLayout === COMMUNITY_LAYOUT.SIDEBAR ? 4 : 0}
           />
         )}
       </div>

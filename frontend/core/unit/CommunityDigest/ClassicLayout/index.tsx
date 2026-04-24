@@ -4,11 +4,11 @@ import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
 import useHeaderLinks from '~/hooks/useHeaderLinks'
 import AccountUnit from '~/widgets/AccountUnit'
 import ViewportTracker from '~/widgets/ViewportTracker'
-import useSalon, { cn } from '../salon/header_layout'
+import useSalon, { cn } from '../salon/classic_layout'
 import CommunityBrief from './CommunityBrief'
 import ThreadTab from './ThreadTab'
 
-export default function HeaderLayout() {
+export default function ClassicLayout() {
   const s = useSalon()
 
   const { layout } = useHeaderLinks()
@@ -16,7 +16,7 @@ export default function HeaderLayout() {
 
   return (
     <>
-      <div id={ANCHOR.GLOBAL_HEADER_ID} className={cn(s.wrapper, 'header-layout-community-brief')}>
+      <div id={ANCHOR.GLOBAL_CLASSIC_ID} className={cn(s.wrapper, 'header-layout-community-brief')}>
         <CommunityBrief />
         {layout === HEADER_LAYOUT.RIGHT && <div className='grow' />}
         <ThreadTab right={layout === HEADER_LAYOUT.RIGHT ? 20 : 0} />

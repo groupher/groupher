@@ -6,10 +6,10 @@ import { FIELD } from '../../constant'
 import useKanban from '../../logic/useKanban'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
-import useSalon, { cnMerge } from '../../salon/layout/kanban_layout/global_layout'
-import GlobalLayoutPreview from './GlobalLayoutPreview'
+import useSalon, { cnMerge } from '../../salon/layout/kanban_layout/layout_selector'
+import KanbanLayoutPreview from './KanbanLayoutPreview'
 
-export default function GlobalLayout() {
+export default function KanbanLayoutSelector() {
   const s = useSalon()
   const { t } = useTrans()
 
@@ -34,7 +34,7 @@ export default function GlobalLayout() {
                 <div className={cnMerge(s.bar, s.toolbarLeft)} />
                 <div className={cnMerge(s.bar, s.toolbarRight)} />
               </div>
-              <GlobalLayoutPreview layout={KANBAN_LAYOUT.CLASSIC} />
+              <KanbanLayoutPreview layout={KANBAN_LAYOUT.CLASSIC} />
             </div>
           </div>
           <CheckLabel
@@ -55,7 +55,7 @@ export default function GlobalLayout() {
                 <div className={cnMerge(s.bar, s.toolbarLeft)} />
                 <div className={cnMerge(s.bar, s.toolbarRight)} />
               </div>
-              <GlobalLayoutPreview layout={KANBAN_LAYOUT.WATERFALL} />
+              <KanbanLayoutPreview layout={KANBAN_LAYOUT.WATERFALL} />
             </div>
           </div>
           <CheckLabel

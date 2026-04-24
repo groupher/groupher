@@ -1,7 +1,7 @@
 import useMobileDetect from '@groupher/use-mobile-detect-hook'
 import { useState } from 'react'
 
-import { BANNER_LAYOUT } from '~/const/layout'
+import { COMMUNITY_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
 import Sticky from '~/widgets/Sticky'
 import FaqLayout from '../FaqLayout'
@@ -21,7 +21,7 @@ export default function ArticleLayout() {
   const s = useSalon({ outlineOpen })
 
   const { isMobile } = useMobileDetect()
-  const { globalLayout } = useLayout()
+  const { communityLayout } = useLayout()
 
   return (
     <div className={s.wrapper}>
@@ -39,7 +39,7 @@ export default function ArticleLayout() {
         </div>
       )}
 
-      {!isMobile && globalLayout !== BANNER_LAYOUT.SIDEBAR && (
+      {!isMobile && communityLayout !== COMMUNITY_LAYOUT.SIDEBAR && (
         <div className={s.sidebar}>
           <PinedTree />
           <Sticky offsetTop={30}>

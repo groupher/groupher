@@ -1,8 +1,8 @@
-import { BANNER_LAYOUT } from '~/const/layout'
+import { COMMUNITY_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
 
 export default function useSidebarLayout(): boolean {
-  const { globalLayout } = useLayout()
+  const { communityLayout } = useLayout()
 
-  return globalLayout === BANNER_LAYOUT.SIDEBAR
+  return communityLayout === COMMUNITY_LAYOUT.SIDEBAR
 }

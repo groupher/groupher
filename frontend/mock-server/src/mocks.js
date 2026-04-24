@@ -59,7 +59,7 @@ const makeDashboard = (slug = 'home') => {
       inlineTagLayout: 'border',
       avatarLayout: 'circle',
       brandLayout: 'logo',
-      globalLayout: 'header',
+      communityLayout: 'classic',
       topbarEnabled: false,
       topbarBg: '#000000',
       broadcastLayout: 'default',

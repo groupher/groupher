@@ -3,7 +3,7 @@ import type {
   TAvatarLayout,
   TBrandLayout,
   TChangelogLayout,
-  TGlobalLayout,
+  TCommunityLayout,
   TInlineTagLayout,
   TKanbanBoard,
   TKanbanCardLayout,
@@ -15,7 +15,7 @@ import useDashboard from '~/stores/dashboard/hooks'
 
 type TRet = {
   avatarLayout: TAvatarLayout
-  globalLayout: TGlobalLayout
+  communityLayout: TCommunityLayout
   brandLayout: TBrandLayout
   tagLayout: TTagLayout
   inlineTagLayout: TInlineTagLayout
@@ -32,7 +32,7 @@ export default function UseLayout(): TRet {
   return pick(
     [
       'avatarLayout',
-      'globalLayout',
+      'communityLayout',
       'brandLayout',
       'tagLayout',
       'inlineTagLayout',

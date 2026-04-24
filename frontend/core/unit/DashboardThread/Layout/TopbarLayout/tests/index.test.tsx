@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { BANNER_LAYOUT } from '~/const/layout'
+import { COMMUNITY_LAYOUT } from '~/const/layout'
 import { FIELD } from '../../../constant'
 import TopbarLayout from '..'
 
@@ -21,9 +21,9 @@ vi.mock('../../../logic/useTopbar', () => ({
   }),
 }))
 
-vi.mock('../../../logic/useBanner', () => ({
+vi.mock('../../../logic/useCommunityLayout', () => ({
   default: () => ({
-    layout: BANNER_LAYOUT.HEADER,
+    layout: COMMUNITY_LAYOUT.CLASSIC,
     edit: vi.fn(),
     isTouched: false,
     saving: false,
@@ -36,7 +36,7 @@ vi.mock('~/stores/community/hooks', () => ({
   }),
 }))
 
-vi.mock('../../BannerLayout/BannerLayoutPreviewContent', () => ({
+vi.mock('../../CommunityLayout/CommunityLayoutPreviewContent', () => ({
   default: ({ layout, title }: { layout: string; title: string }) => (
     <div data-testid='banner-layout-preview' data-layout={layout} data-title={title} />
   ),

@@ -30,7 +30,7 @@ export const DSB_ROUTE = {
   CHANGELOG: 'changelog',
   DOC: 'doc',
   COMMUNITIES: 'communities',
-  HEADER: 'header',
+  CLASSIC: 'header',
   FOOTER: 'footer',
   BROADCAST: 'broadcast',
   BLACKHOUSE: 'blackhouse',

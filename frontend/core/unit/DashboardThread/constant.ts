@@ -30,7 +30,7 @@ export const LAYOUT_FIELD = {
   TAG_LAYOUT: 'tagLayout',
   INLINE_TAG_LAYOUT: 'inlineTagLayout',
   AVATAR_LAYOUT: 'avatarLayout',
-  BANNER_LAYOUT: 'globalLayout',
+  COMMUNITY_LAYOUT: 'communityLayout',
   HEADER_LAYOUT: 'headerLayout',
   FOOTER_LAYOUT: 'footerLayout',
   TOPBAR_ENABLED: 'topbarEnabled',
@@ -118,7 +118,7 @@ export const MENU: TDsbMenu = {
       },
       {
         title: 'dsb.menu.header',
-        slug: DSB_ROUTE.HEADER,
+        slug: DSB_ROUTE.CLASSIC,
       },
       {
         title: 'dsb.menu.footer',

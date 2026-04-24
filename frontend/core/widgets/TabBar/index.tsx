@@ -31,7 +31,7 @@ const TabBar: FC<TProps> = ({
   const sortedSource = sortByIndex(source)
 
   return (
-    <div id={ANCHOR.GLOBAL_TABBER_ID}>
+    <div id={ANCHOR.GLOBAL_HERO_ID}>
       <NormalView
         source={sortedSource}
         active={active}

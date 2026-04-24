@@ -1,1 +1,2126 @@
-../../../backend/main/schema.graphql
+schema {
+  mutation: RootMutationType
+  query: RootQueryType
+}
+
+type RootQueryType {
+  "get all users"
+  pagedUsers(filter: PagedUsersFilter!): PagedUsers!
+
+  "get cur user"
+  me: User
+
+  "get user by id"
+  user(login: String!): User
+
+  "check the cur token is valid or not"
+  sessionState: SessionState
+
+  "anyone can get anyone's subscribed communities"
+  subscribedCommunities(login: String, filter: PagiFilter!): PagedCommunities
+
+  "get login user's mentions in mailbox"
+  pagedMentions(filter: MailboxMentionsFilter): PagedMailboxMentions
+
+  "get login user's notifications in mailbox"
+  pagedNotifications(filter: MailboxNotificationsFilter): PagedMailboxNotifications
+
+  "get user's follower"
+  pagedFollowers(login: String!, filter: PagiFilter!): PagedUsers
+
+  "get user's follower"
+  pagedFollowings(login: String!, filter: PagiFilter!): PagedUsers
+
+  "get paged upvoted articles"
+  pagedUpvotedArticles(login: String!, filter: UpvotedArticlesFilter): PagedArticles
+
+  "get paged collect folders of a user"
+  pagedCollectFolders(login: String!, filter: CollectFoldersFilter!): PagedCollectFolders
+
+  "get paged collected articles"
+  pagedCollectedArticles(folderId: ID!, filter: CollectedArticlesFilter!): PagedArticles
+
+  "paged communities which the user it's the editor"
+  moderatorableCommunities(login: String, filter: PagiFilter!): PagedCommunities
+
+  "get all passport rules include system and community etc ..."
+  allPassportRulesString: Rules
+
+  "search user by name"
+  searchUsers(name: String!): PagedUsers
+
+  "get paged published article comments"
+  pagedPublishedComments(login: String!, filter: PagiFilter!, thread: Thread): PagedComments
+
+  "paged published posts"
+  pagedPublishedPosts(login: String!, filter: PagiFilter!, thread: PostThread): PagedPosts
+
+  "paged published blogs"
+  pagedPublishedBlogs(login: String!, filter: PagiFilter!, thread: BlogThread): PagedBlogs
+
+  "paged published changelogs"
+  pagedPublishedChangelogs(login: String!, filter: PagiFilter!, thread: ChangelogThread): PagedChangelogs
+
+  "paged published docs"
+  pagedPublishedDocs(login: String!, filter: PagiFilter!, thread: DocThread): PagedDocs
+
+  "list cities geo info"
+  citiesGeoInfo: PagedGeoInfos
+
+  "basic online status"
+  onlineStatus(freshkey: String): OnlineStatusInfo
+
+  "basic site info in total counts format"
+  countStatus: CountStatusInfo
+
+  "spec community info"
+  community(slug: String!, incViews: Boolean): Community
+
+  allPassportRules: AllRules
+
+  "if use has pending apply"
+  hasPendingCommunityApply: CheckState
+
+  "if the community exist or not"
+  isCommunityExist(slug: String!): CheckState
+
+  "communities with pagination info"
+  pagedCommunities(filter: CommunitiesFilter!): PagedCommunities
+
+  "paged subscribers of a community"
+  pagedCommunitySubscribers(id: ID, community: String, filter: PagiFilter): PagedUsers
+
+  "paged subscribers of a community"
+  pagedCommunityModerators(id: ID!, filter: PagiFilter): PagedUsers
+
+  "get all categories"
+  pagedCategories(filter: PagiFilter): PagedCategories
+
+  "get paged community tags"
+  pagedCommunityTags(filter: CommunityTagsFilter): PagedCommunityTags
+
+  "got basic comments state"
+  commentsState(article: ArticleRefInput!, freshkey: String): CommentsListState
+
+  "got spec comment by id"
+  oneComment(id: ID!): Comment
+
+  "get paged article comments"
+  pagedComments(article: ArticleRefInput!, mode: CommentsMode, filter: CommentsFilter): PagedComments
+
+  "get paged article comments participants"
+  pagedCommentsParticipants(article: ArticleRefInput!, filter: PagiFilter): PagedUsers
+
+  "get paged replies of a comment"
+  pagedCommentReplies(id: ID!, filter: CommentsFilter): PagedCommentReplies
+
+  "paged reports list"
+  pagedAbuseReports(filter: ReportFilter!): PagedReports
+
+  "paged citings list"
+  pagedCitingContents(id: ID!, content: Content, filter: PagiFilter): PagedCitings
+
+  "search communities by title"
+  searchCommunities(title: String!, category: String): PagedCommunities
+
+  "kanban posts grouped by backlog\/todo\/wip\/done\/rejected"
+  groupedKanbanPosts(community: String!): KanbanPosts
+
+  "get open graph info by url"
+  openGraphInfo(url: String!): OpenGraph
+
+  "paged kanban posts by state"
+  pagedKanbanPosts(community: String!, filter: PagedKanbanPostsFilter!): PagedPosts
+
+  "get post by id"
+  searchPosts(title: String!, thread: PostThread): PagedPosts
+
+  "get blog by id"
+  searchBlogs(title: String!, thread: BlogThread): PagedBlogs
+
+  "get changelog by id"
+  searchChangelogs(title: String!, thread: ChangelogThread): PagedChangelogs
+
+  "get doc by id"
+  searchDocs(title: String!, thread: DocThread): PagedDocs
+
+  "get paged upvoted users of an article"
+  upvotedUsers(article: ArticleRefInput!, filter: PagiFilter!): PagedUsers
+
+  "get paged collected users of an article"
+  collectedUsers(article: ArticleRefInput!, filter: PagiFilter!): PagedUsers
+
+  "get post by id"
+  post(article: ArticleRefInput!): Post!
+
+  "get paged posts"
+  pagedPosts(thread: PostThread, filter: PagedPostsFilter!): PagedPosts
+
+  "get blog by id"
+  blog(article: ArticleRefInput!): Blog!
+
+  "get paged blogs"
+  pagedBlogs(thread: BlogThread, filter: PagedBlogsFilter!): PagedBlogs
+
+  "get changelog by id"
+  changelog(article: ArticleRefInput!): Changelog!
+
+  "get paged changelogs"
+  pagedChangelogs(thread: ChangelogThread, filter: PagedChangelogsFilter!): PagedChangelogs
+
+  "get doc by id"
+  doc(article: ArticleRefInput!): Doc!
+
+  "get paged docs"
+  pagedDocs(thread: DocThread, filter: PagedDocsFilter!): PagedDocs
+}
+
+type RootMutationType {
+  "update user's profile"
+  updateProfile(profile: UserProfileInput!, social: SocialInput): User
+
+  signinOauth(provider: OauthProviderInput!, oauthTrustCode: String!): TokenInfo
+
+  linkOauth(provider: OauthProviderInput!, oauthTrustCode: String!): TokenInfo
+
+  unlinkOauth(provider: OauthProviderInput!, oauthTrustCode: String!): User
+
+  "follow a user"
+  follow(login: String!): User
+
+  "unfollow a user"
+  undoFollow(login: String!): User
+
+  "create a collect folder"
+  createCollectFolder(title: String!, private: Boolean, desc: String): CollectFolder
+
+  "update a collect folder"
+  updateCollectFolder(id: ID!, title: String, private: Boolean, desc: String): CollectFolder
+
+  "delete a collect folder"
+  deleteCollectFolder(id: ID!): CollectFolder
+
+  "add article into a collect folder"
+  addToCollect(article: ArticleRefInput!, folderId: ID!): CollectFolder
+
+  "remove article from a collect folder"
+  removeFromCollect(article: ArticleRefInput!, folderId: ID!): CollectFolder
+
+  "mark a message as read"
+  markRead(ids: [ID], type: MailboxType): Done
+
+  "mark all unread message as read"
+  markReadAll(type: MailboxType): Done
+
+  makeContribute(userId: ID!): UserContribute
+
+  "create a global community"
+  createCommunity(title: String!, desc: String!, slug: String!, logo: String!, locale: String): Community
+
+  "update a community"
+  updateCommunity(community: String!, title: String, desc: String, slug: String, logo: String, locale: String): Community
+
+  "delete a global community"
+  deleteCommunity(id: ID!): Community
+
+  "apply to create a community"
+  applyCommunity(
+    title: String!, desc: String!, slug: String!, logo: String!, locale: String, applyMsg: String, applyCategory: String
+  ): Community
+
+  "approve the apply to create a community"
+  approveCommunityApply(community: String!): Community
+
+  "deny the apply to create a community"
+  denyCommunityApply(id: ID!): Community
+
+  "create category"
+  createCategory(community: String!, title: String!, slug: String!): Category
+
+  "delete category"
+  deleteCategory(community: String!, id: ID!): Category
+
+  "update category"
+  updateCategory(community: String!, id: ID!, title: String!): Category
+
+  "add a moderator for a community"
+  addModerator(community: String!, user: String!, role: String!): Community
+
+  "unset a moderator from a community, the user's passport also deleted"
+  removeModerator(community: String!, user: String!): Community
+
+  "update cms moderator's title, passport is not effected"
+  updateModeratorPassport(community: String!, user: String!, rules: Json!): Community
+
+  "create a tag"
+  createCommunityTag(
+    title: String!, slug: String!, color: RainbowColor!, layout: String, community: String!, group: String, thread: Thread, extra: [String], icon: String
+  ): CommunityTag
+
+  "update a tag"
+  updateCommunityTag(
+    id: ID!, community: String!, title: String, layout: String, desc: String, slug: String, color: RainbowColor, group: String, thread: Thread, extra: [String], icon: String
+  ): CommunityTag
+
+  "delete a tag by thread"
+  deleteCommunityTag(id: ID!, community: String!, thread: Thread): CommunityTag
+
+  "set category to a community"
+  setCategory(community: String!, categoryId: ID!): Community
+
+  "unset category to a community"
+  unsetCategory(community: String!, categoryId: ID!): Community
+
+  "subscribe a community so it can appear in sidebar"
+  subscribeCommunity(community: String!): Community
+
+  "unsubscribe a community"
+  unsubscribeCommunity(community: String!): Community
+
+  "set a community_tag to content"
+  setCommunityTag(article: ArticleRefInput!, communityTagId: ID!): Article
+
+  "unset a tag to content"
+  unsetCommunityTag(article: ArticleRefInput!, communityTagId: ID!): Article
+
+  "reindex tags in given group"
+  reindexTagsInGroup(community: String!, thread: Thread, group: String!, tags: [ReindexTagInput]): Done
+
+  "mirror article to other community"
+  mirrorArticle(article: ArticleRefInput!, targetCommunity: String!, communityTags: [ID]): Article
+
+  "unmirror article for community"
+  unmirrorArticle(article: ArticleRefInput!, targetCommunity: String!): Article
+
+  "move article to other community"
+  moveArticle(article: ArticleRefInput!, targetCommunity: String!, communityTags: [ID]): Article
+
+  "mirror article to home community"
+  mirrorToHome(article: ArticleRefInput!, communityTags: [ID]): Article
+
+  "move article to other community"
+  moveToBlackhole(article: ArticleRefInput!, communityTags: [ID]): Article
+
+  "create a post"
+  createPost(
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID]
+  ): Post
+
+  "update a cms\/post"
+  updatePost(
+    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID]
+  ): Post
+
+  "set cat for a post"
+  setPostCat(article: ArticleRefInput!, cat: ArticleCatEnum!): Post
+
+  "set cat for a post"
+  setPostState(article: ArticleRefInput!, state: ArticleStateEnum!): Post
+
+  "upvote to post"
+  upvotePost(article: ArticleRefInput!): Article
+
+  "undo upvote to post"
+  undoUpvotePost(article: ArticleRefInput!): Article
+
+  "pin to post"
+  pinPost(article: ArticleRefInput!): Post
+
+  "undo pin to post"
+  undoPinPost(article: ArticleRefInput!): Post
+
+  "mark delete a post type article, aka soft-delete"
+  markDeletePost(article: ArticleRefInput!): Post
+
+  "undo mark delete a post type article"
+  undoMarkDeletePost(article: ArticleRefInput!): Post
+
+  "batch mark delete posts type article, aka soft-delete"
+  batchMarkDeletePosts(community: String!, ids: [ID], thread: PostThread): DoneState
+
+  "batch undo mark delete posts type article, aka soft-delete"
+  batchUndoMarkDeletePosts(community: String!, ids: [ID], thread: PostThread): DoneState
+
+  "permanently delete a post"
+  deletePost(article: ArticleRefInput!): Post
+
+  "emotion to post"
+  emotionToPost(article: ArticleRefInput!, emotion: ArticleEmotion!): Post
+
+  "undo emotion to post"
+  undoEmotionToPost(article: ArticleRefInput!, emotion: ArticleEmotion!): Post
+
+  "report a post"
+  reportPost(article: ArticleRefInput!, reason: String!, attr: String): Post
+
+  "undo report a post"
+  undoReportPost(article: ArticleRefInput!): Post
+
+  "sink a post"
+  sinkPost(article: ArticleRefInput!): Article
+
+  "undo sink to post"
+  undoSinkPost(article: ArticleRefInput!): Article
+
+  "lock comment of a post"
+  lockPostComment(article: ArticleRefInput!): Article
+
+  "undo lock to a post"
+  undoLockPostComment(article: ArticleRefInput!): Article
+
+  "create a blog"
+  createBlog(
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID]
+  ): Blog
+
+  "update a cms\/blog"
+  updateBlog(
+    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID]
+  ): Blog
+
+  "upvote to blog"
+  upvoteBlog(article: ArticleRefInput!): Article
+
+  "undo upvote to blog"
+  undoUpvoteBlog(article: ArticleRefInput!): Article
+
+  "pin to blog"
+  pinBlog(article: ArticleRefInput!): Blog
+
+  "undo pin to blog"
+  undoPinBlog(article: ArticleRefInput!): Blog
+
+  "mark delete a blog type article, aka soft-delete"
+  markDeleteBlog(article: ArticleRefInput!): Blog
+
+  "undo mark delete a blog type article"
+  undoMarkDeleteBlog(article: ArticleRefInput!): Blog
+
+  "batch mark delete blogs type article, aka soft-delete"
+  batchMarkDeleteBlogs(community: String!, ids: [ID], thread: BlogThread): DoneState
+
+  "batch undo mark delete blogs type article, aka soft-delete"
+  batchUndoMarkDeleteBlogs(community: String!, ids: [ID], thread: BlogThread): DoneState
+
+  "permanently delete a blog"
+  deleteBlog(article: ArticleRefInput!): Blog
+
+  "emotion to blog"
+  emotionToBlog(article: ArticleRefInput!, emotion: ArticleEmotion!): Blog
+
+  "undo emotion to blog"
+  undoEmotionToBlog(article: ArticleRefInput!, emotion: ArticleEmotion!): Blog
+
+  "report a blog"
+  reportBlog(article: ArticleRefInput!, reason: String!, attr: String): Blog
+
+  "undo report a blog"
+  undoReportBlog(article: ArticleRefInput!): Blog
+
+  "sink a blog"
+  sinkBlog(article: ArticleRefInput!): Article
+
+  "undo sink to blog"
+  undoSinkBlog(article: ArticleRefInput!): Article
+
+  "lock comment of a blog"
+  lockBlogComment(article: ArticleRefInput!): Article
+
+  "undo lock to a blog"
+  undoLockBlogComment(article: ArticleRefInput!): Article
+
+  "create a changelog"
+  createChangelog(
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID]
+  ): Changelog
+
+  "update a cms\/changelog"
+  updateChangelog(
+    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID]
+  ): Changelog
+
+  "upvote to changelog"
+  upvoteChangelog(article: ArticleRefInput!): Article
+
+  "undo upvote to changelog"
+  undoUpvoteChangelog(article: ArticleRefInput!): Article
+
+  "pin to changelog"
+  pinChangelog(article: ArticleRefInput!): Changelog
+
+  "undo pin to changelog"
+  undoPinChangelog(article: ArticleRefInput!): Changelog
+
+  "mark delete a changelog type article, aka soft-delete"
+  markDeleteChangelog(article: ArticleRefInput!): Changelog
+
+  "undo mark delete a changelog type article"
+  undoMarkDeleteChangelog(article: ArticleRefInput!): Changelog
+
+  "batch mark delete changelogs type article, aka soft-delete"
+  batchMarkDeleteChangelogs(community: String!, ids: [ID], thread: ChangelogThread): DoneState
+
+  "batch undo mark delete changelogs type article, aka soft-delete"
+  batchUndoMarkDeleteChangelogs(community: String!, ids: [ID], thread: ChangelogThread): DoneState
+
+  "permanently delete a changelog"
+  deleteChangelog(article: ArticleRefInput!): Changelog
+
+  "emotion to changelog"
+  emotionToChangelog(article: ArticleRefInput!, emotion: ArticleEmotion!): Changelog
+
+  "undo emotion to changelog"
+  undoEmotionToChangelog(article: ArticleRefInput!, emotion: ArticleEmotion!): Changelog
+
+  "report a changelog"
+  reportChangelog(article: ArticleRefInput!, reason: String!, attr: String): Changelog
+
+  "undo report a changelog"
+  undoReportChangelog(article: ArticleRefInput!): Changelog
+
+  "sink a changelog"
+  sinkChangelog(article: ArticleRefInput!): Article
+
+  "undo sink to changelog"
+  undoSinkChangelog(article: ArticleRefInput!): Article
+
+  "lock comment of a changelog"
+  lockChangelogComment(article: ArticleRefInput!): Article
+
+  "undo lock to a changelog"
+  undoLockChangelogComment(article: ArticleRefInput!): Article
+
+  "create a doc"
+  createDoc(
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID]
+  ): Doc
+
+  "update a cms\/doc"
+  updateDoc(
+    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID]
+  ): Doc
+
+  "upvote to doc"
+  upvoteDoc(article: ArticleRefInput!): Article
+
+  "undo upvote to doc"
+  undoUpvoteDoc(article: ArticleRefInput!): Article
+
+  "pin to doc"
+  pinDoc(article: ArticleRefInput!): Doc
+
+  "undo pin to doc"
+  undoPinDoc(article: ArticleRefInput!): Doc
+
+  "mark delete a doc type article, aka soft-delete"
+  markDeleteDoc(article: ArticleRefInput!): Doc
+
+  "undo mark delete a doc type article"
+  undoMarkDeleteDoc(article: ArticleRefInput!): Doc
+
+  "batch mark delete docs type article, aka soft-delete"
+  batchMarkDeleteDocs(community: String!, ids: [ID], thread: DocThread): DoneState
+
+  "batch undo mark delete docs type article, aka soft-delete"
+  batchUndoMarkDeleteDocs(community: String!, ids: [ID], thread: DocThread): DoneState
+
+  "permanently delete a doc"
+  deleteDoc(article: ArticleRefInput!): Doc
+
+  "emotion to doc"
+  emotionToDoc(article: ArticleRefInput!, emotion: ArticleEmotion!): Doc
+
+  "undo emotion to doc"
+  undoEmotionToDoc(article: ArticleRefInput!, emotion: ArticleEmotion!): Doc
+
+  "report a doc"
+  reportDoc(article: ArticleRefInput!, reason: String!, attr: String): Doc
+
+  "undo report a doc"
+  undoReportDoc(article: ArticleRefInput!): Doc
+
+  "sink a doc"
+  sinkDoc(article: ArticleRefInput!): Article
+
+  "undo sink to doc"
+  undoSinkDoc(article: ArticleRefInput!): Article
+
+  "lock comment of a doc"
+  lockDocComment(article: ArticleRefInput!): Article
+
+  "undo lock to a doc"
+  undoLockDocComment(article: ArticleRefInput!): Article
+
+  "write a comment"
+  createComment(community: String!, thread: Thread, id: ID!, body: String!): Comment
+
+  "update a comment"
+  updateComment(id: ID!, body: String!): Comment
+
+  "delete a comment"
+  deleteComment(id: ID!): Comment
+
+  "reply to a comment"
+  replyComment(id: ID!, body: String!): Comment
+
+  "upvote to a comment"
+  upvoteComment(id: ID!): Comment
+
+  "undo upvote to a comment"
+  undoUpvoteComment(id: ID!): Comment
+
+  "emotion to a comment"
+  emotionToComment(id: ID!, emotion: CommentEmotion!): Comment
+
+  "undo emotion to a comment"
+  undoEmotionToComment(id: ID!, emotion: CommentEmotion!): Comment
+
+  "mark a comment as question post's best solution"
+  markCommentSolution(id: ID!): Comment
+
+  "mark a comment as question post's best solution"
+  undoMarkCommentSolution(id: ID!): Comment
+
+  "pin a comment"
+  pinComment(id: ID!): Comment
+
+  "undo pin a comment"
+  undoPinComment(id: ID!): Comment
+
+  "update base info in dashboard"
+  updateDashboardBaseInfo(
+    community: String!, dashboardSection: DashboardSection, favicon: String, title: String, locale: String, logo: String, slug: String, desc: String, introduction: String, homepage: String, city: String, techstack: String
+  ): Community
+
+  "update seo in dashboard"
+  updateDashboardSeo(
+    community: String!, dashboardSection: DashboardSection, seoEnable: Boolean, ogSiteName: String, ogTitle: String, ogDescription: String, ogUrl: String, ogImage: String, ogLocale: String, ogPublisher: String, twTitle: String, twDescription: String, twUrl: String, twCard: String, twSite: String, twImage: String, twImageWidth: String, twImageHeight: String
+  ): Community
+
+  "update wallpaper in dashboard"
+  updateDashboardWallpaper(
+    community: String!, dashboardSection: DashboardSection, wallpaperType: String, wallpaper: String, hasPattern: Boolean, direction: String, customColorValue: String, bgSize: String, uploadBgImage: String, hasBlur: Boolean, hasShadow: Boolean
+  ): Community
+
+  "update enable in dashboard"
+  updateDashboardEnable(
+    community: String!, dashboardSection: DashboardSection, post: Boolean, blog: Boolean, kanban: Boolean, changelog: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean
+  ): Community
+
+  "update thread-specific emotion settings in dashboard"
+  updateDashboardThreadEmotions(
+    community: String!, dashboardSection: DashboardSection, post: [EmotionType], blog: [EmotionType], changelog: [EmotionType], doc: [EmotionType], postComment: [EmotionType], blogComment: [EmotionType], changelogComment: [EmotionType], docComment: [EmotionType]
+  ): Community
+
+  "update layout in dashboard"
+  updateDashboardLayout(
+    community: String!, dashboardSection: DashboardSection, pageBg: String, pageBgDark: String, pageCustomBg: Int, pageCustomBgDark: Int, pageCustomIntensity: Int, pageCustomIntensityDark: Int, primaryColor: RainbowColor, primaryCustomColor: String, primaryCustomColorDark: String, subPrimaryColor: RainbowColor, subPrimaryCustomColor: String, subPrimaryCustomColorDark: String, kanbanBgColors: [RainbowColor], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docCoverLayout: DsbDocCoverLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, communityLayout: DsbCommunityLayout, topbarEnabled: Boolean, topbarBg: RainbowColor, topbarBgCustomColor: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: RainbowColor, broadcastCustomBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: RainbowColor, broadcastArticleCustomBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, glowType: String, glowFixed: Boolean, glowOpacity: String, overlayDark: Boolean, gaussBlur: Int, gaussBlurDark: Int
+  ): Community
+
+  "update rss in dashboard"
+  updateDashboardRss(
+    community: String!, dashboardSection: DashboardSection, rssFeedType: DsbRssFeedType, rssFeedCount: Int
+  ): Community
+
+  "update name alias in dashboard"
+  updateDashboardNameAlias(community: String!, dashboardSection: DashboardSection, nameAlias: [DashboardAliasMap]): Community
+
+  "update header links in dashboard"
+  updateDashboardHeaderLinks(community: String!, dashboardSection: DashboardSection, headerLinks: [DashboardLinkMap]): Community
+
+  "update footer links in dashboard"
+  updateDashboardFooterLinks(community: String!, dashboardSection: DashboardSection, footerLinks: [DashboardLinkMap]): Community
+
+  "update social links in dashboard"
+  updateDashboardSocialLinks(
+    community: String!, dashboardSection: DashboardSection, socialLinks: [DashboardSocialLinkMap]
+  ): Community
+
+  "update media reports in dashboard"
+  updateDashboardMediaReports(
+    community: String!, dashboardSection: DashboardSection, mediaReports: [DashboardMediaReportMap]
+  ): Community
+
+  "update faqs in dashboard"
+  updateDashboardFaqs(community: String!, dashboardSection: DashboardSection, faqs: [DashboardFaqMap]): Community
+}
+
+type CheckState {
+  exist: Boolean
+}
+
+type DoneState {
+  done: Boolean
+}
+
+type CommonUser {
+  login: String
+  avatar: String
+  nickname: String
+  bio: String
+  shortbio: String
+}
+
+type CommonArticle {
+  thread: Thread
+  id: ID
+  title: String
+  author: CommonUser
+}
+
+type CommonComment {
+  id: ID
+  bodyHtml: String
+  upvotesCount: Int
+  author: CommonUser
+  article: CommonArticle
+}
+
+type ThreadDocument {
+  json: String
+  markdown: String
+  markdownToc: Json
+  html: String
+  rss: String
+}
+
+type Post implements Article {
+  innerId: ID
+  title: String
+  document: ThreadDocument
+  digest: String
+  views: Int
+  isPinned: Boolean
+  markDelete: Boolean
+  communityTags: [CommunityTag]
+  author: User
+  community: Community
+  communitySlug: String
+  communities: [Community]
+  meta: ArticleMeta
+  upvotesCount: Int
+  collectsCount: Int
+  emotions: [EmotionStat]
+  viewerHasCollected: Boolean
+  viewerHasUpvoted: Boolean
+  viewerHasViewed: Boolean
+  viewerHasReported: Boolean
+  isArchived: Boolean
+  archivedAt: DateTime
+  copyRight: String
+  linkAddr: String
+  pending: Int
+  commentsParticipants: [User]
+  commentsParticipantsCount: Int
+  commentsCount: Int
+  cat: ArticleCatEnum
+  state: ArticleStateEnum
+  insertedAt: DateTime
+  updatedAt: DateTime
+  activeAt: DateTime
+}
+
+type Changelog implements Article {
+  innerId: ID
+  title: String
+  document: ThreadDocument
+  digest: String
+  views: Int
+  isPinned: Boolean
+  markDelete: Boolean
+  communityTags: [CommunityTag]
+  author: User
+  community: Community
+  communitySlug: String
+  communities: [Community]
+  meta: ArticleMeta
+  upvotesCount: Int
+  collectsCount: Int
+  emotions: [EmotionStat]
+  viewerHasCollected: Boolean
+  viewerHasUpvoted: Boolean
+  viewerHasViewed: Boolean
+  viewerHasReported: Boolean
+  isArchived: Boolean
+  archivedAt: DateTime
+  copyRight: String
+  linkAddr: String
+  pending: Int
+  commentsParticipants: [User]
+  commentsParticipantsCount: Int
+  commentsCount: Int
+  insertedAt: DateTime
+  updatedAt: DateTime
+  activeAt: DateTime
+}
+
+type Doc implements Article {
+  innerId: ID
+  title: String
+  document: ThreadDocument
+  digest: String
+  views: Int
+  isPinned: Boolean
+  markDelete: Boolean
+  communityTags: [CommunityTag]
+  author: User
+  community: Community
+  communitySlug: String
+  communities: [Community]
+  meta: ArticleMeta
+  upvotesCount: Int
+  collectsCount: Int
+  emotions: [EmotionStat]
+  viewerHasCollected: Boolean
+  viewerHasUpvoted: Boolean
+  viewerHasViewed: Boolean
+  viewerHasReported: Boolean
+  isArchived: Boolean
+  archivedAt: DateTime
+  copyRight: String
+  linkAddr: String
+  pending: Int
+  commentsParticipants: [User]
+  commentsParticipantsCount: Int
+  commentsCount: Int
+  insertedAt: DateTime
+  updatedAt: DateTime
+  activeAt: DateTime
+}
+
+type Blog implements Article {
+  innerId: ID
+  title: String
+  document: ThreadDocument
+  digest: String
+  views: Int
+  isPinned: Boolean
+  markDelete: Boolean
+  communityTags: [CommunityTag]
+  author: User
+  community: Community
+  communitySlug: String
+  communities: [Community]
+  meta: ArticleMeta
+  upvotesCount: Int
+  collectsCount: Int
+  emotions: [EmotionStat]
+  viewerHasCollected: Boolean
+  viewerHasUpvoted: Boolean
+  viewerHasViewed: Boolean
+  viewerHasReported: Boolean
+  isArchived: Boolean
+  archivedAt: DateTime
+  copyRight: String
+  linkAddr: String
+  pending: Int
+  commentsParticipants: [User]
+  commentsParticipantsCount: Int
+  commentsCount: Int
+  insertedAt: DateTime
+  updatedAt: DateTime
+  activeAt: DateTime
+}
+
+type Contribute {
+  date: Date
+  count: Int
+}
+
+type ContributeMap {
+  startDate: Date
+  endDate: Date
+  totalCount: Int
+  records: [Contribute]
+}
+
+type DashboardRss {
+  rssFeedType: DsbRssFeedType
+  rssFeedCount: Int
+}
+
+type DashboardSeo {
+  seoEnable: Boolean
+  ogSiteName: String
+  ogTitle: String
+  ogDescription: String
+  ogUrl: String
+  ogImage: String
+  ogLocale: String
+  ogPublisher: String
+  twTitle: String
+  twDescription: String
+  twUrl: String
+  twCard: String
+  twSite: String
+  twImage: String
+  twImageWidth: String
+  twImageHeight: String
+}
+
+type DashboardWallpaper {
+  wallpaperType: String
+  wallpaper: String
+  hasPattern: Boolean
+  direction: String
+  customColorValue: String
+  bgSize: String
+  uploadBgImage: String
+  hasBlur: Boolean
+  hasShadow: Boolean
+}
+
+type DashboardLayout {
+  pageBg: String
+  pageBgDark: String
+  pageCustomBg: Int
+  pageCustomBgDark: Int
+  pageCustomIntensity: Int
+  pageCustomIntensityDark: Int
+  primaryColor: RainbowColor
+  primaryCustomColor: String
+  primaryCustomColorDark: String
+  subPrimaryColor: RainbowColor
+  subPrimaryCustomColor: String
+  subPrimaryCustomColorDark: String
+  kanbanBgColors: [RainbowColor]
+  kanbanBoards: [KanbanBoard]
+  postLayout: DsbPostLayout
+  kanbanLayout: DsbKanbanLayout
+  kanbanCardLayout: DsbKanbanCardLayout
+  docCoverLayout: DsbDocCoverLayout
+  docFaqLayout: DsbDocFaqLayout
+  tagLayout: DsbTagLayout
+  inlineTagLayout: DsbInlineTagLayout
+  avatarLayout: DsbAvatarLayout
+  brandLayout: DsbBrandLayout
+  communityLayout: DsbCommunityLayout
+  topbarEnabled: Boolean
+  topbarBg: RainbowColor
+  topbarBgCustomColor: String
+  broadcastLayout: DsbBroadcastLayout
+  broadcastBg: RainbowColor
+  broadcastCustomBg: String
+  broadcastEnable: Boolean
+  broadcastArticleLayout: DsbBroadcastArticleLayout
+  broadcastArticleBg: RainbowColor
+  broadcastArticleCustomBg: String
+  broadcastArticleEnable: Boolean
+  changelogLayout: DsbChangelogLayout
+  footerLayout: DsbFooterLayout
+  headerLayout: DsbHeaderLayout
+  glowType: String
+  glowFixed: Boolean
+  glowOpacity: String
+  overlayDark: Boolean
+  gaussBlur: Int
+  gaussBlurDark: Int
+}
+
+type DashboardEnable {
+  post: Boolean
+  blog: Boolean
+  kanban: Boolean
+  changelog: Boolean
+  doc: Boolean
+  docLastUpdate: Boolean
+  docReaction: Boolean
+  about: Boolean
+  aboutTechstack: Boolean
+  aboutLocation: Boolean
+  aboutLinks: Boolean
+  aboutMediaReport: Boolean
+}
+
+type DashboardThreadEmotions {
+  post: [EmotionType]
+  blog: [EmotionType]
+  changelog: [EmotionType]
+  doc: [EmotionType]
+  postComment: [EmotionType]
+  blogComment: [EmotionType]
+  changelogComment: [EmotionType]
+  docComment: [EmotionType]
+}
+
+type DashboardBaseInfo {
+  favicon: String
+  title: String
+  locale: String
+  logo: String
+  slug: String
+  desc: String
+  introduction: String
+  homepage: String
+  city: String
+  techstack: String
+}
+
+type DashboardNameAlias {
+  slug: String
+  name: String
+  original: String
+  group: String
+}
+
+type DashboardLink {
+  title: String
+  link: String
+  group: String
+  groupIndex: Int
+  index: Int
+  isHot: Boolean
+  isNew: Boolean
+}
+
+type DashboardSocialLink {
+  type: String
+  link: String
+}
+
+type DashboardMediaReport {
+  index: Int
+  title: String
+  favicon: String
+  siteName: String
+  description: String
+  url: String
+}
+
+type DashboardFaqSection {
+  title: String
+  body: String
+  index: Int
+}
+
+type Dashboard {
+  seo: DashboardSeo
+  wallpaper: DashboardWallpaper
+  layout: DashboardLayout
+  enable: DashboardEnable
+  threadEmotions: DashboardThreadEmotions
+  baseInfo: DashboardBaseInfo
+  rss: DashboardRss
+  nameAlias: [DashboardNameAlias]
+  headerLinks: [DashboardLink]
+  footerLinks: [DashboardLink]
+  socialLinks: [DashboardSocialLink]
+  mediaReports: [DashboardMediaReport]
+  faqs: [DashboardFaqSection]
+}
+
+type CommunityModerator {
+  role: String
+  passportItemCount: Int
+  user: CommonUser
+}
+
+type AllRules {
+  root: String
+  moderator: String
+}
+
+type Community {
+  id: ID
+  title: String
+  desc: String
+  slug: String
+  favicon: String
+  homepage: String
+  index: Int
+  logo: String
+  author: User
+  locale: String
+  categories: [Category]
+  dashboard: Dashboard
+  moderators: [CommunityModerator]
+  meta: CommunityMeta
+  views: Int
+  contributesDigest: [Int]
+  articlesCount: Int
+  subscribersCount: Int
+  moderatorsCount: Int
+  communityTagsCount: Int
+  viewerHasSubscribed: Boolean
+  viewerIsModerator: Boolean
+  pending: Int
+  insertedAt: DateTime
+  updatedAt: DateTime
+}
+
+type Category {
+  id: ID
+  title: String
+  slug: String
+  index: Int
+  author: User
+  communities: [Community]
+  insertedAt: DateTime
+  updatedAt: DateTime
+}
+
+type CommunityTag {
+  id: ID
+  title: String
+  desc: String
+  layout: String
+  slug: String
+  color: RainbowColor
+  thread: Thread
+  group: String
+  extra: [String]
+  icon: String
+  index: Int
+  author: User
+  community: Community
+  insertedAt: DateTime
+  updatedAt: DateTime
+}
+
+type EmotionStat {
+  type: EmotionType
+  count: Int
+  viewerHasReacted: Boolean
+  latestUsers: [CommonUser]
+}
+
+type CommentMeta {
+  isArticleAuthorUpvoted: Boolean
+  isReplyToOthers: Boolean
+  isLegal: Boolean
+  illegalReason: [String]
+  illegalWords: [String]
+}
+
+type CommentReply {
+  id: ID
+  body: String
+  bodyHtml: String
+  author: User
+  isPinned: Boolean
+  floor: Int
+  upvotesCount: Int
+  isArticleAuthor: Boolean
+  emotions: [EmotionStat]
+  meta: CommentMeta
+  repliesCount: Int
+  thread: Thread
+  viewerHasUpvoted: Boolean
+  replyTo: Comment
+  replyToId: ID
+  isDeleted: Boolean
+  isArchived: Boolean
+  archivedAt: DateTime
+  insertedAt: DateTime
+  updatedAt: DateTime
+}
+
+type Comment {
+  id: ID
+  body: String
+  bodyHtml: String
+  author: User
+  isPinned: Boolean
+  floor: Int
+  upvotesCount: Int
+  isArticleAuthor: Boolean
+  emotions: [EmotionStat]
+  meta: CommentMeta
+  repliesCount: Int
+  thread: Thread
+  viewerHasUpvoted: Boolean
+  replyTo: Comment
+  replyToId: ID
+  isDeleted: Boolean
+  isArchived: Boolean
+  archivedAt: DateTime
+  insertedAt: DateTime
+  updatedAt: DateTime
+  replies: [CommentReply]
+  article: CommonArticle
+  isForQuestion: Boolean
+  isSolution: Boolean
+}
+
+type CommentsListState {
+  totalCount: Int
+  participantsCount: Int
+  participants: [CommonUser]
+  isViewerJoined: Boolean
+}
+
+type AbuseReportCase {
+  reason: String
+  attr: String
+  user: CommonUser
+}
+
+type AbuseReport {
+  id: ID
+  article: CommonArticle
+  comment: CommonComment
+  account: CommonUser
+  reportCasesCount: Int
+  dealWith: String
+  operateUser: User
+  reportCases: [AbuseReportCase]
+  insertedAt: DateTime
+  updatedAt: DateTime
+}
+
+type Citing {
+  id: ID
+  thread: Thread
+  title: String
+  blockLinker: [String]
+  commentId: ID
+  user: CommonUser
+  insertedAt: DateTime
+  updatedAt: DateTime
+}
+
+type PagedPosts {
+  entries: [Post]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type PagedBlogs {
+  entries: [Blog]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type PagedChangelogs {
+  entries: [Changelog]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type PagedDocs {
+  entries: [Doc]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type KanbanPosts {
+  backlog: PagedPosts
+  todo: PagedPosts
+  wip: PagedPosts
+  done: PagedPosts
+  rejected: PagedPosts
+}
+
+type PagedReports {
+  entries: [AbuseReport]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type PagedCitings {
+  entries: [Citing]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type PagedCategories {
+  entries: [Category]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type PagedComments {
+  entries: [Comment]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type PagedCommentReplies {
+  entries: [CommentReply]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type PagedCommunities {
+  entries: [Community]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type PagedCommunityTags {
+  entries: [CommunityTag]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type PagedArticles {
+  entries: [CommonArticle]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+"article meta info"
+type ArticleMeta {
+  thread: Thread
+  isEdited: Boolean
+  isCommentLocked: Boolean
+  lastActiveAt: DateTime
+  citingCount: Int
+  latestUpvotedUsers: [CommonUser]
+  isLegal: Boolean
+  illegalReason: [String]
+  illegalWords: [String]
+}
+
+type CommunityMeta {
+  postsCount: Int
+  blogsCount: Int
+  changelogsCount: Int
+  docsCount: Int
+  applyMsg: String
+  applyCategory: String
+}
+
+type OpenGraph {
+  title: String
+  url: String
+  favicon: String
+  siteName: String
+}
+
+interface Article {
+  innerId: ID
+  title: String
+  views: Int
+  upvotesCount: Int
+  meta: ArticleMeta
+  pending: Int
+}
+
+enum PostThread {
+  POST
+}
+
+enum BlogThread {
+  BLOG
+}
+
+enum ChangelogThread {
+  CHANGELOG
+}
+
+enum DocThread {
+  DOC
+}
+
+"emotion options of article"
+enum ArticleEmotion {
+  UPVOTE
+  DOWNVOTE
+  BEER
+  HEART
+  BICEPS
+  ORZ
+  CONFUSED
+  PILL
+  POPCORN
+}
+
+"emotion options of comment"
+enum CommentEmotion {
+  DOWNVOTE
+  BEER
+  HEART
+  BICEPS
+  ORZ
+  CONFUSED
+  PILL
+  POPCORN
+}
+
+"emotion options used by API output"
+enum EmotionType {
+  UPVOTE
+  DOWNVOTE
+  BEER
+  HEART
+  BICEPS
+  ORZ
+  CONFUSED
+  PILL
+  POPCORN
+}
+
+enum Thread {
+  POST
+  BLOG
+  CHANGELOG
+  DOC
+  KANBAN
+  ACCOUNT
+  ABOUT
+  DASHBOARD
+  USER
+}
+
+enum DashboardSection {
+  SEO
+  WALLPAPER
+  ENABLE
+  THREAD_EMOTIONS
+  LAYOUT
+  BASE_INFO
+  RSS
+  NAME_ALIAS
+  HEADER_LINKS
+  FOOTER_LINKS
+  SOCIAL_LINKS
+  MEDIA_REPORTS
+  FAQS
+}
+
+enum Content {
+  POST
+  BLOG
+  CHANGELOG
+  DOC
+  COMMENT
+}
+
+enum WhenEnum {
+  TODAY
+  THIS_WEEK
+  THIS_MONTH
+  THIS_YEAR
+}
+
+enum InsertedSortEnum {
+  ASC_INSERTED
+  DESC_INSERTED
+}
+
+enum SortEnum {
+  DESC_INSERTED
+  MOST_VIEWS
+  ASC_ACTIVE
+  DESC_ACTIVE
+  MOST_STARS
+  LEAST_VIEWS
+  LEAST_STARS
+}
+
+enum ArticleOrderEnum {
+  UPVOTES
+  COMMENTS
+  VIEWS
+  PUBLISH
+}
+
+enum RainbowColor {
+  BLACK
+  PINK
+  RED
+  ORANGE
+  YELLOW
+  BROWN
+  GREEN_LIGHT
+  GREEN
+  CYAN
+  CYAN_LIGHT
+  BLUE
+  PURPLE
+  CUSTOM
+}
+
+enum ArticleCatEnum {
+  FEATURE
+  BUG
+  QUESTION
+  OTHER
+}
+
+enum ArticleStateEnum {
+  DEFAULT
+  BACKLOG
+  TODO
+  WIP
+  DONE
+  RESOLVED
+  REJECT
+  REJECT_DUP
+  REJECT_NO_PLAN
+  REJECT_REPRO
+  REJECT_STALE
+}
+
+enum KanbanBoard {
+  BACKLOG
+  TODO
+  WIP
+  DONE
+  REJECTED
+}
+
+enum DsbPostLayout {
+  QUORA
+  PH
+  MASONRY
+  MINIMAL
+  COVER
+}
+
+enum DsbKanbanLayout {
+  CLASSIC
+  WATERFALL
+}
+
+enum DsbKanbanCardLayout {
+  SIMPLE
+  FULL
+}
+
+enum DsbDocCoverLayout {
+  OUTLINE_COLUMNS
+  OUTLINE_TOC
+  BRIEF_CARDS
+  COVER_CARDS
+  TILE_CARDS
+  STACK_CARDS
+}
+
+enum DsbDocFaqLayout {
+  FLAT
+  COLLAPSE
+  SEARCH_HINT
+  LEFT_RIGHT
+}
+
+enum DsbTagLayout {
+  HASH
+  DOT
+}
+
+enum DsbInlineTagLayout {
+  MORANDI
+  SOFT
+  SOLID
+  BORDER
+  SIMPLE
+}
+
+enum DsbAvatarLayout {
+  CIRCLE
+  SQUARE
+}
+
+enum DsbBrandLayout {
+  BOTH
+  LOGO
+  TEXT
+}
+
+enum DsbCommunityLayout {
+  CLASSIC
+  HERO
+  SIDEBAR
+}
+
+enum DsbBroadcastLayout {
+  DEFAULT
+  CENTER
+}
+
+enum DsbBroadcastArticleLayout {
+  DEFAULT
+  SIMPLE
+}
+
+enum DsbChangelogLayout {
+  CLASSIC
+  SIMPLE
+}
+
+enum DsbHeaderLayout {
+  CENTER
+  RIGHT
+  FLOAT
+}
+
+enum DsbFooterLayout {
+  SIMPLE
+  GROUP
+}
+
+enum DsbRssFeedType {
+  DIGEST
+  FULL
+}
+
+"the filter mode for list comments"
+enum CommentsMode {
+  REPLIES
+  TIMELINE
+}
+
+input CommentsFilter {
+  page: Int
+  size: Int
+  sort: InsertedSortEnum
+}
+
+input CommunitiesFilter {
+  "limit of records (default 20), if first > 30, only return 30 at most"
+  page: Int
+
+  size: Int
+
+  sort: SortEnum
+
+  category: String
+}
+
+input CommunityTagsFilter {
+  community: String
+  thread: Thread
+  page: Int
+  size: Int
+}
+
+input ReindexTagInput {
+  id: ID
+  index: Int
+}
+
+input ArticleRefInput {
+  innerId: ID!
+  community: String!
+  thread: Thread
+}
+
+input PagiFilter {
+  "limit of records (default 20), if first > 30, only return 30 at most"
+  page: Int
+
+  size: Int
+
+  sort: SortEnum
+}
+
+"posts_filter doc"
+input PagedPostsFilter {
+  "limit of records (default 20), if first > 30, only return 30 at most"
+  page: Int
+
+  size: Int
+
+  when: WhenEnum
+
+  communityTag: String
+
+  cat: ArticleCatEnum
+
+  state: ArticleStateEnum
+
+  order: ArticleOrderEnum
+
+  communityTags: [String]
+
+  community: String
+
+  author: String
+
+  sort: SortEnum
+}
+
+"kanban posts_filter doc"
+input PagedKanbanPostsFilter {
+  page: Int
+  size: Int
+  state: ArticleStateEnum
+}
+
+"changelogs_filter doc"
+input PagedChangelogsFilter {
+  "limit of records (default 20), if first > 30, only return 30 at most"
+  page: Int
+
+  size: Int
+
+  when: WhenEnum
+
+  communityTag: String
+
+  cat: ArticleCatEnum
+
+  state: ArticleStateEnum
+
+  order: ArticleOrderEnum
+
+  communityTags: [String]
+
+  community: String
+
+  author: String
+
+  sort: SortEnum
+}
+
+"docs_filter doc"
+input PagedDocsFilter {
+  "limit of records (default 20), if first > 30, only return 30 at most"
+  page: Int
+
+  size: Int
+
+  when: WhenEnum
+
+  communityTag: String
+
+  cat: ArticleCatEnum
+
+  state: ArticleStateEnum
+
+  order: ArticleOrderEnum
+
+  communityTags: [String]
+
+  community: String
+
+  author: String
+
+  sort: SortEnum
+}
+
+"blog_filter doc"
+input PagedBlogsFilter {
+  page: Int
+  size: Int
+  when: WhenEnum
+  communityTag: String
+  cat: ArticleCatEnum
+  state: ArticleStateEnum
+  order: ArticleOrderEnum
+  communityTags: [String]
+  community: String
+  author: String
+  sort: SortEnum
+}
+
+"common filter for upvoted articles"
+input UpvotedArticlesFilter {
+  thread: Thread
+  page: Int
+  size: Int
+}
+
+"common filter for collect folders"
+input CollectFoldersFilter {
+  thread: Thread
+  page: Int
+  size: Int
+}
+
+"common filter for collect articles"
+input CollectedArticlesFilter {
+  thread: Thread
+  page: Int
+  size: Int
+}
+
+enum ReportContentType {
+  POST
+  BLOG
+  CHANGELOG
+  DOC
+  ACCOUNT
+  COMMENT
+}
+
+"abuse report filter"
+input ReportFilter {
+  contentType: ReportContentType
+  contentId: ID
+  page: Int
+  size: Int
+}
+
+input DashboardAliasMap {
+  slug: String
+  name: String
+  original: String
+  group: String
+}
+
+input DashboardLinkMap {
+  title: String
+  link: String
+  group: String
+  groupIndex: Int
+  index: Int
+  isHot: Boolean
+  isNew: Boolean
+}
+
+input DashboardSocialLinkMap {
+  type: String
+  link: String
+}
+
+input DashboardMediaReportMap {
+  index: Int
+  title: String
+  favicon: String
+  siteName: String
+  description: String
+  url: String
+}
+
+input DashboardFaqMap {
+  title: String
+  body: String
+  index: Int
+}
+
+type UserContribute {
+  count: Int
+  date: Date
+}
+
+type OnlineStatusInfo {
+  realtimeVisitors: Int
+}
+
+type CountStatusInfo {
+  communitiesCount: Int
+  postsCount: Int
+  changelogsCount: Int
+  blogsCount: Int
+  categoriesCount: Int
+  communityTagsCount: Int
+}
+
+type SessionState {
+  user: User
+  isValid: Boolean
+}
+
+type UserMeta {
+  reportedCount: Int
+  isMaker: Boolean
+  publishedPostsCount: Int
+  publishedBlogsCount: Int
+  hasIllegalArticles: Boolean
+  hasIllegalComments: Boolean
+  illegalArticles: [String]
+  illegalComments: [String]
+}
+
+type User {
+  meta: UserMeta
+
+  id: ID
+
+  nickname: String
+
+  login: String
+
+  avatar: String
+
+  bio: String
+
+  shortbio: String
+
+  sex: String
+
+  email: String
+
+  location: String
+
+  geoCity: String
+
+  views: Int
+
+  social: SocialMap
+
+  achievement: Achievement
+
+  cmsPassportString: String
+
+  cmsPassport: Json
+
+  subscribedCommunitiesCount: Int
+
+  "get follower users count"
+  followersCount: Int
+
+  "get following users count"
+  followingsCount: Int
+
+  "if viewer has followed"
+  viewerHasFollowed: Boolean
+
+  "if viewer has been followed"
+  viewerBeenFollowed: Boolean
+
+  contributes: ContributeMap
+
+  mailbox: MailboxStatus
+
+  insertedAt: DateTime
+
+  updatedAt: DateTime
+}
+
+type MailboxStatus {
+  isEmpty: Boolean
+  unreadTotalCount: Int
+  unreadMentionsCount: Int
+  unreadNotificationsCount: Int
+}
+
+type MailboxMention {
+  id: ID
+  thread: Thread
+  articleId: ID
+  title: String
+  commentId: ID
+  read: Boolean
+  blockLinker: [String]
+  user: CommonUser
+  insertedAt: DateTime
+  updatedAt: DateTime
+}
+
+type MailboxNotification {
+  id: ID
+  action: String
+  thread: Thread
+  articleId: ID
+  title: String
+  commentId: ID
+  read: Boolean
+  fromUsers: [CommonUser]
+  fromUsersCount: Int
+  insertedAt: DateTime
+  updatedAt: DateTime
+}
+
+type SocialMap {
+  github: String
+  company: String
+  blog: String
+  douban: String
+  twitter: String
+  zhihu: String
+  dribble: String
+  pinterest: String
+  huaban: String
+}
+
+type CollectFolderMeta {
+  hasPost: Boolean
+  postCount: Int
+  hasBlog: Boolean
+  blogCount: Int
+  hasChangelog: Boolean
+  changelogCount: Int
+  hasDoc: Boolean
+  docCount: Int
+}
+
+type CollectFolder {
+  id: ID
+  title: String
+  desc: String
+  index: Int
+  totalCount: Int
+  private: Boolean
+  lastUpdated: DateTime
+  meta: CollectFolderMeta
+  insertedAt: DateTime
+  updatedAt: DateTime
+}
+
+type PagedCollectFolders {
+  entries: [CollectFolder]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type SourceContribute {
+  web: Boolean
+  server: Boolean
+  weApp: Boolean
+  h5: Boolean
+  mobile: Boolean
+}
+
+type Achievement {
+  reputation: Int
+  articlesUpvotesCount: Int
+  articlesCollectsCount: Int
+  sourceContribute: SourceContribute
+  donateMember: Boolean
+  seniorMember: Boolean
+  sponsorMember: Boolean
+}
+
+type TokenInfo {
+  token: String
+  user: User
+}
+
+type Rules {
+  cms: Json
+}
+
+type PagedUsers {
+  entries: [User]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type PagedMailboxMentions {
+  entries: [MailboxMention]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type PagedMailboxNotifications {
+  entries: [MailboxNotification]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+enum MailboxType {
+  MENTION
+  NOTIFICATION
+}
+
+input MailboxMentionsFilter {
+  read: Boolean
+  page: Int
+  size: Int
+}
+
+input MailboxNotificationsFilter {
+  read: Boolean
+  page: Int
+  size: Int
+}
+
+"article_filter doc"
+input PagedUsersFilter {
+  page: Int
+  size: Int
+}
+
+input UserProfileInput {
+  avatar: String
+  nickname: String
+  bio: String
+  shortbio: String
+  sex: String
+  location: String
+  email: String
+}
+
+input SocialInput {
+  github: String
+  company: String
+  blog: String
+  douban: String
+  twitter: String
+  zhihu: String
+  dribble: String
+  pinterest: String
+  huaban: String
+}
+
+input OauthProviderInput {
+  provider: String!
+  providerId: String!
+  login: String!
+  avatar: String!
+  nickname: String
+  email: String
+  locale: String
+  link: String
+  bio: String
+  country: String
+  city: String
+  company: String
+  raw: Json
+}
+
+"""
+The `Json` scalar type represents arbitrary json string data, represented as UTF-8
+character sequences. The Json type is most often used to represent a free-form
+human-readable json string.
+"""
+scalar Json
+
+type Done {
+  done: Boolean
+}
+
+type GeoInfo {
+  city: String
+  value: Int
+  long: Float
+  lant: Float
+}
+
+type PagedGeoInfos {
+  entries: [GeoInfo]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+"""
+The `DateTime` scalar type represents a date and time in the UTC
+timezone. The DateTime appears in a JSON response as an ISO8601 formatted
+string, including UTC timezone ("Z"). The parsed date and time string will
+be converted to UTC if there is an offset.
+"""
+scalar DateTime
+
+"""
+The `Date` scalar type represents a date. The Date appears in a JSON
+response as an ISO8601 formatted string, without a time component.
+"""
+scalar Date

@@ -1,26 +1,26 @@
-import type { TEditFunc, TGlobalLayout } from '~/spec'
+import type { TCommunityLayout, TEditFunc } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import useHelper from './useHelper'
 
 type TRet = {
   edit: TEditFunc
-  layout: TGlobalLayout
+  layout: TCommunityLayout
   isTouched: boolean
   saving: boolean
 }
 
-export default function useBanner(): TRet {
+export default function useCommunityLayout(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
 
-  const { globalLayout, saving } = dsb$
+  const { communityLayout, saving } = dsb$
 
-  const isTouched = isChanged('globalLayout')
+  const isTouched = isChanged('communityLayout')
 
   return {
     edit,
-    layout: globalLayout,
+    layout: communityLayout,
     isTouched,
     saving,
   }

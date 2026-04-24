@@ -12,7 +12,7 @@ import useDashboard from '~/stores/dashboard/hooks'
 import CommunityBrand from '~/unit/CommunityBrand'
 import Tooltip from '~/widgets/Tooltip'
 
-import useSalon, { cn } from '../salon/header_layout/community_brief'
+import useSalon, { cn } from '../salon/classic_layout/community_brief'
 
 export default function CommunityBrief() {
   const s = useSalon()

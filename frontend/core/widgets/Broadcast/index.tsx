@@ -29,7 +29,7 @@ const Broadcast: FC<TProps> = ({ testid = 'banner-notify' }) => {
   if (!enabled) return null
 
   return (
-    <div id={ANCHOR.GLOBAL_HEADER_ID} className={cn(s.wrapper, s.rainbow(bg, 'bg'))}>
+    <div id={ANCHOR.GLOBAL_CLASSIC_ID} className={cn(s.wrapper, s.rainbow(bg, 'bg'))}>
       <div className={cn(s.inner, layout === BROADCAST_LAYOUT.CENTER && 'justify-center')}>
         <div className='row'>
           <NotifySVG className={s.icon} />

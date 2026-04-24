@@ -1,5 +1,5 @@
 import { includes } from 'ramda'
-import { BANNER_LAYOUT } from '~/const/layout'
+import { COMMUNITY_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
@@ -9,7 +9,7 @@ type TProps = TSpace
 
 export default function useSalon({ ...spacing }: TProps) {
   const { cn, margin, fg, bg, br, fill } = useTwBelt()
-  const { globalLayout } = useLayout()
+  const { communityLayout } = useLayout()
   const { isLightTheme } = useTheme()
 
   const normalWrapper = cn('row-center', margin(spacing))
@@ -20,14 +20,16 @@ export default function useSalon({ ...spacing }: TProps) {
     margin(spacing),
   )
 
-  const isTabberLayout = globalLayout === BANNER_LAYOUT.TABBER
-  const wrapper = includes(globalLayout, [BANNER_LAYOUT.SIDEBAR]) ? withBgWrapper : normalWrapper
+  const isHeroLayout = communityLayout === COMMUNITY_LAYOUT.HERO
+  const wrapper = includes(communityLayout, [COMMUNITY_LAYOUT.SIDEBAR])
+    ? withBgWrapper
+    : normalWrapper
 
   return {
     wrapper,
     hoverBox: cn(
       'align-both size-6 rounded border border-transparent pointer',
-      isTabberLayout && bg('hoverBg'),
+      isHeroLayout && bg('hoverBg'),
       `hover:${bg('hoverBg')}`,
       `hover:${br('divider')}`,
     ),

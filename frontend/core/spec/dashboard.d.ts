@@ -1,10 +1,10 @@
 import type {
   AVATAR_LAYOUT,
-  BANNER_LAYOUT,
   BRAND_LAYOUT,
   BROADCAST_ARTICLE_LAYOUT,
   BROADCAST_LAYOUT,
   CHANGELOG_LAYOUT,
+  COMMUNITY_LAYOUT,
   DOC_COVER_LAYOUT,
   DOC_FAQ_LAYOUT,
   FOOTER_LAYOUT,
@@ -30,7 +30,7 @@ export type TTagLayout = TConstValues<typeof TAG_LAYOUT>
 export type TInlineTagLayout = TConstValues<typeof INLINE_TAG_LAYOUT>
 export type TAvatarLayout = TConstValues<typeof AVATAR_LAYOUT>
 export type TBrandLayout = TConstValues<typeof BRAND_LAYOUT>
-export type TGlobalLayout = TConstValues<typeof BANNER_LAYOUT>
+export type TCommunityLayout = TConstValues<typeof COMMUNITY_LAYOUT>
 
 export type TPostLayout = TConstValues<typeof POST_LAYOUT>
 export type TKanbanLayout = TConstValues<typeof KANBAN_LAYOUT>
@@ -83,7 +83,7 @@ export type TDsb = {
     tagLayout: TTagLayout
     inlineTagLayout: TInlineTagLayout
     avatarLayout: TAvatarLayout
-    globalLayout: TGlobalLayout
+    communityLayout: TCommunityLayout
     glowType: string
     glowFixed: boolean
     glowOpacity: string

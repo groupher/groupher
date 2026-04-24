@@ -1,4 +1,4 @@
-import { BANNER_LAYOUT, CHANGELOG_LAYOUT } from '~/const/layout'
+import { COMMUNITY_LAYOUT, CHANGELOG_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
@@ -6,9 +6,9 @@ import useTwBelt from '~/hooks/useTwBelt'
 export default function useSalon() {
   const { isLightTheme } = useTheme()
   const { cn, fg, sexyBorder } = useTwBelt()
-  const { globalLayout, changelogLayout } = useLayout()
+  const { communityLayout, changelogLayout } = useLayout()
 
-  const isSidebarLayout = globalLayout === BANNER_LAYOUT.SIDEBAR
+  const isSidebarLayout = communityLayout === COMMUNITY_LAYOUT.SIDEBAR
   const alignLeft = changelogLayout === CHANGELOG_LAYOUT.SIMPLE
 
   return {

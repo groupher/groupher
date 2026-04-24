@@ -5,7 +5,7 @@
  */
 
 import BUTTON_PREFIX from '~/const/button_prefix'
-import { BANNER_LAYOUT } from '~/const/layout'
+import { COMMUNITY_LAYOUT } from '~/const/layout'
 import { CONDITION_MODE, PUBLISH_MODE } from '~/const/mode'
 import TYPE from '~/const/type'
 import useArticlesFilter from '~/hooks/useArticlesFilter'
@@ -28,7 +28,7 @@ export default function ArticlesFilter({ ...spacing }: TProps) {
 
   const { resState } = usePagedPosts()
   const isLoading = resState === TYPE.RES_STATE.LOADING
-  const { globalLayout } = useLayout()
+  const { communityLayout } = useLayout()
 
   const {
     cat: activeCat,
@@ -38,15 +38,15 @@ export default function ArticlesFilter({ ...spacing }: TProps) {
   } = useArticlesFilter()
 
   const renderSearchBox = () => {
-    if (globalLayout === BANNER_LAYOUT.SIDEBAR) {
+    if (communityLayout === COMMUNITY_LAYOUT.SIDEBAR) {
       return isLoading ? <LavaLampLoading /> : <SearchBox />
     }
 
-    if (globalLayout === BANNER_LAYOUT.HEADER) {
+    if (communityLayout === COMMUNITY_LAYOUT.CLASSIC) {
       return isLoading ? <LavaLampLoading top={4} right={12} /> : <SearchBox right={-4} />
     }
 
-    if (globalLayout === BANNER_LAYOUT.TABBER) {
+    if (communityLayout === COMMUNITY_LAYOUT.HERO) {
       return isLoading ? <LavaLampLoading right={6} /> : <SearchBox right={6} />
     }
 
@@ -87,7 +87,7 @@ export default function ArticlesFilter({ ...spacing }: TProps) {
       <div className='mr-2.5' />
       <div className='grow' />
       {renderSearchBox()}
-      {globalLayout === BANNER_LAYOUT.SIDEBAR && (
+      {communityLayout === COMMUNITY_LAYOUT.SIDEBAR && (
         <PublishButton
           text='参与讨论'
           mode={PUBLISH_MODE.SIDEBAR_LAYOUT_HEADER}

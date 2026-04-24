@@ -1,9 +1,9 @@
-import { BANNER_LAYOUT } from '~/const/layout'
-import type { TGlobalLayout } from '~/spec'
+import { COMMUNITY_LAYOUT } from '~/const/layout'
+import type { TCommunityLayout } from '~/spec'
 
-import useSalon, { cnMerge } from '../../salon/layout/banner_layout'
+import useSalon, { cnMerge } from '../../salon/layout/community_layout'
 
-function HeaderContent({ title }: { title: string }) {
+function ClassicContent({ title }: { title: string }) {
   const s = useSalon()
 
   return (
@@ -49,7 +49,7 @@ function HeaderContent({ title }: { title: string }) {
   )
 }
 
-function CoverContent({ title }: { title: string }) {
+function HeroContent({ title }: { title: string }) {
   const s = useSalon()
 
   return (
@@ -149,12 +149,12 @@ function SidebarContent({ title }: { title: string }) {
 }
 
 type TProps = {
-  layout: TGlobalLayout
+  layout: TCommunityLayout
   title: string
 }
 
-export default function BannerLayoutPreviewContent({ layout, title }: TProps) {
-  if (layout === BANNER_LAYOUT.TABBER) return <CoverContent title={title} />
-  if (layout === BANNER_LAYOUT.SIDEBAR) return <SidebarContent title={title} />
-  return <HeaderContent title={title} />
+export default function CommunityLayoutPreviewContent({ layout, title }: TProps) {
+  if (layout === COMMUNITY_LAYOUT.HERO) return <HeroContent title={title} />
+  if (layout === COMMUNITY_LAYOUT.SIDEBAR) return <SidebarContent title={title} />
+  return <ClassicContent title={title} />
 }

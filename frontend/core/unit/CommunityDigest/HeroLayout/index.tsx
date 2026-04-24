@@ -7,10 +7,10 @@ import useCommunity from '~/stores/community/hooks'
 import CustomHeaderLinks from '~/unit/HeaderLinks'
 import TabBar from '~/widgets/TabBar'
 import ViewportTracker from '~/widgets/ViewportTracker'
-import useSalon from '../salon/tabber_layout'
+import useSalon from '../salon/hero_layout'
 import CommunityBrief from './CommunityBrief'
 
-export default function TabberLayout() {
+export default function HeroLayout() {
   const s = useSalon()
 
   const router = useRouter()

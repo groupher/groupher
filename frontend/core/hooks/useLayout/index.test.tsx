@@ -2,9 +2,9 @@ import { renderHook } from '@testing-library/react'
 
 import {
   AVATAR_LAYOUT,
-  BANNER_LAYOUT,
   BRAND_LAYOUT,
   CHANGELOG_LAYOUT,
+  COMMUNITY_LAYOUT,
   KANBAN_CARD_LAYOUT,
   KANBAN_LAYOUT,
   POST_LAYOUT,
@@ -20,7 +20,7 @@ describe('useLayout', () => {
     const wrapper = makeStoreWrapper({
       dashboard: {
         avatarLayout: AVATAR_LAYOUT.SQUARE,
-        globalLayout: BANNER_LAYOUT.HEADER,
+        communityLayout: COMMUNITY_LAYOUT.CLASSIC,
         brandLayout: BRAND_LAYOUT.BOTH,
         tagLayout: TAG_LAYOUT.HASH,
         postLayout: POST_LAYOUT.QUORA,
