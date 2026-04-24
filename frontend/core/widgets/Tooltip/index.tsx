@@ -10,7 +10,7 @@ import { type FC, memo, type ReactNode, useEffect, useMemo, useRef, useState } f
 import type { Instance } from 'tippy.js'
 import { hideAll } from 'tippy.js'
 import THEME from '~/const/theme'
-import useDarkFloat from '~/hooks/useDarkFloat'
+import useOverlayDark from '~/hooks/useOverlayDark'
 import useOutsideClick from '~/hooks/useOutsideClick'
 import useTheme from '~/hooks/useTheme'
 import type { TThemeName, TTooltipPlacement } from '~/spec'
@@ -86,10 +86,10 @@ const Tooltip: FC<TProps> = ({
   forceZIndex = false,
 }) => {
   const s = useSalon()
-  const darkFloat = useDarkFloat()
+  const overlayDark = useOverlayDark()
 
   const { theme } = useTheme()
-  const tooltipTheme = darkFloat ? THEME.DARK : theme
+  const tooltipTheme = overlayDark ? THEME.DARK : theme
 
   const instanceRef = useRef<Instance | null>(null)
   const [active, setActive] = useState(false)
@@ -112,7 +112,7 @@ const Tooltip: FC<TProps> = ({
       instanceRef.current = null
       setActive(false)
     }
-  }, [theme, darkFloat, tooltipTheme])
+  }, [theme, overlayDark, tooltipTheme])
 
   // Unmount cleanup
   useEffect(() => {
@@ -197,7 +197,7 @@ const Tooltip: FC<TProps> = ({
 
         const tippyBox = ins.popper.querySelector('.tippy-box')
         if (tippyBox) {
-          tippyBox.setAttribute('data-dark-float', String(darkFloat))
+          tippyBox.setAttribute('data-overlay-dark', String(overlayDark))
           tippyBox.setAttribute('data-page-theme', theme)
         }
 
@@ -220,7 +220,7 @@ const Tooltip: FC<TProps> = ({
     trigger,
     interactive,
     theme,
-    darkFloat,
+    overlayDark,
     tooltipTheme,
     visible,
     onHide,

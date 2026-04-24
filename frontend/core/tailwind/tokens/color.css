@@ -307,7 +307,7 @@
      --color-hoverBg: #efefef78;
   }
 
-  .tippy-box[data-theme='dark'][data-dark-float='true'][data-page-theme='light'] {
+  .tippy-box[data-theme='dark'][data-overlay-dark='true'][data-page-theme='light'] {
     --color-rainbow-red: #ca5f4d;
     --color-rainbow-redSoft: #ffebec;
 

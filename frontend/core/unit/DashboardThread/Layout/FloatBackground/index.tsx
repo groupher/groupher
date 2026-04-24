@@ -1,7 +1,7 @@
 import useTrans from '~/hooks/useTrans'
 import CheckLabel from '~/widgets/CheckLabel'
 import { FIELD } from '../../constant'
-import useDarkFloat from '../../logic/useDarkFloat'
+import useOverlayDark from '../../logic/useOverlayDark'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import useSalon, { cnMerge } from '../../salon/layout/float_background'
@@ -38,7 +38,7 @@ function PopoverContent({ dark = false }: { dark?: boolean }) {
 
 export default function FloatBackground() {
   const s = useSalon()
-  const { darkFloat, edit, isTouched } = useDarkFloat()
+  const { overlayDark, edit, isTouched } = useOverlayDark()
   const { t } = useTrans()
 
   return (
@@ -52,10 +52,10 @@ export default function FloatBackground() {
         <button
           type='button'
           className={s.layout}
-          aria-pressed={darkFloat}
-          onClick={() => edit(true, FIELD.DARK_FLOAT)}
+          aria-pressed={overlayDark}
+          onClick={() => edit(true, FIELD.OVERLAY_DARK)}
         >
-          <div className={cnMerge(s.block, darkFloat && s.blockActive)}>
+          <div className={cnMerge(s.block, overlayDark && s.blockActive)}>
             <div
               className={cnMerge(s.popover, 'left-20 top-12')}
               style={{ borderColor: 'dimgray' }}
@@ -72,17 +72,17 @@ export default function FloatBackground() {
 
           <CheckLabel
             title={t('dsb.layout.float_background.option.dark')}
-            active={darkFloat}
+            active={overlayDark}
             top={4}
           />
         </button>
         <button
           type='button'
           className={s.layout}
-          aria-pressed={!darkFloat}
-          onClick={() => edit(false, FIELD.DARK_FLOAT)}
+          aria-pressed={!overlayDark}
+          onClick={() => edit(false, FIELD.OVERLAY_DARK)}
         >
-          <div className={cnMerge(s.block, !darkFloat && s.blockActive)}>
+          <div className={cnMerge(s.block, !overlayDark && s.blockActive)}>
             <div
               className={cnMerge(s.popover, 'left-5 top-12 w-24 bg-white')}
               style={{ borderColor: 'dimgray' }}
@@ -107,13 +107,13 @@ export default function FloatBackground() {
 
           <CheckLabel
             title={t('dsb.layout.float_background.option.follow')}
-            active={!darkFloat}
+            active={!overlayDark}
             top={4}
           />
         </button>
       </div>
 
-      <SavingBar isTouched={isTouched} field={FIELD.DARK_FLOAT} top={6} />
+      <SavingBar isTouched={isTouched} field={FIELD.OVERLAY_DARK} top={6} />
     </section>
   )
 }

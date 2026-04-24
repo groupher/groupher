@@ -43,7 +43,7 @@ export const LAYOUT_FIELD = {
   GLOW_TYPE: 'glowType',
   GLOW_FIXED: 'glowFixed',
   GLOW_OPACITY: 'glowOpacity',
-  DARK_FLOAT: 'darkFloat',
+  OVERLAY_DARK: 'overlayDark',
   GAUSS_BLUR: 'gaussBlur',
   GAUSS_BLUR_DARK: 'gaussBlurDark',
 } as const

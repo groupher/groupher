@@ -220,8 +220,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_layout_query """
-    mutation($community: String!, $primaryColor: RainbowColor, $primaryCustomColorDark: String, $subPrimaryColor: RainbowColor, $subPrimaryCustomColor: String, $subPrimaryCustomColorDark: String, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $gaussBlur: Int, $gaussBlurDark: Int, $brandLayout: DsbBrandLayout, $globalLayout: DsbGlobalLayout, $darkFloat: Boolean) {
-      updateDashboardLayout(community: $community, primaryColor: $primaryColor, primaryCustomColorDark: $primaryCustomColorDark, subPrimaryColor: $subPrimaryColor, subPrimaryCustomColor: $subPrimaryCustomColor, subPrimaryCustomColorDark: $subPrimaryCustomColorDark, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, globalLayout: $globalLayout, darkFloat: $darkFloat) {
+    mutation($community: String!, $primaryColor: RainbowColor, $primaryCustomColorDark: String, $subPrimaryColor: RainbowColor, $subPrimaryCustomColor: String, $subPrimaryCustomColorDark: String, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $gaussBlur: Int, $gaussBlurDark: Int, $brandLayout: DsbBrandLayout, $globalLayout: DsbGlobalLayout, $overlayDark: Boolean) {
+      updateDashboardLayout(community: $community, primaryColor: $primaryColor, primaryCustomColorDark: $primaryCustomColorDark, subPrimaryColor: $subPrimaryColor, subPrimaryCustomColor: $subPrimaryCustomColor, subPrimaryCustomColorDark: $subPrimaryCustomColorDark, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, globalLayout: $globalLayout, overlayDark: $overlayDark) {
         id
         title
         dashboard {
@@ -238,7 +238,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
             gaussBlurDark
             brandLayout
             globalLayout
-            darkFloat
+            overlayDark
             primaryCustomColorDark
             subPrimaryColor
             subPrimaryCustomColor
@@ -275,7 +275,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         gaussBlurDark: 60,
         brandLayout: "LOGO",
         globalLayout: "SIDEBAR",
-        darkFloat: false
+        overlayDark: false
       }
 
       updated =
@@ -304,7 +304,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.layout.gauss_blur_dark == 60
       assert found.dashboard.layout.brand_layout == :logo
       assert found.dashboard.layout.global_layout == :sidebar
-      assert found.dashboard.layout.dark_float == false
+      assert found.dashboard.layout.overlay_dark == false
       assert found.dashboard.layout.primary_custom_color_dark == "#C41A80"
       assert found.dashboard.layout.sub_primary_custom_color == "#147A8A"
       assert found.dashboard.layout.sub_primary_custom_color_dark == "#89E5FF"

@@ -193,7 +193,7 @@ const updateDashboardLayout = gql`
     $glowType: String
     $glowFixed: Boolean
     $glowOpacity: String
-    $darkFloat: Boolean
+    $overlayDark: Boolean
     $gaussBlur: Int
     $gaussBlurDark: Int
     $brandLayout: DsbBrandLayout
@@ -237,7 +237,7 @@ const updateDashboardLayout = gql`
       glowType: $glowType
       glowFixed: $glowFixed
       glowOpacity: $glowOpacity
-      darkFloat: $darkFloat
+      overlayDark: $overlayDark
       gaussBlur: $gaussBlur
       gaussBlurDark: $gaussBlurDark
       brandLayout: $brandLayout

@@ -4,22 +4,22 @@ import useDashboard from '~/stores/dashboard/hooks'
 import useHelper from './useHelper'
 
 type TRet = {
-  darkFloat: boolean
+  overlayDark: boolean
   saving: boolean
   isTouched: boolean
   edit: TEditFunc
 }
 
-export default function useDarkFloat(): TRet {
+export default function useOverlayDark(): TRet {
   const dsb$ = useDashboard()
   const { edit, isChanged } = useHelper()
 
-  const { darkFloat, saving } = dsb$
+  const { overlayDark, saving } = dsb$
 
   return {
-    darkFloat,
+    overlayDark,
     saving,
     edit,
-    isTouched: isChanged('darkFloat'),
+    isTouched: isChanged('overlayDark'),
   }
 }
