@@ -5,7 +5,7 @@ export default function useSalon() {
 
   const link = cn(
     'row-center text-sm rounded px-1.5 h-8 pointer no-underline',
-    `hover:${fg('title')}`,
+    `hover:${primary('fg')}`,
     `hover:${bg('hoverBg')}`,
     fg('digest'),
   )
@@ -13,12 +13,14 @@ export default function useSalon() {
   return {
     link,
     menuLink: cn(
-      link,
-      'border border-transparent',
+      'row-center text-sm rounded px-1.5 h-8 pointer no-underline border border-transparent',
+      `hover:${primary('fg')}`,
       `hover:${bg('menuHoverBg')}`,
       `hover:${br('divider')}`,
+      fg('digest'),
     ),
     linkActive: cn(primary('fg'), bg('hoverBg')),
+    menuLinkActive: cn(primary('fg'), bg('menuHoverBg'), br('divider')),
     arrowIcon: cn('absolute size-3.5 right-px -rotate-90', fill('digest')),
   }
 }

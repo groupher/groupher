@@ -74,7 +74,7 @@ export default function CommunityBrief() {
         }
         placement='bottom'
         hideOnClick={false}
-        offset={[-7, -39]}
+        offset={[0, -36]}
         trigger='click'
         noPadding
       >
@@ -103,7 +103,8 @@ export default function CommunityBrief() {
                   {item.slug === THREAD_PATH.KANBAN && <KanbanSVG className={s.icon} />}
                   {item.slug === THREAD_PATH.CHANGELOG && <ChangelogSVG className={s.icon} />}
                   {item.slug === THREAD_PATH.DOC && <GuideSVG className={s.icon} />}
-                  <div>{item.title}</div>
+
+                  {item.slug !== THREAD_PATH.ABOUT && <div>{item.title}</div>}
                 </Link>
               )
             })}
@@ -116,7 +117,7 @@ export default function CommunityBrief() {
         }
         placement='bottom'
         hideOnClick={false}
-        offset={[-7, -39]}
+        offset={[0, -36]}
         trigger='click'
         noPadding
       >

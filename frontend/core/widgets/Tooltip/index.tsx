@@ -105,13 +105,14 @@ const Tooltip: FC<TProps> = ({
   })
 
   // Theme switch / route transition safety: destroy transient UI to avoid flicker/residual popper.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (instanceRef.current) {
       instanceRef.current.destroy()
       instanceRef.current = null
       setActive(false)
     }
-  }, [])
+  }, [theme, darkFloat, tooltipTheme])
 
   // Unmount cleanup
   useEffect(() => {
@@ -194,6 +195,12 @@ const Tooltip: FC<TProps> = ({
         // avoid fighting controlled tooltips
         if (visible === null) hideAll({ exclude: ins })
 
+        const tippyBox = ins.popper.querySelector('.tippy-box')
+        if (tippyBox) {
+          tippyBox.setAttribute('data-dark-float', String(darkFloat))
+          tippyBox.setAttribute('data-page-theme', theme)
+        }
+
         instanceRef.current = ins
         setActive(true)
         onShow?.()
@@ -212,6 +219,8 @@ const Tooltip: FC<TProps> = ({
     duration,
     trigger,
     interactive,
+    theme,
+    darkFloat,
     tooltipTheme,
     visible,
     onHide,

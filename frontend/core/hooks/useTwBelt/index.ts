@@ -214,9 +214,8 @@ export default function useTwBelt(): TRet {
       case 'bar':
         return cn(
           STATIC_CLS.menuBarBase,
-          `hover:${fg('title')}`,
+          `hover:${primary('fg')}`,
           `hover:${bg('menuHoverBg')}`,
-          `hover:${br('divider')}`,
           fg('digest'),
         )
 
@@ -224,7 +223,7 @@ export default function useTwBelt(): TRet {
         return cn(STATIC_CLS.menuTitleBase, `group-hover/menubar:${fg('title')}`)
 
       case 'icon':
-        return cn(STATIC_CLS.menuIconBase, fill('digest'), `group-hover/menubar:${fill('title')}`)
+        return cn(STATIC_CLS.menuIconBase, fill('digest'), `group-hover/menubar:${primary('fill')}`)
 
       case 'activeBox':
         return cn(

@@ -27,11 +27,15 @@ export default function useSalon({ ...spacing }: TProps) {
     wrapper,
     title: cn(
       'row-center text-sm no-underline h-8 px-3.5 rounded pointer transition-colors',
-      `hover:${primary('fg')}`,
       `hover:${bg('hoverBg')}`,
       `hover:${fg('title')}`,
       fg('digest'),
     ),
-    titleActive: cn('bold-sm', `hover:${primary('fg')}`, primary('fg'), vividDark()),
+    titleActive: cn(
+      'row-center text-sm no-underline h-7 px-3.5 rounded-md pointer transition-colors bold-sm',
+      `hover:${bg('hoverBg')}`,
+      primary('fg'),
+      vividDark(),
+    ),
   }
 }

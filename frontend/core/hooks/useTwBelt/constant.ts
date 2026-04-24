@@ -15,10 +15,10 @@ export const STATIC_CLS = {
     'row-center group px-1.5 py-0.5 rounded trans-all-100 underline-offset-8 hover:underline decoration-1',
 
   menuBarBase:
-    'group/menubar row-center text-sm w-full border border-transparent rounded-md pointer px-1.5 py-1 cursor-pointer bold-none trans-all-100 hover:bold-none',
+    'group/menubar row-center text-sm w-full rounded-md pointer px-1.5 py-1 cursor-pointer bold-none trans-all-100 hover:bold-sm hover:dark:saturate-110 hover:dark:brightness-110',
 
   menuTitleBase: 'text-sm grow',
-  menuIconBase: 'size-3 mr-2.5',
+  menuIconBase: 'size-3 mr-2.5 hover:dark:saturate-110 hover:dark:brightness-110',
   menuLinkBase: 'size-3.5 opacity-0 group-hover/menubar:opacity-60',
 
   hoverBgBase: 'group align-both rounded trans-all-100 pointer',

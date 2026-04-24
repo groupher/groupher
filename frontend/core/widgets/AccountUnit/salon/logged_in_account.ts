@@ -7,7 +7,7 @@ export default function useSalon() {
 
   return {
     panel: 'w-40 py-2',
-    avatar: cn('size-5', avatar('sm')),
+    avatar: cn('size-4', avatar('sm')),
     baseInfo: 'ml-3 mb-4',
     userName: cn('text-sm bold-sm', fg('title')),
     loginBy: cn('text-xs opacity-80', fg('digest')),
