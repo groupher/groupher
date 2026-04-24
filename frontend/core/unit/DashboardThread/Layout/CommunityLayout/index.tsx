@@ -12,6 +12,21 @@ import SectionLabel from '../../SectionLabel'
 import useSalon, { cnMerge } from '../../salon/layout/community_layout'
 import CommunityLayoutPreviewContent from './CommunityLayoutPreviewContent'
 
+const COMMUNITY_LAYOUT_OPTIONS = [
+  {
+    value: COMMUNITY_LAYOUT.CLASSIC,
+    titleKey: 'dsb.layout.community.option.classic',
+  },
+  {
+    value: COMMUNITY_LAYOUT.HERO,
+    titleKey: 'dsb.layout.community.option.hero',
+  },
+  {
+    value: COMMUNITY_LAYOUT.SIDEBAR,
+    titleKey: 'dsb.layout.community.option.sidebar',
+  },
+] as const
+
 function LayoutPreview({
   isActive,
   title,
@@ -48,59 +63,25 @@ export default function CommunityLayout() {
         title={t('dsb.layout.community.title')}
         desc={t('dsb.layout.community.desc')}
         detailText={t('dsb.layout.view_example')}
+        onDetailClick={() => setShowDrawer(true)}
       />
       <div className={s.select}>
-        <button
-          type='button'
-          className={s.layout}
-          aria-pressed={layout === COMMUNITY_LAYOUT.CLASSIC}
-          onClick={() => edit(COMMUNITY_LAYOUT.CLASSIC, FIELD.COMMUNITY_LAYOUT)}
-        >
-          <LayoutPreview
-            isActive={layout === COMMUNITY_LAYOUT.CLASSIC}
-            title={title}
-            layout={COMMUNITY_LAYOUT.CLASSIC}
-          />
-          <CheckLabel
-            title={t('dsb.layout.community.option.classic')}
-            active={layout === COMMUNITY_LAYOUT.CLASSIC}
-            top={4}
-          />
-        </button>
-        <button
-          type='button'
-          className={s.layout}
-          aria-pressed={layout === COMMUNITY_LAYOUT.HERO}
-          onClick={() => edit(COMMUNITY_LAYOUT.HERO, FIELD.COMMUNITY_LAYOUT)}
-        >
-          <LayoutPreview
-            isActive={layout === COMMUNITY_LAYOUT.HERO}
-            title={title}
-            layout={COMMUNITY_LAYOUT.HERO}
-          />
-          <CheckLabel
-            title={t('dsb.layout.community.option.hero')}
-            active={layout === COMMUNITY_LAYOUT.HERO}
-            top={4}
-          />
-        </button>
-        <button
-          type='button'
-          className={s.layout}
-          aria-pressed={layout === COMMUNITY_LAYOUT.SIDEBAR}
-          onClick={() => edit(COMMUNITY_LAYOUT.SIDEBAR, FIELD.COMMUNITY_LAYOUT)}
-        >
-          <LayoutPreview
-            isActive={layout === COMMUNITY_LAYOUT.SIDEBAR}
-            title={title}
-            layout={COMMUNITY_LAYOUT.SIDEBAR}
-          />
-          <CheckLabel
-            title={t('dsb.layout.community.option.sidebar')}
-            active={layout === COMMUNITY_LAYOUT.SIDEBAR}
-            top={4}
-          />
-        </button>
+        {COMMUNITY_LAYOUT_OPTIONS.map(({ value, titleKey }) => {
+          const isActive = layout === value
+
+          return (
+            <button
+              key={value}
+              type='button'
+              className={s.layout}
+              aria-pressed={isActive}
+              onClick={() => edit(value, FIELD.COMMUNITY_LAYOUT)}
+            >
+              <LayoutPreview isActive={isActive} title={title} layout={value} />
+              <CheckLabel title={t(titleKey)} active={isActive} top={4} />
+            </button>
+          )
+        })}
       </div>
       <SavingBar isTouched={isTouched} field={FIELD.COMMUNITY_LAYOUT} top={10} />
     </div>

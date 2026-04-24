@@ -234,7 +234,7 @@ export default {
   'dsb.layout.doc.faq.label': 'FAQ',
   'dsb.layout.community.drawer_title': 'Community layout preview',
   'dsb.layout.community.title': 'Community layout',
-  'dsb.layout.community.desc': 'Community layout for all page except article page.',
+  'dsb.layout.community.desc': 'Community layout for all pages except article pages.',
   'dsb.layout.community.option.classic': 'Classic',
   'dsb.layout.community.option.hero': 'Hero',
   'dsb.layout.community.option.sidebar': 'Sidebar',

@@ -24,7 +24,7 @@ export default function CommunityBrief() {
   const COVER_IMAGE = '/banner-cover.webp'
 
   return (
-    <div className={s.wrapper} id={ANCHOR.GLOBAL_CLASSIC_ID}>
+    <div className={s.wrapper} id={ANCHOR.GLOBAL_HERO_ID}>
       <div className={s.accountWrapper}>
         <AccountUnit />
       </div>

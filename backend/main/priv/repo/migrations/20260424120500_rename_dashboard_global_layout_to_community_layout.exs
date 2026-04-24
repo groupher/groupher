@@ -13,7 +13,12 @@ defmodule GroupherServer.Repo.Migrations.RenameDashboardGlobalLayoutToCommunityL
         jsonb_set(
           layout - 'global_layout',
           '{community_layout}',
-          layout->'global_layout'
+          CASE layout->>'global_layout'
+            WHEN 'header' THEN '"classic"'::jsonb
+            WHEN 'tabber' THEN '"hero"'::jsonb
+            ELSE layout->'global_layout'
+          END,
+          false
         )
       ELSE layout
     END
@@ -31,7 +36,12 @@ defmodule GroupherServer.Repo.Migrations.RenameDashboardGlobalLayoutToCommunityL
         jsonb_set(
           layout - 'community_layout',
           '{global_layout}',
-          layout->'community_layout'
+          CASE layout->>'community_layout'
+            WHEN 'classic' THEN '"header"'::jsonb
+            WHEN 'hero' THEN '"tabber"'::jsonb
+            ELSE '"header"'::jsonb
+          END,
+          false
         )
       ELSE layout
     END
