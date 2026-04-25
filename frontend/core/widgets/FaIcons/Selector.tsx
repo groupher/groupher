@@ -23,7 +23,7 @@ type TProps = {
   size?: number
 } & TSpace
 
-const FaIcons: FC<TProps> = ({ testid = 'fa-icons', size = 16, ...spacing }) => {
+const FaIcons: FC<TProps> = ({ _testid = 'fa-icons', size = 16, ...spacing }) => {
   const s = useSalon({ ...spacing })
 
   const [panelOpen, setPanelOpen] = useState(false)

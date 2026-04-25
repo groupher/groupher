@@ -52,6 +52,7 @@ const Folder: FC<TProps> = ({
   return (
     <div className={s.wrapper}>
       <button
+        type='button'
         className={s.header}
         onClick={() => {
           toggleFolder(!isFolderOpen)
@@ -81,6 +82,7 @@ const Folder: FC<TProps> = ({
         ))}
         {needSubToggle && (
           <button
+            type='button'
             className={s.subToggle}
             ref={subToggleRef}
             onClick={() => {

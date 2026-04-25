@@ -105,8 +105,8 @@ export const useCommentsHeadState = () => {
 }
 
 export default function useLogic(): TRet {
-  const commentsStore = useCommentsStore() as any
-  const comments = useSnapshot(commentsStore) as any
+  const commentsStore = useCommentsStore()
+  const comments = useSnapshot(commentsStore)
   const actions = useActions()
   const derived = useDerived()
 

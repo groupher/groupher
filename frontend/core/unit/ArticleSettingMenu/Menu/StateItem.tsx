@@ -32,7 +32,7 @@ const StateItem: FC<TProps> = ({ onClick }) => {
     const TheIcon = ICON[article.state] || ICON[ARTICLE_STATE.REJECT]
 
     return (
-      <button className={s.menuItem} onClick={onClick}>
+      <button type='button' className={s.menuItem} onClick={onClick}>
         <TheIcon className={cn(s.icon, s.rainbowFill)} />
         {article.state === ARTICLE_STATE.DONE
           ? t(aliasGTDDoneState(article.cat, article.state))
@@ -44,7 +44,7 @@ const StateItem: FC<TProps> = ({ onClick }) => {
   }
 
   return (
-    <button className={s.menuItem} onClick={onClick}>
+    <button type='button' className={s.menuItem} onClick={onClick}>
       <WipIcon className={cn(s.icon, 'ml-px')} />
       {t('article.state')}
       <div className='grow' />

@@ -3,15 +3,23 @@ name: Frontend linter
 on:
   pull_request:
     paths:
-      - "frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}"
+      - "frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}"
       - "frontend/**/biome.json"
+      - "frontend/**/.oxlintrc.json"
+      - "frontend/core/config/oxfmt.json"
+      - "frontend/core/config/oxlint.json"
+      - ".oxfmtrc.json"
       - "package.json"
       - "yarn.lock"
       - "biome.json"
   push:
     paths:
-      - "frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}"
+      - "frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}"
       - "frontend/**/biome.json"
+      - "frontend/**/.oxlintrc.json"
+      - "frontend/core/config/oxfmt.json"
+      - "frontend/core/config/oxlint.json"
+      - ".oxfmtrc.json"
       - "package.json"
       - "yarn.lock"
       - "biome.json"
@@ -35,16 +43,20 @@ jobs:
         with:
           filters: |
             main:
-              - 'frontend/main/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/main/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             dashboard:
-              - 'frontend/dashboard/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/dashboard/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             landing:
-              - 'frontend/landing/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/landing/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             gateway:
-              - 'frontend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             shared:
-              - 'frontend/core/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'frontend/core/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
               - 'frontend/**/biome.json'
+              - 'frontend/**/.oxlintrc.json'
+              - 'frontend/core/config/oxfmt.json'
+              - 'frontend/core/config/oxlint.json'
+              - '.oxfmtrc.json'
               - 'package.json'
               - 'yarn.lock'
               - 'biome.json'
@@ -61,23 +73,23 @@ jobs:
           targets=()
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$MAIN_CHANGED" = "true" ]; then
-            targets+=('{"target":"main","path":"frontend/main"}')
+            targets+=('{"target":"main","workspace":"@groupher/frontend-main"}')
           fi
 
           if [ "$SHARED_CHANGED" = "true" ]; then
-            targets+=('{"target":"core","path":"frontend/core"}')
+            targets+=('{"target":"core","workspace":"@groupher/frontend-core"}')
           fi
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$DASHBOARD_CHANGED" = "true" ]; then
-            targets+=('{"target":"dashboard","path":"frontend/dashboard"}')
+            targets+=('{"target":"dashboard","workspace":"@groupher/frontend-dashboard"}')
           fi
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$LANDING_CHANGED" = "true" ]; then
-            targets+=('{"target":"landing","path":"frontend/landing"}')
+            targets+=('{"target":"landing","workspace":"@groupher/frontend-landing"}')
           fi
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$GATEWAY_CHANGED" = "true" ]; then
-            targets+=('{"target":"gateway","path":"frontend/gateway"}')
+            targets+=('{"target":"gateway","workspace":"@groupher/frontend-gateway"}')
           fi
 
           if [ ${#targets[@]} -eq 0 ]; then
@@ -89,8 +101,8 @@ jobs:
             echo 'has_targets=true' >> "$GITHUB_OUTPUT"
           fi
 
-  biome:
-    name: biome (${{ matrix.target }})
+  oxlint:
+    name: oxlint (${{ matrix.target }})
     needs: changes
     runs-on: ubuntu-latest
     if: needs.changes.outputs.has_targets == 'true'
@@ -113,5 +125,32 @@ jobs:
       - name: Install deps
         run: yarn install --immutable
 
-      - name: Run Biome CI
-        run: yarn biome ci ${{ matrix.path }}
+      - name: Run Oxlint
+        run: yarn workspace ${{ matrix.workspace }} lint
+
+  oxfmt:
+    name: oxfmt (${{ matrix.target }})
+    needs: changes
+    runs-on: ubuntu-latest
+    if: needs.changes.outputs.has_targets == 'true'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.changes.outputs.targets) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install deps
+        run: yarn install --immutable
+
+      - name: Run Oxfmt
+        run: yarn workspace ${{ matrix.workspace }} format:check

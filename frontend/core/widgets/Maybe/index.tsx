@@ -24,7 +24,7 @@ const Maybe: FC<TProps> = ({ children, test, loading = false }) => {
   if (test === null) return <div />
   if (test === false) return <MaybeLoading loading={loading} />
 
-  return <>{children}</>
+  return children
 }
 
 export default memo(Maybe)

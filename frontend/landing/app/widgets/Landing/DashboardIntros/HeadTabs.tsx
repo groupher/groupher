@@ -28,6 +28,7 @@ export default function HeadTabs({ tab, onChange }: TProps) {
 
         return (
           <button
+            type='button'
             key={tabKey}
             className={cn(s.button, isActive && s[activeColor])}
             onClick={() => onChange(tabKey as TIntroTab)}

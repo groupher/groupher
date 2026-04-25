@@ -42,11 +42,11 @@ function ClassicPreview() {
 
   return (
     <div className={s.boardGrid}>
-      {CLASSIC_COLUMNS.map((cards, index) => (
-        <div key={index} className={s.boardColumn}>
+      {CLASSIC_COLUMNS.map((cards) => (
+        <div key={cards.join('|')} className={s.boardColumn}>
           <div className={s.boardContent}>
-            {cards.map((opacity, cardIndex) => (
-              <div key={`${index}-${cardIndex}`} className={cnMerge(s.card, opacity)} />
+            {cards.map((opacity) => (
+              <div key={opacity} className={cnMerge(s.card, opacity)} />
             ))}
           </div>
         </div>
@@ -60,14 +60,14 @@ function WaterfallPreview() {
 
   return (
     <div className={s.waterfall}>
-      {WATERFALL_GROUPS.map((group, index) => (
-        <div key={index} className={s.waterfallGroup}>
+      {WATERFALL_GROUPS.map((group) => (
+        <div key={`${group.headerWidth}-${group.titleWidth}`} className={s.waterfallGroup}>
           <div className={cnMerge(s.waterfallMain, group.headerWidth)}>
             <div className={cnMerge(s.waterfallTitle, group.titleWidth)} />
           </div>
 
-          {group.rows.map((row, rowIndex) => (
-            <div key={`${index}-${rowIndex}`} className={s.waterfallRow}>
+          {group.rows.map((row) => (
+            <div key={`${row.left}-${row.right}`} className={s.waterfallRow}>
               <div className={cnMerge(s.waterfallMeta, row.left)} />
               <div className={cnMerge(s.waterfallMeta, row.right)} />
             </div>

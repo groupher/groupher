@@ -17,6 +17,7 @@ export default function ArticleNavi() {
     <div className={s.wrapper}>
       {articleNavi?.previous && (
         <button
+          type='button'
           className={cn(s.switchBlock, s.upBlock)}
           onClick={() =>
             router.push(
@@ -35,6 +36,7 @@ export default function ArticleNavi() {
       )}
       {articleNavi?.next && (
         <button
+          type='button'
           className={cn(s.switchBlock, s.downBlock)}
           onClick={() =>
             router.push(

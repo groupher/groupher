@@ -39,7 +39,9 @@ const DefaultLayout: FC<TProps> = ({ data, isReply = false, showInnerRef = false
 
       <div className={s.comment}>
         <div className={s.sidebar}>
-          {isReply && <button className={s.indentLine} onClick={() => foldComment(data.id)} />}
+          {isReply && (
+            <button type='button' className={s.indentLine} onClick={() => foldComment(data.id)} />
+          )}
         </div>
 
         <div className={s.commentBody}>

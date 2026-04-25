@@ -68,8 +68,8 @@ const Facepile: FC<TProps> = ({
     return <span />
   }
 
-  users = filter(validUser, getUniqueArray(users, 'login'))
-  const sortedUsers = reverse ? reverseFn(users) : users
+  const uniqueUsers = filter(validUser, getUniqueArray(users, 'login'))
+  const sortedUsers = reverse ? reverseFn(uniqueUsers) : uniqueUsers
 
   // delete restProps?.forwardRef
 

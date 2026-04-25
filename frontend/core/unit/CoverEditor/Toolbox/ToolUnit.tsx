@@ -28,7 +28,7 @@ const ToolUnit: FC<TProps> = ({
   return (
     <div className={cn(s.wrapper, className)}>
       <Tooltip
-        content={<>{panelOpen && <>{panel}</>}</>}
+        content={panelOpen ? panel : null}
         placement={placement}
         trigger='mouseenter focus'
         onShow={() => setPanelOpen(true)}

@@ -12,7 +12,7 @@ export default function MenuBar({ children, active = false, onClick = console.lo
   const s = useSalon({ active })
 
   return (
-    <button className={s.wrapper} onClick={() => onClick()}>
+    <button type='button' className={s.wrapper} onClick={() => onClick()}>
       {children}
     </button>
   )

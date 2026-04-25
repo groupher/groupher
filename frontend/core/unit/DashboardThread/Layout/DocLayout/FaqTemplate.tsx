@@ -45,8 +45,8 @@ const FaqTemplate: FC<TProps> = ({ layout }) => {
         </div>
 
         <div className={s.collapseList}>
-          {COLLAPSE_ITEMS.map((item, index) => (
-            <div key={index} className={s.collapseItem}>
+          {COLLAPSE_ITEMS.map((item) => (
+            <div key={`${item.title}-${item.body1}-${item.body2}`} className={s.collapseItem}>
               <div className={cnMerge(s.bar, item.title)} />
               <div className={cnMerge(s.bar, 'h-1', item.body1, 'opacity-20')} />
               <div className={cnMerge(s.bar, 'h-1', item.body2, 'opacity-20')} />
@@ -68,8 +68,8 @@ const FaqTemplate: FC<TProps> = ({ layout }) => {
           </div>
 
           <div className={s.leftRightList}>
-            {LEFT_RIGHT_ITEMS.map((item, index) => (
-              <div key={index} className={s.leftRightItem}>
+            {LEFT_RIGHT_ITEMS.map((item) => (
+              <div key={`${item.title}-${item.body1}-${item.body2}`} className={s.leftRightItem}>
                 <div className={cnMerge(s.bar, item.title)} />
                 <div className={cnMerge(s.bar, 'h-1', item.body1, 'opacity-20')} />
                 <div className={cnMerge(s.bar, 'h-1', item.body2, 'opacity-20')} />
@@ -88,10 +88,10 @@ const FaqTemplate: FC<TProps> = ({ layout }) => {
       </div>
 
       <div className={s.flatList}>
-        {FLAT_ROWS.map((row, rowIndex) => (
-          <div key={rowIndex} className={s.flatRow}>
-            {row.map((item, index) => (
-              <div key={index} className={s.flatBox}>
+        {FLAT_ROWS.map((row) => (
+          <div key={row.map((item) => item.title).join('|')} className={s.flatRow}>
+            {row.map((item) => (
+              <div key={`${item.title}-${item.body1}-${item.body2}`} className={s.flatBox}>
                 <div className={cnMerge(s.bar, item.title)} />
                 <div className={cnMerge(s.bar, 'h-1', item.body1, 'opacity-20')} />
                 <div className={cnMerge(s.bar, 'h-1', item.body2, 'opacity-20')} />

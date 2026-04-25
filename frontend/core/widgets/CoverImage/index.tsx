@@ -14,7 +14,7 @@ type TProps = {
   testid?: string
 }
 
-const CoverImage: FC<TProps> = ({ testid = 'cover-image' }) => {
+const CoverImage: FC<TProps> = ({ _testid = 'cover-image' }) => {
   const s = useSalon()
 
   return (

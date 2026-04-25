@@ -14,7 +14,11 @@ const FileItem: FC<TProps> = ({ tag, active, onSelect }) => {
 
   return (
     <div className={cn(s.wrapper)}>
-      <button className={cn(s.file, active && 'py-0.5')} onClick={() => onSelect(tag)}>
+      <button
+        type='button'
+        className={cn(s.file, active && 'py-0.5')}
+        onClick={() => onSelect(tag)}
+      >
         <div className={cn(s.title, active && s.primary)}>{tag.title}</div>
       </button>
       {/* {active && <Outline />} */}

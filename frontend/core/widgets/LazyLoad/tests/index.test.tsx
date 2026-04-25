@@ -2,6 +2,10 @@ import { render, screen, waitFor } from '@testing-library/react'
 
 import LazyLoad from '..'
 
+type TWindowWithIO = Window & {
+  IntersectionObserver?: typeof IntersectionObserver
+}
+
 describe('<LazyLoad />', () => {
   it('renders content immediately when visibleByDefault=true', async () => {
     const onVisible = vi.fn()
@@ -20,10 +24,11 @@ describe('<LazyLoad />', () => {
     const onVisible = vi.fn()
 
     const hadObserver = 'IntersectionObserver' in window
-    const original = (window as any).IntersectionObserver
+    const ioWindow = window as TWindowWithIO
+    const original = ioWindow.IntersectionObserver
     // Ensure `('IntersectionObserver' in window)` is false.
     // biome-ignore lint/performance/noDelete: test-only
-    delete (window as any).IntersectionObserver
+    delete ioWindow.IntersectionObserver
 
     try {
       render(
@@ -36,10 +41,10 @@ describe('<LazyLoad />', () => {
       expect(onVisible).toHaveBeenCalledTimes(1)
     } finally {
       if (hadObserver) {
-        ;(window as any).IntersectionObserver = original
+        ioWindow.IntersectionObserver = original
       } else {
         // biome-ignore lint/performance/noDelete: test-only
-        delete (window as any).IntersectionObserver
+        delete ioWindow.IntersectionObserver
       }
     }
   })

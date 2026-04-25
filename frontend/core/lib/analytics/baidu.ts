@@ -17,5 +17,5 @@ export const handleRouteChange = (url: string): void => {
   try {
     Global._hmt.push(['_trackPageview', url])
     // eslint-disable-next-line no-empty
-  } catch (e) {}
+  } catch (_e) {}
 }

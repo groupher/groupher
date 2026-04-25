@@ -2,7 +2,7 @@
  * this selector is only used for normal user edtior
  */
 
-import { type FC, Fragment, useState } from 'react'
+import { type FC, useState } from 'react'
 
 import type { TGroupedTags, TTag } from '~/spec'
 import DropdownButton from '~/widgets/Buttons/DropdownButton'
@@ -25,7 +25,7 @@ const TagSelector: FC<TProps> = ({ mode = 'default', groupedTags, activeTag, onS
 
   const [show, setShow] = useState(false)
   // @ts-expect-error
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [_menuOpen, setMenuOpen] = useState(false)
 
   const handleSelect = (tag: TTag) => {
     onSelect(tag)
@@ -44,15 +44,9 @@ const TagSelector: FC<TProps> = ({ mode = 'default', groupedTags, activeTag, onS
         onHide={() => setMenuOpen(false)}
         offset={[-35, 8]}
         content={
-          <Fragment>
-            {show && (
-              <FilterPanel
-                activeTag={activeTag}
-                groupedTags={groupedTags}
-                onSelect={handleSelect}
-              />
-            )}
-          </Fragment>
+          show ? (
+            <FilterPanel activeTag={activeTag} groupedTags={groupedTags} onSelect={handleSelect} />
+          ) : null
         }
       >
         <DropdownButton noArrow={mode === 'modeline'}>

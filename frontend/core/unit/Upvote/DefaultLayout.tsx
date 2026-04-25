@@ -40,7 +40,7 @@ const Upvote: FC<TProps> = ({
 
   return (
     <div className={s.wrapper} data-testid={testid}>
-      <button className={s.button} onClick={handleClick}>
+      <button type='button' className={s.button} onClick={handleClick}>
         <UpvoteBtn viewerHasUpvoted={viewerHasUpvoted} count={count} />
         <AnimatedCount count={count} active={viewerHasUpvoted} size='large' left={2} />
       </button>

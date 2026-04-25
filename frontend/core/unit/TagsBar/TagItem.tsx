@@ -19,12 +19,12 @@ const TagItem: FC<TProps> = ({ tag, active, onSelect }) => {
 
   return (
     <div className={s.wrapper}>
-      <button className={s.tag} onClick={() => onSelect(tag)}>
+      <button type='button' className={s.tag} onClick={() => onSelect(tag)}>
         <TagNode color={tag.color as TColorName} boldHash />
         <div className={s.title}>{cutRest(tag.title, 10)}</div>
       </button>
       {active && (
-        <button className={s.closeBox} onClick={(_e) => onSelect(EMPTY_TAG)}>
+        <button type='button' className={s.closeBox} onClick={(_e) => onSelect(EMPTY_TAG)}>
           <CloseSVG className={s.closeIcon} />
           <CheckVG className={s.checkIcon} />
         </button>

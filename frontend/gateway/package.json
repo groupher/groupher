@@ -9,8 +9,10 @@
     "build": "cross-env NODE_ENV=production next build --turbopack",
     "start": "cross-env NODE_ENV=production next start",
     "info": "next info",
-    "lint": "echo 'skip link'",
-    "format": "echo 'skip format'",
+    "lint": "../../node_modules/.bin/oxlint . --threads=1",
+    "format": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json app proxy.ts proxy.test.ts utils.ts utils.test.ts next.config.js jsconfig.json tsconfig.json vercel.json",
+    "format:biome": "echo 'skip format'",
+    "format:check": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json --check app proxy.ts proxy.test.ts utils.ts utils.test.ts next.config.js jsconfig.json tsconfig.json vercel.json",
     "clean": "shjs ./utils/scripts/clean.js"
   },
   "lint-staged": {

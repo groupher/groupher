@@ -15,7 +15,7 @@ export default function DrawerHeader() {
 
   return (
     <div className={s.wrapper}>
-      <button className={s.backBtn} onClick={() => router.back()}>
+      <button type='button' className={s.backBtn} onClick={() => router.back()}>
         <ArrowSVG className={s.icon} />
       </button>
       <div className='ml-1' />

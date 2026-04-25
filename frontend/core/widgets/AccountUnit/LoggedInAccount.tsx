@@ -66,6 +66,7 @@ const LoggedInAccount: FC<TProps> = ({ user }) => {
           </Link>
           <div className={s.divider} />
           <button
+            type='button'
             className={cn(s.menuBar, s.warningActive)}
             onClick={() => signOut(() => router.refresh())}
           >

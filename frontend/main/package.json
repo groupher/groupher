@@ -11,8 +11,10 @@
     "info": "next info",
     "clean": "shjs ./utils/scripts/clean.js",
     "analyze": "cross-env ANALYZE=true next build",
-    "lint": "../../node_modules/.bin/biome lint src/**/*.{ts,tsx}",
-    "format": "../../node_modules/.bin/biome format --write ./src",
+    "lint": "../../node_modules/.bin/oxlint src --threads=1",
+    "format": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json ./src",
+    "format:biome": "../../node_modules/.bin/biome format --write ./src",
+    "format:check": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json --check ./src",
     "clean:up": "rm -rf *.tsbuildinfo"
   },
   "lint-staged": {

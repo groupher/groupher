@@ -63,7 +63,7 @@ export default function ThreadSidebar() {
                   fallback={<ImgFallback right={2} user={user} />}
                 />
               ))}
-              <button className={s.moreNum} onClick={() => listUsers('drawer')}>
+              <button type='button' className={s.moreNum} onClick={() => listUsers('drawer')}>
                 +2
               </button>
             </div>

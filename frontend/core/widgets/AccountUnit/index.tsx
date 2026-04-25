@@ -43,7 +43,7 @@ const AccountUnit: FC<TProps> = ({ withName = false, ...spacing }) => {
           <LoggedInAccount user={user} />
         </div>
       ) : (
-        <button className={s.hoverBox} onClick={() => setShowPanel(true)}>
+        <button type='button' className={s.hoverBox} onClick={() => setShowPanel(true)}>
           <AccountSVG className={s.unLoginIcon} />
         </button>
       )}

@@ -49,7 +49,6 @@
   }
 }
 
-
 /* Apply community */
 @utility container-apply-community {
   --container-pl: theme('spacing.5');
@@ -66,7 +65,7 @@
   }
 
   @media (min-width: theme('screens.xl')) {
-    --container-pl: theme('spacing.8');  /* 32px */
+    --container-pl: theme('spacing.8'); /* 32px */
     --container-pr: theme('spacing.7'); /* 28px */
   }
 }
@@ -92,7 +91,6 @@
     --container-pr: theme('spacing.20');
   }
 }
-
 
 /* Community sidebar */
 @utility container-community_sidebar {

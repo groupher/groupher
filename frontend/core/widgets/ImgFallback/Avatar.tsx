@@ -11,7 +11,7 @@ const Avatar: FC<TProps> = ({
   size = SIZE.SMALL, // ✅ 默认用常量
   title = '',
   user = {},
-  quote = false,
+  _quote = false,
   ...spacing
 }) => {
   const s = useSalon({ size, ...spacing })

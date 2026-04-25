@@ -7,7 +7,7 @@
 'use client'
 
 import Link from 'next/link'
-import { type FC, useCallback, useEffect, useRef } from 'react'
+import { type FC, type MouseEvent, useCallback, useEffect, useRef } from 'react'
 import { isElementInViewport } from '~/dom'
 import useTrans from '~/hooks/useTrans'
 import type { TSizeSM, TTabItem } from '~/spec'
@@ -23,7 +23,7 @@ type TProps = {
   activeKey: string
   bottomSpace?: number | string
   setItemWidth?: (index: number, width: number) => void
-  onClick?: (index: number, e: any) => void
+  onClick?: (index: number, e: MouseEvent<HTMLElement>) => void
 }
 
 const getItemKey = (item: TTabItem): string => (isString(item) ? item : item.slug)
@@ -35,7 +35,7 @@ const TabItem: FC<TProps> = ({
   activeKey,
   item,
   index,
-  size, // 保留参数，样式系统可能用到
+  _size, // 保留参数，样式系统可能用到
   onClick,
   setItemWidth,
 }) => {
@@ -52,7 +52,7 @@ const TabItem: FC<TProps> = ({
 
   // set each tab item width for calc
   useEffect(() => {
-    const width = ref.current ? (ref.current as any).offsetWidth : 0
+    const width = ref.current?.offsetWidth ?? 0
     setItemWidth?.(index, width)
   }, [setItemWidth, index])
 
@@ -66,7 +66,7 @@ const TabItem: FC<TProps> = ({
   }, [href])
 
   const handleLabelClick = useCallback(
-    (e: any) => {
+    (e: MouseEvent<HTMLElement>) => {
       // 关键：href 场景不能 stopPropagation，否则 Next Link 拦截不到 click，会变成整页刷新
       if (!href) e.stopPropagation()
       onClick?.(index, e)
@@ -94,7 +94,7 @@ const TabItem: FC<TProps> = ({
       onClick={handleLabelClick}
     >
       {!isString(item) && item.icon && (
-        <TabIcon item={item} clickableRef={clickableRef as any} active={active} />
+        <TabIcon item={item} clickableRef={clickableRef} active={active} />
       )}
       <div ref={active ? activeRef : null}>{isString(item) ? item : t(item.title)}</div>
     </span>
@@ -102,14 +102,14 @@ const TabItem: FC<TProps> = ({
 
   if (href) {
     return (
-      <Link href={href} className={s.wrapper} ref={ref as any}>
+      <Link href={href} className={s.wrapper} ref={ref}>
         {Label}
       </Link>
     )
   }
 
   return (
-    <button className={s.wrapper} ref={ref as any} onClick={handleWrapperClick}>
+    <button type='button' className={s.wrapper} ref={ref} onClick={handleWrapperClick}>
       {Label}
     </button>
   )

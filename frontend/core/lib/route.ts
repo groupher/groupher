@@ -1,17 +1,4 @@
-import {
-  clone,
-  compose,
-  endsWith,
-  head,
-  includes,
-  isEmpty,
-  mergeRight,
-  pickBy,
-  prop,
-  reject,
-  slice,
-  split,
-} from 'ramda'
+import { clone, endsWith, isEmpty, mergeRight, pickBy, slice } from 'ramda'
 
 import { HOME_COMMUNITY } from '~/const/name'
 import { ROUTE } from '~/const/route'
@@ -20,47 +7,72 @@ import { Global } from './helper'
 import { path2Thread } from './thread'
 import { nilOrEmpty } from './validator'
 
-// example: /getme/xxx?aa=bb&cc=dd
-const parseMainPath = compose(head, split('?'), head, reject(isEmpty), split('/'), prop('asPath'))
+type TRouteArgs = {
+  asPath: string
+  url: string
+  req?: {
+    subdomains?: string[]
+  }
+}
+
+type TRouteParts = {
+  mainPath: string
+  subPath: string
+  thirdPath: string
+}
+
+type TParsedRoute = TRouteParts & {
+  communityPath: string
+  threadPath: string
+}
+
+type TSSRParsedRoute = TParsedRoute & {
+  community: string
+  thread: ReturnType<typeof path2Thread>
+}
+
+type TPagiType = 'string' | 'number'
+type TRouteQueryValue = string | number
+type TRouteQuery = Record<string, TRouteQueryValue>
+type TQueryStringOptions = {
+  noPagiInfo?: boolean
+  pagi?: TPagiType
+}
+
+type TParsedDomain = {
+  protocol?: string
+  domain?: string
+  path?: string | null
+  subdomain?: string | null
+  host?: string
+  tld?: string
+  parent_domain?: string
+}
+
+const getPathSegments = (path: string): string[] => path.split('?')[0].split('/').filter(Boolean)
 
 // example: /xxx/getme?aa=bb&cc=dd
-// @ts-expect-error
-const parsePathList = compose(
-  reject(isEmpty),
-  split('/'),
-  head,
-  reject(includes('=')),
-  reject(isEmpty),
-  split('?'),
-  prop('url'),
-)
+const parsePathList = (args: TRouteArgs): string[] => getPathSegments(args.url)
 
 const INDEX = ''
-const getMainPath = (args: any): string => {
+const getMainPath = (args: TRouteArgs): string => {
   if (args.asPath === '/') return INDEX
 
-  // @ts-expect-error
-  return parseMainPath(args)
+  return getPathSegments(args.asPath)[0] || INDEX
 }
 
-const getSubPath = (args: any): string => {
+const getSubPath = (args: TRouteArgs): string => {
   if (args.asPath === '/') return INDEX
 
   const asPathList = parsePathList(args)
-  // @ts-expect-error
-  const subPath = asPathList.length > 1 ? asPathList[1] : ''
-
-  return subPath
+  return asPathList[1] || INDEX
 }
 
-const getThirdPath = (args: any): string => {
+const getThirdPath = (args: TRouteArgs): string => {
   if (args.asPath === '/') return INDEX
 
   const asPathList = parsePathList(args)
-  // @ts-expect-error
-  const subPath = asPathList.length > 2 ? asPathList[2] : ''
-
-  return subPath
+  return asPathList[2] || INDEX
 }
 
 /**
@@ -69,12 +81,12 @@ const getThirdPath = (args: any): string => {
  * will return emacs
  * otherwise will return ""
  */
-const parseSubDomain = (args: any): string => {
+const parseSubDomain = (args: TRouteArgs): string => {
   let communityPath = ''
   const isServerSide = false
   if (isServerSide) {
     // on server side
-    const { subdomains } = args.req
+    const subdomains = args.req?.subdomains || []
     if (!isEmpty(subdomains)) {
       communityPath = subdomains[subdomains.length - 1]
     }
@@ -90,7 +102,7 @@ const parseSubDomain = (args: any): string => {
   return communityPath
 }
 
-export const parseURL = (args: any): any => {
+export const parseURL = (args: TRouteArgs): TParsedRoute => {
   let mainPath = ''
   let subPath = ''
   let thirdPath = ''
@@ -120,26 +132,15 @@ export const parseURL = (args: any): any => {
 }
 
 // --------------
-// @ts-expect-error
-export const getRoutePathList = compose(
-  reject(isEmpty),
-  split('/'),
-  head,
-  reject(includes('=')),
-  reject(isEmpty),
-  split('?'),
-)
-
-const doGetRouteMainPath = compose(head, split('?'), head, reject(isEmpty), split('/'))
+export const getRoutePathList = (path: string): string[] => getPathSegments(path)
 
 export const getRouteMainPath = (asPath: string): string => {
   if (asPath === '/') return ROUTE.HOME
 
-  // @ts-expect-error
-  return doGetRouteMainPath(asPath)
+  return getPathSegments(asPath)[0] || ROUTE.HOME
 }
 
-export const ssrParseURL = (req: any): any => {
+export const ssrParseURL = (req: Pick<TRouteArgs, 'url'>): TSSRParsedRoute => {
   const { url } = req
   if (url === '/') {
     const mainPath = 'home'
@@ -157,9 +158,9 @@ export const ssrParseURL = (req: any): any => {
   }
 
   const pathList = getRoutePathList(url)
-  const mainPath = pathList[0]
-  const subPath = pathList[1]
-  const thirdPath = pathList[2] || ''
+  const mainPath = pathList[0] || ROUTE.HOME
+  const subPath = pathList[1] || THREAD_PATH.POST
+  const thirdPath = pathList[2] || INDEX
 
   const thread = endsWith('s', subPath) ? slice(0, -1, subPath) : subPath
 
@@ -197,17 +198,19 @@ export const akaTranslate = (communitySlug: string): string => {
   }
 }
 
-const mergePagiQuery = (query: any = {}, opt: any = { pagi: 'string' }): any => {
+const mergePagiQuery = (
+  query: TRouteQuery = {},
+  opt: TQueryStringOptions = { pagi: 'string' },
+): TRouteQuery => {
   const routeQuery = clone(query)
 
-  let defaultQuery = { page: '1', size: '20' }
+  let defaultQuery: TRouteQuery = { page: '1', size: '20' }
 
   if (opt.pagi === 'number') {
-    // @ts-expect-error
     defaultQuery = { page: 1, size: 20 }
   }
 
-  if (routeQuery.page && opt.pagi === 'number') {
+  if (typeof routeQuery.page === 'string' && opt.pagi === 'number') {
     routeQuery.page = Number.parseInt(routeQuery.page, 10)
   }
 
@@ -217,12 +220,12 @@ const mergePagiQuery = (query: any = {}, opt: any = { pagi: 'string' }): any => 
 // convert url query string to json, with optional pagi info
 export const queryStringToJSON = (
   path: string,
-  opt: any = { noPagiInfo: false, pagi: 'string' },
-): any => {
-  const splited = split('?', path)
+  opt: TQueryStringOptions = { noPagiInfo: false, pagi: 'string' },
+): TRouteQuery => {
+  const splited = path.split('?')
   if (splited.length === 1) return mergePagiQuery({}, opt)
 
-  const result: any = {}
+  const result: TRouteQuery = {}
   const paris = splited[1].split('&')
 
   for (const pair of paris) {
@@ -246,19 +249,19 @@ export const getParameterByName = (name: string): string | null => {
 }
 
 export const getQueryFromUrl = (name: string, url: string): string | null => {
-  if (!url) url = window.location.href
+  const resolvedUrl = url || window.location.href
   const nameVal = name.replace(/[[\]]/g, '\\$&')
   const regex = new RegExp(`[?&]${nameVal}(=([^&#]*)|&|#|$)`)
-  const results = regex.exec(url)
+  const results = regex.exec(resolvedUrl)
   if (!results) return null
   if (!results[2]) return ''
   return decodeURIComponent(results[2].replace(/\+/g, ' '))
 }
 
-export const serializeQuery = (obj: any): string => {
+export const serializeQuery = (obj: Record<string, unknown>): string => {
   const qstring = Object.keys(obj)
     .reduce((a: string[], k: string) => {
-      a.push(`${k}=${encodeURIComponent(obj[k])}`)
+      a.push(`${k}=${encodeURIComponent(String(obj[k]))}`)
       return a
     }, [])
     .join('&')
@@ -266,9 +269,9 @@ export const serializeQuery = (obj: any): string => {
   return isEmpty(qstring) ? '' : `?${qstring}`
 }
 
-export const parseDomain = (url: string): any => {
+export const parseDomain = (url: string): string | TParsedDomain => {
   try {
-    const parsedUrl: any = {}
+    const parsedUrl: TParsedDomain = {}
 
     if (url === null || url.length === 0) return parsedUrl
 
@@ -313,7 +316,10 @@ export const parseDomain = (url: string): any => {
 
 // sync json query to the brower url without reload the page
 // empty value obj will be omit
-export const markRoute = (query: any, opt: any = { noPagiInfo: true }): void => {
+export const markRoute = (
+  query: Record<string, unknown>,
+  opt: TQueryStringOptions = { noPagiInfo: true },
+): void => {
   let query$ = query
   if (nilOrEmpty(query)) query$ = {}
 
@@ -321,7 +327,7 @@ export const markRoute = (query: any, opt: any = { noPagiInfo: true }): void => 
     ...opt,
   })
 
-  const newQueryObj = pickBy((v: any) => !nilOrEmpty(v), mergeRight(exsitQuery, query$))
+  const newQueryObj = pickBy((v) => !nilOrEmpty(v), mergeRight(exsitQuery, query$))
   const newQueryString = serializeQuery(newQueryObj)
 
   Global.history.pushState({}, null, newQueryString)

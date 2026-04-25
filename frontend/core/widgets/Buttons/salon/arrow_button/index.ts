@@ -11,7 +11,7 @@ type TProps = {
 } & TSpace
 
 export default function useSalon({
-  disabled,
+  _disabled,
   dimWhenIdle,
   leftLayout,
   scopeClassName = '',

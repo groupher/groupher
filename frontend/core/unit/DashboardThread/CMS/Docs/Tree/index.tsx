@@ -103,14 +103,10 @@ function FolderArrow({ node }: { node: NodeApi<TTreeItem> }) {
 
   if (node.isLeaf) return <span />
 
-  return (
-    <>
-      {node.isOpen ? (
-        <ArrowSVG className={s.arrowUpIcon} />
-      ) : (
-        <ArrowSVG className={s.arrowDownIcon} />
-      )}
-    </>
+  return node.isOpen ? (
+    <ArrowSVG className={s.arrowUpIcon} />
+  ) : (
+    <ArrowSVG className={s.arrowDownIcon} />
   )
 }
 

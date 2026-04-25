@@ -20,7 +20,7 @@ type TProps = {
   testid?: string
 }
 
-const SearchPanel: FC<TProps> = ({ testid = 'search-panel' }) => {
+const SearchPanel: FC<TProps> = ({ _testid = 'search-panel' }) => {
   const s = useSalon()
 
   return (

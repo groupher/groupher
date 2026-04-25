@@ -26,7 +26,7 @@ type TProps = {
 const Radio: FC<TProps> = ({
   items,
   activeKey,
-  size = SIZE.MEDIUM,
+  _size = SIZE.MEDIUM,
   onChange = console.log,
   ...spacing
 }) => {

@@ -1,12 +1,16 @@
+import type { AnyVariables, DocumentInput } from '@urql/core'
 import { useQuery as useGQQuery } from 'urql'
 
-const useQuery = (query, variables) => {
-  const [result, reexecuteQuery] = useGQQuery({
+const useQuery = <TData = unknown, TVariables extends AnyVariables = AnyVariables>(
+  query: DocumentInput<TData, TVariables>,
+  variables: TVariables,
+) => {
+  const [result, reexecuteQuery] = useGQQuery<TData, TVariables>({
     query,
     variables,
   })
 
-  const reload = (nextVariables?: any) => {
+  const reload = (nextVariables?: TVariables) => {
     reexecuteQuery({
       requestPolicy: 'network-only',
       variables: nextVariables ?? variables,

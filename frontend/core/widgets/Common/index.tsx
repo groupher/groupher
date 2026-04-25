@@ -10,5 +10,5 @@ export const LoadWatcher: FC<TLoadWatcher> = ({ onLoad }) => {
     }
   }, [])
 
-  return <></>
+  return null
 }

@@ -18,9 +18,13 @@ export default function Hooks() {
 
   // Keep client state in sync during logout before the next refresh lands.
   // Without this, auth-sensitive widgets can briefly render the old login state.
-  useEvent(EVENT.LOGOUT, () => {
-    store.commit({ user: null, loading: false })
-  }, [store])
+  useEvent(
+    EVENT.LOGOUT,
+    () => {
+      store.commit({ user: null, loading: false })
+    },
+    [store],
+  )
 
   useEffect(() => {
     if (error) {

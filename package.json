@@ -47,8 +47,11 @@
     "info": "next info",
     "clean": "rimraf *.tsbuildinfo frontend/**/*.tsbuildinfo",
     "analyze": "cross-env ANALYZE=true next build",
-    "lint": "yarn workspaces run lint",
-    "format": "yarn workspaces run lint format",
+    "lint": "yarn workspaces foreach -pt --all --exclude @groupher/root run lint",
+    "lint:biome": "yarn biome lint frontend/core frontend/main frontend/dashboard frontend/landing frontend/gateway",
+    "format": "yarn workspaces foreach -pt --all --exclude @groupher/root run format",
+    "format:biome": "yarn workspaces foreach -pt --all --exclude @groupher/root run format:biome",
+    "format:check": "yarn workspaces foreach -pt --all --exclude @groupher/root run format:check",
     "clean:up": "rm -rf *.tsbuildinfo",
     "test": "vitest --config frontend/core/vitest.config.mts run",
     "test:core": "vitest --config frontend/core/vitest.config.mts run frontend/core",
@@ -90,7 +93,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn workspaces foreach -pt --all --exclude @groupher/root run format && yarn lint-staged",
+      "pre-commit": "yarn format && yarn lint",
       "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
       "post-commit": "yarn clean"
     }
@@ -199,6 +202,8 @@
     "jsdom": "^26.1.0",
     "lint-staged": "^15.2.0",
     "npm-run-all": "^4.1.1",
+    "oxfmt": "0.46.0",
+    "oxlint": "1.61.0",
     "postcss": "^8.4.39",
     "react-doctor": "^0.0.29",
     "react-json-view-lite": "^2.5.0",

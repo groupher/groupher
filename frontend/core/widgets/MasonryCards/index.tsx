@@ -13,7 +13,7 @@ type TProps = {
   children: ReactNode
 }
 
-const MasonryCards: FC<TProps> = ({ testid = 'masonry-cards', column = 2, children }) => {
+const MasonryCards: FC<TProps> = ({ _testid = 'masonry-cards', column = 2, children }) => {
   return (
     <Masonry
       breakpointCols={column}

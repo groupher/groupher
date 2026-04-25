@@ -1,4 +1,5 @@
 import { injectDsbColors } from './script'
+import type { TParseDashboard } from '~/spec'
 
 describe('injectDsbColors', () => {
   it('injects primary and sub-primary custom vars for both themes', () => {
@@ -13,7 +14,7 @@ describe('injectDsbColors', () => {
       primaryCustomColorDark: '#223344',
       subPrimaryCustomColor: '#334455',
       subPrimaryCustomColorDark: '#445566',
-    } as any)
+    } satisfies Partial<TParseDashboard>)
 
     expect(styleText).toContain('--color-primary-custom: #112233;')
     expect(styleText).toContain('--color-primary-custom-dark: #223344;')
@@ -29,7 +30,7 @@ describe('injectDsbColors', () => {
       primaryCustomColorDark: '#fff',
       subPrimaryCustomColor: 'var(--malicious)',
       subPrimaryCustomColorDark: '',
-    } as any)
+    } satisfies Partial<TParseDashboard>)
 
     expect(styleText).toContain('--color-primary-custom: #333333;')
     expect(styleText).toContain('--color-primary-custom-dark: #ffffff;')

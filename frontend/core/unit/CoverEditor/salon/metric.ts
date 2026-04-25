@@ -171,8 +171,8 @@ export const getLightPos = (pos: TImagePos): TLightPos => {
 
 export const getLinearBorder = (
   pos: TLinearBorderPos,
-  active = false,
-  isLightTheme = true,
+  _active = false,
+  _isLightTheme = true,
 ): string => {
   // const themeKey = isLightTheme ? 'DEFAULT' : 'dark'
   // TODO:

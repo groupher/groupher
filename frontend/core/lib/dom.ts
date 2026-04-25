@@ -151,9 +151,11 @@ export const toggleGlobalBlur = (visible: boolean): void => {
     for (let index = 0; index < blurableEls.length; index += 1) {
       const el = blurableEls[index] as HTMLElement
 
-      // !visible ? (el.style.filter = '') : (el.style.filter = 'blur(2px)')
-      // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
-      !visible ? (el.style.filter = '') : (el.style.filter = 'brightness(0.6)')
+      if (!visible) {
+        el.style.filter = ''
+      } else {
+        el.style.filter = 'brightness(0.6)'
+      }
     }
   }
 }

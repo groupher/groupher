@@ -31,7 +31,7 @@ const Portal: FC<TProps> = ({
         <h3 className={s.title} data-testid={testid || undefined}>
           {title}
         </h3>
-        {addon && <>{addon}</>}
+        {addon}
       </div>
 
       {desc && <p className={s.desc}>{desc}</p>}

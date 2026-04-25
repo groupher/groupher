@@ -21,7 +21,7 @@ const TagsItem: FC<TProps> = ({ onClick }) => {
     const tag = tags[0]
 
     return (
-      <button className={s.menuItem} onClick={onClick}>
+      <button type='button' className={s.menuItem} onClick={onClick}>
         <TagNode
           dotRight={1.5}
           dotLeft={2}
@@ -40,7 +40,7 @@ const TagsItem: FC<TProps> = ({ onClick }) => {
   }
 
   return (
-    <button className={s.menuItem} onClick={onClick}>
+    <button type='button' className={s.menuItem} onClick={onClick}>
       <TagNode dotRight={1.5} dotLeft={2} dotTop={1} hashLeft='px' hashRight={1.5} hashSize={3.5} />
       标签
       <div className='grow' />

@@ -1,4 +1,4 @@
-html[data-theme="light"] {
+html[data-theme='light'] {
   .page-pureWhite {
     --color-pageBg: var(--color-page-pureWhite);
   }
@@ -37,7 +37,7 @@ html[data-theme="light"] {
   }
 }
 
-html[data-theme="dark"] {
+html[data-theme='dark'] {
   .page-charcoalGray {
     --color-pageBg: var(--color-page-charcoalGray);
   }

@@ -26,6 +26,8 @@ import { extractQueryName } from '~/utils/graphql'
 
 import type { TGQSSRResult } from './spec'
 
+type TTwitterCard = NonNullable<Metadata['twitter']>['card']
+
 export const commonRes = (result): TGQSSRResult => {
   return {
     fetching: result.fetching,
@@ -285,7 +287,7 @@ export const getMetadata = (dashboard: TParseDashboard): Metadata => {
       images: ogImage ? [ogImage] : [],
     },
     twitter: {
-      card: (twCard as any) || 'summary',
+      card: (twCard as TTwitterCard) || 'summary',
       site: twSite,
       title: twTitle || ogTitle,
       description: twDescription || ogDescription,

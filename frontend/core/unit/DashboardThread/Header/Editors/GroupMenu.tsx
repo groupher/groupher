@@ -19,8 +19,8 @@ type TProps = {
 const GroupMenu: FC<TProps> = ({
   moveLeft = console.log,
   moveRight = console.log,
-  moveEdgeLeft = console.log,
-  moveEdgeRight = console.log,
+  _moveEdgeLeft = console.log,
+  _moveEdgeRight = console.log,
   onDelete = console.log,
 
   isEdgeLeft,

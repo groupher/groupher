@@ -364,22 +364,23 @@ const getScrollParent = (node: HTMLElement): HTMLElement | Window => {
 const offsetTill = (node: HTMLElement, target: HTMLElement | Window): number => {
   let current = node
   let offset = 0
+  let resolvedTarget = target
 
   // If target is not an offsetParent itself, subtract its offsetTop and set correct target
   if (
-    target instanceof HTMLElement &&
-    target.firstChild instanceof HTMLElement &&
-    target.firstChild.offsetParent !== target
+    resolvedTarget instanceof HTMLElement &&
+    resolvedTarget.firstChild instanceof HTMLElement &&
+    resolvedTarget.firstChild.offsetParent !== resolvedTarget
   ) {
-    offset += node.offsetTop - target.offsetTop
-    target = node.offsetParent as HTMLElement
+    offset += node.offsetTop - resolvedTarget.offsetTop
+    resolvedTarget = node.offsetParent as HTMLElement
     offset += -node.offsetTop
   }
 
   do {
     offset += current.offsetTop
     current = current.offsetParent as HTMLElement
-  } while (current && current !== target)
+  } while (current && current !== resolvedTarget)
 
   return offset
 }

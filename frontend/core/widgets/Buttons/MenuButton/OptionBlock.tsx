@@ -6,11 +6,12 @@ import Img from '~/Img'
 import type { TMenuOption } from '~/spec'
 
 import { cn } from '../salon/menu_button/menu'
+import useSalon from '../salon/menu_button/menu'
 
 type TProps = {
   item: TMenuOption
   onClick: () => void
-  s: any
+  s: ReturnType<typeof useSalon>
 }
 
 const OptionBlock: FC<TProps> = ({ item, onClick, s }) => {
@@ -28,7 +29,7 @@ const OptionBlock: FC<TProps> = ({ item, onClick, s }) => {
     )
   }
   return (
-    <button className={s.block} onClick={onClick}>
+    <button type='button' className={s.block} onClick={onClick}>
       <div className={s.item}>
         <div className={s.icon}>
           {/* @ts-ignore */}

@@ -20,8 +20,10 @@ const ActiveTag: FC<TProps> = ({ activeTag, mode }) => {
           <TagNode color={activeTag.color as TColorName} boldHash />
           <div className={s.tagTitle}>{activeTag.title}</div>
         </div>
+      ) : mode === 'default' ? (
+        '未设置'
       ) : (
-        <>{mode === 'default' ? '未设置' : '标签'}</>
+        '标签'
       )}
     </div>
   )

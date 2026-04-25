@@ -40,6 +40,7 @@ const Share: FC<TProps> = ({ modalOffset = '', ...spacing }) => {
     <div className={s.wrapper}>
       <Tooltip content={<div className={s.linkTip}>复制链接</div>} placement='bottom' delay={500}>
         <button
+          type='button'
           className={s.iconBox}
           onClick={() => {
             copy(articleLink)
@@ -68,6 +69,7 @@ const Share: FC<TProps> = ({ modalOffset = '', ...spacing }) => {
 
       <Tooltip content={<div className={s.linkTip}>分享到微博</div>} placement='bottom' delay={500}>
         <button
+          type='button'
           className={cn(s.iconBox, '-mt-0.5')}
           onClick={() => {
             toPlatform(article, SHARE_TYPE.WEIBO, articleLink)
@@ -78,7 +80,7 @@ const Share: FC<TProps> = ({ modalOffset = '', ...spacing }) => {
       </Tooltip>
 
       <Tooltip content={<div className={s.linkTip}>更多分享</div>} placement='bottom' delay={500}>
-        <button className={s.iconBox} onClick={() => setShowMore(true)}>
+        <button type='button' className={s.iconBox} onClick={() => setShowMore(true)}>
           <MoreSVG className={cn(s.icon, 'size-5')} />
         </button>
       </Tooltip>

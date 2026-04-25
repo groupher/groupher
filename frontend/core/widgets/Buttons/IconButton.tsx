@@ -20,7 +20,7 @@ export type TProps = {
 
 const IconButton: FC<TProps> = ({
   path = null,
-  icon = null,
+  _icon = null,
   size = 3.5,
   active = false,
   dimWhenIdle = false,

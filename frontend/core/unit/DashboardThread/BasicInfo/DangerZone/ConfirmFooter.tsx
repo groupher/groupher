@@ -12,7 +12,7 @@ type TProps = {
   testid?: string
 } & TSpace
 
-const ConfirmFooter: FC<TProps> = ({ testid = '', ...spacing }) => {
+const ConfirmFooter: FC<TProps> = ({ _testid = '', ...spacing }) => {
   const s = useSalon({ ...spacing })
   const { t } = useTrans()
 

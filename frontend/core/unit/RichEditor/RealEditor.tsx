@@ -17,11 +17,11 @@ type TProps = {
 }
 
 const RichEditor: FC<TProps> = ({
-  data,
-  placeholder = "// 正文内容（'Tab' 键插入富文本）",
-  type = 'article',
-  reinitKey = '',
-  onChange = console.log,
+  _data,
+  _placeholder = "// 正文内容（'Tab' 键插入富文本）",
+  _type = 'article',
+  _reinitKey = '',
+  _onChange = console.log,
 }) => {
   const s = useSalon()
 

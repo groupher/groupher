@@ -15,7 +15,7 @@ import type { TProps as TBase } from '..'
 
 type TProps = Pick<TBase, 'mode' | 'apiMode' | 'isAllFolded'>
 
-const Actions: FC<TProps> = ({ mode, isAllFolded, apiMode }) => {
+const Actions: FC<TProps> = ({ mode, isAllFolded, apiMode: _apiMode }) => {
   const s = useSalon()
 
   const { foldAllComments, expandAllComments, onModeChange } = useActions()
@@ -61,7 +61,7 @@ const Actions: FC<TProps> = ({ mode, isAllFolded, apiMode }) => {
         </Tooltip>
       )}
 
-      {/* {apiMode === API_MODE.ARTICLE && (
+      {/* {_apiMode === API_MODE.ARTICLE && (
           <IconButton
             icon={SVG.LOCK}
             hint="关闭讨论"

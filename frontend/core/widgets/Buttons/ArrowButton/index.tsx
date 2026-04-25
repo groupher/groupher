@@ -40,8 +40,8 @@ const ArrowButton: FC<TProps> = ({
   reverseColor = false,
   up = false,
   down = false,
-  fontSize = 13,
-  initWidth = 55,
+  _fontSize = 13,
+  _initWidth = 55,
   ...spacing
 }) => {
   const isLeft = leftLayout || up || down

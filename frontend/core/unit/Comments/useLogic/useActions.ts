@@ -3,6 +3,7 @@ import { useContext } from 'react'
 
 import type { TComment, TID } from '~/spec'
 import { StoreContext as CommentsStoreContext } from '~/stores/comments/provider'
+import type { TStore as TCommentsStore } from '~/stores/comments/spec'
 import persist from '~/utils/persist'
 
 import type { TMode } from '../spec'
@@ -26,7 +27,7 @@ export type TActions = {
 } & ReturnType<typeof useQuery>
 
 export default function useActions(): TActions {
-  const commentsStore = useContext(CommentsStoreContext) as any
+  const commentsStore = useContext(CommentsStoreContext) as TCommentsStore | null
   if (!commentsStore) {
     throw new Error('useActions must be used within a Comments store provider')
   }

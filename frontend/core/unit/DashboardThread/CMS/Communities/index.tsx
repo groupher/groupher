@@ -10,9 +10,9 @@ import {
 } from '@tanstack/react-table'
 import { includes } from 'ramda'
 import { startTransition, useMemo, useState } from 'react'
+import type { TCommunity } from '~/spec'
 
 import {
-  getArticleRowId,
   SELECT_COL_ID,
   type TSortDir,
   useMultiSelection,
@@ -43,10 +43,10 @@ export default function Communities() {
 
   // useMount(loadCommunities)
 
-  const data = (pagedCommunities.entries ?? []) as any[]
+  const data = (pagedCommunities.entries ?? []) as TCommunity[]
   const { metaRef, selectColumn, selectedCount, clear } = useMultiSelection()
 
-  const columns = useMemo<ColumnDef<any, any>[]>(() => {
+  const columns = useMemo<ColumnDef<TCommunity, unknown>[]>(() => {
     return [
       selectColumn(),
 
@@ -134,7 +134,7 @@ export default function Communities() {
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getRowId: (row, index) => getArticleRowId(row, index),
+    getRowId: (row, index) => row.id ?? `${row.slug}:${index ?? 0}`,
     meta: metaRef,
   })
 

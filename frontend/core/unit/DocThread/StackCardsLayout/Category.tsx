@@ -14,7 +14,7 @@ type TProps = {
   articles: TArticle[]
 }
 
-const Category: FC<TProps> = ({ title, desc, articles }) => {
+const Category: FC<TProps> = ({ title, _desc, articles }) => {
   const s = useSalon()
 
   const { gotoDetailLayout } = useLogic()

@@ -5,6 +5,7 @@ import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import type { TComment, TEmotion, TEmotionType, TID } from '~/spec'
 import { StoreContext as CommentsStoreContext } from '~/stores/comments/provider'
+import type { TStore as TCommentsStore } from '~/stores/comments/spec'
 import uid from '~/utils/uid'
 
 import { API_MODE, EDIT_MODE } from '../constant'
@@ -27,11 +28,11 @@ export type TRet = {
   updateComment: () => void
 }
 
-let repliesPagiNo = {}
+let repliesPagiNo: Record<string, number> = {}
 const PAGI_SIZE = 30
 
 export default function useQuery(): TRet {
-  const commentsStore = useContext(CommentsStoreContext) as any
+  const commentsStore = useContext(CommentsStoreContext) as TCommentsStore | null
   if (!commentsStore) {
     throw new Error('useQuery must be used within a Comments store provider')
   }

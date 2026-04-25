@@ -57,7 +57,11 @@ const List: FC<TProps> = ({ mode, repliesLoadingByParentId, apiMode, entries, fo
               />
             )}
 
-            <button className={s.indentLine} onClick={() => foldComment(comment.id)} />
+            <button
+              type='button'
+              className={s.indentLine}
+              onClick={() => foldComment(comment.id)}
+            />
           </div>
         )
       })}

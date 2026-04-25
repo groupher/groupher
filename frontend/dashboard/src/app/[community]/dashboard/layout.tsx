@@ -35,6 +35,7 @@ export default async ({ children, params, searchParams }) => {
   return (
     <>
       <style
+        // eslint-disable-next-line react/no-danger -- dashboard theme tokens must be injected before render to avoid flash
         dangerouslySetInnerHTML={{
           __html: injectDsbColors(dashboard),
         }}

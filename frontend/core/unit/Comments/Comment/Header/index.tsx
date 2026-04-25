@@ -13,7 +13,12 @@ type TProps = {
   isReply?: boolean
 }
 
-const CommentHeader: FC<TProps> = ({ data, showInnerRef, apiMode = API_MODE.ARTICLE, isReply }) => {
+const CommentHeader: FC<TProps> = ({
+  data,
+  showInnerRef,
+  _apiMode = API_MODE.ARTICLE,
+  isReply,
+}) => {
   const s = useSalon()
 
   return (

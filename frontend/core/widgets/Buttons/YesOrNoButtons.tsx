@@ -30,7 +30,7 @@ const YesOrNoButton: FC<TProps> = ({
   return (
     <div className={s.wrapper}>
       {!loading && (
-        <button className={s.cancelBtn} onClick={() => onCancel?.()}>
+        <button type='button' className={s.cancelBtn} onClick={() => onCancel?.()}>
           {cancelText}
         </button>
       )}

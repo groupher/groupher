@@ -3,13 +3,16 @@ import { type RefObject, useEffect, useRef } from 'react'
 type OutsideEvent = MouseEvent | TouchEvent
 
 type MaybeRef = RefObject<HTMLElement | null>
+type EventWithComposedPath = Event & {
+  composedPath?: () => EventTarget[]
+}
 
 const isEventInside = (e: Event, refs: MaybeRef[]): boolean => {
   const target = e.target as Node | null
   if (!target) return false
 
   // 优先使用 composedPath（支持 shadow DOM / portal）
-  const path = (e as any).composedPath?.() as EventTarget[] | undefined
+  const path = (e as EventWithComposedPath).composedPath?.()
   if (path) {
     return refs.some((ref) => ref.current && path.includes(ref.current))
   }

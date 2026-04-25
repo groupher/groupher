@@ -1,0 +1,8 @@
+{
+  "extends": ["../core/config/oxlint.json"],
+  "settings": {
+    "next": {
+      "rootDir": "."
+    }
+  }
+}

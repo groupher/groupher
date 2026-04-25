@@ -27,6 +27,7 @@ const ReplyEditor: FC<TProps> = ({ body, submitState, replyTo }) => {
         </div>
         <div
           className={s.replyToContent}
+          // eslint-disable-next-line react/no-danger -- reply preview renders server-sanitized HTML returned by the comments API
           dangerouslySetInnerHTML={{
             __html: replyTo?.bodyHtml,
           }}

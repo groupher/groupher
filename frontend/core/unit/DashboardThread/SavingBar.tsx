@@ -60,7 +60,9 @@ const SavingBar: FC<TProps> = ({
               space={!resolvedLoading ? 1.5 : 0}
               onCancel={() => {
                 onCancel?.()
-                field && rollbackEdit(field)
+                if (field) {
+                  rollbackEdit(field)
+                }
               }}
               onConfirm={() => {
                 if (field) {
@@ -75,7 +77,7 @@ const SavingBar: FC<TProps> = ({
         </div>
       )
     }
-    return <>{children}</>
+    return children
   }
 
   if (!isTouched) return null
@@ -107,7 +109,9 @@ const SavingBar: FC<TProps> = ({
           }}
           onCancel={() => {
             onCancel?.()
-            field && rollbackEdit(field)
+            if (field) {
+              rollbackEdit(field)
+            }
           }}
         />
       </div>

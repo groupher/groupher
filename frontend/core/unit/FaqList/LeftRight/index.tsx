@@ -30,9 +30,11 @@ const LeftRight: FC<TProps> = ({ sections }) => {
   // fold/unfold one item
   const toggle = useCallback(
     (id) => {
-      includes(id, openedIndexes)
-        ? setOpenedIndexes(reject((_id) => _id === id, openedIndexes))
-        : setOpenedIndexes([id, ...openedIndexes])
+      if (includes(id, openedIndexes)) {
+        setOpenedIndexes(reject((_id) => _id === id, openedIndexes))
+      } else {
+        setOpenedIndexes([id, ...openedIndexes])
+      }
     },
     [openedIndexes],
   )
