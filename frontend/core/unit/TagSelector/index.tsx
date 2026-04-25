@@ -24,11 +24,10 @@ const TagSelector: FC<TProps> = ({ mode = 'default', groupedTags, activeTag, onS
   const s = useSalon()
 
   const [show, setShow] = useState(false)
-  // @ts-expect-error
   const [_menuOpen, setMenuOpen] = useState(false)
 
   const handleSelect = (tag: TTag) => {
-    onSelect(tag)
+    onSelect?.(tag)
   }
 
   return (

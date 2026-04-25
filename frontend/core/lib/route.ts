@@ -327,7 +327,10 @@ export const markRoute = (
     ...opt,
   })
 
-  const newQueryObj = pickBy((v) => !nilOrEmpty(v), mergeRight(exsitQuery, query$))
+  const newQueryObj = pickBy((v) => !nilOrEmpty(v), mergeRight(exsitQuery, query$)) as Record<
+    string,
+    unknown
+  >
   const newQueryString = serializeQuery(newQueryObj)
 
   Global.history.pushState({}, null, newQueryString)

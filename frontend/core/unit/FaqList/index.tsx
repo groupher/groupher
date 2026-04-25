@@ -61,9 +61,9 @@ const TEST_DATA = [
 ]
 
 const FaqList: FC<TProps> = ({
-  _testid = 'faq-list',
+  testid: _testid = 'faq-list',
   layout = DOC_FAQ_LAYOUT.FLAT,
-  _sections = [],
+  sections: _sections = [],
   large = false,
   ...spacing
 }) => {

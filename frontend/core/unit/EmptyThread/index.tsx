@@ -12,7 +12,7 @@ type TProps = {
   thread: TThread
 }
 
-const EmptyThread: FC<TProps> = ({ _thread }) => (
+const EmptyThread: FC<TProps> = ({ thread: _thread }) => (
   <div>
     <h3>Empty Thread</h3>
   </div>

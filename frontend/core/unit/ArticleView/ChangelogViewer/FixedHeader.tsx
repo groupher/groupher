@@ -13,7 +13,7 @@ type TProps = {
   footerVisible: boolean
 }
 
-const FixedHeader: FC<TProps> = ({ article, visible, _footerVisible }) => {
+const FixedHeader: FC<TProps> = ({ article, visible, footerVisible: _footerVisible }) => {
   const s = useSalon({ visible })
   const { upvotesCount, viewerHasUpvoted, cat, state } = article
 

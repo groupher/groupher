@@ -46,7 +46,7 @@ interface IWindow extends Window {
   HTMLElement?: typeof HTMLElement
 
   // for baidu analysis
-  _hmt?: unknown
+  _hmt?: Array<unknown>
 }
 
 export type TWindow = IWindow | null

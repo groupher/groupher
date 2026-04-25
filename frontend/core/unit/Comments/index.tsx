@@ -27,7 +27,7 @@ type TProps = {
   locked?: boolean
 }
 
-const Comments: FC<TProps> = ({ _locked = false, apiMode = API_MODE.ARTICLE }) => {
+const Comments: FC<TProps> = ({ locked: _locked = false, apiMode = API_MODE.ARTICLE }) => {
   const s = useSalon()
   const { initialized, totalCount } = useCommentsRootState()
   const editState = useCommentsEditState()

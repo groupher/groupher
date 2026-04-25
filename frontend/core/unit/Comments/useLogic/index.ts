@@ -116,8 +116,11 @@ export default function useLogic(): TRet {
     reset: commentsStore.reset,
     ...actions,
     ...derived,
-    replyToComment: {
-      ...comments.replyToComment,
-    },
-  }
+    replyToComment: comments.replyToComment
+      ? ({
+          ...comments.replyToComment,
+          replies: [...(comments.replyToComment.replies ?? [])],
+        } as unknown as TEditState['replyToComment'])
+      : null,
+  } as unknown as TRet
 }

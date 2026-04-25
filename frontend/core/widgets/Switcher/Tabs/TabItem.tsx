@@ -35,7 +35,7 @@ const TabItem: FC<TProps> = ({
   activeKey,
   item,
   index,
-  _size, // 保留参数，样式系统可能用到
+  size: _size, // 保留参数，样式系统可能用到
   onClick,
   setItemWidth,
 }) => {
@@ -46,13 +46,14 @@ const TabItem: FC<TProps> = ({
   const s = useSalon({ bottomSpace })
 
   const { t } = useTrans()
-  const ref = useRef<HTMLElement | null>(null)
+  const linkRef = useRef<HTMLAnchorElement | null>(null)
+  const buttonRef = useRef<HTMLButtonElement | null>(null)
   const clickableRef = useRef<HTMLSpanElement | null>(null)
   const activeRef = useRef<HTMLDivElement | null>(null)
 
   // set each tab item width for calc
   useEffect(() => {
-    const width = ref.current?.offsetWidth ?? 0
+    const width = linkRef.current?.offsetWidth ?? buttonRef.current?.offsetWidth ?? 0
     setItemWidth?.(index, width)
   }, [setItemWidth, index])
 
@@ -102,14 +103,14 @@ const TabItem: FC<TProps> = ({
 
   if (href) {
     return (
-      <Link href={href} className={s.wrapper} ref={ref}>
+      <Link href={href} className={s.wrapper} ref={linkRef}>
         {Label}
       </Link>
     )
   }
 
   return (
-    <button type='button' className={s.wrapper} ref={ref} onClick={handleWrapperClick}>
+    <button type='button' className={s.wrapper} ref={buttonRef} onClick={handleWrapperClick}>
       {Label}
     </button>
   )

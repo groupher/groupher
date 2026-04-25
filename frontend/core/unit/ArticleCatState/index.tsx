@@ -22,7 +22,7 @@ export type TProps = {
 } & TSpace
 
 const ArticleCatState: FC<TProps> = ({
-  _testid = 'article-cat-state',
+  testid: _testid = 'article-cat-state',
   cat = ARTICLE_CAT.FEATURE,
   state = ARTICLE_STATE.DEFAULT,
   smaller = true,

@@ -20,15 +20,15 @@ type TProps = Omit<TScrollProps, 'direction' | 'innerHeight'>
 
 // vertical version
 const VerticalScroller: FC<TProps> = ({
-  _height = '100%',
+  height: _height = '100%',
   // width = '100%',
-  _showShadow = true,
-  _shadowSize = SIZE.SMALL,
+  showShadow: _showShadow = true,
+  shadowSize: _shadowSize = SIZE.SMALL,
   // barSize = SIZE.SMALL,
   children,
   // autoHide = true,
   // showOnHover = false,
-  _withBorder = false,
+  withBorder: _withBorder = false,
   // onScrollDirectionChange,
   // instanceKey = null,
 }) => {

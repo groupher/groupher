@@ -26,7 +26,7 @@ import { extractQueryName } from '~/utils/graphql'
 
 import type { TGQSSRResult } from './spec'
 
-type TTwitterCard = NonNullable<Metadata['twitter']>['card']
+type TTwitterCard = 'summary' | 'summary_large_image' | 'player' | 'app'
 
 export const commonRes = (result): TGQSSRResult => {
   return {

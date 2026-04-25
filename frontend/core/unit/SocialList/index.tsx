@@ -12,7 +12,7 @@ type TProps = {
 } & TSpace
 
 const SocialList: FC<TProps> = ({
-  _testid = 'social-list',
+  testid: _testid = 'social-list',
   selected = [],
   size = SIZE.SMALL,
   ...spacing

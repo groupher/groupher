@@ -22,7 +22,7 @@ type TProps = {
 const DropdownButton: FC<TProps> = ({
   children,
   size = SIZE.SMALL,
-  _withBorder = false,
+  withBorder: _withBorder = false,
   onClick = console.log,
   onClear = console.log,
   noArrow = false,

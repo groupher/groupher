@@ -26,7 +26,7 @@ export type TProps = {
 } & TSpace
 
 const FaIcons: FC<TProps> = ({
-  _testid = 'fa-icons',
+  testid: _testid = 'fa-icons',
   size = 16,
   icon = 'user',
   color = COLOR.ORANGE,

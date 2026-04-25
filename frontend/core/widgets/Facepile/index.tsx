@@ -4,7 +4,7 @@
  *
  */
 
-import { compose, filter, isNil, not, reverse as reverseFn, slice } from 'ramda'
+import { compose, filter, isNil, not, reverse as reverseFn } from 'ramda'
 import { type FC, Suspense } from 'react'
 import SIZE from '~/const/size'
 import type { TSpace, TUser } from '~/spec'
@@ -89,7 +89,7 @@ const Facepile: FC<TProps> = ({
         </Suspense>
       ) : (
         <div className={s.avatars}>
-          {slice(0, limit, sortedUsers).map((user, index) => (
+          {sortedUsers.slice(0, limit).map((user, index) => (
             <Suspense
               key={user.login}
               fallback={<ImgFallback className={s.avatarFallback} user={user} />}

@@ -17,7 +17,7 @@ type TProps = {
   user: TUser
 } & TSpace
 
-const AdminAvatar: FC<TProps> = ({ _testid = 'admin-avatar', user, ...spacing }) => {
+const AdminAvatar: FC<TProps> = ({ testid: _testid = 'admin-avatar', user, ...spacing }) => {
   const s = useSalon({ ...spacing })
 
   return (

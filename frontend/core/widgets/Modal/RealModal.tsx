@@ -23,7 +23,7 @@ const RealModal: FC<TProps> = ({
   show,
   width,
   showCloseBtn,
-  _mode,
+  mode: _mode,
   offsetTop = '20%',
   offsetLeft,
   handleCloseModal,

@@ -19,6 +19,10 @@ const clarify = (obj: TClarifyInput): TClarifyInput => {
   return obj
 }
 
+const clarifyVariables = <TVars extends AnyVariables>(variables?: TVars): TVars => {
+  return clarify((variables ?? {}) as TClarifyInput) as TVars
+}
+
 export default function useGraphQL() {
   const client = useClient()
 
@@ -26,9 +30,7 @@ export default function useGraphQL() {
     schema: DocumentInput<TData, TVars>,
     variables?: TVars,
   ) => {
-    const res = await client
-      .query<TData, TVars>(schema, clarify(variables ?? {}) as TVars)
-      .toPromise()
+    const res = await client.query<TData, TVars>(schema, clarifyVariables(variables)).toPromise()
     if (res.error) throw res.error
     return res.data as TData
   }
@@ -37,9 +39,7 @@ export default function useGraphQL() {
     schema: DocumentInput<TData, TVars>,
     variables?: TVars,
   ) => {
-    const res = await client
-      .mutation<TData, TVars>(schema, clarify(variables ?? {}) as TVars)
-      .toPromise()
+    const res = await client.mutation<TData, TVars>(schema, clarifyVariables(variables)).toPromise()
     if (res.error) throw res.error
     return res.data as TData
   }

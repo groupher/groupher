@@ -22,7 +22,7 @@ type TProps = {
 }
 
 const Upvote: FC<TProps> = ({
-  _testid = 'upvote',
+  testid: _testid = 'upvote',
   count = 4,
   viewerHasUpvoted = false,
   onAction = console.log,

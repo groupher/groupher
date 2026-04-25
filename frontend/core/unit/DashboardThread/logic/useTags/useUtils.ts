@@ -31,7 +31,6 @@ export default function useUtils(): TRet {
 
     dsb$.commit({ loading: true })
     query(S.pagedCommunityTags, params).then((data) => {
-      // @ts-expect-error
       const tags = data.pagedCommunityTags.entries
       dsb$.commit({ tags, original: { ...original, tags }, loading: false })
     })

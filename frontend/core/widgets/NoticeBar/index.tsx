@@ -29,7 +29,7 @@ type TProps = {
 } & TSpace
 
 const NoticeBar: FC<TProps> = ({
-  _testid = 'notice-bar',
+  testid: _testid = 'notice-bar',
   type = TYPE.NOTICE,
   user = null,
   isArticleAuthor = false,

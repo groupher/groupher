@@ -63,7 +63,6 @@ export default function useDerived(): TRet {
         'showEditor',
         'showReplyEditor',
         'showUpdateEditor',
-        'submitState',
         'updateId',
       ],
       commentsSnap,
@@ -76,7 +75,12 @@ export default function useDerived(): TRet {
         publishDone: commentsSnap.publishDone,
         isReady: commentsSnap.wordsCountReady,
       },
-      replyToComment: commentsSnap.replyToComment,
+      replyToComment: commentsSnap.replyToComment
+        ? ({
+            ...commentsSnap.replyToComment,
+            replies: [...(commentsSnap.replyToComment.replies ?? [])],
+          } as unknown as TEditState['replyToComment'])
+        : null,
     }
   }
 

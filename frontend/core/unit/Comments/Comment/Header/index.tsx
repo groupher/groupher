@@ -16,7 +16,7 @@ type TProps = {
 const CommentHeader: FC<TProps> = ({
   data,
   showInnerRef,
-  _apiMode = API_MODE.ARTICLE,
+  apiMode: _apiMode = API_MODE.ARTICLE,
   isReply,
 }) => {
   const s = useSalon()

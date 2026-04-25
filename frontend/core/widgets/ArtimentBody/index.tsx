@@ -23,7 +23,7 @@ type TProps = {
 }
 
 const ArtimentBody: FC<TProps> = ({
-  _testid = 'article-body',
+  testid: _testid = 'article-body',
   document,
   initLineClamp = 15,
   mode = 'article',
