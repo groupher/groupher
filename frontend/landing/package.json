@@ -12,8 +12,10 @@
     "serve": "serve out",
     "info": "next info",
     "analyze": "cross-env ANALYZE=true next build",
-    "lint": "../../node_modules/.bin/biome lint app/**/*.{ts,tsx}",
-    "format": "../../node_modules/.bin/biome format --write ./app",
+    "lint": "../../node_modules/.bin/oxlint app --threads=1",
+    "format": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json ./app",
+    "format:biome": "../../node_modules/.bin/biome format --write ./app",
+    "format:check": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json --check ./app",
     "clean:up": "rm -rf *.tsbuildinfo"
   },
   "lint-staged": {

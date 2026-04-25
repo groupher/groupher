@@ -23,7 +23,7 @@ const RealModal: FC<TProps> = ({
   show,
   width,
   showCloseBtn,
-  mode,
+  mode: _mode,
   offsetTop = '20%',
   offsetLeft,
   handleCloseModal,
@@ -83,7 +83,7 @@ const RealModal: FC<TProps> = ({
           />
           <ViewportTracker onEnter={() => setVisibleOnPage(true)} />
           {showCloseBtn && (
-            <button className={s.closeBox} onKeyUp={handleClose}>
+            <button type='button' className={s.closeBox} onKeyUp={handleClose}>
               <CloseCrossSVG className={s.closeIcon} />
             </button>
           )}

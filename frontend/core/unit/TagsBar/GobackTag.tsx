@@ -15,7 +15,7 @@ const GoBackTag: FC<TProps> = ({ onSelect }) => {
   const { t } = useTrans()
 
   return (
-    <button className={s.wrapper} onClick={() => onSelect(EMPTY_TAG)}>
+    <button type='button' className={s.wrapper} onClick={() => onSelect(EMPTY_TAG)}>
       <ArrowSVG className={s.arrow} />
       <div className={s.title}>{t('tags.all')}</div>
     </button>

@@ -12,7 +12,7 @@ type TProps = {
   testid?: string
 }
 
-const ArticleImgWindow: FC<TProps> = ({ testid = 'article-img-window' }) => {
+const ArticleImgWindow: FC<TProps> = ({ testid: _testid = 'article-img-window' }) => {
   const s = useSalon()
 
   return (

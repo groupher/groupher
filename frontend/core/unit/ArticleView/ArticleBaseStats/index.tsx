@@ -19,7 +19,7 @@ type TProps = {
 } & TSpace
 
 const ArticleBaseStats: FC<TProps> = ({
-  testid = 'article-base-stats',
+  testid: _testid = 'article-base-stats',
   container = 'body',
   article,
   ...spacing

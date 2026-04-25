@@ -39,6 +39,7 @@ const Panel: FC<TProps> = ({ show, onClose }) => {
 
             return (
               <button
+                type='button'
                 className={s.socialItem}
                 key={provider}
                 onClick={() => {

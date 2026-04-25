@@ -9,7 +9,7 @@ type TProps = {
   articles: TArticle[]
 }
 
-const Category: FC<TProps> = ({ title, desc, articles }) => {
+const Category: FC<TProps> = ({ title, desc: _desc, articles }) => {
   const s = useSalon()
   const { gotoDetailLayout } = useLogic()
 
@@ -20,7 +20,7 @@ const Category: FC<TProps> = ({ title, desc, articles }) => {
       <div className={s.items}>
         {articles.map((article, articleIndex) => (
           <button
-            key={`${article.id}-${articleIndex}`}
+            key={article.id}
             type='button'
             className={s.item}
             onClick={() => gotoDetailLayout()}

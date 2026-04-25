@@ -15,7 +15,11 @@ type TProps = {
   count?: number
 }
 
-const UpvoteBtn: FC<TProps> = ({ type = 'default', viewerHasUpvoted = false, count = 0 }) => {
+const UpvoteBtn: FC<TProps> = ({
+  type: _type = 'default',
+  viewerHasUpvoted = false,
+  count: _count = 0,
+}) => {
   const s = useSalon({ viewerHasUpvoted })
 
   return (

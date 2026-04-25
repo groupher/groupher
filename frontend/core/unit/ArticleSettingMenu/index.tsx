@@ -16,7 +16,10 @@ type TProps = {
   testid?: string
 } & TSpace
 
-const ArticleSettingMenu: FC<TProps> = ({ testid = 'article-setting-menu', ...spacing }) => {
+const ArticleSettingMenu: FC<TProps> = ({
+  testid: _testid = 'article-setting-menu',
+  ...spacing
+}) => {
   const s = useSalon({ ...spacing })
 
   const [visible, setVisible] = useState(null)

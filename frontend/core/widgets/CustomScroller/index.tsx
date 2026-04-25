@@ -29,7 +29,11 @@ export type TProps = {
   onScrollDirectionChange?: (dir: TScrollDirection) => void
 }
 
-const CustomScroller: FC<TProps> = ({ children, direction = 'vertical', ...restProps }) => {
+const CustomScroller: FC<TProps> = ({
+  children,
+  direction: _direction = 'vertical',
+  ...restProps
+}) => {
   return <VerticalScroller {...restProps}>{children}</VerticalScroller>
 }
 

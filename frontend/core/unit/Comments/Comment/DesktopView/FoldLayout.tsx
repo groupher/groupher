@@ -28,7 +28,7 @@ const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
   const { isLegal, illegalReason, illegalWords } = meta
 
   return (
-    <button className={s.wrapper} onClick={() => expandComment(data.id)}>
+    <button type='button' className={s.wrapper} onClick={() => expandComment(data.id)}>
       {isReply && <ReplyCurveSVG className={s.replyCurve} />}
       <ExpandSVG className={s.expandIcon} />
       <Img
@@ -40,6 +40,7 @@ const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
       {isLegal ? (
         <div
           className={s.commentBody}
+          // eslint-disable-next-line react/no-danger -- folded comment bodies use sanitized HTML from the backend renderer
           dangerouslySetInnerHTML={{
             __html: data.bodyHtml,
           }}

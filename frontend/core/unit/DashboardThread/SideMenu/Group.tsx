@@ -29,7 +29,7 @@ const Group: FC<TProps> = ({ group }) => {
 
   return (
     <div className={s.wrapper}>
-      <button className={s.folder} onClick={() => setFold(!fold)}>
+      <button type='button' className={s.folder} onClick={() => setFold(!fold)}>
         <div className={s.iconBox}>
           {group.icon === 'basic' && <InfoSVG className={s.menuIcon} />}
           {group.icon === 'cms' && <ManagementSVG className={cn(s.menuIcon, 'size-4 -mt-px')} />}

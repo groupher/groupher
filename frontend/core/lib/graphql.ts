@@ -43,7 +43,7 @@ export const makeGithubExplore = (
 export const pagiFilter = (
   page: number,
   options: Record<string, string | number> = {},
-): Record<string, any> => mergeRight({ page, size: PAGE_SIZE.D }, options)
+): Record<string, string | number> => mergeRight({ page, size: PAGE_SIZE.D }, options)
 
 /*
  * map value(string) to UPPER case for server absinthe-atom format
@@ -65,17 +65,17 @@ export const atomizeValues = (_obj: Record<string, string>): Record<string, stri
 // in rxjs, if you want to send parallel request you should use complex method
 // like forkJoin .. which need to refactor whole sr71 part
 // currently the simple later is fine
-export const later = (func, time = 200): ReturnType<typeof setTimeout> => {
+export const later = (func: () => void, time = 200): ReturnType<typeof setTimeout> => {
   return setTimeout(func, time)
 }
 
 const normalizeGQLQuery = (query: string): string => {
-  query = query.replace(/#.*?(\n|$)/g, '')
-  query = query.replace(/"""[\s\S]*?"""/g, '')
-  query = query.replace(/\s+/g, ' ').trim()
-  query = query.replace(/^(query|mutation|subscription)(?=[^\s])/, '$1 ')
+  let normalized = query.replace(/#.*?(\n|$)/g, '')
+  normalized = normalized.replace(/"""[\s\S]*?"""/g, '')
+  normalized = normalized.replace(/\s+/g, ' ').trim()
+  normalized = normalized.replace(/^(query|mutation|subscription)(?=[^\s])/, '$1 ')
 
-  return query
+  return normalized
 }
 
 export const extractQueryName = (schema: string): string | null => {

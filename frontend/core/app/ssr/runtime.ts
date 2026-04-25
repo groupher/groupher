@@ -69,7 +69,7 @@ export const getCommunityInfo = async (community$: string): Promise<TCommunityIn
 export const getLocaleData = async (
   locale: TLocale = LOCALE.EN,
   namespaces: readonly TI18nNamespace[] = ['base'],
-): Promise<any> => {
+): Promise<Awaited<ReturnType<typeof loadLocaleFile>>> => {
   'use cache'
   cacheLife('days')
 

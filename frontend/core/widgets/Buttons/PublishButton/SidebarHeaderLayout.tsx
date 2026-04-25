@@ -4,7 +4,7 @@
  *
  */
 
-import { type FC, Fragment, memo } from 'react'
+import { type FC, memo } from 'react'
 import EditPenSVG from '~/icons/EditPen'
 
 import useSalon from '../salon/publish_button/sidebar_header_layout'
@@ -18,10 +18,8 @@ const SidebarHeaderLayout: FC<TProps> = ({ text }) => {
 
   return (
     <div className={s.wrapper}>
-      <Fragment>
-        <EditPenSVG className={s.editIcon} />
-        <div className={s.title}>{text}</div>
-      </Fragment>
+      <EditPenSVG className={s.editIcon} />
+      <div className={s.title}>{text}</div>
     </div>
   )
 }

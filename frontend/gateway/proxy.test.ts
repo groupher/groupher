@@ -14,6 +14,7 @@ import proxy from './proxy'
 import { SITE } from './utils'
 
 const rewriteMock = vi.mocked(NextResponse.rewrite)
+type TProxyRequest = Parameters<typeof proxy>[0]
 
 const makeRequest = (pathname: string, host: string, search = '') => {
   return {
@@ -39,7 +40,7 @@ describe('gateway/proxy', () => {
   })
 
   it('rewrites dashboard route to dashboard site and trims /dashboard suffix', () => {
-    proxy(makeRequest('/cps/dashboard', 'www.groupher.com', '?page=1') as any)
+    proxy(makeRequest('/cps/dashboard', 'www.groupher.com', '?page=1') as unknown as TProxyRequest)
     const rewritten = getRewrittenUrl()
     expect(rewritten.origin).toBe(new URL(SITE.DASHBOARD).origin)
     expect(rewritten.pathname).toBe('/cps')
@@ -47,7 +48,13 @@ describe('gateway/proxy', () => {
   })
 
   it('rewrites nested dashboard route to dashboard site and keeps real route segments', () => {
-    proxy(makeRequest('/cps/dashboard/layout/kanban', 'www.groupher.com', '?tab=preview') as any)
+    proxy(
+      makeRequest(
+        '/cps/dashboard/layout/kanban',
+        'www.groupher.com',
+        '?tab=preview',
+      ) as unknown as TProxyRequest,
+    )
     const rewritten = getRewrittenUrl()
     expect(rewritten.origin).toBe(new URL(SITE.DASHBOARD).origin)
     expect(rewritten.pathname).toBe('/cps/layout/kanban')
@@ -55,7 +62,13 @@ describe('gateway/proxy', () => {
   })
 
   it('keeps nested dashboard route on dashboard subdomain', () => {
-    proxy(makeRequest('/cps/layout/kanban', 'dashboard.groupher.com', '?tab=preview') as any)
+    proxy(
+      makeRequest(
+        '/cps/layout/kanban',
+        'dashboard.groupher.com',
+        '?tab=preview',
+      ) as unknown as TProxyRequest,
+    )
     const rewritten = getRewrittenUrl()
     expect(rewritten.origin).toBe(new URL(SITE.DASHBOARD).origin)
     expect(rewritten.pathname).toBe('/cps/layout/kanban')
@@ -63,7 +76,13 @@ describe('gateway/proxy', () => {
   })
 
   it('rewrites dashboard static route to dashboard site', () => {
-    proxy(makeRequest('/dashboard/_next/static/chunks/app.js', 'www.groupher.com', '?v=1') as any)
+    proxy(
+      makeRequest(
+        '/dashboard/_next/static/chunks/app.js',
+        'www.groupher.com',
+        '?v=1',
+      ) as unknown as TProxyRequest,
+    )
     const rewritten = getRewrittenUrl()
     expect(rewritten.origin).toBe(new URL(SITE.DASHBOARD).origin)
     expect(rewritten.pathname).toBe('/dashboard/_next/static/chunks/app.js')
@@ -71,7 +90,13 @@ describe('gateway/proxy', () => {
   })
 
   it('rewrites landing static route to landing site', () => {
-    proxy(makeRequest('/landing/_next/static/chunks/app.js', 'www.groupher.com', '?v=2') as any)
+    proxy(
+      makeRequest(
+        '/landing/_next/static/chunks/app.js',
+        'www.groupher.com',
+        '?v=2',
+      ) as unknown as TProxyRequest,
+    )
     const rewritten = getRewrittenUrl()
     expect(rewritten.origin).toBe(new URL(SITE.LANDING).origin)
     expect(rewritten.pathname).toBe('/landing/_next/static/chunks/app.js')
@@ -79,7 +104,7 @@ describe('gateway/proxy', () => {
   })
 
   it('rewrites landing static page path to landing site', () => {
-    proxy(makeRequest('/pricing', 'www.groupher.com', '?ref=ad') as any)
+    proxy(makeRequest('/pricing', 'www.groupher.com', '?ref=ad') as unknown as TProxyRequest)
     const rewritten = getRewrittenUrl()
     expect(rewritten.origin).toBe(new URL(SITE.LANDING).origin)
     expect(rewritten.pathname).toBe('/pricing')
@@ -87,7 +112,7 @@ describe('gateway/proxy', () => {
   })
 
   it('rewrites other routes to main site', () => {
-    proxy(makeRequest('/unknown', 'www.groupher.com', '?k=v') as any)
+    proxy(makeRequest('/unknown', 'www.groupher.com', '?k=v') as unknown as TProxyRequest)
     const rewritten = getRewrittenUrl()
     expect(rewritten.origin).toBe(new URL(SITE.MAIN).origin)
     expect(rewritten.pathname).toBe('/unknown')
@@ -95,7 +120,7 @@ describe('gateway/proxy', () => {
   })
 
   it('does not misclassify non-dashboard routes', () => {
-    proxy(makeRequest('/foo/bar/dashboard', 'www.groupher.com', '?k=v') as any)
+    proxy(makeRequest('/foo/bar/dashboard', 'www.groupher.com', '?k=v') as unknown as TProxyRequest)
     const rewritten = getRewrittenUrl()
     expect(rewritten.origin).toBe(new URL(SITE.MAIN).origin)
     expect(rewritten.pathname).toBe('/foo/bar/dashboard')

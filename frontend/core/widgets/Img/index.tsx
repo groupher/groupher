@@ -31,30 +31,26 @@ const Img: FC<TProps> = ({
   clickable = false,
   threshold = 200,
 }) => {
-  return (
-    <>
-      {noLazy ? (
-        <NativeImg
-          className={className}
-          src={src}
-          alt={alt}
-          fallback={fallback}
-          clickable={clickable}
-          onClick={onClick}
-        />
-      ) : (
-        <LazyLoadImg
-          className={className}
-          src={src}
-          alt={alt}
-          fallback={fallback}
-          visibleByDefault={visibleByDefault}
-          clickable={clickable}
-          threshold={threshold}
-          onClick={onClick}
-        />
-      )}
-    </>
+  return noLazy ? (
+    <NativeImg
+      className={className}
+      src={src}
+      alt={alt}
+      fallback={fallback}
+      clickable={clickable}
+      onClick={onClick}
+    />
+  ) : (
+    <LazyLoadImg
+      className={className}
+      src={src}
+      alt={alt}
+      fallback={fallback}
+      visibleByDefault={visibleByDefault}
+      clickable={clickable}
+      threshold={threshold}
+      onClick={onClick}
+    />
   )
 }
 

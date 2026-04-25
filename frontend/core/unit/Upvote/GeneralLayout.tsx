@@ -22,7 +22,7 @@ type TProps = {
 }
 
 const Upvote: FC<TProps> = ({
-  testid = 'upvote',
+  testid: _testid = 'upvote',
   count = 4,
   viewerHasUpvoted = false,
   onAction = console.log,
@@ -35,7 +35,7 @@ const Upvote: FC<TProps> = ({
 
   return (
     <div className={s.wrapper}>
-      <button className={cn(s.button)} onClick={handleClick}>
+      <button type='button' className={cn(s.button)} onClick={handleClick}>
         <div className={s.upvote}>
           <UpvoteBtn viewerHasUpvoted={viewerHasUpvoted} count={count} />
         </div>

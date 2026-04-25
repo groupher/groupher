@@ -26,7 +26,11 @@ export function useMultiSelection() {
       if ((checked && has) || (!checked && !has)) return prev
 
       const next = new Set(prev)
-      checked ? next.add(id) : next.delete(id)
+      if (checked) {
+        next.add(id)
+      } else {
+        next.delete(id)
+      }
       return next
     })
   }, [])
@@ -99,7 +103,7 @@ export function useMultiSelection() {
    * ✅ IMPORTANT: this callback is stable (no deps),
    * so the ColumnDef identity stays stable across show/hide toggles.
    */
-  const selectColumn = useCallback(<TData,>(): ColumnDef<TData, any> => {
+  const selectColumn = useCallback(<TData,>(): ColumnDef<TData, unknown> => {
     const getId = (row: Row<TData>) => row.id
 
     return {

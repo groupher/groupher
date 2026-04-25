@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import * as React from 'react'
 import Img from '~/Img'
 import PulseSVG from '~/icons/Pulse'
-import type { TArticle } from '~/spec'
+import type { TArticle, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import ArticleCatState from '~/unit/ArticleCatState'
 import TagsList from '~/unit/TagsList'
@@ -12,7 +12,7 @@ import { thread2Path } from '~/utils/thread'
 import TimeAgo from '~/widgets/TimeAgo'
 import useSalon, { cn } from '../../salon/cms/cell'
 
-const EMPTY_ARR: any[] = []
+const EMPTY_ARR: TTag[] = []
 
 export const StateCell = React.memo(function StateCell({ rowData }: { rowData: TArticle }) {
   const s = useSalon()

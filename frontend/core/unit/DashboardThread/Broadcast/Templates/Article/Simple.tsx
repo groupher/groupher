@@ -18,6 +18,7 @@ const Center: FC<TProps> = ({ onSelect = null }) => {
 
   return (
     <button
+      type='button'
       className={cn(s.wrapper, active && s.active)}
       onClick={() => {
         edit(BROADCAST_ARTICLE_LAYOUT.SIMPLE, 'broadcastArticleLayout')

@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic'
-import { type FC, memo } from 'react'
+import { type ComponentType, type FC, memo } from 'react'
 
 import CommentSVG from '~/icons/Comment'
 import EmojiSVG from '~/icons/Heart'
@@ -9,7 +9,21 @@ import UserSVG from '~/icons/Users'
 
 import useSalon, { cn } from '../salon/basic_states'
 
-const Trend: any = dynamic(() => import('react-trend'), { ssr: false })
+type TTrendProps = {
+  smooth?: boolean
+  width?: number
+  height?: number
+  data: number[]
+  gradient?: string[]
+  radius?: number
+  strokeWidth?: number
+  strokeLinecap?: 'butt' | 'round' | 'square'
+}
+
+const Trend = dynamic<TTrendProps>(
+  () => import('react-trend').then((mod) => mod.default as ComponentType<TTrendProps>),
+  { ssr: false },
+)
 
 const BasicStates: FC = () => {
   const s = useSalon()

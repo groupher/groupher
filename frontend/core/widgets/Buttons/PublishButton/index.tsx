@@ -31,8 +31,8 @@ const PublishButton: FC<TProps> = ({
   mode = PUBLISH_MODE.DEFAULT,
   placement = 'bottom',
   onMenuSelect = console.log,
-  menuLeft = false,
-  offset = [-5, 5],
+  menuLeft: _menuLeft = false,
+  offset: _offset = [-5, 5],
   ...spacing
 }) => {
   const s = useSalon({ ...spacing })

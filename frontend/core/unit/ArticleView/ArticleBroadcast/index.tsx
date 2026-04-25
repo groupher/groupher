@@ -19,7 +19,7 @@ type TProps = {
 } & TSpace
 
 const ArticleBroadcast: FC<TProps> = ({
-  testid = 'article-broadcast',
+  testid: _testid = 'article-broadcast',
   color = COLOR.PURPLE,
   simple = false,
   ...spacing

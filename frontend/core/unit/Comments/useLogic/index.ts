@@ -105,8 +105,8 @@ export const useCommentsHeadState = () => {
 }
 
 export default function useLogic(): TRet {
-  const commentsStore = useCommentsStore() as any
-  const comments = useSnapshot(commentsStore) as any
+  const commentsStore = useCommentsStore()
+  const comments = useSnapshot(commentsStore)
   const actions = useActions()
   const derived = useDerived()
 
@@ -116,8 +116,11 @@ export default function useLogic(): TRet {
     reset: commentsStore.reset,
     ...actions,
     ...derived,
-    replyToComment: {
-      ...comments.replyToComment,
-    },
-  }
+    replyToComment: comments.replyToComment
+      ? ({
+          ...comments.replyToComment,
+          replies: [...(comments.replyToComment.replies ?? [])],
+        } as unknown as TEditState['replyToComment'])
+      : null,
+  } as unknown as TRet
 }

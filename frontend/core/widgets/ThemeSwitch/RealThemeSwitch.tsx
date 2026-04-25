@@ -38,6 +38,7 @@ const ThemeSwitch: FC<TProps> = ({ ...spacing }) => {
   return (
     <div className={s.wrapper}>
       <button
+        type='button'
         id='theme-toggle'
         className={s.button}
         title={ariaLabel}

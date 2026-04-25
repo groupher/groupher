@@ -10,7 +10,7 @@ type TProps = {
   isFold?: boolean
 }
 
-const IllegalBar: FC<TProps> = ({ illegalReason, illegalWords, isFold }) => {
+const IllegalBar: FC<TProps> = ({ illegalReason, illegalWords: _illegalWords, isFold }) => {
   const s = useSalon()
   const { t } = useTrans()
 

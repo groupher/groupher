@@ -1,6 +1,6 @@
 @config "../tailwind.config.js";
 
-@import "tailwindcss";
+@import 'tailwindcss';
 @layer base, components, utilities;
 
 @source "../..";
@@ -9,12 +9,12 @@
 @source "../../../landing/app";
 @source "../../../gateway";
 
-@import "tailwindcss-animated";
+@import 'tailwindcss-animated';
 @plugin "@tailwindcss/typography";
 
-@import "./tokens";
-@import "./safelist";
-@import "./common";
+@import './tokens';
+@import './safelist';
+@import './common';
 
 @layer base {
   :root {
@@ -37,5 +37,5 @@
   .masonry-cards-grid_column {
     background-clip: padding-box;
     padding: 8px;
-  } 
+  }
 }

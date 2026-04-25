@@ -1,9 +1,9 @@
 import type { TThread } from '~/spec'
 
-export const getTargetPage = (community: string, thread: TThread): string => {
-  return `/publish/${thread}?community=${community}`
+export const getTargetPage = (community: string, _thread: TThread): string => {
+  return `/publish/${_thread}?community=${community}`
 }
 
-export const getText = (thread: TThread): string => {
+export const getText = (_thread: TThread): string => {
   return '发布帖子'
 }

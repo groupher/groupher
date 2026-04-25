@@ -20,6 +20,7 @@ const Default: FC<TProps> = ({ onSelect = null }) => {
 
   return (
     <button
+      type='button'
       className={cn(s.wrapper, active && s.active)}
       onClick={() => {
         edit(BROADCAST_LAYOUT.DEFAULT, 'broadcastLayout')

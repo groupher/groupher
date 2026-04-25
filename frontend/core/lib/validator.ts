@@ -65,21 +65,27 @@ const notNil = compose(not, isNil)
 
 const validObjects = compose(pickBy(notNil), pickBy(isObject))
 
-const emptyArray = (obj) => Array.isArray(obj) && obj.length === 0
+const emptyArray = (obj: unknown) => Array.isArray(obj) && obj.length === 0
 
 // avoid trim on int
-const trimIfNeed = (v) => {
+const trimIfNeed = (v: unknown) => {
   if (isString(v)) return trim(v)
   return v
 }
 
 const validValues = compose(map(trimIfNeed), pickBy(notNil), reject(isObject))
 
-export const cast = (fields: string[], source: Record<string, unknown>): any => {
+export const cast = (
+  fields: string[],
+  source: Record<string, unknown>,
+): Record<string, unknown> => {
   const casted = pick(fields, source)
+  const primitiveValues = validValues(casted)
 
-  // @ts-expect-error
-  return mergeRight(validValues(casted), validObjects(casted))
+  return mergeRight(
+    Array.isArray(primitiveValues) ? {} : (primitiveValues as Record<string, unknown>),
+    validObjects(casted) as Record<string, unknown>,
+  )
 }
 
 const keyOf = compose(head, keys)

@@ -97,6 +97,7 @@ const Button: FC<TProps> = ({
 
   return (
     <button
+      type='button'
       className={cnMerge(s.wrapper, className)}
       disabled={disabled}
       aria-label={ariaLabel}

@@ -7,7 +7,7 @@ import type { TArticleCat, TArticleState, TTransKey } from '~/spec'
 import { isString } from './validator'
 
 // need this since "15.5.1-canary.10", otherwise will crash due to strict Serialization issue
-export const deepSanitize = (obj: any): any => JSON.parse(JSON.stringify(obj))
+export const deepSanitize = <T>(obj: T): T => JSON.parse(JSON.stringify(obj)) as T
 
 /**
  * cut extra length of a string
@@ -105,12 +105,14 @@ export const camelize = (str: string): string => {
 }
 
 // https://stackoverflow.com/a/2627482/4050784
-export const daysBetween = (date1, date2) => {
+export const daysBetween = (date1: number | Date, date2: number | Date): number => {
   // The number of milliseconds in one day
   const ONE_DAY = 1000 * 60 * 60 * 24
+  const left = date1 instanceof Date ? date1.getTime() : date1
+  const right = date2 instanceof Date ? date2.getTime() : date2
 
   // Calculate the difference in milliseconds
-  const differenceMs = Math.abs(date1 - date2)
+  const differenceMs = Math.abs(left - right)
 
   // Convert back to days and return
   return Math.round(differenceMs / ONE_DAY)
@@ -139,7 +141,7 @@ const doCovert = (value: string, opt: TCovert): string => {
  * e.g:
  * posts -> post
  */
-export const singular = (value: string, opt = null): string => {
+export const singular = (value: string, opt: TCovert = null): string => {
   switch (value) {
     default: {
       const singularValue = endsWith('s', value) ? value.slice(0, -1) : value
@@ -154,7 +156,7 @@ export const singular = (value: string, opt = null): string => {
  * e.g:
  * post -> posts
  */
-export const plural = (value: string, opt = null): string => {
+export const plural = (value: string, opt: TCovert = null): string => {
   if (
     includes(value, [THREAD.ACCOUNT, THREAD.DOC, THREAD.KANBAN, THREAD.ABOUT, THREAD.DASHBOARD])
   ) {

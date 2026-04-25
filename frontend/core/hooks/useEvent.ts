@@ -1,12 +1,12 @@
 // hooks/useEvent.ts
-import { useEffect } from 'react'
+import { type DependencyList, useEffect } from 'react'
 
 import PubSub from '~/utils/pubsub'
 
 export default <T>(
   eventName: string | symbol,
   callback: (message: string | symbol, data?: T) => void,
-  dependencies: any[] = [],
+  dependencies: DependencyList = [],
 ) => {
   useEffect(() => {
     const handler = (msg: string | symbol, data?: T) => {

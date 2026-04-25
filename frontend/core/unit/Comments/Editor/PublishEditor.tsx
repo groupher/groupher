@@ -12,7 +12,7 @@ type TProps = {
   submitState: TSubmitState
 }
 
-const PublishEditor: FC<TProps> = ({ submitState, body }) => {
+const PublishEditor: FC<TProps> = ({ submitState: _submitState, body }) => {
   const s = useSalon()
   const { commentOnChange } = useActions()
 

@@ -3,6 +3,7 @@ import { useContext } from 'react'
 
 import type { TComment, TEmotion, TID } from '~/spec'
 import { StoreContext as CommentsStoreContext } from '~/stores/comments/provider'
+import type { TStore as TCommentsStore } from '~/stores/comments/spec'
 import { EDIT_MODE, MODE } from '../constant'
 import type { TEditMode } from '../spec'
 
@@ -15,7 +16,7 @@ type TRet = {
 }
 
 export default function useHelper(): TRet {
-  const commentsStore = useContext(CommentsStoreContext) as any
+  const commentsStore = useContext(CommentsStoreContext) as TCommentsStore | null
   if (!commentsStore) {
     throw new Error('useHelper must be used within a Comments store provider')
   }

@@ -5,7 +5,7 @@
  */
 
 import { OverlayScrollbarsComponent } from 'overlayscrollbars-react'
-import { type FC, Fragment, memo } from 'react'
+import { type FC, memo } from 'react'
 
 import SIZE from '~/const/size'
 // import useTheme from '~/hooks/useTheme'
@@ -20,15 +20,15 @@ type TProps = Omit<TScrollProps, 'direction' | 'innerHeight'>
 
 // vertical version
 const VerticalScroller: FC<TProps> = ({
-  height = '100%',
+  height: _height = '100%',
   // width = '100%',
-  showShadow = true,
-  shadowSize = SIZE.SMALL,
+  showShadow: _showShadow = true,
+  shadowSize: _shadowSize = SIZE.SMALL,
   // barSize = SIZE.SMALL,
   children,
   // autoHide = true,
   // showOnHover = false,
-  withBorder = false,
+  withBorder: _withBorder = false,
   // onScrollDirectionChange,
   // instanceKey = null,
 }) => {
@@ -37,20 +37,18 @@ const VerticalScroller: FC<TProps> = ({
   // const [showBottomShadow] = useState(true)
 
   return (
-    <Fragment>
-      <OverlayScrollbarsComponent
-        options={{
-          scrollbars: { autoHide: 'leave', autoHideDelay: 300, autoHideSuspend: true },
-        }}
-      >
-        <div className={s.viewHolder} />
-        {/* <Waypoint onEnter={handleHideTopShadow} onLeave={handleShowTopShadow} /> */}
-        {children}
+    <OverlayScrollbarsComponent
+      options={{
+        scrollbars: { autoHide: 'leave', autoHideDelay: 300, autoHideSuspend: true },
+      }}
+    >
+      <div className={s.viewHolder} />
+      {/* <Waypoint onEnter={handleHideTopShadow} onLeave={handleShowTopShadow} /> */}
+      {children}
 
-        <div className={s.viewHolder} />
-        {/* <Waypoint onEnter={handleHideBottomShadow} onLeave={handleShowBottomShadow} /> */}
-      </OverlayScrollbarsComponent>
-    </Fragment>
+      <div className={s.viewHolder} />
+      {/* <Waypoint onEnter={handleHideBottomShadow} onLeave={handleShowBottomShadow} /> */}
+    </OverlayScrollbarsComponent>
   )
 }
 

@@ -64,7 +64,7 @@ const CustomSingleValue = (props) => {
 }
 
 const Select: FC<TProps> = ({
-  testid = 'widget-select',
+  testid: _testid = 'widget-select',
   placeholder = '请选择..',
   options,
   isMulti = false,

@@ -4,6 +4,7 @@ import { useSnapshot } from 'valtio'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import type { TCommentsState } from '~/spec'
 import { StoreContext as CommentsStoreContext } from '~/stores/comments/provider'
+import type { TStore as TCommentsStore } from '~/stores/comments/spec'
 import { API_MODE } from '../constant'
 import type { TEditState, TFoldState, TRepliesState } from '../spec'
 
@@ -15,11 +16,11 @@ export type TRet = {
 }
 
 export default function useDerived(): TRet {
-  const commentsStore = useContext(CommentsStoreContext) as any
+  const commentsStore = useContext(CommentsStoreContext) as TCommentsStore | null
   if (!commentsStore) {
     throw new Error('useDerived must be used within a Comments store provider')
   }
-  const commentsSnap = useSnapshot(commentsStore) as any
+  const commentsSnap = useSnapshot(commentsStore)
   const { article } = useViewingArticle()
 
   const getBasicState = (): TCommentsState => {
@@ -62,7 +63,6 @@ export default function useDerived(): TRet {
         'showEditor',
         'showReplyEditor',
         'showUpdateEditor',
-        'submitState',
         'updateId',
       ],
       commentsSnap,
@@ -75,7 +75,12 @@ export default function useDerived(): TRet {
         publishDone: commentsSnap.publishDone,
         isReady: commentsSnap.wordsCountReady,
       },
-      replyToComment: commentsSnap.replyToComment,
+      replyToComment: commentsSnap.replyToComment
+        ? ({
+            ...commentsSnap.replyToComment,
+            replies: [...(commentsSnap.replyToComment.replies ?? [])],
+          } as unknown as TEditState['replyToComment'])
+        : null,
     }
   }
 

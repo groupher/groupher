@@ -26,6 +26,7 @@ const ThirdPart: FC = () => {
       <div className={s.inner}>
         {INTEGRATE_ANALYSIS_TOOLS.map((item) => (
           <button
+            type='button'
             key={item.key}
             className={s.block}
             onClick={() => {

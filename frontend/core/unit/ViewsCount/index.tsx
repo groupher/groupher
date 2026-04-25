@@ -12,20 +12,16 @@ const ViewsCount: FC<TProps> = ({ count, ...spacing }) => {
 
   const s = useSalon({ isHighLight, ...spacing })
 
-  return (
-    <>
-      {isHighLight ? (
-        <div className={cn(s.wrapper, s.highLight)}>
-          <ViewedSVG className={s.viewIcon} />
-          <div className={s.count}>{count}</div>
-        </div>
-      ) : (
-        <div className={s.wrapper}>
-          <ViewedSVG className={s.viewIcon} />
-          <div className={s.count}>{count}</div>
-        </div>
-      )}
-    </>
+  return isHighLight ? (
+    <div className={cn(s.wrapper, s.highLight)}>
+      <ViewedSVG className={s.viewIcon} />
+      <div className={s.count}>{count}</div>
+    </div>
+  ) : (
+    <div className={s.wrapper}>
+      <ViewedSVG className={s.viewIcon} />
+      <div className={s.count}>{count}</div>
+    </div>
   )
 }
 

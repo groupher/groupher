@@ -15,7 +15,7 @@ type TProps = {
   testid?: string
 } & TSpace
 
-const SearchBox: FC<TProps> = ({ testid = 'search-box', ...spacing }) => {
+const SearchBox: FC<TProps> = ({ testid: _testid = 'search-box', ...spacing }) => {
   const s = useSalon({ ...spacing })
 
   return (

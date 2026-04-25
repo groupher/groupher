@@ -92,7 +92,7 @@ export default function useMediaReports(): TRet {
         .catch((e) => {
           dsb$.commit({ loading: false, queryingMediaReportIndex: null })
           console.error('## og info: ', e)
-          // biome-ignore lint/suspicious/noAlert: <explanation>
+          // eslint-disable-next-line no-alert -- legacy admin fallback while media report fetching is still alert-based
           alert('## queryOpenGraphInfo error')
         })
     }

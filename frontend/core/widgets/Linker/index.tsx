@@ -23,10 +23,10 @@ type TProps = TSpace & {
 }
 
 const Linker: FC<TProps> = ({
-  testid = 'linker',
+  testid: _testid = 'linker',
   src,
-  text = '',
-  external = true,
+  text: _text = '',
+  external: _external = true,
   inline = false,
   plainColor = false,
   ...spacing

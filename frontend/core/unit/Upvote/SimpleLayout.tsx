@@ -28,7 +28,7 @@ const Upvote: FC<TProps> = ({
   const { handleClick } = useUpvote({ viewerHasUpvoted, onAction })
 
   return (
-    <button className={s.wrapper} data-testid={testid} onClick={() => handleClick()}>
+    <button type='button' className={s.wrapper} data-testid={testid} onClick={() => handleClick()}>
       <UpvoteBtn viewerHasUpvoted={viewerHasUpvoted} count={count} />
       <AnimatedCount count={count} $active={viewerHasUpvoted} size='small' />
     </button>

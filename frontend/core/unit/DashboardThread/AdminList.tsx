@@ -29,7 +29,7 @@ const AdminList: FC<TProps> = ({ title = null, userList, ...spacing }) => {
 
       <div className={s.header}>
         <div className={s.title}>{resolvedTitle}</div>
-        <button className={s.iconBox} onClick={() => setShowDrawer(true)}>
+        <button type='button' className={s.iconBox} onClick={() => setShowDrawer(true)}>
           <SettingSVG
             className={s.icon}
             onClick={() => {

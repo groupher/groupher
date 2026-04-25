@@ -19,7 +19,7 @@ const makeClient = () => {
 const { getClient } = registerUrql(makeClient)
 
 const signinOauthQuery = gql`
-  mutation($provider: OauthProviderInput!, $oauthTrustCode: String!) {
+  mutation ($provider: OauthProviderInput!, $oauthTrustCode: String!) {
     signinOauth(provider: $provider, oauthTrustCode: $oauthTrustCode) {
       token
       user {

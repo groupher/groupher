@@ -32,6 +32,7 @@ const Content: FC<TProps> = ({ title = '', desc = '', logo, communityType, onHov
           <div className={s.threads}>
             {communityIntros[communityType].threads.map((thread) => (
               <button
+                type='button'
                 key={thread}
                 className={s.threadItem}
                 onMouseOver={() => onHoverThread(thread)}

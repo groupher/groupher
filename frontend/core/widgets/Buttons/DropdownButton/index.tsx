@@ -22,7 +22,7 @@ type TProps = {
 const DropdownButton: FC<TProps> = ({
   children,
   size = SIZE.SMALL,
-  withBorder = false,
+  withBorder: _withBorder = false,
   onClick = console.log,
   onClear = console.log,
   noArrow = false,
@@ -36,7 +36,7 @@ const DropdownButton: FC<TProps> = ({
 
   return (
     <div className={s.wrapper} onClick={onClick}>
-      <button className={s.button}>
+      <button type='button' className={s.button}>
         <div className={s.inner}>
           <PrefixIcon type={prefixIcon} />
           {children}

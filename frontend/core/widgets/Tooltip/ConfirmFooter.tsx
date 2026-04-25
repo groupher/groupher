@@ -21,7 +21,7 @@ const ConfirmFooter: FC<TProps> = ({ onConfirm, onCancel, behavior }) => {
     case FOOTER_BEHAVIOR.DELETE_CONFIRM: {
       content = (
         <div className={s.bottomWrapper}>
-          <button className={s.cancelBtn} onClick={onCancel}>
+          <button type='button' className={s.cancelBtn} onClick={onCancel}>
             取消
           </button>
           <div className='mr-2.5' />
@@ -40,7 +40,7 @@ const ConfirmFooter: FC<TProps> = ({ onConfirm, onCancel, behavior }) => {
             添加
           </Button>
           <div className='mr-2.5' />
-          <button className={s.cancelBtn} onClick={() => onCancel?.()}>
+          <button type='button' className={s.cancelBtn} onClick={() => onCancel?.()}>
             取消
           </button>
         </div>
@@ -55,7 +55,7 @@ const ConfirmFooter: FC<TProps> = ({ onConfirm, onCancel, behavior }) => {
             确定
           </Button>
           <div className='mr-2.5' />
-          <button className={s.cancelBtn} onClick={() => onCancel?.()}>
+          <button type='button' className={s.cancelBtn} onClick={() => onCancel?.()}>
             取消
           </button>
         </div>

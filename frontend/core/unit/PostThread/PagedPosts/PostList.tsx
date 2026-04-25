@@ -51,11 +51,7 @@ export default function PostList() {
     )
   }
 
-  return (
-    <>
-      {entries?.map((entry) => (
-        <PostItem key={entry.innerId} article={entry} layout={postLayout} />
-      ))}
-    </>
-  )
+  return entries?.map((entry) => (
+    <PostItem key={entry.innerId} article={entry} layout={postLayout} />
+  ))
 }

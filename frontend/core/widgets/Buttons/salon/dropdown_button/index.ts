@@ -4,7 +4,12 @@ import type { TActive, TSizeTS, TSpace } from '~/spec'
 
 type TProps = { size: TSizeTS; selected: boolean } & TSpace & TActive
 
-export default function useSalon({ size, selected, active, ...spacing }: TProps) {
+export default function useSalon({
+  size,
+  selected: _selected,
+  $active: _active,
+  ...spacing
+}: TProps) {
   const { cn, fg, margin, fill } = useTwBelt()
 
   return {

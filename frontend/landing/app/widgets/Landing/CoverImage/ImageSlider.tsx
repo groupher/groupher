@@ -126,6 +126,7 @@ export default function ImageSlider() {
           </Slider>
 
           <button
+            type='button'
             className={s.leftNavi}
             onClick={() => {
               let targetSlideIndex = 0
@@ -145,6 +146,7 @@ export default function ImageSlider() {
           </button>
 
           <button
+            type='button'
             className={s.rightNavi}
             onClick={() => {
               let targetSlideIndex = 0
@@ -173,6 +175,7 @@ export default function ImageSlider() {
       )}
       {loaded && (
         <button
+          type='button'
           className={s.themeSwitch}
           onClick={() => {
             if (themeIndex >= MAX_THEMES_COUNT) {

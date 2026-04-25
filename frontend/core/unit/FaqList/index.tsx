@@ -61,22 +61,21 @@ const TEST_DATA = [
 ]
 
 const FaqList: FC<TProps> = ({
-  testid = 'faq-list',
+  testid: _testid = 'faq-list',
   layout = DOC_FAQ_LAYOUT.FLAT,
-  sections = [],
+  sections: _sections = [],
   large = false,
   ...spacing
 }) => {
   const s = useSalon({ ...spacing })
-
-  sections = TEST_DATA
+  const resolvedSections = TEST_DATA
 
   return (
     <div className={s.wrapper}>
-      {layout === DOC_FAQ_LAYOUT.FLAT && <Flat sections={sections} large={large} />}
-      {layout === DOC_FAQ_LAYOUT.SEARCH_HINT && <SearchHint sections={sections} />}
-      {layout === DOC_FAQ_LAYOUT.COLLAPSE && <Collapse sections={sections} />}
-      {layout === DOC_FAQ_LAYOUT.LEFT_RIGHT && <LeftRight sections={sections} />}
+      {layout === DOC_FAQ_LAYOUT.FLAT && <Flat sections={resolvedSections} large={large} />}
+      {layout === DOC_FAQ_LAYOUT.SEARCH_HINT && <SearchHint sections={resolvedSections} />}
+      {layout === DOC_FAQ_LAYOUT.COLLAPSE && <Collapse sections={resolvedSections} />}
+      {layout === DOC_FAQ_LAYOUT.LEFT_RIGHT && <LeftRight sections={resolvedSections} />}
     </div>
   )
 }

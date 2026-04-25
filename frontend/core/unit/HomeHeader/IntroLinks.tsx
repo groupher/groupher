@@ -29,6 +29,7 @@ const IntroLinks: FC<TProps> = ({ activeMenu, setActiveMenu, onLinkHover }) => {
 
       <div className={s.links}>
         <button
+          type='button'
           className={cn(s.stackLink, activeMenu === HEAD_MENU.PRODUCT && s.linkActive)}
           onMouseEnter={() => handleHover(HEAD_MENU.PRODUCT)}
         >
@@ -36,6 +37,7 @@ const IntroLinks: FC<TProps> = ({ activeMenu, setActiveMenu, onLinkHover }) => {
         </button>
 
         <button
+          type='button'
           className={cn(s.stackLink, activeMenu === HEAD_MENU.COMMUNITY && s.linkActive)}
           onMouseEnter={() => handleHover(HEAD_MENU.COMMUNITY)}
         >
@@ -43,6 +45,7 @@ const IntroLinks: FC<TProps> = ({ activeMenu, setActiveMenu, onLinkHover }) => {
         </button>
 
         <button
+          type='button'
           className={cn(s.stackLink, activeMenu === HEAD_MENU.DOCS && s.linkActive)}
           onMouseEnter={() => handleHover(HEAD_MENU.DOCS)}
         >
@@ -54,6 +57,7 @@ const IntroLinks: FC<TProps> = ({ activeMenu, setActiveMenu, onLinkHover }) => {
         </Link>
 
         <button
+          type='button'
           className={cn(s.stackLink, activeMenu === HEAD_MENU.ABOUT && s.linkActive)}
           onMouseEnter={() => handleHover(HEAD_MENU.ABOUT)}
         >

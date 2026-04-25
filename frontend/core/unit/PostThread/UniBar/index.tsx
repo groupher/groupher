@@ -59,13 +59,14 @@ export default function UniBar() {
 
       <div className={s.buttonBar}>
         <Tooltip content={<div className={s.tipText}>{t('to.top')}</div>} {...TIP_OPTIONS}>
-          <button className={s.topBox} onClick={() => scrollToHeader()}>
+          <button type='button' className={s.topBox} onClick={() => scrollToHeader()}>
             <ArrowTopSVG className={s.icon} />
           </button>
         </Tooltip>
 
         <Tooltip content={<div className={s.tipText}>{t('mention.msg')}</div>} {...TIP_OPTIONS}>
           <button
+            type='button'
             className={cn(s.iconBox, menu === MENU.NOTIFY.key && s.iconActive)}
             onClick={() => handleOpenMenu(MENU.NOTIFY.key)}
           >
@@ -75,6 +76,7 @@ export default function UniBar() {
 
         <Tooltip content={<div className={s.tipText}>{t('active.users')}</div>} {...TIP_OPTIONS}>
           <button
+            type='button'
             className={cn(s.iconBox, menu === MENU.PEOPLE.key && s.iconActive)}
             onClick={() => handleOpenMenu(MENU.PEOPLE.key)}
           >
@@ -84,6 +86,7 @@ export default function UniBar() {
 
         <Tooltip content={<div className={s.tipText}>{t('locale')}</div>} {...TIP_OPTIONS}>
           <button
+            type='button'
             className={cn(s.iconBox, menu === MENU.I18N.key && s.iconActive)}
             onClick={() => handleOpenMenu(MENU.I18N.key)}
           >
@@ -97,6 +100,7 @@ export default function UniBar() {
 
         <Tooltip content={<div className={s.tipText}>{t('more')}</div>} {...TIP_OPTIONS}>
           <button
+            type='button'
             className={cn(s.iconBox, menu === MENU.MORE.key && s.iconActive)}
             onClick={() => handleOpenMenu(MENU.MORE.key)}
           >

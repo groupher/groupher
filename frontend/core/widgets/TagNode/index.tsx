@@ -39,11 +39,7 @@ const TagNode: FC<TProps> = ({ boldHash = false, ...restProps }) => {
 
   const HashIcon = boldHash ? HashSVGBold : HashSVG
 
-  return (
-    <>
-      {tagLayout === TAG_LAYOUT.DOT ? <div className={s.dot} /> : <HashIcon className={s.hash} />}
-    </>
-  )
+  return tagLayout === TAG_LAYOUT.DOT ? <div className={s.dot} /> : <HashIcon className={s.hash} />
 }
 
 export default TagNode

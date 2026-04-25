@@ -18,7 +18,7 @@ const Item: FC<TProps> = ({ item, withDesc = false, active, onClick }) => {
 
   if (withDesc) {
     return (
-      <button className={cnMerge(s.wrapper, s.full)} onClick={onClick}>
+      <button type='button' className={cnMerge(s.wrapper, s.full)} onClick={onClick}>
         <div className={s.fullIconBox}>
           <Icon type={item.icon as TMenu} />
         </div>
@@ -31,7 +31,7 @@ const Item: FC<TProps> = ({ item, withDesc = false, active, onClick }) => {
   }
 
   return (
-    <button className={s.wrapper} onClick={onClick}>
+    <button type='button' className={s.wrapper} onClick={onClick}>
       <Icon type={item.icon as TMenu} />
       <div className={s.title}>{t(item.title)}</div>
     </button>

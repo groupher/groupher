@@ -10,7 +10,7 @@ import CatSection from './CatSection'
 
 type TProps = Pick<TIndex, 'sections'>
 
-const SearchHint: FC<TProps> = ({ sections }) => {
+const SearchHint: FC<TProps> = ({ sections: _sections }) => {
   const s = useSalon()
 
   const { slug: community } = useCommunity()

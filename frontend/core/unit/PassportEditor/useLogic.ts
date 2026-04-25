@@ -46,9 +46,7 @@ export default function useLogic(): TRet {
   const loadUserPassport = (): void => {
     setSelectedRules([])
     query(S.userPassport, { login: activeModerator.login }).then((res) => {
-      // @ts-expect-error
       console.log('## load: userPassport: ', res.user)
-      // @ts-expect-error
       const { cmsPassportString } = res.user
       const passportJson = JSON.parse(cmsPassportString)
 
@@ -65,7 +63,6 @@ export default function useLogic(): TRet {
     }
 
     query(S.allPassportRules).then((res) => {
-      // @ts-expect-error
       const { moderator, root } = res.allPassportRules
 
       dsb$.commit({ allRootRules: root, allModeratorRules: moderator })

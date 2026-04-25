@@ -15,7 +15,7 @@ export default function TableLoading({ className = '', ...spacing }: TProps) {
   return (
     <div className={cn(s.wrapper, className)}>
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className={s.row}>
+        <div key={`row-${i + 1}`} className={s.row}>
           <div style={randDelay()} className={cn(s.item, 'h-4 w-60')} />
           <div style={randDelay()} className={cn(s.item, 'w-16 h-4')} />
           <div style={randDelay()} className={cn(s.item, 'w-20 h-4')} />

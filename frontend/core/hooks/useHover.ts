@@ -1,5 +1,9 @@
 import { type MutableRefObject, useEffect, useRef, useState } from 'react'
 
+type HoverableNode = HTMLElement & {
+  _hoverListenersAdded?: boolean
+}
+
 // Hook
 // T - could be any type of HTML element like: HTMLDivElement, HTMLParagraphElement and etc.
 // hook returns tuple(array) with type [any, boolean]
@@ -12,7 +16,7 @@ function useHover<T>(): [MutableRefObject<T>, boolean] {
   // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(
     () => {
-      const node: any = ref.current
+      const node = ref.current as HoverableNode | null
       if (node) {
         if (node._hoverListenersAdded) {
           node.removeEventListener('mouseover', handleMouseOver)

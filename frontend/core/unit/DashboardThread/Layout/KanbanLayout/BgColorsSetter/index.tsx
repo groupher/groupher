@@ -72,10 +72,10 @@ export default function BgColorsSetter() {
   const resetEnabledBoards = () => {
     const nextColors = [...colors]
 
-    activeBoards.forEach((board) => {
+    for (const board of activeBoards) {
       const index = BOARD_ORDER.indexOf(board)
       nextColors[index] = INIT_KANBAN_COLORS[index]
-    })
+    }
 
     edit(nextColors, FIELD.KANBAN_BG_COLORS)
   }
@@ -84,10 +84,10 @@ export default function BgColorsSetter() {
     const nextColors = [...colors]
     const randomColors = randomBgNames(activeBoards.length, [COLOR.CYAN])
 
-    activeBoards.forEach((board, idx) => {
+    for (const [idx, board] of activeBoards.entries()) {
       const index = BOARD_ORDER.indexOf(board)
       nextColors[index] = randomColors[idx]
-    })
+    }
 
     edit(nextColors, FIELD.KANBAN_BG_COLORS)
   }

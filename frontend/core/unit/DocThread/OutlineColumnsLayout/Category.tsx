@@ -24,7 +24,7 @@ const Category: FC<TProps> = ({ categoryIndex, title, articles }) => {
       <div className={s.items}>
         {articles.map((article, articleIndex) => (
           <button
-            key={`${article.id}-${articleIndex}`}
+            key={article.id}
             type='button'
             className={s.item}
             onClick={() => gotoDetailLayout()}

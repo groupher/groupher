@@ -9,10 +9,8 @@
   --container-community-sidebar-width: 1280px;
 }
 
-
 @media (min-width: 1680px) {
   :root {
-    --container-landing-width-init: 1520px
+    --container-landing-width-init: 1520px;
   }
 }
-

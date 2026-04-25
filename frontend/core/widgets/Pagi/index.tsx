@@ -47,23 +47,19 @@ const Pagi: FC<TProps> = ({
     )
   }
 
-  return (
-    <>
-      {hasExtraPage(totalCount, pageSize) ? (
-        <RealPagi
-          pageNumber={pageNumber}
-          totalCount={totalCount}
-          totalPages={totalPages}
-          pageSize={pageSize}
-          onChange={handlePageChange}
-          {...spacing}
-        />
-      ) : (
-        <div className={cn(s.wrapper, s.empty)}>
-          {showBottomMsg && <div className={s.bottomMsg}>{noMoreMsg}</div>}
-        </div>
-      )}
-    </>
+  return hasExtraPage(totalCount, pageSize) ? (
+    <RealPagi
+      pageNumber={pageNumber}
+      totalCount={totalCount}
+      totalPages={totalPages}
+      pageSize={pageSize}
+      onChange={handlePageChange}
+      {...spacing}
+    />
+  ) : (
+    <div className={cn(s.wrapper, s.empty)}>
+      {showBottomMsg && <div className={s.bottomMsg}>{noMoreMsg}</div>}
+    </div>
   )
 }
 

@@ -22,6 +22,7 @@ export default function ThemeSectionSelector({ ...spacing }: TSpace) {
   return (
     <div className={s.wrapper}>
       <button
+        type='button'
         className={cn(s.section, theme === THEME.LIGHT && s.sectionActive)}
         onClick={() => changeMode(THEME.LIGHT)}
       >
@@ -34,6 +35,7 @@ export default function ThemeSectionSelector({ ...spacing }: TSpace) {
       <div className={s.divider} />
 
       <button
+        type='button'
         className={cn(s.section, theme === THEME.DARK && s.sectionActive)}
         onClick={() => changeMode(THEME.DARK)}
       >

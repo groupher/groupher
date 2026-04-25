@@ -70,6 +70,7 @@ const StateSetting: FC<TProps> = ({ onBack }) => {
 
         return (
           <button
+            type='button'
             key={item.key}
             className={cn(
               s.item,

@@ -1,4 +1,4 @@
-import { THREAD_PATH } from '~/const/thread'
+import { THREAD, THREAD_PATH } from '~/const/thread'
 import type { TThread, TThreadPath } from '~/spec'
 
 const THREAD_BY_PATH = Object.fromEntries(
@@ -6,4 +6,5 @@ const THREAD_BY_PATH = Object.fromEntries(
 ) as Record<TThreadPath, TThread>
 
 export const thread2Path = (slug: TThread): TThreadPath => THREAD_PATH[slug]
-export const path2Thread = (path: TThreadPath): TThread => THREAD_BY_PATH[path]
+export const path2Thread = (path: string): TThread =>
+  THREAD_BY_PATH[path as TThreadPath] ?? THREAD.POST

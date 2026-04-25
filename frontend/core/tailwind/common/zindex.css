@@ -1,5 +1,5 @@
 @layer components {
-   .z-modal {
+  .z-modal {
     z-index: var(--z-modal);
   }
 
@@ -35,4 +35,3 @@
     z-index: var(--z-header);
   }
 }
-

@@ -22,7 +22,7 @@ type TProps = {
   metric?: TMetric
 }
 
-const ArticleEditor: FC<TProps> = ({ metric = METRIC.ARTICLE_EDITOR }) => {
+const ArticleEditor: FC<TProps> = ({ metric: _metric = METRIC.ARTICLE_EDITOR }) => {
   const s = useSalon()
 
   const {

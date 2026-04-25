@@ -42,7 +42,7 @@ export default function PinItem() {
   }, [pin, article, pinPost, undoPinPost])
 
   return (
-    <button className={s.menuItem} onClick={handlePin}>
+    <button type='button' className={s.menuItem} onClick={handlePin}>
       {pin ? <UnPinSVG className={s.icon} /> : <PinSVG className={s.icon} />}
       {pin ? '取消置顶' : '置顶'}
       <div className='grow' />

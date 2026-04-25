@@ -11,16 +11,12 @@ type TProps = {
 }
 
 const NextStepButton: FC<TProps> = ({ loading = false, onClick, disabled, text = '下一步' }) => {
-  return (
-    <>
-      {loading ? (
-        <LavaLampLoading />
-      ) : (
-        <Button disabled={disabled} onClick={onClick}>
-          {text}
-        </Button>
-      )}
-    </>
+  return loading ? (
+    <LavaLampLoading />
+  ) : (
+    <Button disabled={disabled} onClick={onClick}>
+      {text}
+    </Button>
   )
 }
 

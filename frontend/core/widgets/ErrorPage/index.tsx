@@ -18,10 +18,10 @@ export type TProps = {
 }
 
 const ErrorPage: FC<TProps> = ({
-  testid = 'error-page',
-  errorCode = 500,
-  metric = METRIC.COMMUNITY,
-  target = '',
+  testid: _testid = 'error-page',
+  errorCode: _errorCode = 500,
+  metric: _metric = METRIC.COMMUNITY,
+  target: _target = '',
 }) => {
   const s = useSalon()
 

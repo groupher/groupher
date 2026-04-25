@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
+import { type DependencyList, useEffect, useState } from 'react'
 import useTheme from '~/hooks/useTheme'
 
 type TOptions = {
   selector?: string
 }
 
-export default function useCSSVar(name: string, deps?: any[], options?: TOptions): string {
+export default function useCSSVar(name: string, deps?: DependencyList, options?: TOptions): string {
   const { theme } = useTheme()
   const [val, setVal] = useState('')
   const selector = options?.selector || '[data-theme]'

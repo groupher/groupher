@@ -1,0 +1,32 @@
+{
+  "$schema": "../../../node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "tabWidth": 2,
+  "useTabs": false,
+  "semi": false,
+  "singleQuote": true,
+  "jsxSingleQuote": true,
+  "quoteProps": "as-needed",
+  "trailingComma": "all",
+  "bracketSameLine": false,
+  "bracketSpacing": true,
+  "arrowParens": "always",
+  "endOfLine": "lf",
+  "ignorePatterns": [
+    "**/*.d.ts",
+    "**/*.tsbuildinfo",
+    "**/*.tsbuildinfo.*",
+    "**/*.min.js",
+    "**/next-env.d.ts",
+    "**/node_modules/**",
+    "**/.next/**",
+    "**/out/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/coverage/**",
+    "**/.turbo/**",
+    "**/.cache/**",
+    "**/.vercel/**",
+    "**/storybook-static/**"
+  ]
+}
