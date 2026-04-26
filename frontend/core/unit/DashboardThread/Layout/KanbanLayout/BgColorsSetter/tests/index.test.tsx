@@ -82,7 +82,7 @@ describe('<BgColorsSetter />', () => {
     render(<BgColorsSetter />)
 
     expect(screen.getAllByTestId('color-selector')).toHaveLength(3)
-    expect(screen.getByTestId('classic-preview')).toHaveTextContent('todo,wip,done')
+    expect(screen.getByTestId('classic-preview')).toHaveTextContent('TODO,WIP,DONE')
   })
 
   it('resets only enabled board colors and preserves hidden board colors', () => {
