@@ -51,7 +51,7 @@
     "serve.prod": "cross-env NODe_ENV=production next start -p 3000",
     "dist": "next build && next export -o \"build\"",
     "info": "next info",
-    "clean": "rimraf *.tsbuildinfo frontend/**/*.tsbuildinfo",
+    "clean": "rimraf --glob \"*.tsbuildinfo\" \"frontend/**/*.tsbuildinfo\"",
     "analyze": "cross-env ANALYZE=true next build",
     "lint": "yarn workspaces foreach -pt --all --exclude @groupher/root run lint",
     "format": "yarn workspaces foreach -pt --all --exclude @groupher/root run format",
@@ -66,6 +66,7 @@
     "test:e2e:main": "cross-env E2E_APP=main playwright test -c frontend/e2e/playwright.config.ts",
     "test:e2e:dashboard": "cross-env E2E_APP=dashboard playwright test -c frontend/e2e/playwright.config.ts",
     "test:e2e:landing": "cross-env E2E_APP=landing playwright test -c frontend/e2e/playwright.config.ts",
+    "prepare": "husky",
     "coveralls": "cat ./coverage/lcov.info | coveralls",
     "doctor": "react-doctor .",
     "doctor:main": "react-doctor frontend/main",
@@ -171,7 +172,7 @@
     "cross-env": "^10.1.0",
     "cz-conventional-changelog": "^3.0.0",
     "graphql-http": "^1.22.4",
-    "husky": "^3.1.0",
+    "husky": "^9.1.7",
     "jsdom": "^29.0.2",
     "lint-staged": "^15.2.0",
     "npm-run-all": "^4.1.1",
@@ -186,13 +187,6 @@
     "vite": "^8.0.10",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.5"
-  },
-  "husky": {
-    "hooks": {
-      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
-      "post-commit": "yarn clean",
-      "pre-commit": "yarn format && yarn lint"
-    }
   },
   "config": {
     "commitizen": {
