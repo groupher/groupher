@@ -4,6 +4,7 @@ import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
 import AccountUnit from '~/widgets/AccountUnit'
 import ArrowLinker from '~/widgets/ArrowLinker'
 import ViewportTracker from '~/widgets/ViewportTracker'
+
 import useSalon from '../salon/dashboard_layout'
 import CommunityBrief from './CommunityBrief'
 

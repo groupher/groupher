@@ -1,7 +1,8 @@
 import { getToken } from 'next-auth/jwt'
 import { revalidateTag } from 'next/cache'
-import { AUTH_KEY } from '~/const/oauth'
+
 import { CACHE_TAG } from '~/const/cache'
+import { AUTH_KEY } from '~/const/oauth'
 
 type TPayload = {
   community?: string

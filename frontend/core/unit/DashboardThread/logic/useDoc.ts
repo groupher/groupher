@@ -1,7 +1,9 @@
 import { pick } from 'ramda'
+
 import { COLOR } from '~/const/colors'
 import type { TDocCoverLayout, TDocFAQLayout, TEditFunc } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
+
 import { DEFAULT_NEW_FAQ } from '../constant'
 import useHelper from './useHelper'
 

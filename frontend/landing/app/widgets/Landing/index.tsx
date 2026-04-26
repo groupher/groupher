@@ -5,7 +5,6 @@
  */
 
 import { DOC_FAQ_LAYOUT } from '~/const/layout'
-
 import { ROUTE } from '~/const/route'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
@@ -75,7 +74,7 @@ export default function Landing() {
             <div className='inline-block -rotate-12'>
               <KanbanSVG className={cn(s.icon, s.blueFill, 'rotate-180')} />
             </div>
-            <span className='inline-block mr-1 text-3xl -rotate-12'>📝</span>
+            <span className='mr-1 inline-block -rotate-12 text-3xl'>📝</span>
             <BookSVG className={cn(s.icon, s.cyanFill, 'rotate-12')} />
             <div className={s.iconFootBar} />
           </div>
@@ -83,14 +82,14 @@ export default function Landing() {
           <h1 className={s.title}>{t('landing.hero.title')}</h1>
           <div className={s.desc}>
             {t('landing.hero.desc.prefix')}
-            <div className='inline-block ml-3'>
+            <div className='ml-3 inline-block'>
               <Facepile users={users} noLazyLoad showMore={false} />
             </div>
             {t('landing.hero.desc.feedback')}
           </div>
           <div className={cn(s.desc, 'mt-2')}>
             {t('landing.hero.subline.prefix')}
-            <span className='line-through px-0.5'>{t('landing.hero.subline.team')}</span>
+            <span className='px-0.5 line-through'>{t('landing.hero.subline.team')}</span>
             <span className={s.focus}>{t('landing.hero.subline.user')}</span>
             {t('landing.hero.subline.suffix')}
           </div>

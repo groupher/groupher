@@ -5,6 +5,7 @@
 
 import Link from 'next/link'
 import { type FC, useEffect } from 'react'
+
 import { COLOR } from '~/const/colors'
 import { DRAWER_SCROLLER } from '~/const/dom'
 import { POST_LAYOUT } from '~/const/layout'
@@ -15,6 +16,7 @@ import ColorSelector from '~/widgets/ColorSelector'
 import CustomScroller from '~/widgets/CustomScroller'
 import Input from '~/widgets/Input'
 import Select from '~/widgets/Select'
+
 import Footer from './Footer'
 import PostLayout from './PostLayout'
 import useSalon, { cn } from './salon'

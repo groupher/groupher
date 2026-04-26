@@ -1,7 +1,9 @@
 import type { FC } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
+
 import useSalon from '../../salon/domain/custom/domain_adder'
 
 type TProps = {

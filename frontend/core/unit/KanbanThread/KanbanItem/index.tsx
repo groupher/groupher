@@ -5,9 +5,11 @@
  */
 
 import type { FC } from 'react'
+
 import { KANBAN_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
 import type { TArticle } from '~/spec'
+
 import ClassicLayout from './ClassicLayout'
 import WaterfallLayout from './WaterfallLayout'
 

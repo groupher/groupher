@@ -1,7 +1,9 @@
 import { keys } from 'ramda'
+
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import PenSVG from '~/icons/EditPen'
 import { parseWallpaper } from '~/wallpaper'
+
 import useSalon, { cn } from '../salon/build_in/gradient_group'
 import useLogic from '../useLogic'
 

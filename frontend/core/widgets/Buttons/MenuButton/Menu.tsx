@@ -1,6 +1,7 @@
 import { QRCodeSVG } from 'qrcode.react'
 import { isEmpty } from 'ramda'
 import { type FC, Fragment, memo } from 'react'
+
 import type { TMenuOption } from '~/spec'
 
 import useSalon, { cn } from '../salon/menu_button/menu'

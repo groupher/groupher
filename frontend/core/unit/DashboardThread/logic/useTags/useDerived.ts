@@ -1,5 +1,6 @@
 import { equals, filter, find, includes, pluck, reject, uniq } from 'ramda'
 import { useMemo } from 'react'
+
 import { THREAD_PATH } from '~/const/thread'
 import { sortById } from '~/helper'
 import type { TCommunityThread, TNameAlias, TTag } from '~/spec'

@@ -1,11 +1,11 @@
 import { type FC, memo } from 'react'
-import { UPVOTE_LAYOUT } from '~/const/layout'
 
+import { UPVOTE_LAYOUT } from '~/const/layout'
 import { upvoteArticle } from '~/signal'
 import type { TArticle } from '~/spec'
 import Upvote from '~/unit/Upvote'
-import ArticleBaseStats from '../ArticleBaseStats'
 
+import ArticleBaseStats from '../ArticleBaseStats'
 import useSalon from '../salon/post_viewer/article_info'
 
 type TProps = {

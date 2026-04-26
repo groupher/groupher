@@ -3,7 +3,6 @@ import type { FC } from 'react'
 import Button from '~/widgets/Buttons/Button'
 
 import { FOOTER_BEHAVIOR } from './constant'
-
 import useSalon from './salon/confirm_footer'
 
 type TProps = {

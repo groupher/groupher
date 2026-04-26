@@ -1,13 +1,14 @@
 import Link from 'next/link'
 import type { FC } from 'react'
+
 import SIZE from '~/const/size'
 import { THREAD_PATH } from '~/const/thread'
 import type { TPost } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import CommentsCount from '~/unit/CommentsCount'
 import TagsList from '~/unit/TagsList'
-import ArticleReadLabel from '../../ArticleReadLabel'
 
+import ArticleReadLabel from '../../ArticleReadLabel'
 import useSalon from '../salon/minimal_layout/header'
 
 type TProps = {

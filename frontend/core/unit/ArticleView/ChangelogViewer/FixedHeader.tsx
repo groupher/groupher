@@ -1,4 +1,5 @@
 import { type FC, memo } from 'react'
+
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import type { TArticle } from '~/spec'
 import ArticleCatState from '~/unit/ArticleCatState'

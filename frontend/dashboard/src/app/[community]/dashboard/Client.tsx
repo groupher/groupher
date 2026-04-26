@@ -2,6 +2,7 @@
 
 import CommunityDigest from '~/unit/CommunityDigest/dashboard-layout'
 import { SideMenu } from '~/unit/DashboardThread'
+
 import useSalon from './salon'
 
 const ClientLayout = ({ children, demoMode = false }) => {

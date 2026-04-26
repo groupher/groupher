@@ -4,10 +4,10 @@
 
 import Link from 'next/link'
 import type { FC } from 'react'
-import { cutRest } from '~/fmt'
-import Img from '~/Img'
 
+import { cutRest } from '~/fmt'
 import UserSVG from '~/icons/User'
+import Img from '~/Img'
 import type { TCommunity } from '~/spec'
 import DotDivider from '~/widgets/DotDivider'
 

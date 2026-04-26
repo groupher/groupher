@@ -13,6 +13,7 @@ import usePrimaryColor from '~/hooks/usePrimaryColor'
 import useSubPrimaryColor from '~/hooks/useSubPrimaryColor'
 import type { TColorName, TZIndexType } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
+
 import { cachedMargin, keyToClass, RAINBOW_ALIAS, STATIC_CLS } from './constant'
 import type {
   TBgKey,
@@ -248,7 +249,6 @@ export default function useTwBelt(): TRet {
 
   const page = () => `${pageLightClass} ${pageDarkClass}`
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   return useMemo<TRet>(
     () => ({
       cn,

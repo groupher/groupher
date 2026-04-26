@@ -4,11 +4,13 @@
  */
 
 import type { FC } from 'react'
+
 import useMount from '~/hooks/useMount'
 import useCommunity from '~/stores/community/hooks'
 import Button from '~/widgets/Buttons/Button'
-import Selects from './Selects'
+
 import useSalon from './salon'
+import Selects from './Selects'
 import useLogic from './useLogic'
 
 const PassportEditor: FC = () => {

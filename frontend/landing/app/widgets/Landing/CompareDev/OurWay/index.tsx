@@ -2,6 +2,7 @@ import { COLOR } from '~/const/colors'
 import { ARTICLE_CAT } from '~/const/gtd'
 import SeedSVG from '~/icons/Seed'
 import TadaSVG from '~/icons/Tada'
+
 import useSalon from '../../salon/compare_dev/our_way'
 import BgShapes from './BgShapes'
 import Fans from './Fans'
@@ -20,7 +21,7 @@ export default function OurWay() {
         <NodeBlock index={0} cat='DEFAULT' rightDot='bottom-10 mt-0.5' leftDot='bottom-10' />
         <NodeBlock
           cat={ARTICLE_CAT.FEATURE}
-          className='absolute mt-2 top-16 left-56 rotate-3'
+          className='absolute top-16 left-56 mt-2 rotate-3'
           rightDot='bottom-8 mb-1'
           bg={COLOR.PURPLE}
         />
@@ -33,13 +34,13 @@ export default function OurWay() {
         <NodeBlock index={1} cat='DEFAULT' rightDot='bottom-10 mt-0.5' leftDot='bottom-10' />
         <NodeBlock
           cat={ARTICLE_CAT.BUG}
-          className='absolute z-10 mt-2 mr-12 top-16 right-80 -rotate-6'
+          className='absolute top-16 right-80 z-10 mt-2 mr-12 -rotate-6'
           rightDot='bottom-5'
           bg={COLOR.ORANGE}
         />
         <NodeBlock
           cat={ARTICLE_CAT.QUESTION}
-          className='absolute ml-20 bottom-14 right-96 rotate-3'
+          className='absolute right-96 bottom-14 ml-20 rotate-3'
           rightDot='top-5'
           bg={COLOR.GREEN}
         />

@@ -7,8 +7,8 @@ import Button from '~/widgets/Buttons/Button'
 
 import { FIELD } from '../../constant'
 import useFooter from '../../logic/useFooter'
-import SavingBar from '../../SavingBar'
 import useSalon, { cn } from '../../salon/footer/templates'
+import SavingBar from '../../SavingBar'
 import Group from './Group'
 import Simple from './Simple'
 

@@ -1,6 +1,5 @@
 import { ARTICLE_CAT, ARTICLE_STATE } from '~/const/gtd'
 import BugSVG from '~/icons/ColorBug'
-
 import LightSVG from '~/icons/ColorLight'
 import DiscussSVG from '~/icons/Discuss'
 import DoneSVG from '~/icons/GtdDone'

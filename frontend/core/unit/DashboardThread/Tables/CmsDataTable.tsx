@@ -7,11 +7,13 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { useMemo } from 'react'
+
 import { SELECT_COL_ID, useScrollStuck, useStickyColumns } from '~/hooks/useTanTable'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/Arrow'
 import FilterSVG from '~/icons/Filter'
 import TableLoading from '~/widgets/Loading/Table'
+
 import useSalon, { cn, cnMerge } from '../salon/cms'
 import type { TCmsDataTableProps } from './types'
 
@@ -128,7 +130,6 @@ export default function CmsDataTable<TData>({
 
             return (
               <div key={row.id} className={cn('border-b', s.table.border)}>
-                {/* biome-ignore lint/a11y/useSemanticElements: row wrapper must stay a div because cells contain nested interactive controls */}
                 <div
                   className={cn(
                     'flex',

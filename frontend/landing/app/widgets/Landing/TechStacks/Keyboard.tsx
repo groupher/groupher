@@ -1,9 +1,11 @@
 import { motion, useInView } from 'motion/react'
 import { useEffect, useRef, useState } from 'react'
+
 import { COLOR } from '~/const/colors'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import ArrowLinker from '~/widgets/ArrowLinker'
+
 import useSalon from '../salon/tech_stacks/keyboard'
 import HolderKey from './HolderKey'
 import TechKey from './TechKey'
@@ -133,7 +135,7 @@ export default function Keyboard() {
         </div>
 
         <div className='row-center gap-x-2'>
-          <HolderKey name='' prefix='Shift' className='items-center w-32 -ml-10' />
+          <HolderKey name='' prefix='Shift' className='-ml-10 w-32 items-center' />
           <TechKey
             path='graphql.png'
             name='GraphQL'

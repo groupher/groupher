@@ -1,5 +1,6 @@
 import { reject } from 'ramda'
 import type { FC } from 'react'
+
 import { ROUTE } from '~/const/route'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'

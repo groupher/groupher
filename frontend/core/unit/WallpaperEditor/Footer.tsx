@@ -2,6 +2,7 @@ import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import ForbidSVG from '~/icons/ForbidImg'
 import Button from '~/widgets/Buttons/Button'
 import YesOrNoButtons from '~/widgets/Buttons/YesOrNoButtons'
+
 import useSalon from './salon/footer'
 import useLogic from './useLogic'
 

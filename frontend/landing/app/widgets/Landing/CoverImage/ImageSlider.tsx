@@ -1,14 +1,16 @@
 import { range } from 'ramda'
 import { useEffect, useRef, useState } from 'react'
 import { Carousel, Slide, Slider, SliderBarDotGroup } from 'react-scroll-snap-anime-slider'
+
 import APP from '~/const/app'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
 import useInterval from '~/hooks/useInterval'
 import useLoaded from '~/hooks/useLoaded'
 import useTheme from '~/hooks/useTheme'
-import Img from '~/Img'
 import ArrowSVG from '~/icons/ArrowSimple'
 import ThemeRulerSVG from '~/icons/ThemeRuler'
+import Img from '~/Img'
+
 import useSalon from '../salon/cover_image/image_slider'
 import Scrollbar from './Scrollbar'
 import ScrollbarDark from './ScrollbarDark'

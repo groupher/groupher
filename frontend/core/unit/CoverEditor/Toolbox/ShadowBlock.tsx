@@ -1,11 +1,12 @@
 import { values } from 'ramda'
 import type { FC } from 'react'
+
 import EmptySVG from '~/icons/Empty'
 import ShadowSVG from '~/icons/Shadow'
+
 import { IMAGE_SHADOW, SETTING_LEVEL } from '../constant'
 import useSalon, { cn } from '../salon/toolbox/shadow_block'
 import type { TSettingLevel } from '../spec'
-
 import useLogic from '../useLogic'
 import ToolUnit from './ToolUnit'
 

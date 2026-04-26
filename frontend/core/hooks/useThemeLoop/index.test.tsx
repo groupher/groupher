@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react'
 
 import { THEME_MODE } from '~/const/theme'
-
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useThemeLoop from '~/hooks/useThemeLoop'
 

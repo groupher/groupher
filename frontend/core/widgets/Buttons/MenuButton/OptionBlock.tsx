@@ -1,4 +1,5 @@
 import type { ComponentType, FC } from 'react'
+
 import { ICON } from '~/config'
 import SVG from '~/const/svg'
 import { cutRest } from '~/fmt'

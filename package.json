@@ -1,7 +1,13 @@
 {
   "name": "@groupher/root",
   "version": "1.2.50",
+  "private": true,
   "license": "Apache License 2.0",
+  "workspaces": {
+    "packages": [
+      "frontend/*"
+    ]
+  },
   "scripts": {
     "info:main": "yarn workspace @groupher/frontend-main next info",
     "clean:main": "yarn workspace @groupher/frontend-main rimraf .next",
@@ -48,9 +54,7 @@
     "clean": "rimraf *.tsbuildinfo frontend/**/*.tsbuildinfo",
     "analyze": "cross-env ANALYZE=true next build",
     "lint": "yarn workspaces foreach -pt --all --exclude @groupher/root run lint",
-    "lint:biome": "yarn biome lint frontend/core frontend/main frontend/dashboard frontend/landing frontend/gateway",
     "format": "yarn workspaces foreach -pt --all --exclude @groupher/root run format",
-    "format:biome": "yarn workspaces foreach -pt --all --exclude @groupher/root run format:biome",
     "format:check": "yarn workspaces foreach -pt --all --exclude @groupher/root run format:check",
     "clean:up": "rm -rf *.tsbuildinfo",
     "test": "vitest --config frontend/core/vitest.config.mts run",
@@ -69,34 +73,6 @@
     "doctor:landing": "react-doctor frontend/landing",
     "doctor:gateway": "react-doctor frontend/gateway",
     "doctor:core": "react-doctor frontend/core"
-  },
-  "engines": {
-    "node": "24.x"
-  },
-  "private": true,
-  "workspaces": {
-    "packages": [
-      "frontend/*"
-    ]
-  },
-  "packageManagerConfig": {
-    "hoistingLimits": {
-      "**/@radix-ui/**": "workspaces",
-      "**/shadcn/**": "workspaces",
-      "**/@groupher/editor/**": "workspaces"
-    }
-  },
-  "config": {
-    "commitizen": {
-      "path": "./node_modules/cz-conventional-changelog"
-    }
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "yarn format && yarn lint",
-      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
-      "post-commit": "yarn clean"
-    }
   },
   "dependencies": {
     "@formkit/auto-animate": "^0.8.0",
@@ -173,7 +149,6 @@
     "valtio": "2.3.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.10",
     "@commitlint/cli": "^17.6.6",
     "@commitlint/config-conventional": "^8.2.0",
     "@graphql-tools/mock": "^9.1.5",
@@ -215,5 +190,27 @@
     "vite-tsconfig-paths": "^6.0.0",
     "vitest": "^3.2.4"
   },
-  "packageManager": "yarn@4.12.0"
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS",
+      "post-commit": "yarn clean",
+      "pre-commit": "yarn format && yarn lint"
+    }
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "engines": {
+    "node": "24.x"
+  },
+  "packageManager": "yarn@4.12.0",
+  "packageManagerConfig": {
+    "hoistingLimits": {
+      "**/@radix-ui/**": "workspaces",
+      "**/shadcn/**": "workspaces",
+      "**/@groupher/editor/**": "workspaces"
+    }
+  }
 }

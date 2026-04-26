@@ -1,6 +1,8 @@
 import { signIn as authSignIn, signOut as authSignOut } from 'next-auth/react'
+
 import { LOGOUT_ENDPOINT } from '~/const/oauth'
 import type { TOauthProvider } from '~/spec'
+
 import { logout } from './signal'
 
 export const signOut = async (onComplete?: () => void) => {

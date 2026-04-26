@@ -6,9 +6,9 @@ import CheckLabel from '~/widgets/CheckLabel'
 
 import { FIELD } from '../../constant'
 import useKanban from '../../logic/useKanban'
+import useSalon, { cnMerge } from '../../salon/layout/kanban_layout/item_card_layout'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
-import useSalon, { cnMerge } from '../../salon/layout/kanban_layout/item_card_layout'
 
 const KANBAN_CARD_LAYOUT_OPTIONS = [
   {

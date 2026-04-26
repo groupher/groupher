@@ -1,12 +1,11 @@
 'use client'
 
 import AvatarLayout from '~/unit/DashboardThread/Layout/AvatarLayout'
-import CommunityLayout from '~/unit/DashboardThread/Layout/CommunityLayout'
 import BrandLayout from '~/unit/DashboardThread/Layout/BrandLayout'
+import CommunityLayout from '~/unit/DashboardThread/Layout/CommunityLayout'
 import InlineTagLayout from '~/unit/DashboardThread/Layout/InlineTagLayout'
 import TagLayout from '~/unit/DashboardThread/Layout/TagLayout'
 import TopbarLayout from '~/unit/DashboardThread/Layout/TopbarLayout'
-
 import useSalon from '~/unit/DashboardThread/salon/layout'
 
 export default function Page() {

@@ -1,6 +1,7 @@
 import useTrans from '~/hooks/useTrans'
 import CheckSVG from '~/icons/CheckBold'
 import CloseCrossSVG from '~/icons/CloseCross'
+
 import useSalon, { cn } from '../salon/compare_dev'
 import HighWay from './HighWay'
 import OurWay from './OurWay'

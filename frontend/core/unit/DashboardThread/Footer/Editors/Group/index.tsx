@@ -1,11 +1,12 @@
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import { keys } from 'ramda'
 import type { FC } from 'react'
-import { groupByKey, sortByGroupIndex } from '~/helper'
 
+import { groupByKey, sortByGroupIndex } from '~/helper'
 import PlusSVG from '~/icons/Plus'
 import type { TLinkItem } from '~/spec'
 import Button from '~/widgets/Buttons/Button'
+
 import useFooter from '../../../logic/useFooter'
 import useSalon from '../../../salon/footer/editors/group'
 import GroupInputer from '../GroupInputer'

@@ -1,9 +1,11 @@
 import type { FC } from 'react'
+
 import Img from '~/Img'
 import { mockUsers } from '~/mock'
 import type { TModerator } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
 import NoteTip from '~/widgets/NoteTip'
+
 import useSalon, { cn } from '../salon/members'
 import AdminMember from './AdminMember'
 

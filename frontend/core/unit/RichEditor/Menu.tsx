@@ -1,6 +1,6 @@
 import type { FC } from 'react'
-import { ICON } from '~/config'
 
+import { ICON } from '~/config'
 import IconButton from '~/widgets/Buttons/IconButton'
 import MenuButton from '~/widgets/Buttons/MenuButton'
 

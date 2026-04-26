@@ -1,9 +1,10 @@
 import { type FC, memo, type ReactNode } from 'react'
+
 import { ICON } from '~/config'
 import Img from '~/Img'
 import type { TSpace } from '~/spec'
-
 import Tooltip from '~/widgets/Tooltip'
+
 import useSalon from './salon/icon_button'
 
 export type TProps = {

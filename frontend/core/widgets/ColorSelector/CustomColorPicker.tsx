@@ -17,6 +17,7 @@ import {
 } from 'react-aria-components'
 
 import ThemeSectionSelector from '~/widgets/ThemeSectionSelector'
+
 import useSalon from './salon/custom_color_picker'
 
 type TProps = {

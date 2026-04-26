@@ -7,6 +7,7 @@
 
 import { KANBAN_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
+
 import ClassicLayout from './ClassicLayout'
 import useSalon from './salon'
 import WaterfallLayout from './WaterfallLayout'

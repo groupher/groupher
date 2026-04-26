@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import CheckSVG from '~/icons/CheckCircle'
 import type { TColor } from '~/spec'
 

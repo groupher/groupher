@@ -1,4 +1,5 @@
 import SIZE from '~/const/size'
+
 import type { TAvatarSize } from '../spec'
 
 /**

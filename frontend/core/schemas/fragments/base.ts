@@ -1,4 +1,5 @@
 import { gql } from 'urql'
+
 import { titleCase } from '~/fmt'
 
 export const community = `

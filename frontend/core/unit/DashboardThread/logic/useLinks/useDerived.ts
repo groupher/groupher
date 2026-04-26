@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+
 import { publicThreads } from '~/helper'
 import type { TCommunityThread } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -33,7 +34,6 @@ export default function useDerived(): TRet {
     return isChanged('footerLinks') && editingLink === null
   }, [editingLink, isChanged])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const isHeaderLinksTouched = useMemo((): boolean => {
     return isChanged('headerLinks') && editingLink === null
   }, [editingLink])

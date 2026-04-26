@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+
 import { CHANGELOG_LAYOUT } from '~/const/layout'
-import { FIELD } from '../../../constant'
+
 import ChangelogLayout from '..'
+import { FIELD } from '../../../constant'
 
 const edit = vi.fn()
 

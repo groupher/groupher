@@ -1,6 +1,5 @@
 import { ICON_BASE } from '~/config'
 import { HOME_COMMUNITY } from '~/const/name'
-
 import { ROUTE } from '~/const/route'
 
 const COMMUNITY_INTRO = {

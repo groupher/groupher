@@ -1,7 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 
 import THEME from '~/const/theme'
-
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useGaussBlur from '~/hooks/useGaussBlur'
 import useTheme from '~/hooks/useTheme'

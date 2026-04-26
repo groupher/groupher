@@ -4,7 +4,7 @@ import UploadBox from './UploadBox'
 
 const UploadPic: FC = () => {
   return (
-    <div className='w-full mt-4 column-center'>
+    <div className='column-center mt-4 w-full'>
       <UploadBox />
     </div>
   )

@@ -4,13 +4,13 @@ import Link from 'next/link'
 
 import { COLOR } from '~/const/colors'
 import useHover from '~/hooks/useHover'
-import Img from '~/Img'
 import CoffeeSVG from '~/icons/CoffeeDuo'
+import Img from '~/Img'
 // import AnimatedCount from '~/widgets/AnimatedCount'
 import Button from '~/widgets/Buttons/Button'
+
 import { CUSTOM_PAN_ITEMS, FREE_PAN_ITEMS, PAID_PAN_ITEMS } from './constant'
 import Feature from './Feature'
-
 import useSalon, { cn } from './salon'
 
 type TProps = {

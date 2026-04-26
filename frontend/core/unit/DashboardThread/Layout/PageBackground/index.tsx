@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+
 import { PAGE_BG_COLOR_HEX } from '~/const/colors'
 import { blurRGB, camelize, titleCaseHM } from '~/fmt'
 import useDidMount from '~/hooks/useDidMount'
@@ -9,11 +10,12 @@ import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import CheckSVG from '~/icons/Check'
 import useDashboard from '~/stores/dashboard/hooks'
+
 import { FIELD } from '../../constant'
 import useHelper from '../../logic/useHelper'
+import useSalon, { cn } from '../../salon/layout/page_background'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
-import useSalon, { cn } from '../../salon/layout/page_background'
 import CustomBackground from './CustomBackground'
 import { resolveRawBg, type TPageBgDraft, usePageBgDraft } from './hooks'
 

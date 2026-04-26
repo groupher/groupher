@@ -5,16 +5,14 @@
  */
 
 import type { FC, ReactNode } from 'react'
+
 import usePageBg from '~/hooks/usePageBg'
 import useTopbar from '~/hooks/useTopbar'
 import useTrans from '~/hooks/useTrans'
-
 // import Broadcast from '~/widgets/Broadcast'
 import Footer from '~/unit/SiteFooter'
-
 // import DashboardAlert from './D
 // import CustomScroller from '~/widgets/CustomScroller'
-
 import GlowBackground from '~/widgets/GlobalLayout/GlowBackground'
 import useSalon from '~/widgets/GlobalLayout/salon/main'
 

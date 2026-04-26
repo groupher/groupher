@@ -1,6 +1,7 @@
 import { COMMUNITY_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
 import useTwBelt from '~/hooks/useTwBelt'
+
 import useBase from '..'
 
 export default function useSalon() {

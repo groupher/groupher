@@ -3,12 +3,14 @@
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import { filter, keys, length, startsWith } from 'ramda'
 import type { FC } from 'react'
+
 import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
 import { groupByKey, sortByGroupIndex } from '~/helper'
 import useTrans from '~/hooks/useTrans'
 import PlusSVG from '~/icons/Plus'
 import type { TLinkItem } from '~/spec'
 import Button from '~/widgets/Buttons/Button'
+
 import GroupInputer from '../../Footer/Editors/GroupInputer'
 import LinkEditor from '../../Footer/Editors/LinkEditor'
 import useHeader from '../../logic/useHeader'

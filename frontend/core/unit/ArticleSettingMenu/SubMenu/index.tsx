@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import { SUB_MENU_TYPE } from '../constant'
 import useSalon from '../salon/sub_menu'
 import type { TSubMenu } from '../spec'

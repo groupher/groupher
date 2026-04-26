@@ -1,6 +1,8 @@
 import { cacheExchange, createClient, fetchExchange } from '@urql/core'
 import { clone, mergeRight, toUpper } from 'ramda'
+
 import { PAGE_SIZE } from '~/config'
+
 import { isString } from './validator'
 
 export const FETCH_OPTIONS = (): RequestInit => ({

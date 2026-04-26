@@ -1,4 +1,5 @@
 import { proxy } from 'valtio'
+
 import type { TAccount } from '~/spec'
 
 import type { TStore } from './spec'

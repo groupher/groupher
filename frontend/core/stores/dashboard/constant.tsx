@@ -25,6 +25,7 @@ import SIZE from '~/const/size'
 import THEME from '~/const/theme'
 import { THREAD } from '~/const/thread'
 import { PAGE_CUSTOM_HUE_DEFAULT, PAGE_CUSTOM_INTENSITY_DEFAULT } from '~/lib/color'
+
 import type { TDsbFieldMap } from './spec'
 
 export const DEFAULT_OVERVIEW = {

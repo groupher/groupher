@@ -1,4 +1,5 @@
 import { filter, findIndex, reject, remove } from 'ramda'
+
 import { THREAD } from '~/const/thread'
 import { sortByIndex } from '~/helper'
 import useGraphQLClient from '~/hooks/useGraphQLClient'

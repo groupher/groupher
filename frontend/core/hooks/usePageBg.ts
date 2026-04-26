@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
+
 import { COLOR, PAGE_BG_COLOR_HEX, PAGE_BG_DEFAULT } from '~/const/colors'
 import THEME from '~/const/theme'
 import { blurRGB } from '~/fmt'
-import { getPageBgCustomColor } from '~/lib/color'
 import useGaussBlur from '~/hooks/useGaussBlur'
 import useTheme from '~/hooks/useTheme'
+import { getPageBgCustomColor } from '~/lib/color'
 import useDashboard from '~/stores/dashboard/hooks'
 
 type TRes = {

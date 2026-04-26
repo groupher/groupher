@@ -12,6 +12,10 @@
   "bracketSpacing": true,
   "arrowParens": "always",
   "endOfLine": "lf",
+  "sortImports": true,
+  "sortTailwindcss": true,
+  "sortPackageJson": true,
+  "embeddedLanguageFormatting": "auto",
   "ignorePatterns": [
     "**/*.d.ts",
     "**/*.tsbuildinfo",

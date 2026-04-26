@@ -1,8 +1,10 @@
 import type { FC } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import type { TSubmitState } from '~/spec'
 import SubmitButton from '~/widgets/Buttons/SubmitButton'
 import WordsCounter from '~/widgets/WordsCounter'
+
 import useSalon from '../salon/editor/footer'
 import useActions from '../useLogic/useActions'
 

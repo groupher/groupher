@@ -1,5 +1,6 @@
 import useHover from '~/hooks/useHover'
 import useTrans from '~/hooks/useTrans'
+
 import useSalon from '../../salon/battery_bento/integration'
 import Panel from './Panel'
 

@@ -10,11 +10,12 @@
 
 import Link from 'next/link'
 import { lazy, Suspense } from 'react'
+
 import useActiveTag from '~/hooks/useActiveTag'
 import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
 import useTrans from '~/hooks/useTrans'
-import Img from '~/Img'
 import LinkSVG from '~/icons/Link'
+import Img from '~/Img'
 import { mockUsers } from '~/mock'
 import { callGEditor, callSyncSelector, listUsers } from '~/signal'
 import useCommunity from '~/stores/community/hooks'
@@ -22,8 +23,9 @@ import GetMe from '~/unit/GetMe'
 import TagsBar from '~/unit/TagsBar'
 import PublishButton from '~/widgets/Buttons/PublishButton'
 import ImgFallback from '~/widgets/ImgFallback'
-import SocialBanner from '../SocialBanner'
+
 import useSalon from '../salon/thread_sidebar'
+import SocialBanner from '../SocialBanner'
 import CommunityBrief from './CommunityBrief'
 
 const UniBar = lazy(() => import('../UniBar'))

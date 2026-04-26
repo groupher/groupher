@@ -1,4 +1,5 @@
 import { equals, pick } from 'ramda'
+
 import { INIT_KANBAN_BOARDS } from '~/const/dashboard'
 import type { TColorName, TEditFunc, TKanbanBoard, TKanbanCardLayout, TKanbanLayout } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'

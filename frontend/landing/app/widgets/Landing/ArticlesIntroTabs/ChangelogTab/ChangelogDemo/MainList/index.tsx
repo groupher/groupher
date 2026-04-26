@@ -1,6 +1,6 @@
 import { COLOR } from '~/const/colors'
-
 import TagNode from '~/widgets/TagNode'
+
 import useSalon, {
   cn,
 } from '../../../../salon/articles_intro_tabs/changelog_tab/changelog_demo/main_list'

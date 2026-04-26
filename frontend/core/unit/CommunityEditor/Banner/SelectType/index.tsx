@@ -7,6 +7,7 @@
 import useAccount from '~/stores/account/hooks'
 import ArrowLinker from '~/widgets/ArrowLinker'
 import Checker from '~/widgets/Checker'
+
 import useSalon from '../../salon/banner/select_type'
 import useLogic from '../../useLogic'
 import NextStepButton from '../NextStepButton'

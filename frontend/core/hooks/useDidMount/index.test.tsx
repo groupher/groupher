@@ -1,4 +1,5 @@
 import { render, waitFor } from '@testing-library/react'
+
 import useDidMount from '~/hooks/useDidMount'
 
 it('returns false on first render and true after mount', async () => {

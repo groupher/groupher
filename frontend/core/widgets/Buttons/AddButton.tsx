@@ -5,8 +5,8 @@
  */
 
 import { type FC, memo, type ReactNode } from 'react'
-import EditSVG from '~/icons/EditPen'
 
+import EditSVG from '~/icons/EditPen'
 import PlusSVG from '~/icons/Plus'
 import type { TSpace } from '~/spec'
 

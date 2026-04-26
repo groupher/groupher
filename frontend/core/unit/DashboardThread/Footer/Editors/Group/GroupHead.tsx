@@ -1,7 +1,9 @@
 import type { FC } from 'react'
+
 import EditSVG from '~/icons/EditPen'
 import MoreSVG from '~/icons/menu/MoreL'
 import Tooltip from '~/widgets/Tooltip'
+
 import useFooter from '../../../logic/useFooter'
 import useSalon from '../../../salon/footer/editors/group/group_head'
 import GroupInputer from '../GroupInputer'

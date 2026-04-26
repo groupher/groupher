@@ -1,4 +1,5 @@
 import { gql } from 'urql'
+
 import { F } from '~/schemas'
 
 const pagedCommunityTags = gql`

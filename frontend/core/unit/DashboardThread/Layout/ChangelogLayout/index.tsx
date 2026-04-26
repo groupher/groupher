@@ -4,9 +4,9 @@ import CheckLabel from '~/widgets/CheckLabel'
 
 import { FIELD } from '../../constant'
 import useChangelog from '../../logic/useChangelog'
+import useSalon, { cnMerge } from '../../salon/layout/changelog_layout'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
-import useSalon, { cnMerge } from '../../salon/layout/changelog_layout'
 
 const CHANGELOG_LAYOUT_OPTIONS = [
   {

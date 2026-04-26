@@ -5,8 +5,10 @@
  */
 
 import type { FC } from 'react'
+
 import { POST_LAYOUT } from '~/const/layout'
 import type { TPost, TPostLayout } from '~/spec'
+
 import CoverLayout from './CoverLayout'
 import MasonryLayout from './MasonryLayout'
 import MinimalLayout from './MinimalLayout'

@@ -1,8 +1,8 @@
 import { COLOR } from '~/const/colors'
 import useTrans from '~/hooks/useTrans'
 import ArrowLinker from '~/widgets/ArrowLinker'
-
 import Button from '~/widgets/Buttons/Button'
+
 import useSalon from '../../salon/articles_intro_tabs'
 import FeatItem from '../FeatItem'
 

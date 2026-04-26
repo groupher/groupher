@@ -1,11 +1,12 @@
 import { type FC, useEffect, useRef } from 'react'
 import { type CursorProps, type NodeApi, type NodeRendererProps, Tree } from 'react-arborist'
-import ArrowSVG from '~/icons/ArrowSimple'
 
+import ArrowSVG from '~/icons/ArrowSimple'
 import DragSVG from '~/icons/Dragble'
 import EditSVG from '~/icons/EditPen'
 import DeleteSVG from '~/icons/Trash'
 import type { TPagedArticles } from '~/spec'
+
 import useSalon, { cn } from '../../../salon/cms/docs/tree'
 import { type TTreeItem, treeData } from '../treeData'
 import Actions from './Actions'

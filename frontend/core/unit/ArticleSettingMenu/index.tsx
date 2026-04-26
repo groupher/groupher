@@ -5,6 +5,7 @@
  */
 
 import { type FC, useState } from 'react'
+
 import SettingSVG from '~/icons/Setting'
 import type { TSpace } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'

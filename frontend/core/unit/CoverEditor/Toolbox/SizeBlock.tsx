@@ -1,10 +1,10 @@
 import type { FC } from 'react'
 
 import ImageSizeSVG from '~/icons/ImageSize'
+
 import { IMAGE_SIZE } from '../constant'
 import useSalon, { cn } from '../salon/toolbox/size_block'
 import type { TImageSize } from '../spec'
-
 import useLogic from '../useLogic'
 import ToolUnit from './ToolUnit'
 

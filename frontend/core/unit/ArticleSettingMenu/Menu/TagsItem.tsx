@@ -1,5 +1,6 @@
 import { isEmpty } from 'ramda'
 import type { FC } from 'react'
+
 import ArrowSVG from '~/icons/ArrowSimple'
 import type { TColorName } from '~/spec'
 import useArticle from '~/stores/article/hooks'

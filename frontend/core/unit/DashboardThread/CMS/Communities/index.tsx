@@ -10,7 +10,6 @@ import {
 } from '@tanstack/react-table'
 import { includes } from 'ramda'
 import { startTransition, useMemo, useState } from 'react'
-import type { TCommunity } from '~/spec'
 
 import {
   SELECT_COL_ID,
@@ -22,6 +21,7 @@ import {
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/Arrow'
 import FilterSVG from '~/icons/Filter'
+import type { TCommunity } from '~/spec'
 import TableLoading from '~/widgets/Loading/Table'
 
 import useCMSInfo from '../../hooks/useCMSInfo'

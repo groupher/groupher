@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react'
+
 import { KANBAN_BOARD } from '~/const/thread'
 import type { TPagedPosts } from '~/spec'
+
 import Sections from '../Sections'
 
 const emptyPosts: TPagedPosts = {

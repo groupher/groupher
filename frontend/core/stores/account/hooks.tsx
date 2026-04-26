@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect } from 'react'
+
 import EVENT from '~/const/event'
 import useEvent from '~/hooks/useEvent'
 import useQuery from '~/hooks/useQuery'
 import type { TUser } from '~/spec'
+
 import { me } from '../../schemas/pages/user'
 import createStoreHook from '../createStoreHook'
 import { StoreContext } from './provider'

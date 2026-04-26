@@ -1,12 +1,10 @@
 import type { FC } from 'react'
 
 import { BROADCAST_LAYOUT } from '~/const/layout'
-
 import CrossSVG from '~/icons/CloseCross'
 import NotifySVG from '~/icons/Trumpet'
 
 import useBroadcast from '../../../logic/useBroadcast'
-
 import useSalon, { cn } from '../../../salon/broadcast/templates/global/default'
 
 type TProps = {

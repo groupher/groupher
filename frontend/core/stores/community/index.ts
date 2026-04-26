@@ -1,5 +1,7 @@
 import { proxy } from 'valtio'
+
 import { COMMUNITY_THREADS } from '~/const/thread'
+
 import type { TInit, TStore } from './spec'
 
 export default function CommunityStore(init: TInit = { slug: 'home' }): TStore {

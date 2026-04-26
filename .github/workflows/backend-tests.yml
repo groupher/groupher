@@ -2,7 +2,7 @@ name: Backend unit tests
 on:
   push:
     paths:
-      - "backend/main/**" # only trigger when this dir changes
+      - 'backend/main/**' # only trigger when this dir changes
 
 jobs:
   setup:
@@ -18,8 +18,8 @@ jobs:
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: "26.2"
-          elixir-version: "1.19.5"
+          otp-version: '26.2'
+          elixir-version: '1.19.5'
 
       - name: Cache deps
         uses: actions/cache@v3
@@ -64,8 +64,8 @@ jobs:
       - name: Setup Elixir
         uses: erlef/setup-beam@v1
         with:
-          otp-version: "26.2"
-          elixir-version: "1.19.5"
+          otp-version: '26.2'
+          elixir-version: '1.19.5'
 
       - name: Restore cached deps
         uses: actions/cache@v3

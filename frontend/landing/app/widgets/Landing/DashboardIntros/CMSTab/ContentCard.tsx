@@ -67,7 +67,7 @@ export default function ContentCard() {
         <ArticleCatState left={2} right={3} />
         <CommentsCount count={8} size='medium' left={3} right={4} />
 
-        <Facepile users={users} className='scale-90 -mt-0.5' />
+        <Facepile users={users} className='-mt-0.5 scale-90' />
       </div>
       <div className={s.item}>
         <div className={s.falseChecker} />

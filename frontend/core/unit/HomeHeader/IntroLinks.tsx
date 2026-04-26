@@ -4,6 +4,7 @@ import type { FC } from 'react'
 import { ROUTE } from '~/const/route'
 import ArrowSVG from '~/icons/ArrowSimple'
 import CommunityBrand from '~/unit/CommunityBrand'
+
 import { HEAD_MENU } from './constant'
 import useSalon, { cn } from './salon'
 

@@ -1,8 +1,8 @@
 import type { FC } from 'react'
 
 import type { TComment } from '~/spec'
-import type { TAPIMode } from '../../spec'
 
+import type { TAPIMode } from '../../spec'
 import DefaultLayout from './DefaultLayout'
 import FoldLayout from './FoldLayout'
 

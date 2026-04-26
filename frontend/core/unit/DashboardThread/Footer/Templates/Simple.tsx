@@ -6,7 +6,6 @@ import { FOOTER_LAYOUT } from '~/const/layout'
 import { DEME_SOCIALS } from '~/const/social'
 import { groupByKey, sortByGroupIndex } from '~/helper'
 import type { TActive, TLinkItem } from '~/spec'
-
 import CommunityBrand from '~/unit/CommunityBrand'
 import SocialList from '~/unit/SocialList'
 

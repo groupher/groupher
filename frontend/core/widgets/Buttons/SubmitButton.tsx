@@ -1,6 +1,8 @@
 import { type FC, memo } from 'react'
+
 import CheckedSVG from '~/icons/Checked'
 import type { TSubmitState } from '~/spec'
+
 import Button from './Button'
 import useSalon from './salon/submit_button'
 import YesOrNoButtons from './YesOrNoButtons'

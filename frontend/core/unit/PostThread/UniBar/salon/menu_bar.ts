@@ -1,5 +1,4 @@
 import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
-
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TActive } from '~/spec'
 

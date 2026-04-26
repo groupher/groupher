@@ -9,6 +9,7 @@ import { type FC, useCallback } from 'react'
 
 import Img from '~/Img'
 import { nilOrEmpty } from '~/validator'
+
 import useSalon, { cn } from './salon'
 import Textarea from './Textarea'
 
@@ -88,7 +89,6 @@ const Input: FC<TProps> = ({
         onFocus={handleOnFocus}
         onBlur={handleOnBlur}
         spellCheck='false'
-        // biome-ignore lint/a11y/noAutofocus: <explanation>
         autoFocus={autoFocus}
         // @ts-expect-error
         {...validProps}

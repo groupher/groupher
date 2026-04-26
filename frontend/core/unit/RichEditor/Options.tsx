@@ -1,7 +1,6 @@
 import { type FC, memo, type ReactNode } from 'react'
 
 import Menu from './Menu'
-
 import useSalon from './salon/options'
 
 type TProps = {

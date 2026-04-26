@@ -1,9 +1,11 @@
 import { filter, includes, keys } from 'ramda'
 import { type FC, useEffect, useState } from 'react'
+
 import { COLOR } from '~/const/colors'
 import type { TColorName } from '~/spec'
 import CustomScroller from '~/widgets/CustomScroller'
 import Input from '~/widgets/Input'
+
 import FaIcon from '.'
 import ICONS from './icons'
 import useSalon, { cn } from './salon/panel'

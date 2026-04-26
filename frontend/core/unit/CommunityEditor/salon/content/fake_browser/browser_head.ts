@@ -1,4 +1,5 @@
 import { includes, keys } from 'ramda'
+
 import { COLOR } from '~/const/colors'
 import { GRADIENT_WALLPAPER, GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
 import useTwBelt from '~/hooks/useTwBelt'

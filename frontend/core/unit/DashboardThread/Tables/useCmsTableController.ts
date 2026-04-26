@@ -2,7 +2,9 @@
 
 import type { SortingState } from '@tanstack/react-table'
 import { startTransition, useCallback, useEffect, useState } from 'react'
+
 import { useMultiSelection } from '~/hooks/useTanTable'
+
 import type { TCmsTableController, TCmsTableControllerOptions } from './types'
 
 const DEFAULT_SELECT_COLUMN_ANIMATION_MS = 200

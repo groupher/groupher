@@ -9,7 +9,6 @@
 import { type FC, memo } from 'react'
 
 import EVENT from '~/const/event'
-
 import { send } from '~/signal'
 import Pagi from '~/widgets/Pagi'
 

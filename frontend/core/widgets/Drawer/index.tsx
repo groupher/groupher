@@ -1,11 +1,13 @@
 'use client'
 
 import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+
 import { ANCHOR } from '~/const/dom'
 import TYPE from '~/const/type'
 import { lockPage, unlockPage } from '~/dom'
 import useDrawerOffset from '~/hooks/useDrawerOffset'
 import Portal from '~/widgets/Portal'
+
 import useSalon, { cn } from './salon'
 import { CLOSE_ANIMATION_BUFFER_MS, CLOSE_ANIMATION_MS } from './salon/constant'
 

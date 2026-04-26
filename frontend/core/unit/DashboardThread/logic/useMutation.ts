@@ -1,5 +1,6 @@
 import { equals, filter, findIndex, includes, keys, omit, update, values } from 'ramda'
 import { useEffect, useRef } from 'react'
+
 import { serializeKanbanBoards } from '~/const/dashboard'
 import { DSB_INFO_ROUTE } from '~/const/route'
 import THEME from '~/const/theme'
@@ -12,6 +13,7 @@ import type { TEditValue, TKanbanBoard, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 import { buildDsbDemoConfig, setDsbDemoConfig } from '~/utils/dsb-demo'
+
 import {
   BASEINFO_BASIC_KEYS,
   BASEINFO_KEYS,

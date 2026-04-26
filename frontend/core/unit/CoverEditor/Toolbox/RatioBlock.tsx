@@ -1,10 +1,10 @@
 import type { FC } from 'react'
 
 import RatioSVG from '~/icons/Ratio'
+
 import { IMAGE_RATIO } from '../constant'
 import useSalon, { cn } from '../salon/toolbox/ratio_block'
 import type { TImageRadio } from '../spec'
-
 import useLogic from '../useLogic'
 import ToolUnit from './ToolUnit'
 
@@ -22,7 +22,7 @@ const RatioBlock: FC<TProps> = ({ ratio }) => {
       title='比例'
       icon={<RatioSVG className={s.icon} />}
       panel={
-        <div className='px-4 py-3 row-center gap-x-2'>
+        <div className='row-center gap-x-2 px-4 py-3'>
           <div
             className={cn(s.optionItem, ratio === IMAGE_RATIO.SCREEN && s.optionItemActive)}
             onClick={() => ratioOnChange(IMAGE_RATIO.SCREEN)}

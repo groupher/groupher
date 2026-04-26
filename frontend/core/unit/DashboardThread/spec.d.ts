@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
+
 import type { TChangeMode, TColorName, TConstValues, TDsbPath, TLinkItem, TTransKey } from '~/spec'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
+
 import type { FIELD } from './constant'
 
 export { TNameAlias } from '~/spec'

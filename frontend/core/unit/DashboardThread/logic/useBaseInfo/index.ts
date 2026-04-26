@@ -1,10 +1,12 @@
 import { isEmpty, pick } from 'ramda'
 import { useEffect } from 'react'
+
 import useQuery from '~/hooks/useQuery'
 import type { TCommunity, TEditFunc } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
+
 import { BASEINFO_KEYS } from '../../constant'
 import S from '../../schema'
 import useHelper from '../useHelper'
@@ -73,7 +75,6 @@ export default function useBaseInfo(): TRet {
     })
   }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (data?.community && !dsb$.initFilled) {
       dsb$.commit({ initFilled: true })

@@ -1,6 +1,7 @@
 'use client'
 
 import { type CSSProperties, type FC, type ReactNode, useEffect } from 'react'
+
 import { COLOR, getDefaultCustomColor } from '~/const/colors'
 import THEME from '~/const/theme'
 import { getPageBgCustomColor } from '~/lib/color'

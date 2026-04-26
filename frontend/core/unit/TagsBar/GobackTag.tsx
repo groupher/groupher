@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import { EMPTY_TAG } from '~/const/utils'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/Arrow'

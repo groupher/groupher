@@ -1,6 +1,8 @@
 import type { FC } from 'react'
+
 import { COLOR } from '~/const/colors'
 import TagNode from '~/widgets/TagNode'
+
 import useSalon, {
   cn,
 } from '../../../../salon/articles_intro_tabs/changelog_tab/changelog_demo/editor_preview'

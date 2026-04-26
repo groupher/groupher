@@ -1,6 +1,8 @@
 import { renderHook } from '@testing-library/react'
+
 import { KANBAN_BOARD } from '~/const/thread'
 import type { TPagedPosts } from '~/spec'
+
 import { useColumnsData } from '../Columns'
 
 const emptyPosts: TPagedPosts = {

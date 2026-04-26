@@ -1,5 +1,6 @@
 import { includes } from 'ramda'
 import type { FC } from 'react'
+
 import ArrowSVG from '~/icons/ArrowSimple'
 import type { TFAQSection } from '~/spec'
 import Markdown from '~/widgets/Markdown'

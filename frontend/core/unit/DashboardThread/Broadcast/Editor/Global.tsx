@@ -2,10 +2,11 @@ import useTrans from '~/hooks/useTrans'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import ColorSelector from '~/widgets/ColorSelector'
 import Input from '~/widgets/Input'
+
 import useBroadcast from '../../logic/useBroadcast'
+import useSalon from '../../salon/broadcast/editor/global'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
-import useSalon from '../../salon/broadcast/editor/global'
 import GlobalTemplate from '../Templates/Global'
 
 export default function Global() {

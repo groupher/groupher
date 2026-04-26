@@ -3,7 +3,9 @@
 
 import type { Table } from '@tanstack/react-table'
 import { useMemo } from 'react'
+
 import useTwBelt from '~/hooks/useTwBelt'
+
 import type {} from '../../spec/tantable'
 import { SELECT_COL_ID, SELECT_COL_WIDTH } from './useMultiSelection'
 
@@ -27,7 +29,6 @@ export function useStickyColumns<TData>(table: Table<TData>, options?: TStickyOp
 
   const layoutKey = leafCols.map((c) => `${c.id}:${c.getSize()}`).join('|')
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   const { headerProps, bodyProps } = useMemo(() => {
     const widthMap = new Map<string, number>()
     const sideMap = new Map<string, StickySide>()

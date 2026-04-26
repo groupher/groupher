@@ -5,7 +5,6 @@ import SocialList from '~/unit/SocialList'
 
 import LabelList from './LabelList'
 import MediaReports from './MediaReports'
-
 import useSalon, { cn } from './salon/extra_info'
 
 export default function ExtraInfo() {

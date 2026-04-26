@@ -7,8 +7,8 @@ import { useState } from 'react'
 
 import usePagedChangelogs from '~/hooks/usePagedChangelogs'
 import Tabs from '~/widgets/Switcher/Tabs'
-import ChangelogItem from '../ChangelogItem'
 
+import ChangelogItem from '../ChangelogItem'
 import { TABS_MODE_OPTIONS } from '../constant'
 import useSalon from '../salon/simple_layout'
 import FilterBar from './FilterBar'

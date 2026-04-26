@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import { CONDITION_MODE } from '~/const/mode'
 import useTrans from '~/hooks/useTrans'
 import DabbleCheckSVG from '~/icons/DabbleCircleCheck'
@@ -7,6 +8,7 @@ import ResetSVG from '~/icons/Reset'
 import ConditionSelector from '~/unit/ConditionSelector'
 import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
+
 import useSalon, { cn } from '../../salon/cms/filter_bar'
 import ActionBar from './ActionBar'
 

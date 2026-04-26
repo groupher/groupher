@@ -1,6 +1,7 @@
 import Img from '~/Img'
 import { mockUsers } from '~/mock'
 import ImgFallback from '~/widgets/ImgFallback'
+
 import useSalon, { cn } from '../salon/activities'
 import GtdItem from './GtdItem'
 import MentionItem from './MentionItem'

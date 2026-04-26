@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import CodeSVG from '~/icons/editor/Code'
 import ImageSVG from '~/icons/editor/Image'
 import TitleSVG from '~/icons/editor/Title'

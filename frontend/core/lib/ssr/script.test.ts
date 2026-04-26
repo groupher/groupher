@@ -1,5 +1,6 @@
-import { injectDsbColors } from './script'
 import type { TParseDashboard } from '~/spec'
+
+import { injectDsbColors } from './script'
 
 describe('injectDsbColors', () => {
   it('injects primary and sub-primary custom vars for both themes', () => {

@@ -7,6 +7,7 @@
 import { type FC, memo } from 'react'
 
 import AnimatedCount from '~/widgets/AnimatedCount'
+
 import useSalon from './salon/simple_layout'
 import UpvoteBtn from './UpvoteBtn'
 import useUpvote from './useUpvote'

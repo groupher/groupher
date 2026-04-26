@@ -1,11 +1,12 @@
 import { keys, values } from 'ramda'
 import type { FC } from 'react'
+
 import { COVER_GRADIENT_WALLPAPER, GRADIENT_DIRECTION } from '~/const/wallpaper'
 import ArrowSVG from '~/icons/Arrow'
 import type { TWallpaper, TWallpaperGradientDir } from '~/spec'
 import { parseWallpaper } from '~/wallpaper'
-import useSalon, { cn } from '../salon/toolbox/background_block'
 
+import useSalon, { cn } from '../salon/toolbox/background_block'
 import useLogic from '../useLogic'
 import ToolUnit from './ToolUnit'
 

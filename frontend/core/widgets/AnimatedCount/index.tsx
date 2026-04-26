@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import SIZE from '~/const/size'
 import type { TActive, TSize, TSpace } from '~/spec'
 

@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import UpvoteSVG from '~/icons/Upvote'
 import { mockUsers } from '~/mock'
 import Facepile from '~/widgets/Facepile/LandingPage'

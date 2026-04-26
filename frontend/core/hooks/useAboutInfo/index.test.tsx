@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react'
 
 import { SOCIAL_LIST } from '~/const/social'
-
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useAboutInfo from '~/hooks/useAboutInfo'
 

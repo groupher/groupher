@@ -1,5 +1,6 @@
 import { COLOR } from '~/const/colors'
 import useTrans from '~/hooks/useTrans'
+
 import useSalon from '../../salon/articles_intro_tabs/kanban_tab/intro_digest'
 import FeatItem from '../FeatItem'
 

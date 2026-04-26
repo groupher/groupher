@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import { ARTICLE_CAT } from '~/const/gtd'
 import UpvoteSVG from '~/icons/Upvote'
 import type { TActive, TArticleCat } from '~/spec'

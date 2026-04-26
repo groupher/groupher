@@ -1,6 +1,7 @@
 import { type FC, useEffect, useState } from 'react'
 
 import CopySVG from '~/icons/Copy'
+
 import useSalon from '../salon/copy_button'
 
 const CopyButton: FC = () => {

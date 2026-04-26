@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import { THREAD } from '~/const/thread'
 import GuideSVG from '~/icons/Book'
 import DiscussSVG from '~/icons/Discuss'

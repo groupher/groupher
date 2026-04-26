@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import { EMPTY_TAG } from '~/const/utils'
 import { cutRest } from '~/fmt'
 import CheckVG from '~/icons/CheckBold'

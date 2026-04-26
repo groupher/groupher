@@ -3,7 +3,6 @@
 import type { FC } from 'react'
 
 import useShortcut from '~/hooks/useShortcut'
-
 import PriceWall from '~/unit/PriceWall/Modal'
 import UserListModal from '~/widgets/UserListModal'
 

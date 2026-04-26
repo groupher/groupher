@@ -8,6 +8,7 @@ import TelegramSVG from '~/icons/social/Telegram'
 import TwitterSVG from '~/icons/social/Twitter'
 import WeChatSVG from '~/icons/social/WeChat'
 import WeiboSVG from '~/icons/social/Weibo'
+
 import { SHARE_TYPE } from '../../constant'
 
 export default function useSalon() {

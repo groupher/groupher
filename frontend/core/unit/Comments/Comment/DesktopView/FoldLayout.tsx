@@ -1,14 +1,15 @@
 import type { FC } from 'react'
+
 import useTrans from '~/hooks/useTrans'
-import Img from '~/Img'
 import CheckBoldSVG from '~/icons/CheckBold'
 import ExpandSVG from '~/icons/Expand'
 import ReplyCurveSVG from '~/icons/ReplyCurve'
+import Img from '~/Img'
 import type { TComment } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
 import TimeAgo from '~/widgets/TimeAgo'
-import useSalon, { cn } from '../../salon/comment/desktop_view/fold_layout'
 
+import useSalon, { cn } from '../../salon/comment/desktop_view/fold_layout'
 import useActions from '../../useLogic/useActions'
 import IllegalBar from './IllegalBar'
 

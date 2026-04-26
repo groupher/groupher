@@ -1,7 +1,7 @@
 import { type FC, memo } from 'react'
+
 import { DOC_FAQ_LAYOUT } from '~/const/layout'
 import type { TSpace } from '~/spec'
-
 import FaqList from '~/unit/FaqList'
 
 import useSalon from './salon/faq_layout'

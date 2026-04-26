@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import MENU from '~/const/menu'
 import MenuItem from '~/widgets/MenuItem'
 

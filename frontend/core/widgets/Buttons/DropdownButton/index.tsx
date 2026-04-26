@@ -1,8 +1,10 @@
 import type { FC, ReactNode } from 'react'
+
 import SIZE from '~/const/size'
 import ArrowSVG from '~/icons/ArrowSimple'
 import CloseSVG from '~/icons/CloseLight'
 import type { TActive, TButtonPrefix, TSizeTS, TSpace } from '~/spec'
+
 import useSalon from '../salon/dropdown_button'
 import PrefixIcon from './PrefixIcon'
 

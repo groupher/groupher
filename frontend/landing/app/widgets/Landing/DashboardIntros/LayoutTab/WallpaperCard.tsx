@@ -1,5 +1,6 @@
 import { fmt2CompStyle } from '~/fmt'
 import useWallpaper from '~/hooks/useWallpaper'
+
 import useSalon from '../../salon/dashboard_intros/layout_tab/wallpaper_card'
 import WallpaperBar from './WallpaperBar'
 

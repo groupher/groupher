@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+
 import { GlobalProvider, GraphQLProvider } from '~/app/providers'
 import { getCommunityInfo, getLocaleData } from '~/app/ssr'
 import { LOCALE } from '~/const/i18n'
@@ -6,6 +7,7 @@ import { I18N_NS } from '~/i18n/namespaces'
 import MainProvider from '~/stores/provider'
 import { getMetadata } from '~/utils/ssr'
 import { injectDsbColors } from '~/utils/ssr/script'
+
 import Client from './Client'
 
 export async function generateMetadata({ params }): Promise<Metadata> {

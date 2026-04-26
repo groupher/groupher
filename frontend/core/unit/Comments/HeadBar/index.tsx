@@ -1,10 +1,10 @@
 import { Fragment, useState } from 'react'
 
 import type { TCommentsState } from '~/spec'
+
 import PublishEditor from '../Editor/PublishEditor'
 import useSalon from '../salon/head_bar'
 import type { TAPIMode, TEditState, TMode } from '../spec'
-
 import { useCommentsHeadState } from '../useLogic'
 import PublishBar from './PublishBar'
 import StateBar from './StateBar'

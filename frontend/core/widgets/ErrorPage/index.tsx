@@ -5,6 +5,7 @@
  */
 
 import type { FC } from 'react'
+
 import METRIC from '~/const/metric'
 import type { TMetric } from '~/spec'
 

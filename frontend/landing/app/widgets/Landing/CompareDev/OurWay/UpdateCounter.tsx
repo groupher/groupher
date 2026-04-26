@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import UpvoteSVG from '~/icons/Upvote'
 import type { TColorName } from '~/spec'

@@ -5,8 +5,10 @@
  */
 
 import { m } from 'motion/react'
+
 import useTrans from '~/hooks/useTrans'
 import HookSVG from '~/icons/Hook'
+
 import useSalon from './salon/custom_color'
 
 type TProps = {

@@ -1,9 +1,9 @@
 import { useState } from 'react'
 
 import { BROADCAST_ARTICLE_LAYOUT } from '~/const/layout'
-
 import ArrowSVG from '~/icons/ArrowSimple'
 import Button from '~/widgets/Buttons/Button'
+
 import useBroadcast from '../../../logic/useBroadcast'
 import useSalon, { cn } from '../../../salon/broadcast/templates/article'
 import Default from './Default'

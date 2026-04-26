@@ -1,5 +1,6 @@
 import { type FC, useEffect, useRef, useState } from 'react'
 import FlipNumbers from 'react-flip-numbers'
+
 import SIZE from '~/const/size'
 import useDidMount from '~/hooks/useDidMount'
 

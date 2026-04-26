@@ -1,11 +1,13 @@
 'use client'
 
 import Link from 'next/link'
+
 import { DSB_SEG } from '~/const/route'
 import PinSVG from '~/icons/Pin'
 import type { TDsbCoversConfig } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import { Portal } from '~/unit/DashboardThread'
+
 import useSalon, { cn } from './salon'
 
 const joinPath = (...parts: string[]) =>

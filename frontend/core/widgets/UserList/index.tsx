@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 
 import { mockUsers } from '~/mock'
+
 import useSalon from './salon'
 import UserItem from './UserItem'
 

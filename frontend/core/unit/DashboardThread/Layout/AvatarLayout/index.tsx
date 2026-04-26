@@ -4,9 +4,9 @@ import CheckLabel from '~/widgets/CheckLabel'
 
 import { FIELD } from '../../constant'
 import useAvatar from '../../logic/useAvatar'
+import useSalon, { cn } from '../../salon/layout/avatar_layout'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
-import useSalon, { cn } from '../../salon/layout/avatar_layout'
 
 const AVATAR_LAYOUT_OPTIONS = [
   {

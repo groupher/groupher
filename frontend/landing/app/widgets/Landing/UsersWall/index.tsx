@@ -2,7 +2,6 @@ import { COLOR } from '~/const/colors'
 import useTrans from '~/hooks/useTrans'
 import { mockUsers } from '~/mock'
 import type { TTransKey } from '~/spec'
-
 import MasonryCards from '~/widgets/MasonryCards'
 
 import useSalon from '../salon/users_wall'

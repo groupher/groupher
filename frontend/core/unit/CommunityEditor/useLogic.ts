@@ -1,7 +1,9 @@
 import { isEmpty, keys, mergeDeepRight, pick } from 'ramda'
 import { proxy, useSnapshot } from 'valtio'
+
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TEditValue } from '~/spec'
+
 import { STEP } from './constant'
 import S from './schema'
 import type {

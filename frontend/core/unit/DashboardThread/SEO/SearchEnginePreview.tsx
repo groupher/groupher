@@ -1,5 +1,4 @@
 import useSEO from '../logic/useSEO'
-
 import useSalon from '../salon/seo/search_engine_preview'
 
 export default function SearchEnginePreview() {

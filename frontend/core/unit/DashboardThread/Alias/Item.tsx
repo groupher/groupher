@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSolid'
 import AddButton from '~/widgets/Buttons/AddButton'
@@ -6,8 +7,8 @@ import Input from '~/widgets/Input'
 
 import { BUILD_IN_ALIAS_SUGGESTIONS, FIELD } from '../constant'
 import useAlias from '../logic/useAlias'
-import SavingBar from '../SavingBar'
 import useSalon, { cn } from '../salon/alias/item'
+import SavingBar from '../SavingBar'
 import type { TNameAlias } from '../spec'
 import Suggestion from './Suggestion'
 

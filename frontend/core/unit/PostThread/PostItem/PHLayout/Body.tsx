@@ -1,7 +1,6 @@
 import type { FC } from 'react'
 
 import type { TPost } from '~/spec'
-
 import ArticleCatState from '~/unit/ArticleCatState'
 import CommentsCount from '~/unit/CommentsCount'
 import ViewsCount from '~/unit/ViewsCount'

@@ -3,8 +3,8 @@ import { BRAND_LAYOUT } from '~/const/layout'
 import { assetSrc } from '~/helper'
 import useActiveTag from '~/hooks/useActiveTag'
 import useLayout from '~/hooks/useLayout'
-import Img from '~/Img'
 import MoreSVG from '~/icons/menu/More'
+import Img from '~/Img'
 import { callGEditor, callSyncSelector } from '~/signal'
 import useCommunity from '~/stores/community/hooks'
 import AccountUnit from '~/widgets/AccountUnit'
@@ -53,7 +53,7 @@ export default function CommunityBrief() {
             }}
             offset={[0, 5]}
           />
-          <Button ghost left={1} className='scale-90 mt-0.5'>
+          <Button ghost left={1} className='mt-0.5 scale-90'>
             <MoreSVG className={s.more} />
           </Button>
         </div>

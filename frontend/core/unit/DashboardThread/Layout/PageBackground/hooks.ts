@@ -1,8 +1,10 @@
 import { pick } from 'ramda'
 import { useMemo } from 'react'
+
 import { COLOR, PAGE_BG_COLOR_HEX, PAGE_BG_DEFAULT } from '~/const/colors'
 import THEME from '~/const/theme'
 import { getPageBgCustomColor, getPageBgCustomParamsFromHex } from '~/lib/color'
+
 import {
   COLORED_PAGE_BG,
   PAGE_BG_DRAFT_KEYS,

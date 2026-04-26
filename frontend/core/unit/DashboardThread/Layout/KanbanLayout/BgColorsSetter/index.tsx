@@ -1,4 +1,5 @@
 import { useState } from 'react'
+
 import { COLOR } from '~/const/colors'
 import { INIT_KANBAN_COLORS } from '~/const/dashboard'
 import { KANBAN_LAYOUT } from '~/const/layout'
@@ -8,14 +9,13 @@ import useTrans from '~/hooks/useTrans'
 import DiceSVG from '~/icons/Dice'
 import ResetSVG from '~/icons/Reset'
 import type { TColorName } from '~/spec'
-
 import ColorSelector from '~/widgets/ColorSelector'
 
 import { FIELD } from '../../../constant'
 import useKanban from '../../../logic/useKanban'
+import useSalon, { cn } from '../../../salon/layout/kanban_layout/bg_colors_setter'
 import SavingBar from '../../../SavingBar'
 import SectionLabel from '../../../SectionLabel'
-import useSalon, { cn } from '../../../salon/layout/kanban_layout/bg_colors_setter'
 import ClassicLayout from './ClassicLayout'
 import WaterfallLayout from './WaterfallLayout'
 

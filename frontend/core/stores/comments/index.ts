@@ -1,5 +1,7 @@
 import { proxy } from 'valtio'
+
 import { EMPTY_PAGED_COMMENTS } from '~/const/utils'
+
 import { API_MODE, MODE } from './constant'
 import type { TInit, TStore } from './spec'
 

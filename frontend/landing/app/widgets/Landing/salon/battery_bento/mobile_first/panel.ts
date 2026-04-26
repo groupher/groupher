@@ -1,5 +1,4 @@
 import { COLOR } from '~/const/colors'
-
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 

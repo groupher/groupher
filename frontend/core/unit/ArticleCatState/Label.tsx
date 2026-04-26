@@ -4,7 +4,6 @@ import { ARTICLE_CAT } from '~/const/gtd'
 import useNameAlias from '~/hooks/useNameAlias'
 
 import type { TProps as TArticleStateBadgeProps } from '.'
-
 import useSalon, { Icon } from './salon/label'
 
 type TProps = Pick<TArticleStateBadgeProps, 'cat' | 'smaller'>

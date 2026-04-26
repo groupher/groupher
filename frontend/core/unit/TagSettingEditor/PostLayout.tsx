@@ -1,7 +1,7 @@
 import { type FC, memo } from 'react'
+
 import { POST_LAYOUT } from '~/const/layout'
 import type { TPostLayout } from '~/spec'
-
 import CheckLabel from '~/widgets/CheckLabel'
 
 import useSalon, { cn } from './salon/post_layout'

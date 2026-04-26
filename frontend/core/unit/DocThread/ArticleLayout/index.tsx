@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { COMMUNITY_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
 import Sticky from '~/widgets/Sticky'
+
 import FaqLayout from '../FaqLayout'
 import FeedbackFooter from '../FeedbackFooter'
 import FileTree from '../FileTree'
@@ -32,7 +33,7 @@ export default function ArticleLayout() {
               <ToggleBtn
                 open={false}
                 onToggle={(toggle) => setOutlineOpen(toggle)}
-                className='mt-1 top-16'
+                className='top-16 mt-1'
               />
             </div>
           </Sticky>

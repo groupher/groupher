@@ -1,6 +1,8 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+
 import { getCSSVar } from '~/css'
 import useWindowResize from '~/hooks/useWindowResize'
+
 import useMetric from './useMetric'
 
 type TRes = {

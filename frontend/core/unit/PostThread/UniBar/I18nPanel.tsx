@@ -4,7 +4,6 @@ import CheckSVG from '~/icons/Check'
 import type { TLocale } from '~/spec'
 
 import MenuBar from './MenuBar'
-
 import useSalon from './salon/i18n_panel'
 
 export default function I18nPanel() {

@@ -1,4 +1,5 @@
 import { startsWith } from 'ramda'
+
 import APP from '~/const/app'
 
 export const STATIC_PATHS = ['/', '/pricing', '/book-demo']

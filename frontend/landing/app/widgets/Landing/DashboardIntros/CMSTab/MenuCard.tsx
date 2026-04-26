@@ -9,6 +9,7 @@ import MergeSVG from '~/icons/Merge'
 import PinSVG from '~/icons/Pin'
 import SlugSVG from '~/icons/Slug'
 import DeleteSVG from '~/icons/Trash'
+
 import useSalon, { cn } from '../../salon/dashboard_intros/cms_tab/menu_card'
 
 export default function MenuCard() {

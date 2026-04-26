@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+
 import { AVATAR_LAYOUT } from '~/const/layout'
-import { FIELD } from '../../../constant'
+
 import AvatarLayout from '..'
+import { FIELD } from '../../../constant'
 
 const edit = vi.fn()
 

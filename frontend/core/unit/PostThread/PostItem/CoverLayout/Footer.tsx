@@ -1,6 +1,6 @@
 import type { FC } from 'react'
-import { UPVOTE_LAYOUT } from '~/const/layout'
 
+import { UPVOTE_LAYOUT } from '~/const/layout'
 import type { TPost } from '~/spec'
 import Upvote from '~/unit/Upvote'
 import TimeAgo from '~/widgets/TimeAgo'

@@ -4,6 +4,7 @@ import type { FC } from 'react'
 import ArchSVG from '~/icons/Arch'
 import EmptySVG from '~/icons/Empty'
 import Radio from '~/widgets/Switcher/Radio'
+
 import { IMAGE_BORDER_RADIUS, IMAGE_SHADOW, LINEAR_BORDER, SETTING_LEVEL } from '../../constant'
 import useSalon, { cn } from '../../salon/toolbox/border_block'
 import type { TLinearBorderPos, TSettingLevel } from '../../spec'

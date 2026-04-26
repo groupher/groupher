@@ -1,4 +1,5 @@
 import { clone, keys } from 'ramda'
+
 import { GRADIENT_WALLPAPER, PATTERN_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
 import type {
   TWallpaper,

@@ -1,6 +1,7 @@
 import { keys } from 'ramda'
 
 import Sticky from '~/widgets/Sticky'
+
 import { MENU } from '../constant'
 import useSalon from '../salon/side_menu'
 import Group from './Group'

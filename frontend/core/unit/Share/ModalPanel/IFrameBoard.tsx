@@ -1,4 +1,5 @@
 import { type FC, memo } from 'react'
+
 import CopyButton from '~/widgets/Buttons/CopyButton'
 import Input from '~/widgets/Input'
 

@@ -2,6 +2,7 @@
 
 import SIZE from '~/const/size'
 import useTwBelt from '~/hooks/useTwBelt'
+
 import type { TAvatarSize } from '../spec'
 
 type TProps = {

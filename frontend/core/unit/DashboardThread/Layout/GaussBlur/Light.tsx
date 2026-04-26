@@ -10,10 +10,9 @@ import RangeSlider from '~/widgets/RangeSlider'
 
 import { FIELD } from '../../constant'
 import useHelper from '../../logic/useHelper'
+import useSalon, { cnMerge } from '../../salon/layout/gauss_blur'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
-
-import useSalon, { cnMerge } from '../../salon/layout/gauss_blur'
 
 export default function Light() {
   const s = useSalon()

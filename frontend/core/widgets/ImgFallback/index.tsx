@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 
 import type { TSizeSML, TSpace, TUser } from '~/spec'
+
 import Avatar from './Avatar'
 
 export type TAvatarProps = {

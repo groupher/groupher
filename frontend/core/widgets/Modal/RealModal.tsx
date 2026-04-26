@@ -1,9 +1,9 @@
 import { type FC, useCallback, useEffect, useState } from 'react'
+
 import { lockPage, toggleGlobalBlur, unlockPage } from '~/dom'
 import useGlowLight from '~/hooks/useGlowLight'
 import useShortcut from '~/hooks/useShortcut'
 import useTheme from '~/hooks/useTheme'
-
 import CloseCrossSVG from '~/icons/CloseLight'
 import Portal from '~/widgets/Portal'
 import ViewportTracker from '~/widgets/ViewportTracker'

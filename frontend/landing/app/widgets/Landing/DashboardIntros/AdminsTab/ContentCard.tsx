@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 
 import FingerPrintSVG from '~/icons/FingerPrintDuo'
+
 import useSalon from '../../salon/dashboard_intros/admins_tab/content_card'
 import PermissionItems from './PermissionItems'
 

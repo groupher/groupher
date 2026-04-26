@@ -1,9 +1,10 @@
 import useTrans from '~/hooks/useTrans'
 import ColorSelector from '~/widgets/ColorSelector'
+
 import usePrimaryColor from '../../logic/usePrimaryColor'
+import useSalon, { cn } from '../../salon/layout/primary_color'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
-import useSalon, { cn } from '../../salon/layout/primary_color'
 import SubPrimaryColor from '../SubPrimaryColor'
 
 export default function PrimaryColor() {

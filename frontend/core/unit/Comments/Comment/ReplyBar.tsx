@@ -1,8 +1,8 @@
 import { type FC, memo } from 'react'
-import { cutRest } from '~/fmt'
-import Img from '~/Img'
 
+import { cutRest } from '~/fmt'
 import ReplySVG from '~/icons/Reply'
+import Img from '~/Img'
 import type { TComment } from '~/spec'
 
 import useSalon from '../salon/comment/reply_bar'

@@ -1,5 +1,4 @@
 import { GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
-
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 import useWallpaper from '~/hooks/useWallpaper'

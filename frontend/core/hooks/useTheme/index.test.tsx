@@ -1,7 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 
 import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
-
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useTheme from '~/hooks/useTheme'
 

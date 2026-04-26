@@ -7,7 +7,6 @@ import { type FC, useEffect, useMemo, useRef, useState } from 'react'
 import type { TDocument } from '~/spec'
 
 import FoldBox from './FoldBox'
-
 import useSalon, { cn } from './salon'
 
 const RICH_EDITOR_STORAGE_KEY = 'installation-react-demo'

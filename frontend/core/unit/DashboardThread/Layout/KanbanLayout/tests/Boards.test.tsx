@@ -1,5 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+
 import { KANBAN_BOARD } from '~/const/thread'
+
 import { FIELD } from '../../../constant'
 import Boards from '../Boards'
 

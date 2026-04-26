@@ -1,10 +1,11 @@
 import { findIndex, reverse } from 'ramda'
 import { type FC, useEffect, useRef, useState } from 'react'
+
 import { sortByColor } from '~/helper'
 import ArrowSVG from '~/icons/ArrowSimple'
 import type { TTag } from '~/spec'
-import FileItem from './FileItem'
 
+import FileItem from './FileItem'
 import useSalon from './salon/folder'
 
 type TProps = {

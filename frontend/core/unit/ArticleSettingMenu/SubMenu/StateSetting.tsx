@@ -1,5 +1,6 @@
 import { type FC, useEffect, useState } from 'react'
 import { useMutation } from 'urql'
+
 import { ARTICLE_STATE } from '~/const/gtd'
 import { POST_STATE_MENU_ITEMS } from '~/const/menu'
 import { aliasGTDDoneState, toGTDLabelKey } from '~/fmt'
@@ -9,6 +10,7 @@ import useTrans from '~/hooks/useTrans'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import CheckSVG from '~/icons/CheckBold'
 import { toast, updateViewingArticle } from '~/signal'
+
 import { ICON } from '../constant'
 import { getGTDColor } from '../helper'
 import useSalon, { cn } from '../salon/sub_menu/state_setting'

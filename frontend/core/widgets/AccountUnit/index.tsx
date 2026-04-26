@@ -5,6 +5,7 @@
  */
 
 import { type FC, useState } from 'react'
+
 import { COMMUNITY_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
 import AccountSVG from '~/icons/Account'
@@ -13,7 +14,6 @@ import useAccount from '~/stores/account/hooks'
 
 import LoggedInAccount from './LoggedInAccount'
 import Panel from './Panel'
-
 import useSalon from './salon'
 
 type TProps = {

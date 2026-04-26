@@ -1,8 +1,10 @@
 import { type FC, useState } from 'react'
+
 import { mockUsers } from '~/mock'
 import type { TArticle } from '~/spec'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import Facepile from '~/widgets/Facepile'
+
 import useSalon from '../salon/stack_cards_layout/category'
 import useLogic from '../useLogic'
 

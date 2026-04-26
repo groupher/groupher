@@ -1,9 +1,10 @@
 import RangeSlider from '~/widgets/RangeSlider'
 import Radio from '~/widgets/Switcher/Radio'
+
 import useRSS from './logic/useRSS'
 import Portal from './Portal'
-import SavingBar from './SavingBar'
 import useSalon from './salon/rss'
+import SavingBar from './SavingBar'
 
 export default function RSS() {
   const s = useSalon()

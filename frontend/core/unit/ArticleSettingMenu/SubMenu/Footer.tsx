@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import ArrowSVG from '~/icons/Arrow'
 import type { TSpace } from '~/spec'
 import Button from '~/widgets/Buttons/Button'

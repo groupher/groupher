@@ -1,9 +1,10 @@
 import useTrans from '~/hooks/useTrans'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import Input from '~/widgets/Input'
+
 import useSEO from '../logic/useSEO'
-import SectionLabel from '../SectionLabel'
 import useSalon from '../salon/seo/open_graph'
+import SectionLabel from '../SectionLabel'
 import SearchEnginePreview from './SearchEnginePreview'
 
 /*

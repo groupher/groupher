@@ -9,8 +9,8 @@ import type { TCrumbConfig } from '~/spec'
 import { FIELD } from '~/unit/DashboardThread/constant'
 import useSEO from '~/unit/DashboardThread/hooks/useSEO'
 import Portal from '~/unit/DashboardThread/Portal'
-import SavingBar from '~/unit/DashboardThread/SavingBar'
 import useSalon, { cnMerge } from '~/unit/DashboardThread/salon'
+import SavingBar from '~/unit/DashboardThread/SavingBar'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = SEO_TABS.segment

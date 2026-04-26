@@ -1,8 +1,9 @@
 import { type FC, useEffect } from 'react'
-import useHover from '~/hooks/useHover'
 
+import useHover from '~/hooks/useHover'
 import Img from '~/Img'
 import { mockUsers } from '~/mock'
+
 import useSalon, { cn } from '../../salon/dashboard_intros/admins_tab/admins'
 import { ACTIVE_ITMES } from './constant'
 
@@ -19,7 +20,6 @@ const Admins: FC<TProps> = ({ onHover, userHover }) => {
   const [user2Ref, user2Hovered] = useHover<HTMLDivElement>()
   const [user3Ref, user3Hovered] = useHover<HTMLDivElement>()
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: The parallax parent passes a transient onHover callback each render; re-subscribing here causes hover flicker and breaks the landing animation.
   useEffect(() => {
     onHover([user1Hovered, user2Hovered, user3Hovered])
   }, [user1Hovered, user2Hovered, user3Hovered])

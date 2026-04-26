@@ -6,9 +6,9 @@
 
 import { find, forEach, includes, isEmpty, reject, without } from 'ramda'
 import { type FC, memo, useCallback, useEffect, useState } from 'react'
+
 import { CITY_OPTION_VALUES, CITY_OPTIONS, HOME_CITY_OPTIONS } from '~/const/city'
 import type { TCityOption, TSpace } from '~/spec'
-
 import Input from '~/widgets/Input'
 
 import useSalon, { cn, FLAGS } from './salon'

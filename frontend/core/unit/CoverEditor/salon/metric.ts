@@ -1,5 +1,6 @@
 import { GRADIENT_DIRECTION } from '~/const/wallpaper'
 import type { TWallpaperGradientDir } from '~/spec'
+
 import { IMAGE_POS, IMAGE_RATIO_SIZE, IMAGE_SIZE, LINEAR_BORDER } from '../constant'
 import type { TImagePos, TImageRadio, TImageSize, TImageSizeValue, TLinearBorderPos } from '../spec'
 

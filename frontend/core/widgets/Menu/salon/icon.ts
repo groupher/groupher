@@ -1,5 +1,4 @@
 import MENU from '~/const/menu'
-
 import useTwBelt from '~/hooks/useTwBelt'
 import ViewSVG from '~/icons/article/Viewed'
 import GtdDoneSVG from '~/icons/CheckBold'

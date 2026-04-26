@@ -1,5 +1,4 @@
 import { range } from 'ramda'
-
 import type { IRenderDotsProps } from 'react-scroll-snap-anime-slider'
 
 import { cn } from '../salon/cover_image/scroll_bar'

@@ -1,8 +1,8 @@
 import type { FC } from 'react'
+
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import SIZE from '~/const/size'
 import { upvoteArticle } from '~/signal'
-
 import type { TArticle } from '~/spec'
 import CommentsCount from '~/unit/CommentsCount'
 import Upvote from '~/unit/Upvote'

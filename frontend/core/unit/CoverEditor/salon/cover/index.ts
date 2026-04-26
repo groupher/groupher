@@ -1,5 +1,6 @@
 import { pixelAdd } from '~/dom'
 import useTwBelt from '~/hooks/useTwBelt'
+
 import { IMAGE_CONTAINER_SIZE, LINEAR_BORDER } from '../../constant'
 import { getImageSize, getImageTranslate, getLightPos, getLinearBorder } from '../metric'
 

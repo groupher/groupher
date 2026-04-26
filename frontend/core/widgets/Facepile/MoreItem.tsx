@@ -1,7 +1,6 @@
 import type { FC } from 'react'
 
 import type { TProps as TAvatarsProps } from '.'
-
 import useSalon from './salon/more_item'
 
 type TProps = Pick<TAvatarsProps, 'size' | 'onTotalSelect'>

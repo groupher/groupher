@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import { upvoteArticle } from '~/signal'
 import type { TPost } from '~/spec'

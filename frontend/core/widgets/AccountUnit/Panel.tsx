@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { type FC, useState } from 'react'
+
 import { SOCIAL } from '~/const/oauth'
 import { titleCase } from '~/fmt'
 import useTrans from '~/hooks/useTrans'
@@ -8,7 +9,6 @@ import Modal from '~/widgets/Modal'
 
 import { OAUTH_PROVIDERS } from './constant'
 import Loading, { LoadingMask } from './Loading'
-
 import useSalon, { SocialIcon } from './salon/panel'
 
 type TProps = {

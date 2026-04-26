@@ -1,8 +1,9 @@
 import type { FC } from 'react'
-import { assetSrc } from '~/helper'
 
+import { assetSrc } from '~/helper'
 import Img from '~/Img'
 import type { TUser } from '~/spec'
+
 import useSalon from './salon/user_item'
 
 type TProps = {

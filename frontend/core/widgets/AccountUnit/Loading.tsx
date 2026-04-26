@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import HomeLogo from '~/widgets/HomeLogo'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 

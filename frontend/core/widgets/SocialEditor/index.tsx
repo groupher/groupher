@@ -7,11 +7,11 @@
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import { findIndex, includes, keys, reject, update } from 'ramda'
 import { type FC, Fragment, memo, useCallback, useEffect, useState } from 'react'
+
 import { SOCIAL_LIST } from '~/const/social'
 import type { TSocialItem, TSocialType, TSpace } from '~/spec'
 
 import InputBar from './InputBar'
-
 import useSalon, { cn, Icon } from './salon'
 
 type TProps = {

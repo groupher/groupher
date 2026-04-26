@@ -1,4 +1,5 @@
 import { renderHook } from '@testing-library/react'
+
 import { COLOR } from '~/const/colors'
 import { INLINE_TAG_LAYOUT } from '~/const/layout'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'

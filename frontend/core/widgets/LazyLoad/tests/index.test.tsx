@@ -27,7 +27,6 @@ describe('<LazyLoad />', () => {
     const ioWindow = window as TWindowWithIO
     const original = ioWindow.IntersectionObserver
     // Ensure `('IntersectionObserver' in window)` is false.
-    // biome-ignore lint/performance/noDelete: test-only
     delete ioWindow.IntersectionObserver
 
     try {
@@ -43,7 +42,6 @@ describe('<LazyLoad />', () => {
       if (hadObserver) {
         ioWindow.IntersectionObserver = original
       } else {
-        // biome-ignore lint/performance/noDelete: test-only
         delete ioWindow.IntersectionObserver
       }
     }

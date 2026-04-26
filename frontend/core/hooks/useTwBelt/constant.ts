@@ -1,6 +1,7 @@
 // useTwBelt/constant.ts
 
 import type { TSpace } from '~/spec'
+
 import type { TColorPrefix } from './spec'
 
 export const STATIC_CLS = {

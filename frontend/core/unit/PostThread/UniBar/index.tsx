@@ -2,18 +2,18 @@
 /* eslint-disable react/jsx-no-comment-text-nodes */
 
 import { useCallback, useRef, useState } from 'react'
+
 import { scrollToHeader } from '~/dom'
 import useOutsideClick from '~/hooks/useOutsideClick'
 import useTrans from '~/hooks/useTrans'
-
 import ArrowTopSVG from '~/icons/Arrow2Top'
 import PeopleSVG from '~/icons/HeartPulse'
 import I18nSVG from '~/icons/I18n'
 import MoreSVG from '~/icons/menu/MoreL'
 import NotifySVG from '~/icons/Notify'
-
 import ThemeSwitch from '~/widgets/ThemeSwitch'
 import Tooltip from '~/widgets/Tooltip'
+
 import { MENU, TIP_OPTIONS } from './constant'
 import I18nPanel from './I18nPanel'
 import MorePanel from './MorePanel'

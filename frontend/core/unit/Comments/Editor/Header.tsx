@@ -1,10 +1,11 @@
 import type { FC } from 'react'
-import useTrans from '~/hooks/useTrans'
 
-import Img from '~/Img'
+import useTrans from '~/hooks/useTrans'
 import CommentSVG from '~/icons/Comment'
 import UserSVG from '~/icons/User'
+import Img from '~/Img'
 import type { TAccount } from '~/spec'
+
 import useSalon from '../salon/editor/header'
 import useActions from '../useLogic/useActions'
 

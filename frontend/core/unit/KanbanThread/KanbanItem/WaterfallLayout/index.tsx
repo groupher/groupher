@@ -6,6 +6,7 @@
 
 import Link from 'next/link'
 import type { FC } from 'react'
+
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
@@ -14,7 +15,6 @@ import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import ArticleCatState from '~/unit/ArticleCatState'
 import TagsList from '~/unit/TagsList'
-
 import Upvote from '~/unit/Upvote'
 
 import useSalon from '../salon/waterfall_layout'

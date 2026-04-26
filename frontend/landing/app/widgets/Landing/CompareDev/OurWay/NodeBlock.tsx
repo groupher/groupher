@@ -1,7 +1,7 @@
 import type { FC } from 'react'
+
 import { ARTICLE_CAT } from '~/const/gtd'
 import useTrans from '~/hooks/useTrans'
-import Img from '~/Img'
 import BugSVG from '~/icons/Bug'
 import ClipSVG from '~/icons/Clip'
 import DiscussSVG from '~/icons/Discuss'
@@ -11,10 +11,11 @@ import PinSVG from '~/icons/Pin'
 import QuestionSVG from '~/icons/Question'
 import TargetSVG from '~/icons/TargetBold'
 import ToolSVG from '~/icons/Tool'
+import Img from '~/Img'
 import { mockUsers } from '~/mock'
 import type { TArticleCat, TColorName } from '~/spec'
-
 import Facepile from '~/widgets/Facepile/LandingPage'
+
 import useSalon, { cn } from '../../salon/compare_dev/our_way/node_block'
 import { getMetricMap } from '../constant'
 import SprintCounter from './SprintCounter'

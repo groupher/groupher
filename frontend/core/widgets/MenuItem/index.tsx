@@ -7,8 +7,8 @@
 import type { FC } from 'react'
 
 import MENU from '~/const/menu'
-
 import type { TMenu } from '~/spec'
+
 import useSalon, { cn, MenuIcon } from './salon'
 
 type TProps = {

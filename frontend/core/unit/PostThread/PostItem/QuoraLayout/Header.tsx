@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { type FC, lazy, Suspense } from 'react'
+
 import { COMMUNITY_LAYOUT } from '~/const/layout'
 import SIZE from '~/const/size'
 import { THREAD_PATH } from '~/const/thread'
@@ -11,8 +12,8 @@ import TagsList from '~/unit/TagsList'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import TimeAgo from '~/widgets/TimeAgo'
 import Tooltip from '~/widgets/Tooltip'
-import ArticleReadLabel from '../../ArticleReadLabel'
 
+import ArticleReadLabel from '../../ArticleReadLabel'
 import useSalon from '../salon/quora_layout/header'
 
 const UserCard = lazy(() => import('~/widgets/Cards/UserCard'))

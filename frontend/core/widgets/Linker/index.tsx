@@ -5,6 +5,7 @@
  */
 
 import type { FC } from 'react'
+
 import { prettyURL } from '~/fmt'
 import LinkSVG from '~/icons/Link'
 import type { TSpace } from '~/spec'

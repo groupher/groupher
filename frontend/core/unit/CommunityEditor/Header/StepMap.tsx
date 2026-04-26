@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 
 import TadaSVG from '~/icons/Tada'
+
 import { STEP } from '../constant'
 import { tada } from '../helper'
 import { Icon } from '../salon/banner/select_type/type_boxes'

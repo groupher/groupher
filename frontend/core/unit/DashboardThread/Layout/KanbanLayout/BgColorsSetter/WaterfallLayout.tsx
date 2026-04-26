@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import { KANBAN_BOARD } from '~/const/thread'
 import type { TKanbanBoard } from '~/spec'
 

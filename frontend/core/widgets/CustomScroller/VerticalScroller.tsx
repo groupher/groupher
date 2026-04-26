@@ -9,11 +9,9 @@ import { type FC, memo } from 'react'
 
 import SIZE from '~/const/size'
 // import useTheme from '~/hooks/useTheme'
-
 // import ViewportTracker from '~/widgets/ViewportTracker'
 
 import type { TProps as TScrollProps } from '.'
-
 import useSalon from './salon/vertical_scroller'
 
 type TProps = Omit<TScrollProps, 'direction' | 'innerHeight'>

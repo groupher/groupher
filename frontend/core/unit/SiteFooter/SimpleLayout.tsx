@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { keys } from 'ramda'
+
 import { DEME_SOCIALS } from '~/const/social'
 import { groupByKey, sortByGroupIndex } from '~/helper'
 import useFooterLinks from '~/hooks/useFooterLinks'
 import type { TLinkItem } from '~/spec'
-
 import SocialList from '~/unit/SocialList'
 
 import useSalon from './salon/simple_layout'

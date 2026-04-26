@@ -1,6 +1,8 @@
 import type { FC } from 'react'
+
 import ViewedSVG from '~/icons/article/Viewed'
 import type { TSpace } from '~/spec'
+
 import useSalon, { cn } from './salon'
 
 type TProps = {

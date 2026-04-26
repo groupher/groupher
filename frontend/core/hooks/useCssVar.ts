@@ -1,4 +1,5 @@
 import { type DependencyList, useEffect, useState } from 'react'
+
 import useTheme from '~/hooks/useTheme'
 
 type TOptions = {

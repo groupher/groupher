@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+
 import { TAG_LAYOUT } from '~/const/layout'
-import { FIELD } from '../../../constant'
+
 import TagLayout from '..'
+import { FIELD } from '../../../constant'
 
 const edit = vi.fn()
 

@@ -14,6 +14,7 @@ import SquareSVG from '~/icons/SquareDuo'
 import StarSVG from '~/icons/StarDuo'
 import TriangleSVG from '~/icons/TriangleDuo'
 import UserSVG from '~/icons/UserDuo'
+
 import useSalon, { cn } from '../../salon/battery_bento/grid_blocks'
 import { SHINE_DOTS } from './constant'
 import Slogan from './Slogan'

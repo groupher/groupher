@@ -1,6 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
-import { getBgGradientDirAngle } from '../metric'
+
 import useBase from '.'
+import { getBgGradientDirAngle } from '../metric'
 
 export { cn } from '~/css'
 

@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+
 import { getDefaultCustomColor } from '~/const/colors'
 import THEME from '~/const/theme'
 import useLocalDraft from '~/hooks/useLocalDraft'

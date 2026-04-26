@@ -1,8 +1,8 @@
 import { type FC, memo } from 'react'
 
 import Img from '~/Img'
-
 import type { TEmotionType } from '~/spec'
+
 import useSalon from '../salon/selected_emotions/emotion_icon'
 
 type TProps = {

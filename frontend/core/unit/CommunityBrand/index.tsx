@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import { BRAND_LAYOUT } from '~/const/layout'
 import { assetSrc } from '~/helper'
 import useLayout from '~/hooks/useLayout'

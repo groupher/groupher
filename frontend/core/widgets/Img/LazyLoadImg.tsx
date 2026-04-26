@@ -1,6 +1,8 @@
 // frontend/core/widgets/Img/LazyLoadImg.tsx
 import { type FC, useCallback, useEffect, useRef, useState } from 'react'
+
 import LazyLoad from '~/widgets/LazyLoad'
+
 import type { TProps as TPropsBase } from '.'
 import { hasLoadedSrc, markLoadedSrc } from './cache'
 import useSalon, { cnMerge } from './salon/lazy_load_image'
@@ -51,7 +53,6 @@ const LazyLoadImg: FC<TProps> = ({
   }, [src])
 
   // ✅ cached hit / already-complete handling (must depend on src too)
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (!started) return
     const el = imgRef.current

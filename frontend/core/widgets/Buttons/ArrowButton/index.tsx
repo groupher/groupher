@@ -5,8 +5,10 @@
  */
 
 import type { FC, ReactNode } from 'react'
+
 import usePrimaryColor from '~/hooks/usePrimaryColor'
 import type { TColorName, TSpace } from '~/spec'
+
 import useSalon, { cnMerge } from '../salon/arrow_button'
 import Arrow from './Arrow'
 

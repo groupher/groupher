@@ -5,6 +5,7 @@
  */
 
 import type { FC } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import DeleteSVG from '~/icons/DeleteSolid'
 import type { TSocialItem } from '~/spec'

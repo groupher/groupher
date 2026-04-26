@@ -13,14 +13,13 @@
     "analyze": "cross-env ANALYZE=true next build",
     "lint": "../../node_modules/.bin/oxlint src --threads=1",
     "format": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json ./src",
-    "format:biome": "../../node_modules/.bin/biome format --write ./src",
     "format:check": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json --check ./src",
     "clean:up": "rm -rf *.tsbuildinfo"
   },
-  "lint-staged": {
-    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
-  },
   "dependencies": {
     "@groupher/frontend-core": "1.0.0"
+  },
+  "lint-staged": {
+    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
   }
 }

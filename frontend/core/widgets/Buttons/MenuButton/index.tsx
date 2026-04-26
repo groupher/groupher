@@ -1,7 +1,6 @@
 import { type FC, memo, type ReactNode } from 'react'
 
 import type { TMenuOption, TTooltipPlacement } from '~/spec'
-
 import Tooltip from '~/widgets/Tooltip'
 
 import Menu from './Menu'

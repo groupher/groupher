@@ -7,8 +7,8 @@ import TagNode from '~/widgets/TagNode'
 
 import { FIELD } from '../constant'
 import useTags from '../logic/useTags'
-import SavingBar from '../SavingBar'
 import useSalon, { cn } from '../salon/tags/tag_bar'
+import SavingBar from '../SavingBar'
 import TagAction from './TagAction'
 
 export type TProps = {

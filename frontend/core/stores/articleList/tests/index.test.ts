@@ -1,5 +1,6 @@
 import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATE } from '~/const/gtd'
 import type { TArticleFilter, TPagedArticles, TTag } from '~/spec'
+
 import setupStore from '..'
 
 describe('stores/articleList', () => {

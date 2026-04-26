@@ -1,8 +1,10 @@
 import { proxy } from 'valtio'
+
 import { INIT_KANBAN_BOARDS } from '~/const/dashboard'
 import METRIC from '~/const/metric'
 import { CHANGE_MODE } from '~/const/mode'
 import { EMPTY_PAGED_ARTICLES, EMPTY_PAGED_COMMUNITIES } from '~/const/utils'
+
 import { DEFAULT_OVERVIEW, FIELDS } from './constant'
 import type { TDsbFieldMap, TInit, TStore } from './spec'
 

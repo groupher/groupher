@@ -1,6 +1,5 @@
 import { GLOW_EFFECTS_DAY, GLOW_EFFECTS_NIGHT } from '~/const/glow_effect'
 import THEME from '~/const/theme'
-
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'

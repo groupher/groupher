@@ -1,11 +1,11 @@
 import type { FC } from 'react'
+
 import { ARTICLE_STATE } from '~/const/gtd'
 import { aliasGTDDoneState, toGTDLabelKey } from '~/fmt'
 import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 import useNameAlias from '~/hooks/useNameAlias'
 import useTrans from '~/hooks/useTrans'
 import useViewingArticle from '~/hooks/useViewingArticle'
-
 import ArrowSVG from '~/icons/ArrowSimple'
 
 import { ICON } from '../constant'

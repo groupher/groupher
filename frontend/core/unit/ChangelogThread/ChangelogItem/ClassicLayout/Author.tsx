@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import Img from '~/Img'
 import type { TUser } from '~/spec'
 

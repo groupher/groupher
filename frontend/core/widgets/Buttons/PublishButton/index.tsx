@@ -2,14 +2,15 @@
  * PublishButton
  */
 import { type FC, memo } from 'react'
+
 import { ARTICLE_CAT } from '~/const/gtd'
 import { POST_CAT_MENU_ITEMS } from '~/const/menu'
 import { PUBLISH_MODE } from '~/const/mode'
 import useViewingThread from '~/hooks/useViewingThread'
 import ArrowSVG from '~/icons/ArrowSolid'
 import type { TArticleCat, TPublishMode, TSpace, TTooltipPlacement } from '~/spec'
-
 import Menu from '~/widgets/Menu'
+
 import Button from '../Button'
 import useSalon from '../salon/publish_button'
 import { getText } from './helper'

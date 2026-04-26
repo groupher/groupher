@@ -1,9 +1,10 @@
 import useTrans from '~/hooks/useTrans'
 import useTwBelt from '~/hooks/useTwBelt'
 import ColorSelector from '~/widgets/ColorSelector'
+
 import useSubPrimaryColor from '../../logic/useSubPrimaryColor'
-import SavingBar from '../../SavingBar'
 import useSalon, { cn, cnMerge } from '../../salon/layout/primary_color'
+import SavingBar from '../../SavingBar'
 
 export default function SubPrimaryColor() {
   const s = useSalon()

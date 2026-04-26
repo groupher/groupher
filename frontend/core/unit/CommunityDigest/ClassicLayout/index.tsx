@@ -4,6 +4,7 @@ import useCommunityDigestViewport from '~/hooks/useCommunityDigestViewport'
 import useHeaderLinks from '~/hooks/useHeaderLinks'
 import AccountUnit from '~/widgets/AccountUnit'
 import ViewportTracker from '~/widgets/ViewportTracker'
+
 import useSalon, { cn } from '../salon/classic_layout'
 import CommunityBrief from './CommunityBrief'
 import ThreadTab from './ThreadTab'

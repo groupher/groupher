@@ -1,10 +1,11 @@
 import { keys } from 'ramda'
 import { useState } from 'react'
 
-import Img from '~/Img'
 import CircleArrowSVG from '~/icons/ArrowSimple'
 import CheckedSVG from '~/icons/CheckBold'
+import Img from '~/Img'
 import Button from '~/widgets/Buttons/Button'
+
 import useSalon, { cn } from '../salon/build_in/pictrue_group'
 import useLogic from '../useLogic'
 

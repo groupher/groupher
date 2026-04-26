@@ -1,5 +1,6 @@
 import { endsWith, includes } from 'ramda'
 import { length, limit } from 'stringz'
+
 import { ARTICLE_CAT, ARTICLE_STATE } from '~/const/gtd'
 import { THREAD } from '~/const/thread'
 import type { TArticleCat, TArticleState, TTransKey } from '~/spec'

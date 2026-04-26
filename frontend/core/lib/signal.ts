@@ -12,6 +12,7 @@ import type {
   TToastType,
   TWindow,
 } from '~/spec'
+
 import { scrollToHeader } from './dom'
 import PubSub from './pubsub'
 

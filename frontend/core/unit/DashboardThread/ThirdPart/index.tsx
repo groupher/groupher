@@ -1,11 +1,12 @@
 import Image from 'next/image'
 import type { FC } from 'react'
 import { useState } from 'react'
+
 import useTrans from '~/hooks/useTrans'
+
 import useSalon, { cn } from '../salon/third_part'
 import { INTEGRATE_ANALYSIS_TOOLS } from './constant'
 import SettingModal from './SettingModal'
-
 import type { TIntegrateAnalysisTool } from './spec'
 
 const ThirdPart: FC = () => {

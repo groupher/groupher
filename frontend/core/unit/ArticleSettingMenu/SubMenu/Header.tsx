@@ -1,11 +1,12 @@
 import type { FC } from 'react'
+
 import CategorySVG from '~/icons/Category'
 import EditSVG from '~/icons/EditPen'
 import WipSVG from '~/icons/GtdWip'
 import InfoSVG from '~/icons/Info'
 import SlugSVG from '~/icons/Slug'
-
 import TagNode from '~/widgets/TagNode'
+
 import { SUB_MENU_TYPE } from '../constant'
 import useSalon from '../salon/sub_menu/header'
 import type { TSubMenu } from '../spec'

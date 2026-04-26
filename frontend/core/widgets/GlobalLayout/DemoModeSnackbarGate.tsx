@@ -1,6 +1,7 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+
 import useDsbDemoMode from '~/hooks/useDsbDemoMode'
 
 const DemoModeSnackbar = dynamic(() => import('./DemoModeSnackbar'), {

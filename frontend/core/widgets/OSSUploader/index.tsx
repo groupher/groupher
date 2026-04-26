@@ -5,11 +5,13 @@
 
 import Script from 'next/script'
 import { type FC, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+
 import { assetPath } from '~/helper'
 import CrossSVG from '~/icons/CloseCross'
 import TurboSVG from '~/icons/Turbo'
 import UploadSVG from '~/icons/Upload'
 import uid from '~/utils/uid'
+
 import { handleUploadFile, initOSSClient } from './helper'
 import PreviewBlock from './PreviewBlock'
 import useSalon, { cn } from './salon'

@@ -1,11 +1,11 @@
 import { includes } from 'ramda'
+
 import { COLOR } from '~/const/colors'
 import { ARTICLE_CAT, ARTICLE_STATE } from '~/const/gtd'
 import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 import useTwBelt from '~/hooks/useTwBelt'
 // import GtdDoneSVG from '~/icons/GtdDone'
 import GtdDoneSVG from '~/icons/CheckBold'
-
 import GtdTodoSVG from '~/icons/GtdTodo'
 import GtdWipSVG from '~/icons/GtdWip'
 import RejectSVG from '~/icons/Reject'

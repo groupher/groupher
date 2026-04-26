@@ -6,10 +6,11 @@
 
 import Link from 'next/link'
 import type { FC } from 'react'
-import QuestionSVG from '~/icons/Question'
 
+import QuestionSVG from '~/icons/Question'
 import type { TSpace } from '~/spec'
 import TimeAgo from '~/widgets/TimeAgo'
+
 import { TYPE } from './constant'
 import Icon from './Icon'
 import useSalon, { cn } from './salon'

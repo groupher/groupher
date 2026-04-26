@@ -1,7 +1,6 @@
 import type { FC } from 'react'
 
 import { BROADCAST_LAYOUT } from '~/const/layout'
-
 import CrossSVG from '~/icons/CloseCross'
 import NotifySVG from '~/icons/Trumpet'
 

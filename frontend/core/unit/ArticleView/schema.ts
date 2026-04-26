@@ -1,6 +1,8 @@
 import { gql } from 'urql'
+
 import { F } from '~/schemas'
 import { thread2Path } from '~/utils/thread'
+
 import { setTag as setTagMutation, unsetTag as unsetTagMutation } from '../../schemas/pages/action'
 import { changelog } from '../../schemas/pages/changelog'
 import { doc } from '../../schemas/pages/doc'

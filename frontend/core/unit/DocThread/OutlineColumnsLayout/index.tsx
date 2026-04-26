@@ -1,4 +1,5 @@
 import { mockHelpCats } from '~/mock'
+
 import useSalon from '../salon/outline_columns_layout'
 import Category from './Category'
 

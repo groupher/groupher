@@ -4,8 +4,8 @@
  */
 
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
-
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
+
 import useSalon, { cn } from '../salon/build_in'
 import useLogic from '../useLogic'
 import AnglePanel from './AnglePanel'

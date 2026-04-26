@@ -1,5 +1,4 @@
 import { GRADIENT_DIRECTION } from '~/const/wallpaper'
-
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'

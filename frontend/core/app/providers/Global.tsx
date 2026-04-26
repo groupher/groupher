@@ -1,6 +1,7 @@
 'use client'
 
 import type { FC, ReactNode } from 'react'
+
 import GlobalLayout from '~/widgets/GlobalLayout'
 
 type TProps = {

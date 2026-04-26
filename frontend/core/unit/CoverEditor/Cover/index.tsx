@@ -2,9 +2,9 @@ import { isEmpty } from 'ramda'
 import type { FC } from 'react'
 
 import { parseWallpaper } from '~/wallpaper'
+
 import { IMAGE_BORDER_RADIUS, IMAGE_POS, IMAGE_SHADOW, IMAGE_SIZE } from '../constant'
 import useSalon from '../salon/cover'
-
 import useLogic from '../useLogic'
 import Placeholder from './Placeholder'
 

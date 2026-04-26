@@ -1,4 +1,5 @@
 import useTrans from '~/hooks/useTrans'
+
 import useSalon from '../salon/battery_bento'
 import BundleSize from './BundleSize'
 import DarkMode from './DarkMode'

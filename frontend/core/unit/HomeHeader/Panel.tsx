@@ -2,6 +2,7 @@
 
 import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
 import type { FC } from 'react'
+
 import CommunityIntros from './CommunityIntros'
 import { HEAD_MENU } from './constant'
 import DocsIntros from './DocsIntros'

@@ -1,4 +1,5 @@
 import { type FC, Fragment, memo } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import BotSVG from '~/icons/Bot'
 

@@ -7,6 +7,7 @@
 import { type FC, useState } from 'react'
 
 import type { TSpace } from '~/spec'
+
 import { HELP_FEEDBACK } from './constant'
 import BadSVG from './salon/BadSVG'
 import useSalon, { cn } from './salon/bottom_info'

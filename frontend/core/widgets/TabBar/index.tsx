@@ -3,6 +3,7 @@
  */
 
 import { type FC, memo } from 'react'
+
 import { ANCHOR } from '~/const/dom'
 import SIZE from '~/const/size'
 import { THREAD } from '~/const/thread'
@@ -10,7 +11,6 @@ import { sortByIndex } from '~/helper'
 import type { TSizeSM, TThread } from '~/spec'
 
 import NormalView from './NormalView'
-
 import type { TTabItem } from './spec'
 
 export type TProps = {

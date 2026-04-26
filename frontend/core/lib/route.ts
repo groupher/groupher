@@ -3,6 +3,7 @@ import { clone, endsWith, isEmpty, mergeRight, pickBy, slice } from 'ramda'
 import { HOME_COMMUNITY } from '~/const/name'
 import { ROUTE } from '~/const/route'
 import { THREAD, THREAD_PATH } from '~/const/thread'
+
 import { Global } from './helper'
 import { path2Thread } from './thread'
 import { nilOrEmpty } from './validator'

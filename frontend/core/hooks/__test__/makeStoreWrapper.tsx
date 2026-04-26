@@ -2,7 +2,6 @@ import type { FC, ReactNode } from 'react'
 
 import METRIC from '~/const/metric'
 import { COMMUNITY_THREADS } from '~/const/thread'
-
 import type { TCommunity, TLocale, TMetric } from '~/spec'
 import ArticleListStoreProvider from '~/stores/articleList/provider'
 import type { TInit as TArticleListInit } from '~/stores/articleList/spec'

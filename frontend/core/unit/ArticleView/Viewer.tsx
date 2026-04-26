@@ -8,6 +8,7 @@ import { type FC, memo } from 'react'
 
 import { THREAD } from '~/const/thread'
 import type { TArticle } from '~/spec'
+
 import ChangelogViewer from './ChangelogViewer'
 import PostViewer from './PostViewer'
 

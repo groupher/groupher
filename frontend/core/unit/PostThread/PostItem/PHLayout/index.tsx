@@ -1,13 +1,14 @@
 import type { FC } from 'react'
+
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import { THREAD_PATH } from '~/const/thread'
-import Img from '~/Img'
-
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
+import Img from '~/Img'
 import { upvoteArticle } from '~/signal'
 import type { TPost } from '~/spec'
 import Upvote from '~/unit/Upvote'
 import ImgFallback from '~/widgets/ImgFallback'
+
 import ArticlePinLabel from '../../ArticlePinLabel'
 import useSalon from '../salon/ph_layout'
 import Body from './Body'

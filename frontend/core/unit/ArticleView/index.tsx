@@ -7,9 +7,9 @@ import { startTransition, useEffect, useLayoutEffect, useRef, useState } from 'r
 import { ANCHOR } from '~/const/dom'
 import type { TArticleLoad } from '~/spec'
 import Comments from '~/unit/Comments'
+
 import DrawerHeader from './DrawerHeader'
 import useSalon from './salon'
-
 import useLogic from './useLogic'
 import Viewer from './Viewer'
 
@@ -99,7 +99,7 @@ export default function ArticleViewer({ isFullView = true }: TProps & TViewProps
 
   return (
     <div ref={wrapperRef} className={s.wrapper}>
-      <div id={ANCHOR.DRAWER_HEAD} data-drawer-scroll-anchor className='w-full h-px' />
+      <div id={ANCHOR.DRAWER_HEAD} data-drawer-scroll-anchor className='h-px w-full' />
       <DrawerHeader />
       <div className='relative'>
         <Viewer article={article} isFullView={isFullView} />
