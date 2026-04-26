@@ -66,14 +66,15 @@
     "test:e2e:main": "cross-env E2E_APP=main playwright test -c frontend/e2e/playwright.config.ts",
     "test:e2e:dashboard": "cross-env E2E_APP=dashboard playwright test -c frontend/e2e/playwright.config.ts",
     "test:e2e:landing": "cross-env E2E_APP=landing playwright test -c frontend/e2e/playwright.config.ts",
-    "prepare": "husky",
+    "postinstall": "husky",
     "coveralls": "cat ./coverage/lcov.info | coveralls",
     "doctor": "react-doctor .",
     "doctor:main": "react-doctor frontend/main",
     "doctor:dashboard": "react-doctor frontend/dashboard",
     "doctor:landing": "react-doctor frontend/landing",
     "doctor:gateway": "react-doctor frontend/gateway",
-    "doctor:core": "react-doctor frontend/core"
+    "doctor:core": "react-doctor frontend/core",
+    "lint-staged": "lint-staged --relative"
   },
   "dependencies": {
     "@formkit/auto-animate": "^0.8.0",
@@ -84,7 +85,7 @@
     "@groupher/rich-editor": "0.0.8",
     "@groupher/tooltip": "4.2.7",
     "@groupher/use-mobile-detect-hook": "^2.0.2",
-    "@next/bundle-analyzer": "^12.3.4",
+    "@next/bundle-analyzer": "^16.2.4",
     "@tailwindcss/postcss": "4.2.4",
     "@tailwindcss/typography": "0.5.19",
     "@tanstack/react-table": "^8.21.3",
@@ -151,7 +152,6 @@
   },
   "devDependencies": {
     "@commitlint/cli": "^17.6.6",
-    "@commitlint/config-conventional": "^8.2.0",
     "@graphql-tools/mock": "^9.1.7",
     "@graphql-tools/schema": "^10.0.33",
     "@playwright/test": "^1.59.1",
@@ -181,12 +181,20 @@
     "postcss": "^8.5.10",
     "react-doctor": "^0.0.39",
     "react-json-view-lite": "^2.5.0",
-    "react-test-renderer": "^19.2.5",
     "tsc-files": "^1.1.4",
     "typescript": "6.0.3",
     "vite": "^8.0.10",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.5"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,md}": "oxfmt -c frontend/core/config/oxfmt.json",
+    "*.{js,jsx,ts,tsx}": "oxlint -c frontend/core/config/oxlint.json --fix --threads=1",
+    "frontend/core/**/*.{ts,tsx}": "tsc-files --noEmit --project frontend/core/tsconfig.app.json",
+    "frontend/main/**/*.{ts,tsx}": "tsc-files --noEmit --project frontend/main/tsconfig.json",
+    "frontend/dashboard/**/*.{ts,tsx}": "tsc-files --noEmit --project frontend/dashboard/tsconfig.json",
+    "frontend/landing/**/*.{ts,tsx}": "tsc-files --noEmit --project frontend/landing/tsconfig.json",
+    "frontend/gateway/**/*.{ts,tsx}": "tsc-files --noEmit --project frontend/gateway/tsconfig.json"
   },
   "config": {
     "commitizen": {
