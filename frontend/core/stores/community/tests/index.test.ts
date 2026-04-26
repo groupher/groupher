@@ -1,4 +1,4 @@
-import { THREAD_PATH } from '~/const/thread'
+import { COMMUNITY_THREADS, THREAD_PATH } from '~/const/thread'
 import type { TCommunityThread } from '~/spec'
 
 import setupStore from '..'
@@ -9,7 +9,7 @@ describe('stores/community', () => {
 
     expect(store.slug).toBe('home')
     expect(store.title).toBe('')
-    expect(store.threads).toEqual([])
+    expect(store.threads).toEqual(COMMUNITY_THREADS)
     expect(store.communityDigestInView).toBe(true)
 
     const threads: readonly TCommunityThread[] = [
