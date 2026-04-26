@@ -3,6 +3,7 @@ import { includes, keys } from 'ramda'
 import CheckSVG from '~/icons/Check'
 import RootCheckSVG from '~/icons/CheckCircle'
 import Checker from '~/widgets/Checker'
+
 import useSalon from './salon/selects'
 import useLogic from './useLogic'
 

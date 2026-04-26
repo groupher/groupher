@@ -1,4 +1,5 @@
 import Img from '~/Img'
+
 import useSalon from '../salon/article_layout/article_cover'
 
 const ArticleCover = () => {

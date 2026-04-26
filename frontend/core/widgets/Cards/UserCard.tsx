@@ -4,8 +4,8 @@
 
 import Link from 'next/link'
 import type { FC } from 'react'
-import { cutRest } from '~/fmt'
 
+import { cutRest } from '~/fmt'
 import Img from '~/Img'
 import type { TAccount, TUser } from '~/spec'
 

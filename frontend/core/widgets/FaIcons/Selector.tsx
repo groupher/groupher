@@ -7,12 +7,13 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { keys } from 'ramda'
 import { type FC, useState } from 'react'
-import '@fortawesome/fontawesome-svg-core/styles.css'
 
+import '@fortawesome/fontawesome-svg-core/styles.css'
 import { COLOR } from '~/const/colors'
 import ArrowSVG from '~/icons/ArrowSolid'
 import type { TColorName, TSpace } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
+
 import FaIcon from './icons'
 import Panel from './Panel'
 import useSalon, { cn } from './salon/selector'

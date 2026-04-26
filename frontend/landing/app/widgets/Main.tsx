@@ -2,6 +2,7 @@
 
 import { motion, useScroll, useSpring, useTransform } from 'motion/react'
 import { type FC, type ReactNode, useEffect, useState } from 'react'
+
 import useTopbar from '~/hooks/useTopbar'
 import useTrans from '~/hooks/useTrans'
 import HomeHeader from '~/unit/HomeHeader'

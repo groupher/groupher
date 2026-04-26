@@ -1,4 +1,5 @@
 import { useState } from 'react'
+
 import useSalon from '../../salon/dashboard_intros/admins_tab'
 import Admins from './Admins'
 import ContentCard from './ContentCard'

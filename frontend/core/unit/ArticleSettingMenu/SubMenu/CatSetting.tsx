@@ -1,11 +1,13 @@
 import { type FC, useEffect, useState } from 'react'
 import { useMutation } from 'urql'
+
 import { POST_CAT_MENU_ITEMS } from '~/const/menu'
 import { toGTDLabelKey } from '~/fmt'
 import useTrans from '~/hooks/useTrans'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import CheckSVG from '~/icons/CheckBold'
 import { toast, updateViewingArticle } from '~/signal'
+
 import { ICON } from '../constant'
 import useSalon, { cn } from '../salon/sub_menu/cat_setting'
 import S from '../schema'
@@ -24,9 +26,9 @@ const CatSetting: FC<TProps> = ({ onBack }) => {
   const [cat, setCat] = useState(article.cat)
 
   const { touched, setTouched, resetTouched } = useTouched()
+
   const [result, setPostCat] = useMutation(S.setPostCat)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     setCat(article.cat)
   }, [])

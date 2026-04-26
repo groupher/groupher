@@ -7,6 +7,7 @@ import type {
 } from '~/const/gtd'
 import type { UPVOTE_LAYOUT } from '~/const/layout'
 import type { TConstValues } from '~/spec'
+
 import type { TCommunity, TTag } from '.'
 import type { TAccount, TSimpleUser, TUser } from './account'
 import type { TColor } from './color'

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { FC } from 'react'
+
 import useHeaderLinks from '~/hooks/useHeaderLinks'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
 import usePublicThreads from '~/hooks/usePublicThreads'

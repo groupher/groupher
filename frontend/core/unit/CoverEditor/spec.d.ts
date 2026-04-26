@@ -1,4 +1,5 @@
 import type { TConstValues, TWallpaper, TWallpaperGradientDir } from '~/spec'
+
 import type { IMAGE_POS, IMAGE_RATIO, IMAGE_SIZE, LINEAR_BORDER, SETTING_LEVEL } from './constant'
 
 export type TStore = {

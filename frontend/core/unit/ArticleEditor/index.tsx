@@ -3,6 +3,7 @@
  */
 
 import { type FC, useEffect } from 'react'
+
 import METRIC from '~/const/metric'
 import { CONDITION_MODE } from '~/const/mode'
 import type { TEditMode, TMetric } from '~/spec'

@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
+
 import useSalon from '../salon/build_in/custom_gradient_editor'
 import useLogic from '../useLogic'
 

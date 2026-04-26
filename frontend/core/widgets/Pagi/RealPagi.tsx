@@ -3,6 +3,7 @@ import type { FC } from 'react'
 import { roundUpNumber } from '~/fmt'
 import ArrowSVG from '~/icons/ArrowSimple'
 import type { TPagi, TSpace } from '~/spec'
+
 import type { TProps as TPagiProps } from '.'
 import useSalon, { cn } from './salon'
 

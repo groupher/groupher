@@ -8,10 +8,12 @@
 
 import Link from 'next/link'
 import { type FC, type MouseEvent, useCallback, useEffect, useRef } from 'react'
+
 import { isElementInViewport } from '~/dom'
 import useTrans from '~/hooks/useTrans'
 import type { TSizeSM, TTabItem } from '~/spec'
 import { isString } from '~/validator'
+
 import useSalon, { cn } from '../salon/tabs/tab_item'
 import TabIcon from './TabIcon'
 

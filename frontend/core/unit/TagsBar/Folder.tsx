@@ -1,10 +1,12 @@
 import { findIndex, reverse } from 'ramda'
 import { type FC, useEffect, useMemo, useRef, useState } from 'react'
+
 import { sortByColor } from '~/helper'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 import MoreSVG from '~/icons/menu/MoreL'
 import type { TTag } from '~/spec'
+
 import useSalon from './salon/folder'
 import TagItem from './TagItem'
 

@@ -1,11 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
+
 import { COLOR } from '~/const/colors'
 import { INIT_KANBAN_COLORS } from '~/const/dashboard'
 import { KANBAN_LAYOUT } from '~/const/layout'
 import { KANBAN_BOARD } from '~/const/thread'
-import { FIELD } from '../../../../constant'
+
 import BgColorsSetter from '..'
+import { FIELD } from '../../../../constant'
 
 const edit = vi.fn()
 

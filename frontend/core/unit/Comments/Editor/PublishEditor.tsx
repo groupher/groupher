@@ -1,8 +1,8 @@
 import { type FC, memo } from 'react'
 
 import type { TSubmitState } from '~/spec'
-import useSalon from '../salon/editor/publish_editor'
 
+import useSalon from '../salon/editor/publish_editor'
 import useActions from '../useLogic/useActions'
 // import Header from './Header'
 import BodyEditor from './BodyEditor'

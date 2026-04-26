@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react'
+
 import THEME from '~/const/theme'
 import useHover from '~/hooks/useHover'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import StarSVG from '~/icons/Star'
+
 import useSalon, { cn } from '../../salon/battery_bento/dark_mode'
 import Panel from './Panel'
 

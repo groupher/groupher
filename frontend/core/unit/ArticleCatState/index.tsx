@@ -5,12 +5,13 @@
  */
 
 import type { FC } from 'react'
+
 import { ARTICLE_CAT, ARTICLE_STATE } from '~/const/gtd'
 import type { TArticleCat, TArticleState, TSpace } from '~/spec'
-import Label from './Label'
-import State from './State'
 
+import Label from './Label'
 import useSalon from './salon'
+import State from './State'
 
 export type TProps = {
   testid?: string

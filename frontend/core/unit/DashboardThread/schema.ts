@@ -1,4 +1,5 @@
 import { gql } from 'urql'
+
 import { F, P } from '~/schemas'
 
 const { pagedPosts, pagedChangelogs } = P

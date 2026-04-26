@@ -6,7 +6,6 @@ import GlowLight from '~/unit/DashboardThread/Layout/GlowLight'
 import PageBackground from '~/unit/DashboardThread/Layout/PageBackground'
 import PrimaryColor from '~/unit/DashboardThread/Layout/PrimaryColor'
 import Wallpaper from '~/unit/DashboardThread/Layout/Wallpaper'
-
 import useSalon from '~/unit/DashboardThread/salon/layout'
 
 export default function Page() {

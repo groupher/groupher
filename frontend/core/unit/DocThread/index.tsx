@@ -3,15 +3,15 @@
  */
 
 import { DOC_COVER_LAYOUT } from '~/const/layout'
-
 import FaqList from '~/unit/FaqList'
+
 import ArticleLayout from './ArticleLayout'
 import BriefCardsLayout from './BriefCardsLayout'
 import CoverCardsLayout from './CoverCardsLayout'
 import OutlineColumnsLayout from './OutlineColumnsLayout'
 import OutlineTocLayout from './OutlineTocLayout'
-import StackCardsLayout from './StackCardsLayout'
 import useSalon from './salon'
+import StackCardsLayout from './StackCardsLayout'
 import TileCardsLayout from './TileCardsLayout'
 import useLogic from './useLogic'
 

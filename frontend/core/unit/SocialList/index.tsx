@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { type FC, memo } from 'react'
+
 import SIZE from '~/const/size'
 import type { TSizeTSM, TSocialItem, TSpace } from '~/spec'
 

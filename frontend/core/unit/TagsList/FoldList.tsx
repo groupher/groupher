@@ -1,7 +1,7 @@
 import type { FC } from 'react'
+
 import type { TProps as TTagProps } from '.'
 import List from './List'
-
 import useSalon from './salon'
 
 type TProps = Omit<TTagProps, 'withSetter' | 'community' | 'thread'>

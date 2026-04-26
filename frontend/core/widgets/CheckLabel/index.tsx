@@ -5,6 +5,7 @@
  */
 
 import { type FC, memo } from 'react'
+
 import HookSVG from '~/icons/Hook'
 import type { TActive, TSpace } from '~/spec'
 

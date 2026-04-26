@@ -1,4 +1,5 @@
 import { type FC, useEffect, useState } from 'react'
+
 import { CHANGE_MODE } from '~/const/mode'
 import ArrowSVG from '~/icons/Arrow'
 import EditPenSVG from '~/icons/EditPen'
@@ -11,8 +12,8 @@ import Tooltip from '~/widgets/Tooltip'
 
 import { EMPTY_LINK_ITEM } from '../../constant'
 import useFooter from '../../logic/useFooter'
-import SavingBar from '../../SavingBar'
 import useSalon, { cn } from '../../salon/footer/editors/link_editor'
+import SavingBar from '../../SavingBar'
 import LinkMenu from './LinkMenu'
 
 type TProps = {

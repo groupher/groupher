@@ -1,10 +1,11 @@
 import { type FC, Fragment } from 'react'
-import useTrans from '~/hooks/useTrans'
 
+import useTrans from '~/hooks/useTrans'
 // import Tooltip from '~/widgets/Tooltip'
 import PinSVG from '~/icons/Pin'
 import type { TComment } from '~/spec'
 import ArtimentBody from '~/widgets/ArtimentBody'
+
 import useSalon, { cn } from '../../salon/comment/desktop_view'
 import type { TAPIMode } from '../../spec'
 import useActions from '../../useLogic/useActions'

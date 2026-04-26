@@ -6,10 +6,11 @@
 
 import { compose, filter, isNil, not, reverse as reverseFn } from 'ramda'
 import { type FC, Suspense } from 'react'
+
 import SIZE from '~/const/size'
 import type { TSpace, TUser } from '~/spec'
-
 import ImgFallback from '~/widgets/ImgFallback'
+
 import MoreItem from './MoreItem'
 import RealAvatar from './RealAvatar'
 import useSalon, { cn } from './salon'

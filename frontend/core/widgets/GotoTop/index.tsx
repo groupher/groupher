@@ -7,7 +7,6 @@
 import { type FC, memo } from 'react'
 
 import { scrollDrawerToTop, scrollToHeader } from '~/dom'
-
 import AirBalloonSVG from '~/icons/AirBalloon'
 
 import useSalon from './salon'

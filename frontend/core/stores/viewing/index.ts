@@ -1,5 +1,6 @@
 import { mergeRight } from 'ramda'
 import { proxy } from 'valtio'
+
 import METRIC from '~/const/metric'
 import { ARTICLE_THREAD } from '~/const/thread'
 import type { TCommunity } from '~/spec'

@@ -7,6 +7,7 @@
 import { type FC, memo } from 'react'
 
 import type { TSpace } from '~/spec'
+
 import useSalon from './salon'
 
 type TProps = {

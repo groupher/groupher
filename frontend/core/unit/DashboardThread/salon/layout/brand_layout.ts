@@ -1,6 +1,7 @@
 export { cn } from '~/css'
 
 import useTwBelt from '~/hooks/useTwBelt'
+
 import useBase from '.'
 
 export default function useSalon() {

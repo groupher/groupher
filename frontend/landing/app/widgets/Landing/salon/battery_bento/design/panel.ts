@@ -1,6 +1,7 @@
 import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 import useWallpaper from '~/hooks/useWallpaper'
+
 import { getCursorGradient, getPathGradient } from '../../metric'
 
 export { cn } from '~/css'

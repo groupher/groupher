@@ -2,6 +2,7 @@ import { motion, type TargetAndTransition, useAnimationControls } from 'motion/r
 import { type FC, useEffect } from 'react'
 
 import Img from '~/Img'
+
 import useSalon, { cn } from '../salon/tech_stacks/tech_key'
 
 type TProps = {

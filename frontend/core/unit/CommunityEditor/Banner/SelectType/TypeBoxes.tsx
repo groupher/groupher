@@ -1,7 +1,7 @@
 import CheckSVG from '~/icons/CheckCircle'
+
 import { COMMUNITY_CATS } from '../../constant'
 import useSalon, { cn, Icon } from '../../salon/banner/select_type/type_boxes'
-
 import useLogic from '../../useLogic'
 import IntroImages from './IntroImages'
 

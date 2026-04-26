@@ -6,14 +6,15 @@
 
 import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
 import { type FC, type ReactNode, useEffect, useMemo, useState } from 'react'
+
 import { COLOR, getDefaultCustomColor } from '~/const/colors'
 import useTheme from '~/hooks/useTheme'
 import type { TColorName, TTooltipPlacement } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
+
 import BuildInColors from './BuildInColors'
 import CustomColor from './CustomColor'
 import CustomColorPicker from './CustomColorPicker'
-
 import useSalon from './salon'
 
 type TProps = {

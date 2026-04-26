@@ -1,6 +1,7 @@
 'use client'
 
 import type { FC } from 'react'
+
 import { COLOR } from '~/const/colors'
 import useTrans from '~/hooks/useTrans'
 import MoreSVG from '~/icons/List'
@@ -8,6 +9,7 @@ import WarningSVG from '~/icons/Warning'
 import useDashboard from '~/stores/dashboard/hooks'
 import { resetDsbDemoConfig } from '~/utils/dsb-demo'
 import Button from '~/widgets/Buttons/Button'
+
 import useSalon from './salon/demo_mode_snackbar'
 
 const DemoModeSnackbar: FC = () => {

@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import GithubSVG from '~/icons/Github8'
 import DiscordSVG from '~/icons/social/Discord'
 import TikTokSVG from '~/icons/social/TikTok'

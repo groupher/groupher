@@ -5,6 +5,7 @@
  */
 
 import { type FC, useEffect, useState } from 'react'
+
 import { THEME_MODE } from '~/const/theme'
 import useTheme from '~/hooks/useTheme'
 import useThemeLoop from '~/hooks/useThemeLoop'

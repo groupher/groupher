@@ -2,9 +2,9 @@
 import Link from 'next/link'
 
 import { ROUTE } from '~/const/route'
-
-import Img from '~/Img'
 import ArrowSVG from '~/icons/ArrowUpRight'
+import Img from '~/Img'
+
 import useSalon, { cn } from '../salon/banner/finished'
 import useLogic from '../useLogic'
 

@@ -1,6 +1,7 @@
 // useTwBelt/spec.d.ts
 
 import type { ClassValue } from 'clsx'
+
 import type { TColorName, TSpace, TZIndexType } from '~/spec'
 
 export type TColorPrefix = 'fg' | 'bg' | 'bgSoft' | 'fill' | 'border' | 'borderSoft' | 'decoration'

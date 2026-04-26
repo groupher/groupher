@@ -7,6 +7,7 @@
 'use client'
 
 import { type FC, type ReactNode, useEffect, useRef } from 'react'
+
 import SIZE from '~/const/size'
 import CheckedSVG from '~/icons/CheckBold'
 import type { TColorName, TSizeSM, TSpace } from '~/spec'

@@ -7,6 +7,7 @@
 import type { FC } from 'react'
 
 import type { TSpace } from '~/spec'
+
 import BottomInfo from './BottomInfo'
 import useSalon from './salon'
 import TopInfo from './TopInfo'

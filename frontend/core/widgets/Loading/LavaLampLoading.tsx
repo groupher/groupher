@@ -2,6 +2,7 @@
 
 import { range } from 'ramda'
 import type { FC } from 'react'
+
 import SIZE from '~/const/size'
 import { cnMerge } from '~/css'
 import type { TSizeTSM, TSpace } from '~/spec'

@@ -1,6 +1,6 @@
 import { includes } from 'ramda'
-import { GLOW_EFFECT_NAME, GLOW_OPACITY } from '~/const/glow_effect'
 
+import { GLOW_EFFECT_NAME, GLOW_OPACITY } from '~/const/glow_effect'
 import METRIC from '~/const/metric'
 import { GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
 import useMetric from '~/hooks/useMetric'

@@ -1,4 +1,5 @@
 import { proxy } from 'valtio'
+
 import METRIC from '~/const/metric'
 import { THREAD } from '~/const/thread'
 

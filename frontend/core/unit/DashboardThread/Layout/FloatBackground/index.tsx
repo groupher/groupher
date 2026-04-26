@@ -1,10 +1,11 @@
 import useTrans from '~/hooks/useTrans'
 import CheckLabel from '~/widgets/CheckLabel'
+
 import { FIELD } from '../../constant'
 import useOverlayDark from '../../logic/useOverlayDark'
+import useSalon, { cnMerge } from '../../salon/layout/float_background'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
-import useSalon, { cnMerge } from '../../salon/layout/float_background'
 
 function PanelContent({ dark = false }: { dark?: boolean }) {
   const s = useSalon()

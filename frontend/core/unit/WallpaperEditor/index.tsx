@@ -4,9 +4,9 @@
  */
 
 import VIEW from '~/const/view'
-
 import useMount from '~/hooks/useMount'
 import Tabs from '~/widgets/Switcher/Tabs'
+
 import BuildIn from './BuildIn'
 import { TAB, TAB_OPTIONS } from './constant'
 import Footer from './Footer'

@@ -6,8 +6,8 @@
 
 import copy from 'copy-to-clipboard'
 import { QRCodeSVG } from 'qrcode.react'
-
 import { type FC, lazy, Suspense, useState } from 'react'
+
 import useViewingArticle from '~/hooks/useViewingArticle'
 import LinkSVG from '~/icons/Link'
 import MoreSVG from '~/icons/ShareArrow'

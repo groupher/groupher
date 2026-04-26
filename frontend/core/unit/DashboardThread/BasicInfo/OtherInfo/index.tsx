@@ -1,13 +1,13 @@
 import type { FC } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import CitySelector from '~/widgets/CitySelector'
 import Input from '~/widgets/Input'
 
 import { FIELD } from '../../constant'
 import useBaseInfo from '../../logic/useBaseInfo'
-import SavingBar from '../../SavingBar'
 import useSalon from '../../salon/basic_info/other_info'
-
+import SavingBar from '../../SavingBar'
 import MediaEditor from './MediaEditor'
 
 const OtherInfo: FC = () => {

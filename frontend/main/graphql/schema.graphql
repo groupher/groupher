@@ -59,7 +59,11 @@ type RootQueryType {
   pagedPublishedBlogs(login: String!, filter: PagiFilter!, thread: BlogThread): PagedBlogs
 
   "paged published changelogs"
-  pagedPublishedChangelogs(login: String!, filter: PagiFilter!, thread: ChangelogThread): PagedChangelogs
+  pagedPublishedChangelogs(
+    login: String!
+    filter: PagiFilter!
+    thread: ChangelogThread
+  ): PagedChangelogs
 
   "paged published docs"
   pagedPublishedDocs(login: String!, filter: PagiFilter!, thread: DocThread): PagedDocs
@@ -106,7 +110,11 @@ type RootQueryType {
   oneComment(id: ID!): Comment
 
   "get paged article comments"
-  pagedComments(article: ArticleRefInput!, mode: CommentsMode, filter: CommentsFilter): PagedComments
+  pagedComments(
+    article: ArticleRefInput!
+    mode: CommentsMode
+    filter: CommentsFilter
+  ): PagedComments
 
   "get paged article comments participants"
   pagedCommentsParticipants(article: ArticleRefInput!, filter: PagiFilter): PagedUsers
@@ -123,7 +131,7 @@ type RootQueryType {
   "search communities by title"
   searchCommunities(title: String!, category: String): PagedCommunities
 
-  "kanban posts grouped by backlog\/todo\/wip\/done\/rejected"
+  "kanban posts grouped by backlog/todo/wip/done/rejected"
   groupedKanbanPosts(community: String!): KanbanPosts
 
   "get open graph info by url"
@@ -215,17 +223,36 @@ type RootMutationType {
   makeContribute(userId: ID!): UserContribute
 
   "create a global community"
-  createCommunity(title: String!, desc: String!, slug: String!, logo: String!, locale: String): Community
+  createCommunity(
+    title: String!
+    desc: String!
+    slug: String!
+    logo: String!
+    locale: String
+  ): Community
 
   "update a community"
-  updateCommunity(community: String!, title: String, desc: String, slug: String, logo: String, locale: String): Community
+  updateCommunity(
+    community: String!
+    title: String
+    desc: String
+    slug: String
+    logo: String
+    locale: String
+  ): Community
 
   "delete a global community"
   deleteCommunity(id: ID!): Community
 
   "apply to create a community"
   applyCommunity(
-    title: String!, desc: String!, slug: String!, logo: String!, locale: String, applyMsg: String, applyCategory: String
+    title: String!
+    desc: String!
+    slug: String!
+    logo: String!
+    locale: String
+    applyMsg: String
+    applyCategory: String
   ): Community
 
   "approve the apply to create a community"
@@ -254,12 +281,30 @@ type RootMutationType {
 
   "create a tag"
   createCommunityTag(
-    title: String!, slug: String!, color: RainbowColor!, layout: String, community: String!, group: String, thread: Thread, extra: [String], icon: String
+    title: String!
+    slug: String!
+    color: RainbowColor!
+    layout: String
+    community: String!
+    group: String
+    thread: Thread
+    extra: [String]
+    icon: String
   ): CommunityTag
 
   "update a tag"
   updateCommunityTag(
-    id: ID!, community: String!, title: String, layout: String, desc: String, slug: String, color: RainbowColor, group: String, thread: Thread, extra: [String], icon: String
+    id: ID!
+    community: String!
+    title: String
+    layout: String
+    desc: String
+    slug: String
+    color: RainbowColor
+    group: String
+    thread: Thread
+    extra: [String]
+    icon: String
   ): CommunityTag
 
   "delete a tag by thread"
@@ -284,7 +329,12 @@ type RootMutationType {
   unsetCommunityTag(article: ArticleRefInput!, communityTagId: ID!): Article
 
   "reindex tags in given group"
-  reindexTagsInGroup(community: String!, thread: Thread, group: String!, tags: [ReindexTagInput]): Done
+  reindexTagsInGroup(
+    community: String!
+    thread: Thread
+    group: String!
+    tags: [ReindexTagInput]
+  ): Done
 
   "mirror article to other community"
   mirrorArticle(article: ArticleRefInput!, targetCommunity: String!, communityTags: [ID]): Article
@@ -303,12 +353,24 @@ type RootMutationType {
 
   "create a post"
   createPost(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID]
+    title: String!
+    body: String!
+    linkAddr: String
+    copyRight: String
+    community: String!
+    thread: Thread
+    communityTags: [ID]
   ): Post
 
-  "update a cms\/post"
+  "update a cms/post"
   updatePost(
-    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID]
+    article: ArticleRefInput!
+    title: String
+    body: String
+    digest: String
+    copyRight: String
+    linkAddr: String
+    communityTags: [ID]
   ): Post
 
   "set cat for a post"
@@ -370,12 +432,24 @@ type RootMutationType {
 
   "create a blog"
   createBlog(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID]
+    title: String!
+    body: String!
+    linkAddr: String
+    copyRight: String
+    community: String!
+    thread: Thread
+    communityTags: [ID]
   ): Blog
 
-  "update a cms\/blog"
+  "update a cms/blog"
   updateBlog(
-    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID]
+    article: ArticleRefInput!
+    title: String
+    body: String
+    digest: String
+    copyRight: String
+    linkAddr: String
+    communityTags: [ID]
   ): Blog
 
   "upvote to blog"
@@ -431,12 +505,24 @@ type RootMutationType {
 
   "create a changelog"
   createChangelog(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID]
+    title: String!
+    body: String!
+    linkAddr: String
+    copyRight: String
+    community: String!
+    thread: Thread
+    communityTags: [ID]
   ): Changelog
 
-  "update a cms\/changelog"
+  "update a cms/changelog"
   updateChangelog(
-    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID]
+    article: ArticleRefInput!
+    title: String
+    body: String
+    digest: String
+    copyRight: String
+    linkAddr: String
+    communityTags: [ID]
   ): Changelog
 
   "upvote to changelog"
@@ -492,12 +578,24 @@ type RootMutationType {
 
   "create a doc"
   createDoc(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID]
+    title: String!
+    body: String!
+    linkAddr: String
+    copyRight: String
+    community: String!
+    thread: Thread
+    communityTags: [ID]
   ): Doc
 
-  "update a cms\/doc"
+  "update a cms/doc"
   updateDoc(
-    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID]
+    article: ArticleRefInput!
+    title: String
+    body: String
+    digest: String
+    copyRight: String
+    linkAddr: String
+    communityTags: [ID]
   ): Doc
 
   "upvote to doc"
@@ -589,60 +687,188 @@ type RootMutationType {
 
   "update base info in dashboard"
   updateDashboardBaseInfo(
-    community: String!, dashboardSection: DashboardSection, favicon: String, title: String, locale: String, logo: String, slug: String, desc: String, introduction: String, homepage: String, city: String, techstack: String
+    community: String!
+    dashboardSection: DashboardSection
+    favicon: String
+    title: String
+    locale: String
+    logo: String
+    slug: String
+    desc: String
+    introduction: String
+    homepage: String
+    city: String
+    techstack: String
   ): Community
 
   "update seo in dashboard"
   updateDashboardSeo(
-    community: String!, dashboardSection: DashboardSection, seoEnable: Boolean, ogSiteName: String, ogTitle: String, ogDescription: String, ogUrl: String, ogImage: String, ogLocale: String, ogPublisher: String, twTitle: String, twDescription: String, twUrl: String, twCard: String, twSite: String, twImage: String, twImageWidth: String, twImageHeight: String
+    community: String!
+    dashboardSection: DashboardSection
+    seoEnable: Boolean
+    ogSiteName: String
+    ogTitle: String
+    ogDescription: String
+    ogUrl: String
+    ogImage: String
+    ogLocale: String
+    ogPublisher: String
+    twTitle: String
+    twDescription: String
+    twUrl: String
+    twCard: String
+    twSite: String
+    twImage: String
+    twImageWidth: String
+    twImageHeight: String
   ): Community
 
   "update wallpaper in dashboard"
   updateDashboardWallpaper(
-    community: String!, dashboardSection: DashboardSection, wallpaperType: String, wallpaper: String, hasPattern: Boolean, direction: String, customColorValue: String, bgSize: String, uploadBgImage: String, hasBlur: Boolean, hasShadow: Boolean
+    community: String!
+    dashboardSection: DashboardSection
+    wallpaperType: String
+    wallpaper: String
+    hasPattern: Boolean
+    direction: String
+    customColorValue: String
+    bgSize: String
+    uploadBgImage: String
+    hasBlur: Boolean
+    hasShadow: Boolean
   ): Community
 
   "update enable in dashboard"
   updateDashboardEnable(
-    community: String!, dashboardSection: DashboardSection, post: Boolean, blog: Boolean, kanban: Boolean, changelog: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean
+    community: String!
+    dashboardSection: DashboardSection
+    post: Boolean
+    blog: Boolean
+    kanban: Boolean
+    changelog: Boolean
+    doc: Boolean
+    docLastUpdate: Boolean
+    docReaction: Boolean
+    about: Boolean
+    aboutTechstack: Boolean
+    aboutLocation: Boolean
+    aboutLinks: Boolean
+    aboutMediaReport: Boolean
   ): Community
 
   "update thread-specific emotion settings in dashboard"
   updateDashboardThreadEmotions(
-    community: String!, dashboardSection: DashboardSection, post: [EmotionType], blog: [EmotionType], changelog: [EmotionType], doc: [EmotionType], postComment: [EmotionType], blogComment: [EmotionType], changelogComment: [EmotionType], docComment: [EmotionType]
+    community: String!
+    dashboardSection: DashboardSection
+    post: [EmotionType]
+    blog: [EmotionType]
+    changelog: [EmotionType]
+    doc: [EmotionType]
+    postComment: [EmotionType]
+    blogComment: [EmotionType]
+    changelogComment: [EmotionType]
+    docComment: [EmotionType]
   ): Community
 
   "update layout in dashboard"
   updateDashboardLayout(
-    community: String!, dashboardSection: DashboardSection, pageBg: String, pageBgDark: String, pageCustomBg: Int, pageCustomBgDark: Int, pageCustomIntensity: Int, pageCustomIntensityDark: Int, primaryColor: RainbowColor, primaryCustomColor: String, primaryCustomColorDark: String, subPrimaryColor: RainbowColor, subPrimaryCustomColor: String, subPrimaryCustomColorDark: String, kanbanBgColors: [RainbowColor], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docCoverLayout: DsbDocCoverLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, communityLayout: DsbCommunityLayout, topbarEnabled: Boolean, topbarBg: RainbowColor, topbarBgCustomColor: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: RainbowColor, broadcastCustomBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: RainbowColor, broadcastArticleCustomBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, glowType: String, glowFixed: Boolean, glowOpacity: String, overlayDark: Boolean, gaussBlur: Int, gaussBlurDark: Int
+    community: String!
+    dashboardSection: DashboardSection
+    pageBg: String
+    pageBgDark: String
+    pageCustomBg: Int
+    pageCustomBgDark: Int
+    pageCustomIntensity: Int
+    pageCustomIntensityDark: Int
+    primaryColor: RainbowColor
+    primaryCustomColor: String
+    primaryCustomColorDark: String
+    subPrimaryColor: RainbowColor
+    subPrimaryCustomColor: String
+    subPrimaryCustomColorDark: String
+    kanbanBgColors: [RainbowColor]
+    kanbanBoards: [KanbanBoard]
+    postLayout: DsbPostLayout
+    kanbanLayout: DsbKanbanLayout
+    kanbanCardLayout: DsbKanbanCardLayout
+    docCoverLayout: DsbDocCoverLayout
+    docFaqLayout: DsbDocFaqLayout
+    tagLayout: DsbTagLayout
+    inlineTagLayout: DsbInlineTagLayout
+    avatarLayout: DsbAvatarLayout
+    brandLayout: DsbBrandLayout
+    communityLayout: DsbCommunityLayout
+    topbarEnabled: Boolean
+    topbarBg: RainbowColor
+    topbarBgCustomColor: String
+    broadcastLayout: DsbBroadcastLayout
+    broadcastBg: RainbowColor
+    broadcastCustomBg: String
+    broadcastEnable: Boolean
+    broadcastArticleLayout: DsbBroadcastArticleLayout
+    broadcastArticleBg: RainbowColor
+    broadcastArticleCustomBg: String
+    broadcastArticleEnable: Boolean
+    changelogLayout: DsbChangelogLayout
+    footerLayout: DsbFooterLayout
+    headerLayout: DsbHeaderLayout
+    glowType: String
+    glowFixed: Boolean
+    glowOpacity: String
+    overlayDark: Boolean
+    gaussBlur: Int
+    gaussBlurDark: Int
   ): Community
 
   "update rss in dashboard"
   updateDashboardRss(
-    community: String!, dashboardSection: DashboardSection, rssFeedType: DsbRssFeedType, rssFeedCount: Int
+    community: String!
+    dashboardSection: DashboardSection
+    rssFeedType: DsbRssFeedType
+    rssFeedCount: Int
   ): Community
 
   "update name alias in dashboard"
-  updateDashboardNameAlias(community: String!, dashboardSection: DashboardSection, nameAlias: [DashboardAliasMap]): Community
+  updateDashboardNameAlias(
+    community: String!
+    dashboardSection: DashboardSection
+    nameAlias: [DashboardAliasMap]
+  ): Community
 
   "update header links in dashboard"
-  updateDashboardHeaderLinks(community: String!, dashboardSection: DashboardSection, headerLinks: [DashboardLinkMap]): Community
+  updateDashboardHeaderLinks(
+    community: String!
+    dashboardSection: DashboardSection
+    headerLinks: [DashboardLinkMap]
+  ): Community
 
   "update footer links in dashboard"
-  updateDashboardFooterLinks(community: String!, dashboardSection: DashboardSection, footerLinks: [DashboardLinkMap]): Community
+  updateDashboardFooterLinks(
+    community: String!
+    dashboardSection: DashboardSection
+    footerLinks: [DashboardLinkMap]
+  ): Community
 
   "update social links in dashboard"
   updateDashboardSocialLinks(
-    community: String!, dashboardSection: DashboardSection, socialLinks: [DashboardSocialLinkMap]
+    community: String!
+    dashboardSection: DashboardSection
+    socialLinks: [DashboardSocialLinkMap]
   ): Community
 
   "update media reports in dashboard"
   updateDashboardMediaReports(
-    community: String!, dashboardSection: DashboardSection, mediaReports: [DashboardMediaReportMap]
+    community: String!
+    dashboardSection: DashboardSection
+    mediaReports: [DashboardMediaReportMap]
   ): Community
 
   "update faqs in dashboard"
-  updateDashboardFaqs(community: String!, dashboardSection: DashboardSection, faqs: [DashboardFaqMap]): Community
+  updateDashboardFaqs(
+    community: String!
+    dashboardSection: DashboardSection
+    faqs: [DashboardFaqMap]
+  ): Community
 }
 
 type CheckState {

@@ -1,4 +1,5 @@
 import type { NextRequest } from 'next/server'
+
 import { THREAD } from '~/const/thread'
 import { SEARCH_PARAM } from '~/const/url'
 import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'

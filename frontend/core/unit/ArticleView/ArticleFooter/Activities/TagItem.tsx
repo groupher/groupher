@@ -1,4 +1,5 @@
 import TagSVG from '~/icons/Tag'
+
 import useSalon from '../salon/activities/tag_item'
 
 export default function TagItem() {

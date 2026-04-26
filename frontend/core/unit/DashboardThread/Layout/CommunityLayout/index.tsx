@@ -1,4 +1,5 @@
 import { useState } from 'react'
+
 import { COMMUNITY_LAYOUT } from '~/const/layout'
 import useTrans from '~/hooks/useTrans'
 import useCommunity from '~/stores/community/hooks'
@@ -7,9 +8,9 @@ import Drawer from '~/widgets/Drawer'
 
 import { FIELD } from '../../constant'
 import useCommunityLayout from '../../logic/useCommunityLayout'
+import useSalon, { cnMerge } from '../../salon/layout/community_layout'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
-import useSalon, { cnMerge } from '../../salon/layout/community_layout'
 import CommunityLayoutPreviewContent from './CommunityLayoutPreviewContent'
 
 const COMMUNITY_LAYOUT_OPTIONS = [

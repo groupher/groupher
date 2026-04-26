@@ -1,4 +1,5 @@
 import { cacheLife, cacheTag } from 'next/cache'
+
 import { CACHE_TAG } from '~/const/cache'
 import { LOCALE } from '~/const/i18n'
 import { TAG_THREADS, THREAD } from '~/const/thread'

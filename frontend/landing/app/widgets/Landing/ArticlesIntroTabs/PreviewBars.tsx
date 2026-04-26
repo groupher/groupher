@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import { THREAD } from '~/const/thread'
 import type { TThread } from '~/spec'
 

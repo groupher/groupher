@@ -5,6 +5,7 @@
  */
 
 import type { FC } from 'react'
+
 import SearchSVG from '~/icons/HeaderSearch'
 import { openSearch } from '~/signal'
 import type { TSpace } from '~/spec'

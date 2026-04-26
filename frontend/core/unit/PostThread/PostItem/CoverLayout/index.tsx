@@ -1,10 +1,11 @@
 import { type FC, useEffect, useState } from 'react'
-import Img from '~/Img'
 
-import { mockImage } from '~/mock'
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
+import Img from '~/Img'
+import { mockImage } from '~/mock'
 import type { TPost } from '~/spec'
+
 import ArticlePinLabel from '../../ArticlePinLabel'
 import useSalon from '../salon/cover_layout'
 import Footer from './Footer'

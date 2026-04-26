@@ -7,10 +7,10 @@
 import { useRef } from 'react'
 
 import useArticle from '~/stores/article/hooks'
-import ArtimentBody from '~/widgets/ArtimentBody'
-// import ViewportTracker from '~/widgets/ViewportTracker'
-
 import Comments from '~/unit/Comments'
+// import ViewportTracker from '~/widgets/ViewportTracker'
+import ArtimentBody from '~/widgets/ArtimentBody'
+
 import useSalon from './salon/content'
 
 export default function Content() {

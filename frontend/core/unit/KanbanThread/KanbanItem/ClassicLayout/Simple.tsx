@@ -6,10 +6,11 @@
 
 import { useRouter } from 'next/navigation'
 import { type FC, memo, useEffect, useState } from 'react'
+
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import { THREAD_PATH } from '~/const/thread'
-import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { getRandomInt } from '~/helper'
+import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { mockTags, mockUsers } from '~/mock'
 import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'

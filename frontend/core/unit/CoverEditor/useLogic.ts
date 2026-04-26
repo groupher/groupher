@@ -1,8 +1,9 @@
 import { clone, forEach, keys, mergeDeepRight, pick } from 'ramda'
-
 import { proxy, useSnapshot } from 'valtio'
+
 import { COVER_GRADIENT_WALLPAPER, GRADIENT_DIRECTION } from '~/const/wallpaper'
 import type { TWallpaper, TWallpaperGradient, TWallpaperGradientDir } from '~/spec'
+
 import { IMAGE_POS, IMAGE_RATIO, IMAGE_SIZE, LINEAR_BORDER, SETTING_LEVEL } from './constant'
 import type {
   TImagePos,

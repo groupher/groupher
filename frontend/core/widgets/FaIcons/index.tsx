@@ -6,8 +6,8 @@
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import type { FC } from 'react'
-import '@fortawesome/fontawesome-svg-core/styles.css'
 
+import '@fortawesome/fontawesome-svg-core/styles.css'
 import { COLOR } from '~/const/colors'
 import { camelize } from '~/fmt'
 import useCSSVar from '~/hooks/useCssVar'

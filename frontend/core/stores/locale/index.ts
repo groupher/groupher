@@ -1,4 +1,5 @@
 import { proxy } from 'valtio'
+
 import { LOCALE } from '~/const/i18n'
 import type { TLocale } from '~/spec'
 

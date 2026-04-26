@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react'
 
 import { COLOR } from '~/const/colors'
-
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 

@@ -1,5 +1,6 @@
 import { values } from 'ramda'
 import type { FC } from 'react'
+
 import { IMAGE_POS } from '../constant'
 import useSalon, { cn } from '../salon/toolbox/position_block'
 import type { TImagePos } from '../spec'

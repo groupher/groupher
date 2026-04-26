@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 
 import SVG from '~/const/svg'
+
 import AirBalloonIcon from './AirBalloon'
 import ActivityIcon from './article/Activity'
 import ArchivedIcon from './article/Archived'
@@ -14,8 +15,6 @@ import Emotion from './Emotion'
 //
 import LightIcon from './Light'
 import LockIcon from './Lock'
-import MobileIcon from './Mobile'
-
 // Menu
 import CopyIcon from './menu/Copy'
 import MoreIcon from './menu/More'
@@ -23,6 +22,7 @@ import MoreDotIcon from './menu/MoreDot'
 import MoreLIcon from './menu/MoreL'
 import QRCodeIcon from './menu/QRCode'
 import ReportIcon from './menu/Report'
+import MobileIcon from './Mobile'
 import QuestionIcon from './Question'
 import ShareIcon from './Share'
 import EmailIcon from './social/Email'

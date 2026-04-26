@@ -1,6 +1,7 @@
 import { INLINE_TAG_LAYOUT } from '~/const/layout'
 import type { TColorName, TInlineTagLayout, TTag } from '~/spec'
 import TagNode from '~/widgets/TagNode'
+
 import useSalon from '../../salon/layout/inline_tag_layout/tag_item'
 
 type TProps = {

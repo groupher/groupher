@@ -8,7 +8,6 @@
     "./jsconfig": "./jsconfig.json",
     "./tailwind.config": "./tailwind.config.js",
     "./postcss.config": "./postcss.config.js",
-    "./biome": "./config/biome.json",
     "./oxfmt": "./config/oxfmt.json",
     "./oxlint": "./config/oxlint.json",
     "./next.config": "./next.config.js"
@@ -17,7 +16,6 @@
     "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.app.json",
     "lint": "../../node_modules/.bin/oxlint . --threads=1",
     "format": "../../node_modules/.bin/oxfmt -c ./config/oxfmt.json .",
-    "format:biome": "../../node_modules/.bin/biome format --write .",
     "format:check": "../../node_modules/.bin/oxfmt -c ./config/oxfmt.json --check .",
     "build": "echo 'skip build'"
   },

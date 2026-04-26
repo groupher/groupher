@@ -2,8 +2,8 @@ import type { FC } from 'react'
 
 import RotateSVG from '~/icons/Rotate'
 import RangeSlider from '~/widgets/RangeSlider'
-import useSalon from '../salon/toolbox/rotate_block'
 
+import useSalon from '../salon/toolbox/rotate_block'
 import useLogic from '../useLogic'
 import ToolUnit from './ToolUnit'
 

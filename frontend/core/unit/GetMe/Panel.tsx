@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import AppStoreSVG from '~/icons/AppStore'
 import LinkSVG from '~/icons/ArrowUpRight'
 import ChromeWebStoreSVG from '~/icons/ChromeWebStore'

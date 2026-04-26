@@ -1,8 +1,8 @@
 import type { FC } from 'react'
-import useTrans from '~/hooks/useTrans'
-import Img from '~/Img'
 
+import useTrans from '~/hooks/useTrans'
 import EditPublishSVG from '~/icons/EditPublish'
+import Img from '~/Img'
 import { mockUsers } from '~/mock'
 import Button from '~/widgets/Buttons/Button'
 

@@ -2,6 +2,7 @@ import { includes, isEmpty, pluck, reject } from 'ramda'
 import { type FC, useCallback, useEffect, useState } from 'react'
 
 import type { TMenuOption } from '~/spec'
+
 import type { TProps as TIndex } from '..'
 import useSalon from '../salon/left_right'
 import { DEFAULT_MENU, MENU } from './constant'

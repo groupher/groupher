@@ -1,5 +1,7 @@
 import { gql } from 'urql'
+
 import { F } from '~/schemas'
+
 import { pagedChangelogs } from '../../schemas/pages/changelog'
 import { pagedCommunityTags as pagedCommunityTagsQuery } from '../../schemas/pages/misc'
 import { pagedPosts } from '../../schemas/pages/post'

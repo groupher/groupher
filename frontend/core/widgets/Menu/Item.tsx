@@ -1,6 +1,8 @@
 import type { FC } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import type { TActive, TMenu } from '~/spec'
+
 import Icon from './Icon'
 import useSalon, { cnMerge } from './salon/item'
 import type { TMenuItem } from './spec'

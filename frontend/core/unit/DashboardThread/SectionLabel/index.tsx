@@ -1,8 +1,10 @@
 import type { FC, ReactNode } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import type { TSpace } from '~/spec'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import ThemeSectionSelector from '~/widgets/ThemeSectionSelector'
+
 import useSalon, { cnMerge } from '../salon/section_label'
 
 type TProps = {

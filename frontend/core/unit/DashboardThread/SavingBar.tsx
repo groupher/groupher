@@ -1,9 +1,11 @@
 import type { FC, ReactNode } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import InfoSVG from '~/icons/Save'
 import type { TSpace } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 import YesOrNoButtons from '~/widgets/Buttons/YesOrNoButtons'
+
 import useHelper from './logic/useHelper'
 import useSalon, { cn } from './salon/saving_bar'
 import type { TDsbFieldKey } from './spec.d'

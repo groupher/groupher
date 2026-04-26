@@ -1,7 +1,6 @@
 import { keys } from 'ramda'
 
 import useFullWallpaper from '~/hooks/useFullWallpaper'
-
 import { parseWallpaper } from '~/wallpaper'
 
 import useSalon, { cn } from '../../../salon/dashboard_intros/layout_tab/wallpaper_bar'

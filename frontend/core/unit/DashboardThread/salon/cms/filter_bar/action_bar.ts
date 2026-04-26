@@ -1,5 +1,4 @@
 import { COLOR } from '~/const/colors'
-
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {

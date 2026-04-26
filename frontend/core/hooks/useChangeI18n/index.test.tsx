@@ -1,4 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
+
 import METRIC from '~/const/metric'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useChangeI18n from '~/hooks/useChangeI18n'

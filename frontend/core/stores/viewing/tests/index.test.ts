@@ -2,6 +2,7 @@ import METRIC from '~/const/metric'
 import { ARTICLE_THREAD } from '~/const/thread'
 import type { TCommunity, TTag } from '~/spec'
 import type { TInit } from '~/stores/viewing/spec'
+
 import setupStore from '..'
 
 describe('stores/viewing', () => {

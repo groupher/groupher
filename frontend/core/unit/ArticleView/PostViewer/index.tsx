@@ -3,13 +3,14 @@
  */
 
 import { useEffect, useState } from 'react'
-import { BROADCAST_ARTICLE_LAYOUT } from '~/const/layout'
 
+import { BROADCAST_ARTICLE_LAYOUT } from '~/const/layout'
 import useBroadcast from '~/hooks/useBroadcast'
 import ArticleBody from '~/widgets/ArtimentBody'
 import GotoTop from '~/widgets/GotoTop'
 import { ArticleContentLoading } from '~/widgets/Loading'
 import ViewportTracker from '~/widgets/ViewportTracker'
+
 import ArticleBroadcast from '../ArticleBroadcast'
 import ArticleFooter from '../ArticleFooter'
 import useSalon, { cn } from '../salon/post_viewer'
@@ -32,7 +33,6 @@ export default function PostViewer({ isFullView = true }: TProps) {
   const [footerVisible, setFooterVisible] = useState(false)
   const [trackerReady, setTrackerReady] = useState(false)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     setTrackerReady(false)
     setFixedHeaderVisible(false)

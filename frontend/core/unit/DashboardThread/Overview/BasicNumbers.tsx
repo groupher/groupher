@@ -1,5 +1,4 @@
 import { prettyNum } from '~/fmt'
-
 import NoteTip from '~/widgets/NoteTip'
 
 import useOverview from '../logic/useOverview'

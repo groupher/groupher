@@ -1,6 +1,7 @@
 import { type FC, memo, useEffect } from 'react'
 
 import type { TSpace } from '~/spec'
+
 import { countWords } from './helper'
 import useSalon, { cn } from './salon'
 

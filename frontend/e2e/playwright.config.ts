@@ -1,4 +1,5 @@
 import path from 'node:path'
+
 import { defineConfig, devices } from '@playwright/test'
 
 const app = process.env.E2E_APP ?? 'main'

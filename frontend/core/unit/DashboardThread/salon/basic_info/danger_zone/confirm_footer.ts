@@ -1,7 +1,6 @@
-import type { TSpace } from '~/spec'
-// import InfoSVG from '~/icons/Info'
-
 import useTwBelt from '~/hooks/useTwBelt'
+// import InfoSVG from '~/icons/Info'
+import type { TSpace } from '~/spec'
 
 type TProps = TSpace
 

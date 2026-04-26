@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+
 import { DOC_COVER_LAYOUT, DOC_FAQ_LAYOUT } from '~/const/layout'
-import { FIELD } from '../../../constant'
+
 import DocLayout from '..'
+import { FIELD } from '../../../constant'
 
 const edit = vi.fn()
 

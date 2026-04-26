@@ -5,6 +5,7 @@
  */
 
 import useAccount from '~/stores/account/hooks'
+
 import { STEP } from '../constant'
 import useLogic from '../useLogic'
 import SetupDomain from './SetupDomain'
@@ -45,5 +46,5 @@ export default function Content() {
     }
   }
 
-  return <div className='justify-center row'>{stepComp}</div>
+  return <div className='row justify-center'>{stepComp}</div>
 }

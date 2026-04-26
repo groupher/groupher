@@ -5,17 +5,16 @@
  */
 
 import { type FC, memo } from 'react'
+
 import { DOC_FAQ_LAYOUT } from '~/const/layout'
 import type { TArticle, TDocFAQLayout, TFAQSection, TSpace } from '~/spec'
-
 // import { FAQ as DefaultFAQ } from '~/const/landingPage'
 
 import Collapse from './Collapse'
 import Flat from './Flat'
 import LeftRight from './LeftRight'
-import SearchHint from './SearchHint'
-
 import useSalon from './salon'
+import SearchHint from './SearchHint'
 
 export type TProps = {
   testid?: string

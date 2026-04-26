@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { ColorSlider, ColorThumb, parseColor, SliderTrack } from 'react-aria-components'
+
 import { COLOR } from '~/const/colors'
 import THEME from '~/const/theme'
 import useTheme from '~/hooks/useTheme'
@@ -7,6 +8,7 @@ import useTrans from '~/hooks/useTrans'
 import Checker from '~/widgets/Checker'
 import RangeSlider from '~/widgets/RangeSlider'
 import ThemeSectionSelector from '~/widgets/ThemeSectionSelector'
+
 import useSalon from '../../salon/layout/page_background/custom_background'
 import {
   getThemePageBgState,
@@ -52,7 +54,6 @@ export default function CustomBackground({ draft, originalDraft, onDraftChange }
     if (patch) onDraftChange(patch)
   }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (!checked) return
 

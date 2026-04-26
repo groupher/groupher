@@ -1,4 +1,5 @@
 import { type FC, memo } from 'react'
+
 import type { KANBAN_CARD_LAYOUT } from '~/const/layout'
 
 import KanbanItem from './KanbanItem'

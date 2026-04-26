@@ -1,13 +1,13 @@
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import type { FC } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import type { TFAQSection } from '~/spec'
 import Markdown from '~/widgets/Markdown'
 
 import { FIELD } from '../../../constant'
-
-import SavingBar from '../../../SavingBar'
 import useSalon from '../../../salon/cms/docs/faq'
+import SavingBar from '../../../SavingBar'
 import Adder from './Adder'
 import Block from './Block'
 import Editor from './Editor'

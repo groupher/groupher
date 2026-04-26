@@ -7,6 +7,7 @@
 import { m } from 'motion/react'
 import { endsWith, includes, isEmpty, keys } from 'ramda'
 import type { FC } from 'react'
+
 import { COLOR, STACKED_COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 import ArrowSVG from '~/icons/ArrowSimple'

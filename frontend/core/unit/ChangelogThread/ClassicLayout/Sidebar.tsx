@@ -1,10 +1,10 @@
 import { type FC, memo } from 'react'
 
 import VIEW from '~/const/view'
-
 import TagsBar from '~/unit/TagsBar'
 import Sticky from '~/widgets/Sticky'
 import Tabs from '~/widgets/Switcher/Tabs'
+
 import { TABS_MODE_OPTIONS } from '../constant'
 import { tagsModeChange } from '../logic'
 import useSalon from '../salon/classic_layout/sidebar'

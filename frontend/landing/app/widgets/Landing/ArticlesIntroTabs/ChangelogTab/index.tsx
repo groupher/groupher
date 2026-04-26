@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 
 import type { TActive } from '~/spec'
+
 import useSalon, { cn } from '../../salon/articles_intro_tabs/changelog_tab'
 import ChangelogDemo from './ChangelogDemo'
 import IntroDigest from './IntroDigest'

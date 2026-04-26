@@ -2,6 +2,7 @@ import { COLOR } from '~/const/colors'
 import { ONE_LINK_GROUP, TW_CARD } from '~/const/dashboard'
 import { DSB_ALIAS_ROUTE, DSB_DOC_ROUTE, DSB_ROUTE } from '~/const/route'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
+
 import type { TDsbMenu } from './spec'
 
 export { SEO_KEYS, SEO_OG_KEYS, SEO_TW_KEYS } from '~/const/seo'

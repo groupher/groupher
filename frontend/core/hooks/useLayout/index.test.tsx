@@ -11,7 +11,6 @@ import {
   TAG_LAYOUT,
 } from '~/const/layout'
 import { KANBAN_BOARD } from '~/const/thread'
-
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useLayout from '~/hooks/useLayout'
 

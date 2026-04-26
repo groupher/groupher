@@ -1,5 +1,6 @@
 import { openShareWindow } from '~/helper'
 import type { TArticle } from '~/spec'
+
 import { SHARE_TYPE } from './constant'
 import type { TLinksData } from './spec'
 

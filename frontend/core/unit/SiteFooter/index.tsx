@@ -9,11 +9,11 @@
 import { FOOTER_LAYOUT } from '~/const/layout'
 import useFooterLinks from '~/hooks/useFooterLinks'
 import useCommunity from '~/stores/community/hooks'
+
 import GroupLayout from './GroupLayout'
 import PowerbyInfo from './PowerbyInfo'
-import SimpleLayout from './SimpleLayout'
-
 import useSalon from './salon'
+import SimpleLayout from './SimpleLayout'
 
 export default function Footer() {
   const s = useSalon()

@@ -1,8 +1,8 @@
 import { type FC, memo } from 'react'
 
 import type { TArticle } from '~/spec'
-import ArticleBaseStats from '../ArticleBaseStats'
 
+import ArticleBaseStats from '../ArticleBaseStats'
 import useSalon from '../salon/changelog_viewer/article_info'
 
 type TProps = {

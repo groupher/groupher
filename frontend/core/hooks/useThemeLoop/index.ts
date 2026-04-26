@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useRef } from 'react'
+
 import THEME, { THEME_MODE } from '~/const/theme'
 import type { TThemeMode } from '~/spec'
 import useThemeDomain from '~/stores/theme/hooks'

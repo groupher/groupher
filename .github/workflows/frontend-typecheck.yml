@@ -3,18 +3,18 @@ name: Frontend typecheck
 on:
   pull_request:
     paths:
-      - "frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}"
-      - "frontend/**/tsconfig*.json"
-      - "frontend/**/package.json"
-      - "package.json"
-      - "yarn.lock"
+      - 'frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+      - 'frontend/**/tsconfig*.json'
+      - 'frontend/**/package.json'
+      - 'package.json'
+      - 'yarn.lock'
   push:
     paths:
-      - "frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}"
-      - "frontend/**/tsconfig*.json"
-      - "frontend/**/package.json"
-      - "package.json"
-      - "yarn.lock"
+      - 'frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+      - 'frontend/**/tsconfig*.json'
+      - 'frontend/**/package.json'
+      - 'package.json'
+      - 'yarn.lock'
 
 permissions:
   contents: read

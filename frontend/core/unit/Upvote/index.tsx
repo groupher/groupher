@@ -5,8 +5,10 @@
  */
 
 import { type FC, memo } from 'react'
+
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import type { TSpace, TUpvoteLayout, TUser } from '~/spec'
+
 import ArticleLayout from './ArticleLayout'
 import CommentLayout from './CommentLayout'
 import DefaultLayout from './DefaultLayout'
@@ -14,10 +16,9 @@ import FixedHeaderLayout from './FixedHeaderLayout'
 import GeneralLayout from './GeneralLayout'
 import PostListLayout from './PostListLayout'
 import PostMinimalLayout from './PostMinimalLayout'
+import useSalon from './salon'
 import SimpleLayout from './SimpleLayout'
 import StickerLayout from './StickerLayout'
-
-import useSalon from './salon'
 
 type TProps = {
   testid?: string

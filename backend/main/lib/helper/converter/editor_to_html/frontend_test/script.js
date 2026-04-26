@@ -1,6 +1,6 @@
 content =
   // people
-  "<div class=\"article-viewer-wrapper\"><div id=\"Lbkab\" class=\"people-wrapper\">\n        <div class=\"gallery-wrapper\">\n          <div class=\"gallery-previewer-wrapper\">\n        <div class=\"gallery-previewer-item gallery-previewer-item-active\" data-index=\"BWLiC\">\n        <img src=\"https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1557555187-23d685287bc3?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=1000&amp;q=80\" />\n      </div><div class=\"gallery-previewer-item \" data-index=\"aDwpJ\">\n        <img src=\"https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1557555187-23d685287bc3?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=1000&amp;q=80\" />\n      </div>\n      </div>\n    \n          <div class=\"gallery-card-wrapper\" data-index=\"BWLiC\">\n         <div class=\"gallery-avatar\">\n           <img src=\"https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1557555187-23d685287bc3?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=1000&amp;q=80\" />\n         </div>\n         <div class=\"gallery-intro\">\n          <div class=\"gallery-intro-title\">\n            title\n          </div>\n          <div class=\"gallery-intro-bio\">\n            this is a X man\n          </div>\n          <div class=\"gallery-intro-desc\">\n            hello world i am x man\n          </div>\n          <div class=\"gallery-social-wrapper\">\n            <div class=\"gallery-social-icon\">\n        <a href=\"https://link\">\n          <svg>\n            <image xlink:href=\"https://cps-oss.oss-cn-shanghai.aliyuncs.com/icons/static/social/zhihu.svg\"></image>\n          </svg>\n        </a>\n      </div><div class=\"gallery-social-icon\">\n        <a href=\"https://link\">\n          <svg>\n            <image xlink:href=\"https://cps-oss.oss-cn-shanghai.aliyuncs.com/icons/static/social/twitter.svg\"></image>\n          </svg>\n        </a>\n      </div>\n          </div>\n         </div>\n      </div><div class=\"gallery-card-wrapper hide\" data-index=\"aDwpJ\">\n         <div class=\"gallery-avatar\">\n           <img src=\"https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1557555187-23d685287bc3?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=1000&amp;q=80\" />\n         </div>\n         <div class=\"gallery-intro\">\n          <div class=\"gallery-intro-title\">\n            title2\n          </div>\n          <div class=\"gallery-intro-bio\">\n            this is a X man2\n          </div>\n          <div class=\"gallery-intro-desc\">\n            hello world i am x man2\n          </div>\n          <div class=\"gallery-social-wrapper\">\n            <div class=\"gallery-social-icon\">\n        <a href=\"https://link\">\n          <svg>\n            <image xlink:href=\"https://cps-oss.oss-cn-shanghai.aliyuncs.com/icons/static/social/github.svg\"></image>\n          </svg>\n        </a>\n      </div><div class=\"gallery-social-icon\">\n        <a href=\"https://link\">\n          <svg>\n            <image xlink:href=\"https://cps-oss.oss-cn-shanghai.aliyuncs.com/icons/static/social/twitter.svg\"></image>\n          </svg>\n        </a>\n      </div>\n          </div>\n         </div>\n      </div>\n        </div>\n      </div></div>"
+  '<div class="article-viewer-wrapper"><div id="Lbkab" class="people-wrapper">\n        <div class="gallery-wrapper">\n          <div class="gallery-previewer-wrapper">\n        <div class="gallery-previewer-item gallery-previewer-item-active" data-index="BWLiC">\n        <img src="https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1557555187-23d685287bc3?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=1000&amp;q=80" />\n      </div><div class="gallery-previewer-item " data-index="aDwpJ">\n        <img src="https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1557555187-23d685287bc3?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=1000&amp;q=80" />\n      </div>\n      </div>\n    \n          <div class="gallery-card-wrapper" data-index="BWLiC">\n         <div class="gallery-avatar">\n           <img src="https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1557555187-23d685287bc3?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=1000&amp;q=80" />\n         </div>\n         <div class="gallery-intro">\n          <div class="gallery-intro-title">\n            title\n          </div>\n          <div class="gallery-intro-bio">\n            this is a X man\n          </div>\n          <div class="gallery-intro-desc">\n            hello world i am x man\n          </div>\n          <div class="gallery-social-wrapper">\n            <div class="gallery-social-icon">\n        <a href="https://link">\n          <svg>\n            <image xlink:href="https://cps-oss.oss-cn-shanghai.aliyuncs.com/icons/static/social/zhihu.svg"></image>\n          </svg>\n        </a>\n      </div><div class="gallery-social-icon">\n        <a href="https://link">\n          <svg>\n            <image xlink:href="https://cps-oss.oss-cn-shanghai.aliyuncs.com/icons/static/social/twitter.svg"></image>\n          </svg>\n        </a>\n      </div>\n          </div>\n         </div>\n      </div><div class="gallery-card-wrapper hide" data-index="aDwpJ">\n         <div class="gallery-avatar">\n           <img src="https://rmt.dogedoge.com/fetch/~/source/unsplash/photo-1557555187-23d685287bc3?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&amp;ixlib=rb-1.2.1&amp;auto=format&amp;fit=crop&amp;w=1000&amp;q=80" />\n         </div>\n         <div class="gallery-intro">\n          <div class="gallery-intro-title">\n            title2\n          </div>\n          <div class="gallery-intro-bio">\n            this is a X man2\n          </div>\n          <div class="gallery-intro-desc">\n            hello world i am x man2\n          </div>\n          <div class="gallery-social-wrapper">\n            <div class="gallery-social-icon">\n        <a href="https://link">\n          <svg>\n            <image xlink:href="https://cps-oss.oss-cn-shanghai.aliyuncs.com/icons/static/social/github.svg"></image>\n          </svg>\n        </a>\n      </div><div class="gallery-social-icon">\n        <a href="https://link">\n          <svg>\n            <image xlink:href="https://cps-oss.oss-cn-shanghai.aliyuncs.com/icons/static/social/twitter.svg"></image>\n          </svg>\n        </a>\n      </div>\n          </div>\n         </div>\n      </div>\n        </div>\n      </div></div>'
 
 // image
 // gallery
@@ -24,11 +24,11 @@ content =
 // list
 // '<div class="article-viewer-wrapper"><div class="list-wrapper"><div class="list-item ">\n        <div class="list__item-order-prefix">1.</div>\n        <div class="list-label list-label__default" data-index="0">\n        label\n      </div>\n        <div class="list-item-text">\n        一个带着中文的很长的句子。一个带着中文的很长的句子。一个带着中文的很长的句子。一个带着中文的很长的句子。一个带着中文的很长的句子。一个带着中文的很长的句子。一个带着中文的很长的句子。一个带着中文的很长的句子。一个带着中文的很长的句子。\n      </div>\n      </div><div class="list-item ">\n        <div class="list__item-order-prefix">2.</div>\n        <div class="list-label list-label__default" data-index="0">\n        label\n      </div>\n        <div class="list-item-text">\n        list item\n      </div>\n      </div><div class="list-item list-indent-1">\n        <div class="list__item-order-prefix">2.1</div>\n        <div class="list-label list-label__green" data-index="1">\n        green\n      </div>\n        <div class="list-item-text">\n        list item\n      </div>\n      </div></div></div>';
 
-const articleEl = document.getElementById("article");
+const articleEl = document.getElementById('article')
 
-articleEl.innerHTML = content;
+articleEl.innerHTML = content
 // utils
-const hideClass = "hide";
+const hideClass = 'hide'
 
 /**
  * toggleClass
@@ -40,12 +40,12 @@ const hideClass = "hide";
  */
 const toggleClass = (element, elementList, className) => {
   for (let i = 0; i < elementList.length; i++) {
-    const el = elementList[i];
-    el.classList.remove(className);
+    const el = elementList[i]
+    el.classList.remove(className)
   }
 
-  element.classList.add(className);
-};
+  element.classList.add(className)
+}
 
 /**
  * toggleElement display
@@ -55,10 +55,10 @@ const toggleClass = (element, elementList, className) => {
  * @param {HTMLElement[]} elementList
  * @param {attr} "block" | "flex"
  */
-const toggleElement = (element, elementList, attr = "block") => {
-  _hideAll(elementList);
-  _showEl(element, attr);
-};
+const toggleElement = (element, elementList, attr = 'block') => {
+  _hideAll(elementList)
+  _showEl(element, attr)
+}
 
 /**
  * hide all elements
@@ -66,79 +66,69 @@ const toggleElement = (element, elementList, attr = "block") => {
  */
 const _hideAll = (elementList) => {
   for (let i = 0; i < elementList.length; i++) {
-    const el = elementList[i];
+    const el = elementList[i]
     if (!el.classList.contains(hideClass)) {
-      el.classList.add(hideClass);
+      el.classList.add(hideClass)
     }
   }
-};
+}
 
-const _showEl = (el, attr = "block") => {
-  el.classList.remove(hideClass);
-  el.style.display = attr;
-};
+const _showEl = (el, attr = 'block') => {
+  el.classList.remove(hideClass)
+  el.style.display = attr
+}
 
 // utils end
 
 // image block
-const lightbox = GLightbox({ loop: true });
+const lightbox = GLightbox({ loop: true })
 
-const galleryMiniImageClass = ".gallery-minimap-block-image";
-const minimapImageEls = document.querySelectorAll(galleryMiniImageClass);
+const galleryMiniImageClass = '.gallery-minimap-block-image'
+const minimapImageEls = document.querySelectorAll(galleryMiniImageClass)
 
 if (minimapImageEls.length > 0) {
   for (let i = 0; i < minimapImageEls.length; i++) {
-    const miniImageEl = minimapImageEls[i];
-    miniImageEl.addEventListener("click", function () {
-      const targetIndex = miniImageEl.dataset.index;
-      const mainImagesEl = miniImageEl.parentElement.previousElementSibling;
+    const miniImageEl = minimapImageEls[i]
+    miniImageEl.addEventListener('click', function () {
+      const targetIndex = miniImageEl.dataset.index
+      const mainImagesEl = miniImageEl.parentElement.previousElementSibling
 
-      const targetImageEl = mainImagesEl.querySelector(
-        `[data-index="${targetIndex}"]`
-      );
+      const targetImageEl = mainImagesEl.querySelector(`[data-index="${targetIndex}"]`)
 
-      if (!targetImageEl) return;
+      if (!targetImageEl) return
 
       targetImageEl.scrollIntoView({
-        behavior: "smooth",
-        inline: "center",
-        block: "nearest",
-      });
-    });
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest',
+      })
+    })
   }
 }
 
 // people block
-const peoplePreviewerClass = "gallery-previewer-item";
-const peoplePreviewerItemActiveClass = "gallery-previewer-item-active";
-const peopleCardClass = "gallery-card-wrapper";
+const peoplePreviewerClass = 'gallery-previewer-item'
+const peoplePreviewerItemActiveClass = 'gallery-previewer-item-active'
+const peopleCardClass = 'gallery-card-wrapper'
 
-const peoplePreviewerEls = document.querySelectorAll(
-  "." + peoplePreviewerClass
-);
+const peoplePreviewerEls = document.querySelectorAll('.' + peoplePreviewerClass)
 
 if (peoplePreviewerEls.length > 0) {
   for (let i = 0; i < peoplePreviewerEls.length; i++) {
-    const previewerEl = peoplePreviewerEls[i];
-    previewerEl.addEventListener("click", function () {
-      toggleClass(
-        previewerEl,
-        peoplePreviewerEls,
-        peoplePreviewerItemActiveClass
-      );
+    const previewerEl = peoplePreviewerEls[i]
+    previewerEl.addEventListener('click', function () {
+      toggleClass(previewerEl, peoplePreviewerEls, peoplePreviewerItemActiveClass)
 
-      const activeIndex = previewerEl.dataset.index;
-      const WrapperEl = previewerEl.parentElement.parentElement;
+      const activeIndex = previewerEl.dataset.index
+      const WrapperEl = previewerEl.parentElement.parentElement
 
       const ActiveCardEl = WrapperEl.querySelector(
-        `.${peopleCardClass}[data-index="${activeIndex}"]`
-      );
+        `.${peopleCardClass}[data-index="${activeIndex}"]`,
+      )
 
-      const CardsElementsList = WrapperEl.querySelectorAll(
-        "." + peopleCardClass
-      );
+      const CardsElementsList = WrapperEl.querySelectorAll('.' + peopleCardClass)
 
-      toggleElement(ActiveCardEl, CardsElementsList, "flex");
-    });
+      toggleElement(ActiveCardEl, CardsElementsList, 'flex')
+    })
   }
 }

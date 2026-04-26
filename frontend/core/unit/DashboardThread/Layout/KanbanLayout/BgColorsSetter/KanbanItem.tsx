@@ -1,6 +1,6 @@
 import type { FC } from 'react'
-import { KANBAN_CARD_LAYOUT } from '~/const/layout'
 
+import { KANBAN_CARD_LAYOUT } from '~/const/layout'
 import CommentSVG from '~/icons/Comment'
 import UpvoteSVG from '~/icons/Upvote'
 

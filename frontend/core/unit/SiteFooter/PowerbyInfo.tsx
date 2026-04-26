@@ -1,4 +1,5 @@
 import Link from 'next/link'
+
 import METRIC from '~/const/metric'
 import useMetric from '~/hooks/useMetric'
 

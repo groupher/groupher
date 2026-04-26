@@ -1,5 +1,6 @@
 import type EMOTION from '~/const/emotion'
 import type { TConstValues } from '~/spec'
+
 import type { TSimpleUser } from './account'
 
 export type TEmotionType = TConstValues<typeof EMOTION>

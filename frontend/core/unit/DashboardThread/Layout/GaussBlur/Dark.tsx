@@ -1,5 +1,5 @@
-import { blurRGB } from '~/fmt'
 import THEME from '~/const/theme'
+import { blurRGB } from '~/fmt'
 import useLocalDraft from '~/hooks/useLocalDraft'
 import useMainBackgroundPreview from '~/hooks/useMainBackgroundPreview'
 import usePageBg from '~/hooks/usePageBg'
@@ -11,10 +11,9 @@ import RangeSlider from '~/widgets/RangeSlider'
 
 import { FIELD } from '../../constant'
 import useHelper from '../../logic/useHelper'
+import useSalon, { cn } from '../../salon/layout/gauss_blur'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
-
-import useSalon, { cn } from '../../salon/layout/gauss_blur'
 
 export default function Dark() {
   const s = useSalon()

@@ -2,6 +2,7 @@
 
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useRef } from 'react'
+
 import EVENT from '~/const/event'
 import TYPE from '~/const/type'
 import URL_PARAM from '~/const/url_param'
@@ -9,6 +10,7 @@ import useEvent from '~/hooks/useEvent'
 import type { TResState } from '~/spec'
 import useArticleList from '~/stores/articleList/hooks'
 import useCommunity from '~/stores/community/hooks'
+
 import fetchPagedPosts from './fetchPagedPosts'
 
 type TRefreshPayload = {
@@ -71,7 +73,6 @@ export default function useFetchPagedPosts() {
     }
   }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: requestKey narrows refreshes to real post-list filter changes and avoids duplicate fetches during preview drawer open/close route transitions.
   useEffect(() => {
     if (!initialSyncSkipped.current) {
       initialSyncSkipped.current = true

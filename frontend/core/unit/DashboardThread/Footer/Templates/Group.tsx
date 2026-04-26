@@ -7,7 +7,6 @@ import { DEME_SOCIALS } from '~/const/social'
 import { groupByKey, sortByGroupIndex } from '~/helper'
 import type { TActive, TLinkItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-
 import CommunityBrand from '~/unit/CommunityBrand'
 import SocialList from '~/unit/SocialList'
 

@@ -7,6 +7,7 @@
 import type { FC, ReactNode } from 'react'
 
 import type { TPagi, TSpace } from '~/spec'
+
 import RealPagi from './RealPagi'
 import useSalon, { cn } from './salon'
 

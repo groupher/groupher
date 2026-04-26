@@ -1,4 +1,5 @@
 import { proxy } from 'valtio'
+
 import THEME, { THEME_MODE } from '~/const/theme'
 import type { TThemeMode, TThemeName } from '~/spec'
 

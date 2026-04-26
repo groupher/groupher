@@ -6,9 +6,9 @@ import CheckLabel from '~/widgets/CheckLabel'
 
 import { FIELD } from '../../constant'
 import usePost from '../../logic/usePost'
+import useSalon, { cnMerge } from '../../salon/layout/post_layout'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
-import useSalon, { cnMerge } from '../../salon/layout/post_layout'
 
 function ClassicPreview({ isActive }: { isActive: boolean }) {
   const s = useSalon()

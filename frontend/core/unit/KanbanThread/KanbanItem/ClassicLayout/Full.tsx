@@ -6,14 +6,14 @@
 
 import Link from 'next/link'
 import { type FC, memo, useEffect, useState } from 'react'
+
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import { THREAD_PATH } from '~/const/thread'
-import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { getRandomInt } from '~/helper'
+import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { mockTags, mockUsers } from '~/mock'
 import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-
 import ArticleCatState from '~/unit/ArticleCatState'
 import TagsList from '~/unit/TagsList'
 import Upvote from '~/unit/Upvote'

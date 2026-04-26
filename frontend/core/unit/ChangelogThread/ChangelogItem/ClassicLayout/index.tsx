@@ -6,6 +6,7 @@
 
 import Link from 'next/link'
 import { type FC, memo } from 'react'
+
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import ShareSVG from '~/icons/Share'
@@ -17,9 +18,8 @@ import CoverImage from '~/widgets/CoverImage'
 import ReadableDate from '~/widgets/ReadableDate'
 
 import { demoEmotion, demoTags } from '../constant'
-
-import SolidTagList from '../SolidTagList'
 import useSalon from '../salon/classic_layout/article_layout'
+import SolidTagList from '../SolidTagList'
 import Author from './Author'
 
 type TProps = {

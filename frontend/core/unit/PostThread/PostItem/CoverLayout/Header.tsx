@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import type { FC } from 'react'
+
 import { THREAD_PATH } from '~/const/thread'
 import type { TPost } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 
 import ArticleReadLabel from '../../ArticleReadLabel'
-
 import useSalon from '../salon/cover_layout/header'
 
 type TProps = {

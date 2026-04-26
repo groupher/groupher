@@ -3,26 +3,22 @@ name: Frontend linter
 on:
   pull_request:
     paths:
-      - "frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}"
-      - "frontend/**/biome.json"
-      - "frontend/**/.oxlintrc.json"
-      - "frontend/core/config/oxfmt.json"
-      - "frontend/core/config/oxlint.json"
-      - ".oxfmtrc.json"
-      - "package.json"
-      - "yarn.lock"
-      - "biome.json"
+      - 'frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+      - 'frontend/**/.oxlintrc.json'
+      - 'frontend/core/config/oxfmt.json'
+      - 'frontend/core/config/oxlint.json'
+      - '.oxfmtrc.json'
+      - 'package.json'
+      - 'yarn.lock'
   push:
     paths:
-      - "frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}"
-      - "frontend/**/biome.json"
-      - "frontend/**/.oxlintrc.json"
-      - "frontend/core/config/oxfmt.json"
-      - "frontend/core/config/oxlint.json"
-      - ".oxfmtrc.json"
-      - "package.json"
-      - "yarn.lock"
-      - "biome.json"
+      - 'frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+      - 'frontend/**/.oxlintrc.json'
+      - 'frontend/core/config/oxfmt.json'
+      - 'frontend/core/config/oxlint.json'
+      - '.oxfmtrc.json'
+      - 'package.json'
+      - 'yarn.lock'
 
 permissions:
   contents: read
@@ -52,14 +48,12 @@ jobs:
               - 'frontend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             shared:
               - 'frontend/core/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
-              - 'frontend/**/biome.json'
               - 'frontend/**/.oxlintrc.json'
               - 'frontend/core/config/oxfmt.json'
               - 'frontend/core/config/oxlint.json'
               - '.oxfmtrc.json'
               - 'package.json'
               - 'yarn.lock'
-              - 'biome.json'
 
       - name: Build matrix
         id: matrix

@@ -2,6 +2,7 @@ import type { FC } from 'react'
 
 import CheckSVG from '~/icons/Check'
 import Markdown from '~/widgets/Markdown'
+
 import type { TProps as TIndex } from '.'
 import useSalon from './salon/flat'
 

@@ -1,15 +1,15 @@
 import type { FC } from 'react'
+
 import { COLOR } from '~/const/colors'
 import { ARTICLE_CAT } from '~/const/gtd'
 import useTrans from '~/hooks/useTrans'
 import CommentSVG from '~/icons/Comment'
-
 import UpvoteSVG from '~/icons/Upvote'
 import { mockUsers } from '~/mock'
-
 import ArticleCatState from '~/unit/ArticleCatState'
 import Facepile from '~/widgets/Facepile/LandingPage'
 import TagNode from '~/widgets/TagNode'
+
 import useSalon, { cn } from '../../../salon/articles_intro_tabs/discuss_tab/discuss_demo'
 import CommentItem from './CommentItem'
 import PostItem from './PostItem'
@@ -77,7 +77,7 @@ const DiscussDemo: FC = () => {
             <div className={s.count}>101</div>
           </div>
 
-          <Facepile users={users.slice(3, 6)} className='mt-0.5 scale-75 opacity-65 gap-x-1.5' />
+          <Facepile users={users.slice(3, 6)} className='mt-0.5 scale-75 gap-x-1.5 opacity-65' />
 
           <div className='grow' />
           <CommentSVG className={s.commentIcon} />

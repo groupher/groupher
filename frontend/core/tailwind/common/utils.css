@@ -80,31 +80,31 @@
   }
 
   .smoky-40 {
-    @apply opacity-40 hover:opacity-100 cursor-pointer;
+    @apply cursor-pointer opacity-40 hover:opacity-100;
   }
 
   .smoky-65 {
-    @apply opacity-65 hover:opacity-100 cursor-pointer;
+    @apply cursor-pointer opacity-65 hover:opacity-100;
   }
 
   .smoky-80 {
-    @apply opacity-80 hover:opacity-100 cursor-pointer;
+    @apply cursor-pointer opacity-80 hover:opacity-100;
   }
 
   .smoky-90 {
-    @apply opacity-90 hover:opacity-100 cursor-pointer;
+    @apply cursor-pointer opacity-90 hover:opacity-100;
   }
 
   .group-smoky-0 {
-    @apply opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer;
+    @apply cursor-pointer opacity-0 transition-opacity group-hover:opacity-100;
   }
 
   .group-smoky-65 {
-    @apply opacity-65 group-hover:opacity-100 transition-opacity cursor-pointer;
+    @apply cursor-pointer opacity-65 transition-opacity group-hover:opacity-100;
   }
 
   .group-smoky-80 {
-    @apply opacity-80 group-hover:opacity-100 transition-opacity cursor-pointer;
+    @apply cursor-pointer opacity-80 transition-opacity group-hover:opacity-100;
   }
 
   .hover-underline {
@@ -120,11 +120,11 @@
   }
 
   .button-reset {
-    @apply text-left leading-none cursor-pointer;
+    @apply cursor-pointer text-left leading-none;
   }
 
   .s-full {
-    @apply w-full h-full;
+    @apply h-full w-full;
   }
 
   .text-shadow-none {

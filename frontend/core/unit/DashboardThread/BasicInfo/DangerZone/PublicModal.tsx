@@ -7,6 +7,7 @@ import Input from '~/widgets/Input'
 import Modal from '~/widgets/Modal'
 import NoticeBar from '~/widgets/NoticeBar'
 import Tabs from '~/widgets/Switcher/Tabs'
+
 import useBaseInfo from '../../logic/useBaseInfo'
 import useSalon from '../../salon/basic_info/danger_zone/modal'
 // import from '~/widgets/Alert'

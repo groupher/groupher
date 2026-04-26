@@ -1,6 +1,6 @@
 import type { TColorName, TSizeTSM, TTag } from '~/spec'
-
 import TagNode from '~/widgets/TagNode'
+
 import { getDotMargin, getDotSize, getHashMargin, getIconSize } from './salon/metric'
 import useSalon from './salon/tag_item'
 

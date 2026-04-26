@@ -7,17 +7,14 @@
 import { type FC, lazy, type ReactNode, Suspense } from 'react'
 
 import Mushroom from '~/widgets/Mushroom'
-import ThemeMonitor from './ThemeMonitor'
-
-// import Broadcast from '~/widgets/Broadcast'
 
 import DemoModeSnackbarGate from './DemoModeSnackbarGate'
-
-// import CustomScroller from '~/widgets/CustomScroller'
-
+// import Broadcast from '~/widgets/Broadcast'
 import LocaleSync from './LocaleSync'
+// import CustomScroller from '~/widgets/CustomScroller'
 import Main from './Main'
 import useSalon from './salon'
+import ThemeMonitor from './ThemeMonitor'
 import Wallpaper from './Wallpaper'
 
 const Addon = lazy(() => import('./Addon'))

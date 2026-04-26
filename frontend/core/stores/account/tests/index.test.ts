@@ -1,4 +1,5 @@
 import type { TUser } from '~/spec'
+
 import setupStore from '..'
 
 describe('stores/account', () => {

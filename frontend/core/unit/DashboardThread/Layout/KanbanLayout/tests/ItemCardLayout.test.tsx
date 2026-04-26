@@ -1,5 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+
 import { KANBAN_CARD_LAYOUT } from '~/const/layout'
+
 import { FIELD } from '../../../constant'
 import ItemCardLayout from '../ItemCardLayout'
 

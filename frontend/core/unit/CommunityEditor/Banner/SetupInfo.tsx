@@ -1,13 +1,12 @@
-import Img from '~/Img'
-
 import ApplySVG from '~/icons/Apply'
 import UploadSVG from '~/icons/Upload'
+import Img from '~/Img'
 import { nilOrEmpty } from '~/validator'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import Input from '~/widgets/Input'
 import OSSUploader from '~/widgets/OSSUploader'
-import useSalon from '../salon/banner/setup_info'
 
+import useSalon from '../salon/banner/setup_info'
 import useLogic from '../useLogic'
 import NextStepButton from './NextStepButton'
 

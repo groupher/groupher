@@ -1,5 +1,6 @@
 import { THREAD_PATH } from '~/const/thread'
 import type { TCommunityThread } from '~/spec'
+
 import setupStore from '..'
 
 describe('stores/community', () => {

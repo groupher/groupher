@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import useSalon from '../salon/toolbox'
 import useLogic from '../useLogic'
 import ActionBlock from './ActionBlock'

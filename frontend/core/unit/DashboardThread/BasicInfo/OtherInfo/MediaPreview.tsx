@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import type { FC } from 'react'
-import Img from '~/Img'
+
 import ArrowSVG from '~/icons/ArrowUpRight'
+import Img from '~/Img'
 import type { TMediaReport } from '~/spec'
 
 import useSalon from '../../salon/basic_info/other_info/media_preview'

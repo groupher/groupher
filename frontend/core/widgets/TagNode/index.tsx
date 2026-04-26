@@ -5,15 +5,14 @@
  */
 
 import type { FC } from 'react'
-import useLayout from '~/hooks/useLayout'
-import type { TColorName } from '~/spec'
-// import useTheme from '~/hooks/useTheme'
 
 import { TAG_LAYOUT } from '~/const/layout'
-// import THEME from '~/const/theme'
-
+import useLayout from '~/hooks/useLayout'
+// import useTheme from '~/hooks/useTheme'
 import HashSVG from '~/icons/HashTag'
+// import THEME from '~/const/theme'
 import HashSVGBold from '~/icons/HashTagBold'
+import type { TColorName } from '~/spec'
 
 import useSalon from './salon'
 

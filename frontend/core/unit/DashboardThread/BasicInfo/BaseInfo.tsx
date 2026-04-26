@@ -1,13 +1,15 @@
 import { find } from 'ramda'
+
 import { LANGS_OPTIONS } from '~/const/i18n'
 import useTrans from '~/hooks/useTrans'
 import type { TSelectOption } from '~/spec'
 import Input from '~/widgets/Input'
 import Select from '~/widgets/Select'
+
 import { FIELD } from '../constant'
 import useBaseInfo from '../logic/useBaseInfo'
-import SavingBar from '../SavingBar'
 import useSalon from '../salon/basic_info/base_info'
+import SavingBar from '../SavingBar'
 import DangerZone from './DangerZone'
 
 export default function BaseInfo() {

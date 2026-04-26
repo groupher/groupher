@@ -2,7 +2,6 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 
 import METRIC from '~/const/metric'
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
-
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useGlowLight from '~/hooks/useGlowLight'
 import useDashboard from '~/stores/dashboard/hooks'

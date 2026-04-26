@@ -2,11 +2,13 @@ import { useAutoAnimate } from '@formkit/auto-animate/react'
 import Link from 'next/link'
 import { keys, startsWith } from 'ramda'
 import { type FC, Fragment } from 'react'
+
 import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
 import { groupByKey, sortByGroupIndex } from '~/helper'
 import ArrowSVG from '~/icons/ArrowSimple'
 import type { TLinkItem } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
+
 import useSalon from './salon/header_template'
 import type { TLinkGroup, TProps } from './spec'
 

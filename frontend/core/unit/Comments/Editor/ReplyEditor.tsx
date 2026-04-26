@@ -1,8 +1,10 @@
 import { type FC, memo } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import type { TComment, TSubmitState } from '~/spec'
 import CustomScroller from '~/widgets/CustomScroller'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+
 import useSalon from '../salon/editor/reply_editor'
 import useActions from '../useLogic/useActions'
 import BodyEditor from './BodyEditor'

@@ -1,4 +1,5 @@
 import { type ReactNode, Suspense } from 'react'
+
 import { ssrThemeInitScript } from '~/utils/ssr/script'
 
 // import { Analytics } from '@vercel/analytics/react'

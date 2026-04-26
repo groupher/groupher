@@ -5,18 +5,18 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { lazy, Suspense } from 'react'
+
 import { THREAD_PATH } from '~/const/thread'
-import Img from '~/Img'
 import ArrowSVG from '~/icons/Arrow'
-import useArticle from '~/stores/article/hooks'
-
-// import ArchivedSign from '~/widgets/ArchivedSign'
-
+import Img from '~/Img'
 import type { TChangelog } from '~/spec'
+// import ArchivedSign from '~/widgets/ArchivedSign'
+import useArticle from '~/stores/article/hooks'
 import ArticleSettingMenu from '~/unit/ArticleSettingMenu'
 import ArticleBaseStats from '~/unit/ArticleView/ArticleBaseStats'
 import ArticlePinLabel from '~/unit/PostThread/ArticlePinLabel'
 import ImgFallback from '~/widgets/ImgFallback'
+
 import useSalon from './salon/digest'
 
 const Share = lazy(() => import('~/unit/Share'))

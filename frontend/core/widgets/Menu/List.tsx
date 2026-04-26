@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import Item from './Item'
 import useSalon from './salon/list'
 import type { TMenuItem } from './spec'

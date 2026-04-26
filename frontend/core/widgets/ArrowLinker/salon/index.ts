@@ -1,5 +1,4 @@
 import usePrimaryColor from '~/hooks/usePrimaryColor'
-
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TColorName, TSpace } from '~/spec'

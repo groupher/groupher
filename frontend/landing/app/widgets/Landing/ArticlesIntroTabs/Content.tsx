@@ -1,6 +1,8 @@
 import type { FC } from 'react'
+
 import { THREAD } from '~/const/thread'
 import type { TThread } from '~/spec'
+
 import useSalon from '../salon/articles_intro_tabs/content'
 import ChangelogTab from './ChangelogTab'
 import DiscussTab from './DiscussTab'

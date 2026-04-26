@@ -1,4 +1,5 @@
 import useTrans from '~/hooks/useTrans'
+
 import useSalon from '../../salon/articles_intro_tabs/changelog_tab/intro_digest'
 import IntroItems from './IntroItems'
 

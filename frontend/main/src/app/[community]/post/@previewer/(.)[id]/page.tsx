@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+
 import ArticleContent from './ArticleContent'
 
 export default async function Page({ params }) {

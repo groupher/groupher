@@ -1,8 +1,8 @@
 import type { TSimpleUse } from './account'
 import type { TDsb, TParseDashboard } from './dashboard'
+import type { TThread, TCommunityThread } from './thread'
 import type { TID, TPagi } from './utils'
 import type { TParsedWallpaper } from './wallpaper'
-import type { TThread, TCommunityThread } from './thread'
 
 type TMeta = {
   postsCount?: number

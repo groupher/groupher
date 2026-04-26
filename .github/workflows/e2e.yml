@@ -3,26 +3,26 @@ name: e2e
 on:
   pull_request:
     paths:
-      - "frontend/main/**"
-      - "frontend/dashboard/**"
-      - "frontend/landing/**"
-      - "frontend/core/**"
-      - "frontend/mock-server/**"
-      - "frontend/e2e/**"
-      - "package.json"
-      - "yarn.lock"
-      - "!frontend/**/vercel.json"
+      - 'frontend/main/**'
+      - 'frontend/dashboard/**'
+      - 'frontend/landing/**'
+      - 'frontend/core/**'
+      - 'frontend/mock-server/**'
+      - 'frontend/e2e/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - '!frontend/**/vercel.json'
   push:
     paths:
-      - "frontend/main/**"
-      - "frontend/dashboard/**"
-      - "frontend/landing/**"
-      - "frontend/core/**"
-      - "frontend/mock-server/**"
-      - "frontend/e2e/**"
-      - "package.json"
-      - "yarn.lock"
-      - "!frontend/**/vercel.json"
+      - 'frontend/main/**'
+      - 'frontend/dashboard/**'
+      - 'frontend/landing/**'
+      - 'frontend/core/**'
+      - 'frontend/mock-server/**'
+      - 'frontend/e2e/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - '!frontend/**/vercel.json'
   workflow_dispatch:
 
 permissions:

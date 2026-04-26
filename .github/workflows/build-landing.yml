@@ -3,8 +3,8 @@ name: Build frontend landing
 on:
   push:
     paths:
-      - "frontend/landing/**" # only trigger when this dir changes
-      - "!frontend/landing/vercel.json"
+      - 'frontend/landing/**' # only trigger when this dir changes
+      - '!frontend/landing/vercel.json'
 
 jobs:
   build:
@@ -16,21 +16,18 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          repository: "groupher/groupher"
-          path: "./"
+          repository: 'groupher/groupher'
+          path: './'
 
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: "22.13.0"
+          node-version: '22.13.0'
 
       - name: Install Yarn Dependencies
         run: |
           corepack enable
           yarn install --immutable
-
-      # - name: Run Biome for landing
-      #   run: biome lint "$GITHUB_WORKSPACE/frontend-landing/src/**/*.{ts,tsx}"
 
       - name: Build Project
         run: yarn run build:prod:landing

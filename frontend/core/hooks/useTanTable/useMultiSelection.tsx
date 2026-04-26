@@ -3,6 +3,7 @@
 
 import type { ColumnDef, Row, Table } from '@tanstack/react-table'
 import { useCallback, useRef, useState } from 'react'
+
 import Checker from '~/widgets/Checker'
 
 export const SELECT_COL_ID = 'select'

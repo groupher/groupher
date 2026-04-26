@@ -1,6 +1,8 @@
 import type { FC } from 'react'
+
 import Img from '~/Img'
 import { mockUsers } from '~/mock'
+
 import useSalon, { cn } from '../../salon/battery_bento/mobile_first/panel'
 import ActionsMask from './ActionsMask'
 

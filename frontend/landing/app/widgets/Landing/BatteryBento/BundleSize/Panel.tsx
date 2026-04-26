@@ -1,9 +1,9 @@
 import type { FC } from 'react'
 
 import { num2Percent } from '~/helper'
+import LoadingGapSVG from '~/icons/LoadingGap'
 import Img from '~/Img'
 
-import LoadingGapSVG from '~/icons/LoadingGap'
 import useSalon, { cn } from '../../salon/battery_bento/bundle_size/panel'
 import { MAX_SIZE, PRODUCTS } from './constant'
 

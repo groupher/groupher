@@ -4,6 +4,7 @@ import ArchivedSVG from '~/icons/Archived'
 import InfoSVG from '~/icons/Info'
 import LockSVG from '~/icons/Lock'
 import NoticeSVG from '~/icons/Notice'
+
 import { TYPE } from './constant'
 import useSalon, { cn } from './salon/icon'
 import type { TType } from './spec'

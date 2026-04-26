@@ -1,16 +1,16 @@
 import Link from 'next/link'
 import type { FC } from 'react'
+
 import { THREAD_PATH } from '~/const/thread'
-import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { cutRest } from '~/fmt'
+import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
+
 import ArticleImgWindow from '../ArticleImgWindow'
 import ArticlePinLabel from '../ArticlePinLabel'
 import ArticleReadLabel from '../ArticleReadLabel'
-
 import Footer from './Footer'
-
 import useSalon from './salon'
 
 export type TProps = {

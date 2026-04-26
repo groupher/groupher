@@ -1,5 +1,6 @@
 import type { ColumnDef, OnChangeFn, SortingState } from '@tanstack/react-table'
 import type { MutableRefObject, ReactNode } from 'react'
+
 import type { MultiSelectionTableMeta } from '~/hooks/useTanTable'
 
 export type TCmsTableBatchActions = {

@@ -6,12 +6,12 @@
 
 import { keys, reverse } from 'ramda'
 import { type FC, memo } from 'react'
+
 import { groupByKey } from '~/helper'
 import { mockTags } from '~/mock'
 import type { TSpace } from '~/spec'
 
 import Folder from './Folder'
-
 import useSalon from './salon'
 
 type TProps = {

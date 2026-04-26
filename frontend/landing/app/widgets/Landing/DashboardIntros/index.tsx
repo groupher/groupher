@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import { DSB_ROUTE } from '~/const/route'
 import useTrans from '~/hooks/useTrans'
+
 import useSalon from '../salon/dashboard_intros'
 import AdminsTab from './AdminsTab'
 import CMSTab from './CMSTab'

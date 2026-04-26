@@ -1,6 +1,7 @@
 import METRIC from '~/const/metric'
 import useGlowLight from '~/hooks/useGlowLight'
 import useMetric from '~/hooks/useMetric'
+
 import useSalon from './salon/glow_background'
 
 export default function GlowBackground() {

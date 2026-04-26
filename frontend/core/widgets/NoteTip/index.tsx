@@ -5,6 +5,7 @@
  */
 
 import type { FC, ReactNode } from 'react'
+
 import InfoSVG from '~/icons/Info'
 import type { TSpace, TTooltipPlacement } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'

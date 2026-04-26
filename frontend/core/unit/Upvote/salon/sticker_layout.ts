@@ -1,5 +1,4 @@
 import usePrimaryColor from '~/hooks/usePrimaryColor'
-
 import useTwBelt from '~/hooks/useTwBelt'
 
 type TProps = {

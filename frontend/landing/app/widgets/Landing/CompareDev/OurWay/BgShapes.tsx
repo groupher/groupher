@@ -1,6 +1,7 @@
 import useTrans from '~/hooks/useTrans'
 import GtdWipSVG from '~/icons/GtdWip'
 import TagSVG from '~/icons/HashTagBold'
+
 import useSalon, { cn } from '../../salon/compare_dev/bg_shapes'
 import CurveLine1SVG from '../../salon/compare_dev/bg_shapes/CurveLine1'
 import CurveLine2SVG from '../../salon/compare_dev/bg_shapes/CurveLine2'

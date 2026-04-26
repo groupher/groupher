@@ -1,7 +1,6 @@
 import { type FC, memo } from 'react'
 
 import type { TUser } from '~/spec'
-
 import AdminAvatar from '~/unit/AdminAvatar'
 
 import useSalon from '../salon/members/admin_member'

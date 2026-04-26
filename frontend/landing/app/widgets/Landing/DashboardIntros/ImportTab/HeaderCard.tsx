@@ -1,7 +1,7 @@
-import Img from '~/Img'
 import MarkdownSVG from '~/icons/Markdown'
 import GithubSVG from '~/icons/social/Github'
 import NotionSVG from '~/icons/social/Notion'
+import Img from '~/Img'
 
 import useSalon, { cn } from '../../salon/dashboard_intros/import_tab/header_card'
 

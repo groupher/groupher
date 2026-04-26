@@ -1,12 +1,14 @@
 import type { FC } from 'react'
+
 import { COMMUNITY_LAYOUT } from '~/const/layout'
 import { THREAD } from '~/const/thread'
 import useLayout from '~/hooks/useLayout'
 import useViewingThread from '~/hooks/useViewingThread'
+
 import ClassicLayout from './ClassicLayout'
+import HeroLayout from './HeroLayout'
 import SidebarLayout from './SidebarLayout'
 import type { TProps } from './spec'
-import HeroLayout from './HeroLayout'
 
 const CustomHeaderLinks: FC<TProps> = (props) => {
   const { communityLayout } = useLayout()

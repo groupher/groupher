@@ -1,6 +1,8 @@
 import type { FC } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import Button from '~/widgets/Buttons/Button'
+
 import useSalon, { cn } from '../../salon/domain/custom/verify_domain'
 import { VERIFYING_DOMAIN_ROWS } from './constant'
 import VerifyingTable from './VerifyingTable'

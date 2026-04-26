@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react'
 
 import METRIC from '~/const/metric'
-
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useMetric from '~/hooks/useMetric'
 

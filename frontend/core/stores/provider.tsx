@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
 import type { TCommunity, TLocale, TMetric, TParseDashboard } from '~/spec'
@@ -8,6 +9,7 @@ import DashboardStoreProvider from '~/stores/dashboard/provider'
 import LocaleStoreProvider from '~/stores/locale/provider'
 import ThemeStoreProvider from '~/stores/theme/provider'
 import WallpaperStoreProvider from '~/stores/wallpaper/provider'
+
 import CustomThemeScope from './CustomThemeScope'
 
 type TProps = {

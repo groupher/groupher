@@ -1,6 +1,7 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+
 import METRIC from '~/const/metric'
 import { THREAD, THREAD_PATH } from '~/const/thread'
 import useMetric from '~/hooks/useMetric'

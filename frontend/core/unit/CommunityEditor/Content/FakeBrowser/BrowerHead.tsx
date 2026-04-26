@@ -1,10 +1,12 @@
 import { isEmpty } from 'ramda'
 import { type FC, memo } from 'react'
+
 import ArrowSVG from '~/icons/Arrow'
 import LockSVG from '~/icons/Lock'
 import MoreSVG from '~/icons/menu/MoreL'
 import RefreshSVG from '~/icons/Refresh'
 import StarSVG from '~/icons/Star5'
+
 import useSalon, { cn } from '../../salon/content/fake_browser/browser_head'
 import Favicon from './Favicon'
 

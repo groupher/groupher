@@ -2,6 +2,7 @@ import type { FC } from 'react'
 
 import UpvoteSVG from '~/icons/Upvote'
 import type { TThemeName } from '~/spec'
+
 import useSalon, { cn } from '../../salon/battery_bento/dark_mode/article_card'
 
 type TProps = {

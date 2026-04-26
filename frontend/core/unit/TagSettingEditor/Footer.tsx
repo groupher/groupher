@@ -1,7 +1,7 @@
 import { CHANGE_MODE } from '~/const/mode'
-
 import Button from '~/widgets/Buttons/Button'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+
 import useSalon, { cn } from './salon/footer'
 import useLogic from './useLogic'
 

@@ -1,7 +1,6 @@
 import type { FC } from 'react'
 
 import Button from './Button'
-
 import useSalon from './salon/yes_or_no_buttons'
 
 type TProps = {
@@ -34,7 +33,7 @@ const YesOrNoButton: FC<TProps> = ({
           {cancelText}
         </button>
       )}
-      <div className='ml-1.5 mr-2' />
+      <div className='mr-2 ml-1.5' />
       <Button
         size='small'
         loading={loading}

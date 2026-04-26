@@ -1,5 +1,4 @@
 import { INIT_KANBAN_COLORS } from '~/const/dashboard'
-
 import useTwBelt from '~/hooks/useTwBelt'
 
 import useKanban from '../../../../logic/useKanban'

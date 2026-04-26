@@ -5,6 +5,7 @@
  */
 
 import type { FC } from 'react'
+
 import useDidMount from '~/hooks/useDidMount'
 import type { TSpace } from '~/spec'
 import useAccount from '~/stores/account/hooks'

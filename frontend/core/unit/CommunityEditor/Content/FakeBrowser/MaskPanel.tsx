@@ -2,6 +2,7 @@ import type { FC } from 'react'
 
 import CheckSVG from '~/icons/Check'
 import ArrowLinker from '~/widgets/ArrowLinker'
+
 import { STEP } from '../../constant'
 import useSalon, { cn } from '../../salon/content/fake_browser/mask_panel'
 import type { TStep } from '../../spec'

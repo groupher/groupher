@@ -1,10 +1,12 @@
 import { type FC, memo } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import EditPenSVG from '~/icons/EditPen'
 import Button from '~/widgets/Buttons/Button'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
-import useSalon from '../../salon/head_bar/state_bar'
+
 import type { TProps as TBase } from '..'
+import useSalon from '../../salon/head_bar/state_bar'
 import SortMenu from './SortMenu'
 
 type TProps = Pick<TBase, 'mode' | 'apiMode' | 'isAllFolded' | 'loading' | 'basicState'> & {

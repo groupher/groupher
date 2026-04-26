@@ -1,4 +1,5 @@
 import SpiderSVG from '~/icons/Spider'
+
 import useSalon, { cn } from '../../salon/dashboard_intros/seo_tab/content'
 
 export default function Content() {

@@ -5,7 +5,6 @@ import AdminAvatar from '~/unit/AdminAvatar'
 import Button from '~/widgets/Buttons/Button'
 
 import useAdmins from '../logic/useAdmins'
-
 import useSalon, { cn } from '../salon/admin/list'
 
 export default function List() {

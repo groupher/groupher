@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 
 import Img from '~/Img'
+
 import useSalon from '../../salon/battery_bento/rich_content/panel'
 import InlineToolBox from './InlineToolBox'
 import ToolBox from './ToolBox'

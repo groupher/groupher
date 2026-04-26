@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import { DOC_FAQ_LAYOUT } from '~/const/layout'
 import useTrans from '~/hooks/useTrans'
 import type { TDocFAQLayout } from '~/spec'

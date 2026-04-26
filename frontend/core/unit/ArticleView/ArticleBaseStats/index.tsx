@@ -5,6 +5,7 @@
  */
 
 import type { FC } from 'react'
+
 import { scrollToComments } from '~/dom'
 import ViewSVG from '~/icons/article/Viewed'
 import CommentSVG from '~/icons/Comment'

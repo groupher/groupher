@@ -1,10 +1,12 @@
 import type { FC } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import { mockUsers } from '~/mock'
 import type { TArticle, TColorName } from '~/spec'
 import DotDivider from '~/widgets/DotDivider'
 import Facepile from '~/widgets/Facepile'
 import FaIcons from '~/widgets/FaIcons'
+
 import useSalon from '../salon/tile_cards_layout/category'
 import useLogic from '../useLogic'
 

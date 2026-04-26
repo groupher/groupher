@@ -1,4 +1,5 @@
 import MentionSVG from '~/icons/Mention'
+
 import useSalon from '../salon/activities/mention_item'
 
 export default function MentionItem() {

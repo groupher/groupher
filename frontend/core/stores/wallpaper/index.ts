@@ -1,4 +1,5 @@
 import { proxy } from 'valtio'
+
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import type { TWallpaperGradientDir } from '~/spec'
 

@@ -5,17 +5,17 @@
  */
 
 import type { FC } from 'react'
+
 import { COMMUNITY_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
 import useCommunity from '~/stores/community/hooks'
-
 import Markdown from '~/widgets/Markdown'
+
 import BasicStates from './BasicStates'
 import ExtraInfo from './ExtraInfo'
 import Members from './Members'
-import Sidebar from './Sidebar'
-
 import useSalon, { cn } from './salon'
+import Sidebar from './Sidebar'
 
 type TProps = {
   isSidebarLayout?: boolean

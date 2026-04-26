@@ -1,11 +1,12 @@
 import { INLINE_TAG_LAYOUT } from '~/const/layout'
 import useTrans from '~/hooks/useTrans'
 import CheckLabel from '~/widgets/CheckLabel'
+
 import { FIELD } from '../../constant'
 import useTags from '../../logic/useTags'
+import useSalon, { cnMerge } from '../../salon/layout/inline_tag_layout'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
-import useSalon, { cnMerge } from '../../salon/layout/inline_tag_layout'
 import { TAGS_DEMO_LIST } from './constant'
 import TagItem from './TagItem'
 

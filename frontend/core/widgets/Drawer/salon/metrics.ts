@@ -1,4 +1,5 @@
 import { concat, includes, keys, reduce } from 'ramda'
+
 import { ARTICLE_THREAD } from '~/const/thread'
 import TYPE from '~/const/type'
 

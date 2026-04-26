@@ -4,6 +4,7 @@ import METRIC from '~/const/metric'
 import { KANBAN_BOARD } from '~/const/thread'
 import type { TEnableConf, TLinkItem, TNameAlias, TTag } from '~/spec'
 import type { TInit } from '~/stores/dashboard/spec'
+
 import setupStore from '..'
 
 describe('stores/dashboard', () => {

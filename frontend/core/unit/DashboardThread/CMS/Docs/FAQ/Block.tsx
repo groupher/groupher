@@ -1,15 +1,15 @@
 import type { FC } from 'react'
-import useTrans from '~/hooks/useTrans'
 
+import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/Arrow'
 import DeleteSVG from '~/icons/Delete'
 import EditSVG from '~/icons/EditPen'
 import type { TFAQSection } from '~/spec'
-
 import Markdown from '~/widgets/Markdown'
+
+import type { TProps as TIndex } from '.'
 import useFAQ from '../../../logic/useFAQ'
 import useSalon, { cn } from '../../../salon/cms/docs/faq/block'
-import type { TProps as TIndex } from '.'
 import Editor from './Editor'
 
 type TProps = {

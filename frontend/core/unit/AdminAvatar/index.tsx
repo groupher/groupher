@@ -5,8 +5,9 @@
  */
 
 import type { FC } from 'react'
-import Img from '~/Img'
+
 import AdminStarSVG from '~/icons/AdminStar'
+import Img from '~/Img'
 import type { TSpace, TUser } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
 

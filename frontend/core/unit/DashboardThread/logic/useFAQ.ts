@@ -1,4 +1,5 @@
 import { find, findIndex, pick, reject } from 'ramda'
+
 import type { TDocFAQLayout, TEditFunc, TFAQSection } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'

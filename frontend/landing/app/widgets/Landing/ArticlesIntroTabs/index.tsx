@@ -1,6 +1,8 @@
 import { useState } from 'react'
+
 import { THREAD } from '~/const/thread'
 import type { TThread } from '~/spec'
+
 import useSalon from '../salon/articles_intro_tabs'
 import Content from './Content'
 import Tabs from './Tabs'

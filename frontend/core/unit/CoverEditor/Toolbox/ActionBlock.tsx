@@ -1,6 +1,8 @@
 import type { FC } from 'react'
+
 import DeleteSVG from '~/icons/Delete'
 import SettingSVG from '~/icons/Setting'
+
 import useSalon, { cn } from '../salon/toolbox/action_block'
 import ToolUnit from './ToolUnit'
 

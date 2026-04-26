@@ -9,9 +9,10 @@ import Tippy from '@groupher/tooltip'
 import { type FC, memo, type ReactNode, useEffect, useMemo, useRef, useState } from 'react'
 import type { Instance } from 'tippy.js'
 import { hideAll } from 'tippy.js'
+
 import THEME from '~/const/theme'
-import useOverlayDark from '~/hooks/useOverlayDark'
 import useOutsideClick from '~/hooks/useOutsideClick'
+import useOverlayDark from '~/hooks/useOverlayDark'
 import useTheme from '~/hooks/useTheme'
 import type { TThemeName, TTooltipPlacement } from '~/spec'
 
@@ -105,7 +106,6 @@ const Tooltip: FC<TProps> = ({
   })
 
   // Theme switch / route transition safety: destroy transient UI to avoid flicker/residual popper.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (instanceRef.current) {
       instanceRef.current.destroy()
@@ -122,7 +122,6 @@ const Tooltip: FC<TProps> = ({
     }
   }, [])
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Position refresh intentionally tracks rendered tooltip state/content only; instanceRef/contentRef mutations do not participate in React's dependency model.
   useEffect(() => {
     if (!active || !contentRef.current) return
 

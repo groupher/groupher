@@ -1,9 +1,11 @@
 import type { FC } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import DeleteSVG from '~/icons/DeleteSolid'
 import type { TMediaReport } from '~/spec'
 import Input from '~/widgets/Input'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+
 import useBaseInfo from '../../logic/useBaseInfo'
 import useSalon from '../../salon/basic_info/other_info/input_box'
 import MediaPreview from './MediaPreview'

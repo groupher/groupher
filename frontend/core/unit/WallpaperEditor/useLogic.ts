@@ -1,5 +1,6 @@
 import { clone, equals, pick } from 'ramda'
 import { useMemo, useState } from 'react'
+
 import { WALLPAPER_STATE_KEYS, WALLPAPER_TYPE } from '~/const/wallpaper'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
@@ -7,6 +8,7 @@ import { closeDrawer, toast } from '~/signal'
 import type { TWallpaperData, TWallpaperGradientDir, TWallpaperType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
+
 import { TAB } from './constant'
 import S from './schema'
 import type { TTab } from './spec'

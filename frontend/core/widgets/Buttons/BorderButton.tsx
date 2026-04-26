@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
+
 import useWallpaper from '~/hooks/useWallpaper'
 import ArrowSVG from '~/icons/ArrowSimple'
+
 import Button from './Button'
 import useSalon, { cn } from './salon/border_button'
 

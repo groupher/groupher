@@ -1,10 +1,12 @@
 import type { FC } from 'react'
+
 import ArrowSVG from '~/icons/Arrow'
 import EditSVG from '~/icons/EditPen'
 import MoreSVG from '~/icons/menu/MoreL'
 import SettingSVG from '~/icons/Setting'
 import { callTagEditEditor } from '~/signal'
 import Tooltip from '~/widgets/Tooltip'
+
 import useTags from '../logic/useTags'
 import useSalon, { cn } from '../salon/tags/tag_action'
 import ActionMenu from './ActionMenu'

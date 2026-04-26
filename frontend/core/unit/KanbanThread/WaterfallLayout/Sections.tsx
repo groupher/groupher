@@ -4,6 +4,7 @@
  */
 
 import type { ReactNode } from 'react'
+
 import { KANBAN_BOARD } from '~/const/thread'
 import useKanbanPosts from '~/hooks/useKanbanPosts'
 import useLayout from '~/hooks/useLayout'
@@ -18,7 +19,6 @@ import type { TKanbanBoard, TPagedPosts } from '~/spec'
 
 import KanbanItem from '../KanbanItem'
 import EmptyItem from '../KanbanItem/EmptyItem'
-
 import useSalon, { cn } from '../salon/waterfall_layout/sections'
 
 type TSection = {

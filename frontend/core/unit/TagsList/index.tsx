@@ -3,14 +3,13 @@
  */
 
 import type { FC } from 'react'
+
 import SIZE from '~/const/size'
 import type { TSizeTSM, TSpace, TTag } from '~/spec'
-
 import Tooltip from '~/widgets/Tooltip'
 
 import FoldList from './FoldList'
 import List from './List'
-
 import useSalon from './salon'
 
 export type TProps = {

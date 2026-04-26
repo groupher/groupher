@@ -1,4 +1,5 @@
 import Image from 'next/image'
+
 import APP from '~/const/app'
 import ArtSVG from '~/icons/Art'
 import MusicSVG from '~/icons/Music'
@@ -6,6 +7,7 @@ import RocketSVG from '~/icons/Rocket'
 import UniverseSVG from '~/icons/Universe'
 import { mockUsers } from '~/mock'
 import Facepile from '~/widgets/Facepile/LandingPage'
+
 import { COMMUNITY_TYPE } from '../../constant'
 import useSalon, { cn } from '../../salon/banner/select_type/intro_images'
 import type { TCommunityType } from '../../spec'

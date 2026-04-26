@@ -1,6 +1,8 @@
 import type { FC } from 'react'
+
 import Img from '~/Img'
 import type { TSpace, TUser } from '~/spec'
+
 import useSalon, { cn } from './salon/landing_page'
 
 type TProps = {

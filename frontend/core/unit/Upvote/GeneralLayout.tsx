@@ -9,6 +9,7 @@ import { type FC, memo } from 'react'
 import type { TUser } from '~/spec'
 import AnimatedCount from '~/widgets/AnimatedCount'
 import Facepile from '~/widgets/Facepile'
+
 import useSalon, { cn } from './salon/general_layout'
 import UpvoteBtn from './UpvoteBtn'
 import useUpvote from './useUpvote'

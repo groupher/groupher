@@ -2,6 +2,7 @@ import { COLOR } from '~/const'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 import useWallpaper from '~/hooks/useWallpaper'
+
 // import { getGlowOpacity, getGlowBackground, getPathGradient } from './metric'
 import { getCursorGradient, getPathGradient } from './metric'
 

@@ -1,6 +1,6 @@
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
-import useSalon from '../salon/article_layout/navi_head'
 
+import useSalon from '../salon/article_layout/navi_head'
 import useLogic from '../useLogic'
 import HeadAction from './HeadAction'
 

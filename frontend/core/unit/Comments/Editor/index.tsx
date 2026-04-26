@@ -1,6 +1,7 @@
 import { type FC, Fragment } from 'react'
 
 import Modal from '~/widgets/Modal'
+
 import type { TEditState } from '../spec'
 import useActions from '../useLogic/useActions'
 import ReplyEditor from './ReplyEditor'

@@ -1,10 +1,12 @@
 import type { FC } from 'react'
+
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { upvoteArticle } from '~/signal'
 import type { TPost } from '~/spec'
 import Upvote from '~/unit/Upvote'
+
 import ArticlePinLabel from '../../ArticlePinLabel'
 import useSalon from '../salon/minimal_layout'
 import Footer from './Footer'

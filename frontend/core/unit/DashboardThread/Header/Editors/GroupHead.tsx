@@ -6,6 +6,7 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import EditSVG from '~/icons/EditPen'
 import MoreSVG from '~/icons/menu/MoreL'
 import Tooltip from '~/widgets/Tooltip'
+
 import useHeader from '../../logic/useHeader'
 import useSalon from '../../salon/header/editors/group_head'
 import GroupInputer from './GroupInputer'

@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import QRCodeSolidSVG from '~/icons/QRCodeSolid'
 import LinkSVG from '~/icons/Share'
 import WeChatSVG from '~/icons/social/WeChat'

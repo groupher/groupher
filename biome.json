@@ -1,3 +1,0 @@
-{
-  "extends": ["./frontend/core/config/biome.json"]
-}

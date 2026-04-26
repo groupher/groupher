@@ -1,8 +1,10 @@
 import type { FC } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import useCommunity from '~/stores/community/hooks'
 import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
+
 import useSalon from '../salon/domain/platform'
 
 const Domain: FC = () => {

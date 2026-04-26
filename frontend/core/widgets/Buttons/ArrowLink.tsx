@@ -5,6 +5,7 @@
  */
 
 import { type FC, memo, type ReactNode } from 'react'
+
 import SIZE from '~/const/size'
 import ArrowSVG from '~/icons/Arrow'
 import type { TSize } from '~/spec'

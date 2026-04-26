@@ -7,16 +7,13 @@
 import { type FC, useEffect } from 'react'
 
 import { ANCHOR } from '~/const/dom'
-
 // import NoticeBar from '~/widgets/NoticeBar'
 
-import Editor from './Editor'
-import List from './List'
-
-// import LockedMessage from './LockedMessage'
-
 import { API_MODE } from './constant'
+import Editor from './Editor'
+// import LockedMessage from './LockedMessage'
 import HeadBar from './HeadBar'
+import List from './List'
 import useSalon from './salon'
 import type { TAPIMode } from './spec'
 import { useCommentsEditState, useCommentsRootState } from './useLogic'
@@ -33,7 +30,6 @@ const Comments: FC<TProps> = ({ locked: _locked = false, apiMode = API_MODE.ARTI
   const editState = useCommentsEditState()
   const { loadComments } = useActions()
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (!initialized) {
       loadComments()

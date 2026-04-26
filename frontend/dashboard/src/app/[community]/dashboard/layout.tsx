@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+
 import { GlobalProvider, GraphQLProvider } from '~/app/providers'
 import { getCommunityInfo, getLocaleData } from '~/app/ssr'
 import { LOCALE } from '~/const/i18n'
@@ -8,6 +9,7 @@ import MainProvider from '~/stores/provider'
 import { isDsbDemoMode } from '~/utils/dsb-demo'
 import { getMetadata } from '~/utils/ssr'
 import { injectDsbColors } from '~/utils/ssr/script'
+
 import Client from './Client'
 
 const parseLocale = (lang?: string | string[]) => {

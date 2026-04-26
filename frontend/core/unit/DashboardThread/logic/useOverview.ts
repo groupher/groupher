@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+
 import useQuery from '~/hooks/useQuery'
 import type { TCommunity, TOverview } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -29,7 +30,6 @@ export default function useOverview(): TOverview {
     })
   }
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     if (data?.community) updateOverview(data.community)
   }, [data])

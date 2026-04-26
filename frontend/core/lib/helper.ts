@@ -1,4 +1,5 @@
 import { includes, isEmpty, keys, remove, sort, startsWith, uniq } from 'ramda'
+
 import { ASSETS_ENDPOINT } from '~/config'
 import { COLOR } from '~/const/colors'
 import { ARTICLE_STATE } from '~/const/gtd'
@@ -87,7 +88,6 @@ export const extractAttachments = (str: string): string[] => {
   const regex = /!\[(.*?)\]\((.*?)\)/g
 
   const urls = []
-  // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
   while ((m = regex.exec(str)) !== null) {
     if (m.index === regex.lastIndex) {
       regex.lastIndex += 1

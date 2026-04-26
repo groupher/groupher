@@ -10,7 +10,6 @@ import type {
   TWallpaperPic,
 } from '~/spec'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
-
 import { parseWallpaper } from '~/wallpaper'
 
 type TRet = { wallpaper: string; hasShadow: boolean } & TWallpaperFmt

@@ -1,5 +1,6 @@
 import { KANBAN_BOARD } from '~/const/thread'
 import type { TCommunity } from '~/spec'
+
 import { parseDashboard } from '.'
 
 describe('parseDashboard', () => {

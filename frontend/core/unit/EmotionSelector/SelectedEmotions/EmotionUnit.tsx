@@ -3,9 +3,11 @@
  */
 
 import { type FC, memo } from 'react'
+
 import type { TEmotion, TEmotionType, TSimpleUser } from '~/spec'
 import AnimatedCount from '~/widgets/AnimatedCount'
 import Tooltip from '~/widgets/Tooltip'
+
 import { getEmotionName } from '../helper'
 import useSalon from '../salon/selected_emotions/emotion_unit'
 import EmotionIcon from './EmotionIcon'

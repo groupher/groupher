@@ -1,6 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
-import useTopbar from '../../logic/useTopbar'
+
 import useBase from '.'
+import useTopbar from '../../logic/useTopbar'
 
 export { cn } from '~/css'
 

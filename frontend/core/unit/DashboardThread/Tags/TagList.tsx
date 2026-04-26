@@ -1,9 +1,10 @@
 import { useAutoAnimate } from '@formkit/auto-animate/react'
-import { sortByIndex } from '~/helper'
 
+import { sortByIndex } from '~/helper'
 import useMount from '~/hooks/useMount'
 import type { TTag } from '~/spec'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
+
 import useTags from '../logic/useTags'
 import TagBar from './TagBar'
 

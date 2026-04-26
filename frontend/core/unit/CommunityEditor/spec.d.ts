@@ -1,4 +1,5 @@
 import type { TConstValues } from '~/spec'
+
 import type { COMMUNITY_TYPE, STEP } from './constant'
 
 export type TCommunityType = TConstValues<typeof COMMUNITY_TYPE>

@@ -1,6 +1,7 @@
 import METRIC from '~/const/metric'
 import { THREAD } from '~/const/thread'
 import type { TChangelog, TPost, TTag } from '~/spec'
+
 import setupStore from '..'
 
 describe('stores/article', () => {

@@ -1,5 +1,4 @@
 import { COMMUNITY_LAYOUT } from '~/const'
-
 import useLayout from '~/hooks/useLayout'
 import useTwBelt from '~/hooks/useTwBelt'
 

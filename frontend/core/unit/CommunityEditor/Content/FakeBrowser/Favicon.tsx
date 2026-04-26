@@ -1,6 +1,7 @@
 import { type FC, memo } from 'react'
 
 import Img from '~/Img'
+
 import useSalon from '../../salon/content/fake_browser/favicon'
 
 type TProps = {

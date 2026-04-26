@@ -1,6 +1,7 @@
 import { equals, includes, reject, uniq } from 'ramda'
 import { type FC, useEffect, useState } from 'react'
 import { useMutation, useQuery } from 'urql'
+
 // import { mockTags } from '~/mock'
 import { THREAD } from '~/const/thread'
 import useViewingArticle from '~/hooks/useViewingArticle'
@@ -9,6 +10,7 @@ import type { TColorName, TID, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import Checker from '~/widgets/Checker'
 import TagNode from '~/widgets/TagNode'
+
 import useSalon from '../salon/sub_menu/tags_setting'
 import S from '../schema'
 import useTouched from '../useTouched'

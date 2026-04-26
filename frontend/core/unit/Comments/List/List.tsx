@@ -1,6 +1,7 @@
 import type { CSSProperties, FC } from 'react'
 
 import type { TComment, TID } from '~/spec'
+
 import Comment from '../Comment'
 import { MODE } from '../constant'
 import { passedDate } from '../helper'

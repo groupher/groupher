@@ -1,8 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import type { ReactNode } from 'react'
+
 import { COMMUNITY_LAYOUT } from '~/const/layout'
-import { FIELD } from '../../../constant'
+
 import TopbarLayout from '..'
+import { FIELD } from '../../../constant'
 
 const edit = vi.fn()
 

@@ -1,7 +1,6 @@
 import { getGroupedKanbanPosts } from '~/app/ssr'
 import { THREAD } from '~/const/thread'
 import ArticleListStoreProvider from '~/stores/articleList/provider'
-
 import KanbanThread from '~/unit/KanbanThread'
 
 export default async function CommunityKanbanPage({ params }) {

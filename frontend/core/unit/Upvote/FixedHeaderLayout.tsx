@@ -5,6 +5,7 @@
  */
 
 import { type FC, memo } from 'react'
+
 import useSalon from './salon/fixed_header_layout'
 import UpvoteBtn from './UpvoteBtn'
 import useUpvote from './useUpvote'

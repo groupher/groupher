@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import AuthSVG from '~/icons/Auth'
 import CloudSVG from '~/icons/CloudCheck'
 import HashSVG from '~/icons/HashTagBold'
@@ -7,6 +8,7 @@ import LockSVG from '~/icons/Lock'
 import NestlSVG from '~/icons/NestGlobal'
 import SettingSVG from '~/icons/Setting'
 import UploadSVG from '~/icons/Upload'
+
 import useSalon, { cn } from '../../salon/battery_bento/security/panel'
 import Header from './Header'
 

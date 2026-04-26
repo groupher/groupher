@@ -1,6 +1,7 @@
 'use client'
 
 import type { TSpace } from '~/spec'
+
 import useSalon, { cn } from './salon/table'
 
 const randDelay = () => ({

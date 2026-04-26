@@ -10,7 +10,6 @@ import Tooltip from '~/widgets/Tooltip'
 
 import ActiveTag from './ActiveTag'
 import FilterPanel from './FilterPanel'
-
 import useSalon from './salon'
 
 type TProps = {

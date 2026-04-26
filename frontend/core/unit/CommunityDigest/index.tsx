@@ -11,8 +11,8 @@ import { COMMUNITY_LAYOUT } from '~/const/layout'
 import useLayout from '~/hooks/useLayout'
 
 import ClassicLayout from './ClassicLayout'
-import SidebarLayout from './SidebarLayout'
 import HeroLayout from './HeroLayout'
+import SidebarLayout from './SidebarLayout'
 
 export default function CommunityDigest() {
   // const router = useRouter()

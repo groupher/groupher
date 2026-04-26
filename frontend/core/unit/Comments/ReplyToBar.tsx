@@ -1,8 +1,10 @@
 import type { FC } from 'react'
+
 // import { Wrapper } from './salon'
 import { cutRest } from '~/fmt'
 import useTrans from '~/hooks/useTrans'
 import type { TComment } from '~/spec'
+
 import useSalon from './salon/reply_to_bar'
 
 type TProps = {

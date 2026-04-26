@@ -1,12 +1,13 @@
 import type { FC } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import type { TFAQSection } from '~/spec'
 import Input from '~/widgets/Input'
 
 import { FIELD } from '../../../constant'
 import useFAQ from '../../../logic/useFAQ'
-import SavingBar from '../../../SavingBar'
 import useSalon from '../../../salon/cms/docs/faq/editor'
+import SavingBar from '../../../SavingBar'
 
 type TProps = {
   editingFAQ: TFAQSection

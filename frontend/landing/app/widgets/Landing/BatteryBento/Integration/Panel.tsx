@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import useSalon, { cn } from '../../salon/battery_bento/integration/panel'
 import EmbedScript from './EmbedScript'
 import Header from './Header'

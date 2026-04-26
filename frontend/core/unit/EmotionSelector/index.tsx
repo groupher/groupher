@@ -10,9 +10,8 @@ import Tooltip from '~/widgets/Tooltip'
 
 import { ensureEmotion, visibleEmotions } from './helper'
 import Panel from './Panel'
-import SelectedEmotions from './SelectedEmotions'
-
 import useSalon from './salon'
+import SelectedEmotions from './SelectedEmotions'
 
 type TProps = {
   isLegal?: boolean

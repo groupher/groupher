@@ -5,6 +5,7 @@
  */
 
 import type { FC } from 'react'
+
 import SIZE from '~/const/size'
 import type { TSizeSM, TSpace } from '~/spec'
 

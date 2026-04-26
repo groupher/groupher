@@ -1,6 +1,7 @@
 import { range } from 'ramda'
 import type { FC } from 'react'
 import ContentLoader from 'react-content-loader'
+
 import useTheme from '~/hooks/useTheme'
 import type { TSpace } from '~/spec'
 

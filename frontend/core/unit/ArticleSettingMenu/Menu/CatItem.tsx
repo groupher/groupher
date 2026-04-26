@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import { toGTDLabelKey } from '~/fmt'
 import useTrans from '~/hooks/useTrans'
 import useViewingArticle from '~/hooks/useViewingArticle'
@@ -6,7 +7,6 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import CategorySVG from '~/icons/Category'
 
 import { ICON } from '../constant'
-
 import useSalon, { cn } from '../salon/menu'
 
 type TProps = {

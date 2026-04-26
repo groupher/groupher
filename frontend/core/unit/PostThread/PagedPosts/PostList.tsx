@@ -1,6 +1,7 @@
 /* eslint-disable react/display-name */
 
 import { lazy, Suspense } from 'react'
+
 import { POST_LAYOUT } from '~/const/layout'
 import { THREAD } from '~/const/thread'
 import TYPE from '~/const/type'
@@ -8,8 +9,8 @@ import useLayout from '~/hooks/useLayout'
 import usePagedPosts from '~/hooks/usePagedPosts'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 import MasonryCards from '~/widgets/MasonryCards'
-import PostItem from '../PostItem'
 
+import PostItem from '../PostItem'
 import useSalon from './salon/article_list'
 
 export const EmptyThread = lazy(() => import('~/unit/EmptyThread'))

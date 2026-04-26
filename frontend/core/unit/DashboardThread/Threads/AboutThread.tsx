@@ -1,4 +1,5 @@
 import { type FC, memo } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import type { TEnableConf } from '~/spec'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'

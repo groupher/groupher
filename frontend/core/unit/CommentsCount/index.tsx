@@ -1,4 +1,5 @@
 import { type FC, memo } from 'react'
+
 import SIZE from '~/const/size'
 import CommentSVG from '~/icons/Comment'
 import type { TSizeSM, TSpace } from '~/spec'

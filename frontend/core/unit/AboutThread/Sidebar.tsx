@@ -6,7 +6,6 @@ import Linker from '~/widgets/Linker'
 
 import LabelList from './LabelList'
 import MediaReports from './MediaReports'
-
 import useSalon, { cn } from './salon/sidebar'
 
 export default function Sidebar() {

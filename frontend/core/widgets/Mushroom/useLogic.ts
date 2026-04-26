@@ -1,10 +1,10 @@
 import { useSnapshot } from 'valtio'
+
 import { APP_VERSION } from '~/config'
-import type { TScrollDirection } from '~/spec'
+import { Global } from '~/helper'
 // import useCommunity from '~/stores/community/hooks'
 // import useViewingThread from '~/hooks/useViewingThread'
-
-import { Global } from '~/helper'
+import type { TScrollDirection } from '~/spec'
 
 import store from './store'
 

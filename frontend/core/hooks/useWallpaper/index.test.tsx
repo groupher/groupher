@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react'
 
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
-
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useWallpaper from '~/hooks/useWallpaper'
 

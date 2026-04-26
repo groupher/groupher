@@ -1,4 +1,5 @@
 import { SOCIAL_LIST } from '~/const/social'
+import useTwBelt from '~/hooks/useTwBelt'
 import BiliBiliSVG from '~/icons/social/BiliBili'
 import BossSVG from '~/icons/social/Boss'
 import EmailSVG from '~/icons/social/Email'
@@ -8,10 +9,8 @@ import TwitterSVG from '~/icons/social/Twitter'
 import WeChatSVG from '~/icons/social/WeChat'
 import WeiboSVG from '~/icons/social/Weibo'
 import ZhihuSVG from '~/icons/social/Zhihu'
-import type { TSpace } from '~/spec'
 // import LagouSVG from '~/icons/social/Lagou'
-
-import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
 export { cn } from '~/css'
 

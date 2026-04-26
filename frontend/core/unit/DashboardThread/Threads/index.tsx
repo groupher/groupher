@@ -1,8 +1,9 @@
 import useTrans from '~/hooks/useTrans'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
+
 import useEnable from '../logic/useEnable'
-import SectionLabel from '../SectionLabel'
 import useSalon from '../salon/threads'
+import SectionLabel from '../SectionLabel'
 import AboutThread from './AboutThread'
 import DocThread from './DocThread'
 

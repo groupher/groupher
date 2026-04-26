@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react'
 
 import { DEFAULT_ENABLE } from '~/const/dashboard'
-
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useEnable from '~/hooks/useEnable'
 

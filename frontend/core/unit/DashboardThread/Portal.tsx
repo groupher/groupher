@@ -1,6 +1,8 @@
 import type { FC, ReactNode } from 'react'
+
 import type { TBreadcrumbItem, TSpace } from '~/spec'
 import Breadcrumbs from '~/widgets/Breadcrumbs'
+
 import useSalon from './salon/portal'
 
 type TProps = {

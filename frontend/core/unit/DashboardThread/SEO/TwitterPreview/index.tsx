@@ -1,7 +1,6 @@
 import { TW_CARD } from '~/const/dashboard'
 
 import useSEO from '../../logic/useSEO'
-
 import SummaryLargeLayout from './SummaryLargeLayout'
 import SummaryLayout from './SummaryLayout'
 

@@ -2,9 +2,12 @@
   "makefile.configureOnOpen": false,
   "elixir.projectPath": "backend/main",
   "elixirLS.projectDir": "backend/main",
+  "editor.formatOnSave": false,
   "editor.codeActionsOnSave": {
+    "source.format.oxc": "always",
     "source.fixAll.oxc": "always"
   },
+  "oxc.fmt.configPath": "frontend/core/config/oxfmt.json",
   "[javascript]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
@@ -16,23 +19,6 @@
   },
   "[typescriptreact]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
-  },
-  "[json]": {
-    "editor.defaultFormatter": "oxc.oxc-vscode"
-  },
-  "[jsonc]": {
-    "editor.defaultFormatter": "oxc.oxc-vscode"
-  },
-  "[css]": {
-    "editor.defaultFormatter": "oxc.oxc-vscode"
-  },
-  "biome.inlineConfig": {
-    "linter": {
-      "enabled": false
-    },
-    "assist": {
-      "enabled": false
-    }
   },
   "search.exclude": {
     "**/*.dump": true,

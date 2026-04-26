@@ -1,4 +1,5 @@
 import type { FC } from 'react'
+
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import useTrans from '~/hooks/useTrans'
 import CheckSVG from '~/icons/CheckBold'
@@ -8,10 +9,10 @@ import type { TComment } from '~/spec'
 import useAccount from '~/stores/account/hooks'
 import EmotionSelector from '~/unit/EmotionSelector'
 import Upvote from '~/unit/Upvote'
+
 import { API_MODE } from '../constant'
 import useSalon from '../salon/comment/footer'
 import type { TAPIMode } from '../spec'
-
 import useActions from '../useLogic/useActions'
 import Actions from './Actions'
 

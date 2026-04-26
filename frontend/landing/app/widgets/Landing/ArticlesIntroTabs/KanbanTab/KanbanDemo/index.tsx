@@ -1,5 +1,6 @@
 import { ARTICLE_CAT } from '~/const/gtd'
 import useTrans from '~/hooks/useTrans'
+
 import useSalon, { cn } from '../../../salon/articles_intro_tabs/kanban_tab/kanban_demo'
 import Banner from './Banner'
 import KanbanItem from './KanbanItem'

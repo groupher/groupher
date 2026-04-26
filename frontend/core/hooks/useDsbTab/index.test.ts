@@ -1,7 +1,6 @@
 import { renderHook } from '@testing-library/react'
 
 import { DSB_ROUTE } from '~/const/route'
-
 import useDsbTab from '~/hooks/useDsbTab'
 
 let mockPathname = '/'

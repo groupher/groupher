@@ -1,4 +1,5 @@
 import { find, propEq, reject } from 'ramda'
+
 import { THREAD_PATH } from '~/const/thread'
 import { sortByIndex } from '~/helper'
 import { shouldFoldAboutToMore } from '~/hooks/useHeaderLinks/helper'

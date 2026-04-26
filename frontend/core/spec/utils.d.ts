@@ -5,6 +5,7 @@ import type { DSB_DESC_LAYOUT } from '~/const/layout'
 import type { CHANGE_MODE, CONDITION_MODE, PUBLISH_MODE } from '~/const/mode'
 import type { SOCIAL_LIST } from '~/const/social'
 import type { TConstValues, TTransKey } from '~/spec'
+
 import type { TArticleThread } from './thread'
 // c# like
 export type Nullable<T> = T | null

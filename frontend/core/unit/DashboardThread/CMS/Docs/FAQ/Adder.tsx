@@ -1,5 +1,4 @@
 import useTrans from '~/hooks/useTrans'
-
 import AdderSVG from '~/icons/Plus'
 import Button from '~/widgets/Buttons/Button'
 

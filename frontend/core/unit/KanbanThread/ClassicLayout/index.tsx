@@ -20,7 +20,6 @@ export default function ClassicLayout() {
   const headerTrackRef = useRef<HTMLDivElement | null>(null)
   const [isHeaderSticky, setIsHeaderSticky] = useState(false)
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const updateStickyState = () => {
       const board = boardRef.current
