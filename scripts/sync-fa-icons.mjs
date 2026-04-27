@@ -6,13 +6,14 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const repoRoot = path.resolve(__dirname, '..')
 
-const sourceDir = path.join(repoRoot, 'frontend/core/assets/fa')
+const sourceDir = path.join(repoRoot, 'frontend/core/assets/icons')
 const allowedApps = ['main', 'dashboard', 'landing']
+const allowedProviders = ['fa', 'lucide', 'heroicons', 'phosphor']
 const requestedApps = process.argv.slice(2)
 const targetApps = requestedApps.length > 0 ? requestedApps : allowedApps
 
 if (!existsSync(sourceDir)) {
-  throw new Error(`FA icon source directory not found: ${sourceDir}`)
+  throw new Error(`Icon source directory not found: ${sourceDir}`)
 }
 
 for (const app of targetApps) {
@@ -22,17 +23,25 @@ for (const app of targetApps) {
     )
   }
 
-  const targetDir = path.join(repoRoot, `frontend/${app}/public/icons/fa`)
+  const targetRoot = path.join(repoRoot, `frontend/${app}/public/icons`)
+  mkdirSync(targetRoot, { recursive: true })
 
-  mkdirSync(path.dirname(targetDir), { recursive: true })
+  for (const provider of allowedProviders) {
+    const sourceProviderDir = path.join(sourceDir, provider)
+    const targetProviderDir = path.join(targetRoot, provider)
 
-  if (existsSync(targetDir)) {
-    rmSync(targetDir, { recursive: true, force: true })
+    if (!existsSync(sourceProviderDir)) continue
+
+    if (existsSync(targetProviderDir)) {
+      rmSync(targetProviderDir, { recursive: true, force: true })
+    }
+
+    mkdirSync(targetProviderDir, { recursive: true })
+    cpSync(sourceProviderDir, targetProviderDir, { recursive: true })
+
+    const fileCount = readdirSync(targetProviderDir).length
+    console.log(
+      `[sync-fa-icons] synced ${fileCount} files -> frontend/${app}/public/icons/${provider}`,
+    )
   }
-
-  mkdirSync(targetDir, { recursive: true })
-  cpSync(sourceDir, targetDir, { recursive: true })
-
-  const fileCount = readdirSync(targetDir).length
-  console.log(`[sync-fa-icons] synced ${fileCount} files -> frontend/${app}/public/icons/fa`)
 }

@@ -5,7 +5,7 @@ import { mockUsers } from '~/mock'
 import type { TArticle, TColorName } from '~/spec'
 import DotDivider from '~/widgets/DotDivider'
 import Facepile from '~/widgets/Facepile'
-import FaIcons from '~/widgets/FaIcons'
+import IconHub from '~/widgets/IconHub'
 
 import useSalon from '../salon/tile_cards_layout/category'
 import useLogic from '../useLogic'
@@ -29,7 +29,7 @@ const Category: FC<TProps> = ({ title, desc, color, articles }) => {
   return (
     <button type='button' className={s.wrapper} onClick={() => gotoDetailLayout()}>
       <div className={s.iconBox}>
-        <FaIcons icon='star' size={20} color={color} opacity={0.7} />
+        <IconHub provider='fa' icon='star' size={20} color={color} opacity={0.7} />
       </div>
 
       <h3 className={s.title}>{title}</h3>

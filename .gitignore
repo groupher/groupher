@@ -74,6 +74,10 @@ frontend/**/public/sw.js.map
 frontend/**/public/worker-*.js
 frontend/**/public/fallback-*.js
 frontend/**/public/*.js.map
+frontend/**/public/icons/fa/
+frontend/**/public/icons/lucide/
+frontend/**/public/icons/heroicons/
+frontend/**/public/icons/phosphor/
 
 # =====================
 # Backend (Elixir / BEAM)
