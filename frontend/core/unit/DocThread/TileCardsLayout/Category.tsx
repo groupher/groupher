@@ -29,7 +29,7 @@ const Category: FC<TProps> = ({ title, desc, color, articles }) => {
   return (
     <button type='button' className={s.wrapper} onClick={() => gotoDetailLayout()}>
       <div className={s.iconBox}>
-        <FaIcons icon='music' size={20} color={color} opacity={0.7} />
+        <FaIcons icon='star' size={20} color={color} opacity={0.7} />
       </div>
 
       <h3 className={s.title}>{title}</h3>

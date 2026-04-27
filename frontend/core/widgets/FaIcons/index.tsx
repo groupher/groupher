@@ -4,13 +4,9 @@
  *
  */
 
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import type { FC } from 'react'
+import type { CSSProperties, FC } from 'react'
 
-import '@fortawesome/fontawesome-svg-core/styles.css'
 import { COLOR } from '~/const/colors'
-import { camelize } from '~/fmt'
-import useCSSVar from '~/hooks/useCssVar'
 import type { TColorName, TSpace } from '~/spec'
 
 import FaIcon from './icons'
@@ -27,18 +23,23 @@ export type TProps = {
 
 const FaIcons: FC<TProps> = ({
   testid: _testid = 'fa-icons',
-  size = 16,
+  size = 3.5,
   icon = 'user',
   color = COLOR.ORANGE,
+  opacity,
   ...spacing
 }) => {
-  const s = useSalon({ ...spacing })
-  const colorKey = `rainbow-${camelize(color)}`
-  const colorVal = useCSSVar(colorKey)
+  const s = useSalon({ ...spacing, color, size })
+  const iconMeta = FaIcon[icon]
+  const style = {
+    WebkitMaskImage: `url(${iconMeta})`,
+    maskImage: `url(${iconMeta})`,
+    opacity,
+  } as CSSProperties
 
   return (
-    <div className={s.wrapper}>
-      <FontAwesomeIcon icon={FaIcon[icon]} fontSize={size} color={colorVal} />
+    <div className={s.wrapper} data-testid={_testid}>
+      <span aria-hidden='true' className={s.icon} style={style} />
     </div>
   )
 }

@@ -1,3 +1,3 @@
-import type { TRegularIcons, TSolidIcons } from './icons'
+import type { TRegularIcons } from './icons'
 
-export type TIcon = TRegularIcons | TSolidIcons
+export type TIcon = TRegularIcons

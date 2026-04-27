@@ -2,7 +2,6 @@ import Link from 'next/link'
 import type { FC } from 'react'
 
 import useHeaderLinks from '~/hooks/useHeaderLinks'
-import usePrimaryColor from '~/hooks/usePrimaryColor'
 import usePublicThreads from '~/hooks/usePublicThreads'
 import useViewingThread from '~/hooks/useViewingThread'
 import type { TSpace } from '~/spec'
@@ -16,10 +15,6 @@ type TProps = TSpace
 
 const ThreadTab: FC<TProps> = ({ ...spacing }) => {
   const s = useSalon({ ...spacing })
-
-  const primaryColor = usePrimaryColor()
-
-  console.log('## primaryColor: ', primaryColor)
 
   const { slug: community } = useCommunity()
   const { getCustomLinks } = useHeaderLinks()

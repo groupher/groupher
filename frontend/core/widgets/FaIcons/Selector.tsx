@@ -1,20 +1,13 @@
-/*
- *
- * FaIcons
- *
- */
-
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { keys } from 'ramda'
 import { type FC, useState } from 'react'
 
-import '@fortawesome/fontawesome-svg-core/styles.css'
 import { COLOR } from '~/const/colors'
 import ArrowSVG from '~/icons/ArrowSolid'
 import type { TColorName, TSpace } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
 
-import FaIcon from './icons'
+import FaIcon from '.'
+import ICONS from './icons'
 import Panel from './Panel'
 import useSalon, { cn } from './salon/selector'
 import type { TIcon } from './spec'
@@ -30,7 +23,7 @@ const FaIcons: FC<TProps> = ({ testid: _testid = 'fa-icons', size = 16, ...spaci
   const [panelOpen, setPanelOpen] = useState(false)
   const [selectColor, setSelectColor] = useState<TColorName>(COLOR.BLACK)
 
-  const iconNames = keys(FaIcon)
+  const iconNames = keys(ICONS)
   const [selectIcon, setSelectIcon] = useState<TIcon>(iconNames[0])
 
   return (
@@ -59,7 +52,7 @@ const FaIcons: FC<TProps> = ({ testid: _testid = 'fa-icons', size = 16, ...spaci
               className={cn(s.iconBox, panelOpen && s.rainbow(selectColor, 'border'))}
               color={selectColor}
             >
-              <FontAwesomeIcon icon={FaIcon[selectIcon]} fontSize={size} color={selectColor} />
+              <FaIcon color={selectColor} icon={selectIcon} size={size} />
             </div>
 
             <ArrowSVG className={cn(s.arrowIcon, panelOpen && 'opacity-100')} />
