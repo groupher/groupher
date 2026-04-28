@@ -1,5 +1,6 @@
 'use client'
 
+import { LazyMotion, domAnimation, m } from 'motion/react'
 import { type FC, useState } from 'react'
 
 import type { TNodeStyleValue } from '~/spec'
@@ -15,6 +16,12 @@ import IconTab from './IconTab'
 import useSalon from './salon'
 import type { TNodeStylePickerProps, TTab } from './spec'
 
+const TAB_ORDER = [TAB.ICON, TAB.COLOR, TAB.EMOJI] as const
+const TAB_TRANSITION = {
+  duration: 0.18,
+  ease: 'easeOut',
+} as const
+
 const NodeStylePicker: FC<TNodeStylePickerProps> = ({
   testid = 'node-style-picker',
   value,
@@ -23,6 +30,7 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
   const s = useSalon()
 
   const [tab, setTab] = useState<TTab>(TAB.ICON)
+  const [direction, setDirection] = useState(1)
   const [panelOpen, setPanelOpen] = useState(false)
   const [mountedTabs, setMountedTabs] = useState<Record<TTab, boolean>>({
     [TAB.ICON]: true,
@@ -44,9 +52,14 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
   }
 
   const handleTabChange = (key: TTab) => {
+    if (key === tab) return
+
+    setDirection(TAB_ORDER.indexOf(key) > TAB_ORDER.indexOf(tab) ? 1 : -1)
     setTab(key)
     setMountedTabs((prev) => (prev[key] ? prev : { ...prev, [key]: true }))
   }
+
+  const hiddenX = direction > 0 ? 14 : -14
 
   return (
     <div className={s.wrapper} data-testid={testid}>
@@ -69,29 +82,64 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
               bottom={1.5}
             />
 
-            <div className={s.content}>
-              {mountedTabs[TAB.ICON] && (
-                <div className={tab === TAB.ICON ? s.tabPanel : s.tabPanelHidden}>
-                  <IconTab
-                    panelOpen={panelOpen}
-                    selectedValue={selectedValue}
-                    onChange={handleStyleChange}
-                  />
-                </div>
-              )}
+            <LazyMotion features={domAnimation}>
+              <div className={s.content}>
+                {mountedTabs[TAB.ICON] && (
+                  <m.div
+                    initial={false}
+                    animate={{
+                      opacity: tab === TAB.ICON ? 1 : 0,
+                      x: tab === TAB.ICON ? 0 : hiddenX,
+                      scale: tab === TAB.ICON ? 1 : 0.985,
+                      pointerEvents: tab === TAB.ICON ? 'auto' : 'none',
+                    }}
+                    transition={TAB_TRANSITION}
+                    aria-hidden={tab !== TAB.ICON}
+                    className={`${s.tabPanel} ${tab === TAB.ICON ? s.tabPanelActive : s.tabPanelInactive}`}
+                  >
+                    <IconTab
+                      panelOpen={panelOpen}
+                      selectedValue={selectedValue}
+                      onChange={handleStyleChange}
+                    />
+                  </m.div>
+                )}
 
-              {mountedTabs[TAB.COLOR] && (
-                <div className={tab === TAB.COLOR ? s.tabPanel : s.tabPanelHidden}>
-                  <ColorTab />
-                </div>
-              )}
+                {mountedTabs[TAB.COLOR] && (
+                  <m.div
+                    initial={{ opacity: 0, x: hiddenX, scale: 0.985 }}
+                    animate={{
+                      opacity: tab === TAB.COLOR ? 1 : 0,
+                      x: tab === TAB.COLOR ? 0 : hiddenX,
+                      scale: tab === TAB.COLOR ? 1 : 0.985,
+                      pointerEvents: tab === TAB.COLOR ? 'auto' : 'none',
+                    }}
+                    transition={TAB_TRANSITION}
+                    aria-hidden={tab !== TAB.COLOR}
+                    className={`${s.tabPanel} ${tab === TAB.COLOR ? s.tabPanelActive : s.tabPanelInactive}`}
+                  >
+                    <ColorTab />
+                  </m.div>
+                )}
 
-              {mountedTabs[TAB.EMOJI] && (
-                <div className={tab === TAB.EMOJI ? s.tabPanel : s.tabPanelHidden}>
-                  <EmojiTab onChange={handleStyleChange} />
-                </div>
-              )}
-            </div>
+                {mountedTabs[TAB.EMOJI] && (
+                  <m.div
+                    initial={{ opacity: 0, x: hiddenX, scale: 0.985 }}
+                    animate={{
+                      opacity: tab === TAB.EMOJI ? 1 : 0,
+                      x: tab === TAB.EMOJI ? 0 : hiddenX,
+                      scale: tab === TAB.EMOJI ? 1 : 0.985,
+                      pointerEvents: tab === TAB.EMOJI ? 'auto' : 'none',
+                    }}
+                    transition={TAB_TRANSITION}
+                    aria-hidden={tab !== TAB.EMOJI}
+                    className={`${s.tabPanel} ${tab === TAB.EMOJI ? s.tabPanelActive : s.tabPanelInactive}`}
+                  >
+                    <EmojiTab onChange={handleStyleChange} />
+                  </m.div>
+                )}
+              </div>
+            </LazyMotion>
           </div>
         }
       >

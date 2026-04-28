@@ -85,6 +85,7 @@ const TabItem: FC<TTabItemProps> = ({
   const Label = (
     <span
       ref={clickableRef}
+      data-tab-label='true'
       className={cn(s.label, active && s.labelActive)}
       onClick={handleLabelClick}
     >

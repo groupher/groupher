@@ -24,17 +24,19 @@ const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, onChange }) => {
   }
 
   return (
-    <>
+    <div className='flex h-full min-h-0 flex-col'>
       <SearchBar />
-      {panelOpen && (
-        <IconList
-          providerTab={providerTab}
-          selectedValue={selectedValue}
-          onSelect={handleSelect}
-        />
-      )}
+      <div className='min-h-0 flex-1'>
+        {panelOpen && (
+          <IconList
+            providerTab={providerTab}
+            selectedValue={selectedValue}
+            onSelect={handleSelect}
+          />
+        )}
+      </div>
       <FootTab value={providerTab} onChange={setProviderTab} />
-    </>
+    </div>
   )
 }
 

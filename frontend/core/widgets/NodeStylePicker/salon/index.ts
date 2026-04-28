@@ -11,10 +11,10 @@ export default function useSalon() {
       hover('box'),
     ),
     panel: cn('w-80 pt-1 pb-0.5', shadow('xl')),
-    content: 'relative min-h-80 min-w-0',
-    tabPanel: 'relative h-full',
-    tabPanelHidden:
-      'absolute inset-x-0 top-0 max-h-0 overflow-hidden opacity-0 pointer-events-none',
+    content: 'relative h-80 min-w-0 overflow-hidden',
+    tabPanel: 'absolute inset-0 will-change-transform',
+    tabPanelActive: 'z-10',
+    tabPanelInactive: 'z-0',
     emojiWrapper: cn(
       'pr-0.5',
       '[&_.EmojiPickerReact]:w-full',

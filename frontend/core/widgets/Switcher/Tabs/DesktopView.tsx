@@ -29,6 +29,13 @@ const getDefaultActiveTabIndex = (items: readonly TTabItem[], activeKey: string)
   return index >= 0 ? index : 0
 }
 
+const getTabLabelWidth = (node?: Element): number => {
+  if (!(node instanceof HTMLElement)) return 0
+
+  const labelEl = node.querySelector<HTMLElement>('[data-tab-label="true"]')
+  return labelEl?.offsetWidth ?? node.offsetWidth
+}
+
 const Tabs: FC<TViewProps> = ({
   size = SIZE.MEDIUM,
   onChange = () => {},
@@ -66,7 +73,7 @@ const Tabs: FC<TViewProps> = ({
     )
 
     const activeNode = navEl.children[defaultActiveTabIndex] as HTMLElement | undefined
-    const activeWidth = activeNode?.offsetWidth ?? 0
+    const activeWidth = getTabLabelWidth(activeNode)
 
     if (activeWidth > 0) {
       setSlipWidth(activeWidth)
