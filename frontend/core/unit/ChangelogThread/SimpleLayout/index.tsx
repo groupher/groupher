@@ -11,6 +11,7 @@ import Tabs from '~/widgets/Switcher/Tabs'
 import ChangelogItem from '../ChangelogItem'
 import { TABS_MODE_OPTIONS } from '../constant'
 import useSalon from '../salon/simple_layout'
+import type { TTagsMode } from '../spec'
 import FilterBar from './FilterBar'
 
 export default function SimpleLayout() {
@@ -32,9 +33,10 @@ export default function SimpleLayout() {
             activeKey={tab}
             bottomSpace={0}
             onChange={(slug) => {
-              setTab(slug)
+              const nextTab = slug as TTagsMode
+              setTab(nextTab)
 
-              if (slug === TABS_MODE_OPTIONS[0].slug) {
+              if (nextTab === TABS_MODE_OPTIONS[0].slug) {
                 return setFilterExpand(false)
               }
               setFilterExpand(true)

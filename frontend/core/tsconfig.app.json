@@ -82,7 +82,7 @@
     ],
     "incremental": true
   },
-  "include": ["next-env.d.ts", "**/*.tsx", "**/*.ts", ".next/types/**/*.ts"],
+  "include": ["next-env.d.ts", "**/*.d.ts", "**/*.tsx", "**/*.ts", ".next/types/**/*.ts"],
   "exclude": ["node_modules", "**/*.test.ts"],
   "removeComments": true
 }

@@ -11,29 +11,20 @@ import { type FC, type MouseEvent, useCallback, useEffect, useRef } from 'react'
 
 import { isElementInViewport } from '~/dom'
 import useTrans from '~/hooks/useTrans'
-import type { TSizeSM, TTabItem } from '~/spec'
 import { isString } from '~/validator'
 
 import useSalon, { cn } from '../salon/tabs/tab_item'
 import TabIcon from './TabIcon'
+import type { TTabItem, TTabItemProps } from './spec'
 
-type TProps = {
-  wrapMode?: boolean
-  item: TTabItem
-  index: number
-  size: TSizeSM
-  activeKey: string
-  bottomSpace?: number | string
-  setItemWidth?: (index: number, width: number) => void
-  onClick?: (index: number, e: MouseEvent<HTMLElement>) => void
-}
-
-const getItemKey = (item: TTabItem): string => (isString(item) ? item : item.slug)
+const getItemKey = (item: TTabItem): string => (isString(item) ? item : item.slug || item.title || '')
 const getItemHref = (item: TTabItem): string | undefined => (isString(item) ? undefined : item.href)
 
-const TabItem: FC<TProps> = ({
+const TabItem: FC<TTabItemProps> = ({
   wrapMode = false,
-  bottomSpace = 0,
+  slipBarPos = 'bottom',
+  topSpace = 0.5,
+  bottomSpace = 0.5,
   activeKey,
   item,
   index,
@@ -45,7 +36,7 @@ const TabItem: FC<TProps> = ({
   const href = getItemHref(item)
   const active = key === activeKey
 
-  const s = useSalon({ bottomSpace })
+  const s = useSalon({ slipBarPos, topSpace, bottomSpace })
 
   const { t } = useTrans()
   const linkRef = useRef<HTMLAnchorElement | null>(null)
@@ -99,7 +90,9 @@ const TabItem: FC<TProps> = ({
       {!isString(item) && item.icon && (
         <TabIcon item={item} clickableRef={clickableRef} active={active} />
       )}
-      <div ref={active ? activeRef : null}>{isString(item) ? item : t(item.title)}</div>
+      <div ref={active ? activeRef : null}>
+        {isString(item) ? item : t(item.title as never)}
+      </div>
     </span>
   )
 

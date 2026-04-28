@@ -6,7 +6,6 @@
 
 import type { CSSProperties, FC } from 'react'
 
-import { COLOR } from '~/const/colors'
 import type { TColorName, TSpace } from '~/spec'
 
 import ICONS from './icons'
@@ -20,6 +19,7 @@ export type TProps = {
   provider?: TProvider
   color?: TColorName
   opacity?: number
+  className?: string
 } & TSpace
 
 const IconHub: FC<TProps> = ({
@@ -27,11 +27,12 @@ const IconHub: FC<TProps> = ({
   size = 3.5,
   icon = 'user',
   provider = 'fa',
-  color = COLOR.ORANGE,
+  color,
   opacity,
+  className,
   ...spacing
 }) => {
-  const s = useSalon({ ...spacing, color, size })
+  const s = useSalon({ ...spacing, color, size, className })
   const providerIcons = ICONS[provider] as Record<string, string>
   const iconMeta = providerIcons[icon]
   const style = {

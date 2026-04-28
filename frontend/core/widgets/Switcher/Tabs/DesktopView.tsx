@@ -6,22 +6,21 @@ import type { FC, MouseEvent } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import SIZE from '~/const/size'
-import type { TSizeSM, TTabItem } from '~/spec'
 import { isString } from '~/validator'
 
 import useSalon from '../salon/tabs'
 import TabItem from './TabItem'
+import type { TTabItem, TViewProps } from './spec'
 
 const temItems: TTabItem[] = [
   {
-    // @ts-expect-error
     title: '帖子',
     slug: 'posts',
     icon: 'settings',
   },
 ]
 
-const getItemKey = (item: TTabItem): string => (isString(item) ? item : item.slug || item.title)
+const getItemKey = (item: TTabItem): string => (isString(item) ? item : item.slug || item.title || '')
 
 const getDefaultActiveTabIndex = (items: readonly TTabItem[], activeKey: string): number => {
   if (isEmpty(activeKey)) return 0
@@ -30,29 +29,19 @@ const getDefaultActiveTabIndex = (items: readonly TTabItem[], activeKey: string)
   return index >= 0 ? index : 0
 }
 
-type TProps = {
-  items?: readonly TTabItem[]
-  /**
-   * onChange 不再负责路由跳转；仅用于副作用/埋点等
-   */
-  onChange?: (key: string, item: TTabItem, index: number) => void
-  activeKey?: string
-  size?: TSizeSM
-  slipHeight?: 'px' | 0.5
-  bottomSpace?: number
-  noAnimation?: boolean
-}
-
-const Tabs: FC<TProps> = ({
+const Tabs: FC<TViewProps> = ({
   size = SIZE.MEDIUM,
   onChange = () => {},
   items = temItems,
   activeKey = '',
   slipHeight = 0.5,
-  bottomSpace = 0,
+  slipBarPos = 'bottom',
+  topSpace = 0.5,
+  bottomSpace = 0.5,
   noAnimation = false,
+  ...spacing
 }) => {
-  const s = useSalon({ noAnimation, slipHeight })
+  const s = useSalon({ noAnimation, slipHeight, slipBarPos, ...spacing })
   const { isMobile } = useMobileDetect()
 
   const defaultActiveTabIndex = getDefaultActiveTabIndex(items, activeKey)
@@ -115,6 +104,8 @@ const Tabs: FC<TProps> = ({
             index={index}
             item={item}
             size={size}
+            slipBarPos={slipBarPos}
+            topSpace={topSpace}
             bottomSpace={bottomSpace}
             setItemWidth={handleNaviItemWidth}
             onClick={handleItemClick}

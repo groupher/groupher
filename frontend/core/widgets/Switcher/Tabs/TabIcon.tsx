@@ -1,8 +1,9 @@
 import { type FC, lazy, Suspense, useCallback } from 'react'
 
-import type { TTabItem } from '~/spec'
+import { isString } from '~/validator'
 
 import useSalon from '../salon/tabs/tab_icon'
+import type { TTabItem } from './spec'
 
 type TProps = {
   item: TTabItem
@@ -16,7 +17,7 @@ export const LocalIcon = lazy(() => import('./LocalIcon'))
 
 const TabIcon: FC<TProps> = ({ item, clickableRef, active }) => {
   const s = useSalon()
-  const { icon } = item
+  const icon = isString(item) ? undefined : item.icon
 
   const IconCmp = icon && (
     <Suspense fallback={null}>
