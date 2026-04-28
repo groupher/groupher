@@ -1,22 +1,25 @@
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
 import { getSlipMargin } from '../metric/tabs'
 
 type TProps = {
   noAnimation: boolean
   slipHeight: 'px' | 0.5
-}
+  slipBarPos: 'top' | 'bottom'
+} & TSpace
 
-export default function useSalon({ noAnimation, slipHeight }: TProps) {
-  const { cn, primary, vividDark } = useTwBelt()
+export default function useSalon({ noAnimation, slipHeight, slipBarPos, ...spacing }: TProps) {
+  const { cn, margin, primary, vividDark } = useTwBelt()
 
   return {
-    wrapper: 'relative text-sm w-auto overflow-hidden',
+    wrapper: cn('relative text-sm w-auto overflow-hidden', margin(spacing)),
     nav: 'row-center relative flex-nowrap p-0 my-auto',
     slipBar: cn(
-      'row justify-center absolute bottom-0 left-0 opacity-65',
+      'row justify-center absolute left-0 opacity-65',
+      slipBarPos === 'top' ? 'top-0' : 'bottom-0',
       noAnimation && 'trans-all-200',
-      'border-t border-t-transparent',
+      slipBarPos === 'top' ? 'border-b border-b-transparent' : 'border-t border-t-transparent',
       `h-${slipHeight}`,
     ),
     realBar: cn(primary('bg'), vividDark()),

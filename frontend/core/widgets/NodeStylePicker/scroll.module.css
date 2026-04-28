@@ -1,0 +1,40 @@
+.viewport {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+
+  /*
+   * Single source of truth for the virtual picker grid.
+   * JS reads these values from the viewport and derives the current column count
+   * from the visible width, instead of hard-coding a fixed number in TS.
+   */
+  --icon-grid-min: 50px;
+  --icon-grid-gap: 8px;
+  --icon-grid-pad-x: 4px;
+  --icon-grid-row-height: 40px;
+}
+
+.viewport::-webkit-scrollbar {
+  /*
+   * We can style the scrollbar width, but macOS overlay scrollbars may still
+   * auto-hide based on the user's system preference.
+   */
+  width: 10px;
+}
+
+.viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.viewport::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background-clip: padding-box;
+}
+
+.viewport::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}

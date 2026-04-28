@@ -1,25 +1,28 @@
 import { type FC, useCallback, useEffect, useRef, useState } from 'react'
 
-import type { TTabItem } from '~/spec'
 import { isString } from '~/validator'
 
 import useSalon, { cn } from '../salon/tabs/drawer_view'
+import type { TTabItem, TViewProps } from './spec'
 
-const temItems = [
+const temItems: TTabItem[] = [
   {
     title: '帖子',
+    slug: 'posts',
     localIcon: 'settings',
   },
 ]
 
-type TProps = {
-  items?: TTabItem[]
-  onChange: (key: string) => void
-  activeKey?: string
-}
-
-const Tabs: FC<TProps> = ({ onChange = console.log, items = temItems, activeKey = '' }) => {
-  const s = useSalon()
+const Tabs: FC<TViewProps> = ({
+  onChange = () => {},
+  items = temItems,
+  activeKey = '',
+  slipBarPos = 'bottom',
+  topSpace = 0.5,
+  bottomSpace = 0.5,
+  ...spacing
+}) => {
+  const s = useSalon({ slipBarPos, topSpace, bottomSpace, ...spacing })
   const [activeIndex, setActiveIndex] = useState(0)
   const tabsRef = useRef<HTMLDivElement>(null)
   const [sliderStyle, setSliderStyle] = useState({})
@@ -45,9 +48,9 @@ const Tabs: FC<TProps> = ({ onChange = console.log, items = temItems, activeKey 
   }, [activeIndex])
 
   const handleItemClick = useCallback(
-    (item, index) => {
+    (item: TTabItem, index: number) => {
       setActiveIndex(index)
-      onChange(isString(item) ? item : item.slug || item.title)
+      onChange(isString(item) ? item : item.slug || item.title || '', item, index)
     },
     [onChange],
   )
@@ -62,7 +65,7 @@ const Tabs: FC<TProps> = ({ onChange = console.log, items = temItems, activeKey 
             className={cn(s.tabItem, index === activeIndex && s.activeTabItem)}
             onClick={() => handleItemClick(item, index)}
           >
-            {item.title}
+            {isString(item) ? item : item.title}
           </button>
         ))}
       </div>

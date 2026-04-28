@@ -1195,7 +1195,9 @@ __metadata:
     "@groupher/rich-editor": "npm:0.0.8"
     "@groupher/tooltip": "npm:4.2.7"
     "@groupher/use-mobile-detect-hook": "npm:^2.0.2"
+    "@heroicons/react": "npm:^2.2.0"
     "@next/bundle-analyzer": "npm:^16.2.4"
+    "@phosphor-icons/core": "npm:^2.1.1"
     "@playwright/test": "npm:^1.59.1"
     "@tailwindcss/postcss": "npm:4.2.4"
     "@tailwindcss/typography": "npm:0.5.19"
@@ -1233,6 +1235,7 @@ __metadata:
     husky: "npm:^9.1.7"
     jsdom: "npm:^29.0.2"
     lint-staged: "npm:^15.2.0"
+    lucide-static: "npm:^1.11.0"
     markdown-to-jsx: "npm:^7.5.0"
     mastani-codehighlight: "npm:0.0.7"
     motion: "npm:^12.38.0"
@@ -1312,6 +1315,15 @@ __metadata:
   peerDependencies:
     react: ">=16.8.0"
   checksum: 10c0/4fd5075d69c51526a1c092e288f60e3b89797cee09e6cd39e7df9715347c5a3b184089df942714e13a15a11a18efc201a9b022d94a15ca292d434081a19a2c6e
+  languageName: node
+  linkType: hard
+
+"@heroicons/react@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "@heroicons/react@npm:2.2.0"
+  peerDependencies:
+    react: ">= 16 || ^19.0.0-rc"
+  checksum: 10c0/f8d3cf689b56716339c91df3542f3948115042d1e70e6bc940a3f3e347c0bc78b56aa563917fbd7ce097fe2f38ebb21bffb0db39be914cbc545a754bddae9ab4
   languageName: node
   linkType: hard
 
@@ -2346,6 +2358,13 @@ __metadata:
   version: 1.2.1
   resolution: "@panva/hkdf@npm:1.2.1"
   checksum: 10c0/1fabdec9bd2c19b8e88a3fa6fd0c25e25823c5000d9efdf4b6dfe32e9f370f8b9603cf776d120d160bec15fba17e079974cc34f0f52cebb24602cd832dfde19c
+  languageName: node
+  linkType: hard
+
+"@phosphor-icons/core@npm:^2.1.1":
+  version: 2.1.1
+  resolution: "@phosphor-icons/core@npm:2.1.1"
+  checksum: 10c0/0a92d8f1811c450b8ce12becbb520522784ffeb781a2cd33771d716901909fb4dfeb6d88243cbf3712c404f11479764c1dcd443a141d5dad416b41f7251e44d7
   languageName: node
   linkType: hard
 
@@ -8952,6 +8971,13 @@ __metadata:
   peerDependencies:
     react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
   checksum: 10c0/3ccdb898a480f0194f93abef0b6f0347bc2647db24051e65a17c1dbd22ca0d10a7636d9af68c92665b42b6c9e761567a0d65944fe8568fb0e30a7ea57281ccec
+  languageName: node
+  linkType: hard
+
+"lucide-static@npm:^1.11.0":
+  version: 1.11.0
+  resolution: "lucide-static@npm:1.11.0"
+  checksum: 10c0/bd8c1b851e56d013ef91ab02f8deedc8a18778a5a658dda289aa859e7a30721f3ef6f6d97de2a774f68967b866e8d988e65083dc904a531847549b31ff50ea06
   languageName: node
   linkType: hard
 
