@@ -49,29 +49,66 @@ const Tabs: FC<TViewProps> = ({
 
   const [active, setActive] = useState(defaultActiveTabIndex)
   const [slipWidth, setSlipWidth] = useState(0)
+  const [tabWidths, setTabWidths] = useState<number[]>([])
   const [isInitialRender, setIsInitialRender] = useState(true)
 
   const navRef = useRef<HTMLElement | null>(null)
-  const tabWidthListRef = useRef<number[]>([])
+
+  const measureTabs = useCallback(() => {
+    const navEl = navRef.current
+    if (!navEl) return
+
+    const widths = Array.from(navEl.children).map((node) => (node as HTMLElement).offsetWidth ?? 0)
+    setTabWidths((prev) =>
+      prev.length === widths.length && prev.every((width, index) => width === widths[index])
+        ? prev
+        : widths,
+    )
+
+    const activeNode = navEl.children[defaultActiveTabIndex] as HTMLElement | undefined
+    const activeWidth = activeNode?.offsetWidth ?? 0
+
+    if (activeWidth > 0) {
+      setSlipWidth(activeWidth)
+    }
+  }, [defaultActiveTabIndex])
+
+  useEffect(() => {
+    setActive(defaultActiveTabIndex)
+    measureTabs()
+
+    const timerId = window.setTimeout(() => setIsInitialRender(false), 500)
+    return () => window.clearTimeout(timerId)
+  }, [defaultActiveTabIndex, measureTabs])
 
   useEffect(() => {
     const navEl = navRef.current
-    if (navEl?.childNodes?.[defaultActiveTabIndex]) {
-      const node = navEl.childNodes[defaultActiveTabIndex] as HTMLElement
-      // TabItem 里会保证第一个元素是可测宽 wrapper
-      const first = node.firstElementChild as HTMLElement | null
-      setSlipWidth(first?.offsetWidth ?? 0)
+    if (!navEl) return
+
+    const rafId = window.requestAnimationFrame(() => {
+      measureTabs()
+    })
+
+    const observer = new ResizeObserver(() => {
+      measureTabs()
+    })
+
+    observer.observe(navEl)
+    Array.from(navEl.children).forEach((node) => observer.observe(node))
+
+    return () => {
+      window.cancelAnimationFrame(rafId)
+      observer.disconnect()
     }
-
-    setActive(defaultActiveTabIndex)
-
-    // make sure the real bar animation starts only when this component fully loaded
-    const timerId = window.setTimeout(() => setIsInitialRender(false), 500)
-    return () => window.clearTimeout(timerId)
-  }, [defaultActiveTabIndex])
+  }, [items, measureTabs])
 
   const handleNaviItemWidth = useCallback((index: number, width: number) => {
-    tabWidthListRef.current[index] = width
+    setTabWidths((prev) => {
+      if (prev[index] === width) return prev
+      const next = [...prev]
+      next[index] = width
+      return next
+    })
   }, [])
 
   const handleItemClick = useCallback(
@@ -90,7 +127,7 @@ const Tabs: FC<TViewProps> = ({
   )
 
   const translateX = `${
-    tabWidthListRef.current.slice(0, active).reduce((a, b) => a + b, 0) +
+    tabWidths.slice(0, active).reduce((a, b) => a + b, 0) +
     s.getSlipMargin(size, isMobile) * active
   }px`
 
@@ -117,7 +154,7 @@ const Tabs: FC<TViewProps> = ({
             className={s.slipBar}
             style={{
               transform: `translate3d(${translateX}, 0, 0)`,
-              width: `${tabWidthListRef.current[active] ?? 0}px`,
+              width: `${tabWidths[active] ?? 0}px`,
               transition: isInitialRender ? 'none' : undefined,
             }}
           >

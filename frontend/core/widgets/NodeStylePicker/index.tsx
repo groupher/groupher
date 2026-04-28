@@ -2,8 +2,9 @@
 
 import { type FC, useState } from 'react'
 
-import IconHub from '~/widgets/IconHub'
+import type { TNodeStyleValue } from '~/spec'
 import { ICONS } from '~/widgets/IconHub/icons'
+import NodeStyleRender from '~/widgets/NodeStyleRender'
 import { Tabs } from '~/widgets/Switcher'
 import Tooltip from '~/widgets/Tooltip'
 
@@ -12,7 +13,7 @@ import { DEFAULT_ICON_NAME, DEFAULT_PROVIDER, TAB, TAB_ITEMS } from './constant'
 import EmojiTab from './EmojiTab'
 import IconTab from './IconTab'
 import useSalon from './salon'
-import type { TNodeStyleIconValue, TNodeStylePickerProps, TTab } from './spec'
+import type { TNodeStylePickerProps, TTab } from './spec'
 
 const NodeStylePicker: FC<TNodeStylePickerProps> = ({
   testid = 'node-style-picker',
@@ -23,7 +24,12 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
 
   const [tab, setTab] = useState<TTab>(TAB.ICON)
   const [panelOpen, setPanelOpen] = useState(false)
-  const [innerValue, setInnerValue] = useState<TNodeStyleIconValue>({
+  const [mountedTabs, setMountedTabs] = useState<Record<TTab, boolean>>({
+    [TAB.ICON]: true,
+    [TAB.COLOR]: false,
+    [TAB.EMOJI]: false,
+  })
+  const [innerValue, setInnerValue] = useState<TNodeStyleValue>({
     type: 'icon',
     provider: DEFAULT_PROVIDER,
     name: DEFAULT_ICON_NAME,
@@ -32,9 +38,14 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
 
   const selectedValue = value ?? innerValue
 
-  const handleIconChange = (nextValue: TNodeStyleIconValue) => {
+  const handleStyleChange = (nextValue: TNodeStyleValue) => {
     setInnerValue(nextValue)
     onChange(nextValue)
+  }
+
+  const handleTabChange = (key: TTab) => {
+    setTab(key)
+    setMountedTabs((prev) => (prev[key] ? prev : { ...prev, [key]: true }))
   }
 
   return (
@@ -53,33 +64,39 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
             <Tabs
               items={TAB_ITEMS}
               activeKey={tab}
-              onChange={(key) => setTab(key as TTab)}
+              onChange={(key) => handleTabChange(key as TTab)}
               left={1.5}
               bottom={1.5}
             />
 
             <div className={s.content}>
-              {tab === TAB.ICON && (
-                <IconTab
-                  panelOpen={panelOpen}
-                  selectedValue={selectedValue}
-                  onChange={handleIconChange}
-                />
+              {mountedTabs[TAB.ICON] && (
+                <div className={tab === TAB.ICON ? s.tabPanel : s.tabPanelHidden}>
+                  <IconTab
+                    panelOpen={panelOpen}
+                    selectedValue={selectedValue}
+                    onChange={handleStyleChange}
+                  />
+                </div>
               )}
 
-              {tab === TAB.COLOR && <ColorTab />}
-              {tab === TAB.EMOJI && <EmojiTab />}
+              {mountedTabs[TAB.COLOR] && (
+                <div className={tab === TAB.COLOR ? s.tabPanel : s.tabPanelHidden}>
+                  <ColorTab />
+                </div>
+              )}
+
+              {mountedTabs[TAB.EMOJI] && (
+                <div className={tab === TAB.EMOJI ? s.tabPanel : s.tabPanelHidden}>
+                  <EmojiTab onChange={handleStyleChange} />
+                </div>
+              )}
             </div>
           </div>
         }
       >
         <button type='button' className={s.trigger}>
-          <IconHub
-            provider={selectedValue.provider}
-            icon={selectedValue.name}
-            size={4.5}
-            className={s.previewIconColor}
-          />
+          <NodeStyleRender value={selectedValue} size={18} iconClassName={s.previewIconColor} />
         </button>
       </Tooltip>
     </div>

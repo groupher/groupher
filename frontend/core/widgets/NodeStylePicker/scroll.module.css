@@ -38,3 +38,30 @@
   border: 2px solid transparent;
   background-clip: padding-box;
 }
+
+.emojiPicker :global(.epr-body) {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.22) transparent;
+}
+
+.emojiPicker :global(.epr-body::-webkit-scrollbar) {
+  width: 10px;
+}
+
+.emojiPicker :global(.epr-body::-webkit-scrollbar-track) {
+  background: transparent;
+}
+
+.emojiPicker :global(.epr-body::-webkit-scrollbar-thumb) {
+  background: rgba(255, 255, 255, 0.22);
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background-clip: padding-box;
+}
+
+.emojiPicker :global(.epr-body::-webkit-scrollbar-thumb:hover) {
+  background: rgba(255, 255, 255, 0.3);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}

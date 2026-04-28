@@ -1,0 +1,64 @@
+.emojiPicker :global(.epr-emoji-list) {
+  width: calc(100% - 10px);
+}
+.emojiPicker :global(.epr-category-nav) {
+  width: 95%;
+  margin-top: -10px;
+  margin-bottom: 5px;
+}
+
+.emojiPicker :global(.epr-cat-btn) {
+  color: var(--color-digest);
+  opacity: 0.8;
+  transition:
+    color 0.2s ease,
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.emojiPicker :global(.epr-cat-btn:hover) {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.emojiPicker :global(.epr-cat-btn.epr-active) {
+  color: var(--emoji-picker-primary-color, var(--color-link));
+  opacity: 1;
+}
+
+.emojiPicker :global(.epr-cat-btn svg) {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+.emojiPicker :global(.epr-emoji-category-label) {
+  color: var(--color-digest);
+  font-size: 13px;
+  margin-bottom: 6px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  backdrop-filter: none;
+  background-color: var(--color-popover-solid-bg);
+}
+
+.emojiPicker :global(.epr-emoji-category-content) {
+  justify-content: start;
+  column-gap: 8px;
+  row-gap: 6px;
+}
+
+.emojiPicker :global(.epr-skin-tones) {
+  background-color: transparent;
+  backdrop-filter: none;
+}
+
+.categoryIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}

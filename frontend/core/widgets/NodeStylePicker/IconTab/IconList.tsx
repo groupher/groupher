@@ -2,6 +2,7 @@
 
 import { type FC, useMemo } from 'react'
 
+import type { TNodeStyleValue } from '~/spec'
 import { ICONS, PROVIDERS } from '~/widgets/IconHub/icons'
 import type { TIconName, TPickerProvider } from '~/widgets/IconHub/icons'
 
@@ -9,11 +10,11 @@ import IconNode from './IconNode'
 import useSalon from './salon'
 
 import VirtualList from '../VirtualList'
-import type { TIconOption, TIconSelect, TNodeStyleIconValue } from '../spec'
+import type { TIconOption, TIconSelect } from '../spec'
 
 type TProps = {
   providerTab: TPickerProvider
-  selectedValue: TNodeStyleIconValue
+  selectedValue: TNodeStyleValue
   onSelect: TIconSelect
 }
 

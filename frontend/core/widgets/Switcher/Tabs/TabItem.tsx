@@ -75,7 +75,8 @@ const TabItem: FC<TTabItemProps> = ({
 
       if (curEl && inViewport && getComputedStyle(curEl).width !== 'auto') {
         curEl.scrollIntoView({
-          block: 'center',
+          block: 'nearest',
+          inline: 'center',
         })
       }
     }

@@ -1229,6 +1229,7 @@ __metadata:
     coveralls: "npm:3.0.14"
     cross-env: "npm:^10.1.0"
     cz-conventional-changelog: "npm:^3.0.0"
+    emoji-picker-react: "npm:^4.19.1"
     graphql: "npm:^16.13.2"
     graphql-http: "npm:^1.22.4"
     graphql-request: "npm:^7.4.0"
@@ -6052,6 +6053,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"emoji-picker-react@npm:^4.19.1":
+  version: 4.19.1
+  resolution: "emoji-picker-react@npm:4.19.1"
+  dependencies:
+    flairup: "npm:1.0.0"
+  peerDependencies:
+    react: ">=16"
+  checksum: 10c0/7b42d84490e9e82f05bdfb12e2dbd42485850147fc8af5987f313f3efc4353099c80b0785327ac1861716f80880e563aa34e5c74d889385b555d4a3079cde628
+  languageName: node
+  linkType: hard
+
 "emoji-regex@npm:^10.3.0":
   version: 10.6.0
   resolution: "emoji-regex@npm:10.6.0"
@@ -6641,6 +6653,13 @@ __metadata:
     micromatch: "npm:^4.0.2"
     resolve-dir: "npm:^1.0.1"
   checksum: 10c0/3e7de4d0afda35ecdd6260ce9d31524161817466ad6218b092dc73554848ce9618b69ec0f841dc82e320a4b3bfaba19c71c154f5b249ffed28143ba95a743d37
+  languageName: node
+  linkType: hard
+
+"flairup@npm:1.0.0":
+  version: 1.0.0
+  resolution: "flairup@npm:1.0.0"
+  checksum: 10c0/2d9fe1f1c890383be65ae0ec95d57b96f3ff42eecffaf493f8a39f09f4982e12109a865e79baca051e784919eecd72fa6cf620cfae8a4663b98deaa6d883d7ba
   languageName: node
   linkType: hard
 
