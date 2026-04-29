@@ -2,8 +2,11 @@
 
 import type { FC } from 'react'
 
+import { NODE_STYLE } from '~/const/node_style'
 import type { TNodeStyleValue } from '~/spec'
 import IconHub from '~/widgets/IconHub'
+
+import useSalon from './salon'
 
 type TProps = {
   value: TNodeStyleValue
@@ -22,7 +25,12 @@ const NodeStyleRender: FC<TProps> = ({
   iconClassName,
   emojiClassName,
 }) => {
-  if (value.type === 'emoji') {
+  const s = useSalon({
+    color: value.type === NODE_STYLE.COLOR ? value.color : undefined,
+    className,
+  })
+
+  if (value.type === NODE_STYLE.EMOJI) {
     return (
       <img
         src={`https://cdn.jsdelivr.net/gh/twitter/twemoji@${TWEMOJI_VERSION}/assets/svg/${value.unified}.svg`}
@@ -31,6 +39,18 @@ const NodeStyleRender: FC<TProps> = ({
         alt=''
         draggable={false}
         className={emojiClassName ?? className}
+      />
+    )
+  }
+
+  if (value.type === NODE_STYLE.COLOR) {
+    return (
+      <span
+        className={s.color}
+        style={{
+          width: size,
+          height: size,
+        }}
       />
     )
   }
