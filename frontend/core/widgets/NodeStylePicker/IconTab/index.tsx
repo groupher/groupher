@@ -12,6 +12,7 @@ import SearchBar from './SearchBar'
 
 const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, onChange }) => {
   const [providerTab, setProviderTab] = useState<TPickerProvider>('all')
+  const [query, setQuery] = useState('')
 
   const handleSelect: TIconSelect = (provider, name, src) => {
     onChange({
@@ -24,11 +25,12 @@ const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, onChange }) => {
 
   return (
     <div className='flex h-full min-h-0 flex-col'>
-      <SearchBar />
+      <SearchBar value={query} onChange={setQuery} />
       <div className='min-h-0 flex-1'>
         {panelOpen && (
           <IconList
             providerTab={providerTab}
+            query={query}
             selectedValue={selectedValue}
             onSelect={handleSelect}
           />

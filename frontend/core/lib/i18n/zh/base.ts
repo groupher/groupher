@@ -25,6 +25,7 @@ export default {
   about: '关于',
   icon: '图标',
   all_icons: 'All icons',
+  no_icon_found: 'No icon found',
   color: '颜色',
   emoji: '表情',
   'team.member': '团队成员',

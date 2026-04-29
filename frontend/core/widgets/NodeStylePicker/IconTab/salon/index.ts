@@ -1,9 +1,22 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {
-  const { bg, cn, hover, primary } = useTwBelt()
+  const { bg, br, cn, fg, fill, hover, primary } = useTwBelt()
 
   return {
+    searchWrapper: cn('px-2 pt-2 pb-1'),
+    searchBox: cn('row-center rounded-md border px-2.5 h-8', bg('card'), br('divider')),
+    searchIcon: cn('size-3.5 mr-2 shrink-0', fill('digest')),
+    searchInput: cn(
+      'w-full bg-transparent text-sm outline-none placeholder:text-sm',
+      fg('title'),
+      '[&::placeholder]:text-digest',
+      '[&::-webkit-search-cancel-button]:hidden',
+      '[&::-webkit-search-decoration]:hidden',
+    ),
+    clearButton: cn('shrink-0 ml-2 pointer', fill('digest')),
+    clearIcon: 'size-3.5',
+    emptyState: cn('align-both h-full text-sm', fg('digest')),
     viewport: 'min-w-0 h-full overflow-x-hidden overflow-y-scroll overscroll-contain',
     gridRow: 'grid px-1',
     cell: cn(
