@@ -1,5 +1,3 @@
-/* eslint-disable react/no-unescaped-entities */
-
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import { filter, keys, length, startsWith } from 'ramda'
 import type { FC } from 'react'

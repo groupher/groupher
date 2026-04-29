@@ -173,7 +173,6 @@ export const plural = (value: string, opt: TCovert = null): string => {
  * see: https://stackoverflow.com/questions/5191088/how-to-round-up-a-number-in-javascript
  */
 export const roundUpNumber = (num: number, precision = 0): number => {
-  // eslint-disable-next-line no-restricted-properties
   const precisionPow = 10 ** precision
   return Math.ceil(num * precisionPow) / precisionPow
 }

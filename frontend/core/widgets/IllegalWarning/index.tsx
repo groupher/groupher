@@ -1,5 +1,3 @@
-/* eslint-disable react/no-array-index-key */
-
 import { type FC, Fragment } from 'react'
 
 import useSalon from './salon'

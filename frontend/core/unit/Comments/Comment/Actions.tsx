@@ -78,7 +78,6 @@ const Actions: FC<TProps> = ({ data }) => {
           return console.log('## todo: delete')
         }
         default: {
-          // eslint-disable-next-line no-useless-return
           return
         }
       }

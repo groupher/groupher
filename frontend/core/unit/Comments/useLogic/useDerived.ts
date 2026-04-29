@@ -31,7 +31,6 @@ export default function useDerived(): TRet {
     if (commentsSnap.apiMode === API_MODE.ARTICLE) {
       totalCount = commentsSnap.totalCount === -1 ? article.commentsCount : commentsSnap.totalCount
     } else {
-      // eslint-disable-next-line prefer-destructuring
       totalCount = commentsSnap.pagedPublishedComments.totalCount
     }
 

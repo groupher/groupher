@@ -1,4 +1,3 @@
-/* eslint-disable react/no-danger */
 /*
  * ArtimentBody
  */
@@ -89,6 +88,7 @@ const ArtimentBody: FC<TProps> = ({
         ) : (
           <div
             className={s.html}
+            // oxlint-disable-next-line react/no-danger -- Article HTML is rendered from sanitized rich-text output.
             dangerouslySetInnerHTML={{
               __html: document.html || document.bodyHtml || '',
             }}

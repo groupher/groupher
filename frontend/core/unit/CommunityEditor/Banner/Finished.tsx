@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/accessible-emoji */
 import Link from 'next/link'
 
 import { ROUTE } from '~/const/route'

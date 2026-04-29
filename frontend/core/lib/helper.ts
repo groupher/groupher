@@ -55,7 +55,6 @@ export const countWords = (str: string): number => {
 
 export const debounce = (fn, ms = 0) => {
   let timeoutId: ReturnType<typeof setTimeout>
-  // eslint-disable-next-line func-names
   return function (...args) {
     clearTimeout(timeoutId)
     timeoutId = setTimeout(() => fn.apply(this, args), ms)
@@ -212,7 +211,6 @@ type TShareParam = {
 export const openShareWindow = (platformUrl: string, param: TShareParam): void => {
   const safeParam = []
 
-  /* eslint-disable */
   for (const i in param) {
     safeParam.push(`${i}=${encodeURIComponent(param[i] || '')}`)
   }

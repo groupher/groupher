@@ -34,7 +34,6 @@ const handler = createHandler({
   schema: mockedSchema,
   onOperation(_req, args) {
     const op = args.operationName ?? 'anonymous'
-    // eslint-disable-next-line no-console
     console.log(`[mock-graphql] ${op}`)
   },
 })
@@ -199,6 +198,5 @@ createServer((req, res) => {
   res.setHeader('content-type', 'text/plain; charset=utf-8')
   res.end('Not Found')
 }).listen(PORT, () => {
-  // eslint-disable-next-line no-console
   console.log(`Mock GraphQL server listening on http://localhost:${PORT}${GRAPHQL_PATH}`)
 })

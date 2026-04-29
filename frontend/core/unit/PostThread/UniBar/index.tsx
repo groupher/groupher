@@ -1,6 +1,3 @@
-/* eslint-disable jsx-a11y/accessible-emoji */
-/* eslint-disable react/jsx-no-comment-text-nodes */
-
 import { useCallback, useRef, useState } from 'react'
 
 import { scrollToHeader } from '~/dom'

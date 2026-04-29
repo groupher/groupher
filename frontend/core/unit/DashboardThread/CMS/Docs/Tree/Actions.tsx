@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unescaped-entities */
 import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'

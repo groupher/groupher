@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/label-has-for */
 /*
  * OSSUploader
  */
@@ -44,8 +43,7 @@ const OSSUploader: FC<TProps> = ({
 
   useEffect(() => {
     if (loaded) {
-      // see https://stackoverflow.com/a/53572588
-      // eslint-disable-next-line no-inner-declarations
+      // See https://stackoverflow.com/a/53572588.
       function initOSS() {
         const ossClient = initOSSClient()
 
