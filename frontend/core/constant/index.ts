@@ -21,6 +21,7 @@ export {
   UPVOTE_LAYOUT,
 } from './layout'
 export { default as METRIC } from './metric'
+export { NODE_STYLE } from './node_style'
 export { default as RECIPE } from './recipe'
 export { REPORT, REPORT_TYPE } from './report'
 export { DSB_ROUTE, NON_COMMUNITY_ROUTE, ROUTE } from './route'

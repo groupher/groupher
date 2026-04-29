@@ -2,6 +2,8 @@
 
 import type { FC } from 'react'
 
+import { NODE_STYLE } from '~/const/node_style'
+import useTwBelt from '~/hooks/useTwBelt'
 import type { TNodeStyleValue } from '~/spec'
 import IconHub from '~/widgets/IconHub'
 
@@ -22,7 +24,9 @@ const NodeStyleRender: FC<TProps> = ({
   iconClassName,
   emojiClassName,
 }) => {
-  if (value.type === 'emoji') {
+  const { cn, rainbow } = useTwBelt()
+
+  if (value.type === NODE_STYLE.EMOJI) {
     return (
       <img
         src={`https://cdn.jsdelivr.net/gh/twitter/twemoji@${TWEMOJI_VERSION}/assets/svg/${value.unified}.svg`}
@@ -31,6 +35,18 @@ const NodeStyleRender: FC<TProps> = ({
         alt=''
         draggable={false}
         className={emojiClassName ?? className}
+      />
+    )
+  }
+
+  if (value.type === NODE_STYLE.COLOR) {
+    return (
+      <span
+        className={cn('inline-block circle', rainbow(value.color, 'bg'), className)}
+        style={{
+          width: size,
+          height: size,
+        }}
       />
     )
   }

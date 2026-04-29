@@ -1,10 +1,7 @@
+import { NODE_STYLE } from '~/const/node_style'
 import type { TIconName, TIconProvider } from '~/widgets/IconHub/icons'
 
-export const TAB = {
-  ICON: 'icon',
-  COLOR: 'color',
-  EMOJI: 'emoji',
-} as const
+export const TAB = NODE_STYLE
 
 export const TAB_ITEMS = [
   {

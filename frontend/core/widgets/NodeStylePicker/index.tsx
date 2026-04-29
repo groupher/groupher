@@ -3,6 +3,7 @@
 import { LazyMotion, domAnimation, m } from 'motion/react'
 import { type FC, useState } from 'react'
 
+import { NODE_STYLE } from '~/const/node_style'
 import type { TNodeStyleValue } from '~/spec'
 import { ICONS } from '~/widgets/IconHub/icons'
 import NodeStyleRender from '~/widgets/NodeStyleRender'
@@ -38,7 +39,7 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
     [TAB.EMOJI]: false,
   })
   const [innerValue, setInnerValue] = useState<TNodeStyleValue>({
-    type: 'icon',
+    type: NODE_STYLE.ICON,
     provider: DEFAULT_PROVIDER,
     name: DEFAULT_ICON_NAME,
     src: ICONS[DEFAULT_PROVIDER][DEFAULT_ICON_NAME],
@@ -120,7 +121,7 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
                     aria-hidden={tab !== TAB.COLOR}
                     className={`${s.tabPanel} ${tab === TAB.COLOR ? s.tabPanelActive : s.tabPanelInactive}`}
                   >
-                    <ColorTab />
+                    <ColorTab selectedValue={selectedValue} onChange={handleStyleChange} />
                   </m.div>
                 )}
 

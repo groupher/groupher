@@ -25,5 +25,6 @@ export default function useSalon() {
     ),
     cellActive: primary('border'),
     iconColor: bg('digest'),
+    iconColorActive: primary('bg'),
   }
 }

@@ -3,6 +3,7 @@
 import EmojiPicker, { Categories, EmojiStyle, Theme } from 'emoji-picker-react'
 import type { CSSProperties, FC, ReactNode } from 'react'
 
+import { NODE_STYLE } from '~/const/node_style'
 import { camelize } from '~/fmt'
 import useOverlayDark from '~/hooks/useOverlayDark'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
@@ -54,6 +55,7 @@ const EmojiTab: FC<TProps> = ({ open, onChange }) => {
     [Categories.FLAGS]: renderCategoryIcon(<FlagSVG />),
   }
   const pickerStyle = {
+    '--emoji-picker-primary-color': primary,
     '--epr-highlight-color': primary,
     '--epr-picker-border-color': 'var(--color-divider)',
     '--epr-text-color': 'var(--color-digest)',
@@ -110,7 +112,7 @@ const EmojiTab: FC<TProps> = ({ open, onChange }) => {
         style={pickerStyle}
         onEmojiClick={(emojiData) =>
           onChange({
-            type: 'emoji',
+            type: NODE_STYLE.EMOJI,
             unified: emojiData.unified,
           })
         }

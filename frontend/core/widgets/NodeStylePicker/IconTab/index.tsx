@@ -2,6 +2,7 @@
 
 import { type FC, useState } from 'react'
 
+import { NODE_STYLE } from '~/const/node_style'
 import { ICONS } from '~/widgets/IconHub/icons'
 import type { TIconName, TPickerProvider } from '~/widgets/IconHub/icons'
 
@@ -16,7 +17,7 @@ const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, onChange }) => {
 
   const handleSelect: TIconSelect = (provider, name, src) => {
     onChange({
-      type: 'icon',
+      type: NODE_STYLE.ICON,
       provider,
       name: name as TIconName,
       src: src || ICONS[provider][name],
