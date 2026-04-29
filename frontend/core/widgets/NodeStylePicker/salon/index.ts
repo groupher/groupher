@@ -1,5 +1,6 @@
 import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TColorName } from '~/spec'
 
 export default function useSalon() {
   const { bg, cn, br, fg, fill, hover, primary, rainbow, shadow } = useTwBelt()
@@ -33,8 +34,7 @@ export default function useSalon() {
     previewIconColor: bg('digest'),
     colorGrid: 'grid grid-cols-6 gap-3 px-4 pt-3',
     colorButton: 'align-both size-8 circle appearance-none',
-    colorButtonActive: '',
-    colorDot: (color, active) =>
+    colorDot: (color: TColorName, active: boolean) =>
       cn(
         'size-7 circle align-both border pointer trans-all-100 hover:-mt-0.5',
         color === COLOR.BLACK ? br('outline') : 'border-transparent',

@@ -30,7 +30,7 @@ const ColorTab: FC<TProps> = ({ selectedValue, onChange }) => {
             type='button'
             aria-label={color}
             aria-pressed={active}
-            className={`${s.colorButton} ${active ? s.colorButtonActive : ''}`}
+            className={s.colorButton}
             onClick={() => onChange({ type: NODE_STYLE.COLOR, color })}
           >
             <span className={s.colorDot(color, active)}>

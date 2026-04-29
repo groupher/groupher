@@ -3,9 +3,10 @@
 import type { FC } from 'react'
 
 import { NODE_STYLE } from '~/const/node_style'
-import useTwBelt from '~/hooks/useTwBelt'
 import type { TNodeStyleValue } from '~/spec'
 import IconHub from '~/widgets/IconHub'
+
+import useSalon from './salon'
 
 type TProps = {
   value: TNodeStyleValue
@@ -24,7 +25,10 @@ const NodeStyleRender: FC<TProps> = ({
   iconClassName,
   emojiClassName,
 }) => {
-  const { cn, rainbow } = useTwBelt()
+  const s = useSalon({
+    color: value.type === NODE_STYLE.COLOR ? value.color : undefined,
+    className,
+  })
 
   if (value.type === NODE_STYLE.EMOJI) {
     return (
@@ -42,7 +46,7 @@ const NodeStyleRender: FC<TProps> = ({
   if (value.type === NODE_STYLE.COLOR) {
     return (
       <span
-        className={cn('inline-block circle', rainbow(value.color, 'bg'), className)}
+        className={s.color}
         style={{
           width: size,
           height: size,

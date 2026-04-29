@@ -9,9 +9,11 @@ import type { TIconName, TPickerProvider } from '~/widgets/IconHub/icons'
 import type { TIconSelect, TIconTabProps } from '../spec'
 import FootTab from './FootTab'
 import IconList from './IconList'
+import useSalon from './salon'
 import SearchBar from './SearchBar'
 
 const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, onChange }) => {
+  const s = useSalon()
   const [providerTab, setProviderTab] = useState<TPickerProvider>('all')
   const [query, setQuery] = useState('')
 
@@ -25,9 +27,9 @@ const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, onChange }) => {
   }
 
   return (
-    <div className='flex h-full min-h-0 flex-col'>
+    <div className={s.wrapper}>
       <SearchBar value={query} onChange={setQuery} />
-      <div className='min-h-0 flex-1'>
+      <div className={s.listWrapper}>
         {panelOpen && (
           <IconList
             providerTab={providerTab}

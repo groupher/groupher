@@ -4,6 +4,8 @@ export default function useSalon() {
   const { bg, br, cn, fg, fill, hover, primary } = useTwBelt()
 
   return {
+    wrapper: 'flex h-full min-h-0 flex-col',
+    listWrapper: 'min-h-0 flex-1',
     searchWrapper: cn('px-2 pt-2 pb-1'),
     searchBox: cn('row-center rounded-md border px-2.5 h-8', bg('card'), br('divider')),
     searchIcon: cn('size-3.5 mr-2 shrink-0', fill('digest')),
