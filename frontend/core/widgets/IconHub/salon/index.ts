@@ -14,10 +14,6 @@ export default function useSalon({ color, size, className, ...spacing }: TProps)
 
   return {
     wrapper: cn(margin(spacing)),
-    icon: cn(
-      'inline-block mask-no-repeat mask-contain mask-center',
-      zise(size),
-      colorClass,
-    ),
+    icon: cn('inline-block mask-no-repeat mask-contain mask-center', zise(size), colorClass),
   }
 }

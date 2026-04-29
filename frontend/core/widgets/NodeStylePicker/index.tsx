@@ -87,6 +87,7 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
                 {mountedTabs[TAB.ICON] && (
                   <m.div
                     initial={false}
+                    inert={tab !== TAB.ICON}
                     animate={{
                       opacity: tab === TAB.ICON ? 1 : 0,
                       x: tab === TAB.ICON ? 0 : hiddenX,
@@ -98,7 +99,7 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
                     className={`${s.tabPanel} ${tab === TAB.ICON ? s.tabPanelActive : s.tabPanelInactive}`}
                   >
                     <IconTab
-                      panelOpen={panelOpen}
+                      panelOpen={panelOpen && tab === TAB.ICON}
                       selectedValue={selectedValue}
                       onChange={handleStyleChange}
                     />
@@ -108,6 +109,7 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
                 {mountedTabs[TAB.COLOR] && (
                   <m.div
                     initial={{ opacity: 0, x: hiddenX, scale: 0.985 }}
+                    inert={tab !== TAB.COLOR}
                     animate={{
                       opacity: tab === TAB.COLOR ? 1 : 0,
                       x: tab === TAB.COLOR ? 0 : hiddenX,
@@ -125,6 +127,7 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
                 {mountedTabs[TAB.EMOJI] && (
                   <m.div
                     initial={{ opacity: 0, x: hiddenX, scale: 0.985 }}
+                    inert={tab !== TAB.EMOJI}
                     animate={{
                       opacity: tab === TAB.EMOJI ? 1 : 0,
                       x: tab === TAB.EMOJI ? 0 : hiddenX,
@@ -135,10 +138,7 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
                     aria-hidden={tab !== TAB.EMOJI}
                     className={`${s.tabPanel} ${tab === TAB.EMOJI ? s.tabPanelActive : s.tabPanelInactive}`}
                   >
-                    <EmojiTab
-                      open={panelOpen && tab === TAB.EMOJI}
-                      onChange={handleStyleChange}
-                    />
+                    <EmojiTab open={panelOpen && tab === TAB.EMOJI} onChange={handleStyleChange} />
                   </m.div>
                 )}
               </div>

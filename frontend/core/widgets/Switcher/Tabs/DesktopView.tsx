@@ -9,8 +9,8 @@ import SIZE from '~/const/size'
 import { isString } from '~/validator'
 
 import useSalon from '../salon/tabs'
-import TabItem from './TabItem'
 import type { TTabItem, TViewProps } from './spec'
+import TabItem from './TabItem'
 
 const temItems: TTabItem[] = [
   {
@@ -20,7 +20,8 @@ const temItems: TTabItem[] = [
   },
 ]
 
-const getItemKey = (item: TTabItem): string => (isString(item) ? item : item.slug || item.title || '')
+const getItemKey = (item: TTabItem): string =>
+  isString(item) ? item : item.slug || item.title || ''
 
 const getDefaultActiveTabIndex = (items: readonly TTabItem[], activeKey: string): number => {
   if (isEmpty(activeKey)) return 0
@@ -60,6 +61,11 @@ const Tabs: FC<TViewProps> = ({
   const [isInitialRender, setIsInitialRender] = useState(true)
 
   const navRef = useRef<HTMLElement | null>(null)
+  const activeIndexRef = useRef(defaultActiveTabIndex)
+
+  useEffect(() => {
+    activeIndexRef.current = active
+  }, [active])
 
   const measureTabs = useCallback(() => {
     const navEl = navRef.current
@@ -72,15 +78,16 @@ const Tabs: FC<TViewProps> = ({
         : widths,
     )
 
-    const activeNode = navEl.children[defaultActiveTabIndex] as HTMLElement | undefined
+    const activeNode = navEl.children[activeIndexRef.current] as HTMLElement | undefined
     const activeWidth = getTabLabelWidth(activeNode)
 
     if (activeWidth > 0) {
       setSlipWidth(activeWidth)
     }
-  }, [defaultActiveTabIndex])
+  }, [])
 
   useEffect(() => {
+    activeIndexRef.current = defaultActiveTabIndex
     setActive(defaultActiveTabIndex)
     measureTabs()
 
@@ -101,7 +108,9 @@ const Tabs: FC<TViewProps> = ({
     })
 
     observer.observe(navEl)
-    Array.from(navEl.children).forEach((node) => observer.observe(node))
+    for (const node of navEl.children) {
+      observer.observe(node)
+    }
 
     return () => {
       window.cancelAnimationFrame(rafId)
@@ -134,8 +143,7 @@ const Tabs: FC<TViewProps> = ({
   )
 
   const translateX = `${
-    tabWidths.slice(0, active).reduce((a, b) => a + b, 0) +
-    s.getSlipMargin(size, isMobile) * active
+    tabWidths.slice(0, active).reduce((a, b) => a + b, 0) + s.getSlipMargin(size, isMobile) * active
   }px`
 
   return (

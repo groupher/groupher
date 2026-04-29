@@ -54,7 +54,7 @@ const EmojiTab: FC<TProps> = ({ open, onChange }) => {
     [Categories.FLAGS]: renderCategoryIcon(<FlagSVG />),
   }
   const pickerStyle = {
-    '--emoji-picker-primary-color': primary,
+    '--epr-highlight-color': primary,
     '--epr-picker-border-color': 'var(--color-divider)',
     '--epr-text-color': 'var(--color-digest)',
     '--epr-search-input-text-color': 'var(--color-title)',

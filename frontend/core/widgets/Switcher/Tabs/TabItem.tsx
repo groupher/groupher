@@ -14,10 +14,11 @@ import useTrans from '~/hooks/useTrans'
 import { isString } from '~/validator'
 
 import useSalon, { cn } from '../salon/tabs/tab_item'
-import TabIcon from './TabIcon'
 import type { TTabItem, TTabItemProps } from './spec'
+import TabIcon from './TabIcon'
 
-const getItemKey = (item: TTabItem): string => (isString(item) ? item : item.slug || item.title || '')
+const getItemKey = (item: TTabItem): string =>
+  isString(item) ? item : item.slug || item.title || ''
 const getItemHref = (item: TTabItem): string | undefined => (isString(item) ? undefined : item.href)
 
 const TabItem: FC<TTabItemProps> = ({
@@ -92,9 +93,7 @@ const TabItem: FC<TTabItemProps> = ({
       {!isString(item) && item.icon && (
         <TabIcon item={item} clickableRef={clickableRef} active={active} />
       )}
-      <div ref={active ? activeRef : null}>
-        {isString(item) ? item : t(item.title as never)}
-      </div>
+      <div ref={active ? activeRef : null}>{isString(item) ? item : t(item.title as never)}</div>
     </span>
   )
 

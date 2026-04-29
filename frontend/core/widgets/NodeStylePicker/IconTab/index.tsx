@@ -5,11 +5,10 @@ import { type FC, useState } from 'react'
 import { ICONS } from '~/widgets/IconHub/icons'
 import type { TIconName, TPickerProvider } from '~/widgets/IconHub/icons'
 
+import type { TIconSelect, TIconTabProps } from '../spec'
 import FootTab from './FootTab'
 import IconList from './IconList'
 import SearchBar from './SearchBar'
-
-import type { TIconSelect, TIconTabProps } from '../spec'
 
 const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, onChange }) => {
   const [providerTab, setProviderTab] = useState<TPickerProvider>('all')

@@ -22,7 +22,12 @@ export default function useSalon({ noAnimation, slipHeight, slipBarPos, ...spaci
       slipBarPos === 'top' ? 'border-b border-b-transparent' : 'border-t border-t-transparent',
       `h-${slipHeight}`,
     ),
-    realBar: cn('block h-full rounded-full', !noAnimation && 'trans-all-200', primary('bg'), vividDark()),
+    realBar: cn(
+      'block h-full rounded-full',
+      !noAnimation && 'trans-all-200',
+      primary('bg'),
+      vividDark(),
+    ),
     getSlipMargin,
   }
 }
