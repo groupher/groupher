@@ -24,6 +24,7 @@ export default {
   search: 'search',
   about: 'about',
   icon: 'Icons',
+  all_icons: 'All icons',
   color: 'Colors',
   emoji: 'Emojis',
   'team.member': 'team members',

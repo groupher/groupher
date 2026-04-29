@@ -8,7 +8,7 @@ const repoRoot = path.resolve(__dirname, '..')
 
 const sourceDir = path.join(repoRoot, 'frontend/core/assets/icons')
 const allowedApps = ['main', 'dashboard', 'landing']
-const allowedProviders = ['fa', 'lucide', 'heroicons', 'phosphor']
+const allowedProviders = ['fa', 'lucide', 'heroicons', 'phosphor', 'providers']
 const requestedApps = process.argv.slice(2)
 const targetApps = requestedApps.length > 0 ? requestedApps : allowedApps
 

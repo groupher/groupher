@@ -24,6 +24,7 @@ export default {
   search: '搜索内容',
   about: '关于',
   icon: '图标',
+  all_icons: 'All icons',
   color: '颜色',
   emoji: '表情',
   'team.member': '团队成员',
