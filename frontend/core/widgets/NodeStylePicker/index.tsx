@@ -135,7 +135,10 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
                     aria-hidden={tab !== TAB.EMOJI}
                     className={`${s.tabPanel} ${tab === TAB.EMOJI ? s.tabPanelActive : s.tabPanelInactive}`}
                   >
-                    <EmojiTab onChange={handleStyleChange} />
+                    <EmojiTab
+                      open={panelOpen && tab === TAB.EMOJI}
+                      onChange={handleStyleChange}
+                    />
                   </m.div>
                 )}
               </div>

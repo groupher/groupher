@@ -24,6 +24,7 @@ import scrollStyles from '../scroll.module.css'
 import styles from './index.module.css'
 
 type TProps = {
+  open: boolean
   onChange: (value: TNodeStyleValue) => void
 }
 
@@ -33,7 +34,7 @@ const renderCategoryIcon = (icon: ReactNode) => (
   </span>
 )
 
-const EmojiTab: FC<TProps> = ({ onChange }) => {
+const EmojiTab: FC<TProps> = ({ open, onChange }) => {
   const s = useSalon()
   const overlayDark = useOverlayDark()
   const primaryColor = usePrimaryColor()
@@ -97,6 +98,7 @@ const EmojiTab: FC<TProps> = ({ onChange }) => {
     <div className={s.emojiWrapper}>
       <EmojiPicker
         className={`${s.emojiPicker} ${scrollStyles.emojiPicker} ${styles.emojiPicker}`}
+        open={open}
         theme={pickerTheme}
         emojiStyle={EmojiStyle.TWITTER}
         lazyLoadEmojis
