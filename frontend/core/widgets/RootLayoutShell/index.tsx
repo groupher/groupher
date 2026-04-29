@@ -20,7 +20,7 @@ export default function RootLayoutShell({ children, lang = 'en' }: TProps) {
       <Suspense fallback={null}>
         <head>
           <script
-            // eslint-disable-next-line react/no-danger -- inline boot script is required before hydration to avoid theme flicker
+            // oxlint-disable-next-line react/no-danger -- Inline boot script is required before hydration to avoid theme flicker.
             dangerouslySetInnerHTML={{
               __html: ssrThemeInitScript(),
             }}

@@ -68,7 +68,6 @@ export const toPlatform = (article: TArticle, type: string, url: string): void =
     }
 
     default: {
-      // eslint-disable-next-line no-useless-return
       return
     }
   }

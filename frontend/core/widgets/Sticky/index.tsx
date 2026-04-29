@@ -176,7 +176,6 @@ class StickyBox extends React.Component<TStickyBoxProps, TStickyBoxState> {
         }
       } else {
         // stickyTop
-        // eslint-disable-next-line no-lonely-if
         if (bottom) {
           this.node.style.bottom = `${this.viewPortHeight - this.nodeHeight - offsetBottom}px`
         } else {
@@ -316,7 +315,6 @@ class StickyBox extends React.Component<TStickyBoxProps, TStickyBoxState> {
       }
     } else {
       // scroll up
-      // eslint-disable-next-line no-lonely-if
       if (this.mode === 'stickyBottom') {
         if (
           this.scrollPaneOffset + scrollY + this.viewPortHeight <
@@ -397,7 +395,6 @@ if (typeof CSS !== 'undefined' && CSS.supports) {
 let passiveArg: boolean | AddEventListenerOptions = false
 try {
   const opts = Object.defineProperty({}, 'passive', {
-    // eslint-disable-next-line getter-return
     get() {
       passiveArg = { passive: true }
     },

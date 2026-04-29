@@ -70,8 +70,7 @@ export default function Drawer({
     setVisible(false)
     resetContentToTop()
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    drawerRef.current?.offsetHeight
+    void drawerRef.current?.offsetHeight
 
     const raf = requestAnimationFrame(() => setVisible(true))
     return () => cancelAnimationFrame(raf)

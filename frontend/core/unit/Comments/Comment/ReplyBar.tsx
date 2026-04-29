@@ -21,7 +21,7 @@ const CommentReplyBar: FC<TProps> = ({ data }) => {
       {cutRest(data.author.nickname, 20)}:
       <div
         className={s.replyToBody}
-        // eslint-disable-next-line react/no-danger -- reply snippets are rendered from sanitized backend HTML
+        // oxlint-disable-next-line react/no-danger -- Reply snippets are rendered from sanitized backend HTML.
         dangerouslySetInnerHTML={{
           __html: data.bodyHtml,
         }}

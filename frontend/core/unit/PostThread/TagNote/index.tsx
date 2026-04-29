@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/accessible-emoji */
 /*
  *
  * TagNote

@@ -2,7 +2,6 @@ import { COLOR } from '~/const/colors'
 import THEME from '~/const/theme'
 import type { TColorName } from '~/spec'
 
-/* eslint-disable radix */
 /**
  * for lighten / darken color
  * see https://stackoverflow.com/a/13532993/4050784

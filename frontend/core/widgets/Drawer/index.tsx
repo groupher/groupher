@@ -65,8 +65,7 @@ export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POS
     setClosing(false)
     setVisible(false)
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    drawerRef.current?.offsetHeight
+    void drawerRef.current?.offsetHeight
 
     const raf = requestAnimationFrame(() => setVisible(true))
     return () => cancelAnimationFrame(raf)

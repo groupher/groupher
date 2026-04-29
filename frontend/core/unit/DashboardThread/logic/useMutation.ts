@@ -238,7 +238,7 @@ export default function useMutation(): TRet {
       })
       .catch((err) => {
         console.error('## handle request error: ', err)
-        // eslint-disable-next-line no-alert -- legacy admin fallback during mutation failure handling
+        // oxlint-disable-next-line no-alert -- Legacy admin fallback during mutation failure handling.
         alert(err)
       })
   }

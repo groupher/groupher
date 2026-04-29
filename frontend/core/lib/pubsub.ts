@@ -1,4 +1,3 @@
-/* eslint-disable */
 /**
  * Copyright (c) 2010,2011,2012,2013,2014 Morgan Roderick http://roderick.dk
  * License: MIT - http://mrgnrdrck.mit-license.org
@@ -8,38 +7,38 @@
 
 type TMessage = string | symbol
 type TToken = string
-type TSubscriber = (message: TMessage, data?: any) => void
+type TSubscriber = (message: TMessage, data?: unknown) => void
 type TMessages = Record<string, Record<TToken, TSubscriber>>
 
 const PubSub = {
   immediateExceptions: false,
-  publish: (message: TMessage, data?: any): boolean =>
+  publish: (message: TMessage, data?: unknown): boolean =>
     publish(message, data, false, PubSub.immediateExceptions),
-  publishSync: (message: TMessage, data?: any): boolean =>
+  publishSync: (message: TMessage, data?: unknown): boolean =>
     publish(message, data, true, PubSub.immediateExceptions),
   subscribe: (message: TMessage, func: TSubscriber): TToken | false => {
     if (typeof func !== 'function') {
       return false
     }
 
-    message = typeof message === 'symbol' ? message.toString() : message
+    const normalizedMessage = typeof message === 'symbol' ? message.toString() : message
 
     // message is not registered yet
-    if (!Object.hasOwn(messages, message)) {
-      messages[message] = {}
+    if (!Object.hasOwn(messages, normalizedMessage)) {
+      messages[normalizedMessage] = {}
     }
 
     // forcing token as String, to allow for future expansions without breaking usage
     // and allow for easy use as key names for the 'messages' object
     const token = `uid_${String((lastUid += 1))}`
-    messages[message][token] = func
+    messages[normalizedMessage][token] = func
 
     // return token for unsubscribing
     return token
   },
   subscribeAll: (func: TSubscriber): TToken | false => PubSub.subscribe(ALL_SUBSCRIBING_MSG, func),
   subscribeOnce: (message: TMessage, func: TSubscriber): typeof PubSub => {
-    const token = PubSub.subscribe(message, function (...args: any[]) {
+    const token = PubSub.subscribe(message, function (...args: Parameters<TSubscriber>) {
       // before func apply, unsubscribe message
       PubSub.unsubscribe(token)
       func.apply(this, args)
@@ -135,10 +134,9 @@ const ALL_SUBSCRIBING_MSG = '*'
  * @param { Object } obj The object to check
  * @returns { Boolean }
  */
-function hasKeys(obj: Record<string, any>): boolean {
+function hasKeys(obj: Record<string, unknown>): boolean {
   let key
 
-  // eslint-disable-next-line no-restricted-syntax
   for (key in obj) {
     if (Object.hasOwn(obj, key)) {
       return true
@@ -168,7 +166,7 @@ function throwException(ex: Error): () => void {
 function callSubscriberWithDelayedExceptions(
   subscriber: TSubscriber,
   message: TMessage,
-  data?: any,
+  data?: unknown,
 ): void {
   try {
     subscriber(message, data)
@@ -186,7 +184,7 @@ function callSubscriberWithDelayedExceptions(
 function callSubscriberWithImmediateExceptions(
   subscriber: TSubscriber,
   message: TMessage,
-  data?: any,
+  data?: unknown,
 ): void {
   subscriber(message, data)
 }
@@ -201,7 +199,7 @@ function callSubscriberWithImmediateExceptions(
 function deliverMessage(
   originalMessage: TMessage,
   matchedMessage: TMessage,
-  data?: any,
+  data?: unknown,
   immediateExceptions?: boolean,
 ): void {
   const subscribers = messages[matchedMessage as string]
@@ -213,7 +211,6 @@ function deliverMessage(
     return
   }
 
-  // eslint-disable-next-line no-restricted-syntax
   for (const s in subscribers) {
     if (Object.hasOwn(subscribers, s)) {
       callSubscriber(subscribers[s], originalMessage, data)
@@ -230,7 +227,7 @@ function deliverMessage(
  */
 function createDeliveryFunction(
   message: TMessage,
-  data?: any,
+  data?: unknown,
   immediateExceptions?: boolean,
 ): () => void {
   return function deliverNamespaced() {
@@ -292,14 +289,14 @@ function messageHasSubscribers(message: TMessage): boolean {
  */
 function publish(
   message: TMessage,
-  data?: any,
+  data?: unknown,
   sync?: boolean,
   immediateExceptions?: boolean,
 ): boolean {
-  message = typeof message === 'symbol' ? message.toString() : message
+  const normalizedMessage = typeof message === 'symbol' ? message.toString() : message
 
-  const deliver = createDeliveryFunction(message, data, immediateExceptions)
-  const hasSubscribers = messageHasSubscribers(message)
+  const deliver = createDeliveryFunction(normalizedMessage, data, immediateExceptions)
+  const hasSubscribers = messageHasSubscribers(normalizedMessage)
 
   if (!hasSubscribers) {
     return false

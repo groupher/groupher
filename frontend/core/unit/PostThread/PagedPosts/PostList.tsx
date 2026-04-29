@@ -1,5 +1,3 @@
-/* eslint-disable react/display-name */
-
 import { lazy, Suspense } from 'react'
 
 import { POST_LAYOUT } from '~/const/layout'
