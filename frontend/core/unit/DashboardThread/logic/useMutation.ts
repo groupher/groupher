@@ -30,16 +30,18 @@ type TRet = {
   mergeBackEditingTag: () => TTag[]
 }
 
-const TAG_STORE_FIELDS = ['tags'] as const satisfies readonly TDsbStoreFieldKey[]
-const FAQ_STORE_FIELDS = [FIELD.FAQ_SECTIONS] as const satisfies readonly TDsbStoreFieldKey[]
-const PAGE_BG_STORE_FIELDS = [
+type StoreFields = readonly TDsbStoreFieldKey[]
+
+const TAG_STORE_FIELDS: StoreFields = [FIELD.TAGS]
+const FAQ_STORE_FIELDS: StoreFields = [FIELD.FAQ_SECTIONS]
+const PAGE_BG_STORE_FIELDS: StoreFields = [
   FIELD.PAGE_BG,
   FIELD.PAGE_CUSTOM_BG,
   FIELD.PAGE_CUSTOM_INTENSITY,
   FIELD.PAGE_BG_DARK,
   FIELD.PAGE_CUSTOM_BG_DARK,
   FIELD.PAGE_CUSTOM_INTENSITY_DARK,
-] as const satisfies readonly TDsbStoreFieldKey[]
+]
 
 export default function useMutation(): TRet {
   const dashboard$ = useDashboard()
@@ -53,9 +55,9 @@ export default function useMutation(): TRet {
   const storeRef = useRef(liveDashboard$)
   const { slug: community } = community$
   const primaryCustomColorField: TDsbStoreFieldKey =
-    theme === THEME.DARK ? 'primaryCustomColorDark' : 'primaryCustomColor'
+    theme === THEME.DARK ? FIELD.PRIMARY_CUSTOM_COLOR_DARK : FIELD.PRIMARY_CUSTOM_COLOR
   const subPrimaryCustomColorField: TDsbStoreFieldKey =
-    theme === THEME.DARK ? 'subPrimaryCustomColorDark' : 'subPrimaryCustomColor'
+    theme === THEME.DARK ? FIELD.SUB_PRIMARY_CUSTOM_COLOR_DARK : FIELD.SUB_PRIMARY_CUSTOM_COLOR
 
   // get latest store, for those state not in UI render cycle
   useEffect(() => {

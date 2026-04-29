@@ -101,7 +101,7 @@ describe('stores/dashboard', () => {
     store.editFields({ title: 'Saved title', desc: 'Changed desc' })
     expect(store.anyTouched([TITLE_FIELD, DESC_FIELD])).toBe(true)
 
-    store.markFieldsSaved([TITLE_FIELD])
+    store.markFieldsToOriginal([TITLE_FIELD])
     expect(store.original.title).toBe('Saved title')
     expect(store.isTouched(TITLE_FIELD)).toBe(false)
     expect(store.isTouched(DESC_FIELD)).toBe(true)

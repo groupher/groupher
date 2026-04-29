@@ -9,26 +9,28 @@ import { BASEINFO_KEYS, FIELD, SEO_KEYS } from '../../constant'
 import type { TDsbFieldKey, TDsbStoreFieldKey } from '../../spec'
 import useMutation from '../useMutation'
 
-const PRIMARY_COLOR_FIELDS = [
+type StoreFields = readonly TDsbStoreFieldKey[]
+
+const PRIMARY_COLOR_FIELDS: StoreFields = [
   FIELD.PRIMARY_COLOR,
-  'primaryCustomColor',
-  'primaryCustomColorDark',
-] as const satisfies readonly TDsbStoreFieldKey[]
-const PAGE_BG_FIELDS = [
+  FIELD.PRIMARY_CUSTOM_COLOR,
+  FIELD.PRIMARY_CUSTOM_COLOR_DARK,
+]
+const PAGE_BG_FIELDS: StoreFields = [
   FIELD.PAGE_BG,
   FIELD.PAGE_CUSTOM_BG,
   FIELD.PAGE_CUSTOM_INTENSITY,
   FIELD.PAGE_BG_DARK,
   FIELD.PAGE_CUSTOM_BG_DARK,
   FIELD.PAGE_CUSTOM_INTENSITY_DARK,
-] as const satisfies readonly TDsbStoreFieldKey[]
-const SUB_PRIMARY_COLOR_FIELDS = [
+]
+const SUB_PRIMARY_COLOR_FIELDS: StoreFields = [
   FIELD.SUB_PRIMARY_COLOR,
-  'subPrimaryCustomColor',
-  'subPrimaryCustomColorDark',
-] as const satisfies readonly TDsbStoreFieldKey[]
-const TAG_STORE_FIELDS = ['tags'] as const satisfies readonly TDsbStoreFieldKey[]
-const FAQ_SECTIONS_FIELDS = [FIELD.FAQ_SECTIONS] as const satisfies readonly TDsbStoreFieldKey[]
+  FIELD.SUB_PRIMARY_CUSTOM_COLOR,
+  FIELD.SUB_PRIMARY_CUSTOM_COLOR_DARK,
+]
+const TAG_STORE_FIELDS: StoreFields = [FIELD.TAGS]
+const FAQ_SECTIONS_FIELDS: StoreFields = [FIELD.FAQ_SECTIONS]
 const NAME_ALIAS_FIELD = FIELD.NAME_ALIAS
 
 export type TRet = {
@@ -61,8 +63,6 @@ export default function useEdit(): TRet {
     [dsb$.commit, dsb$.editField, dsb$.original],
   )
 
-  const _rollbackByKeys = (keys: readonly TDsbStoreFieldKey[]): void => dsb$.rollbackFields(keys)
-
   const _findAliasIdx = (): number => {
     const { nameAlias, editingAlias } = dsb$
     const targetIdx = findIndex((item: TNameAlias) => item.slug === editingAlias.slug, nameAlias)
@@ -92,12 +92,12 @@ export default function useEdit(): TRet {
     }
 
     if (field === FIELD.BASE_INFO) {
-      _rollbackByKeys(BASEINFO_KEYS)
+      dsb$.rollbackFields(BASEINFO_KEYS)
       return
     }
 
     if (field === FIELD.SEO) {
-      _rollbackByKeys(SEO_KEYS as readonly TDsbStoreFieldKey[])
+      dsb$.rollbackFields(SEO_KEYS)
       return
     }
 

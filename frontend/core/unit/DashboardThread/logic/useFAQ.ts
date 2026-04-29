@@ -1,4 +1,4 @@
-import { find, findIndex, pick, reject } from 'ramda'
+import { find, findIndex, reject } from 'ramda'
 
 import type { TDocFAQLayout, TEditFunc, TFAQSection } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -83,7 +83,8 @@ export default function useFAQ(): TRet {
 
   return {
     edit,
-    ...pick(['docFaqLayout', 'saving'], dsb$),
+    docFaqLayout: dsb$[FIELD.DOC_FAQ_LAYOUT],
+    saving: dsb$.saving,
     addFAQSection,
     triggerEditFAQ,
     updateEditingFAQ,

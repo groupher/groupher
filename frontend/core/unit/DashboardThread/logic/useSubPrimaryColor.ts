@@ -29,7 +29,7 @@ export default function useSubPrimaryColor(): TRet {
 
   const { subPrimaryColor } = dsb$
   const subPrimaryCustomColorField: TDsbStoreFieldKey =
-    theme === THEME.DARK ? 'subPrimaryCustomColorDark' : 'subPrimaryCustomColor'
+    theme === THEME.DARK ? FIELD.SUB_PRIMARY_CUSTOM_COLOR_DARK : FIELD.SUB_PRIMARY_CUSTOM_COLOR
   const previewVar =
     theme === THEME.DARK ? '--color-sub-primary-custom-dark' : '--color-sub-primary-custom'
   const defaultCustomColor = getDefaultCustomColor(theme)

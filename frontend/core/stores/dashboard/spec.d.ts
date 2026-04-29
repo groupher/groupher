@@ -222,8 +222,9 @@ export type TStore = TDsbFieldMap & {
   editField: <K extends TDsbStoreFieldKey>(field: K, value: TDsbFieldMap[K]) => void
   // Batch version of editField for draft confirmations that update multiple persisted fields.
   editFields: (patch: Partial<TDsbFieldMap>) => void
-  // Accept current values as saved originals and clear cached dirty state for those fields.
-  markFieldsSaved: (fields: readonly TDsbStoreFieldKey[]) => void
+  // After save succeeds, accept current values as the new original and clear touched.
+  // Example: saving FIELD.TITLE turns current title into original.title, so the Save button becomes untouched.
+  markFieldsToOriginal: (fields: readonly TDsbStoreFieldKey[]) => void
   // Restore current values from original and clear cached dirty state for those fields.
   rollbackFields: (fields: readonly TDsbStoreFieldKey[]) => void
   isTouched: (field: TDsbStoreFieldKey) => boolean

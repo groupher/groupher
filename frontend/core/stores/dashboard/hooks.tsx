@@ -7,7 +7,7 @@ export default createStoreHook(StoreContext, [
   'commit',
   'editField',
   'editFields',
-  'markFieldsSaved',
+  'markFieldsToOriginal',
   'rollbackFields',
   'isTouched',
   'anyTouched',

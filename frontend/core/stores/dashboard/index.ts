@@ -66,7 +66,7 @@ export default function DashboardStore(init: TInit = {}): TStore {
           store.editField(field, patch[field])
         }
       },
-      markFieldsSaved(fields: readonly TDsbStoreFieldKey[]): void {
+      markFieldsToOriginal(fields: readonly TDsbStoreFieldKey[]): void {
         const originalPatch = {} as Partial<TDsbFieldMap>
         const mutableOriginalPatch = originalPatch as Record<TDsbStoreFieldKey, unknown>
         const storeFields = store as unknown as Record<TDsbStoreFieldKey, unknown>
