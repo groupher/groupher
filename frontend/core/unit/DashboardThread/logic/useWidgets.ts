@@ -1,8 +1,9 @@
-import { equals, pick, reject } from 'ramda'
+import { pick, reject } from 'ramda'
 
 import type { TColorName, TEditFunc, TSizeSML, TThread } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
+import { FIELD } from '../constant'
 import useHelper from './useHelper'
 
 type TRet = {
@@ -21,20 +22,20 @@ export default function useWidgets(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
 
-  const { widgetsThreads, original } = dsb$
+  const { widgetsThreads } = dsb$
 
   const threadOnChange = (checked: boolean, thread: TThread): void => {
     const newThreads = checked
       ? [...widgetsThreads, thread]
       : reject((t: TThread) => t === thread, widgetsThreads)
 
-    dsb$.commit({ widgetsThreads: newThreads })
+    dsb$.editField(FIELD.WIDGETS_THREADS, newThreads)
   }
 
-  const isThreadTouched = !equals(widgetsThreads, original.widgetsThreads)
+  const isThreadTouched = isChanged(FIELD.WIDGETS_THREADS)
 
-  const isPrimaryColorTouched = isChanged('widgetsPrimaryColor')
-  const isSizeTouched = isChanged('widgetsSize')
+  const isPrimaryColorTouched = isChanged(FIELD.WIDGETS_PRIMARY_COLOR)
+  const isSizeTouched = isChanged(FIELD.WIDGETS_SIZE)
 
   return {
     ...pick(['saving', 'widgetsPrimaryColor', 'widgetsThreads', 'widgetsSize'], dsb$),

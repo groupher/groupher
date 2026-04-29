@@ -7,7 +7,8 @@ import useTheme from '~/hooks/useTheme'
 import type { TColorName, TEditFunc } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
-import type { TDsbFieldKey } from '../spec'
+import { FIELD } from '../constant'
+import type { TDsbStoreFieldKey } from '../spec'
 import useHelper from './useHelper'
 
 type TRet = {
@@ -27,7 +28,7 @@ export default function useSubPrimaryColor(): TRet {
   const { theme } = useTheme()
 
   const { subPrimaryColor } = dsb$
-  const subPrimaryCustomColorField: TDsbFieldKey =
+  const subPrimaryCustomColorField: TDsbStoreFieldKey =
     theme === THEME.DARK ? 'subPrimaryCustomColorDark' : 'subPrimaryCustomColor'
   const previewVar =
     theme === THEME.DARK ? '--color-sub-primary-custom-dark' : '--color-sub-primary-custom'
@@ -50,21 +51,21 @@ export default function useSubPrimaryColor(): TRet {
     }
   }, [customColor, previewVar, sourceColor])
 
-  const isTouched = isChanged('subPrimaryColor') || isCustomTouched
+  const isTouched = isChanged(FIELD.SUB_PRIMARY_COLOR) || isCustomTouched
 
   const onCancel = () => {
     resetDraft()
-    rollbackEdit('subPrimaryColor')
+    rollbackEdit(FIELD.SUB_PRIMARY_COLOR)
   }
 
   const onConfirm = () => {
-    dsb$.live$.commit({ [subPrimaryCustomColorField]: customColorDraft })
-    window.requestAnimationFrame(() => onSave('subPrimaryColor'))
+    dsb$.live$.editField(subPrimaryCustomColorField, customColorDraft)
+    window.requestAnimationFrame(() => onSave(FIELD.SUB_PRIMARY_COLOR))
   }
 
   return {
     edit,
-    editSubPrimaryColor: (color) => edit(color, 'subPrimaryColor'),
+    editSubPrimaryColor: (color) => edit(color, FIELD.SUB_PRIMARY_COLOR),
     editCustomColor: (color) => setDraft(color),
     subPrimaryColor,
     customColor,

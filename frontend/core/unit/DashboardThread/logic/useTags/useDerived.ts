@@ -7,6 +7,9 @@ import type { TCommunityThread, TNameAlias, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
+import { FIELD } from '../../constant'
+import useTouch from '../useHelper/useTouch'
+
 export type TRet = {
   tags: readonly TTag[]
   groups: string[]
@@ -19,9 +22,9 @@ export type TRet = {
 export default function useDerived(): TRet {
   const dsb$ = useDashboard()
   const community$ = useCommunity()
+  const { isChanged } = useTouch()
 
-  const { tags, original, activeTagThread, activeTagGroup, nameAlias, tagLayout, inlineTagLayout } =
-    dsb$
+  const { tags, original, activeTagThread, activeTagGroup, nameAlias } = dsb$
 
   const selectedThread = activeTagThread
 
@@ -51,15 +54,8 @@ export default function useDerived(): TRet {
     )
   }, [community$.threads, nameAlias])
 
-  const tagLayoutTouched = useMemo(
-    () => !equals(tagLayout, original.tagLayout),
-    [tagLayout, original.tagLayout],
-  )
-
-  const inlineTagLayoutTouched = useMemo(
-    () => !equals(inlineTagLayout, original.inlineTagLayout),
-    [inlineTagLayout, original.inlineTagLayout],
-  )
+  const tagLayoutTouched = isChanged(FIELD.TAG_LAYOUT)
+  const inlineTagLayoutTouched = isChanged(FIELD.INLINE_TAG_LAYOUT)
 
   const tagsIndexTouched = useMemo(
     () => !equals(sortById(tags), sortById(original.tags || [])),

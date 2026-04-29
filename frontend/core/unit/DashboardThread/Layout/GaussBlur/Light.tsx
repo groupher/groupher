@@ -89,7 +89,7 @@ export default function Light() {
         top={10}
         onCancel={resetDraft}
         onConfirm={() => {
-          dsb$.live$.commit({ gaussBlur: gaussBlur })
+          dsb$.live$.editField(FIELD.GAUSS_BLUR, gaussBlur)
           window.requestAnimationFrame(() => onSave(FIELD.GAUSS_BLUR))
         }}
       />

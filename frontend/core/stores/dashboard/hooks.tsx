@@ -3,4 +3,12 @@
 import createStoreHook from '../createStoreHook'
 import { StoreContext } from './provider'
 
-export default createStoreHook(StoreContext)
+export default createStoreHook(StoreContext, [
+  'commit',
+  'editField',
+  'editFields',
+  'markFieldsSaved',
+  'rollbackFields',
+  'isTouched',
+  'anyTouched',
+])

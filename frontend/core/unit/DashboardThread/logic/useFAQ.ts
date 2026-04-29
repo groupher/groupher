@@ -7,6 +7,8 @@ import useDashboard from '~/stores/dashboard/hooks'
 import { DEFAULT_NEW_FAQ, FIELD } from '../constant'
 import useHelper from './useHelper'
 
+const FAQ_SECTIONS_FIELD = FIELD.FAQ_SECTIONS
+
 type TRet = {
   docFaqLayout: TDocFAQLayout
   saving: boolean
@@ -20,37 +22,38 @@ type TRet = {
 }
 
 export default function useFAQ(): TRet {
-  const dashboard$ = useDashboard()
+  const dsb$ = useDashboard()
   const community$ = useCommunity()
   const { edit } = useHelper()
-  const { faqSections } = dashboard$
+  const { faqSections } = dsb$
 
   const addFAQSection = (): void => {
     const index = faqSections.length
-    dashboard$.commit({ editingFAQ: { ...DEFAULT_NEW_FAQ, index }, editingFAQIndex: index })
+    dsb$.commit({ editingFAQ: { ...DEFAULT_NEW_FAQ, index }, editingFAQIndex: index })
   }
 
   const triggerEditFAQ = (index: number | null): void => {
     if (index === null) {
-      dashboard$.commit({ editingFAQ: null, editingFAQIndex: null })
+      dsb$.commit({ editingFAQ: null, editingFAQIndex: null })
       return
     }
 
     const editingFAQ = find((faq: TFAQSection) => faq.index === index, faqSections)
-    dashboard$.commit({ editingFAQIndex: index, editingFAQ })
+    dsb$.commit({ editingFAQIndex: index, editingFAQ })
   }
 
-  const updateEditingFAQ = (faq: TFAQSection): void => dashboard$.commit({ editingFAQ: faq })
+  const updateEditingFAQ = (faq: TFAQSection): void => dsb$.commit({ editingFAQ: faq })
 
   const deleteFAQSection = (index: number): void => {
     const community = community$.slug
 
-    dashboard$.commit({
-      faqSections: reject((faq: TFAQSection) => faq.index === index, faqSections),
-      savingField: FIELD.FAQ_SECTION_DELETE,
-    })
+    dsb$.editField(
+      FAQ_SECTIONS_FIELD,
+      reject((faq: TFAQSection) => faq.index === index, faqSections),
+    )
+    dsb$.commit({ savingField: FIELD.FAQ_SECTION_DELETE })
 
-    const params = { faqs: dashboard$.faqSections, community }
+    const params = { faqs: dsb$.faqSections, community }
     console.log('## deleteFAQSection: ', params)
   }
 
@@ -66,20 +69,21 @@ export default function useFAQ(): TRet {
     nextSections[targetIndex] = nextSections[currentIndex]
     nextSections[currentIndex] = target
 
-    dashboard$.commit({ faqSections: nextSections })
+    dsb$.editField(FAQ_SECTIONS_FIELD, nextSections)
     setTimeout(() => {
-      dashboard$.commit({
-        faqSections: nextSections.map((item, index) => ({
+      dsb$.editField(
+        FAQ_SECTIONS_FIELD,
+        nextSections.map((item, index) => ({
           ...item,
           index,
         })),
-      })
+      )
     })
   }
 
   return {
     edit,
-    ...pick(['docFaqLayout', 'saving'], dashboard$),
+    ...pick(['docFaqLayout', 'saving'], dsb$),
     addFAQSection,
     triggerEditFAQ,
     updateEditingFAQ,

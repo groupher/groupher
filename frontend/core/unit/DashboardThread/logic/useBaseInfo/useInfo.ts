@@ -6,6 +6,8 @@ import { BASEINFO_BASIC_KEYS, BASEINFO_OTHER_KEYS } from '../../constant'
 import type { TDsbFieldKey } from '../../spec'
 import useHelper from '../useHelper'
 
+const CITY_FIELD = 'city' as const
+
 export type TRet = {
   favicon: string
   logo: string
@@ -29,6 +31,6 @@ export default function useInfo(): TRet {
     ...pick(BASEINFO_BASIC_KEYS, dsb$),
     ...pick(BASEINFO_OTHER_KEYS, dsb$),
     isTouched: anyChanged(BASEINFO_BASIC_KEYS as TDsbFieldKey[]),
-    isCityTouched: anyChanged(['city']),
+    isCityTouched: anyChanged([CITY_FIELD]),
   }
 }

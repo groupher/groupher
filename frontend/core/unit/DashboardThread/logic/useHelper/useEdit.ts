@@ -6,8 +6,30 @@ import useDashboard from '~/stores/dashboard/hooks'
 import { isObject } from '~/validator'
 
 import { BASEINFO_KEYS, FIELD, SEO_KEYS } from '../../constant'
-import type { TDsbFieldKey } from '../../spec'
+import type { TDsbFieldKey, TDsbStoreFieldKey } from '../../spec'
 import useMutation from '../useMutation'
+
+const PRIMARY_COLOR_FIELDS = [
+  FIELD.PRIMARY_COLOR,
+  'primaryCustomColor',
+  'primaryCustomColorDark',
+] as const satisfies readonly TDsbStoreFieldKey[]
+const PAGE_BG_FIELDS = [
+  FIELD.PAGE_BG,
+  FIELD.PAGE_CUSTOM_BG,
+  FIELD.PAGE_CUSTOM_INTENSITY,
+  FIELD.PAGE_BG_DARK,
+  FIELD.PAGE_CUSTOM_BG_DARK,
+  FIELD.PAGE_CUSTOM_INTENSITY_DARK,
+] as const satisfies readonly TDsbStoreFieldKey[]
+const SUB_PRIMARY_COLOR_FIELDS = [
+  FIELD.SUB_PRIMARY_COLOR,
+  'subPrimaryCustomColor',
+  'subPrimaryCustomColorDark',
+] as const satisfies readonly TDsbStoreFieldKey[]
+const TAG_STORE_FIELDS = ['tags'] as const satisfies readonly TDsbStoreFieldKey[]
+const FAQ_SECTIONS_FIELDS = [FIELD.FAQ_SECTIONS] as const satisfies readonly TDsbStoreFieldKey[]
+const NAME_ALIAS_FIELD = FIELD.NAME_ALIAS
 
 export type TRet = {
   edit: TEditFunc
@@ -20,6 +42,8 @@ export default function useEdit(): TRet {
   const dsb$ = useDashboard()
   const { mutation } = useMutation()
 
+  const isStoreField = (field: TDsbFieldKey): field is TDsbStoreFieldKey => field in dsb$.original
+
   const edit = useCallback(
     (v: TEditValue, field: TDsbFieldKey): void => {
       let value = v
@@ -27,20 +51,17 @@ export default function useEdit(): TRet {
         value = v.target.value
       }
 
+      if (isStoreField(field)) {
+        dsb$.editField(field, value)
+        return
+      }
+
       dsb$.commit({ [field]: value })
     },
-    [dsb$.commit],
+    [dsb$.commit, dsb$.editField, dsb$.original],
   )
 
-  const _rollbackByKeys = (keys: readonly TDsbFieldKey[]): void => {
-    for (let i = 0; i < keys.length; i += 1) {
-      const key = keys[i]
-      const initValue = dsb$.original[key]
-      if (dsb$[key] !== initValue) {
-        dsb$.commit({ [key]: initValue })
-      }
-    }
-  }
+  const _rollbackByKeys = (keys: readonly TDsbStoreFieldKey[]): void => dsb$.rollbackFields(keys)
 
   const _findAliasIdx = (): number => {
     const { nameAlias, editingAlias } = dsb$
@@ -51,44 +72,22 @@ export default function useEdit(): TRet {
 
   const rollbackEdit = (field: TDsbFieldKey): void => {
     if (field === FIELD.PRIMARY_COLOR) {
-      dsb$.commit({
-        primaryColor: dsb$.original.primaryColor,
-        primaryCustomColor: dsb$.original.primaryCustomColor,
-        primaryCustomColorDark: dsb$.original.primaryCustomColorDark,
-      })
+      dsb$.rollbackFields(PRIMARY_COLOR_FIELDS)
       return
     }
 
     if (field === FIELD.PAGE_BG) {
-      dsb$.commit({
-        pageBg: dsb$.original.pageBg,
-        pageCustomBg: dsb$.original.pageCustomBg,
-        pageCustomIntensity: dsb$.original.pageCustomIntensity,
-        pageBgDark: dsb$.original.pageBgDark,
-        pageCustomBgDark: dsb$.original.pageCustomBgDark,
-        pageCustomIntensityDark: dsb$.original.pageCustomIntensityDark,
-      })
+      dsb$.rollbackFields(PAGE_BG_FIELDS)
       return
     }
 
     if (field === FIELD.PAGE_BG_DARK) {
-      dsb$.commit({
-        pageBg: dsb$.original.pageBg,
-        pageCustomBg: dsb$.original.pageCustomBg,
-        pageCustomIntensity: dsb$.original.pageCustomIntensity,
-        pageBgDark: dsb$.original.pageBgDark,
-        pageCustomBgDark: dsb$.original.pageCustomBgDark,
-        pageCustomIntensityDark: dsb$.original.pageCustomIntensityDark,
-      })
+      dsb$.rollbackFields(PAGE_BG_FIELDS)
       return
     }
 
     if (field === FIELD.SUB_PRIMARY_COLOR) {
-      dsb$.commit({
-        subPrimaryColor: dsb$.original.subPrimaryColor,
-        subPrimaryCustomColor: dsb$.original.subPrimaryCustomColor,
-        subPrimaryCustomColorDark: dsb$.original.subPrimaryCustomColorDark,
-      })
+      dsb$.rollbackFields(SUB_PRIMARY_COLOR_FIELDS)
       return
     }
 
@@ -98,7 +97,7 @@ export default function useEdit(): TRet {
     }
 
     if (field === FIELD.SEO) {
-      _rollbackByKeys(SEO_KEYS)
+      _rollbackByKeys(SEO_KEYS as readonly TDsbStoreFieldKey[])
       return
     }
 
@@ -108,12 +107,12 @@ export default function useEdit(): TRet {
     }
 
     if (field === FIELD.TAG_INDEX) {
-      dsb$.commit({ tags: [...dsb$.original.tags] })
+      dsb$.rollbackFields(TAG_STORE_FIELDS)
       return
     }
 
     if (field === FIELD.FAQ_SECTIONS) {
-      dsb$.commit({ faqSections: dsb$.original.faqSections })
+      dsb$.rollbackFields(FAQ_SECTIONS_FIELDS)
       return
     }
 
@@ -122,11 +121,14 @@ export default function useEdit(): TRet {
       if (targetIdx < 0) return
 
       const updatedNameAlias = update(targetIdx, dsb$.original.nameAlias[targetIdx], dsb$.nameAlias)
-      dsb$.commit({ editingAlias: null, nameAlias: updatedNameAlias })
+      dsb$.editField(NAME_ALIAS_FIELD, updatedNameAlias)
+      dsb$.commit({ editingAlias: null })
       return
     }
 
-    dsb$.commit({ [field]: dsb$.original[field] })
+    if (isStoreField(field)) {
+      dsb$.rollbackFields([field])
+    }
   }
 
   const resetEdit = (field: TDsbFieldKey): void => {

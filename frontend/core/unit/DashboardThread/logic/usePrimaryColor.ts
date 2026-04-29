@@ -7,7 +7,8 @@ import useTheme from '~/hooks/useTheme'
 import type { TColorName, TEditFunc } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
-import type { TDsbFieldKey } from '../spec'
+import { FIELD } from '../constant'
+import type { TDsbStoreFieldKey } from '../spec'
 import useHelper from './useHelper'
 
 type TRet = {
@@ -27,7 +28,7 @@ export default function usePrimaryColor(): TRet {
   const { theme } = useTheme()
 
   const { primaryColor } = dsb$
-  const primaryCustomColorField: TDsbFieldKey =
+  const primaryCustomColorField: TDsbStoreFieldKey =
     theme === THEME.DARK ? 'primaryCustomColorDark' : 'primaryCustomColor'
   const previewVar = theme === THEME.DARK ? '--color-primary-custom-dark' : '--color-primary-custom'
   const defaultCustomColor = getDefaultCustomColor(theme)
@@ -49,21 +50,21 @@ export default function usePrimaryColor(): TRet {
     }
   }, [customColor, previewVar, sourceColor])
 
-  const isTouched = isChanged('primaryColor') || isCustomTouched
+  const isTouched = isChanged(FIELD.PRIMARY_COLOR) || isCustomTouched
 
   const onCancel = () => {
     resetDraft()
-    rollbackEdit('primaryColor')
+    rollbackEdit(FIELD.PRIMARY_COLOR)
   }
 
   const onConfirm = () => {
-    dsb$.live$.commit({ [primaryCustomColorField]: customColorDraft })
-    window.requestAnimationFrame(() => onSave('primaryColor'))
+    dsb$.live$.editField(primaryCustomColorField, customColorDraft)
+    window.requestAnimationFrame(() => onSave(FIELD.PRIMARY_COLOR))
   }
 
   return {
     edit,
-    editPrimaryColor: (color) => edit(color, 'primaryColor'),
+    editPrimaryColor: (color) => edit(color, FIELD.PRIMARY_COLOR),
     editCustomColor: (color) => setDraft(color),
     primaryColor,
     customColor,

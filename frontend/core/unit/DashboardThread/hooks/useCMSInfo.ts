@@ -5,6 +5,7 @@ import type { TFAQSection, TID, TPagedArticles, TPagedCommunities } from '~/spec
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
+import { FIELD } from '../constant'
 import useHelper from '../logic/useHelper'
 import S from '../schema'
 
@@ -110,7 +111,7 @@ export default function useCMSInfo(): TRet {
 
     faqSections,
     editingFAQ,
-    isFaqSectionsTouched: mapArrayChanged('faqSections'),
+    isFaqSectionsTouched: mapArrayChanged(FIELD.FAQ_SECTIONS),
 
     loadPosts,
     loadChangelogs,

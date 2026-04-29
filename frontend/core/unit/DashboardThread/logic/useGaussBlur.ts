@@ -3,6 +3,7 @@ import { pick } from 'ramda'
 import type { TEditFunc } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
+import { FIELD } from '../constant'
 import useHelper from './useHelper'
 
 type TRet = {
@@ -18,8 +19,8 @@ export default function useGaussBlur(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
 
-  const isTouched = isChanged('gaussBlur')
-  const isDarkTouched = isChanged('gaussBlurDark')
+  const isTouched = isChanged(FIELD.GAUSS_BLUR)
+  const isDarkTouched = isChanged(FIELD.GAUSS_BLUR_DARK)
 
   return {
     edit,

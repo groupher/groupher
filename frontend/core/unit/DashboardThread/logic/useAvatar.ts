@@ -1,6 +1,7 @@
 import type { TAvatarLayout, TEditFunc } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
+import { FIELD } from '../constant'
 import useHelper from './useHelper'
 
 type TRet = {
@@ -16,7 +17,7 @@ export default function useAvatar(): TRet {
 
   const { avatarLayout, saving } = dsb$
 
-  const isTouched = isChanged('avatarLayout')
+  const isTouched = isChanged(FIELD.AVATAR_LAYOUT)
 
   return {
     edit,

@@ -95,7 +95,7 @@ export default function Dark() {
         top={20}
         onCancel={resetDraft}
         onConfirm={() => {
-          dsb$.live$.commit({ gaussBlurDark: gaussBlurDark })
+          dsb$.live$.editField(FIELD.GAUSS_BLUR_DARK, gaussBlurDark)
           window.requestAnimationFrame(() => onSave(FIELD.GAUSS_BLUR_DARK))
         }}
       />

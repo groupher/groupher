@@ -1,6 +1,7 @@
 import type { TEditFunc } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
+import { FIELD } from '../constant'
 import useHelper from './useHelper'
 
 type TRet = {
@@ -20,6 +21,6 @@ export default function useOverlayDark(): TRet {
     overlayDark,
     saving,
     edit,
-    isTouched: isChanged('overlayDark'),
+    isTouched: isChanged(FIELD.OVERLAY_DARK),
   }
 }
