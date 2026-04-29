@@ -51,7 +51,7 @@ export default function PageBackground() {
   }
 
   const handleConfirm = () => {
-    dsb$.live$.commit({
+    dsb$.live$.editFields({
       pageBg: draft.pageBg,
       pageBgDark: draft.pageBgDark,
       pageCustomBg: draft.pageCustomBg,

@@ -5,11 +5,11 @@ import useBase from '../..'
 export { cn, cnMerge } from '~/css'
 
 export default function useSalon() {
-  const { cn, cnMerge, bg, shadow, fill, avatar } = useTwBelt()
+  const { cn, cnMerge, bg, fill, avatar } = useTwBelt()
   const base = useBase()
 
   return {
-    wrapper: cn('h-14 rounded-md px-1.5 py-1 pt-2.5', bg('alphaBg'), shadow('md')),
+    wrapper: cn('h-14 rounded-md px-1.5 py-1 pt-2.5', bg('alphaBg')),
     frame: 'flex h-full w-full flex-col',
     header: 'flex flex-col gap-1',
     headerRow: 'flex items-end justify-between gap-2',

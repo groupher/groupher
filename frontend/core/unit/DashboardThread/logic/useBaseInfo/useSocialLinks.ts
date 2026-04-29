@@ -1,7 +1,10 @@
-import { equals, isEmpty, reject } from 'ramda'
+import { isEmpty, reject } from 'ramda'
 
 import type { TSocialItem } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
+
+import { FIELD } from '../../constant'
+import useHelper from '../useHelper'
 
 export type TRet = {
   socialLinks: readonly TSocialItem[]
@@ -9,14 +12,11 @@ export type TRet = {
 }
 
 export default function useSocialLinks(): TRet {
-  const { socialLinks, original } = useDashboard()
-
-  const socialLinksTouched = () => {
-    return !equals(socialLinks, original.socialLinks)
-  }
+  const { socialLinks } = useDashboard()
+  const { isChanged } = useHelper()
 
   return {
     socialLinks: reject((item: TSocialItem) => isEmpty(item.type), socialLinks),
-    isSocialLinksTouched: socialLinksTouched(),
+    isSocialLinksTouched: isChanged(FIELD.SOCIAL_LINKS),
   }
 }

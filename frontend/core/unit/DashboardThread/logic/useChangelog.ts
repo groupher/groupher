@@ -1,6 +1,7 @@
 import type { TChangelogLayout, TEditFunc } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
+import { FIELD } from '../constant'
 import useHelper from './useHelper'
 
 type TRet = {
@@ -16,7 +17,7 @@ export default function useChangelog(): TRet {
 
   const { changelogLayout, saving } = dsb$
 
-  const isTouched = isChanged('changelogLayout')
+  const isTouched = isChanged(FIELD.CHANGELOG_LAYOUT)
 
   return {
     edit,

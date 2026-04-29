@@ -1,8 +1,9 @@
-import { any, equals } from 'ramda'
+import { equals } from 'ramda'
 
 import useDashboard from '~/stores/dashboard/hooks'
 
-import type { TDsbFieldKey } from '../../spec'
+import { FIELD } from '../../constant'
+import type { TDsbFieldKey, TDsbStoreFieldKey } from '../../spec'
 
 export type TRet = {
   isChanged: (field: TDsbFieldKey) => boolean
@@ -10,14 +11,30 @@ export type TRet = {
   mapArrayChanged: (key: string) => boolean
 }
 
+const LEGACY_COMPARE_FIELDS = new Set<TDsbStoreFieldKey>([FIELD.HEADER_LINKS, FIELD.FOOTER_LINKS])
+
 export default function useTouch(): TRet {
   const dsb$ = useDashboard()
 
-  const { original } = dsb$
+  const { original, touchedFields } = dsb$
 
-  const isChanged = (field: TDsbFieldKey): boolean => !equals(dsb$[field], original[field])
-  const anyChanged = (fields: TDsbFieldKey[]): boolean => any(isChanged)(fields)
-  const mapArrayChanged = (key: string): boolean => !equals(dsb$[key], original[key])
+  const isStoreField = (field: TDsbFieldKey | string): field is TDsbStoreFieldKey =>
+    field in original
+
+  const isChanged = (field: TDsbFieldKey): boolean => {
+    if (!isStoreField(field)) {
+      return !equals(dsb$[field], original[field])
+    }
+
+    if (LEGACY_COMPARE_FIELDS.has(field)) {
+      return !equals(dsb$[field], original[field])
+    }
+
+    return Boolean(touchedFields[field])
+  }
+
+  const anyChanged = (fields: TDsbFieldKey[]): boolean => fields.some(isChanged)
+  const mapArrayChanged = (key: string): boolean => isChanged(key as TDsbFieldKey)
 
   return {
     isChanged,

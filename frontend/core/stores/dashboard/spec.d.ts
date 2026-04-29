@@ -169,13 +169,22 @@ export type TDsbFieldMap = {
   widgetsSize: TSizeSML
 }
 
-export type TInit = { metric?: TMetric; now?: number } & Partial<TDsbFieldMap>
+export type TInit = {
+  metric?: TMetric
+  now?: number
+  initFilled?: boolean
+  original?: TDsbFieldMap
+} & Partial<TDsbFieldMap>
+export type TDsbStoreFieldKey = keyof TDsbFieldMap
+export type TDsbTouchedFields = Partial<Record<TDsbStoreFieldKey, true>>
 
 export type TStore = TDsbFieldMap & {
   metric?: TMetric
   now?: number
   initFilled: boolean
   original: TDsbFieldMap
+  // Fields that are currently different from original.
+  touchedFields: TDsbTouchedFields
 
   savingField: string | null
   saving: boolean
@@ -212,7 +221,19 @@ export type TStore = TDsbFieldMap & {
   allRootRules: string
 
   // actions
+  // Low-level state patch. Does not update dirty/touched state.
   commit: (patch: Partial<TStore>) => void
+  // Update one persisted dashboard field and refresh its cached dirty state.
+  editField: <K extends TDsbStoreFieldKey>(field: K, value: TDsbFieldMap[K]) => void
+  // Batch version of editField for draft confirmations that update multiple persisted fields.
+  editFields: (patch: Partial<TDsbFieldMap>) => void
+  // After save succeeds, accept current values as the new original and clear touched.
+  // Example: saving FIELD.TITLE turns current title into original.title, so the Save button becomes untouched.
+  markFieldsToOriginal: (fields: readonly TDsbStoreFieldKey[]) => void
+  // Restore current values from original and clear cached dirty state for those fields.
+  rollbackFields: (fields: readonly TDsbStoreFieldKey[]) => void
+  isTouched: (field: TDsbStoreFieldKey) => boolean
+  anyTouched: (fields: readonly TDsbStoreFieldKey[]) => boolean
   debug: () => void
 }
 

@@ -31,7 +31,7 @@ export default function AvatarLayout() {
       <div className={s.select}>
         {AVATAR_LAYOUT_OPTIONS.map(({ value, titleKey }) => {
           const isActive = layout === value
-          const shapeClass = value === AVATAR_LAYOUT.CIRCLE ? 'circle' : ''
+          const shapeClass = value === AVATAR_LAYOUT.CIRCLE ? 'circle' : 'rounded'
 
           return (
             <button

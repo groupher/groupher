@@ -11,7 +11,7 @@ import type { TGroupedLinks, TLinkItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
-import { EMPTY_LINK_ITEM } from '../../constant'
+import { EMPTY_LINK_ITEM, FIELD } from '../../constant'
 
 export type TRet = {
   getLinks: () => TLinkItem[]
@@ -43,10 +43,10 @@ export default function useUtils(): TRet {
     return clone(mainTab !== DSB_ROUTE.FOOTER ? headerLinks : footerLinks)
   }
 
-  const linksKey = mainTab !== DSB_ROUTE.FOOTER ? 'headerLinks' : 'footerLinks'
+  const linksKey = mainTab !== DSB_ROUTE.FOOTER ? FIELD.HEADER_LINKS : FIELD.FOOTER_LINKS
 
   const emptyLinksIfNeed = (links: TLinkItem[]): TLinkItem[] => {
-    if (linksKey === 'headerLinks' && links.length === 1 && links[0].group === MORE_GROUP) {
+    if (linksKey === FIELD.HEADER_LINKS && links.length === 1 && links[0].group === MORE_GROUP) {
       return []
     }
 
@@ -130,7 +130,7 @@ export default function useUtils(): TRet {
   }
 
   const keepMoreGroup2EndIfNeed = () => {
-    if (linksKey !== 'headerLinks') return
+    if (linksKey !== FIELD.HEADER_LINKS) return
     const links = getLinks()
 
     const _groupedLinks = groupByKey(links, 'group')
@@ -152,7 +152,7 @@ export default function useUtils(): TRet {
       const linksAfter = [...links, newLinkItem]
 
       dsb$.commit({
-        headerLinks: reindexGroup(linksAfter),
+        [FIELD.HEADER_LINKS]: reindexGroup(linksAfter),
       })
     } else {
       // make sure the "more" group is always in the end
@@ -162,7 +162,7 @@ export default function useUtils(): TRet {
       }))
 
       dsb$.commit({
-        headerLinks: reindexGroup(linksAfter),
+        [FIELD.HEADER_LINKS]: reindexGroup(linksAfter),
       })
     }
   }

@@ -18,7 +18,7 @@ const OtherInfo: FC = () => {
   return (
     <div className={s.wrapper}>
       <div className={s.label}>{t('dsb.base_info.other.city.label')}</div>
-      <CitySelector value={city} onChange={(v) => edit(v, 'city')} top={4} bottom={4} />
+      <CitySelector value={city} onChange={(v) => edit(v, FIELD.CITY)} top={4} bottom={4} />
 
       <SavingBar
         field={FIELD.BASE_INFO}
@@ -30,7 +30,7 @@ const OtherInfo: FC = () => {
 
       <div className={s.divider} />
       <div className={s.label}>{t('dsb.base_info.other.tech_stack.label')}</div>
-      <Input className={s.input} value={techstack} onChange={(v) => edit(v, 'techstack')} />
+      <Input className={s.input} value={techstack} onChange={(v) => edit(v, FIELD.TECHSTACK)} />
       <p className={s.hint}>{t('dsb.base_info.other.tech_stack.hint')}</p>
 
       <div className='mt-5' />

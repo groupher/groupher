@@ -5,6 +5,7 @@ import type { TCommunityThread } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
+import { FIELD } from '../../constant'
 import useHelper from '../useHelper'
 
 export type TRet = {
@@ -31,15 +32,15 @@ export default function useDerived(): TRet {
   }, [community$, enable, nameAlias])
 
   const isFooterLinksTouched = useMemo((): boolean => {
-    return isChanged('footerLinks') && editingLink === null
+    return isChanged(FIELD.FOOTER_LINKS) && editingLink === null
   }, [editingLink, isChanged])
 
   const isHeaderLinksTouched = useMemo((): boolean => {
-    return isChanged('headerLinks') && editingLink === null
+    return isChanged(FIELD.HEADER_LINKS) && editingLink === null
   }, [editingLink])
 
-  const isClassicLayoutTouched = isChanged('headerLayout')
-  const isFooterLayoutTouched = isChanged('footerLayout')
+  const isClassicLayoutTouched = isChanged(FIELD.HEADER_LAYOUT)
+  const isFooterLayoutTouched = isChanged(FIELD.FOOTER_LAYOUT)
 
   return {
     threads,

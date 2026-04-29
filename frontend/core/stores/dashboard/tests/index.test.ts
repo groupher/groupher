@@ -7,6 +7,9 @@ import type { TInit } from '~/stores/dashboard/spec'
 
 import setupStore from '..'
 
+const TITLE_FIELD = 'title'
+const DESC_FIELD = 'desc'
+
 describe('stores/dashboard', () => {
   it('commits edge data and keeps actions working', () => {
     const init: TInit = { metric: METRIC.COMMUNITY, now: 123 }
@@ -64,5 +67,60 @@ describe('stores/dashboard', () => {
 
     expect(store.kanbanBoards).toEqual(['TODO', 'WIP', 'DONE'])
     expect(store.original.kanbanBoards).toEqual(['TODO', 'WIP', 'DONE'])
+  })
+
+  it('uses init data as original baseline when original is not provided', () => {
+    const store = setupStore({ title: 'Loaded title' })
+
+    expect(store.original.title).toBe('Loaded title')
+
+    store.editField(TITLE_FIELD, 'Changed title')
+    expect(store.isTouched(TITLE_FIELD)).toBe(true)
+
+    store.rollbackFields([TITLE_FIELD])
+    expect(store.title).toBe('Loaded title')
+    expect(store.isTouched(TITLE_FIELD)).toBe(false)
+  })
+
+  it('tracks edited fields and clears them when values return to original', () => {
+    const store = setupStore()
+
+    expect(store.isTouched(TITLE_FIELD)).toBe(false)
+
+    store.editField(TITLE_FIELD, 'New title')
+    expect(store.title).toBe('New title')
+    expect(store.isTouched(TITLE_FIELD)).toBe(true)
+    expect(store.anyTouched([TITLE_FIELD, DESC_FIELD])).toBe(true)
+
+    store.editField(TITLE_FIELD, store.original.title)
+    expect(store.title).toBe(store.original.title)
+    expect(store.isTouched(TITLE_FIELD)).toBe(false)
+    expect(store.anyTouched([TITLE_FIELD, DESC_FIELD])).toBe(false)
+  })
+
+  it('keeps commit separate from touched tracking', () => {
+    const store = setupStore()
+
+    store.commit({ loading: true, title: 'Committed title' })
+
+    expect(store.loading).toBe(true)
+    expect(store.title).toBe('Committed title')
+    expect(store.isTouched(TITLE_FIELD)).toBe(false)
+  })
+
+  it('marks edited fields as saved and supports rollback', () => {
+    const store = setupStore()
+
+    store.editFields({ title: 'Saved title', desc: 'Changed desc' })
+    expect(store.anyTouched([TITLE_FIELD, DESC_FIELD])).toBe(true)
+
+    store.markFieldsToOriginal([TITLE_FIELD])
+    expect(store.original.title).toBe('Saved title')
+    expect(store.isTouched(TITLE_FIELD)).toBe(false)
+    expect(store.isTouched(DESC_FIELD)).toBe(true)
+
+    store.rollbackFields([DESC_FIELD])
+    expect(store.desc).toBe(store.original.desc)
+    expect(store.isTouched(DESC_FIELD)).toBe(false)
   })
 })

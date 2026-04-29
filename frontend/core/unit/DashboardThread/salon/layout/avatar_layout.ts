@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 import useBase from '.'
 
-export { cn } from '~/css'
+export { cn, cnMerge } from '~/css'
 
 export default function useSalon() {
   const { cn, cnMerge, bg, rainbow } = useTwBelt()
@@ -17,7 +17,7 @@ export default function useSalon() {
     layout: 'column-align-both',
     list: 'row-center gap-x-2',
     divider: cn('h-6 w-px ml-4 mr-4 opacity-65', bg('digest')),
-    avatar: 'align-both size-7 text-xs border bold-sm rounded',
+    avatar: 'align-both size-7 text-xs border bold-sm',
     blue: cn(
       rainbow(COLOR.BLUE, 'fg'),
       rainbow(COLOR.BLUE, 'bgSoft'),

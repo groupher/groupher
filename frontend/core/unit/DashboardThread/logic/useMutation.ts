@@ -18,12 +18,15 @@ import {
   BASEINFO_BASIC_KEYS,
   BASEINFO_KEYS,
   BASEINFO_OTHER_KEYS,
+  FAQ_STORE_FIELDS,
   FIELD,
   LAYOUT_FIELD,
+  PAGE_BG_STORE_FIELDS,
   SEO_KEYS,
+  TAG_STORE_FIELDS,
 } from '../constant'
 import S from '../schema'
-import type { TDsbFieldKey } from '../spec'
+import type { TDsbFieldKey, TDsbStoreFieldKey } from '../spec'
 
 type TRet = {
   mutation: (field: string, e: TEditValue) => Promise<void>
@@ -41,10 +44,10 @@ export default function useMutation(): TRet {
 
   const storeRef = useRef(liveDashboard$)
   const { slug: community } = community$
-  const primaryCustomColorField =
-    theme === THEME.DARK ? 'primaryCustomColorDark' : 'primaryCustomColor'
-  const subPrimaryCustomColorField =
-    theme === THEME.DARK ? 'subPrimaryCustomColorDark' : 'subPrimaryCustomColor'
+  const primaryCustomColorField: TDsbStoreFieldKey =
+    theme === THEME.DARK ? FIELD.PRIMARY_CUSTOM_COLOR_DARK : FIELD.PRIMARY_CUSTOM_COLOR
+  const subPrimaryCustomColorField: TDsbStoreFieldKey =
+    theme === THEME.DARK ? FIELD.SUB_PRIMARY_CUSTOM_COLOR_DARK : FIELD.SUB_PRIMARY_CUSTOM_COLOR
 
   // get latest store, for those state not in UI render cycle
   useEffect(() => {
@@ -82,6 +85,34 @@ export default function useMutation(): TRet {
     pageCustomBgDark: Math.round(storeRef.current.pageCustomBgDark),
     pageCustomIntensityDark: Math.round(storeRef.current.pageCustomIntensityDark),
   })
+
+  const resolveSavedFields = (field: TDsbFieldKey): readonly TDsbStoreFieldKey[] => {
+    if (field === FIELD.TAG_INDEX || field === FIELD.TAG) return TAG_STORE_FIELDS
+
+    if (
+      field === FIELD.FAQ_SECTIONS ||
+      includes(field, [FIELD.FAQ_SECTION_ADD, FIELD.FAQ_SECTION_DELETE])
+    ) {
+      return FAQ_STORE_FIELDS
+    }
+
+    if (field === FIELD.BASE_INFO) return BASEINFO_KEYS
+    if (field === FIELD.SEO) return SEO_KEYS as readonly TDsbStoreFieldKey[]
+
+    if (field === FIELD.PRIMARY_COLOR) {
+      return [FIELD.PRIMARY_COLOR, primaryCustomColorField]
+    }
+
+    if (field === FIELD.PAGE_BG || field === FIELD.PAGE_BG_DARK) {
+      return PAGE_BG_STORE_FIELDS
+    }
+
+    if (field === FIELD.SUB_PRIMARY_COLOR) {
+      return [FIELD.SUB_PRIMARY_COLOR, subPrimaryCustomColorField]
+    }
+
+    return field in storeRef.current.original ? [field as TDsbStoreFieldKey] : []
+  }
 
   const applyOriginal = (field: TDsbFieldKey | null): void => {
     if (!field) return
@@ -153,7 +184,14 @@ export default function useMutation(): TRet {
       }
     }
 
-    storeRef.current.commit({ original })
+    const savedFields = resolveSavedFields(field)
+    const touchedFields = { ...storeRef.current.touchedFields }
+
+    for (const savedField of savedFields) {
+      delete touchedFields[savedField]
+    }
+
+    storeRef.current.commit({ original, touchedFields })
   }
 
   const _handleDone = (fieldOverride?: TDsbFieldKey): void => {

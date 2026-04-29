@@ -12,7 +12,7 @@ import type { TLinkItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
-import { EMPTY_LINK_ITEM } from '../../constant'
+import { EMPTY_LINK_ITEM, FIELD } from '../../constant'
 import type { TMoveLinkDir } from '../../spec'
 import useDerived, { type TRet as TDrived } from './useDerived'
 import useUtils from './useUtils'
@@ -73,7 +73,7 @@ export default function useLinks(): TRet {
   const derived = useDerived()
 
   // derived
-  const linksKey = mainTab !== DSB_ROUTE.FOOTER ? 'headerLinks' : 'footerLinks'
+  const linksKey = mainTab !== DSB_ROUTE.FOOTER ? FIELD.HEADER_LINKS : FIELD.FOOTER_LINKS
 
   const updateInGroup = (link: TLinkItem): void => {
     dsb$.commit({ editingLink: link, editingLinkMode: CHANGE_MODE.UPDATE })
@@ -259,11 +259,11 @@ export default function useLinks(): TRet {
   }
 
   const moveAboutLink2Bottom = (): void => {
-    if (linksKey !== 'headerLinks') return
+    if (linksKey !== FIELD.HEADER_LINKS) return
 
     const aboutLink = find(
       (item: TLinkItem) => item.group === MORE_GROUP && item.link === getAboutPath(community),
-      dsb$.headerLinks,
+      dsb$[FIELD.HEADER_LINKS],
     )
 
     if (!aboutLink) return

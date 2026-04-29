@@ -1,6 +1,7 @@
 import type { TEditFunc } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
+import { FIELD } from '../constant'
 import useHelper from './useHelper'
 
 type TRet = {
@@ -20,9 +21,9 @@ export default function useGlowLight(): TRet {
 
   const { glowType, glowFixed, glowOpacity, saving } = dsb$
 
-  const isTouched = isChanged('glowType')
-  const isGrowFixedTouched = isChanged('glowFixed')
-  const isGrowOpacityTouched = isChanged('glowOpacity')
+  const isTouched = isChanged(FIELD.GLOW_TYPE)
+  const isGrowFixedTouched = isChanged(FIELD.GLOW_FIXED)
+  const isGrowOpacityTouched = isChanged(FIELD.GLOW_OPACITY)
 
   return {
     edit,

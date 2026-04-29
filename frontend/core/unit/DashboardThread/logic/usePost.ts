@@ -1,6 +1,7 @@
 import type { TEditFunc, TPostLayout } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
+import { FIELD } from '../constant'
 import useHelper from './useHelper'
 
 type TRet = {
@@ -16,7 +17,7 @@ export default function usePost(): TRet {
 
   const { postLayout, saving } = dsb$
 
-  const isTouched = isChanged('postLayout')
+  const isTouched = isChanged(FIELD.POST_LAYOUT)
 
   return {
     edit,

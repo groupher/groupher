@@ -1,6 +1,7 @@
 import type { TColorName, TEditFunc } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
+import { FIELD } from '../constant'
 import useHelper from './useHelper'
 
 type TRet = {
@@ -18,8 +19,8 @@ export default function useTopbar(): TRet {
 
   const { topbarEnabled, topbarBg, saving } = dsb$
 
-  const isLayoutTouched = isChanged('topbarEnabled')
-  const isBgTouched = isChanged('topbarBg')
+  const isLayoutTouched = isChanged(FIELD.TOPBAR_ENABLED)
+  const isBgTouched = isChanged(FIELD.TOPBAR_BG)
 
   return {
     edit,

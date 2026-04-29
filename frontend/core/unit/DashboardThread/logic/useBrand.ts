@@ -1,6 +1,7 @@
 import type { TBrandLayout, TEditFunc } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
+import { FIELD } from '../constant'
 import useHelper from './useHelper'
 
 type TRet = {
@@ -16,7 +17,7 @@ export default function useBrand(): TRet {
 
   const { brandLayout, saving } = dsb$
 
-  const isTouched = isChanged('brandLayout')
+  const isTouched = isChanged(FIELD.BRAND_LAYOUT)
 
   return {
     edit,

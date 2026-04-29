@@ -21,8 +21,9 @@ export default function useBroadcast(): TRet {
   const dsb$ = useDashboard()
   const { edit, isChanged, onSave } = useHelper()
 
-  const isTouched = isChanged('broadcastLayout') || isChanged('broadcastBg')
-  const isArticleTouched = isChanged('broadcastArticleLayout') || isChanged('broadcastArticleBg')
+  const isTouched = isChanged(FIELD.BROADCAST_LAYOUT) || isChanged(FIELD.BROADCAST_BG)
+  const isArticleTouched =
+    isChanged(FIELD.BROADCAST_ARTICLE_LAYOUT) || isChanged(FIELD.BROADCAST_ARTICLE_BG)
 
   const changeEnable = (v: boolean) => {
     dsb$.commit({ broadcastEnable: v })

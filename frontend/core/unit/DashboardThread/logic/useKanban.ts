@@ -1,9 +1,9 @@
-import { equals, pick } from 'ramda'
+import { pick } from 'ramda'
 
-import { INIT_KANBAN_BOARDS } from '~/const/dashboard'
 import type { TColorName, TEditFunc, TKanbanBoard, TKanbanCardLayout, TKanbanLayout } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
+import { FIELD } from '../constant'
 import useHelper from './useHelper'
 
 type TRet = {
@@ -24,16 +24,11 @@ type TRet = {
 export default function useKanban(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
-  const { kanbanBoards, original } = dsb$
 
-  const currentKanbanBoards = kanbanBoards.length > 0 ? kanbanBoards : INIT_KANBAN_BOARDS
-  const originalKanbanBoards =
-    original.kanbanBoards.length > 0 ? original.kanbanBoards : INIT_KANBAN_BOARDS
-
-  const isKanbanLayoutTouched = isChanged('kanbanLayout')
-  const isKanbanCardLayoutTouched = isChanged('kanbanCardLayout')
-  const isKanbanBoardsTouched = !equals(currentKanbanBoards, originalKanbanBoards)
-  const isKanbanColorsTouched = isChanged('kanbanBgColors')
+  const isKanbanLayoutTouched = isChanged(FIELD.KANBAN_LAYOUT)
+  const isKanbanCardLayoutTouched = isChanged(FIELD.KANBAN_CARD_LAYOUT)
+  const isKanbanBoardsTouched = isChanged(FIELD.KANBAN_BOARDS)
+  const isKanbanColorsTouched = isChanged(FIELD.KANBAN_BG_COLORS)
 
   return {
     edit,

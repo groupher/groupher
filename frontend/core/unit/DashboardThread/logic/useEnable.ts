@@ -21,7 +21,7 @@ export default function useEnable(): TRet {
       [key]: toggle,
     }
 
-    dsb$.commit({ enable: patch })
+    dsb$.editField(FIELD.ENABLE, patch)
     setTimeout(() => onSave(FIELD.ENABLE))
   }
 

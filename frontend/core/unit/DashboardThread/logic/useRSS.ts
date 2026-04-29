@@ -3,6 +3,7 @@ import { pick } from 'ramda'
 import type { TEditFunc } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
+import { FIELD } from '../constant'
 import useHelper from './useHelper'
 
 type TRet = {
@@ -19,7 +20,7 @@ export default function useRSS(): TRet {
   const dsb$ = useDashboard()
   const { edit, isChanged } = useHelper()
 
-  const isTouched = isChanged('rssFeedType') || isChanged('rssFeedCount')
+  const isTouched = isChanged(FIELD.RSS_FEED_TYPE) || isChanged(FIELD.RSS_FEED_COUNT)
 
   const rssOnSave = (): void => {
     dsb$.commit({ saving: true })
