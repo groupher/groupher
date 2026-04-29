@@ -34,17 +34,7 @@ export default function useTouch(): TRet {
   }
 
   const anyChanged = (fields: TDsbFieldKey[]): boolean => fields.some(isChanged)
-  const mapArrayChanged = (key: string): boolean => {
-    if (!isStoreField(key)) {
-      return !equals(dsb$[key], original[key])
-    }
-
-    if (LEGACY_COMPARE_FIELDS.has(key)) {
-      return !equals(dsb$[key], original[key])
-    }
-
-    return Boolean(touchedFields[key])
-  }
+  const mapArrayChanged = (key: string): boolean => isChanged(key as TDsbFieldKey)
 
   return {
     isChanged,

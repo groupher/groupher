@@ -9,6 +9,21 @@ import { EMPTY_PAGED_ARTICLES, EMPTY_PAGED_COMMUNITIES } from '~/const/utils'
 import { DEFAULT_OVERVIEW, FIELDS } from './constant'
 import type { TDsbFieldMap, TDsbStoreFieldKey, TDsbTouchedFields, TInit, TStore } from './spec'
 
+const STORE_FIELD_KEYS = Object.keys(FIELDS) as TDsbStoreFieldKey[]
+
+// Build an original baseline from persisted dashboard fields only.
+// Runtime UI fields such as loading/editing states must not be copied into original.
+const pickStoreFields = (source: Record<TDsbStoreFieldKey, unknown>): TDsbFieldMap => {
+  const fields = {} as TDsbFieldMap
+  const mutableFields = fields as Record<TDsbStoreFieldKey, unknown>
+
+  for (const field of STORE_FIELD_KEYS) {
+    mutableFields[field] = source[field]
+  }
+
+  return fields
+}
+
 export default function DashboardStore(init: TInit = {}): TStore {
   const states = Object.assign(
     {
@@ -63,7 +78,10 @@ export default function DashboardStore(init: TInit = {}): TStore {
       },
       editFields(patch: Partial<TDsbFieldMap>): void {
         for (const field of Object.keys(patch) as TDsbStoreFieldKey[]) {
-          store.editField(field, patch[field])
+          const value = patch[field]
+          if (value !== undefined) {
+            store.editField(field, value)
+          }
         }
       },
       markFieldsToOriginal(fields: readonly TDsbStoreFieldKey[]): void {
@@ -109,6 +127,10 @@ export default function DashboardStore(init: TInit = {}): TStore {
 
   if (!states.kanbanBoards?.length) {
     states.kanbanBoards = INIT_KANBAN_BOARDS
+  }
+
+  if (!init.original) {
+    states.original = pickStoreFields(states)
   }
 
   if (!states.original?.kanbanBoards?.length) {

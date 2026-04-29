@@ -69,6 +69,19 @@ describe('stores/dashboard', () => {
     expect(store.original.kanbanBoards).toEqual(['TODO', 'WIP', 'DONE'])
   })
 
+  it('uses init data as original baseline when original is not provided', () => {
+    const store = setupStore({ title: 'Loaded title' })
+
+    expect(store.original.title).toBe('Loaded title')
+
+    store.editField(TITLE_FIELD, 'Changed title')
+    expect(store.isTouched(TITLE_FIELD)).toBe(true)
+
+    store.rollbackFields([TITLE_FIELD])
+    expect(store.title).toBe('Loaded title')
+    expect(store.isTouched(TITLE_FIELD)).toBe(false)
+  })
+
   it('tracks edited fields and clears them when values return to original', () => {
     const store = setupStore()
 

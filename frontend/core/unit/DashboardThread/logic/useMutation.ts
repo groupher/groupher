@@ -18,9 +18,12 @@ import {
   BASEINFO_BASIC_KEYS,
   BASEINFO_KEYS,
   BASEINFO_OTHER_KEYS,
+  FAQ_STORE_FIELDS,
   FIELD,
   LAYOUT_FIELD,
+  PAGE_BG_STORE_FIELDS,
   SEO_KEYS,
+  TAG_STORE_FIELDS,
 } from '../constant'
 import S from '../schema'
 import type { TDsbFieldKey, TDsbStoreFieldKey } from '../spec'
@@ -29,19 +32,6 @@ type TRet = {
   mutation: (field: string, e: TEditValue) => Promise<void>
   mergeBackEditingTag: () => TTag[]
 }
-
-type StoreFields = readonly TDsbStoreFieldKey[]
-
-const TAG_STORE_FIELDS: StoreFields = [FIELD.TAGS]
-const FAQ_STORE_FIELDS: StoreFields = [FIELD.FAQ_SECTIONS]
-const PAGE_BG_STORE_FIELDS: StoreFields = [
-  FIELD.PAGE_BG,
-  FIELD.PAGE_CUSTOM_BG,
-  FIELD.PAGE_CUSTOM_INTENSITY,
-  FIELD.PAGE_BG_DARK,
-  FIELD.PAGE_CUSTOM_BG_DARK,
-  FIELD.PAGE_CUSTOM_INTENSITY_DARK,
-]
 
 export default function useMutation(): TRet {
   const dashboard$ = useDashboard()

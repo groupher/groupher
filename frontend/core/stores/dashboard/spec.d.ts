@@ -169,7 +169,12 @@ export type TDsbFieldMap = {
   widgetsSize: TSizeSML
 }
 
-export type TInit = { metric?: TMetric; now?: number } & Partial<TDsbFieldMap>
+export type TInit = {
+  metric?: TMetric
+  now?: number
+  initFilled?: boolean
+  original?: TDsbFieldMap
+} & Partial<TDsbFieldMap>
 export type TDsbStoreFieldKey = keyof TDsbFieldMap
 export type TDsbTouchedFields = Partial<Record<TDsbStoreFieldKey, true>>
 

@@ -1,7 +1,7 @@
 import { COLOR } from '~/const/colors'
 import { ONE_LINK_GROUP, TW_CARD } from '~/const/dashboard'
 import { DSB_ALIAS_ROUTE, DSB_DOC_ROUTE, DSB_ROUTE } from '~/const/route'
-import type { TDsbFieldMap } from '~/stores/dashboard/spec'
+import type { TDsbFieldMap, TDsbStoreFieldKey } from '~/stores/dashboard/spec'
 
 import type { TDsbMenu } from './spec'
 
@@ -57,6 +57,8 @@ export const FIELD = {
   ...LAYOUT_FIELD,
   ENABLE: 'enable',
   BASE_INFO: 'baseInfo',
+  CITY: 'city',
+  TECHSTACK: 'techstack',
   MEDIA_REPORTS: 'mediaReports',
   SEO: 'seo',
   SOCIAL_LINKS: 'socialLinks',
@@ -86,6 +88,27 @@ export const FIELD = {
   PAGE_CUSTOM_INTENSITY_DARK: LAYOUT_FIELD.PAGE_CUSTOM_INTENSITY_DARK,
   BROADCAST_ENABLE: 'broadcastEnable',
 } as const
+
+export const TAG_STORE_FIELDS: readonly TDsbStoreFieldKey[] = [FIELD.TAGS]
+export const FAQ_STORE_FIELDS: readonly TDsbStoreFieldKey[] = [FIELD.FAQ_SECTIONS]
+export const PAGE_BG_STORE_FIELDS: readonly TDsbStoreFieldKey[] = [
+  FIELD.PAGE_BG,
+  FIELD.PAGE_CUSTOM_BG,
+  FIELD.PAGE_CUSTOM_INTENSITY,
+  FIELD.PAGE_BG_DARK,
+  FIELD.PAGE_CUSTOM_BG_DARK,
+  FIELD.PAGE_CUSTOM_INTENSITY_DARK,
+]
+export const PRIMARY_COLOR_STORE_FIELDS: readonly TDsbStoreFieldKey[] = [
+  FIELD.PRIMARY_COLOR,
+  FIELD.PRIMARY_CUSTOM_COLOR,
+  FIELD.PRIMARY_CUSTOM_COLOR_DARK,
+]
+export const SUB_PRIMARY_COLOR_STORE_FIELDS: readonly TDsbStoreFieldKey[] = [
+  FIELD.SUB_PRIMARY_COLOR,
+  FIELD.SUB_PRIMARY_CUSTOM_COLOR,
+  FIELD.SUB_PRIMARY_CUSTOM_COLOR_DARK,
+]
 
 export const MENU: TDsbMenu = {
   BASIC: {
@@ -298,7 +321,7 @@ export const BASEINFO_BASIC_KEYS: (keyof TDsbFieldMap)[] = [
   'slug',
 ]
 export const BASEINFO_LOGOS_KEYS: (keyof TDsbFieldMap)[] = ['logo', 'favicon']
-export const BASEINFO_OTHER_KEYS: (keyof TDsbFieldMap)[] = ['city', 'techstack']
+export const BASEINFO_OTHER_KEYS: (keyof TDsbFieldMap)[] = [FIELD.CITY, FIELD.TECHSTACK]
 
 export const BASEINFO_KEYS: (keyof TDsbFieldMap)[] = [
   ...BASEINFO_BASIC_KEYS,

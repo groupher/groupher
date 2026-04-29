@@ -5,32 +5,19 @@ import type { TEditFunc, TEditValue, TNameAlias } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 import { isObject } from '~/validator'
 
-import { BASEINFO_KEYS, FIELD, SEO_KEYS } from '../../constant'
+import {
+  BASEINFO_KEYS,
+  FAQ_STORE_FIELDS,
+  FIELD,
+  PAGE_BG_STORE_FIELDS,
+  PRIMARY_COLOR_STORE_FIELDS,
+  SEO_KEYS,
+  SUB_PRIMARY_COLOR_STORE_FIELDS,
+  TAG_STORE_FIELDS,
+} from '../../constant'
 import type { TDsbFieldKey, TDsbStoreFieldKey } from '../../spec'
 import useMutation from '../useMutation'
 
-type StoreFields = readonly TDsbStoreFieldKey[]
-
-const PRIMARY_COLOR_FIELDS: StoreFields = [
-  FIELD.PRIMARY_COLOR,
-  FIELD.PRIMARY_CUSTOM_COLOR,
-  FIELD.PRIMARY_CUSTOM_COLOR_DARK,
-]
-const PAGE_BG_FIELDS: StoreFields = [
-  FIELD.PAGE_BG,
-  FIELD.PAGE_CUSTOM_BG,
-  FIELD.PAGE_CUSTOM_INTENSITY,
-  FIELD.PAGE_BG_DARK,
-  FIELD.PAGE_CUSTOM_BG_DARK,
-  FIELD.PAGE_CUSTOM_INTENSITY_DARK,
-]
-const SUB_PRIMARY_COLOR_FIELDS: StoreFields = [
-  FIELD.SUB_PRIMARY_COLOR,
-  FIELD.SUB_PRIMARY_CUSTOM_COLOR,
-  FIELD.SUB_PRIMARY_CUSTOM_COLOR_DARK,
-]
-const TAG_STORE_FIELDS: StoreFields = [FIELD.TAGS]
-const FAQ_SECTIONS_FIELDS: StoreFields = [FIELD.FAQ_SECTIONS]
 const NAME_ALIAS_FIELD = FIELD.NAME_ALIAS
 
 export type TRet = {
@@ -72,22 +59,22 @@ export default function useEdit(): TRet {
 
   const rollbackEdit = (field: TDsbFieldKey): void => {
     if (field === FIELD.PRIMARY_COLOR) {
-      dsb$.rollbackFields(PRIMARY_COLOR_FIELDS)
+      dsb$.rollbackFields(PRIMARY_COLOR_STORE_FIELDS)
       return
     }
 
     if (field === FIELD.PAGE_BG) {
-      dsb$.rollbackFields(PAGE_BG_FIELDS)
+      dsb$.rollbackFields(PAGE_BG_STORE_FIELDS)
       return
     }
 
     if (field === FIELD.PAGE_BG_DARK) {
-      dsb$.rollbackFields(PAGE_BG_FIELDS)
+      dsb$.rollbackFields(PAGE_BG_STORE_FIELDS)
       return
     }
 
     if (field === FIELD.SUB_PRIMARY_COLOR) {
-      dsb$.rollbackFields(SUB_PRIMARY_COLOR_FIELDS)
+      dsb$.rollbackFields(SUB_PRIMARY_COLOR_STORE_FIELDS)
       return
     }
 
@@ -112,7 +99,7 @@ export default function useEdit(): TRet {
     }
 
     if (field === FIELD.FAQ_SECTIONS) {
-      dsb$.rollbackFields(FAQ_SECTIONS_FIELDS)
+      dsb$.rollbackFields(FAQ_STORE_FIELDS)
       return
     }
 
