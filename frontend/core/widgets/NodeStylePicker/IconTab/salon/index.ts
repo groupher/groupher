@@ -10,7 +10,7 @@ export default function useSalon() {
     searchBox: cn('row-center rounded-md border px-2.5 h-8', bg('card'), br('divider')),
     searchIcon: cn('size-3.5 mr-2 shrink-0', fill('digest')),
     searchInput: cn(
-      'w-full bg-transparent text-sm outline-none placeholder:text-sm',
+      'w-full bg-transparent text-sm placeholder:text-sm',
       fg('title'),
       '[&::placeholder]:text-digest',
       '[&::-webkit-search-cancel-button]:hidden',

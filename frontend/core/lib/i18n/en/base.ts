@@ -26,6 +26,7 @@ export default {
   icon: 'Icons',
   all_icons: 'All icons',
   no_icon_found: 'No icon found',
+  clear_search: 'Clear search',
   color: 'Colors',
   emoji: 'Emojis',
   'team.member': 'team members',

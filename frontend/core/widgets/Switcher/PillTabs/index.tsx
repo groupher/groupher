@@ -19,6 +19,9 @@ const PillTabs: FC<TProps> = ({
 }) => {
   const s = useSalon({ ...spacing })
   const enabledItems = useMemo(() => items.filter((item) => !item.disabled), [items])
+  const renderActiveKey = enabledItems.some((item) => item.key === activeKey)
+    ? activeKey
+    : enabledItems[0]?.key
 
   const handleChange = (index: number) => {
     const item = items[index]
@@ -32,7 +35,7 @@ const PillTabs: FC<TProps> = ({
 
     const currentKey = items[currentIndex]?.key
     const currentEnabledIndex = enabledItems.findIndex((item) => item.key === currentKey)
-    const fallbackIndex = enabledItems.findIndex((item) => item.key === activeKey)
+    const fallbackIndex = enabledItems.findIndex((item) => item.key === renderActiveKey)
     const startIndex = currentEnabledIndex >= 0 ? currentEnabledIndex : Math.max(fallbackIndex, 0)
     const nextEnabledIndex = (startIndex + direction + enabledItems.length) % enabledItems.length
     const nextItem = enabledItems[nextEnabledIndex]
@@ -81,7 +84,7 @@ const PillTabs: FC<TProps> = ({
             key={item.key}
             item={item}
             index={index}
-            active={item.key === activeKey}
+            active={item.key === renderActiveKey}
             size={size}
             itemClassName={itemClassName}
             onClick={handleChange}

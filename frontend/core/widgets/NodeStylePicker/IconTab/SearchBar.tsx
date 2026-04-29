@@ -27,13 +27,14 @@ const SearchBar: FC<TProps> = ({ value, onChange }) => {
 
   return (
     <div className={s.searchWrapper}>
-      <label className={s.searchBox}>
+      <div className={s.searchBox}>
         <SearchSVG className={s.searchIcon} />
         <input
           type='search'
           value={value}
           onChange={handleChange}
           placeholder={t('search')}
+          aria-label={t('search')}
           autoComplete='off'
           spellCheck={false}
           className={s.searchInput}
@@ -43,12 +44,12 @@ const SearchBar: FC<TProps> = ({ value, onChange }) => {
             type='button'
             className={s.clearButton}
             onClick={handleClear}
-            aria-label='clear search'
+            aria-label={t('clear_search')}
           >
             <CloseLightSVG className={s.clearIcon} />
           </button>
         )}
-      </label>
+      </div>
     </div>
   )
 }
