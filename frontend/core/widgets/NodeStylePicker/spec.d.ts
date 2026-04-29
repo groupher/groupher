@@ -1,22 +1,16 @@
 import type { ReactNode } from 'react'
 
+import type { TNodeStyleIconValue, TNodeStyleValue } from '~/spec'
 import type { TIconName, TIconProvider, TPickerProvider } from '~/widgets/IconHub/icons'
 
 import type { TAB } from './constant'
 
 export type TTab = (typeof TAB)[keyof typeof TAB]
 
-export type TNodeStyleIconValue = {
-  type: 'icon'
-  provider: TIconProvider
-  name: TIconName
-  src: string
-}
-
 export type TNodeStylePickerProps = {
   testid?: string
-  value?: TNodeStyleIconValue | null
-  onChange?: (value: TNodeStyleIconValue) => void
+  value?: TNodeStyleValue | null
+  onChange?: (value: TNodeStyleValue) => void
 }
 
 export type TIconOption = {
@@ -39,8 +33,8 @@ export type TVirtualListProps<T> = {
 
 export type TIconTabProps = {
   panelOpen: boolean
-  selectedValue: TNodeStyleIconValue
-  onChange: (value: TNodeStyleIconValue) => void
+  selectedValue: TNodeStyleValue
+  onChange: (value: TNodeStyleValue) => void
 }
 
 export type TProviderTabsProps = {

@@ -46,6 +46,7 @@
 
   /* popover */
   --color-popover-bg: #fafafa;
+  --color-popover-solid-bg: #fafafa;
 
   /* drawer */
   --color-drawer-mask: oklch(13.5% 0.02 260deg / 0.15);
@@ -219,6 +220,7 @@
 
     /* popover */
     --color-popover-bg: #2e2e2ef0;
+    --color-popover-solid-bg: #3a3939;
 
     /* drawer */
     --color-drawer-mask: rgb(21 21 21 / 72%);

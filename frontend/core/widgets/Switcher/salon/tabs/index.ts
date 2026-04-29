@@ -18,11 +18,16 @@ export default function useSalon({ noAnimation, slipHeight, slipBarPos, ...spaci
     slipBar: cn(
       'row justify-center absolute left-0 opacity-65',
       slipBarPos === 'top' ? 'top-0' : 'bottom-0',
-      noAnimation && 'trans-all-200',
+      !noAnimation && 'trans-all-200',
       slipBarPos === 'top' ? 'border-b border-b-transparent' : 'border-t border-t-transparent',
       `h-${slipHeight}`,
     ),
-    realBar: cn(primary('bg'), vividDark()),
+    realBar: cn(
+      'block h-full rounded-full',
+      !noAnimation && 'trans-all-200',
+      primary('bg'),
+      vividDark(),
+    ),
     getSlipMargin,
   }
 }

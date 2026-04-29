@@ -9,8 +9,8 @@ import SIZE from '~/const/size'
 import { isString } from '~/validator'
 
 import useSalon from '../salon/tabs'
-import TabItem from './TabItem'
 import type { TTabItem, TViewProps } from './spec'
+import TabItem from './TabItem'
 
 const temItems: TTabItem[] = [
   {
@@ -20,13 +20,21 @@ const temItems: TTabItem[] = [
   },
 ]
 
-const getItemKey = (item: TTabItem): string => (isString(item) ? item : item.slug || item.title || '')
+const getItemKey = (item: TTabItem): string =>
+  isString(item) ? item : item.slug || item.title || ''
 
 const getDefaultActiveTabIndex = (items: readonly TTabItem[], activeKey: string): number => {
   if (isEmpty(activeKey)) return 0
 
   const index = findIndex((item) => activeKey === getItemKey(item), items as TTabItem[])
   return index >= 0 ? index : 0
+}
+
+const getTabLabelWidth = (node?: Element): number => {
+  if (!(node instanceof HTMLElement)) return 0
+
+  const labelEl = node.querySelector<HTMLElement>('[data-tab-label="true"]')
+  return labelEl?.offsetWidth ?? node.offsetWidth
 }
 
 const Tabs: FC<TViewProps> = ({
@@ -49,29 +57,74 @@ const Tabs: FC<TViewProps> = ({
 
   const [active, setActive] = useState(defaultActiveTabIndex)
   const [slipWidth, setSlipWidth] = useState(0)
+  const [tabWidths, setTabWidths] = useState<number[]>([])
   const [isInitialRender, setIsInitialRender] = useState(true)
 
   const navRef = useRef<HTMLElement | null>(null)
-  const tabWidthListRef = useRef<number[]>([])
+  const activeIndexRef = useRef(defaultActiveTabIndex)
+
+  useEffect(() => {
+    activeIndexRef.current = active
+  }, [active])
+
+  const measureTabs = useCallback(() => {
+    const navEl = navRef.current
+    if (!navEl) return
+
+    const widths = Array.from(navEl.children).map((node) => (node as HTMLElement).offsetWidth ?? 0)
+    setTabWidths((prev) =>
+      prev.length === widths.length && prev.every((width, index) => width === widths[index])
+        ? prev
+        : widths,
+    )
+
+    const activeNode = navEl.children[activeIndexRef.current] as HTMLElement | undefined
+    const activeWidth = getTabLabelWidth(activeNode)
+
+    if (activeWidth > 0) {
+      setSlipWidth(activeWidth)
+    }
+  }, [])
+
+  useEffect(() => {
+    activeIndexRef.current = defaultActiveTabIndex
+    setActive(defaultActiveTabIndex)
+    measureTabs()
+
+    const timerId = window.setTimeout(() => setIsInitialRender(false), 500)
+    return () => window.clearTimeout(timerId)
+  }, [defaultActiveTabIndex, measureTabs])
 
   useEffect(() => {
     const navEl = navRef.current
-    if (navEl?.childNodes?.[defaultActiveTabIndex]) {
-      const node = navEl.childNodes[defaultActiveTabIndex] as HTMLElement
-      // TabItem 里会保证第一个元素是可测宽 wrapper
-      const first = node.firstElementChild as HTMLElement | null
-      setSlipWidth(first?.offsetWidth ?? 0)
+    if (!navEl) return
+
+    const rafId = window.requestAnimationFrame(() => {
+      measureTabs()
+    })
+
+    const observer = new ResizeObserver(() => {
+      measureTabs()
+    })
+
+    observer.observe(navEl)
+    for (const node of navEl.children) {
+      observer.observe(node)
     }
 
-    setActive(defaultActiveTabIndex)
-
-    // make sure the real bar animation starts only when this component fully loaded
-    const timerId = window.setTimeout(() => setIsInitialRender(false), 500)
-    return () => window.clearTimeout(timerId)
-  }, [defaultActiveTabIndex])
+    return () => {
+      window.cancelAnimationFrame(rafId)
+      observer.disconnect()
+    }
+  }, [items, measureTabs])
 
   const handleNaviItemWidth = useCallback((index: number, width: number) => {
-    tabWidthListRef.current[index] = width
+    setTabWidths((prev) => {
+      if (prev[index] === width) return prev
+      const next = [...prev]
+      next[index] = width
+      return next
+    })
   }, [])
 
   const handleItemClick = useCallback(
@@ -90,8 +143,7 @@ const Tabs: FC<TViewProps> = ({
   )
 
   const translateX = `${
-    tabWidthListRef.current.slice(0, active).reduce((a, b) => a + b, 0) +
-    s.getSlipMargin(size, isMobile) * active
+    tabWidths.slice(0, active).reduce((a, b) => a + b, 0) + s.getSlipMargin(size, isMobile) * active
   }px`
 
   return (
@@ -117,7 +169,7 @@ const Tabs: FC<TViewProps> = ({
             className={s.slipBar}
             style={{
               transform: `translate3d(${translateX}, 0, 0)`,
-              width: `${tabWidthListRef.current[active] ?? 0}px`,
+              width: `${tabWidths[active] ?? 0}px`,
               transition: isInitialRender ? 'none' : undefined,
             }}
           >
