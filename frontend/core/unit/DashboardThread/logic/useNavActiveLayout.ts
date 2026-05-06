@@ -1,4 +1,4 @@
-import { COMMUNITY_LAYOUT } from '~/const/layout'
+import { COMMUNITY_LAYOUT, NAV_ACTIVE_LAYOUT } from '~/const/layout'
 import type { TCommunityLayout, TEditFunc, TNavActiveLayout } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
@@ -19,6 +19,7 @@ export default function useNavActiveLayout(): TRet {
   const { isChanged, edit } = useHelper()
 
   const { navActiveLayout, communityLayout, saving } = dsb$
+  const layout = navActiveLayout ?? NAV_ACTIVE_LAYOUT.TEXT
 
   const isTouched = isChanged(FIELD.NAV_ACTIVE_LAYOUT)
   const isSupported =
@@ -26,7 +27,7 @@ export default function useNavActiveLayout(): TRet {
 
   return {
     edit,
-    layout: navActiveLayout,
+    layout,
     communityLayout,
     isTouched,
     isSupported,

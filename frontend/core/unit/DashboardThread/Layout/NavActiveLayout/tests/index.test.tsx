@@ -68,6 +68,7 @@ describe('<NavActiveLayout />', () => {
   afterEach(() => {
     hookState.layout = NAV_ACTIVE_LAYOUT.TEXT
     hookState.isSupported = true
+    edit.mockClear()
   })
 
   it('renders three layout toggles with active state', () => {

@@ -238,6 +238,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
             gaussBlurDark
             brandLayout
             communityLayout
+            navActiveLayout
             overlayDark
             primaryCustomColorDark
             subPrimaryColor
@@ -282,6 +283,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       updated =
         rule_conn
         |> gq_mutation(@update_layout_query, variables)
+
+      assert get_in(updated, ["dashboard", "layout", "navActiveLayout"]) == "SOFT_BG"
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
