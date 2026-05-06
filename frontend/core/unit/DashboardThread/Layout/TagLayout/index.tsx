@@ -42,23 +42,18 @@ export default function TagLayout() {
               onClick={() => edit(value, FIELD.TAG_LAYOUT)}
             >
               <div className={cnMerge(s.block, isActive && s.blockActive)}>
-                {value === TAG_LAYOUT.HASH ? (
-                  <>
-                    <HashTagSVG className={cnMerge(s.hashIcon, 'left-8')} />
-                    <div className={cnMerge(s.bar, 'left-16 w-10 h-1.5')} />
-
-                    <HashTagSVG className={cnMerge(s.hashIcon, 'left-36')} />
-                    <div className={cnMerge(s.bar, 'right-10 w-10 h-1.5')} />
-                  </>
-                ) : (
-                  <>
-                    <div className={cnMerge(s.circle, 'left-10')} />
-                    <div className={cnMerge(s.bar, 'left-16 w-10 h-1.5')} />
-
-                    <div className={cnMerge(s.circle, 'right-24')} />
-                    <div className={cnMerge(s.bar, 'right-11 w-10 h-1.5')} />
-                  </>
-                )}
+                <div className={s.previewList}>
+                  {Array.from({ length: 2 }).map((_, index) => (
+                    <div key={`${value}-${index}`} className={s.previewItem}>
+                      {value === TAG_LAYOUT.HASH ? (
+                        <HashTagSVG className={s.hashIcon} />
+                      ) : (
+                        <div className={s.circle} />
+                      )}
+                      <div className={s.bar} />
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <CheckLabel title={t(titleKey)} active={isActive} top={3} />

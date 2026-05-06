@@ -798,6 +798,7 @@ type RootMutationType {
     avatarLayout: DsbAvatarLayout
     brandLayout: DsbBrandLayout
     communityLayout: DsbCommunityLayout
+    navActiveLayout: DsbNavActiveLayout
     topbarEnabled: Boolean
     topbarBg: RainbowColor
     topbarBgCustomColor: String
@@ -1121,6 +1122,7 @@ type DashboardLayout {
   avatarLayout: DsbAvatarLayout
   brandLayout: DsbBrandLayout
   communityLayout: DsbCommunityLayout
+  navActiveLayout: DsbNavActiveLayout
   topbarEnabled: Boolean
   topbarBg: RainbowColor
   topbarBgCustomColor: String
@@ -1773,6 +1775,12 @@ enum DsbCommunityLayout {
   CLASSIC
   HERO
   SIDEBAR
+}
+
+enum DsbNavActiveLayout {
+  TEXT
+  GRAY_BG
+  SOFT_BG
 }
 
 enum DsbBroadcastLayout {

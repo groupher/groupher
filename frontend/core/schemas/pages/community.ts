@@ -97,6 +97,7 @@ export const community = `
           avatarLayout
           brandLayout
           communityLayout
+          navActiveLayout
           topbarEnabled
           topbarBg
           topbarBgCustomColor

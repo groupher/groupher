@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { FC } from 'react'
 
 import useHeaderLinks from '~/hooks/useHeaderLinks'
+import useNavActiveLayoutSalon from '~/hooks/useNavActiveLayoutSalon'
 import usePublicThreads from '~/hooks/usePublicThreads'
 import useViewingThread from '~/hooks/useViewingThread'
 import type { TSpace } from '~/spec'
@@ -9,12 +10,13 @@ import useCommunity from '~/stores/community/hooks'
 import CustomHeaderLinks from '~/unit/HeaderLinks'
 import { path2Thread } from '~/utils/thread'
 
-import useSalon from '../salon/classic_layout/thread_tab'
+import useSalon, { cn } from '../salon/classic_layout/thread_tab'
 
 type TProps = TSpace
 
 const ThreadTab: FC<TProps> = ({ ...spacing }) => {
   const s = useSalon({ ...spacing })
+  const activeStyle = useNavActiveLayoutSalon()
 
   const { slug: community } = useCommunity()
   const { getCustomLinks } = useHeaderLinks()
@@ -30,7 +32,7 @@ const ThreadTab: FC<TProps> = ({ ...spacing }) => {
         return (
           <Link
             key={item.slug}
-            className={active ? s.titleActive : s.title}
+            className={cn(s.title, active && activeStyle.item)}
             href={`/${community}/${item.slug}`}
             prefetch={false}
           >

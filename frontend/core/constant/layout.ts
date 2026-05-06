@@ -40,6 +40,12 @@ export const COMMUNITY_LAYOUT = {
   SIDEBAR: 'SIDEBAR',
 } as const
 
+export const NAV_ACTIVE_LAYOUT = {
+  TEXT: 'TEXT',
+  GRAY_BG: 'GRAY_BG',
+  SOFT_BG: 'SOFT_BG',
+} as const
+
 export const BROADCAST_LAYOUT = {
   DEFAULT: 'DEFAULT',
   CENTER: 'CENTER',

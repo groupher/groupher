@@ -36,6 +36,7 @@ export const LAYOUT_FIELD = {
   INLINE_TAG_LAYOUT: 'inlineTagLayout',
   AVATAR_LAYOUT: 'avatarLayout',
   COMMUNITY_LAYOUT: 'communityLayout',
+  NAV_ACTIVE_LAYOUT: 'navActiveLayout',
   HEADER_LAYOUT: 'headerLayout',
   FOOTER_LAYOUT: 'footerLayout',
   TOPBAR_ENABLED: 'topbarEnabled',

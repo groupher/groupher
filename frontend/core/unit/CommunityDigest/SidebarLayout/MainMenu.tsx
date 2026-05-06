@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import useHeaderLinks from '~/hooks/useHeaderLinks'
+import useNavActiveLayoutSalon from '~/hooks/useNavActiveLayoutSalon'
 import usePublicThreads from '~/hooks/usePublicThreads'
 import useViewingThread from '~/hooks/useViewingThread'
 import useCommunity from '~/stores/community/hooks'
@@ -12,6 +13,7 @@ import ThreadIcon from './ThreadIcon'
 
 export default function MainMenu() {
   const s = useSalon()
+  const activeStyle = useNavActiveLayoutSalon()
 
   const { slug: community } = useCommunity()
 
@@ -27,9 +29,13 @@ export default function MainMenu() {
         const active = activeThread === path2Thread(thread.slug)
 
         return (
-          <Link className={s.menuItem} key={thread.slug} href={`/${community}/${thread.slug}`}>
+          <Link
+            className={cn(s.menuItem, active && activeStyle.item)}
+            key={thread.slug}
+            href={`/${community}/${thread.slug}`}
+          >
             <ThreadIcon thread={path2Thread(thread.slug)} active={active} />
-            <div className={cn(s.menuTitle, active && s.titleActive)}>{thread.title}</div>
+            <div className={cn(s.menuTitle, active && activeStyle.text)}>{thread.title}</div>
           </Link>
         )
       })}

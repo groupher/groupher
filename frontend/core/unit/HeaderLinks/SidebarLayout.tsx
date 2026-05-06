@@ -4,6 +4,7 @@ import { type FC, Fragment, useState } from 'react'
 
 import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
 import { groupByKey, sortByGroupIndex } from '~/helper'
+import useNavActiveLayoutSalon from '~/hooks/useNavActiveLayoutSalon'
 import ArrowSVG from '~/icons/ArrowSimple'
 import LinkSVG from '~/icons/Link'
 import MoreSVG from '~/icons/menu/MoreL'
@@ -16,9 +17,12 @@ import type { TLinkGroup, TProps } from './spec'
 
 const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath }) => {
   const s = useSalon()
+  const activeStyle = useNavActiveLayoutSalon()
 
   const [menuOpen, setMenuOpen] = useState(false)
   const { slug } = useCommunity()
+  const isLinkActive = (link: string) => `/${slug}/${activePath}` === link
+  const isGroupActive = links.some((item) => isLinkActive(item.link))
 
   if (!showMoreFold) return null
 
@@ -27,12 +31,12 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath
       content={
         <div className={s.menuPanel}>
           {links.map((item: TLinkItem) => {
-            const active = `/${slug}/${activePath}` === item.link
+            const active = isLinkActive(item.link)
 
             return (
               <Link
                 key={item.index}
-                className={cn(s.menuItem, active && s.menuItemActive)}
+                className={cn(s.menuItem, active && activeStyle.item)}
                 href={item.link}
               >
                 {item.title}
@@ -48,9 +52,12 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath
       offset={[-14, 5]}
     >
       {/* @ts-ignore */}
-      <div className={cn(s.groupItem, menuOpen && s.groupItemActive)}>
-        <MoreSVG className={s.icon} />
-        {groupTitle === MORE_GROUP ? '更多' : groupTitle} <ArrowSVG className={s.arrowIcon} />
+      <div className={cn(s.groupItem, (menuOpen || isGroupActive) && activeStyle.item)}>
+        <MoreSVG className={cn(s.icon, (menuOpen || isGroupActive) && activeStyle.icon)} />
+        {groupTitle === MORE_GROUP ? '更多' : groupTitle}{' '}
+        <ArrowSVG
+          className={cn(s.arrowIcon, (menuOpen || isGroupActive) && activeStyle.icon)}
+        />
       </div>
     </Tooltip>
   )
@@ -58,6 +65,8 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath
 
 const CustomHeaderLinks: FC<TProps> = ({ links, activePath = '' }) => {
   const s = useSalon()
+  const activeStyle = useNavActiveLayoutSalon()
+  const { slug } = useCommunity()
 
   const _links = filter((item) => item.title !== '', links)
 
@@ -73,8 +82,20 @@ const CustomHeaderLinks: FC<TProps> = ({ links, activePath = '' }) => {
         return (
           <Fragment key={groupTitle}>
             {startsWith(ONE_LINK_GROUP, groupTitle) ? (
-              <Link className={s.linkItem} href={curGroupLinks[0].link}>
-                <LinkSVG className={cn(s.icon, 'size-4')} />
+              <Link
+                className={cn(
+                  s.linkItem,
+                  `/${slug}/${activePath}` === curGroupLinks[0].link && activeStyle.item,
+                )}
+                href={curGroupLinks[0].link}
+              >
+                <LinkSVG
+                  className={cn(
+                    s.icon,
+                    'size-4',
+                    `/${slug}/${activePath}` === curGroupLinks[0].link && activeStyle.icon,
+                  )}
+                />
                 {curGroupLinks[0].title}
               </Link>
             ) : (

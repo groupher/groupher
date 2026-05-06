@@ -7,6 +7,7 @@ import {
   COMMUNITY_LAYOUT,
   KANBAN_CARD_LAYOUT,
   KANBAN_LAYOUT,
+  NAV_ACTIVE_LAYOUT,
   POST_LAYOUT,
   TAG_LAYOUT,
 } from '~/const/layout'
@@ -22,6 +23,7 @@ describe('useLayout', () => {
         communityLayout: COMMUNITY_LAYOUT.CLASSIC,
         brandLayout: BRAND_LAYOUT.BOTH,
         tagLayout: TAG_LAYOUT.HASH,
+        navActiveLayout: NAV_ACTIVE_LAYOUT.SOFT_BG,
         postLayout: POST_LAYOUT.QUORA,
         kanbanLayout: KANBAN_LAYOUT.CLASSIC,
         kanbanCardLayout: KANBAN_CARD_LAYOUT.SIMPLE,
@@ -32,6 +34,7 @@ describe('useLayout', () => {
 
     const { result } = renderHook(() => useLayout(), { wrapper })
     expect(result.current.avatarLayout).toBe(AVATAR_LAYOUT.SQUARE)
+    expect(result.current.navActiveLayout).toBe(NAV_ACTIVE_LAYOUT.SOFT_BG)
     expect(result.current.postLayout).toBe(POST_LAYOUT.QUORA)
     expect(result.current.kanbanBoards).toEqual([
       KANBAN_BOARD.TODO,
