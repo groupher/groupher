@@ -21,6 +21,7 @@ import type {
   TLocale,
   TMediaReport,
   TModerator,
+  TNavActiveLayout,
   TNameAlias,
   TOverview,
   TPagedArticles,
@@ -113,6 +114,7 @@ export type TDsbFieldMap = {
   avatarLayout: TAvatarLayout
   brandLayout: TBrandLayout
   communityLayout: TCommunityLayout
+  navActiveLayout: TNavActiveLayout
   topbarEnabled: boolean
   topbarBg: TColorName
   topbarBgCustomColor: string

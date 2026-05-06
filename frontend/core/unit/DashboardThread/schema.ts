@@ -185,6 +185,7 @@ const updateDashboardLayout = gql`
     $tagLayout: DsbTagLayout
     $inlineTagLayout: DsbInlineTagLayout
     $avatarLayout: DsbAvatarLayout
+    $navActiveLayout: DsbNavActiveLayout
     $broadcastEnable: Boolean
     $kanbanBgColors: [RainbowColor]
     $broadcastBg: RainbowColor
@@ -229,6 +230,7 @@ const updateDashboardLayout = gql`
       tagLayout: $tagLayout
       inlineTagLayout: $inlineTagLayout
       avatarLayout: $avatarLayout
+      navActiveLayout: $navActiveLayout
       broadcastEnable: $broadcastEnable
       broadcastBg: $broadcastBg
       broadcastCustomBg: $broadcastCustomBg

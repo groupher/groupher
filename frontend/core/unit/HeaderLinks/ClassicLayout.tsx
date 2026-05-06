@@ -3,6 +3,7 @@ import { startsWith } from 'ramda'
 import { type FC, Fragment, useState } from 'react'
 
 import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
+import useNavActiveLayoutSalon from '~/hooks/useNavActiveLayoutSalon'
 import useHeaderLinks from '~/hooks/useHeaderLinks'
 import ArrowSVG from '~/icons/ArrowSimple'
 import type { TLinkItem } from '~/spec'
@@ -14,9 +15,12 @@ import type { TLinkGroup, TProps } from './spec'
 
 const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath }) => {
   const s = useSalon()
+  const activeStyle = useNavActiveLayoutSalon()
 
   const [menuOpen, setMenuOpen] = useState(false)
   const { slug } = useCommunity()
+  const isLinkActive = (link: string) => `/${slug}/${activePath}` === link
+  const isGroupActive = links.some((item) => isLinkActive(item.link))
 
   if (!showMoreFold) return null
 
@@ -26,13 +30,13 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath
       content={
         <div className={s.menuPanel}>
           {links.map((item: TLinkItem) => {
-            const active = `/${slug}/${activePath}` === item.link
+            const active = isLinkActive(item.link)
 
             return (
               <Link
                 key={item.index}
                 href={item.link}
-                className={cn(s.menuLink, active && s.menuLinkActive)}
+                className={cn(s.menuLink, active && activeStyle.item)}
               >
                 {item.title}
               </Link>
@@ -47,8 +51,9 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath
       offset={[8, 5]}
     >
       {/* @ts-ignore */}
-      <div className={cn(s.link, s.groupItem, menuOpen && s.linkActive)}>
-        {groupTitle === MORE_GROUP ? '更多' : groupTitle} <ArrowSVG className={s.arrowIcon} />
+      <div className={cn(s.link, s.groupItem, (menuOpen || isGroupActive) && activeStyle.item)}>
+        {groupTitle === MORE_GROUP ? '更多' : groupTitle}{' '}
+        <ArrowSVG className={cn(s.arrowIcon, (menuOpen || isGroupActive) && activeStyle.icon)} />
       </div>
     </Tooltip>
   )
@@ -56,6 +61,8 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath
 
 const CustomHeaderLinks: FC<TProps> = ({ activePath = '' }) => {
   const s = useSalon()
+  const activeStyle = useNavActiveLayoutSalon()
+  const { slug } = useCommunity()
 
   const { getGroupedLinks } = useHeaderLinks()
   const { groupedLinks, groupKeys } = getGroupedLinks()
@@ -70,7 +77,13 @@ const CustomHeaderLinks: FC<TProps> = ({ activePath = '' }) => {
         return (
           <Fragment key={groupTitle}>
             {startsWith(ONE_LINK_GROUP, groupTitle) ? (
-              <Link className={s.link} href={curGroupLinks[0].link}>
+              <Link
+                className={cn(
+                  s.link,
+                  `/${slug}/${activePath}` === curGroupLinks[0].link && activeStyle.item,
+                )}
+                href={curGroupLinks[0].link}
+              >
                 {curGroupLinks[0].title}
               </Link>
             ) : (

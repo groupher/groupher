@@ -12,6 +12,7 @@ import type {
   INLINE_TAG_LAYOUT,
   KANBAN_CARD_LAYOUT,
   KANBAN_LAYOUT,
+  NAV_ACTIVE_LAYOUT,
   POST_LAYOUT,
   RSS_TYPE,
   TAG_LAYOUT,
@@ -32,6 +33,7 @@ export type TInlineTagLayout = TConstValues<typeof INLINE_TAG_LAYOUT>
 export type TAvatarLayout = TConstValues<typeof AVATAR_LAYOUT>
 export type TBrandLayout = TConstValues<typeof BRAND_LAYOUT>
 export type TCommunityLayout = TConstValues<typeof COMMUNITY_LAYOUT>
+export type TNavActiveLayout = TConstValues<typeof NAV_ACTIVE_LAYOUT>
 
 export type TPostLayout = TConstValues<typeof POST_LAYOUT>
 export type TKanbanLayout = TConstValues<typeof KANBAN_LAYOUT>
@@ -85,6 +87,7 @@ export type TDsb = {
     inlineTagLayout: TInlineTagLayout
     avatarLayout: TAvatarLayout
     communityLayout: TCommunityLayout
+    navActiveLayout: TNavActiveLayout
     glowType: string
     glowFixed: boolean
     glowOpacity: string

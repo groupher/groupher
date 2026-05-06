@@ -9,6 +9,7 @@ import type {
   TKanbanBoard,
   TKanbanCardLayout,
   TKanbanLayout,
+  TNavActiveLayout,
   TPostLayout,
   TTagLayout,
 } from '~/spec'
@@ -20,6 +21,7 @@ type TRet = {
   brandLayout: TBrandLayout
   tagLayout: TTagLayout
   inlineTagLayout: TInlineTagLayout
+  navActiveLayout: TNavActiveLayout
   postLayout: TPostLayout
   kanbanLayout: TKanbanLayout
   kanbanCardLayout: TKanbanCardLayout
@@ -37,6 +39,7 @@ export default function UseLayout(): TRet {
       'brandLayout',
       'tagLayout',
       'inlineTagLayout',
+      'navActiveLayout',
       'postLayout',
       'kanbanLayout',
       'kanbanCardLayout',
