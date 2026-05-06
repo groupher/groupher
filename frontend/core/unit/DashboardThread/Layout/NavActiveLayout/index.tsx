@@ -30,7 +30,11 @@ const PREVIEW_KEYS = [
   'dsb.layout.nav_active.preview.doc',
 ] as const
 
-function Preview({ layout }: { layout: (typeof NAV_ACTIVE_LAYOUT)[keyof typeof NAV_ACTIVE_LAYOUT] }) {
+function Preview({
+  layout,
+}: {
+  layout: (typeof NAV_ACTIVE_LAYOUT)[keyof typeof NAV_ACTIVE_LAYOUT]
+}) {
   const s = useSalon()
   const { t } = useTrans()
   const activeStyle = useNavActiveLayoutSalon({ layout })
