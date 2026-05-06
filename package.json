@@ -202,8 +202,11 @@
     "vitest": "^4.1.5"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,md}": "oxfmt -c frontend/core/config/oxfmt.json",
-    "*.{js,jsx,ts,tsx}": "oxlint -c frontend/core/config/oxlint.json --fix --threads=1",
+    "*.{json,md}": "oxfmt -c frontend/core/config/oxfmt.json",
+    "frontend/**/*.{js,jsx,ts,tsx}": [
+      "oxfmt -c frontend/core/config/oxfmt.json",
+      "oxlint -c frontend/core/config/oxlint.json --fix --threads=1"
+    ],
     "frontend/core/**/*.{ts,tsx}": "tsc-files --noEmit --project frontend/core/tsconfig.app.json",
     "frontend/main/**/*.{ts,tsx}": "tsc-files --noEmit --project frontend/main/tsconfig.json",
     "frontend/dashboard/**/*.{ts,tsx}": "tsc-files --noEmit --project frontend/dashboard/tsconfig.json",
