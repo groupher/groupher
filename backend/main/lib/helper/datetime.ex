@@ -63,7 +63,7 @@ defmodule Helper.Datetime do
   def today, do: Date.utc_today()
 
   @doc """
-  Converts a date to midnight UTC, or returns an existing UTC datetime unchanged.
+  Converts a date to midnight UTC, or normalizes an existing datetime to UTC.
 
   ## Examples
 
@@ -74,7 +74,7 @@ defmodule Helper.Datetime do
   @spec to_datetime(Date.t()) :: DateTime.t()
   @spec to_datetime(DateTime.t()) :: DateTime.t()
   def to_datetime(%Date{} = date), do: DateTime.new!(date, ~T[00:00:00], @utc)
-  def to_datetime(%DateTime{} = datetime), do: datetime
+  def to_datetime(%DateTime{} = datetime), do: to_utc(datetime)
 
   @doc """
   Converts a datetime to its UTC date, or returns an existing date unchanged.
@@ -87,7 +87,7 @@ defmodule Helper.Datetime do
   """
   @spec to_date(date_or_datetime()) :: Date.t()
   def to_date(%Date{} = date), do: date
-  def to_date(%DateTime{} = datetime), do: DateTime.to_date(datetime)
+  def to_date(%DateTime{} = datetime), do: datetime |> to_utc() |> DateTime.to_date()
 
   @doc """
   Shifts a date or datetime by calendar units.
@@ -254,6 +254,18 @@ defmodule Helper.Datetime do
       {:seconds, value} -> {:second, value}
       {:microseconds, value} -> {:microsecond, value}
       {unit, value} -> {unit, value}
+    end)
+  end
+
+  defp to_utc(%DateTime{} = datetime) do
+    {_, precision} = datetime.microsecond
+
+    datetime
+    |> DateTime.to_unix(:microsecond)
+    |> DateTime.from_unix!(:microsecond)
+    |> then(fn utc_datetime ->
+      {microsecond, _} = utc_datetime.microsecond
+      %{utc_datetime | microsecond: {microsecond, precision}}
     end)
   end
 end
