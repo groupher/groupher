@@ -96,7 +96,7 @@ defmodule GroupherServer.Test.Mutation.Statistics do
       assert {:ok, _} = ORM.find_by(UserContribute, user_id: user.id)
 
       assert ["count", "date"] == results |> Map.keys()
-      assert results["date"] == Timex.today() |> Date.to_iso8601()
+      assert results["date"] == Datetime.today() |> Date.to_iso8601()
       assert results["count"] == 1
     end
 
@@ -105,7 +105,7 @@ defmodule GroupherServer.Test.Mutation.Statistics do
       guest_conn |> gq_mutation(@query, variables)
       results = guest_conn |> gq_mutation(@query, variables)
       assert ["count", "date"] == results |> Map.keys()
-      assert results["date"] == Timex.today() |> Date.to_iso8601()
+      assert results["date"] == Datetime.today() |> Date.to_iso8601()
       assert results["count"] == 2
     end
   end

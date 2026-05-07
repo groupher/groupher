@@ -42,7 +42,6 @@ defmodule GroupherServer.Mixfile do
         :runtime_tools,
         :faker,
         :scrivener_ecto,
-        :timex,
         :sentry
       ]
     ]
@@ -69,7 +68,7 @@ defmodule GroupherServer.Mixfile do
       {:phoenix_ecto, "~> 4.7.0"},
       {:postgrex, "~> 0.22.0"},
       # for i18n usage
-      {:gettext, "~> 0.26"},
+      {:gettext, "~> 1.0"},
       {:plug_cowboy, "~> 2.8.0"},
       {:plug, "~> 1.19"},
       # GraphQl tool
@@ -80,7 +79,7 @@ defmodule GroupherServer.Mixfile do
       {:comeonin, "~> 5.5"},
       # CORS
       {:corsica, "~> 2.1.3"},
-      {:tesla, "~> 1.16.0"},
+      {:tesla, "~> 1.17"},
       # optional, but recommended adapter
       {:hackney, "~> 1.25"},
       # for fake data in test env
@@ -89,7 +88,6 @@ defmodule GroupherServer.Mixfile do
       # enhanced cursor based pagination
       {:quarto, "~> 1.1.7"},
       {:guardian, "~> 2.4.0"},
-      {:timex, "~> 3.7.13"},
       {:dataloader, "~> 2.0.2"},
       {:mix_test_watch, "~> 1.4.0", only: :dev, runtime: false},
       {:ex_unit_notifier, "~> 1.3", only: :test},
@@ -118,10 +116,8 @@ defmodule GroupherServer.Mixfile do
       # rss feed parser
       {:fiet, "~> 0.3"},
       {:ogp, "~> 1.1.2"},
-      {:ex_aliyun_openapi, "0.9.0"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.10"},
-      {:aliyun_oss, "~> 3.3.0"},
       {:esbuild, "~> 0.10", runtime: Mix.env() == :mock},
       {:tailwind, "~> 0.4", runtime: Mix.env() == :mock},
       {:heroicons,

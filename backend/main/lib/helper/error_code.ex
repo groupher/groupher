@@ -38,7 +38,6 @@ defmodule Helper.ErrorCode do
   def ecode(:bill_action), do: @default_base + 13
   def ecode(:editor_data_parse), do: @default_base + 14
   def ecode(:community_exist), do: @default_base + 15
-  def ecode(:oss_sts_token), do: @default_base + 16
   def ecode(:oauth_trust_code), do: @default_base + 17
   def ecode(:oauth_unlink), do: @default_base + 18
   # throttle

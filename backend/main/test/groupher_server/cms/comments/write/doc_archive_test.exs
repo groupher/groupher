@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocArchive do
   use GroupherServer.TestMate
 
   @archive_threshold get_config(:article, :archive_threshold)
-  @comment_archive_threshold Timex.shift(@now, @archive_threshold[:default])
+  @comment_archive_threshold Datetime.shift(@now, @archive_threshold[:default])
 
   setup do
     {community, doc, _, user} = mock_article(:doc)

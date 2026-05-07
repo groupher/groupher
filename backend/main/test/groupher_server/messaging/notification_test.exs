@@ -33,7 +33,8 @@ defmodule GroupherServer.Test.Messaging.Notification do
   # 将插入时间模拟到 @notify_group_interval_hour 之前, 防止折叠
   defp move_insert_at_long_ago(notify) do
     before_inserted_at =
-      Timex.shift(Timex.now(), hours: -@notify_group_interval_hour, minutes: -1)
+      Datetime.now()
+      |> Datetime.shift(hours: -@notify_group_interval_hour, minutes: -1)
       |> DateTime.truncate(:second)
 
     notify
@@ -382,7 +383,9 @@ defmodule GroupherServer.Test.Messaging.Notification do
       {:ok, result} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
       assert result.total_count == 0
 
-      {:ok, result} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10, read: true})
+      {:ok, result} =
+        Messaging.paged_messages(:notification, user, %{page: 1, size: 10, read: true})
+
       assert result.total_count == 2
     end
 
@@ -400,7 +403,9 @@ defmodule GroupherServer.Test.Messaging.Notification do
       {:ok, result} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10})
       assert result.total_count == 0
 
-      {:ok, result} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10, read: true})
+      {:ok, result} =
+        Messaging.paged_messages(:notification, user, %{page: 1, size: 10, read: true})
+
       assert result.total_count == 2
     end
   end

@@ -133,7 +133,7 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
          ~m(community user cur_date)a do
       active_period_days = @active_period[:doc] || @active_period[:default]
       # inserted_at =
-      #   Timex.shift(Timex.now(), days: -(active_period_days - 1)) |> Timex.to_datetime()
+      #   Datetime.shift(Datetime.now(), days: -(active_period_days - 1)) |> Datetime.to_datetime()
 
       doc_attrs = mock_attrs(:doc)
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
@@ -149,9 +149,9 @@ defmodule GroupherServer.Test.CMS.Comments.DocComment do
 
       #####
       inserted_at =
-        Timex.shift(Timex.now(), days: -(active_period_days + 1))
+        Datetime.shift(Datetime.now(), days: -(active_period_days + 1))
         |> DateTime.truncate(:second)
-        |> Timex.to_datetime()
+        |> Datetime.to_datetime()
 
       doc_attrs = mock_attrs(:doc)
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)

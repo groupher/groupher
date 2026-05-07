@@ -35,12 +35,3 @@ config :groupher_server, :oauth,
   oauth_trust_code: "fWrFuWs1j+TGcrok7XHkwDLiOVTGOnUR3JWF3cbcu2Tcnbj7TvSS1mMVeekvjgNQ"
 
 config :groupher_server, Helper.Converter.Content, provider: Helper.Converter.Content.Mock
-
-config :ex_aliyun_openapi, :sts,
-  access_key_id: System.get_env("ALI_OSS_STS_AK"),
-  access_key_secret: System.get_env("_ALIOSS_STS_AS")
-
-config :groupher_server, Helper.OSS,
-  endpoint: "oss-cn-shanghai.aliyuncs.com",
-  access_key_id: System.get_env("ALI_OSS_STS_AK"),
-  access_key_secret: System.get_env("_ALIOSS_STS_AS")

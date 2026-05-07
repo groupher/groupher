@@ -193,7 +193,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
          ~m(community user cur_date)a do
       active_period_days = @active_period[:changelog] || @active_period[:default]
       # inserted_at =
-      #   Timex.shift(Timex.now(), days: -(active_period_days - 1)) |> Timex.to_datetime()
+      #   Datetime.shift(Datetime.now(), days: -(active_period_days - 1)) |> Datetime.to_datetime()
 
       changelog_attrs = mock_attrs(:changelog)
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
@@ -215,9 +215,9 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
 
       #####
       inserted_at =
-        Timex.shift(Timex.now(), days: -(active_period_days + 1))
+        Datetime.shift(Datetime.now(), days: -(active_period_days + 1))
         |> DateTime.truncate(:second)
-        |> Timex.to_datetime()
+        |> Datetime.to_datetime()
 
       changelog_attrs = mock_attrs(:changelog)
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)

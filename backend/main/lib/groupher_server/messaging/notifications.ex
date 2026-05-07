@@ -13,7 +13,7 @@ defmodule GroupherServer.Messaging.Notifications do
   alias Accounts.Model.User
   alias GroupherServer.CMS.Model.Embeds
   alias GroupherServer.Messaging.Model.Notification
-  alias Helper.{Multi, ORM}
+  alias Helper.{Datetime, Multi, ORM}
 
   @notify_actions get_config(:general, :nofity_actions)
   @notify_group_interval_hour get_config(:general, :notify_group_interval_hour)
@@ -241,7 +241,7 @@ defmodule GroupherServer.Messaging.Notifications do
   end
 
   defp interval_threshold_time do
-    Timex.shift(Timex.now(), hours: -@notify_group_interval_hour)
+    Datetime.now() |> Datetime.shift(hours: -@notify_group_interval_hour)
   end
 
   defp normalize_action_attr(%{action: action} = attrs) when is_atom(action) do

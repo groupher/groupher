@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Comments.Write do
   alias CMS.Helper.ArticleEnums
   alias CMS.Model.{Comment, Community, PinnedComment, Post}
 
-  alias Helper.{ContentPipeline, Multi, Later, ORM, T}
+  alias Helper.{ContentPipeline, Datetime, Multi, Later, ORM, T}
 
   @delete_hint Comment.delete_hint()
 
@@ -50,7 +50,9 @@ defmodule GroupherServer.CMS.Comments.Write do
       |> Multi.run(:set_question_flag_ifneed, fn _, %{create_comment: comment} ->
         set_question_flag_ifneed(article, comment)
       end)
-      |> Multi.run(:add_participator, fn _, _ -> CommentHelper.add_participant_to_article(article, user) end)
+      |> Multi.run(:add_participator, fn _, _ ->
+        CommentHelper.add_participant_to_article(article, user)
+      end)
       |> Multi.run(:update_article_active_timestamp, fn _, %{create_comment: comment} ->
         case comment.author_id == article.author.user.id do
           true -> {:ok, :pass}
@@ -73,8 +75,6 @@ defmodule GroupherServer.CMS.Comments.Write do
       false -> raise_error(:article_comments_locked, "this article is forbid comment")
     end
   end
-
-
 
   @spec update(Comment.t(), String.t()) :: T.domain_res(Comment.t())
   def update(%{is_archived: true}, _body),
@@ -196,9 +196,9 @@ defmodule GroupherServer.CMS.Comments.Write do
 
   @spec archive_comments() :: T.domain_res(term())
   def archive_comments do
-    now = Timex.now() |> DateTime.truncate(:second)
+    now = Datetime.now(:second)
     threshold = @archive_threshold[:default]
-    archive_threshold = Timex.shift(now, threshold)
+    archive_threshold = Datetime.shift(now, threshold)
 
     Comment
     |> where([c], c.inserted_at < ^archive_threshold)

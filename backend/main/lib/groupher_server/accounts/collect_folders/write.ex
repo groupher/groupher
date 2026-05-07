@@ -10,14 +10,14 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.{CollectFolder, Embeds, User}
-  alias Helper.{Multi, ORM, T}
+  alias Helper.{Datetime, Multi, ORM, T}
 
   @default_meta Embeds.CollectFolderMeta.default_meta()
   @spec create(map(), User.t()) :: T.domain_res(CollectFolder.t())
   def create(%{title: title} = attrs, %User{id: user_id}) do
     case ORM.find_by(CollectFolder, ~m(user_id title)a) do
       {:error, _} ->
-        last_updated = Timex.today() |> Timex.to_datetime()
+        last_updated = Datetime.today() |> Datetime.to_datetime()
 
         args =
           Map.merge(
@@ -35,7 +35,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   @spec update(T.id(), map()) :: T.domain_res(CollectFolder.t())
   def update(folder_id, attrs) do
     with {:ok, folder} <- ORM.find(CollectFolder, folder_id) do
-      last_updated = Timex.today() |> Timex.to_datetime()
+      last_updated = Datetime.today() |> Datetime.to_datetime()
       folder |> ORM.update(Map.merge(~m(last_updated)a, attrs))
     end
   end
@@ -116,7 +116,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
 
   defp update_folder_meta(thread, collects, folder) do
     total_count = length(collects)
-    last_updated = Timex.today() |> Timex.to_datetime()
+    last_updated = Datetime.today() |> Datetime.to_datetime()
     thread_count = Enum.filter(collects, &(not is_nil(Map.get(&1, :"#{thread}_id")))) |> length()
 
     meta =

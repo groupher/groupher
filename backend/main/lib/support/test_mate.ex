@@ -26,22 +26,22 @@ defmodule GroupherServer.TestMate do
       alias GroupherServer.{Accounts, CMS, Repo}
       alias CMS.Model.{Author, Blog, Changelog, Comment, Community, Doc, Embeds, Post}
       alias GroupherServer.Test.Helper.Schema
-      alias Helper.{Constant, ORM}
+      alias Helper.{Constant, Datetime, ORM}
 
       alias Accounts.Model.User
 
-      @now Timex.now() |> DateTime.truncate(:second)
+      @now Datetime.now(:second)
 
-      @last_week Timex.shift(Timex.beginning_of_week(@now), days: -1)
+      @last_week Datetime.shift(Datetime.beginning_of_week(@now), days: -1)
                  |> DateTime.truncate(:second)
 
-      @last_month Timex.beginning_of_month(Timex.shift(@now, months: -1))
+      @last_month Datetime.beginning_of_month(Datetime.shift(@now, months: -1))
                   |> DateTime.truncate(:second)
 
       # NOTE: keep it strictly "old enough" across the whole year.
       # Using end_of_year(@now - 1y) makes it only a few weeks old in Jan,
       # which breaks time-threshold based tests (e.g. archive_threshold months: -3).
-      @last_year Timex.shift(@now, years: -1)
+      @last_year Datetime.shift(@now, years: -1)
                  |> DateTime.truncate(:second)
     end
   end
