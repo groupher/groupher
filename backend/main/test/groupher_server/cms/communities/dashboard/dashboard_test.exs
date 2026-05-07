@@ -75,19 +75,21 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
                CMS.Communities.update_dashboard(community, :base_info, %{slug: "new slug"})
     end
 
-    test "update base info logo should remove _tmp prefix", ~m(community_attrs user)a do
+    test "update base info logo should keep provided path", ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      asset_path = "ugc/_tmp/2023-10-14/73l5_groupher.png"
 
       {:ok, _} =
         CMS.Communities.update_dashboard(community, :base_info, %{
-          logo: "ugc/_tmp/2023-10-14/73l5_groupher.png",
-          favicon: "ugc/_tmp/2023-10-14/73l5_groupher.png"
+          logo: asset_path,
+          favicon: asset_path
         })
 
       {:ok, community} = ORM.find(Community, community.id)
 
-      assert community.logo == "ugc/2023-10-14/73l5_groupher.png"
-      assert community.favicon == "ugc/2023-10-14/73l5_groupher.png"
+      assert community.logo == asset_path
+      assert community.favicon == asset_path
     end
 
     # test "update base info logo should skip persist when not in ugc/_tmp prefix",
@@ -163,7 +165,8 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
                  kanban_boards: [:todo, :invalid_board]
                })
 
-      assert {:kanban_boards, {"is invalid", _}} = List.keyfind(changeset.errors, :kanban_boards, 0)
+      assert {:kanban_boards, {"is invalid", _}} =
+               List.keyfind(changeset.errors, :kanban_boards, 0)
     end
 
     test "rejects duplicate kanban boards in community dashboard", ~m(community_attrs user)a do
@@ -204,7 +207,8 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
       assert find_community.dashboard.layout.kanban_boards == [:todo, :wip, :done]
     end
 
-    test "rejects unsupported thread emotions in community dashboard", ~m(community_attrs user)a do
+    test "rejects unsupported thread emotions in community dashboard",
+         ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       assert {:error, %Ecto.Changeset{} = changeset} =
@@ -230,7 +234,8 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
       assert find_community.dashboard.rss.rss_feed_count == 25
     end
 
-    test "rss updates keep existing values when updating incrementally", ~m(community_attrs user)a do
+    test "rss updates keep existing values when updating incrementally",
+         ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
