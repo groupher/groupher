@@ -91,7 +91,7 @@ defmodule Helper.Converter.HtmlSanitizer do
       "style"
     ])
 
-    Meta.strip_everything_not_covered()
+    @before_compile HtmlSanitizeEx.ScrubberCompiler
   end
 
   # 跳过一些 sanitize 很麻烦的标签，比如 svg data
