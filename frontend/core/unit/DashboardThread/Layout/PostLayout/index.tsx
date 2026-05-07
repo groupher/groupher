@@ -10,8 +10,13 @@ import useSalon, { cnMerge } from '../../salon/layout/post_layout'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 
-function ClassicPreview({ isActive }: { isActive: boolean }) {
-  const s = useSalon()
+type TPreviewProps = {
+  isActive: boolean
+  compact?: boolean
+}
+
+export function ClassicPreview({ isActive, compact }: TPreviewProps) {
+  const s = useSalon({ compact })
 
   return (
     <div className={cnMerge(s.block, isActive && s.blockActive)}>
@@ -37,8 +42,8 @@ function ClassicPreview({ isActive }: { isActive: boolean }) {
   )
 }
 
-function ThreeColumnPreview({ isActive }: { isActive: boolean }) {
-  const s = useSalon()
+export function ThreeColumnPreview({ isActive, compact }: TPreviewProps) {
+  const s = useSalon({ compact })
 
   return (
     <div className={cnMerge(s.block, isActive && s.blockActive)}>
@@ -51,7 +56,7 @@ function ThreeColumnPreview({ isActive }: { isActive: boolean }) {
           <div className={cnMerge(s.bar, s.phBodyTiny)} />
         </div>
 
-        <div className={cnMerge(s.upvoteBtn, 'scale-90 -mt-1')}>
+        <div className={cnMerge(s.upvoteBtn, compact ? '-mt-0.5' : 'scale-90 -mt-1')}>
           <UpvoteSVG className={s.upvoteIcon} />
           <div>N</div>
         </div>
@@ -60,8 +65,8 @@ function ThreeColumnPreview({ isActive }: { isActive: boolean }) {
   )
 }
 
-function MasonryPreview({ isActive }: { isActive: boolean }) {
-  const s = useSalon()
+export function MasonryPreview({ isActive, compact }: TPreviewProps) {
+  const s = useSalon({ compact })
 
   return (
     <div className={cnMerge(s.masonryBlock, isActive && s.blockActive)}>
@@ -82,8 +87,8 @@ function MasonryPreview({ isActive }: { isActive: boolean }) {
   )
 }
 
-function MinimalPreview({ isActive }: { isActive: boolean }) {
-  const s = useSalon()
+export function MinimalPreview({ isActive, compact }: TPreviewProps) {
+  const s = useSalon({ compact })
 
   return (
     <div className={cnMerge(s.block, isActive && s.blockActive)}>
@@ -105,8 +110,8 @@ function MinimalPreview({ isActive }: { isActive: boolean }) {
   )
 }
 
-function CoverPreview({ isActive }: { isActive: boolean }) {
-  const s = useSalon()
+export function CoverPreview({ isActive, compact }: TPreviewProps) {
+  const s = useSalon({ compact })
 
   return (
     <div className={cnMerge(s.block, isActive && s.blockActive)}>

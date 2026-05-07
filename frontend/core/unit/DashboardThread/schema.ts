@@ -311,6 +311,30 @@ const updateCommunityTag = gql`
   }
 `
 
+const createCommunityTag = gql`
+  mutation (
+    $thread: Thread!
+    $title: String!
+    $slug: String!
+    $layout: String
+    $color: RainbowColor!
+    $group: String
+    $community: String!
+  ) {
+    createCommunityTag(
+      thread: $thread
+      title: $title
+      slug: $slug
+      layout: $layout
+      color: $color
+      group: $group
+      community: $community
+    ) {
+      id
+    }
+  }
+`
+
 const reindexTagsInGroup = gql`
   mutation ($community: String!, $thread: Thread, $group: String!, $tags: [ReindexTagInput]) {
     reindexTagsInGroup(community: $community, thread: $thread, group: $group, tags: $tags) {
@@ -413,6 +437,7 @@ const schema = {
   updateDashboardLayout,
   updateDashboardSocialLinks,
   updateDashboardNameAlias,
+  createCommunityTag,
   updateCommunityTag,
   reindexTagsInGroup,
   pagedPosts,

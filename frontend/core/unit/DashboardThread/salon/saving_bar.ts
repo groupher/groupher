@@ -13,7 +13,7 @@ export default function useSalon({ minimal, width, ...spacing }: TProps) {
 
   return {
     wrapper: cn(
-      'row-center h-11 py-2.5 pr-2 rounded-lg mr-3',
+      'row-center h-11 py-2.5 pr-2 rounded-lg',
       width,
       minimal && 'h-8 py-2 mr-0',
       margin(spacing),

@@ -12,9 +12,13 @@ export default function useSalon() {
   const { cn, menu, fill, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn(menu('bar'), 'row-between px-1 py-1'),
-    title: cn(menu('title'), 'text-xs'),
-    deleteTitle: cn(menu('title'), 'text-xs', `group-hover/menubar:${rainbow(COLOR.RED, 'fg')}`),
+    wrapper: cn(menu('bar'), 'row-between gap-2 px-1 py-1'),
+    title: cn(menu('title'), 'text-xs whitespace-nowrap'),
+    deleteTitle: cn(
+      menu('title'),
+      'text-xs whitespace-nowrap',
+      `group-hover/menubar:${rainbow(COLOR.RED, 'fg')}`,
+    ),
 
     ARROW_RIGHT: 'size-2.5 ml-0.5 rotate-180',
     ARROW_LEFT: 'size-2.5 ml-0.5',

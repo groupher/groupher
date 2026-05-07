@@ -1,6 +1,6 @@
 import { pick } from 'ramda'
 
-import type { TEditFunc, TInlineTagLayout, TTag, TTagLayout, TThread } from '~/spec'
+import type { TColorName, TEditFunc, TInlineTagLayout, TTag, TTagLayout, TThread } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 import type { TChangeTagMode } from '~/stores/dashboard/spec'
 
@@ -11,9 +11,9 @@ import useUtils from './useUtils'
 type TRet = {
   loading: boolean
   saving: boolean
-  editingTag: TTag
-  settingTag: TTag
-  activeTagGroup: string
+  editingTag: TTag | null
+  settingTag: TTag | null
+  activeTagGroup: string | null
   activeTagThread: TThread | null
   tagLayout: TTagLayout
   inlineTagLayout: TInlineTagLayout
@@ -23,6 +23,8 @@ type TRet = {
   editTag: (key: TChangeTagMode, tag: TTag) => void
 
   loadTags: (thread?: TThread) => void
+  createTag: (title: string, group: string, color?: TColorName) => Promise<void>
+  renameGroup: (fromGroup: string, toGroup: string) => Promise<void>
   moveTagUp: (tag: TTag) => void
   moveTagDown: (tag: TTag) => void
   moveTag2Top: (tag: TTag) => void
@@ -34,7 +36,7 @@ export default function useTags(): TRet {
   const { edit } = useHelper()
   const derived = useDerived()
 
-  const { loadTags, moveTag, moveTag2Edge } = useUtils()
+  const { loadTags, createTag, moveTag, moveTag2Edge, renameGroup } = useUtils()
 
   const exportState = [
     'loading',
@@ -49,7 +51,15 @@ export default function useTags(): TRet {
   ]
 
   const editTag = (key: TChangeTagMode, tag: TTag): void => dsb$.commit({ [key]: tag })
-  const changeThread = (thread: TThread) => dsb$.commit({ activeTagThread: thread })
+  const changeThread = (thread: TThread): void => {
+    dsb$.commit({
+      activeTagThread: thread,
+      activeTagGroup: null,
+      editingTag: null,
+      settingTag: null,
+    })
+    loadTags(thread)
+  }
 
   const moveTagUp = (tag: TTag): void => moveTag(tag, 'up')
   const moveTagDown = (tag: TTag): void => moveTag(tag, 'down')
@@ -66,6 +76,8 @@ export default function useTags(): TRet {
     edit,
     // move actions
     loadTags,
+    createTag,
+    renameGroup,
     moveTagUp,
     moveTagDown,
     moveTag2Top,

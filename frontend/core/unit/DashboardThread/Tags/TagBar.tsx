@@ -16,20 +16,30 @@ export type TProps = {
   isFirst: boolean
   isLast: boolean
   total: number
+  onSetting: (tag: TTag) => void
+  inGroup?: boolean
+  onBeforeReorder?: () => void
 }
 
-const TagBar: FC<TProps> = ({ tag, isFirst, isLast, total }) => {
-  const { editingTag, activeTagGroup, editTag } = useTags()
-  const s = useSalon({ color: editingTag?.color as TColorName })
-
+const TagBar: FC<TProps> = ({
+  tag,
+  isFirst,
+  isLast,
+  total,
+  onSetting,
+  inGroup = false,
+  onBeforeReorder,
+}) => {
+  const { editingTag, editTag } = useTags()
   const isEditMode = editingTag?.id === tag.id
+  const s = useSalon({ color: editingTag?.color as TColorName, editing: isEditMode })
 
   // isSetting={settingTag?.id === tag.id}
   //     hasSettingTag={settingTag !== null}
 
   return (
     <div key={tag.id} className={cn(s.wrapper, isEditMode && s.wrapperEdit)}>
-      <SavingBar isTouched={isEditMode} field={FIELD.TAG}>
+      <SavingBar isTouched={isEditMode} field={FIELD.TAG} width='w-full'>
         {isEditMode ? (
           <ColorSelector
             activeColor={editingTag.color}
@@ -47,18 +57,26 @@ const TagBar: FC<TProps> = ({ tag, isFirst, isLast, total }) => {
         {isEditMode ? (
           <Input
             className={s.input}
+            width='w-48'
             value={editingTag.title}
             onChange={(e) => editTag('editingTag', { ...editingTag, title: e.target.value })}
             autoFocus
           />
         ) : (
-          <div className={s.title}>
-            {tag.title}
-            {!activeTagGroup && <div className={s.catNote}>({tag.group})</div>}
-          </div>
+          <div className={s.title}>{tag.title}</div>
         )}
         <div className='grow' />
-        {!isEditMode && <TagAction tag={tag} isFirst={isFirst} isLast={isLast} total={total} />}
+        {!isEditMode && (
+          <TagAction
+            tag={tag}
+            isFirst={isFirst}
+            isLast={isLast}
+            total={total}
+            onSetting={onSetting}
+            inGroup={inGroup}
+            onBeforeReorder={onBeforeReorder}
+          />
+        )}
       </SavingBar>
     </div>
   )

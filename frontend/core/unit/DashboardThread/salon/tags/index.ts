@@ -5,5 +5,6 @@ export default function useSalon() {
 
   return {
     icon: cn('size-3 mr-1', primary('fill')),
+    toolbar: 'row-center mb-8',
   }
 }

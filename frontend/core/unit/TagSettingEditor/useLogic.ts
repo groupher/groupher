@@ -1,5 +1,5 @@
 import { pluck, reject, uniq } from 'ramda'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import EVENT from '~/const/event'
 import { CHANGE_MODE } from '~/const/mode'
@@ -12,6 +12,11 @@ import { nilOrEmpty } from '~/validator'
 
 import { DEFAULT_CREATE_TAG } from './constant'
 import S from './schema'
+
+type TArgs = {
+  initialGroup?: string
+  onDone?: () => void
+}
 
 type TRet = {
   mode: TChangeMode
@@ -27,7 +32,7 @@ type TRet = {
   categoryOptions: TSelectOption[]
 }
 
-export default function useLogic(): TRet {
+export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRet {
   const dsb$ = useDashboard()
   const { tags, settingTag, activeTagThread } = dsb$
 
@@ -39,26 +44,33 @@ export default function useLogic(): TRet {
   const [mode, setMode] = useState<TChangeMode>(CHANGE_MODE.UPDATE)
   const [processing, setProcessing] = useState(false)
 
-  const initEditingTag = (mode: TChangeMode): void => {
-    setMode(mode)
-    if (mode === CHANGE_MODE.CREATE) {
-      setEditingTag(DEFAULT_CREATE_TAG)
-    } else {
-      setEditingTag(settingTag)
-    }
-  }
+  const initEditingTag = useCallback(
+    (mode: TChangeMode): void => {
+      setMode(mode)
+      if (mode === CHANGE_MODE.CREATE) {
+        const defaultGroup = initialGroup || tags.find((tag) => !nilOrEmpty(tag.group))?.group || ''
+        setEditingTag({ ...DEFAULT_CREATE_TAG, group: defaultGroup, thread: activeTagThread })
+      } else {
+        setEditingTag(settingTag)
+      }
+    },
+    [activeTagThread, initialGroup, settingTag, tags],
+  )
 
   const edit = (e: TEditValue, key): void => {
+    if (!editingTag) return
     setEditingTag({ ...editingTag, [key]: e })
   }
 
   const _handleDone = (): void => {
+    setProcessing(false)
     closeDrawer()
     send(EVENT.REFRESH_TAGS)
-    setProcessing(false)
+    onDone?.()
   }
 
   const onDelete = (tag: TTag): void => {
+    if (!tag) return
     setProcessing(true)
     const { id, thread, community } = tag
 
@@ -70,7 +82,7 @@ export default function useLogic(): TRet {
 
   const onUpdate = (): void => {
     setProcessing(true)
-    if (!activeTagThread) {
+    if (!activeTagThread || !editingTag) {
       setProcessing(false)
       return
     }
@@ -90,7 +102,7 @@ export default function useLogic(): TRet {
 
   const onCreate = (): void => {
     setProcessing(true)
-    if (!activeTagThread) {
+    if (!activeTagThread || !editingTag) {
       setProcessing(false)
       return
     }
@@ -101,6 +113,7 @@ export default function useLogic(): TRet {
       community: community$.slug,
       thread: activeTagThread,
     }
+    delete params.desc
 
     mutate(S.createCommunityTag, params).then((res) => {
       console.log('## createCommunityTag: ', res)

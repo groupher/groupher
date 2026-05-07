@@ -9,7 +9,8 @@ export default function useSalon() {
 
   return {
     wrapper: 'row-center gap-x-1',
-    iconBox: cn('size-4', hover('bg')),
+    iconBox: cn('size-5', hover('bg')),
+    sortIconBox: cn('size-4 opacity-0 group-hover:opacity-100 trans-all-200', hover('bg')),
     icon: cn('size-3.5', hover('icon')),
   }
 }
