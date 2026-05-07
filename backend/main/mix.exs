@@ -72,7 +72,7 @@ defmodule GroupherServer.Mixfile do
       {:plug_cowboy, "~> 2.8.0"},
       {:plug, "~> 1.19"},
       # GraphQl tool
-      {:absinthe, "~> 1.9.0"},
+      {:absinthe, "~> 1.10"},
       # Plug support for Absinthe
       {:absinthe_plug, "~> 1.5.9"},
       # Password hashing lib
@@ -95,11 +95,11 @@ defmodule GroupherServer.Mixfile do
       {:inch_ex, "~> 2.0", only: [:dev, :test]},
       {:short_maps, "~> 0.1.2"},
       {:jason, "~> 1.4"},
-      {:credo, "1.7.16", only: [:dev, :test], runtime: false},
+      {:credo, "1.7.18", only: [:dev, :test], runtime: false},
       {:bunt, "~> 1.0", only: [:dev, :test], override: true},
       {:dialyxir, "~> 1.4", only: [:dev, :mock], runtime: false},
       {:excoveralls, "~> 0.18", only: :test},
-      {:sentry, "~> 12.0"},
+      {:sentry, "~> 13.0"},
       {:recase, "~> 0.9.1"},
       {:nanoid, "~> 2.1.0"},
       # mem cache
