@@ -147,7 +147,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     test "old posts will not update active after comment created", ~m(community user cur_date)a do
       active_period_days = @active_period[:post] || @active_period[:default]
       # inserted_at =
-      #   Timex.shift(Timex.now(), days: -(active_period_days - 1)) |> Timex.to_datetime()
+      #   Datetime.shift(Datetime.now(), days: -(active_period_days - 1)) |> Datetime.to_datetime()
 
       post_attrs = mock_attrs(:post)
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
@@ -163,9 +163,9 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       #####
       inserted_at =
-        Timex.shift(Timex.now(), days: -(active_period_days + 1))
+        Datetime.shift(Datetime.now(), days: -(active_period_days + 1))
         |> DateTime.truncate(:second)
-        |> Timex.to_datetime()
+        |> Datetime.to_datetime()
 
       post_attrs = mock_attrs(:post)
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)

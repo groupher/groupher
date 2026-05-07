@@ -12,7 +12,7 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
   alias Accounts.Model.User
   alias CMS.Model.Community
   alias Statistics.Model.{CommunityContribute, UserContribute}
-  alias Helper.{Multi, Cache, Later, ORM, QueryBuilder}
+  alias Helper.{Multi, Cache, Datetime, Later, ORM, QueryBuilder}
 
   @community_contribute_days get_config(:general, :community_contribute_days)
   @user_contribute_months get_config(:general, :user_contribute_months)
@@ -22,7 +22,7 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
   update community's contributes record
   """
   def make_contribute(%User{id: id}) do
-    today = Timex.today() |> Date.to_iso8601()
+    today = Datetime.today() |> Date.to_iso8601()
 
     with {:ok, user} <- ORM.find(User, id) do
       Multi.new()
@@ -42,7 +42,7 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
   end
 
   def make_contribute(%Community{id: id} = community) do
-    today = Timex.today() |> Date.to_iso8601()
+    today = Datetime.today() |> Date.to_iso8601()
 
     Multi.new()
     |> Multi.run(:make_contribute, fn _, _ ->
@@ -107,13 +107,13 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
   end
 
   defp insert_contribute_record(%User{id: id}) do
-    today = Timex.today() |> Date.to_iso8601()
+    today = Datetime.today() |> Date.to_iso8601()
 
     UserContribute |> ORM.create(%{user_id: id, date: today, count: 1})
   end
 
   defp insert_contribute_record(%Community{id: id}) do
-    today = Timex.today() |> Date.to_iso8601()
+    today = Datetime.today() |> Date.to_iso8601()
 
     with {:ok, result} <-
            ORM.create(CommunityContribute, %{community_id: id, date: today, count: 1}) do
@@ -136,8 +136,8 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
   end
 
   defp to_contributes_map(data) do
-    end_date = Timex.today()
-    start_date = Timex.shift(Timex.today(), months: -6)
+    end_date = Datetime.today()
+    start_date = Datetime.today() |> Datetime.shift(months: -6)
     total_count = Enum.reduce(data, 0, &(&1.count + &2))
 
     records = data
@@ -160,12 +160,12 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
         Enum.map(record, & &1.count)
 
       false ->
-        today = Timex.today() |> Date.to_erl()
+        today = Datetime.today()
         return_count = abs(count) + 1
         enmpty_tuple = return_count |> repeat(0) |> List.to_tuple()
 
         Enum.reduce(record, enmpty_tuple, fn record, acc ->
-          diff = Timex.diff(Timex.to_date(record.date), today, :days)
+          diff = Date.diff(Datetime.to_date(record.date), today)
           index = diff + abs(count)
 
           put_elem(acc, index, record.count)

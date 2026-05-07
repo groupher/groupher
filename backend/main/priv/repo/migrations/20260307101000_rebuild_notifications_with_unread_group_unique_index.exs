@@ -12,7 +12,7 @@ defmodule GroupherServer.Repo.Migrations.RebuildNotificationsWithUnreadGroupUniq
       COALESCE(thread, ''),
       COALESCE(article_id, 0),
       COALESCE(comment_id, 0),
-      date_trunc('hour', inserted_at)
+      date_trunc('hour', inserted_at AT TIME ZONE 'UTC')
     )
     WHERE read = false
     """)

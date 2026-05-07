@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Articles.States do
   alias CMS.{Communities, FrontDesk}
 
   alias Ecto.Multi
-  alias Helper.{ORM, T}
+  alias Helper.{Datetime, ORM, T}
 
   @active_period get_config(:article, :active_period_days)
   @archive_threshold get_config(:article, :archive_threshold)
@@ -63,9 +63,9 @@ defmodule GroupherServer.CMS.Articles.States do
   @spec archive(atom()) :: T.domain_res(term())
   def archive(thread) do
     with {:ok, info} <- match(thread) do
-      now = Timex.now()
+      now = Datetime.now()
       threshold = @archive_threshold[thread] || @archive_threshold[:default]
-      archive_threshold = Timex.shift(now, threshold)
+      archive_threshold = Datetime.shift(now, threshold)
 
       info.model
       |> where([article], article.inserted_at < ^archive_threshold)
@@ -270,7 +270,7 @@ defmodule GroupherServer.CMS.Articles.States do
     active_period_days = @active_period[thread] || @active_period[:default]
 
     inserted_at = article.inserted_at
-    active_threshold = Timex.shift(Timex.now(), days: -active_period_days)
+    active_threshold = Datetime.now() |> Datetime.shift(days: -active_period_days)
 
     :gt == DateTime.compare(inserted_at, active_threshold)
   end

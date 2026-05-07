@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.DocArchive do
   use GroupherServer.TestMate
 
   @archive_threshold get_config(:article, :archive_threshold)
-  @doc_archive_threshold Timex.shift(
+  @doc_archive_threshold Datetime.shift(
                            @now,
                            @archive_threshold[:doc] || @archive_threshold[:default]
                          )

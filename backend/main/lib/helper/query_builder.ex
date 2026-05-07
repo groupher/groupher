@@ -6,7 +6,7 @@ defmodule Helper.QueryBuilder do
   import Ecto.Query, warn: false
 
   alias GroupherServer.CMS.Helper.{ArticleEnums, Threads}
-  alias Helper.Constant
+  alias Helper.{Constant, Datetime}
 
   @article_cat ArticleEnums.cat_values()
   @article_state ArticleEnums.state_values()
@@ -29,8 +29,8 @@ defmodule Helper.QueryBuilder do
   inserted in latest x month/days etc..
   """
   def recent_inserted(queryable, months: count) do
-    end_of_today = Timex.now() |> Timex.end_of_day()
-    x_months_ago = Timex.today() |> Timex.shift(months: -count) |> Timex.to_datetime()
+    end_of_today = Datetime.now() |> Datetime.end_of_day()
+    x_months_ago = Datetime.today() |> Datetime.shift(months: -count) |> Datetime.to_datetime()
 
     queryable
     |> where([q], q.inserted_at >= ^x_months_ago)
@@ -38,8 +38,8 @@ defmodule Helper.QueryBuilder do
   end
 
   def recent_inserted(queryable, days: count) do
-    end_of_today = Timex.now() |> Timex.end_of_day()
-    x_days_ago = Timex.today() |> Timex.shift(days: -count) |> Timex.to_datetime()
+    end_of_today = Datetime.now() |> Datetime.end_of_day()
+    x_days_ago = Datetime.today() |> Datetime.shift(days: -count) |> Datetime.to_datetime()
 
     queryable
     |> where([q], q.inserted_at >= ^x_days_ago)
@@ -111,35 +111,32 @@ defmodule Helper.QueryBuilder do
   defp handle_timestamp_logic(queryable, filter) do
     Enum.reduce(filter, queryable, fn
       {:when, :today}, queryable ->
-        # date = DateTime.utc_now() |> Timex.to_datetime()
-        # use timezone info is server is not in the some timezone
-        # Timex.now("America/Chicago")
-        date = Timex.now()
+        date = Datetime.now()
 
         queryable
-        |> where([p], p.inserted_at >= ^Timex.beginning_of_day(date))
-        |> where([p], p.inserted_at <= ^Timex.end_of_day(date))
+        |> where([p], p.inserted_at >= ^Datetime.beginning_of_day(date))
+        |> where([p], p.inserted_at <= ^Datetime.end_of_day(date))
 
       {:when, :this_week}, queryable ->
-        date = Timex.now()
+        date = Datetime.now()
 
         queryable
-        |> where([p], p.inserted_at >= ^Timex.beginning_of_week(date))
-        |> where([p], p.inserted_at <= ^Timex.end_of_week(date))
+        |> where([p], p.inserted_at >= ^Datetime.beginning_of_week(date))
+        |> where([p], p.inserted_at <= ^Datetime.end_of_week(date))
 
       {:when, :this_month}, queryable ->
-        date = Timex.now()
+        date = Datetime.now()
 
         queryable
-        |> where([p], p.inserted_at >= ^Timex.beginning_of_month(date))
-        |> where([p], p.inserted_at <= ^Timex.end_of_month(date))
+        |> where([p], p.inserted_at >= ^Datetime.beginning_of_month(date))
+        |> where([p], p.inserted_at <= ^Datetime.end_of_month(date))
 
       {:when, :this_year}, queryable ->
-        date = Timex.now()
+        date = Datetime.now()
 
         queryable
-        |> where([p], p.inserted_at >= ^Timex.beginning_of_year(date))
-        |> where([p], p.inserted_at <= ^Timex.end_of_year(date))
+        |> where([p], p.inserted_at >= ^Datetime.beginning_of_year(date))
+        |> where([p], p.inserted_at <= ^Datetime.end_of_year(date))
 
       {_, _}, queryable ->
         queryable

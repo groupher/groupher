@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Articles.Read do
   alias Accounts.Model.User
   alias CMS.CanCan
   alias CMS.Model.{Community, PinnedArticle}
-  alias Helper.{Multi, Constant, ORM, T}
+  alias Helper.{Multi, Constant, Datetime, ORM, T}
 
   @active_period get_config(:article, :active_period_days)
   @article_threads get_config(:article, :threads)
@@ -146,7 +146,7 @@ defmodule GroupherServer.CMS.Articles.Read do
     active_period_days = @active_period[thread] || @active_period[:default]
 
     inserted_at = article.inserted_at
-    active_threshold = Timex.shift(Timex.now(), days: -active_period_days)
+    active_threshold = Datetime.now() |> Datetime.shift(days: -active_period_days)
 
     :gt == DateTime.compare(inserted_at, active_threshold)
   end

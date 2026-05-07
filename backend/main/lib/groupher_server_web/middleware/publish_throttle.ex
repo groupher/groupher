@@ -7,6 +7,7 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
   import Helper.Utils, only: [handle_absinthe_error: 3, get_config: 2]
   import Helper.ErrorCode
 
+  alias Helper.Datetime
   alias GroupherServer.{Accounts, Statistics}
 
   alias Accounts.Model.User
@@ -56,9 +57,9 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
   # TODO: option: passport ..
   defp interval_check(%PublishThrottle{last_publish_time: last_publish_time}, opt) do
     interval_opt = Keyword.get(opt, :interval) || @interval_minutes
-    latest_valid_time = Timex.shift(last_publish_time, minutes: interval_opt)
+    latest_valid_time = Datetime.shift(last_publish_time, minutes: interval_opt)
 
-    case Timex.before?(latest_valid_time, Timex.now()) do
+    case DateTime.before?(latest_valid_time, Datetime.now()) do
       true -> {:ok, :interval_check}
       false -> {:error, :interval_check}
     end

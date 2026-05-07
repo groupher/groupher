@@ -9,6 +9,10 @@ import Config
 config :groupher_server, ecto_repos: [GroupherServer.Repo]
 config :groupher_server, env: config_env()
 
+config :groupher_server, GroupherServer.Repo,
+  after_connect: {Postgrex, :query!, ["SET TIME ZONE 'UTC'", []]},
+  migration_timestamps: [type: :timestamptz]
+
 config :absinthe, schema: GroupherServerWeb.Schema
 
 # Configures the endpoint

@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
   import Helper.Utils, only: [strip_struct: 1]
 
   alias CMS.Model.{Community, CommunityDashboard, Embeds}
-  alias Helper.{ORM, OSS, T, Transaction}
+  alias Helper.{ORM, T, Transaction}
 
   @default_dashboard CommunityDashboard.default()
   # List-like dashboard sections are replaced as a whole on each update.
@@ -41,8 +41,6 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
   def update(%Community{} = community, :base_info, args) do
     main_fields =
       Map.take(args, [:title, :locale, :desc, :logo, :favicon, :slug, :homepage])
-      |> OSS.persist_file(:logo)
-      |> OSS.persist_file(:favicon)
 
     with {:ok, community} <- update_community_if_need(community, main_fields) do
       do_update(community, :base_info, Map.merge(args, main_fields))
@@ -55,7 +53,8 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
 
   defp do_update(%Community{} = community, key, args) do
     with {:ok, community_dashboard} <- ensure_exist(community),
-         {:ok, section_payload} <- prepare_dashboard_section_payload(community_dashboard, key, args),
+         {:ok, section_payload} <-
+           prepare_dashboard_section_payload(community_dashboard, key, args),
          {:ok, _} <- apply_dashboard_section_update(community_dashboard, key, section_payload) do
       {:ok, community}
     end
@@ -102,7 +101,8 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
 
         {:ok, normalized_payload}
 
-      changeset -> {:error, changeset}
+      changeset ->
+        {:error, changeset}
     end
   end
 

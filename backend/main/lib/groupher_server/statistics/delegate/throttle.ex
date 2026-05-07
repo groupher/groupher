@@ -11,10 +11,10 @@ defmodule GroupherServer.Statistics.Delegate.Throttle do
   alias Accounts.Model.User
   alias Statistics.Model.PublishThrottle
 
-  alias Helper.ORM
+  alias Helper.{Datetime, ORM}
 
   def log_publish_action(%User{id: user_id}) do
-    cur_date = Timex.today() |> Date.to_iso8601()
+    cur_date = Datetime.today() |> Date.to_iso8601()
     cur_datetime = DateTime.utc_now() |> DateTime.to_iso8601()
 
     last_publish_time = cur_datetime
@@ -45,7 +45,7 @@ defmodule GroupherServer.Statistics.Delegate.Throttle do
 
       case date_count !== 0 or hour_count !== 0 do
         true ->
-          cur_date = Timex.today() |> Date.to_iso8601()
+          cur_date = Datetime.today() |> Date.to_iso8601()
           cur_datetime = DateTime.utc_now() |> DateTime.to_iso8601()
 
           publish_hour = cur_datetime
@@ -61,12 +61,12 @@ defmodule GroupherServer.Statistics.Delegate.Throttle do
   end
 
   defp same_day?(datetime) do
-    datetime |> Timex.to_date() |> Timex.equal?(Timex.to_date(Timex.now()))
+    Datetime.to_date(datetime) == Datetime.today()
   end
 
   defp same_hour?(datetime) do
-    {_date, {record_hour, _min, _sec}} = datetime |> Timex.to_erl()
-    {_date, {cur_hour, _min, _sec}} = Timex.now() |> Timex.to_erl()
+    %{hour: record_hour} = DateTime.to_time(datetime)
+    %{hour: cur_hour} = Datetime.now() |> DateTime.to_time()
 
     same_hour? = record_hour == cur_hour
 
@@ -76,7 +76,7 @@ defmodule GroupherServer.Statistics.Delegate.Throttle do
   # NOTE: the mock_xxx  is only use for test
   def mock_throttle_attr(:last_publish_time, %User{id: user_id}, minutes: minutes) do
     with {:ok, record} <- PublishThrottle |> ORM.find_by(~m(user_id)a) do
-      last_publish_time = Timex.shift(record.last_publish_time, minutes: minutes)
+      last_publish_time = Datetime.shift(record.last_publish_time, minutes: minutes)
       record |> ORM.update(~m(last_publish_time)a)
     end
   end
@@ -89,7 +89,7 @@ defmodule GroupherServer.Statistics.Delegate.Throttle do
 
   def mock_throttle_attr(:publish_hour, %User{id: user_id}, hours: hours) do
     with {:ok, record} <- PublishThrottle |> ORM.find_by(~m(user_id)a) do
-      publish_hour = Timex.shift(record.publish_hour, hours: hours)
+      publish_hour = Datetime.shift(record.publish_hour, hours: hours)
       record |> ORM.update(~m(publish_hour)a)
     end
   end
@@ -102,7 +102,7 @@ defmodule GroupherServer.Statistics.Delegate.Throttle do
 
   def mock_throttle_attr(:publish_date, %User{id: user_id}, days: days) do
     with {:ok, record} <- PublishThrottle |> ORM.find_by(~m(user_id)a) do
-      publish_date = Timex.shift(record.publish_hour, days: days)
+      publish_date = record.publish_hour |> Datetime.shift(days: days) |> Datetime.to_date()
       record |> ORM.update(~m(publish_date)a)
     end
   end

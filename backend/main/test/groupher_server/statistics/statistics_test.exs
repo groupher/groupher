@@ -36,23 +36,23 @@ defmodule GroupherServer.Test.Statistics do
     end
 
     test "should return recent 6 month contributes of a user by default", ~m(user)a do
-      six_month_ago = Timex.shift(Timex.today(), months: -6)
-      six_more_month_ago = Timex.shift(six_month_ago, days: -10)
+      six_month_ago = Datetime.today() |> Datetime.shift(months: -6)
+      six_more_month_ago = Datetime.shift(six_month_ago, days: -10)
 
       Repo.insert_all(UserContribute, [
         %{
           user_id: user.id,
           date: six_month_ago,
           count: 1,
-          inserted_at: six_month_ago |> Timex.to_datetime(),
-          updated_at: six_month_ago |> Timex.to_datetime()
+          inserted_at: six_month_ago |> Datetime.to_datetime(),
+          updated_at: six_month_ago |> Datetime.to_datetime()
         },
         %{
           user_id: user.id,
           date: six_more_month_ago,
           count: 1,
-          inserted_at: six_more_month_ago |> Timex.to_datetime(),
-          updated_at: six_more_month_ago |> Timex.to_datetime()
+          inserted_at: six_more_month_ago |> Datetime.to_datetime(),
+          updated_at: six_more_month_ago |> Datetime.to_datetime()
         }
       ])
 
@@ -76,7 +76,7 @@ defmodule GroupherServer.Test.Statistics do
 
       assert contribute.user_id == user.id
       assert contribute.count == 1
-      assert contribute.date == Timex.today()
+      assert contribute.date == Datetime.today()
     end
 
     test "should update a contribute when the user has contribute before", ~m(user)a do
@@ -105,7 +105,7 @@ defmodule GroupherServer.Test.Statistics do
 
       assert contribute.community_id == community.id
       assert contribute.count == 1
-      assert contribute.date == Timex.today()
+      assert contribute.date == Datetime.today()
     end
 
     test "should update community's field after contribute being make", ~m(community)a do
@@ -171,23 +171,23 @@ defmodule GroupherServer.Test.Statistics do
 
     test "should return recent #{@community_contribute_days} days community contributes by default",
          ~m(community)a do
-      days_ago = Timex.shift(Timex.today(), days: -@community_contribute_days)
-      more_days_ago = Timex.shift(days_ago, days: -1)
+      days_ago = Datetime.today() |> Datetime.shift(days: -@community_contribute_days)
+      more_days_ago = Datetime.shift(days_ago, days: -1)
 
       Repo.insert_all(CommunityContribute, [
         %{
           community_id: community.id,
           date: days_ago,
           count: 1,
-          inserted_at: days_ago |> Timex.to_datetime(),
-          updated_at: days_ago |> Timex.to_datetime()
+          inserted_at: days_ago |> Datetime.to_datetime(),
+          updated_at: days_ago |> Datetime.to_datetime()
         },
         %{
           community_id: community.id,
           date: more_days_ago,
           count: 1,
-          inserted_at: more_days_ago |> Timex.to_datetime(),
-          updated_at: more_days_ago |> Timex.to_datetime()
+          inserted_at: more_days_ago |> Datetime.to_datetime(),
+          updated_at: more_days_ago |> Datetime.to_datetime()
         }
       ])
 

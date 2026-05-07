@@ -156,8 +156,4 @@ if config_env() in [:prod, :seed_prod] do
   #   included_environments: [:prod]
 
   config :groupher_server, :oauth, oauth_trust_code: System.get_env("OAUTH_TRUST_CODE")
-
-  config :ex_aliyun_openapi, :sts,
-    access_key_id: System.get_env("ALI_OSS_STS_AK"),
-    access_key_secret: System.get_env("_ALIOSS_STS_AS")
 end

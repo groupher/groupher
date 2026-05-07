@@ -1,6 +1,8 @@
 defmodule GroupherServer.Support.Factory.Articles do
   @moduledoc false
 
+  alias Helper.Datetime
+
   defmacro __using__(_opts) do
     quote do
       def mock_rich_text(text \\ "text"), do: unquote(__MODULE__).rich_text(text)
@@ -301,7 +303,8 @@ defmodule GroupherServer.Support.Factory.Articles do
     active_at_offset = Keyword.get(opts, :active_at_offset, -1)
 
     active_at =
-      Timex.shift(Timex.now(), seconds: active_at_offset)
+      Datetime.now()
+      |> Datetime.shift(seconds: active_at_offset)
       |> DateTime.truncate(:second)
 
     %{

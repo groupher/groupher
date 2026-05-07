@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
 
   alias CMS.FrontDesk
   alias CMS.Model.{ArticleDocument, PostDocument}
-  # @last_year Timex.shift(Timex.beginning_of_year(Timex.now()), days: -3)
+  # @last_year Datetime.shift(Datetime.beginning_of_year(Datetime.now()), days: -3)
   #            |> DateTime.truncate(:second)
   @article_digest_length get_config(:article, :digest_length)
 
