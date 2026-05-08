@@ -163,7 +163,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:icon, :string)
 
       middleware(M.Authorize, :login)
-      # middleware(M.Passport, action: "community_tag.create")
+      middleware(M.Passport, action: "community_tag.create")
 
       resolve(&R.CMS.create_community_tag/3)
     end
