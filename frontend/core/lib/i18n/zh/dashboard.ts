@@ -72,7 +72,7 @@ export default {
   'dsb.portal.footer.desc': '页脚模板样式，链接编组等设置。',
   'dsb.portal.header.title': '页头',
   'dsb.portal.header.desc': '页头模板样式，链接编组等设置。',
-  'dsb.portal.tags.title': '标签设置',
+  'dsb.portal.tags.title': '标签管理',
   'dsb.portal.tags.desc': '编辑各板块标签，标签分组，颜色名称等均可编辑。',
   'dsb.portal.changelog.title': '更新日志',
   'dsb.portal.changelog.desc': '',

@@ -73,7 +73,7 @@ export default {
   'dsb.portal.footer.desc': 'Footer template styles and link groups.',
   'dsb.portal.header.title': 'Header',
   'dsb.portal.header.desc': 'Header template styles and link groups.',
-  'dsb.portal.tags.title': 'Tag settings',
+  'dsb.portal.tags.title': 'Tag management',
   'dsb.portal.tags.desc': 'Edit tag groups, colors, and labels for each section.',
   'dsb.portal.changelog.title': 'Changelog',
   'dsb.portal.changelog.desc': 'Manage all changelogs in current community',
