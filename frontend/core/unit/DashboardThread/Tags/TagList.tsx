@@ -1,5 +1,6 @@
 import {
   DndContext,
+  KeyboardSensor,
   MeasuringStrategy,
   PointerSensor,
   closestCorners,
@@ -12,7 +13,9 @@ import {
   type DragOverEvent,
   type DragStartEvent,
   type Over,
+  type Announcements,
 } from '@dnd-kit/core'
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -30,6 +33,21 @@ import useTagDragDraft from './useTagDragDraft'
 const DND_MEASURING = {
   droppable: {
     strategy: MeasuringStrategy.BeforeDragging,
+  },
+}
+
+const DND_ANNOUNCEMENTS: Announcements = {
+  onDragStart({ active }) {
+    return `Picked up tag ${active.id}.`
+  },
+  onDragOver({ active, over }) {
+    return over ? `Tag ${active.id} moved over ${over.id}.` : `Tag ${active.id} left drop area.`
+  },
+  onDragEnd({ active, over }) {
+    return over ? `Tag ${active.id} dropped over ${over.id}.` : `Tag ${active.id} dropped.`
+  },
+  onDragCancel({ active }) {
+    return `Dragging tag ${active.id} was cancelled.`
   },
 }
 
@@ -54,7 +72,10 @@ export default function TagList({
   const pointerYRef = useRef<number | null>(null)
   const indicatorFrameRef = useRef<number | null>(null)
   const [indicatorRoot, setIndicatorRoot] = useState<HTMLElement | null>(null)
-  const sensors = useSensors(useSensor(PointerSensor))
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
   const handleDragStart = ({ active }: DragStartEvent): void => {
     startDrag(String(active.id))
@@ -107,6 +128,11 @@ export default function TagList({
 
   useEffect(() => {
     setIndicatorRoot(document.body)
+
+    return () => {
+      if (indicatorFrameRef.current) cancelAnimationFrame(indicatorFrameRef.current)
+      indicatorFrameRef.current = null
+    }
   }, [])
 
   useMount(loadTags)
@@ -182,6 +208,7 @@ export default function TagList({
   return (
     <DndContext
       sensors={sensors}
+      accessibility={{ announcements: DND_ANNOUNCEMENTS }}
       measuring={DND_MEASURING}
       collisionDetection={collisionDetection}
       onDragStart={handleDragStart}

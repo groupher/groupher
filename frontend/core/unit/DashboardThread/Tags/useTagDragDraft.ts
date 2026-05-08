@@ -60,14 +60,18 @@ const buildGroups = (
 
   const draftItems: TGroupListItem[] = draftGroups
     .filter((group) => group.thread === currentThread)
-    .map((group) => ({
-      key: draftGroupKey(group.id),
-      title: group.title,
-      group: group.title,
-      tags: [],
-      draft: true,
-      draftId: group.id,
-    }))
+    .map((group) => {
+      const matchingRealGroup = realGroups.find((item) => item.title === group.title)
+
+      return {
+        key: draftGroupKey(group.id),
+        title: group.title,
+        group: group.title,
+        tags: matchingRealGroup?.tags || [],
+        draft: true,
+        draftId: group.id,
+      }
+    })
 
   const draftTitles = new Set(draftItems.map((group) => group.title).filter(Boolean))
 
@@ -217,8 +221,7 @@ export default function useTagDragDraft({
   }, [])
 
   const commitDrag = useCallback(
-    (targetOverride?: TTagDragTarget | null): void => {
-      const target = targetOverride
+    (target?: TTagDragTarget | null): void => {
       const activeId = activeIdRef.current
       const currentGroups = latestGroupsRef.current
       const nextGroups =

@@ -105,7 +105,12 @@ export default function useUtils(): TRet {
     if (!activeTagThread) return
 
     const restTags = tags.filter((tag) => tag.thread !== activeTagThread)
-    dsb$.commit({ tags: [...restTags, ...threadTags] })
+    const sortedIds = new Set(threadTags.map((tag) => tag.id).filter(Boolean))
+    const untouchedThreadTags = tags.filter(
+      (tag) => tag.thread === activeTagThread && !sortedIds.has(tag.id),
+    )
+
+    dsb$.commit({ tags: [...restTags, ...untouchedThreadTags, ...threadTags] })
   }
 
   const renameGroup = async (fromGroup: string, toGroup: string): Promise<void> => {

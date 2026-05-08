@@ -1626,9 +1626,9 @@ input ReindexTagInput {
 }
 
 input ReindexCommunityTagInput {
-  id: ID
-  group: String
-  index: Int
+  id: ID!
+  group: String!
+  index: Int!
 }
 
 input ArticleRefInput {

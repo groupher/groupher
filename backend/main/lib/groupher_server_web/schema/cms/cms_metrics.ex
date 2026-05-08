@@ -183,9 +183,9 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   end
 
   input_object :reindex_community_tag_input do
-    field(:id, :id)
-    field(:group, :string)
-    field(:index, :integer)
+    field(:id, non_null(:id))
+    field(:group, non_null(:string))
+    field(:index, non_null(:integer))
   end
 
   input_object :article_ref_input do

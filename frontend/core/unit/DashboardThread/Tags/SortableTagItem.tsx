@@ -24,7 +24,12 @@ type TProps = {
   onSetting: (tag: TTag) => void
 }
 
-const SortableTagItem = memo(function SortableTagItem({
+type TSortableProps = TProps & {
+  id: string
+}
+
+const SortableTagItemInner = memo(function SortableTagItemInner({
+  id,
   tag,
   group,
   groupKey,
@@ -36,8 +41,7 @@ const SortableTagItem = memo(function SortableTagItem({
   isLast,
   total,
   onSetting,
-}: TProps) {
-  const id = tag.id
+}: TSortableProps) {
   const cardRef = useRef<HTMLDivElement | null>(null)
   const setCardRef = useCallback((node: HTMLDivElement | null): void => {
     cardRef.current = node
@@ -51,7 +55,7 @@ const SortableTagItem = memo(function SortableTagItem({
     transition,
     isDragging,
   } = useSortable({
-    id: id || '',
+    id,
     data: {
       type: 'tag',
       group,
@@ -60,7 +64,6 @@ const SortableTagItem = memo(function SortableTagItem({
       getRect: () => cardRef.current?.getBoundingClientRect(),
       getListRect,
     },
-    disabled: !id,
   })
 
   const style = {
@@ -71,19 +74,6 @@ const SortableTagItem = memo(function SortableTagItem({
         })
       : undefined,
     transition,
-  }
-
-  if (!id) {
-    return (
-      <TagBar
-        tag={tag}
-        isFirst={isFirst}
-        isLast={isLast}
-        total={total}
-        onSetting={onSetting}
-        inGroup
-      />
-    )
   }
 
   return (
@@ -114,6 +104,25 @@ const SortableTagItem = memo(function SortableTagItem({
       />
     </div>
   )
+})
+
+const SortableTagItem = memo(function SortableTagItem(props: TProps) {
+  const id = props.tag.id
+
+  if (!id) {
+    return (
+      <TagBar
+        tag={props.tag}
+        isFirst={props.isFirst}
+        isLast={props.isLast}
+        total={props.total}
+        onSetting={props.onSetting}
+        inGroup
+      />
+    )
+  }
+
+  return <SortableTagItemInner {...props} id={id} />
 })
 
 export default SortableTagItem
