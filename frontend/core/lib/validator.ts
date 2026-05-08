@@ -25,6 +25,30 @@ export const nilOrEmpty = either(isNil, isEmpty)
 
 export const hasValue: (v: string) => boolean = compose(not, nilOrEmpty)
 
+const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+export type TSlugValidation = {
+  valid: boolean
+  value: string
+  reason?: 'empty' | 'format'
+}
+
+export const validateSlug = (value?: string | null): TSlugValidation => {
+  const next = isString(value) ? trim(value) : ''
+
+  if (!next) {
+    return { valid: false, value: next, reason: 'empty' }
+  }
+
+  if (!SLUG_RE.test(next)) {
+    return { valid: false, value: next, reason: 'format' }
+  }
+
+  return { valid: true, value: next }
+}
+
+export const isValidSlug = (value?: string | null): boolean => validateSlug(value).valid
+
 export const isObject = (value: unknown): boolean => {
   const type = typeof value
   return value != null && (type === 'object' || type === 'function')

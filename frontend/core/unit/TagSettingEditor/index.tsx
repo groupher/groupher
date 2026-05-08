@@ -12,7 +12,7 @@ import { POST_LAYOUT } from '~/const/layout'
 import { CHANGE_MODE } from '~/const/mode'
 import { ROUTE } from '~/const/route'
 import useTrans from '~/hooks/useTrans'
-import type { TChangeMode, TColorName, TSelectOption } from '~/spec'
+import type { TChangeMode, TColorName, TSelectOption, TTransKey } from '~/spec'
 import ColorSelector from '~/widgets/ColorSelector'
 import CustomScroller from '~/widgets/CustomScroller'
 import Input from '~/widgets/Input'
@@ -33,7 +33,7 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE, initialGroup 
   const s = useSalon()
   const { t } = useTrans()
   const logic = useLogic({ initialGroup, onDone })
-  const { initEditingTag, edit, editingTag, curCategory, categoryOptions } = logic
+  const { initEditingTag, edit, editingTag, curCategory, categoryOptions, slugError } = logic
 
   useEffect(() => {
     initEditingTag(mode)
@@ -94,6 +94,18 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE, initialGroup 
             onChange={(option: TSelectOption) => edit(option.value, 'group')}
             creatable
           />
+        </div>
+        <div className='mb-6' />
+        <div className={s.title}>{t('dsb.tags.editor.slug')}</div>
+        <div className={s.inputWrapper}>
+          <Input
+            className={s.slugInput}
+            width='w-full'
+            value={editingTag.slug}
+            placeholder={t('dsb.tags.editor.slug.placeholder')}
+            onChange={(e) => edit(e.target.value, 'slug')}
+          />
+          {slugError && <div className={s.error}>{t(slugError as TTransKey)}</div>}
         </div>
         <div className='mb-6' />
         <div className={s.title}>{t('dsb.tags.editor.desc')}</div>

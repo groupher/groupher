@@ -24,6 +24,7 @@ export default function useSalon({ color, editing = false }: TProps) {
       br('divider'),
     ),
     title: cn('row-center text-sm ml-1', fg('title')),
+    slug: cn('text-xs ml-3', fg('hint')),
     catNote: cn('text-xs ml-3', fg('hint')),
     input: 'h-8',
     dot: cn('size-5 circle', color && rainbow(color, 'bg')),

@@ -17,6 +17,8 @@ export default function useSalon() {
     desc: cn('text-xs px-6 mb-2.5 leading-5', fg('digest')),
     navi: cn('text-xs no-underline hover:underline ml-px mr-0.5', fg('link')),
     inputWrapper: 'px-6',
+    slugInput: 'h-9',
+    error: cn('mt-1.5 text-xs', fg('rainbow.red')),
     inputer: 'min-h-24',
     rainbow,
   }

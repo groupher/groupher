@@ -24,6 +24,7 @@ type TRet = {
 
   loadTags: (thread?: TThread) => void
   createTag: (title: string, group: string, color?: TColorName) => Promise<void>
+  updateTag: (tag: TTag) => Promise<void>
   renameGroup: (fromGroup: string, toGroup: string) => Promise<void>
   moveTagUp: (tag: TTag) => void
   moveTagDown: (tag: TTag) => void
@@ -36,7 +37,7 @@ export default function useTags(): TRet {
   const { edit } = useHelper()
   const derived = useDerived()
 
-  const { loadTags, createTag, moveTag, moveTag2Edge, renameGroup } = useUtils()
+  const { loadTags, createTag, updateTag, moveTag, moveTag2Edge, renameGroup } = useUtils()
 
   const exportState = [
     'loading',
@@ -77,6 +78,7 @@ export default function useTags(): TRet {
     // move actions
     loadTags,
     createTag,
+    updateTag,
     renameGroup,
     moveTagUp,
     moveTagDown,

@@ -303,6 +303,7 @@ const updateCommunityTag = gql`
     ) {
       id
       title
+      slug
       color
       group
       extra

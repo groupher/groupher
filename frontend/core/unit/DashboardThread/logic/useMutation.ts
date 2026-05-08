@@ -13,6 +13,7 @@ import type { TEditValue, TKanbanBoard, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 import { buildDsbDemoConfig, setDsbDemoConfig } from '~/utils/dsb-demo'
+import { slugify } from '~/utils/slug'
 
 import {
   BASEINFO_BASIC_KEYS,
@@ -238,8 +239,8 @@ export default function useMutation(): TRet {
       })
       .catch((err) => {
         console.error('## handle request error: ', err)
-        // oxlint-disable-next-line no-alert -- Legacy admin fallback during mutation failure handling.
-        alert(err)
+        toast(String(err), 'error')
+        storeRef.current.commit({ saving: false, savingField: null })
       })
   }
 
@@ -379,9 +380,16 @@ export default function useMutation(): TRet {
 
     if (field === FIELD.TAG) {
       const { editingTag } = storeRef.current
-      const params = { ...editingTag, community }
-
-      handleMutation(S.updateCommunityTag, params)
+      slugify(editingTag.title)
+        .then((slug) => {
+          storeRef.current.commit({ editingTag: { ...editingTag, slug } })
+          handleMutation(S.updateCommunityTag, { ...editingTag, slug, community })
+        })
+        .catch((err) => {
+          console.error('## slugify tag title error: ', err)
+          toast(String(err), 'error')
+          storeRef.current.commit({ saving: false, savingField: null })
+        })
       return
     }
 

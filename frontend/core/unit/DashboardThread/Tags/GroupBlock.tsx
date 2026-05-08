@@ -27,9 +27,9 @@ type TProps = {
   draftId?: string
   activeThread: TThread | null
   groupNames: readonly string[]
-  onCreateTag: (group: string) => void
   onRemoveDraft: (draftId: string) => void
   onRenameDraft: (draftId: string, toGroup: string) => void
+  onCompleteDraft: (draftId?: string) => void
   onSettingTag: (tag: TTag) => void
 }
 
@@ -44,9 +44,9 @@ const GroupBlock: FC<TProps> = ({
   draftId,
   activeThread,
   groupNames,
-  onCreateTag: _onCreateTag,
   onRemoveDraft,
   onRenameDraft,
+  onCompleteDraft,
   onSettingTag,
 }) => {
   const s = useSalon()
@@ -121,6 +121,7 @@ const GroupBlock: FC<TProps> = ({
     if (draft) {
       if (!draftId) return
       onRenameDraft(draftId, trimmedTitle)
+      setNextTitle(trimmedTitle)
       setRenaming(false)
       setFolded(false)
       setCreatingFirstTag(true)
@@ -128,9 +129,15 @@ const GroupBlock: FC<TProps> = ({
     }
 
     setSaving(true)
-    await renameGroup(title, trimmedTitle)
-    setSaving(false)
-    setRenaming(false)
+    try {
+      await renameGroup(title, trimmedTitle)
+      setNextTitle(trimmedTitle)
+      setRenaming(false)
+    } catch {
+      // Keep the editor open so the user can retry without losing the input.
+    } finally {
+      setSaving(false)
+    }
   }
 
   const cancelRename = (): void => {
@@ -148,12 +155,17 @@ const GroupBlock: FC<TProps> = ({
     if (!canCreateFirstTag || !title.trim()) return
 
     setCreatingTag(true)
-    await createTag(newTagTitle, title, newTagColor)
-    setCreatingTag(false)
-    setCreatingFirstTag(false)
-    setNewTagTitle('')
-    setNewTagColor(COLOR.BLACK)
-    if (draft && draftId) onRemoveDraft(draftId)
+    try {
+      await createTag(newTagTitle, title, newTagColor)
+      setCreatingFirstTag(false)
+      setNewTagTitle('')
+      setNewTagColor(COLOR.BLACK)
+      if (draft) onCompleteDraft(draftId)
+    } catch {
+      // Keep the inline creator open so the user can retry without retyping.
+    } finally {
+      setCreatingTag(false)
+    }
   }
 
   return (

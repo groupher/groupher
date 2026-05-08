@@ -14,6 +14,18 @@ const THREAD_TITLE_KEYS: Partial<Record<string, TTransKey>> = {
   [THREAD_PATH.DOC]: 'dsb.widgets.threads.doc.title',
 }
 
+const getThreadTitle = (slug: string, fallback: string): TTransKey => {
+  const titleKey = THREAD_TITLE_KEYS[slug]
+
+  if (titleKey) return titleKey
+
+  if (process.env.NODE_ENV === 'development') {
+    console.warn(`Missing thread title translation key for slug: ${slug}`)
+  }
+
+  return fallback as TTransKey
+}
+
 export default function ThreadSelector() {
   const s = useSalon()
 
@@ -21,7 +33,7 @@ export default function ThreadSelector() {
   const active = activeTagThread || THREAD.POST
   const items: TTabItem[] = threads.map((thread) => ({
     slug: path2Thread(thread.slug),
-    title: THREAD_TITLE_KEYS[thread.slug] || (thread.title as TTransKey),
+    title: getThreadTitle(thread.slug, thread.title),
   }))
 
   return (

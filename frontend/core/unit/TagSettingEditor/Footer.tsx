@@ -13,7 +13,7 @@ type TProps = {
 export default function Footer({ logic }: TProps) {
   const s = useSalon()
   const { t } = useTrans()
-  const { mode, editingTag, onCreate, onUpdate, onDelete, processing } = logic
+  const { mode, editingTag, onCreate, onUpdate, onDelete, processing, canSubmit } = logic
 
   if (processing) {
     return (
@@ -26,16 +26,16 @@ export default function Footer({ logic }: TProps) {
   return (
     <div className={s.wrapper}>
       {mode === CHANGE_MODE.CREATE ? (
-        <Button noBorder onClick={() => onCreate()}>
+        <Button noBorder disabled={!canSubmit} onClick={() => onCreate()}>
           {t('dsb.tags.editor.create')}
         </Button>
       ) : (
         <div className={s.updateWrapper}>
-          <Button noBorder onClick={() => onUpdate()}>
+          <Button noBorder disabled={!canSubmit} onClick={() => onUpdate()}>
             {t('dsb.tags.editor.update')}
           </Button>
 
-          <Button red onClick={() => onDelete(editingTag)} ghost noBorder>
+          <Button red onClick={() => editingTag && onDelete(editingTag)} ghost noBorder>
             {t('dsb.tags.editor.delete')}
           </Button>
         </div>
