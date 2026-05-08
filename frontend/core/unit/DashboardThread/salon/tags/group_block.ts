@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default function useSalon() {
-  const { cn, br, fg, fill, rainbow, hover } = useTwBelt()
+  const { cn, br, fg, fill, bg, rainbow, hover } = useTwBelt()
 
   return {
     wrapper: 'mb-5',
@@ -17,8 +17,16 @@ export default function useSalon() {
     actionGroup: 'row-center',
     iconButton: cn('align-both size-5.5 rounded-md', hover('bg')),
     icon: cn('size-3.5', fill('digest')),
+    dragHandle: cn(
+      'align-both absolute -left-8 top-0 size-10 rounded-md cursor-grab opacity-0 trans-all-200',
+      'touch-none group-hover/tag-row:opacity-100 focus-visible:opacity-100 active:cursor-grabbing',
+      fill('digest'),
+    ),
+    sortableTag: 'group group/tag-row relative w-full will-change-transform',
+    sortableTagDragging: cn('z-10 select-none', bg('sandBox')),
     groupInput: 'h-8',
-    tags: '',
+    tags: cn('rounded-md trans-all-200'),
+    tagsOver: bg('hoverBg'),
     firstTagEdit: cn('row-center h-11 w-full mb-3 rounded-lg saving-bar-right-linear'),
     dotSelector: cn('align-both size-7 circle border-2 p-0.5 ml-2 mr-2 pointer', br('divider')),
     dot: 'size-5 circle',

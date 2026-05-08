@@ -218,6 +218,11 @@ defmodule GroupherServer.CMS.Communities do
     Tags.reindex_in_group(community, thread, group, tags)
   end
 
+  @spec reindex_tags(Community.t() | String.t(), atom(), list()) :: T.domain_res(atom())
+  def reindex_tags(community, thread, tags) do
+    Tags.reindex(community, thread, tags)
+  end
+
   # Count helpers (migrated from CommunityCRUD)
   @spec update_count_field(Community.t() | [Community.t()], atom()) ::
           T.domain_res(Community.t() | :pass)

@@ -182,6 +182,12 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     field(:index, :integer)
   end
 
+  input_object :reindex_community_tag_input do
+    field(:id, :id)
+    field(:group, :string)
+    field(:index, :integer)
+  end
+
   input_object :article_ref_input do
     field(:inner_id, non_null(:id))
     field(:community, non_null(:string))

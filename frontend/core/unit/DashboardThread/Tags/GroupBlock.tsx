@@ -1,4 +1,4 @@
-import { type FC, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, type FC, useCallback, useMemo, useRef, useState } from 'react'
 
 import { COLOR } from '~/const/colors'
 import { THREAD } from '~/const/thread'
@@ -18,10 +18,13 @@ import Tooltip from '~/widgets/Tooltip'
 import useTags from '../logic/useTags'
 import useSalon, { cn } from '../salon/tags/group_block'
 import GroupActionMenu from './GroupActionMenu'
-import TagBar from './TagBar'
+import SortableTagItem from './SortableTagItem'
+import TagSortableGroup from './TagSortableGroup'
 
 type TProps = {
   title: string
+  groupKey: string
+  group?: string | null
   tags: readonly TTag[]
   draft?: boolean
   draftId?: string
@@ -39,6 +42,8 @@ const canRenameRealGroup = (thread: TThread | null): boolean => {
 
 const GroupBlock: FC<TProps> = ({
   title,
+  groupKey,
+  group,
   tags,
   draft = false,
   draftId,
@@ -52,8 +57,9 @@ const GroupBlock: FC<TProps> = ({
   const s = useSalon()
   const { t } = useTrans()
   const { createTag, renameGroup } = useTags()
-  const itemRefs = useRef(new Map<string, HTMLDivElement>())
-  const beforeRects = useRef(new Map<string, DOMRect>())
+  const droppableGroup = group === null ? undefined : (group ?? title)
+  const listRef = useRef<HTMLDivElement | null>(null)
+  const getListRect = useCallback(() => listRef.current?.getBoundingClientRect(), [])
 
   const [folded, setFolded] = useState(false)
   const [renaming, setRenaming] = useState(draft && title.trim().length === 0)
@@ -65,45 +71,15 @@ const GroupBlock: FC<TProps> = ({
   const [creatingTag, setCreatingTag] = useState(false)
 
   const sortedTags = useMemo(() => sortByIndex(tags), [tags])
-  const orderKey = sortedTags.map((tag) => tag.id || tag.slug || tag.title).join(':')
   const trimmedTitle = nextTitle.trim()
   const isDuplicate = groupNames.some((group) => group !== title && group === trimmedTitle)
   const canSave = trimmedTitle.length > 0 && !isDuplicate && (draft || trimmedTitle !== title)
   const canCreateFirstTag = newTagTitle.trim().length > 0
   const realGroupRenameEnabled = !draft && canRenameRealGroup(activeThread)
-
-  const measureItems = (): void => {
-    const rects = new Map<string, DOMRect>()
-
-    for (const [id, node] of itemRefs.current) {
-      rects.set(id, node.getBoundingClientRect())
-    }
-
-    beforeRects.current = rects
-  }
-
-  useLayoutEffect(() => {
-    for (const [id, node] of itemRefs.current) {
-      const previous = beforeRects.current.get(id)
-      if (!previous) continue
-
-      const next = node.getBoundingClientRect()
-      const deltaX = previous.left - next.left
-      const deltaY = previous.top - next.top
-
-      if (deltaX === 0 && deltaY === 0) continue
-
-      node.animate(
-        [{ transform: `translate(${deltaX}px, ${deltaY}px)` }, { transform: 'translate(0, 0)' }],
-        {
-          duration: 180,
-          easing: 'cubic-bezier(0.2, 0, 0, 1)',
-        },
-      )
-    }
-
-    beforeRects.current = new Map()
-  }, [orderKey])
+  const sortableIds = useMemo(
+    () => sortedTags.map((tag) => tag.id).filter((id): id is string => Boolean(id)),
+    [sortedTags],
+  )
 
   const commitRename = async (): Promise<void> => {
     if (!trimmedTitle) {
@@ -209,9 +185,7 @@ const GroupBlock: FC<TProps> = ({
               aria-label={folded ? 'Expand group' : 'Collapse group'}
               onClick={() => setFolded(!folded)}
             >
-              <ArrowSVG
-                className={cn(s.foldIcon, folded ? 'rotate-[180deg]' : 'rotate-[270deg]')}
-              />
+              <ArrowSVG className={cn(s.foldIcon, folded ? 'rotate-180' : '-rotate-90')} />
             </button>
             <div className='grow' />
 
@@ -252,7 +226,14 @@ const GroupBlock: FC<TProps> = ({
       </div>
 
       {!renaming && !folded && (
-        <div className={s.tags}>
+        <TagSortableGroup
+          className={s.tags}
+          overClassName={s.tagsOver}
+          group={droppableGroup}
+          groupKey={groupKey}
+          ids={sortableIds}
+          listRef={listRef}
+        >
           {creatingFirstTag && (
             <div className={s.firstTagEdit}>
               <ColorSelector
@@ -292,27 +273,20 @@ const GroupBlock: FC<TProps> = ({
           )}
 
           {sortedTags.map((tag, index) => (
-            <div
+            <SortableTagItem
               key={tag.id || tag.slug || tag.title}
-              className='w-full'
-              ref={(node) => {
-                const tagKey = tag.id || tag.slug || tag.title
-                if (!tagKey) return
-
-                if (node) itemRefs.current.set(tagKey, node)
-                if (!node) itemRefs.current.delete(tagKey)
-              }}
-            >
-              <TagBar
-                tag={tag}
-                isFirst={index === 0}
-                isLast={index === sortedTags.length - 1}
-                total={sortedTags.length}
-                onSetting={onSettingTag}
-                onBeforeReorder={measureItems}
-                inGroup
-              />
-            </div>
+              tag={tag}
+              group={droppableGroup}
+              groupKey={groupKey}
+              getListRect={getListRect}
+              handleClassName={s.dragHandle}
+              itemClassName={s.sortableTag}
+              itemDraggingClassName={s.sortableTagDragging}
+              isFirst={index === 0}
+              isLast={index === sortedTags.length - 1}
+              total={sortedTags.length}
+              onSetting={onSettingTag}
+            />
           ))}
 
           {sortedTags.length === 0 && !creatingFirstTag && (
@@ -322,10 +296,10 @@ const GroupBlock: FC<TProps> = ({
               </Button>
             </div>
           )}
-        </div>
+        </TagSortableGroup>
       )}
     </section>
   )
 }
 
-export default GroupBlock
+export default memo(GroupBlock)

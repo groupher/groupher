@@ -394,7 +394,7 @@ export default function useMutation(): TRet {
     }
 
     if (field === FIELD.TAG_INDEX) {
-      const { activeTagThread, activeTagGroup: group, tags } = dashboard$
+      const { activeTagThread, tags } = dashboard$
       if (!activeTagThread) {
         _handleDone()
         return
@@ -403,11 +403,12 @@ export default function useMutation(): TRet {
 
       const tagIndex = tags.map((item) => ({
         id: item.id,
+        group: item.group,
         index: item.index,
       }))
 
-      const params = { community, thread, group, tags: tagIndex }
-      handleMutation(S.reindexTagsInGroup, params)
+      const params = { community, thread, tags: tagIndex }
+      handleMutation(S.reindexCommunityTags, params)
       return
     }
 

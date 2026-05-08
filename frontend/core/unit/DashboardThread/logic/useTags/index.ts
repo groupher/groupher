@@ -26,10 +26,7 @@ type TRet = {
   createTag: (title: string, group: string, color?: TColorName) => Promise<void>
   updateTag: (tag: TTag) => Promise<void>
   renameGroup: (fromGroup: string, toGroup: string) => Promise<void>
-  moveTagUp: (tag: TTag) => void
-  moveTagDown: (tag: TTag) => void
-  moveTag2Top: (tag: TTag) => void
-  moveTag2Bottom: (tag: TTag) => void
+  commitTagSorting: (threadTags: TTag[]) => void
 } & TDrived
 
 export default function useTags(): TRet {
@@ -37,7 +34,7 @@ export default function useTags(): TRet {
   const { edit } = useHelper()
   const derived = useDerived()
 
-  const { loadTags, createTag, updateTag, moveTag, moveTag2Edge, renameGroup } = useUtils()
+  const { loadTags, createTag, updateTag, commitTagSorting, renameGroup } = useUtils()
 
   const exportState = [
     'loading',
@@ -62,11 +59,6 @@ export default function useTags(): TRet {
     loadTags(thread)
   }
 
-  const moveTagUp = (tag: TTag): void => moveTag(tag, 'up')
-  const moveTagDown = (tag: TTag): void => moveTag(tag, 'down')
-  const moveTag2Top = (tag: TTag): void => moveTag2Edge(tag, 'top')
-  const moveTag2Bottom = (tag: TTag): void => moveTag2Edge(tag, 'bottom')
-
   return {
     // @ts-expect-error
     ...pick(exportState, dsb$),
@@ -80,9 +72,6 @@ export default function useTags(): TRet {
     createTag,
     updateTag,
     renameGroup,
-    moveTagUp,
-    moveTagDown,
-    moveTag2Top,
-    moveTag2Bottom,
+    commitTagSorting,
   }
 }
