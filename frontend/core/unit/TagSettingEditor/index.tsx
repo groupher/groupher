@@ -11,7 +11,8 @@ import { DRAWER_SCROLLER } from '~/const/dom'
 import { POST_LAYOUT } from '~/const/layout'
 import { CHANGE_MODE } from '~/const/mode'
 import { ROUTE } from '~/const/route'
-import type { TChangeMode, TColorName, TSelectOption } from '~/spec'
+import useTrans from '~/hooks/useTrans'
+import type { TChangeMode, TColorName, TSelectOption, TTransKey } from '~/spec'
 import ColorSelector from '~/widgets/ColorSelector'
 import CustomScroller from '~/widgets/CustomScroller'
 import Input from '~/widgets/Input'
@@ -24,22 +25,28 @@ import useLogic from './useLogic'
 
 type TProps = {
   mode?: TChangeMode
+  initialGroup?: string
+  onDone?: () => void
 }
 
-const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE }) => {
+const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE, initialGroup = '', onDone }) => {
   const s = useSalon()
-  const { initEditingTag, edit, editingTag, curCategory, categoryOptions } = useLogic()
+  const { t } = useTrans()
+  const logic = useLogic({ initialGroup, onDone })
+  const { initEditingTag, edit, editingTag, curCategory, categoryOptions, slugError } = logic
 
   useEffect(() => {
     initEditingTag(mode)
   }, [initEditingTag, mode])
+
+  if (!editingTag) return null
 
   return (
     <div className={s.wrapper}>
       <CustomScroller
         instanceKey={DRAWER_SCROLLER}
         direction='vertical'
-        height='calc(100vh - 200px)'
+        height='calc(100vh - 112px)'
         barSize='small'
         showShadow={false}
         autoHide={false}
@@ -47,7 +54,7 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE }) => {
         {mode === CHANGE_MODE.CREATE && (
           <>
             <div className='mb-6' />
-            <div className={s.title}>标签名称</div>
+            <div className={s.title}>{t('dsb.tags.editor.name')}</div>
             <div className={s.basicInfo}>
               <ColorSelector
                 activeColor={editingTag.color || COLOR.BLACK}
@@ -59,7 +66,7 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE }) => {
                   <div
                     className={cn(
                       s.titleDot,
-                      s.rainbow((editingTag?.color as TColorName) || COLOR.BLACK, 'bg'),
+                      s.rainbow((editingTag.color as TColorName) || COLOR.BLACK, 'bg'),
                     )}
                   />
                 </div>
@@ -67,7 +74,8 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE }) => {
 
               <Input
                 className={s.titleInput}
-                value={editingTag?.title}
+                width='w-72'
+                value={editingTag.title}
                 onChange={(e) => edit(e.target.value, 'title')}
               />
             </div>
@@ -75,44 +83,58 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE }) => {
         )}
 
         <div className='mb-6' />
-        <div className={s.title}>标签分组</div>
+        <div className={s.title}>{t('dsb.tags.editor.group')}</div>
         <div className='mb-1' />
         <div className={s.selectorWrapper}>
           <Select
             value={curCategory}
             options={categoryOptions}
-            placeholder='请选择标签所在分组'
+            placeholder={t('dsb.tags.editor.group.placeholder')}
             onCreateOption={(value) => edit(value, 'group')}
             onChange={(option: TSelectOption) => edit(option.value, 'group')}
             creatable
           />
         </div>
         <div className='mb-6' />
-        <div className={s.title}>标签说明</div>
-        <div className='mb-1' />
-        <Input
-          className={s.inputer}
-          value={editingTag?.desc}
-          placeholder='标签说明 (支持 Markdown 语法)'
-          behavior='textarea'
-          onChange={(e) => edit(e.target.value, 'desc')}
-        />
+        <div className={s.title}>{t('dsb.tags.editor.slug')}</div>
+        <div className={s.inputWrapper}>
+          <Input
+            className={s.slugInput}
+            width='w-full'
+            value={editingTag.slug}
+            placeholder={t('dsb.tags.editor.slug.placeholder')}
+            onChange={(e) => edit(e.target.value, 'slug')}
+          />
+          {slugError && <div className={s.error}>{t(slugError as TTransKey)}</div>}
+        </div>
         <div className='mb-6' />
-        <div className={s.title}>标签布局</div>
+        <div className={s.title}>{t('dsb.tags.editor.desc')}</div>
+        <div className={s.inputWrapper}>
+          <Input
+            className={s.inputer}
+            width='w-full'
+            value={editingTag.desc}
+            placeholder={t('dsb.tags.editor.desc.placeholder')}
+            behavior='textarea'
+            onChange={(e) => edit(e.target.value, 'desc')}
+          />
+        </div>
+        <div className='mb-6' />
+        <div className={s.title}>{t('dsb.tags.editor.layout')}</div>
         <div className={s.desc}>
-          当选中该标签后，帖子列表将以此布局展示。所有标签默认的展示布局可在{' '}
+          {t('dsb.tags.editor.layout.desc_prefix')}
           <Link href={`/dashboard/home/${ROUTE.DASHBOARD.LAYOUT}`} className={s.navi}>
-            板块布局
+            {t('dsb.tags.editor.layout.link')}
           </Link>
-          中设置。{' '}
+          {t('dsb.tags.editor.layout.desc_suffix')}
         </div>
         <div className='mb-5' />
         <PostLayout
-          layout={editingTag?.layout || POST_LAYOUT.QUORA}
+          layout={editingTag.layout || POST_LAYOUT.QUORA}
           onChange={(v) => edit(v, 'layout')}
         />
       </CustomScroller>
-      <Footer />
+      <Footer logic={logic} />
     </div>
   )
 }

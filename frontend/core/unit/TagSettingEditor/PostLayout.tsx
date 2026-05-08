@@ -1,10 +1,18 @@
 import { type FC, memo } from 'react'
 
 import { POST_LAYOUT } from '~/const/layout'
+import useTrans from '~/hooks/useTrans'
 import type { TPostLayout } from '~/spec'
+import {
+  ClassicPreview,
+  CoverPreview,
+  MasonryPreview,
+  MinimalPreview,
+  ThreeColumnPreview,
+} from '~/unit/DashboardThread/Layout/PostLayout'
 import CheckLabel from '~/widgets/CheckLabel'
 
-import useSalon, { cn } from './salon/post_layout'
+import useSalon from './salon/post_layout'
 
 type TProps = {
   layout: string
@@ -13,42 +21,68 @@ type TProps = {
 
 const PostListLayout: FC<TProps> = ({ layout, onChange }) => {
   const s = useSalon()
+  const { t } = useTrans()
+  const classicTitle = t('dsb.layout.post.option.classic')
+  const phTitle = t('dsb.layout.post.option.ph')
+  const masonryTitle = t('dsb.layout.post.option.masonry')
+  const minimalTitle = t('dsb.layout.post.option.minimal')
+  const coverTitle = t('dsb.layout.post.option.cover')
 
   return (
     <div className={s.wrapper}>
-      <div className={s.layout} onClick={() => onChange(POST_LAYOUT.QUORA)}>
-        <div className={cn(s.block, layout === POST_LAYOUT.QUORA && s.blockActive)}>
-          <h3>QUORA</h3>
-        </div>
-        <CheckLabel title='经典' active={layout === POST_LAYOUT.QUORA} top={4} />
-      </div>
-      <div className={s.layout} onClick={() => onChange(POST_LAYOUT.PH)}>
-        <div className={cn(s.block, layout === POST_LAYOUT.PH && s.blockActive)}>
-          <h3>PH</h3>
-        </div>
-        <CheckLabel title='三段式' active={layout === POST_LAYOUT.PH} top={4} />
-      </div>
+      <button
+        type='button'
+        className={s.layout}
+        aria-label={classicTitle}
+        aria-pressed={layout === POST_LAYOUT.QUORA}
+        onClick={() => onChange(POST_LAYOUT.QUORA)}
+      >
+        <ClassicPreview isActive={layout === POST_LAYOUT.QUORA} compact />
+        <CheckLabel title={classicTitle} active={layout === POST_LAYOUT.QUORA} top={4} />
+      </button>
+      <button
+        type='button'
+        className={s.layout}
+        aria-label={phTitle}
+        aria-pressed={layout === POST_LAYOUT.PH}
+        onClick={() => onChange(POST_LAYOUT.PH)}
+      >
+        <ThreeColumnPreview isActive={layout === POST_LAYOUT.PH} compact />
+        <CheckLabel title={phTitle} active={layout === POST_LAYOUT.PH} top={4} />
+      </button>
 
-      <div className={s.layout} onClick={() => onChange(POST_LAYOUT.MASONRY)}>
-        <div className={cn(s.block, layout === POST_LAYOUT.MASONRY && s.blockActive)}>
-          <h3>MASONRY</h3>
-        </div>
-        <CheckLabel title='瀑布流卡片' $active={layout === POST_LAYOUT.MASONRY} top={4} />
-      </div>
+      <button
+        type='button'
+        className={s.layout}
+        aria-label={masonryTitle}
+        aria-pressed={layout === POST_LAYOUT.MASONRY}
+        onClick={() => onChange(POST_LAYOUT.MASONRY)}
+      >
+        <MasonryPreview isActive={layout === POST_LAYOUT.MASONRY} compact />
+        <CheckLabel title={masonryTitle} active={layout === POST_LAYOUT.MASONRY} top={4} />
+      </button>
 
-      <div className={s.layout} onClick={() => onChange(POST_LAYOUT.MINIMAL)}>
-        <div className={cn(s.block, layout === POST_LAYOUT.MINIMAL && s.blockActive)}>
-          <h3>MINIMAL</h3>
-        </div>
-        <CheckLabel title='极简' active={layout === POST_LAYOUT.MINIMAL} top={4} />
-      </div>
+      <button
+        type='button'
+        className={s.layout}
+        aria-label={minimalTitle}
+        aria-pressed={layout === POST_LAYOUT.MINIMAL}
+        onClick={() => onChange(POST_LAYOUT.MINIMAL)}
+      >
+        <MinimalPreview isActive={layout === POST_LAYOUT.MINIMAL} compact />
+        <CheckLabel title={minimalTitle} active={layout === POST_LAYOUT.MINIMAL} top={4} />
+      </button>
 
-      <div className={s.layout} onClick={() => onChange(POST_LAYOUT.COVER)}>
-        <div className={cn(s.block, layout === POST_LAYOUT.COVER && s.blockActive)}>
-          <h3>COVER</h3>
-        </div>
-        <CheckLabel title='封面图' active={layout === POST_LAYOUT.COVER} top={4} />
-      </div>
+      <button
+        type='button'
+        className={s.layout}
+        aria-label={coverTitle}
+        aria-pressed={layout === POST_LAYOUT.COVER}
+        onClick={() => onChange(POST_LAYOUT.COVER)}
+      >
+        <CoverPreview isActive={layout === POST_LAYOUT.COVER} compact />
+        <CheckLabel title={coverTitle} active={layout === POST_LAYOUT.COVER} top={4} />
+      </button>
     </div>
   )
 }

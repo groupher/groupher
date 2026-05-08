@@ -4,7 +4,6 @@ import ArrowSVG from '~/icons/Arrow'
 import EditSVG from '~/icons/EditPen'
 import MoreSVG from '~/icons/menu/MoreL'
 import SettingSVG from '~/icons/Setting'
-import { callTagEditEditor } from '~/signal'
 import Tooltip from '~/widgets/Tooltip'
 
 import useTags from '../logic/useTags'
@@ -14,7 +13,15 @@ import type { TProps as TTagBarProps } from './TagBar'
 
 type TProps = Omit<TTagBarProps, 'settingTag'>
 
-const TagAction: FC<TProps> = ({ tag, isFirst, isLast, total }) => {
+const TagAction: FC<TProps> = ({
+  tag,
+  isFirst,
+  isLast,
+  total,
+  onSetting,
+  inGroup,
+  onBeforeReorder,
+}) => {
   const s = useSalon()
 
   const {
@@ -27,31 +34,44 @@ const TagAction: FC<TProps> = ({ tag, isFirst, isLast, total }) => {
     moveTag2Bottom,
   } = useTags()
   const isEditMode = editingTag?.id === tag.id
+  const hasGroupContext = inGroup || activeTagGroup !== null
 
   if (isEditMode) return null
 
   return (
     <div className={s.wrapper}>
-      {activeTagGroup && !isFirst && (
-        <div className={s.iconBox}>
-          <ArrowSVG className={cn(s.icon, 'size-3 rotate-90')} onClick={() => moveTagUp(tag)} />
+      {hasGroupContext && !isFirst && (
+        <div className={s.sortIconBox}>
+          <ArrowSVG
+            className={cn(s.icon, 'size-3 rotate-90')}
+            onClick={() => {
+              onBeforeReorder?.()
+              moveTagUp(tag)
+            }}
+          />
         </div>
       )}
-      {activeTagGroup && !isLast && (
-        <div className={s.iconBox}>
-          <ArrowSVG className={cn(s.icon, 'size-3 -rotate-90')} onClick={() => moveTagDown(tag)} />
+      {hasGroupContext && !isLast && (
+        <div className={s.sortIconBox}>
+          <ArrowSVG
+            className={cn(s.icon, 'size-3 -rotate-90')}
+            onClick={() => {
+              onBeforeReorder?.()
+              moveTagDown(tag)
+            }}
+          />
         </div>
       )}
       <div className={s.iconBox}>
         <EditSVG className={s.icon} onClick={() => editTag('editingTag', tag)} />
       </div>
-      {activeTagGroup === null || total <= 2 ? (
+      {!hasGroupContext || total <= 2 ? (
         <div className={s.iconBox}>
           <SettingSVG
             className={s.icon}
             onClick={() => {
               editTag('settingTag', tag)
-              callTagEditEditor()
+              onSetting(tag)
             }}
           />
         </div>
@@ -61,12 +81,18 @@ const TagAction: FC<TProps> = ({ tag, isFirst, isLast, total }) => {
             <ActionMenu
               isFirst={isFirst}
               isLast={isLast}
-              activeTagGroup={activeTagGroup}
-              move2Top={() => moveTag2Top(tag)}
-              move2Bottom={() => moveTag2Bottom(tag)}
+              activeTagGroup={tag.group || null}
+              move2Top={() => {
+                onBeforeReorder?.()
+                moveTag2Top(tag)
+              }}
+              move2Bottom={() => {
+                onBeforeReorder?.()
+                moveTag2Bottom(tag)
+              }}
               onSetting={() => {
                 editTag('settingTag', tag)
-                callTagEditEditor()
+                onSetting(tag)
               }}
             />
           }

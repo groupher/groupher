@@ -28,14 +28,17 @@ export default function useDerived(): TRet {
 
   const selectedThread = activeTagThread
 
-  const filteredTags = useMemo(() => {
-    const filteredByGroup = activeTagGroup
-      ? filter((t: TTag) => t.group === activeTagGroup, tags)
-      : tags
-    return filter((t: TTag) => t.thread === selectedThread, filteredByGroup)
-  }, [tags, activeTagGroup, selectedThread])
+  const threadTags = useMemo(() => {
+    return filter((t: TTag) => t.thread === selectedThread, tags)
+  }, [tags, selectedThread])
 
-  const groups = useMemo(() => uniq(pluck('group', tags)), [tags])
+  const filteredTags = useMemo(() => {
+    return activeTagGroup ? filter((t: TTag) => t.group === activeTagGroup, threadTags) : threadTags
+  }, [activeTagGroup, threadTags])
+
+  const groups = useMemo(() => {
+    return uniq(pluck('group', threadTags))
+  }, [threadTags])
 
   const threads = useMemo(() => {
     const mappedThreads = community$.threads.map((pThread) => {
@@ -44,7 +47,7 @@ export default function useDerived(): TRet {
         | undefined
       return {
         ...pThread,
-        title: aliasItem?.name || pThread.title,
+        title: aliasItem && aliasItem.name !== aliasItem.original ? aliasItem.name : pThread.title,
       }
     })
 

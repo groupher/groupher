@@ -5,8 +5,8 @@ import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useSta
 
 import { ANCHOR } from '~/const/dom'
 import TYPE from '~/const/type'
-import { lockPage, unlockPage } from '~/dom'
 import useDrawerOffset from '~/hooks/useDrawerOffset'
+import usePageLock from '~/hooks/usePageLock'
 import useSalon, { cn } from '~/widgets/Drawer/salon'
 import { CLOSE_ANIMATION_BUFFER_MS, CLOSE_ANIMATION_MS } from '~/widgets/Drawer/salon/constant'
 import Portal from '~/widgets/Portal'
@@ -42,14 +42,13 @@ export default function Drawer({
 
   const closeTimerRef = useRef<number | null>(null)
   const didCloseRef = useRef(false)
-  const didUnlockRef = useRef(false)
 
+  const { lockPageOnce, unlockPageOnce } = usePageLock()
   const { rightOffset, fromContentEdge } = useDrawerOffset()
   const s = useSalon({ visible, closing, type, rightOffset, fromContentEdge })
 
   useEffect(() => {
-    lockPage()
-    didUnlockRef.current = false
+    lockPageOnce()
 
     return () => {
       if (closeTimerRef.current) {
@@ -57,12 +56,9 @@ export default function Drawer({
         closeTimerRef.current = null
       }
 
-      if (!didUnlockRef.current) {
-        unlockPage()
-        didUnlockRef.current = true
-      }
+      unlockPageOnce()
     }
-  }, [])
+  }, [lockPageOnce, unlockPageOnce])
 
   useLayoutEffect(() => {
     didCloseRef.current = false
@@ -84,13 +80,9 @@ export default function Drawer({
     if (didCloseRef.current) return
     didCloseRef.current = true
 
-    if (!didUnlockRef.current) {
-      unlockPage()
-      didUnlockRef.current = true
-    }
-
+    unlockPageOnce()
     router.back()
-  }, [router])
+  }, [router, unlockPageOnce])
 
   const requestClose = useCallback(() => {
     if (closing) return

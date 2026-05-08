@@ -50,7 +50,7 @@ const SavingBar: FC<TProps> = ({
   if (children !== null) {
     if (isTouched) {
       return (
-        <div className={cn(s.wrapper, 'saving-bar-left-linear')}>
+        <div className={cn(s.wrapper, 'saving-bar-right-linear')}>
           {children}
           <div className='grow' />
           <div className={s.actions}>

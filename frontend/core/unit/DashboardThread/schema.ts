@@ -303,10 +303,35 @@ const updateCommunityTag = gql`
     ) {
       id
       title
+      slug
       color
       group
       extra
       icon
+    }
+  }
+`
+
+const createCommunityTag = gql`
+  mutation (
+    $thread: Thread!
+    $title: String!
+    $slug: String!
+    $layout: String
+    $color: RainbowColor!
+    $group: String
+    $community: String!
+  ) {
+    createCommunityTag(
+      thread: $thread
+      title: $title
+      slug: $slug
+      layout: $layout
+      color: $color
+      group: $group
+      community: $community
+    ) {
+      id
     }
   }
 `
@@ -413,6 +438,7 @@ const schema = {
   updateDashboardLayout,
   updateDashboardSocialLinks,
   updateDashboardNameAlias,
+  createCommunityTag,
   updateCommunityTag,
   reindexTagsInGroup,
   pagedPosts,

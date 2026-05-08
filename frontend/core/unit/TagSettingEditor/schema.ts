@@ -12,7 +12,6 @@ const createCommunityTag = gql`
     $thread: Thread!
     $title: String!
     $slug: String!
-    $desc: String
     $layout: String
     $color: RainbowColor!
     $group: String
@@ -21,8 +20,8 @@ const createCommunityTag = gql`
     createCommunityTag(
       thread: $thread
       title: $title
-      desc: $desc
       slug: $slug
+      layout: $layout
       color: $color
       group: $group
       community: $community
