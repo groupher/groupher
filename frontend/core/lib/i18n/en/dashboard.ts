@@ -482,8 +482,7 @@ export default {
   'dsb.tags.editor.slug': 'Slug',
   'dsb.tags.editor.slug.placeholder': 'tag-url-slug',
   'dsb.tags.editor.slug.error.empty': 'Slug is required',
-  'dsb.tags.editor.slug.error.format':
-    'Use lowercase letters, numbers, and single hyphens only',
+  'dsb.tags.editor.slug.error.format': 'Use lowercase letters, numbers, and single hyphens only',
   'dsb.tags.editor.desc': 'Tag description',
   'dsb.tags.editor.desc.placeholder': 'Tag description (Markdown supported)',
   'dsb.tags.editor.layout': 'Tag layout',

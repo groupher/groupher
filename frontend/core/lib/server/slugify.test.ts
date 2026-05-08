@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import { slugify } from './slugify'
 import { validateSlug } from '../validator'
+import { slugify } from './slugify'
 
 describe('slugify', () => {
   it('keeps latin text and converts han characters to pinyin', () => {

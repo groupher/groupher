@@ -47,8 +47,7 @@ export default function useDerived(): TRet {
         | undefined
       return {
         ...pThread,
-        title:
-          aliasItem && aliasItem.name !== aliasItem.original ? aliasItem.name : pThread.title,
+        title: aliasItem && aliasItem.name !== aliasItem.original ? aliasItem.name : pThread.title,
       }
     })
 
