@@ -4,7 +4,7 @@ import MENU from '~/const/menu'
 import useTrans from '~/hooks/useTrans'
 import MenuItem from '~/widgets/MenuItem'
 
-import useSalon from '../salon/tags/action_menu'
+import useSalon from '../salon/tags/group_action_menu'
 
 type TProps = {
   move2Top?: () => void

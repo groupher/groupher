@@ -344,6 +344,14 @@ const reindexTagsInGroup = gql`
   }
 `
 
+const reindexCommunityTags = gql`
+  mutation ($community: String!, $thread: Thread, $tags: [ReindexCommunityTagInput]) {
+    reindexCommunityTags(community: $community, thread: $thread, tags: $tags) {
+      done
+    }
+  }
+`
+
 const updateDashboardFaqs = gql`
   mutation ($community: String!, $faqs: [dashboardFaqMap]) {
     updateDashboardFaqs(community: $community, faqs: $faqs) {
@@ -441,6 +449,7 @@ const schema = {
   createCommunityTag,
   updateCommunityTag,
   reindexTagsInGroup,
+  reindexCommunityTags,
   pagedPosts,
   pagedChangelogs,
   updateDashboardFaqs,

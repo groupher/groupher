@@ -2,13 +2,22 @@ import { equals, filter, find, includes, pluck, reject, uniq } from 'ramda'
 import { useMemo } from 'react'
 
 import { THREAD_PATH } from '~/const/thread'
-import { sortById } from '~/helper'
 import type { TCommunityThread, TNameAlias, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import { FIELD } from '../../constant'
 import useTouch from '../useHelper/useTouch'
+
+const tagSortSnapshot = (tags: readonly TTag[] = []) =>
+  tags
+    .filter((tag) => tag.id)
+    .map((tag) => ({
+      id: tag.id,
+      group: tag.group || null,
+      index: tag.index ?? null,
+    }))
+    .sort((a, b) => String(a.id).localeCompare(String(b.id)))
 
 export type TRet = {
   tags: readonly TTag[]
@@ -61,7 +70,7 @@ export default function useDerived(): TRet {
   const inlineTagLayoutTouched = isChanged(FIELD.INLINE_TAG_LAYOUT)
 
   const tagsIndexTouched = useMemo(
-    () => !equals(sortById(tags), sortById(original.tags || [])),
+    () => !equals(tagSortSnapshot(tags), tagSortSnapshot(original.tags || [])),
     [tags, original.tags],
   )
 

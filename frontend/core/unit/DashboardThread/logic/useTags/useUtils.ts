@@ -1,8 +1,5 @@
-import { filter, findIndex, reject, remove } from 'ramda'
-
 import { COLOR } from '~/const/colors'
 import { THREAD } from '~/const/thread'
-import { sortByIndex } from '~/helper'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TColorName, TTag, TThread } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -16,8 +13,7 @@ type TRet = {
   createTag: (title: string, group: string, color?: TColorName) => Promise<void>
   updateTag: (tag: TTag) => Promise<void>
   renameGroup: (fromGroup: string, toGroup: string) => Promise<void>
-  moveTag: (tag: TTag, opt: 'up' | 'down') => void
-  moveTag2Edge: (tag: TTag, opt: 'top' | 'bottom') => void
+  commitTagSorting: (threadTags: TTag[]) => void
 }
 
 export default function useUtils(): TRet {
@@ -41,8 +37,6 @@ export default function useUtils(): TRet {
       dsb$.commit({ tags, original: { ...original, tags }, loading: false })
     })
   }
-
-  const _reindex = (tags: TTag[]): TTag[] => tags.map((item, index) => ({ ...item, index }))
 
   const createTag = async (
     title: string,
@@ -105,48 +99,18 @@ export default function useUtils(): TRet {
     }
   }
 
-  const moveTag = (tag: TTag, opt: 'up' | 'down'): void => {
-    const { tags } = dsb$
-    const { group } = tag
+  const commitTagSorting = (threadTags: TTag[]): void => {
+    const { activeTagThread, tags } = dsb$
 
-    const tagsWithIndex = tags
-      .filter((tag) => tag.index !== undefined)
-      .map((tag) => ({ ...tag, index: tag.index! }))
+    if (!activeTagThread) return
 
-    const groupTags = sortByIndex(tagsWithIndex.filter((item) => item.group === group)) as TTag[]
+    const restTags = tags.filter((tag) => tag.thread !== activeTagThread)
+    const sortedIds = new Set(threadTags.map((tag) => tag.id).filter(Boolean))
+    const untouchedThreadTags = tags.filter(
+      (tag) => tag.thread === activeTagThread && !sortedIds.has(tag.id),
+    )
 
-    const restTags = reject((item: TTag) => item.group === group, tags)
-    const tagIndex = findIndex((item: TTag) => item.id === tag.id, groupTags)
-
-    const targetIndex = opt === 'up' ? tagIndex - 1 : tagIndex + 1
-
-    const tmp = groupTags[targetIndex]
-    groupTags[targetIndex] = groupTags[tagIndex]
-    groupTags[tagIndex] = tmp
-
-    const tmpIndex = groupTags[targetIndex].index
-    groupTags[targetIndex].index = groupTags[tagIndex].index
-    groupTags[tagIndex].index = tmpIndex
-
-    dsb$.commit({ tags: [...restTags, ..._reindex(groupTags)] })
-  }
-
-  const moveTag2Edge = (tag: TTag, opt: 'top' | 'bottom'): void => {
-    const { tags } = dsb$
-    const { group } = tag
-
-    const groupTags = filter((item: TTag) => item.group === group, tags)
-    const restTags = reject((item: TTag) => item.group === group, tags)
-
-    const curTagItemIndex = findIndex((item: TTag) => item.id === tag.id, groupTags)
-    const curTagItem = groupTags[curTagItemIndex]
-
-    const newTags =
-      opt === 'top'
-        ? [curTagItem, ...remove(curTagItemIndex, 1, groupTags)]
-        : [...remove(curTagItemIndex, 1, groupTags), curTagItem]
-
-    dsb$.commit({ tags: [...restTags, ..._reindex(newTags)] })
+    dsb$.commit({ tags: [...restTags, ...untouchedThreadTags, ...threadTags] })
   }
 
   const renameGroup = async (fromGroup: string, toGroup: string): Promise<void> => {
@@ -201,7 +165,6 @@ export default function useUtils(): TRet {
     createTag,
     updateTag,
     renameGroup,
-    moveTag,
-    moveTag2Edge,
+    commitTagSorting,
   }
 }

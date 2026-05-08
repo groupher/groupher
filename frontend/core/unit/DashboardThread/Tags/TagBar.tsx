@@ -1,4 +1,4 @@
-import { type FC, useEffect, useState } from 'react'
+import { memo, type FC, useEffect, useState } from 'react'
 
 import type { TColorName, TTag } from '~/spec'
 import ColorSelector from '~/widgets/ColorSelector'
@@ -17,7 +17,7 @@ export type TProps = {
   total: number
   onSetting: (tag: TTag) => void
   inGroup?: boolean
-  onBeforeReorder?: () => void
+  itemRef?: (node: HTMLDivElement | null) => void
 }
 
 const TagBar: FC<TProps> = ({
@@ -27,7 +27,7 @@ const TagBar: FC<TProps> = ({
   total,
   onSetting,
   inGroup = false,
-  onBeforeReorder,
+  itemRef,
 }) => {
   const { editingTag, editTag, updateTag } = useTags()
   const isEditMode = editingTag?.id === tag.id
@@ -58,11 +58,8 @@ const TagBar: FC<TProps> = ({
     }
   }
 
-  // isSetting={settingTag?.id === tag.id}
-  //     hasSettingTag={settingTag !== null}
-
   return (
-    <div key={tag.id} className={cn(s.wrapper, isEditMode && s.wrapperEdit)}>
+    <div ref={itemRef} className={cn(s.wrapper, isEditMode && s.wrapperEdit)}>
       <SavingBar
         isTouched={isEditMode}
         width='w-full'
@@ -108,7 +105,6 @@ const TagBar: FC<TProps> = ({
             total={total}
             onSetting={onSetting}
             inGroup={inGroup}
-            onBeforeReorder={onBeforeReorder}
           />
         )}
       </SavingBar>
@@ -116,4 +112,4 @@ const TagBar: FC<TProps> = ({
   )
 }
 
-export default TagBar
+export default memo(TagBar)

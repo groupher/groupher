@@ -29,11 +29,12 @@ defmodule GroupherServer.CMS.Communities.Tags do
          {:ok, community} <- ORM.find_by(Community, slug: community.slug) do
       Multi.new()
       |> Multi.run(:create_tag, fn _, _ ->
-        attrs = Map.merge(attrs, %{
-          author_id: author.id,
-          community_id: community.id,
-          thread: thread
-        })
+        attrs =
+          Map.merge(attrs, %{
+            author_id: author.id,
+            community_id: community.id,
+            thread: thread
+          })
 
         ORM.create(CommunityTag, attrs)
       end)
@@ -238,6 +239,41 @@ defmodule GroupherServer.CMS.Communities.Tags do
     end
   end
 
+  @doc """
+  reindex tags across groups
+  """
+  @spec reindex(Community.t(), atom(), list()) :: {:ok, atom()} | {:error, any()}
+  def reindex(%Community{} = community, thread, indexed_tags) do
+    ids = Enum.map(indexed_tags, & &1.id)
+
+    Repo.transaction(fn ->
+      CommunityTag
+      |> where([t], t.community_id == ^community.id)
+      |> where([t], t.thread == ^thread)
+      |> where([t], t.id in ^ids)
+      |> Repo.all()
+      |> Enum.each(fn tag ->
+        target =
+          Enum.find(indexed_tags, fn t ->
+            to_string(t.id) === to_string(tag.id)
+          end)
+
+        tag
+        |> Ecto.Changeset.change(%{group: target.group, index: target.index})
+        |> Repo.update!()
+      end)
+
+      :pass
+    end)
+    |> result()
+  end
+
+  def reindex(community, thread, indexed_tags) do
+    with {:ok, community} <- ORM.find_by(Community, slug: community) do
+      reindex(community, thread, indexed_tags)
+    end
+  end
+
   defp find_group_tags(%Community{} = community, thread, group) do
     filter = %{community: community.slug, thread: thread}
 
@@ -264,5 +300,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
 
   defp result({:ok, %{create_tag: result}}), do: {:ok, result}
   defp result({:ok, %{delete_tag: result}}), do: {:ok, result}
+  defp result({:ok, result}), do: {:ok, result}
   defp result({:error, _, result, _steps}), do: {:error, result}
+  defp result({:error, result}), do: {:error, result}
 end

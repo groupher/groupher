@@ -286,6 +286,9 @@ type RootMutationType {
   "reindex tags in given group"
   reindexTagsInGroup(community: String!, thread: Thread, group: String!, tags: [ReindexTagInput]): Done
 
+  "reindex tags across groups"
+  reindexCommunityTags(community: String!, thread: Thread, tags: [ReindexCommunityTagInput]): Done
+
   "mirror article to other community"
   mirrorArticle(article: ArticleRefInput!, targetCommunity: String!, communityTags: [ID]): Article
 
@@ -1620,6 +1623,12 @@ input CommunityTagsFilter {
 input ReindexTagInput {
   id: ID
   index: Int
+}
+
+input ReindexCommunityTagInput {
+  id: ID!
+  group: String!
+  index: Int!
 }
 
 input ArticleRefInput {

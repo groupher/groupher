@@ -304,9 +304,15 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def reindex_community_tags(_root, ~m(community thread group tags)a, _info) do
-    CMS.Communities.reindex_tags(community, thread, group, tags)
+    with {:ok, _} <- CMS.Communities.reindex_tags(community, thread, group, tags) do
+      {:ok, %{done: true}}
+    end
+  end
 
-    {:ok, %{done: true}}
+  def reindex_community_tags_across_groups(_root, ~m(community thread tags)a, _info) do
+    with {:ok, _} <- CMS.Communities.reindex_tags(community, thread, tags) do
+      {:ok, %{done: true}}
+    end
   end
 
   # #######################
