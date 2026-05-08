@@ -9,10 +9,14 @@ type TProps = {
 }
 
 export default function useSalon({ color, editing = false }: TProps) {
-  const { cn, br, fg, rainbow } = useTwBelt()
+  const { cn, br, fg, rainbow, hover } = useTwBelt()
 
   return {
-    wrapper: cn('row-center group w-full h-10 p-2.5 pr-1 border rounded-md mb-3', br('divider')),
+    wrapper: cn(
+      'row-center group w-full h-10 p-2.5 pr-1 border rounded-md mb-3',
+      br('divider'),
+      hover('box'),
+    ),
     wrapperEdit: '!block !w-full !h-11 !p-0 !border-0',
     dotSelector: cn(
       'align-both size-7 circle border-2 p-0.5 mr-1 pointer',

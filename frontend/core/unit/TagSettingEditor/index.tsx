@@ -97,15 +97,16 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE, initialGroup 
         </div>
         <div className='mb-6' />
         <div className={s.title}>{t('dsb.tags.editor.desc')}</div>
-        <div className='mb-1' />
-        <Input
-          className={s.inputer}
-          width='w-full'
-          value={editingTag.desc}
-          placeholder={t('dsb.tags.editor.desc.placeholder')}
-          behavior='textarea'
-          onChange={(e) => edit(e.target.value, 'desc')}
-        />
+        <div className={s.inputWrapper}>
+          <Input
+            className={s.inputer}
+            width='w-full'
+            value={editingTag.desc}
+            placeholder={t('dsb.tags.editor.desc.placeholder')}
+            behavior='textarea'
+            onChange={(e) => edit(e.target.value, 'desc')}
+          />
+        </div>
         <div className='mb-6' />
         <div className={s.title}>{t('dsb.tags.editor.layout')}</div>
         <div className={s.desc}>

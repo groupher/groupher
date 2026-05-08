@@ -4,8 +4,8 @@ import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useSta
 
 import { ANCHOR } from '~/const/dom'
 import TYPE from '~/const/type'
-import { lockPage, unlockPage } from '~/dom'
 import useDrawerOffset from '~/hooks/useDrawerOffset'
+import usePageLock from '~/hooks/usePageLock'
 import Portal from '~/widgets/Portal'
 
 import useSalon, { cn } from './salon'
@@ -27,12 +27,14 @@ export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POS
   const [closing, setClosing] = useState(false)
 
   const closeTimerRef = useRef<number | null>(null)
+  const enterFrameRef = useRef<number | null>(null)
   const didCloseRef = useRef(false)
 
   // close action needs to be stable for timers / transitionend
   const onCloseRef = useRef<() => void>(() => {})
   onCloseRef.current = onClose
 
+  const { lockPageOnce, unlockPageOnce } = usePageLock()
   const { rightOffset, fromContentEdge } = useDrawerOffset()
   const s = useSalon({ visible, closing, type, rightOffset, fromContentEdge })
 
@@ -43,14 +45,20 @@ export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POS
     }
   }, [])
 
+  const clearEnterFrame = useCallback(() => {
+    if (enterFrameRef.current) {
+      window.cancelAnimationFrame(enterFrameRef.current)
+      enterFrameRef.current = null
+    }
+  }, [])
+
   const commitClose = useCallback(() => {
     if (didCloseRef.current) return
     didCloseRef.current = true
     setMounted(false)
     setClosing(false)
-    unlockPage()
-    onCloseRef.current?.()
-  }, [])
+    unlockPageOnce()
+  }, [unlockPageOnce])
 
   const scheduleFallbackClose = useCallback(() => {
     clearCloseTimer()
@@ -61,22 +69,26 @@ export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POS
   }, [clearCloseTimer, commitClose])
 
   const triggerEnter = useCallback(() => {
+    clearEnterFrame()
     didCloseRef.current = false
     setClosing(false)
     setVisible(false)
 
     void drawerRef.current?.offsetHeight
 
-    const raf = requestAnimationFrame(() => setVisible(true))
-    return () => cancelAnimationFrame(raf)
-  }, [])
+    enterFrameRef.current = window.requestAnimationFrame(() => {
+      enterFrameRef.current = null
+      setVisible(true)
+    })
+
+    return clearEnterFrame
+  }, [clearEnterFrame])
 
   // show -> mounted / close orchestration (handles reopen while closing)
   useEffect(() => {
-    clearCloseTimer()
-
     if (show) {
-      lockPage()
+      clearCloseTimer()
+      lockPageOnce()
 
       if (!mounted) {
         setMounted(true)
@@ -93,14 +105,27 @@ export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POS
     }
 
     // show=false -> start closing animation (but keep mounted until animation ends)
-    if (mounted) {
+    if (mounted && !closing) {
       setClosing(true)
       setVisible(false)
       scheduleFallbackClose()
-    } else {
-      unlockPage()
+      return
     }
-  }, [show, mounted, visible, closing, clearCloseTimer, scheduleFallbackClose, triggerEnter])
+
+    if (!mounted) {
+      unlockPageOnce()
+    }
+  }, [
+    show,
+    mounted,
+    visible,
+    closing,
+    clearCloseTimer,
+    scheduleFallbackClose,
+    triggerEnter,
+    lockPageOnce,
+    unlockPageOnce,
+  ])
 
   // initial mount enter: when mounted becomes true, run enter sequence once
   useLayoutEffect(() => {
@@ -123,9 +148,10 @@ export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POS
   useEffect(() => {
     return () => {
       clearCloseTimer()
-      unlockPage()
+      clearEnterFrame()
+      unlockPageOnce()
     }
-  }, [clearCloseTimer])
+  }, [clearCloseTimer, clearEnterFrame, unlockPageOnce])
 
   if (!mounted) return null
 
