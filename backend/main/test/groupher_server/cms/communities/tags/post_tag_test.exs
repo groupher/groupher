@@ -20,18 +20,18 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       {:ok, article_tag1} = CMS.Communities.create_tag(community, :post, attrs, user)
 
       {:ok, article_tag2} =
-        CMS.Communities.create_tag(community, :post, unique_tag_attrs(attrs, "2"), user)
+        CMS.Communities.create_tag(community, :post, unique_community_tag_attrs(attrs, "2"), user)
 
       {:ok, article_tag3} =
-        CMS.Communities.create_tag(community, :post, unique_tag_attrs(attrs, "3"), user)
+        CMS.Communities.create_tag(community, :post, unique_community_tag_attrs(attrs, "3"), user)
 
       {:ok, article_tag4} =
-        CMS.Communities.create_tag(community, :post, unique_tag_attrs(attrs, "4"), user)
+        CMS.Communities.create_tag(community, :post, unique_community_tag_attrs(attrs, "4"), user)
 
       attrs = Map.merge(article_tag_attrs, %{group: "group2"})
 
       {:ok, article_tag5} =
-        CMS.Communities.create_tag(community, :post, unique_tag_attrs(attrs, "5"), user)
+        CMS.Communities.create_tag(community, :post, unique_community_tag_attrs(attrs, "5"), user)
 
       tags_with_index = [
         %{
@@ -175,7 +175,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
         CMS.Communities.create_tag(
           community,
           :post,
-          unique_tag_attrs(article_tag_attrs, "3"),
+          unique_community_tag_attrs(article_tag_attrs, "3"),
           user
         )
 
@@ -377,13 +377,5 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       assert stat.contents_count == 2
       assert stat.today_contents_count == 1
     end
-  end
-
-  defp unique_tag_attrs(attrs, suffix) do
-    attrs
-    |> Map.merge(%{
-      title: "#{attrs.title}-#{suffix}",
-      slug: "#{attrs.slug}-#{suffix}"
-    })
   end
 end

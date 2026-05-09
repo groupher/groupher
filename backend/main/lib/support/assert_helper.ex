@@ -27,6 +27,14 @@ defmodule GroupherServer.Test.AssertHelper do
     |> Helper.Datetime.shift(days: -1)
   end
 
+  def unique_community_tag_attrs(attrs, suffix) do
+    attrs
+    |> Map.merge(%{
+      title: "#{attrs.title}-#{suffix}",
+      slug: "#{attrs.slug}-#{suffix}"
+    })
+  end
+
   def is_error?(reason, code) when is_atom(code) do
     error_code(reason) == ecode(code)
   end
