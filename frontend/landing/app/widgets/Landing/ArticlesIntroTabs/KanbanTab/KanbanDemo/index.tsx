@@ -17,7 +17,7 @@ export default function KanbanDemo() {
           <KanbanItem
             count={17}
             title={t('landing.articles.kanban.demo.item.0')}
-            cat={ARTICLE_CAT.FEATURE}
+            cat={ARTICLE_CAT.IDEA}
           />
           <KanbanItem
             className='opacity-85'
@@ -29,7 +29,7 @@ export default function KanbanDemo() {
             className='opacity-75'
             count={6}
             title={t('landing.articles.kanban.demo.item.2')}
-            cat={ARTICLE_CAT.FEATURE}
+            cat={ARTICLE_CAT.IDEA}
           />
           <KanbanItem
             className='opacity-50'
@@ -41,7 +41,7 @@ export default function KanbanDemo() {
             className='opacity-35'
             count={2}
             title={t('landing.articles.kanban.demo.item.4')}
-            cat={ARTICLE_CAT.FEATURE}
+            cat={ARTICLE_CAT.IDEA}
           />
           <KanbanItem className='opacity-25' />
         </div>
@@ -49,7 +49,7 @@ export default function KanbanDemo() {
           <KanbanItem
             count={21}
             title={t('landing.articles.kanban.demo.item.5')}
-            cat={ARTICLE_CAT.FEATURE}
+            cat={ARTICLE_CAT.IDEA}
           />
           <KanbanItem
             draging
@@ -68,27 +68,27 @@ export default function KanbanDemo() {
             className='opacity-60'
             count={21}
             title={t('landing.articles.kanban.demo.item.8')}
-            cat={ARTICLE_CAT.FEATURE}
+            cat={ARTICLE_CAT.IDEA}
           />
           <KanbanItem
             className='opacity-30'
             count={9}
             title={t('landing.articles.kanban.demo.item.9')}
-            cat={ARTICLE_CAT.FEATURE}
+            cat={ARTICLE_CAT.IDEA}
           />
         </div>
         <div className={s.board}>
           <KanbanItem
             count={72}
             title={t('landing.articles.kanban.demo.item.10')}
-            cat={ARTICLE_CAT.FEATURE}
+            cat={ARTICLE_CAT.IDEA}
           />
           <KanbanItem className='opacity-90' count={12} dragTarget />
           <KanbanItem
             className='opacity-80'
             count={12}
             title={t('landing.articles.kanban.demo.item.11')}
-            cat={ARTICLE_CAT.FEATURE}
+            cat={ARTICLE_CAT.IDEA}
           />
           <KanbanItem
             className='opacity-65'
@@ -100,13 +100,13 @@ export default function KanbanDemo() {
             className='opacity-50'
             count={87}
             title={t('landing.articles.kanban.demo.item.13')}
-            cat={ARTICLE_CAT.FEATURE}
+            cat={ARTICLE_CAT.IDEA}
           />
           <KanbanItem
             className='opacity-30'
             count={62}
             title={t('landing.articles.kanban.demo.item.14')}
-            cat={ARTICLE_CAT.FEATURE}
+            cat={ARTICLE_CAT.IDEA}
           />
         </div>
       </div>

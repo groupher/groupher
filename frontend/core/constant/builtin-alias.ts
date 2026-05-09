@@ -62,9 +62,9 @@ export const BUILTIN_ALIAS = [
     group: ALIAS_GROUP.KANBAN,
   },
   {
-    slug: 'feature',
-    name: '功能请求',
-    original: '功能请求',
+    slug: 'idea',
+    name: '想法',
+    original: '想法',
     group: ALIAS_GROUP.KANBAN,
   },
   {
@@ -74,15 +74,15 @@ export const BUILTIN_ALIAS = [
     group: ALIAS_GROUP.KANBAN,
   },
   {
-    slug: 'question',
-    name: '求助 / 疑问',
-    original: '求助 / 疑问',
+    slug: 'qa',
+    name: '问答',
+    original: '问答',
     group: ALIAS_GROUP.KANBAN,
   },
   {
-    slug: 'other',
-    name: '其他讨论',
-    original: '其他讨论',
+    slug: 'discussion',
+    name: '讨论',
+    original: '讨论',
     group: ALIAS_GROUP.KANBAN,
   },
   {

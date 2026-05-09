@@ -49,7 +49,7 @@ export const commonRes = (result): TGQSSRResult => {
 
 //     communityTag: searchParams.get(URL_PARAM.TAG),
 //     cat: searchParams.get(URL_PARAM.CAT),
-//     state: searchParams.get(URL_PARAM.STATE),
+//     state: searchParams.get(URL_PARAM.STATUS),
 //   }) as TPagedArticlesParams
 
 //   return mergeRight(ARTICLES_FILTER, filter)
@@ -187,7 +187,7 @@ const isDefaultPagedArticlesFilter = (filter: TPagedArticlesParams) => {
     !filter.size &&
     !filter.communityTag &&
     !filter.cat &&
-    !filter.state &&
+    !filter.status &&
     !filter.order
   )
 }

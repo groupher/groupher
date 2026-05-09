@@ -1,4 +1,4 @@
-import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATE } from '~/const/gtd'
+import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATUS } from '~/const/gtd'
 import type { TArticleFilter, TPagedArticles, TTag } from '~/spec'
 
 import setupStore from '..'
@@ -9,7 +9,7 @@ describe('stores/articleList', () => {
 
     expect(store.activeCat).toBeNull()
     expect(store.activeOrder).toBeNull()
-    expect(store.activeState).toBeNull()
+    expect(store.activeStatus).toBeNull()
 
     store.updateActiveFilter({ cat: ARTICLE_CAT.BUG } satisfies TArticleFilter)
     expect(store.activeCat).toBe(ARTICLE_CAT.BUG)
@@ -21,12 +21,12 @@ describe('stores/articleList', () => {
     expect(store.activeOrder).toBe(ARTICLE_ORDER.UPVOTES)
 
     // edge: key exists but value is undefined -> should assign undefined
-    store.updateActiveFilter({ state: ARTICLE_STATE.TODO } satisfies TArticleFilter)
-    expect(store.activeState).toBe(ARTICLE_STATE.TODO)
+    store.updateActiveFilter({ status: ARTICLE_STATUS.TODO } satisfies TArticleFilter)
+    expect(store.activeStatus).toBe(ARTICLE_STATUS.TODO)
 
     // edge: key exists but value is undefined -> should assign undefined
-    store.updateActiveFilter({ state: undefined } satisfies TArticleFilter)
-    expect(store).toHaveProperty('activeState', undefined)
+    store.updateActiveFilter({ status: undefined } satisfies TArticleFilter)
+    expect(store).toHaveProperty('activeStatus', undefined)
 
     const paged: TPagedArticles = {
       pageNumber: 1,

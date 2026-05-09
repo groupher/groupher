@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.Mutation.Articles.PostCatState do
+defmodule GroupherServer.Test.Mutation.Articles.PostCatStatus do
   @moduledoc false
 
   use GroupherServer.TestMate
@@ -13,7 +13,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatState do
     {:ok, ~m(user_conn guest_conn owner_conn community post)a}
   end
 
-  describe "[post cat & state]" do
+  describe "[post cat & status]" do
     @set_cat_query """
     mutation(
       $article: ArticleRefInput!
@@ -31,12 +31,12 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatState do
     test "can set cat for a existing post", ~m(user_conn community post)a do
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
-        cat: "FEATURE"
+        cat: "IDEA"
       }
 
       created = user_conn |> gq_mutation(@set_cat_query, variables)
 
-      assert "FEATURE" == created["cat"]
+      assert "IDEA" == created["cat"]
     end
 
     test "set cat rejects non-enum value", ~m(user_conn community post)a do
@@ -48,38 +48,38 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatState do
       assert user_conn |> mutation_error?(@set_cat_query, variables)
     end
 
-    @set_state_query """
+    @set_status_query """
     mutation(
       $article: ArticleRefInput!
-      $state: ArticleStateEnum!
+      $status: ArticleStatusEnum!
     ) {
-      setPostState(
+      setPostStatus(
         article: $article
-        state: $state
+        status: $status
       ) {
         innerId
-        state
+        status
       }
     }
     """
-    test "can set state for a existing post", ~m(user_conn community post)a do
+    test "can set status for a existing post", ~m(user_conn community post)a do
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
-        state: "DONE"
+        status: "DONE"
       }
 
-      created = user_conn |> gq_mutation(@set_state_query, variables)
+      created = user_conn |> gq_mutation(@set_status_query, variables)
 
-      assert "DONE" == created["state"]
+      assert "DONE" == created["status"]
     end
 
-    test "set state rejects non-enum value", ~m(user_conn community post)a do
+    test "set status rejects non-enum value", ~m(user_conn community post)a do
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
-        state: "NOT_EXIST"
+        status: "NOT_EXIST"
       }
 
-      assert user_conn |> mutation_error?(@set_state_query, variables)
+      assert user_conn |> mutation_error?(@set_status_query, variables)
     end
   end
 end

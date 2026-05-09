@@ -6,7 +6,7 @@ import useTrans from '~/hooks/useTrans'
 import CommentSVG from '~/icons/Comment'
 import UpvoteSVG from '~/icons/Upvote'
 import { mockUsers } from '~/mock'
-import ArticleCatState from '~/unit/ArticleCatState'
+import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import Facepile from '~/widgets/Facepile/LandingPage'
 import TagNode from '~/widgets/TagNode'
 
@@ -27,7 +27,7 @@ const DiscussDemo: FC = () => {
           count={101}
           className='opacity-85'
           title={t('landing.articles.discuss.demo.item.0')}
-          cat={ARTICLE_CAT.FEATURE}
+          cat={ARTICLE_CAT.IDEA}
           active
         />
         <PostItem
@@ -45,25 +45,25 @@ const DiscussDemo: FC = () => {
           className='opacity-50'
           count={86}
           title={t('landing.articles.discuss.demo.item.3')}
-          cat={ARTICLE_CAT.QUESTION}
+          cat={ARTICLE_CAT.QA}
         />
         <PostItem
           className='opacity-30'
           count={74}
           title={t('landing.articles.discuss.demo.item.4')}
-          cat={ARTICLE_CAT.QUESTION}
+          cat={ARTICLE_CAT.QA}
         />
         <PostItem
           className='opacity-25'
           count={13}
           title={t('landing.articles.discuss.demo.item.5')}
-          cat={ARTICLE_CAT.QUESTION}
+          cat={ARTICLE_CAT.QA}
         />
       </div>
 
       <div className={s.detailCard}>
         <div className={s.header}>
-          <ArticleCatState cat={ARTICLE_CAT.FEATURE} right={3} />
+          <ArticleCatStatus cat={ARTICLE_CAT.IDEA} right={3} />
           <div className={s.tagBox}>
             <TagNode color={COLOR.PURPLE} boldHash />
             <div className={s.tag}>{t('landing.articles.discuss.demo.tag')}</div>

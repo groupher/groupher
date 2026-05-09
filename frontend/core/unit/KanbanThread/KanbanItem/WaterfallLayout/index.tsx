@@ -13,7 +13,7 @@ import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { mockUsers } from '~/mock'
 import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import ArticleCatState from '~/unit/ArticleCatState'
+import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import TagsList from '~/unit/TagsList'
 import Upvote from '~/unit/Upvote'
 
@@ -43,7 +43,7 @@ const KanbanItem: FC<TProps> = ({ article }) => {
       </h4>
       <div className='grow' />
       <TagsList items={communityTags} right={1} />
-      <ArticleCatState cat={cat} right={10} top={-1} />
+      <ArticleCatStatus cat={cat} right={10} top={-1} />
       <div className={s.upvotes}>
         <Upvote count={upvotesCount} avatarList={mockUsers(3)} type={UPVOTE_LAYOUT.GENERAL} />
       </div>

@@ -4,7 +4,7 @@ import { ARTICLE_CAT } from '~/const/gtd'
 import useTrans from '~/hooks/useTrans'
 import UpvoteSVG from '~/icons/Upvote'
 import type { TArticleCat } from '~/spec'
-import ArticleCatState from '~/unit/ArticleCatState'
+import ArticleCatStatus from '~/unit/ArticleCatStatus'
 
 import useSalon, { cn } from '../../../salon/articles_intro_tabs/kanban_tab/kanban_demo/kanban_item'
 
@@ -20,7 +20,7 @@ type TProps = {
 const KanbanItem: FC<TProps> = ({
   count = 9,
   title = '',
-  cat = ARTICLE_CAT.FEATURE,
+  cat = ARTICLE_CAT.IDEA,
   draging = false,
   dragTarget = false,
   className = '',
@@ -43,7 +43,7 @@ const KanbanItem: FC<TProps> = ({
       <div className={s.footer}>
         <UpvoteSVG className={s.upvoteIcon} />
         <div className={s.count}>{count}</div>
-        <ArticleCatState cat={cat} noBorder />
+        <ArticleCatStatus cat={cat} noBorder />
       </div>
     </div>
   )

@@ -26,8 +26,8 @@ describe('useArticlesFilter', () => {
 
     expect(result.current.cat).toBe(ARTICLE_CAT.BUG)
 
-    act(() => result.current.updateActiveFilter({ cat: ARTICLE_CAT.FEATURE }))
+    act(() => result.current.updateActiveFilter({ cat: ARTICLE_CAT.IDEA }))
 
-    expect(mockPush).toHaveBeenCalledWith(`/demo/post?${URL_PARAM.CAT}=${ARTICLE_CAT.FEATURE}`)
+    expect(mockPush).toHaveBeenCalledWith(`/demo/post?${URL_PARAM.CAT}=${ARTICLE_CAT.IDEA}`)
   })
 })

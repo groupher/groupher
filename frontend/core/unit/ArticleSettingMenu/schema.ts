@@ -21,11 +21,11 @@ const setPostCat = gql`
     }
   }
 `
-const setPostState = gql`
-  mutation ($article: ArticleRefInput!, $state: ArticleStateEnum!) {
-    setPostState(article: $article, state: $state) {
+const setPostStatus = gql`
+  mutation ($article: ArticleRefInput!, $status: ArticleStatusEnum!) {
+    setPostStatus(article: $article, status: $status) {
       id
-      state
+      status
     }
   }
 `
@@ -60,7 +60,7 @@ const pagedCommunityTags = gql`
 const schema = {
   updatePost,
   setPostCat,
-  setPostState,
+  setPostStatus,
   pinPost,
   undoPinPost,
   pagedCommunityTags,

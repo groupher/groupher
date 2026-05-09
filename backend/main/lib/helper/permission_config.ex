@@ -188,7 +188,7 @@ defmodule Helper.PermissionConfig do
         grant: "post.edit",
         owner_fallback: true
       },
-      "post.set_state" => %{
+      "post.set_status" => %{
         scope: :context,
         context: :cms,
         grant: "post.edit",

@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.Query.Articles.Kanban do
   use GroupherServer.TestMate
 
   @article_cat Constant.CMS.article_cat()
-  @article_state Constant.CMS.article_state()
+  @article_status Constant.CMS.article_status()
 
   setup do
     {community, post, post_attrs, user} = mock_article(:post)
@@ -18,15 +18,15 @@ defmodule GroupherServer.Test.Query.Articles.Kanban do
   test "basic graphql query on kanban post with login user",
        ~m(user_conn community user post_attrs)a do
     kanban_attrs =
-      post_attrs |> Map.merge(%{cat: @article_cat.feature, state: @article_state.todo})
+      post_attrs |> Map.merge(%{cat: @article_cat.idea, status: @article_status.todo})
 
     {:ok, post} = CMS.Articles.create(community, :post, kanban_attrs, user)
 
     variables = %{article: %{inner_id: post.inner_id, community: post.community_slug}}
-    result = user_conn |> gq_query(Schema.q(:article, :post, "cat state"), variables)
+    result = user_conn |> gq_query(Schema.q(:article, :post, "cat status"), variables)
 
     assert result["innerId"] == to_string(post.inner_id)
-    assert result["cat"] == "FEATURE"
-    assert result["state"] == "TODO"
+    assert result["cat"] == "IDEA"
+    assert result["status"] == "TODO"
   end
 end

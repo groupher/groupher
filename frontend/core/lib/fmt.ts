@@ -1,9 +1,9 @@
 import { endsWith, includes } from 'ramda'
 import { length, limit } from 'stringz'
 
-import { ARTICLE_CAT, ARTICLE_STATE } from '~/const/gtd'
+import { ARTICLE_CAT, ARTICLE_STATUS } from '~/const/gtd'
 import { THREAD } from '~/const/thread'
-import type { TArticleCat, TArticleState, TTransKey } from '~/spec'
+import type { TArticleCat, TArticleStatus, TTransKey } from '~/spec'
 
 import { isString } from './validator'
 
@@ -192,19 +192,19 @@ export const prettyURL = (url: string): string => {
  */
 export const toGTDLabelKey = (value: string): TTransKey => value.toUpperCase() as TTransKey
 
-export const aliasGTDDoneState = (cat: TArticleCat, state: TArticleState): TTransKey => {
-  if (state !== ARTICLE_STATE.DONE) return toGTDLabelKey(state)
+export const aliasGTDDoneState = (cat: TArticleCat, status: TArticleStatus): TTransKey => {
+  if (status !== ARTICLE_STATUS.DONE) return toGTDLabelKey(status)
 
   switch (cat) {
     case ARTICLE_CAT.BUG: {
-      return toGTDLabelKey(ARTICLE_STATE.FIXED)
+      return toGTDLabelKey(ARTICLE_STATUS.FIXED)
     }
-    case ARTICLE_CAT.QUESTION: {
-      return toGTDLabelKey(ARTICLE_STATE.SOLVED)
+    case ARTICLE_CAT.QA: {
+      return toGTDLabelKey(ARTICLE_STATUS.SOLVED)
     }
 
     default: {
-      return toGTDLabelKey(ARTICLE_STATE.DONE)
+      return toGTDLabelKey(ARTICLE_STATUS.DONE)
     }
   }
 }

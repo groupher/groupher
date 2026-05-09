@@ -2,7 +2,7 @@ import { type FC, memo } from 'react'
 
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import type { TArticle } from '~/spec'
-import ArticleCatState from '~/unit/ArticleCatState'
+import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import Upvote from '~/unit/Upvote'
 // import ArticleBaseStats from '~/widgets/ArticleBaseStats'
 
@@ -16,7 +16,7 @@ type TProps = {
 
 const FixedHeader: FC<TProps> = ({ article, visible, footerVisible: _footerVisible }) => {
   const s = useSalon({ visible })
-  const { upvotesCount, viewerHasUpvoted, cat, state } = article
+  const { upvotesCount, viewerHasUpvoted, cat, status } = article
 
   return (
     <div className={s.wrapper}>
@@ -29,7 +29,7 @@ const FixedHeader: FC<TProps> = ({ article, visible, footerVisible: _footerVisib
         />
         <div className={s.articleTitle}>{article.title}</div>
       </div>
-      <ArticleCatState cat={cat} state={state} />
+      <ArticleCatStatus cat={cat} status={status} />
       <div className={s.divider} />
     </div>
   )

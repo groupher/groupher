@@ -72,7 +72,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     comments_fields()
 
     field(:cat, :article_cat_enum)
-    field(:state, :article_state_enum)
+    field(:status, :article_status_enum)
 
     timestamp_fields(:article)
   end
@@ -130,6 +130,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object(:dashboard_enable, do: dashboard_gq_fields(:enable))
+
   object :dashboard_thread_emotions do
     field(:post, list_of(:emotion_type))
     field(:blog, list_of(:emotion_type))

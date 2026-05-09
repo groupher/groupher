@@ -43,7 +43,7 @@ const FilterBar: FC<TProps> = ({ checkboxActive, triggerCheckbox, selectedCount 
         </div>
 
         <ConditionSelector mode={CONDITION_MODE.CAT} selected={false} right={10} />
-        <ConditionSelector mode={CONDITION_MODE.STATE} selected={false} right={10} />
+        <ConditionSelector mode={CONDITION_MODE.STATUS} selected={false} right={10} />
 
         <div className={s.dateRange}>{t('dsb.cms.filter.date_range')}</div>
         <div className='grow' />

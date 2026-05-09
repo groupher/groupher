@@ -93,7 +93,7 @@ export default function useSalon({ loading }: { loading: boolean }) {
       cellInner: (colId: string) =>
         cn(
           'w-full overflow-hidden',
-          colId === 'state' && 'whitespace-nowrap',
+          colId === 'status' && 'whitespace-nowrap',
           (colId === 'upvotesCount' || colId === 'views' || colId === 'commentsCount') &&
             'text-center whitespace-nowrap',
           colId === 'dates' && 'text-right whitespace-nowrap',

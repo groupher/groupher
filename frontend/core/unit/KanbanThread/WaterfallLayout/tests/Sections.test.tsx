@@ -78,10 +78,10 @@ describe('<Sections />', () => {
   it('renders only configured boards', () => {
     render(<Sections />)
 
-    expect(screen.getByText('article.state.todo')).toBeInTheDocument()
-    expect(screen.getByText('article.state.done')).toBeInTheDocument()
-    expect(screen.queryByText('article.state.backlog')).not.toBeInTheDocument()
-    expect(screen.queryByText('article.state.wip')).not.toBeInTheDocument()
-    expect(screen.queryByText('article.state.reject')).not.toBeInTheDocument()
+    expect(screen.getByText('article.status.todo')).toBeInTheDocument()
+    expect(screen.getByText('article.status.done')).toBeInTheDocument()
+    expect(screen.queryByText('article.status.backlog')).not.toBeInTheDocument()
+    expect(screen.queryByText('article.status.wip')).not.toBeInTheDocument()
+    expect(screen.queryByText('article.status.reject')).not.toBeInTheDocument()
   })
 })

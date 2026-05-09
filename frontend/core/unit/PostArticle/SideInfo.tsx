@@ -2,7 +2,7 @@ import { UPVOTE_LAYOUT } from '~/const/layout'
 import Img from '~/Img'
 import { upvoteArticle } from '~/signal'
 import useArticle from '~/stores/article/hooks'
-import ArticleCatState from '~/unit/ArticleCatState'
+import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import TagsList from '~/unit/TagsList'
 import Upvote from '~/unit/Upvote'
 import ReadableDate from '~/widgets/ReadableDate'
@@ -17,7 +17,7 @@ export default function SideInfo() {
     return <h1>Error article</h1>
   }
 
-  const { insertedAt, communityTags, upvotesCount, meta, viewerHasUpvoted, cat, state } = article
+  const { insertedAt, communityTags, upvotesCount, meta, viewerHasUpvoted, cat, status } = article
   const { latestUpvotedUsers } = meta
 
   return (
@@ -46,7 +46,7 @@ export default function SideInfo() {
         <TagsList items={communityTags} size='medium' left={1} max={20} bottom={2} />
         <div className='mb-6' />
         <div className={s.label}>分类</div>
-        <ArticleCatState cat={cat} state={state} smaller={false} />
+        <ArticleCatStatus cat={cat} status={status} smaller={false} />
         <div className='mb-6' />
         <div className={s.label}>发布时间</div>
         <div className={s.value}>

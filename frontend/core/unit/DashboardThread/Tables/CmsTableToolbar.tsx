@@ -87,7 +87,7 @@ export default function CmsTableToolbar({
         )}
 
         {withCategory && <ConditionSelector mode={CONDITION_MODE.CAT} selected={false} />}
-        {withState && <ConditionSelector mode={CONDITION_MODE.STATE} selected={false} />}
+        {withState && <ConditionSelector mode={CONDITION_MODE.STATUS} selected={false} />}
         {withTags && <ConditionSelector mode={CONDITION_MODE.TAG} selected={false} />}
 
         {withDateRange && <CmsDateRangePicker label={t('dsb.cms.filter.date_range')} />}
@@ -134,7 +134,7 @@ export default function CmsTableToolbar({
                       <div className={actionBar.note}>{t('dsb.cms.action.label')}</div>
                       {batchActions.withCategory && <div className={actionBar.note}>Category</div>}
                       {batchActions.withState && (
-                        <div className={actionBar.note}>{t('dsb.cms.table.state')}</div>
+                        <div className={actionBar.note}>{t('dsb.cms.table.status')}</div>
                       )}
                       {batchActions.withTags && <div className={actionBar.note}>Tags</div>}
                       {batchActions.withDelete && (

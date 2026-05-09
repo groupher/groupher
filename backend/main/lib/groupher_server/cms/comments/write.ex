@@ -28,7 +28,7 @@ defmodule GroupherServer.CMS.Comments.Write do
   @archive_threshold get_config(:article, :archive_threshold)
 
   @article_cat ArticleEnums.cat_values() |> Enum.into(%{}, &{&1, &1})
-  @article_state ArticleEnums.state_values() |> Enum.into(%{}, &{&1, &1})
+  @article_status ArticleEnums.status_values() |> Enum.into(%{}, &{&1, &1})
 
   @spec create(Community.t(), T.article_thread(), T.id(), String.t(), User.t()) ::
           T.domain_res(Comment.t())
@@ -214,7 +214,7 @@ defmodule GroupherServer.CMS.Comments.Write do
   end
 
   defp set_question_flag_ifneed(%Post{cat: cat}, %Comment{} = comment) do
-    question_type = @article_cat.question
+    question_type = @article_cat.qa
 
     case cat do
       ^question_type ->
@@ -250,8 +250,8 @@ defmodule GroupherServer.CMS.Comments.Write do
 
     case ORM.update(post, %{solution_digest: solution_digest}) do
       {:ok, updated_post} ->
-        state = if is_solution, do: @article_state.resolved, else: @article_state.default
-        CMS.Articles.set_state(updated_post, state)
+        status = if is_solution, do: @article_status.resolved, else: @article_status.default
+        CMS.Articles.set_status(updated_post, status)
 
       {:error, reason} ->
         {:error, reason}

@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-import { ARTICLE_STATE } from '~/const/gtd'
+import { ARTICLE_STATUS } from '~/const/gtd'
 import { aliasGTDDoneState, toGTDLabelKey } from '~/fmt'
 import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 import useNameAlias from '~/hooks/useNameAlias'
@@ -16,27 +16,27 @@ type TProps = {
   onClick: () => void
 }
 
-const StateItem: FC<TProps> = ({ onClick }) => {
+const StatusItem: FC<TProps> = ({ onClick }) => {
   const { article } = useViewingArticle()
   const bgColors = useKanbanBgColors()
   const kanbanAlias = useNameAlias('kanban')
   const { t } = useTrans()
 
-  if (!article?.state) return <div>no state in this article</div>
-  const color = getGTDColor(article.state, [...bgColors])
+  if (!article?.status) return <div>no status in this article</div>
+  const color = getGTDColor(article.status, [...bgColors])
   const s = useSalon({ color })
 
-  const WipIcon = ICON[ARTICLE_STATE.WIP]
+  const WipIcon = ICON[ARTICLE_STATUS.WIP]
 
-  if (article.state) {
-    const TheIcon = ICON[article.state] || ICON[ARTICLE_STATE.REJECT]
+  if (article.status) {
+    const TheIcon = ICON[article.status] || ICON[ARTICLE_STATUS.REJECT]
 
     return (
       <button type='button' className={s.menuItem} onClick={onClick}>
         <TheIcon className={cn(s.icon, s.rainbowFill)} />
-        {article.state === ARTICLE_STATE.DONE
-          ? t(aliasGTDDoneState(article.cat, article.state))
-          : kanbanAlias[article.state]?.name || t(toGTDLabelKey(article.state))}
+        {article.status === ARTICLE_STATUS.DONE
+          ? t(aliasGTDDoneState(article.cat, article.status))
+          : kanbanAlias[article.status]?.name || t(toGTDLabelKey(article.status))}
         <div className='grow' />
         <ArrowSVG className={cn(s.icon, 'rotate-180')} />
       </button>
@@ -46,11 +46,11 @@ const StateItem: FC<TProps> = ({ onClick }) => {
   return (
     <button type='button' className={s.menuItem} onClick={onClick}>
       <WipIcon className={cn(s.icon, 'ml-px')} />
-      {t('article.state')}
+      {t('article.status')}
       <div className='grow' />
       <ArrowSVG className={cn(s.icon, 'rotate-180')} />
     </button>
   )
 }
 
-export default StateItem
+export default StatusItem

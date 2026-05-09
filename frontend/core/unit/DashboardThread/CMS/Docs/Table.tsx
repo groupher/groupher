@@ -11,7 +11,7 @@ import useSalon, { cn } from '../../salon/cms/posts'
 import CmsDataTable from '../../Tables/CmsDataTable'
 import CmsTableToolbar from '../../Tables/CmsTableToolbar'
 import useCmsTableController from '../../Tables/useCmsTableController'
-import { ArticleCell, DateCell, StateCell } from '../Cell'
+import { ArticleCell, DateCell, StatusCell } from '../Cell'
 
 type TProps = {
   pagedDocs: TPagedArticles
@@ -36,9 +36,9 @@ export default function DocsTables({ pagedDocs, loading }: TProps) {
       },
 
       {
-        id: 'state',
-        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.state')}</div>,
-        cell: ({ row }) => <StateCell rowData={row.original} />,
+        id: 'status',
+        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.status')}</div>,
+        cell: ({ row }) => <StatusCell rowData={row.original} />,
         size: 90,
       },
 

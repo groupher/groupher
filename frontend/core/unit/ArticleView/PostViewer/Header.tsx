@@ -1,7 +1,7 @@
 import { type FC, Fragment } from 'react'
 
 import type { TPost } from '~/spec'
-import ArticleCatState from '~/unit/ArticleCatState'
+import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import TagsList from '~/unit/TagsList'
 import DotDivider from '~/widgets/DotDivider'
 
@@ -13,11 +13,11 @@ type TProps = {
 
 const Header: FC<TProps> = ({ article }) => {
   const s = useSalon()
-  const { meta, cat, state, communityTags } = article
+  const { meta, cat, status, communityTags } = article
 
   return (
     <div className={s.wrapper}>
-      <ArticleCatState cat={cat} state={state} smaller={false} right={4} />
+      <ArticleCatStatus cat={cat} status={status} smaller={false} right={4} />
       <TagsList items={communityTags} size='medium' />
       <div className={s.publishWrapper}>
         {meta.isEdited && (

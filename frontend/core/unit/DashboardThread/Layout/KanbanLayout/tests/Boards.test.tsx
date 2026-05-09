@@ -12,11 +12,11 @@ vi.mock('~/hooks/useTrans', () => ({
     t: (key: string) =>
       (
         ({
-          'article.state.backlog': 'Backlog',
-          'article.state.todo': 'Todo',
-          'article.state.wip': 'In progress',
+          'article.status.backlog': 'Backlog',
+          'article.status.todo': 'Todo',
+          'article.status.wip': 'In progress',
           REJECTED: 'Rejected',
-          'article.state.done': 'Done',
+          'article.status.done': 'Done',
         }) as Record<string, string>
       )[key] || key,
   }),

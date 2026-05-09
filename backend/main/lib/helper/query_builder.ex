@@ -9,7 +9,7 @@ defmodule Helper.QueryBuilder do
   alias Helper.{Constant, Datetime}
 
   @article_cat ArticleEnums.cat_values()
-  @article_state ArticleEnums.state_values()
+  @article_status ArticleEnums.status_values()
   @threads Threads.enums()
 
   @audit_illegal Constant.CMS.pending(:illegal)
@@ -186,14 +186,14 @@ defmodule Helper.QueryBuilder do
       {:cat, nil}, queryable ->
         queryable
 
-      {:state, nil}, queryable ->
+      {:status, nil}, queryable ->
         queryable
 
       {:cat, cat}, queryable ->
         queryable |> trans_article_cat(cat)
 
-      {:state, state}, queryable ->
-        queryable |> trans_article_state(state)
+      {:status, status}, queryable ->
+        queryable |> trans_article_status(status)
 
       {:mark_delete, bool}, queryable ->
         queryable |> where([p], p.mark_delete == ^bool)
@@ -275,9 +275,9 @@ defmodule Helper.QueryBuilder do
     end
   end
 
-  defp trans_article_state(queryable, state) when is_atom(state) do
-    case state in @article_state do
-      true -> queryable |> where([p], p.state == ^state)
+  defp trans_article_status(queryable, status) when is_atom(status) do
+    case status in @article_status do
+      true -> queryable |> where([p], p.status == ^status)
       false -> queryable |> where([p], p.id == -1)
     end
   end

@@ -11,16 +11,16 @@ export const getMetricMap = (t: TTranslate) => ({
     delay: 6000,
   },
 
-  [ARTICLE_CAT.FEATURE]: {
-    title: t('landing.compare.metric.feature.title'),
-    upvoteText: t('landing.compare.metric.feature.upvote'),
+  [ARTICLE_CAT.IDEA]: {
+    title: t('landing.compare.metric.idea.title'),
+    upvoteText: t('landing.compare.metric.idea.upvote'),
     upvoteNum: 13,
     delay: 5000,
   },
 
-  [ARTICLE_CAT.OTHER]: {
-    title: t('landing.compare.metric.other.title'),
-    upvoteText: t('landing.compare.metric.other.upvote'),
+  [ARTICLE_CAT.DISCUSSION]: {
+    title: t('landing.compare.metric.discussion.title'),
+    upvoteText: t('landing.compare.metric.discussion.upvote'),
     upvoteNum: 18,
     delay: 7000,
   },
@@ -32,9 +32,9 @@ export const getMetricMap = (t: TTranslate) => ({
     delay: 8000,
   },
 
-  [ARTICLE_CAT.QUESTION]: {
-    title: t('landing.compare.metric.question.title'),
-    upvoteText: t('landing.compare.metric.question.upvote'),
+  [ARTICLE_CAT.QA]: {
+    title: t('landing.compare.metric.qa.title'),
+    upvoteText: t('landing.compare.metric.qa.upvote'),
     upvoteNum: 6,
     delay: 10000,
   },

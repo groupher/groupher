@@ -33,7 +33,7 @@ export default store
 //   showUserListModal: T.opt(T.bool, false),
 //   // follow the mac convention
 //   bodyScrollDirection: T.opt(T.enum(['up', 'down']), 'up'),
-//   // activeState;
+//   // activeStatus;
 //   // activeSort
 // })
 //   .views((self) => ({

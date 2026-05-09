@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.Articles.States do
   @moduledoc """
-  Article state helpers.
+  Article status and lifecycle helpers.
   """
 
   import Ecto.Query, warn: false
@@ -27,14 +27,14 @@ defmodule GroupherServer.CMS.Articles.States do
   @spec set_cat(Post.t(), term()) :: T.domain_res(term())
   def set_cat(%Post{} = post, cat) do
     with {:ok, updated} <- ORM.update(post, %{cat: cat}),
-         {:ok, _} <- Write.batch_update_question_flag(post, cat == @article_cat.question) do
+         {:ok, _} <- Write.batch_update_question_flag(post, cat == @article_cat.qa) do
       updated |> done
     end
   end
 
-  @spec set_state(Post.t(), term()) :: T.domain_res(term())
-  def set_state(%Post{} = post, state) do
-    with {:ok, updated} <- ORM.update(post, %{state: state}) do
+  @spec set_status(Post.t(), term()) :: T.domain_res(term())
+  def set_status(%Post{} = post, status) do
+    with {:ok, updated} <- ORM.update(post, %{status: status}) do
       updated |> done
     end
   end

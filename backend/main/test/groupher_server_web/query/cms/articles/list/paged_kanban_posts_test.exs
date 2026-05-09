@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
   use GroupherServer.TestMate
 
   @article_cat Constant.CMS.article_cat()
-  @article_state Constant.CMS.article_state()
+  @article_status Constant.CMS.article_status()
 
   setup do
     {community, _, post_attrs, user} = mock_article(:post)
@@ -22,7 +22,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
           entries {
             innerId
             cat
-            state
+            status
             title
           }
           totalPages
@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
           entries {
             innerId
             cat
-            state
+            status
             title
           }
           totalPages
@@ -48,7 +48,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
           entries {
             innerId
             cat
-            state
+            status
             title
           }
           totalPages
@@ -61,7 +61,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
           entries {
             innerId
             cat
-            state
+            status
             title
           }
           totalPages
@@ -74,7 +74,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
           entries {
             innerId
             cat
-            state
+            status
             title
           }
           totalPages
@@ -93,25 +93,25 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.feature)
-      {:ok, _} = CMS.Articles.set_state(post, @article_state.backlog)
+      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.idea)
+      {:ok, _} = CMS.Articles.set_status(post, @article_status.backlog)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.feature)
-      {:ok, _} = CMS.Articles.set_state(post, @article_state.todo)
-
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.bug)
-      {:ok, _} = CMS.Articles.set_state(post, @article_state.wip)
-
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.feature)
-      {:ok, _} = CMS.Articles.set_state(post, @article_state.done)
+      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.idea)
+      {:ok, _} = CMS.Articles.set_status(post, @article_status.todo)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
       {:ok, _} = CMS.Articles.set_cat(post, @article_cat.bug)
-      {:ok, _} = CMS.Articles.set_state(post, @article_state.reject_dup)
+      {:ok, _} = CMS.Articles.set_status(post, @article_status.wip)
+
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.idea)
+      {:ok, _} = CMS.Articles.set_status(post, @article_status.done)
+
+      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.bug)
+      {:ok, _} = CMS.Articles.set_status(post, @article_status.reject_dup)
 
       variables = %{community: community.slug}
       results = guest_conn |> gq_query(@query, variables)
@@ -135,19 +135,21 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
     test "disabled grouped kanban boards resolve to empty paginations",
          ~m(guest_conn user community post_attrs)a do
       {:ok, _} =
-        CMS.Communities.update_dashboard(community, :layout, %{kanban_boards: [:todo, :wip, :done]})
+        CMS.Communities.update_dashboard(community, :layout, %{
+          kanban_boards: [:todo, :wip, :done]
+        })
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.feature)
-      {:ok, _} = CMS.Articles.set_state(post, @article_state.backlog)
+      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.idea)
+      {:ok, _} = CMS.Articles.set_status(post, @article_status.backlog)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.feature)
-      {:ok, _} = CMS.Articles.set_state(post, @article_state.todo)
+      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.idea)
+      {:ok, _} = CMS.Articles.set_status(post, @article_status.todo)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
       {:ok, _} = CMS.Articles.set_cat(post, @article_cat.bug)
-      {:ok, _} = CMS.Articles.set_state(post, @article_state.reject_dup)
+      {:ok, _} = CMS.Articles.set_status(post, @article_status.reject_dup)
 
       variables = %{community: community.slug}
       results = guest_conn |> gq_query(@query, variables)
@@ -168,7 +170,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
         entries {
           innerId
           cat
-          state
+          status
           title
         }
         totalPages
@@ -180,26 +182,26 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
     """
     test "can get paged kanban posts", ~m(guest_conn user community post_attrs)a do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.feature)
-      {:ok, _} = CMS.Articles.set_state(post, @article_state.todo)
+      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.idea)
+      {:ok, _} = CMS.Articles.set_status(post, @article_status.todo)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
       {:ok, _} = CMS.Articles.set_cat(post, @article_cat.bug)
-      {:ok, _} = CMS.Articles.set_state(post, @article_state.wip)
+      {:ok, _} = CMS.Articles.set_status(post, @article_status.wip)
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.feature)
-      {:ok, _} = CMS.Articles.set_state(post, @article_state.done)
+      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.idea)
+      {:ok, _} = CMS.Articles.set_status(post, @article_status.done)
 
       variables = %{
         community: community.slug,
-        filter: %{page: 1, size: 20, state: "WIP"}
+        filter: %{page: 1, size: 20, status: "WIP"}
       }
 
       results = guest_conn |> gq_query(@query, variables)
 
       assert results["totalCount"] == 1
-      assert results["entries"] |> Enum.at(0) |> Map.get("state") == "WIP"
+      assert results["entries"] |> Enum.at(0) |> Map.get("status") == "WIP"
     end
   end
 end

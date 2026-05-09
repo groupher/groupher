@@ -55,17 +55,17 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
       resolve(&R.CMS.set_post_cat/3)
     end
 
-    @desc "set cat for a post"
-    field :set_post_state, :post do
+    @desc "set status for a post"
+    field :set_post_status, :post do
       arg(:article, non_null(:article_ref_input))
-      arg(:state, non_null(:article_state_enum))
+      arg(:status, non_null(:article_status_enum))
 
       middleware(M.Authorize, :login)
       middleware(M.ArticleArgs, thread: :post)
-      middleware(M.Passport, action: "post.set_state")
+      middleware(M.Passport, action: "post.set_status")
       middleware(M.ArticleLoader)
 
-      resolve(&R.CMS.set_post_state/3)
+      resolve(&R.CMS.set_post_status/3)
     end
 
     article_react_mutations(:post, [

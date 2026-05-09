@@ -98,8 +98,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Articles.set_cat(article, cat)
   end
 
-  def set_post_state(_root, %{article: article, state: state}, _info) do
-    CMS.Articles.set_state(article, state)
+  def set_post_status(_root, %{article: article, status: status}, _info) do
+    CMS.Articles.set_status(article, status)
   end
 
   def paged_articles(_root, ~m(thread filter)a, %{context: %{cur_user: user}}) do

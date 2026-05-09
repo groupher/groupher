@@ -106,7 +106,7 @@ const isDefaultPagedPostsFilter = (filter: TPagedArticlesParams) => {
     (filter.page || 1) === 1 &&
     !filter.communityTag &&
     !filter.cat &&
-    !filter.state &&
+    !filter.status &&
     !filter.order
   )
 }

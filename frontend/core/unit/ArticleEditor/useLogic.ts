@@ -47,7 +47,7 @@ const store = proxy<TStore>({
   wordsCountReady: false,
 
   // selectors
-  activeCat: ARTICLE_CAT.FEATURE,
+  activeCat: ARTICLE_CAT.IDEA,
   activeTag: null,
 
   get allowEdit(): boolean {

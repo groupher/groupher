@@ -7,7 +7,7 @@ import CatSetting from './CatSetting'
 import Header from './Header'
 import Mirror2Home from './Mirror2Home'
 import SlugSetting from './SlugSetting'
-import StateSetting from './StateSetting'
+import StatusSetting from './StatusSetting'
 import TagsSetting from './TagsSetting'
 import TitleSetting from './TitleSetting'
 
@@ -32,8 +32,8 @@ const SubMenu: FC<TProps> = ({ closeSubMenu, subMenuType }) => {
       break
     }
 
-    case SUB_MENU_TYPE.STATE: {
-      Content = StateSetting
+    case SUB_MENU_TYPE.STATUS: {
+      Content = StatusSetting
       break
     }
 

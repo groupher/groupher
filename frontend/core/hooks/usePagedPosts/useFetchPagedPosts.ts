@@ -28,7 +28,7 @@ export default function useFetchPagedPosts() {
   const page = searchParams.get(URL_PARAM.PAGE)
   const tag = searchParams.get(URL_PARAM.TAG)
   const cat = searchParams.get(URL_PARAM.CAT)
-  const state = searchParams.get(URL_PARAM.STATE)
+  const status = searchParams.get(URL_PARAM.STATUS)
   const order = searchParams.get(URL_PARAM.ORDER)
   // Do not depend on the useSearchParams() object identity directly here.
   // Opening/closing the post preview drawer changes the route tree and can
@@ -40,7 +40,7 @@ export default function useFetchPagedPosts() {
     page: page || '1',
     tag: tag || '',
     cat: cat || '',
-    state: state || '',
+    status: status || '',
     order: order || '',
   })
 
@@ -55,7 +55,7 @@ export default function useFetchPagedPosts() {
         page: payload.page,
         tag,
         cat,
-        state,
+        status,
         order,
       })
 

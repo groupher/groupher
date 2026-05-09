@@ -1,7 +1,7 @@
 import type {
   TArticleCat,
   TArticleOrder,
-  TArticleState,
+  TArticleStatus,
   TPagedArticles,
   TResState,
   TTag,
@@ -27,7 +27,7 @@ export type TInit = {
 export type TStore = TInit & {
   activeOrder: TArticleOrder | null
   activeCat: TArticleCat | null
-  activeState: TArticleState | null
+  activeStatus: TArticleStatus | null
 
   resState: TResState
 

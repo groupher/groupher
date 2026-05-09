@@ -4,7 +4,7 @@ import CurveLineSVG from '~/icons/CurveLine'
 import PostSVG from '~/icons/Post'
 import WebhookSVG from '~/icons/Webhook'
 import { mockUsers } from '~/mock'
-import ArticleCatState from '~/unit/ArticleCatState'
+import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import CommentsCount from '~/unit/CommentsCount'
 import Checker from '~/widgets/Checker'
 import Facepile from '~/widgets/Facepile/LandingPage'
@@ -64,7 +64,7 @@ export default function ContentCard() {
       <div className={cn(s.item, s.itemBlue, 'opacity-70 pl-6')}>
         <Checker checked size='small' color={COLOR.BLUE} />
         <div className={s.title}>支持离线同步</div>
-        <ArticleCatState left={2} right={3} />
+        <ArticleCatStatus left={2} right={3} />
         <CommentsCount count={8} size='medium' left={3} right={4} />
 
         <Facepile users={users} className='-mt-0.5 scale-90' />

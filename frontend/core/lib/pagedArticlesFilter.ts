@@ -58,7 +58,7 @@ export const getPagedArticlesParams = (
     page: Number(searchParams.get(URL_PARAM.PAGE)) || 1,
     communityTag: searchParams.get(URL_PARAM.TAG),
     cat: normalizeEnumValue(searchParams.get(URL_PARAM.CAT)),
-    state: normalizeEnumValue(searchParams.get(URL_PARAM.STATE)),
+    status: normalizeEnumValue(searchParams.get(URL_PARAM.STATUS)),
     order: normalizeEnumValue(searchParams.get(URL_PARAM.ORDER)),
   })
 

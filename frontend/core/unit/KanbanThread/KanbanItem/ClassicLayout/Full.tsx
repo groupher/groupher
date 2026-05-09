@@ -14,7 +14,7 @@ import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { mockTags, mockUsers } from '~/mock'
 import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import ArticleCatState from '~/unit/ArticleCatState'
+import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import TagsList from '~/unit/TagsList'
 import Upvote from '~/unit/Upvote'
 
@@ -57,7 +57,7 @@ const KanbanItem: FC<TProps> = ({ article }) => {
           avatarList={mockUsers(3)}
           type={UPVOTE_LAYOUT.GENERAL}
         />
-        <ArticleCatState cat={article.cat} top={1} />
+        <ArticleCatStatus cat={article.cat} top={1} />
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 const URL_PARAM = {
   PAGE: 'page',
-  STATE: 'state',
+  STATUS: 'status',
   CAT: 'cat',
   ORDER: 'order',
   TAG: 'tag',
