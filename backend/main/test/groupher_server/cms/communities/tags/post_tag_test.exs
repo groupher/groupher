@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
   @moduledoc false
   use GroupherServer.TestMate
 
+  alias CMS.Communities.TagStats
   alias CMS.Model.{CommunityTag, CommunityTagStat}
 
   alias GroupherServer.CMS
@@ -198,7 +199,6 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       assert stat.contents_count == 1
       assert stat.today_contents_count == 1
       assert stat.today_stat_date == Datetime.today()
-      assert stat.last_posted_at == DateTime.truncate(created.inserted_at, :second)
 
       assert stat2.contents_count == 1
       assert stat2.today_contents_count == 1
@@ -344,6 +344,43 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       assert stat.today_contents_count == 1
     end
 
+    test "repeated mark delete does not decrement stats twice",
+         ~m(community post article_tag_attrs user)a do
+      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
+
+      {:ok, _} = CMS.Articles.mark_delete(post)
+      {:ok, post} = ORM.find(Post, post.id, preload: :community_tags)
+      {:ok, _} = CMS.Articles.mark_delete(post)
+
+      {:ok, stat} = CMS.Communities.tag_stats(article_tag)
+      assert stat.contents_count == 0
+      assert stat.today_contents_count == 0
+    end
+
+    test "mark delete does not decrement stats for already illegal post",
+         ~m(community post article_tag_attrs user)a do
+      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
+      {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
+
+      {:ok, _} =
+        CMS.Articles.set_illegal(post, %{
+          is_legal: false,
+          illegal_reason: ["some-reason"],
+          illegal_words: ["some-word"]
+        })
+
+      {:ok, stat} = CMS.Communities.tag_stats(article_tag)
+      assert stat.contents_count == 0
+
+      {:ok, post} = ORM.find(Post, post.id, preload: :community_tags)
+      {:ok, _} = CMS.Articles.mark_delete(post)
+
+      {:ok, stat} = CMS.Communities.tag_stats(article_tag)
+      assert stat.contents_count == 0
+      assert stat.today_contents_count == 0
+    end
+
     test "can rebuild tag stats from source data",
          ~m(community post article_tag_attrs user)a do
       {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
@@ -376,6 +413,26 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       {:ok, stat} = CMS.Communities.rebuild_tag_stats(article_tag)
       assert stat.contents_count == 2
       assert stat.today_contents_count == 1
+    end
+
+    test "normalizes stale today stat date with stale today count",
+         ~m(community post article_tag_attrs user)a do
+      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
+      {:ok, _post} = CMS.Communities.set_tag(post, article_tag.id)
+
+      from(s in CommunityTagStat, where: s.community_tag_id == ^article_tag.id)
+      |> Repo.update_all(set: [today_stat_date: yesterday_date(), today_contents_count: 99])
+
+      {:ok, stat} = CMS.Communities.tag_stats(article_tag)
+      assert stat.today_stat_date == Datetime.today()
+      assert stat.today_contents_count == 0
+    end
+
+    test "tag stats rejects mismatched article and tag thread",
+         ~m(community post article_tag_attrs user)a do
+      {:ok, blog_tag} = CMS.Communities.create_tag(community, :blog, article_tag_attrs, user)
+
+      assert {:error, {:invalid_domain_tag, _}} = TagStats.inc(post, blog_tag)
     end
   end
 end

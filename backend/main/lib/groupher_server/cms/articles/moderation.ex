@@ -51,11 +51,11 @@ defmodule GroupherServer.CMS.Articles.Moderation do
     article = Repo.preload(article, :community_tags)
 
     Multi.new()
-    |> Multi.run(:update_tag_stats, fn _, _ ->
-      update_tag_stats(article, :dec)
-    end)
     |> Multi.run(:update_pending_state, fn _, _ ->
       ORM.update(article, %{pending: @audit_illegal})
+    end)
+    |> Multi.run(:update_tag_stats, fn _, %{update_pending_state: updated_article} ->
+      update_tag_stats_on_visibility_change(article, updated_article)
     end)
     |> Multi.run(:update_article_meta, fn _, %{update_pending_state: article} ->
       legal_state = Map.take(audit_state, [:is_legal, :illegal_reason, :illegal_words])
@@ -92,11 +92,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
       ORM.update(article, %{pending: @audit_legal})
     end)
     |> Multi.run(:update_tag_stats, fn _, %{update_pending_state: updated_article} ->
-      if article.pending == @audit_illegal do
-        update_tag_stats(updated_article, :inc)
-      else
-        {:ok, :pass}
-      end
+      update_tag_stats_on_visibility_change(article, updated_article)
     end)
     |> Multi.run(:update_article_meta, fn _, %{update_pending_state: article} ->
       legal_state = Map.take(audit_state, [:is_legal, :illegal_reason, :illegal_words])
@@ -133,5 +129,17 @@ defmodule GroupherServer.CMS.Articles.Moderation do
         error -> {:halt, error}
       end
     end)
+  end
+
+  defp update_tag_stats_on_visibility_change(article, updated_article) do
+    case {counted_in_tag_stats?(article), counted_in_tag_stats?(updated_article)} do
+      {true, false} -> update_tag_stats(article, :dec)
+      {false, true} -> update_tag_stats(updated_article, :inc)
+      _ -> {:ok, :pass}
+    end
+  end
+
+  defp counted_in_tag_stats?(article) do
+    Map.get(article, :mark_delete) == false and Map.get(article, :pending) != @audit_illegal
   end
 end

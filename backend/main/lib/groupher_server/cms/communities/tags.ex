@@ -101,11 +101,18 @@ defmodule GroupherServer.CMS.Communities.Tags do
     article = Repo.preload(article, :community_tags)
     old_tags = article.community_tags
 
-    article
-    |> Ecto.Changeset.change()
-    |> Ecto.Changeset.put_assoc(:community_tags, tags)
-    |> Repo.update()
-    |> sync_tag_stats(article, old_tags)
+    Repo.transaction(fn ->
+      with {:ok, updated_article} <-
+             article
+             |> Ecto.Changeset.change()
+             |> Ecto.Changeset.put_assoc(:community_tags, tags)
+             |> Repo.update(),
+           {:ok, :pass} <- sync_tag_stats(updated_article, article, old_tags) do
+        updated_article
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
   defp find_related_tags(tag_ids) do
@@ -184,11 +191,19 @@ defmodule GroupherServer.CMS.Communities.Tags do
     article
     |> Ecto.Changeset.change()
     |> Ecto.Changeset.put_assoc(:community_tags, community_tags)
-    |> Repo.update()
-    |> sync_tag_stats(article, old_tags)
+    |> then(fn changeset ->
+      Repo.transaction(fn ->
+        with {:ok, updated_article} <- Repo.update(changeset),
+             {:ok, :pass} <- sync_tag_stats(updated_article, article, old_tags) do
+          updated_article
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+    end)
   end
 
-  defp sync_tag_stats({:ok, updated_article}, article, old_tags) do
+  defp sync_tag_stats(updated_article, article, old_tags) do
     new_tags = Map.get(updated_article, :community_tags, [])
 
     old_ids = MapSet.new(Enum.map(old_tags, & &1.id))
@@ -199,11 +214,9 @@ defmodule GroupherServer.CMS.Communities.Tags do
 
     with {:ok, :pass} <- update_stats(article, added_tags, :inc),
          {:ok, :pass} <- update_stats(article, removed_tags, :dec) do
-      {:ok, updated_article}
+      {:ok, :pass}
     end
   end
-
-  defp sync_tag_stats(error, _article, _old_tags), do: error
 
   defp update_stats(article, tags, action) do
     Enum.reduce_while(tags, {:ok, :pass}, fn tag, {:ok, :pass} ->

@@ -22,7 +22,13 @@ defmodule GroupherServer.Test.CMS.Communities.Count.UpdateCountField do
 
       assert updated_community.community_tags_count == 1
 
-      {:ok, _tag2} = CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+      {:ok, _tag2} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          unique_community_tag_attrs(community_tag_attrs, "2"),
+          user
+        )
 
       {:ok, updated_community} =
         CMS.Communities.update_count_field(community, :community_tags_count)

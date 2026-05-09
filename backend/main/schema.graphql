@@ -1090,7 +1090,6 @@ type CommunityTagStat {
   todayContentsCount: Int
   todayStatDate: Date
   rank: Int
-  lastPostedAt: DateTime
 }
 
 type EmotionStat {

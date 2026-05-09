@@ -28,6 +28,7 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   defp do_update(article, tag, delta) when delta in [-1, 1] do
     with {:ok, tag} <- ensure_tag(tag),
          true <- trackable_tag?(tag),
+         {:ok, true} <- valid_article_tag_pair?(article, tag),
          {:ok, true} <- trackable_article?(article) do
       upsert_delta(article, tag, delta)
     else
@@ -86,27 +87,20 @@ defmodule GroupherServer.CMS.Communities.TagStats do
       |> select([a, _t], count(a.id))
       |> Repo.one()
 
-    last_posted_at =
-      base_query
-      |> select([a, _t], max(a.inserted_at))
-      |> Repo.one()
-
     attrs = %{
       community_tag_id: tag.id,
       community_id: tag.community_id,
       thread: tag.thread,
       contents_count: contents_count,
       today_contents_count: today_contents_count,
-      today_stat_date: today,
-      last_posted_at: last_posted_at
+      today_stat_date: today
     }
 
     %CommunityTagStat{}
     |> CommunityTagStat.changeset(attrs)
     |> Repo.insert(
       on_conflict:
-        {:replace,
-         [:contents_count, :today_contents_count, :today_stat_date, :last_posted_at, :updated_at]},
+        {:replace, [:contents_count, :today_contents_count, :today_stat_date, :updated_at]},
       conflict_target: :community_tag_id
     )
   end
@@ -144,7 +138,6 @@ defmodule GroupherServer.CMS.Communities.TagStats do
     today = Datetime.today()
     now = Datetime.now(:second)
     today_delta = if same_utc_day?(article.inserted_at, today), do: delta, else: 0
-    last_posted_at = if delta > 0, do: article.inserted_at, else: nil
 
     query = """
     INSERT INTO cms.community_tag_stats (
@@ -154,11 +147,19 @@ defmodule GroupherServer.CMS.Communities.TagStats do
       contents_count,
       today_contents_count,
       today_stat_date,
-      last_posted_at,
       inserted_at,
       updated_at
     )
-    VALUES ($1, $2, $3, GREATEST($4, 0), GREATEST($5, 0), $6, $7, $8, $8)
+    VALUES (
+      $1,
+      $2,
+      $3,
+      GREATEST($4, 0),
+      GREATEST($5, 0),
+      $6,
+      $7,
+      $7
+    )
     ON CONFLICT (community_tag_id) DO UPDATE SET
       contents_count = GREATEST(cms.community_tag_stats.contents_count + $4, 0),
       today_contents_count = CASE
@@ -167,12 +168,7 @@ defmodule GroupherServer.CMS.Communities.TagStats do
         ELSE GREATEST($5, 0)
       END,
       today_stat_date = $6,
-      last_posted_at = CASE
-        WHEN $4 > 0
-          THEN GREATEST(COALESCE(cms.community_tag_stats.last_posted_at, $7), $7)
-        ELSE cms.community_tag_stats.last_posted_at
-      END,
-      updated_at = $8
+      updated_at = $7
     """
 
     Repo.query(query, [
@@ -182,7 +178,6 @@ defmodule GroupherServer.CMS.Communities.TagStats do
       delta,
       today_delta,
       today,
-      last_posted_at,
       now
     ])
     |> case do
@@ -194,7 +189,7 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   defp normalize_today(%CommunityTagStat{today_stat_date: today} = stat) do
     case today == Datetime.today() do
       true -> done(stat)
-      false -> done(%{stat | today_contents_count: 0})
+      false -> done(%{stat | today_contents_count: 0, today_stat_date: Datetime.today()})
     end
   end
 
@@ -218,6 +213,18 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   defp trackable_article?(article) do
     with {:ok, thread} <- FrontDesk.thread_of(article) do
       done(thread in @tracked_threads and visible?(article))
+    end
+  end
+
+  defp valid_article_tag_pair?(article, %CommunityTag{} = tag) do
+    with {:ok, thread} <- FrontDesk.thread_of(article) do
+      case thread == tag.thread and Map.get(article, :community_id) == tag.community_id do
+        true ->
+          done(true)
+
+        false ->
+          {:error, {:invalid_domain_tag, "article and tag not in same community or thread"}}
+      end
     end
   end
 

@@ -35,7 +35,6 @@ defmodule GroupherServer.Test.Query.CMS.PostTags do
             contentsCount
             todayContentsCount
             todayStatDate
-            lastPostedAt
           }
         }
         totalCount
@@ -95,7 +94,6 @@ defmodule GroupherServer.Test.Query.CMS.PostTags do
       assert stats["contentsCount"] == 1
       assert stats["todayContentsCount"] == 1
       assert stats["todayStatDate"] == Date.to_iso8601(Datetime.today())
-      assert not is_nil(stats["lastPostedAt"])
     end
 
     test "guest user can get single post tag stats by community thread and slug",
@@ -111,7 +109,6 @@ defmodule GroupherServer.Test.Query.CMS.PostTags do
           contentsCount
           todayContentsCount
           todayStatDate
-          lastPostedAt
         }
       }
       """
@@ -122,7 +119,6 @@ defmodule GroupherServer.Test.Query.CMS.PostTags do
       assert results["contentsCount"] == 1
       assert results["todayContentsCount"] == 1
       assert results["todayStatDate"] == Date.to_iso8601(Datetime.today())
-      assert not is_nil(results["lastPostedAt"])
     end
   end
 end

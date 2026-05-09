@@ -21,11 +21,12 @@ defmodule GroupherServer.CMS.Articles.Write do
   alias CMS.Communities.TagStats
   alias CMS.Model.{Author, Community, Embeds}
   alias CMS.{Communities, Events, FrontDesk}
-  alias Helper.{ContentPipeline, Multi, Later, ORM, T, Transaction}
+  alias Helper.{Constant, ContentPipeline, Multi, Later, ORM, T, Transaction}
 
   @default_emotions Embeds.ArticleEmotion.default_emotions()
   @default_article_meta Embeds.ArticleMeta.default_meta()
   @remove_article_hint "The content does not comply with the community norms"
+  @audit_illegal Constant.CMS.pending(:illegal)
 
   @spec create(Community.t(), atom(), map(), User.t()) :: T.domain_res(term())
   def create(%Community{} = community, thread, attrs, %User{} = user) do
@@ -166,11 +167,11 @@ defmodule GroupherServer.CMS.Articles.Write do
       case article.is_archived do
         false ->
           Multi.new()
-          |> Multi.run(:update_tag_stats, fn _, _ ->
-            update_tag_stats(article, :dec)
-          end)
           |> Multi.run(:update_article, fn _, _ ->
             ORM.update(article, %{mark_delete: true})
+          end)
+          |> Multi.run(:update_tag_stats, fn _, %{update_article: updated_article} ->
+            update_tag_stats_on_visibility_change(article, updated_article)
           end)
           |> Multi.run(:update_community_article_count, fn _, _ ->
             Communities.update_count_field(article.communities, thread)
@@ -195,11 +196,7 @@ defmodule GroupherServer.CMS.Articles.Write do
         ORM.update(article, %{mark_delete: false})
       end)
       |> Multi.run(:update_tag_stats, fn _, %{update_article: updated_article} ->
-        if article.mark_delete == true do
-          update_tag_stats(updated_article, :inc)
-        else
-          {:ok, :pass}
-        end
+        update_tag_stats_on_visibility_change(article, updated_article)
       end)
       |> Multi.run(:update_community_article_count, fn _, _ ->
         Communities.update_count_field(article.communities, thread)
@@ -230,11 +227,11 @@ defmodule GroupherServer.CMS.Articles.Write do
     {:ok, thread} = FrontDesk.thread_of(article)
 
     Multi.new()
-    |> Multi.run(:update_tag_stats, fn _, _ ->
-      update_tag_stats(article, :dec)
-    end)
     |> Multi.run(:delete_article, fn _, _ ->
       article |> ORM.delete()
+    end)
+    |> Multi.run(:update_tag_stats, fn _, _ ->
+      update_tag_stats_on_visibility_change(article, %{article | mark_delete: true})
     end)
     |> Multi.run(:update_community_article_count, fn _, _ ->
       Communities.update_count_field(article.communities, thread)
@@ -342,14 +339,9 @@ defmodule GroupherServer.CMS.Articles.Write do
         |> done
       end)
       |> Multi.run(:update_tag_stats, fn _, %{list_articles: articles} ->
-        articles =
-          case delete_flag do
-            true -> Enum.filter(articles, &(&1.mark_delete == false))
-            false -> Enum.filter(articles, &(&1.mark_delete == true))
-          end
-
-        action = if delete_flag, do: :dec, else: :inc
-        update_articles_tag_stats(articles, action)
+        articles
+        |> Enum.map(fn article -> {article, %{article | mark_delete: delete_flag}} end)
+        |> update_articles_tag_stats()
       end)
       |> Multi.run(:update_community_article_count, fn _, _ ->
         communities =
@@ -375,13 +367,25 @@ defmodule GroupherServer.CMS.Articles.Write do
     end
   end
 
-  defp update_articles_tag_stats(articles, action) do
-    Enum.reduce_while(articles, {:ok, :pass}, fn article, {:ok, :pass} ->
-      case update_tag_stats(article, action) do
+  defp update_articles_tag_stats(articles) do
+    Enum.reduce_while(articles, {:ok, :pass}, fn {article, updated_article}, {:ok, :pass} ->
+      case update_tag_stats_on_visibility_change(article, updated_article) do
         {:ok, :pass} -> {:cont, {:ok, :pass}}
         error -> {:halt, error}
       end
     end)
+  end
+
+  defp update_tag_stats_on_visibility_change(article, updated_article) do
+    case {counted_in_tag_stats?(article), counted_in_tag_stats?(updated_article)} do
+      {true, false} -> update_tag_stats(article, :dec)
+      {false, true} -> update_tag_stats(updated_article, :inc)
+      _ -> {:ok, :pass}
+    end
+  end
+
+  defp counted_in_tag_stats?(article) do
+    Map.get(article, :mark_delete) == false and Map.get(article, :pending) != @audit_illegal
   end
 
   defp update_tag_stats(article, action) do
