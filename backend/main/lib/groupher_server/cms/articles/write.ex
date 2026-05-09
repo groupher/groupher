@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Articles.Write do
 
   alias Accounts.Model.User
   alias CMS.Articles.{Document, States}
+  alias CMS.Communities.TagStats
   alias CMS.Model.{Author, Community, Embeds}
   alias CMS.{Communities, Events, FrontDesk}
   alias Helper.{ContentPipeline, Multi, Later, ORM, T, Transaction}
@@ -125,10 +126,10 @@ defmodule GroupherServer.CMS.Articles.Write do
         States.update_edit_status(update_article)
       end)
       |> Multi.run(:finalize_article, fn _,
-                                        %{
-                                          set_community_tags: tagged_article,
-                                          update_edit_status: updated_article
-                                        } ->
+                                         %{
+                                           set_community_tags: tagged_article,
+                                           update_edit_status: updated_article
+                                         } ->
         {:ok, merge_loaded_assoc(updated_article, :community_tags, tagged_article)}
       end)
       |> Multi.run(:after_events, fn _, %{update_article: update_article} ->
@@ -159,11 +160,15 @@ defmodule GroupherServer.CMS.Articles.Write do
   @spec mark_delete(term()) :: T.domain_res(term())
   def mark_delete(article) do
     {:ok, thread} = FrontDesk.thread_of(article)
+    article = Repo.preload(article, :community_tags)
 
     Transaction.lock_row(article, fn article ->
       case article.is_archived do
         false ->
           Multi.new()
+          |> Multi.run(:update_tag_stats, fn _, _ ->
+            update_tag_stats(article, :dec)
+          end)
           |> Multi.run(:update_article, fn _, _ ->
             ORM.update(article, %{mark_delete: true})
           end)
@@ -182,11 +187,19 @@ defmodule GroupherServer.CMS.Articles.Write do
   @spec undo_mark_delete(term()) :: T.domain_res(term())
   def undo_mark_delete(article) do
     {:ok, thread} = FrontDesk.thread_of(article)
+    article = Repo.preload(article, :community_tags)
 
     Transaction.lock_row(article, fn article ->
       Multi.new()
       |> Multi.run(:update_article, fn _, _ ->
         ORM.update(article, %{mark_delete: false})
+      end)
+      |> Multi.run(:update_tag_stats, fn _, %{update_article: updated_article} ->
+        if article.mark_delete == true do
+          update_tag_stats(updated_article, :inc)
+        else
+          {:ok, :pass}
+        end
       end)
       |> Multi.run(:update_community_article_count, fn _, _ ->
         Communities.update_count_field(article.communities, thread)
@@ -213,10 +226,13 @@ defmodule GroupherServer.CMS.Articles.Write do
 
   @spec delete(term(), String.t()) :: T.domain_res(term())
   def delete(article, _reason) do
-    article = Repo.preload(article, [:communities, [author: :user]])
+    article = Repo.preload(article, [:communities, :community_tags, [author: :user]])
     {:ok, thread} = FrontDesk.thread_of(article)
 
     Multi.new()
+    |> Multi.run(:update_tag_stats, fn _, _ ->
+      update_tag_stats(article, :dec)
+    end)
     |> Multi.run(:delete_article, fn _, _ ->
       article |> ORM.delete()
     end)
@@ -314,10 +330,26 @@ defmodule GroupherServer.CMS.Articles.Write do
         |> where([article], article.inner_id in ^inner_id_list)
 
       Multi.new()
+      |> Multi.run(:list_articles, fn _, _ ->
+        batch_query
+        |> preload(:community_tags)
+        |> Repo.all()
+        |> done()
+      end)
       |> Multi.run(:update_articles, fn _, _ ->
         batch_query
         |> Repo.update_all(set: [mark_delete: delete_flag])
         |> done
+      end)
+      |> Multi.run(:update_tag_stats, fn _, %{list_articles: articles} ->
+        articles =
+          case delete_flag do
+            true -> Enum.filter(articles, &(&1.mark_delete == false))
+            false -> Enum.filter(articles, &(&1.mark_delete == true))
+          end
+
+        action = if delete_flag, do: :dec, else: :inc
+        update_articles_tag_stats(articles, action)
       end)
       |> Multi.run(:update_community_article_count, fn _, _ ->
         communities =
@@ -341,6 +373,26 @@ defmodule GroupherServer.CMS.Articles.Write do
       %Ecto.Association.NotLoaded{} -> target
       loaded -> Map.put(target, field, loaded)
     end
+  end
+
+  defp update_articles_tag_stats(articles, action) do
+    Enum.reduce_while(articles, {:ok, :pass}, fn article, {:ok, :pass} ->
+      case update_tag_stats(article, action) do
+        {:ok, :pass} -> {:cont, {:ok, :pass}}
+        error -> {:halt, error}
+      end
+    end)
+  end
+
+  defp update_tag_stats(article, action) do
+    article = Repo.preload(article, :community_tags)
+
+    Enum.reduce_while(article.community_tags, {:ok, :pass}, fn tag, {:ok, :pass} ->
+      case apply(TagStats, action, [article, tag]) do
+        {:ok, :pass} -> {:cont, {:ok, :pass}}
+        error -> {:halt, error}
+      end
+    end)
   end
 
   defp result({:ok, %{set_active_at_timestamp: result}}), do: {:ok, result}

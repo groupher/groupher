@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
 
   alias GroupherServer.{CMS, Repo}
 
+  alias CMS.Communities.TagStats
   alias CMS.FrontDesk
   alias GroupherServer.FrontDesk, as: UserFrontDesk
   alias Helper.{Multi, Constant, ORM, QueryBuilder, T}
@@ -47,7 +48,12 @@ defmodule GroupherServer.CMS.Articles.Moderation do
 
   @spec set_illegal(term(), map()) :: T.domain_res(term())
   def set_illegal(article, audit_state) do
+    article = Repo.preload(article, :community_tags)
+
     Multi.new()
+    |> Multi.run(:update_tag_stats, fn _, _ ->
+      update_tag_stats(article, :dec)
+    end)
     |> Multi.run(:update_pending_state, fn _, _ ->
       ORM.update(article, %{pending: @audit_illegal})
     end)
@@ -79,9 +85,18 @@ defmodule GroupherServer.CMS.Articles.Moderation do
 
   @spec unset_illegal(term(), map()) :: T.domain_res(term())
   def unset_illegal(article, audit_state) do
+    article = Repo.preload(article, :community_tags)
+
     Multi.new()
     |> Multi.run(:update_pending_state, fn _, _ ->
       ORM.update(article, %{pending: @audit_legal})
+    end)
+    |> Multi.run(:update_tag_stats, fn _, %{update_pending_state: updated_article} ->
+      if article.pending == @audit_illegal do
+        update_tag_stats(updated_article, :inc)
+      else
+        {:ok, :pass}
+      end
     end)
     |> Multi.run(:update_article_meta, fn _, %{update_pending_state: article} ->
       legal_state = Map.take(audit_state, [:is_legal, :illegal_reason, :illegal_words])
@@ -108,4 +123,15 @@ defmodule GroupherServer.CMS.Articles.Moderation do
 
   defp result({:ok, %{update_article_meta: result}}), do: {:ok, result}
   defp result({:error, _, result, _steps}), do: {:error, result}
+
+  defp update_tag_stats(article, action) do
+    article = Repo.preload(article, :community_tags)
+
+    Enum.reduce_while(article.community_tags, {:ok, :pass}, fn tag, {:ok, :pass} ->
+      case apply(TagStats, action, [article, tag]) do
+        {:ok, :pass} -> {:cont, {:ok, :pass}}
+        error -> {:halt, error}
+      end
+    end)
+  end
 end

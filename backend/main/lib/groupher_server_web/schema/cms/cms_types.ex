@@ -240,8 +240,17 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
     field(:author, :user, resolve: dataloader(CMS, :author))
     field(:community, :community, resolve: dataloader(CMS, :community))
+    field(:stats, :community_tag_stat, resolve: &R.CMS.community_tag_stats/3)
 
     timestamp_fields()
+  end
+
+  object :community_tag_stat do
+    field(:contents_count, :integer)
+    field(:today_contents_count, :integer)
+    field(:today_stat_date, :date)
+    field(:rank, :integer)
+    field(:last_posted_at, :datetime)
   end
 
   object :emotion_stat do

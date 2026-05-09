@@ -143,6 +143,10 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
       assert changelog.community_tags |> length == 1
       assert exist_in?(article_tag, changelog.community_tags)
 
+      {:ok, stat} = CMS.Communities.tag_stats(article_tag)
+      assert stat.contents_count == 1
+      assert stat.today_contents_count == 1
+
       {:ok, changelog} = CMS.Communities.set_tag(changelog, article_tag2.id)
       assert changelog.community_tags |> length == 2
       assert exist_in?(article_tag, changelog.community_tags)
@@ -153,10 +157,21 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
       assert not exist_in?(article_tag, changelog.community_tags)
       assert exist_in?(article_tag2, changelog.community_tags)
 
+      {:ok, stat} = CMS.Communities.tag_stats(article_tag)
+      {:ok, stat2} = CMS.Communities.tag_stats(article_tag2)
+      assert stat.contents_count == 0
+      assert stat.today_contents_count == 0
+      assert stat2.contents_count == 1
+      assert stat2.today_contents_count == 1
+
       {:ok, changelog} = CMS.Communities.unset_tag(changelog, article_tag2.id)
       assert changelog.community_tags |> length == 0
       assert not exist_in?(article_tag, changelog.community_tags)
       assert not exist_in?(article_tag2, changelog.community_tags)
+
+      {:ok, stat2} = CMS.Communities.tag_stats(article_tag2)
+      assert stat2.contents_count == 0
+      assert stat2.today_contents_count == 0
     end
 
     test "can not set dup tag ", ~m(community changelog article_tag_attrs user)a do
@@ -167,6 +182,27 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
       {:ok, changelog} = CMS.Communities.set_tag(changelog, article_tag.id)
 
       assert changelog.community_tags |> length == 1
+    end
+
+    test "set tag counts all contents but only today's contents",
+         ~m(community changelog article_tag_attrs user)a do
+      {:ok, article_tag} =
+        CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
+
+      {:ok, old_changelog} =
+        CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
+
+      from(c in Changelog, where: c.id == ^old_changelog.id)
+      |> Repo.update_all(set: [inserted_at: Datetime.beginning_of_day(yesterday_date())])
+
+      {:ok, old_changelog} = ORM.find(Changelog, old_changelog.id, preload: :community_tags)
+
+      {:ok, _changelog} = CMS.Communities.set_tag(changelog, article_tag.id)
+      {:ok, _old_changelog} = CMS.Communities.set_tag(old_changelog, article_tag.id)
+
+      {:ok, stat} = CMS.Communities.tag_stats(article_tag)
+      assert stat.contents_count == 2
+      assert stat.today_contents_count == 1
     end
   end
 end

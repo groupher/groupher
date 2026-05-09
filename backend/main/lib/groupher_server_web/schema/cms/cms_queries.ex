@@ -79,6 +79,15 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.paged_community_tags/3)
     end
 
+    @desc "get community tag stats by community, thread and slug"
+    field :community_tag_stats, :community_tag_stat do
+      arg(:community, non_null(:string))
+      arg(:thread, non_null(:thread))
+      arg(:slug, non_null(:string))
+
+      resolve(&R.CMS.community_tag_stats/3)
+    end
+
     @desc "got basic comments state"
     field :comments_state, :comments_list_state do
       arg(:article, non_null(:article_ref_input))

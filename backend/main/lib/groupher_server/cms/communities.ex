@@ -20,6 +20,7 @@ defmodule GroupherServer.CMS.Communities do
     Passport,
     Read,
     Subscribe,
+    TagStats,
     Tags,
     Write
   }
@@ -198,8 +199,7 @@ defmodule GroupherServer.CMS.Communities do
   @spec unset_tag(Ecto.Schema.t(), T.id()) :: T.domain_res(Ecto.Schema.t())
   def unset_tag(article, id), do: Tags.remove(article, id)
 
-  @spec set_tags(Community.t(), atom(), Ecto.Schema.t(), map()) ::
-          T.domain_res(Ecto.Schema.t())
+  @spec set_tags(Community.t(), atom(), Ecto.Schema.t(), map()) :: T.domain_res(Ecto.Schema.t())
   def set_tags(%Community{} = community, thread, article, attrs) do
     Tags.set(community, thread, article, attrs)
   end
@@ -221,6 +221,20 @@ defmodule GroupherServer.CMS.Communities do
   @spec reindex_tags(Community.t() | String.t(), atom(), list()) :: T.domain_res(atom())
   def reindex_tags(community, thread, tags) do
     Tags.reindex(community, thread, tags)
+  end
+
+  @spec tag_stats(CommunityTag.t() | T.id()) :: T.domain_res(term())
+  def tag_stats(tag), do: TagStats.get(tag)
+
+  @spec tag_stats(String.t(), atom(), String.t()) :: T.domain_res(term())
+  def tag_stats(community, thread, slug), do: TagStats.get(community, thread, slug)
+
+  @spec rebuild_tag_stats(CommunityTag.t() | T.id()) :: T.domain_res(term())
+  def rebuild_tag_stats(tag), do: TagStats.rebuild(tag)
+
+  @spec rebuild_tag_stats_for_community(Community.t() | String.t(), atom()) :: T.domain_res(:pass)
+  def rebuild_tag_stats_for_community(community, thread \\ :post) do
+    TagStats.rebuild_for_community(community, thread)
   end
 
   # Count helpers (migrated from CommunityCRUD)

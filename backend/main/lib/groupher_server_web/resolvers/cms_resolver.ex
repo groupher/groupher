@@ -303,6 +303,14 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Communities.paged_tags(filter)
   end
 
+  def community_tag_stats(_root, ~m(community thread slug)a, _info) do
+    CMS.Communities.tag_stats(community, thread, slug)
+  end
+
+  def community_tag_stats(root, _args, _info) do
+    CMS.Communities.tag_stats(root)
+  end
+
   def reindex_community_tags(_root, ~m(community thread group tags)a, _info) do
     with {:ok, _} <- CMS.Communities.reindex_tags(community, thread, group, tags) do
       {:ok, %{done: true}}

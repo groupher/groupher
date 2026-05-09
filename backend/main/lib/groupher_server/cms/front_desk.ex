@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.FrontDesk do
 
   alias Accounts.Model.User
   alias CMS.Helper.Threads
-  alias CMS.Model.{Comment, Community, Embeds}
+  alias CMS.Model.{Comment, Community, CommunityTag, Embeds}
   alias Helper.{ORM, QueryBuilder, T}
 
   @article_threads Application.compile_env(:groupher_server, :article, [])
@@ -44,6 +44,30 @@ defmodule GroupherServer.CMS.FrontDesk do
     with {:ok, comment} <- ORM.find(Comment, comment_id, preload: :author) do
       ORM.fill_meta(comment)
     end
+  end
+
+  @spec community_tag(T.id()) :: T.domain_res(CommunityTag.t())
+  def community_tag(id), do: ORM.find(CommunityTag, id)
+
+  @spec community_tag(String.t(), atom(), String.t()) :: T.domain_res(CommunityTag.t())
+  def community_tag(community, thread, slug) do
+    with {:ok, community} <- community(community) do
+      ORM.find_by(CommunityTag, community_id: community.id, thread: thread, slug: slug)
+    end
+  end
+
+  @spec community_tags([T.id()]) :: T.domain_res([CommunityTag.t()])
+  def community_tags(tag_ids) when is_list(tag_ids) do
+    pos =
+      tag_ids
+      |> Enum.with_index()
+      |> Map.new(fn {id, idx} -> {to_string(id), idx} end)
+
+    CommunityTag
+    |> where([t], t.id in ^tag_ids)
+    |> Repo.all()
+    |> Enum.sort_by(&Map.get(pos, to_string(&1.id), 9_999_999))
+    |> done()
   end
 
   @spec full_comment(integer()) :: T.domain_res(T.article_info())

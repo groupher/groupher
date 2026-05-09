@@ -46,6 +46,7 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
     |> Slug.validate_changeset(:slug)
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:community_id)
+    |> unique_constraint(:slug, name: :community_tags_community_id_thread_slug_index)
   end
 
   def update_changeset(%CommunityTag{} = tag, attrs) do
@@ -54,5 +55,6 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
     |> Slug.validate_changeset(:slug)
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:community_id)
+    |> unique_constraint(:slug, name: :community_tags_community_id_thread_slug_index)
   end
 end

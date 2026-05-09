@@ -133,6 +133,10 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.DocTagTest do
       assert doc.community_tags |> length == 1
       assert exist_in?(article_tag, doc.community_tags)
 
+      {:ok, stat} = CMS.Communities.tag_stats(article_tag)
+      assert stat.contents_count == 0
+      assert stat.today_contents_count == 0
+
       {:ok, doc} = CMS.Communities.set_tag(doc, article_tag2.id)
       assert doc.community_tags |> length == 2
       assert exist_in?(article_tag, doc.community_tags)
