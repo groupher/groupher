@@ -20,6 +20,7 @@ export default function useSalon() {
     slugInput: 'h-9',
     error: cn('mt-1.5 text-xs', fg('rainbow.red')),
     inputer: 'min-h-24',
+    markdownEditor: 'w-full',
     rainbow,
   }
 }

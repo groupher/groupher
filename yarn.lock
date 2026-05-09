@@ -1289,7 +1289,7 @@ __metadata:
     jsdom: "npm:^29.0.2"
     lint-staged: "npm:^15.2.0"
     lucide-static: "npm:^1.11.0"
-    markdown-to-jsx: "npm:^7.5.0"
+    markdown-to-jsx: "npm:^9.7.16"
     mastani-codehighlight: "npm:0.0.7"
     motion: "npm:^12.38.0"
     nanoid: "npm:^5.1.9"
@@ -9267,15 +9267,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"markdown-to-jsx@npm:^7.5.0":
-  version: 7.7.17
-  resolution: "markdown-to-jsx@npm:7.7.17"
+"markdown-to-jsx@npm:^9.7.16":
+  version: 9.7.16
+  resolution: "markdown-to-jsx@npm:9.7.16"
   peerDependencies:
-    react: ">= 0.14.0"
+    react: ">= 16.0.0"
+    solid-js: ">=1.0.0"
+    vue: ">=3.0.0"
   peerDependenciesMeta:
     react:
       optional: true
-  checksum: 10c0/581c5ee1b3c79445f9f8369dc2882d0289507e702b2fcf2bc276b163a984cdcca2d8463a609c9bf310a31dcbf10c3210721c42c9173d4f12da675d3b56243736
+    react-native:
+      optional: true
+    solid-js:
+      optional: true
+    vue:
+      optional: true
+  checksum: 10c0/ecadb010bc82362368187c2f3171bb47ec40602f5fa3fa19a360e6665c1c7a66caaa7e2617cebbfe6df31c6de725c6d4536bf2df0de9ca6e7267b9dd3e89f47a
   languageName: node
   linkType: hard
 
