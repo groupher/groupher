@@ -32,9 +32,9 @@ export const ICONS = {
   [MENU.UPVOTE]: UpvoteSVG,
   [MENU.VIEWS]: ViewSVG,
   [MENU.COMMENT]: CommentSVG,
-  [MENU.FEATURE]: LightSVG,
+  [MENU.IDEA]: LightSVG,
   [MENU.BUG]: BugSVG,
   [MENU.CLOSE]: RejectSVG,
   [MENU.HELP]: QuestionSVG,
-  [MENU.OTHER]: OtherSVG,
+  [MENU.DISCUSSION]: OtherSVG,
 }

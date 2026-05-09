@@ -16,7 +16,7 @@ import type { TSubMenu } from '../spec'
 import SubMenu from '../SubMenu'
 import CatItem from './CatItem'
 import PinItem from './PinItem'
-import StateItem from './StateItem'
+import StatusItem from './StatusItem'
 import TagsItem from './TagsItem'
 
 type TProps = {
@@ -74,7 +74,7 @@ const Menu: FC<TProps> = ({ onSubMenuToggle, onClose }) => {
           </div>
           <div className={s.divider} />
           <CatItem onClick={() => openSubMenu(SUB_MENU_TYPE.CATEGORY)} />
-          <StateItem onClick={() => openSubMenu(SUB_MENU_TYPE.STATE)} />
+          <StatusItem onClick={() => openSubMenu(SUB_MENU_TYPE.STATUS)} />
           <TagsItem onClick={() => openSubMenu(SUB_MENU_TYPE.TAGS)} />
           <div className={s.divider} />
           <PinItem />

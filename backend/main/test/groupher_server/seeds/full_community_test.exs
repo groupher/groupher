@@ -45,11 +45,11 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       post = List.first(posts)
 
       assert Enum.all?(posts, &(&1.cat in allowed_cats))
-      assert Enum.all?(posts, &(&1.state in allowed_states))
+      assert Enum.all?(posts, &(&1.status in allowed_states))
 
-      assert Enum.any?(posts, &(is_nil(&1.cat) and is_nil(&1.state)))
-      assert Enum.any?(posts, &(not is_nil(&1.cat) and is_nil(&1.state)))
-      assert Enum.any?(posts, &(not is_nil(&1.cat) and not is_nil(&1.state)))
+      assert Enum.any?(posts, &(is_nil(&1.cat) and is_nil(&1.status)))
+      assert Enum.any?(posts, &(not is_nil(&1.cat) and is_nil(&1.status)))
+      assert Enum.any?(posts, &(not is_nil(&1.cat) and not is_nil(&1.status)))
 
       comments_count =
         from(c in Comment, where: c.post_id == ^post.id) |> count()

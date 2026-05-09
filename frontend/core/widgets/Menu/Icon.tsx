@@ -11,7 +11,7 @@ type TProps = {
 const Icon: FC<TProps> = ({ type }) => {
   const s = useSalon()
 
-  const IconComp = ICONS[type] || ICONS.OTHER
+  const IconComp = ICONS[type] || ICONS.DISCUSSION
 
   return (
     <div className={s.wrapper}>

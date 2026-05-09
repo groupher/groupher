@@ -47,7 +47,7 @@ export default function Sections() {
   const sectionMap: Record<TKanbanBoard, TSection> = {
     [KANBAN_BOARD.BACKLOG]: {
       key: KANBAN_BOARD.BACKLOG,
-      title: resolveTitle('backlog', t('article.state.backlog')),
+      title: resolveTitle('backlog', t('article.status.backlog')),
       countClassName: s.backlogText,
       headClassName: s.backlogHead,
       icon: <GtdTodoSVG className={s.backlogIcon} />,
@@ -55,7 +55,7 @@ export default function Sections() {
     },
     [KANBAN_BOARD.TODO]: {
       key: KANBAN_BOARD.TODO,
-      title: resolveTitle('todo', t('article.state.todo')),
+      title: resolveTitle('todo', t('article.status.todo')),
       countClassName: s.todoText,
       headClassName: s.todoHead,
       icon: <GtdTodoSVG className={s.todoIcon} />,
@@ -63,7 +63,7 @@ export default function Sections() {
     },
     [KANBAN_BOARD.WIP]: {
       key: KANBAN_BOARD.WIP,
-      title: resolveTitle('wip', t('article.state.wip')),
+      title: resolveTitle('wip', t('article.status.wip')),
       countClassName: s.wipText,
       headClassName: s.wipHead,
       icon: <GtdWipSVG className={s.wipIcon} />,
@@ -71,7 +71,7 @@ export default function Sections() {
     },
     [KANBAN_BOARD.DONE]: {
       key: KANBAN_BOARD.DONE,
-      title: resolveTitle('done', t('article.state.done')),
+      title: resolveTitle('done', t('article.status.done')),
       countClassName: s.doneText,
       headClassName: s.doneHead,
       icon: <GtdDoneSVG className={s.doneIcon} />,
@@ -79,7 +79,7 @@ export default function Sections() {
     },
     [KANBAN_BOARD.REJECTED]: {
       key: KANBAN_BOARD.REJECTED,
-      title: resolveTitle('rejected', t('article.state.reject')),
+      title: resolveTitle('rejected', t('article.status.reject')),
       countClassName: s.rejectedText,
       headClassName: s.rejectedHead,
       icon: <RejectSVG className={s.rejectedIcon} />,

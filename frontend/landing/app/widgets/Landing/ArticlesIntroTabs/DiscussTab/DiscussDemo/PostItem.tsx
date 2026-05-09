@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import { ARTICLE_CAT } from '~/const/gtd'
 import UpvoteSVG from '~/icons/Upvote'
 import type { TActive, TArticleCat } from '~/spec'
-import ArticleCatState from '~/unit/ArticleCatState'
+import ArticleCatStatus from '~/unit/ArticleCatStatus'
 
 import useSalon, { cn } from '../../../salon/articles_intro_tabs/discuss_tab/discuss_demo/post_item'
 
@@ -17,7 +17,7 @@ type TProps = {
 
 const PostItem: FC<TProps> = ({
   title = '',
-  cat = ARTICLE_CAT.FEATURE,
+  cat = ARTICLE_CAT.IDEA,
   count = 9,
   className = '',
   active,
@@ -34,7 +34,7 @@ const PostItem: FC<TProps> = ({
       <div className={s.rightPart}>
         <div className={s.title}>{title}</div>
         <div className={s.footer}>
-          <ArticleCatState cat={cat} noBorder />
+          <ArticleCatStatus cat={cat} noBorder />
         </div>
       </div>
     </div>

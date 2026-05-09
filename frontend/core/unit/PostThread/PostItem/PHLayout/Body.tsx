@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import type { TPost } from '~/spec'
-import ArticleCatState from '~/unit/ArticleCatState'
+import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import CommentsCount from '~/unit/CommentsCount'
 import ViewsCount from '~/unit/ViewsCount'
 
@@ -19,7 +19,13 @@ const Body: FC<TProps> = ({ article }) => {
       <div className={s.digest}>{article.digest}</div>
       <div className={s.footer}>
         {article.cat && (
-          <ArticleCatState cat={article.cat} state={article.state} right={18} top={1} left={-2} />
+          <ArticleCatStatus
+            cat={article.cat}
+            status={article.status}
+            right={18}
+            top={1}
+            left={-2}
+          />
         )}
         <ViewsCount count={article.views} />
         <div className='mr-5' />

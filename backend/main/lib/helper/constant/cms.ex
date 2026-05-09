@@ -17,7 +17,7 @@ defmodule Helper.Constant.CMS do
   @apply_web "WEB"
 
   @article_cat_map ArticleEnums.cat_values() |> Enum.into(%{}, &{&1, &1})
-  @article_state_map ArticleEnums.state_values() |> Enum.into(%{}, &{&1, &1})
+  @article_status_map ArticleEnums.status_values() |> Enum.into(%{}, &{&1, &1})
 
   def pending(:legal), do: @artiment_legal
   def pending(:illegal), do: @artiment_illegal
@@ -30,5 +30,5 @@ defmodule Helper.Constant.CMS do
 
   def article_cat, do: @article_cat_map
 
-  def article_state, do: @article_state_map
+  def article_status, do: @article_status_map
 end

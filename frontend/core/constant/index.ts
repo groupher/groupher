@@ -5,7 +5,7 @@ export { default as ERR } from './err'
 export { default as EVENT } from './event'
 export { default as FILTER } from './filter'
 export { default as GALLERY } from './gallery'
-export { ARTICLE_CAT, ARTICLE_CAT_MODE, ARTICLE_CAT_REJECT, ARTICLE_STATE } from './gtd'
+export { ARTICLE_CAT, ARTICLE_CAT_MODE, ARTICLE_STATUS, ARTICLE_STATUS_REJECT } from './gtd'
 export { default as GUIDE } from './guide'
 export {
   BRAND_LAYOUT,

@@ -2,8 +2,8 @@ import { includes, isEmpty, keys, remove, sort, startsWith, uniq } from 'ramda'
 
 import { ASSETS_ENDPOINT } from '~/config'
 import { COLOR } from '~/const/colors'
-import { ARTICLE_STATE } from '~/const/gtd'
-import type { TArticleState, TColorName, TCommunityThread, TDsdThreadConf, TWindow } from '~/spec'
+import { ARTICLE_STATUS } from '~/const/gtd'
+import type { TArticleStatus, TColorName, TCommunityThread, TDsdThreadConf, TWindow } from '~/spec'
 
 export const Global: TWindow = typeof window !== 'undefined' ? window : null
 
@@ -233,14 +233,14 @@ export const daysBetween = (date1, date2) => {
 }
 
 /**
- * check if article state is one of the rejected states
+ * check if article status is one of the rejected statuses
  */
-export const isRejectedState = (state: TArticleState): boolean => {
-  return includes(state, [
-    ARTICLE_STATE.REJECT_DUP,
-    ARTICLE_STATE.REJECT_NO_PLAN,
-    ARTICLE_STATE.REJECT_REPRO,
-    ARTICLE_STATE.REJECT_STALE,
+export const isRejectedStatus = (status: TArticleStatus): boolean => {
+  return includes(status, [
+    ARTICLE_STATUS.REJECT_DUP,
+    ARTICLE_STATUS.REJECT_NO_PLAN,
+    ARTICLE_STATUS.REJECT_REPRO,
+    ARTICLE_STATUS.REJECT_STALE,
   ])
 }
 

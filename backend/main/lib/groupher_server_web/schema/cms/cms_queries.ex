@@ -162,7 +162,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.open_graph_info/3)
     end
 
-    @desc "paged kanban posts by state"
+    @desc "paged kanban posts by status"
     field :paged_kanban_posts, :paged_posts do
       arg(:community, non_null(:string))
       arg(:filter, non_null(:paged_kanban_posts_filter))

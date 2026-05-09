@@ -3,10 +3,10 @@ import type { FC } from 'react'
 import { ARTICLE_CAT } from '~/const/gtd'
 import useNameAlias from '~/hooks/useNameAlias'
 
-import type { TProps as TArticleStateBadgeProps } from '.'
+import type { TProps as TArticleStatusBadgeProps } from '.'
 import useSalon, { Icon } from './salon/label'
 
-type TProps = Pick<TArticleStateBadgeProps, 'cat' | 'smaller'>
+type TProps = Pick<TArticleStatusBadgeProps, 'cat' | 'smaller'>
 
 const Label: FC<TProps> = ({ cat, smaller }) => {
   const s = useSalon({ smaller })
@@ -14,11 +14,11 @@ const Label: FC<TProps> = ({ cat, smaller }) => {
   const nameAlias = useNameAlias('kanban')
 
   switch (cat) {
-    case ARTICLE_CAT.FEATURE: {
+    case ARTICLE_CAT.IDEA: {
       return (
         <div className={s.wrapper}>
           <div className={s.iconBox}>
-            <Icon.FEATURE className={s.icon} />
+            <Icon.IDEA className={s.icon} />
           </div>
           <div className={s.text}>{nameAlias[cat.toLowerCase()]?.name}</div>
         </div>
@@ -36,11 +36,11 @@ const Label: FC<TProps> = ({ cat, smaller }) => {
       )
     }
 
-    case ARTICLE_CAT.QUESTION: {
+    case ARTICLE_CAT.QA: {
       return (
         <div className={s.wrapper}>
           <div className={s.iconBox}>
-            <Icon.QUESTION className={s.icon} />
+            <Icon.QA className={s.icon} />
           </div>
           <div className={s.text}>{nameAlias[cat.toLowerCase()]?.name}</div>
         </div>

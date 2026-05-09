@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
   alias CMS.Model.PinnedComment
 
   @article_cat Constant.CMS.article_cat()
-  @article_state Constant.CMS.article_state()
+  @article_status Constant.CMS.article_status()
 
   @active_period get_config(:article, :active_period_days)
 
@@ -928,7 +928,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
     end
 
     test "create comment for question post should have flags", ~m(user community)a do
-      post_attrs = mock_attrs(:post, %{community_id: community.id, cat: @article_cat.question})
+      post_attrs = mock_attrs(:post, %{community_id: community.id, cat: @article_cat.qa})
 
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
@@ -957,7 +957,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       {:ok, comment3} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.question)
+      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.qa)
 
       {:ok, comment1} = ORM.find(Comment, comment1.id)
       {:ok, comment2} = ORM.find(Comment, comment2.id)
@@ -967,7 +967,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert comment2.is_for_question
       assert comment3.is_for_question
 
-      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.feature)
+      {:ok, _} = CMS.Articles.set_cat(post, @article_cat.idea)
 
       {:ok, comment1} = ORM.find(Comment, comment1.id)
       {:ok, comment2} = ORM.find(Comment, comment2.id)
@@ -994,7 +994,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
 
       {:ok, post} = ORM.find(Post, post.id)
 
-      assert post.state == @article_state.resolved
+      assert post.status == @article_status.resolved
       assert post.solution_digest == "comment"
     end
 
@@ -1032,7 +1032,7 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert not comment.is_pinned
 
       {:ok, post} = ORM.find(Post, post.id)
-      assert post.state == @article_state.default
+      assert post.status == @article_status.default
     end
 
     test "non-post-author can not undo mark a comment as solution", ~m(user community)a do

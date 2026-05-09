@@ -34,8 +34,8 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
 
   @tag_threads Config.tag_threads()
   @content_threads Config.content_threads()
-  @post_cats [:feature, :bug, :question, :other]
-  @post_states [:backlog, :todo, :wip, :done, :resolved, :reject]
+  @post_cats [:idea, :bug, :qa, :discussion]
+  @post_statuses [:backlog, :todo, :wip, :done, :resolved, :reject]
 
   @tag_count_range Config.tag_count_range()
   @article_count_per_thread Config.article_count_per_thread()
@@ -163,7 +163,7 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
 
         :cat_and_state ->
           with {:ok, post} <- CMS.Articles.set_cat(post, Enum.random(@post_cats)),
-               {:ok, _post} <- CMS.Articles.set_state(post, Enum.random(@post_states)) do
+               {:ok, _post} <- CMS.Articles.set_status(post, Enum.random(@post_statuses)) do
             {:cont, {:ok, :ok}}
           else
             {:error, reason} -> {:halt, {:error, reason}}

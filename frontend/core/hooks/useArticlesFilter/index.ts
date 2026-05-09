@@ -1,14 +1,14 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
-import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATE, CAT, ORDER, STATE } from '~/const/gtd'
+import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATUS, CAT, ORDER, STATUS } from '~/const/gtd'
 import TYPE from '~/const/type'
 import URL_PARAM from '~/const/url_param'
-import type { TArticleCat, TArticleFilter, TArticleOrder, TArticleState, TResState } from '~/spec'
+import type { TArticleCat, TArticleFilter, TArticleOrder, TArticleStatus, TResState } from '~/spec'
 import useArticleList from '~/stores/articleList/hooks'
 
 type TRes = {
   cat: TArticleCat
-  state: TArticleState
+  status: TArticleStatus
   order: TArticleOrder
   updateActiveFilter: (filter: TArticleFilter) => void
 }
@@ -33,10 +33,10 @@ export default function useArticlesFilter(): TRes {
     searchParams.get(URL_PARAM.ORDER),
     Object.values(ARTICLE_ORDER),
   ) as TArticleOrder | null
-  const state = toValidFilterValue(
-    searchParams.get(URL_PARAM.STATE),
-    Object.values(ARTICLE_STATE),
-  ) as TArticleState | null
+  const status = toValidFilterValue(
+    searchParams.get(URL_PARAM.STATUS),
+    Object.values(ARTICLE_STATUS),
+  ) as TArticleStatus | null
   const cat = toValidFilterValue(
     searchParams.get(URL_PARAM.CAT),
     Object.values(ARTICLE_CAT),
@@ -54,11 +54,11 @@ export default function useArticlesFilter(): TRes {
       }
     }
 
-    if (Object.hasOwn(filter, STATE)) {
-      if (filter.state) {
-        nextSearchParams.set(URL_PARAM.STATE, filter.state)
+    if (Object.hasOwn(filter, STATUS)) {
+      if (filter.status) {
+        nextSearchParams.set(URL_PARAM.STATUS, filter.status)
       } else {
-        nextSearchParams.delete(URL_PARAM.STATE)
+        nextSearchParams.delete(URL_PARAM.STATUS)
       }
     }
 
@@ -84,7 +84,7 @@ export default function useArticlesFilter(): TRes {
   return {
     order,
     cat,
-    state,
+    status,
     updateActiveFilter,
   }
 }

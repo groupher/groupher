@@ -20,13 +20,13 @@ export default function OurWay() {
       <div className={s.nodes}>
         <NodeBlock index={0} cat='DEFAULT' rightDot='bottom-10 mt-0.5' leftDot='bottom-10' />
         <NodeBlock
-          cat={ARTICLE_CAT.FEATURE}
+          cat={ARTICLE_CAT.IDEA}
           className='absolute top-16 left-56 mt-2 rotate-3'
           rightDot='bottom-8 mb-1'
           bg={COLOR.PURPLE}
         />
         <NodeBlock
-          cat={ARTICLE_CAT.OTHER}
+          cat={ARTICLE_CAT.DISCUSSION}
           className='absolute bottom-20 left-56 -rotate-6'
           rightDot='top-12 mt-1'
           bg={COLOR.BLUE}
@@ -39,7 +39,7 @@ export default function OurWay() {
           bg={COLOR.ORANGE}
         />
         <NodeBlock
-          cat={ARTICLE_CAT.QUESTION}
+          cat={ARTICLE_CAT.QA}
           className='absolute right-96 bottom-14 ml-20 rotate-3'
           rightDot='top-5'
           bg={COLOR.GREEN}

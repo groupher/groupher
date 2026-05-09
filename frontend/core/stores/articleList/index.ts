@@ -23,7 +23,7 @@ export default function ArticleListStore(init: TInit = {}): TStore {
 
     activeOrder: null,
     activeCat: null,
-    activeState: null,
+    activeStatus: null,
 
     tags: [],
     activeTag: null,
@@ -32,7 +32,7 @@ export default function ArticleListStore(init: TInit = {}): TStore {
 
     updateActiveFilter(filter: TArticleFilter): void {
       if (has(URL_PARAM.CAT, filter)) store.activeCat = filter.cat
-      if (has(URL_PARAM.STATE, filter)) store.activeState = filter.state
+      if (has(URL_PARAM.STATUS, filter)) store.activeStatus = filter.status
       if (has(URL_PARAM.ORDER, filter)) store.activeOrder = filter.order
     },
     ...init,

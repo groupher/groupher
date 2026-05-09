@@ -9,7 +9,7 @@ const groupedKanbanPosts = gql`
         entries {
           innerId
           cat
-          state
+          status
           title
           communitySlug
           meta {
@@ -26,7 +26,7 @@ const groupedKanbanPosts = gql`
         entries {
           innerId
           cat
-          state
+          status
           title
           communitySlug
           meta {
@@ -43,7 +43,7 @@ const groupedKanbanPosts = gql`
         entries {
           innerId
           cat
-          state
+          status
           title
           communitySlug
           meta {
@@ -60,7 +60,7 @@ const groupedKanbanPosts = gql`
         entries {
           innerId
           cat
-          state
+          status
           title
           communitySlug
           meta {
@@ -77,7 +77,7 @@ const groupedKanbanPosts = gql`
         entries {
           innerId
           cat
-          state
+          status
           title
           communitySlug
           meta {

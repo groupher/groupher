@@ -1,4 +1,4 @@
-import { ARTICLE_CAT, ARTICLE_STATE } from '~/const/gtd'
+import { ARTICLE_CAT, ARTICLE_STATUS } from '~/const/gtd'
 import BugSVG from '~/icons/ColorBug'
 import LightSVG from '~/icons/ColorLight'
 import DiscussSVG from '~/icons/Discuss'
@@ -12,7 +12,7 @@ export const SUB_MENU_TYPE = {
   EDIT: 'edit',
   SLUG: 'slug',
   CATEGORY: 'category',
-  STATE: 'state',
+  STATUS: 'status',
   TAGS: 'tags',
   PIN: 'pin',
   LOCK: 'lock',
@@ -24,15 +24,15 @@ export const SUB_MENU_TYPE = {
 
 export const ICON = {
   // cat
-  [ARTICLE_CAT.FEATURE]: LightSVG,
-  [ARTICLE_CAT.QUESTION]: QuestionSVG,
+  [ARTICLE_CAT.IDEA]: LightSVG,
+  [ARTICLE_CAT.QA]: QuestionSVG,
   [ARTICLE_CAT.BUG]: BugSVG,
-  [ARTICLE_CAT.OTHER]: DiscussSVG,
+  [ARTICLE_CAT.DISCUSSION]: DiscussSVG,
 
-  // state
-  [ARTICLE_STATE.BACKLOG]: TodoSVG,
-  [ARTICLE_STATE.TODO]: TodoSVG,
-  [ARTICLE_STATE.WIP]: WipSVG,
-  [ARTICLE_STATE.DONE]: DoneSVG,
-  [ARTICLE_STATE.REJECT]: RejectSVG,
+  // status
+  [ARTICLE_STATUS.BACKLOG]: TodoSVG,
+  [ARTICLE_STATUS.TODO]: TodoSVG,
+  [ARTICLE_STATUS.WIP]: WipSVG,
+  [ARTICLE_STATUS.DONE]: DoneSVG,
+  [ARTICLE_STATUS.REJECT]: RejectSVG,
 }

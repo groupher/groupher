@@ -1,9 +1,9 @@
 import { type FC, useEffect, useState } from 'react'
 import { useMutation } from 'urql'
 
-import { ARTICLE_STATE } from '~/const/gtd'
-import { POST_STATE_MENU_ITEMS } from '~/const/menu'
-import { aliasGTDDoneState, toGTDLabelKey } from '~/fmt'
+import { ARTICLE_STATUS } from '~/const/gtd'
+import { POST_STATUS_MENU_ITEMS } from '~/const/menu'
+import { aliasGTDDoneStatus, toGTDLabelKey } from '~/fmt'
 import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 import useNameAlias from '~/hooks/useNameAlias'
 import useTrans from '~/hooks/useTrans'
@@ -13,7 +13,7 @@ import { toast, updateViewingArticle } from '~/signal'
 
 import { ICON } from '../constant'
 import { getGTDColor } from '../helper'
-import useSalon, { cn } from '../salon/sub_menu/state_setting'
+import useSalon, { cn } from '../salon/sub_menu/status_setting'
 import S from '../schema'
 import useTouched from '../useTouched'
 import Footer from './Footer'
@@ -22,7 +22,7 @@ type TProps = {
   onBack: () => void
 }
 
-const StateSetting: FC<TProps> = ({ onBack }) => {
+const StatusSetting: FC<TProps> = ({ onBack }) => {
   const s = useSalon()
   const { t } = useTrans()
 
@@ -30,33 +30,33 @@ const StateSetting: FC<TProps> = ({ onBack }) => {
   const bgColors = useKanbanBgColors()
   const kanbanAlias = useNameAlias('kanban')
 
-  const [state, setState] = useState(article.state)
+  const [status, setStatus] = useState(article.status)
   const { touched, setTouched, resetTouched } = useTouched()
 
-  const [result, setPostState] = useMutation(S.setPostState)
+  const [result, setPostStatus] = useMutation(S.setPostStatus)
 
   useEffect(() => {
-    setState(article.state)
-  }, [article.state])
+    setStatus(article.status)
+  }, [article.status])
 
-  const handleState = () => {
+  const handleStatus = () => {
     const params = {
       article: {
         innerId: article.innerId,
         community: article.communitySlug,
         thread: article.meta.thread,
       },
-      state,
+      status,
     }
 
-    setPostState(params).then((result) => {
+    setPostStatus(params).then((result) => {
       if (result.error) {
         toast('修改失败', 'error')
       } else {
         toast('修改完成')
-        const newState = result.data.setPostState.state
-        setState(newState)
-        updateViewingArticle({ id: article.id, state: newState })
+        const newStatus = result.data.setPostStatus.status
+        setStatus(newStatus)
+        updateViewingArticle({ id: article.id, status: newStatus })
 
         resetTouched()
       }
@@ -65,9 +65,9 @@ const StateSetting: FC<TProps> = ({ onBack }) => {
 
   return (
     <div className={s.wrapper}>
-      {POST_STATE_MENU_ITEMS.map((item, index) => {
-        const TheIcon = ICON[item.key] || ICON[ARTICLE_STATE.REJECT]
-        const active = item.key === state
+      {POST_STATUS_MENU_ITEMS.map((item, index) => {
+        const TheIcon = ICON[item.key] || ICON[ARTICLE_STATUS.REJECT]
+        const active = item.key === status
         const color = getGTDColor(item.key, [...bgColors])
 
         return (
@@ -81,21 +81,21 @@ const StateSetting: FC<TProps> = ({ onBack }) => {
               index === 4 && 'mt-3.5',
             )}
             onClick={() => {
-              setState(item.key)
-              setTouched(article.state !== item.key)
+              setStatus(item.key)
+              setTouched(article.status !== item.key)
             }}
           >
             <TheIcon
               className={cn(
                 s.icon,
-                item.key === ARTICLE_STATE.WIP && 'size-4 -ml-px',
+                item.key === ARTICLE_STATUS.WIP && 'size-4 -ml-px',
                 `group-hover:${s.rainbow(color, 'fill')}`,
                 active && s.rainbow(color, 'fill'),
               )}
             />
             <div className={cn(s.title, active && s.titleActive)}>
-              {item.key === ARTICLE_STATE.DONE
-                ? t(aliasGTDDoneState(article.cat, item.key))
+              {item.key === ARTICLE_STATUS.DONE
+                ? t(aliasGTDDoneStatus(article.cat, item.key))
                 : kanbanAlias[item.key]?.name || t(toGTDLabelKey(item.key))}
             </div>
             {active && <CheckSVG className={s.checkIcon} />}
@@ -107,11 +107,11 @@ const StateSetting: FC<TProps> = ({ onBack }) => {
         onBack={onBack}
         loading={result.fetching}
         disabled={!touched}
-        onConfirm={() => handleState()}
+        onConfirm={() => handleStatus()}
         top={4}
       />
     </div>
   )
 }
 
-export default StateSetting
+export default StatusSetting

@@ -12,7 +12,7 @@ import useArticlesFilter from '~/hooks/useArticlesFilter'
 import useLayout from '~/hooks/useLayout'
 import usePagedPosts from '~/hooks/usePagedPosts'
 import { callGEditor, callSyncSelector } from '~/signal'
-import type { TArticleCat, TArticleOrder, TArticleState, TSpace } from '~/spec'
+import type { TArticleCat, TArticleOrder, TArticleStatus, TSpace } from '~/spec'
 import ConditionSelector from '~/unit/ConditionSelector'
 import PublishButton from '~/widgets/Buttons/PublishButton'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
@@ -31,7 +31,7 @@ export default function ArticlesFilter({ ...spacing }: TProps) {
 
   const {
     cat: activeCat,
-    state: activeState,
+    status: activeStatus,
     order: activeOrder,
     updateActiveFilter,
   } = useArticlesFilter()
@@ -75,12 +75,12 @@ export default function ArticlesFilter({ ...spacing }: TProps) {
         right={0.5}
       />
       <ConditionSelector
-        mode={CONDITION_MODE.STATE}
-        active={activeState}
-        onSelect={(state: TArticleState) => {
-          updateActiveFilter({ state })
+        mode={CONDITION_MODE.STATUS}
+        active={activeStatus}
+        onSelect={(status: TArticleStatus) => {
+          updateActiveFilter({ status })
         }}
-        selected={!!activeState}
+        selected={!!activeStatus}
         prefixIcon={BUTTON_PREFIX.STATUS}
       />
       <div className='mr-2.5' />

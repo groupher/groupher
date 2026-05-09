@@ -23,8 +23,8 @@ export default function useSalon({ smaller }: TProps) {
 
 export const Icon = {
   REJECT: RejectSVG,
-  FEATURE: LightSVG,
+  IDEA: LightSVG,
   BUG: BugSVG,
-  QUESTION: QuestionSVG,
-  OTHER: OtherSVG,
+  QA: QuestionSVG,
+  DISCUSSION: OtherSVG,
 }

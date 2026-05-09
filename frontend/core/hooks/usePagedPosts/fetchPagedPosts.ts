@@ -7,7 +7,7 @@ type TFetchPagedPostsParams = {
   page?: number
   tag?: string | null
   cat?: string | null
-  state?: string | null
+  status?: string | null
   order?: string | null
 }
 
@@ -16,7 +16,7 @@ const buildSearchParams = ({
   page,
   tag,
   cat,
-  state,
+  status,
   order,
 }: TFetchPagedPostsParams): URLSearchParams => {
   const searchParams = new URLSearchParams()
@@ -26,7 +26,7 @@ const buildSearchParams = ({
   if ((page || 1) > 1) searchParams.set(URL_PARAM.PAGE, String(page))
   if (tag) searchParams.set(URL_PARAM.TAG, tag)
   if (cat) searchParams.set(URL_PARAM.CAT, cat)
-  if (state) searchParams.set(URL_PARAM.STATE, state)
+  if (status) searchParams.set(URL_PARAM.STATUS, status)
   if (order) searchParams.set(URL_PARAM.ORDER, order)
 
   return searchParams

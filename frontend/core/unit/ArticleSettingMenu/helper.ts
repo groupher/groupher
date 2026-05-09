@@ -1,21 +1,21 @@
 import { COLOR } from '~/const/colors'
-import { ARTICLE_STATE } from '~/const/gtd'
-import type { TArticleState, TColorName } from '~/spec'
+import { ARTICLE_STATUS } from '~/const/gtd'
+import type { TArticleStatus, TColorName } from '~/spec'
 
-export const getGTDColor = (state: TArticleState, bgColors: TColorName[]): TColorName => {
-  switch (state) {
-    case ARTICLE_STATE.BACKLOG: {
+export const getGTDColor = (status: TArticleStatus, bgColors: TColorName[]): TColorName => {
+  switch (status) {
+    case ARTICLE_STATUS.BACKLOG: {
       return bgColors[0]
     }
 
-    case ARTICLE_STATE.TODO: {
+    case ARTICLE_STATUS.TODO: {
       return bgColors[0]
     }
-    case ARTICLE_STATE.WIP: {
+    case ARTICLE_STATUS.WIP: {
       return bgColors[1]
     }
 
-    case ARTICLE_STATE.DONE: {
+    case ARTICLE_STATUS.DONE: {
       return bgColors[2]
     }
 

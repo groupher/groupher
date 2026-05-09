@@ -129,7 +129,7 @@ type RootQueryType {
   "get open graph info by url"
   openGraphInfo(url: String!): OpenGraph
 
-  "paged kanban posts by state"
+  "paged kanban posts by status"
   pagedKanbanPosts(community: String!, filter: PagedKanbanPostsFilter!): PagedPosts
 
   "get post by id"
@@ -317,8 +317,8 @@ type RootMutationType {
   "set cat for a post"
   setPostCat(article: ArticleRefInput!, cat: ArticleCatEnum!): Post
 
-  "set cat for a post"
-  setPostState(article: ArticleRefInput!, state: ArticleStateEnum!): Post
+  "set status for a post"
+  setPostStatus(article: ArticleRefInput!, status: ArticleStatusEnum!): Post
 
   "upvote to post"
   upvotePost(article: ArticleRefInput!): Article
@@ -717,7 +717,7 @@ type Post implements Article {
   commentsParticipantsCount: Int
   commentsCount: Int
   cat: ArticleCatEnum
-  state: ArticleStateEnum
+  status: ArticleStatusEnum
   insertedAt: DateTime
   updatedAt: DateTime
   activeAt: DateTime
@@ -1461,13 +1461,13 @@ enum RainbowColor {
 }
 
 enum ArticleCatEnum {
-  FEATURE
+  IDEA
   BUG
-  QUESTION
-  OTHER
+  QA
+  DISCUSSION
 }
 
-enum ArticleStateEnum {
+enum ArticleStatusEnum {
   DEFAULT
   BACKLOG
   TODO
@@ -1659,7 +1659,7 @@ input PagedPostsFilter {
 
   cat: ArticleCatEnum
 
-  state: ArticleStateEnum
+  status: ArticleStatusEnum
 
   order: ArticleOrderEnum
 
@@ -1676,7 +1676,7 @@ input PagedPostsFilter {
 input PagedKanbanPostsFilter {
   page: Int
   size: Int
-  state: ArticleStateEnum
+  status: ArticleStatusEnum
 }
 
 "changelogs_filter doc"
@@ -1692,7 +1692,7 @@ input PagedChangelogsFilter {
 
   cat: ArticleCatEnum
 
-  state: ArticleStateEnum
+  status: ArticleStatusEnum
 
   order: ArticleOrderEnum
 
@@ -1718,7 +1718,7 @@ input PagedDocsFilter {
 
   cat: ArticleCatEnum
 
-  state: ArticleStateEnum
+  status: ArticleStatusEnum
 
   order: ArticleOrderEnum
 
@@ -1738,7 +1738,7 @@ input PagedBlogsFilter {
   when: WhenEnum
   communityTag: String
   cat: ArticleCatEnum
-  state: ArticleStateEnum
+  status: ArticleStatusEnum
   order: ArticleOrderEnum
   communityTags: [String]
   community: String

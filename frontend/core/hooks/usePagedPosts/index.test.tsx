@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 
-import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATE } from '~/const/gtd'
+import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATUS } from '~/const/gtd'
 import URL_PARAM from '~/const/url_param'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import usePagedPosts from '~/hooks/usePagedPosts'
@@ -17,7 +17,7 @@ vi.mock('next/navigation', () => {
 describe('usePagedPosts', () => {
   it('builds pagedParams from searchParams and can commit updates to store', async () => {
     mockSearchParams = new URLSearchParams(
-      `${URL_PARAM.PAGE}=2&${URL_PARAM.CAT}=${ARTICLE_CAT.BUG}&${URL_PARAM.STATE}=${ARTICLE_STATE.TODO}&${URL_PARAM.ORDER}=${ARTICLE_ORDER.UPVOTES}&${URL_PARAM.TAG}=t1`,
+      `${URL_PARAM.PAGE}=2&${URL_PARAM.CAT}=${ARTICLE_CAT.BUG}&${URL_PARAM.STATUS}=${ARTICLE_STATUS.TODO}&${URL_PARAM.ORDER}=${ARTICLE_ORDER.UPVOTES}&${URL_PARAM.TAG}=t1`,
     )
 
     const wrapper = makeStoreWrapper({
@@ -31,7 +31,7 @@ describe('usePagedPosts', () => {
     const { result } = renderHook(() => usePagedPosts(), { wrapper })
     expect(result.current.pagedParams.community).toBe('acme')
     expect(result.current.pagedParams.cat).toBe(ARTICLE_CAT.BUG)
-    expect(result.current.pagedParams.state).toBe(ARTICLE_STATE.TODO)
+    expect(result.current.pagedParams.status).toBe(ARTICLE_STATUS.TODO)
     expect(result.current.pagedParams.order).toBe(ARTICLE_ORDER.UPVOTES)
     expect(result.current.pagedPosts.entries).toHaveLength(0)
 

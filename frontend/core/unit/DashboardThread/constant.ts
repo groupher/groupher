@@ -256,13 +256,11 @@ export const BUILD_IN_ALIAS_SUGGESTIONS = {
   wip: ['Wip', '完善中'],
   done: ['Done', '已解决'],
   rejected: ['Rejected', '已拒绝', '已关闭'],
-  // state
-  feature: ['功能建议', '功能需求', '新功能'],
-  question: ['求助 / 疑问', '使用帮助'],
+  // category
+  idea: ['想法', '功能建议', '功能需求', '新功能'],
+  qa: ['问答', '求助 / 疑问', '使用帮助'],
   bug: ['问题上报', '缺陷', 'issue', 'bug'],
-  other: ['其他讨论', '其他话题'],
-  // TODO
-  state_other: ['其他讨论'],
+  discussion: ['讨论', '其他讨论', '其他话题'],
 }
 
 export const DOC_TABS = [

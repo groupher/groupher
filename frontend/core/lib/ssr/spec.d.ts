@@ -73,7 +73,7 @@ export type TDsbTab = {
 
 export type TFilterSearchParams = {
   activeCat?: string | null
-  activeState?: string | null
+  activeStatus?: string | null
 }
 
 export type TUseI18n = {

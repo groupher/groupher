@@ -3,12 +3,12 @@ import SVG from '~/const/svg'
 
 const POST_MENU_OPTIONS = [
   {
-    key: 'feedback',
+    key: 'idea',
     icon: SVG.FEATURE,
     title: '功能请求',
   },
   {
-    key: 'question',
+    key: 'qa',
     icon: SVG.QUESTION,
     title: '问题 / 求助',
   },
@@ -18,7 +18,7 @@ const POST_MENU_OPTIONS = [
     title: 'Bug / 吐槽',
   },
   {
-    key: 'other',
+    key: 'discussion',
     icon: SVG.MORE,
     title: '其它话题',
   },

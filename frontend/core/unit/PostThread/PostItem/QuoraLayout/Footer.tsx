@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import { upvoteArticle } from '~/signal'
 import type { TPost } from '~/spec'
-import ArticleCatState from '~/unit/ArticleCatState'
+import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import Upvote from '~/unit/Upvote'
 import ViewsCount from '~/unit/ViewsCount'
 
@@ -27,7 +27,7 @@ const Footer: FC<TProps> = ({ article }) => {
         viewerHasUpvoted={viewerHasUpvoted}
         type={UPVOTE_LAYOUT.GENERAL}
       />
-      {article.cat && <ArticleCatState left={2} cat={article.cat} state={article.state} />}
+      {article.cat && <ArticleCatStatus left={2} cat={article.cat} status={article.status} />}
       <ViewsCount count={article.views} left={3} />
     </div>
   )

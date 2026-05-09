@@ -126,7 +126,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   end
 
   enum(:article_cat_enum, do: enum_values(ArticleEnums.cat()))
-  enum(:article_state_enum, do: enum_values(ArticleEnums.state()))
+  enum(:article_status_enum, do: enum_values(ArticleEnums.status()))
   enum(:kanban_board, do: enum_values(KanbanBoards.values()))
 
   dsb_enum(:post_layout)
@@ -234,7 +234,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   @desc "kanban posts_filter doc"
   input_object :paged_kanban_posts_filter do
     pagination_args()
-    field(:state, :article_state_enum)
+    field(:status, :article_status_enum)
   end
 
   @desc "changelogs_filter doc"

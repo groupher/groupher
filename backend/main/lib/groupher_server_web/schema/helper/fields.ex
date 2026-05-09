@@ -218,7 +218,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:when, :when_enum)
       field(:community_tag, :string)
       field(:cat, :article_cat_enum)
-      field(:state, :article_state_enum)
+      field(:status, :article_status_enum)
       field(:order, :article_order_enum)
       field(:community_tags, list_of(:string))
       field(:community, :string)
@@ -396,6 +396,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   # internal :quora / :ph atoms automatically.
   defmacro dsb_enum(enum_key) do
     values = Dashboard.enum_values(enum_key)
+
     type =
       case enum_key do
         :doc_cover_layout -> :dsb_doc_cover_layout

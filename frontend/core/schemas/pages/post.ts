@@ -14,7 +14,7 @@ export const pagedPosts = `
       entries {
         ${F.article}
         cat
-        state
+        status
         meta {
           thread
           latestUpvotedUsers {
@@ -61,7 +61,7 @@ export const groupedKanbanPosts = `
         entries {
           innerId
           cat
-          state
+          status
           title
           communitySlug
           meta {
@@ -78,7 +78,7 @@ export const groupedKanbanPosts = `
         entries {
           innerId
           cat
-          state
+          status
           title
           communitySlug
           meta {
@@ -95,7 +95,7 @@ export const groupedKanbanPosts = `
         entries {
           innerId
           cat
-          state
+          status
           title
           communitySlug
           meta {
@@ -112,7 +112,7 @@ export const groupedKanbanPosts = `
         entries {
           innerId
           cat
-          state
+          status
           title
           communitySlug
           meta {
@@ -129,7 +129,7 @@ export const groupedKanbanPosts = `
         entries {
           innerId
           cat
-          state
+          status
           title
           communitySlug
           meta {

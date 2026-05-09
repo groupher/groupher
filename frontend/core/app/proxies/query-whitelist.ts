@@ -10,7 +10,7 @@ const ALLOWED_PARAMS = [
   'tag',
   'page',
   'cat',
-  'state',
+  'status',
   'order',
   SEARCH_PARAM.COMMUNITY,
 ]

@@ -4,7 +4,7 @@ export const pagedPosts = `
   entries {
     ${article}
     cat
-    state
+    status
     commentsParticipants {
       ${author}
     }

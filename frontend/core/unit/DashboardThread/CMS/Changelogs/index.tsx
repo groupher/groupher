@@ -13,7 +13,7 @@ import useSalon, { cn } from '../../salon/cms/changelogs'
 import CmsDataTable from '../../Tables/CmsDataTable'
 import CmsTableToolbar from '../../Tables/CmsTableToolbar'
 import useCmsTableController from '../../Tables/useCmsTableController'
-import { ArticleCell, AuthorCell, DateCell, StateCell } from '../Cell'
+import { ArticleCell, AuthorCell, DateCell, StatusCell } from '../Cell'
 
 export default function Changelogs() {
   const { pagedChangelogs, loading, loadChangelogs } = useCMSInfo()
@@ -36,9 +36,9 @@ export default function Changelogs() {
       },
 
       {
-        id: 'state',
-        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.state')}</div>,
-        cell: ({ row }) => <StateCell rowData={row.original} />,
+        id: 'status',
+        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.status')}</div>,
+        cell: ({ row }) => <StatusCell rowData={row.original} />,
         size: 120,
       },
 
@@ -109,7 +109,7 @@ export default function Changelogs() {
           placeholder: t('dsb.cms.filter.search_placeholder'),
         }}
         withCategory
-        withState
+        withStatus
         withDateRange
         withReset
         onResetAction={table.resetFilters}

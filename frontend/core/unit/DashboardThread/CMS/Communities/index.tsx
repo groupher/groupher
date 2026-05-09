@@ -69,9 +69,9 @@ export default function Communities() {
       },
 
       {
-        id: 'state',
+        id: 'status',
         header: () => (
-          <div className={cn(s.title, 'text-center')}>{t('dsb.cms.communities.state')}</div>
+          <div className={cn(s.title, 'text-center')}>{t('dsb.cms.communities.status')}</div>
         ),
         cell: () => <div className='text-center'>TODO: PendingCell</div>,
         size: 90,

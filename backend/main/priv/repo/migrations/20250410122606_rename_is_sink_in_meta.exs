@@ -1,68 +1,23 @@
 defmodule GroupherServer.Repo.Migrations.RenameIsSinkInMeta do
   use Ecto.Migration
 
-  use Ecto.Migration
-  import Ecto.Query
-
-  alias GroupherServer.{CMS, Repo}
-
-  alias CMS.Model.{Blog, Changelog, Doc, Post}
-
-  @models_using_meta [Post, Changelog, Blog, Doc]
+  @prefix "cms"
+  @tables ~w(posts changelogs blogs docs)a
 
   def up do
-    Enum.each(@models_using_meta, fn model ->
-      query = from(r in model, where: not is_nil(r.meta))
-
-      Repo.stream(query)
-      |> Enum.each(fn record ->
-        meta = record.meta || %{}
-
-        updated_meta =
-          if Map.has_key?(meta, :is_sinked) do
-            meta
-            |> Map.put(:is_sunk, meta.is_sinked)
-            |> Map.delete(:is_sinked)
-          else
-            meta
-          end
-
-        if updated_meta != meta do
-          record
-          |> Ecto.Changeset.change()
-          |> Ecto.Changeset.put_embed(:meta, updated_meta)
-          |> Repo.update!()
-        end
-      end)
-    end)
+    Enum.each(@tables, &rename_meta_key(&1, "is_sinked", "is_sunk"))
   end
 
   def down do
-    Enum.each(@models_using_meta, fn model ->
-      query = from(r in model, where: not is_nil(r.meta))
+    Enum.each(@tables, &rename_meta_key(&1, "is_sunk", "is_sinked"))
+  end
 
-      Repo.transaction(fn ->
-        Repo.stream(query)
-        |> Enum.each(fn record ->
-          meta = record.meta || %{}
-
-          updated_meta =
-            if Map.has_key?(meta, :is_sunk) do
-              meta
-              |> Map.put(:is_sinked, meta.is_sunk)
-              |> Map.delete(:is_sunk)
-            else
-              meta
-            end
-
-          if updated_meta != meta do
-            record
-            |> Ecto.Changeset.change()
-            |> Ecto.Changeset.put_embed(:meta, updated_meta)
-            |> Repo.update!()
-          end
-        end)
-      end)
-    end)
+  defp rename_meta_key(table, old_key, new_key) do
+    execute("""
+    UPDATE #{@prefix}.#{table}
+    SET meta = (meta - '#{old_key}') || jsonb_build_object('#{new_key}', meta->'#{old_key}')
+    WHERE meta IS NOT NULL
+      AND meta ? '#{old_key}'
+    """)
   end
 end

@@ -16,7 +16,7 @@ export const COMMUNITY_STATUS = {
 }
 
 export const CONDITION_MODE = {
-  STATE: 'state',
+  STATUS: 'status',
   CAT: 'cat',
   ORDER: 'order',
   TAG: 'tag',

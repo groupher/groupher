@@ -54,7 +54,7 @@ const PublishButton: FC<TProps> = ({
         <div className={s.menuBtn}>
           <Menu
             offset={s.menuOffset as [number, number]}
-            activeKey={ARTICLE_CAT.FEATURE}
+            activeKey={ARTICLE_CAT.IDEA}
             placement={placement}
             items={POST_CAT_MENU_ITEMS}
             onSelect={(item) => onMenuSelect(item.key as TArticleCat)}

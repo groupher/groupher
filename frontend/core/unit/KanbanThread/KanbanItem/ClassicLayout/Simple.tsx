@@ -14,7 +14,7 @@ import usePreviewItemActive from '~/hooks/usePreviewItemActive'
 import { mockTags, mockUsers } from '~/mock'
 import type { TArticle } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import ArticleCatState from '~/unit/ArticleCatState'
+import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import CommentsCount from '~/unit/CommentsCount'
 import TagsList from '~/unit/TagsList'
 import Upvote from '~/unit/Upvote'
@@ -66,7 +66,7 @@ const KanbanItem: FC<TProps> = ({ article }) => {
             <CommentsCount count={article.commentsCount} size='medium' />
           )}
         </div>
-        <ArticleCatState cat={article.cat} />
+        <ArticleCatStatus cat={article.cat} status={article.status} />
       </div>
     </div>
   )

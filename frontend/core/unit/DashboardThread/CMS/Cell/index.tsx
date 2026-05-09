@@ -7,7 +7,7 @@ import PulseSVG from '~/icons/Pulse'
 import Img from '~/Img'
 import type { TArticle, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
-import ArticleCatState from '~/unit/ArticleCatState'
+import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import TagsList from '~/unit/TagsList'
 import { thread2Path } from '~/utils/thread'
 import TimeAgo from '~/widgets/TimeAgo'
@@ -16,15 +16,15 @@ import useSalon, { cn } from '../../salon/cms/cell'
 
 const EMPTY_ARR: TTag[] = []
 
-export const StateCell = React.memo(function StateCell({ rowData }: { rowData: TArticle }) {
+export const StatusCell = React.memo(function StatusCell({ rowData }: { rowData: TArticle }) {
   const s = useSalon()
-  const { cat, state } = rowData ?? {}
+  const { cat, status } = rowData ?? {}
 
-  if (!state) return <div />
+  if (!status) return <div />
 
   return (
-    <div className={s.stateWrapper}>
-      <ArticleCatState cat={cat} state={state} smaller />
+    <div className={s.statusWrapper}>
+      <ArticleCatStatus cat={cat} status={status} smaller />
     </div>
   )
 })

@@ -1,4 +1,4 @@
-import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATE } from '~/const/gtd'
+import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATUS } from '~/const/gtd'
 import type { TTransKey } from '~/spec'
 
 const MENU = {
@@ -25,11 +25,11 @@ const MENU = {
   WIP: 'WIP',
   DONE: 'DONE',
   CLOSE: 'CLOSE',
-  FEATURE: 'FEATURE',
+  IDEA: 'IDEA',
   BUG: 'BUG',
   HELP: 'HELP',
   ALL: 'ALL',
-  OTHER: 'OTHER',
+  DISCUSSION: 'DISCUSSION',
   TOOL: 'TOOL',
 } as const
 
@@ -42,10 +42,10 @@ type TPostMenuItem = {
 
 export const POST_CAT_MENU_ITEMS = [
   {
-    key: ARTICLE_CAT.FEATURE,
-    title: 'article.cat.feature',
+    key: ARTICLE_CAT.IDEA,
+    title: 'article.cat.idea',
     desc: '功能请求，提建议等',
-    icon: MENU.FEATURE,
+    icon: MENU.IDEA,
   },
   {
     key: ARTICLE_CAT.BUG,
@@ -54,63 +54,63 @@ export const POST_CAT_MENU_ITEMS = [
     icon: MENU.BUG,
   },
   {
-    key: ARTICLE_CAT.QUESTION,
-    title: 'article.cat.question',
+    key: ARTICLE_CAT.QA,
+    title: 'article.cat.qa',
     desc: '请求帮助，使用疑惑等',
     icon: MENU.HELP,
   },
   {
-    key: ARTICLE_CAT.OTHER,
-    title: 'article.cat.other',
+    key: ARTICLE_CAT.DISCUSSION,
+    title: 'article.cat.discussion',
     desc: '一般讨论，其他话题',
-    icon: MENU.OTHER,
+    icon: MENU.DISCUSSION,
   },
 ] satisfies TPostMenuItem[]
 
-export const POST_STATE_MENU_ITEMS = [
+export const POST_STATUS_MENU_ITEMS = [
   {
-    key: ARTICLE_STATE.BACKLOG,
-    title: 'article.state.backlog',
+    key: ARTICLE_STATUS.BACKLOG,
+    title: 'article.status.backlog',
     icon: MENU.TODO,
   },
   {
-    key: ARTICLE_STATE.TODO,
-    title: 'article.state.todo',
+    key: ARTICLE_STATUS.TODO,
+    title: 'article.status.todo',
     icon: MENU.TODO,
   },
   {
-    key: ARTICLE_STATE.WIP,
-    title: 'article.state.wip',
+    key: ARTICLE_STATUS.WIP,
+    title: 'article.status.wip',
     icon: MENU.WIP,
   },
   {
-    key: ARTICLE_STATE.DONE,
-    title: 'article.state.done',
+    key: ARTICLE_STATUS.DONE,
+    title: 'article.status.done',
     icon: MENU.DONE,
   },
   {
-    key: ARTICLE_STATE.REJECT,
-    title: 'article.state.reject',
+    key: ARTICLE_STATUS.REJECT,
+    title: 'article.status.reject',
     icon: MENU.CLOSE,
   },
   {
-    key: ARTICLE_STATE.REJECT_DUP,
-    title: 'article.state.reject_dup',
+    key: ARTICLE_STATUS.REJECT_DUP,
+    title: 'article.status.reject_dup',
     icon: MENU.CLOSE,
   },
   {
-    key: ARTICLE_STATE.REJECT_NO_PLAN,
-    title: 'article.state.reject_no_plan',
+    key: ARTICLE_STATUS.REJECT_NO_PLAN,
+    title: 'article.status.reject_no_plan',
     icon: MENU.CLOSE,
   },
   {
-    key: ARTICLE_STATE.REJECT_REPRO,
-    title: 'article.state.reject_repro',
+    key: ARTICLE_STATUS.REJECT_REPRO,
+    title: 'article.status.reject_repro',
     icon: MENU.CLOSE,
   },
   {
-    key: ARTICLE_STATE.REJECT_STALE,
-    title: 'article.state.reject_stale',
+    key: ARTICLE_STATUS.REJECT_STALE,
+    title: 'article.status.reject_stale',
     icon: MENU.CLOSE,
   },
 ] satisfies TPostMenuItem[]

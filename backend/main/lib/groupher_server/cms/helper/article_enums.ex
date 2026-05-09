@@ -3,9 +3,9 @@ defmodule GroupherServer.CMS.Helper.ArticleEnums do
   article enums for post, blog, doc, changelog
   """
 
-  @type cat_enum :: :feature | :bug | :question | :other
+  @type cat_enum :: :idea | :bug | :qa | :discussion
 
-  @type state_enum ::
+  @type status_enum ::
           :default
           | :backlog
           | :todo
@@ -21,13 +21,13 @@ defmodule GroupherServer.CMS.Helper.ArticleEnums do
   # Single source of truth for article category/status enums.
   #
   # Internal values stay as lowercase atoms:
-  #   [:feature, :bug]
+  #   [:idea, :bug]
   #
-  # Absinthe exposes FEATURE / BUG over GraphQL by default and maps them
+  # Absinthe exposes IDEA / BUG over GraphQL by default and maps them
   # back to the same lowercase atoms above automatically.
-  @cat [:feature, :bug, :question, :other]
+  @cat [:idea, :bug, :qa, :discussion]
 
-  @state [
+  @status [
     :default,
     :backlog,
     :todo,
@@ -43,9 +43,9 @@ defmodule GroupherServer.CMS.Helper.ArticleEnums do
 
   # compile-time constants (for Absinthe Schema)
   defmacro cat, do: @cat
-  defmacro state, do: @state
+  defmacro status, do: @status
 
   # optional: runtime access (for non-macro call sites like validations)
   def cat_values, do: @cat
-  def state_values, do: @state
+  def status_values, do: @status
 end

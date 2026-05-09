@@ -8,7 +8,7 @@ export type TCmsTableBatchActions = {
   onConfirmAction?: () => void
   withCategory?: boolean
   withDelete?: boolean
-  withState?: boolean
+  withStatus?: boolean
   withTags?: boolean
 }
 
@@ -28,7 +28,7 @@ export type TCmsTableToolbarProps = {
   withCategory?: boolean
   withDateRange?: boolean
   withReset?: boolean
-  withState?: boolean
+  withStatus?: boolean
   withTags?: boolean
 }
 

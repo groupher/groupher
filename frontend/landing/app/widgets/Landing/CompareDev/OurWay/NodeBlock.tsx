@@ -46,12 +46,10 @@ const NodeBlock: FC<TProps> = ({
 
   return (
     <div className={cn(s.wrapper, className, cat === 'DEFAULT' && 'h-32')}>
-      {cat === ARTICLE_CAT.FEATURE && <ClipSVG className={s.attachIcon} />}
-      {cat === ARTICLE_CAT.QUESTION && (
-        <PinSVG className={cn(s.attachIcon, 'rotate-12 size-5 -top-2')} />
-      )}
+      {cat === ARTICLE_CAT.IDEA && <ClipSVG className={s.attachIcon} />}
+      {cat === ARTICLE_CAT.QA && <PinSVG className={cn(s.attachIcon, 'rotate-12 size-5 -top-2')} />}
       {cat === ARTICLE_CAT.BUG && <TargetSVG className={s.attachIcon} />}
-      {cat === ARTICLE_CAT.OTHER && <TagSVG className={cn(s.attachIcon, 'rotate-12')} />}
+      {cat === ARTICLE_CAT.DISCUSSION && <TagSVG className={cn(s.attachIcon, 'rotate-12')} />}
 
       {cat === ARTICLE_CAT.BUG && (
         <div className={cn(s.avatarGroup, 'top-4 right-4 rotate-6 opacity-65')}>
@@ -59,13 +57,13 @@ const NodeBlock: FC<TProps> = ({
         </div>
       )}
 
-      {cat === ARTICLE_CAT.FEATURE && (
+      {cat === ARTICLE_CAT.IDEA && (
         <div className={cn(s.userWrapper, s.borderPurple, 'top-5 right-4')}>
           <Img src={users[6].avatar} className={cn(s.avatar, 'size-7')} />
         </div>
       )}
 
-      {cat === ARTICLE_CAT.OTHER && (
+      {cat === ARTICLE_CAT.DISCUSSION && (
         <div className={cn(s.avatarGroup, 'top-3.5 right-4 -rotate-3 opacity-65')}>
           <Facepile users={users.slice(0, 2)} left={2} className='scale-90 gap-x-1' />
         </div>
@@ -76,10 +74,10 @@ const NodeBlock: FC<TProps> = ({
       <div className={cn(s.rightDot, rightDot)} />
 
       <div className={s.header}>
-        {cat === ARTICLE_CAT.FEATURE && <LightSVG className={s.headIcon} />}
-        {cat === ARTICLE_CAT.QUESTION && <QuestionSVG className={s.headIcon} />}
+        {cat === ARTICLE_CAT.IDEA && <LightSVG className={s.headIcon} />}
+        {cat === ARTICLE_CAT.QA && <QuestionSVG className={s.headIcon} />}
         {cat === ARTICLE_CAT.BUG && <BugSVG className={s.headIcon} />}
-        {cat === ARTICLE_CAT.OTHER && <DiscussSVG className={s.headIcon} />}
+        {cat === ARTICLE_CAT.DISCUSSION && <DiscussSVG className={s.headIcon} />}
         {cat === 'DEFAULT' && <ToolSVG className={cn(s.headIcon, 'size-2.5 opacity-80')} />}
 
         <div className={s.text}>{metric.title}</div>

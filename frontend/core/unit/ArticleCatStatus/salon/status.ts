@@ -1,7 +1,7 @@
 import { includes } from 'ramda'
 
 import { COLOR } from '~/const/colors'
-import { ARTICLE_CAT, ARTICLE_STATE } from '~/const/gtd'
+import { ARTICLE_CAT, ARTICLE_STATUS } from '~/const/gtd'
 import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 import useTwBelt from '~/hooks/useTwBelt'
 // import GtdDoneSVG from '~/icons/GtdDone'
@@ -9,7 +9,7 @@ import GtdDoneSVG from '~/icons/CheckBold'
 import GtdTodoSVG from '~/icons/GtdTodo'
 import GtdWipSVG from '~/icons/GtdWip'
 import RejectSVG from '~/icons/Reject'
-import type { TArticleCat, TArticleState } from '~/spec'
+import type { TArticleCat, TArticleStatus } from '~/spec'
 
 export const Icon = {
   Todo: GtdTodoSVG,
@@ -20,26 +20,24 @@ export const Icon = {
 
 type TProps = {
   cat: TArticleCat
-  state: TArticleState
+  status: TArticleStatus
 }
 
-export default function useSalon({ cat, state }: TProps) {
+export default function useSalon({ cat, status }: TProps) {
   const { cn, rainbow, rainbowSoft } = useTwBelt()
   const [todoColor, wipColor, doneColor] = useKanbanBgColors()
 
-  const stateColor = {
-    [ARTICLE_STATE.BACKLOG]: todoColor,
-    [ARTICLE_STATE.TODO]: todoColor,
-    [ARTICLE_STATE.WIP]: wipColor,
-    [ARTICLE_STATE.DONE]: doneColor,
+  const statusColor = {
+    [ARTICLE_STATUS.BACKLOG]: todoColor,
+    [ARTICLE_STATUS.TODO]: todoColor,
+    [ARTICLE_STATUS.WIP]: wipColor,
+    [ARTICLE_STATUS.DONE]: doneColor,
   }
 
-  const doneColor$ = includes(cat, [ARTICLE_CAT.QUESTION, ARTICLE_CAT.BUG])
-    ? COLOR.GREEN
-    : doneColor
+  const doneColor$ = includes(cat, [ARTICLE_CAT.QA, ARTICLE_CAT.BUG]) ? COLOR.GREEN : doneColor
 
   return {
-    box: cn('align-both size-4 mr-0.5 rounded', rainbowSoft(stateColor[state] || COLOR.RED)),
+    box: cn('align-both size-4 mr-0.5 rounded', rainbowSoft(statusColor[status] || COLOR.RED)),
     text: 'text-xs py-1.5',
     tipNote: 'row-center px-1.5 py-0.5 bold-sm',
     todoIcon: cn('size-3 z-10', rainbow(todoColor, 'fill')),

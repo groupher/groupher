@@ -13,7 +13,7 @@ import useSalon, { cn } from '../../salon/cms/posts'
 import CmsDataTable from '../../Tables/CmsDataTable'
 import CmsTableToolbar from '../../Tables/CmsTableToolbar'
 import useCmsTableController from '../../Tables/useCmsTableController'
-import { ArticleCell, AuthorCell, DateCell, StateCell } from '../Cell'
+import { ArticleCell, AuthorCell, DateCell, StatusCell } from '../Cell'
 
 export default function Posts() {
   const { pagedPosts, loading, loadPosts } = useCMSInfo()
@@ -35,9 +35,9 @@ export default function Posts() {
         meta: { sticky: 'left', align: 'left' },
       },
       {
-        id: 'state',
-        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.state')}</div>,
-        cell: ({ row }) => <StateCell rowData={row.original} />,
+        id: 'status',
+        header: () => <div className={cn(s.title, 'text-center')}>{t('dsb.cms.table.status')}</div>,
+        cell: ({ row }) => <StatusCell rowData={row.original} />,
         size: 140,
       },
       {
@@ -103,7 +103,7 @@ export default function Posts() {
           placeholder: t('dsb.cms.filter.search_placeholder'),
         }}
         withCategory
-        withState
+        withStatus
         withDateRange
         withReset
         onResetAction={table.resetFilters}

@@ -1,8 +1,8 @@
 export const CAT = 'cat'
-export const STATE = 'state'
+export const STATUS = 'status'
 export const ORDER = 'order'
 
-export const ARTICLE_CAT_REJECT = {
+export const ARTICLE_STATUS_REJECT = {
   REJECT: 'REJECT', // 关闭
   REJECT_DUP: 'REJECT_DUP', // 重复问题
   REJECT_NO_PLAN: 'REJECT_NO_PLAN', // 无计划
@@ -18,13 +18,13 @@ export const ARTICLE_ORDER = {
 } as const
 
 export const ARTICLE_CAT = {
-  FEATURE: 'FEATURE',
+  IDEA: 'IDEA',
   BUG: 'BUG',
-  QUESTION: 'QUESTION',
-  OTHER: 'OTHER',
+  QA: 'QA',
+  DISCUSSION: 'DISCUSSION',
 } as const
 
-export const ARTICLE_STATE = {
+export const ARTICLE_STATUS = {
   BACKLOG: 'BACKLOG',
   TODO: 'TODO',
   WIP: 'WIP',
@@ -34,7 +34,7 @@ export const ARTICLE_STATE = {
   FIXED: 'FIXED',
   DEFAULT: 'DEFAULT',
   // reject
-  ...ARTICLE_CAT_REJECT,
+  ...ARTICLE_STATUS_REJECT,
 } as const
 
 export const ARTICLE_CAT_MODE = {

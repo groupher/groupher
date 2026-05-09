@@ -1,9 +1,9 @@
 import type {
   ARTICLE_CAT,
   ARTICLE_CAT_MODE,
-  ARTICLE_CAT_REJECT,
+  ARTICLE_STATUS_REJECT,
   ARTICLE_ORDER,
-  ARTICLE_STATE,
+  ARTICLE_STATUS,
 } from '~/const/gtd'
 import type { UPVOTE_LAYOUT } from '~/const/layout'
 import type { TConstValues } from '~/spec'
@@ -78,9 +78,9 @@ type TBaseArticle = {
   activeAt?: string
 
   cat?: TArticleCat
-  state?: TArticleState
+  status?: TArticleStatus
 
-  // for dashboard cmd tmp check state
+  // for dashboard cmd tmp check status
   _checked?: boolean
 }
 
@@ -175,7 +175,7 @@ export type TPagedComments = {
 export type TArticleFilter = {
   order?: TArticleOrder
   cat?: TArticleCat
-  state?: TArticleState
+  status?: TArticleStatus
 }
 
 export type TArticleFilterMode = 'default' | 'modeline'
@@ -203,8 +203,8 @@ export type TCommentsState = {
   participants: TSimpleUser[]
 }
 
-export type TArticleCatReject = TConstValues<typeof ARTICLE_CAT_REJECT>
-export type TArticleState = TConstValues<typeof ARTICLE_STATE>
+export type TArticleStatusReject = TConstValues<typeof ARTICLE_STATUS_REJECT>
+export type TArticleStatus = TConstValues<typeof ARTICLE_STATUS>
 export type TArticleOrder = TConstValues<typeof ARTICLE_ORDER>
 export type TArticleCat = TConstValues<typeof ARTICLE_CAT>
 
@@ -225,7 +225,7 @@ export type TPagedArticlesParams = {
   community?: string
   communityTag?: string
   cat?: string
-  state?: string
+  status?: string
   order?: string
 }
 

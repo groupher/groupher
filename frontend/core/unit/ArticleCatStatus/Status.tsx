@@ -1,16 +1,16 @@
 import type { FC } from 'react'
 
-import { ARTICLE_STATE } from '~/const/gtd'
-import { aliasGTDDoneState, toGTDLabelKey } from '~/fmt'
+import { ARTICLE_STATUS } from '~/const/gtd'
+import { aliasGTDDoneStatus, toGTDLabelKey } from '~/fmt'
 import useNameAlias from '~/hooks/useNameAlias'
 import useTrans from '~/hooks/useTrans'
 import type { TTooltipPlacement } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
 
-import type { TProps as TArticleStateBadgeProps } from '.'
-import useSalon, { Icon } from './salon/state'
+import type { TProps as TArticleStatusBadgeProps } from '.'
+import useSalon, { Icon } from './salon/status'
 
-type TProps = Pick<TArticleStateBadgeProps, 'cat' | 'state' | 'smaller'>
+type TProps = Pick<TArticleStatusBadgeProps, 'cat' | 'status' | 'smaller'>
 
 const tipConfig = {
   placement: 'right' as TTooltipPlacement,
@@ -18,16 +18,16 @@ const tipConfig = {
   noPadding: true,
 }
 
-const State: FC<TProps> = ({ cat, state, smaller }) => {
-  const s = useSalon({ cat, state })
+const Status: FC<TProps> = ({ cat, status, smaller }) => {
+  const s = useSalon({ cat, status })
   const { t } = useTrans()
 
   const kanbanAlias = useNameAlias('kanban')
 
-  switch (state) {
-    case ARTICLE_STATE.BACKLOG:
-    case ARTICLE_STATE.TODO: {
-      const stateKey = state.toLowerCase()
+  switch (status) {
+    case ARTICLE_STATUS.BACKLOG:
+    case ARTICLE_STATUS.TODO: {
+      const statusKey = status.toLowerCase()
 
       if (smaller) {
         return (
@@ -35,7 +35,7 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
             content={
               <div className={s.tipNote}>
                 <div className={s.text}>
-                  {kanbanAlias[stateKey]?.name || t(toGTDLabelKey(state))}
+                  {kanbanAlias[statusKey]?.name || t(toGTDLabelKey(status))}
                 </div>
               </div>
             }
@@ -51,19 +51,21 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
       return (
         <div className={s.box}>
           <Icon.Todo className={s.todoIcon} />
-          <div className={s.text}>{kanbanAlias[stateKey]?.name || t(toGTDLabelKey(state))}</div>
+          <div className={s.text}>{kanbanAlias[statusKey]?.name || t(toGTDLabelKey(status))}</div>
         </div>
       )
     }
 
-    case ARTICLE_STATE.WIP: {
+    case ARTICLE_STATUS.WIP: {
+      const statusKey = status.toLowerCase()
+
       if (smaller) {
         return (
           <Tooltip
             content={
               <div className={s.tipNote}>
                 <div className={s.text}>
-                  {kanbanAlias[ARTICLE_STATE.WIP]?.name || t(toGTDLabelKey(state))}
+                  {kanbanAlias[statusKey]?.name || t(toGTDLabelKey(status))}
                 </div>
               </div>
             }
@@ -80,21 +82,19 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
         <div className={s.box}>
           <Icon.Wip className={s.wipIcon} />
 
-          <div className={s.text}>
-            {kanbanAlias[ARTICLE_STATE.WIP]?.name || t(toGTDLabelKey(state))}
-          </div>
+          <div className={s.text}>{kanbanAlias[statusKey]?.name || t(toGTDLabelKey(status))}</div>
         </div>
       )
     }
 
-    case ARTICLE_STATE.DONE: {
-      const doneStateKey = aliasGTDDoneState(cat, state)
+    case ARTICLE_STATUS.DONE: {
+      const doneStatusKey = aliasGTDDoneStatus(cat, status)
       if (smaller) {
         return (
           <Tooltip
             content={
               <div className={s.tipNote}>
-                <div className={s.text}>{t(doneStateKey)}</div>
+                <div className={s.text}>{t(doneStatusKey)}</div>
               </div>
             }
             {...tipConfig}
@@ -110,24 +110,24 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
         <div className={s.box}>
           {/* <DoneIcon color={doneColor === COLOR.BLACK ? COLOR.GREEN : doneColor} /> */}
           <Icon.Done className={s.doneIcon} />
-          <div className={s.text}>{t(doneStateKey)}</div>
+          <div className={s.text}>{t(doneStatusKey)}</div>
         </div>
       )
     }
 
-    case ARTICLE_STATE.REJECT:
-    case ARTICLE_STATE.REJECT_STALE:
-    case ARTICLE_STATE.REJECT_NO_PLAN:
-    case ARTICLE_STATE.REJECT_REPRO:
-    case ARTICLE_STATE.REJECT_DUP: {
-      const rejectStateKey = state
+    case ARTICLE_STATUS.REJECT:
+    case ARTICLE_STATUS.REJECT_STALE:
+    case ARTICLE_STATUS.REJECT_NO_PLAN:
+    case ARTICLE_STATUS.REJECT_REPRO:
+    case ARTICLE_STATUS.REJECT_DUP: {
+      const rejectStatusKey = status
 
       if (smaller) {
         return (
           <Tooltip
             content={
               <div className={s.tipNote}>
-                <div className={s.text}>{t(toGTDLabelKey(rejectStateKey))}</div>
+                <div className={s.text}>{t(toGTDLabelKey(rejectStatusKey))}</div>
               </div>
             }
             {...tipConfig}
@@ -142,7 +142,7 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
       return (
         <div className={s.box}>
           <Icon.Reject className={s.rejectIcon} />
-          <div className={s.text}>{t(toGTDLabelKey(rejectStateKey))}</div>
+          <div className={s.text}>{t(toGTDLabelKey(rejectStatusKey))}</div>
         </div>
       )
     }
@@ -153,4 +153,4 @@ const State: FC<TProps> = ({ cat, state, smaller }) => {
   }
 }
 
-export default State
+export default Status

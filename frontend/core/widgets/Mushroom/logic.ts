@@ -61,7 +61,7 @@
 
 // const loadArticles = (page = 1): void => {
 //   console.log('## TODO: load loadArticles: ', page)
-//   // const { curCommunity, userHasLogin, activeTag, activeCat, activeState, activeOrder } = store
+//   // const { curCommunity, userHasLogin, activeTag, activeCat, activeStatus, activeOrder } = store
 //   // store.updateResState(TYPE.RES_STATE.LOADING as TResState)
 //   // scrollToTop()
 
@@ -70,7 +70,7 @@
 //   // if (activeTag?.slug) filter.communityTag = activeTag?.slug
 
 //   // if (activeCat) filter.cat = activeCat
-//   // if (activeState) filter.state = activeState
+//   // if (activeStatus) filter.status = activeStatus
 //   // if (activeOrder) filter.order = activeOrder
 
 //   // sr71$.query(S.pagedPosts, { filter, userHasLogin })
@@ -79,13 +79,13 @@
 // // TODO: use sanitor to filter whitelist oueries if nend
 // const syncURL = (page: number): void => {
 //   console.log('## TODO: syncURL: ', page)
-//   // const { activeTag, activeCat, activeState, activeOrder } = store
+//   // const { activeTag, activeCat, activeStatus, activeOrder } = store
 //   // const curSearchParams = getCurSearchParams()
 
 //   // // handle tag spec logic
 //   // activeTag?.slug ? (curSearchParams.tag = activeTag?.slug) : delete curSearchParams.tag
 //   // activeCat ? (curSearchParams.cat = activeCat.toLowerCase()) : delete curSearchParams.cat
-//   // activeState ? (curSearchParams.state = activeState.toLowerCase()) : delete curSearchParams.state
+//   // activeStatus ? (curSearchParams.status = activeStatus.toLowerCase()) : delete curSearchParams.status
 //   // activeOrder ? (curSearchParams.order = activeOrder.toLowerCase()) : delete curSearchParams.order
 
 //   // // handle page number spec logic

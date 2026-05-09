@@ -29,13 +29,13 @@ defmodule GroupherServer.CMS.Articles.List do
   @article_preloads @article_threads |> Enum.map(&Keyword.new([{&1, [author: :user]}]))
   @comment_article_preloads @article_threads |> Enum.map(&Keyword.new([{:comment, &1}]))
   @cited_preloads @article_preloads ++ [[comment: :author] ++ @comment_article_preloads]
-  @article_state ArticleEnums.state_values() |> Enum.into(%{}, &{&1, &1})
-  @kanban_rejected_states [
-    @article_state.reject,
-    @article_state.reject_dup,
-    @article_state.reject_no_plan,
-    @article_state.reject_repro,
-    @article_state.reject_stale
+  @article_status ArticleEnums.status_values() |> Enum.into(%{}, &{&1, &1})
+  @kanban_rejected_statuses [
+    @article_status.reject,
+    @article_status.reject_dup,
+    @article_status.reject_no_plan,
+    @article_status.reject_repro,
+    @article_status.reject_stale
   ]
 
   @spec page(atom(), map()) :: T.domain_res(term())
@@ -97,32 +97,33 @@ defmodule GroupherServer.CMS.Articles.List do
          enabled_boards
        ) do
     if board in enabled_boards do
-      paged_kanban(community, Map.put(filter, :state, kanban_board_state(board)))
+      paged_kanban(community, Map.put(filter, :status, kanban_board_status(board)))
     else
       {:ok, empty_paged_kanban(filter)}
     end
   end
 
-  defp kanban_board_state(:backlog), do: @article_state.backlog
-  defp kanban_board_state(:todo), do: @article_state.todo
-  defp kanban_board_state(:wip), do: @article_state.wip
-  defp kanban_board_state(:done), do: @article_state.done
+  defp kanban_board_status(:backlog), do: @article_status.backlog
+  defp kanban_board_status(:todo), do: @article_status.todo
+  defp kanban_board_status(:wip), do: @article_status.wip
+  defp kanban_board_status(:done), do: @article_status.done
   # rejected is a virtual kanban column that aggregates all reject states.
-  defp kanban_board_state(:rejected), do: @kanban_rejected_states
+  defp kanban_board_status(:rejected), do: @kanban_rejected_statuses
 
   defp empty_paged_kanban(%{page: page, size: size}) do
     %{entries: [], total_count: 0, page_number: page, page_size: size, total_pages: 0}
   end
 
-  def paged_kanban(%Community{} = community, %{state: states} = filter) when is_list(states) do
+  def paged_kanban(%Community{} = community, %{status: statuses} = filter)
+      when is_list(statuses) do
     %{page: page, size: size} = filter
 
-    valid_states =
-      states
+    valid_statuses =
+      statuses
       |> Enum.filter(&is_atom/1)
-      |> Enum.filter(&(&1 in Map.keys(@article_state)))
+      |> Enum.filter(&(&1 in Map.keys(@article_status)))
 
-    case valid_states do
+    case valid_statuses do
       [] ->
         %{entries: [], total_count: 0, page_number: page, page_size: size, total_pages: 0}
         |> done()
@@ -132,25 +133,25 @@ defmodule GroupherServer.CMS.Articles.List do
           mark_delete: false,
           pending: :legal,
           community_id: community.id,
-          state: nil
+          status: nil
         }
 
         Post
         |> QueryBuilder.filter_pack(Map.merge(filter, flags))
-        |> where([p], p.state in ^valid_states)
+        |> where([p], p.status in ^valid_statuses)
         |> ORM.paginator(~m(page size)a)
         |> done()
     end
   end
 
   def paged_kanban(%Community{} = community, filter) do
-    %{page: page, size: size, state: state} = filter
+    %{page: page, size: size, status: status} = filter
 
     flags = %{
       mark_delete: false,
       pending: :legal,
       community_id: community.id,
-      state: state
+      status: status
     }
 
     Post

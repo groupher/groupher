@@ -49,7 +49,7 @@ const Header: FC<TProps> = ({ type }) => {
       break
     }
 
-    case SUB_MENU_TYPE.STATE: {
+    case SUB_MENU_TYPE.STATUS: {
       Content = (
         <>
           <WipSVG className={s.icon} />

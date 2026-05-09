@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Model.Post do
 
   @optional_fields ~w(
     copy_right solution_digest updated_at inserted_at active_at archived_at
-    cat state inner_id community_slug
+    cat status inner_id community_slug
   )a ++ @article_cast_fields
 
   @type t :: %Post{}
@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Model.Post do
 
     # DB stores string, Ecto exposes atoms
     field(:cat, Ecto.Enum, values: ArticleEnums.cat_values())
-    field(:state, Ecto.Enum, values: ArticleEnums.state_values())
+    field(:status, Ecto.Enum, values: ArticleEnums.status_values())
 
     field(:solution_digest, :string)
 
@@ -47,7 +47,7 @@ defmodule GroupherServer.CMS.Model.Post do
     post
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> normalize_enum(:cat, ArticleEnums.cat_values())
-    |> normalize_enum(:state, ArticleEnums.state_values())
+    |> normalize_enum(:status, ArticleEnums.status_values())
     |> validate_required(@required_fields)
     |> cast_embed(:meta, required: false, with: &Embeds.ArticleMeta.changeset/2)
     |> geneal_changeset()
@@ -58,7 +58,7 @@ defmodule GroupherServer.CMS.Model.Post do
     post
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> normalize_enum(:cat, ArticleEnums.cat_values())
-    |> normalize_enum(:state, ArticleEnums.state_values())
+    |> normalize_enum(:status, ArticleEnums.status_values())
     |> geneal_changeset()
   end
 
@@ -70,7 +70,7 @@ defmodule GroupherServer.CMS.Model.Post do
   end
 
   # Accept:
-  # - atom: :feature
+  # - atom: :todo
   #
   # Reject any other value with a changeset error.
   defp normalize_enum(changeset, field, allowed_atoms) do
