@@ -1,4 +1,4 @@
-import MarkdownRender from 'markdown-to-jsx'
+import MarkdownRender from 'markdown-to-jsx/react'
 import type { ReactNode } from 'react'
 
 import type { TSpace } from '~/spec'

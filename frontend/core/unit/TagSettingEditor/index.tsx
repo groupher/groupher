@@ -16,6 +16,7 @@ import type { TChangeMode, TColorName, TSelectOption, TTransKey } from '~/spec'
 import ColorSelector from '~/widgets/ColorSelector'
 import CustomScroller from '~/widgets/CustomScroller'
 import Input from '~/widgets/Input'
+import MarkdownEditor from '~/widgets/MarkdownEditor'
 import Select from '~/widgets/Select'
 
 import Footer from './Footer'
@@ -110,13 +111,12 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE, initialGroup 
         <div className='mb-6' />
         <div className={s.title}>{t('dsb.tags.editor.desc')}</div>
         <div className={s.inputWrapper}>
-          <Input
-            className={s.inputer}
-            width='w-full'
+          <MarkdownEditor
+            className={s.markdownEditor}
             value={editingTag.desc}
             placeholder={t('dsb.tags.editor.desc.placeholder')}
-            behavior='textarea'
-            onChange={(e) => edit(e.target.value, 'desc')}
+            minRows={5}
+            onChange={(value) => edit(value, 'desc')}
           />
         </div>
         <div className='mb-6' />
