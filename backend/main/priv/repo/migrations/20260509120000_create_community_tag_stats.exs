@@ -15,7 +15,6 @@ defmodule GroupherServer.Repo.Migrations.CreateCommunityTagStats do
       add(:contents_count, :integer, null: false, default: 0)
       add(:today_contents_count, :integer, null: false, default: 0)
       add(:today_stat_date, :date)
-      add(:rank, :integer)
 
       timestamps()
     end

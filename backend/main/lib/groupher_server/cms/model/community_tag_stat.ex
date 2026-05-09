@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Model.CommunityTagStat do
 
   @schema_prefix DBPrefix.cms()
   @required_fields ~w(community_tag_id community_id thread)a
-  @optional_fields ~w(contents_count today_contents_count today_stat_date rank)a
+  @optional_fields ~w(contents_count today_contents_count today_stat_date)a
 
   @type t :: %__MODULE__{}
   schema "community_tag_stats" do
@@ -21,7 +21,6 @@ defmodule GroupherServer.CMS.Model.CommunityTagStat do
     field(:contents_count, :integer, default: 0)
     field(:today_contents_count, :integer, default: 0)
     field(:today_stat_date, :date)
-    field(:rank, :integer)
 
     belongs_to(:community_tag, CommunityTag)
     belongs_to(:community, Community)

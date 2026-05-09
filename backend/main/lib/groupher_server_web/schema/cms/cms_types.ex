@@ -249,7 +249,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:contents_count, :integer)
     field(:today_contents_count, :integer)
     field(:today_stat_date, :date)
-    field(:rank, :integer)
   end
 
   object :emotion_stat do
