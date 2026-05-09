@@ -70,7 +70,7 @@ defmodule GroupherServer.CMS.Model.Post do
   end
 
   # Accept:
-  # - atom: :idea
+  # - atom: :todo
   #
   # Reject any other value with a changeset error.
   defp normalize_enum(changeset, field, allowed_atoms) do

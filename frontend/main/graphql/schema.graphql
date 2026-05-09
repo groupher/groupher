@@ -383,7 +383,7 @@ type RootMutationType {
   "set cat for a post"
   setPostCat(article: ArticleRefInput!, cat: ArticleCatEnum!): Post
 
-  "set cat for a post"
+  "set status for a post"
   setPostStatus(article: ArticleRefInput!, status: ArticleStatusEnum!): Post
 
   "upvote to post"

@@ -66,7 +66,7 @@ const KanbanItem: FC<TProps> = ({ article }) => {
             <CommentsCount count={article.commentsCount} size='medium' />
           )}
         </div>
-        <ArticleCatStatus cat={article.cat} />
+        <ArticleCatStatus cat={article.cat} status={article.status} />
       </div>
     </div>
   )

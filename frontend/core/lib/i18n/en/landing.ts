@@ -33,7 +33,7 @@ export default {
   'landing.faq.5.body':
     'Yes, but the current server is located in mainland China. Internationalization work is still in progress.',
   'landing.articles.tab.post.title': 'Forum',
-  'landing.articles.tab.post.desc': 'Ideass / Bugs / Support',
+  'landing.articles.tab.post.desc': 'Ideas / Bugs / Support',
   'landing.articles.tab.kanban.title': 'Board',
   'landing.articles.tab.kanban.desc': 'Planned / In Progress / Done',
   'landing.articles.tab.changelog.title': 'Changelog',
@@ -42,7 +42,7 @@ export default {
   'landing.articles.tab.doc.desc': 'Knowledge Base / Tutorials / Manual',
   'landing.articles.common.example': 'See Example',
   'landing.articles.common.more': 'Learn More',
-  'landing.articles.discuss.title': 'Ideass / Bugs / Support',
+  'landing.articles.discuss.title': 'Ideas / Bugs / Support',
   'landing.articles.discuss.digest.prefix':
     'Complete yet practical community features for communication between ',
   'landing.articles.discuss.digest.team': 'users and the team',

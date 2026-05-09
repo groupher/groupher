@@ -192,7 +192,7 @@ export const prettyURL = (url: string): string => {
  */
 export const toGTDLabelKey = (value: string): TTransKey => value.toUpperCase() as TTransKey
 
-export const aliasGTDDoneState = (cat: TArticleCat, status: TArticleStatus): TTransKey => {
+export const aliasGTDDoneStatus = (cat: TArticleCat, status: TArticleStatus): TTransKey => {
   if (status !== ARTICLE_STATUS.DONE) return toGTDLabelKey(status)
 
   switch (cat) {

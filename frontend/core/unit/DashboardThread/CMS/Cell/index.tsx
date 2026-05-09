@@ -23,7 +23,7 @@ export const StatusCell = React.memo(function StatusCell({ rowData }: { rowData:
   if (!status) return <div />
 
   return (
-    <div className={s.stateWrapper}>
+    <div className={s.statusWrapper}>
       <ArticleCatStatus cat={cat} status={status} smaller />
     </div>
   )

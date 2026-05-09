@@ -3,7 +3,7 @@ import { useMutation } from 'urql'
 
 import { ARTICLE_STATUS } from '~/const/gtd'
 import { POST_STATUS_MENU_ITEMS } from '~/const/menu'
-import { aliasGTDDoneState, toGTDLabelKey } from '~/fmt'
+import { aliasGTDDoneStatus, toGTDLabelKey } from '~/fmt'
 import useKanbanBgColors from '~/hooks/useKanbanBgColors'
 import useNameAlias from '~/hooks/useNameAlias'
 import useTrans from '~/hooks/useTrans'
@@ -95,7 +95,7 @@ const StatusSetting: FC<TProps> = ({ onBack }) => {
             />
             <div className={cn(s.title, active && s.titleActive)}>
               {item.key === ARTICLE_STATUS.DONE
-                ? t(aliasGTDDoneState(article.cat, item.key))
+                ? t(aliasGTDDoneStatus(article.cat, item.key))
                 : kanbanAlias[item.key]?.name || t(toGTDLabelKey(item.key))}
             </div>
             {active && <CheckSVG className={s.checkIcon} />}

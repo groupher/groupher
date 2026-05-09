@@ -53,7 +53,7 @@ export default function CmsTableToolbar({
   withCategory = false,
   withDateRange = false,
   withReset = true,
-  withState = false,
+  withStatus = false,
   withTags = false,
 }: TCmsTableToolbarProps) {
   const s = useSalon()
@@ -87,7 +87,7 @@ export default function CmsTableToolbar({
         )}
 
         {withCategory && <ConditionSelector mode={CONDITION_MODE.CAT} selected={false} />}
-        {withState && <ConditionSelector mode={CONDITION_MODE.STATUS} selected={false} />}
+        {withStatus && <ConditionSelector mode={CONDITION_MODE.STATUS} selected={false} />}
         {withTags && <ConditionSelector mode={CONDITION_MODE.TAG} selected={false} />}
 
         {withDateRange && <CmsDateRangePicker label={t('dsb.cms.filter.date_range')} />}
@@ -127,13 +127,13 @@ export default function CmsTableToolbar({
                   </div>
 
                   {(batchActions.withCategory ||
-                    batchActions.withState ||
+                    batchActions.withStatus ||
                     batchActions.withTags ||
                     batchActions.withDelete) && (
                     <div className={actionBar.actionNotes}>
                       <div className={actionBar.note}>{t('dsb.cms.action.label')}</div>
                       {batchActions.withCategory && <div className={actionBar.note}>Category</div>}
-                      {batchActions.withState && (
+                      {batchActions.withStatus && (
                         <div className={actionBar.note}>{t('dsb.cms.table.status')}</div>
                       )}
                       {batchActions.withTags && <div className={actionBar.note}>Tags</div>}

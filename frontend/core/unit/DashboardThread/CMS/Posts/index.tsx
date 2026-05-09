@@ -103,7 +103,7 @@ export default function Posts() {
           placeholder: t('dsb.cms.filter.search_placeholder'),
         }}
         withCategory
-        withState
+        withStatus
         withDateRange
         withReset
         onResetAction={table.resetFilters}

@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import { ARTICLE_STATUS } from '~/const/gtd'
-import { aliasGTDDoneState, toGTDLabelKey } from '~/fmt'
+import { aliasGTDDoneStatus, toGTDLabelKey } from '~/fmt'
 import useNameAlias from '~/hooks/useNameAlias'
 import useTrans from '~/hooks/useTrans'
 import type { TTooltipPlacement } from '~/spec'
@@ -88,7 +88,7 @@ const Status: FC<TProps> = ({ cat, status, smaller }) => {
     }
 
     case ARTICLE_STATUS.DONE: {
-      const doneStatusKey = aliasGTDDoneState(cat, status)
+      const doneStatusKey = aliasGTDDoneStatus(cat, status)
       if (smaller) {
         return (
           <Tooltip

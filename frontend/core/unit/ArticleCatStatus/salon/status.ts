@@ -27,7 +27,7 @@ export default function useSalon({ cat, status }: TProps) {
   const { cn, rainbow, rainbowSoft } = useTwBelt()
   const [todoColor, wipColor, doneColor] = useKanbanBgColors()
 
-  const stateColor = {
+  const statusColor = {
     [ARTICLE_STATUS.BACKLOG]: todoColor,
     [ARTICLE_STATUS.TODO]: todoColor,
     [ARTICLE_STATUS.WIP]: wipColor,
@@ -37,7 +37,7 @@ export default function useSalon({ cat, status }: TProps) {
   const doneColor$ = includes(cat, [ARTICLE_CAT.QA, ARTICLE_CAT.BUG]) ? COLOR.GREEN : doneColor
 
   return {
-    box: cn('align-both size-4 mr-0.5 rounded', rainbowSoft(stateColor[status] || COLOR.RED)),
+    box: cn('align-both size-4 mr-0.5 rounded', rainbowSoft(statusColor[status] || COLOR.RED)),
     text: 'text-xs py-1.5',
     tipNote: 'row-center px-1.5 py-0.5 bold-sm',
     todoIcon: cn('size-3 z-10', rainbow(todoColor, 'fill')),

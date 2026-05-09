@@ -109,7 +109,7 @@ export default function DocsTables({ pagedDocs, loading }: TProps) {
           placeholder: t('dsb.cms.filter.search_placeholder'),
         }}
         withCategory
-        withState
+        withStatus
         withDateRange
         withReset
         onResetAction={table.resetFilters}
