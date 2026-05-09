@@ -7,6 +7,7 @@ import ListBulletsSVG from '~/icons/ListBullets'
 import ListChecksSVG from '~/icons/ListChecks'
 import ListNumbersSVG from '~/icons/ListNumbers'
 import QuotesSVG from '~/icons/Quotes'
+import TextBSVG from '~/icons/TextB'
 import TextItalicSVG from '~/icons/TextItalic'
 import type { TTransKey } from '~/spec'
 
@@ -51,9 +52,8 @@ export const FORMAT_CONFIGS: TFormatConfig[] = [
     action: (textarea, meta) => applyLinePrefix(textarea, '### ', meta.heading),
   },
   {
-    label: 'B',
+    label: <TextBSVG className='size-4 fill-current' />,
     hintKey: 'widgets.markdown_editor.toolbar.bold',
-    className: 'font-bold',
     action: (textarea, meta) => applyWrap(textarea, '**', '**', meta.bold),
   },
   {
@@ -89,7 +89,7 @@ export const FORMAT_CONFIGS: TFormatConfig[] = [
   {
     label: <ListSVG className='size-4 fill-current' />,
     hintKey: 'widgets.markdown_editor.toolbar.lists',
-    action: (textarea, meta) => applyOrderedList(textarea, meta.listItem),
+    action: (textarea, meta) => applyLinePrefix(textarea, '- ', meta.listItem),
   },
   {
     label: <ListNumbersSVG className='size-4 fill-current' />,

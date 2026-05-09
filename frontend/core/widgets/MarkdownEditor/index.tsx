@@ -51,6 +51,8 @@ const MarkdownEditor: FC<TProps> = ({
   const writeLabelTxt = writeLabel ?? t('widgets.markdown_editor.tab.write')
   const previewLabelTxt = previewLabel ?? t('widgets.markdown_editor.tab.preview')
   const placeholderTxt = placeholder ?? t('widgets.markdown_editor.placeholder.input')
+  const listTriggerFormat = formats[6]
+  const listOptionFormats = formats.slice(7)
 
   const updateSelection = useCallback((start: number, end: number) => {
     requestAnimationFrame(() => {
@@ -114,34 +116,36 @@ const MarkdownEditor: FC<TProps> = ({
             </button>
           ))}
 
-          <div className={s.listGroup}>
-            <button
-              aria-label={formats[6].hint}
-              className={cn(s.toolButton, s.listTrigger, formats[6].className)}
-              disabled={disabled || tab === TAB.PREVIEW}
-              title={formats[6].hint}
-              type='button'
-              onClick={() => handleFormat(formats[6])}
-            >
-              {formats[6].label}
-            </button>
+          {listTriggerFormat && (
+            <div className={s.listGroup}>
+              <button
+                aria-label={listTriggerFormat.hint}
+                className={cn(s.toolButton, s.listTrigger, listTriggerFormat.className)}
+                disabled={disabled || tab === TAB.PREVIEW}
+                title={listTriggerFormat.hint}
+                type='button'
+                onClick={() => handleFormat(listTriggerFormat)}
+              >
+                {listTriggerFormat.label}
+              </button>
 
-            <div className={s.listOptions}>
-              {formats.slice(7).map((format) => (
-                <button
-                  aria-label={format.hint}
-                  className={cn(s.toolButton, format.className)}
-                  disabled={disabled || tab === TAB.PREVIEW}
-                  key={format.hint}
-                  title={format.hint}
-                  type='button'
-                  onClick={() => handleFormat(format)}
-                >
-                  {format.label}
-                </button>
-              ))}
+              <div className={s.listOptions}>
+                {listOptionFormats.map((format) => (
+                  <button
+                    aria-label={format.hint}
+                    className={cn(s.toolButton, format.className)}
+                    disabled={disabled || tab === TAB.PREVIEW}
+                    key={format.hint}
+                    title={format.hint}
+                    type='button'
+                    onClick={() => handleFormat(format)}
+                  >
+                    {format.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

@@ -634,7 +634,7 @@ export default {
   'widgets.markdown_editor.placeholder.link_text': 'link text',
   'widgets.markdown_editor.placeholder.list_item': 'list item',
   'widgets.markdown_editor.placeholder.task_item': 'task item',
-  'widgets.markdown_editor.placeholder.input': 'Add your comment here...',
+  'widgets.markdown_editor.placeholder.input': 'Enter content here...',
   'widgets.markdown_editor.tab.write': 'Write',
   'widgets.markdown_editor.tab.preview': 'Preview',
 }

@@ -30,10 +30,13 @@ export const applyLinePrefix = (
 ): TSelectionUpdate => {
   const { selectionStart, selectionEnd, value } = textarea
   const lineStart = value.lastIndexOf('\n', Math.max(0, selectionStart - 1)) + 1
-  const selected = value.slice(lineStart, selectionEnd) || placeholder
+  const hasSelection = selectionStart !== selectionEnd
+  const lineEnd = value.indexOf('\n', selectionEnd)
+  const blockEnd = hasSelection ? selectionEnd : lineEnd === -1 ? value.length : lineEnd
+  const selected = value.slice(lineStart, blockEnd) || placeholder
   const lines = selected.split('\n')
   const nextBlock = lines.map((line) => `${prefix}${line}`).join('\n')
-  const next = `${value.slice(0, lineStart)}${nextBlock}${value.slice(selectionEnd)}`
+  const next = `${value.slice(0, lineStart)}${nextBlock}${value.slice(blockEnd)}`
   const start = lineStart + prefix.length
   const end = lineStart + nextBlock.length
 
@@ -46,10 +49,13 @@ export const applyOrderedList = (
 ): TSelectionUpdate => {
   const { selectionStart, selectionEnd, value } = textarea
   const lineStart = value.lastIndexOf('\n', Math.max(0, selectionStart - 1)) + 1
-  const selected = value.slice(lineStart, selectionEnd) || placeholder
+  const hasSelection = selectionStart !== selectionEnd
+  const lineEnd = value.indexOf('\n', selectionEnd)
+  const blockEnd = hasSelection ? selectionEnd : lineEnd === -1 ? value.length : lineEnd
+  const selected = value.slice(lineStart, blockEnd) || placeholder
   const lines = selected.split('\n')
   const nextBlock = lines.map((line, index) => `${index + 1}. ${line}`).join('\n')
-  const next = `${value.slice(0, lineStart)}${nextBlock}${value.slice(selectionEnd)}`
+  const next = `${value.slice(0, lineStart)}${nextBlock}${value.slice(blockEnd)}`
   const start = lineStart + 3
   const end = lineStart + nextBlock.length
 
