@@ -4,7 +4,7 @@ import { pagedComments } from './comment'
 import { community, pagedCommunities, subscribedCommunities } from './community'
 import { doc, pagedDocs } from './doc'
 import { mentions } from './mail'
-import { pagedCategories, pagedCommunityTags } from './misc'
+import { communityTagStats, pagedCategories, pagedCommunityTags } from './misc'
 import { groupedKanbanPosts, pagedPosts, pagedPublishedPosts, post } from './post'
 import { me, sessionState, user } from './user'
 
@@ -18,6 +18,7 @@ const P = {
   // misc
   pagedCategories,
   pagedCommunityTags,
+  communityTagStats,
   // post
   pagedPosts,
   pagedPublishedPosts,

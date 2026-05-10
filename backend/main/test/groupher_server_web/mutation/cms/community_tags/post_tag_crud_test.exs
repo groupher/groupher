@@ -142,6 +142,27 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
       assert updated["icon"] == "icon"
     end
 
+    test "auth user can update a tag with markdown note longer than varchar default",
+         ~m(community_tag_attrs community user)a do
+      {:ok, community_tag} =
+        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+
+      long_desc = String.duplicate("长标签说明，支持 Markdown 内容。\n\n", 20)
+
+      variables = %{
+        id: community_tag.id,
+        desc: long_desc,
+        community: community.slug
+      }
+
+      passport_rules = %{community.title => %{"post.community_tag.update" => true}}
+      rule_conn = simu_conn(:user, cms: passport_rules)
+
+      updated = rule_conn |> gq_mutation(@update_tag_query, variables)
+
+      assert updated["desc"] == long_desc
+    end
+
     @delete_tag_query """
     mutation($id: ID!, $community: String!){
       deleteCommunityTag(id: $id, community: $community) {

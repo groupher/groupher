@@ -4,18 +4,23 @@
  *
  */
 
-import useActiveTag from '~/hooks/useActiveTag'
-import type { TColorName } from '~/spec'
+import type { TColorName, TSpace } from '~/spec'
 import Markdown from '~/widgets/Markdown'
 import TagNode from '~/widgets/TagNode'
 
 import useSalon from './salon'
+import useLogic from './useLogic'
 
-export default function TagNote() {
-  const tag = useActiveTag()
-  const s = useSalon()
+type TProps = TSpace
+
+export default function TagNote({ ...spacing }: TProps) {
+  const { tag, stats } = useLogic()
+  const s = useSalon({ ...spacing })
 
   if (!tag?.title) return null
+
+  const todayCount = stats?.todayContentsCount || 0
+  const contentsCount = stats?.contentsCount || 0
 
   return (
     <div className={s.wrapper}>
@@ -32,8 +37,15 @@ export default function TagNote() {
           />
           <div className={s.title}>{tag.title}</div>
         </div>
+        <div className={s.stats}>
+          <span className={s.statLabel}>今日</span>
+          <span className={s.statNum}>{todayCount}</span>
+          <span className='mx-0.5' />
+          <span className={s.statLabel}>主题</span>
+          <span className={s.statNum}>{contentsCount}</span>
+        </div>
       </div>
-      <Markdown className='-ml-3.5 scale-95'>{tag.desc || ''}</Markdown>
+      <Markdown>{tag.desc || ''}</Markdown>
     </div>
   )
 }

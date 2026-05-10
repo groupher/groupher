@@ -25,7 +25,7 @@ export default function PostThread() {
   return (
     <div className={s.wrapper}>
       <div className={s.layout}>
-        <TagNote />
+        <TagNote top={2.5} />
         <ArticlesFilter left={-1.5} top={1.5} bottom={1.5} />
         <PagedPosts />
       </div>

@@ -59,7 +59,7 @@ export const FORMAT_CONFIGS: TFormatConfig[] = [
   {
     label: <TextItalicSVG className='size-4 fill-current' />,
     hintKey: 'widgets.markdown_editor.toolbar.italic',
-    action: (textarea, meta) => applyWrap(textarea, '_', '_', meta.italic),
+    action: (textarea, meta) => applyWrap(textarea, '*', '*', meta.italic),
   },
   {
     label: <QuotesSVG className='size-4 fill-current' />,

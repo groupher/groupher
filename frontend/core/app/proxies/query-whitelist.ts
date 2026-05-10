@@ -15,8 +15,17 @@ const ALLOWED_PARAMS = [
   SEARCH_PARAM.COMMUNITY,
 ]
 
+const shouldSkipQueryWhitelist = (pathname: string): boolean => {
+  return pathname.startsWith('/api/') || pathname.startsWith('/_next/') || pathname.includes('.')
+}
+
 export function queryWhitelistProxy(req: NextRequest) {
   const url = new URL(req.url)
+
+  if (shouldSkipQueryWhitelist(url.pathname)) {
+    return NextResponse.next()
+  }
+
   let hasNotAllowedParams = false
 
   // 检查URL中的查询参数是否都在白名单中

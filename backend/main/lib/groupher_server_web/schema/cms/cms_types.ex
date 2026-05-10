@@ -248,7 +248,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :community_tag_stat do
     field(:contents_count, :integer)
     field(:today_contents_count, :integer)
-    field(:today_stat_date, :date)
   end
 
   object :emotion_stat do

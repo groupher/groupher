@@ -1,12 +1,18 @@
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
-export default function useSalon() {
-  const { cn, fg, br } = useTwBelt()
+type TProps = TSpace
+
+export default function useSalon({ ...spacing }: TProps) {
+  const { cn, fg, br, margin, primary } = useTwBelt()
 
   return {
-    wrapper: cn('border-b pt-3.5 pb-4 mb-6 -mt-3', br('divider')),
-    header: 'row-center mb-1.5 w-full',
-    tagWrapper: 'align-both -ml-0.5 h-6',
-    title: cn('text-base', fg('title')),
+    wrapper: cn('border-b pb-4 mb-6', br('divider'), margin(spacing)),
+    header: 'row-between mb-1.5 w-full',
+    tagWrapper: 'align-both h-6 mb-1',
+    title: cn('text-lg ml-0.5', fg('title')),
+    stats: cn('row-center text-sm gap-x-1.5 mr-2'),
+    statLabel: cn('text-xs', fg('digest')),
+    statNum: cn('font-medium', primary('fg')),
   }
 }

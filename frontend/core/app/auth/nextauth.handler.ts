@@ -43,7 +43,7 @@ export const config = {
       if (account && profile) {
         const standProvider = {
           provider: account.provider,
-          provider_id: account.providerAccountId,
+          providerId: account.providerAccountId,
           login: profile.login,
           nickname: profile.name,
           avatar: profile.avatar_url,
@@ -62,13 +62,16 @@ export const config = {
         try {
           const { data, error } = await oauthSignin(params)
           if (error) {
-            // TODO: error handling on UI
             console.error('oauthSignin GraphQL error:', error)
+            throw error
           } else if (data?.signinOauth) {
             token[AUTH_KEY.TOKEN] = data.signinOauth.token
+          } else {
+            throw new Error('oauthSignin returned empty token info')
           }
         } catch (e) {
           console.error('oauthSignin request failed:', e)
+          throw e
         }
       }
 

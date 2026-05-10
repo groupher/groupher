@@ -1088,7 +1088,6 @@ type CommunityTag {
 type CommunityTagStat {
   contentsCount: Int
   todayContentsCount: Int
-  todayStatDate: Date
 }
 
 type EmotionStat {

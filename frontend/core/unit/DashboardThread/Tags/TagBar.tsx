@@ -35,6 +35,7 @@ const TagBar: FC<TProps> = ({
   const [saving, setSaving] = useState(false)
   const s = useSalon({ color: editingTag?.color as TColorName, editing: isEditMode })
   const canSaveInline = !isEditMode || !!draftTag.title?.trim()
+  const desc = tag.desc?.trim()
 
   useEffect(() => {
     if (isEditMode) setDraftTag(editingTag)
@@ -91,10 +92,21 @@ const TagBar: FC<TProps> = ({
             autoFocus
           />
         ) : (
-          <>
+          <div className={s.info}>
             <div className={s.title}>{tag.title}</div>
-            {tag.slug && <div className={s.slug}>({tag.slug})</div>}
-          </>
+            {tag.slug && (
+              <>
+                <div className={s.dotSep} />
+                <div className={s.slug}>{tag.slug}</div>
+              </>
+            )}
+            {desc && (
+              <>
+                <div className={s.dotSep} />
+                <div className={s.desc}>{desc}</div>
+              </>
+            )}
+          </div>
         )}
         <div className='grow' />
         {!isEditMode && (
