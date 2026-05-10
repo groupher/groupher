@@ -35,7 +35,13 @@ const getBackendAuthCookie = (req: Request): string | null => {
   const authCookie = cookie.split(';').find((c) => c.trim().startsWith(`${AUTH_KEY.TOKEN}=`))
   if (!authCookie) return null
 
-  return decodeURIComponent(authCookie.trim().slice(`${AUTH_KEY.TOKEN}=`.length))
+  const rawValue = authCookie.trim().slice(`${AUTH_KEY.TOKEN}=`.length)
+
+  try {
+    return decodeURIComponent(rawValue)
+  } catch {
+    return rawValue
+  }
 }
 
 export async function authCookieProxy(req: Request) {

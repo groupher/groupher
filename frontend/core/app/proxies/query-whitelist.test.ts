@@ -21,4 +21,12 @@ describe('queryWhitelistProxy', () => {
       'http://localhost/cper/dashboard?page=2',
     )
   })
+
+  it('does not skip dotted page pathnames', () => {
+    const response = queryWhitelistProxy(request('http://localhost/profile/john.doe?page=2&x=1'))
+
+    expect(response.headers.get('x-middleware-rewrite')).toBe(
+      'http://localhost/profile/john.doe?page=2',
+    )
+  })
 })
