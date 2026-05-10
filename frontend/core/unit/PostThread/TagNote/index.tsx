@@ -4,6 +4,7 @@
  *
  */
 
+import useTrans from '~/hooks/useTrans'
 import type { TColorName, TSpace } from '~/spec'
 import Markdown from '~/widgets/Markdown'
 import TagNode from '~/widgets/TagNode'
@@ -15,6 +16,7 @@ type TProps = TSpace
 
 export default function TagNote({ ...spacing }: TProps) {
   const { tag, stats } = useLogic()
+  const { t } = useTrans()
   const s = useSalon({ ...spacing })
 
   if (!tag?.title) return null
@@ -38,10 +40,10 @@ export default function TagNote({ ...spacing }: TProps) {
           <div className={s.title}>{tag.title}</div>
         </div>
         <div className={s.stats}>
-          <span className={s.statLabel}>今日</span>
+          <span className={s.statLabel}>{t('tag.stat.today')}</span>
           <span className={s.statNum}>{todayCount}</span>
           <span className='mx-0.5' />
-          <span className={s.statLabel}>主题</span>
+          <span className={s.statLabel}>{t('tag.stat.topic')}</span>
           <span className={s.statNum}>{contentsCount}</span>
         </div>
       </div>

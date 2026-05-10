@@ -45,6 +45,8 @@ export default {
   'tags.fold.expand': '展开',
   'tags.fold.collapse': '收起',
   'tags.all': '全部标签',
+  'tag.stat.today': '今日',
+  'tag.stat.topic': '主题',
   'common.other': '其他',
   'account.menu.via_github': 'via GitHub',
   'account.menu.settings': '账户设置',
