@@ -34,7 +34,6 @@ defmodule GroupherServer.Test.Query.CMS.PostTags do
           stats {
             contentsCount
             todayContentsCount
-            todayStatDate
           }
         }
         totalCount
@@ -93,7 +92,6 @@ defmodule GroupherServer.Test.Query.CMS.PostTags do
 
       assert stats["contentsCount"] == 1
       assert stats["todayContentsCount"] == 1
-      assert stats["todayStatDate"] == Date.to_iso8601(Datetime.today())
     end
 
     test "guest user can get single post tag stats by community thread and slug",
@@ -108,7 +106,6 @@ defmodule GroupherServer.Test.Query.CMS.PostTags do
         communityTagStats(community: $community, thread: $thread, slug: $slug) {
           contentsCount
           todayContentsCount
-          todayStatDate
         }
       }
       """
@@ -118,7 +115,6 @@ defmodule GroupherServer.Test.Query.CMS.PostTags do
 
       assert results["contentsCount"] == 1
       assert results["todayContentsCount"] == 1
-      assert results["todayStatDate"] == Date.to_iso8601(Datetime.today())
     end
   end
 end
