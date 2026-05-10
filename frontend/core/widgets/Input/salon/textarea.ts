@@ -8,7 +8,7 @@ export default function useSalon() {
   return {
     wrapper: cn(
       'outline-none tabular-nums box-border m-0 list-none relative inline-block w-full bg-none border appearance-none',
-      'px-2.5 py-2 rounded-md text-sm text-left leading-normal caret-inherit saturate-0',
+      'px-2.5 py-2 rounded-md text-sm text-left leading-normal caret-inherit',
       'trans-all-200',
       'min-h-14 overflow-hidden',
       `hover:${br('digest')}`,

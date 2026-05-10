@@ -99,6 +99,9 @@ type RootQueryType {
   "get paged community tags"
   pagedCommunityTags(filter: CommunityTagsFilter): PagedCommunityTags
 
+  "get community tag stats by community, thread and slug"
+  communityTagStats(community: String!, thread: Thread!, slug: String!): CommunityTagStat
+
   "got basic comments state"
   commentsState(article: ArticleRefInput!, freshkey: String): CommentsListState
 
@@ -1077,8 +1080,14 @@ type CommunityTag {
   index: Int
   author: User
   community: Community
+  stats: CommunityTagStat
   insertedAt: DateTime
   updatedAt: DateTime
+}
+
+type CommunityTagStat {
+  contentsCount: Int
+  todayContentsCount: Int
 }
 
 type EmotionStat {

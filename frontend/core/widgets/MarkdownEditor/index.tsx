@@ -1,4 +1,12 @@
-import { type ChangeEvent, type FC, memo, useCallback, useRef, useState } from 'react'
+import {
+  type ChangeEvent,
+  type FC,
+  type KeyboardEvent,
+  memo,
+  useCallback,
+  useRef,
+  useState,
+} from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 
 import useTrans from '~/hooks/useTrans'
@@ -10,7 +18,7 @@ import type { TFormat } from './constant'
 import useSalon, { cn } from './salon'
 import type { TTab } from './spec'
 import useFormats from './useFormats'
-import { safeValue } from './utils'
+import { continueListOnEnter, safeValue } from './utils'
 
 export type TProps = {
   value?: string
@@ -75,6 +83,21 @@ const MarkdownEditor: FC<TProps> = ({
       if (!textarea || disabled) return
 
       const update = format.action(textarea)
+      onChange?.(update.value)
+      updateSelection(update.start, update.end)
+    },
+    [disabled, onChange, updateSelection],
+  )
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (disabled || e.key !== 'Enter' || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey) return
+      if (e.nativeEvent.isComposing) return
+
+      const update = continueListOnEnter(e.currentTarget)
+      if (!update) return
+
+      e.preventDefault()
       onChange?.(update.value)
       updateSelection(update.start, update.end)
     },
@@ -162,6 +185,7 @@ const MarkdownEditor: FC<TProps> = ({
             spellCheck='false'
             value={safeValue(value)}
             onChange={handleChange}
+            onKeyDown={handleKeyDown}
           />
         ) : (
           <div className={cn(s.preview, previewClassName)}>

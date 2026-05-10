@@ -31,6 +31,10 @@ defmodule GroupherServer.Test.Query.CMS.PostTags do
             title
             logo
           }
+          stats {
+            contentsCount
+            todayContentsCount
+          }
         }
         totalCount
         totalPages
@@ -71,6 +75,46 @@ defmodule GroupherServer.Test.Query.CMS.PostTags do
 
       tag = results["entries"] |> List.first()
       assert tag["id"] == to_string(article_tag.id)
+    end
+
+    test "guest user can get post tag stats",
+         ~m(guest_conn community article_tag_attrs user)a do
+      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
+
+      post_attrs = mock_attrs(:post) |> Map.merge(%{community_tags: [article_tag.id]})
+      {:ok, _post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      variables = %{filter: %{community: community.slug, thread: "POST"}}
+      results = guest_conn |> gq_query(@query, variables)
+
+      tag = results["entries"] |> List.first()
+      stats = tag["stats"]
+
+      assert stats["contentsCount"] == 1
+      assert stats["todayContentsCount"] == 1
+    end
+
+    test "guest user can get single post tag stats by community thread and slug",
+         ~m(guest_conn community article_tag_attrs user)a do
+      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
+
+      post_attrs = mock_attrs(:post) |> Map.merge(%{community_tags: [article_tag.id]})
+      {:ok, _post} = CMS.Articles.create(community, :post, post_attrs, user)
+
+      query = """
+      query($community: String!, $thread: Thread!, $slug: String!) {
+        communityTagStats(community: $community, thread: $thread, slug: $slug) {
+          contentsCount
+          todayContentsCount
+        }
+      }
+      """
+
+      variables = %{community: community.slug, thread: "POST", slug: article_tag.slug}
+      results = guest_conn |> gq_query(query, variables)
+
+      assert results["contentsCount"] == 1
+      assert results["todayContentsCount"] == 1
     end
   end
 end

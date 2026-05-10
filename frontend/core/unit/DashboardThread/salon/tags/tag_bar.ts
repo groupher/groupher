@@ -9,7 +9,7 @@ type TProps = {
 }
 
 export default function useSalon({ color, editing = false }: TProps) {
-  const { cn, br, fg, rainbow, hover } = useTwBelt()
+  const { cn, br, fg, rainbow, hover, bg, cut } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -23,8 +23,11 @@ export default function useSalon({ color, editing = false }: TProps) {
       editing ? 'ml-2 mr-2' : '-ml-1.5',
       br('divider'),
     ),
-    title: cn('row-center text-sm ml-1', fg('title')),
-    slug: cn('text-xs ml-3', fg('hint')),
+    info: 'row-center min-w-0 gap-x-2',
+    title: cn('text-sm shrink-0', fg('title'), cut('w-16')),
+    slug: cn('text-xs shrink-0', fg('hint'), cut('w-16')),
+    desc: cn('text-xs min-w-0', fg('hint'), cut('w-32')),
+    dotSep: cn('size-0.5 shrink-0 circle', bg('dot')),
     catNote: cn('text-xs ml-3', fg('hint')),
     input: 'h-8',
     dot: cn('size-5 circle', color && rainbow(color, 'bg')),

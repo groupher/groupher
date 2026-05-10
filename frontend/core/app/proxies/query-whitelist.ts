@@ -15,8 +15,24 @@ const ALLOWED_PARAMS = [
   SEARCH_PARAM.COMMUNITY,
 ]
 
+const STATIC_ASSET_PATH_PATTERN =
+  /\.(?:css|js|mjs|json|png|jpe?g|gif|webp|avif|svg|ico|map|txt|xml|woff2?|ttf|otf)$/i
+
+const shouldSkipQueryWhitelist = (pathname: string): boolean => {
+  return (
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/_next/') ||
+    STATIC_ASSET_PATH_PATTERN.test(pathname)
+  )
+}
+
 export function queryWhitelistProxy(req: NextRequest) {
   const url = new URL(req.url)
+
+  if (shouldSkipQueryWhitelist(url.pathname)) {
+    return NextResponse.next()
+  }
+
   let hasNotAllowedParams = false
 
   // 检查URL中的查询参数是否都在白名单中

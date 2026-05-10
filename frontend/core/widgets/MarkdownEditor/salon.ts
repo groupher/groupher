@@ -50,14 +50,14 @@ export default function useSalon({ className, ...spacing }: TProps) {
       'group-hover/list:translate-x-0 group-hover/list:opacity-100',
       'group-focus-within/list:translate-x-0 group-focus-within/list:opacity-100',
     ),
-    body: cn('px-1 py-1', bg('card')),
+    body: cn('px-1 pb-1 pt-4', bg('card')),
     textarea: cn(
       'w-full resize-y border-0 bg-transparent px-2 py-1.5 text-sm leading-6 outline-none',
       'placeholder:opacity-75 disabled:cursor-not-allowed disabled:opacity-60',
       'trans-all-100',
-      fg('title'),
+      fg('digest'),
     ),
-    preview: cn('min-h-40 px-2 py-1.5 text-sm', bg('card')),
-    emptyPreview: cn('h-24 rounded-md', bg('hoverBg')),
+    preview: cn('min-h-40 px-2 pt-0 text-sm', bg('card'), fg('digest')),
+    emptyPreview: cn('h-24 rounded-md', bg('sandBox')),
   }
 }

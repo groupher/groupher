@@ -5,6 +5,7 @@ import type {
   TPagedArticles,
   TResState,
   TTag,
+  TTagStats,
   TThread,
 } from '~/spec'
 
@@ -22,6 +23,7 @@ export type TInit = {
 
   tags?: TTag[]
   activeTag?: TTag | null
+  activeTagStats?: TTagStats | null
 }
 
 export type TStore = TInit & {

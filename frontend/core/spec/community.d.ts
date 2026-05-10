@@ -66,6 +66,12 @@ export type TTag = {
   updatedAt?: string
 }
 
+export type TTagStats = {
+  slug?: string
+  contentsCount?: number
+  todayContentsCount?: number
+}
+
 export type TPagedTags = {
   entries: TTag[]
 } & TPagi

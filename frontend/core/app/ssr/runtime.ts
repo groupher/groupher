@@ -16,6 +16,7 @@ import type {
   TPagedPosts,
   TPost,
   TTag,
+  TTagStats,
   TThread,
 } from '~/spec'
 import { gqFetch } from '~/utils/api'
@@ -196,6 +197,27 @@ export const getTags = async (community: string, thread: TThread): Promise<TTag[
   }
 
   return data.pagedCommunityTags.entries
+}
+
+export const getTagStats = async (
+  community: string,
+  thread: TThread,
+  slug?: string | null,
+): Promise<TTagStats | null> => {
+  if (!slug) return null
+
+  const gqlThread = TAG_THREADS.includes(thread as (typeof TAG_THREADS)[number]) ? thread : null
+  if (!gqlThread) return null
+
+  const response = await gqFetch(P.communityTagStats, { community, thread: gqlThread, slug })
+
+  const { data, errors } = await response.json()
+  if (errors) {
+    console.log('## error details', errors)
+    return null
+  }
+
+  return data.communityTagStats ? { ...data.communityTagStats, slug } : null
 }
 
 export const getPost = async (

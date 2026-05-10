@@ -46,6 +46,8 @@ export default {
   'tags.fold.expand': 'More..',
   'tags.fold.collapse': 'Collapse',
   'tags.all': 'All tags',
+  'tag.stat.today': 'Today',
+  'tag.stat.topic': 'Topics',
   'common.other': 'Other',
   'account.menu.via_github': 'via GitHub',
   'account.menu.settings': 'Settings',

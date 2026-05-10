@@ -27,6 +27,7 @@ export default function ArticleListStore(init: TInit = {}): TStore {
 
     tags: [],
     activeTag: null,
+    activeTagStats: null,
 
     resState: TYPE.RES_STATE.EMPTY as TResState,
 

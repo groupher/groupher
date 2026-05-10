@@ -126,6 +126,10 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.BlogTagTest do
       assert blog.community_tags |> length == 1
       assert exist_in?(article_tag, blog.community_tags)
 
+      {:ok, stat} = CMS.Communities.tag_stats(article_tag)
+      assert stat.contents_count == 1
+      assert stat.today_contents_count == 1
+
       {:ok, blog} = CMS.Communities.set_tag(blog, article_tag2.id)
       assert blog.community_tags |> length == 2
       assert exist_in?(article_tag, blog.community_tags)
@@ -136,10 +140,21 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.BlogTagTest do
       assert not exist_in?(article_tag, blog.community_tags)
       assert exist_in?(article_tag2, blog.community_tags)
 
+      {:ok, stat} = CMS.Communities.tag_stats(article_tag)
+      {:ok, stat2} = CMS.Communities.tag_stats(article_tag2)
+      assert stat.contents_count == 0
+      assert stat.today_contents_count == 0
+      assert stat2.contents_count == 1
+      assert stat2.today_contents_count == 1
+
       {:ok, blog} = CMS.Communities.unset_tag(blog, article_tag2.id)
       assert blog.community_tags |> length == 0
       assert not exist_in?(article_tag, blog.community_tags)
       assert not exist_in?(article_tag2, blog.community_tags)
+
+      {:ok, stat2} = CMS.Communities.tag_stats(article_tag2)
+      assert stat2.contents_count == 0
+      assert stat2.today_contents_count == 0
     end
 
     test "can not set dup tag ", ~m(community blog article_tag_attrs user)a do
@@ -148,6 +163,24 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.BlogTagTest do
       {:ok, blog} = CMS.Communities.set_tag(blog, article_tag.id)
 
       assert blog.community_tags |> length == 1
+    end
+
+    test "set tag counts all contents but only today's contents",
+         ~m(community blog article_tag_attrs user)a do
+      {:ok, article_tag} = CMS.Communities.create_tag(community, :blog, article_tag_attrs, user)
+      {:ok, old_blog} = CMS.Articles.create(community, :blog, mock_attrs(:blog), user)
+
+      from(b in Blog, where: b.id == ^old_blog.id)
+      |> Repo.update_all(set: [inserted_at: Datetime.beginning_of_day(yesterday_date())])
+
+      {:ok, old_blog} = ORM.find(Blog, old_blog.id, preload: :community_tags)
+
+      {:ok, _blog} = CMS.Communities.set_tag(blog, article_tag.id)
+      {:ok, _old_blog} = CMS.Communities.set_tag(old_blog, article_tag.id)
+
+      {:ok, stat} = CMS.Communities.tag_stats(article_tag)
+      assert stat.contents_count == 2
+      assert stat.today_contents_count == 1
     end
   end
 end

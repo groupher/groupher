@@ -14,6 +14,8 @@ defmodule GroupherServer.CMS.Communities.Tags do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
+  alias CMS.Communities.TagStats
+  alias CMS.FrontDesk
   alias CMS.Model.{Community, CommunityTag}
   alias Helper.{Multi, ORM, QueryBuilder, T}
 
@@ -54,7 +56,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
   """
   @spec update(T.id(), map()) :: {:ok, CommunityTag.t()} | {:error, Ecto.Changeset.t()}
   def update(id, attrs) do
-    with {:ok, tag} <- ORM.find(CommunityTag, id) do
+    with {:ok, tag} <- FrontDesk.community_tag(id) do
       ORM.update(tag, attrs)
     end
   end
@@ -64,7 +66,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
   """
   @spec delete(T.id()) :: {:ok, CommunityTag.t()} | {:error, Ecto.Changeset.t()}
   def delete(id) do
-    with {:ok, tag} <- ORM.find(CommunityTag, id),
+    with {:ok, tag} <- FrontDesk.community_tag(id),
          {:ok, community} <- ORM.find(Community, tag.community_id) do
       Multi.new()
       |> Multi.run(:delete_tag, fn _, _ ->
@@ -96,27 +98,25 @@ defmodule GroupherServer.CMS.Communities.Tags do
   end
 
   defp do_overwrite_tags(article, tags) do
-    article
-    |> Repo.preload(:community_tags)
-    |> Ecto.Changeset.change()
-    |> Ecto.Changeset.put_assoc(:community_tags, tags)
-    |> Repo.update()
+    article = Repo.preload(article, :community_tags)
+    old_tags = article.community_tags
+
+    Repo.transaction(fn ->
+      with {:ok, updated_article} <-
+             article
+             |> Ecto.Changeset.change()
+             |> Ecto.Changeset.put_assoc(:community_tags, tags)
+             |> Repo.update(),
+           {:ok, :pass} <- sync_tag_stats(updated_article, article, old_tags) do
+        updated_article
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
   defp find_related_tags(tag_ids) do
-    tags =
-      from(t in CommunityTag)
-      |> where([t], t.id in ^tag_ids)
-      |> Repo.all()
-
-    pos =
-      tag_ids
-      |> Enum.with_index()
-      |> Map.new(fn {id, idx} -> {to_string(id), idx} end)
-
-    tags
-    |> Enum.sort_by(&Map.get(pos, to_string(&1.id), 9_999_999))
-    |> done()
+    FrontDesk.community_tags(tag_ids)
   end
 
   @doc """
@@ -163,7 +163,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
   """
   @spec add(Ecto.Schema.t(), T.id()) :: {:ok, Ecto.Schema.t()} | {:error, any()}
   def add(article, tag_id) do
-    with {:ok, tag} <- ORM.find(CommunityTag, tag_id) do
+    with {:ok, tag} <- FrontDesk.community_tag(tag_id) do
       do_update_tags_assoc(article, tag, :add)
     end
   end
@@ -173,13 +173,14 @@ defmodule GroupherServer.CMS.Communities.Tags do
   """
   @spec remove(Ecto.Schema.t(), T.id()) :: {:ok, Ecto.Schema.t()} | {:error, any()}
   def remove(article, tag_id) do
-    with {:ok, tag} <- ORM.find(CommunityTag, tag_id) do
+    with {:ok, tag} <- FrontDesk.community_tag(tag_id) do
       do_update_tags_assoc(article, tag, :remove)
     end
   end
 
   defp do_update_tags_assoc(article, %CommunityTag{} = tag, opt) do
     article = Repo.preload(article, :community_tags)
+    old_tags = article.community_tags
 
     community_tags =
       case opt do
@@ -190,7 +191,40 @@ defmodule GroupherServer.CMS.Communities.Tags do
     article
     |> Ecto.Changeset.change()
     |> Ecto.Changeset.put_assoc(:community_tags, community_tags)
-    |> Repo.update()
+    |> then(fn changeset ->
+      Repo.transaction(fn ->
+        with {:ok, updated_article} <- Repo.update(changeset),
+             {:ok, :pass} <- sync_tag_stats(updated_article, article, old_tags) do
+          updated_article
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+    end)
+  end
+
+  defp sync_tag_stats(updated_article, article, old_tags) do
+    new_tags = Map.get(updated_article, :community_tags, [])
+
+    old_ids = MapSet.new(Enum.map(old_tags, & &1.id))
+    new_ids = MapSet.new(Enum.map(new_tags, & &1.id))
+
+    added_tags = Enum.reject(new_tags, &MapSet.member?(old_ids, &1.id))
+    removed_tags = Enum.reject(old_tags, &MapSet.member?(new_ids, &1.id))
+
+    with {:ok, :pass} <- update_stats(article, added_tags, :inc),
+         {:ok, :pass} <- update_stats(article, removed_tags, :dec) do
+      {:ok, :pass}
+    end
+  end
+
+  defp update_stats(article, tags, action) do
+    Enum.reduce_while(tags, {:ok, :pass}, fn tag, {:ok, :pass} ->
+      case apply(TagStats, action, [article, tag]) do
+        {:ok, :pass} -> {:cont, {:ok, :pass}}
+        error -> {:halt, error}
+      end
+    end)
   end
 
   @doc """

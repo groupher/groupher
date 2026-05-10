@@ -31,9 +31,15 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostReindexTag do
       attrs = Map.merge(community_tag_attrs, %{group: "group1"})
 
       {:ok, community_tag1} = CMS.Communities.create_tag(community, :post, attrs, user)
-      {:ok, community_tag2} = CMS.Communities.create_tag(community, :post, attrs, user)
-      {:ok, community_tag3} = CMS.Communities.create_tag(community, :post, attrs, user)
-      {:ok, community_tag4} = CMS.Communities.create_tag(community, :post, attrs, user)
+
+      {:ok, community_tag2} =
+        CMS.Communities.create_tag(community, :post, unique_community_tag_attrs(attrs, "2"), user)
+
+      {:ok, community_tag3} =
+        CMS.Communities.create_tag(community, :post, unique_community_tag_attrs(attrs, "3"), user)
+
+      {:ok, community_tag4} =
+        CMS.Communities.create_tag(community, :post, unique_community_tag_attrs(attrs, "4"), user)
 
       passport_rules = %{community.title => %{"post.community_tag.update" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -87,9 +93,30 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostReindexTag do
       general_attrs = Map.merge(community_tag_attrs, %{group: "General"})
 
       {:ok, community_tag1} = CMS.Communities.create_tag(community, :post, resources_attrs, user)
-      {:ok, community_tag2} = CMS.Communities.create_tag(community, :post, resources_attrs, user)
-      {:ok, community_tag3} = CMS.Communities.create_tag(community, :post, general_attrs, user)
-      {:ok, community_tag4} = CMS.Communities.create_tag(community, :post, general_attrs, user)
+
+      {:ok, community_tag2} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          unique_community_tag_attrs(resources_attrs, "2"),
+          user
+        )
+
+      {:ok, community_tag3} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          unique_community_tag_attrs(general_attrs, "3"),
+          user
+        )
+
+      {:ok, community_tag4} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          unique_community_tag_attrs(general_attrs, "4"),
+          user
+        )
 
       passport_rules = %{community.title => %{"post.community_tag.update" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)

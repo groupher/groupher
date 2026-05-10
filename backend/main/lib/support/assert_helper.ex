@@ -22,6 +22,19 @@ defmodule GroupherServer.Test.AssertHelper do
   def non_exist_login, do: "15_982_398_614"
   # def page_size, do: @page_size
 
+  def yesterday_date do
+    Helper.Datetime.today()
+    |> Helper.Datetime.shift(days: -1)
+  end
+
+  def unique_community_tag_attrs(attrs, suffix) do
+    attrs
+    |> Map.merge(%{
+      title: "#{attrs.title}-#{suffix}",
+      slug: "#{attrs.slug}-#{suffix}"
+    })
+  end
+
   def is_error?(reason, code) when is_atom(code) do
     error_code(reason) == ecode(code)
   end

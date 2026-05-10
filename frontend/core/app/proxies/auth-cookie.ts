@@ -28,11 +28,20 @@ const setCookies = (
   }
 }
 
-const hasBackendAuthCookie = (req: Request) => {
+const getBackendAuthCookie = (req: Request): string | null => {
   const cookie = req.headers.get('cookie')
-  if (!cookie) return false
+  if (!cookie) return null
 
-  return cookie.split(';').some((c) => c.trim().startsWith(`${AUTH_KEY.TOKEN}=`))
+  const authCookie = cookie.split(';').find((c) => c.trim().startsWith(`${AUTH_KEY.TOKEN}=`))
+  if (!authCookie) return null
+
+  const rawValue = authCookie.trim().slice(`${AUTH_KEY.TOKEN}=`.length)
+
+  try {
+    return decodeURIComponent(rawValue)
+  } catch {
+    return rawValue
+  }
 }
 
 export async function authCookieProxy(req: Request) {
@@ -49,14 +58,16 @@ export async function authCookieProxy(req: Request) {
     return res
   }
 
+  const backendToken = String(token[AUTH_KEY.TOKEN])
+
   // 2️⃣ Already synced backend cookie, skip
-  if (hasBackendAuthCookie(req)) {
+  if (getBackendAuthCookie(req) === backendToken) {
     return res
   }
 
   // 3️⃣ First time sync
   setCookies(res, {
-    [AUTH_KEY.TOKEN]: String(token[AUTH_KEY.TOKEN]),
+    [AUTH_KEY.TOKEN]: backendToken,
   })
 
   return res
