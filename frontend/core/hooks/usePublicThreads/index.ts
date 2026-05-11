@@ -2,14 +2,14 @@ import { find, propEq, reject } from 'ramda'
 
 import { THREAD_PATH } from '~/const/thread'
 import { sortByIndex } from '~/helper'
-import { shouldFoldAboutToMore } from '~/hooks/useHeaderLinks/helper'
+import { normalizeHeaderLinks, shouldFoldAboutToMore } from '~/hooks/useHeaderLinks/helper'
 import type { TCommunityThread, TNameAlias } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
 export default function usePublicThreads(): TCommunityThread[] {
   const dsb$ = useDashboard()
-  const { slug: community, threads } = useCommunity()
+  const { slug, threads } = useCommunity()
 
   const enabledThreads = sortByIndex(threads.filter((thread) => dsb$.enable[thread.slug]))
 
@@ -22,7 +22,7 @@ export default function usePublicThreads(): TCommunityThread[] {
     }
   })
 
-  const shouldFoldAbout = shouldFoldAboutToMore(dsb$.headerLinks, community)
+  const shouldFoldAbout = shouldFoldAboutToMore(normalizeHeaderLinks(dsb$.headerLinks, slug))
 
   if (shouldFoldAbout) {
     return reject(

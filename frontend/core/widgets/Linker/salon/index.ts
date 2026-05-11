@@ -14,6 +14,6 @@ export default function useSalon({ ...spacing }: TProps) {
     sourceLink: cn('text-xs line-clamp-1 break-all no-underline hover:underline', fg('link')),
     plainColor: fg('link'),
     //
-    linkIcon: cn('size-4 mt-0.5 mr-1', fill('digest')),
+    linkIcon: cn('size-4 mt-0.5 mr-0.5 opacity-60', fill('digest')),
   }
 }

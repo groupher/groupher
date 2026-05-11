@@ -399,12 +399,12 @@ const communityOverview = gql`
 `
 
 const updateDashboardHeaderLinks = gql`
-  mutation ($community: String!, $headerLinks: [DashboardLinkMap]) {
+  mutation ($community: String!, $headerLinks: [DashboardHeaderLinkMap]) {
     updateDashboardHeaderLinks(community: $community, headerLinks: $headerLinks) {
       slug
       dashboard {
         headerLinks {
-          ${F.customLink}
+          ${F.headerLink}
         }
       }
     }

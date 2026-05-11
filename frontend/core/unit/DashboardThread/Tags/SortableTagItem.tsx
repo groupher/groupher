@@ -3,7 +3,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { memo, useCallback, useRef } from 'react'
 
 import { cn } from '~/css'
-import GrabSVG from '~/icons/Grab'
+import GrabDotsSVG from '~/icons/GrabDots'
 import type { TTag } from '~/spec'
 
 import TagBar from './TagBar'
@@ -90,7 +90,7 @@ const SortableTagItemInner = memo(function SortableTagItemInner({
         {...attributes}
         {...listeners}
       >
-        <GrabSVG className='size-4' />
+        <GrabDotsSVG className='size-4' />
       </button>
 
       <TagBar

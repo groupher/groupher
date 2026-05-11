@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react'
 
-import { DEFAULT_ENABLE, MORE_GROUP } from '~/const/dashboard'
+import { DEFAULT_ENABLE } from '~/const/dashboard'
 import { THREAD_PATH } from '~/const/thread'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import usePublicThreads from '~/hooks/usePublicThreads'
@@ -41,7 +41,7 @@ describe('usePublicThreads', () => {
       community: { slug: 'acme', threads },
       dashboard: {
         enable: { ...DEFAULT_ENABLE, doc: false },
-        headerLinks: [{ index: 1, title: 'Docs Link', group: 'DOC', link: '/docs', groupIndex: 1 }],
+        headerLinks: [{ id: 'docs', type: 'LINK', title: 'Docs Link', url: '/docs' }],
         nameAlias,
       },
     })
@@ -52,20 +52,12 @@ describe('usePublicThreads', () => {
     expect(slugs.includes(THREAD_PATH.ABOUT)).toBe(false)
   })
 
-  it('drops ABOUT when MORE already contains about link regardless of title locale', () => {
+  it('keeps ABOUT when persisted data only contains system ABOUT', () => {
     const wrapper = makeStoreWrapper({
       community: { slug: 'acme', threads },
       dashboard: {
         enable: { ...DEFAULT_ENABLE, doc: false },
-        headerLinks: [
-          {
-            index: 999,
-            title: 'About menu',
-            group: MORE_GROUP,
-            link: '/acme/about',
-            groupIndex: 999,
-          },
-        ],
+        headerLinks: [{ id: 'about-menu', type: 'LINK', title: 'About menu', url: '/acme/about' }],
         nameAlias,
       },
     })
@@ -75,6 +67,6 @@ describe('usePublicThreads', () => {
 
     expect(slugs.includes(THREAD_PATH.POST)).toBe(true)
     expect(slugs.includes(THREAD_PATH.DOC)).toBe(false)
-    expect(slugs.includes(THREAD_PATH.ABOUT)).toBe(false)
+    expect(slugs.includes(THREAD_PATH.ABOUT)).toBe(true)
   })
 })

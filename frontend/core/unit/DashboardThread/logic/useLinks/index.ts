@@ -74,6 +74,9 @@ export default function useLinks(): TRet {
 
   // derived
   const linksKey = mainTab !== DSB_ROUTE.FOOTER ? FIELD.HEADER_LINKS : FIELD.FOOTER_LINKS
+  const editLinks = (links: TLinkItem[]): void => {
+    dsb$.editField(linksKey as typeof FIELD.FOOTER_LINKS, links)
+  }
 
   const updateInGroup = (link: TLinkItem): void => {
     dsb$.commit({ editingLink: link, editingLinkMode: CHANGE_MODE.UPDATE })
@@ -93,8 +96,8 @@ export default function useLinks(): TRet {
       groupIndex,
     }
 
+    editLinks([...links, newItem])
     dsb$.commit({
-      [linksKey]: [...links, newItem],
       editingLink: newItem,
       editingLinkMode: CHANGE_MODE.CREATE,
     })
@@ -110,9 +113,7 @@ export default function useLinks(): TRet {
 
     linksAfter = emptyLinksIfNeed(linksAfter)
 
-    dsb$.commit({
-      [linksKey]: reindex(linksAfter),
-    })
+    editLinks(reindex(linksAfter))
   }
 
   const deleteGroup = (groupIndex: number): void => {
@@ -121,9 +122,7 @@ export default function useLinks(): TRet {
 
     linksAfter = emptyLinksIfNeed(linksAfter)
 
-    dsb$.commit({
-      [linksKey]: reindexGroup(linksAfter),
-    })
+    editLinks(reindexGroup(linksAfter))
   }
 
   const cancelLinkEditing = (): void => {
@@ -142,10 +141,10 @@ export default function useLinks(): TRet {
 
     linksAfter = emptyLinksIfNeed(linksAfter)
 
+    editLinks(linksAfter)
     dsb$.commit({
-      [linksKey]: linksAfter,
       editingLink: null,
-      original: { ...original, [linksKey]: linksAfter },
+      original: { ...original, [linksKey]: clone(linksAfter) },
     })
   }
 
@@ -162,10 +161,8 @@ export default function useLinks(): TRet {
       links[editingIndex].title = editingLink.title
       links[editingIndex].link = editingLink.link
 
-      dsb$.commit({
-        [linksKey]: links,
-        editingLink: null,
-      })
+      editLinks(links)
+      dsb$.commit({ editingLink: null })
       return
     }
 
@@ -189,10 +186,8 @@ export default function useLinks(): TRet {
       links,
     ).concat(editingLinkAfter)
 
-    dsb$.commit({
-      [linksKey]: clone(linksAfter),
-      editingLink: null,
-    })
+    editLinks(clone(linksAfter))
+    dsb$.commit({ editingLink: null })
 
     // setTimeout(keepMoreGroup2EndIfNeed, 100)
 
@@ -263,7 +258,7 @@ export default function useLinks(): TRet {
 
     const aboutLink = find(
       (item: TLinkItem) => item.group === MORE_GROUP && item.link === getAboutPath(community),
-      dsb$[FIELD.HEADER_LINKS],
+      dsb$[FIELD.HEADER_LINKS] as unknown as TLinkItem[],
     )
 
     if (!aboutLink) return

@@ -13,6 +13,7 @@ import type {
   TFAQSection,
   TFooterLayout,
   THeaderLayout,
+  THeaderLinkItem,
   TInlineTagLayout,
   TKanbanCardLayout,
   TKanbanBoard,
@@ -161,7 +162,7 @@ export type TDsbFieldMap = {
   footerLayout: TFooterLayout
 
   footerLinks: readonly TLinkItem[]
-  headerLinks: readonly TLinkItem[]
+  headerLinks: readonly THeaderLinkItem[]
 
   moderators: readonly TModerator[]
 

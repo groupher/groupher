@@ -436,13 +436,21 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_header_links_query """
-    mutation($community: String!, $headerLinks: [DashboardLinkMap]) {
+    mutation($community: String!, $headerLinks: [DashboardHeaderLinkMap]) {
       updateDashboardHeaderLinks(community: $community, headerLinks: $headerLinks) {
         id
         title
         dashboard {
           headerLinks {
-            groupIndex
+            id
+            type
+            title
+            url
+            links {
+              id
+              title
+              url
+            }
           }
         }
       }
@@ -455,13 +463,22 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         community: community.slug,
         headerLinks: [
           %{
+            id: "link-1",
+            type: "LINK",
             title: "title",
-            link: "link",
-            group: "group",
-            group_index: 1,
-            index: 1,
-            is_hot: false,
-            is_new: false
+            url: "link"
+          },
+          %{
+            id: "group-1",
+            type: "GROUP",
+            title: "group",
+            links: [
+              %{
+                id: "child-1",
+                title: "child",
+                url: "child-link"
+              }
+            ]
           }
         ]
       }
@@ -470,15 +487,19 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         rule_conn
         |> gq_mutation(@update_header_links_query, variables)
 
-      assert updated["dashboard"]["headerLinks"] |> List.first() |> Map.get("groupIndex") == 1
+      first_updated = updated["dashboard"]["headerLinks"] |> List.first()
+      assert first_updated["id"] == "link-1"
+      assert first_updated["type"] == "LINK"
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
       link = found.dashboard.header_links |> Enum.at(0)
 
       assert link.title == "title"
-      assert link.link == "link"
-      assert link.group == "group"
-      assert link.group_index == 1
+      assert link.url == "link"
+
+      group = found.dashboard.header_links |> Enum.at(1)
+      assert group.title == "group"
+      assert group.links |> List.first() |> Map.get(:url) == "child-link"
     end
 
     @update_footer_links_query """

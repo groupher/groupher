@@ -31,13 +31,8 @@ export default function useDerived(): TRet {
     return publicThreads(community$.threads, { enable, nameAlias })
   }, [community$, enable, nameAlias])
 
-  const isFooterLinksTouched = useMemo((): boolean => {
-    return isChanged(FIELD.FOOTER_LINKS) && editingLink === null
-  }, [editingLink, isChanged])
-
-  const isHeaderLinksTouched = useMemo((): boolean => {
-    return isChanged(FIELD.HEADER_LINKS) && editingLink === null
-  }, [editingLink])
+  const isFooterLinksTouched = isChanged(FIELD.FOOTER_LINKS) && editingLink === null
+  const isHeaderLinksTouched = isChanged(FIELD.HEADER_LINKS) && editingLink === null
 
   const isClassicLayoutTouched = isChanged(FIELD.HEADER_LAYOUT)
   const isFooterLayoutTouched = isChanged(FIELD.FOOTER_LAYOUT)

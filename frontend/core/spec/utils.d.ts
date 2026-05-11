@@ -215,6 +215,39 @@ export type TLinkItem = {
   groupIndex?: number
 }
 
+export type THeaderLinkChild = {
+  id: string
+  title: string
+  url: string
+}
+
+export type THeaderLinkItem =
+  | {
+      id: string
+      type: 'LINK'
+      title: string
+      url: string
+      links?: never
+    }
+  | {
+      id: string
+      type: 'GROUP'
+      title: string
+      url?: never
+      links: readonly THeaderLinkChild[]
+    }
+
+export type TResolvedHeaderLinkItem =
+  | THeaderLinkItem
+  // Resolver-only group used by the Header "More" tab; never persisted.
+  | {
+      id: string
+      type: 'GROUP'
+      usage: 'more-tab'
+      title: string
+      links: readonly THeaderLinkChild[]
+    }
+
 export type TGroupedLinks = {
   [key: string]: TLinkItem[]
 }

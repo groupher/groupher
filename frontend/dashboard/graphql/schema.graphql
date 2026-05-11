@@ -847,7 +847,7 @@ type RootMutationType {
   updateDashboardHeaderLinks(
     community: String!
     dashboardSection: DashboardSection
-    headerLinks: [DashboardLinkMap]
+    headerLinks: [DashboardHeaderLinkMap]
   ): Community
 
   "update footer links in dashboard"
@@ -1208,6 +1208,20 @@ type DashboardLink {
   isNew: Boolean
 }
 
+type DashboardHeaderLinkChild {
+  id: String
+  title: String
+  url: String
+}
+
+type DashboardHeaderLink {
+  id: String
+  type: DsbLinkType
+  title: String
+  url: String
+  links: [DashboardHeaderLinkChild]
+}
+
 type DashboardSocialLink {
   type: String
   link: String
@@ -1237,7 +1251,7 @@ type Dashboard {
   baseInfo: DashboardBaseInfo
   rss: DashboardRss
   nameAlias: [DashboardNameAlias]
-  headerLinks: [DashboardLink]
+  headerLinks: [DashboardHeaderLink]
   footerLinks: [DashboardLink]
   socialLinks: [DashboardSocialLink]
   mediaReports: [DashboardMediaReport]
@@ -1638,6 +1652,11 @@ enum DashboardSection {
   FAQS
 }
 
+enum DsbLinkType {
+  LINK
+  GROUP
+}
+
 enum Content {
   POST
   BLOG
@@ -2020,6 +2039,20 @@ input DashboardAliasMap {
   name: String
   original: String
   group: String
+}
+
+input DashboardHeaderLinkChildMap {
+  id: String
+  title: String
+  url: String
+}
+
+input DashboardHeaderLinkMap {
+  id: String
+  type: DsbLinkType
+  title: String
+  url: String
+  links: [DashboardHeaderLinkChildMap]
 }
 
 input DashboardLinkMap {

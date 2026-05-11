@@ -25,6 +25,17 @@ export const customLink = `
   groupIndex
   index
 `
+export const headerLink = `
+  id
+  type
+  title
+  url
+  links {
+    id
+    title
+    url
+  }
+`
 export const wallpaper = `
   wallpaperType
   wallpaper

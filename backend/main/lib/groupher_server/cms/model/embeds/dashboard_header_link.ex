@@ -1,32 +1,64 @@
 defmodule GroupherServer.CMS.Model.Embeds.DashboardHeaderLink do
   @type t :: %__MODULE__{}
 
-  @moduledoc """
-  general article comment meta info
-  """
+  @moduledoc false
   use Ecto.Schema
   use Accessible
 
   import Ecto.Changeset
 
-  import GroupherServerWeb.Schema.Helper.Fields,
-    only: [dashboard_cast_fields: 1, dashboard_default: 1, dashboard_fields: 1]
+  alias GroupherServer.CMS.Model.Embeds.DashboardHeaderLinkChild
 
-  @optional_fields dashboard_cast_fields(:header_link)
-
-  @doc "for test usage"
-  def default do
-    [
-      dashboard_default(:header_link)
-    ]
-  end
-
+  @primary_key false
   embedded_schema do
-    dashboard_fields(:header_link)
+    field(:id, :string)
+    field(:type, Ecto.Enum, values: [:link, :group])
+    field(:title, :string)
+    field(:url, :string)
+
+    embeds_many(:links, DashboardHeaderLinkChild, on_replace: :delete)
   end
+
+  def default, do: []
 
   def changeset(struct, params) do
     struct
-    |> cast(params, @optional_fields)
+    |> cast(params, [:id, :type, :title, :url])
+    |> cast_embed(:links, with: &DashboardHeaderLinkChild.changeset/2)
+    |> validate_required([:id, :type, :title])
+    |> validate_by_type()
+  end
+
+  defp validate_by_type(%Ecto.Changeset{} = changeset) do
+    case get_field(changeset, :type) do
+      :link ->
+        changeset
+        |> validate_required([:url])
+        |> validate_empty_links()
+
+      :group ->
+        changeset
+        |> validate_empty_url()
+
+      _ ->
+        changeset
+    end
+  end
+
+  defp validate_empty_links(%Ecto.Changeset{} = changeset) do
+    links = get_field(changeset, :links) || []
+
+    if Enum.empty?(links) do
+      changeset
+    else
+      add_error(changeset, :links, "must be empty for link items")
+    end
+  end
+
+  defp validate_empty_url(%Ecto.Changeset{} = changeset) do
+    case get_field(changeset, :url) do
+      url when url in [nil, ""] -> changeset
+      _ -> add_error(changeset, :url, "must be empty for group items")
+    end
   end
 end

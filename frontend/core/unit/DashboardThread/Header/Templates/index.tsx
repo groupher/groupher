@@ -3,6 +3,7 @@ import { type FC, useState } from 'react'
 import { HEADER_LAYOUT } from '~/const/layout'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
+import type { THeaderLinkItem } from '~/spec'
 import Button from '~/widgets/Buttons/Button'
 
 import { FIELD } from '../../constant'
@@ -13,18 +14,16 @@ import Center from './Center'
 import Float from './Float'
 import Right from './Right'
 
-const Templates: FC = () => {
+type TProps = {
+  links: readonly THeaderLinkItem[]
+}
+
+const Templates: FC<TProps> = ({ links }) => {
   const [showAll, setShowAll] = useState(false)
   const s = useSalon()
   const { t } = useTrans()
 
-  const {
-    isClassicLayoutTouched: isLayoutTouched,
-    headerLayout,
-    saving,
-    headerLinks: links,
-    threads,
-  } = useHeader()
+  const { isClassicLayoutTouched: isLayoutTouched, headerLayout, saving, threads } = useHeader()
 
   const linksProps = { threads, links }
 

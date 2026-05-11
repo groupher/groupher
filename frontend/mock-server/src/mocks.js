@@ -110,13 +110,10 @@ const makeDashboard = (slug = 'home') => {
     nameAlias: [],
     headerLinks: [
       {
+        id: 'header-link-home',
+        type: 'LINK',
         title: 'Home',
-        link: `/${slug}/post`,
-        group: 'main',
-        groupIndex: 0,
-        index: 0,
-        isHot: false,
-        isNew: false,
+        url: `/${slug}/post`,
       },
     ],
     footerLinks: [

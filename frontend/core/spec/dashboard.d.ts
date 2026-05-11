@@ -25,7 +25,7 @@ import type { TDsbFieldKey, TDsbFieldMap } from '~/stores/dashboard/spec'
 import type { TFAQSection } from './article'
 import type { TColorName } from './color'
 import type { TModerator } from './community'
-import type { TEditValue, TLinkItem, TSocialItem } from './utils'
+import type { TEditValue, THeaderLinkItem, TLinkItem, TSocialItem } from './utils'
 import type { TWallpaperData } from './wallpaper'
 
 export type TTagLayout = TConstValues<typeof TAG_LAYOUT>
@@ -111,7 +111,7 @@ export type TDsb = {
     rssFeedCount: number
   }
 
-  headerLinks?: readonly TLinkItem[]
+  headerLinks?: readonly THeaderLinkItem[]
   footerLinks?: readonly TLinkItem[]
 
   wallpaper?: TWallpaperData

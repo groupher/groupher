@@ -1,4 +1,4 @@
-import { equals, filter, findIndex, includes, keys, omit, update, values } from 'ramda'
+import { clone, equals, filter, findIndex, includes, keys, omit, update, values } from 'ramda'
 import { useEffect, useRef } from 'react'
 
 import { serializeKanbanBoards } from '~/const/dashboard'
@@ -120,35 +120,35 @@ export default function useMutation(): TRet {
 
     const current = storeRef.current
     console.log('## done field: ', field)
-    let original = { ...current.original, [field]: current[field] }
+    let original = { ...current.original, [field]: clone(current[field]) }
 
     if (field === FIELD.TAG_INDEX) {
-      original = { ...current.original, tags: current.tags }
+      original = { ...current.original, tags: clone(current.tags) }
     }
 
     if (includes(field, [FIELD.FAQ_SECTION_ADD, FIELD.FAQ_SECTION_DELETE])) {
-      original = { ...current.original, faqSections: current.faqSections }
+      original = { ...current.original, faqSections: clone(current.faqSections) }
     }
 
     if (field === FIELD.BASE_INFO) {
       const current = {}
 
       for (const key of BASEINFO_KEYS) {
-        current[key] = storeRef.current[key]
+        current[key] = clone(storeRef.current[key])
       }
       original = { ...storeRef.current.original, ...current }
     }
 
     if (field === FIELD.TAG) {
       const updatedTags = mergeBackEditingTag()
-      original = { ...storeRef.current.original, tags: updatedTags }
+      original = { ...storeRef.current.original, tags: clone(updatedTags) }
     }
 
     if (field === FIELD.SEO) {
       const current = {}
 
       for (const key of SEO_KEYS) {
-        current[key] = storeRef.current[key]
+        current[key] = clone(storeRef.current[key])
       }
       original = { ...storeRef.current.original, ...current }
     }

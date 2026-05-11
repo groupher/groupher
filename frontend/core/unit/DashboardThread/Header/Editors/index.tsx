@@ -1,52 +1,166 @@
-import { useAutoAnimate } from '@formkit/auto-animate/react'
-import { filter, keys, length, startsWith } from 'ramda'
-import type { FC } from 'react'
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCorners,
+  pointerWithin,
+  useSensor,
+  useSensors,
+  type CollisionDetection,
+  type DragCancelEvent,
+  type DragEndEvent,
+  type DragOverEvent,
+  type DragStartEvent,
+  type Over,
+} from '@dnd-kit/core'
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import type { Dispatch, FC, SetStateAction } from 'react'
+import { useRef, useState } from 'react'
 
-import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
-import { groupByKey, sortByGroupIndex } from '~/helper'
 import useTrans from '~/hooks/useTrans'
 import PlusSVG from '~/icons/Plus'
-import type { TLinkItem } from '~/spec'
+import type { THeaderLinkItem } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
 import Button from '~/widgets/Buttons/Button'
 
-import GroupInputer from '../../Footer/Editors/GroupInputer'
-import LinkEditor from '../../Footer/Editors/LinkEditor'
-import useHeader from '../../logic/useHeader'
 import useSalon from '../../salon/header/editors'
+import {
+  HEADER_DND_CONTEXT_ID,
+  HEADER_DND_TYPE,
+  DND_ANNOUNCEMENTS,
+  DND_MEASURING,
+} from './constants'
 import FixedLinks from './FixedLinks'
-import GroupHead from './GroupHead'
+import GroupInputer from './GroupInputer'
+import HeaderColumn from './HeaderColumn'
+import type { THeaderDragTarget } from './spec'
+import useHeaderEditorActions from './useHeaderEditorActions'
+import useHeaderLinkDnd from './useHeaderLinkDnd'
 
-const Editor: FC = () => {
+type TProps = {
+  links: readonly THeaderLinkItem[]
+  onChange: Dispatch<SetStateAction<readonly THeaderLinkItem[]>>
+  makeId: (prefix: string) => string
+}
+
+const Editor: FC<TProps> = ({ links, makeId, onChange }) => {
   const s = useSalon()
   const { t } = useTrans()
+  const { slug } = useCommunity()
+  const pointerYRef = useRef<number | null>(null)
+  const lastDragTargetRef = useRef<THeaderDragTarget | null>(null)
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
 
-  const [animateRef] = useAutoAnimate()
-  const [groupAnimateRef] = useAutoAnimate()
-
+  const [activeDragColumnId, setActiveDragColumnId] = useState<string | null>(null)
+  const [targetDragColumnId, setTargetDragColumnId] = useState<string | null>(null)
+  const editor = useHeaderEditorActions({ links, makeId, onChange })
   const {
-    headerLinks: links,
-    editingLink,
-    editingLinkMode,
-    editingGroup,
-    editingGroupIndex,
-    deleteGroup,
-    moveGroup2Left,
-    moveGroup2Right,
-    moveGroup2EdgeLeft,
-    moveGroup2EdgeRight,
-    add2Group,
-    addHeaderLinkGroup,
-    triggerGroupAdd,
-    updateEditingGroup,
-    confirmGroupAdd,
-    cancelGroupChange,
-  } = useHeader()
+    cancelDrag,
+    columns,
+    commitDrag,
+    findColumnWithLink: findCurrentColumnWithLink,
+    moveDrag,
+    startDrag,
+  } = useHeaderLinkDnd({
+    links,
+    community: slug,
+    onCommit: onChange,
+  })
 
-  const isAboutLinkFold =
-    length(filter((item) => item.title !== '' && item.group !== MORE_GROUP, links)) >= 1
+  const getOverRect = (over: Over): DOMRect | typeof over.rect => {
+    const getRect = over.data.current?.getRect
+    const rect = typeof getRect === 'function' ? getRect() : null
 
-  const groupedLinks = groupByKey(sortByGroupIndex(links), 'group')
-  const groupKeys = keys(groupedLinks) as string[]
+    return rect || over.rect
+  }
+
+  const getDragTarget = ({
+    active,
+    over,
+  }: DragOverEvent | DragEndEvent): THeaderDragTarget | undefined => {
+    if (!over) return
+
+    const overData = over.data.current
+
+    if (overData?.type === HEADER_DND_TYPE.LINK) {
+      const overRect = getOverRect(over)
+      const activeRect = active.rect.current.translated
+      const activeCenterY = activeRect ? activeRect.top + activeRect.height / 2 : overRect.top
+      const targetY = pointerYRef.current ?? activeCenterY
+      const overCenterY = overRect.top + overRect.height / 2
+
+      return {
+        columnId: overData.columnId,
+        itemId: overData.itemId,
+        position: targetY > overCenterY ? 'after' : 'before',
+      }
+    }
+
+    if (overData?.type === HEADER_DND_TYPE.COLUMN) {
+      return {
+        columnId: overData.columnId,
+      }
+    }
+  }
+
+  const handleDragStart = ({ active }: DragStartEvent): void => {
+    const source = findCurrentColumnWithLink(String(active.id))
+    lastDragTargetRef.current = null
+    setActiveDragColumnId(source?.column.id || null)
+    setTargetDragColumnId(null)
+    startDrag(String(active.id))
+  }
+
+  const handleDragOver = (event: DragOverEvent): void => {
+    const target = getDragTarget(event) || null
+    lastDragTargetRef.current = target
+    setTargetDragColumnId(target?.columnId || null)
+    moveDrag(target)
+  }
+
+  const handleDragEnd = (_event: DragEndEvent): void => {
+    const target = lastDragTargetRef.current
+    lastDragTargetRef.current = null
+    setActiveDragColumnId(null)
+    setTargetDragColumnId(null)
+    commitDrag(target)
+  }
+
+  const handleDragCancel = (_event: DragCancelEvent): void => {
+    lastDragTargetRef.current = null
+    setActiveDragColumnId(null)
+    setTargetDragColumnId(null)
+    cancelDrag()
+  }
+
+  const collisionDetection: CollisionDetection = (args) => {
+    pointerYRef.current = args.pointerCoordinates?.y ?? null
+    const linkContainers = args.droppableContainers.filter(
+      (container) =>
+        container.id !== args.active.id && container.data.current?.type === HEADER_DND_TYPE.LINK,
+    )
+    const groupContainers = args.droppableContainers.filter(
+      (container) => container.data.current?.type === HEADER_DND_TYPE.COLUMN,
+    )
+
+    const linkArgs = { ...args, droppableContainers: linkContainers }
+    const pointerCollisions = pointerWithin(linkArgs)
+    if (pointerCollisions.length > 0) return pointerCollisions
+
+    const groupArgs = { ...args, droppableContainers: groupContainers }
+    const groupPointerCollisions = pointerWithin(groupArgs)
+    if (groupPointerCollisions.length > 0) return groupPointerCollisions
+
+    const cornerCollisions = closestCorners(linkArgs)
+    if (cornerCollisions.length > 0) return cornerCollisions
+
+    return closestCorners(groupArgs)
+  }
+
+  const isAboutLinkFold = links.length > 0
 
   return (
     <div className={s.wrapper}>
@@ -64,95 +178,61 @@ const Editor: FC = () => {
 
       <div className={s.divider} />
 
-      {editingGroup !== null &&
-      !startsWith(ONE_LINK_GROUP, editingGroup) &&
-      editingGroupIndex === null ? (
+      <div className={s.adder}>
+        <Button size='small' onClick={editor.triggerLinkAdd} space={0.5} ghost noBorder>
+          <PlusSVG className={s.plusIcon} />
+          {t('dsb.header.editors.link')}
+        </Button>
+        <div className={s.slash}>/</div>
+        <Button size='small' onClick={editor.triggerGroupAdd} space={0.5} ghost noBorder>
+          <PlusSVG className={s.plusIcon} />
+          {t('dsb.header.editors.group')}
+        </Button>
+      </div>
+
+      {editor.editingGroup !== null && editor.editingGroupIndex === null && (
         <div className={s.groupInputer}>
           <GroupInputer
-            value={editingGroup}
-            onChange={updateEditingGroup}
-            onConfirm={confirmGroupAdd}
-            onCancel={cancelGroupChange}
+            value={editor.editingGroup}
+            onChange={editor.updateEditingGroup}
+            onConfirm={editor.saveGroup}
+            onCancel={editor.cancelGroupChange}
           />
-        </div>
-      ) : (
-        <div className={s.adder}>
-          <Button size='small' onClick={addHeaderLinkGroup} space={8} ghost>
-            <PlusSVG className={s.plusIcon} />
-            {t('dsb.header.editors.link')}
-          </Button>
-          <div className={s.slash}>/</div>
-          <Button size='small' onClick={triggerGroupAdd} space={10} ghost>
-            <PlusSVG className={s.plusIcon} />
-            {t('dsb.header.editors.group')}
-          </Button>
         </div>
       )}
 
-      <div className={s.linkGroup} ref={groupAnimateRef}>
-        {groupKeys.map((groupKey: string, index) => {
-          const curGroupLinks = groupedLinks[groupKey]
+      <DndContext
+        id={HEADER_DND_CONTEXT_ID}
+        sensors={sensors}
+        accessibility={{ announcements: DND_ANNOUNCEMENTS }}
+        measuring={DND_MEASURING}
+        collisionDetection={collisionDetection}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        <div className={s.linkGroup}>
+          {columns.map((column) => {
+            const isCrossGroupTarget =
+              !!activeDragColumnId &&
+              !!targetDragColumnId &&
+              targetDragColumnId === column.id &&
+              activeDragColumnId !== column.id
 
-          if (
-            // isAboutLinkFold
-            links.length === 2 &&
-            links[0].title === '' &&
-            curGroupLinks[0].group === MORE_GROUP
-          ) {
-            return null
-          }
-
-          return (
-            <div className={s.columnWrapper} key={groupKey}>
-              <div className={s.itemsWrapper} ref={animateRef}>
-                <GroupHead
-                  title={groupKey as string}
-                  curGroupIndex={index}
-                  moveLeft={() => moveGroup2Left(groupKey)}
-                  moveRight={() => moveGroup2Right(groupKey)}
-                  moveEdgeLeft={() => moveGroup2EdgeLeft(groupKey)}
-                  moveEdgeRight={() => moveGroup2EdgeRight(groupKey)}
-                  isEdgeLeft={index === 0}
-                  isEdgeRight={index === groupKeys.length - 2}
-                  onDelete={() => deleteGroup(curGroupLinks[0].groupIndex)}
-                />
-                {curGroupLinks.map((item, index) => {
-                  const isAboutLink =
-                    item.group === MORE_GROUP && index === curGroupLinks.length - 1
-
-                  return (
-                    <LinkEditor
-                      // must use item.title as key, or the sort animation will fail, wired
-                      key={item.title}
-                      mode={editingLinkMode}
-                      linkItem={item as TLinkItem}
-                      editingLink={editingLink}
-                      isFirst={index === 0}
-                      isLast={index === curGroupLinks.length - 1}
-                      disableEdit={isAboutLink}
-                      disableSetting={isAboutLink}
-                    />
-                  )
-                })}
-              </div>
-
-              {!editingLink && !startsWith(ONE_LINK_GROUP, groupKey) && (
-                <div className={s.adder}>
-                  <Button
-                    size='small'
-                    ghost
-                    space={8}
-                    onClick={() => add2Group(groupKey, curGroupLinks.length)}
-                  >
-                    <PlusSVG className={s.plusIcon} />
-                    {t('dsb.header.editors.link')}
-                  </Button>
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
+            return (
+              <HeaderColumn
+                key={column.id}
+                column={column}
+                customLinksLength={links.length}
+                editor={editor}
+                isCollapsed={editor.collapsedGroups.has(column.id)}
+                isCrossGroupTarget={isCrossGroupTarget}
+              />
+            )
+          })}
+        </div>
+      </DndContext>
     </div>
   )
 }

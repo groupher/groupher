@@ -144,7 +144,22 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object(:dashboard_base_info, do: dashboard_gq_fields(:base_info))
   object(:dashboard_name_alias, do: dashboard_gq_fields(:name_alias))
-  object(:dashboard_link, do: dashboard_gq_fields(:header_link))
+
+  object :dashboard_header_link_child do
+    field(:id, :string)
+    field(:title, :string)
+    field(:url, :string)
+  end
+
+  object :dashboard_header_link do
+    field(:id, :string)
+    field(:type, :dsb_link_type)
+    field(:title, :string)
+    field(:url, :string)
+    field(:links, list_of(:dashboard_header_link_child))
+  end
+
+  object(:dashboard_link, do: dashboard_gq_fields(:footer_link))
   object(:dashboard_social_link, do: dashboard_gq_fields(:social_link))
   object(:dashboard_media_report, do: dashboard_gq_fields(:media_report))
   object(:dashboard_faq_section, do: dashboard_gq_fields(:faq_section))
@@ -158,7 +173,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:base_info, :dashboard_base_info)
     field(:rss, :dashboard_rss)
     field(:name_alias, list_of(:dashboard_name_alias))
-    field(:header_links, list_of(:dashboard_link))
+    field(:header_links, list_of(:dashboard_header_link))
     field(:footer_links, list_of(:dashboard_link))
     field(:social_links, list_of(:dashboard_social_link))
     field(:media_reports, list_of(:dashboard_media_report))

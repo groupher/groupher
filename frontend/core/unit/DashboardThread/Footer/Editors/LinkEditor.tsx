@@ -14,7 +14,17 @@ import { EMPTY_LINK_ITEM } from '../../constant'
 import useFooter from '../../logic/useFooter'
 import useSalon, { cn } from '../../salon/footer/editors/link_editor'
 import SavingBar from '../../SavingBar'
+import type { TMoveLinkDir } from '../../spec'
 import LinkMenu from './LinkMenu'
+
+type TActions = {
+  cancelLinkEditing: () => void
+  deleteLink: (linkItem: TLinkItem) => void
+  updateEditingLink: (key: string, value: string) => void
+  confirmLinkEditing: () => void
+  updateInGroup: (linkItem: TLinkItem) => void
+  moveLink: (linkItem: TLinkItem, dir: TMoveLinkDir) => void
+}
 
 type TProps = {
   notifyText?: string
@@ -25,6 +35,9 @@ type TProps = {
   mode?: TChangeMode
   disableSetting?: boolean
   disableEdit?: boolean
+  disableMove?: boolean
+  compact?: boolean
+  actions?: Partial<TActions>
 }
 
 const LinkEditor: FC<TProps> = ({
@@ -36,9 +49,13 @@ const LinkEditor: FC<TProps> = ({
   mode = CHANGE_MODE.CREATE,
   disableSetting = false,
   disableEdit = false,
+  disableMove = false,
+  compact = false,
+  actions = {},
 }) => {
   const s = useSalon()
 
+  const footerActions = useFooter()
   const {
     cancelLinkEditing,
     deleteLink,
@@ -46,7 +63,7 @@ const LinkEditor: FC<TProps> = ({
     confirmLinkEditing,
     updateInGroup,
     moveLink,
-  } = useFooter()
+  } = { ...footerActions, ...actions }
 
   const [snapshot, setSnapshot] = useState<TLinkItem | null>(null)
   const editing = linkItem.group === editingLink?.group && linkItem.index === editingLink?.index
@@ -69,8 +86,8 @@ const LinkEditor: FC<TProps> = ({
     (snapshot?.title !== editingLink?.title || snapshot?.link !== editingLink?.link)
 
   return (
-    <div className={cn(s.wrapper, editing && 'w-11/12')}>
-      <div className={s.readonly}>
+    <div className={s.wrapper}>
+      <div className={cn(s.readonly, compact && s.readonlyCompact)}>
         <div className={s.readonlyHead}>
           {editing && <div className={s.divider} />}
           {!editing && (
@@ -81,13 +98,13 @@ const LinkEditor: FC<TProps> = ({
           )}
           <div className='grow' />
           <div className={cn(s.actions, editing && '!hidden')}>
-            {!isFirst && (
+            {!disableMove && !isFirst && (
               <ArrowSVG
                 className={cn(s.icon, 'size-3 rotate-90')}
                 onClick={() => moveLink(linkItem, 'up')}
               />
             )}
-            {!isLast && (
+            {!disableMove && !isLast && (
               <ArrowSVG
                 className={cn(s.icon, 'size-3 -rotate-90')}
                 onClick={() => moveLink(linkItem, 'down')}
@@ -100,8 +117,8 @@ const LinkEditor: FC<TProps> = ({
               <Tooltip
                 content={
                   <LinkMenu
-                    isFirst={isFirst}
-                    isLast={isLast}
+                    isFirst={disableMove || isFirst}
+                    isLast={disableMove || isLast}
                     move2Top={() => moveLink(linkItem, 'top')}
                     move2Bottom={() => moveLink(linkItem, 'bottom')}
                     onDelete={() => deleteLink(linkItem)}
@@ -118,8 +135,8 @@ const LinkEditor: FC<TProps> = ({
             )}
           </div>
         </div>
-        <div className='grow' />
-        {!editing && <Linker src={linkItem?.link || ''} left={-2} top={5} external />}
+        {!compact && <div className='grow' />}
+        {!editing && <Linker src={linkItem?.link || ''} left={-1} external />}
       </div>
 
       {editing && (

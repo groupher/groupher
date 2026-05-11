@@ -1,17 +1,180 @@
-import { MORE_GROUP } from '~/const/dashboard'
 import { ROUTE } from '~/const/route'
-import type { TLinkItem } from '~/spec'
+import type { THeaderLinkChild, THeaderLinkItem, TResolvedHeaderLinkItem } from '~/spec'
+
+import { HEADER_LINK_TYPE, MORE_TAB } from './constant'
 
 export const getAboutPath = (community: string): string => `/${community}/${ROUTE.ABOUT}`
+export const getDashboardPath = (community: string): string => `/${community}/dashboard`
 
-export const isAboutLink = (link: TLinkItem, community: string): boolean =>
-  link.link === getAboutPath(community)
+type TLegacyHeaderLinkItem = {
+  id?: string
+  type?: string
+  title?: string
+  url?: string
+  link?: string
+  group?: string
+  links?: readonly TLegacyHeaderLinkItem[]
+}
 
-export const hasAboutLinkInMore = (links: readonly TLinkItem[], community: string): boolean =>
-  links.some((link) => link.group === MORE_GROUP && isAboutLink(link, community))
+const legacyId = (prefix: string, ...parts: Array<number | string | undefined>): string => {
+  const body = parts
+    .filter((part) => part !== undefined && part !== '')
+    .join('-')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
 
-export const hasCustomMainLinks = (links: readonly TLinkItem[]): boolean =>
-  links.some((link) => link.title !== '' && link.group !== MORE_GROUP)
+  return body ? `${prefix}-${body}` : prefix
+}
 
-export const shouldFoldAboutToMore = (links: readonly TLinkItem[], community: string): boolean =>
-  hasCustomMainLinks(links) || hasAboutLinkInMore(links, community)
+type TCustomHeaderLinkType = typeof HEADER_LINK_TYPE.LINK | typeof HEADER_LINK_TYPE.GROUP
+
+type TMoreTabLinkItem = Extract<TResolvedHeaderLinkItem, { usage: typeof MORE_TAB.USAGE }>
+
+export const isMoreTabGroup = (item: TResolvedHeaderLinkItem): item is TMoreTabLinkItem =>
+  item.type === HEADER_LINK_TYPE.GROUP && 'usage' in item && item.usage === MORE_TAB.USAGE
+
+const normalizeType = (type?: string): TCustomHeaderLinkType | null => {
+  if (!type) return null
+
+  const normalized = type.toUpperCase()
+  return normalized === HEADER_LINK_TYPE.LINK || normalized === HEADER_LINK_TYPE.GROUP
+    ? normalized
+    : null
+}
+
+export const normalizeUrl = (url = ''): string => url.replace(/\/$/, '')
+
+const isMoreTabFixedUrl = (url: string, community: string): boolean => {
+  const normalized = normalizeUrl(url)
+
+  return (
+    normalized === normalizeUrl(getAboutPath(community)) ||
+    normalized === normalizeUrl(getDashboardPath(community))
+  )
+}
+
+const isMoreTabFixedChild = (
+  link: Pick<TLegacyHeaderLinkItem, 'link' | 'url'>,
+  community: string,
+) => isMoreTabFixedUrl(link.url || link.link || '', community)
+
+export const isCustomMoreGroup = (
+  item:
+    | Pick<THeaderLinkItem, 'id' | 'title' | 'type'>
+    | Pick<TLegacyHeaderLinkItem, 'id' | 'title'>,
+): boolean => item.id === MORE_TAB.CUSTOM_ID
+
+const customMoreTitle = (
+  item:
+    | Pick<THeaderLinkItem, 'id' | 'title' | 'type'>
+    | Pick<TLegacyHeaderLinkItem, 'id' | 'title'>,
+): string => (isCustomMoreGroup(item) ? MORE_TAB.TITLE_KEY : item.title || '')
+
+const normalizeStructuredLinks = (
+  links: readonly TLegacyHeaderLinkItem[],
+  community: string,
+): readonly THeaderLinkItem[] => {
+  return links.flatMap((item, index): THeaderLinkItem[] => {
+    const type =
+      normalizeType(item.type) ?? (item.links ? HEADER_LINK_TYPE.GROUP : HEADER_LINK_TYPE.LINK)
+    const id = item.id || legacyId('header', index, item.title)
+
+    if (type === HEADER_LINK_TYPE.LINK) {
+      const url = item.url || item.link || ''
+      if (isMoreTabFixedUrl(url, community)) return []
+
+      return [{ id, type: HEADER_LINK_TYPE.LINK, title: item.title || '', url }]
+    }
+
+    const children = (item.links || [])
+      .filter((link) => !isMoreTabFixedChild(link, community))
+      .map((link, linkIndex) => ({
+        id: link.id || legacyId('header-child', index, linkIndex, link.title),
+        title: link.title || '',
+        url: link.url || link.link || '',
+      }))
+
+    return [
+      {
+        id: isCustomMoreGroup(item) ? MORE_TAB.CUSTOM_ID : id,
+        type: HEADER_LINK_TYPE.GROUP,
+        title: customMoreTitle(item),
+        links: children,
+      },
+    ]
+  })
+}
+
+export const normalizeHeaderLinks = (
+  links: readonly THeaderLinkItem[] | readonly TLegacyHeaderLinkItem[],
+  community: string,
+): readonly THeaderLinkItem[] => {
+  const legacyLinks = links as readonly TLegacyHeaderLinkItem[]
+  const hasLegacyFlatShape = legacyLinks.some((item) => item.group || item.link)
+
+  // Old flat header-link records are intentionally ignored instead of being
+  // migrated in the resolver. New writes should only use THeaderLinkItem.
+  return hasLegacyFlatShape ? [] : normalizeStructuredLinks(legacyLinks, community)
+}
+
+export const hasCustomHeaderItems = (links: readonly THeaderLinkItem[]): boolean =>
+  links.some((item) => {
+    if (item.type === HEADER_LINK_TYPE.LINK) return item.title.trim() !== ''
+    if (isCustomMoreGroup(item)) return item.links.some((link) => link.title.trim() !== '')
+
+    return item.title.trim() !== '' || item.links.some((link) => link.title.trim() !== '')
+  })
+
+const asMoreTabLink = (id: string, title: string, url: string): THeaderLinkChild => ({
+  id,
+  title,
+  url,
+})
+
+export const shouldFoldAboutToMore = (links: readonly THeaderLinkItem[]): boolean =>
+  hasCustomHeaderItems(links)
+
+export const resolveHeaderLinks = (
+  links: readonly THeaderLinkItem[],
+  community: string,
+  isModerator = false,
+): readonly TResolvedHeaderLinkItem[] => {
+  const customLinks = normalizeHeaderLinks(links, community)
+  const customMore = customLinks.find(
+    (item) => item.type === HEADER_LINK_TYPE.GROUP && isCustomMoreGroup(item),
+  )
+  const visibleCustomLinks = customLinks.filter((item) => item !== customMore)
+  const moreTabLinks: THeaderLinkChild[] = []
+
+  if (shouldFoldAboutToMore(customLinks)) {
+    moreTabLinks.push(
+      asMoreTabLink(MORE_TAB.ABOUT_ID, MORE_TAB.ABOUT_TITLE_KEY, getAboutPath(community)),
+    )
+  }
+
+  if (isModerator) {
+    moreTabLinks.push(
+      asMoreTabLink(
+        MORE_TAB.DASHBOARD_ID,
+        MORE_TAB.DASHBOARD_TITLE_KEY,
+        getDashboardPath(community),
+      ),
+    )
+  }
+
+  if (!customMore && moreTabLinks.length === 0) return customLinks
+  if ((customMore?.links.length || 0) === 0 && moreTabLinks.length === 0) return visibleCustomLinks
+
+  return [
+    ...visibleCustomLinks,
+    {
+      id: MORE_TAB.ID,
+      type: HEADER_LINK_TYPE.GROUP,
+      // usage marks this resolved group as the rendered More tab. It is never
+      // persisted back into dashboard.headerLinks.
+      usage: MORE_TAB.USAGE,
+      title: MORE_TAB.TITLE_KEY,
+      links: [...(customMore?.links || []), ...moreTabLinks],
+    },
+  ]
+}

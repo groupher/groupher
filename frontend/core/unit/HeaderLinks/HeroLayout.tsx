@@ -1,19 +1,20 @@
 import Link from 'next/link'
-import { filter, keys, startsWith } from 'ramda'
 import { type FC, Fragment, useState } from 'react'
 
-import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
-import { groupByKey, sortByGroupIndex } from '~/helper'
+import useHeaderLinks from '~/hooks/useHeaderLinks'
+import { HEADER_LINK_TYPE } from '~/hooks/useHeaderLinks/constant'
+import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 import LinkSVG from '~/icons/Link'
-import type { TLinkItem } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
 
+import { filterVisibleHeaderLinks, moreTabLinkTitle, moreTabTitle } from './helper'
 import useSalon, { cn } from './salon/hero_layout'
 import type { TLinkGroup, TProps } from './spec'
 
 const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
   const s = useSalon()
+  const { t } = useTrans()
   const [menuOpen, setMenuOpen] = useState(false)
 
   if (!showMoreFold) return null
@@ -22,9 +23,9 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
     <Tooltip
       content={
         <div className={s.menuPanel}>
-          {links.map((item: TLinkItem) => (
-            <Link key={item.index} href={item.link} className={s.linkItem}>
-              {item.title}
+          {links.map((item) => (
+            <Link key={item.id} href={item.url} className={s.linkItem}>
+              {moreTabLinkTitle(item, t)}
             </Link>
           ))}
         </div>
@@ -36,40 +37,33 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
       offset={[8, 5]}
     >
       <div className={cn(s.groupItem, menuOpen && s.groupItemActive)}>
-        {groupTitle === MORE_GROUP ? '更多' : groupTitle} <ArrowSVG className={s.arrowIcon} />
+        {groupTitle} <ArrowSVG className={s.arrowIcon} />
       </div>
     </Tooltip>
   )
 }
 
-const CustomHeaderLinks: FC<TProps> = ({ links, activePath = '' }) => {
+const CustomHeaderLinks: FC<TProps> = ({ links }) => {
   const s = useSalon()
-
-  const _links = filter((item) => item.title !== '', links)
-
-  const groupedLinks = groupByKey(sortByGroupIndex(_links), 'group')
-  const groupKeys = keys(groupedLinks)
+  const { t } = useTrans()
+  const { getCustomLinks } = useHeaderLinks()
+  const resolvedLinks = filterVisibleHeaderLinks(links ?? getCustomLinks())
 
   return (
     <div className={s.wrapper}>
-      {groupKeys.map((groupTitle: string) => {
-        const curGroupLinks = groupedLinks[groupTitle]
-
-        if (curGroupLinks.length === 1 && curGroupLinks[0].title === '') return null
-
+      {resolvedLinks.map((item) => {
         return (
-          <Fragment key={groupTitle}>
-            {startsWith(ONE_LINK_GROUP, groupTitle) ? (
-              <Link href={curGroupLinks[0].link} className={s.linkItem}>
+          <Fragment key={item.id}>
+            {item.type === HEADER_LINK_TYPE.LINK ? (
+              <Link href={item.url} className={s.linkItem}>
                 <LinkSVG className={cn(s.icon, 'size-4')} />
-                {curGroupLinks[0].title}
+                {item.title}
               </Link>
             ) : (
               <LinkGroup
-                groupTitle={groupTitle}
-                links={curGroupLinks}
-                activePath={activePath}
-                showMoreFold={curGroupLinks.length > 0}
+                groupTitle={moreTabTitle(item, t)}
+                links={item.links}
+                showMoreFold={item.links.length > 0}
               />
             )}
           </Fragment>
