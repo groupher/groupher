@@ -1,4 +1,4 @@
-import { equals } from 'ramda'
+import { clone, equals } from 'ramda'
 import { proxy } from 'valtio'
 
 import { INIT_KANBAN_BOARDS } from '~/const/dashboard'
@@ -91,7 +91,7 @@ export default function DashboardStore(init: TInit = {}): TStore {
         let touchedFields = store.touchedFields
 
         for (const field of fields) {
-          mutableOriginalPatch[field] = storeFields[field]
+          mutableOriginalPatch[field] = clone(storeFields[field])
           const { [field]: _removedTouched, ...nextTouchedFields } = touchedFields
           touchedFields = nextTouchedFields
         }

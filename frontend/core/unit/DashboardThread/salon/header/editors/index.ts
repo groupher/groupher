@@ -1,7 +1,9 @@
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {
-  const { cn, fg, sexyBorder, primary } = useTwBelt()
+  const { cn, fg, bg, sexyBorder, primary, rainbow } = useTwBelt()
+  const groupHint = 'w-3/5 rounded-md px-3 py-2 text-xs mt-2'
 
   return {
     wrapper: 'w-full',
@@ -12,12 +14,15 @@ export default function useSalon() {
     rightPart: 'w-64 max-w-64 mr-4 list-disc',
     noteTitle: cn('text-xs mb-4 -ml-3.5 bold-sm', fg('digest')),
     noteP: cn('text-xs mb-3 leading-relaxed', fg('digest')),
-    adder: 'row-center w-44 -ml-1 scale-95',
-    slash: cn('text-xs ml-3 mr-3', fg('hint')),
-    plusIcon: cn('size-3 mr-1.5', primary('fill')),
+    adder: 'row-center w-44 -ml-1.5',
+    slash: cn('text-xs mx-1', fg('hint')),
+    plusIcon: cn('size-2.5 mr-1', primary('fill')),
     //
     linkGroup: 'row wrap justify-start mt-7 w-full gap-x-5 gap-y-7',
     columnWrapper: 'w-[30%] h-full',
-    itemsWrapper: 'column gap-y-5 mb-5',
+    itemsWrapper: 'column gap-y-3 mb-5',
+    addLinkRow: 'row justify-start w-full',
+    linksCount: cn(groupHint, bg('sandBox'), fg('digest')),
+    noLinks: cn(groupHint, rainbow(COLOR.RED, 'fg'), rainbow(COLOR.RED, 'bgSoft')),
   }
 }

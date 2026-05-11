@@ -1,6 +1,6 @@
 import { pick } from 'ramda'
 
-import type { TEditFunc, THeaderLayout, TLinkItem } from '~/spec'
+import type { TEditFunc, THeaderLayout, THeaderLinkItem } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import type { TLinkState } from '../spec'
@@ -9,7 +9,7 @@ import useLinks, { type TRet as TUserLinks } from './useLinks'
 
 type TRet = {
   headerLayout: THeaderLayout
-  headerLinks: readonly TLinkItem[]
+  headerLinks: readonly THeaderLinkItem[]
   edit: TEditFunc
 } & TLinkState &
   TUserLinks

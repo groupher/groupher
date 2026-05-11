@@ -215,6 +215,37 @@ export type TLinkItem = {
   groupIndex?: number
 }
 
+export type THeaderLinkChild = {
+  id: string
+  title: string
+  url: string
+}
+
+export type THeaderLinkItem =
+  | {
+      id: string
+      type: 'LINK'
+      title: string
+      url: string
+      links?: never
+    }
+  | {
+      id: string
+      type: 'GROUP'
+      title: string
+      url?: never
+      links: readonly THeaderLinkChild[]
+    }
+
+export type TResolvedHeaderLinkItem =
+  | THeaderLinkItem
+  | {
+      id: string
+      type: 'system-group'
+      title: string
+      links: readonly THeaderLinkChild[]
+    }
+
 export type TGroupedLinks = {
   [key: string]: TLinkItem[]
 }

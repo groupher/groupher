@@ -3,8 +3,10 @@ import type { FC } from 'react'
 
 import { HEADER_LAYOUT } from '~/const/layout'
 import { THREAD_PATH } from '~/const/thread'
+import { resolveHeaderLinks } from '~/hooks/useHeaderLinks/helper'
 import AccountSVG from '~/icons/Account'
-import type { TActive, TCommunityThread, TLinkItem } from '~/spec'
+import type { TActive, TCommunityThread, THeaderLinkItem } from '~/spec'
+import useCommunity from '~/stores/community/hooks'
 import CommunityBrand from '~/unit/CommunityBrand'
 import CustomHeaderLinks from '~/unit/HeaderLinks/HeaderTemplate'
 
@@ -13,7 +15,7 @@ import useSalon, { cn } from '../../salon/header/templates/center'
 
 type TProps = {
   threads: readonly TCommunityThread[]
-  links: readonly TLinkItem[]
+  links: readonly THeaderLinkItem[]
 } & TActive
 
 const RADIO_NAME = 'header-layout'
@@ -21,13 +23,15 @@ const RADIO_NAME = 'header-layout'
 const Center: FC<TProps> = ({ active, threads, links }) => {
   const s = useSalon()
   const { edit } = useHeader()
+  const { slug } = useCommunity()
 
   const radioId = 'header-layout-center'
 
-  const isAboutFold = links.length >= 2 && links[0].title !== ''
+  const isAboutFold = links.length > 0
   const visibleThreads = isAboutFold
     ? reject((t: TCommunityThread) => t.slug === THREAD_PATH.ABOUT, threads)
     : threads
+  const resolvedLinks = resolveHeaderLinks(links, slug)
 
   return (
     <label htmlFor={radioId} className={cn(s.wrapper, active && s.active)}>
@@ -49,7 +53,7 @@ const Center: FC<TProps> = ({ active, threads, links }) => {
           </div>
         ))}
 
-        <CustomHeaderLinks links={links} />
+        <CustomHeaderLinks links={resolvedLinks} />
       </div>
 
       <AccountSVG className={s.accountIcon} />

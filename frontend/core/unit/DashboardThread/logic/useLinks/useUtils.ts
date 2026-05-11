@@ -40,10 +40,13 @@ export default function useUtils(): TRet {
   const getLinks = (): TLinkItem[] => {
     const { headerLinks, footerLinks } = storeRef.current
 
-    return clone(mainTab !== DSB_ROUTE.FOOTER ? headerLinks : footerLinks)
+    return clone(mainTab !== DSB_ROUTE.FOOTER ? headerLinks : footerLinks) as TLinkItem[]
   }
 
   const linksKey = mainTab !== DSB_ROUTE.FOOTER ? FIELD.HEADER_LINKS : FIELD.FOOTER_LINKS
+  const editLinks = (links: TLinkItem[]): void => {
+    dsb$.editField(linksKey as typeof FIELD.FOOTER_LINKS, links)
+  }
 
   const emptyLinksIfNeed = (links: TLinkItem[]): TLinkItem[] => {
     if (linksKey === FIELD.HEADER_LINKS && links.length === 1 && links[0].group === MORE_GROUP) {
@@ -82,9 +85,7 @@ export default function useUtils(): TRet {
     groupLinks[targetIndex].index = groupLinks[linkIndex].index
     groupLinks[linkIndex].index = tmpIndex
 
-    dsb$.commit({
-      [linksKey]: [...restLinks, ...reindex(groupLinks)],
-    })
+    editLinks([...restLinks, ...reindex(groupLinks)])
   }
 
   const doMoveLink2Edge = (link: TLinkItem, opt: 'top' | 'bottom'): void => {
@@ -102,9 +103,7 @@ export default function useUtils(): TRet {
         ? [curLinkItem, ...remove(curLinkItemIndex, 1, groupLinks)]
         : [...remove(curLinkItemIndex, 1, groupLinks), curLinkItem]
 
-    dsb$.commit({
-      [linksKey]: [...restLinks, ...reindex(newLinks)],
-    })
+    editLinks([...restLinks, ...reindex(newLinks)])
   }
 
   /**
@@ -151,9 +150,7 @@ export default function useUtils(): TRet {
 
       const linksAfter = [...links, newLinkItem]
 
-      dsb$.commit({
-        [FIELD.HEADER_LINKS]: reindexGroup(linksAfter),
-      })
+      dsb$.editField(FIELD.HEADER_LINKS, reindexGroup(linksAfter) as never)
     } else {
       // make sure the "more" group is always in the end
       const linksAfter = links.map((item) => ({
@@ -161,9 +158,7 @@ export default function useUtils(): TRet {
         groupIndex: item.group === MORE_GROUP ? links.length + 2 : item.groupIndex,
       }))
 
-      dsb$.commit({
-        [FIELD.HEADER_LINKS]: reindexGroup(linksAfter),
-      })
+      dsb$.editField(FIELD.HEADER_LINKS, reindexGroup(linksAfter) as never)
     }
   }
 
@@ -183,10 +178,10 @@ export default function useUtils(): TRet {
 
     const linksAfter = [...links, newLinkItem]
 
+    editLinks(linksAfter)
     dsb$.commit({
       editingGroup: null,
       editingLink: newLinkItem,
-      [linksKey]: linksAfter,
     })
 
     setTimeout(keepMoreGroup2EndIfNeed, 100)
@@ -206,10 +201,10 @@ export default function useUtils(): TRet {
       }
     }
 
+    editLinks(reindexGroup(reindex(linksAfter)))
     dsb$.commit({
       editingGroup: null,
       editingGroupIndex: null,
-      [linksKey]: reindexGroup(reindex(linksAfter)),
     })
   }
 
@@ -272,7 +267,7 @@ export default function useUtils(): TRet {
     const newLinks = []
     forEach((key) => newLinks.push(...groupedLinks[key]), groupKeys)
 
-    dsb$.commit({ [linksKey]: newLinks })
+    editLinks(newLinks)
   }
 
   return {

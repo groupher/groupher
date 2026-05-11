@@ -58,7 +58,7 @@ export const community = `
           ${F.wallpaper}
         }
         headerLinks {
-          ${F.customLink}
+          ${F.headerLink}
         }
         footerLinks {
           ${F.customLink}

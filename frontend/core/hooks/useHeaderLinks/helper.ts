@@ -1,17 +1,185 @@
-import { MORE_GROUP } from '~/const/dashboard'
+import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
 import { ROUTE } from '~/const/route'
-import type { TLinkItem } from '~/spec'
+import type { THeaderLinkChild, THeaderLinkItem, TResolvedHeaderLinkItem } from '~/spec'
+
+export const SYSTEM_MORE_ID = 'system:more'
+export const SYSTEM_ABOUT_ID = 'system:about'
+export const SYSTEM_DASHBOARD_ID = 'system:dashboard'
 
 export const getAboutPath = (community: string): string => `/${community}/${ROUTE.ABOUT}`
+export const getDashboardPath = (community: string): string => `/${community}/dashboard`
 
-export const isAboutLink = (link: TLinkItem, community: string): boolean =>
-  link.link === getAboutPath(community)
+type TLegacyHeaderLinkItem = {
+  id?: string
+  type?: string
+  title?: string
+  url?: string
+  link?: string
+  group?: string
+  groupIndex?: number
+  index?: number
+  links?: readonly TLegacyHeaderLinkItem[]
+}
 
-export const hasAboutLinkInMore = (links: readonly TLinkItem[], community: string): boolean =>
-  links.some((link) => link.group === MORE_GROUP && isAboutLink(link, community))
+const legacyId = (prefix: string, ...parts: Array<number | string | undefined>): string => {
+  const body = parts
+    .filter((part) => part !== undefined && part !== '')
+    .join('-')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
 
-export const hasCustomMainLinks = (links: readonly TLinkItem[]): boolean =>
-  links.some((link) => link.title !== '' && link.group !== MORE_GROUP)
+  return body ? `${prefix}-${body}` : prefix
+}
 
-export const shouldFoldAboutToMore = (links: readonly TLinkItem[], community: string): boolean =>
-  hasCustomMainLinks(links) || hasAboutLinkInMore(links, community)
+const normalizeType = (type?: string): 'LINK' | 'GROUP' | null => {
+  if (!type) return null
+
+  const normalized = type.toUpperCase()
+  return normalized === 'LINK' || normalized === 'GROUP' ? normalized : null
+}
+
+const normalizeUrl = (url = ''): string => url.replace(/\/$/, '')
+
+const isSystemUrl = (url: string, community: string): boolean => {
+  const normalized = normalizeUrl(url)
+
+  return (
+    normalized === normalizeUrl(getAboutPath(community)) ||
+    normalized === normalizeUrl(getDashboardPath(community))
+  )
+}
+
+const isSystemChild = (link: Pick<TLegacyHeaderLinkItem, 'link' | 'url'>, community: string) =>
+  isSystemUrl(link.url || link.link || '', community)
+
+const isSystemGroup = (group: string): boolean =>
+  group === MORE_GROUP || group === '更多' || group === '关于' || group === 'About'
+
+const normalizeStructuredLinks = (
+  links: readonly TLegacyHeaderLinkItem[],
+  community: string,
+): readonly THeaderLinkItem[] => {
+  return links.flatMap((item, index): THeaderLinkItem[] => {
+    const type = normalizeType(item.type) ?? (item.links ? 'GROUP' : 'LINK')
+    const id = item.id || legacyId('header', index, item.title)
+
+    if (type === 'LINK') {
+      const url = item.url || item.link || ''
+      if (isSystemUrl(url, community)) return []
+
+      return [{ id, type: 'LINK', title: item.title || '', url }]
+    }
+
+    if (isSystemGroup(item.title || '')) return []
+
+    const children = (item.links || [])
+      .filter((link) => !isSystemChild(link, community))
+      .map((link, linkIndex) => ({
+        id: link.id || legacyId('header-child', index, linkIndex, link.title),
+        title: link.title || '',
+        url: link.url || link.link || '',
+      }))
+
+    return [{ id, type: 'GROUP', title: item.title || '', links: children }]
+  })
+}
+
+const normalizeLegacyFlatLinks = (
+  links: readonly TLegacyHeaderLinkItem[],
+  community: string,
+): readonly THeaderLinkItem[] => {
+  const groups = new Map<string, TLegacyHeaderLinkItem[]>()
+
+  for (const item of links) {
+    if (!item.group || isSystemGroup(item.group) || isSystemChild(item, community)) continue
+    groups.set(item.group, [...(groups.get(item.group) || []), item])
+  }
+
+  return Array.from(groups.entries())
+    .map(([group, items]) => ({
+      group,
+      groupIndex: items[0]?.groupIndex ?? 0,
+      items: [...items].sort((a, b) => (a.index ?? 0) - (b.index ?? 0)),
+    }))
+    .sort((a, b) => a.groupIndex - b.groupIndex)
+    .flatMap(({ group, groupIndex, items }): THeaderLinkItem[] => {
+      if (group.startsWith(ONE_LINK_GROUP)) {
+        const item = items[0]
+
+        return [
+          {
+            id: item.id || legacyId('header-link', groupIndex, item.index, item.title),
+            type: 'LINK',
+            title: item.title || '',
+            url: item.url || item.link || '',
+          },
+        ]
+      }
+
+      return [
+        {
+          id: legacyId('header-group', groupIndex, group),
+          type: 'GROUP',
+          title: group,
+          links: items.map((item) => ({
+            id: item.id || legacyId('header-child', groupIndex, item.index, item.title),
+            title: item.title || '',
+            url: item.url || item.link || '',
+          })),
+        },
+      ]
+    })
+}
+
+export const normalizeHeaderLinks = (
+  links: readonly THeaderLinkItem[] | readonly TLegacyHeaderLinkItem[],
+  community: string,
+): readonly THeaderLinkItem[] => {
+  const legacyLinks = links as readonly TLegacyHeaderLinkItem[]
+  const hasLegacyFlatShape = legacyLinks.some((item) => item.group || item.link)
+
+  return hasLegacyFlatShape
+    ? normalizeLegacyFlatLinks(legacyLinks, community)
+    : normalizeStructuredLinks(legacyLinks, community)
+}
+
+export const hasCustomHeaderItems = (links: readonly THeaderLinkItem[]): boolean =>
+  links.some((item) => item.title.trim() !== '')
+
+const asSystemLink = (id: string, title: string, url: string): THeaderLinkChild => ({
+  id,
+  title,
+  url,
+})
+
+export const shouldFoldAboutToMore = (links: readonly THeaderLinkItem[]): boolean =>
+  hasCustomHeaderItems(links)
+
+export const resolveHeaderLinks = (
+  links: readonly THeaderLinkItem[],
+  community: string,
+  isModerator = true,
+): readonly TResolvedHeaderLinkItem[] => {
+  const customLinks = normalizeHeaderLinks(links, community)
+  const systemLinks: THeaderLinkChild[] = []
+
+  if (shouldFoldAboutToMore(customLinks)) {
+    systemLinks.push(asSystemLink(SYSTEM_ABOUT_ID, '关于', getAboutPath(community)))
+  }
+
+  if (isModerator) {
+    systemLinks.push(asSystemLink(SYSTEM_DASHBOARD_ID, '控制台', getDashboardPath(community)))
+  }
+
+  if (systemLinks.length === 0) return customLinks
+
+  return [
+    ...customLinks,
+    {
+      id: SYSTEM_MORE_ID,
+      type: 'system-group',
+      title: '更多',
+      links: systemLinks,
+    },
+  ]
+}

@@ -1,13 +1,13 @@
-import type { TLinkItem } from '~/spec'
+import type { THeaderLinkChild, TResolvedHeaderLinkItem } from '~/spec'
 
 export type TProps = {
-  links: readonly TLinkItem[]
+  links?: readonly TResolvedHeaderLinkItem[]
   activePath?: string
 }
 
 export type TLinkGroup = {
   groupTitle: string
-  links: readonly TLinkItem[]
+  links: readonly THeaderLinkChild[]
   showMoreFold: boolean
   activePath?: string
 }

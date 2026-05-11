@@ -1,12 +1,9 @@
 import Link from 'next/link'
-import { startsWith } from 'ramda'
 import { type FC, Fragment, useState } from 'react'
 
-import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
 import useHeaderLinks from '~/hooks/useHeaderLinks'
 import useNavActiveLayoutSalon from '~/hooks/useNavActiveLayoutSalon'
 import ArrowSVG from '~/icons/ArrowSimple'
-import type { TLinkItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import Tooltip from '~/widgets/Tooltip'
 
@@ -19,8 +16,8 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath
 
   const [menuOpen, setMenuOpen] = useState(false)
   const { slug } = useCommunity()
-  const isLinkActive = (link: string) => `/${slug}/${activePath}` === link
-  const isGroupActive = links.some((item) => isLinkActive(item.link))
+  const isLinkActive = (url: string) => `/${slug}/${activePath}` === url
+  const isGroupActive = links.some((item) => isLinkActive(item.url))
 
   if (!showMoreFold) return null
 
@@ -29,13 +26,13 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath
     <Tooltip
       content={
         <div className={s.menuPanel}>
-          {links.map((item: TLinkItem) => {
-            const active = isLinkActive(item.link)
+          {links.map((item) => {
+            const active = isLinkActive(item.url)
 
             return (
               <Link
-                key={item.index}
-                href={item.link}
+                key={item.id}
+                href={item.url}
                 className={cn(s.menuLink, active && activeStyle.item)}
               >
                 {item.title}
@@ -52,46 +49,39 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath
     >
       {/* @ts-ignore */}
       <div className={cn(s.link, s.groupItem, (menuOpen || isGroupActive) && activeStyle.item)}>
-        {groupTitle === MORE_GROUP ? '更多' : groupTitle}{' '}
+        {groupTitle}{' '}
         <ArrowSVG className={cn(s.arrowIcon, (menuOpen || isGroupActive) && activeStyle.icon)} />
       </div>
     </Tooltip>
   )
 }
 
-const CustomHeaderLinks: FC<TProps> = ({ activePath = '' }) => {
+const CustomHeaderLinks: FC<TProps> = ({ links, activePath = '' }) => {
   const s = useSalon()
   const activeStyle = useNavActiveLayoutSalon()
   const { slug } = useCommunity()
 
-  const { getGroupedLinks } = useHeaderLinks()
-  const { groupedLinks, groupKeys } = getGroupedLinks()
+  const { getCustomLinks } = useHeaderLinks()
+  const resolvedLinks = links ?? getCustomLinks()
 
   return (
     <div className={s.wrapper}>
-      {groupKeys.map((groupTitle: string) => {
-        const curGroupLinks = groupedLinks[groupTitle]
-
-        if (curGroupLinks.length === 1 && curGroupLinks[0].title === '') return null
-
+      {resolvedLinks.map((item) => {
         return (
-          <Fragment key={groupTitle}>
-            {startsWith(ONE_LINK_GROUP, groupTitle) ? (
+          <Fragment key={item.id}>
+            {item.type === 'LINK' ? (
               <Link
-                className={cn(
-                  s.link,
-                  `/${slug}/${activePath}` === curGroupLinks[0].link && activeStyle.item,
-                )}
-                href={curGroupLinks[0].link}
+                className={cn(s.link, `/${slug}/${activePath}` === item.url && activeStyle.item)}
+                href={item.url}
               >
-                {curGroupLinks[0].title}
+                {item.title}
               </Link>
             ) : (
               <LinkGroup
-                groupTitle={groupTitle}
-                links={curGroupLinks}
+                groupTitle={item.title}
+                links={item.links}
                 activePath={activePath}
-                showMoreFold={curGroupLinks.length > 0}
+                showMoreFold={item.links.length > 0}
               />
             )}
           </Fragment>

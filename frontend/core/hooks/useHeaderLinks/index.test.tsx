@@ -1,6 +1,5 @@
 import { renderHook } from '@testing-library/react'
 
-import { MORE_GROUP } from '~/const/dashboard'
 import { ROUTE } from '~/const/route'
 import { THREAD_PATH } from '~/const/thread'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
@@ -25,8 +24,12 @@ describe('useHeaderLinks', () => {
     const custom = result.current.getCustomLinks()
     const aboutPath = `/acme/${ROUTE.ABOUT}`
 
-    expect(custom.some((l) => l.link === aboutPath)).toBe(false)
-    expect(custom.some((l) => l.title === '控制台')).toBe(true)
+    expect(custom.some((l) => l.type === 'LINK' && l.url === aboutPath)).toBe(false)
+    expect(
+      custom.some(
+        (l) => l.type === 'system-group' && l.links.some((item) => item.title === '控制台'),
+      ),
+    ).toBe(true)
   })
 
   it('folds ABOUT to MORE when custom main links exist', () => {
@@ -38,7 +41,7 @@ describe('useHeaderLinks', () => {
     const wrapper = makeStoreWrapper({
       community: { slug: 'acme', threads },
       dashboard: {
-        headerLinks: [{ index: 1, title: 'Docs', group: 'DOC', link: '/docs', groupIndex: 1 }],
+        headerLinks: [{ id: 'docs', type: 'LINK', title: 'Docs', url: '/docs' }],
       },
     })
 
@@ -46,32 +49,29 @@ describe('useHeaderLinks', () => {
     const custom = result.current.getCustomLinks()
     const aboutPath = `/acme/${ROUTE.ABOUT}`
 
-    expect(custom.some((l) => l.link === aboutPath)).toBe(true)
-
-    const grouped = result.current.getGroupedLinks()
-    expect(grouped.groupKeys.includes(MORE_GROUP)).toBe(true)
+    const more = custom.find((l) => l.type === 'system-group')
+    expect(more?.links.some((l) => l.url === aboutPath)).toBe(true)
   })
 
-  it('does not duplicate ABOUT in MORE when an about link already exists', () => {
+  it('drops persisted ABOUT links from custom links', () => {
     const wrapper = makeStoreWrapper({
       community: { slug: 'acme', threads: [] },
       dashboard: {
         headerLinks: [
-          {
-            index: 1,
-            title: 'About menu',
-            group: MORE_GROUP,
-            link: '/acme/about',
-            groupIndex: 1,
-          },
+          { id: 'about-custom', type: 'LINK', title: 'About menu', url: '/acme/about' },
         ],
       },
     })
 
     const { result } = renderHook(() => useHeaderLinks(), { wrapper })
     const custom = result.current.getCustomLinks()
-    const aboutLinks = custom.filter((l) => l.link === '/acme/about')
+    const aboutLinks = custom.filter(
+      (l) =>
+        (l.type === 'LINK' && l.url === '/acme/about') ||
+        (l.type === 'system-group' && l.links.some((item) => item.url === '/acme/about')),
+    )
 
-    expect(aboutLinks).toHaveLength(1)
+    expect(aboutLinks).toHaveLength(0)
+    expect(custom.some((l) => l.type === 'LINK' && l.url === '/acme/about')).toBe(false)
   })
 })

@@ -63,6 +63,11 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     value(:faqs)
   end
 
+  enum :dsb_link_type do
+    value(:link)
+    value(:group)
+  end
+
   enum :content do
     article_values()
     value(:comment)
@@ -318,8 +323,22 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     dashboard_gq_fields(:name_alias)
   end
 
+  input_object :dashboard_header_link_child_map do
+    field(:id, :string)
+    field(:title, :string)
+    field(:url, :string)
+  end
+
+  input_object :dashboard_header_link_map do
+    field(:id, :string)
+    field(:type, :dsb_link_type)
+    field(:title, :string)
+    field(:url, :string)
+    field(:links, list_of(:dashboard_header_link_child_map))
+  end
+
   input_object :dashboard_link_map do
-    dashboard_gq_fields(:header_link)
+    dashboard_gq_fields(:footer_link)
   end
 
   input_object :dashboard_social_link_map do

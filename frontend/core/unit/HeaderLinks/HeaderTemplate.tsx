@@ -1,12 +1,8 @@
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import Link from 'next/link'
-import { keys, startsWith } from 'ramda'
 import { type FC, Fragment } from 'react'
 
-import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
-import { groupByKey, sortByGroupIndex } from '~/helper'
 import ArrowSVG from '~/icons/ArrowSimple'
-import type { TLinkItem } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
 
 import useSalon from './salon/header_template'
@@ -21,8 +17,8 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
     <Tooltip
       content={
         <div className={s.menuPanel}>
-          {links.map((item: TLinkItem) => (
-            <Link className={s.linkItem} key={item.index} href={item.link}>
+          {links.map((item) => (
+            <Link className={s.linkItem} key={item.id} href={item.url}>
               {item.title}
             </Link>
           ))}
@@ -32,43 +28,33 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
       offset={[-5, 5]}
     >
       <div className={s.groupItem}>
-        {groupTitle === MORE_GROUP ? '更多' : groupTitle} <ArrowSVG className={s.arrowIcon} />
+        {groupTitle} <ArrowSVG className={s.arrowIcon} />
       </div>
     </Tooltip>
   )
 }
 
-const CustomHeaderLinks: FC<TProps> = ({ links }) => {
+const CustomHeaderLinks: FC<TProps> = ({ links = [] }) => {
   const s = useSalon()
-
   const [animateRef] = useAutoAnimate()
-
-  const groupedLinks = groupByKey(sortByGroupIndex(links), 'group')
-  const groupKeys = keys(groupedLinks)
 
   return (
     <div className={s.wrapper} ref={animateRef}>
-      {groupKeys.map((groupTitle: string) => {
-        const curGroupLinks = groupedLinks[groupTitle]
-
-        if (curGroupLinks.length === 1 && curGroupLinks[0].title === '') return null
-
-        return (
-          <Fragment key={groupTitle}>
-            {startsWith(ONE_LINK_GROUP, groupTitle) ? (
-              <Link className={s.linkItem} href={curGroupLinks[0].link}>
-                {curGroupLinks[0].title}
-              </Link>
-            ) : (
-              <LinkGroup
-                groupTitle={groupTitle}
-                links={curGroupLinks}
-                showMoreFold={curGroupLinks.length > 0}
-              />
-            )}
-          </Fragment>
-        )
-      })}
+      {links.map((item) => (
+        <Fragment key={item.id}>
+          {item.type === 'LINK' ? (
+            <Link className={s.linkItem} href={item.url}>
+              {item.title}
+            </Link>
+          ) : (
+            <LinkGroup
+              groupTitle={item.title}
+              links={item.links}
+              showMoreFold={item.links.length > 0}
+            />
+          )}
+        </Fragment>
+      ))}
     </div>
   )
 }

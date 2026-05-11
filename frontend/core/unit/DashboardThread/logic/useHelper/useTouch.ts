@@ -27,7 +27,7 @@ export default function useTouch(): TRet {
     }
 
     if (LEGACY_COMPARE_FIELDS.has(field)) {
-      return !equals(dsb$[field], original[field])
+      return Boolean(touchedFields[field]) || !equals(dsb$[field], original[field])
     }
 
     return Boolean(touchedFields[field])

@@ -14,7 +14,17 @@ import { EMPTY_LINK_ITEM } from '../../constant'
 import useFooter from '../../logic/useFooter'
 import useSalon, { cn } from '../../salon/footer/editors/link_editor'
 import SavingBar from '../../SavingBar'
+import type { TMoveLinkDir } from '../../spec'
 import LinkMenu from './LinkMenu'
+
+type TActions = {
+  cancelLinkEditing: () => void
+  deleteLink: (linkItem: TLinkItem) => void
+  updateEditingLink: (key: string, value: string) => void
+  confirmLinkEditing: () => void
+  updateInGroup: (linkItem: TLinkItem) => void
+  moveLink: (linkItem: TLinkItem, dir: TMoveLinkDir) => void
+}
 
 type TProps = {
   notifyText?: string
@@ -25,6 +35,8 @@ type TProps = {
   mode?: TChangeMode
   disableSetting?: boolean
   disableEdit?: boolean
+  compact?: boolean
+  actions?: Partial<TActions>
 }
 
 const LinkEditor: FC<TProps> = ({
@@ -36,9 +48,12 @@ const LinkEditor: FC<TProps> = ({
   mode = CHANGE_MODE.CREATE,
   disableSetting = false,
   disableEdit = false,
+  compact = false,
+  actions = {},
 }) => {
   const s = useSalon()
 
+  const footerActions = useFooter()
   const {
     cancelLinkEditing,
     deleteLink,
@@ -46,7 +61,7 @@ const LinkEditor: FC<TProps> = ({
     confirmLinkEditing,
     updateInGroup,
     moveLink,
-  } = useFooter()
+  } = { ...footerActions, ...actions }
 
   const [snapshot, setSnapshot] = useState<TLinkItem | null>(null)
   const editing = linkItem.group === editingLink?.group && linkItem.index === editingLink?.index
@@ -70,7 +85,7 @@ const LinkEditor: FC<TProps> = ({
 
   return (
     <div className={cn(s.wrapper, editing && 'w-11/12')}>
-      <div className={s.readonly}>
+      <div className={cn(s.readonly, compact && s.readonlyCompact)}>
         <div className={s.readonlyHead}>
           {editing && <div className={s.divider} />}
           {!editing && (
@@ -118,8 +133,8 @@ const LinkEditor: FC<TProps> = ({
             )}
           </div>
         </div>
-        <div className='grow' />
-        {!editing && <Linker src={linkItem?.link || ''} left={-2} top={5} external />}
+        {!compact && <div className='grow' />}
+        {!editing && <Linker src={linkItem?.link || ''} left={-0.5} external />}
       </div>
 
       {editing && (

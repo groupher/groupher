@@ -632,7 +632,7 @@ type RootMutationType {
   updateDashboardNameAlias(community: String!, dashboardSection: DashboardSection, nameAlias: [DashboardAliasMap]): Community
 
   "update header links in dashboard"
-  updateDashboardHeaderLinks(community: String!, dashboardSection: DashboardSection, headerLinks: [DashboardLinkMap]): Community
+  updateDashboardHeaderLinks(community: String!, dashboardSection: DashboardSection, headerLinks: [DashboardHeaderLinkMap]): Community
 
   "update footer links in dashboard"
   updateDashboardFooterLinks(community: String!, dashboardSection: DashboardSection, footerLinks: [DashboardLinkMap]): Community
@@ -980,6 +980,20 @@ type DashboardLink {
   isNew: Boolean
 }
 
+type DashboardHeaderLinkChild {
+  id: String
+  title: String
+  url: String
+}
+
+type DashboardHeaderLink {
+  id: String
+  type: DsbLinkType
+  title: String
+  url: String
+  links: [DashboardHeaderLinkChild]
+}
+
 type DashboardSocialLink {
   type: String
   link: String
@@ -1009,7 +1023,7 @@ type Dashboard {
   baseInfo: DashboardBaseInfo
   rss: DashboardRss
   nameAlias: [DashboardNameAlias]
-  headerLinks: [DashboardLink]
+  headerLinks: [DashboardHeaderLink]
   footerLinks: [DashboardLink]
   socialLinks: [DashboardSocialLink]
   mediaReports: [DashboardMediaReport]
@@ -1599,6 +1613,11 @@ enum DsbRssFeedType {
   FULL
 }
 
+enum DsbLinkType {
+  LINK
+  GROUP
+}
+
 "the filter mode for list comments"
 enum CommentsMode {
   REPLIES
@@ -1798,6 +1817,20 @@ input DashboardAliasMap {
   name: String
   original: String
   group: String
+}
+
+input DashboardHeaderLinkChildMap {
+  id: String
+  title: String
+  url: String
+}
+
+input DashboardHeaderLinkMap {
+  id: String
+  type: DsbLinkType
+  title: String
+  url: String
+  links: [DashboardHeaderLinkChildMap]
 }
 
 input DashboardLinkMap {

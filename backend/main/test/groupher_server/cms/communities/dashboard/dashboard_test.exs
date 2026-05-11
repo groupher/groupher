@@ -330,13 +330,18 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
       {:ok, _} =
         CMS.Communities.update_dashboard(community, :header_links, [
           %{
+            id: "link-1",
+            type: :link,
             title: "title",
-            link: "link",
-            group: "group",
-            group_index: 1,
-            index: 1,
-            is_hot: false,
-            is_new: false
+            url: "link"
+          },
+          %{
+            id: "group-1",
+            type: :group,
+            title: "group",
+            links: [
+              %{id: "child-1", title: "child", url: "child-link"}
+            ]
           }
         ])
 
@@ -345,9 +350,11 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
       first = find_community.dashboard.header_links |> Enum.at(0)
 
       assert first.title == "title"
-      assert first.link == "link"
-      assert first.group == "group"
-      assert first.group_index == 1
+      assert first.url == "link"
+
+      second = find_community.dashboard.header_links |> Enum.at(1)
+      assert second.title == "group"
+      assert second.links |> List.first() |> Map.get(:title) == "child"
     end
 
     test "should overwrite all header links in community dashboard every time",
@@ -357,22 +364,16 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
       {:ok, _} =
         CMS.Communities.update_dashboard(community, :header_links, [
           %{
+            id: "link-1",
+            type: :link,
             title: "title",
-            link: "link",
-            group: "group",
-            group_index: 1,
-            index: 1,
-            is_hot: false,
-            is_new: false
+            url: "link"
           },
           %{
+            id: "link-2",
+            type: :link,
             title: "title2",
-            link: "link2",
-            group: "group2",
-            group_index: 2,
-            index: 2,
-            is_hot: false,
-            is_new: false
+            url: "link2"
           }
         ])
 
@@ -384,19 +385,17 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
       second = find_community.dashboard.header_links |> Enum.at(1)
 
       assert first.title == "title"
-      assert first.group_index == 1
+      assert first.url == "link"
       assert second.title == "title2"
-      assert second.group_index == 2
+      assert second.url == "link2"
 
       {:ok, _} =
         CMS.Communities.update_dashboard(community, :header_links, [
           %{
+            id: "link-3",
+            type: :link,
             title: "title3",
-            link: "link3",
-            group: "group3",
-            index: 1,
-            is_hot: false,
-            is_new: false
+            url: "link3"
           }
         ])
 
