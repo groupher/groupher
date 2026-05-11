@@ -74,4 +74,50 @@ describe('useHeaderLinks', () => {
     expect(aboutLinks).toHaveLength(0)
     expect(custom.some((l) => l.type === 'LINK' && l.url === '/acme/about')).toBe(false)
   })
+
+  it('keeps custom MORE links before fixed system links', () => {
+    const wrapper = makeStoreWrapper({
+      community: { slug: 'acme', threads: [] },
+      dashboard: {
+        headerLinks: [
+          {
+            id: 'custom:more',
+            type: 'GROUP',
+            title: '更多',
+            links: [{ id: 'community', title: 'Community', url: '/community' }],
+          },
+        ],
+      },
+    })
+
+    const { result } = renderHook(() => useHeaderLinks(), { wrapper })
+    const more = result.current.getCustomLinks().find((l) => l.type === 'system-group')
+
+    expect(more?.links.map((link) => link.id)).toEqual([
+      'community',
+      'system:about',
+      'system:dashboard',
+    ])
+  })
+
+  it('drops persisted MORE when it only contains system links', () => {
+    const wrapper = makeStoreWrapper({
+      community: { slug: 'acme', threads: [] },
+      dashboard: {
+        headerLinks: [
+          {
+            id: 'custom:more',
+            type: 'GROUP',
+            title: '更多',
+            links: [{ id: 'about', title: 'About', url: '/acme/about' }],
+          },
+        ],
+      },
+    })
+
+    const { result } = renderHook(() => useHeaderLinks(), { wrapper })
+    const more = result.current.getCustomLinks().find((l) => l.type === 'system-group')
+
+    expect(more?.links.map((link) => link.id)).toEqual(['system:dashboard'])
+  })
 })

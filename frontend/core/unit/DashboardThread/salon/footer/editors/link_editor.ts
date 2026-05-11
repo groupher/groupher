@@ -8,7 +8,7 @@ export default function useSalon() {
 
   return {
     wrapper: 'w-full group',
-    readonly: 'column mt-2.5',
+    readonly: 'column py-1',
     readonlyCompact: 'gap-y-1.5',
     divider: cn(sexyBorder(), 'mb-4'),
     readonlyEditing: 'pt-0',

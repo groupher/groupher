@@ -2,8 +2,8 @@ import { type FC, useEffect, useRef } from 'react'
 import { type CursorProps, type NodeApi, type NodeRendererProps, Tree } from 'react-arborist'
 
 import ArrowSVG from '~/icons/ArrowSimple'
-import DragSVG from '~/icons/Dragble'
 import EditSVG from '~/icons/EditPen'
+import GrabDotsSVG from '~/icons/GrabDots'
 import DeleteSVG from '~/icons/Trash'
 import type { TPagedArticles } from '~/spec'
 
@@ -82,7 +82,7 @@ function Node({ node, style, dragHandle }: NodeRendererProps<TTreeItem>) {
       style={style}
       onClick={() => node.isInternal && node.toggle()}
     >
-      <DragSVG className={s.dragIcon} />
+      <GrabDotsSVG className={s.dragIcon} />
       <div
         className={cn(s.folderName, !!node.data.children || (node.isSelected && 'bold leading-8'))}
       >

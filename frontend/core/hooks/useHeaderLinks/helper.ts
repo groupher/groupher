@@ -5,6 +5,7 @@ import type { THeaderLinkChild, THeaderLinkItem, TResolvedHeaderLinkItem } from 
 export const SYSTEM_MORE_ID = 'system:more'
 export const SYSTEM_ABOUT_ID = 'system:about'
 export const SYSTEM_DASHBOARD_ID = 'system:dashboard'
+export const CUSTOM_MORE_ID = 'custom:more'
 
 export const getAboutPath = (community: string): string => `/${community}/${ROUTE.ABOUT}`
 export const getDashboardPath = (community: string): string => `/${community}/dashboard`
@@ -55,6 +56,15 @@ const isSystemChild = (link: Pick<TLegacyHeaderLinkItem, 'link' | 'url'>, commun
 const isSystemGroup = (group: string): boolean =>
   group === MORE_GROUP || group === '更多' || group === '关于' || group === 'About'
 
+export const isCustomMoreGroup = (
+  item:
+    | Pick<THeaderLinkItem, 'id' | 'title' | 'type'>
+    | Pick<TLegacyHeaderLinkItem, 'id' | 'title'>,
+): boolean => item.id === CUSTOM_MORE_ID || item.title === '更多'
+
+const customMoreTitle = (item: Pick<TLegacyHeaderLinkItem, 'id' | 'title'>): string =>
+  isCustomMoreGroup(item) ? '更多' : item.title || ''
+
 const normalizeStructuredLinks = (
   links: readonly TLegacyHeaderLinkItem[],
   community: string,
@@ -70,8 +80,6 @@ const normalizeStructuredLinks = (
       return [{ id, type: 'LINK', title: item.title || '', url }]
     }
 
-    if (isSystemGroup(item.title || '')) return []
-
     const children = (item.links || [])
       .filter((link) => !isSystemChild(link, community))
       .map((link, linkIndex) => ({
@@ -80,7 +88,16 @@ const normalizeStructuredLinks = (
         url: link.url || link.link || '',
       }))
 
-    return [{ id, type: 'GROUP', title: item.title || '', links: children }]
+    if (isSystemGroup(item.title || '') && children.length === 0) return []
+
+    return [
+      {
+        id: isCustomMoreGroup(item) ? CUSTOM_MORE_ID : id,
+        type: 'GROUP',
+        title: customMoreTitle(item),
+        links: children,
+      },
+    ]
   })
 }
 
@@ -91,7 +108,8 @@ const normalizeLegacyFlatLinks = (
   const groups = new Map<string, TLegacyHeaderLinkItem[]>()
 
   for (const item of links) {
-    if (!item.group || isSystemGroup(item.group) || isSystemChild(item, community)) continue
+    if (!item.group || isSystemChild(item, community)) continue
+    if (isSystemGroup(item.group) && item.group !== MORE_GROUP && item.group !== '更多') continue
     groups.set(item.group, [...(groups.get(item.group) || []), item])
   }
 
@@ -112,6 +130,21 @@ const normalizeLegacyFlatLinks = (
             type: 'LINK',
             title: item.title || '',
             url: item.url || item.link || '',
+          },
+        ]
+      }
+
+      if (group === MORE_GROUP || group === '更多') {
+        return [
+          {
+            id: CUSTOM_MORE_ID,
+            type: 'GROUP',
+            title: '更多',
+            links: items.map((item) => ({
+              id: item.id || legacyId('header-child', groupIndex, item.index, item.title),
+              title: item.title || '',
+              url: item.url || item.link || '',
+            })),
           },
         ]
       }
@@ -161,6 +194,8 @@ export const resolveHeaderLinks = (
   isModerator = true,
 ): readonly TResolvedHeaderLinkItem[] => {
   const customLinks = normalizeHeaderLinks(links, community)
+  const customMore = customLinks.find((item) => item.type === 'GROUP' && isCustomMoreGroup(item))
+  const visibleCustomLinks = customLinks.filter((item) => item !== customMore)
   const systemLinks: THeaderLinkChild[] = []
 
   if (shouldFoldAboutToMore(customLinks)) {
@@ -171,15 +206,15 @@ export const resolveHeaderLinks = (
     systemLinks.push(asSystemLink(SYSTEM_DASHBOARD_ID, '控制台', getDashboardPath(community)))
   }
 
-  if (systemLinks.length === 0) return customLinks
+  if (!customMore && systemLinks.length === 0) return customLinks
 
   return [
-    ...customLinks,
+    ...visibleCustomLinks,
     {
       id: SYSTEM_MORE_ID,
       type: 'system-group',
       title: '更多',
-      links: systemLinks,
+      links: [...(customMore?.links || []), ...systemLinks],
     },
   ]
 }

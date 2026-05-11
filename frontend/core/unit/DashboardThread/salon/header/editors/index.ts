@@ -18,9 +18,11 @@ export default function useSalon() {
     slash: cn('text-xs mx-1', fg('hint')),
     plusIcon: cn('size-2.5 mr-1', primary('fill')),
     //
-    linkGroup: 'row wrap justify-start mt-7 w-full gap-x-5 gap-y-7',
+    linkGroup: 'row wrap justify-start mt-7 w-full gap-x-5 gap-y-6',
     columnWrapper: 'w-[30%] h-full',
-    itemsWrapper: 'column gap-y-3 mb-5',
+    itemsWrapper: 'column gap-y-1 mt-1 mb-5 min-h-32 rounded-md',
+    itemsWrapperOver: cn(bg('hoverBg')),
+    itemsWrapperTarget: cn('border border-dashed', primary('border')),
     addLinkRow: 'row justify-start w-full',
     linksCount: cn(groupHint, bg('sandBox'), fg('digest')),
     noLinks: cn(groupHint, rainbow(COLOR.RED, 'fg'), rainbow(COLOR.RED, 'bgSoft')),
