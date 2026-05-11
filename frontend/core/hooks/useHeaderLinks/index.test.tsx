@@ -4,6 +4,8 @@ import { ROUTE } from '~/const/route'
 import { THREAD_PATH } from '~/const/thread'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useHeaderLinks from '~/hooks/useHeaderLinks'
+import { HEADER_LINK_TYPE, MORE_TAB } from '~/hooks/useHeaderLinks/constant'
+import { isMoreTabGroup } from '~/hooks/useHeaderLinks/helper'
 import type { TCommunityThread } from '~/spec'
 
 describe('useHeaderLinks', () => {
@@ -24,8 +26,8 @@ describe('useHeaderLinks', () => {
     const custom = result.current.getCustomLinks()
     const aboutPath = `/acme/${ROUTE.ABOUT}`
 
-    expect(custom.some((l) => l.type === 'LINK' && l.url === aboutPath)).toBe(false)
-    expect(custom.some((l) => l.type === 'system-group')).toBe(false)
+    expect(custom.some((l) => l.type === HEADER_LINK_TYPE.LINK && l.url === aboutPath)).toBe(false)
+    expect(custom.some(isMoreTabGroup)).toBe(false)
   })
 
   it('folds ABOUT to MORE when custom main links exist', () => {
@@ -37,7 +39,7 @@ describe('useHeaderLinks', () => {
     const wrapper = makeStoreWrapper({
       community: { slug: 'acme', threads },
       dashboard: {
-        headerLinks: [{ id: 'docs', type: 'LINK', title: 'Docs', url: '/docs' }],
+        headerLinks: [{ id: 'docs', type: HEADER_LINK_TYPE.LINK, title: 'Docs', url: '/docs' }],
       },
     })
 
@@ -45,7 +47,7 @@ describe('useHeaderLinks', () => {
     const custom = result.current.getCustomLinks()
     const aboutPath = `/acme/${ROUTE.ABOUT}`
 
-    const more = custom.find((l) => l.type === 'system-group')
+    const more = custom.find(isMoreTabGroup)
     expect(more?.links.some((l) => l.url === aboutPath)).toBe(true)
   })
 
@@ -54,7 +56,12 @@ describe('useHeaderLinks', () => {
       community: { slug: 'acme', threads: [] },
       dashboard: {
         headerLinks: [
-          { id: 'about-custom', type: 'LINK', title: 'About menu', url: '/acme/about' },
+          {
+            id: 'about-custom',
+            type: HEADER_LINK_TYPE.LINK,
+            title: 'About menu',
+            url: '/acme/about',
+          },
         ],
       },
     })
@@ -63,12 +70,14 @@ describe('useHeaderLinks', () => {
     const custom = result.current.getCustomLinks()
     const aboutLinks = custom.filter(
       (l) =>
-        (l.type === 'LINK' && l.url === '/acme/about') ||
-        (l.type === 'system-group' && l.links.some((item) => item.url === '/acme/about')),
+        (l.type === HEADER_LINK_TYPE.LINK && l.url === '/acme/about') ||
+        (isMoreTabGroup(l) && l.links.some((item) => item.url === '/acme/about')),
     )
 
     expect(aboutLinks).toHaveLength(0)
-    expect(custom.some((l) => l.type === 'LINK' && l.url === '/acme/about')).toBe(false)
+    expect(custom.some((l) => l.type === HEADER_LINK_TYPE.LINK && l.url === '/acme/about')).toBe(
+      false,
+    )
   })
 
   it('keeps custom MORE links before fixed system links', () => {
@@ -78,8 +87,8 @@ describe('useHeaderLinks', () => {
         headerLinks: [
           {
             id: 'custom:more',
-            type: 'GROUP',
-            title: '更多',
+            type: HEADER_LINK_TYPE.GROUP,
+            title: MORE_TAB.TITLE_KEY,
             links: [{ id: 'community', title: 'Community', url: '/community' }],
           },
         ],
@@ -87,9 +96,9 @@ describe('useHeaderLinks', () => {
     })
 
     const { result } = renderHook(() => useHeaderLinks(), { wrapper })
-    const more = result.current.getCustomLinks().find((l) => l.type === 'system-group')
+    const more = result.current.getCustomLinks().find(isMoreTabGroup)
 
-    expect(more?.links.map((link) => link.id)).toEqual(['community', 'system:about'])
+    expect(more?.links.map((link) => link.id)).toEqual(['community', MORE_TAB.ABOUT_ID])
   })
 
   it('drops persisted MORE when it only contains system links', () => {
@@ -99,8 +108,8 @@ describe('useHeaderLinks', () => {
         headerLinks: [
           {
             id: 'custom:more',
-            type: 'GROUP',
-            title: '更多',
+            type: HEADER_LINK_TYPE.GROUP,
+            title: MORE_TAB.TITLE_KEY,
             links: [{ id: 'about', title: 'About', url: '/acme/about' }],
           },
         ],
@@ -108,8 +117,30 @@ describe('useHeaderLinks', () => {
     })
 
     const { result } = renderHook(() => useHeaderLinks(), { wrapper })
-    const more = result.current.getCustomLinks().find((l) => l.type === 'system-group')
+    const more = result.current.getCustomLinks().find(isMoreTabGroup)
 
     expect(more).toBeUndefined()
+  })
+
+  it('ignores legacy flat header link data', () => {
+    const wrapper = makeStoreWrapper({
+      community: { slug: 'acme', threads: [] },
+      dashboard: {
+        headerLinks: [
+          {
+            id: 'legacy',
+            title: 'Legacy',
+            link: '/legacy',
+            group: 'Legacy Group',
+            groupIndex: 0,
+            index: 0,
+          },
+        ] as never,
+      },
+    })
+
+    const { result } = renderHook(() => useHeaderLinks(), { wrapper })
+
+    expect(result.current.getCustomLinks()).toEqual([])
   })
 })

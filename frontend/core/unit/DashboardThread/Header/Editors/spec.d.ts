@@ -10,7 +10,7 @@ export type THeaderColumn = {
   title: string
   sourceIndex: number
   links: THeaderLinkChild[]
-  systemLinks: THeaderLinkChild[]
+  fixedLinks: THeaderLinkChild[]
 }
 
 export type THeaderDragTarget = {

@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from 'react'
 import { useCallback, useMemo, useState } from 'react'
 
 import { CHANGE_MODE } from '~/const/mode'
+import { HEADER_LINK_TYPE } from '~/hooks/useHeaderLinks/constant'
 import type { TChangeMode, THeaderLinkItem, TLinkItem } from '~/spec'
 
 import type { TMoveLinkDir } from '../../spec'
@@ -55,7 +56,12 @@ export default function useHeaderEditorActions({
   const [collapsedGroups, setCollapsedGroups] = useState<ReadonlySet<string>>(new Set())
 
   const triggerLinkAdd = useCallback((): void => {
-    const item: THeaderLinkItem = { id: makeId('link'), type: 'LINK', title: '', url: '' }
+    const item: THeaderLinkItem = {
+      id: makeId('link'),
+      type: HEADER_LINK_TYPE.LINK,
+      title: '',
+      url: '',
+    }
 
     onChange((items) => [...items, item])
     setEditingLink(toLinkItem(item, item.id, links.length, 0))
@@ -83,7 +89,7 @@ export default function useHeaderEditorActions({
     const childId = makeId('child')
     const nextGroup: THeaderLinkItem = {
       id: groupId,
-      type: 'GROUP',
+      type: HEADER_LINK_TYPE.GROUP,
       title: editingGroup.trim(),
       links: [{ id: childId, title: '', url: '' }],
     }
@@ -99,7 +105,7 @@ export default function useHeaderEditorActions({
 
     onChange((items) =>
       items.map((item, index) =>
-        index === editingGroupIndex && item.type === 'GROUP'
+        index === editingGroupIndex && item.type === HEADER_LINK_TYPE.GROUP
           ? { ...item, title: editingGroup.trim() }
           : item,
       ),
@@ -120,12 +126,14 @@ export default function useHeaderEditorActions({
 
       onChange((items) =>
         items.map((item) => {
-          if (item.id !== groupId || item.type !== 'GROUP') return item
+          if (item.id !== groupId || item.type !== HEADER_LINK_TYPE.GROUP) return item
           return { ...item, links: [...item.links, child] }
         }),
       )
 
-      const group = links.find((item) => item.id === groupId && item.type === 'GROUP')
+      const group = links.find(
+        (item) => item.id === groupId && item.type === HEADER_LINK_TYPE.GROUP,
+      )
       setEditingLink(toLinkItem(child, groupId, groupIndex, group?.links.length ?? 0))
       setEditingLinkMode(CHANGE_MODE.CREATE)
     },
@@ -152,7 +160,7 @@ export default function useHeaderEditorActions({
       items.map((item) => {
         if (item.id !== editingLink.group) return item
 
-        if (item.type === 'LINK') {
+        if (item.type === HEADER_LINK_TYPE.LINK) {
           return { ...item, title: editingLink.title, url: editingLink.link || '' }
         }
 
@@ -176,7 +184,7 @@ export default function useHeaderEditorActions({
       onChange((items) =>
         items.flatMap((item) => {
           if (item.id !== linkItem.group) return [item]
-          if (item.type === 'LINK') return []
+          if (item.type === HEADER_LINK_TYPE.LINK) return []
 
           return [
             {

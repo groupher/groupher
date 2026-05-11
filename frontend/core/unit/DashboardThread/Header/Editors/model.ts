@@ -1,11 +1,12 @@
+import { HEADER_LINK_TYPE, MORE_TAB } from '~/hooks/useHeaderLinks/constant'
 import {
-  CUSTOM_MORE_ID,
   isCustomMoreGroup,
+  isMoreTabGroup,
   resolveHeaderLinks,
 } from '~/hooks/useHeaderLinks/helper'
 import type { THeaderLinkChild, THeaderLinkItem, TLinkItem } from '~/spec'
 
-import { HEADER_COLUMN_KIND, SYSTEM_LINK_IDS } from './constants'
+import { HEADER_COLUMN_KIND, MORE_TAB_FIXED_LINK_IDS } from './constants'
 import type { THeaderColumn, THeaderDragTarget } from './spec'
 
 export type TMoveDir = 'up' | 'down' | 'top' | 'bottom'
@@ -28,52 +29,53 @@ export const buildHeaderColumns = (
   community: string,
 ): THeaderColumn[] => {
   const columns = links.map<THeaderColumn>((item, sourceIndex) => {
-    if (item.type === 'LINK') {
+    if (item.type === HEADER_LINK_TYPE.LINK) {
       return {
         id: item.id,
         kind: HEADER_COLUMN_KIND.LINK,
         title: item.title,
         sourceIndex,
         links: [{ id: item.id, title: item.title, url: item.url }],
-        systemLinks: [],
+        fixedLinks: [],
       }
     }
 
     const isMore = isCustomMoreGroup(item)
 
     return {
-      id: isMore ? CUSTOM_MORE_ID : item.id,
+      id: isMore ? MORE_TAB.CUSTOM_ID : item.id,
       kind: isMore ? HEADER_COLUMN_KIND.MORE : HEADER_COLUMN_KIND.GROUP,
-      title: isMore ? '更多' : item.title,
+      title: isMore ? MORE_TAB.TITLE_KEY : item.title,
       sourceIndex,
       links: [...item.links],
-      systemLinks: [],
+      fixedLinks: [],
     }
   })
 
-  const systemMore = resolveHeaderLinks(links, community).find(
-    (item) => item.type === 'system-group',
-  )
-  const systemLinks = systemMore?.links.filter((link) => SYSTEM_LINK_IDS.has(link.id)) ?? []
+  const moreTab = resolveHeaderLinks(links, community).find(isMoreTabGroup)
+  const fixedMoreTabLinks =
+    moreTab?.links.filter((link) => MORE_TAB_FIXED_LINK_IDS.has(link.id)) ?? []
 
-  if (systemLinks.length === 0) return columns
+  if (fixedMoreTabLinks.length === 0) return columns
 
   const moreColumn = columns.find((column) => column.kind === HEADER_COLUMN_KIND.MORE)
   if (moreColumn) {
     return columns.map((column) =>
-      column.id === moreColumn.id ? { ...column, systemLinks } : column,
+      column.id === moreColumn.id ? { ...column, fixedLinks: fixedMoreTabLinks } : column,
     )
   }
 
+  // The editor shows fixed More tab links as read-only children, but
+  // flattenHeaderColumns strips them so usage: more-tab is never persisted.
   return [
     ...columns,
     {
-      id: CUSTOM_MORE_ID,
+      id: MORE_TAB.CUSTOM_ID,
       kind: HEADER_COLUMN_KIND.MORE,
-      title: '更多',
+      title: MORE_TAB.TITLE_KEY,
       sourceIndex: links.length,
       links: [],
-      systemLinks,
+      fixedLinks: fixedMoreTabLinks,
     },
   ]
 }
@@ -84,16 +86,16 @@ export const flattenHeaderColumns = (columns: readonly THeaderColumn[]): THeader
       const link = column.links[0]
       if (!link) return []
 
-      return [{ id: link.id, type: 'LINK', title: link.title, url: link.url }]
+      return [{ id: link.id, type: HEADER_LINK_TYPE.LINK, title: link.title, url: link.url }]
     }
 
     if (column.kind === HEADER_COLUMN_KIND.MORE && column.links.length === 0) return []
 
     return [
       {
-        id: column.kind === HEADER_COLUMN_KIND.MORE ? CUSTOM_MORE_ID : column.id,
-        type: 'GROUP',
-        title: column.kind === HEADER_COLUMN_KIND.MORE ? '更多' : column.title,
+        id: column.kind === HEADER_COLUMN_KIND.MORE ? MORE_TAB.CUSTOM_ID : column.id,
+        type: HEADER_LINK_TYPE.GROUP,
+        title: column.kind === HEADER_COLUMN_KIND.MORE ? MORE_TAB.TITLE_KEY : column.title,
         links: column.links,
       },
     ]

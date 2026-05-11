@@ -2,20 +2,28 @@ import Link from 'next/link'
 import { type FC, Fragment, useState } from 'react'
 
 import useHeaderLinks from '~/hooks/useHeaderLinks'
+import { HEADER_LINK_TYPE } from '~/hooks/useHeaderLinks/constant'
 import useNavActiveLayoutSalon from '~/hooks/useNavActiveLayoutSalon'
+import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 import LinkSVG from '~/icons/Link'
 import MoreSVG from '~/icons/menu/MoreL'
 import useCommunity from '~/stores/community/hooks'
 import Tooltip from '~/widgets/Tooltip'
 
-import { filterVisibleHeaderLinks, isHeaderLinkActive } from './helper'
+import {
+  filterVisibleHeaderLinks,
+  isHeaderLinkActive,
+  moreTabLinkTitle,
+  moreTabTitle,
+} from './helper'
 import useSalon, { cn } from './salon/sidebar_layout'
 import type { TLinkGroup, TProps } from './spec'
 
 const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath }) => {
   const s = useSalon()
   const activeStyle = useNavActiveLayoutSalon()
+  const { t } = useTrans()
 
   const [menuOpen, setMenuOpen] = useState(false)
   const { slug } = useCommunity()
@@ -37,7 +45,7 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath
                 className={cn(s.menuItem, active && activeStyle.item)}
                 href={item.url}
               >
-                {item.title}
+                {moreTabLinkTitle(item, t)}
               </Link>
             )
           })}
@@ -62,6 +70,7 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath
 const CustomHeaderLinks: FC<TProps> = ({ links, activePath = '' }) => {
   const s = useSalon()
   const activeStyle = useNavActiveLayoutSalon()
+  const { t } = useTrans()
   const { slug } = useCommunity()
   const { getCustomLinks } = useHeaderLinks()
   const resolvedLinks = filterVisibleHeaderLinks(links ?? getCustomLinks())
@@ -71,7 +80,7 @@ const CustomHeaderLinks: FC<TProps> = ({ links, activePath = '' }) => {
       {resolvedLinks.map((item) => {
         return (
           <Fragment key={item.id}>
-            {item.type === 'LINK' ? (
+            {item.type === HEADER_LINK_TYPE.LINK ? (
               <Link
                 className={cn(
                   s.linkItem,
@@ -90,7 +99,7 @@ const CustomHeaderLinks: FC<TProps> = ({ links, activePath = '' }) => {
               </Link>
             ) : (
               <LinkGroup
-                groupTitle={item.title}
+                groupTitle={moreTabTitle(item, t)}
                 links={item.links}
                 activePath={activePath}
                 showMoreFold={item.links.length > 0}

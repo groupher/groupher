@@ -1,5 +1,6 @@
 import type { FC } from 'react'
 
+import { MORE_TAB } from '~/hooks/useHeaderLinks/constant'
 import useTrans from '~/hooks/useTrans'
 import PlusSVG from '~/icons/Plus'
 import Button from '~/widgets/Buttons/Button'
@@ -51,12 +52,14 @@ const HeaderColumn: FC<TProps> = ({
     triggerGroupUpdate,
     updateEditingGroup,
   } = editor
+
   const isSingleLink = column.kind === HEADER_COLUMN_KIND.LINK
   const isMore = column.kind === HEADER_COLUMN_KIND.MORE
+  const title = isMore ? t(MORE_TAB.TITLE_KEY) : column.title
   const isLastCustom = column.sourceIndex === customLinksLength - 1
   const isCollapsible =
     column.kind === HEADER_COLUMN_KIND.GROUP || column.kind === HEADER_COLUMN_KIND.MORE
-  const isEmptyGroup = !isSingleLink && column.links.length === 0 && column.systemLinks.length === 0
+  const isEmptyGroup = !isSingleLink && column.links.length === 0 && column.fixedLinks.length === 0
   const sortableIds = column.links.map((link) => link.id)
   const visibleLinks = [
     ...column.links.map((link, index) => ({
@@ -65,7 +68,7 @@ const HeaderColumn: FC<TProps> = ({
       sortable: true,
       sortableId: link.id,
     })),
-    ...column.systemLinks.map((link, index) => ({
+    ...column.fixedLinks.map((link, index) => ({
       link,
       index: column.links.length + index,
       sortable: false,
@@ -76,7 +79,7 @@ const HeaderColumn: FC<TProps> = ({
   return (
     <div className={s.columnWrapper}>
       <GroupHead
-        title={column.title}
+        title={title}
         kind={isSingleLink ? 'link' : isMore ? 'system' : 'group'}
         curGroupIndex={column.sourceIndex}
         isEdgeLeft={column.sourceIndex === 0}
@@ -110,7 +113,18 @@ const HeaderColumn: FC<TProps> = ({
           <div className={s.linksCount}>{linkCountLabel(visibleLinks.length, t)}</div>
         ) : (
           visibleLinks.map(({ link, index, sortable, sortableId }) => {
-            const linkItem = toLinkItem(link, column.id, column.sourceIndex, index)
+            const fixedTitle =
+              link.id === MORE_TAB.ABOUT_ID
+                ? t(MORE_TAB.ABOUT_TITLE_KEY)
+                : link.id === MORE_TAB.DASHBOARD_ID
+                  ? t(MORE_TAB.DASHBOARD_TITLE_KEY)
+                  : link.title
+            const linkItem = toLinkItem(
+              { ...link, title: fixedTitle },
+              column.id,
+              column.sourceIndex,
+              index,
+            )
 
             return (
               <SortableHeaderLinkItem

@@ -239,9 +239,11 @@ export type THeaderLinkItem =
 
 export type TResolvedHeaderLinkItem =
   | THeaderLinkItem
+  // Resolver-only group used by the Header "More" tab; never persisted.
   | {
       id: string
-      type: 'system-group'
+      type: 'GROUP'
+      usage: 'more-tab'
       title: string
       links: readonly THeaderLinkChild[]
     }

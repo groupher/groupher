@@ -2,16 +2,19 @@ import Link from 'next/link'
 import { type FC, Fragment, useState } from 'react'
 
 import useHeaderLinks from '~/hooks/useHeaderLinks'
+import { HEADER_LINK_TYPE } from '~/hooks/useHeaderLinks/constant'
+import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 import LinkSVG from '~/icons/Link'
 import Tooltip from '~/widgets/Tooltip'
 
-import { filterVisibleHeaderLinks } from './helper'
+import { filterVisibleHeaderLinks, moreTabLinkTitle, moreTabTitle } from './helper'
 import useSalon, { cn } from './salon/hero_layout'
 import type { TLinkGroup, TProps } from './spec'
 
 const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
   const s = useSalon()
+  const { t } = useTrans()
   const [menuOpen, setMenuOpen] = useState(false)
 
   if (!showMoreFold) return null
@@ -22,7 +25,7 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
         <div className={s.menuPanel}>
           {links.map((item) => (
             <Link key={item.id} href={item.url} className={s.linkItem}>
-              {item.title}
+              {moreTabLinkTitle(item, t)}
             </Link>
           ))}
         </div>
@@ -42,6 +45,7 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
 
 const CustomHeaderLinks: FC<TProps> = ({ links }) => {
   const s = useSalon()
+  const { t } = useTrans()
   const { getCustomLinks } = useHeaderLinks()
   const resolvedLinks = filterVisibleHeaderLinks(links ?? getCustomLinks())
 
@@ -50,14 +54,14 @@ const CustomHeaderLinks: FC<TProps> = ({ links }) => {
       {resolvedLinks.map((item) => {
         return (
           <Fragment key={item.id}>
-            {item.type === 'LINK' ? (
+            {item.type === HEADER_LINK_TYPE.LINK ? (
               <Link href={item.url} className={s.linkItem}>
                 <LinkSVG className={cn(s.icon, 'size-4')} />
                 {item.title}
               </Link>
             ) : (
               <LinkGroup
-                groupTitle={item.title}
+                groupTitle={moreTabTitle(item, t)}
                 links={item.links}
                 showMoreFold={item.links.length > 0}
               />

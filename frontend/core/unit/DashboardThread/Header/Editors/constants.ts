@@ -1,6 +1,6 @@
 import { MeasuringStrategy, type Announcements } from '@dnd-kit/core'
 
-import { SYSTEM_ABOUT_ID, SYSTEM_DASHBOARD_ID } from '~/hooks/useHeaderLinks/helper'
+import { MORE_TAB } from '~/hooks/useHeaderLinks/constant'
 
 export const HEADER_COLUMN_KIND = {
   LINK: 'link',
@@ -13,7 +13,7 @@ export const HEADER_DND_TYPE = {
   COLUMN: 'header-column',
 } as const
 
-export const SYSTEM_LINK_IDS = new Set([SYSTEM_ABOUT_ID, SYSTEM_DASHBOARD_ID])
+export const MORE_TAB_FIXED_LINK_IDS = new Set<string>([MORE_TAB.ABOUT_ID, MORE_TAB.DASHBOARD_ID])
 
 export const DND_MEASURING = {
   droppable: {

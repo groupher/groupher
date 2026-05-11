@@ -1,11 +1,7 @@
-import { MORE_GROUP, ONE_LINK_GROUP } from '~/const/dashboard'
 import { ROUTE } from '~/const/route'
 import type { THeaderLinkChild, THeaderLinkItem, TResolvedHeaderLinkItem } from '~/spec'
 
-export const SYSTEM_MORE_ID = 'system:more'
-export const SYSTEM_ABOUT_ID = 'system:about'
-export const SYSTEM_DASHBOARD_ID = 'system:dashboard'
-export const CUSTOM_MORE_ID = 'custom:more'
+import { HEADER_LINK_TYPE, MORE_TAB } from './constant'
 
 export const getAboutPath = (community: string): string => `/${community}/${ROUTE.ABOUT}`
 export const getDashboardPath = (community: string): string => `/${community}/dashboard`
@@ -17,8 +13,6 @@ type TLegacyHeaderLinkItem = {
   url?: string
   link?: string
   group?: string
-  groupIndex?: number
-  index?: number
   links?: readonly TLegacyHeaderLinkItem[]
 }
 
@@ -32,16 +26,25 @@ const legacyId = (prefix: string, ...parts: Array<number | string | undefined>):
   return body ? `${prefix}-${body}` : prefix
 }
 
-const normalizeType = (type?: string): 'LINK' | 'GROUP' | null => {
+type TCustomHeaderLinkType = typeof HEADER_LINK_TYPE.LINK | typeof HEADER_LINK_TYPE.GROUP
+
+type TMoreTabLinkItem = Extract<TResolvedHeaderLinkItem, { usage: typeof MORE_TAB.USAGE }>
+
+export const isMoreTabGroup = (item: TResolvedHeaderLinkItem): item is TMoreTabLinkItem =>
+  item.type === HEADER_LINK_TYPE.GROUP && 'usage' in item && item.usage === MORE_TAB.USAGE
+
+const normalizeType = (type?: string): TCustomHeaderLinkType | null => {
   if (!type) return null
 
   const normalized = type.toUpperCase()
-  return normalized === 'LINK' || normalized === 'GROUP' ? normalized : null
+  return normalized === HEADER_LINK_TYPE.LINK || normalized === HEADER_LINK_TYPE.GROUP
+    ? normalized
+    : null
 }
 
 export const normalizeUrl = (url = ''): string => url.replace(/\/$/, '')
 
-const isSystemUrl = (url: string, community: string): boolean => {
+const isMoreTabFixedUrl = (url: string, community: string): boolean => {
   const normalized = normalizeUrl(url)
 
   return (
@@ -50,121 +53,56 @@ const isSystemUrl = (url: string, community: string): boolean => {
   )
 }
 
-const isSystemChild = (link: Pick<TLegacyHeaderLinkItem, 'link' | 'url'>, community: string) =>
-  isSystemUrl(link.url || link.link || '', community)
-
-const isSystemGroup = (group: string): boolean =>
-  group === MORE_GROUP || group === '更多' || group === '关于' || group === 'About'
+const isMoreTabFixedChild = (
+  link: Pick<TLegacyHeaderLinkItem, 'link' | 'url'>,
+  community: string,
+) => isMoreTabFixedUrl(link.url || link.link || '', community)
 
 export const isCustomMoreGroup = (
   item:
     | Pick<THeaderLinkItem, 'id' | 'title' | 'type'>
     | Pick<TLegacyHeaderLinkItem, 'id' | 'title'>,
-): boolean => item.id === CUSTOM_MORE_ID || item.title === '更多' || item.title === MORE_GROUP
+): boolean => item.id === MORE_TAB.CUSTOM_ID
 
 const customMoreTitle = (
   item:
     | Pick<THeaderLinkItem, 'id' | 'title' | 'type'>
     | Pick<TLegacyHeaderLinkItem, 'id' | 'title'>,
-): string => (isCustomMoreGroup(item) ? '更多' : item.title || '')
+): string => (isCustomMoreGroup(item) ? MORE_TAB.TITLE_KEY : item.title || '')
 
 const normalizeStructuredLinks = (
   links: readonly TLegacyHeaderLinkItem[],
   community: string,
 ): readonly THeaderLinkItem[] => {
   return links.flatMap((item, index): THeaderLinkItem[] => {
-    const type = normalizeType(item.type) ?? (item.links ? 'GROUP' : 'LINK')
+    const type =
+      normalizeType(item.type) ?? (item.links ? HEADER_LINK_TYPE.GROUP : HEADER_LINK_TYPE.LINK)
     const id = item.id || legacyId('header', index, item.title)
 
-    if (type === 'LINK') {
+    if (type === HEADER_LINK_TYPE.LINK) {
       const url = item.url || item.link || ''
-      if (isSystemUrl(url, community)) return []
+      if (isMoreTabFixedUrl(url, community)) return []
 
-      return [{ id, type: 'LINK', title: item.title || '', url }]
+      return [{ id, type: HEADER_LINK_TYPE.LINK, title: item.title || '', url }]
     }
 
     const children = (item.links || [])
-      .filter((link) => !isSystemChild(link, community))
+      .filter((link) => !isMoreTabFixedChild(link, community))
       .map((link, linkIndex) => ({
         id: link.id || legacyId('header-child', index, linkIndex, link.title),
         title: link.title || '',
         url: link.url || link.link || '',
       }))
 
-    if (isSystemGroup(item.title || '') && children.length === 0) return []
-
     return [
       {
-        id: isCustomMoreGroup(item) ? CUSTOM_MORE_ID : id,
-        type: 'GROUP',
+        id: isCustomMoreGroup(item) ? MORE_TAB.CUSTOM_ID : id,
+        type: HEADER_LINK_TYPE.GROUP,
         title: customMoreTitle(item),
         links: children,
       },
     ]
   })
-}
-
-const normalizeLegacyFlatLinks = (
-  links: readonly TLegacyHeaderLinkItem[],
-  community: string,
-): readonly THeaderLinkItem[] => {
-  const groups = new Map<string, TLegacyHeaderLinkItem[]>()
-
-  for (const item of links) {
-    if (!item.group || isSystemChild(item, community)) continue
-    if (isSystemGroup(item.group) && item.group !== MORE_GROUP && item.group !== '更多') continue
-    groups.set(item.group, [...(groups.get(item.group) || []), item])
-  }
-
-  return Array.from(groups.entries())
-    .map(([group, items]) => ({
-      group,
-      groupIndex: items[0]?.groupIndex ?? 0,
-      items: [...items].sort((a, b) => (a.index ?? 0) - (b.index ?? 0)),
-    }))
-    .sort((a, b) => a.groupIndex - b.groupIndex)
-    .flatMap(({ group, groupIndex, items }): THeaderLinkItem[] => {
-      if (group.startsWith(ONE_LINK_GROUP)) {
-        const item = items[0]
-
-        return [
-          {
-            id: item.id || legacyId('header-link', groupIndex, item.index, item.title),
-            type: 'LINK',
-            title: item.title || '',
-            url: item.url || item.link || '',
-          },
-        ]
-      }
-
-      if (group === MORE_GROUP || group === '更多') {
-        return [
-          {
-            id: CUSTOM_MORE_ID,
-            type: 'GROUP',
-            title: '更多',
-            links: items.map((item) => ({
-              id: item.id || legacyId('header-child', groupIndex, item.index, item.title),
-              title: item.title || '',
-              url: item.url || item.link || '',
-            })),
-          },
-        ]
-      }
-
-      return [
-        {
-          id: legacyId('header-group', groupIndex, group),
-          type: 'GROUP',
-          title: group,
-          links: items.map((item) => ({
-            id: item.id || legacyId('header-child', groupIndex, item.index, item.title),
-            title: item.title || '',
-            url: item.url || item.link || '',
-          })),
-        },
-      ]
-    })
 }
 
 export const normalizeHeaderLinks = (
@@ -174,15 +112,20 @@ export const normalizeHeaderLinks = (
   const legacyLinks = links as readonly TLegacyHeaderLinkItem[]
   const hasLegacyFlatShape = legacyLinks.some((item) => item.group || item.link)
 
-  return hasLegacyFlatShape
-    ? normalizeLegacyFlatLinks(legacyLinks, community)
-    : normalizeStructuredLinks(legacyLinks, community)
+  // Old flat header-link records are intentionally ignored instead of being
+  // migrated in the resolver. New writes should only use THeaderLinkItem.
+  return hasLegacyFlatShape ? [] : normalizeStructuredLinks(legacyLinks, community)
 }
 
 export const hasCustomHeaderItems = (links: readonly THeaderLinkItem[]): boolean =>
-  links.some((item) => item.title.trim() !== '')
+  links.some((item) => {
+    if (item.type === HEADER_LINK_TYPE.LINK) return item.title.trim() !== ''
+    if (isCustomMoreGroup(item)) return item.links.some((link) => link.title.trim() !== '')
 
-const asSystemLink = (id: string, title: string, url: string): THeaderLinkChild => ({
+    return item.title.trim() !== '' || item.links.some((link) => link.title.trim() !== '')
+  })
+
+const asMoreTabLink = (id: string, title: string, url: string): THeaderLinkChild => ({
   id,
   title,
   url,
@@ -197,27 +140,41 @@ export const resolveHeaderLinks = (
   isModerator = false,
 ): readonly TResolvedHeaderLinkItem[] => {
   const customLinks = normalizeHeaderLinks(links, community)
-  const customMore = customLinks.find((item) => item.type === 'GROUP' && isCustomMoreGroup(item))
+  const customMore = customLinks.find(
+    (item) => item.type === HEADER_LINK_TYPE.GROUP && isCustomMoreGroup(item),
+  )
   const visibleCustomLinks = customLinks.filter((item) => item !== customMore)
-  const systemLinks: THeaderLinkChild[] = []
+  const moreTabLinks: THeaderLinkChild[] = []
 
   if (shouldFoldAboutToMore(customLinks)) {
-    systemLinks.push(asSystemLink(SYSTEM_ABOUT_ID, '关于', getAboutPath(community)))
+    moreTabLinks.push(
+      asMoreTabLink(MORE_TAB.ABOUT_ID, MORE_TAB.ABOUT_TITLE_KEY, getAboutPath(community)),
+    )
   }
 
   if (isModerator) {
-    systemLinks.push(asSystemLink(SYSTEM_DASHBOARD_ID, '控制台', getDashboardPath(community)))
+    moreTabLinks.push(
+      asMoreTabLink(
+        MORE_TAB.DASHBOARD_ID,
+        MORE_TAB.DASHBOARD_TITLE_KEY,
+        getDashboardPath(community),
+      ),
+    )
   }
 
-  if (!customMore && systemLinks.length === 0) return customLinks
+  if (!customMore && moreTabLinks.length === 0) return customLinks
+  if ((customMore?.links.length || 0) === 0 && moreTabLinks.length === 0) return visibleCustomLinks
 
   return [
     ...visibleCustomLinks,
     {
-      id: SYSTEM_MORE_ID,
-      type: 'system-group',
-      title: '更多',
-      links: [...(customMore?.links || []), ...systemLinks],
+      id: MORE_TAB.ID,
+      type: HEADER_LINK_TYPE.GROUP,
+      // usage marks this resolved group as the rendered More tab. It is never
+      // persisted back into dashboard.headerLinks.
+      usage: MORE_TAB.USAGE,
+      title: MORE_TAB.TITLE_KEY,
+      links: [...(customMore?.links || []), ...moreTabLinks],
     },
   ]
 }

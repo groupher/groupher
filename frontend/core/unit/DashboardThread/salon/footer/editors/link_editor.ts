@@ -13,7 +13,7 @@ export default function useSalon() {
     divider: cn(sexyBorder(), 'mb-4'),
     readonlyEditing: 'pt-0',
     readonlyHead: 'row-center',
-    actions: 'row-center mr-3 gap-x-1 group-smoky-0',
+    actions: 'row-center gap-x-1 group-smoky-0',
     //
     label: cn('row-center text-sm', fg('title')),
     editTitle: cn('row-center text-xs mb-2 ml-px', fg('title')),
