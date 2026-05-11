@@ -3,7 +3,11 @@ import type { FC } from 'react'
 
 import { HEADER_LAYOUT } from '~/const/layout'
 import { THREAD_PATH } from '~/const/thread'
-import { resolveHeaderLinks } from '~/hooks/useHeaderLinks/helper'
+import {
+  normalizeHeaderLinks,
+  resolveHeaderLinks,
+  shouldFoldAboutToMore,
+} from '~/hooks/useHeaderLinks/helper'
 import AccountSVG from '~/icons/Account'
 import type { TActive, TCommunityThread, THeaderLinkItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -27,11 +31,11 @@ const Right: FC<TProps> = ({ active, threads, links }) => {
 
   const radioId = 'header-layout-right'
 
-  const isAboutFold = links.length > 0
+  const isAboutFold = shouldFoldAboutToMore(normalizeHeaderLinks(links, slug))
   const visibleThreads = isAboutFold
     ? reject((t: TCommunityThread) => t.slug === THREAD_PATH.ABOUT, threads)
     : threads
-  const resolvedLinks = resolveHeaderLinks(links, slug)
+  const resolvedLinks = resolveHeaderLinks(links, slug, true)
 
   return (
     <label htmlFor={radioId} className={cn(s.wrapper, active && s.active)}>

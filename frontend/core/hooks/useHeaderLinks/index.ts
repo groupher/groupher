@@ -16,10 +16,8 @@ export default function useHeaderLinks(): THeaderLinks {
   const { headerLayout, headerLinks } = useDashboard()
   const { slug: community } = useCommunity()
 
-  const isModerator = true
-
   const getCustomLinks = useCallback(
-    () => resolveHeaderLinks(headerLinks, community, isModerator),
+    () => resolveHeaderLinks(headerLinks, community),
     [headerLinks, community],
   )
 

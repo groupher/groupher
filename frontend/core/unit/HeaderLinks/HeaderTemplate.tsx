@@ -5,6 +5,7 @@ import { type FC, Fragment } from 'react'
 import ArrowSVG from '~/icons/ArrowSimple'
 import Tooltip from '~/widgets/Tooltip'
 
+import { filterVisibleHeaderLinks } from './helper'
 import useSalon from './salon/header_template'
 import type { TLinkGroup, TProps } from './spec'
 
@@ -37,10 +38,11 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
 const CustomHeaderLinks: FC<TProps> = ({ links = [] }) => {
   const s = useSalon()
   const [animateRef] = useAutoAnimate()
+  const visibleLinks = filterVisibleHeaderLinks(links)
 
   return (
     <div className={s.wrapper} ref={animateRef}>
-      {links.map((item) => (
+      {visibleLinks.map((item) => (
         <Fragment key={item.id}>
           {item.type === 'LINK' ? (
             <Link className={s.linkItem} href={item.url}>

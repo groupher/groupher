@@ -330,9 +330,9 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   end
 
   input_object :dashboard_header_link_map do
-    field(:id, :string)
-    field(:type, :dsb_link_type)
-    field(:title, :string)
+    field(:id, non_null(:string))
+    field(:type, non_null(:dsb_link_type))
+    field(:title, non_null(:string))
     field(:url, :string)
     field(:links, list_of(:dashboard_header_link_child_map))
   end

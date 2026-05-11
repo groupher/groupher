@@ -206,7 +206,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
   def macro_schema(:header_link) do
     [
       [:id, :string, ""],
-      [:type, :string, "link"],
+      [:type, :string, "LINK"],
       [:title, :string, ""],
       [:url, :string, ""]
     ]

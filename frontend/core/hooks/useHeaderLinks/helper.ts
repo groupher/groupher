@@ -39,7 +39,7 @@ const normalizeType = (type?: string): 'LINK' | 'GROUP' | null => {
   return normalized === 'LINK' || normalized === 'GROUP' ? normalized : null
 }
 
-const normalizeUrl = (url = ''): string => url.replace(/\/$/, '')
+export const normalizeUrl = (url = ''): string => url.replace(/\/$/, '')
 
 const isSystemUrl = (url: string, community: string): boolean => {
   const normalized = normalizeUrl(url)
@@ -60,10 +60,13 @@ export const isCustomMoreGroup = (
   item:
     | Pick<THeaderLinkItem, 'id' | 'title' | 'type'>
     | Pick<TLegacyHeaderLinkItem, 'id' | 'title'>,
-): boolean => item.id === CUSTOM_MORE_ID || item.title === '更多'
+): boolean => item.id === CUSTOM_MORE_ID || item.title === '更多' || item.title === MORE_GROUP
 
-const customMoreTitle = (item: Pick<TLegacyHeaderLinkItem, 'id' | 'title'>): string =>
-  isCustomMoreGroup(item) ? '更多' : item.title || ''
+const customMoreTitle = (
+  item:
+    | Pick<THeaderLinkItem, 'id' | 'title' | 'type'>
+    | Pick<TLegacyHeaderLinkItem, 'id' | 'title'>,
+): string => (isCustomMoreGroup(item) ? '更多' : item.title || '')
 
 const normalizeStructuredLinks = (
   links: readonly TLegacyHeaderLinkItem[],
@@ -191,7 +194,7 @@ export const shouldFoldAboutToMore = (links: readonly THeaderLinkItem[]): boolea
 export const resolveHeaderLinks = (
   links: readonly THeaderLinkItem[],
   community: string,
-  isModerator = true,
+  isModerator = false,
 ): readonly TResolvedHeaderLinkItem[] => {
   const customLinks = normalizeHeaderLinks(links, community)
   const customMore = customLinks.find((item) => item.type === 'GROUP' && isCustomMoreGroup(item))

@@ -6,6 +6,7 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import LinkSVG from '~/icons/Link'
 import Tooltip from '~/widgets/Tooltip'
 
+import { filterVisibleHeaderLinks } from './helper'
 import useSalon, { cn } from './salon/hero_layout'
 import type { TLinkGroup, TProps } from './spec'
 
@@ -42,7 +43,7 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
 const CustomHeaderLinks: FC<TProps> = ({ links }) => {
   const s = useSalon()
   const { getCustomLinks } = useHeaderLinks()
-  const resolvedLinks = links ?? getCustomLinks()
+  const resolvedLinks = filterVisibleHeaderLinks(links ?? getCustomLinks())
 
   return (
     <div className={s.wrapper}>

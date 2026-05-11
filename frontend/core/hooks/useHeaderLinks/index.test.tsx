@@ -25,11 +25,7 @@ describe('useHeaderLinks', () => {
     const aboutPath = `/acme/${ROUTE.ABOUT}`
 
     expect(custom.some((l) => l.type === 'LINK' && l.url === aboutPath)).toBe(false)
-    expect(
-      custom.some(
-        (l) => l.type === 'system-group' && l.links.some((item) => item.title === '控制台'),
-      ),
-    ).toBe(true)
+    expect(custom.some((l) => l.type === 'system-group')).toBe(false)
   })
 
   it('folds ABOUT to MORE when custom main links exist', () => {
@@ -93,11 +89,7 @@ describe('useHeaderLinks', () => {
     const { result } = renderHook(() => useHeaderLinks(), { wrapper })
     const more = result.current.getCustomLinks().find((l) => l.type === 'system-group')
 
-    expect(more?.links.map((link) => link.id)).toEqual([
-      'community',
-      'system:about',
-      'system:dashboard',
-    ])
+    expect(more?.links.map((link) => link.id)).toEqual(['community', 'system:about'])
   })
 
   it('drops persisted MORE when it only contains system links', () => {
@@ -118,6 +110,6 @@ describe('useHeaderLinks', () => {
     const { result } = renderHook(() => useHeaderLinks(), { wrapper })
     const more = result.current.getCustomLinks().find((l) => l.type === 'system-group')
 
-    expect(more?.links.map((link) => link.id)).toEqual(['system:dashboard'])
+    expect(more).toBeUndefined()
   })
 })

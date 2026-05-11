@@ -9,6 +9,7 @@ import MoreSVG from '~/icons/menu/MoreL'
 import useCommunity from '~/stores/community/hooks'
 import Tooltip from '~/widgets/Tooltip'
 
+import { filterVisibleHeaderLinks, isHeaderLinkActive } from './helper'
 import useSalon, { cn } from './salon/sidebar_layout'
 import type { TLinkGroup, TProps } from './spec'
 
@@ -18,7 +19,7 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold, activePath
 
   const [menuOpen, setMenuOpen] = useState(false)
   const { slug } = useCommunity()
-  const isLinkActive = (url: string) => `/${slug}/${activePath}` === url
+  const isLinkActive = (url: string) => isHeaderLinkActive(slug, activePath || '', url)
   const isGroupActive = links.some((item) => isLinkActive(item.url))
 
   if (!showMoreFold) return null
@@ -63,7 +64,7 @@ const CustomHeaderLinks: FC<TProps> = ({ links, activePath = '' }) => {
   const activeStyle = useNavActiveLayoutSalon()
   const { slug } = useCommunity()
   const { getCustomLinks } = useHeaderLinks()
-  const resolvedLinks = links ?? getCustomLinks()
+  const resolvedLinks = filterVisibleHeaderLinks(links ?? getCustomLinks())
 
   return (
     <div className={s.wrapper}>
@@ -74,7 +75,7 @@ const CustomHeaderLinks: FC<TProps> = ({ links, activePath = '' }) => {
               <Link
                 className={cn(
                   s.linkItem,
-                  `/${slug}/${activePath}` === item.url && activeStyle.item,
+                  isHeaderLinkActive(slug, activePath, item.url) && activeStyle.item,
                 )}
                 href={item.url}
               >
@@ -82,7 +83,7 @@ const CustomHeaderLinks: FC<TProps> = ({ links, activePath = '' }) => {
                   className={cn(
                     s.icon,
                     'size-4',
-                    `/${slug}/${activePath}` === item.url && activeStyle.icon,
+                    isHeaderLinkActive(slug, activePath, item.url) && activeStyle.icon,
                   )}
                 />
                 {item.title}

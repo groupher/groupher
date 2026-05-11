@@ -34,15 +34,31 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardHeaderLink do
       :link ->
         changeset
         |> validate_required([:url])
-        |> validate_change(:links, fn :links, links ->
-          if Enum.empty?(links), do: [], else: [links: "must be empty for link items"]
-        end)
+        |> validate_empty_links()
 
       :group ->
         changeset
+        |> validate_empty_url()
 
       _ ->
         changeset
+    end
+  end
+
+  defp validate_empty_links(%Ecto.Changeset{} = changeset) do
+    links = get_field(changeset, :links) || []
+
+    if Enum.empty?(links) do
+      changeset
+    else
+      add_error(changeset, :links, "must be empty for link items")
+    end
+  end
+
+  defp validate_empty_url(%Ecto.Changeset{} = changeset) do
+    case get_field(changeset, :url) do
+      url when url in [nil, ""] -> changeset
+      _ -> add_error(changeset, :url, "must be empty for group items")
     end
   end
 end

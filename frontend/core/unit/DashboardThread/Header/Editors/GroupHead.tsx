@@ -25,9 +25,9 @@ const GroupTitle: FC<TGroupTitle> = ({ title, kind, collapsed, onToggle }) => {
   }
 
   return (
-    <div className={s.title} onClick={onToggle}>
+    <button type='button' className={s.title} onClick={onToggle}>
       {title} <ArrowSVG className={cn(s.arrowIcon, collapsed && s.arrowCollapsed)} />
-    </div>
+    </button>
   )
 }
 
