@@ -24,7 +24,12 @@ import useCommunity from '~/stores/community/hooks'
 import Button from '~/widgets/Buttons/Button'
 
 import useSalon from '../../salon/header/editors'
-import { HEADER_DND_TYPE, DND_ANNOUNCEMENTS, DND_MEASURING } from './constants'
+import {
+  HEADER_DND_CONTEXT_ID,
+  HEADER_DND_TYPE,
+  DND_ANNOUNCEMENTS,
+  DND_MEASURING,
+} from './constants'
 import FixedLinks from './FixedLinks'
 import GroupInputer from './GroupInputer'
 import HeaderColumn from './HeaderColumn'
@@ -197,6 +202,7 @@ const Editor: FC<TProps> = ({ links, makeId, onChange }) => {
       )}
 
       <DndContext
+        id={HEADER_DND_CONTEXT_ID}
         sensors={sensors}
         accessibility={{ announcements: DND_ANNOUNCEMENTS }}
         measuring={DND_MEASURING}

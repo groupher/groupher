@@ -13,6 +13,8 @@ export const HEADER_DND_TYPE = {
   COLUMN: 'header-column',
 } as const
 
+export const HEADER_DND_CONTEXT_ID = 'dashboard-header-links-dnd'
+
 export const MORE_TAB_FIXED_LINK_IDS = new Set<string>([MORE_TAB.ABOUT_ID, MORE_TAB.DASHBOARD_ID])
 
 export const DND_MEASURING = {
