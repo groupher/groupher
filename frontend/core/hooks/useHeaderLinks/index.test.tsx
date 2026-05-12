@@ -1,10 +1,11 @@
 import { renderHook } from '@testing-library/react'
 
+import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import { ROUTE } from '~/const/route'
 import { THREAD_PATH } from '~/const/thread'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useHeaderLinks from '~/hooks/useHeaderLinks'
-import { HEADER_LINK_TYPE, MORE_TAB } from '~/hooks/useHeaderLinks/constant'
+import { MORE_TAB } from '~/hooks/useHeaderLinks/constant'
 import { isMoreTabGroup } from '~/hooks/useHeaderLinks/helper'
 import type { TCommunityThread } from '~/spec'
 
@@ -26,7 +27,9 @@ describe('useHeaderLinks', () => {
     const custom = result.current.getCustomLinks()
     const aboutPath = `/acme/${ROUTE.ABOUT}`
 
-    expect(custom.some((l) => l.type === HEADER_LINK_TYPE.LINK && l.url === aboutPath)).toBe(false)
+    expect(custom.some((l) => l.type === DASHBOARD_LINK_TYPE.LINK && l.url === aboutPath)).toBe(
+      false,
+    )
     expect(custom.some(isMoreTabGroup)).toBe(false)
   })
 
@@ -39,7 +42,7 @@ describe('useHeaderLinks', () => {
     const wrapper = makeStoreWrapper({
       community: { slug: 'acme', threads },
       dashboard: {
-        headerLinks: [{ id: 'docs', type: HEADER_LINK_TYPE.LINK, title: 'Docs', url: '/docs' }],
+        headerLinks: [{ id: 'docs', type: DASHBOARD_LINK_TYPE.LINK, title: 'Docs', url: '/docs' }],
       },
     })
 
@@ -58,7 +61,7 @@ describe('useHeaderLinks', () => {
         headerLinks: [
           {
             id: 'about-custom',
-            type: HEADER_LINK_TYPE.LINK,
+            type: DASHBOARD_LINK_TYPE.LINK,
             title: 'About menu',
             url: '/acme/about',
           },
@@ -70,12 +73,12 @@ describe('useHeaderLinks', () => {
     const custom = result.current.getCustomLinks()
     const aboutLinks = custom.filter(
       (l) =>
-        (l.type === HEADER_LINK_TYPE.LINK && l.url === '/acme/about') ||
+        (l.type === DASHBOARD_LINK_TYPE.LINK && l.url === '/acme/about') ||
         (isMoreTabGroup(l) && l.links.some((item) => item.url === '/acme/about')),
     )
 
     expect(aboutLinks).toHaveLength(0)
-    expect(custom.some((l) => l.type === HEADER_LINK_TYPE.LINK && l.url === '/acme/about')).toBe(
+    expect(custom.some((l) => l.type === DASHBOARD_LINK_TYPE.LINK && l.url === '/acme/about')).toBe(
       false,
     )
   })
@@ -87,7 +90,7 @@ describe('useHeaderLinks', () => {
         headerLinks: [
           {
             id: 'custom:more',
-            type: HEADER_LINK_TYPE.GROUP,
+            type: DASHBOARD_LINK_TYPE.GROUP,
             title: MORE_TAB.TITLE_KEY,
             links: [{ id: 'community', title: 'Community', url: '/community' }],
           },
@@ -108,7 +111,7 @@ describe('useHeaderLinks', () => {
         headerLinks: [
           {
             id: 'custom:more',
-            type: HEADER_LINK_TYPE.GROUP,
+            type: DASHBOARD_LINK_TYPE.GROUP,
             title: MORE_TAB.TITLE_KEY,
             links: [{ id: 'about', title: 'About', url: '/acme/about' }],
           },

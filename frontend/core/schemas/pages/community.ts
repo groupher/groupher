@@ -61,7 +61,7 @@ export const community = `
           ${F.headerLink}
         }
         footerLinks {
-          ${F.customLink}
+          ${F.headerLink}
         }
         socialLinks {
           type

@@ -18,6 +18,7 @@ import type {
   TKanbanCardLayout,
   TKanbanBoard,
   TKanbanLayout,
+  TLinkDraftItem,
   TLinkItem,
   TLocale,
   TMediaReport,
@@ -198,7 +199,7 @@ export type TStore = TDsbFieldMap & {
   editingTag: TTag | null
   settingTag: TTag | null
   editingAlias: TNameAlias | null
-  editingLink: TLinkItem
+  editingLink: TLinkDraftItem | null
   editingLinkMode: TChangeMode
 
   editingGroup: string | null
@@ -241,7 +242,7 @@ export type TStore = TDsbFieldMap & {
 }
 
 export type TLinkState = {
-  editingLink: TLinkItem
+  editingLink: TLinkDraftItem | null
   saving: boolean
   editingLinkMode: TChangeMode
   editingGroup: string | null

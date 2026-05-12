@@ -1,8 +1,9 @@
 import { COLOR } from '~/const/colors'
 import { DEFAULT_ENABLE } from '~/const/dashboard'
+import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import METRIC from '~/const/metric'
 import { KANBAN_BOARD } from '~/const/thread'
-import type { TEnableConf, TLinkItem, TNameAlias, TTag } from '~/spec'
+import type { TEnableConf, TLinkDraftItem, TLinkItem, TNameAlias, TTag } from '~/spec'
 import type { TInit } from '~/stores/dashboard/spec'
 
 import setupStore from '..'
@@ -20,8 +21,15 @@ describe('stores/dashboard', () => {
     expect(store.headerLinks).toEqual([])
 
     const headerLinks: readonly TLinkItem[] = [
-      { index: 2, title: 'Docs', group: 'MORE', link: '/x/docs', groupIndex: 2 },
-      { index: 1, title: 'About', group: 'MORE', link: '/x/about', groupIndex: 1 },
+      {
+        id: 'more',
+        type: DASHBOARD_LINK_TYPE.GROUP,
+        title: 'More',
+        links: [
+          { id: 'docs', title: 'Docs', url: '/x/docs' },
+          { id: 'about', title: 'About', url: '/x/about' },
+        ],
+      },
     ]
 
     const enable: TEnableConf = { ...DEFAULT_ENABLE, changelog: false }
@@ -33,7 +41,7 @@ describe('stores/dashboard', () => {
       { id: 't1', title: 'Edge', color: COLOR.ORANGE },
       { id: 't2', title: 'Case', color: COLOR.BLACK },
     ]
-    const editingLink: TLinkItem = { index: 9, title: 'X', group: 'MORE', link: '/x' }
+    const editingLink: TLinkDraftItem = { index: 9, title: 'X', group: 'MORE', link: '/x' }
 
     store.commit({
       primaryColor: COLOR.ORANGE,
@@ -41,7 +49,14 @@ describe('stores/dashboard', () => {
       pageBg: 'radial-gradient(circle at 20% 20%, #111, #000)',
       kanbanBoards: [KANBAN_BOARD.BACKLOG, KANBAN_BOARD.TODO],
       headerLinks,
-      footerLinks: [{ index: 1, title: 'GitHub', group: 'LINKS', link: 'https://x' }],
+      footerLinks: [
+        {
+          id: 'links',
+          type: DASHBOARD_LINK_TYPE.GROUP,
+          title: 'Links',
+          links: [{ id: 'github', title: 'GitHub', url: 'https://x' }],
+        },
+      ],
       enable,
       nameAlias,
       tags,

@@ -140,7 +140,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       arg(:community, non_null(:string))
       arg(:dashboard_section, :dashboard_section, default_value: :header_links)
 
-      arg(:header_links, list_of(:dashboard_header_link_map))
+      arg(:header_links, list_of(:dsb_link_map))
 
       middleware(M.Authorize, :login)
       # middleware(M.PublishThrottle)
@@ -154,7 +154,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
     field :update_dashboard_footer_links, :community do
       arg(:community, non_null(:string))
       arg(:dashboard_section, :dashboard_section, default_value: :footer_links)
-      arg(:footer_links, list_of(:dashboard_link_map))
+      arg(:footer_links, list_of(:dsb_link_map))
 
       middleware(M.Authorize, :login)
       # middleware(M.PublishThrottle)

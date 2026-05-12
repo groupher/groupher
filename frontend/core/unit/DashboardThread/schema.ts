@@ -399,7 +399,7 @@ const communityOverview = gql`
 `
 
 const updateDashboardHeaderLinks = gql`
-  mutation ($community: String!, $headerLinks: [DashboardHeaderLinkMap]) {
+  mutation ($community: String!, $headerLinks: [DsbLinkMap]) {
     updateDashboardHeaderLinks(community: $community, headerLinks: $headerLinks) {
       slug
       dashboard {
@@ -411,12 +411,12 @@ const updateDashboardHeaderLinks = gql`
   }
 `
 const updateDashboardFooterLinks = gql`
-  mutation ($community: String!, $footerLinks: [DashboardLinkMap]) {
+  mutation ($community: String!, $footerLinks: [DsbLinkMap]) {
     updateDashboardFooterLinks(community: $community, footerLinks: $footerLinks) {
       slug
       dashboard {
         footerLinks {
-          ${F.customLink}
+          ${F.headerLink}
         }
       }
     }

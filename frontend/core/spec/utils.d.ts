@@ -207,7 +207,7 @@ export type TSocial = {
   slug: string
 }
 
-export type TLinkItem = {
+export type TLinkDraftItem = {
   index: number
   title: string
   link?: string
@@ -215,13 +215,13 @@ export type TLinkItem = {
   groupIndex?: number
 }
 
-export type THeaderLinkChild = {
+export type TLinkChild = {
   id: string
   title: string
   url: string
 }
 
-export type THeaderLinkItem =
+export type TLinkItem =
   | {
       id: string
       type: 'LINK'
@@ -234,8 +234,11 @@ export type THeaderLinkItem =
       type: 'GROUP'
       title: string
       url?: never
-      links: readonly THeaderLinkChild[]
+      links: readonly TLinkChild[]
     }
+
+export type THeaderLinkChild = TLinkChild
+export type THeaderLinkItem = TLinkItem
 
 export type TResolvedHeaderLinkItem =
   | THeaderLinkItem
@@ -249,7 +252,7 @@ export type TResolvedHeaderLinkItem =
     }
 
 export type TGroupedLinks = {
-  [key: string]: TLinkItem[]
+  [key: string]: TLinkDraftItem[]
 }
 
 export type TChangeMode = TConstValues<typeof CHANGE_MODE>

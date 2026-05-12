@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { type FC, Fragment, useState } from 'react'
 
+import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import useHeaderLinks from '~/hooks/useHeaderLinks'
-import { HEADER_LINK_TYPE } from '~/hooks/useHeaderLinks/constant'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 import LinkSVG from '~/icons/Link'
@@ -54,7 +54,7 @@ const CustomHeaderLinks: FC<TProps> = ({ links }) => {
       {resolvedLinks.map((item) => {
         return (
           <Fragment key={item.id}>
-            {item.type === HEADER_LINK_TYPE.LINK ? (
+            {item.type === DASHBOARD_LINK_TYPE.LINK ? (
               <Link href={item.url} className={s.linkItem}>
                 <LinkSVG className={cn(s.icon, 'size-4')} />
                 {item.title}

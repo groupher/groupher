@@ -323,22 +323,18 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     dashboard_gq_fields(:name_alias)
   end
 
-  input_object :dashboard_header_link_child_map do
+  input_object :dsb_link_child_map do
     field(:id, :string)
     field(:title, :string)
     field(:url, :string)
   end
 
-  input_object :dashboard_header_link_map do
+  input_object :dsb_link_map do
     field(:id, non_null(:string))
     field(:type, non_null(:dsb_link_type))
     field(:title, non_null(:string))
     field(:url, :string)
-    field(:links, list_of(:dashboard_header_link_child_map))
-  end
-
-  input_object :dashboard_link_map do
-    dashboard_gq_fields(:footer_link)
+    field(:links, list_of(:dsb_link_child_map))
   end
 
   input_object :dashboard_social_link_map do

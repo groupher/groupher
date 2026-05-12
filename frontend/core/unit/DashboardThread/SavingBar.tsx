@@ -90,7 +90,7 @@ const SavingBar: FC<TProps> = ({
         <InfoSVG className={s.infoIcon} />
         <div className={s.hintText}>
           {resolvedPrefix}
-          {hint && <div className={s.hint}>{hint}</div>} ?
+          {hint && <div className={s.hint}>{hint}</div>}?
         </div>
       </div>
       <div className='grow' />

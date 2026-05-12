@@ -1,35 +1,24 @@
-import { HEADER_LINK_TYPE, MORE_TAB } from '~/hooks/useHeaderLinks/constant'
+import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
+import { MORE_TAB } from '~/hooks/useHeaderLinks/constant'
 import {
   isCustomMoreGroup,
   isMoreTabGroup,
   resolveHeaderLinks,
 } from '~/hooks/useHeaderLinks/helper'
-import type { THeaderLinkChild, THeaderLinkItem, TLinkItem } from '~/spec'
+import type { THeaderLinkChild, THeaderLinkItem } from '~/spec'
 
+import { toDraftLink } from '../../LinkEditor/model'
 import { HEADER_COLUMN_KIND, MORE_TAB_FIXED_LINK_IDS } from './constants'
 import type { THeaderColumn, THeaderDragTarget } from './spec'
 
-export type TMoveDir = 'up' | 'down' | 'top' | 'bottom'
-
-export const toLinkItem = (
-  link: Pick<THeaderLinkChild, 'title' | 'url'>,
-  group: string,
-  groupIndex: number,
-  index: number,
-): TLinkItem => ({
-  index,
-  title: link.title,
-  link: link.url,
-  group,
-  groupIndex,
-})
+export const toLinkItem = toDraftLink
 
 export const buildHeaderColumns = (
   links: readonly THeaderLinkItem[],
   community: string,
 ): THeaderColumn[] => {
   const columns = links.map<THeaderColumn>((item, sourceIndex) => {
-    if (item.type === HEADER_LINK_TYPE.LINK) {
+    if (item.type === DASHBOARD_LINK_TYPE.LINK) {
       return {
         id: item.id,
         kind: HEADER_COLUMN_KIND.LINK,
@@ -86,7 +75,7 @@ export const flattenHeaderColumns = (columns: readonly THeaderColumn[]): THeader
       const link = column.links[0]
       if (!link) return []
 
-      return [{ id: link.id, type: HEADER_LINK_TYPE.LINK, title: link.title, url: link.url }]
+      return [{ id: link.id, type: DASHBOARD_LINK_TYPE.LINK, title: link.title, url: link.url }]
     }
 
     if (column.kind === HEADER_COLUMN_KIND.MORE && column.links.length === 0) return []
@@ -94,7 +83,7 @@ export const flattenHeaderColumns = (columns: readonly THeaderColumn[]): THeader
     return [
       {
         id: column.kind === HEADER_COLUMN_KIND.MORE ? MORE_TAB.CUSTOM_ID : column.id,
-        type: HEADER_LINK_TYPE.GROUP,
+        type: DASHBOARD_LINK_TYPE.GROUP,
         title: column.kind === HEADER_COLUMN_KIND.MORE ? MORE_TAB.TITLE_KEY : column.title,
         links: column.links,
       },
@@ -162,22 +151,4 @@ export const moveHeaderLinkInColumns = (
 
     return [column]
   })
-}
-
-export const move = <T>(items: readonly T[], from: number, to: number): T[] => {
-  const next = [...items]
-  const [item] = next.splice(from, 1)
-  next.splice(to, 0, item)
-  return next
-}
-
-export const moveTo = <T>(items: readonly T[], from: number, dir: TMoveDir): T[] => {
-  if (items.length <= 1) return [...items]
-
-  const to =
-    dir === 'top' ? 0 : dir === 'bottom' ? items.length - 1 : dir === 'up' ? from - 1 : from + 1
-
-  if (to < 0 || to >= items.length || to === from) return [...items]
-
-  return move(items, from, to)
 }

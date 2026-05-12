@@ -1,6 +1,13 @@
 import type { ReactNode } from 'react'
 
-import type { TChangeMode, TColorName, TConstValues, TDsbPath, TLinkItem, TTransKey } from '~/spec'
+import type {
+  TChangeMode,
+  TColorName,
+  TConstValues,
+  TDsbPath,
+  TLinkDraftItem,
+  TTransKey,
+} from '~/spec'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
 
 import type { FIELD } from './constant'
@@ -23,7 +30,7 @@ export type TDsbMenu = {
 }
 
 export type TLinkState = {
-  editingLink: TLinkItem
+  editingLink: TLinkDraftItem | null
   saving: boolean
   editingLinkMode: TChangeMode
   editingGroup: string | null

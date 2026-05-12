@@ -6,7 +6,7 @@
       "unit/DashboardThread/CMS/Communities/index.tsx",
       "unit/DashboardThread/CMS/Changelogs/index.tsx",
       "unit/DashboardThread/CMS/Docs/Table.tsx",
-      "unit/DashboardThread/Footer/Editors/LinkEditor.tsx",
+      "unit/DashboardThread/LinkEditor/index.tsx",
       "widgets/ArticleSettingMenu/SubMenu/TitleSetting.tsx"
     ]
   }

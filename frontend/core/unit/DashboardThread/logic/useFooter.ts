@@ -3,19 +3,20 @@ import useDashboard from '~/stores/dashboard/hooks'
 
 import type { TLinkState } from '../spec'
 import useHelper from './useHelper'
-import useLinks, { type TRet as TUserLinks } from './useLinks'
+import useLinkDerived, { type TRet as TDerived } from './useLinkDerived'
 
 type TRet = {
   footerLayout: TFooterLayout
   footerLinks: readonly TLinkItem[]
   edit: TEditFunc
+  resetEditingLink: () => void
 } & TLinkState &
-  TUserLinks
+  TDerived
 
 export default function useFooter(): TRet {
   const dsb$ = useDashboard()
 
-  const useLinksData = useLinks()
+  const derived = useLinkDerived()
   const { edit } = useHelper()
 
   const {
@@ -30,6 +31,7 @@ export default function useFooter(): TRet {
 
   return {
     edit,
+    resetEditingLink: () => dsb$.commit({ editingLink: null }),
     footerLayout,
     footerLinks,
     editingLink,
@@ -37,6 +39,6 @@ export default function useFooter(): TRet {
     editingGroup,
     editingGroupIndex,
     saving,
-    ...useLinksData,
+    ...derived,
   }
 }

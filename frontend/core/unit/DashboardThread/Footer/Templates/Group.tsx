@@ -1,10 +1,8 @@
-import { useAutoAnimate } from '@formkit/auto-animate/react'
-import { keys } from 'ramda'
 import type { FC } from 'react'
 
+import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import { FOOTER_LAYOUT } from '~/const/layout'
 import { DEME_SOCIALS } from '~/const/social'
-import { groupByKey, sortByGroupIndex } from '~/helper'
 import type { TActive, TLinkItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import CommunityBrand from '~/unit/CommunityBrand'
@@ -12,6 +10,7 @@ import SocialList from '~/unit/SocialList'
 
 import useFooter from '../../logic/useFooter'
 import useSalon, { cn } from '../../salon/footer/templates/group'
+import { isValidFooterLink } from '../Editors/model'
 
 type TProps = {
   links: readonly TLinkItem[]
@@ -29,13 +28,11 @@ const Group: FC<TProps> = ({ links, active, previewOnly = true }) => {
 
   const { desc } = useCommunity()
   const { edit } = useFooter()
-  const [animateRef] = useAutoAnimate()
-  const [groupAnimateRef] = useAutoAnimate()
 
   const radioId = 'footer-layout-group'
 
-  const groupedLinks = groupByKey(sortByGroupIndex(links), 'group')
-  const groupKeys = keys(groupedLinks)
+  const validLinks = links.every(isValidFooterLink) ? links : []
+  const groups = validLinks.filter((item) => item.type === DASHBOARD_LINK_TYPE.GROUP)
 
   return (
     <label htmlFor={radioId} className={cn(s.wrapper, active && s.active)}>
@@ -55,21 +52,19 @@ const Group: FC<TProps> = ({ links, active, previewOnly = true }) => {
         <SocialList left={-2} size='tiny' selected={DEME_SOCIALS} />
       </div>
 
-      <div className={s.right} ref={groupAnimateRef}>
-        {groupKeys.map((groupTitle: string) => {
-          const curGroupLinks = groupedLinks[groupTitle]
-
+      <div className={s.right}>
+        {groups.map((group) => {
           return (
-            <div className={s.center} key={groupTitle} ref={animateRef}>
-              <div className={s.groupTitle}>{groupTitle}</div>
+            <div className={s.center} key={group.id}>
+              <div className={s.groupTitle}>{group.title}</div>
 
-              {curGroupLinks.map((item) =>
+              {group.links.map((item) =>
                 previewOnly ? (
                   <span key={item.title} className={s.linkItem}>
                     {item.title}
                   </span>
                 ) : (
-                  <a key={item.title} href={item.link} className={s.linkItem}>
+                  <a key={item.title} href={item.url} className={s.linkItem}>
                     {item.title}
                   </a>
                 ),

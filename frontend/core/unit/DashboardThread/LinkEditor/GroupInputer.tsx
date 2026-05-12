@@ -1,19 +1,15 @@
 import type { FC } from 'react'
 
+import useTrans from '~/hooks/useTrans'
 import Input from '~/widgets/Input'
 
-import useSalon from '../../salon/footer/editors/group_inputer'
-import SavingBar from '../../SavingBar'
+import SavingBar from '../SavingBar'
+import useSalon from './salon/group_inputer'
+import type { TGroupInputerProps } from './spec'
 
-type TProps = {
-  value: string
-  onChange: (value: string) => void
-  onConfirm: () => void
-  onCancel: () => void
-}
-
-const GroupInputer: FC<TProps> = ({ value, onChange, onConfirm, onCancel }) => {
+const GroupInputer: FC<TGroupInputerProps> = ({ value, onChange, onConfirm, onCancel }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <SavingBar
@@ -28,7 +24,7 @@ const GroupInputer: FC<TProps> = ({ value, onChange, onConfirm, onCancel }) => {
           className={s.input}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder='// 新分组名称'
+          placeholder={t('dsb.link_editor.group_placeholder')}
           autoFocus
         />
       </div>

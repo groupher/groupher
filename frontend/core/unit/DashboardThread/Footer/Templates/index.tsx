@@ -59,21 +59,22 @@ const Templates: FC = () => {
         top={10}
       />
 
-      {!isLayoutTouched && !saving && (
-        <Button
-          size='small'
-          className='w-32'
-          ghost
-          noBorder
-          onClick={() => {
-            setShowAll(!showAll)
-            resetEditingLink()
-          }}
-        >
-          {showAll ? t('dsb.footer.templates.collapse') : t('dsb.footer.templates.switch')}
-          <ArrowSVG className={cn(s.arrowIcon, showAll && 'rotate-90')} />
-        </Button>
-      )}
+      <div className={s.action}>
+        {!isLayoutTouched && !saving && (
+          <Button
+            size='small'
+            ghost
+            noBorder
+            onClick={() => {
+              setShowAll(!showAll)
+              resetEditingLink()
+            }}
+          >
+            {showAll ? t('dsb.footer.templates.collapse') : t('dsb.footer.templates.switch')}
+            <ArrowSVG className={cn(s.arrowIcon, showAll ? 'rotate-90' : 'rotate-180')} />
+          </Button>
+        )}
+      </div>
     </div>
   )
 }

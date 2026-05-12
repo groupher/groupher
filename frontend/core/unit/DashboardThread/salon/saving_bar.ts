@@ -19,7 +19,7 @@ export default function useSalon({ minimal, width, ...spacing }: TProps) {
       margin(spacing),
     ),
     hint: cn('ml-0.5', fg('title')),
-    hintText: cn(minimal ? 'text-xs' : 'text-sm', fg('title')),
+    hintText: cn('whitespace-nowrap', minimal ? 'text-xs' : 'text-sm', fg('title')),
     infoIcon: cn('size-4 mr-2', fill('digest')),
     actions: cn('row-center', minimal && 'scale-90 -mr-2'),
   }
