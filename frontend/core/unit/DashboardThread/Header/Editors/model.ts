@@ -5,7 +5,7 @@ import {
   isMoreTabGroup,
   resolveHeaderLinks,
 } from '~/hooks/useHeaderLinks/helper'
-import type { THeaderLinkChild, THeaderLinkItem } from '~/spec'
+import type { TLinkChild, TLinkItem } from '~/spec'
 
 import { toDraftLink } from '../../LinkEditor/model'
 import { HEADER_COLUMN_KIND, MORE_TAB_FIXED_LINK_IDS } from './constants'
@@ -14,7 +14,7 @@ import type { THeaderColumn, THeaderDragTarget } from './spec'
 export const toLinkItem = toDraftLink
 
 export const buildHeaderColumns = (
-  links: readonly THeaderLinkItem[],
+  links: readonly TLinkItem[],
   community: string,
 ): THeaderColumn[] => {
   const columns = links.map<THeaderColumn>((item, sourceIndex) => {
@@ -69,8 +69,8 @@ export const buildHeaderColumns = (
   ]
 }
 
-export const flattenHeaderColumns = (columns: readonly THeaderColumn[]): THeaderLinkItem[] => {
-  return columns.flatMap((column): THeaderLinkItem[] => {
+export const flattenHeaderColumns = (columns: readonly THeaderColumn[]): TLinkItem[] => {
+  return columns.flatMap((column): TLinkItem[] => {
     if (column.kind === HEADER_COLUMN_KIND.LINK) {
       const link = column.links[0]
       if (!link) return []
@@ -91,15 +91,13 @@ export const flattenHeaderColumns = (columns: readonly THeaderColumn[]): THeader
   })
 }
 
-export const sameHeaderLinks = (
-  left: readonly THeaderLinkItem[],
-  right: readonly THeaderLinkItem[],
-): boolean => JSON.stringify(left) === JSON.stringify(right)
+export const sameHeaderLinks = (left: readonly TLinkItem[], right: readonly TLinkItem[]): boolean =>
+  JSON.stringify(left) === JSON.stringify(right)
 
 export const findColumnWithLink = (
   columns: readonly THeaderColumn[],
   itemId: string,
-): { column: THeaderColumn; link: THeaderLinkChild } | null => {
+): { column: THeaderColumn; link: TLinkChild } | null => {
   for (const column of columns) {
     const link = column.links.find((item) => item.id === itemId)
     if (link) return { column, link }

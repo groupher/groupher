@@ -72,6 +72,7 @@ export const tag = `
   color
   thread
   group
+  groupId
   index
   community {
     slug

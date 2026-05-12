@@ -7,7 +7,7 @@ import { PAGE_BG_DEFAULT } from '~/const/colors'
 import { INIT_KANBAN_BOARDS, normalizeKanbanBoards } from '~/const/dashboard'
 import { BUILTIN_ALIAS } from '~/const/name'
 import THEME from '~/const/theme'
-import { TAG_THREADS, THREAD } from '~/const/thread'
+import { THREAD } from '~/const/thread'
 import { removeEmptyValuesFromObject } from '~/helper'
 import { P } from '~/schemas'
 import type {
@@ -15,7 +15,6 @@ import type {
   TNameAlias,
   TPagedArticles,
   TPagedArticlesParams,
-  TPagedTags,
   TParseDashboard,
   TParsedWallpaper,
   TThread,
@@ -233,29 +232,6 @@ export const getPagedArticles = async (
   }
 
   return fetchPagedArticles(community, thread, filter)
-}
-
-export const getPagedTags = async (
-  community: string,
-  thread: TThread,
-): Promise<TPagedTags | null> => {
-  'use cache'
-  cacheLife('hours')
-  cacheTag(CACHE_TAG.tagsCache(community, thread))
-
-  const gqlThread = TAG_THREADS.includes(thread as (typeof TAG_THREADS)[number]) ? thread : null
-  if (!gqlThread) return null
-
-  const response = await gqFetch(P.pagedCommunityTags, { filter: { community, thread: gqlThread } })
-
-  const { data, errors } = await response.json()
-
-  if (errors) {
-    console.log('## error details', errors)
-    return null
-  }
-
-  return data[extractQueryName(P.pagedCommunityTags)]
 }
 
 export const getMetadata = (dashboard: TParseDashboard): Metadata => {

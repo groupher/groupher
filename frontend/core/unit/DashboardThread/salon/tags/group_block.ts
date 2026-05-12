@@ -7,7 +7,7 @@ export default function useSalon() {
 
   return {
     wrapper: 'mb-5',
-    header: cn('row-center min-h-9 mb-2'),
+    header: cn('group/group-title row-center min-h-9 mb-2'),
     editBox: cn('row-center h-12 w-full pl-2 rounded-lg saving-bar-right-linear'),
     foldButton: cn('align-both size-5 ml-2 rounded-md', fg('hint'), hover('bg')),
     foldIcon: cn('size-3.5 trans-all-200', fill('digest')),
@@ -16,7 +16,18 @@ export default function useSalon() {
     error: cn('ml-2 text-xs', fg('rainbow.red')),
     actionGroup: 'row-center',
     iconButton: cn('align-both size-5.5 rounded-md', hover('bg')),
+    editIconButton: cn(
+      'align-both size-5.5 rounded-md opacity-0 trans-all-200',
+      'group-hover/group-title:opacity-100 focus-visible:opacity-100',
+      hover('bg'),
+    ),
     icon: cn('size-3.5', fill('digest')),
+    groupDragHandle: cn(
+      'align-both -ml-8 mr-1 size-7 rounded-md cursor-grab opacity-0 trans-all-200',
+      'touch-none group-hover/group-title:opacity-100 focus-visible:opacity-100 active:cursor-grabbing',
+      fill('digest'),
+    ),
+    groupDragging: cn('relative z-10 select-none', bg('sandBox')),
     dragHandle: cn(
       'align-both absolute -left-8 top-0 size-10 rounded-md cursor-grab opacity-0 trans-all-200',
       'touch-none group-hover/tag-row:opacity-100 focus-visible:opacity-100 active:cursor-grabbing',

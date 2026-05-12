@@ -145,7 +145,7 @@ export const FIELDS: TDsbFieldMap = {
 
   // contents
   // tags
-  tags: [],
+  tagGroups: [],
   activeTagGroup: null,
   activeTagThread: THREAD.POST,
   nameAlias: BUILTIN_ALIAS,

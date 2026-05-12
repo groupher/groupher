@@ -10,13 +10,13 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
   alias GroupherServer.CMS
 
   alias CMS.Helper.Threads
-  alias CMS.Model.{Author, Community}
+  alias CMS.Model.{Author, Community, CommunityTagGroup}
   alias CMS.Model.Metrics.Dashboard
   alias Helper.Constant.DBPrefix
   alias Helper.Validator.Slug
 
-  @required_fields ~w(thread title color author_id community_id slug)a
-  @updatable_fields ~w(thread title desc color community_id group extra icon slug index layout)a
+  @required_fields ~w(thread title color author_id community_id group_id slug)a
+  @updatable_fields ~w(thread title desc color community_id group group_id extra icon slug index layout)a
 
   @schema_prefix DBPrefix.cms()
 
@@ -35,6 +35,7 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
 
     belongs_to(:community, Community)
     belongs_to(:author, Author)
+    belongs_to(:tag_group, CommunityTagGroup, foreign_key: :group_id)
 
     timestamps(type: :utc_datetime)
   end

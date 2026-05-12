@@ -3,7 +3,6 @@ import { useMemo } from 'react'
 
 import TYPE from '~/const/type'
 import URL_PARAM from '~/const/url_param'
-import { groupByKey } from '~/helper'
 import useActiveTag from '~/hooks/useActiveTag'
 import type { TGroupedTags, TResState, TTag } from '~/spec'
 import useArticleList from '~/stores/articleList/hooks'
@@ -13,6 +12,7 @@ type TRet = {
   activeTag: TTag | null
 
   groupedTags: TGroupedTags
+  groupKeys: string[]
   onTagSelect: (tag?: TTag) => void
 
   maxDisplayCount: number
@@ -24,14 +24,22 @@ export default function useLogic(): TRet {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const store = useArticleList()
-  const { tags } = store
+  const { tagGroups } = store
   const activeTag = useActiveTag()
   const loadingState = TYPE.RES_STATE.LOADING as TResState
 
   // derived data
-  const groupedTags = useMemo<TGroupedTags>(() => {
-    return groupByKey(tags, 'group')
-  }, [tags])
+  const { tags, groupedTags, groupKeys } = useMemo(() => {
+    const tags = tagGroups.flatMap((group) => group.tags)
+    const groupedTags = {} as TGroupedTags
+    const groupKeys = tagGroups.map((group) => group.title)
+
+    tagGroups.forEach((group) => {
+      groupedTags[group.title] = [...group.tags]
+    })
+
+    return { tags, groupedTags, groupKeys }
+  }, [tagGroups])
 
   const onTagSelect = (tag?: TTag): void => {
     const nextSearchParams = new URLSearchParams(searchParams.toString())
@@ -55,6 +63,7 @@ export default function useLogic(): TRet {
     activeTag,
 
     groupedTags,
+    groupKeys,
     onTagSelect,
 
     maxDisplayCount: 3,

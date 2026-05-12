@@ -9,7 +9,7 @@ export const DEFAULT_CREATE_TAG = {
   title: '',
   desc: '',
   thread: THREAD.POST,
-  group: '',
+  groupId: '',
 }
 
 export const holder = 1

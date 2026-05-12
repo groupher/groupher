@@ -58,18 +58,18 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
 
       assert post.upvotes_count in 10..20
 
-      {:ok, paged_post_tags} =
-        CMS.Communities.paged_tags(%{
-          page: 1,
-          size: 100,
+      {:ok, post_tag_groups} =
+        CMS.Communities.tag_groups(%{
           community_id: community.id,
           thread: :post
         })
 
-      assert paged_post_tags.total_count in 10..20
+      post_tags = Enum.flat_map(post_tag_groups, & &1.tags)
+
+      assert length(post_tags) in 10..20
 
       group_size =
-        paged_post_tags.entries
+        post_tags
         |> Enum.map(& &1.group)
         |> Enum.reject(&is_nil/1)
         |> Enum.uniq()

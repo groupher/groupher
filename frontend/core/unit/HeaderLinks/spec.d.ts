@@ -1,4 +1,4 @@
-import type { THeaderLinkChild, TResolvedHeaderLinkItem } from '~/spec'
+import type { TLinkChild, TResolvedHeaderLinkItem } from '~/spec'
 
 export type TProps = {
   links?: readonly TResolvedHeaderLinkItem[]
@@ -7,7 +7,7 @@ export type TProps = {
 
 export type TLinkGroup = {
   groupTitle: string
-  links: readonly THeaderLinkChild[]
+  links: readonly TLinkChild[]
   showMoreFold: boolean
   activePath?: string
 }

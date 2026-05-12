@@ -25,7 +25,7 @@ export default function ArticleListStore(init: TInit = {}): TStore {
     activeCat: null,
     activeStatus: null,
 
-    tags: [],
+    tagGroups: [],
     activeTag: null,
     activeTagStats: null,
 

@@ -1,7 +1,7 @@
 import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import { MORE_TAB } from '~/hooks/useHeaderLinks/constant'
 import { isMoreTabGroup } from '~/hooks/useHeaderLinks/helper'
-import type { THeaderLinkChild, TResolvedHeaderLinkItem, TTransKey } from '~/spec'
+import type { TLinkChild, TResolvedHeaderLinkItem, TTransKey } from '~/spec'
 
 const normalizeUrl = (url = ''): string => url.replace(/\/$/, '')
 
@@ -35,7 +35,7 @@ export const moreTabTitle = (
   t: (key: TTransKey) => string,
 ): string => (isMoreTabGroup(item) ? t(MORE_TAB.TITLE_KEY) : item.title)
 
-export const moreTabLinkTitle = (link: THeaderLinkChild, t: (key: TTransKey) => string): string => {
+export const moreTabLinkTitle = (link: TLinkChild, t: (key: TTransKey) => string): string => {
   if (link.id === MORE_TAB.ABOUT_ID) return t(MORE_TAB.ABOUT_TITLE_KEY)
   if (link.id === MORE_TAB.DASHBOARD_ID) return t(MORE_TAB.DASHBOARD_TITLE_KEY)
 

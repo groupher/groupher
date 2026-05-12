@@ -37,10 +37,12 @@ defmodule GroupherServer.CMS.Seeds.Tags do
     groups = @seed_groups |> Enum.take(group_count)
 
     with {:ok, bot} <- GroupherServer.CMS.Seeds.Helper.seed_bot(),
-         {:ok, existing} <- CMS.Communities.paged_tags(tag_filter(community.id, thread)) do
-      with :ok <- ensure_tags_count(community, thread, bot, groups, count, length(existing.entries)),
-           {:ok, tags} <- CMS.Communities.paged_tags(tag_filter(community.id, thread)) do
-        {:ok, Enum.map(tags.entries, & &1.id)}
+         {:ok, existing_groups} <- CMS.Communities.tag_groups(tag_filter(community.id, thread)) do
+      existing_tags = flatten_group_tags(existing_groups)
+
+      with :ok <- ensure_tags_count(community, thread, bot, groups, count, length(existing_tags)),
+           {:ok, tag_groups} <- CMS.Communities.tag_groups(tag_filter(community.id, thread)) do
+        {:ok, tag_groups |> flatten_group_tags() |> Enum.map(& &1.id)}
       end
     end
   end
@@ -59,6 +61,8 @@ defmodule GroupherServer.CMS.Seeds.Tags do
       {:error, reason} -> {:error, reason}
     end
   end
+
+  defp flatten_group_tags(groups), do: Enum.flat_map(groups, & &1.tags)
 
   defp build_tag_attrs(thread, groups, target_count, index) do
     group = Enum.at(groups, rem(index - 1, length(groups)))

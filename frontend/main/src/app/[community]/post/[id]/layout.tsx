@@ -12,9 +12,7 @@ export default async function Layout({ children, params }) {
     getPost(community, id),
     getPagedComments(community, id),
   ])
-  // const tags = await getTags(params$.community, THREAD.POST)
   // console.log('## got single post: ', post)
-  // console.log('## got tags: ', tags)
 
   const articleInitData = { post, thread: THREAD.POST }
   const commentsInitData = pagedComments

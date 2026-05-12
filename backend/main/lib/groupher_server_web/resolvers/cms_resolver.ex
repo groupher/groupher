@@ -283,8 +283,20 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Communities.create_tag(%Community{slug: community}, thread, args, user)
   end
 
+  def create_community_tag_group(_root, %{thread: thread, community: community} = args, _info) do
+    CMS.Communities.create_tag_group(%Community{slug: community}, thread, args)
+  end
+
   def update_community_tag(_root, %{id: id} = args, _info) do
     CMS.Communities.update_tag(id, args)
+  end
+
+  def update_community_tag_group(_root, %{id: id} = args, _info) do
+    CMS.Communities.update_tag_group(id, args)
+  end
+
+  def delete_community_tag_group(_root, %{id: id}, _info) do
+    CMS.Communities.delete_tag_group(id)
   end
 
   def delete_community_tag(_root, %{id: id}, _info) do
@@ -299,8 +311,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Communities.unset_tag(article, community_tag_id)
   end
 
-  def paged_community_tags(_root, %{filter: filter}, _info) do
-    CMS.Communities.paged_tags(filter)
+  def community_tag_groups(_root, ~m(community thread)a, _info) do
+    CMS.Communities.tag_groups(~m(community thread)a)
   end
 
   def community_tag_stats(_root, ~m(community thread slug)a, _info) do
@@ -311,6 +323,20 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Communities.tag_stats(root)
   end
 
+  def community_tag_group_title(%{tag_group: %{title: title}}, _args, _info), do: {:ok, title}
+
+  def community_tag_group_title(%{group: group}, _args, _info) when is_binary(group),
+    do: {:ok, group}
+
+  def community_tag_group_title(%{group_id: group_id}, _args, _info) when not is_nil(group_id) do
+    case Helper.ORM.find(GroupherServer.CMS.Model.CommunityTagGroup, group_id) do
+      {:ok, group} -> {:ok, group.title}
+      _ -> {:ok, nil}
+    end
+  end
+
+  def community_tag_group_title(_, _args, _info), do: {:ok, nil}
+
   def reindex_community_tags(_root, ~m(community thread group tags)a, _info) do
     with {:ok, _} <- CMS.Communities.reindex_tags(community, thread, group, tags) do
       {:ok, %{done: true}}
@@ -319,6 +345,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def reindex_community_tags_across_groups(_root, ~m(community thread tags)a, _info) do
     with {:ok, _} <- CMS.Communities.reindex_tags(community, thread, tags) do
+      {:ok, %{done: true}}
+    end
+  end
+
+  def reindex_community_tag_groups(_root, ~m(community thread groups)a, _info) do
+    with {:ok, _} <- CMS.Communities.reindex_tag_groups(community, thread, groups) do
       {:ok, %{done: true}}
     end
   end

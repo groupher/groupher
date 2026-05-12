@@ -12,8 +12,7 @@ const clampTranslateX = (x: number): number => Math.max(-12, Math.min(36, x))
 
 type TProps = {
   tag: TTag
-  group?: string
-  groupKey: string
+  groupId: string
   getListRect: () => DOMRect | undefined
   handleClassName: string
   itemClassName: string
@@ -31,8 +30,7 @@ type TSortableProps = TProps & {
 const SortableTagItemInner = memo(function SortableTagItemInner({
   id,
   tag,
-  group,
-  groupKey,
+  groupId,
   getListRect,
   handleClassName,
   itemClassName,
@@ -58,8 +56,7 @@ const SortableTagItemInner = memo(function SortableTagItemInner({
     id,
     data: {
       type: 'tag',
-      group,
-      groupKey,
+      groupId,
       tagId: id,
       getRect: () => cardRef.current?.getBoundingClientRect(),
       getListRect,

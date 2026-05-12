@@ -157,7 +157,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:color, non_null(:rainbow_color))
       arg(:layout, :string)
       arg(:community, non_null(:string))
-      arg(:group, :string)
+      arg(:group_id, non_null(:id))
       arg(:thread, :thread, default_value: :post)
       arg(:extra, list_of(:string))
       arg(:icon, :string)
@@ -177,7 +177,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:desc, :string)
       arg(:slug, :string)
       arg(:color, :rainbow_color)
-      arg(:group, :string)
+      arg(:group_id, :id)
       arg(:thread, :thread, default_value: :post)
       arg(:extra, list_of(:string))
       arg(:icon, :string)
@@ -186,6 +186,43 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.Passport, action: "community_tag.update")
 
       resolve(&R.CMS.update_community_tag/3)
+    end
+
+    @desc "create a tag group"
+    field :create_community_tag_group, :community_tag_group do
+      arg(:title, non_null(:string))
+      arg(:community, non_null(:string))
+      arg(:thread, :thread, default_value: :post)
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "community_tag.create")
+
+      resolve(&R.CMS.create_community_tag_group/3)
+    end
+
+    @desc "update a tag group"
+    field :update_community_tag_group, :community_tag_group do
+      arg(:id, non_null(:id))
+      arg(:community, non_null(:string))
+      arg(:title, non_null(:string))
+      arg(:thread, :thread, default_value: :post)
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "community_tag.update")
+
+      resolve(&R.CMS.update_community_tag_group/3)
+    end
+
+    @desc "delete a tag group"
+    field :delete_community_tag_group, :community_tag_group do
+      arg(:id, non_null(:id))
+      arg(:community, non_null(:string))
+      arg(:thread, :thread, default_value: :post)
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "community_tag.delete")
+
+      resolve(&R.CMS.delete_community_tag_group/3)
     end
 
     @desc "delete a tag by thread"

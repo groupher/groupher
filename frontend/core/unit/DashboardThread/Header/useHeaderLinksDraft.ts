@@ -2,7 +2,7 @@ import { clone, equals } from 'ramda'
 import { useEffect, useMemo, useState } from 'react'
 
 import { normalizeHeaderLinks } from '~/hooks/useHeaderLinks/helper'
-import type { THeaderLinkItem } from '~/spec'
+import type { TLinkItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
@@ -13,8 +13,8 @@ const makeId = (prefix: string): string =>
   `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
 type TRet = {
-  draftLinks: readonly THeaderLinkItem[]
-  setDraftLinks: React.Dispatch<React.SetStateAction<readonly THeaderLinkItem[]>>
+  draftLinks: readonly TLinkItem[]
+  setDraftLinks: React.Dispatch<React.SetStateAction<readonly TLinkItem[]>>
   isTouched: boolean
   resetDraft: () => void
   saveDraft: () => void
@@ -33,7 +33,7 @@ export default function useHeaderLinksDraft(): TRet {
     () => normalizeHeaderLinks(dsb$.original.headerLinks, slug),
     [dsb$.original.headerLinks, slug],
   )
-  const [draftLinks, setDraftLinks] = useState<readonly THeaderLinkItem[]>(source)
+  const [draftLinks, setDraftLinks] = useState<readonly TLinkItem[]>(source)
 
   useEffect(() => {
     setDraftLinks(source)

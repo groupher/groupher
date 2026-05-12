@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 
-import type { THeaderLinkChild, THeaderLinkItem } from '~/spec'
+import type { TLinkChild, TLinkItem } from '~/spec'
 
 import useSortableDraft from '../../LinkEditor/Dnd/useSortableDraft'
 import {
@@ -13,9 +13,9 @@ import {
 import type { THeaderColumn, THeaderDragTarget } from './spec'
 
 type TProps = {
-  links: readonly THeaderLinkItem[]
+  links: readonly TLinkItem[]
   community: string
-  onCommit: (links: readonly THeaderLinkItem[]) => void
+  onCommit: (links: readonly TLinkItem[]) => void
 }
 
 type TRet = {
@@ -32,7 +32,7 @@ type TRet = {
 export default function useHeaderLinkDnd({ links, community, onCommit }: TProps): TRet {
   const sourceColumns = useMemo(() => buildHeaderColumns(links, community), [community, links])
 
-  return useSortableDraft<THeaderColumn, THeaderLinkChild, THeaderDragTarget, THeaderLinkItem>({
+  return useSortableDraft<THeaderColumn, TLinkChild, THeaderDragTarget, TLinkItem>({
     sourceColumns,
     findColumnWithLink,
     flattenColumns: flattenHeaderColumns,

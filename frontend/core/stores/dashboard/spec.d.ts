@@ -13,7 +13,7 @@ import type {
   TFAQSection,
   TFooterLayout,
   THeaderLayout,
-  THeaderLinkItem,
+  TLinkItem,
   TInlineTagLayout,
   TKanbanCardLayout,
   TKanbanBoard,
@@ -32,7 +32,7 @@ import type {
   TRSSType,
   TSizeSML,
   TSocialItem,
-  TTag,
+  TTagGroup,
   TTagLayout,
   TThread,
   TUser,
@@ -149,7 +149,7 @@ export type TDsbFieldMap = {
 
   // contents
   // tags
-  tags: readonly TTag[]
+  tagGroups: readonly TTagGroup[]
   activeTagGroup: string | null
   activeTagThread: TThread | null
   nameAlias: readonly TNameAlias[]
@@ -163,7 +163,7 @@ export type TDsbFieldMap = {
   footerLayout: TFooterLayout
 
   footerLinks: readonly TLinkItem[]
-  headerLinks: readonly THeaderLinkItem[]
+  headerLinks: readonly TLinkItem[]
 
   moderators: readonly TModerator[]
 

@@ -1,6 +1,6 @@
 import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import { ROUTE } from '~/const/route'
-import type { THeaderLinkChild, THeaderLinkItem, TResolvedHeaderLinkItem } from '~/spec'
+import type { TLinkChild, TLinkItem, TResolvedHeaderLinkItem } from '~/spec'
 
 import { MORE_TAB } from './constant'
 
@@ -60,22 +60,18 @@ const isMoreTabFixedChild = (
 ) => isMoreTabFixedUrl(link.url || link.link || '', community)
 
 export const isCustomMoreGroup = (
-  item:
-    | Pick<THeaderLinkItem, 'id' | 'title' | 'type'>
-    | Pick<TLegacyHeaderLinkItem, 'id' | 'title'>,
+  item: Pick<TLinkItem, 'id' | 'title' | 'type'> | Pick<TLegacyHeaderLinkItem, 'id' | 'title'>,
 ): boolean => item.id === MORE_TAB.CUSTOM_ID
 
 const customMoreTitle = (
-  item:
-    | Pick<THeaderLinkItem, 'id' | 'title' | 'type'>
-    | Pick<TLegacyHeaderLinkItem, 'id' | 'title'>,
+  item: Pick<TLinkItem, 'id' | 'title' | 'type'> | Pick<TLegacyHeaderLinkItem, 'id' | 'title'>,
 ): string => (isCustomMoreGroup(item) ? MORE_TAB.TITLE_KEY : item.title || '')
 
 const normalizeStructuredLinks = (
   links: readonly TLegacyHeaderLinkItem[],
   community: string,
-): readonly THeaderLinkItem[] => {
-  return links.flatMap((item, index): THeaderLinkItem[] => {
+): readonly TLinkItem[] => {
+  return links.flatMap((item, index): TLinkItem[] => {
     const type =
       normalizeType(item.type) ??
       (item.links ? DASHBOARD_LINK_TYPE.GROUP : DASHBOARD_LINK_TYPE.LINK)
@@ -108,18 +104,18 @@ const normalizeStructuredLinks = (
 }
 
 export const normalizeHeaderLinks = (
-  links: readonly THeaderLinkItem[] | readonly TLegacyHeaderLinkItem[],
+  links: readonly TLinkItem[] | readonly TLegacyHeaderLinkItem[],
   community: string,
-): readonly THeaderLinkItem[] => {
+): readonly TLinkItem[] => {
   const legacyLinks = links as readonly TLegacyHeaderLinkItem[]
   const hasLegacyFlatShape = legacyLinks.some((item) => item.group || item.link)
 
   // Old flat header-link records are intentionally ignored instead of being
-  // migrated in the resolver. New writes should only use THeaderLinkItem.
+  // migrated in the resolver. New writes should only use TLinkItem.
   return hasLegacyFlatShape ? [] : normalizeStructuredLinks(legacyLinks, community)
 }
 
-export const hasCustomHeaderItems = (links: readonly THeaderLinkItem[]): boolean =>
+export const hasCustomHeaderItems = (links: readonly TLinkItem[]): boolean =>
   links.some((item) => {
     if (item.type === DASHBOARD_LINK_TYPE.LINK) return item.title.trim() !== ''
     if (isCustomMoreGroup(item)) return item.links.some((link) => link.title.trim() !== '')
@@ -127,17 +123,17 @@ export const hasCustomHeaderItems = (links: readonly THeaderLinkItem[]): boolean
     return item.title.trim() !== '' || item.links.some((link) => link.title.trim() !== '')
   })
 
-const asMoreTabLink = (id: string, title: string, url: string): THeaderLinkChild => ({
+const asMoreTabLink = (id: string, title: string, url: string): TLinkChild => ({
   id,
   title,
   url,
 })
 
-export const shouldFoldAboutToMore = (links: readonly THeaderLinkItem[]): boolean =>
+export const shouldFoldAboutToMore = (links: readonly TLinkItem[]): boolean =>
   hasCustomHeaderItems(links)
 
 export const resolveHeaderLinks = (
-  links: readonly THeaderLinkItem[],
+  links: readonly TLinkItem[],
   community: string,
   isModerator = false,
 ): readonly TResolvedHeaderLinkItem[] => {
@@ -146,7 +142,7 @@ export const resolveHeaderLinks = (
     (item) => item.type === DASHBOARD_LINK_TYPE.GROUP && isCustomMoreGroup(item),
   )
   const visibleCustomLinks = customLinks.filter((item) => item !== customMore)
-  const moreTabLinks: THeaderLinkChild[] = []
+  const moreTabLinks: TLinkChild[] = []
 
   if (shouldFoldAboutToMore(customLinks)) {
     moreTabLinks.push(

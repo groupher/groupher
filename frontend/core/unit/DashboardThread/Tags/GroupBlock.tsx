@@ -1,3 +1,5 @@
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { memo, type FC, useCallback, useMemo, useRef, useState } from 'react'
 
 import { COLOR } from '~/const/colors'
@@ -6,8 +8,10 @@ import { sortByIndex } from '~/helper'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 import EditSVG from '~/icons/EditPen'
+import GrabDotsSVG from '~/icons/GrabDots'
 import MoreSVG from '~/icons/menu/MoreL'
 import PlusSVG from '~/icons/Plus'
+import { toast } from '~/signal'
 import type { TColorName, TTag, TThread } from '~/spec'
 import Button from '~/widgets/Buttons/Button'
 import YesOrNoButtons from '~/widgets/Buttons/YesOrNoButtons'
@@ -21,10 +25,11 @@ import GroupActionMenu from './GroupActionMenu'
 import SortableTagItem from './SortableTagItem'
 import TagSortableGroup from './TagSortableGroup'
 
+const clampTranslateX = (x: number): number => Math.max(-12, Math.min(36, x))
+
 type TProps = {
   title: string
-  groupKey: string
-  group?: string | null
+  groupId: string
   tags: readonly TTag[]
   draft?: boolean
   draftId?: string
@@ -42,8 +47,7 @@ const canRenameRealGroup = (thread: TThread | null): boolean => {
 
 const GroupBlock: FC<TProps> = ({
   title,
-  groupKey,
-  group,
+  groupId,
   tags,
   draft = false,
   draftId,
@@ -56,8 +60,7 @@ const GroupBlock: FC<TProps> = ({
 }) => {
   const s = useSalon()
   const { t } = useTrans()
-  const { createTag, renameGroup } = useTags()
-  const droppableGroup = group === null ? undefined : (group ?? title)
+  const { createGroup, createTag, renameGroup } = useTags()
   const listRef = useRef<HTMLDivElement | null>(null)
   const getListRect = useCallback(() => listRef.current?.getBoundingClientRect(), [])
 
@@ -80,6 +83,35 @@ const GroupBlock: FC<TProps> = ({
     () => sortedTags.map((tag) => tag.id).filter((id): id is string => Boolean(id)),
     [sortedTags],
   )
+  const {
+    attributes,
+    listeners,
+    setActivatorNodeRef,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: `tag-group-sort:${groupId}`,
+    disabled: draft || renaming,
+    data: {
+      type: 'group',
+      groupId,
+      getRect: () => listRef.current?.parentElement?.getBoundingClientRect(),
+    },
+  })
+
+  const style = {
+    transform: transform
+      ? CSS.Transform.toString({
+          ...transform,
+          x: clampTranslateX(transform.x),
+          scaleX: 1,
+          scaleY: 1,
+        })
+      : undefined,
+    transition,
+  }
 
   const commitRename = async (): Promise<void> => {
     if (!trimmedTitle) {
@@ -96,20 +128,24 @@ const GroupBlock: FC<TProps> = ({
 
     if (draft) {
       if (!draftId) return
-      onRenameDraft(draftId, trimmedTitle)
-      setNextTitle(trimmedTitle)
-      setRenaming(false)
-      setFolded(false)
-      setCreatingFirstTag(true)
+      setSaving(true)
+      try {
+        onRenameDraft(draftId, trimmedTitle)
+        await createGroup(trimmedTitle)
+        onCompleteDraft(draftId)
+      } finally {
+        setSaving(false)
+      }
       return
     }
 
     setSaving(true)
     try {
-      await renameGroup(title, trimmedTitle)
+      await renameGroup(groupId, trimmedTitle)
       setNextTitle(trimmedTitle)
       setRenaming(false)
-    } catch {
+    } catch (err) {
+      toast(String(err), 'error')
       // Keep the editor open so the user can retry without losing the input.
     } finally {
       setSaving(false)
@@ -132,7 +168,7 @@ const GroupBlock: FC<TProps> = ({
 
     setCreatingTag(true)
     try {
-      await createTag(newTagTitle, title, newTagColor)
+      await createTag(newTagTitle, groupId, newTagColor)
       setCreatingFirstTag(false)
       setNewTagTitle('')
       setNewTagColor(COLOR.BLACK)
@@ -145,7 +181,11 @@ const GroupBlock: FC<TProps> = ({
   }
 
   return (
-    <section className={s.wrapper}>
+    <section
+      ref={setNodeRef}
+      style={style}
+      className={cn(s.wrapper, isDragging && s.groupDragging)}
+    >
       <div className={s.header}>
         {renaming ? (
           <div
@@ -177,6 +217,18 @@ const GroupBlock: FC<TProps> = ({
           </div>
         ) : (
           <>
+            {!draft && (
+              <button
+                ref={setActivatorNodeRef}
+                type='button'
+                className={s.groupDragHandle}
+                aria-label='Drag group'
+                {...attributes}
+                {...listeners}
+              >
+                <GrabDotsSVG className='size-4' />
+              </button>
+            )}
             <div className={s.title}>{title}</div>
 
             <button
@@ -191,7 +243,11 @@ const GroupBlock: FC<TProps> = ({
 
             <div className={s.actionGroup}>
               {(draft || realGroupRenameEnabled) && (
-                <button type='button' className={s.iconButton} onClick={() => setRenaming(true)}>
+                <button
+                  type='button'
+                  className={s.editIconButton}
+                  onClick={() => setRenaming(true)}
+                >
                   <EditSVG className={s.icon} />
                 </button>
               )}
@@ -229,8 +285,7 @@ const GroupBlock: FC<TProps> = ({
         <TagSortableGroup
           className={s.tags}
           overClassName={s.tagsOver}
-          group={droppableGroup}
-          groupKey={groupKey}
+          groupId={groupId}
           ids={sortableIds}
           listRef={listRef}
         >
@@ -276,8 +331,7 @@ const GroupBlock: FC<TProps> = ({
             <SortableTagItem
               key={tag.id || tag.slug || tag.title}
               tag={tag}
-              group={droppableGroup}
-              groupKey={groupKey}
+              groupId={groupId}
               getListRect={getListRect}
               handleClassName={s.dragHandle}
               itemClassName={s.sortableTag}

@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Communities do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Model.{Category, Community, CommunityTag}
+  alias CMS.Model.{Category, Community, CommunityTag, CommunityTagGroup}
   alias Helper.T
 
   alias __MODULE__.{
@@ -190,6 +190,17 @@ defmodule GroupherServer.CMS.Communities do
   @spec update_tag(T.id(), map()) :: T.domain_res(CommunityTag.t())
   def update_tag(id, attrs), do: Tags.update(id, attrs)
 
+  @spec create_tag_group(Community.t(), atom(), map()) :: T.domain_res(CommunityTagGroup.t())
+  def create_tag_group(%Community{} = community, thread, attrs) do
+    Tags.create_group(community, thread, attrs)
+  end
+
+  @spec update_tag_group(T.id(), map()) :: T.domain_res(CommunityTagGroup.t())
+  def update_tag_group(id, attrs), do: Tags.update_group(id, attrs)
+
+  @spec delete_tag_group(T.id()) :: T.domain_res(CommunityTagGroup.t())
+  def delete_tag_group(id), do: Tags.delete_group(id)
+
   @spec delete_tag(T.id()) :: T.domain_res(CommunityTag.t())
   def delete_tag(id), do: Tags.delete(id)
 
@@ -210,8 +221,8 @@ defmodule GroupherServer.CMS.Communities do
     Tags.overwrite(community, thread, article, attrs)
   end
 
-  @spec paged_tags(map()) :: T.domain_res(T.paged_data())
-  def paged_tags(filter), do: Tags.paged(filter)
+  @spec tag_groups(map()) :: T.domain_res(list(CommunityTagGroup.t()))
+  def tag_groups(filter), do: Tags.groups(filter)
 
   @spec reindex_tags(Community.t() | String.t(), atom(), atom(), list()) :: T.domain_res(atom())
   def reindex_tags(community, thread, group, tags) do
@@ -221,6 +232,11 @@ defmodule GroupherServer.CMS.Communities do
   @spec reindex_tags(Community.t() | String.t(), atom(), list()) :: T.domain_res(atom())
   def reindex_tags(community, thread, tags) do
     Tags.reindex(community, thread, tags)
+  end
+
+  @spec reindex_tag_groups(Community.t() | String.t(), atom(), list()) :: T.domain_res(atom())
+  def reindex_tag_groups(community, thread, groups) do
+    Tags.reindex_groups(community, thread, groups)
   end
 
   @spec tag_stats(CommunityTag.t() | T.id()) :: T.domain_res(term())

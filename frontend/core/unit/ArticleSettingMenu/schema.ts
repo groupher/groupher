@@ -47,10 +47,13 @@ const undoPinPost = gql`
   }
 `
 
-const pagedCommunityTags = gql`
-  query ($filter: CommunityTagsFilter) {
-    pagedCommunityTags(filter: $filter) {
-      entries {
+const communityTagGroups = gql`
+  query ($community: String!, $thread: Thread) {
+    communityTagGroups(community: $community, thread: $thread) {
+      id
+      title
+      index
+      tags {
         ${F.tag}
       }
     }
@@ -63,7 +66,7 @@ const schema = {
   setPostStatus,
   pinPost,
   undoPinPost,
-  pagedCommunityTags,
+  communityTagGroups,
 }
 
 export default schema

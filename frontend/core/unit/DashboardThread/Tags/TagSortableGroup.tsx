@@ -7,8 +7,7 @@ import { cn } from '../salon/tags/group_block'
 type TProps = {
   children: ReactNode
   className: string
-  group?: string
-  groupKey: string
+  groupId: string
   ids: string[]
   listRef: MutableRefObject<HTMLDivElement | null>
   overClassName: string
@@ -17,18 +16,16 @@ type TProps = {
 const TagSortableGroup = memo(function TagSortableGroup({
   children,
   className,
-  group,
-  groupKey,
+  groupId,
   ids,
   listRef,
   overClassName,
 }: TProps) {
   const { setNodeRef, isOver } = useDroppable({
-    id: `tag-group:${groupKey}`,
+    id: `tag-group:${groupId}`,
     data: {
-      type: 'group',
-      group,
-      groupKey,
+      type: 'tag-group',
+      groupId,
       getListRect: () => listRef.current?.getBoundingClientRect(),
     },
   })
@@ -39,7 +36,7 @@ const TagSortableGroup = memo(function TagSortableGroup({
   }
 
   return (
-    <SortableContext id={groupKey} items={ids} strategy={verticalListSortingStrategy}>
+    <SortableContext id={groupId} items={ids} strategy={verticalListSortingStrategy}>
       <div ref={setListNodeRef} className={cn(className, isOver && overClassName)}>
         {children}
       </div>

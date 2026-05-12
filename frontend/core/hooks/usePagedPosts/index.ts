@@ -1,13 +1,13 @@
 import { useSearchParams } from 'next/navigation'
 
 import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
-import type { TPagedPosts, TResState, TTag } from '~/spec'
+import type { TPagedPosts, TResState, TTagGroup } from '~/spec'
 import useArticleList from '~/stores/articleList/hooks'
 import useCommunity from '~/stores/community/hooks'
 
 export type TUpdate = {
   pagedPosts: TPagedPosts
-  tags: TTag[]
+  tagGroups: TTagGroup[]
 }
 
 type TRes = {
@@ -23,8 +23,8 @@ export default function usePagedPosts(): TRes {
   const { pagedPosts, resState } = articleList$
   const searchParams = useSearchParams()
 
-  const update = ({ pagedPosts, tags }: TUpdate) => {
-    articleList$.commit({ pagedPosts, tags })
+  const update = ({ pagedPosts, tagGroups }: TUpdate) => {
+    articleList$.commit({ pagedPosts, tagGroups })
   }
 
   const pagedParams = getPagedArticlesParams(slug, searchParams)

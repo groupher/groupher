@@ -1,6 +1,6 @@
 import { unstable_noStore as noStore } from 'next/cache'
 
-import { getPagedPosts, getTags, getTagStats } from '~/app/ssr'
+import { getPagedPosts, getTagGroups, getTagStats } from '~/app/ssr'
 import { THREAD } from '~/const/thread'
 import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
 import ArticleListStoreProvider from '~/stores/articleList/provider'
@@ -21,15 +21,15 @@ export default async function Page({ params, searchParams }) {
     noStore()
   }
 
-  const [pagedPosts, tags, activeTagStats] = await Promise.all([
+  const [pagedPosts, tagGroups, activeTagStats] = await Promise.all([
     getPagedPosts(filter),
-    getTags(params$.community, THREAD.POST),
+    getTagGroups(params$.community, THREAD.POST),
     getTagStats(params$.community, THREAD.POST, filter.communityTag),
   ])
 
   const initData = {
     pagedPosts: pagedPosts || undefined,
-    tags,
+    tagGroups,
     activeTagStats,
     thread: THREAD.POST,
   }
