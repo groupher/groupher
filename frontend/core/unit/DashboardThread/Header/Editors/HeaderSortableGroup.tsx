@@ -1,9 +1,6 @@
-import { useDroppable } from '@dnd-kit/core'
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { type ReactNode, memo, useRef } from 'react'
+import { type ReactNode, memo } from 'react'
 
-import { cn } from '~/css'
-
+import SortableGroup from '../../LinkEditor/Dnd/SortableGroup'
 import { HEADER_DND_TYPE } from './constants'
 
 type TProps = {
@@ -25,31 +22,19 @@ const HeaderSortableGroup = memo(function HeaderSortableGroup({
   overClassName,
   targetClassName = '',
 }: TProps) {
-  const listRef = useRef<HTMLDivElement | null>(null)
-  const { setNodeRef, isOver } = useDroppable({
-    id: `header-column:${columnId}`,
-    disabled,
-    data: {
-      type: HEADER_DND_TYPE.COLUMN,
-      columnId,
-      getListRect: () => listRef.current?.getBoundingClientRect(),
-    },
-  })
-
-  const setListNodeRef = (node: HTMLDivElement | null): void => {
-    listRef.current = node
-    setNodeRef(node)
-  }
-
   return (
-    <SortableContext id={columnId} items={ids} strategy={verticalListSortingStrategy}>
-      <div
-        ref={setListNodeRef}
-        className={cn(className, isOver && !targetClassName && overClassName, targetClassName)}
-      >
-        {children}
-      </div>
-    </SortableContext>
+    <SortableGroup
+      className={className}
+      columnId={columnId}
+      disabled={disabled}
+      dndType={{ link: HEADER_DND_TYPE.LINK, column: HEADER_DND_TYPE.COLUMN }}
+      idPrefix='header-column'
+      ids={ids}
+      overClassName={overClassName}
+      targetClassName={targetClassName}
+    >
+      {children}
+    </SortableGroup>
   )
 })
 
