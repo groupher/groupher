@@ -1,111 +1,142 @@
-import { useAutoAnimate } from '@formkit/auto-animate/react'
-import { keys } from 'ramda'
 import type { FC } from 'react'
 
-import { groupByKey, sortByGroupIndex } from '~/helper'
+import useTrans from '~/hooks/useTrans'
 import PlusSVG from '~/icons/Plus'
-import type { TLinkItem } from '~/spec'
+import useDashboard from '~/stores/dashboard/hooks'
+import { FIELD } from '~/unit/DashboardThread/constant'
 import Button from '~/widgets/Buttons/Button'
 
+import LinkEditor from '../../../LinkEditor'
+import GroupHead from '../../../LinkEditor/GroupHead'
+import GroupInputer from '../../../LinkEditor/GroupInputer'
+import LinksHint from '../../../LinkEditor/LinksHint'
 import useFooter from '../../../logic/useFooter'
 import useSalon from '../../../salon/footer/editors/group'
-import GroupInputer from '../GroupInputer'
-import LinkEditor from '../LinkEditor'
-import GroupHead from './GroupHead'
+import FooterDndContext from '../FooterDndContext'
+import FooterSortableGroup from '../FooterSortableGroup'
+import { toDraftLink } from '../model'
+import SortableFooterLinkItem from '../SortableFooterLinkItem'
+import useFooterEditorActions from '../useFooterEditorActions'
 
 const Group: FC = () => {
   const s = useSalon()
+  const { t } = useTrans()
 
-  const {
-    footerLinks: links,
-    editingLink,
-    editingLinkMode,
-    editingGroup,
-    editingGroupIndex,
-    add2Group,
-    deleteGroup,
-    moveGroup2Left,
-    moveGroup2Right,
-    moveGroup2EdgeLeft,
-    moveGroup2EdgeRight,
-    updateEditingGroup,
-    triggerGroupAdd,
-    cancelGroupChange,
-    confirmGroupAdd,
-  } = useFooter()
-
-  const [animateRef] = useAutoAnimate()
-  const [groupAnimateRef] = useAutoAnimate()
-
-  const groupedLinks = groupByKey(sortByGroupIndex(links), 'group')
-  const groupKeys = keys(groupedLinks)
+  const { footerLinks: links } = useFooter()
+  const editor = useFooterEditorActions(links)
+  const dsb$ = useDashboard()
 
   return (
     <div className={s.wrapper}>
       <div className={s.actionRow}>
-        {editingGroup !== null && editingGroupIndex === null ? (
+        {editor.editingGroup !== null && editor.editingGroupIndex === null ? (
           <GroupInputer
-            value={editingGroup}
-            onChange={updateEditingGroup}
-            onConfirm={confirmGroupAdd}
-            onCancel={cancelGroupChange}
+            value={editor.editingGroup}
+            onChange={editor.updateEditingGroup}
+            onConfirm={editor.confirmGroupAdd}
+            onCancel={editor.cancelGroupChange}
           />
         ) : (
-          <Button size='small' className='w-40' ghost space={4} onClick={() => triggerGroupAdd()}>
+          <Button
+            size='small'
+            ghost
+            noBorder
+            space={1.5}
+            left={-1}
+            onClick={editor.triggerGroupAdd}
+          >
             <PlusSVG className={s.plusIcon} />
-            添加分组
+            {t('dsb.footer.editors.group')}
           </Button>
         )}
       </div>
-      <div className={s.linkGroup} ref={groupAnimateRef}>
-        {groupKeys.map((groupKey: string, index) => {
-          const curGroupLinks = groupedLinks[groupKey]
 
-          return (
-            <div className={s.column} key={groupKey}>
-              <div className={s.items} ref={animateRef}>
-                <GroupHead
-                  title={groupKey as string}
-                  editingGroup={editingGroup}
-                  editingGroupIndex={editingGroupIndex}
-                  curGroupIndex={index}
-                  moveLeft={() => moveGroup2Left(groupKey)}
-                  moveRight={() => moveGroup2Right(groupKey)}
-                  moveEdgeLeft={() => moveGroup2EdgeLeft(groupKey)}
-                  moveEdgeRight={() => moveGroup2EdgeRight(groupKey)}
-                  isEdgeLeft={index === 0}
-                  isEdgeRight={index === groupKeys.length - 1}
-                  onDelete={() => deleteGroup(curGroupLinks[0].groupIndex)}
-                />
-                {curGroupLinks.map((item, index) => (
-                  <LinkEditor
-                    // must use item.title as key, or the sort animation will fail, wired
-                    key={item.title}
-                    mode={editingLinkMode}
-                    linkItem={item as TLinkItem}
-                    editingLink={editingLink}
-                    isFirst={index === 0}
-                    isLast={index === curGroupLinks.length - 1}
-                  />
-                ))}
-              </div>
+      <FooterDndContext
+        links={links}
+        onCommit={(nextLinks) => dsb$.editField(FIELD.FOOTER_LINKS, nextLinks)}
+      >
+        {({ activeDragColumnId, columns, targetDragColumnId }) => (
+          <div className={s.linkGroup}>
+            {columns.map((column, index) => {
+              const isCollapsed = editor.collapsedGroups.has(column.id)
+              const isEmptyGroup = column.links.length === 0
+              const isCrossGroupTarget =
+                !!activeDragColumnId &&
+                !!targetDragColumnId &&
+                targetDragColumnId === column.id &&
+                activeDragColumnId !== column.id
 
-              {!editingLink && (
-                <Button
-                  size='small'
-                  ghost
-                  space={4}
-                  onClick={() => add2Group(groupKey, curGroupLinks.length)}
-                  className='w-24'
-                >
-                  <PlusSVG className={s.plusIcon} />
-                  链接
-                </Button>
-              )}
-            </div>
-          )
-        })}
-      </div>
+              return (
+                <div className={s.column} key={column.id}>
+                  <FooterSortableGroup
+                    className={s.items}
+                    overClassName={s.itemsOver}
+                    targetClassName={isCrossGroupTarget ? s.itemsTarget : ''}
+                    columnId={column.id}
+                    ids={column.links.map((item) => item.dndId)}
+                  >
+                    <GroupHead
+                      title={column.title}
+                      currentIndex={index}
+                      collapsed={isCollapsed}
+                      onToggle={() => editor.toggleGroup(column.id)}
+                      onEdit={editor.triggerGroupUpdate}
+                      onDelete={() => editor.deleteGroup(column.sourceIndex)}
+                      editingGroup={editor.editingGroup}
+                      editingGroupIndex={editor.editingGroupIndex}
+                      onCancelEdit={editor.cancelGroupChange}
+                      onChangeEdit={editor.updateEditingGroup}
+                      onConfirmEdit={editor.confirmGroupUpdate}
+                    />
+                    {isEmptyGroup ? (
+                      <LinksHint count={0} empty />
+                    ) : isCollapsed ? (
+                      <LinksHint count={column.links.length} />
+                    ) : (
+                      column.links.map((item, itemIndex) => {
+                        const linkItem = toDraftLink(item, column.id, index, itemIndex)
+
+                        return (
+                          <SortableFooterLinkItem
+                            key={item.dndId}
+                            id={item.dndId}
+                            columnId={column.id}
+                            editing={
+                              linkItem.group === editor.editingLink?.group &&
+                              linkItem.index === editor.editingLink?.index
+                            }
+                          >
+                            <LinkEditor
+                              mode={editor.editingLinkMode}
+                              linkItem={linkItem}
+                              editingLink={editor.editingLink}
+                              actions={editor.linkActions}
+                            />
+                          </SortableFooterLinkItem>
+                        )
+                      })
+                    )}
+                  </FooterSortableGroup>
+
+                  {!editor.editingLink && !isCollapsed && (
+                    <Button
+                      onClick={() => editor.add2Group(column.id, index)}
+                      size='small'
+                      ghost
+                      noBorder
+                      space={1}
+                      left={0.5}
+                    >
+                      <PlusSVG className={s.plusIcon} />
+                      {t('dsb.footer.editors.link')}
+                    </Button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </FooterDndContext>
     </div>
   )
 }

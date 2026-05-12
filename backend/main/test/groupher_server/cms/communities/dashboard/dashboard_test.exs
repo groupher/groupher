@@ -412,12 +412,10 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
       {:ok, _} =
         CMS.Communities.update_dashboard(community, :footer_links, [
           %{
+            id: "group-1",
+            type: :group,
             title: "title",
-            link: "link",
-            group: "group",
-            index: 1,
-            is_hot: false,
-            is_new: false
+            links: [%{id: "link-1", title: "link-title", url: "link"}]
           }
         ])
 
@@ -426,8 +424,7 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
       first = find_community.dashboard.footer_links |> Enum.at(0)
 
       assert first.title == "title"
-      assert first.link == "link"
-      assert first.group == "group"
+      assert first.links |> List.first() |> Map.get(:url) == "link"
     end
 
     test "should overwrite all footer links in community dashboard every time",
@@ -437,20 +434,16 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
       {:ok, _} =
         CMS.Communities.update_dashboard(community, :footer_links, [
           %{
+            id: "group-1",
+            type: :group,
             title: "title",
-            link: "link",
-            group: "group",
-            index: 1,
-            is_hot: false,
-            is_new: false
+            links: [%{id: "link-1", title: "link-title", url: "link"}]
           },
           %{
+            id: "group-2",
+            type: :group,
             title: "title2",
-            link: "link2",
-            group: "group2",
-            index: 2,
-            is_hot: false,
-            is_new: false
+            links: [%{id: "link-2", title: "link-title2", url: "link2"}]
           }
         ])
 
@@ -467,13 +460,10 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
       {:ok, _} =
         CMS.Communities.update_dashboard(community, :footer_links, [
           %{
+            id: "group-3",
+            type: :group,
             title: "title3",
-            link: "link3",
-            group: "group3",
-            group_index: 3,
-            index: 1,
-            is_hot: false,
-            is_new: false
+            links: []
           }
         ])
 
@@ -482,7 +472,7 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
 
       third = find_community.dashboard.footer_links |> Enum.at(0)
       assert third.title == "title3"
-      assert third.group_index == 3
+      assert third.links == []
     end
 
     test "can update media reports in community dashboard", ~m(community_attrs user)a do

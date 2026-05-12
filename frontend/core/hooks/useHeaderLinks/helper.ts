@@ -1,7 +1,8 @@
+import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import { ROUTE } from '~/const/route'
 import type { THeaderLinkChild, THeaderLinkItem, TResolvedHeaderLinkItem } from '~/spec'
 
-import { HEADER_LINK_TYPE, MORE_TAB } from './constant'
+import { MORE_TAB } from './constant'
 
 export const getAboutPath = (community: string): string => `/${community}/${ROUTE.ABOUT}`
 export const getDashboardPath = (community: string): string => `/${community}/dashboard`
@@ -26,18 +27,18 @@ const legacyId = (prefix: string, ...parts: Array<number | string | undefined>):
   return body ? `${prefix}-${body}` : prefix
 }
 
-type TCustomHeaderLinkType = typeof HEADER_LINK_TYPE.LINK | typeof HEADER_LINK_TYPE.GROUP
+type TCustomHeaderLinkType = typeof DASHBOARD_LINK_TYPE.LINK | typeof DASHBOARD_LINK_TYPE.GROUP
 
 type TMoreTabLinkItem = Extract<TResolvedHeaderLinkItem, { usage: typeof MORE_TAB.USAGE }>
 
 export const isMoreTabGroup = (item: TResolvedHeaderLinkItem): item is TMoreTabLinkItem =>
-  item.type === HEADER_LINK_TYPE.GROUP && 'usage' in item && item.usage === MORE_TAB.USAGE
+  item.type === DASHBOARD_LINK_TYPE.GROUP && 'usage' in item && item.usage === MORE_TAB.USAGE
 
 const normalizeType = (type?: string): TCustomHeaderLinkType | null => {
   if (!type) return null
 
   const normalized = type.toUpperCase()
-  return normalized === HEADER_LINK_TYPE.LINK || normalized === HEADER_LINK_TYPE.GROUP
+  return normalized === DASHBOARD_LINK_TYPE.LINK || normalized === DASHBOARD_LINK_TYPE.GROUP
     ? normalized
     : null
 }
@@ -76,14 +77,15 @@ const normalizeStructuredLinks = (
 ): readonly THeaderLinkItem[] => {
   return links.flatMap((item, index): THeaderLinkItem[] => {
     const type =
-      normalizeType(item.type) ?? (item.links ? HEADER_LINK_TYPE.GROUP : HEADER_LINK_TYPE.LINK)
+      normalizeType(item.type) ??
+      (item.links ? DASHBOARD_LINK_TYPE.GROUP : DASHBOARD_LINK_TYPE.LINK)
     const id = item.id || legacyId('header', index, item.title)
 
-    if (type === HEADER_LINK_TYPE.LINK) {
+    if (type === DASHBOARD_LINK_TYPE.LINK) {
       const url = item.url || item.link || ''
       if (isMoreTabFixedUrl(url, community)) return []
 
-      return [{ id, type: HEADER_LINK_TYPE.LINK, title: item.title || '', url }]
+      return [{ id, type: DASHBOARD_LINK_TYPE.LINK, title: item.title || '', url }]
     }
 
     const children = (item.links || [])
@@ -97,7 +99,7 @@ const normalizeStructuredLinks = (
     return [
       {
         id: isCustomMoreGroup(item) ? MORE_TAB.CUSTOM_ID : id,
-        type: HEADER_LINK_TYPE.GROUP,
+        type: DASHBOARD_LINK_TYPE.GROUP,
         title: customMoreTitle(item),
         links: children,
       },
@@ -119,7 +121,7 @@ export const normalizeHeaderLinks = (
 
 export const hasCustomHeaderItems = (links: readonly THeaderLinkItem[]): boolean =>
   links.some((item) => {
-    if (item.type === HEADER_LINK_TYPE.LINK) return item.title.trim() !== ''
+    if (item.type === DASHBOARD_LINK_TYPE.LINK) return item.title.trim() !== ''
     if (isCustomMoreGroup(item)) return item.links.some((link) => link.title.trim() !== '')
 
     return item.title.trim() !== '' || item.links.some((link) => link.title.trim() !== '')
@@ -141,7 +143,7 @@ export const resolveHeaderLinks = (
 ): readonly TResolvedHeaderLinkItem[] => {
   const customLinks = normalizeHeaderLinks(links, community)
   const customMore = customLinks.find(
-    (item) => item.type === HEADER_LINK_TYPE.GROUP && isCustomMoreGroup(item),
+    (item) => item.type === DASHBOARD_LINK_TYPE.GROUP && isCustomMoreGroup(item),
   )
   const visibleCustomLinks = customLinks.filter((item) => item !== customMore)
   const moreTabLinks: THeaderLinkChild[] = []
@@ -169,7 +171,7 @@ export const resolveHeaderLinks = (
     ...visibleCustomLinks,
     {
       id: MORE_TAB.ID,
-      type: HEADER_LINK_TYPE.GROUP,
+      type: DASHBOARD_LINK_TYPE.GROUP,
       // usage marks this resolved group as the rendered More tab. It is never
       // persisted back into dashboard.headerLinks.
       usage: MORE_TAB.USAGE,

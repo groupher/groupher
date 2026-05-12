@@ -12,8 +12,8 @@ export default function useSalon() {
     wrapper: cn(
       'group group/header-link-row relative w-full rounded-md px-2 will-change-transform',
       'border border-transparent trans-all-100',
-      hover('box'),
     ),
+    hoverable: hover('box'),
     dragging: cn('z-10 select-none', bg('sandBox')),
   }
 }

@@ -1,4 +1,5 @@
-import { HEADER_LINK_TYPE, MORE_TAB } from '~/hooks/useHeaderLinks/constant'
+import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
+import { MORE_TAB } from '~/hooks/useHeaderLinks/constant'
 import { isMoreTabGroup } from '~/hooks/useHeaderLinks/helper'
 import type { THeaderLinkChild, TResolvedHeaderLinkItem, TTransKey } from '~/spec'
 
@@ -11,7 +12,7 @@ export const filterVisibleHeaderLinks = (
   links: readonly TResolvedHeaderLinkItem[],
 ): readonly TResolvedHeaderLinkItem[] => {
   return links.flatMap((item): TResolvedHeaderLinkItem[] => {
-    if (item.type === HEADER_LINK_TYPE.LINK) {
+    if (item.type === DASHBOARD_LINK_TYPE.LINK) {
       return isLinkVisible(item.title, item.url) ? [item] : []
     }
 

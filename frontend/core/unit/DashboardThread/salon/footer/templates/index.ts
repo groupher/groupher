@@ -8,6 +8,7 @@ export default function useSalon() {
   return {
     wrapper: 'column items-center w-full gap-4 pb-8',
     options: 'column gap-y-6',
+    action: 'align-both w-full',
     template: cn(
       'w-full h-16 border rounded-md pointer',
       `hover:${primary('border')}`,
@@ -16,6 +17,6 @@ export default function useSalon() {
       'trans-all-100',
     ),
     templateActive: cn(primary('borderSoft'), shadow('md')),
-    arrowIcon: cn('size-3.5 ml-0.5 rotate-180', primary('fill')),
+    arrowIcon: cn('size-3.5 ml-0.5', primary('fill')),
   }
 }

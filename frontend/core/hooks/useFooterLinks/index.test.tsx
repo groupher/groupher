@@ -7,12 +7,19 @@ describe('useFooterLinks', () => {
   it('returns footer links projection', () => {
     const wrapper = makeStoreWrapper({
       dashboard: {
-        footerLinks: [{ index: 1, title: 'GitHub', group: 'LINKS', link: 'https://x' }],
+        footerLinks: [
+          {
+            id: 'links',
+            type: 'GROUP',
+            title: 'Links',
+            links: [{ id: 'github', title: 'GitHub', url: 'https://x' }],
+          },
+        ],
       },
     })
 
     const { result } = renderHook(() => useFooterLinks(), { wrapper })
     expect(result.current.links).toHaveLength(1)
-    expect(result.current.links[0].title).toBe('GitHub')
+    expect(result.current.links[0].title).toBe('Links')
   })
 })

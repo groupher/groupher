@@ -436,7 +436,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_header_links_query """
-    mutation($community: String!, $headerLinks: [DashboardHeaderLinkMap]) {
+    mutation($community: String!, $headerLinks: [DsbLinkMap]) {
       updateDashboardHeaderLinks(community: $community, headerLinks: $headerLinks) {
         id
         title
@@ -503,13 +503,20 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_footer_links_query """
-    mutation($community: String!, $footerLinks: [DashboardLinkMap]) {
+    mutation($community: String!, $footerLinks: [DsbLinkMap]) {
       updateDashboardFooterLinks(community: $community, footerLinks: $footerLinks) {
         id
         title
         dashboard {
           footerLinks {
-            groupIndex
+            id
+            type
+            title
+            links {
+              id
+              title
+              url
+            }
           }
         }
       }
@@ -522,13 +529,10 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         community: community.slug,
         footerLinks: [
           %{
+            id: "group-1",
+            type: "GROUP",
             title: "title",
-            link: "link",
-            group: "group",
-            group_index: 1,
-            index: 1,
-            is_hot: false,
-            is_new: false
+            links: [%{id: "link-1", title: "link-title", url: "link"}]
           }
         ]
       }
@@ -537,16 +541,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         rule_conn
         |> gq_mutation(@update_footer_links_query, variables)
 
-      assert updated["dashboard"]["footerLinks"] |> List.first() |> Map.get("groupIndex") == 1
+      assert updated["dashboard"]["footerLinks"] |> List.first() |> Map.get("title") == "title"
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
       link = found.dashboard.footer_links |> Enum.at(0)
 
       assert link.title == "title"
-      assert link.link == "link"
-      assert link.group == "group"
-      assert link.group_index == 1
+      assert link.links |> List.first() |> Map.get(:url) == "link"
     end
 
     @update_social_links_query """

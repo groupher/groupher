@@ -63,11 +63,11 @@ const Templates: FC<TProps> = ({ links }) => {
         top={10}
       />
 
-      <div className='align-both'>
+      <div className={s.action}>
         {!isLayoutTouched && !saving && (
-          <Button size='small' ghost noBorder className='w-36' onClick={() => setShowAll(!showAll)}>
+          <Button size='small' ghost noBorder onClick={() => setShowAll(!showAll)}>
             {showAll ? t('dsb.header.templates.collapse') : t('dsb.header.templates.switch')}
-            <ArrowSVG className={cn(s.arrowIcon, showAll && 'rotate-90')} />
+            <ArrowSVG className={cn(s.arrowIcon, showAll ? 'rotate-90' : 'rotate-180')} />
           </Button>
         )}
       </div>

@@ -29,8 +29,8 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
       thread_emotions: Embeds.DashboardThreadEmotions.default(),
       rss: Embeds.DashboardRSS.default(),
       name_alias: Embeds.DashboardNameAlias.default(),
-      header_links: Embeds.DashboardHeaderLink.default(),
-      footer_links: Embeds.DashboardFooterLink.default(),
+      header_links: Embeds.DashboardLink.default(),
+      footer_links: Embeds.DashboardLink.default(),
       social_links: Embeds.DashboardSocialLink.default(),
       media_reports: Embeds.DashboardMediaReport.default(),
       faqs: Embeds.DashboardFAQ.default()
@@ -47,8 +47,8 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
     embeds_one(:thread_emotions, Embeds.DashboardThreadEmotions, on_replace: :delete)
     embeds_one(:rss, Embeds.DashboardRSS, on_replace: :delete)
     embeds_many(:name_alias, Embeds.DashboardNameAlias, on_replace: :delete)
-    embeds_many(:header_links, Embeds.DashboardHeaderLink, on_replace: :delete)
-    embeds_many(:footer_links, Embeds.DashboardFooterLink, on_replace: :delete)
+    embeds_many(:header_links, Embeds.DashboardLink, on_replace: :delete)
+    embeds_many(:footer_links, Embeds.DashboardLink, on_replace: :delete)
     embeds_many(:social_links, Embeds.DashboardSocialLink, on_replace: :delete)
     embeds_many(:media_reports, Embeds.DashboardMediaReport, on_replace: :delete)
     embeds_many(:faqs, Embeds.DashboardFAQ, on_replace: :delete)
@@ -69,8 +69,8 @@ defmodule GroupherServer.CMS.Model.CommunityDashboard do
     |> cast_embed(:thread_emotions, with: &Embeds.DashboardThreadEmotions.changeset/2)
     |> cast_embed(:rss, with: &Embeds.DashboardRSS.changeset/2)
     |> cast_embed(:name_alias, with: &Embeds.DashboardNameAlias.changeset/2)
-    |> cast_embed(:header_links, with: &Embeds.DashboardHeaderLink.changeset/2)
-    |> cast_embed(:footer_links, with: &Embeds.DashboardFooterLink.changeset/2)
+    |> cast_embed(:header_links, with: &Embeds.DashboardLink.changeset/2)
+    |> cast_embed(:footer_links, with: &Embeds.DashboardLink.changeset/2)
     |> cast_embed(:social_links, with: &Embeds.DashboardSocialLink.changeset/2)
     |> cast_embed(:media_reports, with: &Embeds.DashboardMediaReport.changeset/2)
     |> cast_embed(:faqs, with: &Embeds.DashboardFAQ.changeset/2)

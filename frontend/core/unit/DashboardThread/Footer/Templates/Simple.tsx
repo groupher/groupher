@@ -1,16 +1,15 @@
-import { useAutoAnimate } from '@formkit/auto-animate/react'
-import { keys } from 'ramda'
 import type { FC } from 'react'
 
+import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import { FOOTER_LAYOUT } from '~/const/layout'
 import { DEME_SOCIALS } from '~/const/social'
-import { groupByKey, sortByGroupIndex } from '~/helper'
 import type { TActive, TLinkItem } from '~/spec'
 import CommunityBrand from '~/unit/CommunityBrand'
 import SocialList from '~/unit/SocialList'
 
 import useFooter from '../../logic/useFooter'
 import useSalon, { cn } from '../../salon/footer/templates/simple'
+import { isValidFooterLink } from '../Editors/model'
 
 type TProps = {
   links: readonly TLinkItem[]
@@ -26,14 +25,12 @@ const RADIO_NAME = 'footer-layout'
 const Simple: FC<TProps> = ({ links, active, previewOnly = true }) => {
   const s = useSalon()
   const { edit } = useFooter()
-  const [animateRef] = useAutoAnimate()
 
   const radioId = 'footer-layout-simple'
 
-  const groupedLinks = groupByKey(sortByGroupIndex(links), 'group')
-  const groupKeys = keys(groupedLinks)
-  const firstGroupKey = groupKeys[0]
-  const firstGroupLinks = firstGroupKey ? groupedLinks[firstGroupKey] : []
+  const validLinks = links.every(isValidFooterLink) ? links : []
+  const firstGroupLinks =
+    validLinks.find((item) => item.type === DASHBOARD_LINK_TYPE.GROUP)?.links || []
 
   return (
     <label htmlFor={radioId} className={cn(s.wrapper, active && s.active)}>
@@ -48,14 +45,14 @@ const Simple: FC<TProps> = ({ links, active, previewOnly = true }) => {
 
       <CommunityBrand className='scale-95' />
 
-      <div className={s.center} ref={animateRef}>
+      <div className={s.center}>
         {firstGroupLinks.map((item) =>
           previewOnly ? (
             <span className={s.linkItem} key={item.title}>
               {item.title}
             </span>
           ) : (
-            <a className={s.linkItem} key={item.title} href={item.link}>
+            <a className={s.linkItem} key={item.title} href={item.url}>
               {item.title}
             </a>
           ),

@@ -23,6 +23,7 @@ import type { THeaderLinkItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import Button from '~/widgets/Buttons/Button'
 
+import GroupInputer from '../../LinkEditor/GroupInputer'
 import useSalon from '../../salon/header/editors'
 import {
   HEADER_DND_CONTEXT_ID,
@@ -31,7 +32,6 @@ import {
   DND_MEASURING,
 } from './constants'
 import FixedLinks from './FixedLinks'
-import GroupInputer from './GroupInputer'
 import HeaderColumn from './HeaderColumn'
 import type { THeaderDragTarget } from './spec'
 import useHeaderEditorActions from './useHeaderEditorActions'
@@ -224,7 +224,6 @@ const Editor: FC<TProps> = ({ links, makeId, onChange }) => {
               <HeaderColumn
                 key={column.id}
                 column={column}
-                customLinksLength={links.length}
                 editor={editor}
                 isCollapsed={editor.collapsedGroups.has(column.id)}
                 isCrossGroupTarget={isCrossGroupTarget}

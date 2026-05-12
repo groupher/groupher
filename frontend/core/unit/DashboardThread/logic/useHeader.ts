@@ -5,18 +5,18 @@ import useDashboard from '~/stores/dashboard/hooks'
 
 import type { TLinkState } from '../spec'
 import useHelper from './useHelper'
-import useLinks, { type TRet as TUserLinks } from './useLinks'
+import useLinkDerived, { type TRet as TDerived } from './useLinkDerived'
 
 type TRet = {
   headerLayout: THeaderLayout
   headerLinks: readonly THeaderLinkItem[]
   edit: TEditFunc
 } & TLinkState &
-  TUserLinks
+  TDerived
 
 export default function useHeader(): TRet {
   const dsb$ = useDashboard()
-  const useLinksData = useLinks()
+  const derived = useLinkDerived()
   const { edit } = useHelper()
 
   return {
@@ -33,6 +33,6 @@ export default function useHeader(): TRet {
       dsb$,
     ),
     edit,
-    ...useLinksData,
+    ...derived,
   }
 }

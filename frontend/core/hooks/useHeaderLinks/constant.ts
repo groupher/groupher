@@ -1,10 +1,5 @@
 import type { TTransKey } from '~/spec'
 
-export const HEADER_LINK_TYPE = {
-  LINK: 'LINK',
-  GROUP: 'GROUP',
-} as const
-
 export const MORE_TAB = {
   ID: 'more-tab',
   CUSTOM_ID: 'custom:more',

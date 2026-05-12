@@ -2,7 +2,7 @@ import { useAutoAnimate } from '@formkit/auto-animate/react'
 import Link from 'next/link'
 import { type FC, Fragment } from 'react'
 
-import { HEADER_LINK_TYPE } from '~/hooks/useHeaderLinks/constant'
+import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 import Tooltip from '~/widgets/Tooltip'
@@ -48,7 +48,7 @@ const CustomHeaderLinks: FC<TProps> = ({ links = [] }) => {
     <div className={s.wrapper} ref={animateRef}>
       {visibleLinks.map((item) => (
         <Fragment key={item.id}>
-          {item.type === HEADER_LINK_TYPE.LINK ? (
+          {item.type === DASHBOARD_LINK_TYPE.LINK ? (
             <Link className={s.linkItem} href={item.url}>
               {item.title}
             </Link>

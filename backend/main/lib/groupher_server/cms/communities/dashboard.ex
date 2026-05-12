@@ -106,8 +106,36 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
     end
   end
 
+  defp prepare_dashboard_section_payload(%CommunityDashboard{}, key, args)
+       when key in [:header_links, :footer_links] and is_list(args) do
+    if Enum.all?(args, &valid_tree_link?/1), do: {:ok, args}, else: {:ok, []}
+  end
+
   # Replace-style sections are already the final payload.
   defp prepare_dashboard_section_payload(%CommunityDashboard{}, _key, args), do: {:ok, args}
+
+  defp valid_tree_link?(%{id: id, type: type, title: title} = item)
+       when is_binary(id) and is_binary(title) do
+    case type do
+      :link -> is_binary(Map.get(item, :url))
+      :group -> valid_link_children?(Map.get(item, :links, []))
+      _ -> false
+    end
+  end
+
+  defp valid_tree_link?(_), do: false
+
+  defp valid_link_children?(links) when is_list(links) do
+    Enum.all?(links, fn
+      %{id: id, title: title, url: url} ->
+        is_binary(id) and is_binary(title) and is_binary(url)
+
+      _ ->
+        false
+    end)
+  end
+
+  defp valid_link_children?(_), do: false
 
   # Replace-style sections are written as a whole on each update.
   defp apply_dashboard_section_update(%CommunityDashboard{} = community_dashboard, key, args)

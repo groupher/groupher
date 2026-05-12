@@ -12,6 +12,7 @@ type TProps = {
   children: ReactNode
   columnId: string
   disabled?: boolean
+  editing?: boolean
   id: string
   linkId: string
 }
@@ -22,6 +23,7 @@ const SortableHeaderLinkItem = memo(function SortableHeaderLinkItem({
   children,
   columnId,
   disabled = false,
+  editing = false,
   id,
   linkId,
 }: TProps) {
@@ -61,8 +63,12 @@ const SortableHeaderLinkItem = memo(function SortableHeaderLinkItem({
   }
 
   return (
-    <div ref={setNodeRef} style={style} className={cn(s.wrapper, isDragging && s.dragging)}>
-      {!disabled && (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(s.wrapper, !editing && s.hoverable, isDragging && s.dragging)}
+    >
+      {!disabled && !editing && (
         <button
           ref={setActivatorNodeRef}
           type='button'
