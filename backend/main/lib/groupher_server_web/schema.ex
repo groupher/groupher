@@ -52,7 +52,7 @@ defmodule GroupherServerWeb.Schema do
     import_article_fields(:mutations)
 
     import_fields(:cms_comment_mutations)
-    import_fields(:cms_dashboard_mutations)
+    import_fields(:cms_dsb_mutations)
   end
 
   def middleware(middleware, _field, %{identifier: :query}) do

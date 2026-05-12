@@ -595,60 +595,54 @@ type RootMutationType {
 
   "update base info in dashboard"
   updateDashboardBaseInfo(
-    community: String!, dashboardSection: DashboardSection, favicon: String, title: String, locale: String, logo: String, slug: String, desc: String, introduction: String, homepage: String, city: String, techstack: String
+    community: String!, dsbSection: DsbSection, favicon: String, title: String, locale: String, logo: String, slug: String, desc: String, introduction: String, homepage: String, city: String, techstack: String
   ): Community
 
   "update seo in dashboard"
   updateDashboardSeo(
-    community: String!, dashboardSection: DashboardSection, seoEnable: Boolean, ogSiteName: String, ogTitle: String, ogDescription: String, ogUrl: String, ogImage: String, ogLocale: String, ogPublisher: String, twTitle: String, twDescription: String, twUrl: String, twCard: String, twSite: String, twImage: String, twImageWidth: String, twImageHeight: String
+    community: String!, dsbSection: DsbSection, seoEnable: Boolean, ogSiteName: String, ogTitle: String, ogDescription: String, ogUrl: String, ogImage: String, ogLocale: String, ogPublisher: String, twTitle: String, twDescription: String, twUrl: String, twCard: String, twSite: String, twImage: String, twImageWidth: String, twImageHeight: String
   ): Community
 
   "update wallpaper in dashboard"
   updateDashboardWallpaper(
-    community: String!, dashboardSection: DashboardSection, wallpaperType: String, wallpaper: String, hasPattern: Boolean, direction: String, customColorValue: String, bgSize: String, uploadBgImage: String, hasBlur: Boolean, hasShadow: Boolean
+    community: String!, dsbSection: DsbSection, wallpaperType: String, wallpaper: String, hasPattern: Boolean, direction: String, customColorValue: String, bgSize: String, uploadBgImage: String, hasBlur: Boolean, hasShadow: Boolean
   ): Community
 
   "update enable in dashboard"
   updateDashboardEnable(
-    community: String!, dashboardSection: DashboardSection, post: Boolean, blog: Boolean, kanban: Boolean, changelog: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean
+    community: String!, dsbSection: DsbSection, post: Boolean, blog: Boolean, kanban: Boolean, changelog: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean
   ): Community
 
   "update thread-specific emotion settings in dashboard"
   updateDashboardThreadEmotions(
-    community: String!, dashboardSection: DashboardSection, post: [EmotionType], blog: [EmotionType], changelog: [EmotionType], doc: [EmotionType], postComment: [EmotionType], blogComment: [EmotionType], changelogComment: [EmotionType], docComment: [EmotionType]
+    community: String!, dsbSection: DsbSection, post: [EmotionType], blog: [EmotionType], changelog: [EmotionType], doc: [EmotionType], postComment: [EmotionType], blogComment: [EmotionType], changelogComment: [EmotionType], docComment: [EmotionType]
   ): Community
 
   "update layout in dashboard"
   updateDashboardLayout(
-    community: String!, dashboardSection: DashboardSection, pageBg: String, pageBgDark: String, pageCustomBg: Int, pageCustomBgDark: Int, pageCustomIntensity: Int, pageCustomIntensityDark: Int, primaryColor: RainbowColor, primaryCustomColor: String, primaryCustomColorDark: String, subPrimaryColor: RainbowColor, subPrimaryCustomColor: String, subPrimaryCustomColorDark: String, kanbanBgColors: [RainbowColor], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docCoverLayout: DsbDocCoverLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, communityLayout: DsbCommunityLayout, navActiveLayout: DsbNavActiveLayout, topbarEnabled: Boolean, topbarBg: RainbowColor, topbarBgCustomColor: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: RainbowColor, broadcastCustomBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: RainbowColor, broadcastArticleCustomBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, glowType: String, glowFixed: Boolean, glowOpacity: String, overlayDark: Boolean, gaussBlur: Int, gaussBlurDark: Int
+    community: String!, dsbSection: DsbSection, pageBg: String, pageBgDark: String, pageCustomBg: Int, pageCustomBgDark: Int, pageCustomIntensity: Int, pageCustomIntensityDark: Int, primaryColor: RainbowColor, primaryCustomColor: String, primaryCustomColorDark: String, subPrimaryColor: RainbowColor, subPrimaryCustomColor: String, subPrimaryCustomColorDark: String, kanbanBgColors: [RainbowColor], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docCoverLayout: DsbDocCoverLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, communityLayout: DsbCommunityLayout, navActiveLayout: DsbNavActiveLayout, topbarEnabled: Boolean, topbarBg: RainbowColor, topbarBgCustomColor: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: RainbowColor, broadcastCustomBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: RainbowColor, broadcastArticleCustomBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, glowType: String, glowFixed: Boolean, glowOpacity: String, overlayDark: Boolean, gaussBlur: Int, gaussBlurDark: Int
   ): Community
 
   "update rss in dashboard"
-  updateDashboardRss(
-    community: String!, dashboardSection: DashboardSection, rssFeedType: DsbRssFeedType, rssFeedCount: Int
-  ): Community
+  updateDashboardRss(community: String!, dsbSection: DsbSection, rssFeedType: DsbRssFeedType, rssFeedCount: Int): Community
 
   "update name alias in dashboard"
-  updateDashboardNameAlias(community: String!, dashboardSection: DashboardSection, nameAlias: [DashboardAliasMap]): Community
+  updateDashboardNameAlias(community: String!, dsbSection: DsbSection, nameAlias: [DsbAliasMap]): Community
 
   "update header links in dashboard"
-  updateDashboardHeaderLinks(community: String!, dashboardSection: DashboardSection, headerLinks: [DsbLinkMap]): Community
+  updateDashboardHeaderLinks(community: String!, dsbSection: DsbSection, headerLinks: [DsbLinkMap]): Community
 
   "update footer links in dashboard"
-  updateDashboardFooterLinks(community: String!, dashboardSection: DashboardSection, footerLinks: [DsbLinkMap]): Community
+  updateDashboardFooterLinks(community: String!, dsbSection: DsbSection, footerLinks: [DsbLinkMap]): Community
 
   "update social links in dashboard"
-  updateDashboardSocialLinks(
-    community: String!, dashboardSection: DashboardSection, socialLinks: [DashboardSocialLinkMap]
-  ): Community
+  updateDashboardSocialLinks(community: String!, dsbSection: DsbSection, socialLinks: [DsbSocialLinkMap]): Community
 
   "update media reports in dashboard"
-  updateDashboardMediaReports(
-    community: String!, dashboardSection: DashboardSection, mediaReports: [DashboardMediaReportMap]
-  ): Community
+  updateDashboardMediaReports(community: String!, dsbSection: DsbSection, mediaReports: [DsbMediaReportMap]): Community
 
   "update faqs in dashboard"
-  updateDashboardFaqs(community: String!, dashboardSection: DashboardSection, faqs: [DashboardFaqMap]): Community
+  updateDashboardFaqs(community: String!, dsbSection: DsbSection, faqs: [DsbFaqMap]): Community
 }
 
 type CheckState {
@@ -840,12 +834,12 @@ type ContributeMap {
   records: [Contribute]
 }
 
-type DashboardRss {
+type DsbRss {
   rssFeedType: DsbRssFeedType
   rssFeedCount: Int
 }
 
-type DashboardSeo {
+type DsbSeo {
   seoEnable: Boolean
   ogSiteName: String
   ogTitle: String
@@ -864,7 +858,7 @@ type DashboardSeo {
   twImageHeight: String
 }
 
-type DashboardWallpaper {
+type DsbWallpaper {
   wallpaperType: String
   wallpaper: String
   hasPattern: Boolean
@@ -876,7 +870,7 @@ type DashboardWallpaper {
   hasShadow: Boolean
 }
 
-type DashboardLayout {
+type DsbLayout {
   pageBg: String
   pageBgDark: String
   pageCustomBg: Int
@@ -924,7 +918,7 @@ type DashboardLayout {
   gaussBlurDark: Int
 }
 
-type DashboardEnable {
+type DsbEnable {
   post: Boolean
   blog: Boolean
   kanban: Boolean
@@ -939,7 +933,7 @@ type DashboardEnable {
   aboutMediaReport: Boolean
 }
 
-type DashboardThreadEmotions {
+type DsbThreadEmotions {
   post: [EmotionType]
   blog: [EmotionType]
   changelog: [EmotionType]
@@ -950,7 +944,7 @@ type DashboardThreadEmotions {
   docComment: [EmotionType]
 }
 
-type DashboardBaseInfo {
+type DsbBaseInfo {
   favicon: String
   title: String
   locale: String
@@ -963,7 +957,7 @@ type DashboardBaseInfo {
   techstack: String
 }
 
-type DashboardNameAlias {
+type DsbNameAlias {
   slug: String
   name: String
   original: String
@@ -984,12 +978,12 @@ type DsbLink {
   links: [DsbLinkChild]
 }
 
-type DashboardSocialLink {
+type DsbSocialLink {
   type: String
   link: String
 }
 
-type DashboardMediaReport {
+type DsbMediaReport {
   index: Int
   title: String
   favicon: String
@@ -998,26 +992,26 @@ type DashboardMediaReport {
   url: String
 }
 
-type DashboardFaqSection {
+type DsbFaqSection {
   title: String
   body: String
   index: Int
 }
 
-type Dashboard {
-  seo: DashboardSeo
-  wallpaper: DashboardWallpaper
-  layout: DashboardLayout
-  enable: DashboardEnable
-  threadEmotions: DashboardThreadEmotions
-  baseInfo: DashboardBaseInfo
-  rss: DashboardRss
-  nameAlias: [DashboardNameAlias]
+type Dsb {
+  seo: DsbSeo
+  wallpaper: DsbWallpaper
+  layout: DsbLayout
+  enable: DsbEnable
+  threadEmotions: DsbThreadEmotions
+  baseInfo: DsbBaseInfo
+  rss: DsbRss
+  nameAlias: [DsbNameAlias]
   headerLinks: [DsbLink]
   footerLinks: [DsbLink]
-  socialLinks: [DashboardSocialLink]
-  mediaReports: [DashboardMediaReport]
-  faqs: [DashboardFaqSection]
+  socialLinks: [DsbSocialLink]
+  mediaReports: [DsbMediaReport]
+  faqs: [DsbFaqSection]
 }
 
 type CommunityModerator {
@@ -1043,7 +1037,7 @@ type Community {
   author: User
   locale: String
   categories: [Category]
-  dashboard: Dashboard
+  dashboard: Dsb
   moderators: [CommunityModerator]
   meta: CommunityMeta
   views: Int
@@ -1404,7 +1398,7 @@ enum Thread {
   USER
 }
 
-enum DashboardSection {
+enum DsbSection {
   SEO
   WALLPAPER
   ENABLE
@@ -1802,7 +1796,7 @@ input ReportFilter {
   size: Int
 }
 
-input DashboardAliasMap {
+input DsbAliasMap {
   slug: String
   name: String
   original: String
@@ -1823,12 +1817,12 @@ input DsbLinkMap {
   links: [DsbLinkChildMap]
 }
 
-input DashboardSocialLinkMap {
+input DsbSocialLinkMap {
   type: String
   link: String
 }
 
-input DashboardMediaReportMap {
+input DsbMediaReportMap {
   index: Int
   title: String
   favicon: String
@@ -1837,7 +1831,7 @@ input DashboardMediaReportMap {
   url: String
 }
 
-input DashboardFaqMap {
+input DsbFaqMap {
   title: String
   body: String
   index: Int

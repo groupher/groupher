@@ -274,9 +274,9 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   end
 
   @doc """
-  fields for dashboard seo
+  fields for dsb seo
   """
-  defmacro dashboard_cast_fields(section \\ :layout) do
+  defmacro dsb_cast_fields(section \\ :layout) do
     schema = Dashboard.macro_schema(section) |> Macro.escape()
 
     quote do
@@ -286,7 +286,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     end
   end
 
-  defmacro dashboard_args(section \\ :layout) do
+  defmacro dsb_args(section \\ :layout) do
     Dashboard.macro_schema(section)
     |> Enum.map(fn item ->
       [key, type, _default_v] = item
@@ -297,7 +297,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     end)
   end
 
-  defmacro dashboard_fields(section \\ :layout) do
+  defmacro dsb_fields(section \\ :layout) do
     Dashboard.macro_schema(section)
     |> Enum.map(fn item ->
       [key, type, default_v] = item
@@ -305,7 +305,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       case type do
         :enum ->
           quote do
-            # Dashboard enums use the default Ecto.Enum flow:
+            # Dsb enums use the default Ecto.Enum flow:
             #   [:quora, :ph] -> internal :quora / :ph -> DB "quora" / "ph"
             field(unquote(key), Ecto.Enum,
               values: unquote(Dashboard.enum_values(key)),
@@ -345,7 +345,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     end)
   end
 
-  defmacro dashboard_gq_fields(section \\ :layout) do
+  defmacro dsb_gq_fields(section \\ :layout) do
     Dashboard.macro_schema(section)
     |> Enum.map(fn item ->
       [key, type, _default_v] = item
@@ -356,7 +356,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     end)
   end
 
-  defmacro dashboard_default(section \\ :layout) do
+  defmacro dsb_default(section \\ :layout) do
     schema = Dashboard.macro_schema(section) |> Macro.escape()
 
     quote do
@@ -366,13 +366,13 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     end
   end
 
-  # Convert dashboard metric DSL types to Ecto field types.
-  # Supports list-like types in shared dashboard schema definitions.
+  # Convert dsb metric DSL types to Ecto field types.
+  # Supports list-like types in shared dsb schema definitions.
   defp to_ecto_type({:array, inner}), do: {:array, to_ecto_type(inner)}
   defp to_ecto_type(type), do: type
 
-  # Convert dashboard metric DSL types to Absinthe field/arg type AST.
-  # Supports list-like types in shared dashboard schema definitions.
+  # Convert dsb metric DSL types to Absinthe field/arg type AST.
+  # Supports list-like types in shared dsb schema definitions.
   defp to_absinthe_type({:array, inner}, _key),
     do: quote(do: list_of(unquote(to_absinthe_type(inner, nil))))
 

@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
   alias Helper.{ORM, T, Transaction}
 
   @default_dashboard CommunityDashboard.default()
-  # List-like dashboard sections are replaced as a whole on each update.
+  # List-like dsb sections are replaced as a whole on each update.
   @replace_section_fields [
     :header_links,
     :footer_links,
@@ -54,8 +54,8 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
   defp do_update(%Community{} = community, key, args) do
     with {:ok, community_dashboard} <- ensure_exist(community),
          {:ok, section_payload} <-
-           prepare_dashboard_section_payload(community_dashboard, key, args),
-         {:ok, _} <- apply_dashboard_section_update(community_dashboard, key, section_payload) do
+           prepare_dsb_section_payload(community_dashboard, key, args),
+         {:ok, _} <- apply_dsb_section_update(community_dashboard, key, section_payload) do
       {:ok, community}
     end
   end
@@ -86,7 +86,7 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
 
   # For embeds_one sections, always prepare the merged final payload first so
   # validation and persistence operate on the same data.
-  defp prepare_dashboard_section_payload(%CommunityDashboard{} = community_dashboard, key, args)
+  defp prepare_dsb_section_payload(%CommunityDashboard{} = community_dashboard, key, args)
        when key in @validated_embed_section_fields do
     embed_module = Map.fetch!(@embed_section_modules, key)
     current_embed = community_dashboard[key] || struct(embed_module)
@@ -106,7 +106,7 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
     end
   end
 
-  defp prepare_dashboard_section_payload(%CommunityDashboard{}, key, args)
+  defp prepare_dsb_section_payload(%CommunityDashboard{}, key, args)
        when key in [:header_links, :footer_links] and is_list(args) do
     if Enum.all?(args, &valid_tree_link?/1) do
       {:ok, args}
@@ -116,7 +116,7 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
   end
 
   # Replace-style sections are already the final payload.
-  defp prepare_dashboard_section_payload(%CommunityDashboard{}, _key, args), do: {:ok, args}
+  defp prepare_dsb_section_payload(%CommunityDashboard{}, _key, args), do: {:ok, args}
 
   defp valid_tree_link?(%{id: id, type: type, title: title} = item)
        when is_binary(id) and is_binary(title) do
@@ -142,13 +142,13 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
   defp valid_link_children?(_), do: false
 
   # Replace-style sections are written as a whole on each update.
-  defp apply_dashboard_section_update(%CommunityDashboard{} = community_dashboard, key, args)
+  defp apply_dsb_section_update(%CommunityDashboard{} = community_dashboard, key, args)
        when key in @replace_section_fields do
-    ORM.replace_dashboard_section(community_dashboard, key, args)
+    ORM.replace_dsb_section(community_dashboard, key, args)
   end
 
   # embeds_one sections receive the validated final payload directly.
-  defp apply_dashboard_section_update(%CommunityDashboard{} = community_dashboard, key, args) do
-    ORM.replace_dashboard_section(community_dashboard, key, args)
+  defp apply_dsb_section_update(%CommunityDashboard{} = community_dashboard, key, args) do
+    ORM.replace_dsb_section(community_dashboard, key, args)
   end
 end

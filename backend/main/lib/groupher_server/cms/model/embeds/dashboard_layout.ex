@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
   import Ecto.Changeset
 
   import GroupherServerWeb.Schema.Helper.Fields,
-    only: [dashboard_cast_fields: 1, dashboard_fields: 1]
+    only: [dsb_cast_fields: 1, dsb_fields: 1]
 
   alias GroupherServer.CMS
 
@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
   alias CMS.Model.Metrics.Dashboard
   @hex_color_re ~r/^#[0-9a-fA-F]{6}$/
 
-  @optional_fields dashboard_cast_fields(:layout)
+  @optional_fields dsb_cast_fields(:layout)
   @layout_schema Dashboard.macro_schema(:layout)
   @enum_fields Enum.flat_map(@layout_schema, fn
                  [key, :enum, _default] -> [key]
@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
   def default, do: Dashboard.layout_default()
 
   embedded_schema do
-    dashboard_fields(:layout)
+    dsb_fields(:layout)
   end
 
   @doc "for test usage"
@@ -138,7 +138,12 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
   end
 
   defp validate_custom_colors(changeset) do
-    [:primary_custom_color, :primary_custom_color_dark, :sub_primary_custom_color, :sub_primary_custom_color_dark]
+    [
+      :primary_custom_color,
+      :primary_custom_color_dark,
+      :sub_primary_custom_color,
+      :sub_primary_custom_color_dark
+    ]
     |> Enum.reduce(changeset, fn field, acc ->
       validate_change(acc, field, fn ^field, value ->
         cond do

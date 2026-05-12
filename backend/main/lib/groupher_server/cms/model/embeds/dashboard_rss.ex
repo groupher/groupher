@@ -10,15 +10,15 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardRSS do
   import Ecto.Changeset
 
   import GroupherServerWeb.Schema.Helper.Fields,
-    only: [dashboard_cast_fields: 1, dashboard_default: 1, dashboard_fields: 1]
+    only: [dsb_cast_fields: 1, dsb_default: 1, dsb_fields: 1]
 
-  @optional_fields dashboard_cast_fields(:rss)
+  @optional_fields dsb_cast_fields(:rss)
 
   @doc "for test usage"
-  def default, do: dashboard_default(:rss)
+  def default, do: dsb_default(:rss)
 
   embedded_schema do
-    dashboard_fields(:rss)
+    dsb_fields(:rss)
   end
 
   def changeset(struct, params) do

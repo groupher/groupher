@@ -91,7 +91,7 @@ defmodule GroupherServer.CMS.CanCan.Communities do
     fallback = Map.get(@default_thread_emotions, thread_key, [])
 
     community_slug
-    |> community_override(thread_key)
+    |> dsb_thread_emotions_override(thread_key)
     |> case do
       nil -> fallback
       override -> override
@@ -99,24 +99,24 @@ defmodule GroupherServer.CMS.CanCan.Communities do
     |> Enum.filter(&(&1 in @emotions_whitelist))
   end
 
-  defp dashboard_enable(nil), do: nil
+  defp dsb_enable(nil), do: nil
 
-  defp dashboard_enable(%{dashboard: %{enable: enable}}), do: enable
+  defp dsb_enable(%{dashboard: %{enable: enable}}), do: enable
 
-  defp dashboard_enable(%{community: community_slug}) when is_binary(community_slug) do
-    dashboard_enable(community_slug)
+  defp dsb_enable(%{community: community_slug}) when is_binary(community_slug) do
+    dsb_enable(community_slug)
   end
 
-  defp dashboard_enable(community_slug) when is_binary(community_slug) do
+  defp dsb_enable(community_slug) when is_binary(community_slug) do
     case FrontDesk.community(community_slug) do
       {:ok, %{dashboard: %{enable: enable}}} -> enable
       _ -> nil
     end
   end
 
-  defp community_override(nil, _thread_key), do: nil
+  defp dsb_thread_emotions_override(nil, _thread_key), do: nil
 
-  defp community_override(community_slug, thread_key) when is_binary(community_slug) do
+  defp dsb_thread_emotions_override(community_slug, thread_key) when is_binary(community_slug) do
     case FrontDesk.community(community_slug) do
       {:ok, %{dashboard: %{thread_emotions: thread_emotions}}} when not is_nil(thread_emotions) ->
         Map.get(thread_emotions, thread_key)
@@ -126,19 +126,19 @@ defmodule GroupherServer.CMS.CanCan.Communities do
     end
   end
 
-  defp community_override(%{dashboard: %{thread_emotions: thread_emotions}}, thread_key)
+  defp dsb_thread_emotions_override(%{dashboard: %{thread_emotions: thread_emotions}}, thread_key)
        when not is_nil(thread_emotions) do
     Map.get(thread_emotions, thread_key)
   end
 
-  defp community_override(_, _thread_key), do: nil
+  defp dsb_thread_emotions_override(_, _thread_key), do: nil
 
   defp emotion_allowed?(community_slug, scope, thread, emotion) do
     emotion in allowed_emotions(community_slug, scope, thread)
   end
 
   defp thread_visible?(community, thread) do
-    case dashboard_enable(community) do
+    case dsb_enable(community) do
       nil -> true
       enable -> Map.get(enable, thread, true)
     end

@@ -121,17 +121,17 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:records, list_of(:contribute))
   end
 
-  object(:dashboard_rss, do: dashboard_gq_fields(:rss))
-  object(:dashboard_seo, do: dashboard_gq_fields(:seo))
-  object(:dashboard_wallpaper, do: dashboard_gq_fields(:wallpaper))
+  object(:dsb_rss, do: dsb_gq_fields(:rss))
+  object(:dsb_seo, do: dsb_gq_fields(:seo))
+  object(:dsb_wallpaper, do: dsb_gq_fields(:wallpaper))
 
-  object :dashboard_layout do
-    dashboard_gq_fields(:layout)
+  object :dsb_layout do
+    dsb_gq_fields(:layout)
   end
 
-  object(:dashboard_enable, do: dashboard_gq_fields(:enable))
+  object(:dsb_enable, do: dsb_gq_fields(:enable))
 
-  object :dashboard_thread_emotions do
+  object :dsb_thread_emotions do
     field(:post, list_of(:emotion_type))
     field(:blog, list_of(:emotion_type))
     field(:changelog, list_of(:emotion_type))
@@ -142,8 +142,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:doc_comment, list_of(:emotion_type))
   end
 
-  object(:dashboard_base_info, do: dashboard_gq_fields(:base_info))
-  object(:dashboard_name_alias, do: dashboard_gq_fields(:name_alias))
+  object(:dsb_base_info, do: dsb_gq_fields(:base_info))
+  object(:dsb_name_alias, do: dsb_gq_fields(:name_alias))
 
   object :dsb_link_child do
     field(:id, :string)
@@ -159,24 +159,24 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:links, list_of(:dsb_link_child))
   end
 
-  object(:dashboard_social_link, do: dashboard_gq_fields(:social_link))
-  object(:dashboard_media_report, do: dashboard_gq_fields(:media_report))
-  object(:dashboard_faq_section, do: dashboard_gq_fields(:faq_section))
+  object(:dsb_social_link, do: dsb_gq_fields(:social_link))
+  object(:dsb_media_report, do: dsb_gq_fields(:media_report))
+  object(:dsb_faq_section, do: dsb_gq_fields(:faq_section))
 
-  object :dashboard do
-    field(:seo, :dashboard_seo)
-    field(:wallpaper, :dashboard_wallpaper)
-    field(:layout, :dashboard_layout)
-    field(:enable, :dashboard_enable)
-    field(:thread_emotions, :dashboard_thread_emotions)
-    field(:base_info, :dashboard_base_info)
-    field(:rss, :dashboard_rss)
-    field(:name_alias, list_of(:dashboard_name_alias))
+  object :dsb do
+    field(:seo, :dsb_seo)
+    field(:wallpaper, :dsb_wallpaper)
+    field(:layout, :dsb_layout)
+    field(:enable, :dsb_enable)
+    field(:thread_emotions, :dsb_thread_emotions)
+    field(:base_info, :dsb_base_info)
+    field(:rss, :dsb_rss)
+    field(:name_alias, list_of(:dsb_name_alias))
     field(:header_links, list_of(:dsb_link))
     field(:footer_links, list_of(:dsb_link))
-    field(:social_links, list_of(:dashboard_social_link))
-    field(:media_reports, list_of(:dashboard_media_report))
-    field(:faqs, list_of(:dashboard_faq_section))
+    field(:social_links, list_of(:dsb_social_link))
+    field(:media_reports, list_of(:dsb_media_report))
+    field(:faqs, list_of(:dsb_faq_section))
   end
 
   object :community_moderator do
@@ -203,7 +203,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:author, :user, resolve: dataloader(CMS, :author))
     field(:locale, :string)
     field(:categories, list_of(:category), resolve: dataloader(CMS, :categories))
-    field(:dashboard, :dashboard, resolve: dataloader(CMS, :dashboard))
+    field(:dashboard, :dsb, resolve: dataloader(CMS, :dashboard))
 
     # field(:moderators, list_of(:community_moderator), resolve: dataloader(CMS, moderators: :user))
     field(:moderators, list_of(:community_moderator))
