@@ -13,7 +13,7 @@ export type TLinkEditorActions = {
 export type TLinkEditorProps = {
   notifyText?: string
   linkItem?: TLinkDraftItem
-  editingLink?: TLinkDraftItem
+  editingLink?: TLinkDraftItem | null
   mode?: TChangeMode
   disableSetting?: boolean
   disableEdit?: boolean

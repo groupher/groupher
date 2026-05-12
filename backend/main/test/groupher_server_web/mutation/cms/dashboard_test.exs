@@ -551,6 +551,35 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert link.links |> List.first() |> Map.get(:url) == "link"
     end
 
+    test "reject invalid dashboard links without clearing existing footer links",
+         ~m(community)a do
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+
+      valid_variables = %{
+        community: community.slug,
+        footerLinks: [
+          %{
+            id: "group-1",
+            type: "GROUP",
+            title: "title",
+            links: [%{id: "link-1", title: "link-title", url: "link"}]
+          }
+        ]
+      }
+
+      rule_conn |> gq_mutation(@update_footer_links_query, valid_variables)
+
+      invalid_variables = %{
+        community: community.slug,
+        footerLinks: [%{id: "link-1", type: "LINK", title: "broken"}]
+      }
+
+      assert mutation_error?(rule_conn, @update_footer_links_query, invalid_variables)
+
+      {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
+      assert found.dashboard.footer_links |> length() == 1
+    end
+
     @update_social_links_query """
     mutation($community: String!, $socialLinks: [DashboardSocialLinkMap]) {
       updateDashboardSocialLinks(community: $community, socialLinks: $socialLinks) {

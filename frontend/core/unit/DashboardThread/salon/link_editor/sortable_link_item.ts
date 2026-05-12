@@ -6,11 +6,11 @@ export default function useSalon() {
   return {
     dragHandle: cn(
       'align-both absolute -left-7 top-0 size-8 rounded-md cursor-grab opacity-0 trans-all-200',
-      'touch-none group-hover/header-link-row:opacity-100 focus-visible:opacity-100 active:cursor-grabbing',
+      'touch-none group-hover/dashboard-link-row:opacity-100 focus-visible:opacity-100 active:cursor-grabbing',
       fg('digest'),
     ),
     wrapper: cn(
-      'group group/header-link-row relative w-full rounded-md px-2 will-change-transform',
+      'group group/dashboard-link-row relative w-full rounded-md px-2 will-change-transform',
       'border border-transparent trans-all-100',
     ),
     hoverable: hover('box'),

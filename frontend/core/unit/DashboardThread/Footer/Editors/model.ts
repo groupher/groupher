@@ -15,8 +15,9 @@ export const buildFooterColumns = (links: readonly TLinkItem[]): TFooterColumn[]
   if (!isValidFooterLinks(links)) return []
 
   return links
-    .filter((item) => item.type === DASHBOARD_LINK_TYPE.GROUP)
-    .map((group, sourceIndex) => ({
+    .map((item, sourceIndex) => ({ item, sourceIndex }))
+    .filter(({ item }) => item.type === DASHBOARD_LINK_TYPE.GROUP)
+    .map(({ item: group, sourceIndex }) => ({
       id: group.id,
       title: group.title,
       sourceIndex,

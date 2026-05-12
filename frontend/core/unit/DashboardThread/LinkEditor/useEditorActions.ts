@@ -222,9 +222,15 @@ export default function useDashboardLinkEditorActions({
 
   const deleteGroup = useCallback(
     (index: number): void => {
+      const group = links[index]
+
       editLinks(links.filter((_, itemIndex) => itemIndex !== index))
+
+      if (group && editingLink?.group === group.id) {
+        setActiveEditingLink(null)
+      }
     },
-    [editLinks, links],
+    [editLinks, editingLink, links, setActiveEditingLink],
   )
 
   const toggleGroup = useCallback((id: string): void => {

@@ -57,7 +57,7 @@ const Group: FC = () => {
       >
         {({ activeDragColumnId, columns, targetDragColumnId }) => (
           <div className={s.linkGroup}>
-            {columns.map((column, index) => {
+            {columns.map((column) => {
               const isCollapsed = editor.collapsedGroups.has(column.id)
               const isEmptyGroup = column.links.length === 0
               const isCrossGroupTarget =
@@ -77,7 +77,7 @@ const Group: FC = () => {
                   >
                     <GroupHead
                       title={column.title}
-                      currentIndex={index}
+                      currentIndex={column.sourceIndex}
                       collapsed={isCollapsed}
                       onToggle={() => editor.toggleGroup(column.id)}
                       onEdit={editor.triggerGroupUpdate}
@@ -94,7 +94,7 @@ const Group: FC = () => {
                       <LinksHint count={column.links.length} />
                     ) : (
                       column.links.map((item, itemIndex) => {
-                        const linkItem = toDraftLink(item, column.id, index, itemIndex)
+                        const linkItem = toDraftLink(item, column.id, column.sourceIndex, itemIndex)
 
                         return (
                           <SortableFooterLinkItem
@@ -120,7 +120,7 @@ const Group: FC = () => {
 
                   {!editor.editingLink && !isCollapsed && (
                     <Button
-                      onClick={() => editor.add2Group(column.id, index)}
+                      onClick={() => editor.add2Group(column.id, column.sourceIndex)}
                       size='small'
                       ghost
                       noBorder

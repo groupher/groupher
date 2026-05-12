@@ -108,7 +108,11 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
 
   defp prepare_dashboard_section_payload(%CommunityDashboard{}, key, args)
        when key in [:header_links, :footer_links] and is_list(args) do
-    if Enum.all?(args, &valid_tree_link?/1), do: {:ok, args}, else: {:ok, []}
+    if Enum.all?(args, &valid_tree_link?/1) do
+      {:ok, args}
+    else
+      {:error, {:custom, "invalid dashboard links"}}
+    end
   end
 
   # Replace-style sections are already the final payload.
