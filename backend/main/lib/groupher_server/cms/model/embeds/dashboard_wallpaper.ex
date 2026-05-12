@@ -10,15 +10,15 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardWallpaper do
   import Ecto.Changeset
 
   import GroupherServerWeb.Schema.Helper.Fields,
-    only: [dashboard_cast_fields: 1, dashboard_default: 1, dashboard_fields: 1]
+    only: [dsb_cast_fields: 1, dsb_default: 1, dsb_fields: 1]
 
-  @optional_fields dashboard_cast_fields(:wallpaper)
+  @optional_fields dsb_cast_fields(:wallpaper)
 
   @doc "for test usage"
-  def default, do: dashboard_default(:wallpaper)
+  def default, do: dsb_default(:wallpaper)
 
   embedded_schema do
-    dashboard_fields(:wallpaper)
+    dsb_fields(:wallpaper)
   end
 
   def changeset(struct, params) do

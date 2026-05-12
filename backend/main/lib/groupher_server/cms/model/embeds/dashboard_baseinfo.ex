@@ -10,15 +10,15 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardBaseInfo do
   import Ecto.Changeset
 
   import GroupherServerWeb.Schema.Helper.Fields,
-    only: [dashboard_cast_fields: 1, dashboard_default: 1, dashboard_fields: 1]
+    only: [dsb_cast_fields: 1, dsb_default: 1, dsb_fields: 1]
 
-  @optional_fields dashboard_cast_fields(:base_info)
+  @optional_fields dsb_cast_fields(:base_info)
 
   @doc "for test usage"
-  def default, do: dashboard_default(:base_info)
+  def default, do: dsb_default(:base_info)
 
   embedded_schema do
-    dashboard_fields(:base_info)
+    dsb_fields(:base_info)
   end
 
   def changeset(struct, params) do

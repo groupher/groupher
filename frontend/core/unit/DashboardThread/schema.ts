@@ -82,7 +82,7 @@ const updateDashboardBaseInfo = gql`
   }
 `
 const updateDashboardMediaReports = gql`
-  mutation ($community: String!, $mediaReports: [DashboardMediaReportMap]) {
+  mutation ($community: String!, $mediaReports: [DsbMediaReportMap]) {
     updateDashboardMediaReports(community: $community, mediaReports: $mediaReports) {
       title
       dashboard {
@@ -255,7 +255,7 @@ const updateDashboardLayout = gql`
 `
 
 const updateDashboardSocialLinks = gql`
-  mutation ($community: String!, $socialLinks: [DashboardSocialLinkMap]) {
+  mutation ($community: String!, $socialLinks: [DsbSocialLinkMap]) {
     updateDashboardSocialLinks(community: $community, socialLinks: $socialLinks) {
       slug
     }
@@ -263,7 +263,7 @@ const updateDashboardSocialLinks = gql`
 `
 
 const updateDashboardNameAlias = gql`
-  mutation ($community: String!, $nameAlias: [DashboardAliasMap]) {
+  mutation ($community: String!, $nameAlias: [DsbAliasMap]) {
     updateDashboardNameAlias(community: $community, nameAlias: $nameAlias) {
       slug
     }

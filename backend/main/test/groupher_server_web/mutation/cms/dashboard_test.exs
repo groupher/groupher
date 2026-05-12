@@ -400,7 +400,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_alias_query """
-    mutation($community: String!, $nameAlias: [DashboardAliasMap]) {
+    mutation($community: String!, $nameAlias: [DsbAliasMap]) {
       updateDashboardNameAlias(community: $community, nameAlias: $nameAlias) {
         id
         title
@@ -581,7 +581,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_social_links_query """
-    mutation($community: String!, $socialLinks: [DashboardSocialLinkMap]) {
+    mutation($community: String!, $socialLinks: [DsbSocialLinkMap]) {
       updateDashboardSocialLinks(community: $community, socialLinks: $socialLinks) {
         id
         title
@@ -620,7 +620,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_media_reports_query """
-    mutation($community: String!, $mediaReports: [DashboardMediaReportMap]) {
+    mutation($community: String!, $mediaReports: [DsbMediaReportMap]) {
       updateDashboardMediaReports(community: $community, mediaReports: $mediaReports) {
         id
         title
@@ -660,7 +660,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_faqs_query """
-    mutation($community: String!, $faqs: [DashboardFaqMap]) {
+    mutation($community: String!, $faqs: [DsbFaqMap]) {
       updateDashboardFaqs(community: $community, faqs: $faqs) {
         id
         title

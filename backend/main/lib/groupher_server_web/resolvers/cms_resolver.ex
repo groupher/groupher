@@ -38,7 +38,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Communities.update(community, args)
   end
 
-  def update_dashboard(_root, %{community: community, dashboard_section: key} = args, _info) do
+  def update_dashboard(_root, %{community: community, dsb_section: key} = args, _info) do
     special_keys = [
       :header_links,
       :footer_links,
@@ -48,13 +48,13 @@ defmodule GroupherServerWeb.Resolvers.CMS do
       :faqs
     ]
 
-    dashboard_args =
+    dsb_args =
       case key in special_keys do
-        true -> Map.drop(args, [:community, :dashboard_section]) |> Map.get(key)
-        false -> Map.drop(args, [:community, :dashboard_section])
+        true -> Map.drop(args, [:community, :dsb_section]) |> Map.get(key)
+        false -> Map.drop(args, [:community, :dsb_section])
       end
 
-    CMS.Communities.update_dashboard(community, key, dashboard_args)
+    CMS.Communities.update_dashboard(community, key, dsb_args)
   end
 
   def open_graph_info(_root, %{url: url}, _info), do: OgInfo.get(url)

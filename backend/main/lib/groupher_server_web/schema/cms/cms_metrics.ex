@@ -47,7 +47,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     enum_values(Threads.values())
   end
 
-  enum :dashboard_section do
+  enum :dsb_section do
     value(:seo)
     value(:wallpaper)
     value(:enable)
@@ -319,8 +319,8 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     field(:link, :string)
   end
 
-  input_object :dashboard_alias_map do
-    dashboard_gq_fields(:name_alias)
+  input_object :dsb_alias_map do
+    dsb_gq_fields(:name_alias)
   end
 
   input_object :dsb_link_child_map do
@@ -337,15 +337,15 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     field(:links, list_of(:dsb_link_child_map))
   end
 
-  input_object :dashboard_social_link_map do
-    dashboard_gq_fields(:social_link)
+  input_object :dsb_social_link_map do
+    dsb_gq_fields(:social_link)
   end
 
-  input_object :dashboard_media_report_map do
-    dashboard_gq_fields(:media_report)
+  input_object :dsb_media_report_map do
+    dsb_gq_fields(:media_report)
   end
 
-  input_object :dashboard_faq_map do
-    dashboard_gq_fields(:faq_section)
+  input_object :dsb_faq_map do
+    dsb_gq_fields(:faq_section)
   end
 end

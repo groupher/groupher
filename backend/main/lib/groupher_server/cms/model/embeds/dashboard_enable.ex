@@ -10,17 +10,17 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardEnable do
   import Ecto.Changeset
 
   import GroupherServerWeb.Schema.Helper.Fields,
-    only: [dashboard_cast_fields: 1, dashboard_default: 1, dashboard_fields: 1]
+    only: [dsb_cast_fields: 1, dsb_default: 1, dsb_fields: 1]
 
-  @optional_fields dashboard_cast_fields(:enable)
+  @optional_fields dsb_cast_fields(:enable)
 
   @doc "for test usage"
   def default do
-    dashboard_default(:enable)
+    dsb_default(:enable)
   end
 
   embedded_schema do
-    dashboard_fields(:enable)
+    dsb_fields(:enable)
   end
 
   @doc "for test usage"
