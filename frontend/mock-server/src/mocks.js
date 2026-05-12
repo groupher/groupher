@@ -118,13 +118,16 @@ const makeDashboard = (slug = 'home') => {
     ],
     footerLinks: [
       {
-        title: 'About',
-        link: `/${slug}/about`,
-        group: 'main',
-        groupIndex: 0,
-        index: 0,
-        isHot: false,
-        isNew: false,
+        id: 'footer-group-main',
+        type: 'GROUP',
+        title: 'main',
+        links: [
+          {
+            id: 'footer-link-about',
+            title: 'About',
+            url: `/${slug}/about`,
+          },
+        ],
       },
     ],
     socialLinks: [],
