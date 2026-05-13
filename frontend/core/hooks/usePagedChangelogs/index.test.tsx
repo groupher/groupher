@@ -4,7 +4,7 @@ import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATUS } from '~/const/gtd'
 import URL_PARAM from '~/const/url_param'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import usePagedChangelogs from '~/hooks/usePagedChangelogs'
-import type { TPagedChangelogs, TTag } from '~/spec'
+import type { TPagedChangelogs, TTagGroup } from '~/spec'
 
 let mockSearchParams = new URLSearchParams()
 
@@ -44,7 +44,14 @@ describe('usePagedChangelogs', () => {
           totalCount: 1,
           totalPages: 1,
         } satisfies TPagedChangelogs,
-        tags: [{ id: 't1', title: 'Tag' }] satisfies readonly TTag[],
+        tagGroups: [
+          {
+            id: 'g1',
+            title: 'General',
+            index: 0,
+            tags: [{ id: 't1', title: 'Tag' }],
+          },
+        ] satisfies readonly TTagGroup[],
       }),
     )
 

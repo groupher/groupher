@@ -91,9 +91,7 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE, initialGroup 
             value={curCategory}
             options={categoryOptions}
             placeholder={t('dsb.tags.editor.group.placeholder')}
-            onCreateOption={(value) => edit(value, 'group')}
-            onChange={(option: TSelectOption) => edit(option.value, 'group')}
-            creatable
+            onChange={(option: TSelectOption) => edit(option.value, 'groupId')}
           />
         </div>
         <div className='mb-6' />

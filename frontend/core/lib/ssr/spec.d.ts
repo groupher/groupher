@@ -10,7 +10,6 @@ import type {
   TDsbSEORoute,
   TLocale,
   TPagedArticles,
-  TTag,
 } from '~/spec'
 
 export type TSessionRes = TGQSSRResult & {
@@ -25,7 +24,6 @@ export type TSessionRes = TGQSSRResult & {
   }
 }
 export type TCommunityRes = TGQSSRResult & { community: TCommunity }
-export type TTagsRes = TGQSSRResult & { tags: TTag[] }
 export type TPagedPostsRes = TGQSSRResult & { pagedPosts: TPagedArticles }
 export type TPostRes = TGQSSRResult & { post: TArticle }
 export type TChangelogRes = TGQSSRResult & { changelog: TArticle }

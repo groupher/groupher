@@ -270,13 +270,15 @@ const updateDashboardNameAlias = gql`
   }
 `
 
-const pagedCommunityTags = gql`
-  query ($filter: CommunityTagsFilter) {
-    pagedCommunityTags(filter: $filter) {
-      entries {
+const communityTagGroups = gql`
+  query ($community: String!, $thread: Thread) {
+    communityTagGroups(community: $community, thread: $thread) {
+      id
+      title
+      index
+      tags {
         ${F.tag}
       }
-      totalCount
     }
   }
 `
@@ -289,7 +291,7 @@ const updateCommunityTag = gql`
     $community: String!
     $extra: [String]
     $icon: String
-    $group: String
+    $groupId: ID
   ) {
     updateCommunityTag(
       id: $id
@@ -299,15 +301,41 @@ const updateCommunityTag = gql`
       community: $community
       extra: $extra
       icon: $icon
-      group: $group
+      groupId: $groupId
     ) {
       id
       title
       slug
       color
-      group
+      groupId
       extra
       icon
+    }
+  }
+`
+
+const createCommunityTagGroup = gql`
+  mutation ($thread: Thread!, $title: String!, $community: String!) {
+    createCommunityTagGroup(thread: $thread, title: $title, community: $community) {
+      id
+      title
+      index
+      tags {
+        ${F.tag}
+      }
+    }
+  }
+`
+
+const updateCommunityTagGroup = gql`
+  mutation ($id: ID!, $title: String!, $community: String!, $thread: Thread) {
+    updateCommunityTagGroup(id: $id, title: $title, community: $community, thread: $thread) {
+      id
+      title
+      index
+      tags {
+        ${F.tag}
+      }
     }
   }
 `
@@ -319,7 +347,7 @@ const createCommunityTag = gql`
     $slug: String!
     $layout: String
     $color: RainbowColor!
-    $group: String
+    $groupId: ID!
     $community: String!
   ) {
     createCommunityTag(
@@ -328,7 +356,7 @@ const createCommunityTag = gql`
       slug: $slug
       layout: $layout
       color: $color
-      group: $group
+      groupId: $groupId
       community: $community
     ) {
       id
@@ -337,8 +365,8 @@ const createCommunityTag = gql`
 `
 
 const reindexTagsInGroup = gql`
-  mutation ($community: String!, $thread: Thread, $group: String!, $tags: [ReindexTagInput]) {
-    reindexTagsInGroup(community: $community, thread: $thread, group: $group, tags: $tags) {
+  mutation ($community: String!, $thread: Thread, $groupId: ID!, $tags: [ReindexTagInput]) {
+    reindexTagsInGroup(community: $community, thread: $thread, groupId: $groupId, tags: $tags) {
       done
     }
   }
@@ -347,6 +375,14 @@ const reindexTagsInGroup = gql`
 const reindexCommunityTags = gql`
   mutation ($community: String!, $thread: Thread, $tags: [ReindexCommunityTagInput]) {
     reindexCommunityTags(community: $community, thread: $thread, tags: $tags) {
+      done
+    }
+  }
+`
+
+const reindexCommunityTagGroups = gql`
+  mutation ($community: String!, $thread: Thread, $groups: [ReindexCommunityTagGroupInput]) {
+    reindexCommunityTagGroups(community: $community, thread: $thread, groups: $groups) {
       done
     }
   }
@@ -441,15 +477,18 @@ const schema = {
   updateDashboardBaseInfo,
   updateDashboardMediaReports,
   updateDashboardSeo,
-  pagedCommunityTags,
+  communityTagGroups,
   updateDashboardEnable,
   updateDashboardLayout,
   updateDashboardSocialLinks,
   updateDashboardNameAlias,
   createCommunityTag,
+  createCommunityTagGroup,
   updateCommunityTag,
+  updateCommunityTagGroup,
   reindexTagsInGroup,
   reindexCommunityTags,
+  reindexCommunityTagGroups,
   pagedPosts,
   pagedChangelogs,
   updateDashboardFaqs,

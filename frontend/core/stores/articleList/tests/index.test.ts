@@ -1,5 +1,5 @@
 import { ARTICLE_CAT, ARTICLE_ORDER, ARTICLE_STATUS } from '~/const/gtd'
-import type { TArticleFilter, TPagedArticles, TTag } from '~/spec'
+import type { TArticleFilter, TPagedArticles, TTagGroup } from '~/spec'
 
 import setupStore from '..'
 
@@ -36,13 +36,20 @@ describe('stores/articleList', () => {
       entries: [{ id: 'a1' }, { id: 'a2' }],
     }
 
-    const tags: TTag[] = [
-      { id: 't1', title: 'tag-1' },
-      { id: 't2', title: 'tag-2' },
+    const tagGroups: TTagGroup[] = [
+      {
+        id: 'g1',
+        title: 'General',
+        index: 0,
+        tags: [
+          { id: 't1', title: 'tag-1' },
+          { id: 't2', title: 'tag-2' },
+        ],
+      },
     ]
 
     store.commit({
-      tags,
+      tagGroups,
       pagedPosts: paged,
       backlog: { ...paged, entries: [{ id: 'a0' }] },
       todo: paged,

@@ -15,7 +15,7 @@ import type {
   TPagedComments,
   TPagedPosts,
   TPost,
-  TTag,
+  TTagGroup,
   TTagStats,
   TThread,
 } from '~/spec'
@@ -178,7 +178,10 @@ export const getGroupedKanbanPosts = async (
   return data.groupedKanbanPosts
 }
 
-export const getTags = async (community: string, thread: TThread): Promise<TTag[] | []> => {
+export const getTagGroups = async (
+  community: string,
+  thread: TThread,
+): Promise<TTagGroup[] | []> => {
   'use cache'
   //
   cacheLife('days')
@@ -187,7 +190,7 @@ export const getTags = async (community: string, thread: TThread): Promise<TTag[
   const gqlThread = TAG_THREADS.includes(thread as (typeof TAG_THREADS)[number]) ? thread : null
   if (!gqlThread) return []
 
-  const response = await gqFetch(P.pagedCommunityTags, { filter: { community, thread: gqlThread } })
+  const response = await gqFetch(P.communityTagGroups, { community, thread: gqlThread })
 
   const { data, errors } = await response.json()
   if (errors) {
@@ -196,7 +199,7 @@ export const getTags = async (community: string, thread: TThread): Promise<TTag[
     return []
   }
 
-  return data.pagedCommunityTags.entries
+  return data.communityTagGroups || []
 }
 
 export const getTagStats = async (

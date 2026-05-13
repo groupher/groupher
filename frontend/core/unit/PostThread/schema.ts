@@ -3,10 +3,7 @@ import { gql } from 'urql'
 import { F } from '~/schemas'
 
 import { pagedChangelogs } from '../../schemas/pages/changelog'
-import {
-  communityTagStats as communityTagStatsQuery,
-  pagedCommunityTags as pagedCommunityTagsQuery,
-} from '../../schemas/pages/misc'
+import { communityTagStats as communityTagStatsQuery } from '../../schemas/pages/misc'
 import { pagedPosts } from '../../schemas/pages/post'
 
 const PAGED_ARTICLE_SCHEMA = {
@@ -36,16 +33,11 @@ const getArticleFreshSchema = () => {
   `
 }
 
-const pagedCommunityTags = gql`
-  ${pagedCommunityTagsQuery}
-`
-
 const communityTagStats = gql`
   ${communityTagStatsQuery}
 `
 
 const schema = {
-  pagedCommunityTags,
   communityTagStats,
   getPagedArticlesSchema,
   getArticleFreshSchema,

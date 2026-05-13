@@ -1,81 +1,81 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { sortByIndex } from '~/helper'
-import type { TTag, TThread } from '~/spec'
+import type { TTagGroup, TThread } from '~/spec'
 
-import type { TDraftGroup, TGroupListItem, TTagDragTarget } from './types'
-
-const UNGROUPED_GROUP = 'Ungrouped'
-const UNGROUPED_KEY = '__ungrouped__'
+import type { TDraftGroup, TGroupDragTarget, TGroupListItem, TTagDragTarget } from './types'
 
 type TProps = {
-  tags: readonly TTag[]
+  tagGroups: readonly TTagGroup[]
   draftGroups: readonly TDraftGroup[]
   currentThread: TThread
-  onCommit: (tags: TTag[]) => void
+  onCommit: (tagGroups: TTagGroup[]) => void
 }
 
 type TRet = {
   groups: TGroupListItem[]
   groupNames: string[]
-  startDrag: (tagId: string) => void
-  moveDrag: (target?: TTagDragTarget | null) => void
-  commitDrag: (target?: TTagDragTarget | null) => void
+  startDrag: (id: string) => void
+  moveTagDrag: (target?: TTagDragTarget | null) => void
+  commitTagDrag: (target?: TTagDragTarget | null) => void
+  commitGroupDrag: (target?: TGroupDragTarget | null) => void
   cancelDrag: () => void
 }
 
-const realGroupKey = (group?: string | null): string => group || UNGROUPED_KEY
-const draftGroupKey = (draftId: string): string => `draft:${draftId}`
+const draftGroupId = (draftId: string): string => `draft:${draftId}`
 
 const buildGroups = (
-  tags: readonly TTag[],
+  tagGroups: readonly TTagGroup[],
   draftGroups: readonly TDraftGroup[],
   currentThread: TThread,
 ): TGroupListItem[] => {
-  const groupedTags = new Map<string, TTag[]>()
+  const realItems = (sortByIndex([...tagGroups]) as TTagGroup[]).map((group) => ({
+    id: group.id,
+    title: group.title,
+    index: group.index,
+    tags: sortByIndex([...group.tags]),
+    draft: false,
+  }))
 
-  for (const tag of tags) {
-    const key = realGroupKey(tag.group)
-    const groupTags = groupedTags.get(key)
-
-    if (groupTags) {
-      groupTags.push(tag)
-    } else {
-      groupedTags.set(key, [tag])
-    }
-  }
-
-  const realGroups: TGroupListItem[] = Array.from(groupedTags.entries()).map(([key, groupTags]) => {
-    const firstTag = groupTags[0]
-    const group = firstTag.group || null
-
-    return {
-      key,
-      title: group || UNGROUPED_GROUP,
-      group,
-      tags: sortByIndex(groupTags),
-      draft: false,
-    }
-  })
-
-  const draftItems: TGroupListItem[] = draftGroups
+  const draftItems = draftGroups
     .filter((group) => group.thread === currentThread)
-    .map((group) => {
-      const matchingRealGroup = realGroups.find((item) => item.title === group.title)
+    .map((group, index) => ({
+      id: draftGroupId(group.id),
+      title: group.title,
+      index: -1 - index,
+      tags: [],
+      draft: true,
+      draftId: group.id,
+    }))
 
-      return {
-        key: draftGroupKey(group.id),
-        title: group.title,
-        group: group.title,
-        tags: matchingRealGroup?.tags || [],
-        draft: true,
-        draftId: group.id,
-      }
-    })
+  return [...draftItems, ...realItems]
+}
 
-  const draftTitles = new Set(draftItems.map((group) => group.title).filter(Boolean))
+const normalizeGroupIndexes = (groups: TGroupListItem[]): TGroupListItem[] =>
+  groups.map((group, index) => ({ ...group, index }))
 
-  return [...draftItems, ...realGroups.filter((group) => !draftTitles.has(group.title))]
+const moveGroup = (
+  groups: TGroupListItem[],
+  activeId: string,
+  target: TGroupDragTarget,
+): TGroupListItem[] => {
+  if (activeId === target.groupId || activeId.startsWith('draft:')) return groups
+
+  const activeIndex = groups.findIndex((group) => group.id === activeId)
+
+  if (activeIndex < 0 || !groups.some((group) => group.id === target.groupId)) return groups
+
+  const movingGroup = groups[activeIndex]
+  const withoutMoving = groups.filter((group) => group.id !== activeId)
+  const baseTargetIndex = withoutMoving.findIndex((group) => group.id === target.groupId)
+  const insertIndex = baseTargetIndex + (target.position === 'after' ? 1 : 0)
+  const boundedIndex = Math.max(0, Math.min(insertIndex, withoutMoving.length))
+
+  return normalizeGroupIndexes([
+    ...withoutMoving.slice(0, boundedIndex),
+    movingGroup,
+    ...withoutMoving.slice(boundedIndex),
+  ])
 }
 
 const moveTagInGroups = (
@@ -84,16 +84,16 @@ const moveTagInGroups = (
   target: TTagDragTarget,
 ): TGroupListItem[] => {
   const sourceGroup = groups.find((group) => group.tags.some((tag) => tag.id === tagId))
-  const targetGroup = groups.find((group) => group.key === target.groupKey)
+  const targetGroup = groups.find((group) => group.id === target.groupId)
 
-  if (!sourceGroup || !targetGroup || target.tagId === tagId) return groups
+  if (!sourceGroup || !targetGroup || targetGroup.draft || target.tagId === tagId) return groups
 
   const movingTag = sourceGroup.tags.find((tag) => tag.id === tagId)
   if (!movingTag) return groups
 
   const sourceTags = sourceGroup.tags.filter((tag) => tag.id !== tagId)
   const targetBase =
-    sourceGroup.key === targetGroup.key
+    sourceGroup.id === targetGroup.id
       ? sourceTags
       : targetGroup.tags.filter((tag) => tag.id !== tagId)
 
@@ -103,7 +103,7 @@ const moveTagInGroups = (
   const targetIndex =
     targetTagIndex >= 0 ? targetTagIndex + (target.position === 'after' ? 1 : 0) : targetBase.length
   const boundedTargetIndex = Math.max(0, Math.min(targetIndex, targetBase.length))
-  const movedTag = { ...movingTag, group: targetGroup.group || undefined }
+  const movedTag = { ...movingTag, groupId: targetGroup.id }
   const targetTags = [
     ...targetBase.slice(0, boundedTargetIndex),
     movedTag,
@@ -111,14 +111,14 @@ const moveTagInGroups = (
   ]
 
   return groups.map((group) => {
-    if (group.key === sourceGroup.key && group.key !== targetGroup.key) {
+    if (group.id === sourceGroup.id && group.id !== targetGroup.id) {
       return {
         ...group,
         tags: sourceTags.map((tag, index) => ({ ...tag, index })),
       }
     }
 
-    if (group.key === targetGroup.key) {
+    if (group.id === targetGroup.id) {
       return {
         ...group,
         tags: targetTags.map((tag, index) => ({ ...tag, index })),
@@ -129,45 +129,53 @@ const moveTagInGroups = (
   })
 }
 
-const flattenGroups = (groups: readonly TGroupListItem[]): TTag[] => {
-  return groups.flatMap((group) =>
-    group.tags.map((tag, index) => ({
-      ...tag,
-      group: group.group || undefined,
+const flattenGroups = (groups: readonly TGroupListItem[]): TTagGroup[] => {
+  return groups
+    .filter((group) => !group.draft)
+    .map((group, index) => ({
+      id: group.id,
+      title: group.title,
       index,
-    })),
-  )
+      tags: group.tags.map((tag, tagIndex) => ({
+        ...tag,
+        groupId: group.id,
+        index: tagIndex,
+      })),
+    }))
 }
 
 const isSamePlacement = (
   left: readonly TGroupListItem[],
   right: readonly TGroupListItem[],
 ): boolean => {
-  const leftTags = flattenGroups(left)
-  const rightTags = flattenGroups(right)
+  const leftGroups = flattenGroups(left)
+  const rightGroups = flattenGroups(right)
 
-  if (leftTags.length !== rightTags.length) return false
+  if (leftGroups.length !== rightGroups.length) return false
 
-  return leftTags.every((tag, index) => {
-    const other = rightTags[index]
+  return leftGroups.every((group, groupIndex) => {
+    const otherGroup = rightGroups[groupIndex]
+    if (!otherGroup || group.id !== otherGroup.id || group.index !== otherGroup.index) return false
+    if (group.tags.length !== otherGroup.tags.length) return false
 
-    return (
-      tag.id === other?.id &&
-      (tag.group || null) === (other.group || null) &&
-      tag.index === other.index
-    )
+    return group.tags.every((tag, tagIndex) => {
+      const otherTag = otherGroup.tags[tagIndex]
+      return (
+        tag.id === otherTag?.id && tag.groupId === otherTag.groupId && tag.index === otherTag.index
+      )
+    })
   })
 }
 
 export default function useTagDragDraft({
-  tags,
+  tagGroups,
   draftGroups,
   currentThread,
   onCommit,
 }: TProps): TRet {
   const sourceGroups = useMemo(
-    () => buildGroups(tags, draftGroups, currentThread),
-    [currentThread, draftGroups, tags],
+    () => buildGroups(tagGroups, draftGroups, currentThread),
+    [currentThread, draftGroups, tagGroups],
   )
   const [groups, setGroups] = useState<TGroupListItem[]>(sourceGroups)
   const latestGroupsRef = useRef(groups)
@@ -198,20 +206,20 @@ export default function useTagDragDraft({
     [groupNameKey],
   )
 
-  const startDrag = useCallback((tagId: string): void => {
-    activeIdRef.current = tagId
+  const startDrag = useCallback((id: string): void => {
+    activeIdRef.current = id
     draggingRef.current = true
     baselineGroupsRef.current = latestGroupsRef.current
   }, [])
 
-  const moveDrag = useCallback((target?: TTagDragTarget | null): void => {
+  const moveTagDrag = useCallback((target?: TTagDragTarget | null): void => {
     const activeId = activeIdRef.current
-    if (!activeId || !target?.groupKey) return
+    if (!activeId || !target?.groupId) return
 
     const currentGroups = latestGroupsRef.current
     const sourceGroup = currentGroups.find((group) => group.tags.some((tag) => tag.id === activeId))
 
-    if (!sourceGroup || sourceGroup.key === target.groupKey) return
+    if (!sourceGroup || sourceGroup.id === target.groupId) return
 
     const nextGroups = moveTagInGroups(currentGroups, activeId, target)
     if (nextGroups === currentGroups || isSamePlacement(currentGroups, nextGroups)) return
@@ -220,7 +228,20 @@ export default function useTagDragDraft({
     setGroups(nextGroups)
   }, [])
 
-  const commitDrag = useCallback(
+  const commitDraft = useCallback(
+    (nextGroups: TGroupListItem[]): void => {
+      if (!isSamePlacement(baselineGroupsRef.current, nextGroups)) {
+        if (commitFrameRef.current) cancelAnimationFrame(commitFrameRef.current)
+        commitFrameRef.current = requestAnimationFrame(() => {
+          onCommit(flattenGroups(nextGroups))
+          commitFrameRef.current = null
+        })
+      }
+    },
+    [onCommit],
+  )
+
+  const commitTagDrag = useCallback(
     (target?: TTagDragTarget | null): void => {
       const activeId = activeIdRef.current
       const currentGroups = latestGroupsRef.current
@@ -235,15 +256,29 @@ export default function useTagDragDraft({
         setGroups(nextGroups)
       }
 
-      if (!isSamePlacement(baselineGroupsRef.current, nextGroups)) {
-        if (commitFrameRef.current) cancelAnimationFrame(commitFrameRef.current)
-        commitFrameRef.current = requestAnimationFrame(() => {
-          onCommit(flattenGroups(nextGroups))
-          commitFrameRef.current = null
-        })
-      }
+      commitDraft(nextGroups)
     },
-    [onCommit],
+    [commitDraft],
+  )
+
+  const commitGroupDrag = useCallback(
+    (target?: TGroupDragTarget | null): void => {
+      const activeId = activeIdRef.current
+      const currentGroups = latestGroupsRef.current
+      const nextGroups =
+        activeId && target ? moveGroup(currentGroups, activeId, target) : currentGroups
+
+      activeIdRef.current = null
+      draggingRef.current = false
+
+      if (!isSamePlacement(currentGroups, nextGroups)) {
+        latestGroupsRef.current = nextGroups
+        setGroups(nextGroups)
+      }
+
+      commitDraft(nextGroups)
+    },
+    [commitDraft],
   )
 
   const cancelDrag = useCallback((): void => {
@@ -257,8 +292,9 @@ export default function useTagDragDraft({
     groups,
     groupNames,
     startDrag,
-    moveDrag,
-    commitDrag,
+    moveTagDrag,
+    commitTagDrag,
+    commitGroupDrag,
     cancelDrag,
   }
 }

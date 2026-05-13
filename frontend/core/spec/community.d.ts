@@ -53,6 +53,7 @@ export type TPagedCommunities = {
 
 export type TTag = {
   id?: string
+  groupId?: string
   index?: number
   title?: string
   slug?: string
@@ -66,15 +67,18 @@ export type TTag = {
   updatedAt?: string
 }
 
+export type TTagGroup = {
+  id: string
+  title: string
+  index: number
+  tags: readonly TTag[]
+}
+
 export type TTagStats = {
   slug?: string
   contentsCount?: number
   todayContentsCount?: number
 }
-
-export type TPagedTags = {
-  entries: TTag[]
-} & TPagi
 
 // for cool-guide, awesome sort thing
 

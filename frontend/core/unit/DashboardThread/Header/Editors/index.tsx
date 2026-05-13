@@ -2,7 +2,7 @@ import type { Dispatch, FC, SetStateAction } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import PlusSVG from '~/icons/Plus'
-import type { THeaderLinkItem } from '~/spec'
+import type { TLinkItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import Button from '~/widgets/Buttons/Button'
 
@@ -21,8 +21,8 @@ import useHeaderEditorActions from './useHeaderEditorActions'
 import useHeaderLinkDnd from './useHeaderLinkDnd'
 
 type TProps = {
-  links: readonly THeaderLinkItem[]
-  onChange: Dispatch<SetStateAction<readonly THeaderLinkItem[]>>
+  links: readonly TLinkItem[]
+  onChange: Dispatch<SetStateAction<readonly TLinkItem[]>>
   makeId: (prefix: string) => string
 }
 

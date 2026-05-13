@@ -71,12 +71,12 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.paged_categories/3)
     end
 
-    @desc "get paged community tags"
-    field :paged_community_tags, :paged_community_tags do
-      arg(:filter, :community_tags_filter)
+    @desc "get community tag groups"
+    field :community_tag_groups, list_of(:community_tag_group) do
+      arg(:community, non_null(:string))
+      arg(:thread, :thread, default_value: :post)
 
-      middleware(M.PageSizeProof)
-      resolve(&R.CMS.paged_community_tags/3)
+      resolve(&R.CMS.community_tag_groups/3)
     end
 
     @desc "get community tag stats by community, thread and slug"

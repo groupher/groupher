@@ -13,6 +13,10 @@ export default function useActiveTag(): TTag | null {
   return useMemo(() => {
     if (!activeTagSlug) return null
 
-    return articleList$.tags.find((tag) => tag.slug === activeTagSlug) || null
-  }, [activeTagSlug, articleList$.tags])
+    return (
+      articleList$.tagGroups
+        .flatMap((group) => group.tags)
+        .find((tag) => tag.slug === activeTagSlug) || null
+    )
+  }, [activeTagSlug, articleList$.tagGroups])
 }

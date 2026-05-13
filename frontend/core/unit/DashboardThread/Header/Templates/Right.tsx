@@ -9,7 +9,7 @@ import {
   shouldFoldAboutToMore,
 } from '~/hooks/useHeaderLinks/helper'
 import AccountSVG from '~/icons/Account'
-import type { TActive, TCommunityThread, THeaderLinkItem } from '~/spec'
+import type { TActive, TCommunityThread, TLinkItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import CommunityBrand from '~/unit/CommunityBrand'
 import CustomHeaderLinks from '~/unit/HeaderLinks/HeaderTemplate'
@@ -19,7 +19,7 @@ import useSalon, { cn } from '../../salon/header/templates/right'
 
 type TProps = {
   threads: readonly TCommunityThread[]
-  links: readonly THeaderLinkItem[]
+  links: readonly TLinkItem[]
 } & TActive
 
 const RADIO_NAME = 'header-layout'

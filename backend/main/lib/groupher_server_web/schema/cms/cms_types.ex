@@ -247,7 +247,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:slug, :string)
     field(:color, :rainbow_color)
     field(:thread, :thread)
-    field(:group, :string)
+    field(:group, :string, resolve: &R.CMS.community_tag_group_title/3)
+    field(:group_id, :id)
     field(:extra, list_of(:string))
     field(:icon, :string)
     field(:index, :integer)
@@ -255,6 +256,18 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:author, :user, resolve: dataloader(CMS, :author))
     field(:community, :community, resolve: dataloader(CMS, :community))
     field(:stats, :community_tag_stat, resolve: &R.CMS.community_tag_stats/3)
+
+    timestamp_fields()
+  end
+
+  object :community_tag_group do
+    field(:id, :id)
+    field(:title, :string)
+    field(:thread, :thread)
+    field(:index, :integer)
+    field(:tags, list_of(:community_tag), resolve: dataloader(CMS, :tags))
+
+    field(:community, :community, resolve: dataloader(CMS, :community))
 
     timestamp_fields()
   end
@@ -388,11 +401,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :paged_communities do
     field(:entries, list_of(:community))
-    pagination_fields()
-  end
-
-  object :paged_community_tags do
-    field(:entries, list_of(:community_tag))
     pagination_fields()
   end
 

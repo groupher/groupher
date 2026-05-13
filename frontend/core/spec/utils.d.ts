@@ -237,18 +237,15 @@ export type TLinkItem =
       links: readonly TLinkChild[]
     }
 
-export type THeaderLinkChild = TLinkChild
-export type THeaderLinkItem = TLinkItem
-
 export type TResolvedHeaderLinkItem =
-  | THeaderLinkItem
+  | TLinkItem
   // Resolver-only group used by the Header "More" tab; never persisted.
   | {
       id: string
       type: 'GROUP'
       usage: 'more-tab'
       title: string
-      links: readonly THeaderLinkChild[]
+      links: readonly TLinkChild[]
     }
 
 export type TGroupedLinks = {

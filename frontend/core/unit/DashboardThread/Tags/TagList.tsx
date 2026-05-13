@@ -7,15 +7,19 @@ import {
   pointerWithin,
   useSensor,
   useSensors,
+  type Announcements,
   type CollisionDetection,
   type DragCancelEvent,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
   type Over,
-  type Announcements,
 } from '@dnd-kit/core'
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -35,6 +39,8 @@ const DND_MEASURING = {
     strategy: MeasuringStrategy.BeforeDragging,
   },
 }
+
+const DROP_INDICATOR_GAP = 6
 
 const DND_ANNOUNCEMENTS: Announcements = {
   onDragStart({ active }) {
@@ -66,7 +72,7 @@ export default function TagList({
   onCompleteDraft,
   onSettingTag,
 }: TProps) {
-  const { activeTagThread, commitTagSorting, loading, loadTags, tags } = useTags()
+  const { activeTagThread, commitTagSorting, loading, loadTags, tagGroups } = useTags()
   const s = useSalon()
   const dropIndicatorRef = useRef<HTMLDivElement | null>(null)
   const pointerYRef = useRef<number | null>(null)
@@ -78,10 +84,21 @@ export default function TagList({
   )
 
   const handleDragStart = ({ active }: DragStartEvent): void => {
-    startDrag(String(active.id))
+    const activeData = active.data.current
+    const activeId =
+      activeData?.type === 'group' ? activeData.groupId : activeData?.tagId || String(active.id)
+
+    startDrag(activeId)
   }
 
   const handleDragOver = (event: DragOverEvent): void => {
+    if (event.active.data.current?.type === 'group') {
+      if (indicatorFrameRef.current) cancelAnimationFrame(indicatorFrameRef.current)
+      indicatorFrameRef.current = null
+      updateDropIndicator(null)
+      return
+    }
+
     const target = getDragTarget(event) || null
 
     if (indicatorFrameRef.current) cancelAnimationFrame(indicatorFrameRef.current)
@@ -89,12 +106,16 @@ export default function TagList({
       updateDropIndicator(event.over, target)
       indicatorFrameRef.current = null
     })
-    moveDrag(target)
+    moveTagDrag(target)
   }
 
   const handleDragEnd = (event: DragEndEvent): void => {
-    const target = getDragTarget(event) || null
-    commitDrag(target)
+    if (event.active.data.current?.type === 'group') {
+      commitGroupDrag(getGroupDragTarget(event) || null)
+    } else {
+      commitTagDrag(getDragTarget(event) || null)
+    }
+
     if (indicatorFrameRef.current) cancelAnimationFrame(indicatorFrameRef.current)
     indicatorFrameRef.current = null
     updateDropIndicator(null)
@@ -109,11 +130,19 @@ export default function TagList({
 
   const collisionDetection: CollisionDetection = (args) => {
     pointerYRef.current = args.pointerCoordinates?.y ?? null
+    if (args.active.data.current?.type === 'group') {
+      const groupContainers = args.droppableContainers.filter(
+        (container) => container.id !== args.active.id && container.data.current?.type === 'group',
+      )
+
+      return closestCorners({ ...args, droppableContainers: groupContainers })
+    }
+
     const tagContainers = args.droppableContainers.filter(
       (container) => container.id !== args.active.id && container.data.current?.type === 'tag',
     )
     const groupContainers = args.droppableContainers.filter(
-      (container) => container.data.current?.type === 'group',
+      (container) => container.data.current?.type === 'tag-group',
     )
 
     const tagArgs = { ...args, droppableContainers: tagContainers }
@@ -137,12 +166,13 @@ export default function TagList({
 
   useMount(loadTags)
   const currentThread = activeTagThread || THREAD.POST
-  const { cancelDrag, commitDrag, groups, groupNames, moveDrag, startDrag } = useTagDragDraft({
-    tags,
-    draftGroups,
-    currentThread,
-    onCommit: commitTagSorting,
-  })
+  const { cancelDrag, commitGroupDrag, commitTagDrag, groups, groupNames, moveTagDrag, startDrag } =
+    useTagDragDraft({
+      tagGroups,
+      draftGroups,
+      currentThread,
+      onCommit: commitTagSorting,
+    })
 
   const getOverRect = (over: Over): DOMRect | typeof over.rect => {
     const getRect = over.data.current?.getRect
@@ -172,15 +202,30 @@ export default function TagList({
 
       return {
         tagId: overData.tagId,
-        groupKey: overData.groupKey,
+        groupId: overData.groupId,
         position,
       }
     }
 
-    if (overData?.type === 'group') {
+    if (overData?.type === 'tag-group') {
       return {
-        groupKey: overData.groupKey,
+        groupId: overData.groupId,
       }
+    }
+  }
+
+  const getGroupDragTarget = ({ active, over }: DragEndEvent) => {
+    if (!over || over.data.current?.type !== 'group') return
+
+    const overRect = getOverRect(over)
+    const activeRect = active.rect.current.translated
+    const activeCenterY = activeRect ? activeRect.top + activeRect.height / 2 : overRect.top
+    const targetY = pointerYRef.current ?? activeCenterY
+    const overCenterY = overRect.top + overRect.height / 2
+
+    return {
+      groupId: over.data.current.groupId,
+      position: targetY > overCenterY ? ('after' as const) : ('before' as const),
     }
   }
 
@@ -191,14 +236,17 @@ export default function TagList({
     const node = dropIndicatorRef.current
     if (!node) return
 
-    if (!over || over.data.current?.type !== 'tag') {
+    if (!over || over.data.current?.type !== 'tag' || !target || !('position' in target)) {
       node.style.opacity = '0'
       return
     }
 
     const overRect = getOverRect(over)
     const listRect = getOverListRect(over) || overRect
-    const top = target?.position === 'after' ? overRect.bottom : overRect.top
+    const top =
+      target.position === 'after'
+        ? overRect.bottom + DROP_INDICATOR_GAP
+        : overRect.top - DROP_INDICATOR_GAP
 
     node.style.opacity = '1'
     node.style.transform = `translate3d(${listRect.left}px, ${top}px, 0)`
@@ -219,23 +267,29 @@ export default function TagList({
       <div>
         {loading && <LavaLampLoading bottom={10} />}
 
-        {groups.map((group) => (
-          <GroupBlock
-            key={group.key}
-            title={group.title}
-            groupKey={group.key}
-            group={group.group}
-            tags={group.tags}
-            draft={group.draft}
-            draftId={group.draftId}
-            activeThread={currentThread}
-            groupNames={groupNames}
-            onRemoveDraft={onRemoveDraft}
-            onRenameDraft={onRenameDraft}
-            onCompleteDraft={onCompleteDraft}
-            onSettingTag={onSettingTag}
-          />
-        ))}
+        <SortableContext
+          items={groups
+            .filter((group) => !group.draft)
+            .map((group) => `tag-group-sort:${group.id}`)}
+          strategy={verticalListSortingStrategy}
+        >
+          {groups.map((group) => (
+            <GroupBlock
+              key={group.id}
+              title={group.title}
+              groupId={group.id}
+              tags={group.tags}
+              draft={group.draft}
+              draftId={group.draftId}
+              activeThread={currentThread}
+              groupNames={groupNames}
+              onRemoveDraft={onRemoveDraft}
+              onRenameDraft={onRenameDraft}
+              onCompleteDraft={onCompleteDraft}
+              onSettingTag={onSettingTag}
+            />
+          ))}
+        </SortableContext>
       </div>
       {indicatorRoot &&
         createPortal(<div ref={dropIndicatorRef} className={s.dropIndicator} />, indicatorRoot)}

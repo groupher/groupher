@@ -1,7 +1,7 @@
 import { COLOR } from '~/const/colors'
 import { THREAD } from '~/const/thread'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
-import type { TColorName, TTag, TThread } from '~/spec'
+import type { TColorName, TTag, TTagGroup, TThread } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 import { slugify } from '~/utils/slug'
@@ -10,10 +10,11 @@ import S from '../../schema'
 
 type TRet = {
   loadTags: (thread?: TThread) => void
-  createTag: (title: string, group: string, color?: TColorName) => Promise<void>
+  createGroup: (title: string) => Promise<void>
+  createTag: (title: string, groupId: string, color?: TColorName) => Promise<void>
   updateTag: (tag: TTag) => Promise<void>
-  renameGroup: (fromGroup: string, toGroup: string) => Promise<void>
-  commitTagSorting: (threadTags: TTag[]) => void
+  renameGroup: (groupId: string, toGroup: string) => Promise<void>
+  commitTagSorting: (tagGroups: TTagGroup[]) => void
 }
 
 export default function useUtils(): TRet {
@@ -27,28 +28,46 @@ export default function useUtils(): TRet {
     const community = community$.slug
     const thread = activeThread
 
-    const params = {
-      filter: { community, thread },
-    }
+    const params = { community, thread }
 
     dsb$.commit({ loading: true })
-    query(S.pagedCommunityTags, params).then((data) => {
-      const tags = data.pagedCommunityTags.entries
-      dsb$.commit({ tags, original: { ...original, tags }, loading: false })
+    query(S.communityTagGroups, params).then((data) => {
+      const tagGroups = data.communityTagGroups
+      dsb$.commit({ tagGroups, original: { ...original, tagGroups }, loading: false })
     })
+  }
+
+  const createGroup = async (title: string): Promise<void> => {
+    const { activeTagThread } = dsb$
+    const thread = activeTagThread || THREAD.POST
+    const trimmedTitle = title.trim()
+
+    if (!trimmedTitle) return
+
+    dsb$.commit({ saving: true })
+
+    try {
+      await mutate(S.createCommunityTagGroup, {
+        thread,
+        title: trimmedTitle,
+        community: community$.slug,
+      })
+      loadTags(thread)
+    } finally {
+      dsb$.commit({ saving: false })
+    }
   }
 
   const createTag = async (
     title: string,
-    group: string,
+    groupId: string,
     color: TColorName = COLOR.BLACK,
   ): Promise<void> => {
     const { activeTagThread } = dsb$
     const thread = activeTagThread || THREAD.POST
     const trimmedTitle = title.trim()
-    const trimmedGroup = group.trim()
 
-    if (!trimmedTitle || !trimmedGroup) return
+    if (!trimmedTitle || !groupId) return
 
     dsb$.commit({ saving: true })
 
@@ -61,7 +80,7 @@ export default function useUtils(): TRet {
         slug,
         layout: null,
         color,
-        group: trimmedGroup,
+        groupId,
         community: community$.slug,
       })
 
@@ -87,73 +106,58 @@ export default function useUtils(): TRet {
         community: community$.slug,
       })
 
-      const updatedTags = dsb$.tags.map((item) => (item.id === tag.id ? nextTag : item))
+      const updatedTagGroups = dsb$.tagGroups.map((group) => ({
+        ...group,
+        tags: group.tags.map((item) => (item.id === tag.id ? nextTag : item)),
+      }))
 
       dsb$.commit({
-        tags: updatedTags,
+        tagGroups: updatedTagGroups,
         editingTag: null,
-        original: { ...dsb$.original, tags: updatedTags },
+        original: { ...dsb$.original, tagGroups: updatedTagGroups },
       })
     } finally {
       dsb$.commit({ saving: false })
     }
   }
 
-  const commitTagSorting = (threadTags: TTag[]): void => {
-    const { activeTagThread, tags } = dsb$
-
-    if (!activeTagThread) return
-
-    const restTags = tags.filter((tag) => tag.thread !== activeTagThread)
-    const sortedIds = new Set(threadTags.map((tag) => tag.id).filter(Boolean))
-    const untouchedThreadTags = tags.filter(
-      (tag) => tag.thread === activeTagThread && !sortedIds.has(tag.id),
-    )
-
-    dsb$.commit({ tags: [...restTags, ...untouchedThreadTags, ...threadTags] })
+  const commitTagSorting = (tagGroups: TTagGroup[]): void => {
+    dsb$.commit({ tagGroups })
   }
 
-  const renameGroup = async (fromGroup: string, toGroup: string): Promise<void> => {
-    const { activeTagThread, tags } = dsb$
+  const renameGroup = async (groupId: string, toGroup: string): Promise<void> => {
+    const { activeTagThread, tagGroups } = dsb$
     const community = community$.slug
     const trimmedGroup = toGroup.trim()
+    const targetGroup = tagGroups.find((group) => group.id === groupId)
 
-    if (!activeTagThread || !trimmedGroup || trimmedGroup === fromGroup) return
-
-    const targetTags = tags.filter(
-      (tag) => tag.thread === activeTagThread && tag.group === fromGroup,
-    )
+    if (!activeTagThread || !targetGroup || !trimmedGroup || trimmedGroup === targetGroup.title) {
+      return
+    }
 
     dsb$.commit({ saving: true })
 
     try {
-      const results = await Promise.allSettled(
-        targetTags.map((tag) =>
-          mutate(S.updateCommunityTag, {
-            id: tag.id,
-            community,
-            thread: activeTagThread,
-            group: trimmedGroup,
-          }),
-        ),
-      )
+      await mutate(S.updateCommunityTagGroup, {
+        id: groupId,
+        community,
+        thread: activeTagThread,
+        title: trimmedGroup,
+      })
 
-      const failed = results.some((result) => result.status === 'rejected')
-
-      if (failed) {
-        loadTags(activeTagThread)
-        return
-      }
-
-      const updatedTags = tags.map((tag) =>
-        tag.thread === activeTagThread && tag.group === fromGroup
-          ? { ...tag, group: trimmedGroup }
-          : tag,
+      const updatedGroups = tagGroups.map((group) =>
+        group.id === groupId
+          ? {
+              ...group,
+              title: trimmedGroup,
+              tags: group.tags.map((tag) => ({ ...tag, group: trimmedGroup })),
+            }
+          : group,
       )
 
       dsb$.commit({
-        tags: updatedTags,
-        original: { ...dsb$.original, tags: updatedTags },
+        tagGroups: updatedGroups,
+        original: { ...dsb$.original, tagGroups: updatedGroups },
       })
     } finally {
       dsb$.commit({ saving: false })
@@ -162,6 +166,7 @@ export default function useUtils(): TRet {
 
   return {
     loadTags,
+    createGroup,
     createTag,
     updateTag,
     renameGroup,

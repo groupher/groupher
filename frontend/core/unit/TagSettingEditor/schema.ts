@@ -14,7 +14,7 @@ const createCommunityTag = gql`
     $slug: String!
     $layout: String
     $color: RainbowColor!
-    $group: String
+    $groupId: ID!
     $community: String!
   ) {
     createCommunityTag(
@@ -23,7 +23,7 @@ const createCommunityTag = gql`
       slug: $slug
       layout: $layout
       color: $color
-      group: $group
+      groupId: $groupId
       community: $community
     ) {
       id
@@ -39,7 +39,7 @@ const updateCommunityTag = gql`
     $desc: String
     $slug: String
     $community: String!
-    $group: String
+    $groupId: ID
   ) {
     updateCommunityTag(
       id: $id
@@ -49,7 +49,7 @@ const updateCommunityTag = gql`
       layout: $layout
       slug: $slug
       community: $community
-      group: $group
+      groupId: $groupId
     ) {
       id
     }

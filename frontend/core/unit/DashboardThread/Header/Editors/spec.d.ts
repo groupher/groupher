@@ -1,4 +1,4 @@
-import type { TConstValues, THeaderLinkChild } from '~/spec'
+import type { TConstValues, TLinkChild } from '~/spec'
 
 import type { HEADER_COLUMN_KIND } from './constants'
 
@@ -9,8 +9,8 @@ export type THeaderColumn = {
   kind: THeaderColumnKind
   title: string
   sourceIndex: number
-  links: THeaderLinkChild[]
-  fixedLinks: THeaderLinkChild[]
+  links: TLinkChild[]
+  fixedLinks: TLinkChild[]
 }
 
 export type THeaderDragTarget = {

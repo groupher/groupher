@@ -1,9 +1,12 @@
 import F from '../fragments'
 
-export const pagedCommunityTags = `
-  query ($filter: CommunityTagsFilter) {
-    pagedCommunityTags(filter: $filter) {
-      entries {
+export const communityTagGroups = `
+  query ($community: String!, $thread: Thread) {
+    communityTagGroups(community: $community, thread: $thread) {
+      id
+      title
+      index
+      tags {
         ${F.tag}
       }
     }

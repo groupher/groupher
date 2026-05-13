@@ -14,15 +14,13 @@ defmodule GroupherServer.Test.Seeds.TagsTest do
 
       assert length(tag_ids) >= 4
 
-      {:ok, paged_tags} =
-        CMS.Communities.paged_tags(%{
-          page: 1,
-          size: 100,
+      {:ok, tag_groups} =
+        CMS.Communities.tag_groups(%{
           community_id: community.id,
           thread: :post
         })
 
-      assert paged_tags.total_count >= 4
+      assert tag_groups |> Enum.flat_map(& &1.tags) |> length() >= 4
     end
 
     test "random_color returns valid color atom" do

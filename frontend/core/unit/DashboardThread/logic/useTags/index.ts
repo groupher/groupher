@@ -1,6 +1,14 @@
 import { pick } from 'ramda'
 
-import type { TColorName, TEditFunc, TInlineTagLayout, TTag, TTagLayout, TThread } from '~/spec'
+import type {
+  TColorName,
+  TEditFunc,
+  TInlineTagLayout,
+  TTag,
+  TTagGroup,
+  TTagLayout,
+  TThread,
+} from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 import type { TChangeTagMode } from '~/stores/dashboard/spec'
 
@@ -23,10 +31,11 @@ type TRet = {
   editTag: (key: TChangeTagMode, tag: TTag) => void
 
   loadTags: (thread?: TThread) => void
-  createTag: (title: string, group: string, color?: TColorName) => Promise<void>
+  createGroup: (title: string) => Promise<void>
+  createTag: (title: string, groupId: string, color?: TColorName) => Promise<void>
   updateTag: (tag: TTag) => Promise<void>
-  renameGroup: (fromGroup: string, toGroup: string) => Promise<void>
-  commitTagSorting: (threadTags: TTag[]) => void
+  renameGroup: (groupId: string, toGroup: string) => Promise<void>
+  commitTagSorting: (tagGroups: TTagGroup[]) => void
 } & TDrived
 
 export default function useTags(): TRet {
@@ -34,7 +43,7 @@ export default function useTags(): TRet {
   const { edit } = useHelper()
   const derived = useDerived()
 
-  const { loadTags, createTag, updateTag, commitTagSorting, renameGroup } = useUtils()
+  const { loadTags, createGroup, createTag, updateTag, commitTagSorting, renameGroup } = useUtils()
 
   const exportState = [
     'loading',
@@ -69,6 +78,7 @@ export default function useTags(): TRet {
     edit,
     // move actions
     loadTags,
+    createGroup,
     createTag,
     updateTag,
     renameGroup,

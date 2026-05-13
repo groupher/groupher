@@ -21,14 +21,15 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.BlogReindexTag do
 
   describe "[mutation blog tag]" do
     @query """
-    mutation($community: String!, $thread: Thread, $group: String!, $tags: [ReindexTagInput]) {
-      reindexTagsInGroup(community: $community, thread: $thread, group: $group, tags: $tags) {
+    mutation($community: String!, $thread: Thread, $groupId: ID!, $tags: [ReindexTagInput]) {
+      reindexTagsInGroup(community: $community, thread: $thread, groupId: $groupId, tags: $tags) {
         done
       }
     }
     """
     test "auth user can reindex tags in given group", ~m(community community_tag_attrs user)a do
-      attrs = Map.merge(community_tag_attrs, %{group: "group1"})
+      {:ok, group} = CMS.Communities.create_tag_group(community, :blog, %{title: "group1"})
+      attrs = Map.merge(community_tag_attrs, %{group_id: group.id})
 
       {:ok, community_tag1} = CMS.Communities.create_tag(community, :blog, attrs, user)
 
@@ -47,7 +48,7 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.BlogReindexTag do
       variables = %{
         community: community.slug,
         thread: "BLOG",
-        group: "group1",
+        groupId: group.id,
         tags: [
           %{
             id: community_tag1.id,

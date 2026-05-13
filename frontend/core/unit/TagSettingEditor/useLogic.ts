@@ -1,4 +1,4 @@
-import { pluck, reject, uniq } from 'ramda'
+import { reject, uniq } from 'ramda'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import EVENT from '~/const/event'
@@ -37,7 +37,7 @@ type TRet = {
 
 export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRet {
   const dsb$ = useDashboard()
-  const { tags, settingTag, activeTagThread } = dsb$
+  const { tagGroups, settingTag, activeTagThread } = dsb$
 
   const community$ = useCommunity()
 
@@ -53,14 +53,14 @@ export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRe
     (mode: TChangeMode): void => {
       setMode(mode)
       if (mode === CHANGE_MODE.CREATE) {
-        const defaultGroup = initialGroup || tags.find((tag) => !nilOrEmpty(tag.group))?.group || ''
-        setEditingTag({ ...DEFAULT_CREATE_TAG, group: defaultGroup, thread: activeTagThread })
+        const defaultGroup = initialGroup || tagGroups[0]?.id || ''
+        setEditingTag({ ...DEFAULT_CREATE_TAG, groupId: defaultGroup, thread: activeTagThread })
       } else {
         setEditingTag(settingTag)
       }
       setSlugEdited(false)
     },
-    [activeTagThread, initialGroup, settingTag, tags],
+    [activeTagThread, initialGroup, settingTag, tagGroups],
   )
 
   const edit = (e: TEditValue, key): void => {
@@ -181,39 +181,37 @@ export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRe
   const curCategory = useMemo((): TSelectOption => {
     if (!editingTag) return { label: '', value: '' }
 
-    const { group } = editingTag
+    const group = tagGroups.find((item) => item.id === editingTag.groupId)
 
     return {
-      label: group,
-      value: group,
+      label: group?.title || '',
+      value: group?.id || '',
     }
-  }, [editingTag])
+  }, [editingTag, tagGroups])
 
   const categoryOptions = useMemo((): TSelectOption[] => {
     if (!editingTag) return []
 
-    const tagGroups = uniq(pluck('group', tags))
-
-    const existOptions = tagGroups.map((cat) => ({
-      label: cat,
-      value: cat,
+    const existOptions = tagGroups.map((group) => ({
+      label: group.title,
+      value: group.id,
     }))
 
     let retOptions = existOptions
 
-    const { group } = editingTag
+    const group = tagGroups.find((item) => item.id === editingTag.groupId)
     if (group) {
       retOptions = uniq([
         {
-          label: group,
-          value: group,
+          label: group.title,
+          value: group.id,
         },
         ...existOptions,
       ])
     }
 
     return reject((opt: TSelectOption) => nilOrEmpty(opt.value), uniq(retOptions))
-  }, [editingTag, tags])
+  }, [editingTag, tagGroups])
 
   const slugValidation = validateSlug(editingTag?.slug)
   const slugError =
@@ -223,7 +221,7 @@ export default function useLogic({ initialGroup = '', onDone }: TArgs = {}): TRe
   const canSubmit =
     !!activeTagThread &&
     !!editingTag?.title?.trim() &&
-    (mode !== CHANGE_MODE.CREATE || !!editingTag?.group?.trim()) &&
+    (mode !== CHANGE_MODE.CREATE || !!editingTag?.groupId) &&
     slugValidation.valid
 
   return {

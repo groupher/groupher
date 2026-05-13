@@ -19,9 +19,16 @@ describe('useActiveTag', () => {
       articleList: true,
       articleListInit: {
         activeTag: { id: 't2', title: 'Other', slug: 'other' },
-        tags: [
-          { id: 't1', title: 'Tag', slug: 'tag-1' },
-          { id: 't2', title: 'Other', slug: 'other' },
+        tagGroups: [
+          {
+            id: 'g1',
+            title: 'General',
+            index: 0,
+            tags: [
+              { id: 't1', title: 'Tag', slug: 'tag-1' },
+              { id: 't2', title: 'Other', slug: 'other' },
+            ],
+          },
         ],
       },
     })

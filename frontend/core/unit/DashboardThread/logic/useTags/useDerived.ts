@@ -1,26 +1,36 @@
-import { equals, filter, find, includes, pluck, reject, uniq } from 'ramda'
+import { equals, find, includes, reject } from 'ramda'
 import { useMemo } from 'react'
 
 import { THREAD_PATH } from '~/const/thread'
-import type { TCommunityThread, TNameAlias, TTag } from '~/spec'
+import type { TCommunityThread, TNameAlias, TTag, TTagGroup } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import { FIELD } from '../../constant'
 import useTouch from '../useHelper/useTouch'
 
-const tagSortSnapshot = (tags: readonly TTag[] = []) =>
-  tags
-    .filter((tag) => tag.id)
-    .map((tag) => ({
-      id: tag.id,
-      group: tag.group || null,
-      index: tag.index ?? null,
-    }))
+const tagSortSnapshot = (tagGroups: readonly TTagGroup[] = []) =>
+  tagGroups
+    .flatMap((group) => [
+      {
+        id: group.id,
+        index: group.index ?? null,
+        type: 'group',
+      },
+      ...group.tags
+        .filter((tag) => tag.id)
+        .map((tag) => ({
+          id: tag.id,
+          groupId: group.id,
+          index: tag.index ?? null,
+          type: 'tag',
+        })),
+    ])
     .sort((a, b) => String(a.id).localeCompare(String(b.id)))
 
 export type TRet = {
   tags: readonly TTag[]
+  tagGroups: readonly TTagGroup[]
   groups: string[]
   threads: TCommunityThread[]
   tagLayoutTouched: boolean
@@ -33,21 +43,17 @@ export default function useDerived(): TRet {
   const community$ = useCommunity()
   const { isChanged } = useTouch()
 
-  const { tags, original, activeTagThread, activeTagGroup, nameAlias } = dsb$
-
-  const selectedThread = activeTagThread
-
-  const threadTags = useMemo(() => {
-    return filter((t: TTag) => t.thread === selectedThread, tags)
-  }, [tags, selectedThread])
+  const { tagGroups, original, activeTagGroup, nameAlias } = dsb$
 
   const filteredTags = useMemo(() => {
-    return activeTagGroup ? filter((t: TTag) => t.group === activeTagGroup, threadTags) : threadTags
-  }, [activeTagGroup, threadTags])
+    const activeGroups = activeTagGroup
+      ? tagGroups.filter((group) => group.id === activeTagGroup)
+      : tagGroups
 
-  const groups = useMemo(() => {
-    return uniq(pluck('group', threadTags))
-  }, [threadTags])
+    return activeGroups.flatMap((group) => group.tags)
+  }, [activeTagGroup, tagGroups])
+
+  const groups = useMemo(() => tagGroups.map((group) => group.title), [tagGroups])
 
   const threads = useMemo(() => {
     const mappedThreads = community$.threads.map((pThread) => {
@@ -70,12 +76,13 @@ export default function useDerived(): TRet {
   const inlineTagLayoutTouched = isChanged(FIELD.INLINE_TAG_LAYOUT)
 
   const tagsIndexTouched = useMemo(
-    () => !equals(tagSortSnapshot(tags), tagSortSnapshot(original.tags || [])),
-    [tags, original.tags],
+    () => !equals(tagSortSnapshot(tagGroups), tagSortSnapshot(original.tagGroups || [])),
+    [tagGroups, original.tagGroups],
   )
 
   return {
     tags: filteredTags,
+    tagGroups,
     groups,
     threads,
     tagLayoutTouched,

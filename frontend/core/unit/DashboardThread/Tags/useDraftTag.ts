@@ -14,10 +14,8 @@ type TRet = {
   completeDraftGroup: (draftId?: string) => void
 }
 
-// A tag group is not a persisted backend entity. The backend only stores a
-// string group name on each tag, so an empty group has no durable representation.
-// This hook keeps that "new group before first tag exists" state local to the
-// tag editor and removes it once the first tag has been created.
+// Draft groups exist only while the inline title editor is open. Once the title
+// is confirmed, the real group is persisted and this local row is removed.
 export default function useDraftTag(activeThread?: TThread | null): TRet {
   const [draftGroups, setDraftGroups] = useState<TDraftGroup[]>([])
   const currentThread = activeThread || THREAD.POST
@@ -54,9 +52,7 @@ export default function useDraftTag(activeThread?: TThread | null): TRet {
     setDraftGroups((groups) => groups.filter((item) => item.id !== draftId))
   }
 
-  // Completing means the first real tag was saved successfully. At that point
-  // the group is represented by the saved tag.group value and the draft row is
-  // no longer needed.
+  // Completing means the real backend group was saved successfully.
   const completeDraftGroup = (draftId?: string): void => {
     if (!draftId) return
     removeDraftGroup(draftId)

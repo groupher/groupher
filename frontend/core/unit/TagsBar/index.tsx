@@ -4,7 +4,6 @@
  * TagsBar
  */
 
-import { keys, reverse } from 'ramda'
 import type { FC } from 'react'
 
 import Folder from './Folder'
@@ -19,10 +18,15 @@ type TProps = {
 const TagsBar: FC<TProps> = ({ onSelect }) => {
   const s = useSalon()
 
-  const { tags, activeTag, maxDisplayCount, totalCountThreshold, groupedTags, onTagSelect } =
-    useLogic()
-
-  const groupsKeys = reverse(keys(groupedTags)) as string[]
+  const {
+    tags,
+    activeTag,
+    maxDisplayCount,
+    totalCountThreshold,
+    groupedTags,
+    groupKeys,
+    onTagSelect,
+  } = useLogic()
 
   return (
     <div className={s.wrapper}>
@@ -34,7 +38,7 @@ const TagsBar: FC<TProps> = ({ onSelect }) => {
           }}
         />
       )}
-      {groupsKeys.map((groupKey) => (
+      {groupKeys.map((groupKey) => (
         <Folder
           key={groupKey}
           title={groupKey}

@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 
-import type { THeaderLayout, THeaderLinkItem, TResolvedHeaderLinkItem } from '~/spec'
+import type { THeaderLayout, TLinkItem, TResolvedHeaderLinkItem } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
@@ -8,7 +8,7 @@ import { resolveHeaderLinks } from './helper'
 
 type THeaderLinks = {
   layout: THeaderLayout
-  links: readonly THeaderLinkItem[]
+  links: readonly TLinkItem[]
   getCustomLinks: () => readonly TResolvedHeaderLinkItem[]
 }
 

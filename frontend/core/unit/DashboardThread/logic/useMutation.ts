@@ -1,4 +1,4 @@
-import { clone, equals, filter, findIndex, includes, keys, omit, update, values } from 'ramda'
+import { clone, equals, filter, findIndex, includes, keys, omit, values } from 'ramda'
 import { useEffect, useRef } from 'react'
 
 import { serializeKanbanBoards } from '~/const/dashboard'
@@ -31,7 +31,7 @@ import type { TDsbFieldKey, TDsbStoreFieldKey } from '../spec'
 
 type TRet = {
   mutation: (field: string, e: TEditValue) => Promise<void>
-  mergeBackEditingTag: () => TTag[]
+  mergeBackEditingTag: () => void
 }
 
 export default function useMutation(): TRet {
@@ -56,26 +56,27 @@ export default function useMutation(): TRet {
   }, [liveDashboard$])
 
   const _findTagIdx = (): number => {
-    const { tags, editingTag } = storeRef.current
+    const { tagGroups, editingTag } = storeRef.current
+    const tags = tagGroups.flatMap((group) => group.tags)
     const targetIdx = findIndex((item: TTag) => item.id === editingTag.id, tags)
     return targetIdx
   }
 
-  const mergeBackEditingTag = (): TTag[] => {
-    const { editingTag, tags } = storeRef.current
+  const mergeBackEditingTag = (): void => {
+    const { editingTag, tagGroups } = storeRef.current
     const targetIdx = _findTagIdx()
 
-    if (targetIdx < 0) return
-    const updatedTags = update(targetIdx, editingTag, tags)
-    if (!equals(tags, updatedTags)) {
-      console.log('## not equals, update tags')
-      // store.commit({ tags: updatedTags })
-    }
+    if (targetIdx < 0) return undefined
 
     // store.commit({ editingTag: null })
-    storeRef.current.commit({ tags: updatedTags, editingTag: null })
+    const updatedTagGroups = tagGroups.map((group) => ({
+      ...group,
+      tags: group.tags.map((tag) => (tag.id === editingTag.id ? editingTag : tag)),
+    }))
 
-    return updatedTags
+    storeRef.current.commit({ tagGroups: updatedTagGroups, editingTag: null })
+
+    return undefined
   }
 
   const normalizePageBgLayoutPatch = () => ({
@@ -123,7 +124,7 @@ export default function useMutation(): TRet {
     let original = { ...current.original, [field]: clone(current[field]) }
 
     if (field === FIELD.TAG_INDEX) {
-      original = { ...current.original, tags: clone(current.tags) }
+      original = { ...current.original, tagGroups: clone(current.tagGroups) }
     }
 
     if (includes(field, [FIELD.FAQ_SECTION_ADD, FIELD.FAQ_SECTION_DELETE])) {
@@ -140,8 +141,8 @@ export default function useMutation(): TRet {
     }
 
     if (field === FIELD.TAG) {
-      const updatedTags = mergeBackEditingTag()
-      original = { ...storeRef.current.original, tags: clone(updatedTags) }
+      mergeBackEditingTag()
+      original = { ...storeRef.current.original, tagGroups: clone(storeRef.current.tagGroups) }
     }
 
     if (field === FIELD.SEO) {
@@ -394,21 +395,35 @@ export default function useMutation(): TRet {
     }
 
     if (field === FIELD.TAG_INDEX) {
-      const { activeTagThread, tags } = dashboard$
+      const { activeTagThread, tagGroups } = dashboard$
       if (!activeTagThread) {
         _handleDone()
         return
       }
       const thread = activeTagThread
 
-      const tagIndex = tags.map((item) => ({
-        id: item.id,
-        group: item.group,
-        index: item.index,
+      const tagIndex = tagGroups.flatMap((group) =>
+        group.tags.map((item) => ({
+          id: item.id,
+          groupId: group.id,
+          index: item.index,
+        })),
+      )
+      const groupIndex = tagGroups.map((group) => ({
+        id: group.id,
+        index: group.index,
       }))
 
-      const params = { community, thread, tags: tagIndex }
-      handleMutation(S.reindexCommunityTags, params)
+      Promise.all([
+        mutate(S.reindexCommunityTagGroups, { community, thread, groups: groupIndex }),
+        mutate(S.reindexCommunityTags, { community, thread, tags: tagIndex }),
+      ])
+        .then(() => _handleDone())
+        .catch((err) => {
+          console.error('## reindex tags error: ', err)
+          toast(String(err), 'error')
+          storeRef.current.commit({ saving: false, savingField: null })
+        })
       return
     }
 

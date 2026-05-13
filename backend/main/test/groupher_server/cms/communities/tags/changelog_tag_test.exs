@@ -22,7 +22,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.ChangelogTagTest do
         CMS.Communities.create_tag(community, :changelog, article_tag_attrs, user)
 
       assert article_tag.title == article_tag_attrs.title
-      assert article_tag.group == article_tag_attrs.group
+      assert article_tag.group_id
     end
 
     test "create article tag with extra & icon data", ~m(community article_tag_attrs user)a do

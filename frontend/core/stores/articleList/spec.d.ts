@@ -5,6 +5,7 @@ import type {
   TPagedArticles,
   TResState,
   TTag,
+  TTagGroup,
   TTagStats,
   TThread,
 } from '~/spec'
@@ -21,7 +22,7 @@ export type TInit = {
   done?: TPagedArticles
   rejected?: TPagedArticles
 
-  tags?: TTag[]
+  tagGroups?: TTagGroup[]
   activeTag?: TTag | null
   activeTagStats?: TTagStats | null
 }

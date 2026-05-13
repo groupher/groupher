@@ -17,7 +17,10 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
   describe "[post tag reindex]" do
     test "can reindex group of tags", ~m(community article_tag_attrs user)a do
-      attrs = Map.merge(article_tag_attrs, %{group: "group1"})
+      {:ok, group1} = CMS.Communities.create_tag_group(community, :post, %{title: "group1"})
+      {:ok, group2} = CMS.Communities.create_tag_group(community, :post, %{title: "group2"})
+
+      attrs = Map.merge(article_tag_attrs, %{group_id: group1.id})
       {:ok, article_tag1} = CMS.Communities.create_tag(community, :post, attrs, user)
 
       {:ok, article_tag2} =
@@ -29,7 +32,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       {:ok, article_tag4} =
         CMS.Communities.create_tag(community, :post, unique_community_tag_attrs(attrs, "4"), user)
 
-      attrs = Map.merge(article_tag_attrs, %{group: "group2"})
+      attrs = Map.merge(article_tag_attrs, %{group_id: group2.id})
 
       {:ok, article_tag5} =
         CMS.Communities.create_tag(community, :post, unique_community_tag_attrs(attrs, "5"), user)
@@ -53,7 +56,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
         }
       ]
 
-      CMS.Communities.reindex_tags(community, :post, "group1", tags_with_index)
+      CMS.Communities.reindex_tags(community, :post, group1.id, tags_with_index)
 
       {:ok, article_tag1_after} = ORM.find(CommunityTag, article_tag1.id)
       {:ok, article_tag2_after} = ORM.find(CommunityTag, article_tag2.id)
@@ -74,7 +77,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
     test "create article tag with valid data", ~m(community article_tag_attrs user)a do
       {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
       assert article_tag.title == article_tag_attrs.title
-      assert article_tag.group == article_tag_attrs.group
+      assert article_tag.group_id
     end
 
     test "can not create duplicate tag slug in same community and thread",

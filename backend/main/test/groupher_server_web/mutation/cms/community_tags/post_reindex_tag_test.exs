@@ -21,14 +21,15 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostReindexTag do
 
   describe "[mutation post tag]" do
     @query """
-    mutation($community: String!, $thread: Thread, $group: String!, $tags: [ReindexTagInput]) {
-      reindexTagsInGroup(community: $community, thread: $thread, group: $group, tags: $tags) {
+    mutation($community: String!, $thread: Thread, $groupId: ID!, $tags: [ReindexTagInput]) {
+      reindexTagsInGroup(community: $community, thread: $thread, groupId: $groupId, tags: $tags) {
         done
       }
     }
     """
     test "auth user can reindex tags in given group", ~m(community community_tag_attrs user)a do
-      attrs = Map.merge(community_tag_attrs, %{group: "group1"})
+      {:ok, group} = CMS.Communities.create_tag_group(community, :post, %{title: "group1"})
+      attrs = Map.merge(community_tag_attrs, %{group_id: group.id})
 
       {:ok, community_tag1} = CMS.Communities.create_tag(community, :post, attrs, user)
 
@@ -47,7 +48,7 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostReindexTag do
       variables = %{
         community: community.slug,
         thread: "POST",
-        group: "group1",
+        groupId: group.id,
         tags: [
           %{
             id: community_tag1.id,
@@ -89,8 +90,11 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostReindexTag do
     }
     """
     test "auth user can reindex tags across groups", ~m(community community_tag_attrs user)a do
-      resources_attrs = Map.merge(community_tag_attrs, %{group: "Resources"})
-      general_attrs = Map.merge(community_tag_attrs, %{group: "General"})
+      {:ok, resources} = CMS.Communities.create_tag_group(community, :post, %{title: "Resources"})
+      {:ok, general} = CMS.Communities.create_tag_group(community, :post, %{title: "General"})
+
+      resources_attrs = Map.merge(community_tag_attrs, %{group_id: resources.id})
+      general_attrs = Map.merge(community_tag_attrs, %{group_id: general.id})
 
       {:ok, community_tag1} = CMS.Communities.create_tag(community, :post, resources_attrs, user)
 
@@ -127,22 +131,22 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostReindexTag do
         tags: [
           %{
             id: community_tag1.id,
-            group: "General",
+            groupId: general.id,
             index: 1
           },
           %{
             id: community_tag2.id,
-            group: "Resources",
+            groupId: resources.id,
             index: 0
           },
           %{
             id: community_tag3.id,
-            group: "Resources",
+            groupId: resources.id,
             index: 1
           },
           %{
             id: community_tag4.id,
-            group: "General",
+            groupId: general.id,
             index: 0
           }
         ]
@@ -155,13 +159,13 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostReindexTag do
       {:ok, community_tag3_after} = ORM.find(CommunityTag, community_tag3.id)
       {:ok, community_tag4_after} = ORM.find(CommunityTag, community_tag4.id)
 
-      assert community_tag1_after.group === "General"
+      assert community_tag1_after.group_id === general.id
       assert community_tag1_after.index === 1
-      assert community_tag2_after.group === "Resources"
+      assert community_tag2_after.group_id === resources.id
       assert community_tag2_after.index === 0
-      assert community_tag3_after.group === "Resources"
+      assert community_tag3_after.group_id === resources.id
       assert community_tag3_after.index === 1
-      assert community_tag4_after.group === "General"
+      assert community_tag4_after.group_id === general.id
       assert community_tag4_after.index === 0
     end
   end

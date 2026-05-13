@@ -7,9 +7,9 @@ export type TDraftGroup = {
 }
 
 export type TGroupListItem = {
-  key: string
+  id: string
   title: string
-  group?: string | null
+  index: number
   tags: readonly TTag[]
   draft: boolean
   draftId?: string
@@ -19,6 +19,11 @@ export type TTagDropPosition = 'before' | 'after'
 
 export type TTagDragTarget = {
   tagId?: string
-  groupKey?: string
+  groupId?: string
   position?: TTagDropPosition
+}
+
+export type TGroupDragTarget = {
+  groupId: string
+  position: TTagDropPosition
 }

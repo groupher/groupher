@@ -6,7 +6,7 @@ import { useMutation, useQuery } from 'urql'
 import { THREAD } from '~/const/thread'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import { toast, updateViewingArticle } from '~/signal'
-import type { TColorName, TID, TTag } from '~/spec'
+import type { TColorName, TID, TTag, TTagGroup } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import Checker from '~/widgets/Checker'
 import TagNode from '~/widgets/TagNode'
@@ -30,18 +30,16 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
   const { article } = useViewingArticle()
 
   const [result] = useQuery({
-    query: S.pagedCommunityTags,
+    query: S.communityTagGroups,
     variables: {
-      filter: {
-        community,
-        thread: THREAD.POST,
-      },
+      community,
+      thread: THREAD.POST,
     },
     requestPolicy: 'cache-and-network',
   })
   const [updatePostRes, updatePost] = useMutation(S.updatePost)
 
-  const tags = result.data?.pagedCommunityTags?.entries || []
+  const tags = result.data?.communityTagGroups?.flatMap((group: TTagGroup) => group.tags) || []
 
   useEffect(() => {
     const originTags = article.communityTags || []

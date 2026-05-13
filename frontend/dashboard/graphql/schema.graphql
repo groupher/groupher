@@ -96,8 +96,8 @@ type RootQueryType {
   "get all categories"
   pagedCategories(filter: PagiFilter): PagedCategories
 
-  "get paged community tags"
-  pagedCommunityTags(filter: CommunityTagsFilter): PagedCommunityTags
+  "get community tag groups"
+  communityTagGroups(community: String!, thread: Thread): [CommunityTagGroup]
 
   "get community tag stats by community, thread and slug"
   communityTagStats(community: String!, thread: Thread!, slug: String!): CommunityTagStat
@@ -257,13 +257,22 @@ type RootMutationType {
 
   "create a tag"
   createCommunityTag(
-    title: String!, slug: String!, color: RainbowColor!, layout: String, community: String!, group: String, thread: Thread, extra: [String], icon: String
+    title: String!, slug: String!, color: RainbowColor!, layout: String, community: String!, groupId: ID!, thread: Thread, extra: [String], icon: String
   ): CommunityTag
 
   "update a tag"
   updateCommunityTag(
-    id: ID!, community: String!, title: String, layout: String, desc: String, slug: String, color: RainbowColor, group: String, thread: Thread, extra: [String], icon: String
+    id: ID!, community: String!, title: String, layout: String, desc: String, slug: String, color: RainbowColor, groupId: ID, thread: Thread, extra: [String], icon: String
   ): CommunityTag
+
+  "create a tag group"
+  createCommunityTagGroup(title: String!, community: String!, thread: Thread): CommunityTagGroup
+
+  "update a tag group"
+  updateCommunityTagGroup(id: ID!, community: String!, title: String!, thread: Thread): CommunityTagGroup
+
+  "delete a tag group"
+  deleteCommunityTagGroup(id: ID!, community: String!, thread: Thread): CommunityTagGroup
 
   "delete a tag by thread"
   deleteCommunityTag(id: ID!, community: String!, thread: Thread): CommunityTag
@@ -287,10 +296,13 @@ type RootMutationType {
   unsetCommunityTag(article: ArticleRefInput!, communityTagId: ID!): Article
 
   "reindex tags in given group"
-  reindexTagsInGroup(community: String!, thread: Thread, group: String!, tags: [ReindexTagInput]): Done
+  reindexTagsInGroup(community: String!, thread: Thread, groupId: ID!, tags: [ReindexTagInput]): Done
 
   "reindex tags across groups"
   reindexCommunityTags(community: String!, thread: Thread, tags: [ReindexCommunityTagInput]): Done
+
+  "reindex tag groups"
+  reindexCommunityTagGroups(community: String!, thread: Thread, groups: [ReindexCommunityTagGroupInput]): Done
 
   "mirror article to other community"
   mirrorArticle(article: ArticleRefInput!, targetCommunity: String!, communityTags: [ID]): Article
@@ -1073,12 +1085,24 @@ type CommunityTag {
   color: RainbowColor
   thread: Thread
   group: String
+  groupId: ID
   extra: [String]
   icon: String
   index: Int
   author: User
   community: Community
   stats: CommunityTagStat
+  insertedAt: DateTime
+  updatedAt: DateTime
+}
+
+type CommunityTagGroup {
+  id: ID
+  title: String
+  thread: Thread
+  index: Int
+  tags: [CommunityTag]
+  community: Community
   insertedAt: DateTime
   updatedAt: DateTime
 }
@@ -1272,14 +1296,6 @@ type PagedCommentReplies {
 
 type PagedCommunities {
   entries: [Community]
-  totalCount: Int
-  pageSize: Int
-  totalPages: Int
-  pageNumber: Int
-}
-
-type PagedCommunityTags {
-  entries: [CommunityTag]
   totalCount: Int
   pageSize: Int
   totalPages: Int
@@ -1625,13 +1641,6 @@ input CommunitiesFilter {
   category: String
 }
 
-input CommunityTagsFilter {
-  community: String
-  thread: Thread
-  page: Int
-  size: Int
-}
-
 input ReindexTagInput {
   id: ID
   index: Int
@@ -1639,7 +1648,12 @@ input ReindexTagInput {
 
 input ReindexCommunityTagInput {
   id: ID!
-  group: String!
+  groupId: ID!
+  index: Int!
+}
+
+input ReindexCommunityTagGroupInput {
+  id: ID!
   index: Int!
 }
 
