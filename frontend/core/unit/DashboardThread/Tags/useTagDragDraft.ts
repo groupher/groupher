@@ -22,8 +22,15 @@ type TRet = {
   cancelDrag: () => void
 }
 
+// Draft groups are UI-only placeholders for newly typed group names. They are
+// shown before real groups so users can drag existing tags into them after the
+// group is confirmed, but draft groups themselves are never persisted.
 const draftGroupId = (draftId: string): string => `draft:${draftId}`
 
+// Builds the editor view model by merging persisted tag groups with local draft
+// groups for the selected thread. Persisted groups keep their saved index order;
+// draft groups get negative indexes so they remain visually separated from
+// server-backed data.
 const buildGroups = (
   tagGroups: readonly TTagGroup[],
   draftGroups: readonly TDraftGroup[],
@@ -54,6 +61,9 @@ const buildGroups = (
 const normalizeGroupIndexes = (groups: TGroupListItem[]): TGroupListItem[] =>
   groups.map((group, index) => ({ ...group, index }))
 
+// Reorders real groups in the local drag draft. Draft groups are blocked here
+// because they do not yet exist in the backend and cannot be committed as part
+// of group ordering.
 const moveGroup = (
   groups: TGroupListItem[],
   activeId: string,
@@ -78,6 +88,9 @@ const moveGroup = (
   ])
 }
 
+// Moves a tag between real groups or within the same group. Dropping into draft
+// groups is intentionally blocked: a draft group needs to be saved first so the
+// backend can assign a real group id.
 const moveTagInGroups = (
   groups: TGroupListItem[],
   tagId: string,
@@ -129,6 +142,9 @@ const moveTagInGroups = (
   })
 }
 
+// Converts the drag draft back to the backend-facing tag group shape. Draft
+// groups are filtered out and both group/tag indexes are normalized from the
+// current visual order.
 const flattenGroups = (groups: readonly TGroupListItem[]): TTagGroup[] => {
   return groups
     .filter((group) => !group.draft)
@@ -144,6 +160,9 @@ const flattenGroups = (groups: readonly TGroupListItem[]): TTagGroup[] => {
     }))
 }
 
+// Placement comparison ignores UI-only draft groups and compares only the
+// persisted group/tag identity and indexes. This prevents unnecessary commits
+// when hover updates do not change the final saved order.
 const isSamePlacement = (
   left: readonly TGroupListItem[],
   right: readonly TGroupListItem[],
@@ -167,6 +186,9 @@ const isSamePlacement = (
   })
 }
 
+// Keeps a local copy of the tag/group placement while dragging. This mirrors the
+// link editor DnD pattern: update local UI during hover, then commit the final
+// flattened tagGroups once on drop.
 export default function useTagDragDraft({
   tagGroups,
   draftGroups,
@@ -228,6 +250,8 @@ export default function useTagDragDraft({
     setGroups(nextGroups)
   }, [])
 
+  // Commit is delayed to the next animation frame so the final local drag state
+  // can paint before the parent dashboard store updates and re-renders.
   const commitDraft = useCallback(
     (nextGroups: TGroupListItem[]): void => {
       if (!isSamePlacement(baselineGroupsRef.current, nextGroups)) {

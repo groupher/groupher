@@ -1,18 +1,16 @@
 import type { FC } from 'react'
 
-import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import { FOOTER_LAYOUT } from '~/const/layout'
 import { DEME_SOCIALS } from '~/const/social'
-import type { TActive, TLinkItem } from '~/spec'
+import type { TActive, TFooterOnelineLink } from '~/spec'
 import CommunityBrand from '~/unit/CommunityBrand'
 import SocialList from '~/unit/SocialList'
 
 import useFooter from '../../logic/useFooter'
-import useSalon, { cn } from '../../salon/footer/templates/simple'
-import { isValidFooterLink } from '../Editors/model'
+import useSalon, { cn } from '../../salon/footer/templates/oneline'
 
 type TProps = {
-  links: readonly TLinkItem[]
+  links: readonly TFooterOnelineLink[]
   /**
    * When used as a layout selector preview, disable nested interactive elements
    * (e.g., anchors) to avoid interactive-in-interactive a11y violations.
@@ -22,15 +20,11 @@ type TProps = {
 
 const RADIO_NAME = 'footer-layout'
 
-const Simple: FC<TProps> = ({ links, active, previewOnly = true }) => {
+const Oneline: FC<TProps> = ({ links, active, previewOnly = true }) => {
   const s = useSalon()
   const { edit } = useFooter()
 
-  const radioId = 'footer-layout-simple'
-
-  const validLinks = links.every(isValidFooterLink) ? links : []
-  const firstGroupLinks =
-    validLinks.find((item) => item.type === DASHBOARD_LINK_TYPE.GROUP)?.links || []
+  const radioId = 'footer-layout-oneline'
 
   return (
     <label htmlFor={radioId} className={cn(s.wrapper, active && s.active)}>
@@ -39,14 +33,14 @@ const Simple: FC<TProps> = ({ links, active, previewOnly = true }) => {
         type='radio'
         name={RADIO_NAME}
         checked={active}
-        onChange={() => edit(FOOTER_LAYOUT.SIMPLE, 'footerLayout')}
+        onChange={() => edit(FOOTER_LAYOUT.ONELINE, 'footerLayout')}
         className='sr-only'
       />
 
       <CommunityBrand className='scale-95' />
 
       <div className={s.center}>
-        {firstGroupLinks.map((item) =>
+        {links.map((item) =>
           previewOnly ? (
             <span className={s.linkItem} key={item.title}>
               {item.title}
@@ -66,4 +60,4 @@ const Simple: FC<TProps> = ({ links, active, previewOnly = true }) => {
   )
 }
 
-export default Simple
+export default Oneline

@@ -15,6 +15,7 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
   @replace_section_fields [
     :header_links,
     :footer_links,
+    :footer_oneline_links,
     :name_alias,
     :social_links,
     :media_reports,
@@ -109,6 +110,15 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
   defp prepare_dsb_section_payload(%CommunityDashboard{}, key, args)
        when key in [:header_links, :footer_links] and is_list(args) do
     if Enum.all?(args, &valid_tree_link?/1) do
+      {:ok, args}
+    else
+      {:error, {:custom, "invalid dashboard links"}}
+    end
+  end
+
+  defp prepare_dsb_section_payload(%CommunityDashboard{}, :footer_oneline_links, args)
+       when is_list(args) do
+    if valid_link_children?(args) do
       {:ok, args}
     else
       {:error, {:custom, "invalid dashboard links"}}

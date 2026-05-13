@@ -13,6 +13,9 @@ type TProps = {
   overClassName: string
 }
 
+// Droppable/sortable wrapper for one tag group. It exposes the group list rect
+// through dnd-kit data so collision logic can distinguish empty group drops from
+// drops over individual tags.
 const TagSortableGroup = memo(function TagSortableGroup({
   children,
   className,

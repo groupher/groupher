@@ -12,6 +12,7 @@ import type {
   TEnableConf,
   TFAQSection,
   TFooterLayout,
+  TFooterOnelineLink,
   THeaderLayout,
   TLinkItem,
   TInlineTagLayout,
@@ -19,7 +20,6 @@ import type {
   TKanbanBoard,
   TKanbanLayout,
   TLinkDraftItem,
-  TLinkItem,
   TLocale,
   TMediaReport,
   TModerator,
@@ -163,6 +163,7 @@ export type TDsbFieldMap = {
   footerLayout: TFooterLayout
 
   footerLinks: readonly TLinkItem[]
+  footerOnelineLinks: readonly TFooterOnelineLink[]
   headerLinks: readonly TLinkItem[]
 
   moderators: readonly TModerator[]

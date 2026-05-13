@@ -647,6 +647,9 @@ type RootMutationType {
   "update footer links in dashboard"
   updateDashboardFooterLinks(community: String!, dsbSection: DsbSection, footerLinks: [DsbLinkMap]): Community
 
+  "update footer oneline links in dashboard"
+  updateDashboardFooterOnelineLinks(community: String!, dsbSection: DsbSection, footerOnelineLinks: [DsbLinkChildMap]): Community
+
   "update social links in dashboard"
   updateDashboardSocialLinks(community: String!, dsbSection: DsbSection, socialLinks: [DsbSocialLinkMap]): Community
 
@@ -1021,6 +1024,7 @@ type Dsb {
   nameAlias: [DsbNameAlias]
   headerLinks: [DsbLink]
   footerLinks: [DsbLink]
+  footerOnelineLinks: [DsbLinkChild]
   socialLinks: [DsbSocialLink]
   mediaReports: [DsbMediaReport]
   faqs: [DsbFaqSection]
@@ -1425,6 +1429,7 @@ enum DsbSection {
   NAME_ALIAS
   HEADER_LINKS
   FOOTER_LINKS
+  FOOTER_ONELINE_LINKS
   SOCIAL_LINKS
   MEDIA_REPORTS
   FAQS
@@ -1609,7 +1614,7 @@ enum DsbHeaderLayout {
 }
 
 enum DsbFooterLayout {
-  SIMPLE
+  ONELINE
   GROUP
 }
 
@@ -1818,9 +1823,9 @@ input DsbAliasMap {
 }
 
 input DsbLinkChildMap {
-  id: String
-  title: String
-  url: String
+  id: String!
+  title: String!
+  url: String!
 }
 
 input DsbLinkMap {

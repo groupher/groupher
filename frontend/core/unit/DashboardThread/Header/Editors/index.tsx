@@ -1,3 +1,4 @@
+import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable'
 import type { Dispatch, FC, SetStateAction } from 'react'
 
 import useTrans from '~/hooks/useTrans'
@@ -10,6 +11,7 @@ import SortableDndContext from '../../LinkEditor/Dnd/SortableDndContext'
 import GroupInputer from '../../LinkEditor/GroupInputer'
 import useSalon from '../../salon/header/editors'
 import {
+  HEADER_COLUMN_KIND,
   HEADER_DND_CONTEXT_ID,
   HEADER_DND_TYPE,
   DND_ANNOUNCEMENTS,
@@ -81,29 +83,40 @@ const Editor: FC<TProps> = ({ links, makeId, onChange }) => {
       <SortableDndContext
         contextId={HEADER_DND_CONTEXT_ID}
         controller={dndController}
-        dndType={{ link: HEADER_DND_TYPE.LINK, column: HEADER_DND_TYPE.COLUMN }}
+        dndType={{
+          link: HEADER_DND_TYPE.LINK,
+          column: HEADER_DND_TYPE.COLUMN,
+          sortableColumn: HEADER_DND_TYPE.SORTABLE_COLUMN,
+        }}
         announcements={DND_ANNOUNCEMENTS}
         measuring={DND_MEASURING}
       >
         {({ activeDragColumnId, columns, targetDragColumnId }) => (
           <div className={s.linkGroup}>
-            {columns.map((column) => {
-              const isCrossGroupTarget =
-                !!activeDragColumnId &&
-                !!targetDragColumnId &&
-                targetDragColumnId === column.id &&
-                activeDragColumnId !== column.id
+            <SortableContext
+              items={columns
+                .filter((column) => column.kind !== HEADER_COLUMN_KIND.MORE)
+                .map((column) => `header-sortable-column:${column.id}`)}
+              strategy={rectSortingStrategy}
+            >
+              {columns.map((column) => {
+                const isCrossGroupTarget =
+                  !!activeDragColumnId &&
+                  !!targetDragColumnId &&
+                  targetDragColumnId === column.id &&
+                  activeDragColumnId !== column.id
 
-              return (
-                <HeaderColumn
-                  key={column.id}
-                  column={column}
-                  editor={editor}
-                  isCollapsed={editor.collapsedGroups.has(column.id)}
-                  isCrossGroupTarget={isCrossGroupTarget}
-                />
-              )
-            })}
+                return (
+                  <HeaderColumn
+                    key={column.id}
+                    column={column}
+                    editor={editor}
+                    isCollapsed={editor.collapsedGroups.has(column.id)}
+                    isCrossGroupTarget={isCrossGroupTarget}
+                  />
+                )
+              })}
+            </SortableContext>
           </div>
         )}
       </SortableDndContext>

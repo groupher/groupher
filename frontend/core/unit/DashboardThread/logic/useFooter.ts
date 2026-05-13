@@ -1,4 +1,4 @@
-import type { TEditFunc, TFooterLayout, TLinkItem } from '~/spec'
+import type { TEditFunc, TFooterLayout, TFooterOnelineLink, TLinkItem } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import type { TLinkState } from '../spec'
@@ -8,6 +8,7 @@ import useLinkDerived, { type TRet as TDerived } from './useLinkDerived'
 type TRet = {
   footerLayout: TFooterLayout
   footerLinks: readonly TLinkItem[]
+  footerOnelineLinks: readonly TFooterOnelineLink[]
   edit: TEditFunc
   resetEditingLink: () => void
 } & TLinkState &
@@ -22,6 +23,7 @@ export default function useFooter(): TRet {
   const {
     footerLayout,
     footerLinks,
+    footerOnelineLinks,
     editingLink,
     editingLinkMode,
     editingGroup,
@@ -34,6 +36,7 @@ export default function useFooter(): TRet {
     resetEditingLink: () => dsb$.commit({ editingLink: null }),
     footerLayout,
     footerLinks,
+    footerOnelineLinks,
     editingLink,
     editingLinkMode,
     editingGroup,

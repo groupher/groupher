@@ -11,9 +11,9 @@ import useFooterLinks from '~/hooks/useFooterLinks'
 import useCommunity from '~/stores/community/hooks'
 
 import GroupLayout from './GroupLayout'
+import OnelineLayout from './OnelineLayout'
 import PowerbyInfo from './PowerbyInfo'
 import useSalon from './salon'
-import SimpleLayout from './SimpleLayout'
 
 export default function Footer() {
   const s = useSalon()
@@ -25,7 +25,7 @@ export default function Footer() {
 
   return (
     <footer className={s.wrapper}>
-      {layout === FOOTER_LAYOUT.GROUP ? <GroupLayout /> : <SimpleLayout />}
+      {layout === FOOTER_LAYOUT.GROUP ? <GroupLayout /> : <OnelineLayout />}
       <PowerbyInfo />
     </footer>
   )

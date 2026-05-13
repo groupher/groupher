@@ -1,3 +1,5 @@
+import { arrayMove } from '@dnd-kit/sortable'
+
 import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import { MORE_TAB } from '~/hooks/useHeaderLinks/constant'
 import {
@@ -13,6 +15,21 @@ import type { THeaderColumn, THeaderDragTarget } from './spec'
 
 export const toLinkItem = toDraftLink
 
+// Header editing uses columns as the working model. A column may be a normal
+// group, a special single-link group, or the fixed More group. The persisted
+// shape is still the original TLinkItem list.
+const placeMoreLast = (columns: readonly THeaderColumn[]): THeaderColumn[] => {
+  const moreColumns = columns.filter((column) => column.kind === HEADER_COLUMN_KIND.MORE)
+  const regularColumns = columns.filter((column) => column.kind !== HEADER_COLUMN_KIND.MORE)
+
+  // This is a view-only placement rule. Keep sourceIndex tied to the persisted
+  // array so group edit/delete actions still target the original item.
+  return [...regularColumns, ...moreColumns]
+}
+
+// Builds the editor-only column model from persisted header links. Single links
+// become one-link columns so they can be sorted alongside groups; More is kept
+// as the last non-sortable column and may also show fixed resolver links.
 export const buildHeaderColumns = (
   links: readonly TLinkItem[],
   community: string,
@@ -45,18 +62,20 @@ export const buildHeaderColumns = (
   const fixedMoreTabLinks =
     moreTab?.links.filter((link) => MORE_TAB_FIXED_LINK_IDS.has(link.id)) ?? []
 
-  if (fixedMoreTabLinks.length === 0) return columns
+  if (fixedMoreTabLinks.length === 0) return placeMoreLast(columns)
 
   const moreColumn = columns.find((column) => column.kind === HEADER_COLUMN_KIND.MORE)
   if (moreColumn) {
-    return columns.map((column) =>
-      column.id === moreColumn.id ? { ...column, fixedLinks: fixedMoreTabLinks } : column,
+    return placeMoreLast(
+      columns.map((column) =>
+        column.id === moreColumn.id ? { ...column, fixedLinks: fixedMoreTabLinks } : column,
+      ),
     )
   }
 
   // The editor shows fixed More tab links as read-only children, but
   // flattenHeaderColumns strips them so usage: more-tab is never persisted.
-  return [
+  return placeMoreLast([
     ...columns,
     {
       id: MORE_TAB.CUSTOM_ID,
@@ -66,9 +85,12 @@ export const buildHeaderColumns = (
       links: [],
       fixedLinks: fixedMoreTabLinks,
     },
-  ]
+  ])
 }
 
+// Converts header columns back to persisted links. Empty single-link columns are
+// dropped, which is how dragging a header single link into another group removes
+// the source single-link column. Fixed More links are never persisted.
 export const flattenHeaderColumns = (columns: readonly THeaderColumn[]): TLinkItem[] => {
   return columns.flatMap((column): TLinkItem[] => {
     if (column.kind === HEADER_COLUMN_KIND.LINK) {
@@ -94,6 +116,15 @@ export const flattenHeaderColumns = (columns: readonly THeaderColumn[]): TLinkIt
 export const sameHeaderLinks = (left: readonly TLinkItem[], right: readonly TLinkItem[]): boolean =>
   JSON.stringify(left) === JSON.stringify(right)
 
+function normalizeColumnIndexes(columns: readonly THeaderColumn[]): THeaderColumn[] {
+  return columns.map((column, sourceIndex) => ({ ...column, sourceIndex }))
+}
+
+const isSortableColumn = (column: THeaderColumn): boolean =>
+  column.kind === HEADER_COLUMN_KIND.LINK || column.kind === HEADER_COLUMN_KIND.GROUP
+
+// Link sorting is only allowed into group/More columns. Single-link columns are
+// sortable as whole columns, but they do not accept child links.
 export const findColumnWithLink = (
   columns: readonly THeaderColumn[],
   itemId: string,
@@ -106,6 +137,9 @@ export const findColumnWithLink = (
   return null
 }
 
+// Moves a link in the column draft. When the source is a single-link column and
+// the link is dragged into another group, the source column is removed from the
+// draft and therefore from the eventual persisted header links.
 export const moveHeaderLinkInColumns = (
   columns: readonly THeaderColumn[],
   itemId: string,
@@ -149,4 +183,27 @@ export const moveHeaderLinkInColumns = (
 
     return [column]
   })
+}
+
+// Sorts only movable header columns. The More column and any other fixed column
+// stay out of the sortable set and are appended after the reordered columns.
+export const moveHeaderColumn = (
+  columns: readonly THeaderColumn[],
+  columnId: string,
+  targetColumnId: string,
+): THeaderColumn[] => {
+  if (columnId === targetColumnId) return [...columns]
+
+  const sortableColumns = columns.filter(isSortableColumn)
+  const fixedColumns = columns.filter((column) => !isSortableColumn(column))
+  const activeIndex = sortableColumns.findIndex((column) => column.id === columnId)
+  if (activeIndex < 0) return [...columns]
+
+  const targetIndex = sortableColumns.findIndex((column) => column.id === targetColumnId)
+  if (targetIndex < 0) return [...columns]
+
+  return normalizeColumnIndexes([
+    ...arrayMove(sortableColumns, activeIndex, targetIndex),
+    ...fixedColumns,
+  ])
 }

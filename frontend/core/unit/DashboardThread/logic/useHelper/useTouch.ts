@@ -11,7 +11,11 @@ export type TRet = {
   mapArrayChanged: (key: string) => boolean
 }
 
-const LEGACY_COMPARE_FIELDS = new Set<TDsbStoreFieldKey>([FIELD.HEADER_LINKS, FIELD.FOOTER_LINKS])
+const LEGACY_COMPARE_FIELDS = new Set<TDsbStoreFieldKey>([
+  FIELD.HEADER_LINKS,
+  FIELD.FOOTER_LINKS,
+  FIELD.FOOTER_ONELINE_LINKS,
+])
 
 export default function useTouch(): TRet {
   const dsb$ = useDashboard()

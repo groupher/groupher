@@ -164,6 +164,18 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       resolve(&R.CMS.update_dashboard/3)
     end
 
+    @desc "update footer oneline links in dashboard"
+    field :update_dashboard_footer_oneline_links, :community do
+      arg(:community, non_null(:string))
+      arg(:dsb_section, :dsb_section, default_value: :footer_oneline_links)
+      arg(:footer_oneline_links, list_of(:dsb_link_child_map))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+
+      resolve(&R.CMS.update_dashboard/3)
+    end
+
     @desc "update social links in dashboard"
     field :update_dashboard_social_links, :community do
       arg(:community, non_null(:string))

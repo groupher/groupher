@@ -18,6 +18,10 @@ import { useRef, useState } from 'react'
 import { getOverRect } from './helper'
 import type { TLinkDndColumnBase, TLinkDndTarget, TSortableDndContextProps } from './spec'
 
+// DnD shell shared by header/footer link editors. It owns sensor setup,
+// collision detection, and event routing, while each editor owns the actual data
+// transformation through its controller. Link drag targets carry item placement;
+// column drag targets intentionally only carry the target column id.
 export default function SortableDndContext<
   TColumn extends TLinkDndColumnBase,
   TTarget extends TLinkDndTarget,
@@ -31,6 +35,7 @@ export default function SortableDndContext<
 }: TSortableDndContextProps<TColumn, TTarget>) {
   const pointerYRef = useRef<number | null>(null)
   const lastDragTargetRef = useRef<TTarget | null>(null)
+  const lastColumnTargetIdRef = useRef<string | null>(null)
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -65,7 +70,23 @@ export default function SortableDndContext<
     }
   }
 
+  const getColumnDragTargetId = ({ over }: DragOverEvent | DragEndEvent): string | undefined => {
+    if (!over || over.data.current?.type !== dndType.sortableColumn) return
+
+    return over.data.current.columnId
+  }
+
   const handleDragStart = ({ active }: DragStartEvent): void => {
+    if (active.data.current?.type === dndType.sortableColumn) {
+      const columnId = active.data.current.columnId || String(active.id)
+      lastDragTargetRef.current = null
+      lastColumnTargetIdRef.current = null
+      setActiveDragColumnId(columnId)
+      setTargetDragColumnId(null)
+      controller.startColumnDrag?.(columnId)
+      return
+    }
+
     const source = controller.findColumnWithLink(String(active.id))
     lastDragTargetRef.current = null
     setActiveDragColumnId(source?.column.id || null)
@@ -74,22 +95,38 @@ export default function SortableDndContext<
   }
 
   const handleDragOver = (event: DragOverEvent): void => {
+    if (event.active.data.current?.type === dndType.sortableColumn) {
+      const targetColumnId = getColumnDragTargetId(event) || null
+      lastColumnTargetIdRef.current = targetColumnId
+      setTargetDragColumnId(targetColumnId)
+      return
+    }
+
     const target = getDragTarget(event) || null
     lastDragTargetRef.current = target
     setTargetDragColumnId(target?.columnId || null)
     controller.moveDrag(target)
   }
 
-  const handleDragEnd = (_event: DragEndEvent): void => {
+  const handleDragEnd = (event: DragEndEvent): void => {
     const target = lastDragTargetRef.current
     lastDragTargetRef.current = null
+    const targetColumnId = lastColumnTargetIdRef.current
+    lastColumnTargetIdRef.current = null
     setActiveDragColumnId(null)
     setTargetDragColumnId(null)
+
+    if (event.active.data.current?.type === dndType.sortableColumn) {
+      controller.commitColumnDrag?.(targetColumnId)
+      return
+    }
+
     controller.commitDrag(target)
   }
 
   const handleDragCancel = (_event: DragCancelEvent): void => {
     lastDragTargetRef.current = null
+    lastColumnTargetIdRef.current = null
     setActiveDragColumnId(null)
     setTargetDragColumnId(null)
     controller.cancelDrag()
@@ -97,6 +134,17 @@ export default function SortableDndContext<
 
   const collisionDetection: CollisionDetection = (args) => {
     pointerYRef.current = args.pointerCoordinates?.y ?? null
+
+    if (args.active.data.current?.type === dndType.sortableColumn) {
+      const columnSortContainers = args.droppableContainers.filter(
+        (container) =>
+          container.id !== args.active.id &&
+          container.data.current?.type === dndType.sortableColumn,
+      )
+
+      return closestCorners({ ...args, droppableContainers: columnSortContainers })
+    }
+
     const linkContainers = args.droppableContainers.filter(
       (container) =>
         container.id !== args.active.id && container.data.current?.type === dndType.link,

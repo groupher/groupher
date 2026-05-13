@@ -58,6 +58,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     value(:name_alias)
     value(:header_links)
     value(:footer_links)
+    value(:footer_oneline_links)
     value(:social_links)
     value(:media_reports)
     value(:faqs)
@@ -323,9 +324,9 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   end
 
   input_object :dsb_link_child_map do
-    field(:id, :string)
-    field(:title, :string)
-    field(:url, :string)
+    field(:id, non_null(:string))
+    field(:title, non_null(:string))
+    field(:url, non_null(:string))
   end
 
   input_object :dsb_link_map do

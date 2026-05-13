@@ -491,7 +491,7 @@ export default {
   'dsb.footer.editors.group': '链接组',
   'dsb.footer.editors.note.title': '注意事项',
   'dsb.footer.editors.note.item.preview': '改变顺序后可通过上方模板预览效果。',
-  'dsb.footer.editors.note.item.keep': '不同模板间切换时，本组（第一组）链接组会被保留。',
+  'dsb.footer.editors.note.item.keep': '单行和分组页脚链接会分别编辑和保存。',
   'dsb.overview.portal.title': '设置概览',
   'dsb.overview.portal.desc': '基础设置向导，帮助文档等等',
   'dsb.menu.basic': '工作区',

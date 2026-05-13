@@ -4,14 +4,14 @@ import { FOOTER_LAYOUT } from '~/const/layout'
 
 import useFooter from '../../logic/useFooter'
 import GroupEditor from './Group'
-import SimpleEditor from './Simple'
+import OnelineEditor from './Oneline'
 
 const Editor: FC = () => {
   const { footerLayout } = useFooter()
 
   return (
     <>
-      {footerLayout === FOOTER_LAYOUT.SIMPLE && <SimpleEditor />}
+      {footerLayout === FOOTER_LAYOUT.ONELINE && <OnelineEditor />}
       {footerLayout === FOOTER_LAYOUT.GROUP && <GroupEditor />}
     </>
   )

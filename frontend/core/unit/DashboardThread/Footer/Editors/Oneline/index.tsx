@@ -8,27 +8,27 @@ import Button from '~/widgets/Buttons/Button'
 
 import LinkEditor from '../../../LinkEditor'
 import useFooter from '../../../logic/useFooter'
-import useSalon from '../../../salon/footer/editors/simple'
+import useSalon from '../../../salon/footer/editors/oneline'
 import FooterDndContext from '../FooterDndContext'
 import FooterSortableGroup from '../FooterSortableGroup'
-import { toDraftLink } from '../model'
+import { buildFooterOnelineDraftLinks, flattenFooterOnelineDraftLinks, toDraftLink } from '../model'
 import SortableFooterLinkItem from '../SortableFooterLinkItem'
 import useFooterEditorActions from '../useFooterEditorActions'
 
-const Simple: FC = () => {
+const Oneline: FC = () => {
   const s = useSalon()
   const { t } = useTrans()
   const dsb$ = useDashboard()
 
-  const { footerLinks: links } = useFooter()
-  const editor = useFooterEditorActions(links)
+  const { footerOnelineLinks } = useFooter()
+  const links = buildFooterOnelineDraftLinks(footerOnelineLinks)
+  const editOnelineLinks = (nextLinks: typeof links): void =>
+    dsb$.editField(FIELD.FOOTER_ONELINE_LINKS, flattenFooterOnelineDraftLinks(nextLinks))
+  const editor = useFooterEditorActions(links, editOnelineLinks)
 
   return (
     <div className={s.wrapper}>
-      <FooterDndContext
-        links={links}
-        onCommit={(nextLinks) => dsb$.editField(FIELD.FOOTER_LINKS, nextLinks)}
-      >
+      <FooterDndContext links={links} onCommit={editOnelineLinks}>
         {({ columns }) => {
           const column = columns[0]
 
@@ -74,9 +74,9 @@ const Simple: FC = () => {
                   ghost
                   noBorder
                   space={8}
-                  onClick={() =>
-                    column ? editor.add2Group(column.id, 0) : editor.add2NewGroup('Links', 0)
-                  }
+                  onClick={() => {
+                    if (column) editor.add2Group(column.id, 0)
+                  }}
                   className='mt-6 w-28'
                 >
                   <PlusSVG className={s.icon} />
@@ -97,4 +97,4 @@ const Simple: FC = () => {
   )
 }
 
-export default Simple
+export default Oneline

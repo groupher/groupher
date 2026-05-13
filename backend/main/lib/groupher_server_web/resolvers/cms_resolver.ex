@@ -42,6 +42,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     special_keys = [
       :header_links,
       :footer_links,
+      :footer_oneline_links,
       :name_alias,
       :social_links,
       :media_reports,
@@ -291,7 +292,11 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Communities.update_tag(id, args)
   end
 
-  def update_community_tag_group(_root, %{id: id, thread: thread, community: community} = args, _info) do
+  def update_community_tag_group(
+        _root,
+        %{id: id, thread: thread, community: community} = args,
+        _info
+      ) do
     CMS.Communities.update_tag_group(%Community{slug: community}, thread, id, args)
   end
 

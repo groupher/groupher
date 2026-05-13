@@ -14,6 +14,8 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLinkChild do
     field(:url, :string)
   end
 
+  def default, do: []
+
   def changeset(struct, params) do
     struct
     |> cast(params, [:id, :title, :url])

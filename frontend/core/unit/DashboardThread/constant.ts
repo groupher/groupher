@@ -65,6 +65,7 @@ export const FIELD = {
   SOCIAL_LINKS: 'socialLinks',
   HEADER_LINKS: 'headerLinks',
   FOOTER_LINKS: 'footerLinks',
+  FOOTER_ONELINE_LINKS: 'footerOnelineLinks',
   TAGS: 'tagGroups',
   TAG: 'tag',
   TAG_INDEX: 'tagIndex',

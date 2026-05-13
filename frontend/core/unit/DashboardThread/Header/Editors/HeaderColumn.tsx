@@ -6,10 +6,12 @@ import PlusSVG from '~/icons/Plus'
 import Button from '~/widgets/Buttons/Button'
 
 import LinkEditor from '../../LinkEditor'
+import SortableColumn from '../../LinkEditor/Dnd/SortableColumn'
+import GroupDragHandle from '../../LinkEditor/GroupDragHandle'
 import GroupHead from '../../LinkEditor/GroupHead'
 import LinksHint from '../../LinkEditor/LinksHint'
 import useSalon from '../../salon/header/editors'
-import { HEADER_COLUMN_KIND } from './constants'
+import { HEADER_COLUMN_KIND, HEADER_DND_TYPE } from './constants'
 import HeaderSortableGroup from './HeaderSortableGroup'
 import { toLinkItem } from './model'
 import SortableHeaderLinkItem from './SortableHeaderLinkItem'
@@ -64,90 +66,114 @@ const HeaderColumn: FC<TProps> = ({ column, editor, isCollapsed, isCrossGroupTar
   ]
 
   return (
-    <div className={s.columnWrapper}>
-      <GroupHead
-        title={title}
-        currentIndex={column.sourceIndex}
-        collapsed={isCollapsed}
-        onToggle={isCollapsible ? () => toggleGroup(column.id) : undefined}
-        onEdit={column.kind === HEADER_COLUMN_KIND.GROUP ? triggerGroupUpdate : undefined}
-        onDelete={!isMore ? () => deleteGroup(column.sourceIndex) : undefined}
-        editingGroup={editingGroup}
-        editingGroupIndex={editingGroupIndex}
-        onCancelEdit={cancelGroupChange}
-        onChangeEdit={updateEditingGroup}
-        onConfirmEdit={confirmGroupUpdate}
-      />
-
-      <HeaderSortableGroup
-        className={s.itemsWrapper}
-        overClassName={s.itemsWrapperOver}
-        targetClassName={isCrossGroupTarget ? s.itemsWrapperTarget : ''}
-        columnId={column.id}
-        ids={sortableIds}
-        disabled={isSingleLink || isCollapsed}
-      >
-        {isEmptyGroup ? (
-          <LinksHint count={0} empty />
-        ) : isCollapsed ? (
-          <LinksHint count={visibleLinks.length} />
-        ) : (
-          visibleLinks.map(({ link, index, sortable, sortableId }) => {
-            const fixedTitle =
-              link.id === MORE_TAB.ABOUT_ID
-                ? t(MORE_TAB.ABOUT_TITLE_KEY)
-                : link.id === MORE_TAB.DASHBOARD_ID
-                  ? t(MORE_TAB.DASHBOARD_TITLE_KEY)
-                  : link.title
-            const linkItem = toLinkItem(
-              { ...link, title: fixedTitle },
-              column.id,
-              column.sourceIndex,
-              index,
-            )
-            const isEditing =
-              linkItem.group === editingLink?.group && linkItem.index === editingLink?.index
-
-            return (
-              <SortableHeaderLinkItem
-                key={sortableId}
-                id={sortableId}
-                linkId={link.id}
-                columnId={column.id}
-                disabled={!sortable}
-                editing={isEditing}
-              >
-                <LinkEditor
-                  linkItem={linkItem}
-                  editingLink={editingLink}
-                  mode={editingLinkMode}
-                  disableSetting={!sortable || isSingleLink}
-                  disableEdit={!sortable}
-                  compact
-                  actions={linkActions}
+    <SortableColumn
+      className={s.columnWrapper}
+      columnId={column.id}
+      dndType={{
+        link: HEADER_DND_TYPE.LINK,
+        column: HEADER_DND_TYPE.COLUMN,
+        sortableColumn: HEADER_DND_TYPE.SORTABLE_COLUMN,
+      }}
+      disabled={isMore}
+      idPrefix='header-sortable-column'
+    >
+      {({ attributes, listeners, setActivatorNodeRef }) => (
+        <>
+          <GroupHead
+            title={title}
+            currentIndex={column.sourceIndex}
+            dragHandle={
+              !isMore ? (
+                <GroupDragHandle
+                  attributes={attributes}
+                  label='Drag header group'
+                  listeners={listeners}
+                  setActivatorNodeRef={setActivatorNodeRef}
                 />
-              </SortableHeaderLinkItem>
-            )
-          })
-        )}
+              ) : null
+            }
+            collapsed={isCollapsed}
+            onToggle={isCollapsible ? () => toggleGroup(column.id) : undefined}
+            onEdit={column.kind === HEADER_COLUMN_KIND.GROUP ? triggerGroupUpdate : undefined}
+            onDelete={!isMore ? () => deleteGroup(column.sourceIndex) : undefined}
+            editingGroup={editingGroup}
+            editingGroupIndex={editingGroupIndex}
+            onCancelEdit={cancelGroupChange}
+            onChangeEdit={updateEditingGroup}
+            onConfirmEdit={confirmGroupUpdate}
+          />
 
-        {!isMore && !isSingleLink && !isCollapsed && (
-          <div className={s.addLinkRow}>
-            <Button
-              size='small'
-              onClick={() => add2Group(column.id, column.sourceIndex)}
-              space={2}
-              ghost
-              noBorder
-              left={1.5}
-            >
-              <PlusSVG className={s.plusIcon} />
-              {t('dsb.header.editors.link')}
-            </Button>
-          </div>
-        )}
-      </HeaderSortableGroup>
-    </div>
+          <HeaderSortableGroup
+            className={s.itemsWrapper}
+            overClassName={s.itemsWrapperOver}
+            targetClassName={isCrossGroupTarget ? s.itemsWrapperTarget : ''}
+            columnId={column.id}
+            ids={sortableIds}
+            disabled={isSingleLink || isCollapsed}
+          >
+            {isEmptyGroup ? (
+              <LinksHint count={0} empty />
+            ) : isCollapsed ? (
+              <LinksHint count={visibleLinks.length} />
+            ) : (
+              visibleLinks.map(({ link, index, sortable, sortableId }) => {
+                const fixedTitle =
+                  link.id === MORE_TAB.ABOUT_ID
+                    ? t(MORE_TAB.ABOUT_TITLE_KEY)
+                    : link.id === MORE_TAB.DASHBOARD_ID
+                      ? t(MORE_TAB.DASHBOARD_TITLE_KEY)
+                      : link.title
+                const linkItem = toLinkItem(
+                  { ...link, title: fixedTitle },
+                  column.id,
+                  column.sourceIndex,
+                  index,
+                )
+                const isEditing =
+                  linkItem.group === editingLink?.group && linkItem.index === editingLink?.index
+
+                return (
+                  <SortableHeaderLinkItem
+                    key={sortableId}
+                    id={sortableId}
+                    linkId={link.id}
+                    columnId={column.id}
+                    disabled={!sortable}
+                    editing={isEditing}
+                  >
+                    <LinkEditor
+                      linkItem={linkItem}
+                      editingLink={editingLink}
+                      mode={editingLinkMode}
+                      disableSetting={!sortable || isSingleLink}
+                      disableEdit={!sortable}
+                      compact
+                      actions={linkActions}
+                    />
+                  </SortableHeaderLinkItem>
+                )
+              })
+            )}
+
+            {!isMore && !isSingleLink && !isCollapsed && (
+              <div className={s.addLinkRow}>
+                <Button
+                  size='small'
+                  onClick={() => add2Group(column.id, column.sourceIndex)}
+                  space={2}
+                  ghost
+                  noBorder
+                  left={1.5}
+                >
+                  <PlusSVG className={s.plusIcon} />
+                  {t('dsb.header.editors.link')}
+                </Button>
+              </div>
+            )}
+          </HeaderSortableGroup>
+        </>
+      )}
+    </SortableColumn>
   )
 }
 

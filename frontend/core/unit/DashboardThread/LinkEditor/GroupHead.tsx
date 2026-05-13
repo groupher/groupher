@@ -26,11 +26,11 @@ const GroupHead: FC<TGroupHeadProps> = ({
   onConfirmEdit,
 }) => {
   const s = useSalon()
+  const dragHandleNode = dragHandle ? <div className={s.dragSlot}>{dragHandle}</div> : null
 
   if (editingGroup !== null && editingGroupIndex === currentIndex) {
     return (
       <div className={s.wrapper}>
-        {dragHandle}
         <GroupInputer
           value={editingGroup}
           onChange={onChangeEdit}
@@ -52,7 +52,7 @@ const GroupHead: FC<TGroupHeadProps> = ({
 
   return (
     <div className={s.wrapper}>
-      {dragHandle}
+      {dragHandleNode}
       {titleNode}
       <div className='grow' />
       {onEdit && <EditSVG className={s.editIcon} onClick={() => onEdit(title, currentIndex)} />}

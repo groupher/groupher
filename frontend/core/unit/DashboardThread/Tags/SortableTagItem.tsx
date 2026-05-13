@@ -8,6 +8,9 @@ import type { TTag } from '~/spec'
 
 import TagBar from './TagBar'
 
+// Tags are horizontally compact inside the dashboard editor. Clamp horizontal
+// movement so a vertical sort drag does not visually slide the tag far out of
+// its group while still allowing enough offset to show active dragging.
 const clampTranslateX = (x: number): number => Math.max(-12, Math.min(36, x))
 
 type TProps = {
@@ -27,6 +30,8 @@ type TSortableProps = TProps & {
   id: string
 }
 
+// Sortable tag row. Drag activation is limited to the handle so TagBar can keep
+// its own settings click targets without accidentally starting a drag.
 const SortableTagItemInner = memo(function SortableTagItemInner({
   id,
   tag,

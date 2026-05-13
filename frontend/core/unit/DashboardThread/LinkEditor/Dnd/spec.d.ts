@@ -14,6 +14,7 @@ export type TLinkDndColumnBase = {
 export type TLinkDndType = {
   link: string
   column: string
+  sortableColumn?: string
 }
 
 export type TLinkDndColumnResult<TColumn extends TLinkDndColumnBase, TLink> = {
@@ -28,8 +29,10 @@ export type TLinkDndController<
   columns: TColumn[]
   findColumnWithLink: (itemId: string) => { column: TColumn } | null
   startDrag: (itemId: string) => void
+  startColumnDrag?: (columnId: string) => void
   moveDrag: (target?: TTarget | null) => void
   commitDrag: (target?: TTarget | null) => void
+  commitColumnDrag?: (targetColumnId?: string | null) => void
   cancelDrag: () => void
 }
 
