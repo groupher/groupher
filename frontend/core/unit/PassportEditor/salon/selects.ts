@@ -7,8 +7,10 @@ export default function useSalon() {
   return {
     wrapper: 'column w-full gap-y-6 relative',
     group: 'w-full',
-    groupTitle: cn('text-sm bold mb-2', fg('title')),
-    primaryGroupTitle: cn('text-sm bold mb-2', primary('fg')),
+    groupHeader: 'mb-2 ml-0.5',
+    groupTitle: cn('text-sm bold', fg('title')),
+    primaryGroupTitle: cn('text-sm bold', primary('fg')),
+    groupDesc: cn('text-sm mt-1 mb-3 w-11/12', fg('digest')),
     groupPanel: cn('w-full rounded-sm border', br('divider')),
     groupBody: 'grid grid-cols-2 gap-x-5 gap-y-1',
     threadedGroupBody: 'column w-full gap-y-5 p-4',
@@ -18,11 +20,8 @@ export default function useSalon() {
     threadCount: cn('normal-case font-normal', fg('digest')),
     primaryThreadCount: cn('normal-case font-normal', primary('fg')),
     threadRules: 'grid grid-cols-2 gap-x-5 gap-y-1',
-    item: 'row-center min-w-0 w-full overflow-hidden',
     readonlyItem: 'row-center w-1/2',
     checkIcon: cn('size-3 mr-1.5', rainbow(COLOR.GREEN, 'fill')),
     rootCheckIcon: cn('size-3 mr-1.5', rainbow(COLOR.GREEN, 'fill')),
-    itemTitle: cn('text-sm ml-2 min-w-0 flex-1 truncate', fg('digest')),
-    primaryItemTitle: cn('text-sm ml-2 min-w-0 flex-1 truncate', primary('fg')),
   }
 }

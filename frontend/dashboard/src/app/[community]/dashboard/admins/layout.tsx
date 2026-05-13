@@ -1,41 +1,24 @@
-'use client'
+import { getLocaleData } from '~/app/ssr'
+import { LOCALE } from '~/const/i18n'
+import { I18N_NS } from '~/i18n/namespaces'
 
-import { DSB_COVERS, DSB_ROUTE } from '~/const/route'
-import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
-import useTrans from '~/hooks/useTrans'
-import type { TCrumbConfig } from '~/spec'
-import Portal from '~/unit/DashboardThread/Portal'
-import useSalon, { cnMerge } from '~/unit/DashboardThread/salon'
-import ArrowButton from '~/widgets/Buttons/ArrowButton'
+import ClientLayout from './ClientLayout'
 
-const seg = DSB_ROUTE.ADMINS
-const CRUMB_CONFIG = {
-  title: 'dsb.crumb.workplace',
-  seg,
-  toSeg: DSB_COVERS.WORKPLACE,
-  children: [{ title: 'dsb.crumb.admins', seg }],
-} satisfies TCrumbConfig
+const parseLocale = (lang?: string | string[]) => {
+  const langValue = Array.isArray(lang) ? lang[0] : lang
 
-export default function Layout({ children }) {
-  const s = useSalon()
-  const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
-  const { t } = useTrans()
+  return langValue === LOCALE.ZH ? LOCALE.ZH : LOCALE.EN
+}
+
+export default async function Layout({ children, searchParams }) {
+  const searchParams$ = await searchParams
+  const locale = parseLocale(searchParams$?.lang)
+  // Load route-only passport messages on the server so Admins never renders raw i18n keys on first paint.
+  const passportLocaleData = await getLocaleData(locale, I18N_NS.PASSPORT)
 
   return (
-    <div className={cnMerge(s.content, 'w-3/5')}>
-      <Portal
-        title={t('dsb.portal.admins.title')}
-        desc={
-          <>
-            {t('dsb.portal.admins.desc')}
-            <span className='inline-block'>
-              <ArrowButton>{t('dsb.portal.admins.guide')}</ArrowButton>
-            </span>
-          </>
-        }
-        crumbItems={crumbItems}
-      />
+    <ClientLayout extraLocaleData={passportLocaleData} extraLocale={locale}>
       {children}
-    </div>
+    </ClientLayout>
   )
 }

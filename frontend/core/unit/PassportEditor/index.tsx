@@ -33,7 +33,7 @@ const PassportEditor: FC = () => {
 
   return (
     <div className={s.wrapper}>
-      {!isActiveModeratorRoot ? <h3>权限设置</h3> : <div className={s.rootSign}>ROOT</div>}
+      {!isActiveModeratorRoot ? <h3>权限设置</h3> : <div className={s.rootSign}>root</div>}
       {isActiveModeratorRoot ? (
         <div className={s.desc}>
           {activeModerator.nickname} 拥有 {community$.title} 社区的所有管理权限

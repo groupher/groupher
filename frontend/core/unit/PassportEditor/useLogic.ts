@@ -9,7 +9,9 @@ import useAccount from '~/stores/account/hooks'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
+import { PASSPORT_SCOPE } from './constant'
 import S from './schema'
+import type { TPassportScope, TTogglePassportRule } from './spec'
 
 const normalizeRules = (rules: unknown): string => {
   if (typeof rules === 'string') return rules
@@ -28,7 +30,7 @@ type TRet = {
   selectedGlobalRules: string[]
   selectedRules: string[]
 
-  toggleCheck: (rule: string, checked: boolean, scope?: 'global' | 'cms') => void
+  toggleCheck: TTogglePassportRule
   loadAllPassportRules: () => void
   updatePassport: () => void
 
@@ -48,11 +50,15 @@ export default function useLogic(): TRet {
   const [selectedGlobalRules, setSelectedGlobalRules] = useState([])
   const [selectedRules, setSelectedRules] = useState([])
 
-  const toggleCheck = (rule: string, checked: boolean, scope: 'global' | 'cms' = 'cms'): void => {
-    const rules = scope === 'global' ? selectedGlobalRules : selectedRules
+  const toggleCheck = (
+    rule: string,
+    checked: boolean,
+    scope: TPassportScope = PASSPORT_SCOPE.CMS,
+  ): void => {
+    const rules = scope === PASSPORT_SCOPE.GLOBAL ? selectedGlobalRules : selectedRules
     const nextRules = checked ? [...rules, rule] : reject((i) => i === rule, rules)
 
-    if (scope === 'global') {
+    if (scope === PASSPORT_SCOPE.GLOBAL) {
       setSelectedGlobalRules(uniq(nextRules))
     } else {
       setSelectedRules(uniq(nextRules))
