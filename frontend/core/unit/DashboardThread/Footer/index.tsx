@@ -10,10 +10,20 @@ import Templates from './Templates'
 
 const Footer: FC = () => {
   const { footerLayout, isFooterLinksTouched, isFooterOnelineLinksTouched } = useFooter()
-  const savingField =
+  const activeLinkField =
     footerLayout === FOOTER_LAYOUT.ONELINE ? FIELD.FOOTER_ONELINE_LINKS : FIELD.FOOTER_LINKS
-  const isTouched =
+  const inactiveLinkField =
+    footerLayout === FOOTER_LAYOUT.ONELINE ? FIELD.FOOTER_LINKS : FIELD.FOOTER_ONELINE_LINKS
+  const activeFieldTouched =
     footerLayout === FOOTER_LAYOUT.ONELINE ? isFooterOnelineLinksTouched : isFooterLinksTouched
+  const inactiveFieldTouched =
+    footerLayout === FOOTER_LAYOUT.ONELINE ? isFooterLinksTouched : isFooterOnelineLinksTouched
+  const savingField = activeFieldTouched
+    ? activeLinkField
+    : inactiveFieldTouched
+      ? inactiveLinkField
+      : activeLinkField
+  const isTouched = activeFieldTouched || inactiveFieldTouched
 
   return (
     <>

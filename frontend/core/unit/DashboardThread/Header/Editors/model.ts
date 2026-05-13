@@ -22,7 +22,9 @@ const placeMoreLast = (columns: readonly THeaderColumn[]): THeaderColumn[] => {
   const moreColumns = columns.filter((column) => column.kind === HEADER_COLUMN_KIND.MORE)
   const regularColumns = columns.filter((column) => column.kind !== HEADER_COLUMN_KIND.MORE)
 
-  return normalizeColumnIndexes([...regularColumns, ...moreColumns])
+  // This is a view-only placement rule. Keep sourceIndex tied to the persisted
+  // array so group edit/delete actions still target the original item.
+  return [...regularColumns, ...moreColumns]
 }
 
 // Builds the editor-only column model from persisted header links. Single links

@@ -14,21 +14,29 @@ export const DND_MEASURING = {
   },
 }
 
+type TDragActive = Parameters<NonNullable<Announcements['onDragStart']>>[0]['active']
+
+const dragItemLabel = (active: TDragActive): string =>
+  active.data.current?.type === FOOTER_DND_TYPE.SORTABLE_COLUMN ? 'footer column' : 'footer link'
+
+const dragItemSentenceLabel = (active: TDragActive): string =>
+  active.data.current?.type === FOOTER_DND_TYPE.SORTABLE_COLUMN ? 'Footer column' : 'Footer link'
+
 export const DND_ANNOUNCEMENTS: Announcements = {
   onDragStart({ active }) {
-    return `Picked up footer link ${active.id}.`
+    return `Picked up ${dragItemLabel(active)} ${active.id}.`
   },
   onDragOver({ active, over }) {
     return over
-      ? `Footer link ${active.id} moved over ${over.id}.`
-      : `Footer link ${active.id} left drop area.`
+      ? `${dragItemSentenceLabel(active)} ${active.id} moved over ${over.id}.`
+      : `${dragItemSentenceLabel(active)} ${active.id} left drop area.`
   },
   onDragEnd({ active, over }) {
     return over
-      ? `Footer link ${active.id} dropped over ${over.id}.`
-      : `Footer link ${active.id} dropped.`
+      ? `${dragItemSentenceLabel(active)} ${active.id} dropped over ${over.id}.`
+      : `${dragItemSentenceLabel(active)} ${active.id} dropped.`
   },
   onDragCancel({ active }) {
-    return `Dragging footer link ${active.id} was cancelled.`
+    return `Dragging ${dragItemLabel(active)} ${active.id} was cancelled.`
   },
 }

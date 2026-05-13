@@ -13,10 +13,10 @@ export const isValidFooterLink = isValidDashboardLink
 export const isValidFooterLinks = isValidDashboardLinks
 
 // Public footer rendering is fed from dashboard state, which can briefly contain
-// partial editor drafts. Keep oneline links flat and valid before exposing them
-// to SiteFooter.
+// partial editor drafts. Treat empty title/url strings as valid draft values so
+// a newly added oneline link stays editable instead of being filtered out.
 export const isValidFooterOnelineLink = (link: TFooterOnelineLink): boolean =>
-  Boolean(link.id && link.title && link.url)
+  Boolean(link.id) && typeof link.title === 'string' && typeof link.url === 'string'
 export const isValidFooterOnelineLinks = (links: readonly TFooterOnelineLink[]): boolean =>
   links.every(isValidFooterOnelineLink)
 
