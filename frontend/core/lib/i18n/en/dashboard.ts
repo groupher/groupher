@@ -505,7 +505,7 @@ export default {
   'dsb.footer.editors.group': 'Group',
   'dsb.footer.editors.note.title': 'Notes',
   'dsb.footer.editors.note.item.preview': 'Reordering can be previewed using the templates above.',
-  'dsb.footer.editors.note.item.keep': 'Switching templates keeps links in the first group.',
+  'dsb.footer.editors.note.item.keep': 'Oneline and grouped footer links are edited separately.',
   'dsb.overview.portal.title': 'Settings overview',
   'dsb.overview.portal.desc': 'Basic setup guide, help docs, and more.',
   'dsb.menu.basic': 'Workspace',

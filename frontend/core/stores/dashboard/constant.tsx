@@ -159,6 +159,7 @@ export const FIELDS: TDsbFieldMap = {
   footerLayout: FOOTER_LAYOUT.GROUP,
 
   footerLinks: [],
+  footerOnelineLinks: [],
   headerLinks: [],
 
   // moderators

@@ -7,6 +7,7 @@ import {
   buildHeaderColumns,
   findColumnWithLink,
   flattenHeaderColumns,
+  moveHeaderColumn,
   moveHeaderLinkInColumns,
   sameHeaderLinks,
 } from './model'
@@ -27,8 +28,9 @@ type TRet = {
   cancelDrag: () => void
 }
 
-// Keeps a local column draft while dragging header links. The draft updates during
-// cross-group hover, then commits once on drop to avoid expensive parent updates.
+// Wires header-specific column adapters into the shared DnD draft controller.
+// The header adapter understands single-link columns and the fixed More column,
+// so callers can treat the returned columns as the complete editor view model.
 export default function useHeaderLinkDnd({ links, community, onCommit }: TProps): TRet {
   const sourceColumns = useMemo(() => buildHeaderColumns(links, community), [community, links])
 
@@ -37,6 +39,7 @@ export default function useHeaderLinkDnd({ links, community, onCommit }: TProps)
     findColumnWithLink,
     flattenColumns: flattenHeaderColumns,
     moveLinkInColumns: moveHeaderLinkInColumns,
+    moveColumn: moveHeaderColumn,
     sameLinks: sameHeaderLinks,
     onCommit,
   })

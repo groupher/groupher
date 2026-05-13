@@ -36,6 +36,11 @@ export const headerLink = `
     url
   }
 `
+export const footerOnelineLink = `
+  id
+  title
+  url
+`
 export const wallpaper = `
   wallpaperType
   wallpaper

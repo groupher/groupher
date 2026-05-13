@@ -3,6 +3,7 @@ import { MeasuringStrategy, type Announcements } from '@dnd-kit/core'
 export const FOOTER_DND_TYPE = {
   LINK: 'footer-link',
   COLUMN: 'footer-column',
+  SORTABLE_COLUMN: 'footer-sortable-column',
 } as const
 
 export const FOOTER_DND_CONTEXT_ID = 'dashboard-footer-links-dnd'

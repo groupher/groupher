@@ -56,7 +56,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
     broadcast_layout: [:default, :center],
     broadcast_article_layout: [:default, :simple],
     changelog_layout: [:classic, :simple],
-    footer_layout: [:simple, :group],
+    footer_layout: [:oneline, :group],
     header_layout: [:center, :right, :float],
     rss_feed_type: [:digest, :full]
   }

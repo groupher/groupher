@@ -322,6 +322,12 @@ export default function useMutation(): TRet {
       return
     }
 
+    if (field === FIELD.FOOTER_ONELINE_LINKS) {
+      const { footerOnelineLinks } = dashboard$
+      handleMutation(S.updateDashboardFooterOnelineLinks, { community, footerOnelineLinks })
+      return
+    }
+
     if (field === FIELD.BASE_INFO) {
       const params = { community }
 

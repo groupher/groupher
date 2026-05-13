@@ -25,7 +25,7 @@ import type { TDsbFieldKey, TDsbFieldMap } from '~/stores/dashboard/spec'
 import type { TFAQSection } from './article'
 import type { TColorName } from './color'
 import type { TModerator } from './community'
-import type { TEditValue, TLinkItem, TSocialItem } from './utils'
+import type { TEditValue, TFooterOnelineLink, TLinkItem, TSocialItem } from './utils'
 import type { TWallpaperData } from './wallpaper'
 
 export type TTagLayout = TConstValues<typeof TAG_LAYOUT>
@@ -113,6 +113,7 @@ export type TDsb = {
 
   headerLinks?: readonly TLinkItem[]
   footerLinks?: readonly TLinkItem[]
+  footerOnelineLinks?: readonly TFooterOnelineLink[]
 
   wallpaper?: TWallpaperData
   baseInfo?: {

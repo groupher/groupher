@@ -174,6 +174,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:name_alias, list_of(:dsb_name_alias))
     field(:header_links, list_of(:dsb_link))
     field(:footer_links, list_of(:dsb_link))
+    field(:footer_oneline_links, list_of(:dsb_link_child))
     field(:social_links, list_of(:dsb_social_link))
     field(:media_reports, list_of(:dsb_media_report))
     field(:faqs, list_of(:dsb_faq_section))

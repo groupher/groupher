@@ -11,6 +11,7 @@ export const HEADER_COLUMN_KIND = {
 export const HEADER_DND_TYPE = {
   LINK: 'header-link',
   COLUMN: 'header-column',
+  SORTABLE_COLUMN: 'header-sortable-column',
 } as const
 
 export const HEADER_DND_CONTEXT_ID = 'dashboard-header-links-dnd'

@@ -110,6 +110,7 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     baseInfo,
     headerLinks,
     footerLinks,
+    footerOnelineLinks,
     mediaReports,
   } = dashboard
 
@@ -125,6 +126,7 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     ...rss,
     headerLinks,
     footerLinks,
+    footerOnelineLinks,
     moderators,
     mediaReports,
     pageBg: layout?.pageBg || PAGE_BG_DEFAULT[THEME.LIGHT],

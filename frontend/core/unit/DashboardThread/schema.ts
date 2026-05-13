@@ -459,6 +459,22 @@ const updateDashboardFooterLinks = gql`
   }
 `
 
+const updateDashboardFooterOnelineLinks = gql`
+  mutation ($community: String!, $footerOnelineLinks: [DsbLinkChildMap]) {
+    updateDashboardFooterOnelineLinks(
+      community: $community
+      footerOnelineLinks: $footerOnelineLinks
+    ) {
+      slug
+      dashboard {
+        footerOnelineLinks {
+          ${F.footerOnelineLink}
+        }
+      }
+    }
+  }
+`
+
 const openGraphInfo = gql`
   query ($url: String!) {
     openGraphInfo(url: $url) {
@@ -497,6 +513,7 @@ const schema = {
   openGraphInfo,
   updateDashboardHeaderLinks,
   updateDashboardFooterLinks,
+  updateDashboardFooterOnelineLinks,
 }
 
 export default schema

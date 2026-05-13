@@ -263,7 +263,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         broadcastEnable: true,
         kanbanLayout: "WATERFALL",
         kanbanCardLayout: "FULL",
-        footerLayout: "SIMPLE",
+        footerLayout: "ONELINE",
         topbarEnabled: true,
         kanbanBgColors: ["BLACK", "YELLOW"],
         kanbanBoards: ["BACKLOG", "TODO", "DONE", "REJECTED"],
@@ -296,7 +296,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.layout.broadcast_enable == true
       assert found.dashboard.layout.kanban_bg_colors == [:black, :yellow]
       assert found.dashboard.layout.kanban_boards == [:backlog, :todo, :done, :rejected]
-      assert found.dashboard.layout.footer_layout == :simple
+      assert found.dashboard.layout.footer_layout == :oneline
       assert found.dashboard.layout.topbar_enabled == true
 
       assert found.dashboard.layout.glow_type == "PINK"
@@ -578,6 +578,64 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
       assert found.dashboard.footer_links |> length() == 1
+    end
+
+    @update_footer_oneline_links_query """
+    mutation($community: String!, $footerOnelineLinks: [DsbLinkChildMap]) {
+      updateDashboardFooterOnelineLinks(
+        community: $community,
+        footerOnelineLinks: $footerOnelineLinks
+      ) {
+        id
+        title
+        dashboard {
+          footerOnelineLinks {
+            id
+            title
+            url
+          }
+          footerLinks {
+            id
+            title
+          }
+        }
+      }
+    }
+    """
+    test "update community dashboard footer oneline links independently", ~m(community)a do
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+
+      grouped_variables = %{
+        community: community.slug,
+        footerLinks: [
+          %{
+            id: "group-1",
+            type: "GROUP",
+            title: "grouped",
+            links: [%{id: "grouped-link", title: "grouped-link", url: "grouped"}]
+          }
+        ]
+      }
+
+      rule_conn |> gq_mutation(@update_footer_links_query, grouped_variables)
+
+      variables = %{
+        community: community.slug,
+        footerOnelineLinks: [
+          %{id: "link-1", title: "link-title", url: "link"},
+          %{id: "link-2", title: "link-title2", url: "link2"}
+        ]
+      }
+
+      updated = rule_conn |> gq_mutation(@update_footer_oneline_links_query, variables)
+
+      assert updated["dashboard"]["footerOnelineLinks"] |> length() == 2
+      assert updated["dashboard"]["footerLinks"] |> List.first() |> Map.get("title") == "grouped"
+
+      {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
+
+      assert found.dashboard.footer_oneline_links |> length() == 2
+      assert found.dashboard.footer_links |> List.first() |> Map.get(:title) == "grouped"
     end
 
     @update_social_links_query """

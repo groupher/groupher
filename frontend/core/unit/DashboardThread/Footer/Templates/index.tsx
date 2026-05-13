@@ -10,7 +10,7 @@ import useFooter from '../../logic/useFooter'
 import useSalon, { cn } from '../../salon/footer/templates'
 import SavingBar from '../../SavingBar'
 import Group from './Group'
-import Simple from './Simple'
+import Oneline from './Oneline'
 
 const Templates: FC = () => {
   const s = useSalon()
@@ -21,6 +21,7 @@ const Templates: FC = () => {
     footerLayout,
     saving,
     footerLinks,
+    footerOnelineLinks,
     resetEditingLink,
   } = useFooter()
 
@@ -33,12 +34,12 @@ const Templates: FC = () => {
 
         <div className={s.options}>
           <div
-            aria-hidden={!showAll && footerLayout !== FOOTER_LAYOUT.SIMPLE}
-            className={cn(!showAll && footerLayout !== FOOTER_LAYOUT.SIMPLE && 'hidden')}
+            aria-hidden={!showAll && footerLayout !== FOOTER_LAYOUT.ONELINE}
+            className={cn(!showAll && footerLayout !== FOOTER_LAYOUT.ONELINE && 'hidden')}
           >
-            <Simple
-              active={footerLayout === FOOTER_LAYOUT.SIMPLE}
-              links={footerLinks}
+            <Oneline
+              active={footerLayout === FOOTER_LAYOUT.ONELINE}
+              links={footerOnelineLinks}
               previewOnly
             />
           </div>

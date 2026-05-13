@@ -6,6 +6,8 @@ export type TDraftGroup = {
   thread: TThread
 }
 
+// View model used only by the tags editor. It combines persisted groups with
+// local draft groups, so callers must flatten/filter before saving.
 export type TGroupListItem = {
   id: string
   title: string

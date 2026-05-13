@@ -527,6 +527,7 @@ defmodule Helper.ORM do
              # those fields are array maps
              :header_links,
              :footer_links,
+             :footer_oneline_links,
              :name_alias,
              :social_links,
              :media_reports,

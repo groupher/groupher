@@ -221,6 +221,8 @@ export type TLinkChild = {
   url: string
 }
 
+export type TFooterOnelineLink = TLinkChild
+
 export type TLinkItem =
   | {
       id: string

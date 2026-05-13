@@ -108,7 +108,7 @@ export const HEADER_LAYOUT = {
 } as const
 
 export const FOOTER_LAYOUT = {
-  SIMPLE: 'SIMPLE',
+  ONELINE: 'ONELINE',
   GROUP: 'GROUP',
 } as const
 

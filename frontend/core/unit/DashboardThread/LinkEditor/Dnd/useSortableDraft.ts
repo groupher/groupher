@@ -10,6 +10,7 @@ type TProps<TColumn extends TLinkDndColumnBase, TLink, TTarget extends TLinkDndT
   ) => TLinkDndColumnResult<TColumn, TLink> | null
   flattenColumns: (columns: readonly TColumn[]) => readonly TOutput[]
   moveLinkInColumns: (columns: readonly TColumn[], itemId: string, target: TTarget) => TColumn[]
+  moveColumn?: (columns: readonly TColumn[], columnId: string, targetColumnId: string) => TColumn[]
   sameLinks: (left: readonly TOutput[], right: readonly TOutput[]) => boolean
   onCommit: (links: readonly TOutput[]) => void
 }
@@ -18,13 +19,20 @@ type TRet<TColumn extends TLinkDndColumnBase, TLink, TTarget extends TLinkDndTar
   columns: TColumn[]
   findColumnWithLink: (itemId: string) => TLinkDndColumnResult<TColumn, TLink> | null
   startDrag: (itemId: string) => void
+  startColumnDrag: (columnId: string) => void
   moveDrag: (target?: TTarget | null) => void
   commitDrag: (target?: TTarget | null) => void
+  commitColumnDrag: (targetColumnId?: string | null) => void
   cancelDrag: () => void
 }
 
-// Keeps a local column draft while dragging links. The draft updates during
-// cross-group hover, then commits once on drop to avoid expensive parent updates.
+// Shared draft controller for dashboard link editors.
+//
+// It keeps an editor-local column draft during DnD so cross-group hover feedback
+// can update immediately without mutating dashboard state on every pointer move.
+// The parent store is updated once on drop through `onCommit`. Header and footer
+// provide their own adapters for building columns, moving links, moving columns,
+// and flattening the draft back to the persisted shape.
 export default function useSortableDraft<
   TColumn extends TLinkDndColumnBase,
   TLink,
@@ -35,6 +43,7 @@ export default function useSortableDraft<
   findColumnWithLink,
   flattenColumns,
   moveLinkInColumns,
+  moveColumn,
   sameLinks,
   onCommit,
 }: TProps<TColumn, TLink, TTarget, TOutput>): TRet<TColumn, TLink, TTarget> {
@@ -75,6 +84,37 @@ export default function useSortableDraft<
     baselineColumnsRef.current = latestColumnsRef.current
   }, [])
 
+  const startColumnDrag = useCallback((columnId: string): void => {
+    activeIdRef.current = columnId
+    draggingRef.current = true
+    baselineColumnsRef.current = latestColumnsRef.current
+  }, [])
+
+  // Commits a finished draft once per animation frame. Both link dragging and
+  // group/column dragging use the same commit path so touched-state and save-bar
+  // behavior stays consistent.
+  const commitColumns = useCallback(
+    (nextColumns: TColumn[]): void => {
+      const currentColumns = latestColumnsRef.current
+
+      if (!sameLinks(flattenColumns(currentColumns), flattenColumns(nextColumns))) {
+        latestColumnsRef.current = nextColumns
+        setColumns(nextColumns)
+      }
+
+      const baselineLinks = flattenColumns(baselineColumnsRef.current)
+      const nextLinks = flattenColumns(nextColumns)
+      if (sameLinks(baselineLinks, nextLinks)) return
+
+      if (commitFrameRef.current) cancelAnimationFrame(commitFrameRef.current)
+      commitFrameRef.current = requestAnimationFrame(() => {
+        onCommit(nextLinks)
+        commitFrameRef.current = null
+      })
+    },
+    [flattenColumns, onCommit, sameLinks],
+  )
+
   const moveDrag = useCallback(
     (target?: TTarget | null): void => {
       const activeId = activeIdRef.current
@@ -103,22 +143,26 @@ export default function useSortableDraft<
       activeIdRef.current = null
       draggingRef.current = false
 
-      if (!sameLinks(flattenColumns(currentColumns), flattenColumns(nextColumns))) {
-        latestColumnsRef.current = nextColumns
-        setColumns(nextColumns)
-      }
-
-      const baselineLinks = flattenColumns(baselineColumnsRef.current)
-      const nextLinks = flattenColumns(nextColumns)
-      if (sameLinks(baselineLinks, nextLinks)) return
-
-      if (commitFrameRef.current) cancelAnimationFrame(commitFrameRef.current)
-      commitFrameRef.current = requestAnimationFrame(() => {
-        onCommit(nextLinks)
-        commitFrameRef.current = null
-      })
+      commitColumns(nextColumns)
     },
-    [flattenColumns, moveLinkInColumns, onCommit, sameLinks],
+    [commitColumns, moveLinkInColumns],
+  )
+
+  const commitColumnDrag = useCallback(
+    (targetColumnId?: string | null): void => {
+      const activeId = activeIdRef.current
+      const currentColumns = latestColumnsRef.current
+      const nextColumns =
+        activeId && targetColumnId && moveColumn
+          ? moveColumn(currentColumns, activeId, targetColumnId)
+          : currentColumns
+
+      activeIdRef.current = null
+      draggingRef.current = false
+
+      commitColumns(nextColumns)
+    },
+    [commitColumns, moveColumn],
   )
 
   const cancelDrag = useCallback((): void => {
@@ -132,8 +176,10 @@ export default function useSortableDraft<
     columns,
     findColumnWithLink: findColumn,
     startDrag,
+    startColumnDrag,
     moveDrag,
     commitDrag,
+    commitColumnDrag,
     cancelDrag,
   }
 }

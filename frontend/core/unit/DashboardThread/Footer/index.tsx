@@ -1,5 +1,7 @@
 import type { FC } from 'react'
 
+import { FOOTER_LAYOUT } from '~/const/layout'
+
 import { FIELD } from '../constant'
 import useFooter from '../logic/useFooter'
 import SavingBar from '../SavingBar'
@@ -7,7 +9,11 @@ import Editor from './Editors'
 import Templates from './Templates'
 
 const Footer: FC = () => {
-  const { isFooterLinksTouched: isTouched } = useFooter()
+  const { footerLayout, isFooterLinksTouched, isFooterOnelineLinksTouched } = useFooter()
+  const savingField =
+    footerLayout === FOOTER_LAYOUT.ONELINE ? FIELD.FOOTER_ONELINE_LINKS : FIELD.FOOTER_LINKS
+  const isTouched =
+    footerLayout === FOOTER_LAYOUT.ONELINE ? isFooterOnelineLinksTouched : isFooterLinksTouched
 
   return (
     <>
@@ -16,7 +22,7 @@ const Footer: FC = () => {
       <br />
       <Editor />
 
-      <SavingBar field={FIELD.FOOTER_LINKS} isTouched={isTouched} top={10} />
+      <SavingBar field={savingField} isTouched={isTouched} top={10} />
     </>
   )
 }
