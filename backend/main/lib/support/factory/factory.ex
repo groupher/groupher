@@ -17,7 +17,8 @@ defmodule GroupherServer.Support.Factory do
     Category,
     Comment,
     Community,
-    CommunityTag
+    CommunityTag,
+    CommunityTagGroup
   }
 
   alias Helper.ORM
@@ -185,7 +186,10 @@ defmodule GroupherServer.Support.Factory do
 
   defp db_insert_with_retry(factory_name, attributes, attempts_left) do
     try do
-      GroupherServer.Repo.insert(mock(factory_name, attributes))
+      factory_name
+      |> mock(attributes)
+      |> maybe_put_default_tag_group()
+      |> GroupherServer.Repo.insert()
     rescue
       e in Ecto.ConstraintError ->
         if retryable_constraint?(e) and attempts_left > 1 do
@@ -194,6 +198,39 @@ defmodule GroupherServer.Support.Factory do
           reraise e, __STACKTRACE__
         end
     end
+  end
+
+  defp maybe_put_default_tag_group(%CommunityTag{group_id: nil, thread: thread} = tag)
+       when not is_nil(thread) do
+    community_id = tag.community_id || get_in(tag, [Access.key(:community), Access.key(:id)])
+
+    if is_nil(community_id) do
+      tag
+    else
+      put_default_tag_group(tag, community_id, thread)
+    end
+  end
+
+  defp maybe_put_default_tag_group(record), do: record
+
+  defp put_default_tag_group(%CommunityTag{} = tag, community_id, thread) do
+    title = tag.group || "Ungrouped"
+
+    group =
+      GroupherServer.Repo.get_by(CommunityTagGroup,
+        community_id: community_id,
+        thread: thread,
+        title: title
+      ) ||
+        %CommunityTagGroup{}
+        |> CommunityTagGroup.changeset(%{
+          community_id: community_id,
+          thread: thread,
+          title: title
+        })
+        |> GroupherServer.Repo.insert!()
+
+    %{tag | community_id: community_id, group_id: group.id}
   end
 
   defp retryable_constraint?(%Ecto.ConstraintError{type: :unique, constraint: constraint}) do
