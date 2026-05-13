@@ -69,9 +69,8 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       assert length(post_tags) in 10..20
 
       group_size =
-        post_tags
-        |> Enum.map(& &1.group)
-        |> Enum.reject(&is_nil/1)
+        post_tag_groups
+        |> Enum.map(& &1.title)
         |> Enum.uniq()
         |> length()
 

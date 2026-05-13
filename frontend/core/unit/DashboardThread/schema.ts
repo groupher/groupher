@@ -365,8 +365,8 @@ const createCommunityTag = gql`
 `
 
 const reindexTagsInGroup = gql`
-  mutation ($community: String!, $thread: Thread, $group: String!, $tags: [ReindexTagInput]) {
-    reindexTagsInGroup(community: $community, thread: $thread, group: $group, tags: $tags) {
+  mutation ($community: String!, $thread: Thread, $groupId: ID!, $tags: [ReindexTagInput]) {
+    reindexTagsInGroup(community: $community, thread: $thread, groupId: $groupId, tags: $tags) {
       done
     }
   }

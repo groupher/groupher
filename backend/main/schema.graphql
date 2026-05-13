@@ -296,7 +296,7 @@ type RootMutationType {
   unsetCommunityTag(article: ArticleRefInput!, communityTagId: ID!): Article
 
   "reindex tags in given group"
-  reindexTagsInGroup(community: String!, thread: Thread, group: String!, tags: [ReindexTagInput]): Done
+  reindexTagsInGroup(community: String!, thread: Thread, groupId: ID!, tags: [ReindexTagInput]): Done
 
   "reindex tags across groups"
   reindexCommunityTags(community: String!, thread: Thread, tags: [ReindexCommunityTagInput]): Done

@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
   alias Helper.Validator.Slug
 
   @required_fields ~w(thread title color author_id community_id group_id slug)a
-  @updatable_fields ~w(thread title desc color community_id group group_id extra icon slug index layout)a
+  @updatable_fields ~w(thread title desc color community_id group_id extra icon slug index layout)a
 
   @schema_prefix DBPrefix.cms()
 
@@ -47,6 +47,7 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
     |> Slug.validate_changeset(:slug)
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:community_id)
+    |> foreign_key_constraint(:group_id)
     |> unique_constraint(:slug, name: :community_tags_community_id_thread_slug_index)
   end
 
@@ -56,6 +57,7 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
     |> Slug.validate_changeset(:slug)
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:community_id)
+    |> foreign_key_constraint(:group_id)
     |> unique_constraint(:slug, name: :community_tags_community_id_thread_slug_index)
   end
 end

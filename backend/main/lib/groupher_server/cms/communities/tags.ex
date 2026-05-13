@@ -44,6 +44,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
             group_id: group.id,
             thread: thread
           })
+          |> Map.drop([:group])
 
         ORM.create(CommunityTag, attrs)
       end)
@@ -63,8 +64,11 @@ defmodule GroupherServer.CMS.Communities.Tags do
   """
   @spec update(T.id(), map()) :: {:ok, CommunityTag.t()} | {:error, Ecto.Changeset.t()}
   def update(id, attrs) do
-    with {:ok, tag} <- FrontDesk.community_tag(id) do
-      ORM.update(tag, attrs)
+    with {:ok, tag} <- FrontDesk.community_tag(id),
+         {:ok, attrs} <- normalize_update_attrs(tag, attrs) do
+      tag
+      |> ORM.update(attrs)
+      |> preload_tag_group()
     end
   end
 
@@ -92,8 +96,15 @@ defmodule GroupherServer.CMS.Communities.Tags do
   @doc """
   update a community tag group
   """
-  @spec update_group(T.id(), map()) ::
+  @spec update_group(Community.t(), atom(), T.id(), map()) ::
           {:ok, CommunityTagGroup.t()} | {:error, Ecto.Changeset.t()}
+  def update_group(%Community{} = community, thread, id, attrs) do
+    with {:ok, community} <- ORM.find_by(Community, slug: community.slug),
+         {:ok, group} <- find_group_in_thread(community, thread, id) do
+      group |> ORM.update(attrs) |> preload_group_tags()
+    end
+  end
+
   def update_group(id, attrs) do
     CommunityTagGroup
     |> ORM.find(id)
@@ -106,13 +117,23 @@ defmodule GroupherServer.CMS.Communities.Tags do
   @doc """
   delete a community tag group
   """
-  @spec delete_group(T.id()) :: {:ok, CommunityTagGroup.t()} | {:error, Ecto.Changeset.t()}
-  def delete_group(id) do
-    CommunityTagGroup
-    |> ORM.find(id)
-    |> case do
-      {:ok, group} -> ORM.delete(group)
-      error -> error
+  @spec delete_group(Community.t(), atom(), T.id()) ::
+          {:ok, CommunityTagGroup.t()} | {:error, Ecto.Changeset.t()}
+  def delete_group(%Community{} = community, thread, id) do
+    with {:ok, community} <- ORM.find_by(Community, slug: community.slug),
+         {:ok, group} <- find_group_in_thread(community, thread, id) do
+      Repo.transaction(fn ->
+        case ORM.delete(group) do
+          {:ok, deleted_group} ->
+            case CMS.Communities.update_count_field(community, :community_tags_count) do
+              {:ok, _} -> deleted_group
+              {:error, reason} -> Repo.rollback(reason)
+            end
+
+          {:error, reason} ->
+            Repo.rollback(reason)
+        end
+      end)
     end
   end
 
@@ -309,9 +330,9 @@ defmodule GroupherServer.CMS.Communities.Tags do
   @doc """
   reindex tags in spec group
   """
-  @spec reindex_in_group(Community.t(), atom(), atom(), list()) :: {:ok, atom()} | {:error, any()}
-  def reindex_in_group(%Community{} = community, thread, group, indexed_tags) do
-    with {:ok, group_tags} <- find_group_tags(community, thread, group) do
+  @spec reindex_in_group(Community.t(), atom(), T.id(), list()) :: {:ok, atom()} | {:error, any()}
+  def reindex_in_group(%Community{} = community, thread, group_id, indexed_tags) do
+    with {:ok, group_tags} <- find_group_tags(community, thread, group_id) do
       group_tags
       |> Enum.each(fn tag ->
         target =
@@ -328,9 +349,9 @@ defmodule GroupherServer.CMS.Communities.Tags do
     end
   end
 
-  def reindex_in_group(community, thread, group, indexed_tags) do
+  def reindex_in_group(community, thread, group_id, indexed_tags) do
     with {:ok, community} <- ORM.find_by(Community, slug: community) do
-      reindex_in_group(community, thread, group, indexed_tags)
+      reindex_in_group(community, thread, group_id, indexed_tags)
     end
   end
 
@@ -341,26 +362,28 @@ defmodule GroupherServer.CMS.Communities.Tags do
   def reindex(%Community{} = community, thread, indexed_tags) do
     ids = Enum.map(indexed_tags, & &1.id)
 
-    Repo.transaction(fn ->
-      CommunityTag
-      |> where([t], t.community_id == ^community.id)
-      |> where([t], t.thread == ^thread)
-      |> where([t], t.id in ^ids)
-      |> Repo.all()
-      |> Enum.each(fn tag ->
-        target =
-          Enum.find(indexed_tags, fn t ->
-            to_string(t.id) === to_string(tag.id)
-          end)
+    with {:ok, indexed_tags} <- validate_indexed_tags_groups(community, thread, indexed_tags) do
+      Repo.transaction(fn ->
+        CommunityTag
+        |> where([t], t.community_id == ^community.id)
+        |> where([t], t.thread == ^thread)
+        |> where([t], t.id in ^ids)
+        |> Repo.all()
+        |> Enum.each(fn tag ->
+          target =
+            Enum.find(indexed_tags, fn t ->
+              to_string(t.id) === to_string(tag.id)
+            end)
 
-        tag
-        |> Ecto.Changeset.change(%{group_id: cast_id!(target.group_id), index: target.index})
-        |> Repo.update!()
+          tag
+          |> Ecto.Changeset.change(%{group_id: target.group_id, index: target.index})
+          |> Repo.update!()
+        end)
+
+        :pass
       end)
-
-      :pass
-    end)
-    |> result()
+      |> result()
+    end
   end
 
   def reindex(community, thread, indexed_tags) do
@@ -407,15 +430,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
 
   defp find_group_in_thread(%Community{} = community, thread, group_id, _group_title)
        when not is_nil(group_id) do
-    CommunityTagGroup
-    |> where([g], g.community_id == ^community.id)
-    |> where([g], g.thread == ^thread)
-    |> where([g], g.id == ^group_id)
-    |> Repo.one()
-    |> case do
-      %CommunityTagGroup{} = group -> {:ok, group}
-      _ -> raise_error(:invalid_domain_tag, "tag group not in same community & thread")
-    end
+    find_group_in_thread(community, thread, group_id)
   end
 
   defp find_group_in_thread(%Community{} = community, thread, _group_id, group_title)
@@ -443,6 +458,62 @@ defmodule GroupherServer.CMS.Communities.Tags do
   defp find_group_in_thread(_, _, _, _),
     do: raise_error(:invalid_domain_tag, "tag group required")
 
+  defp find_group_in_thread(%Community{} = community, thread, group_id)
+       when not is_nil(group_id) do
+    group_id = cast_id!(group_id)
+
+    CommunityTagGroup
+    |> where([g], g.community_id == ^community.id)
+    |> where([g], g.thread == ^thread)
+    |> where([g], g.id == ^group_id)
+    |> Repo.one()
+    |> case do
+      %CommunityTagGroup{} = group -> {:ok, group}
+      _ -> raise_error(:invalid_domain_tag, "tag group not in same community & thread")
+    end
+  end
+
+  defp normalize_update_attrs(%CommunityTag{} = tag, attrs) do
+    attrs = Map.drop(attrs, [:group])
+
+    case Map.get(attrs, :group_id) do
+      nil ->
+        {:ok, attrs}
+
+      group_id ->
+        with {:ok, _group} <- find_group_in_thread(%Community{id: tag.community_id}, tag.thread, group_id) do
+          {:ok, attrs}
+        end
+    end
+  end
+
+  defp validate_indexed_tags_groups(%Community{} = community, thread, indexed_tags) do
+    group_ids =
+      indexed_tags
+      |> Enum.map(&cast_id!(&1.group_id))
+      |> Enum.uniq()
+
+    valid_group_ids =
+      CommunityTagGroup
+      |> where([g], g.community_id == ^community.id)
+      |> where([g], g.thread == ^thread)
+      |> where([g], g.id in ^group_ids)
+      |> select([g], g.id)
+      |> Repo.all()
+      |> MapSet.new()
+
+    if Enum.all?(group_ids, &MapSet.member?(valid_group_ids, &1)) do
+      indexed_tags =
+        Enum.map(indexed_tags, fn tag ->
+          %{tag | group_id: cast_id!(tag.group_id)}
+        end)
+
+      {:ok, indexed_tags}
+    else
+      raise_error(:invalid_domain_tag, "tag group not in same community & thread")
+    end
+  end
+
   defp cast_id!(id) do
     case Ecto.Type.cast(:id, id) do
       {:ok, casted_id} -> casted_id
@@ -462,13 +533,13 @@ defmodule GroupherServer.CMS.Communities.Tags do
     end
   end
 
-  defp find_group_tags(%Community{} = community, thread, group) do
-    filter = %{community: community.slug, thread: thread}
+  defp find_group_tags(%Community{} = community, thread, group_id) do
+    group_id = cast_id!(group_id)
 
     CommunityTag
-    |> join(:inner, [t], g in assoc(t, :tag_group))
-    |> where([_t, g], g.title == ^group)
-    |> QueryBuilder.filter_pack(replace_community_ifneed(filter))
+    |> where([t], t.community_id == ^community.id)
+    |> where([t], t.thread == ^thread)
+    |> where([t], t.group_id == ^group_id)
     |> Repo.all()
     |> done
   end
@@ -478,6 +549,12 @@ defmodule GroupherServer.CMS.Communities.Tags do
   end
 
   defp preload_group_tags(result), do: result
+
+  defp preload_tag_group({:ok, %CommunityTag{} = tag}) do
+    {:ok, Repo.preload(tag, [:community, :tag_group])}
+  end
+
+  defp preload_tag_group(result), do: result
 
   defp replace_community_ifneed(filter) when is_map(filter) do
     filter

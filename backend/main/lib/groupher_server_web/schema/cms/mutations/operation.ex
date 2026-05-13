@@ -79,7 +79,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
     field :reindex_tags_in_group, :done do
       arg(:community, non_null(:string))
       arg(:thread, :thread, default_value: :post)
-      arg(:group, non_null(:string))
+      arg(:group_id, non_null(:id))
       arg(:tags, list_of(:reindex_tag_input))
 
       middleware(M.Authorize, :login)

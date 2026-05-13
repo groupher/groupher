@@ -20,13 +20,14 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.ChangelogTagCRUD
 
   describe "[mutation cms tag]" do
     @create_tag_query """
-    mutation($thread: Thread!, $title: String!, $slug: String!, $color: RainbowColor!, $group: String, $community: String!, $extra: [String] ) {
-      createCommunityTag(thread: $thread, title: $title, slug: $slug, color: $color, group: $group, community: $community, extra: $extra) {
+    mutation($thread: Thread!, $title: String!, $slug: String!, $color: RainbowColor!, $groupId: ID!, $community: String!, $extra: [String] ) {
+      createCommunityTag(thread: $thread, title: $title, slug: $slug, color: $color, groupId: $groupId, community: $community, extra: $extra) {
         id
         title
         color
         thread
         group
+        groupId
         extra
         community {
           id
@@ -38,13 +39,15 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.ChangelogTagCRUD
     """
     test "create tag with valid attrs, has default CHANGELOG thread and default changelogs",
          ~m(community)a do
+      {:ok, group} = CMS.Communities.create_tag_group(community, :changelog, %{title: "awesome"})
+
       variables = %{
         title: "tag title",
         slug: "tag_slug",
         community: community.slug,
         thread: "CHANGELOG",
         color: "GREEN",
-        group: "awesome"
+        groupId: group.id
       }
 
       passport_rules = %{community.title => %{"changelog.community_tag.create" => true}}
@@ -58,18 +61,21 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.ChangelogTagCRUD
 
       assert created["id"] == to_string(found.id)
       assert found.thread == :changelog
-      assert found.group == "awesome"
+      assert found.group_id == group.id
+      assert created["group"] == "awesome"
       assert belong_community["id"] == to_string(community.id)
     end
 
     test "create tag with extra", ~m(community)a do
+      {:ok, group} = CMS.Communities.create_tag_group(community, :changelog, %{title: "awesome"})
+
       variables = %{
         title: "tag title",
         slug: "tag",
         community: community.slug,
         thread: "CHANGELOG",
         color: "GREEN",
-        group: "awesome",
+        groupId: group.id,
         extra: ["menuID", "menuID2"]
       }
 
@@ -82,12 +88,15 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.ChangelogTagCRUD
     end
 
     test "unauth user create tag fails", ~m(community user_conn guest_conn)a do
+      {:ok, group} = CMS.Communities.create_tag_group(community, :changelog, %{title: "awesome"})
+
       variables = %{
         title: "tag title",
         slug: "tag",
         community: community.slug,
         thread: "CHANGELOG",
-        color: "GREEN"
+        color: "GREEN",
+        groupId: group.id
       }
 
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})

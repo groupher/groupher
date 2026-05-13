@@ -40,23 +40,33 @@ defmodule GroupherServer.CMS.Seeds.Tags do
          {:ok, existing_groups} <- CMS.Communities.tag_groups(tag_filter(community.id, thread)) do
       existing_tags = flatten_group_tags(existing_groups)
 
-      with :ok <- ensure_tags_count(community, thread, bot, groups, count, length(existing_tags)),
+      with {:ok, group_by_title} <- ensure_groups(community, thread, groups, existing_groups),
+           :ok <-
+             ensure_tags_count(
+               community,
+               thread,
+               bot,
+               groups,
+               group_by_title,
+               count,
+               length(existing_tags)
+             ),
            {:ok, tag_groups} <- CMS.Communities.tag_groups(tag_filter(community.id, thread)) do
         {:ok, tag_groups |> flatten_group_tags() |> Enum.map(& &1.id)}
       end
     end
   end
 
-  defp ensure_tags_count(_community, _thread, _bot, _groups, target_count, current_count)
+  defp ensure_tags_count(_community, _thread, _bot, _groups, _group_by_title, target_count, current_count)
        when current_count >= target_count,
        do: :ok
 
-  defp ensure_tags_count(community, thread, bot, groups, target_count, current_count) do
+  defp ensure_tags_count(community, thread, bot, groups, group_by_title, target_count, current_count) do
     index = current_count + 1
-    attrs = build_tag_attrs(thread, groups, target_count, index)
+    attrs = build_tag_attrs(thread, groups, group_by_title, target_count, index)
 
     with {:ok, _tag} <- CMS.Communities.create_tag(community, thread, attrs, bot) do
-      ensure_tags_count(community, thread, bot, groups, target_count, index)
+      ensure_tags_count(community, thread, bot, groups, group_by_title, target_count, index)
     else
       {:error, reason} -> {:error, reason}
     end
@@ -64,8 +74,26 @@ defmodule GroupherServer.CMS.Seeds.Tags do
 
   defp flatten_group_tags(groups), do: Enum.flat_map(groups, & &1.tags)
 
-  defp build_tag_attrs(thread, groups, target_count, index) do
-    group = Enum.at(groups, rem(index - 1, length(groups)))
+  defp ensure_groups(community, thread, titles, existing_groups) do
+    existing_by_title = Map.new(existing_groups, &{&1.title, &1})
+
+    Enum.reduce_while(titles, {:ok, existing_by_title}, fn title, {:ok, acc} ->
+      case Map.fetch(acc, title) do
+        {:ok, _group} ->
+          {:cont, {:ok, acc}}
+
+        :error ->
+          case CMS.Communities.create_tag_group(community, thread, %{title: title}) do
+            {:ok, group} -> {:cont, {:ok, Map.put(acc, title, group)}}
+            {:error, reason} -> {:halt, {:error, reason}}
+          end
+      end
+    end)
+  end
+
+  defp build_tag_attrs(thread, groups, group_by_title, target_count, index) do
+    group_title = Enum.at(groups, rem(index - 1, length(groups)))
+    group = Map.fetch!(group_by_title, group_title)
     lang = if index <= div(target_count, 2), do: :zh, else: :en
 
     title_seed =
@@ -77,7 +105,7 @@ defmodule GroupherServer.CMS.Seeds.Tags do
     %{
       title: "#{title_seed}#{index}",
       slug: "#{thread}-#{lang}-#{index}-#{System.unique_integer([:positive, :monotonic])}",
-      group: group,
+      group_id: group.id,
       color: random_color()
     }
   end

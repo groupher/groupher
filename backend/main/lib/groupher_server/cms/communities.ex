@@ -195,11 +195,13 @@ defmodule GroupherServer.CMS.Communities do
     Tags.create_group(community, thread, attrs)
   end
 
-  @spec update_tag_group(T.id(), map()) :: T.domain_res(CommunityTagGroup.t())
-  def update_tag_group(id, attrs), do: Tags.update_group(id, attrs)
+  @spec update_tag_group(Community.t(), atom(), T.id(), map()) :: T.domain_res(CommunityTagGroup.t())
+  def update_tag_group(%Community{} = community, thread, id, attrs) do
+    Tags.update_group(community, thread, id, attrs)
+  end
 
-  @spec delete_tag_group(T.id()) :: T.domain_res(CommunityTagGroup.t())
-  def delete_tag_group(id), do: Tags.delete_group(id)
+  @spec delete_tag_group(Community.t(), atom(), T.id()) :: T.domain_res(CommunityTagGroup.t())
+  def delete_tag_group(%Community{} = community, thread, id), do: Tags.delete_group(community, thread, id)
 
   @spec delete_tag(T.id()) :: T.domain_res(CommunityTag.t())
   def delete_tag(id), do: Tags.delete(id)
