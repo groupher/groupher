@@ -22,6 +22,8 @@ on:
 
 permissions:
   contents: read
+  issues: write
+  pull-requests: read
 
 jobs:
   changes:
@@ -148,3 +150,186 @@ jobs:
 
       - name: Run Oxfmt
         run: yarn workspace ${{ matrix.workspace }} format:check
+
+  react-doctor:
+    name: react-doctor (${{ matrix.target }})
+    needs: changes
+    runs-on: ubuntu-latest
+    if: needs.changes.outputs.has_targets == 'true'
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.changes.outputs.targets) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install deps
+        run: yarn install --immutable
+
+      - name: Run React Doctor
+        run: yarn doctor:${{ matrix.target }} --json --json-compact --offline --fail-on none > react-doctor-${{ matrix.target }}.json
+
+      - name: Emit React Doctor annotations
+        env:
+          TARGET: ${{ matrix.target }}
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs')
+
+          const target = process.env.TARGET
+          const report = JSON.parse(fs.readFileSync(`react-doctor-${target}.json`, 'utf8'))
+          const root = target === 'core' ? 'frontend/core' : `frontend/${target}`
+
+          const escape = (value) =>
+            String(value ?? '')
+              .replaceAll('%', '%25')
+              .replaceAll('\r', '%0D')
+              .replaceAll('\n', '%0A')
+              .replaceAll(':', '%3A')
+              .replaceAll(',', '%2C')
+
+          for (const diagnostic of report.diagnostics ?? []) {
+            const severity = diagnostic.severity === 'error' ? 'error' : 'warning'
+            const file = `${root}/${diagnostic.filePath}`
+            const title = `${diagnostic.plugin}/${diagnostic.rule}`
+            const line = diagnostic.line ?? 1
+            const message = diagnostic.message ?? title
+
+            console.log(
+              `::${severity} file=${escape(file)},line=${line},title=${escape(title)}::${escape(message)}`,
+            )
+          }
+
+          const summary = report.summary ?? {}
+          fs.appendFileSync(
+            process.env.GITHUB_STEP_SUMMARY,
+            [
+              `### React Doctor: ${target}`,
+              '',
+              `Score: ${summary.score ?? 'n/a'} / 100 (${summary.scoreLabel ?? 'n/a'})`,
+              `Errors: ${summary.errorCount ?? 0}`,
+              `Warnings: ${summary.warningCount ?? 0}`,
+              `Affected files: ${summary.affectedFileCount ?? 0}`,
+              '',
+            ].join('\n'),
+          )
+          NODE
+
+      - name: Upload React Doctor report
+        uses: actions/upload-artifact@v4
+        with:
+          name: react-doctor-${{ matrix.target }}
+          path: react-doctor-${{ matrix.target }}.json
+          if-no-files-found: error
+          retention-days: 7
+
+  react-doctor-comment:
+    name: Comment React Doctor score
+    needs:
+      - changes
+      - react-doctor
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && needs.changes.outputs.has_targets == 'true'
+
+    steps:
+      - name: Download React Doctor reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: react-doctor-*
+          path: react-doctor-reports
+          merge-multiple: true
+
+      - name: Comment React Doctor score
+        continue-on-error: true
+        uses: actions/github-script@v7
+        env:
+          REPORT_DIR: react-doctor-reports
+        with:
+          script: |
+            const fs = require('node:fs')
+            const path = require('node:path')
+
+            const marker = '<!-- react-doctor-score -->'
+            const reportDir = process.env.REPORT_DIR
+            const reportFiles = fs
+              .readdirSync(reportDir)
+              .filter((file) => file.endsWith('.json'))
+              .sort()
+
+            const rows = []
+            const topRuleBlocks = []
+
+            for (const file of reportFiles) {
+              const report = JSON.parse(fs.readFileSync(path.join(reportDir, file), 'utf8'))
+              const target = file.replace(/^react-doctor-/, '').replace(/\.json$/, '')
+              const summary = report.summary ?? {}
+
+              rows.push(
+                `| \`${target}\` | ${summary.score ?? 'n/a'} | ${summary.scoreLabel ?? 'n/a'} | ${summary.errorCount ?? 0} | ${summary.warningCount ?? 0} | ${summary.affectedFileCount ?? 0} |`,
+              )
+
+              const byRule = new Map()
+              for (const diagnostic of report.diagnostics ?? []) {
+                const key = `${diagnostic.severity} ${diagnostic.plugin}/${diagnostic.rule}`
+                byRule.set(key, (byRule.get(key) ?? 0) + 1)
+              }
+
+              const topRules = [...byRule.entries()]
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .map(([rule, count]) => `| \`${target}\` | ${rule} | ${count} |`)
+
+              topRuleBlocks.push(...topRules)
+            }
+
+            const body = [
+              marker,
+              '### React Doctor',
+              '',
+              '| Target | Score | Label | Errors | Warnings | Affected files |',
+              '|---|---:|---|---:|---:|---:|',
+              ...rows,
+              '',
+              topRuleBlocks.length > 0
+                ? ['| Target | Top rule | Count |', '|---|---|---:|', ...topRuleBlocks].join('\n')
+                : 'No diagnostics.',
+              '',
+              `[Run log](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
+            ].join('\n')
+
+            const { owner, repo } = context.repo
+            const issue_number = context.issue.number
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            })
+            const existing = comments.find(
+              (comment) => comment.user.type === 'Bot' && comment.body?.includes(marker),
+            )
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body,
+              })
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body,
+              })
+            }

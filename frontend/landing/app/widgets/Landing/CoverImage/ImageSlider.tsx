@@ -15,8 +15,8 @@ import useSalon from '../salon/cover_image/image_slider'
 import Scrollbar from './Scrollbar'
 import ScrollbarDark from './ScrollbarDark'
 
-export const MAX_INTRO_IMAGES_COUNT = 5
-export const MAX_THEMES_COUNT = 5
+const MAX_INTRO_IMAGES_COUNT = 5
+const MAX_THEMES_COUNT = 5
 const INTRO_SLIDE_KEYS = [
   'cover-slide-1',
   'cover-slide-2',

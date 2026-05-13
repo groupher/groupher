@@ -76,9 +76,7 @@ const prunePreviewCacheIfNeeded = () => {
  * Returns the cached preview snapshot for a post while it is still inside the
  * active in-memory window.
  */
-export const getPreviewCacheEntry = <
-  TEntry extends TPreviewCacheEntryBase = TPreviewCacheEntryBase,
->(
+const getPreviewCacheEntry = <TEntry extends TPreviewCacheEntryBase = TPreviewCacheEntryBase>(
   key: string,
 ): TEntry | null => {
   return getFreshEntry(key) as TEntry | null
@@ -117,9 +115,9 @@ export const markPreviewReady = (key: string): void => {
   emit()
 }
 
-export const getPreviewReadyState = (key: string): boolean => previewStatus.get(key) === 'ready'
+const getPreviewReadyState = (key: string): boolean => previewStatus.get(key) === 'ready'
 
-export const getPreviewIntentKey = (): string | null => previewIntentKey
+const getPreviewIntentKey = (): string | null => previewIntentKey
 
 export const setPreviewIntentKey = (key: string): void => {
   if (previewIntentKey === key) return
