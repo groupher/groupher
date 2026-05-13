@@ -28,9 +28,9 @@ export default function Layout({ children }) {
         desc={
           <>
             {t('dsb.portal.admins.desc')}
-            <div className='inline-block'>
+            <span className='inline-block'>
               <ArrowButton>{t('dsb.portal.admins.guide')}</ArrowButton>
-            </div>
+            </span>
           </>
         }
         crumbItems={crumbItems}

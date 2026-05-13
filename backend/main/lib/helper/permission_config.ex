@@ -52,7 +52,12 @@ defmodule Helper.PermissionConfig do
         "community.update",
         "community.delete",
         "community.apply.approve",
-        "community.apply.deny"
+        "community.apply.deny",
+        "category.create",
+        "category.update",
+        "category.delete",
+        "category.set",
+        "category.unset"
       ]
   end
 
@@ -92,11 +97,6 @@ defmodule Helper.PermissionConfig do
         "thread.create",
         "thread.set",
         "thread.unset",
-        "category.create",
-        "category.update",
-        "category.delete",
-        "category.set",
-        "category.unset",
         "moderator.set",
         "moderator.unset",
         "moderator.update",
@@ -137,13 +137,13 @@ defmodule Helper.PermissionConfig do
       "article.mirror" => %{scope: :global, grant_by_thread: "community.mirror"},
       "article.unmirror" => %{scope: :global, grant_by_thread: "community.unmirror"},
       "article.move" => %{scope: :global, grant_by_thread: "community.move"},
+      "category.create" => %{scope: :global, grant: "category.create"},
+      "category.update" => %{scope: :global, grant: "category.update"},
+      "category.delete" => %{scope: :global, grant: "category.delete"},
+      "category.set" => %{scope: :global, grant: "category.set"},
+      "category.unset" => %{scope: :global, grant: "category.unset"},
 
       # cms
-      "category.create" => %{scope: :context, context: :cms, grant: "category.create"},
-      "category.update" => %{scope: :context, context: :cms, grant: "category.update"},
-      "category.delete" => %{scope: :context, context: :cms, grant: "category.delete"},
-      "category.set" => %{scope: :context, context: :cms, grant: "category.set"},
-      "category.unset" => %{scope: :context, context: :cms, grant: "category.unset"},
       "thread.create" => %{scope: :context, context: :cms, grant: "thread.create"},
       "thread.set" => %{scope: :context, context: :cms, grant: "thread.set"},
       "thread.unset" => %{scope: :context, context: :cms, grant: "thread.unset"},

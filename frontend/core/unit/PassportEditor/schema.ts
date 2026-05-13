@@ -1,7 +1,7 @@
 import { gql } from 'urql'
 
 const userPassport = gql`
-  query ($login: String) {
+  query ($login: String!) {
     user(login: $login) {
       cmsPassportString
     }
@@ -10,9 +10,8 @@ const userPassport = gql`
 
 const allPassportRules = gql`
   query {
-    allPassportRules {
-      root
-      moderator
+    allPassportRulesString {
+      cms
     }
   }
 `

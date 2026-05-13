@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     """
     test "auth user can create category", ~m(user community)a do
       variables = mock_attrs(:category, %{user_id: user.id, community: community.slug})
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"category.create" => true}})
+      rule_conn = simu_conn(:user, cms: %{"category.create" => true})
 
       created = rule_conn |> gq_mutation(@create_category_query, variables)
       # author = created["author"]
@@ -55,7 +55,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     test "auth user can delete category", ~m(community)a do
       {:ok, category} = db_insert(:category)
       {:ok, _} = CMS.Communities.set_category(community, category)
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"category.delete" => true}})
+      rule_conn = simu_conn(:user, cms: %{"category.delete" => true})
 
       variables = %{community: community.slug, id: category.id}
       deleted = rule_conn |> gq_mutation(@delete_category_query, variables)
@@ -73,7 +73,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     """
     test "auth user can update  category", ~m(category community)a do
       {:ok, _} = CMS.Communities.set_category(community, category)
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"category.update" => true}})
+      rule_conn = simu_conn(:user, cms: %{"category.update" => true})
       variables = %{community: community.slug, id: category.id, title: "new title"}
 
       updated = rule_conn |> gq_mutation(@update_category_query, variables)
@@ -121,7 +121,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       {:ok, community} = mock_community()
       {:ok, category} = db_insert(:category)
 
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"category.set" => true}})
+      rule_conn = simu_conn(:user, cms: %{"category.set" => true})
       variables = %{community: community.slug, categoryId: category.id}
 
       rule_conn |> gq_mutation(@set_category_query, variables)
@@ -150,7 +150,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       {:ok, _} = CMS.Communities.set_category(community, %Category{id: category.id})
 
-      rule_conn = simu_conn(:user, cms: %{community.slug => %{"category.unset" => true}})
+      rule_conn = simu_conn(:user, cms: %{"category.unset" => true})
       variables = %{community: community.slug, categoryId: category.id}
 
       rule_conn |> gq_mutation(@unset_category_query, variables)
