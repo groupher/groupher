@@ -5,17 +5,13 @@ import type { ReactNode } from 'react'
 import { DSB_COVERS, DSB_ROUTE } from '~/const/route'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useTrans from '~/hooks/useTrans'
-import { I18N_NS } from '~/i18n/namespaces'
-import type { TCrumbConfig, TLocale } from '~/spec'
-import ExtraLocaleProvider from '~/stores/locale/extra-provider'
+import type { TCrumbConfig } from '~/spec'
 import Portal from '~/unit/DashboardThread/Portal'
 import useSalon, { cnMerge } from '~/unit/DashboardThread/salon'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 
 type TProps = {
   children: ReactNode
-  extraLocaleData: Record<string, string>
-  extraLocale: TLocale
 }
 
 const seg = DSB_ROUTE.ADMINS
@@ -50,14 +46,6 @@ function Content({ children }: { children: ReactNode }) {
   )
 }
 
-export default function ClientLayout({ children, extraLocaleData, extraLocale }: TProps) {
-  return (
-    <ExtraLocaleProvider
-      initData={extraLocaleData}
-      initLocale={extraLocale}
-      namespaces={I18N_NS.PASSPORT}
-    >
-      <Content>{children}</Content>
-    </ExtraLocaleProvider>
-  )
+export default function ClientLayout({ children }: TProps) {
+  return <Content>{children}</Content>
 }
