@@ -40,6 +40,13 @@ const enabledRuleKeys = (rules: Record<string, boolean>): string[] =>
 
 const hasGlobalGod = (user: TUser | null): boolean => user?.cmsPassport?.global?.god === true
 
+const hasCommunityRoot = (user: TUser | null, community: string): boolean => {
+  if (!community) return false
+
+  const rules = user?.cmsPassport?.[community]
+  return typeof rules === 'object' && rules !== null && 'root' in rules && rules.root === true
+}
+
 type TRet = {
   activeModerator: TUser | null
   allRootRules: string
@@ -230,10 +237,11 @@ export default function useLogic(): TRet {
 
   const isCurUserModeratorRoot = useMemo(() => {
     if (hasGlobalGod(account$.user)) return true
+    if (hasCommunityRoot(account$.user, community$.slug)) return true
 
     const curRoot = find((moderator) => moderator.role === ADMIN_ROLE.ROOT, community$.moderators)
     return curRoot?.user?.login === account$.user?.login
-  }, [account$.user, community$.moderators])
+  }, [account$.user, community$.moderators, community$.slug])
 
   const rules = useMemo(() => {
     return isActiveModeratorRoot ? allRootRules : allModeratorRules

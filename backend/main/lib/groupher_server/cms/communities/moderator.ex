@@ -248,15 +248,34 @@ defmodule GroupherServer.CMS.Communities.Moderator do
     |> user_is_root?(cur_user)
   end
 
-  defp user_is_root?(%Community{moderators: moderators}, %User{} = cur_user) do
+  defp user_is_root?(%Community{slug: community_slug, moderators: moderators}, %User{} = cur_user) do
     is_root =
       global_god?(cur_user) ||
-        moderators
-        |> Enum.filter(&(&1.role == "root"))
-        |> Enum.any?(&(to_string(&1.user_id) == to_string(cur_user.id)))
+        community_root_role?(cur_user, moderators) ||
+        community_root_passport?(cur_user, community_slug)
 
     if is_root, do: {:ok, true}, else: {:error, :community_root_only}
   end
+
+  defp community_root_role?(cur_user, moderators) when is_list(moderators) do
+    moderators
+    |> Enum.filter(&(&1.role == "root"))
+    |> Enum.any?(&(to_string(&1.user_id) == to_string(cur_user.id)))
+  end
+
+  defp community_root_passport?(cur_user, community_slug) when is_binary(community_slug) do
+    case Map.get(cur_user, :cur_passport) do
+      passport when is_map(passport) ->
+        passport
+        |> PermissionRegistry.normalize_rules()
+        |> get_in([community_slug, "root"]) == true
+
+      _ ->
+        false
+    end
+  end
+
+  defp community_root_passport?(_cur_user, _community_slug), do: false
 
   defp global_god?(cur_user) do
     case Map.get(cur_user, :cur_passport) do

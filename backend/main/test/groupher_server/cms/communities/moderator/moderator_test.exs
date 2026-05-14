@@ -207,6 +207,25 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       assert is_map(get_in(passport, [other_community.slug, "cms"]))
     end
 
+    test "community root passport can manage moderators without root role",
+         ~m(user2 community)a do
+      {:ok, user3} = db_insert(:user)
+
+      cur_user =
+        Map.put(user2, :cur_passport, %{
+          "global" => %{},
+          community.slug => %{"root" => true}
+        })
+
+      {:ok, updated_community} =
+        CMS.Communities.add_moderator(community, "moderator", user3, cur_user)
+
+      assert updated_community.slug == community.slug
+
+      assert {:ok, _} =
+               CommunityModerator |> ORM.find_by(user_id: user3.id, community_id: community.id)
+    end
+
     test "can add moderator to a community, moderator has default passport",
          ~m(user user2 community)a do
       role = "moderator"
