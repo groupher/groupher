@@ -248,9 +248,11 @@ export default function TagList({
         ? overRect.bottom + DROP_INDICATOR_GAP
         : overRect.top - DROP_INDICATOR_GAP
 
-    node.style.opacity = '1'
-    node.style.transform = `translate3d(${listRect.left}px, ${top}px, 0)`
-    node.style.width = `${listRect.width}px`
+    node.style.cssText = `
+      opacity: 1;
+      transform: translate3d(${listRect.left}px, ${top}px, 0);
+      width: ${listRect.width}px;
+    `
   }
 
   return (

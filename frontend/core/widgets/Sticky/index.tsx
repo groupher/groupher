@@ -297,39 +297,35 @@ class StickyBox extends React.Component<TStickyBoxProps, TStickyBoxState> {
     }
     const scrollDelta = scrollY - this.latestScrollY
     this.offset = this.getCurrentOffset()
+
     if (scrollDelta > 0) {
-      // scroll down
-      if (this.mode === 'stickyTop') {
-        if (scrollY + this.scrollPaneOffset + offsetTop > this.naturalTop) {
-          if (
-            scrollY + this.scrollPaneOffset + this.viewPortHeight <=
-            this.naturalTop + this.nodeHeight + this.offset + offsetBottom
-          ) {
-            this.changeMode('relative')
-          } else {
-            this.changeMode('stickyBottom')
-          }
-        }
-      } else if (this.mode === 'relative') {
+      if (this.mode === 'relative') {
         this.changeToStickyBottomIfBoxTooLow(scrollY)
+      } else if (
+        this.mode === 'stickyTop' &&
+        scrollY + this.scrollPaneOffset + offsetTop > this.naturalTop
+      ) {
+        const boxBottomVisible =
+          scrollY + this.scrollPaneOffset + this.viewPortHeight <=
+          this.naturalTop + this.nodeHeight + this.offset + offsetBottom
+
+        this.changeMode(boxBottomVisible ? 'relative' : 'stickyBottom')
       }
     } else {
-      // scroll up
-      if (this.mode === 'stickyBottom') {
-        if (
-          this.scrollPaneOffset + scrollY + this.viewPortHeight <
+      if (
+        this.mode === 'relative' &&
+        this.scrollPaneOffset + scrollY + offsetTop < this.naturalTop + this.offset
+      ) {
+        this.changeMode('stickyTop')
+      } else if (
+        this.mode === 'stickyBottom' &&
+        this.scrollPaneOffset + scrollY + this.viewPortHeight <
           this.naturalTop + this.parentHeight + offsetBottom
-        ) {
-          if (this.scrollPaneOffset + scrollY + offsetTop >= this.naturalTop + this.offset) {
-            this.changeMode('relative')
-          } else {
-            this.changeMode('stickyTop')
-          }
-        }
-      } else if (this.mode === 'relative') {
-        if (this.scrollPaneOffset + scrollY + offsetTop < this.naturalTop + this.offset) {
-          this.changeMode('stickyTop')
-        }
+      ) {
+        const boxTopVisible =
+          this.scrollPaneOffset + scrollY + offsetTop >= this.naturalTop + this.offset
+
+        this.changeMode(boxTopVisible ? 'relative' : 'stickyTop')
       }
     }
 

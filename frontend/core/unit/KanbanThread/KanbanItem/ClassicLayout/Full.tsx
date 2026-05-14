@@ -5,7 +5,7 @@
  */
 
 import Link from 'next/link'
-import { type FC, memo, useEffect, useState } from 'react'
+import { type FC, memo, useState } from 'react'
 
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import { THREAD_PATH } from '~/const/thread'
@@ -29,11 +29,7 @@ const KanbanItem: FC<TProps> = ({ article }) => {
   const s = useSalon({ active: isActive })
   const { slug } = useCommunity()
 
-  const [titleIdx, setTitleIdx] = useState(0)
-
-  useEffect(() => {
-    setTitleIdx(getRandomInt(0, 7))
-  }, [])
+  const [titleIdx] = useState(() => getRandomInt(0, 7))
 
   const tags = mockTags(8)
 

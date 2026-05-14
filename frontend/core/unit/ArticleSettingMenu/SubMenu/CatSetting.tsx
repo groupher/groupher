@@ -1,4 +1,4 @@
-import { type FC, useEffect, useState } from 'react'
+import { type FC, useState } from 'react'
 import { useMutation } from 'urql'
 
 import { POST_CAT_MENU_ITEMS } from '~/const/menu'
@@ -28,10 +28,6 @@ const CatSetting: FC<TProps> = ({ onBack }) => {
   const { touched, setTouched, resetTouched } = useTouched()
 
   const [result, setPostCat] = useMutation(S.setPostCat)
-
-  useEffect(() => {
-    setCat(article.cat)
-  }, [])
 
   const handleCat = () => {
     const params = {

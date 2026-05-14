@@ -20,6 +20,8 @@ const TAG_LAYOUT_OPTIONS = [
   },
 ] as const
 
+const PREVIEW_ITEMS = ['first', 'second'] as const
+
 export default function TagLayout() {
   const s = useSalon()
   const { t } = useTrans()
@@ -43,8 +45,8 @@ export default function TagLayout() {
             >
               <div className={cnMerge(s.block, isActive && s.blockActive)}>
                 <div className={s.previewList}>
-                  {Array.from({ length: 2 }).map((_, index) => (
-                    <div key={`${value}-${index}`} className={s.previewItem}>
+                  {PREVIEW_ITEMS.map((item) => (
+                    <div key={`${value}-${item}`} className={s.previewItem}>
                       {value === TAG_LAYOUT.HASH ? (
                         <HashTagSVG className={s.hashIcon} />
                       ) : (

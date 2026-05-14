@@ -5,7 +5,7 @@
  */
 
 import { find, includes, isEmpty, reject, without } from 'ramda'
-import { type FC, memo, useCallback, useEffect, useState } from 'react'
+import { type FC, memo, useCallback, useState } from 'react'
 
 import { CITY_OPTION_VALUES, CITY_OPTIONS, HOME_CITY_OPTIONS } from '~/const/city'
 import type { TCityOption, TSpace } from '~/spec'
@@ -45,14 +45,10 @@ const parseCityState = (value: string): TCityState => {
   }
 }
 
-const CitySelector: FC<TProps> = ({ value = '', onChange = console.log, ...spacing }) => {
+const CitySelectorContent: FC<TProps> = ({ value = '', onChange = console.log, ...spacing }) => {
   const s = useSalon({ ...spacing })
 
   const [cityState, setCityState] = useState<TCityState>(() => parseCityState(value))
-
-  useEffect(() => {
-    setCityState(parseCityState(value))
-  }, [value])
 
   const { selected, showMore, extraCities } = cityState
   const options = !showMore ? HOME_CITY_OPTIONS : CITY_OPTIONS
@@ -127,6 +123,10 @@ const CitySelector: FC<TProps> = ({ value = '', onChange = console.log, ...spaci
       )}
     </div>
   )
+}
+
+const CitySelector: FC<TProps> = ({ value = '', ...props }) => {
+  return <CitySelectorContent key={value} value={value} {...props} />
 }
 
 export default memo(CitySelector)

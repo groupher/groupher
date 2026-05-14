@@ -3,7 +3,7 @@ import type { SVGProps } from 'react'
 const SVG = (props: SVGProps<SVGSVGElement>) => {
   return (
     <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 -189.93 539.856 539.856' {...props}>
-      <g transform='scale(4.00216 4.0011)'>
+      <g transform='scale(4 4)'>
         <path
           fill='#FFF'
           d='M134.032 35.268a3.83 3.83 0 0 1-3.834 3.83H4.729a3.835 3.835 0 0 1-3.839-3.83V4.725A3.84 3.84 0 0 1 4.729.89h125.468a3.834 3.834 0 0 1 3.834 3.835l.001 30.543z'
@@ -23,7 +23,7 @@ const SVG = (props: SVGProps<SVGSVGElement>) => {
           x2={-23.235}
           y1={97.431}
           y2={61.386}
-          gradientTransform='matrix(4.0022 0 0 4.0011 191.95 -349.736)'
+          gradientTransform='matrix(4 0 0 4 191.95 -349.74)'
           gradientUnits='userSpaceOnUse'
         >
           <stop offset={0} stopColor='#1a1a1a' stopOpacity={0.1} />

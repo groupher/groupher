@@ -6,7 +6,7 @@
 
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import { findIndex, includes, keys, reject, update } from 'ramda'
-import { type FC, Fragment, memo, useCallback, useEffect, useState } from 'react'
+import { type FC, Fragment, memo, useCallback, useState } from 'react'
 
 import { SOCIAL_LIST } from '~/const/social'
 import type { TSocialItem, TSocialType, TSpace } from '~/spec'
@@ -24,7 +24,11 @@ type TProps = {
 
 const DEFAULT_VALUE: readonly TSocialItem[] = []
 
-const SocialEditor: FC<TProps> = ({
+const getValueKey = (value: readonly TSocialItem[]): string => {
+  return value.map((item) => `${item.type}:${item.link}`).join('|')
+}
+
+const SocialEditorContent: FC<TProps> = ({
   testid = 'social-editor',
   width = 'w-full',
   withTitle = true,
@@ -35,11 +39,7 @@ const SocialEditor: FC<TProps> = ({
   const s = useSalon({ width, ...spacing })
   const [parent] = useAutoAnimate()
 
-  const [selected, setSelected] = useState<TSocialItem[]>([{ type: SOCIAL_LIST.EMAIL, link: '' }])
-
-  useEffect(() => {
-    setSelected([...value])
-  }, [value])
+  const [selected, setSelected] = useState<TSocialItem[]>(() => [...value])
 
   const removeSocial = useCallback(
     (social: TSocialItem) => {
@@ -103,6 +103,10 @@ const SocialEditor: FC<TProps> = ({
       </div>
     </div>
   )
+}
+
+const SocialEditor: FC<TProps> = ({ value = DEFAULT_VALUE, ...props }) => {
+  return <SocialEditorContent key={getValueKey(value)} value={value} {...props} />
 }
 
 export default memo(SocialEditor)

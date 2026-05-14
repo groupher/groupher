@@ -4,6 +4,7 @@ import { useVirtualizer } from '@tanstack/react-virtual'
 import { type CSSProperties, type ReactElement, useEffect, useRef, useState } from 'react'
 
 import type { TVirtualListProps } from './spec'
+import VirtualListItem from './VirtualListItem'
 
 import scrollStyles from './scroll.module.css'
 
@@ -21,7 +22,7 @@ export default function VirtualList<T>({
   isActive,
   onItemClick,
   getItemKey,
-  renderItem,
+  ItemContent,
 }: TVirtualListProps<T>): ReactElement {
   const viewportRef = useRef<HTMLDivElement | null>(null)
   const [gridLayout, setGridLayout] = useState({ columns: 1, rowHeight: 40 })
@@ -100,16 +101,15 @@ export default function VirtualList<T>({
                   const active = isActive?.(item) ?? false
 
                   return (
-                    <button
+                    <VirtualListItem
                       key={getItemKey(item)}
-                      type='button'
-                      className={[itemClassName, active ? itemActiveClassName : '']
-                        .filter(Boolean)
-                        .join(' ')}
-                      onClick={() => onItemClick?.(item)}
-                    >
-                      {renderItem(item)}
-                    </button>
+                      item={item}
+                      active={active}
+                      className={itemClassName}
+                      activeClassName={itemActiveClassName}
+                      onClick={onItemClick}
+                      ItemContent={ItemContent}
+                    />
                   )
                 })}
               </div>

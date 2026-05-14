@@ -2,7 +2,6 @@
 
 import { type FC, useMemo } from 'react'
 
-import { NODE_STYLE } from '~/const/node_style'
 import useTrans from '~/hooks/useTrans'
 import type { TNodeStyleValue } from '~/spec'
 import { ICONS, PROVIDERS } from '~/widgets/IconHub/icons'
@@ -10,7 +9,7 @@ import type { TIconName, TPickerProvider } from '~/widgets/IconHub/icons'
 
 import type { TIconOption, TIconSelect } from '../spec'
 import VirtualList from '../VirtualList'
-import IconNode from './IconNode'
+import IconListItem, { isSelectedIcon } from './IconListItem'
 import useSalon from './salon'
 
 type TProps = {
@@ -21,11 +20,6 @@ type TProps = {
 }
 
 const normalizeQuery = (value: string): string => value.trim().toLowerCase().replaceAll(/\s+/g, '-')
-
-const isSelectedIcon = (selectedValue: TNodeStyleValue, item: TIconOption): boolean =>
-  selectedValue.type === NODE_STYLE.ICON &&
-  selectedValue.provider === item.provider &&
-  selectedValue.name === item.name
 
 const IconList: FC<TProps> = ({ providerTab, query, selectedValue, onSelect }) => {
   const s = useSalon()
@@ -73,12 +67,7 @@ const IconList: FC<TProps> = ({ providerTab, query, selectedValue, onSelect }) =
       onItemClick={(item) => onSelect(item.provider, item.name as TIconName, item.src)}
       isActive={(item) => isSelectedIcon(selectedValue, item)}
       getItemKey={(item) => `${item.provider}-${item.name}`}
-      renderItem={(item) => (
-        <IconNode
-          item={item}
-          iconClassName={isSelectedIcon(selectedValue, item) ? s.iconColorActive : s.iconColor}
-        />
-      )}
+      ItemContent={IconListItem}
     />
   )
 }

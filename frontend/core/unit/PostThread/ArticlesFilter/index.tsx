@@ -15,10 +15,9 @@ import { callGEditor, callSyncSelector } from '~/signal'
 import type { TArticleCat, TArticleOrder, TArticleStatus, TSpace } from '~/spec'
 import ConditionSelector from '~/unit/ConditionSelector'
 import PublishButton from '~/widgets/Buttons/PublishButton'
-import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
-import SearchBox from '~/widgets/SearchBox'
 
 import useSalon from './salon'
+import SearchBoxView from './SearchBoxView'
 
 type TProps = TSpace
 
@@ -35,22 +34,6 @@ export default function ArticlesFilter({ ...spacing }: TProps) {
     order: activeOrder,
     updateActiveFilter,
   } = useArticlesFilter()
-
-  const renderSearchBox = () => {
-    if (communityLayout === COMMUNITY_LAYOUT.SIDEBAR) {
-      return isLoading ? <LavaLampLoading /> : <SearchBox />
-    }
-
-    if (communityLayout === COMMUNITY_LAYOUT.CLASSIC) {
-      return isLoading ? <LavaLampLoading top={4} right={12} /> : <SearchBox right={-4} />
-    }
-
-    if (communityLayout === COMMUNITY_LAYOUT.HERO) {
-      return isLoading ? <LavaLampLoading right={6} /> : <SearchBox right={6} />
-    }
-
-    return null
-  }
 
   return (
     <div className={s.wrapper}>
@@ -85,7 +68,7 @@ export default function ArticlesFilter({ ...spacing }: TProps) {
       />
       <div className='mr-2.5' />
       <div className='grow' />
-      {renderSearchBox()}
+      <SearchBoxView communityLayout={communityLayout} loading={isLoading} />
       {communityLayout === COMMUNITY_LAYOUT.SIDEBAR && (
         <PublishButton
           text='参与讨论'

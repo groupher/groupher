@@ -24,14 +24,15 @@ const Group: FC<TProps> = ({ group }) => {
 
   const { slug: community } = useCommunity()
   const searchString = useURLSearchParams()
-  const [fold, setFold] = useState(group.initFold)
+  const [foldState, setFoldState] = useState<boolean | null>(null)
+  const fold = foldState ?? group.initFold
   const { t } = useTrans()
 
   const s = useSalon({ fold })
 
   return (
     <div className={s.wrapper}>
-      <button type='button' className={s.folder} onClick={() => setFold(!fold)}>
+      <button type='button' className={s.folder} onClick={() => setFoldState(!fold)}>
         <div className={s.iconBox}>
           {group.icon === 'basic' && <InfoSVG className={s.menuIcon} />}
           {group.icon === 'cms' && <ManagementSVG className={cn(s.menuIcon, 'size-4 -mt-px')} />}

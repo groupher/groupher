@@ -1,6 +1,6 @@
 'use client'
 
-import { type FC, useCallback, useEffect } from 'react'
+import { type FC, useEffect, useRef } from 'react'
 
 import { THREAD } from '~/const/thread'
 import useViewingThread from '~/hooks/useViewingThread'
@@ -12,17 +12,17 @@ const Mushroom: FC = () => {
 
   const curThread = useViewingThread()
 
-  const handleBrowserPopChange = useCallback(
-    (_) => {
-      if (curThread === THREAD.POST) {
-        // window.location = data.target.location.pathname
-      }
-    },
-    [curThread],
-  )
+  const curThreadRef = useRef(curThread)
+  curThreadRef.current = curThread
 
   useEffect(() => {
     initAppVersion()
+
+    const handleBrowserPopChange = () => {
+      if (curThreadRef.current === THREAD.POST) {
+        // window.location = data.target.location.pathname
+      }
+    }
 
     /**
      * this event is only handle browser back/forward, current behavior is like product-hunt
@@ -32,7 +32,7 @@ const Mushroom: FC = () => {
     return () => {
       window.removeEventListener('popstate', handleBrowserPopChange)
     }
-  }, [handleBrowserPopChange, initAppVersion])
+  }, [initAppVersion])
 
   return null
 }
