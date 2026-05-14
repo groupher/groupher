@@ -145,10 +145,17 @@ defmodule GroupherServer.Test.ConnSimulator do
   defp filter_global_rule_map(map) when is_map(map) do
     map
     |> Enum.reduce(%{}, fn {rule, value}, acc ->
-      if PermissionRegistry.valid_global_permission?(to_string(rule)) and value == true do
-        Map.put(acc, to_string(rule), true)
-      else
-        acc
+      rule = to_string(rule)
+
+      cond do
+        rule == "root" and value == true ->
+          Map.put(acc, "god", true)
+
+        PermissionRegistry.valid_global_permission?(rule) and value == true ->
+          Map.put(acc, rule, true)
+
+        true ->
+          acc
       end
     end)
   end
