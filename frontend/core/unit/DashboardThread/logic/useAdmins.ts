@@ -95,7 +95,11 @@ export default function useAdmins(): TRet {
 
       dsb$.commit({ moderators: resolvedModerators })
       community$.commit({ moderators: resolvedModerators })
-      await revalidateCommunityCache(community$.slug)
+      try {
+        await revalidateCommunityCache(community$.slug)
+      } catch (error) {
+        console.error('## revalidate community cache error: ', error)
+      }
     },
     [community$, dsb$, isModerator, mutate, originalModerators],
   )

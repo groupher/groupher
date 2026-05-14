@@ -213,7 +213,11 @@ export default function useMutation(): TRet {
       .then(async (data) => {
         toast('设置已保存')
         if (okCb) okCb(data)
-        await revalidateCommunityCache(community)
+        try {
+          await revalidateCommunityCache(community)
+        } catch (err) {
+          console.error('## revalidate community cache error: ', err)
+        }
         _handleDone()
       })
       .catch((err) => {

@@ -172,17 +172,39 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
     test "can add multi moderators to a community", ~m(user user2 community)a do
       role = "moderator"
       cur_user = user
-      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
+      {:ok, user3} = db_insert(:user)
+
+      {:ok, updated_community} =
+        CMS.Communities.add_moderators(community, role, [user2, user3], cur_user)
 
       {:ok, moderators} = CommunityModerator |> ORM.find_all(%{page: 1, size: 10})
 
-      assert moderators.total_count == 2
+      assert moderators.total_count == 3
+      assert updated_community.moderators_count == 3
 
       moderator_user = moderators.entries |> Enum.find(&(&1.user_id == user.id))
       moderator_user2 = moderators.entries |> Enum.find(&(&1.user_id == user2.id))
+      moderator_user3 = moderators.entries |> Enum.find(&(&1.user_id == user3.id))
 
       assert not is_nil(moderator_user)
       assert not is_nil(moderator_user2)
+      assert not is_nil(moderator_user3)
+    end
+
+    test "remove moderator deletes only the community-scoped passport rules",
+         ~m(user user2 community)a do
+      role = "moderator"
+      cur_user = user
+
+      {:ok, other_community} = CMS.Communities.create(mock_attrs(:community), user)
+      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(other_community, role, user2, cur_user)
+
+      {:ok, _} = CMS.Communities.remove_moderator(community.slug, user2, cur_user)
+      {:ok, passport} = Passport.get_passport(user2)
+
+      refute Map.has_key?(passport, community.slug)
+      assert is_map(get_in(passport, [other_community.slug, "cms"]))
     end
 
     test "can add moderator to a community, moderator has default passport",

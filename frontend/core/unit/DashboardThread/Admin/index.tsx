@@ -20,6 +20,8 @@ export default function Admin() {
   useEvent<TDrawerPayload>(EVENT.DRAWER.OPEN, (_msg, data) => {
     if (data?.type === TYPE.DRAWER.PASSPORT_EDITOR) {
       setShowPassportEditor(true)
+    } else {
+      setShowPassportEditor(false)
     }
   })
 

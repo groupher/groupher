@@ -1,12 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  Autocomplete,
-  Input,
-  ListBox,
-  ListBoxItem,
-  SearchField,
-  useAsyncList,
-} from 'react-aria-components'
+import { Autocomplete, Input, ListBox, ListBoxItem, SearchField } from 'react-aria-components'
+import { useAsyncList } from 'react-stately'
 
 import SIZE from '~/const/size'
 import useTrans from '~/hooks/useTrans'
@@ -53,8 +47,10 @@ export default function Adder() {
   }, [selectedUsers])
 
   const visibleUsers = useMemo(() => {
-    return list.items.filter((user) => user.login && !selectedLogins.has(user.login))
-  }, [list.items, selectedLogins])
+    return list.items.filter(
+      (user) => user.login && !selectedLogins.has(user.login) && !isModerator(user),
+    )
+  }, [isModerator, list.items, selectedLogins])
 
   const onInputChange = (value: string): void => {
     list.setFilterText(value)

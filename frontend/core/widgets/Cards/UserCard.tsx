@@ -5,6 +5,7 @@
 import Link from 'next/link'
 import type { FC } from 'react'
 
+import SIZE from '~/const/size'
 import { cutRest } from '~/fmt'
 import Img from '~/Img'
 import type { TAccount, TUser } from '~/spec'
@@ -27,7 +28,7 @@ const UserCard: FC<TProps> = ({ user }) => {
         <Img
           src={avatar}
           className={s.avatar}
-          fallback={<ImgFallback user={user} className={s.avatar} />}
+          fallback={<ImgFallback user={user} className={s.avatar} size={SIZE.MEDIUM} />}
         />
         <div className={s.info}>
           <Link href={`user/${login}`} prefetch={false} className={s.title}>

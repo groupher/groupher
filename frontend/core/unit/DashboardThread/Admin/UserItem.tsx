@@ -39,7 +39,7 @@ const UserItem = ({ item, active = false, readonly = false, onOpen }: TProps) =>
           <div className={s.name}>{user.nickname}</div>
           <div className={s.login}>@{user.login}</div>
           {role === ADMIN_ROLE.ROOT && <div className={s.rootSign}>{ADMIN_ROLE.ROOT}</div>}
-          {item.pending && <div className={s.pendingSign}>pending</div>}
+          {item.pending && <div className={s.pendingSign}>{t('dsb.admin.badge.pending')}</div>}
           <div className='grow' />
           {readonly ? (
             <div className={s.readonlyPermission}>{permissionsLabel}</div>

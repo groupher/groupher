@@ -129,21 +129,19 @@ defmodule Helper.PermissionRegistry do
   Normalizes rules into the canonical `%{"global" => map, community_slug => map}` shape.
   """
   @spec normalize_rules(map() | nil) :: map()
-  def normalize_rules(%{"global" => global, "cms" => legacy_cms} = rules)
-      when is_map(global) and is_map(legacy_cms) do
-    rules
-    |> migrate_legacy_rules()
-    |> normalize_rules()
+  def normalize_rules(%{"global" => global, "cms" => maybe_legacy_cms} = rules)
+      when is_map(global) and is_map(maybe_legacy_cms) do
+    if community_rule_container?(maybe_legacy_cms) do
+      normalize_global_rules(rules)
+    else
+      rules
+      |> migrate_legacy_rules()
+      |> normalize_rules()
+    end
   end
 
   def normalize_rules(%{"global" => global} = rules) when is_map(global) do
-    base = %{"global" => normalize_context("global", global)}
-
-    rules
-    |> Map.drop(["global"])
-    |> Enum.reduce(base, fn {community_slug, community_rules}, acc ->
-      Map.put(acc, to_string(community_slug), normalize_community_rules(community_rules))
-    end)
+    normalize_global_rules(rules)
   end
 
   def normalize_rules(rules) when is_map(rules) do
@@ -269,6 +267,23 @@ defmodule Helper.PermissionRegistry do
 
   defp normalize_community_rules(_),
     do: raise(ArgumentError, "invalid passport rules shape, expected community context maps")
+
+  defp normalize_global_rules(%{"global" => global} = rules) do
+    base = %{"global" => normalize_context("global", global)}
+
+    rules
+    |> Map.drop(["global"])
+    |> Enum.reduce(base, fn {community_slug, community_rules}, acc ->
+      Map.put(acc, to_string(community_slug), normalize_community_rules(community_rules))
+    end)
+  end
+
+  defp community_rule_container?(map) when is_map(map) do
+    map
+    |> Map.keys()
+    |> Enum.map(&to_string/1)
+    |> Enum.any?(fn key -> key == "root" or key in @contexts end)
+  end
 
   defp migrate_legacy_rules(%{"global" => global, "cms" => cms}) do
     cms

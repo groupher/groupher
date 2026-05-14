@@ -436,6 +436,7 @@ export default {
   'dsb.admin.adder.action': 'Invite',
   'dsb.admin.adder.loading': 'Searching...',
   'dsb.admin.adder.empty': 'No matching accounts',
+  'dsb.admin.badge.pending': 'Pending',
   'dsb.admin.list.all_permissions': 'All permissions',
   'dsb.admin.list.permissions_unit': 'rules',
   'dsb.seo.twitter.preview': 'Preview',

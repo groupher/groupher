@@ -22,23 +22,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
       {:ok, true} ->
         Transaction.lock_row(community, fn community ->
           Multi.new()
-          |> Multi.insert(
-            :insert_moderator,
-            CommunityModerator.changeset(%CommunityModerator{}, %{
-              user_id: target_user.id,
-              community_id: community.id,
-              role: role
-            })
-          )
-          |> Multi.run(:update_community_count, fn _, _ ->
-            Communities.Count.update(community, target_user, :moderators_count, :inc)
-          end)
-          |> Multi.run(:stamp_passport, fn _, %{insert_moderator: community_moderator} ->
-            with {:ok, rules} <- PermissionConfig.default_passport_for_role(role, community.slug),
-                 {:ok, _} <- Passport.stamp_passport(rules, target_user) do
-              update_passport_item_count(community_moderator, community, target_user, rules)
-            end
-          end)
+          |> insert_and_stamp_moderator(community, role, target_user)
           |> Repo.transaction()
           |> result()
         end)
@@ -58,21 +42,25 @@ defmodule GroupherServer.CMS.Communities.Moderator do
 
     case user_is_root?(community, cur_user) do
       {:ok, true} ->
-        existing_user_ids = Enum.map(community.moderators, & &1.user_id)
+        Transaction.lock_row(community, fn community ->
+          community = Repo.preload(community, :moderators)
+          existing_user_ids = Enum.map(community.moderators, & &1.user_id)
 
-        target_users
-        |> Enum.uniq_by(& &1.id)
-        |> Enum.reject(&(&1.id in existing_user_ids))
-        |> Enum.reduce_while({:ok, community}, fn target_user, {:ok, _} ->
-          case add(community, role, target_user, cur_user) do
-            {:ok, updated_community} -> {:cont, {:ok, updated_community}}
-            {:error, reason} -> {:halt, {:error, reason}}
+          new_users =
+            target_users
+            |> Enum.uniq_by(& &1.id)
+            |> Enum.reject(&(&1.id in existing_user_ids))
+
+          new_users
+          |> Enum.reduce(Multi.new(), fn target_user, multi ->
+            insert_and_stamp_moderator(multi, community, role, target_user)
+          end)
+          |> Repo.transaction()
+          |> case do
+            {:ok, _} -> Communities.Read.read(community.slug, inc_views: false)
+            error -> result(error)
           end
         end)
-        |> case do
-          {:ok, _} -> Communities.Read.read(community.slug, inc_views: false)
-          {:error, reason} -> {:error, reason}
-        end
 
       {:error, :community_root_only} ->
         {:error, {:community_root_only, "only community root can add moderator"}}
@@ -179,6 +167,38 @@ defmodule GroupherServer.CMS.Communities.Moderator do
 
   # Helpers
 
+  defp insert_and_stamp_moderator(
+         multi,
+         %Community{} = community,
+         role,
+         %User{} = target_user
+       ) do
+    insert_name = {:insert_moderator, target_user.id}
+
+    multi
+    |> Multi.insert(
+      insert_name,
+      CommunityModerator.changeset(%CommunityModerator{}, %{
+        user_id: target_user.id,
+        community_id: community.id,
+        role: role
+      })
+    )
+    |> Multi.run({:update_community_count, target_user.id}, fn _, _ ->
+      with {:ok, community} <- ORM.find(Community, community.id) do
+        Communities.Count.update(community, target_user, :moderators_count, :inc)
+      end
+    end)
+    |> Multi.run({:stamp_passport, target_user.id}, fn _, changes ->
+      community_moderator = Map.fetch!(changes, insert_name)
+
+      with {:ok, rules} <- PermissionConfig.default_passport_for_role(role, community.slug),
+           {:ok, _} <- Passport.stamp_passport(rules, target_user) do
+        update_passport_item_count(community_moderator, community, target_user, rules)
+      end
+    end)
+  end
+
   defp update_passport_item_count(%Community{} = community, %User{} = user, rules) do
     with {:ok, community_moderator} <-
            ORM.find_by(CommunityModerator, %{community_id: community.id, user_id: user.id}) do
@@ -274,10 +294,28 @@ defmodule GroupherServer.CMS.Communities.Moderator do
     {:ok, result}
   end
 
+  defp result({:ok, changes}) when is_map(changes) do
+    changes
+    |> Enum.find_value(fn
+      {{:update_community_count, _user_id}, result} -> result
+      _ -> nil
+    end)
+    |> case do
+      nil -> {:ok, changes}
+      result -> {:ok, result}
+    end
+  end
+
   defp result({:error, :stamp_passport, %Ecto.Changeset{} = result, _steps}),
     do: {:error, {:changeset, result}}
 
   defp result({:error, :stamp_passport, _result, _steps}),
+    do: {:error, {:custom, "stamp passport error"}}
+
+  defp result({:error, {:stamp_passport, _user_id}, %Ecto.Changeset{} = result, _steps}),
+    do: {:error, {:changeset, result}}
+
+  defp result({:error, {:stamp_passport, _user_id}, _result, _steps}),
     do: {:error, {:custom, "stamp passport error"}}
 
   defp result({:error, _, result, _steps}) do

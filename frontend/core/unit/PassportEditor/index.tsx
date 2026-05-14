@@ -111,7 +111,7 @@ const PassportEditor: FC = () => {
 
       {!loading && isActiveModeratorRoot && isCurUserModeratorRoot && (
         <div className={s.footer}>
-          <Button ghost left={30}>
+          <Button ghost left={30} disabled>
             {t('passport.action.transfer_root')}
           </Button>
         </div>

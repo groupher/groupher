@@ -70,6 +70,27 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
            })
   end
 
+  test "normalize_rules keeps community slug named cms as community scope" do
+    normalized =
+      PermissionRegistry.normalize_rules(%{
+        "global" => %{},
+        "cms" => %{"root" => true, "cms" => %{"post.edit" => true}}
+      })
+
+    assert get_in(normalized, ["cms", "root"]) == true
+    assert get_in(normalized, ["cms", "cms", "post.edit"]) == true
+  end
+
+  test "normalize_rules still migrates legacy top-level cms context shape" do
+    normalized =
+      PermissionRegistry.normalize_rules(%{
+        "global" => %{},
+        "cms" => %{"javascript" => %{"post.edit" => true}}
+      })
+
+    assert get_in(normalized, ["javascript", "cms", "post.edit"]) == true
+  end
+
   defp action_literals_from_schema do
     @schema_root
     |> Path.join("**/*.ex")

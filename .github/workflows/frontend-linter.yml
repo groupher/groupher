@@ -22,8 +22,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
-  pull-requests: read
 
 jobs:
   changes:
@@ -189,11 +187,14 @@ jobs:
           const report = JSON.parse(fs.readFileSync(`react-doctor-${target}.json`, 'utf8'))
           const root = target === 'core' ? 'frontend/core' : `frontend/${target}`
 
-          const escape = (value) =>
+          const escapeData = (value) =>
             String(value ?? '')
               .replaceAll('%', '%25')
               .replaceAll('\r', '%0D')
               .replaceAll('\n', '%0A')
+
+          const escapeProperty = (value) =>
+            escapeData(value)
               .replaceAll(':', '%3A')
               .replaceAll(',', '%2C')
 
@@ -205,7 +206,7 @@ jobs:
             const message = diagnostic.message ?? title
 
             console.log(
-              `::${severity} file=${escape(file)},line=${line},title=${escape(title)}::${escape(message)}`,
+              `::${severity} file=${escapeProperty(file)},line=${line},title=${escapeProperty(title)}::${escapeData(message)}`,
             )
           }
 
@@ -234,11 +235,14 @@ jobs:
 
   react-doctor-comment:
     name: Comment React Doctor score
+    permissions:
+      contents: read
+      issues: write
     needs:
       - changes
       - react-doctor
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request' && needs.changes.outputs.has_targets == 'true'
+    if: ${{ always() && github.event_name == 'pull_request' && needs.changes.outputs.has_targets == 'true' }}
 
     steps:
       - name: Download React Doctor reports

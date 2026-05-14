@@ -23,6 +23,15 @@ const normalizeRules = (rules: unknown): string => {
 
 const parseRules = (rules: string): Record<string, boolean> => JSON.parse(rules)
 
+const safeParseRules = (rules: string): Record<string, boolean> => {
+  try {
+    return parseRules(rules)
+  } catch (error) {
+    console.error('## parse passport rules error: ', error)
+    return {}
+  }
+}
+
 const ruleKeys = (rules: Record<string, boolean>): string[] => Object.keys(rules)
 const enabledRuleKeys = (rules: Record<string, boolean>): string[] =>
   Object.entries(rules)
@@ -58,8 +67,8 @@ export default function useLogic(): TRet {
   const { mutate, query } = useGraphQLClient()
 
   const { activeModerator, allRootRules, allModeratorRules } = dsb$
-  const [selectedGlobalRules, setSelectedGlobalRules] = useState([])
-  const [selectedRules, setSelectedRules] = useState([])
+  const [selectedGlobalRules, setSelectedGlobalRules] = useState<string[]>([])
+  const [selectedRules, setSelectedRules] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
 
   const toggleCheck = (
@@ -87,23 +96,32 @@ export default function useLogic(): TRet {
     setLoading(true)
     setSelectedRules([])
     setSelectedGlobalRules([])
-    query(S.userPassport, { login: activeModerator.login }).then((res) => {
-      const { cmsPassportString, social } = res.user
-      const passportJson = JSON.parse(cmsPassportString)
-      const globalRules = passportJson.global
-      const communityRules = passportJson[community$.slug]?.cms
+    query(S.userPassport, { login: activeModerator.login })
+      .then((res) => {
+        const { cmsPassportString = '{}', social = null } = res?.user ?? {}
+        const passportJson = JSON.parse(cmsPassportString)
+        const globalRules = passportJson.global
+        const communityRules = passportJson[community$.slug]?.cms
 
-      dsb$.commit({ activeModerator: { ...activeModerator, social } })
+        dsb$.commit({ activeModerator: { ...activeModerator, social } })
 
-      if (globalRules) {
-        setSelectedGlobalRules(enabledRuleKeys(globalRules))
-      }
+        if (globalRules) {
+          setSelectedGlobalRules(enabledRuleKeys(globalRules))
+        }
 
-      if (communityRules) {
-        setSelectedRules(enabledRuleKeys(communityRules))
-      }
-      setLoading(false)
-    })
+        if (communityRules) {
+          setSelectedRules(enabledRuleKeys(communityRules))
+        }
+      })
+      .catch((error) => {
+        console.error('## load user passport error: ', error)
+        setSelectedGlobalRules([])
+        setSelectedRules([])
+        dsb$.commit({ activeModerator: { ...activeModerator, social: null } })
+      })
+      .finally(() => {
+        setLoading(false)
+      })
   }
 
   const loadAllPassportRules = (): void => {
@@ -112,21 +130,30 @@ export default function useLogic(): TRet {
       return
     }
 
-    query(S.allPassportRules).then((res) => {
-      const { cms } = res.allPassportRulesString
-      const { general, community } = cms
+    setLoading(true)
+    query(S.allPassportRules)
+      .then((res) => {
+        const { cms } = res.allPassportRulesString
+        const { general, community } = cms
 
-      dsb$.commit({
-        allRootRules: normalizeRules(general),
-        allModeratorRules: normalizeRules(community),
+        dsb$.commit({
+          allRootRules: normalizeRules(general),
+          allModeratorRules: normalizeRules(community),
+        })
+
+        loadUserPassport()
       })
-
-      loadUserPassport()
-    })
+      .catch((error) => {
+        console.error('## load passport rules error: ', error)
+        setSelectedGlobalRules([])
+        setSelectedRules([])
+        setLoading(false)
+      })
   }
 
   const updatePassport = (): void => {
     const community = community$.slug
+    if (!community || !activeModerator?.login) return
 
     const innerRules: Record<string, boolean> = {}
     const globalRules: Record<string, boolean> = {}
@@ -135,7 +162,7 @@ export default function useLogic(): TRet {
       (key) => {
         globalRules[key] = false
       },
-      ruleKeys(parseRules(allRootRules)),
+      ruleKeys(safeParseRules(allRootRules)),
     )
     forEach((key) => {
       globalRules[key] = true
@@ -145,7 +172,7 @@ export default function useLogic(): TRet {
       (key) => {
         innerRules[key] = false
       },
-      ruleKeys(parseRules(allModeratorRules)),
+      ruleKeys(safeParseRules(allModeratorRules)),
     )
     forEach((key) => {
       innerRules[key] = true
@@ -164,7 +191,11 @@ export default function useLogic(): TRet {
 
       dsb$.commit({ moderators })
       community$.commit({ moderators })
-      await revalidateCommunityCache(community)
+      try {
+        await revalidateCommunityCache(community)
+      } catch (error) {
+        console.error('## revalidate community cache error: ', error)
+      }
       closeDrawer()
     })
   }
@@ -180,7 +211,11 @@ export default function useLogic(): TRet {
 
         dsb$.commit({ moderators, activeModerator: null })
         community$.commit({ moderators })
-        await revalidateCommunityCache(community$.slug)
+        try {
+          await revalidateCommunityCache(community$.slug)
+        } catch (error) {
+          console.error('## revalidate community cache error: ', error)
+        }
 
         closeDrawer()
         send(EVENT.REFRESH_MODERATORS)

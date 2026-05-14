@@ -422,6 +422,7 @@ export default {
   'dsb.admin.adder.action': '邀请',
   'dsb.admin.adder.loading': '搜索中...',
   'dsb.admin.adder.empty': '没有匹配的账户',
+  'dsb.admin.badge.pending': '待处理',
   'dsb.admin.list.all_permissions': '全部权限',
   'dsb.admin.list.permissions_unit': '条规则',
   'dsb.seo.twitter.preview': '预览',

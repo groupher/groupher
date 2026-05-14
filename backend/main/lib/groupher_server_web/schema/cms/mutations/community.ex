@@ -139,7 +139,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       resolve(&R.CMS.add_moderators/3)
     end
 
-    # TODO: remove, should remove both moderator and community-scoped passport rules
     @desc "unset a moderator from a community, the user's passport also deleted"
     field :remove_moderator, :community do
       arg(:community, non_null(:string))
