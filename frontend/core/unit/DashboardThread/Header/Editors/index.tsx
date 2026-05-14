@@ -94,9 +94,11 @@ const Editor: FC<TProps> = ({ links, makeId, onChange }) => {
         {({ activeDragColumnId, columns, targetDragColumnId }) => (
           <div className={s.linkGroup}>
             <SortableContext
-              items={columns
-                .filter((column) => column.kind !== HEADER_COLUMN_KIND.MORE)
-                .map((column) => `header-sortable-column:${column.id}`)}
+              items={columns.flatMap((column) =>
+                column.kind === HEADER_COLUMN_KIND.MORE
+                  ? []
+                  : [`header-sortable-column:${column.id}`],
+              )}
               strategy={rectSortingStrategy}
             >
               {columns.map((column) => {

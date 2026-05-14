@@ -59,5 +59,3 @@ export const countWords = (body: string): number => {
 
   return countChinese(str) + countLatinWords(str)
 }
-
-export const holder = 1

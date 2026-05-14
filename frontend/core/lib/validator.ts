@@ -8,22 +8,16 @@ import {
   isNil,
   keys,
   length,
-  map,
   mergeRight,
   not,
-  pick,
-  pickBy,
-  reject,
   startsWith,
   trim,
   values,
 } from 'ramda'
 
-export const notEmpty = compose(not, isEmpty)
-export const isEmptyValue = compose(isEmpty, trim)
 export const nilOrEmpty = either(isNil, isEmpty)
 
-export const hasValue: (v: string) => boolean = compose(not, nilOrEmpty)
+const hasValue: (v: string) => boolean = compose(not, nilOrEmpty)
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
@@ -65,57 +59,12 @@ export const isString = (value: unknown): value is string => {
   return typeof value === 'string' || value instanceof String
 }
 
-/**
- * judge if given thing is valid URL
- * @link https://stackoverflow.com/a/43467144/4050784
- * @param {string} v
- * @return {Boolean}
- * @returns
- */
-
-export const isURL = (v: string, emptyAsError = false): boolean => {
-  if (trim(v).length === 0) return !emptyAsError
-  let url: URL
-  try {
-    url = new URL(v)
-  } catch (_) {
-    return false
-  }
-
-  return url.protocol === 'http:' || url.protocol === 'https:'
-}
-
-const notNil = compose(not, isNil)
-
-const validObjects = compose(pickBy(notNil), pickBy(isObject))
-
 const emptyArray = (obj: unknown) => Array.isArray(obj) && obj.length === 0
-
-// avoid trim on int
-const trimIfNeed = (v: unknown) => {
-  if (isString(v)) return trim(v)
-  return v
-}
-
-const validValues = compose(map(trimIfNeed), pickBy(notNil), reject(isObject))
-
-export const cast = (
-  fields: string[],
-  source: Record<string, unknown>,
-): Record<string, unknown> => {
-  const casted = pick(fields, source)
-  const primitiveValues = validValues(casted)
-
-  return mergeRight(
-    Array.isArray(primitiveValues) ? {} : (primitiveValues as Record<string, unknown>),
-    validObjects(casted) as Record<string, unknown>,
-  )
-}
 
 const keyOf = compose(head, keys)
 const valOf = compose(head, values)
 
-export const changeset = (source: Record<string, string>): Record<string, unknown> => ({
+const changeset = (source: Record<string, string>): Record<string, unknown> => ({
   exist: (obj, cb, opt = { skip: false, msg: '' }) => {
     if (source.__dirty__) return changeset(source)
     if (opt.skip) return changeset(source)

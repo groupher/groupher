@@ -30,6 +30,18 @@ type TRuleSectionProps = {
   onToggle: TTogglePassportRule
 }
 
+type TSalon = ReturnType<typeof useSalon>
+
+type TRenderRuleProps = TRuleSectionProps & {
+  s: TSalon
+  translate: (key: TTransKey, fallback: string) => string
+  translateRule: (rule: string) => string
+}
+
+type TRenderThreadProps = TRenderRuleProps & {
+  translateThread: (thread: string) => string
+}
+
 const getRuleKeys = (rules: string): string[] => {
   const optionsJson = JSON.parse(rules)
   return Object.keys(optionsJson)
@@ -170,6 +182,127 @@ const getSelectedCount = (rules: string[], selectedRules: string[], selectAll: b
   return rules.filter((rule) => includes(rule, selectedRules)).length
 }
 
+function RuleGrid({
+  rules,
+  selectedRules,
+  selectAll,
+  disabled,
+  primary = false,
+  scope = PASSPORT_SCOPE.CMS,
+  onToggle,
+  s,
+  translate,
+  translateRule,
+}: TRenderRuleProps) {
+  if (!rules.length) return null
+
+  return (
+    <div className={s.groupBody}>
+      {groupStackedRules(rules).map((item) => {
+        if (typeof item !== 'string') {
+          return (
+            <StackedRuleItem
+              key={`${scope}:${item.rules[0]}:${item.group.id}`}
+              title={translate(item.group.titleKey, item.group.fallbackTitle)}
+              rules={item.rules}
+              selectedRules={selectedRules}
+              selectAll={selectAll}
+              disabled={disabled}
+              primary={primary}
+              scope={scope}
+              stripTitle={stripThread}
+              translateRule={translateRule}
+              onToggle={onToggle}
+            />
+          )
+        }
+
+        const checked = selectAll || includes(item, selectedRules)
+
+        return (
+          <RuleItem
+            key={item}
+            ruleKey={item}
+            title={translateRule(item)}
+            checked={checked}
+            disabled={disabled}
+            primary={primary}
+            onChange={(checked) => onToggle(item, checked, scope)}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
+function ThreadSections({
+  rules,
+  selectedRules,
+  selectAll,
+  disabled,
+  primary = false,
+  scope = PASSPORT_SCOPE.CMS,
+  onToggle,
+  s,
+  translate,
+  translateRule,
+  translateThread,
+}: TRenderThreadProps) {
+  const threadRules = getThreadRules(rules)
+
+  return PASSPORT_THREADS.map((thread) => {
+    const rules = threadRules[thread]
+    if (!rules.length) return null
+    const selectedCount = getSelectedCount(rules, selectedRules, selectAll)
+
+    return (
+      <div className={s.threadGroup} key={thread}>
+        <div className={primary ? s.primaryThreadTitle : s.threadTitle}>
+          <span>{translateThread(thread)}</span>
+          <span className={primary ? s.primaryThreadCount : s.threadCount}>
+            ({selectedCount}/{rules.length})
+          </span>
+        </div>
+        <div className={s.threadRules}>
+          {groupStackedRules(rules).map((item) => {
+            if (typeof item !== 'string') {
+              return (
+                <StackedRuleItem
+                  key={`${scope}:${item.rules[0]}:${item.group.id}`}
+                  title={translate(item.group.titleKey, item.group.fallbackTitle)}
+                  rules={item.rules}
+                  selectedRules={selectedRules}
+                  selectAll={selectAll}
+                  disabled={disabled}
+                  primary={primary}
+                  scope={scope}
+                  stripTitle={stripThread}
+                  translateRule={translateRule}
+                  onToggle={onToggle}
+                />
+              )
+            }
+
+            const checked = selectAll || includes(item, selectedRules)
+
+            return (
+              <RuleItem
+                key={item}
+                ruleKey={item}
+                title={translateRule(item)}
+                checked={checked}
+                disabled={disabled}
+                primary={primary}
+                onChange={(checked) => onToggle(item, checked, scope)}
+              />
+            )
+          })}
+        </div>
+      </div>
+    )
+  })
+}
+
 export default function Selects({
   allRootRules,
   allModeratorRules,
@@ -202,120 +335,6 @@ export default function Selects({
     return translate(getPassportKey('thread', thread), thread)
   }
 
-  const renderRuleGrid = ({
-    rules,
-    selectedRules,
-    selectAll,
-    disabled,
-    primary = false,
-    scope = PASSPORT_SCOPE.CMS,
-    onToggle,
-  }: TRuleSectionProps) => {
-    if (!rules.length) return null
-
-    return (
-      <div className={s.groupBody}>
-        {groupStackedRules(rules).map((item) => {
-          if (typeof item !== 'string') {
-            return (
-              <StackedRuleItem
-                key={`${scope}:${item.rules[0]}:${item.group.id}`}
-                title={translate(item.group.titleKey, item.group.fallbackTitle)}
-                rules={item.rules}
-                selectedRules={selectedRules}
-                selectAll={selectAll}
-                disabled={disabled}
-                primary={primary}
-                scope={scope}
-                stripTitle={stripThread}
-                translateRule={translateRule}
-                onToggle={onToggle}
-              />
-            )
-          }
-
-          const checked = selectAll || includes(item, selectedRules)
-
-          return (
-            <RuleItem
-              key={item}
-              ruleKey={item}
-              title={translateRule(item)}
-              checked={checked}
-              disabled={disabled}
-              primary={primary}
-              onChange={(checked) => onToggle(item, checked, scope)}
-            />
-          )
-        })}
-      </div>
-    )
-  }
-
-  const renderThreadSections = ({
-    rules,
-    selectedRules,
-    selectAll,
-    disabled,
-    primary = false,
-    scope = PASSPORT_SCOPE.CMS,
-    onToggle,
-  }: TRuleSectionProps) => {
-    const threadRules = getThreadRules(rules)
-
-    return PASSPORT_THREADS.map((thread) => {
-      const rules = threadRules[thread]
-      if (!rules.length) return null
-      const selectedCount = getSelectedCount(rules, selectedRules, selectAll)
-
-      return (
-        <div className={s.threadGroup} key={thread}>
-          <div className={primary ? s.primaryThreadTitle : s.threadTitle}>
-            <span>{translateThread(thread)}</span>
-            <span className={primary ? s.primaryThreadCount : s.threadCount}>
-              ({selectedCount}/{rules.length})
-            </span>
-          </div>
-          <div className={s.threadRules}>
-            {groupStackedRules(rules).map((item) => {
-              if (typeof item !== 'string') {
-                return (
-                  <StackedRuleItem
-                    key={`${scope}:${item.rules[0]}:${item.group.id}`}
-                    title={translate(item.group.titleKey, item.group.fallbackTitle)}
-                    rules={item.rules}
-                    selectedRules={selectedRules}
-                    selectAll={selectAll}
-                    disabled={disabled}
-                    primary={primary}
-                    scope={scope}
-                    stripTitle={stripThread}
-                    translateRule={translateRule}
-                    onToggle={onToggle}
-                  />
-                )
-              }
-
-              const checked = selectAll || includes(item, selectedRules)
-
-              return (
-                <RuleItem
-                  key={item}
-                  ruleKey={item}
-                  title={translateRule(item)}
-                  checked={checked}
-                  disabled={disabled}
-                  primary={primary}
-                  onChange={(checked) => onToggle(item, checked, scope)}
-                />
-              )
-            })}
-          </div>
-        </div>
-      )
-    })
-  }
-
   return (
     <div className={s.wrapper}>
       {isActiveModeratorGod && !!globalRules.length && (
@@ -333,24 +352,31 @@ export default function Selects({
           </div>
           <div className={s.groupPanel}>
             <div className={s.threadedGroupBody}>
-              {renderRuleGrid({
-                rules: getContextRules(globalRules),
-                selectedRules: selectedGlobalRules,
-                selectAll: isActiveModeratorGod,
-                disabled: globalRulesReadonly,
-                primary: true,
-                scope: PASSPORT_SCOPE.GLOBAL,
-                onToggle: toggleCheck,
-              })}
-              {renderThreadSections({
-                rules: globalRules,
-                selectedRules: selectedGlobalRules,
-                selectAll: isActiveModeratorGod,
-                disabled: globalRulesReadonly,
-                primary: true,
-                scope: PASSPORT_SCOPE.GLOBAL,
-                onToggle: toggleCheck,
-              })}
+              <RuleGrid
+                rules={getContextRules(globalRules)}
+                selectedRules={selectedGlobalRules}
+                selectAll={isActiveModeratorGod}
+                disabled={globalRulesReadonly}
+                primary
+                scope={PASSPORT_SCOPE.GLOBAL}
+                onToggle={toggleCheck}
+                s={s}
+                translate={translate}
+                translateRule={translateRule}
+              />
+              <ThreadSections
+                rules={globalRules}
+                selectedRules={selectedGlobalRules}
+                selectAll={isActiveModeratorGod}
+                disabled={globalRulesReadonly}
+                primary
+                scope={PASSPORT_SCOPE.GLOBAL}
+                onToggle={toggleCheck}
+                s={s}
+                translate={translate}
+                translateRule={translateRule}
+                translateThread={translateThread}
+              />
             </div>
           </div>
         </section>
@@ -370,20 +396,27 @@ export default function Selects({
         </div>
         <div className={s.groupPanel}>
           <div className={s.threadedGroupBody}>
-            {renderRuleGrid({
-              rules: contextRules,
-              selectedRules,
-              selectAll: isActiveModeratorRoot,
-              disabled: cmsRulesReadonly,
-              onToggle: toggleCheck,
-            })}
-            {renderThreadSections({
-              rules: cmsRules,
-              selectedRules,
-              selectAll: isActiveModeratorRoot,
-              disabled: cmsRulesReadonly,
-              onToggle: toggleCheck,
-            })}
+            <RuleGrid
+              rules={contextRules}
+              selectedRules={selectedRules}
+              selectAll={isActiveModeratorRoot}
+              disabled={cmsRulesReadonly}
+              onToggle={toggleCheck}
+              s={s}
+              translate={translate}
+              translateRule={translateRule}
+            />
+            <ThreadSections
+              rules={cmsRules}
+              selectedRules={selectedRules}
+              selectAll={isActiveModeratorRoot}
+              disabled={cmsRulesReadonly}
+              onToggle={toggleCheck}
+              s={s}
+              translate={translate}
+              translateRule={translateRule}
+              translateThread={translateThread}
+            />
           </div>
         </div>
       </section>

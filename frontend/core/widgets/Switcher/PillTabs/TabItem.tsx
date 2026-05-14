@@ -1,5 +1,6 @@
 'use client'
 
+import NextImage from 'next/image'
 import { cloneElement, isValidElement, type FC, type ReactElement, type SVGProps } from 'react'
 
 import useSalon, { cn } from '../salon/pill_tabs/tab_item'
@@ -40,7 +41,15 @@ const TabItem: FC<TPillTabItemProps> = ({
     >
       <span className={s.iconSlot} aria-hidden='true'>
         {item.icon ? (
-          <img src={item.icon} alt='' draggable={false} className={s.iconImageClassName} />
+          <NextImage
+            src={item.icon}
+            alt=''
+            width={14}
+            height={14}
+            unoptimized
+            draggable={false}
+            className={s.iconImageClassName}
+          />
         ) : (
           renderedIconComp
         )}

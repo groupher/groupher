@@ -12,11 +12,11 @@ const Share = lazy(() => import('~/unit/Share'))
 
 export default function DrawerHeader() {
   const s = useSalon()
-  const router = useRouter()
+  const { back } = useRouter()
 
   return (
     <div className={s.wrapper}>
-      <button type='button' className={s.backBtn} onClick={() => router.back()}>
+      <button type='button' className={s.backBtn} onClick={() => back()}>
         <ArrowSVG className={s.icon} />
       </button>
       <div className='ml-1' />

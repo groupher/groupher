@@ -23,17 +23,7 @@ import { FIELDS } from '~/stores/dashboard/constant'
 import { gqFetch } from '~/utils/api'
 import { extractQueryName } from '~/utils/graphql'
 
-import type { TGQSSRResult } from './spec'
-
 type TTwitterCard = 'summary' | 'summary_large_image' | 'player' | 'app'
-
-export const commonRes = (result): TGQSSRResult => {
-  return {
-    fetching: result.fetching,
-    error: result.error,
-    stale: result.stale,
-  }
-}
 
 /**
  * common url filter logic for all paged articles queries

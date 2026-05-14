@@ -4,6 +4,7 @@ import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/Arrow'
 import DeleteSVG from '~/icons/Delete'
 import EditSVG from '~/icons/EditPen'
+import { createKeyboardClick } from '~/lib/a11y'
 import type { TFAQSection } from '~/spec'
 import Markdown from '~/widgets/Markdown'
 
@@ -40,14 +41,26 @@ const Block: FC<TProps> = ({ section, editingFAQIndex, editingFAQ, isFirst, isLa
       <div className={s.actions}>
         {!sortOnly && !editingFAQ && (
           <>
-            <div className={s.hintBox} onClick={() => triggerEditFAQ(section.index)}>
+            <div
+              className={s.hintBox}
+              role='button'
+              tabIndex={0}
+              onClick={() => triggerEditFAQ(section.index)}
+              onKeyDown={createKeyboardClick(() => triggerEditFAQ(section.index))}
+            >
               <EditSVG className={s.editIcon} />
               <div className={s.hint}>{t('dsb.cms.faq.block.edit')}</div>
             </div>
 
             <div className={s.deleteBox}>
               <DeleteSVG className={s.deleteIcon} />
-              <div className={s.deleteHint} onClick={() => deleteFAQSection(section.index)}>
+              <div
+                className={s.deleteHint}
+                role='button'
+                tabIndex={0}
+                onClick={() => deleteFAQSection(section.index)}
+                onKeyDown={createKeyboardClick(() => deleteFAQSection(section.index))}
+              >
                 {t('dsb.cms.faq.block.delete')}
               </div>
             </div>

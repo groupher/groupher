@@ -118,7 +118,7 @@ export function useColumnsData() {
     },
   }
 
-  return kanbanBoards.map((board) => columnMap[board]).filter(Boolean)
+  return kanbanBoards.flatMap((board) => columnMap[board] || [])
 }
 
 export function HeaderRow({

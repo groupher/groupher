@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { ComponentType } from 'react'
 
 import type { TNodeStyleIconValue, TNodeStyleValue } from '~/spec'
 import type { TIconName, TIconProvider, TPickerProvider } from '~/widgets/IconHub/icons'
@@ -28,7 +28,7 @@ export type TVirtualListProps<T> = {
   isActive?: (item: T) => boolean
   onItemClick?: (item: T) => void
   getItemKey: (item: T) => string
-  renderItem: (item: T) => ReactNode
+  ItemContent: ComponentType<{ item: T; active: boolean }>
 }
 
 export type TIconTabProps = {

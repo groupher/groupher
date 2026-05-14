@@ -3,6 +3,7 @@ import type { FC } from 'react'
 
 import { COVER_GRADIENT_WALLPAPER, GRADIENT_DIRECTION } from '~/const/wallpaper'
 import ArrowSVG from '~/icons/Arrow'
+import { createKeyboardClick } from '~/lib/a11y'
 import type { TWallpaper, TWallpaperGradientDir } from '~/spec'
 import { parseWallpaper } from '~/wallpaper'
 
@@ -37,7 +38,13 @@ const BackgroundBlock: FC<TProps> = ({ wallpapers, wallpaper, direction }) => {
           <div className={s.sectionTitle}>渐变背景色:</div>
           <div className={s.bgRow}>
             <div className={cn(s.imageItem, wallpaper === '' && s.imageItemActive)}>
-              <div className={s.imageBlock} onClick={() => wallpaperOnChange('')} />
+              <div
+                className={s.imageBlock}
+                role='button'
+                tabIndex={0}
+                onClick={() => wallpaperOnChange('')}
+                onKeyDown={createKeyboardClick(() => wallpaperOnChange(''))}
+              />
             </div>
 
             {keys(COVER_GRADIENT_WALLPAPER).map((themeName) => (
@@ -48,7 +55,10 @@ const BackgroundBlock: FC<TProps> = ({ wallpapers, wallpaper, direction }) => {
                 <div
                   className={s.imageBlock}
                   style={{ background: parseWallpaper(wallpapers, themeName).background }}
+                  role='button'
+                  tabIndex={0}
                   onClick={() => wallpaperOnChange(themeName)}
+                  onKeyDown={createKeyboardClick(() => wallpaperOnChange(themeName))}
                 />
               </div>
             ))}
@@ -60,7 +70,10 @@ const BackgroundBlock: FC<TProps> = ({ wallpapers, wallpaper, direction }) => {
               <div
                 key={dir}
                 className={cn(s.imageItem, s.dirItem, dir === direction && s.imageItemActive)}
+                role='button'
+                tabIndex={0}
                 onClick={() => gradientDirOnChange(dir)}
+                onKeyDown={createKeyboardClick(() => gradientDirOnChange(dir))}
               >
                 <ArrowSVG
                   className={s.dirArrow}

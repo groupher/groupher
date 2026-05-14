@@ -39,7 +39,7 @@ export const HOME_CITY_OPTIONS = [
   },
 ]
 
-export const OVERSEA_CITY_OPTIONS = [
+const OVERSEA_CITY_OPTIONS = [
   {
     label: '湾区',
     value: 'bay-area',

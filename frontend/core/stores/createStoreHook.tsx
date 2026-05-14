@@ -1,7 +1,7 @@
 'use client'
 
 import type { Context } from 'react'
-import { useContext, useRef } from 'react'
+import { use, useRef } from 'react'
 import { useSnapshot } from 'valtio'
 
 type TObject = Record<string, unknown>
@@ -16,7 +16,7 @@ const createStoreHook = <TStore extends TObject, TSnap extends TObject = TStore>
   const errorMessage = `useStore must be used within a ${storeName} store provider`
 
   return () => {
-    const store = useContext(StoreContext)
+    const store = use(StoreContext)
     if (!store) {
       throw new Error(errorMessage)
     }

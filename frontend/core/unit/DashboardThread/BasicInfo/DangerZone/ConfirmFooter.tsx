@@ -30,7 +30,12 @@ const ConfirmFooter: FC<TProps> = ({ testid: _testid = '', ...spacing }) => {
         <span className={s.bold}>{community}</span>
         {t('dsb.base_info.danger.delete.confirm_suffix')}
       </div>
-      <Input className={s.input} onChange={(e) => setMsg(e.target.value)} value={msg} autoFocus />
+      <Input
+        className={s.input}
+        onChange={(e) => setMsg(e.target.value)}
+        value={msg}
+        focusOnMount
+      />
       <Button
         red
         top={14}

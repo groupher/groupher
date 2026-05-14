@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 
 import RotateSVG from '~/icons/Rotate'
+import { createKeyboardClick } from '~/lib/a11y'
 import RangeSlider from '~/widgets/RangeSlider'
 
 import useSalon from '../salon/toolbox/rotate_block'
@@ -23,7 +24,13 @@ const RotateBlock: FC<TProps> = ({ rotate }) => {
       panel={
         <div className={s.panel}>
           {rotate !== 0 && (
-            <div className={s.reset} onClick={() => rotateOnChange(0)}>
+            <div
+              className={s.reset}
+              role='button'
+              tabIndex={0}
+              onClick={() => rotateOnChange(0)}
+              onKeyDown={createKeyboardClick(() => rotateOnChange(0))}
+            >
               回正
             </div>
           )}

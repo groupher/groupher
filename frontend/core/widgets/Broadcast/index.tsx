@@ -5,6 +5,7 @@ import { type FC, Fragment } from 'react'
 import { ANCHOR } from '~/const/dom'
 import { BROADCAST_LAYOUT } from '~/const/layout'
 import useBroadcast from '~/hooks/useBroadcast'
+import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/Arrow'
 import CrossSVG from '~/icons/CloseCross'
 import NotifySVG from '~/icons/Trumpet'
@@ -21,6 +22,7 @@ const DETAIL_TEXT =
 
 const Broadcast: FC<TProps> = ({ testid: _testid = 'banner-notify' }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { broadcastBg: bg, broadcastLayout: layout, broadcastEnable: enabled } = useBroadcast()
 
@@ -39,16 +41,20 @@ const Broadcast: FC<TProps> = ({ testid: _testid = 'banner-notify' }) => {
         <div className='row'>
           {layout === BROADCAST_LAYOUT.DEFAULT ? (
             <Fragment>
-              <div className={cn(s.linkBtn, s.rainbow(bg, 'bg'))} onClick={showDetail}>
-                查看详情
-              </div>
+              <button
+                type='button'
+                className={cn(s.linkBtn, s.rainbow(bg, 'bg'))}
+                onClick={showDetail}
+              >
+                {t('common.view_detail')}
+              </button>
               <CrossSVG className={s.icon} />
             </Fragment>
           ) : (
             <Fragment>
-              <div className={s.linkText} onClick={showDetail}>
-                查看详情
-              </div>
+              <button type='button' className={s.linkText} onClick={showDetail}>
+                {t('common.view_detail')}
+              </button>
               <ArrowSVG className={s.icon} />
             </Fragment>
           )}

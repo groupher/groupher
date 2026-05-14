@@ -6,7 +6,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 import useWallpaper from '~/hooks/useWallpaper'
 
 // TODO: move this with landing to @groupher/ftontend-shared.
-export const getPathGradient = (wallpaper: string): string => {
+const getPathGradient = (wallpaper: string): string => {
   if (!includes(wallpaper, keys(GRADIENT_WALLPAPER))) {
     return '#f2bc5a,#f76b6b'
   }

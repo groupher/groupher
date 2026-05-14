@@ -5,7 +5,7 @@ import type { TLinkChild, TResolvedHeaderLinkItem, TTransKey } from '~/spec'
 
 const normalizeUrl = (url = ''): string => url.replace(/\/$/, '')
 
-export const isLinkVisible = (title: string, url: string): boolean =>
+const isLinkVisible = (title: string, url: string): boolean =>
   title.trim() !== '' && url.trim() !== ''
 
 export const filterVisibleHeaderLinks = (

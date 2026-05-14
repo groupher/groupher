@@ -59,10 +59,12 @@ const TEST_DATA = [
   },
 ]
 
+const DEFAULT_SECTIONS: TFAQSection[] = []
+
 const FaqList: FC<TProps> = ({
   testid: _testid = 'faq-list',
   layout = DOC_FAQ_LAYOUT.FLAT,
-  sections: _sections = [],
+  sections: _sections = DEFAULT_SECTIONS,
   large = false,
   ...spacing
 }) => {

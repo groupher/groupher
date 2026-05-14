@@ -25,22 +25,22 @@ const CatItem: FC<TProps> = ({ onClick }) => {
     const TheIcon = ICON[article.cat]
 
     return (
-      <div className={s.menuItem} onClick={onClick}>
+      <button type='button' className={s.menuItem} onClick={onClick}>
         <TheIcon />
         {t(toGTDLabelKey(article.cat))}
         <div className='grow' />
         <ArrowSVG className={cn(s.icon, 'rotate-180')} />
-      </div>
+      </button>
     )
   }
 
   return (
-    <div className={s.menuItem} onClick={onClick}>
+    <button type='button' className={s.menuItem} onClick={onClick}>
       <CategorySVG className={cn(s.icon, 'ml-px ')} />
       {t('article.cat')}
       <div className='grow' />
       <ArrowSVG className={cn(s.icon, 'rotate-180')} />
-    </div>
+    </button>
   )
 }
 

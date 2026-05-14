@@ -23,5 +23,3 @@ export const getGTDColor = (status: TArticleStatus, bgColors: TColorName[]): TCo
       return COLOR.RED
   }
 }
-
-export const holder = 1

@@ -8,11 +8,11 @@ import type { CSSProperties, FC } from 'react'
 
 import type { TColorName, TSpace } from '~/spec'
 
-import ICONS from './icons'
+import { ICONS } from './icons'
 import useSalon from './salon'
 import type { TIcon, TProvider } from './spec'
 
-export type TProps = {
+type TProps = {
   testid?: string
   size?: number
   icon?: TIcon

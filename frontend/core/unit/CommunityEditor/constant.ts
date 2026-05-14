@@ -15,14 +15,6 @@ export const COMMUNITY_TYPE = {
   GROUP: 'GROUP',
 } as const
 
-// TODO: remove later
-export const COMMUNITY_CATS_COLOR = {
-  [COMMUNITY_TYPE.PRODUCT]: COLOR.PURPLE,
-  [COMMUNITY_TYPE.GAMING]: COLOR.BLUE,
-  [COMMUNITY_TYPE.TEACH]: COLOR.GREEN,
-  [COMMUNITY_TYPE.GROUP]: COLOR.ORANGE,
-}
-
 export const COMMUNITY_CATS = [
   {
     //
@@ -47,53 +39,6 @@ export const COMMUNITY_CATS = [
     type: COMMUNITY_TYPE.GROUP,
     title: '圈子 / 团体',
     color: COLOR.BLUE,
-  },
-]
-
-export const CITY_OPTIONS = [
-  {
-    label: '北京',
-    value: 'beijing',
-  },
-  {
-    label: '上海',
-    value: 'shanghai',
-  },
-  {
-    label: '杭州',
-    value: 'hangzhou',
-  },
-  {
-    label: '深圳',
-    value: 'shenzheng',
-  },
-  {
-    label: '广州',
-    value: 'guangzhou',
-  },
-  {
-    label: '苏州',
-    value: 'suzhou',
-  },
-  {
-    label: '成都',
-    value: 'chengdu',
-  },
-  {
-    label: '武汉',
-    value: 'wuhan',
-  },
-  {
-    label: '西安',
-    value: 'xian',
-  },
-  {
-    label: '海外',
-    value: 'oversea',
-  },
-  {
-    label: '其他',
-    value: 'others',
   },
 ]
 

@@ -32,24 +32,27 @@ const FeedbackFooter: FC<TProps> = ({ offsetRight, withLastUpdated = true }) => 
       <div className={s.feedback}>
         <div className={cn(s.title, withLastUpdated && s.titleSmall)}>本文是否有帮助?</div>
         <div className={cn(s.faces, withLastUpdated && s.facesSmall)}>
-          <div
+          <button
+            type='button'
             className={cn(s.iconBox, feedback === BAD && s.iconBoxActive)}
             onClick={() => setFeedback(BAD)}
           >
             <BadSVG className={cn(s.icon, 'circle', withLastUpdated && s.iconSmall)} />
-          </div>
-          <div
+          </button>
+          <button
+            type='button'
             className={cn(s.iconBox, feedback === SOSO && s.iconBoxActive)}
             onClick={() => setFeedback(SOSO)}
           >
             <SoSoSVG className={cn(s.icon, 'circle', withLastUpdated && s.iconSmall)} />
-          </div>
-          <div
+          </button>
+          <button
+            type='button'
             className={cn(s.iconBox, feedback === GOOD && s.iconBoxActive)}
             onClick={() => setFeedback(GOOD)}
           >
             <GoodSVG className={cn(s.icon, withLastUpdated && s.iconSmall)} />
-          </div>
+          </button>
         </div>
       </div>
     </div>

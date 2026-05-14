@@ -3,5 +3,3 @@ export const HELP_FEEDBACK = {
   SOSO: 'soso',
   BAD: 'bad',
 } as const
-
-export const holder = 1

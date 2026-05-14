@@ -9,6 +9,7 @@ import {
 } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 
+import { useAutoFocusTarget } from '~/hooks/useAutoFocus'
 import useTrans from '~/hooks/useTrans'
 import type { TSpace } from '~/spec'
 import Markdown from '~/widgets/Markdown'
@@ -20,7 +21,7 @@ import type { TTab } from './spec'
 import useFormats from './useFormats'
 import { continueListOnEnter, safeValue } from './utils'
 
-export type TProps = {
+type TProps = {
   value?: string
   placeholder?: string
   className?: string
@@ -28,7 +29,7 @@ export type TProps = {
   previewClassName?: string
   minRows?: number
   maxRows?: number
-  autoFocus?: boolean
+  focusOnMount?: boolean
   disabled?: boolean
   writeLabel?: string
   previewLabel?: string
@@ -43,7 +44,7 @@ const MarkdownEditor: FC<TProps> = ({
   previewClassName = '',
   minRows = 7,
   maxRows,
-  autoFocus = false,
+  focusOnMount = false,
   disabled = false,
   writeLabel,
   previewLabel,
@@ -55,6 +56,7 @@ const MarkdownEditor: FC<TProps> = ({
   const formats = useFormats()
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [tab, setTab] = useState<TTab>(TAB.WRITE)
+  useAutoFocusTarget(textareaRef, focusOnMount && tab === TAB.WRITE && !disabled)
 
   const writeLabelTxt = writeLabel ?? t('widgets.markdown_editor.tab.write')
   const previewLabelTxt = previewLabel ?? t('widgets.markdown_editor.tab.preview')
@@ -72,7 +74,7 @@ const MarkdownEditor: FC<TProps> = ({
     })
   }, [])
 
-  const handleChange = useCallback(
+  const updateMarkdownValue = useCallback(
     (e: ChangeEvent<HTMLTextAreaElement>) => onChange?.(e.target.value, e),
     [onChange],
   )
@@ -175,7 +177,6 @@ const MarkdownEditor: FC<TProps> = ({
       <div className={s.body}>
         {tab === TAB.WRITE ? (
           <TextareaAutosize
-            autoFocus={autoFocus}
             className={cn(s.textarea, textareaClassName)}
             disabled={disabled}
             maxRows={maxRows}
@@ -184,7 +185,7 @@ const MarkdownEditor: FC<TProps> = ({
             ref={textareaRef}
             spellCheck='false'
             value={safeValue(value)}
-            onChange={handleChange}
+            onChange={updateMarkdownValue}
             onKeyDown={handleKeyDown}
           />
         ) : (

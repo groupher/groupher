@@ -1,5 +1,5 @@
 import { range } from 'ramda'
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Carousel, Slide, Slider, SliderBarDotGroup } from 'react-scroll-snap-anime-slider'
 
 import APP from '~/const/app'
@@ -38,7 +38,7 @@ export default function ImageSlider() {
   const sliderRef = useRef<Slider>(null)
 
   const [curImageIndex, setCurImageIndex] = useState(0)
-  const [themeIndex, setThemeIndex] = useState(0)
+  const themeIndexRef = useRef(0)
 
   const [imgSrc2, _] = useState(`/${APP.LANDING}/intro/home-dark.webp`)
   const s = useSalon()
@@ -64,31 +64,31 @@ export default function ImageSlider() {
     ? `/${APP.LANDING}/intro/home.webp`
     : `/${APP.LANDING}/intro/home-dark.webp`
 
-  useEffect(() => {
+  const applyTheme = (themeIndex: number) => {
     switch (themeIndex) {
       case 1: {
         changePatternWallpaper('newspaper')
-        break
+        return
       }
 
       case 2: {
         changePatternWallpaper('cartoon')
-        break
+        return
       }
 
       case 3: {
         changePatternWallpaper('idian')
-        break
+        return
       }
 
       case 4: {
         changePatternWallpaper('country1')
-        break
+        return
       }
 
       case 5: {
         changePatternWallpaper('mac')
-        break
+        return
       }
 
       default: {
@@ -96,7 +96,7 @@ export default function ImageSlider() {
         return
       }
     }
-  }, [themeIndex, changeWallpaper, changePatternWallpaper])
+  }
 
   return (
     <div
@@ -180,11 +180,11 @@ export default function ImageSlider() {
           type='button'
           className={s.themeSwitch}
           onClick={() => {
-            if (themeIndex >= MAX_THEMES_COUNT) {
-              setThemeIndex(0)
-              return
-            }
-            setThemeIndex(themeIndex + 1)
+            const nextThemeIndex =
+              themeIndexRef.current >= MAX_THEMES_COUNT ? 0 : themeIndexRef.current + 1
+
+            themeIndexRef.current = nextThemeIndex
+            applyTheme(nextThemeIndex)
           }}
         >
           <ThemeRulerSVG className={s.themeIcon} />

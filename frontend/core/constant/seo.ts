@@ -1,6 +1,6 @@
 import type { TDsbFieldKey } from '~/unit/DashboardThread/spec'
 
-export const SEO_OG_KEYS = [
+const SEO_OG_KEYS = [
   'ogSiteName',
   'ogTitle',
   'ogDescription',
@@ -11,7 +11,7 @@ export const SEO_OG_KEYS = [
   // 'ogPublisher',
 ] as const
 
-export const SEO_TW_KEYS = [
+const SEO_TW_KEYS = [
   'twTitle',
   'twDescription',
   'twUrl',

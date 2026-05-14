@@ -36,7 +36,7 @@ export default function SetupExtra() {
           value={homepage}
           placeholder='https://'
           onChange={(e) => inputOnChange(e, 'homepage')}
-          autoFocus
+          focusOnMount
         />
         <div className='mb-9' />
 

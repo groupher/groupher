@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
 
 import useHover from '~/hooks/useHover'
 import ArrowSVG from '~/icons/ArrowUpRight'
@@ -18,17 +18,17 @@ import useSalon, { cn } from '../salon/classic_layout/community_brief'
 export default function CommunityBrief() {
   const s = useSalon()
 
-  const [disableTippyJump, setDisableTippyJump] = useState(false)
+  const disableTippyJumpRef = useRef(false)
   const { slug } = useCommunity()
   const dsb$ = useDashboard()
 
   const [ref, isHovering] = useHover<HTMLDivElement>()
 
   useEffect(() => {
-    if (isHovering && disableTippyJump !== true) {
-      setDisableTippyJump(true)
+    if (isHovering && !disableTippyJumpRef.current) {
+      disableTippyJumpRef.current = true
     }
-  }, [isHovering, disableTippyJump])
+  }, [isHovering])
 
   return (
     <Tooltip
@@ -76,7 +76,9 @@ export default function CommunityBrief() {
       hideOnClick={false}
       offset={[-3, -48]}
       trigger='click'
-      onHide={() => setDisableTippyJump(false)}
+      onHide={() => {
+        disableTippyJumpRef.current = false
+      }}
       noPadding
     >
       <div className={s.wrapper} ref={ref}>

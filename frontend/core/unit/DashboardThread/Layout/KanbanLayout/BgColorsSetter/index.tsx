@@ -27,6 +27,8 @@ const BOARD_ORDER = [
   KANBAN_BOARD.REJECTED,
 ] as const
 
+const BOARD_INDEX = new Map<string, number>(BOARD_ORDER.map((board, index) => [board, index]))
+
 const BOARD_COLOR_KEY = {
   [KANBAN_BOARD.BACKLOG]: 'backlogBall',
   [KANBAN_BOARD.TODO]: 'todoBall',
@@ -56,13 +58,13 @@ export default function BgColorsSetter() {
       : [KANBAN_BOARD.TODO, KANBAN_BOARD.WIP, KANBAN_BOARD.DONE]
   const activeBoardConfigs = activeBoards.map((board) => ({
     board,
-    index: BOARD_ORDER.indexOf(board),
-    color: colors[BOARD_ORDER.indexOf(board)],
+    index: BOARD_INDEX.get(board) ?? -1,
+    color: colors[BOARD_INDEX.get(board) ?? -1],
   }))
 
   const patchBoardColor = (board: string, color: TColorName) => {
-    const index = BOARD_ORDER.indexOf(board as (typeof BOARD_ORDER)[number])
-    if (index < 0) return
+    const index = BOARD_INDEX.get(board)
+    if (index == null) return
 
     const nextColors = [...colors]
     nextColors[index] = color
@@ -73,7 +75,8 @@ export default function BgColorsSetter() {
     const nextColors = [...colors]
 
     for (const board of activeBoards) {
-      const index = BOARD_ORDER.indexOf(board)
+      const index = BOARD_INDEX.get(board)
+      if (index == null) continue
       nextColors[index] = INIT_KANBAN_COLORS[index]
     }
 
@@ -85,7 +88,8 @@ export default function BgColorsSetter() {
     const randomColors = randomBgNames(activeBoards.length, [COLOR.CYAN])
 
     for (const [idx, board] of activeBoards.entries()) {
-      const index = BOARD_ORDER.indexOf(board)
+      const index = BOARD_INDEX.get(board)
+      if (index == null) continue
       nextColors[index] = randomColors[idx]
     }
 

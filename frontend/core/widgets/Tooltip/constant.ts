@@ -4,5 +4,3 @@ export const FOOTER_BEHAVIOR = {
   DELETE_CONFIRM: 'delete-confirm',
   ADD: 'add',
 }
-
-export const holder = 1

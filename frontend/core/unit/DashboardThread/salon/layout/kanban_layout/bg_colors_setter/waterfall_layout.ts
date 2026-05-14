@@ -4,7 +4,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 import useBase from '../..'
 import useKanban from '../../../../logic/useKanban'
 
-export { cn, cnMerge } from '~/css'
+export { cnMerge } from '~/css'
 
 export default function useSalon() {
   const { cn, cnMerge, shadow, rainbow, rainbowSoft } = useTwBelt()

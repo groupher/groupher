@@ -27,12 +27,14 @@ type TProps = {
   excepts?: TColorName[]
 }
 
+const DEFAULT_EXCEPTS: TColorName[] = []
+
 const BuildInColors: FC<TProps> = ({
   activeColor,
   stacked = false,
   onChange = console.log,
   onCollapse = console.log,
-  excepts = [],
+  excepts = DEFAULT_EXCEPTS,
 }) => {
   const DISPLAY_COLOR = stacked ? STACKED_COLOR : COLOR
   const colorKeys = (

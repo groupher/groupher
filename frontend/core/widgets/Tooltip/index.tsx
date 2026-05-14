@@ -24,7 +24,7 @@ import useSalon, { cnMerge } from './salon'
  * Current tooltip theme.
  * For now it's hard-coded.
  */
-export type TProps = {
+type TProps = {
   children: ReactNode
   content: string | ReactNode
   maxWidth?: number | string

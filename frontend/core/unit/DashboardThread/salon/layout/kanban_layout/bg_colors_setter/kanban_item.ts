@@ -2,7 +2,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 import useBase from '../..'
 
-export { cn, cnMerge } from '~/css'
+export { cnMerge } from '~/css'
 
 export default function useSalon() {
   const { cn, cnMerge, bg, fill, avatar } = useTwBelt()

@@ -21,6 +21,3 @@ export const GRAPHQL_ENDPOINT =
     return 'http://localhost:4001/graphiql'
   })()
 export const SITE_URL = readPublicEnv('NEXT_PUBLIC_SITE_URL', 'https://groupher.com')
-export const SITE_NAME = 'Groupher'
-export const SITE_SLOGAN =
-  '让你的产品听见用户的声音。互动讨论、看板、更新日志、帮助文档多合一，收集整理用户用户反馈，助你打造更好的产品。'

@@ -72,12 +72,17 @@ export default function useAdmins(): TRet {
 
       const pendingLogins = new Set(validUsers.map((user) => user.login))
       const remoteModerators = data.addModerators.moderators ?? []
-      const nextModerators = remoteModerators
-        .filter((moderator) => moderator.user?.login)
-        .map((moderator) => ({
-          ...moderator,
-          pending: pendingLogins.has(moderator.user.login),
-        }))
+      const nextModerators = remoteModerators.flatMap((moderator) => {
+        const login = moderator.user?.login
+        if (!login) return []
+
+        return [
+          {
+            ...moderator,
+            pending: pendingLogins.has(login),
+          },
+        ]
+      })
 
       const fallbackModerators = [
         ...originalModerators,

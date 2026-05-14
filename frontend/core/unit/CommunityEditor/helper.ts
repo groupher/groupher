@@ -37,5 +37,3 @@ export const tada = () => {
   setTimeout(shoot, 0)
   setTimeout(shoot, 100)
 }
-
-export const holder = 1

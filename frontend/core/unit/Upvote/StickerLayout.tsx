@@ -23,21 +23,23 @@ type TProps = {
   avatarList: TUser[]
 }
 
+const DEFAULT_AVATAR_LIST: TUser[] = []
+
 const Upvote: FC<TProps> = ({
   testid = 'upvote',
   count = 0,
   viewerHasUpvoted = false,
   onAction = console.log,
-  avatarList = [],
+  avatarList = DEFAULT_AVATAR_LIST,
 }) => {
   const s = useSalon({ viewerHasUpvoted })
 
-  const { handleClick } = useUpvote({ viewerHasUpvoted, onAction })
+  const { handleUpvote } = useUpvote({ viewerHasUpvoted, onAction })
   const noOne = count === 0
 
   return (
     <div className={s.wrapper} data-testid={testid}>
-      <button type='button' className={s.button} onClick={handleClick}>
+      <button type='button' className={s.button} onClick={handleUpvote}>
         <UpvoteBtn type={UPVOTE_LAYOUT.COMMENT} viewerHasUpvoted={viewerHasUpvoted} count={count} />
         <AnimatedCount
           count={count}

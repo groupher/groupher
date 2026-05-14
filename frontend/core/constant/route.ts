@@ -1,6 +1,6 @@
 import type { TDsbTabs } from '~/hooks/useDsbLayoutTabs'
 
-export const NON_COMMUNITY_ROUTE = {
+const NON_COMMUNITY_ROUTE = {
   APPLY_COMMUNITY: '/apply/community',
 }
 
@@ -94,7 +94,7 @@ export const DSB_THIRD_PART_ROUTE = {
   CONTENT_SYNC: 'content-sync',
 } as const
 
-export const DSB_WIDGET_ROUTE = {
+const DSB_WIDGET_ROUTE = {
   DRAWER: 'drawer',
   MODAL: 'modal',
   POPUP: 'popup',

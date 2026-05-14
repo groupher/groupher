@@ -30,7 +30,7 @@ type TProps = {
 const LoggedInAccount: FC<TProps> = ({ user }) => {
   const s = useSalon()
   const { t } = useTrans()
-  const router = useRouter()
+  const { refresh } = useRouter()
 
   const { avatar, nickname } = user
 
@@ -69,7 +69,7 @@ const LoggedInAccount: FC<TProps> = ({ user }) => {
           <button
             type='button'
             className={cn(s.menuBar, s.warningActive)}
-            onClick={() => signOut(() => router.refresh())}
+            onClick={() => signOut(() => refresh())}
           >
             <span className={s.menuTitle}>{t('account.menu.logout')}</span>
             <LogoutSVG className={s.logoutIcon} />

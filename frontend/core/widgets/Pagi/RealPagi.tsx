@@ -25,9 +25,14 @@ const RealPagi: FC<TProps> = ({
   return (
     <div className={s.wrapper}>
       <div className={s.inner}>
-        <div className={s.arrowBlock} onClick={() => !leftDisabled && onChange(pageNumber - 1)}>
+        <button
+          type='button'
+          className={s.arrowBlock}
+          disabled={leftDisabled}
+          onClick={() => onChange(pageNumber - 1)}
+        >
           <ArrowSVG className={cn(s.arrowIcon, pageNumber === 1 && s.arrowDisabled)} />
-        </div>
+        </button>
 
         <div className={s.main}>
           <input
@@ -47,9 +52,14 @@ const RealPagi: FC<TProps> = ({
           <div className={s.slash}>/</div>
           <div className={s.total}>{totalPages}</div>
         </div>
-        <div className={s.arrowBlock} onClick={() => !rightDisabled && onChange(pageNumber + 1)}>
+        <button
+          type='button'
+          className={s.arrowBlock}
+          disabled={rightDisabled}
+          onClick={() => onChange(pageNumber + 1)}
+        >
           <ArrowSVG className={cn(s.arrowIcon, 'rotate-180', rightDisabled && s.arrowDisabled)} />
-        </div>
+        </button>
       </div>
     </div>
   )

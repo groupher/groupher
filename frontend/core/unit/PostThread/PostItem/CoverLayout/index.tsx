@@ -1,4 +1,4 @@
-import { type FC, useEffect, useState } from 'react'
+import { type FC, useState } from 'react'
 
 import { THREAD_PATH } from '~/const/thread'
 import usePreviewItemActive from '~/hooks/usePreviewItemActive'
@@ -20,11 +20,7 @@ const DigestView: FC<TProps> = ({ article }) => {
   const isActive = usePreviewItemActive(article.innerId, THREAD_PATH.POST)
   const s = useSalon({ active: isActive })
 
-  const [coverImg, setCoverImg] = useState('')
-
-  useEffect(() => {
-    setCoverImg(mockImage())
-  }, [])
+  const [coverImg] = useState(() => mockImage())
 
   return (
     <section className={s.wrapper}>

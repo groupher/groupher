@@ -13,7 +13,7 @@ type TProps = {
   active: boolean
 }
 
-export const LocalIcon = lazy(() => import('./LocalIcon'))
+const LocalIcon = lazy(() => import('./LocalIcon'))
 
 const TabIcon: FC<TProps> = ({ item, clickableRef, active }) => {
   const s = useSalon()
@@ -25,7 +25,7 @@ const TabIcon: FC<TProps> = ({ item, clickableRef, active }) => {
     </Suspense>
   )
 
-  const handleClick = useCallback(
+  const activateParentTab = useCallback(
     (e) => {
       e.stopPropagation()
       clickableRef.current.click()
@@ -34,9 +34,9 @@ const TabIcon: FC<TProps> = ({ item, clickableRef, active }) => {
   )
 
   return (
-    <div className={s.wrapper} onClick={handleClick}>
+    <button type='button' className={s.wrapper} onClick={activateParentTab}>
       {IconCmp}
-    </div>
+    </button>
   )
 }
 

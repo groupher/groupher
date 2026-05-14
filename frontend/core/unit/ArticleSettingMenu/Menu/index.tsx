@@ -59,19 +59,27 @@ const Menu: FC<TProps> = ({ onSubMenuToggle, onClose }) => {
     <div ref={ref} className={s.wrapper}>
       {!subMenuActive ? (
         <>
-          <div className={s.menuItem} onClick={() => openSubMenu(SUB_MENU_TYPE.EDIT)}>
+          <button
+            type='button'
+            className={s.menuItem}
+            onClick={() => openSubMenu(SUB_MENU_TYPE.EDIT)}
+          >
             <EditSVG className={s.icon} />
             <div className={s.menuTitle}>修改标题</div>
             <div className='grow' />
             <ArrowSVG className={cn(s.icon, 'rotate-180')} />
-          </div>
+          </button>
 
-          <div className={s.menuItem} onClick={() => openSubMenu(SUB_MENU_TYPE.SLUG)}>
+          <button
+            type='button'
+            className={s.menuItem}
+            onClick={() => openSubMenu(SUB_MENU_TYPE.SLUG)}
+          >
             <SlugSVG className={s.icon} />
             <div className={s.menuTitle}>设置路径</div>
             <div className='grow' />
             <ArrowSVG className={cn(s.icon, 'rotate-180')} />
-          </div>
+          </button>
           <div className={s.divider} />
           <CatItem onClick={() => openSubMenu(SUB_MENU_TYPE.CATEGORY)} />
           <StatusItem onClick={() => openSubMenu(SUB_MENU_TYPE.STATUS)} />
@@ -92,12 +100,16 @@ const Menu: FC<TProps> = ({ onSubMenuToggle, onClose }) => {
             <ArchivedSVG className={s.icon} />
             <div className={s.menuTitle}>归档</div>
           </div>
-          <div className={s.menuItem} onClick={() => openSubMenu(SUB_MENU_TYPE.MIRROR)}>
+          <button
+            type='button'
+            className={s.menuItem}
+            onClick={() => openSubMenu(SUB_MENU_TYPE.MIRROR)}
+          >
             <ArticleMirror className={s.icon} />
             <div className={s.menuTitle}>镜像:Groupher</div>
             <div className='grow' />
             <ArrowSVG className={cn(s.icon, 'rotate-180')} />
-          </div>
+          </button>
           <div className={cn(s.menuItem, s.menuItemDanger)}>
             <DeleteSVG className={s.icon} />
             删除

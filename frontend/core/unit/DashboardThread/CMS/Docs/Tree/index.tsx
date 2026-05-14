@@ -5,6 +5,7 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import EditSVG from '~/icons/EditPen'
 import GrabDotsSVG from '~/icons/GrabDots'
 import DeleteSVG from '~/icons/Trash'
+import { createKeyboardClick } from '~/lib/a11y'
 import type { TPagedArticles } from '~/spec'
 
 import useSalon, { cn } from '../../../salon/cms/docs/tree'
@@ -29,16 +30,7 @@ const TreeView: FC<TProps> = ({ pagedDocs }) => {
   }, [])
 
   return (
-    <div
-      className={s.wrapper}
-      onClick={() => {
-        // treeRef.current.createLeaf()
-        // treeRef.current.createInternal()
-        // console.log('## ## tree: ', treeRef.current)
-        // console.log('## ## get Data: ', treeRef.current)
-        // treeRef.current.unselectAll()
-      }}
-    >
+    <div className={s.wrapper}>
       <Tree
         ref={treeRef}
         // data={treeData}
@@ -80,7 +72,12 @@ function Node({ node, style, dragHandle }: NodeRendererProps<TTreeItem>) {
       className={cn(s.folderWrapper, hasChild && 'bold-sm')}
       ref={dragHandle}
       style={style}
+      role='button'
+      tabIndex={0}
       onClick={() => node.isInternal && node.toggle()}
+      onKeyDown={createKeyboardClick(() => {
+        if (node.isInternal) node.toggle()
+      })}
     >
       <GrabDotsSVG className={s.dragIcon} />
       <div

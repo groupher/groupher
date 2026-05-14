@@ -44,10 +44,15 @@ const safeParsePassport = (passport: string): TPassportJson => {
 }
 
 const ruleKeys = (rules: Record<string, boolean>): string[] => Object.keys(rules)
-const enabledRuleKeys = (rules: Record<string, boolean>): string[] =>
-  Object.entries(rules)
-    .filter(([, enabled]) => enabled)
-    .map(([rule]) => rule)
+const enabledRuleKeys = (rules: Record<string, boolean>): string[] => {
+  const keys: string[] = []
+
+  for (const [rule, enabled] of Object.entries(rules)) {
+    if (enabled) keys.push(rule)
+  }
+
+  return keys
+}
 
 const ruleMapFrom = (rules: unknown): Record<string, boolean> =>
   typeof rules === 'object' && rules !== null ? (rules as Record<string, boolean>) : {}
@@ -290,9 +295,7 @@ export default function useLogic(): TRet {
     return selectedGlobalRules.includes('god')
   }, [selectedGlobalRules])
 
-  const isReadonly = useMemo(() => {
-    return !isCurUserModeratorRoot
-  }, [isCurUserModeratorRoot])
+  const isReadonly = !isCurUserModeratorRoot
 
   return {
     selectedGlobalRules,

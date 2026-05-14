@@ -17,7 +17,7 @@ export const COLOR = {
   CUSTOM: 'CUSTOM',
 } as const
 
-export const DEFAULT_CUSTOM_COLOR = {
+const DEFAULT_CUSTOM_COLOR = {
   [THEME.LIGHT]: '#333333',
   [THEME.DARK]: '#ffffff',
 } as const

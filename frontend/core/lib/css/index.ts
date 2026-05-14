@@ -12,4 +12,4 @@ export const cnMerge = (...inputs: ClassValue[]) => twMerge(clsx(inputs))
 
 export const cn = (...inputs: ClassValue[]) => clsx(inputs)
 
-export { getCSSVar, setGlobalCSSVar } from './helper'
+export { getCSSVar } from './helper'

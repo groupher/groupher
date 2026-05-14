@@ -1,4 +1,4 @@
-import { type FC, useCallback, useEffect, useRef, useState } from 'react'
+import { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { isString } from '~/validator'
 
@@ -23,15 +23,14 @@ const Tabs: FC<TViewProps> = ({
   ...spacing
 }) => {
   const s = useSalon({ slipBarPos, topSpace, bottomSpace, ...spacing })
-  const [activeIndex, setActiveIndex] = useState(0)
   const tabsRef = useRef<HTMLDivElement>(null)
   const [sliderStyle, setSliderStyle] = useState({})
-
-  useEffect(() => {
+  const activeIndex = useMemo(() => {
     const index = items.findIndex(
       (item) => (isString(item) ? item : item.slug || item.title) === activeKey,
     )
-    setActiveIndex(index !== -1 ? index : 0)
+
+    return index !== -1 ? index : 0
   }, [activeKey, items])
 
   useEffect(() => {
@@ -49,7 +48,6 @@ const Tabs: FC<TViewProps> = ({
 
   const handleItemClick = useCallback(
     (item: TTabItem, index: number) => {
-      setActiveIndex(index)
       onChange(isString(item) ? item : item.slug || item.title || '', item, index)
     },
     [onChange],

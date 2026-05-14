@@ -14,5 +14,3 @@ export const pagedComments = `
     }
   }
 `
-
-export const holder = 1

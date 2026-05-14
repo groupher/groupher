@@ -8,10 +8,6 @@ import type { TStore as TCommentsStore } from '~/stores/comments/spec'
 
 import { API_MODE } from '../constant'
 import type { TEditState } from '../spec'
-import useActions, { type TActions } from './useActions'
-import useDerived, { type TRet as TDrived } from './useDerived'
-
-type TRet = TCommentsStore & TActions & TDrived
 
 const useCommentsStore = () => {
   const commentsStore = useContext(CommentsStoreContext) as TCommentsStore | null
@@ -103,25 +99,4 @@ export const useCommentsHeadState = () => {
       isReady: comments.wordsCountReady,
     },
   }
-}
-
-export default function useLogic(): TRet {
-  const commentsStore = useCommentsStore()
-  const comments = useSnapshot(commentsStore)
-  const actions = useActions()
-  const derived = useDerived()
-
-  return {
-    ...comments,
-    commit: commentsStore.commit,
-    reset: commentsStore.reset,
-    ...actions,
-    ...derived,
-    replyToComment: comments.replyToComment
-      ? ({
-          ...comments.replyToComment,
-          replies: [...(comments.replyToComment.replies ?? [])],
-        } as unknown as TEditState['replyToComment'])
-      : null,
-  } as unknown as TRet
 }

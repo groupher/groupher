@@ -3,6 +3,7 @@ import type { FC } from 'react'
 
 import ArchSVG from '~/icons/Arch'
 import EmptySVG from '~/icons/Empty'
+import { createKeyboardClick } from '~/lib/a11y'
 import Radio from '~/widgets/Switcher/Radio'
 
 import { IMAGE_BORDER_RADIUS, IMAGE_SHADOW, LINEAR_BORDER, SETTING_LEVEL } from '../../constant'
@@ -42,7 +43,12 @@ const ArchBlock: FC<TProps> = ({ borderRadiusLevel, linearBorderPos, hasGlassBor
                         s.optionItem,
                         borderRadiusLevel === SETTING_LEVEL[level] && s.optionItemActive,
                       )}
+                      role='button'
+                      tabIndex={0}
                       onClick={() => borderRadiusOnChange(SETTING_LEVEL[level])}
+                      onKeyDown={createKeyboardClick(() =>
+                        borderRadiusOnChange(SETTING_LEVEL[level]),
+                      )}
                     >
                       <EmptySVG className={s.forbidIcon} />
                     </div>
@@ -62,7 +68,12 @@ const ArchBlock: FC<TProps> = ({ borderRadiusLevel, linearBorderPos, hasGlassBor
                       boxShadow: IMAGE_SHADOW[level],
                       borderRadius: IMAGE_BORDER_RADIUS[level],
                     }}
+                    role='button'
+                    tabIndex={0}
                     onClick={() => borderRadiusOnChange(SETTING_LEVEL[level])}
+                    onKeyDown={createKeyboardClick(() =>
+                      borderRadiusOnChange(SETTING_LEVEL[level]),
+                    )}
                   />
                 )
               })}
@@ -81,7 +92,12 @@ const ArchBlock: FC<TProps> = ({ borderRadiusLevel, linearBorderPos, hasGlassBor
                         s.optionItem,
                         linearBorderPos === LINEAR_BORDER.NONE && s.optionItemActive,
                       )}
+                      role='button'
+                      tabIndex={0}
                       onClick={() => linearBorderPosOnChange(LINEAR_BORDER.NONE)}
+                      onKeyDown={createKeyboardClick(() =>
+                        linearBorderPosOnChange(LINEAR_BORDER.NONE),
+                      )}
                     >
                       <EmptySVG className={s.forbidIcon} />
                     </div>

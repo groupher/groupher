@@ -1,6 +1,8 @@
 import { values } from 'ramda'
 import type { FC } from 'react'
 
+import { createKeyboardClick } from '~/lib/a11y'
+
 import { IMAGE_POS } from '../constant'
 import useSalon, { cn } from '../salon/toolbox/light_block'
 import type { TImagePos } from '../spec'
@@ -24,7 +26,10 @@ const LightBlock: FC<TProps> = ({ pos }) => {
             <div
               key={_pos}
               className={cn(s.pice, pos === _pos && s.piceActive)}
+              role='button'
+              tabIndex={0}
               onClick={() => lightPosOnChange(_pos)}
+              onKeyDown={createKeyboardClick(() => lightPosOnChange(_pos))}
             />
           )
         })}

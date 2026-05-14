@@ -1,4 +1,4 @@
-import { cva, type VariantProps } from 'class-variance-authority'
+import { cva } from 'class-variance-authority'
 
 export const buttonWrapper = cva(
   'group w-max select-none touch-manipulation outline-none bg-none whitespace-nowrap rounded-xl',
@@ -50,5 +50,3 @@ export const buttonInner = cva(
     },
   },
 )
-
-export type ButtonInnerVariants = VariantProps<typeof buttonInner>

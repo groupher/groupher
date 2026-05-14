@@ -10,11 +10,6 @@ export const CHANGE_MODE = {
   UPDATE: 'update',
 } as const
 
-export const COMMUNITY_STATUS = {
-  NORMAL: 0,
-  PENDING: 1,
-}
-
 export const CONDITION_MODE = {
   STATUS: 'status',
   CAT: 'cat',

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from 'react'
 
 import ImageSVG from '~/icons/Image'
+import { createKeyboardClick } from '~/lib/a11y'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
 import useSalon from './salon/article_cover'
@@ -14,7 +15,13 @@ export default function ArticleCover() {
   return (
     <div className={s.wrapper}>
       {!hasCover && (
-        <div className={s.adder} onClick={() => setHasCover(true)}>
+        <div
+          className={s.adder}
+          role='button'
+          tabIndex={0}
+          onClick={() => setHasCover(true)}
+          onKeyDown={createKeyboardClick(() => setHasCover(true))}
+        >
           <ImageSVG className={s.imageIcon} />
           <div className={s.addTitle}>添加封面图</div>
         </div>

@@ -1,4 +1,4 @@
-export { cn, cnMerge } from '~/css'
+export { cnMerge } from '~/css'
 
 export default function useSalon() {
   return {

@@ -7,5 +7,3 @@ export const TYPE = {
   BOT: 'bot' as TType,
   INFO: 'info' as TType,
 }
-
-export const holder = 1

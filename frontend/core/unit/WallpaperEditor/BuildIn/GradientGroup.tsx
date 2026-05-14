@@ -2,6 +2,7 @@ import { keys } from 'ramda'
 
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import PenSVG from '~/icons/EditPen'
+import { createKeyboardClick } from '~/lib/a11y'
 import { parseWallpaper } from '~/wallpaper'
 
 import useSalon, { cn } from '../salon/build_in/gradient_group'
@@ -21,7 +22,10 @@ export default function GradientGroup() {
         <div
           key={name}
           className={cn(s.ballWrapper, name === wallpaper && s.ballActive)}
+          role='button'
+          tabIndex={0}
           onClick={() => changeGradientWallpaper(name)}
+          onKeyDown={createKeyboardClick(() => changeGradientWallpaper(name))}
         >
           <div
             className={s.colorBall}
@@ -31,7 +35,10 @@ export default function GradientGroup() {
       ))}
       <div
         className={cn(s.ballWrapper, wallpaper === WALLPAPER_TYPE.CUSTOM_GRADIENT && s.ballActive)}
+        role='button'
+        tabIndex={0}
         onClick={() => changeCustomGradientWallpaper()}
+        onKeyDown={createKeyboardClick(() => changeCustomGradientWallpaper())}
       >
         <div
           className={cn(s.colorBall, 'align-both')}

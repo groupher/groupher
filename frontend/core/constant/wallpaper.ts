@@ -214,11 +214,6 @@ export const GRADIENT_WALLPAPER = {
   },
 } as Record<string, TWallpaper>
 
-export const WALLPAPER = {
-  ...PATTERN_WALLPAPER,
-  ...GRADIENT_WALLPAPER,
-}
-
 export const GRADIENT_DIRECTION = {
   TOP: 'top',
   TOP_RIGHT: 'top right',

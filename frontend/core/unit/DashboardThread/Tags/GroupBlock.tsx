@@ -66,7 +66,7 @@ const GroupBlock: FC<TProps> = ({
 
   const [folded, setFolded] = useState(false)
   const [renaming, setRenaming] = useState(draft && title.trim().length === 0)
-  const [nextTitle, setNextTitle] = useState(title)
+  const [nextTitleDraft, setNextTitleDraft] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [creatingFirstTag, setCreatingFirstTag] = useState(false)
   const [newTagTitle, setNewTagTitle] = useState('')
@@ -74,13 +74,14 @@ const GroupBlock: FC<TProps> = ({
   const [creatingTag, setCreatingTag] = useState(false)
 
   const sortedTags = useMemo(() => sortByIndex(tags), [tags])
+  const nextTitle = nextTitleDraft ?? title
   const trimmedTitle = nextTitle.trim()
   const isDuplicate = groupNames.some((group) => group !== title && group === trimmedTitle)
   const canSave = trimmedTitle.length > 0 && !isDuplicate && (draft || trimmedTitle !== title)
   const canCreateFirstTag = newTagTitle.trim().length > 0
   const realGroupRenameEnabled = !draft && canRenameRealGroup(activeThread)
   const sortableIds = useMemo(
-    () => sortedTags.map((tag) => tag.id).filter((id): id is string => Boolean(id)),
+    () => sortedTags.flatMap((tag) => (tag.id ? [tag.id] : [])),
     [sortedTags],
   )
   const {
@@ -142,7 +143,7 @@ const GroupBlock: FC<TProps> = ({
     setSaving(true)
     try {
       await renameGroup(groupId, trimmedTitle)
-      setNextTitle(trimmedTitle)
+      setNextTitleDraft(trimmedTitle)
       setRenaming(false)
     } catch (err) {
       toast(String(err), 'error')
@@ -153,7 +154,7 @@ const GroupBlock: FC<TProps> = ({
   }
 
   const cancelRename = (): void => {
-    setNextTitle(title)
+    setNextTitleDraft(null)
 
     if (draft && draftId && tags.length === 0) {
       onRemoveDraft(draftId)
@@ -189,6 +190,7 @@ const GroupBlock: FC<TProps> = ({
       <div className={s.header}>
         {renaming ? (
           <div
+            role='group'
             className={s.editBox}
             onKeyDown={(e) => {
               if (e.key === 'Escape') cancelRename()
@@ -199,8 +201,8 @@ const GroupBlock: FC<TProps> = ({
               width='w-48'
               value={nextTitle}
               placeholder={t('dsb.tags.group.new')}
-              autoFocus
-              onChange={(e) => setNextTitle(e.target.value)}
+              focusOnMount
+              onChange={(e) => setNextTitleDraft(e.target.value)}
               onEnter={commitRename}
             />
             {isDuplicate && <div className={s.error}>{t('dsb.tags.group.error.duplicate')}</div>}
@@ -246,7 +248,10 @@ const GroupBlock: FC<TProps> = ({
                 <button
                   type='button'
                   className={s.editIconButton}
-                  onClick={() => setRenaming(true)}
+                  onClick={() => {
+                    setNextTitleDraft(title)
+                    setRenaming(true)
+                  }}
                 >
                   <EditSVG className={s.icon} />
                 </button>
@@ -306,7 +311,7 @@ const GroupBlock: FC<TProps> = ({
                 width='w-48'
                 value={newTagTitle}
                 placeholder={t('dsb.tags.tag.new')}
-                autoFocus
+                focusOnMount
                 onChange={(e) => setNewTagTitle(e.target.value)}
                 onEnter={() => void commitFirstTag()}
               />

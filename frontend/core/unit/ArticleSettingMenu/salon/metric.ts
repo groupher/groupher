@@ -24,5 +24,3 @@ export const getSubMenuWidth = (subType: TSubMenu): string => {
     }
   }
 }
-
-export const holder = 1

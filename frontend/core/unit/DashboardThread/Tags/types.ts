@@ -17,7 +17,7 @@ export type TGroupListItem = {
   draftId?: string
 }
 
-export type TTagDropPosition = 'before' | 'after'
+type TTagDropPosition = 'before' | 'after'
 
 export type TTagDragTarget = {
   tagId?: string

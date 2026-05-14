@@ -22,14 +22,14 @@ const MenuItem: FC<TProps> = ({ title, icon, onClick = console.log }) => {
   const Icon = MenuIcon[icon]
 
   return (
-    <div className={s.wrapper} onClick={onClick}>
+    <button type='button' className={s.wrapper} onClick={onClick}>
       <Icon className={cn(s.icon, s[icon] || '')} />
       {icon === MENU.DELETE ? (
         <div className={s.deleteTitle}>{title}</div>
       ) : (
         <div className={s.title}>{title}</div>
       )}
-    </div>
+    </button>
   )
 }
 

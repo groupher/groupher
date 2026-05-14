@@ -4,8 +4,8 @@ import type { TLinkChild, TLinkItem, TResolvedHeaderLinkItem } from '~/spec'
 
 import { MORE_TAB } from './constant'
 
-export const getAboutPath = (community: string): string => `/${community}/${ROUTE.ABOUT}`
-export const getDashboardPath = (community: string): string => `/${community}/dashboard`
+const getAboutPath = (community: string): string => `/${community}/${ROUTE.ABOUT}`
+const getDashboardPath = (community: string): string => `/${community}/dashboard`
 
 type TLegacyHeaderLinkItem = {
   id?: string
@@ -43,7 +43,7 @@ const normalizeType = (type?: string): TCustomHeaderLinkType | null => {
     : null
 }
 
-export const normalizeUrl = (url = ''): string => url.replace(/\/$/, '')
+const normalizeUrl = (url = ''): string => url.replace(/\/$/, '')
 
 const isMoreTabFixedUrl = (url: string, community: string): boolean => {
   const normalized = normalizeUrl(url)
@@ -115,7 +115,7 @@ export const normalizeHeaderLinks = (
   return hasLegacyFlatShape ? [] : normalizeStructuredLinks(legacyLinks, community)
 }
 
-export const hasCustomHeaderItems = (links: readonly TLinkItem[]): boolean =>
+const hasCustomHeaderItems = (links: readonly TLinkItem[]): boolean =>
   links.some((item) => {
     if (item.type === DASHBOARD_LINK_TYPE.LINK) return item.title.trim() !== ''
     if (isCustomMoreGroup(item)) return item.links.some((link) => link.title.trim() !== '')

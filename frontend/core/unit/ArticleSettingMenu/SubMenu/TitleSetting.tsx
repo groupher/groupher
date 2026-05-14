@@ -1,4 +1,4 @@
-import { type FC, useEffect, useState } from 'react'
+import { type FC, useState } from 'react'
 import { useMutation } from 'urql'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
@@ -21,10 +21,6 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
   const [title, setTitle] = useState(article.title)
   const { touched, setTouched, resetTouched } = useTouched()
   const [result, updatePost] = useMutation(S.updatePost)
-
-  useEffect(() => {
-    setTitle(article.title)
-  }, [])
 
   const handleUpdate = () => {
     const params = {
@@ -53,7 +49,6 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
     <div className={s.wrapper}>
       <Input
         className={s.input}
-        autoFocus
         value={title}
         onChange={(e) => {
           setTitle(e.target.value)

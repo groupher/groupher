@@ -3,6 +3,7 @@ import type { FC } from 'react'
 
 import EmptySVG from '~/icons/Empty'
 import ShadowSVG from '~/icons/Shadow'
+import { createKeyboardClick } from '~/lib/a11y'
 
 import { IMAGE_SHADOW, SETTING_LEVEL } from '../constant'
 import useSalon, { cn } from '../salon/toolbox/shadow_block'
@@ -33,7 +34,10 @@ const ShadowBlock: FC<TProps> = ({ shadowLevel }) => {
                     s.optionItem,
                     shadowLevel === SETTING_LEVEL[level] && s.optionItemActive,
                   )}
+                  role='button'
+                  tabIndex={0}
                   onClick={() => shadowOnChange(SETTING_LEVEL[level])}
+                  onKeyDown={createKeyboardClick(() => shadowOnChange(SETTING_LEVEL[level]))}
                 >
                   <EmptySVG className={s.forbidIcon} />
                 </div>
@@ -50,7 +54,10 @@ const ShadowBlock: FC<TProps> = ({ shadowLevel }) => {
                 style={{
                   boxShadow: IMAGE_SHADOW[level],
                 }}
+                role='button'
+                tabIndex={0}
                 onClick={() => shadowOnChange(SETTING_LEVEL[level])}
+                onKeyDown={createKeyboardClick(() => shadowOnChange(SETTING_LEVEL[level]))}
               />
             )
           })}

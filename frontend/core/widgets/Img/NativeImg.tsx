@@ -1,4 +1,5 @@
-import { type FC, type ReactNode, useEffect, useRef, useState } from 'react'
+import NextImage from 'next/image'
+import { type FC, type ReactNode, useEffect, useReducer, useRef } from 'react'
 
 import { hasLoadedSrc, markLoadedSrc } from './cache'
 import useSalon, { cnMerge } from './salon'
@@ -13,6 +14,12 @@ type TProps = {
 }
 
 type Status = 'checking' | 'loaded' | 'error'
+type TImageState = {
+  status: Status
+  resolvedSrc: string | null
+}
+
+const imageStateReducer = (_state: TImageState, nextState: TImageState) => nextState
 
 /**
  * normal image like .jpg .jpeg .png etc
@@ -29,46 +36,43 @@ const NativeImg: FC<TProps> = ({
   const s = useSalon()
   const isCachedSrc = hasLoadedSrc(src)
 
-  const [status, setStatus] = useState<Status>(isCachedSrc ? 'loaded' : 'checking')
-  const [resolvedSrc, setResolvedSrc] = useState<string | null>(isCachedSrc ? src : null)
+  const [imageState, dispatchImageState] = useReducer(imageStateReducer, {
+    status: isCachedSrc ? 'loaded' : 'checking',
+    resolvedSrc: isCachedSrc ? src : null,
+  })
   const reqIdRef = useRef(0)
 
   useEffect(() => {
     if (!src) {
-      setStatus('error')
-      setResolvedSrc(null)
+      dispatchImageState({ status: 'error', resolvedSrc: null })
       return
     }
 
     if (hasLoadedSrc(src)) {
-      setStatus('loaded')
-      setResolvedSrc(src)
+      dispatchImageState({ status: 'loaded', resolvedSrc: src })
       return
     }
 
-    setStatus('checking')
-    setResolvedSrc(null)
+    dispatchImageState({ status: 'checking', resolvedSrc: null })
 
     reqIdRef.current += 1
     const reqId = reqIdRef.current
 
     let alive = true
-    const probe = new Image()
+    const probe = new window.Image()
     probe.decoding = 'async'
 
     probe.onload = () => {
       if (!alive) return
       if (reqIdRef.current !== reqId) return
       markLoadedSrc(src)
-      setResolvedSrc(src) // ✅ 只有成功才把 src 放进 DOM <img>
-      setStatus('loaded')
+      dispatchImageState({ status: 'loaded', resolvedSrc: src })
     }
 
     probe.onerror = () => {
       if (!alive) return
       if (reqIdRef.current !== reqId) return
-      setResolvedSrc(null)
-      setStatus('error')
+      dispatchImageState({ status: 'error', resolvedSrc: null })
     }
 
     probe.src = src
@@ -81,6 +85,7 @@ const NativeImg: FC<TProps> = ({
 
   if (!src) return null
 
+  const { status, resolvedSrc } = imageState
   const showFallback = !!fallback && status !== 'loaded'
   const showImg = status === 'loaded' && !!resolvedSrc
 
@@ -95,7 +100,14 @@ const NativeImg: FC<TProps> = ({
       {showFallback && <span className={s.fallbackOverlay}>{fallback}</span>}
 
       {showImg && (
-        <img className={s.img} src={resolvedSrc} alt={alt} draggable={false} decoding='async' />
+        <NextImage
+          className={s.img}
+          src={resolvedSrc}
+          alt={alt}
+          fill
+          unoptimized
+          draggable={false}
+        />
       )}
     </button>
   )

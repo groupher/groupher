@@ -1,3 +1,4 @@
+import NextImage from 'next/image'
 import type { FC } from 'react'
 
 import { assetSrc } from '~/helper'
@@ -13,7 +14,14 @@ const PreviewBlock: FC<TProps> = ({ url }) => {
 
   return (
     <div>
-      <img src={assetSrc(url)} className={s.previewImg} alt='preview img' />
+      <NextImage
+        src={assetSrc(url)}
+        className={s.previewImg}
+        alt='preview img'
+        width={64}
+        height={64}
+        unoptimized
+      />
     </div>
   )
 }

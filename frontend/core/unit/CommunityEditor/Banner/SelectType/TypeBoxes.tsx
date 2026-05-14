@@ -1,4 +1,5 @@
 import CheckSVG from '~/icons/CheckCircle'
+import { createKeyboardClick } from '~/lib/a11y'
 
 import { COMMUNITY_CATS } from '../../constant'
 import useSalon, { cn, Icon } from '../../salon/banner/select_type/type_boxes'
@@ -19,7 +20,10 @@ export default function TypeBoxes() {
           <div
             key={item.type}
             className={cn(s.block, active && s.blockActive)}
+            role='button'
+            tabIndex={0}
             onClick={() => communityTypeOnChange(item.type)}
+            onKeyDown={createKeyboardClick(() => communityTypeOnChange(item.type))}
           >
             <IntroImages type={item.type} current={communityType} />
 

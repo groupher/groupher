@@ -23,7 +23,7 @@ const toValidFilterValue = <TValue extends string>(
 }
 
 export default function useArticlesFilter(): TRes {
-  const router = useRouter()
+  const { push } = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const store = useArticleList()
@@ -78,7 +78,7 @@ export default function useArticlesFilter(): TRes {
     if (nextUrl === currentUrl) return
 
     store.commit({ resState: loadingState })
-    router.push(nextUrl)
+    push(nextUrl)
   }
 
   return {

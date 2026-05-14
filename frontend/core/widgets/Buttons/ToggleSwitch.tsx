@@ -20,13 +20,13 @@ const ToggleSwitch: FC<TProps> = ({
   const s = useSalon({ size, checked })
 
   return (
-    <div className={s.wrapper} onClick={() => onChange(!checked)}>
+    <button type='button' className={s.wrapper} onClick={() => onChange(!checked)}>
       <div className={s.track}>
         <div className={s.indicator}>
           <HookSVG className={s.checkIcon} />
         </div>
       </div>
-    </div>
+    </button>
   )
 }
 

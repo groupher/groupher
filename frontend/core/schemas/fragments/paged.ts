@@ -11,4 +11,3 @@ export const pagedPosts = `
   }
   ${pagi}
 `
-export const holder = 1

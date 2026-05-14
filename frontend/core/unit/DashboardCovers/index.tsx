@@ -11,11 +11,7 @@ import { Portal } from '~/unit/DashboardThread'
 import useSalon, { cn } from './salon'
 
 const joinPath = (...parts: string[]) =>
-  '/' +
-  parts
-    .filter(Boolean)
-    .map((p) => p.replace(/^\/+|\/+$/g, ''))
-    .join('/')
+  '/' + parts.flatMap((p) => (p ? [p.replace(/^\/+|\/+$/g, '')] : [])).join('/')
 
 type Props = {
   config: TDsbCoversConfig

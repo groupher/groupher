@@ -10,7 +10,10 @@ const CopyButton: FC = () => {
   const [done, setDone] = useState(false)
 
   useEffect(() => {
-    if (done) setTimeout(() => setDone(false), 3000)
+    if (!done) return
+
+    const timer = setTimeout(() => setDone(false), 3000)
+    return () => clearTimeout(timer)
   }, [done])
 
   return (

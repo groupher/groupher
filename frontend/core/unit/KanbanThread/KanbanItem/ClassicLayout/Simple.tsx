@@ -5,7 +5,7 @@
  */
 
 import { useRouter } from 'next/navigation'
-import { type FC, memo, useEffect, useState } from 'react'
+import { type FC, memo, useState } from 'react'
 
 import { UPVOTE_LAYOUT } from '~/const/layout'
 import { THREAD_PATH } from '~/const/thread'
@@ -28,14 +28,10 @@ type TProps = {
 const KanbanItem: FC<TProps> = ({ article }) => {
   const isActive = usePreviewItemActive(article.innerId, THREAD_PATH.POST)
   const s = useSalon({ active: isActive })
-  const router = useRouter()
+  const { push } = useRouter()
   const { slug } = useCommunity()
 
-  const [titleIdx, setTitleIdx] = useState(0)
-
-  useEffect(() => {
-    setTitleIdx(getRandomInt(0, 7))
-  }, [])
+  const [titleIdx] = useState(() => getRandomInt(0, 7))
 
   const tags = mockTags(8)
 
@@ -48,9 +44,7 @@ const KanbanItem: FC<TProps> = ({ article }) => {
         type='button'
         className={s.title}
         data-preview-id={String(article.innerId)}
-        onClick={() =>
-          router.push(`/${slug}/${THREAD_PATH.POST}/${article.innerId}`, { scroll: false })
-        }
+        onClick={() => push(`/${slug}/${THREAD_PATH.POST}/${article.innerId}`, { scroll: false })}
       >
         {article.title}
       </button>

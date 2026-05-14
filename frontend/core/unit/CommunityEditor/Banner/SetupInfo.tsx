@@ -41,7 +41,7 @@ export default function SetupInfo() {
             value={title}
             placeholder='社区名称'
             onChange={(e) => inputOnChange(e, 'title')}
-            autoFocus
+            focusOnMount
           />
           <div className='mb-2.5' />
           <Input

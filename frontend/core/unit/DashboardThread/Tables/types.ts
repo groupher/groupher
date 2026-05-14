@@ -3,7 +3,7 @@ import type { MutableRefObject, ReactNode } from 'react'
 
 import type { MultiSelectionTableMeta } from '~/hooks/useTanTable'
 
-export type TCmsTableBatchActions = {
+type TCmsTableBatchActions = {
   onCancelAction: () => void
   onConfirmAction?: () => void
   withCategory?: boolean
@@ -12,7 +12,7 @@ export type TCmsTableBatchActions = {
   withTags?: boolean
 }
 
-export type TCmsTableSearch = {
+type TCmsTableSearch = {
   onChangeAction: (value: string) => void
   placeholder?: string
   value: string
@@ -32,9 +32,9 @@ export type TCmsTableToolbarProps = {
   withTags?: boolean
 }
 
-export type TCmsSelectColumnFactory = <TRowData>() => ColumnDef<TRowData, unknown>
+type TCmsSelectColumnFactory = <TRowData>() => ColumnDef<TRowData, unknown>
 
-export type TCmsTableMultiSelect = {
+type TCmsTableMultiSelect = {
   enabled: boolean
   metaRef: MutableRefObject<MultiSelectionTableMeta>
   selectColumn: TCmsSelectColumnFactory

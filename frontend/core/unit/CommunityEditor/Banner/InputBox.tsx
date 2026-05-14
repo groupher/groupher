@@ -23,7 +23,7 @@ const InputBox: FC<TProps> = ({ placeholder = '', value = '', onChange, onBlur =
         value={value}
         placeholder={placeholder}
         onBlur={onBlur}
-        autoFocus
+        focusOnMount
       />
     </div>
   )

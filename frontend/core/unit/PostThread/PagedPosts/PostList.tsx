@@ -11,7 +11,7 @@ import MasonryCards from '~/widgets/MasonryCards'
 import PostItem from '../PostItem'
 import useSalon from './salon/article_list'
 
-export const EmptyThread = lazy(() => import('~/unit/EmptyThread'))
+const EmptyThread = lazy(() => import('~/unit/EmptyThread'))
 
 export default function PostList() {
   const s = useSalon()

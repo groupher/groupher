@@ -2,12 +2,13 @@ import { filter, includes, keys } from 'ramda'
 import { type FC, useEffect, useState } from 'react'
 
 import { COLOR } from '~/const/colors'
+import { createKeyboardClick } from '~/lib/a11y'
 import type { TColorName } from '~/spec'
 import CustomScroller from '~/widgets/CustomScroller'
 import Input from '~/widgets/Input'
 
 import FaIcon from '.'
-import { FA_ICONS } from './icons'
+import { ICONS } from './icons'
 import useSalon, { cn } from './salon/panel'
 import type { TIcon } from './spec'
 
@@ -21,7 +22,7 @@ type TProps = {
 
 const Panel: FC<TProps> = ({ selectColor, selectIcon, onColorSelect, onIconSelect, panelOpen }) => {
   const s = useSalon()
-  const iconKeys = keys(FA_ICONS)
+  const iconKeys = keys(ICONS.fa)
   const colorNames = keys(COLOR)
 
   const [searchKey, setSearchKey] = useState('')
@@ -44,7 +45,10 @@ const Panel: FC<TProps> = ({ selectColor, selectIcon, onColorSelect, onIconSelec
               s.rainbow(color, 'bgSoft'),
               selectColor === color && s.rainbow(color, 'border'),
             )}
+            role='button'
+            tabIndex={0}
             onClick={() => onColorSelect(color)}
+            onKeyDown={createKeyboardClick(() => onColorSelect(color))}
           >
             <div className={cn(s.colorCenter, s.rainbow(color, 'bg'))} />
           </div>
@@ -69,7 +73,10 @@ const Panel: FC<TProps> = ({ selectColor, selectIcon, onColorSelect, onIconSelec
           <div
             className={cn(s.item, selectIcon === name && s.itemActive)}
             key={name}
+            role='button'
+            tabIndex={0}
             onClick={() => onIconSelect(name)}
+            onKeyDown={createKeyboardClick(() => onIconSelect(name))}
           >
             <div className={s.iconBox}>
               <FaIcon icon={name} size={13} color={COLOR.BLACK} />

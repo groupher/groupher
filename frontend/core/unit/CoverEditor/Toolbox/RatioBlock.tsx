@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 
 import RatioSVG from '~/icons/Ratio'
+import { createKeyboardClick } from '~/lib/a11y'
 
 import { IMAGE_RATIO } from '../constant'
 import useSalon, { cn } from '../salon/toolbox/ratio_block'
@@ -25,20 +26,29 @@ const RatioBlock: FC<TProps> = ({ ratio }) => {
         <div className='row-center gap-x-2 px-4 py-3'>
           <div
             className={cn(s.optionItem, ratio === IMAGE_RATIO.SCREEN && s.optionItemActive)}
+            role='button'
+            tabIndex={0}
             onClick={() => ratioOnChange(IMAGE_RATIO.SCREEN)}
+            onKeyDown={createKeyboardClick(() => ratioOnChange(IMAGE_RATIO.SCREEN))}
           >
             16:9
           </div>
 
           <div
             className={cn(s.optionItem, ratio === IMAGE_RATIO.TV && s.optionItemActive)}
+            role='button'
+            tabIndex={0}
             onClick={() => ratioOnChange(IMAGE_RATIO.TV)}
+            onKeyDown={createKeyboardClick(() => ratioOnChange(IMAGE_RATIO.TV))}
           >
             4:3
           </div>
           <div
             className={cn(s.optionItem, ratio === IMAGE_RATIO.SQUARE && s.optionItemActive)}
+            role='button'
+            tabIndex={0}
             onClick={() => ratioOnChange(IMAGE_RATIO.SQUARE)}
+            onKeyDown={createKeyboardClick(() => ratioOnChange(IMAGE_RATIO.SQUARE))}
           >
             1:1
           </div>

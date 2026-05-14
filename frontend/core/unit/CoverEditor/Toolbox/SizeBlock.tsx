@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 
 import ImageSizeSVG from '~/icons/ImageSize'
+import { createKeyboardClick } from '~/lib/a11y'
 
 import { IMAGE_SIZE } from '../constant'
 import useSalon, { cn } from '../salon/toolbox/size_block'
@@ -29,19 +30,28 @@ const SizeBlock: FC<TProps> = ({ size }) => {
               'text-base',
               size === IMAGE_SIZE.LARGE && s.optionItemActive,
             )}
+            role='button'
+            tabIndex={0}
             onClick={() => sizeOnChange(IMAGE_SIZE.LARGE)}
+            onKeyDown={createKeyboardClick(() => sizeOnChange(IMAGE_SIZE.LARGE))}
           >
             大
           </div>
           <div
             className={cn(s.optionItem, size === IMAGE_SIZE.MEDIUM && s.optionItemActive)}
+            role='button'
+            tabIndex={0}
             onClick={() => sizeOnChange(IMAGE_SIZE.MEDIUM)}
+            onKeyDown={createKeyboardClick(() => sizeOnChange(IMAGE_SIZE.MEDIUM))}
           >
             中
           </div>
           <div
             className={cn(s.optionItem, 'text-xs', size === IMAGE_SIZE.SMALL && s.optionItemActive)}
+            role='button'
+            tabIndex={0}
             onClick={() => sizeOnChange(IMAGE_SIZE.SMALL)}
+            onKeyDown={createKeyboardClick(() => sizeOnChange(IMAGE_SIZE.SMALL))}
           >
             小
           </div>

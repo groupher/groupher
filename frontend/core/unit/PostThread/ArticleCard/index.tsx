@@ -13,7 +13,7 @@ import ArticleReadLabel from '../ArticleReadLabel'
 import Footer from './Footer'
 import useSalon from './salon'
 
-export type TProps = {
+type TProps = {
   data: TArticle
 }
 

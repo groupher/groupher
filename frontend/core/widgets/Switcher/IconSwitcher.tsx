@@ -7,6 +7,7 @@
 import { findIndex, propEq } from 'ramda'
 import type { FC } from 'react'
 
+import { createKeyboardClick } from '~/lib/a11y'
 import Tooltip from '~/widgets/Tooltip'
 
 import useSalon from './salon/icon_selector'
@@ -41,7 +42,13 @@ const IconSwitcher: FC<TProps> = ({ items, activeKey, onChange = console.log }) 
               forceZIndex
               noPadding
             >
-              <div className={s.label} onClick={() => onChange(item)}>
+              <div
+                className={s.label}
+                role='button'
+                tabIndex={0}
+                onClick={() => onChange(item)}
+                onKeyDown={createKeyboardClick(() => onChange(item))}
+              >
                 <div>SVG</div>
               </div>
             </Tooltip>

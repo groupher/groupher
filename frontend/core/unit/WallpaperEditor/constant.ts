@@ -12,16 +12,4 @@ export const TAB_OPTIONS = [
     title: '上传壁纸',
     slug: TAB.UPLOAD,
   },
-]
-
-export const QUERY_KEYS = [
-  'wallpaper',
-  'wallpaperType',
-  'direction',
-  'customColorValue',
-  'bgSize',
-  'uploadBgImage',
-  'hasPattern',
-  'hasBlur',
-  'hasShadow',
-]
+] as const

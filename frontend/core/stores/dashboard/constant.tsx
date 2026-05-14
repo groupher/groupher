@@ -37,7 +37,7 @@ export const DEFAULT_OVERVIEW = {
   docsCount: 0,
 }
 
-export const EMPTY_MEDIA_REPORT = {
+const EMPTY_MEDIA_REPORT = {
   index: 0,
   title: '',
   favicon: '',
@@ -46,7 +46,7 @@ export const EMPTY_MEDIA_REPORT = {
   editUrl: '',
 }
 
-export const INIT_KANBAN_COLORS = [COLOR.BLACK, COLOR.YELLOW, COLOR.PURPLE, COLOR.GREEN, COLOR.RED]
+const INIT_KANBAN_COLORS = [COLOR.BLACK, COLOR.YELLOW, COLOR.PURPLE, COLOR.GREEN, COLOR.RED]
 
 export const FIELDS: TDsbFieldMap = {
   // baseInfo

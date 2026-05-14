@@ -1,8 +1,3 @@
-export type TProps = {
-  $radius: number
-  $space: number
-}
-
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cnMerge } from '~/css'

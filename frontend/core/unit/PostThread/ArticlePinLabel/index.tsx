@@ -10,7 +10,7 @@ import PinSVG from '~/icons/Pin'
 
 import useSalon, { cn } from './salon'
 
-export type TProps = {
+type TProps = {
   className?: string
   isPinned?: boolean
 }

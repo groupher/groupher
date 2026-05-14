@@ -19,7 +19,7 @@ const Section: FC<TProps> = ({ item, openedIndexes, toggle }) => {
 
   return (
     <div className={s.wrapper}>
-      <div className={s.header} onClick={() => toggle(item.index)}>
+      <button type='button' className={s.header} onClick={() => toggle(item.index)}>
         <div className={s.title}>{item.title}</div>
         <ArrowSVG
           className={s.arrowIcon}
@@ -27,7 +27,7 @@ const Section: FC<TProps> = ({ item, openedIndexes, toggle }) => {
             transform: isOpened ? 'rotate(90deg)' : 'rotate(270deg)',
           }}
         />
-      </div>
+      </button>
 
       <div className={s.body}>
         <Markdown>{item.body}</Markdown>

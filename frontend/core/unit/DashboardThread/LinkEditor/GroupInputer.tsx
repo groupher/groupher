@@ -25,7 +25,7 @@ const GroupInputer: FC<TGroupInputerProps> = ({ value, onChange, onConfirm, onCa
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={t('dsb.link_editor.group_placeholder')}
-          autoFocus
+          focusOnMount
         />
       </div>
     </SavingBar>

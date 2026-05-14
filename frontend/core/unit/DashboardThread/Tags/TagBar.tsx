@@ -1,4 +1,4 @@
-import { memo, type FC, useEffect, useState } from 'react'
+import { memo, type FC, useState } from 'react'
 
 import type { TColorName, TTag } from '~/spec'
 import ColorSelector from '~/widgets/ColorSelector'
@@ -31,27 +31,29 @@ const TagBar: FC<TProps> = ({
 }) => {
   const { editingTag, editTag, updateTag } = useTags()
   const isEditMode = editingTag?.id === tag.id
-  const [draftTag, setDraftTag] = useState<TTag>(tag)
+  const [draftTag, setDraftTag] = useState<TTag | null>(null)
+  const editingDraft = draftTag ?? tag
   const [saving, setSaving] = useState(false)
   const s = useSalon({ color: editingTag?.color as TColorName, editing: isEditMode })
-  const canSaveInline = !isEditMode || !!draftTag.title?.trim()
+  const canSaveInline = !isEditMode || !!editingDraft.title?.trim()
   const desc = tag.desc?.trim()
 
-  useEffect(() => {
-    if (isEditMode) setDraftTag(editingTag)
-  }, [editingTag, isEditMode])
-
   const cancelEdit = (): void => {
-    setDraftTag(tag)
+    setDraftTag(null)
     editTag('editingTag', null as unknown as TTag)
   }
 
+  const startEdit = (): void => {
+    setDraftTag(tag)
+    editTag('editingTag', tag)
+  }
+
   const saveEdit = async (): Promise<void> => {
-    if (!draftTag.title?.trim()) return
+    if (!editingDraft.title?.trim()) return
 
     setSaving(true)
     try {
-      await updateTag(draftTag)
+      await updateTag(editingDraft)
     } catch {
       // Keep the local draft open so the user can retry without losing input.
     } finally {
@@ -71,8 +73,8 @@ const TagBar: FC<TProps> = ({
       >
         {isEditMode ? (
           <ColorSelector
-            activeColor={draftTag.color}
-            onChange={(color) => setDraftTag({ ...draftTag, color })}
+            activeColor={editingDraft.color}
+            onChange={(color) => setDraftTag((prev) => ({ ...(prev ?? tag), color }))}
             placement='bottom-start'
             offset={[-8, 0]}
           >
@@ -87,9 +89,9 @@ const TagBar: FC<TProps> = ({
           <Input
             className={s.input}
             width='w-48'
-            value={draftTag.title}
-            onChange={(e) => setDraftTag({ ...draftTag, title: e.target.value })}
-            autoFocus
+            value={editingDraft.title}
+            onChange={(e) => setDraftTag((prev) => ({ ...(prev ?? tag), title: e.target.value }))}
+            focusOnMount
           />
         ) : (
           <div className={s.info}>
@@ -116,6 +118,7 @@ const TagBar: FC<TProps> = ({
             isLast={isLast}
             total={total}
             onSetting={onSetting}
+            onEdit={startEdit}
             inGroup={inGroup}
           />
         )}

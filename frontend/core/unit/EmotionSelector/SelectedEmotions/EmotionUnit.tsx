@@ -32,12 +32,16 @@ const EmotionUnit: FC<TProps> = ({ item, onAction }) => {
       interactive={false}
       noPadding
     >
-      <div className={s.wrapper} onClick={() => onAction(name as TEmotionType, hasReacted)}>
+      <button
+        type='button'
+        className={s.wrapper}
+        onClick={() => onAction(name as TEmotionType, hasReacted)}
+      >
         <EmotionIcon name={name} />
         <div className={s.count}>
           <AnimatedCount count={count} size='small' active={hasReacted} />
         </div>
-      </div>
+      </button>
     </Tooltip>
   )
 }

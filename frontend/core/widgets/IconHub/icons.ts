@@ -2,7 +2,7 @@
 // Do not edit by hand.
 
 export const PROVIDERS = ['fa', 'lucide', 'heroicons', 'phosphor'] as const
-export const PICKER_PROVIDERS = ['all', ...PROVIDERS] as const
+const PICKER_PROVIDERS = ['all', ...PROVIDERS] as const
 
 export const ICONS = {
   fa: {
@@ -3961,16 +3961,10 @@ export const ICONS = {
   },
 } as const
 
-export const FA_ICONS = ICONS.fa
-
 export type TIconProvider = (typeof PROVIDERS)[number]
 export type TPickerProvider = (typeof PICKER_PROVIDERS)[number]
-export type TFaIconName = keyof typeof ICONS.fa
-export type TLucideIconName = keyof typeof ICONS.lucide
-export type THeroiconsIconName = keyof typeof ICONS.heroicons
-export type TPhosphorIconName = keyof typeof ICONS.phosphor
+type TFaIconName = keyof typeof ICONS.fa
+type TLucideIconName = keyof typeof ICONS.lucide
+type THeroiconsIconName = keyof typeof ICONS.heroicons
+type TPhosphorIconName = keyof typeof ICONS.phosphor
 export type TIconName = TFaIconName | TLucideIconName | THeroiconsIconName | TPhosphorIconName
-export type TRegularIcons = TFaIconName
-export type TFaIconMeta = (typeof ICONS.fa)[keyof typeof ICONS.fa]
-
-export default ICONS

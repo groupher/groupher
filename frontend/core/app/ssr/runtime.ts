@@ -5,7 +5,6 @@ import { LOCALE } from '~/const/i18n'
 import { TAG_THREADS, THREAD } from '~/const/thread'
 import type { TI18nNamespace } from '~/i18n'
 import { loadLocaleFile } from '~/i18n'
-import { getPagedArticlesParams } from '~/lib/pagedArticlesFilter'
 import { P } from '~/schemas'
 import type {
   TCommunityInfo,
@@ -122,13 +121,6 @@ export const getPagedPosts = async (filter: TPagedArticlesParams): Promise<TPage
   }
 
   return fetchPagedPosts(filter)
-}
-
-export const getPagedPostsFromSearchParams = async (
-  community: string,
-  searchParams?: URLSearchParams | Record<string, string | string[] | undefined> | null,
-): Promise<TPagedPosts | null> => {
-  return getPagedPosts(getPagedArticlesParams(community, searchParams))
 }
 
 export const getPagedChangelogs = async (community: string): Promise<TPagedChangelogs | null> => {

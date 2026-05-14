@@ -25,7 +25,7 @@ const isSearchParamsLike = (
   source: TSearchParamsLike | TSearchParamsObject,
 ): source is TSearchParamsLike => typeof (source as TSearchParamsLike).get === 'function'
 
-export const toURLSearchParams = (
+const toURLSearchParams = (
   source?: TSearchParamsLike | TSearchParamsObject | null,
 ): URLSearchParams => {
   if (!source) return new URLSearchParams()

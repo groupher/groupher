@@ -1,5 +1,7 @@
 import { useState } from 'react'
 
+import { createKeyboardClick } from '~/lib/a11y'
+
 import useSalon, { cn } from '../salon/banner/scale_selector'
 
 const STEP = {
@@ -23,41 +25,77 @@ export default function ScaleSelector() {
           </div>
         </div>
 
-        <div className={s.markDot} onClick={() => setStep(STEP.S)}>
+        <div
+          className={s.markDot}
+          role='button'
+          tabIndex={0}
+          onClick={() => setStep(STEP.S)}
+          onKeyDown={createKeyboardClick(() => setStep(STEP.S))}
+        >
           <div className={s.markInner} />
         </div>
-        <div className={s.markDot} onClick={() => setStep(STEP.X)}>
+        <div
+          className={s.markDot}
+          role='button'
+          tabIndex={0}
+          onClick={() => setStep(STEP.X)}
+          onKeyDown={createKeyboardClick(() => setStep(STEP.X))}
+        >
           <div className={s.markInner} />
         </div>
-        <div className={s.markDot} onClick={() => setStep(STEP.M)}>
+        <div
+          className={s.markDot}
+          role='button'
+          tabIndex={0}
+          onClick={() => setStep(STEP.M)}
+          onKeyDown={createKeyboardClick(() => setStep(STEP.M))}
+        >
           <div className={s.markInner} />
         </div>
-        <div className={s.markDot} onClick={() => setStep(STEP.L)}>
+        <div
+          className={s.markDot}
+          role='button'
+          tabIndex={0}
+          onClick={() => setStep(STEP.L)}
+          onKeyDown={createKeyboardClick(() => setStep(STEP.L))}
+        >
           <div className={s.markInner} />
         </div>
       </div>
       <div className={s.footer}>
         <div
           className={cn(s.noteBtn, '-ml-5', step === STEP.S && s.noteBtnActive)}
+          role='button'
+          tabIndex={0}
           onClick={() => setStep(STEP.S)}
+          onKeyDown={createKeyboardClick(() => setStep(STEP.S))}
         >
           独立开发者
         </div>
         <div
           className={cn(s.noteBtn, '-ml-4', step === STEP.X && s.noteBtnActive)}
+          role='button'
+          tabIndex={0}
           onClick={() => setStep(STEP.X)}
+          onKeyDown={createKeyboardClick(() => setStep(STEP.X))}
         >
           2-20
         </div>
         <div
           className={cn(s.noteBtn, '-ml-1', step === STEP.M && s.noteBtnActive)}
+          role='button'
+          tabIndex={0}
           onClick={() => setStep(STEP.M)}
+          onKeyDown={createKeyboardClick(() => setStep(STEP.M))}
         >
           20-100
         </div>
         <div
           className={cn(s.noteBtn, '-ml-1 mr-0.5', step === STEP.L && s.noteBtnActive)}
+          role='button'
+          tabIndex={0}
           onClick={() => setStep(STEP.L)}
+          onKeyDown={createKeyboardClick(() => setStep(STEP.L))}
         >
           100+
         </div>

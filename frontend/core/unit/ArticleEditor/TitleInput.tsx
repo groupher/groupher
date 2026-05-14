@@ -21,7 +21,7 @@ const TitleInput: FC<TProps> = ({ title, placeholder }) => {
         behavior='textarea'
         onChange={(_) => console.log('## TODO')}
         disableEnter
-        autoFocus
+        focusOnMount
       />
     </div>
   )

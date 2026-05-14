@@ -28,7 +28,7 @@ const SearchPanel: FC<TProps> = ({ testid: _testid = 'search-panel' }) => {
       <CloseSVG onClick={() => closeDrawer()} className={s.closeIcon} />
 
       <div className={s.title}>在帖子中搜索</div>
-      <Input placeholder='搜索内容' autoFocus />
+      <Input placeholder='搜索内容' focusOnMount />
 
       <Suspense fallback={<LavaLampLoading />}>
         <FaqList layout={DOC_FAQ_LAYOUT.SEARCH_HINT} top={8} left={6} />

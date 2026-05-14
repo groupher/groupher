@@ -1,6 +1,6 @@
 import { DSB_ALIAS_ROUTE } from '~/const/route'
 
-export const ALIAS_GROUP = {
+const ALIAS_GROUP = {
   THREAD: DSB_ALIAS_ROUTE.THREAD,
   KANBAN: DSB_ALIAS_ROUTE.KANBAN,
   OTHERS: DSB_ALIAS_ROUTE.OTHERS,

@@ -17,10 +17,12 @@ type TProps = {
   onClick?: (key?: string) => void
 }
 
+const DEFAULT_EXTRA_OPTIONS: TMenuOption[] = []
+
 const MenuButton: FC<TProps> = ({
   children,
   options,
-  extraOptions = [],
+  extraOptions = DEFAULT_EXTRA_OPTIONS,
   offset = [5, 5],
   onClick = console.log,
   placement = 'top-end',

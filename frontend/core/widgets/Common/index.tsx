@@ -5,10 +5,12 @@ type TLoadWatcher = {
 }
 export const LoadWatcher: FC<TLoadWatcher> = ({ onLoad }) => {
   useEffect(() => {
-    if (onLoad) {
-      setTimeout(onLoad)
-    }
-  }, [])
+    if (!onLoad) return
+
+    const timer = setTimeout(onLoad)
+
+    return () => clearTimeout(timer)
+  }, [onLoad])
 
   return null
 }

@@ -1,6 +1,6 @@
 import THEME from '~/const/theme'
 
-export const PAGE_BG_THEME_KEYS = {
+const PAGE_BG_THEME_KEYS = {
   [THEME.LIGHT]: 'light',
   [THEME.DARK]: 'dark',
 } as const

@@ -9,5 +9,3 @@ export const OAUTH_PROVIDERS = [
   'line',
   'linkedin',
 ]
-
-export const holder = 1

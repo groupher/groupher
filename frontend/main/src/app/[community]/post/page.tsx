@@ -7,8 +7,7 @@ import ArticleListStoreProvider from '~/stores/articleList/provider'
 import PostThread from '~/unit/PostThread'
 
 export default async function Page({ params, searchParams }) {
-  const params$ = await params
-  const searchParams$ = await searchParams
+  const [params$, searchParams$] = await Promise.all([params, searchParams])
   const filter = getPagedArticlesParams(params$.community, searchParams$)
 
   if (

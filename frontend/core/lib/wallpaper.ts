@@ -25,8 +25,6 @@ export const parseWallpaper = (
 
   return _parseWallpaper(wallpapers[name], customWallpaper)
 }
-
-export const holder = 1
 /**
  * parse wallpaper both for gradient and picture background
  */

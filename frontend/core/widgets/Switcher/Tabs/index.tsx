@@ -31,5 +31,4 @@ const Tabs: FC<TProps> = (props) => {
   }
 }
 
-export type { TProps, TSlipBarPos, TTabItem, TTabsOnChange, TTabsView } from './spec'
 export default memo(Tabs)

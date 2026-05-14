@@ -4,6 +4,7 @@ import useTrans from '~/hooks/useTrans'
 import CommentSVG from '~/icons/Comment'
 import UserSVG from '~/icons/User'
 import Img from '~/Img'
+import { createKeyboardClick } from '~/lib/a11y'
 import type { TAccount } from '~/spec'
 
 import useSalon from '../salon/editor/header'
@@ -30,7 +31,13 @@ const EditorHeader: FC<TProps> = ({ accountInfo, showEditor }) => {
     )
   }
   return (
-    <div className={s.wrapper} onClick={openEditor}>
+    <div
+      className={s.wrapper}
+      role='button'
+      tabIndex={0}
+      onClick={openEditor}
+      onKeyDown={createKeyboardClick(openEditor)}
+    >
       {accountInfo.avatar ? (
         <Img src={accountInfo.avatar} className={s.avatar} />
       ) : (

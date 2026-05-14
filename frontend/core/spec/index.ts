@@ -25,7 +25,7 @@ import type { TThemeName } from './theme'
 
 export type TContainer = 'body' | 'drawer'
 
-export type TGlowPosition = 'fixed' | 'absolute'
+type TGlowPosition = 'fixed' | 'absolute'
 export type TGlowEffect = {
   glowType: string
   glowPosition?: TGlowPosition

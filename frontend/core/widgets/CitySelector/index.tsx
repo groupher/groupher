@@ -4,8 +4,8 @@
  *
  */
 
-import { find, forEach, includes, isEmpty, reject, without } from 'ramda'
-import { type FC, memo, useCallback, useEffect, useState } from 'react'
+import { find, includes, isEmpty, reject, without } from 'ramda'
+import { type FC, memo, useCallback, useState } from 'react'
 
 import { CITY_OPTION_VALUES, CITY_OPTIONS, HOME_CITY_OPTIONS } from '~/const/city'
 import type { TCityOption, TSpace } from '~/spec'
@@ -18,34 +18,39 @@ type TProps = {
   onChange?: (value: string) => void
 } & TSpace
 
-const CitySelector: FC<TProps> = ({ value = '', onChange = console.log, ...spacing }) => {
+type TCityState = {
+  selected: string[]
+  showMore: boolean
+  extraCities: string
+}
+
+const parseCityState = (value: string): TCityState => {
+  const selected: string[] = []
+  const extraCities: string[] = []
+
+  for (const item of value.split(',')) {
+    if (!includes(item, CITY_OPTION_VALUES)) {
+      extraCities.push(item)
+    } else {
+      selected.push(item)
+    }
+  }
+
+  const validExtraCities = reject(isEmpty, extraCities)
+
+  return {
+    selected,
+    showMore: validExtraCities.length > 0,
+    extraCities: validExtraCities.join(','),
+  }
+}
+
+const CitySelectorContent: FC<TProps> = ({ value = '', onChange = console.log, ...spacing }) => {
   const s = useSalon({ ...spacing })
 
-  const [selected, setSelected] = useState(value.split(','))
-  const [showMore, setShowMore] = useState(false)
-  const [extraCities, setExtraCities] = useState('')
+  const [cityState, setCityState] = useState<TCityState>(() => parseCityState(value))
 
-  useEffect(() => {
-    const splitedValue = value.split(',')
-    const extraCities = []
-    const selectedCities = []
-
-    forEach((item) => {
-      if (!includes(item, CITY_OPTION_VALUES)) {
-        extraCities.push(item)
-      } else {
-        selectedCities.push(item)
-      }
-    }, splitedValue)
-
-    setSelected(selectedCities)
-
-    if (!(isEmpty(extraCities) || reject(isEmpty, extraCities).length === 0)) {
-      setExtraCities(extraCities.join(','))
-      setShowMore(true)
-    }
-  }, [value])
-
+  const { selected, showMore, extraCities } = cityState
   const options = !showMore ? HOME_CITY_OPTIONS : CITY_OPTIONS
 
   const calcCityValue = useCallback((extraCityValue: string, selectedCityValue: string) => {
@@ -62,7 +67,7 @@ const CitySelector: FC<TProps> = ({ value = '', onChange = console.log, ...spaci
       selectedAfter = without([option.value], selected)
     }
 
-    setSelected(selectedAfter)
+    setCityState((prev) => ({ ...prev, selected: selectedAfter }))
 
     const selectedCityValue = reject(isEmpty, selectedAfter).join(',')
     const cityVal = calcCityValue(extraCities, selectedCityValue)
@@ -85,20 +90,25 @@ const CitySelector: FC<TProps> = ({ value = '', onChange = console.log, ...spaci
         const active = includes(option.value, selected)
 
         return (
-          <div
+          <button
+            type='button'
             className={cn(s.box, active && s.boxActive, option.flag && 'px-2.5')}
             key={option.value}
             onClick={() => cityOnChange(option)}
           >
             {option.label}
             {NationFlag && <NationFlag className={cn(s.flag, !active && 'opacity-65')} />}
-          </div>
+          </button>
         )
       })}
       {!showMore && (
-        <div className={s.moreBtn} onClick={() => setShowMore(true)}>
+        <button
+          type='button'
+          className={s.moreBtn}
+          onClick={() => setCityState((prev) => ({ ...prev, showMore: true }))}
+        >
           更多..
-        </div>
+        </button>
       )}
       {showMore && (
         <>
@@ -106,13 +116,17 @@ const CitySelector: FC<TProps> = ({ value = '', onChange = console.log, ...spaci
           <Input
             placeholder='多个城市请用 , 分隔开'
             value={extraCities}
-            onChange={(e) => setExtraCities(e.target.value)}
+            onChange={(e) => setCityState((prev) => ({ ...prev, extraCities: e.target.value }))}
             onBlur={() => extraCityOnBlur()}
           />
         </>
       )}
     </div>
   )
+}
+
+const CitySelector: FC<TProps> = ({ value = '', ...props }) => {
+  return <CitySelectorContent key={value} value={value} {...props} />
 }
 
 export default memo(CitySelector)

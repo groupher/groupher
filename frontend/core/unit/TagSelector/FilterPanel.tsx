@@ -1,6 +1,7 @@
 import { keys } from 'ramda'
 import type { FC } from 'react'
 
+import { createKeyboardClick } from '~/lib/a11y'
 import type { TColorName, TGroupedTags, TTag } from '~/spec'
 import TagNode from '~/widgets/TagNode'
 
@@ -26,7 +27,14 @@ const GroupTags: FC<TGroupTags> = ({ tags, activeTag, onSelect }) => {
         console.log('## active Tag: ', activeTag)
         // const $active = tag.id === activeTag?.id
         return (
-          <div className={s.selectItem} key={tag.id} onClick={() => onSelect(tag)}>
+          <div
+            className={s.selectItem}
+            key={tag.id}
+            role='button'
+            tabIndex={0}
+            onClick={() => onSelect(tag)}
+            onKeyDown={createKeyboardClick(() => onSelect(tag))}
+          >
             <TagNode color={tag.color as TColorName} boldHash />
             <div className={s.title}>{tag.title}</div>
           </div>

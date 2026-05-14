@@ -7,6 +7,7 @@
 import { pickBy } from 'ramda'
 import { type FC, useCallback } from 'react'
 
+import useAutoFocus from '~/hooks/useAutoFocus'
 import Img from '~/Img'
 import { nilOrEmpty } from '~/validator'
 
@@ -24,6 +25,7 @@ type TProps = {
   suffixActive?: boolean
   disabled?: boolean
   autoFocus?: boolean
+  focusOnMount?: boolean
   disableEnter?: boolean
   className?: string
   width?: string
@@ -48,6 +50,7 @@ const Input: FC<TProps> = ({
   suffixActive = false,
   testid = 'input',
   autoFocus = false,
+  focusOnMount = false,
   disableEnter = false,
   className = '',
   width = 'w-full',
@@ -68,6 +71,8 @@ const Input: FC<TProps> = ({
   const handleOnFocus = useCallback((e) => onFocus?.(e), [onFocus])
   const handleOnBlur = useCallback((e) => onBlur?.(e), [onBlur])
   const validProps = pickBy((v) => v !== null, restProps)
+  const shouldFocusOnMount = autoFocus || focusOnMount
+  const inputRef = useAutoFocus<HTMLInputElement>(shouldFocusOnMount)
 
   return behavior === 'default' ? (
     <div className={s.wrapper} data-testid={testid}>
@@ -89,7 +94,7 @@ const Input: FC<TProps> = ({
         onFocus={handleOnFocus}
         onBlur={handleOnBlur}
         spellCheck='false'
-        autoFocus={autoFocus}
+        ref={inputRef}
         // @ts-expect-error
         {...validProps}
       />
@@ -104,7 +109,7 @@ const Input: FC<TProps> = ({
       testid={testid}
       className={className}
       onChange={onChange}
-      autoFocus={autoFocus}
+      focusOnMount={shouldFocusOnMount}
       disableEnter={disableEnter}
       {...restProps}
     />

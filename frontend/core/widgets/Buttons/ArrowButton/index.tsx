@@ -12,7 +12,7 @@ import type { TColorName, TSpace } from '~/spec'
 import useSalon, { cnMerge } from '../salon/arrow_button'
 import Arrow from './Arrow'
 
-export type TProps = {
+type TProps = {
   as?: 'button' | 'span'
   children?: ReactNode
   onClick?: () => void

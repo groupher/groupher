@@ -7,9 +7,11 @@ import useTags from '../logic/useTags'
 import useSalon from '../salon/tags/tag_action'
 import type { TProps as TTagBarProps } from './TagBar'
 
-type TProps = TTagBarProps
+type TProps = TTagBarProps & {
+  onEdit: () => void
+}
 
-const TagAction: FC<TProps> = ({ tag, onSetting }) => {
+const TagAction: FC<TProps> = ({ tag, onSetting, onEdit }) => {
   const s = useSalon()
 
   const { editingTag, editTag } = useTags()
@@ -23,12 +25,7 @@ const TagAction: FC<TProps> = ({ tag, onSetting }) => {
 
   return (
     <div className={s.wrapper}>
-      <button
-        type='button'
-        className={s.editIconBox}
-        onClick={() => editTag('editingTag', tag)}
-        aria-label='Edit tag'
-      >
+      <button type='button' className={s.editIconBox} onClick={onEdit} aria-label='Edit tag'>
         <EditSVG className={s.icon} />
       </button>
       <button type='button' className={s.iconBox} onClick={openSetting} aria-label='Tag settings'>

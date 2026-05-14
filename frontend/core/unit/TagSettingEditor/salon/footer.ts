@@ -1,5 +1,3 @@
-export { cn } from '~/css'
-
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {

@@ -25,5 +25,3 @@ export const mentions = `
     }
   }
 `
-
-export const holder = 1

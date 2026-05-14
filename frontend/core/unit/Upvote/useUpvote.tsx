@@ -9,7 +9,7 @@ type TProps = {
 }
 
 type TRet = {
-  handleClick: () => void
+  handleUpvote: () => void
   startAnimate: boolean
 }
 
@@ -17,7 +17,7 @@ const useUpvote = ({ viewerHasUpvoted, onAction }: TProps): TRet => {
   const { isLogin } = useAccount()
   const [startAnimate, setStartAnimate] = useState(false)
 
-  const handleClick = useCallback(() => {
+  const handleUpvote = useCallback(() => {
     if (!isLogin) return authWarn()
     setStartAnimate(true)
     setTimeout(() => setStartAnimate(false), 500)
@@ -26,7 +26,7 @@ const useUpvote = ({ viewerHasUpvoted, onAction }: TProps): TRet => {
   }, [viewerHasUpvoted, onAction, isLogin])
 
   return {
-    handleClick,
+    handleUpvote,
     startAnimate,
   }
 }

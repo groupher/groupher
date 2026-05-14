@@ -85,7 +85,7 @@ const LinkEditor: FC<TLinkEditorProps> = ({
               onChange={(e) =>
                 setDraft((item) => (item ? { ...item, title: e.target.value } : item))
               }
-              autoFocus
+              focusOnMount
             />
           </div>
 

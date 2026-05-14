@@ -17,7 +17,7 @@ export const DNS_RECORDS: TDnsRecord[] = [
   },
 ]
 
-export type TDomainVerifyStatus = 'verifying' | 'verified' | 'failed'
+type TDomainVerifyStatus = 'verifying' | 'verified' | 'failed'
 
 export type TVerifyingDomainRow = {
   url: string

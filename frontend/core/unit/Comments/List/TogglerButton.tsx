@@ -19,9 +19,9 @@ const TogglerButton: FC<TProps> = ({ text, loading, onClick }) => {
       {loading ? (
         <LavaLampLoading left={18} />
       ) : (
-        <div className={s.text} onClick={onClick}>
+        <button type='button' className={s.text} onClick={onClick}>
           {text}
-        </div>
+        </button>
       )}
     </div>
   )

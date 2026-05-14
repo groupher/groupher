@@ -1,7 +1,9 @@
 'use client'
 
+import CommunityEditor from '~/unit/CommunityEditor'
+
 const ApplyCommunity = () => {
-  return <h1>CommunityEditor</h1>
+  return <CommunityEditor />
 }
 
 export default ApplyCommunity

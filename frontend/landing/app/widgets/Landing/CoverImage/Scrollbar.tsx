@@ -23,9 +23,10 @@ export default function Scrollbar({ totalSlides, currentSlide, slideTo }: TProps
     <div className={wrapperClass}>
       {range(0, totalSlides).map((i) => {
         const active = i === currentSlide
+        const slideKey = `cover-scrollbar-dot-${i}`
 
         return (
-          <div key={i} className={cn(dotClass, active && dotActive)}>
+          <div key={slideKey} className={cn(dotClass, active && dotActive)}>
             {!active && (
               <button
                 type='button'

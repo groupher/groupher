@@ -36,7 +36,9 @@ export default function ArticleViewer({ isFullView = true }: TProps & TViewProps
   const s = useSalon()
   const { article } = useLogic()
   const wrapperRef = useRef<HTMLDivElement | null>(null)
-  const [commentsVisible, setCommentsVisible] = useState(false)
+  const [commentsVisibleForKey, setCommentsVisibleForKey] = useState<string | null>(null)
+  const articleKey = article ? `${article.id ?? ''}:${article.innerId ?? ''}` : ''
+  const commentsVisible = isFullView && commentsVisibleForKey === articleKey
 
   useLayoutEffect(() => {
     if (!article) return
@@ -69,20 +71,15 @@ export default function ArticleViewer({ isFullView = true }: TProps & TViewProps
   }, [article])
 
   useEffect(() => {
-    if (!article || !isFullView) {
-      setCommentsVisible(false)
-      return
-    }
+    if (!article || !isFullView) return
 
     // Comments are the heaviest subtree in preview. Let the article body paint
     // first, then mount comments in a follow-up transition.
-    setCommentsVisible(false)
-
     let innerRaf: number | null = null
     const outerRaf = window.requestAnimationFrame(() => {
       innerRaf = window.requestAnimationFrame(() => {
         startTransition(() => {
-          setCommentsVisible(true)
+          setCommentsVisibleForKey(articleKey)
         })
       })
     })
@@ -93,7 +90,7 @@ export default function ArticleViewer({ isFullView = true }: TProps & TViewProps
         window.cancelAnimationFrame(innerRaf)
       }
     }
-  }, [article?.id, article?.innerId, isFullView, article])
+  }, [articleKey, isFullView, article])
 
   if (!article) return null
 
