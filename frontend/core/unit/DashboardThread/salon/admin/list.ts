@@ -1,5 +1,5 @@
 export default function useSalon() {
   return {
-    wrapper: 'column gap-6 w-full',
+    wrapper: 'column gap-2 w-full',
   }
 }
