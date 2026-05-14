@@ -24,6 +24,7 @@ type TProps = {
   suffixIcon?: string | null
   suffixActive?: boolean
   disabled?: boolean
+  autoFocus?: boolean
   focusOnMount?: boolean
   disableEnter?: boolean
   className?: string
@@ -48,6 +49,7 @@ const Input: FC<TProps> = ({
   suffixIcon = null,
   suffixActive = false,
   testid = 'input',
+  autoFocus = false,
   focusOnMount = false,
   disableEnter = false,
   className = '',
@@ -55,7 +57,6 @@ const Input: FC<TProps> = ({
   ...restProps
 }) => {
   const s = useSalon({ width })
-  const inputRef = useAutoFocus<HTMLInputElement>(focusOnMount)
 
   const handleOnChange = useCallback((e) => onChange?.(e), [onChange])
   const handleOnKeydown = useCallback(
@@ -70,6 +71,8 @@ const Input: FC<TProps> = ({
   const handleOnFocus = useCallback((e) => onFocus?.(e), [onFocus])
   const handleOnBlur = useCallback((e) => onBlur?.(e), [onBlur])
   const validProps = pickBy((v) => v !== null, restProps)
+  const shouldFocusOnMount = autoFocus || focusOnMount
+  const inputRef = useAutoFocus<HTMLInputElement>(shouldFocusOnMount)
 
   return behavior === 'default' ? (
     <div className={s.wrapper} data-testid={testid}>
@@ -90,8 +93,8 @@ const Input: FC<TProps> = ({
         onKeyDown={handleOnKeydown}
         onFocus={handleOnFocus}
         onBlur={handleOnBlur}
-        ref={inputRef}
         spellCheck='false'
+        ref={inputRef}
         // @ts-expect-error
         {...validProps}
       />
@@ -106,7 +109,7 @@ const Input: FC<TProps> = ({
       testid={testid}
       className={className}
       onChange={onChange}
-      focusOnMount={focusOnMount}
+      focusOnMount={shouldFocusOnMount}
       disableEnter={disableEnter}
       {...restProps}
     />

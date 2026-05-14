@@ -14,6 +14,7 @@ export const ASSETS_ENDPOINT = readPublicEnv(
   'https://static.groupher.com',
 )
 export const ICON = readPublicEnv('NEXT_PUBLIC_ICON', 'https://static.groupher.com/icons/static')
+export const ICON_BASE = readPublicEnv('NEXT_PUBLIC_ICON_BASE', 'https://static.groupher.com/icons')
 export const GRAPHQL_ENDPOINT =
   publicGraphQLEndpoint ??
   (() => {

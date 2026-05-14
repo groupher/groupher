@@ -1,0 +1,33 @@
+import { PUBLISH_MODE } from '~/const/mode'
+import SVG from '~/const/svg'
+
+const POST_MENU_OPTIONS = [
+  {
+    key: 'idea',
+    icon: SVG.FEATURE,
+    title: '功能请求',
+  },
+  {
+    key: 'qa',
+    icon: SVG.QUESTION,
+    title: '问题 / 求助',
+  },
+  {
+    key: 'bug',
+    icon: SVG.BUG,
+    title: 'Bug / 吐槽',
+  },
+  {
+    key: 'discussion',
+    icon: SVG.MORE,
+    title: '其它话题',
+  },
+]
+
+export const MORE_MENU = {
+  [PUBLISH_MODE.DEFAULT]: POST_MENU_OPTIONS,
+  [PUBLISH_MODE.SIDEBAR_LAYOUT_HEADER]: POST_MENU_OPTIONS,
+  [PUBLISH_MODE.CHANGELOG]: [],
+}
+
+export const holder = 1

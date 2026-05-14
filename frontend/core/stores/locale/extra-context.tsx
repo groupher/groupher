@@ -1,11 +1,11 @@
 'use client'
 
-import { createContext, use } from 'react'
+import { createContext, useContext } from 'react'
 
 export type TExtraLocaleMessages = Record<string, string>
 
-const ExtraLocaleContext = createContext<TExtraLocaleMessages>({})
+export const ExtraLocaleContext = createContext<TExtraLocaleMessages>({})
 ExtraLocaleContext.displayName = 'ExtraLocale'
 
 // Internal hook: business code should keep using useTrans(), which merges base and extra messages.
-export const useExtraLocaleContext = (): TExtraLocaleMessages => use(ExtraLocaleContext)
+export const useExtraLocaleContext = (): TExtraLocaleMessages => useContext(ExtraLocaleContext)
