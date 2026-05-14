@@ -16,24 +16,12 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
   describe "[cms community moderators]" do
     test "should have infinite passport count of root", ~m(user user2 community)a do
-      role = "root"
       cur_user = user
-      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
-
-      {:ok, moderator} =
-        CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
-
-      assert moderator.passport_item_count == PermissionRegistry.root_passport_item_count()
+      {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user)
 
       new_passport_rules = %{
         "global" => %{},
-        "#{community.slug}" => %{
-          "cms" => %{
-            "post.edit" => true,
-            "post.pin" => true,
-            "post.delete" => true
-          }
-        }
+        "#{community.slug}" => %{"root" => true}
       }
 
       {:ok, _} =
@@ -47,9 +35,8 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
     test "should have passport count of community after add moderator",
          ~m(user user2 community)a do
-      role = "moderator"
       cur_user = user
-      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user)
 
       {:ok, moderator} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
@@ -96,9 +83,8 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
     end
 
     test "can update passport of community moderator", ~m(user user2 community)a do
-      role = "moderator"
       cur_user = user
-      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user)
 
       new_passport_rules = %{
         "global" => %{},
@@ -119,9 +105,8 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
     end
 
     test "can not update passport of other community moderator", ~m(user user2 community)a do
-      role = "moderator"
       cur_user = user
-      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user)
 
       other_community_attrs = mock_attrs(:community)
       {:ok, other_community} = CMS.Communities.create(other_community_attrs, user)
@@ -142,9 +127,8 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
     end
 
     test "can not update multi community passport", ~m(user user2 community)a do
-      role = "moderator"
       cur_user = user
-      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user)
 
       other_community_attrs = mock_attrs(:community)
       {:ok, other_community} = CMS.Communities.create(other_community_attrs, user)
@@ -170,12 +154,11 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
     end
 
     test "can add multi moderators to a community", ~m(user user2 community)a do
-      role = "moderator"
       cur_user = user
       {:ok, user3} = db_insert(:user)
 
       {:ok, updated_community} =
-        CMS.Communities.add_moderators(community, role, [user2, user3], cur_user)
+        CMS.Communities.add_moderators(community, [user2, user3], cur_user)
 
       {:ok, moderators} = CommunityModerator |> ORM.find_all(%{page: 1, size: 10})
 
@@ -193,12 +176,11 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
     test "remove moderator deletes only the community-scoped passport rules",
          ~m(user user2 community)a do
-      role = "moderator"
       cur_user = user
 
       {:ok, other_community} = CMS.Communities.create(mock_attrs(:community), user)
-      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
-      {:ok, _} = CMS.Communities.add_moderator(other_community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(other_community, user2, cur_user)
 
       {:ok, _} = CMS.Communities.remove_moderator(community.slug, user2, cur_user)
       {:ok, passport} = Passport.get_passport(user2)
@@ -207,7 +189,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       assert is_map(get_in(passport, [other_community.slug, "cms"]))
     end
 
-    test "community root passport can manage moderators without root role",
+    test "community root passport can manage moderators",
          ~m(user2 community)a do
       {:ok, user3} = db_insert(:user)
 
@@ -218,7 +200,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
         })
 
       {:ok, updated_community} =
-        CMS.Communities.add_moderator(community, "moderator", user3, cur_user)
+        CMS.Communities.add_moderator(community, user3, cur_user)
 
       assert updated_community.slug == community.slug
 
@@ -228,10 +210,9 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
     test "can add moderator to a community, moderator has default passport",
          ~m(user user2 community)a do
-      role = "moderator"
       cur_user = user
 
-      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user)
 
       {:ok, moderator} = CommunityModerator |> ORM.find_by(user_id: user2.id)
       {:ok, user_passport} = Passport.get_passport(user2)
@@ -252,12 +233,11 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
     test "user can get paged-moderators of a community", ~m(user community)a do
       {:ok, users} = db_insert_multi(:user, 25)
-      role = "moderator"
       cur_user = user
 
       Enum.each(
         users,
-        &CMS.Communities.add_moderator(community, role, %User{id: &1.id}, cur_user)
+        &CMS.Communities.add_moderator(community, %User{id: &1.id}, cur_user)
       )
 
       filter = %{page: 1, size: 10}

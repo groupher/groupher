@@ -56,12 +56,12 @@ defmodule GroupherServerWeb.Schema.Account.Types do
       middleware(M.AchievementProof)
     end
 
-    field(:cms_passport_string, :string) do
+    field(:passport_string, :string) do
       middleware(M.Authorize, :login)
       resolve(&R.Accounts.get_passport_string/3)
     end
 
-    field(:cms_passport, :json) do
+    field(:passport, :json) do
       middleware(M.Authorize, :login)
       resolve(&R.Accounts.get_passport/3)
     end

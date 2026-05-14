@@ -44,9 +44,8 @@ defmodule GroupherServer.Test.CMS.Communities.Read do
     end
 
     test "read moderatorable community should have a flag", ~m(community user user2 user3)a do
-      role = "moderator"
       cur_user = user
-      {:ok, community} = CMS.Communities.add_moderator(community, role, user2, cur_user)
+      {:ok, community} = CMS.Communities.add_moderator(community, user2, cur_user)
 
       {:ok, community} = CMS.Communities.read(community.slug, user2)
       assert community.viewer_is_moderator

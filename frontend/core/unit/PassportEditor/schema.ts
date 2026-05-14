@@ -3,7 +3,7 @@ import { gql } from 'urql'
 const userPassport = gql`
   query ($login: String!) {
     user(login: $login) {
-      cmsPassportString
+      passportString
       social {
         github
         twitter
@@ -26,7 +26,7 @@ const updateModeratorPassport = gql`
     updateModeratorPassport(community: $community, user: $user, rules: $rules) {
       slug
       moderators {
-        role
+        isRoot
         passportItemCount
         user {
           login
@@ -44,7 +44,7 @@ const removeModerator = gql`
     removeModerator(community: $community, user: $user) {
       slug
       moderators {
-        role
+        isRoot
         passportItemCount
         user {
           login

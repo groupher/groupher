@@ -247,10 +247,10 @@ type RootMutationType {
   updateCategory(community: String!, id: ID!, title: String!): Category
 
   "add a moderator for a community"
-  addModerator(community: String!, user: String!, role: String!): Community
+  addModerator(community: String!, user: String!): Community
 
   "add moderators for a community"
-  addModerators(community: String!, users: [String!]!, role: String!): Community
+  addModerators(community: String!, users: [String!]!): Community
 
   "unset a moderator from a community, the user's passport also deleted"
   removeModerator(community: String!, user: String!): Community
@@ -1030,7 +1030,7 @@ type Dsb {
 }
 
 type CommunityModerator {
-  role: String
+  isRoot: Boolean
   passportItemCount: Int
   user: CommonUser
 }
@@ -1917,9 +1917,9 @@ type User {
 
   achievement: Achievement
 
-  cmsPassportString: String
+  passportString: String
 
-  cmsPassport: Json
+  passport: Json
 
   subscribedCommunitiesCount: Int
 

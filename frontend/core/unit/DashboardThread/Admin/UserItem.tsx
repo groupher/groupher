@@ -1,4 +1,3 @@
-import { ADMIN_ROLE } from '~/const/dashboard'
 import { cn } from '~/css'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
@@ -18,18 +17,17 @@ type TProps = {
 const UserItem = ({ item, active = false, readonly = false, onOpen }: TProps) => {
   const s = useSalon()
   const { t } = useTrans()
-  const { user, passportItemCount, role } = item
+  const { user, passportItemCount, isRoot } = item
 
   if (!user?.login) return null
 
-  const permissionsLabel =
-    role === ADMIN_ROLE.ROOT ? (
-      <>{t('dsb.admin.list.all_permissions')}</>
-    ) : (
-      <>
-        {passportItemCount} {t('dsb.admin.list.permissions_unit')}
-      </>
-    )
+  const permissionsLabel = isRoot ? (
+    <>{t('dsb.admin.list.all_permissions')}</>
+  ) : (
+    <>
+      {passportItemCount} {t('dsb.admin.list.permissions_unit')}
+    </>
+  )
 
   return (
     <div className={cn(s.wrapper, active && s.wrapperActive, readonly && s.wrapperReadonly)}>
@@ -38,7 +36,7 @@ const UserItem = ({ item, active = false, readonly = false, onOpen }: TProps) =>
         <div className={s.header}>
           <div className={s.name}>{user.nickname}</div>
           <div className={s.login}>@{user.login}</div>
-          {role === ADMIN_ROLE.ROOT && <div className={s.rootSign}>{ADMIN_ROLE.ROOT}</div>}
+          {isRoot && <div className={s.rootSign}>root</div>}
           {item.pending && <div className={s.pendingSign}>{t('dsb.admin.badge.pending')}</div>}
           <div className='grow' />
           {readonly ? (

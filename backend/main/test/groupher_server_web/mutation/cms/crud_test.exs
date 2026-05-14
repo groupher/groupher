@@ -360,19 +360,17 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     @set_moderator_query """
-    mutation($community: String!, $user: String!, $role: String!){
-      addModerator(community: $community, user: $user, role: $role) {
+    mutation($community: String!, $user: String!){
+      addModerator(community: $community, user: $user) {
         slug
       }
     }
     """
     test "auth user can add moderator to community", ~m(user user2 community)a do
-      role = "moderator"
-
       passport_rules = %{community.slug => %{"moderator.set" => true}}
       rule_conn = simu_conn(:user, user, cms: passport_rules)
 
-      variables = %{user: user2.login, community: community.slug, role: role}
+      variables = %{user: user2.login, community: community.slug}
 
       result = rule_conn |> gq_mutation(@set_moderator_query, variables)
 
@@ -380,11 +378,11 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     @set_moderators_query """
-    mutation($community: String!, $users: [String!]!, $role: String!){
-      addModerators(community: $community, users: $users, role: $role) {
+    mutation($community: String!, $users: [String!]!){
+      addModerators(community: $community, users: $users) {
         slug
         moderators {
-          role
+          isRoot
           user {
             login
           }
@@ -394,12 +392,11 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     """
     test "auth user can add moderators to community", ~m(user user2 community)a do
       {:ok, user3} = db_insert(:user)
-      role = "moderator"
 
       passport_rules = %{community.slug => %{"moderator.set" => true}}
       rule_conn = simu_conn(:user, user, cms: passport_rules)
 
-      variables = %{users: [user2.login, user3.login], community: community.slug, role: role}
+      variables = %{users: [user2.login, user3.login], community: community.slug}
 
       result = rule_conn |> gq_mutation(@set_moderators_query, variables)
 
@@ -410,11 +407,10 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
     test "global god can add moderators to community", ~m(user2 community)a do
       {:ok, user3} = db_insert(:user)
-      role = "moderator"
 
       rule_conn = simu_conn(:user, user2, cms: %{"god" => true})
 
-      variables = %{users: [user3.login], community: community.slug, role: role}
+      variables = %{users: [user3.login], community: community.slug}
 
       result = rule_conn |> gq_mutation(@set_moderators_query, variables)
 
@@ -430,10 +426,8 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     }
     """
     test "auth user can unset moderator AND passport from community", ~m(user community user2)a do
-      role = "moderator"
-
       cur_user = user
-      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user)
 
       assert {:ok, _} =
                CommunityModerator |> ORM.find_by(user_id: user2.id, community_id: community.id)
@@ -456,7 +450,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       updateModeratorPassport(community: $community, user: $user, rules: $rules) {
         id
         moderators {
-          role
+          isRoot
           passportItemCount
           user {
             login
@@ -468,10 +462,9 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     """
     @tag :skip_ci
     test "auth user can update moderator to community", ~m(user user2 community)a do
-      role = "moderator"
       cur_user = user
 
-      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, cur_user)
+      {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user)
 
       passport_rules = %{
         "global" => %{},
@@ -540,9 +533,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
     end
 
     test "unauth user add moderator fails", ~m(user_conn guest_conn user community)a do
-      role = "moderator"
-
-      variables = %{user: user.login, community: community.slug, role: role}
+      variables = %{user: user.login, community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn |> mutation_error?(@set_moderator_query, variables, ecode(:passport))
@@ -663,7 +654,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
         id
         locale
         moderators {
-          role
+          isRoot
           user {
             login
             avatar
@@ -688,7 +679,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert created["pending"] == @community_applying
 
       moderator = created["moderators"] |> Enum.at(0)
-      assert moderator["role"] == "root"
+      assert moderator["isRoot"]
       assert created["locale"] == "it"
     end
 

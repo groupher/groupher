@@ -246,6 +246,14 @@ defmodule Helper.PermissionConfig do
 
   defp put_default_community_rules(rules, _role, _community_slug), do: rules
 
+  def default_root_passport(community_slug) when is_binary(community_slug) do
+    {:ok, put_default_community_rules(%{"global" => %{}}, "root", community_slug)}
+  end
+
+  def default_moderator_passport(community_slug) when is_binary(community_slug) do
+    {:ok, put_default_community_rules(%{"global" => %{}}, "moderator", community_slug)}
+  end
+
   defp default_moderator_community_rules do
     "cms"
     |> grants_for()

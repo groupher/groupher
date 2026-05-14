@@ -61,8 +61,8 @@ defmodule GroupherServer.Test.Query.Account.Basic do
           publishedBlogsCount
         }
         views
-        cmsPassport
-        cmsPassportString
+        passport
+        passportString
         subscribedCommunitiesCount
         followersCount
         followingsCount
@@ -92,7 +92,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       assert results["nickname"] == user.nickname
       assert results["social"]["github"] == nil
       assert results["social"]["douban"] == nil
-      assert results["cmsPassport"] == nil
+      assert results["passport"] == nil
 
       assert results["subscribedCommunitiesCount"] == 0
       assert results["followersCount"] == 0
@@ -130,13 +130,13 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       assert results["views"] == 1
     end
 
-    test "login newbie user can get own empty cms_passport", ~m(user)a do
+    test "login newbie user can get own empty passport", ~m(user)a do
       user_conn = simu_conn(:user, user)
       variables = %{login: user.login}
       results = user_conn |> gq_query(@query, variables)
 
-      assert results["cmsPassport"] == %{"global" => %{}}
-      assert Jason.decode!(results["cmsPassportString"]) == %{"global" => %{}}
+      assert results["passport"] == %{"global" => %{}}
+      assert Jason.decode!(results["passportString"]) == %{"global" => %{}}
     end
 
     @valid_rules %{
@@ -144,24 +144,24 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       "javascript" => %{"cms" => %{"post.delete" => true, "post.edit" => true}}
     }
 
-    test "login user can get own cms_passport and cms_passport_string", ~m(user)a do
+    test "login user can get own passport and passport_string", ~m(user)a do
       user_conn = simu_conn(:user, user)
 
       {:ok, _} = CMS.Communities.stamp_passport(@valid_rules, user)
 
       results = user_conn |> gq_query(@query, %{login: user.login})
 
-      assert Map.equal?(results["cmsPassport"], @valid_rules)
-      assert Map.equal?(Jason.decode!(results["cmsPassportString"]), @valid_rules)
+      assert Map.equal?(results["passport"], @valid_rules)
+      assert Map.equal?(Jason.decode!(results["passportString"]), @valid_rules)
     end
 
-    test "login user can get empty if cms_passport not exist", ~m(user)a do
+    test "login user can get empty if passport not exist", ~m(user)a do
       user_conn = simu_conn(:user, user)
 
       results = user_conn |> gq_query(@query, %{login: user.login})
 
-      assert %{"global" => %{}} == results["cmsPassport"]
-      assert Jason.decode!(results["cmsPassportString"]) == %{"global" => %{}}
+      assert %{"global" => %{}} == results["passport"]
+      assert Jason.decode!(results["passportString"]) == %{"global" => %{}}
     end
 
     @query """

@@ -407,7 +407,7 @@ const updateModerators = gql`
   query community($slug: String!, $incViews: Boolean) {
     community(slug: $slug, incViews: $incViews) {
       moderators {
-        role
+        isRoot
         passportItemCount
         user {
           login
@@ -439,10 +439,10 @@ const searchUsers = gql`
 `
 
 const addModerator = gql`
-  mutation ($community: String!, $user: String!, $role: String!) {
-    addModerator(community: $community, user: $user, role: $role) {
+  mutation ($community: String!, $user: String!) {
+    addModerator(community: $community, user: $user) {
       moderators {
-        role
+        isRoot
         passportItemCount
         user {
           login
@@ -456,10 +456,10 @@ const addModerator = gql`
 `
 
 const addModerators = gql`
-  mutation ($community: String!, $users: [String!]!, $role: String!) {
-    addModerators(community: $community, users: $users, role: $role) {
+  mutation ($community: String!, $users: [String!]!) {
+    addModerators(community: $community, users: $users) {
       moderators {
-        role
+        isRoot
         passportItemCount
         user {
           login

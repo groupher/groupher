@@ -116,7 +116,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
     field :add_moderator, :community do
       arg(:community, non_null(:string))
       arg(:user, non_null(:string))
-      arg(:role, non_null(:string))
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "moderator.set")
@@ -130,7 +129,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
     field :add_moderators, :community do
       arg(:community, non_null(:string))
       arg(:users, non_null(list_of(non_null(:string))))
-      arg(:role, non_null(:string))
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "moderator.set")

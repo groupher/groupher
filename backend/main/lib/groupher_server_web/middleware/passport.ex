@@ -125,11 +125,11 @@ defmodule GroupherServerWeb.Middleware.Passport do
     end
   end
 
-  defp check_scope_permission(_cms_passport, _resolution, %{owner_fallback: true, grant: nil}),
+  defp check_scope_permission(_passport, _resolution, %{owner_fallback: true, grant: nil}),
     do: false
 
-  defp check_scope_permission(_cms_passport, _resolution, %{owner_fallback: true}), do: false
-  defp check_scope_permission(_cms_passport, _resolution, _), do: false
+  defp check_scope_permission(_passport, _resolution, %{owner_fallback: true}), do: false
+  defp check_scope_permission(_passport, _resolution, _), do: false
 
   defp resolve_grant(%{grant: grant}, _resolution) when is_binary(grant), do: {:ok, grant}
 

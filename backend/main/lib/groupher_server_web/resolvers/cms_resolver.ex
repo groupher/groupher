@@ -248,13 +248,13 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
-  def add_moderator(_root, ~m(community user role)a, %{context: %{cur_user: cur_user}}) do
-    CMS.Communities.add_moderator(community, role, user, cur_user)
+  def add_moderator(_root, ~m(community user)a, %{context: %{cur_user: cur_user}}) do
+    CMS.Communities.add_moderator(community, user, cur_user)
   end
 
-  def add_moderators(_root, ~m(community users role)a, %{context: %{cur_user: cur_user}}) do
+  def add_moderators(_root, ~m(community users)a, %{context: %{cur_user: cur_user}}) do
     with {:ok, target_users} <- resolve_users(users) do
-      CMS.Communities.add_moderators(community, role, target_users, cur_user)
+      CMS.Communities.add_moderators(community, target_users, cur_user)
     end
   end
 

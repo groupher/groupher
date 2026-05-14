@@ -1,7 +1,6 @@
 import { find, forEach, reject, uniq } from 'ramda'
 import { useMemo, useState } from 'react'
 
-import { ADMIN_ROLE } from '~/const/dashboard'
 import EVENT from '~/const/event'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { closeDrawer, send } from '~/signal'
@@ -32,19 +31,46 @@ const safeParseRules = (rules: string): Record<string, boolean> => {
   }
 }
 
+type TPassportJson = Record<string, unknown>
+
+const safeParsePassport = (passport: string): TPassportJson => {
+  try {
+    const parsed = JSON.parse(passport)
+    return typeof parsed === 'object' && parsed !== null ? parsed : {}
+  } catch (error) {
+    console.error('## parse passport error: ', error)
+    return {}
+  }
+}
+
 const ruleKeys = (rules: Record<string, boolean>): string[] => Object.keys(rules)
 const enabledRuleKeys = (rules: Record<string, boolean>): string[] =>
   Object.entries(rules)
     .filter(([, enabled]) => enabled)
     .map(([rule]) => rule)
 
-const hasGlobalGod = (user: TUser | null): boolean => user?.cmsPassport?.global?.god === true
+const ruleMapFrom = (rules: unknown): Record<string, boolean> =>
+  typeof rules === 'object' && rules !== null ? (rules as Record<string, boolean>) : {}
+
+const communityPassportFrom = (
+  passport: Record<string, unknown>,
+  community: string,
+): Record<string, unknown> => {
+  if (!community) return {}
+
+  const rules = passport[community]
+  return typeof rules === 'object' && rules !== null ? (rules as Record<string, unknown>) : {}
+}
+
+const isCommunityRootPassport = (passport: Record<string, unknown>, community: string): boolean =>
+  communityPassportFrom(passport, community).root === true
+
+const hasGlobalGod = (user: TUser | null): boolean => user?.passport?.global?.god === true
 
 const hasCommunityRoot = (user: TUser | null, community: string): boolean => {
-  if (!community) return false
+  if (!user?.passport) return false
 
-  const rules = user?.cmsPassport?.[community]
-  return typeof rules === 'object' && rules !== null && 'root' in rules && rules.root === true
+  return isCommunityRootPassport(user.passport, community)
 }
 
 type TRet = {
@@ -76,6 +102,7 @@ export default function useLogic(): TRet {
   const { activeModerator, allRootRules, allModeratorRules } = dsb$
   const [selectedGlobalRules, setSelectedGlobalRules] = useState<string[]>([])
   const [selectedRules, setSelectedRules] = useState<string[]>([])
+  const [activeModeratorHasRootPassport, setActiveModeratorHasRootPassport] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const toggleCheck = (
@@ -96,6 +123,7 @@ export default function useLogic(): TRet {
 
   const loadUserPassport = (): void => {
     if (!activeModerator) {
+      setActiveModeratorHasRootPassport(false)
       setLoading(false)
       return
     }
@@ -103,27 +131,38 @@ export default function useLogic(): TRet {
     setLoading(true)
     setSelectedRules([])
     setSelectedGlobalRules([])
+    setActiveModeratorHasRootPassport(false)
     query(S.userPassport, { login: activeModerator.login })
       .then((res) => {
-        const { cmsPassportString = '{}', social = null } = res?.user ?? {}
-        const passportJson = JSON.parse(cmsPassportString)
-        const globalRules = passportJson.global
-        const communityRules = passportJson[community$.slug]?.cms
+        const { passportString = '{}', social = null } = res?.user ?? {}
+        const passportJson = safeParsePassport(passportString)
+        const globalRules = ruleMapFrom(passportJson.global)
+        const communityPassport = communityPassportFrom(passportJson, community$.slug)
+        const communityRules = ruleMapFrom(communityPassport.cms)
+        const hasRootPassport = isCommunityRootPassport(passportJson, community$.slug)
 
-        dsb$.commit({ activeModerator: { ...activeModerator, social } })
+        if (hasRootPassport) {
+          const moderators = dsb$.moderators.map((moderator) =>
+            moderator.user?.login === activeModerator.login
+              ? { ...moderator, isRoot: true }
+              : moderator,
+          )
 
-        if (globalRules) {
-          setSelectedGlobalRules(enabledRuleKeys(globalRules))
+          dsb$.commit({ activeModerator: { ...activeModerator, social }, moderators })
+          community$.commit({ moderators })
+        } else {
+          dsb$.commit({ activeModerator: { ...activeModerator, social } })
         }
 
-        if (communityRules) {
-          setSelectedRules(enabledRuleKeys(communityRules))
-        }
+        setSelectedGlobalRules(enabledRuleKeys(globalRules))
+        setSelectedRules(enabledRuleKeys(communityRules))
+        setActiveModeratorHasRootPassport(hasRootPassport)
       })
       .catch((error) => {
         console.error('## load user passport error: ', error)
         setSelectedGlobalRules([])
         setSelectedRules([])
+        setActiveModeratorHasRootPassport(false)
         dsb$.commit({ activeModerator: { ...activeModerator, social: null } })
       })
       .finally(() => {
@@ -231,15 +270,15 @@ export default function useLogic(): TRet {
   }
 
   const isActiveModeratorRoot = useMemo(() => {
-    const curRoot = find((moderator) => moderator.role === ADMIN_ROLE.ROOT, community$.moderators)
-    return curRoot?.user?.login === activeModerator?.login
-  }, [activeModerator, community$.moderators])
+    const curRoot = find((moderator) => moderator.isRoot, community$.moderators)
+    return activeModeratorHasRootPassport || curRoot?.user?.login === activeModerator?.login
+  }, [activeModerator, activeModeratorHasRootPassport, community$.moderators])
 
   const isCurUserModeratorRoot = useMemo(() => {
     if (hasGlobalGod(account$.user)) return true
     if (hasCommunityRoot(account$.user, community$.slug)) return true
 
-    const curRoot = find((moderator) => moderator.role === ADMIN_ROLE.ROOT, community$.moderators)
+    const curRoot = find((moderator) => moderator.isRoot, community$.moderators)
     return curRoot?.user?.login === account$.user?.login
   }, [account$.user, community$.moderators, community$.slug])
 

@@ -7,7 +7,7 @@ export const me = `
       nickname
       avatar
       bio
-      cmsPassport
+      passport
     }
   }
 `
@@ -72,7 +72,7 @@ export const sessionState = `
         social {
           ${F.userSocial}
         }
-        cmsPassport
+        passport
         subscribedCommunitiesCount
         githubProfile {
           htmlUrl

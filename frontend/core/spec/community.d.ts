@@ -1,5 +1,3 @@
-import type { TAdminRole } from '~/const/dashboard'
-
 import type { TSimpleUser } from './account'
 import type { TDsb, TParseDashboard } from './dashboard'
 import type { TThread, TCommunityThread } from './thread'
@@ -14,7 +12,7 @@ type TMeta = {
 }
 
 export type TModerator = {
-  role: TAdminRole
+  isRoot?: boolean
   passportItemCount: number
   user: TSimpleUser
   pending?: boolean

@@ -14,15 +14,15 @@ defmodule GroupherServer.CMS.Communities.Moderator do
   @doc """
   set a community moderator
   """
-  @spec add(Community.t(), term(), User.t(), User.t()) :: T.domain_res(term())
-  def add(%Community{} = community, role, %User{} = target_user, %User{} = cur_user) do
+  @spec add(Community.t(), User.t(), User.t()) :: T.domain_res(term())
+  def add(%Community{} = community, %User{} = target_user, %User{} = cur_user) do
     community = Repo.preload(community, :moderators)
 
     case user_is_root?(community, cur_user) do
       {:ok, true} ->
         Transaction.lock_row(community, fn community ->
           Multi.new()
-          |> insert_and_stamp_moderator(community, role, target_user)
+          |> insert_and_stamp_moderator(community, target_user)
           |> Repo.transaction()
           |> result()
         end)
@@ -32,11 +32,21 @@ defmodule GroupherServer.CMS.Communities.Moderator do
     end
   end
 
+  @spec add_root(Community.t(), User.t()) :: T.domain_res(term())
+  def add_root(%Community{} = community, %User{} = target_user) do
+    Transaction.lock_row(community, fn community ->
+      Multi.new()
+      |> insert_and_stamp_root(community, target_user)
+      |> Repo.transaction()
+      |> result()
+    end)
+  end
+
   @doc """
   set multiple community moderators
   """
-  @spec add_many(Community.t(), term(), list(User.t()), User.t()) :: T.domain_res(term())
-  def add_many(%Community{} = community, role, target_users, %User{} = cur_user)
+  @spec add_many(Community.t(), list(User.t()), User.t()) :: T.domain_res(term())
+  def add_many(%Community{} = community, target_users, %User{} = cur_user)
       when is_list(target_users) do
     community = Repo.preload(community, :moderators)
 
@@ -53,7 +63,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
 
           new_users
           |> Enum.reduce(Multi.new(), fn target_user, multi ->
-            insert_and_stamp_moderator(multi, community, role, target_user)
+            insert_and_stamp_moderator(multi, community, target_user)
           end)
           |> Repo.transaction()
           |> case do
@@ -170,9 +180,20 @@ defmodule GroupherServer.CMS.Communities.Moderator do
   defp insert_and_stamp_moderator(
          multi,
          %Community{} = community,
-         role,
          %User{} = target_user
        ) do
+    insert_and_stamp(multi, community, target_user, :moderator)
+  end
+
+  defp insert_and_stamp_root(
+         multi,
+         %Community{} = community,
+         %User{} = target_user
+       ) do
+    insert_and_stamp(multi, community, target_user, :root)
+  end
+
+  defp insert_and_stamp(multi, %Community{} = community, %User{} = target_user, kind) do
     insert_name = {:insert_moderator, target_user.id}
 
     multi
@@ -180,8 +201,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
       insert_name,
       CommunityModerator.changeset(%CommunityModerator{}, %{
         user_id: target_user.id,
-        community_id: community.id,
-        role: role
+        community_id: community.id
       })
     )
     |> Multi.run({:update_community_count, target_user.id}, fn _, _ ->
@@ -192,12 +212,18 @@ defmodule GroupherServer.CMS.Communities.Moderator do
     |> Multi.run({:stamp_passport, target_user.id}, fn _, changes ->
       community_moderator = Map.fetch!(changes, insert_name)
 
-      with {:ok, rules} <- PermissionConfig.default_passport_for_role(role, community.slug),
+      with {:ok, rules} <- default_passport(kind, community.slug),
            {:ok, _} <- Passport.stamp_passport(rules, target_user) do
         update_passport_item_count(community_moderator, community, target_user, rules)
       end
     end)
   end
+
+  defp default_passport(:root, community_slug),
+    do: PermissionConfig.default_root_passport(community_slug)
+
+  defp default_passport(:moderator, community_slug),
+    do: PermissionConfig.default_moderator_passport(community_slug)
 
   defp update_passport_item_count(%Community{} = community, %User{} = user, rules) do
     with {:ok, community_moderator} <-
@@ -207,21 +233,25 @@ defmodule GroupherServer.CMS.Communities.Moderator do
   end
 
   defp update_passport_item_count(
-         %CommunityModerator{role: "root"} = moderator,
-         _community,
-         _user,
-         _rules
-       ) do
-    moderator |> ORM.update(%{passport_item_count: PermissionRegistry.root_passport_item_count()})
-  end
-
-  defp update_passport_item_count(
          %CommunityModerator{} = moderator,
          %Community{} = community,
          %User{} = _user,
          rules
        ) do
-    case get_in(rules, [community.slug, "cms"]) do
+    case get_in(rules, [community.slug]) do
+      %{"root" => true} ->
+        moderator
+        |> ORM.update(%{passport_item_count: PermissionRegistry.root_passport_item_count()})
+
+      %{"cms" => %{}} ->
+        community_rules = get_in(rules, [community.slug, "cms"]) || %{}
+
+        passport_item_count =
+          community_rules
+          |> Enum.count(fn {_rule, enabled} -> enabled == true end)
+
+        moderator |> ORM.update(%{passport_item_count: passport_item_count})
+
       %{} ->
         community_rules = get_in(rules, [community.slug, "cms"]) || %{}
 
@@ -248,19 +278,12 @@ defmodule GroupherServer.CMS.Communities.Moderator do
     |> user_is_root?(cur_user)
   end
 
-  defp user_is_root?(%Community{slug: community_slug, moderators: moderators}, %User{} = cur_user) do
+  defp user_is_root?(%Community{slug: community_slug}, %User{} = cur_user) do
     is_root =
       global_god?(cur_user) ||
-        community_root_role?(cur_user, moderators) ||
         community_root_passport?(cur_user, community_slug)
 
     if is_root, do: {:ok, true}, else: {:error, :community_root_only}
-  end
-
-  defp community_root_role?(cur_user, moderators) when is_list(moderators) do
-    moderators
-    |> Enum.filter(&(&1.role == "root"))
-    |> Enum.any?(&(to_string(&1.user_id) == to_string(cur_user.id)))
   end
 
   defp community_root_passport?(cur_user, community_slug) when is_binary(community_slug) do
@@ -271,7 +294,13 @@ defmodule GroupherServer.CMS.Communities.Moderator do
         |> get_in([community_slug, "root"]) == true
 
       _ ->
-        false
+        with {:ok, passport} <- Passport.get_passport(cur_user) do
+          passport
+          |> PermissionRegistry.normalize_rules()
+          |> get_in([community_slug, "root"]) == true
+        else
+          _ -> false
+        end
     end
   end
 
@@ -285,7 +314,13 @@ defmodule GroupherServer.CMS.Communities.Moderator do
         |> get_in(["global", "god"]) == true
 
       _ ->
-        false
+        with {:ok, passport} <- Passport.get_passport(cur_user) do
+          passport
+          |> PermissionRegistry.normalize_rules()
+          |> get_in(["global", "god"]) == true
+        else
+          _ -> false
+        end
     end
   end
 

@@ -33,11 +33,10 @@ defmodule GroupherServer.Test.Accounts.Achievement do
       community_attrs = mock_attrs(:community)
       {:ok, community2} = CMS.Communities.create(community_attrs, user2)
 
-      role = "moderator"
 
-      {:ok, _} = CMS.Communities.add_moderator(community, role, user3, user)
-      {:ok, _} = CMS.Communities.add_moderator(community2, role, user3, user2)
-      {:ok, _} = CMS.Communities.add_moderator(community, role, user2, user)
+      {:ok, _} = CMS.Communities.add_moderator(community, user3, user)
+      {:ok, _} = CMS.Communities.add_moderator(community2, user3, user2)
+      {:ok, _} = CMS.Communities.add_moderator(community, user2, user)
 
       {:ok, moderatorable_communities} =
         Accounts.Achievements.paged_moderatorable_communities(user3, %{page: 1, size: 20})

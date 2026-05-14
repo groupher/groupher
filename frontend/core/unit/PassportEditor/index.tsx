@@ -5,7 +5,6 @@
 
 import { type FC, useState } from 'react'
 
-import { ADMIN_ROLE } from '~/const/dashboard'
 import SIZE from '~/const/size'
 import { SOCIAL_LIST } from '~/const/social'
 import useMount from '~/hooks/useMount'
@@ -52,7 +51,6 @@ const PassportEditor: FC = () => {
     deleteModerator,
     isActiveModeratorRoot,
     isActiveModeratorGod,
-    isCurUserModeratorRoot,
     isReadonly,
     loading,
     toggleCheck,
@@ -109,14 +107,6 @@ const PassportEditor: FC = () => {
         </div>
       )}
 
-      {!loading && isActiveModeratorRoot && isCurUserModeratorRoot && (
-        <div className={s.footer}>
-          <Button ghost left={30} disabled>
-            {t('passport.action.transfer_root')}
-          </Button>
-        </div>
-      )}
-
       <Modal
         show={showDeleteConfirm}
         width='360px'
@@ -131,7 +121,7 @@ const PassportEditor: FC = () => {
             <AdminUserItem
               item={{
                 user: activeModerator,
-                role: isActiveModeratorRoot ? ADMIN_ROLE.ROOT : ADMIN_ROLE.MODERATOR,
+                isRoot: isActiveModeratorRoot,
                 passportItemCount: selectedGlobalRules.length + selectedRules.length,
               }}
               readonly

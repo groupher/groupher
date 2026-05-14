@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react'
 
-import { ADMIN_ROLE } from '~/const/dashboard'
 import { sortByKey } from '~/helper'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TModerator, TUser } from '~/spec'
@@ -65,11 +64,10 @@ export default function useAdmins(): TRet {
 
       const data = await mutate<
         { addModerators: { moderators: TModerator[] } },
-        { community: string; users: string[]; role: string }
+        { community: string; users: string[] }
       >(S.addModerators, {
         community: community$.slug,
         users: validUsers.map((user) => user.login!),
-        role: ADMIN_ROLE.MODERATOR,
       })
 
       const pendingLogins = new Set(validUsers.map((user) => user.login))
@@ -84,7 +82,7 @@ export default function useAdmins(): TRet {
       const fallbackModerators = [
         ...originalModerators,
         ...validUsers.map((user) => ({
-          role: ADMIN_ROLE.MODERATOR,
+          isRoot: false,
           passportItemCount: 0,
           user,
           pending: true,

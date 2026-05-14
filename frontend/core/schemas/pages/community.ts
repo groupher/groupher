@@ -25,7 +25,7 @@ export const community = `
         blogsCount
       }
       moderators {
-        role
+        isRoot
         passportItemCount
         user {
           login
