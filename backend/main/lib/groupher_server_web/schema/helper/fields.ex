@@ -227,7 +227,10 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   end
 
   @doc """
-  general social used for user profile
+  General social profile fields for a user.
+
+  These fields map to one `accounts.socials` row per user, not a list of social
+  links. Add a new field here only when the fixed profile shape grows.
   """
   defmacro social_fields do
     quote do

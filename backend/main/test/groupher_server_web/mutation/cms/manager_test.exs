@@ -16,10 +16,10 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
   end
 
   describe "root mutation" do
-    test "root can markDelete a post", ~m(community post)a do
+    test "god can markDelete a post", ~m(community post)a do
       variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
 
-      passport_rules = %{"root" => true}
+      passport_rules = %{"god" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated = rule_conn |> gq_mutation(Schema.m(:mark_delete_article, :post), variables)
@@ -28,8 +28,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
       assert updated["markDelete"] == true
     end
 
-    test "root can delete a post", ~m(community post)a do
-      passport_rules = %{"root" => true}
+    test "god can delete a post", ~m(community post)a do
+      passport_rules = %{"god" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{article: %{inner_id: post.inner_id, community: community.slug}}

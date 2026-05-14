@@ -1,4 +1,6 @@
-import type { TSimpleUse } from './account'
+import type { TAdminRole } from '~/const/dashboard'
+
+import type { TSimpleUser } from './account'
 import type { TDsb, TParseDashboard } from './dashboard'
 import type { TThread, TCommunityThread } from './thread'
 import type { TID, TPagi } from './utils'
@@ -12,9 +14,10 @@ type TMeta = {
 }
 
 export type TModerator = {
-  role: string
+  role: TAdminRole
   passportItemCount: number
-  user: TSimpleUse
+  user: TSimpleUser
+  pending?: boolean
 }
 
 export type TCommunity = {

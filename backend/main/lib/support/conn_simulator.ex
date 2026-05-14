@@ -80,30 +80,67 @@ defmodule GroupherServer.Test.ConnSimulator do
   end
 
   defp normalize_passport_rules(%{"global" => _global, "cms" => _cms} = rules),
+    do: rules |> migrate_legacy_passport_rules() |> sanitize_passport_rules()
+
+  defp normalize_passport_rules(%{"global" => _global} = rules),
     do: sanitize_passport_rules(rules)
 
   defp normalize_passport_rules(rules) when is_map(rules) do
     if Enum.all?(rules, fn {_k, v} -> is_map(v) end) do
-      %{"global" => %{}, "cms" => rules}
+      rules
+      |> Enum.reduce(%{"global" => %{}}, fn {community, community_rules}, acc ->
+        Map.put(acc, to_string(community), %{"cms" => community_rules})
+      end)
       |> sanitize_passport_rules()
     else
-      %{"global" => rules, "cms" => %{}}
+      %{"global" => rules}
       |> sanitize_passport_rules()
     end
   end
 
-  defp normalize_passport_rules(_), do: %{"global" => %{}, "cms" => %{}}
+  defp normalize_passport_rules(_), do: %{"global" => %{}}
 
-  defp sanitize_passport_rules(%{"global" => global, "cms" => cms}) do
-    %{
-      "global" => filter_global_rule_map(global),
-      "cms" =>
-        cms
-        |> Enum.reduce(%{}, fn {community, rules}, acc ->
-          Map.put(acc, community, filter_cms_rule_map(rules))
-        end)
-    }
+  defp sanitize_passport_rules(%{"global" => global} = rules) do
+    rules
+    |> Map.drop(["global"])
+    |> Enum.reduce(%{"global" => filter_global_rule_map(global)}, fn {community, community_rules},
+                                                                     acc ->
+      cleaned_rules = filter_community_rule_map(community_rules)
+
+      if cleaned_rules == %{},
+        do: acc,
+        else: Map.put(acc, to_string(community), cleaned_rules)
+    end)
   end
+
+  defp sanitize_passport_rules(_), do: %{"global" => %{}}
+
+  defp migrate_legacy_passport_rules(%{"global" => global, "cms" => cms}) do
+    cms
+    |> Enum.reduce(%{"global" => global}, fn {community, rules}, acc ->
+      Map.put(acc, to_string(community), %{"cms" => rules})
+    end)
+  end
+
+  defp filter_community_rule_map(map) when is_map(map) do
+    map
+    |> Enum.reduce(%{}, fn {key, value}, acc ->
+      key = to_string(key)
+
+      cond do
+        key == "root" and value == true ->
+          Map.put(acc, key, true)
+
+        key == "cms" and is_map(value) ->
+          Map.put(acc, key, filter_cms_rule_map(value))
+
+        true ->
+          acc
+      end
+    end)
+  end
+
+  defp filter_community_rule_map(_), do: %{}
 
   defp filter_global_rule_map(map) when is_map(map) do
     map

@@ -71,8 +71,8 @@ defmodule GroupherServer.Test.Query.Statistics do
       }
     }
     """
-    test "root manager should get count status" do
-      passport_rules = %{"root" => true}
+    test "god manager should get count status" do
+      passport_rules = %{"god" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       result = rule_conn |> gq_query(@query)

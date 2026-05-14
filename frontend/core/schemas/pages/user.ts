@@ -7,6 +7,7 @@ export const me = `
       nickname
       avatar
       bio
+      cmsPassport
     }
   }
 `

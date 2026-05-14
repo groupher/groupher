@@ -13,6 +13,7 @@ export type TProps = {
   background?: 'default' | 'preview'
   offsetTop?: string
   offsetLeft?: string
+  compact?: boolean
   onClose?: () => void
 }
 

@@ -12,7 +12,7 @@ defmodule GroupherServer.Accounts.Search.User do
   @spec search(String.t()) :: {:ok, map()} | {:error, any()}
   def search(name) do
     User
-    |> where([u], ilike(u.nickname, ^"%#{name}%"))
+    |> where([u], ilike(u.nickname, ^"%#{name}%") or ilike(u.login, ^"%#{name}%"))
     |> ORM.paginator(page: 1, size: @search_items_count)
     |> done()
   end

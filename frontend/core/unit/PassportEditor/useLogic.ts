@@ -1,6 +1,7 @@
 import { find, forEach, reject, uniq } from 'ramda'
 import { useMemo, useState } from 'react'
 
+import { ADMIN_ROLE } from '~/const/dashboard'
 import EVENT from '~/const/event'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { closeDrawer, send } from '~/signal'
@@ -8,6 +9,7 @@ import type { TUser } from '~/spec'
 import useAccount from '~/stores/account/hooks'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
+import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
 
 import { PASSPORT_SCOPE } from './constant'
 import S from './schema'
@@ -22,6 +24,12 @@ const normalizeRules = (rules: unknown): string => {
 const parseRules = (rules: string): Record<string, boolean> => JSON.parse(rules)
 
 const ruleKeys = (rules: Record<string, boolean>): string[] => Object.keys(rules)
+const enabledRuleKeys = (rules: Record<string, boolean>): string[] =>
+  Object.entries(rules)
+    .filter(([, enabled]) => enabled)
+    .map(([rule]) => rule)
+
+const hasGlobalGod = (user: TUser | null): boolean => user?.cmsPassport?.global?.god === true
 
 type TRet = {
   activeModerator: TUser | null
@@ -33,11 +41,14 @@ type TRet = {
   toggleCheck: TTogglePassportRule
   loadAllPassportRules: () => void
   updatePassport: () => void
+  deleteModerator: () => void
 
   rules: string
   isActiveModeratorRoot: boolean
+  isActiveModeratorGod: boolean
   isCurUserModeratorRoot: boolean
   isReadonly: boolean
+  loading: boolean
 }
 
 export default function useLogic(): TRet {
@@ -49,41 +60,49 @@ export default function useLogic(): TRet {
   const { activeModerator, allRootRules, allModeratorRules } = dsb$
   const [selectedGlobalRules, setSelectedGlobalRules] = useState([])
   const [selectedRules, setSelectedRules] = useState([])
+  const [loading, setLoading] = useState(true)
 
   const toggleCheck = (
     rule: string,
     checked: boolean,
     scope: TPassportScope = PASSPORT_SCOPE.CMS,
   ): void => {
-    const rules = scope === PASSPORT_SCOPE.GLOBAL ? selectedGlobalRules : selectedRules
-    const nextRules = checked ? [...rules, rule] : reject((i) => i === rule, rules)
-
     if (scope === PASSPORT_SCOPE.GLOBAL) {
-      setSelectedGlobalRules(uniq(nextRules))
+      setSelectedGlobalRules((rules) =>
+        uniq(checked ? [...rules, rule] : reject((i) => i === rule, rules)),
+      )
     } else {
-      setSelectedRules(uniq(nextRules))
+      setSelectedRules((rules) =>
+        uniq(checked ? [...rules, rule] : reject((i) => i === rule, rules)),
+      )
     }
   }
 
   const loadUserPassport = (): void => {
-    if (!activeModerator) return
+    if (!activeModerator) {
+      setLoading(false)
+      return
+    }
 
+    setLoading(true)
     setSelectedRules([])
     setSelectedGlobalRules([])
     query(S.userPassport, { login: activeModerator.login }).then((res) => {
-      console.log('## load: userPassport: ', res.user)
-      const { cmsPassportString } = res.user
+      const { cmsPassportString, social } = res.user
       const passportJson = JSON.parse(cmsPassportString)
       const globalRules = passportJson.global
-      const communityRules = passportJson.cms?.[community$.slug]
+      const communityRules = passportJson[community$.slug]?.cms
+
+      dsb$.commit({ activeModerator: { ...activeModerator, social } })
 
       if (globalRules) {
-        setSelectedGlobalRules(ruleKeys(globalRules))
+        setSelectedGlobalRules(enabledRuleKeys(globalRules))
       }
 
       if (communityRules) {
-        setSelectedRules(ruleKeys(communityRules))
+        setSelectedRules(enabledRuleKeys(communityRules))
       }
+      setLoading(false)
     })
   }
 
@@ -132,11 +151,37 @@ export default function useLogic(): TRet {
       innerRules[key] = true
     }, selectedRules)
 
-    const rules = { global: globalRules, cms: { [community]: innerRules } }
+    const rules = { global: globalRules, [community]: { cms: innerRules } }
 
-    mutate(S.updateModeratorPassport, { community, user: activeModerator.login, rules }).then(
-      (res) => {
-        console.log('## updateModeratorPassport: ', res)
+    mutate(S.updateModeratorPassport, {
+      community,
+      user: activeModerator.login,
+      rules: JSON.stringify(rules),
+    }).then(async (res) => {
+      const moderators = (res.updateModeratorPassport?.moderators ?? []).filter(
+        (moderator) => moderator.user?.login,
+      )
+
+      dsb$.commit({ moderators })
+      community$.commit({ moderators })
+      await revalidateCommunityCache(community)
+      closeDrawer()
+    })
+  }
+
+  const deleteModerator = (): void => {
+    if (!activeModerator?.login) return
+
+    mutate(S.removeModerator, { community: community$.slug, user: activeModerator.login }).then(
+      async (res) => {
+        const moderators = (res.removeModerator?.moderators ?? []).filter(
+          (moderator) => moderator.user?.login,
+        )
+
+        dsb$.commit({ moderators, activeModerator: null })
+        community$.commit({ moderators })
+        await revalidateCommunityCache(community$.slug)
+
         closeDrawer()
         send(EVENT.REFRESH_MODERATORS)
       },
@@ -144,22 +189,28 @@ export default function useLogic(): TRet {
   }
 
   const isActiveModeratorRoot = useMemo(() => {
-    const curRoot = find((moderator) => moderator.role === 'root', community$.moderators)
-    return curRoot?.user.login === activeModerator?.login
+    const curRoot = find((moderator) => moderator.role === ADMIN_ROLE.ROOT, community$.moderators)
+    return curRoot?.user?.login === activeModerator?.login
   }, [activeModerator, community$.moderators])
 
   const isCurUserModeratorRoot = useMemo(() => {
-    const curRoot = find((moderator) => moderator.role === 'root', community$.moderators)
-    return curRoot?.user.login === account$.user?.login
-  }, [account$.user?.login, community$.moderators])
+    if (hasGlobalGod(account$.user)) return true
+
+    const curRoot = find((moderator) => moderator.role === ADMIN_ROLE.ROOT, community$.moderators)
+    return curRoot?.user?.login === account$.user?.login
+  }, [account$.user, community$.moderators])
 
   const rules = useMemo(() => {
     return isActiveModeratorRoot ? allRootRules : allModeratorRules
   }, [isActiveModeratorRoot, allRootRules, allModeratorRules])
 
+  const isActiveModeratorGod = useMemo(() => {
+    return selectedGlobalRules.includes('god')
+  }, [selectedGlobalRules])
+
   const isReadonly = useMemo(() => {
-    return isActiveModeratorRoot || !isCurUserModeratorRoot
-  }, [isActiveModeratorRoot, isCurUserModeratorRoot])
+    return !isCurUserModeratorRoot
+  }, [isCurUserModeratorRoot])
 
   return {
     selectedGlobalRules,
@@ -171,11 +222,14 @@ export default function useLogic(): TRet {
     toggleCheck,
     loadAllPassportRules,
     updatePassport,
+    deleteModerator,
 
     // TODO:
     rules,
     isActiveModeratorRoot,
+    isActiveModeratorGod,
     isCurUserModeratorRoot,
     isReadonly,
+    loading,
   }
 }

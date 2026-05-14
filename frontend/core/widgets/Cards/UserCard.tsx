@@ -8,6 +8,7 @@ import type { FC } from 'react'
 import { cutRest } from '~/fmt'
 import Img from '~/Img'
 import type { TAccount, TUser } from '~/spec'
+import ImgFallback from '~/widgets/ImgFallback'
 
 import useSalon from './salon/user_card'
 
@@ -23,7 +24,11 @@ const UserCard: FC<TProps> = ({ user }) => {
   return (
     <div className={s.wrapper}>
       <div className={s.header}>
-        <Img src={avatar} className={s.avatar} />
+        <Img
+          src={avatar}
+          className={s.avatar}
+          fallback={<ImgFallback user={user} className={s.avatar} />}
+        />
         <div className={s.info}>
           <Link href={`user/${login}`} prefetch={false} className={s.title}>
             <div className={s.nickname}>{cutRest(nickname, 12)}</div>

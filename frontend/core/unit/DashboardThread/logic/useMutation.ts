@@ -13,6 +13,7 @@ import type { TEditValue, TKanbanBoard, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 import { buildDsbDemoConfig, setDsbDemoConfig } from '~/utils/dsb-demo'
+import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
 import { slugify } from '~/utils/slug'
 
 import {
@@ -203,29 +204,6 @@ export default function useMutation(): TRet {
     setTimeout(() => storeRef.current.commit({ saving: false, savingField: null }), 800)
   }
 
-  const revalidateCommunityCache = async () => {
-    if (!community) return
-
-    try {
-      const response = await fetch('/api/revalidate/community', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ community }),
-      })
-
-      if (!response.ok) {
-        const details = await response.text().catch(() => '')
-        throw new Error(
-          `revalidate failed for ${community}: ${response.status} ${response.statusText} ${details}`,
-        )
-      }
-    } catch (error) {
-      console.error('## revalidate community cache error: ', error)
-    }
-  }
-
   /**
    * store.savingField is not works in this **Promise** staff
    * not Valtio's thing, this is hte wired React staff
@@ -235,7 +213,7 @@ export default function useMutation(): TRet {
       .then(async (data) => {
         toast('设置已保存')
         if (okCb) okCb(data)
-        await revalidateCommunityCache()
+        await revalidateCommunityCache(community)
         _handleDone()
       })
       .catch((err) => {

@@ -13,8 +13,12 @@ export default function useSalon({ size, ...spacing }: TProps) {
   const { cn, rainbowSoft, margin, avatar, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('align-both border-none s-full', margin(spacing), avatar()),
-    name: cn('bold leading-none', getFontSize(size)),
+    wrapper: cn(
+      'grid place-items-center border-none s-full text-center',
+      margin(spacing),
+      avatar(),
+    ),
+    name: cn('inline-flex items-center justify-center bold leading-none', getFontSize(size)),
 
     rainbowSoft,
     rainbow,

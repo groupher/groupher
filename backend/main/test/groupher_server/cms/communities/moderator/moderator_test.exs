@@ -27,8 +27,8 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       new_passport_rules = %{
         "global" => %{},
-        "cms" => %{
-          "#{community.slug}" => %{
+        "#{community.slug}" => %{
+          "cms" => %{
             "post.edit" => true,
             "post.pin" => true,
             "post.delete" => true
@@ -54,12 +54,12 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       {:ok, moderator} =
         CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
 
-      assert moderator.passport_item_count == 0
+      assert moderator.passport_item_count > 0
 
       new_passport_rules = %{
         "global" => %{},
-        "cms" => %{
-          "#{community.slug}" => %{
+        "#{community.slug}" => %{
+          "cms" => %{
             "post.edit" => true,
             "post.pin" => true,
             "post.delete" => true
@@ -77,8 +77,8 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       new_passport_rules = %{
         "global" => %{},
-        "cms" => %{
-          "#{community.slug}" => %{
+        "#{community.slug}" => %{
+          "cms" => %{
             "post.edit" => true,
             "post.pin" => false,
             "post.delete" => true
@@ -102,8 +102,8 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       new_passport_rules = %{
         "global" => %{},
-        "cms" => %{
-          "#{community.slug}" => %{
+        "#{community.slug}" => %{
+          "cms" => %{
             "post.delete" => false,
             "post.edit" => true
           }
@@ -115,7 +115,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       {:ok, passport} = Passport.get_passport(user2)
 
-      assert get_in(passport, ["cms", "#{community.slug}", "post.edit"]) == true
+      assert get_in(passport, ["#{community.slug}", "cms", "post.edit"]) == true
     end
 
     test "can not update passport of other community moderator", ~m(user user2 community)a do
@@ -128,8 +128,8 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       new_passport_rules = %{
         "global" => %{},
-        "cms" => %{
-          "#{other_community.slug}" => %{
+        "#{other_community.slug}" => %{
+          "cms" => %{
             "post.delete" => false
           }
         }
@@ -151,11 +151,13 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       new_passport_rules = %{
         "global" => %{},
-        "cms" => %{
-          "#{community.slug}" => %{
+        "#{community.slug}" => %{
+          "cms" => %{
             "post.delete" => false
-          },
-          "#{other_community.slug}" => %{
+          }
+        },
+        "#{other_community.slug}" => %{
+          "cms" => %{
             "post.delete" => false
           }
         }
@@ -192,10 +194,19 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
 
       {:ok, moderator} = CommunityModerator |> ORM.find_by(user_id: user2.id)
       {:ok, user_passport} = Passport.get_passport(user2)
+      default_rules = get_in(user_passport, [community.slug, "cms"])
 
       assert moderator.user_id == user2.id
       assert moderator.community_id == community.id
-      assert Map.equal?(%{"global" => %{}, "cms" => %{}}, user_passport)
+      assert user_passport["global"] == %{}
+      assert is_map(default_rules)
+      assert default_rules != %{}
+      assert moderator.passport_item_count == map_size(default_rules)
+      assert Enum.all?(Map.keys(default_rules), &String.contains?(&1, "."))
+      assert Enum.all?(Map.keys(default_rules), &(not String.contains?(&1, "delete")))
+      refute Map.has_key?(default_rules, "thread.create")
+      refute Map.has_key?(default_rules, "moderator.set")
+      refute Map.has_key?(default_rules, "community.update")
     end
 
     test "user can get paged-moderators of a community", ~m(user community)a do

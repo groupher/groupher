@@ -5,7 +5,7 @@ defmodule Helper.PermissionConfig do
 
   import Helper.Utils, only: [get_config: 2]
 
-  @contexts ["global", "cms"]
+  @contexts ["cms"]
   @article_ops [
     "pin",
     "undo_pin",
@@ -28,21 +28,21 @@ defmodule Helper.PermissionConfig do
   def article_threads, do: get_config(:article, :threads) |> Enum.map(&to_string/1)
 
   @doc """
-  Returns valid global-level grants.
+  Returns valid system-level grants.
 
   Example passport JSON:
 
       %{
         "global" => %{
           "community.create" => true,
-          "root" => true
+          "god" => true
         }
       }
   """
   def global_grants do
     threaded_grants(["community.mirror", "community.unmirror", "community.move"]) ++
       [
-        "root",
+        "god",
         "blackeye",
         "homemirror",
         "system_accountant",
@@ -62,13 +62,13 @@ defmodule Helper.PermissionConfig do
   end
 
   @doc """
-  Returns valid cms context grants.
+  Returns valid community CMS grants.
 
   Example passport JSON:
 
       %{
-        "cms" => %{
-          "<community_slug>" => %{
+        "<community_slug>" => %{
+          "cms" => %{
             "post.edit" => true,
             "moderator.update" => true
           }
@@ -131,7 +131,7 @@ defmodule Helper.PermissionConfig do
       "community.apply.approve" => %{scope: :global, grant: "community.apply.approve"},
       "community.apply.deny" => %{scope: :global, grant: "community.apply.deny"},
       "billing.state.update" => %{scope: :global, grant: "system_accountant"},
-      "status.count" => %{scope: :global, grant: "root"},
+      "status.count" => %{scope: :global, grant: "god"},
       "article.mirror_home" => %{scope: :global, grant: "homemirror"},
       "article.move_blackhole" => %{scope: :global, grant: "blackeye"},
       "article.mirror" => %{scope: :global, grant_by_thread: "community.mirror"},
@@ -216,17 +216,48 @@ defmodule Helper.PermissionConfig do
   """
   def passport_rule_examples do
     %{
-      root: %{"global" => %{"root" => true}, "cms" => %{}},
-      moderator: %{"global" => %{}, "cms" => %{}}
+      god: %{"global" => %{"god" => true}},
+      root: %{"global" => %{}, "example-community" => %{"root" => true}},
+      moderator: %{"global" => %{}, "example-community" => %{"cms" => %{}}}
     }
   end
 
   @doc """
   Returns default passport payload for a moderator role.
   """
-  def default_passport_for_role("root"), do: {:ok, %{"global" => %{"root" => true}, "cms" => %{}}}
-  def default_passport_for_role("moderator"), do: {:ok, %{"global" => %{}, "cms" => %{}}}
+  def default_passport_for_role("god"), do: {:ok, %{"global" => %{"god" => true}}}
+  def default_passport_for_role("root"), do: {:ok, %{"global" => %{}}}
+  def default_passport_for_role("moderator"), do: {:ok, %{"global" => %{}}}
   def default_passport_for_role(_), do: {:error, :unknown_role}
+
+  def default_passport_for_role(role, community_slug) when is_binary(community_slug) do
+    with {:ok, rules} <- default_passport_for_role(role) do
+      {:ok, put_default_community_rules(rules, role, community_slug)}
+    end
+  end
+
+  defp put_default_community_rules(rules, "moderator", community_slug) do
+    Map.put(rules, community_slug, %{"cms" => default_moderator_community_rules()})
+  end
+
+  defp put_default_community_rules(rules, "root", community_slug) do
+    Map.put(rules, community_slug, %{"root" => true})
+  end
+
+  defp put_default_community_rules(rules, _role, _community_slug), do: rules
+
+  defp default_moderator_community_rules do
+    "cms"
+    |> grants_for()
+    |> Enum.filter(&thread_scoped?/1)
+    |> Enum.reject(&String.contains?(&1, "delete"))
+    |> Enum.map(&{&1, true})
+    |> Map.new()
+  end
+
+  defp thread_scoped?(grant) do
+    Enum.any?(article_threads(), &String.starts_with?(grant, "#{&1}."))
+  end
 
   defp generated_thread_action_requirements do
     article_threads()

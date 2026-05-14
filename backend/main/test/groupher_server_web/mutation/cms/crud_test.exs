@@ -379,6 +379,49 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert result["slug"] == community.slug
     end
 
+    @set_moderators_query """
+    mutation($community: String!, $users: [String!]!, $role: String!){
+      addModerators(community: $community, users: $users, role: $role) {
+        slug
+        moderators {
+          role
+          user {
+            login
+          }
+        }
+      }
+    }
+    """
+    test "auth user can add moderators to community", ~m(user user2 community)a do
+      {:ok, user3} = db_insert(:user)
+      role = "moderator"
+
+      passport_rules = %{community.slug => %{"moderator.set" => true}}
+      rule_conn = simu_conn(:user, user, cms: passport_rules)
+
+      variables = %{users: [user2.login, user3.login], community: community.slug, role: role}
+
+      result = rule_conn |> gq_mutation(@set_moderators_query, variables)
+
+      assert result["slug"] == community.slug
+      assert Enum.any?(result["moderators"], &(&1["user"]["login"] == user2.login))
+      assert Enum.any?(result["moderators"], &(&1["user"]["login"] == user3.login))
+    end
+
+    test "global god can add moderators to community", ~m(user2 community)a do
+      {:ok, user3} = db_insert(:user)
+      role = "moderator"
+
+      rule_conn = simu_conn(:user, user2, cms: %{"god" => true})
+
+      variables = %{users: [user3.login], community: community.slug, role: role}
+
+      result = rule_conn |> gq_mutation(@set_moderators_query, variables)
+
+      assert result["slug"] == community.slug
+      assert Enum.any?(result["moderators"], &(&1["user"]["login"] == user3.login))
+    end
+
     @unset_moderator_query """
     mutation($community: String!, $user: String!){
       removeModerator(community: $community, user: $user) {
@@ -432,7 +475,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
 
       passport_rules = %{
         "global" => %{},
-        "cms" => %{community.slug => %{"moderator.update" => true}}
+        community.slug => %{"cms" => %{"moderator.update" => true}}
       }
 
       rule_conn = simu_conn(:user, user2, cms: passport_rules)
@@ -441,8 +484,8 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       new_passport_rules =
         Jason.encode!(%{
           "global" => %{},
-          "cms" => %{
-            "#{community.slug}" => %{
+          "#{community.slug}" => %{
+            "cms" => %{
               "post.delete" => false,
               "post.edit" => true,
               "post.pin" => true,
@@ -463,10 +506,37 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       result = root_rule_conn |> gq_mutation(@update_moderator_query, variables)
 
       {:ok, user2_passport} = CMS.Communities.get_passport(%User{id: user2.id})
-      assert get_in(user2_passport, ["cms", "#{community.slug}", "post.edit"])
+      assert get_in(user2_passport, ["#{community.slug}", "cms", "post.edit"])
 
       moderator = Enum.find(result["moderators"], &(&1["user"]["login"] == user2.login))
-      assert moderator["passportItemCount"] == 4
+      assert moderator["passportItemCount"] == 3
+
+      next_passport_rules =
+        Jason.encode!(%{
+          "global" => %{},
+          "#{community.slug}" => %{
+            "cms" => %{
+              "post.delete" => false,
+              "post.edit" => true,
+              "post.pin" => false,
+              "post.undo_pin" => true
+            }
+          }
+        })
+
+      next_variables = %{variables | rules: next_passport_rules}
+      result = root_rule_conn |> gq_mutation(@update_moderator_query, next_variables)
+
+      {:ok, user2_passport} = CMS.Communities.get_passport(%User{id: user2.id})
+      assert get_in(user2_passport, ["#{community.slug}", "cms", "post.edit"])
+      refute get_in(user2_passport, ["#{community.slug}", "cms", "post.pin"])
+
+      {:ok, persisted_moderator} =
+        CommunityModerator |> ORM.find_by(user_id: user2.id, community_id: community.id)
+
+      moderator = Enum.find(result["moderators"], &(&1["user"]["login"] == user2.login))
+      assert moderator["passportItemCount"] == 2
+      assert persisted_moderator.passport_item_count == 2
     end
 
     test "unauth user add moderator fails", ~m(user_conn guest_conn user community)a do

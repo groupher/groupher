@@ -8,7 +8,17 @@ import RuleItem from './RuleItem'
 import useSalon from './salon/selects'
 import type { TPassportScope, TStackedRuleGroup, TTogglePassportRule } from './spec'
 import StackedRuleItem from './StackedRuleItem'
-import useLogic from './useLogic'
+
+type TProps = {
+  allRootRules: string
+  allModeratorRules: string
+  selectedGlobalRules: string[]
+  selectedRules: string[]
+  isReadonly: boolean
+  isActiveModeratorRoot: boolean
+  isActiveModeratorGod: boolean
+  toggleCheck: TTogglePassportRule
+}
 
 type TRuleSectionProps = {
   rules: string[]
@@ -160,22 +170,23 @@ const getSelectedCount = (rules: string[], selectedRules: string[], selectAll: b
   return rules.filter((rule) => includes(rule, selectedRules)).length
 }
 
-export default function Selects() {
+export default function Selects({
+  allRootRules,
+  allModeratorRules,
+  selectedGlobalRules,
+  selectedRules,
+  isReadonly,
+  isActiveModeratorRoot,
+  isActiveModeratorGod,
+  toggleCheck,
+}: TProps) {
   const s = useSalon()
   const { t } = useTrans()
-
-  const {
-    allRootRules,
-    allModeratorRules,
-    selectedGlobalRules,
-    selectedRules,
-    isReadonly,
-    isActiveModeratorRoot,
-    toggleCheck,
-  } = useLogic()
   const globalRules = getRuleKeys(allRootRules)
   const cmsRules = getRuleKeys(allModeratorRules)
   const contextRules = getContextRules(cmsRules)
+  const globalRulesReadonly = isReadonly || isActiveModeratorGod
+  const cmsRulesReadonly = isReadonly || isActiveModeratorRoot
 
   const translate = (key: TTransKey, fallback: string): string => {
     const translated = t(key)
@@ -307,7 +318,7 @@ export default function Selects() {
 
   return (
     <div className={s.wrapper}>
-      {!!globalRules.length && (
+      {isActiveModeratorGod && !!globalRules.length && (
         <section className={s.group}>
           <div className={s.groupHeader}>
             <div className={s.primaryGroupTitle}>
@@ -325,8 +336,8 @@ export default function Selects() {
               {renderRuleGrid({
                 rules: getContextRules(globalRules),
                 selectedRules: selectedGlobalRules,
-                selectAll: isActiveModeratorRoot,
-                disabled: isReadonly,
+                selectAll: isActiveModeratorGod,
+                disabled: globalRulesReadonly,
                 primary: true,
                 scope: PASSPORT_SCOPE.GLOBAL,
                 onToggle: toggleCheck,
@@ -334,8 +345,8 @@ export default function Selects() {
               {renderThreadSections({
                 rules: globalRules,
                 selectedRules: selectedGlobalRules,
-                selectAll: isActiveModeratorRoot,
-                disabled: isReadonly,
+                selectAll: isActiveModeratorGod,
+                disabled: globalRulesReadonly,
                 primary: true,
                 scope: PASSPORT_SCOPE.GLOBAL,
                 onToggle: toggleCheck,
@@ -363,14 +374,14 @@ export default function Selects() {
               rules: contextRules,
               selectedRules,
               selectAll: isActiveModeratorRoot,
-              disabled: isReadonly,
+              disabled: cmsRulesReadonly,
               onToggle: toggleCheck,
             })}
             {renderThreadSections({
               rules: cmsRules,
               selectedRules,
               selectAll: isActiveModeratorRoot,
-              disabled: isReadonly,
+              disabled: cmsRulesReadonly,
               onToggle: toggleCheck,
             })}
           </div>

@@ -14,6 +14,9 @@ defmodule GroupherServer.Accounts.Model.Social do
   @optional_fields ~w(github twitter blog company zhihu dribble huaban douban pinterest)a
 
   @type t :: %Social{}
+
+  # This table is modeled as one social profile per user. Each platform is a
+  # nullable column instead of a separate row; see the unique user_id index.
   schema "socials" do
     belongs_to(:user, User)
 
