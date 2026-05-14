@@ -1,6 +1,5 @@
-import { ICON, ICON_BASE, SITE_LOGO } from '~/config'
 import { COLOR } from '~/const/colors'
-import type { TCommunity, TTag, TUser } from '~/spec'
+import type { TTag, TUser } from '~/spec'
 
 import { getRandomInt } from './helper'
 
@@ -172,58 +171,6 @@ const tags = [
   },
 ]
 
-const communities = [
-  {
-    id: '0',
-    title: 'Groupher',
-    slug: 'home',
-    desc: '可能是来为你心爱的产品建立一个反馈社区吧。',
-    logo: SITE_LOGO,
-  },
-  {
-    id: '1',
-    title: '黑洞',
-    slug: 'blackhole',
-    desc: '吞噬一切不适合在本站出现的内容和账号',
-    logo: `${ICON}/shape/blackhole.jpeg`,
-  },
-  {
-    id: '2',
-    title: 'React',
-    slug: 'react',
-    desc: '一个为数据提供渲染为HTML视图的开源JavaScript 库',
-    logo: `${ICON_BASE}/framework/react.png`,
-  },
-  {
-    id: '3',
-    title: 'Elixir',
-    slug: 'elixir',
-    desc: 'Elixir 是一个基于 Erlang 虚拟机的函数式、面向并行的通用编程语言',
-    logo: `${ICON_BASE}/pl/elixir.png`,
-  },
-  {
-    id: '4',
-    title: 'JavaScript',
-    slug: 'javascript',
-    desc: 'JavaScript is very cool',
-    logo: `${ICON_BASE}/pl/javascript.png`,
-  },
-  {
-    id: '5',
-    title: 'Ruby',
-    slug: 'ruby',
-    desc: 'Ruby is very cool',
-    logo: `${ICON_BASE}/pl/ruby.png`,
-  },
-  {
-    id: '6',
-    title: 'PHP',
-    slug: 'php',
-    desc: 'PHP is very cool',
-    logo: `${ICON_BASE}/pl/php.png`,
-  },
-]
-
 const images = [
   'https://feed.muzli.cloud/muzli_feed/wp-content/uploads/2026/04/17235039/claude_design-1-1.png',
   'https://ph-files.imgix.net/e8fedd1e-2775-4868-8769-9c74be268563.png?auto=format',
@@ -239,140 +186,11 @@ export const mockImage = (): string => {
   return images[getRandomInt(0, 4)]
 }
 
-export const mockImages = (num: number): string[] => {
-  return images.slice(0, Math.min(num, images.length - 1))
-}
-
 export const mockUsers = (num: number): TUser[] => {
   return users.slice(0, Math.min(num, users.length - 1))
 }
 
 export const mockTags = (num: number): TTag[] => tags.slice(0, Math.min(num, tags.length))
-
-const changelogTimeTags = [
-  {
-    id: '13',
-    slug: '1',
-    title: '1 月',
-    group: '2022',
-  },
-  {
-    id: '14',
-    slug: '2',
-    title: '2 月',
-    group: '2022',
-  },
-  {
-    id: '15',
-    slug: '3',
-    title: '3 月',
-    group: '2022',
-  },
-  {
-    id: '16',
-    slug: '4',
-    title: '4 月',
-    group: '2022',
-  },
-  {
-    id: '17',
-    slug: '5',
-    title: '5 月',
-    group: '2022',
-  },
-  {
-    id: '18',
-    slug: '6',
-    title: '6 月',
-    group: '2022',
-  },
-  {
-    id: '0',
-    slug: '1',
-    title: '1 月',
-    group: '2021',
-  },
-  {
-    id: '1',
-    slug: '2',
-    title: '2 月',
-    group: '2021',
-  },
-  {
-    id: '2',
-    slug: '3',
-    title: '3 月',
-    group: '2021',
-  },
-]
-
-export const mockChangelogTimeTags = (num = 10): TTag[] => {
-  return changelogTimeTags.slice(0, Math.min(num, changelogTimeTags.length))
-}
-
-const changelogVersionTags = [
-  {
-    id: '13',
-    slug: '1',
-    title: 'v1.0.1',
-    group: 'v1',
-  },
-  {
-    id: '14',
-    slug: '2',
-    title: 'v1.0.2',
-    group: 'v1',
-  },
-  {
-    id: '15',
-    slug: '3',
-    title: 'v1.0.3',
-    group: 'v1',
-  },
-  {
-    id: '16',
-    slug: '4',
-    title: 'v1.0.4',
-    group: 'v1',
-  },
-  {
-    id: '17',
-    slug: '5',
-    title: 'v1.0.5',
-    group: 'v1',
-  },
-  {
-    id: '18',
-    slug: '6',
-    title: 'v1.0.6',
-    group: 'v1',
-  },
-  {
-    id: '0',
-    slug: '1',
-    title: 'v2.0.1',
-    group: 'v2',
-  },
-  {
-    id: '1',
-    slug: '2',
-    title: 'v2.0.2',
-    group: 'v2',
-  },
-  {
-    id: '2',
-    slug: '3',
-    title: 'v2.0.3',
-    group: 'v2',
-  },
-]
-
-export const mockChangelogVersionTags = (num = 10): TTag[] => {
-  return changelogVersionTags.slice(0, Math.min(num, changelogVersionTags.length))
-}
-
-export const mockCommunities = (num: number): TCommunity[] =>
-  communities.slice(0, Math.min(num, communities.length))
 
 export const mockHelpCats = () => {
   return [

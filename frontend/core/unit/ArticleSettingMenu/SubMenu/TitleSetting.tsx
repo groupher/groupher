@@ -53,7 +53,6 @@ const TitleSetting: FC<TProps> = ({ onBack }) => {
     <div className={s.wrapper}>
       <Input
         className={s.input}
-        autoFocus
         value={title}
         onChange={(e) => {
           setTitle(e.target.value)

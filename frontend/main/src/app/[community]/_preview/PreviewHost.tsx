@@ -1,16 +1,7 @@
 'use client'
 
 import { useParams, useSelectedLayoutSegment } from 'next/navigation'
-import {
-  Fragment,
-  type ReactNode,
-  Suspense,
-  startTransition,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react'
+import { Fragment, type ReactNode, Suspense, useEffect, useLayoutEffect, useRef } from 'react'
 
 import Drawer from '~/widgets/@Drawer'
 
@@ -42,39 +33,6 @@ const resolvePreviewPhase = (
   if (!hasCachedEntry || ready) return PREVIEW_PHASE.LIVE
 
   return showCachedFull ? PREVIEW_PHASE.CACHED_FULL : PREVIEW_PHASE.CACHED_LITE
-}
-
-// Cached reopen favors a light first paint, then promotes to the full cached
-// preview tree before the real route payload takes over.
-const useDeferredCachedFull = (enabled: boolean) => {
-  const [showCachedFull, setShowCachedFull] = useState(false)
-
-  useEffect(() => {
-    if (!enabled) {
-      setShowCachedFull(false)
-      return
-    }
-
-    setShowCachedFull(false)
-
-    let innerRaf: number | null = null
-    const outerRaf = window.requestAnimationFrame(() => {
-      innerRaf = window.requestAnimationFrame(() => {
-        startTransition(() => {
-          setShowCachedFull(true)
-        })
-      })
-    })
-
-    return () => {
-      window.cancelAnimationFrame(outerRaf)
-      if (innerRaf) {
-        window.cancelAnimationFrame(innerRaf)
-      }
-    }
-  }, [enabled])
-
-  return showCachedFull
 }
 
 const usePreviewRouteState = <TEntry extends TPreviewCacheEntryBase>(
@@ -159,7 +117,7 @@ export default function PreviewHost<TEntry extends TPreviewCacheEntryBase>({
     entry: cachedEntry,
     ready,
   } = usePreviewRouteState<TEntry>(resolvePreviewKey)
-  const showCachedFull = useDeferredCachedFull(Boolean(cachedEntry) && !ready)
+  const showCachedFull = Boolean(cachedEntry) && !ready
   const phase = resolvePreviewPhase(Boolean(cachedEntry), ready, showCachedFull)
 
   useMarkPreviewPending(previewKey)

@@ -15,7 +15,7 @@ import CommunityBrief from './CommunityBrief'
 export default function HeroLayout() {
   const s = useSalon()
 
-  const router = useRouter()
+  const { push } = useRouter()
   const { enterView, leaveView } = useCommunityDigestViewport()
   const publicThreads = usePublicThreads()
   const activeThread = useViewingThread()
@@ -31,7 +31,7 @@ export default function HeroLayout() {
         <div className={s.tabs}>
           <TabBar
             source={publicThreads}
-            onChange={(path) => router.push(`/${community.slug}/${path}`)}
+            onChange={(path) => push(`/${community.slug}/${path}`)}
             active={activeThread}
             withIcon
           />

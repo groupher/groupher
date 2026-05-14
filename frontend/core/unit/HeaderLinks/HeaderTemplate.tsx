@@ -11,6 +11,8 @@ import { filterVisibleHeaderLinks, moreTabLinkTitle, moreTabTitle } from './help
 import useSalon from './salon/header_template'
 import type { TLinkGroup, TProps } from './spec'
 
+const DEFAULT_LINKS: TProps['links'] = []
+
 const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
   const s = useSalon()
   const { t } = useTrans()
@@ -38,7 +40,7 @@ const LinkGroup: FC<TLinkGroup> = ({ groupTitle, links, showMoreFold }) => {
   )
 }
 
-const CustomHeaderLinks: FC<TProps> = ({ links = [] }) => {
+const CustomHeaderLinks: FC<TProps> = ({ links = DEFAULT_LINKS }) => {
   const s = useSalon()
   const { t } = useTrans()
   const [animateRef] = useAutoAnimate()

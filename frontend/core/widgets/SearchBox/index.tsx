@@ -20,10 +20,10 @@ const SearchBox: FC<TProps> = ({ testid: _testid = 'search-box', ...spacing }) =
   const s = useSalon({ ...spacing })
 
   return (
-    <div className={s.wrapper} onClick={() => openSearch()}>
+    <button type='button' className={s.wrapper} onClick={() => openSearch()}>
       <SearchSVG className={s.icon} />
       <div className={s.text}>搜索内容</div>
-    </div>
+    </button>
   )
 }
 

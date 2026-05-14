@@ -38,6 +38,13 @@ export default function DarkMode() {
       clearTimeout(hoverTimeoutRef.current)
       hoverTimeoutRef.current = null
     }
+
+    return () => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current)
+        hoverTimeoutRef.current = null
+      }
+    }
   }, [isHovered, toggle])
 
   useEffect(() => {

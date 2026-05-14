@@ -96,5 +96,5 @@ const PillTabs: FC<TProps> = ({
   )
 }
 
-export type { TProps, TPillTabItem, TPillTabsOnChange } from './spec'
+export type { TPillTabItem } from './spec'
 export default memo(PillTabs)

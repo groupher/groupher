@@ -2,7 +2,7 @@ import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
 import type { TLocale, TMetric } from '~/spec'
 
-export const I18N_NAMESPACES = ['base', 'main', 'dashboard', 'landing', 'passport'] as const
+const I18N_NAMESPACES = ['base', 'main', 'dashboard', 'landing', 'passport'] as const
 export type TI18nNamespace = (typeof I18N_NAMESPACES)[number]
 
 const DEFAULT_NAMESPACES: TI18nNamespace[] = ['base']

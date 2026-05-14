@@ -8,7 +8,7 @@ type TRet = {
   articleLink: string
 }
 
-export const parseArticleLink = (article: TArticle): string => {
+const parseArticleLink = (article: TArticle): string => {
   if (!article?.meta?.thread || !article.community) return ''
 
   const { meta, community, innerId } = article

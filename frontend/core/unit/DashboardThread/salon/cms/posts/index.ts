@@ -1,6 +1,6 @@
 import useBase from '..'
 
-export { cn, cnMerge } from '~/css'
+export { cn } from '~/css'
 
 export default function useSalon({ loading }) {
   const base = useBase({ loading })

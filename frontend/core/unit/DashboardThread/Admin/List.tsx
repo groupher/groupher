@@ -10,24 +10,24 @@ export default function List() {
 
   return (
     <div className={s.wrapper}>
-      {moderators
-        .filter((item) => item.user?.login)
-        .map((item) => {
-          const { user } = item
-          const active = user.login === activeModerator?.login
+      {moderators.flatMap((item) => {
+        const { user } = item
+        if (!user?.login) return []
 
-          return (
-            <UserItem
-              key={user.login}
-              item={item}
-              active={active}
-              onOpen={(targetUser) => {
-                setActiveSettingAdmin(targetUser)
-                callPassportEditor()
-              }}
-            />
-          )
-        })}
+        const active = user.login === activeModerator?.login
+
+        return [
+          <UserItem
+            key={user.login}
+            item={item}
+            active={active}
+            onOpen={(targetUser) => {
+              setActiveSettingAdmin(targetUser)
+              callPassportEditor()
+            }}
+          />,
+        ]
+      })}
     </div>
   )
 }

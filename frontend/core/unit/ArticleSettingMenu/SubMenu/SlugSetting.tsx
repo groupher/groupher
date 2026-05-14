@@ -17,7 +17,7 @@ const SlugSetting: FC<TProps> = ({ onBack }) => {
 
   return (
     <div className={s.wrapper}>
-      <Input autoFocus className={s.input} />
+      <Input focusOnMount className={s.input} />
       <div className={s.note}>链接预览: </div>
       <div className={s.preview}>
         {articleLink}

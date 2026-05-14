@@ -11,7 +11,7 @@ import AirBalloonSVG from '~/icons/AirBalloon'
 
 import useSalon from './salon'
 
-export type TProps = {
+type TProps = {
   type?: 'body' | 'drawer'
 }
 
@@ -20,9 +20,9 @@ const GotoTop: FC<TProps> = ({ type = 'body' }) => {
   const handler = type === 'body' ? scrollToHeader : scrollDrawerToTop
 
   return (
-    <div className={s.wrapper} onClick={handler}>
+    <button type='button' className={s.wrapper} onClick={handler}>
       <AirBalloonSVG className={s.icon} />
-    </div>
+    </button>
   )
 }
 

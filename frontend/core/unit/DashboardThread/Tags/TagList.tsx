@@ -268,9 +268,7 @@ export default function TagList({
         {loading && <LavaLampLoading bottom={10} />}
 
         <SortableContext
-          items={groups
-            .filter((group) => !group.draft)
-            .map((group) => `tag-group-sort:${group.id}`)}
+          items={groups.flatMap((group) => (group.draft ? [] : [`tag-group-sort:${group.id}`]))}
           strategy={verticalListSortingStrategy}
         >
           {groups.map((group) => (

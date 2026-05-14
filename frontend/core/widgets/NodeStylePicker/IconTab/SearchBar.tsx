@@ -17,7 +17,7 @@ const SearchBar: FC<TProps> = ({ value, onChange }) => {
   const s = useSalon()
   const { t } = useTrans()
 
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const updateSearchValue = (event: ChangeEvent<HTMLInputElement>) => {
     onChange(event.target.value)
   }
 
@@ -32,7 +32,7 @@ const SearchBar: FC<TProps> = ({ value, onChange }) => {
         <input
           type='search'
           value={value}
-          onChange={handleChange}
+          onChange={updateSearchValue}
           placeholder={t('search')}
           aria-label={t('search')}
           autoComplete='off'

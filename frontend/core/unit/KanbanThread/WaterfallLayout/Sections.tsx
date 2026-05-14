@@ -86,7 +86,7 @@ export default function Sections() {
       posts: rejectedPosts,
     },
   }
-  const sections = kanbanBoards.map((board) => sectionMap[board]).filter(Boolean)
+  const sections = kanbanBoards.flatMap((board) => sectionMap[board] || [])
 
   return (
     <div className={s.wrapper}>

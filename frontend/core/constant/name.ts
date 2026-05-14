@@ -1,6 +1,6 @@
 import { FIELDS } from '~/stores/dashboard/constant'
 
-export { ALIAS_GROUP, BUILTIN_ALIAS } from './builtin-alias'
+export { BUILTIN_ALIAS } from './builtin-alias'
 
 export const HOME_COMMUNITY = {
   home: 'groupher',

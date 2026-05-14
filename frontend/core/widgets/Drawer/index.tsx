@@ -22,7 +22,6 @@ export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POS
   const contentRef = useRef<HTMLDivElement | null>(null)
   const drawerRef = useRef<HTMLDivElement | null>(null)
 
-  const [mounted, setMounted] = useState(false)
   const [visible, setVisible] = useState(false)
   const [closing, setClosing] = useState(false)
 
@@ -55,7 +54,7 @@ export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POS
   const commitClose = useCallback(() => {
     if (didCloseRef.current) return
     didCloseRef.current = true
-    setMounted(false)
+    setVisible(false)
     setClosing(false)
     unlockPageOnce()
   }, [unlockPageOnce])
@@ -84,54 +83,34 @@ export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POS
     return clearEnterFrame
   }, [clearEnterFrame])
 
-  // show -> mounted / close orchestration (handles reopen while closing)
+  // show -> close orchestration (handles reopen while closing)
   useEffect(() => {
     if (show) {
       clearCloseTimer()
       lockPageOnce()
-
-      if (!mounted) {
-        setMounted(true)
-        return
-      }
-
-      if (closing || !visible) {
-        triggerEnter()
-      } else {
-        setClosing(false)
-      }
+      if (closing) setClosing(false)
 
       return
     }
 
-    // show=false -> start closing animation (but keep mounted until animation ends)
-    if (mounted && !closing) {
+    // show=false -> start closing animation (but keep rendered until animation ends)
+    if (visible && !closing) {
       setClosing(true)
       setVisible(false)
       scheduleFallbackClose()
       return
     }
 
-    if (!mounted) {
+    if (!visible && !closing) {
       unlockPageOnce()
     }
-  }, [
-    show,
-    mounted,
-    visible,
-    closing,
-    clearCloseTimer,
-    scheduleFallbackClose,
-    triggerEnter,
-    lockPageOnce,
-    unlockPageOnce,
-  ])
+  }, [show, visible, closing, clearCloseTimer, scheduleFallbackClose, lockPageOnce, unlockPageOnce])
 
-  // initial mount enter: when mounted becomes true, run enter sequence once
+  // initial mount enter: when shown, run enter sequence once
   useLayoutEffect(() => {
-    if (!mounted) return
+    if (!show) return
     return triggerEnter()
-  }, [mounted, triggerEnter])
+  }, [show, triggerEnter])
 
   const handleDrawerTransitionEnd = useCallback(
     (e: React.TransitionEvent<HTMLDivElement>) => {
@@ -153,7 +132,7 @@ export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POS
     }
   }, [clearCloseTimer, clearEnterFrame, unlockPageOnce])
 
-  if (!mounted) return null
+  if (!show && !visible && !closing) return null
 
   return (
     <Portal>

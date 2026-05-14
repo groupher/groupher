@@ -7,6 +7,7 @@
 import { pickBy } from 'ramda'
 import { type FC, useCallback } from 'react'
 
+import useAutoFocus from '~/hooks/useAutoFocus'
 import Img from '~/Img'
 import { nilOrEmpty } from '~/validator'
 
@@ -23,7 +24,7 @@ type TProps = {
   suffixIcon?: string | null
   suffixActive?: boolean
   disabled?: boolean
-  autoFocus?: boolean
+  focusOnMount?: boolean
   disableEnter?: boolean
   className?: string
   width?: string
@@ -47,13 +48,14 @@ const Input: FC<TProps> = ({
   suffixIcon = null,
   suffixActive = false,
   testid = 'input',
-  autoFocus = false,
+  focusOnMount = false,
   disableEnter = false,
   className = '',
   width = 'w-full',
   ...restProps
 }) => {
   const s = useSalon({ width })
+  const inputRef = useAutoFocus<HTMLInputElement>(focusOnMount)
 
   const handleOnChange = useCallback((e) => onChange?.(e), [onChange])
   const handleOnKeydown = useCallback(
@@ -88,8 +90,8 @@ const Input: FC<TProps> = ({
         onKeyDown={handleOnKeydown}
         onFocus={handleOnFocus}
         onBlur={handleOnBlur}
+        ref={inputRef}
         spellCheck='false'
-        autoFocus={autoFocus}
         // @ts-expect-error
         {...validProps}
       />
@@ -104,7 +106,7 @@ const Input: FC<TProps> = ({
       testid={testid}
       className={className}
       onChange={onChange}
-      autoFocus={autoFocus}
+      focusOnMount={focusOnMount}
       disableEnter={disableEnter}
       {...restProps}
     />

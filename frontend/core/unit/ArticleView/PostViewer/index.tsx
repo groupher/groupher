@@ -23,30 +23,36 @@ type TProps = {
   isFullView?: boolean
 }
 
+const INIT_VIEW_STATE = {
+  fixedHeaderVisible: false,
+  footerVisible: false,
+  trackerReady: false,
+}
+
 export default function PostViewer({ isFullView = true }: TProps) {
   const s = useSalon()
 
   const { loading, article } = useLogic()
   const broadcastConfig = useBroadcast()
 
-  const [fixedHeaderVisible, setFixedHeaderVisible] = useState(false)
-  const [footerVisible, setFooterVisible] = useState(false)
-  const [trackerReady, setTrackerReady] = useState(false)
+  const [viewState, setViewState] = useState(INIT_VIEW_STATE)
 
   useEffect(() => {
-    setTrackerReady(false)
-    setFixedHeaderVisible(false)
-    setFooterVisible(false)
+    setViewState(INIT_VIEW_STATE)
 
-    const raf = window.requestAnimationFrame(() => setTrackerReady(true))
+    const raf = window.requestAnimationFrame(() =>
+      setViewState((prev) => ({ ...prev, trackerReady: true })),
+    )
     return () => window.cancelAnimationFrame(raf)
   }, [article.innerId])
 
-  const hideFixedHeader = () => setFixedHeaderVisible(false)
-  const showFixedHeader = () => setFixedHeaderVisible(true)
+  const { fixedHeaderVisible, footerVisible, trackerReady } = viewState
 
-  const hideFooter = () => setFooterVisible(false)
-  const showFooter = () => setFooterVisible(true)
+  const hideFixedHeader = () => setViewState((prev) => ({ ...prev, fixedHeaderVisible: false }))
+  const showFixedHeader = () => setViewState((prev) => ({ ...prev, fixedHeaderVisible: true }))
+
+  const hideFooter = () => setViewState((prev) => ({ ...prev, footerVisible: false }))
+  const showFooter = () => setViewState((prev) => ({ ...prev, footerVisible: true }))
 
   return (
     <>

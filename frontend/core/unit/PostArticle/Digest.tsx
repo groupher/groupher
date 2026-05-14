@@ -22,7 +22,7 @@ import useSalon from './salon/digest'
 const Share = lazy(() => import('~/unit/Share'))
 
 export default function Digest() {
-  const router = useRouter()
+  const { push } = useRouter()
   const { post } = useArticle()
 
   const isPinned = post?.isPinned ?? false
@@ -40,7 +40,7 @@ export default function Digest() {
     <div className={s.wrapper}>
       <div className={s.leftPart}>
         <div className={s.topping}>
-          <button type='button' className={s.backBtn} onClick={() => router.push(backUrl)}>
+          <button type='button' className={s.backBtn} onClick={() => push(backUrl)}>
             <ArrowSVG className={s.backIcon} />
             <div className={s.backText}>讨论区</div>
           </button>

@@ -42,7 +42,7 @@ const TabItem: FC<TTabItemProps> = ({
   const { t } = useTrans()
   const linkRef = useRef<HTMLAnchorElement | null>(null)
   const buttonRef = useRef<HTMLButtonElement | null>(null)
-  const clickableRef = useRef<HTMLSpanElement | null>(null)
+  const clickableRef = useRef<HTMLButtonElement | null>(null)
   const activeRef = useRef<HTMLDivElement | null>(null)
 
   // set each tab item width for calc
@@ -84,7 +84,8 @@ const TabItem: FC<TTabItemProps> = ({
   }, [activeKey, wrapMode, key])
 
   const Label = (
-    <span
+    <button
+      type='button'
       ref={clickableRef}
       data-tab-label='true'
       className={cn(s.label, active && s.labelActive)}
@@ -94,7 +95,7 @@ const TabItem: FC<TTabItemProps> = ({
         <TabIcon item={item} clickableRef={clickableRef} active={active} />
       )}
       <div ref={active ? activeRef : null}>{isString(item) ? item : t(item.title as never)}</div>
-    </span>
+    </button>
   )
 
   if (href) {

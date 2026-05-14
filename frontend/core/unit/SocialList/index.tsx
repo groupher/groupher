@@ -12,9 +12,11 @@ type TProps = {
   selected?: readonly TSocialItem[]
 } & TSpace
 
+const DEFAULT_SELECTED: readonly TSocialItem[] = []
+
 const SocialList: FC<TProps> = ({
   testid: _testid = 'social-list',
-  selected = [],
+  selected = DEFAULT_SELECTED,
   size = SIZE.SMALL,
   ...spacing
 }) => {

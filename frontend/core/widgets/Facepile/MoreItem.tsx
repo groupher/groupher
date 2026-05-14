@@ -9,9 +9,9 @@ const MoreItem: FC<TProps> = ({ size, onTotalSelect }) => {
   const s = useSalon({ size })
 
   return (
-    <div className={s.wrapper} onClick={() => onTotalSelect()}>
+    <button type='button' className={s.wrapper} onClick={() => onTotalSelect()}>
       <div className={s.textMore}>..</div>
-    </div>
+    </button>
   )
 }
 

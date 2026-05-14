@@ -3,7 +3,7 @@
  */
 
 import Script from 'next/script'
-import { type FC, type ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import { type FC, type ReactNode, useCallback, useRef, useState } from 'react'
 
 import { assetPath } from '~/helper'
 import CrossSVG from '~/icons/CloseCross'
@@ -34,26 +34,18 @@ const OSSUploader: FC<TProps> = ({
 }) => {
   const s = useSalon()
 
-  const [loaded, setOnLoad] = useState(false)
   const [uniqueId, setUniqueId] = useState(null)
   const [loading, setLoading] = useState(false)
   const [ossClient, setOSSClient] = useState(null)
 
   const labelRef = useRef(null)
 
-  useEffect(() => {
-    if (loaded) {
-      // See https://stackoverflow.com/a/53572588.
-      function initOSS() {
-        const ossClient = initOSSClient()
+  const handleScriptLoad = useCallback(() => {
+    const ossClient = initOSSClient()
 
-        setOSSClient(ossClient)
-        setUniqueId(uid.gen())
-      }
-
-      initOSS()
-    }
-  }, [loaded])
+    setOSSClient(ossClient)
+    setUniqueId(uid.gen())
+  }, [])
 
   const onStart = () => setLoading(true)
 
@@ -75,13 +67,13 @@ const OSSUploader: FC<TProps> = ({
     <div className={s.wrapper}>
       <Script
         src='https://gosspublic.alicdn.com/aliyun-oss-sdk-6.18.1.min.js'
-        onLoad={() => setOnLoad(true)}
+        onLoad={handleScriptLoad}
       />
 
       {showPreview && (
-        <div className={s.crossIcon} onClick={onDelete}>
+        <button type='button' className={s.crossIcon} onClick={onDelete}>
           <CrossSVG className={s.crossIcon} />
-        </div>
+        </button>
       )}
 
       <div className={s.inner}>

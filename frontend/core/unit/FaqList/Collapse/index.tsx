@@ -1,5 +1,5 @@
 import { includes, isEmpty, pluck, reject } from 'ramda'
-import { type FC, useCallback, useEffect, useState } from 'react'
+import { type FC, useCallback, useState } from 'react'
 
 import type { TMenuOption } from '~/spec'
 
@@ -12,22 +12,24 @@ import Section from './Section'
 
 type TProps = Pick<TIndex, 'sections'>
 
+const getMenuOptions = (openedIndexes: number[], articleIds: number[]): TMenuOption[] => {
+  if (isEmpty(openedIndexes)) {
+    return [MENU.UNFOLD_ALL, MENU.AUTH_EDIT]
+  }
+
+  if (openedIndexes.length === articleIds.length) {
+    return [MENU.FOLD_ALL, MENU.AUTH_EDIT]
+  }
+
+  return DEFAULT_MENU
+}
+
 const Collapse: FC<TProps> = ({ sections }) => {
   const s = useSalon()
 
   const [openedIndexes, setOpenedIndexes] = useState<number[]>([])
-  const [menuOptions, setMenuOptions] = useState<TMenuOption[]>(DEFAULT_MENU)
-
-  useEffect(() => {
-    const articleIds = pluck('index', sections)
-    if (isEmpty(openedIndexes)) {
-      setMenuOptions([MENU.UNFOLD_ALL, MENU.AUTH_EDIT])
-    } else if (openedIndexes.length === articleIds.length) {
-      setMenuOptions([MENU.FOLD_ALL, MENU.AUTH_EDIT])
-    } else {
-      setMenuOptions(DEFAULT_MENU)
-    }
-  }, [openedIndexes, sections])
+  const articleIds = pluck('index', sections)
+  const menuOptions = getMenuOptions(openedIndexes, articleIds)
 
   // fold/unfold one item
   const toggle = useCallback(
@@ -35,7 +37,7 @@ const Collapse: FC<TProps> = ({ sections }) => {
       if (includes(id, openedIndexes)) {
         setOpenedIndexes(reject((_id) => _id === id, openedIndexes))
       } else {
-        setOpenedIndexes([id, ...openedIndexes])
+        setOpenedIndexes((prev) => [id, ...prev])
       }
     },
     [openedIndexes],

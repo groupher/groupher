@@ -31,7 +31,7 @@ export const StatusCell = React.memo(function StatusCell({ rowData }: { rowData:
 
 export const ArticleCell = React.memo(function ArticleCell({ rowData }: { rowData: TArticle }) {
   const s = useSalon()
-  const router = useRouter()
+  const { push } = useRouter()
   const { slug } = useCommunity()
 
   return (
@@ -40,7 +40,7 @@ export const ArticleCell = React.memo(function ArticleCell({ rowData }: { rowDat
         type='button'
         className={cn(s.articleTitle, 'truncate w-full text-left')}
         onClick={() =>
-          router.push(`/${slug}/${thread2Path(rowData.meta.thread)}/${rowData.innerId}`, {
+          push(`/${slug}/${thread2Path(rowData.meta.thread)}/${rowData.innerId}`, {
             scroll: false,
           })
         }

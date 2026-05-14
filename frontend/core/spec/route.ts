@@ -8,7 +8,6 @@ import type {
   DSB_LAYOUT_ROUTE,
   DSB_ROUTE,
   DSB_SEO_ROUTE,
-  DSB_THIRD_PART_ROUTE,
 } from '~/const/route'
 import type { TConstValues, TTransKey } from '~/spec'
 
@@ -18,26 +17,8 @@ export type TDsbDocRoute = TConstValues<typeof DSB_DOC_ROUTE>
 export type TDsbLayoutRoute = TConstValues<typeof DSB_LAYOUT_ROUTE>
 export type TDsbBroadcastRoute = TConstValues<typeof DSB_BROADCAST_ROUTE>
 export type TDsbAliasRoute = TConstValues<typeof DSB_ALIAS_ROUTE>
-export type TDsbThirdPartRoute = (typeof DSB_THIRD_PART_ROUTE)[keyof typeof DSB_THIRD_PART_ROUTE]
 
 export type TDsbPath = (typeof DSB_ROUTE)[keyof typeof DSB_ROUTE]
-
-export type TPath =
-  | 'home'
-  | 'post'
-  | 'help'
-  | 'changelog'
-  | 'kanban'
-  | 'about'
-  | 'user'
-  | {
-      DASHBOARD: TDsbPath
-    }
-
-export type TDsbCrumbItem = {
-  title: string
-  seg: string
-}
 
 export type TBreadcrumbItem = {
   key?: string
@@ -46,9 +27,9 @@ export type TBreadcrumbItem = {
   onClick?: () => void
 }
 
-export type TIconComp = ComponentType<{ className?: string }>
+type TIconComp = ComponentType<{ className?: string }>
 
-export type TDsbCoverItem = {
+type TDsbCoverItem = {
   title: string
   desc: string
   seg: string
@@ -57,7 +38,7 @@ export type TDsbCoverItem = {
   pinned?: boolean
 }
 
-export type TDsbCoverGroup = {
+type TDsbCoverGroup = {
   groupTitle: string
   items: TDsbCoverItem[]
 }

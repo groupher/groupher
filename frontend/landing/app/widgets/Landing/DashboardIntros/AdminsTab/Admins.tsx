@@ -1,6 +1,5 @@
-import { type FC, useEffect } from 'react'
+import type { FC } from 'react'
 
-import useHover from '~/hooks/useHover'
 import Img from '~/Img'
 import { mockUsers } from '~/mock'
 
@@ -16,18 +15,16 @@ const Admins: FC<TProps> = ({ onHover, userHover }) => {
   const s = useSalon()
 
   const users = mockUsers(4)
-  const [user1Ref, user1Hovered] = useHover<HTMLDivElement>()
-  const [user2Ref, user2Hovered] = useHover<HTMLDivElement>()
-  const [user3Ref, user3Hovered] = useHover<HTMLDivElement>()
-
-  useEffect(() => {
-    onHover([user1Hovered, user2Hovered, user3Hovered])
-  }, [user1Hovered, user2Hovered, user3Hovered])
+  const handleLeave = () => onHover([false, false, false])
 
   return (
     <div className={s.wrapper}>
       <div className={s.inner}>
-        <div ref={user1Ref} className={cn(s.item, (user1Hovered || userHover[0]) && s.itemActive)}>
+        <div
+          className={cn(s.item, userHover[0] && s.itemActive)}
+          onPointerEnter={() => onHover([true, false, false])}
+          onPointerLeave={handleLeave}
+        >
           <Img src={users[0].avatar} className={s.avatar} />
           <div className={s.intro}>
             <div className={s.nickname}>{users[0].nickname}</div>
@@ -35,7 +32,11 @@ const Admins: FC<TProps> = ({ onHover, userHover }) => {
           </div>
         </div>
 
-        <div ref={user2Ref} className={cn(s.item, (user2Hovered || userHover[1]) && s.itemActive)}>
+        <div
+          className={cn(s.item, userHover[1] && s.itemActive)}
+          onPointerEnter={() => onHover([false, true, false])}
+          onPointerLeave={handleLeave}
+        >
           <Img src={users[1].avatar} className={s.avatar} />
           <div className={s.intro}>
             <div className={s.nickname}>{users[1].nickname}</div>
@@ -45,7 +46,11 @@ const Admins: FC<TProps> = ({ onHover, userHover }) => {
           </div>
         </div>
 
-        <div ref={user3Ref} className={cn(s.item, (user3Hovered || userHover[2]) && s.itemActive)}>
+        <div
+          className={cn(s.item, userHover[2] && s.itemActive)}
+          onPointerEnter={() => onHover([false, false, true])}
+          onPointerLeave={handleLeave}
+        >
           <Img src={users[2].avatar} className={s.avatar} />
           <div className={s.intro}>
             <div className={s.nickname}>{users[2].nickname}</div>

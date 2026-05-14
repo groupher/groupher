@@ -21,7 +21,7 @@ export type TPageBgDraft = {
   pageCustomIntensityDark: number
 }
 
-export const pickPageBgDraft = (source: TPageBgDraft): TPageBgDraft =>
+const pickPageBgDraft = (source: TPageBgDraft): TPageBgDraft =>
   pick(PAGE_BG_DRAFT_KEYS, source) as TPageBgDraft
 
 export const usePageBgDraft = (source: TPageBgDraft): TPageBgDraft =>
@@ -49,11 +49,7 @@ export const resolveRawBg = (draft: TPageBgDraft, isLightTheme: boolean) => {
   return PAGE_BG_COLOR_HEX[currentPageBg] || ''
 }
 
-export const resolveInitialPreset = (
-  current: string,
-  original: string,
-  fallback: string,
-): string => {
+const resolveInitialPreset = (current: string, original: string, fallback: string): string => {
   if (current !== COLOR.CUSTOM) return current
   if (original !== COLOR.CUSTOM) return original
   return fallback

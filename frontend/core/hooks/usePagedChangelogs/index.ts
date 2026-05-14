@@ -5,7 +5,7 @@ import type { TPagedChangelogs, TResState, TTagGroup } from '~/spec'
 import useArticleList from '~/stores/articleList/hooks'
 import useCommunity from '~/stores/community/hooks'
 
-export type TUpdate = {
+type TUpdate = {
   pagedChangelogs: TPagedChangelogs
   tagGroups: TTagGroup[]
 }

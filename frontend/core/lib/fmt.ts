@@ -1,4 +1,4 @@
-import { endsWith, includes } from 'ramda'
+import { includes } from 'ramda'
 import { length, limit } from 'stringz'
 
 import { ARTICLE_CAT, ARTICLE_STATUS } from '~/const/gtd'
@@ -6,9 +6,6 @@ import { THREAD } from '~/const/thread'
 import type { TArticleCat, TArticleStatus, TTransKey } from '~/spec'
 
 import { isString } from './validator'
-
-// need this since "15.5.1-canary.10", otherwise will crash due to strict Serialization issue
-export const deepSanitize = <T>(obj: T): T => JSON.parse(JSON.stringify(obj)) as T
 
 /**
  * cut extra length of a string
@@ -55,16 +52,6 @@ export const prettyNum = (num: number, digits = 1): string => {
 }
 
 /**
- * number with commas format
- * @see @link https://stackoverflow.com/questions/2901102/how-to-print-a-number-with-commas-as-thousands-separators-in-javascript
- *
- * @param {*} x
- */
-export const numberWithCommas = (x: number): string => {
-  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
-}
-
-/**
  *  title case a string
  */
 export const titleCase = (str: string): string => {
@@ -86,14 +73,6 @@ export const titleCaseHM = (input: string): string => {
   return titleCasedWords.join(' ')
 }
 
-// 将 kebab-case 或 snake_case 转换为 UPPER_SNAKE_CASE
-export const upperSnakeCase = (str: string): string => {
-  return str
-    .split(/[-_]/)
-    .map((word) => word.toUpperCase())
-    .join('_')
-}
-
 /**
  * camelize a string
  * e.g: GREEN_APPLE -> greenApple
@@ -103,20 +82,6 @@ export const camelize = (str: string): string => {
 
   const a = str.toLowerCase().replace(/[-_\s.]+(.)?/g, (_, c) => (c ? c.toUpperCase() : ''))
   return a.substring(0, 1).toLowerCase() + a.substring(1)
-}
-
-// https://stackoverflow.com/a/2627482/4050784
-export const daysBetween = (date1: number | Date, date2: number | Date): number => {
-  // The number of milliseconds in one day
-  const ONE_DAY = 1000 * 60 * 60 * 24
-  const left = date1 instanceof Date ? date1.getTime() : date1
-  const right = date2 instanceof Date ? date2.getTime() : date2
-
-  // Calculate the difference in milliseconds
-  const differenceMs = Math.abs(left - right)
-
-  // Convert back to days and return
-  return Math.round(differenceMs / ONE_DAY)
 }
 
 // birthday is a Date
@@ -132,21 +97,6 @@ const doCovert = (value: string, opt: TCovert): string => {
     }
     default: {
       return value
-    }
-  }
-}
-
-/**
- * mainly used for url -> thread convert
- *
- * e.g:
- * posts -> post
- */
-export const singular = (value: string, opt: TCovert = null): string => {
-  switch (value) {
-    default: {
-      const singularValue = endsWith('s', value) ? value.slice(0, -1) : value
-      return doCovert(singularValue, opt)
     }
   }
 }

@@ -156,13 +156,6 @@ export const pageArticleMeta = `
     }
   }
 `
-export const post = `
-  innerId
-  title
-  insertedAt
-  updatedAt
-  views
-`
 
 export const userSocial = `
   github

@@ -1,6 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export { cn, cnMerge } from '~/css'
+export { cnMerge } from '~/css'
 
 export default function useSalon() {
   const { cn, fg, bg, br, shadow } = useTwBelt()

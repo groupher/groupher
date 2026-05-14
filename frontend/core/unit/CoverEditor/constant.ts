@@ -1,11 +1,3 @@
-import type { TSettingLevel } from './spec'
-
-// default size it's based on ratio 16:9
-export const IMAGE_CONTAINER_SIZE = {
-  WIDTH: '710px', // 16:9
-  HEIGHT: '400px',
-}
-
 export const IMAGE_POS = {
   TOP_LEFT: 'top_left',
   TOP_CENTER: 'top_center',
@@ -44,14 +36,6 @@ export const SETTING_LEVEL = {
   L5: 'L5',
 } as const
 
-export const IMAGE_SHADOW = {
-  L1: 'none',
-  L2: 'rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px', // @9
-  L3: 'rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-  L4: 'rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.04) 0px 10px 10px -5px',
-  L5: 'rgba(0, 0, 0, 0.25) 0px 25px 50px -12px',
-} as Record<TSettingLevel, string>
-
 export const IMAGE_SIZE = {
   LARGE: 'large',
   MEDIUM: 'medium',
@@ -63,64 +47,3 @@ export const IMAGE_RATIO = {
   TV: 'tv',
   SCREEN: 'screen',
 } as const
-
-export const IMAGE_BORDER_RADIUS = {
-  L1: '0',
-  L2: '8px',
-  L3: '18px',
-  L4: '15px',
-  L5: '20px',
-} as Record<TSettingLevel, string>
-
-export const IMAGE_RATIO_SIZE = {
-  [IMAGE_RATIO.SCREEN]: {
-    [IMAGE_SIZE.LARGE]: {
-      width: IMAGE_CONTAINER_SIZE.WIDTH,
-      height: IMAGE_CONTAINER_SIZE.HEIGHT,
-    },
-
-    [IMAGE_SIZE.MEDIUM]: {
-      width: '640px',
-      height: '360px',
-    },
-
-    [IMAGE_SIZE.SMALL]: {
-      width: '540px',
-      height: '305px',
-    },
-  },
-
-  [IMAGE_RATIO.TV]: {
-    [IMAGE_SIZE.LARGE]: {
-      width: '532px',
-      height: IMAGE_CONTAINER_SIZE.HEIGHT,
-    },
-
-    [IMAGE_SIZE.MEDIUM]: {
-      width: '478px',
-      height: '360px',
-    },
-
-    [IMAGE_SIZE.SMALL]: {
-      width: '406px',
-      height: '305px',
-    },
-  },
-
-  [IMAGE_RATIO.SQUARE]: {
-    [IMAGE_SIZE.LARGE]: {
-      width: IMAGE_CONTAINER_SIZE.HEIGHT,
-      height: IMAGE_CONTAINER_SIZE.HEIGHT,
-    },
-
-    [IMAGE_SIZE.MEDIUM]: {
-      width: '360px',
-      height: '360px',
-    },
-
-    [IMAGE_SIZE.SMALL]: {
-      width: '305px',
-      height: '305px',
-    },
-  },
-}

@@ -40,6 +40,7 @@ export default {
   locale: 'locale',
   'default.locale': 'default locale',
   report: 'report',
+  'common.view_detail': 'View details',
   'groupher.feedback': 'feedback',
   dashboard: 'Dashboard',
   more: 'more',

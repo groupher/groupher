@@ -20,7 +20,7 @@ type TRet = {
 }
 
 export default function useLogic(): TRet {
-  const router = useRouter()
+  const { push } = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const store = useArticleList()
@@ -55,7 +55,7 @@ export default function useLogic(): TRet {
     const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname
 
     store.commit({ resState: loadingState })
-    setTimeout(() => router.push(nextUrl), 0)
+    setTimeout(() => push(nextUrl), 0)
   }
 
   return {

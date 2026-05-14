@@ -4,7 +4,7 @@ export const SITE_SHARE_TYPE = {
   WECHAT: 'wechat',
 }
 
-export const OUTSIDE_SHARE_TYPE = {
+const OUTSIDE_SHARE_TYPE = {
   TWITTER: 'twitter',
   EMAIL: 'email',
   WECHAT: 'wechat',

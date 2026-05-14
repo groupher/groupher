@@ -1,9 +1,8 @@
-import { includes, isEmpty, keys, remove, sort, startsWith, uniq } from 'ramda'
+import { includes, isEmpty, keys, remove, sort, startsWith } from 'ramda'
 
 import { ASSETS_ENDPOINT } from '~/config'
 import { COLOR } from '~/const/colors'
-import { ARTICLE_STATUS } from '~/const/gtd'
-import type { TArticleStatus, TColorName, TCommunityThread, TDsdThreadConf, TWindow } from '~/spec'
+import type { TColorName, TCommunityThread, TDsdThreadConf, TWindow } from '~/spec'
 
 export const Global: TWindow = typeof window !== 'undefined' ? window : null
 
@@ -36,74 +35,6 @@ export const sortByKey = <T, K extends keyof T>(source: readonly T[], key: K): T
 
 export const sortByColor = (items: readonly TSortableItem[]) => sortByKey(items, 'color')
 export const sortByIndex = (items: readonly TSortableItem[]) => sortByKey(items, 'index')
-export const sortById = (items: readonly TSortableItem[]) => sortByKey(items, 'id')
-export const sortByGroupIndex = (items: readonly TSortableItem[]) => sortByKey(items, 'groupIndex')
-
-/**
- * count both chinese-word and english-words
- * @see @link https://stackoverflow.com/questions/20396456/how-to-do-word-counts-for-a-mixture-of-english-and-chinese-in-javascript
- *
- * @param {string} str
- * @returns {number}
- */
-export const countWords = (str: string): number => {
-  const matches = str.match(/[\u00ff-\uffff]|\S+/g)
-  return matches ? matches.length : 0
-}
-
-// errRescue({type: ERR.GRAPHQL, operation: operationName, details: graphQLErrors})
-
-export const debounce = (fn, ms = 0) => {
-  let timeoutId: ReturnType<typeof setTimeout>
-  return function (...args) {
-    clearTimeout(timeoutId)
-    timeoutId = setTimeout(() => fn.apply(this, args), ms)
-  }
-}
-
-/**
- * extract mention format from markdown str into list
- */
-export const extractMentions = (str: string): string[] => {
-  const mentionsRegex = /@([a-zA-Z0-9_.-]+)/gim
-
-  let matches = str.match(mentionsRegex)
-  if (matches?.length) {
-    // @ts-expect-error
-    matches = matches.map((match) => {
-      return match.slice(1)
-    })
-    return uniq(matches)
-  }
-  return []
-}
-
-/**
- * extract markdown attachments from str
- * @see @link https://blogs.sap.com/2017/07/15/use-regular-expression-to-parse-the-image-reference-in-the-markdown-sourcre-code/
- */
-export const extractAttachments = (str: string): string[] => {
-  let m: RegExpExecArray | null
-  const regex = /!\[(.*?)\]\((.*?)\)/g
-
-  const urls = []
-  while ((m = regex.exec(str)) !== null) {
-    if (m.index === regex.lastIndex) {
-      regex.lastIndex += 1
-    }
-    urls.push(m[2])
-  }
-  /* eslint-enable */
-  return urls
-}
-
-// checkout if the site is running on cypress container
-export const isCypressRunning = (): boolean => {
-  // @ts-expect-error
-  if (typeof window !== 'undefined') return !!window.Cypress
-
-  return false
-}
 
 /**
  * Returns a random integer between min (inclusive) and max (inclusive).
@@ -157,7 +88,7 @@ export const randomBgNames = (count, excepts = [COLOR.CYAN, COLOR.GREEN]): TColo
  * @param {String} value
  * @returns
  */
-export const findDeepMatch = (data, key, value) => {
+const findDeepMatch = (data, key, value) => {
   let result = null
   if (Array.isArray(data)) {
     for (let i = 0; i < data.length; i += 1) {
@@ -218,30 +149,6 @@ export const openShareWindow = (platformUrl: string, param: TShareParam): void =
   const targetUrl = `${platformUrl}?${safeParam.join('&')}`
 
   Global.open(targetUrl, '_blank', 'height=500, width=600')
-}
-
-// https://stackoverflow.com/a/2627482/4050784
-export const daysBetween = (date1, date2) => {
-  // The number of milliseconds in one day
-  const ONE_DAY = 1000 * 60 * 60 * 24
-
-  // Calculate the difference in milliseconds
-  const differenceMs = Math.abs(date1 - date2)
-
-  // Convert back to days and return
-  return Math.round(differenceMs / ONE_DAY)
-}
-
-/**
- * check if article status is one of the rejected statuses
- */
-export const isRejectedStatus = (status: TArticleStatus): boolean => {
-  return includes(status, [
-    ARTICLE_STATUS.REJECT_DUP,
-    ARTICLE_STATUS.REJECT_NO_PLAN,
-    ARTICLE_STATUS.REJECT_REPRO,
-    ARTICLE_STATUS.REJECT_STALE,
-  ])
 }
 
 /**
@@ -309,31 +216,4 @@ export const assetPath = (url: string): string => {
   const splitUrl = url.split(`${ASSETS_ENDPOINT}/`)
 
   return splitUrl.join('')
-}
-
-/**
- * Creates a type-safe predicate that checks whether a string value
- * belongs to a predefined set of allowed values.
- *
- * This is a low-level, generic utility. It does not assume where the
- * values come from (enum, const array, runtime config, etc.).
- *
- * Typical use cases:
- * - Validating route segments
- * - Validating query params
- * - Narrowing string unions at runtime
- *
- * @example
- * const isTab = isOneOf(['general', 'advanced'] as const)
- *
- * if (isTab(value)) {
- *   // value is now typed as 'general' | 'advanced'
- * }
- */
-export const isOneOf = <const T extends readonly string[]>(candidates: T) => {
-  const set = new Set(candidates)
-
-  return (value: string): value is T[number] => {
-    return set.has(value)
-  }
 }

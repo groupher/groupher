@@ -11,5 +11,3 @@ export const DEFAULT_CREATE_TAG = {
   thread: THREAD.POST,
   groupId: '',
 }
-
-export const holder = 1

@@ -14,11 +14,13 @@ type TProps = {
   testid?: string
 } & TSpace
 
+const DEFAULT_CRUMB_ITEMS: TBreadcrumbItem[] = []
+
 const Portal: FC<TProps> = ({
   title,
   desc = null,
   withDivider = true,
-  crumbItems = [],
+  crumbItems = DEFAULT_CRUMB_ITEMS,
   addon = null,
   testid = '',
   ...spacing

@@ -12,7 +12,7 @@ import useAccount from '~/stores/account/hooks'
 
 import useSalon from './salon'
 
-export type TProps = {
+type TProps = {
   viewed?: boolean
   size?: number
 } & TSpace

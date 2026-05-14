@@ -6,12 +6,14 @@ import { getLetterColor } from '~/utils/color'
 import type { TAvatarProps as TProps } from '.'
 import useSalon, { cn } from './salon/avatar'
 
+const DEFAULT_USER: NonNullable<TProps['user']> = {} as NonNullable<TProps['user']>
+
 const Avatar: FC<TProps> = ({
   testid = 'avatar-fallback',
   className = '',
   size = SIZE.SMALL, // ✅ 默认用常量
   title = '',
-  user = {},
+  user = DEFAULT_USER,
   quote: _quote = false,
   ...spacing
 }) => {

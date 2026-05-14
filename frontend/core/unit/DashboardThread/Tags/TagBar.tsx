@@ -72,7 +72,7 @@ const TagBar: FC<TProps> = ({
         {isEditMode ? (
           <ColorSelector
             activeColor={draftTag.color}
-            onChange={(color) => setDraftTag({ ...draftTag, color })}
+            onChange={(color) => setDraftTag((prev) => ({ ...prev, color }))}
             placement='bottom-start'
             offset={[-8, 0]}
           >
@@ -88,8 +88,8 @@ const TagBar: FC<TProps> = ({
             className={s.input}
             width='w-48'
             value={draftTag.title}
-            onChange={(e) => setDraftTag({ ...draftTag, title: e.target.value })}
-            autoFocus
+            onChange={(e) => setDraftTag((prev) => ({ ...prev, title: e.target.value }))}
+            focusOnMount
           />
         ) : (
           <div className={s.info}>

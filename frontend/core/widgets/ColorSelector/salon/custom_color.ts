@@ -1,7 +1,5 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export { cn } from '~/css'
-
 export default function useSalon({ stacked = false } = {}) {
   const { cn, bg, fg, fill } = useTwBelt()
 

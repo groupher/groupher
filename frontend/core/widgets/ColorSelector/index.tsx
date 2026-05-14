@@ -30,6 +30,8 @@ type TProps = {
   excepts?: TColorName[]
 }
 
+const DEFAULT_EXCEPTS: TColorName[] = []
+
 const ColorSelector: FC<TProps> = ({
   testid = 'color-selector',
   activeColor,
@@ -40,7 +42,7 @@ const ColorSelector: FC<TProps> = ({
   allowCustomColor = false,
   placement = 'bottom',
   offset = [5, 5],
-  excepts = [],
+  excepts = DEFAULT_EXCEPTS,
 }) => {
   const s = useSalon()
   const { theme } = useTheme()

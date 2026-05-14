@@ -25,12 +25,17 @@ const Platforms: FC<TProps> = ({ article, changeType }) => {
           const CurIcon = Icon[item.type]
 
           return (
-            <div className={s.media} key={item.title} onClick={() => changeType(item.type)}>
+            <button
+              type='button'
+              className={s.media}
+              key={item.title}
+              onClick={() => changeType(item.type)}
+            >
               <div className={s.logoBox}>
                 <CurIcon className={s.icon} />
               </div>
               <div className={s.title}>{item.title}</div>
-            </div>
+            </button>
           )
         })}
       </div>

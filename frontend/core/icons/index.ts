@@ -129,5 +129,3 @@ export const getLocalSVG = (type: string): FC => {
     }
   }
 }
-
-export const holder = 1

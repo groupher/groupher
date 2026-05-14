@@ -32,10 +32,10 @@ const ArticleBaseStats: FC<TProps> = ({
       <ViewSVG className={s.viewsIcon} />
       <div className={s.count}>{article.views}</div>
       <div className={s.divider} />
-      <div className={s.commentBox} onClick={() => scrollToComments(container)}>
+      <button type='button' className={s.commentBox} onClick={() => scrollToComments(container)}>
         <CommentSVG className={s.commentIcon} />
         <div className={s.commentCount}>{article.commentsCount}</div>
-      </div>
+      </button>
     </div>
   )
 }

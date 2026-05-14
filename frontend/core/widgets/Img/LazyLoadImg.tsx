@@ -1,4 +1,5 @@
 // frontend/core/widgets/Img/LazyLoadImg.tsx
+import NextImage from 'next/image'
 import { type FC, useCallback, useEffect, useRef, useState } from 'react'
 
 import LazyLoad from '~/widgets/LazyLoad'
@@ -8,6 +9,11 @@ import { hasLoadedSrc, markLoadedSrc } from './cache'
 import useSalon, { cnMerge } from './salon/lazy_load_image'
 
 type TProps = Omit<Required<TPropsBase>, 'noLazy'>
+type TImageState = {
+  started: boolean
+  loaded: boolean
+  errored: boolean
+}
 
 const LazyLoadImg: FC<TProps> = ({
   className,
@@ -23,51 +29,51 @@ const LazyLoadImg: FC<TProps> = ({
   const imgRef = useRef<HTMLImageElement | null>(null)
   const isCachedSrc = hasLoadedSrc(src)
 
-  const [started, setStarted] = useState(visibleByDefault || isCachedSrc)
-  const [loaded, setLoaded] = useState(isCachedSrc)
-  const [errored, setErrored] = useState(false)
+  const [imageState, setImageState] = useState<TImageState>({
+    started: visibleByDefault || isCachedSrc,
+    loaded: isCachedSrc,
+    errored: false,
+  })
 
   // Keep started true for cached images and visibleByDefault.
   useEffect(() => {
-    setStarted(visibleByDefault || hasLoadedSrc(src))
+    setImageState((prev) => ({ ...prev, started: visibleByDefault || hasLoadedSrc(src) }))
   }, [visibleByDefault, src])
 
   // src changes reset per-resource states; cached src skips fallback.
   useEffect(() => {
-    setLoaded(hasLoadedSrc(src))
-    setErrored(false)
+    setImageState((prev) => ({ ...prev, loaded: hasLoadedSrc(src), errored: false }))
   }, [src])
 
-  const handleVisible = useCallback(() => setStarted(true), [])
+  const handleVisible = useCallback(() => {
+    setImageState((prev) => (prev.started ? prev : { ...prev, started: true }))
+  }, [])
 
   const handleLoad = useCallback(() => {
     markLoadedSrc(src)
-    setLoaded(true)
-    setErrored(false)
+    setImageState((prev) => ({ ...prev, loaded: true, errored: false }))
   }, [src])
 
   const handleError = useCallback(() => {
     console.warn('[LazyLoadImg] load error:', src)
-    setErrored(true)
-    setLoaded(false)
+    setImageState((prev) => ({ ...prev, loaded: false, errored: true }))
   }, [src])
 
   // ✅ cached hit / already-complete handling (must depend on src too)
   useEffect(() => {
-    if (!started) return
+    if (!imageState.started) return
     const el = imgRef.current
     if (!el || !el.complete) return
 
     if (el.naturalWidth > 0) {
       markLoadedSrc(src)
-      setLoaded(true)
-      setErrored(false)
+      setImageState((prev) => ({ ...prev, loaded: true, errored: false }))
     } else {
-      setLoaded(false)
-      setErrored(true)
+      setImageState((prev) => ({ ...prev, loaded: false, errored: true }))
     }
-  }, [started, src])
+  }, [imageState.started, src])
 
+  const { started, loaded, errored } = imageState
   const hideFallback = loaded && !errored
   const showImg = started && !errored
 
@@ -100,13 +106,13 @@ const LazyLoadImg: FC<TProps> = ({
         {(visible) =>
           // keep "visible" in the gate so behavior remains correct even if started is ever reset
           (visible || started) && showImg ? (
-            <img
+            <NextImage
               ref={imgRef}
               className={cnMerge(s.imgOverlay, !loaded && 'invisible', className)}
               src={src}
               alt={alt}
-              loading='lazy'
-              decoding='async'
+              fill
+              unoptimized
               onLoad={handleLoad}
               onError={handleError}
               draggable={false}

@@ -39,14 +39,15 @@ const Radio: FC<TProps> = ({
         const active = item.key === activeKey
 
         return (
-          <div
+          <button
+            type='button'
             key={item.value}
             className={cn(s.label, active && s.labelChecked)}
             onClick={() => onChange?.(item)}
           >
             <div className={cn(s.circle, active && s.checked)} />
             {item.value}
-          </div>
+          </button>
         )
       })}
     </div>

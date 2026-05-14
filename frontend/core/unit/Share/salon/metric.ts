@@ -16,5 +16,3 @@ export const getInfoPanelHeight = (type: string): string => {
     }
   }
 }
-
-export const holder = 1

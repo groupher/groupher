@@ -43,9 +43,14 @@ const Category: FC<TProps> = ({ title, desc: _desc, articles }) => {
 
         <div className={s.items}>
           {articles.slice(0, sliceCount).map((article) => (
-            <div className={s.item} key={article.id} onClick={() => gotoDetailLayout()}>
+            <button
+              type='button'
+              className={s.item}
+              key={article.id}
+              onClick={() => gotoDetailLayout()}
+            >
               {article.title}
-            </div>
+            </button>
           ))}
         </div>
 

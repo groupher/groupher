@@ -14,10 +14,10 @@ const CancelButton: FC<TProps> = ({ text = '取消', onClick = console.log, ...s
   const s = useSalon({ ...spacing })
 
   return (
-    <div className={s.wrapper} onClick={onClick}>
+    <button type='button' className={s.wrapper} onClick={onClick}>
       <BackSVG className={s.backIcon} />
       {text}
-    </div>
+    </button>
   )
 }
 

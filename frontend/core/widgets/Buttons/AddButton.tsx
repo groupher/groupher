@@ -33,11 +33,11 @@ const AddButton: FC<TProps> = ({
   const s = useSalon({ dimWhenIdle, disabled, ...spacing })
 
   return (
-    <div className={s.wrapper} onClick={() => !disabled && onClick()}>
+    <button type='button' className={s.wrapper} disabled={disabled} onClick={() => onClick()}>
       {withIcon && icon === 'adder' && <PlusSVG className={s.icon} />}
       {withIcon && icon === 'edit' && <EditSVG className={s.icon} />}
       <div className={s.text}>{children}</div>
-    </div>
+    </button>
   )
 }
 

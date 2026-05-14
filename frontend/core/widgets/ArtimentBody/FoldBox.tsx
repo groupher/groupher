@@ -15,7 +15,7 @@ const FoldBox: FC<TProps> = ({ fold, onFold, onExpand, mode }) => {
   const s = useSalon({ fold })
 
   return (
-    <div className={s.wrapper} onClick={() => (fold ? onExpand() : onFold())}>
+    <button type='button' className={s.wrapper} onClick={() => (fold ? onExpand() : onFold())}>
       {!fold && (
         <div className={cn(s.hint, 'opacity-20', mode === 'article' ? 'text-base' : 'text-sm')}>
           折叠内容
@@ -28,7 +28,7 @@ const FoldBox: FC<TProps> = ({ fold, onFold, onExpand, mode }) => {
           <ArrowSVG className={s.arrowIcon} />
         </div>
       )}
-    </div>
+    </button>
   )
 }
 

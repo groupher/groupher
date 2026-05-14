@@ -1,14 +1,12 @@
-import { COLOR } from '~/const/colors'
 import { ONE_LINK_GROUP, TW_CARD } from '~/const/dashboard'
-import { DSB_ALIAS_ROUTE, DSB_DOC_ROUTE, DSB_ROUTE } from '~/const/route'
+import { DSB_ALIAS_ROUTE, DSB_ROUTE } from '~/const/route'
 import type { TDsbFieldMap, TDsbStoreFieldKey } from '~/stores/dashboard/spec'
 
 import type { TDsbMenu } from './spec'
 
-export { SEO_KEYS, SEO_OG_KEYS, SEO_TW_KEYS } from '~/const/seo'
+export { SEO_KEYS } from '~/const/seo'
 
 export const DSB_DEMO_KEY = 'DSB_DEMO'
-export const ALIGN_HEADER_OFFSET = '100px'
 
 // do not change, it's map to GQ endpoint updateDashboardLayout
 export const LAYOUT_FIELD = {
@@ -264,25 +262,6 @@ export const BUILD_IN_ALIAS_SUGGESTIONS = {
   discussion: ['讨论', '其他讨论', '其他话题'],
 }
 
-export const DOC_TABS = [
-  {
-    title: 'dsb.menu.doc.table',
-    slug: DSB_DOC_ROUTE.TABLE,
-  },
-  {
-    title: 'dsb.menu.doc.tree',
-    slug: DSB_DOC_ROUTE.TREE,
-  },
-  {
-    title: 'dsb.menu.doc.cover',
-    slug: DSB_DOC_ROUTE.COVER,
-  },
-  {
-    title: 'dsb.menu.doc.faq',
-    slug: DSB_DOC_ROUTE.FAQ,
-  },
-]
-
 export const TW_CARD_OPTIONS = [
   {
     label: TW_CARD.SUMMARY,
@@ -344,5 +323,3 @@ export const DEFAULT_NEW_FAQ = {
   body: '',
   index: 0,
 }
-
-export const INIT_KANBAN_COLORS = [COLOR.BLACK, COLOR.YELLOW, COLOR.PURPLE, COLOR.GREEN, COLOR.RED]

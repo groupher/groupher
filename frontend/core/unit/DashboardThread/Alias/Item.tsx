@@ -33,7 +33,7 @@ const Item: FC<TProps> = ({ alias }) => {
               <Input
                 className={s.input}
                 value={editingAlias?.name}
-                autoFocus
+                focusOnMount
                 onChange={(e) => updateEditingAlias({ ...editingAlias, name: e.target.value })}
               />
             </div>

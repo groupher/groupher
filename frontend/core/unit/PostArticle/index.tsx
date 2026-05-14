@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef } from 'react'
 
 // import Header from '~/widgets/CommunityDigest/ClassicLayout'
 import ViewportTracker from '~/widgets/ViewportTracker'
@@ -10,7 +10,7 @@ import SideInfo from './SideInfo'
 
 export default function Post() {
   const s = useSalon()
-  const [_inViewport, setInViewport] = useState(false)
+  const inViewportRef = useRef(false)
 
   return (
     <>
@@ -21,7 +21,14 @@ export default function Post() {
         </div>
         <SideInfo />
       </div>
-      <ViewportTracker onEnter={() => setInViewport(true)} onLeave={() => setInViewport(false)} />
+      <ViewportTracker
+        onEnter={() => {
+          inViewportRef.current = true
+        }}
+        onLeave={() => {
+          inViewportRef.current = false
+        }}
+      />
     </>
   )
 }

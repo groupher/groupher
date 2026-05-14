@@ -1,5 +1,6 @@
 'use client'
 
+import NextImage from 'next/image'
 import type { FC } from 'react'
 
 import { NODE_STYLE } from '~/const/node_style'
@@ -32,11 +33,12 @@ const NodeStyleRender: FC<TProps> = ({
 
   if (value.type === NODE_STYLE.EMOJI) {
     return (
-      <img
+      <NextImage
         src={`https://cdn.jsdelivr.net/gh/twitter/twemoji@${TWEMOJI_VERSION}/assets/svg/${value.unified}.svg`}
         width={size}
         height={size}
         alt=''
+        unoptimized
         draggable={false}
         className={emojiClassName ?? className}
       />

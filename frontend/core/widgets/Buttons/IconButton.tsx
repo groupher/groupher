@@ -7,7 +7,7 @@ import Tooltip from '~/widgets/Tooltip'
 
 import useSalon from './salon/icon_button'
 
-export type TProps = {
+type TProps = {
   path?: string | null
   icon?: string | null
   size?: number
@@ -45,7 +45,7 @@ const IconButton: FC<TProps> = ({
   }
 
   return (
-    <div className={s.wrapper} onClick={onClick} {...spacing}>
+    <button type='button' className={s.wrapper} onClick={onClick} {...spacing}>
       {hint ? (
         <Tooltip
           placement={hintPlacement}
@@ -59,7 +59,7 @@ const IconButton: FC<TProps> = ({
       ) : (
         <div className={s.content}>{realIcon}</div>
       )}
-    </div>
+    </button>
   )
 }
 

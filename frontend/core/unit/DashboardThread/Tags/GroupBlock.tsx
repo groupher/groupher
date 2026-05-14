@@ -80,7 +80,7 @@ const GroupBlock: FC<TProps> = ({
   const canCreateFirstTag = newTagTitle.trim().length > 0
   const realGroupRenameEnabled = !draft && canRenameRealGroup(activeThread)
   const sortableIds = useMemo(
-    () => sortedTags.map((tag) => tag.id).filter((id): id is string => Boolean(id)),
+    () => sortedTags.flatMap((tag) => (tag.id ? [tag.id] : [])),
     [sortedTags],
   )
   const {
@@ -189,6 +189,7 @@ const GroupBlock: FC<TProps> = ({
       <div className={s.header}>
         {renaming ? (
           <div
+            role='group'
             className={s.editBox}
             onKeyDown={(e) => {
               if (e.key === 'Escape') cancelRename()
@@ -199,7 +200,7 @@ const GroupBlock: FC<TProps> = ({
               width='w-48'
               value={nextTitle}
               placeholder={t('dsb.tags.group.new')}
-              autoFocus
+              focusOnMount
               onChange={(e) => setNextTitle(e.target.value)}
               onEnter={commitRename}
             />
@@ -306,7 +307,7 @@ const GroupBlock: FC<TProps> = ({
                 width='w-48'
                 value={newTagTitle}
                 placeholder={t('dsb.tags.tag.new')}
-                autoFocus
+                focusOnMount
                 onChange={(e) => setNewTagTitle(e.target.value)}
                 onEnter={() => void commitFirstTag()}
               />

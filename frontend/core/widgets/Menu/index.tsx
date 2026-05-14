@@ -25,10 +25,12 @@ type TProps = {
   popWidth?: number
 }
 
+const DEFAULT_ITEMS: TMenuItem[] = []
+
 const Menu: FC<TProps> = ({
   activeKey = '',
   onSelect = console.log,
-  items = [],
+  items = DEFAULT_ITEMS,
   children = 'menu',
   onShow = console.log,
   onHide = console.log,

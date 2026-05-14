@@ -40,6 +40,7 @@ export default {
   locale: '语言',
   'default.locale': '默认语言',
   report: '违规举报',
+  'common.view_detail': '查看详情',
   'groupher.feedback': '社区功能反馈',
   dashboard: '控制台',
   'tags.fold.expand': '展开',

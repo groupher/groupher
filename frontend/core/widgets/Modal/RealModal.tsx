@@ -1,4 +1,4 @@
-import { type FC, useCallback, useEffect, useState } from 'react'
+import { type FC, useCallback, useEffect, useRef } from 'react'
 
 import { lockPage, toggleGlobalBlur, unlockPage } from '~/dom'
 import useGlowLight from '~/hooks/useGlowLight'
@@ -34,11 +34,10 @@ const RealModal: FC<TProps> = ({
   const { glowType } = useGlowLight()
   const { theme } = useTheme()
 
-  // damn, i forgot why i set this state, fix LATER
-  const [visibleOnPage, setVisibleOnPage] = useState(false)
+  const visibleOnPageRef = useRef(false)
 
   const handleClose = useCallback(() => {
-    setVisibleOnPage(false)
+    visibleOnPageRef.current = false
     toggleGlobalBlur(false)
     handleCloseModal()
     unlockPage()
@@ -46,15 +45,28 @@ const RealModal: FC<TProps> = ({
 
   useShortcut('Escape', handleClose)
 
+  const handleEnterPage = useCallback(() => {
+    visibleOnPageRef.current = true
+    if (!show) return
+
+    toggleGlobalBlur(true)
+    lockPage()
+  }, [show])
+
   useEffect(() => {
-    if (show && visibleOnPage) {
-      toggleGlobalBlur(true)
-      lockPage()
-    }
-    if (visibleOnPage && !show) {
+    if (show || !visibleOnPageRef.current) return
+
+    visibleOnPageRef.current = false
+    toggleGlobalBlur(false)
+  }, [show])
+
+  useEffect(() => {
+    return () => {
+      visibleOnPageRef.current = false
       toggleGlobalBlur(false)
+      unlockPage()
     }
-  }, [show, visibleOnPage])
+  }, [])
 
   if (!show) return null
 
@@ -82,7 +94,7 @@ const RealModal: FC<TProps> = ({
             className={s.glowLight}
             style={s.glowLightStyle(glowType, theme)}
           />
-          <ViewportTracker onEnter={() => setVisibleOnPage(true)} />
+          <ViewportTracker onEnter={handleEnterPage} />
           {showCloseBtn && (
             <button type='button' className={s.closeBox} onKeyUp={handleClose}>
               <CloseCrossSVG className={s.closeIcon} />

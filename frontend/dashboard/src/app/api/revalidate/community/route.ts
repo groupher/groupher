@@ -11,11 +11,6 @@ type TPayload = {
 export const POST = async (req: Request) => {
   const payload = (await req.json().catch(() => ({}))) as TPayload
   const community = payload.community?.trim()
-  const token = await getToken({
-    req,
-    secret: process.env.NEXTAUTH_SECRET,
-    raw: false,
-  })
 
   if (!community) {
     return new Response(JSON.stringify({ ok: false, error: 'community is required' }), {
@@ -25,6 +20,12 @@ export const POST = async (req: Request) => {
       },
     })
   }
+
+  const token = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+    raw: false,
+  })
 
   if (!token?.[AUTH_KEY.TOKEN]) {
     return new Response(JSON.stringify({ ok: false, error: 'unauthorized' }), {

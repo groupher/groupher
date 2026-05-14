@@ -19,15 +19,16 @@ import type { TAvatarSize } from './spec'
 const validUser = compose(not, isNil)
 
 const getUniqueArray = (arr, comp) => {
-  const unique = arr
-    .map((e) => e[comp])
+  const seen = new Set()
+  const unique = []
 
-    // store the keys of the unique objects
-    .map((e, i, final) => final.indexOf(e) === i && i)
+  for (const item of arr) {
+    const key = item?.[comp]
+    if (seen.has(key)) continue
 
-    // eliminate the dead keys & store unique objects
-    .filter((e) => arr[e])
-    .map((e) => arr[e])
+    seen.add(key)
+    unique.push(item)
+  }
 
   return unique
 }
@@ -47,10 +48,12 @@ export type TProps = {
   onTotalSelect?: () => void
 } & TSpace
 
+const DEFAULT_USERS: TUser[] = []
+
 const Facepile: FC<TProps> = ({
   size = SIZE.SMALL,
   total = null,
-  users = [],
+  users = DEFAULT_USERS,
   limit = 4,
   noLazyLoad = false,
   onUserSelect = console.log,

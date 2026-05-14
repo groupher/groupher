@@ -6,7 +6,7 @@ import useWallpaper from '~/hooks/useWallpaper'
 export { cn } from '~/css'
 
 // TODO: move to @groupher-share
-export const getGithubGradient = (wallpaper: string): string => {
+const getGithubGradient = (wallpaper: string): string => {
   switch (wallpaper) {
     case GRADIENT_WALLPAPER_NAME.PINK: {
       return 'linear-gradient(64deg, #2f2f2f 60%, #211227e0 100%)'

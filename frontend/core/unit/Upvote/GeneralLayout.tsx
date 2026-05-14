@@ -31,12 +31,12 @@ const Upvote: FC<TProps> = ({
 }) => {
   const s = useSalon({ viewerHasUpvoted })
 
-  const { handleClick } = useUpvote({ viewerHasUpvoted, onAction })
+  const { handleUpvote } = useUpvote({ viewerHasUpvoted, onAction })
   const noOne = count === 0
 
   return (
     <div className={s.wrapper}>
-      <button type='button' className={cn(s.button)} onClick={handleClick}>
+      <button type='button' className={cn(s.button)} onClick={handleUpvote}>
         <div className={s.upvote}>
           <UpvoteBtn viewerHasUpvoted={viewerHasUpvoted} count={count} />
         </div>

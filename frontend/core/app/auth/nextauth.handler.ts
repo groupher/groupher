@@ -35,7 +35,7 @@ const oauthSignin = (params) => {
   return getClient().mutation(signinOauthQuery, params)
 }
 
-export const config = {
+const config = {
   secret: process.env.NEXTAUTH_SECRET,
   providers: [Github],
   callbacks: {
@@ -92,4 +92,4 @@ export const config = {
   },
 } satisfies NextAuthConfig
 
-export const { handlers, auth, signIn, signOut } = NextAuth(config)
+export const { handlers } = NextAuth(config)

@@ -1,10 +1,3 @@
-import { cacheExchange, createClient, fetchExchange } from '@urql/core'
-import { clone, mergeRight, toUpper } from 'ramda'
-
-import { PAGE_SIZE } from '~/config'
-
-import { isString } from './validator'
-
 export const FETCH_OPTIONS = (): RequestInit => ({
   // make sure cookie is included
   // since groupher.com and api.groupher.com is different domain
@@ -23,52 +16,6 @@ export const RETRY_OPTIONS = {
   randomDelay: true,
   maxNumberAttempts: 2,
   retryIf: (err) => err?.networkError,
-}
-
-export const makeGithubExplore = (
-  GRAPHQL_ENDPOINT: string,
-  token: string,
-): ReturnType<typeof createClient> => {
-  const client = createClient({
-    url: GRAPHQL_ENDPOINT,
-    exchanges: [cacheExchange, fetchExchange],
-    fetchOptions: {
-      headers: {
-        authorization: token ? `Bearer ${token}` : '',
-      },
-    },
-  })
-
-  return client
-}
-
-export const pagiFilter = (
-  page: number,
-  options: Record<string, string | number> = {},
-): Record<string, string | number> => mergeRight({ page, size: PAGE_SIZE.D }, options)
-
-/*
- * map value(string) to UPPER case for server absinthe-atom format
- * e.p: is server required :post, front-end should pass "POST"
- */
-export const atomizeValues = (_obj: Record<string, string>): Record<string, string> => {
-  const obj = clone(_obj)
-
-  for (const k in obj) {
-    if (isString(obj[k])) {
-      obj[k] = toUpper(obj[k])
-    }
-  }
-
-  return obj
-}
-
-// NOTE: this is a simple hack for send parallel requests in rxjs
-// in rxjs, if you want to send parallel request you should use complex method
-// like forkJoin .. which need to refactor whole sr71 part
-// currently the simple later is fine
-export const later = (func: () => void, time = 200): ReturnType<typeof setTimeout> => {
-  return setTimeout(func, time)
 }
 
 const normalizeGQLQuery = (query: string): string => {

@@ -35,13 +35,6 @@ export const STATIC_CLS = {
   vividDarkWhenDark: 'dark:saturate-150 dark:brightness-125',
 } as const
 
-export const DIR: Record<keyof TSpace, string> = {
-  top: 'mt',
-  bottom: 'mb',
-  left: 'ml',
-  right: 'mr',
-} as const
-
 export const RAINBOW_ALIAS: Record<TColorPrefix, string> = {
   fg: 'text-rainbow',
   bg: 'bg-rainbow',
@@ -57,7 +50,7 @@ export const RAINBOW_ALIAS: Record<TColorPrefix, string> = {
  * cacheKey format: `${prefix}|${key}` e.g. "text|digest" or "bg|modal.mask"
  * value: "text-digest" or "bg-modal-mask"
  */
-export const THEME_KEY_CACHE = new Map<string, string>()
+const THEME_KEY_CACHE = new Map<string, string>()
 
 export function keyToClass(prefix: string, key: string): string {
   const cacheKey = `${prefix}|${key}`

@@ -18,31 +18,35 @@ const LinkBoard: FC<TProps> = ({ linksData }) => {
     <>
       <div className={s.header}>
         <div className={s.tabs}>
-          <div
+          <button
+            type='button'
             className={cn(s.tabName, activeTab === 'link' && s.tabNameActive)}
             onClick={() => setActiveTab('link')}
           >
             URL
-          </div>
-          <div
+          </button>
+          <button
+            type='button'
             className={cn(s.tabName, activeTab === 'html' && s.tabNameActive)}
             onClick={() => setActiveTab('html')}
           >
             HTML
-          </div>
+          </button>
 
-          <div
+          <button
+            type='button'
             className={cn(s.tabName, activeTab === 'md' && s.tabNameActive)}
             onClick={() => setActiveTab('md')}
           >
             MD
-          </div>
-          <div
+          </button>
+          <button
+            type='button'
             className={cn(s.tabName, activeTab === 'orgMode' && s.tabNameActive)}
             onClick={() => setActiveTab('orgMode')}
           >
             OrgMode
-          </div>
+          </button>
         </div>
         <CopyButton value={linksData[activeTab]} />
       </div>

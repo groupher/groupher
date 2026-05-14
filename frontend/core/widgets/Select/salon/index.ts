@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TSpace } from '~/spec'
 
-export { cn, cnMerge } from '~/css'
+export { cnMerge } from '~/css'
 
 type TProps = TSpace
 

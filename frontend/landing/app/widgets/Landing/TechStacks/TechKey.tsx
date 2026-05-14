@@ -1,5 +1,11 @@
-import { motion, type TargetAndTransition, useAnimationControls } from 'motion/react'
-import { type FC, useEffect } from 'react'
+import {
+  LazyMotion,
+  domAnimation,
+  m,
+  type TargetAndTransition,
+  useAnimationControls,
+} from 'motion/react'
+import type { FC } from 'react'
 
 import Img from '~/Img'
 
@@ -26,36 +32,32 @@ const TechKey: FC<TProps> = ({ path, name, desc = '', iconSize = 'size-6', activ
     controls.start(CLICK_EFFECT)
   }
 
-  useEffect(() => {
-    if (active) {
-      controls.start(CLICK_EFFECT)
-    }
-  }, [active, controls])
-
   return (
-    <motion.div
-      role='button'
-      className={s.wrapper}
-      animate={controls}
-      onPointerDown={() => {
-        handleClick()
-        controls.start({ scale: 0.96 })
-      }}
-      onPointerUp={() => controls.start({ scale: 1 })}
-      onPointerLeave={() => controls.start({ scale: 1 })}
-    >
-      <motion.div
-        className={s.iconBox}
-        animate={active ? { scale: [1, 1.2, 1] } : { scale: 1 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
+    <LazyMotion features={domAnimation}>
+      <m.div
+        role='button'
+        className={s.wrapper}
+        animate={controls}
+        onPointerDown={() => {
+          handleClick()
+          controls.start({ scale: 0.96 })
+        }}
+        onPointerUp={() => controls.start({ scale: 1 })}
+        onPointerLeave={() => controls.start({ scale: 1 })}
       >
-        <Img src={`landing/stacks/${path}`} className={cn(s.techIcon, iconSize)} />
-      </motion.div>
-      <div className={s.intro}>
-        <span className={s.title}>{name}.</span>
-        {desc}
-      </div>
-    </motion.div>
+        <m.div
+          className={s.iconBox}
+          animate={active ? { scale: [1, 1.2, 1] } : { scale: 1 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
+        >
+          <Img src={`landing/stacks/${path}`} className={cn(s.techIcon, iconSize)} />
+        </m.div>
+        <div className={s.intro}>
+          <span className={s.title}>{name}.</span>
+          {desc}
+        </div>
+      </m.div>
+    </LazyMotion>
   )
 }
 

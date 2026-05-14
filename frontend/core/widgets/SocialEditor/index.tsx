@@ -22,12 +22,14 @@ type TProps = {
   onChange?: (items: readonly TSocialItem[]) => void
 } & TSpace
 
+const DEFAULT_VALUE: readonly TSocialItem[] = []
+
 const SocialEditor: FC<TProps> = ({
   testid = 'social-editor',
   width = 'w-full',
   withTitle = true,
   onChange = console.log,
-  value = [],
+  value = DEFAULT_VALUE,
   ...spacing
 }) => {
   const s = useSalon({ width, ...spacing })
@@ -82,7 +84,7 @@ const SocialEditor: FC<TProps> = ({
                 className={cn(s.icon, active && s.iconActive, social === 'WEIBO' && 'size-5')}
                 onClick={() => {
                   if (!includes(social, selectedTypes)) {
-                    setSelected([...selected, { type: social, link: '' }])
+                    setSelected((prev) => [...prev, { type: social, link: '' }])
                   }
                 }}
               />

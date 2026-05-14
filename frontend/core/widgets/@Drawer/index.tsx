@@ -24,7 +24,7 @@ export default function Drawer({
   resetKey,
   dismissible = true,
 }: TProps) {
-  const router = useRouter()
+  const { back } = useRouter()
 
   const contentRef = useRef<HTMLDivElement | null>(null)
   const drawerRef = useRef<HTMLDivElement | null>(null)
@@ -81,8 +81,8 @@ export default function Drawer({
     didCloseRef.current = true
 
     unlockPageOnce()
-    router.back()
-  }, [router, unlockPageOnce])
+    back()
+  }, [back, unlockPageOnce])
 
   const requestClose = useCallback(() => {
     if (closing) return

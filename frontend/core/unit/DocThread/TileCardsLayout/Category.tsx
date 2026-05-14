@@ -22,7 +22,7 @@ const Category: FC<TProps> = ({ title, desc, color, articles }) => {
   const { t } = useTrans()
   const { gotoDetailLayout } = useLogic()
   const authorsCount =
-    new Set(articles.map((article) => article.author?.login || article.author?.id).filter(Boolean))
+    new Set(articles.flatMap((article) => article.author?.login || article.author?.id || []))
       .size || 2
   const articleCount = articles.length
 

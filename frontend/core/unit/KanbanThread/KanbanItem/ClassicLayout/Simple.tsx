@@ -28,7 +28,7 @@ type TProps = {
 const KanbanItem: FC<TProps> = ({ article }) => {
   const isActive = usePreviewItemActive(article.innerId, THREAD_PATH.POST)
   const s = useSalon({ active: isActive })
-  const router = useRouter()
+  const { push } = useRouter()
   const { slug } = useCommunity()
 
   const [titleIdx, setTitleIdx] = useState(0)
@@ -48,9 +48,7 @@ const KanbanItem: FC<TProps> = ({ article }) => {
         type='button'
         className={s.title}
         data-preview-id={String(article.innerId)}
-        onClick={() =>
-          router.push(`/${slug}/${THREAD_PATH.POST}/${article.innerId}`, { scroll: false })
-        }
+        onClick={() => push(`/${slug}/${THREAD_PATH.POST}/${article.innerId}`, { scroll: false })}
       >
         {article.title}
       </button>

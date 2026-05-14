@@ -24,9 +24,9 @@ const Footer: FC<TProps> = ({
 
   return (
     <div className={s.wrapper}>
-      <div className={s.arrowBox} onClick={() => onBack()}>
+      <button type='button' className={s.arrowBox} onClick={() => onBack()}>
         <ArrowSVG className={s.arrowIocn} />
-      </div>
+      </button>
       <Button
         size='small'
         onClick={() => onConfirm()}

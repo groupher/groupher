@@ -18,7 +18,7 @@ import useSalon from '../salon/sidebar_layout/community_brief'
 export default function CommunityBrief() {
   const s = useSalon()
 
-  const router = useRouter()
+  const { push } = useRouter()
   const { logo, slug, title, desc, dashboard } = useCommunity()
   const activeThread = useViewingThread()
   const { communityLayout, brandLayout } = useLayout()
@@ -37,7 +37,7 @@ export default function CommunityBrief() {
       <div className={s.desc}>{desc}</div>
 
       {communityLayout === COMMUNITY_LAYOUT.SIDEBAR && activeThread === THREAD.DOC && (
-        <ArrowButton top={12} left={-2} leftLayout onClick={() => router.push(`/${slug}`)}>
+        <ArrowButton top={12} left={-2} leftLayout onClick={() => push(`/${slug}`)}>
           返回社区
         </ArrowButton>
       )}

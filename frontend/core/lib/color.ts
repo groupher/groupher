@@ -2,41 +2,6 @@ import { COLOR } from '~/const/colors'
 import THEME from '~/const/theme'
 import type { TColorName } from '~/spec'
 
-/**
- * for lighten / darken color
- * see https://stackoverflow.com/a/13532993/4050784
- */
-const shadeColor = (color: string, percent: number): string => {
-  let R = Number.parseInt(color.substring(1, 3), 16)
-  let G = Number.parseInt(color.substring(3, 5), 16)
-  let B = Number.parseInt(color.substring(5, 7), 16)
-
-  // @ts-expect-error
-  R = Number.parseInt((R * (100 + percent)) / 100, 10)
-  // @ts-expect-error
-  G = Number.parseInt((G * (100 + percent)) / 100, 10)
-  // @ts-expect-error
-  B = Number.parseInt((B * (100 + percent)) / 100, 10)
-
-  R = R < 255 ? R : 255
-  G = G < 255 ? G : 255
-  B = B < 255 ? B : 255
-
-  const RR = R.toString(16).length === 1 ? `0${R.toString(16)}` : R.toString(16)
-  const GG = G.toString(16).length === 1 ? `0${G.toString(16)}` : G.toString(16)
-  const BB = B.toString(16).length === 1 ? `0${B.toString(16)}` : B.toString(16)
-
-  return `#${RR}${GG}${BB}`
-}
-
-export const lighten = (color: string, percent: number): string => {
-  return shadeColor(color, percent as number)
-}
-
-export const darken = (color: string, percent: number): string => {
-  return shadeColor(color, -percent as number)
-}
-
 export const PAGE_CUSTOM_HUE_DEFAULT = 190
 export const PAGE_CUSTOM_INTENSITY_DEFAULT = 100
 
@@ -178,15 +143,6 @@ export const normalizePageBgIntensity = (value?: number | null): number => {
   }
 
   return clamp(value, 0, 100)
-}
-
-export const getHueFromHexColor = (hex: string, fallback = PAGE_CUSTOM_HUE_DEFAULT): number => {
-  const rgb = hexToRgb(hex)
-  if (!rgb) return fallback
-
-  const [hue, saturation] = rgbToHsl(...rgb)
-  if (saturation < 1) return fallback
-  return Math.round(hue)
 }
 
 export const getPageBgCustomColor = (

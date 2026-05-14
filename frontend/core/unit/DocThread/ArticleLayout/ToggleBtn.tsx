@@ -15,9 +15,9 @@ const ToggleBtn: FC<TProps> = ({ open, onToggle, className = '' }) => {
   const s = useSalon({ open })
 
   return (
-    <div className={cn(s.wrapper, className)} onClick={() => onToggle(!open)}>
+    <button type='button' className={cn(s.wrapper, className)} onClick={() => onToggle(!open)}>
       {open ? <ArrowSVG className={s.arrowIcon} /> : <ListSVG className={s.listIcon} />}
-    </div>
+    </button>
   )
 }
 
