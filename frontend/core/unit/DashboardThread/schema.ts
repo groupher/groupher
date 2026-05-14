@@ -407,7 +407,59 @@ const updateModerators = gql`
   query community($slug: String!, $incViews: Boolean) {
     community(slug: $slug, incViews: $incViews) {
       moderators {
-        role
+        isRoot
+        passportItemCount
+        user {
+          login
+          avatar
+          nickname
+          bio
+        }
+      }
+    }
+  }
+`
+
+const searchUsers = gql`
+  query ($name: String!) {
+    searchUsers(name: $name) {
+      entries {
+        login
+        avatar
+        nickname
+        bio
+        social {
+          github
+          twitter
+          zhihu
+        }
+      }
+    }
+  }
+`
+
+const addModerator = gql`
+  mutation ($community: String!, $user: String!) {
+    addModerator(community: $community, user: $user) {
+      moderators {
+        isRoot
+        passportItemCount
+        user {
+          login
+          avatar
+          nickname
+          bio
+        }
+      }
+    }
+  }
+`
+
+const addModerators = gql`
+  mutation ($community: String!, $users: [String!]!) {
+    addModerators(community: $community, users: $users) {
+      moderators {
+        isRoot
         passportItemCount
         user {
           login
@@ -509,6 +561,9 @@ const schema = {
   pagedChangelogs,
   updateDashboardFaqs,
   updateModerators,
+  searchUsers,
+  addModerator,
+  addModerators,
   communityOverview,
   openGraphInfo,
   updateDashboardHeaderLinks,

@@ -25,7 +25,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
 
       action (for post operations) -> requirement: %{scope: :context, context: :cms, grant: "post.*"}
           -> fetch community_slug from resolution.arguments.community
-          -> read cur_user.cur_passport["cms"][community_slug]
+          -> read cur_user.cur_passport[community_slug]["cms"]
           -> check if that community whitelist contains required grant
           -> true: allow, false/missing: deny
 
@@ -33,7 +33,8 @@ defmodule GroupherServerWeb.Middleware.Passport do
 
   - `community_slug` comes from request arguments, then selects one community whitelist bucket.
   - `grant_by_thread` requirements are expanded at runtime into concrete grants via `thread` argument.
-  - `global.root == true` bypasses normal checks.
+  - `global.god == true` bypasses normal checks.
+  - `<community_slug>.root == true` bypasses checks only inside that community.
   """
 
   @behaviour Absinthe.Middleware
@@ -98,7 +99,7 @@ defmodule GroupherServerWeb.Middleware.Passport do
   defp has_permission?(cur_passport, resolution, requirement) do
     normalized_passport = PermissionRegistry.normalize_rules(cur_passport)
 
-    has_root_permission?(normalized_passport) or
+    has_god_permission?(normalized_passport) or
       check_scope_permission(normalized_passport, resolution, requirement)
   end
 
@@ -109,7 +110,8 @@ defmodule GroupherServerWeb.Middleware.Passport do
        ) do
     with {:ok, community} <- fetch_community_slug(resolution),
          {:ok, grant} <- resolve_grant(requirement, resolution) do
-      get_in(passport, [to_string(context), community, grant]) == true
+      get_in(passport, [community, "root"]) == true or
+        get_in(passport, [community, to_string(context), grant]) == true
     else
       _ -> false
     end
@@ -123,11 +125,11 @@ defmodule GroupherServerWeb.Middleware.Passport do
     end
   end
 
-  defp check_scope_permission(_cms_passport, _resolution, %{owner_fallback: true, grant: nil}),
+  defp check_scope_permission(_passport, _resolution, %{owner_fallback: true, grant: nil}),
     do: false
 
-  defp check_scope_permission(_cms_passport, _resolution, %{owner_fallback: true}), do: false
-  defp check_scope_permission(_cms_passport, _resolution, _), do: false
+  defp check_scope_permission(_passport, _resolution, %{owner_fallback: true}), do: false
+  defp check_scope_permission(_passport, _resolution, _), do: false
 
   defp resolve_grant(%{grant: grant}, _resolution) when is_binary(grant), do: {:ok, grant}
 
@@ -157,8 +159,8 @@ defmodule GroupherServerWeb.Middleware.Passport do
     get_in(passport, ["global", permission]) == true
   end
 
-  defp has_root_permission?(passport) do
-    has_global_permission?(passport, "root")
+  defp has_god_permission?(passport) do
+    has_global_permission?(passport, "god")
   end
 
   defp infer_owner?(%{

@@ -2,8 +2,6 @@ import { THREAD } from '~/const/thread'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TThread } from '~/spec'
 
-export { cn } from '~/css'
-
 type TProps = {
   tab: TThread
 }

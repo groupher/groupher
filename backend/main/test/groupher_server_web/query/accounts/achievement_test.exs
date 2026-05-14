@@ -74,9 +74,8 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       community_attrs2 = mock_attrs(:community)
       {:ok, community2} = CMS.Communities.create(community_attrs2, user2)
 
-      role = "moderator"
-      {:ok, _} = CMS.Communities.add_moderator(community, role, user3, user)
-      {:ok, _} = CMS.Communities.add_moderator(community2, role, user3, user2)
+      {:ok, _} = CMS.Communities.add_moderator(community, user3, user)
+      {:ok, _} = CMS.Communities.add_moderator(community2, user3, user2)
 
       variables = %{login: user3.login, filter: %{page: 1, size: 20}}
       results = guest_conn |> gq_query(@query, variables)

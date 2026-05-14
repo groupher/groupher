@@ -197,7 +197,7 @@
     "oxfmt": "0.47.0",
     "oxlint": "1.62.0",
     "postcss": "^8.5.10",
-    "react-doctor": "^0.0.39",
+    "react-doctor": "^0.1.6",
     "react-json-view-lite": "^2.5.0",
     "tsc-files": "^1.1.4",
     "typescript": "6.0.3",

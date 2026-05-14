@@ -1,8 +1,6 @@
 import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
-export { cn } from '~/css'
-
 export default function useSalon() {
   const { cn, fg, fill, rainbow } = useTwBelt()
 

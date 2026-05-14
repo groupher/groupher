@@ -39,5 +39,3 @@ export const getMetricMap = (t: TTranslate) => ({
     delay: 10000,
   },
 })
-
-export const holder = 1

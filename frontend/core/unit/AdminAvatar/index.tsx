@@ -6,6 +6,7 @@
 
 import type { FC } from 'react'
 
+import SIZE from '~/const/size'
 import AdminStarSVG from '~/icons/AdminStar'
 import Img from '~/Img'
 import type { TSpace, TUser } from '~/spec'
@@ -24,7 +25,11 @@ const AdminAvatar: FC<TProps> = ({ testid: _testid = 'admin-avatar', user, ...sp
   return (
     <div className={s.wrapper}>
       <div className={s.innerWrapper}>
-        <Img className={s.avatar} src={user.avatar} fallback={<ImgFallback user={user} />} />
+        <Img
+          className={s.avatar}
+          src={user.avatar}
+          fallback={<ImgFallback user={user} className={s.avatar} size={SIZE.MEDIUM} />}
+        />
         <div className={s.badge}>
           <AdminStarSVG className={s.starIcon} />
         </div>

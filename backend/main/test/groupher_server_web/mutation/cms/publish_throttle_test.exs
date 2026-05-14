@@ -50,9 +50,9 @@ defmodule GroupherServer.Test.Mutation.PublishThrottle do
     assert created |> Map.has_key?("innerId")
   end
 
-  test "root create multi content with invalid interval time success", ~m(community)a do
+  test "god create multi content with invalid interval time success", ~m(community)a do
     {:ok, user} = db_insert(:user)
-    passport_rules = %{"root" => true}
+    passport_rules = %{"god" => true}
     rule_conn = simu_conn(:user, cms: passport_rules)
     variables = mock_attrs(:post) |> Map.merge(%{community: community.slug})
 

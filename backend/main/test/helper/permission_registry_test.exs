@@ -43,8 +43,8 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
 
   test "valid_rules? accepts normalized shape only" do
     normalized = %{
-      "global" => %{"community.update" => true},
-      "cms" => %{"javascript" => %{"post.edit" => true}}
+      "global" => %{"category.set" => true, "community.update" => true},
+      "javascript" => %{"cms" => %{"post.edit" => true}}
     }
 
     assert PermissionRegistry.valid_rules?(normalized)
@@ -56,13 +56,39 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
 
     refute PermissionRegistry.valid_rules?(%{
              "global" => %{"bad.perm" => true},
-             "cms" => %{}
+             "javascript" => %{"cms" => %{}}
            })
 
     refute PermissionRegistry.valid_rules?(%{
              "global" => %{},
-             "communities" => %{"javascript" => %{"post.edit" => true}}
+             "javascript" => %{"cms" => %{"category.set" => true}}
            })
+
+    refute PermissionRegistry.valid_rules?(%{
+             "global" => %{},
+             "javascript" => %{"communities" => %{"post.edit" => true}}
+           })
+  end
+
+  test "normalize_rules keeps community slug named cms as community scope" do
+    normalized =
+      PermissionRegistry.normalize_rules(%{
+        "global" => %{},
+        "cms" => %{"root" => true, "cms" => %{"post.edit" => true}}
+      })
+
+    assert get_in(normalized, ["cms", "root"]) == true
+    assert get_in(normalized, ["cms", "cms", "post.edit"]) == true
+  end
+
+  test "normalize_rules still migrates legacy top-level cms context shape" do
+    normalized =
+      PermissionRegistry.normalize_rules(%{
+        "global" => %{},
+        "cms" => %{"javascript" => %{"post.edit" => true}}
+      })
+
+    assert get_in(normalized, ["javascript", "cms", "post.edit"]) == true
   end
 
   defp action_literals_from_schema do

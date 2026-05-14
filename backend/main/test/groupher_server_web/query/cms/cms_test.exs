@@ -408,11 +408,10 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     }
     """
     test "guest can get moderators count of a community", ~m(guest_conn community user)a do
-      role = "moderator"
       {:ok, users} = db_insert_multi(:user, assert_v(:inner_page_size))
       cur_user = user
 
-      Enum.each(users, &CMS.Communities.add_moderator(community, role, &1, cur_user))
+      Enum.each(users, &CMS.Communities.add_moderator(community, &1, cur_user))
 
       variables = %{slug: community.slug}
       results = guest_conn |> gq_query(@query, variables)
@@ -436,14 +435,13 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     }
     """
     test "guest user can get paged moderators", ~m(guest_conn user community)a do
-      role = "moderator"
       {:ok, users} = db_insert_multi(:user, 25)
 
       cur_user = user
 
       Enum.each(
         users,
-        &CMS.Communities.add_moderator(community, role, %User{id: &1.id}, cur_user)
+        &CMS.Communities.add_moderator(community, %User{id: &1.id}, cur_user)
       )
 
       variables = %{id: community.id, filter: %{page: 1, size: 10}}

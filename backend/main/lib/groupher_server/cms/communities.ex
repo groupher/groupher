@@ -129,10 +129,19 @@ defmodule GroupherServer.CMS.Communities do
   def all_passport_rules, do: Passport.all_passport_rules()
 
   # Moderator
-  @spec add_moderator(Community.t(), String.t(), User.t(), User.t()) ::
-          T.domain_res(Community.t())
-  def add_moderator(%Community{} = community, role, %User{} = target_user, %User{} = cur_user) do
-    Moderator.add(community, role, target_user, cur_user)
+  @spec add_moderator(Community.t(), User.t(), User.t()) :: T.domain_res(Community.t())
+  def add_moderator(%Community{} = community, %User{} = target_user, %User{} = cur_user) do
+    Moderator.add(community, target_user, cur_user)
+  end
+
+  @spec add_moderators(Community.t(), list(User.t()), User.t()) :: T.domain_res(Community.t())
+  def add_moderators(
+        %Community{} = community,
+        target_users,
+        %User{} = cur_user
+      )
+      when is_list(target_users) do
+    Moderator.add_many(community, target_users, cur_user)
   end
 
   @spec remove_moderator(String.t() | Community.t(), User.t(), User.t()) ::
@@ -195,13 +204,15 @@ defmodule GroupherServer.CMS.Communities do
     Tags.create_group(community, thread, attrs)
   end
 
-  @spec update_tag_group(Community.t(), atom(), T.id(), map()) :: T.domain_res(CommunityTagGroup.t())
+  @spec update_tag_group(Community.t(), atom(), T.id(), map()) ::
+          T.domain_res(CommunityTagGroup.t())
   def update_tag_group(%Community{} = community, thread, id, attrs) do
     Tags.update_group(community, thread, id, attrs)
   end
 
   @spec delete_tag_group(Community.t(), atom(), T.id()) :: T.domain_res(CommunityTagGroup.t())
-  def delete_tag_group(%Community{} = community, thread, id), do: Tags.delete_group(community, thread, id)
+  def delete_tag_group(%Community{} = community, thread, id),
+    do: Tags.delete_group(community, thread, id)
 
   @spec delete_tag(T.id()) :: T.domain_res(CommunityTag.t())
   def delete_tag(id), do: Tags.delete(id)

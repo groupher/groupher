@@ -4,12 +4,13 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export default function useSalon({ visible }) {
+export default function useSalon({ visible, compact = false }) {
   const { cn, bg, br, zIndex, hover, shadow } = useTwBelt()
 
   return {
     wrapper: cn(
-      'relative column mx-auto h-auto rounded-md min-h-72 border',
+      'relative column mx-auto h-auto rounded-md border',
+      compact ? 'min-h-0' : 'min-h-72',
       shadow('modal'),
       br('divider'),
       bg('modal.bg'),
@@ -19,7 +20,7 @@ export default function useSalon({ visible }) {
       bg('modal.mask'),
       zIndex('modalOverlay', visible),
     ),
-    children: cn('min-h-72 h-auto', 'grow', 'overflow-y-auto', 'min-h-0'),
+    children: cn(compact ? 'min-h-0' : 'min-h-72', 'h-auto', 'grow', 'overflow-y-auto'),
     //
     closeBox: cn('align-both size-7 absolute top-3.5 right-4 z-10', hover('bg')),
     closeIcon: cn('size-5', hover('icon'), zIndex('modalCloseBtn')),

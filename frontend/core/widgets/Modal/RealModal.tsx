@@ -13,7 +13,7 @@ import useSalon, { cn } from './salon'
 
 type TProps = Pick<
   BaseTProps,
-  'children' | 'show' | 'width' | 'showCloseBtn' | 'mode' | 'offsetTop' | 'offsetLeft'
+  'children' | 'show' | 'width' | 'showCloseBtn' | 'mode' | 'offsetTop' | 'offsetLeft' | 'compact'
 > & {
   handleCloseModal: () => void
 }
@@ -26,9 +26,10 @@ const RealModal: FC<TProps> = ({
   mode: _mode,
   offsetTop = '20%',
   offsetLeft,
+  compact = false,
   handleCloseModal,
 }) => {
-  const s = useSalon({ visible: show })
+  const s = useSalon({ visible: show, compact })
 
   const { glowType } = useGlowLight()
   const { theme } = useTheme()

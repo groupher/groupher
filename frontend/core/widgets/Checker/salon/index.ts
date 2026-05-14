@@ -50,7 +50,8 @@ export default function useSalon({
     iconBox: cn(
       size === SIZE.SMALL ? 'size-3' : 'size-4',
       'align-both rounded trans-all-200 relative',
-      disabled ? 'border-none' : 'border-2',
+      'border-2',
+      disabled && 'opacity-70',
       active ? rainbow(color$, 'bg') : 'bg-transparent',
       rainbow(color$, 'border'),
     ),

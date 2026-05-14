@@ -3,4 +3,5 @@ export const I18N_NS = {
   MAIN: ['base', 'main'],
   DASHBOARD: ['base', 'dashboard'],
   LANDING: ['base', 'landing'],
+  PASSPORT: ['passport'],
 } as const

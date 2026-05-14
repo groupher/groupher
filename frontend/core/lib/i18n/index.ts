@@ -2,7 +2,7 @@ import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
 import type { TLocale, TMetric } from '~/spec'
 
-export const I18N_NAMESPACES = ['base', 'main', 'dashboard', 'landing'] as const
+export const I18N_NAMESPACES = ['base', 'main', 'dashboard', 'landing', 'passport'] as const
 export type TI18nNamespace = (typeof I18N_NAMESPACES)[number]
 
 const DEFAULT_NAMESPACES: TI18nNamespace[] = ['base']
@@ -13,12 +13,14 @@ const localeLoaders = {
     main: () => import('~/i18n/en/main').then((m) => m.default),
     dashboard: () => import('~/i18n/en/dashboard').then((m) => m.default),
     landing: () => import('~/i18n/en/landing').then((m) => m.default),
+    passport: () => import('~/i18n/en/passport').then((m) => m.default),
   },
   zh: {
     base: () => import('~/i18n/zh/base').then((m) => m.default),
     main: () => import('~/i18n/zh/main').then((m) => m.default),
     dashboard: () => import('~/i18n/zh/dashboard').then((m) => m.default),
     landing: () => import('~/i18n/zh/landing').then((m) => m.default),
+    passport: () => import('~/i18n/zh/passport').then((m) => m.default),
   },
 } as const
 

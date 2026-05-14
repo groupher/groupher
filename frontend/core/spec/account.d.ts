@@ -7,6 +7,11 @@ type TUserSocial = {
   twitter?: string
   blog?: string
   company?: string
+  zhihu?: string
+  dribble?: string
+  huaban?: string
+  douban?: string
+  pinterest?: string
 }
 
 export type TSimpleUser = {
@@ -28,6 +33,18 @@ type TContributes = {
   totalCount?: number
 }
 
+type TPassport = {
+  global?: Record<string, boolean>
+  [community: string]:
+    | Record<string, boolean>
+    | {
+        root?: boolean
+        cms?: Record<string, boolean>
+        account?: Record<string, boolean>
+      }
+    | undefined
+}
+
 export type TUser = TSimpleUser & {
   id?: string
   // TODO: figure it out
@@ -38,6 +55,7 @@ export type TUser = TSimpleUser & {
   geoCity?: string
   viewerHasFollowed?: boolean
   social?: TUserSocial
+  passport?: TPassport
   email?: string
   contributes?: TContributes
   followersCount?: number

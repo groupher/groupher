@@ -49,5 +49,15 @@ defmodule GroupherServer.Test.Query.Accounts.Search do
       assert results["totalCount"] == 0
       assert results["entries"] == []
     end
+
+    test "search user by login should work", ~m(guest_conn)a do
+      {:ok, _user} = db_insert(:user, %{login: "admin_login_1", nickname: "dashboard user"})
+
+      variables = %{name: "admin_login"}
+      results = guest_conn |> gq_query(@query, variables)
+
+      assert results["totalCount"] == 1
+      assert results["entries"] |> Enum.any?(&(&1["nickname"] == "dashboard user"))
+    end
   end
 end

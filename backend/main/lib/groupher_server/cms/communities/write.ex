@@ -52,7 +52,7 @@ defmodule GroupherServer.CMS.Communities.Write do
     end
   end
 
-  defp init_community_root(%Community{} = community, %User{} = user, role \\ "root") do
-    Moderator.add(community, role, user, user)
+  defp init_community_root(%Community{} = community, %User{} = user) do
+    Moderator.add_root(community, user)
   end
 end

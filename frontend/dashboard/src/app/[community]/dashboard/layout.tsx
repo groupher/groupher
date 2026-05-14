@@ -31,7 +31,7 @@ export default async ({ children, params, searchParams }) => {
 
   const [{ community, dashboard }, localeData] = await Promise.all([
     getCommunityInfo(params$.community),
-    getLocaleData(locale, I18N_NS.DASHBOARD),
+    getLocaleData(locale, [...I18N_NS.DASHBOARD, ...I18N_NS.PASSPORT]),
   ])
 
   return (

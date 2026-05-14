@@ -15,12 +15,11 @@ defmodule GroupherServer.CMS.Model.CommunityModerator do
   @schema_prefix DBPrefix.cms()
 
   @optional_fields ~w(passport_item_count)a
-  @required_fields ~w(user_id community_id role)a
+  @required_fields ~w(user_id community_id)a
 
   @type t :: %CommunityModerator{}
 
   schema "communities_moderators" do
-    field(:role, :string)
     field(:passport_item_count, :integer)
     belongs_to(:user, User, foreign_key: :user_id)
     belongs_to(:community, Community, foreign_key: :community_id)

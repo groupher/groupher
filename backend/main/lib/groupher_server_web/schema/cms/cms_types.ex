@@ -10,7 +10,9 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import Ecto.Query, warn: false
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{Accounts, CMS}
+  alias CMS.Model.Community
+  alias Helper.ORM
   alias GroupherServerWeb.Schema
 
   import_types(Schema.CMS.Metrics)
@@ -181,7 +183,18 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object :community_moderator do
-    field(:role, :string)
+    field(:is_root, :boolean) do
+      resolve(fn moderator, _, _ ->
+        with {:ok, community} <- ORM.find(Community, moderator.community_id),
+             {:ok, passport} <-
+               CMS.Communities.get_passport(%Accounts.Model.User{id: moderator.user_id}) do
+          {:ok, get_in(passport, [community.slug, "root"]) == true}
+        else
+          _ -> {:ok, false}
+        end
+      end)
+    end
+
     field(:passport_item_count, :integer)
     field(:user, :common_user)
   end

@@ -42,6 +42,8 @@ defmodule GroupherServer.Accounts.Model.User do
 
     field(:views, :integer, default: 0)
 
+    # A user owns one social profile record. The record stores multiple platform
+    # links as fields, e.g. github/twitter/blog, so this is not one row per link.
     has_one(:social, Social)
 
     has_one(:achievement, Achievement)
