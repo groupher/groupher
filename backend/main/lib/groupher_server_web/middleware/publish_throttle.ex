@@ -11,34 +11,20 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
   alias GroupherServer.{Accounts, Statistics}
 
   alias Accounts.Model.User
-  alias Helper.PermissionRegistry
   alias Statistics.Model.PublishThrottle
 
   @interval_minutes get_config(:general, :publish_throttle_interval_minutes)
   @hour_limit get_config(:general, :publish_throttle_hour_limit)
   @day_total get_config(:general, :publish_throttle_day_limit)
 
-  def call(%{context: %{cur_user: %{cur_passport: passport}}} = resolution, opt)
-      when is_map(passport) do
-    if global_god?(passport), do: resolution, else: throttle(resolution, opt)
-  end
-
-  def call(%{context: %{cur_user: _cur_user}} = resolution, opt) do
-    throttle(resolution, opt)
-  end
-
-  def call(resolution, _) do
+  def call(
+        %{context: %{cur_user: %{cur_passport: %{"global" => %{"god" => true}}}}} = resolution,
+        _
+      ) do
     resolution
-    |> handle_absinthe_error("Authorize: need login", ecode(:account_login))
   end
 
-  defp global_god?(passport) do
-    passport
-    |> PermissionRegistry.normalize_rules()
-    |> get_in(["global", "god"]) == true
-  end
-
-  defp throttle(%{context: %{cur_user: cur_user}} = resolution, opt) do
+  def call(%{context: %{cur_user: cur_user}} = resolution, opt) do
     with {:ok, record} <- Statistics.load_throttle_record(%User{id: cur_user.id}),
          {:ok, _} <- interval_check(record, opt),
          {:ok, _} <- hour_limit_check(record, opt),
@@ -63,8 +49,9 @@ defmodule GroupherServerWeb.Middleware.PublishThrottle do
     end
   end
 
-  defp throttle(resolution, _opt) do
+  def call(resolution, _) do
     resolution
+    |> handle_absinthe_error("Authorize: need login", ecode(:account_login))
   end
 
   # TODO: option: passport ..

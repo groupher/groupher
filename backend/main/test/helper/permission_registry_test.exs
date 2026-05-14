@@ -91,14 +91,6 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
     assert get_in(normalized, ["javascript", "cms", "post.edit"]) == true
   end
 
-  test "normalize_rules migrates legacy global root to god" do
-    normalized = PermissionRegistry.normalize_rules(%{"global" => %{"root" => true}})
-
-    assert get_in(normalized, ["global", "god"]) == true
-    refute Map.has_key?(normalized["global"], "root")
-    assert PermissionRegistry.valid_rules?(normalized)
-  end
-
   defp action_literals_from_schema do
     @schema_root
     |> Path.join("**/*.ex")

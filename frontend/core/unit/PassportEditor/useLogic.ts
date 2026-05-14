@@ -38,25 +38,7 @@ const enabledRuleKeys = (rules: Record<string, boolean>): string[] =>
     .filter(([, enabled]) => enabled)
     .map(([rule]) => rule)
 
-const normalizeGlobalRules = (
-  rules: Record<string, boolean> | undefined,
-): Record<string, boolean> => {
-  if (!rules) return {}
-  if (rules.root !== true) return rules
-
-  const { root: _legacyRoot, ...rest } = rules
-  return { ...rest, god: true }
-}
-
-const normalizePassportRules = (rules: Record<string, any>): Record<string, any> => ({
-  ...rules,
-  global: normalizeGlobalRules(rules.global),
-})
-
-const hasGlobalGod = (user: TUser | null): boolean => {
-  const globalRules = normalizeGlobalRules(user?.cmsPassport?.global)
-  return globalRules.god === true
-}
+const hasGlobalGod = (user: TUser | null): boolean => user?.cmsPassport?.global?.god === true
 
 type TRet = {
   activeModerator: TUser | null
@@ -117,7 +99,7 @@ export default function useLogic(): TRet {
     query(S.userPassport, { login: activeModerator.login })
       .then((res) => {
         const { cmsPassportString = '{}', social = null } = res?.user ?? {}
-        const passportJson = normalizePassportRules(JSON.parse(cmsPassportString))
+        const passportJson = JSON.parse(cmsPassportString)
         const globalRules = passportJson.global
         const communityRules = passportJson[community$.slug]?.cms
 

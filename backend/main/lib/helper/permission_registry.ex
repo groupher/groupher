@@ -232,11 +232,7 @@ defmodule Helper.PermissionRegistry do
     end)
   end
 
-  defp normalize_context("global", map) when is_map(map) do
-    map
-    |> normalize_permission_map()
-    |> migrate_legacy_global_root()
-  end
+  defp normalize_context("global", map) when is_map(map), do: normalize_permission_map(map)
 
   defp normalize_context(context, map) when is_binary(context) and is_map(map) do
     Enum.reduce(map, %{}, fn {scope_key, value}, acc ->
@@ -271,14 +267,6 @@ defmodule Helper.PermissionRegistry do
 
   defp normalize_community_rules(_),
     do: raise(ArgumentError, "invalid passport rules shape, expected community context maps")
-
-  defp migrate_legacy_global_root(%{"root" => true} = global_rules) do
-    global_rules
-    |> Map.delete("root")
-    |> Map.put("god", true)
-  end
-
-  defp migrate_legacy_global_root(global_rules), do: global_rules
 
   defp normalize_global_rules(%{"global" => global} = rules) do
     base = %{"global" => normalize_context("global", global)}
