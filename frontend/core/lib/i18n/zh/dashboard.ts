@@ -540,7 +540,7 @@ export default {
   'dsb.menu.widgets': '网站插件',
   'dsb.menu.doc.back': '返回主设置',
   'dsb.menu.doc.analysis': '统计分析',
-  'dsb.menu.doc.layout': 'layout',
+  'dsb.menu.doc.layout': '文档布局',
   'dsb.menu.doc.editor': '文档编辑',
   'dsb.menu.doc.tree': '目录编排',
   'dsb.menu.doc.cover': '封面图标',

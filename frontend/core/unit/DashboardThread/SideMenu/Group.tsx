@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { type FC, useState } from 'react'
 
 import { DSB_ROUTE } from '~/const/route'
@@ -25,7 +24,6 @@ const Group: FC<TProps> = ({ group }) => {
   const { mainTab } = useDsbTab()
 
   const { slug: community } = useCommunity()
-  const pathname = usePathname()
   const searchString = useURLSearchParams()
   const [foldState, setFoldState] = useState<boolean | null>(null)
   const fold = foldState ?? group.initFold
@@ -75,6 +73,7 @@ const Group: FC<TProps> = ({ group }) => {
                 href={`/${community}/${DSB_ROUTE.OVERVIEW}/${itemPath}${searchString}`}
                 onClick={() => {
                   if (item.slug === DSB_ROUTE.DOC) {
+                    const pathname = window.location.pathname
                     sessionStorage.setItem(DOC_RETURN_TO_KEY, `${pathname}${searchString}`)
                   }
                 }}
