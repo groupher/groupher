@@ -95,11 +95,6 @@ export default function useButtonSalon({
     return fg('button.fg')
   }
 
-  const solidPrimaryFgOverride = () => {
-    if (!ghost && tone === 'primary') return 'dark:text-black'
-    return ''
-  }
-
   const ghostBorder = () => {
     if (!ghost || noBorder) return ''
     if (color) return rainbow(color, 'borderSoft')
@@ -153,7 +148,6 @@ export default function useButtonSalon({
 
       toneBg(),
       toneFg(),
-      solidPrimaryFgOverride(),
 
       ghostBorder(),
       ghostHoverBg(),
