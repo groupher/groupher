@@ -7,7 +7,6 @@ import type { TDsbMenu } from './spec'
 export { SEO_KEYS } from '~/const/seo'
 
 export const DSB_DEMO_KEY = 'DSB_DEMO'
-export const DOC_RETURN_TO_KEY = 'dashboard:doc:return-to'
 
 export const DSB_MENU_ICON = {
   BASIC: 'basic',

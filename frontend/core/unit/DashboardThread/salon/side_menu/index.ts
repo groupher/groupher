@@ -5,6 +5,7 @@ export default function useSalon() {
 
   return {
     wrapper: cn('column w-40 min-w-40', fg('digest')),
-    menuLayer: 'w-full',
+    menuStack: 'grid w-full',
+    menuLayer: 'w-full col-start-1 row-start-1',
   }
 }

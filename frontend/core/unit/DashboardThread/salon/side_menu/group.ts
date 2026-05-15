@@ -25,7 +25,7 @@ export default function useSalon({ fold }: TProps) {
     ),
     menu: 'ml-1.5 mt-2 border-l border-transparent sexy-border-50',
     item: cn(
-      'block relative no-underline w-full text-sm px-1 py-1 pl-5 mt-1 mb-0 rounded-lg',
+      'block relative no-underline w-full text-sm px-1 py-1 pl-5 mt-1 mb-0 rounded-lg overflow-hidden',
       `hover:${bg('hoverBg')}`,
       fg('digest'),
     ),
@@ -33,10 +33,11 @@ export default function useSalon({ fold }: TProps) {
       'rounded-tl-none rounded-bl-none py-1.5',
       isLightTheme && 'bold-sm',
       primary('fg'),
-      bg('hoverBg'),
       vividDark(),
     ),
+    itemActiveBg: cn('absolute inset-0 rounded-lg rounded-tl-none rounded-bl-none', bg('hoverBg')),
     itemActiveBar: cn('absolute -left-0.5 top-2 w-1 h-4 rounded opacity-80', primary('bg')),
+    itemLabel: 'relative z-10',
     menuIcon: cn('size-3.5', fill('digest')),
   }
 }
