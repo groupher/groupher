@@ -60,7 +60,7 @@ export default function useSalon({
     },
 
     drawerContent: cn(
-      'relative w-full border rounded-tl-md overflow-y-auto h-auto',
+      'relative w-full border rounded-tl-md overflow-y-auto h-auto scrollbar-thin scrollbar-thumb-neutral-400 scrollbar-track-transparent dark:scrollbar-thumb-neutral-600',
       br('divider'),
       bg('card'),
       !isWideMode(type) && 'rounded-md',
