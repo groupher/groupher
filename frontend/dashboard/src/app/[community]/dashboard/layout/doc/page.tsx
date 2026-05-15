@@ -1,7 +1,6 @@
-'use client'
+import { redirect } from 'next/navigation'
 
-import Layout from '~/unit/DashboardThread/Layout/DocLayout'
-
-export default function Page() {
-  return <Layout />
+export default async function Page({ params }) {
+  const { community } = await params
+  redirect(`/${community}/dashboard/doc/layout`)
 }

@@ -21,7 +21,6 @@ const CRUMB_CONFIG = {
     { title: 'dsb.crumb.layout.post', seg: `${seg}/post` },
     { title: 'dsb.crumb.layout.kanban', seg: `${seg}/kanban` },
     { title: 'dsb.crumb.layout.changelog', seg: `${seg}/changelog` },
-    { title: 'dsb.crumb.layout.doc', seg: `${seg}/doc` },
   ],
 } satisfies TCrumbConfig
 

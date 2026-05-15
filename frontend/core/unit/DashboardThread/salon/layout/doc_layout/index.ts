@@ -10,10 +10,10 @@ export default function useSalon() {
 
   return {
     wrapper: base.baseSection,
-    block: cn(base.blockBase, 'align-both w-72 h-60'),
+    block: cn(base.blockBase, 'align-both h-60 w-full'),
     blockActive: base.blockBaseActive,
-    select: 'row-center wrap gap-x-8 gap-y-8 w-full',
-    layout: 'column-align-both',
+    select: 'grid w-full grid-cols-1 gap-8 lg:grid-cols-2 xl:grid-cols-3',
+    layout: 'column-align-both min-w-0',
     divider: cn(base.divider, 'mt-14 mb-16'),
 
     bar: cn(base.bar, 'h-1.5 w-20 opacity-40'),

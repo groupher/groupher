@@ -7,13 +7,13 @@ export default function useSalon() {
 
   return {
     wrapper: cn('column w-full', fg('digest')),
-    menu: 'column gap-1',
+    menu: 'column gap-1 ml-1.5 mt-2 border-l border-transparent sexy-border-50',
     item: cn(
       'block relative no-underline w-full text-sm px-1 py-1 pl-5 rounded-lg',
       `hover:${bg('hoverBg')}`,
       fg('digest'),
     ),
     itemActive: cn('py-1.5 bold-sm', primary('fg'), bg('hoverBg'), vividDark()),
-    itemActiveBar: cn('absolute left-1 top-2 w-1 h-4 rounded opacity-80', primary('bg')),
+    itemActiveBar: cn('absolute -left-0.5 top-2 w-1 h-4 rounded opacity-80', primary('bg')),
   }
 }
