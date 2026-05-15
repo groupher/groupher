@@ -21,7 +21,7 @@ export default function SubMenuBack({
   fallbackHref,
   title = 'dsb.menu.doc.back',
 }: TProps) {
-  const router = useRouter()
+  const { push } = useRouter()
   const { t } = useTrans()
   const s = useSalon()
 
@@ -31,7 +31,7 @@ export default function SubMenuBack({
     const returnTo = sessionStorage.getItem(DOC_RETURN_TO_KEY)
     const isValidReturn = returnTo?.startsWith(dashboardBase) && !returnTo.startsWith(currentBase)
 
-    router.push(isValidReturn ? returnTo : fallbackHref)
+    push(isValidReturn ? returnTo : fallbackHref)
   }
 
   return (
