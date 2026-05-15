@@ -8,7 +8,6 @@ import {
   DSB_SEO_ROUTE,
 } from '~/const/route'
 import BindSVG from '~/icons/Bind'
-import BookSVG from '~/icons/Book'
 import DomainSVG from '~/icons/Domain'
 import KanbanSVG from '~/icons/Kanban'
 import PostSVG from '~/icons/Post'
@@ -100,12 +99,6 @@ export default function WorkplaceCoversPage() {
                 desc: '更新日志展示个性化设置。',
                 seg: `${DSB_ROUTE.LAYOUT}/${DSB_LAYOUT_ROUTE.CHANGELOG}`,
                 Icon: DomainSVG,
-              },
-              {
-                title: '文档',
-                desc: '文档展示个性化设置。',
-                seg: `${DSB_ROUTE.LAYOUT}/${DSB_LAYOUT_ROUTE.DOC}`,
-                Icon: BookSVG,
               },
             ],
           },

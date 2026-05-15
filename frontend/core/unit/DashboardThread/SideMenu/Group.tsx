@@ -12,6 +12,7 @@ import ManagementSVG from '~/icons/Management'
 import PulseSVG from '~/icons/Pulse'
 import useCommunity from '~/stores/community/hooks'
 
+import { DOC_RETURN_TO_KEY, DSB_MENU_ICON } from '../constant'
 import useSalon, { cn } from '../salon/side_menu/group'
 import type { TDsbMenuGroup } from '../spec'
 
@@ -32,28 +33,50 @@ const Group: FC<TProps> = ({ group }) => {
 
   return (
     <div className={s.wrapper}>
-      <button type='button' className={s.folder} onClick={() => setFoldState(!fold)}>
-        <div className={s.iconBox}>
-          {group.icon === 'basic' && <InfoSVG className={s.menuIcon} />}
-          {group.icon === 'cms' && <ManagementSVG className={cn(s.menuIcon, 'size-4 -mt-px')} />}
-          {group.icon === 'analysis' && <PulseSVG className={s.menuIcon} />}
-          {group.icon === 'bind' && <BindSVG className={s.menuIcon} />}
-        </div>
-        <h3 className={s.title}>{t(group.title)}</h3>
-        <ArrowSVG className={s.arrowIcon} />
-      </button>
+      <div className={s.folder}>
+        <Link
+          className={s.folderLink}
+          href={`/${community}/${DSB_ROUTE.OVERVIEW}/${group.overviewSlug}${searchString}`}
+        >
+          <div className={s.iconBox}>
+            {group.icon === DSB_MENU_ICON.BASIC && <InfoSVG className={s.menuIcon} />}
+            {group.icon === DSB_MENU_ICON.CMS && (
+              <ManagementSVG className={cn(s.menuIcon, 'size-4 -mt-px')} />
+            )}
+            {group.icon === DSB_MENU_ICON.ANALYSIS && <PulseSVG className={s.menuIcon} />}
+            {group.icon === DSB_MENU_ICON.BIND && <BindSVG className={s.menuIcon} />}
+          </div>
+          <h3 className={s.title}>{t(group.title)}</h3>
+        </Link>
+        <button
+          type='button'
+          className={s.foldBtn}
+          aria-label={fold ? t('tags.fold.expand') : t('tags.fold.collapse')}
+          aria-expanded={!fold}
+          onClick={() => setFoldState(!fold)}
+        >
+          <ArrowSVG className={s.arrowIcon} />
+        </button>
+      </div>
 
       {!fold && (
         <div className={s.menu}>
           {group.children.map((item) => {
             const subPath = item.slug === DSB_ROUTE.OVERVIEW ? '' : item.slug
+            const itemPath = item.slug === DSB_ROUTE.DOC ? `${DSB_ROUTE.DOC}/editor` : subPath
             const isActive = item.slug === mainTab
 
             return (
               <Link
                 key={item.slug}
                 className={cn(s.item, isActive && s.itemActive)}
-                href={`/${community}/${DSB_ROUTE.OVERVIEW}/${subPath}${searchString}`}
+                href={`/${community}/${DSB_ROUTE.OVERVIEW}/${itemPath}${searchString}`}
+                onClick={() => {
+                  if (item.slug === DSB_ROUTE.DOC) {
+                    const pathname = window.location.pathname
+                    sessionStorage.setItem(DOC_RETURN_TO_KEY, `${pathname}${searchString}`)
+                  }
+                }}
               >
                 {isActive && <div className={s.itemActiveBar} />}
 

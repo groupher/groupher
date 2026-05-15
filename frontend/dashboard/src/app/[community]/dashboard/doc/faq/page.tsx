@@ -1,7 +1,7 @@
 'use client'
 
 const DashboardDocPage = () => {
-  return <h2>TODO: FAQ page</h2>
+  return <div>FAQ</div>
 }
 
 export default DashboardDocPage

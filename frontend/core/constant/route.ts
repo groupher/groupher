@@ -55,10 +55,16 @@ export const DSB_SEO_ROUTE = {
 } as const
 
 export const DSB_DOC_ROUTE = {
-  TABLE: 'table',
+  ANALYSIS: 'analysis',
+  LAYOUT: 'layout',
+  EDITOR: 'editor',
   TREE: 'tree',
   COVER: 'cover',
   FAQ: 'faq',
+  GIT_SYNC: 'git-sync',
+  DOMAIN: 'domain',
+  IMPORT: 'import',
+  BACKUP: 'backup',
 } as const
 
 export const DSB_LAYOUT_ROUTE = {
@@ -155,7 +161,6 @@ export const LAYOUT_TABS: TDsbTabs = {
     { title: 'dsb.layout.post', slug: DSB_LAYOUT_ROUTE.POST },
     { title: 'dsb.layout.kanban', slug: DSB_LAYOUT_ROUTE.KANBAN },
     { title: 'dsb.layout.changelog', slug: DSB_LAYOUT_ROUTE.CHANGELOG },
-    { title: 'dsb.layout.doc', slug: DSB_LAYOUT_ROUTE.DOC },
   ],
 }
 
@@ -206,10 +211,14 @@ export const ALIAS_TABS: TDsbTabs = {
 export const DOC_TABS: TDsbTabs = {
   segment: DSB_ROUTE.DOC,
   items: [
-    { title: 'dsb.doc.table', slug: DSB_DOC_ROUTE.TABLE, segment: '' },
-    { title: 'dsb.doc.tree', slug: DSB_DOC_ROUTE.TREE },
-    { title: 'dsb.doc.cover', slug: DSB_DOC_ROUTE.COVER },
+    { title: 'dsb.doc.analysis', slug: DSB_DOC_ROUTE.ANALYSIS },
+    { title: 'dsb.doc.layout', slug: DSB_DOC_ROUTE.LAYOUT },
+    { title: 'dsb.doc.editor', slug: DSB_DOC_ROUTE.EDITOR },
     { title: 'dsb.doc.faq', slug: DSB_DOC_ROUTE.FAQ },
+    { title: 'dsb.doc.git_sync', slug: DSB_DOC_ROUTE.GIT_SYNC },
+    { title: 'dsb.doc.domain', slug: DSB_DOC_ROUTE.DOMAIN },
+    { title: 'dsb.doc.import', slug: DSB_DOC_ROUTE.IMPORT },
+    { title: 'dsb.doc.backup', slug: DSB_DOC_ROUTE.BACKUP },
   ],
 }
 

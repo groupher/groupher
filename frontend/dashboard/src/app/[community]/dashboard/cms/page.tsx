@@ -49,7 +49,7 @@ export default function CMSCoversPage() {
               {
                 title: '社区用户',
                 desc: '搜索引擎原信息，标准 OG 信息。',
-                seg: DSB_ROUTE.BLACKHOUSE,
+                seg: DSB_ROUTE.COMMUNITIES,
                 Icon: BindSVG,
               },
               {
@@ -66,7 +66,7 @@ export default function CMSCoversPage() {
               {
                 title: '广播/广告',
                 desc: '品牌展示，整体布局，头像，标签等全局样式。',
-                seg: DSB_ROUTE.LAYOUT,
+                seg: DSB_ROUTE.BROADCAST,
                 Icon: BindSVG,
               },
               {

@@ -1,7 +1,6 @@
-'use client'
+import { redirect } from 'next/navigation'
 
-const DashboardDocPage = () => {
-  return <div>TODO: TABLE</div>
+export default async function Page({ params }) {
+  const { community } = await params
+  redirect(`/${community}/dashboard/doc/layout`)
 }
-
-export default DashboardDocPage

@@ -1,5 +1,5 @@
 import { ONE_LINK_GROUP, TW_CARD } from '~/const/dashboard'
-import { DSB_ALIAS_ROUTE, DSB_ROUTE } from '~/const/route'
+import { DSB_ALIAS_ROUTE, DSB_COVERS, DSB_ROUTE } from '~/const/route'
 import type { TDsbFieldMap, TDsbStoreFieldKey } from '~/stores/dashboard/spec'
 
 import type { TDsbMenu } from './spec'
@@ -7,6 +7,14 @@ import type { TDsbMenu } from './spec'
 export { SEO_KEYS } from '~/const/seo'
 
 export const DSB_DEMO_KEY = 'DSB_DEMO'
+export const DOC_RETURN_TO_KEY = 'dashboard:doc:return-to'
+
+export const DSB_MENU_ICON = {
+  BASIC: 'basic',
+  CMS: 'cms',
+  ANALYSIS: 'analysis',
+  BIND: 'bind',
+} as const
 
 // do not change, it's map to GQ endpoint updateDashboardLayout
 export const LAYOUT_FIELD = {
@@ -113,7 +121,8 @@ export const SUB_PRIMARY_COLOR_STORE_FIELDS: readonly TDsbStoreFieldKey[] = [
 export const MENU: TDsbMenu = {
   BASIC: {
     title: 'dsb.menu.basic',
-    icon: 'basic',
+    icon: DSB_MENU_ICON.BASIC,
+    overviewSlug: DSB_COVERS.WORKPLACE,
     initFold: false,
     children: [
       {
@@ -158,7 +167,8 @@ export const MENU: TDsbMenu = {
 
   CMS: {
     title: 'dsb.menu.cms',
-    icon: 'cms',
+    icon: DSB_MENU_ICON.CMS,
+    overviewSlug: DSB_COVERS.CMS,
     initFold: false,
     children: [
       {
@@ -202,7 +212,8 @@ export const MENU: TDsbMenu = {
 
   ANALYSIS: {
     title: 'dsb.menu.analysis',
-    icon: 'analysis',
+    icon: DSB_MENU_ICON.ANALYSIS,
+    overviewSlug: DSB_ROUTE.ANALYSIS,
     initFold: true,
     children: [
       {
@@ -218,7 +229,8 @@ export const MENU: TDsbMenu = {
 
   INTEGRATE: {
     title: 'dsb.menu.integrations',
-    icon: 'bind',
+    icon: DSB_MENU_ICON.BIND,
+    overviewSlug: DSB_COVERS.INTEGRATIONS,
     initFold: false,
     children: [
       {
@@ -236,6 +248,11 @@ export const MENU: TDsbMenu = {
     ],
   },
 }
+
+export const MENU_VIEW = {
+  MAIN: 'main',
+  DOC: 'doc',
+} as const
 
 export const ALIAS_GROUP = {
   THREAD: DSB_ALIAS_ROUTE.THREAD,
