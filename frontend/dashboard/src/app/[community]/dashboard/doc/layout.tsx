@@ -1,16 +1,13 @@
 'use client'
 
-import { DOC_TABS, DSB_COVERS, DSB_ROUTE } from '~/const/route'
-import VIEW from '~/const/view'
+import { DSB_COVERS, DSB_ROUTE } from '~/const/route'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
-import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import useTrans from '~/hooks/useTrans'
 import { mockUsers } from '~/mock'
 import type { TCrumbConfig } from '~/spec'
 import AdminList from '~/unit/DashboardThread/AdminList'
 import Portal from '~/unit/DashboardThread/Portal'
 import useSalon, { cnMerge } from '~/unit/DashboardThread/salon'
-import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = DSB_ROUTE.DOC
 const CRUMB_CONFIG = {
@@ -18,16 +15,15 @@ const CRUMB_CONFIG = {
   seg,
   toSeg: DSB_COVERS.CMS,
   children: [
-    { title: 'dsb.crumb.doc.table', seg },
-    { title: 'dsb.crumb.doc.tree', seg: `${seg}/tree` },
-    { title: 'dsb.crumb.doc.cover', seg: `${seg}/cover` },
+    { title: 'dsb.crumb.doc.layout', seg },
+    { title: 'dsb.crumb.doc.editor', seg: `${seg}/editor` },
     { title: 'dsb.crumb.doc.faq', seg: `${seg}/faq` },
+    { title: 'dsb.crumb.doc.import_export', seg: `${seg}/import-export` },
   ],
 } satisfies TCrumbConfig
 
 export default function DashboardDocLayout({ children }) {
   const s = useSalon()
-  const { items, activeTab } = useDsbLayoutTabs(DOC_TABS)
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
   const { t } = useTrans()
 
@@ -42,12 +38,6 @@ export default function DashboardDocLayout({ children }) {
         withDivider={false}
         addon={<AdminList userList={adminList} />}
       />
-
-      <div className={s.banner}>
-        <div className={s.tabs}>
-          <Tabs items={items} activeKey={activeTab} view={VIEW.DESKTOP} noAnimation />
-        </div>
-      </div>
 
       {children}
     </div>

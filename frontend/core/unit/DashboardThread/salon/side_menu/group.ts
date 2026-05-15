@@ -9,11 +9,13 @@ type TProps = {
 
 export default function useSalon({ fold }: TProps) {
   const { isLightTheme } = useTheme()
-  const { cn, fill, fg, bg, primary, vividDark } = useTwBelt()
+  const { cn, fill, fg, bg, primary, vividDark, hover } = useTwBelt()
 
   return {
     wrapper: 'mb-4',
-    folder: 'row-between group pointer mb-3',
+    folder: 'row-between group mb-3',
+    folderLink: cn('row-center grow no-underline', fg('digest')),
+    foldBtn: cn('align-both size-5 pointer rounded-md', hover('bg')),
     iconBox: 'align-both size-5',
     title: cn('text-sm grow ml-2 mr-1 bold text-left', fg('digest'), 'dark:brightness-110'),
     arrowIcon: cn(

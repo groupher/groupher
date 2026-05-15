@@ -55,10 +55,12 @@ export const DSB_SEO_ROUTE = {
 } as const
 
 export const DSB_DOC_ROUTE = {
-  TABLE: 'table',
+  LAYOUT: 'layout',
+  EDITOR: 'editor',
   TREE: 'tree',
   COVER: 'cover',
   FAQ: 'faq',
+  IMPORT_EXPORT: 'import-export',
 } as const
 
 export const DSB_LAYOUT_ROUTE = {
@@ -206,10 +208,10 @@ export const ALIAS_TABS: TDsbTabs = {
 export const DOC_TABS: TDsbTabs = {
   segment: DSB_ROUTE.DOC,
   items: [
-    { title: 'dsb.doc.table', slug: DSB_DOC_ROUTE.TABLE, segment: '' },
-    { title: 'dsb.doc.tree', slug: DSB_DOC_ROUTE.TREE },
-    { title: 'dsb.doc.cover', slug: DSB_DOC_ROUTE.COVER },
+    { title: 'dsb.doc.layout', slug: DSB_DOC_ROUTE.LAYOUT, segment: '' },
+    { title: 'dsb.doc.editor', slug: DSB_DOC_ROUTE.EDITOR },
     { title: 'dsb.doc.faq', slug: DSB_DOC_ROUTE.FAQ },
+    { title: 'dsb.doc.import_export', slug: DSB_DOC_ROUTE.IMPORT_EXPORT },
   ],
 }
 

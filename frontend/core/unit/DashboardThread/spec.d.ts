@@ -1,5 +1,3 @@
-import type { ReactNode } from 'react'
-
 import type {
   TChangeMode,
   TColorName,
@@ -10,7 +8,7 @@ import type {
 } from '~/spec'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
 
-import type { FIELD } from './constant'
+import type { DSB_MENU_ICON, FIELD } from './constant'
 
 export { TNameAlias } from '~/spec'
 
@@ -18,7 +16,8 @@ type TMenuGroupName = 'BASIC' | 'ANALYSIS' | 'CMS' | 'INTEGRATE'
 
 export type TDsbMenuGroup = {
   title: TTransKey
-  icon: ReactNode
+  icon: TConstValues<typeof DSB_MENU_ICON>
+  overviewSlug: string
   initFold: boolean
   children: TDsbMenuItem[]
 }

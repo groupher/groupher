@@ -1,7 +1,7 @@
 'use client'
 
 const DashboardDocPage = () => {
-  return <div>TODO: TABLE</div>
+  return <div>layout</div>
 }
 
 export default DashboardDocPage
