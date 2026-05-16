@@ -13,6 +13,13 @@ fe.build.landing:
 fe.serve.landing: 
 	yarn run serve:prod:landing
 
+# inspire-me
+fe.dev.inspire:
+	(sleep 2 && open http://localhost:3010/canny) &
+	yarn workspace @groupher/frontend-inspire-me dev -p 3010
+
+inspire: fe.dev.inspire
+
 # main
 fe.dev.main:
 	yarn run dev:main

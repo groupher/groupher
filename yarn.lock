@@ -961,6 +961,18 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@groupher/frontend-inspire-me@workspace:frontend/inspire-me":
+  version: 0.0.0-use.local
+  resolution: "@groupher/frontend-inspire-me@workspace:frontend/inspire-me"
+  dependencies:
+    "@groupher/frontend-core": "npm:1.0.0"
+    cross-env: "npm:^10.1.0"
+    next: "npm:16.2.4"
+    react: "npm:^19.2.5"
+    react-dom: "npm:^19.2.5"
+  languageName: unknown
+  linkType: soft
+
 "@groupher/frontend-landing@workspace:frontend/landing":
   version: 0.0.0-use.local
   resolution: "@groupher/frontend-landing@workspace:frontend/landing"
