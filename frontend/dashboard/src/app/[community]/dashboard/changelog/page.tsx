@@ -1,9 +1,8 @@
-'use client'
+import { redirect } from 'next/navigation'
 
-import Changelogs from '~/unit/DashboardThread/CMS/Changelogs'
+import { DSB_CHANGELOG_ROUTE, DSB_ROUTE } from '~/const/route'
 
-const DashboardChangelogPage = () => {
-  return <Changelogs />
+export default async function Page({ params }) {
+  const { community } = await params
+  redirect(`/${community}/dashboard/${DSB_ROUTE.CHANGELOG}/${DSB_CHANGELOG_ROUTE.CONTENT}`)
 }
-
-export default DashboardChangelogPage

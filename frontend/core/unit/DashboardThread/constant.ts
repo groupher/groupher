@@ -251,6 +251,8 @@ export const MENU: TDsbMenu = {
 export const MENU_VIEW = {
   MAIN: 'main',
   DOC: 'doc',
+  POST: 'post',
+  CHANGELOG: 'changelog',
 } as const
 
 export const ALIAS_GROUP = {

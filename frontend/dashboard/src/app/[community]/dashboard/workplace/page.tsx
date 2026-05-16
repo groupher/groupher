@@ -2,8 +2,10 @@
 
 import {
   DSB_ALIAS_ROUTE,
+  DSB_CHANGELOG_ROUTE,
   DSB_INFO_ROUTE,
   DSB_LAYOUT_ROUTE,
+  DSB_POST_ROUTE,
   DSB_ROUTE,
   DSB_SEO_ROUTE,
 } from '~/const/route'
@@ -85,7 +87,7 @@ export default function WorkplaceCoversPage() {
               {
                 title: '讨论区',
                 desc: '讨论区个性化设置。',
-                seg: `${DSB_ROUTE.LAYOUT}/${DSB_LAYOUT_ROUTE.POST}`,
+                seg: `${DSB_ROUTE.POST}/${DSB_POST_ROUTE.LAYOUT}`,
                 Icon: PostSVG,
               },
               {
@@ -97,7 +99,7 @@ export default function WorkplaceCoversPage() {
               {
                 title: '更新日志',
                 desc: '更新日志展示个性化设置。',
-                seg: `${DSB_ROUTE.LAYOUT}/${DSB_LAYOUT_ROUTE.CHANGELOG}`,
+                seg: `${DSB_ROUTE.CHANGELOG}/${DSB_CHANGELOG_ROUTE.LAYOUT}`,
                 Icon: DomainSVG,
               },
             ],

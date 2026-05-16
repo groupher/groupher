@@ -1,13 +1,15 @@
 import { DSB_ROUTE } from '~/const/route'
-import type { TDsbDocRoute, TDsbPath } from '~/spec'
+import type { TDsbChangelogRoute, TDsbDocRoute, TDsbPath, TDsbPostRoute } from '~/spec'
 
 import { MENU_VIEW } from '../constant'
 
 export type TMenuView = (typeof MENU_VIEW)[keyof typeof MENU_VIEW]
 
 export type TMenuViewEvent = {
+  changelogSubTab?: TDsbChangelogRoute
   docSubTab?: TDsbDocRoute
   mainTab?: TDsbPath
+  postSubTab?: TDsbPostRoute
   returnTo?: string
   view: TMenuView
 }

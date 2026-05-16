@@ -18,9 +18,7 @@ const CRUMB_CONFIG = {
   children: [
     { title: 'dsb.crumb.layout.general', seg },
     { title: 'dsb.crumb.layout.theme', seg: `${seg}/theme` },
-    { title: 'dsb.crumb.layout.post', seg: `${seg}/post` },
     { title: 'dsb.crumb.layout.kanban', seg: `${seg}/kanban` },
-    { title: 'dsb.crumb.layout.changelog', seg: `${seg}/changelog` },
   ],
 } satisfies TCrumbConfig
 

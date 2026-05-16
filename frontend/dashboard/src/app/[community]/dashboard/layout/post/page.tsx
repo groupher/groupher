@@ -1,7 +1,8 @@
-'use client'
+import { redirect } from 'next/navigation'
 
-import Layout from '~/unit/DashboardThread/Layout/PostLayout'
+import { DSB_POST_ROUTE, DSB_ROUTE } from '~/const/route'
 
-export default function Page() {
-  return <Layout />
+export default async function Page({ params }) {
+  const { community } = await params
+  redirect(`/${community}/dashboard/${DSB_ROUTE.POST}/${DSB_POST_ROUTE.LAYOUT}`)
 }

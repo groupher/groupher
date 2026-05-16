@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { type FC, useState } from 'react'
 
-import { DSB_DOC_ROUTE, DSB_ROUTE } from '~/const/route'
+import { DSB_CHANGELOG_ROUTE, DSB_DOC_ROUTE, DSB_POST_ROUTE, DSB_ROUTE } from '~/const/route'
 import useTrans from '~/hooks/useTrans'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
 import ArrowSVG from '~/icons/ArrowSimple'
@@ -66,7 +66,14 @@ const Group: FC<TProps> = ({ activeMainTab, group }) => {
         <div className={s.menu}>
           {group.children.map((item) => {
             const subPath = item.slug === DSB_ROUTE.OVERVIEW ? '' : item.slug
-            const itemPath = item.slug === DSB_ROUTE.DOC ? `${DSB_ROUTE.DOC}/editor` : subPath
+            const itemPath =
+              item.slug === DSB_ROUTE.DOC
+                ? `${DSB_ROUTE.DOC}/editor`
+                : item.slug === DSB_ROUTE.POST
+                  ? `${DSB_ROUTE.POST}/content`
+                  : item.slug === DSB_ROUTE.CHANGELOG
+                    ? `${DSB_ROUTE.CHANGELOG}/content`
+                    : subPath
             const isActive = item.slug === activeMainTab
 
             return (
@@ -80,6 +87,18 @@ const Group: FC<TProps> = ({ activeMainTab, group }) => {
                       docSubTab: DSB_DOC_ROUTE.EDITOR,
                       returnTo: `${pathname}${searchString}`,
                       view: MENU_VIEW.DOC,
+                    })
+                  } else if (item.slug === DSB_ROUTE.POST) {
+                    dispatchMenuView({
+                      postSubTab: DSB_POST_ROUTE.CONTENT,
+                      returnTo: `${pathname}${searchString}`,
+                      view: MENU_VIEW.POST,
+                    })
+                  } else if (item.slug === DSB_ROUTE.CHANGELOG) {
+                    dispatchMenuView({
+                      changelogSubTab: DSB_CHANGELOG_ROUTE.CONTENT,
+                      returnTo: `${pathname}${searchString}`,
+                      view: MENU_VIEW.CHANGELOG,
                     })
                   } else {
                     dispatchMenuView({
