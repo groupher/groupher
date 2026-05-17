@@ -32,12 +32,13 @@ const PLATFORM_NAMES: Record<string, string> = {
   nolt: 'Nolt',
   rapidr: 'Rapidr',
   uservoice: 'UserVoice',
+  zendesk: 'Zendesk',
 }
 
 let platformCache: FeedbackPlatform[] | null = null
 
 export async function getFeedbackPlatforms(): Promise<FeedbackPlatform[]> {
-  if (platformCache) return platformCache
+  if (platformCache && process.env.NODE_ENV === 'production') return platformCache
 
   const dataDir = path.resolve(process.cwd(), 'data/feedback-platforms')
   const fileNames = await fs.readdir(dataDir)
@@ -59,7 +60,9 @@ export async function getFeedbackPlatforms(): Promise<FeedbackPlatform[]> {
     }),
   )
 
-  platformCache = platforms.sort((a, b) => a.name.localeCompare(b.name))
+  const sortedPlatforms = platforms.sort((a, b) => a.name.localeCompare(b.name))
+
+  platformCache = sortedPlatforms
   return platformCache
 }
 

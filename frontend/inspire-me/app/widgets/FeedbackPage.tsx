@@ -1,14 +1,28 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 
 import type { FeedbackPlatform, FeedbackPost } from '../lib/feedback'
+
+export const POSTS_PER_PAGE = 500
 
 type TProps = {
   platforms: FeedbackPlatform[]
   selected: FeedbackPlatform
+  currentPage: number
+  totalPages: number
+  rankOffset: number
+  posts: FeedbackPost[]
 }
 
-export function FeedbackPage({ platforms, selected }: TProps) {
+export function FeedbackPage({
+  platforms,
+  selected,
+  currentPage,
+  totalPages,
+  rankOffset,
+  posts,
+}: TProps) {
   const totalPosts = platforms.reduce((total, platform) => total + platform.count, 0)
 
   return (
@@ -68,7 +82,7 @@ export function FeedbackPage({ platforms, selected }: TProps) {
       </aside>
 
       <section className='min-w-0'>
-        <header className='flex items-end justify-between gap-6 pb-[30px] max-md:items-start'>
+        <header className='grid grid-cols-[minmax(0,1fr)_auto_auto] items-end gap-6 pb-[30px] max-md:grid-cols-1 max-md:items-start max-md:gap-4'>
           <div className='flex min-w-0 items-center gap-3.5'>
             <Image
               src={selected.logoPath}
@@ -84,6 +98,7 @@ export function FeedbackPage({ platforms, selected }: TProps) {
               </h1>
             </div>
           </div>
+          <Pagination platformId={selected.id} currentPage={currentPage} totalPages={totalPages} />
           <div className='text-title flex flex-col items-end'>
             <span className='text-[28px] leading-none font-bold'>
               {selected.count.toLocaleString()}
@@ -93,8 +108,8 @@ export function FeedbackPage({ platforms, selected }: TProps) {
         </header>
 
         <div className='border-divider border-t'>
-          {selected.posts.map((post) => (
-            <PostItem key={post.id} post={post} />
+          {posts.map((post, index) => (
+            <PostItem key={post.id} post={post} rank={rankOffset + index + 1} />
           ))}
         </div>
       </section>
@@ -102,11 +117,105 @@ export function FeedbackPage({ platforms, selected }: TProps) {
   )
 }
 
-function PostItem({ post }: { post: FeedbackPost }) {
+function Pagination({
+  platformId,
+  currentPage,
+  totalPages,
+}: {
+  platformId: string
+  currentPage: number
+  totalPages: number
+}) {
+  if (totalPages <= 1) return <div />
+
+  const pages = getVisiblePages(currentPage, totalPages)
+
+  return (
+    <nav className='flex items-center gap-1.5' aria-label='Posts pages'>
+      <PageLink platformId={platformId} page={currentPage - 1} disabled={currentPage === 1}>
+        Prev
+      </PageLink>
+
+      {pages.map((page, index) =>
+        page === 'gap' ? (
+          <span key={`gap-${index}`} className='text-digest px-1 text-[13px]'>
+            ...
+          </span>
+        ) : (
+          <PageLink key={page} platformId={platformId} page={page} active={page === currentPage}>
+            {page}
+          </PageLink>
+        ),
+      )}
+
+      <PageLink
+        platformId={platformId}
+        page={currentPage + 1}
+        disabled={currentPage === totalPages}
+      >
+        Next
+      </PageLink>
+    </nav>
+  )
+}
+
+function PageLink({
+  platformId,
+  page,
+  active = false,
+  disabled = false,
+  children,
+}: {
+  platformId: string
+  page: number
+  active?: boolean
+  disabled?: boolean
+  children: ReactNode
+}) {
+  const href = page <= 1 ? `/${platformId}` : `/${platformId}?page=${page}`
+  const baseClass =
+    'inline-flex h-7 min-w-7 items-center justify-center rounded-md px-2 text-[13px] leading-none font-semibold no-underline'
+
+  if (disabled) {
+    return <span className={`${baseClass} text-[#c2c2c2]`}>{children}</span>
+  }
+
+  return (
+    <Link
+      className={`${baseClass} ${
+        active ? 'bg-hover text-title' : 'text-digest hover:bg-hover hover:text-title'
+      }`}
+      href={href}
+      aria-current={active ? 'page' : undefined}
+    >
+      {children}
+    </Link>
+  )
+}
+
+function getVisiblePages(currentPage: number, totalPages: number): Array<number | 'gap'> {
+  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1)
+
+  const pages = new Set([1, totalPages, currentPage - 1, currentPage, currentPage + 1])
+  const sorted = Array.from(pages)
+    .filter((page) => page >= 1 && page <= totalPages)
+    .sort((a, b) => a - b)
+
+  return sorted.flatMap((page, index) => {
+    const previous = sorted[index - 1]
+    if (previous && page - previous > 1) return ['gap' as const, page]
+    return [page]
+  })
+}
+
+function PostItem({ post, rank }: { post: FeedbackPost; rank: number }) {
   return (
     <article className='border-divider grid grid-cols-[minmax(0,1fr)_54px] gap-6 border-b bg-white py-[22px] max-md:grid-cols-[minmax(0,1fr)_46px] max-md:gap-4'>
       <div className='min-w-0'>
         <h2 className='text-title m-0 flex items-center gap-1.5 text-lg leading-[1.35] font-bold max-md:text-base'>
+          <span className='text-digest shrink-0 text-[13px] leading-[1.35] font-semibold tabular-nums max-md:text-[12px]'>
+            No.{rank}
+          </span>
           <span className='group relative min-w-0 cursor-default outline-none' tabIndex={0}>
             {post.titleZh}
             <span className='text-title pointer-events-none absolute bottom-[calc(100%+8px)] left-0 z-10 w-max max-w-[min(520px,70vw)] translate-y-1 rounded-md border border-[#e5e5e5] bg-white px-2.5 py-1.5 text-[13px] leading-[1.45] font-medium opacity-0 shadow-[0_10px_30px_rgb(0_0_0/10%)] transition duration-150 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100'>
