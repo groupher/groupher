@@ -27,6 +27,7 @@ const PLATFORM_NAMES: Record<string, string> = {
   featureos: 'FeatureOS',
   feedbear: 'FeedBear',
   fider: 'Fider',
+  flarum: 'Flarum',
   frill: 'Frill',
   nolt: 'Nolt',
   rapidr: 'Rapidr',
