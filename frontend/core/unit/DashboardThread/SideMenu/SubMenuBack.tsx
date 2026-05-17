@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
@@ -25,13 +24,8 @@ export default function SubMenuBack({
 }: TProps) {
   const { t } = useTrans()
   const s = useSalon()
-  const [backHref, setBackHref] = useState(fallbackHref)
-
-  useEffect(() => {
-    const isValidReturn = returnTo?.startsWith(dashboardBase) && !returnTo.startsWith(currentBase)
-
-    setBackHref(isValidReturn ? returnTo : fallbackHref)
-  }, [currentBase, dashboardBase, fallbackHref, returnTo])
+  const isValidReturn = returnTo?.startsWith(dashboardBase) && !returnTo.startsWith(currentBase)
+  const backHref = isValidReturn ? returnTo : fallbackHref
 
   const switchToMainMenu = (): void => {
     dispatchMenuView({

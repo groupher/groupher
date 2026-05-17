@@ -221,6 +221,7 @@
     "frontend/main/**/*.{ts,tsx}": "tsc-files --noEmit --project frontend/main/tsconfig.json",
     "frontend/dashboard/**/*.{ts,tsx}": "tsc-files --noEmit --project frontend/dashboard/tsconfig.json",
     "frontend/landing/**/*.{ts,tsx}": "tsc-files --noEmit --project frontend/landing/tsconfig.json",
+    "frontend/inspire-me/**/*.{ts,tsx}": "tsc-files --noEmit --project frontend/inspire-me/tsconfig.json",
     "frontend/gateway/**/*.{ts,tsx}": "tsc-files --noEmit --project frontend/gateway/tsconfig.json"
   },
   "config": {

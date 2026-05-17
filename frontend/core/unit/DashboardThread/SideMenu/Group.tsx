@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
 import { type FC, useState } from 'react'
 
 import { DSB_ROUTE } from '~/const/route'
@@ -27,7 +26,6 @@ type TProps = {
 
 const Group: FC<TProps> = ({ activeMainTab, group }) => {
   const { slug: community } = useCommunity()
-  const pathname = usePathname()
   const searchString = useURLSearchParams()
   const [foldState, setFoldState] = useState<boolean | null>(null)
   const fold = foldState ?? group.initFold
@@ -81,7 +79,7 @@ const Group: FC<TProps> = ({ activeMainTab, group }) => {
                   if (submenuConfig) {
                     dispatchMenuView({
                       subTab: submenuConfig.entrySlug,
-                      returnTo: `${pathname}${searchString}`,
+                      returnTo: `${window.location.pathname}${searchString}`,
                       view: submenuView as TMenuView,
                     })
                   } else {

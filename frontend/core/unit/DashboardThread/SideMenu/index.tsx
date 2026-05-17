@@ -2,7 +2,7 @@
 
 import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
 import { keys } from 'ramda'
-import { useEffect, useState } from 'react'
+import { useEffect, useReducer } from 'react'
 
 import useDsbTab from '~/hooks/useDsbTab'
 import type { TDsbPath } from '~/spec'
@@ -16,59 +16,99 @@ import { DASHBOARD_MENU_VIEW_EVENT, type TMenuView, type TMenuViewEvent } from '
 import Group from './Group'
 import SubMenu from './SubMenu'
 
+type TSideMenuState = {
+  direction: TMenuDirection
+  optimisticMainTab: TDsbPath | null
+  optimisticMenuView: TMenuView | null
+  optimisticSubTab: string | null
+  returnToByView: Partial<Record<TMenuView, string>>
+}
+
+type TSideMenuAction =
+  | {
+      resolvedMenuView: TMenuView
+      type: 'syncRoute'
+    }
+  | {
+      event: TMenuViewEvent
+      type: 'applyMenuView'
+    }
+
+const submenuViews = Object.values(SUBMENU_ROUTE_VIEW) as TMenuView[]
+
+const isMenuView = (view: TMenuView): boolean => {
+  return view === MENU_VIEW.MAIN || submenuViews.includes(view)
+}
+
+const createInitialState = (resolvedMenuView: TMenuView): TSideMenuState => ({
+  direction: getMenuDirection(resolvedMenuView),
+  optimisticMainTab: null,
+  optimisticMenuView: null,
+  optimisticSubTab: null,
+  returnToByView: {},
+})
+
+const sideMenuReducer = (state: TSideMenuState, action: TSideMenuAction): TSideMenuState => {
+  switch (action.type) {
+    case 'syncRoute': {
+      const { resolvedMenuView } = action
+
+      return {
+        direction: getMenuDirection(resolvedMenuView),
+        optimisticMainTab: null,
+        optimisticMenuView: null,
+        optimisticSubTab: null,
+        returnToByView:
+          resolvedMenuView === MENU_VIEW.MAIN
+            ? {}
+            : { [resolvedMenuView]: state.returnToByView[resolvedMenuView] },
+      }
+    }
+
+    case 'applyMenuView': {
+      const { mainTab, returnTo, subTab, view } = action.event
+
+      if (!isMenuView(view)) return state
+
+      return {
+        direction: getMenuDirection(view),
+        optimisticMainTab: mainTab ?? null,
+        optimisticMenuView: view,
+        optimisticSubTab: subTab ?? null,
+        returnToByView: returnTo
+          ? { ...state.returnToByView, [view]: returnTo }
+          : state.returnToByView,
+      }
+    }
+  }
+}
+
 export default function SideMenu() {
   const s = useSalon()
   const { mainTab } = useDsbTab()
   const groupKeys = keys(MENU)
   const resolvedMenuView =
     SUBMENU_ROUTE_VIEW[mainTab as keyof typeof SUBMENU_ROUTE_VIEW] ?? MENU_VIEW.MAIN
-  const [optimisticMenuView, setOptimisticMenuView] = useState<TMenuView | null>(null)
-  const [optimisticSubTab, setOptimisticSubTab] = useState<string | null>(null)
-  const [optimisticMainTab, setOptimisticMainTab] = useState<TDsbPath | null>(null)
-  const [direction, setDirection] = useState<TMenuDirection>(() =>
-    getMenuDirection(resolvedMenuView),
-  )
-  const [returnToByView, setReturnToByView] = useState<Partial<Record<TMenuView, string>>>({})
+  const [state, dispatch] = useReducer(sideMenuReducer, resolvedMenuView, createInitialState)
+  const { direction, optimisticMainTab, optimisticMenuView, optimisticSubTab, returnToByView } =
+    state
   const menuView = optimisticMenuView ?? resolvedMenuView
   const activeMainTab = (optimisticMainTab ?? mainTab) as TDsbPath
 
   useEffect(() => {
     // Once the router catches up, pathname becomes the source of truth again.
     // Clearing return targets outside their submenu prevents stale Back targets on later entries.
-    setDirection(getMenuDirection(resolvedMenuView))
-    setOptimisticSubTab(null)
-    setOptimisticMainTab(null)
-    setOptimisticMenuView(null)
-    setReturnToByView((current) =>
-      resolvedMenuView === MENU_VIEW.MAIN ? {} : { [resolvedMenuView]: current[resolvedMenuView] },
-    )
+    dispatch({ resolvedMenuView, type: 'syncRoute' })
   }, [mainTab, resolvedMenuView])
 
   useEffect(() => {
     const handleMenuView = (event: Event): void => {
-      const {
-        mainTab: nextMainTab,
-        returnTo,
-        subTab,
-        view,
-      } = (event as CustomEvent<TMenuViewEvent>).detail
-
-      if (
-        view === MENU_VIEW.MAIN ||
-        Object.values(SUBMENU_ROUTE_VIEW).includes(
-          view as (typeof SUBMENU_ROUTE_VIEW)[keyof typeof SUBMENU_ROUTE_VIEW],
-        )
-      ) {
-        // Apply the target menu and active item immediately; route data may lag
-        // behind on heavier sections, but the sidebar should still feel direct.
-        if (returnTo) {
-          setReturnToByView((current) => ({ ...current, [view]: returnTo }))
-        }
-        setOptimisticMainTab(nextMainTab ?? null)
-        setOptimisticSubTab(subTab ?? null)
-        setDirection(getMenuDirection(view))
-        setOptimisticMenuView(view)
-      }
+      // Apply the target menu and active item immediately; route data may lag
+      // behind on heavier sections, but the sidebar should still feel direct.
+      dispatch({
+        event: (event as CustomEvent<TMenuViewEvent>).detail,
+        type: 'applyMenuView',
+      })
     }
 
     window.addEventListener(DASHBOARD_MENU_VIEW_EVENT, handleMenuView)

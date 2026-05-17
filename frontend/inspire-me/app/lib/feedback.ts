@@ -67,11 +67,15 @@ export async function getFeedbackPlatforms(): Promise<FeedbackPlatform[]> {
 }
 
 function parseFeedbackMarkdown(markdown: string): FeedbackPost[] {
-  return markdown
-    .split('\n')
-    .slice(2)
-    .map((line, index) => parseTableRow(line, index))
-    .filter((post): post is FeedbackPost => Boolean(post))
+  const posts: FeedbackPost[] = []
+  const lines = markdown.split('\n')
+
+  for (let index = 2; index < lines.length; index += 1) {
+    const post = parseTableRow(lines[index], index - 2)
+    if (post) posts.push(post)
+  }
+
+  return posts
 }
 
 function parseTableRow(line: string, index: number): FeedbackPost | null {
@@ -84,8 +88,8 @@ function parseTableRow(line: string, index: number): FeedbackPost | null {
   if (!title) return null
 
   const digest = parseBilingualCell(cells[1])
-  const upvotes = Number.parseInt(unescapeMarkdown(cells[2]), 10) || 0
-  const commentsValue = Number.parseInt(unescapeMarkdown(cells[3]), 10)
+  const upvotes = parseFormattedNumber(cells[2]) ?? 0
+  const commentsValue = parseFormattedNumber(cells[3])
 
   return {
     id: `${title.sourceUrl}-${index}`,
@@ -93,8 +97,14 @@ function parseTableRow(line: string, index: number): FeedbackPost | null {
     digestEn: digest.en,
     digestZh: digest.zh,
     upvotes,
-    comments: Number.isFinite(commentsValue) ? commentsValue : null,
+    comments: commentsValue,
   }
+}
+
+function parseFormattedNumber(value: string): number | null {
+  const parsed = Number.parseInt(unescapeMarkdown(value).replace(/[,_\s]/g, ''), 10)
+
+  return Number.isFinite(parsed) ? parsed : null
 }
 
 function splitMarkdownTableRow(line: string): string[] {
@@ -171,9 +181,11 @@ function decodeHtml(text: string): string {
 }
 
 function toTitle(value: string): string {
-  return value
-    .split(/[-_]/)
-    .filter(Boolean)
-    .map((part) => part.slice(0, 1).toUpperCase() + part.slice(1))
-    .join(' ')
+  const parts: string[] = []
+
+  for (const part of value.split(/[-_]/)) {
+    if (part) parts.push(part.slice(0, 1).toUpperCase() + part.slice(1))
+  }
+
+  return parts.join(' ')
 }

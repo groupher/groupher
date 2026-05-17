@@ -93,7 +93,7 @@ export function FeedbackPage({
               className='size-11 shrink-0 rounded-[10px] object-contain'
             />
             <div className='min-w-0'>
-              <h1 className='text-title m-0 truncate text-[30px] leading-[1.08] font-bold'>
+              <h1 className='text-title m-0 truncate text-[30px] leading-[1.08] font-semibold'>
                 {selected.name}
               </h1>
             </div>
@@ -136,9 +136,9 @@ function Pagination({
         Prev
       </PageLink>
 
-      {pages.map((page, index) =>
-        page === 'gap' ? (
-          <span key={`gap-${index}`} className='text-digest px-1 text-[13px]'>
+      {pages.map((page) =>
+        typeof page === 'string' ? (
+          <span key={page} className='text-digest px-1 text-[13px]'>
             ...
           </span>
         ) : (
@@ -193,7 +193,9 @@ function PageLink({
   )
 }
 
-function getVisiblePages(currentPage: number, totalPages: number): Array<number | 'gap'> {
+type TVisiblePage = number | `gap-${number}-${number}`
+
+function getVisiblePages(currentPage: number, totalPages: number): TVisiblePage[] {
   if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1)
 
   const pages = new Set([1, totalPages, currentPage - 1, currentPage, currentPage + 1])
@@ -203,7 +205,7 @@ function getVisiblePages(currentPage: number, totalPages: number): Array<number 
 
   return sorted.flatMap((page, index) => {
     const previous = sorted[index - 1]
-    if (previous && page - previous > 1) return ['gap' as const, page]
+    if (previous && page - previous > 1) return [`gap-${previous}-${page}` as const, page]
     return [page]
   })
 }
@@ -212,7 +214,7 @@ function PostItem({ post, rank }: { post: FeedbackPost; rank: number }) {
   return (
     <article className='border-divider grid grid-cols-[minmax(0,1fr)_54px] gap-6 border-b bg-white py-[22px] max-md:grid-cols-[minmax(0,1fr)_46px] max-md:gap-4'>
       <div className='min-w-0'>
-        <h2 className='text-title m-0 flex items-center gap-1.5 text-lg leading-[1.35] font-bold max-md:text-base'>
+        <h2 className='text-title m-0 flex items-center gap-1.5 text-lg leading-[1.35] font-semibold max-md:text-base'>
           <span className='text-digest shrink-0 text-[13px] leading-[1.35] font-semibold tabular-nums max-md:text-[12px]'>
             No.{rank}
           </span>
