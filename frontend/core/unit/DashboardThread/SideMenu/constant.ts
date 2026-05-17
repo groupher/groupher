@@ -1,4 +1,15 @@
-import { DSB_CHANGELOG_ROUTE, DSB_DOC_ROUTE, DSB_POST_ROUTE } from '~/const/route'
+import { DSB_CHANGELOG_ROUTE, DSB_DOC_ROUTE, DSB_POST_ROUTE, DSB_ROUTE } from '~/const/route'
+import type { TTransKey } from '~/spec'
+
+import { MENU_VIEW } from '../constant'
+
+export type TSubMenuScope = 'changelog' | 'doc' | 'post'
+
+export type TSubMenuItem = {
+  path: string
+  slug: string
+  title: TTransKey
+}
 
 export const DOC_MENU_ITEMS = [
   {
@@ -88,3 +99,46 @@ export const CHANGELOG_MENU_ITEMS = [
     path: DSB_CHANGELOG_ROUTE.BEHAVIOR,
   },
 ] as const
+
+export const SUBMENU_ROUTE_VIEW = {
+  [DSB_ROUTE.DOC]: MENU_VIEW.DOC,
+  [DSB_ROUTE.POST]: MENU_VIEW.POST,
+  [DSB_ROUTE.CHANGELOG]: MENU_VIEW.CHANGELOG,
+} as const
+
+export const SUBMENU_CONFIG = {
+  [MENU_VIEW.DOC]: {
+    baseRoute: DSB_ROUTE.DOC,
+    defaultSlug: DSB_DOC_ROUTE.LAYOUT,
+    entryPath: `${DSB_ROUTE.DOC}/${DSB_DOC_ROUTE.EDITOR}`,
+    entrySlug: DSB_DOC_ROUTE.EDITOR,
+    items: DOC_MENU_ITEMS,
+    scope: 'doc',
+  },
+  [MENU_VIEW.POST]: {
+    baseRoute: DSB_ROUTE.POST,
+    defaultSlug: DSB_POST_ROUTE.CONTENT,
+    entryPath: `${DSB_ROUTE.POST}/${DSB_POST_ROUTE.CONTENT}`,
+    entrySlug: DSB_POST_ROUTE.CONTENT,
+    items: POST_MENU_ITEMS,
+    scope: 'post',
+  },
+  [MENU_VIEW.CHANGELOG]: {
+    baseRoute: DSB_ROUTE.CHANGELOG,
+    defaultSlug: DSB_CHANGELOG_ROUTE.CONTENT,
+    entryPath: `${DSB_ROUTE.CHANGELOG}/${DSB_CHANGELOG_ROUTE.CONTENT}`,
+    entrySlug: DSB_CHANGELOG_ROUTE.CONTENT,
+    items: CHANGELOG_MENU_ITEMS,
+    scope: 'changelog',
+  },
+} satisfies Record<
+  Exclude<(typeof MENU_VIEW)[keyof typeof MENU_VIEW], typeof MENU_VIEW.MAIN>,
+  {
+    baseRoute: string
+    defaultSlug: string
+    entryPath: string
+    entrySlug: string
+    items: readonly TSubMenuItem[]
+    scope: TSubMenuScope
+  }
+>

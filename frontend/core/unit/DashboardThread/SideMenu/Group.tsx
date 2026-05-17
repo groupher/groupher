@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { type FC, useState } from 'react'
 
-import { DSB_CHANGELOG_ROUTE, DSB_DOC_ROUTE, DSB_POST_ROUTE, DSB_ROUTE } from '~/const/route'
+import { DSB_ROUTE } from '~/const/route'
 import useTrans from '~/hooks/useTrans'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
 import ArrowSVG from '~/icons/ArrowSimple'
@@ -17,7 +17,8 @@ import { DSB_MENU_ICON, MENU_VIEW } from '../constant'
 import useSalon, { cn } from '../salon/side_menu/group'
 import type { TDsbMenuGroup } from '../spec'
 import ActiveMark from './ActiveMark'
-import { dispatchMenuView } from './events'
+import { SUBMENU_CONFIG, SUBMENU_ROUTE_VIEW } from './constant'
+import { dispatchMenuView, type TMenuView } from './events'
 
 type TProps = {
   activeMainTab: TDsbPath
@@ -66,14 +67,9 @@ const Group: FC<TProps> = ({ activeMainTab, group }) => {
         <div className={s.menu}>
           {group.children.map((item) => {
             const subPath = item.slug === DSB_ROUTE.OVERVIEW ? '' : item.slug
-            const itemPath =
-              item.slug === DSB_ROUTE.DOC
-                ? `${DSB_ROUTE.DOC}/editor`
-                : item.slug === DSB_ROUTE.POST
-                  ? `${DSB_ROUTE.POST}/content`
-                  : item.slug === DSB_ROUTE.CHANGELOG
-                    ? `${DSB_ROUTE.CHANGELOG}/content`
-                    : subPath
+            const submenuView = SUBMENU_ROUTE_VIEW[item.slug as keyof typeof SUBMENU_ROUTE_VIEW]
+            const submenuConfig = submenuView ? SUBMENU_CONFIG[submenuView] : null
+            const itemPath = submenuConfig?.entryPath ?? subPath
             const isActive = item.slug === activeMainTab
 
             return (
@@ -82,23 +78,11 @@ const Group: FC<TProps> = ({ activeMainTab, group }) => {
                 className={cn(s.item, isActive && s.itemActive)}
                 href={`/${community}/${DSB_ROUTE.OVERVIEW}/${itemPath}${searchString}`}
                 onClick={() => {
-                  if (item.slug === DSB_ROUTE.DOC) {
+                  if (submenuConfig) {
                     dispatchMenuView({
-                      docSubTab: DSB_DOC_ROUTE.EDITOR,
+                      subTab: submenuConfig.entrySlug,
                       returnTo: `${pathname}${searchString}`,
-                      view: MENU_VIEW.DOC,
-                    })
-                  } else if (item.slug === DSB_ROUTE.POST) {
-                    dispatchMenuView({
-                      postSubTab: DSB_POST_ROUTE.CONTENT,
-                      returnTo: `${pathname}${searchString}`,
-                      view: MENU_VIEW.POST,
-                    })
-                  } else if (item.slug === DSB_ROUTE.CHANGELOG) {
-                    dispatchMenuView({
-                      changelogSubTab: DSB_CHANGELOG_ROUTE.CONTENT,
-                      returnTo: `${pathname}${searchString}`,
-                      view: MENU_VIEW.CHANGELOG,
+                      view: submenuView as TMenuView,
                     })
                   } else {
                     dispatchMenuView({

@@ -1,14 +1,9 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { DSB_ROUTE } from '~/const/route'
+import type { TTransKey } from '~/spec'
 
-import { DSB_COVERS, DSB_ROUTE } from '~/const/route'
-import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
-import useTrans from '~/hooks/useTrans'
-import { mockUsers } from '~/mock'
-import type { TCrumbConfig, TTransKey } from '~/spec'
-import AdminList from '~/unit/DashboardThread/AdminList'
-import Portal from '~/unit/DashboardThread/Portal'
+import createCmsSectionLayout from '../../_shared/createCmsSectionLayout'
 
 type TPostLayoutConfig = {
   path: string
@@ -27,29 +22,13 @@ export default function createPostLayout({
   desc,
   withDivider = false,
 }: TPostLayoutConfig) {
-  const crumbConfig = {
-    title: 'dsb.crumb.cms',
+  return createCmsSectionLayout({
+    crumbTitle,
+    desc,
+    path,
     seg,
-    toSeg: DSB_COVERS.CMS,
-    children: [{ title: crumbTitle, seg: `${seg}/${path}` }],
-  } satisfies TCrumbConfig
-
-  return function DashboardPostSectionLayout({ children }: { children: ReactNode }) {
-    const { t } = useTrans()
-    const crumbItems = useDsbCrumbItems(crumbConfig)
-    const adminList = mockUsers(4)
-
-    return (
-      <>
-        <Portal
-          title={t(title)}
-          desc={desc ? t(desc) : undefined}
-          crumbItems={crumbItems}
-          addon={<AdminList userList={adminList} />}
-          withDivider={withDivider}
-        />
-        {children}
-      </>
-    )
-  }
+    showAdmins: true,
+    title,
+    withDivider,
+  })
 }
