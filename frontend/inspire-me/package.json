@@ -1,0 +1,28 @@
+{
+  "name": "@groupher/frontend-inspire-me",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbo",
+    "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
+    "build": "cross-env NODE_ENV=production next build --webpack",
+    "start": "cross-env NODE_ENV=production next start -p 3000",
+    "info": "next info",
+    "lint": "../../node_modules/.bin/oxlint app --threads=1",
+    "format": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json ./app",
+    "format:check": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json --check ./app",
+    "clean:up": "rm -rf *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@groupher/frontend-core": "1.0.0",
+    "next": "16.2.4",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0"
+  },
+  "lint-staged": {
+    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
+  }
+}

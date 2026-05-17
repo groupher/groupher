@@ -3,9 +3,11 @@ import type { ComponentType } from 'react'
 import type {
   DSB_ALIAS_ROUTE,
   DSB_BROADCAST_ROUTE,
+  DSB_CHANGELOG_ROUTE,
   DSB_DOC_ROUTE,
   DSB_INFO_ROUTE,
   DSB_LAYOUT_ROUTE,
+  DSB_POST_ROUTE,
   DSB_ROUTE,
   DSB_SEO_ROUTE,
 } from '~/const/route'
@@ -14,6 +16,8 @@ import type { TConstValues, TTransKey } from '~/spec'
 export type TDsbBaseInfoRoute = TConstValues<typeof DSB_INFO_ROUTE>
 export type TDsbSEORoute = TConstValues<typeof DSB_SEO_ROUTE>
 export type TDsbDocRoute = TConstValues<typeof DSB_DOC_ROUTE>
+export type TDsbPostRoute = TConstValues<typeof DSB_POST_ROUTE>
+export type TDsbChangelogRoute = TConstValues<typeof DSB_CHANGELOG_ROUTE>
 export type TDsbLayoutRoute = TConstValues<typeof DSB_LAYOUT_ROUTE>
 export type TDsbBroadcastRoute = TConstValues<typeof DSB_BROADCAST_ROUTE>
 export type TDsbAliasRoute = TConstValues<typeof DSB_ALIAS_ROUTE>

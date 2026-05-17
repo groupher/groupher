@@ -1,9 +1,8 @@
-'use client'
+import { redirect } from 'next/navigation'
 
-import Posts from '~/unit/DashboardThread/CMS/Posts'
+import { DSB_POST_ROUTE, DSB_ROUTE } from '~/const/route'
 
-const DashboardPostPage = () => {
-  return <Posts />
+export default async function Page({ params }) {
+  const { community } = await params
+  redirect(`/${community}/dashboard/${DSB_ROUTE.POST}/${DSB_POST_ROUTE.CONTENT}`)
 }
-
-export default DashboardPostPage

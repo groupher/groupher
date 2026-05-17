@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { type FC, useState } from 'react'
 
 import { DSB_ROUTE } from '~/const/route'
-import useDsbTab from '~/hooks/useDsbTab'
 import useTrans from '~/hooks/useTrans'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
 import ArrowSVG from '~/icons/ArrowSimple'
@@ -10,19 +9,22 @@ import BindSVG from '~/icons/Bind'
 import InfoSVG from '~/icons/Info'
 import ManagementSVG from '~/icons/Management'
 import PulseSVG from '~/icons/Pulse'
+import type { TDsbPath } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 
-import { DOC_RETURN_TO_KEY, DSB_MENU_ICON } from '../constant'
+import { DSB_MENU_ICON, MENU_VIEW } from '../constant'
 import useSalon, { cn } from '../salon/side_menu/group'
 import type { TDsbMenuGroup } from '../spec'
+import ActiveMark from './ActiveMark'
+import { SUBMENU_CONFIG, SUBMENU_ROUTE_VIEW } from './constant'
+import { dispatchMenuView, type TMenuView } from './events'
 
 type TProps = {
+  activeMainTab: TDsbPath
   group: TDsbMenuGroup
 }
 
-const Group: FC<TProps> = ({ group }) => {
-  const { mainTab } = useDsbTab()
-
+const Group: FC<TProps> = ({ activeMainTab, group }) => {
   const { slug: community } = useCommunity()
   const searchString = useURLSearchParams()
   const [foldState, setFoldState] = useState<boolean | null>(null)
@@ -63,8 +65,10 @@ const Group: FC<TProps> = ({ group }) => {
         <div className={s.menu}>
           {group.children.map((item) => {
             const subPath = item.slug === DSB_ROUTE.OVERVIEW ? '' : item.slug
-            const itemPath = item.slug === DSB_ROUTE.DOC ? `${DSB_ROUTE.DOC}/editor` : subPath
-            const isActive = item.slug === mainTab
+            const submenuView = SUBMENU_ROUTE_VIEW[item.slug as keyof typeof SUBMENU_ROUTE_VIEW]
+            const submenuConfig = submenuView ? SUBMENU_CONFIG[submenuView] : null
+            const itemPath = submenuConfig?.entryPath ?? subPath
+            const isActive = item.slug === activeMainTab
 
             return (
               <Link
@@ -72,15 +76,29 @@ const Group: FC<TProps> = ({ group }) => {
                 className={cn(s.item, isActive && s.itemActive)}
                 href={`/${community}/${DSB_ROUTE.OVERVIEW}/${itemPath}${searchString}`}
                 onClick={() => {
-                  if (item.slug === DSB_ROUTE.DOC) {
-                    const pathname = window.location.pathname
-                    sessionStorage.setItem(DOC_RETURN_TO_KEY, `${pathname}${searchString}`)
+                  if (submenuConfig) {
+                    dispatchMenuView({
+                      subTab: submenuConfig.entrySlug,
+                      returnTo: `${window.location.pathname}${searchString}`,
+                      view: submenuView as TMenuView,
+                    })
+                  } else {
+                    dispatchMenuView({
+                      mainTab: item.slug,
+                      view: MENU_VIEW.MAIN,
+                    })
                   }
                 }}
               >
-                {isActive && <div className={s.itemActiveBar} />}
+                {isActive && (
+                  <ActiveMark
+                    scope='main'
+                    bgClassName={s.itemActiveBg}
+                    barClassName={s.itemActiveBar}
+                  />
+                )}
 
-                {t(item.title)}
+                <span className={s.itemLabel}>{t(item.title)}</span>
               </Link>
             )
           })}

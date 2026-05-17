@@ -1,37 +1,55 @@
 import Link from 'next/link'
 
-import { DSB_DOC_ROUTE, DSB_ROUTE } from '~/const/route'
+import { DSB_ROUTE } from '~/const/route'
 import useDsbTab from '~/hooks/useDsbTab'
 import useTrans from '~/hooks/useTrans'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
 import useCommunity from '~/stores/community/hooks'
 
 import useSalon, { cn } from '../salon/side_menu/doc'
-import { DOC_MENU_ITEMS } from './constant'
+import ActiveMark from './ActiveMark'
+import type { TSubMenuItem, TSubMenuScope } from './constant'
 import SubMenuBack from './SubMenuBack'
 
-export default function DocMenu() {
+type TProps = {
+  activeSlug: string | null
+  baseRoute: string
+  defaultSlug: string
+  items: readonly TSubMenuItem[]
+  returnTo: string | null
+  scope: TSubMenuScope
+}
+
+export default function SubMenu({
+  activeSlug: activeSlugProp,
+  baseRoute,
+  defaultSlug,
+  items,
+  returnTo,
+  scope,
+}: TProps) {
   const { slug: community } = useCommunity()
   const { subTab } = useDsbTab()
   const searchString = useURLSearchParams()
   const { t } = useTrans()
   const s = useSalon()
 
-  const activeSlug = subTab ?? DSB_DOC_ROUTE.LAYOUT
+  const activeSlug = activeSlugProp ?? subTab ?? defaultSlug
   const dashboardBase = `/${community}/${DSB_ROUTE.OVERVIEW}`
-  const docBase = `/${community}/${DSB_ROUTE.OVERVIEW}/${DSB_ROUTE.DOC}`
+  const sectionBase = `${dashboardBase}/${baseRoute}`
   const fallbackBackHref = `${dashboardBase}${searchString}`
 
   return (
     <div className={s.wrapper}>
       <SubMenuBack
-        currentBase={docBase}
+        currentBase={sectionBase}
         dashboardBase={dashboardBase}
         fallbackHref={fallbackBackHref}
+        returnTo={returnTo}
       />
 
       <div className={s.menu}>
-        {DOC_MENU_ITEMS.map((item) => {
+        {items.map((item) => {
           const isActive = item.slug === activeSlug
           const path = item.path ? `/${item.path}` : ''
 
@@ -39,10 +57,16 @@ export default function DocMenu() {
             <Link
               key={item.slug}
               className={cn(s.item, isActive && s.itemActive)}
-              href={`${docBase}${path}${searchString}`}
+              href={`${sectionBase}${path}${searchString}`}
             >
-              {isActive && <div className={s.itemActiveBar} />}
-              {t(item.title)}
+              {isActive && (
+                <ActiveMark
+                  scope={scope}
+                  bgClassName={s.itemActiveBg}
+                  barClassName={s.itemActiveBar}
+                />
+              )}
+              <span className={s.itemLabel}>{t(item.title)}</span>
             </Link>
           )
         })}

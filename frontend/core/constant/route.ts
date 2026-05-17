@@ -67,6 +67,20 @@ export const DSB_DOC_ROUTE = {
   BACKUP: 'backup',
 } as const
 
+export const DSB_POST_ROUTE = {
+  ANALYSIS: 'analysis',
+  LAYOUT: 'layout',
+  CONTENT: 'content',
+  BEHAVIOR: 'behavior',
+} as const
+
+export const DSB_CHANGELOG_ROUTE = {
+  ANALYSIS: 'analysis',
+  LAYOUT: 'layout',
+  CONTENT: 'content',
+  BEHAVIOR: 'behavior',
+} as const
+
 export const DSB_LAYOUT_ROUTE = {
   GENERAL: 'general',
   THEME: 'theme',
@@ -158,9 +172,7 @@ export const LAYOUT_TABS: TDsbTabs = {
   items: [
     { title: 'dsb.layout.general', slug: DSB_LAYOUT_ROUTE.GENERAL, segment: '' },
     { title: 'dsb.layout.theme', slug: DSB_LAYOUT_ROUTE.THEME },
-    { title: 'dsb.layout.post', slug: DSB_LAYOUT_ROUTE.POST },
     { title: 'dsb.layout.kanban', slug: DSB_LAYOUT_ROUTE.KANBAN },
-    { title: 'dsb.layout.changelog', slug: DSB_LAYOUT_ROUTE.CHANGELOG },
   ],
 }
 
