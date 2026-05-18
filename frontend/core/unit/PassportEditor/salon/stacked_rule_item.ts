@@ -1,13 +1,14 @@
 import { COLOR } from '~/const/colors'
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 type TProps = {
   active: boolean
-  completed: boolean
 }
 
-export default function useSalon({ active, completed }: TProps) {
-  const { cn, fg, bg, primary, rainbow, rainbowSoft } = useTwBelt()
+export default function useSalon({ active }: TProps) {
+  const { cn, fg, bg, primary, rainbow } = useTwBelt()
+  const { isDarkTheme } = useTheme()
 
   return {
     wrapper: cn(
@@ -21,10 +22,10 @@ export default function useSalon({ active, completed }: TProps) {
     detailList: 'column gap-y-1',
     itemTitle: cn('text-sm ml-2 min-w-0 flex-1 truncate', fg('digest')),
     primaryItemTitle: cn('text-sm ml-2 min-w-0 flex-1 truncate', primary('fg')),
-    itemCount: cn(
-      'ml-1 text-xs bold-sm shrink-0 rounded-lg px-1.5 py-0.5',
-      rainbow(completed ? COLOR.GREEN : COLOR.ORANGE, 'fg'),
-      active && rainbowSoft(completed ? COLOR.GREEN : COLOR.ORANGE),
-    ),
+    itemBars: cn('ml-2 row-center shrink-0 gap-0.5 rounded px-1 py-0.5 trans-all-100'),
+    itemBar: 'h-3 w-1 rounded-full trans-all-100',
+    itemBarDone: cn(rainbow(COLOR.GREEN, 'bg'), 'opacity-40'),
+    itemBarPartial: cn(rainbow(COLOR.ORANGE, 'bg'), 'opacity-80'),
+    itemBarEmpty: cn(bg('digest'), isDarkTheme ? 'opacity-40' : 'opacity-20'),
   }
 }

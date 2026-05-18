@@ -13,7 +13,7 @@ export default function useSalon() {
     groupDesc: cn('text-sm mt-1 mb-3 w-11/12', fg('digest')),
     groupPanel: cn('w-full rounded-sm border', br('divider')),
     groupBody: 'grid grid-cols-2 gap-x-5 gap-y-1',
-    threadedGroupBody: 'column w-full gap-y-5 p-4',
+    threadedGroupBody: 'column w-full gap-y-5 py-3.5 pl-3 pr-0',
     threadGroup: 'min-w-0 w-full',
     threadTitle: cn('row-center text-xs bold-sm uppercase mb-3 gap-x-1.5', fg('title')),
     primaryThreadTitle: cn('row-center text-xs bold-sm uppercase mb-3 gap-x-1.5', primary('fg')),
