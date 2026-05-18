@@ -25,6 +25,7 @@ import type { TDsbFieldKey, TDsbFieldMap } from '~/stores/dashboard/spec'
 import type { TFAQSection } from './article'
 import type { TColorName } from './color'
 import type { TModerator } from './community'
+import type { TThemePreset } from './theme_preset'
 import type { TEditValue, TFooterOnelineLink, TLinkItem, TSocialItem } from './utils'
 import type { TWallpaperData } from './wallpaper'
 
@@ -68,6 +69,8 @@ export type TDsb = {
 
   layout?: {
     brandLayout: TBrandLayout
+    themePreset: TThemePreset
+    themeOverrides: Record<string, unknown>
     pageBg: string
     pageBgDark: string
     pageCustomBg: number

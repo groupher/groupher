@@ -37,7 +37,7 @@ export default function useEdit(): TRet {
     (v: TEditValue, field: TDsbFieldKey): void => {
       let value = v
       if (isObject(v) && has('target', v)) {
-        value = v.target.value
+        value = (v as { target: { value: TEditValue } }).target.value
       }
 
       if (isStoreField(field)) {

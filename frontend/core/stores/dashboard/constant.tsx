@@ -24,6 +24,7 @@ import {
 } from '~/const/layout'
 import SIZE from '~/const/size'
 import THEME from '~/const/theme'
+import { DEFAULT_THEME_PRESET } from '~/const/theme_preset'
 import { THREAD } from '~/const/thread'
 import { PAGE_CUSTOM_HUE_DEFAULT, PAGE_CUSTOM_INTENSITY_DEFAULT } from '~/lib/color'
 
@@ -66,6 +67,8 @@ export const FIELDS: TDsbFieldMap = {
   mediaReports: [EMPTY_MEDIA_REPORT],
 
   // page
+  themePreset: DEFAULT_THEME_PRESET,
+  themeOverrides: {},
   pageBg: PAGE_BG_DEFAULT[THEME.LIGHT],
   pageBgDark: PAGE_BG_DEFAULT[THEME.DARK],
   pageCustomBg: PAGE_CUSTOM_HUE_DEFAULT,

@@ -487,6 +487,14 @@ export default function useMutation(): TRet {
         return
       }
 
+      if (field === FIELD.THEME_OVERRIDES) {
+        handleMutation(S.updateDashboardLayout, {
+          community,
+          themeOverrides: JSON.stringify(e ?? {}),
+        })
+        return
+      }
+
       handleMutation(S.updateDashboardLayout, { community, [field]: e })
       return
     }

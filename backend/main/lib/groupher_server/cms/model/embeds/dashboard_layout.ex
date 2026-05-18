@@ -48,8 +48,24 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
 
     struct
     |> cast(params, @optional_fields)
+    |> validate_theme_overrides()
     |> validate_kanban_boards()
     |> validate_custom_colors()
+  end
+
+  defp validate_theme_overrides(changeset) do
+    validate_change(changeset, :theme_overrides, fn :theme_overrides, value ->
+      cond do
+        is_nil(value) ->
+          []
+
+        is_map(value) ->
+          []
+
+        true ->
+          [theme_overrides: "must be a map"]
+      end
+    end)
   end
 
   defp normalize_layout_enum_values(params) when is_map(params) do

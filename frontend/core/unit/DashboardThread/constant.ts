@@ -17,6 +17,8 @@ export const DSB_MENU_ICON = {
 
 // do not change, it's map to GQ endpoint updateDashboardLayout
 export const LAYOUT_FIELD = {
+  THEME_PRESET: 'themePreset',
+  THEME_OVERRIDES: 'themeOverrides',
   PAGE_BG: 'pageBg',
   PAGE_BG_DARK: 'pageBgDark',
   PAGE_CUSTOM_BG: 'pageCustomBg',

@@ -80,6 +80,8 @@ export const community = `
           group
         }
         layout {
+          themePreset
+          themeOverrides
           pageBg
           pageBgDark
           pageCustomBg

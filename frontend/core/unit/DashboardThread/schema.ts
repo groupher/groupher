@@ -161,6 +161,8 @@ const updateDashboardEnable = gql`
 const updateDashboardLayout = gql`
   mutation (
     $community: String!
+    $themePreset: DsbThemePreset
+    $themeOverrides: Json
     $pageBg: String
     $pageBgDark: String
     $pageCustomBg: Int
@@ -206,6 +208,8 @@ const updateDashboardLayout = gql`
   ) {
     updateDashboardLayout(
       community: $community
+      themePreset: $themePreset
+      themeOverrides: $themeOverrides
       pageBg: $pageBg
       pageBgDark: $pageBgDark
       pageCustomBg: $pageCustomBg

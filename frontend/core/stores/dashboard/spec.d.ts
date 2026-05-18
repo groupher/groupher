@@ -34,6 +34,7 @@ import type {
   TSocialItem,
   TTagGroup,
   TTagLayout,
+  TThemePreset,
   TThread,
   TUser,
 } from '~/spec'
@@ -70,6 +71,8 @@ export type TDsbFieldMap = {
   mediaReports: readonly TMediaReport[]
 
   // page
+  themePreset: TThemePreset
+  themeOverrides: Record<string, unknown>
   pageBg: string
   pageBgDark: string
   pageCustomBg: number

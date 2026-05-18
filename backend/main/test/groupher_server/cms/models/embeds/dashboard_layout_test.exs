@@ -14,6 +14,38 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
     assert DashboardLayout.default().kanban_bg_colors == Dashboard.kanban_bg_colors_default()
   end
 
+  test "default theme preset fields are seeded in layout default" do
+    assert DashboardLayout.default().theme_preset == :default
+    assert DashboardLayout.default().theme_overrides == %{}
+  end
+
+  test "accepts theme preset with sparse overrides" do
+    changeset =
+      DashboardLayout.changeset(%DashboardLayout{}, %{
+        theme_preset: "claude",
+        theme_overrides: %{"primaryColor" => "#B85C43", "pageBg" => "CUSTOM"}
+      })
+
+    assert changeset.valid?
+
+    layout = Ecto.Changeset.apply_changes(changeset)
+
+    assert layout.theme_preset == :claude
+    assert layout.theme_overrides["primaryColor"] == "#B85C43"
+  end
+
+  test "rejects invalid theme preset payloads" do
+    changeset =
+      DashboardLayout.changeset(%DashboardLayout{}, %{
+        theme_preset: "unknown",
+        theme_overrides: "not-a-map"
+      })
+
+    refute changeset.valid?
+    assert errors_on(changeset).theme_preset == ["is invalid"]
+    assert errors_on(changeset).theme_overrides == ["is invalid"]
+  end
+
   test "changeset normalizes legacy uppercase enum strings" do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{
