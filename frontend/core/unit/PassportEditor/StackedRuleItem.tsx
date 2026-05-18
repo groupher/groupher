@@ -28,6 +28,31 @@ const getSelectedCount = (rules: string[], selectedRules: string[], selectAll: b
   return rules.filter((rule) => includes(rule, selectedRules)).length
 }
 
+function RuleCountBars({
+  selectedCount,
+  totalCount,
+  completed,
+  s,
+}: {
+  selectedCount: number
+  totalCount: number
+  completed: boolean
+  s: ReturnType<typeof useSalon>
+}) {
+  const activeBarClass = completed ? s.itemBarDone : s.itemBarPartial
+
+  return (
+    <div className={s.itemBars} aria-label={`${selectedCount}/${totalCount}`}>
+      {Array.from({ length: totalCount }).map((_, index) => (
+        <span
+          key={index}
+          className={`${s.itemBar} ${index < selectedCount ? activeBarClass : s.itemBarEmpty}`}
+        />
+      ))}
+    </div>
+  )
+}
+
 export default function StackedRuleItem({
   title,
   rules,
@@ -45,7 +70,7 @@ export default function StackedRuleItem({
   const checked = selectedCount === rules.length
   const indeterminate = selectedCount > 0 && selectedCount < rules.length
   const completed = selectedCount === rules.length
-  const s = useSalon({ active, completed })
+  const s = useSalon({ active })
 
   const detailPanel = (
     <div className={s.detailPanel}>
@@ -89,14 +114,18 @@ export default function StackedRuleItem({
         placement='bottom'
         offset={[-55, 0]}
         maxWidth={180}
+        hideOnClick={false}
         noPadding
         onShow={() => setActive(true)}
         onHide={() => setActive(false)}
         content={detailPanel}
       >
-        <div className={s.itemCount}>
-          {selectedCount}/{rules.length}
-        </div>
+        <RuleCountBars
+          selectedCount={selectedCount}
+          totalCount={rules.length}
+          completed={completed}
+          s={s}
+        />
       </Tooltip>
     </div>
   )
