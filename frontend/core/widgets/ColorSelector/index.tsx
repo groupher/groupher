@@ -25,6 +25,7 @@ type TProps = {
   onChange?: (color: TColorName) => void
   onCustomColorChange?: (color: string) => void
   allowCustomColor?: boolean
+  disabled?: boolean
   placement?: TTooltipPlacement
   offset?: [number, number]
   excepts?: TColorName[]
@@ -40,6 +41,7 @@ const ColorSelector: FC<TProps> = ({
   onChange = console.log,
   onCustomColorChange = console.log,
   allowCustomColor = false,
+  disabled = false,
   placement = 'bottom',
   offset = [5, 5],
   excepts = DEFAULT_EXCEPTS,
@@ -90,6 +92,8 @@ const ColorSelector: FC<TProps> = ({
   const handleCollapse = () => {
     setCustomExpanded(false)
   }
+
+  if (disabled) return <span className='contents'>{children}</span>
 
   return (
     <Tooltip

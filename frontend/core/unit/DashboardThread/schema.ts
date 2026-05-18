@@ -175,6 +175,8 @@ const updateDashboardLayout = gql`
     $subPrimaryColor: RainbowColor
     $subPrimaryCustomColor: String
     $subPrimaryCustomColorDark: String
+    $textTitle: String
+    $textDigest: String
     $postLayout: DsbPostLayout
     $kanbanLayout: DsbKanbanLayout
     $kanbanCardLayout: DsbKanbanCardLayout
@@ -222,6 +224,8 @@ const updateDashboardLayout = gql`
       subPrimaryColor: $subPrimaryColor
       subPrimaryCustomColor: $subPrimaryCustomColor
       subPrimaryCustomColorDark: $subPrimaryCustomColorDark
+      textTitle: $textTitle
+      textDigest: $textDigest
       postLayout: $postLayout
       kanbanLayout: $kanbanLayout
       kanbanCardLayout: $kanbanCardLayout

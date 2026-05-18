@@ -4,6 +4,7 @@ import { type CSSProperties, type FC, type ReactNode, useEffect } from 'react'
 
 import { COLOR, getDefaultCustomColor } from '~/const/colors'
 import THEME from '~/const/theme'
+import { DEFAULT_TEXT_DIGEST, DEFAULT_TEXT_TITLE } from '~/const/theme_preset'
 import { getPageBgCustomColor } from '~/lib/color'
 import useDashboard from '~/stores/dashboard/hooks'
 
@@ -24,9 +25,13 @@ const CustomThemeScope: FC<TProps> = ({ children }) => {
     primaryCustomColorDark,
     subPrimaryCustomColor,
     subPrimaryCustomColorDark,
+    textTitle,
+    textDigest,
   } = useDashboard()
   const lightDefault = getDefaultCustomColor(THEME.LIGHT)
   const darkDefault = getDefaultCustomColor(THEME.DARK)
+  const safeTextTitle = textTitle || DEFAULT_TEXT_TITLE
+  const safeTextDigest = textDigest || DEFAULT_TEXT_DIGEST
 
   useEffect(() => {
     const root = document.documentElement
@@ -48,6 +53,8 @@ const CustomThemeScope: FC<TProps> = ({ children }) => {
     )
     root.style.setProperty('--color-page-custom-light', lightPageBg)
     root.style.setProperty('--color-page-custom-dark', darkPageBg)
+    root.style.setProperty('--color-title', safeTextTitle)
+    root.style.setProperty('--color-digest', safeTextDigest)
   }, [
     darkDefault,
     lightDefault,
@@ -61,6 +68,8 @@ const CustomThemeScope: FC<TProps> = ({ children }) => {
     primaryCustomColorDark,
     subPrimaryCustomColor,
     subPrimaryCustomColorDark,
+    safeTextTitle,
+    safeTextDigest,
   ])
 
   const style = {
@@ -76,6 +85,8 @@ const CustomThemeScope: FC<TProps> = ({ children }) => {
     '--color-primary-custom-dark': primaryCustomColorDark || darkDefault,
     '--color-sub-primary-custom': subPrimaryCustomColor || lightDefault,
     '--color-sub-primary-custom-dark': subPrimaryCustomColorDark || darkDefault,
+    '--color-title': safeTextTitle,
+    '--color-digest': safeTextDigest,
   } as CSSProperties
 
   return (

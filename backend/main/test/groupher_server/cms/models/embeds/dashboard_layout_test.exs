@@ -17,12 +17,14 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
   test "default theme preset fields are seeded in layout default" do
     assert DashboardLayout.default().theme_preset == :default
     assert DashboardLayout.default().theme_overrides == %{}
+    assert DashboardLayout.default().text_title == "#243041"
+    assert DashboardLayout.default().text_digest == "#6b7280"
   end
 
   test "accepts theme preset with sparse overrides" do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{
-        theme_preset: "claude",
+        theme_preset: "custom",
         theme_overrides: %{"primaryColor" => "#B85C43", "pageBg" => "CUSTOM"}
       })
 
@@ -30,7 +32,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
 
     layout = Ecto.Changeset.apply_changes(changeset)
 
-    assert layout.theme_preset == :claude
+    assert layout.theme_preset == :custom
     assert layout.theme_overrides["primaryColor"] == "#B85C43"
   end
 
@@ -71,7 +73,9 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
         primary_custom_color: "#112233",
         primary_custom_color_dark: "#223344",
         sub_primary_custom_color: "#334455",
-        sub_primary_custom_color_dark: "#445566"
+        sub_primary_custom_color_dark: "#445566",
+        text_title: "#556677",
+        text_digest: "#667788"
       })
 
     assert changeset.valid?
@@ -83,7 +87,9 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
         primary_custom_color: "red",
         primary_custom_color_dark: "#fff",
         sub_primary_custom_color: "var(--x)",
-        sub_primary_custom_color_dark: "#12345g"
+        sub_primary_custom_color_dark: "#12345g",
+        text_title: "oklch(1 0 0)",
+        text_digest: "#12345g"
       })
 
     refute changeset.valid?
@@ -91,6 +97,8 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
     assert errors_on(changeset).primary_custom_color_dark == ["must be a valid hex color"]
     assert errors_on(changeset).sub_primary_custom_color == ["must be a valid hex color"]
     assert errors_on(changeset).sub_primary_custom_color_dark == ["must be a valid hex color"]
+    assert errors_on(changeset).text_title == ["must be a valid hex color"]
+    assert errors_on(changeset).text_digest == ["must be a valid hex color"]
   end
 
   defp errors_on(changeset) do

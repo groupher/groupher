@@ -1,5 +1,6 @@
 import { COLOR, getDefaultCustomColor } from '~/const/colors'
 import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
+import { DEFAULT_TEXT_DIGEST, DEFAULT_TEXT_TITLE } from '~/const/theme_preset'
 import { getPageBgCustomColor, normalizePageBgHue, normalizePageBgIntensity } from '~/lib/color'
 import type { TParseDashboard } from '~/spec'
 
@@ -36,12 +37,13 @@ const serializeCSSVars = (selector: string, vars: TCSSVarMap): string => {
 const resolveSafeColor = (
   value: string | undefined,
   theme: typeof THEME.LIGHT | typeof THEME.DARK,
+  fallback = getDefaultCustomColor(theme),
 ) => {
   if (value && HEX_COLOR_RE.test(value)) {
     return value
   }
 
-  return getDefaultCustomColor(theme)
+  return fallback
 }
 
 const resolveSafePageBg = (
@@ -77,6 +79,8 @@ const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string
           dashboard.subPrimaryCustomColorDark,
           THEME.DARK,
         ),
+        '--color-title': resolveSafeColor(dashboard.textTitle, THEME.LIGHT, DEFAULT_TEXT_TITLE),
+        '--color-digest': resolveSafeColor(dashboard.textDigest, THEME.LIGHT, DEFAULT_TEXT_DIGEST),
         '--color-page-custom-light': resolveSafePageBg(
           THEME.LIGHT,
           dashboard.pageBg,

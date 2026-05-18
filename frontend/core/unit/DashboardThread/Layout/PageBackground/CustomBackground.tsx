@@ -22,9 +22,17 @@ type TProps = {
   draft: TPageBgDraft
   originalDraft: TPageBgDraft
   onDraftChange: (patch: Partial<TPageBgDraft>) => void
+  showToggle?: boolean
+  showThemeSelector?: boolean
 }
 
-export default function CustomBackground({ draft, originalDraft, onDraftChange }: TProps) {
+export default function CustomBackground({
+  draft,
+  originalDraft,
+  onDraftChange,
+  showToggle = true,
+  showThemeSelector = true,
+}: TProps) {
   const s = useSalon()
   const { t } = useTrans()
   const { theme } = useTheme()
@@ -64,33 +72,37 @@ export default function CustomBackground({ draft, originalDraft, onDraftChange }
 
   return (
     <div className={s.wrapper}>
-      <div className={s.enableRow}>
-        <Checker
-          checked={checked}
-          aria-label='toggle custom background'
-          onChange={(nextChecked) => {
-            if (nextChecked) {
-              initCurrentThemeCustom()
-              return
-            }
+      {showToggle && (
+        <div className={s.enableRow}>
+          <Checker
+            checked={checked}
+            aria-label='toggle custom background'
+            onChange={(nextChecked) => {
+              if (nextChecked) {
+                initCurrentThemeCustom()
+                return
+              }
 
-            onDraftChange(
-              resolvePresetRestorePatch(
-                lastPresetByThemeRef.current.light,
-                lastPresetByThemeRef.current.dark,
-              ),
-            )
-          }}
-        >
-          {t('dsb.layout.page_background.custom.toggle')}
-        </Checker>
-      </div>
+              onDraftChange(
+                resolvePresetRestorePatch(
+                  lastPresetByThemeRef.current.light,
+                  lastPresetByThemeRef.current.dark,
+                ),
+              )
+            }}
+          >
+            {t('dsb.layout.page_background.custom.toggle')}
+          </Checker>
+        </div>
+      )}
 
       {checked && (
         <>
-          <div className={s.selectorRow}>
-            <ThemeSectionSelector />
-          </div>
+          {showThemeSelector && (
+            <div className={s.selectorRow}>
+              <ThemeSectionSelector />
+            </div>
+          )}
 
           <div className={s.inner}>
             <div className={s.settingRow}>

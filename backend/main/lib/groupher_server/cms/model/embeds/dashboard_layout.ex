@@ -158,7 +158,9 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
       :primary_custom_color,
       :primary_custom_color_dark,
       :sub_primary_custom_color,
-      :sub_primary_custom_color_dark
+      :sub_primary_custom_color_dark,
+      :text_title,
+      :text_digest
     ]
     |> Enum.reduce(changeset, fn field, acc ->
       validate_change(acc, field, fn ^field, value ->

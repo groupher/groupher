@@ -220,8 +220,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_layout_query """
-    mutation($community: String!, $themePreset: DsbThemePreset, $themeOverrides: Json, $primaryColor: RainbowColor, $primaryCustomColorDark: String, $subPrimaryColor: RainbowColor, $subPrimaryCustomColor: String, $subPrimaryCustomColorDark: String, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $gaussBlur: Int, $gaussBlurDark: Int, $brandLayout: DsbBrandLayout, $communityLayout: DsbCommunityLayout, $navActiveLayout: DsbNavActiveLayout, $overlayDark: Boolean) {
-      updateDashboardLayout(community: $community, themePreset: $themePreset, themeOverrides: $themeOverrides, primaryColor: $primaryColor, primaryCustomColorDark: $primaryCustomColorDark, subPrimaryColor: $subPrimaryColor, subPrimaryCustomColor: $subPrimaryCustomColor, subPrimaryCustomColorDark: $subPrimaryCustomColorDark, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, communityLayout: $communityLayout, navActiveLayout: $navActiveLayout, overlayDark: $overlayDark) {
+    mutation($community: String!, $themePreset: DsbThemePreset, $themeOverrides: Json, $primaryColor: RainbowColor, $primaryCustomColorDark: String, $subPrimaryColor: RainbowColor, $subPrimaryCustomColor: String, $subPrimaryCustomColorDark: String, $textTitle: String, $textDigest: String, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $gaussBlur: Int, $gaussBlurDark: Int, $brandLayout: DsbBrandLayout, $communityLayout: DsbCommunityLayout, $navActiveLayout: DsbNavActiveLayout, $overlayDark: Boolean) {
+      updateDashboardLayout(community: $community, themePreset: $themePreset, themeOverrides: $themeOverrides, primaryColor: $primaryColor, primaryCustomColorDark: $primaryCustomColorDark, subPrimaryColor: $subPrimaryColor, subPrimaryCustomColor: $subPrimaryCustomColor, subPrimaryCustomColorDark: $subPrimaryCustomColorDark, textTitle: $textTitle, textDigest: $textDigest, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, communityLayout: $communityLayout, navActiveLayout: $navActiveLayout, overlayDark: $overlayDark) {
         id
         title
         dashboard {
@@ -246,6 +246,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
             subPrimaryColor
             subPrimaryCustomColor
             subPrimaryCustomColorDark
+            textTitle
+            textDigest
           }
         }
       }
@@ -256,13 +258,15 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       variables = %{
         community: community.slug,
-        themePreset: "CLAUDE",
+        themePreset: "CUSTOM",
         themeOverrides: Jason.encode!(%{"primaryColor" => "#B85C43"}),
         primaryColor: "PURPLE",
         primaryCustomColorDark: "#C41A80",
         subPrimaryColor: "YELLOW",
         subPrimaryCustomColor: "#147A8A",
         subPrimaryCustomColorDark: "#89E5FF",
+        textTitle: "#112233",
+        textDigest: "#667788",
         postLayout: "COVER",
         broadcastEnable: true,
         kanbanLayout: "WATERFALL",
@@ -289,7 +293,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         |> gq_mutation(@update_layout_query, variables)
 
       assert get_in(updated, ["dashboard", "layout", "navActiveLayout"]) == "SOFT_BG"
-      assert get_in(updated, ["dashboard", "layout", "themePreset"]) == "CLAUDE"
+      assert get_in(updated, ["dashboard", "layout", "themePreset"]) == "CUSTOM"
 
       assert get_in(updated, ["dashboard", "layout", "themeOverrides", "primaryColor"]) ==
                "#B85C43"
@@ -297,7 +301,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
       assert found.dashboard.layout.primary_color == :purple
-      assert found.dashboard.layout.theme_preset == :claude
+      assert found.dashboard.layout.theme_preset == :custom
       assert found.dashboard.layout.theme_overrides["primaryColor"] == "#B85C43"
       assert found.dashboard.layout.sub_primary_color == :yellow
       assert found.dashboard.layout.post_layout == :cover
@@ -323,6 +327,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.layout.primary_custom_color_dark == "#C41A80"
       assert found.dashboard.layout.sub_primary_custom_color == "#147A8A"
       assert found.dashboard.layout.sub_primary_custom_color_dark == "#89E5FF"
+      assert found.dashboard.layout.text_title == "#112233"
+      assert found.dashboard.layout.text_digest == "#667788"
     end
 
     test "update community dashboard layout should not overwrite existing settings",

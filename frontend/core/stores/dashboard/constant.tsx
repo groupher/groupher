@@ -24,7 +24,7 @@ import {
 } from '~/const/layout'
 import SIZE from '~/const/size'
 import THEME from '~/const/theme'
-import { DEFAULT_THEME_PRESET } from '~/const/theme_preset'
+import { DEFAULT_TEXT_DIGEST, DEFAULT_TEXT_TITLE, DEFAULT_THEME_PRESET } from '~/const/theme_preset'
 import { THREAD } from '~/const/thread'
 import { PAGE_CUSTOM_HUE_DEFAULT, PAGE_CUSTOM_INTENSITY_DEFAULT } from '~/lib/color'
 
@@ -102,6 +102,8 @@ export const FIELDS: TDsbFieldMap = {
   subPrimaryColor: COLOR.BLACK,
   subPrimaryCustomColor: '',
   subPrimaryCustomColorDark: '',
+  textTitle: DEFAULT_TEXT_TITLE,
+  textDigest: DEFAULT_TEXT_DIGEST,
   postLayout: POST_LAYOUT.QUORA,
   kanbanLayout: KANBAN_LAYOUT.CLASSIC,
   kanbanCardLayout: KANBAN_CARD_LAYOUT.SIMPLE,

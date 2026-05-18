@@ -18,6 +18,7 @@ type TProps = {
   max?: number
   step?: number
   width?: string
+  disabled?: boolean
   onChange?: (v: number) => void
 } & TSpace
 
@@ -30,6 +31,7 @@ const RangeSlider: FC<TProps> = ({
   step = 1,
   width = 'w-auto',
   unit = 'deg',
+  disabled = false,
   onChange,
   ...spacing
 }) => {
@@ -48,6 +50,7 @@ const RangeSlider: FC<TProps> = ({
         min={min}
         max={max}
         step={step}
+        disabled={disabled}
         onChange={(v) => onChange?.(Number.parseFloat(v.target.value))}
       />
     </div>
