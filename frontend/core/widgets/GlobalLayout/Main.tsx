@@ -38,7 +38,7 @@ const Main: FC<TProps> = ({ children }) => {
     <main
       key={locale}
       className={s.wrapper}
-      style={background ? { backgroundColor: background } : undefined}
+      style={background ? { backgroundColor: `var(--preview-page-bg, ${background})` } : undefined}
     >
       {hasTopbar && <div className={s.topBar} />}
       {/* <Broadcast /> */}

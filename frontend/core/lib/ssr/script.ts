@@ -2,6 +2,7 @@ import { COLOR, getDefaultCustomColor } from '~/const/colors'
 import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
 import { DEFAULT_TEXT_DIGEST, DEFAULT_TEXT_TITLE } from '~/const/theme_preset'
 import { getPageBgCustomColor, normalizePageBgHue, normalizePageBgIntensity } from '~/lib/color'
+import { resolveThemePreset } from '~/lib/themePreset'
 import type { TParseDashboard } from '~/spec'
 
 export const ssrThemeInitScript = () => `
@@ -62,13 +63,15 @@ const resolveSafePageBg = (
 // Build first-paint dashboard color variables on the server so custom colors do
 // not wait for client hydration to override the base token defaults.
 const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string, TCSSVarMap]> => {
+  const themePreset = resolveThemePreset(dashboard)
+
   return [
     [
       ':root',
       {
-        '--color-primary-custom': resolveSafeColor(dashboard.primaryCustomColor, THEME.LIGHT),
+        '--color-primary-custom': resolveSafeColor(themePreset.primaryCustomColor, THEME.LIGHT),
         '--color-primary-custom-dark': resolveSafeColor(
-          dashboard.primaryCustomColorDark,
+          themePreset.primaryCustomColorDark,
           THEME.DARK,
         ),
         '--color-sub-primary-custom': resolveSafeColor(
@@ -79,19 +82,23 @@ const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string
           dashboard.subPrimaryCustomColorDark,
           THEME.DARK,
         ),
-        '--color-title': resolveSafeColor(dashboard.textTitle, THEME.LIGHT, DEFAULT_TEXT_TITLE),
-        '--color-digest': resolveSafeColor(dashboard.textDigest, THEME.LIGHT, DEFAULT_TEXT_DIGEST),
+        '--color-title': resolveSafeColor(themePreset.textTitle, THEME.LIGHT, DEFAULT_TEXT_TITLE),
+        '--color-digest': resolveSafeColor(
+          themePreset.textDigest,
+          THEME.LIGHT,
+          DEFAULT_TEXT_DIGEST,
+        ),
         '--color-page-custom-light': resolveSafePageBg(
           THEME.LIGHT,
-          dashboard.pageBg,
-          dashboard.pageCustomBg,
-          dashboard.pageCustomIntensity,
+          themePreset.pageBg,
+          themePreset.pageCustomBg,
+          themePreset.pageCustomIntensity,
         ),
         '--color-page-custom-dark': resolveSafePageBg(
           THEME.DARK,
-          dashboard.pageBgDark,
-          dashboard.pageCustomBgDark,
-          dashboard.pageCustomIntensityDark,
+          themePreset.pageBgDark,
+          themePreset.pageCustomBgDark,
+          themePreset.pageCustomIntensityDark,
         ),
       },
     ],

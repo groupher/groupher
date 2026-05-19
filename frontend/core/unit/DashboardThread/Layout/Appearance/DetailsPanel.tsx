@@ -1,58 +1,67 @@
-import type { Dispatch, SetStateAction } from 'react'
-
 import useTrans from '~/hooks/useTrans'
 import Button from '~/widgets/Buttons/Button'
 
 import useSalon from '../../salon/layout/details_panel'
+import SectionLabel from '../../SectionLabel'
 import CustomBackground from '../PageBackground/CustomBackground'
 import type { TPageBgDraft } from '../PageBackground/hooks'
 import PrimaryColors from './PrimaryColors'
-import type { TEditDashboardField, TThemePresetOverrides } from './spec'
+import type { TThemePresetOverrides } from './spec'
 
 type TProps = {
   selectedOverrides: TThemePresetOverrides
   selectedPageBgDraft: TPageBgDraft
-  pageBgDraft: TPageBgDraft
-  setPageBgDraft: Dispatch<SetStateAction<TPageBgDraft>>
   primaryCustomColor: string
   isLightTheme: boolean
-  editField: TEditDashboardField
+  pageBgResetKey: string
+  onPageBgPreview: (patch: Partial<TPageBgDraft>) => void
+  onPageBgCommit: (patch: Partial<TPageBgDraft>) => void
+  onThemePresetCommit: (patch: Partial<TThemePresetOverrides>) => void
 }
 
 export default function DetailsPanel({
   selectedOverrides,
   selectedPageBgDraft,
-  pageBgDraft,
-  setPageBgDraft,
   primaryCustomColor,
   isLightTheme,
-  editField,
+  pageBgResetKey,
+  onPageBgPreview,
+  onPageBgCommit,
+  onThemePresetCommit,
 }: TProps) {
   const s = useSalon()
   const { t } = useTrans()
 
   return (
-    <div className={s.details}>
-      <div className={s.detailsHeader}>
-        <div className={s.detailsTitle}>{t('dsb.layout.appearance.details')}</div>
-        <div className='grow' />
-        <Button ghost noBorder size='small'>
-          {t('dsb.layout.appearance.customize')}
-        </Button>
+    <div className={s.wrapper}>
+      <div className={s.header}>
+        <SectionLabel
+          title={t('dsb.layout.appearance.preset.detail')}
+          desc={t('dsb.layout.appearance.preset.desc')}
+          addon={
+            <Button ghost noBorder size='small'>
+              {t('dsb.layout.appearance.customize')}
+            </Button>
+          }
+        />
       </div>
 
-      <div className={s.detailDivider}>
+      <div className={s.content}>
         <PrimaryColors
           selectedOverrides={selectedOverrides}
           primaryCustomColor={primaryCustomColor}
           isLightTheme={isLightTheme}
-          editField={editField}
+          onThemePresetCommit={onThemePresetCommit}
         />
 
         <CustomBackground
-          draft={pageBgDraft}
+          key={pageBgResetKey}
+          draft={selectedPageBgDraft}
           originalDraft={selectedPageBgDraft}
-          onDraftChange={(patch) => setPageBgDraft((prev) => ({ ...prev, ...patch }))}
+          hueResetKey={pageBgResetKey}
+          onDraftChange={onPageBgCommit}
+          onPreviewPatch={onPageBgPreview}
+          onScheduleCommitPatch={onPageBgCommit}
           showToggle={false}
           showThemeSelector={false}
         />

@@ -15,15 +15,16 @@ export default function Appearance() {
     activePreset,
     selectedOverrides,
     selectedPageBgDraft,
-    pageBgDraft,
-    setPageBgDraft,
     isTouched,
     isLightTheme,
     primaryCustomColor,
     selectPreset,
+    previewPageBg,
+    scheduleThemePresetPatch,
+    commitThemePresetPatch,
+    pageBgResetKey,
     saveAppearance,
     cancelAppearance,
-    editField,
   } = useAppearance()
 
   return (
@@ -39,11 +40,12 @@ export default function Appearance() {
       <DetailsPanel
         selectedOverrides={selectedOverrides}
         selectedPageBgDraft={selectedPageBgDraft}
-        pageBgDraft={pageBgDraft}
-        setPageBgDraft={setPageBgDraft}
         primaryCustomColor={primaryCustomColor}
         isLightTheme={isLightTheme}
-        editField={editField}
+        pageBgResetKey={pageBgResetKey}
+        onPageBgPreview={previewPageBg}
+        onPageBgCommit={scheduleThemePresetPatch}
+        onThemePresetCommit={commitThemePresetPatch}
       />
 
       {isTouched && (

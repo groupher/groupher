@@ -9,6 +9,7 @@ import { BUILTIN_ALIAS } from '~/const/name'
 import THEME from '~/const/theme'
 import { THREAD } from '~/const/thread'
 import { removeEmptyValuesFromObject } from '~/helper'
+import { resolveThemePreset } from '~/lib/themePreset'
 import { P } from '~/schemas'
 import type {
   TCommunity,
@@ -103,6 +104,7 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     footerOnelineLinks,
     mediaReports,
   } = dashboard
+  const resolvedThemePreset = resolveThemePreset(layout ?? {})
 
   const fieldsObj = removeEmptyValuesFromObject({
     enable,
@@ -112,15 +114,15 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     ...baseInfo,
     ...seo,
     ...layout,
-    subPrimaryColor: layout?.subPrimaryColor || layout?.primaryColor,
+    ...resolvedThemePreset,
     ...rss,
     headerLinks,
     footerLinks,
     footerOnelineLinks,
     moderators,
     mediaReports,
-    pageBg: layout?.pageBg || PAGE_BG_DEFAULT[THEME.LIGHT],
-    pageBgDark: layout?.pageBgDark || PAGE_BG_DEFAULT[THEME.DARK],
+    pageBg: resolvedThemePreset.pageBg || PAGE_BG_DEFAULT[THEME.LIGHT],
+    pageBgDark: resolvedThemePreset.pageBgDark || PAGE_BG_DEFAULT[THEME.DARK],
   }) as Partial<TParseDashboard>
 
   if (layout?.kanbanBoards?.length) {

@@ -1,11 +1,11 @@
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { THEME_PRESET_OPTIONS } from '~/const/theme_preset'
 import { blurRGB } from '~/fmt'
+import useDebouncedPreviewCommit from '~/hooks/useDebouncedPreviewCommit'
 import useGaussBlur from '~/hooks/useGaussBlur'
-import useLocalDraft from '~/hooks/useLocalDraft'
-import useMainBackgroundPreview from '~/hooks/useMainBackgroundPreview'
 import useTheme from '~/hooks/useTheme'
+import useThemePreset from '~/hooks/useThemePreset'
+import useUpdatePreviewCssVars from '~/hooks/useUpdatePreviewCssVars'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import { FIELD } from '../../constant'
@@ -44,47 +44,43 @@ export default function useAppearance() {
   const { isLightTheme } = useTheme()
   const { onSave, rollbackEdit } = useHelper()
   const gaussBlur = useGaussBlur()
+  const selectedOverrides = useThemePreset()
+  const updatePreviewCssVars = useUpdatePreviewCssVars()
+  const [pageBgResetVersion, setPageBgResetVersion] = useState(0)
 
   const activePreset = dsb$.themePreset
-  const selectedPreset =
-    THEME_PRESET_OPTIONS.find((preset) => preset.value === activePreset) ?? THEME_PRESET_OPTIONS[0]
   const storeTouched = dsb$.anyTouched(APPEARANCE_STORE_FIELDS)
-  const currentOverrides: TThemePresetOverrides = {
-    pageBg: dsb$.pageBg,
-    pageBgDark: dsb$.pageBgDark,
-    pageCustomBg: dsb$.pageCustomBg,
-    pageCustomBgDark: dsb$.pageCustomBgDark,
-    pageCustomIntensity: dsb$.pageCustomIntensity,
-    pageCustomIntensityDark: dsb$.pageCustomIntensityDark,
-    primaryColor: dsb$.primaryColor,
-    primaryCustomColor: dsb$.primaryCustomColor,
-    primaryCustomColorDark: dsb$.primaryCustomColorDark,
-    subPrimaryColor: dsb$.subPrimaryColor,
-    textTitle: dsb$.textTitle,
-    textDigest: dsb$.textDigest,
-  }
-  const selectedOverrides = storeTouched ? currentOverrides : selectedPreset.overrides
-
   const selectedPageBgDraft = useMemo(() => toPageBgDraft(selectedOverrides), [selectedOverrides])
-  const {
-    draft: pageBgDraft,
-    setDraft: setPageBgDraft,
-    isTouched: pageBgDraftTouched,
-    resetDraft: resetPageBgDraft,
-  } = useLocalDraft(selectedPageBgDraft, selectedPageBgDraft)
-  const isTouched = storeTouched || pageBgDraftTouched
-  const previewRawBg = useMemo(
-    () => resolveRawBg(pageBgDraft, isLightTheme),
-    [pageBgDraft, isLightTheme],
-  )
-  const previewBackground = useMemo(() => {
-    if (!previewRawBg) return null
-    return blurRGB(previewRawBg, gaussBlur)
-  }, [gaussBlur, previewRawBg])
+  const isTouched = storeTouched
+  const selectedOverridesRef = useRef(selectedOverrides)
+  const selectedPageBgDraftRef = useRef(selectedPageBgDraft)
 
-  useMainBackgroundPreview(previewBackground, { enabled: pageBgDraftTouched })
+  useEffect(() => {
+    selectedOverridesRef.current = selectedOverrides
+    selectedPageBgDraftRef.current = selectedPageBgDraft
+  }, [selectedOverrides, selectedPageBgDraft])
+
+  const commitThemePresetPatch = useCallback(
+    (patch: Partial<TThemePresetOverrides>) => {
+      dsb$.editFields({
+        ...patch,
+        themeOverrides: {
+          ...selectedOverridesRef.current,
+          ...patch,
+        },
+      })
+    },
+    [dsb$],
+  )
+  const {
+    schedule: scheduleThemePresetPreviewCommit,
+    flush: flushThemePresetPreviewCommit,
+    clear: clearPendingThemePresetPreviewCommit,
+  } = useDebouncedPreviewCommit<TThemePresetOverrides>({ onCommit: commitThemePresetPatch })
 
   const selectPreset = (preset: TThemePresetOption) => {
+    clearPendingThemePresetPreviewCommit()
+    updatePreviewCssVars({ '--preview-page-bg': null })
     dsb$.editFields({
       themePreset: preset.value,
       themeOverrides: { ...preset.overrides },
@@ -92,38 +88,54 @@ export default function useAppearance() {
     })
   }
 
-  const saveAppearance = () => {
-    const themeOverrides = {
-      ...selectedOverrides,
-      ...pageBgDraft,
-    }
+  const previewPageBg = useCallback(
+    (patch: Partial<TPageBgDraft>) => {
+      const previewRawBg = resolveRawBg(
+        { ...selectedPageBgDraftRef.current, ...patch },
+        isLightTheme,
+      )
+      const previewBackground = previewRawBg ? blurRGB(previewRawBg, gaussBlur) : null
 
-    dsb$.editFields({
-      ...pageBgDraft,
-      themeOverrides,
-    })
+      updatePreviewCssVars({ '--preview-page-bg': previewBackground })
+    },
+    [gaussBlur, isLightTheme, updatePreviewCssVars],
+  )
+
+  const scheduleThemePresetPatch = useCallback(
+    (patch: Partial<TThemePresetOverrides>) => {
+      scheduleThemePresetPreviewCommit(patch)
+    },
+    [scheduleThemePresetPreviewCommit],
+  )
+
+  const saveAppearance = () => {
+    flushThemePresetPreviewCommit()
+    updatePreviewCssVars({ '--preview-page-bg': null })
     onSave(FIELD.THEME_PRESET)
   }
 
   const cancelAppearance = () => {
-    resetPageBgDraft()
+    clearPendingThemePresetPreviewCommit()
+    updatePreviewCssVars({ '--preview-page-bg': null })
     rollbackEdit(FIELD.THEME_PRESET)
+    setPageBgResetVersion((version) => version + 1)
   }
 
   return {
     activePreset,
     selectedOverrides,
     selectedPageBgDraft,
-    pageBgDraft,
-    setPageBgDraft,
     isTouched,
     isLightTheme,
     primaryCustomColor: isLightTheme
       ? selectedOverrides.primaryCustomColor
       : selectedOverrides.primaryCustomColorDark,
     selectPreset,
+    previewPageBg,
+    scheduleThemePresetPatch,
+    commitThemePresetPatch,
+    pageBgResetKey: `${activePreset}-${isLightTheme ? 'light' : 'dark'}-${pageBgResetVersion}`,
     saveAppearance,
     cancelAppearance,
-    editField: dsb$.editField,
   }
 }

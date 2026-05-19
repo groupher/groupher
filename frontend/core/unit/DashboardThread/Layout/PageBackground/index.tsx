@@ -1,13 +1,13 @@
-import { useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import { PAGE_BG_COLOR_HEX } from '~/const/colors'
 import { blurRGB, camelize, titleCaseHM } from '~/fmt'
 import useDidMount from '~/hooks/useDidMount'
 import useGaussBlur from '~/hooks/useGaussBlur'
 import useLocalDraft from '~/hooks/useLocalDraft'
-import useMainBackgroundPreview from '~/hooks/useMainBackgroundPreview'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
+import useUpdatePreviewCssVars from '~/hooks/useUpdatePreviewCssVars'
 import CheckSVG from '~/icons/Check'
 import useDashboard from '~/stores/dashboard/hooks'
 
@@ -27,6 +27,8 @@ export default function PageBackground() {
   const { isLightTheme } = useTheme()
   const { t } = useTrans()
   const gaussBlur = useGaussBlur()
+  const updatePreviewCssVars = useUpdatePreviewCssVars()
+  const commitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const storeDraft = usePageBgDraft(dsb$)
   const originalDraft = usePageBgDraft(dsb$.original)
@@ -44,11 +46,41 @@ export default function PageBackground() {
     return blurRGB(rawBg, gaussBlur)
   }, [gaussBlur, rawBg])
 
-  useMainBackgroundPreview(background)
+  useEffect(() => {
+    updatePreviewCssVars({ '--preview-page-bg': background })
+  }, [background, updatePreviewCssVars])
+
+  const previewPageBg = useCallback(
+    (patch: Partial<TPageBgDraft>) => {
+      const previewRawBg = resolveRawBg({ ...draft, ...patch }, isLightTheme)
+      const previewBackground = previewRawBg ? blurRGB(previewRawBg, gaussBlur) : null
+
+      updatePreviewCssVars({ '--preview-page-bg': previewBackground })
+    },
+    [draft, gaussBlur, isLightTheme, updatePreviewCssVars],
+  )
 
   const onDraftChange = (patch: Partial<TPageBgDraft>) => {
     setDraft((prev) => ({ ...prev, ...patch }))
   }
+
+  const commitPageBgDraft = useCallback((patch: Partial<TPageBgDraft>) => {
+    if (commitTimerRef.current) {
+      clearTimeout(commitTimerRef.current)
+    }
+
+    commitTimerRef.current = setTimeout(() => {
+      onDraftChange(patch)
+    }, 300)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (commitTimerRef.current) {
+        clearTimeout(commitTimerRef.current)
+      }
+    }
+  }, [])
 
   const handleConfirm = () => {
     dsb$.live$.editFields({
@@ -104,7 +136,13 @@ export default function PageBackground() {
           })}
       </div>
 
-      <CustomBackground draft={draft} originalDraft={originalDraft} onDraftChange={onDraftChange} />
+      <CustomBackground
+        draft={draft}
+        originalDraft={originalDraft}
+        onDraftChange={onDraftChange}
+        onPreviewPatch={previewPageBg}
+        onScheduleCommitPatch={commitPageBgDraft}
+      />
 
       <SavingBar
         isTouched={activeTouched}

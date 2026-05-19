@@ -305,7 +305,9 @@ export default {
   'dsb.layout.appearance.title': 'Theme preset',
   'dsb.layout.appearance.desc':
     'Choose a coordinated appearance baseline. Fine tuning remains available in the other tabs.',
-  'dsb.layout.appearance.details': 'Details',
+  'dsb.layout.appearance.preset.detail': 'Preset details',
+  'dsb.layout.appearance.preset.desc':
+    'Click Customize on the right to create your own preset from an existing theme preset.',
   'dsb.layout.appearance.customize': 'Customize',
   'dsb.layout.appearance.preset.default.title': 'Default',
   'dsb.layout.appearance.preset.default.desc': 'Neutral baseline',

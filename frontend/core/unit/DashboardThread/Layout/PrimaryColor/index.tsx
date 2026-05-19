@@ -48,7 +48,6 @@ export default function PrimaryColor() {
 
           <SavingBar isTouched={isTouched} top={6} onCancel={onCancel} onConfirm={onConfirm} />
         </div>
-
         <SubPrimaryColor />
       </div>
     </section>
