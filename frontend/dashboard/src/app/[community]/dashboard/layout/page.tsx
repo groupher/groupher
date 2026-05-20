@@ -5,6 +5,7 @@ import useLayout from '~/hooks/useLayout'
 import AvatarLayout from '~/unit/DashboardThread/Layout/AvatarLayout'
 import BrandLayout from '~/unit/DashboardThread/Layout/BrandLayout'
 import CommunityLayout from '~/unit/DashboardThread/Layout/CommunityLayout'
+import FloatBackground from '~/unit/DashboardThread/Layout/FloatBackground'
 import InlineTagLayout from '~/unit/DashboardThread/Layout/InlineTagLayout'
 import NavActiveLayout from '~/unit/DashboardThread/Layout/NavActiveLayout'
 import TagLayout from '~/unit/DashboardThread/Layout/TagLayout'
@@ -34,6 +35,8 @@ export default function Page() {
       <TagLayout />
       <div className={s.divider} />
       <InlineTagLayout />
+      <div className={s.divider} />
+      <FloatBackground />
       <div className={s.divider} />
       <TopbarLayout />
     </>
