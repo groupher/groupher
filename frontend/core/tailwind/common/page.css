@@ -33,7 +33,7 @@ html[data-theme='light'] {
     --color-pageBg: var(--color-page-todo2);
   }
   .page-customLight {
-    --color-pageBg: var(--color-page-custom-light);
+    --color-pageBg: var(--color-page-custom);
   }
 }
 

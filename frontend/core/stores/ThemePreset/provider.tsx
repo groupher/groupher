@@ -18,12 +18,15 @@ type TProps = {
 }
 
 const EMPTY_INIT_DATA: TInit = {}
-const ROOT_CSS_VAR_KEYS = [
+
+// Keep this list in sync with the CSS variables written by ThemePresetScope so
+// unmounting the preset provider does not leave stale theme values on <html>.
+const PRESET_CSS_VAR_KEYS = [
   '--color-primary-custom',
   '--color-primary-custom-dark',
   '--color-sub-primary-custom',
   '--color-sub-primary-custom-dark',
-  '--color-page-custom-light',
+  '--color-page-custom',
   '--color-page-custom-dark',
   '--color-title',
   '--color-digest',
@@ -82,13 +85,13 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
       '--color-sub-primary-custom-dark',
       subPrimaryCustomColorDark || darkDefault,
     )
-    root.style.setProperty('--color-page-custom-light', lightPageBg)
+    root.style.setProperty('--color-page-custom', lightPageBg)
     root.style.setProperty('--color-page-custom-dark', darkPageBg)
     root.style.setProperty('--color-title', safeTextTitle)
     root.style.setProperty('--color-digest', safeTextDigest)
 
     return () => {
-      for (const key of ROOT_CSS_VAR_KEYS) {
+      for (const key of PRESET_CSS_VAR_KEYS) {
         root.style.removeProperty(key)
       }
     }
@@ -106,7 +109,7 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
   ])
 
   const style = {
-    '--color-page-custom-light': lightPageBg,
+    '--color-page-custom': lightPageBg,
     '--color-page-custom-dark': darkPageBg,
     '--color-primary-custom': primaryCustomColor || lightDefault,
     '--color-primary-custom-dark': primaryCustomColorDark || darkDefault,

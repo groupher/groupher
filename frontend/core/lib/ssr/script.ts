@@ -74,7 +74,7 @@ const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string
           THEME.LIGHT,
           DEFAULT_TEXT_DIGEST,
         ),
-        '--color-page-custom-light': resolveThemePresetPageBgCssVar(
+        '--color-page-custom': resolveThemePresetPageBgCssVar(
           THEME.LIGHT,
           themePreset.pageBg,
           themePreset.pageCustomBg,
