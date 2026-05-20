@@ -1,3 +1,5 @@
+'use client'
+
 import { includes } from 'ramda'
 
 import { GLOW_EFFECT_NAME, GLOW_OPACITY } from '~/const/glow_effect'

@@ -1,4 +1,5 @@
 // useTwBelt/index.ts
+'use client'
 
 import { clsx } from 'clsx'
 import { useMemo } from 'react'

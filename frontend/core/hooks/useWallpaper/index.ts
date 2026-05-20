@@ -1,3 +1,5 @@
+'use client'
+
 import { clone, forEach, keys } from 'ramda'
 import { useMemo } from 'react'
 

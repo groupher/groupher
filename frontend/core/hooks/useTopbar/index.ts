@@ -1,3 +1,5 @@
+'use client'
+
 import { includes } from 'ramda'
 
 import METRIC from '~/const/metric'
