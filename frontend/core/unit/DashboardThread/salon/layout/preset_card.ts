@@ -25,7 +25,7 @@ export default function useSalon({
       'column relative h-36 w-28 justify-between rounded-md border px-2 py-1.5 text-left trans-all-200',
       rotateClass,
       shadow('sm'),
-      bg('card'),
+      bg('cardAlpha'),
       br('divider'),
       showActiveStyle
         ? cn('-translate-y-4 rotate-3 rounded-lg', primary('borderSoft'), shadow('lg'))

@@ -50,6 +50,8 @@ export default function DetailsPanel({
           onThemePresetCommit={onThemePresetCommit}
         />
 
+        <div className={s.divider} />
+
         <CustomBackground
           key={pageBgResetKey}
           draft={selectedPageBgDraft}
@@ -61,6 +63,8 @@ export default function DetailsPanel({
           showToggle={false}
           showThemeSelector={false}
         />
+
+        <div className={s.divider} />
 
         <GlassOpacity
           selectedOverrides={selectedOverrides}
