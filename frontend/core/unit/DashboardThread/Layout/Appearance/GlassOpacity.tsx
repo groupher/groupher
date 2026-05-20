@@ -25,15 +25,15 @@ export default function GlassOpacity({
       <div className={s.inner}>
         <div className={s.settingRow}>
           <div className={s.labelGroup}>
-            <div className={s.label}>{t('dsb.layout.gauss_blur.opacity.title')}</div>
-            <div className={s.hint}>{t('dsb.layout.gauss_blur.opacity.desc')}</div>
+            <div className={s.label}>{t('dsb.layout.appearance.glass_opacity.title')}</div>
+            <div className={s.hint}>{t('dsb.layout.appearance.glass_opacity.desc')}</div>
           </div>
 
           <div className='grow' />
           <div className={s.rangeGroup}>
             <RangeInput
               value={gaussBlur}
-              valueLabel={t('dsb.layout.gauss_blur.opacity.title')}
+              valueLabel={t('dsb.layout.appearance.glass_opacity.title')}
               min={50}
               max={100}
               step={0.1}
