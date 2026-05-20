@@ -13,5 +13,8 @@ export const getRatio = (value: number, min: number, max: number): number => {
 export const getVisualRatio = (ratio: number): number =>
   clamp(Math.max(ratio, MIN_VISUAL_RATIO), 0, 100)
 
+export const getRatioFromVisualRatio = (visualRatio: number): number =>
+  visualRatio <= MIN_VISUAL_RATIO ? 0 : visualRatio
+
 export const defaultFormatValue = (value: number): string =>
   Number.isInteger(value) ? String(value) : value.toFixed(1)

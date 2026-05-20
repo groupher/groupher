@@ -6,7 +6,7 @@ import {
   useRef,
 } from 'react'
 
-import { clamp } from './helper'
+import { clamp, getRatioFromVisualRatio } from './helper'
 
 type TArgs = {
   value: number
@@ -54,7 +54,8 @@ export default function useRangeInputLogic({
     const rect = controlRef.current?.getBoundingClientRect()
     if (!rect || rect.width === 0) return value
 
-    const pointerRatio = clamp(((clientX - rect.left) / rect.width) * 100, 0, 100)
+    const pointerVisualRatio = clamp(((clientX - rect.left) / rect.width) * 100, 0, 100)
+    const pointerRatio = getRatioFromVisualRatio(pointerVisualRatio)
     const rawValue = min + (pointerRatio / 100) * (max - min)
     const steppedValue = step > 0 ? min + Math.round((rawValue - min) / step) * step : rawValue
 

@@ -87,7 +87,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
             put_param_or_new(params, :theme_overrides, normalized_overwrite)
 
           :error ->
-            params
+            put_param_or_new(params, :theme_overrides, overwrite)
         end
 
       fetch_param(params, :theme_preset) != :error ->

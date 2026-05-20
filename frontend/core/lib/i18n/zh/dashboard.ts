@@ -291,9 +291,9 @@ export default {
   'dsb.layout.appearance.preset.hn.title': 'HN',
   'dsb.layout.appearance.preset.hn.desc': 'Hacker News 风格',
   'dsb.layout.custom_page_bg.toggle': '使用自定义背景色',
-  'dsb.layout.custom_page_bg.hue': 'Tint color',
+  'dsb.layout.custom_page_bg.hue': '染色颜色',
   'dsb.layout.custom_page_bg.hue_desc': '选择背景染色的颜色',
-  'dsb.layout.custom_page_bg.intensity': 'Tint strength',
+  'dsb.layout.custom_page_bg.intensity': '染色强度',
   'dsb.layout.custom_page_bg.intensity_desc': '控制背景染色的强弱',
   'dsb.layout.float_background.title': '弹出层外观',
   'dsb.layout.float_background.desc':

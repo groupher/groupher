@@ -16,6 +16,12 @@ describe('injectDsbColors', () => {
         primaryCustomColorDark: '#223344',
         accentCustomColor: '#334455',
         accentCustomColorDark: '#445566',
+        pageBg: 'CUSTOM',
+        pageBgDark: 'CUSTOM',
+        pageCustomBg: 190,
+        pageCustomBgDark: 10,
+        pageCustomIntensity: 75,
+        pageCustomIntensityDark: 60,
       },
     } satisfies Partial<TParseDashboard>)
 

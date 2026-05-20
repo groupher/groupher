@@ -144,8 +144,8 @@ export type TDsbFieldMap = {
   overlayDark: boolean
 
   // gauss blur
-  gaussBlur: int
-  gaussBlurDark: int
+  gaussBlur: number
+  gaussBlurDark: number
 
   // contents
   // tags

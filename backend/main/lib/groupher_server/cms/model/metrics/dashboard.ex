@@ -161,8 +161,8 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
       [:overlay_dark, :boolean, true],
 
       ## blur
-      [:gauss_blur, :integer, 100],
-      [:gauss_blur_dark, :integer, 100]
+      [:gauss_blur, :float, 100.0],
+      [:gauss_blur_dark, :float, 100.0]
     ]
   end
 

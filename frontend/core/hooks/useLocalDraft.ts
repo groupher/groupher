@@ -31,10 +31,10 @@ export default function useLocalDraft<K extends TFieldKey, T>(
   const source = isFieldMode ? dsb$[fieldOrSource as K] : (fieldOrSource as T)
   const original = isFieldMode ? dsb$.original[fieldOrSource as K] : (maybeOriginal as T)
 
-  const [draft, setDraft] = useState(source)
+  const [draft, setDraft] = useState<TDsbFieldMap[K] | T>(source)
 
   useEffect(() => {
-    setDraft(source)
+    setDraft(source as TDsbFieldMap[K] | T)
   }, [source])
 
   const isTouched = useMemo(() => !equals(draft, original), [draft, original])

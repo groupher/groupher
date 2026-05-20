@@ -70,7 +70,7 @@ export default function CustomPageBg({
         <div className={s.enableRow}>
           <Checker
             checked={checked}
-            aria-label='toggle custom background'
+            aria-label={t('dsb.layout.custom_page_bg.toggle')}
             onChange={handleToggleChange}
           >
             {t('dsb.layout.custom_page_bg.toggle')}
@@ -97,7 +97,7 @@ export default function CustomPageBg({
               <div className={s.controlGroup}>
                 <ColorSlider
                   key={`${theme}-${hueResetKey ?? hueResetValue}`}
-                  aria-label='Page background hue'
+                  aria-label={t('dsb.layout.custom_page_bg.hue')}
                   className={s.slider}
                   defaultValue={hueColor}
                   colorSpace='hsb'
@@ -122,13 +122,13 @@ export default function CustomPageBg({
               <div className={s.rangeGroup}>
                 <RangeInput
                   value={displayIntensity}
-                  valueLabel='strength'
+                  valueLabel={t('dsb.layout.custom_page_bg.intensity')}
                   min={0}
                   max={100}
-                  step={0.1}
+                  step={1}
                   unit='%'
                   top={0}
-                  aria-label='Page background tint strength'
+                  aria-label={t('dsb.layout.custom_page_bg.intensity')}
                   onChange={handleIntensityChange}
                   onChangeEnd={handleIntensityCommit}
                 />

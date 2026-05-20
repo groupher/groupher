@@ -58,6 +58,31 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
            }
   end
 
+  test "rejects invalid theme overwrite instead of silently ignoring it" do
+    changeset =
+      DashboardLayout.changeset(%DashboardLayout{}, %{
+        theme_preset: "custom",
+        theme_overwrite: "{invalid-json"
+      })
+
+    refute changeset.valid?
+    assert errors_on(changeset).theme_overrides == ["is invalid"]
+  end
+
+  test "ignores empty theme overwrite keys without raising" do
+    changeset =
+      DashboardLayout.changeset(%DashboardLayout{}, %{
+        theme_preset: "custom",
+        theme_overwrite: Jason.encode!(%{"" => "ignored", "accentColor" => "YELLOW"})
+      })
+
+    assert changeset.valid?
+
+    layout = Ecto.Changeset.apply_changes(changeset)
+
+    assert layout.theme_overrides == %{"accentColor" => "YELLOW"}
+  end
+
   test "keeps theme overrides when updating non-preset layout fields" do
     changeset =
       DashboardLayout.changeset(

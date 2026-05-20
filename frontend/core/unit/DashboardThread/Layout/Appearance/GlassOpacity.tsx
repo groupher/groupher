@@ -39,7 +39,7 @@ export default function GlassOpacity({
               step={0.1}
               unit='%'
               top={0}
-              aria-label='Glass opacity'
+              aria-label={t('dsb.layout.appearance.glass_opacity.title')}
               onChange={(value) => {
                 onThemePresetCommit({
                   [isLightTheme ? FIELD.GAUSS_BLUR : FIELD.GAUSS_BLUR_DARK]: value,

@@ -220,7 +220,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_layout_query """
-    mutation($community: String!, $themePreset: DsbThemePreset, $themeOverwrite: Json, $textTitle: String, $textDigest: String, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $gaussBlur: Int, $gaussBlurDark: Int, $brandLayout: DsbBrandLayout, $communityLayout: DsbCommunityLayout, $navActiveLayout: DsbNavActiveLayout, $overlayDark: Boolean) {
+    mutation($community: String!, $themePreset: DsbThemePreset, $themeOverwrite: Json, $textTitle: String, $textDigest: String, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $gaussBlur: Float, $gaussBlurDark: Float, $brandLayout: DsbBrandLayout, $communityLayout: DsbCommunityLayout, $navActiveLayout: DsbNavActiveLayout, $overlayDark: Boolean) {
       updateDashboardLayout(community: $community, themePreset: $themePreset, themeOverwrite: $themeOverwrite, textTitle: $textTitle, textDigest: $textDigest, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, communityLayout: $communityLayout, navActiveLayout: $navActiveLayout, overlayDark: $overlayDark) {
         id
         title
@@ -259,7 +259,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
           Jason.encode!(%{
             "primaryColor" => "CUSTOM",
             "accentColor" => "YELLOW",
-            "gaussBlur" => 80
+            "gaussBlur" => 80.5
           }),
         textTitle: "#112233",
         textDigest: "#667788",
@@ -276,8 +276,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         glowOpacity: "30",
         tagLayout: "DOT",
         inlineTagLayout: "SOFT",
-        gaussBlur: 80,
-        gaussBlurDark: 60,
+        gaussBlur: 80.5,
+        gaussBlurDark: 60.5,
         brandLayout: "LOGO",
         communityLayout: "SIDEBAR",
         navActiveLayout: "SOFT_BG",
@@ -294,7 +294,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert get_in(updated, ["dashboard", "layout", "themeTokens", "accentColor"]) ==
                "YELLOW"
 
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "gaussBlur"]) == 80
+      assert get_in(updated, ["dashboard", "layout", "themeTokens", "gaussBlur"]) == 80.5
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
@@ -314,8 +314,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.layout.glow_opacity == "30"
       assert found.dashboard.layout.tag_layout == :dot
       assert found.dashboard.layout.inline_tag_layout == :soft
-      assert found.dashboard.layout.gauss_blur == 80
-      assert found.dashboard.layout.gauss_blur_dark == 60
+      assert found.dashboard.layout.gauss_blur == 80.5
+      assert found.dashboard.layout.gauss_blur_dark == 60.5
       assert found.dashboard.layout.brand_layout == :logo
       assert found.dashboard.layout.community_layout == :sidebar
       assert found.dashboard.layout.nav_active_layout == :soft_bg

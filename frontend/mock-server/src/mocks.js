@@ -106,8 +106,8 @@ const makeDashboard = (slug = 'home') => {
       glowFixed: false,
       glowOpacity: '0',
       overlayDark: false,
-      gaussBlur: 0,
-      gaussBlurDark: 0,
+      gaussBlur: DEFAULT_THEME_TOKENS.gaussBlur,
+      gaussBlurDark: DEFAULT_THEME_TOKENS.gaussBlurDark,
       kanbanBgColors: ['BLUE', 'PURPLE'],
     },
     enable: {

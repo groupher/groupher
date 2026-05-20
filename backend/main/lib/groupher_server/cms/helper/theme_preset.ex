@@ -158,6 +158,8 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
   defp normalize_key(key) when is_binary(key), do: camelize_key(key)
   defp normalize_key(key), do: to_string(key)
 
+  defp camelize_key(""), do: ""
+
   defp camelize_key(key) do
     key
     |> Macro.camelize()

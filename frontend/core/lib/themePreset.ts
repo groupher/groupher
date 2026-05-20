@@ -123,7 +123,7 @@ export const resolveThemePreset = (source: TThemePresetSource = {}): TResolvedTh
   const legacySource = normalizeThemeTokenSource(source)
   const legacyPatch = hasOverrides ? {} : pickThemePresetFields(legacySource)
   const legacyAccentFallback =
-    !hasOverrides && source.accentColor === undefined && source.primaryColor
+    !hasBackendTokens && !hasOverrides && source.accentColor === undefined && source.primaryColor
       ? { accentColor: source.primaryColor }
       : {}
 

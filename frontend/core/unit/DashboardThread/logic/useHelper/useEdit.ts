@@ -32,7 +32,7 @@ export default function useEdit(): TRet {
       }
 
       if (isStoreField(field)) {
-        dsb$.editField(field, value)
+        dsb$.editField(field, value as never)
         return
       }
 
