@@ -81,19 +81,13 @@ export const community = `
         }
         layout {
           themePreset
-          themeOverrides
+          themeTokens
           pageBg
           pageBgDark
           pageCustomBg
           pageCustomBgDark
           pageCustomIntensity
           pageCustomIntensityDark
-          primaryColor
-          primaryCustomColor
-          primaryCustomColorDark
-          subPrimaryColor
-          subPrimaryCustomColor
-          subPrimaryCustomColorDark
           textTitle
           textDigest
           postLayout

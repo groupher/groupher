@@ -41,8 +41,6 @@ describe('stores/dashboard', () => {
     const editingLink: TLinkDraftItem = { index: 9, title: 'X', group: 'MORE', link: '/x' }
 
     store.commit({
-      primaryColor: COLOR.ORANGE,
-      subPrimaryColor: COLOR.RED,
       pageBg: 'radial-gradient(circle at 20% 20%, #111, #000)',
       kanbanBoards: [KANBAN_BOARD.BACKLOG, KANBAN_BOARD.TODO],
       headerLinks,
@@ -59,8 +57,6 @@ describe('stores/dashboard', () => {
       editingLink,
     })
 
-    expect(store.primaryColor).toBe(COLOR.ORANGE)
-    expect(store.subPrimaryColor).toBe(COLOR.RED)
     expect(store.kanbanBoards).toEqual([KANBAN_BOARD.BACKLOG, KANBAN_BOARD.TODO])
     expect(store.headerLinks).toEqual(headerLinks)
     expect(store.enable.post).toBe(true)
@@ -143,19 +139,13 @@ describe('stores/dashboard', () => {
 
     store.editFields({
       themePreset: claude.value,
-      themeOverrides: { ...claude.overrides },
+      themeTokens: { ...claude.overrides },
       pageBg: claude.overrides.pageBg,
       pageBgDark: claude.overrides.pageBgDark,
       pageCustomBg: claude.overrides.pageCustomBg,
       pageCustomBgDark: claude.overrides.pageCustomBgDark,
       pageCustomIntensity: claude.overrides.pageCustomIntensity,
       pageCustomIntensityDark: claude.overrides.pageCustomIntensityDark,
-      primaryColor: claude.overrides.primaryColor,
-      primaryCustomColor: claude.overrides.primaryCustomColor,
-      primaryCustomColorDark: claude.overrides.primaryCustomColorDark,
-      subPrimaryColor: claude.overrides.subPrimaryColor,
-      subPrimaryCustomColor: claude.overrides.subPrimaryCustomColor,
-      subPrimaryCustomColorDark: claude.overrides.subPrimaryCustomColorDark,
       textTitle: claude.overrides.textTitle,
       textDigest: claude.overrides.textDigest,
     })
@@ -167,28 +157,22 @@ describe('stores/dashboard', () => {
     expect(store.pageCustomBgDark).toBe(claude.overrides.pageCustomBgDark)
     expect(store.pageCustomIntensity).toBe(claude.overrides.pageCustomIntensity)
     expect(store.pageCustomIntensityDark).toBe(claude.overrides.pageCustomIntensityDark)
-    expect(store.primaryColor).toBe(COLOR.CUSTOM)
-    expect(store.primaryCustomColor).toBe('#c96442')
-    expect(store.primaryCustomColorDark).toBe('#d97757')
-    expect(store.subPrimaryColor).toBe(COLOR.BLUE)
+    expect(store.themeTokens.primaryColor).toBe(COLOR.CUSTOM)
+    expect(store.themeTokens.primaryCustomColor).toBe('#c96442')
+    expect(store.themeTokens.primaryCustomColorDark).toBe('#d97757')
+    expect(store.themeTokens.accentColor).toBe(COLOR.BLUE)
     expect(store.textTitle).toBe(claude.overrides.textTitle)
     expect(store.textDigest).toBe(claude.overrides.textDigest)
     expect(
       store.anyTouched([
         'themePreset',
-        'themeOverrides',
+        'themeTokens',
         'pageBg',
         'pageBgDark',
         'pageCustomBg',
         'pageCustomBgDark',
         'pageCustomIntensity',
         'pageCustomIntensityDark',
-        'primaryColor',
-        'primaryCustomColor',
-        'primaryCustomColorDark',
-        'subPrimaryColor',
-        'subPrimaryCustomColor',
-        'subPrimaryCustomColorDark',
         'textTitle',
         'textDigest',
       ]),
@@ -196,19 +180,13 @@ describe('stores/dashboard', () => {
 
     store.rollbackFields([
       'themePreset',
-      'themeOverrides',
+      'themeTokens',
       'pageBg',
       'pageBgDark',
       'pageCustomBg',
       'pageCustomBgDark',
       'pageCustomIntensity',
       'pageCustomIntensityDark',
-      'primaryColor',
-      'primaryCustomColor',
-      'primaryCustomColorDark',
-      'subPrimaryColor',
-      'subPrimaryCustomColor',
-      'subPrimaryCustomColorDark',
       'textTitle',
       'textDigest',
     ])
@@ -220,30 +198,18 @@ describe('stores/dashboard', () => {
     expect(store.pageCustomBgDark).toBe(store.original.pageCustomBgDark)
     expect(store.pageCustomIntensity).toBe(store.original.pageCustomIntensity)
     expect(store.pageCustomIntensityDark).toBe(store.original.pageCustomIntensityDark)
-    expect(store.primaryColor).toBe(store.original.primaryColor)
-    expect(store.primaryCustomColor).toBe(store.original.primaryCustomColor)
-    expect(store.primaryCustomColorDark).toBe(store.original.primaryCustomColorDark)
-    expect(store.subPrimaryColor).toBe(store.original.subPrimaryColor)
-    expect(store.subPrimaryCustomColor).toBe(store.original.subPrimaryCustomColor)
-    expect(store.subPrimaryCustomColorDark).toBe(store.original.subPrimaryCustomColorDark)
     expect(store.textTitle).toBe(store.original.textTitle)
     expect(store.textDigest).toBe(store.original.textDigest)
     expect(
       store.anyTouched([
         'themePreset',
-        'themeOverrides',
+        'themeTokens',
         'pageBg',
         'pageBgDark',
         'pageCustomBg',
         'pageCustomBgDark',
         'pageCustomIntensity',
         'pageCustomIntensityDark',
-        'primaryColor',
-        'primaryCustomColor',
-        'primaryCustomColorDark',
-        'subPrimaryColor',
-        'subPrimaryCustomColor',
-        'subPrimaryCustomColorDark',
         'textTitle',
         'textDigest',
       ]),

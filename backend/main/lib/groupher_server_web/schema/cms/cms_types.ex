@@ -11,6 +11,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
   alias GroupherServer.{Accounts, CMS}
+  alias CMS.Helper.ThemePreset
   alias CMS.Model.Community
   alias Helper.ORM
   alias GroupherServerWeb.Schema
@@ -129,6 +130,12 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :dsb_layout do
     dsb_gq_fields(:layout)
+
+    field :theme_tokens, :json do
+      resolve(fn layout, _, _ ->
+        {:ok, ThemePreset.resolve(layout.theme_preset, layout.theme_overrides)}
+      end)
+    end
   end
 
   object(:dsb_enable, do: dsb_gq_fields(:enable))

@@ -2,7 +2,7 @@ import useTrans from '~/hooks/useTrans'
 import useTwBelt from '~/hooks/useTwBelt'
 import ColorSelector from '~/widgets/ColorSelector'
 
-import { FIELD } from '../../constant'
+import { PRESET_FIELD } from '../../constant'
 import useSalon, { cn, cnMerge } from './salon/primary_colors'
 import type { TThemePresetOverrides } from './spec'
 
@@ -21,7 +21,7 @@ export default function PrimaryColors({
 }: TProps) {
   const s = useSalon()
   const { t } = useTrans()
-  const { subPrimary } = useTwBelt()
+  const { accent } = useTwBelt()
 
   return (
     <div className={s.wrapper}>
@@ -33,12 +33,13 @@ export default function PrimaryColors({
               customColor={primaryCustomColor}
               allowCustomColor
               onChange={(primaryColor) =>
-                onThemePresetCommit({ [FIELD.PRIMARY_COLOR]: primaryColor })
+                onThemePresetCommit({ [PRESET_FIELD.PRIMARY_COLOR]: primaryColor })
               }
               onCustomColorChange={(color) => {
                 onThemePresetCommit({
-                  [isLightTheme ? FIELD.PRIMARY_CUSTOM_COLOR : FIELD.PRIMARY_CUSTOM_COLOR_DARK]:
-                    color,
+                  [isLightTheme
+                    ? PRESET_FIELD.PRIMARY_CUSTOM_COLOR
+                    : PRESET_FIELD.PRIMARY_CUSTOM_COLOR_DARK]: color,
                 })
               }}
             >
@@ -52,19 +53,19 @@ export default function PrimaryColors({
 
       <div className={s.right}>
         <div className={cn(s.head, s.subHead)}>
-          <div className={cnMerge(s.ballWrapper, s.subBall, subPrimary('borderSoft'))}>
+          <div className={cnMerge(s.ballWrapper, s.subBall, accent('borderSoft'))}>
             <ColorSelector
-              activeColor={selectedOverrides.subPrimaryColor}
-              onChange={(subPrimaryColor) =>
-                onThemePresetCommit({ [FIELD.SUB_PRIMARY_COLOR]: subPrimaryColor })
+              activeColor={selectedOverrides.accentColor}
+              onChange={(accentColor) =>
+                onThemePresetCommit({ [PRESET_FIELD.ACCENT_COLOR]: accentColor })
               }
             >
-              <div className={cnMerge(s.colorBall, s.subColorBall, subPrimary('bg'))} />
+              <div className={cnMerge(s.colorBall, s.subColorBall, accent('bg'))} />
             </ColorSelector>
           </div>
-          <div className={s.title}>{t('dsb.layout.sub_primary_color.title')}</div>
+          <div className={s.title}>{t('dsb.layout.accent_color.title')}</div>
         </div>
-        <p className={s.desc}>{t('dsb.layout.sub_primary_color.desc')}</p>
+        <p className={s.desc}>{t('dsb.layout.accent_color.desc')}</p>
       </div>
     </div>
   )

@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn, cnMerge } from '~/css'
 
 export default function useSalon() {
-  const { cn, fg, bg, br, fill, menu, sexyBorder, subPrimary } = useTwBelt()
+  const { cn, fg, bg, br, fill, menu, sexyBorder, accent } = useTwBelt()
 
   return {
     wrapper: 'row-center group',
@@ -28,8 +28,8 @@ export default function useSalon() {
     //
     levelLabel: cn(
       'text-xs px-2 ml-1.5 py-0.5 rounded-lg bold scale-90',
-      subPrimary('bgSoft'),
-      subPrimary('fg'),
+      accent('bgSoft'),
+      accent('fg'),
     ),
   }
 }

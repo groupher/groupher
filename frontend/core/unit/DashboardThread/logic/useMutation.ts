@@ -3,11 +3,10 @@ import { useEffect, useRef } from 'react'
 
 import { serializeKanbanBoards } from '~/const/dashboard'
 import { DSB_INFO_ROUTE } from '~/const/route'
-import THEME from '~/const/theme'
+import { THEME_PRESET } from '~/const/theme_preset'
 import useDsbDemoMode from '~/hooks/useDsbDemoMode'
 import useDsbTab from '~/hooks/useDsbTab'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
-import useTheme from '~/hooks/useTheme'
 import { toast } from '~/signal'
 import type { TEditValue, TKanbanBoard, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -23,7 +22,6 @@ import {
   FAQ_STORE_FIELDS,
   FIELD,
   LAYOUT_FIELD,
-  PAGE_BG_STORE_FIELDS,
   SEO_KEYS,
   TAG_STORE_FIELDS,
 } from '../constant'
@@ -42,14 +40,9 @@ export default function useMutation(): TRet {
   const { mutate } = useGraphQLClient()
   const { subTab } = useDsbTab()
   const isDemoMode = useDsbDemoMode()
-  const { theme } = useTheme()
 
   const storeRef = useRef(liveDashboard$)
   const { slug: community } = community$
-  const primaryCustomColorField: TDsbStoreFieldKey =
-    theme === THEME.DARK ? FIELD.PRIMARY_CUSTOM_COLOR_DARK : FIELD.PRIMARY_CUSTOM_COLOR
-  const subPrimaryCustomColorField: TDsbStoreFieldKey =
-    theme === THEME.DARK ? FIELD.SUB_PRIMARY_CUSTOM_COLOR_DARK : FIELD.SUB_PRIMARY_CUSTOM_COLOR
 
   // get latest store, for those state not in UI render cycle
   useEffect(() => {
@@ -80,15 +73,6 @@ export default function useMutation(): TRet {
     return undefined
   }
 
-  const normalizePageBgLayoutPatch = () => ({
-    pageBg: storeRef.current.pageBg,
-    pageCustomBg: Math.round(storeRef.current.pageCustomBg),
-    pageCustomIntensity: Math.round(storeRef.current.pageCustomIntensity),
-    pageBgDark: storeRef.current.pageBgDark,
-    pageCustomBgDark: Math.round(storeRef.current.pageCustomBgDark),
-    pageCustomIntensityDark: Math.round(storeRef.current.pageCustomIntensityDark),
-  })
-
   const resolveSavedFields = (field: TDsbFieldKey): readonly TDsbStoreFieldKey[] => {
     if (field === FIELD.TAG_INDEX || field === FIELD.TAG) return TAG_STORE_FIELDS
 
@@ -102,36 +86,20 @@ export default function useMutation(): TRet {
     if (field === FIELD.BASE_INFO) return BASEINFO_KEYS
     if (field === FIELD.SEO) return SEO_KEYS as readonly TDsbStoreFieldKey[]
 
-    if (field === FIELD.PRIMARY_COLOR) {
-      return [FIELD.PRIMARY_COLOR, primaryCustomColorField]
-    }
-
-    if (field === FIELD.PAGE_BG || field === FIELD.PAGE_BG_DARK) {
-      return PAGE_BG_STORE_FIELDS
-    }
-
-    if (field === FIELD.SUB_PRIMARY_COLOR) {
-      return [FIELD.SUB_PRIMARY_COLOR, subPrimaryCustomColorField]
-    }
-
     if (field === FIELD.THEME_PRESET) {
       return [
         FIELD.THEME_PRESET,
-        FIELD.THEME_OVERRIDES,
+        FIELD.THEME_TOKENS,
         FIELD.PAGE_BG,
         FIELD.PAGE_BG_DARK,
         FIELD.PAGE_CUSTOM_BG,
         FIELD.PAGE_CUSTOM_BG_DARK,
         FIELD.PAGE_CUSTOM_INTENSITY,
         FIELD.PAGE_CUSTOM_INTENSITY_DARK,
-        FIELD.PRIMARY_COLOR,
-        FIELD.PRIMARY_CUSTOM_COLOR,
-        FIELD.PRIMARY_CUSTOM_COLOR_DARK,
-        FIELD.SUB_PRIMARY_COLOR,
-        FIELD.SUB_PRIMARY_CUSTOM_COLOR,
-        FIELD.SUB_PRIMARY_CUSTOM_COLOR_DARK,
         FIELD.TEXT_TITLE,
         FIELD.TEXT_DIGEST,
+        FIELD.GAUSS_BLUR,
+        FIELD.GAUSS_BLUR_DARK,
       ]
     }
 
@@ -176,57 +144,21 @@ export default function useMutation(): TRet {
       original = { ...storeRef.current.original, ...current }
     }
 
-    if (field === FIELD.PRIMARY_COLOR) {
-      original = {
-        ...storeRef.current.original,
-        primaryColor: storeRef.current.primaryColor,
-        [primaryCustomColorField]: storeRef.current[primaryCustomColorField],
-      }
-    }
-
-    if (field === FIELD.PAGE_BG) {
-      const normalizedPageBg = normalizePageBgLayoutPatch()
-      original = {
-        ...storeRef.current.original,
-        ...normalizedPageBg,
-      }
-    }
-
-    if (field === FIELD.PAGE_BG_DARK) {
-      const normalizedPageBg = normalizePageBgLayoutPatch()
-      original = {
-        ...storeRef.current.original,
-        ...normalizedPageBg,
-      }
-    }
-
-    if (field === FIELD.SUB_PRIMARY_COLOR) {
-      original = {
-        ...storeRef.current.original,
-        subPrimaryColor: storeRef.current.subPrimaryColor,
-        [subPrimaryCustomColorField]: storeRef.current[subPrimaryCustomColorField],
-      }
-    }
-
     if (field === FIELD.THEME_PRESET) {
       original = {
         ...storeRef.current.original,
         themePreset: storeRef.current.themePreset,
-        themeOverrides: clone(storeRef.current.themeOverrides),
+        themeTokens: clone(storeRef.current.themeTokens),
         pageBg: storeRef.current.pageBg,
         pageBgDark: storeRef.current.pageBgDark,
         pageCustomBg: storeRef.current.pageCustomBg,
         pageCustomBgDark: storeRef.current.pageCustomBgDark,
         pageCustomIntensity: storeRef.current.pageCustomIntensity,
         pageCustomIntensityDark: storeRef.current.pageCustomIntensityDark,
-        primaryColor: storeRef.current.primaryColor,
-        primaryCustomColor: storeRef.current.primaryCustomColor,
-        primaryCustomColorDark: storeRef.current.primaryCustomColorDark,
-        subPrimaryColor: storeRef.current.subPrimaryColor,
-        subPrimaryCustomColor: storeRef.current.subPrimaryCustomColor,
-        subPrimaryCustomColorDark: storeRef.current.subPrimaryCustomColorDark,
         textTitle: storeRef.current.textTitle,
         textDigest: storeRef.current.textDigest,
+        gaussBlur: storeRef.current.gaussBlur,
+        gaussBlurDark: storeRef.current.gaussBlurDark,
       }
     }
 
@@ -488,40 +420,6 @@ export default function useMutation(): TRet {
     // }
 
     if (includes(field, values(LAYOUT_FIELD))) {
-      if (field === FIELD.PAGE_BG) {
-        handleMutation(S.updateDashboardLayout, {
-          community,
-          ...normalizePageBgLayoutPatch(),
-        })
-        return
-      }
-
-      if (field === FIELD.PAGE_BG_DARK) {
-        handleMutation(S.updateDashboardLayout, {
-          community,
-          ...normalizePageBgLayoutPatch(),
-        })
-        return
-      }
-
-      if (field === FIELD.PRIMARY_COLOR) {
-        handleMutation(S.updateDashboardLayout, {
-          community,
-          primaryColor: storeRef.current.primaryColor,
-          [primaryCustomColorField]: storeRef.current[primaryCustomColorField],
-        })
-        return
-      }
-
-      if (field === FIELD.SUB_PRIMARY_COLOR) {
-        handleMutation(S.updateDashboardLayout, {
-          community,
-          subPrimaryColor: storeRef.current.subPrimaryColor,
-          [subPrimaryCustomColorField]: storeRef.current[subPrimaryCustomColorField],
-        })
-        return
-      }
-
       if (field === FIELD.KANBAN_BOARDS) {
         handleMutation(S.updateDashboardLayout, {
           community,
@@ -530,33 +428,25 @@ export default function useMutation(): TRet {
         return
       }
 
-      if (field === FIELD.THEME_OVERRIDES) {
-        handleMutation(S.updateDashboardLayout, {
-          community,
-          themeOverrides: JSON.stringify(e ?? {}),
-        })
-        return
-      }
-
       if (field === FIELD.THEME_PRESET) {
+        const isCustomPreset = storeRef.current.themePreset === THEME_PRESET.CUSTOM
+
         handleMutation(S.updateDashboardLayout, {
           community,
           themePreset: storeRef.current.themePreset,
-          themeOverrides: JSON.stringify(storeRef.current.themeOverrides ?? {}),
+          ...(isCustomPreset
+            ? { themeOverwrite: JSON.stringify(storeRef.current.themeTokens ?? {}) }
+            : {}),
           pageBg: storeRef.current.pageBg,
           pageBgDark: storeRef.current.pageBgDark,
           pageCustomBg: storeRef.current.pageCustomBg,
           pageCustomBgDark: storeRef.current.pageCustomBgDark,
           pageCustomIntensity: storeRef.current.pageCustomIntensity,
           pageCustomIntensityDark: storeRef.current.pageCustomIntensityDark,
-          primaryColor: storeRef.current.primaryColor,
-          primaryCustomColor: storeRef.current.primaryCustomColor,
-          primaryCustomColorDark: storeRef.current.primaryCustomColorDark,
-          subPrimaryColor: storeRef.current.subPrimaryColor,
-          subPrimaryCustomColor: storeRef.current.subPrimaryCustomColor,
-          subPrimaryCustomColorDark: storeRef.current.subPrimaryCustomColorDark,
           textTitle: storeRef.current.textTitle,
           textDigest: storeRef.current.textDigest,
+          gaussBlur: storeRef.current.gaussBlur,
+          gaussBlurDark: storeRef.current.gaussBlurDark,
         })
         return
       }

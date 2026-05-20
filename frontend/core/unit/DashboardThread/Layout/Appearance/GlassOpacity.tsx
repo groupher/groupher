@@ -1,8 +1,8 @@
 import useTrans from '~/hooks/useTrans'
+import useSalon from '~/widgets/CustomPageBg/salon'
 import RangeInput from '~/widgets/RangeInput'
 
 import { FIELD } from '../../constant'
-import useSalon from '../../salon/layout/page_background/custom_background'
 import type { TThemePresetOverrides } from './spec'
 
 type TProps = {

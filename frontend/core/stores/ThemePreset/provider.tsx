@@ -24,8 +24,8 @@ const EMPTY_INIT_DATA: TInit = {}
 const PRESET_CSS_VAR_KEYS = [
   '--color-primary-custom',
   '--color-primary-custom-dark',
-  '--color-sub-primary-custom',
-  '--color-sub-primary-custom-dark',
+  '--color-accent-custom',
+  '--color-accent-custom-dark',
   '--color-page-custom',
   '--color-page-custom-dark',
   '--color-title',
@@ -52,9 +52,9 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
     pageCustomIntensityDark,
     primaryCustomColor,
     primaryCustomColorDark,
-    subPrimaryColor,
-    subPrimaryCustomColor,
-    subPrimaryCustomColorDark,
+    accentColor,
+    accentCustomColor,
+    accentCustomColorDark,
     textTitle,
     textDigest,
   } = preset$
@@ -80,11 +80,8 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
 
     root.style.setProperty('--color-primary-custom', primaryCustomColor || lightDefault)
     root.style.setProperty('--color-primary-custom-dark', primaryCustomColorDark || darkDefault)
-    root.style.setProperty('--color-sub-primary-custom', subPrimaryCustomColor || lightDefault)
-    root.style.setProperty(
-      '--color-sub-primary-custom-dark',
-      subPrimaryCustomColorDark || darkDefault,
-    )
+    root.style.setProperty('--color-accent-custom', accentCustomColor || lightDefault)
+    root.style.setProperty('--color-accent-custom-dark', accentCustomColorDark || darkDefault)
     root.style.setProperty('--color-page-custom', lightPageBg)
     root.style.setProperty('--color-page-custom-dark', darkPageBg)
     root.style.setProperty('--color-title', safeTextTitle)
@@ -104,8 +101,8 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
     primaryCustomColorDark,
     safeTextTitle,
     safeTextDigest,
-    subPrimaryCustomColor,
-    subPrimaryCustomColorDark,
+    accentCustomColor,
+    accentCustomColorDark,
   ])
 
   const style = {
@@ -113,14 +110,14 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
     '--color-page-custom-dark': darkPageBg,
     '--color-primary-custom': primaryCustomColor || lightDefault,
     '--color-primary-custom-dark': primaryCustomColorDark || darkDefault,
-    '--color-sub-primary-custom': subPrimaryCustomColor || lightDefault,
-    '--color-sub-primary-custom-dark': subPrimaryCustomColorDark || darkDefault,
+    '--color-accent-custom': accentCustomColor || lightDefault,
+    '--color-accent-custom-dark': accentCustomColorDark || darkDefault,
     '--color-title': safeTextTitle,
     '--color-digest': safeTextDigest,
   } as CSSProperties
 
   return (
-    <div data-primary-color={primaryColor} data-sub-primary-color={subPrimaryColor} style={style}>
+    <div data-primary-color={primaryColor} data-accent-color={accentColor} style={style}>
       {children}
     </div>
   )
@@ -135,39 +132,31 @@ export default function Provider({ children, initData = EMPTY_INIT_DATA }: TProp
   useEffect(() => {
     storeRef.current?.hydrate({
       themePreset: dsb$.themePreset,
-      themeOverrides: dsb$.themeOverrides,
+      themeTokens: dsb$.themeTokens,
       pageBg: dsb$.pageBg,
       pageBgDark: dsb$.pageBgDark,
       pageCustomBg: dsb$.pageCustomBg,
       pageCustomBgDark: dsb$.pageCustomBgDark,
       pageCustomIntensity: dsb$.pageCustomIntensity,
       pageCustomIntensityDark: dsb$.pageCustomIntensityDark,
-      primaryColor: dsb$.primaryColor,
-      primaryCustomColor: dsb$.primaryCustomColor,
-      primaryCustomColorDark: dsb$.primaryCustomColorDark,
-      subPrimaryColor: dsb$.subPrimaryColor,
-      subPrimaryCustomColor: dsb$.subPrimaryCustomColor,
-      subPrimaryCustomColorDark: dsb$.subPrimaryCustomColorDark,
       textTitle: dsb$.textTitle,
       textDigest: dsb$.textDigest,
+      gaussBlur: dsb$.gaussBlur,
+      gaussBlurDark: dsb$.gaussBlurDark,
     })
   }, [
     dsb$.themePreset,
-    dsb$.themeOverrides,
+    dsb$.themeTokens,
     dsb$.pageBg,
     dsb$.pageBgDark,
     dsb$.pageCustomBg,
     dsb$.pageCustomBgDark,
     dsb$.pageCustomIntensity,
     dsb$.pageCustomIntensityDark,
-    dsb$.primaryColor,
-    dsb$.primaryCustomColor,
-    dsb$.primaryCustomColorDark,
-    dsb$.subPrimaryColor,
-    dsb$.subPrimaryCustomColor,
-    dsb$.subPrimaryCustomColorDark,
     dsb$.textTitle,
     dsb$.textDigest,
+    dsb$.gaussBlur,
+    dsb$.gaussBlurDark,
   ])
 
   return (

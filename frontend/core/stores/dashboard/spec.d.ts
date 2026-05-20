@@ -73,7 +73,7 @@ export type TDsbFieldMap = {
 
   // page
   themePreset: TThemePreset
-  themeOverrides: Partial<TResolvedThemePreset>
+  themeTokens: Partial<TResolvedThemePreset>
   pageBg: string
   pageBgDark: string
   pageCustomBg: number
@@ -101,12 +101,6 @@ export type TDsbFieldMap = {
   twImageHeight: string
 
   // layout
-  primaryColor: TColorName
-  primaryCustomColor: string
-  primaryCustomColorDark: string
-  subPrimaryColor: TColorName
-  subPrimaryCustomColor: string
-  subPrimaryCustomColorDark: string
   textTitle: string
   textDigest: string
   postLayout: TPostLayout

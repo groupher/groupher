@@ -1,12 +1,12 @@
 import THEME from '~/const/theme'
 import useTheme from '~/hooks/useTheme'
-import useDashboard from '~/stores/dashboard/hooks'
+import useThemePreset from '~/stores/ThemePreset/hooks'
 
 export default function useGaussBlur(): number {
-  const dsb$ = useDashboard()
+  const preset$ = useThemePreset()
   const { theme } = useTheme()
 
-  const { gaussBlur, gaussBlurDark } = dsb$
+  const { gaussBlur, gaussBlurDark } = preset$
 
   return theme === THEME.LIGHT ? gaussBlur : gaussBlurDark
 }

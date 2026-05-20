@@ -635,7 +635,7 @@ type RootMutationType {
 
   "update layout in dashboard"
   updateDashboardLayout(
-    community: String!, dsbSection: DsbSection, themePreset: DsbThemePreset, themeOverrides: Json, pageBg: String, pageBgDark: String, pageCustomBg: Int, pageCustomBgDark: Int, pageCustomIntensity: Int, pageCustomIntensityDark: Int, primaryColor: RainbowColor, primaryCustomColor: String, primaryCustomColorDark: String, subPrimaryColor: RainbowColor, subPrimaryCustomColor: String, subPrimaryCustomColorDark: String, kanbanBgColors: [RainbowColor], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docCoverLayout: DsbDocCoverLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, communityLayout: DsbCommunityLayout, navActiveLayout: DsbNavActiveLayout, topbarEnabled: Boolean, topbarBg: RainbowColor, topbarBgCustomColor: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: RainbowColor, broadcastCustomBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: RainbowColor, broadcastArticleCustomBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, glowType: String, glowFixed: Boolean, glowOpacity: String, overlayDark: Boolean, gaussBlur: Int, gaussBlurDark: Int
+    community: String!, dsbSection: DsbSection, themeOverwrite: Json, themePreset: DsbThemePreset, themeOverrides: Json, pageBg: String, pageBgDark: String, pageCustomBg: Int, pageCustomBgDark: Int, pageCustomIntensity: Int, pageCustomIntensityDark: Int, textTitle: String, textDigest: String, kanbanBgColors: [RainbowColor], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docCoverLayout: DsbDocCoverLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, communityLayout: DsbCommunityLayout, navActiveLayout: DsbNavActiveLayout, topbarEnabled: Boolean, topbarBg: RainbowColor, topbarBgCustomColor: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: RainbowColor, broadcastCustomBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: RainbowColor, broadcastArticleCustomBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, glowType: String, glowFixed: Boolean, glowOpacity: String, overlayDark: Boolean, gaussBlur: Int, gaussBlurDark: Int
   ): Community
 
   "update rss in dashboard"
@@ -649,6 +649,9 @@ type RootMutationType {
 
   "update footer links in dashboard"
   updateDashboardFooterLinks(community: String!, dsbSection: DsbSection, footerLinks: [DsbLinkMap]): Community
+
+  "update footer oneline links in dashboard"
+  updateDashboardFooterOnelineLinks(community: String!, dsbSection: DsbSection, footerOnelineLinks: [DsbLinkChildMap]): Community
 
   "update social links in dashboard"
   updateDashboardSocialLinks(community: String!, dsbSection: DsbSection, socialLinks: [DsbSocialLinkMap]): Community
@@ -894,12 +897,8 @@ type DsbLayout {
   pageCustomBgDark: Int
   pageCustomIntensity: Int
   pageCustomIntensityDark: Int
-  primaryColor: RainbowColor
-  primaryCustomColor: String
-  primaryCustomColorDark: String
-  subPrimaryColor: RainbowColor
-  subPrimaryCustomColor: String
-  subPrimaryCustomColorDark: String
+  textTitle: String
+  textDigest: String
   kanbanBgColors: [RainbowColor]
   kanbanBoards: [KanbanBoard]
   postLayout: DsbPostLayout
@@ -933,6 +932,7 @@ type DsbLayout {
   overlayDark: Boolean
   gaussBlur: Int
   gaussBlurDark: Int
+  themeTokens: Json
 }
 
 type DsbEnable {
@@ -1026,6 +1026,7 @@ type Dsb {
   nameAlias: [DsbNameAlias]
   headerLinks: [DsbLink]
   footerLinks: [DsbLink]
+  footerOnelineLinks: [DsbLinkChild]
   socialLinks: [DsbSocialLink]
   mediaReports: [DsbMediaReport]
   faqs: [DsbFaqSection]
@@ -1430,6 +1431,7 @@ enum DsbSection {
   NAME_ALIAS
   HEADER_LINKS
   FOOTER_LINKS
+  FOOTER_ONELINE_LINKS
   SOCIAL_LINKS
   MEDIA_REPORTS
   FAQS
@@ -1614,7 +1616,7 @@ enum DsbHeaderLayout {
 }
 
 enum DsbFooterLayout {
-  SIMPLE
+  ONELINE
   GROUP
 }
 
@@ -1623,6 +1625,7 @@ enum DsbThemePreset {
   CLAUDE
   SOLARIZED
   HN
+  CUSTOM
 }
 
 enum DsbRssFeedType {
@@ -1830,9 +1833,9 @@ input DsbAliasMap {
 }
 
 input DsbLinkChildMap {
-  id: String
-  title: String
-  url: String
+  id: String!
+  title: String!
+  url: String!
 }
 
 input DsbLinkMap {

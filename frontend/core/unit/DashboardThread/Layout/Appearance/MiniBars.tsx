@@ -8,7 +8,7 @@ type TProps = {
   active: boolean
   primaryColor: TColorName
   primaryCustomColor?: string
-  subPrimaryColor: TColorName
+  accentColor: TColorName
   textTitle: string
   textDigest: string
 }
@@ -17,7 +17,7 @@ export default function MiniBars({
   active,
   primaryColor,
   primaryCustomColor,
-  subPrimaryColor,
+  accentColor,
   textTitle,
   textDigest,
 }: TProps) {
@@ -30,7 +30,7 @@ export default function MiniBars({
         customColor={primaryCustomColor}
         className={s.primaryBar}
       />
-      <MiniColorBar color={subPrimaryColor} className={s.subBar} />
+      <MiniColorBar color={accentColor} className={s.subBar} />
       <MiniTextBar titleColor={textTitle} digestColor={textDigest} />
     </div>
   )

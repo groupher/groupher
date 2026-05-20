@@ -71,7 +71,7 @@ export type TDsb = {
   layout?: {
     brandLayout: TBrandLayout
     themePreset?: TThemePreset | null
-    themeOverrides?: Partial<TResolvedThemePreset> | null
+    themeTokens?: Partial<TResolvedThemePreset> | null
     pageBg: string
     pageBgDark: string
     pageCustomBg: number
@@ -81,9 +81,9 @@ export type TDsb = {
     primaryColor: TColorName
     primaryCustomColor: string
     primaryCustomColorDark: string
-    subPrimaryColor: TColorName
-    subPrimaryCustomColor: string
-    subPrimaryCustomColorDark: string
+    accentColor: TColorName
+    accentCustomColor: string
+    accentCustomColorDark: string
     textTitle?: string | null
     textDigest?: string | null
     topbarEnabled: boolean
