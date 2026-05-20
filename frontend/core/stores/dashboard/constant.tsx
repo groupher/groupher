@@ -74,7 +74,7 @@ export const FIELDS: TDsbFieldMap = {
 
   // page
   themePreset: DEFAULT_THEME_PRESET,
-  themeOverrides: { ...DEFAULT_THEME_OVERRIDES },
+  themeTokens: { ...DEFAULT_THEME_OVERRIDES },
   pageBg: DEFAULT_THEME_OVERRIDES.pageBg,
   pageBgDark: DEFAULT_THEME_OVERRIDES.pageBgDark,
   pageCustomBg: DEFAULT_THEME_OVERRIDES.pageCustomBg,
@@ -102,12 +102,6 @@ export const FIELDS: TDsbFieldMap = {
   twImageHeight: '',
 
   // layout
-  primaryColor: DEFAULT_THEME_OVERRIDES.primaryColor,
-  primaryCustomColor: DEFAULT_THEME_OVERRIDES.primaryCustomColor,
-  primaryCustomColorDark: DEFAULT_THEME_OVERRIDES.primaryCustomColorDark,
-  subPrimaryColor: DEFAULT_THEME_OVERRIDES.subPrimaryColor,
-  subPrimaryCustomColor: '',
-  subPrimaryCustomColorDark: '',
   textTitle: DEFAULT_THEME_OVERRIDES.textTitle || DEFAULT_TEXT_TITLE,
   textDigest: DEFAULT_THEME_OVERRIDES.textDigest || DEFAULT_TEXT_DIGEST,
   postLayout: POST_LAYOUT.QUORA,
@@ -151,8 +145,8 @@ export const FIELDS: TDsbFieldMap = {
   overlayDark: true,
 
   // gauss blur
-  gaussBlur: 100,
-  gaussBlurDark: 100,
+  gaussBlur: DEFAULT_THEME_OVERRIDES.gaussBlur,
+  gaussBlurDark: DEFAULT_THEME_OVERRIDES.gaussBlurDark,
 
   // contents
   // tags

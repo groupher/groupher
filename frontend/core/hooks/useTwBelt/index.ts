@@ -1,4 +1,5 @@
 // useTwBelt/index.ts
+'use client'
 
 import { clsx } from 'clsx'
 import { useMemo } from 'react'
@@ -7,10 +8,10 @@ import { COLOR } from '~/const/colors'
 import THEME from '~/const/theme'
 import { cn, cnMerge } from '~/css'
 import { camelize } from '~/fmt'
+import useAccentColor from '~/hooks/useAccentColor'
 import useAvatarLayout from '~/hooks/useAvatarLayout'
 import useMetric from '~/hooks/useMetric'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
-import useSubPrimaryColor from '~/hooks/useSubPrimaryColor'
 import type { TColorName, TZIndexType } from '~/spec'
 import useThemePreset from '~/stores/ThemePreset/hooks'
 
@@ -34,7 +35,7 @@ export default function useTwBelt(): TRet {
   const metric = useMetric()
   const { isSquare: isAvatarSquare } = useAvatarLayout()
   const primaryColor = usePrimaryColor()
-  const subPrimaryColor = useSubPrimaryColor()
+  const accentColor = useAccentColor()
   const { pageBg, pageBgDark } = useThemePreset()
 
   const metricLower = metric.toLowerCase()
@@ -106,15 +107,11 @@ export default function useTwBelt(): TRet {
   }
 
   const primary = (prefix: TColorPrefix = 'fg'): string => rainbow(primaryColor, prefix)
-  const subPrimary = (prefix: TColorPrefix = 'fg'): string =>
-    resolveCustomRainbowToken(subPrimaryColor, 'subCustom', prefix)
+  const accent = (prefix: TColorPrefix = 'fg'): string =>
+    resolveCustomRainbowToken(accentColor, 'subCustom', prefix)
 
   const linker = (prefix: TLinkColorPrefix = 'fg'): string => {
-    return resolveCustomRainbowToken(
-      subPrimaryColor,
-      'subCustom',
-      prefix as unknown as TColorPrefix,
-    )
+    return resolveCustomRainbowToken(accentColor, 'subCustom', prefix as unknown as TColorPrefix)
   }
 
   const linkable = () => STATIC_CLS.linkable
@@ -266,7 +263,7 @@ export default function useTwBelt(): TRet {
       rainbow,
       rainbowSoft,
       primary,
-      subPrimary,
+      accent,
       linker,
 
       linkable,
@@ -300,6 +297,6 @@ export default function useTwBelt(): TRet {
       page,
     }),
     // deps: only those that can affect returned behaviors/strings
-    [containerClass, pageLightClass, pageDarkClass, isAvatarSquare, primaryColor, subPrimaryColor],
+    [containerClass, pageLightClass, pageDarkClass, isAvatarSquare, primaryColor, accentColor],
   )
 }

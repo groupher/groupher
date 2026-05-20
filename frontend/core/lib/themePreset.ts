@@ -14,11 +14,13 @@ export const THEME_PRESET_FIELD_KEYS = [
   'primaryColor',
   'primaryCustomColor',
   'primaryCustomColorDark',
-  'subPrimaryColor',
-  'subPrimaryCustomColor',
-  'subPrimaryCustomColorDark',
+  'accentColor',
+  'accentCustomColor',
+  'accentCustomColorDark',
   'textTitle',
   'textDigest',
+  'gaussBlur',
+  'gaussBlurDark',
 ] as const
 
 export type TThemePresetField = (typeof THEME_PRESET_FIELD_KEYS)[number]
@@ -33,15 +35,18 @@ export type TResolvedThemePreset = {
   primaryColor: TColorName
   primaryCustomColor: string
   primaryCustomColorDark: string
-  subPrimaryColor: TColorName
-  subPrimaryCustomColor: string
-  subPrimaryCustomColorDark: string
+  accentColor: TColorName
+  accentCustomColor: string
+  accentCustomColorDark: string
   textTitle: string
   textDigest: string
+  gaussBlur: number
+  gaussBlurDark: number
 }
 
 export type TThemePresetSource = Partial<TResolvedThemePreset> & {
   themePreset?: TThemePreset | string
+  themeTokens?: Record<string, unknown> | null
   themeOverrides?: Record<string, unknown> | null
 }
 
@@ -63,6 +68,14 @@ export const pickThemePresetFields = (source: Partial<TResolvedThemePreset>) => 
   }
 
   return patch
+}
+
+export const normalizeThemeTokenSource = (
+  source: Record<string, unknown> | Partial<TResolvedThemePreset> | null | undefined,
+): Partial<TResolvedThemePreset> => {
+  if (!isRecord(source)) return {}
+
+  return source as Partial<TResolvedThemePreset>
 }
 
 export const pickResolvedThemePresetFields = (source: TResolvedThemePreset): TResolvedThemePreset =>
@@ -96,25 +109,28 @@ export const resolveThemePresetPageBgCssVar = (
 /**
  * Resolve the effective theme preset values from backend/dashboard layout data.
  *
- * New data should use `themePreset + themeOverrides` as the logical source of
+ * New data should use backend-resolved `themeTokens` as the logical source of
  * truth. During migration, old flat layout fields are only used when there are
  * no overrides yet, so stale legacy fields cannot keep overriding preset based
  * edits after the new model has taken ownership.
  */
 export const resolveThemePreset = (source: TThemePresetSource = {}): TResolvedThemePreset => {
   const selectedPreset = resolveThemePresetOption(source.themePreset)
-  const overrides = isRecord(source.themeOverrides) ? source.themeOverrides : {}
-  const hasOverrides = Object.keys(overrides).length > 0
-  const legacyPatch = hasOverrides ? {} : pickThemePresetFields(source)
-  const legacySubPrimaryFallback =
-    !hasOverrides && source.subPrimaryColor === undefined && source.primaryColor
-      ? { subPrimaryColor: source.primaryColor }
+  const backendTokens = normalizeThemeTokenSource(source.themeTokens)
+  const hasBackendTokens = Object.keys(backendTokens).length > 0
+  const overwrite = hasBackendTokens ? {} : normalizeThemeTokenSource(source.themeOverrides)
+  const hasOverrides = Object.keys(overwrite).length > 0
+  const legacySource = normalizeThemeTokenSource(source)
+  const legacyPatch = hasOverrides ? {} : pickThemePresetFields(legacySource)
+  const legacyAccentFallback =
+    !hasBackendTokens && !hasOverrides && source.accentColor === undefined && source.primaryColor
+      ? { accentColor: source.primaryColor }
       : {}
 
   return {
     ...selectedPreset.overrides,
-    ...legacyPatch,
-    ...legacySubPrimaryFallback,
-    ...pickThemePresetFields(overrides as Partial<TResolvedThemePreset>),
+    ...(hasBackendTokens ? backendTokens : legacyPatch),
+    ...legacyAccentFallback,
+    ...pickThemePresetFields(overwrite as Partial<TResolvedThemePreset>),
   }
 }

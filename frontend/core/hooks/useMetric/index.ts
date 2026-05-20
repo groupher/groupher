@@ -1,3 +1,5 @@
+'use client'
+
 import type { TMetric } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 

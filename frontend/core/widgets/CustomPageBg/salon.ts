@@ -1,14 +1,14 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {
-  const { cn, br, fg, primary } = useTwBelt()
+  const { cn, fg, primary } = useTwBelt()
 
   return {
     wrapper: 'mt-10',
     enableRow: 'row-center mb-4 pr-2 text-sm w-full',
     selectorRow: 'row-center justify-end mb-4 pr-2 w-full',
     inner: cn('w-full'),
-    settingRow: cn('row gap-4 py-4 border-b last:border-b-0', br('divider')),
+    settingRow: 'row gap-4 py-4',
     labelGroup: 'w-2/5 min-w-2/5',
     label: cn('text-base', fg('title')),
     hint: cn('mt-1 text-sm', fg('digest')),

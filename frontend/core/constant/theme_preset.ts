@@ -17,12 +17,17 @@ const EMPTY_CUSTOM_PRIMARY = {
   primaryCustomColorDark: '',
 } as const
 
-// Keep custom sub-primary keys present in every preset override. Most presets
-// use a built-in sub-primary color today, but the resolved preset shape still
+// Keep custom accent keys present in every preset override. Most presets
+// use a built-in accent color today, but the resolved preset shape still
 // needs stable custom token fields for SSR, CSS vars, and future custom input.
-const EMPTY_CUSTOM_SUB_PRIMARY = {
-  subPrimaryCustomColor: '',
-  subPrimaryCustomColorDark: '',
+const EMPTY_CUSTOM_ACCENT = {
+  accentCustomColor: '',
+  accentCustomColorDark: '',
+} as const
+
+const DEFAULT_GAUSS_BLUR = {
+  gaussBlur: 100,
+  gaussBlurDark: 100,
 } as const
 
 export const DEFAULT_TEXT_TITLE = '#243041'
@@ -52,10 +57,11 @@ export const THEME_PRESET_OPTIONS = [
       ...pageBgOverrides('pure white', 'outer space'),
       primaryColor: COLOR.PURPLE,
       ...EMPTY_CUSTOM_PRIMARY,
-      subPrimaryColor: COLOR.BLUE,
-      ...EMPTY_CUSTOM_SUB_PRIMARY,
+      accentColor: COLOR.BLUE,
+      ...EMPTY_CUSTOM_ACCENT,
       textTitle: DEFAULT_TEXT_TITLE,
       textDigest: DEFAULT_TEXT_DIGEST,
+      ...DEFAULT_GAUSS_BLUR,
     },
   },
   {
@@ -65,10 +71,11 @@ export const THEME_PRESET_OPTIONS = [
       primaryColor: COLOR.CUSTOM,
       primaryCustomColor: '#c96442',
       primaryCustomColorDark: '#d97757',
-      subPrimaryColor: COLOR.BLUE,
-      ...EMPTY_CUSTOM_SUB_PRIMARY,
+      accentColor: COLOR.BLUE,
+      ...EMPTY_CUSTOM_ACCENT,
       textTitle: '#2f2a24',
       textDigest: '#786f63',
+      ...DEFAULT_GAUSS_BLUR,
     },
   },
   {
@@ -78,10 +85,11 @@ export const THEME_PRESET_OPTIONS = [
       primaryColor: COLOR.CUSTOM,
       primaryCustomColor: '#859900',
       primaryCustomColorDark: '#b6c65b',
-      subPrimaryColor: COLOR.BLUE,
-      ...EMPTY_CUSTOM_SUB_PRIMARY,
+      accentColor: COLOR.BLUE,
+      ...EMPTY_CUSTOM_ACCENT,
       textTitle: '#073642',
       textDigest: '#657b83',
+      ...DEFAULT_GAUSS_BLUR,
     },
   },
   {
@@ -90,10 +98,11 @@ export const THEME_PRESET_OPTIONS = [
       ...pageBgOverrides('hacker news', 'black chocolate'),
       primaryColor: COLOR.BLACK,
       ...EMPTY_CUSTOM_PRIMARY,
-      subPrimaryColor: COLOR.BLUE,
-      ...EMPTY_CUSTOM_SUB_PRIMARY,
+      accentColor: COLOR.BLUE,
+      ...EMPTY_CUSTOM_ACCENT,
       textTitle: '#222222',
       textDigest: '#666666',
+      ...DEFAULT_GAUSS_BLUR,
     },
   },
 ] as const

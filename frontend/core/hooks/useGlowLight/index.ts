@@ -1,3 +1,5 @@
+'use client'
+
 import { includes } from 'ramda'
 
 import { GLOW_EFFECT_NAME, GLOW_OPACITY } from '~/const/glow_effect'
@@ -41,7 +43,7 @@ export default function useGlowLight(): TGlowEffect {
   }
 
   return {
-    glowType: wallpaper && glowType,
+    glowType,
     glowFixed,
     glowOpacity,
     changeGlowEffect,

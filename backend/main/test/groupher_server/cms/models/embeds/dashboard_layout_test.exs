@@ -36,6 +36,68 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
     assert layout.theme_overrides["primaryColor"] == "#B85C43"
   end
 
+  test "normalizes theme overwrite into stored theme overrides" do
+    changeset =
+      DashboardLayout.changeset(%DashboardLayout{}, %{
+        theme_preset: "custom",
+        theme_overwrite:
+          Jason.encode!(%{
+            "accentColor" => "YELLOW",
+            "accentCustomColor" => "#112233",
+            "unknown" => "ignored"
+          })
+      })
+
+    assert changeset.valid?
+
+    layout = Ecto.Changeset.apply_changes(changeset)
+
+    assert layout.theme_overrides == %{
+             "accentColor" => "YELLOW",
+             "accentCustomColor" => "#112233"
+           }
+  end
+
+  test "rejects invalid theme overwrite instead of silently ignoring it" do
+    changeset =
+      DashboardLayout.changeset(%DashboardLayout{}, %{
+        theme_preset: "custom",
+        theme_overwrite: "{invalid-json"
+      })
+
+    refute changeset.valid?
+    assert errors_on(changeset).theme_overrides == ["is invalid"]
+  end
+
+  test "ignores empty theme overwrite keys without raising" do
+    changeset =
+      DashboardLayout.changeset(%DashboardLayout{}, %{
+        theme_preset: "custom",
+        theme_overwrite: Jason.encode!(%{"" => "ignored", "accentColor" => "YELLOW"})
+      })
+
+    assert changeset.valid?
+
+    layout = Ecto.Changeset.apply_changes(changeset)
+
+    assert layout.theme_overrides == %{"accentColor" => "YELLOW"}
+  end
+
+  test "keeps theme overrides when updating non-preset layout fields" do
+    changeset =
+      DashboardLayout.changeset(
+        %DashboardLayout{theme_overrides: %{"accentColor" => "YELLOW"}},
+        %{post_layout: "COVER"}
+      )
+
+    assert changeset.valid?
+
+    layout = Ecto.Changeset.apply_changes(changeset)
+
+    assert layout.post_layout == :cover
+    assert layout.theme_overrides == %{"accentColor" => "YELLOW"}
+  end
+
   test "rejects invalid theme preset payloads" do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{
@@ -51,7 +113,6 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
   test "changeset normalizes legacy uppercase enum strings" do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{
-        primary_color: "BLACK",
         post_layout: "COVER",
         kanban_bg_colors: ["BLACK", "YELLOW"],
         kanban_boards: ["BACKLOG", "DONE"]
@@ -61,19 +122,14 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
 
     layout = Ecto.Changeset.apply_changes(changeset)
 
-    assert layout.primary_color == :black
     assert layout.post_layout == :cover
     assert layout.kanban_bg_colors == [:black, :yellow]
     assert layout.kanban_boards == [:backlog, :done]
   end
 
-  test "accepts valid custom colors for primary and sub-primary in both themes" do
+  test "accepts valid custom text colors" do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{
-        primary_custom_color: "#112233",
-        primary_custom_color_dark: "#223344",
-        sub_primary_custom_color: "#334455",
-        sub_primary_custom_color_dark: "#445566",
         text_title: "#556677",
         text_digest: "#667788"
       })
@@ -81,22 +137,14 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
     assert changeset.valid?
   end
 
-  test "rejects invalid custom colors for primary and sub-primary in both themes" do
+  test "rejects invalid custom text colors" do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{
-        primary_custom_color: "red",
-        primary_custom_color_dark: "#fff",
-        sub_primary_custom_color: "var(--x)",
-        sub_primary_custom_color_dark: "#12345g",
         text_title: "oklch(1 0 0)",
         text_digest: "#12345g"
       })
 
     refute changeset.valid?
-    assert errors_on(changeset).primary_custom_color == ["must be a valid hex color"]
-    assert errors_on(changeset).primary_custom_color_dark == ["must be a valid hex color"]
-    assert errors_on(changeset).sub_primary_custom_color == ["must be a valid hex color"]
-    assert errors_on(changeset).sub_primary_custom_color_dark == ["must be a valid hex color"]
     assert errors_on(changeset).text_title == ["must be a valid hex color"]
     assert errors_on(changeset).text_digest == ["must be a valid hex color"]
   end

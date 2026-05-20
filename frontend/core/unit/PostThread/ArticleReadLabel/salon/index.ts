@@ -6,9 +6,9 @@ type TProps = {
 } & TSpace
 
 export default function useSalon({ size, ...spacing }: TProps) {
-  const { cn, zise, margin, subPrimary, vividDark } = useTwBelt()
+  const { cn, zise, margin, accent, vividDark } = useTwBelt()
 
   return {
-    wrapper: cn('circle opacity-80', zise(size), margin(spacing), subPrimary('bg'), vividDark()),
+    wrapper: cn('circle opacity-80', zise(size), margin(spacing), accent('bg'), vividDark()),
   }
 }

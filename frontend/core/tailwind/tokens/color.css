@@ -16,7 +16,7 @@
   /* utils */
   --color-hoverBg: #efefef78;
   --color-card: #fff;
-  --color-cardAlpha: #ffffffd4;
+  --color-cardAlpha: #ffffffc4;
   --color-sandBox: #f9f9f9;
   --unibar-linear-mask: radial-gradient(circle, oklch(1 0 0 / 0.63) 30%, oklch(0 0 0 / 0) 100%);
   --saving-bar-left-linear: linear-gradient(to left, oklch(0.94 0 0 / 0.47) 45%, oklch(0 0 0 / 0));
@@ -88,16 +88,12 @@
 
   --color-primary-custom: #333333;
   --color-primary-custom-dark: #333333;
-  --color-sub-primary-custom: #333333;
-  --color-sub-primary-custom-dark: #333333;
+  --color-accent-custom: #333333;
+  --color-accent-custom-dark: #333333;
   --color-rainbow-custom: var(--color-primary-custom);
   --color-rainbow-customSoft: color-mix(in srgb, var(--color-primary-custom) 18%, transparent);
-  --color-rainbow-subCustom: var(--color-sub-primary-custom);
-  --color-rainbow-subCustomSoft: color-mix(
-    in srgb,
-    var(--color-sub-primary-custom) 18%,
-    transparent
-  );
+  --color-rainbow-subCustom: var(--color-accent-custom);
+  --color-rainbow-subCustomSoft: color-mix(in srgb, var(--color-accent-custom) 18%, transparent);
 
   --color-rainbow-black: #333333;
   --color-rainbow-blackBtn: oklch(27.8% 0.033 256.848); /* gray.800 */
@@ -265,10 +261,10 @@
       var(--color-primary-custom-dark) 20%,
       transparent
     );
-    --color-rainbow-subCustom: var(--color-sub-primary-custom-dark);
+    --color-rainbow-subCustom: var(--color-accent-custom-dark);
     --color-rainbow-subCustomSoft: color-mix(
       in srgb,
-      var(--color-sub-primary-custom-dark) 20%,
+      var(--color-accent-custom-dark) 20%,
       transparent
     );
 
@@ -390,12 +386,8 @@
 
     --color-rainbow-custom: var(--color-primary-custom);
     --color-rainbow-customSoft: color-mix(in srgb, var(--color-primary-custom) 18%, transparent);
-    --color-rainbow-subCustom: var(--color-sub-primary-custom);
-    --color-rainbow-subCustomSoft: color-mix(
-      in srgb,
-      var(--color-sub-primary-custom) 18%,
-      transparent
-    );
+    --color-rainbow-subCustom: var(--color-accent-custom);
+    --color-rainbow-subCustomSoft: color-mix(in srgb, var(--color-accent-custom) 18%, transparent);
 
     --color-rainbow-black: #333333;
     --color-rainbow-blackBtn: oklch(27.8% 0.033 256.848);

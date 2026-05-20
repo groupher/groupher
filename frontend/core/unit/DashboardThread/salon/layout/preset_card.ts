@@ -29,10 +29,10 @@ export default function useSalon({
       br('divider'),
       showActiveStyle
         ? cn('-translate-y-4 rotate-3 rounded-lg', primary('borderSoft'), shadow('lg'))
-        : 'group-hover:z-10 group-hover:-translate-y-3 group-hover:rotate-6',
+        : 'opacity-80 scale-95 group-hover:z-10 group-hover:-translate-y-3 group-hover:rotate-6',
     ),
     preview: cn('relative h-24 w-full rounded-sm border', br('divider')),
-    title: cn('mt-2.5 text-xs bold-sm', fg('title')),
+    title: cn('mb-1 text-xs', fg('title')),
     checker: 'pointer-events-none absolute top-3 right-3',
   }
 }

@@ -125,12 +125,6 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
       [:page_custom_bg_dark, :integer, 190],
       [:page_custom_intensity, :integer, 100],
       [:page_custom_intensity_dark, :integer, 100],
-      [:primary_color, :rainbow_color, :black],
-      [:primary_custom_color, :string, ""],
-      [:primary_custom_color_dark, :string, ""],
-      [:sub_primary_color, :rainbow_color, :black],
-      [:sub_primary_custom_color, :string, ""],
-      [:sub_primary_custom_color_dark, :string, ""],
       [:text_title, :string, "#243041"],
       [:text_digest, :string, "#6b7280"],
       [:kanban_bg_colors, {:array, :rainbow_color}, @kanban_bg_colors_default],
@@ -167,8 +161,8 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
       [:overlay_dark, :boolean, true],
 
       ## blur
-      [:gauss_blur, :integer, 100],
-      [:gauss_blur_dark, :integer, 100]
+      [:gauss_blur, :float, 100.0],
+      [:gauss_blur_dark, :float, 100.0]
     ]
   end
 

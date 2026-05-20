@@ -5,15 +5,6 @@ const PAGE_BG_THEME_KEYS = {
   [THEME.DARK]: 'dark',
 } as const
 
-export const PAGE_BG_DRAFT_KEYS = [
-  'pageBg',
-  'pageBgDark',
-  'pageCustomBg',
-  'pageCustomBgDark',
-  'pageCustomIntensity',
-  'pageCustomIntensityDark',
-] as const
-
 export const COLORED_PAGE_BG = {
   [THEME.LIGHT]: new Set(['mint white', 'pink', 'todo2', 'blue2', 'purple', 'todo']),
   [THEME.DARK]: new Set([

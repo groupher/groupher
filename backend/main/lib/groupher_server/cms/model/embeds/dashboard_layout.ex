@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
 
   alias GroupherServer.CMS
 
-  alias CMS.Helper.KanbanBoards
+  alias CMS.Helper.{KanbanBoards, ThemePreset}
   alias CMS.Model.Metrics.Dashboard
   @hex_color_re ~r/^#[0-9a-fA-F]{6}$/
 
@@ -43,6 +43,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
   def changeset(struct, params) do
     params =
       params
+      |> normalize_theme_preset_payload()
       |> normalize_layout_enum_values()
       |> normalize_kanban_boards()
 
@@ -54,7 +55,12 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
   end
 
   defp validate_theme_overrides(changeset) do
-    validate_change(changeset, :theme_overrides, fn :theme_overrides, value ->
+    changeset
+    |> validate_theme_map(:theme_overrides)
+  end
+
+  defp validate_theme_map(changeset, field) do
+    validate_change(changeset, field, fn ^field, value ->
       cond do
         is_nil(value) ->
           []
@@ -63,10 +69,48 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
           []
 
         true ->
-          [theme_overrides: "must be a map"]
+          [{field, "must be a map"}]
       end
     end)
   end
+
+  defp normalize_theme_preset_payload(params) when is_map(params) do
+    overwrite_param = fetch_param(params, :theme_overwrite)
+    legacy_overrides_param = fetch_param(params, :theme_overrides)
+
+    cond do
+      overwrite_param != :error or legacy_overrides_param != :error ->
+        overwrite = elem_or_nil(overwrite_param) || elem_or_nil(legacy_overrides_param)
+
+        case normalize_theme_override_map(overwrite) do
+          {:ok, normalized_overwrite} ->
+            put_param_or_new(params, :theme_overrides, normalized_overwrite)
+
+          :error ->
+            put_param_or_new(params, :theme_overrides, overwrite)
+        end
+
+      fetch_param(params, :theme_preset) != :error ->
+        put_param_or_new(params, :theme_overrides, %{})
+
+      true ->
+        params
+    end
+  end
+
+  defp normalize_theme_preset_payload(params), do: params
+
+  defp normalize_theme_override_map(value) when is_binary(value) do
+    case Jason.decode(value) do
+      {:ok, decoded} when is_map(decoded) -> {:ok, ThemePreset.normalize_overwrite(decoded)}
+      _ -> :error
+    end
+  end
+
+  defp normalize_theme_override_map(value), do: {:ok, ThemePreset.normalize_overwrite(value)}
+
+  defp elem_or_nil({:ok, value}), do: value
+  defp elem_or_nil(:error), do: nil
 
   defp normalize_layout_enum_values(params) when is_map(params) do
     params = Enum.reduce(@enum_fields, params, fn key, acc -> normalize_enum_param(acc, key) end)
@@ -114,6 +158,14 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
     end
   end
 
+  defp put_param_or_new(params, key, value) do
+    cond do
+      Map.has_key?(params, key) -> Map.put(params, key, value)
+      Map.has_key?(params, Atom.to_string(key)) -> Map.put(params, Atom.to_string(key), value)
+      true -> Map.put(params, key, value)
+    end
+  end
+
   defp normalize_enum_value(value) when is_binary(value), do: String.downcase(value)
   defp normalize_enum_value(value), do: value
 
@@ -155,10 +207,6 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
 
   defp validate_custom_colors(changeset) do
     [
-      :primary_custom_color,
-      :primary_custom_color_dark,
-      :sub_primary_custom_color,
-      :sub_primary_custom_color_dark,
       :text_title,
       :text_digest
     ]

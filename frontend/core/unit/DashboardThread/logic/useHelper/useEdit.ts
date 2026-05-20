@@ -5,16 +5,7 @@ import type { TEditFunc, TEditValue, TNameAlias } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 import { isObject } from '~/validator'
 
-import {
-  BASEINFO_KEYS,
-  FAQ_STORE_FIELDS,
-  FIELD,
-  PAGE_BG_STORE_FIELDS,
-  PRIMARY_COLOR_STORE_FIELDS,
-  SEO_KEYS,
-  SUB_PRIMARY_COLOR_STORE_FIELDS,
-  TAG_STORE_FIELDS,
-} from '../../constant'
+import { BASEINFO_KEYS, FAQ_STORE_FIELDS, FIELD, SEO_KEYS, TAG_STORE_FIELDS } from '../../constant'
 import type { TDsbFieldKey, TDsbStoreFieldKey } from '../../spec'
 import useMutation from '../useMutation'
 
@@ -41,7 +32,7 @@ export default function useEdit(): TRet {
       }
 
       if (isStoreField(field)) {
-        dsb$.editField(field, value)
+        dsb$.editField(field, value as never)
         return
       }
 
@@ -58,26 +49,6 @@ export default function useEdit(): TRet {
   }
 
   const rollbackEdit = (field: TDsbFieldKey): void => {
-    if (field === FIELD.PRIMARY_COLOR) {
-      dsb$.rollbackFields(PRIMARY_COLOR_STORE_FIELDS)
-      return
-    }
-
-    if (field === FIELD.PAGE_BG) {
-      dsb$.rollbackFields(PAGE_BG_STORE_FIELDS)
-      return
-    }
-
-    if (field === FIELD.PAGE_BG_DARK) {
-      dsb$.rollbackFields(PAGE_BG_STORE_FIELDS)
-      return
-    }
-
-    if (field === FIELD.SUB_PRIMARY_COLOR) {
-      dsb$.rollbackFields(SUB_PRIMARY_COLOR_STORE_FIELDS)
-      return
-    }
-
     if (field === FIELD.BASE_INFO) {
       dsb$.rollbackFields(BASEINFO_KEYS)
       return
@@ -106,21 +77,17 @@ export default function useEdit(): TRet {
     if (field === FIELD.THEME_PRESET) {
       dsb$.rollbackFields([
         FIELD.THEME_PRESET,
-        FIELD.THEME_OVERRIDES,
+        FIELD.THEME_TOKENS,
         FIELD.PAGE_BG,
         FIELD.PAGE_BG_DARK,
         FIELD.PAGE_CUSTOM_BG,
         FIELD.PAGE_CUSTOM_BG_DARK,
         FIELD.PAGE_CUSTOM_INTENSITY,
         FIELD.PAGE_CUSTOM_INTENSITY_DARK,
-        FIELD.PRIMARY_COLOR,
-        FIELD.PRIMARY_CUSTOM_COLOR,
-        FIELD.PRIMARY_CUSTOM_COLOR_DARK,
-        FIELD.SUB_PRIMARY_COLOR,
-        FIELD.SUB_PRIMARY_CUSTOM_COLOR,
-        FIELD.SUB_PRIMARY_CUSTOM_COLOR_DARK,
         FIELD.TEXT_TITLE,
         FIELD.TEXT_DIGEST,
+        FIELD.GAUSS_BLUR,
+        FIELD.GAUSS_BLUR_DARK,
       ])
       return
     }

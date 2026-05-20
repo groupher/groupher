@@ -1,8 +1,10 @@
+'use client'
+
 import type { TColorName } from '~/spec'
 import useThemePreset from '~/stores/ThemePreset/hooks'
 
-export default function useSubPrimaryColor(): TColorName {
+export default function useAccentColor(): TColorName {
   const preset$ = useThemePreset()
 
-  return preset$.subPrimaryColor
+  return preset$.accentColor
 }

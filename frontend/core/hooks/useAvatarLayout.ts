@@ -1,3 +1,5 @@
+'use client'
+
 import { AVATAR_LAYOUT } from '~/const/layout'
 import type { TAvatarLayout } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'

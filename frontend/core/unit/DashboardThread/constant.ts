@@ -18,19 +18,13 @@ export const DSB_MENU_ICON = {
 // do not change, it's map to GQ endpoint updateDashboardLayout
 export const LAYOUT_FIELD = {
   THEME_PRESET: 'themePreset',
-  THEME_OVERRIDES: 'themeOverrides',
+  THEME_TOKENS: 'themeTokens',
   PAGE_BG: 'pageBg',
   PAGE_BG_DARK: 'pageBgDark',
   PAGE_CUSTOM_BG: 'pageCustomBg',
   PAGE_CUSTOM_BG_DARK: 'pageCustomBgDark',
   PAGE_CUSTOM_INTENSITY: 'pageCustomIntensity',
   PAGE_CUSTOM_INTENSITY_DARK: 'pageCustomIntensityDark',
-  PRIMARY_COLOR: 'primaryColor',
-  PRIMARY_CUSTOM_COLOR: 'primaryCustomColor',
-  PRIMARY_CUSTOM_COLOR_DARK: 'primaryCustomColorDark',
-  SUB_PRIMARY_COLOR: 'subPrimaryColor',
-  SUB_PRIMARY_CUSTOM_COLOR: 'subPrimaryCustomColor',
-  SUB_PRIMARY_CUSTOM_COLOR_DARK: 'subPrimaryCustomColorDark',
   TEXT_TITLE: 'textTitle',
   TEXT_DIGEST: 'textDigest',
   POST_LAYOUT: 'postLayout',
@@ -59,6 +53,25 @@ export const LAYOUT_FIELD = {
   GLOW_FIXED: 'glowFixed',
   GLOW_OPACITY: 'glowOpacity',
   OVERLAY_DARK: 'overlayDark',
+  GAUSS_BLUR: 'gaussBlur',
+  GAUSS_BLUR_DARK: 'gaussBlurDark',
+} as const
+
+export const PRESET_FIELD = {
+  PAGE_BG: 'pageBg',
+  PAGE_BG_DARK: 'pageBgDark',
+  PAGE_CUSTOM_BG: 'pageCustomBg',
+  PAGE_CUSTOM_BG_DARK: 'pageCustomBgDark',
+  PAGE_CUSTOM_INTENSITY: 'pageCustomIntensity',
+  PAGE_CUSTOM_INTENSITY_DARK: 'pageCustomIntensityDark',
+  PRIMARY_COLOR: 'primaryColor',
+  PRIMARY_CUSTOM_COLOR: 'primaryCustomColor',
+  PRIMARY_CUSTOM_COLOR_DARK: 'primaryCustomColorDark',
+  ACCENT_COLOR: 'accentColor',
+  ACCENT_CUSTOM_COLOR: 'accentCustomColor',
+  ACCENT_CUSTOM_COLOR_DARK: 'accentCustomColorDark',
+  TEXT_TITLE: 'textTitle',
+  TEXT_DIGEST: 'textDigest',
   GAUSS_BLUR: 'gaussBlur',
   GAUSS_BLUR_DARK: 'gaussBlurDark',
 } as const
@@ -102,25 +115,6 @@ export const FIELD = {
 
 export const TAG_STORE_FIELDS: readonly TDsbStoreFieldKey[] = [FIELD.TAGS]
 export const FAQ_STORE_FIELDS: readonly TDsbStoreFieldKey[] = [FIELD.FAQ_SECTIONS]
-export const PAGE_BG_STORE_FIELDS: readonly TDsbStoreFieldKey[] = [
-  FIELD.PAGE_BG,
-  FIELD.PAGE_CUSTOM_BG,
-  FIELD.PAGE_CUSTOM_INTENSITY,
-  FIELD.PAGE_BG_DARK,
-  FIELD.PAGE_CUSTOM_BG_DARK,
-  FIELD.PAGE_CUSTOM_INTENSITY_DARK,
-]
-export const PRIMARY_COLOR_STORE_FIELDS: readonly TDsbStoreFieldKey[] = [
-  FIELD.PRIMARY_COLOR,
-  FIELD.PRIMARY_CUSTOM_COLOR,
-  FIELD.PRIMARY_CUSTOM_COLOR_DARK,
-]
-export const SUB_PRIMARY_COLOR_STORE_FIELDS: readonly TDsbStoreFieldKey[] = [
-  FIELD.SUB_PRIMARY_COLOR,
-  FIELD.SUB_PRIMARY_CUSTOM_COLOR,
-  FIELD.SUB_PRIMARY_CUSTOM_COLOR_DARK,
-]
-
 export const MENU: TDsbMenu = {
   BASIC: {
     title: 'dsb.menu.basic',

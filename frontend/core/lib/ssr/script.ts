@@ -60,12 +60,9 @@ const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string
           themePreset.primaryCustomColorDark,
           THEME.DARK,
         ),
-        '--color-sub-primary-custom': resolveSafeColor(
-          themePreset.subPrimaryCustomColor,
-          THEME.LIGHT,
-        ),
-        '--color-sub-primary-custom-dark': resolveSafeColor(
-          themePreset.subPrimaryCustomColorDark,
+        '--color-accent-custom': resolveSafeColor(themePreset.accentCustomColor, THEME.LIGHT),
+        '--color-accent-custom-dark': resolveSafeColor(
+          themePreset.accentCustomColorDark,
           THEME.DARK,
         ),
         '--color-title': resolveSafeColor(themePreset.textTitle, THEME.LIGHT, DEFAULT_TEXT_TITLE),

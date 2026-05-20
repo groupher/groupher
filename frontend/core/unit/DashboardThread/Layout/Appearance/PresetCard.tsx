@@ -61,7 +61,7 @@ export default function PresetCard({
             active={active}
             primaryColor={preset.overrides.primaryColor}
             primaryCustomColor={presetPrimaryCustomColor}
-            subPrimaryColor={preset.overrides.subPrimaryColor}
+            accentColor={preset.overrides.accentColor}
             textTitle={preset.overrides.textTitle}
             textDigest={preset.overrides.textDigest}
           />

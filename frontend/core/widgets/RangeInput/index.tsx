@@ -6,23 +6,14 @@
  *
  */
 
-import {
-  type ChangeEvent,
-  type CSSProperties,
-  type FC,
-  type FocusEvent,
-  type KeyboardEvent,
-  memo,
-  type PointerEvent,
-  useId,
-  useMemo,
-} from 'react'
+import { type CSSProperties, type FC, memo, useId, useMemo } from 'react'
 
 import { cnMerge } from '~/css'
 import type { TSpace } from '~/spec'
 
 import { DOT_OFFSET_REM, MAX_RIGHT_DOT_RATIO, MIN_VISUAL_RATIO, TRACK_GAP_REM } from './constant'
 import { clamp, defaultFormatValue, getRatio, getVisualRatio } from './helper'
+import useRangeInputLogic from './hooks'
 import useSalon from './salon'
 
 type TProps = {
@@ -105,22 +96,28 @@ const RangeInput: FC<TProps> = ({
     }),
     [visualRatio],
   )
-  const updateRangeValue = (event: ChangeEvent<HTMLInputElement>) => {
-    const nextValue = Number.parseFloat(event.target.value)
-    onChange?.(nextValue)
-  }
-  const commitRangeValue = (
-    event:
-      | FocusEvent<HTMLInputElement>
-      | KeyboardEvent<HTMLInputElement>
-      | PointerEvent<HTMLInputElement>,
-  ) => {
-    onChangeEnd?.(Number.parseFloat(event.currentTarget.value))
-  }
+  const {
+    controlRef,
+    inputRef,
+    updateRangeValue,
+    commitRangeValue,
+    handleIndicatorPointerDown,
+    handleIndicatorPointerMove,
+    handleIndicatorPointerUp,
+    handleIndicatorPointerCancel,
+  } = useRangeInputLogic({
+    value: safeValue,
+    min,
+    max,
+    step,
+    disabled,
+    onChange,
+    onChangeEnd,
+  })
 
   return (
     <div className={cnMerge(s.wrapper, disabled && s.disabled, className)} data-testid={testid}>
-      <label className='row-center justify-start gap-1 text-sm leading-none' htmlFor={inputId}>
+      <label className={s.valueLabel} htmlFor={inputId}>
         <span className={s.valueLabelPrefix}>{valueLabel}</span>
         <strong className={s.valueLabelAmount}>
           {formatValue(safeValue)}
@@ -128,7 +125,7 @@ const RangeInput: FC<TProps> = ({
         </strong>
       </label>
 
-      <div className={s.control}>
+      <div ref={controlRef} className={s.control}>
         <div className={s.track} aria-hidden='true'>
           <div
             className={cnMerge(s.trackPart, s.trackLeft, s.activeTrack)}
@@ -140,12 +137,20 @@ const RangeInput: FC<TProps> = ({
           />
           {showLeftDot && <div className={cnMerge(s.dot, s.leftDot)} style={leftDotStyle} />}
           {showRightDot && <div className={cnMerge(s.dot, s.rightDot)} style={rightDotStyle} />}
-          <div className={s.indicatorHitbox} style={indicatorStyle}>
+          <div
+            className={s.indicatorHitbox}
+            style={indicatorStyle}
+            onPointerDown={handleIndicatorPointerDown}
+            onPointerMove={handleIndicatorPointerMove}
+            onPointerUp={handleIndicatorPointerUp}
+            onPointerCancel={handleIndicatorPointerCancel}
+          >
             <div className={s.indicator} />
           </div>
         </div>
         <input
           id={inputId}
+          ref={inputRef}
           className={s.range}
           value={safeValue}
           type='range'

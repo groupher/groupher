@@ -148,7 +148,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     """
     test "update community dashboard wallpaper", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
-      variables = %{community: community.slug, wallpaper: "orange", wallpaperType: "custom"}
+      variables = %{community: community.slug, wallpaper: "orange", wallpaperType: "CUSTOM"}
 
       updated =
         rule_conn
@@ -159,7 +159,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
       assert found.dashboard.wallpaper.wallpaper == "orange"
-      assert found.dashboard.wallpaper.wallpaper_type == "custom"
+      assert found.dashboard.wallpaper.wallpaper_type == "CUSTOM"
     end
 
     @update_enable_query """
@@ -220,14 +220,14 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_layout_query """
-    mutation($community: String!, $themePreset: DsbThemePreset, $themeOverrides: Json, $primaryColor: RainbowColor, $primaryCustomColorDark: String, $subPrimaryColor: RainbowColor, $subPrimaryCustomColor: String, $subPrimaryCustomColorDark: String, $textTitle: String, $textDigest: String, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $gaussBlur: Int, $gaussBlurDark: Int, $brandLayout: DsbBrandLayout, $communityLayout: DsbCommunityLayout, $navActiveLayout: DsbNavActiveLayout, $overlayDark: Boolean) {
-      updateDashboardLayout(community: $community, themePreset: $themePreset, themeOverrides: $themeOverrides, primaryColor: $primaryColor, primaryCustomColorDark: $primaryCustomColorDark, subPrimaryColor: $subPrimaryColor, subPrimaryCustomColor: $subPrimaryCustomColor, subPrimaryCustomColorDark: $subPrimaryCustomColorDark, textTitle: $textTitle, textDigest: $textDigest, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, communityLayout: $communityLayout, navActiveLayout: $navActiveLayout, overlayDark: $overlayDark) {
+    mutation($community: String!, $themePreset: DsbThemePreset, $themeOverwrite: Json, $textTitle: String, $textDigest: String, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $gaussBlur: Float, $gaussBlurDark: Float, $brandLayout: DsbBrandLayout, $communityLayout: DsbCommunityLayout, $navActiveLayout: DsbNavActiveLayout, $overlayDark: Boolean) {
+      updateDashboardLayout(community: $community, themePreset: $themePreset, themeOverwrite: $themeOverwrite, textTitle: $textTitle, textDigest: $textDigest, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, communityLayout: $communityLayout, navActiveLayout: $navActiveLayout, overlayDark: $overlayDark) {
         id
         title
         dashboard {
           layout {
             themePreset
-            themeOverrides
+            themeTokens
             kanbanBoards
             footerLayout
             topbarEnabled
@@ -242,10 +242,6 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
             communityLayout
             navActiveLayout
             overlayDark
-            primaryCustomColorDark
-            subPrimaryColor
-            subPrimaryCustomColor
-            subPrimaryCustomColorDark
             textTitle
             textDigest
           }
@@ -259,12 +255,12 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       variables = %{
         community: community.slug,
         themePreset: "CUSTOM",
-        themeOverrides: Jason.encode!(%{"primaryColor" => "#B85C43"}),
-        primaryColor: "PURPLE",
-        primaryCustomColorDark: "#C41A80",
-        subPrimaryColor: "YELLOW",
-        subPrimaryCustomColor: "#147A8A",
-        subPrimaryCustomColorDark: "#89E5FF",
+        themeOverwrite:
+          Jason.encode!(%{
+            "primaryColor" => "CUSTOM",
+            "accentColor" => "YELLOW",
+            "gaussBlur" => 80.5
+          }),
         textTitle: "#112233",
         textDigest: "#667788",
         postLayout: "COVER",
@@ -280,8 +276,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         glowOpacity: "30",
         tagLayout: "DOT",
         inlineTagLayout: "SOFT",
-        gaussBlur: 80,
-        gaussBlurDark: 60,
+        gaussBlur: 80.5,
+        gaussBlurDark: 60.5,
         brandLayout: "LOGO",
         communityLayout: "SIDEBAR",
         navActiveLayout: "SOFT_BG",
@@ -295,15 +291,15 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert get_in(updated, ["dashboard", "layout", "navActiveLayout"]) == "SOFT_BG"
       assert get_in(updated, ["dashboard", "layout", "themePreset"]) == "CUSTOM"
 
-      assert get_in(updated, ["dashboard", "layout", "themeOverrides", "primaryColor"]) ==
-               "#B85C43"
+      assert get_in(updated, ["dashboard", "layout", "themeTokens", "accentColor"]) ==
+               "YELLOW"
+
+      assert get_in(updated, ["dashboard", "layout", "themeTokens", "gaussBlur"]) == 80.5
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
-      assert found.dashboard.layout.primary_color == :purple
       assert found.dashboard.layout.theme_preset == :custom
-      assert found.dashboard.layout.theme_overrides["primaryColor"] == "#B85C43"
-      assert found.dashboard.layout.sub_primary_color == :yellow
+      assert found.dashboard.layout.theme_overrides["primaryColor"] == "CUSTOM"
       assert found.dashboard.layout.post_layout == :cover
       assert found.dashboard.layout.kanban_layout == :waterfall
       assert found.dashboard.layout.kanban_card_layout == :full
@@ -318,15 +314,12 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.layout.glow_opacity == "30"
       assert found.dashboard.layout.tag_layout == :dot
       assert found.dashboard.layout.inline_tag_layout == :soft
-      assert found.dashboard.layout.gauss_blur == 80
-      assert found.dashboard.layout.gauss_blur_dark == 60
+      assert found.dashboard.layout.gauss_blur == 80.5
+      assert found.dashboard.layout.gauss_blur_dark == 60.5
       assert found.dashboard.layout.brand_layout == :logo
       assert found.dashboard.layout.community_layout == :sidebar
       assert found.dashboard.layout.nav_active_layout == :soft_bg
       assert found.dashboard.layout.overlay_dark == false
-      assert found.dashboard.layout.primary_custom_color_dark == "#C41A80"
-      assert found.dashboard.layout.sub_primary_custom_color == "#147A8A"
-      assert found.dashboard.layout.sub_primary_custom_color_dark == "#89E5FF"
       assert found.dashboard.layout.text_title == "#112233"
       assert found.dashboard.layout.text_digest == "#667788"
     end

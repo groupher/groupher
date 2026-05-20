@@ -10,14 +10,14 @@ export default function ThemePresetStore(init: TInit = {}): TStore {
 
   const store = proxy({
     themePreset: init.themePreset ?? DEFAULT_THEME_PRESET,
-    themeOverrides: init.themeOverrides ?? {},
+    themeTokens: init.themeTokens ?? {},
     ...resolved,
 
     hydrate(source: TInit): void {
       const nextResolved = resolveThemePreset(source)
 
       store.themePreset = source.themePreset ?? DEFAULT_THEME_PRESET
-      store.themeOverrides = source.themeOverrides ?? {}
+      store.themeTokens = source.themeTokens ?? {}
       Object.assign(store, nextResolved)
     },
   })

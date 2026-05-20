@@ -162,19 +162,13 @@ const updateDashboardLayout = gql`
   mutation (
     $community: String!
     $themePreset: DsbThemePreset
-    $themeOverrides: Json
+    $themeOverwrite: Json
     $pageBg: String
     $pageBgDark: String
     $pageCustomBg: Int
     $pageCustomBgDark: Int
     $pageCustomIntensity: Int
     $pageCustomIntensityDark: Int
-    $primaryColor: RainbowColor
-    $primaryCustomColor: String
-    $primaryCustomColorDark: String
-    $subPrimaryColor: RainbowColor
-    $subPrimaryCustomColor: String
-    $subPrimaryCustomColorDark: String
     $textTitle: String
     $textDigest: String
     $postLayout: DsbPostLayout
@@ -200,8 +194,8 @@ const updateDashboardLayout = gql`
     $glowFixed: Boolean
     $glowOpacity: String
     $overlayDark: Boolean
-    $gaussBlur: Int
-    $gaussBlurDark: Int
+    $gaussBlur: Float
+    $gaussBlurDark: Float
     $brandLayout: DsbBrandLayout
     $communityLayout: DsbCommunityLayout
     $changelogLayout: DsbChangelogLayout
@@ -211,19 +205,13 @@ const updateDashboardLayout = gql`
     updateDashboardLayout(
       community: $community
       themePreset: $themePreset
-      themeOverrides: $themeOverrides
+      themeOverwrite: $themeOverwrite
       pageBg: $pageBg
       pageBgDark: $pageBgDark
       pageCustomBg: $pageCustomBg
       pageCustomBgDark: $pageCustomBgDark
       pageCustomIntensity: $pageCustomIntensity
       pageCustomIntensityDark: $pageCustomIntensityDark
-      primaryColor: $primaryColor
-      primaryCustomColor: $primaryCustomColor
-      primaryCustomColorDark: $primaryCustomColorDark
-      subPrimaryColor: $subPrimaryColor
-      subPrimaryCustomColor: $subPrimaryCustomColor
-      subPrimaryCustomColorDark: $subPrimaryCustomColorDark
       textTitle: $textTitle
       textDigest: $textDigest
       postLayout: $postLayout

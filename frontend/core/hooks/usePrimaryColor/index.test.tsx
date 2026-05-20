@@ -5,8 +5,8 @@ import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
 
 describe('usePrimaryColor', () => {
-  it('reads primaryColor from dashboard store', () => {
-    const wrapper = makeStoreWrapper({ dashboard: { primaryColor: COLOR.ORANGE } })
+  it('reads primaryColor from theme preset tokens', () => {
+    const wrapper = makeStoreWrapper({ dashboard: { themeTokens: { primaryColor: COLOR.ORANGE } } })
     const { result } = renderHook(() => usePrimaryColor(), { wrapper })
     expect(result.current).toBe(COLOR.ORANGE)
   })

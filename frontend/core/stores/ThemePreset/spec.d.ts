@@ -5,6 +5,6 @@ export type TInit = TThemePresetSource
 
 export type TStore = TResolvedThemePreset & {
   themePreset: TThemePreset | string
-  themeOverrides: Record<string, unknown>
+  themeTokens: Record<string, unknown>
   hydrate: (source: TThemePresetSource) => void
 }

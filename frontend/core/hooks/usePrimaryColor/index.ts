@@ -1,3 +1,5 @@
+'use client'
+
 import type { TColorName } from '~/spec'
 import useThemePreset from '~/stores/ThemePreset/hooks'
 

@@ -1,9 +1,9 @@
 import useTrans from '~/hooks/useTrans'
+import CustomPageBg, { type TPageBgDraft } from '~/widgets/CustomPageBg'
 
 import useSalon from '../../salon/layout/details_panel'
 import SectionLabel from '../../SectionLabel'
-import CustomBackground from '../PageBackground/CustomBackground'
-import type { TPageBgDraft } from '../PageBackground/hooks'
+import GlassOpacity from './GlassOpacity'
 import PrimaryColors from './PrimaryColors'
 import type { TThemePresetOverrides } from './spec'
 
@@ -48,8 +48,8 @@ export default function DetailsPanel({
           isLightTheme={isLightTheme}
           onThemePresetCommit={onThemePresetCommit}
         />
-
-        <CustomBackground
+        <div className={s.divider} />
+        <CustomPageBg
           key={pageBgResetKey}
           draft={selectedPageBgDraft}
           originalDraft={selectedPageBgDraft}
@@ -59,6 +59,14 @@ export default function DetailsPanel({
           onScheduleCommitPatch={onPageBgCommit}
           showToggle={false}
           showThemeSelector={false}
+        />
+
+        <div className={s.divider} />
+
+        <GlassOpacity
+          selectedOverrides={selectedOverrides}
+          isLightTheme={isLightTheme}
+          onThemePresetCommit={onThemePresetCommit}
         />
       </div>
     </div>

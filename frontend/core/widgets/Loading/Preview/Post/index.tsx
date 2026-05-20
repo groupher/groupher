@@ -1,3 +1,5 @@
+'use client'
+
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default function PreviewDrawerLoading() {
