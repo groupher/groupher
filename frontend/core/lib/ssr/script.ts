@@ -1,8 +1,7 @@
-import { COLOR, getDefaultCustomColor } from '~/const/colors'
+import { getDefaultCustomColor } from '~/const/colors'
 import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
 import { DEFAULT_TEXT_DIGEST, DEFAULT_TEXT_TITLE } from '~/const/theme_preset'
-import { getPageBgCustomColor, normalizePageBgHue, normalizePageBgIntensity } from '~/lib/color'
-import { resolveThemePreset } from '~/lib/themePreset'
+import { resolveThemePreset, resolveThemePresetPageBgCssVar } from '~/lib/themePreset'
 import type { TParseDashboard } from '~/spec'
 
 export const ssrThemeInitScript = () => `
@@ -47,19 +46,6 @@ const resolveSafeColor = (
   return fallback
 }
 
-const resolveSafePageBg = (
-  theme: typeof THEME.LIGHT | typeof THEME.DARK,
-  pageBg: string | undefined,
-  hue: number | undefined,
-  intensity: number | undefined,
-) => {
-  if (pageBg !== COLOR.CUSTOM) {
-    return 'transparent'
-  }
-
-  return getPageBgCustomColor(theme, normalizePageBgHue(hue), normalizePageBgIntensity(intensity))
-}
-
 // Build first-paint dashboard color variables on the server so custom colors do
 // not wait for client hydration to override the base token defaults.
 const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string, TCSSVarMap]> => {
@@ -75,11 +61,11 @@ const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string
           THEME.DARK,
         ),
         '--color-sub-primary-custom': resolveSafeColor(
-          dashboard.subPrimaryCustomColor,
+          themePreset.subPrimaryCustomColor,
           THEME.LIGHT,
         ),
         '--color-sub-primary-custom-dark': resolveSafeColor(
-          dashboard.subPrimaryCustomColorDark,
+          themePreset.subPrimaryCustomColorDark,
           THEME.DARK,
         ),
         '--color-title': resolveSafeColor(themePreset.textTitle, THEME.LIGHT, DEFAULT_TEXT_TITLE),
@@ -88,13 +74,13 @@ const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string
           THEME.LIGHT,
           DEFAULT_TEXT_DIGEST,
         ),
-        '--color-page-custom-light': resolveSafePageBg(
+        '--color-page-custom-light': resolveThemePresetPageBgCssVar(
           THEME.LIGHT,
           themePreset.pageBg,
           themePreset.pageCustomBg,
           themePreset.pageCustomIntensity,
         ),
-        '--color-page-custom-dark': resolveSafePageBg(
+        '--color-page-custom-dark': resolveThemePresetPageBgCssVar(
           THEME.DARK,
           themePreset.pageBgDark,
           themePreset.pageCustomBgDark,

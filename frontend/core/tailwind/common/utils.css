@@ -96,15 +96,15 @@
   }
 
   .group-smoky-0 {
-    @apply cursor-pointer opacity-0 transition-opacity group-hover:opacity-100;
+    @apply cursor-pointer opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100;
   }
 
   .group-smoky-65 {
-    @apply cursor-pointer opacity-65 transition-opacity group-hover:opacity-100;
+    @apply cursor-pointer opacity-65 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100;
   }
 
   .group-smoky-80 {
-    @apply cursor-pointer opacity-80 transition-opacity group-hover:opacity-100;
+    @apply cursor-pointer opacity-80 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100;
   }
 
   .hover-underline {

@@ -140,7 +140,9 @@ const RangeInput: FC<TProps> = ({
           />
           {showLeftDot && <div className={cnMerge(s.dot, s.leftDot)} style={leftDotStyle} />}
           {showRightDot && <div className={cnMerge(s.dot, s.rightDot)} style={rightDotStyle} />}
-          <div className={s.indicator} style={indicatorStyle} />
+          <div className={s.indicatorHitbox} style={indicatorStyle}>
+            <div className={s.indicator} />
+          </div>
         </div>
         <input
           id={inputId}

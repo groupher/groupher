@@ -6,6 +6,7 @@ import useGaussBlur from '~/hooks/useGaussBlur'
 import useTheme from '~/hooks/useTheme'
 import useThemePreset from '~/hooks/useThemePreset'
 import useUpdatePreviewCssVars from '~/hooks/useUpdatePreviewCssVars'
+import { pickResolvedThemePresetFields } from '~/lib/themePreset'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import { FIELD } from '../../constant'
@@ -44,7 +45,7 @@ export default function useAppearance() {
   const { isLightTheme } = useTheme()
   const { onSave, rollbackEdit } = useHelper()
   const gaussBlur = useGaussBlur()
-  const selectedOverrides = useThemePreset()
+  const selectedOverrides = pickResolvedThemePresetFields(useThemePreset())
   const updatePreviewCssVars = useUpdatePreviewCssVars()
   const [pageBgResetVersion, setPageBgResetVersion] = useState(0)
 

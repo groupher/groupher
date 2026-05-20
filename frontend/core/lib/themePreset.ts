@@ -1,4 +1,7 @@
+import { COLOR, PAGE_BG_COLOR_HEX, PAGE_BG_DEFAULT } from '~/const/colors'
+import THEME from '~/const/theme'
 import { THEME_PRESET_OPTIONS } from '~/const/theme_preset'
+import { getPageBgCustomColor } from '~/lib/color'
 import type { TColorName, TThemePreset } from '~/spec'
 
 export const THEME_PRESET_FIELD_KEYS = [
@@ -12,6 +15,8 @@ export const THEME_PRESET_FIELD_KEYS = [
   'primaryCustomColor',
   'primaryCustomColorDark',
   'subPrimaryColor',
+  'subPrimaryCustomColor',
+  'subPrimaryCustomColorDark',
   'textTitle',
   'textDigest',
 ] as const
@@ -29,6 +34,8 @@ export type TResolvedThemePreset = {
   primaryCustomColor: string
   primaryCustomColorDark: string
   subPrimaryColor: TColorName
+  subPrimaryCustomColor: string
+  subPrimaryCustomColorDark: string
   textTitle: string
   textDigest: string
 }
@@ -46,7 +53,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 export const resolveThemePresetOption = (themePreset?: TThemePreset | string) =>
   THEME_PRESET_OPTIONS.find((preset) => preset.value === themePreset) ?? DEFAULT_PRESET
 
-const pickThemePresetFields = (source: Partial<TResolvedThemePreset>) => {
+export const pickThemePresetFields = (source: Partial<TResolvedThemePreset>) => {
   const patch = {} as Partial<TResolvedThemePreset>
 
   for (const key of THEME_PRESET_FIELD_KEYS) {
@@ -56,6 +63,37 @@ const pickThemePresetFields = (source: Partial<TResolvedThemePreset>) => {
   }
 
   return patch
+}
+
+export const pickResolvedThemePresetFields = (source: TResolvedThemePreset): TResolvedThemePreset =>
+  pickThemePresetFields(source) as TResolvedThemePreset
+
+export const resolveThemePresetPageBgCssVar = (
+  theme: typeof THEME.LIGHT | typeof THEME.DARK,
+  pageBg: string | undefined,
+  hue: number | undefined,
+  intensity: number | undefined,
+): string => {
+  if (pageBg === COLOR.CUSTOM) {
+    return getPageBgCustomColor(theme, hue, intensity)
+  }
+
+  const fallbackBg =
+    theme === THEME.LIGHT ? DEFAULT_PRESET.overrides.pageBg : DEFAULT_PRESET.overrides.pageBgDark
+
+  if (fallbackBg === COLOR.CUSTOM) {
+    return getPageBgCustomColor(
+      theme,
+      theme === THEME.LIGHT
+        ? DEFAULT_PRESET.overrides.pageCustomBg
+        : DEFAULT_PRESET.overrides.pageCustomBgDark,
+      theme === THEME.LIGHT
+        ? DEFAULT_PRESET.overrides.pageCustomIntensity
+        : DEFAULT_PRESET.overrides.pageCustomIntensityDark,
+    )
+  }
+
+  return PAGE_BG_COLOR_HEX[fallbackBg] ?? PAGE_BG_COLOR_HEX[PAGE_BG_DEFAULT[theme]]
 }
 
 /**

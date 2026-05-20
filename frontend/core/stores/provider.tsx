@@ -8,9 +8,8 @@ import CommunityStoreProvider from '~/stores/community/provider'
 import DashboardStoreProvider from '~/stores/dashboard/provider'
 import LocaleStoreProvider from '~/stores/locale/provider'
 import ThemeStoreProvider from '~/stores/theme/provider'
+import ThemePresetStoreProvider from '~/stores/ThemePreset/provider'
 import WallpaperStoreProvider from '~/stores/wallpaper/provider'
-
-import CustomThemeScope from './CustomThemeScope'
 
 type TProps = {
   children: React.ReactNode
@@ -43,9 +42,9 @@ const MainProvider: FC<TProps> = ({
         <AccountWrapper noAccount={noAccount}>
           <CommunityStoreProvider initData={community}>
             <DashboardStoreProvider initData={{ ...dashboard, metric, now }}>
-              <WallpaperStoreProvider>
-                <CustomThemeScope>{children}</CustomThemeScope>
-              </WallpaperStoreProvider>
+              <ThemePresetStoreProvider initData={dashboard}>
+                <WallpaperStoreProvider>{children}</WallpaperStoreProvider>
+              </ThemePresetStoreProvider>
             </DashboardStoreProvider>
           </CommunityStoreProvider>
         </AccountWrapper>

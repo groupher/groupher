@@ -17,6 +17,14 @@ const EMPTY_CUSTOM_PRIMARY = {
   primaryCustomColorDark: '',
 } as const
 
+// Keep custom sub-primary keys present in every preset override. Most presets
+// use a built-in sub-primary color today, but the resolved preset shape still
+// needs stable custom token fields for SSR, CSS vars, and future custom input.
+const EMPTY_CUSTOM_SUB_PRIMARY = {
+  subPrimaryCustomColor: '',
+  subPrimaryCustomColorDark: '',
+} as const
+
 export const DEFAULT_TEXT_TITLE = '#243041'
 export const DEFAULT_TEXT_DIGEST = '#6b7280'
 
@@ -45,6 +53,7 @@ export const THEME_PRESET_OPTIONS = [
       primaryColor: COLOR.PURPLE,
       ...EMPTY_CUSTOM_PRIMARY,
       subPrimaryColor: COLOR.BLUE,
+      ...EMPTY_CUSTOM_SUB_PRIMARY,
       textTitle: DEFAULT_TEXT_TITLE,
       textDigest: DEFAULT_TEXT_DIGEST,
     },
@@ -57,6 +66,7 @@ export const THEME_PRESET_OPTIONS = [
       primaryCustomColor: '#c96442',
       primaryCustomColorDark: '#d97757',
       subPrimaryColor: COLOR.BLUE,
+      ...EMPTY_CUSTOM_SUB_PRIMARY,
       textTitle: '#2f2a24',
       textDigest: '#786f63',
     },
@@ -69,6 +79,7 @@ export const THEME_PRESET_OPTIONS = [
       primaryCustomColor: '#859900',
       primaryCustomColorDark: '#b6c65b',
       subPrimaryColor: COLOR.BLUE,
+      ...EMPTY_CUSTOM_SUB_PRIMARY,
       textTitle: '#073642',
       textDigest: '#657b83',
     },
@@ -80,6 +91,7 @@ export const THEME_PRESET_OPTIONS = [
       primaryColor: COLOR.BLACK,
       ...EMPTY_CUSTOM_PRIMARY,
       subPrimaryColor: COLOR.BLUE,
+      ...EMPTY_CUSTOM_SUB_PRIMARY,
       textTitle: '#222222',
       textDigest: '#666666',
     },
