@@ -17,6 +17,8 @@ type TProps = {
   initData?: TInit
 }
 
+const EMPTY_INIT_DATA: TInit = {}
+
 export const StoreContext = createContext<TStore | null>(null)
 StoreContext.displayName = 'ThemePreset'
 
@@ -105,7 +107,7 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
   )
 }
 
-export default function Provider({ children, initData = {} }: TProps) {
+export default function Provider({ children, initData = EMPTY_INIT_DATA }: TProps) {
   const storeRef = useRef<TStore | null>(null)
   const dsb$ = useDashboard()
 

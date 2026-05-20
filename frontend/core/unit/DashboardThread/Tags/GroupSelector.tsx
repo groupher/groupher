@@ -27,8 +27,8 @@ export default memo(() => {
           {t('dsb.tags.group.all')}
         </Button>
 
-        {[...tagGroups]
-          .sort((a, b) => a.index - b.index)
+        {tagGroups
+          .toSorted((a, b) => a.index - b.index)
           .map((group) => (
             <Button
               key={group.id}

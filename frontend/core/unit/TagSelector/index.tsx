@@ -23,8 +23,6 @@ const TagSelector: FC<TProps> = ({ mode = 'default', groupedTags, activeTag, onS
   const s = useSalon()
 
   const [show, setShow] = useState(false)
-  const [_menuOpen, setMenuOpen] = useState(false)
-
   const handleSelect = (tag: TTag) => {
     onSelect?.(tag)
   }
@@ -37,9 +35,7 @@ const TagSelector: FC<TProps> = ({ mode = 'default', groupedTags, activeTag, onS
         trigger='click'
         onShow={() => {
           setShow(true)
-          setMenuOpen(true)
         }}
-        onHide={() => setMenuOpen(false)}
         offset={[-35, 8]}
         content={
           show ? (
