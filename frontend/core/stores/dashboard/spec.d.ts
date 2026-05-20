@@ -1,3 +1,4 @@
+import type { TResolvedThemePreset } from '~/lib/themePreset'
 import type {
   TAvatarLayout,
   TCommunityLayout,
@@ -72,7 +73,7 @@ export type TDsbFieldMap = {
 
   // page
   themePreset: TThemePreset
-  themeOverrides: Record<string, unknown>
+  themeOverrides: Partial<TResolvedThemePreset>
   pageBg: string
   pageBgDark: string
   pageCustomBg: number

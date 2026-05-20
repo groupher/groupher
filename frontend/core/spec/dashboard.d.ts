@@ -19,6 +19,7 @@ import type {
 } from '~/const/layout'
 import type { DSB_TAB } from '~/const/route'
 import type { KANBAN_BOARD } from '~/const/thread'
+import type { TResolvedThemePreset } from '~/lib/themePreset'
 import type { TConstValues } from '~/spec'
 import type { TDsbFieldKey, TDsbFieldMap } from '~/stores/dashboard/spec'
 
@@ -69,8 +70,8 @@ export type TDsb = {
 
   layout?: {
     brandLayout: TBrandLayout
-    themePreset: TThemePreset
-    themeOverrides: Record<string, unknown>
+    themePreset?: TThemePreset | null
+    themeOverrides?: Partial<TResolvedThemePreset> | null
     pageBg: string
     pageBgDark: string
     pageCustomBg: number
@@ -83,8 +84,8 @@ export type TDsb = {
     subPrimaryColor: TColorName
     subPrimaryCustomColor: string
     subPrimaryCustomColorDark: string
-    textTitle: string
-    textDigest: string
+    textTitle?: string | null
+    textDigest?: string | null
     topbarEnabled: boolean
     topbarBg: TColorName
     topbarBgCustomColor: string
@@ -107,7 +108,7 @@ export type TDsb = {
     changelogLayout: TChangelogLayout
     headerLayout: THeaderLayout
     footerLayout: TFooterLayout
-  }
+  } | null
 
   moderators?: readonly TModerator[]
 

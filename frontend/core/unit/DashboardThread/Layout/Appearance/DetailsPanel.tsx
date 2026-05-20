@@ -1,5 +1,4 @@
 import useTrans from '~/hooks/useTrans'
-import Button from '~/widgets/Buttons/Button'
 
 import useSalon from '../../salon/layout/details_panel'
 import SectionLabel from '../../SectionLabel'
@@ -38,11 +37,7 @@ export default function DetailsPanel({
         <SectionLabel
           title={t('dsb.layout.appearance.preset.detail')}
           desc={t('dsb.layout.appearance.preset.desc')}
-          addon={
-            <Button ghost noBorder size='small'>
-              {t('dsb.layout.appearance.customize')}
-            </Button>
-          }
+          addon={<span>{t('dsb.layout.appearance.customize')}</span>}
         />
       </div>
 

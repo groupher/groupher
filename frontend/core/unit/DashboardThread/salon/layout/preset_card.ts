@@ -1,5 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
+import { getRotateClass } from './rotate'
+
 export { cn } from '~/css'
 
 type TArgs = {
@@ -15,12 +17,13 @@ export default function useSalon({
 }: TArgs = {}) {
   const { cn, bg, br, fg, primary, shadow } = useTwBelt()
   const showActiveStyle = active && !activeSuppressed
+  const rotateClass = getRotateClass(rotateAngle)
 
   return {
     wrapper: cn('group relative -ml-4 h-36 w-28 pointer', showActiveStyle && 'z-10'),
     card: cn(
       'column relative h-36 w-28 justify-between rounded-md border px-2 py-1.5 text-left trans-all-200',
-      `rotate-${rotateAngle}`,
+      rotateClass,
       shadow('sm'),
       bg('card'),
       br('divider'),

@@ -74,26 +74,23 @@ export const resolveThemePresetPageBgCssVar = (
   hue: number | undefined,
   intensity: number | undefined,
 ): string => {
-  if (pageBg === COLOR.CUSTOM) {
-    return getPageBgCustomColor(theme, hue, intensity)
-  }
-
   const fallbackBg =
     theme === THEME.LIGHT ? DEFAULT_PRESET.overrides.pageBg : DEFAULT_PRESET.overrides.pageBgDark
+  const resolvedBg = pageBg ?? fallbackBg
 
-  if (fallbackBg === COLOR.CUSTOM) {
+  if (resolvedBg === COLOR.CUSTOM) {
     return getPageBgCustomColor(
       theme,
       theme === THEME.LIGHT
-        ? DEFAULT_PRESET.overrides.pageCustomBg
-        : DEFAULT_PRESET.overrides.pageCustomBgDark,
+        ? (hue ?? DEFAULT_PRESET.overrides.pageCustomBg)
+        : (hue ?? DEFAULT_PRESET.overrides.pageCustomBgDark),
       theme === THEME.LIGHT
-        ? DEFAULT_PRESET.overrides.pageCustomIntensity
-        : DEFAULT_PRESET.overrides.pageCustomIntensityDark,
+        ? (intensity ?? DEFAULT_PRESET.overrides.pageCustomIntensity)
+        : (intensity ?? DEFAULT_PRESET.overrides.pageCustomIntensityDark),
     )
   }
 
-  return PAGE_BG_COLOR_HEX[fallbackBg] ?? PAGE_BG_COLOR_HEX[PAGE_BG_DEFAULT[theme]]
+  return PAGE_BG_COLOR_HEX[resolvedBg] ?? PAGE_BG_COLOR_HEX[PAGE_BG_DEFAULT[theme]]
 }
 
 /**

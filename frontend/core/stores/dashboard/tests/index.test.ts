@@ -137,6 +137,9 @@ describe('stores/dashboard', () => {
   it('tracks appearance preset fields as one editable patch', () => {
     const store = setupStore()
     const claude = THEME_PRESET_OPTIONS.find((item) => item.value === 'CLAUDE')
+    if (!claude) {
+      throw new Error('Missing CLAUDE preset in THEME_PRESET_OPTIONS')
+    }
 
     store.editFields({
       themePreset: claude.value,
@@ -151,6 +154,8 @@ describe('stores/dashboard', () => {
       primaryCustomColor: claude.overrides.primaryCustomColor,
       primaryCustomColorDark: claude.overrides.primaryCustomColorDark,
       subPrimaryColor: claude.overrides.subPrimaryColor,
+      subPrimaryCustomColor: claude.overrides.subPrimaryCustomColor,
+      subPrimaryCustomColorDark: claude.overrides.subPrimaryCustomColorDark,
       textTitle: claude.overrides.textTitle,
       textDigest: claude.overrides.textDigest,
     })
@@ -182,6 +187,8 @@ describe('stores/dashboard', () => {
         'primaryCustomColor',
         'primaryCustomColorDark',
         'subPrimaryColor',
+        'subPrimaryCustomColor',
+        'subPrimaryCustomColorDark',
         'textTitle',
         'textDigest',
       ]),
@@ -200,6 +207,8 @@ describe('stores/dashboard', () => {
       'primaryCustomColor',
       'primaryCustomColorDark',
       'subPrimaryColor',
+      'subPrimaryCustomColor',
+      'subPrimaryCustomColorDark',
       'textTitle',
       'textDigest',
     ])
@@ -215,6 +224,8 @@ describe('stores/dashboard', () => {
     expect(store.primaryCustomColor).toBe(store.original.primaryCustomColor)
     expect(store.primaryCustomColorDark).toBe(store.original.primaryCustomColorDark)
     expect(store.subPrimaryColor).toBe(store.original.subPrimaryColor)
+    expect(store.subPrimaryCustomColor).toBe(store.original.subPrimaryCustomColor)
+    expect(store.subPrimaryCustomColorDark).toBe(store.original.subPrimaryCustomColorDark)
     expect(store.textTitle).toBe(store.original.textTitle)
     expect(store.textDigest).toBe(store.original.textDigest)
     expect(
@@ -231,6 +242,8 @@ describe('stores/dashboard', () => {
         'primaryCustomColor',
         'primaryCustomColorDark',
         'subPrimaryColor',
+        'subPrimaryCustomColor',
+        'subPrimaryCustomColorDark',
         'textTitle',
         'textDigest',
       ]),

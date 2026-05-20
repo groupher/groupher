@@ -14,6 +14,7 @@ import useDashboard from '~/stores/dashboard/hooks'
 import { FIELD } from '../../constant'
 import useHelper from '../../logic/useHelper'
 import useSalon, { cn } from '../../salon/layout/page_background'
+import { getRotateClass } from '../../salon/layout/rotate'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import CustomBackground from './CustomBackground'
@@ -117,7 +118,11 @@ export default function PageBackground() {
               <button
                 key={bg}
                 type='button'
-                className={cn(s.block, `rotate-${s.rotateAngle[index]}`, active && s.blockActive)}
+                className={cn(
+                  s.block,
+                  getRotateClass(s.rotateAngle[index]),
+                  active && s.blockActive,
+                )}
                 aria-pressed={active}
                 onClick={() => {
                   const pageBgKey = isLightTheme ? FIELD.PAGE_BG : FIELD.PAGE_BG_DARK

@@ -128,6 +128,8 @@ export default function useMutation(): TRet {
         FIELD.PRIMARY_CUSTOM_COLOR,
         FIELD.PRIMARY_CUSTOM_COLOR_DARK,
         FIELD.SUB_PRIMARY_COLOR,
+        FIELD.SUB_PRIMARY_CUSTOM_COLOR,
+        FIELD.SUB_PRIMARY_CUSTOM_COLOR_DARK,
         FIELD.TEXT_TITLE,
         FIELD.TEXT_DIGEST,
       ]
@@ -221,6 +223,8 @@ export default function useMutation(): TRet {
         primaryCustomColor: storeRef.current.primaryCustomColor,
         primaryCustomColorDark: storeRef.current.primaryCustomColorDark,
         subPrimaryColor: storeRef.current.subPrimaryColor,
+        subPrimaryCustomColor: storeRef.current.subPrimaryCustomColor,
+        subPrimaryCustomColorDark: storeRef.current.subPrimaryCustomColorDark,
         textTitle: storeRef.current.textTitle,
         textDigest: storeRef.current.textDigest,
       }
@@ -549,6 +553,8 @@ export default function useMutation(): TRet {
           primaryCustomColor: storeRef.current.primaryCustomColor,
           primaryCustomColorDark: storeRef.current.primaryCustomColorDark,
           subPrimaryColor: storeRef.current.subPrimaryColor,
+          subPrimaryCustomColor: storeRef.current.subPrimaryCustomColor,
+          subPrimaryCustomColorDark: storeRef.current.subPrimaryCustomColorDark,
           textTitle: storeRef.current.textTitle,
           textDigest: storeRef.current.textDigest,
         })

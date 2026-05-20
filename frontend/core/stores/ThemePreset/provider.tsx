@@ -18,6 +18,16 @@ type TProps = {
 }
 
 const EMPTY_INIT_DATA: TInit = {}
+const ROOT_CSS_VAR_KEYS = [
+  '--color-primary-custom',
+  '--color-primary-custom-dark',
+  '--color-sub-primary-custom',
+  '--color-sub-primary-custom-dark',
+  '--color-page-custom-light',
+  '--color-page-custom-dark',
+  '--color-title',
+  '--color-digest',
+] as const
 
 export const StoreContext = createContext<TStore | null>(null)
 StoreContext.displayName = 'ThemePreset'
@@ -76,6 +86,12 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
     root.style.setProperty('--color-page-custom-dark', darkPageBg)
     root.style.setProperty('--color-title', safeTextTitle)
     root.style.setProperty('--color-digest', safeTextDigest)
+
+    return () => {
+      for (const key of ROOT_CSS_VAR_KEYS) {
+        root.style.removeProperty(key)
+      }
+    }
   }, [
     darkDefault,
     darkPageBg,

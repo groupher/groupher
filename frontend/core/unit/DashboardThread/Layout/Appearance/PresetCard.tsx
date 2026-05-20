@@ -34,9 +34,9 @@ export default function PresetCard({
     ? preset.overrides.primaryCustomColor
     : preset.overrides.primaryCustomColorDark
   const cardBg = getPageBgCustomColor(
-    THEME.LIGHT,
-    preset.overrides.pageCustomBg,
-    preset.overrides.pageCustomIntensity,
+    isLightTheme ? THEME.LIGHT : THEME.DARK,
+    isLightTheme ? preset.overrides.pageCustomBg : preset.overrides.pageCustomBgDark,
+    isLightTheme ? preset.overrides.pageCustomIntensity : preset.overrides.pageCustomIntensityDark,
   )
 
   return (

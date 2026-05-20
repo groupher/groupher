@@ -291,7 +291,7 @@ export default {
   'dsb.layout.appearance.title': '外观预设',
   'dsb.layout.appearance.desc': '选择一套协调的外观基线。细节仍可在其他标签页继续调整。',
   'dsb.layout.appearance.preset.detail': '预设详情',
-  'dsb.layout.appearance.preset.desc': '你点击右侧自定义根据已有的预设主题创建你自己的预设',
+  'dsb.layout.appearance.preset.desc': '点击右侧「自定义」，可基于现有预设主题创建你的专属预设。',
   'dsb.layout.appearance.customize': '自定义',
   'dsb.layout.appearance.preset.default.title': '默认',
   'dsb.layout.appearance.preset.default.desc': '中性基线',
