@@ -2,8 +2,9 @@ import { COLOR } from '~/const/colors'
 import { DEFAULT_ENABLE } from '~/const/dashboard'
 import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import METRIC from '~/const/metric'
+import { THEME_PRESET_OPTIONS } from '~/const/theme_preset'
 import { KANBAN_BOARD } from '~/const/thread'
-import type { TEnableConf, TLinkDraftItem, TLinkItem, TNameAlias, TTag } from '~/spec'
+import type { TEnableConf, TLinkDraftItem, TLinkItem, TNameAlias } from '~/spec'
 import type { TInit } from '~/stores/dashboard/spec'
 
 import setupStore from '..'
@@ -37,10 +38,6 @@ describe('stores/dashboard', () => {
       { group: 'kanban', slug: 'post', name: 'Ideas' },
       { group: 'kanban', slug: 'changelog', name: 'Updates' },
     ]
-    const tags: readonly TTag[] = [
-      { id: 't1', title: 'Edge', color: COLOR.ORANGE },
-      { id: 't2', title: 'Case', color: COLOR.BLACK },
-    ]
     const editingLink: TLinkDraftItem = { index: 9, title: 'X', group: 'MORE', link: '/x' }
 
     store.commit({
@@ -59,7 +56,6 @@ describe('stores/dashboard', () => {
       ],
       enable,
       nameAlias,
-      tags,
       editingLink,
     })
 
@@ -70,7 +66,6 @@ describe('stores/dashboard', () => {
     expect(store.enable.post).toBe(true)
     expect(store.enable.changelog).toBe(false)
     expect(store.nameAlias).toHaveLength(2)
-    expect(store.tags).toHaveLength(2)
 
     store.debug()
     expect(store.editingLink).toBeNull()
@@ -137,5 +132,121 @@ describe('stores/dashboard', () => {
     store.rollbackFields([DESC_FIELD])
     expect(store.desc).toBe(store.original.desc)
     expect(store.isTouched(DESC_FIELD)).toBe(false)
+  })
+
+  it('tracks appearance preset fields as one editable patch', () => {
+    const store = setupStore()
+    const claude = THEME_PRESET_OPTIONS.find((item) => item.value === 'CLAUDE')
+    if (!claude) {
+      throw new Error('Missing CLAUDE preset in THEME_PRESET_OPTIONS')
+    }
+
+    store.editFields({
+      themePreset: claude.value,
+      themeOverrides: { ...claude.overrides },
+      pageBg: claude.overrides.pageBg,
+      pageBgDark: claude.overrides.pageBgDark,
+      pageCustomBg: claude.overrides.pageCustomBg,
+      pageCustomBgDark: claude.overrides.pageCustomBgDark,
+      pageCustomIntensity: claude.overrides.pageCustomIntensity,
+      pageCustomIntensityDark: claude.overrides.pageCustomIntensityDark,
+      primaryColor: claude.overrides.primaryColor,
+      primaryCustomColor: claude.overrides.primaryCustomColor,
+      primaryCustomColorDark: claude.overrides.primaryCustomColorDark,
+      subPrimaryColor: claude.overrides.subPrimaryColor,
+      subPrimaryCustomColor: claude.overrides.subPrimaryCustomColor,
+      subPrimaryCustomColorDark: claude.overrides.subPrimaryCustomColorDark,
+      textTitle: claude.overrides.textTitle,
+      textDigest: claude.overrides.textDigest,
+    })
+
+    expect(store.themePreset).toBe('CLAUDE')
+    expect(store.pageBg).toBe(COLOR.CUSTOM)
+    expect(store.pageBgDark).toBe(COLOR.CUSTOM)
+    expect(store.pageCustomBg).toBe(claude.overrides.pageCustomBg)
+    expect(store.pageCustomBgDark).toBe(claude.overrides.pageCustomBgDark)
+    expect(store.pageCustomIntensity).toBe(claude.overrides.pageCustomIntensity)
+    expect(store.pageCustomIntensityDark).toBe(claude.overrides.pageCustomIntensityDark)
+    expect(store.primaryColor).toBe(COLOR.CUSTOM)
+    expect(store.primaryCustomColor).toBe('#c96442')
+    expect(store.primaryCustomColorDark).toBe('#d97757')
+    expect(store.subPrimaryColor).toBe(COLOR.BLUE)
+    expect(store.textTitle).toBe(claude.overrides.textTitle)
+    expect(store.textDigest).toBe(claude.overrides.textDigest)
+    expect(
+      store.anyTouched([
+        'themePreset',
+        'themeOverrides',
+        'pageBg',
+        'pageBgDark',
+        'pageCustomBg',
+        'pageCustomBgDark',
+        'pageCustomIntensity',
+        'pageCustomIntensityDark',
+        'primaryColor',
+        'primaryCustomColor',
+        'primaryCustomColorDark',
+        'subPrimaryColor',
+        'subPrimaryCustomColor',
+        'subPrimaryCustomColorDark',
+        'textTitle',
+        'textDigest',
+      ]),
+    ).toBe(true)
+
+    store.rollbackFields([
+      'themePreset',
+      'themeOverrides',
+      'pageBg',
+      'pageBgDark',
+      'pageCustomBg',
+      'pageCustomBgDark',
+      'pageCustomIntensity',
+      'pageCustomIntensityDark',
+      'primaryColor',
+      'primaryCustomColor',
+      'primaryCustomColorDark',
+      'subPrimaryColor',
+      'subPrimaryCustomColor',
+      'subPrimaryCustomColorDark',
+      'textTitle',
+      'textDigest',
+    ])
+
+    expect(store.themePreset).toBe(store.original.themePreset)
+    expect(store.pageBg).toBe(store.original.pageBg)
+    expect(store.pageBgDark).toBe(store.original.pageBgDark)
+    expect(store.pageCustomBg).toBe(store.original.pageCustomBg)
+    expect(store.pageCustomBgDark).toBe(store.original.pageCustomBgDark)
+    expect(store.pageCustomIntensity).toBe(store.original.pageCustomIntensity)
+    expect(store.pageCustomIntensityDark).toBe(store.original.pageCustomIntensityDark)
+    expect(store.primaryColor).toBe(store.original.primaryColor)
+    expect(store.primaryCustomColor).toBe(store.original.primaryCustomColor)
+    expect(store.primaryCustomColorDark).toBe(store.original.primaryCustomColorDark)
+    expect(store.subPrimaryColor).toBe(store.original.subPrimaryColor)
+    expect(store.subPrimaryCustomColor).toBe(store.original.subPrimaryCustomColor)
+    expect(store.subPrimaryCustomColorDark).toBe(store.original.subPrimaryCustomColorDark)
+    expect(store.textTitle).toBe(store.original.textTitle)
+    expect(store.textDigest).toBe(store.original.textDigest)
+    expect(
+      store.anyTouched([
+        'themePreset',
+        'themeOverrides',
+        'pageBg',
+        'pageBgDark',
+        'pageCustomBg',
+        'pageCustomBgDark',
+        'pageCustomIntensity',
+        'pageCustomIntensityDark',
+        'primaryColor',
+        'primaryCustomColor',
+        'primaryCustomColorDark',
+        'subPrimaryColor',
+        'subPrimaryCustomColor',
+        'subPrimaryCustomColorDark',
+        'textTitle',
+        'textDigest',
+      ]),
+    ).toBe(false)
   })
 })

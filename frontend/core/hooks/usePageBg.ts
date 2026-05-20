@@ -6,7 +6,7 @@ import { blurRGB } from '~/fmt'
 import useGaussBlur from '~/hooks/useGaussBlur'
 import useTheme from '~/hooks/useTheme'
 import { getPageBgCustomColor } from '~/lib/color'
-import useDashboard from '~/stores/dashboard/hooks'
+import useThemePreset from '~/stores/ThemePreset/hooks'
 
 type TRes = {
   background: string | null
@@ -22,7 +22,7 @@ export default function usePageBg(themeOverride?: string): TRes {
     pageCustomBgDark,
     pageCustomIntensity,
     pageCustomIntensityDark,
-  } = useDashboard()
+  } = useThemePreset()
   const gaussBlur = useGaussBlur()
   const theme = themeOverride || (isLightTheme ? THEME.LIGHT : THEME.DARK)
   const isLightBg = theme === THEME.LIGHT

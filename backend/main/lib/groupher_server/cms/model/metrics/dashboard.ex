@@ -26,6 +26,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
     :custom
   ]
   @kanban_bg_colors_default [:black, :yellow, :purple, :green, :red]
+  @theme_presets [:default, :claude, :solarized, :hn, :custom]
   # Single source of truth for dashboard enums.
   #
   # Internal business values stay as lowercase atoms:
@@ -58,11 +59,13 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
     changelog_layout: [:classic, :simple],
     footer_layout: [:oneline, :group],
     header_layout: [:center, :right, :float],
+    theme_preset: @theme_presets,
     rss_feed_type: [:digest, :full]
   }
 
   def kanban_bg_colors_default, do: @kanban_bg_colors_default
   def rainbow_colors, do: @rainbow_colors
+  def theme_presets, do: @theme_presets
   def enum_values(key), do: Map.fetch!(@enum_values, key)
 
   def layout_default do
@@ -114,6 +117,8 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
   # note: write kanban_bg_colors schema/graphql rules by itself
   def macro_schema(:layout) do
     [
+      [:theme_preset, :enum, :default],
+      [:theme_overrides, :map, %{}],
       [:page_bg, :string, "pure white"],
       [:page_bg_dark, :string, "outer space"],
       [:page_custom_bg, :integer, 190],
@@ -126,6 +131,8 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
       [:sub_primary_color, :rainbow_color, :black],
       [:sub_primary_custom_color, :string, ""],
       [:sub_primary_custom_color_dark, :string, ""],
+      [:text_title, :string, "#243041"],
+      [:text_digest, :string, "#6b7280"],
       [:kanban_bg_colors, {:array, :rainbow_color}, @kanban_bg_colors_default],
       [:kanban_boards, {:array, :kanban_board}, KanbanBoards.default_values_list()],
       [:post_layout, :enum, :quora],

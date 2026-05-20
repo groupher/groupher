@@ -1,8 +1,8 @@
 import type { TColorName } from '~/spec'
-import useDashboard from '~/stores/dashboard/hooks'
+import useThemePreset from '~/stores/ThemePreset/hooks'
 
 export default function usePrimaryColor(): TColorName {
-  const dsb$ = useDashboard()
+  const preset$ = useThemePreset()
 
-  return dsb$.primaryColor
+  return preset$.primaryColor
 }

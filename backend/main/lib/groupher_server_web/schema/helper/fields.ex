@@ -304,6 +304,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     Dashboard.macro_schema(section)
     |> Enum.map(fn item ->
       [key, type, default_v] = item
+      default_ast = Macro.escape(default_v)
 
       case type do
         :enum ->
@@ -312,7 +313,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
             #   [:quora, :ph] -> internal :quora / :ph -> DB "quora" / "ph"
             field(unquote(key), Ecto.Enum,
               values: unquote(Dashboard.enum_values(key)),
-              default: unquote(default_v)
+              default: unquote(default_ast)
             )
           end
 
@@ -320,7 +321,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
           quote do
             field(unquote(key), Ecto.Enum,
               values: unquote(Dashboard.rainbow_colors()),
-              default: unquote(default_v)
+              default: unquote(default_ast)
             )
           end
 
@@ -328,7 +329,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
           quote do
             field(unquote(key), {:array, Ecto.Enum},
               values: unquote(KanbanBoards.values_list()),
-              default: unquote(default_v)
+              default: unquote(default_ast)
             )
           end
 
@@ -336,13 +337,13 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
           quote do
             field(unquote(key), {:array, Ecto.Enum},
               values: unquote(Dashboard.rainbow_colors()),
-              default: unquote(default_v)
+              default: unquote(default_ast)
             )
           end
 
         _ ->
           quote do
-            field(unquote(key), unquote(to_ecto_type(type)), default: unquote(default_v))
+            field(unquote(key), unquote(to_ecto_type(type)), default: unquote(default_ast))
           end
       end
     end)
@@ -382,6 +383,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   defp to_absinthe_type(:enum, :doc_cover_layout), do: :dsb_doc_cover_layout
   defp to_absinthe_type(:enum, key), do: :"dsb_#{key}"
   defp to_absinthe_type(:rainbow_color, _key), do: :rainbow_color
+  defp to_absinthe_type(:map, _key), do: :json
   defp to_absinthe_type(type, _key), do: type
 
   # Expand dashboard enum registry into GraphQL enums.

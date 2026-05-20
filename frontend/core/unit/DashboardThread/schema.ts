@@ -161,6 +161,8 @@ const updateDashboardEnable = gql`
 const updateDashboardLayout = gql`
   mutation (
     $community: String!
+    $themePreset: DsbThemePreset
+    $themeOverrides: Json
     $pageBg: String
     $pageBgDark: String
     $pageCustomBg: Int
@@ -173,6 +175,8 @@ const updateDashboardLayout = gql`
     $subPrimaryColor: RainbowColor
     $subPrimaryCustomColor: String
     $subPrimaryCustomColorDark: String
+    $textTitle: String
+    $textDigest: String
     $postLayout: DsbPostLayout
     $kanbanLayout: DsbKanbanLayout
     $kanbanCardLayout: DsbKanbanCardLayout
@@ -206,6 +210,8 @@ const updateDashboardLayout = gql`
   ) {
     updateDashboardLayout(
       community: $community
+      themePreset: $themePreset
+      themeOverrides: $themeOverrides
       pageBg: $pageBg
       pageBgDark: $pageBgDark
       pageCustomBg: $pageCustomBg
@@ -218,6 +224,8 @@ const updateDashboardLayout = gql`
       subPrimaryColor: $subPrimaryColor
       subPrimaryCustomColor: $subPrimaryCustomColor
       subPrimaryCustomColorDark: $subPrimaryCustomColorDark
+      textTitle: $textTitle
+      textDigest: $textDigest
       postLayout: $postLayout
       kanbanLayout: $kanbanLayout
       kanbanCardLayout: $kanbanCardLayout

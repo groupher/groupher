@@ -80,6 +80,8 @@ export const community = `
           group
         }
         layout {
+          themePreset
+          themeOverrides
           pageBg
           pageBgDark
           pageCustomBg
@@ -92,6 +94,8 @@ export const community = `
           subPrimaryColor
           subPrimaryCustomColor
           subPrimaryCustomColorDark
+          textTitle
+          textDigest
           postLayout
           docCoverLayout
           docFaqLayout

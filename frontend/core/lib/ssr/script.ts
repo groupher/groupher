@@ -1,6 +1,7 @@
-import { COLOR, getDefaultCustomColor } from '~/const/colors'
+import { getDefaultCustomColor } from '~/const/colors'
 import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
-import { getPageBgCustomColor, normalizePageBgHue, normalizePageBgIntensity } from '~/lib/color'
+import { DEFAULT_TEXT_DIGEST, DEFAULT_TEXT_TITLE } from '~/const/theme_preset'
+import { resolveThemePreset, resolveThemePresetPageBgCssVar } from '~/lib/themePreset'
 import type { TParseDashboard } from '~/spec'
 
 export const ssrThemeInitScript = () => `
@@ -36,58 +37,54 @@ const serializeCSSVars = (selector: string, vars: TCSSVarMap): string => {
 const resolveSafeColor = (
   value: string | undefined,
   theme: typeof THEME.LIGHT | typeof THEME.DARK,
+  fallback = getDefaultCustomColor(theme),
 ) => {
   if (value && HEX_COLOR_RE.test(value)) {
     return value
   }
 
-  return getDefaultCustomColor(theme)
-}
-
-const resolveSafePageBg = (
-  theme: typeof THEME.LIGHT | typeof THEME.DARK,
-  pageBg: string | undefined,
-  hue: number | undefined,
-  intensity: number | undefined,
-) => {
-  if (pageBg !== COLOR.CUSTOM) {
-    return 'transparent'
-  }
-
-  return getPageBgCustomColor(theme, normalizePageBgHue(hue), normalizePageBgIntensity(intensity))
+  return fallback
 }
 
 // Build first-paint dashboard color variables on the server so custom colors do
 // not wait for client hydration to override the base token defaults.
 const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string, TCSSVarMap]> => {
+  const themePreset = resolveThemePreset(dashboard)
+
   return [
     [
       ':root',
       {
-        '--color-primary-custom': resolveSafeColor(dashboard.primaryCustomColor, THEME.LIGHT),
+        '--color-primary-custom': resolveSafeColor(themePreset.primaryCustomColor, THEME.LIGHT),
         '--color-primary-custom-dark': resolveSafeColor(
-          dashboard.primaryCustomColorDark,
+          themePreset.primaryCustomColorDark,
           THEME.DARK,
         ),
         '--color-sub-primary-custom': resolveSafeColor(
-          dashboard.subPrimaryCustomColor,
+          themePreset.subPrimaryCustomColor,
           THEME.LIGHT,
         ),
         '--color-sub-primary-custom-dark': resolveSafeColor(
-          dashboard.subPrimaryCustomColorDark,
+          themePreset.subPrimaryCustomColorDark,
           THEME.DARK,
         ),
-        '--color-page-custom-light': resolveSafePageBg(
+        '--color-title': resolveSafeColor(themePreset.textTitle, THEME.LIGHT, DEFAULT_TEXT_TITLE),
+        '--color-digest': resolveSafeColor(
+          themePreset.textDigest,
           THEME.LIGHT,
-          dashboard.pageBg,
-          dashboard.pageCustomBg,
-          dashboard.pageCustomIntensity,
+          DEFAULT_TEXT_DIGEST,
         ),
-        '--color-page-custom-dark': resolveSafePageBg(
+        '--color-page-custom': resolveThemePresetPageBgCssVar(
+          THEME.LIGHT,
+          themePreset.pageBg,
+          themePreset.pageCustomBg,
+          themePreset.pageCustomIntensity,
+        ),
+        '--color-page-custom-dark': resolveThemePresetPageBgCssVar(
           THEME.DARK,
-          dashboard.pageBgDark,
-          dashboard.pageCustomBgDark,
-          dashboard.pageCustomIntensityDark,
+          themePreset.pageBgDark,
+          themePreset.pageCustomBgDark,
+          themePreset.pageCustomIntensityDark,
         ),
       },
     ],

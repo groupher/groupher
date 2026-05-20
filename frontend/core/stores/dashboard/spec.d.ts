@@ -1,3 +1,4 @@
+import type { TResolvedThemePreset } from '~/lib/themePreset'
 import type {
   TAvatarLayout,
   TCommunityLayout,
@@ -34,6 +35,7 @@ import type {
   TSocialItem,
   TTagGroup,
   TTagLayout,
+  TThemePreset,
   TThread,
   TUser,
 } from '~/spec'
@@ -70,6 +72,8 @@ export type TDsbFieldMap = {
   mediaReports: readonly TMediaReport[]
 
   // page
+  themePreset: TThemePreset
+  themeOverrides: Partial<TResolvedThemePreset>
   pageBg: string
   pageBgDark: string
   pageCustomBg: number
@@ -103,6 +107,8 @@ export type TDsbFieldMap = {
   subPrimaryColor: TColorName
   subPrimaryCustomColor: string
   subPrimaryCustomColorDark: string
+  textTitle: string
+  textDigest: string
   postLayout: TPostLayout
   kanbanLayout: TKanbanLayout
   kanbanCardLayout: TKanbanCardLayout

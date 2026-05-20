@@ -1,5 +1,5 @@
 import { BUILTIN_ALIAS } from '~/const/builtin-alias'
-import { COLOR, PAGE_BG_DEFAULT } from '~/const/colors'
+import { COLOR } from '~/const/colors'
 import { DEFAULT_ENABLE, INIT_KANBAN_BOARDS, TW_CARD } from '~/const/dashboard'
 import { GLOW_OPACITY } from '~/const/glow_effect'
 import { LOCALE } from '~/const/i18n'
@@ -23,9 +23,13 @@ import {
   TAG_LAYOUT,
 } from '~/const/layout'
 import SIZE from '~/const/size'
-import THEME from '~/const/theme'
+import {
+  DEFAULT_TEXT_DIGEST,
+  DEFAULT_TEXT_TITLE,
+  DEFAULT_THEME_PRESET,
+  THEME_PRESET_OPTIONS,
+} from '~/const/theme_preset'
 import { THREAD } from '~/const/thread'
-import { PAGE_CUSTOM_HUE_DEFAULT, PAGE_CUSTOM_INTENSITY_DEFAULT } from '~/lib/color'
 
 import type { TDsbFieldMap } from './spec'
 
@@ -47,6 +51,9 @@ const EMPTY_MEDIA_REPORT = {
 }
 
 const INIT_KANBAN_COLORS = [COLOR.BLACK, COLOR.YELLOW, COLOR.PURPLE, COLOR.GREEN, COLOR.RED]
+const DEFAULT_THEME_OVERRIDES =
+  THEME_PRESET_OPTIONS.find((preset) => preset.value === DEFAULT_THEME_PRESET)?.overrides ??
+  THEME_PRESET_OPTIONS[0].overrides
 
 export const FIELDS: TDsbFieldMap = {
   // baseInfo
@@ -66,12 +73,14 @@ export const FIELDS: TDsbFieldMap = {
   mediaReports: [EMPTY_MEDIA_REPORT],
 
   // page
-  pageBg: PAGE_BG_DEFAULT[THEME.LIGHT],
-  pageBgDark: PAGE_BG_DEFAULT[THEME.DARK],
-  pageCustomBg: PAGE_CUSTOM_HUE_DEFAULT,
-  pageCustomBgDark: PAGE_CUSTOM_HUE_DEFAULT,
-  pageCustomIntensity: PAGE_CUSTOM_INTENSITY_DEFAULT,
-  pageCustomIntensityDark: PAGE_CUSTOM_INTENSITY_DEFAULT,
+  themePreset: DEFAULT_THEME_PRESET,
+  themeOverrides: { ...DEFAULT_THEME_OVERRIDES },
+  pageBg: DEFAULT_THEME_OVERRIDES.pageBg,
+  pageBgDark: DEFAULT_THEME_OVERRIDES.pageBgDark,
+  pageCustomBg: DEFAULT_THEME_OVERRIDES.pageCustomBg,
+  pageCustomBgDark: DEFAULT_THEME_OVERRIDES.pageCustomBgDark,
+  pageCustomIntensity: DEFAULT_THEME_OVERRIDES.pageCustomIntensity,
+  pageCustomIntensityDark: DEFAULT_THEME_OVERRIDES.pageCustomIntensityDark,
 
   // seo
   seoEnable: true,
@@ -93,12 +102,14 @@ export const FIELDS: TDsbFieldMap = {
   twImageHeight: '',
 
   // layout
-  primaryColor: COLOR.BLACK,
-  primaryCustomColor: '',
-  primaryCustomColorDark: '',
-  subPrimaryColor: COLOR.BLACK,
+  primaryColor: DEFAULT_THEME_OVERRIDES.primaryColor,
+  primaryCustomColor: DEFAULT_THEME_OVERRIDES.primaryCustomColor,
+  primaryCustomColorDark: DEFAULT_THEME_OVERRIDES.primaryCustomColorDark,
+  subPrimaryColor: DEFAULT_THEME_OVERRIDES.subPrimaryColor,
   subPrimaryCustomColor: '',
   subPrimaryCustomColorDark: '',
+  textTitle: DEFAULT_THEME_OVERRIDES.textTitle || DEFAULT_TEXT_TITLE,
+  textDigest: DEFAULT_THEME_OVERRIDES.textDigest || DEFAULT_TEXT_DIGEST,
   postLayout: POST_LAYOUT.QUORA,
   kanbanLayout: KANBAN_LAYOUT.CLASSIC,
   kanbanCardLayout: KANBAN_CARD_LAYOUT.SIMPLE,

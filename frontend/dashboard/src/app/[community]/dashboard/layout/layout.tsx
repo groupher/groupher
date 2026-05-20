@@ -17,7 +17,9 @@ const CRUMB_CONFIG = {
   toSeg: DSB_COVERS.WORKPLACE,
   children: [
     { title: 'dsb.crumb.layout.general', seg },
+    { title: 'dsb.crumb.layout.appearance', seg: `${seg}/appearance` },
     { title: 'dsb.crumb.layout.theme', seg: `${seg}/theme` },
+    { title: 'dsb.crumb.layout.wallpaper', seg: `${seg}/wallpaper` },
     { title: 'dsb.crumb.layout.kanban', seg: `${seg}/kanban` },
   ],
 } satisfies TCrumbConfig

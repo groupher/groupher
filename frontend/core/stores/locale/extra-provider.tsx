@@ -20,9 +20,11 @@ type TProps = {
   namespaces: readonly TI18nNamespace[]
 }
 
+const EMPTY_MESSAGES: TExtraLocaleMessages = {}
+
 export default function ExtraLocaleProvider({
   children,
-  initData = {},
+  initData = EMPTY_MESSAGES,
   initLocale,
   namespaces,
 }: TProps) {

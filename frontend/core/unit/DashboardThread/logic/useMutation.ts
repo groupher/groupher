@@ -114,6 +114,27 @@ export default function useMutation(): TRet {
       return [FIELD.SUB_PRIMARY_COLOR, subPrimaryCustomColorField]
     }
 
+    if (field === FIELD.THEME_PRESET) {
+      return [
+        FIELD.THEME_PRESET,
+        FIELD.THEME_OVERRIDES,
+        FIELD.PAGE_BG,
+        FIELD.PAGE_BG_DARK,
+        FIELD.PAGE_CUSTOM_BG,
+        FIELD.PAGE_CUSTOM_BG_DARK,
+        FIELD.PAGE_CUSTOM_INTENSITY,
+        FIELD.PAGE_CUSTOM_INTENSITY_DARK,
+        FIELD.PRIMARY_COLOR,
+        FIELD.PRIMARY_CUSTOM_COLOR,
+        FIELD.PRIMARY_CUSTOM_COLOR_DARK,
+        FIELD.SUB_PRIMARY_COLOR,
+        FIELD.SUB_PRIMARY_CUSTOM_COLOR,
+        FIELD.SUB_PRIMARY_CUSTOM_COLOR_DARK,
+        FIELD.TEXT_TITLE,
+        FIELD.TEXT_DIGEST,
+      ]
+    }
+
     return field in storeRef.current.original ? [field as TDsbStoreFieldKey] : []
   }
 
@@ -184,6 +205,28 @@ export default function useMutation(): TRet {
         ...storeRef.current.original,
         subPrimaryColor: storeRef.current.subPrimaryColor,
         [subPrimaryCustomColorField]: storeRef.current[subPrimaryCustomColorField],
+      }
+    }
+
+    if (field === FIELD.THEME_PRESET) {
+      original = {
+        ...storeRef.current.original,
+        themePreset: storeRef.current.themePreset,
+        themeOverrides: clone(storeRef.current.themeOverrides),
+        pageBg: storeRef.current.pageBg,
+        pageBgDark: storeRef.current.pageBgDark,
+        pageCustomBg: storeRef.current.pageCustomBg,
+        pageCustomBgDark: storeRef.current.pageCustomBgDark,
+        pageCustomIntensity: storeRef.current.pageCustomIntensity,
+        pageCustomIntensityDark: storeRef.current.pageCustomIntensityDark,
+        primaryColor: storeRef.current.primaryColor,
+        primaryCustomColor: storeRef.current.primaryCustomColor,
+        primaryCustomColorDark: storeRef.current.primaryCustomColorDark,
+        subPrimaryColor: storeRef.current.subPrimaryColor,
+        subPrimaryCustomColor: storeRef.current.subPrimaryCustomColor,
+        subPrimaryCustomColorDark: storeRef.current.subPrimaryCustomColorDark,
+        textTitle: storeRef.current.textTitle,
+        textDigest: storeRef.current.textDigest,
       }
     }
 
@@ -483,6 +526,37 @@ export default function useMutation(): TRet {
         handleMutation(S.updateDashboardLayout, {
           community,
           [field]: serializeKanbanBoards(e as readonly TKanbanBoard[]),
+        })
+        return
+      }
+
+      if (field === FIELD.THEME_OVERRIDES) {
+        handleMutation(S.updateDashboardLayout, {
+          community,
+          themeOverrides: JSON.stringify(e ?? {}),
+        })
+        return
+      }
+
+      if (field === FIELD.THEME_PRESET) {
+        handleMutation(S.updateDashboardLayout, {
+          community,
+          themePreset: storeRef.current.themePreset,
+          themeOverrides: JSON.stringify(storeRef.current.themeOverrides ?? {}),
+          pageBg: storeRef.current.pageBg,
+          pageBgDark: storeRef.current.pageBgDark,
+          pageCustomBg: storeRef.current.pageCustomBg,
+          pageCustomBgDark: storeRef.current.pageCustomBgDark,
+          pageCustomIntensity: storeRef.current.pageCustomIntensity,
+          pageCustomIntensityDark: storeRef.current.pageCustomIntensityDark,
+          primaryColor: storeRef.current.primaryColor,
+          primaryCustomColor: storeRef.current.primaryCustomColor,
+          primaryCustomColorDark: storeRef.current.primaryCustomColorDark,
+          subPrimaryColor: storeRef.current.subPrimaryColor,
+          subPrimaryCustomColor: storeRef.current.subPrimaryCustomColor,
+          subPrimaryCustomColorDark: storeRef.current.subPrimaryCustomColorDark,
+          textTitle: storeRef.current.textTitle,
+          textDigest: storeRef.current.textDigest,
         })
         return
       }

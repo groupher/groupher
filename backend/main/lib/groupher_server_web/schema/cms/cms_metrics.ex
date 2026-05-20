@@ -151,6 +151,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   dsb_enum(:changelog_layout)
   dsb_enum(:header_layout)
   dsb_enum(:footer_layout)
+  dsb_enum(:theme_preset)
   dsb_enum(:rss_feed_type)
 
   @desc "the filter mode for list comments"

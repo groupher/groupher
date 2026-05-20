@@ -10,6 +10,7 @@ import DashboardStoreProvider from '~/stores/dashboard/provider'
 import type { TInit as TDashboardInit } from '~/stores/dashboard/spec'
 import LocaleStoreProvider from '~/stores/locale/provider'
 import ThemeStoreProvider from '~/stores/theme/provider'
+import ThemePresetStoreProvider from '~/stores/ThemePreset/provider'
 import WallpaperStoreProvider from '~/stores/wallpaper/provider'
 import type { TInit as TWallpaperInit } from '~/stores/wallpaper/spec'
 
@@ -60,7 +61,9 @@ export const makeStoreWrapper = (opts: TWrapperOpts = {}): FC<{ children: ReactN
         <LocaleStoreProvider initData={{ locale, localeData }}>
           <CommunityStoreProvider initData={initCommunity}>
             <DashboardStoreProvider initData={initDashboard}>
-              <WallpaperStoreProvider initData={wallpaper}>{children}</WallpaperStoreProvider>
+              <ThemePresetStoreProvider initData={initDashboard}>
+                <WallpaperStoreProvider initData={wallpaper}>{children}</WallpaperStoreProvider>
+              </ThemePresetStoreProvider>
             </DashboardStoreProvider>
           </CommunityStoreProvider>
         </LocaleStoreProvider>

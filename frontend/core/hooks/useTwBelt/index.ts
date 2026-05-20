@@ -12,7 +12,7 @@ import useMetric from '~/hooks/useMetric'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
 import useSubPrimaryColor from '~/hooks/useSubPrimaryColor'
 import type { TColorName, TZIndexType } from '~/spec'
-import useDashboard from '~/stores/dashboard/hooks'
+import useThemePreset from '~/stores/ThemePreset/hooks'
 
 import { cachedMargin, keyToClass, RAINBOW_ALIAS, STATIC_CLS } from './constant'
 import type {
@@ -35,7 +35,7 @@ export default function useTwBelt(): TRet {
   const { isSquare: isAvatarSquare } = useAvatarLayout()
   const primaryColor = usePrimaryColor()
   const subPrimaryColor = useSubPrimaryColor()
-  const { pageBg, pageBgDark } = useDashboard()
+  const { pageBg, pageBgDark } = useThemePreset()
 
   const metricLower = metric.toLowerCase()
   const containerClass = `container-${metricLower}`

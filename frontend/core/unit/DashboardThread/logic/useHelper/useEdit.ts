@@ -37,7 +37,7 @@ export default function useEdit(): TRet {
     (v: TEditValue, field: TDsbFieldKey): void => {
       let value = v
       if (isObject(v) && has('target', v)) {
-        value = v.target.value
+        value = (v as { target: { value: TEditValue } }).target.value
       }
 
       if (isStoreField(field)) {
@@ -100,6 +100,28 @@ export default function useEdit(): TRet {
 
     if (field === FIELD.FAQ_SECTIONS) {
       dsb$.rollbackFields(FAQ_STORE_FIELDS)
+      return
+    }
+
+    if (field === FIELD.THEME_PRESET) {
+      dsb$.rollbackFields([
+        FIELD.THEME_PRESET,
+        FIELD.THEME_OVERRIDES,
+        FIELD.PAGE_BG,
+        FIELD.PAGE_BG_DARK,
+        FIELD.PAGE_CUSTOM_BG,
+        FIELD.PAGE_CUSTOM_BG_DARK,
+        FIELD.PAGE_CUSTOM_INTENSITY,
+        FIELD.PAGE_CUSTOM_INTENSITY_DARK,
+        FIELD.PRIMARY_COLOR,
+        FIELD.PRIMARY_CUSTOM_COLOR,
+        FIELD.PRIMARY_CUSTOM_COLOR_DARK,
+        FIELD.SUB_PRIMARY_COLOR,
+        FIELD.SUB_PRIMARY_CUSTOM_COLOR,
+        FIELD.SUB_PRIMARY_CUSTOM_COLOR_DARK,
+        FIELD.TEXT_TITLE,
+        FIELD.TEXT_DIGEST,
+      ])
       return
     }
 

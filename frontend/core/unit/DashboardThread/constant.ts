@@ -17,6 +17,8 @@ export const DSB_MENU_ICON = {
 
 // do not change, it's map to GQ endpoint updateDashboardLayout
 export const LAYOUT_FIELD = {
+  THEME_PRESET: 'themePreset',
+  THEME_OVERRIDES: 'themeOverrides',
   PAGE_BG: 'pageBg',
   PAGE_BG_DARK: 'pageBgDark',
   PAGE_CUSTOM_BG: 'pageCustomBg',
@@ -29,6 +31,8 @@ export const LAYOUT_FIELD = {
   SUB_PRIMARY_COLOR: 'subPrimaryColor',
   SUB_PRIMARY_CUSTOM_COLOR: 'subPrimaryCustomColor',
   SUB_PRIMARY_CUSTOM_COLOR_DARK: 'subPrimaryCustomColorDark',
+  TEXT_TITLE: 'textTitle',
+  TEXT_DIGEST: 'textDigest',
   POST_LAYOUT: 'postLayout',
   KANBAN_LAYOUT: 'kanbanLayout',
   KANBAN_CARD_LAYOUT: 'kanbanCardLayout',

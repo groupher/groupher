@@ -43,7 +43,7 @@ function RuleCountBars({
 
   return (
     <div className={s.itemBars} aria-label={`${selectedCount}/${totalCount}`}>
-      {Array.from({ length: totalCount }).map((_, index) => (
+      {Array.from({ length: totalCount }, (_, index) => index).map((index) => (
         <span
           key={index}
           className={`${s.itemBar} ${index < selectedCount ? activeBarClass : s.itemBarEmpty}`}

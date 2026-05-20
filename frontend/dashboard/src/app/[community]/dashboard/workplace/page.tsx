@@ -80,7 +80,7 @@ export default function WorkplaceCoversPage() {
               },
               {
                 title: '主题/背景',
-                desc: '社区主题色，壁纸及各种背景效果。',
+                desc: '社区主题色及各种背景效果。',
                 seg: `${DSB_ROUTE.LAYOUT}/${DSB_LAYOUT_ROUTE.THEME}`,
                 Icon: ThemeSVG,
               },
