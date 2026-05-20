@@ -41,7 +41,7 @@ export default function useGlowLight(): TGlowEffect {
   }
 
   return {
-    glowType: wallpaper && glowType,
+    glowType,
     glowFixed,
     glowOpacity,
     changeGlowEffect,

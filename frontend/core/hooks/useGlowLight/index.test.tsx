@@ -41,4 +41,17 @@ describe('useGlowLight', () => {
     const { result } = renderHook(() => useGlowLight(), { wrapper })
     expect(result.current.glowType).toBeNull()
   })
+
+  it('keeps glow enabled for regular pages without wallpaper', () => {
+    const wrapper = makeStoreWrapper({
+      wallpaper: { wallpaper: '', wallpaperType: WALLPAPER_TYPE.GRADIENT },
+      dashboard: { glowType: 'ORANGE_PURPLE', glowFixed: true, glowOpacity: '100' },
+    })
+
+    const { result } = renderHook(() => useGlowLight(), { wrapper })
+
+    expect(result.current.glowType).toBe('ORANGE_PURPLE')
+    expect(result.current.glowFixed).toBe(true)
+    expect(result.current.glowOpacity).toBe('100')
+  })
 })

@@ -42,9 +42,11 @@ const Main: FC<TProps> = ({ children }) => {
     >
       {hasTopbar && <div className={s.topBar} />}
       {/* <Broadcast /> */}
-      <div className={s.body}>{children}</div>
-      <Footer />
       <GlowBackground />
+      <div className={s.body}>{children}</div>
+      <div className={s.footer}>
+        <Footer />
+      </div>
     </main>
   )
 }
