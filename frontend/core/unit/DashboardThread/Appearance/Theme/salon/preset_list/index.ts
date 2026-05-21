@@ -3,8 +3,6 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export const ROTATE_ANGLES = [6, 3, 2, 6, 12, 2, 3, 6, 12, 3, -2, 6] as const
-
 type TArgs = {
   showForkRelation?: boolean
 }

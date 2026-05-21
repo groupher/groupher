@@ -1,25 +1,22 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-import type { TThemePresetCardMode } from '../spec'
+import type { TThemePresetCardMode } from '../../spec'
 import { getRotateClass } from './rotate'
 
 export { cn } from '~/css'
 
 type TArgs = {
   active?: boolean
-  activeSuppressed?: boolean
   mode?: TThemePresetCardMode
   rotateAngle?: number
 }
 
 export default function useSalon({
   active = false,
-  activeSuppressed = false,
   mode = 'stacked',
   rotateAngle = 0,
 }: TArgs = {}) {
   const { cn, bg, br, fg, primary, shadow } = useTwBelt()
-  const showActiveStyle = active && !activeSuppressed
   const isForkMode = mode !== 'stacked'
   const disabled = mode === 'forkBase'
   const rotateClass = getRotateClass(rotateAngle)
@@ -29,7 +26,7 @@ export default function useSalon({
       'group relative h-36 w-28',
       !isForkMode && '-ml-4',
       disabled ? 'cursor-default' : 'pointer',
-      showActiveStyle && 'z-10',
+      active && 'z-10',
     ),
     card: cn(
       'column relative h-36 w-28 justify-between rounded-md border px-2 py-1.5 text-left trans-all-200',
@@ -37,7 +34,7 @@ export default function useSalon({
       shadow('sm'),
       bg('card'),
       br('divider'),
-      showActiveStyle
+      active
         ? cn(
             isForkMode ? 'translate-y-0' : '-translate-y-4',
             'rounded-lg',

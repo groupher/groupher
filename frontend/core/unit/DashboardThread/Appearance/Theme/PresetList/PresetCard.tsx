@@ -3,32 +3,27 @@ import useTrans from '~/hooks/useTrans'
 import type { TTransKey } from '~/spec'
 import Checker from '~/widgets/Checker'
 
-import MiniBars from './MiniBars'
-import useSalon from './salon/preset_card'
-import type { TThemePresetCardMode, TThemePresetOption } from './spec'
+import MiniBars from '../MiniBars'
+import useSalon from '../salon/preset_list/preset_card'
+import type { TThemePresetCardMode, TThemePresetOption } from '../spec'
 
 type TProps = {
   preset: TThemePresetOption
   active: boolean
-  activeSuppressed: boolean
   mode?: TThemePresetCardMode
   rotateAngle: number
-  onHover: (preset: string | null) => void
   onSelect: (preset: TThemePresetOption) => void
 }
 
 export default function PresetCard({
   preset,
   active,
-  activeSuppressed,
   mode = 'stacked',
   rotateAngle,
-  onHover,
   onSelect,
 }: TProps) {
   const s = useSalon({
     active,
-    activeSuppressed,
     mode,
     rotateAngle,
   })
@@ -49,12 +44,6 @@ export default function PresetCard({
       aria-pressed={active}
       aria-disabled={disabled}
       className={s.wrapper}
-      onPointerEnter={() => {
-        if (!disabled) onHover(preset.value)
-      }}
-      onPointerLeave={() => {
-        if (!disabled) onHover(null)
-      }}
       onClick={() => {
         if (!disabled) onSelect(preset)
       }}

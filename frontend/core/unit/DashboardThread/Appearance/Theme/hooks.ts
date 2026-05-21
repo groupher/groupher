@@ -232,6 +232,12 @@ export default function useAppearance() {
     setPageBgResetVersion((version) => version + 1)
   }
 
+  // Details edits always enter the Custom fork view, while preset-list clicks
+  // clear it. Reuse that split to keep preset-only saves directly under the
+  // preset list and details edits under the details panel.
+  const showDetailsSavingBar = isTouched && showForkRelation
+  const showPresetSavingBar = isTouched && !showForkRelation
+
   return {
     activePreset,
     activePresetBase,
@@ -241,6 +247,8 @@ export default function useAppearance() {
     selectedOverwrite,
     selectedPageBgDraft,
     isTouched,
+    showDetailsSavingBar,
+    showPresetSavingBar,
     isLightTheme,
     primaryColor: isLightTheme
       ? selectedOverwrite.primaryColor
