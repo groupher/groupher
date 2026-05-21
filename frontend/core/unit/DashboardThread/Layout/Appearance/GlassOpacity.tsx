@@ -1,4 +1,5 @@
 import useTrans from '~/hooks/useTrans'
+import type { TSpace } from '~/spec'
 import useSalon from '~/widgets/CustomPageBg/salon'
 import RangeInput from '~/widgets/RangeInput'
 
@@ -9,14 +10,15 @@ type TProps = {
   selectedOverrides: TThemePresetOverrides
   isLightTheme: boolean
   onThemePresetCommit: (patch: Partial<TThemePresetOverrides>) => void
-}
+} & TSpace
 
 export default function GlassOpacity({
   selectedOverrides,
   isLightTheme,
   onThemePresetCommit,
+  ...spacing
 }: TProps) {
-  const s = useSalon()
+  const s = useSalon(spacing)
   const { t } = useTrans()
   const gaussBlur = isLightTheme ? selectedOverrides.gaussBlur : selectedOverrides.gaussBlurDark
 
