@@ -7,7 +7,7 @@ import Input from '~/widgets/Input'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
 import useBaseInfo from '../../logic/useBaseInfo'
-import useSalon from '../../salon/basic_info/other_info/input_box'
+import useSalon from '../salon/other_info/input_box'
 import MediaPreview from './MediaPreview'
 
 type TProps = {

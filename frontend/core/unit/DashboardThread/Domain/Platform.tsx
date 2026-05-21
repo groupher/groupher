@@ -5,7 +5,7 @@ import useCommunity from '~/stores/community/hooks'
 import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
 
-import useSalon from '../salon/domain/platform'
+import useSalon from './salon/platform'
 
 const Domain: FC = () => {
   const s = useSalon()

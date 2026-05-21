@@ -2,7 +2,7 @@ import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TColorName } from '~/spec'
 
-import useSalon from '../../salon/layout/mini_bars'
+import useSalon from './salon/mini_bars'
 
 type TProps = {
   active: boolean

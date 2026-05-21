@@ -20,8 +20,8 @@ import Input from '~/widgets/Input'
 import Tooltip from '~/widgets/Tooltip'
 
 import useTags from '../logic/useTags'
-import useSalon, { cn } from '../salon/tags/group_block'
 import GroupActionMenu from './GroupActionMenu'
+import useSalon, { cn } from './salon/group_block'
 import SortableTagItem from './SortableTagItem'
 import TagSortableGroup from './TagSortableGroup'
 

@@ -1,7 +1,7 @@
 import { COMMUNITY_LAYOUT } from '~/const/layout'
 import type { TCommunityLayout } from '~/spec'
 
-import useSalon, { cnMerge } from '../../salon/layout/community_layout'
+import useSalon, { cnMerge } from './salon'
 
 function ClassicContent({ title }: { title: string }) {
   const s = useSalon()

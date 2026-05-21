@@ -3,8 +3,8 @@ import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import Input from '~/widgets/Input'
 
 import useSEO from '../logic/useSEO'
-import useSalon from '../salon/seo/open_graph'
 import SectionLabel from '../SectionLabel'
+import useSalon from './salon/open_graph'
 import SearchEnginePreview from './SearchEnginePreview'
 
 /*

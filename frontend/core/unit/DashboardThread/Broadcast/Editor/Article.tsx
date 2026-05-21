@@ -4,9 +4,9 @@ import ColorSelector from '~/widgets/ColorSelector'
 import Input from '~/widgets/Input'
 
 import useBroadcast from '../../logic/useBroadcast'
-import useSalon from '../../salon/broadcast/editor/article'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
+import useSalon from '../salon/editor/article'
 import ArticleTemplate from '../Templates/Article'
 
 export default function Article() {

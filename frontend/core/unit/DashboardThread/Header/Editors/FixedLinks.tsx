@@ -7,7 +7,7 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import type { TCommunityThread } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 
-import useSalon from '../../salon/header/editors/fixed_links'
+import useSalon from '../salon/editors/fixed_links'
 
 type TProps = {
   isAboutLinkFold: boolean

@@ -1,4 +1,4 @@
-import useSalon, { cnMerge } from '../../salon/layout/doc_layout/stack_cards_layout'
+import useSalon, { cnMerge } from './salon/stack_cards_layout'
 
 export default function StackCardsLayout() {
   const s = useSalon()

@@ -4,10 +4,10 @@ import CheckLabel from '~/widgets/CheckLabel'
 
 import { FIELD } from '../../constant'
 import useTags from '../../logic/useTags'
-import useSalon, { cnMerge } from '../../salon/layout/inline_tag_layout'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import { TAGS_DEMO_LIST } from './constant'
+import useSalon, { cnMerge } from './salon'
 import TagItem from './TagItem'
 
 const LAYOUT_OPTIONS = [

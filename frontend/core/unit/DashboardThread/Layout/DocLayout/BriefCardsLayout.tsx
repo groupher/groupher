@@ -5,7 +5,7 @@ import BookSVG from '~/icons/Book'
 import CmsSVG from '~/icons/CMS'
 import MirrorSVG from '~/icons/Company'
 
-import useSalon, { cnMerge } from '../../salon/layout/doc_layout/brief_cards_layout'
+import useSalon, { cnMerge } from './salon/brief_cards_layout'
 
 export default function BriefCardsLayout() {
   const s = useSalon()

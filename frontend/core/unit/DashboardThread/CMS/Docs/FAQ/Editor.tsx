@@ -6,8 +6,8 @@ import Input from '~/widgets/Input'
 
 import { FIELD } from '../../../constant'
 import useFAQ from '../../../logic/useFAQ'
-import useSalon from '../../../salon/cms/docs/faq/editor'
 import SavingBar from '../../../SavingBar'
+import useSalon from '../../salon/docs/faq/editor'
 
 type TProps = {
   editingFAQ: TFAQSection

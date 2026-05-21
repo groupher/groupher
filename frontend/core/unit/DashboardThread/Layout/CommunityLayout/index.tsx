@@ -8,10 +8,10 @@ import Drawer from '~/widgets/Drawer'
 
 import { FIELD } from '../../constant'
 import useCommunityLayout from '../../logic/useCommunityLayout'
-import useSalon, { cnMerge } from '../../salon/layout/community_layout'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import CommunityLayoutPreviewContent from './CommunityLayoutPreviewContent'
+import useSalon, { cnMerge } from './salon'
 
 const COMMUNITY_LAYOUT_OPTIONS = [
   {

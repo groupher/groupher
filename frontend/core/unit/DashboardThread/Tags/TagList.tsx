@@ -29,8 +29,8 @@ import type { TTag } from '~/spec'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
 import useTags from '../logic/useTags'
-import useSalon from '../salon/tags'
 import GroupBlock from './GroupBlock'
+import useSalon from './salon'
 import type { TDraftGroup } from './types'
 import useTagDragDraft from './useTagDragDraft'
 

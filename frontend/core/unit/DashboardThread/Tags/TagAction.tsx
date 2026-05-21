@@ -4,7 +4,7 @@ import EditSVG from '~/icons/EditPen'
 import SettingSVG from '~/icons/Setting'
 
 import useTags from '../logic/useTags'
-import useSalon from '../salon/tags/tag_action'
+import useSalon from './salon/tag_action'
 import type { TProps as TTagBarProps } from './TagBar'
 
 type TProps = TTagBarProps & {

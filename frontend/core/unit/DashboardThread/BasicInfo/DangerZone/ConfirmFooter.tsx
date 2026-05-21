@@ -7,7 +7,7 @@ import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
 
 import useBaseInfo from '../../logic/useBaseInfo'
-import useSalon from '../../salon/basic_info/danger_zone/confirm_footer'
+import useSalon from '../salon/danger_zone/confirm_footer'
 
 type TProps = {
   testid?: string

@@ -24,7 +24,7 @@ vi.mock('../../../logic/useBrand', () => ({
   }),
 }))
 
-vi.mock('../../../salon/layout/brand_layout', () => ({
+vi.mock('../salon', () => ({
   default: () => ({
     wrapper: 'wrapper',
     select: 'select',

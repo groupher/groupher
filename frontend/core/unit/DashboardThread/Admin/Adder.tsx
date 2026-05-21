@@ -15,7 +15,7 @@ import ImgFallback from '~/widgets/ImgFallback'
 import Tooltip from '~/widgets/Tooltip'
 
 import useAdmins from '../logic/useAdmins'
-import useSalon from '../salon/admin/adder'
+import useSalon from './salon/adder'
 
 export default function Adder() {
   const s = useSalon()

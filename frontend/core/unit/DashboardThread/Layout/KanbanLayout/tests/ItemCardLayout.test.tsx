@@ -20,7 +20,7 @@ vi.mock('../../../logic/useKanban', () => ({
   }),
 }))
 
-vi.mock('../../../salon/layout/kanban_layout/item_card_layout', () => ({
+vi.mock('../salon/item_card_layout', () => ({
   default: () => ({
     wrapper: 'wrapper',
     select: 'select',

@@ -7,9 +7,9 @@ import ColorSelector from '~/widgets/ColorSelector'
 
 import { FIELD } from '../constant'
 import useWidgets from '../logic/useWidgets'
-import useSalon, { cn } from '../salon/widgets/base_setting'
 import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
+import useSalon, { cn } from './salon/base_setting'
 
 export default function BaseSetting() {
   const s = useSalon()

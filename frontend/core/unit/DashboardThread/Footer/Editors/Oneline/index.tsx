@@ -8,7 +8,7 @@ import Button from '~/widgets/Buttons/Button'
 
 import LinkEditor from '../../../LinkEditor'
 import useFooter from '../../../logic/useFooter'
-import useSalon from '../../../salon/footer/editors/oneline'
+import useSalon from '../../salon/editors/oneline'
 import FooterDndContext from '../FooterDndContext'
 import FooterSortableGroup from '../FooterSortableGroup'
 import { buildFooterOnelineDraftLinks, flattenFooterOnelineDraftLinks, toDraftLink } from '../model'

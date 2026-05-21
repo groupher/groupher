@@ -1,4 +1,4 @@
-import useSalon from '../../salon/layout/doc_layout/outline_columns_layout'
+import useSalon from './salon/outline_columns_layout'
 
 export default function OutlineColumnsLayout() {
   const s = useSalon()

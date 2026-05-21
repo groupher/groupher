@@ -26,7 +26,7 @@ vi.mock('../../../../logic/useKanban', () => ({
   }),
 }))
 
-vi.mock('../../../../salon/layout/kanban_layout/bg_colors_setter', () => ({
+vi.mock('../../salon/bg_colors_setter', () => ({
   default: () => ({
     colorsWrapper: 'colorsWrapper',
     preset: 'preset',

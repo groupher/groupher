@@ -44,7 +44,7 @@ vi.mock('../../../logic/useKanban', () => ({
   }),
 }))
 
-vi.mock('../../../salon/layout/kanban_layout/boards', () => ({
+vi.mock('../salon/boards', () => ({
   default: () => ({
     select: 'select',
     layout: 'layout',

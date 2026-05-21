@@ -7,9 +7,9 @@ import Input from '~/widgets/Input'
 
 import { BUILD_IN_ALIAS_SUGGESTIONS, FIELD } from '../constant'
 import useAlias from '../logic/useAlias'
-import useSalon, { cn } from '../salon/alias/item'
 import SavingBar from '../SavingBar'
 import type { TNameAlias } from '../spec'
+import useSalon, { cn } from './salon/item'
 import Suggestion from './Suggestion'
 
 type TProps = {

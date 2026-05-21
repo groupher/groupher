@@ -8,9 +8,9 @@ import type { TKanbanBoard } from '~/spec'
 
 import { FIELD } from '../../constant'
 import useKanban from '../../logic/useKanban'
-import useSalon from '../../salon/layout/kanban_layout/boards'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
+import useSalon from './salon/boards'
 
 export default function Boards() {
   const s = useSalon()

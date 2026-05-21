@@ -1,11 +1,11 @@
 import { KANBAN_LAYOUT } from '~/const/layout'
 
 import useKanban from '../../logic/useKanban'
-import useSalon from '../../salon/layout/kanban_layout'
 import BgColorsSetter from './BgColorsSetter'
 import Boards from './Boards'
 import ItemCardLayout from './ItemCardLayout'
 import KanbanLayoutSelector from './KanbanLayoutSelector'
+import useSalon from './salon'
 
 export default function KanbanLayout() {
   const { kanbanLayout } = useKanban()

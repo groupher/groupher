@@ -1,4 +1,4 @@
-import useSalon, { cn } from '../../salon/domain/custom/verifying_table'
+import useSalon, { cn } from '../salon/custom/verifying_table'
 import type { TVerifyingDomainRow } from './constant'
 
 type Props = {

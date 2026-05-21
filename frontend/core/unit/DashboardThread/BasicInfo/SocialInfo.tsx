@@ -2,8 +2,8 @@ import SocialEditor from '~/widgets/SocialEditor'
 
 import { FIELD } from '../constant'
 import useBaseInfo from '../logic/useBaseInfo'
-import useSalon from '../salon/basic_info/base_info'
 import SavingBar from '../SavingBar'
+import useSalon from './salon/base_info'
 
 export default function SocialInfo() {
   const s = useSalon()

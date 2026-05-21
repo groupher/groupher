@@ -1,4 +1,4 @@
-import useSalon, { cnMerge } from '../../salon/layout/doc_layout/outline_toc_layout'
+import useSalon, { cnMerge } from './salon/outline_toc_layout'
 
 export default function OutlineTocLayout() {
   const s = useSalon()

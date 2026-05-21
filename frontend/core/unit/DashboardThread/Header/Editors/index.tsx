@@ -9,7 +9,7 @@ import Button from '~/widgets/Buttons/Button'
 
 import SortableDndContext from '../../LinkEditor/Dnd/SortableDndContext'
 import GroupInputer from '../../LinkEditor/GroupInputer'
-import useSalon from '../../salon/header/editors'
+import useSalon from '../salon/editors'
 import {
   HEADER_COLUMN_KIND,
   HEADER_DND_CONTEXT_ID,

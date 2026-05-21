@@ -1,7 +1,7 @@
 import { KANBAN_LAYOUT } from '~/const/layout'
 import type { TKanbanLayout } from '~/spec'
 
-import useSalon, { cnMerge } from '../../salon/layout/kanban_layout/layout_selector'
+import useSalon, { cnMerge } from './salon/layout_selector'
 
 const CLASSIC_COLUMNS = [
   ['opacity-35', 'opacity-20'],

@@ -4,7 +4,7 @@ import { DOC_FAQ_LAYOUT } from '~/const/layout'
 import useTrans from '~/hooks/useTrans'
 import type { TDocFAQLayout } from '~/spec'
 
-import useSalon, { cnMerge } from '../../salon/layout/doc_layout/faq_template'
+import useSalon, { cnMerge } from './salon/faq_template'
 
 type TProps = {
   layout: TDocFAQLayout

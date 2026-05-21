@@ -7,11 +7,11 @@ import { getArticleRowId } from '~/hooks/useTanTable'
 import useTrans from '~/hooks/useTrans'
 import type { TArticle, TPagedArticles } from '~/spec'
 
-import useSalon, { cn } from '../../salon/cms/posts'
-import CmsDataTable from '../../Tables/CmsDataTable'
-import CmsTableToolbar from '../../Tables/CmsTableToolbar'
-import useCmsTableController from '../../Tables/useCmsTableController'
 import { ArticleCell, DateCell, StatusCell } from '../Cell'
+import useSalon, { cn } from '../salon/posts'
+import CmsDataTable from '../Table/CmsDataTable'
+import CmsTableToolbar from '../Table/CmsTableToolbar'
+import useCmsTableController from '../Table/useCmsTableController'
 
 type TProps = {
   pagedDocs: TPagedArticles

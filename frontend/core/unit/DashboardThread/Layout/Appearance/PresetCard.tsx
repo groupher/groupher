@@ -5,8 +5,8 @@ import { getPageBgCustomColor } from '~/lib/color'
 import type { TTransKey } from '~/spec'
 import Checker from '~/widgets/Checker'
 
-import useSalon from '../../salon/layout/preset_card'
 import MiniBars from './MiniBars'
+import useSalon from './salon/preset_card'
 import type { TThemePresetOption } from './spec'
 
 type TProps = {

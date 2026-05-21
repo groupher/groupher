@@ -5,7 +5,7 @@ import { memo, type ReactNode, useCallback, useRef } from 'react'
 import { cn } from '~/css'
 import GrabDotsSVG from '~/icons/GrabDots'
 
-import useSalon from '../../salon/link_editor/sortable_link_item'
+import useSalon from '../salon/sortable_link_item'
 import type { TLinkDndType } from './spec'
 
 type TProps = {

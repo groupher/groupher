@@ -2,8 +2,8 @@ import useTrans from '~/hooks/useTrans'
 import Input from '~/widgets/Input'
 import Radio from '~/widgets/Switcher/Radio'
 
-import useSalon from '../salon/widgets'
 import CodeArea from './CodeArea'
+import useSalon from './salon'
 
 export default function Drawer() {
   const s = useSalon()

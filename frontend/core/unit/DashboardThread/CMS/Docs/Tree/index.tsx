@@ -8,7 +8,7 @@ import DeleteSVG from '~/icons/Trash'
 import { createKeyboardClick } from '~/lib/a11y'
 import type { TPagedArticles } from '~/spec'
 
-import useSalon, { cn } from '../../../salon/cms/docs/tree'
+import useSalon, { cn } from '../../salon/docs/tree'
 import { type TTreeItem, treeData } from '../treeData'
 import Actions from './Actions'
 import Note from './Note'

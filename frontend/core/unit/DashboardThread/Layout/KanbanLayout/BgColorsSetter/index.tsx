@@ -13,9 +13,9 @@ import ColorSelector from '~/widgets/ColorSelector'
 
 import { FIELD } from '../../../constant'
 import useKanban from '../../../logic/useKanban'
-import useSalon, { cn } from '../../../salon/layout/kanban_layout/bg_colors_setter'
 import SavingBar from '../../../SavingBar'
 import SectionLabel from '../../../SectionLabel'
+import useSalon, { cn } from '../salon/bg_colors_setter'
 import ClassicLayout from './ClassicLayout'
 import WaterfallLayout from './WaterfallLayout'
 

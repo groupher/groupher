@@ -9,7 +9,7 @@ import ConditionSelector from '~/unit/ConditionSelector'
 import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
 
-import useSalon, { cn } from '../../salon/cms/filter_bar'
+import useSalon, { cn } from '../Table/salon/filter_bar'
 import ActionBar from './ActionBar'
 
 type TProps = {

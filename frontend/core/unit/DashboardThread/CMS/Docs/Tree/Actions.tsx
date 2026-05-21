@@ -5,7 +5,7 @@ import EditSVG from '~/icons/EditPen'
 import AdderSVG from '~/icons/Plus'
 import Button from '~/widgets/Buttons/Button'
 
-import useSalon from '../../../salon/cms/docs/tree/actions'
+import useSalon from '../../salon/docs/tree/actions'
 
 const Actions: FC = () => {
   const s = useSalon()

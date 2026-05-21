@@ -20,7 +20,7 @@ vi.mock('../../../logic/useTags', () => ({
   }),
 }))
 
-vi.mock('../../../salon/layout/inline_tag_layout', () => ({
+vi.mock('../salon', () => ({
   default: () => ({
     wrapper: 'wrapper',
     select: 'select',

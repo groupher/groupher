@@ -4,7 +4,7 @@ import BillingSVG from '~/icons/Billing'
 import BookSVG from '~/icons/Book'
 import CmsSVG from '~/icons/CMS'
 
-import useSalon, { cnMerge } from '../../salon/layout/doc_layout/tile_cards_layout'
+import useSalon, { cnMerge } from './salon/tile_cards_layout'
 
 export default function TileCardsLayout() {
   const s = useSalon()

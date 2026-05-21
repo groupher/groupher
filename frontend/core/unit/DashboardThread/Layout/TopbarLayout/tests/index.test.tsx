@@ -44,7 +44,7 @@ vi.mock('../../CommunityLayout/CommunityLayoutPreviewContent', () => ({
   ),
 }))
 
-vi.mock('../../../salon/layout/topbar_layout', () => ({
+vi.mock('../salon', () => ({
   default: () => ({
     wrapper: 'wrapper',
     select: 'select',

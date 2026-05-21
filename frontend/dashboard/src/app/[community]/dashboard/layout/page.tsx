@@ -10,7 +10,7 @@ import InlineTagLayout from '~/unit/DashboardThread/Layout/InlineTagLayout'
 import NavActiveLayout from '~/unit/DashboardThread/Layout/NavActiveLayout'
 import TagLayout from '~/unit/DashboardThread/Layout/TagLayout'
 import TopbarLayout from '~/unit/DashboardThread/Layout/TopbarLayout'
-import useSalon from '~/unit/DashboardThread/salon/layout'
+import useSalon from '~/unit/DashboardThread/Layout/useLayoutBaseSalon'
 
 export default function Page() {
   const s = useSalon()

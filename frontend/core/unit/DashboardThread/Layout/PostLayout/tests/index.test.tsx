@@ -20,7 +20,7 @@ vi.mock('../../../logic/usePost', () => ({
   }),
 }))
 
-vi.mock('../../../salon/layout/post_layout', () => ({
+vi.mock('../salon', () => ({
   default: () => ({
     wrapper: 'wrapper',
     select: 'select',

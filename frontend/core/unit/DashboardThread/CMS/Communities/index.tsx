@@ -25,8 +25,8 @@ import type { TCommunity } from '~/spec'
 import TableLoading from '~/widgets/Loading/Table'
 
 import useCMSInfo from '../../hooks/useCMSInfo'
-import useSalon, { cn } from '../../salon/cms/communities'
 import FilterBar from '../FilterBar'
+import useSalon, { cn } from '../salon/communities'
 
 const SORTABLE_COLUMN = ['subscribersCount', 'views', 'articlesCount']
 const CLASSIC_ALIGN_LEFT = ['name', 'desc']

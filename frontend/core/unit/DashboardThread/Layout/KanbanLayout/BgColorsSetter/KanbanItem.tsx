@@ -4,7 +4,7 @@ import { KANBAN_CARD_LAYOUT } from '~/const/layout'
 import CommentSVG from '~/icons/Comment'
 import UpvoteSVG from '~/icons/Upvote'
 
-import useSalon, { cnMerge } from '../../../salon/layout/kanban_layout/bg_colors_setter/kanban_item'
+import useSalon, { cnMerge } from '../salon/bg_colors_setter/kanban_item'
 
 type TProps = {
   layout: (typeof KANBAN_CARD_LAYOUT)[keyof typeof KANBAN_CARD_LAYOUT]

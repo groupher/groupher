@@ -1,7 +1,7 @@
 import { callPassportEditor } from '~/signal'
 
 import useAdmins from '../logic/useAdmins'
-import useSalon from '../salon/admin/list'
+import useSalon from './salon/list'
 import UserItem from './UserItem'
 
 export default function List() {

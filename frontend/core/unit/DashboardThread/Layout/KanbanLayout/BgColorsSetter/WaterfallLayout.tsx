@@ -3,9 +3,7 @@ import type { FC } from 'react'
 import { KANBAN_BOARD } from '~/const/thread'
 import type { TKanbanBoard } from '~/spec'
 
-import useSalon, {
-  cnMerge,
-} from '../../../salon/layout/kanban_layout/bg_colors_setter/waterfall_layout'
+import useSalon, { cnMerge } from '../salon/bg_colors_setter/waterfall_layout'
 
 type TProps = {
   activeBoards: readonly TKanbanBoard[]

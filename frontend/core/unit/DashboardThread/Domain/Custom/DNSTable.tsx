@@ -1,4 +1,4 @@
-import useSalon, { cn } from '../../salon/domain/custom/dns_table'
+import useSalon, { cn } from '../salon/custom/dns_table'
 import type { TDnsRecord } from './constant'
 
 type Props = {

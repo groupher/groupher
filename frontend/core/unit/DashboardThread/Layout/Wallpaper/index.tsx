@@ -8,8 +8,8 @@ import SettingSVG from '~/icons/Setting'
 import { callWallpaperEditor } from '~/signal'
 import CheckLabel from '~/widgets/CheckLabel'
 
-import useSalon, { cn, cnMerge } from '../../salon/layout/wallpaper'
 import SectionLabel from '../../SectionLabel'
+import useSalon, { cn, cnMerge } from './salon'
 
 export default function Wallpaper() {
   const s = useSalon()

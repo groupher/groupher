@@ -5,7 +5,7 @@ import type { TEnableConf } from '~/spec'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 
 import useEnable from '../logic/useEnable'
-import useSalon from '../salon/threads/doc_thread'
+import useSalon from './salon/doc_thread'
 
 type TProps = {
   settings: TEnableConf
