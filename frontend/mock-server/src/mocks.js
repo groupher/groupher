@@ -23,6 +23,11 @@ const DEFAULT_THEME_TOKENS = {
   textDigest: '#6b7280',
   gaussBlur: 100,
   gaussBlurDark: 100,
+  glowType: '',
+  glowTypeDark: '',
+  glowFixed: true,
+  glowOpacity: 100,
+  glowOpacityDark: 100,
 }
 
 const makeUser = (overrides = {}) => {
@@ -102,9 +107,6 @@ const makeDashboard = (slug = 'home') => {
       changelogLayout: 'classic',
       footerLayout: 'simple',
       headerLayout: 'center',
-      glowType: '',
-      glowFixed: false,
-      glowOpacity: '0',
       overlayDark: false,
       gaussBlur: DEFAULT_THEME_TOKENS.gaussBlur,
       gaussBlurDark: DEFAULT_THEME_TOKENS.gaussBlurDark,

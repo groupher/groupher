@@ -17,7 +17,7 @@ const EMPTY_CUSTOM_PRIMARY = {
   primaryCustomColorDark: '',
 } as const
 
-// Keep custom accent keys present in every preset override. Most presets
+// Keep custom accent keys present in every preset overwrite. Most presets
 // use a built-in accent color today, but the resolved preset shape still
 // needs stable custom token fields for SSR, CSS vars, and future custom input.
 const EMPTY_CUSTOM_ACCENT = {
@@ -30,10 +30,18 @@ const DEFAULT_GAUSS_BLUR = {
   gaussBlurDark: 100,
 } as const
 
+const DEFAULT_GLOW = {
+  glowType: '',
+  glowTypeDark: '',
+  glowFixed: true,
+  glowOpacity: 100,
+  glowOpacityDark: 100,
+} as const
+
 export const DEFAULT_TEXT_TITLE = '#243041'
 export const DEFAULT_TEXT_DIGEST = '#6b7280'
 
-const pageBgOverrides = (
+const pageBgOverwrite = (
   lightBg: keyof typeof PAGE_BG_COLOR_HEX,
   darkBg: keyof typeof PAGE_BG_COLOR_HEX,
 ) => {
@@ -53,8 +61,8 @@ const pageBgOverrides = (
 export const THEME_PRESET_OPTIONS = [
   {
     value: THEME_PRESET.DEFAULT,
-    overrides: {
-      ...pageBgOverrides('pure white', 'outer space'),
+    overwrite: {
+      ...pageBgOverwrite('pure white', 'outer space'),
       primaryColor: COLOR.PURPLE,
       ...EMPTY_CUSTOM_PRIMARY,
       accentColor: COLOR.BLUE,
@@ -62,12 +70,13 @@ export const THEME_PRESET_OPTIONS = [
       textTitle: DEFAULT_TEXT_TITLE,
       textDigest: DEFAULT_TEXT_DIGEST,
       ...DEFAULT_GAUSS_BLUR,
+      ...DEFAULT_GLOW,
     },
   },
   {
     value: THEME_PRESET.CLAUDE,
-    overrides: {
-      ...pageBgOverrides('floral white', 'coffee bean'),
+    overwrite: {
+      ...pageBgOverwrite('floral white', 'coffee bean'),
       primaryColor: COLOR.CUSTOM,
       primaryCustomColor: '#c96442',
       primaryCustomColorDark: '#d97757',
@@ -76,12 +85,13 @@ export const THEME_PRESET_OPTIONS = [
       textTitle: '#2f2a24',
       textDigest: '#786f63',
       ...DEFAULT_GAUSS_BLUR,
+      ...DEFAULT_GLOW,
     },
   },
   {
     value: THEME_PRESET.SOLARIZED,
-    overrides: {
-      ...pageBgOverrides('solarized', 'solarized dark'),
+    overwrite: {
+      ...pageBgOverwrite('solarized', 'solarized dark'),
       primaryColor: COLOR.CUSTOM,
       primaryCustomColor: '#859900',
       primaryCustomColorDark: '#b6c65b',
@@ -90,12 +100,13 @@ export const THEME_PRESET_OPTIONS = [
       textTitle: '#073642',
       textDigest: '#657b83',
       ...DEFAULT_GAUSS_BLUR,
+      ...DEFAULT_GLOW,
     },
   },
   {
     value: THEME_PRESET.HN,
-    overrides: {
-      ...pageBgOverrides('hacker news', 'black chocolate'),
+    overwrite: {
+      ...pageBgOverwrite('hacker news', 'black chocolate'),
       primaryColor: COLOR.BLACK,
       ...EMPTY_CUSTOM_PRIMARY,
       accentColor: COLOR.BLUE,
@@ -103,6 +114,7 @@ export const THEME_PRESET_OPTIONS = [
       textTitle: '#222222',
       textDigest: '#666666',
       ...DEFAULT_GAUSS_BLUR,
+      ...DEFAULT_GLOW,
     },
   },
 ] as const

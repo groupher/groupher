@@ -114,9 +114,6 @@ export const community = `
           changelogLayout
           headerLayout
           footerLayout
-          glowType
-          glowFixed
-          glowOpacity
           overlayDark
           gaussBlur
           gaussBlurDark

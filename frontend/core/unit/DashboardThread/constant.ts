@@ -49,9 +49,6 @@ export const LAYOUT_FIELD = {
   BROADCAST_BG: 'broadcastBg',
   BROADCAST_ARTICLE_BG: 'broadcastArticleBg',
   CHANGELOG_LAYOUT: 'changelogLayout',
-  GLOW_TYPE: 'glowType',
-  GLOW_FIXED: 'glowFixed',
-  GLOW_OPACITY: 'glowOpacity',
   OVERLAY_DARK: 'overlayDark',
   GAUSS_BLUR: 'gaussBlur',
   GAUSS_BLUR_DARK: 'gaussBlurDark',
@@ -74,6 +71,11 @@ export const PRESET_FIELD = {
   TEXT_DIGEST: 'textDigest',
   GAUSS_BLUR: 'gaussBlur',
   GAUSS_BLUR_DARK: 'gaussBlurDark',
+  GLOW_TYPE: 'glowType',
+  GLOW_TYPE_DARK: 'glowTypeDark',
+  GLOW_FIXED: 'glowFixed',
+  GLOW_OPACITY: 'glowOpacity',
+  GLOW_OPACITY_DARK: 'glowOpacityDark',
 } as const
 
 export const FIELD = {
@@ -101,9 +103,6 @@ export const FIELD = {
   WIDGETS_PRIMARY_COLOR: 'widgetsPrimaryColor',
   WIDGETS_SIZE: 'widgetsSize',
   WIDGETS_THREADS: 'widgetsThreads',
-  GLOW_TYPE: 'glowType',
-  GLOW_FIXED: 'glowFixed',
-  GLOW_OPACITY: 'glowOpacity',
   PAGE_BG: LAYOUT_FIELD.PAGE_BG,
   PAGE_BG_DARK: LAYOUT_FIELD.PAGE_BG_DARK,
   PAGE_CUSTOM_BG: LAYOUT_FIELD.PAGE_CUSTOM_BG,

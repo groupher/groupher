@@ -1,25 +1,14 @@
-import { GLOW_EFFECTS_DAY, GLOW_EFFECTS_NIGHT } from '~/const/glow_effect'
-import THEME from '~/const/theme'
+import { buildGlowPreviewBackground, resolveGlowEffect } from '~/const/glow_effect'
 import usePageBg from '~/hooks/usePageBg'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn, cnMerge } from '~/css'
 
-const TEXTURE_GLOW_ALPHA = '82'
-
-const previewGlowColor = (color: string): string => {
-  if (!/^#[\dA-Fa-f]{8}$/.test(color)) return color
-
-  return `${color.slice(0, 7)}${TEXTURE_GLOW_ALPHA}`
-}
-
 export default function useSalon() {
   const { cn, fill, br, primary } = useTwBelt()
   const { theme } = useTheme()
   const pageBg = usePageBg()
-
-  const GLOW_EFFECTS = theme === THEME.LIGHT ? GLOW_EFFECTS_DAY : GLOW_EFFECTS_NIGHT
 
   return {
     block: cn(
@@ -43,13 +32,9 @@ export default function useSalon() {
     }),
 
     glowStyle: (glowType) => {
-      const glow = GLOW_EFFECTS[glowType]
+      const glow = resolveGlowEffect(glowType, theme)
 
-      return `
-      radial-gradient(circle at 18% 8%, ${previewGlowColor(glow.LEFT.COLOR)} 0, transparent 62%),
-      radial-gradient(circle at 72% 8%, ${previewGlowColor(glow.MAIN.COLOR)} 0, transparent 68%),
-      radial-gradient(circle at 94% 20%, ${previewGlowColor(glow.RIGHT2.COLOR)} 0, transparent 52%)
-    `
+      return buildGlowPreviewBackground(glow)
     },
     icon: cn('size-4', fill('title')),
   }

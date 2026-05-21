@@ -1,19 +1,23 @@
 import { GLOW_EFFECTS_KEYS } from '~/const/glow_effect'
 import ClossSVG from '~/icons/CloseLight'
 
-import { FIELD } from '../../constant'
-import type useGlowLight from '../../logic/useGlowLight'
+import { PRESET_FIELD } from '../../constant'
 import useSalon, { cn, cnMerge } from './salon/texture_balls'
-
-type TGlowLight = ReturnType<typeof useGlowLight>
+import type { TThemePresetOverwrite } from './spec'
 
 type TProps = {
-  glowType: TGlowLight['glowType']
-  edit: TGlowLight['edit']
+  glowType: TThemePresetOverwrite['glowType']
+  glowTypeField: typeof PRESET_FIELD.GLOW_TYPE | typeof PRESET_FIELD.GLOW_TYPE_DARK
+  onThemePresetCommit: (patch: Partial<TThemePresetOverwrite>) => void
   rowClassName?: string
 }
 
-export default function TextureBalls({ glowType, edit, rowClassName }: TProps) {
+export default function TextureBalls({
+  glowType,
+  glowTypeField,
+  onThemePresetCommit,
+  rowClassName,
+}: TProps) {
   const s = useSalon()
 
   return (
@@ -22,7 +26,7 @@ export default function TextureBalls({ glowType, edit, rowClassName }: TProps) {
         type='button'
         className={cn(s.block, 'align-both', glowType === '' && s.blockActive)}
         aria-pressed={glowType === ''}
-        onClick={() => edit('', FIELD.GLOW_TYPE)}
+        onClick={() => onThemePresetCommit({ [glowTypeField]: '' })}
       >
         <ClossSVG className={cn(s.icon, 'opacity-60')} />
       </button>
@@ -33,7 +37,7 @@ export default function TextureBalls({ glowType, edit, rowClassName }: TProps) {
           type='button'
           className={cn(s.block, effect === glowType && s.blockActive)}
           aria-pressed={effect === glowType}
-          onClick={() => edit(effect, FIELD.GLOW_TYPE)}
+          onClick={() => onThemePresetCommit({ [glowTypeField]: effect })}
         >
           <div className={s.textureBall} style={s.textureStyle()}>
             <div className={s.glowLayer} style={{ background: `${s.glowStyle(effect)}` }} />

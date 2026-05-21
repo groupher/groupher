@@ -92,7 +92,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
     field :update_dashboard_layout, :community do
       arg(:community, non_null(:string))
       arg(:dsb_section, :dsb_section, default_value: :layout)
-      arg(:theme_overwrite, :json)
 
       dsb_args(:layout)
 

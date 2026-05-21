@@ -1,9 +1,15 @@
-import { GLOW_EFFECTS_DAY, GLOW_EFFECTS_NIGHT } from '~/const/glow_effect'
-import THEME from '~/const/theme'
-import { fmtOpacity } from '~/fmt'
+import { buildGlowBackground, resolveGlowEffect } from '~/const/glow_effect'
 import useGlowLight from '~/hooks/useGlowLight'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
+
+const toCssOpacity = (opacity = 100): number => {
+  const percent = Number(opacity)
+
+  if (Number.isNaN(percent)) return 1
+
+  return Math.min(Math.max(percent, 0), 100) / 100
+}
 
 export default function useSalon() {
   const { cn } = useTwBelt()
@@ -11,27 +17,18 @@ export default function useSalon() {
   const { theme } = useTheme()
 
   const { glowType, glowFixed, glowOpacity } = useGlowLight()
-  const GLOW_EFFECTS = theme === THEME.LIGHT ? GLOW_EFFECTS_DAY : GLOW_EFFECTS_NIGHT
-
-  const glow = glowType ? GLOW_EFFECTS[glowType] : null
+  const glow = resolveGlowEffect(glowType, theme)
 
   const glowPosition = glowFixed ? 'fixed' : 'absolute'
   const isAbsolute = glowPosition === 'absolute'
 
   return {
-    bgStyle: glow
-      ? `
-      radial-gradient(circle at ${glow.LEFT.X} ${glow.LEFT.Y}, ${glow.LEFT.COLOR} 0, transparent ${glow.LEFT.RADIUS}),
-      radial-gradient(circle at ${glow.RIGHT1.X} ${glow.RIGHT1.Y}, ${glow.RIGHT1.COLOR} 0, transparent ${glow.RIGHT1.RADIUS}),
-      radial-gradient(circle at ${glow.MAIN.X} ${glow.MAIN.Y}, ${glow.MAIN.COLOR} 0, transparent ${glow.MAIN.RADIUS}),
-      radial-gradient(circle at ${glow.RIGHT2.X} ${glow.RIGHT2.Y}, ${glow.RIGHT2.COLOR} 0, transparent ${glow.RIGHT1.RADIUS})
-    `
-      : '',
+    bgStyle: buildGlowBackground(glow),
     wrapper: cn(
       'pointer-events-none z-0 w-full',
       isAbsolute ? 'absolute top-0 right-0 h-2/5' : 'fixed inset-0 h-screen',
-      `opacity-${fmtOpacity(glowOpacity)}`,
       glowPosition,
     ),
+    opacity: toCssOpacity(glowOpacity),
   }
 }

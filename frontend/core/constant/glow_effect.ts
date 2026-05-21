@@ -1,9 +1,6 @@
 import { keys } from 'ramda'
 
-export const GLOW_OPACITY = {
-  NORMAL: '100',
-  WEEK: '65',
-}
+import THEME from '~/const/theme'
 
 export const GLOW_EFFECT_NAME = {
   ORANGE_PURPLE: 'ORANGE_PURPLE',
@@ -284,3 +281,48 @@ export const GLOW_EFFECTS_NIGHT = {
 }
 
 export const GLOW_EFFECTS_KEYS = keys(GLOW_EFFECTS_DAY)
+
+export type TGlowEffectName = keyof typeof GLOW_EFFECTS_DAY
+export type TGlowEffect = (typeof GLOW_EFFECTS_DAY)[TGlowEffectName]
+
+export const resolveGlowEffect = (
+  glowType: string | null | undefined,
+  theme: string,
+): TGlowEffect | null => {
+  if (!glowType) return null
+
+  const effects = theme === THEME.LIGHT ? GLOW_EFFECTS_DAY : GLOW_EFFECTS_NIGHT
+
+  if (!(GLOW_EFFECTS_KEYS as readonly string[]).includes(glowType)) return null
+
+  return effects[glowType as TGlowEffectName]
+}
+
+export const buildGlowBackground = (glow: TGlowEffect | null): string => {
+  if (!glow) return ''
+
+  return `
+      radial-gradient(circle at ${glow.LEFT.X} ${glow.LEFT.Y}, ${glow.LEFT.COLOR} 0, transparent ${glow.LEFT.RADIUS}),
+      radial-gradient(circle at ${glow.RIGHT1.X} ${glow.RIGHT1.Y}, ${glow.RIGHT1.COLOR} 0, transparent ${glow.RIGHT1.RADIUS}),
+      radial-gradient(circle at ${glow.MAIN.X} ${glow.MAIN.Y}, ${glow.MAIN.COLOR} 0, transparent ${glow.MAIN.RADIUS}),
+      radial-gradient(circle at ${glow.RIGHT2.X} ${glow.RIGHT2.Y}, ${glow.RIGHT2.COLOR} 0, transparent ${glow.RIGHT1.RADIUS})
+    `
+}
+
+const TEXTURE_GLOW_ALPHA = '82'
+
+const previewGlowColor = (color: string): string => {
+  if (!/^#[\dA-Fa-f]{8}$/.test(color)) return color
+
+  return `${color.slice(0, 7)}${TEXTURE_GLOW_ALPHA}`
+}
+
+export const buildGlowPreviewBackground = (glow: TGlowEffect | null): string => {
+  if (!glow) return ''
+
+  return `
+      radial-gradient(circle at 18% 8%, ${previewGlowColor(glow.LEFT.COLOR)} 0, transparent 62%),
+      radial-gradient(circle at 72% 8%, ${previewGlowColor(glow.MAIN.COLOR)} 0, transparent 68%),
+      radial-gradient(circle at 94% 20%, ${previewGlowColor(glow.RIGHT2.COLOR)} 0, transparent 52%)
+    `
+}

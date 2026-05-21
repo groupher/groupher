@@ -31,12 +31,12 @@ export default function PresetCard({
   const { isLightTheme } = useTheme()
   const presetKey = preset.value.toLowerCase()
   const presetPrimaryCustomColor = isLightTheme
-    ? preset.overrides.primaryCustomColor
-    : preset.overrides.primaryCustomColorDark
+    ? preset.overwrite.primaryCustomColor
+    : preset.overwrite.primaryCustomColorDark
   const cardBg = getPageBgCustomColor(
     isLightTheme ? THEME.LIGHT : THEME.DARK,
-    isLightTheme ? preset.overrides.pageCustomBg : preset.overrides.pageCustomBgDark,
-    isLightTheme ? preset.overrides.pageCustomIntensity : preset.overrides.pageCustomIntensityDark,
+    isLightTheme ? preset.overwrite.pageCustomBg : preset.overwrite.pageCustomBgDark,
+    isLightTheme ? preset.overwrite.pageCustomIntensity : preset.overwrite.pageCustomIntensityDark,
   )
 
   return (
@@ -59,11 +59,11 @@ export default function PresetCard({
         <div className={s.preview} style={{ backgroundColor: cardBg }}>
           <MiniBars
             active={active}
-            primaryColor={preset.overrides.primaryColor}
+            primaryColor={preset.overwrite.primaryColor}
             primaryCustomColor={presetPrimaryCustomColor}
-            accentColor={preset.overrides.accentColor}
-            textTitle={preset.overrides.textTitle}
-            textDigest={preset.overrides.textDigest}
+            accentColor={preset.overwrite.accentColor}
+            textTitle={preset.overwrite.textTitle}
+            textDigest={preset.overwrite.textDigest}
           />
         </div>
 

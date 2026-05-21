@@ -136,11 +136,6 @@ export type TDsbFieldMap = {
   // doc
   docCategories: readonly TGroupCategory[]
 
-  // glow effect
-  glowType: string
-  glowFixed: boolean
-  glowOpacity: string
-
   overlayDark: boolean
 
   // gauss blur

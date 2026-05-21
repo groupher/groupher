@@ -133,7 +133,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
     field :theme_tokens, :json do
       resolve(fn layout, _, _ ->
-        {:ok, ThemePreset.resolve(layout.theme_preset, layout.theme_overrides)}
+        {:ok, ThemePreset.resolve(layout.theme_preset, layout.theme_overwrite)}
       end)
     end
   end

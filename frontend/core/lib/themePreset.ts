@@ -1,6 +1,6 @@
 import { COLOR, PAGE_BG_COLOR_HEX, PAGE_BG_DEFAULT } from '~/const/colors'
 import THEME from '~/const/theme'
-import { THEME_PRESET_OPTIONS } from '~/const/theme_preset'
+import { THEME_PRESET, THEME_PRESET_OPTIONS } from '~/const/theme_preset'
 import { getPageBgCustomColor } from '~/lib/color'
 import type { TColorName, TThemePreset } from '~/spec'
 
@@ -21,6 +21,11 @@ export const THEME_PRESET_FIELD_KEYS = [
   'textDigest',
   'gaussBlur',
   'gaussBlurDark',
+  'glowType',
+  'glowTypeDark',
+  'glowFixed',
+  'glowOpacity',
+  'glowOpacityDark',
 ] as const
 
 export type TThemePresetField = (typeof THEME_PRESET_FIELD_KEYS)[number]
@@ -42,12 +47,17 @@ export type TResolvedThemePreset = {
   textDigest: string
   gaussBlur: number
   gaussBlurDark: number
+  glowType: string
+  glowTypeDark: string
+  glowFixed: boolean
+  glowOpacity: number
+  glowOpacityDark: number
 }
 
 export type TThemePresetSource = Partial<TResolvedThemePreset> & {
   themePreset?: TThemePreset | string
   themeTokens?: Record<string, unknown> | null
-  themeOverrides?: Record<string, unknown> | null
+  themeOverwrite?: Record<string, unknown> | null
 }
 
 const DEFAULT_PRESET = THEME_PRESET_OPTIONS[0]
@@ -88,18 +98,18 @@ export const resolveThemePresetPageBgCssVar = (
   intensity: number | undefined,
 ): string => {
   const fallbackBg =
-    theme === THEME.LIGHT ? DEFAULT_PRESET.overrides.pageBg : DEFAULT_PRESET.overrides.pageBgDark
+    theme === THEME.LIGHT ? DEFAULT_PRESET.overwrite.pageBg : DEFAULT_PRESET.overwrite.pageBgDark
   const resolvedBg = pageBg ?? fallbackBg
 
   if (resolvedBg === COLOR.CUSTOM) {
     return getPageBgCustomColor(
       theme,
       theme === THEME.LIGHT
-        ? (hue ?? DEFAULT_PRESET.overrides.pageCustomBg)
-        : (hue ?? DEFAULT_PRESET.overrides.pageCustomBgDark),
+        ? (hue ?? DEFAULT_PRESET.overwrite.pageCustomBg)
+        : (hue ?? DEFAULT_PRESET.overwrite.pageCustomBgDark),
       theme === THEME.LIGHT
-        ? (intensity ?? DEFAULT_PRESET.overrides.pageCustomIntensity)
-        : (intensity ?? DEFAULT_PRESET.overrides.pageCustomIntensityDark),
+        ? (intensity ?? DEFAULT_PRESET.overwrite.pageCustomIntensity)
+        : (intensity ?? DEFAULT_PRESET.overwrite.pageCustomIntensityDark),
     )
   }
 
@@ -109,28 +119,22 @@ export const resolveThemePresetPageBgCssVar = (
 /**
  * Resolve the effective theme preset values from backend/dashboard layout data.
  *
- * New data should use backend-resolved `themeTokens` as the logical source of
- * truth. During migration, old flat layout fields are only used when there are
- * no overrides yet, so stale legacy fields cannot keep overriding preset based
- * edits after the new model has taken ownership.
+ * Built-in presets are resolved from their own token set. Only CUSTOM applies
+ * saved token overwrite; this keeps stale overwrite from changing a selected
+ * built-in preset.
  */
 export const resolveThemePreset = (source: TThemePresetSource = {}): TResolvedThemePreset => {
   const selectedPreset = resolveThemePresetOption(source.themePreset)
+  const isCustomPreset = source.themePreset === THEME_PRESET.CUSTOM
   const backendTokens = normalizeThemeTokenSource(source.themeTokens)
-  const hasBackendTokens = Object.keys(backendTokens).length > 0
-  const overwrite = hasBackendTokens ? {} : normalizeThemeTokenSource(source.themeOverrides)
-  const hasOverrides = Object.keys(overwrite).length > 0
-  const legacySource = normalizeThemeTokenSource(source)
-  const legacyPatch = hasOverrides ? {} : pickThemePresetFields(legacySource)
-  const legacyAccentFallback =
-    !hasBackendTokens && !hasOverrides && source.accentColor === undefined && source.primaryColor
-      ? { accentColor: source.primaryColor }
-      : {}
+  const overwrite = normalizeThemeTokenSource(source.themeOverwrite)
+  const customTokens =
+    Object.keys(backendTokens).length > 0
+      ? backendTokens
+      : pickThemePresetFields(overwrite as Partial<TResolvedThemePreset>)
 
   return {
-    ...selectedPreset.overrides,
-    ...(hasBackendTokens ? backendTokens : legacyPatch),
-    ...legacyAccentFallback,
-    ...pickThemePresetFields(overwrite as Partial<TResolvedThemePreset>),
+    ...selectedPreset.overwrite,
+    ...(isCustomPreset ? customTokens : {}),
   }
 }

@@ -139,30 +139,30 @@ describe('stores/dashboard', () => {
 
     store.editFields({
       themePreset: claude.value,
-      themeTokens: { ...claude.overrides },
-      pageBg: claude.overrides.pageBg,
-      pageBgDark: claude.overrides.pageBgDark,
-      pageCustomBg: claude.overrides.pageCustomBg,
-      pageCustomBgDark: claude.overrides.pageCustomBgDark,
-      pageCustomIntensity: claude.overrides.pageCustomIntensity,
-      pageCustomIntensityDark: claude.overrides.pageCustomIntensityDark,
-      textTitle: claude.overrides.textTitle,
-      textDigest: claude.overrides.textDigest,
+      themeTokens: { ...claude.overwrite },
+      pageBg: claude.overwrite.pageBg,
+      pageBgDark: claude.overwrite.pageBgDark,
+      pageCustomBg: claude.overwrite.pageCustomBg,
+      pageCustomBgDark: claude.overwrite.pageCustomBgDark,
+      pageCustomIntensity: claude.overwrite.pageCustomIntensity,
+      pageCustomIntensityDark: claude.overwrite.pageCustomIntensityDark,
+      textTitle: claude.overwrite.textTitle,
+      textDigest: claude.overwrite.textDigest,
     })
 
     expect(store.themePreset).toBe('CLAUDE')
     expect(store.pageBg).toBe(COLOR.CUSTOM)
     expect(store.pageBgDark).toBe(COLOR.CUSTOM)
-    expect(store.pageCustomBg).toBe(claude.overrides.pageCustomBg)
-    expect(store.pageCustomBgDark).toBe(claude.overrides.pageCustomBgDark)
-    expect(store.pageCustomIntensity).toBe(claude.overrides.pageCustomIntensity)
-    expect(store.pageCustomIntensityDark).toBe(claude.overrides.pageCustomIntensityDark)
+    expect(store.pageCustomBg).toBe(claude.overwrite.pageCustomBg)
+    expect(store.pageCustomBgDark).toBe(claude.overwrite.pageCustomBgDark)
+    expect(store.pageCustomIntensity).toBe(claude.overwrite.pageCustomIntensity)
+    expect(store.pageCustomIntensityDark).toBe(claude.overwrite.pageCustomIntensityDark)
     expect(store.themeTokens.primaryColor).toBe(COLOR.CUSTOM)
     expect(store.themeTokens.primaryCustomColor).toBe('#c96442')
     expect(store.themeTokens.primaryCustomColorDark).toBe('#d97757')
     expect(store.themeTokens.accentColor).toBe(COLOR.BLUE)
-    expect(store.textTitle).toBe(claude.overrides.textTitle)
-    expect(store.textDigest).toBe(claude.overrides.textDigest)
+    expect(store.textTitle).toBe(claude.overwrite.textTitle)
+    expect(store.textDigest).toBe(claude.overwrite.textDigest)
     expect(
       store.anyTouched([
         'themePreset',

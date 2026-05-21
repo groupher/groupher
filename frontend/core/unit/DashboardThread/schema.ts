@@ -190,9 +190,6 @@ const updateDashboardLayout = gql`
     $broadcastCustomBg: String
     $broadcastArticleBg: RainbowColor
     $broadcastArticleCustomBg: String
-    $glowType: String
-    $glowFixed: Boolean
-    $glowOpacity: String
     $overlayDark: Boolean
     $gaussBlur: Float
     $gaussBlurDark: Float
@@ -233,9 +230,6 @@ const updateDashboardLayout = gql`
       broadcastArticleBg: $broadcastArticleBg
       broadcastArticleCustomBg: $broadcastArticleCustomBg
       kanbanBgColors: $kanbanBgColors
-      glowType: $glowType
-      glowFixed: $glowFixed
-      glowOpacity: $glowOpacity
       overlayDark: $overlayDark
       gaussBlur: $gaussBlur
       gaussBlurDark: $gaussBlurDark

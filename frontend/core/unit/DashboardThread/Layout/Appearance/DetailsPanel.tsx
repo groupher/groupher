@@ -6,27 +6,33 @@ import GlassOpacity from './GlassOpacity'
 import PageGlow from './PageGlow'
 import PrimaryColors from './PrimaryColors'
 import useSalon from './salon/details_panel'
-import type { TThemePresetOverrides } from './spec'
+import type { TThemePresetOverwrite } from './spec'
 
 type TProps = {
-  selectedOverrides: TThemePresetOverrides
+  selectedOverwrite: TThemePresetOverwrite
   selectedPageBgDraft: TPageBgDraft
   primaryCustomColor: string
   isLightTheme: boolean
   pageBgResetKey: string
   onPageBgPreview: (patch: Partial<TPageBgDraft>) => void
   onPageBgCommit: (patch: Partial<TPageBgDraft>) => void
-  onThemePresetCommit: (patch: Partial<TThemePresetOverrides>) => void
+  onThemePresetPreview: (patch: Partial<TThemePresetOverwrite>) => void
+  onThemePresetSchedule: (patch: Partial<TThemePresetOverwrite>) => void
+  onThemePresetFlush: () => void
+  onThemePresetCommit: (patch: Partial<TThemePresetOverwrite>) => void
 }
 
 export default function DetailsPanel({
-  selectedOverrides,
+  selectedOverwrite,
   selectedPageBgDraft,
   primaryCustomColor,
   isLightTheme,
   pageBgResetKey,
   onPageBgPreview,
   onPageBgCommit,
+  onThemePresetPreview,
+  onThemePresetSchedule,
+  onThemePresetFlush,
   onThemePresetCommit,
 }: TProps) {
   const s = useSalon()
@@ -44,7 +50,7 @@ export default function DetailsPanel({
 
       <div className={s.content}>
         <PrimaryColors
-          selectedOverrides={selectedOverrides}
+          selectedOverwrite={selectedOverwrite}
           primaryCustomColor={primaryCustomColor}
           isLightTheme={isLightTheme}
           onThemePresetCommit={onThemePresetCommit}
@@ -64,14 +70,22 @@ export default function DetailsPanel({
         />
 
         <GlassOpacity
-          selectedOverrides={selectedOverrides}
+          selectedOverwrite={selectedOverwrite}
           isLightTheme={isLightTheme}
-          onThemePresetCommit={onThemePresetCommit}
+          onThemePresetPreview={onThemePresetPreview}
+          onThemePresetSchedule={onThemePresetSchedule}
+          onThemePresetFlush={onThemePresetFlush}
         />
 
         <div className={s.divider} />
 
-        <PageGlow />
+        <PageGlow
+          selectedOverwrite={selectedOverwrite}
+          onThemePresetPreview={onThemePresetPreview}
+          onThemePresetSchedule={onThemePresetSchedule}
+          onThemePresetFlush={onThemePresetFlush}
+          onThemePresetCommit={onThemePresetCommit}
+        />
       </div>
     </div>
   )

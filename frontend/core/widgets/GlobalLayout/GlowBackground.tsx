@@ -13,7 +13,10 @@ export default function GlowBackground() {
 
   if (!glowType) return null
 
-  const style = { background: `${s.bgStyle}` }
+  const style = {
+    background: `${s.bgStyle}`,
+    opacity: `var(--preview-glow-opacity, ${s.opacity})`,
+  }
 
   return <div className={s.wrapper} style={style} />
 }

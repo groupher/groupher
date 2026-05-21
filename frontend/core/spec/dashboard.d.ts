@@ -94,9 +94,6 @@ export type TDsb = {
     avatarLayout: TAvatarLayout
     communityLayout: TCommunityLayout
     navActiveLayout: TNavActiveLayout
-    glowType: string
-    glowFixed: boolean
-    glowOpacity: string
     overlayDark: boolean
     docCoverLayout: TDocCoverLayout
     docFaqLayout: TDocFAQLayout

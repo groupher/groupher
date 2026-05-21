@@ -1,27 +1,101 @@
-import useTrans from '~/hooks/useTrans'
-import useGlowLight from '~/unit/DashboardThread/logic/useGlowLight'
-import useCustomPageBgSalon from '~/widgets/CustomPageBg/salon'
+import { useEffect, useState } from 'react'
 
+import useTheme from '~/hooks/useTheme'
+import useTrans from '~/hooks/useTrans'
+import RangeInput from '~/widgets/RangeInput'
+
+import { PRESET_FIELD } from '../../constant'
 import useSalon from './salon/page_glow'
+import useSettingRowSalon from './salon/setting_row'
+import type { TThemePresetOverwrite } from './spec'
 import TextureBalls from './TextureBalls'
 
-export default function PageGlow() {
+type TProps = {
+  selectedOverwrite: TThemePresetOverwrite
+  onThemePresetPreview: (patch: Partial<TThemePresetOverwrite>) => void
+  onThemePresetSchedule: (patch: Partial<TThemePresetOverwrite>) => void
+  onThemePresetFlush: () => void
+  onThemePresetCommit: (patch: Partial<TThemePresetOverwrite>) => void
+}
+
+export default function PageGlow({
+  selectedOverwrite,
+  onThemePresetPreview,
+  onThemePresetSchedule,
+  onThemePresetFlush,
+  onThemePresetCommit,
+}: TProps) {
   const s = useSalon()
-  const row = useCustomPageBgSalon()
+  const row = useSettingRowSalon()
   const { t } = useTrans()
-  const { glowType, edit } = useGlowLight()
+  const { isLightTheme } = useTheme()
+  const glowTypeField = isLightTheme ? PRESET_FIELD.GLOW_TYPE : PRESET_FIELD.GLOW_TYPE_DARK
+  const glowOpacityField = isLightTheme ? PRESET_FIELD.GLOW_OPACITY : PRESET_FIELD.GLOW_OPACITY_DARK
+  const glowType = isLightTheme ? selectedOverwrite.glowType : selectedOverwrite.glowTypeDark
+  const glowOpacity = isLightTheme
+    ? selectedOverwrite.glowOpacity
+    : selectedOverwrite.glowOpacityDark
+  const [displayGlowOpacity, setDisplayGlowOpacity] = useState(glowOpacity)
+
+  useEffect(() => {
+    setDisplayGlowOpacity(glowOpacity)
+  }, [glowOpacity])
+
+  const getGlowOpacityPatch = (value: number): Partial<TThemePresetOverwrite> => ({
+    [glowOpacityField]: value,
+  })
 
   return (
-    <div className={row.settingRow}>
-      <div className={row.labelGroup}>
-        <div className={row.label}>{t('dsb.layout.glow.title')}</div>
-        <div className={row.hint}>{t('dsb.layout.glow.desc')}</div>
+    <>
+      <div className={row.settingRow}>
+        <div className={row.labelGroup}>
+          <div className={row.label}>{t('dsb.layout.glow.title')}</div>
+          <div className={row.hint}>{t('dsb.layout.glow.desc')}</div>
+        </div>
+
+        <div className='grow' />
+        <div className={s.swatches}>
+          <TextureBalls
+            glowType={glowType}
+            glowTypeField={glowTypeField}
+            onThemePresetCommit={onThemePresetCommit}
+            rowClassName={s.swatchRow}
+          />
+        </div>
       </div>
 
-      <div className='grow' />
-      <div className={s.swatches}>
-        <TextureBalls glowType={glowType} edit={edit} rowClassName={s.swatchRow} />
-      </div>
-    </div>
+      {!!glowType && (
+        <div className={row.settingRow}>
+          <div className={row.labelGroup}>
+            <div className={row.label}>{t('dsb.layout.glow.intensity.title')}</div>
+          </div>
+
+          <div className='grow' />
+          <div className={row.rangeGroup}>
+            <RangeInput
+              value={displayGlowOpacity}
+              valueLabel={t('dsb.layout.glow.intensity.title')}
+              min={0}
+              max={100}
+              step={0.1}
+              unit='%'
+              top={0}
+              aria-label={t('dsb.layout.glow.intensity.title')}
+              onChange={(value) => {
+                const patch = getGlowOpacityPatch(value)
+
+                setDisplayGlowOpacity(value)
+                onThemePresetPreview(patch)
+                onThemePresetSchedule(patch)
+              }}
+              onChangeEnd={(value) => {
+                onThemePresetSchedule(getGlowOpacityPatch(value))
+                onThemePresetFlush()
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </>
   )
 }

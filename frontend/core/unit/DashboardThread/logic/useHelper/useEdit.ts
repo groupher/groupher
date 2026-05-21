@@ -88,9 +88,6 @@ export default function useEdit(): TRet {
         FIELD.TEXT_DIGEST,
         FIELD.GAUSS_BLUR,
         FIELD.GAUSS_BLUR_DARK,
-        FIELD.GLOW_TYPE,
-        FIELD.GLOW_FIXED,
-        FIELD.GLOW_OPACITY,
       ])
       return
     }

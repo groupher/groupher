@@ -49,14 +49,14 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
 
     struct
     |> cast(params, @optional_fields)
-    |> validate_theme_overrides()
+    |> validate_theme_overwrite()
     |> validate_kanban_boards()
     |> validate_custom_colors()
   end
 
-  defp validate_theme_overrides(changeset) do
+  defp validate_theme_overwrite(changeset) do
     changeset
-    |> validate_theme_map(:theme_overrides)
+    |> validate_theme_map(:theme_overwrite)
   end
 
   defp validate_theme_map(changeset, field) do
@@ -76,22 +76,20 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
 
   defp normalize_theme_preset_payload(params) when is_map(params) do
     overwrite_param = fetch_param(params, :theme_overwrite)
-    legacy_overrides_param = fetch_param(params, :theme_overrides)
+    overwrite = elem_or_nil(overwrite_param)
 
     cond do
-      overwrite_param != :error or legacy_overrides_param != :error ->
-        overwrite = elem_or_nil(overwrite_param) || elem_or_nil(legacy_overrides_param)
-
-        case normalize_theme_override_map(overwrite) do
+      overwrite_param != :error ->
+        case normalize_theme_overwrite_map(overwrite) do
           {:ok, normalized_overwrite} ->
-            put_param_or_new(params, :theme_overrides, normalized_overwrite)
+            put_param_or_new(params, :theme_overwrite, normalized_overwrite)
 
           :error ->
-            put_param_or_new(params, :theme_overrides, overwrite)
+            put_param_or_new(params, :theme_overwrite, overwrite)
         end
 
       fetch_param(params, :theme_preset) != :error ->
-        put_param_or_new(params, :theme_overrides, %{})
+        put_param_or_new(params, :theme_overwrite, %{})
 
       true ->
         params
@@ -100,14 +98,14 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
 
   defp normalize_theme_preset_payload(params), do: params
 
-  defp normalize_theme_override_map(value) when is_binary(value) do
+  defp normalize_theme_overwrite_map(value) when is_binary(value) do
     case Jason.decode(value) do
       {:ok, decoded} when is_map(decoded) -> {:ok, ThemePreset.normalize_overwrite(decoded)}
       _ -> :error
     end
   end
 
-  defp normalize_theme_override_map(value), do: {:ok, ThemePreset.normalize_overwrite(value)}
+  defp normalize_theme_overwrite_map(value), do: {:ok, ThemePreset.normalize_overwrite(value)}
 
   defp elem_or_nil({:ok, value}), do: value
   defp elem_or_nil(:error), do: nil

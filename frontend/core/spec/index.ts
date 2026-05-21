@@ -31,10 +31,8 @@ export type TGlowEffect = {
   glowType: string
   glowPosition?: TGlowPosition
   glowFixed?: boolean
-  glowOpacity?: string
+  glowOpacity?: number
   $theme?: TThemeName
-
-  changeGlowEffect?: (effect: string) => void
 }
 
 interface IWindow extends Window {

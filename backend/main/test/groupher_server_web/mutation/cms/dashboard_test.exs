@@ -220,8 +220,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_layout_query """
-    mutation($community: String!, $themePreset: DsbThemePreset, $themeOverwrite: Json, $textTitle: String, $textDigest: String, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $glowType: String, $glowFixed: Boolean, $glowOpacity: String, $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $gaussBlur: Float, $gaussBlurDark: Float, $brandLayout: DsbBrandLayout, $communityLayout: DsbCommunityLayout, $navActiveLayout: DsbNavActiveLayout, $overlayDark: Boolean) {
-      updateDashboardLayout(community: $community, themePreset: $themePreset, themeOverwrite: $themeOverwrite, textTitle: $textTitle, textDigest: $textDigest, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, glowType: $glowType, glowFixed: $glowFixed, glowOpacity: $glowOpacity, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, communityLayout: $communityLayout, navActiveLayout: $navActiveLayout, overlayDark: $overlayDark) {
+    mutation($community: String!, $themePreset: DsbThemePreset, $themeOverwrite: Json, $textTitle: String, $textDigest: String, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $gaussBlur: Float, $gaussBlurDark: Float, $brandLayout: DsbBrandLayout, $communityLayout: DsbCommunityLayout, $navActiveLayout: DsbNavActiveLayout, $overlayDark: Boolean) {
+      updateDashboardLayout(community: $community, themePreset: $themePreset, themeOverwrite: $themeOverwrite, textTitle: $textTitle, textDigest: $textDigest, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, communityLayout: $communityLayout, navActiveLayout: $navActiveLayout, overlayDark: $overlayDark) {
         id
         title
         dashboard {
@@ -233,9 +233,6 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
             topbarEnabled
             tagLayout
             inlineTagLayout
-            glowType
-            glowFixed
-            glowOpacity
             gaussBlur
             gaussBlurDark
             brandLayout
@@ -259,7 +256,12 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
           Jason.encode!(%{
             "primaryColor" => "CUSTOM",
             "accentColor" => "YELLOW",
-            "gaussBlur" => 80.5
+            "gaussBlur" => 80.5,
+            "glowType" => "PINK",
+            "glowTypeDark" => "GREY_GREEN",
+            "glowFixed" => true,
+            "glowOpacity" => 30.5,
+            "glowOpacityDark" => 45.5
           }),
         textTitle: "#112233",
         textDigest: "#667788",
@@ -271,9 +273,6 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         topbarEnabled: true,
         kanbanBgColors: ["BLACK", "YELLOW"],
         kanbanBoards: ["BACKLOG", "TODO", "DONE", "REJECTED"],
-        glowType: "PINK",
-        glowFixed: true,
-        glowOpacity: "30",
         tagLayout: "DOT",
         inlineTagLayout: "SOFT",
         gaussBlur: 80.5,
@@ -295,11 +294,19 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
                "YELLOW"
 
       assert get_in(updated, ["dashboard", "layout", "themeTokens", "gaussBlur"]) == 80.5
+      assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowType"]) == "PINK"
+
+      assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowTypeDark"]) ==
+               "GREY_GREEN"
+
+      assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowFixed"]) == true
+      assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowOpacity"]) == 30.5
+      assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowOpacityDark"]) == 45.5
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
       assert found.dashboard.layout.theme_preset == :custom
-      assert found.dashboard.layout.theme_overrides["primaryColor"] == "CUSTOM"
+      assert found.dashboard.layout.theme_overwrite["primaryColor"] == "CUSTOM"
       assert found.dashboard.layout.post_layout == :cover
       assert found.dashboard.layout.kanban_layout == :waterfall
       assert found.dashboard.layout.kanban_card_layout == :full
@@ -309,9 +316,11 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.layout.footer_layout == :oneline
       assert found.dashboard.layout.topbar_enabled == true
 
-      assert found.dashboard.layout.glow_type == "PINK"
-      assert found.dashboard.layout.glow_fixed == true
-      assert found.dashboard.layout.glow_opacity == "30"
+      assert found.dashboard.layout.theme_overwrite["glowType"] == "PINK"
+      assert found.dashboard.layout.theme_overwrite["glowTypeDark"] == "GREY_GREEN"
+      assert found.dashboard.layout.theme_overwrite["glowFixed"] == true
+      assert found.dashboard.layout.theme_overwrite["glowOpacity"] == 30.5
+      assert found.dashboard.layout.theme_overwrite["glowOpacityDark"] == 45.5
       assert found.dashboard.layout.tag_layout == :dot
       assert found.dashboard.layout.inline_tag_layout == :soft
       assert found.dashboard.layout.gauss_blur == 80.5

@@ -4,17 +4,17 @@ import ColorSelector from '~/widgets/ColorSelector'
 
 import { PRESET_FIELD } from '../../constant'
 import useSalon, { cn, cnMerge } from './salon/primary_colors'
-import type { TThemePresetOverrides } from './spec'
+import type { TThemePresetOverwrite } from './spec'
 
 type TProps = {
-  selectedOverrides: TThemePresetOverrides
+  selectedOverwrite: TThemePresetOverwrite
   primaryCustomColor: string
   isLightTheme: boolean
-  onThemePresetCommit: (patch: Partial<TThemePresetOverrides>) => void
+  onThemePresetCommit: (patch: Partial<TThemePresetOverwrite>) => void
 }
 
 export default function PrimaryColors({
-  selectedOverrides,
+  selectedOverwrite,
   primaryCustomColor,
   isLightTheme,
   onThemePresetCommit,
@@ -29,7 +29,7 @@ export default function PrimaryColors({
         <div className={s.head}>
           <div className={s.ballWrapper}>
             <ColorSelector
-              activeColor={selectedOverrides.primaryColor}
+              activeColor={selectedOverwrite.primaryColor}
               customColor={primaryCustomColor}
               allowCustomColor
               onChange={(primaryColor) =>
@@ -55,7 +55,7 @@ export default function PrimaryColors({
         <div className={cn(s.head, s.subHead)}>
           <div className={cnMerge(s.ballWrapper, s.subBall, accent('borderSoft'))}>
             <ColorSelector
-              activeColor={selectedOverrides.accentColor}
+              activeColor={selectedOverwrite.accentColor}
               onChange={(accentColor) =>
                 onThemePresetCommit({ [PRESET_FIELD.ACCENT_COLOR]: accentColor })
               }
