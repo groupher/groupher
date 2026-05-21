@@ -4,8 +4,8 @@ import { useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 
-import useSalon, { cn } from '../salon/third_part'
 import { INTEGRATE_ANALYSIS_TOOLS } from './constant'
+import useSalon, { cn } from './salon'
 import SettingModal from './SettingModal'
 import type { TIntegrateAnalysisTool } from './spec'
 

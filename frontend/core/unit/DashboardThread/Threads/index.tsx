@@ -2,10 +2,10 @@ import useTrans from '~/hooks/useTrans'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 
 import useEnable from '../logic/useEnable'
-import useSalon from '../salon/threads'
 import SectionLabel from '../SectionLabel'
 import AboutThread from './AboutThread'
 import DocThread from './DocThread'
+import useSalon from './salon'
 
 export default function Threads() {
   const s = useSalon()

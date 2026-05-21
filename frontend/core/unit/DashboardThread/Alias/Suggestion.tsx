@@ -3,7 +3,7 @@ import { type FC, memo } from 'react'
 
 import Button from '~/widgets/Buttons/Button'
 
-import useSalon from '../salon/alias/suggestion'
+import useSalon from './salon/suggestion'
 
 type TProps = {
   items: string[]

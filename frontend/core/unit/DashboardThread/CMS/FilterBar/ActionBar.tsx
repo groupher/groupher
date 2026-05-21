@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import useTrans from '~/hooks/useTrans'
 import Button from '~/widgets/Buttons/Button'
 
-import useSalon from '../../salon/cms/filter_bar/action_bar'
+import useSalon from '../Table/salon/filter_bar/action_bar'
 
 type TProps = {
   onCancel: () => void

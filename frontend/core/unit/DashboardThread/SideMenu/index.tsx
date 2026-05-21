@@ -9,11 +9,11 @@ import type { TDsbPath } from '~/spec'
 import Sticky from '~/widgets/Sticky'
 
 import { MENU, MENU_VIEW } from '../constant'
-import useSalon from '../salon/side_menu'
 import { getMenuDirection, menuVariants, type TMenuDirection } from './animation'
 import { SUBMENU_CONFIG, SUBMENU_ROUTE_VIEW } from './constant'
 import { DASHBOARD_MENU_VIEW_EVENT, type TMenuView, type TMenuViewEvent } from './events'
 import Group from './Group'
+import useSalon from './salon'
 import SubMenu from './SubMenu'
 
 type TSideMenuState = {

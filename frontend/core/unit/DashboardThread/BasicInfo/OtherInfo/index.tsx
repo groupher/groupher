@@ -6,8 +6,8 @@ import Input from '~/widgets/Input'
 
 import { FIELD } from '../../constant'
 import useBaseInfo from '../../logic/useBaseInfo'
-import useSalon from '../../salon/basic_info/other_info'
 import SavingBar from '../../SavingBar'
+import useSalon from '../salon/other_info'
 import MediaEditor from './MediaEditor'
 
 const OtherInfo: FC = () => {

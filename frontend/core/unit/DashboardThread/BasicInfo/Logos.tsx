@@ -3,8 +3,8 @@ import OSSUploader from '~/widgets/OSSUploader'
 
 import { FIELD } from '../constant'
 import useBaseInfo from '../logic/useBaseInfo'
-import useSalon from '../salon/basic_info/logos'
 import SavingBar from '../SavingBar'
+import useSalon from './salon/logos'
 
 export default function Logos() {
   const s = useSalon()

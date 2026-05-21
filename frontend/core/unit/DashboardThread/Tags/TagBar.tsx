@@ -6,8 +6,8 @@ import Input from '~/widgets/Input'
 import TagNode from '~/widgets/TagNode'
 
 import useTags from '../logic/useTags'
-import useSalon, { cn } from '../salon/tags/tag_bar'
 import SavingBar from '../SavingBar'
+import useSalon, { cn } from './salon/tag_bar'
 import TagAction from './TagAction'
 
 export type TProps = {

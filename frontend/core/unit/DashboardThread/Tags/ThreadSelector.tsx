@@ -4,7 +4,7 @@ import { path2Thread } from '~/utils/thread'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 import useTags from '../logic/useTags'
-import useSalon from '../salon/tags/thread_selector'
+import useSalon from './salon/thread_selector'
 
 const THREAD_TITLE_KEYS: Partial<Record<string, TTransKey>> = {
   [THREAD_PATH.POST]: 'dsb.widgets.threads.post.title',

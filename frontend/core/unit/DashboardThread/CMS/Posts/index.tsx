@@ -9,11 +9,11 @@ import useTrans from '~/hooks/useTrans'
 import type { TArticle } from '~/spec'
 
 import useCMSInfo from '../../hooks/useCMSInfo'
-import useSalon, { cn } from '../../salon/cms/posts'
-import CmsDataTable from '../../Tables/CmsDataTable'
-import CmsTableToolbar from '../../Tables/CmsTableToolbar'
-import useCmsTableController from '../../Tables/useCmsTableController'
 import { ArticleCell, AuthorCell, DateCell, StatusCell } from '../Cell'
+import useSalon, { cn } from '../salon/posts'
+import CmsDataTable from '../Table/CmsDataTable'
+import CmsTableToolbar from '../Table/CmsTableToolbar'
+import useCmsTableController from '../Table/useCmsTableController'
 
 export default function Posts() {
   const { pagedPosts, loading, loadPosts } = useCMSInfo()

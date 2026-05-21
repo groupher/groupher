@@ -8,9 +8,9 @@ import Select from '~/widgets/Select'
 
 import { FIELD } from '../constant'
 import useBaseInfo from '../logic/useBaseInfo'
-import useSalon from '../salon/basic_info/base_info'
 import SavingBar from '../SavingBar'
 import DangerZone from './DangerZone'
+import useSalon from './salon/base_info'
 
 export default function BaseInfo() {
   const { locale, desc, title, slug, homepage, introduction, isTouched, edit } = useBaseInfo()

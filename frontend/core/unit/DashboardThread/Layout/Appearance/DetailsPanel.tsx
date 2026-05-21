@@ -1,10 +1,10 @@
 import useTrans from '~/hooks/useTrans'
 import CustomPageBg, { type TPageBgDraft } from '~/widgets/CustomPageBg'
 
-import useSalon from '../../salon/layout/details_panel'
 import SectionLabel from '../../SectionLabel'
 import GlassOpacity from './GlassOpacity'
 import PrimaryColors from './PrimaryColors'
+import useSalon from './salon/details_panel'
 import type { TThemePresetOverrides } from './spec'
 
 type TProps = {

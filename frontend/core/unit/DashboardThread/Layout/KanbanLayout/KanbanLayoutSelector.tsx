@@ -4,10 +4,10 @@ import CheckLabel from '~/widgets/CheckLabel'
 
 import { FIELD } from '../../constant'
 import useKanban from '../../logic/useKanban'
-import useSalon, { cnMerge } from '../../salon/layout/kanban_layout/layout_selector'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import KanbanLayoutPreview from './KanbanLayoutPreview'
+import useSalon, { cnMerge } from './salon/layout_selector'
 
 export default function KanbanLayoutSelector() {
   const s = useSalon()

@@ -2,8 +2,8 @@ import { useState } from 'react'
 
 import { THEME_PRESET_OPTIONS } from '~/const/theme_preset'
 
-import useSalon, { ROTATE_ANGLES } from '../../salon/layout/preset_list'
 import PresetCard from './PresetCard'
+import useSalon, { ROTATE_ANGLES } from './salon/preset_list'
 import type { TThemePresetOption } from './spec'
 
 type TProps = {

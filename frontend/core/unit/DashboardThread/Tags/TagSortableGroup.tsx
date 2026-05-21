@@ -2,7 +2,7 @@ import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { type MutableRefObject, type ReactNode, memo } from 'react'
 
-import { cn } from '../salon/tags/group_block'
+import { cn } from './salon/group_block'
 
 type TProps = {
   children: ReactNode

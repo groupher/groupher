@@ -13,11 +13,11 @@ import type { TDsbPath } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 
 import { DSB_MENU_ICON, MENU_VIEW } from '../constant'
-import useSalon, { cn } from '../salon/side_menu/group'
 import type { TDsbMenuGroup } from '../spec'
 import ActiveMark from './ActiveMark'
 import { SUBMENU_CONFIG, SUBMENU_ROUTE_VIEW } from './constant'
 import { dispatchMenuView, type TMenuView } from './events'
+import useSalon, { cn } from './salon/group'
 
 type TProps = {
   activeMainTab: TDsbPath

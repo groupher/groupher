@@ -9,8 +9,8 @@ import CommunityBrand from '~/unit/CommunityBrand'
 import SocialList from '~/unit/SocialList'
 
 import useFooter from '../../logic/useFooter'
-import useSalon, { cn } from '../../salon/footer/templates/group'
 import { isValidFooterLink } from '../Editors/model'
+import useSalon, { cn } from '../salon/templates/group'
 
 type TProps = {
   links: readonly TLinkItem[]

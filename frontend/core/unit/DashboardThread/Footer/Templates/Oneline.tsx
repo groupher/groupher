@@ -7,7 +7,7 @@ import CommunityBrand from '~/unit/CommunityBrand'
 import SocialList from '~/unit/SocialList'
 
 import useFooter from '../../logic/useFooter'
-import useSalon, { cn } from '../../salon/footer/templates/oneline'
+import useSalon, { cn } from '../salon/templates/oneline'
 
 type TProps = {
   links: readonly TFooterOnelineLink[]

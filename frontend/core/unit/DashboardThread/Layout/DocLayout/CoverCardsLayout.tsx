@@ -1,4 +1,4 @@
-import useSalon, { cnMerge } from '../../salon/layout/doc_layout/cover_cards_layout'
+import useSalon, { cnMerge } from './salon/cover_cards_layout'
 
 export default function CoverCardsLayout() {
   const s = useSalon()

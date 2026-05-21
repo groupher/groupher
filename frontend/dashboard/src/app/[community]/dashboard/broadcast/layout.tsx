@@ -4,8 +4,8 @@ import { BROADCAST_TABS } from '~/const/route'
 import VIEW from '~/const/view'
 import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
 import useTrans from '~/hooks/useTrans'
+import useSalon from '~/unit/DashboardThread/Broadcast/salon'
 import Portal from '~/unit/DashboardThread/Portal'
-import useSalon from '~/unit/DashboardThread/salon/broadcast'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 export default function Layout({ children }) {

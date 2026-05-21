@@ -5,7 +5,7 @@ import { KANBAN_BOARD } from '~/const/thread'
 import type { TKanbanBoard } from '~/spec'
 
 import useKanban from '../../../logic/useKanban'
-import useSalon, { cn } from '../../../salon/layout/kanban_layout/bg_colors_setter/classic_layout'
+import useSalon, { cn } from '../salon/bg_colors_setter/classic_layout'
 import KanbanList from './KanbanList'
 
 type TProps = {

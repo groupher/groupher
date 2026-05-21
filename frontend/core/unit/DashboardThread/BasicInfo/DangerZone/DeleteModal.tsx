@@ -4,7 +4,7 @@ import useTrans from '~/hooks/useTrans'
 import Modal from '~/widgets/Modal'
 import NoticeBar from '~/widgets/NoticeBar'
 
-import useSalon from '../../salon/basic_info/danger_zone/modal'
+import useSalon from '../salon/danger_zone/modal'
 import ConfirmFooter from './ConfirmFooter'
 // import from '~/widgets/Alert'
 import List from './List'

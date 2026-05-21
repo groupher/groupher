@@ -1,6 +1,6 @@
 import useTrans from '~/hooks/useTrans'
 
-import useSalon from '../../../salon/cms/docs/tree/note'
+import useSalon from '../../salon/docs/tree/note'
 
 export default function Note() {
   const s = useSalon()

@@ -5,7 +5,7 @@ import type { TSpace } from '~/spec'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import ThemeSectionSelector from '~/widgets/ThemeSectionSelector'
 
-import useSalon, { cnMerge } from '../salon/section_label'
+import useSalon, { cnMerge } from './salon'
 
 type TProps = {
   title: string

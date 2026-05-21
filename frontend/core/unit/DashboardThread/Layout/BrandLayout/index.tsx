@@ -6,9 +6,9 @@ import CheckLabel from '~/widgets/CheckLabel'
 
 import { FIELD } from '../../constant'
 import useBrand from '../../logic/useBrand'
-import useSalon, { cn } from '../../salon/layout/brand_layout'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
+import useSalon, { cn } from './salon'
 
 const BRAND_LAYOUT_OPTIONS = [
   {

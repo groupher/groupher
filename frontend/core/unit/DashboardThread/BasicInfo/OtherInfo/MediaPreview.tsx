@@ -5,7 +5,7 @@ import ArrowSVG from '~/icons/ArrowUpRight'
 import Img from '~/Img'
 import type { TMediaReport } from '~/spec'
 
-import useSalon from '../../salon/basic_info/other_info/media_preview'
+import useSalon from '../salon/other_info/media_preview'
 
 type TProps = {
   item: TMediaReport

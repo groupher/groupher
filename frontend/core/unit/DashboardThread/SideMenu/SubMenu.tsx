@@ -6,9 +6,9 @@ import useTrans from '~/hooks/useTrans'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
 import useCommunity from '~/stores/community/hooks'
 
-import useSalon, { cn } from '../salon/side_menu/doc'
 import ActiveMark from './ActiveMark'
 import type { TSubMenuItem, TSubMenuScope } from './constant'
+import useSalon, { cn } from './salon/doc'
 import SubMenuBack from './SubMenuBack'
 
 type TProps = {

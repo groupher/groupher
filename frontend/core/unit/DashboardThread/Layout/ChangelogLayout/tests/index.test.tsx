@@ -20,7 +20,7 @@ vi.mock('../../../logic/useChangelog', () => ({
   }),
 }))
 
-vi.mock('../../../salon/layout/changelog_layout', () => ({
+vi.mock('../salon', () => ({
   default: () => ({
     wrapper: 'wrapper',
     select: 'select',

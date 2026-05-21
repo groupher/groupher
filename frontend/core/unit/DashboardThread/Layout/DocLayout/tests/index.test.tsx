@@ -22,7 +22,7 @@ vi.mock('../../../logic/useDoc', () => ({
   }),
 }))
 
-vi.mock('../../../salon/layout/doc_layout', () => ({
+vi.mock('../salon', () => ({
   default: () => ({
     wrapper: 'wrapper',
     select: 'select',

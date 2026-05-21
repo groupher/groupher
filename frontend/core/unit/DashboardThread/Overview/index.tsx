@@ -1,8 +1,8 @@
 import useTrans from '~/hooks/useTrans'
 
 import Portal from '../Portal'
-import useSalon from '../salon/overview'
 import BasicNumbers from './BasicNumbers'
+import useSalon from './salon'
 
 export default function Overview() {
   const s = useSalon()

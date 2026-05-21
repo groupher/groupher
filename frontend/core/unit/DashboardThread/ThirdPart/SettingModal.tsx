@@ -7,7 +7,7 @@ import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import Input from '~/widgets/Input'
 import Modal from '~/widgets/Modal'
 
-import useSalon, { cn } from '../salon/third_part/setting_modal'
+import useSalon, { cn } from './salon/setting_modal'
 import type { TIntegrateAnalysisTool } from './spec'
 
 type TProps = {

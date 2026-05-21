@@ -4,7 +4,7 @@ import useTrans from '~/hooks/useTrans'
 import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
 
-import useSalon from '../../salon/domain/custom/domain_adder'
+import useSalon from '../salon/custom/domain_adder'
 
 type TProps = {
   onNext: () => void

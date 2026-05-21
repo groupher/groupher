@@ -1,5 +1,5 @@
-import useSalon from '../salon/widgets'
 import CodeArea from './CodeArea'
+import useSalon from './salon'
 
 export default function Popup() {
   const s = useSalon()

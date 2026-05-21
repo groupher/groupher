@@ -4,7 +4,7 @@ import Select from '~/widgets/Select'
 
 import { TW_CARD_OPTIONS } from '../constant'
 import useSEO from '../logic/useSEO'
-import useSalon from '../salon/seo/twitter_graph'
+import useSalon from './salon/twitter_graph'
 import TwitterPreview from './TwitterPreview'
 
 export default function TwitterGraph() {

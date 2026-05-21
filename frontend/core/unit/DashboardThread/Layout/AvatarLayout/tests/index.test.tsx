@@ -20,7 +20,7 @@ vi.mock('../../../logic/useAvatar', () => ({
   }),
 }))
 
-vi.mock('../../../salon/layout/avatar_layout', () => ({
+vi.mock('../salon', () => ({
   default: () => ({
     wrapper: 'wrapper',
     select: 'select',

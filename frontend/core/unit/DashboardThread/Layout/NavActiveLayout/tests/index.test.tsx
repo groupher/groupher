@@ -31,7 +31,7 @@ vi.mock('../../../logic/useNavActiveLayout', () => ({
   default: () => hookState,
 }))
 
-vi.mock('../../../salon/layout/nav_active_layout', () => ({
+vi.mock('../salon', () => ({
   default: () => ({
     wrapper: 'wrapper',
     select: 'select',

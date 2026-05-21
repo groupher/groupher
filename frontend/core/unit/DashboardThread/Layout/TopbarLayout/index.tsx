@@ -6,10 +6,10 @@ import ColorSelector from '~/widgets/ColorSelector'
 import { FIELD } from '../../constant'
 import useCommunityLayout from '../../logic/useCommunityLayout'
 import useTopbar from '../../logic/useTopbar'
-import useSalon, { cn } from '../../salon/layout/topbar_layout'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import CommunityLayoutPreviewContent from '../CommunityLayout/CommunityLayoutPreviewContent'
+import useSalon, { cn } from './salon'
 
 const TOPBAR_LAYOUT_OPTIONS = [
   {

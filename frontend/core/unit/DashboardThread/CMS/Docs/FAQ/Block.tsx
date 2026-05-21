@@ -10,7 +10,7 @@ import Markdown from '~/widgets/Markdown'
 
 import type { TProps as TIndex } from '.'
 import useFAQ from '../../../logic/useFAQ'
-import useSalon, { cn } from '../../../salon/cms/docs/faq/block'
+import useSalon, { cn } from '../../salon/docs/faq/block'
 import Editor from './Editor'
 
 type TProps = {

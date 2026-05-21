@@ -4,8 +4,8 @@ import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 
 import { MENU_VIEW } from '../constant'
-import useSalon from '../salon/side_menu/sub_menu_back'
 import { dispatchMenuView, resolveMainTab } from './events'
+import useSalon from './salon/sub_menu_back'
 
 type TProps = {
   currentBase: string

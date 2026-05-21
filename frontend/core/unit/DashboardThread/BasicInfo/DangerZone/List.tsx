@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import type { TSpace } from '~/spec'
 
-import useSalon from '../../salon/basic_info/danger_zone/list'
+import useSalon from '../salon/danger_zone/list'
 
 type TProps = {
   items: string[]

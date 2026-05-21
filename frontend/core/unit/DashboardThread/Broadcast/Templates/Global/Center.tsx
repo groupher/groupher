@@ -5,7 +5,7 @@ import CrossSVG from '~/icons/CloseCross'
 import NotifySVG from '~/icons/Trumpet'
 
 import useBroadcast from '../../../logic/useBroadcast'
-import useSalon, { cn } from '../../../salon/broadcast/templates/global/default'
+import useSalon, { cn } from '../../salon/templates/global/default'
 
 type TProps = {
   onSelect?: () => void

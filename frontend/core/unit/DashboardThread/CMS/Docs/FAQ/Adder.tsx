@@ -3,7 +3,7 @@ import AdderSVG from '~/icons/Plus'
 import Button from '~/widgets/Buttons/Button'
 
 import useDoc from '../../../logic/useDoc'
-import useSalon from '../../../salon/cms/docs/faq/adder'
+import useSalon from '../../salon/docs/faq/adder'
 
 export default function Adder() {
   const s = useSalon()

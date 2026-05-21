@@ -5,9 +5,9 @@ import CheckLabel from '~/widgets/CheckLabel'
 
 import { FIELD } from '../../constant'
 import useNavActiveLayout from '../../logic/useNavActiveLayout'
-import useSalon, { cnMerge } from '../../salon/layout/nav_active_layout'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
+import useSalon, { cnMerge } from './salon'
 
 const LAYOUT_OPTIONS = [
   {

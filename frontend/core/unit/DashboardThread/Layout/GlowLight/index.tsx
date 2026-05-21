@@ -7,9 +7,9 @@ import Radio from '~/widgets/Switcher/Radio'
 
 import { FIELD } from '../../constant'
 import useGlowLight from '../../logic/useGlowLight'
-import useSalon, { cn } from '../../salon/layout/glow_light'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
+import useSalon, { cn } from './salon'
 
 export default function GlowLight() {
   const s = useSalon()

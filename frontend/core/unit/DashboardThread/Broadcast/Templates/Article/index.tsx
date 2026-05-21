@@ -5,7 +5,7 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import Button from '~/widgets/Buttons/Button'
 
 import useBroadcast from '../../../logic/useBroadcast'
-import useSalon, { cn } from '../../../salon/broadcast/templates/article'
+import useSalon, { cn } from '../../salon/templates/article'
 import Default from './Default'
 import Simple from './Simple'
 

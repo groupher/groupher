@@ -1,12 +1,12 @@
 import useTrans from '~/hooks/useTrans'
 import ThemeSectionSelector from '~/widgets/ThemeSectionSelector'
 
-import useSalon from '../../salon/layout/details_panel'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
 import DetailsPanel from './DetailsPanel'
 import useAppearance from './hooks'
 import PresetList from './PresetList'
+import useSalon from './salon/details_panel'
 
 export default function Appearance() {
   const { t } = useTrans()

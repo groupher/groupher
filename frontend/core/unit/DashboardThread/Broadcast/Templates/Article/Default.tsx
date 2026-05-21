@@ -4,7 +4,7 @@ import { BROADCAST_ARTICLE_LAYOUT } from '~/const/layout'
 import ArticleBroadcast from '~/unit/ArticleView/ArticleBroadcast'
 
 import useBroadcast from '../../../logic/useBroadcast'
-import useSalon, { cn } from '../../../salon/broadcast/templates/article/default'
+import useSalon, { cn } from '../../salon/templates/article/default'
 
 type TProps = {
   onSelect?: () => void

@@ -4,7 +4,7 @@ import type { TMediaReport } from '~/spec'
 import AddButton from '~/widgets/Buttons/AddButton'
 
 import useBaseInfo from '../../logic/useBaseInfo'
-import useSalon from '../../salon/basic_info/other_info/media_editor'
+import useSalon from '../salon/other_info/media_editor'
 import InputBox from './InputBox'
 
 export default function MediaEditor() {

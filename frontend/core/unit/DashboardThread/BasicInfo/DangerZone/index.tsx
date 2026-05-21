@@ -4,7 +4,7 @@ import useTrans from '~/hooks/useTrans'
 import InfoSVG from '~/icons/Info'
 import Button from '~/widgets/Buttons/Button'
 
-import useSalon, { cn } from '../../salon/basic_info/danger_zone'
+import useSalon, { cn } from '../salon/danger_zone'
 import ArchiveModal from './ArchiveModal'
 import DeleteModal from './DeleteModal'
 import PublicModal from './PublicModal'

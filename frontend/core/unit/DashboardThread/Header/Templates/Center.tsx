@@ -15,7 +15,7 @@ import CommunityBrand from '~/unit/CommunityBrand'
 import CustomHeaderLinks from '~/unit/HeaderLinks/HeaderTemplate'
 
 import useHeader from '../../logic/useHeader'
-import useSalon, { cn } from '../../salon/header/templates/center'
+import useSalon, { cn } from '../salon/templates/center'
 
 type TProps = {
   threads: readonly TCommunityThread[]
