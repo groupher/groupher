@@ -32,6 +32,8 @@ describe('injectDsbColors', () => {
         primaryColorDark: '#fff',
         accentColor: 'var(--malicious)',
         accentColorDark: '',
+        pageBg: '</style><script>alert(2)</script>',
+        pageBgDark: 'var(--bad-bg)',
       },
     } satisfies Partial<TParseDashboard>)
 
@@ -43,6 +45,8 @@ describe('injectDsbColors', () => {
     expect(styleText).toContain('--color-page-custom-dark: #25161d;')
     expect(styleText).not.toContain('</style>')
     expect(styleText).not.toContain('alert(1)')
+    expect(styleText).not.toContain('alert(2)')
     expect(styleText).not.toContain('var(--malicious)')
+    expect(styleText).not.toContain('var(--bad-bg)')
   })
 })

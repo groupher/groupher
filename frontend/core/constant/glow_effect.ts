@@ -305,7 +305,7 @@ export const buildGlowBackground = (glow: TGlowEffect | null): string => {
       radial-gradient(circle at ${glow.LEFT.X} ${glow.LEFT.Y}, ${glow.LEFT.COLOR} 0, transparent ${glow.LEFT.RADIUS}),
       radial-gradient(circle at ${glow.RIGHT1.X} ${glow.RIGHT1.Y}, ${glow.RIGHT1.COLOR} 0, transparent ${glow.RIGHT1.RADIUS}),
       radial-gradient(circle at ${glow.MAIN.X} ${glow.MAIN.Y}, ${glow.MAIN.COLOR} 0, transparent ${glow.MAIN.RADIUS}),
-      radial-gradient(circle at ${glow.RIGHT2.X} ${glow.RIGHT2.Y}, ${glow.RIGHT2.COLOR} 0, transparent ${glow.RIGHT1.RADIUS})
+      radial-gradient(circle at ${glow.RIGHT2.X} ${glow.RIGHT2.Y}, ${glow.RIGHT2.COLOR} 0, transparent ${glow.RIGHT2.RADIUS})
     `
 }
 

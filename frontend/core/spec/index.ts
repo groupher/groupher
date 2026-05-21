@@ -28,7 +28,7 @@ export type TContainer = 'body' | 'drawer'
 
 type TGlowPosition = 'fixed' | 'absolute'
 export type TGlowEffect = {
-  glowType: string
+  glowType: string | null
   glowPosition?: TGlowPosition
   glowFixed?: boolean
   glowOpacity?: number

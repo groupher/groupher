@@ -81,6 +81,17 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
     assert errors_on(changeset).theme_overwrite == ["is invalid"]
   end
 
+  test "rejects non-map theme overwrite values instead of normalizing them to empty maps" do
+    changeset =
+      DashboardLayout.changeset(%DashboardLayout{}, %{
+        theme_preset: "custom",
+        theme_overwrite: 42
+      })
+
+    refute changeset.valid?
+    assert errors_on(changeset).theme_overwrite == ["is invalid"]
+  end
+
   test "ignores empty theme overwrite keys without raising" do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{

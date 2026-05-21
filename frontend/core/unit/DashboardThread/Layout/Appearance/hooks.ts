@@ -136,7 +136,7 @@ export default function useAppearance() {
         ...selectedOverwriteRef.current,
         ...patch,
       }
-      const previewRawBg = resolveRawBg(selectedPageBgDraftRef.current, isLightTheme)
+      const previewRawBg = resolveRawBg(toPageBgDraft(nextOverwrite), isLightTheme)
       const activeGaussBlur = isLightTheme ? nextOverwrite.gaussBlur : nextOverwrite.gaussBlurDark
       const previewBackground = previewRawBg ? blurRGB(previewRawBg, activeGaussBlur) : null
       const glowOpacityField = isLightTheme

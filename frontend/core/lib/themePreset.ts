@@ -105,10 +105,11 @@ export const resolveThemePreset = (source: TThemePresetSource = {}): TResolvedTh
   const isCustomPreset = source.themePreset === THEME_PRESET.CUSTOM
   const backendTokens = normalizeThemeTokenSource(source.themeTokens)
   const overwrite = normalizeThemeTokenSource(source.themeOverwrite)
-  const customTokens =
-    Object.keys(backendTokens).length > 0
-      ? backendTokens
-      : pickThemePresetFields(overwrite as Partial<TResolvedThemePreset>)
+  const overwriteTokens = pickThemePresetFields(overwrite as Partial<TResolvedThemePreset>)
+  const customTokens = {
+    ...overwriteTokens,
+    ...backendTokens,
+  }
 
   return {
     ...selectedPreset.overwrite,

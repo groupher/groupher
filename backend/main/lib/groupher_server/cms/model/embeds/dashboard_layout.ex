@@ -105,7 +105,10 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
     end
   end
 
-  defp normalize_theme_overwrite_map(value), do: {:ok, ThemePreset.normalize_overwrite(value)}
+  defp normalize_theme_overwrite_map(value) when is_map(value),
+    do: {:ok, ThemePreset.normalize_overwrite(value)}
+
+  defp normalize_theme_overwrite_map(_value), do: :error
 
   defp elem_or_nil({:ok, value}), do: value
   defp elem_or_nil(:error), do: nil

@@ -227,6 +227,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         dashboard {
           layout {
             themePreset
+            themeOverwrite
             themeTokens
             kanbanBoards
             footerLayout
@@ -254,7 +255,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         themePreset: "CUSTOM",
         themeOverwrite:
           Jason.encode!(%{
-            "primaryColor" => "CUSTOM",
+            "primaryColor" => "#112233",
             "accentColor" => "YELLOW",
             "gaussBlur" => 80.5,
             "glowType" => "PINK",
@@ -290,6 +291,9 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert get_in(updated, ["dashboard", "layout", "navActiveLayout"]) == "SOFT_BG"
       assert get_in(updated, ["dashboard", "layout", "themePreset"]) == "CUSTOM"
 
+      assert get_in(updated, ["dashboard", "layout", "themeOverwrite", "primaryColor"]) ==
+               "#112233"
+
       assert get_in(updated, ["dashboard", "layout", "themeTokens", "accentColor"]) ==
                "YELLOW"
 
@@ -306,7 +310,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
       assert found.dashboard.layout.theme_preset == :custom
-      assert found.dashboard.layout.theme_overwrite["primaryColor"] == "CUSTOM"
+      assert found.dashboard.layout.theme_overwrite["primaryColor"] == "#112233"
       assert found.dashboard.layout.post_layout == :cover
       assert found.dashboard.layout.kanban_layout == :waterfall
       assert found.dashboard.layout.kanban_card_layout == :full
