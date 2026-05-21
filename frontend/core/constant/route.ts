@@ -84,7 +84,6 @@ export const DSB_CHANGELOG_ROUTE = {
 export const DSB_LAYOUT_ROUTE = {
   GENERAL: 'general',
   APPEARANCE: 'appearance',
-  THEME: 'theme',
   WALLPAPER: 'wallpaper',
   POST: 'post',
   KANBAN: 'kanban',
@@ -174,7 +173,6 @@ export const LAYOUT_TABS: TDsbTabs = {
   items: [
     { title: 'dsb.layout.general', slug: DSB_LAYOUT_ROUTE.GENERAL, segment: '' },
     { title: 'dsb.layout.appearance', slug: DSB_LAYOUT_ROUTE.APPEARANCE },
-    { title: 'dsb.layout.theme', slug: DSB_LAYOUT_ROUTE.THEME },
     { title: 'dsb.layout.wallpaper', slug: DSB_LAYOUT_ROUTE.WALLPAPER },
     { title: 'dsb.layout.kanban', slug: DSB_LAYOUT_ROUTE.KANBAN },
   ],

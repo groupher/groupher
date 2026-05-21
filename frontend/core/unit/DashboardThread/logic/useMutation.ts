@@ -100,6 +100,9 @@ export default function useMutation(): TRet {
         FIELD.TEXT_DIGEST,
         FIELD.GAUSS_BLUR,
         FIELD.GAUSS_BLUR_DARK,
+        FIELD.GLOW_TYPE,
+        FIELD.GLOW_FIXED,
+        FIELD.GLOW_OPACITY,
       ]
     }
 
@@ -159,6 +162,9 @@ export default function useMutation(): TRet {
         textDigest: storeRef.current.textDigest,
         gaussBlur: storeRef.current.gaussBlur,
         gaussBlurDark: storeRef.current.gaussBlurDark,
+        glowType: storeRef.current.glowType,
+        glowFixed: storeRef.current.glowFixed,
+        glowOpacity: storeRef.current.glowOpacity,
       }
     }
 
@@ -447,6 +453,9 @@ export default function useMutation(): TRet {
           textDigest: storeRef.current.textDigest,
           gaussBlur: storeRef.current.gaussBlur,
           gaussBlurDark: storeRef.current.gaussBlurDark,
+          glowType: storeRef.current.glowType,
+          glowFixed: storeRef.current.glowFixed,
+          glowOpacity: storeRef.current.glowOpacity,
         })
         return
       }

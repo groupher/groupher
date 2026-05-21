@@ -3,6 +3,7 @@ import CustomPageBg, { type TPageBgDraft } from '~/widgets/CustomPageBg'
 
 import SectionLabel from '../../SectionLabel'
 import GlassOpacity from './GlassOpacity'
+import PageGlow from './PageGlow'
 import PrimaryColors from './PrimaryColors'
 import useSalon from './salon/details_panel'
 import type { TThemePresetOverrides } from './spec'
@@ -49,6 +50,7 @@ export default function DetailsPanel({
           onThemePresetCommit={onThemePresetCommit}
         />
         <div className={s.divider} />
+
         <CustomPageBg
           key={pageBgResetKey}
           draft={selectedPageBgDraft}
@@ -61,13 +63,15 @@ export default function DetailsPanel({
           showThemeSelector={false}
         />
 
-        <div className={s.divider} />
-
         <GlassOpacity
           selectedOverrides={selectedOverrides}
           isLightTheme={isLightTheme}
           onThemePresetCommit={onThemePresetCommit}
         />
+
+        <div className={s.divider} />
+
+        <PageGlow />
       </div>
     </div>
   )

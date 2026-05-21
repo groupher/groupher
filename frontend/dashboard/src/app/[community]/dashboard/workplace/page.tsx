@@ -79,12 +79,6 @@ export default function WorkplaceCoversPage() {
                 Icon: BindSVG,
               },
               {
-                title: '主题/背景',
-                desc: '社区主题色及各种背景效果。',
-                seg: `${DSB_ROUTE.LAYOUT}/${DSB_LAYOUT_ROUTE.THEME}`,
-                Icon: ThemeSVG,
-              },
-              {
                 title: '讨论区',
                 desc: '讨论区个性化设置。',
                 seg: `${DSB_ROUTE.POST}/${DSB_POST_ROUTE.LAYOUT}`,
