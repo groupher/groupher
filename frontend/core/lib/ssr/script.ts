@@ -1,7 +1,10 @@
-import { getDefaultCustomColor } from '~/const/colors'
 import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
 import { DEFAULT_TEXT_DIGEST, DEFAULT_TEXT_TITLE } from '~/const/theme_preset'
-import { resolveThemePreset, resolveThemePresetPageBgCssVar } from '~/lib/themePreset'
+import {
+  resolveThemePreset,
+  resolveThemePresetColor,
+  resolveThemePresetPageBgCssVar,
+} from '~/lib/themePreset'
 import type { TParseDashboard } from '~/spec'
 
 export const ssrThemeInitScript = () => `
@@ -23,8 +26,6 @@ export const ssrThemeInitScript = () => `
 `
 
 type TCSSVarMap = Record<string, string>
-const HEX_COLOR_RE = /^#[0-9a-f]{6}$/i
-
 const serializeCSSVars = (selector: string, vars: TCSSVarMap): string => {
   const entries = Object.entries(vars)
 
@@ -32,18 +33,6 @@ const serializeCSSVars = (selector: string, vars: TCSSVarMap): string => {
 
   const body = entries.map(([key, value]) => `  ${key}: ${value};`).join('\n')
   return `${selector} {\n${body}\n}`
-}
-
-const resolveSafeColor = (
-  value: string | undefined,
-  theme: typeof THEME.LIGHT | typeof THEME.DARK,
-  fallback = getDefaultCustomColor(theme),
-) => {
-  if (value && HEX_COLOR_RE.test(value)) {
-    return value
-  }
-
-  return fallback
 }
 
 // Build first-paint dashboard color variables on the server so custom colors do
@@ -55,33 +44,22 @@ const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string
     [
       ':root',
       {
-        '--color-primary-custom': resolveSafeColor(themePreset.primaryCustomColor, THEME.LIGHT),
-        '--color-primary-custom-dark': resolveSafeColor(
-          themePreset.primaryCustomColorDark,
-          THEME.DARK,
+        '--color-primary-custom': resolveThemePresetColor(themePreset.primaryColor, '#333333'),
+        '--color-primary-custom-dark': resolveThemePresetColor(
+          themePreset.primaryColorDark,
+          '#ffffff',
         ),
-        '--color-accent-custom': resolveSafeColor(themePreset.accentCustomColor, THEME.LIGHT),
-        '--color-accent-custom-dark': resolveSafeColor(
-          themePreset.accentCustomColorDark,
-          THEME.DARK,
+        '--color-accent-custom': resolveThemePresetColor(themePreset.accentColor, '#333333'),
+        '--color-accent-custom-dark': resolveThemePresetColor(
+          themePreset.accentColorDark,
+          '#ffffff',
         ),
-        '--color-title': resolveSafeColor(themePreset.textTitle, THEME.LIGHT, DEFAULT_TEXT_TITLE),
-        '--color-digest': resolveSafeColor(
-          themePreset.textDigest,
-          THEME.LIGHT,
-          DEFAULT_TEXT_DIGEST,
-        ),
-        '--color-page-custom': resolveThemePresetPageBgCssVar(
-          THEME.LIGHT,
-          themePreset.pageBg,
-          themePreset.pageCustomBg,
-          themePreset.pageCustomIntensity,
-        ),
+        '--color-title': resolveThemePresetColor(themePreset.textTitle, DEFAULT_TEXT_TITLE),
+        '--color-digest': resolveThemePresetColor(themePreset.textDigest, DEFAULT_TEXT_DIGEST),
+        '--color-page-custom': resolveThemePresetPageBgCssVar(THEME.LIGHT, themePreset.pageBg),
         '--color-page-custom-dark': resolveThemePresetPageBgCssVar(
           THEME.DARK,
           themePreset.pageBgDark,
-          themePreset.pageCustomBgDark,
-          themePreset.pageCustomIntensityDark,
         ),
       },
     ],

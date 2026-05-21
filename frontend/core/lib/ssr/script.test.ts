@@ -7,16 +7,12 @@ describe('injectDsbColors', () => {
     const styleText = injectDsbColors({
       themePreset: 'CUSTOM',
       themeTokens: {
-        primaryCustomColor: '#112233',
-        primaryCustomColorDark: '#223344',
-        accentCustomColor: '#334455',
-        accentCustomColorDark: '#445566',
-        pageBg: 'CUSTOM',
-        pageBgDark: 'CUSTOM',
-        pageCustomBg: 190,
-        pageCustomBgDark: 10,
-        pageCustomIntensity: 75,
-        pageCustomIntensityDark: 60,
+        primaryColor: '#112233',
+        primaryColorDark: '#223344',
+        accentColor: '#334455',
+        accentColorDark: '#445566',
+        pageBg: '#ecfbfe',
+        pageBgDark: '#3d2121',
       },
     } satisfies Partial<TParseDashboard>)
 
@@ -30,11 +26,12 @@ describe('injectDsbColors', () => {
 
   it('falls back to safe defaults when dashboard colors are invalid', () => {
     const styleText = injectDsbColors({
+      themePreset: 'CUSTOM',
       themeTokens: {
-        primaryCustomColor: 'red;}</style><script>alert(1)</script>',
-        primaryCustomColorDark: '#fff',
-        accentCustomColor: 'var(--malicious)',
-        accentCustomColorDark: '',
+        primaryColor: 'red;}</style><script>alert(1)</script>',
+        primaryColorDark: '#fff',
+        accentColor: 'var(--malicious)',
+        accentColorDark: '',
       },
     } satisfies Partial<TParseDashboard>)
 

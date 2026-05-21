@@ -1,7 +1,5 @@
-import THEME from '~/const/theme'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
-import { getPageBgCustomColor } from '~/lib/color'
 import type { TTransKey } from '~/spec'
 import Checker from '~/widgets/Checker'
 
@@ -30,14 +28,11 @@ export default function PresetCard({
   const { t } = useTrans()
   const { isLightTheme } = useTheme()
   const presetKey = preset.value.toLowerCase()
-  const presetPrimaryCustomColor = isLightTheme
-    ? preset.overwrite.primaryCustomColor
-    : preset.overwrite.primaryCustomColorDark
-  const cardBg = getPageBgCustomColor(
-    isLightTheme ? THEME.LIGHT : THEME.DARK,
-    isLightTheme ? preset.overwrite.pageCustomBg : preset.overwrite.pageCustomBgDark,
-    isLightTheme ? preset.overwrite.pageCustomIntensity : preset.overwrite.pageCustomIntensityDark,
-  )
+  const cardBg = isLightTheme ? preset.overwrite.pageBg : preset.overwrite.pageBgDark
+  const primaryColor = isLightTheme
+    ? preset.overwrite.primaryColor
+    : preset.overwrite.primaryColorDark
+  const accentColor = isLightTheme ? preset.overwrite.accentColor : preset.overwrite.accentColorDark
 
   return (
     <div
@@ -59,9 +54,8 @@ export default function PresetCard({
         <div className={s.preview} style={{ backgroundColor: cardBg }}>
           <MiniBars
             active={active}
-            primaryColor={preset.overwrite.primaryColor}
-            primaryCustomColor={presetPrimaryCustomColor}
-            accentColor={preset.overwrite.accentColor}
+            primaryColor={primaryColor}
+            accentColor={accentColor}
             textTitle={preset.overwrite.textTitle}
             textDigest={preset.overwrite.textDigest}
           />

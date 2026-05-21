@@ -17,7 +17,8 @@ export default function Appearance() {
     selectedPageBgDraft,
     isTouched,
     isLightTheme,
-    primaryCustomColor,
+    primaryColor,
+    accentColor,
     selectPreset,
     previewPageBg,
     previewThemePresetPatch,
@@ -42,7 +43,8 @@ export default function Appearance() {
       <DetailsPanel
         selectedOverwrite={selectedOverwrite}
         selectedPageBgDraft={selectedPageBgDraft}
-        primaryCustomColor={primaryCustomColor}
+        primaryColor={primaryColor}
+        accentColor={accentColor}
         isLightTheme={isLightTheme}
         pageBgResetKey={pageBgResetKey}
         onPageBgPreview={previewPageBg}

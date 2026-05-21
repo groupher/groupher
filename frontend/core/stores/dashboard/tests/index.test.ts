@@ -1,4 +1,3 @@
-import { COLOR } from '~/const/colors'
 import { DEFAULT_ENABLE } from '~/const/dashboard'
 import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import METRIC from '~/const/metric'
@@ -144,16 +143,12 @@ describe('stores/dashboard', () => {
     })
 
     expect(store.themePreset).toBe('CLAUDE')
-    expect(store.themeTokens.pageBg).toBe(COLOR.CUSTOM)
-    expect(store.themeTokens.pageBgDark).toBe(COLOR.CUSTOM)
-    expect(store.themeTokens.pageCustomBg).toBe(claude.overwrite.pageCustomBg)
-    expect(store.themeTokens.pageCustomBgDark).toBe(claude.overwrite.pageCustomBgDark)
-    expect(store.themeTokens.pageCustomIntensity).toBe(claude.overwrite.pageCustomIntensity)
-    expect(store.themeTokens.pageCustomIntensityDark).toBe(claude.overwrite.pageCustomIntensityDark)
-    expect(store.themeTokens.primaryColor).toBe(COLOR.CUSTOM)
-    expect(store.themeTokens.primaryCustomColor).toBe('#c96442')
-    expect(store.themeTokens.primaryCustomColorDark).toBe('#d97757')
-    expect(store.themeTokens.accentColor).toBe(COLOR.BLUE)
+    expect(store.themeTokens.pageBg).toBe(claude.overwrite.pageBg)
+    expect(store.themeTokens.pageBgDark).toBe(claude.overwrite.pageBgDark)
+    expect(store.themeTokens.primaryColor).toBe('#c96442')
+    expect(store.themeTokens.primaryColorDark).toBe('#d97757')
+    expect(store.themeTokens.accentColor).toBe('#5073c6')
+    expect(store.themeTokens.accentColorDark).toBe('#3a7ec7')
     expect(store.textTitle).toBe(claude.overwrite.textTitle)
     expect(store.textDigest).toBe(claude.overwrite.textDigest)
     expect(store.anyTouched(['themePreset', 'themeTokens', 'textTitle', 'textDigest'])).toBe(true)

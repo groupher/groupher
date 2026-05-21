@@ -26,7 +26,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{
         theme_preset: "custom",
-        theme_overwrite: %{"primaryColor" => "#B85C43", "pageBg" => "CUSTOM"}
+        theme_overwrite: %{"primaryColor" => "#B85C43", "pageBg" => "#fffaf0"}
       })
 
     assert changeset.valid?
@@ -55,7 +55,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
         theme_overwrite:
           Jason.encode!(%{
             "accentColor" => "YELLOW",
-            "accentCustomColor" => "#112233",
+            "accentColorDark" => "#112233",
             "unknown" => "ignored"
           })
       })
@@ -66,7 +66,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
 
     assert layout.theme_overwrite == %{
              "accentColor" => "YELLOW",
-             "accentCustomColor" => "#112233"
+             "accentColorDark" => "#112233"
            }
   end
 
@@ -85,20 +85,20 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{
         theme_preset: "custom",
-        theme_overwrite: Jason.encode!(%{"" => "ignored", "accentColor" => "YELLOW"})
+        theme_overwrite: Jason.encode!(%{"" => "ignored", "accentColor" => "#112233"})
       })
 
     assert changeset.valid?
 
     layout = Ecto.Changeset.apply_changes(changeset)
 
-    assert layout.theme_overwrite == %{"accentColor" => "YELLOW"}
+    assert layout.theme_overwrite == %{"accentColor" => "#112233"}
   end
 
   test "keeps theme overwrite when updating non-preset layout fields" do
     changeset =
       DashboardLayout.changeset(
-        %DashboardLayout{theme_overwrite: %{"accentColor" => "YELLOW"}},
+        %DashboardLayout{theme_overwrite: %{"accentColor" => "#112233"}},
         %{post_layout: "COVER"}
       )
 
@@ -107,7 +107,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
     layout = Ecto.Changeset.apply_changes(changeset)
 
     assert layout.post_layout == :cover
-    assert layout.theme_overwrite == %{"accentColor" => "YELLOW"}
+    assert layout.theme_overwrite == %{"accentColor" => "#112233"}
   end
 
   test "rejects invalid theme preset payloads" do

@@ -11,7 +11,8 @@ import type { TThemePresetOverwrite } from './spec'
 type TProps = {
   selectedOverwrite: TThemePresetOverwrite
   selectedPageBgDraft: TPageBgDraft
-  primaryCustomColor: string
+  primaryColor: string
+  accentColor: string
   isLightTheme: boolean
   pageBgResetKey: string
   onPageBgPreview: (patch: Partial<TPageBgDraft>) => void
@@ -25,7 +26,8 @@ type TProps = {
 export default function DetailsPanel({
   selectedOverwrite,
   selectedPageBgDraft,
-  primaryCustomColor,
+  primaryColor,
+  accentColor,
   isLightTheme,
   pageBgResetKey,
   onPageBgPreview,
@@ -50,8 +52,8 @@ export default function DetailsPanel({
 
       <div className={s.content}>
         <PrimaryColors
-          selectedOverwrite={selectedOverwrite}
-          primaryCustomColor={primaryCustomColor}
+          primaryColor={primaryColor}
+          accentColor={accentColor}
           isLightTheme={isLightTheme}
           onThemePresetCommit={onThemePresetCommit}
         />
@@ -60,7 +62,6 @@ export default function DetailsPanel({
         <CustomPageBg
           key={pageBgResetKey}
           draft={selectedPageBgDraft}
-          originalDraft={selectedPageBgDraft}
           hueResetKey={pageBgResetKey}
           onDraftChange={onPageBgCommit}
           onPreviewPatch={onPageBgPreview}

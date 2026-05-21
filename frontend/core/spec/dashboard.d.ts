@@ -72,12 +72,6 @@ export type TDsb = {
     brandLayout: TBrandLayout
     themePreset?: TThemePreset | null
     themeTokens?: Partial<TResolvedThemePreset> | null
-    primaryColor: TColorName
-    primaryCustomColor: string
-    primaryCustomColorDark: string
-    accentColor: TColorName
-    accentCustomColor: string
-    accentCustomColorDark: string
     textTitle?: string | null
     textDigest?: string | null
     topbarEnabled: boolean

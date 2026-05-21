@@ -3,10 +3,9 @@
 import { type CSSProperties, createContext, type ReactNode, useEffect, useRef } from 'react'
 import { useSnapshot } from 'valtio'
 
-import { getDefaultCustomColor } from '~/const/colors'
 import THEME from '~/const/theme'
 import { DEFAULT_TEXT_DIGEST, DEFAULT_TEXT_TITLE } from '~/const/theme_preset'
-import { resolveThemePresetPageBgCssVar } from '~/lib/themePreset'
+import { resolveThemePresetColor, resolveThemePresetPageBgCssVar } from '~/lib/themePreset'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import setupStore from '.'
@@ -44,44 +43,32 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
   const preset$ = useSnapshot(store)
   const {
     primaryColor,
+    primaryColorDark,
     pageBg,
     pageBgDark,
-    pageCustomBg,
-    pageCustomBgDark,
-    pageCustomIntensity,
-    pageCustomIntensityDark,
-    primaryCustomColor,
-    primaryCustomColorDark,
     accentColor,
-    accentCustomColor,
-    accentCustomColorDark,
+    accentColorDark,
     textTitle,
     textDigest,
   } = preset$
-  const lightDefault = getDefaultCustomColor(THEME.LIGHT)
-  const darkDefault = getDefaultCustomColor(THEME.DARK)
+  const lightDefault = '#333333'
+  const darkDefault = '#ffffff'
   const safeTextTitle = textTitle || DEFAULT_TEXT_TITLE
   const safeTextDigest = textDigest || DEFAULT_TEXT_DIGEST
-  const lightPageBg = resolveThemePresetPageBgCssVar(
-    THEME.LIGHT,
-    pageBg,
-    pageCustomBg,
-    pageCustomIntensity,
-  )
-  const darkPageBg = resolveThemePresetPageBgCssVar(
-    THEME.DARK,
-    pageBgDark,
-    pageCustomBgDark,
-    pageCustomIntensityDark,
-  )
+  const lightPageBg = resolveThemePresetPageBgCssVar(THEME.LIGHT, pageBg)
+  const darkPageBg = resolveThemePresetPageBgCssVar(THEME.DARK, pageBgDark)
+  const lightPrimary = resolveThemePresetColor(primaryColor, lightDefault)
+  const darkPrimary = resolveThemePresetColor(primaryColorDark, darkDefault)
+  const lightAccent = resolveThemePresetColor(accentColor, lightDefault)
+  const darkAccent = resolveThemePresetColor(accentColorDark, darkDefault)
 
   useEffect(() => {
     const root = document.documentElement
 
-    root.style.setProperty('--color-primary-custom', primaryCustomColor || lightDefault)
-    root.style.setProperty('--color-primary-custom-dark', primaryCustomColorDark || darkDefault)
-    root.style.setProperty('--color-accent-custom', accentCustomColor || lightDefault)
-    root.style.setProperty('--color-accent-custom-dark', accentCustomColorDark || darkDefault)
+    root.style.setProperty('--color-primary-custom', lightPrimary)
+    root.style.setProperty('--color-primary-custom-dark', darkPrimary)
+    root.style.setProperty('--color-accent-custom', lightAccent)
+    root.style.setProperty('--color-accent-custom-dark', darkAccent)
     root.style.setProperty('--color-page-custom', lightPageBg)
     root.style.setProperty('--color-page-custom-dark', darkPageBg)
     root.style.setProperty('--color-title', safeTextTitle)
@@ -95,32 +82,28 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
   }, [
     darkDefault,
     darkPageBg,
+    darkPrimary,
+    darkAccent,
     lightDefault,
     lightPageBg,
-    primaryCustomColor,
-    primaryCustomColorDark,
+    lightPrimary,
     safeTextTitle,
     safeTextDigest,
-    accentCustomColor,
-    accentCustomColorDark,
+    lightAccent,
   ])
 
   const style = {
     '--color-page-custom': lightPageBg,
     '--color-page-custom-dark': darkPageBg,
-    '--color-primary-custom': primaryCustomColor || lightDefault,
-    '--color-primary-custom-dark': primaryCustomColorDark || darkDefault,
-    '--color-accent-custom': accentCustomColor || lightDefault,
-    '--color-accent-custom-dark': accentCustomColorDark || darkDefault,
+    '--color-primary-custom': lightPrimary,
+    '--color-primary-custom-dark': darkPrimary,
+    '--color-accent-custom': lightAccent,
+    '--color-accent-custom-dark': darkAccent,
     '--color-title': safeTextTitle,
     '--color-digest': safeTextDigest,
   } as CSSProperties
 
-  return (
-    <div data-primary-color={primaryColor} data-accent-color={accentColor} style={style}>
-      {children}
-    </div>
-  )
+  return <div style={style}>{children}</div>
 }
 
 export default function Provider({ children, initData = EMPTY_INIT_DATA }: TProps) {

@@ -58,10 +58,6 @@ const pickDashboardMirrorPatch = (patch: Partial<TThemePresetOverwrite>) => {
 const toPageBgDraft = (overwrite: TThemePresetOverwrite): TPageBgDraft => ({
   pageBg: overwrite.pageBg,
   pageBgDark: overwrite.pageBgDark,
-  pageCustomBg: overwrite.pageCustomBg,
-  pageCustomBgDark: overwrite.pageCustomBgDark,
-  pageCustomIntensity: overwrite.pageCustomIntensity,
-  pageCustomIntensityDark: overwrite.pageCustomIntensityDark,
 })
 
 export default function useAppearance() {
@@ -189,9 +185,10 @@ export default function useAppearance() {
     selectedPageBgDraft,
     isTouched,
     isLightTheme,
-    primaryCustomColor: isLightTheme
-      ? selectedOverwrite.primaryCustomColor
-      : selectedOverwrite.primaryCustomColorDark,
+    primaryColor: isLightTheme
+      ? selectedOverwrite.primaryColor
+      : selectedOverwrite.primaryColorDark,
+    accentColor: isLightTheme ? selectedOverwrite.accentColor : selectedOverwrite.accentColorDark,
     selectPreset,
     previewPageBg,
     previewThemePresetPatch,

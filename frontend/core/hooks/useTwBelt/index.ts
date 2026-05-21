@@ -5,7 +5,6 @@ import { clsx } from 'clsx'
 import { useMemo } from 'react'
 
 import { COLOR } from '~/const/colors'
-import THEME from '~/const/theme'
 import { cn, cnMerge } from '~/css'
 import { camelize } from '~/fmt'
 import useAccentColor from '~/hooks/useAccentColor'
@@ -13,7 +12,6 @@ import useAvatarLayout from '~/hooks/useAvatarLayout'
 import useMetric from '~/hooks/useMetric'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
 import type { TColorName, TZIndexType } from '~/spec'
-import useThemePreset from '~/stores/ThemePreset/hooks'
 
 import { cachedMargin, keyToClass, RAINBOW_ALIAS, STATIC_CLS } from './constant'
 import type {
@@ -36,22 +34,13 @@ export default function useTwBelt(): TRet {
   const { isSquare: isAvatarSquare } = useAvatarLayout()
   const primaryColor = usePrimaryColor()
   const accentColor = useAccentColor()
-  const { pageBg, pageBgDark } = useThemePreset()
 
   const metricLower = metric.toLowerCase()
   const containerClass = `container-${metricLower}`
 
-  const resolvePageClass = (value: string, mode: 'light' | 'dark') => {
-    if (value === COLOR.CUSTOM) {
-      return mode === THEME.LIGHT ? 'page-customLight' : 'page-customDark'
-    }
-
-    return `page-${camelize(value)}`
-  }
-
   // keep your page-bg strategy (no flash)
-  const pageLightClass = resolvePageClass(pageBg, THEME.LIGHT)
-  const pageDarkClass = resolvePageClass(pageBgDark, THEME.DARK)
+  const pageLightClass = 'page-customLight'
+  const pageDarkClass = 'page-customDark'
 
   /**
    * ✅ New token scheme:

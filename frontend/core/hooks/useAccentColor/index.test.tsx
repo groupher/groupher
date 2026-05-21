@@ -5,10 +5,10 @@ import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useAccentColor from '~/hooks/useAccentColor'
 
 describe('useAccentColor', () => {
-  it('reads accentColor from theme preset tokens', () => {
-    const wrapper = makeStoreWrapper({ dashboard: { themeTokens: { accentColor: COLOR.PURPLE } } })
+  it('uses the accent CSS-var rainbow token', () => {
+    const wrapper = makeStoreWrapper({ dashboard: { themeTokens: { accentColor: '#334455' } } })
     const { result } = renderHook(() => useAccentColor(), { wrapper })
 
-    expect(result.current).toBe(COLOR.PURPLE)
+    expect(result.current).toBe(COLOR.CUSTOM)
   })
 })

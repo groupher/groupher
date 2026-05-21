@@ -1,22 +1,14 @@
-import { COLOR, PAGE_BG_COLOR_HEX, PAGE_BG_DEFAULT } from '~/const/colors'
 import THEME from '~/const/theme'
 import { THEME_PRESET, THEME_PRESET_OPTIONS } from '~/const/theme_preset'
-import { getPageBgCustomColor } from '~/lib/color'
-import type { TColorName, TThemePreset } from '~/spec'
+import type { TThemePreset } from '~/spec'
 
 export const THEME_PRESET_FIELD_KEYS = [
   'pageBg',
   'pageBgDark',
-  'pageCustomBg',
-  'pageCustomBgDark',
-  'pageCustomIntensity',
-  'pageCustomIntensityDark',
   'primaryColor',
-  'primaryCustomColor',
-  'primaryCustomColorDark',
+  'primaryColorDark',
   'accentColor',
-  'accentCustomColor',
-  'accentCustomColorDark',
+  'accentColorDark',
   'textTitle',
   'textDigest',
   'gaussBlur',
@@ -33,16 +25,10 @@ export type TThemePresetField = (typeof THEME_PRESET_FIELD_KEYS)[number]
 export type TResolvedThemePreset = {
   pageBg: string
   pageBgDark: string
-  pageCustomBg: number
-  pageCustomBgDark: number
-  pageCustomIntensity: number
-  pageCustomIntensityDark: number
-  primaryColor: TColorName
-  primaryCustomColor: string
-  primaryCustomColorDark: string
-  accentColor: TColorName
-  accentCustomColor: string
-  accentCustomColorDark: string
+  primaryColor: string
+  primaryColorDark: string
+  accentColor: string
+  accentColorDark: string
   textTitle: string
   textDigest: string
   gaussBlur: number
@@ -61,9 +47,15 @@ export type TThemePresetSource = Partial<TResolvedThemePreset> & {
 }
 
 const DEFAULT_PRESET = THEME_PRESET_OPTIONS[0]
+const HEX_COLOR_RE = /^#[0-9a-f]{6}$/i
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
+
+export const resolveThemePresetColor = (value: string | undefined, fallback: string): string => {
+  if (value && HEX_COLOR_RE.test(value)) return value
+  return fallback
+}
 
 export const resolveThemePresetOption = (themePreset?: TThemePreset | string) =>
   THEME_PRESET_OPTIONS.find((preset) => preset.value === themePreset) ?? DEFAULT_PRESET
@@ -94,26 +86,11 @@ export const pickResolvedThemePresetFields = (source: TResolvedThemePreset): TRe
 export const resolveThemePresetPageBgCssVar = (
   theme: typeof THEME.LIGHT | typeof THEME.DARK,
   pageBg: string | undefined,
-  hue: number | undefined,
-  intensity: number | undefined,
 ): string => {
   const fallbackBg =
     theme === THEME.LIGHT ? DEFAULT_PRESET.overwrite.pageBg : DEFAULT_PRESET.overwrite.pageBgDark
-  const resolvedBg = pageBg ?? fallbackBg
 
-  if (resolvedBg === COLOR.CUSTOM) {
-    return getPageBgCustomColor(
-      theme,
-      theme === THEME.LIGHT
-        ? (hue ?? DEFAULT_PRESET.overwrite.pageCustomBg)
-        : (hue ?? DEFAULT_PRESET.overwrite.pageCustomBgDark),
-      theme === THEME.LIGHT
-        ? (intensity ?? DEFAULT_PRESET.overwrite.pageCustomIntensity)
-        : (intensity ?? DEFAULT_PRESET.overwrite.pageCustomIntensityDark),
-    )
-  }
-
-  return PAGE_BG_COLOR_HEX[resolvedBg] ?? PAGE_BG_COLOR_HEX[PAGE_BG_DEFAULT[theme]]
+  return resolveThemePresetColor(pageBg, fallbackBg)
 }
 
 /**
