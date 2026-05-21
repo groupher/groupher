@@ -25,7 +25,7 @@ export default function Finished() {
           </Link>
         </div>
         <div className={s.rightFrame}>
-          <Link href={`/${slug}/${ROUTE.DASHBOARD.LAYOUT}`} className={s.dashItem}>
+          <Link href={`/${slug}/${ROUTE.DASHBOARD.APPEARANCE}`} className={s.dashItem}>
             <div>
               <div className={s.dashTitle}>
                 布局样式 <ArrowSVG className={s.linkIcon} />

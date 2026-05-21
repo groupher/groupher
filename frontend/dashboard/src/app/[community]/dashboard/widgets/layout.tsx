@@ -1,7 +1,7 @@
 'use client'
 
 import { WIDGET_TABS } from '~/const/route'
-import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
+import useDsbTabs from '~/hooks/useDsbTabs'
 import useTrans from '~/hooks/useTrans'
 import ViewSVG from '~/icons/article/Viewed'
 import Portal from '~/unit/DashboardThread/Portal'
@@ -12,7 +12,7 @@ import Tabs from '~/widgets/Switcher/Tabs'
 
 export default function Layout({ children }) {
   const s = useSalon()
-  const { items, activeTab } = useDsbLayoutTabs(WIDGET_TABS)
+  const { items, activeTab } = useDsbTabs(WIDGET_TABS)
   const { t } = useTrans()
 
   return (

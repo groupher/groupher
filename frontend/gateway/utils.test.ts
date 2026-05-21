@@ -16,8 +16,8 @@ describe('gateway/utils', () => {
 
     it('returns true for /xxx/dashboard pattern', () => {
       expect(isDashboardRoute('/cps/dashboard', 'www.groupher.com')).toBe(true)
-      expect(isDashboardRoute('/cps/dashboard/layout', 'www.groupher.com')).toBe(true)
-      expect(isDashboardRoute('/cps/dashboard/layout/kanban', 'www.groupher.com')).toBe(true)
+      expect(isDashboardRoute('/cps/dashboard/appearance', 'www.groupher.com')).toBe(true)
+      expect(isDashboardRoute('/cps/dashboard/appearance/kanban', 'www.groupher.com')).toBe(true)
     })
 
     it('returns false for non-dashboard route', () => {
@@ -56,19 +56,23 @@ describe('gateway/utils', () => {
 
     it('keeps nested dashboard route segments', () => {
       const url = getDashboardUrl(
-        '/cps/dashboard/layout/kanban',
+        '/cps/dashboard/appearance/kanban',
         'www.groupher.com',
         '?tab=preview',
       )
       expect(url.origin).toBe(new URL(SITE.DASHBOARD).origin)
-      expect(url.pathname).toBe('/cps/layout/kanban')
+      expect(url.pathname).toBe('/cps/appearance/kanban')
       expect(url.search).toBe('?tab=preview')
     })
 
     it('keeps nested dashboard route segments for dashboard subdomain', () => {
-      const url = getDashboardUrl('/cps/layout/kanban', 'dashboard.groupher.com', '?tab=preview')
+      const url = getDashboardUrl(
+        '/cps/appearance/kanban',
+        'dashboard.groupher.com',
+        '?tab=preview',
+      )
       expect(url.origin).toBe(new URL(SITE.DASHBOARD).origin)
-      expect(url.pathname).toBe('/cps/layout/kanban')
+      expect(url.pathname).toBe('/cps/appearance/kanban')
       expect(url.search).toBe('?tab=preview')
     })
 

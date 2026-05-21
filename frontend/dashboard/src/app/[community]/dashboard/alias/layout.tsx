@@ -3,7 +3,7 @@
 import { ALIAS_TABS, DSB_COVERS } from '~/const/route'
 import VIEW from '~/const/view'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
-import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
+import useDsbTabs from '~/hooks/useDsbTabs'
 import useTrans from '~/hooks/useTrans'
 import type { TCrumbConfig } from '~/spec'
 import Portal from '~/unit/DashboardThread/Portal'
@@ -24,7 +24,7 @@ const CRUMB_CONFIG = {
 
 export default function Layout({ children }) {
   const s = useSalon()
-  const { items, activeTab } = useDsbLayoutTabs(ALIAS_TABS)
+  const { items, activeTab } = useDsbTabs(ALIAS_TABS)
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
   const { t } = useTrans()
 

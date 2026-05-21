@@ -2,7 +2,7 @@
 
 import { BROADCAST_TABS } from '~/const/route'
 import VIEW from '~/const/view'
-import useDsbLayoutTabs from '~/hooks/useDsbLayoutTabs'
+import useDsbTabs from '~/hooks/useDsbTabs'
 import useTrans from '~/hooks/useTrans'
 import useSalon from '~/unit/DashboardThread/Broadcast/salon'
 import Portal from '~/unit/DashboardThread/Portal'
@@ -10,7 +10,7 @@ import Tabs from '~/widgets/Switcher/Tabs'
 
 export default function Layout({ children }) {
   const s = useSalon()
-  const { items, activeTab } = useDsbLayoutTabs(BROADCAST_TABS)
+  const { items, activeTab } = useDsbTabs(BROADCAST_TABS)
   const { t } = useTrans()
 
   return (

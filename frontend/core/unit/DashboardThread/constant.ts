@@ -120,8 +120,8 @@ export const MENU: TDsbMenu = {
         slug: DSB_ROUTE.THREADS,
       },
       {
-        title: 'dsb.menu.layout',
-        slug: DSB_ROUTE.LAYOUT,
+        title: 'dsb.menu.appearance',
+        slug: DSB_ROUTE.APPEARANCE,
       },
       {
         title: 'dsb.menu.alias',

@@ -5,7 +5,7 @@ import type {
   TDsbBaseInfoRoute,
   TDsbBroadcastRoute,
   TDsbDocRoute,
-  TDsbLayoutRoute,
+  TDsbAppearanceRoute,
   TDsbPath,
   TDsbSEORoute,
   TLocale,
@@ -65,7 +65,7 @@ export type TDsbTab = {
   seoTab?: TDsbSEORoute
   docTab?: TDsbDocRoute
   broadcastTab?: TDsbBroadcastRoute
-  layoutTab?: TDsbLayoutRoute
+  appearanceTab?: TDsbAppearanceRoute
   aliasTab?: TDsbAliasRoute
 }
 
