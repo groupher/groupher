@@ -10,6 +10,7 @@ export default function ThemePresetStore(init: TInit = {}): TStore {
 
   const store = proxy({
     themePreset: init.themePreset ?? DEFAULT_THEME_PRESET,
+    themePresetBase: init.themePresetBase ?? DEFAULT_THEME_PRESET,
     themeTokens: init.themeTokens ?? {},
     ...resolved,
 
@@ -17,6 +18,7 @@ export default function ThemePresetStore(init: TInit = {}): TStore {
       const nextResolved = resolveThemePreset(source)
 
       store.themePreset = source.themePreset ?? DEFAULT_THEME_PRESET
+      store.themePresetBase = source.themePresetBase ?? DEFAULT_THEME_PRESET
       store.themeTokens = source.themeTokens ?? {}
       Object.assign(store, nextResolved)
     },

@@ -635,8 +635,16 @@ type RootMutationType {
 
   "update layout in dashboard"
   updateDashboardLayout(
-    community: String!, dsbSection: DsbSection, themePreset: DsbThemePreset, themeOverwrite: Json, textTitle: String, textDigest: String, kanbanBgColors: [RainbowColor], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docCoverLayout: DsbDocCoverLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, communityLayout: DsbCommunityLayout, navActiveLayout: DsbNavActiveLayout, topbarEnabled: Boolean, topbarBg: RainbowColor, topbarBgCustomColor: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: RainbowColor, broadcastCustomBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: RainbowColor, broadcastArticleCustomBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, overlayDark: Boolean, gaussBlur: Float, gaussBlurDark: Float
+    community: String!, dsbSection: DsbSection, kanbanBgColors: [RainbowColor], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docCoverLayout: DsbDocCoverLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, communityLayout: DsbCommunityLayout, navActiveLayout: DsbNavActiveLayout, topbarEnabled: Boolean, topbarBg: RainbowColor, topbarBgCustomColor: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: RainbowColor, broadcastCustomBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: RainbowColor, broadcastArticleCustomBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, overlayDark: Boolean
   ): Community
+
+  "save custom theme preset in dashboard"
+  saveCustomThemePreset(
+    community: String!, themePreset: DsbThemePreset!, themePresetBase: DsbThemePreset!, themeTokens: Json, textTitle: String, textDigest: String, gaussBlur: Float, gaussBlurDark: Float
+  ): Community
+
+  "select read-only theme preset in dashboard"
+  selectThemePreset(community: String!, themePreset: DsbThemePreset!): Community
 
   "update rss in dashboard"
   updateDashboardRss(community: String!, dsbSection: DsbSection, rssFeedType: DsbRssFeedType, rssFeedCount: Int): Community
@@ -890,7 +898,7 @@ type DsbWallpaper {
 
 type DsbLayout {
   themePreset: DsbThemePreset
-  themeOverwrite: Json
+  themePresetBase: DsbThemePreset
   textTitle: String
   textDigest: String
   kanbanBgColors: [RainbowColor]
@@ -924,6 +932,7 @@ type DsbLayout {
   gaussBlur: Float
   gaussBlurDark: Float
   themeTokens: Json
+  hasCustomThemePreset: Boolean
 }
 
 type DsbEnable {

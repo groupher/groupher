@@ -4,7 +4,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
   """
   use Helper.GqlSchemaSuite
 
-  import GroupherServerWeb.Schema.Helper.Fields, only: [dsb_args: 1]
+  import GroupherServerWeb.Schema.Helper.Fields, only: [dsb_args: 1, dsb_args: 2]
 
   object :cms_dsb_mutations do
     @desc "update base info in dashboard"
@@ -93,7 +93,17 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       arg(:community, non_null(:string))
       arg(:dsb_section, :dsb_section, default_value: :layout)
 
-      dsb_args(:layout)
+      dsb_args(:layout,
+        except: [
+          :theme_preset,
+          :theme_preset_base,
+          :theme_overwrite,
+          :text_title,
+          :text_digest,
+          :gauss_blur,
+          :gauss_blur_dark
+        ]
+      )
 
       middleware(M.Authorize, :login)
       # middleware(M.PublishThrottle)
@@ -101,6 +111,38 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       middleware(M.FrontDesk, :community)
 
       resolve(&R.CMS.update_dashboard/3)
+    end
+
+    @desc "save custom theme preset in dashboard"
+    field :save_custom_theme_preset, :community do
+      arg(:community, non_null(:string))
+      arg(:theme_preset, non_null(:dsb_theme_preset))
+      arg(:theme_preset_base, non_null(:dsb_theme_preset))
+      arg(:theme_tokens, :json)
+      arg(:text_title, :string)
+      arg(:text_digest, :string)
+      arg(:gauss_blur, :float)
+      arg(:gauss_blur_dark, :float)
+
+      middleware(M.Authorize, :login)
+      # middleware(M.PublishThrottle)
+      # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
+      middleware(M.FrontDesk, :community)
+
+      resolve(&R.CMS.save_custom_theme_preset/3)
+    end
+
+    @desc "select read-only theme preset in dashboard"
+    field :select_theme_preset, :community do
+      arg(:community, non_null(:string))
+      arg(:theme_preset, non_null(:dsb_theme_preset))
+
+      middleware(M.Authorize, :login)
+      # middleware(M.PublishThrottle)
+      # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
+      middleware(M.FrontDesk, :community)
+
+      resolve(&R.CMS.select_theme_preset/3)
     end
 
     @desc "update rss in dashboard"

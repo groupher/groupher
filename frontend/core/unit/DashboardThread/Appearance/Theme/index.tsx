@@ -13,6 +13,10 @@ export default function Appearance() {
   const s = useSalon()
   const {
     activePreset,
+    activePresetBase,
+    hasCustomThemePreset,
+    customPresetOverwrite,
+    showForkRelation,
     selectedOverwrite,
     selectedPageBgDraft,
     isTouched,
@@ -38,7 +42,14 @@ export default function Appearance() {
         addon={<ThemeSectionSelector />}
       />
 
-      <PresetList activePreset={activePreset} onSelect={selectPreset} />
+      <PresetList
+        activePreset={activePreset}
+        activePresetBase={activePresetBase}
+        hasCustomPreset={hasCustomThemePreset}
+        customOverwrite={customPresetOverwrite}
+        showForkRelation={showForkRelation}
+        onSelect={selectPreset}
+      />
 
       <DetailsPanel
         selectedOverwrite={selectedOverwrite}

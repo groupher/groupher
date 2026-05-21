@@ -52,6 +52,16 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
     do_update(community, key, args)
   end
 
+  @spec save_custom_theme_preset(Community.t(), map()) :: T.domain_res(Community.t())
+  def save_custom_theme_preset(%Community{} = community, args) do
+    do_update(community, :layout, args)
+  end
+
+  @spec select_theme_preset(Community.t(), map()) :: T.domain_res(Community.t())
+  def select_theme_preset(%Community{} = community, args) do
+    do_update(community, :layout, args)
+  end
+
   defp do_update(%Community{} = community, key, args) do
     with {:ok, community_dashboard} <- ensure_exist(community),
          {:ok, section_payload} <-

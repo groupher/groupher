@@ -42,8 +42,8 @@ export type TResolvedThemePreset = {
 
 export type TThemePresetSource = Partial<TResolvedThemePreset> & {
   themePreset?: TThemePreset | string
+  themePresetBase?: TThemePreset | string
   themeTokens?: Record<string, unknown> | null
-  themeOverwrite?: Record<string, unknown> | null
 }
 
 const DEFAULT_PRESET = THEME_PRESET_OPTIONS[0]
@@ -101,15 +101,12 @@ export const resolveThemePresetPageBgCssVar = (
  * built-in preset.
  */
 export const resolveThemePreset = (source: TThemePresetSource = {}): TResolvedThemePreset => {
-  const selectedPreset = resolveThemePresetOption(source.themePreset)
   const isCustomPreset = source.themePreset === THEME_PRESET.CUSTOM
+  const selectedPreset = resolveThemePresetOption(
+    isCustomPreset ? source.themePresetBase : source.themePreset,
+  )
   const backendTokens = normalizeThemeTokenSource(source.themeTokens)
-  const overwrite = normalizeThemeTokenSource(source.themeOverwrite)
-  const overwriteTokens = pickThemePresetFields(overwrite as Partial<TResolvedThemePreset>)
-  const customTokens = {
-    ...overwriteTokens,
-    ...backendTokens,
-  }
+  const customTokens = pickThemePresetFields(backendTokens as Partial<TResolvedThemePreset>)
 
   return {
     ...selectedPreset.overwrite,

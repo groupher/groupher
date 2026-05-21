@@ -5,12 +5,13 @@ import Checker from '~/widgets/Checker'
 
 import MiniBars from './MiniBars'
 import useSalon from './salon/preset_card'
-import type { TThemePresetOption } from './spec'
+import type { TThemePresetCardMode, TThemePresetOption } from './spec'
 
 type TProps = {
   preset: TThemePresetOption
   active: boolean
   activeSuppressed: boolean
+  mode?: TThemePresetCardMode
   rotateAngle: number
   onHover: (preset: string | null) => void
   onSelect: (preset: TThemePresetOption) => void
@@ -20,13 +21,20 @@ export default function PresetCard({
   preset,
   active,
   activeSuppressed,
+  mode = 'stacked',
   rotateAngle,
   onHover,
   onSelect,
 }: TProps) {
-  const s = useSalon({ active, activeSuppressed, rotateAngle })
+  const s = useSalon({
+    active,
+    activeSuppressed,
+    mode,
+    rotateAngle,
+  })
   const { t } = useTrans()
   const { isLightTheme } = useTheme()
+  const disabled = mode === 'forkBase'
   const presetKey = preset.value.toLowerCase()
   const cardBg = isLightTheme ? preset.overwrite.pageBg : preset.overwrite.pageBgDark
   const primaryColor = isLightTheme
@@ -37,13 +45,21 @@ export default function PresetCard({
   return (
     <div
       role='button'
-      tabIndex={0}
+      tabIndex={disabled ? -1 : 0}
       aria-pressed={active}
+      aria-disabled={disabled}
       className={s.wrapper}
-      onPointerEnter={() => onHover(preset.value)}
-      onPointerLeave={() => onHover(null)}
-      onClick={() => onSelect(preset)}
+      onPointerEnter={() => {
+        if (!disabled) onHover(preset.value)
+      }}
+      onPointerLeave={() => {
+        if (!disabled) onHover(null)
+      }}
+      onClick={() => {
+        if (!disabled) onSelect(preset)
+      }}
       onKeyDown={(event) => {
+        if (disabled) return
         if (event.key !== 'Enter' && event.key !== ' ') return
 
         event.preventDefault()

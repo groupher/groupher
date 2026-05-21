@@ -60,6 +60,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
     footer_layout: [:oneline, :group],
     header_layout: [:center, :right, :float],
     theme_preset: @theme_presets,
+    theme_preset_base: @theme_presets,
     rss_feed_type: [:digest, :full]
   }
 
@@ -118,6 +119,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
   def macro_schema(:layout) do
     [
       [:theme_preset, :enum, :default],
+      [:theme_preset_base, :enum, :default],
       [:theme_overwrite, :map, %{}],
       [:text_title, :string, "#243041"],
       [:text_digest, :string, "#6b7280"],

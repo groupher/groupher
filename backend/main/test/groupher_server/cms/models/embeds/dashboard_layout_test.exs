@@ -17,6 +17,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
 
   test "default theme preset fields are seeded in layout default" do
     assert DashboardLayout.default().theme_preset == :default
+    assert DashboardLayout.default().theme_preset_base == :default
     assert DashboardLayout.default().theme_overwrite == %{}
     assert DashboardLayout.default().text_title == "#243041"
     assert DashboardLayout.default().text_digest == "#6b7280"
@@ -26,6 +27,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{
         theme_preset: "custom",
+        theme_preset_base: "claude",
         theme_overwrite: %{"primaryColor" => "#B85C43", "pageBg" => "#fffaf0"}
       })
 
@@ -34,6 +36,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
     layout = Ecto.Changeset.apply_changes(changeset)
 
     assert layout.theme_preset == :custom
+    assert layout.theme_preset_base == :claude
     assert layout.theme_overwrite["primaryColor"] == "#B85C43"
   end
 

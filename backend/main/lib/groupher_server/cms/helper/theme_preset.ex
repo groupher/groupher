@@ -117,6 +117,12 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
     |> maybe_merge_custom_overwrite(normalized_preset, overwrite)
   end
 
+  def resolve_custom(base_preset, overwrite) do
+    base_preset
+    |> defaults()
+    |> Map.merge(normalize_overwrite(overwrite))
+  end
+
   defp maybe_merge_custom_overwrite(defaults, :custom, overwrite),
     do: Map.merge(defaults, normalize_overwrite(overwrite))
 

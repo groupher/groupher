@@ -220,22 +220,20 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_layout_query """
-    mutation($community: String!, $themePreset: DsbThemePreset, $themeOverwrite: Json, $textTitle: String, $textDigest: String, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $gaussBlur: Float, $gaussBlurDark: Float, $brandLayout: DsbBrandLayout, $communityLayout: DsbCommunityLayout, $navActiveLayout: DsbNavActiveLayout, $overlayDark: Boolean) {
-      updateDashboardLayout(community: $community, themePreset: $themePreset, themeOverwrite: $themeOverwrite, textTitle: $textTitle, textDigest: $textDigest, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, communityLayout: $communityLayout, navActiveLayout: $navActiveLayout, overlayDark: $overlayDark) {
+    mutation($community: String!, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $brandLayout: DsbBrandLayout, $communityLayout: DsbCommunityLayout, $navActiveLayout: DsbNavActiveLayout, $overlayDark: Boolean) {
+      updateDashboardLayout(community: $community, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, brandLayout: $brandLayout, communityLayout: $communityLayout, navActiveLayout: $navActiveLayout, overlayDark: $overlayDark) {
         id
         title
         dashboard {
           layout {
             themePreset
-            themeOverwrite
+            themePresetBase
             themeTokens
             kanbanBoards
             footerLayout
             topbarEnabled
             tagLayout
             inlineTagLayout
-            gaussBlur
-            gaussBlurDark
             brandLayout
             communityLayout
             navActiveLayout
@@ -252,8 +250,74 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       variables = %{
         community: community.slug,
+        postLayout: "COVER",
+        broadcastEnable: true,
+        kanbanLayout: "WATERFALL",
+        kanbanCardLayout: "FULL",
+        footerLayout: "ONELINE",
+        topbarEnabled: true,
+        kanbanBgColors: ["BLACK", "YELLOW"],
+        kanbanBoards: ["BACKLOG", "TODO", "DONE", "REJECTED"],
+        tagLayout: "DOT",
+        inlineTagLayout: "SOFT",
+        brandLayout: "LOGO",
+        communityLayout: "SIDEBAR",
+        navActiveLayout: "SOFT_BG",
+        overlayDark: false
+      }
+
+      updated =
+        rule_conn
+        |> gq_mutation(@update_layout_query, variables)
+
+      assert get_in(updated, ["dashboard", "layout", "navActiveLayout"]) == "SOFT_BG"
+
+      {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
+
+      assert found.dashboard.layout.post_layout == :cover
+      assert found.dashboard.layout.kanban_layout == :waterfall
+      assert found.dashboard.layout.kanban_card_layout == :full
+      assert found.dashboard.layout.broadcast_enable == true
+      assert found.dashboard.layout.kanban_bg_colors == [:black, :yellow]
+      assert found.dashboard.layout.kanban_boards == [:backlog, :todo, :done, :rejected]
+      assert found.dashboard.layout.footer_layout == :oneline
+      assert found.dashboard.layout.topbar_enabled == true
+
+      assert found.dashboard.layout.tag_layout == :dot
+      assert found.dashboard.layout.inline_tag_layout == :soft
+      assert found.dashboard.layout.brand_layout == :logo
+      assert found.dashboard.layout.community_layout == :sidebar
+      assert found.dashboard.layout.nav_active_layout == :soft_bg
+      assert found.dashboard.layout.overlay_dark == false
+    end
+
+    @save_custom_theme_preset_query """
+    mutation($community: String!, $themePreset: DsbThemePreset!, $themePresetBase: DsbThemePreset!, $themeTokens: Json, $textTitle: String, $textDigest: String, $gaussBlur: Float, $gaussBlurDark: Float) {
+      saveCustomThemePreset(community: $community, themePreset: $themePreset, themePresetBase: $themePresetBase, themeTokens: $themeTokens, textTitle: $textTitle, textDigest: $textDigest, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark) {
+        id
+        dashboard {
+          layout {
+            themePreset
+            themePresetBase
+            themeTokens
+            hasCustomThemePreset
+            textTitle
+            textDigest
+            gaussBlur
+            gaussBlurDark
+          }
+        }
+      }
+    }
+    """
+    test "save custom theme preset stores fork base and overwrite", ~m(community)a do
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+
+      variables = %{
+        community: community.slug,
         themePreset: "CUSTOM",
-        themeOverwrite:
+        themePresetBase: "CLAUDE",
+        themeTokens:
           Jason.encode!(%{
             "primaryColor" => "#112233",
             "accentColor" => "YELLOW",
@@ -266,33 +330,15 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
           }),
         textTitle: "#112233",
         textDigest: "#667788",
-        postLayout: "COVER",
-        broadcastEnable: true,
-        kanbanLayout: "WATERFALL",
-        kanbanCardLayout: "FULL",
-        footerLayout: "ONELINE",
-        topbarEnabled: true,
-        kanbanBgColors: ["BLACK", "YELLOW"],
-        kanbanBoards: ["BACKLOG", "TODO", "DONE", "REJECTED"],
-        tagLayout: "DOT",
-        inlineTagLayout: "SOFT",
         gaussBlur: 80.5,
-        gaussBlurDark: 60.5,
-        brandLayout: "LOGO",
-        communityLayout: "SIDEBAR",
-        navActiveLayout: "SOFT_BG",
-        overlayDark: false
+        gaussBlurDark: 60.5
       }
 
-      updated =
-        rule_conn
-        |> gq_mutation(@update_layout_query, variables)
+      updated = rule_conn |> gq_mutation(@save_custom_theme_preset_query, variables)
 
-      assert get_in(updated, ["dashboard", "layout", "navActiveLayout"]) == "SOFT_BG"
       assert get_in(updated, ["dashboard", "layout", "themePreset"]) == "CUSTOM"
-
-      assert get_in(updated, ["dashboard", "layout", "themeOverwrite", "primaryColor"]) ==
-               "#112233"
+      assert get_in(updated, ["dashboard", "layout", "themePresetBase"]) == "CLAUDE"
+      assert get_in(updated, ["dashboard", "layout", "hasCustomThemePreset"]) == true
 
       assert get_in(updated, ["dashboard", "layout", "themeTokens", "accentColor"]) ==
                "YELLOW"
@@ -310,31 +356,109 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
       assert found.dashboard.layout.theme_preset == :custom
+      assert found.dashboard.layout.theme_preset_base == :claude
       assert found.dashboard.layout.theme_overwrite["primaryColor"] == "#112233"
-      assert found.dashboard.layout.post_layout == :cover
-      assert found.dashboard.layout.kanban_layout == :waterfall
-      assert found.dashboard.layout.kanban_card_layout == :full
-      assert found.dashboard.layout.broadcast_enable == true
-      assert found.dashboard.layout.kanban_bg_colors == [:black, :yellow]
-      assert found.dashboard.layout.kanban_boards == [:backlog, :todo, :done, :rejected]
-      assert found.dashboard.layout.footer_layout == :oneline
-      assert found.dashboard.layout.topbar_enabled == true
-
       assert found.dashboard.layout.theme_overwrite["glowType"] == "PINK"
       assert found.dashboard.layout.theme_overwrite["glowTypeDark"] == "GREY_GREEN"
       assert found.dashboard.layout.theme_overwrite["glowFixed"] == true
       assert found.dashboard.layout.theme_overwrite["glowOpacity"] == 30.5
       assert found.dashboard.layout.theme_overwrite["glowOpacityDark"] == 45.5
-      assert found.dashboard.layout.tag_layout == :dot
-      assert found.dashboard.layout.inline_tag_layout == :soft
       assert found.dashboard.layout.gauss_blur == 80.5
       assert found.dashboard.layout.gauss_blur_dark == 60.5
-      assert found.dashboard.layout.brand_layout == :logo
-      assert found.dashboard.layout.community_layout == :sidebar
-      assert found.dashboard.layout.nav_active_layout == :soft_bg
-      assert found.dashboard.layout.overlay_dark == false
       assert found.dashboard.layout.text_title == "#112233"
       assert found.dashboard.layout.text_digest == "#667788"
+    end
+
+    test "save custom theme preset rejects read-only presets", ~m(community)a do
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+
+      variables = %{
+        community: community.slug,
+        themePreset: "CLAUDE",
+        themePresetBase: "CLAUDE",
+        themeTokens: Jason.encode!(%{"gaussBlur" => 70})
+      }
+
+      assert mutation_error?(rule_conn, @save_custom_theme_preset_query, variables)
+    end
+
+    @select_theme_preset_query """
+    mutation($community: String!, $themePreset: DsbThemePreset!) {
+      selectThemePreset(community: $community, themePreset: $themePreset) {
+        id
+        dashboard {
+          layout {
+            themePreset
+            themePresetBase
+            themeTokens
+            hasCustomThemePreset
+            textTitle
+            textDigest
+            gaussBlur
+            gaussBlurDark
+          }
+        }
+      }
+    }
+    """
+    test "select theme preset stores a read-only preset without custom overwrite",
+         ~m(community)a do
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+
+      updated =
+        rule_conn
+        |> gq_mutation(@select_theme_preset_query, %{community: community.slug, themePreset: "HN"})
+
+      assert get_in(updated, ["dashboard", "layout", "themePreset"]) == "HN"
+      assert get_in(updated, ["dashboard", "layout", "themePresetBase"]) == "DEFAULT"
+      assert get_in(updated, ["dashboard", "layout", "hasCustomThemePreset"]) == false
+      assert get_in(updated, ["dashboard", "layout", "themeTokens", "textTitle"]) == "#222222"
+      assert get_in(updated, ["dashboard", "layout", "textTitle"]) == "#222222"
+      assert get_in(updated, ["dashboard", "layout", "textDigest"]) == "#666666"
+      assert get_in(updated, ["dashboard", "layout", "gaussBlur"]) == 100
+      assert get_in(updated, ["dashboard", "layout", "gaussBlurDark"]) == 100
+
+      {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
+
+      assert found.dashboard.layout.theme_preset == :hn
+      assert found.dashboard.layout.theme_preset_base == :default
+      assert found.dashboard.layout.theme_overwrite == %{}
+      assert found.dashboard.layout.text_title == "#222222"
+      assert found.dashboard.layout.text_digest == "#666666"
+      assert found.dashboard.layout.gauss_blur == 100
+      assert found.dashboard.layout.gauss_blur_dark == 100
+    end
+
+    test "select theme preset preserves saved custom preset overwrite", ~m(community)a do
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+
+      custom_variables = %{
+        community: community.slug,
+        themePreset: "CUSTOM",
+        themePresetBase: "CLAUDE",
+        themeTokens: Jason.encode!(%{"primaryColor" => "#112233", "gaussBlur" => 80.5}),
+        textTitle: "#112233",
+        textDigest: "#667788",
+        gaussBlur: 80.5,
+        gaussBlurDark: 60.5
+      }
+
+      rule_conn |> gq_mutation(@save_custom_theme_preset_query, custom_variables)
+
+      updated =
+        rule_conn
+        |> gq_mutation(@select_theme_preset_query, %{community: community.slug, themePreset: "HN"})
+
+      assert get_in(updated, ["dashboard", "layout", "themePreset"]) == "HN"
+      assert get_in(updated, ["dashboard", "layout", "themePresetBase"]) == "CLAUDE"
+      assert get_in(updated, ["dashboard", "layout", "hasCustomThemePreset"]) == true
+      assert get_in(updated, ["dashboard", "layout", "themeTokens", "textTitle"]) == "#222222"
+
+      {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
+
+      assert found.dashboard.layout.theme_preset == :hn
+      assert found.dashboard.layout.theme_preset_base == :claude
+      assert found.dashboard.layout.theme_overwrite["primaryColor"] == "#112233"
     end
 
     test "update community dashboard layout should not overwrite existing settings",

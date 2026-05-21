@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { THEME_PRESET } from '~/const/theme_preset'
+import { THEME_PRESET, THEME_PRESET_OPTIONS } from '~/const/theme_preset'
 import { blurRGB } from '~/fmt'
 import useDebouncedPreviewCommit from '~/hooks/useDebouncedPreviewCommit'
 import useTheme from '~/hooks/useTheme'
@@ -16,6 +16,7 @@ import type { TThemePresetOption, TThemePresetOverwrite } from './spec'
 
 const APPEARANCE_STORE_FIELDS = [
   FIELD.THEME_PRESET,
+  FIELD.THEME_PRESET_BASE,
   FIELD.THEME_TOKENS,
   FIELD.TEXT_TITLE,
   FIELD.TEXT_DIGEST,
@@ -67,11 +68,19 @@ export default function useAppearance() {
   const selectedOverwrite = pickResolvedThemePresetFields(useThemePreset())
   const updatePreviewCssVars = useUpdatePreviewCssVars()
   const [pageBgResetVersion, setPageBgResetVersion] = useState(0)
+  const [showForkRelation, setShowForkRelation] = useState(false)
 
   const activePreset = dsb$.themePreset
+  const activePresetBase =
+    activePreset === THEME_PRESET.CUSTOM ? dsb$.themePresetBase : activePreset
   const storeTouched = dsb$.anyTouched(APPEARANCE_STORE_FIELDS)
   const selectedPageBgDraft = useMemo(() => toPageBgDraft(selectedOverwrite), [selectedOverwrite])
   const isTouched = storeTouched
+  const customBaseOverwrite =
+    THEME_PRESET_OPTIONS.find((preset) => preset.value === dsb$.themePresetBase)?.overwrite ??
+    THEME_PRESET_OPTIONS[0].overwrite
+  const customPresetOverwrite =
+    activePreset === THEME_PRESET.CUSTOM ? selectedOverwrite : customBaseOverwrite
   const selectedOverwriteRef = useRef(selectedOverwrite)
   const selectedPageBgDraftRef = useRef(selectedPageBgDraft)
 
@@ -80,20 +89,50 @@ export default function useAppearance() {
     selectedPageBgDraftRef.current = selectedPageBgDraft
   }, [selectedOverwrite, selectedPageBgDraft])
 
-  const commitThemePresetPatch = useCallback(
-    (patch: Partial<TThemePresetOverwrite>) => {
+  const buildCustomPresetEditPatch = useCallback(
+    (patch: Partial<TThemePresetOverwrite> = {}) => {
+      const themePresetBase =
+        dsb$.themePreset === THEME_PRESET.CUSTOM ? dsb$.themePresetBase : dsb$.themePreset
       const nextTokens = {
         ...selectedOverwriteRef.current,
         ...patch,
       }
-      dsb$.editFields({
-        ...pickDashboardMirrorPatch(patch),
+
+      return {
         themePreset: THEME_PRESET.CUSTOM,
+        themePresetBase,
         themeTokens: nextTokens,
-      })
+      }
     },
     [dsb$],
   )
+
+  const enterCustomPresetTokenEdit = useCallback(
+    (patch: Partial<TThemePresetOverwrite> = {}) => {
+      // Both delayed controls (ranges/background) and immediate controls
+      // (primary/accent colors, glow swatches) must enter the same fork UI.
+      // Keep the transition here so every theme token edit first becomes a
+      // Custom preset edit, while built-in presets remain read-only.
+      setShowForkRelation(true)
+      return buildCustomPresetEditPatch(patch)
+    },
+    [buildCustomPresetEditPatch],
+  )
+
+  const commitThemePresetPatch = useCallback(
+    (patch: Partial<TThemePresetOverwrite>) => {
+      dsb$.editFields({
+        ...enterCustomPresetTokenEdit(patch),
+        ...pickDashboardMirrorPatch(patch),
+      })
+    },
+    [dsb$, enterCustomPresetTokenEdit],
+  )
+  const forkCustomPreset = useCallback(() => {
+    setShowForkRelation(true)
+    dsb$.editFields(buildCustomPresetEditPatch())
+  }, [buildCustomPresetEditPatch, dsb$])
+
   const {
     schedule: scheduleThemePresetPreviewCommit,
     flush: flushThemePresetPreviewCommit,
@@ -105,10 +144,17 @@ export default function useAppearance() {
   }, [updatePreviewCssVars])
 
   const selectPreset = (preset: TThemePresetOption) => {
+    if (preset.value === THEME_PRESET.CUSTOM && !dsb$.hasCustomThemePreset) return
+
+    setShowForkRelation(false)
     clearPendingThemePresetPreviewCommit()
     clearPreviewCssVars()
     dsb$.editFields({
       themePreset: preset.value,
+      themePresetBase:
+        preset.value === THEME_PRESET.CUSTOM || dsb$.hasCustomThemePreset
+          ? dsb$.themePresetBase
+          : preset.value,
       themeTokens: { ...preset.overwrite },
       ...pickDashboardMirrorPatch(preset.overwrite),
     })
@@ -161,9 +207,15 @@ export default function useAppearance() {
 
   const scheduleThemePresetPatch = useCallback(
     (patch: Partial<TThemePresetOverwrite>) => {
+      if (dsb$.themePreset !== THEME_PRESET.CUSTOM) {
+        forkCustomPreset()
+      } else {
+        setShowForkRelation(true)
+      }
+
       scheduleThemePresetPreviewCommit(patch)
     },
-    [scheduleThemePresetPreviewCommit],
+    [dsb$, forkCustomPreset, scheduleThemePresetPreviewCommit],
   )
 
   const saveAppearance = () => {
@@ -175,12 +227,17 @@ export default function useAppearance() {
   const cancelAppearance = () => {
     clearPendingThemePresetPreviewCommit()
     clearPreviewCssVars()
+    setShowForkRelation(false)
     rollbackEdit(FIELD.THEME_PRESET)
     setPageBgResetVersion((version) => version + 1)
   }
 
   return {
     activePreset,
+    activePresetBase,
+    hasCustomThemePreset: dsb$.hasCustomThemePreset,
+    customPresetOverwrite,
+    showForkRelation: activePreset === THEME_PRESET.CUSTOM && isTouched && showForkRelation,
     selectedOverwrite,
     selectedPageBgDraft,
     isTouched,
