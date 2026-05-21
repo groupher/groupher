@@ -1,26 +1,23 @@
-import { COLOR, PAGE_BG_COLOR_HEX, PAGE_BG_DEFAULT } from '~/const/colors'
 import THEME from '~/const/theme'
-import { THEME_PRESET_OPTIONS } from '~/const/theme_preset'
-import { getPageBgCustomColor } from '~/lib/color'
-import type { TColorName, TThemePreset } from '~/spec'
+import { THEME_PRESET, THEME_PRESET_OPTIONS } from '~/const/theme_preset'
+import type { TThemePreset } from '~/spec'
 
 export const THEME_PRESET_FIELD_KEYS = [
   'pageBg',
   'pageBgDark',
-  'pageCustomBg',
-  'pageCustomBgDark',
-  'pageCustomIntensity',
-  'pageCustomIntensityDark',
   'primaryColor',
-  'primaryCustomColor',
-  'primaryCustomColorDark',
+  'primaryColorDark',
   'accentColor',
-  'accentCustomColor',
-  'accentCustomColorDark',
+  'accentColorDark',
   'textTitle',
   'textDigest',
   'gaussBlur',
   'gaussBlurDark',
+  'glowType',
+  'glowTypeDark',
+  'glowFixed',
+  'glowOpacity',
+  'glowOpacityDark',
 ] as const
 
 export type TThemePresetField = (typeof THEME_PRESET_FIELD_KEYS)[number]
@@ -28,32 +25,37 @@ export type TThemePresetField = (typeof THEME_PRESET_FIELD_KEYS)[number]
 export type TResolvedThemePreset = {
   pageBg: string
   pageBgDark: string
-  pageCustomBg: number
-  pageCustomBgDark: number
-  pageCustomIntensity: number
-  pageCustomIntensityDark: number
-  primaryColor: TColorName
-  primaryCustomColor: string
-  primaryCustomColorDark: string
-  accentColor: TColorName
-  accentCustomColor: string
-  accentCustomColorDark: string
+  primaryColor: string
+  primaryColorDark: string
+  accentColor: string
+  accentColorDark: string
   textTitle: string
   textDigest: string
   gaussBlur: number
   gaussBlurDark: number
+  glowType: string
+  glowTypeDark: string
+  glowFixed: boolean
+  glowOpacity: number
+  glowOpacityDark: number
 }
 
 export type TThemePresetSource = Partial<TResolvedThemePreset> & {
   themePreset?: TThemePreset | string
   themeTokens?: Record<string, unknown> | null
-  themeOverrides?: Record<string, unknown> | null
+  themeOverwrite?: Record<string, unknown> | null
 }
 
 const DEFAULT_PRESET = THEME_PRESET_OPTIONS[0]
+const HEX_COLOR_RE = /^#[0-9a-f]{6}$/i
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
+
+export const resolveThemePresetColor = (value: string | undefined, fallback: string): string => {
+  if (value && HEX_COLOR_RE.test(value)) return value
+  return fallback
+}
 
 export const resolveThemePresetOption = (themePreset?: TThemePreset | string) =>
   THEME_PRESET_OPTIONS.find((preset) => preset.value === themePreset) ?? DEFAULT_PRESET
@@ -84,53 +86,33 @@ export const pickResolvedThemePresetFields = (source: TResolvedThemePreset): TRe
 export const resolveThemePresetPageBgCssVar = (
   theme: typeof THEME.LIGHT | typeof THEME.DARK,
   pageBg: string | undefined,
-  hue: number | undefined,
-  intensity: number | undefined,
 ): string => {
   const fallbackBg =
-    theme === THEME.LIGHT ? DEFAULT_PRESET.overrides.pageBg : DEFAULT_PRESET.overrides.pageBgDark
-  const resolvedBg = pageBg ?? fallbackBg
+    theme === THEME.LIGHT ? DEFAULT_PRESET.overwrite.pageBg : DEFAULT_PRESET.overwrite.pageBgDark
 
-  if (resolvedBg === COLOR.CUSTOM) {
-    return getPageBgCustomColor(
-      theme,
-      theme === THEME.LIGHT
-        ? (hue ?? DEFAULT_PRESET.overrides.pageCustomBg)
-        : (hue ?? DEFAULT_PRESET.overrides.pageCustomBgDark),
-      theme === THEME.LIGHT
-        ? (intensity ?? DEFAULT_PRESET.overrides.pageCustomIntensity)
-        : (intensity ?? DEFAULT_PRESET.overrides.pageCustomIntensityDark),
-    )
-  }
-
-  return PAGE_BG_COLOR_HEX[resolvedBg] ?? PAGE_BG_COLOR_HEX[PAGE_BG_DEFAULT[theme]]
+  return resolveThemePresetColor(pageBg, fallbackBg)
 }
 
 /**
  * Resolve the effective theme preset values from backend/dashboard layout data.
  *
- * New data should use backend-resolved `themeTokens` as the logical source of
- * truth. During migration, old flat layout fields are only used when there are
- * no overrides yet, so stale legacy fields cannot keep overriding preset based
- * edits after the new model has taken ownership.
+ * Built-in presets are resolved from their own token set. Only CUSTOM applies
+ * saved token overwrite; this keeps stale overwrite from changing a selected
+ * built-in preset.
  */
 export const resolveThemePreset = (source: TThemePresetSource = {}): TResolvedThemePreset => {
   const selectedPreset = resolveThemePresetOption(source.themePreset)
+  const isCustomPreset = source.themePreset === THEME_PRESET.CUSTOM
   const backendTokens = normalizeThemeTokenSource(source.themeTokens)
-  const hasBackendTokens = Object.keys(backendTokens).length > 0
-  const overwrite = hasBackendTokens ? {} : normalizeThemeTokenSource(source.themeOverrides)
-  const hasOverrides = Object.keys(overwrite).length > 0
-  const legacySource = normalizeThemeTokenSource(source)
-  const legacyPatch = hasOverrides ? {} : pickThemePresetFields(legacySource)
-  const legacyAccentFallback =
-    !hasBackendTokens && !hasOverrides && source.accentColor === undefined && source.primaryColor
-      ? { accentColor: source.primaryColor }
-      : {}
+  const overwrite = normalizeThemeTokenSource(source.themeOverwrite)
+  const overwriteTokens = pickThemePresetFields(overwrite as Partial<TResolvedThemePreset>)
+  const customTokens = {
+    ...overwriteTokens,
+    ...backendTokens,
+  }
 
   return {
-    ...selectedPreset.overrides,
-    ...(hasBackendTokens ? backendTokens : legacyPatch),
-    ...legacyAccentFallback,
-    ...pickThemePresetFields(overwrite as Partial<TResolvedThemePreset>),
+    ...selectedPreset.overwrite,
+    ...(isCustomPreset ? customTokens : {}),
   }
 }

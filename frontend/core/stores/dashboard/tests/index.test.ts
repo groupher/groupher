@@ -1,4 +1,3 @@
-import { COLOR } from '~/const/colors'
 import { DEFAULT_ENABLE } from '~/const/dashboard'
 import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import METRIC from '~/const/metric'
@@ -41,7 +40,6 @@ describe('stores/dashboard', () => {
     const editingLink: TLinkDraftItem = { index: 9, title: 'X', group: 'MORE', link: '/x' }
 
     store.commit({
-      pageBg: 'radial-gradient(circle at 20% 20%, #111, #000)',
       kanbanBoards: [KANBAN_BOARD.BACKLOG, KANBAN_BOARD.TODO],
       headerLinks,
       footerLinks: [
@@ -139,80 +137,28 @@ describe('stores/dashboard', () => {
 
     store.editFields({
       themePreset: claude.value,
-      themeTokens: { ...claude.overrides },
-      pageBg: claude.overrides.pageBg,
-      pageBgDark: claude.overrides.pageBgDark,
-      pageCustomBg: claude.overrides.pageCustomBg,
-      pageCustomBgDark: claude.overrides.pageCustomBgDark,
-      pageCustomIntensity: claude.overrides.pageCustomIntensity,
-      pageCustomIntensityDark: claude.overrides.pageCustomIntensityDark,
-      textTitle: claude.overrides.textTitle,
-      textDigest: claude.overrides.textDigest,
+      themeTokens: { ...claude.overwrite },
+      textTitle: claude.overwrite.textTitle,
+      textDigest: claude.overwrite.textDigest,
     })
 
     expect(store.themePreset).toBe('CLAUDE')
-    expect(store.pageBg).toBe(COLOR.CUSTOM)
-    expect(store.pageBgDark).toBe(COLOR.CUSTOM)
-    expect(store.pageCustomBg).toBe(claude.overrides.pageCustomBg)
-    expect(store.pageCustomBgDark).toBe(claude.overrides.pageCustomBgDark)
-    expect(store.pageCustomIntensity).toBe(claude.overrides.pageCustomIntensity)
-    expect(store.pageCustomIntensityDark).toBe(claude.overrides.pageCustomIntensityDark)
-    expect(store.themeTokens.primaryColor).toBe(COLOR.CUSTOM)
-    expect(store.themeTokens.primaryCustomColor).toBe('#c96442')
-    expect(store.themeTokens.primaryCustomColorDark).toBe('#d97757')
-    expect(store.themeTokens.accentColor).toBe(COLOR.BLUE)
-    expect(store.textTitle).toBe(claude.overrides.textTitle)
-    expect(store.textDigest).toBe(claude.overrides.textDigest)
-    expect(
-      store.anyTouched([
-        'themePreset',
-        'themeTokens',
-        'pageBg',
-        'pageBgDark',
-        'pageCustomBg',
-        'pageCustomBgDark',
-        'pageCustomIntensity',
-        'pageCustomIntensityDark',
-        'textTitle',
-        'textDigest',
-      ]),
-    ).toBe(true)
+    expect(store.themeTokens.pageBg).toBe(claude.overwrite.pageBg)
+    expect(store.themeTokens.pageBgDark).toBe(claude.overwrite.pageBgDark)
+    expect(store.themeTokens.primaryColor).toBe('#c96442')
+    expect(store.themeTokens.primaryColorDark).toBe('#d97757')
+    expect(store.themeTokens.accentColor).toBe('#5073c6')
+    expect(store.themeTokens.accentColorDark).toBe('#3a7ec7')
+    expect(store.textTitle).toBe(claude.overwrite.textTitle)
+    expect(store.textDigest).toBe(claude.overwrite.textDigest)
+    expect(store.anyTouched(['themePreset', 'themeTokens', 'textTitle', 'textDigest'])).toBe(true)
 
-    store.rollbackFields([
-      'themePreset',
-      'themeTokens',
-      'pageBg',
-      'pageBgDark',
-      'pageCustomBg',
-      'pageCustomBgDark',
-      'pageCustomIntensity',
-      'pageCustomIntensityDark',
-      'textTitle',
-      'textDigest',
-    ])
+    store.rollbackFields(['themePreset', 'themeTokens', 'textTitle', 'textDigest'])
 
     expect(store.themePreset).toBe(store.original.themePreset)
-    expect(store.pageBg).toBe(store.original.pageBg)
-    expect(store.pageBgDark).toBe(store.original.pageBgDark)
-    expect(store.pageCustomBg).toBe(store.original.pageCustomBg)
-    expect(store.pageCustomBgDark).toBe(store.original.pageCustomBgDark)
-    expect(store.pageCustomIntensity).toBe(store.original.pageCustomIntensity)
-    expect(store.pageCustomIntensityDark).toBe(store.original.pageCustomIntensityDark)
+    expect(store.themeTokens).toBe(store.original.themeTokens)
     expect(store.textTitle).toBe(store.original.textTitle)
     expect(store.textDigest).toBe(store.original.textDigest)
-    expect(
-      store.anyTouched([
-        'themePreset',
-        'themeTokens',
-        'pageBg',
-        'pageBgDark',
-        'pageCustomBg',
-        'pageCustomBgDark',
-        'pageCustomIntensity',
-        'pageCustomIntensityDark',
-        'textTitle',
-        'textDigest',
-      ]),
-    ).toBe(false)
+    expect(store.anyTouched(['themePreset', 'themeTokens', 'textTitle', 'textDigest'])).toBe(false)
   })
 })

@@ -28,13 +28,11 @@ export type TContainer = 'body' | 'drawer'
 
 type TGlowPosition = 'fixed' | 'absolute'
 export type TGlowEffect = {
-  glowType: string
+  glowType: string | null
   glowPosition?: TGlowPosition
   glowFixed?: boolean
-  glowOpacity?: string
+  glowOpacity?: number
   $theme?: TThemeName
-
-  changeGlowEffect?: (effect: string) => void
 }
 
 interface IWindow extends Window {

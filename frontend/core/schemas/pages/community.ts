@@ -82,12 +82,6 @@ export const community = `
         layout {
           themePreset
           themeTokens
-          pageBg
-          pageBgDark
-          pageCustomBg
-          pageCustomBgDark
-          pageCustomIntensity
-          pageCustomIntensityDark
           textTitle
           textDigest
           postLayout
@@ -114,9 +108,6 @@ export const community = `
           changelogLayout
           headerLayout
           footerLayout
-          glowType
-          glowFixed
-          glowOpacity
           overlayDark
           gaussBlur
           gaussBlurDark

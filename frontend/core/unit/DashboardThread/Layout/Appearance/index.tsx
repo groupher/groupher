@@ -13,14 +13,17 @@ export default function Appearance() {
   const s = useSalon()
   const {
     activePreset,
-    selectedOverrides,
+    selectedOverwrite,
     selectedPageBgDraft,
     isTouched,
     isLightTheme,
-    primaryCustomColor,
+    primaryColor,
+    accentColor,
     selectPreset,
     previewPageBg,
+    previewThemePresetPatch,
     scheduleThemePresetPatch,
+    flushThemePresetPreviewCommit,
     commitThemePresetPatch,
     pageBgResetKey,
     saveAppearance,
@@ -38,13 +41,17 @@ export default function Appearance() {
       <PresetList activePreset={activePreset} onSelect={selectPreset} />
 
       <DetailsPanel
-        selectedOverrides={selectedOverrides}
+        selectedOverwrite={selectedOverwrite}
         selectedPageBgDraft={selectedPageBgDraft}
-        primaryCustomColor={primaryCustomColor}
+        primaryColor={primaryColor}
+        accentColor={accentColor}
         isLightTheme={isLightTheme}
         pageBgResetKey={pageBgResetKey}
         onPageBgPreview={previewPageBg}
         onPageBgCommit={scheduleThemePresetPatch}
+        onThemePresetPreview={previewThemePresetPatch}
+        onThemePresetSchedule={scheduleThemePresetPatch}
+        onThemePresetFlush={flushThemePresetPreviewCommit}
         onThemePresetCommit={commitThemePresetPatch}
       />
 

@@ -1,27 +1,45 @@
+import { COLOR, RAINBOW_COLOR_HEX } from '~/const/colors'
+import THEME from '~/const/theme'
 import useTrans from '~/hooks/useTrans'
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TColorName } from '~/spec'
 import ColorSelector from '~/widgets/ColorSelector'
 
 import { PRESET_FIELD } from '../../constant'
 import useSalon, { cn, cnMerge } from './salon/primary_colors'
-import type { TThemePresetOverrides } from './spec'
+import type { TThemePresetOverwrite } from './spec'
 
 type TProps = {
-  selectedOverrides: TThemePresetOverrides
-  primaryCustomColor: string
+  primaryColor: string
+  accentColor: string
   isLightTheme: boolean
-  onThemePresetCommit: (patch: Partial<TThemePresetOverrides>) => void
+  onThemePresetCommit: (patch: Partial<TThemePresetOverwrite>) => void
+}
+
+const resolvePresetColor = (color: TColorName, theme: typeof THEME.LIGHT | typeof THEME.DARK) =>
+  RAINBOW_COLOR_HEX[theme][color] ?? RAINBOW_COLOR_HEX[theme][COLOR.BLACK]
+
+const findPresetColor = (
+  color: string,
+  theme: typeof THEME.LIGHT | typeof THEME.DARK,
+): TColorName => {
+  const match = Object.entries(RAINBOW_COLOR_HEX[theme]).find(([, value]) => value === color)
+
+  return (match?.[0] as TColorName | undefined) ?? COLOR.CUSTOM
 }
 
 export default function PrimaryColors({
-  selectedOverrides,
-  primaryCustomColor,
+  primaryColor,
+  accentColor,
   isLightTheme,
   onThemePresetCommit,
 }: TProps) {
   const s = useSalon()
   const { t } = useTrans()
   const { accent } = useTwBelt()
+  const theme = isLightTheme ? THEME.LIGHT : THEME.DARK
+  const primaryField = isLightTheme ? PRESET_FIELD.PRIMARY_COLOR : PRESET_FIELD.PRIMARY_COLOR_DARK
+  const accentField = isLightTheme ? PRESET_FIELD.ACCENT_COLOR : PRESET_FIELD.ACCENT_COLOR_DARK
 
   return (
     <div className={s.wrapper}>
@@ -29,17 +47,17 @@ export default function PrimaryColors({
         <div className={s.head}>
           <div className={s.ballWrapper}>
             <ColorSelector
-              activeColor={selectedOverrides.primaryColor}
-              customColor={primaryCustomColor}
+              activeColor={findPresetColor(primaryColor, theme)}
+              customColor={primaryColor}
               allowCustomColor
-              onChange={(primaryColor) =>
-                onThemePresetCommit({ [PRESET_FIELD.PRIMARY_COLOR]: primaryColor })
-              }
+              onChange={(primaryColor) => {
+                if (primaryColor === COLOR.CUSTOM) return
+
+                onThemePresetCommit({ [primaryField]: resolvePresetColor(primaryColor, theme) })
+              }}
               onCustomColorChange={(color) => {
                 onThemePresetCommit({
-                  [isLightTheme
-                    ? PRESET_FIELD.PRIMARY_CUSTOM_COLOR
-                    : PRESET_FIELD.PRIMARY_CUSTOM_COLOR_DARK]: color,
+                  [primaryField]: color,
                 })
               }}
             >
@@ -55,10 +73,19 @@ export default function PrimaryColors({
         <div className={cn(s.head, s.subHead)}>
           <div className={cnMerge(s.ballWrapper, s.subBall, accent('borderSoft'))}>
             <ColorSelector
-              activeColor={selectedOverrides.accentColor}
-              onChange={(accentColor) =>
-                onThemePresetCommit({ [PRESET_FIELD.ACCENT_COLOR]: accentColor })
-              }
+              activeColor={findPresetColor(accentColor, theme)}
+              customColor={accentColor}
+              allowCustomColor
+              onChange={(accentColor) => {
+                if (accentColor === COLOR.CUSTOM) return
+
+                onThemePresetCommit({ [accentField]: resolvePresetColor(accentColor, theme) })
+              }}
+              onCustomColorChange={(color) => {
+                onThemePresetCommit({
+                  [accentField]: color,
+                })
+              }}
             >
               <div className={cnMerge(s.colorBall, s.subColorBall, accent('bg'))} />
             </ColorSelector>

@@ -78,19 +78,10 @@ export default function useEdit(): TRet {
       dsb$.rollbackFields([
         FIELD.THEME_PRESET,
         FIELD.THEME_TOKENS,
-        FIELD.PAGE_BG,
-        FIELD.PAGE_BG_DARK,
-        FIELD.PAGE_CUSTOM_BG,
-        FIELD.PAGE_CUSTOM_BG_DARK,
-        FIELD.PAGE_CUSTOM_INTENSITY,
-        FIELD.PAGE_CUSTOM_INTENSITY_DARK,
         FIELD.TEXT_TITLE,
         FIELD.TEXT_DIGEST,
         FIELD.GAUSS_BLUR,
         FIELD.GAUSS_BLUR_DARK,
-        FIELD.GLOW_TYPE,
-        FIELD.GLOW_FIXED,
-        FIELD.GLOW_OPACITY,
       ])
       return
     }

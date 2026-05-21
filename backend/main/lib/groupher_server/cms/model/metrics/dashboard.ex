@@ -118,13 +118,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
   def macro_schema(:layout) do
     [
       [:theme_preset, :enum, :default],
-      [:theme_overrides, :map, %{}],
-      [:page_bg, :string, "pure white"],
-      [:page_bg_dark, :string, "outer space"],
-      [:page_custom_bg, :integer, 190],
-      [:page_custom_bg_dark, :integer, 190],
-      [:page_custom_intensity, :integer, 100],
-      [:page_custom_intensity_dark, :integer, 100],
+      [:theme_overwrite, :map, %{}],
       [:text_title, :string, "#243041"],
       [:text_digest, :string, "#6b7280"],
       [:kanban_bg_colors, {:array, :rainbow_color}, @kanban_bg_colors_default],
@@ -154,10 +148,6 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
       [:changelog_layout, :enum, :classic],
       [:footer_layout, :enum, :group],
       [:header_layout, :enum, :center],
-      ## glow
-      [:glow_type, :string, ""],
-      [:glow_fixed, :boolean, true],
-      [:glow_opacity, :string, "100"],
       [:overlay_dark, :boolean, true],
 
       ## blur

@@ -1,26 +1,82 @@
+import { useRef, useState } from 'react'
+
 import useTrans from '~/hooks/useTrans'
 import type { TSpace } from '~/spec'
-import useSalon from '~/widgets/CustomPageBg/salon'
 import RangeInput from '~/widgets/RangeInput'
 
 import { FIELD } from '../../constant'
-import type { TThemePresetOverrides } from './spec'
+import useSettingRowSalon from './salon/setting_row'
+import type { TThemePresetOverwrite } from './spec'
 
 type TProps = {
-  selectedOverrides: TThemePresetOverrides
+  selectedOverwrite: TThemePresetOverwrite
   isLightTheme: boolean
-  onThemePresetCommit: (patch: Partial<TThemePresetOverrides>) => void
+  onThemePresetPreview: (patch: Partial<TThemePresetOverwrite>) => void
+  onThemePresetSchedule: (patch: Partial<TThemePresetOverwrite>) => void
+  onThemePresetFlush: () => void
 } & TSpace
 
+type TGlassOpacityRangeProps = {
+  value: number
+  valueLabel: string
+  getPatch: (value: number) => Partial<TThemePresetOverwrite>
+  onThemePresetPreview: (patch: Partial<TThemePresetOverwrite>) => void
+  onThemePresetSchedule: (patch: Partial<TThemePresetOverwrite>) => void
+  onThemePresetFlush: () => void
+}
+
+const GlassOpacityRange = ({
+  value,
+  valueLabel,
+  getPatch,
+  onThemePresetPreview,
+  onThemePresetSchedule,
+  onThemePresetFlush,
+}: TGlassOpacityRangeProps) => {
+  const initialValueRef = useRef(value)
+  const [displayGaussBlur, setDisplayGaussBlur] = useState(initialValueRef.current)
+
+  return (
+    <RangeInput
+      value={displayGaussBlur}
+      valueLabel={valueLabel}
+      min={50}
+      max={100}
+      step={0.1}
+      unit='%'
+      top={0}
+      aria-label={valueLabel}
+      onChange={(value) => {
+        const patch = getPatch(value)
+
+        setDisplayGaussBlur(value)
+        onThemePresetPreview(patch)
+        onThemePresetSchedule(patch)
+      }}
+      onChangeEnd={(value) => {
+        onThemePresetSchedule(getPatch(value))
+        onThemePresetFlush()
+      }}
+    />
+  )
+}
+
 export default function GlassOpacity({
-  selectedOverrides,
+  selectedOverwrite,
   isLightTheme,
-  onThemePresetCommit,
+  onThemePresetPreview,
+  onThemePresetSchedule,
+  onThemePresetFlush,
   ...spacing
 }: TProps) {
-  const s = useSalon(spacing)
+  const s = useSettingRowSalon(spacing)
   const { t } = useTrans()
-  const gaussBlur = isLightTheme ? selectedOverrides.gaussBlur : selectedOverrides.gaussBlurDark
+  const gaussBlur = isLightTheme ? selectedOverwrite.gaussBlur : selectedOverwrite.gaussBlurDark
+  const gaussBlurField = isLightTheme ? FIELD.GAUSS_BLUR : FIELD.GAUSS_BLUR_DARK
+
+  const getGaussBlurPatch = (value: number): Partial<TThemePresetOverwrite> => ({
+    [gaussBlurField]: value,
+  })
 
   return (
     <div className={s.wrapper}>
@@ -33,20 +89,14 @@ export default function GlassOpacity({
 
           <div className='grow' />
           <div className={s.rangeGroup}>
-            <RangeInput
+            <GlassOpacityRange
+              key={`${gaussBlurField}-${gaussBlur}`}
               value={gaussBlur}
               valueLabel={t('dsb.layout.appearance.glass_opacity.title')}
-              min={50}
-              max={100}
-              step={0.1}
-              unit='%'
-              top={0}
-              aria-label={t('dsb.layout.appearance.glass_opacity.title')}
-              onChange={(value) => {
-                onThemePresetCommit({
-                  [isLightTheme ? FIELD.GAUSS_BLUR : FIELD.GAUSS_BLUR_DARK]: value,
-                })
-              }}
+              getPatch={getGaussBlurPatch}
+              onThemePresetPreview={onThemePresetPreview}
+              onThemePresetSchedule={onThemePresetSchedule}
+              onThemePresetFlush={onThemePresetFlush}
             />
           </div>
         </div>

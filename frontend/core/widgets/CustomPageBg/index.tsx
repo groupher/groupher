@@ -13,7 +13,6 @@ export type { TPageBgDraft } from './hooks'
 
 type TProps = {
   draft: TPageBgDraft
-  originalDraft: TPageBgDraft
   // Immediate saveable-state update used by low-frequency controls.
   onDraftChange: (patch: Partial<TPageBgDraft>) => void
   // High-frequency visual preview. This should only write DOM/CSS vars and must
@@ -32,7 +31,6 @@ type TProps = {
 
 export default function CustomPageBg({
   draft,
-  originalDraft,
   onDraftChange,
   onPreviewPatch,
   onScheduleCommitPatch,
@@ -55,7 +53,6 @@ export default function CustomPageBg({
     handleToggleChange,
   } = useCustomPageBgControls({
     draft,
-    originalDraft,
     theme,
     onDraftChange,
     onPreviewPatch,

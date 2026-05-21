@@ -5,6 +5,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
 
   alias GroupherServer.CMS.Model.Embeds.DashboardLayout
   alias GroupherServer.CMS.Model.Metrics.Dashboard
+  alias GroupherServer.CMS.Helper.ThemePreset
 
   test "default xx_layout values are seeded in layout default" do
     assert DashboardLayout.default() == Dashboard.layout_default()
@@ -16,16 +17,16 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
 
   test "default theme preset fields are seeded in layout default" do
     assert DashboardLayout.default().theme_preset == :default
-    assert DashboardLayout.default().theme_overrides == %{}
+    assert DashboardLayout.default().theme_overwrite == %{}
     assert DashboardLayout.default().text_title == "#243041"
     assert DashboardLayout.default().text_digest == "#6b7280"
   end
 
-  test "accepts theme preset with sparse overrides" do
+  test "accepts theme preset with sparse overwrite" do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{
         theme_preset: "custom",
-        theme_overrides: %{"primaryColor" => "#B85C43", "pageBg" => "CUSTOM"}
+        theme_overwrite: %{"primaryColor" => "#B85C43", "pageBg" => "#fffaf0"}
       })
 
     assert changeset.valid?
@@ -33,17 +34,28 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
     layout = Ecto.Changeset.apply_changes(changeset)
 
     assert layout.theme_preset == :custom
-    assert layout.theme_overrides["primaryColor"] == "#B85C43"
+    assert layout.theme_overwrite["primaryColor"] == "#B85C43"
   end
 
-  test "normalizes theme overwrite into stored theme overrides" do
+  test "built-in theme preset ignores stale overwrite when resolving tokens" do
+    tokens =
+      ThemePreset.resolve(:claude, %{
+        "glowType" => "ORANGE_PURPLE",
+        "glowOpacity" => 90
+      })
+
+    assert tokens["glowType"] == ""
+    assert tokens["glowOpacity"] == 100
+  end
+
+  test "normalizes theme overwrite into stored theme overwrite" do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{
         theme_preset: "custom",
         theme_overwrite:
           Jason.encode!(%{
             "accentColor" => "YELLOW",
-            "accentCustomColor" => "#112233",
+            "accentColorDark" => "#112233",
             "unknown" => "ignored"
           })
       })
@@ -52,9 +64,9 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
 
     layout = Ecto.Changeset.apply_changes(changeset)
 
-    assert layout.theme_overrides == %{
+    assert layout.theme_overwrite == %{
              "accentColor" => "YELLOW",
-             "accentCustomColor" => "#112233"
+             "accentColorDark" => "#112233"
            }
   end
 
@@ -66,27 +78,38 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
       })
 
     refute changeset.valid?
-    assert errors_on(changeset).theme_overrides == ["is invalid"]
+    assert errors_on(changeset).theme_overwrite == ["is invalid"]
+  end
+
+  test "rejects non-map theme overwrite values instead of normalizing them to empty maps" do
+    changeset =
+      DashboardLayout.changeset(%DashboardLayout{}, %{
+        theme_preset: "custom",
+        theme_overwrite: 42
+      })
+
+    refute changeset.valid?
+    assert errors_on(changeset).theme_overwrite == ["is invalid"]
   end
 
   test "ignores empty theme overwrite keys without raising" do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{
         theme_preset: "custom",
-        theme_overwrite: Jason.encode!(%{"" => "ignored", "accentColor" => "YELLOW"})
+        theme_overwrite: Jason.encode!(%{"" => "ignored", "accentColor" => "#112233"})
       })
 
     assert changeset.valid?
 
     layout = Ecto.Changeset.apply_changes(changeset)
 
-    assert layout.theme_overrides == %{"accentColor" => "YELLOW"}
+    assert layout.theme_overwrite == %{"accentColor" => "#112233"}
   end
 
-  test "keeps theme overrides when updating non-preset layout fields" do
+  test "keeps theme overwrite when updating non-preset layout fields" do
     changeset =
       DashboardLayout.changeset(
-        %DashboardLayout{theme_overrides: %{"accentColor" => "YELLOW"}},
+        %DashboardLayout{theme_overwrite: %{"accentColor" => "#112233"}},
         %{post_layout: "COVER"}
       )
 
@@ -95,19 +118,19 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
     layout = Ecto.Changeset.apply_changes(changeset)
 
     assert layout.post_layout == :cover
-    assert layout.theme_overrides == %{"accentColor" => "YELLOW"}
+    assert layout.theme_overwrite == %{"accentColor" => "#112233"}
   end
 
   test "rejects invalid theme preset payloads" do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{
         theme_preset: "unknown",
-        theme_overrides: "not-a-map"
+        theme_overwrite: "not-a-map"
       })
 
     refute changeset.valid?
     assert errors_on(changeset).theme_preset == ["is invalid"]
-    assert errors_on(changeset).theme_overrides == ["is invalid"]
+    assert errors_on(changeset).theme_overwrite == ["is invalid"]
   end
 
   test "changeset normalizes legacy uppercase enum strings" do

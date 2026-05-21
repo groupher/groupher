@@ -72,18 +72,6 @@ export type TDsb = {
     brandLayout: TBrandLayout
     themePreset?: TThemePreset | null
     themeTokens?: Partial<TResolvedThemePreset> | null
-    pageBg: string
-    pageBgDark: string
-    pageCustomBg: number
-    pageCustomBgDark: number
-    pageCustomIntensity: number
-    pageCustomIntensityDark: number
-    primaryColor: TColorName
-    primaryCustomColor: string
-    primaryCustomColorDark: string
-    accentColor: TColorName
-    accentCustomColor: string
-    accentCustomColorDark: string
     textTitle?: string | null
     textDigest?: string | null
     topbarEnabled: boolean
@@ -94,9 +82,6 @@ export type TDsb = {
     avatarLayout: TAvatarLayout
     communityLayout: TCommunityLayout
     navActiveLayout: TNavActiveLayout
-    glowType: string
-    glowFixed: boolean
-    glowOpacity: string
     overlayDark: boolean
     docCoverLayout: TDocCoverLayout
     docFaqLayout: TDocFAQLayout

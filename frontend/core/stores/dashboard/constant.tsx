@@ -1,7 +1,6 @@
 import { BUILTIN_ALIAS } from '~/const/builtin-alias'
 import { COLOR } from '~/const/colors'
 import { DEFAULT_ENABLE, INIT_KANBAN_BOARDS, TW_CARD } from '~/const/dashboard'
-import { GLOW_OPACITY } from '~/const/glow_effect'
 import { LOCALE } from '~/const/i18n'
 import {
   AVATAR_LAYOUT,
@@ -51,9 +50,9 @@ const EMPTY_MEDIA_REPORT = {
 }
 
 const INIT_KANBAN_COLORS = [COLOR.BLACK, COLOR.YELLOW, COLOR.PURPLE, COLOR.GREEN, COLOR.RED]
-const DEFAULT_THEME_OVERRIDES =
-  THEME_PRESET_OPTIONS.find((preset) => preset.value === DEFAULT_THEME_PRESET)?.overrides ??
-  THEME_PRESET_OPTIONS[0].overrides
+const DEFAULT_THEME_OVERWRITE =
+  THEME_PRESET_OPTIONS.find((preset) => preset.value === DEFAULT_THEME_PRESET)?.overwrite ??
+  THEME_PRESET_OPTIONS[0].overwrite
 
 export const FIELDS: TDsbFieldMap = {
   // baseInfo
@@ -74,13 +73,7 @@ export const FIELDS: TDsbFieldMap = {
 
   // page
   themePreset: DEFAULT_THEME_PRESET,
-  themeTokens: { ...DEFAULT_THEME_OVERRIDES },
-  pageBg: DEFAULT_THEME_OVERRIDES.pageBg,
-  pageBgDark: DEFAULT_THEME_OVERRIDES.pageBgDark,
-  pageCustomBg: DEFAULT_THEME_OVERRIDES.pageCustomBg,
-  pageCustomBgDark: DEFAULT_THEME_OVERRIDES.pageCustomBgDark,
-  pageCustomIntensity: DEFAULT_THEME_OVERRIDES.pageCustomIntensity,
-  pageCustomIntensityDark: DEFAULT_THEME_OVERRIDES.pageCustomIntensityDark,
+  themeTokens: { ...DEFAULT_THEME_OVERWRITE },
 
   // seo
   seoEnable: true,
@@ -102,8 +95,8 @@ export const FIELDS: TDsbFieldMap = {
   twImageHeight: '',
 
   // layout
-  textTitle: DEFAULT_THEME_OVERRIDES.textTitle || DEFAULT_TEXT_TITLE,
-  textDigest: DEFAULT_THEME_OVERRIDES.textDigest || DEFAULT_TEXT_DIGEST,
+  textTitle: DEFAULT_THEME_OVERWRITE.textTitle || DEFAULT_TEXT_TITLE,
+  textDigest: DEFAULT_THEME_OVERWRITE.textDigest || DEFAULT_TEXT_DIGEST,
   postLayout: POST_LAYOUT.QUORA,
   kanbanLayout: KANBAN_LAYOUT.CLASSIC,
   kanbanCardLayout: KANBAN_CARD_LAYOUT.SIMPLE,
@@ -137,16 +130,11 @@ export const FIELDS: TDsbFieldMap = {
   // doc
   docCategories: [],
 
-  // glow effect
-  glowType: '',
-  glowFixed: true,
-  glowOpacity: GLOW_OPACITY.NORMAL,
-
   overlayDark: true,
 
   // gauss blur
-  gaussBlur: DEFAULT_THEME_OVERRIDES.gaussBlur,
-  gaussBlurDark: DEFAULT_THEME_OVERRIDES.gaussBlurDark,
+  gaussBlur: DEFAULT_THEME_OVERWRITE.gaussBlur,
+  gaussBlurDark: DEFAULT_THEME_OVERWRITE.gaussBlurDark,
 
   // contents
   // tags

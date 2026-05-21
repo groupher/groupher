@@ -10,43 +10,41 @@ import { pickResolvedThemePresetFields } from '~/lib/themePreset'
 import useDashboard from '~/stores/dashboard/hooks'
 import { resolveRawBg, type TPageBgDraft } from '~/widgets/CustomPageBg/hooks'
 
-import { FIELD } from '../../constant'
+import { FIELD, PRESET_FIELD } from '../../constant'
 import useHelper from '../../logic/useHelper'
-import type { TThemePresetOption, TThemePresetOverrides } from './spec'
+import type { TThemePresetOption, TThemePresetOverwrite } from './spec'
 
 const APPEARANCE_STORE_FIELDS = [
   FIELD.THEME_PRESET,
   FIELD.THEME_TOKENS,
-  FIELD.PAGE_BG,
-  FIELD.PAGE_BG_DARK,
   FIELD.TEXT_TITLE,
   FIELD.TEXT_DIGEST,
-  FIELD.PAGE_CUSTOM_BG,
-  FIELD.PAGE_CUSTOM_BG_DARK,
-  FIELD.PAGE_CUSTOM_INTENSITY,
-  FIELD.PAGE_CUSTOM_INTENSITY_DARK,
   FIELD.GAUSS_BLUR,
   FIELD.GAUSS_BLUR_DARK,
-  FIELD.GLOW_TYPE,
-  FIELD.GLOW_FIXED,
-  FIELD.GLOW_OPACITY,
 ] as const
 
 const THEME_TOKEN_MIRROR_FIELDS = [
-  FIELD.PAGE_BG,
-  FIELD.PAGE_BG_DARK,
-  FIELD.PAGE_CUSTOM_BG,
-  FIELD.PAGE_CUSTOM_BG_DARK,
-  FIELD.PAGE_CUSTOM_INTENSITY,
-  FIELD.PAGE_CUSTOM_INTENSITY_DARK,
   FIELD.TEXT_TITLE,
   FIELD.TEXT_DIGEST,
   FIELD.GAUSS_BLUR,
   FIELD.GAUSS_BLUR_DARK,
 ] as const
 
-const pickDashboardMirrorPatch = (patch: Partial<TThemePresetOverrides>) => {
-  const mirrorPatch = {} as Partial<TThemePresetOverrides>
+const PREVIEW_CSS_VAR_CLEANUP = {
+  '--preview-page-bg': null,
+  '--preview-glow-opacity': null,
+} as const
+
+const toCssOpacity = (opacity = 100): number => {
+  const percent = Number(opacity)
+
+  if (Number.isNaN(percent)) return 1
+
+  return Math.min(Math.max(percent, 0), 100) / 100
+}
+
+const pickDashboardMirrorPatch = (patch: Partial<TThemePresetOverwrite>) => {
+  const mirrorPatch = {} as Partial<TThemePresetOverwrite>
 
   for (const field of THEME_TOKEN_MIRROR_FIELDS) {
     if (patch[field] !== undefined) {
@@ -57,39 +55,35 @@ const pickDashboardMirrorPatch = (patch: Partial<TThemePresetOverrides>) => {
   return mirrorPatch
 }
 
-const toPageBgDraft = (overrides: TThemePresetOverrides): TPageBgDraft => ({
-  pageBg: overrides.pageBg,
-  pageBgDark: overrides.pageBgDark,
-  pageCustomBg: overrides.pageCustomBg,
-  pageCustomBgDark: overrides.pageCustomBgDark,
-  pageCustomIntensity: overrides.pageCustomIntensity,
-  pageCustomIntensityDark: overrides.pageCustomIntensityDark,
+const toPageBgDraft = (overwrite: TThemePresetOverwrite): TPageBgDraft => ({
+  pageBg: overwrite.pageBg,
+  pageBgDark: overwrite.pageBgDark,
 })
 
 export default function useAppearance() {
   const dsb$ = useDashboard()
   const { isLightTheme } = useTheme()
   const { onSave, rollbackEdit } = useHelper()
-  const selectedOverrides = pickResolvedThemePresetFields(useThemePreset())
+  const selectedOverwrite = pickResolvedThemePresetFields(useThemePreset())
   const updatePreviewCssVars = useUpdatePreviewCssVars()
   const [pageBgResetVersion, setPageBgResetVersion] = useState(0)
 
   const activePreset = dsb$.themePreset
   const storeTouched = dsb$.anyTouched(APPEARANCE_STORE_FIELDS)
-  const selectedPageBgDraft = useMemo(() => toPageBgDraft(selectedOverrides), [selectedOverrides])
+  const selectedPageBgDraft = useMemo(() => toPageBgDraft(selectedOverwrite), [selectedOverwrite])
   const isTouched = storeTouched
-  const selectedOverridesRef = useRef(selectedOverrides)
+  const selectedOverwriteRef = useRef(selectedOverwrite)
   const selectedPageBgDraftRef = useRef(selectedPageBgDraft)
 
   useEffect(() => {
-    selectedOverridesRef.current = selectedOverrides
+    selectedOverwriteRef.current = selectedOverwrite
     selectedPageBgDraftRef.current = selectedPageBgDraft
-  }, [selectedOverrides, selectedPageBgDraft])
+  }, [selectedOverwrite, selectedPageBgDraft])
 
   const commitThemePresetPatch = useCallback(
-    (patch: Partial<TThemePresetOverrides>) => {
+    (patch: Partial<TThemePresetOverwrite>) => {
       const nextTokens = {
-        ...selectedOverridesRef.current,
+        ...selectedOverwriteRef.current,
         ...patch,
       }
       dsb$.editFields({
@@ -104,15 +98,19 @@ export default function useAppearance() {
     schedule: scheduleThemePresetPreviewCommit,
     flush: flushThemePresetPreviewCommit,
     clear: clearPendingThemePresetPreviewCommit,
-  } = useDebouncedPreviewCommit<TThemePresetOverrides>({ onCommit: commitThemePresetPatch })
+  } = useDebouncedPreviewCommit<TThemePresetOverwrite>({ onCommit: commitThemePresetPatch })
+
+  const clearPreviewCssVars = useCallback(() => {
+    updatePreviewCssVars(PREVIEW_CSS_VAR_CLEANUP)
+  }, [updatePreviewCssVars])
 
   const selectPreset = (preset: TThemePresetOption) => {
     clearPendingThemePresetPreviewCommit()
-    updatePreviewCssVars({ '--preview-page-bg': null })
+    clearPreviewCssVars()
     dsb$.editFields({
       themePreset: preset.value,
-      themeTokens: { ...preset.overrides },
-      ...pickDashboardMirrorPatch(preset.overrides),
+      themeTokens: { ...preset.overwrite },
+      ...pickDashboardMirrorPatch(preset.overwrite),
     })
   }
 
@@ -123,8 +121,8 @@ export default function useAppearance() {
         isLightTheme,
       )
       const activeGaussBlur = isLightTheme
-        ? selectedOverridesRef.current.gaussBlur
-        : selectedOverridesRef.current.gaussBlurDark
+        ? selectedOverwriteRef.current.gaussBlur
+        : selectedOverwriteRef.current.gaussBlurDark
       const previewBackground = previewRawBg ? blurRGB(previewRawBg, activeGaussBlur) : null
 
       updatePreviewCssVars({ '--preview-page-bg': previewBackground })
@@ -132,8 +130,37 @@ export default function useAppearance() {
     [isLightTheme, updatePreviewCssVars],
   )
 
+  const previewThemePresetPatch = useCallback(
+    (patch: Partial<TThemePresetOverwrite>) => {
+      const nextOverwrite = {
+        ...selectedOverwriteRef.current,
+        ...patch,
+      }
+      const previewRawBg = resolveRawBg(toPageBgDraft(nextOverwrite), isLightTheme)
+      const activeGaussBlur = isLightTheme ? nextOverwrite.gaussBlur : nextOverwrite.gaussBlurDark
+      const previewBackground = previewRawBg ? blurRGB(previewRawBg, activeGaussBlur) : null
+      const glowOpacityField = isLightTheme
+        ? PRESET_FIELD.GLOW_OPACITY
+        : PRESET_FIELD.GLOW_OPACITY_DARK
+      const previewVars = {
+        '--preview-page-bg': previewBackground,
+      } as Record<`--${string}`, string | number | null>
+
+      if (patch[glowOpacityField] !== undefined) {
+        const activeGlowOpacity = isLightTheme
+          ? nextOverwrite.glowOpacity
+          : nextOverwrite.glowOpacityDark
+
+        previewVars['--preview-glow-opacity'] = toCssOpacity(activeGlowOpacity)
+      }
+
+      updatePreviewCssVars(previewVars)
+    },
+    [isLightTheme, updatePreviewCssVars],
+  )
+
   const scheduleThemePresetPatch = useCallback(
-    (patch: Partial<TThemePresetOverrides>) => {
+    (patch: Partial<TThemePresetOverwrite>) => {
       scheduleThemePresetPreviewCommit(patch)
     },
     [scheduleThemePresetPreviewCommit],
@@ -141,29 +168,32 @@ export default function useAppearance() {
 
   const saveAppearance = () => {
     flushThemePresetPreviewCommit()
-    updatePreviewCssVars({ '--preview-page-bg': null })
+    clearPreviewCssVars()
     onSave(FIELD.THEME_PRESET)
   }
 
   const cancelAppearance = () => {
     clearPendingThemePresetPreviewCommit()
-    updatePreviewCssVars({ '--preview-page-bg': null })
+    clearPreviewCssVars()
     rollbackEdit(FIELD.THEME_PRESET)
     setPageBgResetVersion((version) => version + 1)
   }
 
   return {
     activePreset,
-    selectedOverrides,
+    selectedOverwrite,
     selectedPageBgDraft,
     isTouched,
     isLightTheme,
-    primaryCustomColor: isLightTheme
-      ? selectedOverrides.primaryCustomColor
-      : selectedOverrides.primaryCustomColorDark,
+    primaryColor: isLightTheme
+      ? selectedOverwrite.primaryColor
+      : selectedOverwrite.primaryColorDark,
+    accentColor: isLightTheme ? selectedOverwrite.accentColor : selectedOverwrite.accentColorDark,
     selectPreset,
     previewPageBg,
+    previewThemePresetPatch,
     scheduleThemePresetPatch,
+    flushThemePresetPreviewCommit,
     commitThemePresetPatch,
     pageBgResetKey: `${activePreset}-${isLightTheme ? 'light' : 'dark'}-${pageBgResetVersion}`,
     saveAppearance,

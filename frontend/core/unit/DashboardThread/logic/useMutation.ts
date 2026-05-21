@@ -90,19 +90,10 @@ export default function useMutation(): TRet {
       return [
         FIELD.THEME_PRESET,
         FIELD.THEME_TOKENS,
-        FIELD.PAGE_BG,
-        FIELD.PAGE_BG_DARK,
-        FIELD.PAGE_CUSTOM_BG,
-        FIELD.PAGE_CUSTOM_BG_DARK,
-        FIELD.PAGE_CUSTOM_INTENSITY,
-        FIELD.PAGE_CUSTOM_INTENSITY_DARK,
         FIELD.TEXT_TITLE,
         FIELD.TEXT_DIGEST,
         FIELD.GAUSS_BLUR,
         FIELD.GAUSS_BLUR_DARK,
-        FIELD.GLOW_TYPE,
-        FIELD.GLOW_FIXED,
-        FIELD.GLOW_OPACITY,
       ]
     }
 
@@ -152,19 +143,10 @@ export default function useMutation(): TRet {
         ...storeRef.current.original,
         themePreset: storeRef.current.themePreset,
         themeTokens: clone(storeRef.current.themeTokens),
-        pageBg: storeRef.current.pageBg,
-        pageBgDark: storeRef.current.pageBgDark,
-        pageCustomBg: storeRef.current.pageCustomBg,
-        pageCustomBgDark: storeRef.current.pageCustomBgDark,
-        pageCustomIntensity: storeRef.current.pageCustomIntensity,
-        pageCustomIntensityDark: storeRef.current.pageCustomIntensityDark,
         textTitle: storeRef.current.textTitle,
         textDigest: storeRef.current.textDigest,
         gaussBlur: storeRef.current.gaussBlur,
         gaussBlurDark: storeRef.current.gaussBlurDark,
-        glowType: storeRef.current.glowType,
-        glowFixed: storeRef.current.glowFixed,
-        glowOpacity: storeRef.current.glowOpacity,
       }
     }
 
@@ -443,19 +425,10 @@ export default function useMutation(): TRet {
           ...(isCustomPreset
             ? { themeOverwrite: JSON.stringify(storeRef.current.themeTokens ?? {}) }
             : {}),
-          pageBg: storeRef.current.pageBg,
-          pageBgDark: storeRef.current.pageBgDark,
-          pageCustomBg: storeRef.current.pageCustomBg,
-          pageCustomBgDark: storeRef.current.pageCustomBgDark,
-          pageCustomIntensity: storeRef.current.pageCustomIntensity,
-          pageCustomIntensityDark: storeRef.current.pageCustomIntensityDark,
           textTitle: storeRef.current.textTitle,
           textDigest: storeRef.current.textDigest,
           gaussBlur: storeRef.current.gaussBlur,
           gaussBlurDark: storeRef.current.gaussBlurDark,
-          glowType: storeRef.current.glowType,
-          glowFixed: storeRef.current.glowFixed,
-          glowOpacity: storeRef.current.glowOpacity,
         })
         return
       }

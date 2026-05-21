@@ -74,12 +74,6 @@ export type TDsbFieldMap = {
   // page
   themePreset: TThemePreset
   themeTokens: Partial<TResolvedThemePreset>
-  pageBg: string
-  pageBgDark: string
-  pageCustomBg: number
-  pageCustomBgDark: number
-  pageCustomIntensity: number
-  pageCustomIntensityDark: number
 
   // seo
   seoEnable: boolean
@@ -135,11 +129,6 @@ export type TDsbFieldMap = {
 
   // doc
   docCategories: readonly TGroupCategory[]
-
-  // glow effect
-  glowType: string
-  glowFixed: boolean
-  glowOpacity: string
 
   overlayDark: boolean
 
