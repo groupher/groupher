@@ -72,12 +72,6 @@ export type TDsb = {
     brandLayout: TBrandLayout
     themePreset?: TThemePreset | null
     themeTokens?: Partial<TResolvedThemePreset> | null
-    pageBg: string
-    pageBgDark: string
-    pageCustomBg: number
-    pageCustomBgDark: number
-    pageCustomIntensity: number
-    pageCustomIntensityDark: number
     primaryColor: TColorName
     primaryCustomColor: string
     primaryCustomColorDark: string

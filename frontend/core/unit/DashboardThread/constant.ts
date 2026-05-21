@@ -19,12 +19,6 @@ export const DSB_MENU_ICON = {
 export const LAYOUT_FIELD = {
   THEME_PRESET: 'themePreset',
   THEME_TOKENS: 'themeTokens',
-  PAGE_BG: 'pageBg',
-  PAGE_BG_DARK: 'pageBgDark',
-  PAGE_CUSTOM_BG: 'pageCustomBg',
-  PAGE_CUSTOM_BG_DARK: 'pageCustomBgDark',
-  PAGE_CUSTOM_INTENSITY: 'pageCustomIntensity',
-  PAGE_CUSTOM_INTENSITY_DARK: 'pageCustomIntensityDark',
   TEXT_TITLE: 'textTitle',
   TEXT_DIGEST: 'textDigest',
   POST_LAYOUT: 'postLayout',
@@ -103,12 +97,6 @@ export const FIELD = {
   WIDGETS_PRIMARY_COLOR: 'widgetsPrimaryColor',
   WIDGETS_SIZE: 'widgetsSize',
   WIDGETS_THREADS: 'widgetsThreads',
-  PAGE_BG: LAYOUT_FIELD.PAGE_BG,
-  PAGE_BG_DARK: LAYOUT_FIELD.PAGE_BG_DARK,
-  PAGE_CUSTOM_BG: LAYOUT_FIELD.PAGE_CUSTOM_BG,
-  PAGE_CUSTOM_BG_DARK: LAYOUT_FIELD.PAGE_CUSTOM_BG_DARK,
-  PAGE_CUSTOM_INTENSITY: LAYOUT_FIELD.PAGE_CUSTOM_INTENSITY,
-  PAGE_CUSTOM_INTENSITY_DARK: LAYOUT_FIELD.PAGE_CUSTOM_INTENSITY_DARK,
   BROADCAST_ENABLE: 'broadcastEnable',
 } as const
 

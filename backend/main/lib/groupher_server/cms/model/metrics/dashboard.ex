@@ -119,12 +119,6 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
     [
       [:theme_preset, :enum, :default],
       [:theme_overwrite, :map, %{}],
-      [:page_bg, :string, "pure white"],
-      [:page_bg_dark, :string, "outer space"],
-      [:page_custom_bg, :integer, 190],
-      [:page_custom_bg_dark, :integer, 190],
-      [:page_custom_intensity, :integer, 100],
-      [:page_custom_intensity_dark, :integer, 100],
       [:text_title, :string, "#243041"],
       [:text_digest, :string, "#6b7280"],
       [:kanban_bg_colors, {:array, :rainbow_color}, @kanban_bg_colors_default],

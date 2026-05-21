@@ -5,12 +5,7 @@ import { injectDsbColors } from './script'
 describe('injectDsbColors', () => {
   it('injects primary and accent custom vars for both themes', () => {
     const styleText = injectDsbColors({
-      pageBg: 'CUSTOM',
-      pageBgDark: 'CUSTOM',
-      pageCustomBg: 190,
-      pageCustomBgDark: 10,
-      pageCustomIntensity: 75,
-      pageCustomIntensityDark: 60,
+      themePreset: 'CUSTOM',
       themeTokens: {
         primaryCustomColor: '#112233',
         primaryCustomColorDark: '#223344',

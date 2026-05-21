@@ -74,12 +74,6 @@ export const FIELDS: TDsbFieldMap = {
   // page
   themePreset: DEFAULT_THEME_PRESET,
   themeTokens: { ...DEFAULT_THEME_OVERWRITE },
-  pageBg: DEFAULT_THEME_OVERWRITE.pageBg,
-  pageBgDark: DEFAULT_THEME_OVERWRITE.pageBgDark,
-  pageCustomBg: DEFAULT_THEME_OVERWRITE.pageCustomBg,
-  pageCustomBgDark: DEFAULT_THEME_OVERWRITE.pageCustomBgDark,
-  pageCustomIntensity: DEFAULT_THEME_OVERWRITE.pageCustomIntensity,
-  pageCustomIntensityDark: DEFAULT_THEME_OVERWRITE.pageCustomIntensityDark,
 
   // seo
   seoEnable: true,

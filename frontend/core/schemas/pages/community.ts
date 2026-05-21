@@ -82,12 +82,6 @@ export const community = `
         layout {
           themePreset
           themeTokens
-          pageBg
-          pageBgDark
-          pageCustomBg
-          pageCustomBgDark
-          pageCustomIntensity
-          pageCustomIntensityDark
           textTitle
           textDigest
           postLayout

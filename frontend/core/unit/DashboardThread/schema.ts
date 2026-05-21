@@ -163,12 +163,6 @@ const updateDashboardLayout = gql`
     $community: String!
     $themePreset: DsbThemePreset
     $themeOverwrite: Json
-    $pageBg: String
-    $pageBgDark: String
-    $pageCustomBg: Int
-    $pageCustomBgDark: Int
-    $pageCustomIntensity: Int
-    $pageCustomIntensityDark: Int
     $textTitle: String
     $textDigest: String
     $postLayout: DsbPostLayout
@@ -203,12 +197,6 @@ const updateDashboardLayout = gql`
       community: $community
       themePreset: $themePreset
       themeOverwrite: $themeOverwrite
-      pageBg: $pageBg
-      pageBgDark: $pageBgDark
-      pageCustomBg: $pageCustomBg
-      pageCustomBgDark: $pageCustomBgDark
-      pageCustomIntensity: $pageCustomIntensity
-      pageCustomIntensityDark: $pageCustomIntensityDark
       textTitle: $textTitle
       textDigest: $textDigest
       postLayout: $postLayout

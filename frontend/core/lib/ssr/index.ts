@@ -3,10 +3,8 @@ import { cacheLife, cacheTag } from 'next/cache'
 import { includes, reject } from 'ramda'
 
 import { CACHE_TAG } from '~/const/cache'
-import { PAGE_BG_DEFAULT } from '~/const/colors'
 import { INIT_KANBAN_BOARDS, normalizeKanbanBoards } from '~/const/dashboard'
 import { BUILTIN_ALIAS } from '~/const/name'
-import THEME from '~/const/theme'
 import { THREAD } from '~/const/thread'
 import { removeEmptyValuesFromObject } from '~/helper'
 import { resolveThemePreset } from '~/lib/themePreset'
@@ -105,6 +103,12 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     mediaReports,
   } = dashboard
   const resolvedThemePreset = resolveThemePreset(layout ?? {})
+  const dashboardPresetFields = {
+    textTitle: resolvedThemePreset.textTitle,
+    textDigest: resolvedThemePreset.textDigest,
+    gaussBlur: resolvedThemePreset.gaussBlur,
+    gaussBlurDark: resolvedThemePreset.gaussBlurDark,
+  }
 
   const fieldsObj = removeEmptyValuesFromObject({
     enable,
@@ -114,15 +118,13 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     ...baseInfo,
     ...seo,
     ...layout,
-    ...resolvedThemePreset,
+    ...dashboardPresetFields,
     ...rss,
     headerLinks,
     footerLinks,
     footerOnelineLinks,
     moderators,
     mediaReports,
-    pageBg: resolvedThemePreset.pageBg || PAGE_BG_DEFAULT[THEME.LIGHT],
-    pageBgDark: resolvedThemePreset.pageBgDark || PAGE_BG_DEFAULT[THEME.DARK],
   }) as Partial<TParseDashboard>
 
   if (layout?.kanbanBoards?.length) {

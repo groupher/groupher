@@ -41,7 +41,6 @@ describe('stores/dashboard', () => {
     const editingLink: TLinkDraftItem = { index: 9, title: 'X', group: 'MORE', link: '/x' }
 
     store.commit({
-      pageBg: 'radial-gradient(circle at 20% 20%, #111, #000)',
       kanbanBoards: [KANBAN_BOARD.BACKLOG, KANBAN_BOARD.TODO],
       headerLinks,
       footerLinks: [
@@ -140,79 +139,31 @@ describe('stores/dashboard', () => {
     store.editFields({
       themePreset: claude.value,
       themeTokens: { ...claude.overwrite },
-      pageBg: claude.overwrite.pageBg,
-      pageBgDark: claude.overwrite.pageBgDark,
-      pageCustomBg: claude.overwrite.pageCustomBg,
-      pageCustomBgDark: claude.overwrite.pageCustomBgDark,
-      pageCustomIntensity: claude.overwrite.pageCustomIntensity,
-      pageCustomIntensityDark: claude.overwrite.pageCustomIntensityDark,
       textTitle: claude.overwrite.textTitle,
       textDigest: claude.overwrite.textDigest,
     })
 
     expect(store.themePreset).toBe('CLAUDE')
-    expect(store.pageBg).toBe(COLOR.CUSTOM)
-    expect(store.pageBgDark).toBe(COLOR.CUSTOM)
-    expect(store.pageCustomBg).toBe(claude.overwrite.pageCustomBg)
-    expect(store.pageCustomBgDark).toBe(claude.overwrite.pageCustomBgDark)
-    expect(store.pageCustomIntensity).toBe(claude.overwrite.pageCustomIntensity)
-    expect(store.pageCustomIntensityDark).toBe(claude.overwrite.pageCustomIntensityDark)
+    expect(store.themeTokens.pageBg).toBe(COLOR.CUSTOM)
+    expect(store.themeTokens.pageBgDark).toBe(COLOR.CUSTOM)
+    expect(store.themeTokens.pageCustomBg).toBe(claude.overwrite.pageCustomBg)
+    expect(store.themeTokens.pageCustomBgDark).toBe(claude.overwrite.pageCustomBgDark)
+    expect(store.themeTokens.pageCustomIntensity).toBe(claude.overwrite.pageCustomIntensity)
+    expect(store.themeTokens.pageCustomIntensityDark).toBe(claude.overwrite.pageCustomIntensityDark)
     expect(store.themeTokens.primaryColor).toBe(COLOR.CUSTOM)
     expect(store.themeTokens.primaryCustomColor).toBe('#c96442')
     expect(store.themeTokens.primaryCustomColorDark).toBe('#d97757')
     expect(store.themeTokens.accentColor).toBe(COLOR.BLUE)
     expect(store.textTitle).toBe(claude.overwrite.textTitle)
     expect(store.textDigest).toBe(claude.overwrite.textDigest)
-    expect(
-      store.anyTouched([
-        'themePreset',
-        'themeTokens',
-        'pageBg',
-        'pageBgDark',
-        'pageCustomBg',
-        'pageCustomBgDark',
-        'pageCustomIntensity',
-        'pageCustomIntensityDark',
-        'textTitle',
-        'textDigest',
-      ]),
-    ).toBe(true)
+    expect(store.anyTouched(['themePreset', 'themeTokens', 'textTitle', 'textDigest'])).toBe(true)
 
-    store.rollbackFields([
-      'themePreset',
-      'themeTokens',
-      'pageBg',
-      'pageBgDark',
-      'pageCustomBg',
-      'pageCustomBgDark',
-      'pageCustomIntensity',
-      'pageCustomIntensityDark',
-      'textTitle',
-      'textDigest',
-    ])
+    store.rollbackFields(['themePreset', 'themeTokens', 'textTitle', 'textDigest'])
 
     expect(store.themePreset).toBe(store.original.themePreset)
-    expect(store.pageBg).toBe(store.original.pageBg)
-    expect(store.pageBgDark).toBe(store.original.pageBgDark)
-    expect(store.pageCustomBg).toBe(store.original.pageCustomBg)
-    expect(store.pageCustomBgDark).toBe(store.original.pageCustomBgDark)
-    expect(store.pageCustomIntensity).toBe(store.original.pageCustomIntensity)
-    expect(store.pageCustomIntensityDark).toBe(store.original.pageCustomIntensityDark)
+    expect(store.themeTokens).toBe(store.original.themeTokens)
     expect(store.textTitle).toBe(store.original.textTitle)
     expect(store.textDigest).toBe(store.original.textDigest)
-    expect(
-      store.anyTouched([
-        'themePreset',
-        'themeTokens',
-        'pageBg',
-        'pageBgDark',
-        'pageCustomBg',
-        'pageCustomBgDark',
-        'pageCustomIntensity',
-        'pageCustomIntensityDark',
-        'textTitle',
-        'textDigest',
-      ]),
-    ).toBe(false)
+    expect(store.anyTouched(['themePreset', 'themeTokens', 'textTitle', 'textDigest'])).toBe(false)
   })
 })

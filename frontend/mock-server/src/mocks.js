@@ -74,12 +74,6 @@ const makeDashboard = (slug = 'home') => {
     layout: {
       themePreset: 'DEFAULT',
       themeTokens: DEFAULT_THEME_TOKENS,
-      pageBg: 'CUSTOM',
-      pageBgDark: 'CUSTOM',
-      pageCustomBg: 0,
-      pageCustomBgDark: 0,
-      pageCustomIntensity: 0,
-      pageCustomIntensityDark: 15,
       textTitle: '#243041',
       textDigest: '#6b7280',
       postLayout: 'quora',
