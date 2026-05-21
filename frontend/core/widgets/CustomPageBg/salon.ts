@@ -1,10 +1,11 @@
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TSpace } from '~/spec'
 
-export default function useSalon() {
-  const { cn, fg, primary } = useTwBelt()
+export default function useSalon(spacing: TSpace = {}) {
+  const { cn, fg, margin, primary } = useTwBelt()
 
   return {
-    wrapper: 'mt-10',
+    wrapper: cn(margin(spacing)),
     enableRow: 'row-center mb-4 pr-2 text-sm w-full',
     selectorRow: 'row-center justify-end mb-4 pr-2 w-full',
     inner: cn('w-full'),
