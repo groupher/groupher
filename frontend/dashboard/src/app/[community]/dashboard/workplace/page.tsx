@@ -4,7 +4,7 @@ import {
   DSB_ALIAS_ROUTE,
   DSB_CHANGELOG_ROUTE,
   DSB_INFO_ROUTE,
-  DSB_LAYOUT_ROUTE,
+  DSB_APPEARANCE_ROUTE,
   DSB_POST_ROUTE,
   DSB_ROUTE,
   DSB_SEO_ROUTE,
@@ -70,12 +70,12 @@ export default function WorkplaceCoversPage() {
             ],
           },
           {
-            groupTitle: '布局与样式',
+            groupTitle: '外观',
             items: [
               {
-                title: '通用',
+                title: '布局',
                 desc: '品牌展示，整体布局，头像，标签等全局样式。',
-                seg: DSB_ROUTE.LAYOUT,
+                seg: DSB_ROUTE.APPEARANCE,
                 Icon: BindSVG,
               },
               {
@@ -87,7 +87,7 @@ export default function WorkplaceCoversPage() {
               {
                 title: '看板',
                 desc: '看板展示个性化设置。',
-                seg: `${DSB_ROUTE.LAYOUT}/${DSB_LAYOUT_ROUTE.KANBAN}`,
+                seg: `${DSB_ROUTE.APPEARANCE}/${DSB_APPEARANCE_ROUTE.KANBAN}`,
                 Icon: KanbanSVG,
               },
               {

@@ -9,7 +9,7 @@ import {
   MasonryPreview,
   MinimalPreview,
   ThreeColumnPreview,
-} from '~/unit/DashboardThread/Layout/PostLayout'
+} from '~/unit/DashboardThread/Appearance/PostLayout'
 import CheckLabel from '~/widgets/CheckLabel'
 
 import useSalon from './salon/post_layout'
@@ -22,11 +22,11 @@ type TProps = {
 const PostListLayout: FC<TProps> = ({ layout, onChange }) => {
   const s = useSalon()
   const { t } = useTrans()
-  const classicTitle = t('dsb.layout.post.option.classic')
-  const phTitle = t('dsb.layout.post.option.ph')
-  const masonryTitle = t('dsb.layout.post.option.masonry')
-  const minimalTitle = t('dsb.layout.post.option.minimal')
-  const coverTitle = t('dsb.layout.post.option.cover')
+  const classicTitle = t('dsb.appearance.post.option.classic')
+  const phTitle = t('dsb.appearance.post.option.ph')
+  const masonryTitle = t('dsb.appearance.post.option.masonry')
+  const minimalTitle = t('dsb.appearance.post.option.minimal')
+  const coverTitle = t('dsb.appearance.post.option.cover')
 
   return (
     <div className={s.wrapper}>

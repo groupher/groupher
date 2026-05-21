@@ -1,6 +1,6 @@
 'use client'
 
-import PostLayout from '~/unit/DashboardThread/Layout/PostLayout'
+import PostLayout from '~/unit/DashboardThread/Appearance/PostLayout'
 
 export default function DashboardPostLayoutPage() {
   return <PostLayout />

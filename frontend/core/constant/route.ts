@@ -1,4 +1,4 @@
-import type { TDsbTabs } from '~/hooks/useDsbLayoutTabs'
+import type { TDsbTabs } from '~/hooks/useDsbTabs'
 
 const NON_COMMUNITY_ROUTE = {
   APPLY_COMMUNITY: '/apply/community',
@@ -15,7 +15,7 @@ export const DSB_ROUTE = {
   // basic-info
   INFO: 'info',
   SEO: 'seo',
-  LAYOUT: 'layout',
+  APPEARANCE: 'appearance',
   THREADS: 'threads',
   ALIAS: 'alias',
   DOMAIN: 'domain',
@@ -81,9 +81,9 @@ export const DSB_CHANGELOG_ROUTE = {
   BEHAVIOR: 'behavior',
 } as const
 
-export const DSB_LAYOUT_ROUTE = {
-  GENERAL: 'general',
-  APPEARANCE: 'appearance',
+export const DSB_APPEARANCE_ROUTE = {
+  LAYOUT: 'layout',
+  THEME: 'theme',
   WALLPAPER: 'wallpaper',
   POST: 'post',
   KANBAN: 'kanban',
@@ -153,7 +153,7 @@ export const DSB_TAB = {
   THIRD_PART: 'thirdPartTab',
   SEO: 'seoTab',
   DOC: 'docTab',
-  LAYOUT: 'layoutTab',
+  APPEARANCE: 'appearanceTab',
   BROADCAST: 'broadcastTab',
   WIDGET: 'widgetTab',
 } as const
@@ -168,13 +168,13 @@ export const INFO_TABS: TDsbTabs = {
   ],
 }
 
-export const LAYOUT_TABS: TDsbTabs = {
-  segment: DSB_ROUTE.LAYOUT,
+export const APPEARANCE_TABS: TDsbTabs = {
+  segment: DSB_ROUTE.APPEARANCE,
   items: [
-    { title: 'dsb.layout.general', slug: DSB_LAYOUT_ROUTE.GENERAL, segment: '' },
-    { title: 'dsb.layout.appearance', slug: DSB_LAYOUT_ROUTE.APPEARANCE },
-    { title: 'dsb.layout.wallpaper', slug: DSB_LAYOUT_ROUTE.WALLPAPER },
-    { title: 'dsb.layout.kanban', slug: DSB_LAYOUT_ROUTE.KANBAN },
+    { title: 'dsb.appearance.layout', slug: DSB_APPEARANCE_ROUTE.LAYOUT, segment: '' },
+    { title: 'dsb.appearance.theme', slug: DSB_APPEARANCE_ROUTE.THEME },
+    { title: 'dsb.appearance.wallpaper', slug: DSB_APPEARANCE_ROUTE.WALLPAPER },
+    { title: 'dsb.appearance.kanban', slug: DSB_APPEARANCE_ROUTE.KANBAN },
   ],
 }
 

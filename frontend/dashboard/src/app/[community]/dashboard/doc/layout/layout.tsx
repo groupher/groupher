@@ -5,7 +5,7 @@ import createDocLayout from '../_shared/createDocLayout'
 export default createDocLayout({
   path: 'layout',
   title: 'dsb.doc.layout',
-  desc: 'dsb.layout.doc.desc',
+  desc: 'dsb.appearance.doc.desc',
   crumbTitle: 'dsb.crumb.doc.layout',
   withDivider: true,
 })

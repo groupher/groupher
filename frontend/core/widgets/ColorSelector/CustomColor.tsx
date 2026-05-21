@@ -38,7 +38,7 @@ const CustomColor = ({
       <m.button
         layout
         type='button'
-        aria-label={t('dsb.layout.primary_color.custom')}
+        aria-label={t('dsb.appearance.primary_color.custom')}
         initial={false}
         animate={{ scale: expanded ? 0.98 : 1 }}
         transition={{ duration: 0.15, ease: 'easeInOut', delay: 0.06 }}
@@ -61,7 +61,7 @@ const CustomColor = ({
           transition={{ duration: 0.15, ease: 'easeInOut', delay: 0.075 }}
           className={s.title}
         >
-          {t('dsb.layout.primary_color.custom')}
+          {t('dsb.appearance.primary_color.custom')}
         </m.div>
       )}
     </m.div>

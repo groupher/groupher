@@ -50,28 +50,28 @@ describe('gateway/proxy', () => {
   it('rewrites nested dashboard route to dashboard site and keeps real route segments', () => {
     proxy(
       makeRequest(
-        '/cps/dashboard/layout/kanban',
+        '/cps/dashboard/appearance/kanban',
         'www.groupher.com',
         '?tab=preview',
       ) as unknown as TProxyRequest,
     )
     const rewritten = getRewrittenUrl()
     expect(rewritten.origin).toBe(new URL(SITE.DASHBOARD).origin)
-    expect(rewritten.pathname).toBe('/cps/layout/kanban')
+    expect(rewritten.pathname).toBe('/cps/appearance/kanban')
     expect(rewritten.search).toBe('?tab=preview')
   })
 
   it('keeps nested dashboard route on dashboard subdomain', () => {
     proxy(
       makeRequest(
-        '/cps/layout/kanban',
+        '/cps/appearance/kanban',
         'dashboard.groupher.com',
         '?tab=preview',
       ) as unknown as TProxyRequest,
     )
     const rewritten = getRewrittenUrl()
     expect(rewritten.origin).toBe(new URL(SITE.DASHBOARD).origin)
-    expect(rewritten.pathname).toBe('/cps/layout/kanban')
+    expect(rewritten.pathname).toBe('/cps/appearance/kanban')
     expect(rewritten.search).toBe('?tab=preview')
   })
 
