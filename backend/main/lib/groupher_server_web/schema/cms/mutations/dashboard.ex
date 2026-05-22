@@ -125,6 +125,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       arg(:gauss_blur_dark, :float)
 
       middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "dashboard.theme.update")
       # middleware(M.PublishThrottle)
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
@@ -138,6 +139,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       arg(:theme_preset, non_null(:dsb_theme_preset))
 
       middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "dashboard.theme.update")
       # middleware(M.PublishThrottle)
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)

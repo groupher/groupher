@@ -11,8 +11,6 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   alias CMS.Model.{Category, Community}
   alias Helper.{OgInfo, ORM}
 
-  @readonly_theme_presets [:default, :claude, :solarized, :hn]
-
   # #######################
   # community ..
   # #######################
@@ -95,12 +93,11 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   defp normalize_theme_tokens_arg(args), do: args
 
-  defp ensure_custom_theme_preset(%{theme_preset: :custom, theme_preset_base: base})
-       when base in @readonly_theme_presets,
-       do: :ok
+  defp ensure_custom_theme_preset(%{theme_preset: :custom, theme_preset_base: :custom}),
+    do: {:error, "saveCustomThemePreset requires a read-only themePresetBase"}
 
   defp ensure_custom_theme_preset(%{theme_preset: :custom}),
-    do: {:error, "saveCustomThemePreset requires a read-only themePresetBase"}
+    do: :ok
 
   defp ensure_custom_theme_preset(_),
     do: {:error, "saveCustomThemePreset only accepts CUSTOM preset"}
