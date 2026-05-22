@@ -285,7 +285,7 @@ export default {
   'dsb.appearance.theme.preset.desc': '微调当前预设，或将自定义预设重置到另一套主题基线。',
   'dsb.appearance.theme.customize': '自定义',
   'dsb.appearance.theme.reset_to': '重置为',
-  'dsb.appearance.theme.based': 'based',
+  'dsb.appearance.theme.based': '基于',
   'dsb.appearance.theme.preset.default.title': '默认',
   'dsb.appearance.theme.preset.default.desc': '中性基线',
   'dsb.appearance.theme.preset.claude.title': 'Claude',
