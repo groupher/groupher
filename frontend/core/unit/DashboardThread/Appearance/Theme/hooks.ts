@@ -197,6 +197,28 @@ export default function useAppearance() {
     })
   }
 
+  const resetCustomPresetTo = useCallback(
+    (preset: TThemePresetOption) => {
+      if (dsb$.themePreset !== THEME_PRESET.CUSTOM) return
+
+      const nextOverwrite = { ...preset.overwrite }
+
+      clearPendingThemePresetPreviewCommit()
+      clearPreviewCssVars()
+      setEditingDetails(true)
+      setShowForkRelation(false)
+      updateCustomPresetDraft(nextOverwrite)
+      dsb$.editFields({
+        themePreset: THEME_PRESET.CUSTOM,
+        themePresetBase: preset.value,
+        themeTokens: nextOverwrite,
+        ...pickDashboardMirrorPatch(nextOverwrite),
+      })
+      setPageBgResetVersion((version) => version + 1)
+    },
+    [clearPendingThemePresetPreviewCommit, clearPreviewCssVars, dsb$, updateCustomPresetDraft],
+  )
+
   const previewPageBg = useCallback(
     (patch: Partial<TPageBgDraft>) => {
       const previewRawBg = resolveRawBg(
@@ -304,11 +326,13 @@ export default function useAppearance() {
     hasCustomThemePreset: dsb$.hasCustomThemePreset,
     customPresetOverwrite,
     showForkRelation: activePreset === THEME_PRESET.CUSTOM && isTouched && showForkRelation,
+    showResetMenu: activePreset === THEME_PRESET.CUSTOM,
     isTouched,
     showDetailsSavingBar,
     showPresetSavingBar,
     details,
     selectPreset,
+    resetCustomPresetTo,
     saveAppearance,
     cancelAppearance,
   }

@@ -297,8 +297,10 @@ export default {
     'Choose a coordinated theme baseline. Fine tuning remains available in this tab.',
   'dsb.appearance.theme.preset.detail': 'Preset details',
   'dsb.appearance.theme.preset.desc':
-    'Click Customize on the right to create your own preset from an existing theme preset.',
+    'Fine tune the selected preset or reset Custom to another preset baseline.',
   'dsb.appearance.theme.customize': 'Customize',
+  'dsb.appearance.theme.reset_to': 'Reset to',
+  'dsb.appearance.theme.based': 'based',
   'dsb.appearance.theme.preset.default.title': 'Default',
   'dsb.appearance.theme.preset.default.desc': 'Neutral baseline',
   'dsb.appearance.theme.preset.claude.title': 'Claude',
