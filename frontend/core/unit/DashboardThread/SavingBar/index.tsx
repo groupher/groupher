@@ -9,18 +9,12 @@ import YesOrNoButtons from '~/widgets/Buttons/YesOrNoButtons'
 
 import useHelper from '../logic/useHelper'
 import type { TDsbFieldKey } from '../spec.d'
+import {
+  SAVING_BAR_ANIMATION,
+  SAVING_BAR_LAYOUT_TRANSITION,
+  SAVING_BAR_TRANSITION,
+} from './constant'
 import useSalon, { cn } from './salon'
-
-const SAVING_BAR_TRANSITION = {
-  duration: 0.18,
-  ease: 'easeOut',
-} as const
-
-const SAVING_BAR_ANIMATION = {
-  initial: { opacity: 0, scale: 0.985, y: -6 },
-  animate: { opacity: 1, scale: 1, y: 0 },
-  exit: { opacity: 0, scale: 0.985, y: -4 },
-} as const
 
 type TProps = {
   field?: TDsbFieldKey | null
@@ -32,6 +26,7 @@ type TProps = {
   minimal?: boolean
   disabled?: boolean
   width?: string
+  wrapperClassName?: string
   onCancel?: () => void
   onConfirm?: () => void
 } & TSpace
@@ -48,6 +43,7 @@ const SavingBar: FC<TProps> = ({
   onCancel = console.log,
   onConfirm = console.log,
   width = 'w-full',
+  wrapperClassName,
   ...spacing
 }) => {
   const s = useSalon({ minimal, width, ...spacing })
@@ -112,22 +108,32 @@ const SavingBar: FC<TProps> = ({
         {isTouched && (
           <m.div
             key='saving-bar'
-            layout
-            initial={SAVING_BAR_ANIMATION.initial}
-            animate={SAVING_BAR_ANIMATION.animate}
-            exit={SAVING_BAR_ANIMATION.exit}
-            transition={SAVING_BAR_TRANSITION}
-            className={cn(s.wrapper, 'pl-2.5', 'saving-bar-right-linear')}
+            initial={{ height: 0 }}
+            animate={{ height: 'auto' }}
+            exit={{ height: 0 }}
+            transition={SAVING_BAR_LAYOUT_TRANSITION}
+            className='overflow-hidden'
           >
-            <div className='row-center'>
-              <InfoSVG className={s.infoIcon} />
-              <div className={s.hintText}>
-                {resolvedPrefix}
-                {hint && <div className={s.hint}>{hint}</div>}?
+            {/* Keep caller spacing/borders inside the measured height so they collapse smoothly. */}
+            <m.div
+              initial={SAVING_BAR_ANIMATION.initial}
+              animate={SAVING_BAR_ANIMATION.animate}
+              exit={SAVING_BAR_ANIMATION.exit}
+              transition={SAVING_BAR_TRANSITION}
+              className={wrapperClassName}
+            >
+              <div className={cn(s.wrapper, 'pl-2.5', 'saving-bar-right-linear')}>
+                <div className='row-center'>
+                  <InfoSVG className={s.infoIcon} />
+                  <div className={s.hintText}>
+                    {resolvedPrefix}
+                    {hint && <div className={s.hint}>{hint}</div>}?
+                  </div>
+                </div>
+                <div className='grow' />
+                {actions}
               </div>
-            </div>
-            <div className='grow' />
-            {actions}
+            </m.div>
           </m.div>
         )}
       </AnimatePresence>

@@ -1,7 +1,5 @@
 'use client'
 
-import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
-
 import useTrans from '~/hooks/useTrans'
 import ThemeSectionSelector from '~/widgets/ThemeSectionSelector'
 
@@ -11,11 +9,6 @@ import DetailsPanel from './DetailsPanel'
 import useAppearance from './hooks'
 import PresetList from './PresetList'
 import useSalon from './salon'
-
-const SAVING_SECTION_TRANSITION = {
-  duration: 0.18,
-  ease: 'easeOut',
-} as const
 
 export default function Appearance() {
   const { t } = useTrans()
@@ -54,22 +47,13 @@ export default function Appearance() {
         onSelect={selectPreset}
       />
 
-      <LazyMotion features={domAnimation}>
-        <AnimatePresence initial={false}>
-          {showPresetSavingBar && (
-            <m.div
-              key='theme-preset-saving-bar'
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={SAVING_SECTION_TRANSITION}
-              className={s.presetSavingWrapper}
-            >
-              <SavingBar isTouched onCancel={cancelAppearance} onConfirm={saveAppearance} top={5} />
-            </m.div>
-          )}
-        </AnimatePresence>
-      </LazyMotion>
+      <SavingBar
+        isTouched={showPresetSavingBar}
+        wrapperClassName={s.presetSavingWrapper}
+        onCancel={cancelAppearance}
+        onConfirm={saveAppearance}
+        top={5}
+      />
 
       <DetailsPanel
         details={details}
@@ -79,22 +63,12 @@ export default function Appearance() {
         onResetPreset={resetCustomPresetTo}
       />
 
-      <LazyMotion features={domAnimation}>
-        <AnimatePresence initial={false}>
-          {showDetailsSavingBar && (
-            <m.div
-              key='theme-details-saving-bar'
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={SAVING_SECTION_TRANSITION}
-              className={s.savingWrapper}
-            >
-              <SavingBar isTouched onCancel={cancelAppearance} onConfirm={saveAppearance} />
-            </m.div>
-          )}
-        </AnimatePresence>
-      </LazyMotion>
+      <SavingBar
+        isTouched={showDetailsSavingBar}
+        wrapperClassName={s.savingWrapper}
+        onCancel={cancelAppearance}
+        onConfirm={saveAppearance}
+      />
     </section>
   )
 }
