@@ -2,9 +2,9 @@ import useTrans from '~/hooks/useTrans'
 import CustomPageBg, { type TPageBgDraft } from '~/widgets/CustomPageBg'
 
 import SectionLabel from '../../SectionLabel'
+import Colors from './Colors'
 import GlassOpacity from './GlassOpacity'
 import PageGlow from './PageGlow'
-import PrimaryColors from './PrimaryColors'
 import useSalon from './salon/details_panel'
 import type { TThemePresetOverwrite } from './spec'
 
@@ -51,9 +51,11 @@ export default function DetailsPanel({
       </div>
 
       <div className={s.content}>
-        <PrimaryColors
+        <Colors
           primaryColor={primaryColor}
           accentColor={accentColor}
+          textTitle={selectedOverwrite.textTitle}
+          textDigest={selectedOverwrite.textDigest}
           isLightTheme={isLightTheme}
           onThemePresetCommit={onThemePresetCommit}
         />

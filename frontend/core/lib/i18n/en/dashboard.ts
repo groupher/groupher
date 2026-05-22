@@ -288,6 +288,10 @@ export default {
   'dsb.appearance.primary_color.label': 'Primary color',
   'dsb.appearance.primary_color.custom': 'Custom color',
   'dsb.appearance.primary_color.hint': 'Used for buttons, active tabs, and menu highlights.',
+  'dsb.appearance.title_color.title': 'Title color',
+  'dsb.appearance.title_color.desc': 'Used for headings and primary text.',
+  'dsb.appearance.digest_color.title': 'Digest color',
+  'dsb.appearance.digest_color.desc': 'Used for descriptions, metadata, and secondary text.',
   'dsb.appearance.theme.title': 'Theme preset',
   'dsb.appearance.theme.desc':
     'Choose a coordinated theme baseline. Fine tuning remains available in this tab.',

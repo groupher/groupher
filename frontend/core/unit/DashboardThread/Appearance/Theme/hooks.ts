@@ -1,3 +1,4 @@
+import { equals } from 'ramda'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { THEME_PRESET, THEME_PRESET_OPTIONS } from '~/const/theme_preset'
@@ -68,7 +69,9 @@ export default function useAppearance() {
   const selectedOverwrite = pickResolvedThemePresetFields(useThemePreset())
   const updatePreviewCssVars = useUpdatePreviewCssVars()
   const [pageBgResetVersion, setPageBgResetVersion] = useState(0)
+  const [editingDetails, setEditingDetails] = useState(false)
   const [showForkRelation, setShowForkRelation] = useState(false)
+  const [customPresetDraft, setCustomPresetDraft] = useState<TThemePresetOverwrite | null>(null)
 
   const activePreset = dsb$.themePreset
   const activePresetBase =
@@ -80,23 +83,47 @@ export default function useAppearance() {
     THEME_PRESET_OPTIONS.find((preset) => preset.value === dsb$.themePresetBase)?.overwrite ??
     THEME_PRESET_OPTIONS[0].overwrite
   const customPresetOverwrite =
-    activePreset === THEME_PRESET.CUSTOM ? selectedOverwrite : customBaseOverwrite
+    customPresetDraft ??
+    (activePreset === THEME_PRESET.CUSTOM ? selectedOverwrite : customBaseOverwrite)
   const selectedOverwriteRef = useRef(selectedOverwrite)
   const selectedPageBgDraftRef = useRef(selectedPageBgDraft)
+  const customPresetDraftRef = useRef<TThemePresetOverwrite | null>(customPresetDraft)
+
+  const updateCustomPresetDraft = useCallback((overwrite: TThemePresetOverwrite) => {
+    customPresetDraftRef.current = overwrite
+    setCustomPresetDraft(overwrite)
+  }, [])
 
   useEffect(() => {
     selectedOverwriteRef.current = selectedOverwrite
     selectedPageBgDraftRef.current = selectedPageBgDraft
   }, [selectedOverwrite, selectedPageBgDraft])
 
+  useEffect(() => {
+    if (activePreset !== THEME_PRESET.CUSTOM) return
+    if (equals(customPresetDraftRef.current, selectedOverwrite)) return
+
+    updateCustomPresetDraft(selectedOverwrite)
+  }, [activePreset, selectedOverwrite, updateCustomPresetDraft])
+
   const buildCustomPresetEditPatch = useCallback(
     (patch: Partial<TThemePresetOverwrite> = {}) => {
       const themePresetBase =
         dsb$.themePreset === THEME_PRESET.CUSTOM ? dsb$.themePresetBase : dsb$.themePreset
+      // `themeTokens` is the active preset payload from the API, so selecting a
+      // read-only preset replaces it with that preset's resolved tokens. Keep a
+      // separate Custom draft in this hook so unsaved Custom detail edits can
+      // survive temporarily switching to Default/Claude/etc. and back.
+      const baseOverwrite =
+        dsb$.themePreset === THEME_PRESET.CUSTOM
+          ? (customPresetDraftRef.current ?? selectedOverwriteRef.current)
+          : selectedOverwriteRef.current
       const nextTokens = {
-        ...selectedOverwriteRef.current,
+        ...baseOverwrite,
         ...patch,
       }
+
+      updateCustomPresetDraft(nextTokens)
 
       return {
         themePreset: THEME_PRESET.CUSTOM,
@@ -104,19 +131,20 @@ export default function useAppearance() {
         themeTokens: nextTokens,
       }
     },
-    [dsb$],
+    [dsb$, updateCustomPresetDraft],
   )
 
   const enterCustomPresetTokenEdit = useCallback(
     (patch: Partial<TThemePresetOverwrite> = {}) => {
-      // Both delayed controls (ranges/background) and immediate controls
-      // (primary/accent colors, glow swatches) must enter the same fork UI.
-      // Keep the transition here so every theme token edit first becomes a
-      // Custom preset edit, while built-in presets remain read-only.
-      setShowForkRelation(true)
+      // Detail controls always save as Custom tokens, but the visual
+      // "forked from" relation is only meaningful when the edit starts from a
+      // read-only preset. Editing an existing Custom preset should stay in the
+      // normal stacked preset list and only move the save bar to details.
+      setEditingDetails(true)
+      setShowForkRelation(dsb$.themePreset !== THEME_PRESET.CUSTOM)
       return buildCustomPresetEditPatch(patch)
     },
-    [buildCustomPresetEditPatch],
+    [buildCustomPresetEditPatch, dsb$],
   )
 
   const commitThemePresetPatch = useCallback(
@@ -129,6 +157,7 @@ export default function useAppearance() {
     [dsb$, enterCustomPresetTokenEdit],
   )
   const forkCustomPreset = useCallback(() => {
+    setEditingDetails(true)
     setShowForkRelation(true)
     dsb$.editFields(buildCustomPresetEditPatch())
   }, [buildCustomPresetEditPatch, dsb$])
@@ -146,17 +175,21 @@ export default function useAppearance() {
   const selectPreset = (preset: TThemePresetOption) => {
     if (preset.value === THEME_PRESET.CUSTOM && !dsb$.hasCustomThemePreset) return
 
+    const isCustomPreset = preset.value === THEME_PRESET.CUSTOM
+    const nextOverwrite = isCustomPreset
+      ? (customPresetDraftRef.current ?? preset.overwrite)
+      : preset.overwrite
+
+    setEditingDetails(false)
     setShowForkRelation(false)
     clearPendingThemePresetPreviewCommit()
     clearPreviewCssVars()
     dsb$.editFields({
       themePreset: preset.value,
       themePresetBase:
-        preset.value === THEME_PRESET.CUSTOM || dsb$.hasCustomThemePreset
-          ? dsb$.themePresetBase
-          : preset.value,
-      themeTokens: { ...preset.overwrite },
-      ...pickDashboardMirrorPatch(preset.overwrite),
+        isCustomPreset || dsb$.hasCustomThemePreset ? dsb$.themePresetBase : preset.value,
+      themeTokens: { ...nextOverwrite },
+      ...pickDashboardMirrorPatch(nextOverwrite),
     })
   }
 
@@ -210,7 +243,8 @@ export default function useAppearance() {
       if (dsb$.themePreset !== THEME_PRESET.CUSTOM) {
         forkCustomPreset()
       } else {
-        setShowForkRelation(true)
+        setEditingDetails(true)
+        setShowForkRelation(false)
       }
 
       scheduleThemePresetPreviewCommit(patch)
@@ -227,16 +261,17 @@ export default function useAppearance() {
   const cancelAppearance = () => {
     clearPendingThemePresetPreviewCommit()
     clearPreviewCssVars()
+    setEditingDetails(false)
     setShowForkRelation(false)
     rollbackEdit(FIELD.THEME_PRESET)
     setPageBgResetVersion((version) => version + 1)
   }
 
-  // Details edits always enter the Custom fork view, while preset-list clicks
-  // clear it. Reuse that split to keep preset-only saves directly under the
-  // preset list and details edits under the details panel.
-  const showDetailsSavingBar = isTouched && showForkRelation
-  const showPresetSavingBar = isTouched && !showForkRelation
+  // Save-bar placement follows where the edit happened, not whether the active
+  // preset is Custom. Custom details edits save under the details panel without
+  // showing fork UI; preset-card selections save under the preset list.
+  const showDetailsSavingBar = isTouched && editingDetails
+  const showPresetSavingBar = isTouched && !editingDetails
 
   return {
     activePreset,
