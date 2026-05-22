@@ -1,144 +1,23 @@
 import { POST_LAYOUT } from '~/const/layout'
 import useTrans from '~/hooks/useTrans'
-import CommentSVG from '~/icons/Comment'
-import UpvoteSVG from '~/icons/Upvote'
 import CheckLabel from '~/widgets/CheckLabel'
 
 import { FIELD } from '../../constant'
 import usePost from '../../logic/usePost'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
-import useSalon, { cnMerge } from './salon'
+import ClassicPreview from './ClassicPreview'
+import CoverPreview from './CoverPreview'
+import MasonryPreview from './MasonryPreview'
+import MinimalPreview from './MinimalPreview'
+import useSalon from './salon'
+import ThreeColumnPreview from './ThreeColumnPreview'
 
-type TPreviewProps = {
-  isActive: boolean
-  compact?: boolean
-}
-
-export function ClassicPreview({ isActive, compact }: TPreviewProps) {
-  const s = useSalon({ compact })
-
-  return (
-    <div className={cnMerge(s.block, isActive && s.blockActive)}>
-      <div className={s.frame}>
-        <div className={s.topRow}>
-          <div className={s.header}>
-            <div className={cnMerge(s.bar, s.metaBar)} />
-            <div className={cnMerge(s.bar, s.titleBar)} />
-            <div className={cnMerge(s.bar, s.bodyWide)} />
-          </div>
-          <CommentSVG className={s.commentIcon} />
-        </div>
-
-        <div className={s.footer}>
-          <div className={s.footerLeft}>
-            <UpvoteSVG className={s.upvoteIcon} />
-            <div className={cnMerge(s.bar, s.scoreBar)} />
-            <div className={cnMerge(s.bar, s.noteBar)} />
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export function ThreeColumnPreview({ isActive, compact }: TPreviewProps) {
-  const s = useSalon({ compact })
-
-  return (
-    <div className={cnMerge(s.block, isActive && s.blockActive)}>
-      <div className={cnMerge(s.contentRow, 'items-start')}>
-        <div className={cnMerge(s.userAvatar, 'mt-0.5')} />
-
-        <div className={cnMerge(s.textColumn, 'grow pt-1')}>
-          <div className={cnMerge(s.bar, s.phTitleBar)} />
-          <div className={cnMerge(s.bar, s.phBodyWide)} />
-          <div className={cnMerge(s.bar, s.phBodyTiny)} />
-        </div>
-
-        <div className={cnMerge(s.upvoteBtn, compact ? '-mt-0.5' : 'scale-90 -mt-1')}>
-          <UpvoteSVG className={s.upvoteIcon} />
-          <div>N</div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export function MasonryPreview({ isActive, compact }: TPreviewProps) {
-  const s = useSalon({ compact })
-
-  return (
-    <div className={cnMerge(s.masonryBlock, isActive && s.blockActive)}>
-      <div className={s.masonryGrid}>
-        <div className={s.masonryCol}>
-          <div className={cnMerge(s.bar, s.masonryTopBar)} />
-          <div className={cnMerge(s.bar, s.masonryMainCard)} />
-          <div className={cnMerge(s.bar, s.masonryBottomCard)} />
-        </div>
-
-        <div className={s.masonryCol}>
-          <div className={cnMerge(s.bar, s.masonrySideTop)} />
-          <div className={cnMerge(s.bar, s.masonrySideMain)} />
-          <div className={cnMerge(s.bar, s.masonrySideBottom)} />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export function MinimalPreview({ isActive, compact }: TPreviewProps) {
-  const s = useSalon({ compact })
-
-  return (
-    <div className={cnMerge(s.block, isActive && s.blockActive)}>
-      <div className={cnMerge(s.contentRow, 'items-start')}>
-        <div className={s.upvoteBtn}>
-          <UpvoteSVG className={s.upvoteIcon} />
-          <div>N</div>
-        </div>
-
-        <div className={cnMerge(s.textColumn, 'grow pt-1')}>
-          <div className={cnMerge(s.bar, s.minimalTitleBar)} />
-          <div className={cnMerge(s.bar, s.minimalBodyWide)} />
-          <div className={cnMerge(s.bar, s.minimalBodyTiny)} />
-        </div>
-
-        <CommentSVG className={cnMerge(s.upvoteIcon, 'size-3')} />
-      </div>
-    </div>
-  )
-}
-
-export function CoverPreview({ isActive, compact }: TPreviewProps) {
-  const s = useSalon({ compact })
-
-  return (
-    <div className={cnMerge(s.block, isActive && s.blockActive)}>
-      <div className={s.contentRow}>
-        <div className={cnMerge(s.bar, s.coverMedia)} />
-
-        <div className={cnMerge(s.frame, 'grow')}>
-          <div className={s.header}>
-            <div className={cnMerge(s.bar, s.coverMeta)} />
-            <div className={cnMerge(s.bar, s.coverTitle)} />
-          </div>
-
-          <div className={s.footer}>
-            <div className={s.footerLeft}>
-              <UpvoteSVG className={s.upvoteIcon} />
-              <div className={cnMerge(s.bar, s.coverScore)} />
-            </div>
-            <div className={s.footerRight}>
-              <CommentSVG className={cnMerge(s.upvoteIcon, 'size-3.5')} />
-              <div className={cnMerge(s.bar, s.coverNote)} />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
+export { default as ClassicPreview } from './ClassicPreview'
+export { default as CoverPreview } from './CoverPreview'
+export { default as MasonryPreview } from './MasonryPreview'
+export { default as MinimalPreview } from './MinimalPreview'
+export { default as ThreeColumnPreview } from './ThreeColumnPreview'
 
 export default function PostLayout() {
   const s = useSalon()

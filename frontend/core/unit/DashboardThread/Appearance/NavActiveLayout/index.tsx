@@ -1,5 +1,4 @@
 import { NAV_ACTIVE_LAYOUT } from '~/const/layout'
-import useNavActiveLayoutSalon from '~/hooks/useNavActiveLayoutSalon'
 import useTrans from '~/hooks/useTrans'
 import CheckLabel from '~/widgets/CheckLabel'
 
@@ -7,6 +6,7 @@ import { FIELD } from '../../constant'
 import useNavActiveLayout from '../../logic/useNavActiveLayout'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
+import Preview from './Preview'
 import useSalon, { cnMerge } from './salon'
 
 const LAYOUT_OPTIONS = [
@@ -23,43 +23,6 @@ const LAYOUT_OPTIONS = [
     titleKey: 'dsb.appearance.nav_active.option.soft_bg',
   },
 ] as const
-
-const PREVIEW_KEYS = [
-  'dsb.appearance.nav_active.preview.post',
-  'dsb.appearance.nav_active.preview.changelog',
-  'dsb.appearance.nav_active.preview.doc',
-] as const
-
-function Preview({
-  layout,
-}: {
-  layout: (typeof NAV_ACTIVE_LAYOUT)[keyof typeof NAV_ACTIVE_LAYOUT]
-}) {
-  const s = useSalon()
-  const { t } = useTrans()
-  const activeStyle = useNavActiveLayoutSalon({ layout })
-
-  return (
-    <div className={s.preview}>
-      {PREVIEW_KEYS.map((titleKey, index) => {
-        const isActive = index === 1
-
-        return (
-          <div
-            key={titleKey}
-            className={cnMerge(
-              s.previewItem,
-              !isActive && s.previewItemInactive,
-              isActive && activeStyle.item,
-            )}
-          >
-            {t(titleKey)}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
 
 export default function NavActiveLayout() {
   const s = useSalon()

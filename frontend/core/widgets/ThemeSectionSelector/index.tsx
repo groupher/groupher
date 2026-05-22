@@ -10,7 +10,7 @@ import useSalon, { cn } from './salon'
 
 export default function ThemeSectionSelector({ ...spacing }: TSpace) {
   const s = useSalon(spacing)
-  const { theme, changeMode } = useTheme()
+  const { theme, preview } = useTheme()
   const { t } = useTrans()
 
   const mounted = useDidMount()
@@ -24,7 +24,7 @@ export default function ThemeSectionSelector({ ...spacing }: TSpace) {
       <button
         type='button'
         className={cn(s.section, theme === THEME.LIGHT && s.sectionActive)}
-        onClick={() => changeMode(THEME.LIGHT)}
+        onClick={() => preview(THEME.LIGHT)}
       >
         {theme === THEME.LIGHT && <SunSVG className={s.icon} />}
         <div className={cn(s.title, theme === THEME.LIGHT && s.active)}>
@@ -37,7 +37,7 @@ export default function ThemeSectionSelector({ ...spacing }: TSpace) {
       <button
         type='button'
         className={cn(s.section, theme === THEME.DARK && s.sectionActive)}
-        onClick={() => changeMode(THEME.DARK)}
+        onClick={() => preview(THEME.DARK)}
       >
         {theme === THEME.DARK && <MoonSVG className={s.icon} />}
         <div className={cn(s.title, theme === THEME.DARK && s.active)}>

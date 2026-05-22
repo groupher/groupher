@@ -93,7 +93,9 @@ export default function useMutation(): TRet {
         FIELD.THEME_TOKENS,
         FIELD.HAS_CUSTOM_THEME_PRESET,
         FIELD.TEXT_TITLE,
+        FIELD.TEXT_TITLE_DARK,
         FIELD.TEXT_DIGEST,
+        FIELD.TEXT_DIGEST_DARK,
         FIELD.GAUSS_BLUR,
         FIELD.GAUSS_BLUR_DARK,
       ]
@@ -153,7 +155,9 @@ export default function useMutation(): TRet {
         themeTokens: clone(storeRef.current.themeTokens),
         hasCustomThemePreset,
         textTitle: storeRef.current.textTitle,
+        textTitleDark: storeRef.current.textTitleDark,
         textDigest: storeRef.current.textDigest,
+        textDigestDark: storeRef.current.textDigestDark,
         gaussBlur: storeRef.current.gaussBlur,
         gaussBlurDark: storeRef.current.gaussBlurDark,
       }
@@ -443,7 +447,9 @@ export default function useMutation(): TRet {
           themePresetBase: storeRef.current.themePresetBase,
           themeTokens: JSON.stringify(storeRef.current.themeTokens ?? {}),
           textTitle: storeRef.current.textTitle,
+          textTitleDark: storeRef.current.textTitleDark,
           textDigest: storeRef.current.textDigest,
+          textDigestDark: storeRef.current.textDigestDark,
           gaussBlur: storeRef.current.gaussBlur,
           gaussBlurDark: storeRef.current.gaussBlurDark,
         })

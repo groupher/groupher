@@ -24,7 +24,9 @@ import {
 import SIZE from '~/const/size'
 import {
   DEFAULT_TEXT_DIGEST,
+  DEFAULT_TEXT_DIGEST_DARK,
   DEFAULT_TEXT_TITLE,
+  DEFAULT_TEXT_TITLE_DARK,
   DEFAULT_THEME_PRESET,
   THEME_PRESET_OPTIONS,
 } from '~/const/theme_preset'
@@ -98,7 +100,9 @@ export const FIELDS: TDsbFieldMap = {
 
   // layout
   textTitle: DEFAULT_THEME_OVERWRITE.textTitle || DEFAULT_TEXT_TITLE,
+  textTitleDark: DEFAULT_THEME_OVERWRITE.textTitleDark || DEFAULT_TEXT_TITLE_DARK,
   textDigest: DEFAULT_THEME_OVERWRITE.textDigest || DEFAULT_TEXT_DIGEST,
+  textDigestDark: DEFAULT_THEME_OVERWRITE.textDigestDark || DEFAULT_TEXT_DIGEST_DARK,
   postLayout: POST_LAYOUT.QUORA,
   kanbanLayout: KANBAN_LAYOUT.CLASSIC,
   kanbanCardLayout: KANBAN_CARD_LAYOUT.SIMPLE,

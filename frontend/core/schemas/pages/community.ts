@@ -85,7 +85,9 @@ export const community = `
           themeTokens
           hasCustomThemePreset
           textTitle
+          textTitleDark
           textDigest
+          textDigestDark
           postLayout
           docCoverLayout
           docFaqLayout

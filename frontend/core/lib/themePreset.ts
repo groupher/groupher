@@ -10,7 +10,9 @@ export const THEME_PRESET_FIELD_KEYS = [
   'accentColor',
   'accentColorDark',
   'textTitle',
+  'textTitleDark',
   'textDigest',
+  'textDigestDark',
   'gaussBlur',
   'gaussBlurDark',
   'glowType',
@@ -30,7 +32,9 @@ export type TResolvedThemePreset = {
   accentColor: string
   accentColorDark: string
   textTitle: string
+  textTitleDark: string
   textDigest: string
+  textDigestDark: string
   gaussBlur: number
   gaussBlurDark: number
   glowType: string

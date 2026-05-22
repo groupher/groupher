@@ -75,7 +75,9 @@ export type TDsb = {
     themeTokens?: Partial<TResolvedThemePreset> | null
     hasCustomThemePreset?: boolean | null
     textTitle?: string | null
+    textTitleDark?: string | null
     textDigest?: string | null
+    textDigestDark?: string | null
     topbarEnabled: boolean
     topbarBg: TColorName
     topbarBgCustomColor: string

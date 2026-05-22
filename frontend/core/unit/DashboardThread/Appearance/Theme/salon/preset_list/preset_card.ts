@@ -29,7 +29,7 @@ export default function useSalon({
       active && 'z-10',
     ),
     card: cn(
-      'column relative h-36 w-28 justify-between rounded-md border px-2 py-1.5 text-left trans-all-200',
+      'column relative h-36 w-28 justify-between rounded-md border px-2 py-1.5 text-left trans-all-200 !transition-all',
       rotateClass,
       shadow('sm'),
       bg('card'),
@@ -43,7 +43,7 @@ export default function useSalon({
             shadow('lg'),
           )
         : cn(
-            isForkMode ? 'opacity-100 scale-100' : 'opacity-80 scale-95',
+            isForkMode ? 'opacity-100 scale-100' : 'group-smoky-80 scale-95',
             disabled
               ? ''
               : isForkMode

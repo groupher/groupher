@@ -10,8 +10,8 @@ import { FIELD } from '../../constant'
 import useCommunityLayout from '../../logic/useCommunityLayout'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
-import CommunityLayoutPreviewContent from './CommunityLayoutPreviewContent'
-import useSalon, { cnMerge } from './salon'
+import LayoutPreview from './LayoutPreview'
+import useSalon from './salon'
 
 const COMMUNITY_LAYOUT_OPTIONS = [
   {
@@ -27,24 +27,6 @@ const COMMUNITY_LAYOUT_OPTIONS = [
     titleKey: 'dsb.appearance.community.option.sidebar',
   },
 ] as const
-
-function LayoutPreview({
-  isActive,
-  title,
-  layout,
-}: {
-  isActive: boolean
-  title: string
-  layout: (typeof COMMUNITY_LAYOUT)[keyof typeof COMMUNITY_LAYOUT]
-}) {
-  const s = useSalon()
-
-  return (
-    <div className={cnMerge(s.block, isActive && s.blockActive)}>
-      <CommunityLayoutPreviewContent layout={layout} title={title} />
-    </div>
-  )
-}
 
 export default function CommunityLayout() {
   const s = useSalon()

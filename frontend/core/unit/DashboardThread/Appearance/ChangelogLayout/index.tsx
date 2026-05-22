@@ -6,7 +6,9 @@ import { FIELD } from '../../constant'
 import useChangelog from '../../logic/useChangelog'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
-import useSalon, { cnMerge } from './salon'
+import ClassicPreview from './ClassicPreview'
+import MinimalPreview from './MinimalPreview'
+import useSalon from './salon'
 
 const CHANGELOG_LAYOUT_OPTIONS = [
   {
@@ -18,93 +20,6 @@ const CHANGELOG_LAYOUT_OPTIONS = [
     titleKey: 'dsb.appearance.changelog.option.simple',
   },
 ] as const
-
-function ClassicPreview({ isActive }: { isActive: boolean }) {
-  const s = useSalon()
-
-  return (
-    <div className={cnMerge(s.block, isActive && s.blockActive)}>
-      <div className={s.frame}>
-        <div className={s.classicList}>
-          <div className={s.classicEntry}>
-            <div className={s.classicCover} />
-            <div className={s.classicText}>
-              <div className={s.classicTitle} />
-              <div className={s.classicBodyWide} />
-              <div className={s.classicBodyNarrow} />
-            </div>
-          </div>
-
-          <div className={s.classicEntry}>
-            <div className={s.classicCover} />
-            <div className={s.classicText}>
-              <div className={s.classicTitle} />
-              <div className={s.classicBodyNarrow} />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function MinimalPreview({ isActive }: { isActive: boolean }) {
-  const s = useSalon()
-
-  return (
-    <div className={cnMerge(s.block, isActive && s.blockActive)}>
-      <div className={s.frame}>
-        <div className={s.minimalList}>
-          <div className={s.minimalListInner}>
-            <div className={s.minimalEntry}>
-              <div className={s.minimalHeader}>
-                <div className={s.minimalMeta} />
-                <div className={s.minimalMain}>
-                  <div className={s.minimalText}>
-                    <div className={s.minimalTitle} />
-                    <div className={s.minimalBodyWide} />
-                    <div className={s.minimalBodyNarrow} />
-                  </div>
-                  <div className={s.minimalThumbRow}>
-                    <div className={s.minimalThumb} />
-                    <div className={s.minimalThumb} />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className={s.minimalEntry}>
-              <div className={s.minimalHeader}>
-                <div className={s.minimalMeta} />
-                <div className={s.minimalMain}>
-                  <div className={s.minimalText}>
-                    <div className={s.minimalTitle} />
-                    <div className={s.minimalBodyNarrow} />
-                    <div className={s.minimalBodyWide} />
-                    <div className={s.minimalBodyTiny} />
-                  </div>
-                  <div className={s.minimalThumbRow}>
-                    <div className={s.minimalThumb} />
-                    <div className={s.minimalThumb} />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className={s.minimalEntry}>
-              <div className={s.minimalHeader}>
-                <div className={s.minimalMeta} />
-                <div className={s.minimalMain}>
-                  <div className={s.minimalTitle} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 export default function ChangelogLayout() {
   const s = useSalon()

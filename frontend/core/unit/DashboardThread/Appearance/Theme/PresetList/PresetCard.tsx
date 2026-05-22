@@ -36,6 +36,8 @@ export default function PresetCard({
     ? preset.overwrite.primaryColor
     : preset.overwrite.primaryColorDark
   const accentColor = isLightTheme ? preset.overwrite.accentColor : preset.overwrite.accentColorDark
+  const textTitle = isLightTheme ? preset.overwrite.textTitle : preset.overwrite.textTitleDark
+  const textDigest = isLightTheme ? preset.overwrite.textDigest : preset.overwrite.textDigestDark
 
   return (
     <div
@@ -61,8 +63,8 @@ export default function PresetCard({
             active={active}
             primaryColor={primaryColor}
             accentColor={accentColor}
-            textTitle={preset.overwrite.textTitle}
-            textDigest={preset.overwrite.textDigest}
+            textTitle={textTitle}
+            textDigest={textDigest}
           />
         </div>
 

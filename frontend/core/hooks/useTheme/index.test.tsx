@@ -63,4 +63,20 @@ describe('useTheme', () => {
 
     expect(document.documentElement.getAttribute('data-theme')).toBe(THEME.DARK)
   })
+
+  it('previews theme without changing persisted mode', async () => {
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem')
+    const wrapper = makeStoreWrapper()
+    const { result } = renderHook(() => useTheme(), { wrapper })
+
+    act(() => result.current.preview(THEME.DARK))
+
+    await waitFor(() => {
+      expect(result.current.theme).toBe(THEME.DARK)
+    })
+
+    expect(result.current.themeMode).toBe(THEME_MODE.SYSTEM)
+    expect(document.documentElement.getAttribute('data-theme')).toBe(THEME.DARK)
+    expect(setItemSpy).not.toHaveBeenCalled()
+  })
 })

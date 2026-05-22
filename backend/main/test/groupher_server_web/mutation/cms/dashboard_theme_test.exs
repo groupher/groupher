@@ -16,8 +16,8 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
 
   describe "[mutation cms dashboard theme]" do
     @save_custom_theme_preset_query """
-    mutation($community: String!, $themePreset: DsbThemePreset!, $themePresetBase: DsbThemePreset!, $themeTokens: Json, $textTitle: String, $textDigest: String, $gaussBlur: Float, $gaussBlurDark: Float) {
-      saveCustomThemePreset(community: $community, themePreset: $themePreset, themePresetBase: $themePresetBase, themeTokens: $themeTokens, textTitle: $textTitle, textDigest: $textDigest, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark) {
+    mutation($community: String!, $themePreset: DsbThemePreset!, $themePresetBase: DsbThemePreset!, $themeTokens: Json, $textTitle: String, $textTitleDark: String, $textDigest: String, $textDigestDark: String, $gaussBlur: Float, $gaussBlurDark: Float) {
+      saveCustomThemePreset(community: $community, themePreset: $themePreset, themePresetBase: $themePresetBase, themeTokens: $themeTokens, textTitle: $textTitle, textTitleDark: $textTitleDark, textDigest: $textDigest, textDigestDark: $textDigestDark, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark) {
         id
         dashboard {
           layout {
@@ -26,7 +26,9 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
             themeTokens
             hasCustomThemePreset
             textTitle
+            textTitleDark
             textDigest
+            textDigestDark
             gaussBlur
             gaussBlurDark
           }
@@ -50,10 +52,14 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
             "glowTypeDark" => "GREY_GREEN",
             "glowFixed" => true,
             "glowOpacity" => 30.5,
-            "glowOpacityDark" => 45.5
+            "glowOpacityDark" => 45.5,
+            "textTitleDark" => "#ddeeff",
+            "textDigestDark" => "#aabbcc"
           }),
         textTitle: "#112233",
+        textTitleDark: "#ddeeff",
         textDigest: "#667788",
+        textDigestDark: "#aabbcc",
         gaussBlur: 80.5,
         gaussBlurDark: 60.5
       }
@@ -76,6 +82,10 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
       assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowFixed"]) == true
       assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowOpacity"]) == 30.5
       assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowOpacityDark"]) == 45.5
+      assert get_in(updated, ["dashboard", "layout", "themeTokens", "textTitleDark"]) == "#ddeeff"
+
+      assert get_in(updated, ["dashboard", "layout", "themeTokens", "textDigestDark"]) ==
+               "#aabbcc"
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
@@ -90,7 +100,9 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
       assert found.dashboard.layout.gauss_blur == 80.5
       assert found.dashboard.layout.gauss_blur_dark == 60.5
       assert found.dashboard.layout.text_title == "#112233"
+      assert found.dashboard.layout.text_title_dark == "#ddeeff"
       assert found.dashboard.layout.text_digest == "#667788"
+      assert found.dashboard.layout.text_digest_dark == "#aabbcc"
     end
 
     test "save custom theme preset requires community update permission",
@@ -155,7 +167,9 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
             themeTokens
             hasCustomThemePreset
             textTitle
+            textTitleDark
             textDigest
+            textDigestDark
             gaussBlur
             gaussBlurDark
           }
@@ -175,8 +189,11 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
       assert get_in(updated, ["dashboard", "layout", "themePresetBase"]) == "DEFAULT"
       assert get_in(updated, ["dashboard", "layout", "hasCustomThemePreset"]) == false
       assert get_in(updated, ["dashboard", "layout", "themeTokens", "textTitle"]) == "#222222"
+      assert get_in(updated, ["dashboard", "layout", "themeTokens", "textTitleDark"]) == "#e6e6e6"
       assert get_in(updated, ["dashboard", "layout", "textTitle"]) == "#222222"
+      assert get_in(updated, ["dashboard", "layout", "textTitleDark"]) == "#e6e6e6"
       assert get_in(updated, ["dashboard", "layout", "textDigest"]) == "#666666"
+      assert get_in(updated, ["dashboard", "layout", "textDigestDark"]) == "#9a9a9a"
       assert get_in(updated, ["dashboard", "layout", "gaussBlur"]) == 100
       assert get_in(updated, ["dashboard", "layout", "gaussBlurDark"]) == 100
 
@@ -186,7 +203,9 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
       assert found.dashboard.layout.theme_preset_base == :default
       assert found.dashboard.layout.theme_overwrite == %{}
       assert found.dashboard.layout.text_title == "#222222"
+      assert found.dashboard.layout.text_title_dark == "#e6e6e6"
       assert found.dashboard.layout.text_digest == "#666666"
+      assert found.dashboard.layout.text_digest_dark == "#9a9a9a"
       assert found.dashboard.layout.gauss_blur == 100
       assert found.dashboard.layout.gauss_blur_dark == 100
     end
@@ -200,7 +219,9 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
         themePresetBase: "CLAUDE",
         themeTokens: Jason.encode!(%{"primaryColor" => "#112233", "gaussBlur" => 80.5}),
         textTitle: "#112233",
+        textTitleDark: "#ddeeff",
         textDigest: "#667788",
+        textDigestDark: "#aabbcc",
         gaussBlur: 80.5,
         gaussBlurDark: 60.5
       }
@@ -215,6 +236,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
       assert get_in(updated, ["dashboard", "layout", "themePresetBase"]) == "CLAUDE"
       assert get_in(updated, ["dashboard", "layout", "hasCustomThemePreset"]) == true
       assert get_in(updated, ["dashboard", "layout", "themeTokens", "textTitle"]) == "#222222"
+      assert get_in(updated, ["dashboard", "layout", "themeTokens", "textTitleDark"]) == "#e6e6e6"
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 

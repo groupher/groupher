@@ -32,6 +32,14 @@ type TProps = {
 }
 
 const DEFAULT_EXCEPTS: TColorName[] = []
+const COLOR_VALUES = Object.values(COLOR) as string[]
+
+const isCustomActiveColor = (activeColor?: TColorName | string): boolean => {
+  if (!activeColor) return false
+  if (activeColor === COLOR.CUSTOM) return true
+
+  return !COLOR_VALUES.includes(activeColor)
+}
 
 const ColorSelector: FC<TProps> = ({
   testid = 'color-selector',
@@ -50,7 +58,7 @@ const ColorSelector: FC<TProps> = ({
   const { theme } = useTheme()
   const defaultCustomColor = getDefaultCustomColor(theme)
   const [customExpanded, setCustomExpanded] = useState(false)
-  const isCustomSelected = allowCustomColor && activeColor === COLOR.CUSTOM
+  const isCustomSelected = allowCustomColor && isCustomActiveColor(activeColor)
 
   useEffect(() => {
     if (!isCustomSelected) {
@@ -102,6 +110,7 @@ const ColorSelector: FC<TProps> = ({
       hideOnClick={false}
       maxWidth='none'
       offset={offset}
+      onShow={() => setCustomExpanded(isCustomSelected)}
       onHide={() => setCustomExpanded(false)}
       content={
         <LazyMotion features={domAnimation}>

@@ -98,7 +98,9 @@ export type TDsbFieldMap = {
 
   // layout
   textTitle: string
+  textTitleDark: string
   textDigest: string
+  textDigestDark: string
   postLayout: TPostLayout
   kanbanLayout: TKanbanLayout
   kanbanCardLayout: TKanbanCardLayout

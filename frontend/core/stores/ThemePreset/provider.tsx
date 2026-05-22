@@ -4,7 +4,13 @@ import { type CSSProperties, createContext, type ReactNode, useEffect, useRef } 
 import { useSnapshot } from 'valtio'
 
 import THEME from '~/const/theme'
-import { DEFAULT_TEXT_DIGEST, DEFAULT_TEXT_TITLE } from '~/const/theme_preset'
+import {
+  DEFAULT_TEXT_DIGEST,
+  DEFAULT_TEXT_DIGEST_DARK,
+  DEFAULT_TEXT_TITLE,
+  DEFAULT_TEXT_TITLE_DARK,
+} from '~/const/theme_preset'
+import useTheme from '~/hooks/useTheme'
 import { resolveThemePresetColor, resolveThemePresetPageBgCssVar } from '~/lib/themePreset'
 import useDashboard from '~/stores/dashboard/hooks'
 
@@ -28,7 +34,9 @@ const PRESET_CSS_VAR_KEYS = [
   '--color-page-custom',
   '--color-page-custom-dark',
   '--color-title',
+  '--color-title-dark',
   '--color-digest',
+  '--color-digest-dark',
 ] as const
 
 export const StoreContext = createContext<TStore | null>(null)
@@ -49,12 +57,19 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
     accentColor,
     accentColorDark,
     textTitle,
+    textTitleDark,
     textDigest,
+    textDigestDark,
   } = preset$
+  const { isLightTheme } = useTheme()
   const lightDefault = '#333333'
   const darkDefault = '#ffffff'
-  const safeTextTitle = textTitle || DEFAULT_TEXT_TITLE
-  const safeTextDigest = textDigest || DEFAULT_TEXT_DIGEST
+  const safeTextTitle = resolveThemePresetColor(textTitle, DEFAULT_TEXT_TITLE)
+  const safeTextTitleDark = resolveThemePresetColor(textTitleDark, DEFAULT_TEXT_TITLE_DARK)
+  const safeTextDigest = resolveThemePresetColor(textDigest, DEFAULT_TEXT_DIGEST)
+  const safeTextDigestDark = resolveThemePresetColor(textDigestDark, DEFAULT_TEXT_DIGEST_DARK)
+  const activeTextTitle = isLightTheme ? safeTextTitle : safeTextTitleDark
+  const activeTextDigest = isLightTheme ? safeTextDigest : safeTextDigestDark
   const lightPageBg = resolveThemePresetPageBgCssVar(THEME.LIGHT, pageBg)
   const darkPageBg = resolveThemePresetPageBgCssVar(THEME.DARK, pageBgDark)
   const lightPrimary = resolveThemePresetColor(primaryColor, lightDefault)
@@ -71,8 +86,10 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
     root.style.setProperty('--color-accent-custom-dark', darkAccent)
     root.style.setProperty('--color-page-custom', lightPageBg)
     root.style.setProperty('--color-page-custom-dark', darkPageBg)
-    root.style.setProperty('--color-title', safeTextTitle)
-    root.style.setProperty('--color-digest', safeTextDigest)
+    root.style.setProperty('--color-title', activeTextTitle)
+    root.style.setProperty('--color-title-dark', safeTextTitleDark)
+    root.style.setProperty('--color-digest', activeTextDigest)
+    root.style.setProperty('--color-digest-dark', safeTextDigestDark)
 
     return () => {
       for (const key of PRESET_CSS_VAR_KEYS) {
@@ -87,8 +104,10 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
     lightDefault,
     lightPageBg,
     lightPrimary,
-    safeTextTitle,
-    safeTextDigest,
+    activeTextTitle,
+    activeTextDigest,
+    safeTextTitleDark,
+    safeTextDigestDark,
     lightAccent,
   ])
 
@@ -99,8 +118,10 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
     '--color-primary-custom-dark': darkPrimary,
     '--color-accent-custom': lightAccent,
     '--color-accent-custom-dark': darkAccent,
-    '--color-title': safeTextTitle,
-    '--color-digest': safeTextDigest,
+    '--color-title': activeTextTitle,
+    '--color-title-dark': safeTextTitleDark,
+    '--color-digest': activeTextDigest,
+    '--color-digest-dark': safeTextDigestDark,
   } as CSSProperties
 
   return <div style={style}>{children}</div>
@@ -118,7 +139,9 @@ export default function Provider({ children, initData = EMPTY_INIT_DATA }: TProp
       themePresetBase: dsb$.themePresetBase,
       themeTokens: dsb$.themeTokens,
       textTitle: dsb$.textTitle,
+      textTitleDark: dsb$.textTitleDark,
       textDigest: dsb$.textDigest,
+      textDigestDark: dsb$.textDigestDark,
       gaussBlur: dsb$.gaussBlur,
       gaussBlurDark: dsb$.gaussBlurDark,
     })
@@ -127,7 +150,9 @@ export default function Provider({ children, initData = EMPTY_INIT_DATA }: TProp
     dsb$.themePresetBase,
     dsb$.themeTokens,
     dsb$.textTitle,
+    dsb$.textTitleDark,
     dsb$.textDigest,
+    dsb$.textDigestDark,
     dsb$.gaussBlur,
     dsb$.gaussBlurDark,
   ])

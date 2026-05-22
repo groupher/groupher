@@ -5,37 +5,9 @@ import { FIELD } from '../../constant'
 import useOverlayDark from '../../logic/useOverlayDark'
 import SavingBar from '../../SavingBar'
 import SectionLabel from '../../SectionLabel'
+import PanelContent from './PanelContent'
+import PopoverContent from './PopoverContent'
 import useSalon, { cnMerge } from './salon'
-
-function PanelContent({ dark = false }: { dark?: boolean }) {
-  const s = useSalon()
-  const tone = dark ? 'bg-white' : undefined
-
-  return (
-    <>
-      <div className={cnMerge(s.bar, s.panelTitle, tone)} />
-      <div className={cnMerge(s.bar, s.panelShort, tone)} />
-      <div className={cnMerge(s.bar, s.panelWide, tone)} />
-      <div className={cnMerge(s.bar, s.panelMid, tone)} />
-      <div className={cnMerge(s.bar, s.panelNarrow, tone)} />
-      <div className={cnMerge(s.bar, s.panelWideDim, tone)} />
-      <div className={cnMerge(s.bar, s.panelWideDim, tone)} />
-    </>
-  )
-}
-
-function PopoverContent({ dark = false }: { dark?: boolean }) {
-  const s = useSalon()
-  const tone = dark ? 'bg-white' : 'bg-black'
-
-  return (
-    <div className={s.popoverBody}>
-      <div className={cnMerge(s.bar, s.popoverTitle, tone)} />
-      <div className={cnMerge(s.bar, s.popoverBodyWide, tone)} />
-      <div className={cnMerge(s.bar, s.popoverBodyNarrow, tone)} />
-    </div>
-  )
-}
 
 export default function FloatBackground() {
   const s = useSalon()
