@@ -101,6 +101,7 @@ export default function BgColorsSetter() {
       <SectionLabel
         title={t('dsb.appearance.kanban.bg.title')}
         desc={t('dsb.appearance.kanban.bg.desc')}
+        touched={isKanbanColorsTouched}
       />
 
       <div className={s.colorsWrapper}>

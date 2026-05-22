@@ -20,6 +20,7 @@ export default function KanbanLayoutSelector() {
       <SectionLabel
         title={t('dsb.appearance.kanban.global.title')}
         desc={t('dsb.appearance.kanban.global.desc')}
+        touched={isTouched}
       />
       <div className={s.select}>
         <button

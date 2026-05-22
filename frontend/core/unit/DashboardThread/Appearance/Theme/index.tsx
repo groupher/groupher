@@ -33,6 +33,7 @@ export default function Appearance() {
         title={t('dsb.appearance.theme.title')}
         desc={t('dsb.appearance.theme.desc')}
         addon={<ThemeSectionSelector />}
+        touched={showPresetSavingBar}
       />
 
       <PresetList
@@ -54,6 +55,7 @@ export default function Appearance() {
         details={details}
         showResetMenu={showResetMenu}
         activePresetBase={activePresetBase}
+        touched={showDetailsSavingBar}
         onResetPreset={resetCustomPresetTo}
       />
 

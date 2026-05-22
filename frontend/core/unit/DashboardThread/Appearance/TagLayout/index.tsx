@@ -30,7 +30,11 @@ export default function TagLayout() {
 
   return (
     <div className={s.wrapper}>
-      <SectionLabel title={t('dsb.appearance.tag.title')} desc={t('dsb.appearance.tag.desc')} />
+      <SectionLabel
+        title={t('dsb.appearance.tag.title')}
+        desc={t('dsb.appearance.tag.desc')}
+        touched={isTouched}
+      />
       <div className={s.select}>
         {TAG_LAYOUT_OPTIONS.map(({ value, titleKey }) => {
           const isActive = tagLayout === value

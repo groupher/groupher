@@ -32,6 +32,7 @@ export default function ChangelogLayout() {
         title={t('dsb.appearance.changelog.title')}
         desc={t('dsb.appearance.changelog.desc')}
         detailText={t('dsb.appearance.view_example')}
+        touched={isTouched}
       />
       <div className={s.select}>
         {CHANGELOG_LAYOUT_OPTIONS.map(({ value, titleKey }) => {

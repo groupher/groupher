@@ -32,6 +32,7 @@ export default function ItemCardLayout() {
       <SectionLabel
         title={t('dsb.appearance.kanban.card.title')}
         desc={t('dsb.appearance.kanban.card.desc')}
+        touched={isTouched}
       />
       <div className={s.select}>
         {KANBAN_CARD_LAYOUT_OPTIONS.map(({ value, titleKey }) => {
