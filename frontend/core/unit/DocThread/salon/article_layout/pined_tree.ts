@@ -4,7 +4,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default function useSalon() {
-  const { cn, fg, bg, br, rainbow, fill } = useTwBelt()
+  const { cn, bg, br, rainbow, fill, hover } = useTwBelt()
 
   return {
     wrapper: 'column justify-center gap-y-4 w-full mb-9',
@@ -18,6 +18,6 @@ export default function useSalon() {
     //
     bookIcon: cn('size-4 z-20', fill('digest')),
     normalIcon: cn('size-4 z-20', fill('digest')),
-    title: cn('text-sm shrink-0', fg('digest'), `group-hover:${fg('title')}`),
+    title: cn('text-sm shrink-0', hover('fg')),
   }
 }

@@ -8,14 +8,11 @@ type TProps = {
 }
 
 export default function useSalon({ expand }: TProps) {
-  const { cn, br, fg, bg, fill, shadow } = useTwBelt()
+  const { cn, br, fg, bg, fill, hover, shadow } = useTwBelt()
   const { inView: badgeInView } = useCommunityDigestViewport()
 
-  const iconBox = cn(
-    'size-6 align-both pointer rounded border border-transparent',
-    `hover:${bg('hoverBg')}`,
-  )
-  const icon = cn('size-4 pointer', fill('digest'), `hover:${fill('title')}`)
+  const iconBox = cn('size-6 align-both border border-transparent', hover('box'))
+  const icon = cn('size-4 pointer', hover('icon'))
 
   return {
     wrapper: cn(

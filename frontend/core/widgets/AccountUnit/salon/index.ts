@@ -9,7 +9,7 @@ import type { TSpace } from '~/spec'
 type TProps = TSpace
 
 export default function useSalon({ ...spacing }: TProps) {
-  const { cn, margin, fg, bg, br, fill } = useTwBelt()
+  const { cn, margin, fg, bg, br, fill, hover } = useTwBelt()
   const { communityLayout } = useLayout()
   const { isLightTheme } = useTheme()
 
@@ -29,13 +29,13 @@ export default function useSalon({ ...spacing }: TProps) {
   return {
     wrapper,
     hoverBox: cn(
-      'align-both size-6 rounded border border-transparent pointer',
+      'group align-both size-6 rounded border border-transparent pointer',
       isHeroLayout && bg('hoverBg'),
       `hover:${bg('hoverBg')}`,
       `hover:${br('divider')}`,
     ),
     nickname: cn('text-sm ml-2.5', fg('digest')),
-    unLoginIcon: cn('size-3 pointer', fill('digest'), `hover:${fill('title')}`),
+    unLoginIcon: cn('size-3 pointer', fill('digest'), hover('icon')),
 
     loadingBox: cn('size-4 rounded animate-pulse', isLightTheme ? bg('divider') : bg('digest')),
   }

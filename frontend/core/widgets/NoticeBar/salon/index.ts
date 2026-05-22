@@ -6,7 +6,7 @@ export { cn } from '~/css'
 type TProps = TSpace
 
 export default function useSalon({ ...spacing }: TProps) {
-  const { cn, fg, bg, fill, margin } = useTwBelt()
+  const { cn, fg, bg, hover, margin } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -20,6 +20,7 @@ export default function useSalon({ ...spacing }: TProps) {
     userName: cn('mr-1.5', fg('title')),
     authorTag: cn('ml-0.5 mr-1', fg('digest')),
     timestamp: cn('text-xs', fg('digest')),
-    questionIcon: cn('size-4 ml-2.5 -mt-px pointer', fill('digest'), `hover:${fill('title')}`),
+    questionLink: 'group',
+    questionIcon: cn('size-4 ml-2.5 -mt-px pointer', hover('icon')),
   }
 }

@@ -17,10 +17,12 @@ export default function Appearance() {
     hasCustomThemePreset,
     customPresetOverwrite,
     showForkRelation,
+    showResetMenu,
     showDetailsSavingBar,
     showPresetSavingBar,
     details,
     selectPreset,
+    resetCustomPresetTo,
     saveAppearance,
     cancelAppearance,
   } = useAppearance()
@@ -48,7 +50,12 @@ export default function Appearance() {
         </div>
       )}
 
-      <DetailsPanel details={details} />
+      <DetailsPanel
+        details={details}
+        showResetMenu={showResetMenu}
+        activePresetBase={activePresetBase}
+        onResetPreset={resetCustomPresetTo}
+      />
 
       {showDetailsSavingBar && (
         <div className={s.savingWrapper}>
