@@ -1,3 +1,4 @@
+import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
 import type { FC, ReactNode } from 'react'
 
 import useTrans from '~/hooks/useTrans'
@@ -9,6 +10,17 @@ import YesOrNoButtons from '~/widgets/Buttons/YesOrNoButtons'
 import useHelper from '../logic/useHelper'
 import type { TDsbFieldKey } from '../spec.d'
 import useSalon, { cn } from './salon'
+
+const SAVING_BAR_TRANSITION = {
+  duration: 0.18,
+  ease: 'easeOut',
+} as const
+
+const SAVING_BAR_ANIMATION = {
+  initial: { opacity: 0, scale: 0.985, y: -6 },
+  animate: { opacity: 1, scale: 1, y: 0 },
+  exit: { opacity: 0, scale: 0.985, y: -4 },
+} as const
 
 type TProps = {
   field?: TDsbFieldKey | null
@@ -46,78 +58,80 @@ const SavingBar: FC<TProps> = ({
   const cancelText = t('dsb.saving_bar.cancel')
   const saveText = t('dsb.saving_bar.save')
   const resolvedLoading = loading ?? dsb$.saving
+  const actions = (
+    <div className={s.actions}>
+      <YesOrNoButtons
+        cancelText={cancelText}
+        saveText={saveText}
+        disabled={disabled}
+        loading={resolvedLoading}
+        space={!resolvedLoading ? 1.5 : 0}
+        onCancel={() => {
+          onCancel?.()
+          if (field) {
+            rollbackEdit(field)
+          }
+        }}
+        onConfirm={() => {
+          if (field) {
+            onSave(field)
+            setTimeout(() => onConfirm?.(), 500)
+          } else {
+            onConfirm?.()
+          }
+        }}
+      />
+    </div>
+  )
 
   if (children !== null) {
     if (isTouched) {
       return (
-        <div className={cn(s.wrapper, 'saving-bar-right-linear')}>
-          {children}
-          <div className='grow' />
-          <div className={s.actions}>
-            <YesOrNoButtons
-              cancelText={cancelText}
-              saveText={saveText}
-              disabled={disabled}
-              loading={resolvedLoading}
-              space={!resolvedLoading ? 1.5 : 0}
-              onCancel={() => {
-                onCancel?.()
-                if (field) {
-                  rollbackEdit(field)
-                }
-              }}
-              onConfirm={() => {
-                if (field) {
-                  onSave(field)
-                  setTimeout(() => onConfirm?.(), 500)
-                } else {
-                  onConfirm?.()
-                }
-              }}
-            />
-          </div>
-        </div>
+        <LazyMotion features={domAnimation}>
+          <m.div
+            layout
+            initial={SAVING_BAR_ANIMATION.initial}
+            animate={SAVING_BAR_ANIMATION.animate}
+            exit={SAVING_BAR_ANIMATION.exit}
+            transition={SAVING_BAR_TRANSITION}
+            className={cn(s.wrapper, 'saving-bar-right-linear')}
+          >
+            {children}
+            <div className='grow' />
+            {actions}
+          </m.div>
+        </LazyMotion>
       )
     }
     return children
   }
 
-  if (!isTouched) return null
-
   return (
-    <div className={cn(s.wrapper, 'pl-2.5', 'saving-bar-right-linear')}>
-      <div className='row-center'>
-        <InfoSVG className={s.infoIcon} />
-        <div className={s.hintText}>
-          {resolvedPrefix}
-          {hint && <div className={s.hint}>{hint}</div>}?
-        </div>
-      </div>
-      <div className='grow' />
-      <div className={s.actions}>
-        <YesOrNoButtons
-          cancelText={cancelText}
-          disabled={disabled}
-          saveText={saveText}
-          loading={resolvedLoading}
-          space={!resolvedLoading ? 1.5 : 0}
-          onConfirm={() => {
-            if (field) {
-              onSave(field)
-              setTimeout(() => onConfirm?.(), 500)
-            } else {
-              onConfirm?.()
-            }
-          }}
-          onCancel={() => {
-            onCancel?.()
-            if (field) {
-              rollbackEdit(field)
-            }
-          }}
-        />
-      </div>
-    </div>
+    <LazyMotion features={domAnimation}>
+      <AnimatePresence initial={false}>
+        {isTouched && (
+          <m.div
+            key='saving-bar'
+            layout
+            initial={SAVING_BAR_ANIMATION.initial}
+            animate={SAVING_BAR_ANIMATION.animate}
+            exit={SAVING_BAR_ANIMATION.exit}
+            transition={SAVING_BAR_TRANSITION}
+            className={cn(s.wrapper, 'pl-2.5', 'saving-bar-right-linear')}
+          >
+            <div className='row-center'>
+              <InfoSVG className={s.infoIcon} />
+              <div className={s.hintText}>
+                {resolvedPrefix}
+                {hint && <div className={s.hint}>{hint}</div>}?
+              </div>
+            </div>
+            <div className='grow' />
+            {actions}
+          </m.div>
+        )}
+      </AnimatePresence>
+    </LazyMotion>
   )
 }
 
