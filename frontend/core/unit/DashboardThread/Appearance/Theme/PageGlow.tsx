@@ -1,14 +1,12 @@
-import { useRef, useState } from 'react'
-
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
-import RangeInput from '~/widgets/RangeInput'
 
 import { PRESET_FIELD } from '../../constant'
 import useSalon from './salon/page_glow'
 import useSettingRowSalon from './salon/setting_row'
 import type { TThemePresetOverwrite } from './spec'
 import TextureBalls from './TextureBalls'
+import ThemeRangeInput from './ThemeRangeInput'
 
 type TProps = {
   selectedOverwrite: TThemePresetOverwrite
@@ -16,51 +14,6 @@ type TProps = {
   onThemePresetSchedule: (patch: Partial<TThemePresetOverwrite>) => void
   onThemePresetFlush: () => void
   onThemePresetCommit: (patch: Partial<TThemePresetOverwrite>) => void
-}
-
-type TGlowOpacityRangeProps = {
-  value: number
-  valueLabel: string
-  getPatch: (value: number) => Partial<TThemePresetOverwrite>
-  onThemePresetPreview: (patch: Partial<TThemePresetOverwrite>) => void
-  onThemePresetSchedule: (patch: Partial<TThemePresetOverwrite>) => void
-  onThemePresetFlush: () => void
-}
-
-const GlowOpacityRange = ({
-  value,
-  valueLabel,
-  getPatch,
-  onThemePresetPreview,
-  onThemePresetSchedule,
-  onThemePresetFlush,
-}: TGlowOpacityRangeProps) => {
-  const initialValueRef = useRef(value)
-  const [displayGlowOpacity, setDisplayGlowOpacity] = useState(initialValueRef.current)
-
-  return (
-    <RangeInput
-      value={displayGlowOpacity}
-      valueLabel={valueLabel}
-      min={0}
-      max={100}
-      step={0.1}
-      unit='%'
-      top={0}
-      aria-label={valueLabel}
-      onChange={(value) => {
-        const patch = getPatch(value)
-
-        setDisplayGlowOpacity(value)
-        onThemePresetPreview(patch)
-        onThemePresetSchedule(patch)
-      }}
-      onChangeEnd={(value) => {
-        onThemePresetSchedule(getPatch(value))
-        onThemePresetFlush()
-      }}
-    />
-  )
 }
 
 export default function PageGlow({
@@ -112,10 +65,12 @@ export default function PageGlow({
 
           <div className='grow' />
           <div className={row.rangeGroup}>
-            <GlowOpacityRange
+            <ThemeRangeInput
               key={`${glowOpacityField}-${glowOpacity}`}
               value={glowOpacity}
               valueLabel={t('dsb.appearance.glow.intensity.title')}
+              min={0}
+              max={100}
               getPatch={getGlowOpacityPatch}
               onThemePresetPreview={onThemePresetPreview}
               onThemePresetSchedule={onThemePresetSchedule}

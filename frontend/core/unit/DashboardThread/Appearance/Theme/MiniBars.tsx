@@ -1,3 +1,5 @@
+import MiniColorBar from './MiniColorBar'
+import MiniTextBar from './MiniTextBar'
 import useSalon from './salon/mini_bars'
 
 type TProps = {
@@ -24,21 +26,4 @@ export default function MiniBars({
       <MiniTextBar titleColor={textTitle} digestColor={textDigest} />
     </div>
   )
-}
-
-function MiniTextBar({ titleColor, digestColor }: { titleColor: string; digestColor: string }) {
-  const s = useSalon()
-
-  return (
-    <span
-      className={s.textBar}
-      style={{
-        background: `linear-gradient(90deg, ${titleColor} 0 50%, ${digestColor} 50% 100%)`,
-      }}
-    />
-  )
-}
-
-function MiniColorBar({ color, className }: { color: string; className?: string }) {
-  return <span className={className} style={{ backgroundColor: color }} />
 }
