@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import RangeInput from '~/widgets/RangeInput'
 
@@ -25,8 +25,11 @@ export default function ThemeRangeInput({
   onThemePresetSchedule,
   onThemePresetFlush,
 }: TProps) {
-  const initialValueRef = useRef(value)
-  const [displayValue, setDisplayValue] = useState(initialValueRef.current)
+  const [displayValue, setDisplayValue] = useState(value)
+
+  useEffect(() => {
+    setDisplayValue(value)
+  }, [value])
 
   return (
     <RangeInput

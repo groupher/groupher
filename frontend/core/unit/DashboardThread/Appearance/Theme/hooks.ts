@@ -76,6 +76,8 @@ export default function useAppearance() {
   const [editingDetails, setEditingDetails] = useState(false)
   const [showForkRelation, setShowForkRelation] = useState(false)
   const [customPresetDraft, setCustomPresetDraft] = useState<TThemePresetOverwrite | null>(null)
+  const editingDetailsRef = useRef(editingDetails)
+  const showForkRelationRef = useRef(showForkRelation)
 
   const activePreset = dsb$.themePreset
   const activePresetBase =
@@ -92,6 +94,20 @@ export default function useAppearance() {
   const selectedOverwriteRef = useRef(selectedOverwrite)
   const selectedPageBgDraftRef = useRef(selectedPageBgDraft)
   const customPresetDraftRef = useRef<TThemePresetOverwrite | null>(customPresetDraft)
+
+  const updateEditingDetails = useCallback((nextEditingDetails: boolean) => {
+    if (editingDetailsRef.current === nextEditingDetails) return
+
+    editingDetailsRef.current = nextEditingDetails
+    setEditingDetails(nextEditingDetails)
+  }, [])
+
+  const updateShowForkRelation = useCallback((nextShowForkRelation: boolean) => {
+    if (showForkRelationRef.current === nextShowForkRelation) return
+
+    showForkRelationRef.current = nextShowForkRelation
+    setShowForkRelation(nextShowForkRelation)
+  }, [])
 
   const updateCustomPresetDraft = useCallback((overwrite: TThemePresetOverwrite) => {
     customPresetDraftRef.current = overwrite
@@ -144,11 +160,11 @@ export default function useAppearance() {
       // "forked from" relation is only meaningful when the edit starts from a
       // read-only preset. Editing an existing Custom preset should stay in the
       // normal stacked preset list and only move the save bar to details.
-      setEditingDetails(true)
-      setShowForkRelation(dsb$.themePreset !== THEME_PRESET.CUSTOM)
+      updateEditingDetails(true)
+      updateShowForkRelation(dsb$.themePreset !== THEME_PRESET.CUSTOM)
       return buildCustomPresetEditPatch(patch)
     },
-    [buildCustomPresetEditPatch, dsb$],
+    [buildCustomPresetEditPatch, dsb$, updateEditingDetails, updateShowForkRelation],
   )
 
   const commitThemePresetPatch = useCallback(
@@ -160,12 +176,6 @@ export default function useAppearance() {
     },
     [dsb$, enterCustomPresetTokenEdit],
   )
-  const forkCustomPreset = useCallback(() => {
-    setEditingDetails(true)
-    setShowForkRelation(true)
-    dsb$.editFields(buildCustomPresetEditPatch())
-  }, [buildCustomPresetEditPatch, dsb$])
-
   const {
     schedule: scheduleThemePresetPreviewCommit,
     flush: flushThemePresetPreviewCommit,
@@ -184,8 +194,8 @@ export default function useAppearance() {
       ? (customPresetDraftRef.current ?? preset.overwrite)
       : preset.overwrite
 
-    setEditingDetails(false)
-    setShowForkRelation(false)
+    updateEditingDetails(false)
+    updateShowForkRelation(false)
     clearPendingThemePresetPreviewCommit()
     clearPreviewCssVars()
     dsb$.editFields({
@@ -205,8 +215,8 @@ export default function useAppearance() {
 
       clearPendingThemePresetPreviewCommit()
       clearPreviewCssVars()
-      setEditingDetails(true)
-      setShowForkRelation(false)
+      updateEditingDetails(true)
+      updateShowForkRelation(false)
       updateCustomPresetDraft(nextOverwrite)
       dsb$.editFields({
         themePreset: THEME_PRESET.CUSTOM,
@@ -216,7 +226,14 @@ export default function useAppearance() {
       })
       setPageBgResetVersion((version) => version + 1)
     },
-    [clearPendingThemePresetPreviewCommit, clearPreviewCssVars, dsb$, updateCustomPresetDraft],
+    [
+      clearPendingThemePresetPreviewCommit,
+      clearPreviewCssVars,
+      dsb$,
+      updateCustomPresetDraft,
+      updateEditingDetails,
+      updateShowForkRelation,
+    ],
   )
 
   const previewPageBg = useCallback(
@@ -266,16 +283,15 @@ export default function useAppearance() {
 
   const scheduleThemePresetPatch = useCallback(
     (patch: Partial<TThemePresetOverwrite>) => {
-      if (dsb$.themePreset !== THEME_PRESET.CUSTOM) {
-        forkCustomPreset()
-      } else {
-        setEditingDetails(true)
-        setShowForkRelation(false)
-      }
+      // Keep high-frequency slider drags out of the dashboard store. The preview
+      // path already updates CSS vars immediately; touching the store here would
+      // re-render the appearance panel on every pointer move.
+      updateEditingDetails(true)
+      updateShowForkRelation(dsb$.themePreset !== THEME_PRESET.CUSTOM)
 
       scheduleThemePresetPreviewCommit(patch)
     },
-    [dsb$, forkCustomPreset, scheduleThemePresetPreviewCommit],
+    [dsb$, scheduleThemePresetPreviewCommit, updateEditingDetails, updateShowForkRelation],
   )
 
   const saveAppearance = () => {
@@ -287,8 +303,8 @@ export default function useAppearance() {
   const cancelAppearance = () => {
     clearPendingThemePresetPreviewCommit()
     clearPreviewCssVars()
-    setEditingDetails(false)
-    setShowForkRelation(false)
+    updateEditingDetails(false)
+    updateShowForkRelation(false)
     rollbackEdit(FIELD.THEME_PRESET)
     setPageBgResetVersion((version) => version + 1)
   }

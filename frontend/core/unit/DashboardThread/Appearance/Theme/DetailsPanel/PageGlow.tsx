@@ -62,7 +62,6 @@ export default function PageGlow({ details }: TProps) {
           <div className='grow' />
           <div className={row.rangeGroup}>
             <ThemeRangeInput
-              key={`${glowOpacityField}-${glowOpacity}`}
               value={glowOpacity}
               valueLabel={t('dsb.appearance.glow.intensity.title')}
               min={0}

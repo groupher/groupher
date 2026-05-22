@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import THEME from '~/const/theme'
 import { getPageBgCustomColor, getPageBgCustomParamsFromHex } from '~/lib/color'
@@ -54,7 +54,7 @@ export const useCustomPageBgControls = ({
   onScheduleCommitPatch,
   onImmediateCommitPatch,
 }: TUseCustomPageBgControlsArgs) => {
-  const { color, hue, intensity } = getThemePageBgState(draft, theme)
+  const { color, hue, intensity } = useMemo(() => getThemePageBgState(draft, theme), [draft, theme])
   const hasPreviewPatch = !!onPreviewPatch
   const [localHue, setLocalHue] = useState(hue)
   const [localIntensity, setLocalIntensity] = useState(intensity)
