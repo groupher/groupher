@@ -32,7 +32,7 @@ export default function Colors({ details }: TProps) {
         title={t('dsb.appearance.primary_color.label')}
         desc={t('dsb.appearance.primary_color.hint')}
         theme={theme}
-        size='large'
+        isLarge
         onThemePresetCommit={onThemePresetCommit}
       />
 
