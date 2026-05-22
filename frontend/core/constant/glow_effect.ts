@@ -8,6 +8,7 @@ export const GLOW_EFFECT_NAME = {
   YELLOW_RED: 'YELLOW_RED',
   GREY_GREEN: 'GREY_GREEN',
   PURPLE_BLUE: 'PURPLE_BLUE',
+  PASTEL_RAINBOW: 'PASTEL_RAINBOW',
 }
 
 export const GLOW_EFFECTS_DAY = {
@@ -143,6 +144,32 @@ export const GLOW_EFFECTS_DAY = {
       RADIUS: '30%',
     },
   },
+  PASTEL_RAINBOW: {
+    LEFT: {
+      COLOR: '#b7f4f24f',
+      X: '6%',
+      Y: '-10%',
+      RADIUS: '42%',
+    },
+    RIGHT1: {
+      COLOR: '#fff0c64a',
+      X: '50%',
+      Y: '-8%',
+      RADIUS: '44%',
+    },
+    MAIN: {
+      COLOR: '#ffd4d94f',
+      X: '88%',
+      Y: '-8%',
+      RADIUS: '42%',
+    },
+    RIGHT2: {
+      COLOR: '#eff3d73d',
+      X: '72%',
+      Y: '16%',
+      RADIUS: '45%',
+    },
+  },
 }
 
 export const GLOW_EFFECTS_NIGHT = {
@@ -276,6 +303,32 @@ export const GLOW_EFFECTS_NIGHT = {
       X: '85%',
       Y: '15%',
       RADIUS: '30%',
+    },
+  },
+  PASTEL_RAINBOW: {
+    LEFT: {
+      COLOR: '#25d7d84d',
+      X: '8%',
+      Y: '-10%',
+      RADIUS: '38%',
+    },
+    RIGHT1: {
+      COLOR: '#e6ae5248',
+      X: '48%',
+      Y: '-10%',
+      RADIUS: '40%',
+    },
+    MAIN: {
+      COLOR: '#ff5f7a4d',
+      X: '88%',
+      Y: '-8%',
+      RADIUS: '40%',
+    },
+    RIGHT2: {
+      COLOR: '#8f5cff3d',
+      X: '72%',
+      Y: '10%',
+      RADIUS: '42%',
     },
   },
 }
