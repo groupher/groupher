@@ -80,12 +80,12 @@ export default function PresetList({
                     />
                     <m.span
                       className={s.forkedFromDot}
-                      initial={{ x: -2, y: -4, opacity: 0, scale: 0 }}
+                      initial={{ x: -2, y: -4, opacity: 0, scale: 0.95 }}
                       animate={outgoingTopDotControls}
                     />
                     <m.span
                       className={s.forkedFromDot}
-                      initial={{ x: -2, y: 4, opacity: 0, scale: 0 }}
+                      initial={{ x: -2, y: 4, opacity: 0, scale: 0.95 }}
                       animate={outgoingBottomDotControls}
                     />
                   </span>

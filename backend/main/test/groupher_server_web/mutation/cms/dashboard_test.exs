@@ -382,6 +382,19 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert mutation_error?(rule_conn, @save_custom_theme_preset_query, variables)
     end
 
+    test "save custom theme preset rejects custom as fork base", ~m(community)a do
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+
+      variables = %{
+        community: community.slug,
+        themePreset: "CUSTOM",
+        themePresetBase: "CUSTOM",
+        themeTokens: Jason.encode!(%{"gaussBlur" => 70})
+      }
+
+      assert mutation_error?(rule_conn, @save_custom_theme_preset_query, variables)
+    end
+
     @select_theme_preset_query """
     mutation($community: String!, $themePreset: DsbThemePreset!) {
       selectThemePreset(community: $community, themePreset: $themePreset) {

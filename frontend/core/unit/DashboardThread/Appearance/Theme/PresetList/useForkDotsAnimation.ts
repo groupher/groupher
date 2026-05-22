@@ -19,39 +19,41 @@ export default function useForkDotsAnimation(showForkRelation: boolean) {
     let live = true
     let animationTimer: ReturnType<typeof setTimeout> | null = null
 
-    const playForkDots = async () => {
+    const playForkDots = () => {
       incomingDotControls.set({ x: 64, y: 0, opacity: 0, scale: 1 })
-      outgoingTopDotControls.set({ x: -2, y: -4, opacity: 0, scale: 0 })
-      outgoingBottomDotControls.set({ x: -2, y: 4, opacity: 0, scale: 0 })
+      outgoingTopDotControls.set({ x: -2, y: -4, opacity: 0, scale: 0.95 })
+      outgoingBottomDotControls.set({ x: -2, y: 4, opacity: 0, scale: 0.95 })
 
-      await incomingDotControls.start({
-        x: [64, 2, 2],
-        y: [0, 0, 0],
-        opacity: [0.9, 0.85, 0],
-        scale: [1, 0.3, 0],
-        transition: INCOMING_DOT_TRANSITION,
-      })
+      void incomingDotControls
+        .start({
+          x: [64, 2, 2],
+          y: [0, 0, 0],
+          opacity: [0.9, 0.85, 0],
+          scale: [1, 0.3, 0],
+          transition: INCOMING_DOT_TRANSITION,
+        })
+        .then(() => {
+          if (!live) return
 
-      if (!live) return
-
-      void outgoingTopDotControls.start({
-        x: [-2, -46, -46],
-        y: [-4, -4, -4],
-        opacity: [0.85, 0, 0],
-        scale: [0.35, 1, 1],
-        transition: OUTGOING_TOP_DOT_TRANSITION,
-      })
-      void outgoingBottomDotControls.start({
-        x: [-2, -48, -48],
-        y: [4, 4, 4],
-        opacity: [0.85, 0, 0],
-        scale: [0.35, 1, 1],
-        transition: OUTGOING_BOTTOM_DOT_TRANSITION,
-      })
+          void outgoingTopDotControls.start({
+            x: [-2, -46, -46],
+            y: [-4, -4, -4],
+            opacity: [0.85, 0, 0],
+            scale: [0.35, 1, 1],
+            transition: OUTGOING_TOP_DOT_TRANSITION,
+          })
+          void outgoingBottomDotControls.start({
+            x: [-2, -48, -48],
+            y: [4, 4, 4],
+            opacity: [0.85, 0, 0],
+            scale: [0.35, 1, 1],
+            transition: OUTGOING_BOTTOM_DOT_TRANSITION,
+          })
+        })
     }
 
     animationTimer = setTimeout(() => {
-      void playForkDots()
+      playForkDots()
     }, CARD_LAYOUT_TRANSITION.duration * 1000)
 
     return () => {
