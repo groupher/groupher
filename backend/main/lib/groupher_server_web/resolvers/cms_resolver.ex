@@ -7,7 +7,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Helper.EmotionFormatter
+  alias CMS.Helper.{EmotionFormatter, ThemePreset}
   alias CMS.Model.{Category, Community}
   alias Helper.{OgInfo, ORM}
 
@@ -57,6 +57,50 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
     CMS.Communities.update_dashboard(community, key, dsb_args)
   end
+
+  def save_custom_theme_preset(_root, %{community: community} = args, _info) do
+    theme_args =
+      args
+      |> Map.drop([:community])
+      |> normalize_theme_tokens_arg()
+
+    with :ok <- ensure_custom_theme_preset(theme_args) do
+      CMS.Communities.save_custom_theme_preset(community, theme_args)
+    end
+  end
+
+  def select_theme_preset(_root, %{community: _community, theme_preset: :custom}, _info) do
+    {:error, "selectThemePreset only accepts read-only theme presets"}
+  end
+
+  def select_theme_preset(_root, %{community: community, theme_preset: theme_preset}, _info) do
+    defaults = ThemePreset.defaults(theme_preset)
+
+    CMS.Communities.select_theme_preset(community, %{
+      theme_preset: theme_preset,
+      text_title: defaults["textTitle"],
+      text_digest: defaults["textDigest"],
+      gauss_blur: defaults["gaussBlur"],
+      gauss_blur_dark: defaults["gaussBlurDark"]
+    })
+  end
+
+  defp normalize_theme_tokens_arg(%{theme_tokens: tokens} = args) do
+    args
+    |> Map.delete(:theme_tokens)
+    |> Map.put(:theme_overwrite, tokens)
+  end
+
+  defp normalize_theme_tokens_arg(args), do: args
+
+  defp ensure_custom_theme_preset(%{theme_preset: :custom, theme_preset_base: :custom}),
+    do: {:error, "saveCustomThemePreset requires a read-only themePresetBase"}
+
+  defp ensure_custom_theme_preset(%{theme_preset: :custom}),
+    do: :ok
+
+  defp ensure_custom_theme_preset(_),
+    do: {:error, "saveCustomThemePreset only accepts CUSTOM preset"}
 
   def open_graph_info(_root, %{url: url}, _info), do: OgInfo.get(url)
 

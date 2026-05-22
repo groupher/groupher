@@ -11,6 +11,5 @@ export default function useSalon() {
     title: cn('text-base font-medium', fg('title')),
     content: cn('border py-8 px-5 rounded-md', bg('cardAlpha'), br('divider')),
     divider: cn(sexyBorder(), 'mt-6 mb-4'),
-    savingWrapper: cn('mt-8 border-t pt-8', br('divider')),
   }
 }

@@ -63,6 +63,14 @@ defmodule GroupherServer.CMS.Communities do
   def update_dashboard(%Community{} = community, key, args),
     do: Dashboard.update(community, key, args)
 
+  @spec save_custom_theme_preset(Community.t(), map()) :: T.domain_res(Community.t())
+  def save_custom_theme_preset(%Community{} = community, args),
+    do: Dashboard.save_custom_theme_preset(community, args)
+
+  @spec select_theme_preset(Community.t(), map()) :: T.domain_res(Community.t())
+  def select_theme_preset(%Community{} = community, args),
+    do: Dashboard.select_theme_preset(community, args)
+
   # Apply
   @spec apply(map(), User.t()) :: T.domain_res(Community.t())
   def apply(args, %User{} = user), do: Apply.apply(args, user)

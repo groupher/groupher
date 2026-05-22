@@ -15,10 +15,13 @@ export const DSB_MENU_ICON = {
   BIND: 'bind',
 } as const
 
-// do not change, it's map to GQ endpoint updateDashboardLayout
+// Keep these keys aligned with dashboard layout state. Theme preset keys are
+// persisted through dedicated theme mutations instead of updateDashboardLayout.
 export const LAYOUT_FIELD = {
   THEME_PRESET: 'themePreset',
+  THEME_PRESET_BASE: 'themePresetBase',
   THEME_TOKENS: 'themeTokens',
+  HAS_CUSTOM_THEME_PRESET: 'hasCustomThemePreset',
   TEXT_TITLE: 'textTitle',
   TEXT_DIGEST: 'textDigest',
   POST_LAYOUT: 'postLayout',

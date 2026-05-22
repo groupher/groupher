@@ -6,16 +6,21 @@ import SectionLabel from '../../SectionLabel'
 import DetailsPanel from './DetailsPanel'
 import useAppearance from './hooks'
 import PresetList from './PresetList'
-import useSalon from './salon/details_panel'
+import useSalon from './salon'
 
 export default function Appearance() {
   const { t } = useTrans()
   const s = useSalon()
   const {
     activePreset,
+    activePresetBase,
+    hasCustomThemePreset,
+    customPresetOverwrite,
+    showForkRelation,
     selectedOverwrite,
     selectedPageBgDraft,
-    isTouched,
+    showDetailsSavingBar,
+    showPresetSavingBar,
     isLightTheme,
     primaryColor,
     accentColor,
@@ -38,7 +43,20 @@ export default function Appearance() {
         addon={<ThemeSectionSelector />}
       />
 
-      <PresetList activePreset={activePreset} onSelect={selectPreset} />
+      <PresetList
+        activePreset={activePreset}
+        activePresetBase={activePresetBase}
+        hasCustomPreset={hasCustomThemePreset}
+        customOverwrite={customPresetOverwrite}
+        showForkRelation={showForkRelation}
+        onSelect={selectPreset}
+      />
+
+      {showPresetSavingBar && (
+        <div className={s.presetSavingWrapper}>
+          <SavingBar isTouched onCancel={cancelAppearance} onConfirm={saveAppearance} top={5} />
+        </div>
+      )}
 
       <DetailsPanel
         selectedOverwrite={selectedOverwrite}
@@ -55,7 +73,7 @@ export default function Appearance() {
         onThemePresetCommit={commitThemePresetPatch}
       />
 
-      {isTouched && (
+      {showDetailsSavingBar && (
         <div className={s.savingWrapper}>
           <SavingBar isTouched onCancel={cancelAppearance} onConfirm={saveAppearance} />
         </div>

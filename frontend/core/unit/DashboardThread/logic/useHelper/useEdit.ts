@@ -77,6 +77,7 @@ export default function useEdit(): TRet {
     if (field === FIELD.THEME_PRESET) {
       dsb$.rollbackFields([
         FIELD.THEME_PRESET,
+        FIELD.THEME_PRESET_BASE,
         FIELD.THEME_TOKENS,
         FIELD.TEXT_TITLE,
         FIELD.TEXT_DIGEST,

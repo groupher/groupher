@@ -71,7 +71,9 @@ export type TDsb = {
   layout?: {
     brandLayout: TBrandLayout
     themePreset?: TThemePreset | null
+    themePresetBase?: TThemePreset | null
     themeTokens?: Partial<TResolvedThemePreset> | null
+    hasCustomThemePreset?: boolean | null
     textTitle?: string | null
     textDigest?: string | null
     topbarEnabled: boolean

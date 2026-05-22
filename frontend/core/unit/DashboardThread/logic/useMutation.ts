@@ -89,7 +89,9 @@ export default function useMutation(): TRet {
     if (field === FIELD.THEME_PRESET) {
       return [
         FIELD.THEME_PRESET,
+        FIELD.THEME_PRESET_BASE,
         FIELD.THEME_TOKENS,
+        FIELD.HAS_CUSTOM_THEME_PRESET,
         FIELD.TEXT_TITLE,
         FIELD.TEXT_DIGEST,
         FIELD.GAUSS_BLUR,
@@ -106,6 +108,7 @@ export default function useMutation(): TRet {
     const current = storeRef.current
     console.log('## done field: ', field)
     let original = { ...current.original, [field]: clone(current[field]) }
+    let storePatch = {}
 
     if (field === FIELD.TAG_INDEX) {
       original = { ...current.original, tagGroups: clone(current.tagGroups) }
@@ -139,15 +142,22 @@ export default function useMutation(): TRet {
     }
 
     if (field === FIELD.THEME_PRESET) {
+      const hasCustomThemePreset =
+        storeRef.current.hasCustomThemePreset ||
+        storeRef.current.themePreset === THEME_PRESET.CUSTOM
+
       original = {
         ...storeRef.current.original,
         themePreset: storeRef.current.themePreset,
+        themePresetBase: storeRef.current.themePresetBase,
         themeTokens: clone(storeRef.current.themeTokens),
+        hasCustomThemePreset,
         textTitle: storeRef.current.textTitle,
         textDigest: storeRef.current.textDigest,
         gaussBlur: storeRef.current.gaussBlur,
         gaussBlurDark: storeRef.current.gaussBlurDark,
       }
+      storePatch = { hasCustomThemePreset }
     }
 
     const savedFields = resolveSavedFields(field)
@@ -157,7 +167,7 @@ export default function useMutation(): TRet {
       delete touchedFields[savedField]
     }
 
-    storeRef.current.commit({ original, touchedFields })
+    storeRef.current.commit({ ...storePatch, original, touchedFields })
   }
 
   const _handleDone = (fieldOverride?: TDsbFieldKey): void => {
@@ -419,12 +429,19 @@ export default function useMutation(): TRet {
       if (field === FIELD.THEME_PRESET) {
         const isCustomPreset = storeRef.current.themePreset === THEME_PRESET.CUSTOM
 
-        handleMutation(S.updateDashboardLayout, {
+        if (!isCustomPreset) {
+          handleMutation(S.selectThemePreset, {
+            community,
+            themePreset: storeRef.current.themePreset,
+          })
+          return
+        }
+
+        handleMutation(S.saveCustomThemePreset, {
           community,
           themePreset: storeRef.current.themePreset,
-          ...(isCustomPreset
-            ? { themeOverwrite: JSON.stringify(storeRef.current.themeTokens ?? {}) }
-            : {}),
+          themePresetBase: storeRef.current.themePresetBase,
+          themeTokens: JSON.stringify(storeRef.current.themeTokens ?? {}),
           textTitle: storeRef.current.textTitle,
           textDigest: storeRef.current.textDigest,
           gaussBlur: storeRef.current.gaussBlur,

@@ -81,7 +81,9 @@ export const community = `
         }
         layout {
           themePreset
+          themePresetBase
           themeTokens
+          hasCustomThemePreset
           textTitle
           textDigest
           postLayout

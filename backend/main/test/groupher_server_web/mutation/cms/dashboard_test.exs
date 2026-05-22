@@ -220,28 +220,21 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     end
 
     @update_layout_query """
-    mutation($community: String!, $themePreset: DsbThemePreset, $themeOverwrite: Json, $textTitle: String, $textDigest: String, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $gaussBlur: Float, $gaussBlurDark: Float, $brandLayout: DsbBrandLayout, $communityLayout: DsbCommunityLayout, $navActiveLayout: DsbNavActiveLayout, $overlayDark: Boolean) {
-      updateDashboardLayout(community: $community, themePreset: $themePreset, themeOverwrite: $themeOverwrite, textTitle: $textTitle, textDigest: $textDigest, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, gaussBlur: $gaussBlur, gaussBlurDark: $gaussBlurDark, brandLayout: $brandLayout, communityLayout: $communityLayout, navActiveLayout: $navActiveLayout, overlayDark: $overlayDark) {
+    mutation($community: String!, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $brandLayout: DsbBrandLayout, $communityLayout: DsbCommunityLayout, $navActiveLayout: DsbNavActiveLayout, $overlayDark: Boolean) {
+      updateDashboardLayout(community: $community, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, brandLayout: $brandLayout, communityLayout: $communityLayout, navActiveLayout: $navActiveLayout, overlayDark: $overlayDark) {
         id
         title
         dashboard {
           layout {
-            themePreset
-            themeOverwrite
-            themeTokens
             kanbanBoards
             footerLayout
             topbarEnabled
             tagLayout
             inlineTagLayout
-            gaussBlur
-            gaussBlurDark
             brandLayout
             communityLayout
             navActiveLayout
             overlayDark
-            textTitle
-            textDigest
           }
         }
       }
@@ -252,20 +245,6 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       variables = %{
         community: community.slug,
-        themePreset: "CUSTOM",
-        themeOverwrite:
-          Jason.encode!(%{
-            "primaryColor" => "#112233",
-            "accentColor" => "YELLOW",
-            "gaussBlur" => 80.5,
-            "glowType" => "PINK",
-            "glowTypeDark" => "GREY_GREEN",
-            "glowFixed" => true,
-            "glowOpacity" => 30.5,
-            "glowOpacityDark" => 45.5
-          }),
-        textTitle: "#112233",
-        textDigest: "#667788",
         postLayout: "COVER",
         broadcastEnable: true,
         kanbanLayout: "WATERFALL",
@@ -276,8 +255,6 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         kanbanBoards: ["BACKLOG", "TODO", "DONE", "REJECTED"],
         tagLayout: "DOT",
         inlineTagLayout: "SOFT",
-        gaussBlur: 80.5,
-        gaussBlurDark: 60.5,
         brandLayout: "LOGO",
         communityLayout: "SIDEBAR",
         navActiveLayout: "SOFT_BG",
@@ -289,28 +266,9 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         |> gq_mutation(@update_layout_query, variables)
 
       assert get_in(updated, ["dashboard", "layout", "navActiveLayout"]) == "SOFT_BG"
-      assert get_in(updated, ["dashboard", "layout", "themePreset"]) == "CUSTOM"
-
-      assert get_in(updated, ["dashboard", "layout", "themeOverwrite", "primaryColor"]) ==
-               "#112233"
-
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "accentColor"]) ==
-               "YELLOW"
-
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "gaussBlur"]) == 80.5
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowType"]) == "PINK"
-
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowTypeDark"]) ==
-               "GREY_GREEN"
-
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowFixed"]) == true
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowOpacity"]) == 30.5
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowOpacityDark"]) == 45.5
 
       {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
 
-      assert found.dashboard.layout.theme_preset == :custom
-      assert found.dashboard.layout.theme_overwrite["primaryColor"] == "#112233"
       assert found.dashboard.layout.post_layout == :cover
       assert found.dashboard.layout.kanban_layout == :waterfall
       assert found.dashboard.layout.kanban_card_layout == :full
@@ -320,21 +278,12 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.layout.footer_layout == :oneline
       assert found.dashboard.layout.topbar_enabled == true
 
-      assert found.dashboard.layout.theme_overwrite["glowType"] == "PINK"
-      assert found.dashboard.layout.theme_overwrite["glowTypeDark"] == "GREY_GREEN"
-      assert found.dashboard.layout.theme_overwrite["glowFixed"] == true
-      assert found.dashboard.layout.theme_overwrite["glowOpacity"] == 30.5
-      assert found.dashboard.layout.theme_overwrite["glowOpacityDark"] == 45.5
       assert found.dashboard.layout.tag_layout == :dot
       assert found.dashboard.layout.inline_tag_layout == :soft
-      assert found.dashboard.layout.gauss_blur == 80.5
-      assert found.dashboard.layout.gauss_blur_dark == 60.5
       assert found.dashboard.layout.brand_layout == :logo
       assert found.dashboard.layout.community_layout == :sidebar
       assert found.dashboard.layout.nav_active_layout == :soft_bg
       assert found.dashboard.layout.overlay_dark == false
-      assert found.dashboard.layout.text_title == "#112233"
-      assert found.dashboard.layout.text_digest == "#667788"
     end
 
     test "update community dashboard layout should not overwrite existing settings",

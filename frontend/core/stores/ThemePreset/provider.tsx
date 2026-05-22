@@ -115,6 +115,7 @@ export default function Provider({ children, initData = EMPTY_INIT_DATA }: TProp
   useEffect(() => {
     storeRef.current?.hydrate({
       themePreset: dsb$.themePreset,
+      themePresetBase: dsb$.themePresetBase,
       themeTokens: dsb$.themeTokens,
       textTitle: dsb$.textTitle,
       textDigest: dsb$.textDigest,
@@ -123,6 +124,7 @@ export default function Provider({ children, initData = EMPTY_INIT_DATA }: TProp
     })
   }, [
     dsb$.themePreset,
+    dsb$.themePresetBase,
     dsb$.themeTokens,
     dsb$.textTitle,
     dsb$.textDigest,

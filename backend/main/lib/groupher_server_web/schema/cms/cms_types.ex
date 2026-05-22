@@ -129,11 +129,26 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object(:dsb_wallpaper, do: dsb_gq_fields(:wallpaper))
 
   object :dsb_layout do
-    dsb_gq_fields(:layout)
+    dsb_gq_fields(:layout, except: [:theme_overwrite])
 
     field :theme_tokens, :json do
       resolve(fn layout, _, _ ->
-        {:ok, ThemePreset.resolve(layout.theme_preset, layout.theme_overwrite)}
+        tokens =
+          case layout.theme_preset do
+            :custom ->
+              ThemePreset.resolve_custom(layout.theme_preset_base, layout.theme_overwrite)
+
+            preset ->
+              ThemePreset.resolve(preset, layout.theme_overwrite)
+          end
+
+        {:ok, tokens}
+      end)
+    end
+
+    field :has_custom_theme_preset, :boolean do
+      resolve(fn layout, _, _ ->
+        {:ok, map_size(layout.theme_overwrite || %{}) > 0}
       end)
     end
   end

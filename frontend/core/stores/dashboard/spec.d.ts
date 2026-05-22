@@ -73,7 +73,9 @@ export type TDsbFieldMap = {
 
   // page
   themePreset: TThemePreset
+  themePresetBase: TThemePreset
   themeTokens: Partial<TResolvedThemePreset>
+  hasCustomThemePreset: boolean
 
   // seo
   seoEnable: boolean

@@ -1,8 +1,13 @@
-import type { THEME_PRESET_OPTIONS } from '~/const/theme_preset'
 import type { TResolvedThemePreset } from '~/lib/themePreset'
+import type { TThemePreset } from '~/spec'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
 
-export type TThemePresetOption = (typeof THEME_PRESET_OPTIONS)[number]
+export type TThemePresetOption = {
+  value: TThemePreset
+  overwrite: TResolvedThemePreset
+}
+
+export type TThemePresetCardMode = 'stacked' | 'forkActive' | 'forkBase'
 
 export type TThemePresetOverwrite = TResolvedThemePreset
 

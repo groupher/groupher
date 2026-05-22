@@ -161,10 +161,6 @@ const updateDashboardEnable = gql`
 const updateDashboardLayout = gql`
   mutation (
     $community: String!
-    $themePreset: DsbThemePreset
-    $themeOverwrite: Json
-    $textTitle: String
-    $textDigest: String
     $postLayout: DsbPostLayout
     $kanbanLayout: DsbKanbanLayout
     $kanbanCardLayout: DsbKanbanCardLayout
@@ -185,8 +181,6 @@ const updateDashboardLayout = gql`
     $broadcastArticleBg: RainbowColor
     $broadcastArticleCustomBg: String
     $overlayDark: Boolean
-    $gaussBlur: Float
-    $gaussBlurDark: Float
     $brandLayout: DsbBrandLayout
     $communityLayout: DsbCommunityLayout
     $changelogLayout: DsbChangelogLayout
@@ -195,10 +189,6 @@ const updateDashboardLayout = gql`
   ) {
     updateDashboardLayout(
       community: $community
-      themePreset: $themePreset
-      themeOverwrite: $themeOverwrite
-      textTitle: $textTitle
-      textDigest: $textDigest
       postLayout: $postLayout
       kanbanLayout: $kanbanLayout
       kanbanCardLayout: $kanbanCardLayout
@@ -219,14 +209,46 @@ const updateDashboardLayout = gql`
       broadcastArticleCustomBg: $broadcastArticleCustomBg
       kanbanBgColors: $kanbanBgColors
       overlayDark: $overlayDark
-      gaussBlur: $gaussBlur
-      gaussBlurDark: $gaussBlurDark
       brandLayout: $brandLayout
       communityLayout: $communityLayout
       changelogLayout: $changelogLayout
       docCoverLayout: $docCoverLayout
       docFaqLayout: $docFaqLayout
     ) {
+      slug
+    }
+  }
+`
+
+const saveCustomThemePreset = gql`
+  mutation (
+    $community: String!
+    $themePreset: DsbThemePreset!
+    $themePresetBase: DsbThemePreset!
+    $themeTokens: Json
+    $textTitle: String
+    $textDigest: String
+    $gaussBlur: Float
+    $gaussBlurDark: Float
+  ) {
+    saveCustomThemePreset(
+      community: $community
+      themePreset: $themePreset
+      themePresetBase: $themePresetBase
+      themeTokens: $themeTokens
+      textTitle: $textTitle
+      textDigest: $textDigest
+      gaussBlur: $gaussBlur
+      gaussBlurDark: $gaussBlurDark
+    ) {
+      slug
+    }
+  }
+`
+
+const selectThemePreset = gql`
+  mutation ($community: String!, $themePreset: DsbThemePreset!) {
+    selectThemePreset(community: $community, themePreset: $themePreset) {
       slug
     }
   }
@@ -526,6 +548,8 @@ const schema = {
   communityTagGroups,
   updateDashboardEnable,
   updateDashboardLayout,
+  saveCustomThemePreset,
+  selectThemePreset,
   updateDashboardSocialLinks,
   updateDashboardNameAlias,
   createCommunityTag,

@@ -137,12 +137,14 @@ describe('stores/dashboard', () => {
 
     store.editFields({
       themePreset: claude.value,
+      themePresetBase: claude.value,
       themeTokens: { ...claude.overwrite },
       textTitle: claude.overwrite.textTitle,
       textDigest: claude.overwrite.textDigest,
     })
 
     expect(store.themePreset).toBe('CLAUDE')
+    expect(store.themePresetBase).toBe('CLAUDE')
     expect(store.themeTokens.pageBg).toBe(claude.overwrite.pageBg)
     expect(store.themeTokens.pageBgDark).toBe(claude.overwrite.pageBgDark)
     expect(store.themeTokens.primaryColor).toBe('#c96442')
@@ -151,14 +153,37 @@ describe('stores/dashboard', () => {
     expect(store.themeTokens.accentColorDark).toBe('#3a7ec7')
     expect(store.textTitle).toBe(claude.overwrite.textTitle)
     expect(store.textDigest).toBe(claude.overwrite.textDigest)
-    expect(store.anyTouched(['themePreset', 'themeTokens', 'textTitle', 'textDigest'])).toBe(true)
+    expect(
+      store.anyTouched([
+        'themePreset',
+        'themePresetBase',
+        'themeTokens',
+        'textTitle',
+        'textDigest',
+      ]),
+    ).toBe(true)
 
-    store.rollbackFields(['themePreset', 'themeTokens', 'textTitle', 'textDigest'])
+    store.rollbackFields([
+      'themePreset',
+      'themePresetBase',
+      'themeTokens',
+      'textTitle',
+      'textDigest',
+    ])
 
     expect(store.themePreset).toBe(store.original.themePreset)
+    expect(store.themePresetBase).toBe(store.original.themePresetBase)
     expect(store.themeTokens).toBe(store.original.themeTokens)
     expect(store.textTitle).toBe(store.original.textTitle)
     expect(store.textDigest).toBe(store.original.textDigest)
-    expect(store.anyTouched(['themePreset', 'themeTokens', 'textTitle', 'textDigest'])).toBe(false)
+    expect(
+      store.anyTouched([
+        'themePreset',
+        'themePresetBase',
+        'themeTokens',
+        'textTitle',
+        'textDigest',
+      ]),
+    ).toBe(false)
   })
 })

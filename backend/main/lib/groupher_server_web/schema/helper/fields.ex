@@ -289,8 +289,11 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     end
   end
 
-  defmacro dsb_args(section \\ :layout) do
+  defmacro dsb_args(section \\ :layout, opts \\ []) do
+    except = Keyword.get(opts, :except, [])
+
     Dashboard.macro_schema(section)
+    |> Enum.reject(fn [key, _type, _default_v] -> key in except end)
     |> Enum.map(fn item ->
       [key, type, _default_v] = item
 
@@ -349,8 +352,11 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     end)
   end
 
-  defmacro dsb_gq_fields(section \\ :layout) do
+  defmacro dsb_gq_fields(section \\ :layout, opts \\ []) do
+    except = Keyword.get(opts, :except, [])
+
     Dashboard.macro_schema(section)
+    |> Enum.reject(fn [key, _type, _default_v] -> key in except end)
     |> Enum.map(fn item ->
       [key, type, _default_v] = item
 
@@ -381,6 +387,10 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     do: quote(do: list_of(unquote(to_absinthe_type(inner, nil))))
 
   defp to_absinthe_type(:enum, :doc_cover_layout), do: :dsb_doc_cover_layout
+
+  defp to_absinthe_type(:enum, key) when key in [:theme_preset, :theme_preset_base],
+    do: :dsb_theme_preset
+
   defp to_absinthe_type(:enum, key), do: :"dsb_#{key}"
   defp to_absinthe_type(:rainbow_color, _key), do: :rainbow_color
   defp to_absinthe_type(:map, _key), do: :json

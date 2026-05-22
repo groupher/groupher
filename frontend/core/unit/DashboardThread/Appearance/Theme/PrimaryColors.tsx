@@ -69,6 +69,8 @@ export default function PrimaryColors({
         <p className={s.desc}>{t('dsb.appearance.primary_color.hint')}</p>
       </div>
 
+      <div className='grow' />
+
       <div className={s.right}>
         <div className={cn(s.head, s.subHead)}>
           <div className={cnMerge(s.ballWrapper, s.subBall, accent('borderSoft'))}>
