@@ -3,7 +3,6 @@ import { useEffect, useRef } from 'react'
 
 import { serializeKanbanBoards } from '~/const/dashboard'
 import { DSB_INFO_ROUTE } from '~/const/route'
-import { THEME_PRESET } from '~/const/theme_preset'
 import useDsbDemoMode from '~/hooks/useDsbDemoMode'
 import useDsbTab from '~/hooks/useDsbTab'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
@@ -86,21 +85,6 @@ export default function useMutation(): TRet {
     if (field === FIELD.BASE_INFO) return BASEINFO_KEYS
     if (field === FIELD.SEO) return SEO_KEYS as readonly TDsbStoreFieldKey[]
 
-    if (field === FIELD.THEME_PRESET) {
-      return [
-        FIELD.THEME_PRESET,
-        FIELD.THEME_PRESET_BASE,
-        FIELD.THEME_TOKENS,
-        FIELD.HAS_CUSTOM_THEME_PRESET,
-        FIELD.TEXT_TITLE,
-        FIELD.TEXT_TITLE_DARK,
-        FIELD.TEXT_DIGEST,
-        FIELD.TEXT_DIGEST_DARK,
-        FIELD.GAUSS_BLUR,
-        FIELD.GAUSS_BLUR_DARK,
-      ]
-    }
-
     return field in storeRef.current.original ? [field as TDsbStoreFieldKey] : []
   }
 
@@ -141,27 +125,6 @@ export default function useMutation(): TRet {
         current[key] = clone(storeRef.current[key])
       }
       original = { ...storeRef.current.original, ...current }
-    }
-
-    if (field === FIELD.THEME_PRESET) {
-      const hasCustomThemePreset =
-        storeRef.current.hasCustomThemePreset ||
-        storeRef.current.themePreset === THEME_PRESET.CUSTOM
-
-      original = {
-        ...storeRef.current.original,
-        themePreset: storeRef.current.themePreset,
-        themePresetBase: storeRef.current.themePresetBase,
-        themeTokens: clone(storeRef.current.themeTokens),
-        hasCustomThemePreset,
-        textTitle: storeRef.current.textTitle,
-        textTitleDark: storeRef.current.textTitleDark,
-        textDigest: storeRef.current.textDigest,
-        textDigestDark: storeRef.current.textDigestDark,
-        gaussBlur: storeRef.current.gaussBlur,
-        gaussBlurDark: storeRef.current.gaussBlurDark,
-      }
-      storePatch = { hasCustomThemePreset }
     }
 
     const savedFields = resolveSavedFields(field)
@@ -426,32 +389,6 @@ export default function useMutation(): TRet {
         handleMutation(S.updateDashboardLayout, {
           community,
           [field]: serializeKanbanBoards(e as readonly TKanbanBoard[]),
-        })
-        return
-      }
-
-      if (field === FIELD.THEME_PRESET) {
-        const isCustomPreset = storeRef.current.themePreset === THEME_PRESET.CUSTOM
-
-        if (!isCustomPreset) {
-          handleMutation(S.selectThemePreset, {
-            community,
-            themePreset: storeRef.current.themePreset,
-          })
-          return
-        }
-
-        handleMutation(S.saveCustomThemePreset, {
-          community,
-          themePreset: storeRef.current.themePreset,
-          themePresetBase: storeRef.current.themePresetBase,
-          themeTokens: JSON.stringify(storeRef.current.themeTokens ?? {}),
-          textTitle: storeRef.current.textTitle,
-          textTitleDark: storeRef.current.textTitleDark,
-          textDigest: storeRef.current.textDigest,
-          textDigestDark: storeRef.current.textDigestDark,
-          gaussBlur: storeRef.current.gaussBlur,
-          gaussBlurDark: storeRef.current.gaussBlurDark,
         })
         return
       }

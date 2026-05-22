@@ -1,6 +1,5 @@
 import { type FC, memo, useCallback, useMemo } from 'react'
 
-import { THEME_PRESET_OPTIONS } from '~/const/theme_preset'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 import type { TTransKey } from '~/spec'
@@ -11,20 +10,21 @@ import type { TThemePresetOption } from '../spec'
 
 type TProps = {
   activePresetBase: TThemePresetOption['value']
+  presetOptions: readonly TThemePresetOption[]
   onReset: (preset: TThemePresetOption) => void
 }
 
-const ResetToPresetMenu: FC<TProps> = ({ activePresetBase, onReset }) => {
+const ResetToPresetMenu: FC<TProps> = ({ activePresetBase, presetOptions, onReset }) => {
   const s = useSalon()
   const { t } = useTrans()
 
   const options = useMemo(
     () =>
-      THEME_PRESET_OPTIONS.map((preset) => ({
+      presetOptions.map((preset) => ({
         ...preset,
         isBase: preset.value === activePresetBase,
       })),
-    [activePresetBase],
+    [activePresetBase, presetOptions],
   )
 
   const getPresetTitle = useCallback(

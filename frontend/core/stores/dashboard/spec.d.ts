@@ -228,6 +228,8 @@ export type TStore = TDsbFieldMap & {
   // After save succeeds, accept current values as the new original and clear touched.
   // Example: saving FIELD.TITLE turns current title into original.title, so the Save button becomes untouched.
   markFieldsToOriginal: (fields: readonly TDsbStoreFieldKey[]) => void
+  acceptFields: (fields: readonly TDsbStoreFieldKey[]) => void
+  replaceOriginal: (patch: Partial<TDsbFieldMap>) => void
   // Restore current values from original and clear cached dirty state for those fields.
   rollbackFields: (fields: readonly TDsbStoreFieldKey[]) => void
   isTouched: (field: TDsbStoreFieldKey) => boolean

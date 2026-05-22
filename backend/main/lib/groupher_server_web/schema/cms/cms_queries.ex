@@ -6,7 +6,14 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
   use Helper.GqlSchemaSuite
 
+  alias GroupherServer.CMS.Helper.ThemePreset
+
   object :cms_queries do
+    @desc "dashboard theme preset registry"
+    field :theme_presets, list_of(:dsb_theme_preset_option) do
+      resolve(fn _, _, _ -> {:ok, ThemePreset.options()} end)
+    end
+
     @desc "spec community info"
     field :community, :community do
       # arg(:id, non_null(:id))

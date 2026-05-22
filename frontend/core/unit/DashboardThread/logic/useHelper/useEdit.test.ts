@@ -39,21 +39,11 @@ describe('useEdit', () => {
     vi.clearAllMocks()
   })
 
-  it('rolls back theme preset base with the appearance preset draft', () => {
+  it('falls back to single-field rollback for store fields', () => {
     const { result } = renderHook(() => useEdit())
 
     result.current.rollbackEdit(FIELD.THEME_PRESET)
 
-    expect(rollbackFields).toHaveBeenCalledWith([
-      FIELD.THEME_PRESET,
-      FIELD.THEME_PRESET_BASE,
-      FIELD.THEME_TOKENS,
-      FIELD.TEXT_TITLE,
-      FIELD.TEXT_TITLE_DARK,
-      FIELD.TEXT_DIGEST,
-      FIELD.TEXT_DIGEST_DARK,
-      FIELD.GAUSS_BLUR,
-      FIELD.GAUSS_BLUR_DARK,
-    ])
+    expect(rollbackFields).toHaveBeenCalledWith([FIELD.THEME_PRESET])
   })
 })

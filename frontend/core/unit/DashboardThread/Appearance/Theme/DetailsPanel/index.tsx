@@ -13,6 +13,7 @@ type TProps = {
   details: TThemeDetails
   showResetMenu: boolean
   activePresetBase: TThemePresetOption['value']
+  presetOptions: readonly TThemePresetOption[]
   touched: boolean
   onResetPreset: (preset: TThemePresetOption) => void
 }
@@ -21,6 +22,7 @@ export default function DetailsPanel({
   details,
   showResetMenu,
   activePresetBase,
+  presetOptions,
   touched,
   onResetPreset,
 }: TProps) {
@@ -36,7 +38,11 @@ export default function DetailsPanel({
           touched={touched}
           addon={
             showResetMenu ? (
-              <ResetToPresetMenu activePresetBase={activePresetBase} onReset={onResetPreset} />
+              <ResetToPresetMenu
+                activePresetBase={activePresetBase}
+                presetOptions={presetOptions}
+                onReset={onResetPreset}
+              />
             ) : null
           }
         />

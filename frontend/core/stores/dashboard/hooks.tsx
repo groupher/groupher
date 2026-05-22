@@ -8,6 +8,8 @@ export default createStoreHook(StoreContext, [
   'editField',
   'editFields',
   'markFieldsToOriginal',
+  'acceptFields',
+  'replaceOriginal',
   'rollbackFields',
   'isTouched',
   'anyTouched',

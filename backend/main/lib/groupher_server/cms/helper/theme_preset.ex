@@ -33,6 +33,7 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
     "glowOpacity",
     "glowOpacityDark"
   ]
+  @preset_keys [:default, :claude, :solarized, :hn]
 
   @defaults %{
     default: %{
@@ -114,6 +115,16 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
   }
 
   def token_keys, do: @token_keys
+  def preset_keys, do: @preset_keys
+
+  def options do
+    Enum.map(preset_keys(), fn preset ->
+      %{
+        value: preset,
+        tokens: defaults(preset)
+      }
+    end)
+  end
 
   def defaults(preset) do
     Map.get(@defaults, normalize_preset(preset), @defaults.default)

@@ -12,6 +12,7 @@ export type TPresetListItem =
 export type TProps = {
   activePreset: string
   activePresetBase: string
+  presetOptions: readonly TThemePresetOption[]
   hasCustomPreset: boolean
   customOverwrite: TThemePresetOverwrite
   showForkRelation: boolean

@@ -1,14 +1,8 @@
-import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
+import { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
 import {
-  DEFAULT_TEXT_DIGEST,
-  DEFAULT_TEXT_DIGEST_DARK,
-  DEFAULT_TEXT_TITLE,
-  DEFAULT_TEXT_TITLE_DARK,
-} from '~/const/theme_preset'
-import {
+  buildThemePresetCssVars,
+  buildThemePresetDarkCssVars,
   resolveThemePreset,
-  resolveThemePresetColor,
-  resolveThemePresetPageBgCssVar,
 } from '~/lib/themePreset'
 import type { TParseDashboard } from '~/spec'
 
@@ -46,49 +40,8 @@ const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string
   const themePreset = resolveThemePreset(dashboard)
 
   return [
-    [
-      ':root',
-      {
-        '--color-primary-custom': resolveThemePresetColor(themePreset.primaryColor, '#333333'),
-        '--color-primary-custom-dark': resolveThemePresetColor(
-          themePreset.primaryColorDark,
-          '#ffffff',
-        ),
-        '--color-accent-custom': resolveThemePresetColor(themePreset.accentColor, '#333333'),
-        '--color-accent-custom-dark': resolveThemePresetColor(
-          themePreset.accentColorDark,
-          '#ffffff',
-        ),
-        '--color-title': resolveThemePresetColor(themePreset.textTitle, DEFAULT_TEXT_TITLE),
-        '--color-title-dark': resolveThemePresetColor(
-          themePreset.textTitleDark,
-          DEFAULT_TEXT_TITLE_DARK,
-        ),
-        '--color-digest': resolveThemePresetColor(themePreset.textDigest, DEFAULT_TEXT_DIGEST),
-        '--color-digest-dark': resolveThemePresetColor(
-          themePreset.textDigestDark,
-          DEFAULT_TEXT_DIGEST_DARK,
-        ),
-        '--color-page-custom': resolveThemePresetPageBgCssVar(THEME.LIGHT, themePreset.pageBg),
-        '--color-page-custom-dark': resolveThemePresetPageBgCssVar(
-          THEME.DARK,
-          themePreset.pageBgDark,
-        ),
-      },
-    ],
-    [
-      "[data-theme='dark']",
-      {
-        '--color-title': resolveThemePresetColor(
-          themePreset.textTitleDark,
-          DEFAULT_TEXT_TITLE_DARK,
-        ),
-        '--color-digest': resolveThemePresetColor(
-          themePreset.textDigestDark,
-          DEFAULT_TEXT_DIGEST_DARK,
-        ),
-      },
-    ],
+    [':root', buildThemePresetCssVars(themePreset, true)],
+    ["[data-theme='dark']", buildThemePresetDarkCssVars(themePreset)],
   ]
 }
 

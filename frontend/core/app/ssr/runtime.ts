@@ -16,6 +16,8 @@ import type {
   TPost,
   TTagGroup,
   TTagStats,
+  TThemePresetOption,
+  TThemePresetsQuery,
   TThread,
 } from '~/spec'
 import { gqFetch } from '~/utils/api'
@@ -75,6 +77,31 @@ export const getLocaleData = async (
   cacheLife('days')
 
   return loadLocaleFile(locale, namespaces)
+}
+
+const fetchThemePresets = async (): Promise<TThemePresetOption[]> => {
+  'use cache'
+  cacheLife('days')
+
+  const response = await gqFetch(P.themePresets, {})
+  const { data, errors } = (await response.json()) as {
+    data?: TThemePresetsQuery
+    errors?: unknown
+  }
+
+  if (errors || !data?.themePresets) {
+    console.log('## error details theme presets', errors)
+    return []
+  }
+
+  return data.themePresets.map((preset) => ({
+    value: preset.value,
+    overwrite: preset.tokens,
+  }))
+}
+
+export const getThemePresets = async (): Promise<TThemePresetOption[]> => {
+  return fetchThemePresets()
 }
 
 const fetchPagedPosts = async (filter: TPagedArticlesParams): Promise<TPagedPosts | null> => {

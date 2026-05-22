@@ -3,4 +3,4 @@
 import createStoreHook from '../createStoreHook'
 import { StoreContext } from './provider'
 
-export default createStoreHook(StoreContext, ['hydrate'])
+export default createStoreHook(StoreContext, ['hydrate', 'hydratePresetOptions'])

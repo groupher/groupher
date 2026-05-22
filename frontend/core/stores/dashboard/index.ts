@@ -1,4 +1,3 @@
-import { clone, equals } from 'ramda'
 import { proxy } from 'valtio'
 
 import { INIT_KANBAN_BOARDS } from '~/const/dashboard'
@@ -6,6 +5,7 @@ import METRIC from '~/const/metric'
 import { CHANGE_MODE } from '~/const/mode'
 import { EMPTY_PAGED_ARTICLES, EMPTY_PAGED_COMMUNITIES } from '~/const/utils'
 
+import { createDraftFieldActions } from '../draftFields'
 import { DEFAULT_OVERVIEW, FIELDS } from './constant'
 import type { TDsbFieldMap, TDsbStoreFieldKey, TDsbTouchedFields, TInit, TStore } from './spec'
 
@@ -64,59 +64,7 @@ export default function DashboardStore(init: TInit = {}): TStore {
       commit(patch: Partial<TStore>): void {
         Object.assign(store, patch)
       },
-      editField<K extends TDsbStoreFieldKey>(field: K, value: TDsbFieldMap[K]): void {
-        const storeFields = store as unknown as Record<TDsbStoreFieldKey, unknown>
-        storeFields[field] = value
-
-        if (equals(value, store.original[field])) {
-          const { [field]: _removed, ...rest } = store.touchedFields
-          store.touchedFields = rest
-          return
-        }
-
-        store.touchedFields = { ...store.touchedFields, [field]: true }
-      },
-      editFields(patch: Partial<TDsbFieldMap>): void {
-        for (const field of Object.keys(patch) as TDsbStoreFieldKey[]) {
-          const value = patch[field]
-          if (value !== undefined) {
-            store.editField(field, value)
-          }
-        }
-      },
-      markFieldsToOriginal(fields: readonly TDsbStoreFieldKey[]): void {
-        const originalPatch = {} as Partial<TDsbFieldMap>
-        const mutableOriginalPatch = originalPatch as Record<TDsbStoreFieldKey, unknown>
-        const storeFields = store as unknown as Record<TDsbStoreFieldKey, unknown>
-        let touchedFields = store.touchedFields
-
-        for (const field of fields) {
-          mutableOriginalPatch[field] = clone(storeFields[field])
-          const { [field]: _removedTouched, ...nextTouchedFields } = touchedFields
-          touchedFields = nextTouchedFields
-        }
-
-        store.original = { ...store.original, ...originalPatch }
-        store.touchedFields = touchedFields
-      },
-      rollbackFields(fields: readonly TDsbStoreFieldKey[]): void {
-        const storeFields = store as unknown as Record<TDsbStoreFieldKey, unknown>
-        let touchedFields = store.touchedFields
-
-        for (const field of fields) {
-          storeFields[field] = store.original[field]
-          const { [field]: _removedTouched, ...nextTouchedFields } = touchedFields
-          touchedFields = nextTouchedFields
-        }
-
-        store.touchedFields = touchedFields
-      },
-      isTouched(field: TDsbStoreFieldKey): boolean {
-        return Boolean(store.touchedFields[field])
-      },
-      anyTouched(fields: readonly TDsbStoreFieldKey[]): boolean {
-        return fields.some((field) => store.isTouched(field))
-      },
+      ...createDraftFieldActions<TDsbFieldMap>(() => store),
       debug() {
         store.editingLink = null
         store.headerLinks = []

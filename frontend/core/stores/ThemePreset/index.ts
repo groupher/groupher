@@ -12,6 +12,7 @@ export default function ThemePresetStore(init: TInit = {}): TStore {
     themePreset: init.themePreset ?? DEFAULT_THEME_PRESET,
     themePresetBase: init.themePresetBase ?? DEFAULT_THEME_PRESET,
     themeTokens: init.themeTokens ?? {},
+    presetOptions: init.presetOptions ?? [],
     ...resolved,
 
     hydrate(source: TInit): void {
@@ -21,6 +22,9 @@ export default function ThemePresetStore(init: TInit = {}): TStore {
       store.themePresetBase = source.themePresetBase ?? DEFAULT_THEME_PRESET
       store.themeTokens = source.themeTokens ?? {}
       Object.assign(store, nextResolved)
+    },
+    hydratePresetOptions(presetOptions): void {
+      store.presetOptions = presetOptions
     },
   })
 

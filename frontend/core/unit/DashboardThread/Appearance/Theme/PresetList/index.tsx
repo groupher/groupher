@@ -1,6 +1,6 @@
 import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
 
-import { THEME_PRESET, THEME_PRESET_OPTIONS } from '~/const/theme_preset'
+import { THEME_PRESET } from '~/const/theme_preset'
 import useTrans from '~/hooks/useTrans'
 import ArrowsSplitSVG from '~/icons/ArrowsSplit'
 
@@ -14,6 +14,7 @@ import useForkDotsAnimation from './useForkDotsAnimation'
 export default function PresetList({
   activePreset,
   activePresetBase,
+  presetOptions,
   hasCustomPreset,
   customOverwrite,
   showForkRelation,
@@ -23,9 +24,7 @@ export default function PresetList({
   const { t } = useTrans()
   const { incomingDotControls, outgoingTopDotControls, outgoingBottomDotControls } =
     useForkDotsAnimation(showForkRelation)
-  const basePreset =
-    THEME_PRESET_OPTIONS.find((preset) => preset.value === activePresetBase) ??
-    THEME_PRESET_OPTIONS[0]
+  const basePreset = presetOptions.find((preset) => preset.value === activePresetBase)
   const customPreset: TThemePresetOption = {
     value: THEME_PRESET.CUSTOM,
     overwrite: customOverwrite,
@@ -33,18 +32,22 @@ export default function PresetList({
   const isCustomPreset = activePreset === THEME_PRESET.CUSTOM
   const collapseDirection = isCustomPreset && showForkRelation ? -1 : 1
   const shouldShowCustomPreset = hasCustomPreset || isCustomPreset
-  const presetOptions = shouldShowCustomPreset
+  const displayPresetOptions = shouldShowCustomPreset
     ? showForkRelation
-      ? [customPreset, basePreset]
-      : [customPreset, ...THEME_PRESET_OPTIONS]
-    : THEME_PRESET_OPTIONS
+      ? basePreset
+        ? [customPreset, basePreset]
+        : [customPreset]
+      : [customPreset, ...presetOptions]
+    : presetOptions
   const presetItems: TPresetListItem[] = showForkRelation
-    ? [
-        { type: 'preset', preset: customPreset },
-        { type: 'forkedFrom' },
-        { type: 'preset', preset: basePreset },
-      ]
-    : presetOptions.map((preset) => ({ type: 'preset' as const, preset }))
+    ? basePreset
+      ? [
+          { type: 'preset', preset: customPreset },
+          { type: 'forkedFrom' },
+          { type: 'preset', preset: basePreset },
+        ]
+      : [{ type: 'preset', preset: customPreset }]
+    : displayPresetOptions.map((preset) => ({ type: 'preset' as const, preset }))
 
   return (
     <LazyMotion features={domAnimation}>
