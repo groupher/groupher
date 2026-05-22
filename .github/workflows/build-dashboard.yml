@@ -29,5 +29,10 @@ jobs:
           corepack enable
           yarn install --immutable
 
+      - name: Start mock GraphQL
+        run: |
+          yarn mock:server &
+          until curl -fsS http://localhost:4001/health; do sleep 1; done
+
       - name: Build Project
         run: yarn run build:prod:dashboard
