@@ -39,7 +39,6 @@ export default function GlassOpacity({ details, ...spacing }: TProps) {
           <div className='grow' />
           <div className={s.rangeGroup}>
             <ThemeRangeInput
-              key={`${gaussBlurField}-${gaussBlur}`}
               value={gaussBlur}
               valueLabel={t('dsb.appearance.theme.glass_opacity.title')}
               min={50}

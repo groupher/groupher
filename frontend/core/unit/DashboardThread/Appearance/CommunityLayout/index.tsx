@@ -46,6 +46,7 @@ export default function CommunityLayout() {
         title={t('dsb.appearance.community.title')}
         desc={t('dsb.appearance.community.desc')}
         detailText={t('dsb.appearance.view_example')}
+        touched={isTouched}
         onDetailClick={() => setShowDrawer(true)}
       />
       <div className={s.select}>

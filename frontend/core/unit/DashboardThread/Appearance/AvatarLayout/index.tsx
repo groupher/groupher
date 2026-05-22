@@ -30,6 +30,7 @@ export default function AvatarLayout() {
       <SectionLabel
         title={t('dsb.appearance.avatar.title')}
         desc={t('dsb.appearance.avatar.desc')}
+        touched={isTouched}
       />
       <div className={s.select}>
         {AVATAR_LAYOUT_OPTIONS.map(({ value, titleKey }) => {

@@ -30,6 +30,7 @@ export default function PostLayout() {
         title={t('dsb.appearance.post.title')}
         desc={t('dsb.appearance.post.desc')}
         detailText={t('dsb.appearance.view_example')}
+        touched={isTouched}
       />
       <div className={s.select}>
         <button

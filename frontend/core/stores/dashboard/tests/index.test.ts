@@ -1,7 +1,7 @@
 import { DEFAULT_ENABLE } from '~/const/dashboard'
 import { DASHBOARD_LINK_TYPE } from '~/const/dashboard_link'
 import METRIC from '~/const/metric'
-import { THEME_PRESET_OPTIONS } from '~/const/theme_preset'
+import { THEME_PRESET } from '~/const/theme_preset'
 import { KANBAN_BOARD } from '~/const/thread'
 import type { TEnableConf, TLinkDraftItem, TLinkItem, TNameAlias } from '~/spec'
 import type { TInit } from '~/stores/dashboard/spec'
@@ -130,9 +130,20 @@ describe('stores/dashboard', () => {
 
   it('tracks appearance preset fields as one editable patch', () => {
     const store = setupStore()
-    const claude = THEME_PRESET_OPTIONS.find((item) => item.value === 'CLAUDE')
-    if (!claude) {
-      throw new Error('Missing CLAUDE preset in THEME_PRESET_OPTIONS')
+    const claude = {
+      value: THEME_PRESET.CLAUDE,
+      overwrite: {
+        pageBg: '#fefaf1',
+        pageBgDark: '#1e141b',
+        primaryColor: '#c96442',
+        primaryColorDark: '#d97757',
+        accentColor: '#5073c6',
+        accentColorDark: '#3a7ec7',
+        textTitle: '#2f2a24',
+        textTitleDark: '#f4eee7',
+        textDigest: '#786f63',
+        textDigestDark: '#a9a19a',
+      },
     }
 
     store.editFields({
@@ -145,8 +156,8 @@ describe('stores/dashboard', () => {
       textDigestDark: claude.overwrite.textDigestDark,
     })
 
-    expect(store.themePreset).toBe('CLAUDE')
-    expect(store.themePresetBase).toBe('CLAUDE')
+    expect(store.themePreset).toBe(THEME_PRESET.CLAUDE)
+    expect(store.themePresetBase).toBe(THEME_PRESET.CLAUDE)
     expect(store.themeTokens.pageBg).toBe(claude.overwrite.pageBg)
     expect(store.themeTokens.pageBgDark).toBe(claude.overwrite.pageBgDark)
     expect(store.themeTokens.primaryColor).toBe('#c96442')
@@ -181,7 +192,7 @@ describe('stores/dashboard', () => {
 
     expect(store.themePreset).toBe(store.original.themePreset)
     expect(store.themePresetBase).toBe(store.original.themePresetBase)
-    expect(store.themeTokens).toBe(store.original.themeTokens)
+    expect(store.themeTokens).toEqual(store.original.themeTokens)
     expect(store.textTitle).toBe(store.original.textTitle)
     expect(store.textTitleDark).toBe(store.original.textTitleDark)
     expect(store.textDigest).toBe(store.original.textDigest)

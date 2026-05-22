@@ -1,17 +1,17 @@
 'use client'
 
-import { type CSSProperties, createContext, type ReactNode, useEffect, useRef } from 'react'
+import {
+  type CSSProperties,
+  createContext,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react'
 import { useSnapshot } from 'valtio'
 
-import THEME from '~/const/theme'
-import {
-  DEFAULT_TEXT_DIGEST,
-  DEFAULT_TEXT_DIGEST_DARK,
-  DEFAULT_TEXT_TITLE,
-  DEFAULT_TEXT_TITLE_DARK,
-} from '~/const/theme_preset'
 import useTheme from '~/hooks/useTheme'
-import { resolveThemePresetColor, resolveThemePresetPageBgCssVar } from '~/lib/themePreset'
+import { buildThemePresetCssVars } from '~/lib/themePreset'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import setupStore from '.'
@@ -49,11 +49,12 @@ type TScopeProps = {
 
 const ThemePresetScope = ({ children, store }: TScopeProps) => {
   const preset$ = useSnapshot(store)
+  const { isLightTheme } = useTheme()
   const {
-    primaryColor,
-    primaryColorDark,
     pageBg,
     pageBgDark,
+    primaryColor,
+    primaryColorDark,
     accentColor,
     accentColorDark,
     textTitle,
@@ -61,68 +62,53 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
     textDigest,
     textDigestDark,
   } = preset$
-  const { isLightTheme } = useTheme()
-  const lightDefault = '#333333'
-  const darkDefault = '#ffffff'
-  const safeTextTitle = resolveThemePresetColor(textTitle, DEFAULT_TEXT_TITLE)
-  const safeTextTitleDark = resolveThemePresetColor(textTitleDark, DEFAULT_TEXT_TITLE_DARK)
-  const safeTextDigest = resolveThemePresetColor(textDigest, DEFAULT_TEXT_DIGEST)
-  const safeTextDigestDark = resolveThemePresetColor(textDigestDark, DEFAULT_TEXT_DIGEST_DARK)
-  const activeTextTitle = isLightTheme ? safeTextTitle : safeTextTitleDark
-  const activeTextDigest = isLightTheme ? safeTextDigest : safeTextDigestDark
-  const lightPageBg = resolveThemePresetPageBgCssVar(THEME.LIGHT, pageBg)
-  const darkPageBg = resolveThemePresetPageBgCssVar(THEME.DARK, pageBgDark)
-  const lightPrimary = resolveThemePresetColor(primaryColor, lightDefault)
-  const darkPrimary = resolveThemePresetColor(primaryColorDark, darkDefault)
-  const lightAccent = resolveThemePresetColor(accentColor, lightDefault)
-  const darkAccent = resolveThemePresetColor(accentColorDark, darkDefault)
+  const cssVars = useMemo(
+    () =>
+      buildThemePresetCssVars(
+        {
+          pageBg,
+          pageBgDark,
+          primaryColor,
+          primaryColorDark,
+          accentColor,
+          accentColorDark,
+          textTitle,
+          textTitleDark,
+          textDigest,
+          textDigestDark,
+        },
+        isLightTheme,
+      ),
+    [
+      pageBg,
+      pageBgDark,
+      primaryColor,
+      primaryColorDark,
+      accentColor,
+      accentColorDark,
+      textTitle,
+      textTitleDark,
+      textDigest,
+      textDigestDark,
+      isLightTheme,
+    ],
+  )
 
   useEffect(() => {
     const root = document.documentElement
 
-    root.style.setProperty('--color-primary-custom', lightPrimary)
-    root.style.setProperty('--color-primary-custom-dark', darkPrimary)
-    root.style.setProperty('--color-accent-custom', lightAccent)
-    root.style.setProperty('--color-accent-custom-dark', darkAccent)
-    root.style.setProperty('--color-page-custom', lightPageBg)
-    root.style.setProperty('--color-page-custom-dark', darkPageBg)
-    root.style.setProperty('--color-title', activeTextTitle)
-    root.style.setProperty('--color-title-dark', safeTextTitleDark)
-    root.style.setProperty('--color-digest', activeTextDigest)
-    root.style.setProperty('--color-digest-dark', safeTextDigestDark)
+    for (const [key, value] of Object.entries(cssVars)) {
+      root.style.setProperty(key, value)
+    }
 
     return () => {
       for (const key of PRESET_CSS_VAR_KEYS) {
         root.style.removeProperty(key)
       }
     }
-  }, [
-    darkDefault,
-    darkPageBg,
-    darkPrimary,
-    darkAccent,
-    lightDefault,
-    lightPageBg,
-    lightPrimary,
-    activeTextTitle,
-    activeTextDigest,
-    safeTextTitleDark,
-    safeTextDigestDark,
-    lightAccent,
-  ])
+  }, [cssVars])
 
-  const style = {
-    '--color-page-custom': lightPageBg,
-    '--color-page-custom-dark': darkPageBg,
-    '--color-primary-custom': lightPrimary,
-    '--color-primary-custom-dark': darkPrimary,
-    '--color-accent-custom': lightAccent,
-    '--color-accent-custom-dark': darkAccent,
-    '--color-title': activeTextTitle,
-    '--color-title-dark': safeTextTitleDark,
-    '--color-digest': activeTextDigest,
-    '--color-digest-dark': safeTextDigestDark,
-  } as CSSProperties
+  const style = cssVars as CSSProperties
 
   return <div style={style}>{children}</div>
 }

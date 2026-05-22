@@ -36,6 +36,7 @@ export default function NavActiveLayout() {
       <SectionLabel
         title={t('dsb.appearance.nav_active.title')}
         desc={t('dsb.appearance.nav_active.desc')}
+        touched={isTouched}
       />
       <div className={s.select}>
         {LAYOUT_OPTIONS.map(({ value, titleKey }) => {

@@ -1,11 +1,15 @@
 import type { TResolvedThemePreset, TThemePresetSource } from '~/lib/themePreset'
-import type { TThemePreset } from '~/spec'
+import type { TThemePreset, TThemePresetOption } from '~/spec'
 
-export type TInit = TThemePresetSource
+export type TInit = TThemePresetSource & {
+  presetOptions?: readonly TThemePresetOption[]
+}
 
 export type TStore = TResolvedThemePreset & {
   themePreset: TThemePreset | string
   themePresetBase: TThemePreset | string
   themeTokens: Record<string, unknown>
-  hydrate: (source: TThemePresetSource) => void
+  presetOptions: readonly TThemePresetOption[]
+  hydrate: (source: TInit) => void
+  hydratePresetOptions: (presetOptions: readonly TThemePresetOption[]) => void
 }

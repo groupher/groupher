@@ -36,6 +36,7 @@ export default function TopbarLayout() {
         title={t('dsb.appearance.topbar.title')}
         desc={t('dsb.appearance.topbar.desc')}
         detailText={t('dsb.appearance.view_example')}
+        touched={isLayoutTouched || isBgTouched}
       />
       <div className={s.select}>
         {TOPBAR_LAYOUT_OPTIONS.map(({ value, titleKey }) => {

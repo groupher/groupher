@@ -35,11 +35,19 @@ const Main: FC<TProps> = ({ children }) => {
   // style={{ background }}
 
   return (
-    <main
-      key={locale}
-      className={s.wrapper}
-      style={background ? { backgroundColor: `var(--preview-page-bg, ${background})` } : undefined}
-    >
+    <main key={locale} className={s.wrapper} style={{ backgroundColor: 'transparent' }}>
+      {/* Keep page background on a child layer, not on <main> itself.
+       * Theme preview sliders update --preview-page-bg at pointer-move speed.
+       * Applying that directly to <main> repaints the full layout and combines
+       * poorly with backdrop blur. This isolated layer keeps realtime preview
+       * cheap while still letting transparent glass colors reveal the page base.
+       */}
+      {background && (
+        <div
+          className={s.background}
+          style={{ backgroundColor: `var(--preview-page-bg, ${background})` }}
+        />
+      )}
       {hasTopbar && <div className={s.topBar} />}
       {/* <Broadcast /> */}
       <GlowBackground />

@@ -1,5 +1,10 @@
 import THEME from '~/const/theme'
-import { THEME_PRESET, THEME_PRESET_OPTIONS } from '~/const/theme_preset'
+import {
+  DEFAULT_TEXT_DIGEST,
+  DEFAULT_TEXT_DIGEST_DARK,
+  DEFAULT_TEXT_TITLE,
+  DEFAULT_TEXT_TITLE_DARK,
+} from '~/const/theme_preset'
 import type { TThemePreset } from '~/spec'
 
 export const THEME_PRESET_FIELD_KEYS = [
@@ -50,8 +55,44 @@ export type TThemePresetSource = Partial<TResolvedThemePreset> & {
   themeTokens?: Record<string, unknown> | null
 }
 
-const DEFAULT_PRESET = THEME_PRESET_OPTIONS[0]
+export type TThemePresetCssVars = Record<`--${string}`, string>
+type TThemePresetCssSource = Pick<
+  TResolvedThemePreset,
+  | 'pageBg'
+  | 'pageBgDark'
+  | 'primaryColor'
+  | 'primaryColorDark'
+  | 'accentColor'
+  | 'accentColorDark'
+  | 'textTitle'
+  | 'textTitleDark'
+  | 'textDigest'
+  | 'textDigestDark'
+>
+
 const HEX_COLOR_RE = /^#[0-9a-f]{6}$/i
+const FALLBACK_PAGE_BG = '#fffcfc'
+const FALLBACK_PAGE_BG_DARK = '#25161d'
+
+const FALLBACK_THEME_PRESET: TResolvedThemePreset = {
+  pageBg: FALLBACK_PAGE_BG,
+  pageBgDark: FALLBACK_PAGE_BG_DARK,
+  primaryColor: '#333333',
+  primaryColorDark: '#ffffff',
+  accentColor: '#333333',
+  accentColorDark: '#ffffff',
+  textTitle: DEFAULT_TEXT_TITLE,
+  textTitleDark: DEFAULT_TEXT_TITLE_DARK,
+  textDigest: DEFAULT_TEXT_DIGEST,
+  textDigestDark: DEFAULT_TEXT_DIGEST_DARK,
+  gaussBlur: 100,
+  gaussBlurDark: 100,
+  glowType: '',
+  glowTypeDark: '',
+  glowFixed: true,
+  glowOpacity: 100,
+  glowOpacityDark: 100,
+}
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -60,9 +101,6 @@ export const resolveThemePresetColor = (value: string | undefined, fallback: str
   if (value && HEX_COLOR_RE.test(value)) return value
   return fallback
 }
-
-export const resolveThemePresetOption = (themePreset?: TThemePreset | string) =>
-  THEME_PRESET_OPTIONS.find((preset) => preset.value === themePreset) ?? DEFAULT_PRESET
 
 export const pickThemePresetFields = (source: Partial<TResolvedThemePreset>) => {
   const patch = {} as Partial<TResolvedThemePreset>
@@ -91,29 +129,60 @@ export const resolveThemePresetPageBgCssVar = (
   theme: typeof THEME.LIGHT | typeof THEME.DARK,
   pageBg: string | undefined,
 ): string => {
-  const fallbackBg =
-    theme === THEME.LIGHT ? DEFAULT_PRESET.overwrite.pageBg : DEFAULT_PRESET.overwrite.pageBgDark
+  const fallbackBg = theme === THEME.LIGHT ? FALLBACK_PAGE_BG : FALLBACK_PAGE_BG_DARK
 
   return resolveThemePresetColor(pageBg, fallbackBg)
 }
 
-/**
- * Resolve the effective theme preset values from backend/dashboard layout data.
- *
- * Built-in presets are resolved from their own token set. Only CUSTOM applies
- * saved token overwrite; this keeps stale overwrite from changing a selected
- * built-in preset.
- */
-export const resolveThemePreset = (source: TThemePresetSource = {}): TResolvedThemePreset => {
-  const isCustomPreset = source.themePreset === THEME_PRESET.CUSTOM
-  const selectedPreset = resolveThemePresetOption(
-    isCustomPreset ? source.themePresetBase : source.themePreset,
+export const buildThemePresetCssVars = (
+  themePreset: TThemePresetCssSource,
+  isLightTheme: boolean,
+): TThemePresetCssVars => {
+  const safeTextTitle = resolveThemePresetColor(themePreset.textTitle, DEFAULT_TEXT_TITLE)
+  const safeTextTitleDark = resolveThemePresetColor(
+    themePreset.textTitleDark,
+    DEFAULT_TEXT_TITLE_DARK,
   )
-  const backendTokens = normalizeThemeTokenSource(source.themeTokens)
-  const customTokens = pickThemePresetFields(backendTokens as Partial<TResolvedThemePreset>)
+  const safeTextDigest = resolveThemePresetColor(themePreset.textDigest, DEFAULT_TEXT_DIGEST)
+  const safeTextDigestDark = resolveThemePresetColor(
+    themePreset.textDigestDark,
+    DEFAULT_TEXT_DIGEST_DARK,
+  )
 
   return {
-    ...selectedPreset.overwrite,
-    ...(isCustomPreset ? customTokens : {}),
+    '--color-primary-custom': resolveThemePresetColor(themePreset.primaryColor, '#333333'),
+    '--color-primary-custom-dark': resolveThemePresetColor(themePreset.primaryColorDark, '#ffffff'),
+    '--color-accent-custom': resolveThemePresetColor(themePreset.accentColor, '#333333'),
+    '--color-accent-custom-dark': resolveThemePresetColor(themePreset.accentColorDark, '#ffffff'),
+    '--color-page-custom': resolveThemePresetPageBgCssVar(THEME.LIGHT, themePreset.pageBg),
+    '--color-page-custom-dark': resolveThemePresetPageBgCssVar(THEME.DARK, themePreset.pageBgDark),
+    '--color-title': isLightTheme ? safeTextTitle : safeTextTitleDark,
+    '--color-title-dark': safeTextTitleDark,
+    '--color-digest': isLightTheme ? safeTextDigest : safeTextDigestDark,
+    '--color-digest-dark': safeTextDigestDark,
+  }
+}
+
+export const buildThemePresetDarkCssVars = (
+  themePreset: TResolvedThemePreset,
+): Pick<TThemePresetCssVars, '--color-title' | '--color-digest'> => ({
+  '--color-title': resolveThemePresetColor(themePreset.textTitleDark, DEFAULT_TEXT_TITLE_DARK),
+  '--color-digest': resolveThemePresetColor(themePreset.textDigestDark, DEFAULT_TEXT_DIGEST_DARK),
+})
+
+/**
+ * Resolve effective theme values from backend/dashboard layout data.
+ * The backend owns preset defaults and returns the resolved `themeTokens`
+ * payload for both built-in and custom presets.
+ */
+export const resolveThemePreset = (source: TThemePresetSource = {}): TResolvedThemePreset => {
+  const backendTokens = normalizeThemeTokenSource(source.themeTokens)
+  const flatTokens = pickThemePresetFields(source)
+  const tokenPayload = pickThemePresetFields(backendTokens as Partial<TResolvedThemePreset>)
+
+  return {
+    ...FALLBACK_THEME_PRESET,
+    ...flatTokens,
+    ...tokenPayload,
   }
 }

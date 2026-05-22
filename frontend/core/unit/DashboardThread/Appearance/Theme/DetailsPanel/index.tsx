@@ -13,6 +13,8 @@ type TProps = {
   details: TThemeDetails
   showResetMenu: boolean
   activePresetBase: TThemePresetOption['value']
+  presetOptions: readonly TThemePresetOption[]
+  touched: boolean
   onResetPreset: (preset: TThemePresetOption) => void
 }
 
@@ -20,6 +22,8 @@ export default function DetailsPanel({
   details,
   showResetMenu,
   activePresetBase,
+  presetOptions,
+  touched,
   onResetPreset,
 }: TProps) {
   const s = useSalon()
@@ -31,9 +35,14 @@ export default function DetailsPanel({
         <SectionLabel
           title={t('dsb.appearance.theme.preset.detail')}
           desc={t('dsb.appearance.theme.preset.desc')}
+          touched={touched}
           addon={
             showResetMenu ? (
-              <ResetToPresetMenu activePresetBase={activePresetBase} onReset={onResetPreset} />
+              <ResetToPresetMenu
+                activePresetBase={activePresetBase}
+                presetOptions={presetOptions}
+                onReset={onResetPreset}
+              />
             ) : null
           }
         />

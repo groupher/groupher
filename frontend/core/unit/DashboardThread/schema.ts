@@ -220,44 +220,6 @@ const updateDashboardLayout = gql`
   }
 `
 
-const saveCustomThemePreset = gql`
-  mutation (
-    $community: String!
-    $themePreset: DsbThemePreset!
-    $themePresetBase: DsbThemePreset!
-    $themeTokens: Json
-    $textTitle: String
-    $textTitleDark: String
-    $textDigest: String
-    $textDigestDark: String
-    $gaussBlur: Float
-    $gaussBlurDark: Float
-  ) {
-    saveCustomThemePreset(
-      community: $community
-      themePreset: $themePreset
-      themePresetBase: $themePresetBase
-      themeTokens: $themeTokens
-      textTitle: $textTitle
-      textTitleDark: $textTitleDark
-      textDigest: $textDigest
-      textDigestDark: $textDigestDark
-      gaussBlur: $gaussBlur
-      gaussBlurDark: $gaussBlurDark
-    ) {
-      slug
-    }
-  }
-`
-
-const selectThemePreset = gql`
-  mutation ($community: String!, $themePreset: DsbThemePreset!) {
-    selectThemePreset(community: $community, themePreset: $themePreset) {
-      slug
-    }
-  }
-`
-
 const updateDashboardSocialLinks = gql`
   mutation ($community: String!, $socialLinks: [DsbSocialLinkMap]) {
     updateDashboardSocialLinks(community: $community, socialLinks: $socialLinks) {
@@ -552,8 +514,6 @@ const schema = {
   communityTagGroups,
   updateDashboardEnable,
   updateDashboardLayout,
-  saveCustomThemePreset,
-  selectThemePreset,
   updateDashboardSocialLinks,
   updateDashboardNameAlias,
   createCommunityTag,

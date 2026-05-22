@@ -26,6 +26,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:done, :boolean)
   end
 
+  object :dsb_theme_preset_option do
+    field(:value, non_null(:dsb_theme_preset))
+    field(:tokens, non_null(:json))
+  end
+
   ######
   # common stands for minimal info of the type
   # usually used in abuse_report, feeds, etc ..

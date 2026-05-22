@@ -44,6 +44,7 @@ export default function InlineTagLayout() {
       <SectionLabel
         title={t('dsb.appearance.inline_tag.title')}
         desc={t('dsb.appearance.inline_tag.desc')}
+        touched={isTouched}
       />
       <div className={s.select}>
         {LAYOUT_OPTIONS.map(({ value, titleKey }) => {

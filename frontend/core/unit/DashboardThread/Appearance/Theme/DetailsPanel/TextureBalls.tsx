@@ -1,7 +1,7 @@
 import { GLOW_EFFECTS_KEYS } from '~/const/glow_effect'
 import ClossSVG from '~/icons/CloseLight'
 
-import { PRESET_FIELD } from '../../../constant'
+import { PRESET_FIELD } from '../constant'
 import useSalon, { cn, cnMerge } from '../salon/details_panel/texture_balls'
 import type { TThemePresetOverwrite } from '../spec'
 

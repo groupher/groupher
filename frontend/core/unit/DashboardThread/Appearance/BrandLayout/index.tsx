@@ -34,7 +34,11 @@ export default function BrandLayout() {
 
   return (
     <div className={s.wrapper}>
-      <SectionLabel title={t('dsb.appearance.brand.title')} desc={t('dsb.appearance.brand.desc')} />
+      <SectionLabel
+        title={t('dsb.appearance.brand.title')}
+        desc={t('dsb.appearance.brand.desc')}
+        touched={isTouched}
+      />
       <div className={s.select}>
         {BRAND_LAYOUT_OPTIONS.map(({ value, titleKey }) => {
           const isActive = layout === value

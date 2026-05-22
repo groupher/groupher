@@ -16,6 +16,7 @@ type TProps = {
   classNames?: string
   detailText?: string
   showMoreButton?: boolean
+  touched?: boolean
   onDetailClick?: () => void
 } & TSpace
 
@@ -28,6 +29,7 @@ const SectionLabel: FC<TProps> = ({
   detailText = null,
   classNames = '',
   showMoreButton = true,
+  touched = false,
   onDetailClick = () => {},
   ...spacing
 }) => {
@@ -40,6 +42,7 @@ const SectionLabel: FC<TProps> = ({
       <div className={s.header}>
         <h3 className={s.title}>
           {title}
+          {touched && <span aria-hidden='true' className={s.touchedMark} />}
           {withThemeSelect && (
             <>
               <div className='grow' /> <ThemeSectionSelector />

@@ -17,6 +17,10 @@ const getPreviewTarget = (): HTMLElement | null => document.querySelector('main'
  * pickers, and drag controls. The hook writes CSS variables to <main> in the
  * next animation frame and never stores React state.
  *
+ * Note: --preview-page-bg is intentionally consumed by GlobalLayout's
+ * background child layer, not <main>'s own background. Keep that separation for
+ * paint performance; <main> is a large blurred layout container.
+ *
  * Example:
  *   const updatePreviewCssVars = useUpdatePreviewCssVars()
  *

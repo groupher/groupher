@@ -22,6 +22,15 @@ export const communityTagStats = `
   }
 `
 
+export const themePresets = `
+  query {
+    themePresets {
+      value
+      tokens
+    }
+  }
+`
+
 export const pagedCategories = `
   query($filter: PagiFilter!) {
     pagedCategories(filter: $filter) {

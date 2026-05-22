@@ -19,6 +19,7 @@ export default function FloatBackground() {
       <SectionLabel
         title={t('dsb.appearance.float_background.title')}
         desc={t('dsb.appearance.float_background.desc')}
+        touched={isTouched}
       />
 
       <div className={s.select}>

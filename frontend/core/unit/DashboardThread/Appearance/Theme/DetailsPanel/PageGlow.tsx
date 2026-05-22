@@ -1,6 +1,6 @@
 import useTrans from '~/hooks/useTrans'
 
-import { PRESET_FIELD } from '../../../constant'
+import { PRESET_FIELD } from '../constant'
 import useSalon from '../salon/details_panel/page_glow'
 import useSettingRowSalon from '../salon/details_panel/setting_row'
 import type { TThemeDetails, TThemePresetOverwrite } from '../spec'
@@ -62,7 +62,6 @@ export default function PageGlow({ details }: TProps) {
           <div className='grow' />
           <div className={row.rangeGroup}>
             <ThemeRangeInput
-              key={`${glowOpacityField}-${glowOpacity}`}
               value={glowOpacity}
               valueLabel={t('dsb.appearance.glow.intensity.title')}
               min={0}

@@ -28,7 +28,6 @@ import {
   DEFAULT_TEXT_TITLE,
   DEFAULT_TEXT_TITLE_DARK,
   DEFAULT_THEME_PRESET,
-  THEME_PRESET_OPTIONS,
 } from '~/const/theme_preset'
 import { THREAD } from '~/const/thread'
 
@@ -52,10 +51,6 @@ const EMPTY_MEDIA_REPORT = {
 }
 
 const INIT_KANBAN_COLORS = [COLOR.BLACK, COLOR.YELLOW, COLOR.PURPLE, COLOR.GREEN, COLOR.RED]
-const DEFAULT_THEME_OVERWRITE =
-  THEME_PRESET_OPTIONS.find((preset) => preset.value === DEFAULT_THEME_PRESET)?.overwrite ??
-  THEME_PRESET_OPTIONS[0].overwrite
-
 export const FIELDS: TDsbFieldMap = {
   // baseInfo
   favicon: '',
@@ -76,7 +71,7 @@ export const FIELDS: TDsbFieldMap = {
   // page
   themePreset: DEFAULT_THEME_PRESET,
   themePresetBase: DEFAULT_THEME_PRESET,
-  themeTokens: { ...DEFAULT_THEME_OVERWRITE },
+  themeTokens: {},
   hasCustomThemePreset: false,
 
   // seo
@@ -99,10 +94,10 @@ export const FIELDS: TDsbFieldMap = {
   twImageHeight: '',
 
   // layout
-  textTitle: DEFAULT_THEME_OVERWRITE.textTitle || DEFAULT_TEXT_TITLE,
-  textTitleDark: DEFAULT_THEME_OVERWRITE.textTitleDark || DEFAULT_TEXT_TITLE_DARK,
-  textDigest: DEFAULT_THEME_OVERWRITE.textDigest || DEFAULT_TEXT_DIGEST,
-  textDigestDark: DEFAULT_THEME_OVERWRITE.textDigestDark || DEFAULT_TEXT_DIGEST_DARK,
+  textTitle: DEFAULT_TEXT_TITLE,
+  textTitleDark: DEFAULT_TEXT_TITLE_DARK,
+  textDigest: DEFAULT_TEXT_DIGEST,
+  textDigestDark: DEFAULT_TEXT_DIGEST_DARK,
   postLayout: POST_LAYOUT.QUORA,
   kanbanLayout: KANBAN_LAYOUT.CLASSIC,
   kanbanCardLayout: KANBAN_CARD_LAYOUT.SIMPLE,
@@ -139,8 +134,8 @@ export const FIELDS: TDsbFieldMap = {
   overlayDark: true,
 
   // gauss blur
-  gaussBlur: DEFAULT_THEME_OVERWRITE.gaussBlur,
-  gaussBlurDark: DEFAULT_THEME_OVERWRITE.gaussBlurDark,
+  gaussBlur: 100,
+  gaussBlurDark: 100,
 
   // contents
   // tags

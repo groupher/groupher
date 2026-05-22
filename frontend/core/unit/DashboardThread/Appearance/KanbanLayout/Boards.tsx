@@ -43,6 +43,7 @@ export default function Boards() {
       <SectionLabel
         title={t('dsb.appearance.kanban.global.title')}
         desc={t('dsb.appearance.kanban.global.desc')}
+        touched={isTouched}
       />
       <div className={s.select}>
         {boards.map(({ title, value }) => (

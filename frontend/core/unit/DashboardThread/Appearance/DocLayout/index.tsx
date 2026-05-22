@@ -27,6 +27,7 @@ export default function DocLayout() {
         title={t('dsb.appearance.doc.title')}
         desc={t('dsb.appearance.doc.desc')}
         detailText={t('dsb.appearance.view_example')}
+        touched={isTouched}
       />
       <div className={s.select}>
         <button
@@ -161,6 +162,7 @@ export default function DocLayout() {
         title={t('dsb.appearance.doc.faq.title')}
         desc={t('dsb.appearance.doc.faq.desc')}
         detailText={t('dsb.appearance.view_example')}
+        touched={isFaqTouched}
       />
       <div className={s.select}>
         <button

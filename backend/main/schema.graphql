@@ -73,6 +73,9 @@ type RootQueryType {
   "basic site info in total counts format"
   countStatus: CountStatusInfo
 
+  "dashboard theme preset registry"
+  themePresets: [DsbThemePresetOption!]!
+
   "spec community info"
   community(slug: String!, incViews: Boolean): Community
 
@@ -640,7 +643,7 @@ type RootMutationType {
 
   "save custom theme preset in dashboard"
   saveCustomThemePreset(
-    community: String!, themePreset: DsbThemePreset!, themePresetBase: DsbThemePreset!, themeTokens: Json, textTitle: String, textDigest: String, gaussBlur: Float, gaussBlurDark: Float
+    community: String!, themePreset: DsbThemePreset!, themePresetBase: DsbThemePreset!, themeTokens: Json, textTitle: String, textTitleDark: String, textDigest: String, textDigestDark: String, gaussBlur: Float, gaussBlurDark: Float
   ): Community
 
   "select read-only theme preset in dashboard"
@@ -677,6 +680,11 @@ type CheckState {
 
 type DoneState {
   done: Boolean
+}
+
+type DsbThemePresetOption {
+  value: DsbThemePreset!
+  tokens: Json!
 }
 
 type CommonUser {
@@ -900,7 +908,9 @@ type DsbLayout {
   themePreset: DsbThemePreset
   themePresetBase: DsbThemePreset
   textTitle: String
+  textTitleDark: String
   textDigest: String
+  textDigestDark: String
   kanbanBgColors: [RainbowColor]
   kanbanBoards: [KanbanBoard]
   postLayout: DsbPostLayout

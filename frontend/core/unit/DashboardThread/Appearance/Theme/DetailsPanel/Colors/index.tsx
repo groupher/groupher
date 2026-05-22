@@ -1,7 +1,7 @@
 import THEME from '~/const/theme'
 import useTrans from '~/hooks/useTrans'
 
-import { PRESET_FIELD } from '../../../../constant'
+import { PRESET_FIELD } from '../../constant'
 import useSalon from '../../salon/details_panel/colors'
 import type { TThemeDetails } from '../../spec'
 import ColorItem from './ColorItem'

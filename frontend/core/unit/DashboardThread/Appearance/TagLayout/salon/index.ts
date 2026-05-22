@@ -13,7 +13,7 @@ export default function useSalon() {
     block: cn(base.blockBase, 'flex min-h-24 w-full items-center justify-center px-5 py-5'),
     blockActive: base.blockBaseActive,
     select: 'grid w-full grid-cols-1 gap-6 md:grid-cols-2',
-    layout: 'flex min-w-0 flex-col items-stretch gap-3',
+    layout: 'column-align-both min-w-0 gap-3',
 
     previewList: 'flex w-full items-center justify-center gap-6',
     previewItem: 'flex min-w-0 items-center',
