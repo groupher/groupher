@@ -6,25 +6,18 @@ type TProps = TSpace
 export { cn } from '~/css'
 
 export default function useSalon({ ...spacing }: TProps) {
-  const { cn, bg, fill, margin } = useTwBelt()
+  const { cn, margin, hover } = useTwBelt()
 
   return {
     wrapper: cn('', margin(spacing)),
     button: cn(
-      'align-both size-6 group border-none p-0',
+      'align-both size-6 border-none p-0',
       'aspect-square rounded',
       'touch-manipulation outline-offset-4 pointer',
-      `hover:${bg('hoverBg')}`,
+      hover('box'),
     ),
-    iconBox: cn(
-      'size-6 align-both pointer rounded border border-transparent',
-      `hover:${bg('hoverBg')}`,
-    ),
+    iconBox: 'size-6 align-both pointer rounded border border-transparent',
 
-    icon: cn(
-      'size-5 active:scale-90 trans-all-200',
-      fill('digest'),
-      `group-hover:${fill('title')}`,
-    ),
+    icon: cn('size-5 active:scale-90 trans-all-200', hover('icon')),
   }
 }

@@ -19,7 +19,7 @@ export default function useSalon() {
     desc: cn(
       'text-sm mt-3 trans-all-200 line-clamp-2',
       fg('digest'),
-      `group-hover:${fg('title')}`,
+      hover('fg'),
       'group-hover:opacity-80',
     ),
 

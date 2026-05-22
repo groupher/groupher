@@ -3,7 +3,7 @@ import useLayout from '~/hooks/useLayout'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {
-  const { cn, fg, br, divider } = useTwBelt()
+  const { cn, fg, br, divider, hover } = useTwBelt()
   const { communityLayout } = useLayout()
 
   return {
@@ -19,7 +19,7 @@ export default function useSalon() {
     tocItem: 'row-center w-full text-left group pointer',
     articleTitle: cn(
       'text-sm line-clamp-1 transition-colors pointer',
-      `group-hover:${fg('title')}`,
+      hover('fg'),
       'group-hover:underline',
       fg('digest'),
     ),

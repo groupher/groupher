@@ -3,11 +3,11 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default function useSalon() {
-  const { cn, fg, bg, fill, menu, primary } = useTwBelt()
+  const { cn, fg, bg, menu, primary, hover } = useTwBelt()
 
   return {
     wrapper: 'mr-1',
-    icon: cn('size-3.5 mr-2', fill('digest'), `group-hover:${fill('title')}`),
+    icon: cn('size-3.5 mr-2', hover('icon')),
     item: cn('row-center w-full -ml-1', menu('bar')),
     itemActive: bg('hoverBg'),
     title: cn('text-sm', menu('title')),

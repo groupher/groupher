@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default function useSalon() {
-  const { cn, fg, bg, br, fill, sexyBorder } = useTwBelt()
+  const { cn, fg, bg, br, fill, sexyBorder, hover } = useTwBelt()
 
   const wrapper =
     'row-center group w-36 min-w-36 h-9 rounded-lg -ml-2.5 pl-2.5 trans-all-200 border border-transparent pointer'
@@ -34,7 +34,7 @@ export default function useSalon() {
     ),
     menuIconBox: 'align-both size-4 mr-1.5',
     menuIcon: cn('size-3.5 opacity-80', fill('digest')),
-    menuTitle: cn('text-sm grow', `group-hover:${fg('title')}`),
+    menuTitle: cn('text-sm grow', hover('fg')),
     //
     divider: cn(sexyBorder(), 'my-1.5'),
   }

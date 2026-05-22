@@ -7,7 +7,7 @@ type TProps = {
 } & TSpace
 
 export default function useSalon({ dimWhenIdle, disabled, ...spacing }: TProps) {
-  const { cn, margin, fg, fill } = useTwBelt()
+  const { cn, margin, hover } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -18,7 +18,7 @@ export default function useSalon({ dimWhenIdle, disabled, ...spacing }: TProps) 
       !disabled ? 'pointer' : 'cursor-not-allowed',
       margin(spacing),
     ),
-    icon: cn('size-3 mr-0.5', fill('digest'), `group-hover:${fill('title')}`),
-    text: cn('text-sm', fg('digest'), `group-hover:${fg('title')}`),
+    icon: cn('size-3 mr-0.5', hover('icon')),
+    text: cn('text-sm', hover('fg')),
   }
 }

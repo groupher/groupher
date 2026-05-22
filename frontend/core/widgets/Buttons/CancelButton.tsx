@@ -16,7 +16,7 @@ const CancelButton: FC<TProps> = ({ text = '取消', onClick = console.log, ...s
   return (
     <button type='button' className={s.wrapper} onClick={onClick}>
       <BackSVG className={s.backIcon} />
-      {text}
+      <span className={s.text}>{text}</span>
     </button>
   )
 }
