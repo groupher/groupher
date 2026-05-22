@@ -10,7 +10,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
   object :cms_queries do
     @desc "dashboard theme preset registry"
-    field :theme_presets, list_of(:dsb_theme_preset_option) do
+    field :theme_presets, non_null(list_of(non_null(:dsb_theme_preset_option))) do
       resolve(fn _, _, _ -> {:ok, ThemePreset.options()} end)
     end
 

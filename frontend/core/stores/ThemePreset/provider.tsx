@@ -1,6 +1,13 @@
 'use client'
 
-import { type CSSProperties, createContext, type ReactNode, useEffect, useRef } from 'react'
+import {
+  type CSSProperties,
+  createContext,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react'
 import { useSnapshot } from 'valtio'
 
 import useTheme from '~/hooks/useTheme'
@@ -43,7 +50,49 @@ type TScopeProps = {
 const ThemePresetScope = ({ children, store }: TScopeProps) => {
   const preset$ = useSnapshot(store)
   const { isLightTheme } = useTheme()
-  const cssVars = buildThemePresetCssVars(preset$, isLightTheme)
+  const {
+    pageBg,
+    pageBgDark,
+    primaryColor,
+    primaryColorDark,
+    accentColor,
+    accentColorDark,
+    textTitle,
+    textTitleDark,
+    textDigest,
+    textDigestDark,
+  } = preset$
+  const cssVars = useMemo(
+    () =>
+      buildThemePresetCssVars(
+        {
+          pageBg,
+          pageBgDark,
+          primaryColor,
+          primaryColorDark,
+          accentColor,
+          accentColorDark,
+          textTitle,
+          textTitleDark,
+          textDigest,
+          textDigestDark,
+        },
+        isLightTheme,
+      ),
+    [
+      pageBg,
+      pageBgDark,
+      primaryColor,
+      primaryColorDark,
+      accentColor,
+      accentColorDark,
+      textTitle,
+      textTitleDark,
+      textDigest,
+      textDigestDark,
+      isLightTheme,
+    ],
+  )
 
   useEffect(() => {
     const root = document.documentElement

@@ -116,6 +116,7 @@ export const buildCustomPresetEditPatch = ({
       themePreset: THEME_PRESET.CUSTOM,
       themePresetBase,
       themeTokens: nextTokens,
+      ...pickDashboardMirrorPatch(nextTokens),
     },
     nextCustomPresetDraft: nextTokens,
   }

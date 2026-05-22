@@ -18,7 +18,9 @@ type TProps = {
   initialPresetOptions?: readonly TThemePresetOption[]
 }
 
-export default function Appearance({ initialPresetOptions = [] }: TProps) {
+const EMPTY_PRESET_OPTIONS: readonly TThemePresetOption[] = []
+
+export default function Appearance({ initialPresetOptions = EMPTY_PRESET_OPTIONS }: TProps) {
   const { t } = useTrans()
   const s = useSalon()
   const themePreset$ = useThemePreset()

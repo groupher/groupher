@@ -27,8 +27,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object :dsb_theme_preset_option do
-    field(:value, :dsb_theme_preset)
-    field(:tokens, :json)
+    field(:value, non_null(:dsb_theme_preset))
+    field(:tokens, non_null(:json))
   end
 
   ######

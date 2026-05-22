@@ -56,6 +56,19 @@ export type TThemePresetSource = Partial<TResolvedThemePreset> & {
 }
 
 export type TThemePresetCssVars = Record<`--${string}`, string>
+type TThemePresetCssSource = Pick<
+  TResolvedThemePreset,
+  | 'pageBg'
+  | 'pageBgDark'
+  | 'primaryColor'
+  | 'primaryColorDark'
+  | 'accentColor'
+  | 'accentColorDark'
+  | 'textTitle'
+  | 'textTitleDark'
+  | 'textDigest'
+  | 'textDigestDark'
+>
 
 const HEX_COLOR_RE = /^#[0-9a-f]{6}$/i
 const FALLBACK_PAGE_BG = '#fffcfc'
@@ -122,7 +135,7 @@ export const resolveThemePresetPageBgCssVar = (
 }
 
 export const buildThemePresetCssVars = (
-  themePreset: TResolvedThemePreset,
+  themePreset: TThemePresetCssSource,
   isLightTheme: boolean,
 ): TThemePresetCssVars => {
   const safeTextTitle = resolveThemePresetColor(themePreset.textTitle, DEFAULT_TEXT_TITLE)

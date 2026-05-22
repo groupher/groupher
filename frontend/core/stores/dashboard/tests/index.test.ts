@@ -192,7 +192,7 @@ describe('stores/dashboard', () => {
 
     expect(store.themePreset).toBe(store.original.themePreset)
     expect(store.themePresetBase).toBe(store.original.themePresetBase)
-    expect(store.themeTokens).toBe(store.original.themeTokens)
+    expect(store.themeTokens).toEqual(store.original.themeTokens)
     expect(store.textTitle).toBe(store.original.textTitle)
     expect(store.textTitleDark).toBe(store.original.textTitleDark)
     expect(store.textDigest).toBe(store.original.textDigest)

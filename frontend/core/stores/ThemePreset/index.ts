@@ -21,6 +21,9 @@ export default function ThemePresetStore(init: TInit = {}): TStore {
       store.themePreset = source.themePreset ?? DEFAULT_THEME_PRESET
       store.themePresetBase = source.themePresetBase ?? DEFAULT_THEME_PRESET
       store.themeTokens = source.themeTokens ?? {}
+      if (source.presetOptions !== undefined) {
+        store.presetOptions = source.presetOptions
+      }
       Object.assign(store, nextResolved)
     },
     hydratePresetOptions(presetOptions): void {

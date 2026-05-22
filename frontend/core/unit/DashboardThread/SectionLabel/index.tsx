@@ -42,7 +42,7 @@ const SectionLabel: FC<TProps> = ({
       <div className={s.header}>
         <h3 className={s.title}>
           {title}
-          {touched && <span className={s.touchedMark} />}
+          {touched && <span aria-hidden='true' className={s.touchedMark} />}
           {withThemeSelect && (
             <>
               <div className='grow' /> <ThemeSectionSelector />

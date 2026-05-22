@@ -71,6 +71,8 @@ describe('theme preset model helpers', () => {
       themePreset: THEME_PRESET.CUSTOM,
       themePresetBase: THEME_PRESET.CLAUDE,
       themeTokens: nextCustomPresetDraft,
+      textTitle: overwrite.textTitle,
+      gaussBlur: overwrite.gaussBlur,
     })
     expect(nextCustomPresetDraft.primaryColor).toBe('#999999')
   })

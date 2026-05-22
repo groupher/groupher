@@ -74,7 +74,7 @@ type RootQueryType {
   countStatus: CountStatusInfo
 
   "dashboard theme preset registry"
-  themePresets: [DsbThemePresetOption]
+  themePresets: [DsbThemePresetOption!]!
 
   "spec community info"
   community(slug: String!, incViews: Boolean): Community
@@ -683,8 +683,8 @@ type DoneState {
 }
 
 type DsbThemePresetOption {
-  value: DsbThemePreset
-  tokens: Json
+  value: DsbThemePreset!
+  tokens: Json!
 }
 
 type CommonUser {

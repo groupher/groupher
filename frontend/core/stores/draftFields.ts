@@ -154,7 +154,7 @@ export const createDraftFieldActions = <TFields extends object>(
       let touchedFields = store.touchedFields
 
       for (const field of fields) {
-        storeFields[field] = store.original[field]
+        storeFields[field] = clone(store.original[field])
         const { [field]: _removedTouched, ...nextTouchedFields } = touchedFields
         touchedFields = nextTouchedFields as TDraftTouchedFields<TFields>
       }

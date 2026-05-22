@@ -10,6 +10,6 @@ export type TStore = TResolvedThemePreset & {
   themePresetBase: TThemePreset | string
   themeTokens: Record<string, unknown>
   presetOptions: readonly TThemePresetOption[]
-  hydrate: (source: TThemePresetSource) => void
+  hydrate: (source: TInit) => void
   hydratePresetOptions: (presetOptions: readonly TThemePresetOption[]) => void
 }
