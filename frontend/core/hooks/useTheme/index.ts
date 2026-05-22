@@ -9,6 +9,7 @@ type TRet = {
   isDarkTheme: boolean
   change: (name: TThemeName) => void
   changeMode: (name: TThemeMode) => void
+  preview: (name: TThemeName) => void
   toggle: () => void
 }
 
@@ -53,6 +54,7 @@ export default function useTheme(): TRet {
     isDarkTheme: theme === THEME.DARK,
     change: changeTheme,
     changeMode,
+    preview: applyTheme,
     toggle,
   }
 }
