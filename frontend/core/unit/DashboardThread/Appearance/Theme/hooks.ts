@@ -13,21 +13,25 @@ import { resolveRawBg, type TPageBgDraft } from '~/widgets/CustomPageBg/hooks'
 
 import { FIELD, PRESET_FIELD } from '../../constant'
 import useHelper from '../../logic/useHelper'
-import type { TThemePresetOption, TThemePresetOverwrite } from './spec'
+import type { TThemeDetails, TThemePresetOption, TThemePresetOverwrite } from './spec'
 
 const APPEARANCE_STORE_FIELDS = [
   FIELD.THEME_PRESET,
   FIELD.THEME_PRESET_BASE,
   FIELD.THEME_TOKENS,
   FIELD.TEXT_TITLE,
+  FIELD.TEXT_TITLE_DARK,
   FIELD.TEXT_DIGEST,
+  FIELD.TEXT_DIGEST_DARK,
   FIELD.GAUSS_BLUR,
   FIELD.GAUSS_BLUR_DARK,
 ] as const
 
 const THEME_TOKEN_MIRROR_FIELDS = [
   FIELD.TEXT_TITLE,
+  FIELD.TEXT_TITLE_DARK,
   FIELD.TEXT_DIGEST,
+  FIELD.TEXT_DIGEST_DARK,
   FIELD.GAUSS_BLUR,
   FIELD.GAUSS_BLUR_DARK,
 ] as const
@@ -272,6 +276,27 @@ export default function useAppearance() {
   // showing fork UI; preset-card selections save under the preset list.
   const showDetailsSavingBar = isTouched && editingDetails
   const showPresetSavingBar = isTouched && !editingDetails
+  const primaryColor = isLightTheme
+    ? selectedOverwrite.primaryColor
+    : selectedOverwrite.primaryColorDark
+  const accentColor = isLightTheme
+    ? selectedOverwrite.accentColor
+    : selectedOverwrite.accentColorDark
+  const pageBgResetKey = `${activePreset}-${isLightTheme ? 'light' : 'dark'}-${pageBgResetVersion}`
+  const details: TThemeDetails = {
+    selectedOverwrite,
+    selectedPageBgDraft,
+    primaryColor,
+    accentColor,
+    isLightTheme,
+    pageBgResetKey,
+    onPageBgPreview: previewPageBg,
+    onPageBgCommit: scheduleThemePresetPatch,
+    onThemePresetPreview: previewThemePresetPatch,
+    onThemePresetSchedule: scheduleThemePresetPatch,
+    onThemePresetFlush: flushThemePresetPreviewCommit,
+    onThemePresetCommit: commitThemePresetPatch,
+  }
 
   return {
     activePreset,
@@ -279,23 +304,11 @@ export default function useAppearance() {
     hasCustomThemePreset: dsb$.hasCustomThemePreset,
     customPresetOverwrite,
     showForkRelation: activePreset === THEME_PRESET.CUSTOM && isTouched && showForkRelation,
-    selectedOverwrite,
-    selectedPageBgDraft,
     isTouched,
     showDetailsSavingBar,
     showPresetSavingBar,
-    isLightTheme,
-    primaryColor: isLightTheme
-      ? selectedOverwrite.primaryColor
-      : selectedOverwrite.primaryColorDark,
-    accentColor: isLightTheme ? selectedOverwrite.accentColor : selectedOverwrite.accentColorDark,
+    details,
     selectPreset,
-    previewPageBg,
-    previewThemePresetPatch,
-    scheduleThemePresetPatch,
-    flushThemePresetPreviewCommit,
-    commitThemePresetPatch,
-    pageBgResetKey: `${activePreset}-${isLightTheme ? 'light' : 'dark'}-${pageBgResetVersion}`,
     saveAppearance,
     cancelAppearance,
   }

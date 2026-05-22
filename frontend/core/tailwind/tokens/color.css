@@ -4,7 +4,9 @@
 
   /* articles */
   --color-title: oklch(27.8% 0.033 256.848); /* gray.800 */
+  --color-title-dark: #f5f5f5;
   --color-digest: oklch(55.1% 0.027 264.364); /* gray.500 */
+  --color-digest-dark: #949494;
   --color-hint: #9d9999;
   --color-hightlight: orange;
   --color-link: #5073c6;
@@ -169,8 +171,8 @@
     --color-outline: #3d3d3d;
 
     /* articles */
-    --color-title: oklch(96.7% 0.003 264.542);
-    --color-digest: #949494; /*oklch(70.5% 0.015 286.067);*/
+    --color-title: var(--color-title-dark);
+    --color-digest: var(--color-digest-dark); /*oklch(70.5% 0.015 286.067);*/
     --color-hint: #919191;
     --color-hightlight: orange;
     --color-link: #6b97d4;

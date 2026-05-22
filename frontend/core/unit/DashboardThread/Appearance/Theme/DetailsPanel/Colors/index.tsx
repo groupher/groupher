@@ -1,33 +1,28 @@
 import THEME from '~/const/theme'
 import useTrans from '~/hooks/useTrans'
 
-import { PRESET_FIELD } from '../../../constant'
-import useSalon from '../salon/colors'
-import type { TThemePresetOverwrite } from '../spec'
+import { PRESET_FIELD } from '../../../../constant'
+import useSalon from '../../salon/details_panel/colors'
+import type { TThemeDetails } from '../../spec'
 import ColorItem from './ColorItem'
 
 type TProps = {
-  primaryColor: string
-  accentColor: string
-  textTitle: string
-  textDigest: string
-  isLightTheme: boolean
-  onThemePresetCommit: (patch: Partial<TThemePresetOverwrite>) => void
+  details: TThemeDetails
 }
 
-export default function Colors({
-  primaryColor,
-  accentColor,
-  textTitle,
-  textDigest,
-  isLightTheme,
-  onThemePresetCommit,
-}: TProps) {
+export default function Colors({ details }: TProps) {
   const s = useSalon()
   const { t } = useTrans()
+  const { selectedOverwrite, primaryColor, accentColor, isLightTheme, onThemePresetCommit } =
+    details
+  const { textTitle, textTitleDark, textDigest, textDigestDark } = selectedOverwrite
   const theme = isLightTheme ? THEME.LIGHT : THEME.DARK
   const primaryField = isLightTheme ? PRESET_FIELD.PRIMARY_COLOR : PRESET_FIELD.PRIMARY_COLOR_DARK
   const accentField = isLightTheme ? PRESET_FIELD.ACCENT_COLOR : PRESET_FIELD.ACCENT_COLOR_DARK
+  const titleColor = isLightTheme ? textTitle : textTitleDark
+  const titleField = isLightTheme ? PRESET_FIELD.TEXT_TITLE : PRESET_FIELD.TEXT_TITLE_DARK
+  const digestColor = isLightTheme ? textDigest : textDigestDark
+  const digestField = isLightTheme ? PRESET_FIELD.TEXT_DIGEST : PRESET_FIELD.TEXT_DIGEST_DARK
 
   return (
     <div className={s.wrapper}>
@@ -51,8 +46,8 @@ export default function Colors({
       />
 
       <ColorItem
-        color={textTitle}
-        field={PRESET_FIELD.TEXT_TITLE}
+        color={titleColor}
+        field={titleField}
         title={t('dsb.appearance.title_color.title')}
         desc={t('dsb.appearance.title_color.desc')}
         theme={theme}
@@ -60,8 +55,8 @@ export default function Colors({
       />
 
       <ColorItem
-        color={textDigest}
-        field={PRESET_FIELD.TEXT_DIGEST}
+        color={digestColor}
+        field={digestField}
         title={t('dsb.appearance.digest_color.title')}
         desc={t('dsb.appearance.digest_color.desc')}
         theme={theme}

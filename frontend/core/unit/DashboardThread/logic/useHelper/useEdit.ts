@@ -80,7 +80,9 @@ export default function useEdit(): TRet {
         FIELD.THEME_PRESET_BASE,
         FIELD.THEME_TOKENS,
         FIELD.TEXT_TITLE,
+        FIELD.TEXT_TITLE_DARK,
         FIELD.TEXT_DIGEST,
+        FIELD.TEXT_DIGEST_DARK,
         FIELD.GAUSS_BLUR,
         FIELD.GAUSS_BLUR_DARK,
       ])

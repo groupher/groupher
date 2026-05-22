@@ -79,7 +79,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Communities.select_theme_preset(community, %{
       theme_preset: theme_preset,
       text_title: defaults["textTitle"],
+      text_title_dark: defaults["textTitleDark"],
       text_digest: defaults["textDigest"],
+      text_digest_dark: defaults["textDigestDark"],
       gauss_blur: defaults["gaussBlur"],
       gauss_blur_dark: defaults["gaussBlurDark"]
     })

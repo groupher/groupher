@@ -140,7 +140,9 @@ describe('stores/dashboard', () => {
       themePresetBase: claude.value,
       themeTokens: { ...claude.overwrite },
       textTitle: claude.overwrite.textTitle,
+      textTitleDark: claude.overwrite.textTitleDark,
       textDigest: claude.overwrite.textDigest,
+      textDigestDark: claude.overwrite.textDigestDark,
     })
 
     expect(store.themePreset).toBe('CLAUDE')
@@ -152,14 +154,18 @@ describe('stores/dashboard', () => {
     expect(store.themeTokens.accentColor).toBe('#5073c6')
     expect(store.themeTokens.accentColorDark).toBe('#3a7ec7')
     expect(store.textTitle).toBe(claude.overwrite.textTitle)
+    expect(store.textTitleDark).toBe(claude.overwrite.textTitleDark)
     expect(store.textDigest).toBe(claude.overwrite.textDigest)
+    expect(store.textDigestDark).toBe(claude.overwrite.textDigestDark)
     expect(
       store.anyTouched([
         'themePreset',
         'themePresetBase',
         'themeTokens',
         'textTitle',
+        'textTitleDark',
         'textDigest',
+        'textDigestDark',
       ]),
     ).toBe(true)
 
@@ -168,21 +174,27 @@ describe('stores/dashboard', () => {
       'themePresetBase',
       'themeTokens',
       'textTitle',
+      'textTitleDark',
       'textDigest',
+      'textDigestDark',
     ])
 
     expect(store.themePreset).toBe(store.original.themePreset)
     expect(store.themePresetBase).toBe(store.original.themePresetBase)
     expect(store.themeTokens).toBe(store.original.themeTokens)
     expect(store.textTitle).toBe(store.original.textTitle)
+    expect(store.textTitleDark).toBe(store.original.textTitleDark)
     expect(store.textDigest).toBe(store.original.textDigest)
+    expect(store.textDigestDark).toBe(store.original.textDigestDark)
     expect(
       store.anyTouched([
         'themePreset',
         'themePresetBase',
         'themeTokens',
         'textTitle',
+        'textTitleDark',
         'textDigest',
+        'textDigestDark',
       ]),
     ).toBe(false)
   })

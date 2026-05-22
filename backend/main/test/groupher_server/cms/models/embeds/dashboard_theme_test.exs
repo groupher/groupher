@@ -11,7 +11,9 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardThemeTest do
     assert DashboardLayout.default().theme_preset_base == :default
     assert DashboardLayout.default().theme_overwrite == %{}
     assert DashboardLayout.default().text_title == "#243041"
+    assert DashboardLayout.default().text_title_dark == "#f5f5f5"
     assert DashboardLayout.default().text_digest == "#6b7280"
+    assert DashboardLayout.default().text_digest_dark == "#949494"
   end
 
   test "accepts theme preset with sparse overwrite" do
@@ -131,7 +133,9 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardThemeTest do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{
         text_title: "#556677",
-        text_digest: "#667788"
+        text_title_dark: "#ddeeff",
+        text_digest: "#667788",
+        text_digest_dark: "#aabbcc"
       })
 
     assert changeset.valid?
@@ -141,12 +145,16 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardThemeTest do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{
         text_title: "oklch(1 0 0)",
-        text_digest: "#12345g"
+        text_title_dark: "white",
+        text_digest: "#12345g",
+        text_digest_dark: "rgb(1 2 3)"
       })
 
     refute changeset.valid?
     assert errors_on(changeset).text_title == ["must be a valid hex color"]
+    assert errors_on(changeset).text_title_dark == ["must be a valid hex color"]
     assert errors_on(changeset).text_digest == ["must be a valid hex color"]
+    assert errors_on(changeset).text_digest_dark == ["must be a valid hex color"]
   end
 
   defp errors_on(changeset) do

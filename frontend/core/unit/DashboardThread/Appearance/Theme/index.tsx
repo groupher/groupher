@@ -17,20 +17,10 @@ export default function Appearance() {
     hasCustomThemePreset,
     customPresetOverwrite,
     showForkRelation,
-    selectedOverwrite,
-    selectedPageBgDraft,
     showDetailsSavingBar,
     showPresetSavingBar,
-    isLightTheme,
-    primaryColor,
-    accentColor,
+    details,
     selectPreset,
-    previewPageBg,
-    previewThemePresetPatch,
-    scheduleThemePresetPatch,
-    flushThemePresetPreviewCommit,
-    commitThemePresetPatch,
-    pageBgResetKey,
     saveAppearance,
     cancelAppearance,
   } = useAppearance()
@@ -58,20 +48,7 @@ export default function Appearance() {
         </div>
       )}
 
-      <DetailsPanel
-        selectedOverwrite={selectedOverwrite}
-        selectedPageBgDraft={selectedPageBgDraft}
-        primaryColor={primaryColor}
-        accentColor={accentColor}
-        isLightTheme={isLightTheme}
-        pageBgResetKey={pageBgResetKey}
-        onPageBgPreview={previewPageBg}
-        onPageBgCommit={scheduleThemePresetPatch}
-        onThemePresetPreview={previewThemePresetPatch}
-        onThemePresetSchedule={scheduleThemePresetPatch}
-        onThemePresetFlush={flushThemePresetPreviewCommit}
-        onThemePresetCommit={commitThemePresetPatch}
-      />
+      <DetailsPanel details={details} />
 
       {showDetailsSavingBar && (
         <div className={s.savingWrapper}>

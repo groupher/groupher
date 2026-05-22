@@ -1,29 +1,25 @@
 import useTrans from '~/hooks/useTrans'
 import type { TSpace } from '~/spec'
 
-import { FIELD } from '../../constant'
-import useSettingRowSalon from './salon/setting_row'
-import type { TThemePresetOverwrite } from './spec'
+import { FIELD } from '../../../constant'
+import useSettingRowSalon from '../salon/details_panel/setting_row'
+import type { TThemeDetails, TThemePresetOverwrite } from '../spec'
 import ThemeRangeInput from './ThemeRangeInput'
 
 type TProps = {
-  selectedOverwrite: TThemePresetOverwrite
-  isLightTheme: boolean
-  onThemePresetPreview: (patch: Partial<TThemePresetOverwrite>) => void
-  onThemePresetSchedule: (patch: Partial<TThemePresetOverwrite>) => void
-  onThemePresetFlush: () => void
+  details: TThemeDetails
 } & TSpace
 
-export default function GlassOpacity({
-  selectedOverwrite,
-  isLightTheme,
-  onThemePresetPreview,
-  onThemePresetSchedule,
-  onThemePresetFlush,
-  ...spacing
-}: TProps) {
+export default function GlassOpacity({ details, ...spacing }: TProps) {
   const s = useSettingRowSalon(spacing)
   const { t } = useTrans()
+  const {
+    selectedOverwrite,
+    isLightTheme,
+    onThemePresetPreview,
+    onThemePresetSchedule,
+    onThemePresetFlush,
+  } = details
   const gaussBlur = isLightTheme ? selectedOverwrite.gaussBlur : selectedOverwrite.gaussBlurDark
   const gaussBlurField = isLightTheme ? FIELD.GAUSS_BLUR : FIELD.GAUSS_BLUR_DARK
 

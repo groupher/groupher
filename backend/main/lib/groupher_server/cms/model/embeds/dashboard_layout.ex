@@ -209,7 +209,9 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
   defp validate_custom_colors(changeset) do
     [
       :text_title,
-      :text_digest
+      :text_title_dark,
+      :text_digest,
+      :text_digest_dark
     ]
     |> Enum.reduce(changeset, fn field, acc ->
       validate_change(acc, field, fn ^field, value ->

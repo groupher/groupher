@@ -27,6 +27,8 @@ const DEFAULT_GLOW = {
 
 export const DEFAULT_TEXT_TITLE = '#243041'
 export const DEFAULT_TEXT_DIGEST = '#6b7280'
+export const DEFAULT_TEXT_TITLE_DARK = '#f5f5f5'
+export const DEFAULT_TEXT_DIGEST_DARK = '#949494'
 
 const pageBgColorsFromControl = (
   lightHue: number,
@@ -49,7 +51,9 @@ export const THEME_PRESET_OPTIONS = [
       accentColor: RAINBOW_COLOR_HEX[THEME.LIGHT][COLOR.BLUE],
       accentColorDark: RAINBOW_COLOR_HEX[THEME.DARK][COLOR.BLUE],
       textTitle: DEFAULT_TEXT_TITLE,
+      textTitleDark: DEFAULT_TEXT_TITLE_DARK,
       textDigest: DEFAULT_TEXT_DIGEST,
+      textDigestDark: DEFAULT_TEXT_DIGEST_DARK,
       ...DEFAULT_GAUSS_BLUR,
       ...DEFAULT_GLOW,
     },
@@ -63,7 +67,9 @@ export const THEME_PRESET_OPTIONS = [
       accentColor: RAINBOW_COLOR_HEX[THEME.LIGHT][COLOR.BLUE],
       accentColorDark: RAINBOW_COLOR_HEX[THEME.DARK][COLOR.BLUE],
       textTitle: '#2f2a24',
+      textTitleDark: '#f4eee7',
       textDigest: '#786f63',
+      textDigestDark: '#a9a19a',
       ...DEFAULT_GAUSS_BLUR,
       ...DEFAULT_GLOW,
     },
@@ -77,7 +83,9 @@ export const THEME_PRESET_OPTIONS = [
       accentColor: RAINBOW_COLOR_HEX[THEME.LIGHT][COLOR.BLUE],
       accentColorDark: RAINBOW_COLOR_HEX[THEME.DARK][COLOR.BLUE],
       textTitle: '#073642',
+      textTitleDark: '#e8f0ed',
       textDigest: '#657b83',
+      textDigestDark: '#93a1a1',
       ...DEFAULT_GAUSS_BLUR,
       ...DEFAULT_GLOW,
     },
@@ -91,7 +99,9 @@ export const THEME_PRESET_OPTIONS = [
       accentColor: RAINBOW_COLOR_HEX[THEME.LIGHT][COLOR.BLUE],
       accentColorDark: RAINBOW_COLOR_HEX[THEME.DARK][COLOR.BLUE],
       textTitle: '#222222',
+      textTitleDark: '#e6e6e6',
       textDigest: '#666666',
+      textDigestDark: '#9a9a9a',
       ...DEFAULT_GAUSS_BLUR,
       ...DEFAULT_GLOW,
     },

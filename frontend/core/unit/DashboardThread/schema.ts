@@ -227,7 +227,9 @@ const saveCustomThemePreset = gql`
     $themePresetBase: DsbThemePreset!
     $themeTokens: Json
     $textTitle: String
+    $textTitleDark: String
     $textDigest: String
+    $textDigestDark: String
     $gaussBlur: Float
     $gaussBlurDark: Float
   ) {
@@ -237,7 +239,9 @@ const saveCustomThemePreset = gql`
       themePresetBase: $themePresetBase
       themeTokens: $themeTokens
       textTitle: $textTitle
+      textTitleDark: $textTitleDark
       textDigest: $textDigest
+      textDigestDark: $textDigestDark
       gaussBlur: $gaussBlur
       gaussBlurDark: $gaussBlurDark
     ) {

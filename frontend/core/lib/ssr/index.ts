@@ -105,7 +105,9 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
   const resolvedThemePreset = resolveThemePreset(layout ?? {})
   const dashboardPresetFields = {
     textTitle: resolvedThemePreset.textTitle,
+    textTitleDark: resolvedThemePreset.textTitleDark,
     textDigest: resolvedThemePreset.textDigest,
+    textDigestDark: resolvedThemePreset.textDigestDark,
     gaussBlur: resolvedThemePreset.gaussBlur,
     gaussBlurDark: resolvedThemePreset.gaussBlurDark,
   }

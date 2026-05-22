@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 
 import RangeInput from '~/widgets/RangeInput'
 
-import type { TThemePresetOverwrite } from './spec'
+import type { TThemePresetOverwrite } from '../spec'
 
 type TProps = {
   value: number

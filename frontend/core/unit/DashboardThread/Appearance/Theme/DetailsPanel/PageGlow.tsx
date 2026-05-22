@@ -1,32 +1,28 @@
-import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 
-import { PRESET_FIELD } from '../../constant'
-import useSalon from './salon/page_glow'
-import useSettingRowSalon from './salon/setting_row'
-import type { TThemePresetOverwrite } from './spec'
+import { PRESET_FIELD } from '../../../constant'
+import useSalon from '../salon/details_panel/page_glow'
+import useSettingRowSalon from '../salon/details_panel/setting_row'
+import type { TThemeDetails, TThemePresetOverwrite } from '../spec'
 import TextureBalls from './TextureBalls'
 import ThemeRangeInput from './ThemeRangeInput'
 
 type TProps = {
-  selectedOverwrite: TThemePresetOverwrite
-  onThemePresetPreview: (patch: Partial<TThemePresetOverwrite>) => void
-  onThemePresetSchedule: (patch: Partial<TThemePresetOverwrite>) => void
-  onThemePresetFlush: () => void
-  onThemePresetCommit: (patch: Partial<TThemePresetOverwrite>) => void
+  details: TThemeDetails
 }
 
-export default function PageGlow({
-  selectedOverwrite,
-  onThemePresetPreview,
-  onThemePresetSchedule,
-  onThemePresetFlush,
-  onThemePresetCommit,
-}: TProps) {
+export default function PageGlow({ details }: TProps) {
   const s = useSalon()
   const row = useSettingRowSalon()
   const { t } = useTrans()
-  const { isLightTheme } = useTheme()
+  const {
+    selectedOverwrite,
+    isLightTheme,
+    onThemePresetPreview,
+    onThemePresetSchedule,
+    onThemePresetFlush,
+    onThemePresetCommit,
+  } = details
   const glowTypeField = isLightTheme ? PRESET_FIELD.GLOW_TYPE : PRESET_FIELD.GLOW_TYPE_DARK
   const glowOpacityField = isLightTheme ? PRESET_FIELD.GLOW_OPACITY : PRESET_FIELD.GLOW_OPACITY_DARK
   const glowType = isLightTheme ? selectedOverwrite.glowType : selectedOverwrite.glowTypeDark

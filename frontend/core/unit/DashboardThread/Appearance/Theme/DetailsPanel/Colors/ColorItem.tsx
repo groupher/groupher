@@ -2,8 +2,8 @@ import { COLOR } from '~/const/colors'
 import type { TColorName } from '~/spec'
 import ColorSelector from '~/widgets/ColorSelector'
 
-import useSalon, { type TColorItemSize } from '../salon/colors/color_item'
-import type { TThemePresetOverwrite } from '../spec'
+import useSalon, { type TColorItemSize } from '../../salon/details_panel/colors/color_item'
+import type { TThemePresetOverwrite } from '../../spec'
 import { findPresetColor, resolvePresetColor, type TThemeMode } from './helper'
 
 type TProps = {
