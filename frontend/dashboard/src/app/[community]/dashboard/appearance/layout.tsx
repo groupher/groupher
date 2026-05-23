@@ -19,7 +19,6 @@ const CRUMB_CONFIG = {
     { title: 'dsb.crumb.appearance.layout', seg },
     { title: 'dsb.crumb.appearance.theme', seg: `${seg}/${DSB_APPEARANCE_ROUTE.THEME}` },
     { title: 'dsb.crumb.appearance.wallpaper', seg: `${seg}/${DSB_APPEARANCE_ROUTE.WALLPAPER}` },
-    { title: 'dsb.crumb.appearance.kanban', seg: `${seg}/${DSB_APPEARANCE_ROUTE.KANBAN}` },
   ],
 } satisfies TCrumbConfig
 
