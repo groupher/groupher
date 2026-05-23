@@ -1,9 +1,15 @@
-import { DSB_CHANGELOG_ROUTE, DSB_DOC_ROUTE, DSB_POST_ROUTE, DSB_ROUTE } from '~/const/route'
+import {
+  DSB_CHANGELOG_ROUTE,
+  DSB_DOC_ROUTE,
+  DSB_KANBAN_ROUTE,
+  DSB_POST_ROUTE,
+  DSB_ROUTE,
+} from '~/const/route'
 import type { TTransKey } from '~/spec'
 
 import { MENU_VIEW } from '../constant'
 
-export type TSubMenuScope = 'changelog' | 'doc' | 'post'
+export type TSubMenuScope = 'changelog' | 'doc' | 'kanban' | 'post'
 
 export type TSubMenuItem = {
   path: string
@@ -77,6 +83,29 @@ export const POST_MENU_ITEMS = [
   },
 ] as const
 
+export const KANBAN_MENU_ITEMS = [
+  {
+    title: 'dsb.menu.kanban.analysis',
+    slug: DSB_KANBAN_ROUTE.ANALYSIS,
+    path: DSB_KANBAN_ROUTE.ANALYSIS,
+  },
+  {
+    title: 'dsb.menu.kanban.layout',
+    slug: DSB_KANBAN_ROUTE.LAYOUT,
+    path: DSB_KANBAN_ROUTE.LAYOUT,
+  },
+  {
+    title: 'dsb.menu.kanban.content',
+    slug: DSB_KANBAN_ROUTE.CONTENT,
+    path: DSB_KANBAN_ROUTE.CONTENT,
+  },
+  {
+    title: 'dsb.menu.kanban.behavior',
+    slug: DSB_KANBAN_ROUTE.BEHAVIOR,
+    path: DSB_KANBAN_ROUTE.BEHAVIOR,
+  },
+] as const
+
 export const CHANGELOG_MENU_ITEMS = [
   {
     title: 'dsb.menu.changelog.analysis',
@@ -103,6 +132,7 @@ export const CHANGELOG_MENU_ITEMS = [
 export const SUBMENU_ROUTE_VIEW = {
   [DSB_ROUTE.DOC]: MENU_VIEW.DOC,
   [DSB_ROUTE.POST]: MENU_VIEW.POST,
+  [DSB_ROUTE.KANBAN]: MENU_VIEW.KANBAN,
   [DSB_ROUTE.CHANGELOG]: MENU_VIEW.CHANGELOG,
 } as const
 
@@ -122,6 +152,14 @@ export const SUBMENU_CONFIG = {
     entrySlug: DSB_POST_ROUTE.CONTENT,
     items: POST_MENU_ITEMS,
     scope: 'post',
+  },
+  [MENU_VIEW.KANBAN]: {
+    baseRoute: DSB_ROUTE.KANBAN,
+    defaultSlug: DSB_KANBAN_ROUTE.CONTENT,
+    entryPath: `${DSB_ROUTE.KANBAN}/${DSB_KANBAN_ROUTE.CONTENT}`,
+    entrySlug: DSB_KANBAN_ROUTE.CONTENT,
+    items: KANBAN_MENU_ITEMS,
+    scope: 'kanban',
   },
   [MENU_VIEW.CHANGELOG]: {
     baseRoute: DSB_ROUTE.CHANGELOG,

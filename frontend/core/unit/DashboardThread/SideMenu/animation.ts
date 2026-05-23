@@ -10,6 +10,8 @@ export const ACTIVE_LAYOUT_ID = {
   DOC_BAR: 'dashboard-doc-menu-active-bar',
   POST_BG: 'dashboard-post-menu-active-bg',
   POST_BAR: 'dashboard-post-menu-active-bar',
+  KANBAN_BG: 'dashboard-kanban-menu-active-bg',
+  KANBAN_BAR: 'dashboard-kanban-menu-active-bar',
   CHANGELOG_BG: 'dashboard-changelog-menu-active-bg',
   CHANGELOG_BAR: 'dashboard-changelog-menu-active-bar',
   MAIN_BG: 'dashboard-main-menu-active-bg',
@@ -19,7 +21,12 @@ export const ACTIVE_LAYOUT_ID = {
 // Direction is from the incoming menu's perspective: submenus enter from the right,
 // Back returns Main from the left, while the outgoing menu exits opposite.
 export const getMenuDirection = (view: TMenuView): TMenuDirection =>
-  view === MENU_VIEW.DOC || view === MENU_VIEW.POST || view === MENU_VIEW.CHANGELOG ? 1 : -1
+  view === MENU_VIEW.DOC ||
+  view === MENU_VIEW.POST ||
+  view === MENU_VIEW.KANBAN ||
+  view === MENU_VIEW.CHANGELOG
+    ? 1
+    : -1
 
 export const menuVariants = {
   initial: (direction: TMenuDirection) => ({ opacity: 0, x: direction * 16 }),

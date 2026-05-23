@@ -27,6 +27,7 @@ export const DSB_ROUTE = {
   // contents
   TAGS: 'tags',
   POST: 'post',
+  KANBAN: 'kanban',
   CHANGELOG: 'changelog',
   DOC: 'doc',
   COMMUNITIES: 'communities',
@@ -68,6 +69,13 @@ export const DSB_DOC_ROUTE = {
 } as const
 
 export const DSB_POST_ROUTE = {
+  ANALYSIS: 'analysis',
+  LAYOUT: 'layout',
+  CONTENT: 'content',
+  BEHAVIOR: 'behavior',
+} as const
+
+export const DSB_KANBAN_ROUTE = {
   ANALYSIS: 'analysis',
   LAYOUT: 'layout',
   CONTENT: 'content',
@@ -174,7 +182,6 @@ export const APPEARANCE_TABS: TDsbTabs = {
     { title: 'dsb.appearance.layout', slug: DSB_APPEARANCE_ROUTE.LAYOUT, segment: '' },
     { title: 'dsb.appearance.theme', slug: DSB_APPEARANCE_ROUTE.THEME },
     { title: 'dsb.appearance.wallpaper', slug: DSB_APPEARANCE_ROUTE.WALLPAPER },
-    { title: 'dsb.appearance.kanban', slug: DSB_APPEARANCE_ROUTE.KANBAN },
   ],
 }
 

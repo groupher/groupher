@@ -5,7 +5,7 @@ import { ACTIVE_LAYOUT_ID, ACTIVE_TRANSITION } from './animation'
 type TProps = {
   barClassName: string
   bgClassName: string
-  scope: 'changelog' | 'doc' | 'main' | 'post'
+  scope: 'changelog' | 'doc' | 'kanban' | 'main' | 'post'
 }
 
 export default function ActiveMark({ barClassName, bgClassName, scope }: TProps) {
@@ -16,7 +16,9 @@ export default function ActiveMark({ barClassName, bgClassName, scope }: TProps)
         ? ACTIVE_LAYOUT_ID.POST_BG
         : scope === 'changelog'
           ? ACTIVE_LAYOUT_ID.CHANGELOG_BG
-          : ACTIVE_LAYOUT_ID.MAIN_BG
+          : scope === 'kanban'
+            ? ACTIVE_LAYOUT_ID.KANBAN_BG
+            : ACTIVE_LAYOUT_ID.MAIN_BG
   const barLayoutId =
     scope === 'doc'
       ? ACTIVE_LAYOUT_ID.DOC_BAR
@@ -24,7 +26,9 @@ export default function ActiveMark({ barClassName, bgClassName, scope }: TProps)
         ? ACTIVE_LAYOUT_ID.POST_BAR
         : scope === 'changelog'
           ? ACTIVE_LAYOUT_ID.CHANGELOG_BAR
-          : ACTIVE_LAYOUT_ID.MAIN_BAR
+          : scope === 'kanban'
+            ? ACTIVE_LAYOUT_ID.KANBAN_BAR
+            : ACTIVE_LAYOUT_ID.MAIN_BAR
 
   return (
     <>

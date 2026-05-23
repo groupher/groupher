@@ -142,6 +142,10 @@ export const MENU: TDsbMenu = {
         slug: DSB_ROUTE.POST,
       },
       {
+        title: 'dsb.menu.kanban',
+        slug: DSB_ROUTE.KANBAN,
+      },
+      {
         title: 'dsb.menu.changelog',
         slug: DSB_ROUTE.CHANGELOG,
       },
@@ -211,6 +215,7 @@ export const MENU_VIEW = {
   MAIN: 'main',
   DOC: 'doc',
   POST: 'post',
+  KANBAN: 'kanban',
   CHANGELOG: 'changelog',
 } as const
 

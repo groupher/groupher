@@ -56,7 +56,7 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
       "glowOpacityDark" => 100
     },
     claude: %{
-      "pageBg" => "#fefaf1",
+      "pageBg" => "#faf9f5", # "#fefaf1",
       "pageBgDark" => "#1e141b",
       "primaryColor" => "#c96442",
       "primaryColorDark" => "#d97757",
