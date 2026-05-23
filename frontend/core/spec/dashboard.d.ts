@@ -19,14 +19,13 @@ import type {
 } from '~/const/layout'
 import type { DSB_TAB } from '~/const/route'
 import type { KANBAN_BOARD } from '~/const/thread'
-import type { TResolvedThemePreset } from '~/lib/themePreset'
 import type { TConstValues } from '~/spec'
 import type { TDsbFieldKey, TDsbFieldMap } from '~/stores/dashboard/spec'
 
 import type { TFAQSection } from './article'
 import type { TColorName } from './color'
 import type { TModerator } from './community'
-import type { TThemePreset } from './theme_preset'
+import type { TResolvedThemePreset, TThemePreset } from './theme_preset'
 import type { TEditValue, TFooterOnelineLink, TLinkItem, TSocialItem } from './utils'
 import type { TWallpaperData } from './wallpaper'
 
@@ -74,10 +73,6 @@ export type TDsb = {
     themePresetBase?: TThemePreset | null
     themeTokens?: Partial<TResolvedThemePreset> | null
     hasCustomThemePreset?: boolean | null
-    textTitle?: string | null
-    textTitleDark?: string | null
-    textDigest?: string | null
-    textDigestDark?: string | null
     topbarEnabled: boolean
     topbarBg: TColorName
     topbarBgCustomColor: string

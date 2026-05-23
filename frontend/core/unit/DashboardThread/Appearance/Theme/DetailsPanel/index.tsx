@@ -50,7 +50,6 @@ export default function DetailsPanel({
 
       <div className={s.content}>
         <Colors details={details} />
-        <div className={s.divider} />
 
         <PageBackground details={details} />
 

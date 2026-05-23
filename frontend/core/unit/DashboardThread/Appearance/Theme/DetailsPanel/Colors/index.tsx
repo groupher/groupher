@@ -1,10 +1,11 @@
-import THEME from '~/const/theme'
-import useTrans from '~/hooks/useTrans'
+import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
+import { useState } from 'react'
 
-import { PRESET_FIELD } from '../../constant'
+import { SAVING_BAR_LAYOUT_TRANSITION } from '../../../../SavingBar/constant'
 import useSalon from '../../salon/details_panel/colors'
 import type { TThemeDetails } from '../../spec'
 import ColorItem from './ColorItem'
+import { MORE_COLOR_DETAILS, COLOR_DETAILS } from './constant'
 
 type TProps = {
   details: TThemeDetails
@@ -12,56 +13,61 @@ type TProps = {
 
 export default function Colors({ details }: TProps) {
   const s = useSalon()
-  const { t } = useTrans()
-  const { selectedOverwrite, primaryColor, accentColor, isLightTheme, onThemePresetCommit } =
-    details
-  const { textTitle, textTitleDark, textDigest, textDigestDark } = selectedOverwrite
-  const theme = isLightTheme ? THEME.LIGHT : THEME.DARK
-  const primaryField = isLightTheme ? PRESET_FIELD.PRIMARY_COLOR : PRESET_FIELD.PRIMARY_COLOR_DARK
-  const accentField = isLightTheme ? PRESET_FIELD.ACCENT_COLOR : PRESET_FIELD.ACCENT_COLOR_DARK
-  const titleColor = isLightTheme ? textTitle : textTitleDark
-  const titleField = isLightTheme ? PRESET_FIELD.TEXT_TITLE : PRESET_FIELD.TEXT_TITLE_DARK
-  const digestColor = isLightTheme ? textDigest : textDigestDark
-  const digestField = isLightTheme ? PRESET_FIELD.TEXT_DIGEST : PRESET_FIELD.TEXT_DIGEST_DARK
+  const { selectedOverwrite, onThemePresetCommit } = details
+  const [expanded, setExpanded] = useState(false)
+
+  const toggleLabel = expanded ? 'show less' : `${MORE_COLOR_DETAILS.length} more`
 
   return (
-    <div className={s.wrapper}>
-      <ColorItem
-        color={primaryColor}
-        field={primaryField}
-        title={t('dsb.appearance.primary_color.label')}
-        desc={t('dsb.appearance.primary_color.hint')}
-        theme={theme}
-        isLarge
-        onThemePresetCommit={onThemePresetCommit}
-      />
+    <LazyMotion features={domAnimation}>
+      <div className={s.wrapper}>
+        {COLOR_DETAILS.map((detail) => (
+          <ColorItem
+            key={detail.key}
+            detail={detail}
+            selectedOverwrite={selectedOverwrite}
+            onThemePresetCommit={onThemePresetCommit}
+          />
+        ))}
+      </div>
 
-      <ColorItem
-        color={accentColor}
-        field={accentField}
-        title={t('dsb.appearance.accent_color.title')}
-        desc={t('dsb.appearance.accent_color.desc')}
-        theme={theme}
-        onThemePresetCommit={onThemePresetCommit}
-      />
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <m.div
+            key='more-colors'
+            initial={{ height: 0, marginTop: 0, opacity: 0 }}
+            animate={{ height: 'auto', marginTop: 32, opacity: 1 }}
+            exit={{ height: 0, marginTop: 0, opacity: 0 }}
+            transition={SAVING_BAR_LAYOUT_TRANSITION}
+            className={s.moreColorsClip}
+          >
+            <div className={s.moreColors}>
+              {MORE_COLOR_DETAILS.map((detail) => (
+                <ColorItem
+                  key={detail.key}
+                  detail={detail}
+                  selectedOverwrite={selectedOverwrite}
+                  onThemePresetCommit={onThemePresetCommit}
+                />
+              ))}
+            </div>
+          </m.div>
+        )}
+      </AnimatePresence>
 
-      <ColorItem
-        color={titleColor}
-        field={titleField}
-        title={t('dsb.appearance.title_color.title')}
-        desc={t('dsb.appearance.title_color.desc')}
-        theme={theme}
-        onThemePresetCommit={onThemePresetCommit}
-      />
-
-      <ColorItem
-        color={digestColor}
-        field={digestField}
-        title={t('dsb.appearance.digest_color.title')}
-        desc={t('dsb.appearance.digest_color.desc')}
-        theme={theme}
-        onThemePresetCommit={onThemePresetCommit}
-      />
-    </div>
+      <div className={s.dividerRow}>
+        <div className={s.toggleMask} aria-hidden>
+          {toggleLabel}
+        </div>
+        <button
+          type='button'
+          className={s.toggle}
+          aria-expanded={expanded}
+          onClick={() => setExpanded((value) => !value)}
+        >
+          <span className={s.toggleText}>{toggleLabel}</span>
+        </button>
+      </div>
+    </LazyMotion>
   )
 }

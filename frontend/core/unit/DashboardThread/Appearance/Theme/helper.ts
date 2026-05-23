@@ -1,9 +1,11 @@
+import THEME from '~/const/theme'
 import { THEME_PRESET } from '~/const/theme_preset'
 import { blurRGB } from '~/fmt'
+import { createThemeKeyPicker } from '~/lib/themeKey'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
-import { resolveRawBg, type TPageBgDraft } from '~/widgets/CustomPageBg/hooks'
 
-import { PRESET_FIELD, THEME_TOKEN_MIRROR_FIELDS } from './constant'
+import { PRESET_FIELD } from './constant'
+import { resolveRawBg, type TPageBgDraft } from './DetailsPanel/CustomPageBg/hooks'
 import type {
   TCustomPresetEditOptions,
   TPageBgPreviewOptions,
@@ -34,31 +36,6 @@ export const toCssOpacity = (opacity = 100): number => {
 }
 
 /**
- * Pick theme-token fields that also live as flat dashboard fields.
- *
- * Intent: `themeTokens` owns the preset payload, but legacy/layout CSS still
- * reads title/digest/blur values from flat dashboard fields. This helper keeps
- * that mirror list in `constant.ts` and avoids repeating field names in callers.
- *
- * Example:
- *   pickDashboardMirrorPatch({ textTitle: '#111111', pageBg: '#ffffff' })
- *   // => { textTitle: '#111111' }
- */
-export const pickDashboardMirrorPatch = (
-  patch: Partial<TThemePresetOverwrite>,
-): Partial<TDsbFieldMap> => {
-  const mirrorPatch = {} as Partial<TDsbFieldMap>
-
-  for (const field of THEME_TOKEN_MIRROR_FIELDS) {
-    if (patch[field] !== undefined) {
-      mirrorPatch[field] = patch[field] as never
-    }
-  }
-
-  return mirrorPatch
-}
-
-/**
  * Convert resolved preset tokens into the compact page-background draft shape.
  *
  * Intent: `CustomPageBg` edits only light/dark background tokens. Keeping this
@@ -72,6 +49,10 @@ export const pickDashboardMirrorPatch = (
 export const toPageBgDraft = (overwrite: TThemePresetOverwrite): TPageBgDraft => ({
   pageBg: overwrite.pageBg,
   pageBgDark: overwrite.pageBgDark,
+  pageBgHue: overwrite.pageBgHue,
+  pageBgHueDark: overwrite.pageBgHueDark,
+  pageBgIntensity: overwrite.pageBgIntensity,
+  pageBgIntensityDark: overwrite.pageBgIntensityDark,
 })
 
 /**
@@ -116,7 +97,6 @@ export const buildCustomPresetEditPatch = ({
       themePreset: THEME_PRESET.CUSTOM,
       themePresetBase,
       themeTokens: nextTokens,
-      ...pickDashboardMirrorPatch(nextTokens),
     },
     nextCustomPresetDraft: nextTokens,
   }
@@ -155,7 +135,6 @@ export const buildPresetSelectionPatch = ({
       themePresetBase:
         isCustomPreset || hasCustomThemePreset ? currentThemePresetBase : preset.value,
       themeTokens: { ...nextOverwrite },
-      ...pickDashboardMirrorPatch(nextOverwrite),
     },
     nextOverwrite,
   }
@@ -185,7 +164,6 @@ export const buildCustomPresetResetPatch = (
       themePreset: THEME_PRESET.CUSTOM,
       themePresetBase: preset.value,
       themeTokens: nextOverwrite,
-      ...pickDashboardMirrorPatch(nextOverwrite),
     },
     nextCustomPresetDraft: nextOverwrite,
   }
@@ -250,18 +228,17 @@ export const buildThemePresetPreviewCssVars = ({
     ...selectedOverwrite,
     ...patch,
   }
+  const { key, value } = createThemeKeyPicker(isLightTheme ? THEME.LIGHT : THEME.DARK)
   const previewRawBg = resolveRawBg(toPageBgDraft(nextOverwrite), isLightTheme)
-  const activeGaussBlur = isLightTheme ? nextOverwrite.gaussBlur : nextOverwrite.gaussBlurDark
+  const activeGaussBlur = value(nextOverwrite, PRESET_FIELD.GAUSS_BLUR)
   const previewBackground = previewRawBg ? blurRGB(previewRawBg, activeGaussBlur) : null
-  const glowOpacityField = (
-    isLightTheme ? PRESET_FIELD.GLOW_OPACITY : PRESET_FIELD.GLOW_OPACITY_DARK
-  ) as 'glowOpacity' | 'glowOpacityDark'
+  const glowOpacityKey = key(PRESET_FIELD.GLOW_OPACITY)
   const previewVars: TPreviewCssVars = {
     '--preview-page-bg': previewBackground,
   }
 
-  if (patch[glowOpacityField] !== undefined) {
-    previewVars['--preview-glow-opacity'] = toCssOpacity(nextOverwrite[glowOpacityField])
+  if (patch[glowOpacityKey] !== undefined) {
+    previewVars['--preview-glow-opacity'] = toCssOpacity(nextOverwrite[glowOpacityKey])
   }
 
   return previewVars

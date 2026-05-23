@@ -97,13 +97,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
         except: [
           :theme_preset,
           :theme_preset_base,
-          :theme_overwrite,
-          :text_title,
-          :text_title_dark,
-          :text_digest,
-          :text_digest_dark,
-          :gauss_blur,
-          :gauss_blur_dark
+          :theme_overwrite
         ]
       )
 
@@ -121,12 +115,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       arg(:theme_preset, non_null(:dsb_theme_preset))
       arg(:theme_preset_base, non_null(:dsb_theme_preset))
       arg(:theme_tokens, :json)
-      arg(:text_title, :string)
-      arg(:text_title_dark, :string)
-      arg(:text_digest, :string)
-      arg(:text_digest_dark, :string)
-      arg(:gauss_blur, :float)
-      arg(:gauss_blur_dark, :float)
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "dashboard.theme.update")

@@ -1,7 +1,7 @@
-import type { TResolvedThemePreset } from '~/lib/themePreset'
-import type { TThemePresetOption } from '~/spec'
+import type { TResolvedThemePreset, TThemePresetOption } from '~/spec'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
-import type { TPageBgDraft } from '~/widgets/CustomPageBg/hooks'
+
+import type { TPageBgDraft } from './DetailsPanel/CustomPageBg/hooks'
 
 export type { TThemePresetOption } from '~/spec'
 
@@ -167,8 +167,6 @@ export type TUseThemePresetDraftRet = {
 export type TThemeDetails = {
   selectedOverwrite: TThemePresetOverwrite
   selectedPageBgDraft: TPageBgDraft
-  primaryColor: string
-  accentColor: string
   isLightTheme: boolean
   pageBgResetKey: string
   /**

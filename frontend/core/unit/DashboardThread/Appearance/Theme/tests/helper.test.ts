@@ -4,7 +4,6 @@ import {
   buildCustomPresetEditPatch,
   buildCustomPresetResetPatch,
   buildPresetSelectionPatch,
-  pickDashboardMirrorPatch,
   toCssOpacity,
   toPageBgDraft,
 } from '../helper'
@@ -13,6 +12,10 @@ import type { TThemePresetOverwrite } from '../spec'
 const overwrite: TThemePresetOverwrite = {
   pageBg: '#ffffff',
   pageBgDark: '#111111',
+  pageBgHue: 42,
+  pageBgHueDark: 318,
+  pageBgIntensity: 52,
+  pageBgIntensityDark: 61,
   primaryColor: '#222222',
   primaryColorDark: '#eeeeee',
   accentColor: '#333333',
@@ -21,6 +24,10 @@ const overwrite: TThemePresetOverwrite = {
   textTitleDark: '#cccccc',
   textDigest: '#555555',
   textDigestDark: '#bbbbbb',
+  cardColor: '#666666',
+  cardColorDark: '#aaaaaa',
+  dividerColor: '#777777',
+  dividerColorDark: '#999999',
   gaussBlur: 80,
   gaussBlurDark: 40,
   glowType: 'radial',
@@ -42,19 +49,10 @@ describe('theme preset model helpers', () => {
     expect(toPageBgDraft(overwrite)).toEqual({
       pageBg: overwrite.pageBg,
       pageBgDark: overwrite.pageBgDark,
-    })
-  })
-
-  it('mirrors only flat dashboard token fields', () => {
-    expect(
-      pickDashboardMirrorPatch({
-        pageBg: '#ffffff',
-        textTitle: '#101010',
-        gaussBlurDark: 55,
-      }),
-    ).toEqual({
-      textTitle: '#101010',
-      gaussBlurDark: 55,
+      pageBgHue: overwrite.pageBgHue,
+      pageBgHueDark: overwrite.pageBgHueDark,
+      pageBgIntensity: overwrite.pageBgIntensity,
+      pageBgIntensityDark: overwrite.pageBgIntensityDark,
     })
   })
 
@@ -71,8 +69,6 @@ describe('theme preset model helpers', () => {
       themePreset: THEME_PRESET.CUSTOM,
       themePresetBase: THEME_PRESET.CLAUDE,
       themeTokens: nextCustomPresetDraft,
-      textTitle: overwrite.textTitle,
-      gaussBlur: overwrite.gaussBlur,
     })
     expect(nextCustomPresetDraft.primaryColor).toBe('#999999')
   })
@@ -105,8 +101,6 @@ describe('theme preset model helpers', () => {
       themePreset: THEME_PRESET.DEFAULT,
       themePresetBase: THEME_PRESET.CLAUDE,
       themeTokens: overwrite,
-      textTitle: overwrite.textTitle,
-      gaussBlur: overwrite.gaussBlur,
     })
   })
 

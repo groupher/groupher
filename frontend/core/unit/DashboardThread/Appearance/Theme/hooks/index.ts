@@ -4,14 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { THEME_PRESET } from '~/const/theme_preset'
 import useTheme from '~/hooks/useTheme'
 import useThemePreset from '~/hooks/useThemePreset'
-import { pickResolvedThemePresetFields } from '~/lib/themePreset'
+import { getThemeTokens } from '~/lib/themePreset'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import {
   buildCustomPresetEditPatch,
   buildCustomPresetResetPatch,
   buildPresetSelectionPatch,
-  pickDashboardMirrorPatch,
   toPageBgDraft,
 } from '../helper'
 import type {
@@ -44,7 +43,7 @@ export default function useAppearance({
   const { isThemePresetTouched, editThemePresetFields } = useThemePresetDraft()
   const { saveThemePreset, rollbackThemePreset } = useThemePresetMutation()
   const themePreset$ = useThemePreset()
-  const selectedOverwrite = pickResolvedThemePresetFields(themePreset$)
+  const selectedOverwrite = getThemeTokens(themePreset$.themeTokens)
   const presetOptions = themePreset$.presetOptions.length
     ? themePreset$.presetOptions
     : initialPresetOptions
@@ -124,10 +123,7 @@ export default function useAppearance({
 
   const commitThemePresetPatch = useCallback(
     (patch: Partial<TThemePresetOverwrite>) => {
-      editThemePresetFields({
-        ...enterCustomPresetTokenEdit(patch),
-        ...pickDashboardMirrorPatch(patch),
-      })
+      editThemePresetFields(enterCustomPresetTokenEdit(patch))
     },
     [editThemePresetFields, enterCustomPresetTokenEdit],
   )
@@ -223,21 +219,12 @@ export default function useAppearance({
   // showing fork UI; preset-card selections save under the preset list.
   const showDetailsSavingBar = isThemePresetTouched && editingDetails
   const showPresetSavingBar = isThemePresetTouched && !editingDetails
-  const primaryColor = isLightTheme
-    ? selectedOverwrite.primaryColor
-    : selectedOverwrite.primaryColorDark
-
-  const accentColor = isLightTheme
-    ? selectedOverwrite.accentColor
-    : selectedOverwrite.accentColorDark
 
   const pageBgResetKey = `${activePreset}-${isLightTheme ? 'light' : 'dark'}-${pageBgResetVersion}`
 
   const details: TThemeDetails = {
     selectedOverwrite,
     selectedPageBgDraft,
-    primaryColor,
-    accentColor,
     isLightTheme,
     pageBgResetKey,
     onPageBgPreview: previewPageBg,

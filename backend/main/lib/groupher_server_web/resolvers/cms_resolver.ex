@@ -7,7 +7,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Helper.{EmotionFormatter, ThemePreset}
+  alias CMS.Helper.EmotionFormatter
   alias CMS.Model.{Category, Community}
   alias Helper.{OgInfo, ORM}
 
@@ -74,16 +74,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def select_theme_preset(_root, %{community: community, theme_preset: theme_preset}, _info) do
-    defaults = ThemePreset.defaults(theme_preset)
-
     CMS.Communities.select_theme_preset(community, %{
-      theme_preset: theme_preset,
-      text_title: defaults["textTitle"],
-      text_title_dark: defaults["textTitleDark"],
-      text_digest: defaults["textDigest"],
-      text_digest_dark: defaults["textDigestDark"],
-      gauss_blur: defaults["gaussBlur"],
-      gauss_blur_dark: defaults["gaussBlurDark"]
+      theme_preset: theme_preset
     })
   end
 

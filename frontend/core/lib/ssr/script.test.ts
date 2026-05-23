@@ -17,6 +17,10 @@ describe('injectDsbColors', () => {
         textTitleDark: '#ddeeff',
         textDigest: '#405060',
         textDigestDark: '#aabbcc',
+        cardColor: '#f8f9fa',
+        cardColorDark: '#202124',
+        dividerColor: '#dadce0',
+        dividerColorDark: '#3c4043',
       },
     } satisfies Partial<TParseDashboard>)
 
@@ -30,6 +34,10 @@ describe('injectDsbColors', () => {
     expect(styleText).toContain('--color-title-dark: #ddeeff;')
     expect(styleText).toContain('--color-digest: #405060;')
     expect(styleText).toContain('--color-digest-dark: #aabbcc;')
+    expect(styleText).toContain('--color-card: #f8f9fa;')
+    expect(styleText).toContain('--color-card-dark: #202124;')
+    expect(styleText).toContain('--color-divider: #dadce0;')
+    expect(styleText).toContain('--color-divider-dark: #3c4043;')
   })
 
   it('falls back to safe defaults when dashboard colors are invalid', () => {
@@ -46,19 +54,27 @@ describe('injectDsbColors', () => {
         textTitleDark: '#fff',
         textDigest: 'red',
         textDigestDark: '',
+        cardColor: 'url(javascript:evil)',
+        cardColorDark: '#222',
+        dividerColor: 'currentColor',
+        dividerColorDark: null,
       },
     } satisfies Partial<TParseDashboard>)
 
-    expect(styleText).toContain('--color-primary-custom: #333333;')
-    expect(styleText).toContain('--color-primary-custom-dark: #ffffff;')
-    expect(styleText).toContain('--color-accent-custom: #333333;')
-    expect(styleText).toContain('--color-accent-custom-dark: #ffffff;')
+    expect(styleText).toContain('--color-primary-custom: #7d519e;')
+    expect(styleText).toContain('--color-primary-custom-dark: #9669b9;')
+    expect(styleText).toContain('--color-accent-custom: #5073c6;')
+    expect(styleText).toContain('--color-accent-custom-dark: #3a7ec7;')
     expect(styleText).toContain('--color-page-custom: #fffcfc;')
     expect(styleText).toContain('--color-page-custom-dark: #25161d;')
     expect(styleText).toContain('--color-title: #243041;')
     expect(styleText).toContain('--color-title-dark: #f5f5f5;')
     expect(styleText).toContain('--color-digest: #6b7280;')
     expect(styleText).toContain('--color-digest-dark: #949494;')
+    expect(styleText).toContain('--color-card: #ffffff;')
+    expect(styleText).toContain('--color-card-dark: #252525;')
+    expect(styleText).toContain('--color-divider: #eae9e9;')
+    expect(styleText).toContain('--color-divider-dark: #353535;')
     expect(styleText).not.toContain('</style>')
     expect(styleText).not.toContain('alert(1)')
     expect(styleText).not.toContain('alert(2)')

@@ -17,6 +17,10 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
   @token_keys [
     "pageBg",
     "pageBgDark",
+    "pageBgHue",
+    "pageBgHueDark",
+    "pageBgIntensity",
+    "pageBgIntensityDark",
     "primaryColor",
     "primaryColorDark",
     "accentColor",
@@ -25,6 +29,10 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
     "textTitleDark",
     "textDigest",
     "textDigestDark",
+    "cardColor",
+    "cardColorDark",
+    "dividerColor",
+    "dividerColorDark",
     "gaussBlur",
     "gaussBlurDark",
     "glowType",
@@ -39,6 +47,10 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
     default: %{
       "pageBg" => "#fffcfc",
       "pageBgDark" => "#25161d",
+      "pageBgHue" => 0,
+      "pageBgHueDark" => 332,
+      "pageBgIntensity" => 0,
+      "pageBgIntensityDark" => 6,
       "primaryColor" => "#7d519e",
       "primaryColorDark" => "#9669b9",
       "accentColor" => "#5073c6",
@@ -47,6 +59,10 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
       "textTitleDark" => "#f5f5f5",
       "textDigest" => "#6b7280",
       "textDigestDark" => "#949494",
+      "cardColor" => "#ffffff",
+      "cardColorDark" => "#252525",
+      "dividerColor" => "#eae9e9",
+      "dividerColorDark" => "#353535",
       "gaussBlur" => 100,
       "gaussBlurDark" => 100,
       "glowType" => "",
@@ -56,8 +72,13 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
       "glowOpacityDark" => 100
     },
     claude: %{
-      "pageBg" => "#faf9f5", # "#fefaf1",
+      # "#fefaf1",
+      "pageBg" => "#faf9f5",
       "pageBgDark" => "#1e141b",
+      "pageBgHue" => 48,
+      "pageBgHueDark" => 318,
+      "pageBgIntensity" => 32,
+      "pageBgIntensityDark" => 0,
       "primaryColor" => "#c96442",
       "primaryColorDark" => "#d97757",
       "accentColor" => "#5073c6",
@@ -66,6 +87,10 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
       "textTitleDark" => "#f4eee7",
       "textDigest" => "#786f63",
       "textDigestDark" => "#a9a19a",
+      "cardColor" => "#fffdf8",
+      "cardColorDark" => "#261b22",
+      "dividerColor" => "#e6ded2",
+      "dividerColorDark" => "#3a3035",
       "gaussBlur" => 100,
       "gaussBlurDark" => 100,
       "glowType" => "",
@@ -77,6 +102,10 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
     solarized: %{
       "pageBg" => "#fdf7e7",
       "pageBgDark" => "#122732",
+      "pageBgHue" => 44,
+      "pageBgHueDark" => 201,
+      "pageBgIntensity" => 100,
+      "pageBgIntensityDark" => 22,
       "primaryColor" => "#859900",
       "primaryColorDark" => "#b6c65b",
       "accentColor" => "#5073c6",
@@ -85,6 +114,10 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
       "textTitleDark" => "#e8f0ed",
       "textDigest" => "#657b83",
       "textDigestDark" => "#93a1a1",
+      "cardColor" => "#fff9e8",
+      "cardColorDark" => "#18313d",
+      "dividerColor" => "#e2dccb",
+      "dividerColorDark" => "#2f4c57",
       "gaussBlur" => 100,
       "gaussBlurDark" => 100,
       "glowType" => "",
@@ -96,6 +129,10 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
     hn: %{
       "pageBg" => "#fefef0",
       "pageBgDark" => "#1e1c1b",
+      "pageBgHue" => 60,
+      "pageBgHueDark" => 20,
+      "pageBgIntensity" => 54,
+      "pageBgIntensityDark" => 1,
       "primaryColor" => "#333333",
       "primaryColorDark" => "#333333",
       "accentColor" => "#5073c6",
@@ -104,6 +141,10 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
       "textTitleDark" => "#e6e6e6",
       "textDigest" => "#666666",
       "textDigestDark" => "#9a9a9a",
+      "cardColor" => "#fffff5",
+      "cardColorDark" => "#292625",
+      "dividerColor" => "#e6e6d6",
+      "dividerColorDark" => "#3c3938",
       "gaussBlur" => 100,
       "gaussBlurDark" => 100,
       "glowType" => "",
@@ -162,13 +203,6 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
         acc
       end
     end)
-  end
-
-  def normalize_overwrite(overwrite) when is_binary(overwrite) do
-    case Jason.decode(overwrite) do
-      {:ok, decoded} -> normalize_overwrite(decoded)
-      _ -> %{}
-    end
   end
 
   def normalize_overwrite(_), do: %{}

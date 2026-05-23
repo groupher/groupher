@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef } from 'react'
 
 import useDebouncedPreviewCommit from '~/hooks/useDebouncedPreviewCommit'
 import useUpdatePreviewCssVars from '~/hooks/useUpdatePreviewCssVars'
-import type { TPageBgDraft } from '~/widgets/CustomPageBg/hooks'
 
 import { PREVIEW_CSS_VAR_CLEANUP } from '../constant'
+import type { TPageBgDraft } from '../DetailsPanel/CustomPageBg/hooks'
 import { buildPageBgPreviewCssVars, buildThemePresetPreviewCssVars } from '../helper'
 import type {
   TPreviewCssVars,

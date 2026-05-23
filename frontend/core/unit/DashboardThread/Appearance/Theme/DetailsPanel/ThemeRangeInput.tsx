@@ -1,35 +1,43 @@
 import { useEffect, useState } from 'react'
 
+import useThemeKV from '~/hooks/useThemeKV'
 import RangeInput from '~/widgets/RangeInput'
 
 import type { TThemePresetOverwrite } from '../spec'
 
 type TProps = {
-  value: number
+  baseKey: keyof TThemePresetOverwrite
+  selectedOverwrite: TThemePresetOverwrite
   valueLabel: string
   min: number
   max: number
-  getPatch: (value: number) => Partial<TThemePresetOverwrite>
   onThemePresetPreview: (patch: Partial<TThemePresetOverwrite>) => void
   onThemePresetSchedule: (patch: Partial<TThemePresetOverwrite>) => void
   onThemePresetFlush: () => void
 }
 
 export default function ThemeRangeInput({
-  value,
+  baseKey,
+  selectedOverwrite,
   valueLabel,
   min,
   max,
-  getPatch,
   onThemePresetPreview,
   onThemePresetSchedule,
   onThemePresetFlush,
 }: TProps) {
-  const [displayValue, setDisplayValue] = useState(value)
+  const { key, value } = useThemeKV()
+  const activeValue = value(selectedOverwrite, baseKey) as number
+  const activeKey = key(baseKey)
+  const [displayValue, setDisplayValue] = useState(activeValue)
 
   useEffect(() => {
-    setDisplayValue(value)
-  }, [value])
+    setDisplayValue(activeValue)
+  }, [activeValue])
+
+  const getPatch = (value: number): Partial<TThemePresetOverwrite> => ({
+    [activeKey]: value,
+  })
 
   return (
     <RangeInput

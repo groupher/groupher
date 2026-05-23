@@ -1,8 +1,9 @@
-import useTheme from '~/hooks/useTheme'
+import useThemeKV from '~/hooks/useThemeKV'
 import useTrans from '~/hooks/useTrans'
 import type { TTransKey } from '~/spec'
 import Checker from '~/widgets/Checker'
 
+import { PRESET_FIELD } from '../constant'
 import MiniBars from '../MiniBars'
 import useSalon from '../salon/preset_list/preset_card'
 import type { TThemePresetCardMode, TThemePresetOption } from '../spec'
@@ -28,16 +29,14 @@ export default function PresetCard({
     rotateAngle,
   })
   const { t } = useTrans()
-  const { isLightTheme } = useTheme()
+  const { value } = useThemeKV()
   const disabled = mode === 'forkBase'
   const presetKey = preset.value.toLowerCase()
-  const cardBg = isLightTheme ? preset.overwrite.pageBg : preset.overwrite.pageBgDark
-  const primaryColor = isLightTheme
-    ? preset.overwrite.primaryColor
-    : preset.overwrite.primaryColorDark
-  const accentColor = isLightTheme ? preset.overwrite.accentColor : preset.overwrite.accentColorDark
-  const textTitle = isLightTheme ? preset.overwrite.textTitle : preset.overwrite.textTitleDark
-  const textDigest = isLightTheme ? preset.overwrite.textDigest : preset.overwrite.textDigestDark
+  const cardBg = value(preset.overwrite, PRESET_FIELD.PAGE_BG)
+  const primaryColor = value(preset.overwrite, PRESET_FIELD.PRIMARY_COLOR)
+  const accentColor = value(preset.overwrite, PRESET_FIELD.ACCENT_COLOR)
+  const textTitle = value(preset.overwrite, PRESET_FIELD.TEXT_TITLE)
+  const textDigest = value(preset.overwrite, PRESET_FIELD.TEXT_DIGEST)
 
   return (
     <div

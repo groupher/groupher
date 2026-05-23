@@ -3,7 +3,7 @@ import type { TSpace } from '~/spec'
 
 import { FIELD } from '../../../constant'
 import useSettingRowSalon from '../salon/details_panel/setting_row'
-import type { TThemeDetails, TThemePresetOverwrite } from '../spec'
+import type { TThemeDetails } from '../spec'
 import ThemeRangeInput from './ThemeRangeInput'
 
 type TProps = {
@@ -13,19 +13,8 @@ type TProps = {
 export default function GlassOpacity({ details, ...spacing }: TProps) {
   const s = useSettingRowSalon(spacing)
   const { t } = useTrans()
-  const {
-    selectedOverwrite,
-    isLightTheme,
-    onThemePresetPreview,
-    onThemePresetSchedule,
-    onThemePresetFlush,
-  } = details
-  const gaussBlur = isLightTheme ? selectedOverwrite.gaussBlur : selectedOverwrite.gaussBlurDark
-  const gaussBlurField = isLightTheme ? FIELD.GAUSS_BLUR : FIELD.GAUSS_BLUR_DARK
-
-  const getGaussBlurPatch = (value: number): Partial<TThemePresetOverwrite> => ({
-    [gaussBlurField]: value,
-  })
+  const { selectedOverwrite, onThemePresetPreview, onThemePresetSchedule, onThemePresetFlush } =
+    details
 
   return (
     <div className={s.wrapper}>
@@ -39,11 +28,11 @@ export default function GlassOpacity({ details, ...spacing }: TProps) {
           <div className='grow' />
           <div className={s.rangeGroup}>
             <ThemeRangeInput
-              value={gaussBlur}
+              baseKey={FIELD.GAUSS_BLUR}
+              selectedOverwrite={selectedOverwrite}
               valueLabel={t('dsb.appearance.theme.glass_opacity.title')}
               min={50}
               max={100}
-              getPatch={getGaussBlurPatch}
               onThemePresetPreview={onThemePresetPreview}
               onThemePresetSchedule={onThemePresetSchedule}
               onThemePresetFlush={onThemePresetFlush}

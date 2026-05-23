@@ -150,10 +150,6 @@ describe('stores/dashboard', () => {
       themePreset: claude.value,
       themePresetBase: claude.value,
       themeTokens: { ...claude.overwrite },
-      textTitle: claude.overwrite.textTitle,
-      textTitleDark: claude.overwrite.textTitleDark,
-      textDigest: claude.overwrite.textDigest,
-      textDigestDark: claude.overwrite.textDigestDark,
     })
 
     expect(store.themePreset).toBe(THEME_PRESET.CLAUDE)
@@ -164,49 +160,13 @@ describe('stores/dashboard', () => {
     expect(store.themeTokens.primaryColorDark).toBe('#d97757')
     expect(store.themeTokens.accentColor).toBe('#5073c6')
     expect(store.themeTokens.accentColorDark).toBe('#3a7ec7')
-    expect(store.textTitle).toBe(claude.overwrite.textTitle)
-    expect(store.textTitleDark).toBe(claude.overwrite.textTitleDark)
-    expect(store.textDigest).toBe(claude.overwrite.textDigest)
-    expect(store.textDigestDark).toBe(claude.overwrite.textDigestDark)
-    expect(
-      store.anyTouched([
-        'themePreset',
-        'themePresetBase',
-        'themeTokens',
-        'textTitle',
-        'textTitleDark',
-        'textDigest',
-        'textDigestDark',
-      ]),
-    ).toBe(true)
+    expect(store.anyTouched(['themePreset', 'themePresetBase', 'themeTokens'])).toBe(true)
 
-    store.rollbackFields([
-      'themePreset',
-      'themePresetBase',
-      'themeTokens',
-      'textTitle',
-      'textTitleDark',
-      'textDigest',
-      'textDigestDark',
-    ])
+    store.rollbackFields(['themePreset', 'themePresetBase', 'themeTokens'])
 
     expect(store.themePreset).toBe(store.original.themePreset)
     expect(store.themePresetBase).toBe(store.original.themePresetBase)
     expect(store.themeTokens).toEqual(store.original.themeTokens)
-    expect(store.textTitle).toBe(store.original.textTitle)
-    expect(store.textTitleDark).toBe(store.original.textTitleDark)
-    expect(store.textDigest).toBe(store.original.textDigest)
-    expect(store.textDigestDark).toBe(store.original.textDigestDark)
-    expect(
-      store.anyTouched([
-        'themePreset',
-        'themePresetBase',
-        'themeTokens',
-        'textTitle',
-        'textTitleDark',
-        'textDigest',
-        'textDigestDark',
-      ]),
-    ).toBe(false)
+    expect(store.anyTouched(['themePreset', 'themePresetBase', 'themeTokens'])).toBe(false)
   })
 })

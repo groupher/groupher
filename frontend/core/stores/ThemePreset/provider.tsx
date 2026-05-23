@@ -37,6 +37,10 @@ const PRESET_CSS_VAR_KEYS = [
   '--color-title-dark',
   '--color-digest',
   '--color-digest-dark',
+  '--color-card',
+  '--color-card-dark',
+  '--color-divider',
+  '--color-divider-dark',
 ] as const
 
 export const StoreContext = createContext<TStore | null>(null)
@@ -49,50 +53,8 @@ type TScopeProps = {
 
 const ThemePresetScope = ({ children, store }: TScopeProps) => {
   const preset$ = useSnapshot(store)
-  const { isLightTheme } = useTheme()
-  const {
-    pageBg,
-    pageBgDark,
-    primaryColor,
-    primaryColorDark,
-    accentColor,
-    accentColorDark,
-    textTitle,
-    textTitleDark,
-    textDigest,
-    textDigestDark,
-  } = preset$
-  const cssVars = useMemo(
-    () =>
-      buildThemePresetCssVars(
-        {
-          pageBg,
-          pageBgDark,
-          primaryColor,
-          primaryColorDark,
-          accentColor,
-          accentColorDark,
-          textTitle,
-          textTitleDark,
-          textDigest,
-          textDigestDark,
-        },
-        isLightTheme,
-      ),
-    [
-      pageBg,
-      pageBgDark,
-      primaryColor,
-      primaryColorDark,
-      accentColor,
-      accentColorDark,
-      textTitle,
-      textTitleDark,
-      textDigest,
-      textDigestDark,
-      isLightTheme,
-    ],
-  )
+  const { theme } = useTheme()
+  const cssVars = useMemo(() => buildThemePresetCssVars(preset$, theme), [preset$, theme])
 
   useEffect(() => {
     const root = document.documentElement
@@ -124,24 +86,8 @@ export default function Provider({ children, initData = EMPTY_INIT_DATA }: TProp
       themePreset: dsb$.themePreset,
       themePresetBase: dsb$.themePresetBase,
       themeTokens: dsb$.themeTokens,
-      textTitle: dsb$.textTitle,
-      textTitleDark: dsb$.textTitleDark,
-      textDigest: dsb$.textDigest,
-      textDigestDark: dsb$.textDigestDark,
-      gaussBlur: dsb$.gaussBlur,
-      gaussBlurDark: dsb$.gaussBlurDark,
     })
-  }, [
-    dsb$.themePreset,
-    dsb$.themePresetBase,
-    dsb$.themeTokens,
-    dsb$.textTitle,
-    dsb$.textTitleDark,
-    dsb$.textDigest,
-    dsb$.textDigestDark,
-    dsb$.gaussBlur,
-    dsb$.gaussBlurDark,
-  ])
+  }, [dsb$.themePreset, dsb$.themePresetBase, dsb$.themeTokens])
 
   return (
     <StoreContext.Provider value={storeRef.current}>

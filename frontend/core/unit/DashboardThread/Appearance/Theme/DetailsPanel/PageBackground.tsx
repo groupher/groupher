@@ -1,6 +1,5 @@
-import CustomPageBg from '~/widgets/CustomPageBg'
-
 import type { TThemeDetails } from '../spec'
+import CustomPageBg from './CustomPageBg'
 
 type TProps = {
   details: TThemeDetails
@@ -15,6 +14,7 @@ export default function PageBackground({ details }: TProps) {
       onDraftChange={details.onPageBgCommit}
       onPreviewPatch={details.onPageBgPreview}
       onScheduleCommitPatch={details.onPageBgCommit}
+      onImmediateCommitPatch={details.onPageBgCommit}
       showToggle={false}
       showThemeSelector={false}
     />

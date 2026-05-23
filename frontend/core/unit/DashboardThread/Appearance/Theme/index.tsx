@@ -87,8 +87,8 @@ export default function Appearance({ initialPresetOptions = EMPTY_PRESET_OPTIONS
       />
 
       <SavingBar
+        top={6}
         isTouched={showDetailsSavingBar}
-        wrapperClassName={s.savingWrapper}
         onCancel={cancelAppearance}
         onConfirm={saveAppearance}
       />

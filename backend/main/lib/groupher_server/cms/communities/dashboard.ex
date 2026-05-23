@@ -7,6 +7,7 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
 
   import Helper.Utils, only: [strip_struct: 1]
 
+  alias CMS.Helper.ThemePreset
   alias CMS.Model.{Community, CommunityDashboard, Embeds}
   alias Helper.{ORM, T, Transaction}
 
@@ -54,6 +55,8 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
 
   @spec save_custom_theme_preset(Community.t(), map()) :: T.domain_res(Community.t())
   def save_custom_theme_preset(%Community{} = community, args) do
+    args = Map.update(args, :theme_overwrite, %{}, &normalize_theme_overwrite/1)
+
     do_update(community, :layout, args)
   end
 
@@ -70,6 +73,11 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
       {:ok, community}
     end
   end
+
+  defp normalize_theme_overwrite(overwrite) when is_map(overwrite),
+    do: ThemePreset.normalize_overwrite(overwrite)
+
+  defp normalize_theme_overwrite(overwrite), do: overwrite
 
   defp ensure_exist(%Community{} = community) do
     Transaction.lock_global("community_dashboard:init:#{community.id}", fn ->

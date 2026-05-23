@@ -84,12 +84,6 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
           themePreset: storeRef.current.themePreset,
           themePresetBase: storeRef.current.themePresetBase,
           themeTokens: JSON.stringify(storeRef.current.themeTokens ?? {}),
-          textTitle: storeRef.current.textTitle,
-          textTitleDark: storeRef.current.textTitleDark,
-          textDigest: storeRef.current.textDigest,
-          textDigestDark: storeRef.current.textDigestDark,
-          gaussBlur: storeRef.current.gaussBlur,
-          gaussBlurDark: storeRef.current.gaussBlurDark,
         })
       : mutate(S.selectThemePreset, {
           community,

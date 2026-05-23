@@ -643,7 +643,7 @@ type RootMutationType {
 
   "save custom theme preset in dashboard"
   saveCustomThemePreset(
-    community: String!, themePreset: DsbThemePreset!, themePresetBase: DsbThemePreset!, themeTokens: Json, textTitle: String, textTitleDark: String, textDigest: String, textDigestDark: String, gaussBlur: Float, gaussBlurDark: Float
+    community: String!, themePreset: DsbThemePreset!, themePresetBase: DsbThemePreset!, themeTokens: Json
   ): Community
 
   "select read-only theme preset in dashboard"
@@ -907,10 +907,6 @@ type DsbWallpaper {
 type DsbLayout {
   themePreset: DsbThemePreset
   themePresetBase: DsbThemePreset
-  textTitle: String
-  textTitleDark: String
-  textDigest: String
-  textDigestDark: String
   kanbanBgColors: [RainbowColor]
   kanbanBoards: [KanbanBoard]
   postLayout: DsbPostLayout
@@ -939,8 +935,6 @@ type DsbLayout {
   footerLayout: DsbFooterLayout
   headerLayout: DsbHeaderLayout
   overlayDark: Boolean
-  gaussBlur: Float
-  gaussBlurDark: Float
   themeTokens: Json
   hasCustomThemePreset: Boolean
 }

@@ -7,7 +7,6 @@ import { INIT_KANBAN_BOARDS, normalizeKanbanBoards } from '~/const/dashboard'
 import { BUILTIN_ALIAS } from '~/const/name'
 import { THREAD } from '~/const/thread'
 import { removeEmptyValuesFromObject } from '~/helper'
-import { resolveThemePreset } from '~/lib/themePreset'
 import { P } from '~/schemas'
 import type {
   TCommunity,
@@ -102,16 +101,6 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     footerOnelineLinks,
     mediaReports,
   } = dashboard
-  const resolvedThemePreset = resolveThemePreset(layout ?? {})
-  const dashboardPresetFields = {
-    textTitle: resolvedThemePreset.textTitle,
-    textTitleDark: resolvedThemePreset.textTitleDark,
-    textDigest: resolvedThemePreset.textDigest,
-    textDigestDark: resolvedThemePreset.textDigestDark,
-    gaussBlur: resolvedThemePreset.gaussBlur,
-    gaussBlurDark: resolvedThemePreset.gaussBlurDark,
-  }
-
   const fieldsObj = removeEmptyValuesFromObject({
     enable,
     nameAlias: parseDashboardAlias([...nameAlias]),
@@ -120,7 +109,6 @@ export const parseDashboard = (community: TCommunity): TParseDashboard => {
     ...baseInfo,
     ...seo,
     ...layout,
-    ...dashboardPresetFields,
     ...rss,
     headerLinks,
     footerLinks,

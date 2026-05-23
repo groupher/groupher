@@ -1,24 +1,27 @@
 import { GLOW_EFFECTS_KEYS } from '~/const/glow_effect'
-import ClossSVG from '~/icons/CloseLight'
+import useThemeKV from '~/hooks/useThemeKV'
+import CloseSVG from '~/icons/CloseLight'
 
 import { PRESET_FIELD } from '../constant'
 import useSalon, { cn, cnMerge } from '../salon/details_panel/texture_balls'
 import type { TThemePresetOverwrite } from '../spec'
 
 type TProps = {
-  glowType: TThemePresetOverwrite['glowType']
-  glowTypeField: typeof PRESET_FIELD.GLOW_TYPE | typeof PRESET_FIELD.GLOW_TYPE_DARK
+  selectedOverwrite: TThemePresetOverwrite
   onThemePresetCommit: (patch: Partial<TThemePresetOverwrite>) => void
   rowClassName?: string
 }
 
 export default function TextureBalls({
-  glowType,
-  glowTypeField,
+  selectedOverwrite,
   onThemePresetCommit,
   rowClassName,
 }: TProps) {
   const s = useSalon()
+  const { key, value } = useThemeKV()
+
+  const glowType = value(selectedOverwrite, PRESET_FIELD.GLOW_TYPE)
+  const glowTypeKey = key(PRESET_FIELD.GLOW_TYPE)
 
   return (
     <div className={cnMerge(s.row, rowClassName)}>
@@ -26,9 +29,9 @@ export default function TextureBalls({
         type='button'
         className={cn(s.block, 'align-both', glowType === '' && s.blockActive)}
         aria-pressed={glowType === ''}
-        onClick={() => onThemePresetCommit({ [glowTypeField]: '' })}
+        onClick={() => onThemePresetCommit({ [glowTypeKey]: '' })}
       >
-        <ClossSVG className={cn(s.icon, 'opacity-60')} />
+        <CloseSVG className={cn(s.icon, 'opacity-60')} />
       </button>
 
       {GLOW_EFFECTS_KEYS.map((effect) => (
@@ -37,7 +40,7 @@ export default function TextureBalls({
           type='button'
           className={cn(s.block, effect === glowType && s.blockActive)}
           aria-pressed={effect === glowType}
-          onClick={() => onThemePresetCommit({ [glowTypeField]: effect })}
+          onClick={() => onThemePresetCommit({ [glowTypeKey]: effect })}
         >
           <div className={s.textureBall} style={s.textureStyle()}>
             <div className={s.glowLayer} style={{ background: `${s.glowStyle(effect)}` }} />
