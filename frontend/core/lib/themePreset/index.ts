@@ -31,6 +31,21 @@ export const getThemePresetValue = <TKey extends TThemePresetBaseField>(
 ): TResolvedThemePreset[TKey] => createThemeKeyPicker(theme).value(tokens, baseKey) as never
 
 /**
+ * Return the CSS variable that already carries the resolved page background.
+ *
+ * Problem scenario: the backend owns preset tokens, but the first client render
+ * can briefly see an empty token store before hydration. In that gap, callers
+ * should fall back to the CSS variable injected by SSR/ThemePresetScope instead
+ * of hard-coding preset colors in frontend code.
+ *
+ * Example:
+ *   getThemePresetPageBgCssVar(THEME.DARK)
+ *   // => 'var(--color-page-custom-dark)'
+ */
+export const getThemePresetPageBgCssVar = (theme: typeof THEME.LIGHT | typeof THEME.DARK): string =>
+  theme === THEME.DARK ? 'var(--color-page-custom-dark)' : 'var(--color-page-custom)'
+
+/**
  * Build CSS variables for one concrete theme.
  *
  * Problem scenario: runtime and SSR need to write the same CSS variables from

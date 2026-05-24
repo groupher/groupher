@@ -3,10 +3,13 @@ import { useState } from 'react'
 import useThemeKV from '~/hooks/useThemeKV'
 import RangeInput from '~/widgets/RangeInput'
 
+import { PRESET_FIELD } from '../constant'
 import type { TThemePresetOverwrite, TThemePresetTokens } from '../spec'
 
+type TNumericRangeKey = typeof PRESET_FIELD.GAUSS_BLUR | typeof PRESET_FIELD.GLOW_OPACITY
+
 type TProps = {
-  baseKey: keyof TThemePresetTokens
+  baseKey: TNumericRangeKey
   selectedTokens: TThemePresetTokens
   valueLabel: string
   min: number

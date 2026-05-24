@@ -1,5 +1,6 @@
 import { THEME_PRESET } from '~/const/theme_preset'
 
+import { resolveRawBg } from '../DetailsPanel/CustomPageBg/hooks'
 import {
   buildCustomPresetEditOverwrite,
   buildCustomPresetResetOverwrite,
@@ -54,6 +55,13 @@ describe('theme preset model helpers', () => {
       pageBgIntensity: tokens.pageBgIntensity,
       pageBgIntensityDark: tokens.pageBgIntensityDark,
     })
+  })
+
+  it('falls back to the theme css variable when page background draft is empty', () => {
+    const draft = { ...toPageBgDraft(tokens), pageBg: '', pageBgDark: '' }
+
+    expect(resolveRawBg(draft, true)).toBe('var(--color-page-custom)')
+    expect(resolveRawBg(draft, false)).toBe('var(--color-page-custom-dark)')
   })
 
   it('forks readonly preset edits into custom tokens and sparse overwrite', () => {

@@ -28,8 +28,8 @@ export default function PresetList({
   const readonlyPresetOptions = presetOptions.filter(
     (preset) => preset.value !== THEME_PRESET.CUSTOM,
   )
-  const customPreset: TThemePresetOption = savedCustomPreset ?? {
-    value: THEME_PRESET.CUSTOM,
+  const customPreset: TThemePresetOption = {
+    ...(savedCustomPreset ?? { value: THEME_PRESET.CUSTOM }),
     tokens: customTokens,
   }
   const isCustomPreset = activePreset === THEME_PRESET.CUSTOM

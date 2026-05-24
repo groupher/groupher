@@ -15,6 +15,7 @@ export default function ThemePresetStore(init: TInit = {}): TStore {
     ...tokens,
 
     hydrate(source: TInit): void {
+      const currentTokenKeys = Object.keys(store.themeTokens ?? {})
       const nextTokens = source.themeTokens ?? {}
 
       store.themePreset = source.themePreset ?? DEFAULT_THEME_PRESET
@@ -22,6 +23,11 @@ export default function ThemePresetStore(init: TInit = {}): TStore {
       store.themeTokens = source.themeTokens ?? {}
       if (source.presetOptions !== undefined) {
         store.presetOptions = source.presetOptions
+      }
+      for (const key of currentTokenKeys) {
+        if (key in nextTokens) continue
+
+        delete (store as Record<string, unknown>)[key]
       }
       Object.assign(store, nextTokens)
     },

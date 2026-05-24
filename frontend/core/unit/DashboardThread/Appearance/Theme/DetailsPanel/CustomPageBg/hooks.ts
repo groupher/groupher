@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import THEME from '~/const/theme'
 import { getPageBgCustomColor, normalizePageBgHue, normalizePageBgIntensity } from '~/lib/color'
 import { createThemeKeyPicker } from '~/lib/themeKey'
+import { getThemePresetPageBgCssVar } from '~/lib/themePreset'
 
 import { PRESET_FIELD } from '../../constant'
 
@@ -31,7 +32,7 @@ export const resolveRawBg = (draft: TPageBgDraft, isLightTheme: boolean) => {
   const theme = isLightTheme ? THEME.LIGHT : THEME.DARK
   const { value } = createThemeKeyPicker(theme)
 
-  return value(draft, PRESET_FIELD.PAGE_BG)
+  return value(draft, PRESET_FIELD.PAGE_BG) || getThemePresetPageBgCssVar(theme)
 }
 
 const getThemePageBgState = (draft: TPageBgDraft, theme: TThemeName) => {

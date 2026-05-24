@@ -1,7 +1,11 @@
 import THEME from '~/const/theme'
 import type { TResolvedThemePreset } from '~/spec'
 
-import { buildThemePresetCssVars, getThemePresetValue } from './themePreset'
+import {
+  buildThemePresetCssVars,
+  getThemePresetPageBgCssVar,
+  getThemePresetValue,
+} from './themePreset'
 
 const tokens: TResolvedThemePreset = {
   pageBg: '#ffffff',
@@ -35,6 +39,13 @@ describe('getThemePresetValue', () => {
   it('reads dark keys from a base key by convention', () => {
     expect(getThemePresetValue(tokens, 'textTitle', THEME.LIGHT)).toBe('#111111')
     expect(getThemePresetValue(tokens, 'textTitle', THEME.DARK)).toBe('#eeeeee')
+  })
+})
+
+describe('getThemePresetPageBgCssVar', () => {
+  it('returns the css variable fallback for one concrete theme', () => {
+    expect(getThemePresetPageBgCssVar(THEME.LIGHT)).toBe('var(--color-page-custom)')
+    expect(getThemePresetPageBgCssVar(THEME.DARK)).toBe('var(--color-page-custom-dark)')
   })
 })
 
