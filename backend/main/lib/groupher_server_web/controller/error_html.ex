@@ -1,4 +1,10 @@
 defmodule GroupherServerWeb.ErrorHTML do
+  @moduledoc """
+  HTML error renderer used by Phoenix fallback error handling.
+
+  It translates template names such as `"404.html"` into human-readable status
+  text for browser-facing responses.
+  """
   use GroupherServerWeb, :html
 
   # If you want to customize your error pages,
@@ -13,6 +19,9 @@ defmodule GroupherServerWeb.ErrorHTML do
   # The default is to render a plain text page based on
   # the template name. For example, "404.html" becomes
   # "Not Found".
+  @doc """
+  Renders an HTML error message from a template name.
+  """
   def render(template, _assigns) do
     Phoenix.Controller.status_message_from_template(template)
   end

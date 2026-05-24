@@ -88,6 +88,7 @@ defmodule GroupherServerWeb.Schema.Account.Types do
     # 3. has_notifications ?
     # 4. has_watches ?
 
+    @desc "Mailbox unread counters and empty state for the current viewer."
     field :mailbox, :mailbox_status do
       middleware(M.Authorize, :login)
       resolve(&R.Accounts.mailbox_status/3)

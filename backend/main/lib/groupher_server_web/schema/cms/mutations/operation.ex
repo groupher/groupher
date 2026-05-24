@@ -1,6 +1,9 @@
 defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
   @moduledoc """
-  CMS mutations for cms operations
+  GraphQL mutations for cross-entity CMS operations.
+
+  This module covers operational actions like category binding, community
+  subscription, tag indexing, and article move/mirror workflows.
   """
   use Helper.GqlSchemaSuite
 

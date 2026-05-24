@@ -1,6 +1,10 @@
 defmodule GroupherServerWeb.Schema.CMS.Types do
   @moduledoc """
-  cms types used in queries & mutations
+  GraphQL object and payload types for the CMS domain.
+
+  These types define the user-facing CMS data contract used by query and
+  mutation fields in Playground, including communities, articles, comments,
+  dashboard settings, moderation payloads, and pagination wrappers.
   """
   use Helper.GqlSchemaSuite
 
@@ -19,10 +23,12 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import_types(Schema.CMS.Metrics)
 
   object :check_state do
+    @desc "Whether the checked resource exists or condition is met."
     field(:exist, :boolean)
   end
 
   object :done_state do
+    @desc "Whether the requested operation completed successfully."
     field(:done, :boolean)
   end
 
@@ -136,6 +142,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :dsb_layout do
     dsb_gq_fields(:layout, except: [:custom_theme_preset])
 
+    @desc "Base preset used by the current custom theme preset."
     field :theme_preset_base, :dsb_theme_preset do
       resolve(fn layout, _, _ ->
         # `themePresetBase` describes the saved Custom preset only. Returning
@@ -149,6 +156,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
       end)
     end
 
+    @desc "Resolved design tokens for the active theme preset."
     field :theme_tokens, :json do
       resolve(fn layout, _, _ ->
         tokens =
@@ -161,6 +169,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
       end)
     end
 
+    @desc "Theme preset options available for dashboard layout settings."
     field :theme_presets, list_of(:dsb_theme_preset_option) do
       resolve(fn layout, _, _ ->
         {:ok, ThemePreset.options(layout.custom_theme_preset)}
@@ -243,20 +252,27 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :community do
     meta(:cache, max_age: 30)
+    @desc "Community identifier."
     field(:id, :id)
+    @desc "Community display title."
     field(:title, :string)
+    @desc "Community introduction text."
     field(:desc, :string)
+    @desc "Community slug used in API routes."
     field(:slug, :string)
     field(:favicon, :string)
     field(:homepage, :string)
     field(:index, :integer)
     field(:logo, :string)
+    @desc "Community owner account."
     field(:author, :user, resolve: dataloader(CMS, :author))
     field(:locale, :string)
     field(:categories, list_of(:category), resolve: dataloader(CMS, :categories))
+    @desc "Dashboard configuration for this community."
     field(:dashboard, :dsb, resolve: dataloader(CMS, :dashboard))
 
     # field(:moderators, list_of(:community_moderator), resolve: dataloader(CMS, moderators: :user))
+    @desc "Current moderators in the community."
     field(:moderators, list_of(:community_moderator))
 
     field(:meta, :community_meta)
@@ -267,11 +283,14 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:subscribers_count, :integer)
     field(:moderators_count, :integer)
 
+    @desc "Total number of tags configured for the community."
     field :community_tags_count, :integer do
       resolve(&R.CMS.community_tags_count/3)
     end
 
+    @desc "Whether the current viewer has subscribed to this community."
     field(:viewer_has_subscribed, :boolean)
+    @desc "Whether the current viewer is a moderator of this community."
     field(:viewer_is_moderator, :boolean)
 
     field(:pending, :integer)

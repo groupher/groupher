@@ -1,4 +1,10 @@
 defmodule GroupherServerWeb.UserSocket do
+  @moduledoc """
+  Phoenix socket entry point for real-time channel connections.
+
+  It accepts inbound transport connections, returns the initialized socket, and
+  defines the socket identifier strategy used by channel-level broadcast flows.
+  """
   use Phoenix.Socket
 
   ## Channels
@@ -19,6 +25,16 @@ defmodule GroupherServerWeb.UserSocket do
   #
   # See `Phoenix.Token` documentation for examples in
   # performing token verification on connect.
+  @doc """
+  Authenticates and initializes an incoming socket connection.
+
+  ## Parameters
+  - `params`: Client connection params.
+  - `socket`: The raw Phoenix socket.
+
+  ## Returns
+  - `{:ok, socket}` with the accepted socket.
+  """
   def connect(_params, socket) do
     {:ok, socket}
   end
@@ -33,5 +49,10 @@ defmodule GroupherServerWeb.UserSocket do
   #     GroupherServerWeb.Endpoint.broadcast("user_socket:#{user.id}", "disconnect", %{})
   #
   # Returning `nil` makes this socket anonymous.
+  @doc """
+  Returns the socket topic identifier for disconnect broadcasts.
+
+  Returning `nil` keeps sockets anonymous and disables targeted disconnects by id.
+  """
   def id(_socket), do: nil
 end

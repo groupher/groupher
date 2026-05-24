@@ -1,4 +1,11 @@
 defmodule GroupherServer.Repo do
+  @moduledoc """
+  Ecto repository for Groupher's backend data layer.
+
+  This module is the boundary between business domains and PostgreSQL. It powers
+  query execution for contexts such as accounts, CMS content, and statistics, and
+  provides pagination defaults through `Scrivener`.
+  """
   import Helper.Utils, only: [get_config: 2]
 
   use Ecto.Repo, otp_app: :groupher_server, adapter: Ecto.Adapters.Postgres
