@@ -21,12 +21,16 @@ const ResetToPresetMenu: FC<TProps> = ({ activePresetBase, presetOptions, onRese
 
   const options = useMemo(
     () =>
-      presetOptions
-        .filter((preset) => preset.value !== THEME_PRESET.CUSTOM)
-        .map((preset) => ({
+      presetOptions.reduce<Array<TThemePresetOption & { isBase: boolean }>>((options, preset) => {
+        if (preset.value === THEME_PRESET.CUSTOM) return options
+
+        options.push({
           ...preset,
           isBase: preset.value === activePresetBase,
-        })),
+        })
+
+        return options
+      }, []),
     [activePresetBase, presetOptions],
   )
 

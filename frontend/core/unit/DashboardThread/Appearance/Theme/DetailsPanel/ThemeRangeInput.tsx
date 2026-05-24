@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import useThemeKV from '~/hooks/useThemeKV'
 import RangeInput from '~/widgets/RangeInput'
@@ -29,11 +29,11 @@ export default function ThemeRangeInput({
   const { key, value } = useThemeKV()
   const activeValue = value(selectedTokens, baseKey) as number
   const activeKey = key(baseKey)
-  const [displayValue, setDisplayValue] = useState(activeValue)
-
-  useEffect(() => {
-    setDisplayValue(activeValue)
-  }, [activeValue])
+  const [draftValue, setDraftValue] = useState({
+    sourceValue: activeValue,
+    value: activeValue,
+  })
+  const displayValue = draftValue.sourceValue === activeValue ? draftValue.value : activeValue
 
   const getOverwrite = (value: number): TThemePresetOverwrite => ({
     [activeKey]: value,
@@ -52,7 +52,7 @@ export default function ThemeRangeInput({
       onChange={(value) => {
         const overwrite = getOverwrite(value)
 
-        setDisplayValue(value)
+        setDraftValue({ sourceValue: activeValue, value })
         onThemePresetPreview(overwrite)
         onThemePresetSchedule(overwrite)
       }}
