@@ -103,7 +103,9 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
     current_custom_preset = current_layout.custom_theme_preset
     current_base_preset = ThemePreset.custom_base_preset(current_custom_preset)
     base_preset = Map.get(args, :theme_preset_base, current_base_preset)
-    incoming_overwrite = Map.get(args, :theme_overwrite, %{})
+    # GraphQL allows `themeOverwrite: null`; treat it the same as an omitted or
+    # empty overwrite so reset/preserve semantics stay consistent.
+    incoming_overwrite = Map.get(args, :theme_overwrite) || %{}
 
     # Custom existence is stored by the nullable `custom_theme_preset` map, not
     # by overwrite size. Empty overwrite means "reset Custom" when already

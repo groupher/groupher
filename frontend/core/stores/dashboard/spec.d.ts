@@ -74,7 +74,7 @@ export type TDsbFieldMap = {
 
   // page
   themePreset: TThemePreset
-  themePresetBase: TThemePreset
+  themePresetBase: TThemePreset | null
   themeTokens: Partial<TResolvedThemePreset>
   themePresets: readonly TThemePresetOption[]
   themeOverwrite: Partial<TResolvedThemePreset>

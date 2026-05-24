@@ -138,7 +138,14 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
     field :theme_preset_base, :dsb_theme_preset do
       resolve(fn layout, _, _ ->
-        {:ok, ThemePreset.custom_base_preset(layout.custom_theme_preset)}
+        # `themePresetBase` describes the saved Custom preset only. Returning
+        # nil when Custom has not been created lets clients distinguish that
+        # state from "Custom exists and is based on DEFAULT".
+        if is_map(layout.custom_theme_preset) do
+          {:ok, ThemePreset.custom_base_preset(layout.custom_theme_preset)}
+        else
+          {:ok, nil}
+        end
       end)
     end
 

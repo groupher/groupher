@@ -1,7 +1,7 @@
 import { clone } from 'ramda'
 import { useEffect, useRef } from 'react'
 
-import { THEME_PRESET } from '~/const/theme_preset'
+import { DEFAULT_THEME_PRESET, THEME_PRESET } from '~/const/theme_preset'
 import useDsbDemoMode from '~/hooks/useDsbDemoMode'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { toast } from '~/signal'
@@ -18,7 +18,7 @@ import type { TThemePresetMutationRet } from '../spec'
 
 type TThemePresetMutationLayout = {
   themePreset: TThemePreset
-  themePresetBase: TThemePreset
+  themePresetBase: TThemePreset | null
   themeTokens: TResolvedThemePreset
   themePresets: readonly TThemePresetOption[]
 }
@@ -62,7 +62,7 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
     if (layout) {
       storeRef.current.commit({
         themePreset: layout.themePreset,
-        themePresetBase: layout.themePresetBase,
+        themePresetBase: layout.themePresetBase ?? DEFAULT_THEME_PRESET,
         themeTokens: clone(layout.themeTokens),
         themePresets: clone(layout.themePresets),
       })
@@ -78,6 +78,18 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
       })
     }
 
+    // Readonly preset selection does not save Custom overwrite. Preserve the
+    // last accepted overwrite in that path so unsaved Custom edits do not become
+    // the new original just because the user saved a readonly preset.
+    const isAcceptingCustom = storeRef.current.themePreset === THEME_PRESET.CUSTOM
+    const acceptedThemeOverwrite = isAcceptingCustom
+      ? storeRef.current.themeOverwrite
+      : storeRef.current.original.themeOverwrite
+
+    if (!isAcceptingCustom) {
+      storeRef.current.commit({ themeOverwrite: clone(acceptedThemeOverwrite) })
+    }
+
     storeRef.current.acceptFields(THEME_PRESET_STORE_FIELDS)
 
     const original = {
@@ -86,7 +98,7 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
       themePresetBase: storeRef.current.themePresetBase,
       themePresets: clone(storeRef.current.themePresets),
       themeTokens: clone(storeRef.current.themeTokens),
-      themeOverwrite: clone(storeRef.current.themeOverwrite),
+      themeOverwrite: clone(acceptedThemeOverwrite),
     }
 
     storeRef.current.replaceOriginal(original)
@@ -130,7 +142,7 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
       ? mutate<TThemePresetMutationData>(S.saveCustomThemePreset, {
           community,
           themePreset: storeRef.current.themePreset,
-          themePresetBase: storeRef.current.themePresetBase,
+          themePresetBase: storeRef.current.themePresetBase ?? DEFAULT_THEME_PRESET,
           themeOverwrite: JSON.stringify(storeRef.current.themeOverwrite ?? {}),
         })
       : mutate<TThemePresetMutationData>(S.selectThemePreset, {

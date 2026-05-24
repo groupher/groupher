@@ -90,7 +90,8 @@ export const buildCustomPresetEditOverwrite = ({
   dashboardFields: Partial<TDsbFieldMap>
   nextCustomTokensDraft: TThemePresetTokens
 } => {
-  const themePresetBase = activePreset === THEME_PRESET.CUSTOM ? activePresetBase : activePreset
+  const themePresetBase =
+    activePreset === THEME_PRESET.CUSTOM ? (activePresetBase ?? THEME_PRESET.DEFAULT) : activePreset
   const baseTokens =
     activePreset === THEME_PRESET.CUSTOM ? (customTokensDraft ?? selectedTokens) : selectedTokens
   const nextTokens = {
@@ -142,7 +143,7 @@ export const buildPresetSelectionFields = ({
   return {
     dashboardFields: {
       themePreset: preset.value,
-      themePresetBase: currentThemePresetBase,
+      themePresetBase: currentThemePresetBase ?? THEME_PRESET.DEFAULT,
       themeTokens: { ...nextTokens },
     },
     nextTokens,

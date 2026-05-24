@@ -9,65 +9,6 @@ const clamp = (value: number, min: number, max: number): number => {
   return Math.min(max, Math.max(min, value))
 }
 
-const expandHex = (hex: string): string | null => {
-  const value = hex.trim()
-
-  if (/^#([a-f\d]{3})$/i.test(value)) {
-    return value.replace(/^#([a-f\d])([a-f\d])([a-f\d])$/i, (_m, r, g, b) => {
-      return `#${r}${r}${g}${g}${b}${b}`
-    })
-  }
-
-  if (/^#([a-f\d]{6})$/i.test(value)) {
-    return value
-  }
-
-  return null
-}
-
-const hexToRgb = (hex: string): [number, number, number] | null => {
-  const normalized = expandHex(hex)
-  if (!normalized) return null
-
-  return [
-    Number.parseInt(normalized.slice(1, 3), 16),
-    Number.parseInt(normalized.slice(3, 5), 16),
-    Number.parseInt(normalized.slice(5, 7), 16),
-  ]
-}
-
-const rgbToHsl = (r: number, g: number, b: number): [number, number, number] => {
-  const rn = r / 255
-  const gn = g / 255
-  const bn = b / 255
-
-  const max = Math.max(rn, gn, bn)
-  const min = Math.min(rn, gn, bn)
-  const lightness = (max + min) / 2
-  const delta = max - min
-
-  if (delta === 0) {
-    return [0, 0, lightness * 100]
-  }
-
-  const saturation = lightness > 0.5 ? delta / (2 - max - min) : delta / (max + min)
-
-  let hue = 0
-  switch (max) {
-    case rn:
-      hue = ((gn - bn) / delta + (gn < bn ? 6 : 0)) * 60
-      break
-    case gn:
-      hue = ((bn - rn) / delta + 2) * 60
-      break
-    default:
-      hue = ((rn - gn) / delta + 4) * 60
-      break
-  }
-
-  return [hue, saturation * 100, lightness * 100]
-}
-
 const hslToRgb = (h: number, s: number, l: number): [number, number, number] => {
   const hue = ((h % 360) + 360) % 360
   const sat = clamp(s, 0, 100) / 100
@@ -161,43 +102,6 @@ export const getPageBgCustomColor = (
 
   const mixed = mixRgb([255, 255, 255], tintColor, getLightPageBgTintRatio(safeIntensity))
   return rgbToHex(...mixed)
-}
-
-export const getPageBgCustomParamsFromHex = (
-  hex: string,
-  theme: string,
-): { hue: number; intensity: number } => {
-  const rgb = hexToRgb(hex)
-  if (!rgb) {
-    return {
-      hue: PAGE_CUSTOM_HUE_DEFAULT,
-      intensity: PAGE_CUSTOM_INTENSITY_DEFAULT,
-    }
-  }
-
-  const [hue] = rgbToHsl(...rgb)
-  const safeHue = Math.round(hue)
-  let bestIntensity = 100
-  let bestDistance = Number.POSITIVE_INFINITY
-
-  for (let intensity = 0; intensity <= 100; intensity += 1) {
-    const next = getPageBgCustomColor(theme, safeHue, intensity)
-    const nextRgb = hexToRgb(next)
-    if (!nextRgb) continue
-
-    const distance =
-      (rgb[0] - nextRgb[0]) ** 2 + (rgb[1] - nextRgb[1]) ** 2 + (rgb[2] - nextRgb[2]) ** 2
-
-    if (distance < bestDistance) {
-      bestDistance = distance
-      bestIntensity = intensity
-    }
-  }
-
-  return {
-    hue: safeHue,
-    intensity: bestIntensity,
-  }
 }
 
 export const getLetterColor = (username: string): TColorName => {

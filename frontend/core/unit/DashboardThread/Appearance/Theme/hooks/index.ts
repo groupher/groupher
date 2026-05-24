@@ -57,12 +57,13 @@ export default function useAppearance({
   const showForkRelationRef = useRef(showForkRelation)
 
   const activePreset = dsb$.themePreset
+  const savedCustomPresetBase = dsb$.themePresetBase ?? THEME_PRESET.DEFAULT
   const activePresetBase =
-    activePreset === THEME_PRESET.CUSTOM ? dsb$.themePresetBase : activePreset
+    activePreset === THEME_PRESET.CUSTOM ? savedCustomPresetBase : activePreset
   const selectedPageBgDraft = useMemo(() => toPageBgDraft(selectedTokens), [selectedTokens])
   const customPresetOption = presetOptions.find((preset) => preset.value === THEME_PRESET.CUSTOM)
   const customBaseTokens =
-    presetOptions.find((preset) => preset.value === dsb$.themePresetBase)?.tokens ?? selectedTokens
+    presetOptions.find((preset) => preset.value === savedCustomPresetBase)?.tokens ?? selectedTokens
   const customPresetTokens =
     customTokensDraft ??
     customPresetOption?.tokens ??
@@ -84,7 +85,7 @@ export default function useAppearance({
     setShowForkRelation(nextShowForkRelation)
   }, [])
 
-  const updateCustomTokensDraft = useCallback((tokens: typeof selectedTokens) => {
+  const updateCustomTokensDraft = useCallback((tokens: typeof selectedTokens | null) => {
     customTokensDraftRef.current = tokens
     setCustomTokensDraft(tokens)
   }, [])
@@ -111,7 +112,7 @@ export default function useAppearance({
 
       const { dashboardFields, nextCustomTokensDraft } = buildCustomPresetEditOverwrite({
         activePreset: dsb$.themePreset,
-        activePresetBase: dsb$.themePresetBase,
+        activePresetBase: savedCustomPresetBase,
         selectedTokens: selectedTokensRef.current,
         customTokensDraft: customTokensDraftRef.current,
         currentThemeOverwrite: dsb$.themeOverwrite,
@@ -122,7 +123,13 @@ export default function useAppearance({
 
       return dashboardFields
     },
-    [dsb$, updateCustomTokensDraft, updateEditingDetails, updateShowForkRelation],
+    [
+      dsb$,
+      savedCustomPresetBase,
+      updateCustomTokensDraft,
+      updateEditingDetails,
+      updateShowForkRelation,
+    ],
   )
 
   const commitThemePresetOverwrite = useCallback(
@@ -156,7 +163,7 @@ export default function useAppearance({
     editThemePresetFields(
       buildPresetSelectionFields({
         preset,
-        currentThemePresetBase: dsb$.themePresetBase,
+        currentThemePresetBase: savedCustomPresetBase,
         customTokensDraft: customTokensDraftRef.current,
       }).dashboardFields,
     )
@@ -214,6 +221,10 @@ export default function useAppearance({
     updateEditingDetails(false)
     updateShowForkRelation(false)
     rollbackThemePreset()
+    // Cancel means the unsaved Custom card preview is gone too. The dashboard
+    // store rollback restores persisted fields; this clears the feature-local
+    // live token draft that preset selection prefers while editing.
+    updateCustomTokensDraft(null)
     setPageBgResetVersion((version) => version + 1)
   }
 

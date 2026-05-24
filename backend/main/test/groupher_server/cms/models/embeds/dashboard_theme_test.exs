@@ -68,6 +68,15 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardThemeTest do
 
     assert {:error, {:custom, "invalid theme overwrite value: gaussBlur"}} =
              ThemePreset.validate_overwrite(%{"gaussBlur" => "72"})
+
+    assert {:error, {:custom, "invalid theme overwrite value: primaryColor"}} =
+             ThemePreset.validate_overwrite(%{"primaryColor" => "YELLOW"})
+
+    assert {:error, {:custom, "invalid theme overwrite value: glowOpacity"}} =
+             ThemePreset.validate_overwrite(%{"glowOpacity" => 101})
+
+    assert {:error, {:custom, "invalid theme overwrite value: pageBgHue"}} =
+             ThemePreset.validate_overwrite(%{"pageBgHue" => -1})
   end
 
   test "merges sparse overwrite and removes values equal to the base preset" do
@@ -96,7 +105,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardThemeTest do
         custom_theme_preset: %{
           "basePreset" => "claude",
           "overwrite" => %{
-            "accentColor" => "YELLOW",
+            "accentColor" => "#ffee00",
             "accentColorDark" => "#112233"
           }
         }
@@ -107,7 +116,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardThemeTest do
     layout = Ecto.Changeset.apply_changes(changeset)
 
     assert layout.custom_theme_preset["overwrite"] == %{
-             "accentColor" => "YELLOW",
+             "accentColor" => "#ffee00",
              "accentColorDark" => "#112233"
            }
   end

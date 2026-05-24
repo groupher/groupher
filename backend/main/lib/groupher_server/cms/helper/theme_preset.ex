@@ -128,6 +128,31 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
     }
   }
   @token_keys @defaults.default |> Map.keys() |> MapSet.new()
+  @color_token_keys MapSet.new([
+                      "pageBg",
+                      "pageBgDark",
+                      "primaryColor",
+                      "primaryColorDark",
+                      "accentColor",
+                      "accentColorDark",
+                      "textTitle",
+                      "textTitleDark",
+                      "textDigest",
+                      "textDigestDark",
+                      "cardColor",
+                      "cardColorDark",
+                      "dividerColor",
+                      "dividerColorDark"
+                    ])
+  @hue_token_keys MapSet.new(["pageBgHue", "pageBgHueDark"])
+  @percent_token_keys MapSet.new([
+                        "pageBgIntensity",
+                        "pageBgIntensityDark",
+                        "gaussBlur",
+                        "gaussBlurDark",
+                        "glowOpacity",
+                        "glowOpacityDark"
+                      ])
 
   def token_keys, do: MapSet.to_list(@token_keys)
   def preset_keys, do: @preset_keys
@@ -358,10 +383,15 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
   Validate a sparse Custom overwrite payload.
 
   Problem scenario: `saveCustomThemePreset` accepts JSON, so the backend must
-  reject unknown token keys and wrong value types before anything is persisted.
-  This payload is only persisted when the target preset is Custom; readonly
-  presets are selected by name and never store overwrite data. The function does
-  not camelize keys, silently drop fields, or fill defaults.
+  reject unknown token keys and wrong values before anything is persisted. This
+  payload is only persisted when the target preset is Custom; readonly presets
+  are selected by name and never store overwrite data. The function does not
+  camelize keys, silently drop fields, or fill defaults.
+
+  Validation intentionally stays simple and explicit: color tokens accept hex
+  colors, hue accepts 0..360, and percent sliders accept 0..100. The backend is
+  the source of truth for saved custom theme input, so invalid CSS/color strings
+  should not be stored for the frontend to interpret later.
 
   Example:
 
@@ -441,13 +471,26 @@ defmodule GroupherServer.CMS.Helper.ThemePreset do
   defp normalize_preset(preset) when is_atom(preset), do: preset
   defp normalize_preset(_), do: :default
 
-  defp valid_token_value?(key, value) do
-    case Map.fetch!(@defaults.default, key) do
-      default when is_boolean(default) -> is_boolean(value)
-      default when is_binary(default) -> is_binary(value)
-      default when is_number(default) -> is_number(value)
+  defp valid_token_value?(key, value) when is_binary(value) do
+    cond do
+      MapSet.member?(@color_token_keys, key) -> valid_hex_color?(value)
+      key in ["glowType", "glowTypeDark"] -> true
+      true -> false
     end
   end
+
+  defp valid_token_value?(key, value) when is_number(value) do
+    cond do
+      MapSet.member?(@hue_token_keys, key) -> value >= 0 and value <= 360
+      MapSet.member?(@percent_token_keys, key) -> value >= 0 and value <= 100
+      true -> false
+    end
+  end
+
+  defp valid_token_value?(key, value) when is_boolean(value), do: key == "glowFixed"
+  defp valid_token_value?(_, _), do: false
+
+  defp valid_hex_color?(value), do: Regex.match?(~r/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, value)
 
   defp invalid_key(key), do: {:error, {:custom, "invalid theme overwrite key: #{inspect(key)}"}}
   defp invalid_value(key), do: {:error, {:custom, "invalid theme overwrite value: #{key}"}}

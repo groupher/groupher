@@ -34,6 +34,8 @@ const DEFAULT_THEME_TOKENS = {
   glowOpacityDark: 100,
 }
 
+const makeThemeTokens = () => ({ ...DEFAULT_THEME_TOKENS })
+
 const makeUser = (overrides = {}) => {
   return {
     id: overrides.id ?? 'u_e2e',
@@ -77,7 +79,7 @@ const makeDashboard = (slug = 'home') => {
     },
     layout: {
       themePreset: 'DEFAULT',
-      themeTokens: DEFAULT_THEME_TOKENS,
+      themeTokens: makeThemeTokens(),
       postLayout: 'quora',
       kanbanLayout: 'classic',
       kanbanCardLayout: 'simple',

@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
         themeOverwrite:
           Jason.encode!(%{
             "primaryColor" => "#112233",
-            "accentColor" => "YELLOW",
+            "accentColor" => "#ffee00",
             "gaussBlur" => 80.5,
             "glowType" => "PINK",
             "glowOpacity" => 30.5,
@@ -62,10 +62,10 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
         |> get_in(["dashboard", "layout", "themePresets"])
         |> Enum.find(&(&1["value"] == "CUSTOM"))
 
-      assert custom_option["tokens"]["accentColor"] == "YELLOW"
+      assert custom_option["tokens"]["accentColor"] == "#ffee00"
 
       assert get_in(updated, ["dashboard", "layout", "themeTokens", "accentColor"]) ==
-               "YELLOW"
+               "#ffee00"
 
       assert get_in(updated, ["dashboard", "layout", "themeTokens", "gaussBlur"]) == 80.5
       assert custom_option["tokens"]["gaussBlur"] == 80.5
@@ -103,7 +103,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
 
       assert found.dashboard.layout.custom_theme_preset["overwrite"] == %{
                "primaryColor" => "#112233",
-               "accentColor" => "YELLOW",
+               "accentColor" => "#ffee00",
                "gaussBlur" => 80.5,
                "glowType" => "PINK",
                "glowOpacity" => 30.5,
@@ -240,8 +240,24 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
         themeOverwrite: Jason.encode!(%{"gaussBlur" => "70"})
       }
 
+      invalid_color_variables = %{
+        community: community.slug,
+        themePreset: "CUSTOM",
+        themePresetBase: "CLAUDE",
+        themeOverwrite: Jason.encode!(%{"primaryColor" => "not-a-color"})
+      }
+
+      out_of_range_variables = %{
+        community: community.slug,
+        themePreset: "CUSTOM",
+        themePresetBase: "CLAUDE",
+        themeOverwrite: Jason.encode!(%{"glowOpacity" => 101})
+      }
+
       assert mutation_error?(rule_conn, @save_custom_theme_preset_query, unknown_key_variables)
       assert mutation_error?(rule_conn, @save_custom_theme_preset_query, wrong_type_variables)
+      assert mutation_error?(rule_conn, @save_custom_theme_preset_query, invalid_color_variables)
+      assert mutation_error?(rule_conn, @save_custom_theme_preset_query, out_of_range_variables)
     end
 
     test "save custom theme preset resets custom base with empty overwrite", ~m(community)a do
@@ -308,6 +324,34 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
       assert found.dashboard.layout.custom_theme_preset["overwrite"] == %{}
     end
 
+    test "save custom theme preset treats null overwrite as empty overwrite",
+         ~m(community)a do
+      rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
+
+      custom_variables = %{
+        community: community.slug,
+        themePreset: "CUSTOM",
+        themePresetBase: "CLAUDE",
+        themeOverwrite: Jason.encode!(%{"primaryColor" => "#112233"})
+      }
+
+      reset_variables = %{
+        community: community.slug,
+        themePreset: "CUSTOM",
+        themePresetBase: "CLAUDE",
+        themeOverwrite: nil
+      }
+
+      rule_conn |> gq_mutation(@save_custom_theme_preset_query, custom_variables)
+      updated = rule_conn |> gq_mutation(@save_custom_theme_preset_query, reset_variables)
+
+      assert get_in(updated, ["dashboard", "layout", "themeTokens", "primaryColor"]) == "#c96442"
+
+      {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
+
+      assert found.dashboard.layout.custom_theme_preset["overwrite"] == %{}
+    end
+
     @select_theme_preset_query """
     mutation($community: String!, $themePreset: DsbThemePreset!) {
       selectThemePreset(community: $community, themePreset: $themePreset) {
@@ -335,7 +379,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
         |> gq_mutation(@select_theme_preset_query, %{community: community.slug, themePreset: "HN"})
 
       assert get_in(updated, ["dashboard", "layout", "themePreset"]) == "HN"
-      assert get_in(updated, ["dashboard", "layout", "themePresetBase"]) == "DEFAULT"
+      assert get_in(updated, ["dashboard", "layout", "themePresetBase"]) == nil
 
       refute Enum.any?(
                get_in(updated, ["dashboard", "layout", "themePresets"]),

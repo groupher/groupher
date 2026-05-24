@@ -14,7 +14,7 @@ export type TPreviewCssVars = Record<`--${string}`, string | number | null>
 
 export type TCustomPresetEditOptions = {
   activePreset: TThemePresetOption['value']
-  activePresetBase: TThemePresetOption['value']
+  activePresetBase: TThemePresetOption['value'] | null
   selectedTokens: TThemePresetTokens
   customTokensDraft: TThemePresetTokens | null
   currentThemeOverwrite: TThemePresetOverwrite
@@ -23,7 +23,7 @@ export type TCustomPresetEditOptions = {
 
 export type TPresetSelectionOptions = {
   preset: TThemePresetOption
-  currentThemePresetBase: TThemePresetOption['value']
+  currentThemePresetBase: TThemePresetOption['value'] | null
   customTokensDraft: TThemePresetTokens | null
 }
 
