@@ -181,30 +181,28 @@ defmodule GroupherServer.Test.CMS.Communities.Dashboard do
                List.keyfind(changeset.errors, :kanban_boards, 0)
     end
 
-    test "normalizes nil kanban boards update to defaults", ~m(community_attrs user)a do
+    test "rejects nil kanban boards in community dashboard", ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
-      assert {:ok, _} =
+      assert {:error, %Ecto.Changeset{} = changeset} =
                CMS.Communities.update_dashboard(community, :layout, %{
                  kanban_boards: nil
                })
 
-      {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
-
-      assert find_community.dashboard.layout.kanban_boards == [:todo, :wip, :done]
+      assert {:kanban_boards, {"can't be blank", _}} =
+               List.keyfind(changeset.errors, :kanban_boards, 0)
     end
 
-    test "normalizes empty kanban boards update to defaults", ~m(community_attrs user)a do
+    test "rejects empty kanban boards in community dashboard", ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
-      assert {:ok, _} =
+      assert {:error, %Ecto.Changeset{} = changeset} =
                CMS.Communities.update_dashboard(community, :layout, %{
                  kanban_boards: []
                })
 
-      {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
-
-      assert find_community.dashboard.layout.kanban_boards == [:todo, :wip, :done]
+      assert {:kanban_boards, {"contains unsupported kanban boards", _}} =
+               List.keyfind(changeset.errors, :kanban_boards, 0)
     end
 
     test "rejects unsupported thread emotions in community dashboard",

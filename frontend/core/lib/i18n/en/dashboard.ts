@@ -303,6 +303,10 @@ export default {
   'dsb.appearance.title_color.desc': 'Used for headings and primary text.',
   'dsb.appearance.digest_color.title': 'Digest color',
   'dsb.appearance.digest_color.desc': 'Used for descriptions, metadata, and secondary text.',
+  'dsb.appearance.card_color.title': 'Card color',
+  'dsb.appearance.card_color.desc': 'Used for card and panel backgrounds.',
+  'dsb.appearance.divider_color.title': 'Divider color',
+  'dsb.appearance.divider_color.desc': 'Used for separators, borders, and outlines.',
   'dsb.appearance.theme.title': 'Theme preset',
   'dsb.appearance.theme.desc':
     'Choose a coordinated theme baseline. Fine tuning remains available in this tab.',

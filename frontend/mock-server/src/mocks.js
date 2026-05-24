@@ -9,12 +9,22 @@ const nextMockString = () => `mock_${++__mockStrId}`
 const DEFAULT_THEME_TOKENS = {
   pageBg: '#fffcfc',
   pageBgDark: '#25161d',
+  pageBgHue: 0,
+  pageBgHueDark: 332,
+  pageBgIntensity: 0,
+  pageBgIntensityDark: 6,
   primaryColor: '#7d519e',
   primaryColorDark: '#9669b9',
   accentColor: '#5073c6',
   accentColorDark: '#3a7ec7',
   textTitle: '#243041',
+  textTitleDark: '#f5f5f5',
   textDigest: '#6b7280',
+  textDigestDark: '#949494',
+  cardColor: '#ffffff',
+  cardColorDark: '#252525',
+  dividerColor: '#eae9e9',
+  dividerColorDark: '#353535',
   gaussBlur: 100,
   gaussBlurDark: 100,
   glowType: '',
@@ -23,6 +33,8 @@ const DEFAULT_THEME_TOKENS = {
   glowOpacity: 100,
   glowOpacityDark: 100,
 }
+
+const makeThemeTokens = () => ({ ...DEFAULT_THEME_TOKENS })
 
 const makeUser = (overrides = {}) => {
   return {
@@ -67,9 +79,7 @@ const makeDashboard = (slug = 'home') => {
     },
     layout: {
       themePreset: 'DEFAULT',
-      themeTokens: DEFAULT_THEME_TOKENS,
-      textTitle: '#243041',
-      textDigest: '#6b7280',
+      themeTokens: makeThemeTokens(),
       postLayout: 'quora',
       kanbanLayout: 'classic',
       kanbanCardLayout: 'simple',
@@ -96,8 +106,6 @@ const makeDashboard = (slug = 'home') => {
       footerLayout: 'simple',
       headerLayout: 'center',
       overlayDark: false,
-      gaussBlur: DEFAULT_THEME_TOKENS.gaussBlur,
-      gaussBlurDark: DEFAULT_THEME_TOKENS.gaussBlurDark,
       kanbanBgColors: ['BLUE', 'PURPLE'],
     },
     enable: {

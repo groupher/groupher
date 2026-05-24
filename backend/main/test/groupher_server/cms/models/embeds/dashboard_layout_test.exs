@@ -14,12 +14,12 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
     assert DashboardLayout.default().kanban_bg_colors == Dashboard.kanban_bg_colors_default()
   end
 
-  test "changeset normalizes legacy uppercase enum strings" do
+  test "changeset accepts current enum values" do
     changeset =
       DashboardLayout.changeset(%DashboardLayout{}, %{
-        post_layout: "COVER",
-        kanban_bg_colors: ["BLACK", "YELLOW"],
-        kanban_boards: ["BACKLOG", "DONE"]
+        post_layout: :cover,
+        kanban_bg_colors: [:black, :yellow],
+        kanban_boards: [:backlog, :done]
       })
 
     assert changeset.valid?

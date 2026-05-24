@@ -83,11 +83,10 @@ export const community = `
           themePreset
           themePresetBase
           themeTokens
-          hasCustomThemePreset
-          textTitle
-          textTitleDark
-          textDigest
-          textDigestDark
+          themePresets {
+            value
+            tokens
+          }
           postLayout
           docCoverLayout
           docFaqLayout
@@ -113,8 +112,6 @@ export const community = `
           headerLayout
           footerLayout
           overlayDark
-          gaussBlur
-          gaussBlurDark
           broadcastEnable
         } 
 

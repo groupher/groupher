@@ -1,14 +1,12 @@
-import { useMemo } from 'react'
-
 import THEME from '~/const/theme'
 import { blurRGB } from '~/fmt'
 import useGaussBlur from '~/hooks/useGaussBlur'
 import useTheme from '~/hooks/useTheme'
-import { resolveThemePresetPageBgCssVar } from '~/lib/themePreset'
+import { getThemePresetPageBgCssVar } from '~/lib/themePreset'
 import useThemePreset from '~/stores/ThemePreset/hooks'
 
 type TRes = {
-  background: string | null
+  background: string
   rawBg: string
 }
 
@@ -20,16 +18,8 @@ export default function usePageBg(themeOverride?: TThemeName): TRes {
   const gaussBlur = useGaussBlur()
   const theme = themeOverride || (isLightTheme ? THEME.LIGHT : THEME.DARK)
   const isLightBg = theme === THEME.LIGHT
-
-  const rawBg = useMemo(() => {
-    const currentPageBg = isLightBg ? pageBg : pageBgDark
-    return resolveThemePresetPageBgCssVar(theme, currentPageBg)
-  }, [isLightBg, pageBg, pageBgDark, theme])
-
-  const background = useMemo(() => {
-    if (!rawBg) return null
-    return blurRGB(rawBg, gaussBlur)
-  }, [rawBg, gaussBlur])
+  const rawBg = (isLightBg ? pageBg : pageBgDark) || getThemePresetPageBgCssVar(theme)
+  const background = blurRGB(rawBg, gaussBlur)
 
   return { background, rawBg }
 }

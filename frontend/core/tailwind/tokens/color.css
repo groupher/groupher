@@ -1,5 +1,6 @@
 @theme {
   --color-divider: #eae9e9;
+  --color-divider-dark: #353535;
   --color-outline: #dedede;
 
   /* articles */
@@ -18,6 +19,7 @@
   /* utils */
   --color-hoverBg: #efefef78;
   --color-card: #fff;
+  --color-card-dark: #252525;
   --color-cardAlpha: #ffffffc4;
   --color-sandBox: #f9f9f9;
   --unibar-linear-mask: radial-gradient(circle, oklch(1 0 0 / 0.63) 30%, oklch(0 0 0 / 0) 100%);
@@ -167,7 +169,7 @@
 
 @layer theme {
   [data-theme='dark'] {
-    --color-divider: #353535; /* #3c3c3c */
+    --color-divider: var(--color-divider-dark); /* #3c3c3c */
     --color-outline: #3d3d3d;
 
     /* articles */
@@ -183,7 +185,7 @@
 
     /* utils */
     --color-hoverBg: #50505059;
-    --color-card: #252525; /* #1A1A1A, og: #1e1e1e; */
+    --color-card: var(--color-card-dark); /* #1A1A1A, og: #1e1e1e; */
     --color-cardAlpha: #1f2020c7; /*#111111b5;*/
     --color-sandBox: #31303059;
     --unibar-linear-mask: radial-gradient(circle, var(--color-pageBg) 30%, oklch(0 0 0 / 0) 100%);

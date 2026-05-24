@@ -7,6 +7,7 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
 
   import Helper.Utils, only: [strip_struct: 1]
 
+  alias CMS.Helper.ThemePreset
   alias CMS.Model.{Community, CommunityDashboard, Embeds}
   alias Helper.{ORM, T, Transaction}
 
@@ -54,10 +55,37 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
 
   @spec save_custom_theme_preset(Community.t(), map()) :: T.domain_res(Community.t())
   def save_custom_theme_preset(%Community{} = community, args) do
-    do_update(community, :layout, args)
+    with {:ok, community_dashboard} <- ensure_exist(community),
+         current_layout <-
+           community_dashboard.layout ||
+             struct(Embeds.DashboardLayout, Embeds.DashboardLayout.default()),
+         {:ok, custom_theme_preset} <-
+           merge_custom_theme_preset(current_layout, args),
+         args <-
+           args
+           |> Map.drop([:theme_preset_base, :theme_overwrite])
+           |> Map.put(:custom_theme_preset, custom_theme_preset),
+         {:ok, section_payload} <-
+           prepare_dsb_section_payload(community_dashboard, :layout, args),
+         {:ok, _} <- apply_dsb_section_update(community_dashboard, :layout, section_payload) do
+      {:ok, community}
+    end
   end
 
   @spec select_theme_preset(Community.t(), map()) :: T.domain_res(Community.t())
+  def select_theme_preset(%Community{} = community, %{theme_preset: :custom} = args) do
+    with {:ok, community_dashboard} <- ensure_exist(community),
+         current_layout <-
+           community_dashboard.layout ||
+             struct(Embeds.DashboardLayout, Embeds.DashboardLayout.default()),
+         true <- is_map(current_layout.custom_theme_preset) do
+      do_update(community, :layout, args)
+    else
+      false -> {:error, "custom theme preset has not been created"}
+      error -> error
+    end
+  end
+
   def select_theme_preset(%Community{} = community, args) do
     do_update(community, :layout, args)
   end
@@ -68,6 +96,36 @@ defmodule GroupherServer.CMS.Communities.Dashboard do
            prepare_dsb_section_payload(community_dashboard, key, args),
          {:ok, _} <- apply_dsb_section_update(community_dashboard, key, section_payload) do
       {:ok, community}
+    end
+  end
+
+  defp merge_custom_theme_preset(current_layout, args) do
+    current_custom_preset = current_layout.custom_theme_preset
+    current_base_preset = ThemePreset.custom_base_preset(current_custom_preset)
+    base_preset = Map.get(args, :theme_preset_base, current_base_preset)
+    # GraphQL allows `themeOverwrite: null`; treat it the same as an omitted or
+    # empty overwrite so reset/preserve semantics stay consistent.
+    incoming_overwrite = Map.get(args, :theme_overwrite) || %{}
+
+    # Custom existence is stored by the nullable `custom_theme_preset` map, not
+    # by overwrite size. Empty overwrite means "reset Custom" when already
+    # editing Custom, but "restore existing Custom" when selecting Custom from a
+    # readonly preset.
+    existing_overwrite =
+      cond do
+        current_layout.theme_preset == :custom and incoming_overwrite == %{} ->
+          %{}
+
+        is_map(current_custom_preset) and current_base_preset == base_preset ->
+          ThemePreset.custom_overwrite(current_custom_preset)
+
+        true ->
+          %{}
+      end
+
+    with {:ok, overwrite} <-
+           ThemePreset.merge_overwrite(base_preset, existing_overwrite, incoming_overwrite) do
+      {:ok, ThemePreset.build_custom_preset(base_preset, overwrite)}
     end
   end
 

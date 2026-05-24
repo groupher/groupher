@@ -8,7 +8,35 @@ export const THEME_PRESET = {
 
 export const DEFAULT_THEME_PRESET = THEME_PRESET.DEFAULT
 
-export const DEFAULT_TEXT_TITLE = '#243041'
-export const DEFAULT_TEXT_DIGEST = '#6b7280'
-export const DEFAULT_TEXT_TITLE_DARK = '#f5f5f5'
-export const DEFAULT_TEXT_DIGEST_DARK = '#949494'
+export const PRESET_FIELD = {
+  THEME_PRESET: 'themePreset',
+  THEME_PRESET_BASE: 'themePresetBase',
+  THEME_TOKENS: 'themeTokens',
+  THEME_PRESETS: 'themePresets',
+  THEME_OVERWRITE: 'themeOverwrite',
+  PAGE_BG: 'pageBg',
+  PAGE_BG_DARK: 'pageBgDark',
+  PAGE_BG_HUE: 'pageBgHue',
+  PAGE_BG_HUE_DARK: 'pageBgHueDark',
+  PAGE_BG_INTENSITY: 'pageBgIntensity',
+  PAGE_BG_INTENSITY_DARK: 'pageBgIntensityDark',
+  PRIMARY_COLOR: 'primaryColor',
+  PRIMARY_COLOR_DARK: 'primaryColorDark',
+  ACCENT_COLOR: 'accentColor',
+  ACCENT_COLOR_DARK: 'accentColorDark',
+  TEXT_TITLE: 'textTitle',
+  TEXT_TITLE_DARK: 'textTitleDark',
+  TEXT_DIGEST: 'textDigest',
+  TEXT_DIGEST_DARK: 'textDigestDark',
+  CARD_COLOR: 'cardColor',
+  CARD_COLOR_DARK: 'cardColorDark',
+  DIVIDER_COLOR: 'dividerColor',
+  DIVIDER_COLOR_DARK: 'dividerColorDark',
+  GAUSS_BLUR: 'gaussBlur',
+  GAUSS_BLUR_DARK: 'gaussBlurDark',
+  GLOW_TYPE: 'glowType',
+  GLOW_TYPE_DARK: 'glowTypeDark',
+  GLOW_FIXED: 'glowFixed',
+  GLOW_OPACITY: 'glowOpacity',
+  GLOW_OPACITY_DARK: 'glowOpacityDark',
+} as const

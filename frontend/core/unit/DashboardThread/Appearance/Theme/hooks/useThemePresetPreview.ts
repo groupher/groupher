@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef } from 'react'
 
 import useDebouncedPreviewCommit from '~/hooks/useDebouncedPreviewCommit'
 import useUpdatePreviewCssVars from '~/hooks/useUpdatePreviewCssVars'
-import type { TPageBgDraft } from '~/widgets/CustomPageBg/hooks'
 
 import { PREVIEW_CSS_VAR_CLEANUP } from '../constant'
+import type { TPageBgDraft } from '../DetailsPanel/CustomPageBg/hooks'
 import { buildPageBgPreviewCssVars, buildThemePresetPreviewCssVars } from '../helper'
 import type {
   TPreviewCssVars,
@@ -19,42 +19,42 @@ import type {
  * Intent: Theme detail controls need immediate visual feedback, but dashboard
  * store writes are saveable/touched state and should not happen on every slider
  * movement. This hook owns that split: CSS vars update immediately, while
- * saveable token patches are merged and committed after the user pauses.
+ * saveable overwrites are merged and committed after the user pauses.
  *
- * Performance boundary: previewPageBg/previewThemePresetPatch must stay
+ * Performance boundary: previewPageBg/previewThemePresetOverwrite must stay
  * DOM/CSS-only. Moving dashboard edits or preset forking into the preview path
  * makes pointer-move interactions re-render the Appearance tree.
  *
  * Example:
  *   const preview = useThemePresetPreview({
- *     selectedOverwrite,
+ *     selectedTokens,
  *     selectedPageBgDraft,
  *     isLightTheme,
- *     onCommit: (patch) => commitThemePresetPatch(patch),
+ *     onCommit: (overwrite) => commitThemePresetOverwrite(overwrite),
  *   })
  *
- *   preview.previewThemePresetPatch({ glowOpacity: 80 })
- *   preview.scheduleThemePresetPatch({ glowOpacity: 80 })
+ *   preview.previewThemePresetOverwrite({ glowOpacity: 80 })
+ *   preview.scheduleThemePresetOverwrite({ glowOpacity: 80 })
  */
 export default function useThemePresetPreview({
-  selectedOverwrite,
+  selectedTokens,
   selectedPageBgDraft,
   isLightTheme,
   onCommit,
 }: TUseThemePresetPreviewOptions): TUseThemePresetPreviewRet {
   const updatePreviewCssVars = useUpdatePreviewCssVars()
-  const selectedOverwriteRef = useRef(selectedOverwrite)
+  const selectedTokensRef = useRef(selectedTokens)
   const selectedPageBgDraftRef = useRef(selectedPageBgDraft)
   const {
-    schedule: scheduleThemePresetPatch,
+    schedule: scheduleThemePresetOverwrite,
     flush: flushThemePresetPreviewCommit,
     clear: clearPendingThemePresetPreviewCommit,
   } = useDebouncedPreviewCommit<TThemePresetOverwrite>({ onCommit })
 
   useEffect(() => {
-    selectedOverwriteRef.current = selectedOverwrite
+    selectedTokensRef.current = selectedTokens
     selectedPageBgDraftRef.current = selectedPageBgDraft
-  }, [selectedOverwrite, selectedPageBgDraft])
+  }, [selectedTokens, selectedPageBgDraft])
 
   const writePreviewCssVars = useCallback(
     (vars: TPreviewCssVars) => updatePreviewCssVars(vars),
@@ -69,7 +69,7 @@ export default function useThemePresetPreview({
     (patch: Partial<TPageBgDraft>) => {
       writePreviewCssVars(
         buildPageBgPreviewCssVars({
-          selectedOverwrite: selectedOverwriteRef.current,
+          selectedTokens: selectedTokensRef.current,
           selectedPageBgDraft: selectedPageBgDraftRef.current,
           patch,
           isLightTheme,
@@ -79,12 +79,12 @@ export default function useThemePresetPreview({
     [isLightTheme, writePreviewCssVars],
   )
 
-  const previewThemePresetPatch = useCallback(
-    (patch: Partial<TThemePresetOverwrite>) => {
+  const previewThemePresetOverwrite = useCallback(
+    (overwrite: TThemePresetOverwrite) => {
       writePreviewCssVars(
         buildThemePresetPreviewCssVars({
-          selectedOverwrite: selectedOverwriteRef.current,
-          patch,
+          selectedTokens: selectedTokensRef.current,
+          overwrite,
           isLightTheme,
         }),
       )
@@ -94,8 +94,8 @@ export default function useThemePresetPreview({
 
   return {
     previewPageBg,
-    previewThemePresetPatch,
-    scheduleThemePresetPatch,
+    previewThemePresetOverwrite,
+    scheduleThemePresetOverwrite,
     flushThemePresetPreviewCommit,
     clearPendingThemePresetPreviewCommit,
     clearPreviewCssVars,

@@ -5,27 +5,26 @@ export const saveCustomThemePreset = gql`
     $community: String!
     $themePreset: DsbThemePreset!
     $themePresetBase: DsbThemePreset!
-    $themeTokens: Json
-    $textTitle: String
-    $textTitleDark: String
-    $textDigest: String
-    $textDigestDark: String
-    $gaussBlur: Float
-    $gaussBlurDark: Float
+    $themeOverwrite: Json
   ) {
     saveCustomThemePreset(
       community: $community
       themePreset: $themePreset
       themePresetBase: $themePresetBase
-      themeTokens: $themeTokens
-      textTitle: $textTitle
-      textTitleDark: $textTitleDark
-      textDigest: $textDigest
-      textDigestDark: $textDigestDark
-      gaussBlur: $gaussBlur
-      gaussBlurDark: $gaussBlurDark
+      themeOverwrite: $themeOverwrite
     ) {
       slug
+      dashboard {
+        layout {
+          themePreset
+          themePresetBase
+          themeTokens
+          themePresets {
+            value
+            tokens
+          }
+        }
+      }
     }
   }
 `
@@ -34,6 +33,17 @@ export const selectThemePreset = gql`
   mutation ($community: String!, $themePreset: DsbThemePreset!) {
     selectThemePreset(community: $community, themePreset: $themePreset) {
       slug
+      dashboard {
+        layout {
+          themePreset
+          themePresetBase
+          themeTokens
+          themePresets {
+            value
+            tokens
+          }
+        }
+      }
     }
   }
 `

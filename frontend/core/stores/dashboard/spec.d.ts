@@ -1,4 +1,3 @@
-import type { TResolvedThemePreset } from '~/lib/themePreset'
 import type {
   TAvatarLayout,
   TCommunityLayout,
@@ -36,6 +35,8 @@ import type {
   TTagGroup,
   TTagLayout,
   TThemePreset,
+  TThemePresetOption,
+  TResolvedThemePreset,
   TThread,
   TUser,
 } from '~/spec'
@@ -73,9 +74,10 @@ export type TDsbFieldMap = {
 
   // page
   themePreset: TThemePreset
-  themePresetBase: TThemePreset
+  themePresetBase: TThemePreset | null
   themeTokens: Partial<TResolvedThemePreset>
-  hasCustomThemePreset: boolean
+  themePresets: readonly TThemePresetOption[]
+  themeOverwrite: Partial<TResolvedThemePreset>
 
   // seo
   seoEnable: boolean
@@ -97,10 +99,6 @@ export type TDsbFieldMap = {
   twImageHeight: string
 
   // layout
-  textTitle: string
-  textTitleDark: string
-  textDigest: string
-  textDigestDark: string
   postLayout: TPostLayout
   kanbanLayout: TKanbanLayout
   kanbanCardLayout: TKanbanCardLayout
@@ -135,10 +133,6 @@ export type TDsbFieldMap = {
   docCategories: readonly TGroupCategory[]
 
   overlayDark: boolean
-
-  // gauss blur
-  gaussBlur: number
-  gaussBlurDark: number
 
   // contents
   // tags

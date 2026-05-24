@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import THEME from '~/const/theme'
-import { getPageBgCustomColor, getPageBgCustomParamsFromHex } from '~/lib/color'
-import { resolveThemePresetPageBgCssVar } from '~/lib/themePreset'
+import { getPageBgCustomColor, normalizePageBgHue, normalizePageBgIntensity } from '~/lib/color'
+import { createThemeKeyPicker } from '~/lib/themeKey'
+import { getThemePresetPageBgCssVar } from '~/lib/themePreset'
 
-import { PAGE_BG_THEME_FIELDS } from './constant'
+import { PRESET_FIELD } from '../../constant'
 
 export type TPageBgDraft = {
   pageBg: string
   pageBgDark: string
+  pageBgHue: number
+  pageBgHueDark: number
+  pageBgIntensity: number
+  pageBgIntensityDark: number
 }
 
 type TPageBgPatchHandler = (patch: Partial<TPageBgDraft>) => void
@@ -25,24 +30,35 @@ type TUseCustomPageBgControlsArgs = {
 
 export const resolveRawBg = (draft: TPageBgDraft, isLightTheme: boolean) => {
   const theme = isLightTheme ? THEME.LIGHT : THEME.DARK
-  const currentPageBg = isLightTheme ? draft.pageBg : draft.pageBgDark
+  const { value } = createThemeKeyPicker(theme)
 
-  return resolveThemePresetPageBgCssVar(theme, currentPageBg)
+  return value(draft, PRESET_FIELD.PAGE_BG) || getThemePresetPageBgCssVar(theme)
 }
 
 const getThemePageBgState = (draft: TPageBgDraft, theme: TThemeName) => {
-  const { pageBg } = PAGE_BG_THEME_FIELDS[theme]
-  const color = resolveThemePresetPageBgCssVar(theme, draft[pageBg])
-  const { hue, intensity } = getPageBgCustomParamsFromHex(color, theme)
+  const { key } = createThemeKeyPicker(theme)
+  const pageBgKey = key(PRESET_FIELD.PAGE_BG)
+  const pageBgHueKey = key(PRESET_FIELD.PAGE_BG_HUE)
+  const pageBgIntensityKey = key(PRESET_FIELD.PAGE_BG_INTENSITY)
+  const color = draft[pageBgKey]
+  const hue = normalizePageBgHue(draft[pageBgHueKey])
+  const intensity = normalizePageBgIntensity(draft[pageBgIntensityKey])
 
-  return { pageBg, color, hue, intensity }
+  return { color, hue, intensity }
 }
 
 const resolveCustomPatch = (theme: TThemeName, hue: number, intensity: number) => {
-  const { pageBg } = PAGE_BG_THEME_FIELDS[theme]
+  const { key } = createThemeKeyPicker(theme)
+  const pageBgKey = key(PRESET_FIELD.PAGE_BG)
+  const pageBgHueKey = key(PRESET_FIELD.PAGE_BG_HUE)
+  const pageBgIntensityKey = key(PRESET_FIELD.PAGE_BG_INTENSITY)
+  const safeHue = normalizePageBgHue(hue)
+  const safeIntensity = normalizePageBgIntensity(intensity)
 
   return {
-    [pageBg]: getPageBgCustomColor(theme, hue, intensity),
+    [pageBgKey]: getPageBgCustomColor(theme, safeHue, safeIntensity),
+    [pageBgHueKey]: safeHue,
+    [pageBgIntensityKey]: safeIntensity,
   } as Partial<TPageBgDraft>
 }
 
@@ -122,7 +138,9 @@ export const useCustomPageBgControls = ({
   )
 
   const handleToggleChange = useCallback(() => {
-    onDraftChange({ [PAGE_BG_THEME_FIELDS[theme].pageBg]: color })
+    const { key } = createThemeKeyPicker(theme)
+
+    onDraftChange({ [key(PRESET_FIELD.PAGE_BG)]: color })
   }, [color, onDraftChange, theme])
 
   return {

@@ -1,11 +1,7 @@
-import useSalon from './salon/mini_bars'
+import useSalon from './salon'
+import type { TTextBarProps } from './spec'
 
-type TProps = {
-  titleColor: string
-  digestColor: string
-}
-
-export default function MiniTextBar({ titleColor, digestColor }: TProps) {
+export default function MiniTextBar({ titleColor, digestColor }: TTextBarProps) {
   const s = useSalon()
 
   return (

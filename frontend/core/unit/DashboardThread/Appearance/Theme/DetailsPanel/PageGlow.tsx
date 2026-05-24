@@ -1,9 +1,10 @@
+import useThemeKV from '~/hooks/useThemeKV'
 import useTrans from '~/hooks/useTrans'
 
 import { PRESET_FIELD } from '../constant'
 import useSalon from '../salon/details_panel/page_glow'
 import useSettingRowSalon from '../salon/details_panel/setting_row'
-import type { TThemeDetails, TThemePresetOverwrite } from '../spec'
+import type { TThemeDetails } from '../spec'
 import TextureBalls from './TextureBalls'
 import ThemeRangeInput from './ThemeRangeInput'
 
@@ -15,24 +16,16 @@ export default function PageGlow({ details }: TProps) {
   const s = useSalon()
   const row = useSettingRowSalon()
   const { t } = useTrans()
+  const { value } = useThemeKV()
+
   const {
-    selectedOverwrite,
-    isLightTheme,
+    selectedTokens,
     onThemePresetPreview,
     onThemePresetSchedule,
     onThemePresetFlush,
     onThemePresetCommit,
   } = details
-  const glowTypeField = isLightTheme ? PRESET_FIELD.GLOW_TYPE : PRESET_FIELD.GLOW_TYPE_DARK
-  const glowOpacityField = isLightTheme ? PRESET_FIELD.GLOW_OPACITY : PRESET_FIELD.GLOW_OPACITY_DARK
-  const glowType = isLightTheme ? selectedOverwrite.glowType : selectedOverwrite.glowTypeDark
-  const glowOpacity = isLightTheme
-    ? selectedOverwrite.glowOpacity
-    : selectedOverwrite.glowOpacityDark
-
-  const getGlowOpacityPatch = (value: number): Partial<TThemePresetOverwrite> => ({
-    [glowOpacityField]: value,
-  })
+  const glowType = value(selectedTokens, PRESET_FIELD.GLOW_TYPE)
 
   return (
     <>
@@ -45,8 +38,7 @@ export default function PageGlow({ details }: TProps) {
         <div className='grow' />
         <div className={s.swatches}>
           <TextureBalls
-            glowType={glowType}
-            glowTypeField={glowTypeField}
+            selectedTokens={selectedTokens}
             onThemePresetCommit={onThemePresetCommit}
             rowClassName={s.swatchRow}
           />
@@ -62,11 +54,11 @@ export default function PageGlow({ details }: TProps) {
           <div className='grow' />
           <div className={row.rangeGroup}>
             <ThemeRangeInput
-              value={glowOpacity}
+              baseKey={PRESET_FIELD.GLOW_OPACITY}
+              selectedTokens={selectedTokens}
               valueLabel={t('dsb.appearance.glow.intensity.title')}
               min={0}
               max={100}
-              getPatch={getGlowOpacityPatch}
               onThemePresetPreview={onThemePresetPreview}
               onThemePresetSchedule={onThemePresetSchedule}
               onThemePresetFlush={onThemePresetFlush}

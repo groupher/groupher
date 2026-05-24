@@ -5,6 +5,5 @@ export default function useSalon() {
 
   return {
     presetSavingWrapper: cn('mt-12 border-b pb-8', br('divider')),
-    savingWrapper: cn('mt-8 border-t pt-8', br('divider')),
   }
 }

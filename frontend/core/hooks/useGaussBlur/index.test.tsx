@@ -9,8 +9,6 @@ describe('useGaussBlur', () => {
   it('switches blur by theme', async () => {
     const wrapper = makeStoreWrapper({
       dashboard: {
-        gaussBlur: 10,
-        gaussBlurDark: 20,
         themeTokens: { gaussBlur: 10, gaussBlurDark: 20 },
       },
     })

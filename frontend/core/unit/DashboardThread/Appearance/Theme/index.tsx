@@ -36,9 +36,8 @@ export default function Appearance({ initialPresetOptions = EMPTY_PRESET_OPTIONS
   const {
     activePreset,
     activePresetBase,
-    hasCustomThemePreset,
     presetOptions,
-    customPresetOverwrite,
+    customPresetTokens,
     showForkRelation,
     showResetMenu,
     showDetailsSavingBar,
@@ -63,8 +62,7 @@ export default function Appearance({ initialPresetOptions = EMPTY_PRESET_OPTIONS
         activePreset={activePreset}
         activePresetBase={activePresetBase}
         presetOptions={presetOptions}
-        hasCustomPreset={hasCustomThemePreset}
-        customOverwrite={customPresetOverwrite}
+        customTokens={customPresetTokens}
         showForkRelation={showForkRelation}
         onSelect={selectPreset}
       />
@@ -87,8 +85,8 @@ export default function Appearance({ initialPresetOptions = EMPTY_PRESET_OPTIONS
       />
 
       <SavingBar
+        top={6}
         isTouched={showDetailsSavingBar}
-        wrapperClassName={s.savingWrapper}
         onCancel={cancelAppearance}
         onConfirm={saveAppearance}
       />

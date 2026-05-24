@@ -60,7 +60,6 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
     footer_layout: [:oneline, :group],
     header_layout: [:center, :right, :float],
     theme_preset: @theme_presets,
-    theme_preset_base: @theme_presets,
     rss_feed_type: [:digest, :full]
   }
 
@@ -119,12 +118,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
   def macro_schema(:layout) do
     [
       [:theme_preset, :enum, :default],
-      [:theme_preset_base, :enum, :default],
-      [:theme_overwrite, :map, %{}],
-      [:text_title, :string, "#243041"],
-      [:text_title_dark, :string, "#f5f5f5"],
-      [:text_digest, :string, "#6b7280"],
-      [:text_digest_dark, :string, "#949494"],
+      [:custom_theme_preset, :map, nil],
       [:kanban_bg_colors, {:array, :rainbow_color}, @kanban_bg_colors_default],
       [:kanban_boards, {:array, :kanban_board}, KanbanBoards.default_values_list()],
       [:post_layout, :enum, :quora],
@@ -152,11 +146,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
       [:changelog_layout, :enum, :classic],
       [:footer_layout, :enum, :group],
       [:header_layout, :enum, :center],
-      [:overlay_dark, :boolean, true],
-
-      ## blur
-      [:gauss_blur, :float, 100.0],
-      [:gauss_blur_dark, :float, 100.0]
+      [:overlay_dark, :boolean, true]
     ]
   end
 

@@ -1,5 +1,6 @@
 import { type FC, memo, useCallback, useMemo } from 'react'
 
+import { THEME_PRESET } from '~/const/theme_preset'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 import type { TTransKey } from '~/spec'
@@ -20,10 +21,16 @@ const ResetToPresetMenu: FC<TProps> = ({ activePresetBase, presetOptions, onRese
 
   const options = useMemo(
     () =>
-      presetOptions.map((preset) => ({
-        ...preset,
-        isBase: preset.value === activePresetBase,
-      })),
+      presetOptions.reduce<Array<TThemePresetOption & { isBase: boolean }>>((options, preset) => {
+        if (preset.value === THEME_PRESET.CUSTOM) return options
+
+        options.push({
+          ...preset,
+          isBase: preset.value === activePresetBase,
+        })
+
+        return options
+      }, []),
     [activePresetBase, presetOptions],
   )
 

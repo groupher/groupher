@@ -1,10 +1,11 @@
 import { clone } from 'ramda'
 import { useEffect, useRef } from 'react'
 
-import { THEME_PRESET } from '~/const/theme_preset'
+import { DEFAULT_THEME_PRESET, THEME_PRESET } from '~/const/theme_preset'
 import useDsbDemoMode from '~/hooks/useDsbDemoMode'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { toast } from '~/signal'
+import type { TResolvedThemePreset, TThemePreset, TThemePresetOption } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 import { buildDsbDemoConfig, setDsbDemoConfig } from '~/utils/dsb-demo'
@@ -14,6 +15,26 @@ import { FIELD } from '../../../constant'
 import { THEME_PRESET_STORE_FIELDS } from '../constant'
 import * as S from '../schema'
 import type { TThemePresetMutationRet } from '../spec'
+
+type TThemePresetMutationLayout = {
+  themePreset: TThemePreset
+  themePresetBase: TThemePreset | null
+  themeTokens: TResolvedThemePreset
+  themePresets: readonly TThemePresetOption[]
+}
+
+type TThemePresetMutationData = {
+  saveCustomThemePreset?: {
+    dashboard?: {
+      layout?: TThemePresetMutationLayout
+    }
+  }
+  selectThemePreset?: {
+    dashboard?: {
+      layout?: TThemePresetMutationLayout
+    }
+  }
+}
 
 /**
  * ThemePreset-specific mutation boundary.
@@ -37,23 +58,59 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
     storeRef.current = liveDashboard$
   }, [liveDashboard$])
 
-  const acceptThemePreset = (): void => {
-    const hasCustomThemePreset =
-      storeRef.current.hasCustomThemePreset || storeRef.current.themePreset === THEME_PRESET.CUSTOM
+  const acceptThemePreset = (layout?: TThemePresetMutationLayout): void => {
+    if (layout) {
+      storeRef.current.commit({
+        themePreset: layout.themePreset,
+        themePresetBase: layout.themePresetBase ?? DEFAULT_THEME_PRESET,
+        themeTokens: clone(layout.themeTokens),
+        themePresets: clone(layout.themePresets),
+      })
+    } else if (storeRef.current.themePreset === THEME_PRESET.CUSTOM) {
+      storeRef.current.commit({
+        themePresets: [
+          ...storeRef.current.themePresets.filter((preset) => preset.value !== THEME_PRESET.CUSTOM),
+          {
+            value: THEME_PRESET.CUSTOM,
+            tokens: clone(storeRef.current.themeTokens) as TResolvedThemePreset,
+          },
+        ],
+      })
+    }
 
-    storeRef.current.commit({ hasCustomThemePreset })
+    // Readonly preset selection does not save Custom overwrite. Preserve the
+    // last accepted overwrite in that path so unsaved Custom edits do not become
+    // the new original just because the user saved a readonly preset.
+    const isAcceptingCustom = storeRef.current.themePreset === THEME_PRESET.CUSTOM
+    const acceptedThemeOverwrite = isAcceptingCustom
+      ? storeRef.current.themeOverwrite
+      : storeRef.current.original.themeOverwrite
+
+    if (!isAcceptingCustom) {
+      storeRef.current.commit({ themeOverwrite: clone(acceptedThemeOverwrite) })
+    }
+
     storeRef.current.acceptFields(THEME_PRESET_STORE_FIELDS)
 
     const original = {
       ...storeRef.current.original,
-      hasCustomThemePreset,
+      themePreset: storeRef.current.themePreset,
+      themePresetBase: storeRef.current.themePresetBase,
+      themePresets: clone(storeRef.current.themePresets),
       themeTokens: clone(storeRef.current.themeTokens),
+      themeOverwrite: clone(acceptedThemeOverwrite),
     }
 
     storeRef.current.replaceOriginal(original)
   }
 
-  const finishSave = async ({ revalidate = true } = {}): Promise<void> => {
+  const finishSave = async ({
+    layout,
+    revalidate = true,
+  }: {
+    layout?: TThemePresetMutationLayout
+    revalidate?: boolean
+  } = {}): Promise<void> => {
     toast('设置已保存')
 
     if (revalidate) {
@@ -64,7 +121,7 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
       }
     }
 
-    acceptThemePreset()
+    acceptThemePreset(layout)
     setTimeout(() => storeRef.current.commit({ saving: false, savingField: null }), 800)
   }
 
@@ -77,30 +134,34 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
       return
     }
 
+    // Only Custom saves sparse `themeOverwrite`; the backend merges it into
+    // the dashboard's nullable Custom preset definition. Readonly presets are
+    // saved by preset name and do not modify the saved Custom preset.
     const isCustomPreset = storeRef.current.themePreset === THEME_PRESET.CUSTOM
     const request = isCustomPreset
-      ? mutate(S.saveCustomThemePreset, {
+      ? mutate<TThemePresetMutationData>(S.saveCustomThemePreset, {
           community,
           themePreset: storeRef.current.themePreset,
-          themePresetBase: storeRef.current.themePresetBase,
-          themeTokens: JSON.stringify(storeRef.current.themeTokens ?? {}),
-          textTitle: storeRef.current.textTitle,
-          textTitleDark: storeRef.current.textTitleDark,
-          textDigest: storeRef.current.textDigest,
-          textDigestDark: storeRef.current.textDigestDark,
-          gaussBlur: storeRef.current.gaussBlur,
-          gaussBlurDark: storeRef.current.gaussBlurDark,
+          themePresetBase: storeRef.current.themePresetBase ?? DEFAULT_THEME_PRESET,
+          themeOverwrite: JSON.stringify(storeRef.current.themeOverwrite ?? {}),
         })
-      : mutate(S.selectThemePreset, {
+      : mutate<TThemePresetMutationData>(S.selectThemePreset, {
           community,
           themePreset: storeRef.current.themePreset,
         })
 
-    request.then(finishSave).catch((err) => {
-      console.error('## save theme preset error: ', err)
-      toast(String(err), 'error')
-      storeRef.current.commit({ saving: false, savingField: null })
-    })
+    request
+      .then((data) => {
+        const layout =
+          data.saveCustomThemePreset?.dashboard?.layout ?? data.selectThemePreset?.dashboard?.layout
+
+        return finishSave({ layout })
+      })
+      .catch((err) => {
+        console.error('## save theme preset error: ', err)
+        toast(String(err), 'error')
+        storeRef.current.commit({ saving: false, savingField: null })
+      })
   }
 
   const rollbackThemePreset = (): void => {

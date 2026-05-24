@@ -1,22 +1,22 @@
 import { proxy } from 'valtio'
 
 import { DEFAULT_THEME_PRESET } from '~/const/theme_preset'
-import { resolveThemePreset } from '~/lib/themePreset'
 
 import type { TInit, TStore } from './spec'
 
 export default function ThemePresetStore(init: TInit = {}): TStore {
-  const resolved = resolveThemePreset(init)
+  const tokens = init.themeTokens ?? {}
 
   const store = proxy({
     themePreset: init.themePreset ?? DEFAULT_THEME_PRESET,
     themePresetBase: init.themePresetBase ?? DEFAULT_THEME_PRESET,
     themeTokens: init.themeTokens ?? {},
     presetOptions: init.presetOptions ?? [],
-    ...resolved,
+    ...tokens,
 
     hydrate(source: TInit): void {
-      const nextResolved = resolveThemePreset(source)
+      const currentTokenKeys = Object.keys(store.themeTokens ?? {})
+      const nextTokens = source.themeTokens ?? {}
 
       store.themePreset = source.themePreset ?? DEFAULT_THEME_PRESET
       store.themePresetBase = source.themePresetBase ?? DEFAULT_THEME_PRESET
@@ -24,12 +24,17 @@ export default function ThemePresetStore(init: TInit = {}): TStore {
       if (source.presetOptions !== undefined) {
         store.presetOptions = source.presetOptions
       }
-      Object.assign(store, nextResolved)
+      for (const key of currentTokenKeys) {
+        if (key in nextTokens) continue
+
+        delete (store as Record<string, unknown>)[key]
+      }
+      Object.assign(store, nextTokens)
     },
     hydratePresetOptions(presetOptions): void {
       store.presetOptions = presetOptions
     },
   })
 
-  return store
+  return store as TStore
 }

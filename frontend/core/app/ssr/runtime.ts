@@ -96,7 +96,7 @@ const fetchThemePresets = async (): Promise<TThemePresetOption[]> => {
 
   return data.themePresets.map((preset) => ({
     value: preset.value,
-    overwrite: preset.tokens,
+    tokens: preset.tokens,
   }))
 }
 

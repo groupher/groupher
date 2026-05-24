@@ -22,13 +22,7 @@ import {
   TAG_LAYOUT,
 } from '~/const/layout'
 import SIZE from '~/const/size'
-import {
-  DEFAULT_TEXT_DIGEST,
-  DEFAULT_TEXT_DIGEST_DARK,
-  DEFAULT_TEXT_TITLE,
-  DEFAULT_TEXT_TITLE_DARK,
-  DEFAULT_THEME_PRESET,
-} from '~/const/theme_preset'
+import { DEFAULT_THEME_PRESET } from '~/const/theme_preset'
 import { THREAD } from '~/const/thread'
 
 import type { TDsbFieldMap } from './spec'
@@ -72,7 +66,8 @@ export const FIELDS: TDsbFieldMap = {
   themePreset: DEFAULT_THEME_PRESET,
   themePresetBase: DEFAULT_THEME_PRESET,
   themeTokens: {},
-  hasCustomThemePreset: false,
+  themePresets: [],
+  themeOverwrite: {},
 
   // seo
   seoEnable: true,
@@ -94,10 +89,6 @@ export const FIELDS: TDsbFieldMap = {
   twImageHeight: '',
 
   // layout
-  textTitle: DEFAULT_TEXT_TITLE,
-  textTitleDark: DEFAULT_TEXT_TITLE_DARK,
-  textDigest: DEFAULT_TEXT_DIGEST,
-  textDigestDark: DEFAULT_TEXT_DIGEST_DARK,
   postLayout: POST_LAYOUT.QUORA,
   kanbanLayout: KANBAN_LAYOUT.CLASSIC,
   kanbanCardLayout: KANBAN_CARD_LAYOUT.SIMPLE,
@@ -132,10 +123,6 @@ export const FIELDS: TDsbFieldMap = {
   docCategories: [],
 
   overlayDark: true,
-
-  // gauss blur
-  gaussBlur: 100,
-  gaussBlurDark: 100,
 
   // contents
   // tags
