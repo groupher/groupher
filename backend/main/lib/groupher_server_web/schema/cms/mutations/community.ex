@@ -1,6 +1,9 @@
 defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
   @moduledoc """
-  CMS methods for community
+  GraphQL mutations for community and taxonomy management.
+
+  Includes creating/updating communities, handling apply/approve flows,
+  moderator assignments, and community tag/group maintenance.
   """
   use Helper.GqlSchemaSuite
 

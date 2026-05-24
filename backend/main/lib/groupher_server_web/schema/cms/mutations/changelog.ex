@@ -1,6 +1,6 @@
 defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
   @moduledoc """
-  CMS mutations for changelog
+  GraphQL mutations for changelog-thread article publishing and editing.
   """
   use Helper.GqlSchemaSuite
 

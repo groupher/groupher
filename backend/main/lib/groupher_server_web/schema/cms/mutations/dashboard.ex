@@ -1,6 +1,9 @@
 defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
   @moduledoc """
-  CMS mutations for post
+  GraphQL mutations for community dashboard configuration.
+
+  Provides dashboard section updates such as base info, SEO, layout, links,
+  theme presets, RSS options, media reports, and FAQ content.
   """
   use Helper.GqlSchemaSuite
 

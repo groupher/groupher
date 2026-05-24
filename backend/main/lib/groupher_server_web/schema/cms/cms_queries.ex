@@ -1,6 +1,10 @@
 defmodule GroupherServerWeb.Schema.CMS.Queries do
   @moduledoc """
-  CMS queries
+  Public CMS query fields exposed in the GraphQL schema.
+
+  This module defines read-only CMS entry points consumed by clients in
+  GraphQL Playground, including communities, categories, comments, reports,
+  and dashboard-related query surfaces.
   """
   import GroupherServerWeb.Schema.Helper.Queries
 
@@ -24,6 +28,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.community/3)
     end
 
+    @desc "Get all passport rules available to the current user."
     field :all_passport_rules, :all_rules do
       middleware(M.Authorize, :login)
       resolve(&R.CMS.all_passport_rules/3)

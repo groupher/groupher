@@ -1,6 +1,6 @@
 defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
   @moduledoc """
-  CMS mutations for comments
+  GraphQL mutations for comment creation, moderation, and reactions.
   """
   use Helper.GqlSchemaSuite
 
