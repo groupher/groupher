@@ -643,7 +643,7 @@ type RootMutationType {
 
   "save custom theme preset in dashboard"
   saveCustomThemePreset(
-    community: String!, themePreset: DsbThemePreset!, themePresetBase: DsbThemePreset!, themeTokens: Json
+    community: String!, themePreset: DsbThemePreset!, themePresetBase: DsbThemePreset!, themeOverwrite: Json
   ): Community
 
   "select read-only theme preset in dashboard"
@@ -936,7 +936,7 @@ type DsbLayout {
   headerLayout: DsbHeaderLayout
   overlayDark: Boolean
   themeTokens: Json
-  hasCustomThemePreset: Boolean
+  themePresets: [DsbThemePresetOption]
 }
 
 type DsbEnable {

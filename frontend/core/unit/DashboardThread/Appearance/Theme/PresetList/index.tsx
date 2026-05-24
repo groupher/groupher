@@ -15,8 +15,7 @@ export default function PresetList({
   activePreset,
   activePresetBase,
   presetOptions,
-  hasCustomPreset,
-  customOverwrite,
+  customTokens,
   showForkRelation,
   onSelect,
 }: TProps) {
@@ -25,20 +24,24 @@ export default function PresetList({
   const { incomingDotControls, outgoingTopDotControls, outgoingBottomDotControls } =
     useForkDotsAnimation(showForkRelation)
   const basePreset = presetOptions.find((preset) => preset.value === activePresetBase)
-  const customPreset: TThemePresetOption = {
+  const savedCustomPreset = presetOptions.find((preset) => preset.value === THEME_PRESET.CUSTOM)
+  const readonlyPresetOptions = presetOptions.filter(
+    (preset) => preset.value !== THEME_PRESET.CUSTOM,
+  )
+  const customPreset: TThemePresetOption = savedCustomPreset ?? {
     value: THEME_PRESET.CUSTOM,
-    overwrite: customOverwrite,
+    tokens: customTokens,
   }
   const isCustomPreset = activePreset === THEME_PRESET.CUSTOM
   const collapseDirection = isCustomPreset && showForkRelation ? -1 : 1
-  const shouldShowCustomPreset = hasCustomPreset || isCustomPreset
+  const shouldShowCustomPreset = !!savedCustomPreset || isCustomPreset
   const displayPresetOptions = shouldShowCustomPreset
     ? showForkRelation
       ? basePreset
         ? [customPreset, basePreset]
         : [customPreset]
-      : [customPreset, ...presetOptions]
-    : presetOptions
+      : [customPreset, ...readonlyPresetOptions]
+    : readonlyPresetOptions
   const presetItems: TPresetListItem[] = showForkRelation
     ? basePreset
       ? [

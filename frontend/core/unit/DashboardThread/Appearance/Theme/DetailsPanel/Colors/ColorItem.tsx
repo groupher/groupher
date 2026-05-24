@@ -5,7 +5,7 @@ import type { TColorName } from '~/spec'
 import ColorSelector from '~/widgets/ColorSelector'
 
 import useSalon from '../../salon/details_panel/colors/color_item'
-import type { TThemePresetOverwrite } from '../../spec'
+import type { TThemePresetOverwrite, TThemePresetTokens } from '../../spec'
 import type { TColorDetail } from './constant'
 import {
   findPresetColor,
@@ -16,15 +16,15 @@ import {
 
 type TProps = {
   detail: TColorDetail
-  selectedOverwrite: TThemePresetOverwrite
-  onThemePresetCommit: (patch: Partial<TThemePresetOverwrite>) => void
+  selectedTokens: TThemePresetTokens
+  onThemePresetCommit: (overwrite: TThemePresetOverwrite) => void
 }
 
-export default function ColorItem({ detail, selectedOverwrite, onThemePresetCommit }: TProps) {
+export default function ColorItem({ detail, selectedTokens, onThemePresetCommit }: TProps) {
   const s = useSalon({ isLarge: detail.isLarge })
   const { t } = useTrans()
   const { theme, key, value } = useThemeKV()
-  const color = value(selectedOverwrite, detail.key) as string
+  const color = value(selectedTokens, detail.key) as string
   const activeColorKey = key(detail.key)
 
   const wrapperStyle = {

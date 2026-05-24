@@ -1,12 +1,11 @@
 import { proxy } from 'valtio'
 
 import { DEFAULT_THEME_PRESET } from '~/const/theme_preset'
-import { getThemeTokens } from '~/lib/themePreset'
 
 import type { TInit, TStore } from './spec'
 
 export default function ThemePresetStore(init: TInit = {}): TStore {
-  const tokens = getThemeTokens(init.themeTokens)
+  const tokens = init.themeTokens ?? {}
 
   const store = proxy({
     themePreset: init.themePreset ?? DEFAULT_THEME_PRESET,
@@ -16,7 +15,7 @@ export default function ThemePresetStore(init: TInit = {}): TStore {
     ...tokens,
 
     hydrate(source: TInit): void {
-      const nextTokens = getThemeTokens(source.themeTokens)
+      const nextTokens = source.themeTokens ?? {}
 
       store.themePreset = source.themePreset ?? DEFAULT_THEME_PRESET
       store.themePresetBase = source.themePresetBase ?? DEFAULT_THEME_PRESET
@@ -31,5 +30,5 @@ export default function ThemePresetStore(init: TInit = {}): TStore {
     },
   })
 
-  return store
+  return store as TStore
 }

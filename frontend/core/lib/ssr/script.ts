@@ -1,6 +1,6 @@
 import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
-import { buildThemePresetCssVars, getThemeTokens } from '~/lib/themePreset'
-import type { TParseDashboard } from '~/spec'
+import { buildThemePresetCssVars } from '~/lib/themePreset'
+import type { TParseDashboard, TResolvedThemePreset } from '~/spec'
 
 export const ssrThemeInitScript = () => `
 (function() {
@@ -23,14 +23,16 @@ export const ssrThemeInitScript = () => `
 type TCSSVarMap = Record<string, string>
 const HEX_COLOR_RE = /^#[0-9a-f]{6}$/i
 
-const sanitizeCSSVars = (vars: TCSSVarMap, fallback: TCSSVarMap): TCSSVarMap => {
+const sanitizeCSSVars = (vars: TCSSVarMap): TCSSVarMap => {
   const sanitized: TCSSVarMap = {}
 
   for (const [key, value] of Object.entries(vars)) {
     // SSR writes these values into a raw <style> tag. Keep this as an
     // injection-boundary guard only; preset resolution still belongs to the
     // backend and is not repeated on the client.
-    sanitized[key] = HEX_COLOR_RE.test(value) ? value : fallback[key]
+    if (HEX_COLOR_RE.test(value)) {
+      sanitized[key] = value
+    }
   }
 
   return sanitized
@@ -48,16 +50,15 @@ const serializeCSSVars = (selector: string, vars: TCSSVarMap): string => {
 // Build first-paint dashboard color variables on the server so custom colors do
 // not wait for client hydration to override the base token defaults.
 const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string, TCSSVarMap]> => {
-  const themeTokens = getThemeTokens(dashboard.themeTokens)
-  const defaultTokens = getThemeTokens()
+  if (!dashboard.themeTokens?.primaryColor) return []
+
+  const themeTokens = dashboard.themeTokens as TResolvedThemePreset
   const lightVars = buildThemePresetCssVars(themeTokens, THEME.LIGHT)
   const darkVars = buildThemePresetCssVars(themeTokens, THEME.DARK)
-  const lightFallback = buildThemePresetCssVars(defaultTokens, THEME.LIGHT)
-  const darkFallback = buildThemePresetCssVars(defaultTokens, THEME.DARK)
 
   return [
-    [':root', sanitizeCSSVars(lightVars, lightFallback)],
-    ["[data-theme='dark']", sanitizeCSSVars(darkVars, darkFallback)],
+    [':root', sanitizeCSSVars(lightVars)],
+    ["[data-theme='dark']", sanitizeCSSVars(darkVars)],
   ]
 }
 

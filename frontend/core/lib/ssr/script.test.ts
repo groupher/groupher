@@ -1,12 +1,41 @@
-import type { TParseDashboard } from '~/spec'
+import type { TParseDashboard, TResolvedThemePreset } from '~/spec'
 
 import { injectDsbColors } from './script'
+
+const makeTokens = (tokens: Partial<TResolvedThemePreset>): TResolvedThemePreset => ({
+  pageBg: '#ffffff',
+  pageBgDark: '#101010',
+  pageBgHue: 0,
+  pageBgHueDark: 0,
+  pageBgIntensity: 0,
+  pageBgIntensityDark: 0,
+  primaryColor: '#112233',
+  primaryColorDark: '#223344',
+  accentColor: '#334455',
+  accentColorDark: '#445566',
+  textTitle: '#102030',
+  textTitleDark: '#ddeeff',
+  textDigest: '#405060',
+  textDigestDark: '#aabbcc',
+  cardColor: '#f8f9fa',
+  cardColorDark: '#202124',
+  dividerColor: '#dadce0',
+  dividerColorDark: '#3c4043',
+  gaussBlur: 100,
+  gaussBlurDark: 100,
+  glowType: '',
+  glowTypeDark: '',
+  glowFixed: true,
+  glowOpacity: 100,
+  glowOpacityDark: 100,
+  ...tokens,
+})
 
 describe('injectDsbColors', () => {
   it('injects primary and accent custom vars for both themes', () => {
     const styleText = injectDsbColors({
       themePreset: 'CUSTOM',
-      themeTokens: {
+      themeTokens: makeTokens({
         primaryColor: '#112233',
         primaryColorDark: '#223344',
         accentColor: '#334455',
@@ -21,7 +50,7 @@ describe('injectDsbColors', () => {
         cardColorDark: '#202124',
         dividerColor: '#dadce0',
         dividerColorDark: '#3c4043',
-      },
+      }),
     } satisfies Partial<TParseDashboard>)
 
     expect(styleText).toContain('--color-primary-custom: #112233;')
@@ -40,10 +69,10 @@ describe('injectDsbColors', () => {
     expect(styleText).toContain('--color-divider-dark: #3c4043;')
   })
 
-  it('falls back to safe defaults when dashboard colors are invalid', () => {
+  it('omits invalid dashboard colors at the raw SSR injection boundary', () => {
     const styleText = injectDsbColors({
       themePreset: 'CUSTOM',
-      themeTokens: {
+      themeTokens: makeTokens({
         primaryColor: 'red;}</style><script>alert(1)</script>',
         primaryColorDark: '#fff',
         accentColor: 'var(--malicious)',
@@ -57,24 +86,17 @@ describe('injectDsbColors', () => {
         cardColor: 'url(javascript:evil)',
         cardColorDark: '#222',
         dividerColor: 'currentColor',
-        dividerColorDark: null,
-      },
+        dividerColorDark: null as unknown as string,
+      }),
     } satisfies Partial<TParseDashboard>)
 
-    expect(styleText).toContain('--color-primary-custom: #7d519e;')
-    expect(styleText).toContain('--color-primary-custom-dark: #9669b9;')
-    expect(styleText).toContain('--color-accent-custom: #5073c6;')
-    expect(styleText).toContain('--color-accent-custom-dark: #3a7ec7;')
-    expect(styleText).toContain('--color-page-custom: #fffcfc;')
-    expect(styleText).toContain('--color-page-custom-dark: #25161d;')
-    expect(styleText).toContain('--color-title: #243041;')
-    expect(styleText).toContain('--color-title-dark: #f5f5f5;')
-    expect(styleText).toContain('--color-digest: #6b7280;')
-    expect(styleText).toContain('--color-digest-dark: #949494;')
-    expect(styleText).toContain('--color-card: #ffffff;')
-    expect(styleText).toContain('--color-card-dark: #252525;')
-    expect(styleText).toContain('--color-divider: #eae9e9;')
-    expect(styleText).toContain('--color-divider-dark: #353535;')
+    expect(styleText).not.toContain('--color-primary-custom:')
+    expect(styleText).not.toContain('--color-accent-custom:')
+    expect(styleText).not.toContain('--color-page-custom:')
+    expect(styleText).not.toContain('--color-title:')
+    expect(styleText).not.toContain('--color-digest:')
+    expect(styleText).not.toContain('--color-card:')
+    expect(styleText).not.toContain('--color-divider:')
     expect(styleText).not.toContain('</style>')
     expect(styleText).not.toContain('alert(1)')
     expect(styleText).not.toContain('alert(2)')

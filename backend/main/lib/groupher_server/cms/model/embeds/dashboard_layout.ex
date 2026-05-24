@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
 
   alias GroupherServer.CMS
 
-  alias CMS.Helper.KanbanBoards
+  alias CMS.Helper.{KanbanBoards, ThemePreset}
   alias CMS.Model.Metrics.Dashboard
 
   @optional_fields dsb_cast_fields(:layout)
@@ -32,26 +32,15 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
     struct
     |> cast(params, @optional_fields)
     |> validate_required([:kanban_boards])
-    |> validate_theme_overwrite()
+    |> validate_custom_theme_preset()
     |> validate_kanban_boards()
   end
 
-  defp validate_theme_overwrite(changeset) do
-    changeset
-    |> validate_theme_map(:theme_overwrite)
-  end
-
-  defp validate_theme_map(changeset, field) do
-    validate_change(changeset, field, fn ^field, value ->
-      cond do
-        is_nil(value) ->
-          []
-
-        is_map(value) ->
-          []
-
-        true ->
-          [{field, "must be a map"}]
+  defp validate_custom_theme_preset(changeset) do
+    validate_change(changeset, :custom_theme_preset, fn :custom_theme_preset, value ->
+      case ThemePreset.validate_custom_preset(value) do
+        :ok -> []
+        {:error, reason} -> [custom_theme_preset: reason]
       end
     end)
   end

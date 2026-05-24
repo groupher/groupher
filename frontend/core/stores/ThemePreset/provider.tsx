@@ -12,6 +12,7 @@ import { useSnapshot } from 'valtio'
 
 import useTheme from '~/hooks/useTheme'
 import { buildThemePresetCssVars } from '~/lib/themePreset'
+import type { TResolvedThemePreset } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import setupStore from '.'
@@ -54,7 +55,11 @@ type TScopeProps = {
 const ThemePresetScope = ({ children, store }: TScopeProps) => {
   const preset$ = useSnapshot(store)
   const { theme } = useTheme()
-  const cssVars = useMemo(() => buildThemePresetCssVars(preset$, theme), [preset$, theme])
+  const cssVars = useMemo(
+    () =>
+      preset$.primaryColor ? buildThemePresetCssVars(preset$ as TResolvedThemePreset, theme) : {},
+    [preset$, theme],
+  )
 
   useEffect(() => {
     const root = document.documentElement
@@ -86,8 +91,9 @@ export default function Provider({ children, initData = EMPTY_INIT_DATA }: TProp
       themePreset: dsb$.themePreset,
       themePresetBase: dsb$.themePresetBase,
       themeTokens: dsb$.themeTokens,
+      presetOptions: dsb$.themePresets,
     })
-  }, [dsb$.themePreset, dsb$.themePresetBase, dsb$.themeTokens])
+  }, [dsb$.themePreset, dsb$.themePresetBase, dsb$.themeTokens, dsb$.themePresets])
 
   return (
     <StoreContext.Provider value={storeRef.current}>

@@ -66,7 +66,8 @@ export const FIELDS: TDsbFieldMap = {
   themePreset: DEFAULT_THEME_PRESET,
   themePresetBase: DEFAULT_THEME_PRESET,
   themeTokens: {},
-  hasCustomThemePreset: false,
+  themePresets: [],
+  themeOverwrite: {},
 
   // seo
   seoEnable: true,

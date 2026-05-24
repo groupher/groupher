@@ -60,7 +60,6 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
     footer_layout: [:oneline, :group],
     header_layout: [:center, :right, :float],
     theme_preset: @theme_presets,
-    theme_preset_base: @theme_presets,
     rss_feed_type: [:digest, :full]
   }
 
@@ -119,8 +118,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
   def macro_schema(:layout) do
     [
       [:theme_preset, :enum, :default],
-      [:theme_preset_base, :enum, :default],
-      [:theme_overwrite, :map, %{}],
+      [:custom_theme_preset, :map, nil],
       [:kanban_bg_colors, {:array, :rainbow_color}, @kanban_bg_colors_default],
       [:kanban_boards, {:array, :kanban_board}, KanbanBoards.default_values_list()],
       [:post_layout, :enum, :quora],

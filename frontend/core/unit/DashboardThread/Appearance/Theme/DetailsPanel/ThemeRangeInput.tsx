@@ -3,22 +3,22 @@ import { useEffect, useState } from 'react'
 import useThemeKV from '~/hooks/useThemeKV'
 import RangeInput from '~/widgets/RangeInput'
 
-import type { TThemePresetOverwrite } from '../spec'
+import type { TThemePresetOverwrite, TThemePresetTokens } from '../spec'
 
 type TProps = {
-  baseKey: keyof TThemePresetOverwrite
-  selectedOverwrite: TThemePresetOverwrite
+  baseKey: keyof TThemePresetTokens
+  selectedTokens: TThemePresetTokens
   valueLabel: string
   min: number
   max: number
-  onThemePresetPreview: (patch: Partial<TThemePresetOverwrite>) => void
-  onThemePresetSchedule: (patch: Partial<TThemePresetOverwrite>) => void
+  onThemePresetPreview: (overwrite: TThemePresetOverwrite) => void
+  onThemePresetSchedule: (overwrite: TThemePresetOverwrite) => void
   onThemePresetFlush: () => void
 }
 
 export default function ThemeRangeInput({
   baseKey,
-  selectedOverwrite,
+  selectedTokens,
   valueLabel,
   min,
   max,
@@ -27,7 +27,7 @@ export default function ThemeRangeInput({
   onThemePresetFlush,
 }: TProps) {
   const { key, value } = useThemeKV()
-  const activeValue = value(selectedOverwrite, baseKey) as number
+  const activeValue = value(selectedTokens, baseKey) as number
   const activeKey = key(baseKey)
   const [displayValue, setDisplayValue] = useState(activeValue)
 
@@ -35,7 +35,7 @@ export default function ThemeRangeInput({
     setDisplayValue(activeValue)
   }, [activeValue])
 
-  const getPatch = (value: number): Partial<TThemePresetOverwrite> => ({
+  const getOverwrite = (value: number): TThemePresetOverwrite => ({
     [activeKey]: value,
   })
 
@@ -50,14 +50,14 @@ export default function ThemeRangeInput({
       top={0}
       aria-label={valueLabel}
       onChange={(value) => {
-        const patch = getPatch(value)
+        const overwrite = getOverwrite(value)
 
         setDisplayValue(value)
-        onThemePresetPreview(patch)
-        onThemePresetSchedule(patch)
+        onThemePresetPreview(overwrite)
+        onThemePresetSchedule(overwrite)
       }}
       onChangeEnd={(value) => {
-        onThemePresetSchedule(getPatch(value))
+        onThemePresetSchedule(getOverwrite(value))
         onThemePresetFlush()
       }}
     />

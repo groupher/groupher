@@ -5,7 +5,7 @@ import { SAVING_BAR_LAYOUT_TRANSITION } from '../../../../SavingBar/constant'
 import useSalon from '../../salon/details_panel/colors'
 import type { TThemeDetails } from '../../spec'
 import ColorItem from './ColorItem'
-import { MORE_COLOR_DETAILS, COLOR_DETAILS } from './constant'
+import { MAIN_COLOR_DETAILS, EXTRA_COLOR_DETAILS } from './constant'
 
 type TProps = {
   details: TThemeDetails
@@ -13,19 +13,19 @@ type TProps = {
 
 export default function Colors({ details }: TProps) {
   const s = useSalon()
-  const { selectedOverwrite, onThemePresetCommit } = details
+  const { selectedTokens, onThemePresetCommit } = details
   const [expanded, setExpanded] = useState(false)
 
-  const toggleLabel = expanded ? 'show less' : `${MORE_COLOR_DETAILS.length} more`
+  const toggleLabel = expanded ? 'show less' : `${EXTRA_COLOR_DETAILS.length} more`
 
   return (
     <LazyMotion features={domAnimation}>
       <div className={s.wrapper}>
-        {COLOR_DETAILS.map((detail) => (
+        {MAIN_COLOR_DETAILS.map((detail) => (
           <ColorItem
             key={detail.key}
             detail={detail}
-            selectedOverwrite={selectedOverwrite}
+            selectedTokens={selectedTokens}
             onThemePresetCommit={onThemePresetCommit}
           />
         ))}
@@ -42,11 +42,11 @@ export default function Colors({ details }: TProps) {
             className={s.moreColorsClip}
           >
             <div className={s.moreColors}>
-              {MORE_COLOR_DETAILS.map((detail) => (
+              {EXTRA_COLOR_DETAILS.map((detail) => (
                 <ColorItem
                   key={detail.key}
                   detail={detail}
-                  selectedOverwrite={selectedOverwrite}
+                  selectedTokens={selectedTokens}
                   onThemePresetCommit={onThemePresetCommit}
                 />
               ))}

@@ -1,14 +1,7 @@
 import MiniColorBar from './MiniColorBar'
 import MiniTextBar from './MiniTextBar'
-import useSalon from './salon/mini_bars'
-
-type TProps = {
-  active: boolean
-  primaryColor: string
-  accentColor: string
-  textTitle: string
-  textDigest: string
-}
+import useSalon from './salon'
+import type { TProps } from './spec'
 
 export default function MiniBars({
   active,

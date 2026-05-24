@@ -32,11 +32,11 @@ export default function PresetCard({
   const { value } = useThemeKV()
   const disabled = mode === 'forkBase'
   const presetKey = preset.value.toLowerCase()
-  const cardBg = value(preset.overwrite, PRESET_FIELD.PAGE_BG)
-  const primaryColor = value(preset.overwrite, PRESET_FIELD.PRIMARY_COLOR)
-  const accentColor = value(preset.overwrite, PRESET_FIELD.ACCENT_COLOR)
-  const textTitle = value(preset.overwrite, PRESET_FIELD.TEXT_TITLE)
-  const textDigest = value(preset.overwrite, PRESET_FIELD.TEXT_DIGEST)
+  const cardBg = value(preset.tokens, PRESET_FIELD.PAGE_BG)
+  const primaryColor = value(preset.tokens, PRESET_FIELD.PRIMARY_COLOR)
+  const accentColor = value(preset.tokens, PRESET_FIELD.ACCENT_COLOR)
+  const textTitle = value(preset.tokens, PRESET_FIELD.TEXT_TITLE)
+  const textDigest = value(preset.tokens, PRESET_FIELD.TEXT_DIGEST)
 
   return (
     <div

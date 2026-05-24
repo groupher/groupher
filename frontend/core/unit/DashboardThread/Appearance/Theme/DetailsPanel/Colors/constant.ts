@@ -1,6 +1,6 @@
 import { PRESET_FIELD } from '../../constant'
 
-export const COLOR_DETAILS = [
+export const MAIN_COLOR_DETAILS = [
   {
     key: PRESET_FIELD.PRIMARY_COLOR,
     hasContrastRing: false,
@@ -31,7 +31,7 @@ export const COLOR_DETAILS = [
   },
 ] as const
 
-export const MORE_COLOR_DETAILS = [
+export const EXTRA_COLOR_DETAILS = [
   {
     key: PRESET_FIELD.CARD_COLOR,
     hasContrastRing: true,
@@ -48,4 +48,4 @@ export const MORE_COLOR_DETAILS = [
   },
 ] as const
 
-export type TColorDetail = (typeof COLOR_DETAILS | typeof MORE_COLOR_DETAILS)[number]
+export type TColorDetail = (typeof MAIN_COLOR_DETAILS | typeof EXTRA_COLOR_DETAILS)[number]

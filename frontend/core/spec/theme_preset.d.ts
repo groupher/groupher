@@ -36,7 +36,7 @@ export type TResolvedThemePreset = {
 
 export type TThemePresetOption = {
   value: TThemePreset
-  overwrite: TResolvedThemePreset
+  tokens: TResolvedThemePreset
 }
 
 export type TThemePresetsQuery = {

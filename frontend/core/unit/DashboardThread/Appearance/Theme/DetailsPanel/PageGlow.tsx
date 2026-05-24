@@ -19,13 +19,13 @@ export default function PageGlow({ details }: TProps) {
   const { value } = useThemeKV()
 
   const {
-    selectedOverwrite,
+    selectedTokens,
     onThemePresetPreview,
     onThemePresetSchedule,
     onThemePresetFlush,
     onThemePresetCommit,
   } = details
-  const glowType = value(selectedOverwrite, PRESET_FIELD.GLOW_TYPE)
+  const glowType = value(selectedTokens, PRESET_FIELD.GLOW_TYPE)
 
   return (
     <>
@@ -38,7 +38,7 @@ export default function PageGlow({ details }: TProps) {
         <div className='grow' />
         <div className={s.swatches}>
           <TextureBalls
-            selectedOverwrite={selectedOverwrite}
+            selectedTokens={selectedTokens}
             onThemePresetCommit={onThemePresetCommit}
             rowClassName={s.swatchRow}
           />
@@ -55,7 +55,7 @@ export default function PageGlow({ details }: TProps) {
           <div className={row.rangeGroup}>
             <ThemeRangeInput
               baseKey={PRESET_FIELD.GLOW_OPACITY}
-              selectedOverwrite={selectedOverwrite}
+              selectedTokens={selectedTokens}
               valueLabel={t('dsb.appearance.glow.intensity.title')}
               min={0}
               max={100}

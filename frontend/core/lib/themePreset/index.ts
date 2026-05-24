@@ -1,36 +1,15 @@
 import THEME from '~/const/theme'
-import { DEFAULT_THEME_PRESET_TOKENS, PRESET_FIELD } from '~/const/theme_preset'
+import { PRESET_FIELD } from '~/const/theme_preset'
 import { createThemeKeyPicker } from '~/lib/themeKey'
 import type { TResolvedThemePreset } from '~/spec'
 
 import type { TThemePresetBaseField, TThemePresetCssVars } from './spec'
 
-const DEFAULT_RESOLVED_THEME_PRESET = DEFAULT_THEME_PRESET_TOKENS as TResolvedThemePreset
-
-/**
- * Return the theme tokens the frontend should render with.
- *
- * The backend owns preset resolution: built-in preset defaults, custom base
- * preset merging, and custom overwrite merging all happen before `themeTokens`
- * reaches the client. This function only provides a local default for initial
- * render, tests, mocks, or SSR paths where the payload is absent.
- *
- * Example:
- *   getThemeTokens({ textTitle: '#111111' }).textTitle
- *   // => '#111111'
- *
- *   getThemeTokens().textTitle
- *   // => DEFAULT_THEME_PRESET_TOKENS.textTitle
- */
-export const getThemeTokens = (
-  themeTokens: Partial<TResolvedThemePreset> | null | undefined = undefined,
-): TResolvedThemePreset => ({
-  ...DEFAULT_RESOLVED_THEME_PRESET,
-  ...themeTokens,
-})
-
 /**
  * Read a theme token by base key using the `xx / xxDark` naming convention.
+ *
+ * Problem scenario: callers should pass `PRESET_FIELD.TEXT_TITLE` once and let
+ * the current theme decide whether `textTitle` or `textTitleDark` is read.
  *
  * Input:
  *   - `tokens`: resolved theme tokens from the backend.
@@ -42,7 +21,7 @@ export const getThemeTokens = (
  *   theme.
  *
  * Example:
- *   getThemePresetValue(tokens, 'textTitle', THEME.DARK)
+ *   getThemePresetValue(tokens, PRESET_FIELD.TEXT_TITLE, THEME.DARK)
  *   // => tokens.textTitleDark
  */
 export const getThemePresetValue = <TKey extends TThemePresetBaseField>(
@@ -53,6 +32,10 @@ export const getThemePresetValue = <TKey extends TThemePresetBaseField>(
 
 /**
  * Build CSS variables for one concrete theme.
+ *
+ * Problem scenario: runtime and SSR need to write the same CSS variables from
+ * backend-resolved `themeTokens` without knowing how Custom overwrite was
+ * stored or merged in the database.
  *
  * Input:
  *   - `tokens`: resolved theme tokens from the backend.

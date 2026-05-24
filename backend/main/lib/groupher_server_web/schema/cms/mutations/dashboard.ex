@@ -96,8 +96,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       dsb_args(:layout,
         except: [
           :theme_preset,
-          :theme_preset_base,
-          :theme_overwrite
+          :custom_theme_preset
         ]
       )
 
@@ -114,7 +113,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       arg(:community, non_null(:string))
       arg(:theme_preset, non_null(:dsb_theme_preset))
       arg(:theme_preset_base, non_null(:dsb_theme_preset))
-      arg(:theme_tokens, :json)
+      arg(:theme_overwrite, :json)
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "dashboard.theme.update")

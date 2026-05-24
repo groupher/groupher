@@ -13,7 +13,7 @@ type TProps = {
 export default function GlassOpacity({ details, ...spacing }: TProps) {
   const s = useSettingRowSalon(spacing)
   const { t } = useTrans()
-  const { selectedOverwrite, onThemePresetPreview, onThemePresetSchedule, onThemePresetFlush } =
+  const { selectedTokens, onThemePresetPreview, onThemePresetSchedule, onThemePresetFlush } =
     details
 
   return (
@@ -29,7 +29,7 @@ export default function GlassOpacity({ details, ...spacing }: TProps) {
           <div className={s.rangeGroup}>
             <ThemeRangeInput
               baseKey={FIELD.GAUSS_BLUR}
-              selectedOverwrite={selectedOverwrite}
+              selectedTokens={selectedTokens}
               valueLabel={t('dsb.appearance.theme.glass_opacity.title')}
               min={50}
               max={100}

@@ -62,15 +62,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     theme_args =
       args
       |> Map.drop([:community])
-      |> normalize_theme_tokens_arg()
 
     with :ok <- ensure_custom_theme_preset(theme_args) do
       CMS.Communities.save_custom_theme_preset(community, theme_args)
     end
-  end
-
-  def select_theme_preset(_root, %{community: _community, theme_preset: :custom}, _info) do
-    {:error, "selectThemePreset only accepts read-only theme presets"}
   end
 
   def select_theme_preset(_root, %{community: community, theme_preset: theme_preset}, _info) do
@@ -78,14 +73,6 @@ defmodule GroupherServerWeb.Resolvers.CMS do
       theme_preset: theme_preset
     })
   end
-
-  defp normalize_theme_tokens_arg(%{theme_tokens: tokens} = args) do
-    args
-    |> Map.delete(:theme_tokens)
-    |> Map.put(:theme_overwrite, tokens)
-  end
-
-  defp normalize_theme_tokens_arg(args), do: args
 
   defp ensure_custom_theme_preset(%{theme_preset: :custom, theme_preset_base: :custom}),
     do: {:error, "saveCustomThemePreset requires a read-only themePresetBase"}

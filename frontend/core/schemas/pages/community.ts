@@ -83,7 +83,10 @@ export const community = `
           themePreset
           themePresetBase
           themeTokens
-          hasCustomThemePreset
+          themePresets {
+            value
+            tokens
+          }
           postLayout
           docCoverLayout
           docFaqLayout

@@ -1,4 +1,4 @@
-import type { TThemePresetOption, TThemePresetOverwrite } from '../spec'
+import type { TThemePresetOption, TThemePresetTokens } from '../spec'
 
 export type TPresetListItem =
   | {
@@ -13,8 +13,7 @@ export type TProps = {
   activePreset: string
   activePresetBase: string
   presetOptions: readonly TThemePresetOption[]
-  hasCustomPreset: boolean
-  customOverwrite: TThemePresetOverwrite
+  customTokens: TThemePresetTokens
   showForkRelation: boolean
   onSelect: (preset: TThemePresetOption) => void
 }

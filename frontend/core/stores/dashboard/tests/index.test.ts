@@ -132,9 +132,13 @@ describe('stores/dashboard', () => {
     const store = setupStore()
     const claude = {
       value: THEME_PRESET.CLAUDE,
-      overwrite: {
+      tokens: {
         pageBg: '#fefaf1',
         pageBgDark: '#1e141b',
+        pageBgHue: 48,
+        pageBgHueDark: 318,
+        pageBgIntensity: 32,
+        pageBgIntensityDark: 0,
         primaryColor: '#c96442',
         primaryColorDark: '#d97757',
         accentColor: '#5073c6',
@@ -143,30 +147,48 @@ describe('stores/dashboard', () => {
         textTitleDark: '#f4eee7',
         textDigest: '#786f63',
         textDigestDark: '#a9a19a',
+        cardColor: '#fffdf8',
+        cardColorDark: '#261b22',
+        dividerColor: '#e6ded2',
+        dividerColorDark: '#3a3035',
+        gaussBlur: 100,
+        gaussBlurDark: 100,
+        glowType: '',
+        glowTypeDark: '',
+        glowFixed: true,
+        glowOpacity: 100,
+        glowOpacityDark: 100,
       },
     }
 
     store.editFields({
       themePreset: claude.value,
       themePresetBase: claude.value,
-      themeTokens: { ...claude.overwrite },
+      themeTokens: { ...claude.tokens },
+      themePresets: [claude],
     })
 
     expect(store.themePreset).toBe(THEME_PRESET.CLAUDE)
     expect(store.themePresetBase).toBe(THEME_PRESET.CLAUDE)
-    expect(store.themeTokens.pageBg).toBe(claude.overwrite.pageBg)
-    expect(store.themeTokens.pageBgDark).toBe(claude.overwrite.pageBgDark)
+    expect(store.themeTokens.pageBg).toBe(claude.tokens.pageBg)
+    expect(store.themeTokens.pageBgDark).toBe(claude.tokens.pageBgDark)
     expect(store.themeTokens.primaryColor).toBe('#c96442')
     expect(store.themeTokens.primaryColorDark).toBe('#d97757')
     expect(store.themeTokens.accentColor).toBe('#5073c6')
     expect(store.themeTokens.accentColorDark).toBe('#3a7ec7')
-    expect(store.anyTouched(['themePreset', 'themePresetBase', 'themeTokens'])).toBe(true)
+    expect(store.themePresets[0]?.tokens.primaryColor).toBe('#c96442')
+    expect(
+      store.anyTouched(['themePreset', 'themePresetBase', 'themeTokens', 'themePresets']),
+    ).toBe(true)
 
-    store.rollbackFields(['themePreset', 'themePresetBase', 'themeTokens'])
+    store.rollbackFields(['themePreset', 'themePresetBase', 'themeTokens', 'themePresets'])
 
     expect(store.themePreset).toBe(store.original.themePreset)
     expect(store.themePresetBase).toBe(store.original.themePresetBase)
     expect(store.themeTokens).toEqual(store.original.themeTokens)
-    expect(store.anyTouched(['themePreset', 'themePresetBase', 'themeTokens'])).toBe(false)
+    expect(store.themePresets).toEqual(store.original.themePresets)
+    expect(
+      store.anyTouched(['themePreset', 'themePresetBase', 'themeTokens', 'themePresets']),
+    ).toBe(false)
   })
 })

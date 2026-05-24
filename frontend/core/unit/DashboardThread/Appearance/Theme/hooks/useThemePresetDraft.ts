@@ -14,7 +14,7 @@ import type { TUseThemePresetDraftRet } from '../spec'
  * Example:
  *   const { isThemePresetTouched, editThemePresetFields } = useThemePresetDraft()
  *
- *   editThemePresetFields({ themePreset: THEME_PRESET.CUSTOM, themeTokens })
+ *   editThemePresetFields({ themePreset: THEME_PRESET.CUSTOM, themeOverwrite })
  *   if (isThemePresetTouched) saveThemePreset()
  */
 export default function useThemePresetDraft(): TUseThemePresetDraftRet {

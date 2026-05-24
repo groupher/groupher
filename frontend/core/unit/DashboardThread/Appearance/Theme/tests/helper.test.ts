@@ -1,15 +1,15 @@
 import { THEME_PRESET } from '~/const/theme_preset'
 
 import {
-  buildCustomPresetEditPatch,
-  buildCustomPresetResetPatch,
-  buildPresetSelectionPatch,
+  buildCustomPresetEditOverwrite,
+  buildCustomPresetResetOverwrite,
+  buildPresetSelectionFields,
   toCssOpacity,
   toPageBgDraft,
 } from '../helper'
-import type { TThemePresetOverwrite } from '../spec'
+import type { TThemePresetTokens } from '../spec'
 
-const overwrite: TThemePresetOverwrite = {
+const tokens: TThemePresetTokens = {
   pageBg: '#ffffff',
   pageBgDark: '#111111',
   pageBgHue: 42,
@@ -46,74 +46,81 @@ describe('theme preset model helpers', () => {
   })
 
   it('adapts theme tokens to page background drafts', () => {
-    expect(toPageBgDraft(overwrite)).toEqual({
-      pageBg: overwrite.pageBg,
-      pageBgDark: overwrite.pageBgDark,
-      pageBgHue: overwrite.pageBgHue,
-      pageBgHueDark: overwrite.pageBgHueDark,
-      pageBgIntensity: overwrite.pageBgIntensity,
-      pageBgIntensityDark: overwrite.pageBgIntensityDark,
+    expect(toPageBgDraft(tokens)).toEqual({
+      pageBg: tokens.pageBg,
+      pageBgDark: tokens.pageBgDark,
+      pageBgHue: tokens.pageBgHue,
+      pageBgHueDark: tokens.pageBgHueDark,
+      pageBgIntensity: tokens.pageBgIntensity,
+      pageBgIntensityDark: tokens.pageBgIntensityDark,
     })
   })
 
-  it('forks readonly preset edits into custom tokens', () => {
-    const { dashboardPatch, nextCustomPresetDraft } = buildCustomPresetEditPatch({
+  it('forks readonly preset edits into custom tokens and sparse overwrite', () => {
+    const { dashboardFields, nextCustomTokensDraft } = buildCustomPresetEditOverwrite({
       activePreset: THEME_PRESET.CLAUDE,
       activePresetBase: THEME_PRESET.CLAUDE,
-      selectedOverwrite: overwrite,
-      customPresetDraft: null,
-      patch: { primaryColor: '#999999' },
+      selectedTokens: tokens,
+      customTokensDraft: null,
+      currentThemeOverwrite: {},
+      overwrite: { primaryColor: '#999999' },
     })
 
-    expect(dashboardPatch).toMatchObject({
+    expect(dashboardFields).toMatchObject({
       themePreset: THEME_PRESET.CUSTOM,
       themePresetBase: THEME_PRESET.CLAUDE,
-      themeTokens: nextCustomPresetDraft,
+      themeTokens: nextCustomTokensDraft,
+      themeOverwrite: { primaryColor: '#999999' },
     })
-    expect(nextCustomPresetDraft.primaryColor).toBe('#999999')
+    expect(nextCustomTokensDraft.primaryColor).toBe('#999999')
   })
 
-  it('keeps existing custom draft as the edit base', () => {
-    const customDraft = { ...overwrite, primaryColor: '#777777' }
-    const { nextCustomPresetDraft } = buildCustomPresetEditPatch({
+  it('keeps existing custom tokens as the edit base and merges overwrite', () => {
+    const customTokensDraft = { ...tokens, primaryColor: '#777777' }
+    const { dashboardFields, nextCustomTokensDraft } = buildCustomPresetEditOverwrite({
       activePreset: THEME_PRESET.CUSTOM,
       activePresetBase: THEME_PRESET.CLAUDE,
-      selectedOverwrite: overwrite,
-      customPresetDraft: customDraft,
-      patch: { accentColor: '#888888' },
+      selectedTokens: tokens,
+      customTokensDraft,
+      currentThemeOverwrite: { primaryColor: '#777777' },
+      overwrite: { accentColor: '#888888' },
     })
 
-    expect(nextCustomPresetDraft).toMatchObject({
+    expect(nextCustomTokensDraft).toMatchObject({
+      primaryColor: '#777777',
+      accentColor: '#888888',
+    })
+    expect(dashboardFields.themeOverwrite).toEqual({
       primaryColor: '#777777',
       accentColor: '#888888',
     })
   })
 
-  it('builds preset selection patches with preserved custom base', () => {
-    const { dashboardPatch } = buildPresetSelectionPatch({
-      preset: { value: THEME_PRESET.DEFAULT, overwrite },
+  it('builds preset selection fields for readonly presets', () => {
+    const { dashboardFields } = buildPresetSelectionFields({
+      preset: { value: THEME_PRESET.DEFAULT, tokens },
       currentThemePresetBase: THEME_PRESET.CLAUDE,
-      hasCustomThemePreset: true,
-      customPresetDraft: null,
+      customTokensDraft: null,
     })
 
-    expect(dashboardPatch).toMatchObject({
+    expect(dashboardFields).toMatchObject({
       themePreset: THEME_PRESET.DEFAULT,
       themePresetBase: THEME_PRESET.CLAUDE,
-      themeTokens: overwrite,
+      themeTokens: tokens,
     })
   })
 
-  it('resets custom tokens to the selected preset without leaving custom mode', () => {
-    const { dashboardPatch, nextCustomPresetDraft } = buildCustomPresetResetPatch({
+  it('resets custom tokens to the selected preset and clears sparse overwrite', () => {
+    const { dashboardFields, nextCustomTokensDraft } = buildCustomPresetResetOverwrite({
       value: THEME_PRESET.SOLARIZED,
-      overwrite,
+      tokens,
     })
 
-    expect(dashboardPatch).toMatchObject({
+    expect(dashboardFields).toMatchObject({
       themePreset: THEME_PRESET.CUSTOM,
       themePresetBase: THEME_PRESET.SOLARIZED,
-      themeTokens: nextCustomPresetDraft,
+      themeTokens: nextCustomTokensDraft,
+      themeOverwrite: {},
     })
   })
 })

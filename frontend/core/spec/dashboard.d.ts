@@ -25,7 +25,7 @@ import type { TDsbFieldKey, TDsbFieldMap } from '~/stores/dashboard/spec'
 import type { TFAQSection } from './article'
 import type { TColorName } from './color'
 import type { TModerator } from './community'
-import type { TResolvedThemePreset, TThemePreset } from './theme_preset'
+import type { TResolvedThemePreset, TThemePreset, TThemePresetOption } from './theme_preset'
 import type { TEditValue, TFooterOnelineLink, TLinkItem, TSocialItem } from './utils'
 import type { TWallpaperData } from './wallpaper'
 
@@ -71,8 +71,9 @@ export type TDsb = {
     brandLayout: TBrandLayout
     themePreset?: TThemePreset | null
     themePresetBase?: TThemePreset | null
-    themeTokens?: Partial<TResolvedThemePreset> | null
-    hasCustomThemePreset?: boolean | null
+    themeTokens?: TResolvedThemePreset | null
+    themePresets?: readonly TThemePresetOption[] | null
+    themeOverwrite?: Partial<TResolvedThemePreset> | null
     topbarEnabled: boolean
     topbarBg: TColorName
     topbarBgCustomColor: string

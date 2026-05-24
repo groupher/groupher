@@ -4,23 +4,23 @@ import CloseSVG from '~/icons/CloseLight'
 
 import { PRESET_FIELD } from '../constant'
 import useSalon, { cn, cnMerge } from '../salon/details_panel/texture_balls'
-import type { TThemePresetOverwrite } from '../spec'
+import type { TThemePresetOverwrite, TThemePresetTokens } from '../spec'
 
 type TProps = {
-  selectedOverwrite: TThemePresetOverwrite
-  onThemePresetCommit: (patch: Partial<TThemePresetOverwrite>) => void
+  selectedTokens: TThemePresetTokens
+  onThemePresetCommit: (overwrite: TThemePresetOverwrite) => void
   rowClassName?: string
 }
 
 export default function TextureBalls({
-  selectedOverwrite,
+  selectedTokens,
   onThemePresetCommit,
   rowClassName,
 }: TProps) {
   const s = useSalon()
   const { key, value } = useThemeKV()
 
-  const glowType = value(selectedOverwrite, PRESET_FIELD.GLOW_TYPE)
+  const glowType = value(selectedTokens, PRESET_FIELD.GLOW_TYPE)
   const glowTypeKey = key(PRESET_FIELD.GLOW_TYPE)
 
   return (

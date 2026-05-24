@@ -7,35 +7,36 @@ export type { TThemePresetOption } from '~/spec'
 
 export type TThemePresetCardMode = 'stacked' | 'forkActive' | 'forkBase'
 
-export type TThemePresetOverwrite = TResolvedThemePreset
+export type TThemePresetTokens = TResolvedThemePreset
+export type TThemePresetOverwrite = Partial<TResolvedThemePreset>
 
 export type TPreviewCssVars = Record<`--${string}`, string | number | null>
 
 export type TCustomPresetEditOptions = {
   activePreset: TThemePresetOption['value']
   activePresetBase: TThemePresetOption['value']
-  selectedOverwrite: TThemePresetOverwrite
-  customPresetDraft: TThemePresetOverwrite | null
-  patch?: Partial<TThemePresetOverwrite>
+  selectedTokens: TThemePresetTokens
+  customTokensDraft: TThemePresetTokens | null
+  currentThemeOverwrite: TThemePresetOverwrite
+  overwrite?: TThemePresetOverwrite
 }
 
 export type TPresetSelectionOptions = {
   preset: TThemePresetOption
   currentThemePresetBase: TThemePresetOption['value']
-  hasCustomThemePreset: boolean
-  customPresetDraft: TThemePresetOverwrite | null
+  customTokensDraft: TThemePresetTokens | null
 }
 
 export type TPageBgPreviewOptions = {
-  selectedOverwrite: TThemePresetOverwrite
+  selectedTokens: TThemePresetTokens
   selectedPageBgDraft: TPageBgDraft
   patch: Partial<TPageBgDraft>
   isLightTheme: boolean
 }
 
 export type TThemePresetPreviewOptions = {
-  selectedOverwrite: TThemePresetOverwrite
-  patch: Partial<TThemePresetOverwrite>
+  selectedTokens: TThemePresetTokens
+  overwrite: TThemePresetOverwrite
   isLightTheme: boolean
 }
 
@@ -44,10 +45,10 @@ export type TUseAppearanceOptions = {
 }
 
 export type TUseThemePresetPreviewOptions = {
-  selectedOverwrite: TThemePresetOverwrite
+  selectedTokens: TThemePresetTokens
   selectedPageBgDraft: TPageBgDraft
   isLightTheme: boolean
-  onCommit: (patch: Partial<TThemePresetOverwrite>) => void
+  onCommit: (overwrite: TThemePresetOverwrite) => void
 }
 
 export type TThemePresetMutationRet = {
@@ -88,25 +89,25 @@ export type TUseThemePresetPreviewRet = {
    */
   previewPageBg: (patch: Partial<TPageBgDraft>) => void
   /**
-   * Preview full theme-token changes without committing store state.
+   * Preview full theme-token overwrite changes without committing store state.
    *
    * Intent: shared detail controls can preview page background and glow opacity
-   * side effects from a single token patch.
+   * side effects from a single token overwrite.
    *
    * Example:
-   *   previewThemePresetPatch({ glowOpacity: 80 })
+   *   previewThemePresetOverwrite({ glowOpacity: 80 })
    */
-  previewThemePresetPatch: (patch: Partial<TThemePresetOverwrite>) => void
+  previewThemePresetOverwrite: (overwrite: TThemePresetOverwrite) => void
   /**
-   * Queue a token patch for debounced store commit.
+   * Queue a token overwrite for debounced store commit.
    *
    * Intent: keep high-frequency controls responsive while still updating
    * touched/saveable dashboard state after the user pauses.
    *
    * Example:
-   *   scheduleThemePresetPatch({ gaussBlur: 72 })
+   *   scheduleThemePresetOverwrite({ gaussBlur: 72 })
    */
-  scheduleThemePresetPatch: (patch: Partial<TThemePresetOverwrite>) => void
+  scheduleThemePresetOverwrite: (overwrite: TThemePresetOverwrite) => void
   /**
    * Immediately commit any queued preview patch.
    *
@@ -161,11 +162,11 @@ export type TUseThemePresetDraftRet = {
    * Example:
    *   editThemePresetFields({ themePreset: THEME_PRESET.CUSTOM, themeTokens })
    */
-  editThemePresetFields: (patch: Partial<TDsbFieldMap>) => void
+  editThemePresetFields: (fields: Partial<TDsbFieldMap>) => void
 }
 
 export type TThemeDetails = {
-  selectedOverwrite: TThemePresetOverwrite
+  selectedTokens: TThemePresetTokens
   selectedPageBgDraft: TPageBgDraft
   isLightTheme: boolean
   pageBgResetKey: string
@@ -189,14 +190,14 @@ export type TThemeDetails = {
    * Example:
    *   details.onThemePresetPreview({ glowOpacity: 60 })
    */
-  onThemePresetPreview: (patch: Partial<TThemePresetOverwrite>) => void
+  onThemePresetPreview: (overwrite: TThemePresetOverwrite) => void
   /**
-   * Schedule token edits as a debounced Custom preset patch.
+   * Schedule token edits as a debounced Custom preset overwrite.
    *
    * Example:
    *   details.onThemePresetSchedule({ textTitle: '#222222' })
    */
-  onThemePresetSchedule: (patch: Partial<TThemePresetOverwrite>) => void
+  onThemePresetSchedule: (overwrite: TThemePresetOverwrite) => void
   /**
    * Flush pending token edits before save.
    *
@@ -210,15 +211,14 @@ export type TThemeDetails = {
    * Example:
    *   details.onThemePresetCommit({ accentColor: '#333333' })
    */
-  onThemePresetCommit: (patch: Partial<TThemePresetOverwrite>) => void
+  onThemePresetCommit: (overwrite: TThemePresetOverwrite) => void
 }
 
 export type TUseAppearanceRet = {
   activePreset: TThemePresetOption['value']
   activePresetBase: TThemePresetOption['value']
-  hasCustomThemePreset: boolean
   presetOptions: readonly TThemePresetOption[]
-  customPresetOverwrite: TThemePresetOverwrite
+  customPresetTokens: TThemePresetTokens
   showForkRelation: boolean
   showResetMenu: boolean
   isTouched: boolean
