@@ -5,11 +5,11 @@ defmodule Helper.QueryBuilder do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.CMS.Helper.{ArticleEnums, Threads}
+  alias GroupherServer.CMS.Artiment.{Enums, Threads}
   alias Helper.{Constant, Datetime}
 
-  @article_cat ArticleEnums.cat_values()
-  @article_status ArticleEnums.status_values()
+  @article_cat Enums.cat_values()
+  @article_status Enums.status_values()
   @threads Threads.enums()
 
   @audit_illegal Constant.CMS.pending(:illegal)

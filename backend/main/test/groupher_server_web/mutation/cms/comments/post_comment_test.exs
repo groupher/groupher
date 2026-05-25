@@ -167,8 +167,13 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
-      _comment = user_conn |> gq_mutation(Schema.m(:emotion_to_comment), %{id: comment.id, emotion: "BEER"})
-      _comment = user_conn |> gq_mutation(Schema.m(:emotion_to_comment), %{id: comment.id, emotion: "HEART"})
+      _comment =
+        user_conn
+        |> gq_mutation(Schema.m(:emotion_to_comment), %{id: comment.id, emotion: "BEER"})
+
+      _comment =
+        user_conn
+        |> gq_mutation(Schema.m(:emotion_to_comment), %{id: comment.id, emotion: "HEART"})
 
       result = user_conn |> gq_query(Schema.q(:one_comment_emotions), %{id: comment.id})
       assert length(result["emotions"]) == 2
@@ -193,14 +198,18 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, _} =
-        CMS.Communities.update_dashboard(community, :thread_emotions, %{
+        CMS.Dashboard.update(community, :thread_emotions, %{
           post_comment: [:heart]
         })
 
       variables = %{id: comment.id, emotion: "BEER"}
 
       assert user_conn
-             |> mutation_error?(Schema.m(:emotion_to_comment), variables, ecode(:emotion_not_allowed))
+             |> mutation_error?(
+               Schema.m(:emotion_to_comment),
+               variables,
+               ecode(:emotion_not_allowed)
+             )
     end
   end
 

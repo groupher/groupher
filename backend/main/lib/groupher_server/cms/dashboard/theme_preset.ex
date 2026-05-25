@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Helper.ThemePreset do
+defmodule GroupherServer.CMS.Dashboard.ThemePreset do
   @moduledoc """
   Dashboard appearance preset token registry and resolver.
 

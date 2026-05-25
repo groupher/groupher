@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Helper.KanbanBoards do
+defmodule GroupherServer.CMS.Dashboard.KanbanBoards do
   @moduledoc """
   Shared kanban board whitelist and defaults for dashboard layout.
   """

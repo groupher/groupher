@@ -355,28 +355,28 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       community_attrs = mock_attrs(:community)
 
       {:ok, community} = CMS.Communities.create(community_attrs, user)
-      {:ok, _} = CMS.Communities.update_dashboard(community, :seo, %{og_title: "groupher"})
+      {:ok, _} = CMS.Dashboard.update(community, :seo, %{og_title: "groupher"})
 
       {:ok, _} =
-        CMS.Communities.update_dashboard(community, :layout, %{
+        CMS.Dashboard.update(community, :layout, %{
           post_layout: "cover",
           topbar_enabled: true
         })
 
       {:ok, _} =
-        CMS.Communities.update_dashboard(community, :layout, %{kanban_bg_colors: [:green, :red]})
+        CMS.Dashboard.update(community, :layout, %{kanban_bg_colors: [:green, :red]})
 
       {:ok, _} =
-        CMS.Communities.update_dashboard(community, :base_info, %{favicon: "new favicon"})
+        CMS.Dashboard.update(community, :base_info, %{favicon: "new favicon"})
 
       {:ok, _} =
-        CMS.Communities.update_dashboard(community, :rss, %{
+        CMS.Dashboard.update(community, :rss, %{
           rss_feed_type: "digest",
           rss_feed_count: 50
         })
 
       {:ok, _} =
-        CMS.Communities.update_dashboard(community, :name_alias, [
+        CMS.Dashboard.update(community, :name_alias, [
           %{slug: "slug 0", name: "name 0"}
         ])
 

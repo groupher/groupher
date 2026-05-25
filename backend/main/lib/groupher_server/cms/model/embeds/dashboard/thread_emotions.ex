@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Model.Embeds.DashboardThreadEmotions do
+defmodule GroupherServer.CMS.Model.Embeds.Dashboard.ThreadEmotions do
   @moduledoc """
   Community-level emotion availability overrides by thread.
 

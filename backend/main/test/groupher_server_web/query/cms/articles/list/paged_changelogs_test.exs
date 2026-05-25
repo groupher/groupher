@@ -175,7 +175,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
     test "returns cancan error when community changelog thread is disabled",
          ~m(guest_conn community)a do
       {:ok, _} =
-        CMS.Communities.update_dashboard(community, :enable, %{
+        CMS.Dashboard.update(community, :enable, %{
           changelog: false
         })
 

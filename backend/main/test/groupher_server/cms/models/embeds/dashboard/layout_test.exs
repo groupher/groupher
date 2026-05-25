@@ -1,22 +1,22 @@
-defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardLayoutTest do
+defmodule GroupherServer.Test.CMS.Models.Embeds.Dashboard.LayoutTest do
   @moduledoc false
 
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Model.Embeds.DashboardLayout
-  alias GroupherServer.CMS.Model.Metrics.Dashboard
+  alias GroupherServer.CMS.Model.Embeds.Dashboard.Layout
+  alias GroupherServer.CMS.Dashboard.Fields, as: Dashboard
 
   test "default xx_layout values are seeded in layout default" do
-    assert DashboardLayout.default() == Dashboard.layout_default()
+    assert Layout.default() == Dashboard.layout_default()
   end
 
   test "default kanban colors are seeded in layout default" do
-    assert DashboardLayout.default().kanban_bg_colors == Dashboard.kanban_bg_colors_default()
+    assert Layout.default().kanban_bg_colors == Dashboard.kanban_bg_colors_default()
   end
 
   test "changeset accepts current enum values" do
     changeset =
-      DashboardLayout.changeset(%DashboardLayout{}, %{
+      Layout.changeset(%Layout{}, %{
         post_layout: :cover,
         kanban_bg_colors: [:black, :yellow],
         kanban_boards: [:backlog, :done]

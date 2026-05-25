@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Search.Article do
 
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]
-  import GroupherServer.CMS.Helper.Matcher
+  import GroupherServer.CMS.Artiment.Matcher
 
   alias Helper.ORM
 

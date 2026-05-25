@@ -1,14 +1,15 @@
-defmodule GroupherServer.CMS.Helper.Matcher do
+defmodule GroupherServer.CMS.Artiment.Matcher do
   @moduledoc """
   this module defined the matches and handy guard ...
   """
 
   import Ecto.Query, warn: false
-  import GroupherServer.CMS.Helper.MatcherMacros
+  import GroupherServer.CMS.Artiment.MatcherMacros
 
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
+
   @type match_info :: %{
           model: module(),
           thread: atom(),

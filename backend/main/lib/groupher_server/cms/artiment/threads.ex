@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Helper.Threads do
+defmodule GroupherServer.CMS.Artiment.Threads do
   @moduledoc """
   Single source of truth for thread values.
 

@@ -3,13 +3,13 @@ defmodule GroupherServer.CMS.FrontDesk do
   CMS domain front desk for reading/fetching and helper operations.
   """
   import Ecto.Query, warn: false
-  import GroupherServer.CMS.Helper.Matcher
+  import GroupherServer.CMS.Artiment.Matcher
   import ShortMaps
 
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias Accounts.Model.User
-  alias CMS.Helper.Threads
+  alias CMS.Artiment.Threads
   alias CMS.Model.{Comment, Community, CommunityTag, Embeds}
   alias Helper.{ORM, QueryBuilder, T}
 

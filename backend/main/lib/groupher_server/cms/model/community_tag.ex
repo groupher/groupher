@@ -9,9 +9,9 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
 
   alias GroupherServer.CMS
 
-  alias CMS.Helper.Threads
+  alias CMS.Artiment.Threads
   alias CMS.Model.{Author, Community, CommunityTagGroup}
-  alias CMS.Model.Metrics.Dashboard
+  alias CMS.Dashboard.Fields, as: Dashboard
   alias Helper.Constant.DBPrefix
   alias Helper.Validator.Slug
 

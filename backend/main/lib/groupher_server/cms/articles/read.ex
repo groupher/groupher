@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Articles.Read do
   Read helpers for articles.
   """
 
-  import GroupherServer.CMS.Helper.Matcher
+  import GroupherServer.CMS.Artiment.Matcher
   import Helper.ErrorCode
 
   import Helper.Utils,

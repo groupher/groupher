@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   """
   import Ecto.Query, only: [from: 2, where: 3]
   import Helper.Utils, only: [get_config: 2, plural: 1, strip_struct: 1]
-  import GroupherServer.CMS.Helper.Matcher
+  import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{Accounts, CMS, Repo}
 

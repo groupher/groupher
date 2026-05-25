@@ -38,50 +38,17 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Communities.update(community, args)
   end
 
-  def update_dashboard(_root, %{community: community, dsb_section: key} = args, _info) do
-    special_keys = [
-      :header_links,
-      :footer_links,
-      :footer_oneline_links,
-      :name_alias,
-      :social_links,
-      :media_reports,
-      :faqs
-    ]
-
-    dsb_args =
-      case key in special_keys do
-        true -> Map.drop(args, [:community, :dsb_section]) |> Map.get(key)
-        false -> Map.drop(args, [:community, :dsb_section])
-      end
-
-    CMS.Communities.update_dashboard(community, key, dsb_args)
+  def update_dashboard(_root, %{community: community, dsb_section: _key} = args, _info) do
+    CMS.Dashboard.update(community, args)
   end
 
   def save_custom_theme_preset(_root, %{community: community} = args, _info) do
-    theme_args =
-      args
-      |> Map.drop([:community])
-
-    with :ok <- ensure_custom_theme_preset(theme_args) do
-      CMS.Communities.save_custom_theme_preset(community, theme_args)
-    end
+    CMS.Dashboard.save_custom_theme_preset(community, args)
   end
 
-  def select_theme_preset(_root, %{community: community, theme_preset: theme_preset}, _info) do
-    CMS.Communities.select_theme_preset(community, %{
-      theme_preset: theme_preset
-    })
+  def select_theme_preset(_root, %{community: community} = args, _info) do
+    CMS.Dashboard.select_theme_preset(community, args)
   end
-
-  defp ensure_custom_theme_preset(%{theme_preset: :custom, theme_preset_base: :custom}),
-    do: {:error, "saveCustomThemePreset requires a read-only themePresetBase"}
-
-  defp ensure_custom_theme_preset(%{theme_preset: :custom}),
-    do: :ok
-
-  defp ensure_custom_theme_preset(_),
-    do: {:error, "saveCustomThemePreset only accepts CUSTOM preset"}
 
   def open_graph_info(_root, %{url: url}, _info), do: OgInfo.get(url)
 

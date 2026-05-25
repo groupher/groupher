@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Model.Embeds.DashboardLink do
+defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Link do
   @type t :: %__MODULE__{}
 
   @moduledoc false
@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLink do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.Embeds.DashboardLinkChild
+  alias GroupherServer.CMS.Model.Embeds.Dashboard.LinkChild
 
   @primary_key false
   embedded_schema do
@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLink do
     field(:title, :string)
     field(:url, :string)
 
-    embeds_many(:links, DashboardLinkChild, on_replace: :delete)
+    embeds_many(:links, LinkChild, on_replace: :delete)
   end
 
   def default, do: []
@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLink do
   def changeset(struct, params) do
     struct
     |> cast(params, [:id, :type, :title, :url])
-    |> cast_embed(:links, with: &DashboardLinkChild.changeset/2)
+    |> cast_embed(:links, with: &LinkChild.changeset/2)
     |> validate_required([:id, :type, :title])
     |> validate_by_type()
   end

@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Articles.Write do
   """
 
   import Ecto.Query, warn: false
-  import GroupherServer.CMS.Helper.Matcher
+  import GroupherServer.CMS.Artiment.Matcher
   import Helper.ErrorCode
 
   import Helper.Utils,

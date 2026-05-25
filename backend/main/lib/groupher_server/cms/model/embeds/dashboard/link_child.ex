@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Model.Embeds.DashboardLinkChild do
+defmodule GroupherServer.CMS.Model.Embeds.Dashboard.LinkChild do
   @type t :: %__MODULE__{}
 
   @moduledoc false

@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Articles.List do
   """
 
   import Ecto.Query, warn: false
-  import GroupherServer.CMS.Helper.Matcher
+  import GroupherServer.CMS.Artiment.Matcher
   import ShortMaps
 
   import Helper.Utils,
@@ -20,8 +20,9 @@ defmodule GroupherServer.CMS.Articles.List do
 
   alias Accounts.Model.User
   alias CMS.CanCan
+  alias CMS.Dashboard.KanbanBoards
   alias CMS.FrontDesk
-  alias CMS.Helper.{ArticleEnums, KanbanBoards}
+  alias CMS.Artiment.Enums
   alias CMS.Model.{CitedArtiment, Community, PinnedArticle, Post}
   alias Helper.{ORM, QueryBuilder, T}
 
@@ -29,7 +30,7 @@ defmodule GroupherServer.CMS.Articles.List do
   @article_preloads @article_threads |> Enum.map(&Keyword.new([{&1, [author: :user]}]))
   @comment_article_preloads @article_threads |> Enum.map(&Keyword.new([{:comment, &1}]))
   @cited_preloads @article_preloads ++ [[comment: :author] ++ @comment_article_preloads]
-  @article_status ArticleEnums.status_values() |> Enum.into(%{}, &{&1, &1})
+  @article_status Enums.status_values() |> Enum.into(%{}, &{&1, &1})
   @kanban_rejected_statuses [
     @article_status.reject,
     @article_status.reject_dup,

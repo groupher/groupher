@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Helper.ArticleEnums do
+defmodule GroupherServer.CMS.Artiment.Enums do
   @moduledoc """
   article enums for post, blog, doc, changelog
   """

@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Seeds.Helper do
 
   alias Accounts.Model.User
   alias CMS.Model.{Category, Community}
-  alias CMS.Helper.Threads
+  alias CMS.Artiment.Threads
   alias CMS.Seeds.SeedsConfig
 
   alias Helper.ORM

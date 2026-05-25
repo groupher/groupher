@@ -10,7 +10,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
   use Helper.GqlSchemaSuite
 
-  alias GroupherServer.CMS.Helper.ThemePreset
+  alias GroupherServer.CMS.Dashboard.ThemePreset
 
   object :cms_queries do
     @desc "dashboard theme preset registry"

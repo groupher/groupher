@@ -164,7 +164,7 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
 
     test "can get grouped kanban posts", ~m(user community post_attrs)a do
       {:ok, _} =
-        CMS.Communities.update_dashboard(community, :layout, %{
+        CMS.Dashboard.update(community, :layout, %{
           kanban_boards: [:backlog, :todo, :wip, :done, :rejected]
         })
 
@@ -232,7 +232,7 @@ defmodule GroupherServer.Test.CMS.Articles.Kanban do
     test "disabled grouped kanban boards return empty paginations",
          ~m(user community post_attrs)a do
       {:ok, _} =
-        CMS.Communities.update_dashboard(community, :layout, %{
+        CMS.Dashboard.update(community, :layout, %{
           kanban_boards: [:todo, :wip, :done]
         })
 

@@ -7,9 +7,9 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
   import Ecto.Query, warn: false
 
   alias GroupherServer.CMS
-  alias GroupherServer.CMS.Helper.ArticleEnums
+  alias GroupherServer.CMS.Artiment.Enums
   alias GroupherServer.Repo
-  alias GroupherServer.CMS.Model.Metrics.Dashboard
+  alias GroupherServer.CMS.Dashboard.Fields, as: Dashboard
   alias Helper.ORM
 
   alias CMS.Model.{Changelog, Comment, Community, Doc, Post}
@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
   describe "[full community seeds]" do
     @tag :skip_ci
     test "seeds full community data including about dashboard" do
-      allowed_cats = [nil | ArticleEnums.cat_values()]
+      allowed_cats = [nil | Enums.cat_values()]
       allowed_states = [nil, :backlog, :todo, :wip, :done, :resolved, :reject]
 
       slug = "seed-full-#{System.unique_integer([:positive, :monotonic])}"

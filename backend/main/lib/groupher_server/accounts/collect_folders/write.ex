@@ -2,7 +2,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Write do
   @moduledoc false
 
   import GroupherServer.CMS.FrontDesk, only: [thread_of: 1]
-  import GroupherServer.CMS.Helper.Matcher
+  import GroupherServer.CMS.Artiment.Matcher
 
   import Helper.ErrorCode
   import ShortMaps

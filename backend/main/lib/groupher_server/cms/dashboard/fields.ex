@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
+defmodule GroupherServer.CMS.Dashboard.Fields do
   @moduledoc """
   KTV(key, type, value(default)) for dashboard macro/schema/type etc
   define once, we can get embed_schema fields/default_values/cast_values and GraphQL endpoint arg ready
@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Model.Metrics.Dashboard do
   those cases need to manually add
   """
 
-  alias GroupherServer.CMS.Helper.KanbanBoards
+  alias GroupherServer.CMS.Dashboard.KanbanBoards
 
   @rainbow_colors [
     :black,

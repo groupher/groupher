@@ -6,7 +6,7 @@ defmodule GroupherServer.Support.Factory do
   for example you can db_insert(:user) to insert user into db
   """
   import Helper.Utils, only: [done: 1]
-  import GroupherServer.CMS.Helper.Matcher
+  import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{Accounts, CMS, Messaging}
 

@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Model.Embeds.DashboardNameAlias do
+defmodule GroupherServer.CMS.Model.Embeds.Dashboard.NameAlias do
   @type t :: %__MODULE__{}
 
   @moduledoc """

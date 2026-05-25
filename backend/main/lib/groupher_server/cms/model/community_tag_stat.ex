@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Model.CommunityTagStat do
   import Ecto.Changeset
 
   alias GroupherServer.CMS
-  alias CMS.Helper.Threads
+  alias CMS.Artiment.Threads
   alias CMS.Model.{Community, CommunityTag}
   alias Helper.Constant.DBPrefix
 

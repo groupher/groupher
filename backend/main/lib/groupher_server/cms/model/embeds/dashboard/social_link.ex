@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Model.Embeds.DashboardMediaReport do
+defmodule GroupherServer.CMS.Model.Embeds.Dashboard.SocialLink do
   @type t :: %__MODULE__{}
 
   @moduledoc """
@@ -12,17 +12,17 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardMediaReport do
   import GroupherServerWeb.Schema.Helper.Fields,
     only: [dsb_cast_fields: 1, dsb_default: 1, dsb_fields: 1]
 
-  @optional_fields dsb_cast_fields(:media_report)
+  @optional_fields dsb_cast_fields(:social_link)
 
   @doc "for test usage"
   def default do
     [
-      dsb_default(:media_report)
+      dsb_default(:social_link)
     ]
   end
 
   embedded_schema do
-    dsb_fields(:media_report)
+    dsb_fields(:social_link)
   end
 
   def changeset(struct, params) do

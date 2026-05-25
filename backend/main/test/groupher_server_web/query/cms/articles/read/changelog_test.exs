@@ -76,7 +76,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
     {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
     {:ok, _} =
-      CMS.Communities.update_dashboard(community, :enable, %{
+      CMS.Dashboard.update(community, :enable, %{
         changelog: false
       })
 

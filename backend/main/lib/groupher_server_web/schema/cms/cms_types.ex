@@ -15,7 +15,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
   alias GroupherServer.{Accounts, CMS}
-  alias CMS.Helper.ThemePreset
+  alias CMS.Dashboard.ThemePreset
   alias CMS.Model.Community
   alias Helper.ORM
   alias GroupherServerWeb.Schema

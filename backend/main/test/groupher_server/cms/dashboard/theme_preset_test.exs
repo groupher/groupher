@@ -1,19 +1,19 @@
-defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardThemeTest do
+defmodule GroupherServer.Test.CMS.Dashboard.ThemePresetTest do
   @moduledoc false
 
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Helper.ThemePreset
-  alias GroupherServer.CMS.Model.Embeds.DashboardLayout
+  alias GroupherServer.CMS.Dashboard.ThemePreset
+  alias GroupherServer.CMS.Model.Embeds.Dashboard.Layout
 
   test "default theme preset state is seeded in layout default" do
-    assert DashboardLayout.default().theme_preset == :default
-    assert DashboardLayout.default().custom_theme_preset == nil
+    assert Layout.default().theme_preset == :default
+    assert Layout.default().custom_theme_preset == nil
   end
 
   test "accepts created custom preset with sparse overwrite" do
     changeset =
-      DashboardLayout.changeset(%DashboardLayout{}, %{
+      Layout.changeset(%Layout{}, %{
         theme_preset: "custom",
         custom_theme_preset: %{
           "basePreset" => "claude",
@@ -100,7 +100,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardThemeTest do
 
   test "stores custom preset maps without JSON decoding" do
     changeset =
-      DashboardLayout.changeset(%DashboardLayout{}, %{
+      Layout.changeset(%Layout{}, %{
         theme_preset: "custom",
         custom_theme_preset: %{
           "basePreset" => "claude",
@@ -123,7 +123,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardThemeTest do
 
   test "rejects JSON string custom preset values" do
     changeset =
-      DashboardLayout.changeset(%DashboardLayout{}, %{
+      Layout.changeset(%Layout{}, %{
         theme_preset: "custom",
         custom_theme_preset: Jason.encode!(%{"basePreset" => "claude", "overwrite" => %{}})
       })
@@ -134,7 +134,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardThemeTest do
 
   test "rejects invalid custom preset overwrite values" do
     changeset =
-      DashboardLayout.changeset(%DashboardLayout{}, %{
+      Layout.changeset(%Layout{}, %{
         theme_preset: "custom",
         custom_theme_preset: %{
           "basePreset" => "claude",
@@ -151,19 +151,19 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardThemeTest do
 
   test "rejects malformed custom preset definitions" do
     missing_base =
-      DashboardLayout.changeset(%DashboardLayout{}, %{
+      Layout.changeset(%Layout{}, %{
         theme_preset: "custom",
         custom_theme_preset: %{"overwrite" => %{}}
       })
 
     atom_keys =
-      DashboardLayout.changeset(%DashboardLayout{}, %{
+      Layout.changeset(%Layout{}, %{
         theme_preset: "custom",
         custom_theme_preset: %{basePreset: "claude", overwrite: %{}}
       })
 
     unknown_base =
-      DashboardLayout.changeset(%DashboardLayout{}, %{
+      Layout.changeset(%Layout{}, %{
         theme_preset: "custom",
         custom_theme_preset: %{"basePreset" => "unknown", "overwrite" => %{}}
       })
@@ -178,8 +178,8 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardThemeTest do
 
   test "keeps custom preset when updating non-preset layout fields" do
     changeset =
-      DashboardLayout.changeset(
-        %DashboardLayout{
+      Layout.changeset(
+        %Layout{
           custom_theme_preset: %{
             "basePreset" => "claude",
             "overwrite" => %{"accentColor" => "#112233"}
@@ -198,7 +198,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.DashboardThemeTest do
 
   test "rejects invalid theme preset payloads" do
     changeset =
-      DashboardLayout.changeset(%DashboardLayout{}, %{
+      Layout.changeset(%Layout{}, %{
         theme_preset: "unknown",
         custom_theme_preset: "not-a-map"
       })

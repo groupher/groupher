@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Model.Embeds.DashboardSEO do
+defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
   @type t :: %__MODULE__{}
 
   @moduledoc """
@@ -12,13 +12,13 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardSEO do
   import GroupherServerWeb.Schema.Helper.Fields,
     only: [dsb_cast_fields: 1, dsb_default: 1, dsb_fields: 1]
 
-  @optional_fields dsb_cast_fields(:seo)
+  @optional_fields dsb_cast_fields(:wallpaper)
 
   @doc "for test usage"
-  def default, do: dsb_default(:seo)
+  def default, do: dsb_default(:wallpaper)
 
   embedded_schema do
-    dsb_fields(:seo)
+    dsb_fields(:wallpaper)
   end
 
   def changeset(struct, params) do

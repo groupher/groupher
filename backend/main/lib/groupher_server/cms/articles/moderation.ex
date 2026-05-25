@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   """
 
   import Ecto.Query, warn: false
-  import GroupherServer.CMS.Helper.Matcher
+  import GroupherServer.CMS.Artiment.Matcher
 
   import Helper.Utils, only: [done: 1]
   import ShortMaps

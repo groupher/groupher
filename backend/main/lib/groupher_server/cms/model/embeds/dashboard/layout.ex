@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
+defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Layout do
   @type t :: %__MODULE__{}
 
   @moduledoc """
@@ -14,8 +14,8 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardLayout do
 
   alias GroupherServer.CMS
 
-  alias CMS.Helper.{KanbanBoards, ThemePreset}
-  alias CMS.Model.Metrics.Dashboard
+  alias CMS.Dashboard.{KanbanBoards, ThemePreset}
+  alias CMS.Dashboard.Fields, as: Dashboard
 
   @optional_fields dsb_cast_fields(:layout)
 

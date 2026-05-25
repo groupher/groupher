@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Model.Embeds.DashboardBaseInfo do
+defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Enable do
   @type t :: %__MODULE__{}
 
   @moduledoc """
@@ -12,14 +12,18 @@ defmodule GroupherServer.CMS.Model.Embeds.DashboardBaseInfo do
   import GroupherServerWeb.Schema.Helper.Fields,
     only: [dsb_cast_fields: 1, dsb_default: 1, dsb_fields: 1]
 
-  @optional_fields dsb_cast_fields(:base_info)
+  @optional_fields dsb_cast_fields(:enable)
 
   @doc "for test usage"
-  def default, do: dsb_default(:base_info)
+  def default do
+    dsb_default(:enable)
+  end
 
   embedded_schema do
-    dsb_fields(:base_info)
+    dsb_fields(:enable)
   end
+
+  @doc "for test usage"
 
   def changeset(struct, params) do
     struct

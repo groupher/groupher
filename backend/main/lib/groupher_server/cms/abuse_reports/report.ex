@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
   """
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1, strip_struct: 1]
-  import GroupherServer.CMS.Helper.Matcher
+  import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{Accounts, CMS}
 

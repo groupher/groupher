@@ -78,7 +78,7 @@ defmodule GroupherServer.CMS.Seeds.Communities do
         about_media_report: true
       })
 
-    CMS.Communities.update_dashboard(community, :enable, enable)
+    CMS.Dashboard.update(community, :enable, enable)
   end
 
   def get(:pl) do
