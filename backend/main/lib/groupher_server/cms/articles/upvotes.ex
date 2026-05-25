@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
   Article upvote helpers.
   """
 
-  import GroupherServer.CMS.Helper.Matcher
+  import GroupherServer.CMS.Artiment.Matcher
   import Helper.Utils, only: [done: 1]
 
   alias GroupherServer.{Accounts, CMS, Repo}

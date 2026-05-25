@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Model.Post do
 
   alias GroupherServer.CMS
 
-  alias CMS.Helper.ArticleEnums
+  alias CMS.Artiment.Enums
   alias CMS.Model.Embeds
   alias Helper.Constant.DBPrefix
 
@@ -32,8 +32,8 @@ defmodule GroupherServer.CMS.Model.Post do
     field(:copy_right, :string)
 
     # DB stores string, Ecto exposes atoms
-    field(:cat, Ecto.Enum, values: ArticleEnums.cat_values())
-    field(:status, Ecto.Enum, values: ArticleEnums.status_values())
+    field(:cat, Ecto.Enum, values: Enums.cat_values())
+    field(:status, Ecto.Enum, values: Enums.status_values())
 
     field(:solution_digest, :string)
 
@@ -46,8 +46,8 @@ defmodule GroupherServer.CMS.Model.Post do
   def changeset(%Post{} = post, attrs) do
     post
     |> cast(attrs, @optional_fields ++ @required_fields)
-    |> normalize_enum(:cat, ArticleEnums.cat_values())
-    |> normalize_enum(:status, ArticleEnums.status_values())
+    |> normalize_enum(:cat, Enums.cat_values())
+    |> normalize_enum(:status, Enums.status_values())
     |> validate_required(@required_fields)
     |> cast_embed(:meta, required: false, with: &Embeds.ArticleMeta.changeset/2)
     |> geneal_changeset()
@@ -57,8 +57,8 @@ defmodule GroupherServer.CMS.Model.Post do
   def update_changeset(%Post{} = post, attrs) do
     post
     |> cast(attrs, @optional_fields ++ @required_fields)
-    |> normalize_enum(:cat, ArticleEnums.cat_values())
-    |> normalize_enum(:status, ArticleEnums.status_values())
+    |> normalize_enum(:cat, Enums.cat_values())
+    |> normalize_enum(:status, Enums.status_values())
     |> geneal_changeset()
   end
 

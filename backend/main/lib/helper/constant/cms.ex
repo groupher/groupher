@@ -5,7 +5,7 @@ defmodule Helper.Constant.CMS do
   NOTE: DO NOT modify, unless you know what you are doing
   """
 
-  alias GroupherServer.CMS.Helper.ArticleEnums
+  alias GroupherServer.CMS.Artiment.Enums
 
   @artiment_legal 0
   @artiment_illegal 1
@@ -16,8 +16,8 @@ defmodule Helper.Constant.CMS do
 
   @apply_web "WEB"
 
-  @article_cat_map ArticleEnums.cat_values() |> Enum.into(%{}, &{&1, &1})
-  @article_status_map ArticleEnums.status_values() |> Enum.into(%{}, &{&1, &1})
+  @article_cat_map Enums.cat_values() |> Enum.into(%{}, &{&1, &1})
+  @article_status_map Enums.status_values() |> Enum.into(%{}, &{&1, &1})
 
   def pending(:legal), do: @artiment_legal
   def pending(:illegal), do: @artiment_illegal

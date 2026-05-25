@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Articles do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Helper.ArticleEnums
+  alias CMS.Artiment.Enums
   alias CMS.Model.{ArticleCollect, Community}
 
   alias __MODULE__.{
@@ -101,10 +101,10 @@ defmodule GroupherServer.CMS.Articles do
 
   # Meta
 
-  @spec set_cat(T.article(), ArticleEnums.cat_enum() | nil) :: T.domain_res(T.article())
+  @spec set_cat(T.article(), Enums.cat_enum() | nil) :: T.domain_res(T.article())
   def set_cat(article, cat), do: States.set_cat(article, cat)
 
-  @spec set_status(T.article(), ArticleEnums.status_enum() | nil) :: T.domain_res(T.article())
+  @spec set_status(T.article(), Enums.status_enum() | nil) :: T.domain_res(T.article())
   def set_status(article, status), do: States.set_status(article, status)
 
   @spec update_active_timestamp(T.article_thread(), T.article()) :: T.domain_res(T.article())

@@ -13,7 +13,6 @@ defmodule GroupherServer.CMS.Communities do
     Apply,
     Categories,
     Count,
-    Dashboard,
     List,
     Members,
     Moderator,
@@ -55,21 +54,11 @@ defmodule GroupherServer.CMS.Communities do
   @spec update(Community.t(), map()) :: T.domain_res(Community.t())
   def update(%Community{} = community, args), do: Write.update(community, args)
 
+  @spec sync_base_info(Community.t(), map()) :: T.domain_res(Community.t())
+  def sync_base_info(%Community{} = community, args), do: Write.sync_base_info(community, args)
+
   @spec delete(String.t() | Community.t()) :: T.domain_res(Community.t())
   def delete(community), do: Write.delete(community)
-
-  # Dashboard
-  @spec update_dashboard(Community.t(), atom(), map() | list()) :: T.domain_res(Community.t())
-  def update_dashboard(%Community{} = community, key, args),
-    do: Dashboard.update(community, key, args)
-
-  @spec save_custom_theme_preset(Community.t(), map()) :: T.domain_res(Community.t())
-  def save_custom_theme_preset(%Community{} = community, args),
-    do: Dashboard.save_custom_theme_preset(community, args)
-
-  @spec select_theme_preset(Community.t(), map()) :: T.domain_res(Community.t())
-  def select_theme_preset(%Community{} = community, args),
-    do: Dashboard.select_theme_preset(community, args)
 
   # Apply
   @spec apply(map(), User.t()) :: T.domain_res(Community.t())

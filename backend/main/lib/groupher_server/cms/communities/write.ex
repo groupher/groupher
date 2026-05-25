@@ -6,6 +6,7 @@ defmodule GroupherServer.CMS.Communities.Write do
 
   alias GroupherServer.{Accounts, CMS}
   alias GroupherServer.CMS.Communities.{Moderator, Read}
+  alias GroupherServer.CMS.Dashboard.BaseInfo
 
   alias Accounts.Model.User
   alias CMS.Model.{Community, CommunityDashboard, Embeds}
@@ -40,6 +41,19 @@ defmodule GroupherServer.CMS.Communities.Write do
   def update(%Community{} = community, args) do
     with {:ok, community} <- ORM.fill_meta(community) do
       ORM.update(community, args)
+    end
+  end
+
+  @doc """
+  Sync community-owned identity fields edited from dashboard base info.
+  """
+  @spec sync_base_info(Community.t(), map()) :: T.domain_res(Community.t())
+  def sync_base_info(%Community{} = community, args) do
+    args = BaseInfo.take_community_fields(args)
+
+    case map_size(args) do
+      0 -> {:ok, community}
+      _ -> ORM.update(community, args)
     end
   end
 

@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Comments.Helper do
   alias GroupherServer.{Accounts, CMS, Repo}
 
   alias CMS.FrontDesk
-  alias CMS.Helper.Threads
+  alias CMS.Artiment.Threads
   alias CMS.Model.{Comment, Embeds}
   alias Accounts.Model.User
 

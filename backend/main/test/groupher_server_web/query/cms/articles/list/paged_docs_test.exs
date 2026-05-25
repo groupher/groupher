@@ -169,7 +169,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedDocs do
     test "returns cancan error when community doc thread is disabled",
          ~m(guest_conn community)a do
       {:ok, _} =
-        CMS.Communities.update_dashboard(community, :enable, %{
+        CMS.Dashboard.update(community, :enable, %{
           doc: false
         })
 

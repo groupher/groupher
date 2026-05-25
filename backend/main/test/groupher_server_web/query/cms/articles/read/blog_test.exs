@@ -71,11 +71,12 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
     assert results |> get_in(["meta", "illegalWords"]) == ["some-word"]
   end
 
-  test "returns cancan error when blog thread is disabled", ~m(guest_conn community blog_attrs user)a do
+  test "returns cancan error when blog thread is disabled",
+       ~m(guest_conn community blog_attrs user)a do
     {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
     {:ok, _} =
-      CMS.Communities.update_dashboard(community, :enable, %{
+      CMS.Dashboard.update(community, :enable, %{
         blog: false
       })
 

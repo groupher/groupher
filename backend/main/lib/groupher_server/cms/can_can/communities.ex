@@ -37,7 +37,7 @@ defmodule GroupherServer.CMS.CanCan.Communities do
   import Helper.Utils, only: [get_config: 2, done: 1]
 
   alias GroupherServer.CMS.FrontDesk
-  alias GroupherServer.CMS.Helper.Threads
+  alias GroupherServer.CMS.Artiment.Threads
 
   @article_threads get_config(:article, :threads)
   @emotions_whitelist get_config(:article, :emotions_whitelist)

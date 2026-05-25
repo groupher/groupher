@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
   import Ecto.Changeset
   import Helper.Utils, only: [get_config: 2]
 
-  alias GroupherServer.CMS.Helper.Threads
+  alias GroupherServer.CMS.Artiment.Threads
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

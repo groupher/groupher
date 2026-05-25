@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Model.ArticleUpvote do
     ]
 
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Helper.Threads
+  alias GroupherServer.CMS.Artiment.Threads
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()

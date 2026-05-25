@@ -7,8 +7,8 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
   alias GroupherServer.CMS
 
-  alias CMS.Helper.KanbanBoards
-  alias CMS.Model.Metrics.Dashboard
+  alias CMS.Dashboard.Fields, as: Dashboard
+  alias CMS.Dashboard.KanbanBoards
 
   @page_size get_config(:general, :page_size)
 

@@ -74,25 +74,24 @@ const updateDashboardBaseInfo = gql`
       city: $city
       techstack: $techstack
     ) {
-      title
-      logo
-      favicon
-      locale
+      baseInfo {
+        title
+        logo
+        favicon
+        locale
+      }
     }
   }
 `
 const updateDashboardMediaReports = gql`
   mutation ($community: String!, $mediaReports: [DsbMediaReportMap]) {
     updateDashboardMediaReports(community: $community, mediaReports: $mediaReports) {
-      title
-      dashboard {
-        mediaReports {
-          index
-          title
-          url
-          favicon
-          siteName
-        }
+      mediaReports {
+        index
+        title
+        url
+        favicon
+        siteName
       }
     }
   }
@@ -136,11 +135,8 @@ const updateDashboardSeo = gql`
       twImageWidth: $twImageWidth
       twImageHeight: $twImageHeight
     ) {
-      slug
-      dashboard {
-        seo {
-          seoEnable
-        }
+      seo {
+        seoEnable
       }
     }
   }
@@ -153,7 +149,11 @@ const updateDashboardEnable = gql`
       changelog: $changelog
       about: $about
     ) {
-      slug
+      enable {
+        post
+        changelog
+        about
+      }
     }
   }
 `
@@ -215,7 +215,9 @@ const updateDashboardLayout = gql`
       docCoverLayout: $docCoverLayout
       docFaqLayout: $docFaqLayout
     ) {
-      slug
+      layout {
+        postLayout
+      }
     }
   }
 `
@@ -223,7 +225,10 @@ const updateDashboardLayout = gql`
 const updateDashboardSocialLinks = gql`
   mutation ($community: String!, $socialLinks: [DsbSocialLinkMap]) {
     updateDashboardSocialLinks(community: $community, socialLinks: $socialLinks) {
-      slug
+      socialLinks {
+        type
+        link
+      }
     }
   }
 `
@@ -231,7 +236,12 @@ const updateDashboardSocialLinks = gql`
 const updateDashboardNameAlias = gql`
   mutation ($community: String!, $nameAlias: [DsbAliasMap]) {
     updateDashboardNameAlias(community: $community, nameAlias: $nameAlias) {
-      slug
+      nameAlias {
+        original
+        name
+        slug
+        group
+      }
     }
   }
 `
@@ -355,15 +365,12 @@ const reindexCommunityTagGroups = gql`
 `
 
 const updateDashboardFaqs = gql`
-  mutation ($community: String!, $faqs: [dashboardFaqMap]) {
+  mutation ($community: String!, $faqs: [DsbFaqMap]) {
     updateDashboardFaqs(community: $community, faqs: $faqs) {
-      title
-      dashboard {
-        faqs {
-          title
-          body
-          index
-        }
+      faqs {
+        title
+        body
+        index
       }
     }
   }
@@ -455,11 +462,8 @@ const communityOverview = gql`
 const updateDashboardHeaderLinks = gql`
   mutation ($community: String!, $headerLinks: [DsbLinkMap]) {
     updateDashboardHeaderLinks(community: $community, headerLinks: $headerLinks) {
-      slug
-      dashboard {
-        headerLinks {
-          ${F.headerLink}
-        }
+      headerLinks {
+        ${F.headerLink}
       }
     }
   }
@@ -467,11 +471,8 @@ const updateDashboardHeaderLinks = gql`
 const updateDashboardFooterLinks = gql`
   mutation ($community: String!, $footerLinks: [DsbLinkMap]) {
     updateDashboardFooterLinks(community: $community, footerLinks: $footerLinks) {
-      slug
-      dashboard {
-        footerLinks {
-          ${F.headerLink}
-        }
+      footerLinks {
+        ${F.headerLink}
       }
     }
   }
@@ -483,11 +484,8 @@ const updateDashboardFooterOnelineLinks = gql`
       community: $community
       footerOnelineLinks: $footerOnelineLinks
     ) {
-      slug
-      dashboard {
-        footerOnelineLinks {
-          ${F.footerOnelineLink}
-        }
+      footerOnelineLinks {
+        ${F.footerOnelineLink}
       }
     }
   }

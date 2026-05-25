@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
     test "article emotion is rejected when disabled by dashboard thread settings",
          ~m(community post user_conn)a do
       {:ok, _} =
-        CMS.Communities.update_dashboard(community, :thread_emotions, %{
+        CMS.Dashboard.update(community, :thread_emotions, %{
           post: [:heart]
         })
 

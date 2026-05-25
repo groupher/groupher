@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Model.ArticleCollect do
     ]
 
   alias GroupherServer.Accounts
-  alias GroupherServer.CMS.Helper.Threads
+  alias GroupherServer.CMS.Artiment.Threads
 
   alias Accounts.Model.{CollectFolder, User}
   alias Helper.Constant.DBPrefix

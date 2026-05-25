@@ -30,14 +30,14 @@ defmodule GroupherServer.CMS.Events.Cite do
 
   import Ecto.Query, warn: false
 
-  import GroupherServer.CMS.Helper.Matcher
+  import GroupherServer.CMS.Artiment.Matcher
   import Helper.Utils, only: [get_config: 2]
   import GroupherServer.CMS.Events.Helper, only: [merge_same_block_linker: 2]
 
   alias GroupherServer.{CMS, Repo}
 
   alias CMS.Events.{CitedArtiment, Event}
-  alias CMS.{FrontDesk, Helper.Threads}
+  alias CMS.{Artiment.Threads, FrontDesk}
   alias CMS.Model.Comment
   alias Helper.ContentPipeline
   alias Helper.Multi

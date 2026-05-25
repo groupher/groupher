@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Comments.List do
   import Helper.Utils, only: [done: 1]
   import ShortMaps
 
-  import GroupherServer.CMS.Helper.Matcher
+  import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{Accounts, CMS, Repo}
 

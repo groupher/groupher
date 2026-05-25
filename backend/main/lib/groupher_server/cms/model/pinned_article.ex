@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.Model.PinnedArticle do
 
   alias GroupherServer.CMS
 
-  alias CMS.Helper.Threads
+  alias CMS.Artiment.Threads
   alias CMS.Model.Community
   alias Helper.Constant.DBPrefix
 

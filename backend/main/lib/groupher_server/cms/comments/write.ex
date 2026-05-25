@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Comments.Write do
   import Helper.Utils, only: [done: 1, get_config: 2]
   import Helper.ErrorCode
 
-  import GroupherServer.CMS.Helper.Matcher
+  import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{Accounts, CMS, Repo}
 
@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Comments.Write do
   alias CMS.Comments.States
   alias CMS.Comments.Helper, as: CommentHelper
   alias CMS.Events
-  alias CMS.Helper.ArticleEnums
+  alias CMS.Artiment.Enums
   alias CMS.Model.{Comment, Community, PinnedComment, Post}
 
   alias Helper.{ContentPipeline, Datetime, Multi, Later, ORM, T}
@@ -27,8 +27,8 @@ defmodule GroupherServer.CMS.Comments.Write do
 
   @archive_threshold get_config(:article, :archive_threshold)
 
-  @article_cat ArticleEnums.cat_values() |> Enum.into(%{}, &{&1, &1})
-  @article_status ArticleEnums.status_values() |> Enum.into(%{}, &{&1, &1})
+  @article_cat Enums.cat_values() |> Enum.into(%{}, &{&1, &1})
+  @article_status Enums.status_values() |> Enum.into(%{}, &{&1, &1})
 
   @spec create(Community.t(), T.article_thread(), T.id(), String.t(), User.t()) ::
           T.domain_res(Comment.t())

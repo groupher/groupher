@@ -13,16 +13,13 @@ export const saveCustomThemePreset = gql`
       themePresetBase: $themePresetBase
       themeOverwrite: $themeOverwrite
     ) {
-      slug
-      dashboard {
-        layout {
-          themePreset
-          themePresetBase
-          themeTokens
-          themePresets {
-            value
-            tokens
-          }
+      layout {
+        themePreset
+        themePresetBase
+        themeTokens
+        themePresets {
+          value
+          tokens
         }
       }
     }
@@ -32,16 +29,13 @@ export const saveCustomThemePreset = gql`
 export const selectThemePreset = gql`
   mutation ($community: String!, $themePreset: DsbThemePreset!) {
     selectThemePreset(community: $community, themePreset: $themePreset) {
-      slug
-      dashboard {
-        layout {
-          themePreset
-          themePresetBase
-          themeTokens
-          themePresets {
-            value
-            tokens
-          }
+      layout {
+        themePreset
+        themePresetBase
+        themeTokens
+        themePresets {
+          value
+          tokens
         }
       }
     }

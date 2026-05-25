@@ -8,7 +8,7 @@ defmodule GroupherServer.Messaging.Model.Notification do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Helper.Threads
+  alias CMS.Artiment.Threads
   alias CMS.Model.Embeds
   alias Helper.Constant.DBPrefix
 

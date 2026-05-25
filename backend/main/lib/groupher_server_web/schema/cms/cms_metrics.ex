@@ -9,10 +9,9 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
 
   alias GroupherServer.CMS
 
-  alias CMS.Helper.{ArticleEnums, KanbanBoards, Threads}
+  alias CMS.Artiment.{Enums, Threads}
 
-  require ArticleEnums
-  require KanbanBoards
+  require Enums
   require Threads
 
   @doc """
@@ -45,28 +44,6 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
 
   enum :thread do
     enum_values(Threads.values())
-  end
-
-  enum :dsb_section do
-    value(:seo)
-    value(:wallpaper)
-    value(:enable)
-    value(:thread_emotions)
-    value(:layout)
-    value(:base_info)
-    value(:rss)
-    value(:name_alias)
-    value(:header_links)
-    value(:footer_links)
-    value(:footer_oneline_links)
-    value(:social_links)
-    value(:media_reports)
-    value(:faqs)
-  end
-
-  enum :dsb_link_type do
-    value(:link)
-    value(:group)
   end
 
   enum :content do
@@ -115,44 +92,10 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     value(:publish)
   end
 
-  enum :rainbow_color do
-    value(:black)
-    value(:pink)
-    value(:red)
-    value(:orange)
-    value(:yellow)
-    value(:brown)
-    value(:green_light)
-    value(:green)
-    value(:cyan)
-    value(:cyan_light)
-    value(:blue)
-    value(:purple)
-    value(:custom)
-  end
+  enum(:article_cat_enum, do: enum_values(Enums.cat()))
+  enum(:article_status_enum, do: enum_values(Enums.status()))
 
-  enum(:article_cat_enum, do: enum_values(ArticleEnums.cat()))
-  enum(:article_status_enum, do: enum_values(ArticleEnums.status()))
-  enum(:kanban_board, do: enum_values(KanbanBoards.values()))
-
-  dsb_enum(:post_layout)
-  dsb_enum(:kanban_layout)
-  dsb_enum(:kanban_card_layout)
-  dsb_enum(:doc_cover_layout)
-  dsb_enum(:doc_faq_layout)
-  dsb_enum(:tag_layout)
-  dsb_enum(:inline_tag_layout)
-  dsb_enum(:avatar_layout)
-  dsb_enum(:brand_layout)
-  dsb_enum(:community_layout)
-  dsb_enum(:nav_active_layout)
-  dsb_enum(:broadcast_layout)
-  dsb_enum(:broadcast_article_layout)
-  dsb_enum(:changelog_layout)
-  dsb_enum(:header_layout)
-  dsb_enum(:footer_layout)
-  dsb_enum(:theme_preset)
-  dsb_enum(:rss_feed_type)
+  import_types(GroupherServerWeb.Schema.CMS.Dashboard.Metrics)
 
   @desc "the filter mode for list comments"
   enum :comments_mode do
@@ -298,55 +241,5 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     field(:content_type, :report_content_type)
     field(:content_id, :id)
     pagination_args()
-  end
-
-  object :social do
-    field(:platform, :string)
-    field(:link, :string)
-  end
-
-  object :app_store do
-    field(:platform, :string)
-    field(:link, :string)
-  end
-
-  input_object :social_info do
-    field(:platform, :string)
-    field(:link, :string)
-  end
-
-  input_object :app_store_info do
-    field(:platform, :string)
-    field(:link, :string)
-  end
-
-  input_object :dsb_alias_map do
-    dsb_gq_fields(:name_alias)
-  end
-
-  input_object :dsb_link_child_map do
-    field(:id, non_null(:string))
-    field(:title, non_null(:string))
-    field(:url, non_null(:string))
-  end
-
-  input_object :dsb_link_map do
-    field(:id, non_null(:string))
-    field(:type, non_null(:dsb_link_type))
-    field(:title, non_null(:string))
-    field(:url, :string)
-    field(:links, list_of(:dsb_link_child_map))
-  end
-
-  input_object :dsb_social_link_map do
-    dsb_gq_fields(:social_link)
-  end
-
-  input_object :dsb_media_report_map do
-    dsb_gq_fields(:media_report)
-  end
-
-  input_object :dsb_faq_map do
-    dsb_gq_fields(:faq_section)
   end
 end

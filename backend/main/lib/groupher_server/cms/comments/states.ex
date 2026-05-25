@@ -14,7 +14,7 @@ defmodule GroupherServer.CMS.Comments.States do
 
   import Helper.ErrorCode
 
-  import GroupherServer.CMS.Helper.Matcher
+  import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Helper.{Multi, Later, ORM, T}

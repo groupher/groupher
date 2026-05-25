@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   List operations for abuse reports.
   """
   import Ecto.Query, warn: false
-  import GroupherServer.CMS.Helper.Matcher
+  import GroupherServer.CMS.Artiment.Matcher
   import ShortMaps
 
   alias GroupherServer.CMS

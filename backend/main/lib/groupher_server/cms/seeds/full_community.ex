@@ -176,7 +176,7 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
     slug = to_string(slug)
 
     with {:ok, _} <-
-           CMS.Communities.update_dashboard(community, :enable, %{
+           CMS.Dashboard.update(community, :enable, %{
              about: true,
              about_techstack: true,
              about_location: true,
@@ -188,7 +188,7 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
              doc: true
            }),
          {:ok, _} <-
-           CMS.Communities.update_dashboard(community, :base_info, %{
+           CMS.Dashboard.update(community, :base_info, %{
              title: String.capitalize(slug),
              slug: slug,
              desc: "#{slug} community",
@@ -198,13 +198,13 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
              techstack: "Elixir,Phoenix,PostgreSQL,TypeScript,React"
            }),
          {:ok, _} <-
-           CMS.Communities.update_dashboard(community, :social_links, [
+           CMS.Dashboard.update(community, :social_links, [
              %{type: "github", link: "https://github.com/#{slug}"},
              %{type: "twitter", link: "https://x.com/#{slug}"},
              %{type: "website", link: "https://#{slug}.example.com"}
            ]),
          {:ok, _} <-
-           CMS.Communities.update_dashboard(community, :media_reports, [
+           CMS.Dashboard.update(community, :media_reports, [
              %{
                index: 0,
                title: "#{String.capitalize(slug)} announced",

@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Events.CitedArtiment do
       to_upcase: 1
     ]
 
-  import GroupherServer.CMS.Helper.Matcher
+  import GroupherServer.CMS.Artiment.Matcher
   import ShortMaps
 
   alias GroupherServer.{CMS, Repo}
