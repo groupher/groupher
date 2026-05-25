@@ -13,6 +13,8 @@ defmodule GroupherServer.CMS.Dashboard.Write do
     update(community, key, SectionPayload.section_args(key, args))
   end
 
+  def update(%Community{}, _args), do: {:error, :invalid_dsb_section}
+
   @spec update(Community.t(), atom(), map() | list()) :: T.domain_res(CommunityDashboard.t())
   def update(%Community{} = community, :base_info, args) do
     with {:ok, community_dashboard} <- ensure_exist(community),

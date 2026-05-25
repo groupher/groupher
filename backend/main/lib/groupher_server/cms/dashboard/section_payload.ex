@@ -62,16 +62,16 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
   end
 
   def prepare(%CommunityDashboard{}, key, args)
-      when key in [:header_links, :footer_links] and is_list(args) do
-    if Enum.all?(args, &LinkValidator.valid_tree?/1) do
+      when key in [:header_links, :footer_links] do
+    if is_list(args) and Enum.all?(args, &LinkValidator.valid_tree?/1) do
       {:ok, args}
     else
       {:error, {:custom, "invalid dashboard links"}}
     end
   end
 
-  def prepare(%CommunityDashboard{}, :footer_oneline_links, args) when is_list(args) do
-    if LinkValidator.valid_children?(args) do
+  def prepare(%CommunityDashboard{}, :footer_oneline_links, args) do
+    if is_list(args) and LinkValidator.valid_children?(args) do
       {:ok, args}
     else
       {:error, {:custom, "invalid dashboard links"}}

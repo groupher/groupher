@@ -38,6 +38,13 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert not is_nil(find_community.dashboard)
     end
 
+    test "update with malformed dashboard payload returns domain error",
+         ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      assert {:error, :invalid_dsb_section} = CMS.Dashboard.update(community, %{})
+    end
+
     test "can update base info in community dashboard", ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
@@ -434,6 +441,19 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
       assert first.title == "title"
       assert first.links |> List.first() |> Map.get(:url) == "link"
+    end
+
+    test "rejects non-list dashboard link payloads", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      assert {:error, {:custom, "invalid dashboard links"}} =
+               CMS.Dashboard.update(community, :header_links, %{id: "not-list"})
+
+      assert {:error, {:custom, "invalid dashboard links"}} =
+               CMS.Dashboard.update(community, :footer_links, %{id: "not-list"})
+
+      assert {:error, {:custom, "invalid dashboard links"}} =
+               CMS.Dashboard.update(community, :footer_oneline_links, %{id: "not-list"})
     end
 
     test "should overwrite all footer links in community dashboard every time",
