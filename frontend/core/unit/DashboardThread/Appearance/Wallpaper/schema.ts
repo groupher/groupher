@@ -5,24 +5,22 @@ import { F } from '~/schemas'
 const updateDashboardWallpaper = gql`
   mutation (
     $community: String!
-    $wallpaper: String
-    $wallpaperType: String
+    $source: String
+    $type: String
     $direction: String
     $customColorValue: String
     $bgSize: String
-    $uploadBgImage: String
     $hasPattern: Boolean
     $hasBlur: Boolean
     $hasShadow: Boolean
   ) {
     updateDashboardWallpaper(
       community: $community
-      wallpaper: $wallpaper
-      wallpaperType: $wallpaperType
+      source: $source
+      type: $type
       direction: $direction
       customColorValue: $customColorValue
       bgSize: $bgSize
-      uploadBgImage: $uploadBgImage
       hasPattern: $hasPattern
       hasBlur: $hasBlur
       hasShadow: $hasShadow

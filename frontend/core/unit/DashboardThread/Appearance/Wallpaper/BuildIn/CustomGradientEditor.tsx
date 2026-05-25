@@ -1,5 +1,6 @@
 import { useState } from 'react'
 
+import useTrans from '~/hooks/useTrans'
 import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
 
@@ -8,6 +9,7 @@ import useLogic from '../useLogic'
 
 export default function CustomGradientEditor() {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { getWallpaper, confirmCustomColor } = useLogic()
   const { customColor } = getWallpaper()
@@ -17,21 +19,21 @@ export default function CustomGradientEditor() {
 
   return (
     <div className={s.wrapper}>
-      <div className={s.label}>自定义</div>
+      <div className={s.label}>{t('dsb.appearance.wallpaper.editor.custom')}</div>
       <Input
-        placeholder='颜色值以, 分隔, 如 #EBDDD1,#CEB2D3,#F16061'
+        placeholder={t('dsb.appearance.wallpaper.editor.custom_placeholder')}
         className={s.input}
         value={colorVal}
         onChange={(e) => setColorVal(e.target.value)}
       />
       <div className={s.footer}>
-        <div className={s.note}>支持多组 HEX 颜色值，</div>
+        <div className={s.note}>{t('dsb.appearance.wallpaper.editor.custom_note')}</div>
 
         <div className='grow' />
         {changed && (
           <>
             <Button ghost size='small' noBorder right={8} onClick={() => setColorVal(customColor)}>
-              取消
+              {t('dsb.appearance.wallpaper.editor.cancel')}
             </Button>
 
             <Button
@@ -40,7 +42,7 @@ export default function CustomGradientEditor() {
               space={10}
               onClick={() => confirmCustomColor(colorVal)}
             >
-              确定
+              {t('dsb.appearance.wallpaper.editor.confirm')}
             </Button>
           </>
         )}

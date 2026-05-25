@@ -14,29 +14,35 @@ import type {
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 import { parseWallpaper } from '~/wallpaper'
 
-type TRet = { wallpaper: string; hasShadow: boolean } & TWallpaperFmt
+type TRet = { source: string; hasShadow: boolean } & TWallpaperFmt
 
 export default function useWallpaper(): TRet {
   const store = useWallpaperDomain()
-
-  const { wallpaper, hasPattern, hasBlur, hasShadow, direction, customColorValue, wallpaperType } =
+  const { source, hasPattern, hasBlur, hasShadow, direction, customColorValue, type, bgSize } =
     store
 
   const customWallpaper = useMemo((): TCustomWallpaper => {
-    if (wallpaperType === WALLPAPER_TYPE.CUSTOM_GRADIENT) {
+    if (type === WALLPAPER_TYPE.CUSTOM_GRADIENT) {
       const customColors = customColorValue.split(',').map((c: string) => c.trim())
 
       return {
         colors: customColors,
         hasPattern,
         hasBlur,
-        hasShadow,
         direction: direction as TWallpaperGradientDir,
       }
     }
 
+    if (type === WALLPAPER_TYPE.UPLOAD && source) {
+      return {
+        bgImage: source,
+        bgSize,
+        hasBlur,
+      }
+    }
+
     return null
-  }, [wallpaperType, customColorValue, hasPattern, hasBlur, hasShadow, direction])
+  }, [type, customColorValue, hasPattern, hasBlur, direction, source, bgSize])
 
   const patternWallpapers = useMemo(() => {
     const wallpapers = clone(PATTERN_WALLPAPER)
@@ -70,11 +76,11 @@ export default function useWallpaper(): TRet {
   }, [gradientWallpapers, patternWallpapers])
 
   const { background, effect } = useMemo(() => {
-    return parseWallpaper(wallpapers, wallpaper, customWallpaper)
-  }, [wallpapers, wallpaper, customWallpaper])
+    return parseWallpaper(wallpapers, source, customWallpaper)
+  }, [wallpapers, source, customWallpaper])
 
   return {
-    wallpaper,
+    source,
     hasShadow,
     effect,
     background,

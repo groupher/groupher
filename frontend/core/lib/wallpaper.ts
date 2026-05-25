@@ -33,7 +33,9 @@ const _parseWallpaper = (
   customWallpaper?: TCustomWallpaper,
 ): TWallpaperFmt => {
   if (customWallpaper) {
-    return _parseGradientBackground(customWallpaper)
+    return 'colors' in customWallpaper
+      ? _parseGradientBackground(customWallpaper)
+      : _parsePicBackground(customWallpaper)
   }
   // @ts-expect-error
   return wallpaper?.colors ? _parseGradientBackground(wallpaper) : _parsePicBackground(wallpaper)
@@ -43,8 +45,7 @@ const _parseGradientBackground = (gradient: TWallpaperGradient): TWallpaperFmt =
   const DIR = '/wallpaper'
   const { direction, hasPattern, hasBlur } = gradient
   const colors = gradient.colors.join(',')
-  // let background = `linear-gradient(to ${direction}, ${colors})`
-  let background = `linear-gradient(to ${direction}, ${colors})`
+  let background = `linear-gradient(${formatGradientDirection(direction)}, ${colors})`
 
   const patternPic = `${DIR}/patterns/1.png`
   background = hasPattern ? `url(${patternPic}) repeat, ${background}` : background
@@ -55,6 +56,16 @@ const _parseGradientBackground = (gradient: TWallpaperGradient): TWallpaperFmt =
     effect,
     background,
   }
+}
+
+const formatGradientDirection = (direction = '180deg'): string => {
+  const direction$ = direction.trim()
+
+  if (!direction$) return '180deg'
+  if (direction$.endsWith('deg')) return direction$
+  if (direction$.startsWith('to ')) return direction$
+
+  return `to ${direction$}`
 }
 
 const _parsePicBackground = (pic: TWallpaperPic): TWallpaperFmt => {

@@ -42,12 +42,11 @@ export const footerOnelineLink = `
   url
 `
 export const wallpaper = `
-  wallpaperType
-  wallpaper
+  type
+  source
   direction
   customColorValue
   bgSize
-  uploadBgImage
   hasPattern
   hasBlur
   hasShadow

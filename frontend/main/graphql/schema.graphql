@@ -628,7 +628,7 @@ type RootMutationType {
 
   "update wallpaper in dashboard"
   updateDashboardWallpaper(
-    community: String!, dsbSection: DsbSection, wallpaperType: String, wallpaper: String, hasPattern: Boolean, direction: String, customColorValue: String, bgSize: String, uploadBgImage: String, hasBlur: Boolean, hasShadow: Boolean
+    community: String!, dsbSection: DsbSection, type: String, source: String, hasPattern: Boolean, direction: String, customColorValue: String, bgSize: String, hasBlur: Boolean, hasShadow: Boolean
   ): Dsb
 
   "update enable in dashboard"
@@ -900,13 +900,12 @@ type DsbSeo {
 }
 
 type DsbWallpaper {
-  wallpaperType: String
-  wallpaper: String
+  type: String
+  source: String
   hasPattern: Boolean
   direction: String
   customColorValue: String
   bgSize: String
-  uploadBgImage: String
   hasBlur: Boolean
   hasShadow: Boolean
 }

@@ -8,14 +8,13 @@ import type { TInit, TStore } from './spec'
 export const INITIAL_WALLPAPER_STATE = {
   customWallpaper: null,
   customColorValue: '',
-  wallpaper: 'pink',
-  wallpaperType: WALLPAPER_TYPE.GRADIENT,
+  source: 'pink',
+  type: WALLPAPER_TYPE.GRADIENT,
   hasPattern: true,
   hasBlur: false,
   hasShadow: false,
-  direction: 'bottom' as TWallpaperGradientDir,
+  direction: '180deg' as TWallpaperGradientDir,
   bgSize: 'cover',
-  uploadBgImage: '',
 }
 
 export default (init: TInit = {}): TStore => {

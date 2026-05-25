@@ -38,7 +38,7 @@ const getGithubGradient = (wallpaper: string): string => {
 export default function useSalon() {
   const { isLightTheme } = useTheme()
   const { cn, shadow, fill, br } = useTwBelt()
-  const { wallpaper } = useWallpaper()
+  const { source } = useWallpaper()
 
   return {
     wrapper: 'relative group',
@@ -57,7 +57,7 @@ export default function useSalon() {
       !isLightTheme && 'opacity-80',
     ),
 
-    backgroundStyle: { background: getGithubGradient(wallpaper) },
+    backgroundStyle: { background: getGithubGradient(source) },
 
     arrow: cn(
       'absolute right-3 top-3 size-4.5 rotate-180 hidden group-hover:block trans-all-100',

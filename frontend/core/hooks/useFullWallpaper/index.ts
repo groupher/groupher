@@ -11,9 +11,9 @@ import type {
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 
 type TRet = {
-  wallpaper: string
-  changeWallpaper: (wallpaper: string) => void
-  changePatternWallpaper: (wallpaper: string) => void
+  source: string
+  changeWallpaper: (source: string) => void
+  changePatternWallpaper: (source: string) => void
   getWallpaper: () => TWallpaperData
   getGradientWallpapers: () => Record<string, TWallpaper>
   getPatternWallpapers: () => Record<string, TWallpaper>
@@ -43,19 +43,12 @@ export default function useFullWallpaper(): TRet {
   }
 
   const getWallpaper = (): TWallpaperData => {
-    const {
-      customColorValue,
-      direction,
-      hasPattern,
-      hasBlur,
-      hasShadow,
-      wallpaper,
-      wallpaperType,
-    } = store
+    const { customColorValue, direction, hasPattern, hasBlur, hasShadow, source, type, bgSize } =
+      store
 
     return {
-      wallpaper,
-      wallpaperType,
+      source,
+      type,
       hasPattern,
       hasBlur,
       hasShadow,
@@ -63,16 +56,17 @@ export default function useFullWallpaper(): TRet {
       patternWallpapers: getPatternWallpapers(),
       customColor: customColorValue,
       direction,
+      bgSize,
     }
   }
 
-  const changeWallpaper = (wallpaper: string): void => store.commit({ wallpaper })
+  const changeWallpaper = (source: string): void => store.commit({ source })
 
-  const changePatternWallpaper = (wallpaper: string): void =>
-    store.commit({ wallpaper, wallpaperType: WALLPAPER_TYPE.PATTERN })
+  const changePatternWallpaper = (source: string): void =>
+    store.commit({ source, type: WALLPAPER_TYPE.PATTERN })
 
   return {
-    wallpaper: store.wallpaper,
+    source: store.source,
     changeWallpaper,
     changePatternWallpaper,
     getGradientWallpapers,

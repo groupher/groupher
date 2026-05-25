@@ -4,8 +4,8 @@ import path from 'node:path'
 import { buildSchema, validate } from 'graphql'
 import { describe, expect, it } from 'vitest'
 
-import wallpaperSchema from '../WallpaperEditor/schema'
 import * as themeSchema from './Appearance/Theme/schema'
+import wallpaperSchema from './Appearance/Wallpaper/schema'
 import dashboardSchema from './schema'
 
 const schemaPath = path.join(process.cwd(), 'frontend/main/graphql/schema.graphql')

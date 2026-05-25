@@ -1,22 +1,26 @@
-import { type FC, memo } from 'react'
+import { type FC, memo, useMemo } from 'react'
 
 import SVG from '~/const/svg'
+import useTrans from '~/hooks/useTrans'
 import MoreSVG from '~/icons/menu/More'
 import UploadSVG from '~/icons/Upload'
 import MenuButton from '~/widgets/Buttons/MenuButton'
 
 import useSalon from '../salon/upload_pic/upload_box'
 
-const menuOptions = [
-  {
-    key: 'url',
-    icon: SVG.COPY,
-    title: '图片地址',
-  },
-]
-
 const UploadBox: FC = () => {
   const s = useSalon()
+  const { t } = useTrans()
+  const menuOptions = useMemo(
+    () => [
+      {
+        key: 'url',
+        icon: SVG.COPY,
+        title: t('dsb.appearance.wallpaper.editor.image_url'),
+      },
+    ],
+    [t],
+  )
 
   return (
     <div className={s.wrapper}>
@@ -26,7 +30,7 @@ const UploadBox: FC = () => {
         </MenuButton>
       </div>
       <UploadSVG className={s.uploadIcon} />
-      <div className={s.title}>上传 / 引入图片</div>
+      <div className={s.title}>{t('dsb.appearance.wallpaper.editor.upload_image')}</div>
     </div>
   )
 }

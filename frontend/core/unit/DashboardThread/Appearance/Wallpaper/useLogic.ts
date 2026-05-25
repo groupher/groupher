@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react'
 import { WALLPAPER_STATE_KEYS, WALLPAPER_TYPE } from '~/const/wallpaper'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
-import { closeDrawer, toast } from '~/signal'
+import { toast } from '~/signal'
 import type { TWallpaperData, TWallpaperGradientDir, TWallpaperType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
@@ -12,6 +12,20 @@ import useWallpaperDomain from '~/stores/wallpaper/hooks'
 import { TAB } from './constant'
 import S from './schema'
 import type { TTab } from './spec'
+
+const getInitialTab = (type: TWallpaperType): TTab => {
+  switch (type) {
+    case WALLPAPER_TYPE.PATTERN: {
+      return TAB.PICTURES
+    }
+    case WALLPAPER_TYPE.UPLOAD: {
+      return TAB.UPLOAD
+    }
+    default: {
+      return TAB.GRADIENT
+    }
+  }
+}
 
 type TRet = {
   tab: TTab
@@ -23,15 +37,14 @@ type TRet = {
   initRollback: () => void
   rollbackWallpaper: () => void
   onSave: () => void
-  close: () => void
 
   changeTab: (tab: TTab) => void
   changeDirection: (direction: TWallpaperGradientDir) => void
   removeWallpaper: () => void
-  changeGradientWallpaper: (wallpaper: string) => void
-  changePatternWallpaper: (wallpaper: string) => void
+  changeGradientWallpaper: (source: string) => void
+  changePatternWallpaper: (source: string) => void
   changeCustomGradientWallpaper: () => void
-  changeWallpaperType: (wallpaperType: TWallpaperType) => void
+  changeWallpaperType: (type: TWallpaperType) => void
   confirmCustomColor: (customColorValue: string) => void
   togglePattern: (hasPattern: boolean) => void
   toggleBlur: (hasBlur: boolean) => void
@@ -44,7 +57,7 @@ export default function useLogic(): TRet {
   const { getWallpaper } = useFullWallpaper()
 
   const { mutate } = useGraphQLClient()
-  const [tab, setTab] = useState<TTab>(TAB.BUILD_IN)
+  const [tab, setTab] = useState<TTab>(() => getInitialTab(wallpaper$.type))
   const [loading, setLoading] = useState(false)
 
   const isTouched = useMemo((): boolean => {
@@ -54,13 +67,7 @@ export default function useLogic(): TRet {
     return !equals(clone(original), clone(current))
   }, [wallpaper$])
 
-  const close = (): void => {
-    // store.rollbackEdit()
-    closeDrawer()
-  }
-
   const initRollback = (): void =>
-    // @ts-expect-error
     wallpaper$.commit({ original: pick(WALLPAPER_STATE_KEYS, wallpaper$) })
 
   const rollbackWallpaper = (): void => wallpaper$.commit({ ...wallpaper$.original })
@@ -75,7 +82,6 @@ export default function useLogic(): TRet {
         toast('设置已保存')
         setLoading(false)
         initRollback()
-        closeDrawer()
       })
       .catch((err) => {
         console.error('## handle request error: ', err)
@@ -86,23 +92,22 @@ export default function useLogic(): TRet {
   const changeTab = (tab: TTab): void => setTab(tab)
   const changeDirection = (direction: TWallpaperGradientDir): void =>
     wallpaper$.commit({ direction })
-  const removeWallpaper = (): void =>
-    wallpaper$.commit({ wallpaper: '', wallpaperType: WALLPAPER_TYPE.NONE })
-  const changeGradientWallpaper = (wallpaper: string): void =>
-    wallpaper$.commit({ wallpaper, wallpaperType: WALLPAPER_TYPE.GRADIENT })
-  const changePatternWallpaper = (wallpaper: string): void =>
-    wallpaper$.commit({ wallpaper, wallpaperType: WALLPAPER_TYPE.PATTERN })
+  const removeWallpaper = (): void => wallpaper$.commit({ source: '', type: WALLPAPER_TYPE.NONE })
+  const changeGradientWallpaper = (source: string): void =>
+    wallpaper$.commit({ source, type: WALLPAPER_TYPE.GRADIENT })
+  const changePatternWallpaper = (source: string): void =>
+    wallpaper$.commit({ source, type: WALLPAPER_TYPE.PATTERN })
 
   const changeCustomGradientWallpaper = (): void => {
-    wallpaper$.commit({ wallpaper: '', wallpaperType: WALLPAPER_TYPE.CUSTOM_GRADIENT })
+    wallpaper$.commit({ source: '', type: WALLPAPER_TYPE.CUSTOM_GRADIENT })
   }
 
-  const changeWallpaperType = (wallpaperType: TWallpaperType): void => {
-    wallpaper$.commit({ wallpaperType })
+  const changeWallpaperType = (type: TWallpaperType): void => {
+    wallpaper$.commit({ type })
   }
 
   const confirmCustomColor = (customColorValue: string): void => {
-    wallpaper$.commit({ customColorValue, wallpaperType: WALLPAPER_TYPE.CUSTOM_GRADIENT })
+    wallpaper$.commit({ customColorValue, type: WALLPAPER_TYPE.CUSTOM_GRADIENT })
   }
 
   const togglePattern = (hasPattern: boolean): void => wallpaper$.commit({ hasPattern })
@@ -119,7 +124,6 @@ export default function useLogic(): TRet {
     initRollback,
     rollbackWallpaper,
     onSave,
-    close,
     changeTab,
     changeDirection,
     removeWallpaper,

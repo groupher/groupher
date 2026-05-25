@@ -146,15 +146,15 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
       {:ok, _} =
         CMS.Dashboard.update(community, :wallpaper, %{
-          wallpaper_type: "custom",
-          wallpaper: "orange",
+          type: "custom",
+          source: "orange",
           has_blur: true
         })
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
-      assert find_community.dashboard.wallpaper.wallpaper == "orange"
-      assert find_community.dashboard.wallpaper.wallpaper_type == "custom"
+      assert find_community.dashboard.wallpaper.source == "orange"
+      assert find_community.dashboard.wallpaper.type == "custom"
       assert find_community.dashboard.wallpaper.has_blur == true
     end
 

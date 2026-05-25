@@ -102,49 +102,47 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     @update_wallpaper_query """
     mutation (
       $community: String!
-      $wallpaper: String
-      $wallpaperType: String
+      $source: String
+      $type: String
       $direction: String
       $customColorValue: String
       $bgSize: String
-      $uploadBgImage: String
       $hasPattern: Boolean
       $hasBlur: Boolean
       $hasShadow: Boolean
       ) {
       updateDashboardWallpaper(
         community: $community
-        wallpaper: $wallpaper
-        wallpaperType: $wallpaperType
+        source: $source
+        type: $type
         direction: $direction
         customColorValue: $customColorValue
         bgSize: $bgSize
-        uploadBgImage: $uploadBgImage
         hasPattern: $hasPattern
         hasBlur: $hasBlur
         hasShadow: $hasShadow
       ) {
         wallpaper {
-          wallpaperType
-          wallpaper
+          type
+          source
         }
       }
     }
     """
     test "update community dashboard wallpaper", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
-      variables = %{community: community.slug, wallpaper: "orange", wallpaperType: "CUSTOM"}
+      variables = %{community: community.slug, source: "orange", type: "CUSTOM"}
 
       updated =
         rule_conn
         |> gq_mutation(@update_wallpaper_query, variables)
 
-      assert get_in(updated, ["wallpaper", "wallpaper"]) == "orange"
+      assert get_in(updated, ["wallpaper", "source"]) == "orange"
 
       {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
 
-      assert found.dashboard.wallpaper.wallpaper == "orange"
-      assert found.dashboard.wallpaper.wallpaper_type == "CUSTOM"
+      assert found.dashboard.wallpaper.source == "orange"
+      assert found.dashboard.wallpaper.type == "CUSTOM"
     end
 
     @update_enable_query """

@@ -9,19 +9,19 @@ describe('useFullWallpaper', () => {
   it('returns data and can commit wallpaper changes', async () => {
     const wrapper = makeStoreWrapper({
       wallpaper: {
-        wallpaper: GRADIENT_WALLPAPER_NAME.PINK,
-        wallpaperType: WALLPAPER_TYPE.GRADIENT,
+        source: GRADIENT_WALLPAPER_NAME.PINK,
+        type: WALLPAPER_TYPE.GRADIENT,
         hasPattern: true,
         hasBlur: false,
-        direction: 'bottom',
+        direction: '180deg',
       },
     })
 
     const { result } = renderHook(() => useFullWallpaper(), { wrapper })
 
     const data = result.current.getWallpaper()
-    expect(data.wallpaper).toBe(GRADIENT_WALLPAPER_NAME.PINK)
-    expect(data.wallpaperType).toBe(WALLPAPER_TYPE.GRADIENT)
+    expect(data.source).toBe(GRADIENT_WALLPAPER_NAME.PINK)
+    expect(data.type).toBe(WALLPAPER_TYPE.GRADIENT)
 
     const pink = data.gradientWallpapers.pink
     expect('colors' in pink).toBe(true)
@@ -30,7 +30,7 @@ describe('useFullWallpaper', () => {
     act(() => result.current.changePatternWallpaper('dots'))
 
     await waitFor(() => {
-      expect(result.current.wallpaper).toBe('dots')
+      expect(result.current.source).toBe('dots')
     })
   })
 })

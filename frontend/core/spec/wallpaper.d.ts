@@ -1,4 +1,4 @@
-import type { GRADIENT_DIRECTION, WALLPAPER_TYPE } from '~/const/wallpaper'
+import type { WALLPAPER_TYPE } from '~/const/wallpaper'
 import type { TConstValues } from '~/spec'
 
 export type TWallpaperFmt = {
@@ -6,25 +6,23 @@ export type TWallpaperFmt = {
   background: string
 }
 
-export type TWallpaperGradientDir = TConstValues<typeof GRADIENT_DIRECTION>
+export type TWallpaperGradientDir = string
 
 export type TWallpaperGradient = {
   colors?: string[]
   hasPattern?: boolean
   direction?: TWallpaperGradientDir
 
-  // common
+  // Applied by dashboard wallpaper settings before parsing the render background.
   hasBlur?: boolean
-  hasShadow?: boolean
 }
 
 export type TWallpaperPic = {
   bgImage?: string
   bgSize?: string // 'contain' | 'cover' | 'auto'
 
-  // common
+  // Applied by dashboard wallpaper settings before parsing the render background.
   hasBlur?: boolean
-  hasShadow?: boolean
 }
 
 export type TWallpaper = TWallpaperGradient | TWallpaperPic
@@ -35,23 +33,23 @@ export type TWallpaperType = TConstValues<typeof WALLPAPER_TYPE>
 
 export type TWallpaperInfo = {
   customWallpaper?: TCustomWallpaper
-  wallpaper: string
+  source: string
   wallpapers: Record<string, TWallpaper>
-  hasShadow?: boolean
   gradientWallpapers?: Record<string, TWallpaper>
 
-  changeWallpaper?: (wallpaper: string) => void
+  changeWallpaper?: (source: string) => void
 }
 
 export type TWallpaperData = {
-  wallpaper: string
+  source: string
   gradientWallpapers: Record<string, TWallpaper>
   patternWallpapers: Record<string, TWallpaper>
-  wallpaperType: TWallpaperType
+  type: TWallpaperType
   hasPattern: boolean
   hasBlur: boolean
   hasShadow: boolean
   direction: TWallpaperGradientDir
+  bgSize: string
 
   customColor: string
 }

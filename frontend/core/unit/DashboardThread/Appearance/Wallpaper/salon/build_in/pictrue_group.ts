@@ -2,33 +2,22 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-type TProps = {
-  showMore: boolean
-}
-
-export default function useSalon({ showMore }: TProps) {
+export default function useSalon() {
   const { cn, br, fill, primary } = useTwBelt()
 
   return {
-    wrapper: cn('row wrap s-full gap-3 mt-2.5 relative', showMore && 'mb-14'),
+    wrapper: 'row wrap s-full gap-3 mt-2.5 relative',
     block: cn(
       'w-44 h-28 rounded-md overflow-hidden relative border border-2 border-transparent pointer trans-all-200',
       `hover:${br('digest')}`,
     ),
     blockActive: cn(br('digest')),
-    image: 'object-cover w-full h-fit',
+    image: 'object-cover w-full h-full',
     activeSign: cn(
       'size-5 circle absolute -top-1 -right-0.5 z-20 border',
       primary('bg'),
       br('title'),
     ),
     checkIcon: cn('size-3.5 absolute top-0.5 left-0.5', fill('button.fg')),
-    //
-    showMoreMask: cn(
-      'align-both z-20 w-full -ml-2 trans-all-100',
-      !showMore ? 'absolute bottom-0 h-14 -ml-4' : 'h-1',
-      !showMore && 'hidden-panel',
-    ),
-    showMoreIcon: cn('size-3.5 mr-1.5', fill('digest'), showMore ? 'rotate-90' : '-rotate-90'),
   }
 }

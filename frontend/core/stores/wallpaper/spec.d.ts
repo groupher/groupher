@@ -3,16 +3,15 @@ import type { TCustomWallpaper, TWallpaperGradientDir, TWallpaperType } from '~/
 export type TWallpaperState = {
   customWallpaper: TCustomWallpaper
   customColorValue: string
-  wallpaper: string
-  wallpaperType: TWallpaperType
+  source: string
+  type: TWallpaperType
 
-  hasBlur: boolean
   hasPattern: boolean
+  hasBlur: boolean
   hasShadow: boolean
 
   direction: TWallpaperGradientDir
   bgSize: string
-  uploadBgImage: string
 }
 
 export type TStore = TWallpaperState & {

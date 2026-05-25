@@ -5,14 +5,13 @@ const DIR = '/wallpaper'
 export const WALLPAPER_STATE_KEYS = [
   'customWallpaper',
   'customColorValue',
-  'wallpaper',
-  'wallpaperType',
+  'source',
+  'type',
   'hasPattern',
   'hasBlur',
   'hasShadow',
   'direction',
   'bgSize',
-  // 'uploadBgImage',
 ] as const
 
 export const WALLPAPER_TYPE = {
@@ -94,7 +93,7 @@ export const PATTERN_WALLPAPER = {
 const DEFAULT_GRADIENT_EFFECT = {
   hasPattern: false,
   hasBlur: false,
-  direction: 'bottom',
+  direction: '180deg',
 }
 
 export const COVER_GRADIENT_WALLPAPER = {

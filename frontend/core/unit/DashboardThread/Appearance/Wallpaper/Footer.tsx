@@ -1,4 +1,5 @@
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
+import useTrans from '~/hooks/useTrans'
 import ForbidSVG from '~/icons/ForbidImg'
 import Button from '~/widgets/Buttons/Button'
 import YesOrNoButtons from '~/widgets/Buttons/YesOrNoButtons'
@@ -8,18 +9,19 @@ import useLogic from './useLogic'
 
 export default function Footer() {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { getWallpaper, loading, isTouched, removeWallpaper, onSave, rollbackWallpaper } =
     useLogic()
-  const { wallpaperType } = getWallpaper()
+  const { type } = getWallpaper()
 
   return (
     <div className={s.wrapper}>
       <div className={s.divider} />
       <div className={s.inner}>
-        {wallpaperType !== WALLPAPER_TYPE.NONE ? (
+        {type !== WALLPAPER_TYPE.NONE ? (
           <Button size='small' ghost onClick={() => removeWallpaper()}>
-            <ForbidSVG className={s.blankIcon} /> 空白壁纸
+            <ForbidSVG className={s.blankIcon} /> {t('dsb.appearance.wallpaper.editor.blank')}
           </Button>
         ) : (
           <div />
@@ -28,8 +30,8 @@ export default function Footer() {
 
         {isTouched ? (
           <YesOrNoButtons
-            cancelText='恢复默认'
-            saveText='确定'
+            cancelText={t('dsb.appearance.wallpaper.editor.restore')}
+            saveText={t('dsb.appearance.wallpaper.editor.confirm')}
             space={4}
             onCancel={() => {
               rollbackWallpaper()
@@ -38,7 +40,7 @@ export default function Footer() {
           />
         ) : (
           <Button size='small' space={10} loading={loading} onClick={() => onSave()}>
-            确定
+            {t('dsb.appearance.wallpaper.editor.confirm')}
           </Button>
         )}
       </div>

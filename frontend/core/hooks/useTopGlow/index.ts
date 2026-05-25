@@ -15,7 +15,7 @@ import type { TTopGlow } from '~/spec'
 const LANDING_GLOW_OPACITY = 65
 
 export default function useTopGlow(): TTopGlow {
-  const { wallpaper } = useWallpaper()
+  const { source } = useWallpaper()
   const { isLightTheme } = useTheme()
   const { themePreset, glowType, glowTypeDark, glowFixed, glowOpacity, glowOpacityDark } =
     useThemePreset()
@@ -26,7 +26,7 @@ export default function useTopGlow(): TTopGlow {
 
   if (
     includes(metric, [METRIC.APPLY_COMMUNITY]) ||
-    (metric === METRIC.LANDING && wallpaper !== GRADIENT_WALLPAPER_NAME.PINK)
+    (metric === METRIC.LANDING && source !== GRADIENT_WALLPAPER_NAME.PINK)
   ) {
     return {
       glowType: null,

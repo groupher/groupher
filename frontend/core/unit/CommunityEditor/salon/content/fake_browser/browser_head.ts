@@ -33,7 +33,7 @@ const getPathGradient = (wallpaper: string): string => {
 export { cn } from '~/css'
 
 export default function useSalon() {
-  const { wallpaper } = useWallpaper()
+  const { source } = useWallpaper()
   const { cn, fg, br, bg, fill, rainbow } = useTwBelt()
 
   return {
@@ -67,7 +67,7 @@ export default function useSalon() {
     //
     domainText: 'text-sm clip-text',
     domainTextStyle: {
-      background: `linear-gradient(to left, ${getPathGradient(wallpaper)})`,
+      background: `linear-gradient(to left, ${getPathGradient(source)})`,
     },
   }
 }

@@ -8,10 +8,10 @@ describe('useWallpaper', () => {
   it('parses custom gradient wallpaper', () => {
     const wrapper = makeStoreWrapper({
       wallpaper: {
-        wallpaper: 'custom',
-        wallpaperType: WALLPAPER_TYPE.CUSTOM_GRADIENT,
+        source: 'custom',
+        type: WALLPAPER_TYPE.CUSTOM_GRADIENT,
         customColorValue: '#fff, #000',
-        direction: 'bottom',
+        direction: '180deg',
         hasPattern: false,
         hasBlur: true,
         hasShadow: true,
@@ -20,9 +20,9 @@ describe('useWallpaper', () => {
 
     const { result } = renderHook(() => useWallpaper(), { wrapper })
 
-    expect(result.current.wallpaper).toBe('custom')
+    expect(result.current.source).toBe('custom')
     expect(result.current.hasShadow).toBe(true)
-    expect(result.current.background).toContain('linear-gradient(to bottom')
+    expect(result.current.background).toContain('linear-gradient(180deg')
     expect(result.current.effect).toContain('blur')
   })
 })

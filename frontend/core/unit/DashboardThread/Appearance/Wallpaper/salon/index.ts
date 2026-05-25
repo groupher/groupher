@@ -6,20 +6,18 @@ import useBase from '../../useAppearanceBaseSalon'
 export { cn, cnMerge } from '~/css'
 
 export default function useSalon() {
-  const { cn, fill, br, bg, shadow } = useTwBelt()
+  const { cn, br, bg, shadow } = useTwBelt()
 
   const { hasShadow } = useWallpaper()
   const base = useBase()
 
   return {
-    wrapper: 'column',
-    preview: 'row-center w-full wrap gap-8',
-    hoverMask: 'group column-center relative',
-    settingIcon: cn(
-      'size-6 absolute top-20 left-36 -ml-2 z-10 pointer group-smoky-0 trans-all-200',
-      fill('button.fg'),
-    ),
-    previewer: 'column-center',
+    wrapper: 'column relative',
+    themeSwitch: 'absolute top-0 right-0',
+    previewCard: cn('w-full rounded-lg border py-2 pl-4', br('divider'), bg('cardAlpha')),
+    previewLayout: 'grid grid-cols-2 w-full gap-10',
+    previewPanel: 'column-center min-h-44',
+    customizePanel: 'column-center min-h-44',
     previewImage: cn(
       'w-72 h-44 trans-all-200',
       'column-align-both rounded-md border',
