@@ -2,10 +2,10 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
   @moduledoc false
 
   alias GroupherServer.CMS.Dashboard.{ThemePreset, Write}
-  alias GroupherServer.CMS.Model.{Community, Embeds}
+  alias GroupherServer.CMS.Model.{Community, CommunityDashboard, Embeds}
   alias Helper.T
 
-  @spec save_custom(Community.t(), map()) :: T.domain_res(Community.t())
+  @spec save_custom(Community.t(), map()) :: T.domain_res(CommunityDashboard.t())
   def save_custom(%Community{} = community, args) do
     args = Map.drop(args, [:community])
 
@@ -16,13 +16,12 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
          args <-
            args
            |> Map.drop([:theme_preset_base, :theme_overwrite])
-           |> Map.put(:custom_theme_preset, custom_theme_preset),
-         {:ok, _} <- Write.replace_section(community_dashboard, :layout, args) do
-      {:ok, community}
+           |> Map.put(:custom_theme_preset, custom_theme_preset) do
+      Write.replace_section(community_dashboard, :layout, args)
     end
   end
 
-  @spec select(Community.t(), map()) :: T.domain_res(Community.t())
+  @spec select(Community.t(), map()) :: T.domain_res(CommunityDashboard.t())
   def select(%Community{} = community, %{theme_preset: :custom} = args) do
     args = Map.drop(args, [:community])
 

@@ -283,6 +283,15 @@ export const BASEINFO_BASIC_KEYS: (keyof TDsbFieldMap)[] = [
 ]
 export const BASEINFO_LOGOS_KEYS: (keyof TDsbFieldMap)[] = ['logo', 'favicon']
 export const BASEINFO_OTHER_KEYS: (keyof TDsbFieldMap)[] = [FIELD.CITY, FIELD.TECHSTACK]
+export const COMMUNITY_BASEINFO_KEYS = [
+  'title',
+  'locale',
+  'desc',
+  'logo',
+  'favicon',
+  'slug',
+  'homepage',
+] as const
 
 export const BASEINFO_KEYS: (keyof TDsbFieldMap)[] = [
   ...BASEINFO_BASIC_KEYS,

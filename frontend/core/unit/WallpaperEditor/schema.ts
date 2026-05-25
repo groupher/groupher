@@ -27,11 +27,8 @@ const updateDashboardWallpaper = gql`
       hasBlur: $hasBlur
       hasShadow: $hasShadow
     ) {
-      slug
-      dashboard {
-        wallpaper {
-          ${F.wallpaper}
-        }
+      wallpaper {
+        ${F.wallpaper}
       }
     }
   }

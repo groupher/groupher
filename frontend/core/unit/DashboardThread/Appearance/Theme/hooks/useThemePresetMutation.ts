@@ -25,14 +25,10 @@ type TThemePresetMutationLayout = {
 
 type TThemePresetMutationData = {
   saveCustomThemePreset?: {
-    dashboard?: {
-      layout?: TThemePresetMutationLayout
-    }
+    layout?: TThemePresetMutationLayout
   }
   selectThemePreset?: {
-    dashboard?: {
-      layout?: TThemePresetMutationLayout
-    }
+    layout?: TThemePresetMutationLayout
   }
 }
 
@@ -152,8 +148,7 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
 
     request
       .then((data) => {
-        const layout =
-          data.saveCustomThemePreset?.dashboard?.layout ?? data.selectThemePreset?.dashboard?.layout
+        const layout = data.saveCustomThemePreset?.layout ?? data.selectThemePreset?.layout
 
         return finishSave({ layout })
       })

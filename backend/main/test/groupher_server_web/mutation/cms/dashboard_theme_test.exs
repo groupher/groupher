@@ -18,9 +18,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
     @save_custom_theme_preset_query """
     mutation($community: String!, $themePreset: DsbThemePreset!, $themePresetBase: DsbThemePreset!, $themeOverwrite: Json) {
       saveCustomThemePreset(community: $community, themePreset: $themePreset, themePresetBase: $themePresetBase, themeOverwrite: $themeOverwrite) {
-        id
-        dashboard {
-          layout {
+        layout {
             themePreset
             themePresetBase
             themeTokens
@@ -28,7 +26,6 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
               value
               tokens
             }
-          }
         }
       }
     }
@@ -54,49 +51,49 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
 
       updated = rule_conn |> gq_mutation(@save_custom_theme_preset_query, variables)
 
-      assert get_in(updated, ["dashboard", "layout", "themePreset"]) == "CUSTOM"
-      assert get_in(updated, ["dashboard", "layout", "themePresetBase"]) == "CLAUDE"
+      assert get_in(updated, ["layout", "themePreset"]) == "CUSTOM"
+      assert get_in(updated, ["layout", "themePresetBase"]) == "CLAUDE"
 
       custom_option =
         updated
-        |> get_in(["dashboard", "layout", "themePresets"])
+        |> get_in(["layout", "themePresets"])
         |> Enum.find(&(&1["value"] == "CUSTOM"))
 
       assert custom_option["tokens"]["accentColor"] == "#ffee00"
 
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "accentColor"]) ==
+      assert get_in(updated, ["layout", "themeTokens", "accentColor"]) ==
                "#ffee00"
 
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "gaussBlur"]) == 80.5
+      assert get_in(updated, ["layout", "themeTokens", "gaussBlur"]) == 80.5
       assert custom_option["tokens"]["gaussBlur"] == 80.5
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "pageBgHue"]) == 48
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "pageBgHueDark"]) == 318
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "pageBgIntensity"]) == 32
+      assert get_in(updated, ["layout", "themeTokens", "pageBgHue"]) == 48
+      assert get_in(updated, ["layout", "themeTokens", "pageBgHueDark"]) == 318
+      assert get_in(updated, ["layout", "themeTokens", "pageBgIntensity"]) == 32
 
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "pageBgIntensityDark"]) ==
+      assert get_in(updated, ["layout", "themeTokens", "pageBgIntensityDark"]) ==
                0
 
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowType"]) == "PINK"
+      assert get_in(updated, ["layout", "themeTokens", "glowType"]) == "PINK"
 
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowTypeDark"]) ==
+      assert get_in(updated, ["layout", "themeTokens", "glowTypeDark"]) ==
                ""
 
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowFixed"]) == true
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowOpacity"]) == 30.5
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "glowOpacityDark"]) == 100
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "textTitleDark"]) == "#f4eee7"
+      assert get_in(updated, ["layout", "themeTokens", "glowFixed"]) == true
+      assert get_in(updated, ["layout", "themeTokens", "glowOpacity"]) == 30.5
+      assert get_in(updated, ["layout", "themeTokens", "glowOpacityDark"]) == 100
+      assert get_in(updated, ["layout", "themeTokens", "textTitleDark"]) == "#f4eee7"
 
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "textDigestDark"]) ==
+      assert get_in(updated, ["layout", "themeTokens", "textDigestDark"]) ==
                "#aabbcc"
 
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "cardColor"]) == "#fffdf8"
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "cardColorDark"]) == "#261b22"
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "dividerColor"]) == "#e6ded2"
+      assert get_in(updated, ["layout", "themeTokens", "cardColor"]) == "#fffdf8"
+      assert get_in(updated, ["layout", "themeTokens", "cardColorDark"]) == "#261b22"
+      assert get_in(updated, ["layout", "themeTokens", "dividerColor"]) == "#e6ded2"
 
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "dividerColorDark"]) ==
+      assert get_in(updated, ["layout", "themeTokens", "dividerColorDark"]) ==
                "#3a3035"
 
-      {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
+      {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
 
       assert found.dashboard.layout.theme_preset == :custom
       assert found.dashboard.layout.custom_theme_preset["basePreset"] == "claude"
@@ -184,10 +181,10 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
       rule_conn |> gq_mutation(@save_custom_theme_preset_query, first_variables)
       updated = rule_conn |> gq_mutation(@save_custom_theme_preset_query, second_variables)
 
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "primaryColor"]) == "#112233"
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "textTitle"]) == "#445566"
+      assert get_in(updated, ["layout", "themeTokens", "primaryColor"]) == "#112233"
+      assert get_in(updated, ["layout", "themeTokens", "textTitle"]) == "#445566"
 
-      {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
+      {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
 
       assert found.dashboard.layout.custom_theme_preset["overwrite"] == %{
                "primaryColor" => "#112233",
@@ -212,10 +209,10 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
 
       updated = rule_conn |> gq_mutation(@save_custom_theme_preset_query, variables)
 
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "cardColor"]) == "#fffdf8"
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "textTitle"]) == "#445566"
+      assert get_in(updated, ["layout", "themeTokens", "cardColor"]) == "#fffdf8"
+      assert get_in(updated, ["layout", "themeTokens", "textTitle"]) == "#445566"
 
-      {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
+      {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
 
       assert found.dashboard.layout.custom_theme_preset["overwrite"] == %{
                "textTitle" => "#445566"
@@ -280,18 +277,18 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
       rule_conn |> gq_mutation(@save_custom_theme_preset_query, custom_variables)
       updated = rule_conn |> gq_mutation(@save_custom_theme_preset_query, reset_variables)
 
-      assert get_in(updated, ["dashboard", "layout", "themePreset"]) == "CUSTOM"
-      assert get_in(updated, ["dashboard", "layout", "themePresetBase"]) == "HN"
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "primaryColor"]) == "#333333"
+      assert get_in(updated, ["layout", "themePreset"]) == "CUSTOM"
+      assert get_in(updated, ["layout", "themePresetBase"]) == "HN"
+      assert get_in(updated, ["layout", "themeTokens", "primaryColor"]) == "#333333"
 
       custom_option =
         updated
-        |> get_in(["dashboard", "layout", "themePresets"])
+        |> get_in(["layout", "themePresets"])
         |> Enum.find(&(&1["value"] == "CUSTOM"))
 
       assert custom_option["tokens"]["primaryColor"] == "#333333"
 
-      {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
+      {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
 
       assert found.dashboard.layout.custom_theme_preset["overwrite"] == %{}
     end
@@ -317,9 +314,9 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
       rule_conn |> gq_mutation(@save_custom_theme_preset_query, custom_variables)
       updated = rule_conn |> gq_mutation(@save_custom_theme_preset_query, reset_variables)
 
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "primaryColor"]) == "#c96442"
+      assert get_in(updated, ["layout", "themeTokens", "primaryColor"]) == "#c96442"
 
-      {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
+      {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
 
       assert found.dashboard.layout.custom_theme_preset["overwrite"] == %{}
     end
@@ -345,9 +342,9 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
       rule_conn |> gq_mutation(@save_custom_theme_preset_query, custom_variables)
       updated = rule_conn |> gq_mutation(@save_custom_theme_preset_query, reset_variables)
 
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "primaryColor"]) == "#c96442"
+      assert get_in(updated, ["layout", "themeTokens", "primaryColor"]) == "#c96442"
 
-      {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
+      {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
 
       assert found.dashboard.layout.custom_theme_preset["overwrite"] == %{}
     end
@@ -355,9 +352,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
     @select_theme_preset_query """
     mutation($community: String!, $themePreset: DsbThemePreset!) {
       selectThemePreset(community: $community, themePreset: $themePreset) {
-        id
-        dashboard {
-          layout {
+        layout {
             themePreset
             themePresetBase
             themeTokens
@@ -365,7 +360,6 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
               value
               tokens
             }
-          }
         }
       }
     }
@@ -378,24 +372,24 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
         rule_conn
         |> gq_mutation(@select_theme_preset_query, %{community: community.slug, themePreset: "HN"})
 
-      assert get_in(updated, ["dashboard", "layout", "themePreset"]) == "HN"
-      assert get_in(updated, ["dashboard", "layout", "themePresetBase"]) == nil
+      assert get_in(updated, ["layout", "themePreset"]) == "HN"
+      assert get_in(updated, ["layout", "themePresetBase"]) == nil
 
       refute Enum.any?(
-               get_in(updated, ["dashboard", "layout", "themePresets"]),
+               get_in(updated, ["layout", "themePresets"]),
                &(&1["value"] == "CUSTOM")
              )
 
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "textTitle"]) == "#222222"
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "textTitleDark"]) == "#e6e6e6"
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "cardColor"]) == "#fffff5"
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "cardColorDark"]) == "#292625"
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "dividerColor"]) == "#e6e6d6"
+      assert get_in(updated, ["layout", "themeTokens", "textTitle"]) == "#222222"
+      assert get_in(updated, ["layout", "themeTokens", "textTitleDark"]) == "#e6e6e6"
+      assert get_in(updated, ["layout", "themeTokens", "cardColor"]) == "#fffff5"
+      assert get_in(updated, ["layout", "themeTokens", "cardColorDark"]) == "#292625"
+      assert get_in(updated, ["layout", "themeTokens", "dividerColor"]) == "#e6e6d6"
 
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "dividerColorDark"]) ==
+      assert get_in(updated, ["layout", "themeTokens", "dividerColorDark"]) ==
                "#3c3938"
 
-      {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
+      {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
 
       assert found.dashboard.layout.theme_preset == :hn
       assert found.dashboard.layout.custom_theme_preset == nil
@@ -425,20 +419,20 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
         rule_conn
         |> gq_mutation(@select_theme_preset_query, %{community: community.slug, themePreset: "HN"})
 
-      assert get_in(updated, ["dashboard", "layout", "themePreset"]) == "HN"
-      assert get_in(updated, ["dashboard", "layout", "themePresetBase"]) == "CLAUDE"
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "textTitle"]) == "#222222"
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "textTitleDark"]) == "#e6e6e6"
+      assert get_in(updated, ["layout", "themePreset"]) == "HN"
+      assert get_in(updated, ["layout", "themePresetBase"]) == "CLAUDE"
+      assert get_in(updated, ["layout", "themeTokens", "textTitle"]) == "#222222"
+      assert get_in(updated, ["layout", "themeTokens", "textTitleDark"]) == "#e6e6e6"
 
       custom_option =
         updated
-        |> get_in(["dashboard", "layout", "themePresets"])
+        |> get_in(["layout", "themePresets"])
         |> Enum.find(&(&1["value"] == "CUSTOM"))
 
       assert custom_option["tokens"]["primaryColor"] == "#112233"
       assert custom_option["tokens"]["textTitle"] == "#112233"
 
-      {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
+      {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
 
       assert found.dashboard.layout.theme_preset == :hn
       assert found.dashboard.layout.custom_theme_preset["basePreset"] == "claude"
@@ -469,10 +463,10 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
           themeOverwrite: Jason.encode!(%{})
         })
 
-      assert get_in(updated, ["dashboard", "layout", "themePreset"]) == "CUSTOM"
-      assert get_in(updated, ["dashboard", "layout", "themeTokens", "primaryColor"]) == "#112233"
+      assert get_in(updated, ["layout", "themePreset"]) == "CUSTOM"
+      assert get_in(updated, ["layout", "themeTokens", "primaryColor"]) == "#112233"
 
-      {:ok, found} = Community |> ORM.find(updated["id"], preload: :dashboard)
+      {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
 
       assert found.dashboard.layout.custom_theme_preset["overwrite"] == %{
                "primaryColor" => "#112233"

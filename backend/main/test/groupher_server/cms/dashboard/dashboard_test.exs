@@ -70,9 +70,20 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
     test "update base info should reject invalid slug format", ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
+      {:ok, before_update} = ORM.find(Community, community.id, preload: :dashboard)
 
       assert {:error, %Ecto.Changeset{}} =
-               CMS.Dashboard.update(community, :base_info, %{slug: "new slug"})
+               CMS.Dashboard.update(community, :base_info, %{
+                 title: "new title",
+                 slug: "new slug"
+               })
+
+      {:ok, found} = ORM.find(Community, community.id, preload: :dashboard)
+
+      assert found.title == before_update.title
+      assert found.slug == before_update.slug
+      assert found.dashboard.base_info.slug == before_update.dashboard.base_info.slug
+      assert found.dashboard.base_info.title == before_update.dashboard.base_info.title
     end
 
     test "update base info logo should keep provided path", ~m(community_attrs user)a do

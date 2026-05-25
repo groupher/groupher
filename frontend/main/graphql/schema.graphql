@@ -79,6 +79,7 @@ type RootQueryType {
   "spec community info"
   community(slug: String!, incViews: Boolean): Community
 
+  "Get all passport rules available to the current user."
   allPassportRules: AllRules
 
   "if use has pending apply"
@@ -185,10 +186,13 @@ type RootMutationType {
   "update user's profile"
   updateProfile(profile: UserProfileInput!, social: SocialInput): User
 
+  "Sign in with an OAuth provider and return token info."
   signinOauth(provider: OauthProviderInput!, oauthTrustCode: String!): TokenInfo
 
+  "Link an OAuth provider to the current account."
   linkOauth(provider: OauthProviderInput!, oauthTrustCode: String!): TokenInfo
 
+  "Unlink an OAuth provider from the current account."
   unlinkOauth(provider: OauthProviderInput!, oauthTrustCode: String!): User
 
   "follow a user"
@@ -218,6 +222,7 @@ type RootMutationType {
   "mark all unread message as read"
   markReadAll(type: MailboxType): Done
 
+  "Record a contribution event for the specified user."
   makeContribute(userId: ID!): UserContribute
 
   "create a global community"
@@ -614,71 +619,73 @@ type RootMutationType {
   "update base info in dashboard"
   updateDashboardBaseInfo(
     community: String!, dsbSection: DsbSection, favicon: String, title: String, locale: String, logo: String, slug: String, desc: String, introduction: String, homepage: String, city: String, techstack: String
-  ): Community
+  ): Dsb
 
   "update seo in dashboard"
   updateDashboardSeo(
     community: String!, dsbSection: DsbSection, seoEnable: Boolean, ogSiteName: String, ogTitle: String, ogDescription: String, ogUrl: String, ogImage: String, ogLocale: String, ogPublisher: String, twTitle: String, twDescription: String, twUrl: String, twCard: String, twSite: String, twImage: String, twImageWidth: String, twImageHeight: String
-  ): Community
+  ): Dsb
 
   "update wallpaper in dashboard"
   updateDashboardWallpaper(
     community: String!, dsbSection: DsbSection, wallpaperType: String, wallpaper: String, hasPattern: Boolean, direction: String, customColorValue: String, bgSize: String, uploadBgImage: String, hasBlur: Boolean, hasShadow: Boolean
-  ): Community
+  ): Dsb
 
   "update enable in dashboard"
   updateDashboardEnable(
     community: String!, dsbSection: DsbSection, post: Boolean, blog: Boolean, kanban: Boolean, changelog: Boolean, doc: Boolean, docLastUpdate: Boolean, docReaction: Boolean, about: Boolean, aboutTechstack: Boolean, aboutLocation: Boolean, aboutLinks: Boolean, aboutMediaReport: Boolean
-  ): Community
+  ): Dsb
 
   "update thread-specific emotion settings in dashboard"
   updateDashboardThreadEmotions(
     community: String!, dsbSection: DsbSection, post: [EmotionType], blog: [EmotionType], changelog: [EmotionType], doc: [EmotionType], postComment: [EmotionType], blogComment: [EmotionType], changelogComment: [EmotionType], docComment: [EmotionType]
-  ): Community
+  ): Dsb
 
   "update layout in dashboard"
   updateDashboardLayout(
     community: String!, dsbSection: DsbSection, kanbanBgColors: [RainbowColor], kanbanBoards: [KanbanBoard], postLayout: DsbPostLayout, kanbanLayout: DsbKanbanLayout, kanbanCardLayout: DsbKanbanCardLayout, docCoverLayout: DsbDocCoverLayout, docFaqLayout: DsbDocFaqLayout, tagLayout: DsbTagLayout, inlineTagLayout: DsbInlineTagLayout, avatarLayout: DsbAvatarLayout, brandLayout: DsbBrandLayout, communityLayout: DsbCommunityLayout, navActiveLayout: DsbNavActiveLayout, topbarEnabled: Boolean, topbarBg: RainbowColor, topbarBgCustomColor: String, broadcastLayout: DsbBroadcastLayout, broadcastBg: RainbowColor, broadcastCustomBg: String, broadcastEnable: Boolean, broadcastArticleLayout: DsbBroadcastArticleLayout, broadcastArticleBg: RainbowColor, broadcastArticleCustomBg: String, broadcastArticleEnable: Boolean, changelogLayout: DsbChangelogLayout, footerLayout: DsbFooterLayout, headerLayout: DsbHeaderLayout, overlayDark: Boolean
-  ): Community
+  ): Dsb
 
   "save custom theme preset in dashboard"
   saveCustomThemePreset(
-    community: String!, themePreset: DsbThemePreset!, themePresetBase: DsbThemePreset!, themeTokens: Json
-  ): Community
+    community: String!, themePreset: DsbThemePreset!, themePresetBase: DsbThemePreset!, themeOverwrite: Json
+  ): Dsb
 
   "select read-only theme preset in dashboard"
-  selectThemePreset(community: String!, themePreset: DsbThemePreset!): Community
+  selectThemePreset(community: String!, themePreset: DsbThemePreset!): Dsb
 
   "update rss in dashboard"
-  updateDashboardRss(community: String!, dsbSection: DsbSection, rssFeedType: DsbRssFeedType, rssFeedCount: Int): Community
+  updateDashboardRss(community: String!, dsbSection: DsbSection, rssFeedType: DsbRssFeedType, rssFeedCount: Int): Dsb
 
   "update name alias in dashboard"
-  updateDashboardNameAlias(community: String!, dsbSection: DsbSection, nameAlias: [DsbAliasMap]): Community
+  updateDashboardNameAlias(community: String!, dsbSection: DsbSection, nameAlias: [DsbAliasMap]): Dsb
 
   "update header links in dashboard"
-  updateDashboardHeaderLinks(community: String!, dsbSection: DsbSection, headerLinks: [DsbLinkMap]): Community
+  updateDashboardHeaderLinks(community: String!, dsbSection: DsbSection, headerLinks: [DsbLinkMap]): Dsb
 
   "update footer links in dashboard"
-  updateDashboardFooterLinks(community: String!, dsbSection: DsbSection, footerLinks: [DsbLinkMap]): Community
+  updateDashboardFooterLinks(community: String!, dsbSection: DsbSection, footerLinks: [DsbLinkMap]): Dsb
 
   "update footer oneline links in dashboard"
-  updateDashboardFooterOnelineLinks(community: String!, dsbSection: DsbSection, footerOnelineLinks: [DsbLinkChildMap]): Community
+  updateDashboardFooterOnelineLinks(community: String!, dsbSection: DsbSection, footerOnelineLinks: [DsbLinkChildMap]): Dsb
 
   "update social links in dashboard"
-  updateDashboardSocialLinks(community: String!, dsbSection: DsbSection, socialLinks: [DsbSocialLinkMap]): Community
+  updateDashboardSocialLinks(community: String!, dsbSection: DsbSection, socialLinks: [DsbSocialLinkMap]): Dsb
 
   "update media reports in dashboard"
-  updateDashboardMediaReports(community: String!, dsbSection: DsbSection, mediaReports: [DsbMediaReportMap]): Community
+  updateDashboardMediaReports(community: String!, dsbSection: DsbSection, mediaReports: [DsbMediaReportMap]): Dsb
 
   "update faqs in dashboard"
-  updateDashboardFaqs(community: String!, dsbSection: DsbSection, faqs: [DsbFaqMap]): Community
+  updateDashboardFaqs(community: String!, dsbSection: DsbSection, faqs: [DsbFaqMap]): Dsb
 }
 
 type CheckState {
+  "Whether the checked resource exists or condition is met."
   exist: Boolean
 }
 
 type DoneState {
+  "Whether the requested operation completed successfully."
   done: Boolean
 }
 
@@ -906,37 +913,71 @@ type DsbWallpaper {
 
 type DsbLayout {
   themePreset: DsbThemePreset
-  themePresetBase: DsbThemePreset
+
   kanbanBgColors: [RainbowColor]
+
   kanbanBoards: [KanbanBoard]
+
   postLayout: DsbPostLayout
+
   kanbanLayout: DsbKanbanLayout
+
   kanbanCardLayout: DsbKanbanCardLayout
+
   docCoverLayout: DsbDocCoverLayout
+
   docFaqLayout: DsbDocFaqLayout
+
   tagLayout: DsbTagLayout
+
   inlineTagLayout: DsbInlineTagLayout
+
   avatarLayout: DsbAvatarLayout
+
   brandLayout: DsbBrandLayout
+
   communityLayout: DsbCommunityLayout
+
   navActiveLayout: DsbNavActiveLayout
+
   topbarEnabled: Boolean
+
   topbarBg: RainbowColor
+
   topbarBgCustomColor: String
+
   broadcastLayout: DsbBroadcastLayout
+
   broadcastBg: RainbowColor
+
   broadcastCustomBg: String
+
   broadcastEnable: Boolean
+
   broadcastArticleLayout: DsbBroadcastArticleLayout
+
   broadcastArticleBg: RainbowColor
+
   broadcastArticleCustomBg: String
+
   broadcastArticleEnable: Boolean
+
   changelogLayout: DsbChangelogLayout
+
   footerLayout: DsbFooterLayout
+
   headerLayout: DsbHeaderLayout
+
   overlayDark: Boolean
+
+  "Base preset used by the current custom theme preset."
+  themePresetBase: DsbThemePreset
+
+  "Resolved design tokens for the active theme preset."
   themeTokens: Json
-  hasCustomThemePreset: Boolean
+
+  "Theme preset options available for dashboard layout settings."
+  themePresets: [DsbThemePresetOption]
 }
 
 type DsbEnable {
@@ -1048,30 +1089,64 @@ type AllRules {
 }
 
 type Community {
+  "Community identifier."
   id: ID
+
+  "Community display title."
   title: String
+
+  "Community introduction text."
   desc: String
+
+  "Community slug used in API routes."
   slug: String
+
   favicon: String
+
   homepage: String
+
   index: Int
+
   logo: String
+
+  "Community owner account."
   author: User
+
   locale: String
+
   categories: [Category]
+
+  "Dashboard configuration for this community."
   dashboard: Dsb
+
+  "Current moderators in the community."
   moderators: [CommunityModerator]
+
   meta: CommunityMeta
+
   views: Int
+
   contributesDigest: [Int]
+
   articlesCount: Int
+
   subscribersCount: Int
+
   moderatorsCount: Int
+
+  "Total number of tags configured for the community."
   communityTagsCount: Int
+
+  "Whether the current viewer has subscribed to this community."
   viewerHasSubscribed: Boolean
+
+  "Whether the current viewer is a moderator of this community."
   viewerIsModerator: Boolean
+
   pending: Int
+
   insertedAt: DateTime
+
   updatedAt: DateTime
 }
 
@@ -1424,28 +1499,6 @@ enum Thread {
   USER
 }
 
-enum DsbSection {
-  SEO
-  WALLPAPER
-  ENABLE
-  THREAD_EMOTIONS
-  LAYOUT
-  BASE_INFO
-  RSS
-  NAME_ALIAS
-  HEADER_LINKS
-  FOOTER_LINKS
-  FOOTER_ONELINE_LINKS
-  SOCIAL_LINKS
-  MEDIA_REPORTS
-  FAQS
-}
-
-enum DsbLinkType {
-  LINK
-  GROUP
-}
-
 enum Content {
   POST
   BLOG
@@ -1483,22 +1536,6 @@ enum ArticleOrderEnum {
   PUBLISH
 }
 
-enum RainbowColor {
-  BLACK
-  PINK
-  RED
-  ORANGE
-  YELLOW
-  BROWN
-  GREEN_LIGHT
-  GREEN
-  CYAN
-  CYAN_LIGHT
-  BLUE
-  PURPLE
-  CUSTOM
-}
-
 enum ArticleCatEnum {
   IDEA
   BUG
@@ -1518,123 +1555,6 @@ enum ArticleStatusEnum {
   REJECT_NO_PLAN
   REJECT_REPRO
   REJECT_STALE
-}
-
-enum KanbanBoard {
-  BACKLOG
-  TODO
-  WIP
-  DONE
-  REJECTED
-}
-
-enum DsbPostLayout {
-  QUORA
-  PH
-  MASONRY
-  MINIMAL
-  COVER
-}
-
-enum DsbKanbanLayout {
-  CLASSIC
-  WATERFALL
-}
-
-enum DsbKanbanCardLayout {
-  SIMPLE
-  FULL
-}
-
-enum DsbDocCoverLayout {
-  OUTLINE_COLUMNS
-  OUTLINE_TOC
-  BRIEF_CARDS
-  COVER_CARDS
-  TILE_CARDS
-  STACK_CARDS
-}
-
-enum DsbDocFaqLayout {
-  FLAT
-  COLLAPSE
-  SEARCH_HINT
-  LEFT_RIGHT
-}
-
-enum DsbTagLayout {
-  HASH
-  DOT
-}
-
-enum DsbInlineTagLayout {
-  MORANDI
-  SOFT
-  SOLID
-  BORDER
-  SIMPLE
-}
-
-enum DsbAvatarLayout {
-  CIRCLE
-  SQUARE
-}
-
-enum DsbBrandLayout {
-  BOTH
-  LOGO
-  TEXT
-}
-
-enum DsbCommunityLayout {
-  CLASSIC
-  HERO
-  SIDEBAR
-}
-
-enum DsbNavActiveLayout {
-  TEXT
-  GRAY_BG
-  SOFT_BG
-}
-
-enum DsbBroadcastLayout {
-  DEFAULT
-  CENTER
-}
-
-enum DsbBroadcastArticleLayout {
-  DEFAULT
-  SIMPLE
-}
-
-enum DsbChangelogLayout {
-  CLASSIC
-  SIMPLE
-}
-
-enum DsbHeaderLayout {
-  CENTER
-  RIGHT
-  FLOAT
-}
-
-enum DsbFooterLayout {
-  ONELINE
-  GROUP
-}
-
-enum DsbThemePreset {
-  DEFAULT
-  CLAUDE
-  SOLARIZED
-  HN
-  CUSTOM
-}
-
-enum DsbRssFeedType {
-  DIGEST
-  FULL
 }
 
 "the filter mode for list comments"
@@ -1870,6 +1790,161 @@ input DsbFaqMap {
   index: Int
 }
 
+enum DsbSection {
+  SEO
+  WALLPAPER
+  ENABLE
+  THREAD_EMOTIONS
+  LAYOUT
+  BASE_INFO
+  RSS
+  NAME_ALIAS
+  HEADER_LINKS
+  FOOTER_LINKS
+  FOOTER_ONELINE_LINKS
+  SOCIAL_LINKS
+  MEDIA_REPORTS
+  FAQS
+}
+
+enum DsbLinkType {
+  LINK
+  GROUP
+}
+
+enum RainbowColor {
+  BLACK
+  PINK
+  RED
+  ORANGE
+  YELLOW
+  BROWN
+  GREEN_LIGHT
+  GREEN
+  CYAN
+  CYAN_LIGHT
+  BLUE
+  PURPLE
+  CUSTOM
+}
+
+enum KanbanBoard {
+  BACKLOG
+  TODO
+  WIP
+  DONE
+  REJECTED
+}
+
+enum DsbPostLayout {
+  QUORA
+  PH
+  MASONRY
+  MINIMAL
+  COVER
+}
+
+enum DsbKanbanLayout {
+  CLASSIC
+  WATERFALL
+}
+
+enum DsbKanbanCardLayout {
+  SIMPLE
+  FULL
+}
+
+enum DsbDocCoverLayout {
+  OUTLINE_COLUMNS
+  OUTLINE_TOC
+  BRIEF_CARDS
+  COVER_CARDS
+  TILE_CARDS
+  STACK_CARDS
+}
+
+enum DsbDocFaqLayout {
+  FLAT
+  COLLAPSE
+  SEARCH_HINT
+  LEFT_RIGHT
+}
+
+enum DsbTagLayout {
+  HASH
+  DOT
+}
+
+enum DsbInlineTagLayout {
+  MORANDI
+  SOFT
+  SOLID
+  BORDER
+  SIMPLE
+}
+
+enum DsbAvatarLayout {
+  CIRCLE
+  SQUARE
+}
+
+enum DsbBrandLayout {
+  BOTH
+  LOGO
+  TEXT
+}
+
+enum DsbCommunityLayout {
+  CLASSIC
+  HERO
+  SIDEBAR
+}
+
+enum DsbNavActiveLayout {
+  TEXT
+  GRAY_BG
+  SOFT_BG
+}
+
+enum DsbBroadcastLayout {
+  DEFAULT
+  CENTER
+}
+
+enum DsbBroadcastArticleLayout {
+  DEFAULT
+  SIMPLE
+}
+
+enum DsbChangelogLayout {
+  CLASSIC
+  SIMPLE
+}
+
+enum DsbHeaderLayout {
+  CENTER
+  RIGHT
+  FLOAT
+}
+
+enum DsbFooterLayout {
+  ONELINE
+  GROUP
+}
+
+enum DsbThemePreset {
+  DEFAULT
+  CLAUDE
+  SOLARIZED
+  HN
+  CUSTOM
+}
+
+enum DsbRssFeedType {
+  DIGEST
+  FULL
+}
+
 type UserContribute {
   count: Int
   date: Date
@@ -1953,6 +2028,7 @@ type User {
 
   contributes: ContributeMap
 
+  "Mailbox unread counters and empty state for the current viewer."
   mailbox: MailboxStatus
 
   insertedAt: DateTime

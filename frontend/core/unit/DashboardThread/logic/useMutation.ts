@@ -16,6 +16,7 @@ import { slugify } from '~/utils/slug'
 
 import {
   BASEINFO_BASIC_KEYS,
+  COMMUNITY_BASEINFO_KEYS,
   BASEINFO_KEYS,
   BASEINFO_OTHER_KEYS,
   FAQ_STORE_FIELDS,
@@ -265,9 +266,15 @@ export default function useMutation(): TRet {
         }
       }
 
-      handleMutation(S.updateDashboardBaseInfo, params, (data) =>
-        community$.commit({ ...data.updateDashboardBaseInfo }),
-      )
+      handleMutation(S.updateDashboardBaseInfo, params, () => {
+        const communityPatch = {}
+
+        for (const key of COMMUNITY_BASEINFO_KEYS) {
+          if (params[key] !== undefined) communityPatch[key] = params[key]
+        }
+
+        community$.commit(communityPatch)
+      })
       return
     }
 
