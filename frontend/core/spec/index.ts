@@ -26,10 +26,10 @@ import type { TThemeName } from './theme'
 
 export type TContainer = 'body' | 'drawer'
 
-type TGlowPosition = 'fixed' | 'absolute'
-export type TGlowEffect = {
+type TTopGlowPosition = 'fixed' | 'absolute'
+export type TTopGlow = {
   glowType: string | null
-  glowPosition?: TGlowPosition
+  glowPosition?: TTopGlowPosition
   glowFixed?: boolean
   glowOpacity?: number
   $theme?: TThemeName

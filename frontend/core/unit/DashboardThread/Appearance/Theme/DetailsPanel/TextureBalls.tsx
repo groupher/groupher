@@ -1,4 +1,6 @@
-import { GLOW_EFFECTS_KEYS } from '~/const/glow_effect'
+import { useState } from 'react'
+
+import { TOP_GLOW_KEYS } from '~/const/top_glow'
 import useThemeKV from '~/hooks/useThemeKV'
 import CloseSVG from '~/icons/CloseLight'
 
@@ -12,6 +14,8 @@ type TProps = {
   rowClassName?: string
 }
 
+const COLLAPSED_OPTION_COUNT = 7
+
 export default function TextureBalls({
   selectedTokens,
   onThemePresetCommit,
@@ -19,34 +23,83 @@ export default function TextureBalls({
 }: TProps) {
   const s = useSalon()
   const { key, value } = useThemeKV()
+  const [expanded, setExpanded] = useState(false)
 
   const glowType = value(selectedTokens, PRESET_FIELD.GLOW_TYPE)
   const glowTypeKey = key(PRESET_FIELD.GLOW_TYPE)
+  const otherGlowTypeKey =
+    glowTypeKey === PRESET_FIELD.GLOW_TYPE ? PRESET_FIELD.GLOW_TYPE_DARK : PRESET_FIELD.GLOW_TYPE
+  const otherGlowType = selectedTokens[otherGlowTypeKey]
+  const allOptions = ['', ...TOP_GLOW_KEYS]
+  const activeHidden =
+    !!glowType && allOptions.slice(COLLAPSED_OPTION_COUNT).includes(glowType as string)
+
+  const visibleOptions = expanded
+    ? allOptions
+    : activeHidden
+      ? [...allOptions.slice(0, COLLAPSED_OPTION_COUNT - 1), glowType as string]
+      : allOptions.slice(0, COLLAPSED_OPTION_COUNT)
+
+  const hiddenCount = allOptions.length - visibleOptions.length
+
+  const commitGlowType = (effect: string) => {
+    const overwrite: TThemePresetOverwrite = { [glowTypeKey]: effect }
+
+    if (effect && !glowType && !otherGlowType) {
+      overwrite[otherGlowTypeKey] = effect
+    }
+
+    onThemePresetCommit(overwrite)
+  }
 
   return (
-    <div className={cnMerge(s.row, rowClassName)}>
-      <button
-        type='button'
-        className={cn(s.block, 'align-both', glowType === '' && s.blockActive)}
-        aria-pressed={glowType === ''}
-        onClick={() => onThemePresetCommit({ [glowTypeKey]: '' })}
-      >
-        <CloseSVG className={cn(s.icon, 'opacity-60')} />
-      </button>
+    <div className={s.wrapper}>
+      <div className={cnMerge(s.row, rowClassName)}>
+        {visibleOptions.map((effect) => (
+          <button
+            key={effect || 'none'}
+            type='button'
+            className={cn(s.block, effect === glowType && s.blockActive)}
+            aria-pressed={effect === glowType}
+            onClick={() => commitGlowType(effect)}
+          >
+            {effect ? (
+              <div className={s.textureBall} style={s.textureStyle()}>
+                <div className={s.glowLayer} style={{ background: `${s.glowStyle(effect)}` }} />
+              </div>
+            ) : (
+              <CloseSVG className={cn(s.icon, 'opacity-60')} />
+            )}
+          </button>
+        ))}
 
-      {GLOW_EFFECTS_KEYS.map((effect) => (
-        <button
-          key={effect}
-          type='button'
-          className={cn(s.block, effect === glowType && s.blockActive)}
-          aria-pressed={effect === glowType}
-          onClick={() => onThemePresetCommit({ [glowTypeKey]: effect })}
-        >
-          <div className={s.textureBall} style={s.textureStyle()}>
-            <div className={s.glowLayer} style={{ background: `${s.glowStyle(effect)}` }} />
+        {hiddenCount > 0 && (
+          <button
+            type='button'
+            className={s.toggle}
+            aria-expanded={expanded}
+            onClick={() => setExpanded(true)}
+          >
+            {hiddenCount} more
+          </button>
+        )}
+      </div>
+
+      {expanded && (
+        <div className={s.dividerRow}>
+          <div className={s.toggleMask} aria-hidden>
+            show less
           </div>
-        </button>
-      ))}
+          <button
+            type='button'
+            className={s.toggleFloating}
+            aria-expanded={expanded}
+            onClick={() => setExpanded(false)}
+          >
+            <span className={s.toggleText}>show less</span>
+          </button>
+        </div>
+      )}
     </div>
   )
 }

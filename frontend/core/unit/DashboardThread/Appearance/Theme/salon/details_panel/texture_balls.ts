@@ -1,14 +1,15 @@
-import { buildGlowPreviewBackground, resolveGlowEffect } from '~/const/glow_effect'
 import usePageBg from '~/hooks/usePageBg'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
+import { buildTopGlowPreviewBackground, resolveTopGlow } from '~/lib/topGlow'
 
 export { cn, cnMerge } from '~/css'
 
 export default function useSalon() {
-  const { cn, fill, br, primary } = useTwBelt()
+  const { cn, fill, br, primary, bg, hover, sexyBorder } = useTwBelt()
   const { theme } = useTheme()
   const pageBg = usePageBg()
+  const toggleBase = 'h-6 px-4 rounded-full'
 
   return {
     block: cn(
@@ -23,7 +24,8 @@ export default function useSalon() {
       'after:absolute after:-inset-1 after:rounded-full after:border after:border-current after:opacity-25',
       primary('fg'),
     ),
-    row: 'row-center wrap justify-start gap-x-4 gap-y-4 w-full',
+    wrapper: 'w-full',
+    row: 'row align-start wrap justify-start gap-x-4 gap-y-4 w-full',
 
     textureBall: cn('relative size-full rounded-full overflow-hidden', br('divider')),
     glowLayer: 'absolute left-0 top-0 h-3/4 w-full',
@@ -32,10 +34,27 @@ export default function useSalon() {
     }),
 
     glowStyle: (glowType) => {
-      const glow = resolveGlowEffect(glowType, theme)
+      const glow = resolveTopGlow(glowType, theme)
 
-      return buildGlowPreviewBackground(glow)
+      return buildTopGlowPreviewBackground(glow)
     },
     icon: cn('size-4', fill('title')),
+    toggle: cn(
+      toggleBase,
+      'row-center text-xs transition pointer border mt-1',
+      hover('box'),
+      br('divider'),
+    ),
+    dividerRow: cn('relative flex justify-center mt-5', sexyBorder()),
+    toggleMask: cn(
+      'absolute -top-3 h-6 -ml-4 px-[calc(1rem+2px)] rounded-full pointer-events-none row-center text-xs opacity-100',
+      bg('card'),
+    ),
+    toggleFloating: cn(
+      'absolute -top-3 h-6 -ml-4 px-4 rounded-full group row-center text-xs transition pointer border',
+      hover('box'),
+      br('divider'),
+    ),
+    toggleText: cn('text-xs', hover('fg')),
   }
 }

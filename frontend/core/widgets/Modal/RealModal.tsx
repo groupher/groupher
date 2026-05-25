@@ -1,9 +1,9 @@
 import { type FC, useCallback, useEffect, useRef } from 'react'
 
 import { lockPage, toggleGlobalBlur, unlockPage } from '~/dom'
-import useGlowLight from '~/hooks/useGlowLight'
 import useShortcut from '~/hooks/useShortcut'
 import useTheme from '~/hooks/useTheme'
+import useTopGlow from '~/hooks/useTopGlow'
 import CloseCrossSVG from '~/icons/CloseLight'
 import Portal from '~/widgets/Portal'
 import ViewportTracker from '~/widgets/ViewportTracker'
@@ -31,7 +31,7 @@ const RealModal: FC<TProps> = ({
 }) => {
   const s = useSalon({ visible: show, compact })
 
-  const { glowType } = useGlowLight()
+  const { glowType } = useTopGlow()
   const { theme } = useTheme()
 
   const visibleOnPageRef = useRef(false)

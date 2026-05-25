@@ -29,7 +29,7 @@ export default function PageGlow({ details }: TProps) {
 
   return (
     <>
-      <div className={row.settingRow}>
+      <div className={s.settingRow}>
         <div className={row.labelGroup}>
           <div className={row.label}>{t('dsb.appearance.glow.title')}</div>
           <div className={row.hint}>{t('dsb.appearance.glow.desc')}</div>
