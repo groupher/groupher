@@ -1,13 +1,13 @@
 import METRIC from '~/const/metric'
-import useGlowLight from '~/hooks/useGlowLight'
 import useMetric from '~/hooks/useMetric'
+import useTopGlow from '~/hooks/useTopGlow'
 
 import useSalon from './salon/glow_background'
 
 export default function GlowBackground() {
   const s = useSalon()
   const metric = useMetric()
-  const { glowType } = useGlowLight()
+  const { glowType } = useTopGlow()
 
   if (metric === METRIC.LANDING) return null
 

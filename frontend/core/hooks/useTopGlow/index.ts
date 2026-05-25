@@ -2,21 +2,23 @@
 
 import { includes } from 'ramda'
 
-import { GLOW_EFFECT_NAME } from '~/const/glow_effect'
 import METRIC from '~/const/metric'
+import { THEME_PRESET } from '~/const/theme_preset'
+import { TOP_GLOW } from '~/const/top_glow'
 import { GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
 import useMetric from '~/hooks/useMetric'
 import useTheme from '~/hooks/useTheme'
 import useThemePreset from '~/hooks/useThemePreset'
 import useWallpaper from '~/hooks/useWallpaper'
-import type { TGlowEffect } from '~/spec'
+import type { TTopGlow } from '~/spec'
 
 const LANDING_GLOW_OPACITY = 65
 
-export default function useGlowLight(): TGlowEffect {
+export default function useTopGlow(): TTopGlow {
   const { wallpaper } = useWallpaper()
   const { isLightTheme } = useTheme()
-  const { glowType, glowTypeDark, glowFixed, glowOpacity, glowOpacityDark } = useThemePreset()
+  const { themePreset, glowType, glowTypeDark, glowFixed, glowOpacity, glowOpacityDark } =
+    useThemePreset()
   const activeGlowType = isLightTheme ? glowType : glowTypeDark
   const activeGlowOpacity = isLightTheme ? glowOpacity : glowOpacityDark
 
@@ -35,9 +37,17 @@ export default function useGlowLight(): TGlowEffect {
 
   if (metric === METRIC.LANDING && !activeGlowType) {
     return {
-      glowType: GLOW_EFFECT_NAME.ORANGE_PURPLE,
+      glowType: TOP_GLOW.ORANGE_PURPLE,
       glowFixed: false,
       glowOpacity: LANDING_GLOW_OPACITY,
+    }
+  }
+
+  if (themePreset !== THEME_PRESET.CUSTOM) {
+    return {
+      glowType: '',
+      glowFixed,
+      glowOpacity: activeGlowOpacity,
     }
   }
 

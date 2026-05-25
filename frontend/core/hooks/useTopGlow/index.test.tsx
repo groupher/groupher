@@ -5,10 +5,10 @@ import THEME from '~/const/theme'
 import { THEME_PRESET } from '~/const/theme_preset'
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
-import useGlowLight from '~/hooks/useGlowLight'
 import useTheme from '~/hooks/useTheme'
+import useTopGlow from '~/hooks/useTopGlow'
 
-describe('useGlowLight', () => {
+describe('useTopGlow', () => {
   it('disables glow in APPLY_COMMUNITY metric', () => {
     const wrapper = makeStoreWrapper({
       metric: METRIC.APPLY_COMMUNITY,
@@ -23,7 +23,7 @@ describe('useGlowLight', () => {
       },
     })
 
-    const { result } = renderHook(() => useGlowLight(), { wrapper })
+    const { result } = renderHook(() => useTopGlow(), { wrapper })
 
     expect(result.current.glowType).toBeNull()
     expect(result.current.glowFixed).toBe(false)
@@ -36,7 +36,7 @@ describe('useGlowLight', () => {
       dashboard: { themeTokens: { glowType: null, glowTypeDark: null } },
     })
 
-    const { result } = renderHook(() => useGlowLight(), { wrapper })
+    const { result } = renderHook(() => useTopGlow(), { wrapper })
     expect(result.current.glowType).toBeNull()
   })
 
@@ -54,7 +54,7 @@ describe('useGlowLight', () => {
       },
     })
 
-    const { result } = renderHook(() => useGlowLight(), { wrapper })
+    const { result } = renderHook(() => useTopGlow(), { wrapper })
 
     expect(result.current.glowType).toBe('')
   })
@@ -74,7 +74,7 @@ describe('useGlowLight', () => {
       },
     })
 
-    const { result } = renderHook(() => ({ glow: useGlowLight(), theme: useTheme() }), { wrapper })
+    const { result } = renderHook(() => ({ glow: useTopGlow(), theme: useTheme() }), { wrapper })
 
     expect(result.current.glow.glowType).toBe('ORANGE_PURPLE')
     expect(result.current.glow.glowFixed).toBe(true)

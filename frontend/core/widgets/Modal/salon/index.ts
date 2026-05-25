@@ -1,5 +1,5 @@
-import { buildGlowBackground, resolveGlowEffect } from '~/const/glow_effect'
 import useTwBelt from '~/hooks/useTwBelt'
+import { buildTopGlowBackground, resolveTopGlow } from '~/lib/topGlow'
 
 export { cn } from '~/css'
 
@@ -28,12 +28,12 @@ export default function useSalon({ visible, compact = false }) {
     glowLightStyle: (glowType, theme) => {
       if (!glowType) return {}
 
-      const glow = resolveGlowEffect(glowType, theme)
+      const glow = resolveTopGlow(glowType, theme)
 
       if (!glow) return {}
 
       return {
-        background: buildGlowBackground(glow),
+        background: buildTopGlowBackground(glow),
       }
     },
   }
