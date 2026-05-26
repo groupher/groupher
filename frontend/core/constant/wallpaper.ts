@@ -1,6 +1,6 @@
 import type { TWallpaper } from '~/spec'
 
-const DIR = '/wallpaper'
+export { PATTERN_WALLPAPER } from './wallpaper.generated'
 
 export const WALLPAPER_STATE_KEYS = [
   'customWallpaper',
@@ -10,6 +10,8 @@ export const WALLPAPER_STATE_KEYS = [
   'hasPattern',
   'hasBlur',
   'hasShadow',
+  'brightness',
+  'saturation',
   'direction',
   'bgSize',
 ] as const
@@ -22,72 +24,8 @@ export const WALLPAPER_TYPE = {
   NONE: 'none',
 } as const
 
-export const PATTERN_WALLPAPER = {
-  // bubbles: {
-  //   bgImage: `${DIR}/bubbles.png`,
-  // },
-  // limones: {
-  //   bgImage: `${DIR}/limones.jpeg`,
-  // },
-  country1: {
-    bgImage: `${DIR}/country-1.webp`,
-    // bgSize: 'cover',
-  },
-  // curves: {
-  //   bgImage: `${DIR}/curves.png`,
-  //   bgColor: '#050139', // backgroundBg or fallback
-  // },
-  newspaper: {
-    bgImage: `${DIR}/newspaper.jpeg`,
-  },
-  rainbow: {
-    bgImage: `${DIR}/rainbow.jpeg`,
-  },
-  // fishes: {
-  //   bgImage: `${DIR}/fishes.jpeg`,
-  // },
-  // space: {
-  //   bgImage: `${DIR}/space.svg`,
-  //   bgColor: '#002630',
-  // },
-  earth: {
-    bgImage: `${DIR}/earth.jpg`,
-  },
-  // code: {
-  //   bgImage: `${DIR}/code.jpg`,
-  // },
-  plane: {
-    bgImage: `${DIR}/plane.webp`,
-    // bgSize: 'cover',
-  },
-  idian: {
-    bgImage: `${DIR}/idian.webp`,
-  },
-  // elec: {
-  //   bgImage: `${DIR}/elec.jpg`,
-  // },
-  co2: {
-    bgImage: `${DIR}/co2.jpeg`,
-  },
-  cartoon: {
-    bgImage: `${DIR}/cartoon.jpeg`,
-  },
-
-  mac: {
-    bgImage: `${DIR}/mp_teal.jpg`,
-  },
-
-  // ms: {
-  //   bgImage: `${DIR}/ms.svg`,
-  //   bgSize: 'cover',
-  // },
-  // istanbul: {
-  //   bgImage: `${DIR}/istanbul.jpeg`,
-  // },
-}
-
 // demo: `
-//     background: url(${DIR}/patterns/1.png) repeat, linear-gradient(to bottom, #C6D183, #72B58C);
+//     background: url(/wallpaper/pattern/1.png) repeat, linear-gradient(to bottom, #C6D183, #72B58C);
 //   `,
 
 const DEFAULT_GRADIENT_EFFECT = {

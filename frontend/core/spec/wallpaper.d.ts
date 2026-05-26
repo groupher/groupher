@@ -18,11 +18,14 @@ export type TWallpaperGradient = {
 }
 
 export type TWallpaperPic = {
-  bgImage?: string
+  image?: string
+  preview?: string
   bgSize?: string // 'contain' | 'cover' | 'auto'
 
   // Applied by dashboard wallpaper settings before parsing the render background.
   hasBlur?: boolean
+  brightness?: number
+  saturation?: number
 }
 
 export type TWallpaper = TWallpaperGradient | TWallpaperPic
@@ -48,6 +51,8 @@ export type TWallpaperData = {
   hasPattern: boolean
   hasBlur: boolean
   hasShadow: boolean
+  brightness: number
+  saturation: number
   direction: TWallpaperGradientDir
   bgSize: string
 

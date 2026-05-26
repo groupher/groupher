@@ -8,6 +8,27 @@ import type {
   TWallpaperPic,
 } from '~/spec'
 
+const DEFAULT_BRIGHTNESS = 100
+const DEFAULT_SATURATION = 100
+
+const buildFilterEffect = ({
+  hasBlur,
+  brightness = DEFAULT_BRIGHTNESS,
+  saturation = DEFAULT_SATURATION,
+}: {
+  hasBlur?: boolean
+  brightness?: number
+  saturation?: number
+}): string => {
+  const filters = []
+
+  if (hasBlur) filters.push('blur(3px)')
+  if (brightness !== DEFAULT_BRIGHTNESS) filters.push(`brightness(${brightness}%)`)
+  if (saturation !== DEFAULT_SATURATION) filters.push(`saturate(${saturation}%)`)
+
+  return filters.length ? `filter: ${filters.join(' ')}` : ''
+}
+
 /**
  * parse wallpaper both for gradient and picture background
  */
@@ -47,10 +68,10 @@ const _parseGradientBackground = (gradient: TWallpaperGradient): TWallpaperFmt =
   const colors = gradient.colors.join(',')
   let background = `linear-gradient(${formatGradientDirection(direction)}, ${colors})`
 
-  const patternPic = `${DIR}/patterns/1.png`
+  const patternPic = `${DIR}/pattern/1.png`
   background = hasPattern ? `url(${patternPic}) repeat, ${background}` : background
 
-  const effect = hasBlur ? 'filter: blur(3px)' : ''
+  const effect = buildFilterEffect({ hasBlur })
 
   return {
     effect,
@@ -77,11 +98,11 @@ const _parsePicBackground = (pic: TWallpaperPic): TWallpaperFmt => {
     }
   }
 
-  const { bgImage, bgSize = 'contain', hasBlur } = pic
-  const background = `url(${bgImage})`
+  const { image, bgSize = 'contain', hasBlur, brightness, saturation } = pic
+  const background = `url(${image})`
 
-  const blur = hasBlur ? 'filter: blur(3px)' : ''
-  const effect = `background-size: ${bgSize} !important; ${blur}`
+  const filter = buildFilterEffect({ hasBlur, brightness, saturation })
+  const effect = `background-size: ${bgSize}; ${filter}`
 
   return {
     effect,

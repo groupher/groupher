@@ -1,14 +1,8 @@
-import { clone, keys } from 'ramda'
-
-import { GRADIENT_WALLPAPER, PATTERN_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
-import type {
-  TWallpaper,
-  TWallpaperData,
-  TWallpaperGradient,
-  TWallpaperGradientDir,
-  TWallpaperPic,
-} from '~/spec'
+import { WALLPAPER_TYPE } from '~/const/wallpaper'
+import type { TWallpaper, TWallpaperData } from '~/spec'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
+
+import { buildGradientCatalogWallpapers, buildPatternCatalogWallpapers } from './helper'
 
 type TRet = {
   source: string
@@ -23,28 +17,26 @@ export default function useFullWallpaper(): TRet {
   const store = useWallpaperDomain()
 
   const getGradientWallpapers = (): Record<string, TWallpaper> => {
-    const wallpapers = clone(GRADIENT_WALLPAPER)
-    for (const key of keys(GRADIENT_WALLPAPER)) {
-      const wallpaperObj = wallpapers[key] as TWallpaperGradient
-      wallpaperObj.hasPattern = store.hasPattern
-      wallpaperObj.hasBlur = store.hasBlur
-      wallpaperObj.direction = store.direction as TWallpaperGradientDir
-    }
-    return wallpapers
+    return buildGradientCatalogWallpapers()
   }
 
   const getPatternWallpapers = (): Record<string, TWallpaper> => {
-    const wallpapers = clone(PATTERN_WALLPAPER)
-    for (const key of keys(PATTERN_WALLPAPER)) {
-      const wallpaperObj = wallpapers[key] as TWallpaperPic
-      wallpaperObj.hasBlur = store.hasBlur
-    }
-    return wallpapers
+    return buildPatternCatalogWallpapers()
   }
 
   const getWallpaper = (): TWallpaperData => {
-    const { customColorValue, direction, hasPattern, hasBlur, hasShadow, source, type, bgSize } =
-      store
+    const {
+      customColorValue,
+      direction,
+      hasPattern,
+      hasBlur,
+      hasShadow,
+      brightness,
+      saturation,
+      source,
+      type,
+      bgSize,
+    } = store
 
     return {
       source,
@@ -52,6 +44,8 @@ export default function useFullWallpaper(): TRet {
       hasPattern,
       hasBlur,
       hasShadow,
+      brightness,
+      saturation,
       gradientWallpapers: getGradientWallpapers(),
       patternWallpapers: getPatternWallpapers(),
       customColor: customColorValue,
