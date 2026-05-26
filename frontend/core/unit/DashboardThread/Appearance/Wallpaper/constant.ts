@@ -1,20 +1,25 @@
 export const TAB = {
   PICTURES: 'pictures',
   GRADIENT: 'gradient',
+  DIY: 'diy',
   UPLOAD: 'upload',
 } as const
 
 export const TAB_OPTIONS = [
   {
-    title: 'dsb.appearance.wallpaper.editor.tab.pictures',
-    slug: TAB.PICTURES,
+    key: TAB.PICTURES,
+    labelKey: 'dsb.appearance.wallpaper.editor.tab.pictures',
   },
   {
-    title: 'dsb.appearance.wallpaper.editor.tab.gradient',
-    slug: TAB.GRADIENT,
+    key: TAB.GRADIENT,
+    labelKey: 'dsb.appearance.wallpaper.editor.tab.gradient',
   },
   {
-    title: 'dsb.appearance.wallpaper.editor.tab.upload',
-    slug: TAB.UPLOAD,
+    key: TAB.DIY,
+    labelKey: 'dsb.appearance.wallpaper.editor.tab.diy',
+  },
+  {
+    key: TAB.UPLOAD,
+    labelKey: 'dsb.appearance.wallpaper.editor.tab.upload',
   },
 ] as const

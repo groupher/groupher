@@ -325,6 +325,7 @@ export default {
   'dsb.appearance.wallpaper.preview': '预览效果',
   'dsb.appearance.wallpaper.editor.tab.pictures': '图片',
   'dsb.appearance.wallpaper.editor.tab.gradient': '渐变',
+  'dsb.appearance.wallpaper.editor.tab.diy': 'DIY',
   'dsb.appearance.wallpaper.editor.tab.upload': '上传壁纸',
   'dsb.appearance.wallpaper.editor.gradient': '渐变',
   'dsb.appearance.wallpaper.editor.picture': '图片',

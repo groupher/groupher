@@ -7,6 +7,11 @@ import {
   buildActiveGradientWallpapers,
   buildActivePatternWallpapers,
 } from '~/hooks/useFullWallpaper/helper'
+import {
+  buildMeshGradientFallback,
+  parseMeshGradientValue,
+  renderMeshGradientDataUrl,
+} from '~/lib/wallpaperMesh'
 import type { TCustomWallpaper, TWallpaperFmt, TWallpaperGradientDir } from '~/spec'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 import { parseWallpaper } from '~/wallpaper'
@@ -30,6 +35,16 @@ export default function useWallpaper(): TRet {
 
   const customWallpaper = useMemo((): TCustomWallpaper => {
     if (type === WALLPAPER_TYPE.CUSTOM_GRADIENT) {
+      const meshRecipe = parseMeshGradientValue(customColorValue)
+      if (meshRecipe) {
+        return {
+          colors: meshRecipe.colors,
+          hasPattern,
+          hasBlur,
+          direction: `${meshRecipe.flow}deg`,
+        }
+      }
+
       const customColors = customColorValue.split(',').map((c: string) => c.trim())
 
       return {
@@ -82,8 +97,23 @@ export default function useWallpaper(): TRet {
   }, [gradientWallpapers, patternWallpapers])
 
   const { background, effect } = useMemo(() => {
+    const meshRecipe =
+      type === WALLPAPER_TYPE.CUSTOM_GRADIENT && parseMeshGradientValue(customColorValue)
+    if (meshRecipe) {
+      const meshBackground =
+        renderMeshGradientDataUrl(meshRecipe) || buildMeshGradientFallback(meshRecipe)
+      const parsed = parseWallpaper(wallpapers, source, customWallpaper)
+
+      return {
+        ...parsed,
+        background: hasPattern
+          ? `url(/wallpaper/pattern/1.png) repeat, ${meshBackground}`
+          : meshBackground,
+      }
+    }
+
     return parseWallpaper(wallpapers, source, customWallpaper)
-  }, [wallpapers, source, customWallpaper])
+  }, [wallpapers, source, customWallpaper, type, customColorValue, hasPattern])
 
   return {
     source,

@@ -1,10 +1,13 @@
+import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
+
 import useMount from '~/hooks/useMount'
 import useTrans from '~/hooks/useTrans'
-import Tabs from '~/widgets/Switcher/Tabs'
+import { SegmentTabs } from '~/widgets/Switcher'
 import ThemeSwitchPreview from '~/widgets/ThemeSwitch/Preview'
 
 import SectionLabel from '../../SectionLabel'
 import { TAB, TAB_OPTIONS } from './constant'
+import DiyTab from './DiyTab'
 import GradientTab from './GradientTab'
 import PicturesTab from './PicturesTab'
 import Preview from './Preview'
@@ -12,10 +15,22 @@ import useSalon from './salon'
 import UploadTab from './UploadTab'
 import useLogic from './useLogic'
 
+const TAB_TRANSITION = {
+  duration: 0.18,
+  ease: [0.16, 1, 0.3, 1],
+} as const
+
+const TAB_ANIMATION = {
+  initial: { opacity: 0, y: 6 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -4 },
+} as const
+
 export default function Wallpaper() {
   const s = useSalon()
   const { t } = useTrans()
   const { tab, changeTab, initRollback, isTouched } = useLogic()
+  const tabItems = TAB_OPTIONS.map(({ key, labelKey }) => ({ key, label: t(labelKey) }))
 
   useMount(initRollback)
 
@@ -26,25 +41,36 @@ export default function Wallpaper() {
         desc={t('dsb.appearance.wallpaper.desc')}
         addon={<ThemeSwitchPreview />}
         touched={isTouched}
-        width='96%'
       />
 
       <Preview />
 
       <div className={s.editor}>
-        <div className={s.editorTabs}>
-          <Tabs
-            items={TAB_OPTIONS}
-            activeKey={tab}
-            onChange={(key) => changeTab(key as typeof tab)}
-          />
-        </div>
+        <SegmentTabs
+          items={tabItems}
+          activeKey={tab}
+          onChange={(key) => changeTab(key as typeof tab)}
+          left={-1}
+          bottom={5}
+        />
 
-        <div className={s.editorContent}>
-          {tab === TAB.PICTURES && <PicturesTab />}
-          {tab === TAB.GRADIENT && <GradientTab />}
-          {tab === TAB.UPLOAD && <UploadTab />}
-        </div>
+        <LazyMotion features={domAnimation}>
+          <AnimatePresence initial={false} mode='wait'>
+            <m.div
+              key={tab}
+              className={s.editorContent}
+              initial={TAB_ANIMATION.initial}
+              animate={TAB_ANIMATION.animate}
+              exit={TAB_ANIMATION.exit}
+              transition={TAB_TRANSITION}
+            >
+              {tab === TAB.PICTURES && <PicturesTab />}
+              {tab === TAB.GRADIENT && <GradientTab />}
+              {tab === TAB.DIY && <DiyTab />}
+              {tab === TAB.UPLOAD && <UploadTab />}
+            </m.div>
+          </AnimatePresence>
+        </LazyMotion>
       </div>
     </div>
   )

@@ -37,6 +37,8 @@ export const parseWallpaper = (
   name: string,
   customWallpaper?: TCustomWallpaper,
 ): TWallpaperFmt => {
+  if (customWallpaper) return _parseWallpaper(wallpapers[name], customWallpaper)
+
   if (isEmpty(name)) {
     return {
       effect: '',

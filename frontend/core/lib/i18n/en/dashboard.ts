@@ -344,6 +344,7 @@ export default {
   'dsb.appearance.wallpaper.preview': 'Preview',
   'dsb.appearance.wallpaper.editor.tab.pictures': 'Pictures',
   'dsb.appearance.wallpaper.editor.tab.gradient': 'Gradient',
+  'dsb.appearance.wallpaper.editor.tab.diy': 'DIY',
   'dsb.appearance.wallpaper.editor.tab.upload': 'Upload',
   'dsb.appearance.wallpaper.editor.gradient': 'Gradient',
   'dsb.appearance.wallpaper.editor.picture': 'Images',
