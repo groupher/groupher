@@ -2,7 +2,7 @@ import { type FC, memo } from 'react'
 
 import UploadBox from './UploadBox'
 
-const UploadPic: FC = () => {
+const UploadTab: FC = () => {
   return (
     <div className='column-center mt-4 w-full'>
       <UploadBox />
@@ -10,4 +10,4 @@ const UploadPic: FC = () => {
   )
 }
 
-export default memo(UploadPic)
+export default memo(UploadTab)

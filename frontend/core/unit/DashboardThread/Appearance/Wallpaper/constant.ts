@@ -6,18 +6,15 @@ export const TAB = {
 
 export const TAB_OPTIONS = [
   {
-    labelEn: 'Pictures',
-    labelZh: '图片',
+    title: 'dsb.appearance.wallpaper.editor.tab.pictures',
     slug: TAB.PICTURES,
   },
   {
-    labelEn: 'Gradient',
-    labelZh: '渐变',
+    title: 'dsb.appearance.wallpaper.editor.tab.gradient',
     slug: TAB.GRADIENT,
   },
   {
-    labelEn: 'Upload',
-    labelZh: '上传',
+    title: 'dsb.appearance.wallpaper.editor.tab.upload',
     slug: TAB.UPLOAD,
   },
 ] as const

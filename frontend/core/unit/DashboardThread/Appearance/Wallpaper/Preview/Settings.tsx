@@ -3,11 +3,11 @@ import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import useTrans from '~/hooks/useTrans'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 
-import AnglePanel from './BuildIn/AnglePanel'
-import useSalon, { cn } from './salon/effects_panel'
-import useLogic from './useLogic'
+import useSalon, { cn } from '../salon/preview/settings'
+import useLogic from '../useLogic'
+import AnglePanel from './AnglePanel'
 
-export default function EffectsPanel() {
+export default function Settings() {
   const { getWallpaper, togglePattern, toggleBlur, toggleShadow } = useLogic()
   const { type, hasPattern, hasBlur, hasShadow } = getWallpaper()
   const { t } = useTrans()

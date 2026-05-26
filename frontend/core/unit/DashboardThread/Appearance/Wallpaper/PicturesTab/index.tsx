@@ -1,11 +1,12 @@
 import { keys } from 'ramda'
 
 import CheckedSVG from '~/icons/CheckBold'
+import type { TWallpaperPic } from '~/spec'
 
-import useSalon, { cn } from '../salon/build_in/pictrue_group'
+import useSalon, { cn } from '../salon/pictures_tab'
 import useLogic from '../useLogic'
 
-export default function PictureGroup() {
+export default function PicturesTab() {
   const { getWallpaper, changePatternWallpaper } = useLogic()
   const { source, patternWallpapers } = getWallpaper()
 
@@ -16,9 +17,7 @@ export default function PictureGroup() {
   return (
     <div className={s.wrapper}>
       {patternKeys.map((name) => {
-        // @ts-expect-error
-        const { bgImage } = patternWallpapers[name]
-        const bgSrc = bgImage === '/wallpaper/ms.svg' ? '/wallpaper/ms.png' : bgImage
+        const { image, preview } = patternWallpapers[name] as TWallpaperPic
 
         return (
           <button
@@ -32,7 +31,7 @@ export default function PictureGroup() {
                 <CheckedSVG className={s.checkIcon} />
               </div>
             )}
-            <img className={s.image} src={bgSrc} alt='' />
+            <img className={s.image} src={preview ?? image} alt='' />
           </button>
         )
       })}

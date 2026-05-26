@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 import useWallpaper from '~/hooks/useWallpaper'
 
-import useBase from '../../useAppearanceBaseSalon'
+import useBase from '../../../useAppearanceBaseSalon'
 
 export { cnMerge } from '~/css'
 
@@ -12,10 +12,6 @@ export default function useSalon() {
   const base = useBase()
 
   return {
-    previewCard: cn('w-full rounded-lg border py-2 pl-4', br('divider'), bg('cardAlpha')),
-    previewLayout: 'grid grid-cols-2 w-full gap-10',
-    previewPanel: 'column-center min-h-44',
-    customizePanel: 'column-center min-h-44',
     previewImage: cn(
       'w-72 h-44 trans-all-200',
       'column-align-both rounded-md border',
