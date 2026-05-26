@@ -3,7 +3,7 @@ import type { FC, ReactNode } from 'react'
 import useTrans from '~/hooks/useTrans'
 import type { TSpace } from '~/spec'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
-import ThemeSectionSelector from '~/widgets/ThemeSectionSelector'
+import ThemeSwitchPreview from '~/widgets/ThemeSwitch/Preview'
 
 import useSalon, { cnMerge } from './salon'
 
@@ -45,7 +45,7 @@ const SectionLabel: FC<TProps> = ({
           {touched && <span aria-hidden='true' className={s.touchedMark} />}
           {withThemeSelect && (
             <>
-              <div className='grow' /> <ThemeSectionSelector />
+              <div className='grow' /> <ThemeSwitchPreview />
             </>
           )}
         </h3>

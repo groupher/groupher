@@ -6,9 +6,9 @@ import MoonSVG from '~/icons/Moon'
 import SunSVG from '~/icons/Sun'
 import type { TSpace } from '~/spec'
 
-import useSalon, { cn } from './salon'
+import useSalon, { cn } from './salon/preview'
 
-export default function ThemeSectionSelector({ ...spacing }: TSpace) {
+export default function ThemeSwitchPreview({ ...spacing }: TSpace) {
   const s = useSalon(spacing)
   const { theme, preview } = useTheme()
   const { t } = useTrans()

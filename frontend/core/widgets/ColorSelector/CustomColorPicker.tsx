@@ -16,7 +16,7 @@ import {
   SliderTrack,
 } from 'react-aria-components'
 
-import ThemeSectionSelector from '~/widgets/ThemeSectionSelector'
+import ThemeSwitchPreview from '~/widgets/ThemeSwitch/Preview'
 
 import useSalon from './salon/custom_color_picker'
 
@@ -31,7 +31,7 @@ const ColorSelectorPicker: FC<TProps> = ({ color, onChange }) => {
 
   return (
     <div className={s.wrapper}>
-      <ThemeSectionSelector top={4} bottom={3} />
+      <ThemeSwitchPreview top={4} bottom={3} />
 
       <AriaColorPicker
         aria-label='Custom color picker'

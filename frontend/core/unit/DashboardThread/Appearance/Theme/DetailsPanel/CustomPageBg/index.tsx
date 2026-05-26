@@ -4,7 +4,7 @@ import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import Checker from '~/widgets/Checker'
 import RangeInput from '~/widgets/RangeInput'
-import ThemeSectionSelector from '~/widgets/ThemeSectionSelector'
+import ThemeSwitchPreview from '~/widgets/ThemeSwitch/Preview'
 
 import { type TPageBgDraft, useCustomPageBgControls } from './hooks'
 import useSalon from './salon'
@@ -79,7 +79,7 @@ export default function CustomPageBg({
         <>
           {showThemeSelector && (
             <div className={s.selectorRow}>
-              <ThemeSectionSelector />
+              <ThemeSwitchPreview />
             </div>
           )}
 
