@@ -6,9 +6,9 @@ export default function useSalon() {
   const { cn, br, fill, primary } = useTwBelt()
 
   return {
-    wrapper: 'row wrap s-full gap-3 mt-2.5 relative',
+    wrapper: 'grid grid-cols-4 gap-3 s-full mt-2.5 relative',
     block: cn(
-      'w-44 h-28 rounded-md overflow-hidden relative border border-2 border-transparent pointer trans-all-200',
+      'w-full h-24 rounded-md overflow-hidden relative border border-2 border-transparent pointer trans-all-200',
       `hover:${br('digest')}`,
     ),
     blockActive: cn(br('digest')),
