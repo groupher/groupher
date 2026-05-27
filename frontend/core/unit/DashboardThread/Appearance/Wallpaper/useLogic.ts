@@ -1,5 +1,13 @@
 import { clone, equals, pick } from 'ramda'
-import { useMemo, useState } from 'react'
+import {
+  createContext,
+  createElement,
+  type ReactNode,
+  use,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
 
 import {
   WALLPAPER_SAVABLE_STATE_KEYS,
@@ -8,14 +16,17 @@ import {
 } from '~/const/wallpaper'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
+import { parseMeshGradientValue, stringifyMeshGradientRecipe } from '~/lib/wallpaperMesh'
 import { toast } from '~/signal'
 import type { TWallpaperData, TWallpaperGradientDir, TWallpaperType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
+import type { TWallpaperState } from '~/stores/wallpaper/spec'
 
 import { TAB } from './constant'
 import S from './schema'
 import type { TTab } from './spec'
+import useWallpaperPreview from './useWallpaperPreview'
 
 const getInitialTab = (type: TWallpaperType): TTab => {
   switch (type) {
@@ -40,6 +51,7 @@ type TRet = {
   // derived
   getWallpaper: () => TWallpaperData
   isTouched: boolean
+  directionDraft: TWallpaperGradientDir
   // actions
   initRollback: () => void
   rollbackWallpaper: () => void
@@ -56,16 +68,76 @@ type TRet = {
   toggleShadow: (hasShadow: boolean) => void
   changeBrightness: (brightness: number) => void
   changeSaturation: (saturation: number) => void
+  previewWallpaper: (patch: Partial<TWallpaperState>) => void
+  scheduleWallpaperPreview: (patch: Partial<TWallpaperState>) => void
+  flushWallpaperDraft: () => void
+  clearPendingWallpaperDraft: () => void
+  clearWallpaperPreview: () => void
 }
 
-export default function useLogic(): TRet {
+const LogicContext = createContext<TRet | null>(null)
+LogicContext.displayName = 'WallpaperLogic'
+
+const getWallpaperState = (wallpaper$: ReturnType<typeof useWallpaperDomain>): TWallpaperState => ({
+  customWallpaper: wallpaper$.customWallpaper,
+  customColorValue: wallpaper$.customColorValue,
+  source: wallpaper$.source,
+  type: wallpaper$.type,
+  hasPattern: wallpaper$.hasPattern,
+  blurIntensity: wallpaper$.blurIntensity,
+  hasShadow: wallpaper$.hasShadow,
+  brightness: wallpaper$.brightness,
+  saturation: wallpaper$.saturation,
+  direction: wallpaper$.direction,
+  bgSize: wallpaper$.bgSize,
+})
+
+const getDirectionDraft = (state: TWallpaperState): TWallpaperGradientDir => {
+  if (state.type !== WALLPAPER_TYPE.CUSTOM_GRADIENT) return state.direction
+
+  const meshRecipe = parseMeshGradientValue(state.customColorValue)
+
+  return meshRecipe ? `${meshRecipe.flow}deg` : state.direction
+}
+
+function useLogicValue(): TRet {
   const wallpaper$ = useWallpaperDomain()
+  const liveWallpaper$ = wallpaper$.live$ ?? wallpaper$
   const community$ = useCommunity()
   const { getWallpaper } = useFullWallpaper()
 
   const { mutate } = useGraphQLClient()
   const [tab, setTab] = useState<TTab>(() => getInitialTab(wallpaper$.type))
   const [loading, setLoading] = useState(false)
+  const wallpaperState = useMemo(
+    () => getWallpaperState(wallpaper$),
+    [
+      wallpaper$.customWallpaper,
+      wallpaper$.customColorValue,
+      wallpaper$.source,
+      wallpaper$.type,
+      wallpaper$.hasPattern,
+      wallpaper$.blurIntensity,
+      wallpaper$.hasShadow,
+      wallpaper$.brightness,
+      wallpaper$.saturation,
+      wallpaper$.direction,
+      wallpaper$.bgSize,
+    ],
+  )
+  const [directionDraft, setDirectionDraft] = useState<TWallpaperGradientDir>(() =>
+    getDirectionDraft(wallpaperState),
+  )
+  const {
+    previewWallpaper,
+    scheduleWallpaperPreview,
+    flushWallpaperDraft,
+    clearPendingWallpaperDraft,
+    clearWallpaperPreview,
+  } = useWallpaperPreview({
+    state: wallpaperState,
+    onCommit: (patch) => liveWallpaper$.commit(patch),
+  })
 
   const isTouched = useMemo((): boolean => {
     const original = pick(WALLPAPER_SAVABLE_STATE_KEYS, wallpaper$.original)
@@ -74,15 +146,31 @@ export default function useLogic(): TRet {
     return !equals(clone(original), clone(current))
   }, [wallpaper$])
 
-  const initRollback = (): void =>
-    wallpaper$.commit({ original: pick(WALLPAPER_STATE_KEYS, wallpaper$) })
+  useEffect(() => {
+    setDirectionDraft(getDirectionDraft(wallpaperState))
+  }, [wallpaperState])
 
-  const rollbackWallpaper = (): void => wallpaper$.commit({ ...wallpaper$.original })
+  const initRollback = (): void =>
+    liveWallpaper$.commit({ original: pick(WALLPAPER_STATE_KEYS, liveWallpaper$) })
+
+  const commitWallpaperPatch = (patch: Partial<TWallpaperState>): void => {
+    flushWallpaperDraft()
+    clearWallpaperPreview()
+    liveWallpaper$.commit(patch)
+  }
+
+  const rollbackWallpaper = (): void => {
+    clearPendingWallpaperDraft()
+    clearWallpaperPreview()
+    liveWallpaper$.commit({ ...liveWallpaper$.original })
+  }
 
   const onSave = (): void => {
+    flushWallpaperDraft()
+    clearWallpaperPreview()
     setLoading(true)
     const community = community$.slug
-    const params = { community, ...pick(WALLPAPER_SAVABLE_STATE_KEYS, wallpaper$) }
+    const params = { community, ...pick(WALLPAPER_SAVABLE_STATE_KEYS, liveWallpaper$) }
 
     mutate(S.updateDashboardWallpaper, params)
       .then(() => {
@@ -97,23 +185,43 @@ export default function useLogic(): TRet {
   }
 
   const changeTab = (tab: TTab): void => setTab(tab)
-  const changeDirection = (direction: TWallpaperGradientDir): void =>
-    wallpaper$.commit({ direction })
-  const removeWallpaper = (): void => wallpaper$.commit({ source: '', type: WALLPAPER_TYPE.NONE })
+  const changeDirection = (direction: TWallpaperGradientDir): void => {
+    setDirectionDraft(direction)
+
+    if (wallpaperState.type === WALLPAPER_TYPE.CUSTOM_GRADIENT) {
+      const meshRecipe = parseMeshGradientValue(wallpaperState.customColorValue)
+      const flow = Number.parseInt(String(direction), 10)
+
+      if (meshRecipe && Number.isFinite(flow)) {
+        scheduleWallpaperPreview({
+          customColorValue: stringifyMeshGradientRecipe({ ...meshRecipe, flow }),
+        })
+        return
+      }
+    }
+
+    scheduleWallpaperPreview({ direction })
+  }
+  const removeWallpaper = (): void => {
+    clearPendingWallpaperDraft()
+    clearWallpaperPreview()
+    liveWallpaper$.commit({ source: '', type: WALLPAPER_TYPE.NONE })
+  }
   const changeGradientWallpaper = (source: string): void =>
-    wallpaper$.commit({ source, type: WALLPAPER_TYPE.GRADIENT })
+    commitWallpaperPatch({ source, type: WALLPAPER_TYPE.GRADIENT })
   const changePatternWallpaper = (source: string): void =>
-    wallpaper$.commit({ source, type: WALLPAPER_TYPE.PATTERN })
+    commitWallpaperPatch({ source, type: WALLPAPER_TYPE.PATTERN })
 
   const changeWallpaperType = (type: TWallpaperType): void => {
-    wallpaper$.commit({ type })
+    commitWallpaperPatch({ type })
   }
 
-  const togglePattern = (hasPattern: boolean): void => wallpaper$.commit({ hasPattern })
-  const changeBlurIntensity = (blurIntensity: number): void => wallpaper$.commit({ blurIntensity })
-  const toggleShadow = (hasShadow: boolean): void => wallpaper$.commit({ hasShadow })
-  const changeBrightness = (brightness: number): void => wallpaper$.commit({ brightness })
-  const changeSaturation = (saturation: number): void => wallpaper$.commit({ saturation })
+  const togglePattern = (hasPattern: boolean): void => commitWallpaperPatch({ hasPattern })
+  const changeBlurIntensity = (blurIntensity: number): void =>
+    scheduleWallpaperPreview({ blurIntensity })
+  const toggleShadow = (hasShadow: boolean): void => commitWallpaperPatch({ hasShadow })
+  const changeBrightness = (brightness: number): void => scheduleWallpaperPreview({ brightness })
+  const changeSaturation = (saturation: number): void => scheduleWallpaperPreview({ saturation })
 
   return {
     tab,
@@ -121,6 +229,7 @@ export default function useLogic(): TRet {
     // drive
     getWallpaper,
     isTouched,
+    directionDraft,
     //actions
     initRollback,
     rollbackWallpaper,
@@ -136,5 +245,23 @@ export default function useLogic(): TRet {
     toggleShadow,
     changeBrightness,
     changeSaturation,
+    previewWallpaper,
+    scheduleWallpaperPreview,
+    flushWallpaperDraft,
+    clearPendingWallpaperDraft,
+    clearWallpaperPreview,
   }
+}
+
+export function WallpaperLogicProvider({ children }: { children: ReactNode }) {
+  const value = useLogicValue()
+
+  return createElement(LogicContext.Provider, { value }, children)
+}
+
+export default function useLogic(): TRet {
+  const value = use(LogicContext)
+  if (!value) throw new Error('useLogic must be used within WallpaperLogicProvider')
+
+  return value
 }

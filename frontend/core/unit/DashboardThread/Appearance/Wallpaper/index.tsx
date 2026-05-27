@@ -15,7 +15,7 @@ import PicturesTab from './PicturesTab'
 import PreviewZone from './PreviewZone'
 import useSalon from './salon'
 import UploadTab from './UploadTab'
-import useLogic from './useLogic'
+import useLogic, { WallpaperLogicProvider } from './useLogic'
 
 const TAB_TRANSITION = {
   duration: 0.18,
@@ -29,6 +29,14 @@ const TAB_ANIMATION = {
 } as const
 
 export default function Wallpaper() {
+  return (
+    <WallpaperLogicProvider>
+      <WallpaperContent />
+    </WallpaperLogicProvider>
+  )
+}
+
+function WallpaperContent() {
   const s = useSalon()
   const { t } = useTrans()
   const { tab, changeTab, initRollback, isTouched } = useLogic()

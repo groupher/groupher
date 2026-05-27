@@ -13,9 +13,11 @@ const getPreviewBackground = (background: string): string => {
 export default function AuthPreview() {
   const s = useSalon()
   const { background, effect } = useWallpaper()
+  const filter = effect.replace(/^filter:\s*/, '').trim() || 'none'
   const previewStyle = {
-    background: getPreviewBackground(background),
+    background: `var(--preview-wallpaper-bg, ${getPreviewBackground(background) || 'transparent'})`,
     ...fmt2CompStyle(effect),
+    filter: `var(--preview-wallpaper-filter, ${filter})`,
   }
 
   return (

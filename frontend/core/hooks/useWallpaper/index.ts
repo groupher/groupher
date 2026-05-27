@@ -14,111 +14,156 @@ import {
 } from '~/lib/wallpaperMesh'
 import type { TCustomWallpaper, TWallpaperFmt, TWallpaperGradientDir } from '~/spec'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
+import type { TWallpaperState } from '~/stores/wallpaper/spec'
 import { parseWallpaper } from '~/wallpaper'
 
 type TRet = { source: string; hasShadow: boolean } & TWallpaperFmt
+type TResolveOptions = {
+  renderMeshDataUrl?: boolean
+}
 
-export default function useWallpaper(): TRet {
-  const store = useWallpaperDomain()
+export const resolveWallpaper = (
+  state: TWallpaperState,
+  { renderMeshDataUrl = true }: TResolveOptions = {},
+): TRet => {
   const {
     source,
     hasPattern,
-    hasBlur,
+    blurIntensity,
     hasShadow,
     brightness,
     saturation,
     direction,
     customColorValue,
+    customWallpaper: customWallpaperValue,
     type,
     bgSize,
-  } = store
+  } = state
+  let customWallpaper: TCustomWallpaper = null
 
-  const customWallpaper = useMemo((): TCustomWallpaper => {
-    if (type === WALLPAPER_TYPE.CUSTOM_GRADIENT) {
-      const meshRecipe = parseMeshGradientValue(customColorValue)
-      if (meshRecipe) {
-        return {
-          colors: meshRecipe.colors,
-          hasPattern,
-          hasBlur,
-          direction: `${meshRecipe.flow}deg`,
-        }
+  if (
+    (type === WALLPAPER_TYPE.PATTERN || type === WALLPAPER_TYPE.GRADIENT) &&
+    customWallpaperValue &&
+    'image' in customWallpaperValue
+  ) {
+    customWallpaper = {
+      ...customWallpaperValue,
+      blurIntensity,
+      brightness,
+      saturation,
+    }
+  }
+
+  if (type === WALLPAPER_TYPE.CUSTOM_GRADIENT) {
+    const meshRecipe = parseMeshGradientValue(customColorValue)
+    if (meshRecipe) {
+      customWallpaper = {
+        colors: meshRecipe.colors,
+        hasPattern,
+        blurIntensity,
+        brightness,
+        saturation,
+        direction: `${meshRecipe.flow}deg`,
       }
-
+    } else {
       const customColors = customColorValue.split(',').map((c: string) => c.trim())
 
-      return {
+      customWallpaper = {
         colors: customColors,
         hasPattern,
-        hasBlur,
+        blurIntensity,
+        brightness,
+        saturation,
         direction: direction as TWallpaperGradientDir,
       }
     }
+  }
 
-    if (type === WALLPAPER_TYPE.UPLOAD && source) {
-      return {
-        image: source,
-        bgSize,
-        hasBlur,
-        brightness,
-        saturation,
-      }
+  if (type === WALLPAPER_TYPE.UPLOAD && source) {
+    customWallpaper = {
+      image: source,
+      bgSize,
+      blurIntensity,
+      brightness,
+      saturation,
     }
+  }
 
-    return null
-  }, [
-    type,
-    customColorValue,
-    hasPattern,
-    hasBlur,
-    direction,
+  const patternWallpapers = buildActivePatternWallpapers({
     source,
-    bgSize,
+    type,
+    blurIntensity,
     brightness,
     saturation,
-  ])
+  })
 
-  const patternWallpapers = useMemo(() => {
-    return buildActivePatternWallpapers({ source, type, hasBlur, brightness, saturation })
-  }, [source, type, hasBlur, brightness, saturation])
+  const gradientWallpapers = buildActiveGradientWallpapers({
+    source,
+    type,
+    hasPattern,
+    blurIntensity,
+    brightness,
+    saturation,
+    direction: direction as TWallpaperGradientDir,
+  })
 
-  const gradientWallpapers = useMemo(() => {
-    return buildActiveGradientWallpapers({
+  const wallpapers = { ...gradientWallpapers, ...patternWallpapers }
+  const meshRecipe =
+    type === WALLPAPER_TYPE.CUSTOM_GRADIENT && parseMeshGradientValue(customColorValue)
+  const parsed = parseWallpaper(wallpapers, source, customWallpaper)
+
+  if (meshRecipe) {
+    const meshBackground = renderMeshDataUrl
+      ? renderMeshGradientDataUrl(meshRecipe) || buildMeshGradientFallback(meshRecipe)
+      : buildMeshGradientFallback(meshRecipe)
+
+    return {
       source,
-      type,
-      hasPattern,
-      hasBlur,
-      direction: direction as TWallpaperGradientDir,
-    })
-  }, [source, type, hasBlur, hasPattern, direction])
-
-  const wallpapers = useMemo(() => {
-    return { ...gradientWallpapers, ...patternWallpapers }
-  }, [gradientWallpapers, patternWallpapers])
-
-  const { background, effect } = useMemo(() => {
-    const meshRecipe =
-      type === WALLPAPER_TYPE.CUSTOM_GRADIENT && parseMeshGradientValue(customColorValue)
-    if (meshRecipe) {
-      const meshBackground =
-        renderMeshGradientDataUrl(meshRecipe) || buildMeshGradientFallback(meshRecipe)
-      const parsed = parseWallpaper(wallpapers, source, customWallpaper)
-
-      return {
-        ...parsed,
-        background: hasPattern
-          ? `url(/wallpaper/pattern/1.png) repeat, ${meshBackground}`
-          : meshBackground,
-      }
+      hasShadow,
+      ...parsed,
+      background: hasPattern
+        ? `url(/wallpaper/pattern/1.png) repeat, ${meshBackground}`
+        : meshBackground,
     }
-
-    return parseWallpaper(wallpapers, source, customWallpaper)
-  }, [wallpapers, source, customWallpaper, type, customColorValue, hasPattern])
+  }
 
   return {
     source,
     hasShadow,
-    effect,
-    background,
+    ...parsed,
   }
+}
+
+export default function useWallpaper(): TRet {
+  const store = useWallpaperDomain()
+  const state = {
+    source: store.source,
+    hasPattern: store.hasPattern,
+    blurIntensity: store.blurIntensity,
+    hasShadow: store.hasShadow,
+    brightness: store.brightness,
+    saturation: store.saturation,
+    direction: store.direction,
+    customColorValue: store.customColorValue,
+    customWallpaper: store.customWallpaper,
+    type: store.type,
+    bgSize: store.bgSize,
+  }
+
+  return useMemo(
+    () => resolveWallpaper(state),
+    [
+      state.source,
+      state.hasPattern,
+      state.blurIntensity,
+      state.hasShadow,
+      state.brightness,
+      state.saturation,
+      state.direction,
+      state.customColorValue,
+      state.customWallpaper,
+      state.type,
+      state.bgSize,
+    ],
+  )
 }

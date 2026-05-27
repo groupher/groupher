@@ -5,9 +5,11 @@ type TPreviewCssVars = Record<`--${string}`, TPreviewCssVarValue>
 
 type TOptions = {
   cleanup?: boolean
+  selector?: string
 }
 
-const getPreviewTarget = (): HTMLElement | null => document.querySelector('main')
+const getPreviewTarget = (selector: string): HTMLElement | null =>
+  selector === 'html' ? document.documentElement : document.querySelector(selector)
 
 /**
  * rAF-batched preview CSS variable writer for high-frequency dashboard controls.
@@ -34,7 +36,7 @@ const getPreviewTarget = (): HTMLElement | null => document.querySelector('main'
  * saveable values should still be committed to store/draft outside this hook.
  */
 export default function useUpdatePreviewCssVars(options: TOptions = {}) {
-  const { cleanup = true } = options
+  const { cleanup = true, selector = 'main' } = options
   const frameRef = useRef<number | null>(null)
   const pendingVarsRef = useRef<TPreviewCssVars>({})
   const writtenKeysRef = useRef<Set<`--${string}`>>(new Set())
@@ -42,7 +44,7 @@ export default function useUpdatePreviewCssVars(options: TOptions = {}) {
   const flush = useCallback(() => {
     frameRef.current = null
 
-    const target = getPreviewTarget()
+    const target = getPreviewTarget(selector)
     if (!target) return
 
     const pendingVars = pendingVarsRef.current
@@ -61,7 +63,7 @@ export default function useUpdatePreviewCssVars(options: TOptions = {}) {
 
       target.style.setProperty(key, String(value))
     }
-  }, [])
+  }, [selector])
 
   const updatePreviewCssVars = useCallback(
     (vars: TPreviewCssVars) => {
@@ -86,14 +88,14 @@ export default function useUpdatePreviewCssVars(options: TOptions = {}) {
 
       if (!cleanup) return
 
-      const target = getPreviewTarget()
+      const target = getPreviewTarget(selector)
       if (!target) return
 
       for (const key of writtenKeysRef.current) {
         target.style.removeProperty(key)
       }
     }
-  }, [cleanup])
+  }, [cleanup, selector])
 
   return updatePreviewCssVars
 }

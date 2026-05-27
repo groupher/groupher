@@ -1,12 +1,10 @@
 import { keys } from 'ramda'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import CheckedSVG from '~/icons/CheckBold'
-import { renderImageTextureDataUrl } from '~/lib/wallpaperMesh'
 import type { TImageTextureType, TWallpaperTexture } from '~/lib/wallpaperMesh'
 import type { TWallpaperPic } from '~/spec'
-import useWallpaperDomain from '~/stores/wallpaper/hooks'
 import RangeInput from '~/widgets/RangeInput'
 import Tooltip from '~/widgets/Tooltip'
 
@@ -19,11 +17,6 @@ const TEXTURE_OPTIONS: { type: TImageTextureType; label: string }[] = [
   { type: 'screentone', label: 'Screentone' },
   { type: 'dither', label: 'Dither' },
 ]
-
-const WALLPAPER_RENDER_SIZE = {
-  width: 1920,
-  height: 1080,
-}
 
 export default function PicturesTab() {
   const { getWallpaper, changePatternWallpaper } = useLogic()
@@ -59,64 +52,29 @@ export default function PicturesTab() {
 }
 
 export function PictureTextureSettings() {
-  const { getWallpaper } = useLogic()
-  const { source, patternWallpapers } = getWallpaper()
-  const { commit } = useWallpaperDomain()
   const { locale } = useTrans()
   const s = useSalon()
-  const [texture, setTexture] = useState<TWallpaperTexture>({ type: 'grain', strength: 45 })
+  const [draftTexture, setDraftTexture] = useState<TWallpaperTexture>({
+    type: 'grain',
+    strength: 45,
+  })
   const textureLabel = locale === 'zh' || locale === 'zh-hant' ? '质感' : 'Texture'
   const intensityLabel = locale === 'zh' || locale === 'zh-hant' ? '强度' : 'Intensity'
 
-  const patternKeys = keys(patternWallpapers)
-  const activeSource = source || patternKeys[0]
-  const activeWallpaper = patternWallpapers[activeSource] as TWallpaperPic | undefined
-  const activeImage = activeWallpaper?.image || activeWallpaper?.preview
-
-  useEffect(() => {
-    let disposed = false
-
-    if (!activeImage) {
-      commit?.({ customWallpaper: null })
-      return
-    }
-
-    renderImageTextureDataUrl({
-      imageUrl: activeImage,
-      texture: texture.type,
-      intensity: texture.strength,
-      width: WALLPAPER_RENDER_SIZE.width,
-      height: WALLPAPER_RENDER_SIZE.height,
-      surface: 'wallpaper',
-    })
-      .then((wallpaperDataUrl) => {
-        if (disposed || !wallpaperDataUrl) return
-
-        commit?.({
-          customWallpaper: {
-            image: wallpaperDataUrl,
-            bgSize: 'cover',
-          },
-        })
-      })
-      .catch(() => {
-        if (!disposed) {
-          commit?.({
-            customWallpaper: {
-              image: activeImage,
-              bgSize: 'cover',
-            },
-          })
-        }
-      })
-
-    return () => {
-      disposed = true
-    }
-  }, [activeImage, commit, texture])
-
   const updateTexture = (patch: Partial<TWallpaperTexture>): void => {
-    setTexture((current) => ({ ...current, ...patch }))
+    const nextTexture = { ...draftTexture, ...patch }
+
+    setDraftTexture(nextTexture)
+  }
+
+  const updateTextureStrengthDraft = (strength: number): void => {
+    setDraftTexture((current) => ({ ...current, strength }))
+  }
+
+  const commitTextureStrength = (strength: number): void => {
+    const nextTexture = { ...draftTexture, strength }
+
+    setDraftTexture(nextTexture)
   }
 
   return (
@@ -126,7 +84,7 @@ export function PictureTextureSettings() {
           <div className={s.textureLabel}>{textureLabel}</div>
           <div className={s.textureOptions}>
             {TEXTURE_OPTIONS.map(({ type, label }) => {
-              const selected = texture.type === type
+              const selected = draftTexture.type === type
 
               return (
                 <Tooltip key={type} content={label} placement='top'>
@@ -149,14 +107,15 @@ export function PictureTextureSettings() {
 
         <div className={s.textureStrength}>
           <RangeInput
-            value={texture.strength}
+            value={draftTexture.strength}
             min={0}
             max={100}
             step={1}
             labelPlacement='left'
             valueLabel={intensityLabel}
             aria-label={intensityLabel}
-            onChange={(strength) => updateTexture({ strength })}
+            onChange={updateTextureStrengthDraft}
+            onChangeEnd={commitTextureStrength}
           />
         </div>
       </div>

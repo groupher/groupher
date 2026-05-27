@@ -1,15 +1,10 @@
-import { keys } from 'ramda'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
-import { renderGradientTextureDataUrl } from '~/lib/wallpaperMesh'
 import type { TImageTextureType, TWallpaperTexture } from '~/lib/wallpaperMesh'
-import type { TWallpaperGradient } from '~/spec'
-import useWallpaperDomain from '~/stores/wallpaper/hooks'
 import RangeInput from '~/widgets/RangeInput'
 import Tooltip from '~/widgets/Tooltip'
 
 import useSalon, { cn } from '../salon/tuning_zone'
-import useLogic from '../useLogic'
 
 const TEXTURE_OPTIONS: { type: TImageTextureType; label: string }[] = [
   { type: 'grain', label: 'Grain' },
@@ -19,50 +14,26 @@ const TEXTURE_OPTIONS: { type: TImageTextureType; label: string }[] = [
 ]
 
 export default function GradientTextureSettings() {
-  const { getWallpaper } = useLogic()
-  const { source, direction, hasPattern, gradientWallpapers } = getWallpaper()
-  const { commit } = useWallpaperDomain()
   const s = useSalon()
-  const [texture, setTexture] = useState<TWallpaperTexture>({ type: 'grain', strength: 45 })
-
-  const gradientKeys = keys(gradientWallpapers)
-  const activeSource = source || gradientKeys[0]
-  const activeGradient = gradientWallpapers[activeSource] as TWallpaperGradient | undefined
-  const activeColors = activeGradient?.colors || []
-  const activeColorsKey = activeColors.join(',')
-
-  useEffect(() => {
-    let disposed = false
-
-    if (!activeColorsKey) {
-      commit?.({ customWallpaper: null })
-      return
-    }
-
-    renderGradientTextureDataUrl({
-      colors: activeColorsKey.split(','),
-      direction,
-      hasPattern,
-      texture: texture.type,
-      intensity: texture.strength,
-    }).then((wallpaperDataUrl) => {
-      if (disposed || !wallpaperDataUrl) return
-
-      commit?.({
-        customWallpaper: {
-          image: wallpaperDataUrl,
-          bgSize: 'cover',
-        },
-      })
-    })
-
-    return () => {
-      disposed = true
-    }
-  }, [activeColorsKey, commit, direction, hasPattern, texture])
+  const [draftTexture, setDraftTexture] = useState<TWallpaperTexture>({
+    type: 'grain',
+    strength: 45,
+  })
 
   const updateTexture = (patch: Partial<TWallpaperTexture>): void => {
-    setTexture((current) => ({ ...current, ...patch }))
+    const nextTexture = { ...draftTexture, ...patch }
+
+    setDraftTexture(nextTexture)
+  }
+
+  const updateTextureStrengthDraft = (strength: number): void => {
+    setDraftTexture((current) => ({ ...current, strength }))
+  }
+
+  const commitTextureStrength = (strength: number): void => {
+    const nextTexture = { ...draftTexture, strength }
+
+    setDraftTexture(nextTexture)
   }
 
   return (
@@ -72,7 +43,7 @@ export default function GradientTextureSettings() {
           <div className={s.textureLabel}>Texture</div>
           <div className={s.textureOptions}>
             {TEXTURE_OPTIONS.map(({ type, label }) => {
-              const selected = texture.type === type
+              const selected = draftTexture.type === type
 
               return (
                 <Tooltip key={type} content={label} placement='top'>
@@ -95,14 +66,15 @@ export default function GradientTextureSettings() {
 
         <div className={s.textureStrength}>
           <RangeInput
-            value={texture.strength}
+            value={draftTexture.strength}
             min={0}
             max={100}
             step={1}
             labelPlacement='left'
             valueLabel='Intensity'
             aria-label='Intensity'
-            onChange={(strength) => updateTexture({ strength })}
+            onChange={updateTextureStrengthDraft}
+            onChangeEnd={commitTextureStrength}
           />
         </div>
       </div>

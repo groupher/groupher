@@ -19,11 +19,13 @@ export default function GlobalPreview() {
   const gaussBlur = useGaussBlur()
   const { background, effect } = useWallpaper()
   const pageBg = useCSSVar(PAGE_BG_CSS_KEY, [gaussBlur], { selector: 'main' })
+  const filter = effect.replace(/^filter:\s*/, '').trim() || 'none'
 
   const bgColor = `${blurRGB(pageBg, gaussBlur)}`
   const previewStyle = {
-    background: getPreviewBackground(background),
+    background: `var(--preview-wallpaper-bg, ${getPreviewBackground(background) || 'transparent'})`,
     ...fmt2CompStyle(effect),
+    filter: `var(--preview-wallpaper-filter, ${filter})`,
   }
 
   return (

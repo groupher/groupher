@@ -59,18 +59,17 @@ const pointFromAngle = (angle: number): { left: number; top: number } => {
 }
 
 export default function AnglePanel() {
-  const { getWallpaper, changeDirection } = useLogic()
-  const { direction } = getWallpaper()
+  const { directionDraft, changeDirection, flushWallpaperDraft } = useLogic()
   const panelRef = useRef<HTMLDivElement | null>(null)
-  const [angle, setAngle] = useState(() => parseAngle(direction))
+  const [angle, setAngle] = useState(() => parseAngle(directionDraft))
   const [dragging, setDragging] = useState(false)
   const s = useSalon()
 
   const pointStyle = pointFromAngle(angle)
 
   useEffect(() => {
-    setAngle(parseAngle(direction))
-  }, [direction])
+    setAngle(parseAngle(directionDraft))
+  }, [directionDraft])
 
   const commitAngle = useCallback(
     (angle: number) => {
@@ -98,6 +97,7 @@ export default function AnglePanel() {
 
     event.preventDefault()
     commitAngle(normalizeAngle(angle + (isIncrease ? 1 : -1)))
+    flushWallpaperDraft()
   }
 
   const handleMouseDown = (event: MouseEvent<HTMLDivElement>): void => {
@@ -141,6 +141,7 @@ export default function AnglePanel() {
     const handleMouseUp = (event: globalThis.MouseEvent): void => {
       updateAngle(event.clientX, event.clientY)
       setDragging(false)
+      flushWallpaperDraft()
     }
 
     window.addEventListener('mousemove', handleMouseMove)
@@ -150,7 +151,7 @@ export default function AnglePanel() {
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [dragging, updateAngle])
+  }, [dragging, flushWallpaperDraft, updateAngle])
 
   return (
     <div

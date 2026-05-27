@@ -54,7 +54,7 @@ const store = proxy<TStore>({
       const wallpaperObj = wallpapers[key] as TWallpaperGradient
 
       wallpaperObj.hasPattern = store.hasPattern
-      wallpaperObj.hasBlur = store.hasBlur
+      wallpaperObj.blurIntensity = store.hasBlur ? 60 : 0
       wallpaperObj.direction = store.direction as TWallpaperGradientDir
     }, paperKeys)
 
