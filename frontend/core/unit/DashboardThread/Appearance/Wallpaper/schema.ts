@@ -11,10 +11,12 @@ const updateDashboardWallpaper = gql`
     $customColorValue: String
     $bgSize: String
     $hasPattern: Boolean
-    $hasBlur: Boolean
+    $blurIntensity: Int
     $hasShadow: Boolean
     $brightness: Int
     $saturation: Int
+    $textureType: String
+    $textureStrength: Int
   ) {
     updateDashboardWallpaper(
       community: $community
@@ -24,10 +26,12 @@ const updateDashboardWallpaper = gql`
       customColorValue: $customColorValue
       bgSize: $bgSize
       hasPattern: $hasPattern
-      hasBlur: $hasBlur
+      blurIntensity: $blurIntensity
       hasShadow: $hasShadow
       brightness: $brightness
       saturation: $saturation
+      textureType: $textureType
+      textureStrength: $textureStrength
     ) {
       wallpaper {
         ${F.wallpaper}

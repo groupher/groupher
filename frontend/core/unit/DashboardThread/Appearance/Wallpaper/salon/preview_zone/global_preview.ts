@@ -1,5 +1,5 @@
 import useTwBelt from '~/hooks/useTwBelt'
-import useWallpaper from '~/hooks/useWallpaper'
+import useWallpaperDomain from '~/stores/wallpaper/hooks'
 
 import useBase from '../../../useAppearanceBaseSalon'
 
@@ -8,7 +8,7 @@ export { cnMerge } from '~/css'
 export default function useSalon() {
   const { cn, br, bg, shadow } = useTwBelt()
 
-  const { hasShadow } = useWallpaper()
+  const { hasShadow } = useWallpaperDomain()
   const base = useBase()
 
   return {

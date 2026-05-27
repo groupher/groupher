@@ -108,8 +108,12 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       $customColorValue: String
       $bgSize: String
       $hasPattern: Boolean
-      $hasBlur: Boolean
+      $blurIntensity: Int
       $hasShadow: Boolean
+      $brightness: Int
+      $saturation: Int
+      $textureType: String
+      $textureStrength: Int
       ) {
       updateDashboardWallpaper(
         community: $community
@@ -119,30 +123,59 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         customColorValue: $customColorValue
         bgSize: $bgSize
         hasPattern: $hasPattern
-        hasBlur: $hasBlur
+        blurIntensity: $blurIntensity
         hasShadow: $hasShadow
+        brightness: $brightness
+        saturation: $saturation
+        textureType: $textureType
+        textureStrength: $textureStrength
       ) {
         wallpaper {
           type
           source
+          blurIntensity
+          brightness
+          saturation
+          textureType
+          textureStrength
         }
       }
     }
     """
     test "update community dashboard wallpaper", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
-      variables = %{community: community.slug, source: "orange", type: "CUSTOM"}
+
+      variables = %{
+        community: community.slug,
+        source: "orange",
+        type: "CUSTOM",
+        blurIntensity: 35,
+        brightness: 85,
+        saturation: 120,
+        textureType: "dither",
+        textureStrength: 55
+      }
 
       updated =
         rule_conn
         |> gq_mutation(@update_wallpaper_query, variables)
 
       assert get_in(updated, ["wallpaper", "source"]) == "orange"
+      assert get_in(updated, ["wallpaper", "blurIntensity"]) == 35
+      assert get_in(updated, ["wallpaper", "brightness"]) == 85
+      assert get_in(updated, ["wallpaper", "saturation"]) == 120
+      assert get_in(updated, ["wallpaper", "textureType"]) == "dither"
+      assert get_in(updated, ["wallpaper", "textureStrength"]) == 55
 
       {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
 
       assert found.dashboard.wallpaper.source == "orange"
       assert found.dashboard.wallpaper.type == "CUSTOM"
+      assert found.dashboard.wallpaper.blur_intensity == 35
+      assert found.dashboard.wallpaper.brightness == 85
+      assert found.dashboard.wallpaper.saturation == 120
+      assert found.dashboard.wallpaper.texture_type == "dither"
+      assert found.dashboard.wallpaper.texture_strength == 55
     end
 
     @update_enable_query """

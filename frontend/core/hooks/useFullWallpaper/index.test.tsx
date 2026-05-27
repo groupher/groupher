@@ -12,9 +12,11 @@ describe('useFullWallpaper', () => {
         source: GRADIENT_WALLPAPER_NAME.PINK,
         type: WALLPAPER_TYPE.GRADIENT,
         hasPattern: true,
-        hasBlur: false,
+        blurIntensity: 0,
         brightness: 100,
         saturation: 100,
+        textureType: 'grain',
+        textureStrength: 0,
         direction: '180deg',
       },
     })
@@ -26,6 +28,8 @@ describe('useFullWallpaper', () => {
     expect(data.type).toBe(WALLPAPER_TYPE.GRADIENT)
     expect(data.brightness).toBe(100)
     expect(data.saturation).toBe(100)
+    expect(data.textureType).toBe('grain')
+    expect(data.textureStrength).toBe(0)
 
     const pink = data.gradientWallpapers.pink
     expect('colors' in pink).toBe(true)
@@ -44,7 +48,7 @@ describe('useFullWallpaper', () => {
         source: GRADIENT_WALLPAPER_NAME.PURPLE,
         type: WALLPAPER_TYPE.GRADIENT,
         hasPattern: true,
-        hasBlur: true,
+        blurIntensity: 50,
         direction: '90deg',
       },
     })
@@ -58,20 +62,20 @@ describe('useFullWallpaper', () => {
     ] as TWallpaperGradient
 
     expect(active.hasPattern).toBe(false)
-    expect(active.hasBlur).toBe(false)
+    expect(active.blurIntensity).toBe(0)
     expect(active.direction).toBe('180deg')
 
     expect(defaultPattern.hasPattern).toBe(false)
-    expect(defaultPattern.hasBlur).toBe(false)
+    expect(defaultPattern.blurIntensity).toBe(0)
     expect(defaultPattern.direction).toBe('180deg')
   })
 
   it('keeps pattern catalog previews static', () => {
     const wrapper = makeStoreWrapper({
       wallpaper: {
-        source: 'country-1',
+        source: 'backiee-1',
         type: WALLPAPER_TYPE.PATTERN,
-        hasBlur: true,
+        blurIntensity: 50,
         brightness: 75,
         saturation: 130,
       },
@@ -80,14 +84,14 @@ describe('useFullWallpaper', () => {
     const { result } = renderHook(() => useFullWallpaper(), { wrapper })
     const data = result.current.getWallpaper()
 
-    const active = data.patternWallpapers['country-1'] as TWallpaperPic
-    const inactive = data.patternWallpapers.newspaper as TWallpaperPic
+    const active = data.patternWallpapers['backiee-1'] as TWallpaperPic
+    const inactive = data.patternWallpapers['backiee-2'] as TWallpaperPic
 
-    expect(active.hasBlur).toBe(false)
+    expect(active.blurIntensity).toBe(0)
     expect(active.brightness).toBeUndefined()
     expect(active.saturation).toBeUndefined()
-    expect(active.image).toBe('/wallpaper/picture/country-1.webp')
-    expect(active.preview).toBe('/wallpaper/picture-preview/country-1.webp')
-    expect(inactive.hasBlur).toBe(false)
+    expect(active.image).toBe('/wallpaper/picture/backiee-1.webp')
+    expect(active.preview).toBe('/wallpaper/picture-preview/backiee-1.webp')
+    expect(inactive.blurIntensity).toBe(0)
   })
 })

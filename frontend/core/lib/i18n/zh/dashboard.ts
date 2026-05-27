@@ -333,6 +333,8 @@ export default {
   'dsb.appearance.wallpaper.editor.pattern': '花纹',
   'dsb.appearance.wallpaper.editor.blur': '模糊效果',
   'dsb.appearance.wallpaper.editor.shadow': '阴影效果',
+  'dsb.appearance.wallpaper.editor.brightness': '明暗度',
+  'dsb.appearance.wallpaper.editor.saturation': '饱和度',
   'dsb.appearance.wallpaper.editor.gradient_direction': '方向',
   'dsb.appearance.wallpaper.editor.custom': '自定义',
   'dsb.appearance.wallpaper.editor.custom_placeholder':

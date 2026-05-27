@@ -11,11 +11,11 @@ import {
   stringifyMeshGradientRecipe,
 } from '~/lib/wallpaperMesh'
 import type { TImageTextureType, TMeshGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
-import useWallpaperDomain from '~/stores/wallpaper/hooks'
 import RangeInput from '~/widgets/RangeInput'
 import Tooltip from '~/widgets/Tooltip'
 
 import useSalon, { cn } from './salon/diy_tab'
+import useLogic from './useLogic'
 
 type TPreset = {
   key: string
@@ -261,16 +261,18 @@ const getInitialRecipe = (customColorValue?: string | null): TMeshGradientRecipe
 
 export default function DiyTab() {
   const s = useSalon()
-  const { customColorValue, commit } = useWallpaperDomain()
+  const { getWallpaper, scheduleWallpaperPreview, flushWallpaperDraft } = useLogic()
+  const { customColor } = getWallpaper()
 
-  const recipe = useMemo(() => getInitialRecipe(customColorValue), [customColorValue])
+  const recipe = useMemo(() => getInitialRecipe(customColor), [customColor])
 
   const commitRecipe = (recipe: TMeshGradientRecipe): void => {
-    commit?.({
+    scheduleWallpaperPreview({
       source: '',
       type: WALLPAPER_TYPE.CUSTOM_GRADIENT,
       customColorValue: stringifyMeshGradientRecipe(recipe),
     })
+    flushWallpaperDraft()
   }
 
   return (
@@ -307,9 +309,10 @@ export default function DiyTab() {
 
 export function DiySettings() {
   const s = useSalon()
-  const { customColorValue, commit } = useWallpaperDomain()
+  const { getWallpaper, scheduleWallpaperPreview, flushWallpaperDraft } = useLogic()
+  const { customColor } = getWallpaper()
   const { locale } = useTrans()
-  const sourceRecipe = useMemo(() => getInitialRecipe(customColorValue), [customColorValue])
+  const sourceRecipe = useMemo(() => getInitialRecipe(customColor), [customColor])
   const [draftRecipe, setDraftRecipe] = useState(sourceRecipe)
   const textureLabel = locale === 'zh' || locale === 'zh-hant' ? '质感' : 'Texture'
   const intensityLabel = locale === 'zh' || locale === 'zh-hant' ? '强度' : 'Intensity'
@@ -318,22 +321,31 @@ export function DiySettings() {
     setDraftRecipe(sourceRecipe)
   }, [sourceRecipe])
 
-  const commitRecipe = (nextRecipe: TMeshGradientRecipe): void => {
-    commit?.({
+  const commitRecipe = (nextRecipe: TMeshGradientRecipe, flush = false): void => {
+    scheduleWallpaperPreview({
       source: '',
       type: WALLPAPER_TYPE.CUSTOM_GRADIENT,
       customColorValue: stringifyMeshGradientRecipe(nextRecipe),
     })
+
+    if (flush) flushWallpaperDraft()
   }
 
   const updateTexture = (patch: Partial<TWallpaperTexture>): void => {
     const nextRecipe = {
       ...draftRecipe,
-      texture: { ...draftRecipe.texture, ...patch },
+      texture: {
+        ...draftRecipe.texture,
+        ...patch,
+        strength:
+          patch.type && draftRecipe.texture.strength === 0
+            ? 45
+            : (patch.strength ?? draftRecipe.texture.strength),
+      },
     }
 
     setDraftRecipe(nextRecipe)
-    commitRecipe(nextRecipe)
+    commitRecipe(nextRecipe, true)
   }
 
   const updateColor = (index: number, color: string): void => {
@@ -347,21 +359,27 @@ export function DiySettings() {
   }
 
   const updateSoftnessDraft = (softness: number): void => {
-    setDraftRecipe((current) => ({ ...current, softness }))
-  }
-
-  const commitSoftness = (softness: number): void => {
     const nextRecipe = { ...draftRecipe, softness }
 
     setDraftRecipe(nextRecipe)
     commitRecipe(nextRecipe)
   }
 
+  const commitSoftness = (softness: number): void => {
+    const nextRecipe = { ...draftRecipe, softness }
+
+    setDraftRecipe(nextRecipe)
+    commitRecipe(nextRecipe, true)
+  }
+
   const updateTextureStrengthDraft = (strength: number): void => {
-    setDraftRecipe((current) => ({
-      ...current,
-      texture: { ...current.texture, strength },
-    }))
+    const nextRecipe = {
+      ...draftRecipe,
+      texture: { ...draftRecipe.texture, strength },
+    }
+
+    setDraftRecipe(nextRecipe)
+    commitRecipe(nextRecipe)
   }
 
   const commitTextureStrength = (strength: number): void => {
@@ -371,7 +389,7 @@ export function DiySettings() {
     }
 
     setDraftRecipe(nextRecipe)
-    commitRecipe(nextRecipe)
+    commitRecipe(nextRecipe, true)
   }
 
   return (

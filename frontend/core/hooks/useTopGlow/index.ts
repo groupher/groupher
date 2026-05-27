@@ -9,13 +9,13 @@ import { GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
 import useMetric from '~/hooks/useMetric'
 import useTheme from '~/hooks/useTheme'
 import useThemePreset from '~/hooks/useThemePreset'
-import useWallpaper from '~/hooks/useWallpaper'
 import type { TTopGlow } from '~/spec'
+import useWallpaperDomain from '~/stores/wallpaper/hooks'
 
 const LANDING_GLOW_OPACITY = 65
 
 export default function useTopGlow(): TTopGlow {
-  const { source } = useWallpaper()
+  const { source } = useWallpaperDomain()
   const { isLightTheme } = useTheme()
   const { themePreset, glowType, glowTypeDark, glowFixed, glowOpacity, glowOpacityDark } =
     useThemePreset()

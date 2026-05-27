@@ -188,7 +188,7 @@ export const fmtOpacity = (str): number => {
 
 /**
  * covert css style string into react component style tag way
- * e.g: filter: blur(3px) -> {filter: blur(3px)}
+ * e.g: background-size: cover -> {backgroundSize: cover}
  */
 export const fmt2CompStyle = (styleString: string): { [key: string]: string } => {
   if (styleString === '') {
@@ -201,7 +201,11 @@ export const fmt2CompStyle = (styleString: string): { [key: string]: string } =>
   for (const style of styles) {
     if (style) {
       const [property, value] = style.split(':').map((item) => item.trim())
-      result[property] = value
+      const propertyKey = property.startsWith('--')
+        ? property
+        : property.replace(/-([a-z])/g, (_, char: string) => char.toUpperCase())
+
+      result[propertyKey] = value
     }
   }
 

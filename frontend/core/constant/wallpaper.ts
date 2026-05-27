@@ -12,6 +12,8 @@ export const WALLPAPER_STATE_KEYS = [
   'hasShadow',
   'brightness',
   'saturation',
+  'textureType',
+  'textureStrength',
   'direction',
   'bgSize',
 ] as const
@@ -25,6 +27,8 @@ export const WALLPAPER_SAVABLE_STATE_KEYS = [
   'hasShadow',
   'brightness',
   'saturation',
+  'textureType',
+  'textureStrength',
   'direction',
   'bgSize',
 ] as const

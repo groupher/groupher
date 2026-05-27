@@ -1,36 +1,22 @@
 import { PAGE_BG_CSS_KEY } from '~/const/colors'
-import { blurRGB, fmt2CompStyle } from '~/fmt'
+import { blurRGB } from '~/fmt'
 import useCSSVar from '~/hooks/useCssVar'
 import useGaussBlur from '~/hooks/useGaussBlur'
-import useWallpaper from '~/hooks/useWallpaper'
+import WallpaperRenderer from '~/widgets/WallpaperRenderer'
 
 import useSalon, { cnMerge } from '../salon/preview_zone/global_preview'
-
-const getPreviewBackground = (background: string): string => {
-  return background.replace(
-    'url(/wallpaper/pattern/1.png) repeat,',
-    'url(/wallpaper/pattern/1.png) left top / 260px auto repeat,',
-  )
-}
 
 export default function GlobalPreview() {
   const s = useSalon()
 
   const gaussBlur = useGaussBlur()
-  const { background, effect } = useWallpaper()
   const pageBg = useCSSVar(PAGE_BG_CSS_KEY, [gaussBlur], { selector: 'main' })
-  const filter = effect.replace(/^filter:\s*/, '').trim() || 'none'
 
   const bgColor = `${blurRGB(pageBg, gaussBlur)}`
-  const previewStyle = {
-    background: `var(--preview-wallpaper-bg, ${getPreviewBackground(background) || 'transparent'})`,
-    ...fmt2CompStyle(effect),
-    filter: `var(--preview-wallpaper-filter, ${filter})`,
-  }
 
   return (
     <div className={s.realPreview}>
-      <div className={s.previewImage} style={previewStyle} />
+      <WallpaperRenderer className={s.previewImage} patternSize='260px auto' />
       <div className={s.content} style={{ background: bgColor }}>
         <div className={s.contentTop}>
           <div className={cnMerge(s.bar, s.titleBar)} />

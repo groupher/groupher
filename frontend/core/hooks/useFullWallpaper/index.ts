@@ -29,23 +29,30 @@ export default function useFullWallpaper(): TRet {
       customColorValue,
       direction,
       hasPattern,
-      hasBlur,
+      blurIntensity,
       hasShadow,
       brightness,
       saturation,
+      textureType,
+      textureStrength,
       source,
       type,
       bgSize,
     } = store
+
+    const hasBlur = blurIntensity > 0
 
     return {
       source,
       type,
       hasPattern,
       hasBlur,
+      blurIntensity,
       hasShadow,
       brightness,
       saturation,
+      textureType,
+      textureStrength,
       gradientWallpapers: getGradientWallpapers(),
       patternWallpapers: getPatternWallpapers(),
       customColor: customColorValue,

@@ -352,6 +352,8 @@ export default {
   'dsb.appearance.wallpaper.editor.pattern': 'Pattern',
   'dsb.appearance.wallpaper.editor.blur': 'Blur',
   'dsb.appearance.wallpaper.editor.shadow': 'Shadow',
+  'dsb.appearance.wallpaper.editor.brightness': 'Brightness',
+  'dsb.appearance.wallpaper.editor.saturation': 'Saturation',
   'dsb.appearance.wallpaper.editor.gradient_direction': 'Direction',
   'dsb.appearance.wallpaper.editor.custom': 'Custom',
   'dsb.appearance.wallpaper.editor.custom_placeholder':

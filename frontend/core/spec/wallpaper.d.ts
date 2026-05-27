@@ -1,4 +1,5 @@
 import type { WALLPAPER_TYPE } from '~/const/wallpaper'
+import type { TImageTextureType } from '~/lib/wallpaperMesh'
 import type { TConstValues } from '~/spec'
 
 export type TWallpaperFmt = {
@@ -14,7 +15,9 @@ export type TWallpaperGradient = {
   direction?: TWallpaperGradientDir
 
   // Applied by dashboard wallpaper settings before parsing the render background.
-  hasBlur?: boolean
+  blurIntensity?: number
+  brightness?: number
+  saturation?: number
 }
 
 export type TWallpaperPic = {
@@ -23,7 +26,7 @@ export type TWallpaperPic = {
   bgSize?: string // 'contain' | 'cover' | 'auto'
 
   // Applied by dashboard wallpaper settings before parsing the render background.
-  hasBlur?: boolean
+  blurIntensity?: number
   brightness?: number
   saturation?: number
 }
@@ -50,9 +53,12 @@ export type TWallpaperData = {
   type: TWallpaperType
   hasPattern: boolean
   hasBlur: boolean
+  blurIntensity: number
   hasShadow: boolean
   brightness: number
   saturation: number
+  textureType: TImageTextureType
+  textureStrength: number
   direction: TWallpaperGradientDir
   bgSize: string
 

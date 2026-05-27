@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import useDebouncedPreviewCommit from '~/hooks/useDebouncedPreviewCommit'
 import useUpdatePreviewCssVars from '~/hooks/useUpdatePreviewCssVars'
 import { resolveWallpaper } from '~/hooks/useWallpaper'
+import { emitWallpaperPreview } from '~/lib/wallpaperRenderer/preview'
 import type { TWallpaperState } from '~/stores/wallpaper/spec'
 
 type TWallpaperPreviewVars = Record<`--${string}`, string | null>
@@ -60,6 +61,7 @@ export default function useWallpaperPreview({ state, onCommit }: TOptions) {
       }
 
       updatePreviewCssVars(buildPreviewCssVars(draftRef.current))
+      emitWallpaperPreview(draftRef.current)
     },
     [updatePreviewCssVars],
   )
@@ -74,6 +76,7 @@ export default function useWallpaperPreview({ state, onCommit }: TOptions) {
 
   const clearWallpaperPreview = useCallback(() => {
     updatePreviewCssVars(PREVIEW_CSS_VAR_CLEANUP)
+    emitWallpaperPreview(null)
   }, [updatePreviewCssVars])
 
   return {

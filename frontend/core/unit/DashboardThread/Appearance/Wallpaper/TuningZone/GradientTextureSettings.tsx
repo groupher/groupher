@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import type { TImageTextureType, TWallpaperTexture } from '~/lib/wallpaperMesh'
 import RangeInput from '~/widgets/RangeInput'
 import Tooltip from '~/widgets/Tooltip'
 
 import useSalon, { cn } from '../salon/tuning_zone'
+import useLogic from '../useLogic'
 
 const TEXTURE_OPTIONS: { type: TImageTextureType; label: string }[] = [
   { type: 'grain', label: 'Grain' },
@@ -15,25 +16,43 @@ const TEXTURE_OPTIONS: { type: TImageTextureType; label: string }[] = [
 
 export default function GradientTextureSettings() {
   const s = useSalon()
+  const { getWallpaper, changeTexture, flushWallpaperDraft } = useLogic()
+  const { textureType, textureStrength } = getWallpaper()
   const [draftTexture, setDraftTexture] = useState<TWallpaperTexture>({
-    type: 'grain',
-    strength: 45,
+    type: textureType,
+    strength: textureStrength,
   })
 
+  useEffect(() => {
+    setDraftTexture({ type: textureType, strength: textureStrength })
+  }, [textureType, textureStrength])
+
   const updateTexture = (patch: Partial<TWallpaperTexture>): void => {
-    const nextTexture = { ...draftTexture, ...patch }
+    const nextTexture = {
+      ...draftTexture,
+      ...patch,
+      strength:
+        patch.type && draftTexture.strength === 0 ? 45 : (patch.strength ?? draftTexture.strength),
+    }
 
     setDraftTexture(nextTexture)
+    changeTexture(nextTexture)
+    flushWallpaperDraft()
   }
 
   const updateTextureStrengthDraft = (strength: number): void => {
-    setDraftTexture((current) => ({ ...current, strength }))
+    const nextTexture = { ...draftTexture, strength }
+
+    setDraftTexture(nextTexture)
+    changeTexture(nextTexture)
   }
 
   const commitTextureStrength = (strength: number): void => {
     const nextTexture = { ...draftTexture, strength }
 
     setDraftTexture(nextTexture)
+    changeTexture(nextTexture)
+    flushWallpaperDraft()
   }
 
   return (

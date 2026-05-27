@@ -1,5 +1,5 @@
 import { keys } from 'ramda'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import CheckedSVG from '~/icons/CheckBold'
@@ -54,27 +54,45 @@ export default function PicturesTab() {
 export function PictureTextureSettings() {
   const { locale } = useTrans()
   const s = useSalon()
+  const { getWallpaper, changeTexture, flushWallpaperDraft } = useLogic()
+  const { textureType, textureStrength } = getWallpaper()
   const [draftTexture, setDraftTexture] = useState<TWallpaperTexture>({
-    type: 'grain',
-    strength: 45,
+    type: textureType,
+    strength: textureStrength,
   })
   const textureLabel = locale === 'zh' || locale === 'zh-hant' ? '质感' : 'Texture'
   const intensityLabel = locale === 'zh' || locale === 'zh-hant' ? '强度' : 'Intensity'
 
+  useEffect(() => {
+    setDraftTexture({ type: textureType, strength: textureStrength })
+  }, [textureType, textureStrength])
+
   const updateTexture = (patch: Partial<TWallpaperTexture>): void => {
-    const nextTexture = { ...draftTexture, ...patch }
+    const nextTexture = {
+      ...draftTexture,
+      ...patch,
+      strength:
+        patch.type && draftTexture.strength === 0 ? 45 : (patch.strength ?? draftTexture.strength),
+    }
 
     setDraftTexture(nextTexture)
+    changeTexture(nextTexture)
+    flushWallpaperDraft()
   }
 
   const updateTextureStrengthDraft = (strength: number): void => {
-    setDraftTexture((current) => ({ ...current, strength }))
+    const nextTexture = { ...draftTexture, strength }
+
+    setDraftTexture(nextTexture)
+    changeTexture(nextTexture)
   }
 
   const commitTextureStrength = (strength: number): void => {
     const nextTexture = { ...draftTexture, strength }
 
     setDraftTexture(nextTexture)
+    changeTexture(nextTexture)
+    flushWallpaperDraft()
   }
 
   return (

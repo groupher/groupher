@@ -16,7 +16,11 @@ import {
 } from '~/const/wallpaper'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
-import { parseMeshGradientValue, stringifyMeshGradientRecipe } from '~/lib/wallpaperMesh'
+import {
+  parseMeshGradientValue,
+  stringifyMeshGradientRecipe,
+  type TWallpaperTexture,
+} from '~/lib/wallpaperMesh'
 import { toast } from '~/signal'
 import type { TWallpaperData, TWallpaperGradientDir, TWallpaperType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -68,6 +72,7 @@ type TRet = {
   toggleShadow: (hasShadow: boolean) => void
   changeBrightness: (brightness: number) => void
   changeSaturation: (saturation: number) => void
+  changeTexture: (texture: TWallpaperTexture) => void
   previewWallpaper: (patch: Partial<TWallpaperState>) => void
   scheduleWallpaperPreview: (patch: Partial<TWallpaperState>) => void
   flushWallpaperDraft: () => void
@@ -88,6 +93,8 @@ const getWallpaperState = (wallpaper$: ReturnType<typeof useWallpaperDomain>): T
   hasShadow: wallpaper$.hasShadow,
   brightness: wallpaper$.brightness,
   saturation: wallpaper$.saturation,
+  textureType: wallpaper$.textureType,
+  textureStrength: wallpaper$.textureStrength,
   direction: wallpaper$.direction,
   bgSize: wallpaper$.bgSize,
 })
@@ -121,6 +128,8 @@ function useLogicValue(): TRet {
       wallpaper$.hasShadow,
       wallpaper$.brightness,
       wallpaper$.saturation,
+      wallpaper$.textureType,
+      wallpaper$.textureStrength,
       wallpaper$.direction,
       wallpaper$.bgSize,
     ],
@@ -222,6 +231,8 @@ function useLogicValue(): TRet {
   const toggleShadow = (hasShadow: boolean): void => commitWallpaperPatch({ hasShadow })
   const changeBrightness = (brightness: number): void => scheduleWallpaperPreview({ brightness })
   const changeSaturation = (saturation: number): void => scheduleWallpaperPreview({ saturation })
+  const changeTexture = ({ type, strength }: TWallpaperTexture): void =>
+    scheduleWallpaperPreview({ textureType: type, textureStrength: strength })
 
   return {
     tab,
@@ -245,6 +256,7 @@ function useLogicValue(): TRet {
     toggleShadow,
     changeBrightness,
     changeSaturation,
+    changeTexture,
     previewWallpaper,
     scheduleWallpaperPreview,
     flushWallpaperDraft,

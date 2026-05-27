@@ -13,14 +13,16 @@ type TGradientEffectState = {
   source: string
   type: TWallpaperType
   hasPattern: boolean
-  hasBlur: boolean
+  blurIntensity: number
+  brightness: number
+  saturation: number
   direction: TWallpaperGradientDir
 }
 
 type TPatternEffectState = {
   source: string
   type: TWallpaperType
-  hasBlur: boolean
+  blurIntensity: number
   brightness: number
   saturation: number
 }
@@ -30,7 +32,9 @@ export const buildGradientCatalogWallpapers = (): Record<string, TWallpaper> => 
 
   for (const wallpaper of Object.values(wallpapers) as TWallpaperGradient[]) {
     wallpaper.hasPattern = false
-    wallpaper.hasBlur = false
+    wallpaper.blurIntensity = 0
+    wallpaper.brightness = 100
+    wallpaper.saturation = 100
     wallpaper.direction = '180deg'
   }
 
@@ -41,7 +45,7 @@ export const buildPatternCatalogWallpapers = (): Record<string, TWallpaper> => {
   const wallpapers = clone(PATTERN_WALLPAPER)
 
   for (const wallpaper of Object.values(wallpapers) as TWallpaperPic[]) {
-    wallpaper.hasBlur = false
+    wallpaper.blurIntensity = 0
   }
 
   return wallpapers
@@ -58,7 +62,9 @@ export const buildActiveGradientWallpapers = (
   if (!activeWallpaper) return wallpapers
 
   activeWallpaper.hasPattern = state.hasPattern
-  activeWallpaper.hasBlur = state.hasBlur
+  activeWallpaper.blurIntensity = state.blurIntensity
+  activeWallpaper.brightness = state.brightness
+  activeWallpaper.saturation = state.saturation
   activeWallpaper.direction = state.direction
 
   return wallpapers
@@ -74,7 +80,7 @@ export const buildActivePatternWallpapers = (
   const activeWallpaper = wallpapers[state.source] as TWallpaperPic | undefined
   if (!activeWallpaper) return wallpapers
 
-  activeWallpaper.hasBlur = state.hasBlur
+  activeWallpaper.blurIntensity = state.blurIntensity
   activeWallpaper.brightness = state.brightness
   activeWallpaper.saturation = state.saturation
 

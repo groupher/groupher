@@ -1,6 +1,7 @@
 import { proxy } from 'valtio'
 
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
+import type { TImageTextureType } from '~/lib/wallpaperMesh'
 import type { TWallpaperGradientDir } from '~/spec'
 
 import type { TInit, TStore } from './spec'
@@ -11,8 +12,12 @@ export const INITIAL_WALLPAPER_STATE = {
   source: 'pink',
   type: WALLPAPER_TYPE.GRADIENT,
   hasPattern: true,
-  hasBlur: false,
+  blurIntensity: 0,
   hasShadow: false,
+  brightness: 100,
+  saturation: 100,
+  textureType: 'grain' as TImageTextureType,
+  textureStrength: 0,
   direction: '180deg' as TWallpaperGradientDir,
   bgSize: 'cover',
 }

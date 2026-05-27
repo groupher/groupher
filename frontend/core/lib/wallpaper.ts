@@ -10,19 +10,23 @@ import type {
 
 const DEFAULT_BRIGHTNESS = 100
 const DEFAULT_SATURATION = 100
+const MAX_BLUR_PX = 6
 
 const buildFilterEffect = ({
-  hasBlur,
+  blurIntensity = 0,
   brightness = DEFAULT_BRIGHTNESS,
   saturation = DEFAULT_SATURATION,
 }: {
-  hasBlur?: boolean
+  blurIntensity?: number
   brightness?: number
   saturation?: number
 }): string => {
   const filters = []
+  const safeBlurIntensity = Math.max(0, Math.min(100, blurIntensity))
 
-  if (hasBlur) filters.push('blur(3px)')
+  if (safeBlurIntensity > 0) {
+    filters.push(`blur(${Number(((safeBlurIntensity / 100) * MAX_BLUR_PX).toFixed(1))}px)`)
+  }
   if (brightness !== DEFAULT_BRIGHTNESS) filters.push(`brightness(${brightness}%)`)
   if (saturation !== DEFAULT_SATURATION) filters.push(`saturate(${saturation}%)`)
 
@@ -66,14 +70,14 @@ const _parseWallpaper = (
 
 const _parseGradientBackground = (gradient: TWallpaperGradient): TWallpaperFmt => {
   const DIR = '/wallpaper'
-  const { direction, hasPattern, hasBlur } = gradient
+  const { direction, hasPattern, blurIntensity, brightness, saturation } = gradient
   const colors = gradient.colors.join(',')
   let background = `linear-gradient(${formatGradientDirection(direction)}, ${colors})`
 
   const patternPic = `${DIR}/pattern/1.png`
   background = hasPattern ? `url(${patternPic}) repeat, ${background}` : background
 
-  const effect = buildFilterEffect({ hasBlur })
+  const effect = buildFilterEffect({ blurIntensity, brightness, saturation })
 
   return {
     effect,
@@ -100,14 +104,13 @@ const _parsePicBackground = (pic: TWallpaperPic): TWallpaperFmt => {
     }
   }
 
-  const { image, bgSize = 'contain', hasBlur, brightness, saturation } = pic
-  const background = `url(${image})`
+  const { image, bgSize = 'cover', blurIntensity, brightness, saturation } = pic
+  const background = `url(${image}) center / ${bgSize} no-repeat`
 
-  const filter = buildFilterEffect({ hasBlur, brightness, saturation })
-  const effect = `background-size: ${bgSize}; ${filter}`
+  const filter = buildFilterEffect({ blurIntensity, brightness, saturation })
 
   return {
-    effect,
+    effect: filter,
     background,
   }
 }

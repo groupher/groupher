@@ -148,14 +148,22 @@ defmodule GroupherServer.Test.CMS.Dashboard do
         CMS.Dashboard.update(community, :wallpaper, %{
           type: "custom",
           source: "orange",
-          has_blur: true
+          blur_intensity: 35,
+          brightness: 85,
+          saturation: 120,
+          texture_type: "dither",
+          texture_strength: 55
         })
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
       assert find_community.dashboard.wallpaper.source == "orange"
       assert find_community.dashboard.wallpaper.type == "custom"
-      assert find_community.dashboard.wallpaper.has_blur == true
+      assert find_community.dashboard.wallpaper.blur_intensity == 35
+      assert find_community.dashboard.wallpaper.brightness == 85
+      assert find_community.dashboard.wallpaper.saturation == 120
+      assert find_community.dashboard.wallpaper.texture_type == "dither"
+      assert find_community.dashboard.wallpaper.texture_strength == 55
     end
 
     test "can update layout in community dashboard", ~m(community_attrs user)a do

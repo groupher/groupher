@@ -247,8 +247,12 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
 
       # updated
       [:bg_size, :string, "cover"],
-      [:has_blur, :boolean, false],
-      [:has_shadow, :boolean, false]
+      [:blur_intensity, :integer, 0],
+      [:has_shadow, :boolean, false],
+      [:brightness, :integer, 100],
+      [:saturation, :integer, 100],
+      [:texture_type, :string, "grain"],
+      [:texture_strength, :integer, 0]
     ]
   end
 end

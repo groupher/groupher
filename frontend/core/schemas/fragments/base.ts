@@ -48,8 +48,12 @@ export const wallpaper = `
   customColorValue
   bgSize
   hasPattern
-  hasBlur
+  blurIntensity
   hasShadow
+  brightness
+  saturation
+  textureType
+  textureStrength
 `
 export const seo = `
   seoEnable

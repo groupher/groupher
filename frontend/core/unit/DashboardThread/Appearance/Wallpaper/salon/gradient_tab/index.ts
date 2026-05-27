@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default function useSalon() {
-  const { cn, shadow, br, bg, fill, primary } = useTwBelt()
+  const { cn, shadow, br, fill, primary } = useTwBelt()
 
   return {
     wrapper: 'grid grid-cols-4 gap-3 s-full mt-2.5 relative',
@@ -20,7 +20,5 @@ export default function useSalon() {
       br('title'),
     ),
     checkIcon: cn('size-3.5 absolute top-0.5 left-0.5', fill('button.fg')),
-    penWrapper: cn('align-both size-4 circle', bg('card')),
-    penIcon: cn('size-2.5', fill('digest')),
   }
 }
