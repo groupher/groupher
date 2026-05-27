@@ -8,7 +8,20 @@ export const WALLPAPER_STATE_KEYS = [
   'source',
   'type',
   'hasPattern',
-  'hasBlur',
+  'blurIntensity',
+  'hasShadow',
+  'brightness',
+  'saturation',
+  'direction',
+  'bgSize',
+] as const
+
+export const WALLPAPER_SAVABLE_STATE_KEYS = [
+  'customColorValue',
+  'source',
+  'type',
+  'hasPattern',
+  'blurIntensity',
   'hasShadow',
   'brightness',
   'saturation',
@@ -30,7 +43,7 @@ export const WALLPAPER_TYPE = {
 
 const DEFAULT_GRADIENT_EFFECT = {
   hasPattern: false,
-  hasBlur: false,
+  blurIntensity: 0,
   direction: '180deg',
 }
 
@@ -56,7 +69,7 @@ export const COVER_GRADIENT_WALLPAPER = {
   pink: {
     colors: ['#E8DADA', '#D4D0D6'],
     ...DEFAULT_GRADIENT_EFFECT,
-    hasBlur: true,
+    blurIntensity: 60,
   },
   green: {
     colors: ['#C6D183', '#72B58C'],
@@ -123,7 +136,7 @@ export const GRADIENT_WALLPAPER = {
   [GRADIENT_WALLPAPER_NAME.PINK]: {
     colors: ['#FBEFDE', '#D8B9E3'],
     ...DEFAULT_GRADIENT_EFFECT,
-    hasBlur: true,
+    blurIntensity: 60,
   },
 
   [GRADIENT_WALLPAPER_NAME.GREEN]: {

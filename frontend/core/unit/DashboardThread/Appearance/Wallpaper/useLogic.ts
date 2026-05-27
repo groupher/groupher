@@ -1,7 +1,11 @@
 import { clone, equals, pick } from 'ramda'
 import { useMemo, useState } from 'react'
 
-import { WALLPAPER_STATE_KEYS, WALLPAPER_TYPE } from '~/const/wallpaper'
+import {
+  WALLPAPER_SAVABLE_STATE_KEYS,
+  WALLPAPER_STATE_KEYS,
+  WALLPAPER_TYPE,
+} from '~/const/wallpaper'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { toast } from '~/signal'
@@ -20,6 +24,9 @@ const getInitialTab = (type: TWallpaperType): TTab => {
     }
     case WALLPAPER_TYPE.UPLOAD: {
       return TAB.UPLOAD
+    }
+    case WALLPAPER_TYPE.CUSTOM_GRADIENT: {
+      return TAB.DIY
     }
     default: {
       return TAB.GRADIENT
@@ -43,11 +50,9 @@ type TRet = {
   removeWallpaper: () => void
   changeGradientWallpaper: (source: string) => void
   changePatternWallpaper: (source: string) => void
-  changeCustomGradientWallpaper: () => void
   changeWallpaperType: (type: TWallpaperType) => void
-  confirmCustomColor: (customColorValue: string) => void
   togglePattern: (hasPattern: boolean) => void
-  toggleBlur: (hasBlur: boolean) => void
+  changeBlurIntensity: (blurIntensity: number) => void
   toggleShadow: (hasShadow: boolean) => void
   changeBrightness: (brightness: number) => void
   changeSaturation: (saturation: number) => void
@@ -63,8 +68,8 @@ export default function useLogic(): TRet {
   const [loading, setLoading] = useState(false)
 
   const isTouched = useMemo((): boolean => {
-    const original = pick(WALLPAPER_STATE_KEYS, wallpaper$.original)
-    const current = pick(WALLPAPER_STATE_KEYS, wallpaper$)
+    const original = pick(WALLPAPER_SAVABLE_STATE_KEYS, wallpaper$.original)
+    const current = pick(WALLPAPER_SAVABLE_STATE_KEYS, wallpaper$)
 
     return !equals(clone(original), clone(current))
   }, [wallpaper$])
@@ -77,7 +82,7 @@ export default function useLogic(): TRet {
   const onSave = (): void => {
     setLoading(true)
     const community = community$.slug
-    const params = { community, ...pick(WALLPAPER_STATE_KEYS, wallpaper$) }
+    const params = { community, ...pick(WALLPAPER_SAVABLE_STATE_KEYS, wallpaper$) }
 
     mutate(S.updateDashboardWallpaper, params)
       .then(() => {
@@ -100,20 +105,12 @@ export default function useLogic(): TRet {
   const changePatternWallpaper = (source: string): void =>
     wallpaper$.commit({ source, type: WALLPAPER_TYPE.PATTERN })
 
-  const changeCustomGradientWallpaper = (): void => {
-    wallpaper$.commit({ source: '', type: WALLPAPER_TYPE.CUSTOM_GRADIENT })
-  }
-
   const changeWallpaperType = (type: TWallpaperType): void => {
     wallpaper$.commit({ type })
   }
 
-  const confirmCustomColor = (customColorValue: string): void => {
-    wallpaper$.commit({ customColorValue, type: WALLPAPER_TYPE.CUSTOM_GRADIENT })
-  }
-
   const togglePattern = (hasPattern: boolean): void => wallpaper$.commit({ hasPattern })
-  const toggleBlur = (hasBlur: boolean): void => wallpaper$.commit({ hasBlur })
+  const changeBlurIntensity = (blurIntensity: number): void => wallpaper$.commit({ blurIntensity })
   const toggleShadow = (hasShadow: boolean): void => wallpaper$.commit({ hasShadow })
   const changeBrightness = (brightness: number): void => wallpaper$.commit({ brightness })
   const changeSaturation = (saturation: number): void => wallpaper$.commit({ saturation })
@@ -133,11 +130,9 @@ export default function useLogic(): TRet {
     removeWallpaper,
     changeGradientWallpaper,
     changePatternWallpaper,
-    changeCustomGradientWallpaper,
     changeWallpaperType,
-    confirmCustomColor,
     togglePattern,
-    toggleBlur,
+    changeBlurIntensity,
     toggleShadow,
     changeBrightness,
     changeSaturation,

@@ -1,19 +1,19 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
+import useTrans from '~/hooks/useTrans'
 import CheckedSVG from '~/icons/CheckBold'
 import {
   buildMeshGradientFallback,
   parseMeshGradientValue,
-  renderTextureSwatchDataUrl,
   stringifyMeshGradientRecipe,
 } from '~/lib/wallpaperMesh'
 import type { TImageTextureType, TMeshGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
-import Button from '~/widgets/Buttons/Button'
 import RangeInput from '~/widgets/RangeInput'
+import Tooltip from '~/widgets/Tooltip'
 
 import useSalon, { cn } from './salon/diy_tab'
 
@@ -256,22 +256,6 @@ const makeRecipe = (preset: TPreset, seed = Date.now()): TMeshGradientRecipe => 
   anchors: preset.anchors,
 })
 
-const randomColor = (): string =>
-  `#${Math.floor(Math.random() * 0xffffff)
-    .toString(16)
-    .padStart(6, '0')}`
-
-const randomizeRecipe = (recipe: TMeshGradientRecipe): TMeshGradientRecipe => ({
-  ...recipe,
-  seed: Date.now(),
-  colors: recipe.colors.map(() => randomColor()),
-  anchors: recipe.anchors.map((anchor, index) => ({
-    x: Math.random(),
-    y: Math.random(),
-    color: index % recipe.colors.length,
-  })),
-})
-
 const getInitialRecipe = (customColorValue?: string | null): TMeshGradientRecipe =>
   parseMeshGradientValue(customColorValue) || makeRecipe(PRESETS[0], 18432)
 
@@ -324,19 +308,15 @@ export default function DiyTab() {
 export function DiySettings() {
   const s = useSalon()
   const { customColorValue, commit } = useWallpaperDomain()
-  const recipe = useMemo(() => getInitialRecipe(customColorValue), [customColorValue])
-  const textureSwatches = useMemo(
-    () =>
-      Object.fromEntries(
-        TEXTURE_OPTIONS.map(({ type }) => [
-          type,
-          renderTextureSwatchDataUrl({
-            texture: { type, strength: recipe.texture.strength },
-          }),
-        ]),
-      ) as Record<TImageTextureType, string | null>,
-    [recipe],
-  )
+  const { locale } = useTrans()
+  const sourceRecipe = useMemo(() => getInitialRecipe(customColorValue), [customColorValue])
+  const [draftRecipe, setDraftRecipe] = useState(sourceRecipe)
+  const textureLabel = locale === 'zh' || locale === 'zh-hant' ? '质感' : 'Texture'
+  const intensityLabel = locale === 'zh' || locale === 'zh-hant' ? '强度' : 'Intensity'
+
+  useEffect(() => {
+    setDraftRecipe(sourceRecipe)
+  }, [sourceRecipe])
 
   const commitRecipe = (nextRecipe: TMeshGradientRecipe): void => {
     commit?.({
@@ -346,33 +326,63 @@ export function DiySettings() {
     })
   }
 
-  const updateRecipe = (patch: Partial<TMeshGradientRecipe>): void => {
-    commitRecipe({ ...recipe, ...patch })
-  }
-
   const updateTexture = (patch: Partial<TWallpaperTexture>): void => {
-    commitRecipe({
-      ...recipe,
-      texture: { ...recipe.texture, ...patch },
-    })
+    const nextRecipe = {
+      ...draftRecipe,
+      texture: { ...draftRecipe.texture, ...patch },
+    }
+
+    setDraftRecipe(nextRecipe)
+    commitRecipe(nextRecipe)
   }
 
   const updateColor = (index: number, color: string): void => {
-    commitRecipe({
-      ...recipe,
-      colors: recipe.colors.map((value, valueIndex) => (valueIndex === index ? color : value)),
-    })
+    const nextRecipe = {
+      ...draftRecipe,
+      colors: draftRecipe.colors.map((value, valueIndex) => (valueIndex === index ? color : value)),
+    }
+
+    setDraftRecipe(nextRecipe)
+    commitRecipe(nextRecipe)
+  }
+
+  const updateSoftnessDraft = (softness: number): void => {
+    setDraftRecipe((current) => ({ ...current, softness }))
+  }
+
+  const commitSoftness = (softness: number): void => {
+    const nextRecipe = { ...draftRecipe, softness }
+
+    setDraftRecipe(nextRecipe)
+    commitRecipe(nextRecipe)
+  }
+
+  const updateTextureStrengthDraft = (strength: number): void => {
+    setDraftRecipe((current) => ({
+      ...current,
+      texture: { ...current.texture, strength },
+    }))
+  }
+
+  const commitTextureStrength = (strength: number): void => {
+    const nextRecipe = {
+      ...draftRecipe,
+      texture: { ...draftRecipe.texture, strength },
+    }
+
+    setDraftRecipe(nextRecipe)
+    commitRecipe(nextRecipe)
   }
 
   return (
     <div className={s.settingsWrapper}>
       <div className={s.controls}>
         <div className={s.panel}>
-          <div className={s.label}>Palette</div>
+          <div className={s.label}>Colors</div>
           <div className={s.chips}>
-            {recipe.colors.map((color, index) => (
+            {draftRecipe.colors.map((color, index) => (
               <label
-                key={`${color}-${recipe.anchors[index]?.x}-${recipe.anchors[index]?.y}`}
+                key={`${color}-${draftRecipe.anchors[index]?.x}-${draftRecipe.anchors[index]?.y}`}
                 className={s.chip}
                 style={{ background: color }}
                 aria-label={`Change color ${index + 1}`}
@@ -386,71 +396,61 @@ export function DiySettings() {
               </label>
             ))}
           </div>
-
-          <div className={s.actionRow}>
-            <Button size='small' onClick={() => commitRecipe(randomizeRecipe(recipe))}>
-              Randomize
-            </Button>
-          </div>
-          <div className={s.hint}>
-            POC only. The current recipe is stored in the frontend wallpaper state.
-          </div>
         </div>
 
         <div className={s.rangeGroup}>
           <RangeInput
-            value={recipe.flow}
-            min={0}
-            max={359}
-            step={1}
-            unit='deg'
-            valueLabel='Direction:'
-            aria-label='Direction'
-            onChange={(flow) => updateRecipe({ flow })}
-          />
-          <RangeInput
-            value={recipe.softness}
+            value={draftRecipe.softness}
             min={0}
             max={100}
             step={1}
-            valueLabel='Spread:'
+            labelPlacement='left'
+            valueLabel='Spread'
             aria-label='Spread'
-            onChange={(softness) => updateRecipe({ softness })}
+            onChange={updateSoftnessDraft}
+            onChangeEnd={commitSoftness}
           />
           <div className={s.textureControl}>
-            <div className={s.textureOptions}>
-              {TEXTURE_OPTIONS.map(({ type, label }) => {
-                const selected = recipe.texture.type === type
+            <div className={s.textureRow}>
+              <div className={s.textureLabel}>{textureLabel}</div>
+              <div className={s.textureOptions}>
+                {TEXTURE_OPTIONS.map(({ type, label }) => {
+                  const selected = draftRecipe.texture.type === type
 
-                return (
-                  <button
-                    type='button'
-                    key={type}
-                    className={cn(s.textureSwatch, selected && s.textureSwatchActive)}
-                    aria-label={label}
-                    onClick={() => updateTexture({ type })}
-                  >
-                    <div
-                      className={s.textureSwatchPreview}
-                      style={{
-                        backgroundImage: textureSwatches[type]
-                          ? `url(${textureSwatches[type]})`
-                          : undefined,
-                      }}
-                    />
-                  </button>
-                )
-              })}
+                  return (
+                    <Tooltip key={type} content={label} placement='top'>
+                      <button
+                        type='button'
+                        className={cn(
+                          s.textureSwatch,
+                          selected ? s.textureSwatchActive : s.textureSwatchIdle,
+                        )}
+                        aria-label={label}
+                        onClick={() => updateTexture({ type })}
+                      >
+                        <div
+                          className={s.textureSwatchPreview}
+                          style={s.texturePatternStyle(type)}
+                        />
+                      </button>
+                    </Tooltip>
+                  )
+                })}
+              </div>
             </div>
-            <RangeInput
-              value={recipe.texture.strength}
-              min={0}
-              max={100}
-              step={1}
-              valueLabel='Texture:'
-              aria-label='Texture strength'
-              onChange={(strength) => updateTexture({ strength })}
-            />
+            <div className={s.textureStrength}>
+              <RangeInput
+                value={draftRecipe.texture.strength}
+                min={0}
+                max={100}
+                step={1}
+                labelPlacement='left'
+                valueLabel={intensityLabel}
+                aria-label={intensityLabel}
+                onChange={updateTextureStrengthDraft}
+                onChangeEnd={commitTextureStrength}
+              />
+            </div>
           </div>
         </div>
       </div>

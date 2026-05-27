@@ -6,6 +6,13 @@ import useWallpaper from '~/hooks/useWallpaper'
 
 import useSalon, { cnMerge } from '../salon/preview_zone/global_preview'
 
+const getPreviewBackground = (background: string): string => {
+  return background.replace(
+    'url(/wallpaper/pattern/1.png) repeat,',
+    'url(/wallpaper/pattern/1.png) left top / 260px auto repeat,',
+  )
+}
+
 export default function GlobalPreview() {
   const s = useSalon()
 
@@ -15,9 +22,8 @@ export default function GlobalPreview() {
 
   const bgColor = `${blurRGB(pageBg, gaussBlur)}`
   const previewStyle = {
-    background,
+    background: getPreviewBackground(background),
     ...fmt2CompStyle(effect),
-    ...(background.includes('/wallpaper/pattern/') ? { backgroundSize: '260px auto, cover' } : {}),
   }
 
   return (

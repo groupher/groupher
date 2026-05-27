@@ -1,18 +1,28 @@
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TSpace } from '~/spec'
 
-type TProps = { width: string } & TSpace
+type TProps = { width: string; labelPlacement: 'top' | 'left' } & TSpace
 
-export default function useSalon({ width, ...spacing }: TProps) {
+export default function useSalon({ width, labelPlacement, ...spacing }: TProps) {
   const { cn, br, margin, fg, bg, primary } = useTwBelt()
+  const hasLeftLabel = labelPlacement === 'left'
 
   return {
-    wrapper: cn('group column w-full max-w-3xl gap-3', width, margin(spacing)),
-    valueLabel:
-      'row-center justify-start gap-1 text-sm leading-none opacity-0 translate-y-1 pointer-events-none transition-all delay-1000 duration-200 ease-out group-hover:delay-200 group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:delay-0 group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto',
+    wrapper: cn(
+      'group w-full max-w-3xl gap-3',
+      hasLeftLabel ? 'flex items-center' : 'column',
+      width,
+      margin(spacing),
+    ),
+    valueLabel: cn(
+      'row-center justify-start gap-1 text-sm leading-none',
+      hasLeftLabel && 'w-20 shrink-0',
+      !hasLeftLabel &&
+        'opacity-0 translate-y-1 pointer-events-none transition-all delay-1000 duration-200 ease-out group-hover:delay-200 group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:delay-0 group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto',
+    ),
     valueLabelPrefix: fg('digest'),
     valueLabelAmount: fg('title'),
-    control: 'relative grid min-h-4 items-center',
+    control: 'relative grid min-h-4 flex-1 items-center',
     track: 'relative z-10 h-4 pointer-events-none',
     trackPart: cn(
       'absolute top-0 h-4 rounded-sm border origin-center scale-y-50 transition-transform delay-1000 duration-200 ease-out group-hover:delay-100 group-hover:scale-y-100 group-focus-within:delay-0 group-focus-within:scale-y-100',
