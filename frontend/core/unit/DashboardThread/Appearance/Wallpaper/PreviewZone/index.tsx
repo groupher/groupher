@@ -1,10 +1,16 @@
 import SavingBar from '../../../SavingBar'
-import useSalon from '../salon/preview'
+import useSalon from '../salon/preview_zone'
+import type { TTab } from '../spec'
+import TuningZone from '../TuningZone'
 import useLogic from '../useLogic'
-import PreviewCard from './PreviewCard'
-import Settings from './Settings'
+import AuthPreview from './AuthPreview'
+import GlobalPreview from './GlobalPreview'
 
-export default function Preview() {
+type TProps = {
+  tab: TTab
+}
+
+export default function PreviewZone({ tab }: TProps) {
   const s = useSalon()
   const { isTouched, loading, rollbackWallpaper, onSave } = useLogic()
 
@@ -13,13 +19,17 @@ export default function Preview() {
       <div className={s.previewCard}>
         <div className={s.previewLayout}>
           <div className={s.previewPanel}>
-            <PreviewCard />
+            <GlobalPreview />
           </div>
 
-          <div className={s.customizePanel}>
-            <Settings />
+          <div className={s.previewPanel}>
+            <AuthPreview />
           </div>
         </div>
+      </div>
+
+      <div className={s.settingsCard}>
+        <TuningZone tab={tab} />
       </div>
 
       <SavingBar

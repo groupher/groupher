@@ -1,3 +1,5 @@
+'use client'
+
 import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
 
 import useMount from '~/hooks/useMount'
@@ -10,7 +12,7 @@ import { TAB, TAB_OPTIONS } from './constant'
 import DiyTab from './DiyTab'
 import GradientTab from './GradientTab'
 import PicturesTab from './PicturesTab'
-import Preview from './Preview'
+import PreviewZone from './PreviewZone'
 import useSalon from './salon'
 import UploadTab from './UploadTab'
 import useLogic from './useLogic'
@@ -43,7 +45,7 @@ export default function Wallpaper() {
         touched={isTouched}
       />
 
-      <Preview />
+      <PreviewZone tab={tab} />
 
       <div className={s.editor}>
         <SegmentTabs

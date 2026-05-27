@@ -9,7 +9,7 @@ import {
   useState,
 } from 'react'
 
-import useSalon from '../salon/preview/angle_panel'
+import useSalon from '../salon/tuning_zone/angle_panel'
 import useLogic from '../useLogic'
 
 const SIZE = 64

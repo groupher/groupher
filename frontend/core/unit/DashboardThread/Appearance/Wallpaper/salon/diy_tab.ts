@@ -35,6 +35,17 @@ export default function useSalon() {
       `hover:${bg('card')}`,
     ),
     hint: cn('text-xs leading-5', fg('digest')),
+    settingsWrapper: 'w-full',
     rangeGroup: 'column gap-4',
+    textureControl: 'column gap-3',
+    textureOptions: 'row-center gap-2',
+    textureSwatch: cn(
+      'size-10 rounded-lg overflow-hidden relative border-2 border-transparent pointer trans-all-200',
+      bg('card'),
+      br('divider'),
+      `hover:${br('digest')}`,
+    ),
+    textureSwatchActive: primary('border'),
+    textureSwatchPreview: 's-full bg-cover bg-center',
   }
 }

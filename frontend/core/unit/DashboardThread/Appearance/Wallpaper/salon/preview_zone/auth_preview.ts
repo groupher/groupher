@@ -19,21 +19,14 @@ export default function useSalon() {
       bg('hoverBg'),
     ),
     realPreview: 'column-center relative overflow-hidden',
-    content: cn(
-      'absolute top-0 left-7 w-60 h-44 backdrop-blur-sm column-start px-5 pt-3 pb-4',
+    bar: cn(base.bar, 'static h-2 w-24 saturate-50 opacity-40'),
+    authCard: cn(
+      'absolute top-10 left-1/2 -translate-x-1/2 w-32 h-24 rounded-lg column-center px-3 py-3 gap-3',
+      bg('card'),
       hasShadow && shadow('md'),
     ),
-    contentTop: 'column gap-3',
-    contentBottom: 'column gap-3 mt-auto',
-
-    bar: cn(base.bar, 'static h-2 w-24 saturate-50 opacity-40'),
-    titleBar: 'opacity-30',
-    wideBar: 'w-40 opacity-20',
-    midBar: 'w-32 opacity-30',
-    longBar: 'w-44 opacity-20',
-    shortBar: 'w-20 opacity-20',
-    dimBar: 'w-32 opacity-10',
-    footerShort: 'w-14 opacity-15',
-    footerWide: 'w-32 opacity-10',
+    authTitle: 'w-20 h-1.5 opacity-30',
+    authInput: cn('w-full h-4 rounded border opacity-60', br('divider'), bg('hoverBg')),
+    authButton: cn('w-full h-4 rounded opacity-50', base.bar),
   }
 }

@@ -13,6 +13,8 @@ const updateDashboardWallpaper = gql`
     $hasPattern: Boolean
     $hasBlur: Boolean
     $hasShadow: Boolean
+    $brightness: Int
+    $saturation: Int
   ) {
     updateDashboardWallpaper(
       community: $community
@@ -24,6 +26,8 @@ const updateDashboardWallpaper = gql`
       hasPattern: $hasPattern
       hasBlur: $hasBlur
       hasShadow: $hasShadow
+      brightness: $brightness
+      saturation: $saturation
     ) {
       wallpaper {
         ${F.wallpaper}

@@ -1,23 +1,28 @@
 import { PAGE_BG_CSS_KEY } from '~/const/colors'
-import { blurRGB } from '~/fmt'
+import { blurRGB, fmt2CompStyle } from '~/fmt'
 import useCSSVar from '~/hooks/useCssVar'
 import useGaussBlur from '~/hooks/useGaussBlur'
 import useWallpaper from '~/hooks/useWallpaper'
 
-import useSalon, { cnMerge } from '../salon/preview/preview_card'
+import useSalon, { cnMerge } from '../salon/preview_zone/global_preview'
 
-export default function PreviewCard() {
+export default function GlobalPreview() {
   const s = useSalon()
 
   const gaussBlur = useGaussBlur()
-  const { background } = useWallpaper()
+  const { background, effect } = useWallpaper()
   const pageBg = useCSSVar(PAGE_BG_CSS_KEY, [gaussBlur], { selector: 'main' })
 
   const bgColor = `${blurRGB(pageBg, gaussBlur)}`
+  const previewStyle = {
+    background,
+    ...fmt2CompStyle(effect),
+    ...(background.includes('/wallpaper/pattern/') ? { backgroundSize: '260px auto, cover' } : {}),
+  }
 
   return (
     <div className={s.realPreview}>
-      <div className={s.previewImage} style={{ background }} />
+      <div className={s.previewImage} style={previewStyle} />
       <div className={s.content} style={{ background: bgColor }}>
         <div className={s.contentTop}>
           <div className={cnMerge(s.bar, s.titleBar)} />

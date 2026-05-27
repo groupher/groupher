@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default function useSalon() {
-  const { cn, br, fill, primary } = useTwBelt()
+  const { cn, br, bg, fill, primary } = useTwBelt()
 
   return {
     wrapper: 'grid grid-cols-4 gap-3 s-full mt-2.5 relative',
@@ -19,5 +19,21 @@ export default function useSalon() {
       br('title'),
     ),
     checkIcon: cn('size-3.5 absolute top-0.5 left-0.5', fill('button.fg')),
+    texturePanel: 'column gap-4',
+    textureControls: 'grid grid-cols-[auto_1fr] items-center gap-5',
+    textureOptions: 'row-center gap-2',
+    textureSwatch: cn(
+      'size-10 rounded-lg overflow-hidden relative border-2 border-transparent pointer trans-all-200',
+      bg('card'),
+      br('divider'),
+      `hover:${br('digest')}`,
+    ),
+    textureSwatchActive: primary('border'),
+    textureSwatchPreview: 's-full bg-cover bg-center',
+    texturePreview: cn(
+      'w-full h-24 rounded-lg bg-cover bg-center border',
+      bg('card'),
+      br('divider'),
+    ),
   }
 }

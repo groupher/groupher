@@ -49,6 +49,8 @@ type TRet = {
   togglePattern: (hasPattern: boolean) => void
   toggleBlur: (hasBlur: boolean) => void
   toggleShadow: (hasShadow: boolean) => void
+  changeBrightness: (brightness: number) => void
+  changeSaturation: (saturation: number) => void
 }
 
 export default function useLogic(): TRet {
@@ -113,6 +115,8 @@ export default function useLogic(): TRet {
   const togglePattern = (hasPattern: boolean): void => wallpaper$.commit({ hasPattern })
   const toggleBlur = (hasBlur: boolean): void => wallpaper$.commit({ hasBlur })
   const toggleShadow = (hasShadow: boolean): void => wallpaper$.commit({ hasShadow })
+  const changeBrightness = (brightness: number): void => wallpaper$.commit({ brightness })
+  const changeSaturation = (saturation: number): void => wallpaper$.commit({ saturation })
 
   return {
     tab,
@@ -135,5 +139,7 @@ export default function useLogic(): TRet {
     togglePattern,
     toggleBlur,
     toggleShadow,
+    changeBrightness,
+    changeSaturation,
   }
 }
