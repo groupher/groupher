@@ -72,6 +72,6 @@ export default function useSalon() {
     textureSwatchActive: cn(primary('border'), 'shadow-sm'),
     textureSwatchPreview: cn('s-full circle bg-center', bg('card')),
     texturePatternStyle,
-    textureStrength: 'w-full min-w-0',
+    textureIntensity: 'w-full min-w-0',
   }
 }

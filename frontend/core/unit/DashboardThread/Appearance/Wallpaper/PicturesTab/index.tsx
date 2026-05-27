@@ -3,20 +3,14 @@ import { useEffect, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import CheckedSVG from '~/icons/CheckBold'
-import type { TImageTextureType, TWallpaperTexture } from '~/lib/wallpaperMesh'
+import { WALLPAPER_TEXTURE_OPTIONS } from '~/lib/wallpaperMesh'
+import type { TWallpaperTexture } from '~/lib/wallpaperMesh'
 import type { TWallpaperPic } from '~/spec'
 import RangeInput from '~/widgets/RangeInput'
 import Tooltip from '~/widgets/Tooltip'
 
 import useSalon, { cn } from '../salon/pictures_tab'
 import useLogic from '../useLogic'
-
-const TEXTURE_OPTIONS: { type: TImageTextureType; label: string }[] = [
-  { type: 'grain', label: 'Grain' },
-  { type: 'pixelate', label: 'Pixelate' },
-  { type: 'screentone', label: 'Screentone' },
-  { type: 'dither', label: 'Dither' },
-]
 
 export default function PicturesTab() {
   const { getWallpaper, changePatternWallpaper } = useLogic()
@@ -52,27 +46,28 @@ export default function PicturesTab() {
 }
 
 export function PictureTextureSettings() {
-  const { locale } = useTrans()
+  const { t } = useTrans()
   const s = useSalon()
   const { getWallpaper, changeTexture, flushWallpaperDraft } = useLogic()
-  const { textureType, textureStrength } = getWallpaper()
+  const { texture } = getWallpaper()
   const [draftTexture, setDraftTexture] = useState<TWallpaperTexture>({
-    type: textureType,
-    strength: textureStrength,
+    ...texture,
   })
-  const textureLabel = locale === 'zh' || locale === 'zh-hant' ? '质感' : 'Texture'
-  const intensityLabel = locale === 'zh' || locale === 'zh-hant' ? '强度' : 'Intensity'
+  const textureLabel = t('dsb.appearance.wallpaper.texture')
+  const intensityLabel = t('dsb.appearance.wallpaper.texture.intensity')
 
   useEffect(() => {
-    setDraftTexture({ type: textureType, strength: textureStrength })
-  }, [textureType, textureStrength])
+    setDraftTexture(texture)
+  }, [texture])
 
   const updateTexture = (patch: Partial<TWallpaperTexture>): void => {
     const nextTexture = {
       ...draftTexture,
       ...patch,
-      strength:
-        patch.type && draftTexture.strength === 0 ? 45 : (patch.strength ?? draftTexture.strength),
+      intensity:
+        patch.type && draftTexture.intensity === 0
+          ? 45
+          : (patch.intensity ?? draftTexture.intensity),
     }
 
     setDraftTexture(nextTexture)
@@ -80,15 +75,15 @@ export function PictureTextureSettings() {
     flushWallpaperDraft()
   }
 
-  const updateTextureStrengthDraft = (strength: number): void => {
-    const nextTexture = { ...draftTexture, strength }
+  const updateTextureIntensityDraft = (intensity: number): void => {
+    const nextTexture = { ...draftTexture, intensity }
 
     setDraftTexture(nextTexture)
     changeTexture(nextTexture)
   }
 
-  const commitTextureStrength = (strength: number): void => {
-    const nextTexture = { ...draftTexture, strength }
+  const commitTextureIntensity = (intensity: number): void => {
+    const nextTexture = { ...draftTexture, intensity }
 
     setDraftTexture(nextTexture)
     changeTexture(nextTexture)
@@ -101,8 +96,9 @@ export function PictureTextureSettings() {
         <div className={s.textureRow}>
           <div className={s.textureLabel}>{textureLabel}</div>
           <div className={s.textureOptions}>
-            {TEXTURE_OPTIONS.map(({ type, label }) => {
+            {WALLPAPER_TEXTURE_OPTIONS.map(({ type, labelKey }) => {
               const selected = draftTexture.type === type
+              const label = t(labelKey)
 
               return (
                 <Tooltip key={type} content={label} placement='top'>
@@ -123,17 +119,17 @@ export function PictureTextureSettings() {
           </div>
         </div>
 
-        <div className={s.textureStrength}>
+        <div className={s.textureIntensity}>
           <RangeInput
-            value={draftTexture.strength}
+            value={draftTexture.intensity}
             min={0}
             max={100}
             step={1}
             labelPlacement='left'
             valueLabel={intensityLabel}
             aria-label={intensityLabel}
-            onChange={updateTextureStrengthDraft}
-            onChangeEnd={commitTextureStrength}
+            onChange={updateTextureIntensityDraft}
+            onChangeEnd={commitTextureIntensity}
           />
         </div>
       </div>

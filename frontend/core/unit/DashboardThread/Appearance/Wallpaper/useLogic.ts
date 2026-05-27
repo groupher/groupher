@@ -16,13 +16,9 @@ import {
 } from '~/const/wallpaper'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
-import {
-  parseMeshGradientValue,
-  stringifyMeshGradientRecipe,
-  type TWallpaperTexture,
-} from '~/lib/wallpaperMesh'
+import type { TWallpaperTexture } from '~/lib/wallpaperMesh'
 import { toast } from '~/signal'
-import type { TWallpaperData, TWallpaperGradientDir, TWallpaperType } from '~/spec'
+import type { TWallpaperData, TWallpaperType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 import type { TWallpaperState } from '~/stores/wallpaper/spec'
@@ -40,7 +36,7 @@ const getInitialTab = (type: TWallpaperType): TTab => {
     case WALLPAPER_TYPE.UPLOAD: {
       return TAB.UPLOAD
     }
-    case WALLPAPER_TYPE.CUSTOM_GRADIENT: {
+    case WALLPAPER_TYPE.MESH: {
       return TAB.DIY
     }
     default: {
@@ -55,14 +51,14 @@ type TRet = {
   // derived
   getWallpaper: () => TWallpaperData
   isTouched: boolean
-  directionDraft: TWallpaperGradientDir
+  angleDraft: number
   // actions
   initRollback: () => void
   rollbackWallpaper: () => void
   onSave: () => void
 
   changeTab: (tab: TTab) => void
-  changeDirection: (direction: TWallpaperGradientDir) => void
+  changeAngle: (angle: number) => void
   removeWallpaper: () => void
   changeGradientWallpaper: (source: string) => void
   changePatternWallpaper: (source: string) => void
@@ -85,27 +81,21 @@ LogicContext.displayName = 'WallpaperLogic'
 
 const getWallpaperState = (wallpaper$: ReturnType<typeof useWallpaperDomain>): TWallpaperState => ({
   customWallpaper: wallpaper$.customWallpaper,
-  customColorValue: wallpaper$.customColorValue,
   source: wallpaper$.source,
   type: wallpaper$.type,
   hasPattern: wallpaper$.hasPattern,
+  gradientDeg: wallpaper$.gradientDeg,
   blurIntensity: wallpaper$.blurIntensity,
   hasShadow: wallpaper$.hasShadow,
   brightness: wallpaper$.brightness,
   saturation: wallpaper$.saturation,
-  textureType: wallpaper$.textureType,
-  textureStrength: wallpaper$.textureStrength,
-  direction: wallpaper$.direction,
+  mesh: wallpaper$.mesh,
+  texture: wallpaper$.texture,
   bgSize: wallpaper$.bgSize,
 })
 
-const getDirectionDraft = (state: TWallpaperState): TWallpaperGradientDir => {
-  if (state.type !== WALLPAPER_TYPE.CUSTOM_GRADIENT) return state.direction
-
-  const meshRecipe = parseMeshGradientValue(state.customColorValue)
-
-  return meshRecipe ? `${meshRecipe.flow}deg` : state.direction
-}
+const getAngleDraft = (state: TWallpaperState): number =>
+  state.type === WALLPAPER_TYPE.MESH && state.mesh ? state.mesh.flow : state.gradientDeg
 
 function useLogicValue(): TRet {
   const wallpaper$ = useWallpaperDomain()
@@ -120,23 +110,20 @@ function useLogicValue(): TRet {
     () => getWallpaperState(wallpaper$),
     [
       wallpaper$.customWallpaper,
-      wallpaper$.customColorValue,
       wallpaper$.source,
       wallpaper$.type,
       wallpaper$.hasPattern,
+      wallpaper$.gradientDeg,
       wallpaper$.blurIntensity,
       wallpaper$.hasShadow,
       wallpaper$.brightness,
       wallpaper$.saturation,
-      wallpaper$.textureType,
-      wallpaper$.textureStrength,
-      wallpaper$.direction,
+      wallpaper$.mesh,
+      wallpaper$.texture,
       wallpaper$.bgSize,
     ],
   )
-  const [directionDraft, setDirectionDraft] = useState<TWallpaperGradientDir>(() =>
-    getDirectionDraft(wallpaperState),
-  )
+  const [angleDraft, setAngleDraft] = useState(() => getAngleDraft(wallpaperState))
   const {
     previewWallpaper,
     scheduleWallpaperPreview,
@@ -156,7 +143,7 @@ function useLogicValue(): TRet {
   }, [wallpaper$])
 
   useEffect(() => {
-    setDirectionDraft(getDirectionDraft(wallpaperState))
+    setAngleDraft(getAngleDraft(wallpaperState))
   }, [wallpaperState])
 
   const initRollback = (): void =>
@@ -179,7 +166,13 @@ function useLogicValue(): TRet {
     clearWallpaperPreview()
     setLoading(true)
     const community = community$.slug
-    const params = { community, ...pick(WALLPAPER_SAVABLE_STATE_KEYS, liveWallpaper$) }
+    const wallpaperFields = pick(WALLPAPER_SAVABLE_STATE_KEYS, liveWallpaper$)
+    const params = {
+      community,
+      ...wallpaperFields,
+      mesh: wallpaperFields.mesh ? JSON.stringify(wallpaperFields.mesh) : null,
+      texture: JSON.stringify(wallpaperFields.texture),
+    }
 
     mutate(S.updateDashboardWallpaper, params)
       .then(() => {
@@ -194,22 +187,15 @@ function useLogicValue(): TRet {
   }
 
   const changeTab = (tab: TTab): void => setTab(tab)
-  const changeDirection = (direction: TWallpaperGradientDir): void => {
-    setDirectionDraft(direction)
+  const changeAngle = (angle: number): void => {
+    setAngleDraft(angle)
 
-    if (wallpaperState.type === WALLPAPER_TYPE.CUSTOM_GRADIENT) {
-      const meshRecipe = parseMeshGradientValue(wallpaperState.customColorValue)
-      const flow = Number.parseInt(String(direction), 10)
-
-      if (meshRecipe && Number.isFinite(flow)) {
-        scheduleWallpaperPreview({
-          customColorValue: stringifyMeshGradientRecipe({ ...meshRecipe, flow }),
-        })
-        return
-      }
+    if (wallpaperState.type === WALLPAPER_TYPE.MESH && wallpaperState.mesh) {
+      scheduleWallpaperPreview({ mesh: { ...wallpaperState.mesh, flow: angle } })
+      return
     }
 
-    scheduleWallpaperPreview({ direction })
+    scheduleWallpaperPreview({ gradientDeg: angle })
   }
   const removeWallpaper = (): void => {
     clearPendingWallpaperDraft()
@@ -231,8 +217,7 @@ function useLogicValue(): TRet {
   const toggleShadow = (hasShadow: boolean): void => commitWallpaperPatch({ hasShadow })
   const changeBrightness = (brightness: number): void => scheduleWallpaperPreview({ brightness })
   const changeSaturation = (saturation: number): void => scheduleWallpaperPreview({ saturation })
-  const changeTexture = ({ type, strength }: TWallpaperTexture): void =>
-    scheduleWallpaperPreview({ textureType: type, textureStrength: strength })
+  const changeTexture = (texture: TWallpaperTexture): void => scheduleWallpaperPreview({ texture })
 
   return {
     tab,
@@ -240,13 +225,13 @@ function useLogicValue(): TRet {
     // drive
     getWallpaper,
     isTouched,
-    directionDraft,
+    angleDraft,
     //actions
     initRollback,
     rollbackWallpaper,
     onSave,
     changeTab,
-    changeDirection,
+    changeAngle,
     removeWallpaper,
     changeGradientWallpaper,
     changePatternWallpaper,

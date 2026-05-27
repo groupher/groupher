@@ -1,8 +1,14 @@
-import type { TWallpaperRenderDescriptor } from './types'
+import {
+  TEXTURE_SHADER_BRANCHES,
+  TEXTURE_SHADER_HELPERS,
+  TEXTURE_SHADER_UV,
+  TEXTURE_TYPE,
+} from '~/lib/wallpaperMesh/texture/shader'
+
+import type { TWallpaperRenderDescriptor } from './spec'
 
 const MAX_COLORS = 6
 const MAX_ANCHORS = 8
-const MAX_BLUR_PX = 6
 const DPR_CAP = 2
 
 const VERTEX_SHADER = `
@@ -28,10 +34,7 @@ uniform int uTextureType;
 uniform int uBgMode;
 uniform float uFlow;
 uniform float uSoftness;
-uniform float uBrightness;
-uniform float uSaturation;
-uniform float uTextureStrength;
-uniform float uBlurPx;
+uniform float uTextureIntensity;
 uniform float uMeshBrightness;
 uniform float uMeshContrast;
 uniform float uImageReady;
@@ -137,92 +140,19 @@ vec4 sampleBase(vec2 uv) {
   return vec4(clamp(color, 0.0, 1.0), 1.0);
 }
 
-vec4 sampleBaseBlurred(vec2 uv) {
-  if (uBlurPx <= 0.05) return sampleBase(uv);
-
-  vec2 px = uBlurPx / max(uResolution, vec2(1.0));
-  vec4 color = sampleBase(uv) * 0.32;
-  color += sampleBase(uv + vec2(px.x, 0.0)) * 0.12;
-  color += sampleBase(uv - vec2(px.x, 0.0)) * 0.12;
-  color += sampleBase(uv + vec2(0.0, px.y)) * 0.12;
-  color += sampleBase(uv - vec2(0.0, px.y)) * 0.12;
-  color += sampleBase(uv + px) * 0.05;
-  color += sampleBase(uv - px) * 0.05;
-  color += sampleBase(uv + vec2(px.x, -px.y)) * 0.05;
-  color += sampleBase(uv + vec2(-px.x, px.y)) * 0.05;
-
-  return color;
-}
-
 float luminance(vec3 color) {
   return dot(color, vec3(0.299, 0.587, 0.114));
 }
 
-float bayer4(vec2 coord) {
-  vec2 cell = mod(floor(coord), 4.0);
-  float x = cell.x;
-  float y = cell.y;
-
-  if (y < 0.5) {
-    if (x < 0.5) return 0.0 / 15.0;
-    if (x < 1.5) return 8.0 / 15.0;
-    if (x < 2.5) return 2.0 / 15.0;
-    return 10.0 / 15.0;
-  }
-  if (y < 1.5) {
-    if (x < 0.5) return 12.0 / 15.0;
-    if (x < 1.5) return 4.0 / 15.0;
-    if (x < 2.5) return 14.0 / 15.0;
-    return 6.0 / 15.0;
-  }
-  if (y < 2.5) {
-    if (x < 0.5) return 3.0 / 15.0;
-    if (x < 1.5) return 11.0 / 15.0;
-    if (x < 2.5) return 1.0 / 15.0;
-    return 9.0 / 15.0;
-  }
-
-  if (x < 0.5) return 15.0 / 15.0;
-  if (x < 1.5) return 7.0 / 15.0;
-  if (x < 2.5) return 13.0 / 15.0;
-  return 5.0 / 15.0;
-}
+${TEXTURE_SHADER_HELPERS}
 
 vec3 applyTexture(vec3 color, vec2 uv) {
-  float strength = clamp(uTextureStrength, 0.0, 1.0);
+  float strength = clamp(uTextureIntensity, 0.0, 1.0);
   if (strength <= 0.001 || uTextureType == 0) return color;
 
-  if (uTextureType == 1) {
-    float noise = random(gl_FragCoord.xy + vec2(37.0, 91.0));
-    return clamp(color + (noise - 0.5) * strength * 0.22, 0.0, 1.0);
-  }
-
-  if (uTextureType == 3) {
-    float cell = mix(8.0, 4.5, strength);
-    vec2 center = mod(gl_FragCoord.xy, cell) - cell * 0.5;
-    float lum = luminance(color);
-    float radius = cell * mix(0.18, 0.42, (1.0 - lum) * strength);
-    float dotMask = 1.0 - smoothstep(radius, radius + 0.8, length(center));
-
-    return mix(color, color * 0.64, dotMask * (0.35 + strength * 0.42));
-  }
-
-  if (uTextureType == 4) {
-    float threshold = (bayer4(gl_FragCoord.xy) - 0.5) * 0.28 * strength;
-    vec3 adjusted = clamp(color + threshold, 0.0, 1.0);
-    vec3 quantized = floor(adjusted * 6.0 + 0.5) / 6.0;
-
-    return mix(color, quantized, strength * 0.78);
-  }
+${TEXTURE_SHADER_BRANCHES}
 
   return color;
-}
-
-vec3 applyColorAdjust(vec3 color) {
-  float gray = luminance(color);
-  vec3 saturated = mix(vec3(gray), color, uSaturation);
-
-  return clamp(saturated * uBrightness, 0.0, 1.0);
 }
 
 void main() {
@@ -232,13 +162,10 @@ void main() {
   }
 
   vec2 uv = vUv;
-  if (uTextureType == 2 && uTextureStrength > 0.001) {
-    float blockSize = mix(2.0, 8.0, uTextureStrength);
-    uv = (floor(uv * uResolution / blockSize) + 0.5) * blockSize / uResolution;
-  }
+${TEXTURE_SHADER_UV}
 
-  vec4 baseColor = sampleBaseBlurred(uv);
-  vec3 color = applyColorAdjust(baseColor.rgb);
+  vec4 baseColor = sampleBase(uv);
+  vec3 color = baseColor.rgb;
   color = applyTexture(color, uv);
 
   gl_FragColor = vec4(color, baseColor.a);
@@ -252,13 +179,6 @@ const MODE = {
   image: 3,
 } as const
 
-const TEXTURE_TYPE = {
-  grain: 1,
-  pixelate: 2,
-  screentone: 3,
-  dither: 4,
-} as const
-
 type TUniforms = {
   mode: WebGLUniformLocation | null
   colorCount: WebGLUniformLocation | null
@@ -267,10 +187,7 @@ type TUniforms = {
   bgMode: WebGLUniformLocation | null
   flow: WebGLUniformLocation | null
   softness: WebGLUniformLocation | null
-  brightness: WebGLUniformLocation | null
-  saturation: WebGLUniformLocation | null
-  textureStrength: WebGLUniformLocation | null
-  blurPx: WebGLUniformLocation | null
+  textureIntensity: WebGLUniformLocation | null
   meshBrightness: WebGLUniformLocation | null
   meshContrast: WebGLUniformLocation | null
   imageReady: WebGLUniformLocation | null
@@ -359,10 +276,7 @@ const getUniforms = (gl: WebGLRenderingContext, program: WebGLProgram): TUniform
   bgMode: gl.getUniformLocation(program, 'uBgMode'),
   flow: gl.getUniformLocation(program, 'uFlow'),
   softness: gl.getUniformLocation(program, 'uSoftness'),
-  brightness: gl.getUniformLocation(program, 'uBrightness'),
-  saturation: gl.getUniformLocation(program, 'uSaturation'),
-  textureStrength: gl.getUniformLocation(program, 'uTextureStrength'),
-  blurPx: gl.getUniformLocation(program, 'uBlurPx'),
+  textureIntensity: gl.getUniformLocation(program, 'uTextureIntensity'),
   meshBrightness: gl.getUniformLocation(program, 'uMeshBrightness'),
   meshContrast: gl.getUniformLocation(program, 'uMeshContrast'),
   imageReady: gl.getUniformLocation(program, 'uImageReady'),
@@ -374,7 +288,7 @@ const getUniforms = (gl: WebGLRenderingContext, program: WebGLProgram): TUniform
 })
 
 const textureTypeToUniform = (descriptor: TWallpaperRenderDescriptor): number => {
-  if (descriptor.texture.strength <= 0) return 0
+  if (descriptor.texture.intensity <= 0) return 0
 
   return TEXTURE_TYPE[descriptor.texture.type] ?? 0
 }
@@ -574,13 +488,10 @@ class WallpaperWebglRenderer {
     gl.uniform1i(uniforms.bgMode, isContain ? 1 : 0)
     gl.uniform1f(uniforms.flow, descriptor.flow)
     gl.uniform1f(uniforms.softness, descriptor.meshRecipe?.softness ?? 0)
-    gl.uniform1f(uniforms.brightness, descriptor.brightness / 100)
-    gl.uniform1f(uniforms.saturation, descriptor.saturation / 100)
-    gl.uniform1f(uniforms.textureStrength, clamp(descriptor.texture.strength, 0, 100) / 100)
-    gl.uniform1f(
-      uniforms.blurPx,
-      (clamp(descriptor.blurIntensity, 0, 100) / 100) * MAX_BLUR_PX * this.dpr,
-    )
+    // CSS owns global post-processing filters. Keep WebGL focused on content
+    // generation and texture effects so gradient, mesh, picture, and pattern
+    // share one blur/brightness/saturation behavior at the final layer.
+    gl.uniform1f(uniforms.textureIntensity, clamp(descriptor.texture.intensity, 0, 100) / 100)
     gl.uniform1f(uniforms.meshBrightness, meshBrightness)
     gl.uniform1f(uniforms.meshContrast, meshContrast)
     gl.uniform1f(uniforms.imageReady, this.imageReady ? 1 : 0)

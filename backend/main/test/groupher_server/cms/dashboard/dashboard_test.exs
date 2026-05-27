@@ -146,24 +146,37 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
       {:ok, _} =
         CMS.Dashboard.update(community, :wallpaper, %{
-          type: "custom",
+          type: "mesh",
           source: "orange",
+          gradient_deg: 45,
           blur_intensity: 35,
           brightness: 85,
           saturation: 120,
-          texture_type: "dither",
-          texture_strength: 55
+          mesh: %{
+            "version" => 1,
+            "preset" => "test",
+            "seed" => 1,
+            "colors" => ["#fff", "#000"],
+            "flow" => 45,
+            "softness" => 60,
+            "contrast" => 100,
+            "brightness" => 100,
+            "anchors" => [%{"x" => 0.2, "y" => 0.8, "color" => 1}]
+          },
+          texture: %{"type" => "dither", "intensity" => 55, "params" => %{}}
         })
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
       assert find_community.dashboard.wallpaper.source == "orange"
-      assert find_community.dashboard.wallpaper.type == "custom"
+      assert find_community.dashboard.wallpaper.type == "mesh"
+      assert find_community.dashboard.wallpaper.gradient_deg == 45
       assert find_community.dashboard.wallpaper.blur_intensity == 35
       assert find_community.dashboard.wallpaper.brightness == 85
       assert find_community.dashboard.wallpaper.saturation == 120
-      assert find_community.dashboard.wallpaper.texture_type == "dither"
-      assert find_community.dashboard.wallpaper.texture_strength == 55
+      assert find_community.dashboard.wallpaper.mesh["preset"] == "test"
+      assert find_community.dashboard.wallpaper.texture["type"] == "dither"
+      assert find_community.dashboard.wallpaper.texture["intensity"] == 55
     end
 
     test "can update layout in community dashboard", ~m(community_attrs user)a do

@@ -1,6 +1,6 @@
 'use client'
 
-import { type CSSProperties, useEffect, useRef } from 'react'
+import { type CSSProperties, useEffect, useRef, useState } from 'react'
 
 import { cn } from '~/css'
 import {
@@ -8,7 +8,7 @@ import {
   useWallpaperRenderDescriptor,
 } from '~/hooks/useWallpaper'
 import { subscribeWallpaperPreview } from '~/lib/wallpaperRenderer/preview'
-import type { TWallpaperRenderDescriptor } from '~/lib/wallpaperRenderer/types'
+import type { TWallpaperRenderDescriptor } from '~/lib/wallpaperRenderer/spec'
 import { createWallpaperWebglRenderer } from '~/lib/wallpaperRenderer/webgl'
 
 type TProps = {
@@ -22,7 +22,13 @@ const fallbackClass = 'absolute inset-0 bg-center'
 const patternClass = 'absolute inset-0 pointer-events-none'
 
 const getFallbackStyle = (descriptor: TWallpaperRenderDescriptor): CSSProperties => ({
-  background: `var(--preview-wallpaper-bg, ${descriptor.background})`,
+  background: descriptor.background,
+})
+
+// Wallpaper content generation stays in WebGL; global visual adjustments stay in CSS.
+// CSS filter gives blur/brightness/saturation the same final-layer semantics for
+// gradient, mesh, picture, texture effects, and the pattern overlay.
+const getFilterLayerStyle = (descriptor: TWallpaperRenderDescriptor): CSSProperties => ({
   filter: `var(--preview-wallpaper-filter, ${descriptor.filter})`,
 })
 
@@ -34,12 +40,14 @@ export default function WallpaperRenderer({
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const rendererRef = useRef<ReturnType<typeof createWallpaperWebglRenderer>>(null)
   const committedDescriptor = useWallpaperRenderDescriptor()
+  const [activeDescriptor, setActiveDescriptor] = useState(committedDescriptor)
   const committedDescriptorRef = useRef(committedDescriptor)
   const activeDescriptorRef = useRef(committedDescriptor)
 
   useEffect(() => {
     committedDescriptorRef.current = committedDescriptor
     activeDescriptorRef.current = committedDescriptor
+    setActiveDescriptor(committedDescriptor)
     rendererRef.current?.update(committedDescriptor)
   }, [committedDescriptor])
 
@@ -90,6 +98,7 @@ export default function WallpaperRenderer({
         : committedDescriptorRef.current
 
       activeDescriptorRef.current = nextDescriptor
+      setActiveDescriptor(nextDescriptor)
       rendererRef.current?.update(nextDescriptor)
     })
   }, [])
@@ -102,9 +111,11 @@ export default function WallpaperRenderer({
 
   return (
     <div className={cn(positioned && 'relative', 'overflow-hidden', className)} aria-hidden='true'>
-      <div className={fallbackClass} style={getFallbackStyle(committedDescriptor)} />
-      <canvas ref={canvasRef} className={canvasClass} />
-      {committedDescriptor.hasPattern && <div className={patternClass} style={patternStyle} />}
+      <div className='absolute inset-0' style={getFilterLayerStyle(activeDescriptor)}>
+        <div className={fallbackClass} style={getFallbackStyle(activeDescriptor)} />
+        <canvas ref={canvasRef} className={canvasClass} />
+        {activeDescriptor.hasPattern && <div className={patternClass} style={patternStyle} />}
+      </div>
     </div>
   )
 }

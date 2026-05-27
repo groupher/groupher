@@ -365,6 +365,12 @@ export default {
   'dsb.appearance.wallpaper.editor.upload_image': 'Upload / import image',
   'dsb.appearance.wallpaper.editor.blank': 'Blank wallpaper',
   'dsb.appearance.wallpaper.editor.restore': 'Restore',
+  'dsb.appearance.wallpaper.texture': 'Texture',
+  'dsb.appearance.wallpaper.texture.intensity': 'Intensity',
+  'dsb.appearance.wallpaper.texture.grain': 'Grain',
+  'dsb.appearance.wallpaper.texture.pixelate': 'Pixelate',
+  'dsb.appearance.wallpaper.texture.screentone': 'Screentone',
+  'dsb.appearance.wallpaper.texture.dither': 'Dither',
   'dsb.appearance.kanban.bg.title': 'Board backgrounds',
   'dsb.appearance.kanban.bg.desc':
     'Background color for each kanban column. Default is light gray.',

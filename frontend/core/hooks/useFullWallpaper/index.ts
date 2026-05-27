@@ -26,15 +26,14 @@ export default function useFullWallpaper(): TRet {
 
   const getWallpaper = (): TWallpaperData => {
     const {
-      customColorValue,
-      direction,
+      gradientDeg,
       hasPattern,
       blurIntensity,
       hasShadow,
       brightness,
       saturation,
-      textureType,
-      textureStrength,
+      mesh,
+      texture,
       source,
       type,
       bgSize,
@@ -51,12 +50,11 @@ export default function useFullWallpaper(): TRet {
       hasShadow,
       brightness,
       saturation,
-      textureType,
-      textureStrength,
+      mesh,
+      texture,
       gradientWallpapers: getGradientWallpapers(),
       patternWallpapers: getPatternWallpapers(),
-      customColor: customColorValue,
-      direction,
+      gradientDeg,
       bgSize,
     }
   }

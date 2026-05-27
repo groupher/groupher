@@ -3,16 +3,32 @@ import { renderHook } from '@testing-library/react'
 import { GRADIENT_WALLPAPER_NAME, WALLPAPER_TYPE } from '~/const/wallpaper'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useWallpaper, { resolveWallpaperRenderDescriptor } from '~/hooks/useWallpaper'
-import { stringifyMeshGradientRecipe } from '~/lib/wallpaperMesh'
+import { WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
+import type { TMeshGradientRecipe } from '~/lib/wallpaperMesh'
 
 describe('useWallpaper', () => {
-  it('parses custom gradient wallpaper', () => {
+  const mesh: TMeshGradientRecipe = {
+    version: 1,
+    kind: 'mesh',
+    preset: 'test',
+    seed: 1,
+    colors: ['#fbeede', '#ff7f6f', '#5f74a6'],
+    flow: 135,
+    softness: 60,
+    contrast: 100,
+    brightness: 100,
+    anchors: [
+      { x: 0.2, y: 0.2, color: 0 },
+      { x: 0.78, y: 0.82, color: 2 },
+    ],
+  }
+
+  it('parses mesh wallpaper', () => {
     const wrapper = makeStoreWrapper({
       wallpaper: {
-        source: 'custom',
-        type: WALLPAPER_TYPE.CUSTOM_GRADIENT,
-        customColorValue: '#fff, #000',
-        direction: '180deg',
+        source: '',
+        type: WALLPAPER_TYPE.MESH,
+        mesh,
         hasPattern: false,
         blurIntensity: 50,
         hasShadow: true,
@@ -21,9 +37,9 @@ describe('useWallpaper', () => {
 
     const { result } = renderHook(() => useWallpaper(), { wrapper })
 
-    expect(result.current.source).toBe('custom')
+    expect(result.current.source).toBe('')
     expect(result.current.hasShadow).toBe(true)
-    expect(result.current.background).toContain('linear-gradient(180deg')
+    expect(result.current.background).toContain('linear-gradient(135deg')
     expect(result.current.effect).toContain('blur')
   })
 
@@ -32,7 +48,7 @@ describe('useWallpaper', () => {
       wallpaper: {
         source: GRADIENT_WALLPAPER_NAME.PURPLE,
         type: WALLPAPER_TYPE.GRADIENT,
-        direction: '90deg',
+        gradientDeg: 90,
         hasPattern: true,
         blurIntensity: 50,
       },
@@ -102,61 +118,50 @@ describe('useWallpaper', () => {
   it('resolves small texture descriptor separately from CSS wallpaper output', () => {
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
-      customColorValue: '',
       source: GRADIENT_WALLPAPER_NAME.GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: true,
+      gradientDeg: 90,
       blurIntensity: 30,
       hasShadow: false,
       brightness: 90,
       saturation: 120,
-      textureType: 'dither',
-      textureStrength: 55,
-      direction: '90deg',
+      mesh: null,
+      texture: { type: WALLPAPER_TEXTURE.DITHER, intensity: 55, params: {} },
       bgSize: 'cover',
     })
 
     expect(descriptor.kind).toBe('linear-gradient')
-    expect(descriptor.texture).toEqual({ type: 'dither', strength: 55 })
+    expect(descriptor.texture).toEqual({
+      type: WALLPAPER_TEXTURE.DITHER,
+      intensity: 55,
+      params: {},
+    })
     expect(descriptor.background).not.toContain('data:image')
   })
 
   it('resolves DIY mesh texture descriptor when source is empty', () => {
-    const customColorValue = stringifyMeshGradientRecipe({
-      version: 1,
-      kind: 'mesh',
-      preset: 'test',
-      seed: 1,
-      colors: ['#fbeede', '#ff7f6f', '#5f74a6'],
-      flow: 135,
-      softness: 60,
-      texture: { type: 'screentone', strength: 80 },
-      contrast: 100,
-      brightness: 100,
-      anchors: [
-        { x: 0.2, y: 0.2, color: 0 },
-        { x: 0.78, y: 0.82, color: 2 },
-      ],
-    })
-
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
-      customColorValue,
       source: '',
-      type: WALLPAPER_TYPE.CUSTOM_GRADIENT,
+      type: WALLPAPER_TYPE.MESH,
       hasPattern: false,
+      gradientDeg: 180,
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
       saturation: 100,
-      textureType: 'grain',
-      textureStrength: 0,
-      direction: '180deg',
+      mesh,
+      texture: { type: WALLPAPER_TEXTURE.SCREENTONE, intensity: 80, params: {} },
       bgSize: 'cover',
     })
 
     expect(descriptor.kind).toBe('mesh-gradient')
-    expect(descriptor.texture).toEqual({ type: 'screentone', strength: 80 })
+    expect(descriptor.texture).toEqual({
+      type: WALLPAPER_TEXTURE.SCREENTONE,
+      intensity: 80,
+      params: {},
+    })
     expect(descriptor.flow).toBe(135)
     expect(descriptor.meshRecipe?.anchors).toHaveLength(2)
   })

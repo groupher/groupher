@@ -4,39 +4,37 @@ export { PATTERN_WALLPAPER } from './wallpaper.generated'
 
 export const WALLPAPER_STATE_KEYS = [
   'customWallpaper',
-  'customColorValue',
   'source',
   'type',
   'hasPattern',
+  'gradientDeg',
   'blurIntensity',
   'hasShadow',
   'brightness',
   'saturation',
-  'textureType',
-  'textureStrength',
-  'direction',
+  'mesh',
+  'texture',
   'bgSize',
 ] as const
 
 export const WALLPAPER_SAVABLE_STATE_KEYS = [
-  'customColorValue',
   'source',
   'type',
   'hasPattern',
+  'gradientDeg',
   'blurIntensity',
   'hasShadow',
   'brightness',
   'saturation',
-  'textureType',
-  'textureStrength',
-  'direction',
+  'mesh',
+  'texture',
   'bgSize',
 ] as const
 
 export const WALLPAPER_TYPE = {
-  PATTERN: 'pattern',
+  PATTERN: 'picture',
   GRADIENT: 'gradient',
-  CUSTOM_GRADIENT: 'custom_gradient',
+  MESH: 'mesh',
   UPLOAD: 'upload',
   NONE: 'none',
 } as const

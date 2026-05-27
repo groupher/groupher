@@ -7,10 +7,11 @@ import useTrans from '~/hooks/useTrans'
 import CheckedSVG from '~/icons/CheckBold'
 import {
   buildMeshGradientFallback,
-  parseMeshGradientValue,
-  stringifyMeshGradientRecipe,
+  normalizeTexture,
+  WALLPAPER_TEXTURE,
+  WALLPAPER_TEXTURE_OPTIONS,
 } from '~/lib/wallpaperMesh'
-import type { TImageTextureType, TMeshGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
+import type { TMeshGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
 import RangeInput from '~/widgets/RangeInput'
 import Tooltip from '~/widgets/Tooltip'
 
@@ -22,7 +23,7 @@ type TPreset = {
   colors: string[]
   flow: number
   softness: number
-  texture: TWallpaperTexture
+  texture: Partial<TWallpaperTexture> & Pick<TWallpaperTexture, 'type' | 'intensity'>
   anchors: TMeshGradientRecipe['anchors']
 }
 
@@ -32,7 +33,7 @@ const PRESETS: TPreset[] = [
     colors: ['#fbeede', '#d8b9e3', '#f9fbff'],
     flow: 180,
     softness: 82,
-    texture: { type: 'grain', strength: 8 },
+    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 8 },
     anchors: [
       { x: 0.5, y: 0.02, color: 0 },
       { x: 0.5, y: 0.98, color: 1 },
@@ -44,7 +45,7 @@ const PRESETS: TPreset[] = [
     colors: ['#d6d9b8', '#87bb89', '#eef6df'],
     flow: 90,
     softness: 78,
-    texture: { type: 'grain', strength: 6 },
+    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 6 },
     anchors: [
       { x: 0.02, y: 0.5, color: 0 },
       { x: 0.98, y: 0.5, color: 1 },
@@ -56,7 +57,7 @@ const PRESETS: TPreset[] = [
     colors: ['#6f94db', '#64b2f4', '#83e4eb', '#dff8f2'],
     flow: 45,
     softness: 66,
-    texture: { type: 'grain', strength: 18 },
+    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 18 },
     anchors: [
       { x: 0.08, y: 0.12, color: 0 },
       { x: 0.24, y: 0.82, color: 1 },
@@ -69,7 +70,7 @@ const PRESETS: TPreset[] = [
     colors: ['#ffefc4', '#ff9b80', '#c06577', '#6b80a7'],
     flow: 135,
     softness: 54,
-    texture: { type: 'grain', strength: 14 },
+    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 14 },
     anchors: [
       { x: 0.12, y: 0.16, color: 0 },
       { x: 0.35, y: 0.78, color: 1 },
@@ -82,7 +83,7 @@ const PRESETS: TPreset[] = [
     colors: ['#d9f8ff', '#79d7f0', '#4f8bd8', '#233a7b'],
     flow: 160,
     softness: 72,
-    texture: { type: 'grain', strength: 10 },
+    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 10 },
     anchors: [
       { x: 0.18, y: 0.18, color: 0 },
       { x: 0.78, y: 0.22, color: 1 },
@@ -95,7 +96,7 @@ const PRESETS: TPreset[] = [
     colors: ['#ffe0f1', '#ff7eb6', '#8b5cf6', '#5eead4'],
     flow: 125,
     softness: 58,
-    texture: { type: 'grain', strength: 12 },
+    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 12 },
     anchors: [
       { x: 0.14, y: 0.24, color: 0 },
       { x: 0.42, y: 0.76, color: 1 },
@@ -108,7 +109,7 @@ const PRESETS: TPreset[] = [
     colors: ['#fff4d6', '#ffd1a8', '#f59e9e', '#c084fc'],
     flow: 210,
     softness: 64,
-    texture: { type: 'grain', strength: 9 },
+    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 9 },
     anchors: [
       { x: 0.18, y: 0.16, color: 0 },
       { x: 0.66, y: 0.2, color: 1 },
@@ -121,7 +122,7 @@ const PRESETS: TPreset[] = [
     colors: ['#111827', '#312e81', '#0f766e', '#bae6fd'],
     flow: 30,
     softness: 52,
-    texture: { type: 'grain', strength: 16 },
+    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 16 },
     anchors: [
       { x: 0.12, y: 0.18, color: 0 },
       { x: 0.72, y: 0.22, color: 1 },
@@ -134,7 +135,7 @@ const PRESETS: TPreset[] = [
     colors: ['#74d3a7', '#b9eca6', '#f5dfc8', '#efb7bb'],
     flow: 105,
     softness: 70,
-    texture: { type: 'grain', strength: 8 },
+    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 8 },
     anchors: [
       { x: 0.14, y: 0.2, color: 0 },
       { x: 0.72, y: 0.2, color: 1 },
@@ -147,7 +148,7 @@ const PRESETS: TPreset[] = [
     colors: ['#d8e2e8', '#bcc7d0', '#c9c0cb', '#9ba6bc'],
     flow: 155,
     softness: 76,
-    texture: { type: 'grain', strength: 10 },
+    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 10 },
     anchors: [
       { x: 0.18, y: 0.18, color: 0 },
       { x: 0.76, y: 0.18, color: 1 },
@@ -160,7 +161,7 @@ const PRESETS: TPreset[] = [
     colors: ['#ffe1a8', '#e9c394', '#cbb9a1', '#a7b8ac'],
     flow: 65,
     softness: 68,
-    texture: { type: 'grain', strength: 7 },
+    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 7 },
     anchors: [
       { x: 0.12, y: 0.22, color: 0 },
       { x: 0.64, y: 0.18, color: 1 },
@@ -173,7 +174,7 @@ const PRESETS: TPreset[] = [
     colors: ['#fedfa3', '#ecc896', '#85c9e9', '#4f9fd1'],
     flow: 235,
     softness: 62,
-    texture: { type: 'grain', strength: 9 },
+    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 9 },
     anchors: [
       { x: 0.14, y: 0.16, color: 0 },
       { x: 0.58, y: 0.24, color: 1 },
@@ -186,7 +187,7 @@ const PRESETS: TPreset[] = [
     colors: ['#ffe6dc', '#ff9f8f', '#65d6d0', '#2f7f93'],
     flow: 120,
     softness: 64,
-    texture: { type: 'grain', strength: 8 },
+    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 8 },
     anchors: [
       { x: 0.12, y: 0.18, color: 0 },
       { x: 0.48, y: 0.78, color: 1 },
@@ -199,7 +200,7 @@ const PRESETS: TPreset[] = [
     colors: ['#eef5f6', '#c9d7dc', '#9ab0be', '#d9c7d7'],
     flow: 205,
     softness: 80,
-    texture: { type: 'grain', strength: 12 },
+    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 12 },
     anchors: [
       { x: 0.18, y: 0.18, color: 0 },
       { x: 0.78, y: 0.24, color: 1 },
@@ -212,7 +213,7 @@ const PRESETS: TPreset[] = [
     colors: ['#f3d9ee', '#c8a2d8', '#7f6cc8', '#3c3b7b'],
     flow: 30,
     softness: 58,
-    texture: { type: 'grain', strength: 10 },
+    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 10 },
     anchors: [
       { x: 0.16, y: 0.22, color: 0 },
       { x: 0.7, y: 0.16, color: 1 },
@@ -225,7 +226,7 @@ const PRESETS: TPreset[] = [
     colors: ['#fff1b8', '#f5a524', '#10b981', '#06b6d4'],
     flow: 150,
     softness: 55,
-    texture: { type: 'grain', strength: 11 },
+    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 11 },
     anchors: [
       { x: 0.14, y: 0.2, color: 0 },
       { x: 0.68, y: 0.18, color: 1 },
@@ -233,13 +234,6 @@ const PRESETS: TPreset[] = [
       { x: 0.88, y: 0.78, color: 3 },
     ],
   },
-]
-
-const TEXTURE_OPTIONS: { type: TImageTextureType; label: string }[] = [
-  { type: 'grain', label: 'Grain' },
-  { type: 'pixelate', label: 'Pixelate' },
-  { type: 'screentone', label: 'Screentone' },
-  { type: 'dither', label: 'Dither' },
 ]
 
 const makeRecipe = (preset: TPreset, seed = Date.now()): TMeshGradientRecipe => ({
@@ -250,27 +244,30 @@ const makeRecipe = (preset: TPreset, seed = Date.now()): TMeshGradientRecipe => 
   colors: preset.colors,
   flow: preset.flow,
   softness: preset.softness,
-  texture: preset.texture,
   contrast: 100,
   brightness: 100,
   anchors: preset.anchors,
 })
 
-const getInitialRecipe = (customColorValue?: string | null): TMeshGradientRecipe =>
-  parseMeshGradientValue(customColorValue) || makeRecipe(PRESETS[0], 18432)
+const getInitialRecipe = (mesh?: TMeshGradientRecipe | null): TMeshGradientRecipe =>
+  mesh || makeRecipe(PRESETS[0], 18432)
 
 export default function DiyTab() {
   const s = useSalon()
   const { getWallpaper, scheduleWallpaperPreview, flushWallpaperDraft } = useLogic()
-  const { customColor } = getWallpaper()
+  const { mesh } = getWallpaper()
 
-  const recipe = useMemo(() => getInitialRecipe(customColor), [customColor])
+  const recipe = useMemo(() => getInitialRecipe(mesh), [mesh])
+  const recipeSeed = recipe.seed
 
-  const commitRecipe = (recipe: TMeshGradientRecipe): void => {
+  const commitPreset = (preset: TPreset): void => {
+    const recipe = makeRecipe(preset, recipeSeed)
+
     scheduleWallpaperPreview({
       source: '',
-      type: WALLPAPER_TYPE.CUSTOM_GRADIENT,
-      customColorValue: stringifyMeshGradientRecipe(recipe),
+      type: WALLPAPER_TYPE.MESH,
+      mesh: recipe,
+      texture: normalizeTexture(preset.texture),
     })
     flushWallpaperDraft()
   }
@@ -280,7 +277,7 @@ export default function DiyTab() {
       <div className={s.presets}>
         {PRESETS.map((preset) => {
           const selected = recipe.preset === preset.key
-          const presetRecipe = makeRecipe(preset, recipe.seed)
+          const presetRecipe = makeRecipe(preset, recipeSeed)
           const previewRecipe = selected ? recipe : presetRecipe
 
           return (
@@ -288,7 +285,7 @@ export default function DiyTab() {
               type='button'
               key={preset.key}
               className={cn(s.presetCard, selected && s.presetActive)}
-              onClick={() => commitRecipe(presetRecipe)}
+              onClick={() => commitPreset(preset)}
             >
               {selected && (
                 <div className={s.activeSign}>
@@ -309,43 +306,46 @@ export default function DiyTab() {
 
 export function DiySettings() {
   const s = useSalon()
-  const { getWallpaper, scheduleWallpaperPreview, flushWallpaperDraft } = useLogic()
-  const { customColor } = getWallpaper()
-  const { locale } = useTrans()
-  const sourceRecipe = useMemo(() => getInitialRecipe(customColor), [customColor])
+  const { getWallpaper, scheduleWallpaperPreview, flushWallpaperDraft, changeTexture } = useLogic()
+  const { mesh, texture } = getWallpaper()
+  const { t } = useTrans()
+  const sourceRecipe = useMemo(() => getInitialRecipe(mesh), [mesh])
   const [draftRecipe, setDraftRecipe] = useState(sourceRecipe)
-  const textureLabel = locale === 'zh' || locale === 'zh-hant' ? '质感' : 'Texture'
-  const intensityLabel = locale === 'zh' || locale === 'zh-hant' ? '强度' : 'Intensity'
+  const [draftTexture, setDraftTexture] = useState(texture)
+  const textureLabel = t('dsb.appearance.wallpaper.texture')
+  const intensityLabel = t('dsb.appearance.wallpaper.texture.intensity')
 
   useEffect(() => {
     setDraftRecipe(sourceRecipe)
   }, [sourceRecipe])
 
+  useEffect(() => {
+    setDraftTexture(texture)
+  }, [texture])
+
   const commitRecipe = (nextRecipe: TMeshGradientRecipe, flush = false): void => {
     scheduleWallpaperPreview({
       source: '',
-      type: WALLPAPER_TYPE.CUSTOM_GRADIENT,
-      customColorValue: stringifyMeshGradientRecipe(nextRecipe),
+      type: WALLPAPER_TYPE.MESH,
+      mesh: nextRecipe,
     })
 
     if (flush) flushWallpaperDraft()
   }
 
   const updateTexture = (patch: Partial<TWallpaperTexture>): void => {
-    const nextRecipe = {
-      ...draftRecipe,
-      texture: {
-        ...draftRecipe.texture,
-        ...patch,
-        strength:
-          patch.type && draftRecipe.texture.strength === 0
-            ? 45
-            : (patch.strength ?? draftRecipe.texture.strength),
-      },
+    const nextTexture = {
+      ...draftTexture,
+      ...patch,
+      intensity:
+        patch.type && draftTexture.intensity === 0
+          ? 45
+          : (patch.intensity ?? draftTexture.intensity),
     }
 
-    setDraftRecipe(nextRecipe)
-    commitRecipe(nextRecipe, true)
+    setDraftTexture(nextTexture)
+    changeTexture(nextTexture)
+    flushWallpaperDraft()
   }
 
   const updateColor = (index: number, color: string): void => {
@@ -372,24 +372,19 @@ export function DiySettings() {
     commitRecipe(nextRecipe, true)
   }
 
-  const updateTextureStrengthDraft = (strength: number): void => {
-    const nextRecipe = {
-      ...draftRecipe,
-      texture: { ...draftRecipe.texture, strength },
-    }
+  const updateTextureIntensityDraft = (intensity: number): void => {
+    const nextTexture = { ...draftTexture, intensity }
 
-    setDraftRecipe(nextRecipe)
-    commitRecipe(nextRecipe)
+    setDraftTexture(nextTexture)
+    changeTexture(nextTexture)
   }
 
-  const commitTextureStrength = (strength: number): void => {
-    const nextRecipe = {
-      ...draftRecipe,
-      texture: { ...draftRecipe.texture, strength },
-    }
+  const commitTextureIntensity = (intensity: number): void => {
+    const nextTexture = { ...draftTexture, intensity }
 
-    setDraftRecipe(nextRecipe)
-    commitRecipe(nextRecipe, true)
+    setDraftTexture(nextTexture)
+    changeTexture(nextTexture)
+    flushWallpaperDraft()
   }
 
   return (
@@ -432,8 +427,9 @@ export function DiySettings() {
             <div className={s.textureRow}>
               <div className={s.textureLabel}>{textureLabel}</div>
               <div className={s.textureOptions}>
-                {TEXTURE_OPTIONS.map(({ type, label }) => {
-                  const selected = draftRecipe.texture.type === type
+                {WALLPAPER_TEXTURE_OPTIONS.map(({ type, labelKey }) => {
+                  const selected = draftTexture.type === type
+                  const label = t(labelKey)
 
                   return (
                     <Tooltip key={type} content={label} placement='top'>
@@ -456,17 +452,17 @@ export function DiySettings() {
                 })}
               </div>
             </div>
-            <div className={s.textureStrength}>
+            <div className={s.textureIntensity}>
               <RangeInput
-                value={draftRecipe.texture.strength}
+                value={draftTexture.intensity}
                 min={0}
                 max={100}
                 step={1}
                 labelPlacement='left'
                 valueLabel={intensityLabel}
                 aria-label={intensityLabel}
-                onChange={updateTextureStrengthDraft}
-                onChangeEnd={commitTextureStrength}
+                onChange={updateTextureIntensityDraft}
+                onChangeEnd={commitTextureIntensity}
               />
             </div>
           </div>

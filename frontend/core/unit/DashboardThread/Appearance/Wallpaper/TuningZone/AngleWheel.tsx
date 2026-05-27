@@ -13,31 +13,8 @@ import useLogic from '../useLogic'
 const WHEEL_SIZE = 56
 const WHEEL_RADIUS = WHEEL_SIZE / 2
 const DOT_SIZE = 10
-const DEFAULT_ANGLE = 180
-
-const LEGACY_ANGLE = {
-  top: 0,
-  'top right': 45,
-  right: 90,
-  'bottom right': 135,
-  bottom: 180,
-  'bottom left': 225,
-  left: 270,
-  'top left': 315,
-} as const
 
 const normalizeAngle = (angle: number): number => Math.round(((angle % 360) + 360) % 360)
-
-const parseAngle = (direction: string): number => {
-  const direction$ = direction.trim().toLowerCase()
-
-  if (direction$ in LEGACY_ANGLE) return LEGACY_ANGLE[direction$ as keyof typeof LEGACY_ANGLE]
-
-  const match = direction$.match(/^(-?\d+(?:\.\d+)?)deg$/)
-  if (!match) return DEFAULT_ANGLE
-
-  return normalizeAngle(Number(match[1]))
-}
 
 const angleFromPointer = (clientX: number, clientY: number, rect: DOMRect): number => {
   const centerX = rect.left + rect.width / 2
@@ -59,24 +36,24 @@ const pointFromAngle = (angle: number): { left: number; top: number } => {
 }
 
 export default function AnglePanel() {
-  const { directionDraft, changeDirection, flushWallpaperDraft } = useLogic()
+  const { angleDraft, changeAngle, flushWallpaperDraft } = useLogic()
   const panelRef = useRef<HTMLDivElement | null>(null)
-  const [angle, setAngle] = useState(() => parseAngle(directionDraft))
+  const [angle, setAngle] = useState(() => normalizeAngle(angleDraft))
   const [dragging, setDragging] = useState(false)
   const s = useSalon()
 
   const pointStyle = pointFromAngle(angle)
 
   useEffect(() => {
-    setAngle(parseAngle(directionDraft))
-  }, [directionDraft])
+    setAngle(normalizeAngle(angleDraft))
+  }, [angleDraft])
 
   const commitAngle = useCallback(
     (angle: number) => {
       setAngle(angle)
-      changeDirection(`${angle}deg`)
+      changeAngle(angle)
     },
-    [changeDirection],
+    [changeAngle],
   )
 
   const updateAngle = useCallback(

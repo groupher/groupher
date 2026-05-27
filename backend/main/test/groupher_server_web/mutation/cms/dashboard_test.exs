@@ -104,40 +104,39 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       $community: String!
       $source: String
       $type: String
-      $direction: String
-      $customColorValue: String
+      $gradientDeg: Int
+      $mesh: Json
       $bgSize: String
       $hasPattern: Boolean
       $blurIntensity: Int
       $hasShadow: Boolean
       $brightness: Int
       $saturation: Int
-      $textureType: String
-      $textureStrength: Int
+      $texture: Json
       ) {
       updateDashboardWallpaper(
         community: $community
         source: $source
         type: $type
-        direction: $direction
-        customColorValue: $customColorValue
+        gradientDeg: $gradientDeg
+        mesh: $mesh
         bgSize: $bgSize
         hasPattern: $hasPattern
         blurIntensity: $blurIntensity
         hasShadow: $hasShadow
         brightness: $brightness
         saturation: $saturation
-        textureType: $textureType
-        textureStrength: $textureStrength
+        texture: $texture
       ) {
         wallpaper {
           type
           source
+          gradientDeg
           blurIntensity
           brightness
           saturation
-          textureType
-          textureStrength
+          mesh
+          texture
         }
       }
     }
@@ -148,12 +147,24 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       variables = %{
         community: community.slug,
         source: "orange",
-        type: "CUSTOM",
+        type: "mesh",
+        gradientDeg: 45,
         blurIntensity: 35,
         brightness: 85,
         saturation: 120,
-        textureType: "dither",
-        textureStrength: 55
+        mesh:
+          Jason.encode!(%{
+            version: 1,
+            preset: "test",
+            seed: 1,
+            colors: ["#fff", "#000"],
+            flow: 45,
+            softness: 60,
+            contrast: 100,
+            brightness: 100,
+            anchors: [%{x: 0.2, y: 0.8, color: 1}]
+          }),
+        texture: Jason.encode!(%{type: "dither", intensity: 55, params: %{}})
       }
 
       updated =
@@ -161,21 +172,25 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         |> gq_mutation(@update_wallpaper_query, variables)
 
       assert get_in(updated, ["wallpaper", "source"]) == "orange"
+      assert get_in(updated, ["wallpaper", "gradientDeg"]) == 45
       assert get_in(updated, ["wallpaper", "blurIntensity"]) == 35
       assert get_in(updated, ["wallpaper", "brightness"]) == 85
       assert get_in(updated, ["wallpaper", "saturation"]) == 120
-      assert get_in(updated, ["wallpaper", "textureType"]) == "dither"
-      assert get_in(updated, ["wallpaper", "textureStrength"]) == 55
+      assert get_in(updated, ["wallpaper", "mesh", "preset"]) == "test"
+      assert get_in(updated, ["wallpaper", "texture", "type"]) == "dither"
+      assert get_in(updated, ["wallpaper", "texture", "intensity"]) == 55
 
       {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
 
       assert found.dashboard.wallpaper.source == "orange"
-      assert found.dashboard.wallpaper.type == "CUSTOM"
+      assert found.dashboard.wallpaper.type == "mesh"
+      assert found.dashboard.wallpaper.gradient_deg == 45
       assert found.dashboard.wallpaper.blur_intensity == 35
       assert found.dashboard.wallpaper.brightness == 85
       assert found.dashboard.wallpaper.saturation == 120
-      assert found.dashboard.wallpaper.texture_type == "dither"
-      assert found.dashboard.wallpaper.texture_strength == 55
+      assert found.dashboard.wallpaper.mesh["preset"] == "test"
+      assert found.dashboard.wallpaper.texture["type"] == "dither"
+      assert found.dashboard.wallpaper.texture["intensity"] == 55
     end
 
     @update_enable_query """

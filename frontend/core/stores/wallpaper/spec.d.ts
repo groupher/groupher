@@ -1,21 +1,20 @@
-import type { TImageTextureType } from '~/lib/wallpaperMesh'
-import type { TCustomWallpaper, TWallpaperGradientDir, TWallpaperType } from '~/spec'
+import type { TMeshGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
+import type { TCustomWallpaper, TWallpaperType } from '~/spec'
 
 export type TWallpaperState = {
   customWallpaper: TCustomWallpaper
-  customColorValue: string
   source: string
   type: TWallpaperType
 
   hasPattern: boolean
+  gradientDeg: number
   blurIntensity: number
   hasShadow: boolean
   brightness: number
   saturation: number
-  textureType: TImageTextureType
-  textureStrength: number
+  mesh: TMeshGradientRecipe | null
+  texture: TWallpaperTexture
 
-  direction: TWallpaperGradientDir
   bgSize: string
 }
 

@@ -45,7 +45,7 @@ export default function TuningZone({ tab }: TProps) {
     saturation,
   })
 
-  const isGradient = type === WALLPAPER_TYPE.GRADIENT || type === WALLPAPER_TYPE.CUSTOM_GRADIENT
+  const isGradient = type === WALLPAPER_TYPE.GRADIENT || type === WALLPAPER_TYPE.MESH
   const hasCustomSettings = tab === TAB.DIY || tab === TAB.PICTURES
   const hasRightPanel = isGradient || hasCustomSettings
 

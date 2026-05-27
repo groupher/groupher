@@ -3,6 +3,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { GRADIENT_WALLPAPER_NAME, WALLPAPER_TYPE } from '~/const/wallpaper'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
+import { WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 import type { TWallpaperGradient, TWallpaperPic } from '~/spec'
 
 describe('useFullWallpaper', () => {
@@ -15,9 +16,8 @@ describe('useFullWallpaper', () => {
         blurIntensity: 0,
         brightness: 100,
         saturation: 100,
-        textureType: 'grain',
-        textureStrength: 0,
-        direction: '180deg',
+        texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 0, params: {} },
+        gradientDeg: 180,
       },
     })
 
@@ -28,8 +28,7 @@ describe('useFullWallpaper', () => {
     expect(data.type).toBe(WALLPAPER_TYPE.GRADIENT)
     expect(data.brightness).toBe(100)
     expect(data.saturation).toBe(100)
-    expect(data.textureType).toBe('grain')
-    expect(data.textureStrength).toBe(0)
+    expect(data.texture).toEqual({ type: WALLPAPER_TEXTURE.GRAIN, intensity: 0, params: {} })
 
     const pink = data.gradientWallpapers.pink
     expect('colors' in pink).toBe(true)
@@ -49,7 +48,7 @@ describe('useFullWallpaper', () => {
         type: WALLPAPER_TYPE.GRADIENT,
         hasPattern: true,
         blurIntensity: 50,
-        direction: '90deg',
+        gradientDeg: 90,
       },
     })
 

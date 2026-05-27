@@ -105,6 +105,7 @@ backend/main/cover/excoveralls.html
 
 # AI agent / skills (local only)
 .agents/
+.codegraph/
 .codex/
 .cursor/
 .github/skills/

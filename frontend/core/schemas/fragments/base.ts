@@ -44,16 +44,15 @@ export const footerOnelineLink = `
 export const wallpaper = `
   type
   source
-  direction
-  customColorValue
+  gradientDeg
   bgSize
   hasPattern
   blurIntensity
   hasShadow
   brightness
   saturation
-  textureType
-  textureStrength
+  mesh
+  texture
 `
 export const seo = `
   seoEnable

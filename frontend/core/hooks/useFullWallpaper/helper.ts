@@ -1,13 +1,7 @@
 import { clone } from 'ramda'
 
 import { GRADIENT_WALLPAPER, PATTERN_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
-import type {
-  TWallpaper,
-  TWallpaperGradient,
-  TWallpaperGradientDir,
-  TWallpaperPic,
-  TWallpaperType,
-} from '~/spec'
+import type { TWallpaper, TWallpaperGradient, TWallpaperPic, TWallpaperType } from '~/spec'
 
 type TGradientEffectState = {
   source: string
@@ -16,7 +10,7 @@ type TGradientEffectState = {
   blurIntensity: number
   brightness: number
   saturation: number
-  direction: TWallpaperGradientDir
+  gradientDeg: number
 }
 
 type TPatternEffectState = {
@@ -65,7 +59,7 @@ export const buildActiveGradientWallpapers = (
   activeWallpaper.blurIntensity = state.blurIntensity
   activeWallpaper.brightness = state.brightness
   activeWallpaper.saturation = state.saturation
-  activeWallpaper.direction = state.direction
+  activeWallpaper.direction = `${state.gradientDeg}deg`
 
   return wallpapers
 }

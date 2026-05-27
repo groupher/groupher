@@ -240,19 +240,22 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
       [:type, :string, "gradient"],
       [:source, :string, "pink"],
 
-      # (custom) gradient
+      # gradient
       [:has_pattern, :boolean, true],
-      [:direction, :string, "180deg"],
-      [:custom_color_value, :string, ""],
+      [:gradient_deg, :integer, 180],
 
-      # updated
+      # image
       [:bg_size, :string, "cover"],
+
+      # global effects
       [:blur_intensity, :integer, 0],
       [:has_shadow, :boolean, false],
       [:brightness, :integer, 100],
       [:saturation, :integer, 100],
-      [:texture_type, :string, "grain"],
-      [:texture_strength, :integer, 0]
+
+      # renderer-specific config/effects
+      [:mesh, :map, nil],
+      [:texture, :map, %{"type" => "grain", "intensity" => 0, "params" => %{}}]
     ]
   end
 end

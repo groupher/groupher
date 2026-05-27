@@ -1,26 +1,24 @@
 import { proxy } from 'valtio'
 
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
-import type { TImageTextureType } from '~/lib/wallpaperMesh'
-import type { TWallpaperGradientDir } from '~/spec'
+import { WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 
-import type { TInit, TStore } from './spec'
+import type { TInit, TStore, TWallpaperState } from './spec'
 
 export const INITIAL_WALLPAPER_STATE = {
   customWallpaper: null,
-  customColorValue: '',
   source: 'pink',
   type: WALLPAPER_TYPE.GRADIENT,
   hasPattern: true,
+  gradientDeg: 180,
   blurIntensity: 0,
   hasShadow: false,
   brightness: 100,
   saturation: 100,
-  textureType: 'grain' as TImageTextureType,
-  textureStrength: 0,
-  direction: '180deg' as TWallpaperGradientDir,
+  mesh: null,
+  texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 0, params: {} },
   bgSize: 'cover',
-}
+} satisfies TWallpaperState
 
 export default (init: TInit = {}): TStore => {
   const initialStore: TStore = {
