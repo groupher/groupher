@@ -22,7 +22,11 @@ void main() {
 `
 
 const FRAGMENT_SHADER = `
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
 precision mediump float;
+#endif
 
 const int MAX_COLORS = ${MAX_COLORS};
 const int MAX_ANCHORS = ${MAX_ANCHORS};
@@ -47,7 +51,9 @@ uniform sampler2D uImage;
 varying vec2 vUv;
 
 float random(vec2 value) {
-  return fract(sin(dot(value, vec2(12.9898, 78.233))) * 43758.5453123);
+  vec3 mixed = fract(vec3(value.xyx) * vec3(0.1031, 0.1030, 0.0973));
+  mixed += dot(mixed, mixed.yzx + 33.33);
+  return fract((mixed.x + mixed.y) * mixed.z);
 }
 
 vec3 colorAt(int index) {
