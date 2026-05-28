@@ -78,6 +78,9 @@ frontend/**/public/icons/fa/
 frontend/**/public/icons/lucide/
 frontend/**/public/icons/heroicons/
 frontend/**/public/icons/phosphor/
+frontend/main/public/wallpaper/
+frontend/dashboard/public/wallpaper/
+frontend/landing/public/wallpaper/
 
 # =====================
 # Backend (Elixir / BEAM)
