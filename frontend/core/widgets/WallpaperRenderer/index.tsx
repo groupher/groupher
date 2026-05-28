@@ -1,6 +1,6 @@
 'use client'
 
-import { type CSSProperties, useEffect, useRef, useState } from 'react'
+import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react'
 
 import { cn } from '~/css'
 import {
@@ -15,11 +15,22 @@ type TProps = {
   className?: string
   patternSize?: string
   positioned?: boolean
+  textureScale?: number
 }
 
 const canvasClass = 'absolute inset-0 block size-full'
 const fallbackClass = 'absolute inset-0 bg-center'
 const patternClass = 'absolute inset-0 pointer-events-none'
+const FADE_MS = 220
+
+type TWallpaperLayerProps = {
+  className?: string
+  descriptor: TWallpaperRenderDescriptor
+  exiting?: boolean
+  patternSize: string
+  textureScale: number
+  onExited?: () => void
+}
 
 const getFallbackStyle = (descriptor: TWallpaperRenderDescriptor): CSSProperties => ({
   background: descriptor.background,
@@ -32,24 +43,53 @@ const getFilterLayerStyle = (descriptor: TWallpaperRenderDescriptor): CSSPropert
   filter: `var(--preview-wallpaper-filter, ${descriptor.filter})`,
 })
 
-export default function WallpaperRenderer({
+const getVisualIdentity = (descriptor: TWallpaperRenderDescriptor): string =>
+  [descriptor.kind, descriptor.source, descriptor.imageUrl].join('|')
+
+const canAnimate = (): boolean =>
+  typeof window !== 'undefined' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+const shouldCrossfade = (
+  previous: TWallpaperRenderDescriptor,
+  next: TWallpaperRenderDescriptor,
+): boolean => canAnimate() && getVisualIdentity(previous) !== getVisualIdentity(next)
+
+const preloadImage = (descriptor: TWallpaperRenderDescriptor): Promise<void> => {
+  if (descriptor.kind !== 'image' || !descriptor.imageUrl) return Promise.resolve()
+
+  return new Promise((resolve) => {
+    const image = new Image()
+    image.crossOrigin = 'anonymous'
+    image.onload = () => {
+      if (!image.decode) {
+        resolve()
+        return
+      }
+
+      image.decode().then(resolve).catch(resolve)
+    }
+    image.onerror = () => resolve()
+    image.src = descriptor.imageUrl
+  })
+}
+
+function WallpaperLayer({
   className,
-  patternSize = 'auto',
-  positioned = true,
-}: TProps) {
+  descriptor,
+  exiting = false,
+  patternSize,
+  textureScale,
+  onExited,
+}: TWallpaperLayerProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const rendererRef = useRef<ReturnType<typeof createWallpaperWebglRenderer>>(null)
-  const committedDescriptor = useWallpaperRenderDescriptor()
-  const [activeDescriptor, setActiveDescriptor] = useState(committedDescriptor)
-  const committedDescriptorRef = useRef(committedDescriptor)
-  const activeDescriptorRef = useRef(committedDescriptor)
+  const descriptorRef = useRef(descriptor)
+  const [fadeOut, setFadeOut] = useState(false)
 
   useEffect(() => {
-    committedDescriptorRef.current = committedDescriptor
-    activeDescriptorRef.current = committedDescriptor
-    setActiveDescriptor(committedDescriptor)
-    rendererRef.current?.update(committedDescriptor)
-  }, [committedDescriptor])
+    descriptorRef.current = descriptor
+    rendererRef.current?.update(descriptor)
+  }, [descriptor])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -57,8 +97,8 @@ export default function WallpaperRenderer({
 
     const mountRenderer = (): void => {
       rendererRef.current?.destroy()
-      rendererRef.current = createWallpaperWebglRenderer(canvas)
-      rendererRef.current?.update(activeDescriptorRef.current)
+      rendererRef.current = createWallpaperWebglRenderer(canvas, textureScale)
+      rendererRef.current?.update(descriptorRef.current)
     }
 
     const handleContextLost = (event: Event): void => {
@@ -89,19 +129,19 @@ export default function WallpaperRenderer({
       rendererRef.current?.destroy()
       rendererRef.current = null
     }
-  }, [])
+  }, [textureScale])
 
   useEffect(() => {
-    return subscribeWallpaperPreview((state) => {
-      const nextDescriptor = state
-        ? resolveWallpaperRenderDescriptor(state)
-        : committedDescriptorRef.current
+    if (!exiting) return
 
-      activeDescriptorRef.current = nextDescriptor
-      setActiveDescriptor(nextDescriptor)
-      rendererRef.current?.update(nextDescriptor)
-    })
-  }, [])
+    const frame = window.requestAnimationFrame(() => setFadeOut(true))
+    const timer = window.setTimeout(() => onExited?.(), FADE_MS)
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.clearTimeout(timer)
+    }
+  }, [exiting, onExited])
 
   const patternStyle: CSSProperties = {
     backgroundImage: 'url(/wallpaper/pattern/1.png)',
@@ -110,12 +150,89 @@ export default function WallpaperRenderer({
   }
 
   return (
+    <div
+      className={cn(
+        'absolute inset-0 transition-opacity duration-200 ease-out',
+        exiting && (fadeOut ? 'opacity-0' : 'opacity-100'),
+        className,
+      )}
+      style={getFilterLayerStyle(descriptor)}
+    >
+      <div className={fallbackClass} style={getFallbackStyle(descriptor)} />
+      <canvas ref={canvasRef} className={canvasClass} />
+      {descriptor.hasPattern && <div className={patternClass} style={patternStyle} />}
+    </div>
+  )
+}
+
+export default function WallpaperRenderer({
+  className,
+  patternSize = 'auto',
+  positioned = true,
+  textureScale = 1,
+}: TProps) {
+  const committedDescriptor = useWallpaperRenderDescriptor()
+  const [activeDescriptor, setActiveDescriptor] = useState(committedDescriptor)
+  const [exitingDescriptor, setExitingDescriptor] = useState<TWallpaperRenderDescriptor | null>(
+    null,
+  )
+  const committedDescriptorRef = useRef(committedDescriptor)
+  const activeDescriptorRef = useRef(committedDescriptor)
+  const transitionTokenRef = useRef(0)
+
+  const applyDescriptor = useCallback((nextDescriptor: TWallpaperRenderDescriptor) => {
+    const previousDescriptor = activeDescriptorRef.current
+    const shouldAnimate = shouldCrossfade(previousDescriptor, nextDescriptor)
+    const transitionToken = transitionTokenRef.current + 1
+    transitionTokenRef.current = transitionToken
+
+    if (!shouldAnimate) {
+      activeDescriptorRef.current = nextDescriptor
+      setActiveDescriptor(nextDescriptor)
+      return
+    }
+
+    preloadImage(nextDescriptor).then(() => {
+      if (transitionToken !== transitionTokenRef.current) return
+
+      setExitingDescriptor(previousDescriptor)
+      activeDescriptorRef.current = nextDescriptor
+      setActiveDescriptor(nextDescriptor)
+    })
+  }, [])
+
+  useEffect(() => {
+    committedDescriptorRef.current = committedDescriptor
+    applyDescriptor(committedDescriptor)
+  }, [applyDescriptor, committedDescriptor])
+
+  useEffect(() => {
+    return subscribeWallpaperPreview((state) => {
+      const nextDescriptor = state
+        ? resolveWallpaperRenderDescriptor(state)
+        : committedDescriptorRef.current
+
+      applyDescriptor(nextDescriptor)
+    })
+  }, [applyDescriptor])
+
+  return (
     <div className={cn(positioned && 'relative', 'overflow-hidden', className)} aria-hidden='true'>
-      <div className='absolute inset-0' style={getFilterLayerStyle(activeDescriptor)}>
-        <div className={fallbackClass} style={getFallbackStyle(activeDescriptor)} />
-        <canvas ref={canvasRef} className={canvasClass} />
-        {activeDescriptor.hasPattern && <div className={patternClass} style={patternStyle} />}
-      </div>
+      <WallpaperLayer
+        descriptor={activeDescriptor}
+        patternSize={patternSize}
+        textureScale={textureScale}
+      />
+      {exitingDescriptor && (
+        <WallpaperLayer
+          key={getVisualIdentity(exitingDescriptor)}
+          descriptor={exitingDescriptor}
+          exiting
+          patternSize={patternSize}
+          textureScale={textureScale}
+          onExited={() => setExitingDescriptor(null)}
+        />
+      )}
     </div>
   )
 }
