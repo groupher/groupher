@@ -28,6 +28,7 @@ export default function useFullWallpaper(): TRet {
     const {
       gradientDeg,
       hasPattern,
+      hasTexture,
       blurIntensity,
       hasShadow,
       brightness,
@@ -45,6 +46,7 @@ export default function useFullWallpaper(): TRet {
       source,
       type,
       hasPattern,
+      hasTexture,
       hasBlur,
       blurIntensity,
       hasShadow,

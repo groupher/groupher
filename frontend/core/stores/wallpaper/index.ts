@@ -11,6 +11,7 @@ export const INITIAL_WALLPAPER_STATE = {
   source: 'pink',
   type: WALLPAPER_TYPE.GRADIENT,
   hasPattern: true,
+  hasTexture: false,
   gradientDeg: 180,
   blurIntensity: 0,
   hasShadow: false,

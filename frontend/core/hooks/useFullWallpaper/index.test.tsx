@@ -13,6 +13,7 @@ describe('useFullWallpaper', () => {
         source: GRADIENT_WALLPAPER_NAME.PINK,
         type: WALLPAPER_TYPE.GRADIENT,
         hasPattern: true,
+        hasTexture: false,
         blurIntensity: 0,
         brightness: 100,
         saturation: 100,
@@ -26,6 +27,7 @@ describe('useFullWallpaper', () => {
     const data = result.current.getWallpaper()
     expect(data.source).toBe(GRADIENT_WALLPAPER_NAME.PINK)
     expect(data.type).toBe(WALLPAPER_TYPE.GRADIENT)
+    expect(data.hasTexture).toBe(false)
     expect(data.brightness).toBe(100)
     expect(data.saturation).toBe(100)
     expect(data.texture).toEqual({ type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} })

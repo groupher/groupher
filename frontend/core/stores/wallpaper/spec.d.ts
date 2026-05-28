@@ -7,6 +7,7 @@ export type TWallpaperState = {
   type: TWallpaperType
 
   hasPattern: boolean
+  hasTexture: boolean
   gradientDeg: number
   blurIntensity: number
   hasShadow: boolean

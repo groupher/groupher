@@ -5,17 +5,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import useTrans from '~/hooks/useTrans'
 import CheckedSVG from '~/icons/CheckBold'
-import {
-  buildMeshGradientFallback,
-  normalizeTexture,
-  WALLPAPER_TEXTURE,
-  WALLPAPER_TEXTURE_OPTIONS,
-} from '~/lib/wallpaperMesh'
+import { buildMeshGradientFallback, normalizeTexture, WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 import type { TMeshGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
 import RangeInput from '~/widgets/RangeInput'
-import Tooltip from '~/widgets/Tooltip'
 
 import useSalon, { cn } from './salon/diy_tab'
+import TextureStylePicker from './TextureStylePicker'
 import useLogic from './useLogic'
 
 type TPreset = {
@@ -267,6 +262,7 @@ export default function DiyTab() {
       source: '',
       type: WALLPAPER_TYPE.MESH,
       mesh: recipe,
+      hasTexture: true,
       texture: normalizeTexture(preset.texture),
     })
     flushWallpaperDraft()
@@ -312,7 +308,6 @@ export function DiySettings() {
   const sourceRecipe = useMemo(() => getInitialRecipe(mesh), [mesh])
   const [draftRecipe, setDraftRecipe] = useState(sourceRecipe)
   const [draftTexture, setDraftTexture] = useState(texture)
-  const textureLabel = t('dsb.appearance.wallpaper.texture')
   const intensityLabel = t('dsb.appearance.wallpaper.texture.intensity')
 
   useEffect(() => {
@@ -424,34 +419,10 @@ export function DiySettings() {
             onChangeEnd={commitSoftness}
           />
           <div className={s.textureControl}>
-            <div className={s.textureRow}>
-              <div className={s.textureLabel}>{textureLabel}</div>
-              <div className={s.textureOptions}>
-                {WALLPAPER_TEXTURE_OPTIONS.map(({ type, labelKey }) => {
-                  const selected = draftTexture.type === type
-                  const label = t(labelKey)
-
-                  return (
-                    <Tooltip key={type} content={label} placement='top'>
-                      <button
-                        type='button'
-                        className={cn(
-                          s.textureSwatch,
-                          selected ? s.textureSwatchActive : s.textureSwatchIdle,
-                        )}
-                        aria-label={label}
-                        onClick={() => updateTexture({ type })}
-                      >
-                        <div
-                          className={s.textureSwatchPreview}
-                          style={s.texturePatternStyle(type)}
-                        />
-                      </button>
-                    </Tooltip>
-                  )
-                })}
-              </div>
-            </div>
+            <TextureStylePicker
+              value={draftTexture.type}
+              onChange={(type) => updateTexture({ type })}
+            />
             <div className={s.textureIntensity}>
               <RangeInput
                 value={draftTexture.intensity}

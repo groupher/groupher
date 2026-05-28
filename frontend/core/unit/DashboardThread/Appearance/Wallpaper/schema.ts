@@ -11,6 +11,7 @@ const updateDashboardWallpaper = gql`
     $mesh: Json
     $bgSize: String
     $hasPattern: Boolean
+    $hasTexture: Boolean
     $blurIntensity: Int
     $hasShadow: Boolean
     $brightness: Int
@@ -25,6 +26,7 @@ const updateDashboardWallpaper = gql`
       mesh: $mesh
       bgSize: $bgSize
       hasPattern: $hasPattern
+      hasTexture: $hasTexture
       blurIntensity: $blurIntensity
       hasShadow: $hasShadow
       brightness: $brightness

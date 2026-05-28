@@ -294,6 +294,7 @@ const getUniforms = (gl: WebGLRenderingContext, program: WebGLProgram): TUniform
 })
 
 const textureTypeToUniform = (descriptor: TWallpaperRenderDescriptor): number => {
+  if (!descriptor.hasTexture) return 0
   if (descriptor.texture.intensity <= 0) return 0
 
   return TEXTURE_TYPE[descriptor.texture.type] ?? 0
@@ -497,7 +498,10 @@ class WallpaperWebglRenderer {
     // CSS owns global post-processing filters. Keep WebGL focused on content
     // generation and texture effects so gradient, mesh, picture, and pattern
     // share one blur/brightness/saturation behavior at the final layer.
-    gl.uniform1f(uniforms.textureIntensity, clamp(descriptor.texture.intensity, 0, 100) / 100)
+    gl.uniform1f(
+      uniforms.textureIntensity,
+      descriptor.hasTexture ? clamp(descriptor.texture.intensity, 0, 100) / 100 : 0,
+    )
     gl.uniform1f(uniforms.meshBrightness, meshBrightness)
     gl.uniform1f(uniforms.meshContrast, meshContrast)
     gl.uniform1f(uniforms.imageReady, this.imageReady ? 1 : 0)

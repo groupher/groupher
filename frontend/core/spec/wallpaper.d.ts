@@ -52,6 +52,7 @@ export type TWallpaperData = {
   patternWallpapers: Record<string, TWallpaper>
   type: TWallpaperType
   hasPattern: boolean
+  hasTexture: boolean
   gradientDeg: number
   hasBlur: boolean
   blurIntensity: number

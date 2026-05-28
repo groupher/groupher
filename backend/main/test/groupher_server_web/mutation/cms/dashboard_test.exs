@@ -108,6 +108,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       $mesh: Json
       $bgSize: String
       $hasPattern: Boolean
+      $hasTexture: Boolean
       $blurIntensity: Int
       $hasShadow: Boolean
       $brightness: Int
@@ -122,6 +123,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         mesh: $mesh
         bgSize: $bgSize
         hasPattern: $hasPattern
+        hasTexture: $hasTexture
         blurIntensity: $blurIntensity
         hasShadow: $hasShadow
         brightness: $brightness
@@ -132,6 +134,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
           type
           source
           gradientDeg
+          hasTexture
           blurIntensity
           brightness
           saturation
@@ -149,6 +152,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         source: "orange",
         type: "mesh",
         gradientDeg: 45,
+        hasTexture: true,
         blurIntensity: 35,
         brightness: 85,
         saturation: 120,
@@ -173,6 +177,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       assert get_in(updated, ["wallpaper", "source"]) == "orange"
       assert get_in(updated, ["wallpaper", "gradientDeg"]) == 45
+      assert get_in(updated, ["wallpaper", "hasTexture"]) == true
       assert get_in(updated, ["wallpaper", "blurIntensity"]) == 35
       assert get_in(updated, ["wallpaper", "brightness"]) == 85
       assert get_in(updated, ["wallpaper", "saturation"]) == 120
@@ -185,6 +190,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.wallpaper.source == "orange"
       assert found.dashboard.wallpaper.type == "mesh"
       assert found.dashboard.wallpaper.gradient_deg == 45
+      assert found.dashboard.wallpaper.has_texture == true
       assert found.dashboard.wallpaper.blur_intensity == 35
       assert found.dashboard.wallpaper.brightness == 85
       assert found.dashboard.wallpaper.saturation == 120

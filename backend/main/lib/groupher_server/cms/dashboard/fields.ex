@@ -242,6 +242,7 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
 
       # gradient
       [:has_pattern, :boolean, true],
+      [:has_texture, :boolean, false],
       [:gradient_deg, :integer, 180],
 
       # image

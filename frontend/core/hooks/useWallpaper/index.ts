@@ -33,6 +33,7 @@ const getFilterValue = (effect: string): string =>
 export const getWallpaperState = (store: Pick<TStore, keyof TWallpaperState>): TWallpaperState => ({
   source: store.source,
   hasPattern: store.hasPattern,
+  hasTexture: store.hasTexture,
   gradientDeg: store.gradientDeg,
   blurIntensity: store.blurIntensity,
   hasShadow: store.hasShadow,
@@ -48,6 +49,7 @@ export const getWallpaperState = (store: Pick<TStore, keyof TWallpaperState>): T
 const getWallpaperCssState = (store: Pick<TStore, keyof TWallpaperState>): TWallpaperState => ({
   source: store.source,
   hasPattern: store.hasPattern,
+  hasTexture: store.hasTexture,
   gradientDeg: store.gradientDeg,
   blurIntensity: store.blurIntensity,
   hasShadow: store.hasShadow,
@@ -164,6 +166,7 @@ export const resolveWallpaperRenderDescriptor = (
     background: background || 'transparent',
     filter: getFilterValue(effect),
     hasPattern: false,
+    hasTexture: state.hasTexture,
     source: state.source,
     bgSize: state.bgSize,
     colors: DEFAULT_RENDER_COLORS,
@@ -186,6 +189,7 @@ export const resolveWallpaperRenderDescriptor = (
       ...base,
       kind: 'mesh-gradient',
       hasPattern: state.hasPattern,
+      hasTexture: state.hasTexture,
       colors: state.mesh.colors,
       flow: state.mesh.flow,
       meshRecipe: state.mesh,
@@ -203,6 +207,7 @@ export const resolveWallpaperRenderDescriptor = (
       ...base,
       kind: 'linear-gradient',
       hasPattern: state.hasPattern,
+      hasTexture: state.hasTexture,
       colors: wallpaper?.colors?.length ? wallpaper.colors : DEFAULT_RENDER_COLORS,
     }
   }
@@ -259,6 +264,7 @@ export function useWallpaperRenderDescriptor(): TWallpaperRenderDescriptor {
     [
       state.source,
       state.hasPattern,
+      state.hasTexture,
       state.blurIntensity,
       state.hasShadow,
       state.brightness,

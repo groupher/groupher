@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import { WALLPAPER_TEXTURE_OPTIONS } from '~/lib/wallpaperMesh'
 import type { TWallpaperTexture } from '~/lib/wallpaperMesh'
 import RangeInput from '~/widgets/RangeInput'
-import Tooltip from '~/widgets/Tooltip'
 
-import useSalon, { cn } from '../salon/tuning_zone'
-import useLogic from '../useLogic'
+import useSalon from '../../salon/tuning_panel/details_panel'
+import TextureStylePicker from '../../TextureStylePicker'
+import useLogic from '../../useLogic'
 
 export default function GradientTextureSettings() {
   const s = useSalon()
@@ -55,31 +54,10 @@ export default function GradientTextureSettings() {
   return (
     <div className={s.texturePanel}>
       <div className={s.textureControls}>
-        <div className={s.textureRow}>
-          <div className={s.textureLabel}>{t('dsb.appearance.wallpaper.texture')}</div>
-          <div className={s.textureOptions}>
-            {WALLPAPER_TEXTURE_OPTIONS.map(({ type, labelKey }) => {
-              const selected = draftTexture.type === type
-              const label = t(labelKey)
-
-              return (
-                <Tooltip key={type} content={label} placement='top'>
-                  <button
-                    type='button'
-                    className={cn(
-                      s.textureSwatch,
-                      selected ? s.textureSwatchActive : s.textureSwatchIdle,
-                    )}
-                    aria-label={label}
-                    onClick={() => updateTexture({ type })}
-                  >
-                    <div className={s.textureSwatchPreview} style={s.texturePatternStyle(type)} />
-                  </button>
-                </Tooltip>
-              )
-            })}
-          </div>
-        </div>
+        <TextureStylePicker
+          value={draftTexture.type}
+          onChange={(type) => updateTexture({ type })}
+        />
 
         <div className={s.textureIntensity}>
           <RangeInput

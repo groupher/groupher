@@ -47,6 +47,7 @@ export const wallpaper = `
   gradientDeg
   bgSize
   hasPattern
+  hasTexture
   blurIntensity
   hasShadow
   brightness

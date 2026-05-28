@@ -149,6 +149,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
           type: "mesh",
           source: "orange",
           gradient_deg: 45,
+          has_texture: true,
           blur_intensity: 35,
           brightness: 85,
           saturation: 120,
@@ -171,6 +172,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert find_community.dashboard.wallpaper.source == "orange"
       assert find_community.dashboard.wallpaper.type == "mesh"
       assert find_community.dashboard.wallpaper.gradient_deg == 45
+      assert find_community.dashboard.wallpaper.has_texture == true
       assert find_community.dashboard.wallpaper.blur_intensity == 35
       assert find_community.dashboard.wallpaper.brightness == 85
       assert find_community.dashboard.wallpaper.saturation == 120

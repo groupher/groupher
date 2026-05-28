@@ -4,6 +4,7 @@ export const PREVIEW_WIDTH = 420
 export const PREVIEW_HEIGHT = 260
 
 export const DEFAULT_MESH_COLORS = ['#fbeede', '#d8b9e3'] as const
+export const DEFAULT_WALLPAPER_TEXTURE_INTENSITY = 45
 
 export const WALLPAPER_TEXTURE = {
   NOISE: 'noise',

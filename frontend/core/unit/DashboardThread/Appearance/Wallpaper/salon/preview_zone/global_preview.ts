@@ -20,7 +20,7 @@ export default function useSalon() {
     ),
     realPreview: 'column-center relative overflow-hidden',
     content: cn(
-      'absolute top-4 left-7 w-60 h-44 backdrop-blur-sm column-start px-5 pt-3 pb-4 rounded-t-md',
+      'absolute top-4 left-8 w-56 h-44 backdrop-blur-sm column-start px-5 pt-3 pb-4 rounded-t-md',
       hasShadow && shadow('md'),
     ),
     contentTop: 'column gap-3',

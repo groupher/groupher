@@ -3,13 +3,12 @@ import { useEffect, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import CheckedSVG from '~/icons/CheckBold'
-import { WALLPAPER_TEXTURE_OPTIONS } from '~/lib/wallpaperMesh'
 import type { TWallpaperTexture } from '~/lib/wallpaperMesh'
 import type { TWallpaperPic } from '~/spec'
 import RangeInput from '~/widgets/RangeInput'
-import Tooltip from '~/widgets/Tooltip'
 
 import useSalon, { cn } from '../salon/pictures_tab'
+import TextureStylePicker from '../TextureStylePicker'
 import useLogic from '../useLogic'
 
 export default function PicturesTab() {
@@ -53,7 +52,6 @@ export function PictureTextureSettings() {
   const [draftTexture, setDraftTexture] = useState<TWallpaperTexture>({
     ...texture,
   })
-  const textureLabel = t('dsb.appearance.wallpaper.texture')
   const intensityLabel = t('dsb.appearance.wallpaper.texture.intensity')
 
   useEffect(() => {
@@ -93,31 +91,10 @@ export function PictureTextureSettings() {
   return (
     <div className={s.texturePanel}>
       <div className={s.textureControls}>
-        <div className={s.textureRow}>
-          <div className={s.textureLabel}>{textureLabel}</div>
-          <div className={s.textureOptions}>
-            {WALLPAPER_TEXTURE_OPTIONS.map(({ type, labelKey }) => {
-              const selected = draftTexture.type === type
-              const label = t(labelKey)
-
-              return (
-                <Tooltip key={type} content={label} placement='top'>
-                  <button
-                    type='button'
-                    className={cn(
-                      s.textureSwatch,
-                      selected ? s.textureSwatchActive : s.textureSwatchIdle,
-                    )}
-                    aria-label={label}
-                    onClick={() => updateTexture({ type })}
-                  >
-                    <div className={s.textureSwatchPreview} style={s.texturePatternStyle(type)} />
-                  </button>
-                </Tooltip>
-              )
-            })}
-          </div>
-        </div>
+        <TextureStylePicker
+          value={draftTexture.type}
+          onChange={(type) => updateTexture({ type })}
+        />
 
         <div className={s.textureIntensity}>
           <RangeInput

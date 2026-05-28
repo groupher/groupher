@@ -7,6 +7,7 @@ export type TWallpaperRenderDescriptor = {
   background: string
   filter: string
   hasPattern: boolean
+  hasTexture: boolean
   source: string
   bgSize: string
   colors: string[]

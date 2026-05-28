@@ -121,6 +121,7 @@ describe('useWallpaper', () => {
       source: GRADIENT_WALLPAPER_NAME.GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: true,
+      hasTexture: true,
       gradientDeg: 90,
       blurIntensity: 30,
       hasShadow: false,
@@ -146,6 +147,7 @@ describe('useWallpaper', () => {
       source: GRADIENT_WALLPAPER_NAME.GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
+      hasTexture: true,
       gradientDeg: 90,
       blurIntensity: 0,
       hasShadow: false,
@@ -173,6 +175,7 @@ describe('useWallpaper', () => {
       source: GRADIENT_WALLPAPER_NAME.GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
+      hasTexture: true,
       gradientDeg: 90,
       blurIntensity: 0,
       hasShadow: false,
@@ -196,6 +199,7 @@ describe('useWallpaper', () => {
       source: GRADIENT_WALLPAPER_NAME.GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
+      hasTexture: true,
       gradientDeg: 90,
       blurIntensity: 0,
       hasShadow: false,
@@ -210,6 +214,7 @@ describe('useWallpaper', () => {
       source: GRADIENT_WALLPAPER_NAME.GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
+      hasTexture: true,
       gradientDeg: 90,
       blurIntensity: 0,
       hasShadow: false,
@@ -230,6 +235,7 @@ describe('useWallpaper', () => {
       source: GRADIENT_WALLPAPER_NAME.GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
+      hasTexture: true,
       gradientDeg: 90,
       blurIntensity: 0,
       hasShadow: false,
@@ -247,12 +253,38 @@ describe('useWallpaper', () => {
     })
   })
 
+  it('keeps texture settings while marking them disabled', () => {
+    const descriptor = resolveWallpaperRenderDescriptor({
+      customWallpaper: null,
+      source: GRADIENT_WALLPAPER_NAME.GREEN,
+      type: WALLPAPER_TYPE.GRADIENT,
+      hasPattern: false,
+      hasTexture: false,
+      gradientDeg: 90,
+      blurIntensity: 0,
+      hasShadow: false,
+      brightness: 100,
+      saturation: 100,
+      mesh: null,
+      texture: { type: WALLPAPER_TEXTURE.TILE, intensity: 70, params: {} },
+      bgSize: 'cover',
+    })
+
+    expect(descriptor.hasTexture).toBe(false)
+    expect(descriptor.texture).toEqual({
+      type: WALLPAPER_TEXTURE.TILE,
+      intensity: 70,
+      params: {},
+    })
+  })
+
   it('resolves DIY mesh texture descriptor when source is empty', () => {
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
       source: '',
       type: WALLPAPER_TYPE.MESH,
       hasPattern: false,
+      hasTexture: true,
       gradientDeg: 180,
       blurIntensity: 0,
       hasShadow: false,

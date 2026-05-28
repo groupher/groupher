@@ -45,7 +45,7 @@ export default {
   dashboard: 'Dashboard',
   more: 'more',
   'tags.fold.expand': 'More..',
-  'tags.fold.collapse': 'Collapse',
+  'tags.fold.collapse': 'show less',
   'tags.all': 'All tags',
   'tag.stat.today': 'Today',
   'tag.stat.topic': 'Topics',

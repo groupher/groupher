@@ -16,6 +16,7 @@ import {
 } from '~/const/wallpaper'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
+import { DEFAULT_WALLPAPER_TEXTURE_INTENSITY } from '~/lib/wallpaperMesh'
 import type { TWallpaperTexture } from '~/lib/wallpaperMesh'
 import { toast } from '~/signal'
 import type { TWallpaperData, TWallpaperType } from '~/spec'
@@ -65,6 +66,7 @@ type TRet = {
   changePatternWallpaper: (source: string) => void
   changeWallpaperType: (type: TWallpaperType) => void
   togglePattern: (hasPattern: boolean) => void
+  toggleTexture: (hasTexture: boolean) => void
   changeBlurIntensity: (blurIntensity: number) => void
   toggleShadow: (hasShadow: boolean) => void
   changeBrightness: (brightness: number) => void
@@ -85,6 +87,7 @@ const getWallpaperState = (wallpaper$: ReturnType<typeof useWallpaperDomain>): T
   source: wallpaper$.source,
   type: wallpaper$.type,
   hasPattern: wallpaper$.hasPattern,
+  hasTexture: wallpaper$.hasTexture,
   gradientDeg: wallpaper$.gradientDeg,
   blurIntensity: wallpaper$.blurIntensity,
   hasShadow: wallpaper$.hasShadow,
@@ -114,6 +117,7 @@ function useLogicValue(): TRet {
       wallpaper$.source,
       wallpaper$.type,
       wallpaper$.hasPattern,
+      wallpaper$.hasTexture,
       wallpaper$.gradientDeg,
       wallpaper$.blurIntensity,
       wallpaper$.hasShadow,
@@ -214,6 +218,14 @@ function useLogicValue(): TRet {
   }
 
   const togglePattern = (hasPattern: boolean): void => commitWallpaperPatch({ hasPattern })
+  const toggleTexture = (hasTexture: boolean): void => {
+    const texture =
+      hasTexture && wallpaperState.texture.intensity === 0
+        ? { ...wallpaperState.texture, intensity: DEFAULT_WALLPAPER_TEXTURE_INTENSITY }
+        : wallpaperState.texture
+
+    commitWallpaperPatch({ hasTexture, texture })
+  }
   const changeBlurIntensity = (blurIntensity: number): void =>
     scheduleWallpaperPreview({ blurIntensity })
   const toggleShadow = (hasShadow: boolean): void => commitWallpaperPatch({ hasShadow })
@@ -239,6 +251,7 @@ function useLogicValue(): TRet {
     changePatternWallpaper,
     changeWallpaperType,
     togglePattern,
+    toggleTexture,
     changeBlurIntensity,
     toggleShadow,
     changeBrightness,

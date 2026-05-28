@@ -366,6 +366,7 @@ export default {
   'dsb.appearance.wallpaper.editor.blank': 'Blank wallpaper',
   'dsb.appearance.wallpaper.editor.restore': 'Restore',
   'dsb.appearance.wallpaper.texture': 'Texture',
+  'dsb.appearance.wallpaper.texture.style': 'Style',
   'dsb.appearance.wallpaper.texture.intensity': 'Intensity',
   'dsb.appearance.wallpaper.texture.noise': 'Noise',
   'dsb.appearance.wallpaper.texture.tile': 'Tile',

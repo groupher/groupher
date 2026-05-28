@@ -53,7 +53,7 @@ function WallpaperContent() {
         touched={isTouched}
       />
 
-      <PreviewZone tab={tab} />
+      <PreviewZone />
 
       <div className={s.editor}>
         <SegmentTabs

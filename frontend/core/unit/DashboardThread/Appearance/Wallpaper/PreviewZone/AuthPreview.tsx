@@ -11,6 +11,7 @@ export default function AuthPreview() {
       <div className={s.authCard}>
         <div className={cnMerge(s.bar, s.authTitle)} />
         <div className={s.authInput} />
+        <div className={s.authInput} />
         <div className={s.authButton} />
       </div>
     </div>

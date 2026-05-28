@@ -10,6 +10,7 @@ describe('stores/wallpaper', () => {
     expect(store.source).toBe(INITIAL_WALLPAPER_STATE.source)
     expect(store.type).toBe(INITIAL_WALLPAPER_STATE.type)
     expect(store.hasPattern).toBe(true)
+    expect(store.hasTexture).toBe(false)
     expect(store.gradientDeg).toBe(180)
     expect(store.brightness).toBe(100)
     expect(store.saturation).toBe(100)
@@ -20,6 +21,7 @@ describe('stores/wallpaper', () => {
       type: WALLPAPER_TYPE.PATTERN,
       blurIntensity: 35,
       hasPattern: false,
+      hasTexture: true,
       bgSize: 'contain',
       brightness: 90,
       saturation: 120,
@@ -31,6 +33,7 @@ describe('stores/wallpaper', () => {
     expect(store.type).toBe(WALLPAPER_TYPE.PATTERN)
     expect(store.blurIntensity).toBe(35)
     expect(store.hasPattern).toBe(false)
+    expect(store.hasTexture).toBe(true)
     expect(store.bgSize).toBe('contain')
     expect(store.brightness).toBe(90)
     expect(store.saturation).toBe(120)
@@ -43,6 +46,7 @@ describe('stores/wallpaper', () => {
       source: 'backiee-1',
       type: WALLPAPER_TYPE.PATTERN,
       hasPattern: false,
+      hasTexture: true,
       gradientDeg: 45,
       blurIntensity: 35,
       hasShadow: true,
@@ -58,6 +62,7 @@ describe('stores/wallpaper', () => {
       source: 'backiee-1',
       type: WALLPAPER_TYPE.PATTERN,
       hasPattern: false,
+      hasTexture: true,
       gradientDeg: 45,
       blurIntensity: 35,
       hasShadow: true,

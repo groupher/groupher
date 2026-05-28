@@ -7,8 +7,8 @@ import {
   useState,
 } from 'react'
 
-import useSalon from '../salon/tuning_zone/angle_wheel'
-import useLogic from '../useLogic'
+import useSalon from '../../salon/tuning_panel/details_panel/angle_wheel'
+import useLogic from '../../useLogic'
 
 const WHEEL_SIZE = 56
 const WHEEL_RADIUS = WHEEL_SIZE / 2
