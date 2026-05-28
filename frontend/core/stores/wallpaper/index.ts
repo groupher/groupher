@@ -16,7 +16,7 @@ export const INITIAL_WALLPAPER_STATE = {
   brightness: 100,
   saturation: 100,
   mesh: null,
-  texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 0, params: {} },
+  texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
   bgSize: 'cover',
 } satisfies TWallpaperState
 

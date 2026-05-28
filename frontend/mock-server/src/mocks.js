@@ -77,7 +77,7 @@ const makeDashboard = (slug = 'home') => {
       brightness: 100,
       saturation: 100,
       mesh: null,
-      texture: { type: 'grain', intensity: 0, params: {} },
+      texture: { type: 'noise', intensity: 0, params: {} },
     },
     layout: {
       themePreset: 'DEFAULT',

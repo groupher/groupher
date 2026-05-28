@@ -19,8 +19,8 @@ type TWallpaperTexture = {
 
 ## File Map
 
-- `grain.ts`: deterministic noise/grain.
-- `pixelate.ts`: blocky pixel sampling.
+- `noise.ts`: deterministic fine-dot noise.
+- `pixelate.ts`: blocky pixel sampling with cartoon palette compression.
 - `screentone.ts`: halftone dots based on luminance.
 - `dither.ts`: ordered Bayer dithering.
 - `index.ts`: Canvas dispatcher and preview/dataURL helpers.
@@ -49,7 +49,7 @@ The live WebGL path imports `TEXTURE_TYPE`, `TEXTURE_SHADER_HELPERS`, `TEXTURE_S
 
    ```ts
    export const WALLPAPER_TEXTURE = {
-     GRAIN: 'grain',
+     NOISE: 'noise',
      PIXELATE: 'pixelate',
      SCREENTONE: 'screentone',
      DITHER: 'dither',

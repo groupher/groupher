@@ -13,7 +13,7 @@ describe('stores/wallpaper', () => {
     expect(store.gradientDeg).toBe(180)
     expect(store.brightness).toBe(100)
     expect(store.saturation).toBe(100)
-    expect(store.texture).toEqual({ type: WALLPAPER_TEXTURE.GRAIN, intensity: 0, params: {} })
+    expect(store.texture).toEqual({ type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} })
 
     store.commit({
       source: 'blank',

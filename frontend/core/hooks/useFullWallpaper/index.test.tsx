@@ -16,7 +16,7 @@ describe('useFullWallpaper', () => {
         blurIntensity: 0,
         brightness: 100,
         saturation: 100,
-        texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 0, params: {} },
+        texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
         gradientDeg: 180,
       },
     })
@@ -28,7 +28,7 @@ describe('useFullWallpaper', () => {
     expect(data.type).toBe(WALLPAPER_TYPE.GRADIENT)
     expect(data.brightness).toBe(100)
     expect(data.saturation).toBe(100)
-    expect(data.texture).toEqual({ type: WALLPAPER_TEXTURE.GRAIN, intensity: 0, params: {} })
+    expect(data.texture).toEqual({ type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} })
 
     const pink = data.gradientWallpapers.pink
     expect('colors' in pink).toBe(true)

@@ -6,7 +6,7 @@ export const PREVIEW_HEIGHT = 260
 export const DEFAULT_MESH_COLORS = ['#fbeede', '#d8b9e3'] as const
 
 export const WALLPAPER_TEXTURE = {
-  GRAIN: 'grain',
+  NOISE: 'noise',
   PIXELATE: 'pixelate',
   SCREENTONE: 'screentone',
   DITHER: 'dither',
@@ -20,8 +20,8 @@ export const WALLPAPER_TEXTURE_SURFACE = {
 
 export const WALLPAPER_TEXTURE_OPTIONS = [
   {
-    type: WALLPAPER_TEXTURE.GRAIN,
-    labelKey: 'dsb.appearance.wallpaper.texture.grain',
+    type: WALLPAPER_TEXTURE.NOISE,
+    labelKey: 'dsb.appearance.wallpaper.texture.noise',
   },
   {
     type: WALLPAPER_TEXTURE.PIXELATE,

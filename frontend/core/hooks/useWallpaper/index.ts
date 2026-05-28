@@ -53,7 +53,7 @@ const getWallpaperCssState = (store: Pick<TStore, keyof TWallpaperState>): TWall
   hasShadow: store.hasShadow,
   brightness: store.brightness,
   saturation: store.saturation,
-  texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 0, params: {} },
+  texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
   mesh: store.mesh,
   customWallpaper: store.customWallpaper,
   type: store.type,

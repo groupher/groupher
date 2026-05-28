@@ -33,7 +33,7 @@ const PRESETS: TPreset[] = [
     colors: ['#fbeede', '#d8b9e3', '#f9fbff'],
     flow: 180,
     softness: 82,
-    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 8 },
+    texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 8 },
     anchors: [
       { x: 0.5, y: 0.02, color: 0 },
       { x: 0.5, y: 0.98, color: 1 },
@@ -45,7 +45,7 @@ const PRESETS: TPreset[] = [
     colors: ['#d6d9b8', '#87bb89', '#eef6df'],
     flow: 90,
     softness: 78,
-    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 6 },
+    texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 6 },
     anchors: [
       { x: 0.02, y: 0.5, color: 0 },
       { x: 0.98, y: 0.5, color: 1 },
@@ -57,7 +57,7 @@ const PRESETS: TPreset[] = [
     colors: ['#6f94db', '#64b2f4', '#83e4eb', '#dff8f2'],
     flow: 45,
     softness: 66,
-    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 18 },
+    texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 18 },
     anchors: [
       { x: 0.08, y: 0.12, color: 0 },
       { x: 0.24, y: 0.82, color: 1 },
@@ -70,7 +70,7 @@ const PRESETS: TPreset[] = [
     colors: ['#ffefc4', '#ff9b80', '#c06577', '#6b80a7'],
     flow: 135,
     softness: 54,
-    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 14 },
+    texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 14 },
     anchors: [
       { x: 0.12, y: 0.16, color: 0 },
       { x: 0.35, y: 0.78, color: 1 },
@@ -83,7 +83,7 @@ const PRESETS: TPreset[] = [
     colors: ['#d9f8ff', '#79d7f0', '#4f8bd8', '#233a7b'],
     flow: 160,
     softness: 72,
-    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 10 },
+    texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 10 },
     anchors: [
       { x: 0.18, y: 0.18, color: 0 },
       { x: 0.78, y: 0.22, color: 1 },
@@ -96,7 +96,7 @@ const PRESETS: TPreset[] = [
     colors: ['#ffe0f1', '#ff7eb6', '#8b5cf6', '#5eead4'],
     flow: 125,
     softness: 58,
-    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 12 },
+    texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 12 },
     anchors: [
       { x: 0.14, y: 0.24, color: 0 },
       { x: 0.42, y: 0.76, color: 1 },
@@ -109,7 +109,7 @@ const PRESETS: TPreset[] = [
     colors: ['#fff4d6', '#ffd1a8', '#f59e9e', '#c084fc'],
     flow: 210,
     softness: 64,
-    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 9 },
+    texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 9 },
     anchors: [
       { x: 0.18, y: 0.16, color: 0 },
       { x: 0.66, y: 0.2, color: 1 },
@@ -122,7 +122,7 @@ const PRESETS: TPreset[] = [
     colors: ['#111827', '#312e81', '#0f766e', '#bae6fd'],
     flow: 30,
     softness: 52,
-    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 16 },
+    texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 16 },
     anchors: [
       { x: 0.12, y: 0.18, color: 0 },
       { x: 0.72, y: 0.22, color: 1 },
@@ -135,7 +135,7 @@ const PRESETS: TPreset[] = [
     colors: ['#74d3a7', '#b9eca6', '#f5dfc8', '#efb7bb'],
     flow: 105,
     softness: 70,
-    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 8 },
+    texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 8 },
     anchors: [
       { x: 0.14, y: 0.2, color: 0 },
       { x: 0.72, y: 0.2, color: 1 },
@@ -148,7 +148,7 @@ const PRESETS: TPreset[] = [
     colors: ['#d8e2e8', '#bcc7d0', '#c9c0cb', '#9ba6bc'],
     flow: 155,
     softness: 76,
-    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 10 },
+    texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 10 },
     anchors: [
       { x: 0.18, y: 0.18, color: 0 },
       { x: 0.76, y: 0.18, color: 1 },
@@ -161,7 +161,7 @@ const PRESETS: TPreset[] = [
     colors: ['#ffe1a8', '#e9c394', '#cbb9a1', '#a7b8ac'],
     flow: 65,
     softness: 68,
-    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 7 },
+    texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 7 },
     anchors: [
       { x: 0.12, y: 0.22, color: 0 },
       { x: 0.64, y: 0.18, color: 1 },
@@ -174,7 +174,7 @@ const PRESETS: TPreset[] = [
     colors: ['#fedfa3', '#ecc896', '#85c9e9', '#4f9fd1'],
     flow: 235,
     softness: 62,
-    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 9 },
+    texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 9 },
     anchors: [
       { x: 0.14, y: 0.16, color: 0 },
       { x: 0.58, y: 0.24, color: 1 },
@@ -187,7 +187,7 @@ const PRESETS: TPreset[] = [
     colors: ['#ffe6dc', '#ff9f8f', '#65d6d0', '#2f7f93'],
     flow: 120,
     softness: 64,
-    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 8 },
+    texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 8 },
     anchors: [
       { x: 0.12, y: 0.18, color: 0 },
       { x: 0.48, y: 0.78, color: 1 },
@@ -200,7 +200,7 @@ const PRESETS: TPreset[] = [
     colors: ['#eef5f6', '#c9d7dc', '#9ab0be', '#d9c7d7'],
     flow: 205,
     softness: 80,
-    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 12 },
+    texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 12 },
     anchors: [
       { x: 0.18, y: 0.18, color: 0 },
       { x: 0.78, y: 0.24, color: 1 },
@@ -213,7 +213,7 @@ const PRESETS: TPreset[] = [
     colors: ['#f3d9ee', '#c8a2d8', '#7f6cc8', '#3c3b7b'],
     flow: 30,
     softness: 58,
-    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 10 },
+    texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 10 },
     anchors: [
       { x: 0.16, y: 0.22, color: 0 },
       { x: 0.7, y: 0.16, color: 1 },
@@ -226,7 +226,7 @@ const PRESETS: TPreset[] = [
     colors: ['#fff1b8', '#f5a524', '#10b981', '#06b6d4'],
     flow: 150,
     softness: 55,
-    texture: { type: WALLPAPER_TEXTURE.GRAIN, intensity: 11 },
+    texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 11 },
     anchors: [
       { x: 0.14, y: 0.2, color: 0 },
       { x: 0.68, y: 0.18, color: 1 },

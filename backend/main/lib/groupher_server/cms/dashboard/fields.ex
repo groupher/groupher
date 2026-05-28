@@ -255,7 +255,7 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
 
       # renderer-specific config/effects
       [:mesh, :map, nil],
-      [:texture, :map, %{"type" => "grain", "intensity" => 0, "params" => %{}}]
+      [:texture, :map, %{"type" => "noise", "intensity" => 0, "params" => %{}}]
     ]
   end
 end

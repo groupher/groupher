@@ -9,7 +9,7 @@ import type {
   TWallpaperTexture,
 } from '../spec'
 import { renderDitherTexture } from './dither'
-import { renderGrainTexture } from './grain'
+import { renderNoiseTexture } from './noise'
 import { renderPixelateTexture } from './pixelate'
 import { renderScreentoneTexture } from './screentone'
 
@@ -23,6 +23,7 @@ export const normalizeTextureType = (type?: string): TImageTextureType => {
   if (type === 'mosaic') return WALLPAPER_TEXTURE.PIXELATE
   if (type === 'dot' || type === 'halftone') return WALLPAPER_TEXTURE.SCREENTONE
   if (
+    type === WALLPAPER_TEXTURE.NOISE ||
     type === WALLPAPER_TEXTURE.PIXELATE ||
     type === WALLPAPER_TEXTURE.SCREENTONE ||
     type === WALLPAPER_TEXTURE.DITHER
@@ -30,7 +31,7 @@ export const normalizeTextureType = (type?: string): TImageTextureType => {
     return type
   }
 
-  return WALLPAPER_TEXTURE.GRAIN
+  return WALLPAPER_TEXTURE.NOISE
 }
 
 /**
@@ -40,10 +41,10 @@ export const normalizeTextureType = (type?: string): TImageTextureType => {
  * normalizeTexture({ type: WALLPAPER_TEXTURE.DITHER, intensity: 55 })
  */
 export const normalizeTexture = (
-  value?: Partial<TWallpaperTexture> & { grain?: number },
+  value?: Partial<TWallpaperTexture> & { noise?: number },
 ): TWallpaperTexture => ({
   type: normalizeTextureType(value?.type),
-  intensity: clamp(value?.intensity ?? value?.grain ?? 8, 0, 100),
+  intensity: clamp(value?.intensity ?? value?.noise ?? 8, 0, 100),
   params: value?.params ?? {},
 })
 
@@ -64,8 +65,8 @@ export const renderTexture = (
   const intensity = clamp(texture.intensity, 0, 100)
   if (intensity <= 0) return
 
-  if (texture.type === WALLPAPER_TEXTURE.GRAIN) {
-    renderGrainTexture(ctx, width, height, intensity, surface)
+  if (texture.type === WALLPAPER_TEXTURE.NOISE) {
+    renderNoiseTexture(ctx, width, height, intensity, surface)
   }
 
   if (texture.type === WALLPAPER_TEXTURE.PIXELATE) {
@@ -85,7 +86,7 @@ export const renderTexture = (
  * Render a textured image preview dataURL for picture/upload wallpaper.
  *
  * @example
- * await renderImageTextureDataUrl({ imageUrl, texture: WALLPAPER_TEXTURE.GRAIN, intensity: 40 })
+ * await renderImageTextureDataUrl({ imageUrl, texture: WALLPAPER_TEXTURE.NOISE, intensity: 40 })
  */
 export const renderImageTextureDataUrl = async ({
   imageUrl,
@@ -320,7 +321,7 @@ export const renderTextureSwatchDataUrl = ({
 
   renderTexture(ctx, source, width, height, texture, 'swatch')
 
-  if (texture.type === WALLPAPER_TEXTURE.GRAIN) {
+  if (texture.type === WALLPAPER_TEXTURE.NOISE) {
     ctx.fillStyle = palette.digest
     ctx.globalAlpha = 0.22 + texture.intensity * 0.004
     const random = seededRandom(28711)

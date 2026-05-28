@@ -1,10 +1,10 @@
 import { clamp, seededRandom } from '../helper'
 import type { TTextureSurface } from '../spec'
 
-export const GRAIN_WEBGL_ID = 1
+export const NOISE_WEBGL_ID = 1
 
-export const GRAIN_SHADER_BRANCH = `
-  if (uTextureType == ${GRAIN_WEBGL_ID}) {
+export const NOISE_SHADER_BRANCH = `
+  if (uTextureType == ${NOISE_WEBGL_ID}) {
     vec2 pixel = gl_FragCoord.xy;
     vec2 densityGrid = pixel / 92.0;
     vec2 densityCell = floor(densityGrid);
@@ -19,15 +19,15 @@ export const GRAIN_SHADER_BRANCH = `
 
     float density = clamp((0.025 + strength * strength * 0.68) * mix(0.78, 1.22, localDensity), 0.0, 0.9);
     float cellSize = 2.65;
-    vec2 grainGrid = pixel / cellSize;
-    vec2 grainCell = floor(grainGrid);
-    vec2 cellPosition = fract(grainGrid);
-    float grain = 0.0;
+    vec2 noiseGrid = pixel / cellSize;
+    vec2 noiseCell = floor(noiseGrid);
+    vec2 cellPosition = fract(noiseGrid);
+    float noise = 0.0;
 
     for (int y = -1; y <= 1; y += 1) {
       for (int x = -1; x <= 1; x += 1) {
         vec2 offset = vec2(float(x), float(y));
-        vec2 cell = grainCell + offset;
+        vec2 cell = noiseCell + offset;
         float dotSeed = random(cell + vec2(37.0, 91.0));
         float dotMask = step(1.0 - density, dotSeed);
         vec2 center = vec2(
@@ -46,22 +46,22 @@ export const GRAIN_SHADER_BRANCH = `
         float isLight = step(0.12, toneSeed);
         float dotTone = mix(-darkAmount, lightAmount, isLight);
 
-        grain += dotMask * shape * dotTone;
+        noise += dotMask * shape * dotTone;
       }
     }
 
-    return clamp(color + grain, 0.0, 1.0);
+    return clamp(color + noise, 0.0, 1.0);
   }
 `
 
-const getGrainDensity = (amount: number, surface: TTextureSurface): number => {
+const getNoiseDensity = (amount: number, surface: TTextureSurface): number => {
   const baseDensity = surface === 'wallpaper' ? 0.012 : surface === 'preview' ? 0.014 : 0.018
   const densityRange = surface === 'wallpaper' ? 0.2 : surface === 'preview' ? 0.18 : 0.15
 
   return baseDensity + amount * amount * densityRange
 }
 
-const getGrainDotSize = (
+const getNoiseDotSize = (
   random: () => number,
   amount: number,
   surface: TTextureSurface,
@@ -77,12 +77,12 @@ const getGrainDotSize = (
 }
 
 /**
- * Draw fine deterministic grain over the current canvas content.
+ * Draw fine deterministic noise over the current canvas content.
  *
  * @example
- * renderGrainTexture(ctx, 420, 260, 35, 'preview')
+ * renderNoiseTexture(ctx, 420, 260, 35, 'preview')
  */
-export const renderGrainTexture = (
+export const renderNoiseTexture = (
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
@@ -91,7 +91,7 @@ export const renderGrainTexture = (
 ): void => {
   const random = seededRandom(91283)
   const amount = clamp(intensity, 0, 100) / 100
-  const density = getGrainDensity(amount, surface)
+  const density = getNoiseDensity(amount, surface)
   const tileSize = surface === 'wallpaper' ? 92 : 64
   const lightAlpha = (surface === 'wallpaper' ? 0.06 : 0.074) + amount * 0.012
   const darkAlpha = (surface === 'wallpaper' ? 0.012 : 0.016) + amount * 0.004
@@ -110,7 +110,7 @@ export const renderGrainTexture = (
         const y = tileY + Math.floor(random() * tileHeight)
         const isLight = random() > 0.12
         const alpha = (isLight ? lightAlpha : darkAlpha) * (0.5 + random() * 0.5)
-        const [dotWidth, dotHeight] = getGrainDotSize(random, amount, surface)
+        const [dotWidth, dotHeight] = getNoiseDotSize(random, amount, surface)
 
         ctx.fillStyle = isLight ? `rgba(255, 255, 255, ${alpha})` : `rgba(0, 0, 0, ${alpha})`
         ctx.fillRect(x, y, dotWidth, dotHeight)
