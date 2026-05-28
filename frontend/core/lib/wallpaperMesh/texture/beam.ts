@@ -119,7 +119,7 @@ export const renderBeamTexture = (
 export const BEAM_SHADER_BRANCH = `
   if (uTextureType == ${BEAM_WEBGL_ID}) {
     float amount = strength * strength * (3.0 - 2.0 * strength);
-    float beamWidth = mix(52.0, 30.0, amount);
+    float beamWidth = max(8.0, mix(52.0, 30.0, amount) * textureScale);
     float grid = gl_FragCoord.x / beamWidth;
     float cell = floor(grid);
     float local = fract(grid);

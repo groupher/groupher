@@ -18,7 +18,7 @@ export const NOISE_SHADER_BRANCH = `
     float localDensity = mix(mix(d00, d10, densityBlend.x), mix(d01, d11, densityBlend.x), densityBlend.y);
 
     float density = clamp((0.025 + strength * strength * 0.68) * mix(0.78, 1.22, localDensity), 0.0, 0.9);
-    float cellSize = 2.65;
+    float cellSize = max(1.0, 2.65 * textureScale);
     vec2 noiseGrid = pixel / cellSize;
     vec2 noiseCell = floor(noiseGrid);
     vec2 cellPosition = fract(noiseGrid);

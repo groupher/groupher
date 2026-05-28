@@ -7,7 +7,7 @@ export default function AuthPreview() {
 
   return (
     <div className={s.realPreview}>
-      <WallpaperRenderer className={s.previewImage} patternSize='260px auto' />
+      <WallpaperRenderer className={s.previewImage} patternSize='260px auto' textureScale={0.72} />
       <div className={s.authCard}>
         <div className={cnMerge(s.bar, s.authTitle)} />
         <div className={s.authInput} />

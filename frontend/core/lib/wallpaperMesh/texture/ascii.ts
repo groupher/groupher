@@ -184,7 +184,10 @@ float asciiGlyph(float glyph, vec2 point) {
 
 export const ASCII_SHADER_BRANCH = `
   if (uTextureType == ${ASCII_WEBGL_ID}) {
-    vec2 cellSize = vec2(mix(14.0, 8.0, strength), mix(18.0, 12.0, strength));
+    vec2 cellSize = max(
+      vec2(4.0, 6.0),
+      vec2(mix(14.0, 8.0, strength), mix(18.0, 12.0, strength)) * textureScale
+    );
     vec2 cell = floor(gl_FragCoord.xy / cellSize);
     vec2 local = fract(gl_FragCoord.xy / cellSize);
     vec2 cellUv = clamp((cell + vec2(0.5)) * cellSize / uResolution, vec2(0.0), vec2(1.0));

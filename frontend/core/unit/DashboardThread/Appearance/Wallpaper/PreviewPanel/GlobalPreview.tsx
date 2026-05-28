@@ -16,7 +16,7 @@ export default function GlobalPreview() {
 
   return (
     <div className={s.realPreview}>
-      <WallpaperRenderer className={s.previewImage} patternSize='260px auto' />
+      <WallpaperRenderer className={s.previewImage} patternSize='260px auto' textureScale={0.72} />
       <div className={s.content} style={{ background: bgColor }}>
         <div className={s.contentTop}>
           <div className={cnMerge(s.bar, s.titleBar)} />

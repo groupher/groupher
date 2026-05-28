@@ -45,7 +45,7 @@ export const TILE_SHADER_UV = ''
 export const TILE_SHADER_BRANCH = `
   if (uTextureType == ${TILE_WEBGL_ID}) {
     float tileAmount = strength * strength * (3.0 - 2.0 * strength);
-    float tileHeight = mix(8.0, 30.0, tileAmount);
+    float tileHeight = max(3.0, mix(8.0, 30.0, tileAmount) * textureScale);
     float tileWidth = tileHeight * 0.72;
     vec2 tileSize = vec2(tileWidth, tileHeight);
     vec2 grid = uv * uResolution / tileSize;

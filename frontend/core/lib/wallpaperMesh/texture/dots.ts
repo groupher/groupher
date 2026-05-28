@@ -32,7 +32,7 @@ const hash = (x: number, y: number, salt = 0): number => {
 export const DOTS_SHADER_BRANCH = `
   if (uTextureType == ${DOTS_WEBGL_ID}) {
     float amount = strength * strength * (3.0 - 2.0 * strength);
-    float cell = 14.0;
+    float cell = max(4.0, 14.0 * textureScale);
     float row = floor(gl_FragCoord.y / cell);
     float rowOffset = mod(row, 2.0) * cell * 0.5;
     vec2 grid = vec2((gl_FragCoord.x + rowOffset) / cell, gl_FragCoord.y / cell);
@@ -44,7 +44,8 @@ export const DOTS_SHADER_BRANCH = `
     vec2 centerPx = vec2((cellId.x + 0.5) * cell - rowOffset, (cellId.y + 0.5) * cell);
     vec2 centerUv = clamp(centerPx / uResolution, vec2(0.0), vec2(1.0));
     vec3 sampled = sampleBase(centerUv).rgb;
-    float radius = mix(3.0, 3.8, amount) * mix(0.92, 1.08, random(cellId + vec2(61.0, 13.0)));
+    float radius = max(1.0, mix(3.0, 3.8, amount) * textureScale)
+      * mix(0.92, 1.08, random(cellId + vec2(61.0, 13.0)));
     float dotMask = 1.0 - smoothstep(radius, radius + 1.05, length(local * cell));
     float alpha = dotMask * keep * (0.58 + amount * 0.2);
     float lum = luminance(sampled);

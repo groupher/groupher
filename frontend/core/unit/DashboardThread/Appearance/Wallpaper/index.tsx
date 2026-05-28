@@ -12,7 +12,7 @@ import { TAB, TAB_OPTIONS } from './constant'
 import DiyTab from './DiyTab'
 import GradientTab from './GradientTab'
 import PicturesTab from './PicturesTab'
-import PreviewZone from './PreviewZone'
+import PreviewPanel from './PreviewPanel'
 import useSalon from './salon'
 import UploadTab from './UploadTab'
 import useLogic, { WallpaperLogicProvider } from './useLogic'
@@ -53,7 +53,7 @@ function WallpaperContent() {
         touched={isTouched}
       />
 
-      <PreviewZone />
+      <PreviewPanel />
 
       <div className={s.editor}>
         <SegmentTabs

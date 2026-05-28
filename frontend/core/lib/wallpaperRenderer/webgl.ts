@@ -39,6 +39,7 @@ uniform int uBgMode;
 uniform float uFlow;
 uniform float uSoftness;
 uniform float uTextureIntensity;
+uniform float uTextureScale;
 uniform float uMeshBrightness;
 uniform float uMeshContrast;
 uniform float uImageReady;
@@ -154,6 +155,7 @@ ${TEXTURE_SHADER_HELPERS}
 
 vec3 applyTexture(vec3 color, vec2 uv) {
   float strength = clamp(uTextureIntensity, 0.0, 1.0);
+  float textureScale = clamp(uTextureScale, 0.35, 1.4);
   if (strength <= 0.001 || uTextureType == 0) return color;
 
 ${TEXTURE_SHADER_BRANCHES}
@@ -194,6 +196,7 @@ type TUniforms = {
   flow: WebGLUniformLocation | null
   softness: WebGLUniformLocation | null
   textureIntensity: WebGLUniformLocation | null
+  textureScale: WebGLUniformLocation | null
   meshBrightness: WebGLUniformLocation | null
   meshContrast: WebGLUniformLocation | null
   imageReady: WebGLUniformLocation | null
@@ -291,6 +294,7 @@ const getUniforms = (gl: WebGLRenderingContext, program: WebGLProgram): TUniform
   colors: gl.getUniformLocation(program, 'uColors[0]'),
   anchors: gl.getUniformLocation(program, 'uAnchors[0]'),
   image: gl.getUniformLocation(program, 'uImage'),
+  textureScale: gl.getUniformLocation(program, 'uTextureScale'),
 })
 
 const textureTypeToUniform = (descriptor: TWallpaperRenderDescriptor): number => {
@@ -307,6 +311,7 @@ class WallpaperWebglRenderer {
   private readonly uniforms: TUniforms
   private readonly vertexBuffer: WebGLBuffer
   private readonly imageTexture: WebGLTexture
+  private readonly textureScale: number
   private frame: number | null = null
   private descriptor: TWallpaperRenderDescriptor | null = null
   private imageUrl = ''
@@ -323,12 +328,14 @@ class WallpaperWebglRenderer {
     program: WebGLProgram,
     vertexBuffer: WebGLBuffer,
     imageTexture: WebGLTexture,
+    textureScale: number,
   ) {
     this.canvas = canvas
     this.gl = gl
     this.program = program
     this.vertexBuffer = vertexBuffer
     this.imageTexture = imageTexture
+    this.textureScale = textureScale
     this.uniforms = getUniforms(gl, program)
 
     this.prepare()
@@ -502,6 +509,7 @@ class WallpaperWebglRenderer {
       uniforms.textureIntensity,
       descriptor.hasTexture ? clamp(descriptor.texture.intensity, 0, 100) / 100 : 0,
     )
+    gl.uniform1f(uniforms.textureScale, clamp(this.textureScale, 0.35, 1.4))
     gl.uniform1f(uniforms.meshBrightness, meshBrightness)
     gl.uniform1f(uniforms.meshContrast, meshContrast)
     gl.uniform1f(uniforms.imageReady, this.imageReady ? 1 : 0)
@@ -517,6 +525,7 @@ class WallpaperWebglRenderer {
 
 export const createWallpaperWebglRenderer = (
   canvas: HTMLCanvasElement,
+  textureScale = 1,
 ): WallpaperWebglRenderer | null => {
   const gl = canvas.getContext('webgl', {
     alpha: true,
@@ -534,5 +543,5 @@ export const createWallpaperWebglRenderer = (
   const imageTexture = gl.createTexture()
   if (!program || !vertexBuffer || !imageTexture) return null
 
-  return new WallpaperWebglRenderer(canvas, gl, program, vertexBuffer, imageTexture)
+  return new WallpaperWebglRenderer(canvas, gl, program, vertexBuffer, imageTexture, textureScale)
 }
