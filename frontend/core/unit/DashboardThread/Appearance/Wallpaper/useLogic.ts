@@ -22,6 +22,7 @@ import type { TWallpaperData, TWallpaperType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 import type { TWallpaperState } from '~/stores/wallpaper/spec'
+import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
 
 import { TAB } from './constant'
 import S from './schema'
@@ -175,7 +176,8 @@ function useLogicValue(): TRet {
     }
 
     mutate(S.updateDashboardWallpaper, params)
-      .then(() => {
+      .then(async () => {
+        await revalidateCommunityCache(community)
         toast('设置已保存')
         setLoading(false)
         initRollback()

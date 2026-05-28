@@ -37,4 +37,34 @@ describe('stores/wallpaper', () => {
     expect(store.gradientDeg).toBe(90)
     expect(store.texture).toEqual({ type: WALLPAPER_TEXTURE.ASCII, intensity: 55, params: {} })
   })
+
+  it('uses hydrated wallpaper as the original baseline', () => {
+    const store = setupStore({
+      source: 'backiee-1',
+      type: WALLPAPER_TYPE.PATTERN,
+      hasPattern: false,
+      gradientDeg: 45,
+      blurIntensity: 35,
+      hasShadow: true,
+      brightness: 85,
+      saturation: 120,
+      bgSize: 'contain',
+      texture: { type: WALLPAPER_TEXTURE.TILE, intensity: 72, params: {} },
+    })
+
+    expect(store.source).toBe('backiee-1')
+    expect(store.original).toEqual({
+      ...INITIAL_WALLPAPER_STATE,
+      source: 'backiee-1',
+      type: WALLPAPER_TYPE.PATTERN,
+      hasPattern: false,
+      gradientDeg: 45,
+      blurIntensity: 35,
+      hasShadow: true,
+      brightness: 85,
+      saturation: 120,
+      bgSize: 'contain',
+      texture: { type: WALLPAPER_TEXTURE.TILE, intensity: 72, params: {} },
+    })
+  })
 })
