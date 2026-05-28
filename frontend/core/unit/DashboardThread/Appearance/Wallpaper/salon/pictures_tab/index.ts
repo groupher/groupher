@@ -13,6 +13,13 @@ export default function useSalon() {
           backgroundSize: '5px 5px',
         }
       }
+      case 'ascii': {
+        return {
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='40' viewBox='0 0 56 40'%3E%3Crect width='56' height='40' fill='%23efe7dc'/%3E%3Cg font-family='monospace' font-size='8' fill='%235d4a35' opacity='.68'%3E%3Ctext x='2' y='9'%3E@8X%23x%3C/text%3E%3Ctext x='0' y='20'%3Ex%2B=%238%3C/text%3E%3Ctext x='4' y='31'%3E%23@8Xx%3C/text%3E%3C/g%3E%3C/svg%3E\")",
+          backgroundSize: '56px 40px',
+        }
+      }
       case 'screentone': {
         return {
           backgroundImage: 'radial-gradient(circle, rgba(80,60,45,.48) 0 .9px, transparent 1.4px)',

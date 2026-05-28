@@ -24,7 +24,7 @@ describe('stores/wallpaper', () => {
       brightness: 90,
       saturation: 120,
       gradientDeg: 90,
-      texture: { type: WALLPAPER_TEXTURE.DITHER, intensity: 55, params: {} },
+      texture: { type: WALLPAPER_TEXTURE.ASCII, intensity: 55, params: {} },
     })
 
     expect(store.source).toBe('blank')
@@ -35,6 +35,6 @@ describe('stores/wallpaper', () => {
     expect(store.brightness).toBe(90)
     expect(store.saturation).toBe(120)
     expect(store.gradientDeg).toBe(90)
-    expect(store.texture).toEqual({ type: WALLPAPER_TEXTURE.DITHER, intensity: 55, params: {} })
+    expect(store.texture).toEqual({ type: WALLPAPER_TEXTURE.ASCII, intensity: 55, params: {} })
   })
 })

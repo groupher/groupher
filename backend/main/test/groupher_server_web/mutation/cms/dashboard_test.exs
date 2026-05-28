@@ -164,7 +164,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
             brightness: 100,
             anchors: [%{x: 0.2, y: 0.8, color: 1}]
           }),
-        texture: Jason.encode!(%{type: "dither", intensity: 55, params: %{}})
+        texture: Jason.encode!(%{type: "ascii", intensity: 55, params: %{}})
       }
 
       updated =
@@ -177,7 +177,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert get_in(updated, ["wallpaper", "brightness"]) == 85
       assert get_in(updated, ["wallpaper", "saturation"]) == 120
       assert get_in(updated, ["wallpaper", "mesh", "preset"]) == "test"
-      assert get_in(updated, ["wallpaper", "texture", "type"]) == "dither"
+      assert get_in(updated, ["wallpaper", "texture", "type"]) == "ascii"
       assert get_in(updated, ["wallpaper", "texture", "intensity"]) == 55
 
       {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
@@ -189,7 +189,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.wallpaper.brightness == 85
       assert found.dashboard.wallpaper.saturation == 120
       assert found.dashboard.wallpaper.mesh["preset"] == "test"
-      assert found.dashboard.wallpaper.texture["type"] == "dither"
+      assert found.dashboard.wallpaper.texture["type"] == "ascii"
       assert found.dashboard.wallpaper.texture["intensity"] == 55
     end
 

@@ -152,13 +152,13 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       mesh,
-      texture: { type: WALLPAPER_TEXTURE.SCREENTONE, intensity: 80, params: {} },
+      texture: { type: WALLPAPER_TEXTURE.ASCII, intensity: 80, params: {} },
       bgSize: 'cover',
     })
 
     expect(descriptor.kind).toBe('mesh-gradient')
     expect(descriptor.texture).toEqual({
-      type: WALLPAPER_TEXTURE.SCREENTONE,
+      type: WALLPAPER_TEXTURE.ASCII,
       intensity: 80,
       params: {},
     })

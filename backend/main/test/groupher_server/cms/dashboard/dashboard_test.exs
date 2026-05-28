@@ -163,7 +163,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
             "brightness" => 100,
             "anchors" => [%{"x" => 0.2, "y" => 0.8, "color" => 1}]
           },
-          texture: %{"type" => "dither", "intensity" => 55, "params" => %{}}
+          texture: %{"type" => "ascii", "intensity" => 55, "params" => %{}}
         })
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
@@ -175,7 +175,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert find_community.dashboard.wallpaper.brightness == 85
       assert find_community.dashboard.wallpaper.saturation == 120
       assert find_community.dashboard.wallpaper.mesh["preset"] == "test"
-      assert find_community.dashboard.wallpaper.texture["type"] == "dither"
+      assert find_community.dashboard.wallpaper.texture["type"] == "ascii"
       assert find_community.dashboard.wallpaper.texture["intensity"] == 55
     end
 
