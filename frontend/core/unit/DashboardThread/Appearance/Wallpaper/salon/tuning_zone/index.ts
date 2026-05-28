@@ -24,7 +24,7 @@ export default function useSalon() {
         return {
           backgroundImage:
             "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='44' viewBox='0 0 32 44'%3E%3Crect width='32' height='44' fill='%23efe7dc'/%3E%3Cg fill='%23746350' opacity='.72'%3E%3Crect x='2' y='1' width='9' height='15' rx='1.3'/%3E%3Crect x='12' y='1' width='9' height='15' rx='1.3'/%3E%3Crect x='22' y='1' width='8' height='15' rx='1.3'/%3E%3Crect x='2' y='17' width='9' height='15' rx='1.3'/%3E%3Crect x='12' y='17' width='9' height='15' rx='1.3'/%3E%3Crect x='22' y='17' width='8' height='15' rx='1.3'/%3E%3Crect x='2' y='33' width='9' height='10' rx='1.3'/%3E%3Crect x='12' y='33' width='9' height='10' rx='1.3'/%3E%3Crect x='22' y='33' width='8' height='10' rx='1.3'/%3E%3C/g%3E%3C/svg%3E\")",
-          backgroundSize: '32px 44px',
+          backgroundSize: '24px 33px',
         }
       }
       case 'dots': {
@@ -38,8 +38,8 @@ export default function useSalon() {
       default: {
         return {
           backgroundImage:
-            'radial-gradient(circle at 24% 34%, rgba(92,55,35,.48) 0 .9px, transparent 1.4px), radial-gradient(circle at 64% 26%, rgba(92,55,35,.38) 0 .8px, transparent 1.4px), radial-gradient(circle at 48% 70%, rgba(92,55,35,.42) 0 .9px, transparent 1.4px)',
-          backgroundSize: '7px 7px',
+            'radial-gradient(circle at 24% 34%, rgba(92,55,35,.48) 0 .65px, transparent 1.05px), radial-gradient(circle at 64% 26%, rgba(92,55,35,.38) 0 .55px, transparent 1px), radial-gradient(circle at 48% 70%, rgba(92,55,35,.42) 0 .65px, transparent 1.05px)',
+          backgroundSize: '4.5px 4.5px',
         }
       }
     }
