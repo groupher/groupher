@@ -8,10 +8,11 @@ import TextureSwatchPreview from './TextureSwatchPreview'
 
 type Props = {
   value: TImageTextureType
+  active?: boolean
   onChange: (type: TImageTextureType) => void
 }
 
-export default function TextureStylePicker({ value, onChange }: Props) {
+export default function TextureStylePicker({ value, active = true, onChange }: Props) {
   const { t } = useTrans()
   const s = useSalon()
 
@@ -20,7 +21,7 @@ export default function TextureStylePicker({ value, onChange }: Props) {
       <div className={s.label}>{t('dsb.appearance.wallpaper.texture.style')}</div>
       <div className={s.options}>
         {WALLPAPER_TEXTURE_OPTIONS.map(({ type, labelKey }) => {
-          const selected = value === type
+          const selected = active && value === type
           const label = t(labelKey)
 
           return (
@@ -31,7 +32,7 @@ export default function TextureStylePicker({ value, onChange }: Props) {
                 aria-label={label}
                 onClick={() => onChange(type)}
               >
-                <TextureSwatchPreview type={type} className={s.swatchPreview} />
+                <TextureSwatchPreview type={type} variant='picker' />
               </button>
             </Tooltip>
           )

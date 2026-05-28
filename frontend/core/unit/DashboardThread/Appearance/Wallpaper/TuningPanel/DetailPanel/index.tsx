@@ -6,11 +6,11 @@ import type { TWallpaperData } from '~/spec'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import RangeInput from '~/widgets/RangeInput'
 
-import { DiySettings } from '../../DiyTab'
-import { PictureTextureSettings } from '../../PicturesTab'
 import useSalon from '../../salon/tuning_panel/details_panel'
 import AngleWheel from './AngleWheel'
-import GradientTextureSettings from './GradientTextureSettings'
+import DiyFields from './DiyFields'
+import GradientTextureFields from './GradientTextureFields'
+import PictureTextureFields from './PictureTextureFields'
 
 type TRangeDraft = {
   blurIntensity: number
@@ -79,7 +79,7 @@ export default function DetailPanel({
             </div>
 
             {isGradient && (
-              <div className={s.angleSettings}>
+              <div className={s.angleFields}>
                 <AngleWheel />
               </div>
             )}
@@ -132,20 +132,20 @@ export default function DetailPanel({
             )}
 
             {type === WALLPAPER_TYPE.GRADIENT && (
-              <div className={s.customSettings}>
-                <GradientTextureSettings />
+              <div className={s.customFields}>
+                <GradientTextureFields />
               </div>
             )}
 
             {type === WALLPAPER_TYPE.MESH && (
-              <div className={s.customSettings}>
-                <DiySettings />
+              <div className={s.customFields}>
+                <DiyFields />
               </div>
             )}
 
             {(isPicture || isUpload) && (
-              <div className={s.customSettings}>
-                <PictureTextureSettings />
+              <div className={s.customFields}>
+                <PictureTextureFields />
               </div>
             )}
           </div>

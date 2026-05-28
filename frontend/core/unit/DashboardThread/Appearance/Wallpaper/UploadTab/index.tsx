@@ -1,10 +1,13 @@
 import { type FC, memo } from 'react'
 
+import useSalon from '../salon/upload_tab'
 import UploadBox from './UploadBox'
 
 const UploadTab: FC = () => {
+  const s = useSalon()
+
   return (
-    <div className='column-center mt-4 w-full'>
+    <div className={s.wrapper}>
       <UploadBox />
     </div>
   )

@@ -12,7 +12,6 @@ export default function useSalon() {
     hudValue: cn('text-sm bold-sm leading-none tabular-nums', fg('title')),
     hudSwatchWrap: 'row-center gap-1.5',
     hudPatternSwatch: cn('size-5 circle border shadow-sm shrink-0', br('divider'), bg('card')),
-    hudTextureSwatch: cn('size-5 circle border shadow-sm shrink-0 overflow-hidden', br('divider')),
     hudAngle: 'row-center gap-1.5',
     hudAngleRing: cn('relative size-5 circle border shrink-0', br('divider')),
     hudAngleDot: cn(

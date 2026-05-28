@@ -1,19 +1,16 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
-import useTrans from '~/hooks/useTrans'
 import CheckedSVG from '~/icons/CheckBold'
 import { buildMeshGradientFallback, normalizeTexture, WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 import type { TMeshGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
-import RangeInput from '~/widgets/RangeInput'
 
 import useSalon, { cn } from './salon/diy_tab'
-import TextureStylePicker from './TextureStylePicker'
 import useLogic from './useLogic'
 
-type TPreset = {
+export type TPreset = {
   key: string
   colors: string[]
   flow: number
@@ -22,7 +19,7 @@ type TPreset = {
   anchors: TMeshGradientRecipe['anchors']
 }
 
-const PRESETS: TPreset[] = [
+export const PRESETS: TPreset[] = [
   {
     key: 'pastel',
     colors: ['#fbeede', '#d8b9e3', '#f9fbff'],
@@ -231,7 +228,7 @@ const PRESETS: TPreset[] = [
   },
 ]
 
-const makeRecipe = (preset: TPreset, seed = Date.now()): TMeshGradientRecipe => ({
+export const makeRecipe = (preset: TPreset, seed = Date.now()): TMeshGradientRecipe => ({
   version: 1,
   kind: 'mesh',
   preset: preset.key,
@@ -244,7 +241,7 @@ const makeRecipe = (preset: TPreset, seed = Date.now()): TMeshGradientRecipe => 
   anchors: preset.anchors,
 })
 
-const getInitialRecipe = (mesh?: TMeshGradientRecipe | null): TMeshGradientRecipe =>
+export const getInitialRecipe = (mesh?: TMeshGradientRecipe | null): TMeshGradientRecipe =>
   mesh || makeRecipe(PRESETS[0], 18432)
 
 export default function DiyTab() {
@@ -295,149 +292,6 @@ export default function DiyTab() {
             </button>
           )
         })}
-      </div>
-    </div>
-  )
-}
-
-export function DiySettings() {
-  const s = useSalon()
-  const { getWallpaper, scheduleWallpaperPreview, flushWallpaperDraft, changeTexture } = useLogic()
-  const { mesh, texture } = getWallpaper()
-  const { t } = useTrans()
-  const sourceRecipe = useMemo(() => getInitialRecipe(mesh), [mesh])
-  const [draftRecipe, setDraftRecipe] = useState(sourceRecipe)
-  const [draftTexture, setDraftTexture] = useState(texture)
-  const intensityLabel = t('dsb.appearance.wallpaper.texture.intensity')
-
-  useEffect(() => {
-    setDraftRecipe(sourceRecipe)
-  }, [sourceRecipe])
-
-  useEffect(() => {
-    setDraftTexture(texture)
-  }, [texture])
-
-  const commitRecipe = (nextRecipe: TMeshGradientRecipe, flush = false): void => {
-    scheduleWallpaperPreview({
-      source: '',
-      type: WALLPAPER_TYPE.MESH,
-      mesh: nextRecipe,
-    })
-
-    if (flush) flushWallpaperDraft()
-  }
-
-  const updateTexture = (patch: Partial<TWallpaperTexture>): void => {
-    const nextTexture = {
-      ...draftTexture,
-      ...patch,
-      intensity:
-        patch.type && draftTexture.intensity === 0
-          ? 45
-          : (patch.intensity ?? draftTexture.intensity),
-    }
-
-    setDraftTexture(nextTexture)
-    changeTexture(nextTexture)
-    flushWallpaperDraft()
-  }
-
-  const updateColor = (index: number, color: string): void => {
-    const nextRecipe = {
-      ...draftRecipe,
-      colors: draftRecipe.colors.map((value, valueIndex) => (valueIndex === index ? color : value)),
-    }
-
-    setDraftRecipe(nextRecipe)
-    commitRecipe(nextRecipe)
-  }
-
-  const updateSoftnessDraft = (softness: number): void => {
-    const nextRecipe = { ...draftRecipe, softness }
-
-    setDraftRecipe(nextRecipe)
-    commitRecipe(nextRecipe)
-  }
-
-  const commitSoftness = (softness: number): void => {
-    const nextRecipe = { ...draftRecipe, softness }
-
-    setDraftRecipe(nextRecipe)
-    commitRecipe(nextRecipe, true)
-  }
-
-  const updateTextureIntensityDraft = (intensity: number): void => {
-    const nextTexture = { ...draftTexture, intensity }
-
-    setDraftTexture(nextTexture)
-    changeTexture(nextTexture)
-  }
-
-  const commitTextureIntensity = (intensity: number): void => {
-    const nextTexture = { ...draftTexture, intensity }
-
-    setDraftTexture(nextTexture)
-    changeTexture(nextTexture)
-    flushWallpaperDraft()
-  }
-
-  return (
-    <div className={s.settingsWrapper}>
-      <div className={s.controls}>
-        <div className={s.panel}>
-          <div className={s.label}>Colors</div>
-          <div className={s.chips}>
-            {draftRecipe.colors.map((color, index) => (
-              <label
-                key={`${color}-${draftRecipe.anchors[index]?.x}-${draftRecipe.anchors[index]?.y}`}
-                className={s.chip}
-                style={{ background: color }}
-                aria-label={`Change color ${index + 1}`}
-              >
-                <input
-                  className={s.colorInput}
-                  type='color'
-                  value={color}
-                  onChange={(event) => updateColor(index, event.target.value)}
-                />
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className={s.rangeGroup}>
-          <RangeInput
-            value={draftRecipe.softness}
-            min={0}
-            max={100}
-            step={1}
-            labelPlacement='left'
-            valueLabel='Spread'
-            aria-label='Spread'
-            onChange={updateSoftnessDraft}
-            onChangeEnd={commitSoftness}
-          />
-          <div className={s.textureControl}>
-            <TextureStylePicker
-              value={draftTexture.type}
-              onChange={(type) => updateTexture({ type })}
-            />
-            <div className={s.textureIntensity}>
-              <RangeInput
-                value={draftTexture.intensity}
-                min={0}
-                max={100}
-                step={1}
-                labelPlacement='left'
-                valueLabel={intensityLabel}
-                aria-label={intensityLabel}
-                onChange={updateTextureIntensityDraft}
-                onChangeEnd={commitTextureIntensity}
-              />
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   )

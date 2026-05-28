@@ -2,9 +2,11 @@ import useTwBelt from '~/hooks/useTwBelt'
 import { WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 import type { TImageTextureType } from '~/lib/wallpaperMesh'
 
+import useSalon from '../salon/texture_swatch_preview'
+
 type Props = {
   type: TImageTextureType
-  className?: string
+  variant?: 'picker' | 'hud'
 }
 
 const TILE_ROWS = [
@@ -51,20 +53,18 @@ const ASCII_ROWS = [
   ],
 ]
 
-export default function TextureSwatchPreview({ type, className = '' }: Props) {
-  const { cn, bg, fg } = useTwBelt()
-  const noiseDotClass = cn('absolute rounded-full opacity-80', bg('digest'))
-  const tileClass = cn('h-1.5 rounded-none shadow-sm', bg('digest'))
-  const dotClass = cn('size-0.5 rounded-full shadow-sm', bg('digest'))
+export default function TextureSwatchPreview({ type, variant = 'picker' }: Props) {
+  const { cn } = useTwBelt()
+  const s = useSalon()
 
   return (
-    <div className={cn(className, bg('card'), fg('title'))}>
+    <div className={cn(s.wrapper, s[variant])}>
       {type === WALLPAPER_TEXTURE.TILE && (
         <div className='column size-full justify-center gap-px p-px'>
           {TILE_ROWS.map((row) => (
             <div key={row.join('-')} className='grid grid-cols-4 gap-px'>
               {row.map((id) => (
-                <span key={id} className={tileClass} />
+                <span key={id} className={s.tile} />
               ))}
             </div>
           ))}
@@ -73,9 +73,9 @@ export default function TextureSwatchPreview({ type, className = '' }: Props) {
 
       {type === WALLPAPER_TEXTURE.BEAM && (
         <div className='flex size-full justify-center gap-1 px-1'>
-          <span className={cn('h-full w-1', bg('digest'))} />
-          <span className={cn('h-full w-1', bg('digest'))} />
-          <span className={cn('h-full w-1', bg('digest'))} />
+          <span className={s.beam} />
+          <span className={s.beam} />
+          <span className={s.beam} />
         </div>
       )}
 
@@ -96,7 +96,7 @@ export default function TextureSwatchPreview({ type, className = '' }: Props) {
       {type === WALLPAPER_TEXTURE.DOTS && (
         <div className='grid size-full grid-cols-3 place-items-center p-1'>
           {DOTS.map((id) => (
-            <span key={id} className={dotClass} />
+            <span key={id} className={s.dot} />
           ))}
         </div>
       )}
@@ -104,7 +104,7 @@ export default function TextureSwatchPreview({ type, className = '' }: Props) {
       {type === WALLPAPER_TEXTURE.NOISE && (
         <div className='relative size-full'>
           {NOISE_DOTS.map(({ id, className }) => (
-            <span key={id} className={cn(noiseDotClass, className)} />
+            <span key={id} className={cn(s.noiseDot, className)} />
           ))}
         </div>
       )}

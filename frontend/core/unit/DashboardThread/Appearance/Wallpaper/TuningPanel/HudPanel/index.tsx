@@ -1,7 +1,7 @@
 import ArrowSVG from '~/icons/ArrowSimple'
 import type { TWallpaperData } from '~/spec'
 
-import useSalon from '../../salon/tuning_panel/hub_panel'
+import useSalon from '../../salon/tuning_panel/hud_panel'
 import TextureSwatchPreview from '../../TextureStylePicker/TextureSwatchPreview'
 
 type Props = {
@@ -44,7 +44,7 @@ export default function HudPanel({ wallpaper, angle, isGradient, canUseTexture, 
           <div className={s.hudItem}>
             <span className={s.hudLabel}>Texture</span>
             <span className={s.hudSwatchWrap}>
-              <TextureSwatchPreview type={texture.type} className={s.hudTextureSwatch} />
+              <TextureSwatchPreview type={texture.type} variant='hud' />
             </span>
           </div>
         )}
