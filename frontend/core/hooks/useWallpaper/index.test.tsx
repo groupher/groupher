@@ -4,7 +4,7 @@ import { GRADIENT_WALLPAPER_NAME, WALLPAPER_TYPE } from '~/const/wallpaper'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useWallpaper, { resolveWallpaperRenderDescriptor } from '~/hooks/useWallpaper'
 import { WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
-import type { TMeshGradientRecipe } from '~/lib/wallpaperMesh'
+import type { TMeshGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
 
 describe('useWallpaper', () => {
   const mesh: TMeshGradientRecipe = {
@@ -138,6 +138,33 @@ describe('useWallpaper', () => {
       params: {},
     })
     expect(descriptor.background).not.toContain('data:image')
+  })
+
+  it('falls back unsupported texture payloads to noise', () => {
+    const descriptor = resolveWallpaperRenderDescriptor({
+      customWallpaper: null,
+      source: GRADIENT_WALLPAPER_NAME.GREEN,
+      type: WALLPAPER_TYPE.GRADIENT,
+      hasPattern: false,
+      gradientDeg: 90,
+      blurIntensity: 0,
+      hasShadow: false,
+      brightness: 100,
+      saturation: 100,
+      mesh: null,
+      texture: {
+        type: 'unsupported-texture',
+        intensity: 65,
+        params: {},
+      } as unknown as TWallpaperTexture,
+      bgSize: 'cover',
+    })
+
+    expect(descriptor.texture).toEqual({
+      type: WALLPAPER_TEXTURE.NOISE,
+      intensity: 65,
+      params: {},
+    })
   })
 
   it('resolves DIY mesh texture descriptor when source is empty', () => {

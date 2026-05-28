@@ -24,7 +24,6 @@ type TWallpaperTexture = {
 - `beam.ts`: vertical background-sampled light beams.
 - `ascii.ts`: luminance-sampled ASCII glyph field.
 - `screentone.ts`: halftone dots based on luminance.
-- `dither.ts`: ordered Bayer dithering.
 - `index.ts`: Canvas dispatcher and preview/dataURL helpers.
 - `shader.ts`: WebGL texture registry and shader snippets consumed by `wallpaperRenderer/webgl.ts`.
 
@@ -56,7 +55,6 @@ The live WebGL path imports `TEXTURE_TYPE`, `TEXTURE_SHADER_HELPERS`, `TEXTURE_S
      BEAM: 'beam',
      ASCII: 'ascii',
      SCREENTONE: 'screentone',
-     DITHER: 'dither',
      LINEN: 'linen',
    } as const
    ```
@@ -75,10 +73,10 @@ The live WebGL path imports `TEXTURE_TYPE`, `TEXTURE_SHADER_HELPERS`, `TEXTURE_S
 4. Create `linen.ts` with Canvas and WebGL pieces:
 
    ```ts
-   export const LINEN_WEBGL_ID = 5
+   export const LINEN_WEBGL_ID = 7
 
    export const LINEN_SHADER_BRANCH = `
-     if (uTextureType == 5) {
+     if (uTextureType == 7) {
        return color;
      }
    `

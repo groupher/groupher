@@ -10,7 +10,6 @@ import type {
 } from '../spec'
 import { renderAsciiTexture } from './ascii'
 import { renderBeamTexture } from './beam'
-import { renderDitherTexture } from './dither'
 import { renderNoiseTexture } from './noise'
 import { renderPixelateTexture } from './pixelate'
 import { renderScreentoneTexture } from './screentone'
@@ -29,8 +28,7 @@ export const normalizeTextureType = (type?: string): TImageTextureType => {
     type === WALLPAPER_TEXTURE.PIXELATE ||
     type === WALLPAPER_TEXTURE.BEAM ||
     type === WALLPAPER_TEXTURE.ASCII ||
-    type === WALLPAPER_TEXTURE.SCREENTONE ||
-    type === WALLPAPER_TEXTURE.DITHER
+    type === WALLPAPER_TEXTURE.SCREENTONE
   ) {
     return type
   }
@@ -42,7 +40,7 @@ export const normalizeTextureType = (type?: string): TImageTextureType => {
  * Normalize a partial texture payload into the persisted descriptor shape.
  *
  * @example
- * normalizeTexture({ type: WALLPAPER_TEXTURE.DITHER, intensity: 55 })
+ * normalizeTexture({ type: WALLPAPER_TEXTURE.ASCII, intensity: 55 })
  */
 export const normalizeTexture = (
   value?: Partial<TWallpaperTexture> & { noise?: number },
@@ -87,10 +85,6 @@ export const renderTexture = (
 
   if (texture.type === WALLPAPER_TEXTURE.SCREENTONE) {
     renderScreentoneTexture(ctx, width, height, intensity, surface)
-  }
-
-  if (texture.type === WALLPAPER_TEXTURE.DITHER) {
-    renderDitherTexture(ctx, width, height, intensity, surface)
   }
 }
 
@@ -173,7 +167,7 @@ const parseGradientAngle = (direction = '180deg'): number => {
  * Render a textured gradient wallpaper dataURL for static fallback/export paths.
  *
  * @example
- * await renderGradientTextureDataUrl({ colors, direction: '180deg', texture: WALLPAPER_TEXTURE.DITHER })
+ * await renderGradientTextureDataUrl({ colors, direction: '180deg', texture: WALLPAPER_TEXTURE.ASCII })
  */
 export const renderGradientTextureDataUrl = async ({
   colors,

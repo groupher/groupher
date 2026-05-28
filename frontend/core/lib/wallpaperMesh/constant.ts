@@ -11,7 +11,6 @@ export const WALLPAPER_TEXTURE = {
   BEAM: 'beam',
   ASCII: 'ascii',
   SCREENTONE: 'screentone',
-  DITHER: 'dither',
 } as const
 
 export const WALLPAPER_TEXTURE_SURFACE = {
@@ -40,10 +39,6 @@ export const WALLPAPER_TEXTURE_OPTIONS = [
   {
     type: WALLPAPER_TEXTURE.SCREENTONE,
     labelKey: 'dsb.appearance.wallpaper.texture.screentone',
-  },
-  {
-    type: WALLPAPER_TEXTURE.DITHER,
-    labelKey: 'dsb.appearance.wallpaper.texture.dither',
   },
 ] as const
 

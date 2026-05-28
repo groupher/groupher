@@ -33,13 +33,6 @@ export default function useSalon() {
           backgroundSize: '5px 5px',
         }
       }
-      case 'dither': {
-        return {
-          backgroundImage:
-            'radial-gradient(circle at 25% 25%, rgba(92,55,35,.48) 0 .9px, transparent 1.4px), radial-gradient(circle at 75% 75%, rgba(210,88,48,.5) 0 .9px, transparent 1.4px)',
-          backgroundSize: '6px 6px',
-        }
-      }
       default: {
         return {
           backgroundImage:
