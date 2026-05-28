@@ -13,6 +13,13 @@ export default function useSalon() {
           backgroundSize: '5px 5px',
         }
       }
+      case 'beam': {
+        return {
+          backgroundImage:
+            'linear-gradient(90deg, rgba(255,255,255,.55) 0 1px, transparent 2px 7px, rgba(80,65,50,.22) 8px 10px, transparent 11px), linear-gradient(90deg, rgba(255,255,255,.32) 0 2px, transparent 3px)',
+          backgroundSize: '12px 100%, 19px 100%',
+        }
+      }
       case 'ascii': {
         return {
           backgroundImage:

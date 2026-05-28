@@ -127,13 +127,13 @@ describe('useWallpaper', () => {
       brightness: 90,
       saturation: 120,
       mesh: null,
-      texture: { type: WALLPAPER_TEXTURE.DITHER, intensity: 55, params: {} },
+      texture: { type: WALLPAPER_TEXTURE.BEAM, intensity: 55, params: {} },
       bgSize: 'cover',
     })
 
     expect(descriptor.kind).toBe('linear-gradient')
     expect(descriptor.texture).toEqual({
-      type: WALLPAPER_TEXTURE.DITHER,
+      type: WALLPAPER_TEXTURE.BEAM,
       intensity: 55,
       params: {},
     })

@@ -9,6 +9,7 @@ import type {
   TWallpaperTexture,
 } from '../spec'
 import { renderAsciiTexture } from './ascii'
+import { renderBeamTexture } from './beam'
 import { renderDitherTexture } from './dither'
 import { renderNoiseTexture } from './noise'
 import { renderPixelateTexture } from './pixelate'
@@ -26,6 +27,7 @@ export const normalizeTextureType = (type?: string): TImageTextureType => {
   if (
     type === WALLPAPER_TEXTURE.NOISE ||
     type === WALLPAPER_TEXTURE.PIXELATE ||
+    type === WALLPAPER_TEXTURE.BEAM ||
     type === WALLPAPER_TEXTURE.ASCII ||
     type === WALLPAPER_TEXTURE.SCREENTONE ||
     type === WALLPAPER_TEXTURE.DITHER
@@ -73,6 +75,10 @@ export const renderTexture = (
 
   if (texture.type === WALLPAPER_TEXTURE.PIXELATE) {
     renderPixelateTexture(ctx, source, width, height, intensity, surface)
+  }
+
+  if (texture.type === WALLPAPER_TEXTURE.BEAM) {
+    renderBeamTexture(ctx, source, width, height, intensity, surface)
   }
 
   if (texture.type === WALLPAPER_TEXTURE.ASCII) {

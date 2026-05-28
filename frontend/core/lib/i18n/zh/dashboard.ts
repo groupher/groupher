@@ -350,6 +350,7 @@ export default {
   'dsb.appearance.wallpaper.texture.intensity': '强度',
   'dsb.appearance.wallpaper.texture.noise': '噪点',
   'dsb.appearance.wallpaper.texture.pixelate': '像素',
+  'dsb.appearance.wallpaper.texture.beam': '光束',
   'dsb.appearance.wallpaper.texture.ascii': 'ASCII',
   'dsb.appearance.wallpaper.texture.screentone': '网点',
   'dsb.appearance.wallpaper.texture.dither': '抖动',

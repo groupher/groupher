@@ -369,6 +369,7 @@ export default {
   'dsb.appearance.wallpaper.texture.intensity': 'Intensity',
   'dsb.appearance.wallpaper.texture.noise': 'Noise',
   'dsb.appearance.wallpaper.texture.pixelate': 'Pixelate',
+  'dsb.appearance.wallpaper.texture.beam': 'Beam',
   'dsb.appearance.wallpaper.texture.ascii': 'ASCII',
   'dsb.appearance.wallpaper.texture.screentone': 'Screentone',
   'dsb.appearance.wallpaper.texture.dither': 'Dither',
