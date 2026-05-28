@@ -10,25 +10,25 @@ import type {
 } from '../spec'
 import { renderAsciiTexture } from './ascii'
 import { renderBeamTexture } from './beam'
+import { renderDotsTexture } from './dots'
 import { renderNoiseTexture } from './noise'
-import { renderPixelateTexture } from './pixelate'
-import { renderScreentoneTexture } from './screentone'
+import { renderTileTexture } from './tile'
 
 /**
  * Normalize external texture names and legacy aliases to supported values.
  *
  * @example
- * normalizeTextureType('halftone') // 'screentone'
+ * normalizeTextureType('halftone') // 'dots'
  */
 export const normalizeTextureType = (type?: string): TImageTextureType => {
-  if (type === 'mosaic') return WALLPAPER_TEXTURE.PIXELATE
-  if (type === 'dot' || type === 'halftone') return WALLPAPER_TEXTURE.SCREENTONE
+  if (type === 'mosaic') return WALLPAPER_TEXTURE.TILE
+  if (type === 'dot' || type === 'halftone') return WALLPAPER_TEXTURE.DOTS
   if (
     type === WALLPAPER_TEXTURE.NOISE ||
-    type === WALLPAPER_TEXTURE.PIXELATE ||
+    type === WALLPAPER_TEXTURE.TILE ||
     type === WALLPAPER_TEXTURE.BEAM ||
     type === WALLPAPER_TEXTURE.ASCII ||
-    type === WALLPAPER_TEXTURE.SCREENTONE
+    type === WALLPAPER_TEXTURE.DOTS
   ) {
     return type
   }
@@ -71,8 +71,8 @@ export const renderTexture = (
     renderNoiseTexture(ctx, width, height, intensity, surface)
   }
 
-  if (texture.type === WALLPAPER_TEXTURE.PIXELATE) {
-    renderPixelateTexture(ctx, source, width, height, intensity, surface)
+  if (texture.type === WALLPAPER_TEXTURE.TILE) {
+    renderTileTexture(ctx, source, width, height, intensity, surface)
   }
 
   if (texture.type === WALLPAPER_TEXTURE.BEAM) {
@@ -83,8 +83,8 @@ export const renderTexture = (
     renderAsciiTexture(ctx, source, width, height, intensity, surface)
   }
 
-  if (texture.type === WALLPAPER_TEXTURE.SCREENTONE) {
-    renderScreentoneTexture(ctx, width, height, intensity, surface)
+  if (texture.type === WALLPAPER_TEXTURE.DOTS) {
+    renderDotsTexture(ctx, source, width, height, intensity, surface)
   }
 }
 

@@ -20,10 +20,10 @@ type TWallpaperTexture = {
 ## File Map
 
 - `noise.ts`: deterministic fine-dot noise.
-- `pixelate.ts`: blocky pixel sampling with cartoon palette compression.
+- `tile.ts`: single-color rounded tile blocks, where intensity controls tile size.
 - `beam.ts`: vertical background-sampled light beams.
 - `ascii.ts`: luminance-sampled ASCII glyph field.
-- `screentone.ts`: halftone dots based on luminance.
+- `dots.ts`: regular dotted field where intensity controls visible dot count.
 - `index.ts`: Canvas dispatcher and preview/dataURL helpers.
 - `shader.ts`: WebGL texture registry and shader snippets consumed by `wallpaperRenderer/webgl.ts`.
 
@@ -51,10 +51,10 @@ The live WebGL path imports `TEXTURE_TYPE`, `TEXTURE_SHADER_HELPERS`, `TEXTURE_S
    ```ts
    export const WALLPAPER_TEXTURE = {
      NOISE: 'noise',
-     PIXELATE: 'pixelate',
+     TILE: 'tile',
      BEAM: 'beam',
      ASCII: 'ascii',
-     SCREENTONE: 'screentone',
+     DOTS: 'dots',
      LINEN: 'linen',
    } as const
    ```

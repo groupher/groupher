@@ -179,6 +179,34 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert find_community.dashboard.wallpaper.texture["intensity"] == 55
     end
 
+    test "can update wallpaper dots texture", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      {:ok, _} =
+        CMS.Dashboard.update(community, :wallpaper, %{
+          texture: %{"type" => "dots", "intensity" => 55, "params" => %{}}
+        })
+
+      {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
+
+      assert find_community.dashboard.wallpaper.texture["type"] == "dots"
+      assert find_community.dashboard.wallpaper.texture["intensity"] == 55
+    end
+
+    test "can update wallpaper tile texture", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      {:ok, _} =
+        CMS.Dashboard.update(community, :wallpaper, %{
+          texture: %{"type" => "tile", "intensity" => 72, "params" => %{}}
+        })
+
+      {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
+
+      assert find_community.dashboard.wallpaper.texture["type"] == "tile"
+      assert find_community.dashboard.wallpaper.texture["intensity"] == 72
+    end
+
     test "can update layout in community dashboard", ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 

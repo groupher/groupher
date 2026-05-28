@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
   @optional_fields dsb_cast_fields(:wallpaper)
   @wallpaper_types ~w(none gradient picture mesh upload)
   @bg_sizes ~w(cover contain auto)
-  @texture_types ~w(noise pixelate beam ascii screentone)
+  @texture_types ~w(noise tile beam ascii dots)
 
   @doc "for test usage"
   def default, do: dsb_default(:wallpaper)

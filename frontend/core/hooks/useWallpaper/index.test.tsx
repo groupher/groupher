@@ -167,6 +167,86 @@ describe('useWallpaper', () => {
     })
   })
 
+  it('accepts dots texture descriptors', () => {
+    const descriptor = resolveWallpaperRenderDescriptor({
+      customWallpaper: null,
+      source: GRADIENT_WALLPAPER_NAME.GREEN,
+      type: WALLPAPER_TYPE.GRADIENT,
+      hasPattern: false,
+      gradientDeg: 90,
+      blurIntensity: 0,
+      hasShadow: false,
+      brightness: 100,
+      saturation: 100,
+      mesh: null,
+      texture: { type: WALLPAPER_TEXTURE.DOTS, intensity: 70, params: {} },
+      bgSize: 'cover',
+    })
+
+    expect(descriptor.texture).toEqual({
+      type: WALLPAPER_TEXTURE.DOTS,
+      intensity: 70,
+      params: {},
+    })
+  })
+
+  it('normalizes removed texture aliases to supported textures', () => {
+    const mosaicDescriptor = resolveWallpaperRenderDescriptor({
+      customWallpaper: null,
+      source: GRADIENT_WALLPAPER_NAME.GREEN,
+      type: WALLPAPER_TYPE.GRADIENT,
+      hasPattern: false,
+      gradientDeg: 90,
+      blurIntensity: 0,
+      hasShadow: false,
+      brightness: 100,
+      saturation: 100,
+      mesh: null,
+      texture: { type: 'mosaic', intensity: 35, params: {} } as unknown as TWallpaperTexture,
+      bgSize: 'cover',
+    })
+    const halftoneDescriptor = resolveWallpaperRenderDescriptor({
+      customWallpaper: null,
+      source: GRADIENT_WALLPAPER_NAME.GREEN,
+      type: WALLPAPER_TYPE.GRADIENT,
+      hasPattern: false,
+      gradientDeg: 90,
+      blurIntensity: 0,
+      hasShadow: false,
+      brightness: 100,
+      saturation: 100,
+      mesh: null,
+      texture: { type: 'halftone', intensity: 35, params: {} } as unknown as TWallpaperTexture,
+      bgSize: 'cover',
+    })
+
+    expect(mosaicDescriptor.texture.type).toBe(WALLPAPER_TEXTURE.TILE)
+    expect(halftoneDescriptor.texture.type).toBe(WALLPAPER_TEXTURE.DOTS)
+  })
+
+  it('accepts tile texture descriptors', () => {
+    const descriptor = resolveWallpaperRenderDescriptor({
+      customWallpaper: null,
+      source: GRADIENT_WALLPAPER_NAME.GREEN,
+      type: WALLPAPER_TYPE.GRADIENT,
+      hasPattern: false,
+      gradientDeg: 90,
+      blurIntensity: 0,
+      hasShadow: false,
+      brightness: 100,
+      saturation: 100,
+      mesh: null,
+      texture: { type: WALLPAPER_TEXTURE.TILE, intensity: 70, params: {} },
+      bgSize: 'cover',
+    })
+
+    expect(descriptor.texture).toEqual({
+      type: WALLPAPER_TEXTURE.TILE,
+      intensity: 70,
+      params: {},
+    })
+  })
+
   it('resolves DIY mesh texture descriptor when source is empty', () => {
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,

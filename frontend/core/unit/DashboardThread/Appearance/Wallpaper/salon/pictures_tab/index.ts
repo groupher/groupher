@@ -6,31 +6,33 @@ export default function useSalon() {
   const { cn, br, bg, fg, fill, primary } = useTwBelt()
   const texturePatternStyle = (type: string) => {
     switch (type) {
-      case 'pixelate': {
-        return {
-          backgroundImage:
-            'linear-gradient(90deg, rgba(80,65,50,.28) 50%, transparent 50%), linear-gradient(rgba(80,65,50,.28) 50%, transparent 50%)',
-          backgroundSize: '5px 5px',
-        }
-      }
       case 'beam': {
         return {
           backgroundImage:
-            'linear-gradient(90deg, rgba(255,255,255,.55) 0 1px, transparent 2px 7px, rgba(80,65,50,.22) 8px 10px, transparent 11px), linear-gradient(90deg, rgba(255,255,255,.32) 0 2px, transparent 3px)',
-          backgroundSize: '12px 100%, 19px 100%',
+            'linear-gradient(90deg, rgba(255,255,255,.78) 0 2px, rgba(98,76,52,.58) 2px 4px, transparent 4px 9px, rgba(74,55,38,.42) 9px 12px, transparent 12px), linear-gradient(90deg, rgba(255,255,255,.46) 0 1px, transparent 1px)',
+          backgroundSize: '13px 100%, 5px 100%',
         }
       }
       case 'ascii': {
         return {
           backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='40' viewBox='0 0 56 40'%3E%3Crect width='56' height='40' fill='%23efe7dc'/%3E%3Cg font-family='monospace' font-size='8' fill='%235d4a35' opacity='.68'%3E%3Ctext x='2' y='9'%3E@8X%23x%3C/text%3E%3Ctext x='0' y='20'%3Ex%2B=%238%3C/text%3E%3Ctext x='4' y='31'%3E%23@8Xx%3C/text%3E%3C/g%3E%3C/svg%3E\")",
-          backgroundSize: '56px 40px',
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='28' viewBox='0 0 34 28'%3E%3Crect width='34' height='28' fill='%23efe7dc'/%3E%3Cg font-family='monospace' font-size='8.5' font-weight='700' fill='%234f3a2a' opacity='.86'%3E%3Ctext x='1' y='8'%3E@8%23%3C/text%3E%3Ctext x='6' y='18'%3ExY%3C/text%3E%3Ctext x='0' y='27'%3E%238X%3C/text%3E%3C/g%3E%3C/svg%3E\")",
+          backgroundSize: '24px 20px',
         }
       }
-      case 'screentone': {
+      case 'tile': {
         return {
-          backgroundImage: 'radial-gradient(circle, rgba(80,60,45,.48) 0 .9px, transparent 1.4px)',
-          backgroundSize: '5px 5px',
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='44' viewBox='0 0 32 44'%3E%3Crect width='32' height='44' fill='%23efe7dc'/%3E%3Cg fill='%23746350' opacity='.72'%3E%3Crect x='2' y='1' width='9' height='15' rx='1.3'/%3E%3Crect x='12' y='1' width='9' height='15' rx='1.3'/%3E%3Crect x='22' y='1' width='8' height='15' rx='1.3'/%3E%3Crect x='2' y='17' width='9' height='15' rx='1.3'/%3E%3Crect x='12' y='17' width='9' height='15' rx='1.3'/%3E%3Crect x='22' y='17' width='8' height='15' rx='1.3'/%3E%3Crect x='2' y='33' width='9' height='10' rx='1.3'/%3E%3Crect x='12' y='33' width='9' height='10' rx='1.3'/%3E%3Crect x='22' y='33' width='8' height='10' rx='1.3'/%3E%3C/g%3E%3C/svg%3E\")",
+          backgroundSize: '32px 44px',
+        }
+      }
+      case 'dots': {
+        return {
+          backgroundImage:
+            'radial-gradient(circle, rgba(74,54,39,.74) 0 1.45px, transparent 2.1px), radial-gradient(circle, rgba(74,54,39,.5) 0 1.1px, transparent 1.8px)',
+          backgroundPosition: '0 0, 4px 4px',
+          backgroundSize: '8px 8px',
         }
       }
       default: {
@@ -63,7 +65,7 @@ export default function useSalon() {
     textureLabel: cn('w-20 shrink-0 text-sm leading-none', fg('digest')),
     textureOptions: 'row-center gap-1.5',
     textureSwatch: cn(
-      'size-6 circle overflow-hidden relative border-2 pointer trans-all-200 align-both shadow-sm',
+      'size-6 circle overflow-hidden relative border pointer trans-all-200 align-both shadow-sm',
       bg('card'),
     ),
     textureSwatchIdle: cn(br('divider'), `hover:${br('digest')}`),

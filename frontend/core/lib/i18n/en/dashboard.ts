@@ -368,10 +368,10 @@ export default {
   'dsb.appearance.wallpaper.texture': 'Texture',
   'dsb.appearance.wallpaper.texture.intensity': 'Intensity',
   'dsb.appearance.wallpaper.texture.noise': 'Noise',
-  'dsb.appearance.wallpaper.texture.pixelate': 'Pixelate',
+  'dsb.appearance.wallpaper.texture.tile': 'Tile',
   'dsb.appearance.wallpaper.texture.beam': 'Beam',
   'dsb.appearance.wallpaper.texture.ascii': 'ASCII',
-  'dsb.appearance.wallpaper.texture.screentone': 'Screentone',
+  'dsb.appearance.wallpaper.texture.dots': 'Dots',
   'dsb.appearance.kanban.bg.title': 'Board backgrounds',
   'dsb.appearance.kanban.bg.desc':
     'Background color for each kanban column. Default is light gray.',

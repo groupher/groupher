@@ -7,10 +7,10 @@ export const DEFAULT_MESH_COLORS = ['#fbeede', '#d8b9e3'] as const
 
 export const WALLPAPER_TEXTURE = {
   NOISE: 'noise',
-  PIXELATE: 'pixelate',
+  TILE: 'tile',
   BEAM: 'beam',
   ASCII: 'ascii',
-  SCREENTONE: 'screentone',
+  DOTS: 'dots',
 } as const
 
 export const WALLPAPER_TEXTURE_SURFACE = {
@@ -25,8 +25,8 @@ export const WALLPAPER_TEXTURE_OPTIONS = [
     labelKey: 'dsb.appearance.wallpaper.texture.noise',
   },
   {
-    type: WALLPAPER_TEXTURE.PIXELATE,
-    labelKey: 'dsb.appearance.wallpaper.texture.pixelate',
+    type: WALLPAPER_TEXTURE.TILE,
+    labelKey: 'dsb.appearance.wallpaper.texture.tile',
   },
   {
     type: WALLPAPER_TEXTURE.BEAM,
@@ -37,8 +37,8 @@ export const WALLPAPER_TEXTURE_OPTIONS = [
     labelKey: 'dsb.appearance.wallpaper.texture.ascii',
   },
   {
-    type: WALLPAPER_TEXTURE.SCREENTONE,
-    labelKey: 'dsb.appearance.wallpaper.texture.screentone',
+    type: WALLPAPER_TEXTURE.DOTS,
+    labelKey: 'dsb.appearance.wallpaper.texture.dots',
   },
 ] as const
 

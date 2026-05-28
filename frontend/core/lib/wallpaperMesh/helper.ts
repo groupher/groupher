@@ -10,7 +10,7 @@ export const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value))
 
 /**
- * Calculate perceived luminance for texture masks such as screentone dots.
+ * Calculate perceived luminance for texture masks.
  *
  * @example
  * getLuminance(255, 255, 255) // 1
