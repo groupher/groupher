@@ -12,6 +12,7 @@ tools/reports
 # =====================
 .playwright/
 .playwright-cli/
+.playwright-mcp/
 playwright-report/
 test-results/
 
