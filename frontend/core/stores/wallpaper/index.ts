@@ -18,7 +18,7 @@ export const INITIAL_WALLPAPER_STATE = {
   type: WALLPAPER_TYPE.GRADIENT,
   hasPattern: true,
   patternId: DEFAULT_WALLPAPER_PATTERN_ID,
-  patternIntensity: 100,
+  patternIntensity: 50,
   patternTone: WALLPAPER_PATTERN_TONE.DARK,
   hasTexture: false,
   gradient: GRADIENT_WALLPAPER.pink,

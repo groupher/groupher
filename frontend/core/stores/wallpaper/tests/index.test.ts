@@ -17,7 +17,7 @@ describe('stores/wallpaper', () => {
     expect(store.type).toBe(INITIAL_WALLPAPER_STATE.type)
     expect(store.hasPattern).toBe(true)
     expect(store.patternId).toBe(DEFAULT_WALLPAPER_PATTERN_ID)
-    expect(store.patternIntensity).toBe(100)
+    expect(store.patternIntensity).toBe(50)
     expect(store.patternTone).toBe(WALLPAPER_PATTERN_TONE.DARK)
     expect(store.hasTexture).toBe(false)
     expect(store.gradient).toEqual(GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.PINK])
