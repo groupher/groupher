@@ -628,7 +628,7 @@ type RootMutationType {
 
   "update wallpaper in dashboard"
   updateDashboardWallpaper(
-    community: String!, dsbSection: DsbSection, type: String, source: String, hasPattern: Boolean, patternId: String, patternIntensity: Int, patternTone: String, hasTexture: Boolean, gradientDeg: Int, bgSize: String, blurIntensity: Int, hasShadow: Boolean, brightness: Int, saturation: Int, mesh: Json, texture: Json
+    community: String!, dsbSection: DsbSection, type: String, source: String, hasPattern: Boolean, patternId: String, patternIntensity: Int, patternTone: String, hasTexture: Boolean, gradient: Json, bgSize: String, blurIntensity: Int, hasShadow: Boolean, brightness: Int, saturation: Int, texture: Json
   ): Dsb
 
   "update enable in dashboard"
@@ -907,13 +907,12 @@ type DsbWallpaper {
   patternIntensity: Int
   patternTone: String
   hasTexture: Boolean
-  gradientDeg: Int
+  gradient: Json
   bgSize: String
   blurIntensity: Int
   hasShadow: Boolean
   brightness: Int
   saturation: Int
-  mesh: Json
   texture: Json
 }
 
