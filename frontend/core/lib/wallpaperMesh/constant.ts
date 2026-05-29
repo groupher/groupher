@@ -20,6 +20,7 @@ export const MESH_GRADIENT_MODEL = {
   SCANLINE: 'scanline',
   GLOW: 'glow',
   FLOW: 'flow',
+  LIQUID: 'liquid',
 } as const
 
 export const WALLPAPER_TEXTURE = {

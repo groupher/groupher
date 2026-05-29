@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
   @wallpaper_types ~w(none gradient picture upload)
   @bg_sizes ~w(cover contain auto)
   @texture_types ~w(noise tile beam ascii dots)
-  @mesh_models ~w(haze ridge brushed ribbon scanline glow flow)
+  @mesh_models ~w(haze ridge brushed ribbon scanline glow flow liquid)
   @pattern_ids 1..33 |> Enum.map(&String.pad_leading("#{&1}", 2, "0"))
   @pattern_tones ~w(dark light)
 

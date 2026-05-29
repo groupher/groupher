@@ -20,6 +20,7 @@ const MESH_MODEL_UNIFORM = {
   [MESH_GRADIENT_MODEL.SCANLINE]: 4,
   [MESH_GRADIENT_MODEL.GLOW]: 5,
   [MESH_GRADIENT_MODEL.FLOW]: 6,
+  [MESH_GRADIENT_MODEL.LIQUID]: 7,
 } as const
 
 const MESH_MODEL_SHADER_CONSTANTS = `
@@ -30,6 +31,7 @@ const int MESH_MODEL_RIBBON = ${MESH_MODEL_UNIFORM[MESH_GRADIENT_MODEL.RIBBON]};
 const int MESH_MODEL_SCANLINE = ${MESH_MODEL_UNIFORM[MESH_GRADIENT_MODEL.SCANLINE]};
 const int MESH_MODEL_GLOW = ${MESH_MODEL_UNIFORM[MESH_GRADIENT_MODEL.GLOW]};
 const int MESH_MODEL_FLOW = ${MESH_MODEL_UNIFORM[MESH_GRADIENT_MODEL.FLOW]};
+const int MESH_MODEL_LIQUID = ${MESH_MODEL_UNIFORM[MESH_GRADIENT_MODEL.LIQUID]};
 const int FLOW_STRAND_COUNT = ${FLOW_STRAND_COUNT};
 `
 
@@ -270,6 +272,57 @@ vec3 sampleFlowMesh(vec2 uv, float feather, float warp) {
   return color;
 }
 
+float liquidBlob(vec2 uv, vec2 center, float radius, float wobble, float melt, float phase) {
+  vec2 delta = uv - center;
+  float angle = atan(delta.y, delta.x);
+  float edge = 1.0 + wobble * (
+    sin(angle * 2.0 + phase) * 0.08 +
+    sin(angle * 3.0 - phase * 1.4) * 0.05 +
+    sin(angle * 5.0 + phase * 0.7) * 0.025
+  );
+  float safeRadius = max(radius * edge, 0.01);
+  float innerRadius = safeRadius * mix(0.86, 0.34, melt);
+
+  return 1.0 - smoothstep(innerRadius, safeRadius, length(delta));
+}
+
+vec3 sampleLiquidMesh(vec2 uv, float feather, float warp) {
+  float scale = mix(0.48, 1.35, clamp(uMeshScale / 100.0, 0.0, 1.0));
+  float softness = clamp(uSoftness / 100.0, 0.0, 1.0);
+  float spread = smoothstep(0.0, 1.0, softness);
+  float radiusScale = mix(0.72, 1.2, spread);
+  float liquidFeather = mix(0.02, feather * 1.12, spread);
+  vec2 flowUv = rotateUv(uv - 0.5, uFlow - 180.0) + 0.5;
+  vec2 drift = vec2(
+    fbm(flowUv * scale + vec2(2.1, 7.4) + uMeshSeed * 0.009),
+    fbm(flowUv * scale + vec2(8.7, 1.9) + uMeshSeed * 0.011)
+  ) - 0.5;
+  vec2 liquidUv = flowUv + drift * (0.025 + warp * mix(0.08, 0.24, spread));
+  float mist = fbm(liquidUv * (scale * 0.72) + uMeshSeed * 0.006);
+
+  float milk = liquidBlob(liquidUv, vec2(0.28, 0.26), (0.7 + liquidFeather * 0.32) * radiusScale, warp, spread, 0.7);
+  float blush = liquidBlob(liquidUv, vec2(0.12, 0.76), (0.48 + liquidFeather * 0.2) * radiusScale, warp, spread, 2.1);
+  float orange = liquidBlob(liquidUv, vec2(0.62, 0.76), (0.36 + liquidFeather * 0.28) * radiusScale, warp, spread, 4.4);
+  float sky = liquidBlob(liquidUv, vec2(0.93, 0.34), (0.42 + liquidFeather * 0.3) * radiusScale, warp, spread, 6.2);
+  float cream = liquidBlob(liquidUv, vec2(0.42, 0.48), (0.54 + liquidFeather * 0.32) * radiusScale, warp, spread, 8.6);
+
+  vec3 color = mix(sampleGradient(0.0), sampleGradient(0.2), milk * mix(0.36, 0.66, spread));
+  color = mix(color, sampleGradient(0.18), cream * mix(0.18, 0.56, spread));
+  color = mix(color, sampleGradient(0.94), blush * mix(0.22, 0.4, spread));
+  color = mix(color, sampleGradient(0.5), orange * mix(0.56, 0.94, spread));
+  color = mix(color, sampleGradient(0.76), sky * mix(0.56, 0.9, spread));
+
+  float lightVeil = 1.0 - smoothstep(0.12, 0.58 + liquidFeather * 0.9, distance(liquidUv, vec2(0.22, 0.32)));
+  float warmCore = 1.0 - smoothstep(0.03, 0.24 + liquidFeather * 0.75, distance(liquidUv, vec2(0.58, 0.72)));
+  float coolEdge = smoothstep(0.64, 0.98, liquidUv.x);
+  color = mix(color, sampleGradient(0.14), lightVeil * mix(0.08, 0.24, spread));
+  color += sampleGradient(0.5) * warmCore * mix(0.2, 0.42, spread);
+  color = mix(color, sampleGradient(0.78), coolEdge * mix(0.16, 0.42 + mist * 0.18, spread));
+  color = mix(color, sampleGradient(clamp(mist * 0.75 + 0.1, 0.0, 1.0)), mix(0.02, 0.08, spread));
+
+  return color;
+}
+
 vec3 sampleProceduralMesh(vec2 uv) {
   float softness = clamp(uSoftness / 100.0, 0.0, 1.0);
   float warp = clamp(uMeshWarp / 100.0, 0.0, 1.0);
@@ -321,6 +374,8 @@ vec3 sampleProceduralMesh(vec2 uv) {
     color = sampleRibbonMesh(along, across, baseNoise, warp, feather);
   } else if (uMeshModel == MESH_MODEL_FLOW) {
     color = sampleFlowMesh(uv, feather, warp);
+  } else if (uMeshModel == MESH_MODEL_LIQUID) {
+    color = sampleLiquidMesh(uv, feather, warp);
   } else if (uMeshModel == MESH_MODEL_SCANLINE) {
     float columns = mix(12.0, 28.0, clamp(uMeshScale / 100.0, 0.0, 1.0));
     float bentX = uv.x + sin(uv.y * 3.7 + baseNoise * 1.4) * warp * 0.025;

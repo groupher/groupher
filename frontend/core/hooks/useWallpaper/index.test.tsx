@@ -51,6 +51,31 @@ describe('useWallpaper', () => {
     expect(result.current.effect).toContain('blur')
   })
 
+  it('resolves lagoon as liquid mesh wallpaper', () => {
+    const gradient = GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.LAGOON]
+    const descriptor = resolveWallpaperRenderDescriptor({
+      customWallpaper: null,
+      source: GRADIENT_WALLPAPER_NAME.LAGOON,
+      type: WALLPAPER_TYPE.GRADIENT,
+      hasPattern: false,
+      patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+      patternIntensity: 100,
+      patternTone: WALLPAPER_PATTERN_TONE.DARK,
+      hasTexture: false,
+      gradient,
+      blurIntensity: 0,
+      hasShadow: false,
+      brightness: 100,
+      saturation: 100,
+      texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
+      bgSize: 'cover',
+    })
+
+    expect(descriptor.kind).toBe('mesh-gradient')
+    expect(descriptor.meshRecipe?.model).toBe(MESH_GRADIENT_MODEL.LIQUID)
+    expect(descriptor.colors).toEqual(gradient.colors)
+  })
+
   it('applies current gradient effects to the rendered wallpaper', () => {
     const wrapper = makeStoreWrapper({
       wallpaper: {
