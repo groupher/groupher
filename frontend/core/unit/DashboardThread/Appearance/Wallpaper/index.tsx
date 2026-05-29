@@ -9,7 +9,6 @@ import ThemeSwitchPreview from '~/widgets/ThemeSwitch/Preview'
 
 import SectionLabel from '../../SectionLabel'
 import { TAB, TAB_OPTIONS } from './constant'
-import DiyTab from './DiyTab'
 import GradientTab from './GradientTab'
 import PicturesTab from './PicturesTab'
 import PreviewPanel from './PreviewPanel'
@@ -76,7 +75,6 @@ function WallpaperContent() {
             >
               {tab === TAB.PICTURES && <PicturesTab />}
               {tab === TAB.GRADIENT && <GradientTab />}
-              {tab === TAB.DIY && <DiyTab />}
               {tab === TAB.UPLOAD && <UploadTab />}
             </m.div>
           </AnimatePresence>

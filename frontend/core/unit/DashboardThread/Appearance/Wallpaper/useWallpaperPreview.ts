@@ -32,7 +32,7 @@ const buildFilterValue = ({
 }
 
 const buildPreviewCssVars = (state: TWallpaperState): TWallpaperPreviewVars => {
-  const { background } = resolveWallpaper(state, { renderMeshDataUrl: false })
+  const { background } = resolveWallpaper(state)
 
   return {
     '--preview-wallpaper-bg': background || 'transparent',

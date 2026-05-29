@@ -1,14 +1,17 @@
 import { keys } from 'ramda'
 
+import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import CheckedSVG from '~/icons/CheckBold'
 import type { TWallpaperPic } from '~/spec'
 
+import { isActiveWallpaperSource } from '../helper'
 import useSalon, { cn } from '../salon/pictures_tab'
 import useLogic from '../useLogic'
 
 export default function PicturesTab() {
   const { getWallpaper, changePatternWallpaper } = useLogic()
-  const { source, patternWallpapers } = getWallpaper()
+  const wallpaper = getWallpaper()
+  const { patternWallpapers } = wallpaper
 
   const s = useSalon()
 
@@ -18,15 +21,16 @@ export default function PicturesTab() {
     <div className={s.wrapper}>
       {patternKeys.map((name) => {
         const { image, preview } = patternWallpapers[name] as TWallpaperPic
+        const selected = isActiveWallpaperSource(wallpaper, WALLPAPER_TYPE.PATTERN, name)
 
         return (
           <button
             type='button'
-            className={cn(s.block, name === source && s.blockActive)}
+            className={cn(s.block, selected && s.blockActive)}
             key={name}
             onClick={() => changePatternWallpaper(name)}
           >
-            {name === source && (
+            {selected && (
               <div className={s.activeSign}>
                 <CheckedSVG className={s.checkIcon} />
               </div>

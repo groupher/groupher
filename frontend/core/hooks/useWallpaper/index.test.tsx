@@ -1,15 +1,15 @@
 import { renderHook } from '@testing-library/react'
 
-import { GRADIENT_WALLPAPER_NAME, WALLPAPER_TYPE } from '~/const/wallpaper'
+import { GRADIENT_WALLPAPER, GRADIENT_WALLPAPER_NAME, WALLPAPER_TYPE } from '~/const/wallpaper'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useWallpaper, { resolveWallpaperRenderDescriptor } from '~/hooks/useWallpaper'
-import { WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
+import { GRADIENT_TYPE, WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 import type { TMeshGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
 
 describe('useWallpaper', () => {
   const mesh: TMeshGradientRecipe = {
     version: 1,
-    kind: 'mesh',
+    kind: GRADIENT_TYPE.MESH,
     preset: 'test',
     seed: 1,
     colors: ['#fbeede', '#ff7f6f', '#5f74a6'],
@@ -26,9 +26,9 @@ describe('useWallpaper', () => {
   it('parses mesh wallpaper', () => {
     const wrapper = makeStoreWrapper({
       wallpaper: {
-        source: '',
-        type: WALLPAPER_TYPE.MESH,
-        mesh,
+        source: mesh.preset,
+        type: WALLPAPER_TYPE.GRADIENT,
+        gradient: mesh,
         hasPattern: false,
         blurIntensity: 50,
         hasShadow: true,
@@ -37,7 +37,7 @@ describe('useWallpaper', () => {
 
     const { result } = renderHook(() => useWallpaper(), { wrapper })
 
-    expect(result.current.source).toBe('')
+    expect(result.current.source).toBe(mesh.preset)
     expect(result.current.hasShadow).toBe(true)
     expect(result.current.background).toContain('linear-gradient(135deg')
     expect(result.current.effect).toContain('blur')
@@ -48,7 +48,7 @@ describe('useWallpaper', () => {
       wallpaper: {
         source: GRADIENT_WALLPAPER_NAME.PURPLE,
         type: WALLPAPER_TYPE.GRADIENT,
-        gradientDeg: 90,
+        gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.PURPLE], angle: 90 },
         hasPattern: true,
         blurIntensity: 50,
       },
@@ -122,12 +122,11 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: true,
       hasTexture: true,
-      gradientDeg: 90,
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 30,
       hasShadow: false,
       brightness: 90,
       saturation: 120,
-      mesh: null,
       texture: { type: WALLPAPER_TEXTURE.BEAM, intensity: 55, params: {} },
       bgSize: 'cover',
     })
@@ -141,6 +140,68 @@ describe('useWallpaper', () => {
     expect(descriptor.background).not.toContain('data:image')
   })
 
+  it('normalizes linear gradient spread as a centered transition band', () => {
+    const descriptor = resolveWallpaperRenderDescriptor({
+      customWallpaper: null,
+      source: GRADIENT_WALLPAPER_NAME.GREEN,
+      type: WALLPAPER_TYPE.GRADIENT,
+      hasPattern: false,
+      hasTexture: false,
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], spread: 0 },
+      blurIntensity: 0,
+      hasShadow: false,
+      brightness: 100,
+      saturation: 100,
+      texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
+      bgSize: 'cover',
+    })
+
+    expect(descriptor.kind).toBe('linear-gradient')
+    expect(descriptor.colorStops).toEqual([46, 54])
+  })
+
+  it('normalizes radial gradient spread as outward palette reach', () => {
+    const descriptor = resolveWallpaperRenderDescriptor({
+      customWallpaper: null,
+      source: GRADIENT_WALLPAPER_NAME.BLUE,
+      type: WALLPAPER_TYPE.GRADIENT,
+      hasPattern: false,
+      hasTexture: false,
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.BLUE], spread: 50 },
+      blurIntensity: 0,
+      hasShadow: false,
+      brightness: 100,
+      saturation: 100,
+      texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
+      bgSize: 'cover',
+    })
+
+    expect(descriptor.kind).toBe('radial-gradient')
+    expect(descriptor.colorStops).toEqual([0, 20, 39, 59])
+    expect(descriptor.background).toContain('radial-gradient')
+    expect(descriptor.background).not.toContain('transparent')
+  })
+
+  it('uses explicit radial gradient stops in the renderer descriptor', () => {
+    const descriptor = resolveWallpaperRenderDescriptor({
+      customWallpaper: null,
+      source: GRADIENT_WALLPAPER_NAME.BLUE,
+      type: WALLPAPER_TYPE.GRADIENT,
+      hasPattern: false,
+      hasTexture: false,
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.BLUE], stops: [0, 20, 70, 100] },
+      blurIntensity: 0,
+      hasShadow: false,
+      brightness: 100,
+      saturation: 100,
+      texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
+      bgSize: 'cover',
+    })
+
+    expect(descriptor.kind).toBe('radial-gradient')
+    expect(descriptor.colorStops).toEqual([0, 20, 70, 100])
+  })
+
   it('falls back unsupported texture payloads to noise', () => {
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
@@ -148,12 +209,11 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       hasTexture: true,
-      gradientDeg: 90,
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
       saturation: 100,
-      mesh: null,
       texture: {
         type: 'unsupported-texture',
         intensity: 65,
@@ -176,12 +236,11 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       hasTexture: true,
-      gradientDeg: 90,
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
       saturation: 100,
-      mesh: null,
       texture: { type: WALLPAPER_TEXTURE.DOTS, intensity: 70, params: {} },
       bgSize: 'cover',
     })
@@ -200,12 +259,11 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       hasTexture: true,
-      gradientDeg: 90,
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
       saturation: 100,
-      mesh: null,
       texture: { type: 'mosaic', intensity: 35, params: {} } as unknown as TWallpaperTexture,
       bgSize: 'cover',
     })
@@ -215,12 +273,11 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       hasTexture: true,
-      gradientDeg: 90,
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
       saturation: 100,
-      mesh: null,
       texture: { type: 'halftone', intensity: 35, params: {} } as unknown as TWallpaperTexture,
       bgSize: 'cover',
     })
@@ -236,12 +293,11 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       hasTexture: true,
-      gradientDeg: 90,
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
       saturation: 100,
-      mesh: null,
       texture: { type: WALLPAPER_TEXTURE.TILE, intensity: 70, params: {} },
       bgSize: 'cover',
     })
@@ -260,12 +316,11 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       hasTexture: false,
-      gradientDeg: 90,
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
       saturation: 100,
-      mesh: null,
       texture: { type: WALLPAPER_TEXTURE.TILE, intensity: 70, params: {} },
       bgSize: 'cover',
     })
@@ -278,19 +333,18 @@ describe('useWallpaper', () => {
     })
   })
 
-  it('resolves DIY mesh texture descriptor when source is empty', () => {
+  it('resolves mesh gradient texture descriptor', () => {
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
-      source: '',
-      type: WALLPAPER_TYPE.MESH,
+      source: mesh.preset,
+      type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       hasTexture: true,
-      gradientDeg: 180,
+      gradient: mesh,
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
       saturation: 100,
-      mesh,
       texture: { type: WALLPAPER_TEXTURE.ASCII, intensity: 80, params: {} },
       bgSize: 'cover',
     })

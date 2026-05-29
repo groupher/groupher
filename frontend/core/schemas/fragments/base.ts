@@ -44,7 +44,7 @@ export const footerOnelineLink = `
 export const wallpaper = `
   type
   source
-  gradientDeg
+  gradient
   bgSize
   hasPattern
   hasTexture
@@ -52,7 +52,6 @@ export const wallpaper = `
   hasShadow
   brightness
   saturation
-  mesh
   texture
 `
 export const seo = `

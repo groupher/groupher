@@ -6,6 +6,12 @@ export const PREVIEW_HEIGHT = 260
 export const DEFAULT_MESH_COLORS = ['#fbeede', '#d8b9e3'] as const
 export const DEFAULT_WALLPAPER_TEXTURE_INTENSITY = 45
 
+export const GRADIENT_TYPE = {
+  LINEAR: 'linear',
+  RADIAL: 'radial',
+  MESH: 'mesh',
+} as const
+
 export const WALLPAPER_TEXTURE = {
   NOISE: 'noise',
   TILE: 'tile',

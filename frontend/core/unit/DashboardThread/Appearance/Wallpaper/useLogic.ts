@@ -10,14 +10,15 @@ import {
 } from 'react'
 
 import {
+  GRADIENT_WALLPAPER,
   WALLPAPER_SAVABLE_STATE_KEYS,
   WALLPAPER_STATE_KEYS,
   WALLPAPER_TYPE,
 } from '~/const/wallpaper'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
-import { DEFAULT_WALLPAPER_TEXTURE_INTENSITY } from '~/lib/wallpaperMesh'
-import type { TWallpaperTexture } from '~/lib/wallpaperMesh'
+import { DEFAULT_WALLPAPER_TEXTURE_INTENSITY, GRADIENT_TYPE } from '~/lib/wallpaperMesh'
+import type { TGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
 import { toast } from '~/signal'
 import type { TWallpaperData, TWallpaperType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -37,9 +38,6 @@ const getInitialTab = (type: TWallpaperType): TTab => {
     }
     case WALLPAPER_TYPE.UPLOAD: {
       return TAB.UPLOAD
-    }
-    case WALLPAPER_TYPE.MESH: {
-      return TAB.DIY
     }
     default: {
       return TAB.GRADIENT
@@ -63,6 +61,7 @@ type TRet = {
   changeAngle: (angle: number) => void
   removeWallpaper: () => void
   changeGradientWallpaper: (source: string) => void
+  changeGradientRecipe: (gradient: TGradientRecipe) => void
   changePatternWallpaper: (source: string) => void
   changeWallpaperType: (type: TWallpaperType) => void
   togglePattern: (hasPattern: boolean) => void
@@ -88,18 +87,53 @@ const getWallpaperState = (wallpaper$: ReturnType<typeof useWallpaperDomain>): T
   type: wallpaper$.type,
   hasPattern: wallpaper$.hasPattern,
   hasTexture: wallpaper$.hasTexture,
-  gradientDeg: wallpaper$.gradientDeg,
+  gradient: wallpaper$.gradient,
   blurIntensity: wallpaper$.blurIntensity,
   hasShadow: wallpaper$.hasShadow,
   brightness: wallpaper$.brightness,
   saturation: wallpaper$.saturation,
-  mesh: wallpaper$.mesh,
   texture: wallpaper$.texture,
   bgSize: wallpaper$.bgSize,
 })
 
-const getAngleDraft = (state: TWallpaperState): number =>
-  state.type === WALLPAPER_TYPE.MESH && state.mesh ? state.mesh.flow : state.gradientDeg
+const getAngleDraft = (state: TWallpaperState): number => {
+  if (state.gradient?.kind === GRADIENT_TYPE.MESH) return state.gradient.flow
+  if (state.gradient?.kind === GRADIENT_TYPE.LINEAR) return state.gradient.angle
+  if (state.gradient?.kind === GRADIENT_TYPE.RADIAL) {
+    return radialCenterToAngle(state.gradient.center)
+  }
+
+  return 180
+}
+
+const RADIAL_DEFAULT_CENTER_DISTANCE = 0.22
+
+const normalizeAngle = (angle: number): number => Math.round(((angle % 360) + 360) % 360)
+
+const radialCenterToAngle = ({ x, y }: { x: number; y: number }): number => {
+  const dx = x - 0.5
+  const dy = y - 0.5
+
+  if (Math.hypot(dx, dy) < 0.001) return 180
+
+  return normalizeAngle((Math.atan2(dx, -dy) * 180) / Math.PI)
+}
+
+const radialCenterFromAngle = (
+  angle: number,
+  center: { x: number; y: number },
+): { x: number; y: number } => {
+  // Radial gradients reuse Direction as focal-point direction. Keep the
+  // existing center distance so the preset shape stays intact while rotating.
+  const currentDistance = Math.hypot(center.x - 0.5, center.y - 0.5)
+  const distance = currentDistance > 0.001 ? currentDistance : RADIAL_DEFAULT_CENTER_DISTANCE
+  const rad = (normalizeAngle(angle) * Math.PI) / 180
+
+  return {
+    x: 0.5 + Math.sin(rad) * distance,
+    y: 0.5 - Math.cos(rad) * distance,
+  }
+}
 
 function useLogicValue(): TRet {
   const wallpaper$ = useWallpaperDomain()
@@ -118,12 +152,11 @@ function useLogicValue(): TRet {
       wallpaper$.type,
       wallpaper$.hasPattern,
       wallpaper$.hasTexture,
-      wallpaper$.gradientDeg,
+      wallpaper$.gradient,
       wallpaper$.blurIntensity,
       wallpaper$.hasShadow,
       wallpaper$.brightness,
       wallpaper$.saturation,
-      wallpaper$.mesh,
       wallpaper$.texture,
       wallpaper$.bgSize,
     ],
@@ -175,7 +208,7 @@ function useLogicValue(): TRet {
     const params = {
       community,
       ...wallpaperFields,
-      mesh: wallpaperFields.mesh ? JSON.stringify(wallpaperFields.mesh) : null,
+      gradient: wallpaperFields.gradient ? JSON.stringify(wallpaperFields.gradient) : null,
       texture: JSON.stringify(wallpaperFields.texture),
     }
 
@@ -196,12 +229,30 @@ function useLogicValue(): TRet {
   const changeAngle = (angle: number): void => {
     setAngleDraft(angle)
 
-    if (wallpaperState.type === WALLPAPER_TYPE.MESH && wallpaperState.mesh) {
-      scheduleWallpaperPreview({ mesh: { ...wallpaperState.mesh, flow: angle } })
+    if (wallpaperState.gradient?.kind === GRADIENT_TYPE.MESH) {
+      scheduleWallpaperPreview({ gradient: { ...wallpaperState.gradient, flow: angle } })
       return
     }
 
-    scheduleWallpaperPreview({ gradientDeg: angle })
+    if (wallpaperState.gradient?.kind === GRADIENT_TYPE.LINEAR) {
+      scheduleWallpaperPreview({ gradient: { ...wallpaperState.gradient, angle } })
+      return
+    }
+
+    if (wallpaperState.gradient?.kind === GRADIENT_TYPE.RADIAL) {
+      scheduleWallpaperPreview({
+        gradient: {
+          ...wallpaperState.gradient,
+          center: radialCenterFromAngle(angle, wallpaperState.gradient.center),
+        },
+      })
+      return
+    }
+
+    if (wallpaperState.gradient) return
+
+    const fallback = GRADIENT_WALLPAPER.pink
+    scheduleWallpaperPreview({ gradient: { ...fallback, angle } })
   }
   const removeWallpaper = (): void => {
     clearPendingWallpaperDraft()
@@ -209,7 +260,13 @@ function useLogicValue(): TRet {
     liveWallpaper$.commit({ source: '', type: WALLPAPER_TYPE.NONE })
   }
   const changeGradientWallpaper = (source: string): void =>
-    commitWallpaperPatch({ source, type: WALLPAPER_TYPE.GRADIENT })
+    commitWallpaperPatch({
+      source,
+      type: WALLPAPER_TYPE.GRADIENT,
+      gradient: GRADIENT_WALLPAPER[source] ?? GRADIENT_WALLPAPER.pink,
+    })
+  const changeGradientRecipe = (gradient: TGradientRecipe): void =>
+    commitWallpaperPatch({ source: gradient.preset, type: WALLPAPER_TYPE.GRADIENT, gradient })
   const changePatternWallpaper = (source: string): void =>
     commitWallpaperPatch({ source, type: WALLPAPER_TYPE.PATTERN })
 
@@ -248,6 +305,7 @@ function useLogicValue(): TRet {
     changeAngle,
     removeWallpaper,
     changeGradientWallpaper,
+    changeGradientRecipe,
     changePatternWallpaper,
     changeWallpaperType,
     togglePattern,

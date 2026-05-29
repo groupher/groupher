@@ -243,7 +243,18 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
       # gradient
       [:has_pattern, :boolean, true],
       [:has_texture, :boolean, false],
-      [:gradient_deg, :integer, 180],
+      [
+        :gradient,
+        :map,
+        %{
+          "version" => 1,
+          "kind" => "linear",
+          "preset" => "pink",
+          "colors" => ["#FBEFDE", "#D8B9E3"],
+          "angle" => 180,
+          "spread" => 52
+        }
+      ],
 
       # image
       [:bg_size, :string, "cover"],
@@ -255,7 +266,6 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
       [:saturation, :integer, 100],
 
       # renderer-specific config/effects
-      [:mesh, :map, nil],
       [:texture, :map, %{"type" => "noise", "intensity" => 0, "params" => %{}}]
     ]
   end

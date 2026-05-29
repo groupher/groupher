@@ -1,6 +1,6 @@
-import { CANVAS_HEIGHT, CANVAS_WIDTH, DEFAULT_MESH_COLORS } from './constant'
+import { CANVAS_HEIGHT, CANVAS_WIDTH, DEFAULT_MESH_COLORS, GRADIENT_TYPE } from './constant'
 import { clamp, getFlowEndpoints } from './helper'
-import type { TMeshGradientRecipe } from './spec'
+import type { TGradientRecipe, TMeshGradientAnchor, TMeshGradientRecipe } from './spec'
 
 /**
  * Normalize a persisted mesh recipe before rendering or previewing it.
@@ -11,7 +11,7 @@ import type { TMeshGradientRecipe } from './spec'
 export const normalizeMeshRecipe = (recipe: TMeshGradientRecipe): TMeshGradientRecipe => ({
   ...recipe,
   version: 1,
-  kind: 'mesh',
+  kind: GRADIENT_TYPE.MESH,
   seed: Number.isFinite(recipe.seed) ? recipe.seed : 1,
   colors: recipe.colors.length ? recipe.colors : [...DEFAULT_MESH_COLORS],
   flow: clamp(recipe.flow, 0, 359),
@@ -23,9 +23,131 @@ export const normalizeMeshRecipe = (recipe: TMeshGradientRecipe): TMeshGradientR
         x: clamp(anchor.x, 0, 1),
         y: clamp(anchor.y, 0, 1),
         color: clamp(anchor.color, 0, Math.max(recipe.colors.length - 1, 0)),
+        shape: anchor.shape ?? 'circle',
+        spread: clamp(anchor.spread ?? recipe.softness, 0, 100),
+        opacity: clamp(anchor.opacity ?? 0.62, 0, 1),
+        rotate: Number.isFinite(anchor.rotate) ? anchor.rotate : 0,
+        scaleX: clamp(anchor.scaleX ?? 1, 0.2, 3),
+        scaleY: clamp(anchor.scaleY ?? 1, 0.2, 3),
       }))
-    : [{ x: 0.5, y: 0.5, color: 0 }],
+    : [{ x: 0.5, y: 0.5, color: 0, shape: 'circle', spread: recipe.softness }],
 })
+
+export const normalizeEvenGradientStops = (colorCount: number): number[] => {
+  if (colorCount <= 1) return [0]
+
+  const maxIndex = colorCount - 1
+
+  return Array.from({ length: colorCount }, (_, index) => Math.round((index / maxIndex) * 100))
+}
+
+const normalizeExplicitStops = (colorCount: number, stops?: number[]): number[] | null =>
+  stops?.length === colorCount ? stops.map((stop) => clamp(stop, 0, 100)) : null
+
+/**
+ * Spread is one user-facing control, but each gradient kind maps it to a
+ * different render shape. Linear gradients compress or expand the transition
+ * band around the center line, while radial gradients control how far the
+ * palette travels outward from the focal point.
+ */
+export const normalizeLinearGradientStops = (
+  colorCount: number,
+  spread = 100,
+  stops?: number[],
+): number[] => {
+  const explicitStops = normalizeExplicitStops(colorCount, stops)
+  if (explicitStops) return explicitStops
+  if (colorCount <= 1) return [0]
+
+  const width = 0.08 + (clamp(spread, 0, 100) / 100) * 0.92
+  const maxIndex = colorCount - 1
+
+  return Array.from({ length: colorCount }, (_, index) => {
+    const t = index / maxIndex
+    const adjusted = clamp(0.5 + (t - 0.5) * width, 0, 1)
+    return Math.round(adjusted * 100)
+  })
+}
+
+export const normalizeRadialGradientStops = (
+  colorCount: number,
+  spread = 100,
+  stops?: number[],
+): number[] => {
+  const explicitStops = normalizeExplicitStops(colorCount, stops)
+  if (explicitStops) return explicitStops
+  if (colorCount <= 1) return [0]
+
+  const outerReach = 0.18 + (clamp(spread, 0, 100) / 100) * 0.82
+  const maxIndex = colorCount - 1
+
+  return Array.from({ length: colorCount }, (_, index) =>
+    Math.round((index / maxIndex) * outerReach * 100),
+  )
+}
+
+export const normalizeGradientStops = (recipe: TGradientRecipe): number[] => {
+  if (recipe.kind === GRADIENT_TYPE.LINEAR) {
+    return normalizeLinearGradientStops(recipe.colors.length, recipe.spread, recipe.stops)
+  }
+  if (recipe.kind === GRADIENT_TYPE.RADIAL) {
+    return normalizeRadialGradientStops(recipe.colors.length, recipe.spread, recipe.stops)
+  }
+
+  return normalizeEvenGradientStops(recipe.colors.length)
+}
+
+const formatColorStops = (colors: string[], stops: number[]): string => {
+  const safeColors = colors.length ? colors : DEFAULT_MESH_COLORS
+
+  return safeColors.map((color, index) => `${color} ${stops[index] ?? 0}%`).join(',')
+}
+
+export const buildLinearGradientBackground = (recipe: TGradientRecipe): string => {
+  if (recipe.kind !== GRADIENT_TYPE.LINEAR) return ''
+
+  return `linear-gradient(${recipe.angle}deg, ${formatColorStops(
+    recipe.colors,
+    normalizeLinearGradientStops(recipe.colors.length, recipe.spread, recipe.stops),
+  )})`
+}
+
+export const buildRadialGradientBackground = (recipe: TGradientRecipe): string => {
+  if (recipe.kind !== GRADIENT_TYPE.RADIAL) return ''
+
+  return `radial-gradient(${recipe.shape} at ${Math.round(recipe.center.x * 100)}% ${Math.round(
+    recipe.center.y * 100,
+  )}%, ${formatColorStops(
+    recipe.colors,
+    normalizeRadialGradientStops(recipe.colors.length, recipe.spread, recipe.stops),
+  )})`
+}
+
+const meshLayerToCss = (
+  anchor: TMeshGradientAnchor,
+  colors: string[],
+  softness: number,
+): string => {
+  const color = colors[anchor.color] || colors[0] || DEFAULT_MESH_COLORS[0]
+  const spread = clamp(anchor.spread ?? softness, 0, 100)
+  const radius = Math.round(18 + spread * 0.58)
+  const hardStop = Math.round(radius * 0.45)
+  const shape = anchor.shape ?? 'circle'
+  const x = Math.round(anchor.x * 100)
+  const y = Math.round(anchor.y * 100)
+  const colorStop = `color-mix(in srgb, ${color} ${Math.round((anchor.opacity ?? 0.62) * 100)}%, transparent)`
+
+  if (shape === 'band') {
+    return `linear-gradient(${Math.round(anchor.rotate ?? 0)}deg, transparent 0%, ${colorStop} ${Math.max(
+      0,
+      50 - radius / 2,
+    )}%, ${color} 50%, ${colorStop} ${Math.min(100, 50 + radius / 2)}%, transparent 100%)`
+  }
+
+  const cssShape = shape === 'ellipse' ? 'ellipse' : 'circle'
+
+  return `radial-gradient(${cssShape} at ${x}% ${y}%, ${color} 0%, ${colorStop} ${hardStop}%, transparent ${radius}%)`
+}
 
 /**
  * Build the CSS fallback for a mesh wallpaper when WebGL is unavailable.
@@ -35,15 +157,19 @@ export const normalizeMeshRecipe = (recipe: TMeshGradientRecipe): TMeshGradientR
  */
 export const buildMeshGradientFallback = (recipe: TMeshGradientRecipe): string => {
   const safeRecipe = normalizeMeshRecipe(recipe)
-  const layers = safeRecipe.anchors.map((anchor) => {
-    const color = safeRecipe.colors[anchor.color] || safeRecipe.colors[0] || DEFAULT_MESH_COLORS[0]
-    const radius = Math.round(18 + safeRecipe.softness * 0.52)
-
-    return `radial-gradient(circle at ${Math.round(anchor.x * 100)}% ${Math.round(anchor.y * 100)}%, ${color} 0%, color-mix(in srgb, ${color} 45%, transparent) ${Math.round(radius * 0.45)}%, transparent ${radius}%)`
-  })
+  const layers = safeRecipe.anchors.map((anchor) =>
+    meshLayerToCss(anchor, safeRecipe.colors, safeRecipe.softness),
+  )
   const linear = `linear-gradient(${safeRecipe.flow}deg, ${safeRecipe.colors.join(',')})`
 
   return [...layers, linear].join(',')
+}
+
+export const buildGradientBackground = (recipe: TGradientRecipe): string => {
+  if (recipe.kind === GRADIENT_TYPE.LINEAR) return buildLinearGradientBackground(recipe)
+  if (recipe.kind === GRADIENT_TYPE.RADIAL) return buildRadialGradientBackground(recipe)
+
+  return buildMeshGradientFallback(recipe)
 }
 
 /**

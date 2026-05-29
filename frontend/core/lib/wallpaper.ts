@@ -1,5 +1,6 @@
 import { isEmpty } from 'ramda'
 
+import { buildGradientBackground, type TGradientRecipe } from '~/lib/wallpaperMesh'
 import type {
   TCustomWallpaper,
   TWallpaper,
@@ -37,7 +38,7 @@ const buildFilterEffect = ({
  * parse wallpaper both for gradient and picture background
  */
 export const parseWallpaper = (
-  wallpapers: Record<string, TWallpaper>,
+  wallpapers: Record<string, TWallpaper | TGradientRecipe>,
   name: string,
   customWallpaper?: TCustomWallpaper,
 ): TWallpaperFmt => {
@@ -56,7 +57,7 @@ export const parseWallpaper = (
  * parse wallpaper both for gradient and picture background
  */
 const _parseWallpaper = (
-  wallpaper: TWallpaper,
+  wallpaper: TWallpaper | TGradientRecipe,
   customWallpaper?: TCustomWallpaper,
 ): TWallpaperFmt => {
   if (customWallpaper) {
@@ -64,9 +65,38 @@ const _parseWallpaper = (
       ? _parseGradientBackground(customWallpaper)
       : _parsePicBackground(customWallpaper)
   }
+  if (wallpaper && 'kind' in wallpaper) return _parseGradientRecipe(wallpaper)
+
   // @ts-expect-error
   return wallpaper?.colors ? _parseGradientBackground(wallpaper) : _parsePicBackground(wallpaper)
 }
+
+export const parseGradientRecipe = (
+  gradient: TGradientRecipe,
+  {
+    hasPattern = false,
+    blurIntensity = 0,
+    brightness = DEFAULT_BRIGHTNESS,
+    saturation = DEFAULT_SATURATION,
+  }: {
+    hasPattern?: boolean
+    blurIntensity?: number
+    brightness?: number
+    saturation?: number
+  } = {},
+): TWallpaperFmt => {
+  const patternPic = '/wallpaper/pattern/1.png'
+  const background = buildGradientBackground(gradient)
+  const effect = buildFilterEffect({ blurIntensity, brightness, saturation })
+
+  return {
+    effect,
+    background: hasPattern ? `url(${patternPic}) repeat, ${background}` : background,
+  }
+}
+
+const _parseGradientRecipe = (gradient: TGradientRecipe): TWallpaperFmt =>
+  parseGradientRecipe(gradient)
 
 const _parseGradientBackground = (gradient: TWallpaperGradient): TWallpaperFmt => {
   const DIR = '/wallpaper'

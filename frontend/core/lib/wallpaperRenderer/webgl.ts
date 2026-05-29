@@ -1,3 +1,4 @@
+import { GRADIENT_TYPE } from '~/lib/wallpaperMesh'
 import {
   TEXTURE_SHADER_BRANCHES,
   TEXTURE_SHADER_HELPERS,
@@ -38,6 +39,7 @@ uniform int uTextureType;
 uniform int uBgMode;
 uniform float uFlow;
 uniform float uSoftness;
+uniform float uRadialRadius;
 uniform float uTextureIntensity;
 uniform float uTextureScale;
 uniform float uMeshBrightness;
@@ -45,8 +47,12 @@ uniform float uMeshContrast;
 uniform float uImageReady;
 uniform vec2 uResolution;
 uniform vec2 uImageSize;
+uniform vec2 uRadialCenter;
+uniform float uColorStops[MAX_COLORS];
 uniform vec3 uColors[MAX_COLORS];
 uniform vec3 uAnchors[MAX_ANCHORS];
+uniform vec4 uLayerMeta[MAX_ANCHORS];
+uniform vec2 uLayerScale[MAX_ANCHORS];
 uniform sampler2D uImage;
 
 varying vec2 vUv;
@@ -69,18 +75,43 @@ vec3 colorAt(int index) {
   return color;
 }
 
+float stopAt(int index) {
+  float stop = uColorStops[0];
+
+  for (int i = 0; i < MAX_COLORS; i++) {
+    if (i == index) {
+      stop = uColorStops[i];
+    }
+  }
+
+  return clamp(stop, 0.0, 1.0);
+}
+
 vec3 sampleGradient(float t) {
   if (uColorCount <= 1) return colorAt(0);
 
-  float scaled = clamp(t, 0.0, 1.0) * float(uColorCount - 1);
-  int leftIndex = int(floor(scaled));
-  int rightIndex = leftIndex + 1;
+  float value = clamp(t, 0.0, 1.0);
+  vec3 color = colorAt(uColorCount - 1);
 
-  if (rightIndex >= uColorCount) {
-    rightIndex = uColorCount - 1;
+  for (int i = 0; i < MAX_COLORS - 1; i++) {
+    if (i >= uColorCount - 1) break;
+
+    float leftStop = stopAt(i);
+    float rightStop = max(stopAt(i + 1), leftStop + 0.0001);
+
+    if (value <= leftStop) {
+      color = colorAt(i);
+      break;
+    }
+
+    if (value <= rightStop) {
+      float localT = clamp((value - leftStop) / (rightStop - leftStop), 0.0, 1.0);
+      color = mix(colorAt(i), colorAt(i + 1), localT);
+      break;
+    }
   }
 
-  return mix(colorAt(leftIndex), colorAt(rightIndex), fract(scaled));
+  return color;
 }
 
 vec2 coverUv(vec2 uv) {
@@ -118,24 +149,46 @@ vec4 imageColor(vec2 uv) {
 }
 
 vec4 sampleBase(vec2 uv) {
-  if (uMode == 3) return imageColor(uv);
+  if (uMode == 4) return imageColor(uv);
 
-  float rad = radians(uFlow - 90.0);
-  vec2 dir = vec2(cos(rad), sin(rad));
-  float t = dot(uv - (vec2(0.5) - dir * 0.5), dir);
+  float t = 0.0;
+  if (uMode == 2) {
+    t = distance(uv, uRadialCenter) / max(uRadialRadius, 0.01);
+  } else {
+    float rad = radians(uFlow - 90.0);
+    vec2 dir = vec2(cos(rad), sin(rad));
+    t = dot(uv - (vec2(0.5) - dir * 0.5), dir);
+  }
   vec3 color = sampleGradient(t);
 
-  if (uMode == 2) {
-    float radius = 0.16 + uSoftness * 0.0038;
+  if (uMode == 3) {
+    float baseRadius = 0.16 + uSoftness * 0.0038;
     float hardStop = clamp(0.04 + uSoftness / 280.0, 0.04, 0.34);
-    float alpha = clamp(0.72 - uSoftness / 220.0, 0.26, 0.72);
 
     for (int i = 0; i < MAX_ANCHORS; i++) {
       if (i >= uAnchorCount) break;
 
       vec3 anchor = uAnchors[i];
+      vec4 meta = uLayerMeta[i];
+      vec2 layerScale = max(uLayerScale[i], vec2(0.2));
       vec3 anchorColor = colorAt(int(anchor.z + 0.5));
-      float dist = distance(uv, anchor.xy);
+      float shape = meta.x;
+      float radius = 0.16 + meta.y * 0.0038;
+      float alpha = meta.z;
+      float rotateRad = radians(meta.w);
+      vec2 diff = uv - anchor.xy;
+      vec2 rotated = vec2(
+        diff.x * cos(rotateRad) - diff.y * sin(rotateRad),
+        diff.x * sin(rotateRad) + diff.y * cos(rotateRad)
+      );
+      float dist = distance(rotated / layerScale, vec2(0.0));
+
+      if (shape > 1.5 && shape < 2.5) {
+        dist = abs(rotated.y) / max(radius, 0.01);
+      } else if (shape > 2.5) {
+        dist = length(max(abs(uv - anchor.xy) - vec2(baseRadius), vec2(0.0))) / max(radius, 0.01);
+      }
+
       float mask = 1.0 - smoothstep(hardStop, radius, dist);
       color = mix(color, anchorColor, mask * alpha);
     }
@@ -183,8 +236,9 @@ ${TEXTURE_SHADER_UV}
 const MODE = {
   none: 0,
   'linear-gradient': 1,
-  'mesh-gradient': 2,
-  image: 3,
+  'radial-gradient': 2,
+  'mesh-gradient': 3,
+  image: 4,
 } as const
 
 type TUniforms = {
@@ -195,6 +249,7 @@ type TUniforms = {
   bgMode: WebGLUniformLocation | null
   flow: WebGLUniformLocation | null
   softness: WebGLUniformLocation | null
+  radialRadius: WebGLUniformLocation | null
   textureIntensity: WebGLUniformLocation | null
   textureScale: WebGLUniformLocation | null
   meshBrightness: WebGLUniformLocation | null
@@ -202,8 +257,12 @@ type TUniforms = {
   imageReady: WebGLUniformLocation | null
   resolution: WebGLUniformLocation | null
   imageSize: WebGLUniformLocation | null
+  radialCenter: WebGLUniformLocation | null
+  colorStops: WebGLUniformLocation | null
   colors: WebGLUniformLocation | null
   anchors: WebGLUniformLocation | null
+  layerMeta: WebGLUniformLocation | null
+  layerScale: WebGLUniformLocation | null
   image: WebGLUniformLocation | null
 }
 
@@ -232,6 +291,14 @@ const parseColor = (value: string): [number, number, number] => {
     Number.parseInt(fullHex.slice(2, 4), 16) / 255,
     Number.parseInt(fullHex.slice(4, 6), 16) / 255,
   ]
+}
+
+const meshShapeToUniform = (shape?: string): number => {
+  if (shape === 'ellipse') return 1
+  if (shape === 'band') return 2
+  if (shape === 'corner') return 3
+
+  return 0
 }
 
 const compileShader = (
@@ -285,14 +352,19 @@ const getUniforms = (gl: WebGLRenderingContext, program: WebGLProgram): TUniform
   bgMode: gl.getUniformLocation(program, 'uBgMode'),
   flow: gl.getUniformLocation(program, 'uFlow'),
   softness: gl.getUniformLocation(program, 'uSoftness'),
+  radialRadius: gl.getUniformLocation(program, 'uRadialRadius'),
   textureIntensity: gl.getUniformLocation(program, 'uTextureIntensity'),
   meshBrightness: gl.getUniformLocation(program, 'uMeshBrightness'),
   meshContrast: gl.getUniformLocation(program, 'uMeshContrast'),
   imageReady: gl.getUniformLocation(program, 'uImageReady'),
   resolution: gl.getUniformLocation(program, 'uResolution'),
   imageSize: gl.getUniformLocation(program, 'uImageSize'),
+  radialCenter: gl.getUniformLocation(program, 'uRadialCenter'),
+  colorStops: gl.getUniformLocation(program, 'uColorStops[0]'),
   colors: gl.getUniformLocation(program, 'uColors[0]'),
   anchors: gl.getUniformLocation(program, 'uAnchors[0]'),
+  layerMeta: gl.getUniformLocation(program, 'uLayerMeta[0]'),
+  layerScale: gl.getUniformLocation(program, 'uLayerScale[0]'),
   image: gl.getUniformLocation(program, 'uImage'),
   textureScale: gl.getUniformLocation(program, 'uTextureScale'),
 })
@@ -466,6 +538,7 @@ class WallpaperWebglRenderer {
     this.syncSize()
 
     const colors = new Float32Array(MAX_COLORS * 3)
+    const colorStops = new Float32Array(MAX_COLORS)
     const descriptorColors = descriptor.colors.slice(0, MAX_COLORS)
     for (let index = 0; index < descriptorColors.length; index += 1) {
       const color = descriptorColors[index]
@@ -473,15 +546,28 @@ class WallpaperWebglRenderer {
       colors[index * 3] = rgb[0]
       colors[index * 3 + 1] = rgb[1]
       colors[index * 3 + 2] = rgb[2]
+      colorStops[index] = clamp(descriptor.colorStops[index] ?? 0, 0, 100) / 100
     }
 
     const anchors = new Float32Array(MAX_ANCHORS * 3)
+    const layerMeta = new Float32Array(MAX_ANCHORS * 4)
+    const layerScale = new Float32Array(MAX_ANCHORS * 2)
     const descriptorAnchors = descriptor.meshRecipe?.anchors.slice(0, MAX_ANCHORS) ?? []
     for (let index = 0; index < descriptorAnchors.length; index += 1) {
       const anchor = descriptorAnchors[index]
       anchors[index * 3] = clamp(anchor.x, 0, 1)
       anchors[index * 3 + 1] = clamp(anchor.y, 0, 1)
       anchors[index * 3 + 2] = clamp(anchor.color, 0, MAX_COLORS - 1)
+      layerMeta[index * 4] = meshShapeToUniform(anchor.shape)
+      layerMeta[index * 4 + 1] = clamp(
+        anchor.spread ?? descriptor.meshRecipe?.softness ?? 50,
+        0,
+        100,
+      )
+      layerMeta[index * 4 + 2] = clamp(anchor.opacity ?? 0.62, 0, 1)
+      layerMeta[index * 4 + 3] = anchor.rotate ?? 0
+      layerScale[index * 2] = clamp(anchor.scaleX ?? 1, 0.2, 3)
+      layerScale[index * 2 + 1] = clamp(anchor.scaleY ?? 1, 0.2, 3)
     }
 
     const isContain = descriptor.bgSize === 'contain'
@@ -489,6 +575,10 @@ class WallpaperWebglRenderer {
       ? descriptor.meshRecipe.brightness / 100
       : 1
     const meshContrast = descriptor.meshRecipe?.contrast ? descriptor.meshRecipe.contrast / 100 : 1
+    const radialRecipe =
+      descriptor.gradientRecipe?.kind === GRADIENT_TYPE.RADIAL ? descriptor.gradientRecipe : null
+    const radialRadius = radialRecipe ? clamp(radialRecipe.radius / 100, 0.01, 1) : 0.72
+    const radialCenter = radialRecipe?.center ?? { x: 0.5, y: 0.5 }
 
     gl.useProgram(this.program)
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer)
@@ -502,6 +592,7 @@ class WallpaperWebglRenderer {
     gl.uniform1i(uniforms.bgMode, isContain ? 1 : 0)
     gl.uniform1f(uniforms.flow, descriptor.flow)
     gl.uniform1f(uniforms.softness, descriptor.meshRecipe?.softness ?? 0)
+    gl.uniform1f(uniforms.radialRadius, radialRadius)
     // CSS owns global post-processing filters. Keep WebGL focused on content
     // generation and texture effects so gradient, mesh, picture, and pattern
     // share one blur/brightness/saturation behavior at the final layer.
@@ -515,8 +606,12 @@ class WallpaperWebglRenderer {
     gl.uniform1f(uniforms.imageReady, this.imageReady ? 1 : 0)
     gl.uniform2f(uniforms.resolution, this.canvas.width, this.canvas.height)
     gl.uniform2f(uniforms.imageSize, this.imageWidth, this.imageHeight)
+    gl.uniform2f(uniforms.radialCenter, radialCenter.x, radialCenter.y)
+    gl.uniform1fv(uniforms.colorStops, colorStops)
     gl.uniform3fv(uniforms.colors, colors)
     gl.uniform3fv(uniforms.anchors, anchors)
+    gl.uniform4fv(uniforms.layerMeta, layerMeta)
+    gl.uniform2fv(uniforms.layerScale, layerScale)
 
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)

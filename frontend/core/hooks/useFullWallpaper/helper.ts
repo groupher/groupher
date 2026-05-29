@@ -1,16 +1,13 @@
 import { clone } from 'ramda'
 
 import { GRADIENT_WALLPAPER, PATTERN_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
-import type { TWallpaper, TWallpaperGradient, TWallpaperPic, TWallpaperType } from '~/spec'
+import type { TGradientRecipe } from '~/lib/wallpaperMesh'
+import type { TWallpaper, TWallpaperPic, TWallpaperType } from '~/spec'
 
 type TGradientEffectState = {
   source: string
   type: TWallpaperType
-  hasPattern: boolean
-  blurIntensity: number
-  brightness: number
-  saturation: number
-  gradientDeg: number
+  gradient: TGradientRecipe | null
 }
 
 type TPatternEffectState = {
@@ -21,19 +18,8 @@ type TPatternEffectState = {
   saturation: number
 }
 
-export const buildGradientCatalogWallpapers = (): Record<string, TWallpaper> => {
-  const wallpapers = clone(GRADIENT_WALLPAPER)
-
-  for (const wallpaper of Object.values(wallpapers) as TWallpaperGradient[]) {
-    wallpaper.hasPattern = false
-    wallpaper.blurIntensity = 0
-    wallpaper.brightness = 100
-    wallpaper.saturation = 100
-    wallpaper.direction = '180deg'
-  }
-
-  return wallpapers
-}
+export const buildGradientCatalogWallpapers = (): Record<string, TGradientRecipe> =>
+  clone(GRADIENT_WALLPAPER)
 
 export const buildPatternCatalogWallpapers = (): Record<string, TWallpaper> => {
   const wallpapers = clone(PATTERN_WALLPAPER)
@@ -47,19 +33,12 @@ export const buildPatternCatalogWallpapers = (): Record<string, TWallpaper> => {
 
 export const buildActiveGradientWallpapers = (
   state: TGradientEffectState,
-): Record<string, TWallpaper> => {
+): Record<string, TGradientRecipe> => {
   const wallpapers = clone(GRADIENT_WALLPAPER)
 
   if (state.type !== WALLPAPER_TYPE.GRADIENT) return wallpapers
 
-  const activeWallpaper = wallpapers[state.source] as TWallpaperGradient | undefined
-  if (!activeWallpaper) return wallpapers
-
-  activeWallpaper.hasPattern = state.hasPattern
-  activeWallpaper.blurIntensity = state.blurIntensity
-  activeWallpaper.brightness = state.brightness
-  activeWallpaper.saturation = state.saturation
-  activeWallpaper.direction = `${state.gradientDeg}deg`
+  if (state.gradient) wallpapers[state.source] = clone(state.gradient)
 
   return wallpapers
 }

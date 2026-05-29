@@ -1,10 +1,11 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 
-import { GRADIENT_WALLPAPER_NAME, WALLPAPER_TYPE } from '~/const/wallpaper'
+import { GRADIENT_WALLPAPER, GRADIENT_WALLPAPER_NAME, WALLPAPER_TYPE } from '~/const/wallpaper'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
+import { GRADIENT_TYPE } from '~/lib/wallpaperMesh'
 import { WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
-import type { TWallpaperGradient, TWallpaperPic } from '~/spec'
+import type { TWallpaperPic } from '~/spec'
 
 describe('useFullWallpaper', () => {
   it('returns data and can commit wallpaper changes', async () => {
@@ -18,7 +19,7 @@ describe('useFullWallpaper', () => {
         brightness: 100,
         saturation: 100,
         texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-        gradientDeg: 180,
+        gradient: GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.PINK],
       },
     })
 
@@ -34,7 +35,7 @@ describe('useFullWallpaper', () => {
 
     const pink = data.gradientWallpapers.pink
     expect('colors' in pink).toBe(true)
-    expect((pink as TWallpaperGradient).hasPattern).toBe(false)
+    expect(pink.kind).toBe('linear')
 
     act(() => result.current.changePatternWallpaper('dots'))
 
@@ -50,25 +51,19 @@ describe('useFullWallpaper', () => {
         type: WALLPAPER_TYPE.GRADIENT,
         hasPattern: true,
         blurIntensity: 50,
-        gradientDeg: 90,
+        gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.PURPLE], angle: 90 },
       },
     })
 
     const { result } = renderHook(() => useFullWallpaper(), { wrapper })
     const data = result.current.getWallpaper()
 
-    const active = data.gradientWallpapers[GRADIENT_WALLPAPER_NAME.PURPLE] as TWallpaperGradient
-    const defaultPattern = data.gradientWallpapers[
-      GRADIENT_WALLPAPER_NAME.GREEN
-    ] as TWallpaperGradient
+    const active = data.gradientWallpapers[GRADIENT_WALLPAPER_NAME.PURPLE]
+    const defaultPattern = data.gradientWallpapers[GRADIENT_WALLPAPER_NAME.GREEN]
 
-    expect(active.hasPattern).toBe(false)
-    expect(active.blurIntensity).toBe(0)
-    expect(active.direction).toBe('180deg')
+    expect(active).toMatchObject({ kind: GRADIENT_TYPE.LINEAR, angle: 180 })
 
-    expect(defaultPattern.hasPattern).toBe(false)
-    expect(defaultPattern.blurIntensity).toBe(0)
-    expect(defaultPattern.direction).toBe('180deg')
+    expect(defaultPattern).toMatchObject({ kind: GRADIENT_TYPE.LINEAR, angle: 180 })
   })
 
   it('keeps pattern catalog previews static', () => {

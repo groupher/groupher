@@ -1,24 +1,17 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export { cn } from '~/css'
+export { cn, cnMerge } from '~/css'
 
 export default function useSalon() {
-  const { cn, shadow, br, fill, primary } = useTwBelt()
+  const { cn, br, primary } = useTwBelt()
 
   return {
-    wrapper: 'grid grid-cols-4 gap-3 s-full mt-2.5 relative',
+    wrapper: 'row-center wrap gap-3 mt-2.5 relative',
     card: cn(
-      'w-full h-24 rounded-md overflow-hidden relative border border-2 border-transparent pointer trans-all-200',
-      br('divider'),
+      'size-14 rounded-lg p-0.5 relative border-2 border-transparent pointer trans-all-200',
       `hover:${br('digest')}`,
     ),
-    cardActive: cn(br('digest'), shadow('sm')),
-    preview: 's-full',
-    activeSign: cn(
-      'size-5 circle absolute -top-1 -right-0.5 z-20 border',
-      primary('bg'),
-      br('title'),
-    ),
-    checkIcon: cn('size-3.5 absolute top-0.5 left-0.5', fill('button.fg')),
+    cardActive: primary('border'),
+    preview: 's-full rounded-md overflow-hidden',
   }
 }

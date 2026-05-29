@@ -1,5 +1,5 @@
 import type { WALLPAPER_TYPE } from '~/const/wallpaper'
-import type { TMeshGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
+import type { TGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
 import type { TConstValues } from '~/spec'
 
 export type TWallpaperFmt = {
@@ -41,25 +41,24 @@ export type TWallpaperInfo = {
   customWallpaper?: TCustomWallpaper
   source: string
   wallpapers: Record<string, TWallpaper>
-  gradientWallpapers?: Record<string, TWallpaper>
+  gradientWallpapers?: Record<string, TGradientRecipe>
 
   changeWallpaper?: (source: string) => void
 }
 
 export type TWallpaperData = {
   source: string
-  gradientWallpapers: Record<string, TWallpaper>
+  gradientWallpapers: Record<string, TGradientRecipe>
   patternWallpapers: Record<string, TWallpaper>
   type: TWallpaperType
   hasPattern: boolean
   hasTexture: boolean
-  gradientDeg: number
   hasBlur: boolean
   blurIntensity: number
   hasShadow: boolean
   brightness: number
   saturation: number
-  mesh: TMeshGradientRecipe | null
+  gradient: TGradientRecipe | null
   texture: TWallpaperTexture
   bgSize: string
 }

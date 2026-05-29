@@ -1,4 +1,4 @@
-import { WALLPAPER_TYPE } from '~/const/wallpaper'
+import { GRADIENT_WALLPAPER, GRADIENT_WALLPAPER_NAME, WALLPAPER_TYPE } from '~/const/wallpaper'
 import { WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 
 import setupStore, { INITIAL_WALLPAPER_STATE } from '..'
@@ -11,7 +11,7 @@ describe('stores/wallpaper', () => {
     expect(store.type).toBe(INITIAL_WALLPAPER_STATE.type)
     expect(store.hasPattern).toBe(true)
     expect(store.hasTexture).toBe(false)
-    expect(store.gradientDeg).toBe(180)
+    expect(store.gradient).toEqual(GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.PINK])
     expect(store.brightness).toBe(100)
     expect(store.saturation).toBe(100)
     expect(store.texture).toEqual({ type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} })
@@ -25,7 +25,7 @@ describe('stores/wallpaper', () => {
       bgSize: 'contain',
       brightness: 90,
       saturation: 120,
-      gradientDeg: 90,
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       texture: { type: WALLPAPER_TEXTURE.ASCII, intensity: 55, params: {} },
     })
 
@@ -37,7 +37,10 @@ describe('stores/wallpaper', () => {
     expect(store.bgSize).toBe('contain')
     expect(store.brightness).toBe(90)
     expect(store.saturation).toBe(120)
-    expect(store.gradientDeg).toBe(90)
+    expect(store.gradient).toEqual({
+      ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN],
+      angle: 90,
+    })
     expect(store.texture).toEqual({ type: WALLPAPER_TEXTURE.ASCII, intensity: 55, params: {} })
   })
 
@@ -47,7 +50,7 @@ describe('stores/wallpaper', () => {
       type: WALLPAPER_TYPE.PATTERN,
       hasPattern: false,
       hasTexture: true,
-      gradientDeg: 45,
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 45 },
       blurIntensity: 35,
       hasShadow: true,
       brightness: 85,
@@ -63,7 +66,7 @@ describe('stores/wallpaper', () => {
       type: WALLPAPER_TYPE.PATTERN,
       hasPattern: false,
       hasTexture: true,
-      gradientDeg: 45,
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 45 },
       blurIntensity: 35,
       hasShadow: true,
       brightness: 85,

@@ -1,4 +1,5 @@
-import { WALLPAPER_TYPE } from '~/const/wallpaper'
+import { GRADIENT_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
+import type { TGradientRecipe } from '~/lib/wallpaperMesh'
 import type { TWallpaper, TWallpaperData } from '~/spec'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 
@@ -9,14 +10,14 @@ type TRet = {
   changeWallpaper: (source: string) => void
   changePatternWallpaper: (source: string) => void
   getWallpaper: () => TWallpaperData
-  getGradientWallpapers: () => Record<string, TWallpaper>
+  getGradientWallpapers: () => Record<string, TGradientRecipe>
   getPatternWallpapers: () => Record<string, TWallpaper>
 }
 
 export default function useFullWallpaper(): TRet {
   const store = useWallpaperDomain()
 
-  const getGradientWallpapers = (): Record<string, TWallpaper> => {
+  const getGradientWallpapers = (): Record<string, TGradientRecipe> => {
     return buildGradientCatalogWallpapers()
   }
 
@@ -26,14 +27,13 @@ export default function useFullWallpaper(): TRet {
 
   const getWallpaper = (): TWallpaperData => {
     const {
-      gradientDeg,
+      gradient,
       hasPattern,
       hasTexture,
       blurIntensity,
       hasShadow,
       brightness,
       saturation,
-      mesh,
       texture,
       source,
       type,
@@ -41,6 +41,7 @@ export default function useFullWallpaper(): TRet {
     } = store
 
     const hasBlur = blurIntensity > 0
+    const activeGradient = gradient || GRADIENT_WALLPAPER[source] || GRADIENT_WALLPAPER.pink
 
     return {
       source,
@@ -52,11 +53,10 @@ export default function useFullWallpaper(): TRet {
       hasShadow,
       brightness,
       saturation,
-      mesh,
+      gradient: activeGradient,
       texture,
       gradientWallpapers: getGradientWallpapers(),
       patternWallpapers: getPatternWallpapers(),
-      gradientDeg,
       bgSize,
     }
   }

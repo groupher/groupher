@@ -1,6 +1,7 @@
 import type { TConstValues } from '~/spec'
 
 import type {
+  GRADIENT_TYPE,
   WALLPAPER_TEXTURE,
   WALLPAPER_TEXTURE_OPTIONS,
   WALLPAPER_TEXTURE_SURFACE,
@@ -10,6 +11,12 @@ export type TMeshGradientAnchor = {
   x: number
   y: number
   color: number
+  shape?: 'circle' | 'ellipse' | 'band' | 'corner'
+  spread?: number
+  opacity?: number
+  rotate?: number
+  scaleX?: number
+  scaleY?: number
 }
 
 export type TImageTextureType = TConstValues<typeof WALLPAPER_TEXTURE>
@@ -31,9 +38,11 @@ export type TTextureSwatchPalette = {
   digest: string
 }
 
+export type TGradientType = TConstValues<typeof GRADIENT_TYPE>
+
 export type TMeshGradientRecipe = {
   version: 1
-  kind: 'mesh'
+  kind: typeof GRADIENT_TYPE.MESH
   preset: string
   seed: number
   colors: string[]
@@ -43,3 +52,30 @@ export type TMeshGradientRecipe = {
   brightness: number
   anchors: TMeshGradientAnchor[]
 }
+
+export type TLinearGradientRecipe = {
+  version: 1
+  kind: typeof GRADIENT_TYPE.LINEAR
+  preset: string
+  colors: string[]
+  angle: number
+  stops?: number[]
+  spread: number
+}
+
+export type TRadialGradientRecipe = {
+  version: 1
+  kind: typeof GRADIENT_TYPE.RADIAL
+  preset: string
+  colors: string[]
+  center: {
+    x: number
+    y: number
+  }
+  radius: number
+  shape: 'circle' | 'ellipse'
+  stops?: number[]
+  spread: number
+}
+
+export type TGradientRecipe = TLinearGradientRecipe | TRadialGradientRecipe | TMeshGradientRecipe

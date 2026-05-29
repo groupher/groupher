@@ -8,11 +8,19 @@ type Props = {
   wallpaper: TWallpaperData
   angle: number
   isGradient: boolean
+  canUseDirection: boolean
   canUseTexture: boolean
   onExpand: () => void
 }
 
-export default function HudPanel({ wallpaper, angle, isGradient, canUseTexture, onExpand }: Props) {
+export default function HudPanel({
+  wallpaper,
+  angle,
+  isGradient,
+  canUseDirection,
+  canUseTexture,
+  onExpand,
+}: Props) {
   const s = useSalon()
   const { hasPattern, hasTexture, hasShadow, blurIntensity, brightness, saturation, texture } =
     wallpaper
@@ -29,7 +37,7 @@ export default function HudPanel({ wallpaper, angle, isGradient, canUseTexture, 
           </div>
         )}
 
-        {isGradient && (
+        {isGradient && canUseDirection && (
           <div className={s.hudItem}>
             <span className={s.hudLabel}>Angle</span>
             <span className={s.hudAngle}>

@@ -1,4 +1,4 @@
-import type { TMeshGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
+import type { TGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
 import type { TCustomWallpaper, TWallpaperType } from '~/spec'
 
 export type TWallpaperState = {
@@ -8,12 +8,11 @@ export type TWallpaperState = {
 
   hasPattern: boolean
   hasTexture: boolean
-  gradientDeg: number
+  gradient: TGradientRecipe | null
   blurIntensity: number
   hasShadow: boolean
   brightness: number
   saturation: number
-  mesh: TMeshGradientRecipe | null
   texture: TWallpaperTexture
 
   bgSize: string

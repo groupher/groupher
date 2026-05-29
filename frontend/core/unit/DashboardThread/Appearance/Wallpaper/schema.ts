@@ -7,8 +7,7 @@ const updateDashboardWallpaper = gql`
     $community: String!
     $source: String
     $type: String
-    $gradientDeg: Int
-    $mesh: Json
+    $gradient: Json
     $bgSize: String
     $hasPattern: Boolean
     $hasTexture: Boolean
@@ -22,8 +21,7 @@ const updateDashboardWallpaper = gql`
       community: $community
       source: $source
       type: $type
-      gradientDeg: $gradientDeg
-      mesh: $mesh
+      gradient: $gradient
       bgSize: $bgSize
       hasPattern: $hasPattern
       hasTexture: $hasTexture

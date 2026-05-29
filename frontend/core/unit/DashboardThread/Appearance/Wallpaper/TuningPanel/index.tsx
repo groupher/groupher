@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 
+import { canEditGradientDirection } from '../helper'
 import useSalon from '../salon/tuning_panel'
 import useLogic from '../useLogic'
 import DetailPanel from './DetailPanel'
@@ -38,11 +39,12 @@ export default function TuningPanel() {
 
   const s = useSalon()
 
-  const isGradient = type === WALLPAPER_TYPE.GRADIENT || type === WALLPAPER_TYPE.MESH
+  const isGradient = type === WALLPAPER_TYPE.GRADIENT
   const isPicture = type === WALLPAPER_TYPE.PATTERN
   const isUpload = type === WALLPAPER_TYPE.UPLOAD
   const canUseTexture = isGradient || isPicture || isUpload
-  const hasRightPanel = type === WALLPAPER_TYPE.MESH || canUseTexture
+  const canUseDirection = canEditGradientDirection(wallpaper)
+  const hasRightPanel = canUseTexture
 
   useLayoutEffect(() => {
     const node = contentRef.current
@@ -92,6 +94,7 @@ export default function TuningPanel() {
             wallpaper={wallpaper}
             angle={angleDraft}
             isGradient={isGradient}
+            canUseDirection={canUseDirection}
             canUseTexture={canUseTexture}
             onExpand={() => setExpanded(true)}
           />
@@ -105,6 +108,7 @@ export default function TuningPanel() {
             isPicture={isPicture}
             isUpload={isUpload}
             canUseTexture={canUseTexture}
+            canUseDirection={canUseDirection}
             hasRightPanel={hasRightPanel}
             onTogglePattern={togglePattern}
             onToggleTexture={toggleTexture}

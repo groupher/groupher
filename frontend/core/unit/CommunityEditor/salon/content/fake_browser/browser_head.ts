@@ -19,7 +19,6 @@ const getPathGradient = (wallpaper: string): string => {
     return '#E1D5CC,#955D29'
   }
 
-  // @ts-expect-error
   const { colors } = GRADIENT_WALLPAPER[wallpaper]
 
   if (!colors) return ''

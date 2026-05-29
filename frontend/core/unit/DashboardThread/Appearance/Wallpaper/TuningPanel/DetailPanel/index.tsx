@@ -8,7 +8,6 @@ import RangeInput from '~/widgets/RangeInput'
 
 import useSalon from '../../salon/tuning_panel/details_panel'
 import AngleWheel from './AngleWheel'
-import DiyFields from './DiyFields'
 import GradientTextureFields from './GradientTextureFields'
 import PictureTextureFields from './PictureTextureFields'
 
@@ -25,6 +24,7 @@ type Props = {
   isPicture: boolean
   isUpload: boolean
   canUseTexture: boolean
+  canUseDirection: boolean
   hasRightPanel: boolean
   onTogglePattern: (hasPattern: boolean) => void
   onToggleTexture: (hasTexture: boolean) => void
@@ -43,6 +43,7 @@ export default function DetailPanel({
   isPicture,
   isUpload,
   canUseTexture,
+  canUseDirection,
   hasRightPanel,
   onTogglePattern,
   onToggleTexture,
@@ -78,7 +79,7 @@ export default function DetailPanel({
               </div>
             </div>
 
-            {isGradient && (
+            {isGradient && canUseDirection && (
               <div className={s.angleFields}>
                 <AngleWheel />
               </div>
@@ -134,12 +135,6 @@ export default function DetailPanel({
             {type === WALLPAPER_TYPE.GRADIENT && (
               <div className={s.customFields}>
                 <GradientTextureFields />
-              </div>
-            )}
-
-            {type === WALLPAPER_TYPE.MESH && (
-              <div className={s.customFields}>
-                <DiyFields />
               </div>
             )}
 
