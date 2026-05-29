@@ -82,6 +82,7 @@ frontend/**/public/icons/phosphor/
 frontend/main/public/wallpaper/
 frontend/dashboard/public/wallpaper/
 frontend/landing/public/wallpaper/
+frontend/core/assets/wallpaper/pattern-bak/
 
 # =====================
 # Backend (Elixir / BEAM)
