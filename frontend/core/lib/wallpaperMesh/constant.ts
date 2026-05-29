@@ -12,6 +12,15 @@ export const GRADIENT_TYPE = {
   MESH: 'mesh',
 } as const
 
+export const MESH_GRADIENT_MODEL = {
+  HAZE: 'haze',
+  RIDGE: 'ridge',
+  BRUSHED: 'brushed',
+  RIBBON: 'ribbon',
+  SCANLINE: 'scanline',
+  GLOW: 'glow',
+} as const
+
 export const WALLPAPER_TEXTURE = {
   NOISE: 'noise',
   TILE: 'tile',

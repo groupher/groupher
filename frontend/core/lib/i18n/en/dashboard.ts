@@ -350,6 +350,8 @@ export default {
   'dsb.appearance.wallpaper.editor.picture': 'Images',
   'dsb.appearance.wallpaper.editor.effects': 'Effects',
   'dsb.appearance.wallpaper.editor.pattern': 'Pattern',
+  'dsb.appearance.wallpaper.editor.pattern_desc':
+    'Choose a pattern to overlay on the current background.',
   'dsb.appearance.wallpaper.editor.blur': 'Blur',
   'dsb.appearance.wallpaper.editor.shadow': 'Shadow',
   'dsb.appearance.wallpaper.editor.brightness': 'Brightness',

@@ -146,23 +146,26 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
       {:ok, _} =
         CMS.Dashboard.update(community, :wallpaper, %{
-          type: "mesh",
+          type: "gradient",
           source: "orange",
-          gradient_deg: 45,
           has_texture: true,
+          pattern_id: "02",
           blur_intensity: 35,
           brightness: 85,
           saturation: 120,
-          mesh: %{
-            "version" => 1,
+          gradient: %{
+            "version" => 2,
+            "kind" => "mesh",
             "preset" => "test",
+            "model" => "haze",
             "seed" => 1,
             "colors" => ["#fff", "#000"],
             "flow" => 45,
             "softness" => 60,
+            "warp" => 50,
+            "scale" => 60,
             "contrast" => 100,
-            "brightness" => 100,
-            "anchors" => [%{"x" => 0.2, "y" => 0.8, "color" => 1}]
+            "brightness" => 100
           },
           texture: %{"type" => "ascii", "intensity" => 55, "params" => %{}}
         })
@@ -170,13 +173,14 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
       assert find_community.dashboard.wallpaper.source == "orange"
-      assert find_community.dashboard.wallpaper.type == "mesh"
-      assert find_community.dashboard.wallpaper.gradient_deg == 45
+      assert find_community.dashboard.wallpaper.type == "gradient"
       assert find_community.dashboard.wallpaper.has_texture == true
+      assert find_community.dashboard.wallpaper.pattern_id == "02"
       assert find_community.dashboard.wallpaper.blur_intensity == 35
       assert find_community.dashboard.wallpaper.brightness == 85
       assert find_community.dashboard.wallpaper.saturation == 120
-      assert find_community.dashboard.wallpaper.mesh["preset"] == "test"
+      assert find_community.dashboard.wallpaper.gradient["preset"] == "test"
+      assert find_community.dashboard.wallpaper.gradient["model"] == "haze"
       assert find_community.dashboard.wallpaper.texture["type"] == "ascii"
       assert find_community.dashboard.wallpaper.texture["intensity"] == 55
     end

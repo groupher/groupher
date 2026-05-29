@@ -7,6 +7,7 @@ export type TWallpaperState = {
   type: TWallpaperType
 
   hasPattern: boolean
+  patternId: string
   hasTexture: boolean
   gradient: TGradientRecipe | null
   blurIntensity: number

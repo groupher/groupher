@@ -34,7 +34,6 @@ const updateGradientSpread = (gradient: TGradientRecipe, spread: number): TGradi
     return {
       ...gradient,
       softness: spread,
-      anchors: gradient.anchors.map((anchor) => ({ ...anchor, spread })),
     }
   }
 

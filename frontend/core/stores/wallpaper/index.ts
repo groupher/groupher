@@ -1,7 +1,12 @@
 import { pick } from 'ramda'
 import { proxy } from 'valtio'
 
-import { GRADIENT_WALLPAPER, WALLPAPER_STATE_KEYS, WALLPAPER_TYPE } from '~/const/wallpaper'
+import {
+  DEFAULT_WALLPAPER_PATTERN_ID,
+  GRADIENT_WALLPAPER,
+  WALLPAPER_STATE_KEYS,
+  WALLPAPER_TYPE,
+} from '~/const/wallpaper'
 import { WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 
 import type { TInit, TStore, TWallpaperState } from './spec'
@@ -11,6 +16,7 @@ export const INITIAL_WALLPAPER_STATE = {
   source: 'pink',
   type: WALLPAPER_TYPE.GRADIENT,
   hasPattern: true,
+  patternId: DEFAULT_WALLPAPER_PATTERN_ID,
   hasTexture: false,
   gradient: GRADIENT_WALLPAPER.pink,
   blurIntensity: 0,

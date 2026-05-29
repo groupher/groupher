@@ -1,6 +1,20 @@
-import { CANVAS_HEIGHT, CANVAS_WIDTH, DEFAULT_MESH_COLORS, GRADIENT_TYPE } from './constant'
+import {
+  CANVAS_HEIGHT,
+  CANVAS_WIDTH,
+  DEFAULT_MESH_COLORS,
+  GRADIENT_TYPE,
+  MESH_GRADIENT_MODEL,
+} from './constant'
 import { clamp, getFlowEndpoints } from './helper'
-import type { TGradientRecipe, TMeshGradientAnchor, TMeshGradientRecipe } from './spec'
+import type { TGradientRecipe, TMeshGradientModel, TMeshGradientRecipe } from './spec'
+
+const MESH_GRADIENT_MODELS = Object.values(MESH_GRADIENT_MODEL)
+
+const isMeshGradientModel = (model: string): model is TMeshGradientModel =>
+  MESH_GRADIENT_MODELS.includes(model as TMeshGradientModel)
+
+const clampFinite = (value: number, fallback: number, min: number, max: number): number =>
+  clamp(Number.isFinite(value) ? value : fallback, min, max)
 
 /**
  * Normalize a persisted mesh recipe before rendering or previewing it.
@@ -10,27 +24,17 @@ import type { TGradientRecipe, TMeshGradientAnchor, TMeshGradientRecipe } from '
  */
 export const normalizeMeshRecipe = (recipe: TMeshGradientRecipe): TMeshGradientRecipe => ({
   ...recipe,
-  version: 1,
+  version: 2,
   kind: GRADIENT_TYPE.MESH,
+  model: isMeshGradientModel(recipe.model) ? recipe.model : MESH_GRADIENT_MODEL.HAZE,
   seed: Number.isFinite(recipe.seed) ? recipe.seed : 1,
-  colors: recipe.colors.length ? recipe.colors : [...DEFAULT_MESH_COLORS],
-  flow: clamp(recipe.flow, 0, 359),
-  softness: clamp(recipe.softness, 0, 100),
-  contrast: clamp(recipe.contrast, 60, 140),
-  brightness: clamp(recipe.brightness, 60, 140),
-  anchors: recipe.anchors.length
-    ? recipe.anchors.map((anchor) => ({
-        x: clamp(anchor.x, 0, 1),
-        y: clamp(anchor.y, 0, 1),
-        color: clamp(anchor.color, 0, Math.max(recipe.colors.length - 1, 0)),
-        shape: anchor.shape ?? 'circle',
-        spread: clamp(anchor.spread ?? recipe.softness, 0, 100),
-        opacity: clamp(anchor.opacity ?? 0.62, 0, 1),
-        rotate: Number.isFinite(anchor.rotate) ? anchor.rotate : 0,
-        scaleX: clamp(anchor.scaleX ?? 1, 0.2, 3),
-        scaleY: clamp(anchor.scaleY ?? 1, 0.2, 3),
-      }))
-    : [{ x: 0.5, y: 0.5, color: 0, shape: 'circle', spread: recipe.softness }],
+  colors: recipe.colors?.length ? recipe.colors : [...DEFAULT_MESH_COLORS],
+  flow: clampFinite(recipe.flow, 180, 0, 359),
+  softness: clampFinite(recipe.softness, 72, 0, 100),
+  warp: clampFinite(recipe.warp, 55, 0, 100),
+  scale: clampFinite(recipe.scale, 55, 0, 100),
+  contrast: clampFinite(recipe.contrast, 100, 60, 140),
+  brightness: clampFinite(recipe.brightness, 100, 60, 140),
 })
 
 export const normalizeEvenGradientStops = (colorCount: number): number[] => {
@@ -123,32 +127,6 @@ export const buildRadialGradientBackground = (recipe: TGradientRecipe): string =
   )})`
 }
 
-const meshLayerToCss = (
-  anchor: TMeshGradientAnchor,
-  colors: string[],
-  softness: number,
-): string => {
-  const color = colors[anchor.color] || colors[0] || DEFAULT_MESH_COLORS[0]
-  const spread = clamp(anchor.spread ?? softness, 0, 100)
-  const radius = Math.round(18 + spread * 0.58)
-  const hardStop = Math.round(radius * 0.45)
-  const shape = anchor.shape ?? 'circle'
-  const x = Math.round(anchor.x * 100)
-  const y = Math.round(anchor.y * 100)
-  const colorStop = `color-mix(in srgb, ${color} ${Math.round((anchor.opacity ?? 0.62) * 100)}%, transparent)`
-
-  if (shape === 'band') {
-    return `linear-gradient(${Math.round(anchor.rotate ?? 0)}deg, transparent 0%, ${colorStop} ${Math.max(
-      0,
-      50 - radius / 2,
-    )}%, ${color} 50%, ${colorStop} ${Math.min(100, 50 + radius / 2)}%, transparent 100%)`
-  }
-
-  const cssShape = shape === 'ellipse' ? 'ellipse' : 'circle'
-
-  return `radial-gradient(${cssShape} at ${x}% ${y}%, ${color} 0%, ${colorStop} ${hardStop}%, transparent ${radius}%)`
-}
-
 /**
  * Build the CSS fallback for a mesh wallpaper when WebGL is unavailable.
  *
@@ -157,12 +135,11 @@ const meshLayerToCss = (
  */
 export const buildMeshGradientFallback = (recipe: TMeshGradientRecipe): string => {
   const safeRecipe = normalizeMeshRecipe(recipe)
-  const layers = safeRecipe.anchors.map((anchor) =>
-    meshLayerToCss(anchor, safeRecipe.colors, safeRecipe.softness),
-  )
-  const linear = `linear-gradient(${safeRecipe.flow}deg, ${safeRecipe.colors.join(',')})`
 
-  return [...layers, linear].join(',')
+  return `linear-gradient(${safeRecipe.flow}deg, ${formatColorStops(
+    safeRecipe.colors,
+    normalizeEvenGradientStops(safeRecipe.colors.length),
+  )})`
 }
 
 export const buildGradientBackground = (recipe: TGradientRecipe): string => {
@@ -204,23 +181,20 @@ export const renderMeshBase = (
   ctx.fillStyle = baseGradient
   ctx.fillRect(0, 0, width, height)
 
-  for (const anchor of safeRecipe.anchors) {
-    const color = safeRecipe.colors[anchor.color] || safeRecipe.colors[0] || DEFAULT_MESH_COLORS[0]
-    const radius = width * (0.16 + safeRecipe.softness * 0.0038)
-    const hardStop = clamp(0.04 + safeRecipe.softness / 280, 0.04, 0.34)
-    const alpha = clamp(0.72 - safeRecipe.softness / 220, 0.26, 0.72)
-    const x = anchor.x * width
-    const y = anchor.y * height
-    const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius)
+  const glow = ctx.createRadialGradient(
+    width * 0.54,
+    height * 0.42,
+    0,
+    width * 0.54,
+    height * 0.42,
+    width * 0.72,
+  )
+  glow.addColorStop(0, safeRecipe.colors[1] || safeRecipe.colors[0])
+  glow.addColorStop(1, 'rgba(255, 255, 255, 0)')
 
-    gradient.addColorStop(0, color)
-    gradient.addColorStop(hardStop, color)
-    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
-
-    ctx.globalAlpha = alpha
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, width, height)
-  }
+  ctx.globalAlpha = 0.24 + (safeRecipe.softness / 100) * 0.24
+  ctx.fillStyle = glow
+  ctx.fillRect(0, 0, width, height)
 
   ctx.globalAlpha = 1
   ctx.filter = 'none'

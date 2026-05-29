@@ -2,22 +2,11 @@ import type { TConstValues } from '~/spec'
 
 import type {
   GRADIENT_TYPE,
+  MESH_GRADIENT_MODEL,
   WALLPAPER_TEXTURE,
   WALLPAPER_TEXTURE_OPTIONS,
   WALLPAPER_TEXTURE_SURFACE,
 } from './constant'
-
-export type TMeshGradientAnchor = {
-  x: number
-  y: number
-  color: number
-  shape?: 'circle' | 'ellipse' | 'band' | 'corner'
-  spread?: number
-  opacity?: number
-  rotate?: number
-  scaleX?: number
-  scaleY?: number
-}
 
 export type TImageTextureType = TConstValues<typeof WALLPAPER_TEXTURE>
 
@@ -39,18 +28,21 @@ export type TTextureSwatchPalette = {
 }
 
 export type TGradientType = TConstValues<typeof GRADIENT_TYPE>
+export type TMeshGradientModel = TConstValues<typeof MESH_GRADIENT_MODEL>
 
 export type TMeshGradientRecipe = {
-  version: 1
+  version: 2
   kind: typeof GRADIENT_TYPE.MESH
   preset: string
+  model: TMeshGradientModel
   seed: number
   colors: string[]
   flow: number
   softness: number
+  warp: number
+  scale: number
   contrast: number
   brightness: number
-  anchors: TMeshGradientAnchor[]
 }
 
 export type TLinearGradientRecipe = {

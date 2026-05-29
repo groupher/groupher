@@ -9,6 +9,7 @@ import {
 } from '~/hooks/useFullWallpaper/helper'
 import {
   GRADIENT_TYPE,
+  normalizeMeshRecipe,
   normalizeEvenGradientStops,
   normalizeGradientStops,
   normalizeTexture,
@@ -19,7 +20,7 @@ import type { TCustomWallpaper, TWallpaperFmt, TWallpaperPic } from '~/spec'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 import type { TStore } from '~/stores/wallpaper/spec'
 import type { TWallpaperState } from '~/stores/wallpaper/spec'
-import { parseGradientRecipe, parseWallpaper } from '~/wallpaper'
+import { parseGradientRecipe, parseWallpaper, resolveWallpaperPattern } from '~/wallpaper'
 
 type TRet = { source: string; hasShadow: boolean } & TWallpaperFmt
 
@@ -31,6 +32,7 @@ const getFilterValue = (effect: string): string =>
 export const getWallpaperState = (store: Pick<TStore, keyof TWallpaperState>): TWallpaperState => ({
   source: store.source,
   hasPattern: store.hasPattern,
+  patternId: store.patternId,
   hasTexture: store.hasTexture,
   gradient: store.gradient,
   blurIntensity: store.blurIntensity,
@@ -46,6 +48,7 @@ export const getWallpaperState = (store: Pick<TStore, keyof TWallpaperState>): T
 const getWallpaperCssState = (store: Pick<TStore, keyof TWallpaperState>): TWallpaperState => ({
   source: store.source,
   hasPattern: store.hasPattern,
+  patternId: store.patternId,
   hasTexture: store.hasTexture,
   gradient: store.gradient,
   blurIntensity: store.blurIntensity,
@@ -62,6 +65,7 @@ export const resolveWallpaper = (state: TWallpaperState): TRet => {
   const {
     source,
     hasPattern,
+    patternId,
     blurIntensity,
     hasShadow,
     brightness,
@@ -115,6 +119,7 @@ export const resolveWallpaper = (state: TWallpaperState): TRet => {
   if (type === WALLPAPER_TYPE.GRADIENT && activeGradient) {
     const parsed = parseGradientRecipe(activeGradient, {
       hasPattern,
+      patternId,
       blurIntensity,
       brightness,
       saturation,
@@ -143,6 +148,7 @@ export const resolveWallpaperRenderDescriptor = (
     background: background || 'transparent',
     filter: getFilterValue(effect),
     hasPattern: false,
+    patternImage: resolveWallpaperPattern(state.patternId),
     hasTexture: state.hasTexture,
     source: state.source,
     bgSize: state.bgSize,
@@ -167,15 +173,17 @@ export const resolveWallpaperRenderDescriptor = (
     if (!gradient) return { ...base, kind: 'none' }
 
     if (gradient.kind === GRADIENT_TYPE.MESH) {
+      const meshRecipe = normalizeMeshRecipe(gradient)
       return {
         ...base,
         kind: 'mesh-gradient',
         hasPattern: state.hasPattern,
+        patternImage: resolveWallpaperPattern(state.patternId),
         hasTexture: state.hasTexture,
-        colors: gradient.colors,
-        colorStops: normalizeGradientStops(gradient),
-        flow: gradient.flow,
-        meshRecipe: gradient,
+        colors: meshRecipe.colors,
+        colorStops: normalizeGradientStops(meshRecipe),
+        flow: meshRecipe.flow,
+        meshRecipe,
       }
     }
 
@@ -183,6 +191,7 @@ export const resolveWallpaperRenderDescriptor = (
       ...base,
       kind: gradient.kind === GRADIENT_TYPE.RADIAL ? 'radial-gradient' : 'linear-gradient',
       hasPattern: state.hasPattern,
+      patternImage: resolveWallpaperPattern(state.patternId),
       hasTexture: state.hasTexture,
       colors: gradient.colors,
       colorStops: normalizeGradientStops(gradient),
@@ -225,6 +234,7 @@ export default function useWallpaper(): TRet {
     [
       state.source,
       state.hasPattern,
+      state.patternId,
       state.blurIntensity,
       state.hasShadow,
       state.brightness,
@@ -246,6 +256,7 @@ export function useWallpaperRenderDescriptor(): TWallpaperRenderDescriptor {
     [
       state.source,
       state.hasPattern,
+      state.patternId,
       state.hasTexture,
       state.blurIntensity,
       state.hasShadow,

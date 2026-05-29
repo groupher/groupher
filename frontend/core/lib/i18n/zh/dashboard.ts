@@ -331,6 +331,7 @@ export default {
   'dsb.appearance.wallpaper.editor.picture': '图片',
   'dsb.appearance.wallpaper.editor.effects': '附加效果',
   'dsb.appearance.wallpaper.editor.pattern': '花纹',
+  'dsb.appearance.wallpaper.editor.pattern_desc': '选择一个花纹叠加到当前背景上。',
   'dsb.appearance.wallpaper.editor.blur': '模糊效果',
   'dsb.appearance.wallpaper.editor.shadow': '阴影效果',
   'dsb.appearance.wallpaper.editor.brightness': '明暗度',

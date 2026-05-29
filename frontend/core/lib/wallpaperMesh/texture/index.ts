@@ -211,7 +211,7 @@ export const renderGradientTextureDataUrl = async ({
 
   if (hasPattern) {
     try {
-      const patternImage = await loadImage('/wallpaper/pattern/1.png')
+      const patternImage = await loadImage('/wallpaper/pattern/01.png')
       const pattern = ctx.createPattern(patternImage, 'repeat')
       if (pattern) {
         ctx.fillStyle = pattern

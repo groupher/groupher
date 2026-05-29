@@ -16,6 +16,8 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
   @wallpaper_types ~w(none gradient picture upload)
   @bg_sizes ~w(cover contain auto)
   @texture_types ~w(noise tile beam ascii dots)
+  @mesh_models ~w(haze ridge brushed ribbon scanline glow)
+  @pattern_ids 1..33 |> Enum.map(&String.pad_leading("#{&1}", 2, "0"))
 
   @doc "for test usage"
   def default, do: dsb_default(:wallpaper)
@@ -29,6 +31,7 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
     |> cast(params, @optional_fields)
     |> validate_inclusion(:type, @wallpaper_types)
     |> validate_inclusion(:bg_size, @bg_sizes)
+    |> validate_inclusion(:pattern_id, @pattern_ids)
     |> validate_number(:blur_intensity, greater_than_or_equal_to: 0, less_than_or_equal_to: 100)
     |> validate_number(:brightness, greater_than_or_equal_to: 60, less_than_or_equal_to: 140)
     |> validate_number(:saturation, greater_than_or_equal_to: 0, less_than_or_equal_to: 160)
@@ -115,41 +118,23 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
 
   defp valid_mesh?(mesh) do
     version = map_get(mesh, "version")
+    model = map_get(mesh, "model")
     colors = map_get(mesh, "colors")
     flow = map_get(mesh, "flow")
     softness = map_get(mesh, "softness")
+    warp = map_get(mesh, "warp")
+    scale = map_get(mesh, "scale")
     contrast = map_get(mesh, "contrast")
     brightness = map_get(mesh, "brightness")
-    anchors = map_get(mesh, "anchors")
 
-    version == 1 and valid_colors?(colors) and
+    version == 2 and model in @mesh_models and valid_colors?(colors) and
       number_in_range?(flow, 0, 359) and
       number_in_range?(softness, 0, 100) and
+      number_in_range?(warp, 0, 100) and
+      number_in_range?(scale, 0, 100) and
       number_in_range?(contrast, 60, 140) and
-      number_in_range?(brightness, 60, 140) and
-      is_list(anchors) and Enum.all?(anchors, &valid_mesh_anchor?(&1, length(colors)))
+      number_in_range?(brightness, 60, 140)
   end
-
-  defp valid_mesh_anchor?(anchor, color_count) when is_map(anchor) do
-    x = map_get(anchor, "x")
-    y = map_get(anchor, "y")
-    color = map_get(anchor, "color")
-    shape = map_get(anchor, "shape") || "circle"
-    spread = map_get(anchor, "spread") || 50
-    opacity = map_get(anchor, "opacity") || 0.62
-    scale_x = map_get(anchor, "scaleX") || 1
-    scale_y = map_get(anchor, "scaleY") || 1
-
-    number_in_range?(x, 0, 1) and number_in_range?(y, 0, 1) and
-      is_integer(color) and color >= 0 and color < color_count and
-      shape in ~w(circle ellipse band corner) and
-      number_in_range?(spread, 0, 100) and
-      number_in_range?(opacity, 0, 1) and
-      number_in_range?(scale_x, 0.2, 3) and
-      number_in_range?(scale_y, 0.2, 3)
-  end
-
-  defp valid_mesh_anchor?(_, _), do: false
 
   defp valid_colors?(colors), do: is_list(colors) and colors != []
 

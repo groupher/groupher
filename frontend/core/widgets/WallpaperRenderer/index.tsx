@@ -144,7 +144,7 @@ function WallpaperLayer({
   }, [exiting, onExited])
 
   const patternStyle: CSSProperties = {
-    backgroundImage: 'url(/wallpaper/pattern/1.png)',
+    backgroundImage: `url(${descriptor.patternImage})`,
     backgroundRepeat: 'repeat',
     backgroundSize: patternSize,
   }
@@ -160,7 +160,9 @@ function WallpaperLayer({
     >
       <div className={fallbackClass} style={getFallbackStyle(descriptor)} />
       <canvas ref={canvasRef} className={canvasClass} />
-      {descriptor.hasPattern && <div className={patternClass} style={patternStyle} />}
+      {descriptor.hasPattern && descriptor.patternImage && (
+        <div className={patternClass} style={patternStyle} />
+      )}
     </div>
   )
 }

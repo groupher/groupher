@@ -62,6 +62,7 @@ type TRet = {
   removeWallpaper: () => void
   changeGradientWallpaper: (source: string) => void
   changeGradientRecipe: (gradient: TGradientRecipe) => void
+  changePatternId: (patternId: string) => void
   changePatternWallpaper: (source: string) => void
   changeWallpaperType: (type: TWallpaperType) => void
   togglePattern: (hasPattern: boolean) => void
@@ -86,6 +87,7 @@ const getWallpaperState = (wallpaper$: ReturnType<typeof useWallpaperDomain>): T
   source: wallpaper$.source,
   type: wallpaper$.type,
   hasPattern: wallpaper$.hasPattern,
+  patternId: wallpaper$.patternId,
   hasTexture: wallpaper$.hasTexture,
   gradient: wallpaper$.gradient,
   blurIntensity: wallpaper$.blurIntensity,
@@ -151,6 +153,7 @@ function useLogicValue(): TRet {
       wallpaper$.source,
       wallpaper$.type,
       wallpaper$.hasPattern,
+      wallpaper$.patternId,
       wallpaper$.hasTexture,
       wallpaper$.gradient,
       wallpaper$.blurIntensity,
@@ -267,6 +270,8 @@ function useLogicValue(): TRet {
     })
   const changeGradientRecipe = (gradient: TGradientRecipe): void =>
     commitWallpaperPatch({ source: gradient.preset, type: WALLPAPER_TYPE.GRADIENT, gradient })
+  const changePatternId = (patternId: string): void =>
+    commitWallpaperPatch({ patternId, hasPattern: true })
   const changePatternWallpaper = (source: string): void =>
     commitWallpaperPatch({ source, type: WALLPAPER_TYPE.PATTERN })
 
@@ -306,6 +311,7 @@ function useLogicValue(): TRet {
     removeWallpaper,
     changeGradientWallpaper,
     changeGradientRecipe,
+    changePatternId,
     changePatternWallpaper,
     changeWallpaperType,
     togglePattern,

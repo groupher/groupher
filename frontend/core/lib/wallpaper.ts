@@ -1,5 +1,6 @@
 import { isEmpty } from 'ramda'
 
+import { DEFAULT_WALLPAPER_PATTERN_ID, WALLPAPER_PATTERN } from '~/const/wallpaper'
 import { buildGradientBackground, type TGradientRecipe } from '~/lib/wallpaperMesh'
 import type {
   TCustomWallpaper,
@@ -12,6 +13,12 @@ import type {
 const DEFAULT_BRIGHTNESS = 100
 const DEFAULT_SATURATION = 100
 const MAX_BLUR_PX = 6
+
+export const resolveWallpaperPattern = (patternId?: string): string => {
+  const pattern = WALLPAPER_PATTERN[patternId || DEFAULT_WALLPAPER_PATTERN_ID]
+
+  return pattern?.image || WALLPAPER_PATTERN[DEFAULT_WALLPAPER_PATTERN_ID]?.image || ''
+}
 
 const buildFilterEffect = ({
   blurIntensity = 0,
@@ -75,23 +82,25 @@ export const parseGradientRecipe = (
   gradient: TGradientRecipe,
   {
     hasPattern = false,
+    patternId = DEFAULT_WALLPAPER_PATTERN_ID,
     blurIntensity = 0,
     brightness = DEFAULT_BRIGHTNESS,
     saturation = DEFAULT_SATURATION,
   }: {
     hasPattern?: boolean
+    patternId?: string
     blurIntensity?: number
     brightness?: number
     saturation?: number
   } = {},
 ): TWallpaperFmt => {
-  const patternPic = '/wallpaper/pattern/1.png'
+  const patternPic = resolveWallpaperPattern(patternId)
   const background = buildGradientBackground(gradient)
   const effect = buildFilterEffect({ blurIntensity, brightness, saturation })
 
   return {
     effect,
-    background: hasPattern ? `url(${patternPic}) repeat, ${background}` : background,
+    background: hasPattern && patternPic ? `url(${patternPic}) repeat, ${background}` : background,
   }
 }
 
@@ -104,7 +113,7 @@ const _parseGradientBackground = (gradient: TWallpaperGradient): TWallpaperFmt =
   const colors = gradient.colors.join(',')
   let background = `linear-gradient(${formatGradientDirection(direction)}, ${colors})`
 
-  const patternPic = `${DIR}/pattern/1.png`
+  const patternPic = `${DIR}/pattern/${DEFAULT_WALLPAPER_PATTERN_ID}.png`
   background = hasPattern ? `url(${patternPic}) repeat, ${background}` : background
 
   const effect = buildFilterEffect({ blurIntensity, brightness, saturation })

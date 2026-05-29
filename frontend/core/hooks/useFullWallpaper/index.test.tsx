@@ -1,6 +1,11 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 
-import { GRADIENT_WALLPAPER, GRADIENT_WALLPAPER_NAME, WALLPAPER_TYPE } from '~/const/wallpaper'
+import {
+  DEFAULT_WALLPAPER_PATTERN_ID,
+  GRADIENT_WALLPAPER,
+  GRADIENT_WALLPAPER_NAME,
+  WALLPAPER_TYPE,
+} from '~/const/wallpaper'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
 import { GRADIENT_TYPE } from '~/lib/wallpaperMesh'
@@ -14,6 +19,7 @@ describe('useFullWallpaper', () => {
         source: GRADIENT_WALLPAPER_NAME.PINK,
         type: WALLPAPER_TYPE.GRADIENT,
         hasPattern: true,
+        patternId: DEFAULT_WALLPAPER_PATTERN_ID,
         hasTexture: false,
         blurIntensity: 0,
         brightness: 100,
@@ -28,6 +34,7 @@ describe('useFullWallpaper', () => {
     const data = result.current.getWallpaper()
     expect(data.source).toBe(GRADIENT_WALLPAPER_NAME.PINK)
     expect(data.type).toBe(WALLPAPER_TYPE.GRADIENT)
+    expect(data.patternId).toBe(DEFAULT_WALLPAPER_PATTERN_ID)
     expect(data.hasTexture).toBe(false)
     expect(data.brightness).toBe(100)
     expect(data.saturation).toBe(100)
@@ -50,6 +57,7 @@ describe('useFullWallpaper', () => {
         source: GRADIENT_WALLPAPER_NAME.PURPLE,
         type: WALLPAPER_TYPE.GRADIENT,
         hasPattern: true,
+        patternId: DEFAULT_WALLPAPER_PATTERN_ID,
         blurIntensity: 50,
         gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.PURPLE], angle: 90 },
       },

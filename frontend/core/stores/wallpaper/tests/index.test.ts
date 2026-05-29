@@ -1,4 +1,9 @@
-import { GRADIENT_WALLPAPER, GRADIENT_WALLPAPER_NAME, WALLPAPER_TYPE } from '~/const/wallpaper'
+import {
+  DEFAULT_WALLPAPER_PATTERN_ID,
+  GRADIENT_WALLPAPER,
+  GRADIENT_WALLPAPER_NAME,
+  WALLPAPER_TYPE,
+} from '~/const/wallpaper'
 import { WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 
 import setupStore, { INITIAL_WALLPAPER_STATE } from '..'
@@ -10,6 +15,7 @@ describe('stores/wallpaper', () => {
     expect(store.source).toBe(INITIAL_WALLPAPER_STATE.source)
     expect(store.type).toBe(INITIAL_WALLPAPER_STATE.type)
     expect(store.hasPattern).toBe(true)
+    expect(store.patternId).toBe(DEFAULT_WALLPAPER_PATTERN_ID)
     expect(store.hasTexture).toBe(false)
     expect(store.gradient).toEqual(GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.PINK])
     expect(store.brightness).toBe(100)
@@ -21,6 +27,7 @@ describe('stores/wallpaper', () => {
       type: WALLPAPER_TYPE.PATTERN,
       blurIntensity: 35,
       hasPattern: false,
+      patternId: '02',
       hasTexture: true,
       bgSize: 'contain',
       brightness: 90,
@@ -33,6 +40,7 @@ describe('stores/wallpaper', () => {
     expect(store.type).toBe(WALLPAPER_TYPE.PATTERN)
     expect(store.blurIntensity).toBe(35)
     expect(store.hasPattern).toBe(false)
+    expect(store.patternId).toBe('02')
     expect(store.hasTexture).toBe(true)
     expect(store.bgSize).toBe('contain')
     expect(store.brightness).toBe(90)
@@ -49,6 +57,7 @@ describe('stores/wallpaper', () => {
       source: 'backiee-1',
       type: WALLPAPER_TYPE.PATTERN,
       hasPattern: false,
+      patternId: '03',
       hasTexture: true,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 45 },
       blurIntensity: 35,
@@ -65,6 +74,7 @@ describe('stores/wallpaper', () => {
       source: 'backiee-1',
       type: WALLPAPER_TYPE.PATTERN,
       hasPattern: false,
+      patternId: '03',
       hasTexture: true,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 45 },
       blurIntensity: 35,

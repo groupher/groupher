@@ -10,6 +10,7 @@ const updateDashboardWallpaper = gql`
     $gradient: Json
     $bgSize: String
     $hasPattern: Boolean
+    $patternId: String
     $hasTexture: Boolean
     $blurIntensity: Int
     $hasShadow: Boolean
@@ -24,6 +25,7 @@ const updateDashboardWallpaper = gql`
       gradient: $gradient
       bgSize: $bgSize
       hasPattern: $hasPattern
+      patternId: $patternId
       hasTexture: $hasTexture
       blurIntensity: $blurIntensity
       hasShadow: $hasShadow

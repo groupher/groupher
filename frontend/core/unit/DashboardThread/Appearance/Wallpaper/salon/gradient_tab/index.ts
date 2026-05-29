@@ -6,7 +6,8 @@ export default function useSalon() {
   const { cn, br, primary } = useTwBelt()
 
   return {
-    wrapper: 'row-center wrap gap-3 mt-2.5 relative',
+    wrapper: 'column gap-8 mt-2.5 relative',
+    gradientGrid: 'row-center wrap gap-3',
     card: cn(
       'size-14 rounded-lg p-0.5 relative border-2 border-transparent pointer trans-all-200',
       `hover:${br('digest')}`,

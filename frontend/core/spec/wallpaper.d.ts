@@ -33,6 +33,12 @@ export type TWallpaperPic = {
 
 export type TWallpaper = TWallpaperGradient | TWallpaperPic
 
+export type TWallpaperPattern = {
+  id: string
+  image: string
+  preview: string
+}
+
 export type TCustomWallpaper = TWallpaper | null
 
 export type TWallpaperType = TConstValues<typeof WALLPAPER_TYPE>
@@ -52,6 +58,7 @@ export type TWallpaperData = {
   patternWallpapers: Record<string, TWallpaper>
   type: TWallpaperType
   hasPattern: boolean
+  patternId: string
   hasTexture: boolean
   hasBlur: boolean
   blurIntensity: number

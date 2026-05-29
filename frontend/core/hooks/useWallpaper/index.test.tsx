@@ -1,26 +1,30 @@
 import { renderHook } from '@testing-library/react'
 
-import { GRADIENT_WALLPAPER, GRADIENT_WALLPAPER_NAME, WALLPAPER_TYPE } from '~/const/wallpaper'
+import {
+  DEFAULT_WALLPAPER_PATTERN_ID,
+  GRADIENT_WALLPAPER,
+  GRADIENT_WALLPAPER_NAME,
+  WALLPAPER_TYPE,
+} from '~/const/wallpaper'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useWallpaper, { resolveWallpaperRenderDescriptor } from '~/hooks/useWallpaper'
-import { GRADIENT_TYPE, WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
+import { GRADIENT_TYPE, MESH_GRADIENT_MODEL, WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 import type { TMeshGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
 
 describe('useWallpaper', () => {
   const mesh: TMeshGradientRecipe = {
-    version: 1,
+    version: 2,
     kind: GRADIENT_TYPE.MESH,
     preset: 'test',
+    model: MESH_GRADIENT_MODEL.HAZE,
     seed: 1,
     colors: ['#fbeede', '#ff7f6f', '#5f74a6'],
     flow: 135,
     softness: 60,
+    warp: 50,
+    scale: 60,
     contrast: 100,
     brightness: 100,
-    anchors: [
-      { x: 0.2, y: 0.2, color: 0 },
-      { x: 0.78, y: 0.82, color: 2 },
-    ],
   }
 
   it('parses mesh wallpaper', () => {
@@ -30,6 +34,7 @@ describe('useWallpaper', () => {
         type: WALLPAPER_TYPE.GRADIENT,
         gradient: mesh,
         hasPattern: false,
+        patternId: DEFAULT_WALLPAPER_PATTERN_ID,
         blurIntensity: 50,
         hasShadow: true,
       },
@@ -50,13 +55,14 @@ describe('useWallpaper', () => {
         type: WALLPAPER_TYPE.GRADIENT,
         gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.PURPLE], angle: 90 },
         hasPattern: true,
+        patternId: DEFAULT_WALLPAPER_PATTERN_ID,
         blurIntensity: 50,
       },
     })
 
     const { result } = renderHook(() => useWallpaper(), { wrapper })
 
-    expect(result.current.background).toContain('url(/wallpaper/pattern/1.png)')
+    expect(result.current.background).toContain('url(/wallpaper/pattern/01.png)')
     expect(result.current.background).toContain('linear-gradient(90deg')
     expect(result.current.effect).toContain('blur')
   })
@@ -120,7 +126,8 @@ describe('useWallpaper', () => {
       customWallpaper: null,
       source: GRADIENT_WALLPAPER_NAME.GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
-      hasPattern: true,
+      hasPattern: false,
+      patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       hasTexture: true,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 30,
@@ -132,6 +139,7 @@ describe('useWallpaper', () => {
     })
 
     expect(descriptor.kind).toBe('linear-gradient')
+    expect(descriptor.patternImage).toBe('/wallpaper/pattern/01.png')
     expect(descriptor.texture).toEqual({
       type: WALLPAPER_TEXTURE.BEAM,
       intensity: 55,
@@ -146,6 +154,7 @@ describe('useWallpaper', () => {
       source: GRADIENT_WALLPAPER_NAME.GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
+      patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       hasTexture: false,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], spread: 0 },
       blurIntensity: 0,
@@ -166,6 +175,7 @@ describe('useWallpaper', () => {
       source: GRADIENT_WALLPAPER_NAME.BLUE,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
+      patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       hasTexture: false,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.BLUE], spread: 50 },
       blurIntensity: 0,
@@ -188,6 +198,7 @@ describe('useWallpaper', () => {
       source: GRADIENT_WALLPAPER_NAME.BLUE,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
+      patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       hasTexture: false,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.BLUE], stops: [0, 20, 70, 100] },
       blurIntensity: 0,
@@ -208,6 +219,7 @@ describe('useWallpaper', () => {
       source: GRADIENT_WALLPAPER_NAME.GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
+      patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       hasTexture: true,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
@@ -235,6 +247,7 @@ describe('useWallpaper', () => {
       source: GRADIENT_WALLPAPER_NAME.GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
+      patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       hasTexture: true,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
@@ -258,6 +271,7 @@ describe('useWallpaper', () => {
       source: GRADIENT_WALLPAPER_NAME.GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
+      patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       hasTexture: true,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
@@ -272,6 +286,7 @@ describe('useWallpaper', () => {
       source: GRADIENT_WALLPAPER_NAME.GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
+      patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       hasTexture: true,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
@@ -292,6 +307,7 @@ describe('useWallpaper', () => {
       source: GRADIENT_WALLPAPER_NAME.GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
+      patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       hasTexture: true,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
@@ -315,6 +331,7 @@ describe('useWallpaper', () => {
       source: GRADIENT_WALLPAPER_NAME.GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
+      patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       hasTexture: false,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
@@ -339,6 +356,7 @@ describe('useWallpaper', () => {
       source: mesh.preset,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
+      patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       hasTexture: true,
       gradient: mesh,
       blurIntensity: 0,
@@ -356,6 +374,6 @@ describe('useWallpaper', () => {
       params: {},
     })
     expect(descriptor.flow).toBe(135)
-    expect(descriptor.meshRecipe?.anchors).toHaveLength(2)
+    expect(descriptor.meshRecipe?.model).toBe(MESH_GRADIENT_MODEL.HAZE)
   })
 })
