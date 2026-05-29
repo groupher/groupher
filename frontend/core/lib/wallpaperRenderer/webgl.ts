@@ -10,6 +10,28 @@ import type { TWallpaperRenderDescriptor } from './spec'
 
 const MAX_COLORS = 6
 const DPR_CAP = 2
+const FLOW_STRAND_COUNT = 11
+
+const MESH_MODEL_UNIFORM = {
+  [MESH_GRADIENT_MODEL.HAZE]: 0,
+  [MESH_GRADIENT_MODEL.RIDGE]: 1,
+  [MESH_GRADIENT_MODEL.BRUSHED]: 2,
+  [MESH_GRADIENT_MODEL.RIBBON]: 3,
+  [MESH_GRADIENT_MODEL.SCANLINE]: 4,
+  [MESH_GRADIENT_MODEL.GLOW]: 5,
+  [MESH_GRADIENT_MODEL.FLOW]: 6,
+} as const
+
+const MESH_MODEL_SHADER_CONSTANTS = `
+const int MESH_MODEL_HAZE = ${MESH_MODEL_UNIFORM[MESH_GRADIENT_MODEL.HAZE]};
+const int MESH_MODEL_RIDGE = ${MESH_MODEL_UNIFORM[MESH_GRADIENT_MODEL.RIDGE]};
+const int MESH_MODEL_BRUSHED = ${MESH_MODEL_UNIFORM[MESH_GRADIENT_MODEL.BRUSHED]};
+const int MESH_MODEL_RIBBON = ${MESH_MODEL_UNIFORM[MESH_GRADIENT_MODEL.RIBBON]};
+const int MESH_MODEL_SCANLINE = ${MESH_MODEL_UNIFORM[MESH_GRADIENT_MODEL.SCANLINE]};
+const int MESH_MODEL_GLOW = ${MESH_MODEL_UNIFORM[MESH_GRADIENT_MODEL.GLOW]};
+const int MESH_MODEL_FLOW = ${MESH_MODEL_UNIFORM[MESH_GRADIENT_MODEL.FLOW]};
+const int FLOW_STRAND_COUNT = ${FLOW_STRAND_COUNT};
+`
 
 const VERTEX_SHADER = `
 attribute vec2 aPosition;
@@ -29,6 +51,7 @@ precision mediump float;
 #endif
 
 const int MAX_COLORS = ${MAX_COLORS};
+${MESH_MODEL_SHADER_CONSTANTS}
 uniform int uMode;
 uniform int uColorCount;
 uniform int uMeshModel;
@@ -193,6 +216,9 @@ vec3 sampleRibbonMesh(float along, float across, float baseNoise, float warp, fl
 
 vec3 sampleFlowMesh(vec2 uv, float feather, float warp) {
   float flowAmount = clamp(uSoftness / 100.0, 0.0, 1.0);
+  // FLOW renders a field of gaussian ribbons. The UI angle rotates the field,
+  // while each strand bends independently along y so the result avoids the
+  // straight, linear-gradient look.
   vec2 flowUv = rotateUv(uv - 0.5, uFlow - 90.0) + 0.5;
   float y = flowUv.y;
   float fieldNoise = fbm(vec2(flowUv.x * 0.55, y * 0.85) + uMeshSeed * 0.012);
@@ -208,7 +234,7 @@ vec3 sampleFlowMesh(vec2 uv, float feather, float warp) {
   float widthScale = mix(1.14, 0.82, flowAmount);
   float shadeAmount = mix(0.045, 0.11, flowAmount);
 
-  for (int i = 0; i < 11; i++) {
+  for (int i = 0; i < FLOW_STRAND_COUNT; i++) {
     float fi = float(i);
     float anchor = -0.2 + fi * spacing;
     float phase = fi * 1.91 + uMeshSeed * 0.004;
@@ -264,7 +290,7 @@ vec3 sampleProceduralMesh(vec2 uv) {
   float t = clamp(dot(warped, dir) + 0.5 + (baseNoise - 0.5) * warp * 0.28, 0.0, 1.0);
   vec3 color = sampleGradient(t);
 
-  if (uMeshModel == 0) {
+  if (uMeshModel == MESH_MODEL_HAZE) {
     float cloud = fbm(warped * (scale * 0.42) + 12.5);
     float warmBlob = 1.0 - smoothstep(0.18, 0.72 + feather, distance(warped, vec2(0.36, 0.72)));
     float hotBlob = 1.0 - smoothstep(0.12, 0.42 + feather * 0.72, distance(warped, vec2(0.66, 0.72)));
@@ -274,7 +300,7 @@ vec3 sampleProceduralMesh(vec2 uv) {
     color = mix(color, sampleGradient(0.02), milk * 0.55);
     color = mix(color, sampleGradient(0.42), warmBlob * 0.5);
     color = mix(color, sampleGradient(0.55), hotBlob * 0.58);
-  } else if (uMeshModel == 1) {
+  } else if (uMeshModel == MESH_MODEL_RIDGE) {
     float ridgeCurve = across + sin(along * 3.9 + baseNoise * 1.25) * (0.1 + warp * 0.14);
     float ridge = 1.0 - smoothstep(0.02, feather * 0.95, abs(ridgeCurve));
     float lowShade = smoothstep(-0.22, 0.34, across + baseNoise * 0.12);
@@ -283,7 +309,7 @@ vec3 sampleProceduralMesh(vec2 uv) {
     color = mix(color, sampleGradient(0.4), ridge * 0.52);
     color = mix(color, sampleGradient(0.02), upperGlow * 0.5);
     color = mix(color, sampleGradient(0.96), smoothstep(0.15, 0.62, across) * 0.42);
-  } else if (uMeshModel == 2) {
+  } else if (uMeshModel == MESH_MODEL_BRUSHED) {
     float sweep = fbm(vec2(uv.x * 0.85, uv.y * (scale * 1.9)) + uMeshSeed * 0.013);
     float grain = fbm(vec2(uv.x * 1.35, uv.y * 11.0) + uMeshSeed * 0.021);
     float band = uv.y + sin(uv.x * 2.4 + sweep * 2.6) * (0.025 + warp * 0.05);
@@ -291,11 +317,11 @@ vec3 sampleProceduralMesh(vec2 uv) {
     color = sampleGradient(t);
     color = mix(color, sampleGradient(clamp(t + 0.14, 0.0, 1.0)), grain * 0.1);
     color = mix(color, sampleGradient(0.08), (1.0 - smoothstep(0.18, 0.58, uv.y)) * 0.35);
-  } else if (uMeshModel == 3) {
+  } else if (uMeshModel == MESH_MODEL_RIBBON) {
     color = sampleRibbonMesh(along, across, baseNoise, warp, feather);
-  } else if (uMeshModel == 6) {
+  } else if (uMeshModel == MESH_MODEL_FLOW) {
     color = sampleFlowMesh(uv, feather, warp);
-  } else if (uMeshModel == 4) {
+  } else if (uMeshModel == MESH_MODEL_SCANLINE) {
     float columns = mix(12.0, 28.0, clamp(uMeshScale / 100.0, 0.0, 1.0));
     float bentX = uv.x + sin(uv.y * 3.7 + baseNoise * 1.4) * warp * 0.025;
     float column = fract(bentX * columns);
@@ -306,7 +332,7 @@ vec3 sampleProceduralMesh(vec2 uv) {
     color = sampleGradient(t);
     color = mix(color, sampleGradient(clamp(t + 0.18, 0.0, 1.0)), beam * 0.34);
     color *= 0.82 + beam * rowDot * 0.3;
-  } else {
+  } else if (uMeshModel == MESH_MODEL_GLOW) {
     float glowA = 1.0 - smoothstep(0.1, 0.68 + feather, distance(warped, vec2(0.18, 0.82)));
     float glowB = 1.0 - smoothstep(0.14, 0.74 + feather, distance(warped, vec2(0.86, 0.22)));
     float diagonal = smoothstep(-0.58, 0.68, dot(warpedCentered, normalize(vec2(0.86, -0.52))));
@@ -314,6 +340,8 @@ vec3 sampleProceduralMesh(vec2 uv) {
     color = mix(sampleGradient(0.18 + veil * 0.18), sampleGradient(0.68), diagonal);
     color = mix(color, sampleGradient(0.92), glowA * 0.34);
     color = mix(color, sampleGradient(0.38), glowB * 0.32);
+  } else {
+    color = sampleGradient(t);
   }
 
   color = mix(color, sampleGradient(t), 0.06 * (1.0 - softness));
@@ -436,16 +464,6 @@ const parseColor = (value: string): [number, number, number] => {
     Number.parseInt(fullHex.slice(4, 6), 16) / 255,
   ]
 }
-
-const MESH_MODEL = {
-  [MESH_GRADIENT_MODEL.HAZE]: 0,
-  [MESH_GRADIENT_MODEL.RIDGE]: 1,
-  [MESH_GRADIENT_MODEL.BRUSHED]: 2,
-  [MESH_GRADIENT_MODEL.RIBBON]: 3,
-  [MESH_GRADIENT_MODEL.SCANLINE]: 4,
-  [MESH_GRADIENT_MODEL.GLOW]: 5,
-  [MESH_GRADIENT_MODEL.FLOW]: 6,
-} as const
 
 const compileShader = (
   gl: WebGLRenderingContext,
@@ -698,8 +716,8 @@ class WallpaperWebglRenderer {
     const isContain = descriptor.bgSize === 'contain'
     const meshRecipe = descriptor.meshRecipe
     const meshModel = meshRecipe
-      ? MESH_MODEL[meshRecipe.model]
-      : MESH_MODEL[MESH_GRADIENT_MODEL.HAZE]
+      ? MESH_MODEL_UNIFORM[meshRecipe.model]
+      : MESH_MODEL_UNIFORM[MESH_GRADIENT_MODEL.HAZE]
     const meshSeed = meshRecipe?.seed ?? 1
     const meshWarp = meshRecipe?.warp ?? 55
     const meshScale = meshRecipe?.scale ?? 55

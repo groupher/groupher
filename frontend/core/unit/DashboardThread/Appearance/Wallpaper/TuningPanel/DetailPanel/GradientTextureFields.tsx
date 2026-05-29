@@ -26,6 +26,23 @@ const findPresetColor = (color: string, theme: keyof typeof RAINBOW_COLOR_HEX): 
 const resolvePresetColor = (color: TColorName, theme: keyof typeof RAINBOW_COLOR_HEX): string =>
   RAINBOW_COLOR_HEX[theme][color] ?? RAINBOW_COLOR_HEX[theme][COLOR.BLACK]
 
+const buildColorChips = (
+  gradient: TGradientRecipe,
+): Array<{ color: string; index: number; key: string }> => {
+  const colorCounts = new Map<string, number>()
+
+  return gradient.colors.map((color, index) => {
+    const count = (colorCounts.get(color) ?? 0) + 1
+    colorCounts.set(color, count)
+
+    return {
+      color,
+      index,
+      key: `${gradient.preset}-${color}-${count}`,
+    }
+  })
+}
+
 const getGradientSpreadValue = (gradient: TGradientRecipe): number =>
   gradient.kind === GRADIENT_TYPE.MESH ? gradient.softness : gradient.spread
 
@@ -61,6 +78,7 @@ export default function GradientTextureFields() {
   const activeGradient = draftGradient ?? gradient
   const spread = activeGradient ? getGradientSpreadValue(activeGradient) : 50
   const intensityLabel = t('dsb.appearance.wallpaper.texture.intensity')
+  const colorChips = activeGradient ? buildColorChips(activeGradient) : []
 
   useEffect(() => {
     setDraftTexture(texture)
@@ -147,9 +165,9 @@ export default function GradientTextureFields() {
             <div className={s.panel}>
               <div className={s.label}>Colors</div>
               <div className={s.chips}>
-                {activeGradient.colors.map((color, index) => (
+                {colorChips.map(({ color, index, key }) => (
                   <ColorSelector
-                    key={`${activeGradient.preset}-${index}`}
+                    key={key}
                     activeColor={findPresetColor(color, theme)}
                     customColor={color}
                     allowCustomColor
