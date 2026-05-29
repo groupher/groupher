@@ -63,11 +63,13 @@ type TRet = {
   changeGradientWallpaper: (source: string) => void
   changeGradientRecipe: (gradient: TGradientRecipe) => void
   changePatternId: (patternId: string) => void
+  changePatternTone: (patternTone: TWallpaperState['patternTone']) => void
   changePatternWallpaper: (source: string) => void
   changeWallpaperType: (type: TWallpaperType) => void
   togglePattern: (hasPattern: boolean) => void
   toggleTexture: (hasTexture: boolean) => void
   changeBlurIntensity: (blurIntensity: number) => void
+  changePatternIntensity: (patternIntensity: number) => void
   toggleShadow: (hasShadow: boolean) => void
   changeBrightness: (brightness: number) => void
   changeSaturation: (saturation: number) => void
@@ -88,6 +90,8 @@ const getWallpaperState = (wallpaper$: ReturnType<typeof useWallpaperDomain>): T
   type: wallpaper$.type,
   hasPattern: wallpaper$.hasPattern,
   patternId: wallpaper$.patternId,
+  patternIntensity: wallpaper$.patternIntensity,
+  patternTone: wallpaper$.patternTone,
   hasTexture: wallpaper$.hasTexture,
   gradient: wallpaper$.gradient,
   blurIntensity: wallpaper$.blurIntensity,
@@ -125,7 +129,7 @@ const radialCenterFromAngle = (
   angle: number,
   center: { x: number; y: number },
 ): { x: number; y: number } => {
-  // Radial gradients reuse Direction as focal-point direction. Keep the
+  // Radial gradients reuse angle as focal-point direction. Keep the
   // existing center distance so the preset shape stays intact while rotating.
   const currentDistance = Math.hypot(center.x - 0.5, center.y - 0.5)
   const distance = currentDistance > 0.001 ? currentDistance : RADIAL_DEFAULT_CENTER_DISTANCE
@@ -154,6 +158,8 @@ function useLogicValue(): TRet {
       wallpaper$.type,
       wallpaper$.hasPattern,
       wallpaper$.patternId,
+      wallpaper$.patternIntensity,
+      wallpaper$.patternTone,
       wallpaper$.hasTexture,
       wallpaper$.gradient,
       wallpaper$.blurIntensity,
@@ -272,6 +278,8 @@ function useLogicValue(): TRet {
     commitWallpaperPatch({ source: gradient.preset, type: WALLPAPER_TYPE.GRADIENT, gradient })
   const changePatternId = (patternId: string): void =>
     commitWallpaperPatch({ patternId, hasPattern: true })
+  const changePatternTone = (patternTone: TWallpaperState['patternTone']): void =>
+    commitWallpaperPatch({ patternTone })
   const changePatternWallpaper = (source: string): void =>
     commitWallpaperPatch({ source, type: WALLPAPER_TYPE.PATTERN })
 
@@ -290,6 +298,8 @@ function useLogicValue(): TRet {
   }
   const changeBlurIntensity = (blurIntensity: number): void =>
     scheduleWallpaperPreview({ blurIntensity })
+  const changePatternIntensity = (patternIntensity: number): void =>
+    scheduleWallpaperPreview({ patternIntensity })
   const toggleShadow = (hasShadow: boolean): void => commitWallpaperPatch({ hasShadow })
   const changeBrightness = (brightness: number): void => scheduleWallpaperPreview({ brightness })
   const changeSaturation = (saturation: number): void => scheduleWallpaperPreview({ saturation })
@@ -312,11 +322,13 @@ function useLogicValue(): TRet {
     changeGradientWallpaper,
     changeGradientRecipe,
     changePatternId,
+    changePatternTone,
     changePatternWallpaper,
     changeWallpaperType,
     togglePattern,
     toggleTexture,
     changeBlurIntensity,
+    changePatternIntensity,
     toggleShadow,
     changeBrightness,
     changeSaturation,

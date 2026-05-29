@@ -18,6 +18,8 @@ export default function useSalon() {
     title: cn('text-sm bold-sm mb-4', fg('digest')),
     switchWrapper: 'flex items-center h-5 gap-3',
     toggleTitle: cn('w-20 shrink-0 text-sm leading-none', fg('digest')),
+    toneSwitch: 'flex items-center gap-2 ml-2',
+    toneLabel: cn('text-xs leading-none', fg('digest')),
     rangeRows: 'column gap-4.5 min-w-0',
     customFields: 'w-full min-w-0',
     collapseRow: 'absolute right-5 bottom-3',

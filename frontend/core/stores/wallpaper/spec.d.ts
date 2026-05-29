@@ -1,5 +1,5 @@
 import type { TGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
-import type { TCustomWallpaper, TWallpaperType } from '~/spec'
+import type { TCustomWallpaper, TWallpaperPatternTone, TWallpaperType } from '~/spec'
 
 export type TWallpaperState = {
   customWallpaper: TCustomWallpaper
@@ -8,6 +8,8 @@ export type TWallpaperState = {
 
   hasPattern: boolean
   patternId: string
+  patternIntensity: number
+  patternTone: TWallpaperPatternTone
   hasTexture: boolean
   gradient: TGradientRecipe | null
   blurIntensity: number

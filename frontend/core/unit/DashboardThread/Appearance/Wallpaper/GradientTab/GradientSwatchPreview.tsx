@@ -1,11 +1,14 @@
 import { type CSSProperties, useEffect, useMemo, useRef } from 'react'
 
-import { DEFAULT_WALLPAPER_PATTERN_ID, WALLPAPER_TYPE } from '~/const/wallpaper'
+import {
+  DEFAULT_WALLPAPER_PATTERN_ID,
+  WALLPAPER_PATTERN_TONE,
+  WALLPAPER_TYPE,
+} from '~/const/wallpaper'
 import { cn } from '~/css'
 import { resolveWallpaperRenderDescriptor } from '~/hooks/useWallpaper'
 import {
   buildGradientBackground,
-  GRADIENT_TYPE,
   type TGradientRecipe,
   WALLPAPER_TEXTURE,
 } from '~/lib/wallpaperMesh'
@@ -29,6 +32,8 @@ export default function GradientSwatchPreview({ className, gradient }: TProps) {
         type: WALLPAPER_TYPE.GRADIENT,
         hasPattern: false,
         patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+        patternIntensity: 100,
+        patternTone: WALLPAPER_PATTERN_TONE.DARK,
         hasTexture: false,
         gradient,
         blurIntensity: 0,
@@ -46,8 +51,6 @@ export default function GradientSwatchPreview({ className, gradient }: TProps) {
   )
 
   useEffect(() => {
-    if (gradient.kind !== GRADIENT_TYPE.MESH) return
-
     const canvas = canvasRef.current
     if (!canvas) return
 
@@ -66,11 +69,7 @@ export default function GradientSwatchPreview({ className, gradient }: TProps) {
       rendererRef.current?.destroy()
       rendererRef.current = null
     }
-  }, [descriptor, gradient.kind])
-
-  if (gradient.kind !== GRADIENT_TYPE.MESH) {
-    return <div className={className} style={fallbackStyle} />
-  }
+  }, [descriptor])
 
   return (
     <div className={cn(className, 'relative')} style={fallbackStyle}>

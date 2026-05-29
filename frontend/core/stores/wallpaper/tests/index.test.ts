@@ -2,6 +2,7 @@ import {
   DEFAULT_WALLPAPER_PATTERN_ID,
   GRADIENT_WALLPAPER,
   GRADIENT_WALLPAPER_NAME,
+  WALLPAPER_PATTERN_TONE,
   WALLPAPER_TYPE,
 } from '~/const/wallpaper'
 import { WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
@@ -16,6 +17,8 @@ describe('stores/wallpaper', () => {
     expect(store.type).toBe(INITIAL_WALLPAPER_STATE.type)
     expect(store.hasPattern).toBe(true)
     expect(store.patternId).toBe(DEFAULT_WALLPAPER_PATTERN_ID)
+    expect(store.patternIntensity).toBe(100)
+    expect(store.patternTone).toBe(WALLPAPER_PATTERN_TONE.DARK)
     expect(store.hasTexture).toBe(false)
     expect(store.gradient).toEqual(GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.PINK])
     expect(store.brightness).toBe(100)
@@ -28,6 +31,8 @@ describe('stores/wallpaper', () => {
       blurIntensity: 35,
       hasPattern: false,
       patternId: '02',
+      patternIntensity: 65,
+      patternTone: WALLPAPER_PATTERN_TONE.LIGHT,
       hasTexture: true,
       bgSize: 'contain',
       brightness: 90,
@@ -41,6 +46,8 @@ describe('stores/wallpaper', () => {
     expect(store.blurIntensity).toBe(35)
     expect(store.hasPattern).toBe(false)
     expect(store.patternId).toBe('02')
+    expect(store.patternIntensity).toBe(65)
+    expect(store.patternTone).toBe(WALLPAPER_PATTERN_TONE.LIGHT)
     expect(store.hasTexture).toBe(true)
     expect(store.bgSize).toBe('contain')
     expect(store.brightness).toBe(90)
@@ -58,6 +65,8 @@ describe('stores/wallpaper', () => {
       type: WALLPAPER_TYPE.PATTERN,
       hasPattern: false,
       patternId: '03',
+      patternIntensity: 65,
+      patternTone: WALLPAPER_PATTERN_TONE.LIGHT,
       hasTexture: true,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 45 },
       blurIntensity: 35,
@@ -75,6 +84,8 @@ describe('stores/wallpaper', () => {
       type: WALLPAPER_TYPE.PATTERN,
       hasPattern: false,
       patternId: '03',
+      patternIntensity: 65,
+      patternTone: WALLPAPER_PATTERN_TONE.LIGHT,
       hasTexture: true,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 45 },
       blurIntensity: 35,

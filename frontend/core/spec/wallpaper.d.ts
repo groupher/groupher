@@ -1,4 +1,4 @@
-import type { WALLPAPER_TYPE } from '~/const/wallpaper'
+import type { WALLPAPER_PATTERN_TONE, WALLPAPER_TYPE } from '~/const/wallpaper'
 import type { TGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
 import type { TConstValues } from '~/spec'
 
@@ -43,6 +43,8 @@ export type TCustomWallpaper = TWallpaper | null
 
 export type TWallpaperType = TConstValues<typeof WALLPAPER_TYPE>
 
+export type TWallpaperPatternTone = TConstValues<typeof WALLPAPER_PATTERN_TONE>
+
 export type TWallpaperInfo = {
   customWallpaper?: TCustomWallpaper
   source: string
@@ -59,6 +61,8 @@ export type TWallpaperData = {
   type: TWallpaperType
   hasPattern: boolean
   patternId: string
+  patternIntensity: number
+  patternTone: TWallpaperPatternTone
   hasTexture: boolean
   hasBlur: boolean
   blurIntensity: number

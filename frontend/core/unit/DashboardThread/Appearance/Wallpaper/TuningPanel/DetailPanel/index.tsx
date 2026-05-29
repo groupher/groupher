@@ -1,5 +1,5 @@
 import SIZE from '~/const/size'
-import { WALLPAPER_TYPE } from '~/const/wallpaper'
+import { WALLPAPER_PATTERN_TONE, WALLPAPER_TYPE } from '~/const/wallpaper'
 import { cn } from '~/css'
 import useTrans from '~/hooks/useTrans'
 import type { TWallpaperData } from '~/spec'
@@ -13,6 +13,7 @@ import PictureTextureFields from './PictureTextureFields'
 
 type TRangeDraft = {
   blurIntensity: number
+  patternIntensity: number
   brightness: number
   saturation: number
 }
@@ -24,12 +25,14 @@ type Props = {
   isPicture: boolean
   isUpload: boolean
   canUseTexture: boolean
-  canUseDirection: boolean
+  canUseAngle: boolean
   hasRightPanel: boolean
   onTogglePattern: (hasPattern: boolean) => void
   onToggleTexture: (hasTexture: boolean) => void
   onToggleShadow: (hasShadow: boolean) => void
+  onPatternToneChange: (lightPattern: boolean) => void
   onBlurIntensityChange: (value: number) => void
+  onPatternIntensityChange: (value: number) => void
   onBrightnessChange: (value: number) => void
   onSaturationChange: (value: number) => void
   onRangeChangeEnd: () => void
@@ -43,18 +46,20 @@ export default function DetailPanel({
   isPicture,
   isUpload,
   canUseTexture,
-  canUseDirection,
+  canUseAngle,
   hasRightPanel,
   onTogglePattern,
   onToggleTexture,
   onToggleShadow,
+  onPatternToneChange,
   onBlurIntensityChange,
+  onPatternIntensityChange,
   onBrightnessChange,
   onSaturationChange,
   onRangeChangeEnd,
   onCollapse,
 }: Props) {
-  const { type, hasPattern, hasTexture, hasShadow } = wallpaper
+  const { type, hasPattern, patternTone, hasTexture, hasShadow } = wallpaper
   const { t } = useTrans()
   const s = useSalon()
 
@@ -70,6 +75,18 @@ export default function DetailPanel({
                     {t('dsb.appearance.wallpaper.editor.pattern')}
                   </div>
                   <ToggleSwitch size={SIZE.TINY} checked={hasPattern} onChange={onTogglePattern} />
+                  {hasPattern && (
+                    <div className={s.toneSwitch}>
+                      <span className={s.toneLabel}>
+                        {t('dsb.appearance.wallpaper.editor.pattern_tone_light')}
+                      </span>
+                      <ToggleSwitch
+                        size={SIZE.TINY}
+                        checked={patternTone === WALLPAPER_PATTERN_TONE.LIGHT}
+                        onChange={onPatternToneChange}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -79,7 +96,7 @@ export default function DetailPanel({
               </div>
             </div>
 
-            {isGradient && canUseDirection && (
+            {isGradient && canUseAngle && (
               <div className={s.angleFields}>
                 <AngleWheel />
               </div>
@@ -120,6 +137,20 @@ export default function DetailPanel({
               onChange={onSaturationChange}
               onChangeEnd={onRangeChangeEnd}
             />
+
+            {isGradient && hasPattern && (
+              <RangeInput
+                value={rangeDraft.patternIntensity}
+                min={0}
+                max={100}
+                step={5}
+                labelPlacement='left'
+                valueLabel={t('dsb.appearance.wallpaper.editor.pattern_intensity')}
+                aria-label={t('dsb.appearance.wallpaper.editor.pattern_intensity')}
+                onChange={onPatternIntensityChange}
+                onChangeEnd={onRangeChangeEnd}
+              />
+            )}
           </div>
         </div>
 

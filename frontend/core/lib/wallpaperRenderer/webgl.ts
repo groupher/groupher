@@ -178,6 +178,72 @@ vec4 imageColor(vec2 uv) {
   return texture2D(uImage, coverUv(uv));
 }
 
+vec3 sampleRibbonMesh(float along, float across, float baseNoise, float warp, float feather) {
+  float wave = across + sin(along * 2.4 + baseNoise * 1.2) * (0.08 + warp * 0.1);
+  float laneA = 1.0 - smoothstep(0.02, feather * 0.95, abs(wave + 0.22));
+  float laneB = 1.0 - smoothstep(0.02, feather * 0.9, abs(wave - 0.08));
+  float laneC = 1.0 - smoothstep(0.02, feather * 1.05, abs(wave - 0.34));
+  vec3 color = mix(sampleGradient(0.04), sampleGradient(0.18), 0.5 + along * 0.28);
+  color = mix(color, sampleGradient(0.66), laneA * 0.58);
+  color = mix(color, sampleGradient(0.36), laneB * 0.46);
+  color = mix(color, sampleGradient(0.86), laneC * 0.52);
+
+  return color;
+}
+
+vec3 sampleFlowMesh(vec2 uv, float feather, float warp) {
+  float flowAmount = clamp(uSoftness / 100.0, 0.0, 1.0);
+  vec2 flowUv = rotateUv(uv - 0.5, uFlow - 90.0) + 0.5;
+  float y = flowUv.y;
+  float fieldNoise = fbm(vec2(flowUv.x * 0.55, y * 0.85) + uMeshSeed * 0.012);
+  float shadeField = 0.0;
+  vec3 color = sampleGradient(0.02) * (0.7 + fieldNoise * 0.16);
+
+  // FLOW intentionally reuses the UI "Spread" slider via uSoftness:
+  // higher values make the strands denser, curvier, slightly thinner,
+  // and increase dark groove contrast between adjacent strands.
+  float spacing = mix(0.15, 0.102, flowAmount);
+  float curveAmount = mix(0.72, 1.65, flowAmount);
+  float noiseAmount = mix(0.08, 0.2, flowAmount);
+  float widthScale = mix(1.14, 0.82, flowAmount);
+  float shadeAmount = mix(0.045, 0.11, flowAmount);
+
+  for (int i = 0; i < 11; i++) {
+    float fi = float(i);
+    float anchor = -0.2 + fi * spacing;
+    float phase = fi * 1.91 + uMeshSeed * 0.004;
+    float curve = sin(y * (1.15 + fi * 0.12) + phase) * (0.075 + 0.05 * sin(fi * 0.83));
+    curve += sin(y * (2.15 + fi * 0.21) + phase * 1.47) * (0.038 + 0.016 * cos(fi));
+    curve += sin(y * (3.35 + fi * 0.11) + phase * 0.53) * (0.012 + 0.01 * sin(fi * 1.7));
+    curve *= curveAmount;
+    curve += (fbm(vec2(y * (1.08 + fi * 0.08), fi * 0.31) + uMeshSeed * 0.01) - 0.5) * warp * noiseAmount;
+    float slant = (y - 0.5) * (0.12 * sin(fi * 1.13));
+    float centerX = anchor + curve + slant;
+    float distX = abs(flowUv.x - centerX);
+    float width = (0.046 + 0.018 * sin(fi * 1.27 + 0.8)) * widthScale;
+    float haloWidth = width * 3.3 + feather * 0.2;
+    float halo = exp(-pow(distX / haloWidth, 2.0));
+    float core = exp(-pow(distX / width, 2.0));
+    float rim = exp(-pow((distX - width * 1.35) / (width * 0.85), 2.0));
+    float pulse = 0.76 + 0.24 * fbm(vec2(y * 2.6 + phase, fi * 0.23));
+    float colorT = fract(0.09 + fi * 0.115 + sin(fi * 2.1) * 0.08);
+    vec3 haloColor = sampleGradient(colorT);
+    vec3 coreColor = sampleGradient(fract(colorT + 0.16));
+
+    color = mix(color, haloColor, clamp(halo * pulse * 0.34, 0.0, 0.82));
+    color += coreColor * core * pulse * 0.34;
+    shadeField += rim * shadeAmount;
+  }
+
+  float warmBloom = 1.0 - smoothstep(0.04, 0.76, distance(flowUv, vec2(0.86, 0.1)));
+  float lowPink = 1.0 - smoothstep(0.1, 0.82, distance(flowUv, vec2(0.6, 0.86)));
+  color += sampleGradient(0.9) * warmBloom * 0.3;
+  color += sampleGradient(0.62) * lowPink * 0.18;
+  color = mix(color, sampleGradient(0.04), clamp(shadeField, 0.0, 0.42));
+
+  return color;
+}
+
 vec3 sampleProceduralMesh(vec2 uv) {
   float softness = clamp(uSoftness / 100.0, 0.0, 1.0);
   float warp = clamp(uMeshWarp / 100.0, 0.0, 1.0);
@@ -226,28 +292,9 @@ vec3 sampleProceduralMesh(vec2 uv) {
     color = mix(color, sampleGradient(clamp(t + 0.14, 0.0, 1.0)), grain * 0.1);
     color = mix(color, sampleGradient(0.08), (1.0 - smoothstep(0.18, 0.58, uv.y)) * 0.35);
   } else if (uMeshModel == 3) {
-    float curtainY = uv.y * 1.05 - 0.03;
-    float slowNoise = fbm(vec2(uv.x * 0.58, uv.y * 0.82) + uMeshSeed * 0.017);
-    float drift = (slowNoise - 0.5) * warp * 0.07;
-    float lineA = 0.04 + sin(curtainY * 1.15 + 0.45) * 0.07 + drift;
-    float lineB = 0.28 + sin(curtainY * 1.08 + 2.1) * 0.08 - drift * 0.25;
-    float lineC = 0.5 + sin(curtainY * 0.96 + 4.0) * 0.06 + drift * 0.35;
-    float lineD = 0.74 + sin(curtainY * 1.18 + 1.25) * 0.08 - drift * 0.22;
-    float lineE = 0.98 + sin(curtainY * 1.04 + 3.25) * 0.05 + drift * 0.18;
-    float bandA = 1.0 - smoothstep(0.18, 0.46 + feather * 0.58, abs(uv.x - lineA));
-    float bandB = 1.0 - smoothstep(0.18, 0.42 + feather * 0.54, abs(uv.x - lineB));
-    float bandC = 1.0 - smoothstep(0.17, 0.4 + feather * 0.5, abs(uv.x - lineC));
-    float bandD = 1.0 - smoothstep(0.19, 0.48 + feather * 0.56, abs(uv.x - lineD));
-    float bandE = 1.0 - smoothstep(0.18, 0.44 + feather * 0.58, abs(uv.x - lineE));
-    float upperBloom = 1.0 - smoothstep(0.06, 0.72, distance(uv, vec2(0.88, 0.08)));
-    float lowerFade = smoothstep(0.08, 0.96, 1.0 - uv.y);
-    color = mix(sampleGradient(0.02), sampleGradient(0.08), 0.46 + across * 0.18);
-    color = mix(color, sampleGradient(0.28), bandA * 0.68 * lowerFade);
-    color = mix(color, sampleGradient(0.72), bandB * 0.76);
-    color = mix(color, sampleGradient(0.4), bandC * 0.62);
-    color = mix(color, sampleGradient(0.88), bandD * 0.82);
-    color = mix(color, sampleGradient(0.58), bandE * 0.58);
-    color = mix(color, sampleGradient(0.94), upperBloom * 0.48);
+    color = sampleRibbonMesh(along, across, baseNoise, warp, feather);
+  } else if (uMeshModel == 6) {
+    color = sampleFlowMesh(uv, feather, warp);
   } else if (uMeshModel == 4) {
     float columns = mix(12.0, 28.0, clamp(uMeshScale / 100.0, 0.0, 1.0));
     float bentX = uv.x + sin(uv.y * 3.7 + baseNoise * 1.4) * warp * 0.025;
@@ -397,6 +444,7 @@ const MESH_MODEL = {
   [MESH_GRADIENT_MODEL.RIBBON]: 3,
   [MESH_GRADIENT_MODEL.SCANLINE]: 4,
   [MESH_GRADIENT_MODEL.GLOW]: 5,
+  [MESH_GRADIENT_MODEL.FLOW]: 6,
 } as const
 
 const compileShader = (

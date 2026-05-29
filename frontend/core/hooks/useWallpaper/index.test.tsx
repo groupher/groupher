@@ -4,6 +4,7 @@ import {
   DEFAULT_WALLPAPER_PATTERN_ID,
   GRADIENT_WALLPAPER,
   GRADIENT_WALLPAPER_NAME,
+  WALLPAPER_PATTERN_TONE,
   WALLPAPER_TYPE,
 } from '~/const/wallpaper'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
@@ -35,6 +36,8 @@ describe('useWallpaper', () => {
         gradient: mesh,
         hasPattern: false,
         patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+        patternIntensity: 100,
+        patternTone: WALLPAPER_PATTERN_TONE.DARK,
         blurIntensity: 50,
         hasShadow: true,
       },
@@ -56,6 +59,8 @@ describe('useWallpaper', () => {
         gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.PURPLE], angle: 90 },
         hasPattern: true,
         patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+        patternIntensity: 100,
+        patternTone: WALLPAPER_PATTERN_TONE.DARK,
         blurIntensity: 50,
       },
     })
@@ -128,6 +133,8 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+      patternIntensity: 65,
+      patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: true,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 30,
@@ -140,6 +147,8 @@ describe('useWallpaper', () => {
 
     expect(descriptor.kind).toBe('linear-gradient')
     expect(descriptor.patternImage).toBe('/wallpaper/pattern/01.png')
+    expect(descriptor.patternOpacity).toBe(0.65)
+    expect(descriptor.patternColor).toBe('#000000')
     expect(descriptor.texture).toEqual({
       type: WALLPAPER_TEXTURE.BEAM,
       intensity: 55,
@@ -155,6 +164,8 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+      patternIntensity: 100,
+      patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: false,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], spread: 0 },
       blurIntensity: 0,
@@ -176,6 +187,8 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+      patternIntensity: 100,
+      patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: false,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.BLUE], spread: 50 },
       blurIntensity: 0,
@@ -199,6 +212,8 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+      patternIntensity: 100,
+      patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: false,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.BLUE], stops: [0, 20, 70, 100] },
       blurIntensity: 0,
@@ -220,6 +235,8 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+      patternIntensity: 100,
+      patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: true,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
@@ -248,6 +265,8 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+      patternIntensity: 100,
+      patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: true,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
@@ -272,6 +291,8 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+      patternIntensity: 100,
+      patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: true,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
@@ -287,6 +308,8 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+      patternIntensity: 100,
+      patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: true,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
@@ -308,6 +331,8 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+      patternIntensity: 100,
+      patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: true,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
@@ -332,6 +357,8 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+      patternIntensity: 100,
+      patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: false,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
       blurIntensity: 0,
@@ -350,6 +377,28 @@ describe('useWallpaper', () => {
     })
   })
 
+  it('uses a light pattern color when pattern tone is light', () => {
+    const descriptor = resolveWallpaperRenderDescriptor({
+      customWallpaper: null,
+      source: GRADIENT_WALLPAPER_NAME.AURORA,
+      type: WALLPAPER_TYPE.GRADIENT,
+      hasPattern: true,
+      patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+      patternIntensity: 100,
+      patternTone: WALLPAPER_PATTERN_TONE.LIGHT,
+      hasTexture: false,
+      gradient: GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.AURORA],
+      blurIntensity: 0,
+      hasShadow: false,
+      brightness: 100,
+      saturation: 100,
+      texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
+      bgSize: 'cover',
+    })
+
+    expect(descriptor.patternColor).toBe('#ffffff')
+  })
+
   it('resolves mesh gradient texture descriptor', () => {
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
@@ -357,6 +406,8 @@ describe('useWallpaper', () => {
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+      patternIntensity: 100,
+      patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: true,
       gradient: mesh,
       blurIntensity: 0,

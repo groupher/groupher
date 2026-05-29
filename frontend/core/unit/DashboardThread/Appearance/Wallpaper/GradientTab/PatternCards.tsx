@@ -1,14 +1,17 @@
 import { keys } from 'ramda'
-import { useMemo, useState } from 'react'
+import { type CSSProperties, useMemo, useState } from 'react'
 
 import { WALLPAPER_PATTERN } from '~/const/wallpaper'
+import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
-import type { TWallpaperPattern } from '~/spec'
+import type { TWallpaperData, TWallpaperPattern } from '~/spec'
 
+import { isGradientWallpaper } from '../helper'
 import useSalon, { cnMerge } from '../salon/gradient_tab/pattern_cards'
 
 type TProps = {
   patternId: string
+  wallpaper: TWallpaperData
   onPatternSelect: (patternId: string) => void
 }
 
@@ -33,15 +36,17 @@ const getVisiblePatternKeys = (
   return [...visibleKeys.slice(0, visibleSlots - 1), patternId]
 }
 
-export default function PatternCards({ patternId, onPatternSelect }: TProps) {
+export default function PatternCards({ patternId, wallpaper, onPatternSelect }: TProps) {
   const s = useSalon()
   const { t } = useTrans()
+  const { isDarkTheme } = useTheme()
   const [expanded, setExpanded] = useState(false)
 
   const patternKeys = useMemo(() => keys(WALLPAPER_PATTERN), [])
   const visiblePatternKeys = getVisiblePatternKeys(patternKeys, patternId, expanded)
   const hiddenCount = expanded ? 0 : patternKeys.length - visiblePatternKeys.length
   const collapseLabel = t('tags.fold.collapse')
+  const canSelectPattern = isGradientWallpaper(wallpaper)
 
   return (
     <div className={s.wrapper}>
@@ -49,18 +54,32 @@ export default function PatternCards({ patternId, onPatternSelect }: TProps) {
       <div className={s.grid}>
         {visiblePatternKeys.map((id) => {
           const pattern = WALLPAPER_PATTERN[id] as TWallpaperPattern
-          const selected = patternId === id
+          const selected = canSelectPattern && patternId === id
+          const previewStyle: CSSProperties = {
+            backgroundColor: isDarkTheme ? '#ffffff' : '#000000',
+            maskImage: `url(${pattern.preview})`,
+            maskRepeat: 'repeat',
+            maskSize: '300%',
+            WebkitMaskImage: `url(${pattern.preview})`,
+            WebkitMaskRepeat: 'repeat',
+            WebkitMaskSize: '300%',
+          }
 
           return (
             <button
               type='button'
               key={id}
-              className={cnMerge(s.card, selected && s.cardActive)}
+              className={cnMerge(
+                s.card,
+                selected && s.cardActive,
+                !canSelectPattern && s.cardDisabled,
+              )}
               aria-label={`Pattern ${id}`}
               aria-pressed={selected}
+              disabled={!canSelectPattern}
               onClick={() => onPatternSelect(id)}
             >
-              <img className={s.preview} src={pattern.preview} alt='' />
+              <span className={s.preview} style={previewStyle} />
             </button>
           )
         })}

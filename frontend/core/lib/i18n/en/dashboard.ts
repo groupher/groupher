@@ -352,11 +352,13 @@ export default {
   'dsb.appearance.wallpaper.editor.pattern': 'Pattern',
   'dsb.appearance.wallpaper.editor.pattern_desc':
     'Choose a pattern to overlay on the current background.',
+  'dsb.appearance.wallpaper.editor.pattern_intensity': 'Intensity',
+  'dsb.appearance.wallpaper.editor.pattern_tone_light': 'Light',
   'dsb.appearance.wallpaper.editor.blur': 'Blur',
   'dsb.appearance.wallpaper.editor.shadow': 'Shadow',
   'dsb.appearance.wallpaper.editor.brightness': 'Brightness',
   'dsb.appearance.wallpaper.editor.saturation': 'Saturation',
-  'dsb.appearance.wallpaper.editor.gradient_direction': 'Direction',
+  'dsb.appearance.wallpaper.editor.gradient_angle': 'Angle',
   'dsb.appearance.wallpaper.editor.custom': 'Custom',
   'dsb.appearance.wallpaper.editor.custom_placeholder':
     'Separate colors with commas, e.g. #EBDDD1,#CEB2D3,#F16061',

@@ -19,8 +19,6 @@ export const isActiveWallpaperSource = (
   return wallpaper.source === source
 }
 
-export const canEditGradientDirection = (
-  wallpaper: Pick<TWallpaperData, 'gradient' | 'type'>,
-): boolean => {
+export const isGradientWallpaper = (wallpaper: Pick<TWallpaperData, 'type'>): boolean => {
   return wallpaper.type === WALLPAPER_TYPE.GRADIENT
 }

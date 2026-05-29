@@ -19,6 +19,7 @@ export const MESH_GRADIENT_MODEL = {
   RIBBON: 'ribbon',
   SCANLINE: 'scanline',
   GLOW: 'glow',
+  FLOW: 'flow',
 } as const
 
 export const WALLPAPER_TEXTURE = {

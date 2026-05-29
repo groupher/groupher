@@ -4,6 +4,7 @@ import { proxy } from 'valtio'
 import {
   DEFAULT_WALLPAPER_PATTERN_ID,
   GRADIENT_WALLPAPER,
+  WALLPAPER_PATTERN_TONE,
   WALLPAPER_STATE_KEYS,
   WALLPAPER_TYPE,
 } from '~/const/wallpaper'
@@ -17,6 +18,8 @@ export const INITIAL_WALLPAPER_STATE = {
   type: WALLPAPER_TYPE.GRADIENT,
   hasPattern: true,
   patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+  patternIntensity: 100,
+  patternTone: WALLPAPER_PATTERN_TONE.DARK,
   hasTexture: false,
   gradient: GRADIENT_WALLPAPER.pink,
   blurIntensity: 0,

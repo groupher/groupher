@@ -37,7 +37,7 @@ export default function GradientTab() {
         })}
       </div>
 
-      <PatternCards patternId={patternId} onPatternSelect={changePatternId} />
+      <PatternCards patternId={patternId} wallpaper={wallpaper} onPatternSelect={changePatternId} />
     </div>
   )
 }

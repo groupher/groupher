@@ -4,6 +4,7 @@ import {
   DEFAULT_WALLPAPER_PATTERN_ID,
   GRADIENT_WALLPAPER,
   GRADIENT_WALLPAPER_NAME,
+  WALLPAPER_PATTERN_TONE,
   WALLPAPER_TYPE,
 } from '~/const/wallpaper'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
@@ -20,6 +21,8 @@ describe('useFullWallpaper', () => {
         type: WALLPAPER_TYPE.GRADIENT,
         hasPattern: true,
         patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+        patternIntensity: 100,
+        patternTone: WALLPAPER_PATTERN_TONE.DARK,
         hasTexture: false,
         blurIntensity: 0,
         brightness: 100,
@@ -35,6 +38,8 @@ describe('useFullWallpaper', () => {
     expect(data.source).toBe(GRADIENT_WALLPAPER_NAME.PINK)
     expect(data.type).toBe(WALLPAPER_TYPE.GRADIENT)
     expect(data.patternId).toBe(DEFAULT_WALLPAPER_PATTERN_ID)
+    expect(data.patternIntensity).toBe(100)
+    expect(data.patternTone).toBe(WALLPAPER_PATTERN_TONE.DARK)
     expect(data.hasTexture).toBe(false)
     expect(data.brightness).toBe(100)
     expect(data.saturation).toBe(100)
@@ -58,6 +63,8 @@ describe('useFullWallpaper', () => {
         type: WALLPAPER_TYPE.GRADIENT,
         hasPattern: true,
         patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+        patternIntensity: 100,
+        patternTone: WALLPAPER_PATTERN_TONE.DARK,
         blurIntensity: 50,
         gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.PURPLE], angle: 90 },
       },

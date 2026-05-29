@@ -26,11 +26,13 @@ const findPresetColor = (color: string, theme: keyof typeof RAINBOW_COLOR_HEX): 
 const resolvePresetColor = (color: TColorName, theme: keyof typeof RAINBOW_COLOR_HEX): string =>
   RAINBOW_COLOR_HEX[theme][color] ?? RAINBOW_COLOR_HEX[theme][COLOR.BLACK]
 
-const getGradientSpread = (gradient: TGradientRecipe): number =>
+const getGradientSpreadValue = (gradient: TGradientRecipe): number =>
   gradient.kind === GRADIENT_TYPE.MESH ? gradient.softness : gradient.spread
 
-const updateGradientSpread = (gradient: TGradientRecipe, spread: number): TGradientRecipe => {
+const applyGradientSpreadValue = (gradient: TGradientRecipe, spread: number): TGradientRecipe => {
   if (gradient.kind === GRADIENT_TYPE.MESH) {
+    // Mesh models share the user-facing Spread control, but each renderer may
+    // interpret softness differently. FLOW maps it to strand density/curvature.
     return {
       ...gradient,
       softness: spread,
@@ -57,7 +59,7 @@ export default function GradientTextureFields() {
   })
   const [draftGradient, setDraftGradient] = useState<TGradientRecipe | null>(gradient)
   const activeGradient = draftGradient ?? gradient
-  const spread = activeGradient ? getGradientSpread(activeGradient) : 50
+  const spread = activeGradient ? getGradientSpreadValue(activeGradient) : 50
   const intensityLabel = t('dsb.appearance.wallpaper.texture.intensity')
 
   useEffect(() => {
@@ -92,12 +94,12 @@ export default function GradientTextureFields() {
 
   const updateSpreadDraft = (value: number): void => {
     if (!activeGradient) return
-    updateGradient(updateGradientSpread(activeGradient, value))
+    updateGradient(applyGradientSpreadValue(activeGradient, value))
   }
 
   const commitSpread = (value: number): void => {
     if (!activeGradient) return
-    updateGradient(updateGradientSpread(activeGradient, value), true)
+    updateGradient(applyGradientSpreadValue(activeGradient, value), true)
   }
 
   const updateTexture = (patch: Partial<TWallpaperTexture>): void => {

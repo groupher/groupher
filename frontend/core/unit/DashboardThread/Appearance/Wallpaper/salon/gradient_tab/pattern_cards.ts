@@ -15,7 +15,8 @@ export default function useSalon() {
       `hover:${br('digest')}`,
     ),
     cardActive: primary('border'),
-    preview: 's-full rounded-md object-cover scale-200',
+    cardDisabled: 'cursor-default opacity-70',
+    preview: 'block s-full rounded-md',
     toggleSlot: 'h-40 row-center',
     toggle: cn(
       toggleBase,

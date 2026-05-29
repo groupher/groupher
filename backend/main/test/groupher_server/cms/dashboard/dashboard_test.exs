@@ -150,6 +150,8 @@ defmodule GroupherServer.Test.CMS.Dashboard do
           source: "orange",
           has_texture: true,
           pattern_id: "02",
+          pattern_intensity: 65,
+          pattern_tone: "light",
           blur_intensity: 35,
           brightness: 85,
           saturation: 120,
@@ -176,6 +178,8 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert find_community.dashboard.wallpaper.type == "gradient"
       assert find_community.dashboard.wallpaper.has_texture == true
       assert find_community.dashboard.wallpaper.pattern_id == "02"
+      assert find_community.dashboard.wallpaper.pattern_intensity == 65
+      assert find_community.dashboard.wallpaper.pattern_tone == "light"
       assert find_community.dashboard.wallpaper.blur_intensity == 35
       assert find_community.dashboard.wallpaper.brightness == 85
       assert find_community.dashboard.wallpaper.saturation == 120

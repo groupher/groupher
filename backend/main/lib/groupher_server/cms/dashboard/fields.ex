@@ -243,6 +243,8 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
       # gradient
       [:has_pattern, :boolean, true],
       [:pattern_id, :string, "01"],
+      [:pattern_intensity, :integer, 100],
+      [:pattern_tone, :string, "dark"],
       [:has_texture, :boolean, false],
       [
         :gradient,

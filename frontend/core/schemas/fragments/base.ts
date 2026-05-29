@@ -48,6 +48,8 @@ export const wallpaper = `
   bgSize
   hasPattern
   patternId
+  patternIntensity
+  patternTone
   hasTexture
   blurIntensity
   hasShadow

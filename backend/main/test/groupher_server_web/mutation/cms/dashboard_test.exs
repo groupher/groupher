@@ -108,6 +108,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       $bgSize: String
       $hasPattern: Boolean
       $patternId: String
+      $patternIntensity: Int
+      $patternTone: String
       $hasTexture: Boolean
       $blurIntensity: Int
       $hasShadow: Boolean
@@ -123,6 +125,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         bgSize: $bgSize
         hasPattern: $hasPattern
         patternId: $patternId
+        patternIntensity: $patternIntensity
+        patternTone: $patternTone
         hasTexture: $hasTexture
         blurIntensity: $blurIntensity
         hasShadow: $hasShadow
@@ -135,6 +139,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
           source
           gradient
           patternId
+          patternIntensity
+          patternTone
           hasTexture
           blurIntensity
           brightness
@@ -153,6 +159,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         type: "gradient",
         hasTexture: true,
         patternId: "02",
+        patternIntensity: 65,
+        patternTone: "light",
         blurIntensity: 35,
         brightness: 85,
         saturation: 120,
@@ -180,6 +188,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       assert get_in(updated, ["wallpaper", "source"]) == "orange"
       assert get_in(updated, ["wallpaper", "patternId"]) == "02"
+      assert get_in(updated, ["wallpaper", "patternIntensity"]) == 65
+      assert get_in(updated, ["wallpaper", "patternTone"]) == "light"
       assert get_in(updated, ["wallpaper", "hasTexture"]) == true
       assert get_in(updated, ["wallpaper", "blurIntensity"]) == 35
       assert get_in(updated, ["wallpaper", "brightness"]) == 85
@@ -195,6 +205,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.wallpaper.type == "gradient"
       assert found.dashboard.wallpaper.has_texture == true
       assert found.dashboard.wallpaper.pattern_id == "02"
+      assert found.dashboard.wallpaper.pattern_intensity == 65
+      assert found.dashboard.wallpaper.pattern_tone == "light"
       assert found.dashboard.wallpaper.blur_intensity == 35
       assert found.dashboard.wallpaper.brightness == 85
       assert found.dashboard.wallpaper.saturation == 120

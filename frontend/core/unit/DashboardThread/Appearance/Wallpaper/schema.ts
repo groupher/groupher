@@ -11,6 +11,8 @@ const updateDashboardWallpaper = gql`
     $bgSize: String
     $hasPattern: Boolean
     $patternId: String
+    $patternIntensity: Int
+    $patternTone: String
     $hasTexture: Boolean
     $blurIntensity: Int
     $hasShadow: Boolean
@@ -26,6 +28,8 @@ const updateDashboardWallpaper = gql`
       bgSize: $bgSize
       hasPattern: $hasPattern
       patternId: $patternId
+      patternIntensity: $patternIntensity
+      patternTone: $patternTone
       hasTexture: $hasTexture
       blurIntensity: $blurIntensity
       hasShadow: $hasShadow

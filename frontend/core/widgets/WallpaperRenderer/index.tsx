@@ -43,6 +43,20 @@ const getFilterLayerStyle = (descriptor: TWallpaperRenderDescriptor): CSSPropert
   filter: `var(--preview-wallpaper-filter, ${descriptor.filter})`,
 })
 
+const getPatternLayerStyle = (
+  descriptor: TWallpaperRenderDescriptor,
+  patternSize: string,
+): CSSProperties => ({
+  backgroundColor: descriptor.patternColor,
+  maskImage: `url(${descriptor.patternImage})`,
+  maskRepeat: 'repeat',
+  maskSize: patternSize,
+  opacity: descriptor.patternOpacity,
+  WebkitMaskImage: `url(${descriptor.patternImage})`,
+  WebkitMaskRepeat: 'repeat',
+  WebkitMaskSize: patternSize,
+})
+
 const getVisualIdentity = (descriptor: TWallpaperRenderDescriptor): string =>
   [descriptor.kind, descriptor.source, descriptor.imageUrl].join('|')
 
@@ -143,11 +157,7 @@ function WallpaperLayer({
     }
   }, [exiting, onExited])
 
-  const patternStyle: CSSProperties = {
-    backgroundImage: `url(${descriptor.patternImage})`,
-    backgroundRepeat: 'repeat',
-    backgroundSize: patternSize,
-  }
+  const patternStyle = getPatternLayerStyle(descriptor, patternSize)
 
   return (
     <div

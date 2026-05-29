@@ -16,8 +16,9 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
   @wallpaper_types ~w(none gradient picture upload)
   @bg_sizes ~w(cover contain auto)
   @texture_types ~w(noise tile beam ascii dots)
-  @mesh_models ~w(haze ridge brushed ribbon scanline glow)
+  @mesh_models ~w(haze ridge brushed ribbon scanline glow flow)
   @pattern_ids 1..33 |> Enum.map(&String.pad_leading("#{&1}", 2, "0"))
+  @pattern_tones ~w(dark light)
 
   @doc "for test usage"
   def default, do: dsb_default(:wallpaper)
@@ -32,6 +33,11 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
     |> validate_inclusion(:type, @wallpaper_types)
     |> validate_inclusion(:bg_size, @bg_sizes)
     |> validate_inclusion(:pattern_id, @pattern_ids)
+    |> validate_inclusion(:pattern_tone, @pattern_tones)
+    |> validate_number(:pattern_intensity,
+      greater_than_or_equal_to: 0,
+      less_than_or_equal_to: 100
+    )
     |> validate_number(:blur_intensity, greater_than_or_equal_to: 0, less_than_or_equal_to: 100)
     |> validate_number(:brightness, greater_than_or_equal_to: 60, less_than_or_equal_to: 140)
     |> validate_number(:saturation, greater_than_or_equal_to: 0, less_than_or_equal_to: 160)

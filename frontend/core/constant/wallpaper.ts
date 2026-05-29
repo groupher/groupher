@@ -5,12 +5,19 @@ export { PATTERN_WALLPAPER, WALLPAPER_PATTERN } from './wallpaper.generated'
 
 export const DEFAULT_WALLPAPER_PATTERN_ID = '01'
 
+export const WALLPAPER_PATTERN_TONE = {
+  DARK: 'dark',
+  LIGHT: 'light',
+} as const
+
 export const WALLPAPER_STATE_KEYS = [
   'customWallpaper',
   'source',
   'type',
   'hasPattern',
   'patternId',
+  'patternIntensity',
+  'patternTone',
   'hasTexture',
   'blurIntensity',
   'hasShadow',
@@ -26,6 +33,8 @@ export const WALLPAPER_SAVABLE_STATE_KEYS = [
   'type',
   'hasPattern',
   'patternId',
+  'patternIntensity',
+  'patternTone',
   'hasTexture',
   'blurIntensity',
   'hasShadow',
@@ -185,14 +194,14 @@ export const GRADIENT_WALLPAPER = {
     kind: GRADIENT_TYPE.MESH,
     preset: GRADIENT_WALLPAPER_NAME.AURORA,
     seed: 18435,
-    model: MESH_GRADIENT_MODEL.RIBBON,
-    colors: ['#26163f', '#12627f', '#2e8f91', '#ff776f', '#ffc36d', '#5c3267'],
+    model: MESH_GRADIENT_MODEL.FLOW,
+    colors: ['#24143e', '#0c5878', '#2b8c90', '#ff746d', '#ffc66d', '#5b2f65'],
     flow: 92,
-    softness: 92,
-    warp: 24,
-    scale: 28,
-    contrast: 108,
-    brightness: 112,
+    softness: 94,
+    warp: 42,
+    scale: 34,
+    contrast: 118,
+    brightness: 108,
   },
 } satisfies Record<string, TGradientRecipe>
 

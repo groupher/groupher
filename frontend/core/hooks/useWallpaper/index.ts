@@ -2,7 +2,12 @@
 
 import { useMemo } from 'react'
 
-import { GRADIENT_WALLPAPER, PATTERN_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
+import {
+  GRADIENT_WALLPAPER,
+  PATTERN_WALLPAPER,
+  WALLPAPER_PATTERN_TONE,
+  WALLPAPER_TYPE,
+} from '~/const/wallpaper'
 import {
   buildActiveGradientWallpapers,
   buildActivePatternWallpapers,
@@ -29,10 +34,18 @@ const DEFAULT_RENDER_COLORS = ['#fbeede', '#d8b9e3']
 const getFilterValue = (effect: string): string =>
   effect.replace(/^filter:\s*/, '').trim() || 'none'
 
+const getPatternOpacity = (patternIntensity: number): number =>
+  Math.max(0, Math.min(100, patternIntensity)) / 100
+
+const getPatternColor = (patternTone: TWallpaperState['patternTone']): string =>
+  patternTone === WALLPAPER_PATTERN_TONE.LIGHT ? '#ffffff' : '#000000'
+
 export const getWallpaperState = (store: Pick<TStore, keyof TWallpaperState>): TWallpaperState => ({
   source: store.source,
   hasPattern: store.hasPattern,
   patternId: store.patternId,
+  patternIntensity: store.patternIntensity,
+  patternTone: store.patternTone,
   hasTexture: store.hasTexture,
   gradient: store.gradient,
   blurIntensity: store.blurIntensity,
@@ -49,6 +62,8 @@ const getWallpaperCssState = (store: Pick<TStore, keyof TWallpaperState>): TWall
   source: store.source,
   hasPattern: store.hasPattern,
   patternId: store.patternId,
+  patternIntensity: store.patternIntensity,
+  patternTone: store.patternTone,
   hasTexture: store.hasTexture,
   gradient: store.gradient,
   blurIntensity: store.blurIntensity,
@@ -149,6 +164,8 @@ export const resolveWallpaperRenderDescriptor = (
     filter: getFilterValue(effect),
     hasPattern: false,
     patternImage: resolveWallpaperPattern(state.patternId),
+    patternOpacity: getPatternOpacity(state.patternIntensity),
+    patternColor: getPatternColor(state.patternTone),
     hasTexture: state.hasTexture,
     source: state.source,
     bgSize: state.bgSize,
@@ -179,6 +196,8 @@ export const resolveWallpaperRenderDescriptor = (
         kind: 'mesh-gradient',
         hasPattern: state.hasPattern,
         patternImage: resolveWallpaperPattern(state.patternId),
+        patternOpacity: getPatternOpacity(state.patternIntensity),
+        patternColor: getPatternColor(state.patternTone),
         hasTexture: state.hasTexture,
         colors: meshRecipe.colors,
         colorStops: normalizeGradientStops(meshRecipe),
@@ -192,6 +211,8 @@ export const resolveWallpaperRenderDescriptor = (
       kind: gradient.kind === GRADIENT_TYPE.RADIAL ? 'radial-gradient' : 'linear-gradient',
       hasPattern: state.hasPattern,
       patternImage: resolveWallpaperPattern(state.patternId),
+      patternOpacity: getPatternOpacity(state.patternIntensity),
+      patternColor: getPatternColor(state.patternTone),
       hasTexture: state.hasTexture,
       colors: gradient.colors,
       colorStops: normalizeGradientStops(gradient),
@@ -235,6 +256,8 @@ export default function useWallpaper(): TRet {
       state.source,
       state.hasPattern,
       state.patternId,
+      state.patternIntensity,
+      state.patternTone,
       state.blurIntensity,
       state.hasShadow,
       state.brightness,
@@ -257,6 +280,8 @@ export function useWallpaperRenderDescriptor(): TWallpaperRenderDescriptor {
       state.source,
       state.hasPattern,
       state.patternId,
+      state.patternIntensity,
+      state.patternTone,
       state.hasTexture,
       state.blurIntensity,
       state.hasShadow,
