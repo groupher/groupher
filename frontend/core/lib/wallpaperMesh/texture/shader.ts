@@ -1,0 +1,25 @@
+import { ASCII_SHADER_BRANCH, ASCII_SHADER_HELPER, ASCII_WEBGL_ID } from './ascii'
+import { BEAM_SHADER_BRANCH, BEAM_WEBGL_ID } from './beam'
+import { DOTS_SHADER_BRANCH, DOTS_WEBGL_ID } from './dots'
+import { NOISE_SHADER_BRANCH, NOISE_WEBGL_ID } from './noise'
+import { TILE_SHADER_BRANCH, TILE_SHADER_UV, TILE_WEBGL_ID } from './tile'
+
+export const TEXTURE_TYPE = {
+  noise: NOISE_WEBGL_ID,
+  tile: TILE_WEBGL_ID,
+  beam: BEAM_WEBGL_ID,
+  ascii: ASCII_WEBGL_ID,
+  dots: DOTS_WEBGL_ID,
+} as const
+
+export const TEXTURE_SHADER_HELPERS = ASCII_SHADER_HELPER
+
+export const TEXTURE_SHADER_UV = TILE_SHADER_UV
+
+export const TEXTURE_SHADER_BRANCHES = [
+  TILE_SHADER_BRANCH,
+  BEAM_SHADER_BRANCH,
+  ASCII_SHADER_BRANCH,
+  NOISE_SHADER_BRANCH,
+  DOTS_SHADER_BRANCH,
+].join('\n')

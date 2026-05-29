@@ -29,7 +29,7 @@ export default async ({ children, params, searchParams }) => {
   const locale = parseLocale(searchParams?.lang)
   const isDemoMode = isDsbDemoMode(params$.community, searchParams?.mode)
 
-  const [{ community, dashboard }, localeData] = await Promise.all([
+  const [{ community, dashboard, wallpaper }, localeData] = await Promise.all([
     getCommunityInfo(params$.community),
     getLocaleData(locale, [...I18N_NS.DASHBOARD, ...I18N_NS.PASSPORT]),
   ])
@@ -44,7 +44,7 @@ export default async ({ children, params, searchParams }) => {
       />
 
       <MainProvider
-        initData={{ community, dashboard }}
+        initData={{ community, dashboard, wallpaper }}
         locale={locale}
         metric={METRIC.DASHBOARD}
         localeData={JSON.stringify(localeData)}

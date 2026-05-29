@@ -43,6 +43,7 @@ export default {
   'common.view_detail': '查看详情',
   'groupher.feedback': '社区功能反馈',
   dashboard: '控制台',
+  more: '更多',
   'tags.fold.expand': '展开',
   'tags.fold.collapse': '收起',
   'tags.all': '全部标签',

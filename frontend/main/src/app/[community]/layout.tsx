@@ -20,7 +20,7 @@ export default async ({ children, params }) => {
   const params$ = await params
   const locale = LOCALE.EN
 
-  const [{ community, dashboard }, localeData] = await Promise.all([
+  const [{ community, dashboard, wallpaper }, localeData] = await Promise.all([
     getCommunityInfo(params$.community),
     getLocaleData(locale, I18N_NS.MAIN),
   ])
@@ -37,7 +37,7 @@ export default async ({ children, params }) => {
       />
 
       <MainProvider
-        initData={{ community, dashboard }}
+        initData={{ community, dashboard, wallpaper }}
         locale={locale}
         localeData={JSON.stringify(localeData)}
       >

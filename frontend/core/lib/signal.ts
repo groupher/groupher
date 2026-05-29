@@ -65,10 +65,6 @@ export const callPassportEditor = (): void => {
   send(EVENT.DRAWER.OPEN, { type })
 }
 
-export const callWallpaperEditor = (): void => {
-  send(EVENT.DRAWER.OPEN, { type: TYPE.DRAWER.CUSTOM_BG_EDITOR, options: { position: 'H' } })
-}
-
 export const callGEditor = (): void => {
   send(EVENT.DRAWER.OPEN, { type: TYPE.DRAWER.G_EDITOR })
 }

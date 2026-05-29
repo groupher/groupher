@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
-import type { TCommunity, TLocale, TMetric, TParseDashboard } from '~/spec'
+import type { TCommunity, TLocale, TMetric, TParsedWallpaper, TParseDashboard } from '~/spec'
 import AccountStoreProvider from '~/stores/account/provider'
 import CommunityStoreProvider from '~/stores/community/provider'
 import DashboardStoreProvider from '~/stores/dashboard/provider'
@@ -13,7 +13,7 @@ import WallpaperStoreProvider from '~/stores/wallpaper/provider'
 
 type TProps = {
   children: React.ReactNode
-  initData: { community: TCommunity; dashboard: TParseDashboard }
+  initData: { community: TCommunity; dashboard: TParseDashboard; wallpaper?: TParsedWallpaper }
   locale?: TLocale
   localeData?: string
   noAccount?: boolean
@@ -33,7 +33,7 @@ const MainProvider: FC<TProps> = ({
   noAccount = false,
   metric = METRIC.COMMUNITY,
 }) => {
-  const { dashboard, community } = initData
+  const { dashboard, community, wallpaper } = initData
   const now = Date.now()
 
   return (
@@ -43,7 +43,7 @@ const MainProvider: FC<TProps> = ({
           <CommunityStoreProvider initData={community}>
             <DashboardStoreProvider initData={{ ...dashboard, metric, now }}>
               <ThemePresetStoreProvider initData={dashboard}>
-                <WallpaperStoreProvider>{children}</WallpaperStoreProvider>
+                <WallpaperStoreProvider initData={wallpaper}>{children}</WallpaperStoreProvider>
               </ThemePresetStoreProvider>
             </DashboardStoreProvider>
           </CommunityStoreProvider>

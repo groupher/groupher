@@ -1,12 +1,12 @@
 import useTopbar from '~/hooks/useTopbar'
 import useTwBelt from '~/hooks/useTwBelt'
-import useWallpaper from '~/hooks/useWallpaper'
+import useWallpaperDomain from '~/stores/wallpaper/hooks'
 
 export default function useSalon() {
   const { cn, bg, rainbow, container, vividDark, page } = useTwBelt()
 
   const { topbarBg } = useTopbar()
-  const { hasShadow } = useWallpaper()
+  const { hasShadow } = useWallpaperDomain()
 
   return {
     wrapper: cn(

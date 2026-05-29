@@ -1,18 +1,24 @@
-import type { TCustomWallpaper, TWallpaperGradientDir, TWallpaperType } from '~/spec'
+import type { TGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
+import type { TCustomWallpaper, TWallpaperPatternTone, TWallpaperType } from '~/spec'
 
 export type TWallpaperState = {
   customWallpaper: TCustomWallpaper
-  customColorValue: string
-  wallpaper: string
-  wallpaperType: TWallpaperType
+  source: string
+  type: TWallpaperType
 
-  hasBlur: boolean
   hasPattern: boolean
+  patternId: string
+  patternIntensity: number
+  patternTone: TWallpaperPatternTone
+  hasTexture: boolean
+  gradient: TGradientRecipe | null
+  blurIntensity: number
   hasShadow: boolean
+  brightness: number
+  saturation: number
+  texture: TWallpaperTexture
 
-  direction: TWallpaperGradientDir
   bgSize: string
-  uploadBgImage: string
 }
 
 export type TStore = TWallpaperState & {

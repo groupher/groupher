@@ -26,6 +26,8 @@ type TProps = {
   unit?: string
   valueLabel?: string
   width?: string
+  labelPlacement?: 'top' | 'left'
+  showValue?: boolean
   disabled?: boolean
   className?: string
   'aria-label'?: string
@@ -49,6 +51,8 @@ const RangeInput: FC<TProps> = ({
   unit = '%',
   valueLabel = 'opacity:',
   width = 'w-full',
+  labelPlacement = 'top',
+  showValue,
   disabled = false,
   className = '',
   formatValue = defaultFormatValue,
@@ -59,7 +63,8 @@ const RangeInput: FC<TProps> = ({
 }) => {
   const reactId = useId()
   const inputId = id || reactId
-  const s = useSalon({ width, ...spacing })
+  const s = useSalon({ width, labelPlacement, ...spacing })
+  const shouldShowValue = showValue ?? labelPlacement !== 'left'
   const safeValue = clamp(value, min, max)
   const ratio = clamp(getRatio(safeValue, min, max), 0, 100)
   const visualRatio = getVisualRatio(ratio)
@@ -119,10 +124,12 @@ const RangeInput: FC<TProps> = ({
     <div className={cnMerge(s.wrapper, disabled && s.disabled, className)} data-testid={testid}>
       <label className={s.valueLabel} htmlFor={inputId}>
         <span className={s.valueLabelPrefix}>{valueLabel}</span>
-        <strong className={s.valueLabelAmount}>
-          {formatValue(safeValue)}
-          {unit}
-        </strong>
+        {shouldShowValue && (
+          <strong className={s.valueLabelAmount}>
+            {formatValue(safeValue)}
+            {unit}
+          </strong>
+        )}
       </label>
 
       <div ref={controlRef} className={s.control}>

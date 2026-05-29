@@ -1,4 +1,5 @@
-import type { GRADIENT_DIRECTION, WALLPAPER_TYPE } from '~/const/wallpaper'
+import type { WALLPAPER_PATTERN_TONE, WALLPAPER_TYPE } from '~/const/wallpaper'
+import type { TGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
 import type { TConstValues } from '~/spec'
 
 export type TWallpaperFmt = {
@@ -6,54 +7,71 @@ export type TWallpaperFmt = {
   background: string
 }
 
-export type TWallpaperGradientDir = TConstValues<typeof GRADIENT_DIRECTION>
+export type TWallpaperGradientDir = string
 
 export type TWallpaperGradient = {
   colors?: string[]
   hasPattern?: boolean
   direction?: TWallpaperGradientDir
 
-  // common
-  hasBlur?: boolean
-  hasShadow?: boolean
+  // Applied by dashboard wallpaper settings before parsing the render background.
+  blurIntensity?: number
+  brightness?: number
+  saturation?: number
 }
 
 export type TWallpaperPic = {
-  bgImage?: string
+  image?: string
+  preview?: string
   bgSize?: string // 'contain' | 'cover' | 'auto'
 
-  // common
-  hasBlur?: boolean
-  hasShadow?: boolean
+  // Applied by dashboard wallpaper settings before parsing the render background.
+  blurIntensity?: number
+  brightness?: number
+  saturation?: number
 }
 
 export type TWallpaper = TWallpaperGradient | TWallpaperPic
+
+export type TWallpaperPattern = {
+  id: string
+  image: string
+  preview: string
+}
 
 export type TCustomWallpaper = TWallpaper | null
 
 export type TWallpaperType = TConstValues<typeof WALLPAPER_TYPE>
 
+export type TWallpaperPatternTone = TConstValues<typeof WALLPAPER_PATTERN_TONE>
+
 export type TWallpaperInfo = {
   customWallpaper?: TCustomWallpaper
-  wallpaper: string
+  source: string
   wallpapers: Record<string, TWallpaper>
-  hasShadow?: boolean
-  gradientWallpapers?: Record<string, TWallpaper>
+  gradientWallpapers?: Record<string, TGradientRecipe>
 
-  changeWallpaper?: (wallpaper: string) => void
+  changeWallpaper?: (source: string) => void
 }
 
 export type TWallpaperData = {
-  wallpaper: string
-  gradientWallpapers: Record<string, TWallpaper>
+  source: string
+  gradientWallpapers: Record<string, TGradientRecipe>
   patternWallpapers: Record<string, TWallpaper>
-  wallpaperType: TWallpaperType
+  type: TWallpaperType
   hasPattern: boolean
+  patternId: string
+  patternIntensity: number
+  patternTone: TWallpaperPatternTone
+  hasTexture: boolean
   hasBlur: boolean
+  blurIntensity: number
   hasShadow: boolean
-  direction: TWallpaperGradientDir
-
-  customColor: string
+  brightness: number
+  saturation: number
+  gradient: TGradientRecipe | null
+  texture: TWallpaperTexture
+  bgSize: string
 }
 
 export type TParsedWallpaper = TWallpaperData & {

@@ -12,6 +12,7 @@ tools/reports
 # =====================
 .playwright/
 .playwright-cli/
+.playwright-mcp/
 playwright-report/
 test-results/
 
@@ -78,6 +79,10 @@ frontend/**/public/icons/fa/
 frontend/**/public/icons/lucide/
 frontend/**/public/icons/heroicons/
 frontend/**/public/icons/phosphor/
+frontend/main/public/wallpaper/
+frontend/dashboard/public/wallpaper/
+frontend/landing/public/wallpaper/
+frontend/core/assets/wallpaper/pattern-bak/
 
 # =====================
 # Backend (Elixir / BEAM)
@@ -105,6 +110,7 @@ backend/main/cover/excoveralls.html
 
 # AI agent / skills (local only)
 .agents/
+.codegraph/
 .codex/
 .cursor/
 .github/skills/

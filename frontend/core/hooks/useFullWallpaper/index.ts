@@ -1,78 +1,79 @@
-import { clone, keys } from 'ramda'
-
-import { GRADIENT_WALLPAPER, PATTERN_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
-import type {
-  TWallpaper,
-  TWallpaperData,
-  TWallpaperGradient,
-  TWallpaperGradientDir,
-  TWallpaperPic,
-} from '~/spec'
+import { GRADIENT_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
+import type { TGradientRecipe } from '~/lib/wallpaperMesh'
+import type { TWallpaper, TWallpaperData } from '~/spec'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 
+import { buildGradientCatalogWallpapers, buildPatternCatalogWallpapers } from './helper'
+
 type TRet = {
-  wallpaper: string
-  changeWallpaper: (wallpaper: string) => void
-  changePatternWallpaper: (wallpaper: string) => void
+  source: string
+  changeWallpaper: (source: string) => void
+  changePatternWallpaper: (source: string) => void
   getWallpaper: () => TWallpaperData
-  getGradientWallpapers: () => Record<string, TWallpaper>
+  getGradientWallpapers: () => Record<string, TGradientRecipe>
   getPatternWallpapers: () => Record<string, TWallpaper>
 }
 
 export default function useFullWallpaper(): TRet {
   const store = useWallpaperDomain()
 
-  const getGradientWallpapers = (): Record<string, TWallpaper> => {
-    const wallpapers = clone(GRADIENT_WALLPAPER)
-    for (const key of keys(GRADIENT_WALLPAPER)) {
-      const wallpaperObj = wallpapers[key] as TWallpaperGradient
-      wallpaperObj.hasPattern = store.hasPattern
-      wallpaperObj.hasBlur = store.hasBlur
-      wallpaperObj.direction = store.direction as TWallpaperGradientDir
-    }
-    return wallpapers
+  const getGradientWallpapers = (): Record<string, TGradientRecipe> => {
+    return buildGradientCatalogWallpapers()
   }
 
   const getPatternWallpapers = (): Record<string, TWallpaper> => {
-    const wallpapers = clone(PATTERN_WALLPAPER)
-    for (const key of keys(PATTERN_WALLPAPER)) {
-      const wallpaperObj = wallpapers[key] as TWallpaperPic
-      wallpaperObj.hasBlur = store.hasBlur
-    }
-    return wallpapers
+    return buildPatternCatalogWallpapers()
   }
 
   const getWallpaper = (): TWallpaperData => {
     const {
-      customColorValue,
-      direction,
+      gradient,
       hasPattern,
-      hasBlur,
+      patternId,
+      patternIntensity,
+      patternTone,
+      hasTexture,
+      blurIntensity,
       hasShadow,
-      wallpaper,
-      wallpaperType,
+      brightness,
+      saturation,
+      texture,
+      source,
+      type,
+      bgSize,
     } = store
 
+    const hasBlur = blurIntensity > 0
+    const activeGradient = gradient || GRADIENT_WALLPAPER[source] || GRADIENT_WALLPAPER.pink
+
     return {
-      wallpaper,
-      wallpaperType,
+      source,
+      type,
       hasPattern,
+      patternId,
+      patternIntensity,
+      patternTone,
+      hasTexture,
       hasBlur,
+      blurIntensity,
       hasShadow,
+      brightness,
+      saturation,
+      gradient: activeGradient,
+      texture,
       gradientWallpapers: getGradientWallpapers(),
       patternWallpapers: getPatternWallpapers(),
-      customColor: customColorValue,
-      direction,
+      bgSize,
     }
   }
 
-  const changeWallpaper = (wallpaper: string): void => store.commit({ wallpaper })
+  const changeWallpaper = (source: string): void => store.commit({ source })
 
-  const changePatternWallpaper = (wallpaper: string): void =>
-    store.commit({ wallpaper, wallpaperType: WALLPAPER_TYPE.PATTERN })
+  const changePatternWallpaper = (source: string): void =>
+    store.commit({ source, type: WALLPAPER_TYPE.PATTERN })
 
   return {
-    wallpaper: store.wallpaper,
+    source: store.source,
     changeWallpaper,
     changePatternWallpaper,
     getGradientWallpapers,

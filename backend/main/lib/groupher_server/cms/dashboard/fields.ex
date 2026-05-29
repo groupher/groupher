@@ -237,21 +237,39 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
 
   def macro_schema(:wallpaper) do
     [
-      [:wallpaper_type, :string, "gradient"],
-      [:wallpaper, :string, "pink"],
+      [:type, :string, "gradient"],
+      [:source, :string, "pink"],
 
-      # (custom) gradient
+      # gradient
       [:has_pattern, :boolean, true],
-      [:direction, :string, "bottom"],
-      [:custom_color_value, :string, ""],
+      [:pattern_id, :string, "01"],
+      [:pattern_intensity, :integer, 50],
+      [:pattern_tone, :string, "dark"],
+      [:has_texture, :boolean, false],
+      [
+        :gradient,
+        :map,
+        %{
+          "version" => 1,
+          "kind" => "linear",
+          "preset" => "pink",
+          "colors" => ["#FBEFDE", "#D8B9E3"],
+          "angle" => 180,
+          "spread" => 52
+        }
+      ],
 
-      # updated
+      # image
       [:bg_size, :string, "cover"],
-      [:upload_bg_image, :string, ""],
 
-      # common
-      [:has_blur, :boolean, false],
-      [:has_shadow, :boolean, false]
+      # global effects
+      [:blur_intensity, :integer, 0],
+      [:has_shadow, :boolean, false],
+      [:brightness, :integer, 100],
+      [:saturation, :integer, 100],
+
+      # renderer-specific config/effects
+      [:texture, :map, %{"type" => "noise", "intensity" => 0, "params" => %{}}]
     ]
   end
 end

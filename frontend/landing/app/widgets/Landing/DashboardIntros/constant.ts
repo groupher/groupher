@@ -9,7 +9,7 @@ import LayoutSVG from '~/icons/Layout'
 import SpiderSVG from '~/icons/Spider'
 
 export default {
-  [DSB_ROUTE.LAYOUT]: {
+  [DSB_ROUTE.APPEARANCE]: {
     title: '布局 & 样式',
     desc: '社区与内容展示的各种个性化设置',
     color: COLOR.PURPLE,

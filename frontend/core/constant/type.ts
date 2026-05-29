@@ -40,7 +40,6 @@ const TYPE = {
     ...DRAWER_ARTICLE_CRUD,
 
     // custom background editor
-    CUSTOM_BG_EDITOR: 'CUSTOM_BG_EDITOR',
 
     // passport
     PASSPORT_EDITOR: 'PASSPORT_EDITOR',

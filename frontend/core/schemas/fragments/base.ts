@@ -42,15 +42,20 @@ export const footerOnelineLink = `
   url
 `
 export const wallpaper = `
-  wallpaperType
-  wallpaper
-  direction
-  customColorValue
+  type
+  source
+  gradient
   bgSize
-  uploadBgImage
   hasPattern
-  hasBlur
+  patternId
+  patternIntensity
+  patternTone
+  hasTexture
+  blurIntensity
   hasShadow
+  brightness
+  saturation
+  texture
 `
 export const seo = `
   seoEnable

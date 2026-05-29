@@ -1,3 +1,5 @@
 export { default as PillTabs } from './PillTabs'
+export { default as SegmentTabs } from './SegmentTabs'
 export { default as Tabs } from './Tabs'
 export type { TPillTabItem } from './PillTabs'
+export type { TSegmentTabItem } from './SegmentTabs'

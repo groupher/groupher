@@ -102,49 +102,133 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     @update_wallpaper_query """
     mutation (
       $community: String!
-      $wallpaper: String
-      $wallpaperType: String
-      $direction: String
-      $customColorValue: String
+      $source: String
+      $type: String
+      $gradient: Json
       $bgSize: String
-      $uploadBgImage: String
       $hasPattern: Boolean
-      $hasBlur: Boolean
+      $patternId: String
+      $patternIntensity: Int
+      $patternTone: String
+      $hasTexture: Boolean
+      $blurIntensity: Int
       $hasShadow: Boolean
+      $brightness: Int
+      $saturation: Int
+      $texture: Json
       ) {
       updateDashboardWallpaper(
         community: $community
-        wallpaper: $wallpaper
-        wallpaperType: $wallpaperType
-        direction: $direction
-        customColorValue: $customColorValue
+        source: $source
+        type: $type
+        gradient: $gradient
         bgSize: $bgSize
-        uploadBgImage: $uploadBgImage
         hasPattern: $hasPattern
-        hasBlur: $hasBlur
+        patternId: $patternId
+        patternIntensity: $patternIntensity
+        patternTone: $patternTone
+        hasTexture: $hasTexture
+        blurIntensity: $blurIntensity
         hasShadow: $hasShadow
+        brightness: $brightness
+        saturation: $saturation
+        texture: $texture
       ) {
         wallpaper {
-          wallpaperType
-          wallpaper
+          type
+          source
+          gradient
+          patternId
+          patternIntensity
+          patternTone
+          hasTexture
+          blurIntensity
+          brightness
+          saturation
+          texture
         }
       }
     }
     """
     test "update community dashboard wallpaper", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
-      variables = %{community: community.slug, wallpaper: "orange", wallpaperType: "CUSTOM"}
+
+      variables = %{
+        community: community.slug,
+        source: "orange",
+        type: "gradient",
+        hasTexture: true,
+        patternId: "02",
+        patternIntensity: 65,
+        patternTone: "light",
+        blurIntensity: 35,
+        brightness: 85,
+        saturation: 120,
+        gradient:
+          Jason.encode!(%{
+            version: 2,
+            kind: "mesh",
+            preset: "test",
+            model: "haze",
+            seed: 1,
+            colors: ["#fff", "#000"],
+            flow: 45,
+            softness: 60,
+            warp: 50,
+            scale: 60,
+            contrast: 100,
+            brightness: 100
+          }),
+        texture: Jason.encode!(%{type: "ascii", intensity: 55, params: %{}})
+      }
 
       updated =
         rule_conn
         |> gq_mutation(@update_wallpaper_query, variables)
 
-      assert get_in(updated, ["wallpaper", "wallpaper"]) == "orange"
+      assert get_in(updated, ["wallpaper", "source"]) == "orange"
+      assert get_in(updated, ["wallpaper", "patternId"]) == "02"
+      assert get_in(updated, ["wallpaper", "patternIntensity"]) == 65
+      assert get_in(updated, ["wallpaper", "patternTone"]) == "light"
+      assert get_in(updated, ["wallpaper", "hasTexture"]) == true
+      assert get_in(updated, ["wallpaper", "blurIntensity"]) == 35
+      assert get_in(updated, ["wallpaper", "brightness"]) == 85
+      assert get_in(updated, ["wallpaper", "saturation"]) == 120
+      assert get_in(updated, ["wallpaper", "gradient", "preset"]) == "test"
+      assert get_in(updated, ["wallpaper", "gradient", "model"]) == "haze"
+      assert get_in(updated, ["wallpaper", "texture", "type"]) == "ascii"
+      assert get_in(updated, ["wallpaper", "texture", "intensity"]) == 55
 
       {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
 
-      assert found.dashboard.wallpaper.wallpaper == "orange"
-      assert found.dashboard.wallpaper.wallpaper_type == "CUSTOM"
+      assert found.dashboard.wallpaper.source == "orange"
+      assert found.dashboard.wallpaper.type == "gradient"
+      assert found.dashboard.wallpaper.has_texture == true
+      assert found.dashboard.wallpaper.pattern_id == "02"
+      assert found.dashboard.wallpaper.pattern_intensity == 65
+      assert found.dashboard.wallpaper.pattern_tone == "light"
+      assert found.dashboard.wallpaper.blur_intensity == 35
+      assert found.dashboard.wallpaper.brightness == 85
+      assert found.dashboard.wallpaper.saturation == 120
+      assert found.dashboard.wallpaper.gradient["preset"] == "test"
+      assert found.dashboard.wallpaper.gradient["model"] == "haze"
+      assert found.dashboard.wallpaper.texture["type"] == "ascii"
+      assert found.dashboard.wallpaper.texture["intensity"] == 55
+
+      updated =
+        rule_conn
+        |> gq_mutation(@update_wallpaper_query, %{
+          community: community.slug,
+          texture: Jason.encode!(%{type: "dots", intensity: 42, params: %{}})
+        })
+
+      assert get_in(updated, ["wallpaper", "texture", "type"]) == "dots"
+      assert get_in(updated, ["wallpaper", "texture", "intensity"]) == 42
+
+      {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
+
+      assert found.dashboard.wallpaper.texture["type"] == "dots"
+      assert found.dashboard.wallpaper.texture["intensity"] == 42
     end
 
     @update_enable_query """

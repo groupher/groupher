@@ -18,7 +18,7 @@ import TagsTab from './TagsTab'
 import TrendTab from './TrendTab'
 
 export default function DashboardIntros() {
-  const [tab, setTab] = useState<TIntroTab>(DSB_ROUTE.LAYOUT)
+  const [tab, setTab] = useState<TIntroTab>(DSB_ROUTE.APPEARANCE)
   const { t } = useTrans()
 
   const s = useSalon({ tab })
@@ -45,7 +45,7 @@ export default function DashboardIntros() {
           <div className={s.bgGradientYellow} />
 
           <div className={s.graphDemo}>
-            {tab === DSB_ROUTE.LAYOUT && <LayoutTab />}
+            {tab === DSB_ROUTE.APPEARANCE && <LayoutTab />}
             {tab === DSB_ROUTE.SEO && <SeoTab />}
             {tab === DSB_ROUTE.POST && <CMSTab />}
             {tab === DSB_ROUTE.TAGS && <TagsTab />}

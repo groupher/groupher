@@ -146,16 +146,75 @@ defmodule GroupherServer.Test.CMS.Dashboard do
 
       {:ok, _} =
         CMS.Dashboard.update(community, :wallpaper, %{
-          wallpaper_type: "custom",
-          wallpaper: "orange",
-          has_blur: true
+          type: "gradient",
+          source: "orange",
+          has_texture: true,
+          pattern_id: "02",
+          pattern_intensity: 65,
+          pattern_tone: "light",
+          blur_intensity: 35,
+          brightness: 85,
+          saturation: 120,
+          gradient: %{
+            "version" => 2,
+            "kind" => "mesh",
+            "preset" => "test",
+            "model" => "haze",
+            "seed" => 1,
+            "colors" => ["#fff", "#000"],
+            "flow" => 45,
+            "softness" => 60,
+            "warp" => 50,
+            "scale" => 60,
+            "contrast" => 100,
+            "brightness" => 100
+          },
+          texture: %{"type" => "ascii", "intensity" => 55, "params" => %{}}
         })
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
-      assert find_community.dashboard.wallpaper.wallpaper == "orange"
-      assert find_community.dashboard.wallpaper.wallpaper_type == "custom"
-      assert find_community.dashboard.wallpaper.has_blur == true
+      assert find_community.dashboard.wallpaper.source == "orange"
+      assert find_community.dashboard.wallpaper.type == "gradient"
+      assert find_community.dashboard.wallpaper.has_texture == true
+      assert find_community.dashboard.wallpaper.pattern_id == "02"
+      assert find_community.dashboard.wallpaper.pattern_intensity == 65
+      assert find_community.dashboard.wallpaper.pattern_tone == "light"
+      assert find_community.dashboard.wallpaper.blur_intensity == 35
+      assert find_community.dashboard.wallpaper.brightness == 85
+      assert find_community.dashboard.wallpaper.saturation == 120
+      assert find_community.dashboard.wallpaper.gradient["preset"] == "test"
+      assert find_community.dashboard.wallpaper.gradient["model"] == "haze"
+      assert find_community.dashboard.wallpaper.texture["type"] == "ascii"
+      assert find_community.dashboard.wallpaper.texture["intensity"] == 55
+    end
+
+    test "can update wallpaper dots texture", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      {:ok, _} =
+        CMS.Dashboard.update(community, :wallpaper, %{
+          texture: %{"type" => "dots", "intensity" => 55, "params" => %{}}
+        })
+
+      {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
+
+      assert find_community.dashboard.wallpaper.texture["type"] == "dots"
+      assert find_community.dashboard.wallpaper.texture["intensity"] == 55
+    end
+
+    test "can update wallpaper tile texture", ~m(community_attrs user)a do
+      {:ok, community} = CMS.Communities.create(community_attrs, user)
+
+      {:ok, _} =
+        CMS.Dashboard.update(community, :wallpaper, %{
+          texture: %{"type" => "tile", "intensity" => 72, "params" => %{}}
+        })
+
+      {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
+
+      assert find_community.dashboard.wallpaper.texture["type"] == "tile"
+      assert find_community.dashboard.wallpaper.texture["intensity"] == 72
     end
 
     test "can update layout in community dashboard", ~m(community_attrs user)a do

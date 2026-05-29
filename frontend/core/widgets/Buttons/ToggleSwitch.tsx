@@ -2,12 +2,12 @@ import type { FC } from 'react'
 
 import SIZE from '~/const/size'
 import HookSVG from '~/icons/CheckBold'
-import type { TSizeSM } from '~/spec'
+import type { TSizeTSM } from '~/spec'
 
 import useSalon from './salon/toggle_switch'
 
 type TProps = {
-  size?: TSizeSM
+  size?: TSizeTSM
   checked?: boolean
   onChange?: (checked: boolean) => void
 }

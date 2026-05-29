@@ -8,7 +8,7 @@ import useSalon, { cn } from '../../../salon/dashboard_intros/layout_tab/wallpap
 export default function WallpaperBar() {
   const s = useSalon()
 
-  const { wallpaper, getGradientWallpapers } = useFullWallpaper()
+  const { source, getGradientWallpapers } = useFullWallpaper()
   const gradientWallpapers = getGradientWallpapers()
 
   const gradientKeys = keys(gradientWallpapers)
@@ -16,9 +16,9 @@ export default function WallpaperBar() {
   return (
     <div className={s.wrapper}>
       {gradientKeys.map((name) => (
-        <div key={name} className={cn(s.ballWrapper, name === wallpaper && s.ballWrapperActive)}>
+        <div key={name} className={cn(s.ballWrapper, name === source && s.ballWrapperActive)}>
           <div
-            className={cn(s.colorBall, name === wallpaper && s.colorBallActive)}
+            className={cn(s.colorBall, name === source && s.colorBallActive)}
             style={{ background: parseWallpaper(gradientWallpapers, name).background }}
           />
         </div>

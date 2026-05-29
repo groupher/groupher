@@ -1,60 +1,84 @@
-import { PAGE_BG_CSS_KEY } from '~/const/colors'
-import { blurRGB } from '~/fmt'
-import useCSSVar from '~/hooks/useCssVar'
-import useGaussBlur from '~/hooks/useGaussBlur'
+'use client'
+
+import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
+
+import useMount from '~/hooks/useMount'
 import useTrans from '~/hooks/useTrans'
-import useWallpaper from '~/hooks/useWallpaper'
-import SettingSVG from '~/icons/Setting'
-import { callWallpaperEditor } from '~/signal'
-import CheckLabel from '~/widgets/CheckLabel'
+import { SegmentTabs } from '~/widgets/Switcher'
+import ThemeSwitchPreview from '~/widgets/ThemeSwitch/Preview'
 
 import SectionLabel from '../../SectionLabel'
-import useSalon, { cn, cnMerge } from './salon'
+import { TAB, TAB_OPTIONS } from './constant'
+import GradientTab from './GradientTab'
+import PicturesTab from './PicturesTab'
+import PreviewPanel from './PreviewPanel'
+import useSalon from './salon'
+import UploadTab from './UploadTab'
+import useLogic, { WallpaperLogicProvider } from './useLogic'
+
+const TAB_TRANSITION = {
+  duration: 0.18,
+  ease: [0.16, 1, 0.3, 1],
+} as const
+
+const TAB_ANIMATION = {
+  initial: { opacity: 0, y: 6 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -4 },
+} as const
 
 export default function Wallpaper() {
+  return (
+    <WallpaperLogicProvider>
+      <WallpaperContent />
+    </WallpaperLogicProvider>
+  )
+}
+
+function WallpaperContent() {
   const s = useSalon()
   const { t } = useTrans()
+  const { tab, changeTab, initRollback, isTouched } = useLogic()
+  const tabItems = TAB_OPTIONS.map(({ key, labelKey }) => ({ key, label: t(labelKey) }))
 
-  const gaussBlur = useGaussBlur()
-  const { background } = useWallpaper()
-  const pageBg = useCSSVar(PAGE_BG_CSS_KEY, [gaussBlur], { selector: 'main' })
-
-  const bgColor = `${blurRGB(pageBg, gaussBlur)}`
+  useMount(initRollback)
 
   return (
     <div className={s.wrapper}>
       <SectionLabel
         title={t('dsb.appearance.wallpaper.title')}
         desc={t('dsb.appearance.wallpaper.desc')}
-        width='96%'
+        addon={<ThemeSwitchPreview />}
+        touched={isTouched}
       />
 
-      <div className={s.preview}>
-        <button type='button' className={s.hoverMask} onClick={() => callWallpaperEditor()}>
-          <SettingSVG className={s.settingIcon} />
-          <div className={cn(s.previewImage, 'group-hover:brightness-90')} style={{ background }} />
-          <CheckLabel title={t('dsb.appearance.wallpaper.original')} top={4} active={false} />
-        </button>
-        <div className={s.previewer}>
-          <div className={s.realPreview}>
-            <div className={s.previewImage} style={{ background }} />
-            <div className={s.content} style={{ background: bgColor }}>
-              <div className={s.contentTop}>
-                <div className={cnMerge(s.bar, s.titleBar)} />
-                <div className={cnMerge(s.bar, s.wideBar)} />
-                <div className={cnMerge(s.bar, s.midBar)} />
-                <div className={cnMerge(s.bar, s.longBar)} />
-                <div className={cnMerge(s.bar, s.shortBar)} />
-                <div className={cnMerge(s.bar, s.dimBar)} />
-              </div>
-              <div className={s.contentBottom}>
-                <div className={cnMerge(s.bar, s.footerShort)} />
-                <div className={cnMerge(s.bar, s.footerWide)} />
-              </div>
-            </div>
-          </div>
-          <CheckLabel title={t('dsb.appearance.wallpaper.preview')} top={4} active={false} />
-        </div>
+      <PreviewPanel />
+
+      <div className={s.editor}>
+        <SegmentTabs
+          items={tabItems}
+          activeKey={tab}
+          onChange={(key) => changeTab(key as typeof tab)}
+          left={-1}
+          bottom={5}
+        />
+
+        <LazyMotion features={domAnimation}>
+          <AnimatePresence initial={false} mode='wait'>
+            <m.div
+              key={tab}
+              className={s.editorContent}
+              initial={TAB_ANIMATION.initial}
+              animate={TAB_ANIMATION.animate}
+              exit={TAB_ANIMATION.exit}
+              transition={TAB_TRANSITION}
+            >
+              {tab === TAB.PICTURES && <PicturesTab />}
+              {tab === TAB.GRADIENT && <GradientTab />}
+              {tab === TAB.UPLOAD && <UploadTab />}
+            </m.div>
+          </AnimatePresence>
+        </LazyMotion>
       </div>
     </div>
   )
