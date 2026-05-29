@@ -1,6 +1,6 @@
 'use client'
 
-import { type CSSProperties, useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { cn } from '~/css'
 import {
@@ -11,81 +11,16 @@ import { subscribeWallpaperPreview } from '~/lib/wallpaperRenderer/preview'
 import type { TWallpaperRenderDescriptor } from '~/lib/wallpaperRenderer/spec'
 import { createWallpaperWebglRenderer } from '~/lib/wallpaperRenderer/webgl'
 
-type TProps = {
-  className?: string
-  patternSize?: string
-  positioned?: boolean
-  textureScale?: number
-}
-
-const canvasClass = 'absolute inset-0 block size-full'
-const fallbackClass = 'absolute inset-0 bg-center'
-const patternClass = 'absolute inset-0 pointer-events-none'
-const FADE_MS = 220
-
-type TWallpaperLayerProps = {
-  className?: string
-  descriptor: TWallpaperRenderDescriptor
-  exiting?: boolean
-  patternSize: string
-  textureScale: number
-  onExited?: () => void
-}
-
-const getFallbackStyle = (descriptor: TWallpaperRenderDescriptor): CSSProperties => ({
-  background: descriptor.background,
-})
-
-// Wallpaper content generation stays in WebGL; global visual adjustments stay in CSS.
-// CSS filter gives blur/brightness/saturation the same final-layer semantics for
-// gradient, mesh, picture, texture effects, and the pattern overlay.
-const getFilterLayerStyle = (descriptor: TWallpaperRenderDescriptor): CSSProperties => ({
-  filter: `var(--preview-wallpaper-filter, ${descriptor.filter})`,
-})
-
-const getPatternLayerStyle = (
-  descriptor: TWallpaperRenderDescriptor,
-  patternSize: string,
-): CSSProperties => ({
-  backgroundColor: descriptor.patternColor,
-  maskImage: `url(${descriptor.patternImage})`,
-  maskRepeat: 'repeat',
-  maskSize: patternSize,
-  opacity: descriptor.patternOpacity,
-  WebkitMaskImage: `url(${descriptor.patternImage})`,
-  WebkitMaskRepeat: 'repeat',
-  WebkitMaskSize: patternSize,
-})
-
-const getVisualIdentity = (descriptor: TWallpaperRenderDescriptor): string =>
-  [descriptor.kind, descriptor.source, descriptor.imageUrl].join('|')
-
-const canAnimate = (): boolean =>
-  typeof window !== 'undefined' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-const shouldCrossfade = (
-  previous: TWallpaperRenderDescriptor,
-  next: TWallpaperRenderDescriptor,
-): boolean => canAnimate() && getVisualIdentity(previous) !== getVisualIdentity(next)
-
-const preloadImage = (descriptor: TWallpaperRenderDescriptor): Promise<void> => {
-  if (descriptor.kind !== 'image' || !descriptor.imageUrl) return Promise.resolve()
-
-  return new Promise((resolve) => {
-    const image = new Image()
-    image.crossOrigin = 'anonymous'
-    image.onload = () => {
-      if (!image.decode) {
-        resolve()
-        return
-      }
-
-      image.decode().then(resolve).catch(resolve)
-    }
-    image.onerror = () => resolve()
-    image.src = descriptor.imageUrl
-  })
-}
+import { canvasClass, FADE_MS, fallbackClass, patternClass } from './constant'
+import {
+  getFallbackStyle,
+  getFilterLayerStyle,
+  getPatternLayerStyle,
+  getVisualIdentity,
+  preloadImage,
+  shouldCrossfade,
+} from './helper'
+import type { TProps, TWallpaperLayerProps } from './spec'
 
 function WallpaperLayer({
   className,
