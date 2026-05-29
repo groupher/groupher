@@ -29,7 +29,7 @@ export default function useSalon({ tab }: TProps) {
     bgGradientPurple: cn(
       bgGradient,
       'landing-gradient-purple',
-      tab === DSB_ROUTE.LAYOUT && 'opacity-100',
+      tab === DSB_ROUTE.APPEARANCE && 'opacity-100',
     ),
     bgGradientBlue: cn(
       bgGradient,

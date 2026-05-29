@@ -8,7 +8,7 @@ export { cn } from '~/css'
 
 export default function useSalon() {
   const { cn, fg, bg, br, fill, rainbow, shadow } = useTwBelt()
-  const { wallpaper } = useWallpaper()
+  const { source } = useWallpaper()
 
   const baseLine = cn('absolute border-dashed trans-all-200 z-10 opacity-30', br('digest'))
   const design = 'absolute top-11 left-14 bold-lg tracking-wide z-30'
@@ -19,7 +19,7 @@ export default function useSalon() {
 
     designTextGradient: cn(design, 'clip-text trans-all-200'),
     designTextGradientStyle: {
-      background: `linear-gradient(to left, ${getPathGradient(wallpaper)})`,
+      background: `linear-gradient(to left, ${getPathGradient(source)})`,
       fontSize: '42px',
     },
 
@@ -42,9 +42,9 @@ export default function useSalon() {
     // cursor
     cursor: 'absolute trans-all-200',
     cursorIcon: 'size-4 opacity-80 ml-3',
-    cursorIconStyle: { fill: getCursorGradient(wallpaper) },
+    cursorIconStyle: { fill: getCursorGradient(source) },
     cursorText: cn('text-xs bold rounded scale-90 px-1', fg('button.fg')),
-    cursorTextStyle: { background: getCursorGradient(wallpaper) },
+    cursorTextStyle: { background: getCursorGradient(source) },
 
     //
     indexBar: cn('absolute w-px opacity-50', rainbow(COLOR.RED, 'bg')),

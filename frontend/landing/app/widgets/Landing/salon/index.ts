@@ -12,7 +12,7 @@ export default function useSalon() {
   const { isLightTheme } = useTheme()
   const { cn, fg, bg, fill, container, rainbow, linkable, menu, landingTitle, sexyBorder } =
     useTwBelt()
-  const { wallpaper } = useWallpaper()
+  const { source } = useWallpaper()
 
   const colorText = 'grayscale-50 bold-sm'
   const colorFill = ''
@@ -24,8 +24,8 @@ export default function useSalon() {
     githubInfo: cn('row-center mt-12 mb-3 hover:underline pointer', fg('digest')),
     githubIcon: 'size-4 mr-1.5',
     githubText: 'clip-text bold text-base',
-    githubIconStyle: { fill: getCursorGradient(wallpaper) },
-    textGradientStyle: { background: `linear-gradient(to top, ${getPathGradient(wallpaper)})` },
+    githubIconStyle: { fill: getCursorGradient(source) },
+    textGradientStyle: { background: `linear-gradient(to top, ${getPathGradient(source)})` },
     title: cn(landingTitle(), 'text-5xl opacity-70 mb-6 mt-4'),
     iconHead: 'opacity-80 row-center gap-x-4 relative mt-5 mb-4',
     iconFootBar: cn(
