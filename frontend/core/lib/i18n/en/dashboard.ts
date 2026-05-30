@@ -392,6 +392,7 @@ export default {
   'dsb.appearance.wallpaper.texture.beam': 'Beam',
   'dsb.appearance.wallpaper.texture.ascii': 'ASCII',
   'dsb.appearance.wallpaper.texture.dots': 'Dots',
+  'dsb.appearance.wallpaper.texture.oil': 'Oil',
   'dsb.appearance.kanban.bg.title': 'Board backgrounds',
   'dsb.appearance.kanban.bg.desc':
     'Background color for each kanban column. Default is light gray.',

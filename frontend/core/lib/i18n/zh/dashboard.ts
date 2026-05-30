@@ -372,6 +372,7 @@ export default {
   'dsb.appearance.wallpaper.texture.beam': '光束',
   'dsb.appearance.wallpaper.texture.ascii': 'ASCII',
   'dsb.appearance.wallpaper.texture.dots': '点阵',
+  'dsb.appearance.wallpaper.texture.oil': '油画',
   'dsb.appearance.kanban.bg.title': '看板背景色',
   'dsb.appearance.kanban.bg.desc': '看板页面每列的背景版颜色，默认为浅灰色。',
   'dsb.appearance.kanban.bg.reset': '重置',

@@ -354,6 +354,32 @@ describe('useWallpaper', () => {
     })
   })
 
+  it('accepts oil texture descriptors', () => {
+    const descriptor = resolveWallpaperRenderDescriptor({
+      customWallpaper: null,
+      source: GRADIENT_WALLPAPER_NAME.GREEN,
+      type: WALLPAPER_TYPE.GRADIENT,
+      hasPattern: false,
+      patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+      patternIntensity: 100,
+      patternTone: WALLPAPER_PATTERN_TONE.DARK,
+      hasTexture: true,
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
+      blurIntensity: 0,
+      hasShadow: false,
+      brightness: 100,
+      saturation: 100,
+      texture: { type: WALLPAPER_TEXTURE.OIL, intensity: 70, params: {} },
+      bgSize: WALLPAPER_BG_SIZE.COVER,
+    })
+
+    expect(descriptor.texture).toEqual({
+      type: WALLPAPER_TEXTURE.OIL,
+      intensity: 70,
+      params: {},
+    })
+  })
+
   it('accepts tile texture descriptors', () => {
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,

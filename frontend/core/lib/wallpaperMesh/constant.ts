@@ -45,6 +45,7 @@ export enum WALLPAPER_TEXTURE {
   BEAM = 'beam',
   ASCII = 'ascii',
   DOTS = 'dots',
+  OIL = 'oil',
 }
 
 export enum WALLPAPER_TEXTURE_SURFACE {
@@ -73,6 +74,10 @@ export const WALLPAPER_TEXTURE_OPTIONS = [
   {
     type: WALLPAPER_TEXTURE.DOTS,
     labelKey: 'dsb.appearance.wallpaper.texture.dots',
+  },
+  {
+    type: WALLPAPER_TEXTURE.OIL,
+    labelKey: 'dsb.appearance.wallpaper.texture.oil',
   },
 ] as const
 

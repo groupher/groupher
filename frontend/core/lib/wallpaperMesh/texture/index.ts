@@ -18,6 +18,7 @@ import { renderAsciiTexture } from './ascii'
 import { renderBeamTexture } from './beam'
 import { renderDotsTexture } from './dots'
 import { renderNoiseTexture } from './noise'
+import { renderOilTexture } from './oil'
 import { renderTileTexture } from './tile'
 
 /**
@@ -32,6 +33,7 @@ export const normalizeTextureType = (type?: string): TImageTextureType => {
   if (type === WALLPAPER_TEXTURE.BEAM) return WALLPAPER_TEXTURE.BEAM
   if (type === WALLPAPER_TEXTURE.ASCII) return WALLPAPER_TEXTURE.ASCII
   if (type === WALLPAPER_TEXTURE.DOTS) return WALLPAPER_TEXTURE.DOTS
+  if (type === WALLPAPER_TEXTURE.OIL) return WALLPAPER_TEXTURE.OIL
 
   return WALLPAPER_TEXTURE.NOISE
 }
@@ -84,6 +86,10 @@ export const renderTexture = (
 
   if (texture.type === WALLPAPER_TEXTURE.DOTS) {
     renderDotsTexture(ctx, source, width, height, intensity, surface)
+  }
+
+  if (texture.type === WALLPAPER_TEXTURE.OIL) {
+    renderOilTexture(ctx, source, width, height, intensity, surface)
   }
 }
 
