@@ -1,5 +1,5 @@
 import { WALLPAPER_BG_SIZE } from '~/const/wallpaper'
-import { GRADIENT_RENDERER } from '~/lib/wallpaperMesh'
+import { GRADIENT_RENDERER, WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 import {
   TEXTURE_SHADER_BRANCHES,
   TEXTURE_SHADER_HELPERS,
@@ -15,6 +15,7 @@ const DPR_CAP = 2
 // Flow is the highest fragment-cost renderer, so full-canvas output uses a
 // lower internal pixel ratio while CSS keeps the visual size unchanged.
 const FLOW_DPR_CAP = 1
+const OIL_TEXTURE_DPR_CAP = 1
 const FLOW_STRAND_COUNT = 7
 
 const MESH_MODEL_UNIFORM = {
@@ -363,6 +364,10 @@ const MODE = {
 } as const
 
 const getDprCap = (descriptor: TWallpaperRenderDescriptor | null): number => {
+  if (descriptor?.hasTexture && descriptor.texture.type === WALLPAPER_TEXTURE.OIL) {
+    return OIL_TEXTURE_DPR_CAP
+  }
+
   if (
     descriptor?.kind === WALLPAPER_RENDER_KIND.MESH_GRADIENT &&
     descriptor.meshRecipe?.renderer === GRADIENT_RENDERER.FLOW
