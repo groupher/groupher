@@ -343,6 +343,7 @@ export default {
   'dsb.appearance.wallpaper.editor.brightness': '明暗度',
   'dsb.appearance.wallpaper.editor.saturation': '饱和度',
   'dsb.appearance.wallpaper.editor.colors': '颜色',
+  'dsb.appearance.wallpaper.editor.change_gradient_color': '更改渐变颜色',
   'dsb.appearance.wallpaper.editor.spread': '扩散',
   'dsb.appearance.wallpaper.editor.type': '类型',
   'dsb.appearance.wallpaper.editor.gradient_angle': '角度',

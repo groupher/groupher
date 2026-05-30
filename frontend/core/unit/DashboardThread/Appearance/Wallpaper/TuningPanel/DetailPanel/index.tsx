@@ -114,9 +114,9 @@ export default function DetailPanel({
 
   // Split visible groups after conditional filtering so odd counts always leave
   // the left column with one extra group instead of making the right column heavier.
-  const leftColumnCount = Math.ceil(visibleGroups.length / 2)
+  const leftColumnCount = hasRightPanel ? Math.ceil(visibleGroups.length / 2) : visibleGroups.length
   const leftGroups = visibleGroups.slice(0, leftColumnCount)
-  const rightGroups = visibleGroups.slice(leftColumnCount)
+  const rightGroups = hasRightPanel ? visibleGroups.slice(leftColumnCount) : []
 
   return (
     <div className={s.wrapper}>

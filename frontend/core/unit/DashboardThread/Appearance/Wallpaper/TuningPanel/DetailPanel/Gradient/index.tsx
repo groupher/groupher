@@ -95,7 +95,9 @@ export default function Gradient({ gradient, canUseAngle }: Props) {
                   type='button'
                   className={s.chip}
                   style={{ backgroundColor: color }}
-                  aria-label={`Change gradient color ${index + 1}`}
+                  aria-label={`${t('dsb.appearance.wallpaper.editor.change_gradient_color')} ${
+                    index + 1
+                  }`}
                 />
               </ColorSelector>
             ))}

@@ -363,6 +363,7 @@ export default {
   'dsb.appearance.wallpaper.editor.brightness': 'Brightness',
   'dsb.appearance.wallpaper.editor.saturation': 'Saturation',
   'dsb.appearance.wallpaper.editor.colors': 'Colors',
+  'dsb.appearance.wallpaper.editor.change_gradient_color': 'Change gradient color',
   'dsb.appearance.wallpaper.editor.spread': 'Spread',
   'dsb.appearance.wallpaper.editor.type': 'Type',
   'dsb.appearance.wallpaper.editor.gradient_angle': 'Angle',

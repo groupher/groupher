@@ -37,7 +37,12 @@ export default function Pattern({
 
       <div className={s.items}>
         <GroupItem label={t('dsb.appearance.wallpaper.editor.enable')}>
-          <ToggleSwitch size={SIZE.TINY} checked={hasPattern} onChange={onTogglePattern} />
+          <ToggleSwitch
+            size={SIZE.TINY}
+            checked={hasPattern}
+            aria-label={t('dsb.appearance.wallpaper.editor.enable')}
+            onChange={onTogglePattern}
+          />
         </GroupItem>
 
         {hasPattern && (
@@ -46,6 +51,7 @@ export default function Pattern({
               <ToggleSwitch
                 size={SIZE.TINY}
                 checked={patternTone === WALLPAPER_PATTERN_TONE.LIGHT}
+                aria-label={t('dsb.appearance.wallpaper.editor.invert_tone')}
                 onChange={onPatternToneChange}
               />
             </GroupItem>

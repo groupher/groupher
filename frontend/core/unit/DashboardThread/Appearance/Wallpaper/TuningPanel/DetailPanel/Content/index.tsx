@@ -21,7 +21,12 @@ export default function Content({ hasShadow, onToggleShadow }: Props) {
 
       <div className={s.items}>
         <GroupItem label={t('dsb.appearance.wallpaper.editor.shadow')}>
-          <ToggleSwitch size={SIZE.TINY} checked={hasShadow} onChange={onToggleShadow} />
+          <ToggleSwitch
+            size={SIZE.TINY}
+            checked={hasShadow}
+            aria-label={t('dsb.appearance.wallpaper.editor.shadow')}
+            onChange={onToggleShadow}
+          />
         </GroupItem>
       </div>
     </section>

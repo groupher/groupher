@@ -19,18 +19,11 @@ export const resolvePresetColor = (
 export const buildColorChips = (
   gradient: TGradientRecipe,
 ): Array<{ color: string; index: number; key: string }> => {
-  const colorCounts = new Map<string, number>()
-
-  return gradient.colors.map((color, index) => {
-    const count = (colorCounts.get(color) ?? 0) + 1
-    colorCounts.set(color, count)
-
-    return {
-      color,
-      index,
-      key: `${gradient.preset}-${color}-${count}`,
-    }
-  })
+  return gradient.colors.map((color, index) => ({
+    color,
+    index,
+    key: `${gradient.preset}-${index}`,
+  }))
 }
 
 export const getGradientSpreadValue = (gradient: TGradientRecipe): number =>

@@ -35,7 +35,7 @@ export default function Texture({ hasTexture, texture, onToggleTexture }: Props)
       ...draftTexture,
       ...patch,
       intensity:
-        patch.type && draftTexture.intensity === 0
+        patch.type && !hasTexture && draftTexture.intensity === 0
           ? DEFAULT_WALLPAPER_TEXTURE_INTENSITY
           : (patch.intensity ?? draftTexture.intensity),
     }
@@ -67,7 +67,12 @@ export default function Texture({ hasTexture, texture, onToggleTexture }: Props)
 
       <div className={s.items}>
         <GroupItem label={t('dsb.appearance.wallpaper.editor.enable')}>
-          <ToggleSwitch size={SIZE.TINY} checked={hasTexture} onChange={onToggleTexture} />
+          <ToggleSwitch
+            size={SIZE.TINY}
+            checked={hasTexture}
+            aria-label={t('dsb.appearance.wallpaper.editor.enable')}
+            onChange={onToggleTexture}
+          />
         </GroupItem>
 
         <GroupItem label={t('dsb.appearance.wallpaper.editor.type')}>
