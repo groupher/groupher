@@ -78,6 +78,13 @@ const getWallpaperCssState = (store: Pick<TStore, keyof TWallpaperState>): TWall
   bgSize: store.bgSize,
 })
 
+// Renderer draws pattern as a separate opacity-controlled overlay; keep the
+// fallback background pattern-free so first paint cannot flash a 100% pattern.
+const getWallpaperRendererFallbackState = (state: TWallpaperState): TWallpaperState =>
+  state.type === WALLPAPER_TYPE.GRADIENT && state.hasPattern
+    ? { ...state, hasPattern: false }
+    : state
+
 export const resolveWallpaper = (state: TWallpaperState): TRet => {
   const {
     source,
@@ -160,7 +167,7 @@ export const resolveWallpaper = (state: TWallpaperState): TRet => {
 export const resolveWallpaperRenderDescriptor = (
   state: TWallpaperState,
 ): TWallpaperRenderDescriptor => {
-  const { background, effect } = resolveWallpaper(state)
+  const { background, effect } = resolveWallpaper(getWallpaperRendererFallbackState(state))
   const base = {
     background: background || 'transparent',
     filter: getFilterValue(effect),

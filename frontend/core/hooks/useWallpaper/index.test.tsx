@@ -190,6 +190,31 @@ describe('useWallpaper', () => {
     expect(descriptor.background).not.toContain('data:image')
   })
 
+  it('keeps gradient pattern out of the renderer fallback background', () => {
+    const descriptor = resolveWallpaperRenderDescriptor({
+      customWallpaper: null,
+      source: GRADIENT_WALLPAPER_NAME.GREEN,
+      type: WALLPAPER_TYPE.GRADIENT,
+      hasPattern: true,
+      patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+      patternIntensity: 10,
+      patternTone: WALLPAPER_PATTERN_TONE.DARK,
+      hasTexture: false,
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
+      blurIntensity: 0,
+      hasShadow: false,
+      brightness: 100,
+      saturation: 100,
+      texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
+      bgSize: WALLPAPER_BG_SIZE.COVER,
+    })
+
+    expect(descriptor.hasPattern).toBe(true)
+    expect(descriptor.patternOpacity).toBe(0.1)
+    expect(descriptor.background).toContain('linear-gradient(90deg')
+    expect(descriptor.background).not.toContain('/wallpaper/pattern/')
+  })
+
   it('normalizes linear gradient spread as a centered transition band', () => {
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
