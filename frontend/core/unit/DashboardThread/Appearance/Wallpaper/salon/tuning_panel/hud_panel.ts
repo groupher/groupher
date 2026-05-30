@@ -4,8 +4,10 @@ export default function useSalon() {
   const { cn, br, bg, fg, primary, hover } = useTwBelt()
 
   return {
-    wrapper:
-      'row-center justify-between px-3 py-3 w-full min-h-6 gap-3 rounded-md text-left trans-all-200',
+    wrapper: cn(
+      'row-center justify-between px-4 py-3.5 w-full min-h-6 gap-3 rounded-md',
+      'text-left trans-all-200',
+    ),
     hudItems: 'flex items-center flex-wrap gap-x-4 gap-y-2 min-w-0',
     hudItem: 'row-center gap-1.5 min-w-0 whitespace-nowrap',
     hudLabel: cn('text-xs leading-none', fg('digest')),

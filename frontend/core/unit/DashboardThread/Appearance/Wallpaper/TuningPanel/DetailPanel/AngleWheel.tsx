@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react'
 
-import useSalon from '../../salon/tuning_panel/details_panel/angle_wheel'
+import useSalon from '../../salon/tuning_panel/detail_panel/angle_wheel'
 import useLogic from '../../useLogic'
 
 const WHEEL_SIZE = 56

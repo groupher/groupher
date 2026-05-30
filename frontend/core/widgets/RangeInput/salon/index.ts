@@ -1,11 +1,11 @@
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TSpace } from '~/spec'
 
-type TProps = { width: string; labelPlacement: 'top' | 'left' } & TSpace
+type TProps = { width: string; labelPlacement: 'top' | 'left'; hideLabel: boolean } & TSpace
 
-export default function useSalon({ width, labelPlacement, ...spacing }: TProps) {
+export default function useSalon({ width, labelPlacement, hideLabel, ...spacing }: TProps) {
   const { cn, br, margin, fg, bg, primary } = useTwBelt()
-  const hasLeftLabel = labelPlacement === 'left'
+  const hasLeftLabel = labelPlacement === 'left' && !hideLabel
 
   return {
     wrapper: cn(
@@ -16,8 +16,10 @@ export default function useSalon({ width, labelPlacement, ...spacing }: TProps) 
     ),
     valueLabel: cn(
       'row-center justify-start gap-1 text-sm leading-none',
+      hideLabel && 'sr-only',
       hasLeftLabel && 'w-20 shrink-0',
-      !hasLeftLabel &&
+      !hideLabel &&
+        !hasLeftLabel &&
         'opacity-0 translate-y-1 pointer-events-none transition-all delay-1000 duration-200 ease-out group-hover:delay-200 group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto group-focus-within:delay-0 group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto',
     ),
     valueLabelPrefix: fg('digest'),

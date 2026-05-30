@@ -9,16 +9,22 @@ import TextureSwatchPreview from './TextureSwatchPreview'
 type Props = {
   value: TImageTextureType
   active?: boolean
+  showLabel?: boolean
   onChange: (type: TImageTextureType) => void
 }
 
-export default function TextureStylePicker({ value, active = true, onChange }: Props) {
+export default function TextureStylePicker({
+  value,
+  active = true,
+  showLabel = true,
+  onChange,
+}: Props) {
   const { t } = useTrans()
   const s = useSalon()
 
   return (
     <div className={s.wrapper}>
-      <div className={s.label}>{t('dsb.appearance.wallpaper.texture.style')}</div>
+      {showLabel && <div className={s.label}>{t('dsb.appearance.wallpaper.texture.style')}</div>}
       <div className={s.options}>
         {WALLPAPER_TEXTURE_OPTIONS.map(({ type, labelKey }) => {
           const selected = active && value === type

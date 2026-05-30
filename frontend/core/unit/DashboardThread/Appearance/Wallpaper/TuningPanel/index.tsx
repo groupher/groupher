@@ -44,9 +44,8 @@ export default function TuningPanel() {
   const s = useSalon()
 
   const isGradient = type === WALLPAPER_TYPE.GRADIENT
-  const isPicture = type === WALLPAPER_TYPE.PATTERN
-  const isUpload = type === WALLPAPER_TYPE.UPLOAD
-  const canUseTexture = isGradient || isPicture || isUpload
+  const canUseTexture =
+    isGradient || type === WALLPAPER_TYPE.PATTERN || type === WALLPAPER_TYPE.UPLOAD
   const canUseAngle = isGradientWallpaper(wallpaper)
   const hasRightPanel = canUseTexture
 
@@ -119,8 +118,6 @@ export default function TuningPanel() {
             wallpaper={wallpaper}
             rangeDraft={rangeDraft}
             isGradient={isGradient}
-            isPicture={isPicture}
-            isUpload={isUpload}
             canUseTexture={canUseTexture}
             canUseAngle={canUseAngle}
             hasRightPanel={hasRightPanel}
