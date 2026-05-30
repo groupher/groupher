@@ -153,6 +153,23 @@ const radialCenterFromAngle = (
   }
 }
 
+export const buildGradientWallpaperPatch = (
+  wallpaper: Pick<TWallpaperState, 'type' | 'gradient'>,
+  source: string,
+): Pick<TWallpaperState, 'source' | 'type' | 'gradient'> => {
+  const palette = GRADIENT_WALLPAPER[source] ?? GRADIENT_WALLPAPER.pink
+  const gradient =
+    wallpaper.type === WALLPAPER_TYPE.GRADIENT
+      ? applyGradientPalette(wallpaper.gradient, palette)
+      : buildGradientRecipeForRenderer(palette, GRADIENT_RENDERER.LINEAR)
+
+  return {
+    source,
+    type: WALLPAPER_TYPE.GRADIENT,
+    gradient,
+  }
+}
+
 function useLogicValue(): TRet {
   const wallpaper$ = useWallpaperDomain()
   const liveWallpaper$ = wallpaper$.live$ ?? wallpaper$
@@ -281,14 +298,7 @@ function useLogicValue(): TRet {
     liveWallpaper$.commit({ source: '', type: WALLPAPER_TYPE.NONE })
   }
   const changeGradientWallpaper = (source: string): void =>
-    commitWallpaperPatch({
-      source,
-      type: WALLPAPER_TYPE.GRADIENT,
-      gradient: applyGradientPalette(
-        wallpaperState.gradient,
-        GRADIENT_WALLPAPER[source] ?? GRADIENT_WALLPAPER.pink,
-      ),
-    })
+    commitWallpaperPatch(buildGradientWallpaperPatch(wallpaperState, source))
   const changeGradientRecipe = (gradient: TGradientRecipe): void =>
     commitWallpaperPatch({ source: gradient.preset, type: WALLPAPER_TYPE.GRADIENT, gradient })
   const changeGradientRenderer = (renderer: TGradientRenderer): void => {
