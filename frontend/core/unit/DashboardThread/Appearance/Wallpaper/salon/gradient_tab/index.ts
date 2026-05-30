@@ -7,9 +7,9 @@ export default function useSalon() {
 
   return {
     wrapper: 'column gap-8 mt-2.5 relative',
-    gradientGrid: 'row-center wrap gap-3',
+    gradientGrid: 'row-center wrap gap-2',
     card: cn(
-      'size-14 circle p-0.5 relative border-2 border-transparent pointer trans-all-200',
+      'size-10 circle p-0.5 relative border-2 border-transparent pointer trans-all-200',
       `hover:${br('digest')}`,
     ),
     cardActive: primary('border'),

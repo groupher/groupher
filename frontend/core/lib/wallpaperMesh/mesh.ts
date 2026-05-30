@@ -2,34 +2,127 @@ import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
   DEFAULT_MESH_COLORS,
-  GRADIENT_TYPE,
-  MESH_GRADIENT_MODEL,
+  GRADIENT_RENDERER,
+  GRADIENT_SHAPE,
+  MESH_GRADIENT_RENDERERS,
 } from './constant'
 import { clamp, getFlowEndpoints } from './helper'
-import type { TGradientRecipe, TMeshGradientModel, TMeshGradientRecipe } from './spec'
+import type {
+  TGradientRecipe,
+  TGradientRenderer,
+  TMeshGradientRenderer,
+  TMeshGradientRecipe,
+} from './spec'
 
-const MESH_GRADIENT_MODELS = Object.values(MESH_GRADIENT_MODEL)
+const DEFAULT_ANGLE = 180
+const DEFAULT_RADIAL_CENTER = { x: 0.52, y: 0.28 }
+const DEFAULT_RADIAL_RADIUS = 82
+const DEFAULT_MESH_RENDERER = GRADIENT_RENDERER.FLOW
 
-const isMeshGradientModel = (model: string): model is TMeshGradientModel =>
-  MESH_GRADIENT_MODELS.includes(model as TMeshGradientModel)
+const isMeshGradientRenderer = (renderer: string): renderer is TMeshGradientRenderer =>
+  MESH_GRADIENT_RENDERERS.includes(renderer as TMeshGradientRenderer)
+
+export const isMeshGradientRecipe = (recipe: TGradientRecipe): recipe is TMeshGradientRecipe =>
+  isMeshGradientRenderer(recipe.renderer)
 
 const clampFinite = (value: number, fallback: number, min: number, max: number): number =>
   clamp(Number.isFinite(value) ? value : fallback, min, max)
+
+const getFinite = (value: number | undefined, fallback: number): number =>
+  Number.isFinite(value) ? (value as number) : fallback
+
+const getRecipeAngle = (recipe: TGradientRecipe): number => getFinite(recipe.angle, DEFAULT_ANGLE)
+
+export const getGradientRecipeSpread = (recipe: TGradientRecipe): number =>
+  isMeshGradientRecipe(recipe) ? recipe.softness : recipe.spread
+
+const getRecipeStops = (recipe: TGradientRecipe, colorCount: number): number[] | undefined =>
+  !isMeshGradientRecipe(recipe) && recipe.stops?.length === colorCount ? recipe.stops : undefined
+
+export const buildGradientRecipeForRenderer = (
+  recipe: TGradientRecipe,
+  renderer: TGradientRenderer,
+): TGradientRecipe => {
+  const colors = recipe.colors.length ? recipe.colors : [...DEFAULT_MESH_COLORS]
+  const base = {
+    version: 2,
+    preset: recipe.preset,
+    colors,
+  } as const
+  const angle = getRecipeAngle(recipe)
+  const spread = getGradientRecipeSpread(recipe)
+
+  if (renderer === GRADIENT_RENDERER.LINEAR) {
+    const stops = getRecipeStops(recipe, colors.length)
+
+    return {
+      ...base,
+      renderer,
+      angle,
+      ...(stops ? { stops } : {}),
+      spread,
+    }
+  }
+
+  if (renderer === GRADIENT_RENDERER.RADIAL) {
+    const stops = getRecipeStops(recipe, colors.length)
+
+    return {
+      ...base,
+      renderer,
+      angle,
+      center: 'center' in recipe ? recipe.center : DEFAULT_RADIAL_CENTER,
+      radius: 'radius' in recipe ? recipe.radius : DEFAULT_RADIAL_RADIUS,
+      shape: 'shape' in recipe ? recipe.shape : GRADIENT_SHAPE.ELLIPSE,
+      ...(stops ? { stops } : {}),
+      spread,
+    }
+  }
+
+  const meshRenderer = isMeshGradientRenderer(renderer) ? renderer : DEFAULT_MESH_RENDERER
+
+  return {
+    ...base,
+    renderer: meshRenderer,
+    seed: 'seed' in recipe ? recipe.seed : 1,
+    angle,
+    softness: spread,
+    warp: 'warp' in recipe ? recipe.warp : 55,
+    scale: 'scale' in recipe ? recipe.scale : 55,
+    contrast: 'contrast' in recipe ? recipe.contrast : 100,
+    brightness: 'brightness' in recipe ? recipe.brightness : 100,
+  }
+}
+
+export const applyGradientPalette = (
+  current: TGradientRecipe | null,
+  palette: TGradientRecipe,
+): TGradientRecipe => {
+  if (!current) return palette
+
+  return buildGradientRecipeForRenderer(
+    {
+      ...current,
+      preset: palette.preset,
+      colors: palette.colors,
+    },
+    current.renderer,
+  )
+}
 
 /**
  * Normalize a persisted mesh recipe before rendering or previewing it.
  *
  * @example
- * normalizeMeshRecipe(recipe).flow // clamped to 0..359
+ * normalizeMeshRecipe(recipe).angle // clamped to 0..359
  */
 export const normalizeMeshRecipe = (recipe: TMeshGradientRecipe): TMeshGradientRecipe => ({
   ...recipe,
   version: 2,
-  kind: GRADIENT_TYPE.MESH,
-  model: isMeshGradientModel(recipe.model) ? recipe.model : MESH_GRADIENT_MODEL.HAZE,
+  renderer: isMeshGradientRenderer(recipe.renderer) ? recipe.renderer : DEFAULT_MESH_RENDERER,
   seed: Number.isFinite(recipe.seed) ? recipe.seed : 1,
   colors: recipe.colors?.length ? recipe.colors : [...DEFAULT_MESH_COLORS],
-  flow: clampFinite(recipe.flow, 180, 0, 359),
+  angle: clampFinite(recipe.angle, DEFAULT_ANGLE, 0, 359),
   softness: clampFinite(recipe.softness, 72, 0, 100),
   warp: clampFinite(recipe.warp, 55, 0, 100),
   scale: clampFinite(recipe.scale, 55, 0, 100),
@@ -91,10 +184,10 @@ export const normalizeRadialGradientStops = (
 }
 
 export const normalizeGradientStops = (recipe: TGradientRecipe): number[] => {
-  if (recipe.kind === GRADIENT_TYPE.LINEAR) {
+  if (recipe.renderer === GRADIENT_RENDERER.LINEAR) {
     return normalizeLinearGradientStops(recipe.colors.length, recipe.spread, recipe.stops)
   }
-  if (recipe.kind === GRADIENT_TYPE.RADIAL) {
+  if (recipe.renderer === GRADIENT_RENDERER.RADIAL) {
     return normalizeRadialGradientStops(recipe.colors.length, recipe.spread, recipe.stops)
   }
 
@@ -108,7 +201,7 @@ const formatColorStops = (colors: string[], stops: number[]): string => {
 }
 
 export const buildLinearGradientBackground = (recipe: TGradientRecipe): string => {
-  if (recipe.kind !== GRADIENT_TYPE.LINEAR) return ''
+  if (recipe.renderer !== GRADIENT_RENDERER.LINEAR) return ''
 
   return `linear-gradient(${recipe.angle}deg, ${formatColorStops(
     recipe.colors,
@@ -117,7 +210,7 @@ export const buildLinearGradientBackground = (recipe: TGradientRecipe): string =
 }
 
 export const buildRadialGradientBackground = (recipe: TGradientRecipe): string => {
-  if (recipe.kind !== GRADIENT_TYPE.RADIAL) return ''
+  if (recipe.renderer !== GRADIENT_RENDERER.RADIAL) return ''
 
   return `radial-gradient(${recipe.shape} at ${Math.round(recipe.center.x * 100)}% ${Math.round(
     recipe.center.y * 100,
@@ -136,15 +229,15 @@ export const buildRadialGradientBackground = (recipe: TGradientRecipe): string =
 export const buildMeshGradientFallback = (recipe: TMeshGradientRecipe): string => {
   const safeRecipe = normalizeMeshRecipe(recipe)
 
-  return `linear-gradient(${safeRecipe.flow}deg, ${formatColorStops(
+  return `linear-gradient(${safeRecipe.angle}deg, ${formatColorStops(
     safeRecipe.colors,
     normalizeEvenGradientStops(safeRecipe.colors.length),
   )})`
 }
 
 export const buildGradientBackground = (recipe: TGradientRecipe): string => {
-  if (recipe.kind === GRADIENT_TYPE.LINEAR) return buildLinearGradientBackground(recipe)
-  if (recipe.kind === GRADIENT_TYPE.RADIAL) return buildRadialGradientBackground(recipe)
+  if (recipe.renderer === GRADIENT_RENDERER.LINEAR) return buildLinearGradientBackground(recipe)
+  if (recipe.renderer === GRADIENT_RENDERER.RADIAL) return buildRadialGradientBackground(recipe)
 
   return buildMeshGradientFallback(recipe)
 }
@@ -170,7 +263,7 @@ export const renderMeshBase = (
 
   ctx.filter = `contrast(${safeRecipe.contrast}%) brightness(${safeRecipe.brightness}%)`
 
-  const flow = getFlowEndpoints(safeRecipe.flow, width, height)
+  const flow = getFlowEndpoints(safeRecipe.angle, width, height)
   const baseGradient = ctx.createLinearGradient(flow.x0, flow.y0, flow.x1, flow.y1)
   const colorCount = Math.max(safeRecipe.colors.length - 1, 1)
   for (let index = 0; index < safeRecipe.colors.length; index += 1) {

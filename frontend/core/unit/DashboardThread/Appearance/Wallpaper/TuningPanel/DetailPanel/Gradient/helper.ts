@@ -1,5 +1,9 @@
 import { COLOR, RAINBOW_COLOR_HEX } from '~/const/colors'
-import { GRADIENT_TYPE, type TGradientRecipe } from '~/lib/wallpaperMesh'
+import {
+  getGradientRecipeSpread,
+  isMeshGradientRecipe,
+  type TGradientRecipe,
+} from '~/lib/wallpaperMesh'
 import type { TColorName } from '~/spec'
 
 export const findPresetColor = (
@@ -27,13 +31,13 @@ export const buildColorChips = (
 }
 
 export const getGradientSpreadValue = (gradient: TGradientRecipe): number =>
-  gradient.kind === GRADIENT_TYPE.MESH ? gradient.softness : gradient.spread
+  getGradientRecipeSpread(gradient)
 
 export const applyGradientSpreadValue = (
   gradient: TGradientRecipe,
   spread: number,
 ): TGradientRecipe => {
-  if (gradient.kind === GRADIENT_TYPE.MESH) {
+  if (isMeshGradientRecipe(gradient)) {
     // Mesh models share the user-facing Spread control, but each renderer may
     // interpret softness differently. FLOW maps it to strand density/curvature.
     return {

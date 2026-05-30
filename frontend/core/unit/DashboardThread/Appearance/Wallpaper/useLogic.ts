@@ -1,13 +1,5 @@
 import { clone, equals, pick } from 'ramda'
-import {
-  createContext,
-  createElement,
-  type ReactNode,
-  use,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
+import { createContext, use, useEffect, useMemo, useState } from 'react'
 
 import {
   GRADIENT_WALLPAPER,
@@ -17,8 +9,14 @@ import {
 } from '~/const/wallpaper'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
-import { DEFAULT_WALLPAPER_TEXTURE_INTENSITY, GRADIENT_TYPE } from '~/lib/wallpaperMesh'
-import type { TGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
+import {
+  applyGradientPalette,
+  buildGradientRecipeForRenderer,
+  DEFAULT_WALLPAPER_TEXTURE_INTENSITY,
+  GRADIENT_RENDERER,
+  isMeshGradientRecipe,
+} from '~/lib/wallpaperMesh'
+import type { TGradientRecipe, TGradientRenderer, TWallpaperTexture } from '~/lib/wallpaperMesh'
 import { toast } from '~/signal'
 import type { TWallpaperData, TWallpaperType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -45,7 +43,7 @@ const getInitialTab = (type: TWallpaperType): TTab => {
   }
 }
 
-type TRet = {
+export type TWallpaperLogic = {
   tab: TTab
   loading: boolean
   // derived
@@ -62,6 +60,7 @@ type TRet = {
   removeWallpaper: () => void
   changeGradientWallpaper: (source: string) => void
   changeGradientRecipe: (gradient: TGradientRecipe) => void
+  changeGradientRenderer: (renderer: TGradientRenderer) => void
   changePatternId: (patternId: string) => void
   changePatternTone: (patternTone: TWallpaperState['patternTone']) => void
   changePatternWallpaper: (source: string) => void
@@ -81,7 +80,7 @@ type TRet = {
   clearWallpaperPreview: () => void
 }
 
-const LogicContext = createContext<TRet | null>(null)
+export const LogicContext = createContext<TWallpaperLogic | null>(null)
 LogicContext.displayName = 'WallpaperLogic'
 
 const getWallpaperState = (wallpaper$: ReturnType<typeof useWallpaperDomain>): TWallpaperState => ({
@@ -103,10 +102,14 @@ const getWallpaperState = (wallpaper$: ReturnType<typeof useWallpaperDomain>): T
 })
 
 const getAngleDraft = (state: TWallpaperState): number => {
-  if (state.gradient?.kind === GRADIENT_TYPE.MESH) return state.gradient.flow
-  if (state.gradient?.kind === GRADIENT_TYPE.LINEAR) return state.gradient.angle
-  if (state.gradient?.kind === GRADIENT_TYPE.RADIAL) {
-    return radialCenterToAngle(state.gradient.center)
+  const { gradient } = state
+  if (!gradient) return 180
+
+  if (gradient.renderer === GRADIENT_RENDERER.RADIAL) {
+    return radialCenterToAngle(gradient.center)
+  }
+  if (gradient.renderer === GRADIENT_RENDERER.LINEAR || isMeshGradientRecipe(gradient)) {
+    return gradient.angle
   }
 
   return 180
@@ -141,7 +144,24 @@ const radialCenterFromAngle = (
   }
 }
 
-function useLogicValue(): TRet {
+export const buildGradientWallpaperPatch = (
+  wallpaper: Pick<TWallpaperState, 'type' | 'gradient'>,
+  source: string,
+): Pick<TWallpaperState, 'source' | 'type' | 'gradient'> => {
+  const palette = GRADIENT_WALLPAPER[source] ?? GRADIENT_WALLPAPER.pink
+  const gradient =
+    wallpaper.type === WALLPAPER_TYPE.GRADIENT
+      ? applyGradientPalette(wallpaper.gradient, palette)
+      : buildGradientRecipeForRenderer(palette, GRADIENT_RENDERER.LINEAR)
+
+  return {
+    source,
+    type: WALLPAPER_TYPE.GRADIENT,
+    gradient,
+  }
+}
+
+export function useLogicValue(): TWallpaperLogic {
   const wallpaper$ = useWallpaperDomain()
   const liveWallpaper$ = wallpaper$.live$ ?? wallpaper$
   const community$ = useCommunity()
@@ -238,17 +258,17 @@ function useLogicValue(): TRet {
   const changeAngle = (angle: number): void => {
     setAngleDraft(angle)
 
-    if (wallpaperState.gradient?.kind === GRADIENT_TYPE.MESH) {
-      scheduleWallpaperPreview({ gradient: { ...wallpaperState.gradient, flow: angle } })
-      return
-    }
-
-    if (wallpaperState.gradient?.kind === GRADIENT_TYPE.LINEAR) {
+    if (wallpaperState.gradient?.renderer === GRADIENT_RENDERER.LINEAR) {
       scheduleWallpaperPreview({ gradient: { ...wallpaperState.gradient, angle } })
       return
     }
 
-    if (wallpaperState.gradient?.kind === GRADIENT_TYPE.RADIAL) {
+    if (wallpaperState.gradient && isMeshGradientRecipe(wallpaperState.gradient)) {
+      scheduleWallpaperPreview({ gradient: { ...wallpaperState.gradient, angle } })
+      return
+    }
+
+    if (wallpaperState.gradient?.renderer === GRADIENT_RENDERER.RADIAL) {
       scheduleWallpaperPreview({
         gradient: {
           ...wallpaperState.gradient,
@@ -269,13 +289,18 @@ function useLogicValue(): TRet {
     liveWallpaper$.commit({ source: '', type: WALLPAPER_TYPE.NONE })
   }
   const changeGradientWallpaper = (source: string): void =>
-    commitWallpaperPatch({
-      source,
-      type: WALLPAPER_TYPE.GRADIENT,
-      gradient: GRADIENT_WALLPAPER[source] ?? GRADIENT_WALLPAPER.pink,
-    })
+    commitWallpaperPatch(buildGradientWallpaperPatch(wallpaperState, source))
   const changeGradientRecipe = (gradient: TGradientRecipe): void =>
     commitWallpaperPatch({ source: gradient.preset, type: WALLPAPER_TYPE.GRADIENT, gradient })
+  const changeGradientRenderer = (renderer: TGradientRenderer): void => {
+    const gradient = wallpaperState.gradient ?? GRADIENT_WALLPAPER.pink
+
+    commitWallpaperPatch({
+      source: gradient.preset,
+      type: WALLPAPER_TYPE.GRADIENT,
+      gradient: buildGradientRecipeForRenderer(gradient, renderer),
+    })
+  }
   const changePatternId = (patternId: string): void =>
     commitWallpaperPatch({ patternId, hasPattern: true })
   const changePatternTone = (patternTone: TWallpaperState['patternTone']): void =>
@@ -321,6 +346,7 @@ function useLogicValue(): TRet {
     removeWallpaper,
     changeGradientWallpaper,
     changeGradientRecipe,
+    changeGradientRenderer,
     changePatternId,
     changePatternTone,
     changePatternWallpaper,
@@ -341,15 +367,9 @@ function useLogicValue(): TRet {
   }
 }
 
-export function WallpaperLogicProvider({ children }: { children: ReactNode }) {
-  const value = useLogicValue()
-
-  return createElement(LogicContext.Provider, { value }, children)
-}
-
-export default function useLogic(): TRet {
+export default function useLogic(): TWallpaperLogic {
   const value = use(LogicContext)
-  if (!value) throw new Error('useLogic must be used within WallpaperLogicProvider')
+  if (!value) throw new Error('useLogic must be used within LogicProvider')
 
   return value
 }

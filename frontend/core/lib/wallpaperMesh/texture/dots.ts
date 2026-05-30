@@ -1,3 +1,4 @@
+import { WALLPAPER_TEXTURE_SURFACE } from '../constant'
 import { clamp, getLuminance } from '../helper'
 import type { TTextureSurface } from '../spec'
 
@@ -10,15 +11,15 @@ const easeDotsIntensity = (intensity: number): number => {
 }
 
 const getCellSize = (surface: TTextureSurface): number => {
-  if (surface === 'wallpaper') return 14
-  if (surface === 'preview') return 11
+  if (surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER) return 14
+  if (surface === WALLPAPER_TEXTURE_SURFACE.PREVIEW) return 11
 
   return 8
 }
 
 const getDotRadius = (surface: TTextureSurface): number => {
-  if (surface === 'wallpaper') return 3.4
-  if (surface === 'preview') return 2.75
+  if (surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER) return 3.4
+  if (surface === WALLPAPER_TEXTURE_SURFACE.PREVIEW) return 2.75
 
   return 2.15
 }
@@ -91,7 +92,7 @@ const deriveDotColor = (
  * Draw a regular dotted field where intensity controls the number of visible dots.
  *
  * @example
- * renderDotsTexture(ctx, sourceCanvas, 420, 260, 55, 'preview')
+ * renderDotsTexture(ctx, sourceCanvas, 420, 260, 55, WALLPAPER_TEXTURE_SURFACE.PREVIEW)
  */
 export const renderDotsTexture = (
   ctx: CanvasRenderingContext2D,
@@ -105,7 +106,7 @@ export const renderDotsTexture = (
   const cell = getCellSize(surface)
   const radius = getDotRadius(surface)
   const density = 0.08 + amount * 0.84
-  const alpha = (surface === 'wallpaper' ? 0.58 : 0.62) + amount * 0.18
+  const alpha = (surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER ? 0.58 : 0.62) + amount * 0.18
   const sourceCtx = source.getContext('2d')
   if (!sourceCtx) return
 

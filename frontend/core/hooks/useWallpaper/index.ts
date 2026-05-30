@@ -13,13 +13,15 @@ import {
   buildActivePatternWallpapers,
 } from '~/hooks/useFullWallpaper/helper'
 import {
-  GRADIENT_TYPE,
+  GRADIENT_RENDERER,
+  isMeshGradientRecipe,
   normalizeMeshRecipe,
   normalizeEvenGradientStops,
   normalizeGradientStops,
   normalizeTexture,
   WALLPAPER_TEXTURE,
 } from '~/lib/wallpaperMesh'
+import { WALLPAPER_RENDER_KIND } from '~/lib/wallpaperRenderer/constant'
 import type { TWallpaperRenderDescriptor } from '~/lib/wallpaperRenderer/spec'
 import type { TCustomWallpaper, TWallpaperFmt, TWallpaperPic } from '~/spec'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
@@ -75,6 +77,13 @@ const getWallpaperCssState = (store: Pick<TStore, keyof TWallpaperState>): TWall
   type: store.type,
   bgSize: store.bgSize,
 })
+
+// Renderer draws pattern as a separate opacity-controlled overlay; keep the
+// fallback background pattern-free so first paint cannot flash a 100% pattern.
+const getWallpaperRendererFallbackState = (state: TWallpaperState): TWallpaperState =>
+  state.type === WALLPAPER_TYPE.GRADIENT && state.hasPattern
+    ? { ...state, hasPattern: false }
+    : state
 
 export const resolveWallpaper = (state: TWallpaperState): TRet => {
   const {
@@ -158,7 +167,7 @@ export const resolveWallpaper = (state: TWallpaperState): TRet => {
 export const resolveWallpaperRenderDescriptor = (
   state: TWallpaperState,
 ): TWallpaperRenderDescriptor => {
-  const { background, effect } = resolveWallpaper(state)
+  const { background, effect } = resolveWallpaper(getWallpaperRendererFallbackState(state))
   const base = {
     background: background || 'transparent',
     filter: getFilterValue(effect),
@@ -171,7 +180,7 @@ export const resolveWallpaperRenderDescriptor = (
     bgSize: state.bgSize,
     colors: DEFAULT_RENDER_COLORS,
     colorStops: normalizeEvenGradientStops(DEFAULT_RENDER_COLORS.length),
-    flow: state.gradient?.kind === GRADIENT_TYPE.LINEAR ? state.gradient.angle : 180,
+    flow: state.gradient?.renderer === GRADIENT_RENDERER.LINEAR ? state.gradient.angle : 180,
     texture: normalizeTexture(state.texture),
     blurIntensity: state.blurIntensity,
     brightness: state.brightness,
@@ -182,18 +191,18 @@ export const resolveWallpaperRenderDescriptor = (
   }
 
   if (state.type === WALLPAPER_TYPE.NONE) {
-    return { ...base, kind: 'none' }
+    return { ...base, kind: WALLPAPER_RENDER_KIND.NONE }
   }
 
   if (state.type === WALLPAPER_TYPE.GRADIENT) {
     const gradient = state.gradient || GRADIENT_WALLPAPER[state.source]
-    if (!gradient) return { ...base, kind: 'none' }
+    if (!gradient) return { ...base, kind: WALLPAPER_RENDER_KIND.NONE }
 
-    if (gradient.kind === GRADIENT_TYPE.MESH) {
+    if (isMeshGradientRecipe(gradient)) {
       const meshRecipe = normalizeMeshRecipe(gradient)
       return {
         ...base,
-        kind: 'mesh-gradient',
+        kind: WALLPAPER_RENDER_KIND.MESH_GRADIENT,
         hasPattern: state.hasPattern,
         patternImage: resolveWallpaperPattern(state.patternId),
         patternOpacity: getPatternOpacity(state.patternIntensity),
@@ -201,14 +210,17 @@ export const resolveWallpaperRenderDescriptor = (
         hasTexture: state.hasTexture,
         colors: meshRecipe.colors,
         colorStops: normalizeGradientStops(meshRecipe),
-        flow: meshRecipe.flow,
+        flow: meshRecipe.angle,
         meshRecipe,
       }
     }
 
     return {
       ...base,
-      kind: gradient.kind === GRADIENT_TYPE.RADIAL ? 'radial-gradient' : 'linear-gradient',
+      kind:
+        gradient.renderer === GRADIENT_RENDERER.RADIAL
+          ? WALLPAPER_RENDER_KIND.RADIAL_GRADIENT
+          : WALLPAPER_RENDER_KIND.LINEAR_GRADIENT,
       hasPattern: state.hasPattern,
       patternImage: resolveWallpaperPattern(state.patternId),
       patternOpacity: getPatternOpacity(state.patternIntensity),
@@ -216,13 +228,13 @@ export const resolveWallpaperRenderDescriptor = (
       hasTexture: state.hasTexture,
       colors: gradient.colors,
       colorStops: normalizeGradientStops(gradient),
-      flow: gradient.kind === GRADIENT_TYPE.LINEAR ? gradient.angle : 180,
+      flow: gradient.renderer === GRADIENT_RENDERER.LINEAR ? gradient.angle : 180,
       gradientRecipe: gradient,
     }
   }
 
   if (!state.source) {
-    return { ...base, kind: 'none' }
+    return { ...base, kind: WALLPAPER_RENDER_KIND.NONE }
   }
 
   if (state.type === WALLPAPER_TYPE.PATTERN) {
@@ -230,7 +242,7 @@ export const resolveWallpaperRenderDescriptor = (
 
     return {
       ...base,
-      kind: wallpaper?.image ? 'image' : 'none',
+      kind: wallpaper?.image ? WALLPAPER_RENDER_KIND.IMAGE : WALLPAPER_RENDER_KIND.NONE,
       imageUrl: wallpaper?.image || '',
     }
   }
@@ -238,12 +250,12 @@ export const resolveWallpaperRenderDescriptor = (
   if (state.type === WALLPAPER_TYPE.UPLOAD) {
     return {
       ...base,
-      kind: state.source ? 'image' : 'none',
+      kind: state.source ? WALLPAPER_RENDER_KIND.IMAGE : WALLPAPER_RENDER_KIND.NONE,
       imageUrl: state.source,
     }
   }
 
-  return { ...base, kind: 'none' }
+  return { ...base, kind: WALLPAPER_RENDER_KIND.NONE }
 }
 
 export default function useWallpaper(): TRet {

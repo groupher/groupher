@@ -6,6 +6,6 @@ export default function useSalon() {
   return {
     wrapper: 'row-center w-full gap-4 mb-4',
     title: cn('text-sm shrink-0', fg('title')),
-    line: cn('border-t border-dashed flex-1', br('divider')),
+    line: cn('border-t flex-1', br('divider')),
   }
 }

@@ -15,8 +15,11 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
   @optional_fields dsb_cast_fields(:wallpaper)
   @wallpaper_types ~w(none gradient picture upload)
   @bg_sizes ~w(cover contain auto)
-  @texture_types ~w(noise tile beam ascii dots)
-  @mesh_models ~w(haze ridge brushed ribbon scanline glow flow liquid)
+  @texture_types ~w(noise tile beam ascii dots oil)
+  @gradient_renderer_linear "linear"
+  @gradient_renderer_radial "radial"
+  @mesh_renderers ~w(flow liquid)
+  @radial_shapes ~w(circle ellipse)
   @pattern_ids 1..33 |> Enum.map(&String.pad_leading("#{&1}", 2, "0"))
   @pattern_tones ~w(dark light)
 
@@ -89,11 +92,13 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
   end
 
   defp valid_gradient?(gradient) do
-    case map_get(gradient, "kind") do
-      "linear" -> valid_linear_gradient?(gradient)
-      "radial" -> valid_radial_gradient?(gradient)
-      "mesh" -> valid_mesh?(gradient)
-      _ -> false
+    renderer = map_get(gradient, "renderer")
+
+    cond do
+      renderer == @gradient_renderer_linear -> valid_linear_gradient?(gradient)
+      renderer == @gradient_renderer_radial -> valid_radial_gradient?(gradient)
+      renderer in @mesh_renderers -> valid_mesh?(gradient)
+      true -> false
     end
   end
 
@@ -103,38 +108,40 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
     angle = map_get(gradient, "angle")
     spread = map_get(gradient, "spread")
 
-    version == 1 and valid_colors?(colors) and number_in_range?(angle, 0, 359) and
+    version == 2 and valid_colors?(colors) and number_in_range?(angle, 0, 359) and
       number_in_range?(spread, 0, 100)
   end
 
   defp valid_radial_gradient?(gradient) do
     version = map_get(gradient, "version")
     colors = map_get(gradient, "colors")
+    angle = map_get(gradient, "angle")
     center = map_get(gradient, "center")
     radius = map_get(gradient, "radius")
     shape = map_get(gradient, "shape")
     spread = map_get(gradient, "spread")
 
-    version == 1 and valid_colors?(colors) and is_map(center) and
+    version == 2 and valid_colors?(colors) and optional_number_in_range?(angle, 0, 359) and
+      is_map(center) and
       number_in_range?(map_get(center, "x"), 0, 1) and
       number_in_range?(map_get(center, "y"), 0, 1) and
-      number_in_range?(radius, 1, 100) and shape in ~w(circle ellipse) and
+      number_in_range?(radius, 1, 100) and shape in @radial_shapes and
       number_in_range?(spread, 0, 100)
   end
 
   defp valid_mesh?(mesh) do
     version = map_get(mesh, "version")
-    model = map_get(mesh, "model")
+    renderer = map_get(mesh, "renderer")
     colors = map_get(mesh, "colors")
-    flow = map_get(mesh, "flow")
+    angle = map_get(mesh, "angle")
     softness = map_get(mesh, "softness")
     warp = map_get(mesh, "warp")
     scale = map_get(mesh, "scale")
     contrast = map_get(mesh, "contrast")
     brightness = map_get(mesh, "brightness")
 
-    version == 2 and model in @mesh_models and valid_colors?(colors) and
-      number_in_range?(flow, 0, 359) and
+    version == 2 and renderer in @mesh_renderers and valid_colors?(colors) and
+      number_in_range?(angle, 0, 359) and
       number_in_range?(softness, 0, 100) and
       number_in_range?(warp, 0, 100) and
       number_in_range?(scale, 0, 100) and
@@ -143,6 +150,9 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
   end
 
   defp valid_colors?(colors), do: is_list(colors) and colors != []
+
+  defp optional_number_in_range?(nil, _min, _max), do: true
+  defp optional_number_in_range?(value, min, max), do: number_in_range?(value, min, max)
 
   defp number_in_range?(value, min, max) when is_number(value), do: value >= min and value <= max
   defp number_in_range?(_, _, _), do: false

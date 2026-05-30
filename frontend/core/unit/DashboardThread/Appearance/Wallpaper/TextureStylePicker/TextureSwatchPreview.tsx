@@ -52,6 +52,13 @@ const ASCII_ROWS = [
     { id: 'c3', char: 'X' },
   ],
 ]
+const OIL_PATCHES = [
+  'left-0 top-0 h-2.5 w-3',
+  'left-2 top-1 h-3 w-3.5',
+  'right-0 top-0.5 h-2 w-2.5',
+  'left-0.5 bottom-1 h-2.5 w-4',
+  'right-1 bottom-0 h-3 w-3',
+]
 
 export default function TextureSwatchPreview({ type, variant = 'picker' }: Props) {
   const { cn } = useTwBelt()
@@ -105,6 +112,17 @@ export default function TextureSwatchPreview({ type, variant = 'picker' }: Props
         <div className='relative size-full'>
           {NOISE_DOTS.map(({ id, className }) => (
             <span key={id} className={cn(s.noiseDot, className)} />
+          ))}
+        </div>
+      )}
+
+      {type === WALLPAPER_TEXTURE.OIL && (
+        <div className='relative size-full'>
+          {OIL_PATCHES.map((className, index) => (
+            <span
+              key={className}
+              className={cn(s.oilPatch, className, index % 2 && 'opacity-65')}
+            />
           ))}
         </div>
       )}

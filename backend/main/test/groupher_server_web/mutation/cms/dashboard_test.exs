@@ -167,12 +167,11 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         gradient:
           Jason.encode!(%{
             version: 2,
-            kind: "mesh",
+            renderer: "flow",
             preset: "test",
-            model: "haze",
             seed: 1,
             colors: ["#fff", "#000"],
-            flow: 45,
+            angle: 45,
             softness: 60,
             warp: 50,
             scale: 60,
@@ -195,7 +194,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert get_in(updated, ["wallpaper", "brightness"]) == 85
       assert get_in(updated, ["wallpaper", "saturation"]) == 120
       assert get_in(updated, ["wallpaper", "gradient", "preset"]) == "test"
-      assert get_in(updated, ["wallpaper", "gradient", "model"]) == "haze"
+      assert get_in(updated, ["wallpaper", "gradient", "renderer"]) == "flow"
       assert get_in(updated, ["wallpaper", "texture", "type"]) == "ascii"
       assert get_in(updated, ["wallpaper", "texture", "intensity"]) == 55
 
@@ -211,7 +210,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.wallpaper.brightness == 85
       assert found.dashboard.wallpaper.saturation == 120
       assert found.dashboard.wallpaper.gradient["preset"] == "test"
-      assert found.dashboard.wallpaper.gradient["model"] == "haze"
+      assert found.dashboard.wallpaper.gradient["renderer"] == "flow"
       assert found.dashboard.wallpaper.texture["type"] == "ascii"
       assert found.dashboard.wallpaper.texture["intensity"] == 55
 
@@ -229,6 +228,21 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       assert found.dashboard.wallpaper.texture["type"] == "dots"
       assert found.dashboard.wallpaper.texture["intensity"] == 42
+
+      updated =
+        rule_conn
+        |> gq_mutation(@update_wallpaper_query, %{
+          community: community.slug,
+          texture: Jason.encode!(%{type: "oil", intensity: 68, params: %{}})
+        })
+
+      assert get_in(updated, ["wallpaper", "texture", "type"]) == "oil"
+      assert get_in(updated, ["wallpaper", "texture", "intensity"]) == 68
+
+      {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
+
+      assert found.dashboard.wallpaper.texture["type"] == "oil"
+      assert found.dashboard.wallpaper.texture["intensity"] == 68
     end
 
     @update_enable_query """

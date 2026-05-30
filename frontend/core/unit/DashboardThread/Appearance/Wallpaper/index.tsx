@@ -10,11 +10,12 @@ import ThemeSwitchPreview from '~/widgets/ThemeSwitch/Preview'
 import SectionLabel from '../../SectionLabel'
 import { TAB, TAB_OPTIONS } from './constant'
 import GradientTab from './GradientTab'
+import LogicProvider from './LogicProvider'
 import PicturesTab from './PicturesTab'
 import PreviewPanel from './PreviewPanel'
 import useSalon from './salon'
 import UploadTab from './UploadTab'
-import useLogic, { WallpaperLogicProvider } from './useLogic'
+import useLogic from './useLogic'
 
 const TAB_TRANSITION = {
   duration: 0.18,
@@ -27,15 +28,7 @@ const TAB_ANIMATION = {
   exit: { opacity: 0, y: -4 },
 } as const
 
-export default function Wallpaper() {
-  return (
-    <WallpaperLogicProvider>
-      <WallpaperContent />
-    </WallpaperLogicProvider>
-  )
-}
-
-function WallpaperContent() {
+function Wallpaper() {
   const s = useSalon()
   const { t } = useTrans()
   const { tab, changeTab, initRollback, isTouched } = useLogic()
@@ -83,3 +76,5 @@ function WallpaperContent() {
     </div>
   )
 }
+
+export default LogicProvider(Wallpaper)

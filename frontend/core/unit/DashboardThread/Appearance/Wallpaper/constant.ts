@@ -1,8 +1,8 @@
-export const TAB = {
-  PICTURES: 'pictures',
-  GRADIENT: 'gradient',
-  UPLOAD: 'upload',
-} as const
+export enum TAB {
+  PICTURES = 'pictures',
+  GRADIENT = 'gradient',
+  UPLOAD = 'upload',
+}
 
 export const TAB_OPTIONS = [
   {

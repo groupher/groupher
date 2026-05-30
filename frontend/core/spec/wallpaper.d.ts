@@ -1,6 +1,5 @@
-import type { WALLPAPER_PATTERN_TONE, WALLPAPER_TYPE } from '~/const/wallpaper'
+import type { WALLPAPER_BG_SIZE, WALLPAPER_PATTERN_TONE, WALLPAPER_TYPE } from '~/const/wallpaper'
 import type { TGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
-import type { TConstValues } from '~/spec'
 
 export type TWallpaperFmt = {
   effect: string
@@ -23,7 +22,7 @@ export type TWallpaperGradient = {
 export type TWallpaperPic = {
   image?: string
   preview?: string
-  bgSize?: string // 'contain' | 'cover' | 'auto'
+  bgSize?: TWallpaperBgSize
 
   // Applied by dashboard wallpaper settings before parsing the render background.
   blurIntensity?: number
@@ -41,9 +40,11 @@ export type TWallpaperPattern = {
 
 export type TCustomWallpaper = TWallpaper | null
 
-export type TWallpaperType = TConstValues<typeof WALLPAPER_TYPE>
+export type TWallpaperType = WALLPAPER_TYPE
 
-export type TWallpaperPatternTone = TConstValues<typeof WALLPAPER_PATTERN_TONE>
+export type TWallpaperPatternTone = WALLPAPER_PATTERN_TONE
+
+export type TWallpaperBgSize = WALLPAPER_BG_SIZE
 
 export type TWallpaperInfo = {
   customWallpaper?: TCustomWallpaper
@@ -71,7 +72,7 @@ export type TWallpaperData = {
   saturation: number
   gradient: TGradientRecipe | null
   texture: TWallpaperTexture
-  bgSize: string
+  bgSize: TWallpaperBgSize
 }
 
 export type TParsedWallpaper = TWallpaperData & {

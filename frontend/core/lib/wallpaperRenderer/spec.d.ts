@@ -1,11 +1,9 @@
 import type { TGradientRecipe, TMeshGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
+import type { TWallpaperBgSize } from '~/spec'
 
-export type TWallpaperRenderKind =
-  | 'none'
-  | 'linear-gradient'
-  | 'radial-gradient'
-  | 'mesh-gradient'
-  | 'image'
+import type { WALLPAPER_RENDER_KIND } from './constant'
+
+export type TWallpaperRenderKind = WALLPAPER_RENDER_KIND
 
 export type TWallpaperRenderDescriptor = {
   kind: TWallpaperRenderKind
@@ -17,7 +15,7 @@ export type TWallpaperRenderDescriptor = {
   patternColor: string
   hasTexture: boolean
   source: string
-  bgSize: string
+  bgSize: TWallpaperBgSize
   colors: string[]
   colorStops: number[]
   flow: number

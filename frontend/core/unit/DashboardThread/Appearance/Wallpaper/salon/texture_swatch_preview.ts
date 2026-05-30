@@ -11,5 +11,6 @@ export default function useSalon() {
     tile: cn('h-1.5 rounded-none shadow-sm', bg('digest')),
     dot: cn('size-0.5 rounded-full shadow-sm', bg('digest')),
     beam: cn('h-full w-1', bg('digest')),
+    oilPatch: cn('absolute rounded-[2px] shadow-sm opacity-80', bg('digest')),
   }
 }

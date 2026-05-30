@@ -1,4 +1,10 @@
-import { DEFAULT_MESH_COLORS, PREVIEW_HEIGHT, PREVIEW_WIDTH, WALLPAPER_TEXTURE } from '../constant'
+import {
+  DEFAULT_MESH_COLORS,
+  PREVIEW_HEIGHT,
+  PREVIEW_WIDTH,
+  WALLPAPER_TEXTURE,
+  WALLPAPER_TEXTURE_SURFACE,
+} from '../constant'
 import { clamp, drawCoverImage, getFlowEndpoints, loadImage, seededRandom } from '../helper'
 import { renderMeshBase } from '../mesh'
 import type {
@@ -12,26 +18,22 @@ import { renderAsciiTexture } from './ascii'
 import { renderBeamTexture } from './beam'
 import { renderDotsTexture } from './dots'
 import { renderNoiseTexture } from './noise'
+import { renderOilTexture } from './oil'
 import { renderTileTexture } from './tile'
 
 /**
- * Normalize external texture names and legacy aliases to supported values.
+ * Normalize external texture names to supported values.
  *
  * @example
- * normalizeTextureType('halftone') // 'dots'
+ * normalizeTextureType(WALLPAPER_TEXTURE.DOTS) // 'dots'
  */
 export const normalizeTextureType = (type?: string): TImageTextureType => {
-  if (type === 'mosaic') return WALLPAPER_TEXTURE.TILE
-  if (type === 'dot' || type === 'halftone') return WALLPAPER_TEXTURE.DOTS
-  if (
-    type === WALLPAPER_TEXTURE.NOISE ||
-    type === WALLPAPER_TEXTURE.TILE ||
-    type === WALLPAPER_TEXTURE.BEAM ||
-    type === WALLPAPER_TEXTURE.ASCII ||
-    type === WALLPAPER_TEXTURE.DOTS
-  ) {
-    return type
-  }
+  if (type === WALLPAPER_TEXTURE.NOISE) return WALLPAPER_TEXTURE.NOISE
+  if (type === WALLPAPER_TEXTURE.TILE) return WALLPAPER_TEXTURE.TILE
+  if (type === WALLPAPER_TEXTURE.BEAM) return WALLPAPER_TEXTURE.BEAM
+  if (type === WALLPAPER_TEXTURE.ASCII) return WALLPAPER_TEXTURE.ASCII
+  if (type === WALLPAPER_TEXTURE.DOTS) return WALLPAPER_TEXTURE.DOTS
+  if (type === WALLPAPER_TEXTURE.OIL) return WALLPAPER_TEXTURE.OIL
 
   return WALLPAPER_TEXTURE.NOISE
 }
@@ -54,7 +56,7 @@ export const normalizeTexture = (
  * Apply the selected Canvas texture renderer to a destination canvas.
  *
  * @example
- * renderTexture(ctx, sourceCanvas, 420, 260, texture, 'preview')
+ * renderTexture(ctx, sourceCanvas, 420, 260, texture, WALLPAPER_TEXTURE_SURFACE.PREVIEW)
  */
 export const renderTexture = (
   ctx: CanvasRenderingContext2D,
@@ -86,6 +88,10 @@ export const renderTexture = (
   if (texture.type === WALLPAPER_TEXTURE.DOTS) {
     renderDotsTexture(ctx, source, width, height, intensity, surface)
   }
+
+  if (texture.type === WALLPAPER_TEXTURE.OIL) {
+    renderOilTexture(ctx, source, width, height, intensity, surface)
+  }
 }
 
 /**
@@ -100,7 +106,7 @@ export const renderImageTextureDataUrl = async ({
   intensity = 55,
   width = 360,
   height = 170,
-  surface = 'preview',
+  surface = WALLPAPER_TEXTURE_SURFACE.PREVIEW,
 }: {
   imageUrl: string
   texture: TImageTextureType
@@ -177,7 +183,7 @@ export const renderGradientTextureDataUrl = async ({
   intensity = 45,
   width = 1920,
   height = 1080,
-  surface = 'wallpaper',
+  surface = WALLPAPER_TEXTURE_SURFACE.WALLPAPER,
 }: {
   colors: string[]
   direction?: string
@@ -277,7 +283,7 @@ export const renderMeshTexturePreviewDataUrl = ({
   if (!sourceCtx) return null
 
   sourceCtx.drawImage(canvas, 0, 0)
-  renderTexture(ctx, source, width, height, texture, 'preview')
+  renderTexture(ctx, source, width, height, texture, WALLPAPER_TEXTURE_SURFACE.PREVIEW)
 
   return canvas.toDataURL('image/png')
 }
@@ -325,7 +331,7 @@ export const renderTextureSwatchDataUrl = ({
   sourceCtx.fillRect(0, 0, width, height)
   ctx.drawImage(source, 0, 0)
 
-  renderTexture(ctx, source, width, height, texture, 'swatch')
+  renderTexture(ctx, source, width, height, texture, WALLPAPER_TEXTURE_SURFACE.SWATCH)
 
   if (texture.type === WALLPAPER_TEXTURE.NOISE) {
     ctx.fillStyle = palette.digest

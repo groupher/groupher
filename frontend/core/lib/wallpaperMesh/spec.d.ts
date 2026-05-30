@@ -1,14 +1,14 @@
-import type { TConstValues } from '~/spec'
-
 import type {
-  GRADIENT_TYPE,
-  MESH_GRADIENT_MODEL,
+  GRADIENT_RENDERER,
+  GRADIENT_SHAPE,
+  MESH_GRADIENT_RENDERERS,
+  WALLPAPER_GRADIENT_RENDERER_OPTIONS,
   WALLPAPER_TEXTURE,
   WALLPAPER_TEXTURE_OPTIONS,
   WALLPAPER_TEXTURE_SURFACE,
 } from './constant'
 
-export type TImageTextureType = TConstValues<typeof WALLPAPER_TEXTURE>
+export type TImageTextureType = WALLPAPER_TEXTURE
 
 export type TWallpaperTexture = {
   type: TImageTextureType
@@ -16,7 +16,7 @@ export type TWallpaperTexture = {
   params: Record<string, unknown>
 }
 
-export type TTextureSurface = TConstValues<typeof WALLPAPER_TEXTURE_SURFACE>
+export type TTextureSurface = WALLPAPER_TEXTURE_SURFACE
 
 export type TTextureOption = (typeof WALLPAPER_TEXTURE_OPTIONS)[number]
 
@@ -27,17 +27,17 @@ export type TTextureSwatchPalette = {
   digest: string
 }
 
-export type TGradientType = TConstValues<typeof GRADIENT_TYPE>
-export type TMeshGradientModel = TConstValues<typeof MESH_GRADIENT_MODEL>
+export type TGradientRenderer = GRADIENT_RENDERER
+export type TMeshGradientRenderer = (typeof MESH_GRADIENT_RENDERERS)[number]
+export type TGradientRendererOption = (typeof WALLPAPER_GRADIENT_RENDERER_OPTIONS)[number]
 
 export type TMeshGradientRecipe = {
   version: 2
-  kind: typeof GRADIENT_TYPE.MESH
+  renderer: TMeshGradientRenderer
   preset: string
-  model: TMeshGradientModel
   seed: number
   colors: string[]
-  flow: number
+  angle: number
   softness: number
   warp: number
   scale: number
@@ -46,8 +46,8 @@ export type TMeshGradientRecipe = {
 }
 
 export type TLinearGradientRecipe = {
-  version: 1
-  kind: typeof GRADIENT_TYPE.LINEAR
+  version: 2
+  renderer: GRADIENT_RENDERER.LINEAR
   preset: string
   colors: string[]
   angle: number
@@ -56,16 +56,17 @@ export type TLinearGradientRecipe = {
 }
 
 export type TRadialGradientRecipe = {
-  version: 1
-  kind: typeof GRADIENT_TYPE.RADIAL
+  version: 2
+  renderer: GRADIENT_RENDERER.RADIAL
   preset: string
   colors: string[]
+  angle?: number
   center: {
     x: number
     y: number
   }
   radius: number
-  shape: 'circle' | 'ellipse'
+  shape: GRADIENT_SHAPE
   stops?: number[]
   spread: number
 }
