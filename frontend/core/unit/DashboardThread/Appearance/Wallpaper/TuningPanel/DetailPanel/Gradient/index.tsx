@@ -36,18 +36,12 @@ type Props = {
 export default function Gradient({ gradient, canUseAngle }: Props) {
   const { t } = useTrans()
   const { theme } = useTheme()
-  const {
-    scheduleWallpaperPreview,
-    flushWallpaperDraft,
-    changeGradientRenderer,
-    changeRadialCenter,
-  } = useLogic()
+  const { scheduleWallpaperPreview, flushWallpaperDraft, changeGradientRenderer } = useLogic()
   const s = useSalon()
   const [draftGradient, setDraftGradient] = useState<TGradientRecipe | null>(gradient)
   const activeGradient = draftGradient ?? gradient
   const spread = activeGradient ? getGradientSpreadValue(activeGradient) : 50
   const colorChips = activeGradient ? buildColorChips(activeGradient) : []
-  const isRadial = activeGradient?.renderer === GRADIENT_RENDERER.RADIAL
 
   useEffect(() => {
     setDraftGradient(gradient)
@@ -96,7 +90,7 @@ export default function Gradient({ gradient, canUseAngle }: Props) {
       center,
     }
     setDraftGradient(nextGradient)
-    changeRadialCenter(center)
+    scheduleWallpaperPreview({ gradient: nextGradient })
   }
 
   if (!activeGradient) return null
@@ -166,7 +160,7 @@ export default function Gradient({ gradient, canUseAngle }: Props) {
           />
         </GroupItem>
 
-        {isRadial && (
+        {activeGradient.renderer === GRADIENT_RENDERER.RADIAL && (
           <GroupItem label={t('dsb.appearance.wallpaper.editor.focal_point')} align='start'>
             <FocalPointControl
               center={activeGradient.center}
@@ -177,7 +171,7 @@ export default function Gradient({ gradient, canUseAngle }: Props) {
           </GroupItem>
         )}
 
-        {canUseAngle && !isRadial && (
+        {canUseAngle && activeGradient.renderer !== GRADIENT_RENDERER.RADIAL && (
           <GroupItem label={t('dsb.appearance.wallpaper.editor.direction')}>
             <div className={s.angle}>
               <AngleWheel />

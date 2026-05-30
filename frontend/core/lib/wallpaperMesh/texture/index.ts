@@ -67,6 +67,7 @@ export const renderTexture = (
   surface: TTextureSurface,
 ): void => {
   const intensity = clamp(texture.intensity, 0, 100)
+  if (intensity <= 0) return
 
   if (texture.type === WALLPAPER_TEXTURE.NOISE) {
     renderNoiseTexture(ctx, width, height, intensity, surface)

@@ -228,6 +228,21 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       assert found.dashboard.wallpaper.texture["type"] == "dots"
       assert found.dashboard.wallpaper.texture["intensity"] == 42
+
+      updated =
+        rule_conn
+        |> gq_mutation(@update_wallpaper_query, %{
+          community: community.slug,
+          texture: Jason.encode!(%{type: "oil", intensity: 68, params: %{}})
+        })
+
+      assert get_in(updated, ["wallpaper", "texture", "type"]) == "oil"
+      assert get_in(updated, ["wallpaper", "texture", "intensity"]) == 68
+
+      {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
+
+      assert found.dashboard.wallpaper.texture["type"] == "oil"
+      assert found.dashboard.wallpaper.texture["intensity"] == 68
     end
 
     @update_enable_query """

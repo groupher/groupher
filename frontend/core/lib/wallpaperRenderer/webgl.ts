@@ -331,7 +331,7 @@ ${TEXTURE_SHADER_HELPERS}
 vec3 applyTexture(vec3 color, vec2 uv) {
   float strength = clamp(uTextureIntensity, 0.0, 1.0);
   float textureScale = clamp(uTextureScale, 0.35, 1.4);
-  if (uTextureType == 0) return color;
+  if (uTextureType == 0 || strength <= 0.0) return color;
 
 ${TEXTURE_SHADER_BRANCHES}
 

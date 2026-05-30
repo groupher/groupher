@@ -61,7 +61,6 @@ export type TWallpaperLogic = {
   changeGradientWallpaper: (source: string) => void
   changeGradientRecipe: (gradient: TGradientRecipe) => void
   changeGradientRenderer: (renderer: TGradientRenderer) => void
-  changeRadialCenter: (center: { x: number; y: number }) => void
   changePatternId: (patternId: string) => void
   changePatternTone: (patternTone: TWallpaperState['patternTone']) => void
   changePatternWallpaper: (source: string) => void
@@ -302,16 +301,6 @@ export function useLogicValue(): TWallpaperLogic {
       gradient: buildGradientRecipeForRenderer(gradient, renderer),
     })
   }
-  const changeRadialCenter = (center: { x: number; y: number }): void => {
-    if (wallpaperState.gradient?.renderer !== GRADIENT_RENDERER.RADIAL) return
-
-    scheduleWallpaperPreview({
-      gradient: {
-        ...wallpaperState.gradient,
-        center,
-      },
-    })
-  }
   const changePatternId = (patternId: string): void =>
     commitWallpaperPatch({ patternId, hasPattern: true })
   const changePatternTone = (patternTone: TWallpaperState['patternTone']): void =>
@@ -358,7 +347,6 @@ export function useLogicValue(): TWallpaperLogic {
     changeGradientWallpaper,
     changeGradientRecipe,
     changeGradientRenderer,
-    changeRadialCenter,
     changePatternId,
     changePatternTone,
     changePatternWallpaper,

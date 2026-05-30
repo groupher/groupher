@@ -37,6 +37,7 @@ export default function FocalPointControl({ center, label, onChange, onCommit }:
 
   const handlePointerDown = (event: PointerEvent<HTMLButtonElement>): void => {
     event.preventDefault()
+    event.currentTarget.focus()
     event.currentTarget.setPointerCapture(event.pointerId)
     updateCenter(event.clientX, event.clientY)
   }
@@ -69,13 +70,20 @@ export default function FocalPointControl({ center, label, onChange, onCommit }:
     onChange(nextCenter)
     onCommit()
   }
+  const xValue = Math.round(draftCenter.x * 100)
+  const yValue = Math.round(draftCenter.y * 100)
 
   return (
     <button
       type='button'
       ref={panelRef}
       className={s.focalPoint}
+      role='slider'
       aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={xValue}
+      aria-valuetext={`${label}: X ${xValue}%, Y ${yValue}%`}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}

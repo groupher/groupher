@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
   @optional_fields dsb_cast_fields(:wallpaper)
   @wallpaper_types ~w(none gradient picture upload)
   @bg_sizes ~w(cover contain auto)
-  @texture_types ~w(noise tile beam ascii dots)
+  @texture_types ~w(noise tile beam ascii dots oil)
   @gradient_renderer_linear "linear"
   @gradient_renderer_radial "radial"
   @mesh_renderers ~w(flow liquid)
