@@ -1,13 +1,5 @@
 import { clone, equals, pick } from 'ramda'
-import {
-  createContext,
-  createElement,
-  type ReactNode,
-  use,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
+import { createContext, use, useEffect, useMemo, useState } from 'react'
 
 import {
   GRADIENT_WALLPAPER,
@@ -51,7 +43,7 @@ const getInitialTab = (type: TWallpaperType): TTab => {
   }
 }
 
-type TRet = {
+export type TWallpaperLogic = {
   tab: TTab
   loading: boolean
   // derived
@@ -89,7 +81,7 @@ type TRet = {
   clearWallpaperPreview: () => void
 }
 
-const LogicContext = createContext<TRet | null>(null)
+export const LogicContext = createContext<TWallpaperLogic | null>(null)
 LogicContext.displayName = 'WallpaperLogic'
 
 const getWallpaperState = (wallpaper$: ReturnType<typeof useWallpaperDomain>): TWallpaperState => ({
@@ -170,7 +162,7 @@ export const buildGradientWallpaperPatch = (
   }
 }
 
-function useLogicValue(): TRet {
+export function useLogicValue(): TWallpaperLogic {
   const wallpaper$ = useWallpaperDomain()
   const liveWallpaper$ = wallpaper$.live$ ?? wallpaper$
   const community$ = useCommunity()
@@ -387,15 +379,9 @@ function useLogicValue(): TRet {
   }
 }
 
-export function WallpaperLogicProvider({ children }: { children: ReactNode }) {
-  const value = useLogicValue()
-
-  return createElement(LogicContext.Provider, { value }, children)
-}
-
-export default function useLogic(): TRet {
+export default function useLogic(): TWallpaperLogic {
   const value = use(LogicContext)
-  if (!value) throw new Error('useLogic must be used within WallpaperLogicProvider')
+  if (!value) throw new Error('useLogic must be used within LogicProvider')
 
   return value
 }
