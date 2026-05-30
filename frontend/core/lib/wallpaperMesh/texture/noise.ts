@@ -1,3 +1,4 @@
+import { WALLPAPER_TEXTURE_SURFACE } from '../constant'
 import { clamp, seededRandom } from '../helper'
 import type { TTextureSurface } from '../spec'
 
@@ -55,8 +56,18 @@ export const NOISE_SHADER_BRANCH = `
 `
 
 const getNoiseDensity = (amount: number, surface: TTextureSurface): number => {
-  const baseDensity = surface === 'wallpaper' ? 0.012 : surface === 'preview' ? 0.014 : 0.018
-  const densityRange = surface === 'wallpaper' ? 0.2 : surface === 'preview' ? 0.18 : 0.15
+  const baseDensity =
+    surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER
+      ? 0.012
+      : surface === WALLPAPER_TEXTURE_SURFACE.PREVIEW
+        ? 0.014
+        : 0.018
+  const densityRange =
+    surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER
+      ? 0.2
+      : surface === WALLPAPER_TEXTURE_SURFACE.PREVIEW
+        ? 0.18
+        : 0.15
 
   return baseDensity + amount * amount * densityRange
 }
@@ -67,8 +78,9 @@ const getNoiseDotSize = (
   surface: TTextureSurface,
 ): [number, number] => {
   const sizeSeed = random()
-  const largeThreshold = surface === 'wallpaper' ? 0.985 : 0.995
-  const stretchedThreshold = surface === 'wallpaper' ? 0.86 - amount * 0.04 : 0.92
+  const largeThreshold = surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER ? 0.985 : 0.995
+  const stretchedThreshold =
+    surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER ? 0.86 - amount * 0.04 : 0.92
 
   if (sizeSeed > largeThreshold) return [2, 2]
   if (sizeSeed > stretchedThreshold) return random() > 0.5 ? [2, 1] : [1, 2]
@@ -80,7 +92,7 @@ const getNoiseDotSize = (
  * Draw fine deterministic noise over the current canvas content.
  *
  * @example
- * renderNoiseTexture(ctx, 420, 260, 35, 'preview')
+ * renderNoiseTexture(ctx, 420, 260, 35, WALLPAPER_TEXTURE_SURFACE.PREVIEW)
  */
 export const renderNoiseTexture = (
   ctx: CanvasRenderingContext2D,
@@ -92,9 +104,11 @@ export const renderNoiseTexture = (
   const random = seededRandom(91283)
   const amount = clamp(intensity, 0, 100) / 100
   const density = getNoiseDensity(amount, surface)
-  const tileSize = surface === 'wallpaper' ? 92 : 64
-  const lightAlpha = (surface === 'wallpaper' ? 0.06 : 0.074) + amount * 0.012
-  const darkAlpha = (surface === 'wallpaper' ? 0.012 : 0.016) + amount * 0.004
+  const tileSize = surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER ? 92 : 64
+  const lightAlpha =
+    (surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER ? 0.06 : 0.074) + amount * 0.012
+  const darkAlpha =
+    (surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER ? 0.012 : 0.016) + amount * 0.004
 
   ctx.save()
   for (let tileY = 0; tileY < height; tileY += tileSize) {

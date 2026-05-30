@@ -1,6 +1,10 @@
 import { isEmpty } from 'ramda'
 
-import { DEFAULT_WALLPAPER_PATTERN_ID, WALLPAPER_PATTERN } from '~/const/wallpaper'
+import {
+  DEFAULT_WALLPAPER_PATTERN_ID,
+  WALLPAPER_BG_SIZE,
+  WALLPAPER_PATTERN,
+} from '~/const/wallpaper'
 import { buildGradientBackground, type TGradientRecipe } from '~/lib/wallpaperMesh'
 import type {
   TCustomWallpaper,
@@ -72,7 +76,7 @@ const _parseWallpaper = (
       ? _parseGradientBackground(customWallpaper)
       : _parsePicBackground(customWallpaper)
   }
-  if (wallpaper && 'kind' in wallpaper) return _parseGradientRecipe(wallpaper)
+  if (wallpaper && 'renderer' in wallpaper) return _parseGradientRecipe(wallpaper)
 
   // @ts-expect-error
   return wallpaper?.colors ? _parseGradientBackground(wallpaper) : _parsePicBackground(wallpaper)
@@ -143,7 +147,7 @@ const _parsePicBackground = (pic: TWallpaperPic): TWallpaperFmt => {
     }
   }
 
-  const { image, bgSize = 'cover', blurIntensity, brightness, saturation } = pic
+  const { image, bgSize = WALLPAPER_BG_SIZE.COVER, blurIntensity, brightness, saturation } = pic
   const background = `url(${image}) center / ${bgSize} no-repeat`
 
   const filter = buildFilterEffect({ blurIntensity, brightness, saturation })

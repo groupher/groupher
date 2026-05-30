@@ -2,6 +2,7 @@ import {
   DEFAULT_WALLPAPER_PATTERN_ID,
   GRADIENT_WALLPAPER,
   GRADIENT_WALLPAPER_NAME,
+  WALLPAPER_BG_SIZE,
   WALLPAPER_PATTERN_TONE,
   WALLPAPER_TYPE,
 } from '~/const/wallpaper'
@@ -34,7 +35,7 @@ describe('stores/wallpaper', () => {
       patternIntensity: 65,
       patternTone: WALLPAPER_PATTERN_TONE.LIGHT,
       hasTexture: true,
-      bgSize: 'contain',
+      bgSize: WALLPAPER_BG_SIZE.CONTAIN,
       brightness: 90,
       saturation: 120,
       gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
@@ -49,7 +50,7 @@ describe('stores/wallpaper', () => {
     expect(store.patternIntensity).toBe(65)
     expect(store.patternTone).toBe(WALLPAPER_PATTERN_TONE.LIGHT)
     expect(store.hasTexture).toBe(true)
-    expect(store.bgSize).toBe('contain')
+    expect(store.bgSize).toBe(WALLPAPER_BG_SIZE.CONTAIN)
     expect(store.brightness).toBe(90)
     expect(store.saturation).toBe(120)
     expect(store.gradient).toEqual({
@@ -73,7 +74,7 @@ describe('stores/wallpaper', () => {
       hasShadow: true,
       brightness: 85,
       saturation: 120,
-      bgSize: 'contain',
+      bgSize: WALLPAPER_BG_SIZE.CONTAIN,
       texture: { type: WALLPAPER_TEXTURE.TILE, intensity: 72, params: {} },
     })
 
@@ -92,7 +93,7 @@ describe('stores/wallpaper', () => {
       hasShadow: true,
       brightness: 85,
       saturation: 120,
-      bgSize: 'contain',
+      bgSize: WALLPAPER_BG_SIZE.CONTAIN,
       texture: { type: WALLPAPER_TEXTURE.TILE, intensity: 72, params: {} },
     })
   })

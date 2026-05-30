@@ -1,3 +1,4 @@
+import { WALLPAPER_TEXTURE_SURFACE } from '../constant'
 import { clamp, getLuminance } from '../helper'
 import type { TTextureSurface } from '../spec'
 
@@ -16,10 +17,30 @@ const getCellSize = (
   surface: TTextureSurface,
 ): { width: number; height: number } => {
   const amount = easeAsciiIntensity(intensity)
-  const minWidth = surface === 'wallpaper' ? 8 : surface === 'preview' ? 7 : 6
-  const maxWidth = surface === 'wallpaper' ? 14 : surface === 'preview' ? 11 : 9
-  const minHeight = surface === 'wallpaper' ? 12 : surface === 'preview' ? 10 : 8
-  const maxHeight = surface === 'wallpaper' ? 18 : surface === 'preview' ? 14 : 11
+  const minWidth =
+    surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER
+      ? 8
+      : surface === WALLPAPER_TEXTURE_SURFACE.PREVIEW
+        ? 7
+        : 6
+  const maxWidth =
+    surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER
+      ? 14
+      : surface === WALLPAPER_TEXTURE_SURFACE.PREVIEW
+        ? 11
+        : 9
+  const minHeight =
+    surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER
+      ? 12
+      : surface === WALLPAPER_TEXTURE_SURFACE.PREVIEW
+        ? 10
+        : 8
+  const maxHeight =
+    surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER
+      ? 18
+      : surface === WALLPAPER_TEXTURE_SURFACE.PREVIEW
+        ? 14
+        : 11
 
   return {
     width: Math.round(maxWidth - (maxWidth - minWidth) * amount),
@@ -51,7 +72,7 @@ const readPixel = (
  * Draw an ASCII glyph field sampled from the current wallpaper luminance.
  *
  * @example
- * renderAsciiTexture(ctx, sourceCanvas, 420, 260, 65, 'preview')
+ * renderAsciiTexture(ctx, sourceCanvas, 420, 260, 65, WALLPAPER_TEXTURE_SURFACE.PREVIEW)
  */
 export const renderAsciiTexture = (
   ctx: CanvasRenderingContext2D,
@@ -73,8 +94,10 @@ export const renderAsciiTexture = (
   }
 
   const cell = getCellSize(intensity, surface)
-  const fontSize = Math.round(cell.height * (surface === 'swatch' ? 0.95 : 1.02))
-  const alphaBase = (surface === 'wallpaper' ? 0.24 : 0.3) + amount * 0.48
+  const fontSize = Math.round(
+    cell.height * (surface === WALLPAPER_TEXTURE_SURFACE.SWATCH ? 0.95 : 1.02),
+  )
+  const alphaBase = (surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER ? 0.24 : 0.3) + amount * 0.48
   const boost = 46 + amount * 92
 
   ctx.save()

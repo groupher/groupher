@@ -4,6 +4,7 @@ import { proxy } from 'valtio'
 import {
   DEFAULT_WALLPAPER_PATTERN_ID,
   GRADIENT_WALLPAPER,
+  WALLPAPER_BG_SIZE,
   WALLPAPER_PATTERN_TONE,
   WALLPAPER_STATE_KEYS,
   WALLPAPER_TYPE,
@@ -27,7 +28,7 @@ export const INITIAL_WALLPAPER_STATE = {
   brightness: 100,
   saturation: 100,
   texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-  bgSize: 'cover',
+  bgSize: WALLPAPER_BG_SIZE.COVER,
 } satisfies TWallpaperState
 
 const resolveInitialWallpaperState = (init: TInit): TWallpaperState => {

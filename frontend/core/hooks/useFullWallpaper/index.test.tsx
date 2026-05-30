@@ -9,7 +9,7 @@ import {
 } from '~/const/wallpaper'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
-import { GRADIENT_TYPE } from '~/lib/wallpaperMesh'
+import { GRADIENT_RENDERER } from '~/lib/wallpaperMesh'
 import { WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 import type { TWallpaperPic } from '~/spec'
 
@@ -47,7 +47,7 @@ describe('useFullWallpaper', () => {
 
     const pink = data.gradientWallpapers.pink
     expect('colors' in pink).toBe(true)
-    expect(pink.kind).toBe('linear')
+    expect(pink.renderer).toBe(GRADIENT_RENDERER.LINEAR)
 
     act(() => result.current.changePatternWallpaper('dots'))
 
@@ -76,9 +76,9 @@ describe('useFullWallpaper', () => {
     const active = data.gradientWallpapers[GRADIENT_WALLPAPER_NAME.PURPLE]
     const defaultPattern = data.gradientWallpapers[GRADIENT_WALLPAPER_NAME.GREEN]
 
-    expect(active).toMatchObject({ kind: GRADIENT_TYPE.LINEAR, angle: 180 })
+    expect(active).toMatchObject({ renderer: GRADIENT_RENDERER.LINEAR, angle: 180 })
 
-    expect(defaultPattern).toMatchObject({ kind: GRADIENT_TYPE.LINEAR, angle: 180 })
+    expect(defaultPattern).toMatchObject({ renderer: GRADIENT_RENDERER.LINEAR, angle: 180 })
   })
 
   it('keeps pattern catalog previews static', () => {

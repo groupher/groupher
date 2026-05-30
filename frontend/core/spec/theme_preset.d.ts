@@ -1,7 +1,6 @@
 import type { THEME_PRESET } from '~/const/theme_preset'
-import type { TConstValues } from '~/spec'
 
-export type TThemePreset = TConstValues<typeof THEME_PRESET>
+export type TThemePreset = THEME_PRESET
 
 // Resolved theme tokens returned by the backend theme_tokens resolver.
 // Every light token follows the paired `xx / xxDark` convention when it has a

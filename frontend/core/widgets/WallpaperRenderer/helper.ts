@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 
+import { WALLPAPER_RENDER_KIND } from '~/lib/wallpaperRenderer/constant'
 import type { TWallpaperRenderDescriptor } from '~/lib/wallpaperRenderer/spec'
 
 export const getFallbackStyle = (descriptor: TWallpaperRenderDescriptor): CSSProperties => ({
@@ -39,7 +40,8 @@ export const shouldCrossfade = (
 ): boolean => canAnimate() && getVisualIdentity(previous) !== getVisualIdentity(next)
 
 export const preloadImage = (descriptor: TWallpaperRenderDescriptor): Promise<void> => {
-  if (descriptor.kind !== 'image' || !descriptor.imageUrl) return Promise.resolve()
+  if (descriptor.kind !== WALLPAPER_RENDER_KIND.IMAGE || !descriptor.imageUrl)
+    return Promise.resolve()
 
   return new Promise((resolve) => {
     const image = new Image()

@@ -1,10 +1,10 @@
-export const THEME_PRESET = {
-  DEFAULT: 'DEFAULT',
-  CLAUDE: 'CLAUDE',
-  SOLARIZED: 'SOLARIZED',
-  HN: 'HN',
-  CUSTOM: 'CUSTOM',
-} as const
+export enum THEME_PRESET {
+  DEFAULT = 'DEFAULT',
+  CLAUDE = 'CLAUDE',
+  SOLARIZED = 'SOLARIZED',
+  HN = 'HN',
+  CUSTOM = 'CUSTOM',
+}
 
 export const DEFAULT_THEME_PRESET = THEME_PRESET.DEFAULT
 

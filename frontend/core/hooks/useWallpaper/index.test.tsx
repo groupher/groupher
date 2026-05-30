@@ -4,23 +4,28 @@ import {
   DEFAULT_WALLPAPER_PATTERN_ID,
   GRADIENT_WALLPAPER,
   GRADIENT_WALLPAPER_NAME,
+  WALLPAPER_BG_SIZE,
   WALLPAPER_PATTERN_TONE,
   WALLPAPER_TYPE,
 } from '~/const/wallpaper'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useWallpaper, { resolveWallpaperRenderDescriptor } from '~/hooks/useWallpaper'
-import { GRADIENT_TYPE, MESH_GRADIENT_MODEL, WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
+import {
+  buildGradientRecipeForRenderer,
+  GRADIENT_RENDERER,
+  WALLPAPER_TEXTURE,
+} from '~/lib/wallpaperMesh'
 import type { TMeshGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
+import { WALLPAPER_RENDER_KIND } from '~/lib/wallpaperRenderer/constant'
 
 describe('useWallpaper', () => {
   const mesh: TMeshGradientRecipe = {
     version: 2,
-    kind: GRADIENT_TYPE.MESH,
+    renderer: GRADIENT_RENDERER.FLOW,
     preset: 'test',
-    model: MESH_GRADIENT_MODEL.HAZE,
     seed: 1,
     colors: ['#fbeede', '#ff7f6f', '#5f74a6'],
-    flow: 135,
+    angle: 135,
     softness: 60,
     warp: 50,
     scale: 60,
@@ -51,8 +56,11 @@ describe('useWallpaper', () => {
     expect(result.current.effect).toContain('blur')
   })
 
-  it('resolves lagoon as liquid mesh wallpaper', () => {
-    const gradient = GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.LAGOON]
+  it('resolves lagoon as liquid wallpaper', () => {
+    const gradient = buildGradientRecipeForRenderer(
+      GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.LAGOON],
+      GRADIENT_RENDERER.LIQUID,
+    )
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
       source: GRADIENT_WALLPAPER_NAME.LAGOON,
@@ -68,11 +76,11 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-      bgSize: 'cover',
+      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
-    expect(descriptor.kind).toBe('mesh-gradient')
-    expect(descriptor.meshRecipe?.model).toBe(MESH_GRADIENT_MODEL.LIQUID)
+    expect(descriptor.kind).toBe(WALLPAPER_RENDER_KIND.MESH_GRADIENT)
+    expect(descriptor.meshRecipe?.renderer).toBe(GRADIENT_RENDERER.LIQUID)
     expect(descriptor.colors).toEqual(gradient.colors)
   })
 
@@ -142,7 +150,7 @@ describe('useWallpaper', () => {
       wallpaper: {
         source: 'backiee-1',
         type: WALLPAPER_TYPE.PATTERN,
-        bgSize: 'contain',
+        bgSize: WALLPAPER_BG_SIZE.CONTAIN,
       },
     })
 
@@ -167,10 +175,10 @@ describe('useWallpaper', () => {
       brightness: 90,
       saturation: 120,
       texture: { type: WALLPAPER_TEXTURE.BEAM, intensity: 55, params: {} },
-      bgSize: 'cover',
+      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
-    expect(descriptor.kind).toBe('linear-gradient')
+    expect(descriptor.kind).toBe(WALLPAPER_RENDER_KIND.LINEAR_GRADIENT)
     expect(descriptor.patternImage).toBe('/wallpaper/pattern/01.png')
     expect(descriptor.patternOpacity).toBe(0.65)
     expect(descriptor.patternColor).toBe('#000000')
@@ -198,14 +206,20 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-      bgSize: 'cover',
+      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
-    expect(descriptor.kind).toBe('linear-gradient')
+    expect(descriptor.kind).toBe(WALLPAPER_RENDER_KIND.LINEAR_GRADIENT)
     expect(descriptor.colorStops).toEqual([46, 54])
   })
 
   it('normalizes radial gradient spread as outward palette reach', () => {
+    const radialGradient = buildGradientRecipeForRenderer(
+      GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.BLUE],
+      GRADIENT_RENDERER.RADIAL,
+    )
+    if (radialGradient.renderer !== GRADIENT_RENDERER.RADIAL) throw new Error('expected radial')
+
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
       source: GRADIENT_WALLPAPER_NAME.BLUE,
@@ -215,22 +229,28 @@ describe('useWallpaper', () => {
       patternIntensity: 100,
       patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: false,
-      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.BLUE], spread: 50 },
+      gradient: { ...radialGradient, spread: 50 },
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-      bgSize: 'cover',
+      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
-    expect(descriptor.kind).toBe('radial-gradient')
+    expect(descriptor.kind).toBe(WALLPAPER_RENDER_KIND.RADIAL_GRADIENT)
     expect(descriptor.colorStops).toEqual([0, 20, 39, 59])
     expect(descriptor.background).toContain('radial-gradient')
     expect(descriptor.background).not.toContain('transparent')
   })
 
   it('uses explicit radial gradient stops in the renderer descriptor', () => {
+    const radialGradient = buildGradientRecipeForRenderer(
+      GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.BLUE],
+      GRADIENT_RENDERER.RADIAL,
+    )
+    if (radialGradient.renderer !== GRADIENT_RENDERER.RADIAL) throw new Error('expected radial')
+
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
       source: GRADIENT_WALLPAPER_NAME.BLUE,
@@ -240,16 +260,16 @@ describe('useWallpaper', () => {
       patternIntensity: 100,
       patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: false,
-      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.BLUE], stops: [0, 20, 70, 100] },
+      gradient: { ...radialGradient, stops: [0, 20, 70, 100] },
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-      bgSize: 'cover',
+      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
-    expect(descriptor.kind).toBe('radial-gradient')
+    expect(descriptor.kind).toBe(WALLPAPER_RENDER_KIND.RADIAL_GRADIENT)
     expect(descriptor.colorStops).toEqual([0, 20, 70, 100])
   })
 
@@ -273,7 +293,7 @@ describe('useWallpaper', () => {
         intensity: 65,
         params: {},
       } as unknown as TWallpaperTexture,
-      bgSize: 'cover',
+      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
     expect(descriptor.texture).toEqual({
@@ -299,7 +319,7 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.DOTS, intensity: 70, params: {} },
-      bgSize: 'cover',
+      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
     expect(descriptor.texture).toEqual({
@@ -307,46 +327,6 @@ describe('useWallpaper', () => {
       intensity: 70,
       params: {},
     })
-  })
-
-  it('normalizes removed texture aliases to supported textures', () => {
-    const mosaicDescriptor = resolveWallpaperRenderDescriptor({
-      customWallpaper: null,
-      source: GRADIENT_WALLPAPER_NAME.GREEN,
-      type: WALLPAPER_TYPE.GRADIENT,
-      hasPattern: false,
-      patternId: DEFAULT_WALLPAPER_PATTERN_ID,
-      patternIntensity: 100,
-      patternTone: WALLPAPER_PATTERN_TONE.DARK,
-      hasTexture: true,
-      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
-      blurIntensity: 0,
-      hasShadow: false,
-      brightness: 100,
-      saturation: 100,
-      texture: { type: 'mosaic', intensity: 35, params: {} } as unknown as TWallpaperTexture,
-      bgSize: 'cover',
-    })
-    const halftoneDescriptor = resolveWallpaperRenderDescriptor({
-      customWallpaper: null,
-      source: GRADIENT_WALLPAPER_NAME.GREEN,
-      type: WALLPAPER_TYPE.GRADIENT,
-      hasPattern: false,
-      patternId: DEFAULT_WALLPAPER_PATTERN_ID,
-      patternIntensity: 100,
-      patternTone: WALLPAPER_PATTERN_TONE.DARK,
-      hasTexture: true,
-      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
-      blurIntensity: 0,
-      hasShadow: false,
-      brightness: 100,
-      saturation: 100,
-      texture: { type: 'halftone', intensity: 35, params: {} } as unknown as TWallpaperTexture,
-      bgSize: 'cover',
-    })
-
-    expect(mosaicDescriptor.texture.type).toBe(WALLPAPER_TEXTURE.TILE)
-    expect(halftoneDescriptor.texture.type).toBe(WALLPAPER_TEXTURE.DOTS)
   })
 
   it('accepts tile texture descriptors', () => {
@@ -365,7 +345,7 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.TILE, intensity: 70, params: {} },
-      bgSize: 'cover',
+      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
     expect(descriptor.texture).toEqual({
@@ -391,7 +371,7 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.TILE, intensity: 70, params: {} },
-      bgSize: 'cover',
+      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
     expect(descriptor.hasTexture).toBe(false)
@@ -418,7 +398,7 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-      bgSize: 'cover',
+      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
     expect(descriptor.patternColor).toBe('#ffffff')
@@ -440,16 +420,17 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.ASCII, intensity: 80, params: {} },
-      bgSize: 'cover',
+      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
-    expect(descriptor.kind).toBe('mesh-gradient')
+    expect(descriptor.kind).toBe(WALLPAPER_RENDER_KIND.MESH_GRADIENT)
+    expect(descriptor.hasTexture).toBe(true)
     expect(descriptor.texture).toEqual({
       type: WALLPAPER_TEXTURE.ASCII,
       intensity: 80,
       params: {},
     })
     expect(descriptor.flow).toBe(135)
-    expect(descriptor.meshRecipe?.model).toBe(MESH_GRADIENT_MODEL.HAZE)
+    expect(descriptor.meshRecipe?.renderer).toBe(GRADIENT_RENDERER.FLOW)
   })
 })

@@ -1,79 +1,37 @@
-import { type CSSProperties, useEffect, useMemo, useRef } from 'react'
+import { type CSSProperties, useMemo } from 'react'
 
-import {
-  DEFAULT_WALLPAPER_PATTERN_ID,
-  WALLPAPER_PATTERN_TONE,
-  WALLPAPER_TYPE,
-} from '~/const/wallpaper'
 import { cn } from '~/css'
-import { resolveWallpaperRenderDescriptor } from '~/hooks/useWallpaper'
-import {
-  buildGradientBackground,
-  type TGradientRecipe,
-  WALLPAPER_TEXTURE,
-} from '~/lib/wallpaperMesh'
-import { createWallpaperWebglRenderer } from '~/lib/wallpaperRenderer/webgl'
+import type { TGradientRecipe } from '~/lib/wallpaperMesh'
 
 type TProps = {
   className?: string
   gradient: TGradientRecipe
 }
 
-const emptyTexture = { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} }
+const PALETTE_PREVIEW_ANGLE = 45
+
+const buildPalettePreviewBackground = (colors: string[]): string => {
+  if (colors.length === 0) return 'transparent'
+  if (colors.length === 1) return colors[0]
+
+  const step = 100 / colors.length
+  const stops = colors.flatMap((color, index) => {
+    const start = index * step
+    const end = (index + 1) * step
+    const left = index === 0 ? 0 : Math.min(100, start + 1)
+    const right = index === colors.length - 1 ? 100 : Math.max(left, end - 1)
+
+    return [`${color} ${left.toFixed(2)}%`, `${color} ${right.toFixed(2)}%`]
+  })
+
+  return `linear-gradient(${PALETTE_PREVIEW_ANGLE}deg, ${stops.join(', ')})`
+}
 
 export default function GradientSwatchPreview({ className, gradient }: TProps) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const rendererRef = useRef<ReturnType<typeof createWallpaperWebglRenderer>>(null)
-  const descriptor = useMemo(
-    () =>
-      resolveWallpaperRenderDescriptor({
-        customWallpaper: null,
-        source: gradient.preset,
-        type: WALLPAPER_TYPE.GRADIENT,
-        hasPattern: false,
-        patternId: DEFAULT_WALLPAPER_PATTERN_ID,
-        patternIntensity: 100,
-        patternTone: WALLPAPER_PATTERN_TONE.DARK,
-        hasTexture: false,
-        gradient,
-        blurIntensity: 0,
-        hasShadow: false,
-        brightness: 100,
-        saturation: 100,
-        texture: emptyTexture,
-        bgSize: 'cover',
-      }),
-    [gradient],
-  )
   const fallbackStyle = useMemo<CSSProperties>(
-    () => ({ background: buildGradientBackground(gradient) }),
-    [gradient],
+    () => ({ background: buildPalettePreviewBackground(gradient.colors) }),
+    [gradient.colors],
   )
 
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    rendererRef.current?.destroy()
-    rendererRef.current = createWallpaperWebglRenderer(canvas)
-    rendererRef.current?.update(descriptor)
-
-    const resizeObserver =
-      typeof ResizeObserver === 'undefined'
-        ? null
-        : new ResizeObserver(() => rendererRef.current?.resize())
-    resizeObserver?.observe(canvas)
-
-    return () => {
-      resizeObserver?.disconnect()
-      rendererRef.current?.destroy()
-      rendererRef.current = null
-    }
-  }, [descriptor])
-
-  return (
-    <div className={cn(className, 'relative')} style={fallbackStyle}>
-      <canvas ref={canvasRef} className='absolute inset-0 block size-full' />
-    </div>
-  )
+  return <div className={cn(className, 'relative')} style={fallbackStyle} />
 }

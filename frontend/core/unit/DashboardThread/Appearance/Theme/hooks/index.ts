@@ -1,6 +1,7 @@
 import { equals } from 'ramda'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import THEME from '~/const/theme'
 import { THEME_PRESET } from '~/const/theme_preset'
 import useTheme from '~/hooks/useTheme'
 import useThemePreset from '~/hooks/useThemePreset'
@@ -234,7 +235,7 @@ export default function useAppearance({
   const showDetailsSavingBar = isThemePresetTouched && editingDetails
   const showPresetSavingBar = isThemePresetTouched && !editingDetails
 
-  const pageBgResetKey = `${activePreset}-${isLightTheme ? 'light' : 'dark'}-${pageBgResetVersion}`
+  const pageBgResetKey = `${activePreset}-${isLightTheme ? THEME.LIGHT : THEME.DARK}-${pageBgResetVersion}`
 
   const details: TThemeDetails = {
     selectedTokens,

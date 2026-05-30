@@ -6,36 +6,52 @@ export const PREVIEW_HEIGHT = 260
 export const DEFAULT_MESH_COLORS = ['#fbeede', '#d8b9e3'] as const
 export const DEFAULT_WALLPAPER_TEXTURE_INTENSITY = 45
 
-export const GRADIENT_TYPE = {
-  LINEAR: 'linear',
-  RADIAL: 'radial',
-  MESH: 'mesh',
-} as const
+export enum GRADIENT_RENDERER {
+  LINEAR = 'linear',
+  RADIAL = 'radial',
+  FLOW = 'flow',
+  LIQUID = 'liquid',
+}
 
-export const MESH_GRADIENT_MODEL = {
-  HAZE: 'haze',
-  RIDGE: 'ridge',
-  BRUSHED: 'brushed',
-  RIBBON: 'ribbon',
-  SCANLINE: 'scanline',
-  GLOW: 'glow',
-  FLOW: 'flow',
-  LIQUID: 'liquid',
-} as const
+export const MESH_GRADIENT_RENDERERS = [GRADIENT_RENDERER.FLOW, GRADIENT_RENDERER.LIQUID] as const
 
-export const WALLPAPER_TEXTURE = {
-  NOISE: 'noise',
-  TILE: 'tile',
-  BEAM: 'beam',
-  ASCII: 'ascii',
-  DOTS: 'dots',
-} as const
+export enum GRADIENT_SHAPE {
+  CIRCLE = 'circle',
+  ELLIPSE = 'ellipse',
+}
 
-export const WALLPAPER_TEXTURE_SURFACE = {
-  WALLPAPER: 'wallpaper',
-  PREVIEW: 'preview',
-  SWATCH: 'swatch',
-} as const
+export const WALLPAPER_GRADIENT_RENDERER_OPTIONS = [
+  {
+    renderer: GRADIENT_RENDERER.LINEAR,
+    labelKey: 'dsb.appearance.wallpaper.renderer.linear',
+  },
+  {
+    renderer: GRADIENT_RENDERER.RADIAL,
+    labelKey: 'dsb.appearance.wallpaper.renderer.radial',
+  },
+  {
+    renderer: GRADIENT_RENDERER.FLOW,
+    labelKey: 'dsb.appearance.wallpaper.renderer.flow',
+  },
+  {
+    renderer: GRADIENT_RENDERER.LIQUID,
+    labelKey: 'dsb.appearance.wallpaper.renderer.liquid',
+  },
+] as const
+
+export enum WALLPAPER_TEXTURE {
+  NOISE = 'noise',
+  TILE = 'tile',
+  BEAM = 'beam',
+  ASCII = 'ascii',
+  DOTS = 'dots',
+}
+
+export enum WALLPAPER_TEXTURE_SURFACE {
+  WALLPAPER = 'wallpaper',
+  PREVIEW = 'preview',
+  SWATCH = 'swatch',
+}
 
 export const WALLPAPER_TEXTURE_OPTIONS = [
   {

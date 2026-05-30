@@ -1,3 +1,4 @@
+import { WALLPAPER_TEXTURE_SURFACE } from '../constant'
 import { clamp } from '../helper'
 import type { TTextureSurface } from '../spec'
 
@@ -11,8 +12,18 @@ const easeTileIntensity = (intensity: number): number => {
 
 const getTileSize = (intensity: number, surface: TTextureSurface): number => {
   const amount = easeTileIntensity(intensity)
-  const min = surface === 'wallpaper' ? 8 : surface === 'preview' ? 7 : 6
-  const max = surface === 'wallpaper' ? 30 : surface === 'preview' ? 24 : 17
+  const min =
+    surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER
+      ? 8
+      : surface === WALLPAPER_TEXTURE_SURFACE.PREVIEW
+        ? 7
+        : 6
+  const max =
+    surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER
+      ? 30
+      : surface === WALLPAPER_TEXTURE_SURFACE.PREVIEW
+        ? 24
+        : 17
 
   return Math.round(min + (max - min) * amount)
 }
@@ -69,7 +80,7 @@ export const TILE_SHADER_BRANCH = `
  * Render single-color rounded tiles sampled from the source wallpaper.
  *
  * @example
- * renderTileTexture(ctx, sourceCanvas, 420, 260, 55, 'preview')
+ * renderTileTexture(ctx, sourceCanvas, 420, 260, 55, WALLPAPER_TEXTURE_SURFACE.PREVIEW)
  */
 export const renderTileTexture = (
   ctx: CanvasRenderingContext2D,
@@ -84,8 +95,8 @@ export const renderTileTexture = (
   const tileWidth = Math.round(tileHeight * 0.72)
   const gap = clamp(
     tileHeight * 0.04,
-    surface === 'swatch' ? 0.5 : 0.7,
-    surface === 'wallpaper' ? 1.1 : 1,
+    surface === WALLPAPER_TEXTURE_SURFACE.SWATCH ? 0.5 : 0.7,
+    surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER ? 1.1 : 1,
   )
   const sampleWidth = Math.max(1, Math.ceil(width / tileWidth))
   const sampleHeight = Math.max(1, Math.ceil(height / tileHeight))
@@ -110,7 +121,7 @@ export const renderTileTexture = (
   ctx.save()
   ctx.clearRect(0, 0, width, height)
   ctx.drawImage(source, 0, 0, width, height)
-  ctx.fillStyle = `rgba(18, 18, 18, ${(surface === 'wallpaper' ? 0.2 : 0.24) + amount * 0.08})`
+  ctx.fillStyle = `rgba(18, 18, 18, ${(surface === WALLPAPER_TEXTURE_SURFACE.WALLPAPER ? 0.2 : 0.24) + amount * 0.08})`
   ctx.fillRect(0, 0, width, height)
 
   for (let row = 0; row < sampleHeight; row += 1) {

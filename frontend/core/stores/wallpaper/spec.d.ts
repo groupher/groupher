@@ -1,5 +1,10 @@
 import type { TGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
-import type { TCustomWallpaper, TWallpaperPatternTone, TWallpaperType } from '~/spec'
+import type {
+  TCustomWallpaper,
+  TWallpaperBgSize,
+  TWallpaperPatternTone,
+  TWallpaperType,
+} from '~/spec'
 
 export type TWallpaperState = {
   customWallpaper: TCustomWallpaper
@@ -18,7 +23,7 @@ export type TWallpaperState = {
   saturation: number
   texture: TWallpaperTexture
 
-  bgSize: string
+  bgSize: TWallpaperBgSize
 }
 
 export type TStore = TWallpaperState & {

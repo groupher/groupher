@@ -1,4 +1,5 @@
 import ArrowSVG from '~/icons/ArrowSimple'
+import { GRADIENT_RENDERER } from '~/lib/wallpaperMesh'
 import type { TWallpaperData } from '~/spec'
 
 import useSalon from '../../salon/tuning_panel/hud_panel'
@@ -24,6 +25,8 @@ export default function HudPanel({
   const s = useSalon()
   const { hasPattern, hasTexture, hasShadow, blurIntensity, brightness, saturation, texture } =
     wallpaper
+  const showDirection =
+    isGradient && canUseAngle && wallpaper.gradient?.renderer !== GRADIENT_RENDERER.RADIAL
 
   return (
     <div className={s.wrapper}>
@@ -37,9 +40,9 @@ export default function HudPanel({
           </div>
         )}
 
-        {isGradient && canUseAngle && (
+        {showDirection && (
           <div className={s.hudItem}>
-            <span className={s.hudLabel}>Angle</span>
+            <span className={s.hudLabel}>Direction</span>
             <span className={s.hudAngle}>
               <span className={s.hudAngleRing}>
                 <span className={s.hudAngleDot} style={{ transform: `rotate(${angle}deg)` }} />

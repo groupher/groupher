@@ -1,14 +1,14 @@
-import { GRADIENT_TYPE, MESH_GRADIENT_MODEL, type TGradientRecipe } from '~/lib/wallpaperMesh'
+import { GRADIENT_RENDERER, type TGradientRecipe } from '~/lib/wallpaperMesh'
 import type { TWallpaper } from '~/spec'
 
 export { PATTERN_WALLPAPER, WALLPAPER_PATTERN } from './wallpaper.generated'
 
 export const DEFAULT_WALLPAPER_PATTERN_ID = '01'
 
-export const WALLPAPER_PATTERN_TONE = {
-  DARK: 'dark',
-  LIGHT: 'light',
-} as const
+export enum WALLPAPER_PATTERN_TONE {
+  DARK = 'dark',
+  LIGHT = 'light',
+}
 
 export const WALLPAPER_STATE_KEYS = [
   'customWallpaper',
@@ -45,12 +45,18 @@ export const WALLPAPER_SAVABLE_STATE_KEYS = [
   'bgSize',
 ] as const
 
-export const WALLPAPER_TYPE = {
-  PATTERN: 'picture',
-  GRADIENT: 'gradient',
-  UPLOAD: 'upload',
-  NONE: 'none',
-} as const
+export enum WALLPAPER_TYPE {
+  PATTERN = 'picture',
+  GRADIENT = 'gradient',
+  UPLOAD = 'upload',
+  NONE = 'none',
+}
+
+export enum WALLPAPER_BG_SIZE {
+  COVER = 'cover',
+  CONTAIN = 'contain',
+  AUTO = 'auto',
+}
 
 const DEFAULT_GRADIENT_EFFECT = {
   hasPattern: false,
@@ -155,124 +161,108 @@ export const GRADIENT_WALLPAPER_NAME = {
 
 export const GRADIENT_WALLPAPER = {
   [GRADIENT_WALLPAPER_NAME.PINK]: {
-    version: 1,
-    kind: GRADIENT_TYPE.LINEAR,
+    version: 2,
+    renderer: GRADIENT_RENDERER.LINEAR,
     preset: GRADIENT_WALLPAPER_NAME.PINK,
     colors: ['#FBEFDE', '#D8B9E3'],
     angle: 180,
     spread: 52,
   },
   [GRADIENT_WALLPAPER_NAME.GREEN]: {
-    version: 1,
-    kind: GRADIENT_TYPE.LINEAR,
+    version: 2,
+    renderer: GRADIENT_RENDERER.LINEAR,
     preset: GRADIENT_WALLPAPER_NAME.GREEN,
     colors: ['#D6D9B8', '#87BB89'],
     angle: 180,
     spread: 58,
   },
   [GRADIENT_WALLPAPER_NAME.ORANGE]: {
-    version: 1,
-    kind: GRADIENT_TYPE.LINEAR,
+    version: 2,
+    renderer: GRADIENT_RENDERER.LINEAR,
     preset: GRADIENT_WALLPAPER_NAME.ORANGE,
     colors: ['#ffefc4', '#c06577'],
     angle: 180,
     spread: 48,
   },
   [GRADIENT_WALLPAPER_NAME.PURPLE]: {
-    version: 1,
-    kind: GRADIENT_TYPE.LINEAR,
+    version: 2,
+    renderer: GRADIENT_RENDERER.LINEAR,
     preset: GRADIENT_WALLPAPER_NAME.PURPLE,
     colors: ['#69999F', '#6B80A7', '#8C8EBB'],
     angle: 180,
     spread: 62,
   },
   [GRADIENT_WALLPAPER_NAME.BLUE]: {
-    version: 1,
-    kind: GRADIENT_TYPE.RADIAL,
+    version: 2,
+    renderer: GRADIENT_RENDERER.LINEAR,
     preset: GRADIENT_WALLPAPER_NAME.BLUE,
     colors: ['#daf3fb', '#B8D1FA', '#c7bbf2', '#6390c5'],
-    center: { x: 0.52, y: 0.28 },
-    radius: 82,
-    shape: 'ellipse',
+    angle: 180,
     spread: 58,
   },
   [GRADIENT_WALLPAPER_NAME.CEDAR]: {
-    version: 1,
-    kind: GRADIENT_TYPE.LINEAR,
+    version: 2,
+    renderer: GRADIENT_RENDERER.LINEAR,
     preset: GRADIENT_WALLPAPER_NAME.CEDAR,
     colors: ['#4f6851', '#203a27'],
     angle: 112,
     spread: 74,
   },
   [GRADIENT_WALLPAPER_NAME.DUNE]: {
-    version: 1,
-    kind: GRADIENT_TYPE.LINEAR,
+    version: 2,
+    renderer: GRADIENT_RENDERER.LINEAR,
     preset: GRADIENT_WALLPAPER_NAME.DUNE,
     colors: ['#e6cda7', '#b58a58'],
     angle: 118,
     spread: 72,
   },
   [GRADIENT_WALLPAPER_NAME.MINT]: {
-    version: 1,
-    kind: GRADIENT_TYPE.LINEAR,
+    version: 2,
+    renderer: GRADIENT_RENDERER.LINEAR,
     preset: GRADIENT_WALLPAPER_NAME.MINT,
     colors: ['#5fcf94', '#9a9634'],
     angle: 116,
     spread: 68,
   },
   [GRADIENT_WALLPAPER_NAME.DEEP_SEA]: {
-    version: 1,
-    kind: GRADIENT_TYPE.LINEAR,
+    version: 2,
+    renderer: GRADIENT_RENDERER.LINEAR,
     preset: GRADIENT_WALLPAPER_NAME.DEEP_SEA,
     colors: ['#4dbfc0', '#223148'],
     angle: 132,
     spread: 78,
   },
   [GRADIENT_WALLPAPER_NAME.TANGERINE]: {
-    version: 1,
-    kind: GRADIENT_TYPE.LINEAR,
+    version: 2,
+    renderer: GRADIENT_RENDERER.LINEAR,
     preset: GRADIENT_WALLPAPER_NAME.TANGERINE,
     colors: ['#ffc767', '#ff7834'],
     angle: 124,
     spread: 70,
   },
   [GRADIENT_WALLPAPER_NAME.NEXT_GLOW]: {
-    version: 1,
-    kind: GRADIENT_TYPE.RADIAL,
+    version: 2,
+    renderer: GRADIENT_RENDERER.LINEAR,
     preset: GRADIENT_WALLPAPER_NAME.NEXT_GLOW,
     colors: ['#d79bc6', '#5f6fb3', '#4d3b70', '#272f55'],
-    center: { x: 0.48, y: 0.22 },
-    radius: 96,
-    shape: 'ellipse',
+    angle: 128,
     spread: 78,
   },
   [GRADIENT_WALLPAPER_NAME.AURORA]: {
     version: 2,
-    kind: GRADIENT_TYPE.MESH,
+    renderer: GRADIENT_RENDERER.LINEAR,
     preset: GRADIENT_WALLPAPER_NAME.AURORA,
-    seed: 18435,
-    model: MESH_GRADIENT_MODEL.FLOW,
     colors: ['#24143e', '#0c5878', '#2b8c90', '#ff746d', '#ffc66d', '#5b2f65'],
-    flow: 92,
-    softness: 94,
-    warp: 42,
-    scale: 34,
-    contrast: 118,
-    brightness: 108,
+    angle: 92,
+    spread: 94,
   },
   [GRADIENT_WALLPAPER_NAME.LAGOON]: {
     version: 2,
-    kind: GRADIENT_TYPE.MESH,
+    renderer: GRADIENT_RENDERER.LINEAR,
     preset: GRADIENT_WALLPAPER_NAME.LAGOON,
-    seed: 73291,
-    model: MESH_GRADIENT_MODEL.LIQUID,
     colors: ['#ffd8cb', '#fff0cf', '#ff6338', '#a8d7ff', '#f1aaa2'],
-    flow: 18,
-    softness: 92,
-    warp: 68,
-    scale: 28,
-    contrast: 112,
-    brightness: 108,
+    angle: 18,
+    spread: 92,
   },
 } satisfies Record<string, TGradientRecipe>
 

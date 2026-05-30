@@ -6,6 +6,26 @@ const todayISO = () => new Date().toISOString().slice(0, 10)
 let __mockStrId = 0
 const nextMockString = () => `mock_${++__mockStrId}`
 
+const THEME_PRESET = {
+  DEFAULT: 'DEFAULT',
+}
+
+const WALLPAPER_TYPE = {
+  GRADIENT: 'gradient',
+}
+
+const WALLPAPER_BG_SIZE = {
+  COVER: 'cover',
+}
+
+const GRADIENT_RENDERER = {
+  LINEAR: 'linear',
+}
+
+const WALLPAPER_TEXTURE = {
+  NOISE: 'noise',
+}
+
 const DEFAULT_THEME_TOKENS = {
   pageBg: '#fffcfc',
   pageBgDark: '#25161d',
@@ -67,26 +87,26 @@ const makeDashboard = (slug = 'home') => {
       twImageHeight: '630',
     },
     wallpaper: {
-      type: 'gradient',
+      type: WALLPAPER_TYPE.GRADIENT,
       source: 'pink',
       hasPattern: false,
       gradient: {
-        version: 1,
-        kind: 'linear',
+        version: 2,
+        renderer: GRADIENT_RENDERER.LINEAR,
         preset: 'pink',
         colors: ['#FBEFDE', '#D8B9E3'],
         angle: 180,
         spread: 52,
       },
-      bgSize: 'cover',
+      bgSize: WALLPAPER_BG_SIZE.COVER,
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
       saturation: 100,
-      texture: { type: 'noise', intensity: 0, params: {} },
+      texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
     },
     layout: {
-      themePreset: 'DEFAULT',
+      themePreset: THEME_PRESET.DEFAULT,
       themeTokens: makeThemeTokens(),
       postLayout: 'QUORA',
       kanbanLayout: 'CLASSIC',

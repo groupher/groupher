@@ -157,12 +157,11 @@ defmodule GroupherServer.Test.CMS.Dashboard do
           saturation: 120,
           gradient: %{
             "version" => 2,
-            "kind" => "mesh",
+            "renderer" => "flow",
             "preset" => "test",
-            "model" => "haze",
             "seed" => 1,
             "colors" => ["#fff", "#000"],
-            "flow" => 45,
+            "angle" => 45,
             "softness" => 60,
             "warp" => 50,
             "scale" => 60,
@@ -184,7 +183,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert find_community.dashboard.wallpaper.brightness == 85
       assert find_community.dashboard.wallpaper.saturation == 120
       assert find_community.dashboard.wallpaper.gradient["preset"] == "test"
-      assert find_community.dashboard.wallpaper.gradient["model"] == "haze"
+      assert find_community.dashboard.wallpaper.gradient["renderer"] == "flow"
       assert find_community.dashboard.wallpaper.texture["type"] == "ascii"
       assert find_community.dashboard.wallpaper.texture["intensity"] == 55
     end

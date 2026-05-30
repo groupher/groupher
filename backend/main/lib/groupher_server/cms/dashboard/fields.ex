@@ -27,6 +27,13 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
   ]
   @kanban_bg_colors_default [:black, :yellow, :purple, :green, :red]
   @theme_presets [:default, :claude, :solarized, :hn, :custom]
+  @default_wallpaper_type "gradient"
+  @default_wallpaper_source "pink"
+  @default_wallpaper_pattern_id "01"
+  @default_wallpaper_pattern_tone "dark"
+  @default_wallpaper_gradient_renderer "linear"
+  @default_wallpaper_bg_size "cover"
+  @default_wallpaper_texture_type "noise"
   # Single source of truth for dashboard enums.
   #
   # Internal business values stay as lowercase atoms:
@@ -237,22 +244,22 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
 
   def macro_schema(:wallpaper) do
     [
-      [:type, :string, "gradient"],
-      [:source, :string, "pink"],
+      [:type, :string, @default_wallpaper_type],
+      [:source, :string, @default_wallpaper_source],
 
       # gradient
       [:has_pattern, :boolean, true],
-      [:pattern_id, :string, "01"],
+      [:pattern_id, :string, @default_wallpaper_pattern_id],
       [:pattern_intensity, :integer, 50],
-      [:pattern_tone, :string, "dark"],
+      [:pattern_tone, :string, @default_wallpaper_pattern_tone],
       [:has_texture, :boolean, false],
       [
         :gradient,
         :map,
         %{
-          "version" => 1,
-          "kind" => "linear",
-          "preset" => "pink",
+          "version" => 2,
+          "renderer" => @default_wallpaper_gradient_renderer,
+          "preset" => @default_wallpaper_source,
           "colors" => ["#FBEFDE", "#D8B9E3"],
           "angle" => 180,
           "spread" => 52
@@ -260,7 +267,7 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
       ],
 
       # image
-      [:bg_size, :string, "cover"],
+      [:bg_size, :string, @default_wallpaper_bg_size],
 
       # global effects
       [:blur_intensity, :integer, 0],
@@ -269,7 +276,11 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
       [:saturation, :integer, 100],
 
       # renderer-specific config/effects
-      [:texture, :map, %{"type" => "noise", "intensity" => 0, "params" => %{}}]
+      [
+        :texture,
+        :map,
+        %{"type" => @default_wallpaper_texture_type, "intensity" => 0, "params" => %{}}
+      ]
     ]
   end
 end
