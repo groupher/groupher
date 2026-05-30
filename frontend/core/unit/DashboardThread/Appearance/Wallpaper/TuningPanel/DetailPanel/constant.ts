@@ -1,0 +1,7 @@
+export enum GROUP {
+  BASIC,
+  CONTENT,
+  PATTERN,
+  TEXTURE,
+  GRADIENT,
+}

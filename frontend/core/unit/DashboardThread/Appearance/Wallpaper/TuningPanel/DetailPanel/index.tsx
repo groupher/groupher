@@ -1,15 +1,16 @@
-import SIZE from '~/const/size'
-import { WALLPAPER_PATTERN_TONE, WALLPAPER_TYPE } from '~/const/wallpaper'
+import type { ReactNode } from 'react'
+
 import { cn } from '~/css'
 import useTrans from '~/hooks/useTrans'
 import type { TWallpaperData } from '~/spec'
-import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
-import RangeInput from '~/widgets/RangeInput'
 
-import useSalon from '../../salon/tuning_panel/details_panel'
-import AngleWheel from './AngleWheel'
-import GradientTextureFields from './GradientTextureFields'
-import PictureTextureFields from './PictureTextureFields'
+import useSalon from '../../salon/tuning_panel/detail_panel'
+import Basic from './Basic'
+import { GROUP } from './constant'
+import Content from './Content'
+import Gradient from './Gradient'
+import Pattern from './Pattern'
+import Texture from './Texture'
 
 type TRangeDraft = {
   blurIntensity: number
@@ -22,8 +23,6 @@ type Props = {
   wallpaper: TWallpaperData
   rangeDraft: TRangeDraft
   isGradient: boolean
-  isPicture: boolean
-  isUpload: boolean
   canUseTexture: boolean
   canUseAngle: boolean
   hasRightPanel: boolean
@@ -43,8 +42,6 @@ export default function DetailPanel({
   wallpaper,
   rangeDraft,
   isGradient,
-  isPicture,
-  isUpload,
   canUseTexture,
   canUseAngle,
   hasRightPanel,
@@ -59,121 +56,82 @@ export default function DetailPanel({
   onRangeChangeEnd,
   onCollapse,
 }: Props) {
-  const { type, hasPattern, patternTone, hasTexture, hasShadow } = wallpaper
+  const { gradient, hasPattern, patternTone, hasTexture, hasShadow, texture } = wallpaper
   const { t } = useTrans()
   const s = useSalon()
+  const groups: Array<{ key: GROUP; node: ReactNode } | null> = [
+    {
+      key: GROUP.BASIC,
+      node: (
+        <Basic
+          rangeDraft={rangeDraft}
+          onBlurIntensityChange={onBlurIntensityChange}
+          onBrightnessChange={onBrightnessChange}
+          onSaturationChange={onSaturationChange}
+          onRangeChangeEnd={onRangeChangeEnd}
+        />
+      ),
+    },
+    {
+      key: GROUP.CONTENT,
+      node: <Content hasShadow={hasShadow} onToggleShadow={onToggleShadow} />,
+    },
+    isGradient
+      ? {
+          key: GROUP.PATTERN,
+          node: (
+            <Pattern
+              hasPattern={hasPattern}
+              patternTone={patternTone}
+              patternIntensity={rangeDraft.patternIntensity}
+              onTogglePattern={onTogglePattern}
+              onPatternToneChange={onPatternToneChange}
+              onPatternIntensityChange={onPatternIntensityChange}
+              onRangeChangeEnd={onRangeChangeEnd}
+            />
+          ),
+        }
+      : null,
+    canUseTexture
+      ? {
+          key: GROUP.TEXTURE,
+          node: (
+            <Texture hasTexture={hasTexture} texture={texture} onToggleTexture={onToggleTexture} />
+          ),
+        }
+      : null,
+    isGradient
+      ? {
+          key: GROUP.GRADIENT,
+          node: <Gradient gradient={gradient} canUseAngle={canUseAngle} />,
+        }
+      : null,
+  ]
+  const visibleGroups = groups.filter((group) => group !== null) as Array<{
+    key: GROUP
+    node: ReactNode
+  }>
+
+  // Split visible groups after conditional filtering so odd counts always leave
+  // the left column with one extra group instead of making the right column heavier.
+  const leftColumnCount = Math.ceil(visibleGroups.length / 2)
+  const leftGroups = visibleGroups.slice(0, leftColumnCount)
+  const rightGroups = visibleGroups.slice(leftColumnCount)
 
   return (
     <div className={s.wrapper}>
       <div className={cn(s.inner, hasRightPanel ? s.wrapperTwoColumns : s.wrapperOneColumn)}>
-        <div className={s.effects}>
-          <div className={s.topControls}>
-            <div className={s.toggleRows}>
-              {isGradient && (
-                <div className={s.switchWrapper}>
-                  <div className={s.toggleTitle}>
-                    {t('dsb.appearance.wallpaper.editor.pattern')}
-                  </div>
-                  <ToggleSwitch size={SIZE.TINY} checked={hasPattern} onChange={onTogglePattern} />
-                  {hasPattern && (
-                    <div className={s.toneSwitch}>
-                      <span className={s.toneLabel}>
-                        {t('dsb.appearance.wallpaper.editor.pattern_tone_light')}
-                      </span>
-                      <ToggleSwitch
-                        size={SIZE.TINY}
-                        checked={patternTone === WALLPAPER_PATTERN_TONE.LIGHT}
-                        onChange={onPatternToneChange}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className={s.switchWrapper}>
-                <div className={s.toggleTitle}>{t('dsb.appearance.wallpaper.editor.shadow')}</div>
-                <ToggleSwitch size={SIZE.TINY} checked={hasShadow} onChange={onToggleShadow} />
-              </div>
-            </div>
-
-            {isGradient && canUseAngle && (
-              <div className={s.angleFields}>
-                <AngleWheel />
-              </div>
-            )}
-          </div>
-
-          <div className={s.rangeRows}>
-            <RangeInput
-              value={rangeDraft.blurIntensity}
-              min={0}
-              max={100}
-              step={5}
-              labelPlacement='left'
-              valueLabel={t('dsb.appearance.wallpaper.editor.blur')}
-              aria-label={t('dsb.appearance.wallpaper.editor.blur')}
-              onChange={onBlurIntensityChange}
-              onChangeEnd={onRangeChangeEnd}
-            />
-            <RangeInput
-              value={rangeDraft.brightness}
-              min={60}
-              max={140}
-              step={5}
-              labelPlacement='left'
-              valueLabel={t('dsb.appearance.wallpaper.editor.brightness')}
-              aria-label={t('dsb.appearance.wallpaper.editor.brightness')}
-              onChange={onBrightnessChange}
-              onChangeEnd={onRangeChangeEnd}
-            />
-            <RangeInput
-              value={rangeDraft.saturation}
-              min={0}
-              max={160}
-              step={5}
-              labelPlacement='left'
-              valueLabel={t('dsb.appearance.wallpaper.editor.saturation')}
-              aria-label={t('dsb.appearance.wallpaper.editor.saturation')}
-              onChange={onSaturationChange}
-              onChangeEnd={onRangeChangeEnd}
-            />
-
-            {isGradient && hasPattern && (
-              <RangeInput
-                value={rangeDraft.patternIntensity}
-                min={0}
-                max={100}
-                step={5}
-                labelPlacement='left'
-                valueLabel={t('dsb.appearance.wallpaper.editor.pattern_intensity')}
-                aria-label={t('dsb.appearance.wallpaper.editor.pattern_intensity')}
-                onChange={onPatternIntensityChange}
-                onChangeEnd={onRangeChangeEnd}
-              />
-            )}
-          </div>
+        <div className={s.column}>
+          {leftGroups.map(({ key, node }) => (
+            <div key={key}>{node}</div>
+          ))}
         </div>
 
-        {hasRightPanel && (
-          <div className={s.rightPanel}>
-            {canUseTexture && (
-              <div className={s.switchWrapper}>
-                <div className={s.toggleTitle}>{t('dsb.appearance.wallpaper.texture')}</div>
-                <ToggleSwitch size={SIZE.TINY} checked={hasTexture} onChange={onToggleTexture} />
-              </div>
-            )}
-
-            {type === WALLPAPER_TYPE.GRADIENT && (
-              <div className={s.customFields}>
-                <GradientTextureFields />
-              </div>
-            )}
-
-            {(isPicture || isUpload) && (
-              <div className={s.customFields}>
-                <PictureTextureFields />
-              </div>
-            )}
+        {hasRightPanel && rightGroups.length > 0 && (
+          <div className={s.column}>
+            {rightGroups.map(({ key, node }) => (
+              <div key={key}>{node}</div>
+            ))}
           </div>
         )}
       </div>

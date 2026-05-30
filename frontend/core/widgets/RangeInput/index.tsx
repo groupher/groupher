@@ -25,6 +25,7 @@ type TProps = {
   step?: number
   unit?: string
   valueLabel?: string
+  hideLabel?: boolean
   width?: string
   labelPlacement?: 'top' | 'left'
   showValue?: boolean
@@ -50,6 +51,7 @@ const RangeInput: FC<TProps> = ({
   step = 1,
   unit = '%',
   valueLabel = 'opacity:',
+  hideLabel = false,
   width = 'w-full',
   labelPlacement = 'top',
   showValue,
@@ -63,8 +65,8 @@ const RangeInput: FC<TProps> = ({
 }) => {
   const reactId = useId()
   const inputId = id || reactId
-  const s = useSalon({ width, labelPlacement, ...spacing })
-  const shouldShowValue = showValue ?? labelPlacement !== 'left'
+  const s = useSalon({ width, labelPlacement, hideLabel, ...spacing })
+  const shouldShowValue = !hideLabel && (showValue ?? labelPlacement !== 'left')
   const safeValue = clamp(value, min, max)
   const ratio = clamp(getRatio(safeValue, min, max), 0, 100)
   const visualRatio = getVisualRatio(ratio)

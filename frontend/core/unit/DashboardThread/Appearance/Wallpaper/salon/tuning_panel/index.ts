@@ -5,7 +5,7 @@ export default function useSalon() {
 
   return {
     wrapper: cn(
-      'w-full rounded-lg border mt-6 overflow-visible transition-[height] duration-200 ease-out',
+      'w-full rounded-lg border mt-6 overflow-hidden transition-[height] duration-200 ease-out',
       br('divider'),
       bg('cardAlpha'),
     ),
