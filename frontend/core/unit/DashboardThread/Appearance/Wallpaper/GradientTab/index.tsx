@@ -29,7 +29,9 @@ export default function GradientTab() {
               type='button'
               key={name}
               className={cnMerge(s.card, selected && s.cardActive)}
-              onClick={() => changeGradientWallpaper(name)}
+              onClick={() => {
+                if (!selected) changeGradientWallpaper(name)
+              }}
             >
               <GradientSwatchPreview className={s.preview} gradient={presetGradient} />
             </button>

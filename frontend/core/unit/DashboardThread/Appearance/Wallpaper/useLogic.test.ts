@@ -33,4 +33,19 @@ describe('buildGradientWallpaperPatch', () => {
 
     expect(patch.gradient?.renderer).toBe(GRADIENT_RENDERER.LIQUID)
   })
+
+  it('keeps the original gradient shape after switching away and back', () => {
+    const originalGradient = GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.PINK]
+    const awayPatch = buildGradientWallpaperPatch(
+      { type: WALLPAPER_TYPE.GRADIENT, gradient: originalGradient },
+      GRADIENT_WALLPAPER_NAME.GREEN,
+    )
+    const backPatch = buildGradientWallpaperPatch(
+      { type: WALLPAPER_TYPE.GRADIENT, gradient: awayPatch.gradient },
+      GRADIENT_WALLPAPER_NAME.PINK,
+    )
+
+    expect(backPatch.gradient).toStrictEqual(originalGradient)
+    expect(backPatch.gradient).not.toHaveProperty('stops')
+  })
 })

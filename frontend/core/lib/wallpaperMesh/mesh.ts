@@ -53,16 +53,20 @@ export const buildGradientRecipeForRenderer = (
   const spread = getGradientRecipeSpread(recipe)
 
   if (renderer === GRADIENT_RENDERER.LINEAR) {
+    const stops = getRecipeStops(recipe, colors.length)
+
     return {
       ...base,
       renderer,
       angle,
-      stops: getRecipeStops(recipe, colors.length),
+      ...(stops ? { stops } : {}),
       spread,
     }
   }
 
   if (renderer === GRADIENT_RENDERER.RADIAL) {
+    const stops = getRecipeStops(recipe, colors.length)
+
     return {
       ...base,
       renderer,
@@ -70,7 +74,7 @@ export const buildGradientRecipeForRenderer = (
       center: 'center' in recipe ? recipe.center : DEFAULT_RADIAL_CENTER,
       radius: 'radius' in recipe ? recipe.radius : DEFAULT_RADIAL_RADIUS,
       shape: 'shape' in recipe ? recipe.shape : GRADIENT_SHAPE.ELLIPSE,
-      stops: getRecipeStops(recipe, colors.length),
+      ...(stops ? { stops } : {}),
       spread,
     }
   }
