@@ -1,4 +1,5 @@
 import ArrowSVG from '~/icons/ArrowSimple'
+import CheckerSVG from '~/icons/Checker'
 import { GRADIENT_RENDERER } from '~/lib/wallpaperMesh'
 import type { TWallpaperData } from '~/spec'
 
@@ -25,8 +26,9 @@ export default function HudPanel({
   const s = useSalon()
   const { hasPattern, hasTexture, hasShadow, blurIntensity, brightness, saturation, texture } =
     wallpaper
-  const showDirection =
-    isGradient && canUseAngle && wallpaper.gradient?.renderer !== GRADIENT_RENDERER.RADIAL
+  const renderer = isGradient && canUseAngle ? wallpaper.gradient?.renderer : null
+  const showDirection = renderer && renderer !== GRADIENT_RENDERER.RADIAL
+  const gradientColors = isGradient ? (wallpaper.gradient?.colors ?? []) : []
 
   return (
     <div className={s.wrapper}>
@@ -35,19 +37,21 @@ export default function HudPanel({
           <div className={s.hudItem}>
             <span className={s.hudLabel}>Pattern</span>
             <span className={s.hudSwatchWrap}>
-              <span className={s.hudPatternSwatch} />
+              <CheckerSVG className={s.hudPatternIcon} />
             </span>
           </div>
         )}
 
-        {showDirection && (
+        {renderer && (
           <div className={s.hudItem}>
-            <span className={s.hudLabel}>Direction</span>
-            <span className={s.hudAngle}>
-              <span className={s.hudAngleRing}>
-                <span className={s.hudAngleDot} style={{ transform: `rotate(${angle}deg)` }} />
+            <span className={s.hudLabel}>{renderer}</span>
+            {showDirection && (
+              <span className={s.hudAngle}>
+                <span className={s.hudAngleRing}>
+                  <span className={s.hudAngleDot} style={{ transform: `rotate(${angle}deg)` }} />
+                </span>
               </span>
-            </span>
+            )}
           </div>
         )}
 
@@ -74,6 +78,18 @@ export default function HudPanel({
           <span className={s.hudLabel}>Sat</span>
           <span className={s.hudValue}>{saturation}</span>
         </div>
+
+        {gradientColors.length > 0 && (
+          <div className={s.hudColorBalls} aria-label='Gradient colors'>
+            {gradientColors.map((color, index) => (
+              <span
+                key={`${color}-${index}`}
+                className={s.hudColorBall}
+                style={{ backgroundColor: color }}
+              />
+            ))}
+          </div>
+        )}
 
         {hasShadow && (
           <div className={s.hudItem}>

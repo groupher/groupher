@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {
-  const { cn, br, bg, fg, primary, hover } = useTwBelt()
+  const { cn, br, fg, primary, hover } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -13,13 +13,15 @@ export default function useSalon() {
     hudLabel: cn('text-xs leading-none', fg('digest')),
     hudValue: cn('text-sm bold-sm leading-none tabular-nums', fg('title')),
     hudSwatchWrap: 'row-center gap-1.5',
-    hudPatternSwatch: cn('size-5 circle border shadow-sm shrink-0', br('divider'), bg('card')),
+    hudPatternIcon: cn('size-5 shrink-0', fg('title')),
     hudAngle: 'row-center gap-1.5',
     hudAngleRing: cn('relative size-5 circle border shrink-0', br('divider')),
     hudAngleDot: cn(
       'absolute left-1/2 top-0 size-1.5 -ml-0.75 -mt-0.75 circle origin-[3px_10px]',
       primary('bg'),
     ),
+    hudColorBalls: 'row-center pl-0.5',
+    hudColorBall: 'size-5 circle -ml-1.5 first:ml-0 shrink-0',
     expandBtn: cn('size-6 shrink-0', hover('bg')),
     expandIcon: cn('size-3 shrink-0 -rotate-90', fg('digest')),
   }
