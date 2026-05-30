@@ -1,13 +1,12 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {
-  const { cn, br, bg } = useTwBelt()
+  const { cn, bg } = useTwBelt()
 
   return {
     wrapper: cn(
-      'w-full rounded-lg border mt-6 overflow-hidden transition-[height] duration-200 ease-out',
-      br('divider'),
-      bg('cardAlpha'),
+      'w-full rounded-b-2xl overflow-hidden transition-[height] duration-200 ease-out -mt-2 pt-1',
+      bg('hoverBg'),
     ),
     panelContent: 'w-full',
   }
