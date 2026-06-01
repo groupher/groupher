@@ -9,7 +9,6 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleConstraintsTest do
     ArticleCollect,
     ArticleUpvote,
     ArticleUserEmotion,
-    CitedArtiment,
     Comment,
     Embeds,
     PinnedComment
@@ -115,21 +114,6 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleConstraintsTest do
                |> Repo.insert()
 
       assert "is invalid" in errors_on(changeset).post_id
-    end
-
-    test "cited artiment rejects multiple article refs", ~m(post blog user)a do
-      attrs = %{
-        cited_by_type: "COMMENT",
-        cited_by_id: 1,
-        user_id: user.id,
-        post_id: post.id,
-        blog_id: blog.id,
-        block_linker: ["block-a_block-b"]
-      }
-
-      assert_raise Ecto.ConstraintError, fn ->
-        Repo.insert!(struct(CitedArtiment, attrs))
-      end
     end
   end
 

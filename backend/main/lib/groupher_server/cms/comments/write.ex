@@ -60,7 +60,7 @@ defmodule GroupherServer.CMS.Comments.Write do
         end
       end)
       |> Multi.run(:after_events, fn _, %{create_comment: comment} ->
-        Later.run({Events, :emit, [:cite, %{artiment: comment}]})
+        Later.run({Events, :emit, [:sync_mentions, %{artiment: comment}]})
         Later.run({Events, :emit, [:notify_comment, %{comment: comment, from_user: user}]})
         Later.run({Events, :emit, [:mention, %{artiment: comment}]})
         Later.run({Events, :emit, [:audition, %{artiment: comment}]})
@@ -94,6 +94,7 @@ defmodule GroupherServer.CMS.Comments.Write do
         FrontDesk.sync_embed_replies(comment)
       end)
       |> Multi.run(:after_events, fn _, %{update_comment: comment} ->
+        Later.run({Events, :emit, [:sync_mentions, %{artiment: comment}]})
         Later.run({Events, :emit, [:audition, %{artiment: comment}]})
       end)
       |> Repo.transaction()
@@ -111,6 +112,7 @@ defmodule GroupherServer.CMS.Comments.Write do
         FrontDesk.sync_embed_replies(comment)
       end)
       |> Multi.run(:after_events, fn _, %{update_comment: comment} ->
+        Later.run({Events, :emit, [:sync_mentions, %{artiment: comment}]})
         Later.run({Events, :emit, [:audition, %{artiment: comment}]})
       end)
       |> Repo.transaction()

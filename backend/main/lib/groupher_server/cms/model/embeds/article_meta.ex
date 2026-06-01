@@ -31,7 +31,6 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
       is_sunk: false,
       can_undo_sink: true,
       last_active_at: nil,
-      citing_count: 0,
       next_floor: 0,
       latest_upvoted_users: [],
       latest_collected_users: [],
@@ -61,7 +60,6 @@ defmodule GroupherServer.CMS.Model.Embeds.ArticleMeta do
     field(:can_undo_sink, :boolean, default: false)
     # if undo_sink, can recover last active_at from here
     field(:last_active_at, :utc_datetime, default: nil)
-    field(:citing_count, :integer, default: 0)
     field(:next_floor, :integer, default: 0)
 
     embeds_many(:latest_upvoted_users, Embeds.User, on_replace: :delete)

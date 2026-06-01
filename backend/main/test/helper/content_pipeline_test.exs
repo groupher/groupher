@@ -59,13 +59,29 @@ defmodule GroupherServer.Test.Helper.ContentPipeline do
       assert String.length(parsed.content_hash) == 64
     end
 
-    test "extracts mentions and cites from plate ast" do
+    test "extracts mentions from plate ast" do
       {:ok, parsed} = ContentPipeline.parse(%{body: @demo_body})
 
       assert "李四" in parsed.mentions
       assert "王五" in parsed.mentions
-      assert "https://groupher.com/post/123" in parsed.cites
-      assert "https://groupher.com/doc/222" in parsed.cites
+    end
+
+    test "deduplicates mentions while preserving first-seen order" do
+      body =
+        Jason.encode!([
+          %{
+            "type" => "p",
+            "children" => [
+              %{"type" => "mention", "value" => "alice", "children" => [%{"text" => ""}]},
+              %{"type" => "mention", "value" => "bob", "children" => [%{"text" => ""}]},
+              %{"type" => "mention", "value" => "alice", "children" => [%{"text" => ""}]}
+            ]
+          }
+        ])
+
+      {:ok, parsed} = ContentPipeline.parse(%{body: body})
+
+      assert parsed.mentions == ["alice", "bob"]
     end
 
     test "hash is stable for same input" do

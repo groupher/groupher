@@ -165,8 +165,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.AbuseReports.undo_article(article, user)
   end
 
-  def paged_citing_contents(_root, ~m(content id filter)a, _info) do
-    CMS.Articles.paged_citing_contents(content, id, filter)
+  def mentions(_root, ~m(type id)a = args, _info) do
+    CMS.ArtimentMentions.mentions(type, id, Map.get(args, :filter))
+  end
+
+  def mentioned_by(_root, ~m(type id)a = args, _info) do
+    CMS.ArtimentMentions.mentioned_by(type, id, Map.get(args, :filter))
   end
 
   # #######################

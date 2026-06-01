@@ -143,29 +143,6 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
-  def q(:paged_citing_contents) do
-    """
-    query($content: Content!, $id: ID!, $filter: PagiFilter!) {
-      pagedCitingContents(id: $id, content: $content, filter: $filter) {
-        entries {
-          id
-          title
-          user {
-            login
-            nickname
-            avatar
-          }
-          commentId
-        }
-        totalPages
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
-  end
-
   def q(:search_communities) do
     """
     query($title: String!, $category: String) {

@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.Model.Embeds.ReferenceTask do
 
   @optional_fields ~w(bi_link_tasks mention_user_tasks)a
 
-  # thread, article_id, block_id, author_id, cite_thread, cite_article_id, cite_block_id, cite_author_id
+  # thread, article_id, block_id, author_id, reference_thread, reference_article_id
 
   @doc "for test usage"
   def default_meta do

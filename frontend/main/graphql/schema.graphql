@@ -124,8 +124,11 @@ type RootQueryType {
   "paged reports list"
   pagedAbuseReports(filter: ReportFilter!): PagedReports
 
-  "paged citings list"
-  pagedCitingContents(id: ID!, content: Content, filter: PagiFilter): PagedCitings
+  "mentions created by an artiment"
+  mentions(id: ID!, type: MentionType!, filter: PagiFilter): PagedMentions
+
+  "artiments mentioning an internal target"
+  mentionedBy(id: ID!, type: MentionType!, filter: PagiFilter): PagedMentions
 
   "search communities by title"
   searchCommunities(title: String!, category: String): PagedCommunities
@@ -627,9 +630,7 @@ type RootMutationType {
   ): Dsb
 
   "update wallpaper in dashboard"
-  updateDashboardWallpaper(
-    community: String!, dsbSection: DsbSection, type: String, source: String, hasPattern: Boolean, patternId: String, patternIntensity: Int, patternTone: String, hasTexture: Boolean, gradient: Json, bgSize: String, blurIntensity: Int, hasShadow: Boolean, brightness: Int, saturation: Int, texture: Json
-  ): Dsb
+  updateDashboardWallpaper(community: String!, wallpaper: DsbWallpaperInput!): Dsb
 
   "update enable in dashboard"
   updateDashboardEnable(
@@ -902,18 +903,32 @@ type DsbSeo {
 type DsbWallpaper {
   type: String
   source: String
+  typeDark: String
+  sourceDark: String
   hasPattern: Boolean
   patternId: String
   patternIntensity: Int
   patternTone: String
   hasTexture: Boolean
+  hasPatternDark: Boolean
+  patternIdDark: String
+  patternIntensityDark: Int
+  patternToneDark: String
+  hasTextureDark: Boolean
   gradient: Json
+  gradientDark: Json
   bgSize: String
+  bgSizeDark: String
   blurIntensity: Int
   hasShadow: Boolean
   brightness: Int
   saturation: Int
+  blurIntensityDark: Int
+  hasShadowDark: Boolean
+  brightnessDark: Int
+  saturationDark: Int
   texture: Json
+  textureDark: Json
 }
 
 type DsbLayout {
@@ -1293,13 +1308,24 @@ type AbuseReport {
   updatedAt: DateTime
 }
 
-type Citing {
+type ArtimentMention {
   id: ID
-  thread: Thread
-  title: String
-  blockLinker: [String]
-  commentId: ID
-  user: CommonUser
+  mentionerType: MentionType
+  mentionerId: ID
+  mentionerCommunityId: ID
+  mentionerUrl: String
+  mentionedScope: MentionScope
+  mentionedType: MentionType
+  mentionedId: ID
+  mentionedCommunityId: ID
+  mentionedUrl: String
+  mentionedUrlHash: String
+  mentionCase: MentionCase
+  occurrences: [Json]
+  mentionerSnapshot: Json
+  mentionedSnapshot: Json
+  meta: Json
+  mentionedAt: DateTime
   insertedAt: DateTime
   updatedAt: DateTime
 }
@@ -1352,8 +1378,8 @@ type PagedReports {
   pageNumber: Int
 }
 
-type PagedCitings {
-  entries: [Citing]
+type PagedMentions {
+  entries: [ArtimentMention]
   totalCount: Int
   pageSize: Int
   totalPages: Int
@@ -1406,7 +1432,6 @@ type ArticleMeta {
   isEdited: Boolean
   isCommentLocked: Boolean
   lastActiveAt: DateTime
-  citingCount: Int
   latestUpvotedUsers: [CommonUser]
   isLegal: Boolean
   illegalReason: [String]
@@ -1504,12 +1529,31 @@ enum Thread {
   USER
 }
 
-enum Content {
+enum MentionType {
   POST
+
   BLOG
+
   CHANGELOG
+
   DOC
+
   COMMENT
+
+  USER
+
+  "External URL mentions only; internal URLs are normalized to concrete content types."
+  URL
+}
+
+enum MentionScope {
+  INTERNAL
+  EXTERNAL
+}
+
+enum MentionCase {
+  INLINE_MENTION
+  LINK
 }
 
 enum WhenEnum {
@@ -1793,6 +1837,37 @@ input DsbFaqMap {
   title: String
   body: String
   index: Int
+}
+
+input DsbWallpaperInput {
+  type: String
+  source: String
+  typeDark: String
+  sourceDark: String
+  hasPattern: Boolean
+  patternId: String
+  patternIntensity: Int
+  patternTone: String
+  hasTexture: Boolean
+  hasPatternDark: Boolean
+  patternIdDark: String
+  patternIntensityDark: Int
+  patternToneDark: String
+  hasTextureDark: Boolean
+  gradient: Json
+  gradientDark: Json
+  bgSize: String
+  bgSizeDark: String
+  blurIntensity: Int
+  hasShadow: Boolean
+  brightness: Int
+  saturation: Int
+  blurIntensityDark: Int
+  hasShadowDark: Boolean
+  brightnessDark: Int
+  saturationDark: Int
+  texture: Json
+  textureDark: Json
 }
 
 enum DsbSection {

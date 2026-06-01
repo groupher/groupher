@@ -188,18 +188,4 @@ defmodule Helper.T do
   html fragment
   """
   @type html :: String.t()
-
-  @type cite_info :: %{
-          id: integer(),
-          thread: article_thread,
-          title: String.t(),
-          inserted_at: String.t(),
-          block_linker: [String.t()],
-          comment_id: integer() | nil,
-          user: %{
-            login: String.t(),
-            avatar: String.t(),
-            nickname: String.t()
-          }
-        }
 end
