@@ -40,8 +40,8 @@ export enum STEPS {
   VERIFY_DOMAIN = 'verify_domain',
 }
 
-export type TStep = STEPS
+export type TStep = `${STEPS}`
 
-export const DOMAIN_STEP_ORDER = [STEPS.ADD_DOMAIN, STEPS.DNS_SETUP, STEPS.VERIFY_DOMAIN] as const
+export const DOMAIN_STEP_ORDER: TStep[] = [STEPS.ADD_DOMAIN, STEPS.DNS_SETUP, STEPS.VERIFY_DOMAIN]
 
-export type TDomainStep = (typeof DOMAIN_STEP_ORDER)[number]
+export type TDomainStep = TStep

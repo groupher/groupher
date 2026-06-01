@@ -302,7 +302,7 @@ export function useLogicValue(): TWallpaperLogic {
   const removeWallpaper = (): void => {
     clearPendingWallpaperDraft()
     clearWallpaperPreview()
-    liveWallpaper$.commit({ source: '', type: WALLPAPER_TYPE.NONE })
+    liveWallpaper$.commit(toWallpaperThemePatch({ source: '', type: WALLPAPER_TYPE.NONE }, isDarkTheme))
   }
   const changeGradientWallpaper = (source: string): void =>
     commitWallpaperPatch(buildGradientWallpaperPatch(wallpaperState, source))

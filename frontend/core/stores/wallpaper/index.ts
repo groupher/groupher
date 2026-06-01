@@ -1,4 +1,4 @@
-import { pick } from 'ramda'
+import { clone, pick } from 'ramda'
 import { proxy } from 'valtio'
 
 import {
@@ -64,8 +64,9 @@ const resolveInitialWallpaperState = (init: TInit): TWallpaperState => {
 export default (init: TInit = {}): TStore => {
   const initialState = resolveInitialWallpaperState(init)
   const initialStore: TStore = {
-    original: initialState,
-    ...initialState,
+    // Keep the saved baseline isolated from live nested edits used by diff patches.
+    original: clone(initialState),
+    ...clone(initialState),
 
     commit: (patch: Partial<TStore>): void => {
       Object.assign(store, patch)
