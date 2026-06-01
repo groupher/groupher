@@ -15,7 +15,11 @@ import {
   GRADIENT_RENDERER,
   WALLPAPER_TEXTURE,
 } from '~/lib/wallpaperMesh'
-import type { TMeshGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
+import type {
+  TLinearGradientRecipe,
+  TMeshGradientRecipe,
+  TWallpaperTexture,
+} from '~/lib/wallpaperMesh'
 import { WALLPAPER_RENDER_KIND } from '~/lib/wallpaperRenderer/constant'
 
 describe('useWallpaper', () => {
@@ -58,12 +62,12 @@ describe('useWallpaper', () => {
 
   it('resolves lagoon as liquid wallpaper', () => {
     const gradient = buildGradientRecipeForRenderer(
-      GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.LAGOON],
+      GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.ROSE_AMBER_SKY],
       GRADIENT_RENDERER.LIQUID,
     )
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
-      source: GRADIENT_WALLPAPER_NAME.LAGOON,
+      source: GRADIENT_WALLPAPER_NAME.ROSE_AMBER_SKY,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
@@ -87,9 +91,9 @@ describe('useWallpaper', () => {
   it('applies current gradient effects to the rendered wallpaper', () => {
     const wrapper = makeStoreWrapper({
       wallpaper: {
-        source: GRADIENT_WALLPAPER_NAME.PURPLE,
+        source: GRADIENT_WALLPAPER_NAME.TEAL_INDIGO_MAUVE,
         type: WALLPAPER_TYPE.GRADIENT,
-        gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.PURPLE], angle: 90 },
+        gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.TEAL_INDIGO_MAUVE], angle: 90 },
         hasPattern: true,
         patternId: DEFAULT_WALLPAPER_PATTERN_ID,
         patternIntensity: 100,
@@ -162,14 +166,14 @@ describe('useWallpaper', () => {
   it('resolves small texture descriptor separately from CSS wallpaper output', () => {
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
-      source: GRADIENT_WALLPAPER_NAME.GREEN,
+      source: GRADIENT_WALLPAPER_NAME.STONE_GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       patternIntensity: 65,
       patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: true,
-      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.STONE_GREEN], angle: 90 },
       blurIntensity: 30,
       hasShadow: false,
       brightness: 90,
@@ -193,14 +197,14 @@ describe('useWallpaper', () => {
   it('keeps gradient pattern out of the renderer fallback background', () => {
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
-      source: GRADIENT_WALLPAPER_NAME.GREEN,
+      source: GRADIENT_WALLPAPER_NAME.STONE_GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: true,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       patternIntensity: 10,
       patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: false,
-      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.STONE_GREEN], angle: 90 },
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
@@ -218,14 +222,17 @@ describe('useWallpaper', () => {
   it('normalizes linear gradient spread as a centered transition band', () => {
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
-      source: GRADIENT_WALLPAPER_NAME.GREEN,
+      source: GRADIENT_WALLPAPER_NAME.STONE_GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       patternIntensity: 100,
       patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: false,
-      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], spread: 0 },
+      gradient: {
+        ...(GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.STONE_GREEN] as TLinearGradientRecipe),
+        spread: 0,
+      },
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
@@ -240,14 +247,14 @@ describe('useWallpaper', () => {
 
   it('normalizes radial gradient spread as outward palette reach', () => {
     const radialGradient = buildGradientRecipeForRenderer(
-      GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.BLUE],
+      GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.SKY_MAUVE_BLUE],
       GRADIENT_RENDERER.RADIAL,
     )
     if (radialGradient.renderer !== GRADIENT_RENDERER.RADIAL) throw new Error('expected radial')
 
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
-      source: GRADIENT_WALLPAPER_NAME.BLUE,
+      source: GRADIENT_WALLPAPER_NAME.SKY_MAUVE_BLUE,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
@@ -271,14 +278,14 @@ describe('useWallpaper', () => {
 
   it('uses explicit radial gradient stops in the renderer descriptor', () => {
     const radialGradient = buildGradientRecipeForRenderer(
-      GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.BLUE],
+      GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.SKY_MAUVE_BLUE],
       GRADIENT_RENDERER.RADIAL,
     )
     if (radialGradient.renderer !== GRADIENT_RENDERER.RADIAL) throw new Error('expected radial')
 
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
-      source: GRADIENT_WALLPAPER_NAME.BLUE,
+      source: GRADIENT_WALLPAPER_NAME.SKY_MAUVE_BLUE,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
@@ -301,14 +308,14 @@ describe('useWallpaper', () => {
   it('falls back unsupported texture payloads to noise', () => {
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
-      source: GRADIENT_WALLPAPER_NAME.GREEN,
+      source: GRADIENT_WALLPAPER_NAME.STONE_GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       patternIntensity: 100,
       patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: true,
-      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.STONE_GREEN], angle: 90 },
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
@@ -331,14 +338,14 @@ describe('useWallpaper', () => {
   it('accepts dots texture descriptors', () => {
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
-      source: GRADIENT_WALLPAPER_NAME.GREEN,
+      source: GRADIENT_WALLPAPER_NAME.STONE_GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       patternIntensity: 100,
       patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: true,
-      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.STONE_GREEN], angle: 90 },
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
@@ -357,14 +364,14 @@ describe('useWallpaper', () => {
   it('accepts oil texture descriptors', () => {
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
-      source: GRADIENT_WALLPAPER_NAME.GREEN,
+      source: GRADIENT_WALLPAPER_NAME.STONE_GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       patternIntensity: 100,
       patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: true,
-      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.STONE_GREEN], angle: 90 },
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
@@ -383,14 +390,14 @@ describe('useWallpaper', () => {
   it('accepts tile texture descriptors', () => {
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
-      source: GRADIENT_WALLPAPER_NAME.GREEN,
+      source: GRADIENT_WALLPAPER_NAME.STONE_GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       patternIntensity: 100,
       patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: true,
-      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.STONE_GREEN], angle: 90 },
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
@@ -409,14 +416,14 @@ describe('useWallpaper', () => {
   it('keeps texture settings while marking them disabled', () => {
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
-      source: GRADIENT_WALLPAPER_NAME.GREEN,
+      source: GRADIENT_WALLPAPER_NAME.STONE_GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: false,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       patternIntensity: 100,
       patternTone: WALLPAPER_PATTERN_TONE.DARK,
       hasTexture: false,
-      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.GREEN], angle: 90 },
+      gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.STONE_GREEN], angle: 90 },
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,
@@ -436,14 +443,14 @@ describe('useWallpaper', () => {
   it('uses a light pattern color when pattern tone is light', () => {
     const descriptor = resolveWallpaperRenderDescriptor({
       customWallpaper: null,
-      source: GRADIENT_WALLPAPER_NAME.AURORA,
+      source: GRADIENT_WALLPAPER_NAME.VIOLET_TEAL_AMBER,
       type: WALLPAPER_TYPE.GRADIENT,
       hasPattern: true,
       patternId: DEFAULT_WALLPAPER_PATTERN_ID,
       patternIntensity: 100,
       patternTone: WALLPAPER_PATTERN_TONE.LIGHT,
       hasTexture: false,
-      gradient: GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.AURORA],
+      gradient: GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.VIOLET_TEAL_AMBER],
       blurIntensity: 0,
       hasShadow: false,
       brightness: 100,

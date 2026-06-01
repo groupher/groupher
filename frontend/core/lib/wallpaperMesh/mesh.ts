@@ -39,6 +39,11 @@ export const getGradientRecipeSpread = (recipe: TGradientRecipe): number =>
 const getRecipeStops = (recipe: TGradientRecipe, colorCount: number): number[] | undefined =>
   !isMeshGradientRecipe(recipe) && recipe.stops?.length === colorCount ? recipe.stops : undefined
 
+type TGradientPaletteLike = {
+  key: string
+  colors: string[]
+}
+
 export const buildGradientRecipeForRenderer = (
   recipe: TGradientRecipe,
   renderer: TGradientRenderer,
@@ -95,15 +100,13 @@ export const buildGradientRecipeForRenderer = (
 }
 
 export const applyGradientPalette = (
-  current: TGradientRecipe | null,
-  palette: TGradientRecipe,
+  current: TGradientRecipe,
+  palette: TGradientPaletteLike,
 ): TGradientRecipe => {
-  if (!current) return palette
-
   return buildGradientRecipeForRenderer(
     {
       ...current,
-      preset: palette.preset,
+      preset: palette.key,
       colors: palette.colors,
     },
     current.renderer,

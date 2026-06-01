@@ -2,6 +2,7 @@ import { clone, equals, pick } from 'ramda'
 import { createContext, use, useEffect, useMemo, useState } from 'react'
 
 import {
+  GRADIENT_PALETTE,
   GRADIENT_WALLPAPER,
   WALLPAPER_SAVABLE_STATE_KEYS,
   WALLPAPER_STATE_KEYS,
@@ -136,11 +137,12 @@ export const buildGradientWallpaperPatch = (
   wallpaper: Pick<TWallpaperThemeState, 'type' | 'gradient'>,
   source: string,
 ): Pick<TWallpaperThemeState, 'source' | 'type' | 'gradient'> => {
-  const palette = GRADIENT_WALLPAPER[source] ?? GRADIENT_WALLPAPER.pink
+  const palette = GRADIENT_PALETTE[source] ?? GRADIENT_PALETTE.amber_mauve
+  const initialGradient = GRADIENT_WALLPAPER[source] ?? GRADIENT_WALLPAPER.amber_mauve
   const gradient =
-    wallpaper.type === WALLPAPER_TYPE.GRADIENT
+    wallpaper.type === WALLPAPER_TYPE.GRADIENT && wallpaper.gradient
       ? applyGradientPalette(wallpaper.gradient, palette)
-      : buildGradientRecipeForRenderer(palette, GRADIENT_RENDERER.LINEAR)
+      : buildGradientRecipeForRenderer(initialGradient, GRADIENT_RENDERER.LINEAR)
 
   return {
     source,
@@ -296,20 +298,22 @@ export function useLogicValue(): TWallpaperLogic {
 
     if (wallpaperState.gradient) return
 
-    const fallback = GRADIENT_WALLPAPER.pink
+    const fallback = GRADIENT_WALLPAPER.amber_mauve
     scheduleWallpaperPreview({ gradient: { ...fallback, angle } })
   }
   const removeWallpaper = (): void => {
     clearPendingWallpaperDraft()
     clearWallpaperPreview()
-    liveWallpaper$.commit(toWallpaperThemePatch({ source: '', type: WALLPAPER_TYPE.NONE }, isDarkTheme))
+    liveWallpaper$.commit(
+      toWallpaperThemePatch({ source: '', type: WALLPAPER_TYPE.NONE }, isDarkTheme),
+    )
   }
   const changeGradientWallpaper = (source: string): void =>
     commitWallpaperPatch(buildGradientWallpaperPatch(wallpaperState, source))
   const changeGradientRecipe = (gradient: TGradientRecipe): void =>
     commitWallpaperPatch({ source: gradient.preset, type: WALLPAPER_TYPE.GRADIENT, gradient })
   const changeGradientRenderer = (renderer: TGradientRenderer): void => {
-    const gradient = wallpaperState.gradient ?? GRADIENT_WALLPAPER.pink
+    const gradient = wallpaperState.gradient ?? GRADIENT_WALLPAPER.amber_mauve
 
     commitWallpaperPatch({
       source: gradient.preset,

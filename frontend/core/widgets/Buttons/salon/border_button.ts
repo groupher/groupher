@@ -8,25 +8,21 @@ export { cn } from '~/css'
 // TODO: move to @groupher-share
 const getGithubGradient = (wallpaper: string): string => {
   switch (wallpaper) {
-    case GRADIENT_WALLPAPER_NAME.PINK: {
+    case GRADIENT_WALLPAPER_NAME.AMBER_MAUVE: {
       return 'linear-gradient(64deg, #2f2f2f 60%, #211227e0 100%)'
     }
 
-    case GRADIENT_WALLPAPER_NAME.GREEN: {
+    case GRADIENT_WALLPAPER_NAME.STONE_GREEN: {
       return 'linear-gradient(64deg, #2b2b29 60%, #0e230fe0 100%)'
     }
 
-    case GRADIENT_WALLPAPER_NAME.ORANGE: {
+    case GRADIENT_WALLPAPER_NAME.AMBER_ROSE: {
       return 'linear-gradient(64deg, #2f2f2f 60%, #271512e0 100%)'
     }
 
-    case GRADIENT_WALLPAPER_NAME.BLUE:
-    case GRADIENT_WALLPAPER_NAME.PURPLE: {
+    case GRADIENT_WALLPAPER_NAME.SKY_MAUVE_BLUE:
+    case GRADIENT_WALLPAPER_NAME.TEAL_INDIGO_MAUVE: {
       return 'linear-gradient(64deg, #2f2f2f 20%, #0c1d2ee0 100%)'
-    }
-
-    case GRADIENT_WALLPAPER_NAME.GREY: {
-      return 'linear-gradient(64deg, #2f2f2f 60%, #272524e0 100%)'
     }
 
     default: {

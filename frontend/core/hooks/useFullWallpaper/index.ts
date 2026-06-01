@@ -1,11 +1,15 @@
 import { GRADIENT_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
 import useTheme from '~/hooks/useTheme'
 import type { TGradientRecipe } from '~/lib/wallpaperMesh'
-import type { TWallpaper, TWallpaperData } from '~/spec'
+import type { TGradientPalette, TWallpaper, TWallpaperData } from '~/spec'
 import { resolveWallpaperThemeState, toWallpaperThemePatch } from '~/stores/wallpaper/helper'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 
-import { buildGradientCatalogWallpapers, buildPatternCatalogWallpapers } from './helper'
+import {
+  buildGradientCatalogPalettes,
+  buildGradientCatalogWallpapers,
+  buildPatternCatalogWallpapers,
+} from './helper'
 
 type TRet = {
   source: string
@@ -13,6 +17,7 @@ type TRet = {
   changePatternWallpaper: (source: string) => void
   getWallpaper: () => TWallpaperData
   getGradientWallpapers: () => Record<string, TGradientRecipe>
+  getGradientPalettes: () => Record<string, TGradientPalette>
   getPatternWallpapers: () => Record<string, TWallpaper>
 }
 
@@ -22,6 +27,10 @@ export default function useFullWallpaper(): TRet {
 
   const getGradientWallpapers = (): Record<string, TGradientRecipe> => {
     return buildGradientCatalogWallpapers()
+  }
+
+  const getGradientPalettes = (): Record<string, TGradientPalette> => {
+    return buildGradientCatalogPalettes()
   }
 
   const getPatternWallpapers = (): Record<string, TWallpaper> => {
@@ -48,7 +57,7 @@ export default function useFullWallpaper(): TRet {
     } = themedState
 
     const hasBlur = blurIntensity > 0
-    const activeGradient = gradient || GRADIENT_WALLPAPER[source] || GRADIENT_WALLPAPER.pink
+    const activeGradient = gradient || GRADIENT_WALLPAPER[source] || GRADIENT_WALLPAPER.amber_mauve
 
     return {
       source,
@@ -78,6 +87,7 @@ export default function useFullWallpaper(): TRet {
       gradientDark: store.gradientDark,
       texture,
       textureDark: store.textureDark,
+      gradientPalettes: getGradientPalettes(),
       gradientWallpapers: getGradientWallpapers(),
       patternWallpapers: getPatternWallpapers(),
       bgSize,
@@ -95,6 +105,7 @@ export default function useFullWallpaper(): TRet {
     source: resolveWallpaperThemeState(store, isDarkTheme).source,
     changeWallpaper,
     changePatternWallpaper,
+    getGradientPalettes,
     getGradientWallpapers,
     getPatternWallpapers,
     getWallpaper,

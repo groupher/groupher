@@ -15,9 +15,9 @@ import type { TInit, TStore, TWallpaperState } from './spec'
 
 export const INITIAL_WALLPAPER_STATE = {
   customWallpaper: null,
-  source: 'pink',
+  source: 'amber_mauve',
   type: WALLPAPER_TYPE.GRADIENT,
-  sourceDark: 'pink',
+  sourceDark: 'amber_mauve',
   typeDark: WALLPAPER_TYPE.GRADIENT,
   hasPattern: true,
   patternId: DEFAULT_WALLPAPER_PATTERN_ID,
@@ -29,8 +29,8 @@ export const INITIAL_WALLPAPER_STATE = {
   patternIntensityDark: 50,
   patternToneDark: WALLPAPER_PATTERN_TONE.DARK,
   hasTextureDark: false,
-  gradient: GRADIENT_WALLPAPER.pink,
-  gradientDark: GRADIENT_WALLPAPER.pink,
+  gradient: GRADIENT_WALLPAPER.amber_mauve,
+  gradientDark: GRADIENT_WALLPAPER.amber_mauve,
   blurIntensity: 0,
   hasShadow: false,
   brightness: 100,
@@ -52,10 +52,10 @@ const resolveInitialWallpaperState = (init: TInit): TWallpaperState => {
   }
 
   if (state.type === WALLPAPER_TYPE.GRADIENT && !state.gradient) {
-    state.gradient = GRADIENT_WALLPAPER[state.source] ?? GRADIENT_WALLPAPER.pink
+    state.gradient = GRADIENT_WALLPAPER[state.source] ?? GRADIENT_WALLPAPER.amber_mauve
   }
   if (state.typeDark === WALLPAPER_TYPE.GRADIENT && !state.gradientDark) {
-    state.gradientDark = GRADIENT_WALLPAPER[state.sourceDark] ?? GRADIENT_WALLPAPER.pink
+    state.gradientDark = GRADIENT_WALLPAPER[state.sourceDark] ?? GRADIENT_WALLPAPER.amber_mauve
   }
 
   return state

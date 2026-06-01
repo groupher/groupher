@@ -26,7 +26,7 @@ export default function useTopGlow(): TTopGlow {
 
   if (
     includes(metric, [METRIC.APPLY_COMMUNITY]) ||
-    (metric === METRIC.LANDING && source !== GRADIENT_WALLPAPER_NAME.PINK)
+    (metric === METRIC.LANDING && source !== GRADIENT_WALLPAPER_NAME.AMBER_MAUVE)
   ) {
     return {
       glowType: null,
