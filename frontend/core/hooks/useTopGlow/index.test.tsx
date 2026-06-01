@@ -29,7 +29,7 @@ describe('useTopGlow', () => {
     expect(result.current.glowFixed).toBe(false)
   })
 
-  it('disables glow on landing when wallpaper is not PINK', () => {
+  it('disables glow on landing when wallpaper is not AMBER_MAUVE', () => {
     const wrapper = makeStoreWrapper({
       metric: METRIC.LANDING,
       wallpaper: { source: 'sky_mauve_blue', type: WALLPAPER_TYPE.GRADIENT },

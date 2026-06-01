@@ -1,7 +1,7 @@
 import { includes, keys } from 'ramda'
 
 import { COLOR } from '~/const/colors'
-import { GRADIENT_WALLPAPER, GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
+import { GRADIENT_WALLPAPER } from '~/const/wallpaper'
 import useTwBelt from '~/hooks/useTwBelt'
 import useWallpaper from '~/hooks/useWallpaper'
 
@@ -9,10 +9,6 @@ import useWallpaper from '~/hooks/useWallpaper'
 const getPathGradient = (wallpaper: string): string => {
   if (!includes(wallpaper, keys(GRADIENT_WALLPAPER))) {
     return '#f2bc5a,#f76b6b'
-  }
-
-  if (wallpaper === GRADIENT_WALLPAPER_NAME.AMBER_MAUVE) {
-    return '#f8be6d,#c479de'
   }
 
   const { colors } = GRADIENT_WALLPAPER[wallpaper]
