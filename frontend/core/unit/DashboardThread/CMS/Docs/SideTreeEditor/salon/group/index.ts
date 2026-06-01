@@ -13,7 +13,7 @@ export default function useSalon({ actionVisible }: { actionVisible: boolean }) 
     titleButton: cn('row-center min-w-0 bg-transparent border-0 p-0 text-left', fg('digest')),
     arrowIcon: cn('size-3 ml-1.5 -rotate-90 trans-all-100', fill('digest')),
     arrowCollapsed: 'rotate-180',
-    title: 'truncate text-sm',
+    title: cn('truncate text-sm pointer', `hover:${fg('title')}`),
     actions: cn(
       'row-center ml-auto gap-x-1 opacity-0 group-hover/docs-tree-group:opacity-100 trans-all-100',
       actionVisible && 'opacity-100',

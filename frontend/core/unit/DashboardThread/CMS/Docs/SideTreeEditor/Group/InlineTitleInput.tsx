@@ -1,7 +1,7 @@
 import { type FC, useEffect, useRef, useState } from 'react'
 
-import { UNTITLED_TITLE } from './constant'
-import useSalon from './salon/inline_title_input'
+import { UNTITLED_TITLE } from '../constant'
+import useSalon from '../salon/group/inline_title_input'
 
 type TProps = {
   value: string

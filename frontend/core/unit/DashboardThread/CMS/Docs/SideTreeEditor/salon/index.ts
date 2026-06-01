@@ -7,7 +7,6 @@ export default function useSalon() {
 
   return {
     wrapper: cn('column w-48 min-h-96 pr-3 mt-4.5 border-r', br('divider')),
-    list: 'column gap-y-4',
-    addSlot: 'mt-4',
+    groupList: 'column gap-y-4',
   }
 }

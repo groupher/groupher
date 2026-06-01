@@ -4,9 +4,10 @@ import type { TColorName } from '~/spec'
 
 type TProps = {
   compact?: boolean
+  active?: boolean
 }
 
-export default function useSalon({ compact = false }: TProps = {}) {
+export default function useSalon({ compact = false, active = false }: TProps = {}) {
   const { bg, cn, br, fg, fill, hover, primary, rainbow, shadow } = useTwBelt()
 
   return {
@@ -40,7 +41,7 @@ export default function useSalon({ compact = false }: TProps = {}) {
       '[&_.epr-emoji-category-label]:leading-none',
     ),
     todo: cn('align-both h-80 text-lg', fg('digest')),
-    previewIconColor: bg('digest'),
+    previewIconColor: active ? primary('bg') : bg('digest'),
     colorGrid: 'grid grid-cols-6 gap-3 px-4 pt-3',
     colorButton: 'align-both size-8 circle appearance-none',
     colorDot: (color: TColorName, active: boolean) =>

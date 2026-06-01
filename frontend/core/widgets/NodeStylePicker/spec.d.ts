@@ -11,6 +11,7 @@ export type TNodeStylePickerProps = {
   testid?: string
   value?: TNodeStyleValue | null
   compact?: boolean
+  active?: boolean
   onChange?: (value: TNodeStyleValue) => void
 }
 

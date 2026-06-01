@@ -7,16 +7,16 @@ import MoreSVG from '~/icons/menu/MoreL'
 import DeleteSVG from '~/icons/Trash'
 import Tooltip from '~/widgets/Tooltip'
 
-import { SIDE_TREE_NODE_MENU_ACTION } from './constant'
-import useSalon from './salon/node_action_menu'
-import type { TSideTreeNodeMenuAction } from './spec'
+import { SIDE_TREE_NODE_MENU_ACTION } from '../constant'
+import useSalon from '../salon/group/child_menu'
+import type { TSideTreeNodeMenuAction } from '../spec'
 
 type TProps = {
   onSelect: (action: TSideTreeNodeMenuAction) => void
   onOpenChange?: (open: boolean) => void
 }
 
-const NodeActionMenu: FC<TProps> = ({ onSelect, onOpenChange }) => {
+const ChildMenu: FC<TProps> = ({ onSelect, onOpenChange }) => {
   const s = useSalon()
   const { t } = useTrans()
 
@@ -24,7 +24,7 @@ const NodeActionMenu: FC<TProps> = ({ onSelect, onOpenChange }) => {
     <Tooltip
       placement='bottom-end'
       trigger='click'
-      offset={[0, 6]}
+      offset={[14, 5]}
       noPadding
       hideOnClick
       portalToBody
@@ -72,4 +72,4 @@ const NodeActionMenu: FC<TProps> = ({ onSelect, onOpenChange }) => {
   )
 }
 
-export default NodeActionMenu
+export default ChildMenu

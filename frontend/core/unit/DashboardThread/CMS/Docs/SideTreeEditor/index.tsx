@@ -2,13 +2,14 @@
 
 import type { FC } from 'react'
 
-import AddSectionMenu from './AddSectionMenu'
-import GroupRow from './GroupRow'
+import Group from './Group'
+import GroupAdder from './GroupAdder'
 import useSalon from './salon'
 import useSideTreeEditor from './useSideTreeEditor'
 
 const SideTreeEditor: FC = () => {
   const s = useSalon()
+
   const {
     groups,
     activeId,
@@ -27,9 +28,9 @@ const SideTreeEditor: FC = () => {
 
   return (
     <aside className={s.wrapper}>
-      <div className={s.list}>
+      <div className={s.groupList}>
         {groups.map((group) => (
-          <GroupRow
+          <Group
             key={group.id}
             group={group}
             activeId={activeId}
@@ -47,9 +48,7 @@ const SideTreeEditor: FC = () => {
         ))}
       </div>
 
-      <div className={s.addSlot}>
-        <AddSectionMenu onAddGroup={addGroup} />
-      </div>
+      <GroupAdder onAddGroup={addGroup} />
     </aside>
   )
 }

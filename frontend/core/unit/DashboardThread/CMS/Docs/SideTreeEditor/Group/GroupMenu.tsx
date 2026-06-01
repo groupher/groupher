@@ -6,16 +6,16 @@ import LinkSVG from '~/icons/Link'
 import PlusSVG from '~/icons/Plus'
 import Tooltip from '~/widgets/Tooltip'
 
-import { SIDE_TREE_CHILD_MENU_ACTION } from './constant'
-import useSalon, { cnMerge } from './salon/add_child_menu'
-import type { TSideTreeChildMenuAction } from './spec'
+import { SIDE_TREE_CHILD_MENU_ACTION } from '../constant'
+import useSalon, { cnMerge } from '../salon/group/group_menu'
+import type { TSideTreeChildMenuAction } from '../spec'
 
 type TProps = {
   onSelect: (action: TSideTreeChildMenuAction) => void
   onOpenChange?: (open: boolean) => void
 }
 
-const AddChildMenu: FC<TProps> = ({ onSelect, onOpenChange }) => {
+const GroupMenu: FC<TProps> = ({ onSelect, onOpenChange }) => {
   const s = useSalon()
   const { t } = useTrans()
 
@@ -61,4 +61,4 @@ const AddChildMenu: FC<TProps> = ({ onSelect, onOpenChange }) => {
   )
 }
 
-export default AddChildMenu
+export default GroupMenu

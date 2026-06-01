@@ -2,18 +2,18 @@ import { type FC, useState } from 'react'
 
 import ArrowSVG from '~/icons/ArrowSimple'
 
-import AddChildMenu from './AddChildMenu'
-import { SIDE_TREE_NODE_TYPE } from './constant'
-import InlineTitleInput from './InlineTitleInput'
-import LinkRow from './LinkRow'
-import PageRow from './PageRow'
-import useSalon, { cn } from './salon/group_row'
+import { SIDE_TREE_NODE_TYPE } from '../constant'
+import useSalon, { cn } from '../salon/group'
 import type {
   TEditingTarget,
   TSideTreeChildMenuAction,
   TSideTreeGroup,
   TSideTreeNodeMenuAction,
-} from './spec'
+} from '../spec'
+import File from './File'
+import GroupMenu from './GroupMenu'
+import InlineTitleInput from './InlineTitleInput'
+import Link from './Link'
 
 type TProps = {
   group: TSideTreeGroup
@@ -34,7 +34,7 @@ type TProps = {
   ) => void
 }
 
-const GroupRow: FC<TProps> = ({
+const Group: FC<TProps> = ({
   group,
   activeId,
   editingTarget,
@@ -70,7 +70,7 @@ const GroupRow: FC<TProps> = ({
           </button>
         )}
         <div className={s.actions}>
-          <AddChildMenu
+          <GroupMenu
             onOpenChange={setMenuOpen}
             onSelect={(action) => onAddChild(group.id, action)}
           />
@@ -79,7 +79,7 @@ const GroupRow: FC<TProps> = ({
       <div className={cn(s.children, collapsed && s.collapsed)}>
         {group.children.map((child) =>
           child.type === SIDE_TREE_NODE_TYPE.PAGE ? (
-            <PageRow
+            <File
               key={child.id}
               groupId={group.id}
               item={child}
@@ -93,7 +93,7 @@ const GroupRow: FC<TProps> = ({
               onStyleChange={onChildStyleChange}
             />
           ) : (
-            <LinkRow
+            <Link
               key={child.id}
               groupId={group.id}
               item={child}
@@ -113,4 +113,4 @@ const GroupRow: FC<TProps> = ({
   )
 }
 
-export default GroupRow
+export default Group
