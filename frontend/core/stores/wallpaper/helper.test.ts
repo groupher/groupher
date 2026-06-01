@@ -11,14 +11,14 @@ import {
 describe('stores/wallpaper/helper', () => {
   it('resolves the active light or dark wallpaper state', () => {
     const store = setupStore({
-      source: 'pink',
-      sourceDark: 'purple',
+      source: 'amber_mauve',
+      sourceDark: 'teal_indigo_mauve',
       brightness: 100,
       brightnessDark: 82,
       gradient: {
         version: 2,
         renderer: GRADIENT_RENDERER.LINEAR,
-        preset: 'pink',
+        preset: 'amber_mauve',
         colors: ['#fff', '#ddd'],
         angle: 180,
         spread: 52,
@@ -26,7 +26,7 @@ describe('stores/wallpaper/helper', () => {
       gradientDark: {
         version: 2,
         renderer: GRADIENT_RENDERER.LINEAR,
-        preset: 'purple',
+        preset: 'teal_indigo_mauve',
         colors: ['#111', '#333'],
         angle: 90,
         spread: 52,
@@ -34,14 +34,14 @@ describe('stores/wallpaper/helper', () => {
     })
 
     expect(resolveWallpaperThemeState(store, false)).toMatchObject({
-      source: 'pink',
+      source: 'amber_mauve',
       brightness: 100,
-      gradient: expect.objectContaining({ preset: 'pink' }),
+      gradient: expect.objectContaining({ preset: 'amber_mauve' }),
     })
     expect(resolveWallpaperThemeState(store, true)).toMatchObject({
-      source: 'purple',
+      source: 'teal_indigo_mauve',
       brightness: 82,
-      gradient: expect.objectContaining({ preset: 'purple' }),
+      gradient: expect.objectContaining({ preset: 'teal_indigo_mauve' }),
     })
   })
 
@@ -57,19 +57,19 @@ describe('stores/wallpaper/helper', () => {
 
   it('builds a sparse savable patch from original to current state', () => {
     const store = setupStore({
-      source: 'pink',
-      sourceDark: 'purple',
+      source: 'amber_mauve',
+      sourceDark: 'teal_indigo_mauve',
       texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
       textureDark: { type: WALLPAPER_TEXTURE.TILE, intensity: 40, params: {} },
     })
 
     store.commit({
-      sourceDark: 'blue',
+      sourceDark: 'sky_mauve_blue',
       textureDark: { type: WALLPAPER_TEXTURE.ASCII, intensity: 55, params: {} },
     })
 
     expect(getWallpaperSavablePatch(store)).toEqual({
-      sourceDark: 'blue',
+      sourceDark: 'sky_mauve_blue',
       textureDark: { type: WALLPAPER_TEXTURE.ASCII, intensity: 55, params: {} },
     })
   })

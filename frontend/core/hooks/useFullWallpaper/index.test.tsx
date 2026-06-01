@@ -17,7 +17,7 @@ describe('useFullWallpaper', () => {
   it('returns data and can commit wallpaper changes', async () => {
     const wrapper = makeStoreWrapper({
       wallpaper: {
-        source: GRADIENT_WALLPAPER_NAME.PINK,
+        source: GRADIENT_WALLPAPER_NAME.AMBER_MAUVE,
         type: WALLPAPER_TYPE.GRADIENT,
         hasPattern: true,
         patternId: DEFAULT_WALLPAPER_PATTERN_ID,
@@ -28,14 +28,14 @@ describe('useFullWallpaper', () => {
         brightness: 100,
         saturation: 100,
         texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-        gradient: GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.PINK],
+        gradient: GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.AMBER_MAUVE],
       },
     })
 
     const { result } = renderHook(() => useFullWallpaper(), { wrapper })
 
     const data = result.current.getWallpaper()
-    expect(data.source).toBe(GRADIENT_WALLPAPER_NAME.PINK)
+    expect(data.source).toBe(GRADIENT_WALLPAPER_NAME.AMBER_MAUVE)
     expect(data.type).toBe(WALLPAPER_TYPE.GRADIENT)
     expect(data.patternId).toBe(DEFAULT_WALLPAPER_PATTERN_ID)
     expect(data.patternIntensity).toBe(100)
@@ -45,9 +45,16 @@ describe('useFullWallpaper', () => {
     expect(data.saturation).toBe(100)
     expect(data.texture).toEqual({ type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} })
 
-    const pink = data.gradientWallpapers.pink
-    expect('colors' in pink).toBe(true)
-    expect(pink.renderer).toBe(GRADIENT_RENDERER.LINEAR)
+    const amberMauve = data.gradientWallpapers.amber_mauve
+    expect('colors' in amberMauve).toBe(true)
+    expect(amberMauve.renderer).toBe(GRADIENT_RENDERER.LINEAR)
+    expect(data.gradientPalettes.amber_mauve).toEqual({
+      key: GRADIENT_WALLPAPER_NAME.AMBER_MAUVE,
+      label: 'Amber Mauve',
+      colors: GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.AMBER_MAUVE].colors,
+    })
+    expect(data.gradientPalettes.amber_mauve).not.toHaveProperty('angle')
+    expect(data.gradientPalettes.amber_mauve).not.toHaveProperty('spread')
 
     act(() => result.current.changePatternWallpaper('dots'))
 
@@ -59,22 +66,22 @@ describe('useFullWallpaper', () => {
   it('keeps gradient catalog previews static', () => {
     const wrapper = makeStoreWrapper({
       wallpaper: {
-        source: GRADIENT_WALLPAPER_NAME.PURPLE,
+        source: GRADIENT_WALLPAPER_NAME.TEAL_INDIGO_MAUVE,
         type: WALLPAPER_TYPE.GRADIENT,
         hasPattern: true,
         patternId: DEFAULT_WALLPAPER_PATTERN_ID,
         patternIntensity: 100,
         patternTone: WALLPAPER_PATTERN_TONE.DARK,
         blurIntensity: 50,
-        gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.PURPLE], angle: 90 },
+        gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.TEAL_INDIGO_MAUVE], angle: 90 },
       },
     })
 
     const { result } = renderHook(() => useFullWallpaper(), { wrapper })
     const data = result.current.getWallpaper()
 
-    const active = data.gradientWallpapers[GRADIENT_WALLPAPER_NAME.PURPLE]
-    const defaultPattern = data.gradientWallpapers[GRADIENT_WALLPAPER_NAME.GREEN]
+    const active = data.gradientWallpapers[GRADIENT_WALLPAPER_NAME.TEAL_INDIGO_MAUVE]
+    const defaultPattern = data.gradientWallpapers[GRADIENT_WALLPAPER_NAME.STONE_GREEN]
 
     expect(active).toMatchObject({ renderer: GRADIENT_RENDERER.LINEAR, angle: 180 })
 

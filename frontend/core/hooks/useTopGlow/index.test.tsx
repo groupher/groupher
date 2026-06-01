@@ -32,7 +32,7 @@ describe('useTopGlow', () => {
   it('disables glow on landing when wallpaper is not PINK', () => {
     const wrapper = makeStoreWrapper({
       metric: METRIC.LANDING,
-      wallpaper: { source: 'blue', type: WALLPAPER_TYPE.GRADIENT },
+      wallpaper: { source: 'sky_mauve_blue', type: WALLPAPER_TYPE.GRADIENT },
       dashboard: { themeTokens: { glowType: null, glowTypeDark: null } },
     })
 

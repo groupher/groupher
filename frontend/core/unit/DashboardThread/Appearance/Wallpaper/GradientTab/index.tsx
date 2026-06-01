@@ -13,15 +13,15 @@ export default function GradientTab() {
   const { getWallpaper, changeGradientWallpaper, changePatternId } = useLogic()
 
   const wallpaper = getWallpaper()
-  const { gradientWallpapers, patternId } = wallpaper
+  const { gradientPalettes, patternId } = wallpaper
 
-  const gradientKeys = keys(gradientWallpapers)
+  const gradientKeys = keys(gradientPalettes)
 
   return (
     <div className={s.wrapper}>
       <div className={s.gradientGrid}>
         {gradientKeys.map((name) => {
-          const presetGradient = gradientWallpapers[name]
+          const palette = gradientPalettes[name]
           const selected = isActiveWallpaperSource(wallpaper, WALLPAPER_TYPE.GRADIENT, name)
 
           return (
@@ -29,11 +29,13 @@ export default function GradientTab() {
               type='button'
               key={name}
               className={cnMerge(s.card, selected && s.cardActive)}
+              aria-label={palette.label}
+              title={palette.label}
               onClick={() => {
                 if (!selected) changeGradientWallpaper(name)
               }}
             >
-              <GradientSwatchPreview className={s.preview} gradient={presetGradient} />
+              <GradientSwatchPreview className={s.preview} palette={palette} />
             </button>
           )
         })}

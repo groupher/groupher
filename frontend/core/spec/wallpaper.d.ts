@@ -46,10 +46,22 @@ export type TWallpaperPatternTone = WALLPAPER_PATTERN_TONE
 
 export type TWallpaperBgSize = WALLPAPER_BG_SIZE
 
+export type TGradientPalette = {
+  key: string
+  label: string
+  colors: string[]
+}
+
+export type TGradientEffectInit = {
+  angle: number
+  spread: number
+}
+
 export type TWallpaperInfo = {
   customWallpaper?: TCustomWallpaper
   source: string
   wallpapers: Record<string, TWallpaper>
+  gradientPalettes?: Record<string, TGradientPalette>
   gradientWallpapers?: Record<string, TGradientRecipe>
 
   changeWallpaper?: (source: string) => void
@@ -58,6 +70,7 @@ export type TWallpaperInfo = {
 export type TWallpaperData = {
   source: string
   sourceDark: string
+  gradientPalettes: Record<string, TGradientPalette>
   gradientWallpapers: Record<string, TGradientRecipe>
   patternWallpapers: Record<string, TWallpaper>
   type: TWallpaperType

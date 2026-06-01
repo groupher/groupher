@@ -1,8 +1,13 @@
 import { clone } from 'ramda'
 
-import { GRADIENT_WALLPAPER, PATTERN_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
+import {
+  GRADIENT_PALETTE,
+  GRADIENT_WALLPAPER,
+  PATTERN_WALLPAPER,
+  WALLPAPER_TYPE,
+} from '~/const/wallpaper'
 import type { TGradientRecipe } from '~/lib/wallpaperMesh'
-import type { TWallpaper, TWallpaperPic, TWallpaperType } from '~/spec'
+import type { TGradientPalette, TWallpaper, TWallpaperPic, TWallpaperType } from '~/spec'
 
 type TGradientEffectState = {
   source: string
@@ -20,6 +25,9 @@ type TPatternEffectState = {
 
 export const buildGradientCatalogWallpapers = (): Record<string, TGradientRecipe> =>
   clone(GRADIENT_WALLPAPER)
+
+export const buildGradientCatalogPalettes = (): Record<string, TGradientPalette> =>
+  clone(GRADIENT_PALETTE)
 
 export const buildPatternCatalogWallpapers = (): Record<string, TWallpaper> => {
   const wallpapers = clone(PATTERN_WALLPAPER)

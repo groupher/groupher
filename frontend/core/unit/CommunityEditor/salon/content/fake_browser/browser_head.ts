@@ -11,12 +11,8 @@ const getPathGradient = (wallpaper: string): string => {
     return '#f2bc5a,#f76b6b'
   }
 
-  if (wallpaper === GRADIENT_WALLPAPER_NAME.PINK) {
+  if (wallpaper === GRADIENT_WALLPAPER_NAME.AMBER_MAUVE) {
     return '#f8be6d,#c479de'
-  }
-
-  if (wallpaper === GRADIENT_WALLPAPER_NAME.GREY) {
-    return '#E1D5CC,#955D29'
   }
 
   const { colors } = GRADIENT_WALLPAPER[wallpaper]
