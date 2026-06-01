@@ -66,6 +66,24 @@ defmodule GroupherServer.Test.Helper.ContentPipeline do
       assert "王五" in parsed.mentions
     end
 
+    test "deduplicates mentions while preserving first-seen order" do
+      body =
+        Jason.encode!([
+          %{
+            "type" => "p",
+            "children" => [
+              %{"type" => "mention", "value" => "alice", "children" => [%{"text" => ""}]},
+              %{"type" => "mention", "value" => "bob", "children" => [%{"text" => ""}]},
+              %{"type" => "mention", "value" => "alice", "children" => [%{"text" => ""}]}
+            ]
+          }
+        ])
+
+      {:ok, parsed} = ContentPipeline.parse(%{body: body})
+
+      assert parsed.mentions == ["alice", "bob"]
+    end
+
     test "hash is stable for same input" do
       {:ok, parsed1} = ContentPipeline.parse(%{body: @demo_body})
       {:ok, parsed2} = ContentPipeline.parse(%{body: @demo_body})

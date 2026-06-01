@@ -137,10 +137,10 @@ defmodule Helper.ContentPipeline do
 
   # Public mention extraction entry from AST list.
   defp extract_mentions(nodes) when is_list(nodes),
-    do: do_extract_mentions(nodes, []) |> Enum.reverse()
+    do: do_extract_mentions(nodes, []) |> Enum.reverse() |> Enum.uniq()
 
-  # Deduplicate accumulated mentions while preserving order.
-  defp do_extract_mentions([], acc), do: Enum.uniq(acc)
+  # Finish traversal; ordering/deduplication happens at the public entry.
+  defp do_extract_mentions([], acc), do: acc
 
   # Collect mention values from mention nodes.
   defp do_extract_mentions([%{"type" => "mention", "value" => value} = node | rest], acc)

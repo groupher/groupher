@@ -165,12 +165,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.AbuseReports.undo_article(article, user)
   end
 
-  def mentions(_root, ~m(type id filter)a, _info) do
-    CMS.ArtimentMentions.mentions(type, id, filter)
+  def mentions(_root, ~m(type id)a = args, _info) do
+    CMS.ArtimentMentions.mentions(type, id, Map.get(args, :filter))
   end
 
-  def mentioned_by(_root, ~m(type id filter)a, _info) do
-    CMS.ArtimentMentions.mentioned_by(type, id, filter)
+  def mentioned_by(_root, ~m(type id)a = args, _info) do
+    CMS.ArtimentMentions.mentioned_by(type, id, Map.get(args, :filter))
   end
 
   # #######################

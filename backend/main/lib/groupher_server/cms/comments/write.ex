@@ -112,6 +112,7 @@ defmodule GroupherServer.CMS.Comments.Write do
         FrontDesk.sync_embed_replies(comment)
       end)
       |> Multi.run(:after_events, fn _, %{update_comment: comment} ->
+        Later.run({Events, :emit, [:sync_mentions, %{artiment: comment}]})
         Later.run({Events, :emit, [:audition, %{artiment: comment}]})
       end)
       |> Repo.transaction()

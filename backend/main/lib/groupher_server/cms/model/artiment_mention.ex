@@ -70,6 +70,8 @@ defmodule GroupherServer.CMS.Model.ArtimentMention do
     |> validate_required(@required_fields)
     |> validate_internal_mention()
     |> validate_external_mention()
+    |> validate_scope_case()
+    |> validate_scope_fields()
   end
 
   def update_changeset(%ArtimentMention{} = mention, attrs) do
@@ -77,6 +79,8 @@ defmodule GroupherServer.CMS.Model.ArtimentMention do
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> validate_internal_mention()
     |> validate_external_mention()
+    |> validate_scope_case()
+    |> validate_scope_fields()
   end
 
   defp validate_internal_mention(changeset) do
@@ -90,6 +94,39 @@ defmodule GroupherServer.CMS.Model.ArtimentMention do
     case get_field(changeset, :mentioned_scope) do
       :external -> validate_required(changeset, [:mentioned_url, :mentioned_url_hash])
       _ -> changeset
+    end
+  end
+
+  defp validate_scope_case(changeset) do
+    case {get_field(changeset, :mentioned_scope), get_field(changeset, :mention_case)} do
+      {:internal, :inline_mention} -> changeset
+      {:external, :link} -> changeset
+      {nil, _} -> changeset
+      {_, nil} -> changeset
+      {:internal, _} -> add_error(changeset, :mention_case, "must be inline_mention")
+      {:external, _} -> add_error(changeset, :mention_case, "must be link")
+    end
+  end
+
+  defp validate_scope_fields(changeset) do
+    case get_field(changeset, :mentioned_scope) do
+      :internal ->
+        reject_present(changeset, :mentioned_url_hash)
+
+      :external ->
+        changeset
+        |> reject_present(:mentioned_id)
+        |> reject_present(:mentioned_community_id)
+
+      _ ->
+        changeset
+    end
+  end
+
+  defp reject_present(changeset, field) do
+    case get_field(changeset, field) do
+      nil -> changeset
+      _ -> add_error(changeset, field, "must be blank")
     end
   end
 end

@@ -59,6 +59,7 @@ defmodule GroupherServer.CMS.ArtimentMentions do
   alias Helper.{ORM, QueryBuilder, T}
 
   @article_threads get_config(:article, :threads)
+  @mention_types @article_threads ++ [:comment, :user, :url]
 
   @type sync_result :: {:ok, term()} | {:error, term()}
 
@@ -78,6 +79,18 @@ defmodule GroupherServer.CMS.ArtimentMentions do
   end
 
   def sync(_), do: {:ok, :pass}
+
+  @spec purge(Comment.t() | map()) :: T.domain_res(term())
+  def purge(artiment) do
+    {type, id} = mentioner_identity(artiment)
+
+    from(m in ArtimentMention,
+      where:
+        (m.mentioner_type == ^type and m.mentioner_id == ^id) or
+          (m.mentioned_scope == :internal and m.mentioned_type == ^type and m.mentioned_id == ^id)
+    )
+    |> ORM.delete_all(:if_exist)
+  end
 
   @spec mentions(atom(), T.id(), map()) :: T.domain_res(term())
   def mentions(mentioner_type, mentioner_id, nil),
@@ -99,16 +112,25 @@ defmodule GroupherServer.CMS.ArtimentMentions do
     do: mentioned_by(mentioned_type, mentioned_id, %{page: 1, size: 20})
 
   def mentioned_by(mentioned_type, mentioned_id, %{page: page, size: size} = filter) do
-    ArtimentMention
-    |> where(
-      [m],
-      m.mentioned_scope == :internal and
-        m.mentioned_type == ^normalize_type(mentioned_type) and
-        m.mentioned_id == ^mentioned_id
-    )
-    |> QueryBuilder.filter_pack(Map.merge(filter, %{sort: :asc_inserted}))
-    |> ORM.paginator(~m(page size)a)
-    |> done()
+    case normalize_type(mentioned_type) do
+      :url ->
+        {:error, {:custom, "mentioned_by only supports internal targets"}}
+
+      nil ->
+        {:error, {:custom, "invalid mentioned type"}}
+
+      normalized_type ->
+        ArtimentMention
+        |> where(
+          [m],
+          m.mentioned_scope == :internal and
+            m.mentioned_type == ^normalized_type and
+            m.mentioned_id == ^mentioned_id
+        )
+        |> QueryBuilder.filter_pack(Map.merge(filter, %{sort: :asc_inserted}))
+        |> ORM.paginator(~m(page size)a)
+        |> done()
+    end
   end
 
   defp do_sync(artiment, ast) do
@@ -316,8 +338,11 @@ defmodule GroupherServer.CMS.ArtimentMentions do
 
   defp mentioning_itself?(_, _), do: false
 
-  defp normalize_type(type) when is_binary(type),
-    do: type |> String.downcase() |> String.to_atom()
+  defp normalize_type(type) when is_binary(type) do
+    normalized = String.downcase(type)
+    Enum.find(@mention_types, &(Atom.to_string(&1) == normalized))
+  end
 
-  defp normalize_type(type), do: type
+  defp normalize_type(type) when type in @mention_types, do: type
+  defp normalize_type(_), do: nil
 end

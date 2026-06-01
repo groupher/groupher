@@ -242,6 +242,25 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       assert mention.mentioned_community_id == community.id
     end
 
+    test "purges mentions when an article is hard deleted", ~m(community post_attrs blog user)a do
+      body =
+        plate_body([
+          block("block-a", [text(~s(<a href="#{@site_host}/blog/#{blog.id}">blog</a>))])
+        ])
+
+      {:ok, post} =
+        CMS.Articles.create(community, :post, Map.merge(post_attrs, %{body: body}), user)
+
+      {:ok, {1, nil}} = ArtimentMentions.sync(post)
+      {:ok, result} = ArtimentMentions.mentioned_by(:blog, blog.id, %{page: 1, size: 10})
+      assert result.total_count == 1
+
+      {:ok, _} = CMS.Articles.delete(post)
+
+      {:ok, result} = ArtimentMentions.mentioned_by(:blog, blog.id, %{page: 1, size: 10})
+      assert result.total_count == 0
+    end
+
     test "rejects invalid external mentions without url hash", ~m(community)a do
       attrs = %{
         mentioner_type: :post,
@@ -258,6 +277,51 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
 
       refute changeset.valid?
       assert %{mentioned_url_hash: ["can't be blank"]} = errors_on(changeset)
+    end
+
+    test "rejects inconsistent mention scope fields", ~m(community)a do
+      now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+      internal_attrs = %{
+        mentioner_type: :post,
+        mentioner_id: 1,
+        mentioner_community_id: community.id,
+        mentioned_scope: :internal,
+        mentioned_type: :blog,
+        mentioned_id: 2,
+        mentioned_url_hash: "hash",
+        mention_case: :link,
+        mentioned_at: now
+      }
+
+      external_attrs = %{
+        mentioner_type: :post,
+        mentioner_id: 1,
+        mentioner_community_id: community.id,
+        mentioned_scope: :external,
+        mentioned_type: :url,
+        mentioned_id: 2,
+        mentioned_community_id: community.id,
+        mentioned_url: "https://example.com",
+        mentioned_url_hash: "hash",
+        mention_case: :inline_mention,
+        mentioned_at: now
+      }
+
+      internal_changeset = ArtimentMention.changeset(%ArtimentMention{}, internal_attrs)
+      external_changeset = ArtimentMention.changeset(%ArtimentMention{}, external_attrs)
+
+      refute internal_changeset.valid?
+      assert %{mention_case: ["must be inline_mention"], mentioned_url_hash: ["must be blank"]} =
+               errors_on(internal_changeset)
+
+      refute external_changeset.valid?
+
+      assert %{
+               mention_case: ["must be link"],
+               mentioned_id: ["must be blank"],
+               mentioned_community_id: ["must be blank"]
+             } = errors_on(external_changeset)
     end
   end
 

@@ -156,15 +156,17 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:type, non_null(:mention_type))
       arg(:filter, :pagi_filter)
 
+      middleware(M.PageSizeProof)
       resolve(&R.CMS.mentions/3)
     end
 
-    @desc "artiments mentioning a target"
+    @desc "artiments mentioning an internal target"
     field :mentioned_by, :paged_mentions do
       arg(:id, non_null(:id))
       arg(:type, non_null(:mention_type))
       arg(:filter, :pagi_filter)
 
+      middleware(M.PageSizeProof)
       resolve(&R.CMS.mentioned_by/3)
     end
 

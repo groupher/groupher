@@ -227,6 +227,9 @@ defmodule GroupherServer.CMS.Articles.Write do
     {:ok, thread} = FrontDesk.thread_of(article)
 
     Multi.new()
+    |> Multi.run(:purge_mentions, fn _, _ ->
+      CMS.ArtimentMentions.purge(article)
+    end)
     |> Multi.run(:delete_article, fn _, _ ->
       article |> ORM.delete()
     end)

@@ -296,16 +296,18 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   defp node_block_id(_), do: "block-unknown"
 
   defp parse_mention_type(type) do
-    type =
-      type
-      |> String.downcase()
-      |> String.to_atom()
+    case String.downcase(type) do
+      "user" ->
+        {:ok, :user}
 
-    cond do
-      type == :user -> {:ok, :user}
-      type == :comment -> {:ok, :comment}
-      type in Threads.article_enums() -> {:ok, type}
-      true -> {:error, :invalid_mention_type}
+      "comment" ->
+        {:ok, :comment}
+
+      normalized ->
+        case Enum.find(Threads.article_enums(), &(Atom.to_string(&1) == normalized)) do
+          nil -> {:error, :invalid_mention_type}
+          thread -> {:ok, thread}
+        end
     end
   end
 

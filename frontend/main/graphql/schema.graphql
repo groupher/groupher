@@ -127,7 +127,7 @@ type RootQueryType {
   "mentions created by an artiment"
   mentions(id: ID!, type: MentionType!, filter: PagiFilter): PagedMentions
 
-  "artiments mentioning a target"
+  "artiments mentioning an internal target"
   mentionedBy(id: ID!, type: MentionType!, filter: PagiFilter): PagedMentions
 
   "search communities by title"

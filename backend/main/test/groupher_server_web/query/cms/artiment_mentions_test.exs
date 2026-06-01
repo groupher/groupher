@@ -57,6 +57,20 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     }
     """
 
+    @mentions_without_filter_query """
+    query($type: MentionType!, $id: ID!) {
+      mentions(type: $type, id: $id) {
+        entries {
+          mentionerType
+          mentionerId
+          mentionedType
+          mentionedId
+        }
+        totalCount
+      }
+    }
+    """
+
     test "can query mentions and mentionedBy", ~m(guest_conn community post_attrs blog user)a do
       body =
         Jason.encode!([
@@ -106,6 +120,32 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
       assert mention["mentionerId"] == to_string(post.id)
       assert mention["mentionerCommunityId"] == to_string(community.id)
       assert mention["mentionedCommunityId"] == to_string(community.id)
+    end
+
+    test "can query mentions without filter", ~m(guest_conn community post_attrs blog user)a do
+      body =
+        Jason.encode!([
+          %{
+            "type" => "p",
+            "id" => "block-a",
+            "children" => [
+              %{"text" => ~s(<a href="#{@site_host}/blog/#{blog.id}">blog</a>)}
+            ]
+          }
+        ])
+
+      {:ok, post} =
+        CMS.Articles.create(community, :post, Map.merge(post_attrs, %{body: body}), user)
+
+      {:ok, {1, nil}} = ArtimentMentions.sync(post)
+
+      variables = %{type: "POST", id: post.id}
+      mentions = guest_conn |> gq_query(@mentions_without_filter_query, variables)
+
+      assert mentions["totalCount"] == 1
+      mention = mentions["entries"] |> List.first()
+      assert mention["mentionedType"] == "BLOG"
+      assert mention["mentionedId"] == to_string(blog.id)
     end
   end
 end
