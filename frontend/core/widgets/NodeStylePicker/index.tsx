@@ -25,10 +25,11 @@ const TAB_TRANSITION = {
 
 const NodeStylePicker: FC<TNodeStylePickerProps> = ({
   testid = 'node-style-picker',
+  compact = false,
   value,
   onChange = console.log,
 }) => {
-  const s = useSalon()
+  const s = useSalon({ compact })
 
   const [tab, setTab] = useState<TTab>(TAB.ICON)
   const [direction, setDirection] = useState(1)
@@ -148,7 +149,11 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
         }
       >
         <button type='button' className={s.trigger}>
-          <NodeStyleRender value={selectedValue} size={18} iconClassName={s.previewIconColor} />
+          <NodeStyleRender
+            value={selectedValue}
+            size={compact ? 14 : 18}
+            iconClassName={s.previewIconColor}
+          />
         </button>
       </Tooltip>
     </div>

@@ -2,16 +2,25 @@ import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TColorName } from '~/spec'
 
-export default function useSalon() {
+type TProps = {
+  compact?: boolean
+}
+
+export default function useSalon({ compact = false }: TProps = {}) {
   const { bg, cn, br, fg, fill, hover, primary, rainbow, shadow } = useTwBelt()
 
   return {
     wrapper: 'w-fit',
-    trigger: cn(
-      'align-both size-9 rounded-md border transition-all duration-150',
-      br('divider'),
-      hover('box'),
-    ),
+    trigger: compact
+      ? cn(
+          'align-both size-4 rounded bg-transparent border-0 transition-all duration-150',
+          hover('bg'),
+        )
+      : cn(
+          'align-both size-9 rounded-md border transition-all duration-150',
+          br('divider'),
+          hover('box'),
+        ),
     panel: cn('w-80 pt-1 pb-0.5', shadow('xl')),
     content: 'relative h-80 min-w-0 overflow-hidden',
     tabPanel: 'absolute inset-0 will-change-transform',

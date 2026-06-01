@@ -10,6 +10,7 @@ type TDocLayoutConfig = {
   title: TTransKey
   crumbTitle: TTransKey
   desc?: TTransKey
+  hideTitle?: boolean
   withDivider?: boolean
 }
 
@@ -20,11 +21,13 @@ export default function createDocLayout({
   title,
   crumbTitle,
   desc,
+  hideTitle = false,
   withDivider = false,
 }: TDocLayoutConfig) {
   return createCmsSectionLayout({
     crumbTitle,
     desc,
+    hideTitle,
     path,
     seg,
     title,

@@ -10,6 +10,7 @@ export type TTab = (typeof TAB)[keyof typeof TAB]
 export type TNodeStylePickerProps = {
   testid?: string
   value?: TNodeStyleValue | null
+  compact?: boolean
   onChange?: (value: TNodeStyleValue) => void
 }
 

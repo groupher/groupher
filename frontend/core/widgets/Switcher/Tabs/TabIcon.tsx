@@ -34,9 +34,9 @@ const TabIcon: FC<TProps> = ({ item, clickableRef, active }) => {
   )
 
   return (
-    <button type='button' className={s.wrapper} onClick={activateParentTab}>
+    <span className={s.wrapper} onClick={activateParentTab}>
       {IconCmp}
-    </button>
+    </span>
   )
 }
 

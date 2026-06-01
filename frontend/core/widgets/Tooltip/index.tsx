@@ -38,6 +38,7 @@ type TProps = {
   behavior?: 'default' | 'confirm' | 'delete-confirm' | 'add'
   forceZIndex?: boolean
   interactive?: boolean
+  portalToBody?: boolean
   visible?: boolean | null
   onShow?: () => void
   onHide?: () => void
@@ -60,6 +61,7 @@ type TTippyReactProps = {
   duration?: number
   trigger?: string
   interactive?: boolean
+  appendTo?: 'parent' | Element | ((reference: Element) => Element)
   theme?: TThemeName
   visible?: boolean
 
@@ -82,6 +84,7 @@ const Tooltip: FC<TProps> = ({
   hideOnClick = true,
   behavior = 'default',
   trigger = 'mouseenter focus',
+  portalToBody = false,
   visible = null,
   onConfirm,
   forceZIndex = false,
@@ -206,6 +209,7 @@ const Tooltip: FC<TProps> = ({
       },
     }
 
+    if (portalToBody) props.appendTo = () => document.body
     if (visible !== null) props.visible = visible
     return props
   }, [
@@ -218,6 +222,7 @@ const Tooltip: FC<TProps> = ({
     duration,
     trigger,
     interactive,
+    portalToBody,
     theme,
     overlayDark,
     tooltipTheme,
