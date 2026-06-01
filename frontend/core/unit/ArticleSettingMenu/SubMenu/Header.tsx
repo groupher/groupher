@@ -7,7 +7,7 @@ import InfoSVG from '~/icons/Info'
 import SlugSVG from '~/icons/Slug'
 import TagNode from '~/widgets/TagNode'
 
-import { SUB_MENU_TYPE } from '../constant'
+import { SUB_MENU } from '../constant'
 import useSalon from '../salon/sub_menu/header'
 import type { TSubMenu } from '../spec'
 
@@ -22,7 +22,7 @@ const Header: FC<TProps> = ({ type }) => {
   let showDivider = true
 
   switch (type) {
-    case SUB_MENU_TYPE.EDIT: {
+    case SUB_MENU.EDIT: {
       Content = (
         <>
           <EditSVG className={s.icon} />
@@ -36,7 +36,7 @@ const Header: FC<TProps> = ({ type }) => {
       break
     }
 
-    case SUB_MENU_TYPE.CATEGORY: {
+    case SUB_MENU.CATEGORY: {
       Content = (
         <>
           <CategorySVG className={s.icon} />
@@ -49,7 +49,7 @@ const Header: FC<TProps> = ({ type }) => {
       break
     }
 
-    case SUB_MENU_TYPE.STATUS: {
+    case SUB_MENU.STATUS: {
       Content = (
         <>
           <WipSVG className={s.icon} />
@@ -62,7 +62,7 @@ const Header: FC<TProps> = ({ type }) => {
       break
     }
 
-    case SUB_MENU_TYPE.SLUG: {
+    case SUB_MENU.SLUG: {
       Content = (
         <>
           <SlugSVG className={s.icon} />
@@ -76,7 +76,7 @@ const Header: FC<TProps> = ({ type }) => {
       break
     }
 
-    case SUB_MENU_TYPE.MIRROR: {
+    case SUB_MENU.MIRROR: {
       Content = (
         <>
           <SlugSVG className={s.icon} />
@@ -89,7 +89,7 @@ const Header: FC<TProps> = ({ type }) => {
       break
     }
 
-    case SUB_MENU_TYPE.TAGS: {
+    case SUB_MENU.TAGS: {
       Content = (
         <>
           <TagNode hashSize={3.5} hashRight={0.5} />

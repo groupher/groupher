@@ -1,1 +1,3 @@
-export type TType = 'lock' | 'archived' | 'notice' | 'bot' | 'info'
+import type { TYPE } from './constant'
+
+export type TType = `${TYPE}`

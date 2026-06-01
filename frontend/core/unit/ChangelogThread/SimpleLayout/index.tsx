@@ -19,7 +19,7 @@ export default function SimpleLayout() {
   const { pagedChangelogs } = usePagedChangelogs()
 
   const [filterExpand, setFilterExpand] = useState(false)
-  const [tab, setTab] = useState(TABS_MODE_OPTIONS[0].slug)
+  const [tab, setTab] = useState<TTagsMode>(TABS_MODE_OPTIONS[0].slug)
 
   return (
     <div className={s.wrapper}>

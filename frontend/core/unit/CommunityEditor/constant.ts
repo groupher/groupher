@@ -1,19 +1,19 @@
 import { COLOR } from '~/const/colors'
 
-export const STEP = {
-  SELECT_TYPE: 'SELECT_TYPE',
-  SETUP_DOMAIN: 'SETUP_DOMAIN',
-  SETUP_INFO: 'SETUP_INFO',
-  SETUP_EXTRA: 'SETUP_EXTRA',
-  FINISHED: 'FINISHED',
-} as const
+export enum STEP {
+  SELECT_TYPE = 'SELECT_TYPE',
+  SETUP_DOMAIN = 'SETUP_DOMAIN',
+  SETUP_INFO = 'SETUP_INFO',
+  SETUP_EXTRA = 'SETUP_EXTRA',
+  FINISHED = 'FINISHED',
+}
 
-export const COMMUNITY_TYPE = {
-  PRODUCT: 'PRODUCT',
-  GAMING: 'GAMING',
-  TEACH: 'TEACH',
-  GROUP: 'GROUP',
-} as const
+export enum COMMUNITY_TYPE {
+  PRODUCT = 'PRODUCT',
+  GAMING = 'GAMING',
+  TEACH = 'TEACH',
+  GROUP = 'GROUP',
+}
 
 export const COMMUNITY_CATS = [
   {

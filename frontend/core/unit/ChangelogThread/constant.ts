@@ -1,10 +1,8 @@
-import type { TTagsMode } from './spec'
-
-export const TAGS_MODE = {
-  ALL: 'all' as TTagsMode,
-  TAG: 'tag' as TTagsMode,
-  TIME: 'time' as TTagsMode,
-  VERSION: 'version' as TTagsMode,
+export enum TAGS_MODE {
+  ALL = 'all',
+  TAG = 'tag',
+  TIME = 'time',
+  VERSION = 'version',
 }
 
 export const TABS_MODE_OPTIONS = [

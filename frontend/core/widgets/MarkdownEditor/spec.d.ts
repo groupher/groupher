@@ -1,1 +1,3 @@
-export type TTab = 'write' | 'preview'
+import type { TAB } from './constant'
+
+export type TTab = `${TAB}`
