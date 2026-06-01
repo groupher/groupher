@@ -6,7 +6,7 @@ import type {
   TWallpaperType,
 } from '~/spec'
 
-export type TWallpaperState = {
+export type TWallpaperThemeState = {
   customWallpaper: TCustomWallpaper
   source: string
   type: TWallpaperType
@@ -25,6 +25,27 @@ export type TWallpaperState = {
 
   bgSize: TWallpaperBgSize
 }
+
+export type TWallpaperDarkState = {
+  sourceDark: string
+  typeDark: TWallpaperType
+
+  hasPatternDark: boolean
+  patternIdDark: string
+  patternIntensityDark: number
+  patternToneDark: TWallpaperPatternTone
+  hasTextureDark: boolean
+  gradientDark: TGradientRecipe | null
+  blurIntensityDark: number
+  hasShadowDark: boolean
+  brightnessDark: number
+  saturationDark: number
+  textureDark: TWallpaperTexture
+
+  bgSizeDark: TWallpaperBgSize
+}
+
+export type TWallpaperState = TWallpaperThemeState & TWallpaperDarkState
 
 export type TStore = TWallpaperState & {
   original: TWallpaperState

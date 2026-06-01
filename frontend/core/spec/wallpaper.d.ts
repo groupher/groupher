@@ -57,22 +57,36 @@ export type TWallpaperInfo = {
 
 export type TWallpaperData = {
   source: string
+  sourceDark: string
   gradientWallpapers: Record<string, TGradientRecipe>
   patternWallpapers: Record<string, TWallpaper>
   type: TWallpaperType
+  typeDark: TWallpaperType
   hasPattern: boolean
+  hasPatternDark: boolean
   patternId: string
+  patternIdDark: string
   patternIntensity: number
+  patternIntensityDark: number
   patternTone: TWallpaperPatternTone
+  patternToneDark: TWallpaperPatternTone
   hasTexture: boolean
+  hasTextureDark: boolean
   hasBlur: boolean
   blurIntensity: number
+  blurIntensityDark: number
   hasShadow: boolean
+  hasShadowDark: boolean
   brightness: number
+  brightnessDark: number
   saturation: number
+  saturationDark: number
   gradient: TGradientRecipe | null
+  gradientDark: TGradientRecipe | null
   texture: TWallpaperTexture
+  textureDark: TWallpaperTexture
   bgSize: TWallpaperBgSize
+  bgSizeDark: TWallpaperBgSize
 }
 
 export type TParsedWallpaper = TWallpaperData & {

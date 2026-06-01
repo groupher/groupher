@@ -8,7 +8,7 @@ import * as themeSchema from './Appearance/Theme/schema'
 import wallpaperSchema from './Appearance/Wallpaper/schema'
 import dashboardSchema from './schema'
 
-const schemaPath = path.join(process.cwd(), 'frontend/main/graphql/schema.graphql')
+const schemaPath = path.join(process.cwd(), 'backend/main/schema.graphql')
 const schema = buildSchema(fs.readFileSync(schemaPath, 'utf8'))
 
 const documents = {

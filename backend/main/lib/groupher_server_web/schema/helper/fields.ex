@@ -366,6 +366,36 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     end)
   end
 
+  @doc """
+  Expand a dashboard section schema into GraphQL input-object fields.
+
+  This keeps section patch inputs aligned with `Dashboard.macro_schema/1`,
+  while `dsb_args/2` remains for legacy flat mutation arguments.
+
+  ## Example
+
+      input_object :dsb_wallpaper_input do
+        dsb_input_fields(:wallpaper)
+      end
+
+  A field like `:pattern_intensity_dark` is defined once in
+  `macro_schema(:wallpaper)`, exposed by Absinthe as `patternIntensityDark`,
+  and cast by the dashboard embed as `:pattern_intensity_dark`.
+  """
+  defmacro dsb_input_fields(section \\ :layout, opts \\ []) do
+    except = Keyword.get(opts, :except, [])
+
+    Dashboard.macro_schema(section)
+    |> Enum.reject(fn [key, _type, _default_v] -> key in except end)
+    |> Enum.map(fn item ->
+      [key, type, _default_v] = item
+
+      quote do
+        field(unquote(key), unquote(to_absinthe_type(type, key)))
+      end
+    end)
+  end
+
   defmacro dsb_default(section \\ :layout) do
     schema = Dashboard.macro_schema(section) |> Macro.escape()
 

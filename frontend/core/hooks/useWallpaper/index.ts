@@ -12,6 +12,7 @@ import {
   buildActiveGradientWallpapers,
   buildActivePatternWallpapers,
 } from '~/hooks/useFullWallpaper/helper'
+import useTheme from '~/hooks/useTheme'
 import {
   GRADIENT_RENDERER,
   isMeshGradientRecipe,
@@ -24,9 +25,10 @@ import {
 import { WALLPAPER_RENDER_KIND } from '~/lib/wallpaperRenderer/constant'
 import type { TWallpaperRenderDescriptor } from '~/lib/wallpaperRenderer/spec'
 import type { TCustomWallpaper, TWallpaperFmt, TWallpaperPic } from '~/spec'
+import { resolveWallpaperThemeState } from '~/stores/wallpaper/helper'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 import type { TStore } from '~/stores/wallpaper/spec'
-import type { TWallpaperState } from '~/stores/wallpaper/spec'
+import type { TWallpaperThemeState } from '~/stores/wallpaper/spec'
 import { parseGradientRecipe, parseWallpaper, resolveWallpaperPattern } from '~/wallpaper'
 
 type TRet = { source: string; hasShadow: boolean } & TWallpaperFmt
@@ -39,10 +41,12 @@ const getFilterValue = (effect: string): string =>
 const getPatternOpacity = (patternIntensity: number): number =>
   Math.max(0, Math.min(100, patternIntensity)) / 100
 
-const getPatternColor = (patternTone: TWallpaperState['patternTone']): string =>
+const getPatternColor = (patternTone: TWallpaperThemeState['patternTone']): string =>
   patternTone === WALLPAPER_PATTERN_TONE.LIGHT ? '#ffffff' : '#000000'
 
-export const getWallpaperState = (store: Pick<TStore, keyof TWallpaperState>): TWallpaperState => ({
+export const getWallpaperState = (
+  store: Pick<TStore, keyof TWallpaperThemeState>,
+): TWallpaperThemeState => ({
   source: store.source,
   hasPattern: store.hasPattern,
   patternId: store.patternId,
@@ -60,7 +64,9 @@ export const getWallpaperState = (store: Pick<TStore, keyof TWallpaperState>): T
   bgSize: store.bgSize,
 })
 
-const getWallpaperCssState = (store: Pick<TStore, keyof TWallpaperState>): TWallpaperState => ({
+const getWallpaperCssState = (
+  store: Pick<TStore, keyof TWallpaperThemeState>,
+): TWallpaperThemeState => ({
   source: store.source,
   hasPattern: store.hasPattern,
   patternId: store.patternId,
@@ -80,12 +86,12 @@ const getWallpaperCssState = (store: Pick<TStore, keyof TWallpaperState>): TWall
 
 // Renderer draws pattern as a separate opacity-controlled overlay; keep the
 // fallback background pattern-free so first paint cannot flash a 100% pattern.
-const getWallpaperRendererFallbackState = (state: TWallpaperState): TWallpaperState =>
+const getWallpaperRendererFallbackState = (state: TWallpaperThemeState): TWallpaperThemeState =>
   state.type === WALLPAPER_TYPE.GRADIENT && state.hasPattern
     ? { ...state, hasPattern: false }
     : state
 
-export const resolveWallpaper = (state: TWallpaperState): TRet => {
+export const resolveWallpaper = (state: TWallpaperThemeState): TRet => {
   const {
     source,
     hasPattern,
@@ -165,7 +171,7 @@ export const resolveWallpaper = (state: TWallpaperState): TRet => {
 }
 
 export const resolveWallpaperRenderDescriptor = (
-  state: TWallpaperState,
+  state: TWallpaperThemeState,
 ): TWallpaperRenderDescriptor => {
   const { background, effect } = resolveWallpaper(getWallpaperRendererFallbackState(state))
   const base = {
@@ -260,7 +266,8 @@ export const resolveWallpaperRenderDescriptor = (
 
 export default function useWallpaper(): TRet {
   const store = useWallpaperDomain()
-  const state = getWallpaperCssState(store)
+  const { isDarkTheme } = useTheme()
+  const state = getWallpaperCssState(resolveWallpaperThemeState(store, isDarkTheme))
 
   return useMemo(
     () => resolveWallpaper(state),
@@ -284,7 +291,8 @@ export default function useWallpaper(): TRet {
 
 export function useWallpaperRenderDescriptor(): TWallpaperRenderDescriptor {
   const store = useWallpaperDomain()
-  const state = getWallpaperState(store)
+  const { isDarkTheme } = useTheme()
+  const state = getWallpaperState(resolveWallpaperThemeState(store, isDarkTheme))
 
   return useMemo(
     () => resolveWallpaperRenderDescriptor(state),

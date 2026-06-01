@@ -44,18 +44,32 @@ export const footerOnelineLink = `
 export const wallpaper = `
   type
   source
+  typeDark
+  sourceDark
   gradient
+  gradientDark
   bgSize
+  bgSizeDark
   hasPattern
+  hasPatternDark
   patternId
+  patternIdDark
   patternIntensity
+  patternIntensityDark
   patternTone
+  patternToneDark
   hasTexture
+  hasTextureDark
   blurIntensity
+  blurIntensityDark
   hasShadow
+  hasShadowDark
   brightness
+  brightnessDark
   saturation
+  saturationDark
   texture
+  textureDark
 `
 export const seo = `
   seoEnable

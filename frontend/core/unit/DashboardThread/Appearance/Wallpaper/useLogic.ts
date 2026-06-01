@@ -9,6 +9,7 @@ import {
 } from '~/const/wallpaper'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
+import useTheme from '~/hooks/useTheme'
 import {
   applyGradientPalette,
   buildGradientRecipeForRenderer,
@@ -20,8 +21,13 @@ import type { TGradientRecipe, TGradientRenderer, TWallpaperTexture } from '~/li
 import { toast } from '~/signal'
 import type { TWallpaperData, TWallpaperType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
+import {
+  getWallpaperSavablePatch,
+  resolveWallpaperThemeState,
+  toWallpaperThemePatch,
+} from '~/stores/wallpaper/helper'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
-import type { TWallpaperState } from '~/stores/wallpaper/spec'
+import type { TWallpaperState, TWallpaperThemeState } from '~/stores/wallpaper/spec'
 import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
 
 import { TAB } from './constant'
@@ -62,7 +68,7 @@ export type TWallpaperLogic = {
   changeGradientRecipe: (gradient: TGradientRecipe) => void
   changeGradientRenderer: (renderer: TGradientRenderer) => void
   changePatternId: (patternId: string) => void
-  changePatternTone: (patternTone: TWallpaperState['patternTone']) => void
+  changePatternTone: (patternTone: TWallpaperThemeState['patternTone']) => void
   changePatternWallpaper: (source: string) => void
   changeWallpaperType: (type: TWallpaperType) => void
   togglePattern: (hasPattern: boolean) => void
@@ -73,8 +79,8 @@ export type TWallpaperLogic = {
   changeBrightness: (brightness: number) => void
   changeSaturation: (saturation: number) => void
   changeTexture: (texture: TWallpaperTexture) => void
-  previewWallpaper: (patch: Partial<TWallpaperState>) => void
-  scheduleWallpaperPreview: (patch: Partial<TWallpaperState>) => void
+  previewWallpaper: (patch: Partial<TWallpaperThemeState>) => void
+  scheduleWallpaperPreview: (patch: Partial<TWallpaperThemeState>) => void
   flushWallpaperDraft: () => void
   clearPendingWallpaperDraft: () => void
   clearWallpaperPreview: () => void
@@ -83,25 +89,7 @@ export type TWallpaperLogic = {
 export const LogicContext = createContext<TWallpaperLogic | null>(null)
 LogicContext.displayName = 'WallpaperLogic'
 
-const getWallpaperState = (wallpaper$: ReturnType<typeof useWallpaperDomain>): TWallpaperState => ({
-  customWallpaper: wallpaper$.customWallpaper,
-  source: wallpaper$.source,
-  type: wallpaper$.type,
-  hasPattern: wallpaper$.hasPattern,
-  patternId: wallpaper$.patternId,
-  patternIntensity: wallpaper$.patternIntensity,
-  patternTone: wallpaper$.patternTone,
-  hasTexture: wallpaper$.hasTexture,
-  gradient: wallpaper$.gradient,
-  blurIntensity: wallpaper$.blurIntensity,
-  hasShadow: wallpaper$.hasShadow,
-  brightness: wallpaper$.brightness,
-  saturation: wallpaper$.saturation,
-  texture: wallpaper$.texture,
-  bgSize: wallpaper$.bgSize,
-})
-
-const getAngleDraft = (state: TWallpaperState): number => {
+const getAngleDraft = (state: TWallpaperThemeState): number => {
   const { gradient } = state
   if (!gradient) return 180
 
@@ -145,9 +133,9 @@ const radialCenterFromAngle = (
 }
 
 export const buildGradientWallpaperPatch = (
-  wallpaper: Pick<TWallpaperState, 'type' | 'gradient'>,
+  wallpaper: Pick<TWallpaperThemeState, 'type' | 'gradient'>,
   source: string,
-): Pick<TWallpaperState, 'source' | 'type' | 'gradient'> => {
+): Pick<TWallpaperThemeState, 'source' | 'type' | 'gradient'> => {
   const palette = GRADIENT_WALLPAPER[source] ?? GRADIENT_WALLPAPER.pink
   const gradient =
     wallpaper.type === WALLPAPER_TYPE.GRADIENT
@@ -161,33 +149,63 @@ export const buildGradientWallpaperPatch = (
   }
 }
 
+const serializeWallpaperPatch = (patch: Partial<TWallpaperState>): Record<string, unknown> => {
+  const serialized = { ...patch } as Record<string, unknown>
+
+  for (const key of ['gradient', 'gradientDark', 'texture', 'textureDark']) {
+    if (key in serialized && serialized[key] !== null && serialized[key] !== undefined) {
+      serialized[key] = JSON.stringify(serialized[key])
+    }
+  }
+
+  return serialized
+}
+
 export function useLogicValue(): TWallpaperLogic {
   const wallpaper$ = useWallpaperDomain()
   const liveWallpaper$ = wallpaper$.live$ ?? wallpaper$
   const community$ = useCommunity()
   const { getWallpaper } = useFullWallpaper()
+  const { isDarkTheme } = useTheme()
 
   const { mutate } = useGraphQLClient()
-  const [tab, setTab] = useState<TTab>(() => getInitialTab(wallpaper$.type))
+  const [tab, setTab] = useState<TTab>(() =>
+    getInitialTab(resolveWallpaperThemeState(wallpaper$, isDarkTheme).type),
+  )
   const [loading, setLoading] = useState(false)
   const wallpaperState = useMemo(
-    () => getWallpaperState(wallpaper$),
+    () => resolveWallpaperThemeState(wallpaper$, isDarkTheme),
     [
+      isDarkTheme,
       wallpaper$.customWallpaper,
       wallpaper$.source,
       wallpaper$.type,
+      wallpaper$.sourceDark,
+      wallpaper$.typeDark,
       wallpaper$.hasPattern,
       wallpaper$.patternId,
       wallpaper$.patternIntensity,
       wallpaper$.patternTone,
       wallpaper$.hasTexture,
+      wallpaper$.hasPatternDark,
+      wallpaper$.patternIdDark,
+      wallpaper$.patternIntensityDark,
+      wallpaper$.patternToneDark,
+      wallpaper$.hasTextureDark,
       wallpaper$.gradient,
+      wallpaper$.gradientDark,
       wallpaper$.blurIntensity,
       wallpaper$.hasShadow,
       wallpaper$.brightness,
       wallpaper$.saturation,
+      wallpaper$.blurIntensityDark,
+      wallpaper$.hasShadowDark,
+      wallpaper$.brightnessDark,
+      wallpaper$.saturationDark,
       wallpaper$.texture,
+      wallpaper$.textureDark,
       wallpaper$.bgSize,
+      wallpaper$.bgSizeDark,
     ],
   )
   const [angleDraft, setAngleDraft] = useState(() => getAngleDraft(wallpaperState))
@@ -199,7 +217,7 @@ export function useLogicValue(): TWallpaperLogic {
     clearWallpaperPreview,
   } = useWallpaperPreview({
     state: wallpaperState,
-    onCommit: (patch) => liveWallpaper$.commit(patch),
+    onCommit: (patch) => liveWallpaper$.commit(toWallpaperThemePatch(patch, isDarkTheme)),
   })
 
   const isTouched = useMemo((): boolean => {
@@ -216,10 +234,10 @@ export function useLogicValue(): TWallpaperLogic {
   const initRollback = (): void =>
     liveWallpaper$.commit({ original: pick(WALLPAPER_STATE_KEYS, liveWallpaper$) })
 
-  const commitWallpaperPatch = (patch: Partial<TWallpaperState>): void => {
+  const commitWallpaperPatch = (patch: Partial<TWallpaperThemeState>): void => {
     flushWallpaperDraft()
     clearWallpaperPreview()
-    liveWallpaper$.commit(patch)
+    liveWallpaper$.commit(toWallpaperThemePatch(patch, isDarkTheme))
   }
 
   const rollbackWallpaper = (): void => {
@@ -233,12 +251,10 @@ export function useLogicValue(): TWallpaperLogic {
     clearWallpaperPreview()
     setLoading(true)
     const community = community$.slug
-    const wallpaperFields = pick(WALLPAPER_SAVABLE_STATE_KEYS, liveWallpaper$)
+    const wallpaper = serializeWallpaperPatch(getWallpaperSavablePatch(liveWallpaper$))
     const params = {
       community,
-      ...wallpaperFields,
-      gradient: wallpaperFields.gradient ? JSON.stringify(wallpaperFields.gradient) : null,
-      texture: JSON.stringify(wallpaperFields.texture),
+      wallpaper,
     }
 
     mutate(S.updateDashboardWallpaper, params)

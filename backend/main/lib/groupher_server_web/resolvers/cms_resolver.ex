@@ -42,6 +42,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Dashboard.update(community, args)
   end
 
+  def update_dashboard_wallpaper(_root, %{community: community, wallpaper: wallpaper}, _info) do
+    CMS.Dashboard.update(community, :wallpaper, wallpaper)
+  end
+
   def save_custom_theme_preset(_root, %{community: community} = args, _info) do
     CMS.Dashboard.save_custom_theme_preset(community, args)
   end

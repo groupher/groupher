@@ -34,38 +34,54 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
     struct
     |> cast(params, @optional_fields)
     |> validate_inclusion(:type, @wallpaper_types)
+    |> validate_inclusion(:type_dark, @wallpaper_types)
     |> validate_inclusion(:bg_size, @bg_sizes)
+    |> validate_inclusion(:bg_size_dark, @bg_sizes)
     |> validate_inclusion(:pattern_id, @pattern_ids)
+    |> validate_inclusion(:pattern_id_dark, @pattern_ids)
     |> validate_inclusion(:pattern_tone, @pattern_tones)
+    |> validate_inclusion(:pattern_tone_dark, @pattern_tones)
     |> validate_number(:pattern_intensity,
       greater_than_or_equal_to: 0,
       less_than_or_equal_to: 100
     )
+    |> validate_number(:pattern_intensity_dark,
+      greater_than_or_equal_to: 0,
+      less_than_or_equal_to: 100
+    )
     |> validate_number(:blur_intensity, greater_than_or_equal_to: 0, less_than_or_equal_to: 100)
+    |> validate_number(:blur_intensity_dark,
+      greater_than_or_equal_to: 0,
+      less_than_or_equal_to: 100
+    )
     |> validate_number(:brightness, greater_than_or_equal_to: 60, less_than_or_equal_to: 140)
+    |> validate_number(:brightness_dark, greater_than_or_equal_to: 60, less_than_or_equal_to: 140)
     |> validate_number(:saturation, greater_than_or_equal_to: 0, less_than_or_equal_to: 160)
-    |> validate_texture()
-    |> validate_gradient()
+    |> validate_number(:saturation_dark, greater_than_or_equal_to: 0, less_than_or_equal_to: 160)
+    |> validate_texture(:texture)
+    |> validate_texture(:texture_dark)
+    |> validate_gradient(:gradient)
+    |> validate_gradient(:gradient_dark)
   end
 
-  defp validate_texture(changeset) do
-    validate_change(changeset, :texture, fn :texture, value ->
+  defp validate_texture(changeset, field) do
+    validate_change(changeset, field, fn ^field, value ->
       type = map_get(value, "type")
       intensity = map_get(value, "intensity")
       params = map_get(value, "params")
 
       cond do
         not is_map(value) ->
-          [texture: "must be an object"]
+          [{field, "must be an object"}]
 
         type not in @texture_types ->
-          [texture: "has unsupported type"]
+          [{field, "has unsupported type"}]
 
         not is_integer(intensity) or intensity < 0 or intensity > 100 ->
-          [texture: "has unsupported intensity"]
+          [{field, "has unsupported intensity"}]
 
         not is_nil(params) and not is_map(params) ->
-          [texture: "has unsupported params"]
+          [{field, "has unsupported params"}]
 
         true ->
           []
@@ -73,17 +89,17 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
     end)
   end
 
-  defp validate_gradient(changeset) do
-    validate_change(changeset, :gradient, fn :gradient, value ->
+  defp validate_gradient(changeset, field) do
+    validate_change(changeset, field, fn ^field, value ->
       cond do
         is_nil(value) ->
           []
 
         not is_map(value) ->
-          [gradient: "must be an object"]
+          [{field, "must be an object"}]
 
         not valid_gradient?(value) ->
-          [gradient: "has unsupported config"]
+          [{field, "has unsupported config"}]
 
         true ->
           []

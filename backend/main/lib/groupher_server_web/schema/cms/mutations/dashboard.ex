@@ -43,16 +43,14 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
     @desc "update wallpaper in dashboard"
     field :update_dashboard_wallpaper, :dsb do
       arg(:community, non_null(:string))
-      arg(:dsb_section, :dsb_section, default_value: :wallpaper)
-
-      dsb_args(:wallpaper)
+      arg(:wallpaper, non_null(:dsb_wallpaper_input))
 
       middleware(M.Authorize, :login)
       # middleware(M.PublishThrottle)
       # middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
 
-      resolve(&R.CMS.update_dashboard/3)
+      resolve(&R.CMS.update_dashboard_wallpaper/3)
     end
 
     @desc "update enable in dashboard"

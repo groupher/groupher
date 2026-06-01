@@ -102,50 +102,35 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
     @update_wallpaper_query """
     mutation (
       $community: String!
-      $source: String
-      $type: String
-      $gradient: Json
-      $bgSize: String
-      $hasPattern: Boolean
-      $patternId: String
-      $patternIntensity: Int
-      $patternTone: String
-      $hasTexture: Boolean
-      $blurIntensity: Int
-      $hasShadow: Boolean
-      $brightness: Int
-      $saturation: Int
-      $texture: Json
+      $wallpaper: DsbWallpaperInput!
       ) {
       updateDashboardWallpaper(
         community: $community
-        source: $source
-        type: $type
-        gradient: $gradient
-        bgSize: $bgSize
-        hasPattern: $hasPattern
-        patternId: $patternId
-        patternIntensity: $patternIntensity
-        patternTone: $patternTone
-        hasTexture: $hasTexture
-        blurIntensity: $blurIntensity
-        hasShadow: $hasShadow
-        brightness: $brightness
-        saturation: $saturation
-        texture: $texture
+        wallpaper: $wallpaper
       ) {
         wallpaper {
           type
           source
+          typeDark
+          sourceDark
           gradient
+          gradientDark
           patternId
+          patternIdDark
           patternIntensity
+          patternIntensityDark
           patternTone
+          patternToneDark
           hasTexture
+          hasTextureDark
           blurIntensity
+          blurIntensityDark
           brightness
+          brightnessDark
           saturation
+          saturationDark
           texture
+          textureDark
         }
       }
     }
@@ -155,30 +140,51 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       variables = %{
         community: community.slug,
-        source: "orange",
-        type: "gradient",
-        hasTexture: true,
-        patternId: "02",
-        patternIntensity: 65,
-        patternTone: "light",
-        blurIntensity: 35,
-        brightness: 85,
-        saturation: 120,
-        gradient:
-          Jason.encode!(%{
-            version: 2,
-            renderer: "flow",
-            preset: "test",
-            seed: 1,
-            colors: ["#fff", "#000"],
-            angle: 45,
-            softness: 60,
-            warp: 50,
-            scale: 60,
-            contrast: 100,
-            brightness: 100
-          }),
-        texture: Jason.encode!(%{type: "ascii", intensity: 55, params: %{}})
+        wallpaper: %{
+          source: "orange",
+          type: "gradient",
+          sourceDark: "purple",
+          typeDark: "gradient",
+          hasTexture: true,
+          hasTextureDark: true,
+          patternId: "02",
+          patternIdDark: "03",
+          patternIntensity: 65,
+          patternIntensityDark: 35,
+          patternTone: "light",
+          patternToneDark: "dark",
+          blurIntensity: 35,
+          blurIntensityDark: 15,
+          brightness: 85,
+          brightnessDark: 90,
+          saturation: 120,
+          saturationDark: 80,
+          gradient:
+            Jason.encode!(%{
+              version: 2,
+              renderer: "flow",
+              preset: "test",
+              seed: 1,
+              colors: ["#fff", "#000"],
+              angle: 45,
+              softness: 60,
+              warp: 50,
+              scale: 60,
+              contrast: 100,
+              brightness: 100
+            }),
+          gradientDark:
+            Jason.encode!(%{
+              version: 2,
+              renderer: "linear",
+              preset: "dark-test",
+              colors: ["#111", "#333"],
+              angle: 90,
+              spread: 50
+            }),
+          texture: Jason.encode!(%{type: "ascii", intensity: 55, params: %{}}),
+          textureDark: Jason.encode!(%{type: "tile", intensity: 45, params: %{}})
+        }
       }
 
       updated =
@@ -186,39 +192,62 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         |> gq_mutation(@update_wallpaper_query, variables)
 
       assert get_in(updated, ["wallpaper", "source"]) == "orange"
+      assert get_in(updated, ["wallpaper", "sourceDark"]) == "purple"
       assert get_in(updated, ["wallpaper", "patternId"]) == "02"
+      assert get_in(updated, ["wallpaper", "patternIdDark"]) == "03"
       assert get_in(updated, ["wallpaper", "patternIntensity"]) == 65
+      assert get_in(updated, ["wallpaper", "patternIntensityDark"]) == 35
       assert get_in(updated, ["wallpaper", "patternTone"]) == "light"
+      assert get_in(updated, ["wallpaper", "patternToneDark"]) == "dark"
       assert get_in(updated, ["wallpaper", "hasTexture"]) == true
+      assert get_in(updated, ["wallpaper", "hasTextureDark"]) == true
       assert get_in(updated, ["wallpaper", "blurIntensity"]) == 35
+      assert get_in(updated, ["wallpaper", "blurIntensityDark"]) == 15
       assert get_in(updated, ["wallpaper", "brightness"]) == 85
+      assert get_in(updated, ["wallpaper", "brightnessDark"]) == 90
       assert get_in(updated, ["wallpaper", "saturation"]) == 120
+      assert get_in(updated, ["wallpaper", "saturationDark"]) == 80
       assert get_in(updated, ["wallpaper", "gradient", "preset"]) == "test"
       assert get_in(updated, ["wallpaper", "gradient", "renderer"]) == "flow"
+      assert get_in(updated, ["wallpaper", "gradientDark", "preset"]) == "dark-test"
       assert get_in(updated, ["wallpaper", "texture", "type"]) == "ascii"
       assert get_in(updated, ["wallpaper", "texture", "intensity"]) == 55
+      assert get_in(updated, ["wallpaper", "textureDark", "type"]) == "tile"
+      assert get_in(updated, ["wallpaper", "textureDark", "intensity"]) == 45
 
       {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
 
       assert found.dashboard.wallpaper.source == "orange"
+      assert found.dashboard.wallpaper.source_dark == "purple"
       assert found.dashboard.wallpaper.type == "gradient"
+      assert found.dashboard.wallpaper.type_dark == "gradient"
       assert found.dashboard.wallpaper.has_texture == true
+      assert found.dashboard.wallpaper.has_texture_dark == true
       assert found.dashboard.wallpaper.pattern_id == "02"
+      assert found.dashboard.wallpaper.pattern_id_dark == "03"
       assert found.dashboard.wallpaper.pattern_intensity == 65
+      assert found.dashboard.wallpaper.pattern_intensity_dark == 35
       assert found.dashboard.wallpaper.pattern_tone == "light"
+      assert found.dashboard.wallpaper.pattern_tone_dark == "dark"
       assert found.dashboard.wallpaper.blur_intensity == 35
+      assert found.dashboard.wallpaper.blur_intensity_dark == 15
       assert found.dashboard.wallpaper.brightness == 85
+      assert found.dashboard.wallpaper.brightness_dark == 90
       assert found.dashboard.wallpaper.saturation == 120
+      assert found.dashboard.wallpaper.saturation_dark == 80
       assert found.dashboard.wallpaper.gradient["preset"] == "test"
       assert found.dashboard.wallpaper.gradient["renderer"] == "flow"
+      assert found.dashboard.wallpaper.gradient_dark["preset"] == "dark-test"
       assert found.dashboard.wallpaper.texture["type"] == "ascii"
       assert found.dashboard.wallpaper.texture["intensity"] == 55
+      assert found.dashboard.wallpaper.texture_dark["type"] == "tile"
+      assert found.dashboard.wallpaper.texture_dark["intensity"] == 45
 
       updated =
         rule_conn
         |> gq_mutation(@update_wallpaper_query, %{
           community: community.slug,
-          texture: Jason.encode!(%{type: "dots", intensity: 42, params: %{}})
+          wallpaper: %{texture: Jason.encode!(%{type: "dots", intensity: 42, params: %{}})}
         })
 
       assert get_in(updated, ["wallpaper", "texture", "type"]) == "dots"
@@ -233,7 +262,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         rule_conn
         |> gq_mutation(@update_wallpaper_query, %{
           community: community.slug,
-          texture: Jason.encode!(%{type: "oil", intensity: 68, params: %{}})
+          wallpaper: %{texture: Jason.encode!(%{type: "oil", intensity: 68, params: %{}})}
         })
 
       assert get_in(updated, ["wallpaper", "texture", "type"]) == "oil"
