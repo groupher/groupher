@@ -3,7 +3,7 @@ import type { TDsbPath } from '~/spec'
 
 import { MENU_VIEW } from '../constant'
 
-export type TMenuView = (typeof MENU_VIEW)[keyof typeof MENU_VIEW]
+export type TMenuView = `${MENU_VIEW}`
 
 export type TMenuViewEvent = {
   mainTab?: TDsbPath

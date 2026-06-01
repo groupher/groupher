@@ -170,7 +170,7 @@ export const SUBMENU_CONFIG = {
     scope: 'changelog',
   },
 } satisfies Record<
-  Exclude<(typeof MENU_VIEW)[keyof typeof MENU_VIEW], typeof MENU_VIEW.MAIN>,
+  Exclude<`${MENU_VIEW}`, `${MENU_VIEW.MAIN}`>,
   {
     baseRoute: string
     defaultSlug: string

@@ -102,7 +102,12 @@ const LazyLoadImg: FC<TProps> = ({
         </div>
       )}
 
-      <LazyLoad visibleByDefault={visibleByDefault} threshold={threshold} onVisible={handleVisible}>
+      <LazyLoad
+        className={s.imageFrame}
+        visibleByDefault={visibleByDefault}
+        threshold={threshold}
+        onVisible={handleVisible}
+      >
         {(visible) =>
           // keep "visible" in the gate so behavior remains correct even if started is ever reset
           (visible || started) && showImg ? (

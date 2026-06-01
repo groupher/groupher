@@ -11,14 +11,13 @@ import TextBSVG from '~/icons/TextB'
 import TextItalicSVG from '~/icons/TextItalic'
 import type { TTransKey } from '~/spec'
 
-import type { TTab } from './spec'
 import { applyLinePrefix, applyOrderedList, applyWrap } from './utils'
 import type { TSelectionUpdate } from './utils'
 
-export const TAB = {
-  WRITE: 'write',
-  PREVIEW: 'preview',
-} as const satisfies Record<string, TTab>
+export enum TAB {
+  WRITE = 'write',
+  PREVIEW = 'preview',
+}
 
 type TActionMeta = {
   heading: string

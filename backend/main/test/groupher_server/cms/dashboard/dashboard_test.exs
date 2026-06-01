@@ -148,13 +148,22 @@ defmodule GroupherServer.Test.CMS.Dashboard do
         CMS.Dashboard.update(community, :wallpaper, %{
           type: "gradient",
           source: "orange",
+          type_dark: "gradient",
+          source_dark: "purple",
           has_texture: true,
+          has_texture_dark: true,
           pattern_id: "02",
+          pattern_id_dark: "03",
           pattern_intensity: 65,
+          pattern_intensity_dark: 35,
           pattern_tone: "light",
+          pattern_tone_dark: "dark",
           blur_intensity: 35,
+          blur_intensity_dark: 15,
           brightness: 85,
+          brightness_dark: 90,
           saturation: 120,
+          saturation_dark: 80,
           gradient: %{
             "version" => 2,
             "renderer" => "flow",
@@ -168,24 +177,45 @@ defmodule GroupherServer.Test.CMS.Dashboard do
             "contrast" => 100,
             "brightness" => 100
           },
-          texture: %{"type" => "ascii", "intensity" => 55, "params" => %{}}
+          gradient_dark: %{
+            "version" => 2,
+            "renderer" => "linear",
+            "preset" => "dark-test",
+            "colors" => ["#111", "#333"],
+            "angle" => 90,
+            "spread" => 50
+          },
+          texture: %{"type" => "ascii", "intensity" => 55, "params" => %{}},
+          texture_dark: %{"type" => "tile", "intensity" => 45, "params" => %{}}
         })
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
       assert find_community.dashboard.wallpaper.source == "orange"
+      assert find_community.dashboard.wallpaper.source_dark == "purple"
       assert find_community.dashboard.wallpaper.type == "gradient"
+      assert find_community.dashboard.wallpaper.type_dark == "gradient"
       assert find_community.dashboard.wallpaper.has_texture == true
+      assert find_community.dashboard.wallpaper.has_texture_dark == true
       assert find_community.dashboard.wallpaper.pattern_id == "02"
+      assert find_community.dashboard.wallpaper.pattern_id_dark == "03"
       assert find_community.dashboard.wallpaper.pattern_intensity == 65
+      assert find_community.dashboard.wallpaper.pattern_intensity_dark == 35
       assert find_community.dashboard.wallpaper.pattern_tone == "light"
+      assert find_community.dashboard.wallpaper.pattern_tone_dark == "dark"
       assert find_community.dashboard.wallpaper.blur_intensity == 35
+      assert find_community.dashboard.wallpaper.blur_intensity_dark == 15
       assert find_community.dashboard.wallpaper.brightness == 85
+      assert find_community.dashboard.wallpaper.brightness_dark == 90
       assert find_community.dashboard.wallpaper.saturation == 120
+      assert find_community.dashboard.wallpaper.saturation_dark == 80
       assert find_community.dashboard.wallpaper.gradient["preset"] == "test"
       assert find_community.dashboard.wallpaper.gradient["renderer"] == "flow"
+      assert find_community.dashboard.wallpaper.gradient_dark["preset"] == "dark-test"
       assert find_community.dashboard.wallpaper.texture["type"] == "ascii"
       assert find_community.dashboard.wallpaper.texture["intensity"] == 55
+      assert find_community.dashboard.wallpaper.texture_dark["type"] == "tile"
+      assert find_community.dashboard.wallpaper.texture_dark["intensity"] == 45
     end
 
     test "can update wallpaper dots texture", ~m(community_attrs user)a do

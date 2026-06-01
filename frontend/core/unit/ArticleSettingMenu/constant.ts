@@ -8,19 +8,19 @@ import WipSVG from '~/icons/GtdWip'
 import QuestionSVG from '~/icons/Question'
 import RejectSVG from '~/icons/Reject'
 
-export const SUB_MENU_TYPE = {
-  EDIT: 'edit',
-  SLUG: 'slug',
-  CATEGORY: 'category',
-  STATUS: 'status',
-  TAGS: 'tags',
-  PIN: 'pin',
-  LOCK: 'lock',
-  MERGE: 'merge',
-  ARCHIVE: 'archive',
-  MIRROR: 'mirror',
-  DELETE: 'delete',
-} as const
+export enum SUB_MENU {
+  EDIT = 'edit',
+  SLUG = 'slug',
+  CATEGORY = 'category',
+  STATUS = 'status',
+  TAGS = 'tags',
+  PIN = 'pin',
+  LOCK = 'lock',
+  MERGE = 'merge',
+  ARCHIVE = 'archive',
+  MIRROR = 'mirror',
+  DELETE = 'delete',
+}
 
 export const ICON = {
   // cat

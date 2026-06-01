@@ -211,13 +211,13 @@ export const MENU: TDsbMenu = {
   },
 }
 
-export const MENU_VIEW = {
-  MAIN: 'main',
-  DOC: 'doc',
-  POST: 'post',
-  KANBAN: 'kanban',
-  CHANGELOG: 'changelog',
-} as const
+export enum MENU_VIEW {
+  MAIN = 'main',
+  DOC = 'doc',
+  POST = 'post',
+  KANBAN = 'kanban',
+  CHANGELOG = 'changelog',
+}
 
 export const ALIAS_GROUP = {
   THREAD: DSB_ALIAS_ROUTE.THREAD,

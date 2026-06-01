@@ -1,8 +1,10 @@
 import type { TAccount, TComment, TID, TSubmitState, TPagedComments, TUser } from '~/spec'
 
-export type TMode = 'REPLIES' | 'TIMELINE'
+import type { EDIT_MODE, MODE } from './constant'
+
+export type TMode = `${MODE}`
 export type TAPIMode = 'article' | 'user_published'
-export type TEditMode = 'CREATE' | 'UPDATE' | 'REPLY'
+export type TEditMode = `${EDIT_MODE}`
 
 export type TFoldState = {
   isAllFolded: boolean

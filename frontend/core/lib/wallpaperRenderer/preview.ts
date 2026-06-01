@@ -1,14 +1,14 @@
-import type { TWallpaperState } from '~/stores/wallpaper/spec'
+import type { TWallpaperThemeState } from '~/stores/wallpaper/spec'
 
 export const WALLPAPER_PREVIEW_EVENT = 'groupher:wallpaper-preview'
 
 export type TWallpaperPreviewDetail = {
-  state: TWallpaperState | null
+  state: TWallpaperThemeState | null
 }
 
 type TWallpaperPreviewEvent = CustomEvent<TWallpaperPreviewDetail>
 
-export const emitWallpaperPreview = (state: TWallpaperState | null): void => {
+export const emitWallpaperPreview = (state: TWallpaperThemeState | null): void => {
   if (typeof window === 'undefined') return
 
   window.dispatchEvent(
@@ -19,7 +19,7 @@ export const emitWallpaperPreview = (state: TWallpaperState | null): void => {
 }
 
 export const subscribeWallpaperPreview = (
-  listener: (state: TWallpaperState | null) => void,
+  listener: (state: TWallpaperThemeState | null) => void,
 ): (() => void) => {
   if (typeof window === 'undefined') return () => undefined
 

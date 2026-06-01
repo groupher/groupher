@@ -1,9 +1,7 @@
-import type { TConstValues } from '~/spec'
-
 import type { COMMUNITY_TYPE, STEP } from './constant'
 
-export type TCommunityType = TConstValues<typeof COMMUNITY_TYPE>
-export type TStep = TConstValues<typeof STEP>
+export type TCommunityType = `${COMMUNITY_TYPE}`
+export type TStep = `${STEP}`
 
 // the local state store types
 export type TStore = {

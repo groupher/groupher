@@ -21,5 +21,7 @@ describe('<Img />', () => {
     await waitFor(() => {
       expect(screen.getByRole('img', { name: 'test' })).toBeInTheDocument()
     })
+
+    expect(screen.getByRole('img', { name: 'test' }).parentElement).toHaveClass('absolute')
   })
 })

@@ -10,7 +10,7 @@ import ArticleMirror from '~/icons/MirrorShoe'
 import SlugSVG from '~/icons/Slug'
 import DeleteSVG from '~/icons/Trash'
 
-import { SUB_MENU_TYPE } from '../constant'
+import { SUB_MENU } from '../constant'
 import useSalon, { cn } from '../salon/menu'
 import type { TSubMenu } from '../spec'
 import SubMenu from '../SubMenu'
@@ -59,31 +59,23 @@ const Menu: FC<TProps> = ({ onSubMenuToggle, onClose }) => {
     <div ref={ref} className={s.wrapper}>
       {!subMenuActive ? (
         <>
-          <button
-            type='button'
-            className={s.menuItem}
-            onClick={() => openSubMenu(SUB_MENU_TYPE.EDIT)}
-          >
+          <button type='button' className={s.menuItem} onClick={() => openSubMenu(SUB_MENU.EDIT)}>
             <EditSVG className={s.icon} />
             <div className={s.menuTitle}>修改标题</div>
             <div className='grow' />
             <ArrowSVG className={cn(s.icon, 'rotate-180')} />
           </button>
 
-          <button
-            type='button'
-            className={s.menuItem}
-            onClick={() => openSubMenu(SUB_MENU_TYPE.SLUG)}
-          >
+          <button type='button' className={s.menuItem} onClick={() => openSubMenu(SUB_MENU.SLUG)}>
             <SlugSVG className={s.icon} />
             <div className={s.menuTitle}>设置路径</div>
             <div className='grow' />
             <ArrowSVG className={cn(s.icon, 'rotate-180')} />
           </button>
           <div className={s.divider} />
-          <CatItem onClick={() => openSubMenu(SUB_MENU_TYPE.CATEGORY)} />
-          <StatusItem onClick={() => openSubMenu(SUB_MENU_TYPE.STATUS)} />
-          <TagsItem onClick={() => openSubMenu(SUB_MENU_TYPE.TAGS)} />
+          <CatItem onClick={() => openSubMenu(SUB_MENU.CATEGORY)} />
+          <StatusItem onClick={() => openSubMenu(SUB_MENU.STATUS)} />
+          <TagsItem onClick={() => openSubMenu(SUB_MENU.TAGS)} />
           <div className={s.divider} />
           <PinItem />
           <div className={s.menuItem}>
@@ -100,11 +92,7 @@ const Menu: FC<TProps> = ({ onSubMenuToggle, onClose }) => {
             <ArchivedSVG className={s.icon} />
             <div className={s.menuTitle}>归档</div>
           </div>
-          <button
-            type='button'
-            className={s.menuItem}
-            onClick={() => openSubMenu(SUB_MENU_TYPE.MIRROR)}
-          >
+          <button type='button' className={s.menuItem} onClick={() => openSubMenu(SUB_MENU.MIRROR)}>
             <ArticleMirror className={s.icon} />
             <div className={s.menuTitle}>镜像:Groupher</div>
             <div className='grow' />

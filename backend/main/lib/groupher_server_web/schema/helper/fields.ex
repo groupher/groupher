@@ -352,7 +352,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     end)
   end
 
-  defmacro dsb_gq_fields(section \\ :layout, opts \\ []) do
+  defp build_dsb_gq_fields(section, opts) do
     except = Keyword.get(opts, :except, [])
 
     Dashboard.macro_schema(section)
@@ -364,6 +364,33 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
         field(unquote(key), unquote(to_absinthe_type(type, key)))
       end
     end)
+  end
+
+  defmacro dsb_gq_fields(section \\ :layout, opts \\ []) do
+    build_dsb_gq_fields(section, opts)
+  end
+
+  @doc """
+  Expand a dashboard section schema into GraphQL input-object fields.
+
+  This keeps section patch inputs aligned with `Dashboard.macro_schema/1`,
+  while `dsb_args/2` remains for legacy flat mutation arguments. This macro is
+  intentionally a semantic wrapper around the same generator as `dsb_gq_fields/2`:
+  Absinthe accepts the same `field/2` declarations inside object and input-object
+  blocks, so the actual field-generation logic should stay in one place.
+
+  ## Example
+
+      input_object :dsb_wallpaper_input do
+        dsb_input_fields(:wallpaper)
+      end
+
+  A field like `:pattern_intensity_dark` is defined once in
+  `macro_schema(:wallpaper)`, exposed by Absinthe as `patternIntensityDark`,
+  and cast by the dashboard embed as `:pattern_intensity_dark`.
+  """
+  defmacro dsb_input_fields(section \\ :layout, opts \\ []) do
+    build_dsb_gq_fields(section, opts)
   end
 
   defmacro dsb_default(section \\ :layout) do

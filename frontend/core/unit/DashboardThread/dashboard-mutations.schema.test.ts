@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import { buildSchema, validate } from 'graphql'
 import { describe, expect, it } from 'vitest'
@@ -8,7 +9,8 @@ import * as themeSchema from './Appearance/Theme/schema'
 import wallpaperSchema from './Appearance/Wallpaper/schema'
 import dashboardSchema from './schema'
 
-const schemaPath = path.join(process.cwd(), 'frontend/main/graphql/schema.graphql')
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const schemaPath = path.join(__dirname, '../../../..', 'backend/main/schema.graphql')
 const schema = buildSchema(fs.readFileSync(schemaPath, 'utf8'))
 
 const documents = {

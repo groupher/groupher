@@ -34,14 +34,14 @@ export const VERIFYING_DOMAIN_ROWS: TVerifyingDomainRow[] = [
   // { url: 'docs.groupher.com', status: 'failed', addedAt: '2026-01-13' },
 ]
 
-export const STEPS = {
-  ADD_DOMAIN: 'add_domain',
-  DNS_SETUP: 'dns_setup',
-  VERIFY_DOMAIN: 'verify_domain',
-} as const
+export enum STEPS {
+  ADD_DOMAIN = 'add_domain',
+  DNS_SETUP = 'dns_setup',
+  VERIFY_DOMAIN = 'verify_domain',
+}
 
-export type TStep = (typeof STEPS)[keyof typeof STEPS]
+export type TStep = `${STEPS}`
 
-export const DOMAIN_STEP_ORDER = [STEPS.ADD_DOMAIN, STEPS.DNS_SETUP, STEPS.VERIFY_DOMAIN] as const
+export const DOMAIN_STEP_ORDER: TStep[] = [STEPS.ADD_DOMAIN, STEPS.DNS_SETUP, STEPS.VERIFY_DOMAIN]
 
-export type TDomainStep = (typeof DOMAIN_STEP_ORDER)[number]
+export type TDomainStep = TStep

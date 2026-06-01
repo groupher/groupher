@@ -1,8 +1,8 @@
-import type { TAPIMode, TEditMode, TMode } from './spec'
+import type { TAPIMode } from './spec'
 
-export const MODE = {
-  TIMELINE: 'TIMELINE' as TMode,
-  REPLIES: 'REPLIES' as TMode,
+export enum MODE {
+  TIMELINE = 'TIMELINE',
+  REPLIES = 'REPLIES',
 }
 
 export const API_MODE = {
@@ -10,8 +10,8 @@ export const API_MODE = {
   USER_PUBLISHED: 'user_published' as TAPIMode,
 }
 
-export const EDIT_MODE = {
-  CREATE: 'CREATE' as TEditMode,
-  UPDATE: 'UPDATE' as TEditMode,
-  REPLY: 'REPLY' as TEditMode,
+export enum EDIT_MODE {
+  CREATE = 'CREATE',
+  UPDATE = 'UPDATE',
+  REPLY = 'REPLY',
 }

@@ -4,7 +4,7 @@ defmodule GroupherServerWeb.Schema.CMS.Dashboard.Metrics.Inputs do
   """
   use Absinthe.Schema.Notation
 
-  import GroupherServerWeb.Schema.Helper.Fields, only: [dsb_gq_fields: 1]
+  import GroupherServerWeb.Schema.Helper.Fields, only: [dsb_gq_fields: 1, dsb_input_fields: 1]
 
   input_object :social_info do
     field(:platform, :string)
@@ -44,5 +44,9 @@ defmodule GroupherServerWeb.Schema.CMS.Dashboard.Metrics.Inputs do
 
   input_object :dsb_faq_map do
     dsb_gq_fields(:faq_section)
+  end
+
+  input_object :dsb_wallpaper_input do
+    dsb_input_fields(:wallpaper)
   end
 end

@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-import { SUB_MENU_TYPE } from '../constant'
+import { SUB_MENU } from '../constant'
 import useSalon from '../salon/sub_menu'
 import type { TSubMenu } from '../spec'
 import CatSetting from './CatSetting'
@@ -22,32 +22,32 @@ const SubMenu: FC<TProps> = ({ closeSubMenu, subMenuType }) => {
   let Content = null
 
   switch (subMenuType) {
-    case SUB_MENU_TYPE.EDIT: {
+    case SUB_MENU.EDIT: {
       Content = TitleSetting
       break
     }
 
-    case SUB_MENU_TYPE.CATEGORY: {
+    case SUB_MENU.CATEGORY: {
       Content = CatSetting
       break
     }
 
-    case SUB_MENU_TYPE.STATUS: {
+    case SUB_MENU.STATUS: {
       Content = StatusSetting
       break
     }
 
-    case SUB_MENU_TYPE.SLUG: {
+    case SUB_MENU.SLUG: {
       Content = SlugSetting
       break
     }
 
-    case SUB_MENU_TYPE.MIRROR: {
+    case SUB_MENU.MIRROR: {
       Content = Mirror2Home
       break
     }
 
-    case SUB_MENU_TYPE.TAGS: {
+    case SUB_MENU.TAGS: {
       Content = TagsSetting
       break
     }

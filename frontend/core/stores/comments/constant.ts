@@ -1,8 +1,8 @@
-import type { TAPIMode, TMode } from './spec'
+import type { TAPIMode } from './spec'
 
-export const MODE = {
-  TIMELINE: 'TIMELINE' as TMode,
-  REPLIES: 'REPLIES' as TMode,
+export enum MODE {
+  TIMELINE = 'TIMELINE',
+  REPLIES = 'REPLIES',
 }
 
 export const API_MODE = {

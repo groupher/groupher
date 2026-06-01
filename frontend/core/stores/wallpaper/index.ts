@@ -1,4 +1,4 @@
-import { pick } from 'ramda'
+import { clone, pick } from 'ramda'
 import { proxy } from 'valtio'
 
 import {
@@ -17,18 +17,32 @@ export const INITIAL_WALLPAPER_STATE = {
   customWallpaper: null,
   source: 'pink',
   type: WALLPAPER_TYPE.GRADIENT,
+  sourceDark: 'pink',
+  typeDark: WALLPAPER_TYPE.GRADIENT,
   hasPattern: true,
   patternId: DEFAULT_WALLPAPER_PATTERN_ID,
   patternIntensity: 50,
   patternTone: WALLPAPER_PATTERN_TONE.DARK,
   hasTexture: false,
+  hasPatternDark: true,
+  patternIdDark: DEFAULT_WALLPAPER_PATTERN_ID,
+  patternIntensityDark: 50,
+  patternToneDark: WALLPAPER_PATTERN_TONE.DARK,
+  hasTextureDark: false,
   gradient: GRADIENT_WALLPAPER.pink,
+  gradientDark: GRADIENT_WALLPAPER.pink,
   blurIntensity: 0,
   hasShadow: false,
   brightness: 100,
   saturation: 100,
+  blurIntensityDark: 0,
+  hasShadowDark: false,
+  brightnessDark: 100,
+  saturationDark: 100,
   texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
+  textureDark: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
   bgSize: WALLPAPER_BG_SIZE.COVER,
+  bgSizeDark: WALLPAPER_BG_SIZE.COVER,
 } satisfies TWallpaperState
 
 const resolveInitialWallpaperState = (init: TInit): TWallpaperState => {
@@ -40,6 +54,9 @@ const resolveInitialWallpaperState = (init: TInit): TWallpaperState => {
   if (state.type === WALLPAPER_TYPE.GRADIENT && !state.gradient) {
     state.gradient = GRADIENT_WALLPAPER[state.source] ?? GRADIENT_WALLPAPER.pink
   }
+  if (state.typeDark === WALLPAPER_TYPE.GRADIENT && !state.gradientDark) {
+    state.gradientDark = GRADIENT_WALLPAPER[state.sourceDark] ?? GRADIENT_WALLPAPER.pink
+  }
 
   return state
 }
@@ -47,8 +64,9 @@ const resolveInitialWallpaperState = (init: TInit): TWallpaperState => {
 export default (init: TInit = {}): TStore => {
   const initialState = resolveInitialWallpaperState(init)
   const initialStore: TStore = {
-    original: initialState,
-    ...initialState,
+    // Keep the saved baseline isolated from live nested edits used by diff patches.
+    original: clone(initialState),
+    ...clone(initialState),
 
     commit: (patch: Partial<TStore>): void => {
       Object.assign(store, patch)

@@ -1,6 +1,7 @@
 // @ts-nocheck
 import fs from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 import react from '@vitejs/plugin-react'
 import tsconfigPaths from 'vite-tsconfig-paths'
@@ -8,7 +9,8 @@ import { defineConfig } from 'vitest/config'
 
 // This config is shared by all `frontend/*` apps.
 // Run with: `vitest --config frontend/core/vitest.config.mts`
-const repoRoot = process.cwd()
+const configDir = path.dirname(fileURLToPath(import.meta.url))
+const repoRoot = path.resolve(configDir, '../..')
 
 const tsconfigProjects = fs
   .readdirSync(path.join(repoRoot, 'frontend'), { withFileTypes: true })
@@ -17,6 +19,7 @@ const tsconfigProjects = fs
   .filter((p) => fs.existsSync(path.join(repoRoot, p)))
 
 export default defineConfig({
+  root: repoRoot,
   plugins: [
     tsconfigPaths({
       projects: tsconfigProjects,
