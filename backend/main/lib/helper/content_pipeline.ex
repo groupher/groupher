@@ -8,7 +8,6 @@ defmodule Helper.ContentPipeline do
   alias Helper.{ContentPayload, Converter.Content}
 
   @digest_length get_config(:article, :digest_length)
-  @url_regex ~r/https?:\/\/[^\s]+/u
   @type t :: ContentPayload.t()
 
   @doc """
@@ -27,8 +26,8 @@ defmodule Helper.ContentPipeline do
       1
       iex> is_binary(payload.html)
       true
-      iex> payload.cites
-      ["https://groupher.com"]
+      iex> payload.mentions
+      []
   """
   @spec parse(map()) :: {:ok, t()} | {:error, term()}
   def parse(%{body: body}) when is_binary(body) do
@@ -47,8 +46,7 @@ defmodule Helper.ContentPipeline do
         content_hash: content_hash(body),
         schema_version: 1,
         ast: ast,
-        mentions: extract_mentions(ast),
-        cites: extract_cites(ast)
+        mentions: extract_mentions(ast)
       }
       |> done()
     end
@@ -160,38 +158,6 @@ defmodule Helper.ContentPipeline do
 
   # Skip unsupported node entries.
   defp do_extract_mentions([_ | rest], acc), do: do_extract_mentions(rest, acc)
-
-  # Public cite extraction entry from AST list.
-  defp extract_cites(nodes) when is_list(nodes) do
-    nodes
-    |> do_extract_cites([])
-    |> Enum.reverse()
-    |> Enum.uniq()
-  end
-
-  # Deduplicate extracted URLs while preserving order.
-  defp do_extract_cites([], acc), do: acc
-
-  # Collect URLs from current node text then recurse into children.
-  defp do_extract_cites([node | rest], acc) when is_map(node) do
-    acc = collect_text_urls(node, acc)
-    acc = acc_from_children(node, acc, &do_extract_cites/2)
-    do_extract_cites(rest, acc)
-  end
-
-  # Skip unsupported node entries.
-  defp do_extract_cites([_ | rest], acc), do: do_extract_cites(rest, acc)
-
-  # Extract URLs from text leaves using regex.
-  defp collect_text_urls(%{"text" => text}, acc) when is_binary(text) do
-    Regex.scan(@url_regex, text)
-    |> Enum.map(&List.first/1)
-    |> Enum.reject(&is_nil/1)
-    |> Enum.reduce(acc, fn url, memo -> [url | memo] end)
-  end
-
-  # Ignore nodes without text content.
-  defp collect_text_urls(_, acc), do: acc
 
   # Reuse extractor against node children when present.
   defp acc_from_children(%{"children" => children}, acc, extractor) when is_list(children),

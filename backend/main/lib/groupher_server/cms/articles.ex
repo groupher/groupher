@@ -53,9 +53,6 @@ defmodule GroupherServer.CMS.Articles do
   @spec count_published(T.article_thread(), User.t()) :: T.domain_res(non_neg_integer())
   def count_published(thread, %User{} = user), do: List.count_published(thread, user)
 
-  @spec paged_citing_contents(atom(), T.id(), map()) :: T.domain_res(T.paged_data())
-  def paged_citing_contents(type, id, filter), do: List.paged_citing_contents(type, id, filter)
-
   # Write
 
   @spec create(Community.t(), T.article_thread(), map(), User.t()) :: T.domain_res(T.article())

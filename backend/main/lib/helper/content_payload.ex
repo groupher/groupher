@@ -26,8 +26,7 @@ defmodule Helper.ContentPayload do
           content_hash: String.t(),
           schema_version: integer(),
           ast: list(),
-          mentions: list(),
-          cites: list()
+          mentions: list()
         }
 
   @doc """

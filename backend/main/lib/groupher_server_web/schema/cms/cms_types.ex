@@ -407,13 +407,26 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     timestamp_fields()
   end
 
-  object :citing do
+  object :artiment_mention do
     field(:id, :id)
-    field(:thread, :thread)
-    field(:title, :string)
-    field(:block_linker, list_of(:string))
-    field(:comment_id, :id)
-    field(:user, :common_user)
+    field(:mentioner_type, :mention_type)
+    field(:mentioner_id, :id)
+    field(:mentioner_community_id, :id)
+    field(:mentioner_url, :string)
+
+    field(:mentioned_scope, :mention_scope)
+    field(:mentioned_type, :mention_type)
+    field(:mentioned_id, :id)
+    field(:mentioned_community_id, :id)
+    field(:mentioned_url, :string)
+    field(:mentioned_url_hash, :string)
+
+    field(:mention_case, :mention_case)
+    field(:occurrences, list_of(:json))
+    field(:mentioner_snapshot, :json)
+    field(:mentioned_snapshot, :json)
+    field(:meta, :json)
+    field(:mentioned_at, :datetime)
 
     timestamp_fields()
   end
@@ -449,8 +462,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     pagination_fields()
   end
 
-  object :paged_citings do
-    field(:entries, list_of(:citing))
+  object :paged_mentions do
+    field(:entries, list_of(:artiment_mention))
     pagination_fields()
   end
 
@@ -485,7 +498,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:is_edited, :boolean)
     field(:is_comment_locked, :boolean)
     field(:last_active_at, :datetime)
-    field(:citing_count, :integer)
     field(:latest_upvoted_users, list_of(:common_user))
     # audit states
     field(:is_legal, :boolean)

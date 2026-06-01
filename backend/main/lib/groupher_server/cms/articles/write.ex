@@ -66,7 +66,7 @@ defmodule GroupherServer.CMS.Articles.Write do
           Accounts.Publish.update_states(user, thread)
         end)
         |> Multi.run(:after_events, fn _, %{create_article: article} ->
-          Later.run({Events, :emit, [:cite, %{artiment: article}]})
+          Later.run({Events, :emit, [:sync_mentions, %{artiment: article}]})
           Later.run({Events, :emit, [:mention, %{artiment: article}]})
           Later.run({Events, :emit, [:audition, %{artiment: article}]})
           Later.run({__MODULE__, :notify_admin_new_article, [article]})
@@ -134,7 +134,7 @@ defmodule GroupherServer.CMS.Articles.Write do
         {:ok, merge_loaded_assoc(updated_article, :community_tags, tagged_article)}
       end)
       |> Multi.run(:after_events, fn _, %{update_article: update_article} ->
-        Later.run({Events, :emit, [:cite, %{artiment: update_article}]})
+        Later.run({Events, :emit, [:sync_mentions, %{artiment: update_article}]})
         Later.run({Events, :emit, [:mention, %{artiment: update_article}]})
         Later.run({Events, :emit, [:audition, %{artiment: update_article}]})
       end)

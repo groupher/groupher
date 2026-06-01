@@ -205,7 +205,6 @@ defmodule GroupherServer.Test.Helper.ORM do
         ORM.update_meta(post, %{
           is_edited: true,
           thread: :post,
-          citing_count: 20,
           is_comment_locked: true,
           upvoted_user_ids: [2, 3, 5],
           last_active_at: post.inserted_at
@@ -214,7 +213,6 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert ret.meta.is_edited == true
       assert ret.meta.is_comment_locked == true
       assert ret.meta.upvoted_user_ids == [2, 3, 5]
-      assert ret.meta.citing_count == 20
       assert ret.meta.last_active_at == post.inserted_at
       assert ret.meta.thread == :post
     end
@@ -226,7 +224,7 @@ defmodule GroupherServer.Test.Helper.ORM do
       {:ok, ret} =
         ORM.update_meta(post, %{
           is_edited: true,
-          citing_count: 20
+          reported_count: 20
         })
 
       assert ret.inserted_at == post.inserted_at

@@ -51,6 +51,24 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     value(:comment)
   end
 
+  enum :mention_type do
+    article_values()
+    value(:comment)
+    value(:user)
+    @desc "External URL mentions only; internal URLs are normalized to concrete content types."
+    value(:url)
+  end
+
+  enum :mention_scope do
+    value(:internal)
+    value(:external)
+  end
+
+  enum :mention_case do
+    value(:inline_mention)
+    value(:link)
+  end
+
   enum :when_enum do
     value(:today)
     value(:this_week)
