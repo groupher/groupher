@@ -40,6 +40,8 @@ export type TLinkDndRenderProps<TColumn extends TLinkDndColumnBase> = {
   activeDragColumnId: string | null
   columns: TColumn[]
   targetDragColumnId: string | null
+  targetDragItemId: string | null
+  targetDragPosition: TLinkDndTarget['position'] | null
 }
 
 export type TSortableDndContextProps<

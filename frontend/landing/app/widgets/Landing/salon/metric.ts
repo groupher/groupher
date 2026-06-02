@@ -1,17 +1,22 @@
 import { includes, keys } from 'ramda'
 
-import { GRADIENT_WALLPAPER, GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
+import { GRADIENT_WALLPAPER } from '~/const/wallpaper'
+
+const LEGACY_WALLPAPER_NAME = {
+  PINK: 'pink',
+  GREY: 'grey',
+} as const
 
 export const getPathGradient = (wallpaper: string): string => {
   if (!includes(wallpaper, keys(GRADIENT_WALLPAPER))) {
     return '#f2bc5a,#f76b6b'
   }
 
-  if (wallpaper === GRADIENT_WALLPAPER_NAME.PINK) {
+  if (wallpaper === LEGACY_WALLPAPER_NAME.PINK) {
     return '#f8be6d,#c479de'
   }
 
-  if (wallpaper === GRADIENT_WALLPAPER_NAME.GREY) {
+  if (wallpaper === LEGACY_WALLPAPER_NAME.GREY) {
     return '#E1D5CC,#955D29'
   }
 

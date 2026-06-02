@@ -8,6 +8,7 @@ import useSalon from './salon'
 type TProps = {
   title: string
   desc?: ReactNode
+  hideTitle?: boolean
   withDivider?: boolean
   crumbItems?: TBreadcrumbItem[]
   addon?: ReactNode
@@ -19,6 +20,7 @@ const DEFAULT_CRUMB_ITEMS: TBreadcrumbItem[] = []
 const Portal: FC<TProps> = ({
   title,
   desc = null,
+  hideTitle = false,
   withDivider = true,
   crumbItems = DEFAULT_CRUMB_ITEMS,
   addon = null,
@@ -31,12 +33,14 @@ const Portal: FC<TProps> = ({
     <div className={s.wrapper}>
       {crumbItems?.length ? <Breadcrumbs items={crumbItems} /> : null}
 
-      <div className={s.header}>
-        <h3 className={s.title} data-testid={testid || undefined}>
-          {title}
-        </h3>
-        {addon}
-      </div>
+      {!hideTitle && (
+        <div className={s.header}>
+          <h3 className={s.title} data-testid={testid || undefined}>
+            {title}
+          </h3>
+          {addon}
+        </div>
+      )}
 
       {desc && <p className={s.desc}>{desc}</p>}
       {withDivider && <div className={s.divider} />}

@@ -1,7 +1,9 @@
 'use client'
 
+import SideTreeEditor from '~/unit/DashboardThread/CMS/Docs/SideTreeEditor'
+
 const DashboardDocEditorPage = () => {
-  return <div>文档编辑</div>
+  return <SideTreeEditor />
 }
 
 export default DashboardDocEditorPage

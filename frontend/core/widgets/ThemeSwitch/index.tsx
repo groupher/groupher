@@ -7,6 +7,7 @@
 import type { FC } from 'react'
 
 import { THEME_MODE } from '~/const/theme'
+import useDidMount from '~/hooks/useDidMount'
 import useTheme from '~/hooks/useTheme'
 import useThemeLoop from '~/hooks/useThemeLoop'
 import MoonSVG from '~/icons/Moon'
@@ -22,8 +23,10 @@ const ThemeSwitch: FC<TProps> = ({ ...spacing }) => {
   const s = useSalon({ ...spacing })
   const { themeMode, changeMode } = useTheme()
   const { getNextThemeMode, getAriaLabel } = useThemeLoop()
+  const mounted = useDidMount()
 
-  const ariaLabel = getAriaLabel()
+  const renderThemeMode = mounted ? themeMode : THEME_MODE.SYSTEM
+  const ariaLabel = mounted ? getAriaLabel() : `${THEME_MODE.SYSTEM} mode`
 
   const handleToggle = () => {
     const nextMode = getNextThemeMode()
@@ -41,17 +44,17 @@ const ThemeSwitch: FC<TProps> = ({ ...spacing }) => {
         onClick={handleToggle}
         aria-live='polite'
       >
-        {themeMode === THEME_MODE.LIGHT && (
+        {renderThemeMode === THEME_MODE.LIGHT && (
           <div className={s.iconBox}>
             <SunSVG className={s.icon} />
           </div>
         )}
-        {themeMode === THEME_MODE.DARK && (
+        {renderThemeMode === THEME_MODE.DARK && (
           <div className={s.iconBox}>
             <MoonSVG className={s.icon} />
           </div>
         )}
-        {themeMode === THEME_MODE.SYSTEM && (
+        {renderThemeMode === THEME_MODE.SYSTEM && (
           <div className={s.iconBox}>
             <PlanetSVG className={cn(s.icon, 'size-4.5')} />
           </div>

@@ -16,6 +16,7 @@ type TCmsSectionLayoutConfig = {
   path: string
   seg: string
   showAdmins?: boolean
+  hideTitle?: boolean
   title: TTransKey
   withDivider?: boolean
 }
@@ -26,6 +27,7 @@ export default function createCmsSectionLayout({
   path,
   seg,
   showAdmins = false,
+  hideTitle = false,
   title,
   withDivider = false,
 }: TCmsSectionLayoutConfig) {
@@ -46,6 +48,7 @@ export default function createCmsSectionLayout({
         <Portal
           title={t(title)}
           desc={desc ? t(desc) : undefined}
+          hideTitle={hideTitle}
           crumbItems={crumbItems}
           addon={adminList ? <AdminList userList={adminList} /> : undefined}
           withDivider={withDivider}
