@@ -777,41 +777,69 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert link.url == "url"
     end
 
-    @update_faqs_query """
-    mutation($community: String!, $faqs: [DsbFaqMap]) {
-      updateDashboardFaqs(community: $community, faqs: $faqs) {
-        faqs {
+    @update_doc_faq_query """
+    mutation($community: String!, $docFaq: DsbDocFaqInput!) {
+      updateDashboardDocFaq(community: $community, docFaq: $docFaq) {
+        docFaq {
           title
-          body
-          index
+          desc
+          grouped
+          groups {
+            id
+            title
+            index
+            items {
+              id
+              title
+              detail
+              index
+            }
+          }
         }
       }
     }
     """
-    test "update community dashboard faqs info", ~m(community)a do
+    test "update community dashboard docs FAQ info", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
       variables = %{
         community: community.slug,
-        faqs: [
-          %{
-            title: "title",
-            body: "body",
-            index: 0
-          }
-        ]
+        docFaq: %{
+          title: "FAQ",
+          desc: "Common docs questions",
+          grouped: true,
+          groups: [
+            %{
+              id: "grp_basics",
+              title: "Basics",
+              index: 0,
+              items: [
+                %{
+                  id: "faq_intro",
+                  title: "What is docs?",
+                  detail: "Docs are product help content.",
+                  index: 0
+                }
+              ]
+            }
+          ]
+        }
       }
 
-      updated = rule_conn |> gq_mutation(@update_faqs_query, variables)
+      updated = rule_conn |> gq_mutation(@update_doc_faq_query, variables)
 
-      assert updated["faqs"] |> List.first() |> Map.get("title") == "title"
+      assert updated["docFaq"]["title"] == "FAQ"
+      assert updated["docFaq"]["groups"] |> List.first() |> Map.get("title") == "Basics"
 
       {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
 
-      faq = found.dashboard.faqs |> Enum.at(0)
+      faq = found.dashboard.doc_faq
+      group = faq.groups |> Enum.at(0)
+      item = group.items |> Enum.at(0)
 
-      assert faq.title == "title"
-      assert faq.body == "body"
+      assert faq.title == "FAQ"
+      assert faq.desc == "Common docs questions"
+      assert item.detail == "Docs are product help content."
     end
   end
 end

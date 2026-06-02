@@ -26,7 +26,7 @@ defmodule GroupherServerWeb.Schema.CMS.Dashboard.Metrics.Enums do
     value(:footer_oneline_links)
     value(:social_links)
     value(:media_reports)
-    value(:faqs)
+    value(:doc_faq)
   end
 
   enum :dsb_link_type do

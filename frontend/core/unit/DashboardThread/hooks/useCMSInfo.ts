@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 
 import useGraphQLClient from '~/hooks/useGraphQLClient'
-import type { TFAQSection, TID, TPagedArticles, TPagedCommunities } from '~/spec'
+import type { TDocFaq, TID, TPagedArticles, TPagedCommunities } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
@@ -17,9 +17,7 @@ type TRet = {
   pagedDocs: TPagedArticles
   pagedChangelogs: TPagedArticles
 
-  editingFAQ: TFAQSection
-  faqSections: readonly TFAQSection[]
-  editingFAQIndex: number | null
+  docFaq: TDocFaq
 
   // 原有 action（如果别处用得到）
   batchSelect: (id: TID, selected?: boolean) => void
@@ -27,7 +25,7 @@ type TRet = {
 
   loadPosts: () => void
   loadChangelogs: () => void
-  isFaqSectionsTouched: boolean
+  isDocFaqTouched: boolean
 }
 
 export default function useCMSInfo(): TRet {
@@ -39,13 +37,11 @@ export default function useCMSInfo(): TRet {
   const {
     loading,
     batchSelectedIDs,
-    editingFAQIndex,
     pagedCommunities,
     pagedPosts,
     pagedDocs,
     pagedChangelogs,
-    faqSections,
-    editingFAQ,
+    docFaq,
   } = dsb$
 
   const loadPosts = useCallback(() => {
@@ -101,7 +97,6 @@ export default function useCMSInfo(): TRet {
 
   return {
     loading,
-    editingFAQIndex,
     batchSelectedIDs,
 
     pagedCommunities,
@@ -109,9 +104,8 @@ export default function useCMSInfo(): TRet {
     pagedDocs,
     pagedChangelogs,
 
-    faqSections,
-    editingFAQ,
-    isFaqSectionsTouched: mapArrayChanged(FIELD.FAQ_SECTIONS),
+    docFaq,
+    isDocFaqTouched: mapArrayChanged(FIELD.DOC_FAQ),
 
     loadPosts,
     loadChangelogs,

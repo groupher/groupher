@@ -673,69 +673,86 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert first.title == "report title 2"
     end
 
-    test "can update faqs in community dashboard", ~m(community_attrs user)a do
+    test "can update docs FAQ in community dashboard", ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :faqs, [
-          %{
-            title: "xx is yy ?",
-            index: 0,
-            body: "this is body"
-          }
-        ])
+        CMS.Dashboard.update(community, :doc_faq, %{
+          title: "FAQ",
+          desc: "Common docs questions",
+          grouped: true,
+          groups: [
+            %{
+              id: "grp_basics",
+              title: "Basics",
+              index: 0,
+              items: [
+                %{
+                  id: "faq_intro",
+                  title: "What is docs?",
+                  index: 0,
+                  detail: "Docs are product help content."
+                }
+              ]
+            }
+          ]
+        })
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
-      first = find_community.dashboard.faqs |> Enum.at(0)
+      faq = find_community.dashboard.doc_faq
+      first_group = faq.groups |> Enum.at(0)
+      first_item = first_group.items |> Enum.at(0)
 
-      assert first.title == "xx is yy ?"
-      assert first.body == "this is body"
+      assert faq.title == "FAQ"
+      assert faq.desc == "Common docs questions"
+      assert first_group.title == "Basics"
+      assert first_item.detail == "Docs are product help content."
     end
 
-    test "should overwrite all faqs in community dashboard every time",
+    test "should update docs FAQ as one dashboard section",
          ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :faqs, [
-          %{
-            title: "xx is yy ?",
-            index: 0,
-            body: "this is body"
-          },
-          %{
-            title: "xx is yy 2 ?",
-            index: 1,
-            body: "this is body 2"
-          }
-        ])
+        CMS.Dashboard.update(community, :doc_faq, %{
+          title: "FAQ",
+          desc: "Common docs questions",
+          grouped: true,
+          groups: [
+            %{id: "grp_basics", title: "Basics", index: 0, items: []},
+            %{id: "grp_usage", title: "Usage", index: 1, items: []}
+          ]
+        })
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
-      assert find_community.dashboard.faqs |> length == 2
-
-      first = find_community.dashboard.faqs |> Enum.at(0)
-      second = find_community.dashboard.faqs |> Enum.at(1)
-
-      assert first.title == "xx is yy ?"
-      assert second.title == "xx is yy 2 ?"
+      assert find_community.dashboard.doc_faq.groups |> length == 2
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :faqs, [
-          %{
-            title: "xx is zz ?",
-            index: 0,
-            body: "this is body"
-          }
-        ])
+        CMS.Dashboard.update(community, :doc_faq, %{
+          title: "FAQ",
+          desc: "Flat FAQ",
+          grouped: false,
+          groups: [
+            %{
+              id: "__default__",
+              title: "General",
+              index: 0,
+              items: [%{id: "faq_general", title: "General question", detail: "Answer", index: 0}]
+            }
+          ]
+        })
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
-      assert find_community.dashboard.faqs |> length == 1
+      assert find_community.dashboard.doc_faq.groups |> length == 1
 
-      third = find_community.dashboard.faqs |> Enum.at(0)
-      assert third.title == "xx is zz ?"
-      assert third.body == "this is body"
+      faq = find_community.dashboard.doc_faq
+      group = faq.groups |> Enum.at(0)
+      item = group.items |> Enum.at(0)
+      assert faq.grouped == false
+      assert group.title == "General"
+      assert item.detail == "Answer"
     end
 
     test "can update social links in community dashboard", ~m(community_attrs user)a do

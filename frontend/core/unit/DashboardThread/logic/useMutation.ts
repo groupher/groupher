@@ -76,10 +76,7 @@ export default function useMutation(): TRet {
   const resolveSavedFields = (field: TDsbFieldKey): readonly TDsbStoreFieldKey[] => {
     if (field === FIELD.TAG_INDEX || field === FIELD.TAG) return TAG_STORE_FIELDS
 
-    if (
-      field === FIELD.FAQ_SECTIONS ||
-      includes(field, [FIELD.FAQ_SECTION_ADD, FIELD.FAQ_SECTION_DELETE])
-    ) {
+    if (field === FIELD.DOC_FAQ) {
       return FAQ_STORE_FIELDS
     }
 
@@ -99,10 +96,6 @@ export default function useMutation(): TRet {
 
     if (field === FIELD.TAG_INDEX) {
       original = { ...current.original, tagGroups: clone(current.tagGroups) }
-    }
-
-    if (includes(field, [FIELD.FAQ_SECTION_ADD, FIELD.FAQ_SECTION_DELETE])) {
-      original = { ...current.original, faqSections: clone(current.faqSections) }
     }
 
     if (field === FIELD.BASE_INFO) {
@@ -126,6 +119,10 @@ export default function useMutation(): TRet {
         current[key] = clone(storeRef.current[key])
       }
       original = { ...storeRef.current.original, ...current }
+    }
+
+    if (field === FIELD.DOC_FAQ) {
+      storePatch = { docFaqSaveZone: null }
     }
 
     const savedFields = resolveSavedFields(field)
@@ -362,34 +359,10 @@ export default function useMutation(): TRet {
       return
     }
 
-    // if (field === FIELD.FAQ_SECTIONS) {
-    //   sr71$.mutate(S.updateDashboardFaqs, { faqs: toJS(store.faqSections), community })
-    //   return
-    // }
-
-    // if (field === FIELD.FAQ_SECTION_ITEM) {
-    //   const { editingFAQ, faqSections } = store
-    //   const _editingFAQ = toJS(editingFAQ)
-    //   const _faqSections = toJS(faqSections)
-    //   const targetIndex = findIndex(
-    //     (item: TFAQSection) => item.index === editingFAQ.index,
-    //     _faqSections,
-    //   )
-
-    //   const updatedSections = update(targetIndex, _editingFAQ, _faqSections)
-    //   store.mark({ faqSections: updatedSections, editingFAQ: null, editingFAQIndex: null })
-    //   sr71$.mutate(S.updateDashboardFaqs, { faqs: updatedSections, community })
-    //   return
-    // }
-
-    // if (field === FIELD.FAQ_SECTION_ADD) {
-    //   const { faqSections, editingFAQ } = store
-    //   const _faqSections = [...toJS(faqSections), toJS(editingFAQ)]
-
-    //   store.mark({ faqSections: _faqSections, editingFAQ: null, editingFAQIndex: null })
-    //   sr71$.mutate(S.updateDashboardFaqs, { faqs: _faqSections, community })
-    //   return
-    // }
+    if (field === FIELD.DOC_FAQ) {
+      handleMutation(S.updateDashboardDocFaq, { community, docFaq: storeRef.current.docFaq })
+      return
+    }
 
     if (includes(field, values(LAYOUT_FIELD))) {
       if (field === FIELD.KANBAN_BOARDS) {

@@ -241,12 +241,12 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Dashboard do
       resolve(&R.CMS.update_dashboard/3)
     end
 
-    @desc "update faqs in dashboard"
-    field :update_dashboard_faqs, :dsb do
+    @desc "update docs FAQ in dashboard"
+    field :update_dashboard_doc_faq, :dsb do
       arg(:community, non_null(:string))
-      arg(:dsb_section, :dsb_section, default_value: :faqs)
+      arg(:dsb_section, :dsb_section, default_value: :doc_faq)
 
-      arg(:faqs, list_of(:dsb_faq_map))
+      arg(:doc_faq, non_null(:dsb_doc_faq_input))
 
       middleware(M.Authorize, :login)
       # middleware(M.PublishThrottle)

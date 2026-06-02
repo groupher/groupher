@@ -8,9 +8,9 @@ import type {
   TChangeMode,
   TColorName,
   TDocFAQLayout,
+  TDocFaq,
   TDocCoverLayout,
   TEnableConf,
-  TFAQSection,
   TFooterLayout,
   TFooterOnelineLink,
   THeaderLayout,
@@ -142,7 +142,7 @@ export type TDsbFieldMap = {
   nameAlias: readonly TNameAlias[]
   enable: TEnableConf
 
-  faqSections: readonly TFAQSection[]
+  docFaq: TDocFaq
   rssFeedType: TRSSType
   rssFeedCount: number
 
@@ -169,6 +169,14 @@ export type TInit = {
 } & Partial<TDsbFieldMap>
 export type TDsbStoreFieldKey = keyof TDsbFieldMap
 export type TDsbTouchedFields = Partial<Record<TDsbStoreFieldKey, true>>
+export type TDocFaqSaveZone =
+  | { type: 'title' }
+  | { type: 'desc' }
+  | { type: 'groupTitle'; groupId: string }
+  | { type: 'itemTitle'; groupId: string; itemId: string }
+  | { type: 'itemDetail'; groupId: string; itemId: string }
+  | { type: 'listOrder' }
+  | null
 
 export type TStore = TDsbFieldMap & {
   metric?: TMetric
@@ -192,8 +200,7 @@ export type TStore = TDsbFieldMap & {
 
   editingGroup: string | null
   editingGroupIndex: number | null
-  editingFAQIndex: number | null
-  editingFAQ: TFAQSection | null
+  docFaqSaveZone: TDocFaqSaveZone
 
   queryingMediaReportIndex: number
 

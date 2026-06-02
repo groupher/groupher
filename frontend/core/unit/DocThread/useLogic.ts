@@ -1,4 +1,4 @@
-import type { TDocCoverLayout, TDocFAQLayout, TFAQSection } from '~/spec'
+import type { TDocCoverLayout, TDocFAQLayout, TDocFaq } from '~/spec'
 import useArticle from '~/stores/article/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
@@ -10,7 +10,7 @@ type TRet = {
   gotoDetailLayout: () => void
   gotoFAQDetailLayout: () => void
   back2Layout: () => void
-  faqSections: TFAQSection[]
+  docFaq: TDocFaq
 }
 
 export default function useLogic(): TRet {
@@ -35,7 +35,7 @@ export default function useLogic(): TRet {
     isFAQArticleLayout: article$.isFAQArticleLayout,
     layout: dashboard.docCoverLayout,
     faqLayout: dashboard.docFaqLayout,
-    faqSections: [],
+    docFaq: dashboard.docFaq,
     gotoDetailLayout,
     gotoFAQDetailLayout,
     back2Layout,

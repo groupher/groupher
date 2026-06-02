@@ -42,10 +42,6 @@ defmodule GroupherServerWeb.Schema.CMS.Dashboard.Metrics.Inputs do
     dsb_gq_fields(:media_report)
   end
 
-  input_object :dsb_faq_map do
-    dsb_gq_fields(:faq_section)
-  end
-
   input_object :dsb_wallpaper_input do
     dsb_input_fields(:wallpaper)
   end

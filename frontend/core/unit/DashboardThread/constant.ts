@@ -61,10 +61,7 @@ export const FIELD = {
   TAGS: 'tagGroups',
   TAG: 'tag',
   TAG_INDEX: 'tagIndex',
-  FAQ_SECTIONS: 'faqSections',
-  FAQ_SECTION_ITEM: 'faqSectionItem',
-  FAQ_SECTION_ADD: 'faqSectionAdd',
-  FAQ_SECTION_DELETE: 'faqSectionDelete',
+  DOC_FAQ: 'docFaq',
   NAME_ALIAS: 'nameAlias',
   RSS_FEED_TYPE: 'rssFeedType',
   RSS_FEED_COUNT: 'rssFeedCount',
@@ -75,7 +72,7 @@ export const FIELD = {
 } as const
 
 export const TAG_STORE_FIELDS: readonly TDsbStoreFieldKey[] = [FIELD.TAGS]
-export const FAQ_STORE_FIELDS: readonly TDsbStoreFieldKey[] = [FIELD.FAQ_SECTIONS]
+export const FAQ_STORE_FIELDS: readonly TDsbStoreFieldKey[] = [FIELD.DOC_FAQ]
 export const MENU: TDsbMenu = {
   BASIC: {
     title: 'dsb.menu.basic',
@@ -308,9 +305,3 @@ export const BASEINFO_KEYS: (keyof TDsbFieldMap)[] = [
 //   'broadcastArticleBg',
 //   'broadcastArticleEnable',
 // ]
-
-export const DEFAULT_NEW_FAQ = {
-  title: '',
-  body: '',
-  index: 0,
-}

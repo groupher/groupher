@@ -54,6 +54,22 @@ export const community = `
           favicon
           index
         }
+        docFaq {
+          title
+          desc
+          grouped
+          groups {
+            id
+            title
+            index
+            items {
+              id
+              title
+              detail
+              index
+            }
+          }
+        }
         wallpaper {
           ${F.wallpaper}
         }

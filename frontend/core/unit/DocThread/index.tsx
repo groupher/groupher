@@ -17,7 +17,7 @@ import useLogic from './useLogic'
 
 export default function DocThread() {
   const s = useSalon()
-  const { isArticleLayout, layout, faqLayout, faqSections } = useLogic()
+  const { isArticleLayout, layout, faqLayout, docFaq } = useLogic()
   // return <ArticleLayout />
 
   if (isArticleLayout) {
@@ -38,7 +38,7 @@ export default function DocThread() {
       <div className={s.divider} />
 
       <div className={s.faqs}>
-        <FaqList layout={faqLayout} sections={faqSections} />
+        <FaqList layout={faqLayout} docFaq={docFaq} />
       </div>
     </div>
   )

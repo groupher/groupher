@@ -676,8 +676,8 @@ type RootMutationType {
   "update media reports in dashboard"
   updateDashboardMediaReports(community: String!, dsbSection: DsbSection, mediaReports: [DsbMediaReportMap]): Dsb
 
-  "update faqs in dashboard"
-  updateDashboardFaqs(community: String!, dsbSection: DsbSection, faqs: [DsbFaqMap]): Dsb
+  "update docs FAQ in dashboard"
+  updateDashboardDocFaq(community: String!, dsbSection: DsbSection, docFaq: DsbDocFaqInput!): Dsb
 }
 
 type CheckState {
@@ -1074,10 +1074,46 @@ type DsbMediaReport {
   url: String
 }
 
-type DsbFaqSection {
+type DsbDocFaqItem {
+  id: ID
   title: String
-  body: String
+  detail: String
   index: Int
+}
+
+type DsbDocFaqGroup {
+  id: ID
+  title: String
+  index: Int
+  items: [DsbDocFaqItem]
+}
+
+type DsbDocFaq {
+  title: String
+  desc: String
+  grouped: Boolean
+  groups: [DsbDocFaqGroup]
+}
+
+input DsbDocFaqItemInput {
+  id: String
+  title: String
+  detail: String
+  index: Int
+}
+
+input DsbDocFaqGroupInput {
+  id: String
+  title: String
+  index: Int
+  items: [DsbDocFaqItemInput]
+}
+
+input DsbDocFaqInput {
+  title: String
+  desc: String
+  grouped: Boolean
+  groups: [DsbDocFaqGroupInput]
 }
 
 type Dsb {
@@ -1094,7 +1130,7 @@ type Dsb {
   footerOnelineLinks: [DsbLinkChild]
   socialLinks: [DsbSocialLink]
   mediaReports: [DsbMediaReport]
-  faqs: [DsbFaqSection]
+  docFaq: DsbDocFaq
 }
 
 type CommunityModerator {
@@ -1833,12 +1869,6 @@ input DsbMediaReportMap {
   url: String
 }
 
-input DsbFaqMap {
-  title: String
-  body: String
-  index: Int
-}
-
 input DsbWallpaperInput {
   type: String
   source: String
@@ -1884,7 +1914,7 @@ enum DsbSection {
   FOOTER_ONELINE_LINKS
   SOCIAL_LINKS
   MEDIA_REPORTS
-  FAQS
+  DOC_FAQ
 }
 
 enum DsbLinkType {
