@@ -22,6 +22,7 @@ type TRet = {
   activate: (id: string) => void
   addGroup: () => void
   addChild: (groupId: string, action: TSideTreeChildMenuAction) => void
+  deleteGroup: (groupId: string) => void
   toggleGroup: (groupId: string) => void
   renameGroup: (groupId: string, title: string) => void
   renameChild: (groupId: string, childId: string, title: string) => void
@@ -29,6 +30,7 @@ type TRet = {
   edit: (target: TEditingTarget) => void
   handleChildAction: (groupId: string, childId: string, action: TSideTreeNodeMenuAction) => void
   updateChildStyle: (groupId: string, childId: string, icon: TSideTreeChild['icon']) => void
+  reorderGroups: (groups: readonly TSideTreeGroup[]) => void
 }
 
 export default function useSideTreeEditor(): TRet {
@@ -37,6 +39,10 @@ export default function useSideTreeEditor(): TRet {
     DEMO_SIDE_TREE_GROUPS[0]?.children[0]?.id ?? null,
   )
   const [editingTarget, setEditingTarget] = useState<TEditingTarget>(null)
+
+  const reorderGroups = useCallback((nextGroups: readonly TSideTreeGroup[]): void => {
+    setGroups([...nextGroups])
+  }, [])
 
   /**
    * Patch group metadata while preserving child order.
@@ -81,6 +87,25 @@ export default function useSideTreeEditor(): TRet {
     setActiveId(child.id)
     setEditingTarget({ type: child.type, groupId, childId: child.id })
   }, [])
+
+  /**
+   * Delete a group and all of its local demo children.
+   *
+   * @example
+   * deleteGroup('group-getting-started')
+   */
+  const deleteGroup = useCallback(
+    (groupId: string): void => {
+      const group = groups.find((item) => item.id === groupId)
+      const activeInGroup = group?.children.some((child) => child.id === activeId) ?? false
+      const editingInGroup = editingTarget?.groupId === groupId
+
+      setGroups((items) => items.filter((item) => item.id !== groupId))
+      if (activeInGroup) setActiveId(null)
+      if (editingInGroup) setEditingTarget(null)
+    },
+    [activeId, editingTarget, groups],
+  )
 
   /**
    * Toggle a group between expanded and collapsed states.
@@ -218,6 +243,7 @@ export default function useSideTreeEditor(): TRet {
     activate: setActiveId,
     addGroup,
     addChild,
+    deleteGroup,
     toggleGroup,
     renameGroup,
     renameChild,
@@ -225,5 +251,6 @@ export default function useSideTreeEditor(): TRet {
     edit: setEditingTarget,
     handleChildAction,
     updateChildStyle,
+    reorderGroups,
   }
 }

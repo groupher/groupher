@@ -43,6 +43,10 @@ export default function SortableDndContext<
 
   const [activeDragColumnId, setActiveDragColumnId] = useState<string | null>(null)
   const [targetDragColumnId, setTargetDragColumnId] = useState<string | null>(null)
+  const [targetDragItemId, setTargetDragItemId] = useState<string | null>(null)
+  const [targetDragPosition, setTargetDragPosition] = useState<TLinkDndTarget['position'] | null>(
+    null,
+  )
 
   const getDragTarget = ({ active, over }: DragOverEvent | DragEndEvent): TTarget | undefined => {
     if (!over) return
@@ -83,6 +87,8 @@ export default function SortableDndContext<
       lastColumnTargetIdRef.current = null
       setActiveDragColumnId(columnId)
       setTargetDragColumnId(null)
+      setTargetDragItemId(null)
+      setTargetDragPosition(null)
       controller.startColumnDrag?.(columnId)
       return
     }
@@ -91,6 +97,8 @@ export default function SortableDndContext<
     lastDragTargetRef.current = null
     setActiveDragColumnId(source?.column.id || null)
     setTargetDragColumnId(null)
+    setTargetDragItemId(null)
+    setTargetDragPosition(null)
     controller.startDrag(String(active.id))
   }
 
@@ -99,12 +107,16 @@ export default function SortableDndContext<
       const targetColumnId = getColumnDragTargetId(event) || null
       lastColumnTargetIdRef.current = targetColumnId
       setTargetDragColumnId(targetColumnId)
+      setTargetDragItemId(null)
+      setTargetDragPosition(null)
       return
     }
 
     const target = getDragTarget(event) || null
     lastDragTargetRef.current = target
     setTargetDragColumnId(target?.columnId || null)
+    setTargetDragItemId(target?.itemId || null)
+    setTargetDragPosition(target?.position || null)
     controller.moveDrag(target)
   }
 
@@ -115,6 +127,8 @@ export default function SortableDndContext<
     lastColumnTargetIdRef.current = null
     setActiveDragColumnId(null)
     setTargetDragColumnId(null)
+    setTargetDragItemId(null)
+    setTargetDragPosition(null)
 
     if (event.active.data.current?.type === dndType.sortableColumn) {
       controller.commitColumnDrag?.(targetColumnId)
@@ -129,6 +143,8 @@ export default function SortableDndContext<
     lastColumnTargetIdRef.current = null
     setActiveDragColumnId(null)
     setTargetDragColumnId(null)
+    setTargetDragItemId(null)
+    setTargetDragPosition(null)
     controller.cancelDrag()
   }
 
@@ -183,6 +199,8 @@ export default function SortableDndContext<
         activeDragColumnId,
         columns: controller.columns,
         targetDragColumnId,
+        targetDragItemId,
+        targetDragPosition,
       })}
     </DndContext>
   )

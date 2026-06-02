@@ -1,7 +1,9 @@
 import type { TNodeStyleValue } from '~/spec'
 
+import type { TLinkDndTarget } from '../../../LinkEditor/Dnd/spec'
 import type {
   SIDE_TREE_CHILD_MENU_ACTION,
+  SIDE_TREE_GROUP_MENU_ACTION,
   SIDE_TREE_NODE_MENU_ACTION,
   SIDE_TREE_NODE_TYPE,
 } from './constant'
@@ -51,5 +53,9 @@ export type TEditingTarget =
 
 export type TSideTreeChildMenuAction =
   (typeof SIDE_TREE_CHILD_MENU_ACTION)[keyof typeof SIDE_TREE_CHILD_MENU_ACTION]
+export type TSideTreeGroupMenuAction =
+  (typeof SIDE_TREE_GROUP_MENU_ACTION)[keyof typeof SIDE_TREE_GROUP_MENU_ACTION]
 export type TSideTreeNodeMenuAction =
   (typeof SIDE_TREE_NODE_MENU_ACTION)[keyof typeof SIDE_TREE_NODE_MENU_ACTION]
+
+export type TSideTreeDragTarget = TLinkDndTarget

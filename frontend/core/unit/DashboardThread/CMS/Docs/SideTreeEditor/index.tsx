@@ -1,11 +1,13 @@
 'use client'
 
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import type { FC } from 'react'
 import { Group as PanelGroup, Panel, Separator } from 'react-resizable-panels'
 
 import Group from './Group'
 import GroupAdder from './GroupAdder'
 import useSalon from './salon'
+import SideTreeDndContext from './SideTreeDndContext'
 import useSideTreeEditor from './useSideTreeEditor'
 
 const SideTreeEditor: FC = () => {
@@ -18,6 +20,7 @@ const SideTreeEditor: FC = () => {
     activate,
     addGroup,
     addChild,
+    deleteGroup,
     toggleGroup,
     renameGroup,
     renameChild,
@@ -25,6 +28,7 @@ const SideTreeEditor: FC = () => {
     edit,
     handleChildAction,
     updateChildStyle,
+    reorderGroups,
   } = useSideTreeEditor()
 
   return (
@@ -42,25 +46,53 @@ const SideTreeEditor: FC = () => {
         groupResizeBehavior='preserve-pixel-size'
       >
         <aside className={s.wrapper}>
-          <div className={s.groupList}>
-            {groups.map((group) => (
-              <Group
-                key={group.id}
-                group={group}
-                activeId={activeId}
-                editingTarget={editingTarget}
-                onActivate={activate}
-                onToggle={toggleGroup}
-                onAddChild={addChild}
-                onRenameGroup={renameGroup}
-                onRenameChild={renameChild}
-                onCancelEdit={cancelEdit}
-                onEdit={edit}
-                onChildAction={handleChildAction}
-                onChildStyleChange={updateChildStyle}
-              />
-            ))}
-          </div>
+          <SideTreeDndContext groups={groups} onCommit={reorderGroups}>
+            {({
+              activeDragColumnId,
+              columns,
+              targetDragColumnId,
+              targetDragItemId,
+              targetDragPosition,
+            }) => (
+              <div className={s.groupList}>
+                <SortableContext
+                  items={columns.map((group) => `docs-side-tree-sortable-group:${group.id}`)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {columns.map((group) => {
+                    const showGroupTargetLine =
+                      !!activeDragColumnId &&
+                      !!targetDragColumnId &&
+                      targetDragColumnId === group.id &&
+                      activeDragColumnId !== group.id &&
+                      !targetDragItemId
+
+                    return (
+                      <Group
+                        key={group.id}
+                        group={group}
+                        activeId={activeId}
+                        editingTarget={editingTarget}
+                        showTargetLine={showGroupTargetLine}
+                        targetDragItemId={targetDragItemId}
+                        targetDragPosition={targetDragPosition}
+                        onActivate={activate}
+                        onToggle={toggleGroup}
+                        onAddChild={addChild}
+                        onDeleteGroup={deleteGroup}
+                        onRenameGroup={renameGroup}
+                        onRenameChild={renameChild}
+                        onCancelEdit={cancelEdit}
+                        onEdit={edit}
+                        onChildAction={handleChildAction}
+                        onChildStyleChange={updateChildStyle}
+                      />
+                    )
+                  })}
+                </SortableContext>
+              </div>
+            )}
+          </SideTreeDndContext>
 
           <GroupAdder onAddGroup={addGroup} />
         </aside>
