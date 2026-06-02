@@ -2,6 +2,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { memo, type ReactNode, useCallback, useRef } from 'react'
 
 import { cn } from '~/css'
+import useTrans from '~/hooks/useTrans'
 import useTwBelt from '~/hooks/useTwBelt'
 import GrabDotsSVG from '~/icons/GrabDots'
 
@@ -26,6 +27,7 @@ const SortableSideTreeChild = memo(function SortableSideTreeChild({
   targetPosition = null,
 }: TProps) {
   const { fill, primary } = useTwBelt()
+  const { t } = useTrans()
   const rowRef = useRef<HTMLDivElement | null>(null)
   const setRowRef = useCallback((node: HTMLDivElement | null): void => {
     rowRef.current = node
@@ -73,7 +75,7 @@ const SortableSideTreeChild = memo(function SortableSideTreeChild({
             'group-hover/docs-tree-sortable-child:opacity-100 focus-visible:opacity-100 active:cursor-grabbing',
             fill('digest'),
           )}
-          aria-label='Drag docs item'
+          aria-label={t('dsb.cms.docs.side_tree.drag_item')}
           {...attributes}
           {...listeners}
         >

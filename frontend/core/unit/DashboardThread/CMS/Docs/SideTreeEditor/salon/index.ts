@@ -6,8 +6,8 @@ export default function useSalon() {
   const { cn, sexyVBorder } = useTwBelt()
 
   return {
-    panelGroup: 'w-full min-h-96 mt-4.5 !overflow-visible',
-    sidePanel: 'min-h-96 !overflow-visible',
+    panelGroup: 'w-full min-h-96 mt-4.5 overflow-visible!',
+    sidePanel: 'min-h-96 overflow-visible!',
     wrapper: 'column min-h-96 pr-3 overflow-visible',
     groupList: 'column gap-y-4',
     resizeHandle: cn(

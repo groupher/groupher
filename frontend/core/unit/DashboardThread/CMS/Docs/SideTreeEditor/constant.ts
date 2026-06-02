@@ -37,7 +37,7 @@ export const SIDE_TREE_ID_PREFIX = {
   LINK: SIDE_TREE_NODE_TYPE.LINK,
 } as const
 
-export const UNTITLED_TITLE = 'Untitled'
+export const UNTITLED_TITLE_I18N_KEY = 'dsb.cms.docs.side_tree.untitled'
 export const DUPLICATE_TITLE_SUFFIX = 'copy'
 export const DEFAULT_LINK_HREF = 'https://example.com'
 

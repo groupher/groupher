@@ -22,7 +22,7 @@ export default function useSalon({ actionVisible }: { actionVisible: boolean }) 
     arrowCollapsed: 'rotate-180',
     title: cn('truncate text-sm pointer', `hover:${fg('title')}`),
     actions: cn(
-      'row-center ml-auto gap-x-1 opacity-0 group-hover/docs-tree-group:opacity-100 trans-all-100',
+      'row-center ml-auto gap-x-1 opacity-0 group-hover/docs-tree-group:opacity-100 group-focus-within/docs-tree-group:opacity-100 trans-all-100',
       actionVisible && 'opacity-100',
     ),
     actionIcon: icon,

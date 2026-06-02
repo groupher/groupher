@@ -7,7 +7,6 @@ import {
   SIDE_TREE_CHILD_MENU_ACTION,
   SIDE_TREE_ID_PREFIX,
   SIDE_TREE_NODE_TYPE,
-  UNTITLED_TITLE,
 } from './constant'
 import type { TSideTreeChild, TSideTreeChildMenuAction, TSideTreeGroup } from './spec'
 
@@ -43,13 +42,13 @@ export const cloneDemoGroups = (): TSideTreeGroup[] =>
  * Create an empty editable group.
  *
  * @example
- * const group = createSideTreeGroup()
+ * const group = createSideTreeGroup('Untitled')
  * group.type === SIDE_TREE_NODE_TYPE.GROUP
  */
-export const createSideTreeGroup = (): TSideTreeGroup => ({
+export const createSideTreeGroup = (untitledTitle: string): TSideTreeGroup => ({
   id: makeSideTreeId(SIDE_TREE_ID_PREFIX.GROUP),
   type: SIDE_TREE_NODE_TYPE.GROUP,
-  title: UNTITLED_TITLE,
+  title: untitledTitle,
   expanded: true,
   children: [],
 })
@@ -58,21 +57,24 @@ export const createSideTreeGroup = (): TSideTreeGroup => ({
  * Create a page or quick-link child from the add-child menu action.
  *
  * @example
- * const page = createSideTreeChild(SIDE_TREE_CHILD_MENU_ACTION.PAGE)
+ * const page = createSideTreeChild(SIDE_TREE_CHILD_MENU_ACTION.PAGE, 'Untitled')
  * page.type === SIDE_TREE_NODE_TYPE.PAGE
  */
-export const createSideTreeChild = (action: TSideTreeChildMenuAction): TSideTreeChild =>
+export const createSideTreeChild = (
+  action: TSideTreeChildMenuAction,
+  untitledTitle: string,
+): TSideTreeChild =>
   action === SIDE_TREE_CHILD_MENU_ACTION.PAGE
     ? {
         id: makeSideTreeId(SIDE_TREE_ID_PREFIX.PAGE),
         type: SIDE_TREE_NODE_TYPE.PAGE,
-        title: UNTITLED_TITLE,
+        title: untitledTitle,
         icon: DEFAULT_PAGE_STYLE,
       }
     : {
         id: makeSideTreeId(SIDE_TREE_ID_PREFIX.LINK),
         type: SIDE_TREE_NODE_TYPE.LINK,
-        title: UNTITLED_TITLE,
+        title: untitledTitle,
         href: DEFAULT_LINK_HREF,
         icon: DEFAULT_LINK_STYLE,
       }
@@ -81,19 +83,24 @@ export const createSideTreeChild = (action: TSideTreeChildMenuAction): TSideTree
  * Duplicate a child beside the original while clearing backend identity fields.
  *
  * @example
- * const duplicated = duplicateSideTreeChild(page)
+ * const duplicated = duplicateSideTreeChild(page, 'Untitled')
  * duplicated.id !== page.id
  */
-export const duplicateSideTreeChild = (child: TSideTreeChild): TSideTreeChild =>
+export const duplicateSideTreeChild = (
+  child: TSideTreeChild,
+  untitledTitle: string,
+): TSideTreeChild =>
   child.type === SIDE_TREE_NODE_TYPE.PAGE
     ? {
         ...child,
         id: makeSideTreeId(SIDE_TREE_ID_PREFIX.PAGE),
-        title: `${child.title || UNTITLED_TITLE} ${DUPLICATE_TITLE_SUFFIX}`,
+        title: `${child.title || untitledTitle} ${DUPLICATE_TITLE_SUFFIX}`,
         docId: undefined,
+        path: undefined,
+        href: undefined,
       }
     : {
         ...child,
         id: makeSideTreeId(SIDE_TREE_ID_PREFIX.LINK),
-        title: `${child.title || UNTITLED_TITLE} ${DUPLICATE_TITLE_SUFFIX}`,
+        title: `${child.title || untitledTitle} ${DUPLICATE_TITLE_SUFFIX}`,
       }

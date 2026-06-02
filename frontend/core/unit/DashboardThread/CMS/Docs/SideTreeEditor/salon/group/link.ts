@@ -20,7 +20,7 @@ export default function useSalon({
     ),
     href: cn('max-w-16 truncate text-xs', fg('hint')),
     actions: cn(
-      'row-center ml-auto opacity-0 group-hover/docs-tree-row:opacity-100 trans-all-100',
+      'row-center ml-auto opacity-0 group-hover/docs-tree-row:opacity-100 group-focus-within/docs-tree-row:opacity-100 trans-all-100',
       actionVisible && 'opacity-100',
     ),
     moreIcon: cn('size-3.5 pointer', fill('digest')),

@@ -1,6 +1,13 @@
 import { useCallback, useState } from 'react'
 
-import { DEMO_SIDE_TREE_GROUPS, SIDE_TREE_NODE_MENU_ACTION, SIDE_TREE_NODE_TYPE } from './constant'
+import useTrans from '~/hooks/useTrans'
+
+import {
+  DEMO_SIDE_TREE_GROUPS,
+  SIDE_TREE_NODE_MENU_ACTION,
+  SIDE_TREE_NODE_TYPE,
+  UNTITLED_TITLE_I18N_KEY,
+} from './constant'
 import {
   cloneDemoGroups,
   createSideTreeChild,
@@ -34,6 +41,7 @@ type TRet = {
 }
 
 export default function useSideTreeEditor(): TRet {
+  const { t } = useTrans()
   const [groups, setGroups] = useState<TSideTreeGroup[]>(cloneDemoGroups)
   const [activeId, setActiveId] = useState<string | null>(
     DEMO_SIDE_TREE_GROUPS[0]?.children[0]?.id ?? null,
@@ -63,10 +71,10 @@ export default function useSideTreeEditor(): TRet {
    * addGroup()
    */
   const addGroup = useCallback((): void => {
-    const group = createSideTreeGroup()
+    const group = createSideTreeGroup(t(UNTITLED_TITLE_I18N_KEY))
     setGroups((items) => [...items, group])
     setEditingTarget({ type: SIDE_TREE_NODE_TYPE.GROUP, groupId: group.id })
-  }, [])
+  }, [t])
 
   /**
    * Append a new page/link into a group, expand the group, and focus the new child.
@@ -74,19 +82,22 @@ export default function useSideTreeEditor(): TRet {
    * @example
    * addChild('group-getting-started', SIDE_TREE_CHILD_MENU_ACTION.PAGE)
    */
-  const addChild = useCallback((groupId: string, action: TSideTreeChildMenuAction): void => {
-    const child = createSideTreeChild(action)
+  const addChild = useCallback(
+    (groupId: string, action: TSideTreeChildMenuAction): void => {
+      const child = createSideTreeChild(action, t(UNTITLED_TITLE_I18N_KEY))
 
-    setGroups((items) =>
-      items.map((group) =>
-        group.id === groupId
-          ? { ...group, expanded: true, children: [...group.children, child] }
-          : group,
-      ),
-    )
-    setActiveId(child.id)
-    setEditingTarget({ type: child.type, groupId, childId: child.id })
-  }, [])
+      setGroups((items) =>
+        items.map((group) =>
+          group.id === groupId
+            ? { ...group, expanded: true, children: [...group.children, child] }
+            : group,
+        ),
+      )
+      setActiveId(child.id)
+      setEditingTarget({ type: child.type, groupId, childId: child.id })
+    },
+    [t],
+  )
 
   /**
    * Delete a group and all of its local demo children.
@@ -223,7 +234,7 @@ export default function useSideTreeEditor(): TRet {
           const child = group.children[childIndex]
           if (childIndex === -1 || !child) return group
 
-          const duplicated = duplicateSideTreeChild(child)
+          const duplicated = duplicateSideTreeChild(child, t(UNTITLED_TITLE_I18N_KEY))
           const children = [...group.children]
           children.splice(childIndex + 1, 0, duplicated)
 
@@ -231,9 +242,19 @@ export default function useSideTreeEditor(): TRet {
         }),
       )
 
-      if (activeId === childId && action === SIDE_TREE_NODE_MENU_ACTION.DELETE) setActiveId(null)
+      if (action === SIDE_TREE_NODE_MENU_ACTION.DELETE) {
+        if (activeId === childId) setActiveId(null)
+        if (
+          editingTarget &&
+          editingTarget.type !== SIDE_TREE_NODE_TYPE.GROUP &&
+          editingTarget.groupId === groupId &&
+          editingTarget.childId === childId
+        ) {
+          setEditingTarget(null)
+        }
+      }
     },
-    [activeId, groups],
+    [activeId, editingTarget, groups, t],
   )
 
   return {
