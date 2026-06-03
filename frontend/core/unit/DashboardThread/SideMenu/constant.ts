@@ -5,15 +5,15 @@ import {
   DSB_POST_ROUTE,
   DSB_ROUTE,
 } from '~/const/route'
-import type { TDsbIcon } from '~/icons/dsb'
 import type { TTransKey } from '~/spec'
 
 import { MENU_VIEW } from '../constant'
+import type { TDsbMenuIcon } from './icons'
 
 export type TSubMenuScope = 'changelog' | 'doc' | 'kanban' | 'post'
 
 export type TSubMenuItem = {
-  icon: TDsbIcon
+  icon: TDsbMenuIcon
   path: string
   slug: string
   title: TTransKey

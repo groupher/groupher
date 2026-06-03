@@ -9,7 +9,6 @@ import usePublicThreads from '~/hooks/usePublicThreads'
 import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowUpRight'
 import DiscussSVG from '~/icons/Discuss'
-import DsbIcon from '~/icons/dsb'
 import GithubSVG from '~/icons/Github8'
 import GuideSVG from '~/icons/Guide'
 import AboutSVG from '~/icons/Info'
@@ -38,27 +37,6 @@ export default function CommunityBrief() {
 
   return (
     <div className={s.wrapper}>
-      <button
-        type='button'
-        className={s.sidebarToggle}
-        aria-label={
-          dsb$.sidebarCollapsed ? 'Expand dashboard sidebar' : 'Collapse dashboard sidebar'
-        }
-        aria-pressed={dsb$.sidebarCollapsed}
-        onClick={() => {
-          const nextCollapsed = !dsb$.sidebarCollapsed
-
-          dsb$.commit({
-            sidebarCollapsed: nextCollapsed,
-            sidebarTransitioning: true,
-          })
-        }}
-      >
-        <DsbIcon type='sidebar' className={s.sidebarIcon} />
-      </button>
-
-      <div className={s.slash}>/</div>
-
       <Tooltip
         content={
           <div className={s.topPanel}>

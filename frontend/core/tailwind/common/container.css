@@ -72,8 +72,24 @@
 
 /* Dashboard */
 @utility container-dashboard {
+  --container-pl: theme('spacing.20');
+  --container-pr: theme('spacing.20');
+
   margin-inline: auto;
   max-width: var(--container-dashboard-width);
+
+  padding-left: var(--container-pl);
+  padding-right: var(--container-pr);
+
+  @media (min-width: theme('screens.lg')) {
+    --container-pl: theme('spacing.20');
+    --container-pr: theme('spacing.16');
+  }
+
+  @media (min-width: theme('screens.xl')) {
+    --container-pl: theme('spacing.20');
+    --container-pr: theme('spacing.20');
+  }
 }
 
 /* Community sidebar */

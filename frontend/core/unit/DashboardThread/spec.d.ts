@@ -1,4 +1,3 @@
-import type { TDsbIcon } from '~/icons/dsb'
 import type {
   TChangeMode,
   TColorName,
@@ -10,6 +9,7 @@ import type {
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
 
 import type { DSB_MENU_ICON, FIELD } from './constant'
+import type { TDsbMenuIcon } from './SideMenu/icons'
 
 export { TNameAlias } from '~/spec'
 
@@ -23,7 +23,7 @@ export type TDsbMenuGroup = {
   children: TDsbMenuItem[]
 }
 
-type TDsbMenuItem = { title: TTransKey; slug: TDsbPath; icon: TDsbIcon; alias?: string }
+type TDsbMenuItem = { title: TTransKey; slug: TDsbPath; icon: TDsbMenuIcon; alias?: string }
 
 export type TDsbMenu = {
   [k: TMenuGroupName]: TDsbMenuGroup

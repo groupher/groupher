@@ -4,6 +4,7 @@ import { DSB_ROUTE } from '~/const/route'
 import useDsbTab from '~/hooks/useDsbTab'
 import useTrans from '~/hooks/useTrans'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
+import SidebarIcon from '~/icons/dsb/Sidebar'
 import useCommunity from '~/stores/community/hooks'
 
 import ActiveMark from './ActiveMark'
@@ -16,6 +17,7 @@ type TProps = {
   baseRoute: string
   defaultSlug: string
   items: readonly TSubMenuItem[]
+  onCollapse: () => void
   returnTo: string | null
   scope: TSubMenuScope
 }
@@ -25,6 +27,7 @@ export default function SubMenu({
   baseRoute,
   defaultSlug,
   items,
+  onCollapse,
   returnTo,
   scope,
 }: TProps) {
@@ -41,12 +44,22 @@ export default function SubMenu({
 
   return (
     <div className={s.wrapper}>
-      <SubMenuBack
-        currentBase={sectionBase}
-        dashboardBase={dashboardBase}
-        fallbackHref={fallbackBackHref}
-        returnTo={returnTo}
-      />
+      <div className={s.header}>
+        <SubMenuBack
+          currentBase={sectionBase}
+          dashboardBase={dashboardBase}
+          fallbackHref={fallbackBackHref}
+          returnTo={returnTo}
+        />
+        <button
+          type='button'
+          className={s.collapseToggle}
+          aria-label='Collapse dashboard submenu'
+          onClick={onCollapse}
+        >
+          <SidebarIcon className={s.collapseIcon} />
+        </button>
+      </div>
 
       <div className={s.menu}>
         {items.map((item) => {
