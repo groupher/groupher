@@ -1,9 +1,21 @@
 import type { SVGProps } from 'react'
 
-import IconBase from './IconBase'
+import { getDsbIconClassName } from '../helper'
 
-const SVG = (props: SVGProps<SVGSVGElement>) => (
-  <IconBase {...props}>
+const SVG = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns='http://www.w3.org/2000/svg'
+    width={24}
+    height={24}
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    strokeWidth={2}
+    strokeLinecap='round'
+    strokeLinejoin='round'
+    className={getDsbIconClassName(className)}
+    {...props}
+  >
     <path d='m14.305 19.53.923-.382' />
     <path d='m15.228 16.852-.923-.383' />
     <path d='m16.852 15.228-.383-.923' />
@@ -15,7 +27,7 @@ const SVG = (props: SVGProps<SVGSVGElement>) => (
     <path d='m20.772 19.148.924.383' />
     <circle cx='10' cy='8' r='5' />
     <circle cx='18' cy='18' r='3' />
-  </IconBase>
+  </svg>
 )
 
 export default SVG

@@ -1,13 +1,25 @@
 import type { SVGProps } from 'react'
 
-import IconBase from './IconBase'
+import { getDsbIconClassName } from '../helper'
 
-const SVG = (props: SVGProps<SVGSVGElement>) => (
-  <IconBase {...props}>
+const SVG = ({ className, ...props }: SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns='http://www.w3.org/2000/svg'
+    width={24}
+    height={24}
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    strokeWidth={2}
+    strokeLinecap='round'
+    strokeLinejoin='round'
+    className={getDsbIconClassName(className)}
+    {...props}
+  >
     <rect width='18' height='7' x='3' y='3' rx='1' />
     <rect width='9' height='7' x='3' y='14' rx='1' />
     <rect width='5' height='7' x='16' y='14' rx='1' />
-  </IconBase>
+  </svg>
 )
 
 export default SVG
