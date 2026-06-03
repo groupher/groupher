@@ -69,7 +69,7 @@ export default function useEdit(): TRet {
       return
     }
 
-    if (field === FIELD.FAQ_SECTIONS) {
+    if (field === FIELD.DOC_FAQ) {
       dsb$.rollbackFields(FAQ_STORE_FIELDS)
       return
     }

@@ -223,14 +223,6 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
     ]
   end
 
-  def macro_schema(:faq_section) do
-    [
-      [:title, :string, ""],
-      [:body, :string, ""],
-      [:index, :integer, 0]
-    ]
-  end
-
   def macro_schema(:media_report) do
     [
       [:index, :integer, 0],

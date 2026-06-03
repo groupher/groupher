@@ -364,13 +364,30 @@ const reindexCommunityTagGroups = gql`
   }
 `
 
-const updateDashboardFaqs = gql`
-  mutation ($community: String!, $faqs: [DsbFaqMap]) {
-    updateDashboardFaqs(community: $community, faqs: $faqs) {
-      faqs {
+const updateDashboardDocFaq = gql`
+  mutation ($community: String!, $docFaq: DsbDocFaqInput!) {
+    updateDashboardDocFaq(community: $community, docFaq: $docFaq) {
+      docFaq {
         title
-        body
-        index
+        desc
+        groupedView
+        groupItems {
+          id
+          title
+          index
+          items {
+            id
+            title
+            detail
+            index
+          }
+        }
+        flatItems {
+          id
+          title
+          detail
+          index
+        }
       }
     }
   }
@@ -523,7 +540,7 @@ const schema = {
   reindexCommunityTagGroups,
   pagedPosts,
   pagedChangelogs,
-  updateDashboardFaqs,
+  updateDashboardDocFaq,
   updateModerators,
   searchUsers,
   addModerator,

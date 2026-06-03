@@ -13,8 +13,7 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
     :footer_oneline_links,
     :name_alias,
     :social_links,
-    :media_reports,
-    :faqs
+    :media_reports
   ]
 
   # embeds_one sections are incrementally updated, so we validate the merged
@@ -26,7 +25,8 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
     layout: Embeds.Dashboard.Layout,
     enable: Embeds.Dashboard.Enable,
     thread_emotions: Embeds.Dashboard.ThreadEmotions,
-    rss: Embeds.Dashboard.RSS
+    rss: Embeds.Dashboard.RSS,
+    doc_faq: Embeds.Dashboard.DocFAQ
   }
   @validated_embed_section_fields Map.keys(@embed_section_modules)
 
@@ -36,6 +36,8 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
     |> Map.drop([:community, :dsb_section])
     |> Map.get(key)
   end
+
+  def section_args(:doc_faq, args), do: Map.get(args, :doc_faq)
 
   def section_args(_key, args), do: Map.drop(args, [:community, :dsb_section])
 

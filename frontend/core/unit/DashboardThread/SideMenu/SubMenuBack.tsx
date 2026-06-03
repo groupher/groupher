@@ -35,9 +35,9 @@ export default function SubMenuBack({
   }
 
   return (
-    <Link className={s.back} href={backHref} onClick={switchToMainMenu}>
+    <Link className={s.wrapper} href={backHref} onClick={switchToMainMenu}>
       <ArrowSVG className={s.backIcon} />
-      {t(title)}
+      <div className={s.title}>{t(title)}</div>
     </Link>
   )
 }

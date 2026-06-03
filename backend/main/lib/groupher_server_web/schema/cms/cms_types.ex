@@ -209,7 +209,50 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object(:dsb_social_link, do: dsb_gq_fields(:social_link))
   object(:dsb_media_report, do: dsb_gq_fields(:media_report))
-  object(:dsb_faq_section, do: dsb_gq_fields(:faq_section))
+
+  object :dsb_doc_faq_item do
+    field(:id, :id)
+    field(:title, :string)
+    field(:detail, :string)
+    field(:index, :integer)
+  end
+
+  object :dsb_doc_faq_group do
+    field(:id, :id)
+    field(:title, :string)
+    field(:index, :integer)
+    field(:items, list_of(:dsb_doc_faq_item))
+  end
+
+  object :dsb_doc_faq do
+    field(:title, :string)
+    field(:desc, :string)
+    field(:grouped_view, :boolean)
+    field(:group_items, list_of(:dsb_doc_faq_group))
+    field(:flat_items, list_of(:dsb_doc_faq_item))
+  end
+
+  input_object :dsb_doc_faq_item_input do
+    field(:id, :string)
+    field(:title, :string)
+    field(:detail, :string)
+    field(:index, :integer)
+  end
+
+  input_object :dsb_doc_faq_group_input do
+    field(:id, :string)
+    field(:title, :string)
+    field(:index, :integer)
+    field(:items, list_of(:dsb_doc_faq_item_input))
+  end
+
+  input_object :dsb_doc_faq_input do
+    field(:title, :string)
+    field(:desc, :string)
+    field(:grouped_view, :boolean)
+    field(:group_items, list_of(:dsb_doc_faq_group_input))
+    field(:flat_items, list_of(:dsb_doc_faq_item_input))
+  end
 
   object :dsb do
     field(:seo, :dsb_seo)
@@ -225,7 +268,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:footer_oneline_links, list_of(:dsb_link_child))
     field(:social_links, list_of(:dsb_social_link))
     field(:media_reports, list_of(:dsb_media_report))
-    field(:faqs, list_of(:dsb_faq_section))
+    field(:doc_faq, :dsb_doc_faq)
   end
 
   object :community_moderator do

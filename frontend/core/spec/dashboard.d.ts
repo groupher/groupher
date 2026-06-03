@@ -22,7 +22,6 @@ import type { KANBAN_BOARD } from '~/const/thread'
 import type { TConstValues } from '~/spec'
 import type { TDsbFieldKey, TDsbFieldMap } from '~/stores/dashboard/spec'
 
-import type { TFAQSection } from './article'
 import type { TColorName } from './color'
 import type { TModerator } from './community'
 import type { TResolvedThemePreset, TThemePreset, TThemePresetOption } from './theme_preset'
@@ -60,11 +59,33 @@ export type TMediaReport = {
   editUrl?: string
 }
 
+export type TDocFaqItem = {
+  id: string
+  title: string
+  detail: string
+  index: number
+}
+
+export type TDocFaqGroup = {
+  id: string
+  title: string
+  index: number
+  items: readonly TDocFaqItem[]
+}
+
+export type TDocFaq = {
+  title: string
+  desc: string
+  groupedView: boolean
+  groupItems: readonly TDocFaqGroup[]
+  flatItems: readonly TDocFaqItem[]
+}
+
 export type TDsb = {
   enable?: TEnableConf
   nameAlias?: readonly TNameAlias[]
   socialLinks?: readonly TSocialItem[]
-  faqs?: readonly TFAQSection[]
+  docFaq?: TDocFaq
   seo?: TDsdSEOConf
 
   layout?: {

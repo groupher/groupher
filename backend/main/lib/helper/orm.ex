@@ -530,8 +530,7 @@ defmodule Helper.ORM do
              :footer_oneline_links,
              :name_alias,
              :social_links,
-             :media_reports,
-             :faqs
+             :media_reports
            ] do
     community_dashboard
     |> Ecto.Changeset.change(%{})

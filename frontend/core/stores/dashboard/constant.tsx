@@ -27,6 +27,60 @@ import { THREAD } from '~/const/thread'
 
 import type { TDsbFieldMap } from './spec'
 
+export const DEFAULT_DOC_FAQ = {
+  title: 'FAQ',
+  desc: 'Common questions about docs',
+  groupedView: true,
+  groupItems: [
+    {
+      id: 'grp_basics',
+      title: 'Basics',
+      index: 0,
+      items: [
+        {
+          id: 'faq_what_are_docs',
+          title: 'What are docs for?',
+          detail: 'Use docs to publish guides, references, and product help for your community.',
+          index: 0,
+        },
+        {
+          id: 'faq_how_to_update',
+          title: 'How do I update a question?',
+          detail: 'Open a question, edit the markdown answer, then save the FAQ.',
+          index: 1,
+        },
+      ],
+    },
+    {
+      id: 'grp_publishing',
+      title: 'Publishing',
+      index: 1,
+      items: [
+        {
+          id: 'faq_when_visible',
+          title: 'When are FAQ changes visible?',
+          detail: 'FAQ changes are visible after the dashboard save completes.',
+          index: 0,
+        },
+      ],
+    },
+  ],
+  flatItems: [
+    {
+      id: 'faq_get_started',
+      title: 'How do I get started?',
+      detail: 'Create your first guide, add a few common questions, then publish the docs.',
+      index: 0,
+    },
+    {
+      id: 'faq_markdown',
+      title: 'Can answers use Markdown?',
+      detail: 'Yes. FAQ answers support markdown formatting, links, and inline code.',
+      index: 1,
+    },
+  ],
+}
+
 export const DEFAULT_OVERVIEW = {
   views: 0,
   subscribersCount: 0,
@@ -132,7 +186,7 @@ export const FIELDS: TDsbFieldMap = {
   nameAlias: BUILTIN_ALIAS,
   enable: DEFAULT_ENABLE,
 
-  faqSections: [],
+  docFaq: DEFAULT_DOC_FAQ,
   rssFeedType: RSS_TYPE.DIGEST,
   rssFeedCount: 5,
 

@@ -11,7 +11,13 @@ describe('parseDashboard', () => {
       dashboard: {
         nameAlias: [],
         socialLinks: [],
-        faqs: [],
+        docFaq: {
+          title: 'FAQ',
+          desc: '',
+          groupedView: false,
+          groupItems: [],
+          flatItems: [],
+        },
         mediaReports: [],
         headerLinks: [],
         footerLinks: [],
@@ -19,7 +25,7 @@ describe('parseDashboard', () => {
           kanbanBoards: ['TODO', 'WIP', 'DONE'],
         },
       },
-    } satisfies Partial<TCommunity> as TCommunity)
+    } as unknown as TCommunity)
 
     expect(dashboard.kanbanBoards).toEqual([KANBAN_BOARD.TODO, KANBAN_BOARD.WIP, KANBAN_BOARD.DONE])
     expect(dashboard.original.kanbanBoards).toEqual([

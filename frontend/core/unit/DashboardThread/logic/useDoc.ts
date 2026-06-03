@@ -4,7 +4,7 @@ import { COLOR } from '~/const/colors'
 import type { TDocCoverLayout, TDocFAQLayout, TEditFunc } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
-import { DEFAULT_NEW_FAQ, FIELD } from '../constant'
+import { FIELD } from '../constant'
 import useHelper from './useHelper'
 
 type TRet = {
@@ -15,20 +15,12 @@ type TRet = {
   isFaqTouched: boolean
   edit: TEditFunc
 
-  addFAQSection: () => void
   addDocCategory: () => void
 }
 
 export default function useDoc(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
-
-  const addFAQSection = (): void => {
-    const { faqSections } = dsb$
-    const index = faqSections.length
-
-    dsb$.commit({ editingFAQ: { ...DEFAULT_NEW_FAQ, index }, editingFAQIndex: index })
-  }
 
   const addDocCategory = (): void => {
     const docCategories = dsb$.docCategories.concat({
@@ -49,7 +41,6 @@ export default function useDoc(): TRet {
     ...pick(['docCoverLayout', 'docFaqLayout', 'saving'], dsb$),
     isTouched,
     isFaqTouched,
-    addFAQSection,
     addDocCategory,
   }
 }

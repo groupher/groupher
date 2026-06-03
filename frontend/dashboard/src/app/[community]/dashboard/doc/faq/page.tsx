@@ -1,7 +1,9 @@
 'use client'
 
+import FaqEditor from '~/unit/DashboardThread/CMS/Docs/FaqEditor'
+
 const DashboardDocPage = () => {
-  return <div>FAQ</div>
+  return <FaqEditor />
 }
 
 export default DashboardDocPage

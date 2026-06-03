@@ -21,7 +21,7 @@ const documents = {
   updateDashboardLayout: dashboardSchema.updateDashboardLayout,
   updateDashboardSocialLinks: dashboardSchema.updateDashboardSocialLinks,
   updateDashboardNameAlias: dashboardSchema.updateDashboardNameAlias,
-  updateDashboardFaqs: dashboardSchema.updateDashboardFaqs,
+  updateDashboardDocFaq: dashboardSchema.updateDashboardDocFaq,
   updateDashboardHeaderLinks: dashboardSchema.updateDashboardHeaderLinks,
   updateDashboardFooterLinks: dashboardSchema.updateDashboardFooterLinks,
   updateDashboardFooterOnelineLinks: dashboardSchema.updateDashboardFooterOnelineLinks,

@@ -1,0 +1,13 @@
+import type { SVGProps } from 'react'
+
+import IconBase from './IconBase'
+
+const SVG = (props: SVGProps<SVGSVGElement>) => (
+  <IconBase {...props}>
+    <circle cx='12' cy='12' r='10' />
+    <path d='M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20' />
+    <path d='M2 12h20' />
+  </IconBase>
+)
+
+export default SVG

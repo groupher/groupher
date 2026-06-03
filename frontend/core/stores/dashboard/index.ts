@@ -39,6 +39,8 @@ export default function DashboardStore(init: TInit = {}): TStore {
       savingField: null,
       saving: false,
       loading: false,
+      sidebarCollapsed: false,
+      sidebarTransitioning: false,
 
       overview: DEFAULT_OVERVIEW,
       editingTag: null,
@@ -48,8 +50,7 @@ export default function DashboardStore(init: TInit = {}): TStore {
       editingLinkMode: CHANGE_MODE.CREATE,
       editingGroup: null,
       editingGroupIndex: null,
-      editingFAQIndex: null,
-      editingFAQ: null,
+      docFaqSaveZone: null,
       queryingMediaReportIndex: null,
       batchSelectedIDs: [],
       pagedCommunities: EMPTY_PAGED_COMMUNITIES,

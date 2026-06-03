@@ -215,7 +215,34 @@ const makeDashboard = (slug = 'home') => {
     ],
     socialLinks: [],
     mediaReports: [],
-    faqs: [],
+    docFaq: {
+      title: 'FAQ',
+      desc: 'Common questions about docs',
+      groupedView: true,
+      groupItems: [
+        {
+          id: 'grp_basics',
+          title: 'Basics',
+          index: 0,
+          items: [
+            {
+              id: 'faq_what_are_docs',
+              title: 'What are docs for?',
+              detail: 'Use docs to publish guides, references, and product help.',
+              index: 0,
+            },
+          ],
+        },
+      ],
+      flatItems: [
+        {
+          id: 'faq_get_started',
+          title: 'How do I get started?',
+          detail: 'Create your first guide, add a few common questions, then publish the docs.',
+          index: 0,
+        },
+      ],
+    },
   }
 }
 
