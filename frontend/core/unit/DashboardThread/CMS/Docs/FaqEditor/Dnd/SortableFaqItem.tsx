@@ -5,8 +5,8 @@ import { cn } from '~/css'
 import useTwBelt from '~/hooks/useTwBelt'
 import GrabDotsSVG from '~/icons/GrabDots'
 
-import { toTranslateOnlyTransform } from '../SideTreeEditor/dndHelper'
-import { FAQ_DND_TYPE, FAQ_EDITOR_COPY } from './constant'
+import { toTranslateOnlyTransform } from '../../SideTreeEditor/dndHelper'
+import { FAQ_DND_TYPE, FAQ_EDITOR_COPY } from '../constant'
 
 type TProps = {
   children: ReactNode

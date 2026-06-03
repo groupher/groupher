@@ -680,8 +680,8 @@ defmodule GroupherServer.Test.CMS.Dashboard do
         CMS.Dashboard.update(community, :doc_faq, %{
           title: "FAQ",
           desc: "Common docs questions",
-          grouped: true,
-          groups: [
+          grouped_view: true,
+          group_items: [
             %{
               id: "grp_basics",
               title: "Basics",
@@ -695,13 +695,14 @@ defmodule GroupherServer.Test.CMS.Dashboard do
                 }
               ]
             }
-          ]
+          ],
+          flat_items: []
         })
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
       faq = find_community.dashboard.doc_faq
-      first_group = faq.groups |> Enum.at(0)
+      first_group = faq.group_items |> Enum.at(0)
       first_item = first_group.items |> Enum.at(0)
 
       assert faq.title == "FAQ"
@@ -718,40 +719,42 @@ defmodule GroupherServer.Test.CMS.Dashboard do
         CMS.Dashboard.update(community, :doc_faq, %{
           title: "FAQ",
           desc: "Common docs questions",
-          grouped: true,
-          groups: [
+          grouped_view: true,
+          group_items: [
             %{id: "grp_basics", title: "Basics", index: 0, items: []},
             %{id: "grp_usage", title: "Usage", index: 1, items: []}
-          ]
+          ],
+          flat_items: []
         })
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
 
-      assert find_community.dashboard.doc_faq.groups |> length == 2
+      assert find_community.dashboard.doc_faq.group_items |> length == 2
 
       {:ok, _} =
         CMS.Dashboard.update(community, :doc_faq, %{
           title: "FAQ",
           desc: "Flat FAQ",
-          grouped: false,
-          groups: [
+          grouped_view: false,
+          group_items: [
             %{
-              id: "__default__",
-              title: "General",
+              id: "grp_basics",
+              title: "Basics",
               index: 0,
-              items: [%{id: "faq_general", title: "General question", detail: "Answer", index: 0}]
+              items: []
             }
+          ],
+          flat_items: [
+            %{id: "faq_general", title: "General question", detail: "Answer", index: 0}
           ]
         })
 
       {:ok, find_community} = ORM.find(Community, community.id, preload: :dashboard)
-      assert find_community.dashboard.doc_faq.groups |> length == 1
+      assert find_community.dashboard.doc_faq.group_items |> length == 1
 
       faq = find_community.dashboard.doc_faq
-      group = faq.groups |> Enum.at(0)
-      item = group.items |> Enum.at(0)
-      assert faq.grouped == false
-      assert group.title == "General"
+      item = faq.flat_items |> Enum.at(0)
+      assert faq.grouped_view == false
       assert item.detail == "Answer"
     end
 

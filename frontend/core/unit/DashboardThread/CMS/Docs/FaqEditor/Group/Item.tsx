@@ -2,6 +2,7 @@ import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
 import { useState } from 'react'
 
 import ArrowSVG from '~/icons/ArrowSimple'
+import useDocFaqActions from '~/stores/dashboard/docFaq/actions'
 import MarkdownEditor from '~/widgets/MarkdownEditor'
 
 import { FIELD } from '../../../../constant'
@@ -9,7 +10,7 @@ import SavingBar from '../../../../SavingBar'
 import { FAQ_EDITOR_COPY, FAQ_ITEM_MENU_ACTION, FAQ_SAVE_ZONE } from '../constant'
 import InlineTextEditor from '../InlineTextEditor'
 import useSalon, { cn } from '../salon/group/item'
-import type { TFaqEditorItem, TFaqItemMenuAction, TFaqSaveZone } from '../spec'
+import type { TFaqEditorItem, TFaqSaveZone } from '../spec'
 import ActionMenu, { ITEM_MENU_ITEMS } from './ActionMenu'
 
 const DETAIL_TRANSITION = {
@@ -24,12 +25,7 @@ type TProps = {
   saveZone: TFaqSaveZone
   editLocked: boolean
   isDocFaqTouched: boolean
-  onAction: (groupId: string, itemId: string, action: TFaqItemMenuAction) => void
-  onClearSaveZone: () => void
-  onRename: (groupId: string, itemId: string, title: string) => void
-  onSetSaveZone: (zone: TFaqSaveZone) => void
   onToggle: (itemId: string) => void
-  onUpdateDetail: (groupId: string, itemId: string, detail: string) => void
 }
 
 export default function Item({
@@ -39,15 +35,12 @@ export default function Item({
   saveZone,
   editLocked,
   isDocFaqTouched,
-  onAction,
-  onClearSaveZone,
-  onRename,
-  onSetSaveZone,
   onToggle,
-  onUpdateDetail,
 }: TProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const s = useSalon()
+  const { clearSaveZone, handleItemAction, renameItem, setSaveZone, updateDetail } =
+    useDocFaqActions()
   const titleActive = saveZone?.type === FAQ_SAVE_ZONE.ITEM_TITLE && saveZone.itemId === item.id
   const detailActive = saveZone?.type === FAQ_SAVE_ZONE.ITEM_DETAIL && saveZone.itemId === item.id
   const handleToggle = () => onToggle(item.id)
@@ -61,11 +54,9 @@ export default function Item({
           editDisabled={editLocked}
           isTouched={isDocFaqTouched}
           titleClassName={s.title}
-          onChange={(title) => onRename(groupId, item.id, title)}
-          onDone={onClearSaveZone}
-          onStart={() =>
-            onSetSaveZone({ type: FAQ_SAVE_ZONE.ITEM_TITLE, groupId, itemId: item.id })
-          }
+          onChange={(title) => renameItem(groupId, item.id, title)}
+          onDone={clearSaveZone}
+          onStart={() => setSaveZone({ type: FAQ_SAVE_ZONE.ITEM_TITLE, groupId, itemId: item.id })}
         />
 
         {!editLocked && (
@@ -76,11 +67,11 @@ export default function Item({
               onOpenChange={setMenuOpen}
               onSelect={(action) => {
                 if (action === FAQ_ITEM_MENU_ACTION.RENAME) {
-                  onSetSaveZone({ type: FAQ_SAVE_ZONE.ITEM_TITLE, groupId, itemId: item.id })
+                  setSaveZone({ type: FAQ_SAVE_ZONE.ITEM_TITLE, groupId, itemId: item.id })
                   return
                 }
 
-                onAction(groupId, item.id, action)
+                handleItemAction(groupId, item.id, action)
               }}
             />
           </div>
@@ -119,7 +110,7 @@ export default function Item({
                 minRows={4}
                 maxRows={12}
                 value={item.detail}
-                onChange={(detail) => onUpdateDetail(groupId, item.id, detail)}
+                onChange={(detail) => updateDetail(groupId, item.id, detail)}
               />
               {detailActive && (
                 <div className={s.detailSavingBar}>
@@ -129,7 +120,7 @@ export default function Item({
                     minimal
                     top={2}
                     bottom={2}
-                    onCancel={onClearSaveZone}
+                    onCancel={clearSaveZone}
                   />
                 </div>
               )}

@@ -76,8 +76,9 @@ export type TDocFaqGroup = {
 export type TDocFaq = {
   title: string
   desc: string
-  grouped: boolean
-  groups: readonly TDocFaqGroup[]
+  groupedView: boolean
+  groupItems: readonly TDocFaqGroup[]
+  flatItems: readonly TDocFaqItem[]
 }
 
 export type TDsb = {

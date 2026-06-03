@@ -1091,8 +1091,9 @@ type DsbDocFaqGroup {
 type DsbDocFaq {
   title: String
   desc: String
-  grouped: Boolean
-  groups: [DsbDocFaqGroup]
+  groupedView: Boolean
+  groupItems: [DsbDocFaqGroup]
+  flatItems: [DsbDocFaqItem]
 }
 
 input DsbDocFaqItemInput {
@@ -1112,8 +1113,9 @@ input DsbDocFaqGroupInput {
 input DsbDocFaqInput {
   title: String
   desc: String
-  grouped: Boolean
-  groups: [DsbDocFaqGroupInput]
+  groupedView: Boolean
+  groupItems: [DsbDocFaqGroupInput]
+  flatItems: [DsbDocFaqItemInput]
 }
 
 type Dsb {

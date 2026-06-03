@@ -1,7 +1,7 @@
 import { type ReactNode, memo } from 'react'
 
-import SortableGroup from '../../../LinkEditor/Dnd/SortableGroup'
-import { FAQ_DND_TYPE } from './constant'
+import SortableGroup from '../../../../LinkEditor/Dnd/SortableGroup'
+import { FAQ_DND_TYPE } from '../constant'
 
 type TProps = {
   children: ReactNode

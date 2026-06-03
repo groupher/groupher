@@ -2,14 +2,15 @@ import { useState } from 'react'
 
 import EditSVG from '~/icons/EditPen'
 import GrabDotsSVG from '~/icons/GrabDots'
+import useDocFaqActions from '~/stores/dashboard/docFaq/actions'
 
 import { FAQ_EDITOR_COPY, FAQ_GROUP_MENU_ACTION, FAQ_SAVE_ZONE } from '../constant'
+import SortableFaqColumn from '../Dnd/SortableFaqColumn'
+import SortableFaqGroup from '../Dnd/SortableFaqGroup'
+import SortableFaqItem from '../Dnd/SortableFaqItem'
 import InlineTextEditor from '../InlineTextEditor'
 import useSalon, { cn } from '../salon/group'
-import SortableFaqColumn from '../SortableFaqColumn'
-import SortableFaqGroup from '../SortableFaqGroup'
-import SortableFaqItem from '../SortableFaqItem'
-import type { TFaqDragTarget, TFaqEditorGroup, TFaqItemMenuAction, TFaqSaveZone } from '../spec'
+import type { TFaqDragTarget, TFaqEditorGroup, TFaqSaveZone } from '../spec'
 import ActionMenu, { GROUP_MENU_ITEMS } from './ActionMenu'
 import Item from './Item'
 
@@ -23,15 +24,8 @@ type TProps = {
   showTargetLine: boolean
   targetDragItemId: string | null
   targetDragPosition: TFaqDragTarget['position'] | null
-  onAddItem: (groupId: string) => void
-  onClearSaveZone: () => void
-  onDeleteGroup: (groupId: string) => void
-  onItemAction: (groupId: string, itemId: string, action: TFaqItemMenuAction) => void
-  onRenameGroup: (groupId: string, title: string) => void
-  onRenameItem: (groupId: string, itemId: string, title: string) => void
-  onSetSaveZone: (zone: TFaqSaveZone) => void
   onToggleItem: (itemId: string) => void
-  onUpdateDetail: (groupId: string, itemId: string, detail: string) => void
+  onOpenItem: (itemId: string) => void
 }
 
 export default function Group({
@@ -44,18 +38,12 @@ export default function Group({
   showTargetLine,
   targetDragItemId,
   targetDragPosition,
-  onAddItem,
-  onDeleteGroup,
-  onClearSaveZone,
-  onItemAction,
-  onRenameGroup,
-  onRenameItem,
-  onSetSaveZone,
   onToggleItem,
-  onUpdateDetail,
+  onOpenItem,
 }: TProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const s = useSalon()
+  const { addItem, clearSaveZone, deleteGroup, renameGroup, setSaveZone } = useDocFaqActions()
   const titleActive = saveZone?.type === FAQ_SAVE_ZONE.GROUP_TITLE && saveZone.groupId === group.id
 
   return (
@@ -88,10 +76,10 @@ export default function Group({
                     editDisabled
                     isTouched={isDocFaqTouched}
                     titleClassName={s.title}
-                    onChange={(title) => onRenameGroup(group.id, title)}
-                    onDone={onClearSaveZone}
+                    onChange={(title) => renameGroup(group.id, title)}
+                    onDone={clearSaveZone}
                     onStart={() =>
-                      onSetSaveZone({ type: FAQ_SAVE_ZONE.GROUP_TITLE, groupId: group.id })
+                      setSaveZone({ type: FAQ_SAVE_ZONE.GROUP_TITLE, groupId: group.id })
                     }
                   />
                 ) : (
@@ -109,7 +97,7 @@ export default function Group({
                       className={s.editButton}
                       aria-label={FAQ_EDITOR_COPY.EDIT_GROUP_TITLE_ARIA_LABEL}
                       onClick={() =>
-                        onSetSaveZone({ type: FAQ_SAVE_ZONE.GROUP_TITLE, groupId: group.id })
+                        setSaveZone({ type: FAQ_SAVE_ZONE.GROUP_TITLE, groupId: group.id })
                       }
                     >
                       <EditSVG className={s.editIcon} />
@@ -122,16 +110,16 @@ export default function Group({
                       onOpenChange={setMenuOpen}
                       onSelect={(action) => {
                         if (action === FAQ_GROUP_MENU_ACTION.ADD) {
-                          onAddItem(group.id)
+                          onOpenItem(addItem(group.id))
                           return
                         }
 
                         if (action === FAQ_GROUP_MENU_ACTION.RENAME) {
-                          onSetSaveZone({ type: FAQ_SAVE_ZONE.GROUP_TITLE, groupId: group.id })
+                          setSaveZone({ type: FAQ_SAVE_ZONE.GROUP_TITLE, groupId: group.id })
                           return
                         }
 
-                        onDeleteGroup(group.id)
+                        deleteGroup(group.id)
                       }}
                     />
                   </div>
@@ -165,12 +153,7 @@ export default function Group({
                     saveZone={saveZone}
                     editLocked={editLocked}
                     isDocFaqTouched={isDocFaqTouched}
-                    onAction={onItemAction}
-                    onClearSaveZone={onClearSaveZone}
-                    onRename={onRenameItem}
-                    onSetSaveZone={onSetSaveZone}
                     onToggle={onToggleItem}
-                    onUpdateDetail={onUpdateDetail}
                   />
                 </SortableFaqItem>
               )

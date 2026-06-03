@@ -783,8 +783,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         docFaq {
           title
           desc
-          grouped
-          groups {
+          groupedView
+          groupItems {
             id
             title
             index
@@ -794,6 +794,12 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
               detail
               index
             }
+          }
+          flatItems {
+            id
+            title
+            detail
+            index
           }
         }
       }
@@ -807,8 +813,8 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         docFaq: %{
           title: "FAQ",
           desc: "Common docs questions",
-          grouped: true,
-          groups: [
+          groupedView: true,
+          groupItems: [
             %{
               id: "grp_basics",
               title: "Basics",
@@ -822,19 +828,20 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
                 }
               ]
             }
-          ]
+          ],
+          flatItems: []
         }
       }
 
       updated = rule_conn |> gq_mutation(@update_doc_faq_query, variables)
 
       assert updated["docFaq"]["title"] == "FAQ"
-      assert updated["docFaq"]["groups"] |> List.first() |> Map.get("title") == "Basics"
+      assert updated["docFaq"]["groupItems"] |> List.first() |> Map.get("title") == "Basics"
 
       {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
 
       faq = found.dashboard.doc_faq
-      group = faq.groups |> Enum.at(0)
+      group = faq.group_items |> Enum.at(0)
       item = group.items |> Enum.at(0)
 
       assert faq.title == "FAQ"

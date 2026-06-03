@@ -3,12 +3,6 @@ import { MeasuringStrategy } from '@dnd-kit/core'
 import CategorySVG from '~/icons/Category'
 import ListBulletsSVG from '~/icons/ListBullets'
 
-export const DEFAULT_GROUP_ID = '__default__'
-export const DEFAULT_GROUP_TITLE = 'General'
-export const UNTITLED_GROUP_TITLE = 'Untitled group'
-export const UNTITLED_ITEM_TITLE = 'Untitled question'
-export const DUPLICATE_TITLE_SUFFIX = 'copy'
-
 export const FAQ_MODE = {
   GROUPED: 'grouped',
   FLAT: 'flat',
@@ -20,6 +14,7 @@ export const FAQ_SAVE_ZONE = {
   GROUP_TITLE: 'groupTitle',
   ITEM_TITLE: 'itemTitle',
   ITEM_DETAIL: 'itemDetail',
+  MODE: 'mode',
   LIST_ORDER: 'listOrder',
 } as const
 

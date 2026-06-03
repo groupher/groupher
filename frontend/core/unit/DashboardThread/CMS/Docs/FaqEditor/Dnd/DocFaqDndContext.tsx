@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react'
 
-import SortableDndContext from '../../../LinkEditor/Dnd/SortableDndContext'
-import { DND_MEASURING, FAQ_DND_CONTEXT_ID, FAQ_DND_TYPE } from './constant'
-import { DND_ANNOUNCEMENTS } from './helper'
-import type { TFaqDragTarget, TFaqEditorGroup } from './spec'
+import SortableDndContext from '../../../../LinkEditor/Dnd/SortableDndContext'
+import { DND_MEASURING, FAQ_DND_CONTEXT_ID, FAQ_DND_TYPE } from '../constant'
+import { DND_ANNOUNCEMENTS } from '../helper'
+import type { TFaqDragTarget, TFaqEditorGroup } from '../spec'
 import useDocFaqDnd from './useDocFaqDnd'
 
 type TRenderProps = {

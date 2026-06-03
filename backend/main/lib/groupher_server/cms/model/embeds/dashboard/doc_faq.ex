@@ -1,49 +1,17 @@
-defmodule GroupherServer.CMS.Model.Embeds.Dashboard.DocFAQ.Item do
-  @moduledoc false
-  use Ecto.Schema
-
-  import Ecto.Changeset
-
-  @primary_key false
-  embedded_schema do
-    field(:id, :string)
-    field(:title, :string, default: "")
-    field(:detail, :string, default: "")
-    field(:index, :integer, default: 0)
-  end
-
-  def changeset(struct, attrs) do
-    struct
-    |> cast(attrs, [:id, :title, :detail, :index])
-  end
-end
-
-defmodule GroupherServer.CMS.Model.Embeds.Dashboard.DocFAQ.Group do
-  @moduledoc false
-  use Ecto.Schema
-
-  import Ecto.Changeset
-
-  alias GroupherServer.CMS.Model.Embeds.Dashboard.DocFAQ
-
-  @primary_key false
-  embedded_schema do
-    field(:id, :string)
-    field(:title, :string, default: "")
-    field(:index, :integer, default: 0)
-
-    embeds_many(:items, DocFAQ.Item, on_replace: :delete)
-  end
-
-  def changeset(struct, attrs) do
-    struct
-    |> cast(attrs, [:id, :title, :index])
-    |> cast_embed(:items, with: &DocFAQ.Item.changeset/2)
-  end
-end
-
 defmodule GroupherServer.CMS.Model.Embeds.Dashboard.DocFAQ do
-  @moduledoc false
+  @moduledoc """
+  Dashboard docs FAQ configuration.
+
+  The editor supports two independent FAQ views:
+
+  - `group_items` keeps the grouped view as titled sections with ordered FAQ items.
+  - `flat_items` keeps the flat view as one ordered list of FAQ items.
+
+  `grouped_view` only selects which view is displayed. It does not convert or
+  merge items between the two lists, so users can switch modes without losing the
+  previous grouped or flat arrangement. `default/0` returns example content for
+  both views so a new docs FAQ is immediately editable instead of starting empty.
+  """
   use Ecto.Schema
   use Accessible
 
@@ -55,17 +23,18 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.DocFAQ do
   embedded_schema do
     field(:title, :string, default: "FAQ")
     field(:desc, :string, default: "")
-    field(:grouped, :boolean, default: true)
+    field(:grouped_view, :boolean, default: true)
 
-    embeds_many(:groups, DocFAQ.Group, on_replace: :delete)
+    embeds_many(:group_items, DocFAQ.Group, on_replace: :delete)
+    embeds_many(:flat_items, DocFAQ.Item, on_replace: :delete)
   end
 
   def default do
     %{
       title: "FAQ",
       desc: "Common questions about docs",
-      grouped: true,
-      groups: [
+      grouped_view: true,
+      group_items: [
         %{
           id: "grp_basics",
           title: "Basics",
@@ -98,13 +67,28 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.DocFAQ do
             }
           ]
         }
+      ],
+      flat_items: [
+        %{
+          id: "faq_get_started",
+          title: "How do I get started?",
+          detail: "Create your first guide, add a few common questions, then publish the docs.",
+          index: 0
+        },
+        %{
+          id: "faq_markdown",
+          title: "Can answers use Markdown?",
+          detail: "Yes. FAQ answers support markdown formatting, links, and inline code.",
+          index: 1
+        }
       ]
     }
   end
 
   def changeset(struct, attrs) do
     struct
-    |> cast(attrs, [:title, :desc, :grouped])
-    |> cast_embed(:groups, with: &DocFAQ.Group.changeset/2)
+    |> cast(attrs, [:title, :desc, :grouped_view])
+    |> cast_embed(:group_items, with: &DocFAQ.Group.changeset/2)
+    |> cast_embed(:flat_items, with: &DocFAQ.Item.changeset/2)
   end
 end

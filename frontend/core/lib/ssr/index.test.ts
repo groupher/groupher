@@ -14,8 +14,9 @@ describe('parseDashboard', () => {
         docFaq: {
           title: 'FAQ',
           desc: '',
-          grouped: false,
-          groups: [],
+          groupedView: false,
+          groupItems: [],
+          flatItems: [],
         },
         mediaReports: [],
         headerLinks: [],

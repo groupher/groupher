@@ -27,11 +27,11 @@ import { THREAD } from '~/const/thread'
 
 import type { TDsbFieldMap } from './spec'
 
-export const DEFAULT_DOC_FAQ_GROUPED = {
+export const DEFAULT_DOC_FAQ = {
   title: 'FAQ',
   desc: 'Common questions about docs',
-  grouped: true,
-  groups: [
+  groupedView: true,
+  groupItems: [
     {
       id: 'grp_basics',
       title: 'Basics',
@@ -65,31 +65,18 @@ export const DEFAULT_DOC_FAQ_GROUPED = {
       ],
     },
   ],
-}
-
-export const DEFAULT_DOC_FAQ_FLAT = {
-  title: 'FAQ',
-  desc: 'Common questions about docs',
-  grouped: false,
-  groups: [
+  flatItems: [
     {
-      id: '__default__',
-      title: 'General',
+      id: 'faq_get_started',
+      title: 'How do I get started?',
+      detail: 'Create your first guide, add a few common questions, then publish the docs.',
       index: 0,
-      items: [
-        {
-          id: 'faq_get_started',
-          title: 'How do I get started?',
-          detail: 'Create your first guide, add a few common questions, then publish the docs.',
-          index: 0,
-        },
-        {
-          id: 'faq_markdown',
-          title: 'Can answers use Markdown?',
-          detail: 'Yes. FAQ answers support markdown formatting, links, and inline code.',
-          index: 1,
-        },
-      ],
+    },
+    {
+      id: 'faq_markdown',
+      title: 'Can answers use Markdown?',
+      detail: 'Yes. FAQ answers support markdown formatting, links, and inline code.',
+      index: 1,
     },
   ],
 }
@@ -199,7 +186,7 @@ export const FIELDS: TDsbFieldMap = {
   nameAlias: BUILTIN_ALIAS,
   enable: DEFAULT_ENABLE,
 
-  docFaq: DEFAULT_DOC_FAQ_GROUPED,
+  docFaq: DEFAULT_DOC_FAQ,
   rssFeedType: RSS_TYPE.DIGEST,
   rssFeedCount: 5,
 

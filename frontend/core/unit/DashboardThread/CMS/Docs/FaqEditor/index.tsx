@@ -3,6 +3,7 @@
 import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable'
 
 import PlusSVG from '~/icons/Plus'
+import useDocFaqActions from '~/stores/dashboard/docFaq/actions'
 import Button from '~/widgets/Buttons/Button'
 import SegmentTab from '~/widgets/Switcher/SegmentTab'
 
@@ -10,13 +11,12 @@ import { FIELD } from '../../../constant'
 import SavingBar from '../../../SavingBar'
 import {
   FAQ_EDITOR_COPY,
-  FAQ_GROUP_MENU_ACTION,
   FAQ_MODE,
   FAQ_MODE_ITEMS,
   FAQ_SAVE_ZONE,
   FAQ_SORTABLE_GROUP_ID_PREFIX,
 } from './constant'
-import DocFaqDndContext from './DocFaqDndContext'
+import DocFaqDndContext from './Dnd/DocFaqDndContext'
 import Group from './Group'
 import InlineTextEditor from './InlineTextEditor'
 import useSalon from './salon'
@@ -24,30 +24,23 @@ import useFaqEditor from './useFaqEditor'
 
 export default function FaqEditor() {
   const s = useSalon()
+  const { docFaq, saveZone, isDocFaqTouched, displayGroups, openedItemId, openItem, toggleItem } =
+    useFaqEditor()
   const {
-    docFaq,
-    saveZone,
-    isDocFaqTouched,
-    openedItemId,
     addGroup,
     addItem,
     clearSaveZone,
-    handleGroupAction,
-    handleItemAction,
-    renameGroup,
-    renameItem,
     reorderGroups,
     setDesc,
-    setGrouped,
+    setGroupedView,
     setSaveZone,
     setTitle,
-    toggleItem,
-    updateDetail,
-  } = useFaqEditor()
+  } = useDocFaqActions()
   const editLocked = saveZone !== null
   const listSaving = saveZone?.type === FAQ_SAVE_ZONE.LIST_ORDER
-  const activeMode = docFaq.grouped ? FAQ_MODE.GROUPED : FAQ_MODE.FLAT
-  const addButtonText = docFaq.grouped ? FAQ_EDITOR_COPY.ADD_GROUP : FAQ_EDITOR_COPY.ADD_ITEM
+  const modeSaving = saveZone?.type === FAQ_SAVE_ZONE.MODE
+  const activeMode = docFaq.groupedView ? FAQ_MODE.GROUPED : FAQ_MODE.FLAT
+  const addButtonText = docFaq.groupedView ? FAQ_EDITOR_COPY.ADD_GROUP : FAQ_EDITOR_COPY.ADD_ITEM
 
   return (
     <div className={s.wrapper}>
@@ -81,12 +74,19 @@ export default function FaqEditor() {
           items={FAQ_MODE_ITEMS}
           activeKey={activeMode}
           ariaLabel={FAQ_EDITOR_COPY.MODE_ARIA_LABEL}
-          onChange={(key) => setGrouped(key === FAQ_MODE.GROUPED)}
+          onChange={(key) => setGroupedView(key === FAQ_MODE.GROUPED)}
         />
 
         <Button
           disabled={editLocked}
-          onClick={() => (docFaq.grouped ? addGroup() : addItem())}
+          onClick={() => {
+            if (docFaq.groupedView) {
+              addGroup()
+              return
+            }
+
+            openItem(addItem())
+          }}
           ghost
           noBorder
           space={1.5}
@@ -97,7 +97,20 @@ export default function FaqEditor() {
         </Button>
       </div>
 
-      <DocFaqDndContext groups={docFaq.groups} onCommit={reorderGroups}>
+      {modeSaving && (
+        <div className={s.modeSavingBar}>
+          <SavingBar
+            field={FIELD.DOC_FAQ}
+            isTouched={isDocFaqTouched}
+            minimal
+            top={2}
+            bottom={2}
+            onCancel={clearSaveZone}
+          />
+        </div>
+      )}
+
+      <DocFaqDndContext groups={displayGroups} onCommit={reorderGroups}>
         {({
           activeDragColumnId,
           columns,
@@ -121,7 +134,7 @@ export default function FaqEditor() {
                   <Group
                     key={group.id}
                     group={group}
-                    grouped={docFaq.grouped}
+                    grouped={docFaq.groupedView}
                     openedItemId={openedItemId}
                     saveZone={saveZone}
                     editLocked={editLocked}
@@ -129,17 +142,8 @@ export default function FaqEditor() {
                     showTargetLine={isCrossGroupTarget}
                     targetDragItemId={targetDragItemId}
                     targetDragPosition={targetDragPosition}
-                    onAddItem={addItem}
-                    onClearSaveZone={clearSaveZone}
-                    onDeleteGroup={(groupId) =>
-                      handleGroupAction(groupId, FAQ_GROUP_MENU_ACTION.DELETE)
-                    }
-                    onItemAction={handleItemAction}
-                    onRenameGroup={renameGroup}
-                    onRenameItem={renameItem}
-                    onSetSaveZone={setSaveZone}
                     onToggleItem={toggleItem}
-                    onUpdateDetail={updateDetail}
+                    onOpenItem={openItem}
                   />
                 )
               })}

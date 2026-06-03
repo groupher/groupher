@@ -227,8 +227,9 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :dsb_doc_faq do
     field(:title, :string)
     field(:desc, :string)
-    field(:grouped, :boolean)
-    field(:groups, list_of(:dsb_doc_faq_group))
+    field(:grouped_view, :boolean)
+    field(:group_items, list_of(:dsb_doc_faq_group))
+    field(:flat_items, list_of(:dsb_doc_faq_item))
   end
 
   input_object :dsb_doc_faq_item_input do
@@ -248,8 +249,9 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   input_object :dsb_doc_faq_input do
     field(:title, :string)
     field(:desc, :string)
-    field(:grouped, :boolean)
-    field(:groups, list_of(:dsb_doc_faq_group_input))
+    field(:grouped_view, :boolean)
+    field(:group_items, list_of(:dsb_doc_faq_group_input))
+    field(:flat_items, list_of(:dsb_doc_faq_item_input))
   end
 
   object :dsb do

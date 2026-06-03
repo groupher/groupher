@@ -2,14 +2,23 @@ import { arrayMove } from '@dnd-kit/sortable'
 
 import type { TFaqDragTarget, TFaqEditorGroup, TFaqEditorItem } from './spec'
 
+/**
+ * Keeps FAQ columns unchanged for the shared sortable draft controller.
+ */
 export const flattenFaqGroups = (groups: readonly TFaqEditorGroup[]): readonly TFaqEditorGroup[] =>
   groups
 
+/**
+ * Compares the whole FAQ drag draft to decide whether a drop should commit.
+ */
 export const sameFaqGroups = (
   left: readonly TFaqEditorGroup[],
   right: readonly TFaqEditorGroup[],
 ): boolean => JSON.stringify(left) === JSON.stringify(right)
 
+/**
+ * Finds the group that currently owns an item during item drag.
+ */
 export const findGroupWithItem = (
   groups: readonly TFaqEditorGroup[],
   itemId: string,
@@ -22,6 +31,9 @@ export const findGroupWithItem = (
   return null
 }
 
+/**
+ * Moves one FAQ item within a group or across groups in the transient DnD draft.
+ */
 export const moveFaqItemInGroups = (
   groups: readonly TFaqEditorGroup[],
   itemId: string,
@@ -65,6 +77,9 @@ export const moveFaqItemInGroups = (
   })
 }
 
+/**
+ * Reorders whole FAQ groups in the transient DnD draft.
+ */
 export const moveFaqGroup = (
   groups: readonly TFaqEditorGroup[],
   groupId: string,
@@ -80,12 +95,3 @@ export const moveFaqGroup = (
 
   return arrayMove([...groups], activeIndex, targetIndex)
 }
-
-export const normalizeFaqGroups = (
-  groups: readonly TFaqEditorGroup[],
-): readonly TFaqEditorGroup[] =>
-  groups.map((group, groupIndex) => ({
-    ...group,
-    index: groupIndex,
-    items: group.items.map((item, itemIndex) => ({ ...item, index: itemIndex })),
-  }))

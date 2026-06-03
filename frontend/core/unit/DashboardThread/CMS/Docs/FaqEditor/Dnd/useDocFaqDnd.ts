@@ -1,14 +1,14 @@
 import { useMemo } from 'react'
 
-import useSortableDraft from '../../../LinkEditor/Dnd/useSortableDraft'
+import useSortableDraft from '../../../../LinkEditor/Dnd/useSortableDraft'
 import {
   findGroupWithItem,
   flattenFaqGroups,
   moveFaqGroup,
   moveFaqItemInGroups,
   sameFaqGroups,
-} from './model'
-import type { TFaqDragTarget, TFaqEditorGroup, TFaqEditorItem } from './spec'
+} from '../model'
+import type { TFaqDragTarget, TFaqEditorGroup, TFaqEditorItem } from '../spec'
 
 type TProps = {
   groups: readonly TFaqEditorGroup[]

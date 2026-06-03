@@ -15,7 +15,7 @@ export default function useSalon() {
       fill('digest'),
     ),
     titleRow: 'row-center min-w-0 flex-1',
-    title: cn('text-base', fg('title')),
+    title: cn('text-sm', fg('title')),
     line: cn('ml-4 h-px flex-1', bg('divider')),
     editButton: cn(
       'row-center size-6 shrink-0 rounded border-0 bg-transparent p-0',

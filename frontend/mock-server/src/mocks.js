@@ -218,8 +218,8 @@ const makeDashboard = (slug = 'home') => {
     docFaq: {
       title: 'FAQ',
       desc: 'Common questions about docs',
-      grouped: true,
-      groups: [
+      groupedView: true,
+      groupItems: [
         {
           id: 'grp_basics',
           title: 'Basics',
@@ -232,6 +232,14 @@ const makeDashboard = (slug = 'home') => {
               index: 0,
             },
           ],
+        },
+      ],
+      flatItems: [
+        {
+          id: 'faq_get_started',
+          title: 'How do I get started?',
+          detail: 'Create your first guide, add a few common questions, then publish the docs.',
+          index: 0,
         },
       ],
     },

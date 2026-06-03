@@ -370,8 +370,8 @@ const updateDashboardDocFaq = gql`
       docFaq {
         title
         desc
-        grouped
-        groups {
+        groupedView
+        groupItems {
           id
           title
           index
@@ -381,6 +381,12 @@ const updateDashboardDocFaq = gql`
             detail
             index
           }
+        }
+        flatItems {
+          id
+          title
+          detail
+          index
         }
       }
     }

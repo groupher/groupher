@@ -57,8 +57,8 @@ export const community = `
         docFaq {
           title
           desc
-          grouped
-          groups {
+          groupedView
+          groupItems {
             id
             title
             index
@@ -68,6 +68,12 @@ export const community = `
               detail
               index
             }
+          }
+          flatItems {
+            id
+            title
+            detail
+            index
           }
         }
         wallpaper {

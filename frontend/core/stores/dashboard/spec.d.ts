@@ -175,6 +175,7 @@ export type TDocFaqSaveZone =
   | { type: 'groupTitle'; groupId: string }
   | { type: 'itemTitle'; groupId: string; itemId: string }
   | { type: 'itemDetail'; groupId: string; itemId: string }
+  | { type: 'mode' }
   | { type: 'listOrder' }
   | null
 

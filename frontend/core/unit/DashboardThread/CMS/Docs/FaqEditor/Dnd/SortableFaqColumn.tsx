@@ -3,7 +3,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { type ReactNode, memo } from 'react'
 
-import { FAQ_DND_TYPE, FAQ_SORTABLE_GROUP_ID_PREFIX } from './constant'
+import { FAQ_DND_TYPE, FAQ_SORTABLE_GROUP_ID_PREFIX } from '../constant'
 
 type TRenderProps = {
   attributes: ReturnType<typeof useSortable>['attributes']
