@@ -5,6 +5,7 @@ import {
   DSB_POST_ROUTE,
   DSB_ROUTE,
 } from '~/const/route'
+import type { TDsbIcon } from '~/icons/dsb'
 import type { TTransKey } from '~/spec'
 
 import { MENU_VIEW } from '../constant'
@@ -12,6 +13,7 @@ import { MENU_VIEW } from '../constant'
 export type TSubMenuScope = 'changelog' | 'doc' | 'kanban' | 'post'
 
 export type TSubMenuItem = {
+  icon: TDsbIcon
   path: string
   slug: string
   title: TTransKey
@@ -19,41 +21,49 @@ export type TSubMenuItem = {
 
 export const DOC_MENU_ITEMS = [
   {
+    icon: 'analysis',
     title: 'dsb.menu.doc.analysis',
     slug: DSB_DOC_ROUTE.ANALYSIS,
     path: DSB_DOC_ROUTE.ANALYSIS,
   },
   {
+    icon: 'layout',
     title: 'dsb.menu.doc.layout',
     slug: DSB_DOC_ROUTE.LAYOUT,
     path: DSB_DOC_ROUTE.LAYOUT,
   },
   {
+    icon: 'editor',
     title: 'dsb.menu.doc.editor',
     slug: DSB_DOC_ROUTE.EDITOR,
     path: DSB_DOC_ROUTE.EDITOR,
   },
   {
+    icon: 'faq',
     title: 'dsb.menu.doc.faq',
     slug: DSB_DOC_ROUTE.FAQ,
     path: DSB_DOC_ROUTE.FAQ,
   },
   {
+    icon: 'gitSync',
     title: 'dsb.menu.doc.git_sync',
     slug: DSB_DOC_ROUTE.GIT_SYNC,
     path: DSB_DOC_ROUTE.GIT_SYNC,
   },
   {
+    icon: 'secureDomain',
     title: 'dsb.menu.doc.domain',
     slug: DSB_DOC_ROUTE.DOMAIN,
     path: DSB_DOC_ROUTE.DOMAIN,
   },
   {
+    icon: 'import',
     title: 'dsb.menu.doc.import',
     slug: DSB_DOC_ROUTE.IMPORT,
     path: DSB_DOC_ROUTE.IMPORT,
   },
   {
+    icon: 'backup',
     title: 'dsb.menu.doc.backup',
     slug: DSB_DOC_ROUTE.BACKUP,
     path: DSB_DOC_ROUTE.BACKUP,
@@ -62,21 +72,25 @@ export const DOC_MENU_ITEMS = [
 
 export const POST_MENU_ITEMS = [
   {
+    icon: 'analysis',
     title: 'dsb.menu.post.analysis',
     slug: DSB_POST_ROUTE.ANALYSIS,
     path: DSB_POST_ROUTE.ANALYSIS,
   },
   {
+    icon: 'layout',
     title: 'dsb.menu.post.layout',
     slug: DSB_POST_ROUTE.LAYOUT,
     path: DSB_POST_ROUTE.LAYOUT,
   },
   {
+    icon: 'content',
     title: 'dsb.menu.post.content',
     slug: DSB_POST_ROUTE.CONTENT,
     path: DSB_POST_ROUTE.CONTENT,
   },
   {
+    icon: 'behavior',
     title: 'dsb.menu.post.behavior',
     slug: DSB_POST_ROUTE.BEHAVIOR,
     path: DSB_POST_ROUTE.BEHAVIOR,
@@ -85,21 +99,25 @@ export const POST_MENU_ITEMS = [
 
 export const KANBAN_MENU_ITEMS = [
   {
+    icon: 'analysis',
     title: 'dsb.menu.kanban.analysis',
     slug: DSB_KANBAN_ROUTE.ANALYSIS,
     path: DSB_KANBAN_ROUTE.ANALYSIS,
   },
   {
+    icon: 'layout',
     title: 'dsb.menu.kanban.layout',
     slug: DSB_KANBAN_ROUTE.LAYOUT,
     path: DSB_KANBAN_ROUTE.LAYOUT,
   },
   {
+    icon: 'content',
     title: 'dsb.menu.kanban.content',
     slug: DSB_KANBAN_ROUTE.CONTENT,
     path: DSB_KANBAN_ROUTE.CONTENT,
   },
   {
+    icon: 'behavior',
     title: 'dsb.menu.kanban.behavior',
     slug: DSB_KANBAN_ROUTE.BEHAVIOR,
     path: DSB_KANBAN_ROUTE.BEHAVIOR,
@@ -108,21 +126,25 @@ export const KANBAN_MENU_ITEMS = [
 
 export const CHANGELOG_MENU_ITEMS = [
   {
+    icon: 'analysis',
     title: 'dsb.menu.changelog.analysis',
     slug: DSB_CHANGELOG_ROUTE.ANALYSIS,
     path: DSB_CHANGELOG_ROUTE.ANALYSIS,
   },
   {
+    icon: 'layout',
     title: 'dsb.menu.changelog.layout',
     slug: DSB_CHANGELOG_ROUTE.LAYOUT,
     path: DSB_CHANGELOG_ROUTE.LAYOUT,
   },
   {
+    icon: 'content',
     title: 'dsb.menu.changelog.content',
     slug: DSB_CHANGELOG_ROUTE.CONTENT,
     path: DSB_CHANGELOG_ROUTE.CONTENT,
   },
   {
+    icon: 'behavior',
     title: 'dsb.menu.changelog.behavior',
     slug: DSB_CHANGELOG_ROUTE.BEHAVIOR,
     path: DSB_CHANGELOG_ROUTE.BEHAVIOR,

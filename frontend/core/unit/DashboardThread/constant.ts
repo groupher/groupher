@@ -81,39 +81,48 @@ export const MENU: TDsbMenu = {
     initFold: false,
     children: [
       {
+        icon: 'overview',
         title: 'dsb.menu.overview',
         slug: DSB_ROUTE.OVERVIEW,
       },
       {
+        icon: 'basicInfo',
         title: 'dsb.menu.basic_info',
         slug: DSB_ROUTE.INFO,
       },
       {
+        icon: 'seo',
         title: 'dsb.menu.seo',
         slug: DSB_ROUTE.SEO,
       },
       {
+        icon: 'threads',
         title: 'dsb.menu.threads',
         slug: DSB_ROUTE.THREADS,
       },
       {
+        icon: 'appearance',
         title: 'dsb.menu.appearance',
         slug: DSB_ROUTE.APPEARANCE,
       },
       {
+        icon: 'alias',
         title: 'dsb.menu.alias',
         slug: DSB_ROUTE.ALIAS,
         alias: FIELD.NAME_ALIAS,
       },
       {
+        icon: 'admins',
         title: 'dsb.menu.admins',
         slug: DSB_ROUTE.ADMINS,
       },
       {
+        icon: 'header',
         title: 'dsb.menu.header',
         slug: DSB_ROUTE.CLASSIC,
       },
       {
+        icon: 'footer',
         title: 'dsb.menu.footer',
         slug: DSB_ROUTE.FOOTER,
       },
@@ -127,42 +136,52 @@ export const MENU: TDsbMenu = {
     initFold: false,
     children: [
       {
+        icon: 'communities',
         title: 'dsb.menu.communities',
         slug: DSB_ROUTE.COMMUNITIES,
       },
       {
+        icon: 'tags',
         title: 'dsb.menu.tags',
         slug: DSB_ROUTE.TAGS,
       },
       {
+        icon: 'posts',
         title: 'dsb.menu.post',
         slug: DSB_ROUTE.POST,
       },
       {
+        icon: 'kanban',
         title: 'dsb.menu.kanban',
         slug: DSB_ROUTE.KANBAN,
       },
       {
+        icon: 'changelog',
         title: 'dsb.menu.changelog',
         slug: DSB_ROUTE.CHANGELOG,
       },
       {
+        icon: 'docs',
         title: 'dsb.menu.doc',
         slug: DSB_ROUTE.DOC,
       },
       {
+        icon: 'broadcast',
         title: 'dsb.menu.broadcast',
         slug: DSB_ROUTE.BROADCAST,
       },
       {
+        icon: 'blackhouse',
         title: 'dsb.menu.blackhouse',
         slug: DSB_ROUTE.BLACKHOUSE,
       },
       {
+        icon: 'rss',
         title: 'dsb.menu.rss',
         slug: DSB_ROUTE.RSS,
       },
       {
+        icon: 'importExport',
         title: 'dsb.menu.inout',
         slug: DSB_ROUTE.INOUT,
       },
@@ -176,10 +195,12 @@ export const MENU: TDsbMenu = {
     initFold: true,
     children: [
       {
+        icon: 'trend',
         title: 'dsb.menu.trend',
         slug: DSB_ROUTE.TREND,
       },
       {
+        icon: 'log',
         title: 'dsb.menu.log',
         slug: DSB_ROUTE.LOG,
       },
@@ -193,14 +214,17 @@ export const MENU: TDsbMenu = {
     initFold: false,
     children: [
       {
+        icon: 'domain',
         title: 'dsb.menu.domain',
         slug: DSB_ROUTE.DOMAIN,
       },
       {
+        icon: 'thirdParty',
         title: 'dsb.menu.third_part',
         slug: DSB_ROUTE['THIRD-PART'],
       },
       {
+        icon: 'widgets',
         title: 'dsb.menu.widgets',
         slug: DSB_ROUTE.WIDGETS,
       },

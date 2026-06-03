@@ -1,3 +1,4 @@
+import type { TDsbIcon } from '~/icons/dsb'
 import type {
   TChangeMode,
   TColorName,
@@ -22,7 +23,7 @@ export type TDsbMenuGroup = {
   children: TDsbMenuItem[]
 }
 
-type TDsbMenuItem = { title: TTransKey; slug: TDsbPath; alias?: string }
+type TDsbMenuItem = { title: TTransKey; slug: TDsbPath; icon: TDsbIcon; alias?: string }
 
 export type TDsbMenu = {
   [k: TMenuGroupName]: TDsbMenuGroup

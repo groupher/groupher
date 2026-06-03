@@ -190,6 +190,8 @@ export type TStore = TDsbFieldMap & {
   savingField: string | null
   saving: boolean
   loading: boolean
+  sidebarCollapsed: boolean
+  sidebarTransitioning: boolean
 
   overview: TOverview
 

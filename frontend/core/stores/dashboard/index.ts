@@ -39,6 +39,8 @@ export default function DashboardStore(init: TInit = {}): TStore {
       savingField: null,
       saving: false,
       loading: false,
+      sidebarCollapsed: false,
+      sidebarTransitioning: false,
 
       overview: DEFAULT_OVERVIEW,
       editingTag: null,

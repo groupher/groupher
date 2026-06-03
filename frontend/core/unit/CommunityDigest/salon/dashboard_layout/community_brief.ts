@@ -3,11 +3,16 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn, cnMerge } from '~/css'
 
 export default function useSalon() {
-  const { cn, fg, bg, br, fill, menu, sexyBorder, accent } = useTwBelt()
+  const { cn, fg, bg, br, fill, menu, sexyBorder, accent, hover } = useTwBelt()
 
   return {
     wrapper: 'row-center group',
     logo: 'size-5',
+    sidebarToggle: cn(
+      'align-both size-7 rounded-md border border-transparent trans-all-200 pointer',
+      hover('bg'),
+    ),
+    sidebarIcon: cn('size-4', fg('digest'), hover('fg')),
     menuWrapper: cn(
       'row-center trans-all-200 h-8 w-auto rounded-lg border border-transparent pointer pl-2',
       `hover:${br('divider')}`,
