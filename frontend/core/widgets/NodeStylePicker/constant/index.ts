@@ -1,5 +1,6 @@
 import { NODE_STYLE } from '~/const/node_style'
-import type { TIconName, TIconProvider } from '~/widgets/IconHub/icons'
+import type { TIconName } from '~/widgets/IconHub/icons'
+import type { TIconProvider } from '~/widgets/IconHub/sprite'
 
 export const TAB = NODE_STYLE
 

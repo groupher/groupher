@@ -1,11 +1,12 @@
 import type { ComponentType } from 'react'
 
-import type { TNodeStyleIconValue, TNodeStyleValue } from '~/spec'
+import type { TNodeStyleValue } from '~/spec'
 import type { TIconName, TIconProvider, TPickerProvider } from '~/widgets/IconHub/icons'
+import type { TDevLogo } from '~/widgets/NodeStylePicker/constant/dev_logo'
 
-import type { TAB } from './constant'
+import type { TAB_ITEMS } from './constant'
 
-export type TTab = (typeof TAB)[keyof typeof TAB]
+export type TTab = (typeof TAB_ITEMS)[number]['slug']
 
 export type TNodeStylePickerProps = {
   testid?: string
@@ -16,10 +17,19 @@ export type TNodeStylePickerProps = {
 }
 
 export type TIconOption = {
+  kind: 'icon'
   provider: TIconProvider
   name: string
-  src: string
 }
+
+export type TDevLogoOption = {
+  kind: 'dev'
+  name: TDevLogo
+}
+
+export type TIconListOption = TIconOption | TDevLogoOption
+
+export type TPickerTabProvider = TPickerProvider | 'dev'
 
 export type TVirtualListProps<T> = {
   items: T[]
@@ -40,8 +50,8 @@ export type TIconTabProps = {
 }
 
 export type TProviderTabsProps = {
-  value: TPickerProvider
-  onChange: (value: TPickerProvider) => void
+  value: TPickerTabProvider
+  onChange: (value: TPickerTabProvider) => void
 }
 
-export type TIconSelect = (provider: TIconProvider, name: TIconName, src: string) => void
+export type TIconSelect = (provider: TIconProvider | 'dev', name: TIconName | TDevLogo) => void

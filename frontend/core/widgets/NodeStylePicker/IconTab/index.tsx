@@ -3,10 +3,13 @@
 import { type FC, useState } from 'react'
 
 import { NODE_STYLE } from '~/const/node_style'
-import { ICONS } from '~/widgets/IconHub/icons'
-import type { TIconName, TPickerProvider } from '~/widgets/IconHub/icons'
+import { getDevLogoFilePath } from '~/utils/icons'
+import type { TIconName } from '~/widgets/IconHub/icons'
+import { getIconFilePath } from '~/widgets/IconHub/sprite'
 
-import type { TIconSelect, TIconTabProps } from '../spec'
+import type { TDevLogo } from '../constant/dev_logo'
+import DevTab from '../DevTab'
+import type { TIconSelect, TIconTabProps, TPickerTabProvider } from '../spec'
 import FootTab from './FootTab'
 import IconList from './IconList'
 import useSalon from './salon'
@@ -14,15 +17,28 @@ import SearchBar from './SearchBar'
 
 const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, onChange }) => {
   const s = useSalon()
-  const [providerTab, setProviderTab] = useState<TPickerProvider>('all')
+  const [providerTab, setProviderTab] = useState<TPickerTabProvider>('all')
   const [query, setQuery] = useState('')
 
-  const handleSelect: TIconSelect = (provider, name, src) => {
+  const handleSelect: TIconSelect = (provider, name) => {
+    if (provider === 'dev') {
+      handleDevSelect(name as TDevLogo)
+      return
+    }
+
     onChange({
       type: NODE_STYLE.ICON,
       provider,
       name: name as TIconName,
-      src: src || ICONS[provider][name],
+      src: getIconFilePath(provider, name),
+    })
+  }
+
+  const handleDevSelect = (name: Parameters<typeof getDevLogoFilePath>[0]) => {
+    onChange({
+      type: NODE_STYLE.DEV,
+      name,
+      src: getDevLogoFilePath(name),
     })
   }
 
@@ -30,7 +46,11 @@ const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, onChange }) => {
     <div className={s.wrapper}>
       <SearchBar value={query} onChange={setQuery} />
       <div className={s.listWrapper}>
-        {panelOpen && (
+        {panelOpen && providerTab === 'dev' && (
+          <DevTab query={query} selectedValue={selectedValue} onSelect={handleDevSelect} />
+        )}
+
+        {panelOpen && providerTab !== 'dev' && (
           <IconList
             providerTab={providerTab}
             query={query}

@@ -1,6 +1,7 @@
 'use client'
 
 import type { ChangeEvent, FC } from 'react'
+import { useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import CloseLightSVG from '~/icons/CloseLight'
@@ -16,6 +17,7 @@ type TProps = {
 const SearchBar: FC<TProps> = ({ value, onChange }) => {
   const s = useSalon()
   const { t } = useTrans()
+  const [focused, setFocused] = useState(false)
 
   const updateSearchValue = (event: ChangeEvent<HTMLInputElement>) => {
     onChange(event.target.value)
@@ -27,7 +29,7 @@ const SearchBar: FC<TProps> = ({ value, onChange }) => {
 
   return (
     <div className={s.searchWrapper}>
-      <div className={s.searchBox}>
+      <div className={s.searchBox(focused)}>
         <SearchSVG className={s.searchIcon} />
         <input
           type='search'
@@ -38,6 +40,8 @@ const SearchBar: FC<TProps> = ({ value, onChange }) => {
           autoComplete='off'
           spellCheck={false}
           className={s.searchInput}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
         />
         {value && (
           <button
