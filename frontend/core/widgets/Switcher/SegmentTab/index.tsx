@@ -1,10 +1,16 @@
 'use client'
 
-import { type FC, type KeyboardEvent, memo, useMemo } from 'react'
+import { type FC, type KeyboardEvent, memo, useEffect, useMemo, useRef, useState } from 'react'
 
 import useSalon, { cn } from '../salon/segment_tab'
 import SegmentTabItem from './Item'
 import type { TSegmentTabProps } from './spec'
+
+const INITIAL_INDICATOR_STYLE = {
+  transform: 'translate3d(0, 0, 0)',
+  width: 0,
+  opacity: 0,
+}
 
 const SegmentTab: FC<TSegmentTabProps> = ({
   items,
@@ -14,10 +20,51 @@ const SegmentTab: FC<TSegmentTabProps> = ({
   onChange = console.log,
 }) => {
   const s = useSalon()
+  const wrapperRef = useRef<HTMLDivElement | null>(null)
+  const [indicatorStyle, setIndicatorStyle] = useState(INITIAL_INDICATOR_STYLE)
+
   const enabledItems = useMemo(() => items.filter((item) => !item.disabled), [items])
   const renderActiveKey = enabledItems.some((item) => item.key === activeKey)
     ? activeKey
     : enabledItems[0]?.key
+  const activeIndex = items.findIndex((item) => item.key === renderActiveKey)
+
+  useEffect(() => {
+    const wrapperEl = wrapperRef.current
+    const activeEl = wrapperEl?.querySelector<HTMLElement>('[data-segment-tab-active="true"]')
+
+    if (!wrapperEl || !activeEl) {
+      setIndicatorStyle((prev) => (prev.opacity === 0 ? prev : { ...prev, opacity: 0 }))
+      return
+    }
+
+    const syncIndicator = () => {
+      const nextStyle = {
+        transform: `translate3d(${activeEl.offsetLeft}px, 0, 0)`,
+        width: activeEl.offsetWidth,
+        opacity: 1,
+      }
+
+      setIndicatorStyle((prev) =>
+        prev.transform === nextStyle.transform &&
+        prev.width === nextStyle.width &&
+        prev.opacity === nextStyle.opacity
+          ? prev
+          : nextStyle,
+      )
+    }
+
+    const rafId = window.requestAnimationFrame(syncIndicator)
+    const observer = new ResizeObserver(syncIndicator)
+
+    observer.observe(wrapperEl)
+    observer.observe(activeEl)
+
+    return () => {
+      window.cancelAnimationFrame(rafId)
+      observer.disconnect()
+    }
+  }, [activeIndex])
 
   const handleChange = (index: number) => {
     const item = items[index]
@@ -57,7 +104,21 @@ const SegmentTab: FC<TSegmentTabProps> = ({
   }
 
   return (
-    <div role='radiogroup' aria-label={ariaLabel} className={cn(s.wrapper, className)}>
+    <div
+      ref={wrapperRef}
+      role='radiogroup'
+      aria-label={ariaLabel}
+      className={cn(s.wrapper, className)}
+    >
+      <span
+        aria-hidden='true'
+        className={s.indicator}
+        style={{
+          transform: indicatorStyle.transform,
+          width: `${indicatorStyle.width}px`,
+          opacity: indicatorStyle.opacity,
+        }}
+      />
       {items.map((item, index) => (
         <SegmentTabItem
           key={item.key}
