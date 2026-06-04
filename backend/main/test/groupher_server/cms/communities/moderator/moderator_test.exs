@@ -193,14 +193,17 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
          ~m(user2 community)a do
       {:ok, user3} = db_insert(:user)
 
-      cur_user =
-        Map.put(user2, :cur_passport, %{
-          "global" => %{},
-          community.slug => %{"root" => true}
-        })
+      {:ok, _} =
+        Passport.stamp_passport(
+          %{
+            "global" => %{},
+            community.slug => %{"root" => true}
+          },
+          user2
+        )
 
       {:ok, updated_community} =
-        CMS.Communities.add_moderator(community, user3, cur_user)
+        CMS.Communities.add_moderator(community, user3, user2)
 
       assert updated_community.slug == community.slug
 

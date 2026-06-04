@@ -1,6 +1,7 @@
 defmodule GroupherServer.Support.Factory.Articles do
   @moduledoc false
 
+  alias GroupherServer.Support.FakeData
   alias Helper.Datetime
 
   defmacro __using__(_opts) do
@@ -319,7 +320,7 @@ defmodule GroupherServer.Support.Factory.Articles do
   end
 
   def post_base(default_article_meta, default_emotions) do
-    text = Faker.Lorem.sentence(10)
+    text = FakeData.sentence(10)
 
     title = "post-#{String.slice(text, 1, 49)}"
 
@@ -336,7 +337,7 @@ defmodule GroupherServer.Support.Factory.Articles do
   end
 
   def changelog_base(default_article_meta, default_emotions) do
-    text = Faker.Lorem.sentence(10)
+    text = FakeData.sentence(10)
 
     title = "changelog-#{String.slice(text, 1, 49)}"
     meta = Map.merge(default_article_meta, %{thread: :changelog})
@@ -355,7 +356,7 @@ defmodule GroupherServer.Support.Factory.Articles do
   end
 
   def doc_base(default_article_meta, default_emotions) do
-    text = Faker.Lorem.sentence(10)
+    text = FakeData.sentence(10)
 
     title = "doc-#{String.slice(text, 1, 49)}"
     meta = Map.merge(default_article_meta, %{thread: :doc})
@@ -374,7 +375,7 @@ defmodule GroupherServer.Support.Factory.Articles do
   end
 
   def blog_base(default_article_meta, default_emotions) do
-    text = Faker.Lorem.sentence(10)
+    text = FakeData.sentence(10)
 
     title = "blog-#{String.slice(text, 1, 49)}"
     meta = Map.merge(default_article_meta, %{thread: :blog})

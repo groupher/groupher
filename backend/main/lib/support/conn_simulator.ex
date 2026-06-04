@@ -165,6 +165,4 @@ defmodule GroupherServer.Test.ConnSimulator do
       end
     end)
   end
-
-  defp filter_cms_rule_map(_), do: %{}
 end

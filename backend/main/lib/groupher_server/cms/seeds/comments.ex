@@ -5,6 +5,7 @@ defmodule GroupherServer.CMS.Seeds.Comments do
   import Helper.Utils, only: [get_config: 2]
 
   alias GroupherServer.CMS
+  alias GroupherServer.Support.FakeData
 
   alias CMS.Model.{Comment, Community}
   alias CMS.Seeds.Config
@@ -57,7 +58,7 @@ defmodule GroupherServer.CMS.Seeds.Comments do
       with {:ok, users} <- db_insert_multi(:user, count) do
         users
         |> Enum.each(fn user ->
-          text = Faker.Lorem.sentence(20)
+          text = FakeData.sentence(20)
           {:ok, _} = create_reply(comment, text, user)
         end)
       end
@@ -134,7 +135,7 @@ defmodule GroupherServer.CMS.Seeds.Comments do
   end
 
   defp create_top_comment(community, thread, article, user, floor) do
-    body = mock_comment("#{Faker.Lorem.sentence(12)} #{floor}")
+    body = mock_comment("#{FakeData.sentence(12)} #{floor}")
 
     CMS.Comments.create_comment(community, thread, article.inner_id, body, user)
   end

@@ -33,7 +33,6 @@ defmodule GroupherServer.CMS.Communities.TagStats do
       upsert_delta(article, tag, delta)
     else
       false -> done(:pass)
-      {:ok, false} -> done(:pass)
       error -> error
     end
   end
@@ -49,7 +48,6 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   end
 
   defp trackable_tag?(%CommunityTag{thread: thread}), do: thread in @tracked_threads
-  defp trackable_tag?(%CommunityTag{}), do: false
 
   @spec rebuild_for_community(Community.t() | String.t(), atom()) :: T.domain_res(:pass)
   def rebuild_for_community(community, thread \\ @default_thread)

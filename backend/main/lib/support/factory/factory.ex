@@ -9,6 +9,7 @@ defmodule GroupherServer.Support.Factory do
   import GroupherServer.CMS.Artiment.Matcher
 
   alias GroupherServer.{Accounts, CMS, Messaging}
+  alias GroupherServer.Support.FakeData
 
   alias Accounts.Model.User
 
@@ -93,7 +94,7 @@ defmodule GroupherServer.Support.Factory do
 
   defp mock_meta(:community_tag) do
     unique_num = System.unique_integer([:positive, :monotonic])
-    cheese = Faker.Pizza.cheese()
+    cheese = FakeData.cheese()
     tag_slug = build_slug(cheese, unique_num)
 
     %{
@@ -103,7 +104,6 @@ defmodule GroupherServer.Support.Factory do
       color: :yellow,
       group: "cool",
       index: 0,
-      # community: Faker.Pizza.topping(),
       community: mock(:community),
       author: mock(:author),
       extra: []
@@ -120,8 +120,8 @@ defmodule GroupherServer.Support.Factory do
     %{
       login: "#{lower}user_#{unique_num}_#{unique_id}",
       nickname: "#{upper}user#{unique_num}_#{unique_id}",
-      bio: Faker.Lorem.Shakespeare.romeo_and_juliet(),
-      avatar: Faker.Avatar.image_url(),
+      bio: FakeData.shakespeare(),
+      avatar: FakeData.image_url(),
       email: "faker_#{unique_num}_#{unique_id}@gmail.com",
       __schema__: nil
     }
