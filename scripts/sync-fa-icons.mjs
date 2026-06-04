@@ -6,14 +6,21 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const repoRoot = path.resolve(__dirname, '..')
 
-const sourceDir = path.join(repoRoot, 'frontend/core/assets/icons')
+const assetsRoot = path.join(repoRoot, 'frontend/core/assets/icons')
+const optimizedSourceDir = path.join(assetsRoot, 'generated/optimized')
+const spriteSourceDir = path.join(assetsRoot, 'generated/sprites')
+const providerLogoSourceDir = path.join(assetsRoot, 'raw/providers')
+const providers = ['fa', 'lucide', 'heroicons', 'phosphor']
 const allowedApps = ['main', 'dashboard', 'landing']
-const allowedProviders = ['fa', 'lucide', 'heroicons', 'phosphor', 'providers']
 const requestedApps = process.argv.slice(2)
 const targetApps = requestedApps.length > 0 ? requestedApps : allowedApps
 
-if (!existsSync(sourceDir)) {
-  throw new Error(`Icon source directory not found: ${sourceDir}`)
+if (!existsSync(optimizedSourceDir)) {
+  throw new Error(`Optimized icon source directory not found: ${optimizedSourceDir}`)
+}
+
+if (!existsSync(spriteSourceDir)) {
+  throw new Error(`Icon sprite source directory not found: ${spriteSourceDir}`)
 }
 
 for (const app of targetApps) {
@@ -26,22 +33,32 @@ for (const app of targetApps) {
   const targetRoot = path.join(repoRoot, `frontend/${app}/public/icons`)
   mkdirSync(targetRoot, { recursive: true })
 
-  for (const provider of allowedProviders) {
-    const sourceProviderDir = path.join(sourceDir, provider)
-    const targetProviderDir = path.join(targetRoot, provider)
-
-    if (!existsSync(sourceProviderDir)) continue
-
-    if (existsSync(targetProviderDir)) {
-      rmSync(targetProviderDir, { recursive: true, force: true })
+  for (const entry of readdirSync(targetRoot)) {
+    const fullPath = path.join(targetRoot, entry)
+    if (entry.endsWith('.sprite.svg') || providers.includes(entry)) {
+      rmSync(fullPath, { recursive: true, force: true })
     }
-
-    mkdirSync(targetProviderDir, { recursive: true })
-    cpSync(sourceProviderDir, targetProviderDir, { recursive: true })
-
-    const fileCount = readdirSync(targetProviderDir).length
-    console.log(
-      `[sync-fa-icons] synced ${fileCount} files -> frontend/${app}/public/icons/${provider}`,
-    )
   }
+
+  for (const provider of providers) {
+    cpSync(path.join(optimizedSourceDir, provider), path.join(targetRoot, provider), {
+      recursive: true,
+    })
+  }
+
+  const spriteFiles = readdirSync(spriteSourceDir).filter((file) => file.endsWith('.sprite.svg'))
+  for (const file of spriteFiles) {
+    cpSync(path.join(spriteSourceDir, file), path.join(targetRoot, file))
+  }
+
+  if (existsSync(providerLogoSourceDir)) {
+    const targetProviderDir = path.join(targetRoot, 'providers')
+    rmSync(targetProviderDir, { recursive: true, force: true })
+    mkdirSync(targetProviderDir, { recursive: true })
+    cpSync(providerLogoSourceDir, targetProviderDir, { recursive: true })
+  }
+
+  console.log(
+    `[sync-fa-icons] synced ${providers.length} icon dirs and ${spriteFiles.length} sprites -> frontend/${app}/public/icons`,
+  )
 }

@@ -6,14 +6,21 @@ type TProps = TSpace & {
   color?: TColorName
   size: number
   className?: string
+  mode: 'sprite' | 'mask'
 }
 
-export default function useSalon({ color, size, className, ...spacing }: TProps) {
+export default function useSalon({ color, size, className, mode, ...spacing }: TProps) {
   const { cn, margin, primary, rainbow, zise } = useTwBelt()
-  const colorClass = color ? rainbow(color, 'bg') : className || primary('bg')
+  const colorKey = mode === 'sprite' ? 'fg' : 'bg'
+  const colorClass = color ? rainbow(color, colorKey) : className || primary(colorKey)
 
   return {
     wrapper: cn(margin(spacing)),
-    icon: cn('inline-block mask-no-repeat mask-contain mask-center', zise(size), colorClass),
+    icon: cn(
+      'inline-block shrink-0',
+      mode === 'mask' && 'mask-no-repeat mask-contain mask-center',
+      zise(size),
+      colorClass,
+    ),
   }
 }
