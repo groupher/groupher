@@ -213,6 +213,7 @@
     "postcss": "^8.5.10",
     "react-doctor": "^0.1.6",
     "react-json-view-lite": "^2.5.0",
+    "svgo": "^4.0.1",
     "tsc-files": "^1.1.4",
     "typescript": "6.0.3",
     "vite": "^8.0.10",

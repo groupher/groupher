@@ -5,9 +5,10 @@ type TProps = {
 }
 
 export default function useSalon({ active }: TProps) {
-  const { bg, primary } = useTwBelt()
+  const { fg, primary } = useTwBelt()
 
   return {
-    icon: active ? primary('bg') : bg('digest'),
+    // Provider sprite icons read color from currentColor.
+    icon: active ? primary('fg') : fg('digest'),
   }
 }

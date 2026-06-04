@@ -40,7 +40,6 @@ defmodule GroupherServer.Mixfile do
         :ex_unit,
         :logger,
         :runtime_tools,
-        :faker,
         :scrivener_ecto,
         :sentry
       ]
@@ -82,8 +81,6 @@ defmodule GroupherServer.Mixfile do
       {:tesla, "~> 1.17"},
       # optional, but recommended adapter
       {:hackney, "~> 1.25"},
-      # for fake data in test env
-      {:faker, "~> 0.18.0"},
       {:scrivener_ecto, "~> 3.1.0"},
       # enhanced cursor based pagination
       {:quarto, "~> 1.1.7"},

@@ -102,8 +102,6 @@ defmodule GroupherServer.CMS.Events.Mention do
     end)
   end
 
-  defp parse_mentions_from_ast(_, _), do: []
-
   defp collect_mentions_from_node(artiment, %{"type" => "mention", "value" => value}, block_id)
        when is_binary(value) do
     parse_mention_in_block(artiment, block_id, [value])

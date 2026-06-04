@@ -1,4 +1,3 @@
-import { keys } from 'ramda'
 import { type FC, useState } from 'react'
 
 import { COLOR } from '~/const/colors'
@@ -23,7 +22,7 @@ const FaIcons: FC<TProps> = ({ testid: _testid = 'fa-icons', size = 16, ...spaci
   const [panelOpen, setPanelOpen] = useState(false)
   const [selectColor, setSelectColor] = useState<TColorName>(COLOR.BLACK)
 
-  const iconNames = keys(ICONS.fa)
+  const iconNames = ICONS.fa
   const [selectIcon, setSelectIcon] = useState<TIcon>(iconNames[0])
 
   return (

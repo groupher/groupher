@@ -5,7 +5,7 @@ import { type FC, useState } from 'react'
 
 import { NODE_STYLE } from '~/const/node_style'
 import type { TNodeStyleValue } from '~/spec'
-import { ICONS } from '~/widgets/IconHub/icons'
+import { getIconFilePath } from '~/widgets/IconHub/sprite'
 import NodeStyleRender from '~/widgets/NodeStyleRender'
 import { Tabs } from '~/widgets/Switcher'
 import Tooltip from '~/widgets/Tooltip'
@@ -44,7 +44,7 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
     type: NODE_STYLE.ICON,
     provider: DEFAULT_PROVIDER,
     name: DEFAULT_ICON_NAME,
-    src: ICONS[DEFAULT_PROVIDER][DEFAULT_ICON_NAME],
+    src: getIconFilePath(DEFAULT_PROVIDER, DEFAULT_ICON_NAME),
   })
 
   const selectedValue = value ?? innerValue
@@ -73,6 +73,7 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
         offset={[0, 8]}
         maxWidth='24rem'
         noPadding
+        portalToBody
         onShow={() => setPanelOpen(true)}
         onHide={() => setPanelOpen(false)}
         content={
@@ -155,6 +156,7 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
             size={compact ? 14 : 18}
             className={s.previewIconColor}
             iconClassName={s.previewIconColor}
+            devClassName={s.previewDevLogo}
           />
         </button>
       </Tooltip>

@@ -4,14 +4,14 @@ import { type FC, useMemo } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import BlocksSVG from '~/icons/Blocks'
-import type { TPickerProvider } from '~/widgets/IconHub/icons'
+import { getDevLogoFilePath, getDevLogoSrc } from '~/utils/icons'
 import { PillTabs } from '~/widgets/Switcher'
 import type { TPillTabItem } from '~/widgets/Switcher'
 
-import type { TProviderTabsProps } from '../spec'
+import type { TPickerTabProvider, TProviderTabsProps } from '../spec'
 import useSalon from './salon/footer_tab'
 
-const PROVIDER_KEYS = ['all', 'fa', 'lucide', 'heroicons', 'phosphor'] as const
+const PROVIDER_KEYS = ['all', 'fa', 'lucide', 'heroicons', 'phosphor', 'dev'] as const
 
 const PROVIDER_ICON_MAP = {
   all: {
@@ -29,9 +29,12 @@ const PROVIDER_ICON_MAP = {
   phosphor: {
     icon: '/icons/providers/phosphor.png',
   },
+  dev: {
+    icon: getDevLogoSrc(getDevLogoFilePath('devicon')),
+  },
 } as const
 
-const getProviderLabel = (key: TPickerProvider, t: ReturnType<typeof useTrans>['t']): string => {
+const getProviderLabel = (key: TPickerTabProvider, t: ReturnType<typeof useTrans>['t']): string => {
   switch (key) {
     case 'all':
       return t('all_icons')
@@ -43,6 +46,8 @@ const getProviderLabel = (key: TPickerProvider, t: ReturnType<typeof useTrans>['
       return 'Heroicons'
     case 'phosphor':
       return 'Phosphor'
+    case 'dev':
+      return 'Devicon'
     default:
       return key
   }
@@ -68,7 +73,7 @@ const FootTab: FC<TProviderTabsProps> = ({ value, onChange }) => {
         activeKey={value}
         size='small'
         left={4}
-        onChange={(key) => onChange(key as TPickerProvider)}
+        onChange={(key) => onChange(key as TPickerTabProvider)}
       />
     </div>
   )

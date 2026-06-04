@@ -41,7 +41,10 @@ export default function useSalon({ compact = false, active = false }: TProps = {
       '[&_.epr-emoji-category-label]:leading-none',
     ),
     todo: cn('align-both h-80 text-lg', fg('digest')),
+    // The trigger preview renders through NodeStyleRender mask mode.
     previewIconColor: active ? primary('bg') : bg('digest'),
+    // Devicon logos are colored images, not masks; don't pass bg color classes to <img>.
+    previewDevLogo: 'object-contain',
     colorGrid: 'grid grid-cols-6 gap-3 px-4 pt-3',
     colorButton: 'align-both size-8 circle appearance-none',
     colorDot: (color: TColorName, active: boolean) =>

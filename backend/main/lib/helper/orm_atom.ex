@@ -274,7 +274,7 @@ defmodule Helper.ORMAtom do
     |> Enum.filter(fn {_, value} ->
       case value do
         %Ecto.Association.NotLoaded{} -> false
-        _ -> Ecto.assoc_loaded?(value) || is_struct(value)
+        _ -> Ecto.assoc_loaded?(value)
       end
     end)
     |> Enum.into(%{})

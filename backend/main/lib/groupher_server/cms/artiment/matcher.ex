@@ -18,12 +18,16 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
           default_meta: map() | nil
         }
 
-  @spec match(map()) :: {:ok, match_info()}
-  def match(%{} = article) do
-    {:ok, thread} = thread_of(article)
-
+  @spec match(map()) :: {:ok, match_info()} | {:error, {:custom, String.t()}}
+  def match(%{thread: thread}) when is_atom(thread) do
     match(thread)
   end
+
+  def match(%{meta: %{thread: thread}}) when is_atom(thread) do
+    match(thread)
+  end
+
+  def match(%{}), do: {:error, {:custom, "invalid article"}}
 
   @spec match(:account) :: {:ok, match_info()}
   def match(:account) do
@@ -56,12 +60,6 @@ defmodule GroupherServer.CMS.Artiment.Matcher do
        preload: :community_tag
      }}
   end
-
-  defp thread_of(%{thread: thread}) when is_atom(thread), do: {:ok, thread}
-
-  defp thread_of(%{meta: %{thread: thread}}) when is_atom(thread), do: {:ok, thread}
-
-  defp thread_of(_), do: {:error, {:custom, "invalid article"}}
 
   thread_matches()
   thread_query_matches()

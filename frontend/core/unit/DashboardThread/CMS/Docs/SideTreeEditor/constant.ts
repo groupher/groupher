@@ -3,7 +3,7 @@ import { MeasuringStrategy, type Announcements } from '@dnd-kit/core'
 import { COLOR } from '~/const/colors'
 import { NODE_STYLE } from '~/const/node_style'
 import type { TNodeStyleValue } from '~/spec'
-import { ICONS } from '~/widgets/IconHub/icons'
+import { getIconFilePath } from '~/widgets/IconHub/sprite'
 
 import type { TSideTreeGroup } from './spec'
 
@@ -45,14 +45,14 @@ export const DEFAULT_PAGE_STYLE: TNodeStyleValue = {
   type: NODE_STYLE.ICON,
   provider: 'lucide',
   name: 'file-text',
-  src: ICONS.lucide['file-text'],
+  src: getIconFilePath('lucide', 'file-text'),
 }
 
 export const DEFAULT_LINK_STYLE: TNodeStyleValue = {
   type: NODE_STYLE.ICON,
   provider: 'lucide',
   name: 'external-link',
-  src: ICONS.lucide['external-link'],
+  src: getIconFilePath('lucide', 'external-link'),
 }
 
 export const DEFAULT_GROUP_STYLE: TNodeStyleValue = {

@@ -22,7 +22,7 @@ type TProps = {
 
 const Panel: FC<TProps> = ({ selectColor, selectIcon, onColorSelect, onIconSelect, panelOpen }) => {
   const s = useSalon()
-  const iconKeys = keys(ICONS.fa)
+  const iconKeys = ICONS.fa
   const colorNames = keys(COLOR)
 
   const [searchKey, setSearchKey] = useState('')

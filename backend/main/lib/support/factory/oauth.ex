@@ -1,11 +1,11 @@
 defmodule GroupherServer.Support.Factory.Oauth do
   @moduledoc false
 
+  alias GroupherServer.Support.FakeData
+
   defmacro __using__(_opts) do
     quote do
       defp mock_meta(:github_profile), do: unquote(__MODULE__).github_profile_meta()
-
-      defp mock_meta(:oauth_profile), do: unquote(__MODULE__).oauth_profile("github")
 
       defp mock_meta({:oauth_profile, provider}) when is_binary(provider),
         do: unquote(__MODULE__).oauth_profile(provider)
@@ -16,17 +16,17 @@ defmodule GroupherServer.Support.Factory.Oauth do
     unique_num = System.unique_integer([:positive, :monotonic])
 
     %{
-      id: "#{Faker.Person.first_name()} #{unique_num}",
-      login: "#{Faker.Person.first_name()}#{unique_num}",
+      id: "#{FakeData.first_name()} #{unique_num}",
+      login: "#{FakeData.first_name()}#{unique_num}",
       github_id: "#{unique_num + 1000}",
       node_id: "#{unique_num + 2000}",
       access_token: "#{unique_num + 3000}",
-      bio: Faker.Lorem.Shakespeare.romeo_and_juliet(),
-      company: Faker.Company.name(),
+      bio: FakeData.shakespeare(),
+      company: FakeData.company_name(),
       location: "chengdu",
-      email: Faker.Internet.email(),
-      avatar_url: Faker.Avatar.image_url(),
-      html_url: Faker.Avatar.image_url(),
+      email: FakeData.email(),
+      avatar_url: FakeData.image_url(),
+      html_url: FakeData.image_url(),
       followers: unique_num * unique_num,
       following: unique_num * unique_num * unique_num
     }
@@ -36,17 +36,17 @@ defmodule GroupherServer.Support.Factory.Oauth do
     unique_num = System.unique_integer([:positive, :monotonic])
 
     provider_id = unique_num |> to_string()
-    login = "#{Faker.Person.first_name()}#{unique_num}"
-    nickname = "#{Faker.Person.first_name()}#{unique_num}"
-    email = Faker.Internet.email()
-    avatar = Faker.Avatar.image_url()
+    login = "#{FakeData.first_name()}#{unique_num}"
+    nickname = "#{FakeData.first_name()}#{unique_num}"
+    email = FakeData.email()
+    avatar = FakeData.image_url()
 
     %{
       provider: provider,
       provider_id: provider_id,
       login: login,
-      bio: Faker.Lorem.Shakespeare.romeo_and_juliet(),
-      company: Faker.Company.name(),
+      bio: FakeData.shakespeare(),
+      company: FakeData.company_name(),
       country: "",
       city: "",
       email: email,

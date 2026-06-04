@@ -287,16 +287,11 @@ defmodule GroupherServer.CMS.Articles.Write do
   end
 
   defp add_digest_attrs(%{body: body} = attrs) when not is_nil(body) do
-    with %{content_payload: %{digest: digest}} <- attrs do
-      attrs |> Map.merge(%{digest: digest}) |> done
-    else
-      _ ->
-        with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
-          attrs
-          |> Map.put(:content_payload, payload)
-          |> Map.put(:digest, payload.digest)
-          |> done
-        end
+    with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
+      attrs
+      |> Map.put(:content_payload, payload)
+      |> Map.put(:digest, payload.digest)
+      |> done
     end
   end
 
