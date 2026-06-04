@@ -13,14 +13,14 @@ export default function useSalon() {
 
   return {
     previewImage: cn(
-      'w-72 h-44 trans-all-200',
-      'column-align-both rounded-md border',
+      'h-44 w-full trans-all-200',
+      'column-align-both rounded-t-md border',
       br('divider'),
       bg('hoverBg'),
     ),
-    realPreview: 'column-center relative overflow-hidden',
+    realPreview: 'relative h-44 w-full overflow-hidden',
     content: cn(
-      'absolute top-4 left-8 w-56 h-44 backdrop-blur-sm column-start px-5 pt-3 pb-4 rounded-t-md',
+      'absolute bottom-0 left-8 right-8 h-40 backdrop-blur-sm column-start px-5 pt-3 pb-4 rounded-t-md',
       hasShadow && shadow('md'),
     ),
     contentTop: 'column gap-3',
