@@ -36,6 +36,9 @@ const KEYBOARD_STEP = {
   radius: 0.04,
 } as const
 
+const CENTER_DOT_RADIUS = 6.5
+const HANDLE_RADIUS = 4.5
+
 const clamp01 = (value: number): number => Math.min(1, Math.max(0, value))
 
 const getCenterPoint = (center: TPoint): TPoint => ({
@@ -67,6 +70,30 @@ const getDistance = (a: TPoint, b: TPoint): number => {
   const dy = a.y - b.y
 
   return Math.sqrt(dx * dx + dy * dy)
+}
+
+const getTrimmedLine = (
+  start: TPoint,
+  end: TPoint,
+  startOffset: number,
+  endOffset: number,
+): { start: TPoint; end: TPoint } | null => {
+  const distance = getDistance(start, end)
+  if (distance <= startOffset + endOffset) return null
+
+  const unitX = (end.x - start.x) / distance
+  const unitY = (end.y - start.y) / distance
+
+  return {
+    start: {
+      x: start.x + unitX * startOffset,
+      y: start.y + unitY * startOffset,
+    },
+    end: {
+      x: end.x - unitX * endOffset,
+      y: end.y - unitY * endOffset,
+    },
+  }
 }
 
 const getRadiusFromPoint = (point: TPoint, center: TPoint): number => {
@@ -238,6 +265,7 @@ export default function RadiationControl({
 
   const centerPoint = getCenterPoint(draftValue.center)
   const handlePoint = getHandlePoint(draftValue)
+  const radiusLine = getTrimmedLine(centerPoint, handlePoint, CENTER_DOT_RADIUS, HANDLE_RADIUS)
   const shouldShowRadiusHandle = !disabled && !isCenterDragging
   const ringRadius = 8 + draftValue.radius * 8
   const centerValue = `X ${Math.round(draftValue.center.x * 100)}%, Y ${Math.round(
@@ -276,13 +304,16 @@ export default function RadiationControl({
         />
         {shouldShowRadiusHandle && (
           <>
-            <line
-              className={s.radiusLine}
-              x1={centerPoint.x}
-              y1={centerPoint.y}
-              x2={handlePoint.x}
-              y2={handlePoint.y}
-            />
+            {radiusLine && (
+              <line
+                className={s.radiusLine}
+                x1={radiusLine.start.x}
+                y1={radiusLine.start.y}
+                x2={radiusLine.end.x}
+                y2={radiusLine.end.y}
+              />
+            )}
+            <circle className={s.handleMask} cx={handlePoint.x} cy={handlePoint.y} r='4.5' />
             <circle className={s.handle} cx={handlePoint.x} cy={handlePoint.y} r='4.5' />
           </>
         )}
@@ -290,7 +321,7 @@ export default function RadiationControl({
           className={cn(s.centerDot, !disabled && s.centerDotActive)}
           cx={centerPoint.x}
           cy={centerPoint.y}
-          r='6.5'
+          r={CENTER_DOT_RADIUS}
         />
       </svg>
     </button>

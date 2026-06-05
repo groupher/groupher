@@ -3,14 +3,13 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default function useSalon() {
-  const { cn, br, bg, hover, primary } = useTwBelt()
+  const { cn, br, bg, primary } = useTwBelt()
 
   return {
     control: cn(
       'relative w-24 aspect-[71/40] overflow-hidden rounded-md border p-0 select-none outline-none trans-all-100 box-border',
       br('divider'),
       bg('card'),
-      hover('bg'),
       `focus-visible:${primary('border')}`,
     ),
     controlActive: cn('border-4', primary('borderSoft')),

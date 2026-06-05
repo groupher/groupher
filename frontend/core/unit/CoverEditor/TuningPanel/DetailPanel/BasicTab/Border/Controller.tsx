@@ -16,17 +16,48 @@ type TProps = {
   borderHighlight: TBorderHighlight
 }
 
+type TPoint = {
+  x: number
+  y: number
+}
+
 const CENTER_TOGGLE_RADIUS = 11
+const CENTER_DOT_RADIUS = 7
+const HANDLE_RADIUS = 4.5
 const HANDLE_ARC_SPAN = 48
 
-const getDistance = (point: { x: number; y: number }, center: { x: number; y: number }): number => {
+const getDistance = (point: TPoint, center: TPoint): number => {
   const dx = point.x - center.x
   const dy = point.y - center.y
 
   return Math.sqrt(dx * dx + dy * dy)
 }
 
-const getArcPoint = (angle: number, radius: number): { x: number; y: number } => {
+const getTrimmedLine = (
+  start: TPoint,
+  end: TPoint,
+  startOffset: number,
+  endOffset: number,
+): { start: TPoint; end: TPoint } | null => {
+  const distance = getDistance(start, end)
+  if (distance <= startOffset + endOffset) return null
+
+  const unitX = (end.x - start.x) / distance
+  const unitY = (end.y - start.y) / distance
+
+  return {
+    start: {
+      x: start.x + unitX * startOffset,
+      y: start.y + unitY * startOffset,
+    },
+    end: {
+      x: end.x - unitX * endOffset,
+      y: end.y - unitY * endOffset,
+    },
+  }
+}
+
+const getArcPoint = (angle: number, radius: number): TPoint => {
   const rad = (normalizeAngle(angle) * Math.PI) / 180
 
   return {
@@ -47,11 +78,13 @@ const getHandleArcPath = (angle: number, radius: number): string => {
 export default function Controller({ borderHighlight }: TProps) {
   const s = useSalon()
   const { borderHighlightOnChange } = useLogic()
+  const centerPoint = { x: VIEWBOX.centerX, y: VIEWBOX.centerY }
   const handlePoint = getHandlePoint(borderHighlight)
   const handleArcPath = getHandleArcPath(
     borderHighlight.angle,
-    getDistance(handlePoint, { x: VIEWBOX.centerX, y: VIEWBOX.centerY }),
+    getDistance(handlePoint, centerPoint),
   )
+  const stickLine = getTrimmedLine(centerPoint, handlePoint, CENTER_DOT_RADIUS, HANDLE_RADIUS)
 
   const updateFromPointer = (event: PointerEvent<HTMLButtonElement>): void => {
     const rect = event.currentTarget.getBoundingClientRect()
@@ -68,8 +101,7 @@ export default function Controller({ borderHighlight }: TProps) {
   const handlePointerDown = (event: PointerEvent<HTMLButtonElement>): void => {
     const rect = event.currentTarget.getBoundingClientRect()
     const point = getPointFromPointer(event.clientX, event.clientY, rect)
-    const isCenterPress =
-      getDistance(point, { x: VIEWBOX.centerX, y: VIEWBOX.centerY }) <= CENTER_TOGGLE_RADIUS
+    const isCenterPress = getDistance(point, centerPoint) <= CENTER_TOGGLE_RADIUS
 
     event.preventDefault()
     event.currentTarget.focus()
@@ -148,22 +180,25 @@ export default function Controller({ borderHighlight }: TProps) {
         <svg className={s.svg} viewBox={`0 0 ${VIEWBOX.width} ${VIEWBOX.height}`}>
           {borderHighlight.enabled && (
             <>
-              <line
-                className={s.stick}
-                x1={VIEWBOX.centerX}
-                y1={VIEWBOX.centerY}
-                x2={handlePoint.x}
-                y2={handlePoint.y}
-              />
+              {stickLine && (
+                <line
+                  className={s.stick}
+                  x1={stickLine.start.x}
+                  y1={stickLine.start.y}
+                  x2={stickLine.end.x}
+                  y2={stickLine.end.y}
+                />
+              )}
               <path className={s.handleArc} d={handleArcPath} strokeLinecap='round' />
+              <circle className={s.handleMask} cx={handlePoint.x} cy={handlePoint.y} r='4.5' />
               <circle className={s.handle} cx={handlePoint.x} cy={handlePoint.y} r='4.5' />
             </>
           )}
           <circle
             className={cn(s.center, borderHighlight.enabled && s.centerActive)}
-            cx={VIEWBOX.centerX}
-            cy={VIEWBOX.centerY}
-            r='7'
+            cx={centerPoint.x}
+            cy={centerPoint.y}
+            r={CENTER_DOT_RADIUS}
           />
         </svg>
       </button>
