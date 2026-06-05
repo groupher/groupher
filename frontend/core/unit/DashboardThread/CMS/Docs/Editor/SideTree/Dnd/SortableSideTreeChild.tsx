@@ -1,12 +1,13 @@
 import { useSortable } from '@dnd-kit/sortable'
-import { memo, type ReactNode, useCallback, useRef } from 'react'
+import { memo, type ReactNode, useCallback, useRef, useState } from 'react'
 
 import { cn } from '~/css'
+import useTrans from '~/hooks/useTrans'
 import useTwBelt from '~/hooks/useTwBelt'
 import GrabDotsSVG from '~/icons/GrabDots'
 
-import { toTranslateOnlyTransform } from '../../Editor/SideTree/Dnd/helper'
-import { FAQ_DND_TYPE, FAQ_EDITOR_COPY } from '../constant'
+import { SIDE_TREE_DND_TYPE } from './constant'
+import { toTranslateOnlyTransform } from './helper'
 
 type TProps = {
   children: ReactNode
@@ -16,7 +17,9 @@ type TProps = {
   targetPosition?: 'before' | 'after' | null
 }
 
-const SortableFaqItem = memo(function SortableFaqItem({
+// Sortable wrapper for a docs page/link row. The handle lives in an outside
+// gutter, while the row content keeps its original x-position.
+const SortableSideTreeChild = memo(function SortableSideTreeChild({
   children,
   columnId,
   editing = false,
@@ -24,6 +27,8 @@ const SortableFaqItem = memo(function SortableFaqItem({
   targetPosition = null,
 }: TProps) {
   const { fill, primary } = useTwBelt()
+  const { t } = useTrans()
+  const [hovered, setHovered] = useState(false)
   const rowRef = useRef<HTMLDivElement | null>(null)
   const setRowRef = useCallback((node: HTMLDivElement | null): void => {
     rowRef.current = node
@@ -40,9 +45,10 @@ const SortableFaqItem = memo(function SortableFaqItem({
     id,
     disabled: editing,
     data: {
-      itemId: id,
-      type: FAQ_DND_TYPE.ITEM,
+      childId: id,
+      type: SIDE_TREE_DND_TYPE.CHILD,
       columnId,
+      itemId: id,
       getRect: () => rowRef.current?.getBoundingClientRect(),
     },
   })
@@ -57,20 +63,24 @@ const SortableFaqItem = memo(function SortableFaqItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'group/doc-faq-sortable-item relative -ml-7 w-[calc(100%+1.75rem)] pl-7 will-change-transform',
+        'group/docs-tree-sortable-child relative -ml-7 w-[calc(100%+1.75rem)] rounded-md pl-7 will-change-transform',
         isDragging && 'z-10 select-none',
       )}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       {!editing && (
         <button
           ref={setActivatorNodeRef}
           type='button'
           className={cn(
-            'row-center absolute left-1 top-2.5 size-5 cursor-grab border-0 bg-transparent p-0 opacity-0 trans-all-100',
-            'group-hover/doc-faq-sortable-item:opacity-100 focus-visible:opacity-100 active:cursor-grabbing',
+            'row-center absolute left-1 top-1/2 z-10 size-5 -translate-y-1/2 cursor-grab border-0 bg-transparent p-0 opacity-0 trans-all-100',
+            'group-hover/docs-tree-sortable-child:opacity-100 focus-visible:opacity-100 active:cursor-grabbing',
+            hovered && 'opacity-100',
             fill('digest'),
           )}
-          aria-label={FAQ_EDITOR_COPY.DRAG_ITEM_ARIA_LABEL}
+          style={hovered ? { opacity: 1 } : undefined}
+          aria-label={t('dsb.cms.docs.side_tree.drag_item')}
           {...attributes}
           {...listeners}
         >
@@ -93,4 +103,4 @@ const SortableFaqItem = memo(function SortableFaqItem({
   )
 })
 
-export default SortableFaqItem
+export default SortableSideTreeChild
