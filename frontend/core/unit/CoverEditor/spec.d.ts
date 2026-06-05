@@ -16,6 +16,7 @@ export type TBorderHighlight = {
 export type TStore = {
   position: TCoverPoint
   lightCenter: TCoverPoint
+  lightRadius: number
   hasLight: boolean
   shadow: number
   borderRadius: number
@@ -51,6 +52,7 @@ export type TImageRotate = string
 export type TTuningSetting = {
   position: TCoverPoint
   lightCenter: TCoverPoint
+  lightRadius: number
   hasLight: boolean
   shadow: number
   borderRadius: number

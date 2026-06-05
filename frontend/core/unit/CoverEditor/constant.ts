@@ -56,6 +56,18 @@ export const BORDER_HIGHLIGHT_LENGTH_RANGE = {
 
 export const BORDER_HIGHLIGHT_STROKE_COLOR = 'wheat'
 
+export const LIGHT_RADIUS_DEFAULT = 0.5
+
+export const LIGHT_RENDER_SIZE = {
+  MIN: 140,
+  MAX: 560,
+} as const
+
+export const LIGHT_RENDER_OPACITY = {
+  MIN: 0.07,
+  MAX: 0.2,
+} as const
+
 export const IMAGE_RATIO_SIZE = {
   [IMAGE_RATIO.SCREEN]: {
     width: IMAGE_CONTAINER_SIZE.WIDTH,

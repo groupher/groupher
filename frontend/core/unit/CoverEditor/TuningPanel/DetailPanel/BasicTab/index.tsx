@@ -54,7 +54,11 @@ export default function BasicTab({ setting }: TProps) {
           <GroupTitle>Lighting</GroupTitle>
 
           <div className={s.items}>
-            <Light center={setting.lightCenter} enabled={setting.hasLight} />
+            <Light
+              center={setting.lightCenter}
+              radius={setting.lightRadius}
+              enabled={setting.hasLight}
+            />
           </div>
         </section>
       </div>

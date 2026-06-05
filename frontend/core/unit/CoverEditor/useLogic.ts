@@ -4,7 +4,12 @@ import { proxy, useSnapshot } from 'valtio'
 import { COVER_GRADIENT_WALLPAPER, GRADIENT_DIRECTION } from '~/const/wallpaper'
 import type { TWallpaper, TWallpaperGradient, TWallpaperGradientDir } from '~/spec'
 
-import { BORDER_HIGHLIGHT_DEFAULT, IMAGE_RATIO, IMAGE_SIZE_RANGE } from './constant'
+import {
+  BORDER_HIGHLIGHT_DEFAULT,
+  IMAGE_RATIO,
+  IMAGE_SIZE_RANGE,
+  LIGHT_RADIUS_DEFAULT,
+} from './constant'
 import type {
   TBorderHighlight,
   TCoverPoint,
@@ -26,7 +31,7 @@ type TRet = {
   ratioOnChange: (ratio: TImageRadio) => void
   rotateOnChange: (rotate: number) => void
   glassBorderOnChange: (hasGlassBorder: boolean) => void
-  lightCenterOnChange: (lightCenter: TCoverPoint) => void
+  lightRadiationOnChange: (lightCenter: TCoverPoint, lightRadius: number) => void
   lightOnChange: (hasLight: boolean) => void
 } & TStore
 
@@ -46,6 +51,7 @@ const LOADED_IMAGE_DEFAULT_SETTING: Partial<TStore> = {
   },
   hasGlassBorder: false,
   hasLight: false,
+  lightRadius: LIGHT_RADIUS_DEFAULT,
   wallpaper: 'pink',
   direction: GRADIENT_DIRECTION.BOTTOM_RIGHT,
 }
@@ -53,6 +59,7 @@ const LOADED_IMAGE_DEFAULT_SETTING: Partial<TStore> = {
 const store = proxy<TStore>({
   position: { x: 0.5, y: 0.5 },
   lightCenter: { x: 0.5, y: 0.5 },
+  lightRadius: LIGHT_RADIUS_DEFAULT,
   hasLight: false,
   shadow: 0,
   borderRadius: 0,
@@ -92,6 +99,7 @@ const store = proxy<TStore>({
     const {
       position,
       lightCenter,
+      lightRadius,
       hasLight,
       shadow,
       borderRadius,
@@ -108,6 +116,7 @@ const store = proxy<TStore>({
     return {
       position,
       lightCenter,
+      lightRadius,
       hasLight,
       shadow,
       borderRadius,
@@ -154,8 +163,8 @@ export default function useLogic(): TRet {
 
   const glassBorderOnChange = (hasGlassBorder: boolean) => snap.commit({ hasGlassBorder })
 
-  const lightCenterOnChange = (lightCenter: TCoverPoint): void =>
-    snap.commit({ lightCenter, hasLight: true })
+  const lightRadiationOnChange = (lightCenter: TCoverPoint, lightRadius: number): void =>
+    snap.commit({ lightCenter, lightRadius, hasLight: true })
   const lightOnChange = (hasLight: boolean): void => snap.commit({ hasLight })
 
   return {
@@ -171,7 +180,7 @@ export default function useLogic(): TRet {
     ratioOnChange,
     rotateOnChange,
     glassBorderOnChange,
-    lightCenterOnChange,
+    lightRadiationOnChange,
     lightOnChange,
   }
 }

@@ -24,7 +24,7 @@ export default function useSalon() {
     image: 'block size-full trans-all-200 object-cover',
     borderHighlight: 'absolute inset-0 z-20 pointer-events-none overflow-visible',
     light:
-      'absolute size-96 -translate-x-1/2 -translate-y-1/2 trans-all-200 bg-blend-lighten pointer-events-none z-30',
+      'absolute -translate-x-1/2 -translate-y-1/2 trans-all-200 bg-blend-lighten pointer-events-none z-30',
 
     // helpers
     getImageSize,

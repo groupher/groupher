@@ -3,7 +3,13 @@ import type { CSSProperties, FC } from 'react'
 
 import { parseWallpaper } from '~/wallpaper'
 
-import { GLASS_FRAME, IMAGE_RATIO, IMAGE_SIZE_RANGE } from '../constant'
+import {
+  GLASS_FRAME,
+  IMAGE_RATIO,
+  IMAGE_SIZE_RANGE,
+  LIGHT_RENDER_OPACITY,
+  LIGHT_RENDER_SIZE,
+} from '../constant'
 import { getImageShadow } from '../helper'
 import useLogic from '../useLogic'
 import BorderRender from './BorderRender'
@@ -27,6 +33,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     borderHighlight,
     hasLight,
     lightCenter,
+    lightRadius,
     wallpaper,
     wallpapers,
     rotate,
@@ -80,13 +87,19 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     boxShadow: getImageShadow(shadow),
     borderRadius: borderRadiusValue,
   }
+  const lightRenderSize =
+    LIGHT_RENDER_SIZE.MIN + (LIGHT_RENDER_SIZE.MAX - LIGHT_RENDER_SIZE.MIN) * lightRadius
+  const lightRenderOpacity =
+    LIGHT_RENDER_OPACITY.MIN + (LIGHT_RENDER_OPACITY.MAX - LIGHT_RENDER_OPACITY.MIN) * lightRadius
 
   const lightStyle: CSSProperties = {
     top: `${lightCenter.y * 100}%`,
     left: `${lightCenter.x * 100}%`,
+    width: `${lightRenderSize}px`,
+    height: `${lightRenderSize}px`,
     background: `radial-gradient(
       ellipse at center,
-      rgba(255, 255, 255, 0.2) 0%,
+      rgba(255, 255, 255, ${lightRenderOpacity}) 0%,
       rgba(255, 255, 255, 0) 65%
     )`,
   }

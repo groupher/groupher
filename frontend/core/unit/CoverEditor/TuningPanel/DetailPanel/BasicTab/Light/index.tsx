@@ -1,5 +1,4 @@
-import FocalPointControl from '~/widgets/FocalPointControl'
-import Radio from '~/widgets/Switcher/Radio'
+import RadiationControl from '~/widgets/RadiationControl'
 
 import type { TCoverPoint } from '../../../../spec'
 import useLogic from '../../../../useLogic'
@@ -8,42 +7,23 @@ import useSalon from './salon'
 
 type TProps = {
   center: TCoverPoint
+  radius: number
   enabled: boolean
 }
 
-export default function Light({ center, enabled }: TProps) {
+export default function Light({ center, radius, enabled }: TProps) {
   const s = useSalon()
-  const { lightCenterOnChange, lightOnChange } = useLogic()
+  const { lightRadiationOnChange, lightOnChange } = useLogic()
 
   return (
     <section className={s.wrapper}>
-      <GroupItem label='Enabled'>
-        <Radio
-          size='small'
-          top={-0.5}
-          left={-0.5}
-          items={[
-            {
-              value: 'On',
-              key: true,
-            },
-            {
-              value: 'Off',
-              key: false,
-              dimOnActive: true,
-            },
-          ]}
-          activeKey={enabled}
-          onChange={(item) => lightOnChange(item.key as boolean)}
-        />
-      </GroupItem>
-
       <GroupItem label='Position'>
-        <FocalPointControl
-          value={center}
+        <RadiationControl
+          value={{ center, radius }}
           label='Lighting position'
           disabled={!enabled}
-          onChange={lightCenterOnChange}
+          onChange={(next) => lightRadiationOnChange(next.center, next.radius)}
+          onToggle={() => lightOnChange(!enabled)}
         />
       </GroupItem>
     </section>
