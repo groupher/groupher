@@ -12,6 +12,9 @@ import useSalon from './salon'
 const WHEEL_SIZE = 56
 const WHEEL_RADIUS = WHEEL_SIZE / 2
 const DOT_SIZE = 10
+const GUIDE_ARC_SPAN = 78
+const SNAP_STEP = 45
+const SNAP_THRESHOLD = 1
 
 type TProps = {
   value: number
@@ -22,12 +25,29 @@ type TProps = {
 
 const normalizeAngle = (angle: number): number => Math.round(((angle % 360) + 360) % 360)
 
+const circularDistance = (angle: number, target: number): number => {
+  const diff = Math.abs(normalizeAngle(angle) - normalizeAngle(target))
+
+  return Math.min(diff, 360 - diff)
+}
+
+const snapAngle = (angle: number): number => {
+  const normalizedAngle = normalizeAngle(angle)
+  const target = Math.round(normalizedAngle / SNAP_STEP) * SNAP_STEP
+
+  if (circularDistance(normalizedAngle, target) <= SNAP_THRESHOLD) {
+    return normalizeAngle(target)
+  }
+
+  return normalizedAngle
+}
+
 const angleFromPointer = (clientX: number, clientY: number, rect: DOMRect): number => {
   const centerX = rect.left + rect.width / 2
   const centerY = rect.top + rect.height / 2
   const mathAngle = (Math.atan2(clientY - centerY, clientX - centerX) * 180) / Math.PI
 
-  return normalizeAngle(mathAngle + 90)
+  return snapAngle(mathAngle + 90)
 }
 
 const pointFromAngle = (angle: number): { left: number; top: number } => {
@@ -41,6 +61,22 @@ const pointFromAngle = (angle: number): { left: number; top: number } => {
   }
 }
 
+const svgPointFromAngle = (angle: number): { x: number; y: number } => {
+  const rad = (angle * Math.PI) / 180
+
+  return {
+    x: WHEEL_RADIUS + Math.sin(rad) * WHEEL_RADIUS,
+    y: WHEEL_RADIUS - Math.cos(rad) * WHEEL_RADIUS,
+  }
+}
+
+const arcPathFromAngle = (angle: number): string => {
+  const start = svgPointFromAngle(angle - GUIDE_ARC_SPAN / 2)
+  const end = svgPointFromAngle(angle + GUIDE_ARC_SPAN / 2)
+
+  return `M ${start.x.toFixed(3)} ${start.y.toFixed(3)} A ${WHEEL_RADIUS} ${WHEEL_RADIUS} 0 0 1 ${end.x.toFixed(3)} ${end.y.toFixed(3)}`
+}
+
 export default function AngleWheel({ value, label = 'Angle', onChange, onCommit }: TProps) {
   const panelRef = useRef<HTMLDivElement | null>(null)
   const [angle, setAngle] = useState(() => normalizeAngle(value))
@@ -48,6 +84,7 @@ export default function AngleWheel({ value, label = 'Angle', onChange, onCommit 
   const s = useSalon()
 
   const pointStyle = pointFromAngle(angle)
+  const guidePath = arcPathFromAngle(angle)
 
   useEffect(() => {
     setAngle(normalizeAngle(value))
@@ -92,6 +129,16 @@ export default function AngleWheel({ value, label = 'Angle', onChange, onCommit 
     updateAngle(event.clientX, event.clientY)
   }
 
+  const handleResetMouseDown = (event: MouseEvent<HTMLButtonElement>): void => {
+    event.stopPropagation()
+  }
+
+  const handleResetClick = (event: MouseEvent<HTMLButtonElement>): void => {
+    event.stopPropagation()
+    commitAngle(0)
+    onCommit?.()
+  }
+
   useEffect(() => {
     if (!dragging) return
 
@@ -127,7 +174,18 @@ export default function AngleWheel({ value, label = 'Angle', onChange, onCommit 
       onClick={handleClick}
       onKeyDown={handleKeyDown}
     >
-      <div className={s.center}>{angle}°</div>
+      <svg className={s.guide} viewBox={`0 0 ${WHEEL_SIZE} ${WHEEL_SIZE}`} aria-hidden='true'>
+        <path className={s.guideArc} d={guidePath} strokeLinecap='round' />
+      </svg>
+      <button
+        type='button'
+        className={s.center}
+        aria-label='Reset angle to 0 degrees'
+        onMouseDown={handleResetMouseDown}
+        onClick={handleResetClick}
+      >
+        {angle}°
+      </button>
       <div className={s.point} style={pointStyle} />
     </div>
   )
