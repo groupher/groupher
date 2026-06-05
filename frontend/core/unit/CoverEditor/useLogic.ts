@@ -4,38 +4,65 @@ import { proxy, useSnapshot } from 'valtio'
 import { COVER_GRADIENT_WALLPAPER, GRADIENT_DIRECTION } from '~/const/wallpaper'
 import type { TWallpaper, TWallpaperGradient, TWallpaperGradientDir } from '~/spec'
 
-import { IMAGE_POS, IMAGE_RATIO, IMAGE_SIZE, LINEAR_BORDER, SETTING_LEVEL } from './constant'
+import { BORDER_HIGHLIGHT_DEFAULT, IMAGE_RATIO, IMAGE_SIZE_RANGE, SETTING_LEVEL } from './constant'
 import type {
-  TImagePos,
+  TBorderHighlight,
+  TCoverPoint,
   TImageRadio,
   TImageSize,
-  TLinearBorderPos,
   TSettingLevel,
   TStore,
-  TToolboxSetting,
+  TTuningSetting,
 } from './spec'
 
 type TRet = {
-  posOnChange: (imagePos: TImagePos) => void
+  imageLoadedOnChange: (imageUrl: string) => void
+  positionOnChange: (position: TCoverPoint) => void
   shadowOnChange: (shadowLevel: TSettingLevel) => void
   borderRadiusOnChange: (borderRadiusLevel: TSettingLevel) => void
-  linearBorderPosOnChange: (linearBorderPos: TLinearBorderPos) => void
+  borderHighlightOnChange: (borderHighlight: Partial<TBorderHighlight>) => void
   wallpaperOnChange: (wallpaper: string) => void
   gradientDirOnChange: (direction: TWallpaperGradientDir) => void
   sizeOnChange: (size: TImageSize) => void
   ratioOnChange: (ratio: TImageRadio) => void
   rotateOnChange: (rotate: number) => void
   glassBorderOnChange: (hasGlassBorder: boolean) => void
-  lightPosOnChange: (lightPos: TImagePos) => void
+  lightCenterOnChange: (lightCenter: TCoverPoint) => void
+  lightOnChange: (hasLight: boolean) => void
 } & TStore
 
-const store = proxy<TStore>({
-  imagePos: IMAGE_POS.CENTER,
-  lightPos: IMAGE_POS.NONE,
+// Neutral store defaults keep the editor empty-safe; this preset is only applied
+// once a real image finishes loading so the first visible cover has a polished frame.
+const LOADED_IMAGE_DEFAULT_SETTING: Partial<TStore> = {
+  size: 94,
+  ratio: IMAGE_RATIO.SCREEN,
+  rotate: 0,
+  position: { x: 0.5, y: 0.5 },
   shadowLevel: SETTING_LEVEL.L1,
   borderRadiusLevel: SETTING_LEVEL.L1,
-  linearBorderPos: LINEAR_BORDER.NONE,
-  size: IMAGE_SIZE.LARGE,
+  borderHighlight: {
+    enabled: BORDER_HIGHLIGHT_DEFAULT.ENABLED,
+    angle: BORDER_HIGHLIGHT_DEFAULT.ANGLE,
+    length: BORDER_HIGHLIGHT_DEFAULT.LENGTH,
+  },
+  hasGlassBorder: false,
+  hasLight: false,
+  wallpaper: 'pink',
+  direction: GRADIENT_DIRECTION.BOTTOM_RIGHT,
+}
+
+const store = proxy<TStore>({
+  position: { x: 0.5, y: 0.5 },
+  lightCenter: { x: 0.5, y: 0.5 },
+  hasLight: false,
+  shadowLevel: SETTING_LEVEL.L1,
+  borderRadiusLevel: SETTING_LEVEL.L1,
+  borderHighlight: {
+    enabled: BORDER_HIGHLIGHT_DEFAULT.ENABLED,
+    angle: BORDER_HIGHLIGHT_DEFAULT.ANGLE,
+    length: BORDER_HIGHLIGHT_DEFAULT.LENGTH,
+  },
+  size: IMAGE_SIZE_RANGE.MAX,
   ratio: IMAGE_RATIO.SCREEN,
   rotate: 0,
   hasGlassBorder: false,
@@ -45,6 +72,7 @@ const store = proxy<TStore>({
   hasPattern: false,
   hasBlur: true,
   direction: GRADIENT_DIRECTION.BOTTOM_RIGHT,
+  loadedImageUrl: '',
 
   get gradientWallpapers(): Record<string, TWallpaper> {
     const wallpapers = clone(COVER_GRADIENT_WALLPAPER)
@@ -61,13 +89,14 @@ const store = proxy<TStore>({
     return wallpapers
   },
 
-  get toolboxSetting(): TToolboxSetting {
+  get tuningSetting(): TTuningSetting {
     const {
-      imagePos,
-      lightPos,
+      position,
+      lightCenter,
+      hasLight,
       shadowLevel,
       borderRadiusLevel,
-      linearBorderPos,
+      borderHighlight,
       wallpaper,
       gradientWallpapers,
       direction,
@@ -78,15 +107,16 @@ const store = proxy<TStore>({
     } = store
 
     return {
-      pos: imagePos as TImagePos,
-      lightPos: lightPos as TImagePos,
+      position,
+      lightCenter,
+      hasLight,
       shadowLevel: shadowLevel as TSettingLevel,
       borderRadiusLevel: borderRadiusLevel as TSettingLevel,
-      linearBorderPos: linearBorderPos as TLinearBorderPos,
+      borderHighlight,
       wallpapers: gradientWallpapers,
       wallpaper,
       direction: direction as TWallpaperGradientDir,
-      size: size as TImageSize,
+      size,
       ratio: ratio as TImageRadio,
       rotate,
       hasGlassBorder,
@@ -101,12 +131,23 @@ const store = proxy<TStore>({
 export default function useLogic(): TRet {
   const snap = useSnapshot(store)
 
-  const posOnChange = (imagePos: TImagePos): void => snap.commit({ imagePos })
+  const imageLoadedOnChange = (imageUrl: string): void => {
+    if (!imageUrl || snap.loadedImageUrl === imageUrl) return
+
+    // Apply the polished cover preset only after the actual image succeeds loading.
+    // Tracking imageUrl prevents a browser re-load from resetting user tuning edits.
+    snap.commit({
+      ...LOADED_IMAGE_DEFAULT_SETTING,
+      loadedImageUrl: imageUrl,
+    })
+  }
+
+  const positionOnChange = (position: TCoverPoint): void => snap.commit({ position })
   const shadowOnChange = (shadowLevel: TSettingLevel): void => snap.commit({ shadowLevel })
   const borderRadiusOnChange = (borderRadiusLevel: TSettingLevel): void =>
     snap.commit({ borderRadiusLevel })
-  const linearBorderPosOnChange = (linearBorderPos: TLinearBorderPos): void =>
-    snap.commit({ linearBorderPos })
+  const borderHighlightOnChange = (borderHighlight: Partial<TBorderHighlight>): void =>
+    snap.commit({ borderHighlight: { ...snap.borderHighlight, ...borderHighlight } })
   const wallpaperOnChange = (wallpaper: string): void => snap.commit({ wallpaper })
   const gradientDirOnChange = (direction: TWallpaperGradientDir): void => snap.commit({ direction })
   const sizeOnChange = (size: TImageSize): void => snap.commit({ size })
@@ -115,29 +156,24 @@ export default function useLogic(): TRet {
 
   const glassBorderOnChange = (hasGlassBorder: boolean) => snap.commit({ hasGlassBorder })
 
-  const lightPosOnChange = (lightPos: TImagePos): void => {
-    const curPos = store.lightPos
-
-    if (curPos === lightPos && curPos !== IMAGE_POS.NONE) {
-      snap.commit({ lightPos: IMAGE_POS.NONE })
-      return
-    }
-
-    snap.commit({ lightPos })
-  }
+  const lightCenterOnChange = (lightCenter: TCoverPoint): void =>
+    snap.commit({ lightCenter, hasLight: true })
+  const lightOnChange = (hasLight: boolean): void => snap.commit({ hasLight })
 
   return {
     ...pick(keys(snap), snap),
-    posOnChange,
+    imageLoadedOnChange,
+    positionOnChange,
     shadowOnChange,
     borderRadiusOnChange,
-    linearBorderPosOnChange,
+    borderHighlightOnChange,
     wallpaperOnChange,
     gradientDirOnChange,
     sizeOnChange,
     ratioOnChange,
     rotateOnChange,
     glassBorderOnChange,
-    lightPosOnChange,
+    lightCenterOnChange,
+    lightOnChange,
   }
 }

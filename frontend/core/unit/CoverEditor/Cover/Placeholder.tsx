@@ -2,14 +2,16 @@ import UploadSVG from '~/icons/Upload'
 
 import useSalon from '../salon/cover/placeholder'
 
-export default function Placeholder() {
+type TProps = {
+  onUpload: () => void
+}
+
+export default function Placeholder({ onUpload }: TProps) {
   const s = useSalon()
 
   return (
-    <>
+    <button type='button' className={s.wrapper} aria-label='Upload cover image' onClick={onUpload}>
       <UploadSVG className={s.uploadIcon} />
-      <div className={s.title}>上传封面图</div>
-      <div className={s.desc}>上传本地图片或 URL, 默认展示为 680x400 宽度</div>
-    </>
+    </button>
   )
 }

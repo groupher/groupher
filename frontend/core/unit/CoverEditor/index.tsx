@@ -3,11 +3,12 @@
  *
  */
 
-import type { FC } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { ChangeEvent, FC } from 'react'
 
 import Cover from './Cover'
 import useSalon from './salon'
-import Toolbox from './Toolbox'
+import TuningPanel from './TuningPanel'
 
 type TProps = {
   onDelete?: () => void
@@ -16,15 +17,61 @@ type TProps = {
 
 const CoverEditor: FC<TProps> = ({ onDelete = console.log, onReplace = console.log }) => {
   const s = useSalon()
-  // const imageUrl = 'https://s3-us-west-2.amazonaws.com/s.cdpn.io/385126/600.jpg'
-  // const imageUrl = '/changelog-demo-light.jpg'
-  const imageUrl = '/changelog-demo-dark.jpg'
-  // const imageUrl = ''
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const objectUrlRef = useRef('')
+  const [imageUrl, setImageUrl] = useState('')
+
+  const openFilePicker = (): void => fileInputRef.current?.click()
+
+  const revokeObjectUrl = (): void => {
+    if (!objectUrlRef.current) return
+
+    URL.revokeObjectURL(objectUrlRef.current)
+    objectUrlRef.current = ''
+  }
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+
+    if (!file) return
+
+    revokeObjectUrl()
+
+    // Local object URLs keep the selected image in the browser only; server upload can happen later.
+    const nextImageUrl = URL.createObjectURL(file)
+    objectUrlRef.current = nextImageUrl
+    setImageUrl(nextImageUrl)
+  }
+
+  const handleDelete = (): void => {
+    revokeObjectUrl()
+    setImageUrl('')
+    onDelete()
+  }
+
+  useEffect(() => revokeObjectUrl, [])
 
   return (
-    <div className={s.wrapper}>
-      <Cover imageUrl={imageUrl} />
-      <Toolbox onDelete={onDelete} onReplace={onReplace} />
+    <div className={s.wrapper} style={s.wrapperStyle}>
+      <input
+        ref={fileInputRef}
+        className='hidden'
+        type='file'
+        accept='image/*'
+        onChange={handleFileChange}
+      />
+      <Cover imageUrl={imageUrl} onUpload={openFilePicker} />
+      {imageUrl && (
+        <TuningPanel
+          defaultExpanded
+          onDelete={handleDelete}
+          onReplace={() => {
+            onReplace()
+            openFilePicker()
+          }}
+        />
+      )}
     </div>
   )
 }

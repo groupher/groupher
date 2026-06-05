@@ -1,15 +1,16 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {
-  const { cn, fg, br, fill } = useTwBelt()
+  const { cn, br, bg, fill, primary } = useTwBelt()
 
   return {
     wrapper: cn(
-      'column-align-both w-[680px] h-[400px] rounded relative overflow-hidden border',
+      'align-both w-full h-full rounded border outline-none trans-all-100',
+      `hover:${primary('border')}`,
+      `focus-visible:${primary('border')}`,
       br('divider'),
+      bg('card'),
     ),
-    uploadIcon: cn('size-12 opacity-65 mb-4', fill('text.digest')),
-    title: cn('bold-sm mb-1 text-base opacity-65', fg('text.title')),
-    desc: cn('text-xs opacity-65', fg('text.digest')),
+    uploadIcon: cn('size-10 opacity-65', fill('text.digest')),
   }
 }

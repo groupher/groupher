@@ -1,35 +1,36 @@
 import { pixelAdd } from '~/dom'
 import useTwBelt from '~/hooks/useTwBelt'
 
-import { IMAGE_CONTAINER_SIZE, LINEAR_BORDER } from '../../constant'
-import { getImageSize, getImageTranslate, getLightPos, getLinearBorder } from '../metric'
+import { getImagePlacement, getImageSize, getResponsiveImageSize } from '../metric'
 
-export default function useSalon({ linearBorderPos }) {
-  const { cn, br } = useTwBelt()
-
-  const getBorderColor = (linearBorderPos) => {
-    if (linearBorderPos === LINEAR_BORDER.ALL) {
-      return br('text.digest')
-    }
-
-    return ''
-  }
+export default function useSalon() {
+  const { cn } = useTwBelt()
 
   return {
-    wrapper: cn('rounded relative overflow-hidden border', br('divider')),
-    wrapperStyle: {
-      width: IMAGE_CONTAINER_SIZE.WIDTH,
-      height: IMAGE_CONTAINER_SIZE.HEIGHT,
+    wrapper: cn('w-full aspect-[71/40] rounded relative overflow-hidden'),
+    wrapperStyle: {},
+    transparentGridStyle: {
+      backgroundColor: 'rgba(255, 252, 247, 0.9)',
+      backgroundImage: `
+        linear-gradient(45deg, rgba(110, 103, 92, 0.11) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(110, 103, 92, 0.11) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(110, 103, 92, 0.11) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(110, 103, 92, 0.11) 75%)
+      `,
+      backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
+      backgroundSize: '16px 16px',
     },
-    glassBorder: 'relative align-both trans-all-200',
-    image: cn('trans-all-200 object-cover', getBorderColor(linearBorderPos)),
-    light: 'absolute size-96 trans-all-200 bg-blend-lighten pointer-events-none z-30',
+    imageFrame: 'absolute trans-all-200',
+    cropViewport: 'relative size-full overflow-hidden trans-all-200',
+    image: 'block size-full trans-all-200 object-cover',
+    borderHighlight: 'absolute inset-0 z-20 pointer-events-none overflow-visible',
+    light:
+      'absolute size-96 -translate-x-1/2 -translate-y-1/2 trans-all-200 bg-blend-lighten pointer-events-none z-30',
 
     // helpers
     pixelAdd,
     getImageSize,
-    getImageTranslate,
-    getLinearBorder,
-    getLightPos,
+    getResponsiveImageSize,
+    getImagePlacement,
   }
 }

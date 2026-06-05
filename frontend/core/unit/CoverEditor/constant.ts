@@ -19,23 +19,6 @@ export const IMAGE_POS = {
   NONE: 'none',
 } as const
 
-export const LINEAR_BORDER = {
-  NONE: 'none',
-  TOP_LEFT: 'top_left',
-  TOP: 'top',
-  TOP_RIGHT: 'top_right',
-
-  BOTTOM_LEFT: 'bottom_left',
-  BOTTOM: 'bottom',
-  BOTTOM_RIGHT: 'bottom_right',
-
-  TOP_ALL: 'top_all',
-  BOTTOM_ALL: 'bottom_all',
-  LEFT_ALL: 'left_all',
-  RIGHT_ALL: 'right_all',
-  ALL: 'all',
-} as const
-
 export const SETTING_LEVEL = {
   L1: 'L1',
   L2: 'L2',
@@ -52,10 +35,9 @@ export const IMAGE_SHADOW = {
   L5: 'rgba(0, 0, 0, 0.25) 0px 25px 50px -12px',
 } as Record<TSettingLevel, string>
 
-export const IMAGE_SIZE = {
-  LARGE: 'large',
-  MEDIUM: 'medium',
-  SMALL: 'small',
+export const IMAGE_SIZE_RANGE = {
+  MIN: 50,
+  MAX: 100,
 } as const
 
 export const IMAGE_RATIO = {
@@ -72,55 +54,32 @@ export const IMAGE_BORDER_RADIUS = {
   L5: '20px',
 } as Record<TSettingLevel, string>
 
+export const BORDER_HIGHLIGHT_DEFAULT = {
+  ENABLED: false,
+  ANGLE: 35,
+  LENGTH: 0.28,
+} as const
+
+export const BORDER_HIGHLIGHT_LENGTH_RANGE = {
+  MIN: 0.08,
+  MAX: 0.72,
+} as const
+
+export const BORDER_HIGHLIGHT_STROKE_COLOR = 'wheat'
+
 export const IMAGE_RATIO_SIZE = {
   [IMAGE_RATIO.SCREEN]: {
-    [IMAGE_SIZE.LARGE]: {
-      width: IMAGE_CONTAINER_SIZE.WIDTH,
-      height: IMAGE_CONTAINER_SIZE.HEIGHT,
-    },
-
-    [IMAGE_SIZE.MEDIUM]: {
-      width: '640px',
-      height: '360px',
-    },
-
-    [IMAGE_SIZE.SMALL]: {
-      width: '540px',
-      height: '305px',
-    },
+    width: IMAGE_CONTAINER_SIZE.WIDTH,
+    height: IMAGE_CONTAINER_SIZE.HEIGHT,
   },
 
   [IMAGE_RATIO.TV]: {
-    [IMAGE_SIZE.LARGE]: {
-      width: '532px',
-      height: IMAGE_CONTAINER_SIZE.HEIGHT,
-    },
-
-    [IMAGE_SIZE.MEDIUM]: {
-      width: '478px',
-      height: '360px',
-    },
-
-    [IMAGE_SIZE.SMALL]: {
-      width: '406px',
-      height: '305px',
-    },
+    width: '4',
+    height: '3',
   },
 
   [IMAGE_RATIO.SQUARE]: {
-    [IMAGE_SIZE.LARGE]: {
-      width: IMAGE_CONTAINER_SIZE.HEIGHT,
-      height: IMAGE_CONTAINER_SIZE.HEIGHT,
-    },
-
-    [IMAGE_SIZE.MEDIUM]: {
-      width: '360px',
-      height: '360px',
-    },
-
-    [IMAGE_SIZE.SMALL]: {
-      width: '305px',
-      height: '305px',
-    },
+    width: '1',
+    height: '1',
   },
 }
