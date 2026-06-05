@@ -7,7 +7,7 @@ export default function useSalon() {
 
   return {
     control: cn(
-      'relative h-12 w-24 overflow-hidden rounded-md border p-0 select-none touch-none outline-none trans-all-100',
+      'relative w-24 aspect-[71/40] overflow-hidden rounded-md border p-0 select-none touch-none outline-none trans-all-100',
       br('divider'),
       bg('card'),
       hover('bg'),

@@ -1,7 +1,5 @@
 import type { KeyboardEvent, PointerEvent } from 'react'
 
-import EmptySVG from '~/icons/Empty'
-
 import type { TBorderHighlight } from '../../../../spec'
 import useLogic from '../../../../useLogic'
 import { CONTROL_LABEL, KEYBOARD_STEP, VIEWBOX } from './constant'
@@ -18,10 +16,42 @@ type TProps = {
   borderHighlight: TBorderHighlight
 }
 
+const CENTER_TOGGLE_RADIUS = 11
+const HANDLE_ARC_SPAN = 48
+
+const getDistance = (point: { x: number; y: number }, center: { x: number; y: number }): number => {
+  const dx = point.x - center.x
+  const dy = point.y - center.y
+
+  return Math.sqrt(dx * dx + dy * dy)
+}
+
+const getArcPoint = (angle: number, radius: number): { x: number; y: number } => {
+  const rad = (normalizeAngle(angle) * Math.PI) / 180
+
+  return {
+    x: VIEWBOX.centerX + Math.cos(rad) * radius,
+    y: VIEWBOX.centerY + Math.sin(rad) * radius,
+  }
+}
+
+const getHandleArcPath = (angle: number, radius: number): string => {
+  const start = getArcPoint(angle - HANDLE_ARC_SPAN / 2, radius)
+  const end = getArcPoint(angle + HANDLE_ARC_SPAN / 2, radius)
+
+  return `M ${start.x.toFixed(3)} ${start.y.toFixed(3)} A ${radius.toFixed(3)} ${radius.toFixed(
+    3,
+  )} 0 0 1 ${end.x.toFixed(3)} ${end.y.toFixed(3)}`
+}
+
 export default function Controller({ borderHighlight }: TProps) {
   const s = useSalon()
   const { borderHighlightOnChange } = useLogic()
   const handlePoint = getHandlePoint(borderHighlight)
+  const handleArcPath = getHandleArcPath(
+    borderHighlight.angle,
+    getDistance(handlePoint, { x: VIEWBOX.centerX, y: VIEWBOX.centerY }),
+  )
 
   const updateFromPointer = (event: PointerEvent<HTMLButtonElement>): void => {
     const rect = event.currentTarget.getBoundingClientRect()
@@ -36,18 +66,34 @@ export default function Controller({ borderHighlight }: TProps) {
   }
 
   const handlePointerDown = (event: PointerEvent<HTMLButtonElement>): void => {
+    const rect = event.currentTarget.getBoundingClientRect()
+    const point = getPointFromPointer(event.clientX, event.clientY, rect)
+    const isCenterPress =
+      getDistance(point, { x: VIEWBOX.centerX, y: VIEWBOX.centerY }) <= CENTER_TOGGLE_RADIUS
+
     event.preventDefault()
     event.currentTarget.focus()
+
+    if (isCenterPress) {
+      borderHighlightOnChange({ enabled: !borderHighlight.enabled })
+      return
+    }
+
+    if (!borderHighlight.enabled) return
+
     event.currentTarget.setPointerCapture(event.pointerId)
     updateFromPointer(event)
   }
 
   const handlePointerMove = (event: PointerEvent<HTMLButtonElement>): void => {
+    if (!borderHighlight.enabled) return
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
+
     updateFromPointer(event)
   }
 
   const handlePointerUp = (event: PointerEvent<HTMLButtonElement>): void => {
+    if (!borderHighlight.enabled) return
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
 
     updateFromPointer(event)
@@ -55,6 +101,14 @@ export default function Controller({ borderHighlight }: TProps) {
   }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>): void => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      borderHighlightOnChange({ enabled: !borderHighlight.enabled })
+      return
+    }
+
+    if (!borderHighlight.enabled) return
+
     let nextAngle = borderHighlight.angle
     let nextLength = borderHighlight.length
 
@@ -76,17 +130,9 @@ export default function Controller({ borderHighlight }: TProps) {
     <div className={s.wrapper}>
       <button
         type='button'
-        className={cn(s.emptyItem, !borderHighlight.enabled && s.optionItemActive)}
-        aria-label={CONTROL_LABEL.DISABLE}
-        onClick={() => borderHighlightOnChange({ enabled: false })}
-      >
-        <EmptySVG className={s.emptyIcon} />
-      </button>
-
-      <button
-        type='button'
         className={cn(s.control, borderHighlight.enabled && s.controlActive)}
         aria-label={CONTROL_LABEL.EDIT}
+        aria-pressed={borderHighlight.enabled}
         aria-valuetext={`${Math.round(borderHighlight.angle)}deg ${Math.round(
           borderHighlight.length * 100,
         )}%`}
@@ -96,17 +142,29 @@ export default function Controller({ borderHighlight }: TProps) {
         onPointerCancel={handlePointerUp}
         onKeyDown={handleKeyDown}
       >
+        <span className={s.verticalLine} style={{ left: '33.333%' }} />
+        <span className={s.verticalLine} style={{ left: '66.667%' }} />
+        <span className={s.horizontalLine} style={{ top: '50%' }} />
         <svg className={s.svg} viewBox={`0 0 ${VIEWBOX.width} ${VIEWBOX.height}`}>
-          <rect className={s.frame} x='8' y='8' width='84' height='54' rx='8' />
-          <line
-            className={s.stick}
-            x1={VIEWBOX.centerX}
-            y1={VIEWBOX.centerY}
-            x2={handlePoint.x}
-            y2={handlePoint.y}
+          {borderHighlight.enabled && (
+            <>
+              <line
+                className={s.stick}
+                x1={VIEWBOX.centerX}
+                y1={VIEWBOX.centerY}
+                x2={handlePoint.x}
+                y2={handlePoint.y}
+              />
+              <path className={s.handleArc} d={handleArcPath} strokeLinecap='round' />
+              <circle className={s.handle} cx={handlePoint.x} cy={handlePoint.y} r='4.5' />
+            </>
+          )}
+          <circle
+            className={cn(s.center, borderHighlight.enabled && s.centerActive)}
+            cx={VIEWBOX.centerX}
+            cy={VIEWBOX.centerY}
+            r='7'
           />
-          <circle className={s.center} cx={VIEWBOX.centerX} cy={VIEWBOX.centerY} r='2.5' />
-          <circle className={s.handle} cx={handlePoint.x} cy={handlePoint.y} r='4.5' />
         </svg>
       </button>
     </div>

@@ -1,8 +1,8 @@
 export const VIEWBOX = {
   width: 100,
-  height: 70,
+  height: 56.34,
   centerX: 50,
-  centerY: 35,
+  centerY: 28.17,
   minDistance: 8,
   maxDistance: 28,
 } as const

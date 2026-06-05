@@ -22,7 +22,7 @@ type TDragMode = 'center' | 'radius'
 
 const VIEWBOX = {
   width: 100,
-  height: 50,
+  height: 56.34,
   centerHitRadius: 10,
   handleHitRadius: 8,
   dragThreshold: 2,
