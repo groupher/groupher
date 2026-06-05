@@ -3,9 +3,11 @@
 import { domAnimation, LazyMotion } from 'motion/react'
 import { type ChangeEvent, type CSSProperties, type FC, memo, useId, useState } from 'react'
 
+import useTrans from '~/hooks/useTrans'
+
 import Bucket from './Bucket'
 import Face from './Face'
-import { getMoodLabel, normalizeScore } from './helper'
+import { darkenColor, getMood, getMoodLabel, normalizeScore } from './helper'
 import { DEFAULT_DISTRIBUTION, DEFAULT_FEEDBACK_VALUE } from './model'
 import useSalon from './salon'
 import type { TFeedbackBucket } from './spec'
@@ -38,12 +40,15 @@ const FeedbackSpectrum: FC<TProps> = ({
   onCommit,
 }) => {
   const s = useSalon()
+  const { t } = useTrans()
   const reactId = useId()
   const inputId = `${reactId}-input`
   const labelId = `${reactId}-label`
   const [innerValue, setInnerValue] = useState(DEFAULT_FEEDBACK_VALUE)
   const [active, setActive] = useState(false)
   const score = normalizeScore(value ?? innerValue)
+  const mood = getMood(score)
+  const glowColor = darkenColor(mood.color)
   const moodLabel = getMoodLabel(score)
 
   const updateValue = (nextValue: number) => {
@@ -64,7 +69,7 @@ const FeedbackSpectrum: FC<TProps> = ({
       <div className={s.wrapper}>
         <div className={s.head}>
           <label id={labelId} className={s.title} htmlFor={inputId}>
-            文档满意度
+            {t('dsb.cms.docs.feedback.title')}
           </label>
         </div>
 
@@ -73,6 +78,12 @@ const FeedbackSpectrum: FC<TProps> = ({
             <div className={s.trackWrap}>
               <div className={s.track} style={TRACK_STYLE} aria-hidden='true'>
                 <div className={s.trackShade} style={TRACK_SHADE_STYLE} />
+                <div className={s.glowClip} style={TRACK_STYLE}>
+                  <div
+                    className={s.handleGlow}
+                    style={{ left: `${score}%`, backgroundColor: glowColor }}
+                  />
+                </div>
                 {distribution.map((bucket) => (
                   <Bucket key={bucket.id} bucket={bucket} />
                 ))}
@@ -103,14 +114,6 @@ const FeedbackSpectrum: FC<TProps> = ({
             />
           </div>
         </LazyMotion>
-
-        <div className={s.footer}>
-          <div className={s.value}>
-            我的评分
-            <strong className={s.score}>{score}</strong>
-          </div>
-          <div className={s.hint}>{moodLabel}</div>
-        </div>
       </div>
     </section>
   )

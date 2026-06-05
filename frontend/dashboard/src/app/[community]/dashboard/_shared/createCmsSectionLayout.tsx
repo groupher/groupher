@@ -3,10 +3,12 @@
 import type { ReactNode } from 'react'
 
 import { DSB_COVERS } from '~/const/route'
+import { cnMerge } from '~/css'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useTrans from '~/hooks/useTrans'
 import { mockUsers } from '~/mock'
 import type { TCrumbConfig, TTransKey } from '~/spec'
+import useDashboardStore from '~/stores/dashboard/hooks'
 import AdminList from '~/unit/DashboardThread/AdminList'
 import Portal from '~/unit/DashboardThread/Portal'
 
@@ -20,6 +22,8 @@ type TCmsSectionLayoutConfig = {
   title: TTransKey
   withDivider?: boolean
 }
+
+const SECTION_BODY_GAP = 'mt-5'
 
 export default function createCmsSectionLayout({
   crumbTitle,
@@ -41,19 +45,25 @@ export default function createCmsSectionLayout({
   return function DashboardCmsSectionLayout({ children }: { children: ReactNode }) {
     const { t } = useTrans()
     const crumbItems = useDsbCrumbItems(crumbConfig)
+    const { submenuCollapsed } = useDashboardStore()
     const adminList = showAdmins ? mockUsers(4) : null
+    const hasBreadcrumbs = !submenuCollapsed && crumbItems.length > 0
+    const hasPortalContent = hasBreadcrumbs || !hideTitle || !!desc || withDivider
+    const sectionBodyClass = cnMerge('w-full', hasPortalContent && !withDivider && SECTION_BODY_GAP)
 
     return (
       <>
-        <Portal
-          title={t(title)}
-          desc={desc ? t(desc) : undefined}
-          hideTitle={hideTitle}
-          crumbItems={crumbItems}
-          addon={adminList ? <AdminList userList={adminList} /> : undefined}
-          withDivider={withDivider}
-        />
-        {children}
+        {hasPortalContent && (
+          <Portal
+            title={t(title)}
+            desc={desc ? t(desc) : undefined}
+            hideTitle={hideTitle}
+            crumbItems={crumbItems}
+            addon={adminList ? <AdminList userList={adminList} /> : undefined}
+            withDivider={withDivider}
+          />
+        )}
+        <div className={sectionBodyClass}>{children}</div>
       </>
     )
   }

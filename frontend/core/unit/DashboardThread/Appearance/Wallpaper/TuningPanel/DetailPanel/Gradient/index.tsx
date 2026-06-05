@@ -12,6 +12,7 @@ import {
 } from '~/lib/wallpaperMesh'
 import type { TColorName } from '~/spec'
 import ColorSelector from '~/widgets/ColorSelector'
+import FocalPointControl, { type TPoint } from '~/widgets/FocalPointControl'
 import RangeInput from '~/widgets/RangeInput'
 
 import useSalon from '../../../salon/tuning_panel/detail_panel/gradient'
@@ -19,7 +20,6 @@ import useLogic from '../../../useLogic'
 import AngleWheel from '../AngleWheel'
 import GroupItem from '../GroupItem'
 import GroupTitle from '../GroupTitle'
-import FocalPointControl, { type TCenter } from './FocalPointControl'
 import {
   applyGradientSpreadValue,
   buildColorChips,
@@ -82,7 +82,7 @@ export default function Gradient({ gradient, canUseAngle }: Props) {
     if (!activeGradient || renderer === activeGradient.renderer) return
     changeGradientRenderer(renderer)
   }
-  const updateFocalPoint = (center: TCenter): void => {
+  const updateFocalPoint = (center: TPoint): void => {
     if (!activeGradient || activeGradient.renderer !== GRADIENT_RENDERER.RADIAL) return
 
     const nextGradient = {
@@ -163,7 +163,7 @@ export default function Gradient({ gradient, canUseAngle }: Props) {
         {activeGradient.renderer === GRADIENT_RENDERER.RADIAL && (
           <GroupItem label={t('dsb.appearance.wallpaper.editor.focal_point')} align='start'>
             <FocalPointControl
-              center={activeGradient.center}
+              value={activeGradient.center}
               label={t('dsb.appearance.wallpaper.editor.focal_point')}
               onChange={updateFocalPoint}
               onCommit={flushWallpaperDraft}

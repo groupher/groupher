@@ -6,7 +6,7 @@ export default function useSalon() {
   const { cn, fg, bg, br, hover, primary } = useTwBelt()
 
   return {
-    wrapper: cn('relative column h-full w-14 min-w-14 items-start smoky-40', fg('digest')),
+    wrapper: cn('relative column h-full w-14 min-w-14 items-start smoky-40 -mt-1', fg('digest')),
     menu: 'column items-center w-14 -mt-1.5',
     group: cn('column items-center gap-1.5 w-full py-2 border-b last:border-b-0', br('divider')),
     item: cn(

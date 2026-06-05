@@ -1,26 +1,33 @@
 import { type KeyboardEvent, type PointerEvent, useEffect, useRef, useState } from 'react'
 
-import useSalon from '../../../salon/tuning_panel/detail_panel/focal_point_control'
+import useSalon, { cn } from './salon'
 
-export type TCenter = { x: number; y: number }
+export type TPoint = { x: number; y: number }
 
-type Props = {
-  center: TCenter
+type TProps = {
+  value: TPoint
   label: string
-  onChange: (center: TCenter) => void
-  onCommit: () => void
+  disabled?: boolean
+  onChange: (center: TPoint) => void
+  onCommit?: () => void
 }
 
 const clamp01 = (value: number): number => Math.min(1, Math.max(0, value))
 
-export default function FocalPointControl({ center, label, onChange, onCommit }: Props) {
+export default function FocalPointControl({
+  value,
+  label,
+  disabled = false,
+  onChange,
+  onCommit,
+}: TProps) {
   const panelRef = useRef<HTMLButtonElement | null>(null)
-  const [draftCenter, setDraftCenter] = useState(center)
+  const [draftCenter, setDraftCenter] = useState(value)
   const s = useSalon()
 
   useEffect(() => {
-    setDraftCenter(center)
-  }, [center])
+    setDraftCenter(value)
+  }, [value])
 
   const updateCenter = (clientX: number, clientY: number): void => {
     const rect = panelRef.current?.getBoundingClientRect()
@@ -36,23 +43,32 @@ export default function FocalPointControl({ center, label, onChange, onCommit }:
   }
 
   const handlePointerDown = (event: PointerEvent<HTMLButtonElement>): void => {
+    if (disabled) return
+
     event.preventDefault()
     event.currentTarget.focus()
     event.currentTarget.setPointerCapture(event.pointerId)
     updateCenter(event.clientX, event.clientY)
   }
+
   const handlePointerMove = (event: PointerEvent<HTMLButtonElement>): void => {
-    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
+    if (disabled || !event.currentTarget.hasPointerCapture(event.pointerId)) return
     updateCenter(event.clientX, event.clientY)
   }
+
   const handlePointerUp = (event: PointerEvent<HTMLButtonElement>): void => {
+    if (disabled) return
+
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       updateCenter(event.clientX, event.clientY)
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
-    onCommit()
+    onCommit?.()
   }
+
   const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>): void => {
+    if (disabled) return
+
     const delta = 0.03
     const nextCenter = {
       x: draftCenter.x,
@@ -68,8 +84,9 @@ export default function FocalPointControl({ center, label, onChange, onCommit }:
     event.preventDefault()
     setDraftCenter(nextCenter)
     onChange(nextCenter)
-    onCommit()
+    onCommit?.()
   }
+
   const xValue = Math.round(draftCenter.x * 100)
   const yValue = Math.round(draftCenter.y * 100)
 
@@ -77,13 +94,14 @@ export default function FocalPointControl({ center, label, onChange, onCommit }:
     <button
       type='button'
       ref={panelRef}
-      className={s.focalPoint}
+      className={cn(s.focalPoint, disabled && s.focalPointDisabled)}
       role='slider'
       aria-label={label}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={xValue}
       aria-valuetext={`${label}: X ${xValue}%, Y ${yValue}%`}
+      aria-disabled={disabled}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}

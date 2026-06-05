@@ -2,7 +2,7 @@ import { m } from 'motion/react'
 import type { FC } from 'react'
 
 import { normalizeScore } from './helper'
-import useSalon from './salon'
+import useSalon from './salon/bucket'
 import type { TFeedbackBucket } from './spec'
 
 type TProps = {
@@ -16,7 +16,7 @@ const Bucket: FC<TProps> = ({ bucket }) => {
 
   return (
     <m.div
-      className={s.bucket}
+      className={s.wrapper}
       style={{
         left: `${score}%`,
         backgroundColor: `hsl(${Math.round((score / 100) * 120)}, 58%, 54%)`,

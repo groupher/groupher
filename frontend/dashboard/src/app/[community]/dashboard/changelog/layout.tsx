@@ -1,11 +1,11 @@
 'use client'
 
-import useSalon, { cnMerge } from '~/unit/DashboardThread/salon'
+import type { ReactNode } from 'react'
 
-const DashboardPostPage = ({ children }) => {
-  const s = useSalon()
+import SubMenuContentLayout from '../_shared/SubMenuContentLayout'
 
-  return <div className={cnMerge(s.content, 'w-full pl-10')}>{children}</div>
+const DashboardChangelogPage = ({ children }: { children: ReactNode }) => {
+  return <SubMenuContentLayout>{children}</SubMenuContentLayout>
 }
 
-export default DashboardPostPage
+export default DashboardChangelogPage

@@ -29,6 +29,12 @@ const mixColor = (from: string, to: string, ratio: number): string => {
   return rgbToHex([mix(a[0], b[0], ratio), mix(a[1], b[1], ratio), mix(a[2], b[2], ratio)])
 }
 
+export const darkenColor = (hex: string, ratio = 0.72): string => {
+  const [r, g, b] = hexToRgb(hex)
+
+  return rgbToHex([r * ratio, g * ratio, b * ratio])
+}
+
 export const normalizeScore = (score: number): number => clamp(score, 0, 100)
 
 export const getMood = (score: number): TFeedbackMood => {

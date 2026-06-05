@@ -2,7 +2,7 @@ import { m } from 'motion/react'
 import type { FC } from 'react'
 
 import { getMood, normalizeScore } from './helper'
-import useSalon from './salon'
+import useSalon from './salon/face'
 
 type TProps = {
   score: number
@@ -30,7 +30,7 @@ const Face: FC<TProps> = ({ score, active }) => {
 
   return (
     <m.div
-      className={s.handle}
+      className={s.wrapper}
       style={{ left: `${safeScore}%` }}
       initial={false}
       animate={{ scale: active ? 1.04 : 1 }}
