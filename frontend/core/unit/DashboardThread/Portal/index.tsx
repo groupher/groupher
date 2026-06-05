@@ -1,6 +1,7 @@
 import type { FC, ReactNode } from 'react'
 
 import type { TBreadcrumbItem, TSpace } from '~/spec'
+import useDashboardStore from '~/stores/dashboard/hooks'
 import Breadcrumbs from '~/widgets/Breadcrumbs'
 
 import useSalon from './salon'
@@ -28,10 +29,11 @@ const Portal: FC<TProps> = ({
   ...spacing
 }) => {
   const s = useSalon({ ...spacing })
+  const { submenuCollapsed } = useDashboardStore()
 
   return (
     <div className={s.wrapper}>
-      {crumbItems?.length ? <Breadcrumbs items={crumbItems} /> : null}
+      {!submenuCollapsed && crumbItems?.length ? <Breadcrumbs items={crumbItems} /> : null}
 
       {!hideTitle && (
         <div className={s.header}>

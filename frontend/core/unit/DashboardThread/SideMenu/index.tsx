@@ -2,10 +2,11 @@
 
 import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
 import { keys } from 'ramda'
-import { useEffect, useReducer, useState } from 'react'
+import { useEffect, useReducer } from 'react'
 
 import useDsbTab from '~/hooks/useDsbTab'
 import type { TDsbPath } from '~/spec'
+import useDashboardStore from '~/stores/dashboard/hooks'
 import Sticky from '~/widgets/Sticky'
 
 import { MENU, MENU_VIEW } from '../constant'
@@ -88,11 +89,11 @@ const sideMenuReducer = (state: TSideMenuState, action: TSideMenuAction): TSideM
 
 export default function SideMenu() {
   const { mainTab } = useDsbTab()
+  const { commit, submenuCollapsed } = useDashboardStore()
   const groupKeys = keys(MENU)
   const resolvedMenuView =
     SUBMENU_ROUTE_VIEW[mainTab as keyof typeof SUBMENU_ROUTE_VIEW] ?? MENU_VIEW.MAIN
   const [state, dispatch] = useReducer(sideMenuReducer, resolvedMenuView, createInitialState)
-  const [submenuCollapsed, setSubmenuCollapsed] = useState(false)
   const { direction, optimisticMainTab, optimisticMenuView, optimisticSubTab, returnToByView } =
     state
   const menuView = optimisticMenuView ?? resolvedMenuView
@@ -102,8 +103,8 @@ export default function SideMenu() {
   const activeMainTab = (optimisticMainTab ?? mainTab) as TDsbPath
 
   useEffect(() => {
-    if (menuView === MENU_VIEW.MAIN) setSubmenuCollapsed(false)
-  }, [menuView])
+    if (menuView === MENU_VIEW.MAIN) commit({ submenuCollapsed: false })
+  }, [commit, menuView])
 
   useEffect(() => {
     // Once the router catches up, pathname becomes the source of truth again.
@@ -145,14 +146,14 @@ export default function SideMenu() {
                 <Collapsed
                   activeSlug={optimisticSubTab}
                   className={s.collapsedRail}
-                  onExpand={() => setSubmenuCollapsed(false)}
+                  onExpand={() => commit({ submenuCollapsed: false })}
                   view={menuView as TSubmenuView}
                   {...submenuConfig}
                 />
               ) : (
                 <SubMenu
                   activeSlug={optimisticSubTab}
-                  onCollapse={() => setSubmenuCollapsed(true)}
+                  onCollapse={() => commit({ submenuCollapsed: true })}
                   returnTo={returnToByView[menuView] ?? null}
                   {...submenuConfig}
                 />
@@ -170,7 +171,7 @@ export default function SideMenu() {
 
   return (
     <div className={s.wrapper}>
-      <Sticky offsetTop={36}>{menuContent}</Sticky>
+      <Sticky offsetTop={collapsed ? 0 : 36}>{menuContent}</Sticky>
     </div>
   )
 }
