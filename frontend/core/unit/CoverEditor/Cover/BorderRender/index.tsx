@@ -1,8 +1,8 @@
 import { useId, useMemo } from 'react'
 
-import { BORDER_HIGHLIGHT_STROKE_COLOR } from '../constant'
-import type { TBorderHighlight, TImageRadio, TImageSize } from '../spec'
-import { getBorderHighlightGeometry } from './borderHighlightGeometry'
+import { BORDER_HIGHLIGHT_STROKE_COLOR } from '../../constant'
+import type { TBorderHighlight, TImageRadio, TImageSize } from '../../spec'
+import { getBorderRenderGeometry } from './helper'
 
 type TProps = {
   borderRadius: string
@@ -14,7 +14,7 @@ type TProps = {
 
 const CLIP_ID_PREFIX = 'cover-border-clip'
 
-export default function BorderHighlight({
+export default function BorderRender({
   borderRadius,
   borderHighlight,
   className,
@@ -25,7 +25,7 @@ export default function BorderHighlight({
   const geometry = useMemo(() => {
     if (!borderHighlight.enabled) return null
 
-    return getBorderHighlightGeometry({
+    return getBorderRenderGeometry({
       borderRadius,
       borderHighlight,
       ratio,

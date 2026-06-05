@@ -10,17 +10,18 @@ import {
   IMAGE_SIZE_RANGE,
   SETTING_LEVEL,
 } from '../constant'
-import useSalon from '../salon/cover'
 import useLogic from '../useLogic'
-import BorderHighlight from './BorderHighlight'
+import BorderRender from './BorderRender'
 import Placeholder from './Placeholder'
+import useSalon from './salon'
 
 type TProps = {
   imageUrl: string
+  onDropFile: (file: File) => void
   onUpload: () => void
 }
 
-const Cover: FC<TProps> = ({ imageUrl, onUpload }) => {
+const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
   const { imageLoadedOnChange, tuningSetting: setting } = useLogic()
   const {
     ratio,
@@ -54,7 +55,7 @@ const Cover: FC<TProps> = ({ imageUrl, onUpload }) => {
   if (!hasImage) {
     return (
       <div className={s.wrapper} style={s.wrapperStyle}>
-        <Placeholder onUpload={onUpload} />
+        <Placeholder onDropFile={onDropFile} onUpload={onUpload} />
       </div>
     )
   }
@@ -108,7 +109,7 @@ const Cover: FC<TProps> = ({ imageUrl, onUpload }) => {
                 onLoad={() => imageLoadedOnChange(imageUrl)}
               />
             </div>
-            <BorderHighlight
+            <BorderRender
               className={s.borderHighlight}
               borderRadius={IMAGE_BORDER_RADIUS[borderRadiusLevel]}
               borderHighlight={borderHighlight}

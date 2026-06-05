@@ -1,4 +1,7 @@
 export default {
+  'cover_editor.placeholder.action': '拖拽图片到此处，或点击上传',
+  'cover_editor.placeholder.theme_desc': '浅色/深色主题可分别设置不同封面。',
+  'cover_editor.placeholder.ratio_desc': '推荐使用 16:9 比例。',
   'dsb.info.basic': '常规信息',
   'dsb.info.logo': 'Logo',
   'dsb.info.social': '社交媒体',
@@ -481,6 +484,7 @@ export default {
   'dsb.cms.faq.editor.body_placeholder': '内容 (支持 Markdown 语法)',
   'dsb.cms.faq.block.edit': '编辑',
   'dsb.cms.faq.block.delete': '删除',
+  'dsb.cms.docs.feedback.title': '这篇文档对你有帮助吗？',
   'dsb.cms.docs.tree.note.title': '操作提示',
   'dsb.cms.docs.tree.note.item.sort': '可通过拖拽改变文档或目录顺序。',
   'dsb.cms.docs.tree.note.item.navigate': '可通过键盘导航到任意文档。',

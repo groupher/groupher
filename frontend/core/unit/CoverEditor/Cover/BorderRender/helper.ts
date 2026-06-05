@@ -1,5 +1,5 @@
-import { IMAGE_CONTAINER_SIZE, IMAGE_RATIO_SIZE } from '../constant'
-import type { TBorderHighlight, TImageRadio, TImageSize } from '../spec'
+import { IMAGE_CONTAINER_SIZE, IMAGE_RATIO_SIZE } from '../../constant'
+import type { TBorderHighlight, TImageRadio, TImageSize } from '../../spec'
 
 type TPoint = {
   x: number
@@ -15,7 +15,7 @@ type TRoundedRect = TRect & {
   radius: number
 }
 
-export type TBorderHighlightSegment = {
+export type TBorderRenderSegment = {
   path: string
   width: number
 }
@@ -27,9 +27,9 @@ type TGeometryParams = {
   size: TImageSize
 }
 
-export type TBorderHighlightGeometry = {
+export type TBorderRenderGeometry = {
   clipPath: string
-  segments: TBorderHighlightSegment[]
+  segments: TBorderRenderSegment[]
   viewBox: string
 }
 
@@ -371,7 +371,7 @@ const getSampleDistances = (
 const getStrokeSegments = (
   rect: TRoundedRect,
   borderHighlight: TBorderHighlight,
-): TBorderHighlightSegment[] => {
+): TBorderRenderSegment[] => {
   const perimeter = getMetrics(rect).perimeter
   const segmentLength = perimeter * clamp01(borderHighlight.length)
   const centerDistance = getBorderPointProgress(borderHighlight.angle, rect) * perimeter
@@ -437,12 +437,12 @@ const getOutsideClipPath = (rect: TRoundedRect): string => {
 
 // Generates the outer-only SVG stroke for the free border control.
 // Example: angle=45 and length=0.28 draws a tapered highlight centered near top-right.
-export const getBorderHighlightGeometry = ({
+export const getBorderRenderGeometry = ({
   borderRadius,
   borderHighlight,
   ratio,
   size,
-}: TGeometryParams): TBorderHighlightGeometry => {
+}: TGeometryParams): TBorderRenderGeometry => {
   const rect = getRoundedRect(ratio, borderRadius, size)
 
   return {

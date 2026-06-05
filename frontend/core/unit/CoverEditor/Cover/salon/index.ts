@@ -1,7 +1,7 @@
 import { pixelAdd } from '~/dom'
 import useTwBelt from '~/hooks/useTwBelt'
 
-import { getImagePlacement, getImageSize, getResponsiveImageSize } from '../metric'
+import { getImagePlacement, getImageSize, getResponsiveImageSize } from '../../salon/metric'
 
 export default function useSalon() {
   const { cn } = useTwBelt()

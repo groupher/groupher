@@ -30,10 +30,7 @@ const CoverEditor: FC<TProps> = ({ onDelete = console.log, onReplace = console.l
     objectUrlRef.current = ''
   }
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-
+  const setLocalImageFile = (file: File | undefined): void => {
     if (!file) return
 
     revokeObjectUrl()
@@ -42,6 +39,11 @@ const CoverEditor: FC<TProps> = ({ onDelete = console.log, onReplace = console.l
     const nextImageUrl = URL.createObjectURL(file)
     objectUrlRef.current = nextImageUrl
     setImageUrl(nextImageUrl)
+  }
+
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    setLocalImageFile(event.target.files?.[0])
+    event.target.value = ''
   }
 
   const handleDelete = (): void => {
@@ -61,7 +63,7 @@ const CoverEditor: FC<TProps> = ({ onDelete = console.log, onReplace = console.l
         accept='image/*'
         onChange={handleFileChange}
       />
-      <Cover imageUrl={imageUrl} onUpload={openFilePicker} />
+      <Cover imageUrl={imageUrl} onDropFile={setLocalImageFile} onUpload={openFilePicker} />
       {imageUrl && (
         <TuningPanel
           defaultExpanded

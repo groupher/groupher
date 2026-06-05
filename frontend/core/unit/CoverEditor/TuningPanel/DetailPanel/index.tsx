@@ -43,17 +43,15 @@ export default function DetailPanel({ setting, onDelete, onReplace, onCollapse }
 
   return (
     <div className={s.wrapper}>
-      <div className={s.themeRow}>
-        <ThemeSwitchPreview />
-      </div>
-
-      <div className={s.tabRow}>
+      <div className={s.topRow}>
         <SegmentTab
           items={TAB_ITEMS}
           activeKey={tab}
           ariaLabel='Cover settings tabs'
           onChange={(key) => setTab(key as TAB)}
         />
+
+        <ThemeSwitchPreview />
       </div>
 
       <div className={s.content}>

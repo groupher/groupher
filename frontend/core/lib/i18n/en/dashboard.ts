@@ -1,4 +1,7 @@
 export default {
+  'cover_editor.placeholder.action': 'Drag & drop or click to upload',
+  'cover_editor.placeholder.theme_desc': 'light/dark themes can use separate covers.',
+  'cover_editor.placeholder.ratio_desc': '16:9 ratio is recommended.',
   'dsb.info.basic': 'Basic info',
   'dsb.info.logo': 'Logo',
   'dsb.info.social': 'Social',
@@ -501,6 +504,7 @@ export default {
   'dsb.cms.faq.editor.body_placeholder': 'Body (Markdown supported)',
   'dsb.cms.faq.block.edit': 'Edit',
   'dsb.cms.faq.block.delete': 'Delete',
+  'dsb.cms.docs.feedback.title': 'Was this doc helpful?',
   'dsb.cms.docs.tree.note.title': 'Tips',
   'dsb.cms.docs.tree.note.item.sort': 'Drag to reorder docs or folders.',
   'dsb.cms.docs.tree.note.item.navigate': 'Use the keyboard to navigate to any doc.',
