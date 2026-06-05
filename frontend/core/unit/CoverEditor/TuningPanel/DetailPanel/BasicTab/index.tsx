@@ -41,9 +41,9 @@ export default function BasicTab({ setting }: TProps) {
           <GroupTitle>Style</GroupTitle>
 
           <div className={s.items}>
-            <Shadow shadowLevel={setting.shadowLevel} />
+            <Shadow shadow={setting.shadow} />
             <Border
-              borderRadiusLevel={setting.borderRadiusLevel}
+              borderRadius={setting.borderRadius}
               borderHighlight={setting.borderHighlight}
               hasGlassBorder={setting.hasGlassBorder}
             />

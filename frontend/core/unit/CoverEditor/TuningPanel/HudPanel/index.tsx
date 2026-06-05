@@ -6,10 +6,10 @@ import RotateSVG from '~/icons/Rotate'
 import ShadowSVG from '~/icons/Shadow'
 import { parseWallpaper } from '~/wallpaper'
 
-import { IMAGE_RATIO, IMAGE_SIZE_RANGE, SETTING_LEVEL } from '../../constant'
+import { IMAGE_RATIO, IMAGE_SIZE_RANGE } from '../../constant'
 import { getImagePlacement, getResponsiveImageSize } from '../../salon/metric'
 import type { TTuningSetting } from '../../spec'
-import { LEVEL_VALUE, RATIO_VALUE } from './constant'
+import { RATIO_VALUE } from './constant'
 import { getBorderValue, isCenterPoint } from './helper'
 import HudItem from './HudItem'
 import useSalon, { cn } from './salon'
@@ -22,7 +22,7 @@ type TProps = {
 export default function HudPanel({ setting, onExpand }: TProps) {
   const s = useSalon()
   const {
-    borderRadiusLevel,
+    borderRadius,
     borderHighlight,
     hasGlassBorder,
     hasLight,
@@ -30,13 +30,13 @@ export default function HudPanel({ setting, onExpand }: TProps) {
     position,
     ratio,
     rotate,
-    shadowLevel,
+    shadow,
     size,
     wallpaper,
     wallpapers,
   } = setting
 
-  const borderValue = getBorderValue({ borderHighlight, borderRadiusLevel, hasGlassBorder })
+  const borderValue = getBorderValue({ borderRadius, borderHighlight, hasGlassBorder })
   const frameSize = getResponsiveImageSize(size, ratio)
   const framePlacement = getImagePlacement(position, size, ratio, rotate)
 
@@ -67,17 +67,10 @@ export default function HudPanel({ setting, onExpand }: TProps) {
           icon={<ImageSizeSVG className={s.icon} />}
           value={`${Math.round(size)}%`}
         />
-        <HudItem
-          label='阴影'
-          active={shadowLevel !== SETTING_LEVEL.L1}
-          icon={<ShadowSVG className={s.icon} />}
-          value={LEVEL_VALUE[shadowLevel]}
-        />
+        <HudItem label='阴影' active={shadow > 0} icon={<ShadowSVG className={s.icon} />} />
         <HudItem
           label='边框'
-          active={
-            borderRadiusLevel !== SETTING_LEVEL.L1 || borderHighlight.enabled || hasGlassBorder
-          }
+          active={borderRadius > 0 || borderHighlight.enabled || hasGlassBorder}
           icon={<ArchSVG className={s.icon} />}
           value={borderValue}
         />

@@ -4,13 +4,12 @@ import { proxy, useSnapshot } from 'valtio'
 import { COVER_GRADIENT_WALLPAPER, GRADIENT_DIRECTION } from '~/const/wallpaper'
 import type { TWallpaper, TWallpaperGradient, TWallpaperGradientDir } from '~/spec'
 
-import { BORDER_HIGHLIGHT_DEFAULT, IMAGE_RATIO, IMAGE_SIZE_RANGE, SETTING_LEVEL } from './constant'
+import { BORDER_HIGHLIGHT_DEFAULT, IMAGE_RATIO, IMAGE_SIZE_RANGE } from './constant'
 import type {
   TBorderHighlight,
   TCoverPoint,
   TImageRadio,
   TImageSize,
-  TSettingLevel,
   TStore,
   TTuningSetting,
 } from './spec'
@@ -18,8 +17,8 @@ import type {
 type TRet = {
   imageLoadedOnChange: (imageUrl: string) => void
   positionOnChange: (position: TCoverPoint) => void
-  shadowOnChange: (shadowLevel: TSettingLevel) => void
-  borderRadiusOnChange: (borderRadiusLevel: TSettingLevel) => void
+  shadowOnChange: (shadow: number) => void
+  borderRadiusOnChange: (borderRadius: number) => void
   borderHighlightOnChange: (borderHighlight: Partial<TBorderHighlight>) => void
   wallpaperOnChange: (wallpaper: string) => void
   gradientDirOnChange: (direction: TWallpaperGradientDir) => void
@@ -38,8 +37,8 @@ const LOADED_IMAGE_DEFAULT_SETTING: Partial<TStore> = {
   ratio: IMAGE_RATIO.SCREEN,
   rotate: 0,
   position: { x: 0.5, y: 0.5 },
-  shadowLevel: SETTING_LEVEL.L1,
-  borderRadiusLevel: SETTING_LEVEL.L1,
+  shadow: 0,
+  borderRadius: 0,
   borderHighlight: {
     enabled: BORDER_HIGHLIGHT_DEFAULT.ENABLED,
     angle: BORDER_HIGHLIGHT_DEFAULT.ANGLE,
@@ -55,8 +54,8 @@ const store = proxy<TStore>({
   position: { x: 0.5, y: 0.5 },
   lightCenter: { x: 0.5, y: 0.5 },
   hasLight: false,
-  shadowLevel: SETTING_LEVEL.L1,
-  borderRadiusLevel: SETTING_LEVEL.L1,
+  shadow: 0,
+  borderRadius: 0,
   borderHighlight: {
     enabled: BORDER_HIGHLIGHT_DEFAULT.ENABLED,
     angle: BORDER_HIGHLIGHT_DEFAULT.ANGLE,
@@ -94,8 +93,8 @@ const store = proxy<TStore>({
       position,
       lightCenter,
       hasLight,
-      shadowLevel,
-      borderRadiusLevel,
+      shadow,
+      borderRadius,
       borderHighlight,
       wallpaper,
       gradientWallpapers,
@@ -110,8 +109,8 @@ const store = proxy<TStore>({
       position,
       lightCenter,
       hasLight,
-      shadowLevel: shadowLevel as TSettingLevel,
-      borderRadiusLevel: borderRadiusLevel as TSettingLevel,
+      shadow,
+      borderRadius,
       borderHighlight,
       wallpapers: gradientWallpapers,
       wallpaper,
@@ -143,9 +142,8 @@ export default function useLogic(): TRet {
   }
 
   const positionOnChange = (position: TCoverPoint): void => snap.commit({ position })
-  const shadowOnChange = (shadowLevel: TSettingLevel): void => snap.commit({ shadowLevel })
-  const borderRadiusOnChange = (borderRadiusLevel: TSettingLevel): void =>
-    snap.commit({ borderRadiusLevel })
+  const shadowOnChange = (shadow: number): void => snap.commit({ shadow })
+  const borderRadiusOnChange = (borderRadius: number): void => snap.commit({ borderRadius })
   const borderHighlightOnChange = (borderHighlight: Partial<TBorderHighlight>): void =>
     snap.commit({ borderHighlight: { ...snap.borderHighlight, ...borderHighlight } })
   const wallpaperOnChange = (wallpaper: string): void => snap.commit({ wallpaper })

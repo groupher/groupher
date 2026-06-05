@@ -3,13 +3,8 @@ import type { CSSProperties, FC } from 'react'
 
 import { parseWallpaper } from '~/wallpaper'
 
-import {
-  IMAGE_BORDER_RADIUS,
-  IMAGE_RATIO,
-  IMAGE_SHADOW,
-  IMAGE_SIZE_RANGE,
-  SETTING_LEVEL,
-} from '../constant'
+import { IMAGE_RATIO, IMAGE_SIZE_RANGE } from '../constant'
+import { getImageShadow } from '../helper'
 import useLogic from '../useLogic'
 import BorderRender from './BorderRender'
 import Placeholder from './Placeholder'
@@ -26,9 +21,9 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
   const {
     ratio,
     size,
-    shadowLevel,
+    shadow,
     hasGlassBorder,
-    borderRadiusLevel,
+    borderRadius,
     borderHighlight,
     hasLight,
     lightCenter,
@@ -42,10 +37,10 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
   const hasImage = !isEmpty(imageUrl)
   const imageFrameSize = s.getResponsiveImageSize(size, ratio)
   const imagePlacement = s.getImagePlacement(position, size, ratio, rotate)
-  const hasShadow = shadowLevel !== SETTING_LEVEL.L1
   const hasWallpaper = !isEmpty(wallpaper)
   const isFullFrame = size === IMAGE_SIZE_RANGE.MAX && ratio === IMAGE_RATIO.SCREEN && rotate === 0
   const shouldShowTransparentGrid = !hasWallpaper && !isFullFrame
+  const borderRadiusValue = `${borderRadius}px`
   const wrapperBackgroundStyle: CSSProperties = hasWallpaper
     ? { backgroundImage: parseWallpaper(wallpapers, wallpaper).background }
     : shouldShowTransparentGrid
@@ -61,7 +56,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
   }
 
   const imageFrameStyle: CSSProperties = {
-    borderRadius: s.pixelAdd(IMAGE_BORDER_RADIUS[borderRadiusLevel], 5),
+    borderRadius: s.pixelAdd(borderRadiusValue, 5),
     width: imageFrameSize.width,
     height: imageFrameSize.height,
     left: imagePlacement.left,
@@ -76,8 +71,8 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
 
   const cropViewportStyle: CSSProperties = {
     boxSizing: 'border-box',
-    boxShadow: hasShadow ? IMAGE_SHADOW[shadowLevel] : undefined,
-    borderRadius: IMAGE_BORDER_RADIUS[borderRadiusLevel],
+    boxShadow: getImageShadow(shadow),
+    borderRadius: borderRadiusValue,
   }
 
   const lightStyle: CSSProperties = {
@@ -111,7 +106,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
             </div>
             <BorderRender
               className={s.borderHighlight}
-              borderRadius={IMAGE_BORDER_RADIUS[borderRadiusLevel]}
+              borderRadius={borderRadiusValue}
               borderHighlight={borderHighlight}
               ratio={ratio}
               size={size}

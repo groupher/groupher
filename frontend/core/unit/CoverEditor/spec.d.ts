@@ -1,6 +1,6 @@
 import type { TConstValues, TWallpaper, TWallpaperGradientDir } from '~/spec'
 
-import type { IMAGE_POS, IMAGE_RATIO, SETTING_LEVEL } from './constant'
+import type { IMAGE_POS, IMAGE_RATIO } from './constant'
 
 export type TCoverPoint = {
   x: number
@@ -17,8 +17,8 @@ export type TStore = {
   position: TCoverPoint
   lightCenter: TCoverPoint
   hasLight: boolean
-  shadowLevel: TSettingLevel
-  borderRadiusLevel: TSettingLevel
+  shadow: number
+  borderRadius: number
   borderHighlight: TBorderHighlight
   size: TImageSize
   ratio: TImageRadio
@@ -44,7 +44,6 @@ export type TImageSizeValue = {
   width: string
 }
 
-export type TSettingLevel = TConstValues<typeof SETTING_LEVEL>
 export type TImageSize = number
 export type TImageRadio = TConstValues<typeof IMAGE_RATIO>
 export type TImageRotate = string
@@ -53,8 +52,8 @@ export type TTuningSetting = {
   position: TCoverPoint
   lightCenter: TCoverPoint
   hasLight: boolean
-  shadowLevel: TSettingLevel
-  borderRadiusLevel: TSettingLevel
+  shadow: number
+  borderRadius: number
   borderHighlight: TBorderHighlight
   wallpapers: Record<string, TWallpaper>
   wallpaper: string

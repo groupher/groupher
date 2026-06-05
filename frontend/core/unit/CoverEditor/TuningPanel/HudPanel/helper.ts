@@ -1,6 +1,4 @@
-import { SETTING_LEVEL } from '../../constant'
 import type { TCoverPoint, TTuningSetting } from '../../spec'
-import { LEVEL_VALUE } from './constant'
 
 const CENTER_POINT_THRESHOLD = 0.001
 
@@ -9,12 +7,12 @@ export const isCenterPoint = (point: TCoverPoint): boolean =>
   Math.abs(point.y - 0.5) < CENTER_POINT_THRESHOLD
 
 export const getBorderValue = ({
+  borderRadius,
   borderHighlight,
-  borderRadiusLevel,
   hasGlassBorder,
-}: Pick<TTuningSetting, 'borderHighlight' | 'borderRadiusLevel' | 'hasGlassBorder'>): string => {
+}: Pick<TTuningSetting, 'borderHighlight' | 'borderRadius' | 'hasGlassBorder'>): string => {
   const value = [
-    borderRadiusLevel !== SETTING_LEVEL.L1 ? `R${LEVEL_VALUE[borderRadiusLevel]}` : '',
+    borderRadius > 0 ? '角' : '',
     borderHighlight.enabled ? '光' : '',
     hasGlassBorder ? '框' : '',
   ]

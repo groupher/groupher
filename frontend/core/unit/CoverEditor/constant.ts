@@ -1,5 +1,3 @@
-import type { TSettingLevel } from './spec'
-
 // default size it's based on ratio 16:9
 export const IMAGE_CONTAINER_SIZE = {
   WIDTH: '710px', // 16:9
@@ -19,25 +17,19 @@ export const IMAGE_POS = {
   NONE: 'none',
 } as const
 
-export const SETTING_LEVEL = {
-  L1: 'L1',
-  L2: 'L2',
-  L3: 'L3',
-  L4: 'L4',
-  L5: 'L5',
+export const IMAGE_SHADOW_RANGE = {
+  MIN: 0,
+  MAX: 100,
 } as const
-
-export const IMAGE_SHADOW = {
-  L1: 'none',
-  L2: 'rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px', // @9
-  L3: 'rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-  L4: 'rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.04) 0px 10px 10px -5px',
-  L5: 'rgba(0, 0, 0, 0.25) 0px 25px 50px -12px',
-} as Record<TSettingLevel, string>
 
 export const IMAGE_SIZE_RANGE = {
   MIN: 50,
   MAX: 100,
+} as const
+
+export const IMAGE_BORDER_RADIUS_RANGE = {
+  MIN: 0,
+  MAX: 40,
 } as const
 
 export const IMAGE_RATIO = {
@@ -45,14 +37,6 @@ export const IMAGE_RATIO = {
   TV: 'tv',
   SCREEN: 'screen',
 } as const
-
-export const IMAGE_BORDER_RADIUS = {
-  L1: '0',
-  L2: '8px',
-  L3: '18px',
-  L4: '15px',
-  L5: '20px',
-} as Record<TSettingLevel, string>
 
 export const BORDER_HIGHLIGHT_DEFAULT = {
   ENABLED: false,
