@@ -1,11 +1,11 @@
 import RangeInput from '~/widgets/RangeInput'
-import Radio from '~/widgets/Switcher/Radio'
 
 import { IMAGE_BORDER_RADIUS_RANGE } from '../../../../constant'
 import type { TBorderHighlight } from '../../../../spec'
 import useLogic from '../../../../useLogic'
 import GroupItem from '../../GroupItem'
 import Controller from './Controller'
+import GlassFrameControl from './GlassFrameControl'
 import useSalon from './salon'
 
 type TProps = {
@@ -42,23 +42,9 @@ export default function Border({ borderRadius, borderHighlight, hasGlassBorder }
         </GroupItem>
 
         <GroupItem label='Frame'>
-          <Radio
-            size='small'
-            top={-0.5}
-            left={-0.5}
-            items={[
-              {
-                value: 'On',
-                key: true,
-              },
-              {
-                value: 'Off',
-                key: false,
-                dimOnActive: true,
-              },
-            ]}
-            activeKey={hasGlassBorder}
-            onChange={(item) => glassBorderOnChange(item.key as boolean)}
+          <GlassFrameControl
+            enabled={hasGlassBorder}
+            onToggle={() => glassBorderOnChange(!hasGlassBorder)}
           />
         </GroupItem>
       </div>
