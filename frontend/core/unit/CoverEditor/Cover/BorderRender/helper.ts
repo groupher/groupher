@@ -20,9 +20,15 @@ export type TBorderRenderSegment = {
   width: number
 }
 
+export type TBorderFramePadding = {
+  x: number
+  y: number
+}
+
 type TGeometryParams = {
   borderRadius: string
   borderHighlight: TBorderHighlight
+  framePadding?: TBorderFramePadding
   ratio: TImageRadio
   size: TImageSize
 }
@@ -60,19 +66,52 @@ const getRatioValue = (ratio: TImageRadio): number => {
   return Number.parseFloat(ratioSize.width) / Number.parseFloat(ratioSize.height)
 }
 
-const getSvgRadius = (borderRadius: string, size: TImageSize): number => {
+const getFramePadding = (framePadding?: TBorderFramePadding): TBorderFramePadding => ({
+  x: Math.max(0, framePadding?.x ?? 0),
+  y: Math.max(0, framePadding?.y ?? 0),
+})
+
+const getImageHeight = (size: TImageSize): number => {
+  const baseHeight = Number.parseFloat(IMAGE_CONTAINER_SIZE.HEIGHT)
+
+  return baseHeight * (Math.max(1, size) / 100)
+}
+
+const getRenderSize = (
+  ratio: TImageRadio,
+  size: TImageSize,
+  framePadding?: TBorderFramePadding,
+): { width: number; height: number } => {
+  const padding = getFramePadding(framePadding)
+  const imageHeight = getImageHeight(size)
+  const imageWidth = imageHeight * getRatioValue(ratio)
+
+  return {
+    width: imageWidth + padding.x * 2,
+    height: imageHeight + padding.y * 2,
+  }
+}
+
+const getSvgRadius = (
+  borderRadius: string,
+  ratio: TImageRadio,
+  size: TImageSize,
+  framePadding?: TBorderFramePadding,
+): number => {
   const radius = Number.parseFloat(borderRadius)
 
   if (Number.isNaN(radius)) return 0
 
-  const baseHeight = Number.parseFloat(IMAGE_CONTAINER_SIZE.HEIGHT)
-  const imageHeight = baseHeight * (Math.max(1, size) / 100)
-
-  return (radius / imageHeight) * VIEWBOX.HEIGHT
+  return (radius / getRenderSize(ratio, size, framePadding).height) * VIEWBOX.HEIGHT
 }
 
-const getEdgeRect = (ratio: TImageRadio): TRect => {
-  const width = VIEWBOX.HEIGHT * getRatioValue(ratio)
+const getEdgeRect = (
+  ratio: TImageRadio,
+  size: TImageSize,
+  framePadding?: TBorderFramePadding,
+): TRect => {
+  const renderSize = getRenderSize(ratio, size, framePadding)
+  const width = VIEWBOX.HEIGHT * (renderSize.width / renderSize.height)
 
   return {
     x: 0,
@@ -86,9 +125,14 @@ const getRoundedRect = (
   ratio: TImageRadio,
   borderRadius: string,
   size: TImageSize,
+  framePadding?: TBorderFramePadding,
 ): TRoundedRect => {
-  const rect = getEdgeRect(ratio)
-  const radius = Math.min(getSvgRadius(borderRadius, size), rect.width / 2, rect.height / 2)
+  const rect = getEdgeRect(ratio, size, framePadding)
+  const radius = Math.min(
+    getSvgRadius(borderRadius, ratio, size, framePadding),
+    rect.width / 2,
+    rect.height / 2,
+  )
 
   return {
     ...rect,
@@ -440,10 +484,11 @@ const getOutsideClipPath = (rect: TRoundedRect): string => {
 export const getBorderRenderGeometry = ({
   borderRadius,
   borderHighlight,
+  framePadding,
   ratio,
   size,
 }: TGeometryParams): TBorderRenderGeometry => {
-  const rect = getRoundedRect(ratio, borderRadius, size)
+  const rect = getRoundedRect(ratio, borderRadius, size, framePadding)
 
   return {
     clipPath: getOutsideClipPath(rect),

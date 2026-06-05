@@ -1,4 +1,3 @@
-import { pixelAdd } from '~/dom'
 import useTwBelt from '~/hooks/useTwBelt'
 
 import { getImagePlacement, getImageSize, getResponsiveImageSize } from '../../salon/metric'
@@ -28,7 +27,6 @@ export default function useSalon() {
       'absolute size-96 -translate-x-1/2 -translate-y-1/2 trans-all-200 bg-blend-lighten pointer-events-none z-30',
 
     // helpers
-    pixelAdd,
     getImageSize,
     getResponsiveImageSize,
     getImagePlacement,

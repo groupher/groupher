@@ -32,6 +32,11 @@ export const IMAGE_BORDER_RADIUS_RANGE = {
   MAX: 40,
 } as const
 
+export const GLASS_FRAME = {
+  PADDING_X: 7.5,
+  PADDING_Y: 6.5,
+} as const
+
 export const IMAGE_RATIO = {
   SQUARE: 'square',
   TV: 'tv',

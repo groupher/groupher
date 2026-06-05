@@ -2,12 +2,14 @@ import { useId, useMemo } from 'react'
 
 import { BORDER_HIGHLIGHT_STROKE_COLOR } from '../../constant'
 import type { TBorderHighlight, TImageRadio, TImageSize } from '../../spec'
+import type { TBorderFramePadding } from './helper'
 import { getBorderRenderGeometry } from './helper'
 
 type TProps = {
   borderRadius: string
   borderHighlight: TBorderHighlight
   className: string
+  framePadding?: TBorderFramePadding
   ratio: TImageRadio
   size: TImageSize
 }
@@ -18,6 +20,7 @@ export default function BorderRender({
   borderRadius,
   borderHighlight,
   className,
+  framePadding,
   ratio,
   size,
 }: TProps) {
@@ -28,6 +31,7 @@ export default function BorderRender({
     return getBorderRenderGeometry({
       borderRadius,
       borderHighlight,
+      framePadding,
       ratio,
       size,
     })
@@ -36,6 +40,8 @@ export default function BorderRender({
     borderHighlight.enabled,
     borderHighlight.length,
     borderRadius,
+    framePadding?.x,
+    framePadding?.y,
     ratio,
     size,
   ])

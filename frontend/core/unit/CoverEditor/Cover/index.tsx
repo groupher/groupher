@@ -3,7 +3,7 @@ import type { CSSProperties, FC } from 'react'
 
 import { parseWallpaper } from '~/wallpaper'
 
-import { IMAGE_RATIO, IMAGE_SIZE_RANGE } from '../constant'
+import { GLASS_FRAME, IMAGE_RATIO, IMAGE_SIZE_RANGE } from '../constant'
 import { getImageShadow } from '../helper'
 import useLogic from '../useLogic'
 import BorderRender from './BorderRender'
@@ -41,6 +41,12 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
   const isFullFrame = size === IMAGE_SIZE_RANGE.MAX && ratio === IMAGE_RATIO.SCREEN && rotate === 0
   const shouldShowTransparentGrid = !hasWallpaper && !isFullFrame
   const borderRadiusValue = `${borderRadius}px`
+  const frameBorderRadiusValue = hasGlassBorder
+    ? `${borderRadius + GLASS_FRAME.PADDING_Y}px`
+    : borderRadiusValue
+  const framePadding = hasGlassBorder
+    ? { x: GLASS_FRAME.PADDING_X, y: GLASS_FRAME.PADDING_Y }
+    : undefined
   const wrapperBackgroundStyle: CSSProperties = hasWallpaper
     ? { backgroundImage: parseWallpaper(wallpapers, wallpaper).background }
     : shouldShowTransparentGrid
@@ -56,12 +62,12 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
   }
 
   const imageFrameStyle: CSSProperties = {
-    borderRadius: s.pixelAdd(borderRadiusValue, 5),
+    borderRadius: frameBorderRadiusValue,
     width: imageFrameSize.width,
     height: imageFrameSize.height,
     left: imagePlacement.left,
     top: imagePlacement.top,
-    padding: hasGlassBorder ? '6.5px 7.5px' : 0,
+    padding: hasGlassBorder ? `${GLASS_FRAME.PADDING_Y}px ${GLASS_FRAME.PADDING_X}px` : 0,
     boxSizing: 'content-box',
     backgroundColor: hasGlassBorder ? 'rgba(255, 255, 255, 0.2)' : undefined,
     backdropFilter: hasGlassBorder ? 'blur(5px)' : undefined,
@@ -106,8 +112,9 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
             </div>
             <BorderRender
               className={s.borderHighlight}
-              borderRadius={borderRadiusValue}
+              borderRadius={frameBorderRadiusValue}
               borderHighlight={borderHighlight}
+              framePadding={framePadding}
               ratio={ratio}
               size={size}
             />
