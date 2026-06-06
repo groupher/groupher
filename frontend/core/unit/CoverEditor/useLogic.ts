@@ -4,20 +4,8 @@ import { proxy, useSnapshot } from 'valtio'
 import { COVER_GRADIENT_WALLPAPER, GRADIENT_DIRECTION } from '~/const/wallpaper'
 import type { TWallpaper, TWallpaperGradient, TWallpaperGradientDir } from '~/spec'
 
-import {
-  BORDER_HIGHLIGHT_DEFAULT,
-  IMAGE_RATIO,
-  IMAGE_SIZE_RANGE,
-  LIGHT_RADIUS_DEFAULT,
-} from './constant'
-import type {
-  TBorderHighlight,
-  TCoverPoint,
-  TImageRadio,
-  TImageSize,
-  TStore,
-  TTuningSetting,
-} from './spec'
+import { BORDER_HIGHLIGHT_DEFAULT, IMAGE_SIZE_RANGE, LIGHT_RADIUS_DEFAULT } from './constant'
+import type { TBorderHighlight, TCoverPoint, TImageSize, TStore, TTuningSetting } from './spec'
 
 type TRet = {
   imageLoadedOnChange: (imageUrl: string) => void
@@ -28,7 +16,6 @@ type TRet = {
   wallpaperOnChange: (wallpaper: string) => void
   gradientDirOnChange: (direction: TWallpaperGradientDir) => void
   sizeOnChange: (size: TImageSize) => void
-  ratioOnChange: (ratio: TImageRadio) => void
   rotateOnChange: (rotate: number) => void
   glassBorderOnChange: (hasGlassBorder: boolean) => void
   lightRadiationOnChange: (lightCenter: TCoverPoint, lightRadius: number) => void
@@ -39,7 +26,6 @@ type TRet = {
 // once a real image finishes loading so the first visible cover has a polished frame.
 const LOADED_IMAGE_DEFAULT_SETTING: Partial<TStore> = {
   size: 94,
-  ratio: IMAGE_RATIO.SCREEN,
   rotate: 0,
   position: { x: 0.5, y: 0.5 },
   shadow: 0,
@@ -48,6 +34,8 @@ const LOADED_IMAGE_DEFAULT_SETTING: Partial<TStore> = {
     enabled: BORDER_HIGHLIGHT_DEFAULT.ENABLED,
     angle: BORDER_HIGHLIGHT_DEFAULT.ANGLE,
     length: BORDER_HIGHLIGHT_DEFAULT.LENGTH,
+    hue: BORDER_HIGHLIGHT_DEFAULT.HUE,
+    opacity: BORDER_HIGHLIGHT_DEFAULT.OPACITY,
   },
   hasGlassBorder: false,
   hasLight: false,
@@ -67,9 +55,10 @@ const store = proxy<TStore>({
     enabled: BORDER_HIGHLIGHT_DEFAULT.ENABLED,
     angle: BORDER_HIGHLIGHT_DEFAULT.ANGLE,
     length: BORDER_HIGHLIGHT_DEFAULT.LENGTH,
+    hue: BORDER_HIGHLIGHT_DEFAULT.HUE,
+    opacity: BORDER_HIGHLIGHT_DEFAULT.OPACITY,
   },
   size: IMAGE_SIZE_RANGE.MAX,
-  ratio: IMAGE_RATIO.SCREEN,
   rotate: 0,
   hasGlassBorder: false,
 
@@ -108,7 +97,6 @@ const store = proxy<TStore>({
       gradientWallpapers,
       direction,
       size,
-      ratio,
       rotate,
       hasGlassBorder,
     } = store
@@ -125,7 +113,6 @@ const store = proxy<TStore>({
       wallpaper,
       direction: direction as TWallpaperGradientDir,
       size,
-      ratio: ratio as TImageRadio,
       rotate,
       hasGlassBorder,
     }
@@ -158,7 +145,6 @@ export default function useLogic(): TRet {
   const wallpaperOnChange = (wallpaper: string): void => snap.commit({ wallpaper })
   const gradientDirOnChange = (direction: TWallpaperGradientDir): void => snap.commit({ direction })
   const sizeOnChange = (size: TImageSize): void => snap.commit({ size })
-  const ratioOnChange = (ratio: TImageRadio): void => snap.commit({ ratio })
   const rotateOnChange = (rotate: number): void => snap.commit({ rotate })
 
   const glassBorderOnChange = (hasGlassBorder: boolean) => snap.commit({ hasGlassBorder })
@@ -177,7 +163,6 @@ export default function useLogic(): TRet {
     wallpaperOnChange,
     gradientDirOnChange,
     sizeOnChange,
-    ratioOnChange,
     rotateOnChange,
     glassBorderOnChange,
     lightRadiationOnChange,

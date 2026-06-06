@@ -7,26 +7,20 @@ import type { TTuningSetting } from '../../spec'
 import BackgroundTab from './BackgroundTab'
 import BasicTab from './BasicTab'
 import useSalon from './salon'
-import UploadTab from './UploadTab'
 
 enum TAB {
-  BASIC = 'basic',
+  IMAGE = 'image',
   BACKGROUND = 'background',
-  UPLOAD = 'upload',
 }
 
 const TAB_ITEMS = [
   {
-    key: TAB.BASIC,
-    label: 'Basic',
+    key: TAB.IMAGE,
+    label: 'Image(s)',
   },
   {
     key: TAB.BACKGROUND,
     label: 'Background',
-  },
-  {
-    key: TAB.UPLOAD,
-    label: 'Upload',
   },
 ] as const
 
@@ -39,7 +33,7 @@ type TProps = {
 
 export default function DetailPanel({ setting, onDelete, onReplace, onCollapse }: TProps) {
   const s = useSalon()
-  const [tab, setTab] = useState<TAB>(TAB.BASIC)
+  const [tab, setTab] = useState<TAB>(TAB.IMAGE)
 
   return (
     <div className={s.wrapper}>
@@ -55,7 +49,9 @@ export default function DetailPanel({ setting, onDelete, onReplace, onCollapse }
       </div>
 
       <div className={s.content}>
-        {tab === TAB.BASIC && <BasicTab setting={setting} />}
+        {tab === TAB.IMAGE && (
+          <BasicTab setting={setting} onDelete={onDelete} onReplace={onReplace} />
+        )}
 
         {tab === TAB.BACKGROUND && (
           <BackgroundTab
@@ -64,8 +60,6 @@ export default function DetailPanel({ setting, onDelete, onReplace, onCollapse }
             direction={setting.direction}
           />
         )}
-
-        {tab === TAB.UPLOAD && <UploadTab onDelete={onDelete} onReplace={onReplace} />}
       </div>
 
       <div className={s.collapseRow}>

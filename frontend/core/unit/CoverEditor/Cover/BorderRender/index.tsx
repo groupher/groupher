@@ -1,7 +1,7 @@
 import { useId, useMemo } from 'react'
 
-import { BORDER_HIGHLIGHT_STROKE_COLOR } from '../../constant'
-import type { TBorderHighlight, TImageRadio, TImageSize } from '../../spec'
+import { getBorderHighlightColor } from '../../helper'
+import type { TBorderHighlight, TImageSize } from '../../spec'
 import type { TBorderFramePadding } from './helper'
 import { getBorderRenderGeometry } from './helper'
 
@@ -10,7 +10,6 @@ type TProps = {
   borderHighlight: TBorderHighlight
   className: string
   framePadding?: TBorderFramePadding
-  ratio: TImageRadio
   size: TImageSize
 }
 
@@ -21,7 +20,6 @@ export default function BorderRender({
   borderHighlight,
   className,
   framePadding,
-  ratio,
   size,
 }: TProps) {
   const clipId = `${CLIP_ID_PREFIX}-${useId().replaceAll(':', '')}`
@@ -32,23 +30,24 @@ export default function BorderRender({
       borderRadius,
       borderHighlight,
       framePadding,
-      ratio,
       size,
     })
   }, [
     borderHighlight.angle,
     borderHighlight.enabled,
+    borderHighlight.hue,
     borderHighlight.length,
+    borderHighlight.opacity,
     borderRadius,
     framePadding?.x,
     framePadding?.y,
-    ratio,
     size,
   ])
 
   if (!geometry) return null
 
   const { clipPath, segments, viewBox } = geometry
+  const strokeColor = getBorderHighlightColor(borderHighlight)
 
   return (
     <svg className={className} viewBox={viewBox} preserveAspectRatio='none' aria-hidden>
@@ -63,7 +62,7 @@ export default function BorderRender({
             key={`${path}-${width}`}
             d={path}
             fill='none'
-            stroke={BORDER_HIGHLIGHT_STROKE_COLOR}
+            stroke={strokeColor}
             strokeWidth={width}
             strokeLinecap='round'
             strokeLinejoin='round'

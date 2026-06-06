@@ -4,7 +4,7 @@ import ArrowsOutCardinalSVG from '~/icons/ArrowsOutCardinal'
 
 import { IMAGE_SIZE_RANGE } from '../../../../constant'
 import { getImagePlacement, getResponsiveImageSize } from '../../../../salon/metric'
-import type { TCoverPoint, TImageRadio, TImageSize } from '../../../../spec'
+import type { TCoverPoint, TImageSize } from '../../../../spec'
 import {
   GRID_HORIZONTAL_LINES,
   GRID_VERTICAL_LINES,
@@ -16,12 +16,11 @@ import useSalon, { cn } from './salon/controller'
 type TProps = {
   position: TCoverPoint
   size: TImageSize
-  ratio: TImageRadio
   rotate: number
   onChange: (position: TCoverPoint) => void
 }
 
-export default function Controller({ position, size, ratio, rotate, onChange }: TProps) {
+export default function Controller({ position, size, rotate, onChange }: TProps) {
   const panelRef = useRef<HTMLButtonElement | null>(null)
   const [draftPosition, setDraftPosition] = useState(position)
   const [isDragging, setIsDragging] = useState(false)
@@ -35,7 +34,7 @@ export default function Controller({ position, size, ratio, rotate, onChange }: 
     const rect = panelRef.current?.getBoundingClientRect()
     if (!rect) return
 
-    const nextPosition = getPositionFromPointer(clientX, clientY, rect, { size, ratio, rotate })
+    const nextPosition = getPositionFromPointer(clientX, clientY, rect, { size, rotate })
 
     setDraftPosition(nextPosition)
     onChange(nextPosition)
@@ -74,13 +73,13 @@ export default function Controller({ position, size, ratio, rotate, onChange }: 
     onChange(nextPosition)
   }
 
-  const frameSize = getResponsiveImageSize(size, ratio)
+  const frameSize = getResponsiveImageSize(size)
   const previewFrameScale = size >= IMAGE_SIZE_RANGE.MAX ? 1 : POSITION_PREVIEW_FRAME_SCALE
   const previewFrameSize = {
     width: `${Number.parseFloat(frameSize.width) * previewFrameScale}%`,
     height: `${Number.parseFloat(frameSize.height) * previewFrameScale}%`,
   }
-  const placement = getImagePlacement(draftPosition, size, ratio, rotate)
+  const placement = getImagePlacement(draftPosition, size, rotate)
 
   return (
     <button

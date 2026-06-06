@@ -1,4 +1,3 @@
-// default size it's based on ratio 16:9
 export const IMAGE_CONTAINER_SIZE = {
   WIDTH: '710px', // 16:9
   HEIGHT: '400px',
@@ -40,12 +39,6 @@ export const GLASS_FRAME = {
   PADDING_Y: 6.5,
 } as const
 
-export const IMAGE_RATIO = {
-  SQUARE: 'square',
-  TV: 'tv',
-  SCREEN: 'screen',
-} as const
-
 export const BORDER_HIGHLIGHT_DEFAULT = {
   ENABLED: false,
   ANGLE: 35,
@@ -59,7 +52,10 @@ export const BORDER_HIGHLIGHT_LENGTH_RANGE = {
   MAX: 0.72,
 } as const
 
-export const BORDER_HIGHLIGHT_STROKE_COLOR = 'wheat'
+export const BORDER_HIGHLIGHT_COLOR = {
+  SATURATION: 77,
+  LIGHTNESS: 83,
+} as const
 
 export const LIGHT_RADIUS_DEFAULT = 0.5
 
@@ -72,20 +68,3 @@ export const LIGHT_RENDER_OPACITY = {
   MIN: 0.07,
   MAX: 0.2,
 } as const
-
-export const IMAGE_RATIO_SIZE = {
-  [IMAGE_RATIO.SCREEN]: {
-    width: IMAGE_CONTAINER_SIZE.WIDTH,
-    height: IMAGE_CONTAINER_SIZE.HEIGHT,
-  },
-
-  [IMAGE_RATIO.TV]: {
-    width: '4',
-    height: '3',
-  },
-
-  [IMAGE_RATIO.SQUARE]: {
-    width: '1',
-    height: '1',
-  },
-}

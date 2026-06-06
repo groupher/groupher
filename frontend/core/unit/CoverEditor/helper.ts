@@ -12,27 +12,27 @@ const getFiniteNumber = (value: number | undefined, fallback: number): number =>
 const SHADOW_RESPONSE_CURVE = 0.6
 
 export const getImageShadow = (shadow: number): string | undefined => {
-  const rawRatio =
+  const rawStrength =
     clamp(shadow, IMAGE_SHADOW_RANGE.MIN, IMAGE_SHADOW_RANGE.MAX) / IMAGE_SHADOW_RANGE.MAX
 
-  if (rawRatio <= 0) return undefined
+  if (rawStrength <= 0) return undefined
 
-  const ratio = rawRatio ** SHADOW_RESPONSE_CURVE
+  const strength = rawStrength ** SHADOW_RESPONSE_CURVE
 
-  const contactY = Math.round(12 * ratio)
-  const contactBlur = Math.round(28 * ratio)
-  const contactSpread = Math.round(-2 * ratio)
-  const ambientY = Math.round(32 * ratio)
-  const ambientBlur = Math.round(96 * ratio)
-  const ambientSpread = Math.round(6 * ratio)
-  const haloBlur = Math.round(36 * ratio)
+  const contactY = Math.round(12 * strength)
+  const contactBlur = Math.round(28 * strength)
+  const contactSpread = Math.round(-2 * strength)
+  const ambientY = Math.round(32 * strength)
+  const ambientBlur = Math.round(96 * strength)
+  const ambientSpread = Math.round(6 * strength)
+  const haloBlur = Math.round(36 * strength)
 
   // Avoid zero-blur spread layers here: on dark screenshots they read as
   // an image border instead of a soft shadow.
   return [
-    `rgba(255, 255, 255, ${formatAlpha(0.22 * ratio)}) 0px 0px ${haloBlur}px 0px`,
-    `rgba(0, 0, 0, ${formatAlpha(0.48 * ratio)}) 0px ${contactY}px ${contactBlur}px ${contactSpread}px`,
-    `rgba(0, 0, 0, ${formatAlpha(0.34 * ratio)}) 0px ${ambientY}px ${ambientBlur}px ${ambientSpread}px`,
+    `rgba(255, 255, 255, ${formatAlpha(0.22 * strength)}) 0px 0px ${haloBlur}px 0px`,
+    `rgba(0, 0, 0, ${formatAlpha(0.48 * strength)}) 0px ${contactY}px ${contactBlur}px ${contactSpread}px`,
+    `rgba(0, 0, 0, ${formatAlpha(0.34 * strength)}) 0px ${ambientY}px ${ambientBlur}px ${ambientSpread}px`,
   ].join(', ')
 }
 

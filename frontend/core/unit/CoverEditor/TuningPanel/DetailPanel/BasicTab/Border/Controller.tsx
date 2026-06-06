@@ -2,6 +2,7 @@ import type { KeyboardEvent, PointerEvent } from 'react'
 
 import type { TBorderHighlight } from '../../../../spec'
 import useLogic from '../../../../useLogic'
+import ColorControl from './ColorControl'
 import { CONTROL_LABEL, KEYBOARD_STEP, VIEWBOX } from './constant'
 import {
   clampLength,
@@ -202,6 +203,8 @@ export default function Controller({ borderHighlight }: TProps) {
           />
         </svg>
       </button>
+
+      <ColorControl borderHighlight={borderHighlight} />
     </div>
   )
 }
