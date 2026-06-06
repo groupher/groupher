@@ -2,9 +2,14 @@ import { type KeyboardEvent, type PointerEvent, useEffect, useRef, useState } fr
 
 import ArrowsOutCardinalSVG from '~/icons/ArrowsOutCardinal'
 
+import { IMAGE_SIZE_RANGE } from '../../../../constant'
 import { getImagePlacement, getResponsiveImageSize } from '../../../../salon/metric'
 import type { TCoverPoint, TImageRadio, TImageSize } from '../../../../spec'
-import { GRID_HORIZONTAL_LINES, GRID_VERTICAL_LINES } from './constant'
+import {
+  GRID_HORIZONTAL_LINES,
+  GRID_VERTICAL_LINES,
+  POSITION_PREVIEW_FRAME_SCALE,
+} from './constant'
 import { getPositionFromKeyboard, getPositionFromPointer } from './helper'
 import useSalon, { cn } from './salon/controller'
 
@@ -70,6 +75,11 @@ export default function Controller({ position, size, ratio, rotate, onChange }: 
   }
 
   const frameSize = getResponsiveImageSize(size, ratio)
+  const previewFrameScale = size >= IMAGE_SIZE_RANGE.MAX ? 1 : POSITION_PREVIEW_FRAME_SCALE
+  const previewFrameSize = {
+    width: `${Number.parseFloat(frameSize.width) * previewFrameScale}%`,
+    height: `${Number.parseFloat(frameSize.height) * previewFrameScale}%`,
+  }
   const placement = getImagePlacement(draftPosition, size, ratio, rotate)
 
   return (
@@ -100,8 +110,8 @@ export default function Controller({ position, size, ratio, rotate, onChange }: 
       <span
         className={s.frameBlock}
         style={{
-          width: frameSize.width,
-          height: frameSize.height,
+          width: previewFrameSize.width,
+          height: previewFrameSize.height,
           left: placement.left,
           top: placement.top,
           transform: `translate(-50%, -50%) rotate(${rotate}deg)`,
