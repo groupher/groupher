@@ -7,6 +7,7 @@ import { parseWallpaper } from '~/wallpaper'
 import { GLASS_FRAME, IMAGE_SIZE_RANGE, LIGHT_RENDER_OPACITY, LIGHT_RENDER_SIZE } from '../constant'
 import { getImageShadow } from '../helper'
 import {
+  getBorderRadiusFromCanvasPoint,
   getCanvasPointFromClient,
   getImageCanvasCenter,
   getImagePositionFromCanvasPoint,
@@ -25,7 +26,7 @@ type TProps = {
   onUpload: () => void
 }
 
-type TInteractionMode = 'idle' | 'move' | 'resize'
+type TInteractionMode = 'idle' | 'move' | 'radius' | 'resize'
 
 type TInteractionState =
   | {
@@ -44,32 +45,92 @@ type TInteractionState =
       startSize: TImageSize
       type: 'resize'
     }
+  | {
+      handle: TImageResizeHandle
+      localDirection: TCoverPoint
+      pointerId: number
+      rotate: number
+      startCenter: TCoverPoint
+      startSize: TImageSize
+      type: 'radius'
+    }
 
-const RESIZE_HANDLES: {
+type TResizeHandleConfig = {
   classNameKey:
     | 'resizeHandleTopLeft'
     | 'resizeHandleTopRight'
     | 'resizeHandleBottomLeft'
     | 'resizeHandleBottomRight'
+  cursorClassNameKey: 'resizeCursorNesw' | 'resizeCursorNwse'
   handle: TImageResizeHandle
   label: string
-}[] = [
-  { handle: 'top-left', classNameKey: 'resizeHandleTopLeft', label: 'Resize from top left' },
-  { handle: 'top-right', classNameKey: 'resizeHandleTopRight', label: 'Resize from top right' },
+}
+
+const RESIZE_HANDLES: TResizeHandleConfig[] = [
+  {
+    handle: 'top-left',
+    classNameKey: 'resizeHandleTopLeft',
+    cursorClassNameKey: 'resizeCursorNwse',
+    label: 'Resize from top left',
+  },
+  {
+    handle: 'top-right',
+    classNameKey: 'resizeHandleTopRight',
+    cursorClassNameKey: 'resizeCursorNesw',
+    label: 'Resize from top right',
+  },
   {
     handle: 'bottom-left',
     classNameKey: 'resizeHandleBottomLeft',
+    cursorClassNameKey: 'resizeCursorNesw',
     label: 'Resize from bottom left',
   },
   {
     handle: 'bottom-right',
     classNameKey: 'resizeHandleBottomRight',
+    cursorClassNameKey: 'resizeCursorNwse',
     label: 'Resize from bottom right',
   },
 ]
 
+const RADIUS_HANDLE_VISUAL: Record<
+  TImageResizeHandle,
+  { axis: { x: 1; y: -1 | 1 }; guideTransform: string }
+> = {
+  'top-left': {
+    axis: { x: 1, y: -1 },
+    guideTransform: 'translate(-50%, -50%) rotate(-45deg)',
+  },
+  'top-right': {
+    axis: { x: 1, y: 1 },
+    guideTransform: 'translate(-50%, -50%) rotate(45deg)',
+  },
+  'bottom-left': {
+    axis: { x: 1, y: 1 },
+    guideTransform: 'translate(-50%, -50%) rotate(45deg)',
+  },
+  'bottom-right': {
+    axis: { x: 1, y: -1 },
+    guideTransform: 'translate(-50%, -50%) rotate(-45deg)',
+  },
+}
+
+const getRadiusHandleLength = (borderRadius: number): number =>
+  Math.min(64, Math.max(24, 24 + borderRadius))
+
+const getRadiusDotTransform = (axis: { x: 1; y: -1 | 1 }, offset: number): string =>
+  `translate(calc(-50% + ${(axis.x * offset) / Math.SQRT2}px), calc(-50% + ${
+    (axis.y * offset) / Math.SQRT2
+  }px))`
+
 const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
-  const { imageLoadedOnChange, positionOnChange, sizeOnChange, tuningSetting: setting } = useLogic()
+  const {
+    borderRadiusOnChange,
+    imageLoadedOnChange,
+    positionOnChange,
+    sizeOnChange,
+    tuningSetting: setting,
+  } = useLogic()
   const {
     size,
     shadow,
@@ -88,6 +149,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const interactionRef = useRef<TInteractionState | null>(null)
   const [interactionMode, setInteractionMode] = useState<TInteractionMode>('idle')
+  const [hoveredRadiusHandle, setHoveredRadiusHandle] = useState<TImageResizeHandle | null>(null)
 
   const hasImage = !isEmpty(imageUrl)
   const imageFrameSize = s.getResponsiveImageSize(size)
@@ -119,11 +181,14 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     event.isPrimary && (event.pointerType !== 'mouse' || event.button === 0)
 
   const finishInteraction = (event: PointerEvent<HTMLElement>): void => {
+    const state = interactionRef.current
+
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
 
     interactionRef.current = null
+    if (state?.type === 'radius') setHoveredRadiusHandle(null)
     setInteractionMode('idle')
   }
 
@@ -153,6 +218,22 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
 
     sizeOnChange(next.size)
     positionOnChange(getImagePositionFromCanvasPoint(next.center, next.size, state.rotate))
+  }
+
+  const updateRadiusInteraction = (
+    state: Extract<TInteractionState, { type: 'radius' }>,
+    point: TCoverPoint,
+  ): void => {
+    borderRadiusOnChange(
+      getBorderRadiusFromCanvasPoint({
+        center: state.startCenter,
+        handle: state.handle,
+        localDirection: state.localDirection,
+        point,
+        rotate: state.rotate,
+        size: state.startSize,
+      }),
+    )
   }
 
   const handleMovePointerDown = (event: PointerEvent<HTMLDivElement>): void => {
@@ -193,6 +274,34 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
       setInteractionMode('resize')
     }
 
+  const handleRadiusPointerDown =
+    (handle: TImageResizeHandle, localDirection: TCoverPoint) =>
+    (event: PointerEvent<HTMLButtonElement>): void => {
+      if (!isPrimaryPointer(event)) return
+
+      const point = getCanvasPoint(event)
+      if (!point) return
+
+      event.preventDefault()
+      event.stopPropagation()
+      event.currentTarget.setPointerCapture(event.pointerId)
+
+      const nextState: Extract<TInteractionState, { type: 'radius' }> = {
+        handle,
+        localDirection,
+        pointerId: event.pointerId,
+        rotate,
+        startCenter: getImageCanvasCenter(position, size, rotate),
+        startSize: size,
+        type: 'radius',
+      }
+
+      interactionRef.current = nextState
+      setHoveredRadiusHandle(handle)
+      setInteractionMode('radius')
+      updateRadiusInteraction(nextState, point)
+    }
+
   const handlePointerMove = (event: PointerEvent<HTMLElement>): void => {
     const state = interactionRef.current
     if (!state || state.pointerId !== event.pointerId) return
@@ -204,7 +313,8 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     event.preventDefault()
 
     if (state.type === 'move') updateMoveInteraction(state, point)
-    else updateResizeInteraction(state, point)
+    else if (state.type === 'resize') updateResizeInteraction(state, point)
+    else updateRadiusInteraction(state, point)
   }
 
   const handlePointerUp = (event: PointerEvent<HTMLElement>): void => {
@@ -246,6 +356,12 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     boxSizing: 'content-box',
     transform: `translate(-50%, -50%) rotate(${rotate}deg)`,
   }
+  const activeRadiusHandle =
+    interactionMode === 'radius' && interactionRef.current?.type === 'radius'
+      ? interactionRef.current.handle
+      : null
+  const radiusHandleLength = getRadiusHandleLength(borderRadius)
+  const radiusDotOffset = radiusHandleLength / 2
 
   const cropViewportStyle: CSSProperties = {
     boxSizing: 'border-box',
@@ -284,9 +400,12 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
             className={s.cn(s.imageFrame, interactionMode !== 'idle' && s.imageFrameActive)}
             style={imageFrameStyle}
           >
-            <div className={s.cropViewport} style={cropViewportStyle}>
+            <div
+              className={s.cn(s.cropViewport, interactionMode !== 'idle' && s.cropViewportActive)}
+              style={cropViewportStyle}
+            >
               <img
-                className={s.image}
+                className={s.cn(s.image, interactionMode !== 'idle' && s.imageActive)}
                 src={imageUrl}
                 alt=''
                 draggable={false}
@@ -306,6 +425,8 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
             className={s.cn(
               s.editorFrame,
               interactionMode !== 'idle' && s.editorFrameActive,
+              interactionMode === 'idle' && s.editorFrameMove,
+              interactionMode === 'move' && s.editorFrameMoving,
               interactionMode === 'resize' && s.editorFrameResizing,
             )}
             style={editorFrameStyle}
@@ -316,18 +437,76 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
             onPointerCancel={handlePointerUp}
           >
             <div className={s.editorBorder} style={{ borderRadius: frameBorderRadiusValue }} />
-            {RESIZE_HANDLES.map(({ classNameKey, handle, label }) => (
-              <button
-                key={handle}
-                type='button'
-                className={s.cn(s.resizeHandle, s[classNameKey])}
-                aria-label={label}
-                onPointerDown={handleResizePointerDown(handle)}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handlePointerUp}
-              />
-            ))}
+            {RESIZE_HANDLES.map(({ classNameKey, cursorClassNameKey, handle, label }) => {
+              const radiusHandleVisible =
+                hoveredRadiusHandle === handle || activeRadiusHandle === handle
+              const radiusVisual = RADIUS_HANDLE_VISUAL[handle]
+              const guideStyle: CSSProperties = {
+                transform: radiusVisual.guideTransform,
+                width: `${radiusHandleLength}px`,
+              }
+              const bridgeStyle: CSSProperties = {
+                height: `${radiusHandleLength + 16}px`,
+                transform: radiusVisual.guideTransform,
+                width: `${radiusHandleLength + 16}px`,
+              }
+              const radiusDots = [
+                {
+                  direction: {
+                    x: -radiusVisual.axis.x,
+                    y: -radiusVisual.axis.y,
+                  },
+                  key: 'start',
+                  transform: getRadiusDotTransform(radiusVisual.axis, -radiusDotOffset),
+                },
+                {
+                  direction: {
+                    x: radiusVisual.axis.x,
+                    y: radiusVisual.axis.y,
+                  },
+                  key: 'end',
+                  transform: getRadiusDotTransform(radiusVisual.axis, radiusDotOffset),
+                },
+              ]
+
+              return (
+                <div
+                  key={handle}
+                  className={s.cn(s.resizeHandleGroup, s[classNameKey])}
+                  onPointerEnter={() => setHoveredRadiusHandle(handle)}
+                  onPointerLeave={() => setHoveredRadiusHandle(null)}
+                >
+                  <button
+                    type='button'
+                    className={s.cn(s.resizeHandle, s[cursorClassNameKey])}
+                    aria-label={label}
+                    onPointerDown={handleResizePointerDown(handle)}
+                    onPointerMove={handlePointerMove}
+                    onPointerUp={handlePointerUp}
+                    onPointerCancel={handlePointerUp}
+                  />
+                  {radiusHandleVisible && (
+                    <>
+                      <span className={s.radiusBridge} style={bridgeStyle} />
+                      <span className={s.radiusGuide} style={guideStyle} />
+                      {radiusDots.map(({ direction, key, transform }) => (
+                        <button
+                          key={key}
+                          type='button'
+                          className={s.radiusDot}
+                          style={{ transform }}
+                          aria-label={`Adjust corner radius from ${handle}`}
+                          onPointerDown={handleRadiusPointerDown(handle, direction)}
+                          onPointerMove={handlePointerMove}
+                          onPointerUp={handlePointerUp}
+                          onPointerCancel={handlePointerUp}
+                        />
+                      ))}
+                    </>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </>
       )}

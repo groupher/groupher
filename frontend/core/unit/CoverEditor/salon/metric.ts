@@ -1,7 +1,12 @@
 import { GRADIENT_DIRECTION } from '~/const/wallpaper'
 import type { TWallpaperGradientDir } from '~/spec'
 
-import { COVER_IMAGE_MIN_VISIBLE_SIZE, IMAGE_CONTAINER_SIZE, IMAGE_SIZE_RANGE } from '../constant'
+import {
+  COVER_IMAGE_MIN_VISIBLE_SIZE,
+  IMAGE_BORDER_RADIUS_RANGE,
+  IMAGE_CONTAINER_SIZE,
+  IMAGE_SIZE_RANGE,
+} from '../constant'
 import type { TCoverPoint, TImageSize, TImageSizeValue } from '../spec'
 
 const CANVAS_WIDTH = Number.parseFloat(IMAGE_CONTAINER_SIZE.WIDTH)
@@ -61,6 +66,15 @@ type TResizeResult = {
   size: TImageSize
 }
 
+type TRadiusParams = {
+  center: TCoverPoint
+  handle: TImageResizeHandle
+  localDirection: TCoverPoint
+  point: TCoverPoint
+  rotate: number
+  size: TImageSize
+}
+
 const RESIZE_HANDLE_SIGN: Record<TImageResizeHandle, { x: -1 | 1; y: -1 | 1 }> = {
   'top-left': { x: -1, y: -1 },
   'top-right': { x: 1, y: -1 },
@@ -70,6 +84,14 @@ const RESIZE_HANDLE_SIGN: Record<TImageResizeHandle, { x: -1 | 1; y: -1 | 1 }> =
 
 const clampImageSize = (size: number): TImageSize =>
   Math.min(IMAGE_SIZE_RANGE.MAX, Math.max(IMAGE_SIZE_RANGE.MIN, Math.round(size)))
+
+const clampBorderRadius = (radius: number): number =>
+  Math.min(
+    IMAGE_BORDER_RADIUS_RANGE.MAX,
+    Math.max(IMAGE_BORDER_RADIUS_RANGE.MIN, Math.round(radius)),
+  )
+
+const BORDER_RADIUS_HANDLE_MIN_LENGTH = 24
 
 const rotatePoint = (point: TCoverPoint, rotate: number): TCoverPoint => {
   const rad = (normalizeAngle(rotate) * Math.PI) / 180
@@ -84,6 +106,23 @@ const rotatePoint = (point: TCoverPoint, rotate: number): TCoverPoint => {
 
 export const getImageCanvasSize = (size: TImageSize): { width: number; height: number } =>
   getImageSizeNumber(size)
+
+const getResizeHandleOffset = (
+  handle: TImageResizeHandle,
+  size: TImageSize,
+  rotate: number,
+): TCoverPoint => {
+  const sign = RESIZE_HANDLE_SIGN[handle]
+  const frameSize = getImageCanvasSize(size)
+
+  return rotatePoint(
+    {
+      x: (sign.x * frameSize.width) / 2,
+      y: (sign.y * frameSize.height) / 2,
+    },
+    rotate,
+  )
+}
 
 const getRotatedSize = (
   width: number,
@@ -195,15 +234,7 @@ export const getImageResizeFromCanvasPoint = ({
   startCenter,
   startSize,
 }: TResizeParams): TResizeResult => {
-  const sign = RESIZE_HANDLE_SIGN[handle]
-  const startFrameSize = getImageCanvasSize(startSize)
-  const rotatedCorner = rotatePoint(
-    {
-      x: (sign.x * startFrameSize.width) / 2,
-      y: (sign.y * startFrameSize.height) / 2,
-    },
-    rotate,
-  )
+  const rotatedCorner = getResizeHandleOffset(handle, startSize, rotate)
   const anchor = {
     x: startCenter.x - rotatedCorner.x,
     y: startCenter.y - rotatedCorner.y,
@@ -227,6 +258,30 @@ export const getImageResizeFromCanvasPoint = ({
       y: anchor.y + (diagonal.y * scale) / 2,
     },
   }
+}
+
+export const getBorderRadiusFromCanvasPoint = ({
+  center,
+  handle,
+  localDirection,
+  point,
+  rotate,
+  size,
+}: TRadiusParams): number => {
+  const cornerOffset = getResizeHandleOffset(handle, size, rotate)
+  const corner = {
+    x: center.x + cornerOffset.x,
+    y: center.y + cornerOffset.y,
+  }
+  const direction = rotatePoint(localDirection, rotate)
+  const directionLength = Math.sqrt(direction.x * direction.x + direction.y * direction.y)
+
+  if (directionLength <= 0) return IMAGE_BORDER_RADIUS_RANGE.MIN
+
+  const projection =
+    ((point.x - corner.x) * direction.x + (point.y - corner.y) * direction.y) / directionLength
+
+  return clampBorderRadius(projection * 2 - BORDER_RADIUS_HANDLE_MIN_LENGTH)
 }
 
 export const getBgGradientDirAngle = (dir: TWallpaperGradientDir): string => {
