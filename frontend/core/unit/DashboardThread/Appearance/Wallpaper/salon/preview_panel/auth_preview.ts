@@ -13,12 +13,12 @@ export default function useSalon() {
 
   return {
     previewImage: cn(
-      'w-72 h-44 trans-all-200',
-      'column-align-both rounded-md border',
+      'h-44 w-full trans-all-200',
+      'column-align-both rounded-t-md border',
       br('divider'),
       bg('hoverBg'),
     ),
-    realPreview: 'column-center relative overflow-hidden',
+    realPreview: 'relative h-44 w-full overflow-hidden',
     bar: cn(base.bar, 'static h-2 w-24 saturate-50 opacity-40'),
     authCard: cn(
       'absolute top-10 left-1/2 -translate-x-1/2 w-24 h-24 rounded-lg column-center px-6 py-3 gap-2',

@@ -1,13 +1,26 @@
 import type { TConstValues, TWallpaper, TWallpaperGradientDir } from '~/spec'
 
-import type { IMAGE_POS, IMAGE_RATIO, IMAGE_SIZE, LINEAR_BORDER, SETTING_LEVEL } from './constant'
+import type { IMAGE_POS, IMAGE_RATIO } from './constant'
+
+export type TCoverPoint = {
+  x: number
+  y: number
+}
+
+export type TBorderHighlight = {
+  enabled: boolean
+  angle: number
+  length: number
+}
 
 export type TStore = {
-  imagePos: TImagePos
-  lightPos: TImagePos
-  shadowLevel: TSettingLevel
-  borderRadiusLevel: TSettingLevel
-  linearBorderPos: TLinearBorderPos
+  position: TCoverPoint
+  lightCenter: TCoverPoint
+  lightRadius: number
+  hasLight: boolean
+  shadow: number
+  borderRadius: number
+  borderHighlight: TBorderHighlight
   size: TImageSize
   ratio: TImageRadio
   rotate: number
@@ -16,33 +29,34 @@ export type TStore = {
   hasPattern: boolean
   hasBlur: boolean
   direction: TWallpaperGradientDir
+  loadedImageUrl: string
 
   // derived
   gradientWallpapers: Record<string, TWallpaper>
-  toolboxSetting: TToolboxSetting
+  tuningSetting: TTuningSetting
 
   commit: (patch: Partial<TStore>) => void
 }
 
 export type TImagePos = TConstValues<typeof IMAGE_POS>
-export type TLinearBorderPos = TConstValues<typeof LINEAR_BORDER>
 
 export type TImageSizeValue = {
   height: string
   width: string
 }
 
-export type TSettingLevel = TConstValues<typeof SETTING_LEVEL>
-export type TImageSize = TConstValues<typeof IMAGE_SIZE>
+export type TImageSize = number
 export type TImageRadio = TConstValues<typeof IMAGE_RATIO>
 export type TImageRotate = string
 
-export type TToolboxSetting = {
-  pos: TImagePos
-  lightPos: TImagePos
-  shadowLevel: TSettingLevel
-  borderRadiusLevel: TSettingLevel
-  linearBorderPos: TLinearBorderPos
+export type TTuningSetting = {
+  position: TCoverPoint
+  lightCenter: TCoverPoint
+  lightRadius: number
+  hasLight: boolean
+  shadow: number
+  borderRadius: number
+  borderHighlight: TBorderHighlight
   wallpapers: Record<string, TWallpaper>
   wallpaper: string
   direction: TWallpaperGradientDir

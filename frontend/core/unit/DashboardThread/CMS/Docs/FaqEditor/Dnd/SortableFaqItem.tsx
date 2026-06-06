@@ -5,7 +5,7 @@ import { cn } from '~/css'
 import useTwBelt from '~/hooks/useTwBelt'
 import GrabDotsSVG from '~/icons/GrabDots'
 
-import { toTranslateOnlyTransform } from '../../SideTreeEditor/dndHelper'
+import { toTranslateOnlyTransform } from '../../Editor/SideTree/Dnd/helper'
 import { FAQ_DND_TYPE, FAQ_EDITOR_COPY } from '../constant'
 
 type TProps = {

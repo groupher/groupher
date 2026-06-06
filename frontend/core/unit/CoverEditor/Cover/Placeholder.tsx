@@ -1,15 +1,66 @@
-import UploadSVG from '~/icons/Upload'
+import { useState } from 'react'
+import type { DragEvent } from 'react'
 
-import useSalon from '../salon/cover/placeholder'
+import { cn } from '~/css'
+import useTrans from '~/hooks/useTrans'
+import ImgUploadSVG from '~/icons/ImgUpload'
 
-export default function Placeholder() {
+import useSalon from './salon/placeholder'
+
+type TProps = {
+  onDropFile: (file: File) => void
+  onUpload: () => void
+}
+
+export default function Placeholder({ onDropFile, onUpload }: TProps) {
   const s = useSalon()
+  const { t } = useTrans()
+  const [dragging, setDragging] = useState(false)
+
+  const handleDragOver = (event: DragEvent<HTMLButtonElement>): void => {
+    event.preventDefault()
+  }
+
+  const handleDragEnter = (event: DragEvent<HTMLButtonElement>): void => {
+    event.preventDefault()
+    setDragging(true)
+  }
+
+  const handleDragLeave = (event: DragEvent<HTMLButtonElement>): void => {
+    event.preventDefault()
+    setDragging(false)
+  }
+
+  const handleDrop = (event: DragEvent<HTMLButtonElement>): void => {
+    event.preventDefault()
+    setDragging(false)
+
+    const file = event.dataTransfer.files?.[0]
+    if (!file?.type.startsWith('image/')) return
+
+    onDropFile(file)
+  }
 
   return (
-    <>
-      <UploadSVG className={s.uploadIcon} />
-      <div className={s.title}>上传封面图</div>
-      <div className={s.desc}>上传本地图片或 URL, 默认展示为 680x400 宽度</div>
-    </>
+    <button
+      type='button'
+      className={cn(s.wrapper, dragging && s.wrapperActive)}
+      aria-label={t('cover_editor.placeholder.action')}
+      onClick={onUpload}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      <span className={s.dashedFrame} />
+      <div className={s.inner}>
+        <ImgUploadSVG className={s.uploadIcon} />
+        <div className={s.title}>{t('cover_editor.placeholder.action')}</div>
+        <div className={s.desc}>
+          <span>{t('cover_editor.placeholder.theme_desc')}</span>
+          <span>{t('cover_editor.placeholder.ratio_desc')}</span>
+        </div>
+      </div>
+    </button>
   )
 }

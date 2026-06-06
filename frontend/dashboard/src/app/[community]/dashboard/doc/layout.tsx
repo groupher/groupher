@@ -2,10 +2,8 @@
 
 import type { ReactNode } from 'react'
 
-import useSalon, { cnMerge } from '~/unit/DashboardThread/salon'
+import SubMenuContentLayout from '../_shared/SubMenuContentLayout'
 
 export default function DashboardDocLayout({ children }: { children: ReactNode }) {
-  const s = useSalon()
-
-  return <div className={cnMerge(s.content, 'w-full pl-10')}>{children}</div>
+  return <SubMenuContentLayout>{children}</SubMenuContentLayout>
 }

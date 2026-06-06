@@ -193,6 +193,9 @@ export const GRADIENT_WALLPAPER_NAME = {
   EMERALD_AMBER_ROSE: 'emerald_amber_rose',
   RED_SKY: 'red_sky',
   ROSE_SKY_MAUVE: 'rose_sky_mauve',
+  MIST_ROSE_SLATE: 'mist_rose_slate',
+  MIST_GREEN_AMBER: 'mist_green_amber',
+  SKY_MAUVE_SLATE: 'sky_mauve_slate',
 } as const
 
 const DEFAULT_GRADIENT_EFFECT_INIT = {
@@ -336,6 +339,21 @@ export const GRADIENT_PALETTE = {
     label: 'Rose Sky Mauve',
     colors: ['#F5E5E8', '#FF8E86', '#9ABDE7', '#AC70A6'],
   },
+  [GRADIENT_WALLPAPER_NAME.MIST_ROSE_SLATE]: {
+    key: GRADIENT_WALLPAPER_NAME.MIST_ROSE_SLATE,
+    label: 'Mist Rose Slate',
+    colors: ['#E8EDF4', '#E3C0BE', '#8F8AA4', '#223A56'],
+  },
+  [GRADIENT_WALLPAPER_NAME.MIST_GREEN_AMBER]: {
+    key: GRADIENT_WALLPAPER_NAME.MIST_GREEN_AMBER,
+    label: 'Mist Green Amber',
+    colors: ['#DCEFE9', '#EEF2DD', '#F5E0AD'],
+  },
+  [GRADIENT_WALLPAPER_NAME.SKY_MAUVE_SLATE]: {
+    key: GRADIENT_WALLPAPER_NAME.SKY_MAUVE_SLATE,
+    label: 'Sky Mauve Slate',
+    colors: ['#8EA5D5', '#C6D5EE', '#8E7898', '#27375F'],
+  },
 } satisfies Record<string, TGradientPalette>
 
 const GRADIENT_EFFECT_INIT: Record<string, TGradientEffectInit> = {
@@ -366,6 +384,9 @@ const GRADIENT_EFFECT_INIT: Record<string, TGradientEffectInit> = {
   [GRADIENT_WALLPAPER_NAME.EMERALD_AMBER_ROSE]: { angle: 25, spread: 74 },
   [GRADIENT_WALLPAPER_NAME.RED_SKY]: { angle: 180, spread: 70 },
   [GRADIENT_WALLPAPER_NAME.ROSE_SKY_MAUVE]: { angle: 135, spread: 72 },
+  [GRADIENT_WALLPAPER_NAME.MIST_ROSE_SLATE]: { angle: 180, spread: 74 },
+  [GRADIENT_WALLPAPER_NAME.MIST_GREEN_AMBER]: { angle: 180, spread: 66 },
+  [GRADIENT_WALLPAPER_NAME.SKY_MAUVE_SLATE]: { angle: 180, spread: 78 },
 } satisfies Record<string, TGradientEffectInit>
 
 const buildGradientWallpaper = (palette: TGradientPalette): TGradientRecipe => ({

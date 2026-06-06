@@ -21,6 +21,7 @@ const SegmentTabItem: FC<TSegmentTabOptionProps> = ({
       role='radio'
       aria-checked={active}
       disabled={item.disabled}
+      data-segment-tab-active={active ? 'true' : undefined}
       className={s.item}
       onClick={() => onClick(index)}
       onKeyDown={(event) => onKeyDown(event, index)}

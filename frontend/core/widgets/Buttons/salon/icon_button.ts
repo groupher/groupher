@@ -19,7 +19,7 @@ export default function useSalon({ size, active, dimWhenIdle, ...spacing }: TPro
       dimWhenIdle ? 'opacity-80' : 'opacity-100',
       'hover:opacity-100',
       zise(size),
-      fill(active ? 'text.title' : 'text.digest'),
+      fill(active ? 'title' : 'digest'),
     ),
   }
 }

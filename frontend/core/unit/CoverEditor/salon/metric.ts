@@ -1,215 +1,153 @@
 import { GRADIENT_DIRECTION } from '~/const/wallpaper'
 import type { TWallpaperGradientDir } from '~/spec'
 
-import { IMAGE_POS, IMAGE_RATIO_SIZE, IMAGE_SIZE, LINEAR_BORDER } from '../constant'
-import type { TImagePos, TImageRadio, TImageSize, TImageSizeValue, TLinearBorderPos } from '../spec'
+import { IMAGE_CONTAINER_SIZE, IMAGE_RATIO_SIZE } from '../constant'
+import type { TCoverPoint, TImageRadio, TImageSize, TImageSizeValue } from '../spec'
+
+const CANVAS_WIDTH = Number.parseFloat(IMAGE_CONTAINER_SIZE.WIDTH)
+const CANVAS_HEIGHT = Number.parseFloat(IMAGE_CONTAINER_SIZE.HEIGHT)
+
+const getRatioValue = (ratio: TImageRadio): number => {
+  const ratioSize = IMAGE_RATIO_SIZE[ratio]
+
+  return Number.parseFloat(ratioSize.width) / Number.parseFloat(ratioSize.height)
+}
 
 export const getImageSize = (size: TImageSize, ratio: TImageRadio): TImageSizeValue => {
-  return IMAGE_RATIO_SIZE[ratio][size]
-}
-
-type TTranslateOffset = {
-  x: number
-  y: number
-}
-
-const getTranslateOffset = (size: TImageSize): TTranslateOffset => {
-  let xOffset = 40
-  let yOffset = 40
-
-  switch (size) {
-    case IMAGE_SIZE.MEDIUM: {
-      xOffset = 50
-      yOffset = 53
-      break
-    }
-
-    case IMAGE_SIZE.SMALL: {
-      xOffset = 100
-      yOffset = 103
-      break
-    }
-
-    default: {
-      break
-    }
-  }
+  const scale = size / 100
+  const ratioValue = getRatioValue(ratio)
+  const height = CANVAS_HEIGHT * scale
+  const width = height * ratioValue
 
   return {
-    x: xOffset,
-    y: yOffset,
+    width: `${width}px`,
+    height: `${height}px`,
   }
 }
 
-export const getImageTranslate = (pos: TImagePos, size: TImageSize): string => {
-  let x = '0px'
-  let y = '3px'
-
-  const { x: xOffset, y: yOffset } = getTranslateOffset(size)
-
-  switch (pos) {
-    case IMAGE_POS.TOP_LEFT: {
-      x = `-${xOffset}px`
-      y = `-${yOffset}px`
-      break
-    }
-
-    case IMAGE_POS.TOP_CENTER: {
-      y = `-${yOffset}px`
-      break
-    }
-
-    case IMAGE_POS.TOP_RIGHT: {
-      x = `${xOffset}px`
-      y = `-${yOffset}px`
-      break
-    }
-
-    case IMAGE_POS.CENTER_LEFT: {
-      x = `-${xOffset}px`
-      break
-    }
-
-    case IMAGE_POS.CENTER_RIGHT: {
-      x = `${xOffset}px`
-      break
-    }
-
-    case IMAGE_POS.BOTTOM_LEFT: {
-      x = `-${xOffset}px`
-      y = `${yOffset}px`
-      break
-    }
-
-    case IMAGE_POS.BOTTOM_CENTER: {
-      y = `${yOffset}px`
-      break
-    }
-
-    case IMAGE_POS.BOTTOM_RIGHT: {
-      x = `${xOffset}px`
-      y = `${yOffset}px`
-      break
-    }
-
-    // center
-    default: {
-      break
-    }
-  }
-
-  return `translate(${x}, ${y})`
+const toCanvasPercent = (value: string, base: string): string => {
+  return `${(Number.parseFloat(value) / Number.parseFloat(base)) * 100}%`
 }
 
-type TLightPos = {
-  size: number
-  top: string
-  left: string
-}
-
-export const getLightPos = (pos: TImagePos): TLightPos => {
-  const size = 300
-  let top = '-205px'
-  let left = '-200px'
-
-  switch (pos) {
-    case IMAGE_POS.TOP_LEFT: {
-      top = '-350px'
-      left = '-450px'
-      break
-    }
-
-    case IMAGE_POS.TOP_CENTER: {
-      top = '-350px'
-      break
-    }
-
-    case IMAGE_POS.TOP_RIGHT: {
-      top = '-350px'
-      left = '45px'
-      break
-    }
-
-    case IMAGE_POS.CENTER_LEFT: {
-      left = '-450px'
-      break
-    }
-
-    case IMAGE_POS.CENTER_RIGHT: {
-      left = '45px'
-      break
-    }
-
-    case IMAGE_POS.BOTTOM_LEFT: {
-      left = '-420px'
-      top = '-50px'
-      break
-    }
-
-    case IMAGE_POS.BOTTOM_CENTER: {
-      top = '-50px'
-      break
-    }
-
-    case IMAGE_POS.BOTTOM_RIGHT: {
-      left = '45px'
-      top = '-50px'
-      break
-    }
-
-    // center
-    default: {
-      break
-    }
-  }
+export const getResponsiveImageSize = (size: TImageSize, ratio: TImageRadio): TImageSizeValue => {
+  const imageSize = getImageSize(size, ratio)
 
   return {
-    size,
-    top,
-    left,
+    width: toCanvasPercent(imageSize.width, IMAGE_CONTAINER_SIZE.WIDTH),
+    height: toCanvasPercent(imageSize.height, IMAGE_CONTAINER_SIZE.HEIGHT),
   }
 }
 
-export const getLinearBorder = (
-  pos: TLinearBorderPos,
-  _active = false,
-  _isLightTheme = true,
-): string => {
-  // const themeKey = isLightTheme ? 'DEFAULT' : 'dark'
-  // TODO:
-  const color = 'wheat' // active ? colors.text.digest[themeKey] : colors.text.hint[themeKey]
+export const clamp01 = (value: number): number => Math.min(1, Math.max(0, value))
 
-  switch (pos) {
-    case LINEAR_BORDER.TOP_LEFT: {
-      return `linear-gradient(transparent, transparent), 
-      linear-gradient(to left top, transparent, transparent 62%, ${color})`
+const normalizeAngle = (angle: number): number => ((angle % 360) + 360) % 360
+
+const getImageSizeNumber = (
+  size: TImageSize,
+  ratio: TImageRadio,
+): { width: number; height: number } => {
+  const imageSize = getImageSize(size, ratio)
+
+  return {
+    width: Number.parseFloat(imageSize.width),
+    height: Number.parseFloat(imageSize.height),
+  }
+}
+
+const getRotatedSize = (
+  width: number,
+  height: number,
+  rotate: number,
+): { width: number; height: number } => {
+  const rad = (normalizeAngle(rotate) * Math.PI) / 180
+  const cos = Math.abs(Math.cos(rad))
+  const sin = Math.abs(Math.sin(rad))
+
+  return {
+    width: width * cos + height * sin,
+    height: width * sin + height * cos,
+  }
+}
+
+const getPlacementBounds = (
+  size: TImageSize,
+  ratio: TImageRadio,
+  rotate: number,
+): { minX: number; maxX: number; minY: number; maxY: number } => {
+  const imageSize = getImageSizeNumber(size, ratio)
+  const rotatedSize = getRotatedSize(imageSize.width, imageSize.height, rotate)
+
+  const getAxisBounds = (canvasSize: number, frameSize: number): { min: number; max: number } => {
+    if (frameSize >= canvasSize) {
+      return {
+        min: canvasSize - frameSize / 2,
+        max: frameSize / 2,
+      }
     }
-    case LINEAR_BORDER.TOP_RIGHT:
-      return `linear-gradient(transparent, transparent),
-              linear-gradient(to right top, transparent, transparent 62%, ${color})`
-    case LINEAR_BORDER.TOP_ALL:
-      return `linear-gradient(transparent, transparent),
-              linear-gradient(to top, transparent, transparent 20%, ${color})`
-    case LINEAR_BORDER.BOTTOM_LEFT:
-      return `linear-gradient(transparent, transparent), 
-              linear-gradient(to left bottom, transparent, transparent 62%, ${color})`
-    case LINEAR_BORDER.BOTTOM_RIGHT:
-      return `linear-gradient(transparent, transparent), 
-              linear-gradient(to right bottom, transparent, transparent 62%, ${color})`
-    case LINEAR_BORDER.BOTTOM_ALL:
-      return `linear-gradient(transparent, transparent), 
-              linear-gradient(to bottom, transparent, transparent 20%, ${color})`
-    case LINEAR_BORDER.LEFT_ALL:
-      return `linear-gradient(transparent, transparent), 
-              linear-gradient(to left, transparent, transparent 20%, ${color})`
-    case LINEAR_BORDER.RIGHT_ALL:
-      return `linear-gradient(transparent, transparent),
-              linear-gradient(to right, transparent, transparent 20%, ${color})`
-    case LINEAR_BORDER.NONE:
-      return 'none'
-    default:
-      return `linear-gradient(transparent, transparent),
-              linear-gradient(to left, transparent, transparent, ${color})`
+
+    return {
+      min: frameSize / 2,
+      max: canvasSize - frameSize / 2,
+    }
+  }
+
+  const xBounds = getAxisBounds(CANVAS_WIDTH, rotatedSize.width)
+  const yBounds = getAxisBounds(CANVAS_HEIGHT, rotatedSize.height)
+
+  return {
+    minX: xBounds.min,
+    maxX: xBounds.max,
+    minY: yBounds.min,
+    maxY: yBounds.max,
+  }
+}
+
+const getCenterValue = (value: number, min: number, max: number): number => {
+  const range = max - min
+
+  if (range <= 0) return (min + max) / 2
+
+  return min + clamp01(value) * range
+}
+
+export const getImagePlacement = (
+  position: TCoverPoint,
+  size: TImageSize,
+  ratio: TImageRadio,
+  rotate: number,
+): { left: string; top: string } => {
+  const { minX, maxX, minY, maxY } = getPlacementBounds(size, ratio, rotate)
+
+  return {
+    left: `${(getCenterValue(position.x, minX, maxX) / CANVAS_WIDTH) * 100}%`,
+    top: `${(getCenterValue(position.y, minY, maxY) / CANVAS_HEIGHT) * 100}%`,
+  }
+}
+
+export const getImagePositionFromCanvasPoint = (
+  point: TCoverPoint,
+  size: TImageSize,
+  ratio: TImageRadio,
+  rotate: number,
+): TCoverPoint => {
+  const { minX, maxX, minY, maxY } = getPlacementBounds(size, ratio, rotate)
+  const xRange = maxX - minX
+  const yRange = maxY - minY
+
+  return {
+    x: xRange <= 0 ? 0.5 : clamp01((point.x - minX) / xRange),
+    y: yRange <= 0 ? 0.5 : clamp01((point.y - minY) / yRange),
+  }
+}
+
+export const getCanvasPointFromClient = (
+  clientX: number,
+  clientY: number,
+  rect: DOMRect,
+): TCoverPoint => {
+  return {
+    x: clamp01((clientX - rect.left) / rect.width) * CANVAS_WIDTH,
+    y: clamp01((clientY - rect.top) / rect.height) * CANVAS_HEIGHT,
   }
 }
 

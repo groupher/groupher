@@ -1,0 +1,104 @@
+import { type KeyboardEvent, type PointerEvent, useEffect, useRef, useState } from 'react'
+
+import { getImagePlacement, getResponsiveImageSize } from '../../../../salon/metric'
+import type { TCoverPoint, TImageRadio, TImageSize } from '../../../../spec'
+import { GRID_HORIZONTAL_LINES, GRID_VERTICAL_LINES } from './constant'
+import { getPositionFromKeyboard, getPositionFromPointer } from './helper'
+import useSalon from './salon'
+
+type TProps = {
+  position: TCoverPoint
+  size: TImageSize
+  ratio: TImageRadio
+  rotate: number
+  onChange: (position: TCoverPoint) => void
+}
+
+export default function FramePositionControl({ position, size, ratio, rotate, onChange }: TProps) {
+  const panelRef = useRef<HTMLButtonElement | null>(null)
+  const [draftPosition, setDraftPosition] = useState(position)
+  const s = useSalon()
+
+  useEffect(() => {
+    setDraftPosition(position)
+  }, [position])
+
+  const updatePosition = (clientX: number, clientY: number): void => {
+    const rect = panelRef.current?.getBoundingClientRect()
+    if (!rect) return
+
+    const nextPosition = getPositionFromPointer(clientX, clientY, rect, { size, ratio, rotate })
+
+    setDraftPosition(nextPosition)
+    onChange(nextPosition)
+  }
+
+  const handlePointerDown = (event: PointerEvent<HTMLButtonElement>): void => {
+    event.preventDefault()
+    event.currentTarget.focus()
+    event.currentTarget.setPointerCapture(event.pointerId)
+    updatePosition(event.clientX, event.clientY)
+  }
+
+  const handlePointerMove = (event: PointerEvent<HTMLButtonElement>): void => {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
+    updatePosition(event.clientX, event.clientY)
+  }
+
+  const handlePointerUp = (event: PointerEvent<HTMLButtonElement>): void => {
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
+
+    updatePosition(event.clientX, event.clientY)
+    event.currentTarget.releasePointerCapture(event.pointerId)
+  }
+
+  const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>): void => {
+    const nextPosition = getPositionFromKeyboard(draftPosition, event.key)
+    if (!nextPosition) return
+
+    event.preventDefault()
+    setDraftPosition(nextPosition)
+    onChange(nextPosition)
+  }
+
+  const frameSize = getResponsiveImageSize(size, ratio)
+  const placement = getImagePlacement(draftPosition, size, ratio, rotate)
+
+  return (
+    <button
+      type='button'
+      ref={panelRef}
+      className={s.control}
+      role='slider'
+      aria-label='Position'
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(draftPosition.x * 100)}
+      aria-valuetext={`X ${Math.round(draftPosition.x * 100)}%, Y ${Math.round(
+        draftPosition.y * 100,
+      )}%`}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onKeyDown={handleKeyDown}
+    >
+      {GRID_VERTICAL_LINES.map((left) => (
+        <span key={left} className={s.verticalLine} style={{ left: `${left}%` }} />
+      ))}
+      {GRID_HORIZONTAL_LINES.map((top) => (
+        <span key={top} className={s.horizontalLine} style={{ top: `${top}%` }} />
+      ))}
+      <span
+        className={s.frameBlock}
+        style={{
+          width: frameSize.width,
+          height: frameSize.height,
+          left: placement.left,
+          top: placement.top,
+          transform: `translate(-50%, -50%) rotate(${rotate}deg)`,
+        }}
+      />
+    </button>
+  )
+}

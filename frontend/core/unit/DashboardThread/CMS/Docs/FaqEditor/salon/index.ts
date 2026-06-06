@@ -6,7 +6,7 @@ export default function useSalon() {
   const { cn, fg, primary } = useTwBelt()
 
   return {
-    wrapper: 'mx-auto w-1/2 mt-8 pr-4',
+    wrapper: 'mx-auto w-1/2 pr-4',
     titleText: cn('text-2xl font-bold', fg('title')),
     descText: cn('text-sm', fg('digest')),
     descBlock: 'mt-2',

@@ -8,18 +8,20 @@ type TProps = {
 }
 
 export default function useSalon({ active, disabled = false }: TProps) {
-  const { cn, bg, fg, fill, shadow } = useTwBelt()
+  const { cn, fg, fill } = useTwBelt()
 
   return {
     item: cn(
-      'row-center h-6 min-w-24 gap-x-1.5 rounded-md border-0 px-3 text-sm outline-none trans-all-150 pointer',
+      'row-center relative z-10 h-6 min-w-24 justify-center gap-x-1.5 rounded-md border-0 px-3 text-center text-sm outline-none transition-colors duration-150 ease-out pointer',
       'focus-visible:ring-2 focus-visible:ring-offset-1',
-      active
-        ? cn(bg('card'), fg('title'), shadow('sm'))
-        : cn('bg-transparent', fg('digest'), `hover:${fg('title')}`),
+      active ? fg('title') : cn('bg-transparent', fg('digest'), `hover:${fg('title')}`),
       disabled && 'cursor-not-allowed opacity-50',
     ),
-    icon: cn('size-3.5 shrink-0', fill('digest'), active ? 'opacity-100' : 'opacity-80'),
-    label: 'whitespace-nowrap',
+    icon: cn(
+      'size-3.5 shrink-0',
+      active ? fill('title') : fill('digest'),
+      active ? 'opacity-100' : 'opacity-80',
+    ),
+    label: 'whitespace-nowrap text-center',
   }
 }

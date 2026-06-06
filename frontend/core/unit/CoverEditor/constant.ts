@@ -1,5 +1,3 @@
-import type { TSettingLevel } from './spec'
-
 // default size it's based on ratio 16:9
 export const IMAGE_CONTAINER_SIZE = {
   WIDTH: '710px', // 16:9
@@ -19,43 +17,24 @@ export const IMAGE_POS = {
   NONE: 'none',
 } as const
 
-export const LINEAR_BORDER = {
-  NONE: 'none',
-  TOP_LEFT: 'top_left',
-  TOP: 'top',
-  TOP_RIGHT: 'top_right',
-
-  BOTTOM_LEFT: 'bottom_left',
-  BOTTOM: 'bottom',
-  BOTTOM_RIGHT: 'bottom_right',
-
-  TOP_ALL: 'top_all',
-  BOTTOM_ALL: 'bottom_all',
-  LEFT_ALL: 'left_all',
-  RIGHT_ALL: 'right_all',
-  ALL: 'all',
+export const IMAGE_SHADOW_RANGE = {
+  MIN: 0,
+  MAX: 100,
 } as const
 
-export const SETTING_LEVEL = {
-  L1: 'L1',
-  L2: 'L2',
-  L3: 'L3',
-  L4: 'L4',
-  L5: 'L5',
+export const IMAGE_SIZE_RANGE = {
+  MIN: 50,
+  MAX: 100,
 } as const
 
-export const IMAGE_SHADOW = {
-  L1: 'none',
-  L2: 'rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px', // @9
-  L3: 'rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px',
-  L4: 'rgba(0, 0, 0, 0.1) 0px 20px 25px -5px, rgba(0, 0, 0, 0.04) 0px 10px 10px -5px',
-  L5: 'rgba(0, 0, 0, 0.25) 0px 25px 50px -12px',
-} as Record<TSettingLevel, string>
+export const IMAGE_BORDER_RADIUS_RANGE = {
+  MIN: 0,
+  MAX: 40,
+} as const
 
-export const IMAGE_SIZE = {
-  LARGE: 'large',
-  MEDIUM: 'medium',
-  SMALL: 'small',
+export const GLASS_FRAME = {
+  PADDING_X: 7.5,
+  PADDING_Y: 6.5,
 } as const
 
 export const IMAGE_RATIO = {
@@ -64,63 +43,44 @@ export const IMAGE_RATIO = {
   SCREEN: 'screen',
 } as const
 
-export const IMAGE_BORDER_RADIUS = {
-  L1: '0',
-  L2: '8px',
-  L3: '18px',
-  L4: '15px',
-  L5: '20px',
-} as Record<TSettingLevel, string>
+export const BORDER_HIGHLIGHT_DEFAULT = {
+  ENABLED: false,
+  ANGLE: 35,
+  LENGTH: 0.28,
+} as const
+
+export const BORDER_HIGHLIGHT_LENGTH_RANGE = {
+  MIN: 0.08,
+  MAX: 0.72,
+} as const
+
+export const BORDER_HIGHLIGHT_STROKE_COLOR = 'wheat'
+
+export const LIGHT_RADIUS_DEFAULT = 0.5
+
+export const LIGHT_RENDER_SIZE = {
+  MIN: 140,
+  MAX: 560,
+} as const
+
+export const LIGHT_RENDER_OPACITY = {
+  MIN: 0.07,
+  MAX: 0.2,
+} as const
 
 export const IMAGE_RATIO_SIZE = {
   [IMAGE_RATIO.SCREEN]: {
-    [IMAGE_SIZE.LARGE]: {
-      width: IMAGE_CONTAINER_SIZE.WIDTH,
-      height: IMAGE_CONTAINER_SIZE.HEIGHT,
-    },
-
-    [IMAGE_SIZE.MEDIUM]: {
-      width: '640px',
-      height: '360px',
-    },
-
-    [IMAGE_SIZE.SMALL]: {
-      width: '540px',
-      height: '305px',
-    },
+    width: IMAGE_CONTAINER_SIZE.WIDTH,
+    height: IMAGE_CONTAINER_SIZE.HEIGHT,
   },
 
   [IMAGE_RATIO.TV]: {
-    [IMAGE_SIZE.LARGE]: {
-      width: '532px',
-      height: IMAGE_CONTAINER_SIZE.HEIGHT,
-    },
-
-    [IMAGE_SIZE.MEDIUM]: {
-      width: '478px',
-      height: '360px',
-    },
-
-    [IMAGE_SIZE.SMALL]: {
-      width: '406px',
-      height: '305px',
-    },
+    width: '4',
+    height: '3',
   },
 
   [IMAGE_RATIO.SQUARE]: {
-    [IMAGE_SIZE.LARGE]: {
-      width: IMAGE_CONTAINER_SIZE.HEIGHT,
-      height: IMAGE_CONTAINER_SIZE.HEIGHT,
-    },
-
-    [IMAGE_SIZE.MEDIUM]: {
-      width: '360px',
-      height: '360px',
-    },
-
-    [IMAGE_SIZE.SMALL]: {
-      width: '305px',
-      height: '305px',
-    },
+    width: '1',
+    height: '1',
   },
 }

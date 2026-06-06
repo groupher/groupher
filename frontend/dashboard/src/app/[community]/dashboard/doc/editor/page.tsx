@@ -1,9 +1,9 @@
 'use client'
 
-import SideTreeEditor from '~/unit/DashboardThread/CMS/Docs/SideTreeEditor'
+import Editor from '~/unit/DashboardThread/CMS/Docs/Editor'
 
 const DashboardDocEditorPage = () => {
-  return <SideTreeEditor />
+  return <Editor />
 }
 
 export default DashboardDocEditorPage
