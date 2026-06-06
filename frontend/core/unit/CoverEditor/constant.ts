@@ -27,6 +27,9 @@ export const IMAGE_SIZE_RANGE = {
   MAX: 100,
 } as const
 
+// Minimum visible area, in the 710x400 cover design canvas, kept inside the viewport.
+export const COVER_IMAGE_MIN_VISIBLE_SIZE = 200
+
 export const IMAGE_BORDER_RADIUS_RANGE = {
   MIN: 0,
   MAX: 40,
@@ -47,6 +50,8 @@ export const BORDER_HIGHLIGHT_DEFAULT = {
   ENABLED: false,
   ANGLE: 35,
   LENGTH: 0.28,
+  HUE: 39,
+  OPACITY: 1,
 } as const
 
 export const BORDER_HIGHLIGHT_LENGTH_RANGE = {

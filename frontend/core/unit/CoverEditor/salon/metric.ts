@@ -1,7 +1,7 @@
 import { GRADIENT_DIRECTION } from '~/const/wallpaper'
 import type { TWallpaperGradientDir } from '~/spec'
 
-import { IMAGE_CONTAINER_SIZE, IMAGE_RATIO_SIZE } from '../constant'
+import { COVER_IMAGE_MIN_VISIBLE_SIZE, IMAGE_CONTAINER_SIZE, IMAGE_RATIO_SIZE } from '../constant'
 import type { TCoverPoint, TImageRadio, TImageSize, TImageSizeValue } from '../spec'
 
 const CANVAS_WIDTH = Number.parseFloat(IMAGE_CONTAINER_SIZE.WIDTH)
@@ -78,16 +78,12 @@ const getPlacementBounds = (
   const rotatedSize = getRotatedSize(imageSize.width, imageSize.height, rotate)
 
   const getAxisBounds = (canvasSize: number, frameSize: number): { min: number; max: number } => {
-    if (frameSize >= canvasSize) {
-      return {
-        min: canvasSize - frameSize / 2,
-        max: frameSize / 2,
-      }
-    }
+    // Allow dragging outside the cover while keeping enough visible area to recover the image.
+    const minVisibleSize = Math.min(COVER_IMAGE_MIN_VISIBLE_SIZE, frameSize, canvasSize)
 
     return {
-      min: frameSize / 2,
-      max: canvasSize - frameSize / 2,
+      min: minVisibleSize - frameSize / 2,
+      max: canvasSize - minVisibleSize + frameSize / 2,
     }
   }
 
@@ -146,8 +142,8 @@ export const getCanvasPointFromClient = (
   rect: DOMRect,
 ): TCoverPoint => {
   return {
-    x: clamp01((clientX - rect.left) / rect.width) * CANVAS_WIDTH,
-    y: clamp01((clientY - rect.top) / rect.height) * CANVAS_HEIGHT,
+    x: ((clientX - rect.left) / rect.width) * CANVAS_WIDTH,
+    y: ((clientY - rect.top) / rect.height) * CANVAS_HEIGHT,
   }
 }
 

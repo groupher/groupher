@@ -1,10 +1,12 @@
 import { type KeyboardEvent, type PointerEvent, useEffect, useRef, useState } from 'react'
 
+import ArrowsOutCardinalSVG from '~/icons/ArrowsOutCardinal'
+
 import { getImagePlacement, getResponsiveImageSize } from '../../../../salon/metric'
 import type { TCoverPoint, TImageRadio, TImageSize } from '../../../../spec'
 import { GRID_HORIZONTAL_LINES, GRID_VERTICAL_LINES } from './constant'
 import { getPositionFromKeyboard, getPositionFromPointer } from './helper'
-import useSalon from './salon'
+import useSalon, { cn } from './salon/controller'
 
 type TProps = {
   position: TCoverPoint
@@ -14,9 +16,10 @@ type TProps = {
   onChange: (position: TCoverPoint) => void
 }
 
-export default function FramePositionControl({ position, size, ratio, rotate, onChange }: TProps) {
+export default function Controller({ position, size, ratio, rotate, onChange }: TProps) {
   const panelRef = useRef<HTMLButtonElement | null>(null)
   const [draftPosition, setDraftPosition] = useState(position)
+  const [isDragging, setIsDragging] = useState(false)
   const s = useSalon()
 
   useEffect(() => {
@@ -37,6 +40,7 @@ export default function FramePositionControl({ position, size, ratio, rotate, on
     event.preventDefault()
     event.currentTarget.focus()
     event.currentTarget.setPointerCapture(event.pointerId)
+    setIsDragging(true)
     updatePosition(event.clientX, event.clientY)
   }
 
@@ -46,10 +50,14 @@ export default function FramePositionControl({ position, size, ratio, rotate, on
   }
 
   const handlePointerUp = (event: PointerEvent<HTMLButtonElement>): void => {
-    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
+    if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
+      setIsDragging(false)
+      return
+    }
 
     updatePosition(event.clientX, event.clientY)
     event.currentTarget.releasePointerCapture(event.pointerId)
+    setIsDragging(false)
   }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>): void => {
@@ -98,7 +106,13 @@ export default function FramePositionControl({ position, size, ratio, rotate, on
           top: placement.top,
           transform: `translate(-50%, -50%) rotate(${rotate}deg)`,
         }}
-      />
+      >
+        <span className={s.frameFill} />
+        <ArrowsOutCardinalSVG
+          className={cn(s.dragIcon, isDragging ? s.dragIconDragging : s.dragIconIdle)}
+          aria-hidden='true'
+        />
+      </span>
     </button>
   )
 }

@@ -1,7 +1,8 @@
 import type { TCoverPoint, TImageRadio, TImageSize } from '../../../../spec'
 import useLogic from '../../../../useLogic'
 import GroupItem from '../../GroupItem'
-import FramePositionControl from './FramePositionControl'
+import Controller from './Controller'
+import useSalon from './salon'
 
 type TProps = {
   position: TCoverPoint
@@ -12,11 +13,12 @@ type TProps = {
 
 export default function Position({ position, size, ratio, rotate }: TProps) {
   const { positionOnChange } = useLogic()
+  const s = useSalon()
 
   return (
-    <section>
+    <section className={s.wrapper}>
       <GroupItem label='Position'>
-        <FramePositionControl
+        <Controller
           position={position}
           size={size}
           ratio={ratio}
