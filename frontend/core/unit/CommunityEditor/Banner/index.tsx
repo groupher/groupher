@@ -5,7 +5,7 @@
  */
 
 import { STEP } from '../constant'
-import useSalon from '../salon/banner'
+import useSalon from './salon'
 import useLogic from '../useLogic'
 import Finished from './Finished'
 import SelectType from './SelectType'

@@ -4,8 +4,8 @@ import TadaSVG from '~/icons/Tada'
 
 import { STEP } from '../constant'
 import { tada } from '../helper'
-import { Icon } from '../salon/banner/select_type/type_boxes'
-import useSalon from '../salon/header/step_map'
+import { Icon } from '../Banner/salon/select_type/type_boxes'
+import useSalon from './salon/step_map'
 import useLogic from '../useLogic'
 import StatusBall from './StatusBall'
 

@@ -6,7 +6,7 @@ import Img from '~/Img'
 import { mockUsers } from '~/mock'
 import Button from '~/widgets/Buttons/Button'
 
-import useSalon from '../salon/head_bar/publish_bar'
+import useSalon from './salon/publish_bar'
 
 type TProps = {
   closeEditor: () => void

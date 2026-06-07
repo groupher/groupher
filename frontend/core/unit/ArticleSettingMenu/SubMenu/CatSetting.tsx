@@ -9,7 +9,7 @@ import CheckSVG from '~/icons/CheckBold'
 import { toast, updateViewingArticle } from '~/signal'
 
 import { ICON } from '../constant'
-import useSalon, { cn } from '../salon/sub_menu/cat_setting'
+import useSalon, { cn } from './salon/cat_setting'
 import S from '../schema'
 import useTouched from '../useTouched'
 import Footer from './Footer'

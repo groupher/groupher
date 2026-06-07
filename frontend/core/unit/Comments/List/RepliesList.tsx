@@ -4,7 +4,7 @@ import useTrans from '~/hooks/useTrans'
 import type { TComment, TID } from '~/spec'
 
 import Comment from '../Comment'
-import useSalon from '../salon/list/replies_list'
+import useSalon from './salon/replies_list'
 import type { TAPIMode } from '../spec'
 import useActions from '../useLogic/useActions'
 import TogglerButton from './TogglerButton'

@@ -4,7 +4,7 @@ import type { FC } from 'react'
 import { createKeyboardClick } from '~/lib/a11y'
 import type { TSelectOption } from '~/spec'
 
-import useSalon, { cn } from '../salon/banner/block_selector'
+import useSalon, { cn } from './salon/block_selector'
 
 type TProps = {
   options: TSelectOption[]

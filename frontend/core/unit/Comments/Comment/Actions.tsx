@@ -8,7 +8,7 @@ import type { TComment } from '~/spec'
 import useAccount from '~/stores/account/hooks'
 import MenuButton from '~/widgets/Buttons/MenuButton'
 
-import useSalon from '../salon/comment/actions'
+import useSalon from './salon/actions'
 import useActions from '../useLogic/useActions'
 
 type TProps = {

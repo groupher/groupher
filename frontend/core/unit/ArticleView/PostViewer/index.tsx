@@ -13,7 +13,7 @@ import ViewportTracker from '~/widgets/ViewportTracker'
 
 import ArticleBroadcast from '../ArticleBroadcast'
 import ArticleFooter from '../ArticleFooter'
-import useSalon, { cn } from '../salon/post_viewer'
+import useSalon, { cn } from './salon'
 import useLogic from '../useLogic'
 import ArticleInfo from './ArticleInfo'
 import FixedHeader from './FixedHeader'

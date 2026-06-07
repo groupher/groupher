@@ -5,7 +5,7 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import useCommunity from '~/stores/community/hooks'
 import { thread2Path } from '~/utils/thread'
 
-import useSalon, { cn } from '../salon/drawer_header/article_navi'
+import useSalon, { cn } from './salon/article_navi'
 
 export default function ArticleNavi() {
   const s = useSalon()

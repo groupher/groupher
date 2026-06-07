@@ -3,7 +3,7 @@ import { type FC, memo } from 'react'
 import type { TComment } from '~/spec'
 
 import { API_MODE } from '../../constant'
-import useSalon from '../../salon/comment/header'
+import useSalon from '../salon/header'
 import type { TAPIMode } from '../../spec'
 import ArticleHeader from './Article'
 

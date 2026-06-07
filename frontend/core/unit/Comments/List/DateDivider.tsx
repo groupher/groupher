@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-import useSalon from '../salon/list/date_divider'
+import useSalon from './salon/date_divider'
 
 type TProps = {
   text: string | null

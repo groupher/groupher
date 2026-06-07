@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import { createKeyboardClick } from '~/lib/a11y'
 
-import useSalon, { cn } from '../salon/banner/scale_selector'
+import useSalon, { cn } from './salon/scale_selector'
 
 const STEP = {
   S: '15%',

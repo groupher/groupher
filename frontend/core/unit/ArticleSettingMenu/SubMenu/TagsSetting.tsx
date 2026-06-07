@@ -11,7 +11,7 @@ import useCommunity from '~/stores/community/hooks'
 import Checker from '~/widgets/Checker'
 import TagNode from '~/widgets/TagNode'
 
-import useSalon from '../salon/sub_menu/tags_setting'
+import useSalon from './salon/tags_setting'
 import S from '../schema'
 import useTouched from '../useTouched'
 import Footer from './Footer'

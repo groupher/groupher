@@ -13,7 +13,7 @@ import { toast, updateViewingArticle } from '~/signal'
 
 import { ICON } from '../constant'
 import { getGTDColor } from '../helper'
-import useSalon, { cn } from '../salon/sub_menu/status_setting'
+import useSalon, { cn } from './salon/status_setting'
 import S from '../schema'
 import useTouched from '../useTouched'
 import Footer from './Footer'

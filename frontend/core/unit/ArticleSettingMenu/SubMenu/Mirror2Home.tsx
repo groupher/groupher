@@ -4,7 +4,7 @@ import { useMutation } from 'urql'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import { toast, updateViewingArticle } from '~/signal'
 
-import useSalon from '../salon/sub_menu/mirror_home'
+import useSalon from './salon/mirror_home'
 import S from '../schema'
 import useTouched from '../useTouched'
 import Footer from './Footer'

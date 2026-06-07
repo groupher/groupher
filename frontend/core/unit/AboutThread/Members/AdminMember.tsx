@@ -3,7 +3,7 @@ import { type FC, memo } from 'react'
 import type { TUser } from '~/spec'
 import AdminAvatar from '~/unit/AdminAvatar'
 
-import useSalon from '../salon/members/admin_member'
+import useSalon from './salon/admin_member'
 
 type TProps = {
   user: TUser

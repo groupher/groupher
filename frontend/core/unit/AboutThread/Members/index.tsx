@@ -6,7 +6,7 @@ import type { TModerator } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
 import NoteTip from '~/widgets/NoteTip'
 
-import useSalon, { cn } from '../salon/members'
+import useSalon, { cn } from './salon'
 import AdminMember from './AdminMember'
 
 type TProps = {

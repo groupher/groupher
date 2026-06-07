@@ -3,7 +3,7 @@ import { type FC, memo } from 'react'
 import useTrans from '~/hooks/useTrans'
 import Img from '~/Img'
 
-import useSalon, { cn } from '../../salon/content/fake_browser/content'
+import useSalon, { cn } from './salon/fake_browser/content'
 import type { TCommunityType } from '../../spec'
 import communityIntros from '../communityIntros'
 

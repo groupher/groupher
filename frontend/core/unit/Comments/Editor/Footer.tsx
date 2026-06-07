@@ -5,7 +5,7 @@ import type { TSubmitState } from '~/spec'
 import SubmitButton from '~/widgets/Buttons/SubmitButton'
 import WordsCounter from '~/widgets/WordsCounter'
 
-import useSalon from '../salon/editor/footer'
+import useSalon from './salon/footer'
 import useActions from '../useLogic/useActions'
 
 type TProps = {

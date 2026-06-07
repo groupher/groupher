@@ -4,7 +4,7 @@ import ArrowSVG from '~/icons/Arrow'
 import type { TSpace } from '~/spec'
 import Button from '~/widgets/Buttons/Button'
 
-import useSalon from '../salon/sub_menu/footer'
+import useSalon from './salon/footer'
 
 type TProps = {
   onBack: () => void

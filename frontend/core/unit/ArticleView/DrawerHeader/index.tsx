@@ -5,7 +5,7 @@ import ArrowSVG from '~/icons/Arrow'
 import WarningSVG from '~/icons/Warning'
 import ArticleSettingMenu from '~/unit/ArticleSettingMenu'
 
-import useSalon, { cn } from '../salon/drawer_header'
+import useSalon, { cn } from './salon'
 import ArticleNavi from './ArticleNavi'
 
 const Share = lazy(() => import('~/unit/Share'))

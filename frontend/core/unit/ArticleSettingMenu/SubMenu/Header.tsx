@@ -8,7 +8,7 @@ import SlugSVG from '~/icons/Slug'
 import TagNode from '~/widgets/TagNode'
 
 import { SUB_MENU } from '../constant'
-import useSalon from '../salon/sub_menu/header'
+import useSalon from './salon/header'
 import type { TSubMenu } from '../spec'
 
 type TProps = {

@@ -9,7 +9,7 @@ import type { TComment } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
 import TimeAgo from '~/widgets/TimeAgo'
 
-import useSalon, { cn } from '../../salon/comment/desktop_view/fold_layout'
+import useSalon, { cn } from '../salon/desktop_view/fold_layout'
 import useActions from '../../useLogic/useActions'
 import IllegalBar from './IllegalBar'
 

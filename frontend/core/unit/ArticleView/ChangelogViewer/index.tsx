@@ -10,7 +10,7 @@ import { ArticleContentLoading } from '~/widgets/Loading'
 import ViewportTracker from '~/widgets/ViewportTracker'
 
 import ArticleFooter from '../ArticleFooter'
-import useSalon, { cn } from '../salon/changelog_viewer'
+import useSalon, { cn } from './salon'
 import useLogic from '../useLogic'
 import ArticleInfo from './ArticleInfo'
 import FixedHeader from './FixedHeader'

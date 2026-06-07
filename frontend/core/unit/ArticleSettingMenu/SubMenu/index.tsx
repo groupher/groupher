@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 
 import { SUB_MENU } from '../constant'
-import useSalon from '../salon/sub_menu'
+import useSalon from './salon'
 import type { TSubMenu } from '../spec'
 import CatSetting from './CatSetting'
 import Header from './Header'

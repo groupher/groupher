@@ -9,7 +9,7 @@ import { mockUsers } from '~/mock'
 import Facepile from '~/widgets/Facepile/LandingPage'
 
 import { COMMUNITY_TYPE } from '../../constant'
-import useSalon, { cn } from '../../salon/banner/select_type/intro_images'
+import useSalon, { cn } from './salon/select_type/intro_images'
 import type { TCommunityType } from '../../spec'
 
 type TProps = {

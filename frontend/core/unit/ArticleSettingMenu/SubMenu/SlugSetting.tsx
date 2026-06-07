@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import Input from '~/widgets/Input'
 
-import useSalon from '../salon/sub_menu/slug_setting'
+import useSalon from './salon/slug_setting'
 import Footer from './Footer'
 
 type TProps = {

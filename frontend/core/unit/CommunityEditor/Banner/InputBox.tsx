@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import type { TInput } from '~/spec'
 import Input from '~/widgets/Input'
 
-import useSalon from '../salon/banner/input_box'
+import useSalon from './salon/input_box'
 
 type TProps = {
   placeholder?: string

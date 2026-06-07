@@ -2,7 +2,7 @@ import AccountUnit from '~/widgets/AccountUnit'
 import HomeLogo from '~/widgets/HomeLogo'
 import ThemeSwitch from '~/widgets/ThemeSwitch'
 
-import useSalon from '../salon/header'
+import useSalon from './salon'
 import useLogic from '../useLogic'
 import StepMap from './StepMap'
 

@@ -7,7 +7,7 @@ import UnPinSVG from '~/icons/UnPin'
 import { toast, updateViewingArticle } from '~/signal'
 import useArticle from '~/stores/article/hooks'
 
-import useSalon from '../salon/menu'
+import useSalon from './salon'
 import S from '../schema'
 
 export default function PinItem() {

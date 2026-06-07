@@ -4,7 +4,7 @@ import CitySelector from '~/widgets/CitySelector'
 import Input from '~/widgets/Input'
 
 import { SOURCE_OPTIONS } from '../constant'
-import useSalon from '../salon/banner/setup_extra'
+import useSalon from './salon/setup_extra'
 import useLogic from '../useLogic'
 import BlockSelector from './BlockSelector'
 import NextStepButton from './NextStepButton'

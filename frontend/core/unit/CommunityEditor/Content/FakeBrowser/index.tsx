@@ -1,6 +1,6 @@
 import { type FC, useState } from 'react'
 
-import useSalon from '../../salon/content/fake_browser'
+import useSalon from './salon/fake_browser'
 import type { TCommunityType, TStep } from '../../spec'
 import BrowserHead from './BrowerHead'
 import Content from './Content'

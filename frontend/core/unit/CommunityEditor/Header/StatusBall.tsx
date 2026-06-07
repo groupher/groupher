@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import CheckSVG from '~/icons/CheckBold'
 
-import useSalon from '../salon/header/status_ball'
+import useSalon from './salon/status_ball'
 
 type TProps = {
   done?: boolean

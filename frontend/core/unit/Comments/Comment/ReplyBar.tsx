@@ -5,7 +5,7 @@ import ReplySVG from '~/icons/Reply'
 import Img from '~/Img'
 import type { TComment } from '~/spec'
 
-import useSalon from '../salon/comment/reply_bar'
+import useSalon from './salon/reply_bar'
 
 type TProps = {
   data: TComment
