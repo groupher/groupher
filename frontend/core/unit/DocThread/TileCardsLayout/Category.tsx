@@ -7,8 +7,8 @@ import DotDivider from '~/widgets/DotDivider'
 import Facepile from '~/widgets/Facepile'
 import IconHub from '~/widgets/IconHub'
 
-import useSalon from '../salon/tile_cards_layout/category'
 import useLogic from '../useLogic'
+import useSalon from './salon/category'
 
 type TProps = {
   title: string

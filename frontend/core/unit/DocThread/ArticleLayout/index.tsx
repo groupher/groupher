@@ -8,11 +8,11 @@ import Sticky from '~/widgets/Sticky'
 import FaqLayout from '../FaqLayout'
 import FeedbackFooter from '../FeedbackFooter'
 import FileTree from '../FileTree'
-import useSalon from '../salon/article_layout'
 import useLogic from '../useLogic'
 import ArticleCover from './ArticleCover'
 import NaviHead from './NaviHead'
 import PinedTree from './PinedTree'
+import useSalon from './salon'
 import ToggleBtn from './ToggleBtn'
 
 export default function ArticleLayout() {

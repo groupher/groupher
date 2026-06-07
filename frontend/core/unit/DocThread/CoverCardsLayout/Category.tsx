@@ -4,8 +4,8 @@ import useTrans from '~/hooks/useTrans'
 import { mockImage } from '~/mock'
 import type { TArticle } from '~/spec'
 
-import useSalon from '../salon/cover_cards_layout/category'
 import useLogic from '../useLogic'
+import useSalon from './salon/category'
 
 type TProps = {
   title: string

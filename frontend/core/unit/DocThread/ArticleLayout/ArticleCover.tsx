@@ -1,6 +1,6 @@
 import Img from '~/Img'
 
-import useSalon from '../salon/article_layout/article_cover'
+import useSalon from './salon/article_cover'
 
 const ArticleCover = () => {
   const s = useSalon()

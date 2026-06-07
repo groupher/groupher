@@ -2,8 +2,8 @@ import type { FC } from 'react'
 
 import type { TArticle } from '~/spec'
 
-import useSalon from '../salon/outline_toc_layout/category'
 import useLogic from '../useLogic'
+import useSalon from './salon/category'
 
 type TProps = {
   title: string

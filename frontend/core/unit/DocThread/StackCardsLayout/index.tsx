@@ -1,7 +1,7 @@
 import { mockHelpCats } from '~/mock'
 
-import useSalon from '../salon/stack_cards_layout'
 import Category from './Category'
+import useSalon from './salon'
 
 export default function StackCardsLayout() {
   const cats = mockHelpCats()
