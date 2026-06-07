@@ -1,13 +1,13 @@
 import useTrans from '~/hooks/useTrans'
 
 import SectionLabel from '../../../SectionLabel'
-import useSalon from '../salon/details_panel'
 import type { TThemeDetails, TThemePresetOption } from '../spec'
 import Colors from './Colors'
 import GlassOpacity from './GlassOpacity'
 import PageBackground from './PageBackground'
 import PageGlow from './PageGlow'
 import ResetToPresetMenu from './ResetToPresetMenu'
+import useSalon from './salon'
 
 type TProps = {
   details: TThemeDetails

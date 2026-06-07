@@ -2,9 +2,9 @@ import useThemeKV from '~/hooks/useThemeKV'
 import useTrans from '~/hooks/useTrans'
 
 import { PRESET_FIELD } from '../constant'
-import useSalon from '../salon/details_panel/page_glow'
-import useSettingRowSalon from '../salon/details_panel/setting_row'
 import type { TThemeDetails } from '../spec'
+import useSalon from './salon/page_glow'
+import useSettingRowSalon from './salon/setting_row'
 import TextureBalls from './TextureBalls'
 import ThemeRangeInput from './ThemeRangeInput'
 

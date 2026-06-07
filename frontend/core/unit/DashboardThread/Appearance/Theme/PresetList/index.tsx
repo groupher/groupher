@@ -4,10 +4,10 @@ import { THEME_PRESET } from '~/const/theme_preset'
 import useTrans from '~/hooks/useTrans'
 import ArrowsSplitSVG from '~/icons/ArrowsSplit'
 
-import useSalon from '../salon/preset_list'
 import type { TThemePresetCardMode, TThemePresetOption } from '../spec'
 import { CARD_LAYOUT_TRANSITION, cardVariants, listVariants, ROTATE_ANGLES } from './constant'
 import PresetCard from './PresetCard'
+import useSalon, { cn } from './salon'
 import type { TPresetListItem, TProps } from './spec'
 import useForkDotsAnimation from './useForkDotsAnimation'
 
