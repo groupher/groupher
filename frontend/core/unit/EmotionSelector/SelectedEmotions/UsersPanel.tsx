@@ -7,7 +7,7 @@ import { type FC, memo } from 'react'
 import { cutRest } from '~/fmt'
 import type { TEmotionType, TSimpleUser } from '~/spec'
 
-import useSalon from '../salon/selected_emotions/users_panel'
+import useSalon from './salon/users_panel'
 import EmotionIcon from './EmotionIcon'
 
 type TProps = {

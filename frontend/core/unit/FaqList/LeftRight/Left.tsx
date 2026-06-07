@@ -1,4 +1,4 @@
-import useSalon from '../salon/left_right/left'
+import useSalon from './salon/left'
 
 export default function Left() {
   const s = useSalon()

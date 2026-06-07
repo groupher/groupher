@@ -5,7 +5,7 @@ import ArrowSVG from '~/icons/ArrowSolid'
 import type { TFAQSection, TMenuOption } from '~/spec'
 import MenuButton from '~/widgets/Buttons/MenuButton'
 
-import useSalon from '../salon/collapse/banner'
+import useSalon from './salon/banner'
 
 type TProps = {
   menuOptions: TMenuOption[]

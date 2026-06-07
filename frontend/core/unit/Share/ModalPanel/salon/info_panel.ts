@@ -1,6 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-import { getInfoPanelHeight } from '../metric'
+import { getInfoPanelHeight } from '../../salon/metric'
 
 type TProps = {
   type: string

@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import type { TArticle } from '~/spec'
 
 import { PLATFORMS } from '../constant'
-import useSalon, { Icon } from '../salon/modal_panel/platform'
+import useSalon, { Icon } from './salon/platform'
 
 type TProps = {
   article: TArticle

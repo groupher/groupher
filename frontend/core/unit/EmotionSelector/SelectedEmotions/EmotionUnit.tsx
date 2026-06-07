@@ -9,7 +9,7 @@ import AnimatedCount from '~/widgets/AnimatedCount'
 import Tooltip from '~/widgets/Tooltip'
 
 import { getEmotionName } from '../helper'
-import useSalon from '../salon/selected_emotions/emotion_unit'
+import useSalon from './salon/emotion_unit'
 import EmotionIcon from './EmotionIcon'
 import UsersPanel from './UsersPanel'
 

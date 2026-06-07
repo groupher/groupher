@@ -7,7 +7,7 @@
 import type { UIEvent } from 'react'
 import { useEffect, useRef, useState } from 'react'
 
-import useSalon from '../salon/classic_layout'
+import useSalon from './salon'
 import Actions from './Actions'
 import { BodyRow, HeaderRow, useColumnsData } from './Columns'
 

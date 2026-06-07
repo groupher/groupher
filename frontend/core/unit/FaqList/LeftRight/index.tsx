@@ -2,7 +2,7 @@ import { includes, reject } from 'ramda'
 import { type FC, useCallback, useState } from 'react'
 
 import type { TProps as TIndex } from '..'
-import useSalon from '../salon/left_right'
+import useSalon from './salon'
 import Left from './Left'
 import Section from './Section'
 

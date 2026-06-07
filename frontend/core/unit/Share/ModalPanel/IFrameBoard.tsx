@@ -3,7 +3,7 @@ import { type FC, memo } from 'react'
 import CopyButton from '~/widgets/Buttons/CopyButton'
 import Input from '~/widgets/Input'
 
-import useSalon from '../salon/modal_panel/iframe_board'
+import useSalon from './salon/iframe_board'
 
 const IFrameBoard: FC = () => {
   const s = useSalon()

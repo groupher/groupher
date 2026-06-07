@@ -4,7 +4,7 @@ import { type FC, useCallback, useState } from 'react'
 import type { TMenuOption } from '~/spec'
 
 import type { TProps as TIndex } from '..'
-import useSalon from '../salon/collapse'
+import useSalon from './salon'
 import Banner from './Banner'
 import { DEFAULT_MENU, MENU } from './constant'
 import Footer from './Footer'

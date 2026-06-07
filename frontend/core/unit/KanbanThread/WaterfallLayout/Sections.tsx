@@ -19,7 +19,7 @@ import type { TKanbanBoard, TPagedPosts } from '~/spec'
 
 import KanbanItem from '../KanbanItem'
 import EmptyItem from '../KanbanItem/EmptyItem'
-import useSalon, { cn } from '../salon/waterfall_layout/sections'
+import useSalon, { cn } from './salon/sections'
 
 type TSection = {
   key: TKanbanBoard

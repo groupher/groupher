@@ -2,7 +2,7 @@
  * KanbanThread
  */
 
-import useSalon from '../salon/waterfall_layout'
+import useSalon from './salon'
 import Actions from './Actions'
 import Sections from './Sections'
 
