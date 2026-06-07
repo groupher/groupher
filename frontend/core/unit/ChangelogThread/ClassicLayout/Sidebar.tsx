@@ -7,8 +7,8 @@ import Tabs from '~/widgets/Switcher/Tabs'
 
 import { TABS_MODE_OPTIONS } from '../constant'
 import { tagsModeChange } from '../logic'
-import useSalon from '../salon/classic_layout/sidebar'
 import type { TTagsMode } from '../spec'
+import useSalon from './salon/sidebar'
 
 type TProps = {
   tagsMode: TTagsMode
