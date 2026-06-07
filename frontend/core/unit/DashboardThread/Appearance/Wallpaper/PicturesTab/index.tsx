@@ -5,8 +5,8 @@ import CheckedSVG from '~/icons/CheckBold'
 import type { TWallpaperPic } from '~/spec'
 
 import { isActiveWallpaperSource } from '../helper'
-import useSalon, { cn } from '../salon/pictures_tab'
 import useLogic from '../useLogic'
+import useSalon, { cn } from './salon'
 
 export default function PicturesTab() {
   const { getWallpaper, changePatternWallpaper } = useLogic()

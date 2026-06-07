@@ -1,6 +1,6 @@
 import { type FC, memo } from 'react'
 
-import useSalon from '../salon/upload_tab'
+import useSalon from './salon'
 import UploadBox from './UploadBox'
 
 const UploadTab: FC = () => {

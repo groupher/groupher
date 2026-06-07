@@ -5,7 +5,7 @@ import type { TWallpaperPatternTone } from '~/spec'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import RangeInput from '~/widgets/RangeInput'
 
-import useSalon from '../../../salon/tuning_panel/detail_panel/pattern'
+import useSalon from '../../salon/detail_panel/pattern'
 import GroupItem from '../GroupItem'
 import GroupTitle from '../GroupTitle'
 

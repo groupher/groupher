@@ -4,7 +4,7 @@ import useCSSVar from '~/hooks/useCssVar'
 import useGaussBlur from '~/hooks/useGaussBlur'
 import WallpaperRenderer from '~/widgets/WallpaperRenderer'
 
-import useSalon, { cnMerge } from '../salon/preview_panel/global_preview'
+import useSalon, { cnMerge } from './salon/global_preview'
 
 export default function GlobalPreview() {
   const s = useSalon()

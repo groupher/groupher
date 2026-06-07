@@ -1,6 +1,6 @@
 import WallpaperRenderer from '~/widgets/WallpaperRenderer'
 
-import useSalon, { cnMerge } from '../salon/preview_panel/auth_preview'
+import useSalon, { cnMerge } from './salon/auth_preview'
 
 export default function AuthPreview() {
   const s = useSalon()

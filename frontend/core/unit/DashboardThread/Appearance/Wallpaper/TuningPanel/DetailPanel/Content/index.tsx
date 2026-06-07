@@ -2,7 +2,7 @@ import SIZE from '~/const/size'
 import useTrans from '~/hooks/useTrans'
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 
-import useSalon from '../../../salon/tuning_panel/detail_panel/content'
+import useSalon from '../../salon/detail_panel/content'
 import GroupItem from '../GroupItem'
 import GroupTitle from '../GroupTitle'
 

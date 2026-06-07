@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 
 import { cn } from '~/css'
 
-import useSalon from '../../salon/tuning_panel/detail_panel/group_item'
+import useSalon from '../salon/detail_panel/group_item'
 
 type Props = {
   label: ReactNode

@@ -1,7 +1,7 @@
 import useTrans from '~/hooks/useTrans'
 import RangeInput from '~/widgets/RangeInput'
 
-import useSalon from '../../../salon/tuning_panel/detail_panel/basic'
+import useSalon from '../../salon/detail_panel/basic'
 import GroupItem from '../GroupItem'
 import GroupTitle from '../GroupTitle'
 

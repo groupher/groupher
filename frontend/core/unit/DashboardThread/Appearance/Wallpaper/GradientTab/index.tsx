@@ -3,10 +3,10 @@ import { keys } from 'ramda'
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 
 import { isActiveWallpaperSource } from '../helper'
-import useSalon, { cnMerge } from '../salon/gradient_tab'
 import useLogic from '../useLogic'
 import GradientSwatchPreview from './GradientSwatchPreview'
 import PatternCards from './PatternCards'
+import useSalon, { cnMerge } from './salon'
 
 export default function GradientTab() {
   const s = useSalon()
