@@ -26,7 +26,7 @@ import TableLoading from '~/widgets/Loading/Table'
 
 import useCMSInfo from '../../hooks/useCMSInfo'
 import FilterBar from '../FilterBar'
-import useSalon, { cn } from '../salon/communities'
+import useSalon, { cn } from './salon'
 
 const SORTABLE_COLUMN = ['subscribersCount', 'views', 'articlesCount']
 const CLASSIC_ALIGN_LEFT = ['name', 'desc']
