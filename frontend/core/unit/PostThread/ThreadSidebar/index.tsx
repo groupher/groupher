@@ -24,9 +24,9 @@ import TagsBar from '~/unit/TagsBar'
 import PublishButton from '~/widgets/Buttons/PublishButton'
 import ImgFallback from '~/widgets/ImgFallback'
 
-import useSalon from '../salon/thread_sidebar'
 import SocialBanner from '../SocialBanner'
 import CommunityBrief from './CommunityBrief'
+import useSalon from './salon'
 
 const UniBar = lazy(() => import('../UniBar'))
 
