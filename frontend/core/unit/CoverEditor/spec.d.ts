@@ -54,6 +54,7 @@ export type TMagnifierAppearance = {
 }
 
 export type TStore = {
+  imageDominantColor: string | null
   position: TCoverPoint
   magnifierCenter: TCoverPoint
   magnifierRadius: number
@@ -90,6 +91,7 @@ export type TImageSize = number
 export type TImageRotate = string
 
 export type TTuningSetting = {
+  imageDominantColor: string | null
   position: TCoverPoint
   magnifierCenter: TCoverPoint
   magnifierRadius: number

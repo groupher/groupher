@@ -2,6 +2,7 @@ import { isEmpty } from 'ramda'
 import { useRef, useState } from 'react'
 import type { CSSProperties, FC, PointerEvent, ReactNode } from 'react'
 
+import { extractDominantColorFromImage } from '~/lib/imageColor/dominant'
 import { parseWallpaper } from '~/wallpaper'
 
 import {
@@ -485,6 +486,10 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     finishInteraction(event)
   }
 
+  const handleImageLoad = (image: HTMLImageElement): void => {
+    imageLoadedOnChange(imageUrl, extractDominantColorFromImage(image)?.css ?? null)
+  }
+
   if (!hasImage) {
     return (
       <div className={s.wrapper} style={s.wrapperStyle}>
@@ -574,7 +579,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
             src={imageUrl}
             alt=''
             draggable={false}
-            onLoad={isMagnifierClone ? undefined : () => imageLoadedOnChange(imageUrl)}
+            onLoad={isMagnifierClone ? undefined : (event) => handleImageLoad(event.currentTarget)}
           />
         </div>
         <BorderRender

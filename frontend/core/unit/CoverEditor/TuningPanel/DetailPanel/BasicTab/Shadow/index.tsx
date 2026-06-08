@@ -10,6 +10,7 @@ import Panel from './Panel'
 import useSalon from './salon'
 
 type TProps = {
+  imageDominantColor: string | null
   position: TCoverPoint
   shadow: TCoverShadow
   size: TImageSize
@@ -41,7 +42,7 @@ export function ShadowSettings({ shadow }: TSettingsProps) {
   )
 }
 
-export default function Shadow({ position, shadow, size, rotate }: TProps) {
+export default function Shadow({ imageDominantColor, position, shadow, size, rotate }: TProps) {
   const s = useSalon()
   const normalizedShadow = normalizeCoverShadow(shadow)
   const frameSize = getResponsiveImageSize(size)
@@ -65,7 +66,13 @@ export default function Shadow({ position, shadow, size, rotate }: TProps) {
             transform: `translate(-50%, -50%) rotate(${rotate}deg)`,
           }}
         >
-          <span className={s.frameFill} style={{ boxShadow: getImageShadow(normalizedShadow) }} />
+          <span
+            className={s.frameFill}
+            style={{
+              backgroundColor: imageDominantColor ?? undefined,
+              boxShadow: getImageShadow(normalizedShadow),
+            }}
+          />
         </span>
       </div>
     </div>

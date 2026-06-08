@@ -29,6 +29,7 @@ export default function ImageFields({ setting }: TProps) {
       <div className={s.quickItem}>
         <div className={s.quickControl}>
           <Shadow
+            imageDominantColor={setting.imageDominantColor}
             position={setting.position}
             shadow={setting.shadow}
             size={setting.size}

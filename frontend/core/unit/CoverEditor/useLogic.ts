@@ -23,7 +23,7 @@ import type {
 } from './spec'
 
 type TRet = {
-  imageLoadedOnChange: (imageUrl: string) => void
+  imageLoadedOnChange: (imageUrl: string, imageDominantColor: string | null) => void
   positionOnChange: (position: TCoverPoint) => void
   shadowOnChange: (shadow: Partial<TCoverShadow>) => void
   borderRadiusOnChange: (borderRadius: number) => void
@@ -84,6 +84,7 @@ const LOADED_IMAGE_DEFAULT_SETTING: Partial<TStore> = {
 }
 
 const store = proxy<TStore>({
+  imageDominantColor: null,
   position: { x: 0.5, y: 0.5 },
   magnifierCenter: { x: 0.5, y: 0.5 },
   magnifierRadius: MAGNIFIER_RADIUS_DEFAULT,
@@ -147,6 +148,7 @@ const store = proxy<TStore>({
 
   get tuningSetting(): TTuningSetting {
     const {
+      imageDominantColor,
       position,
       magnifierCenter,
       magnifierRadius,
@@ -165,6 +167,7 @@ const store = proxy<TStore>({
     } = store
 
     return {
+      imageDominantColor,
       position,
       magnifierCenter,
       magnifierRadius,
@@ -191,13 +194,14 @@ const store = proxy<TStore>({
 export default function useLogic(): TRet {
   const snap = useSnapshot(store)
 
-  const imageLoadedOnChange = (imageUrl: string): void => {
+  const imageLoadedOnChange = (imageUrl: string, imageDominantColor: string | null): void => {
     if (!imageUrl || snap.loadedImageUrl === imageUrl) return
 
     // Apply the polished cover preset only after the actual image succeeds loading.
     // Tracking imageUrl prevents a browser re-load from resetting user tuning edits.
     snap.commit({
       ...LOADED_IMAGE_DEFAULT_SETTING,
+      imageDominantColor,
       loadedImageUrl: imageUrl,
     })
   }
