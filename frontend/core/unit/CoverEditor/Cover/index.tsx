@@ -2,8 +2,8 @@ import { isEmpty } from 'ramda'
 import { useRef, useState } from 'react'
 import type { CSSProperties, FC, PointerEvent, ReactNode } from 'react'
 
+import { parseCoreBgWallpaper } from '~/lib/coreBg/parse'
 import { extractDominantColorFromImage } from '~/lib/imageColor/dominant'
-import { parseWallpaper } from '~/wallpaper'
 
 import {
   GLASS_FRAME,
@@ -232,7 +232,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     ? { x: GLASS_FRAME.PADDING_X, y: GLASS_FRAME.PADDING_Y }
     : undefined
   const wrapperBackgroundStyle: CSSProperties = hasWallpaper
-    ? { backgroundImage: parseWallpaper(wallpapers, wallpaper).background }
+    ? { backgroundImage: parseCoreBgWallpaper(wallpapers, wallpaper).background }
     : shouldShowTransparentGrid
       ? s.transparentGridStyle
       : {}

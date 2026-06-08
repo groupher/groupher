@@ -3,7 +3,7 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import ImageSizeSVG from '~/icons/ImageSize'
 import RotateSVG from '~/icons/Rotate'
 import ShadowSVG from '~/icons/Shadow'
-import { parseWallpaper } from '~/wallpaper'
+import { parseCoreBgWallpaper } from '~/lib/coreBg/parse'
 
 import { IMAGE_SIZE_RANGE } from '../../constant'
 import { isCoverShadowActive } from '../../helper'
@@ -105,7 +105,7 @@ export default function HudPanel({ setting, onExpand }: TProps) {
           icon={
             <span
               className={s.bgSwatch}
-              style={{ background: parseWallpaper(wallpapers, wallpaper).background }}
+              style={{ background: parseCoreBgWallpaper(wallpapers, wallpaper).background }}
             />
           }
           value={wallpaper || '0'}

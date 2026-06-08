@@ -1,7 +1,7 @@
 import { keys } from 'ramda'
 
 import useFullWallpaper from '~/hooks/useFullWallpaper'
-import { parseWallpaper } from '~/wallpaper'
+import { parseCoreBgWallpaper } from '~/lib/coreBg/parse'
 
 import useSalon, { cn } from '../../../salon/dashboard_intros/layout_tab/wallpaper_bar'
 
@@ -19,7 +19,7 @@ export default function WallpaperBar() {
         <div key={name} className={cn(s.ballWrapper, name === source && s.ballWrapperActive)}>
           <div
             className={cn(s.colorBall, name === source && s.colorBallActive)}
-            style={{ background: parseWallpaper(gradientWallpapers, name).background }}
+            style={{ background: parseCoreBgWallpaper(gradientWallpapers, name).background }}
           />
         </div>
       ))}

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import useDebouncedPreviewCommit from '~/hooks/useDebouncedPreviewCommit'
 import useUpdatePreviewCssVars from '~/hooks/useUpdatePreviewCssVars'
 import { resolveWallpaper } from '~/hooks/useWallpaper'
-import { emitWallpaperPreview } from '~/lib/wallpaperRenderer/preview'
+import { emitWallpaperPreview } from '~/lib/wallpaperPreview'
 import type { TWallpaperThemeState } from '~/stores/wallpaper/spec'
 
 type TWallpaperPreviewVars = Record<`--${string}`, string | null>

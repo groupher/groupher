@@ -1,4 +1,6 @@
 import { WALLPAPER_BG_SIZE } from '~/const/wallpaper'
+import { CORE_BG_RENDER_KIND } from '~/lib/coreBg/constant'
+import type { TCoreBgRenderSpec } from '~/lib/coreBg/spec'
 import { GRADIENT_RENDERER, WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 import {
   TEXTURE_SHADER_BRANCHES,
@@ -6,9 +8,6 @@ import {
   TEXTURE_SHADER_UV,
   TEXTURE_TYPE,
 } from '~/lib/wallpaperMesh/texture/shader'
-
-import { WALLPAPER_RENDER_KIND } from './constant'
-import type { TWallpaperRenderDescriptor } from './spec'
 
 const MAX_COLORS = 6
 const DPR_CAP = 2
@@ -356,21 +355,21 @@ ${TEXTURE_SHADER_UV}
 `
 
 const MODE = {
-  [WALLPAPER_RENDER_KIND.NONE]: 0,
-  [WALLPAPER_RENDER_KIND.LINEAR_GRADIENT]: 1,
-  [WALLPAPER_RENDER_KIND.RADIAL_GRADIENT]: 2,
-  [WALLPAPER_RENDER_KIND.MESH_GRADIENT]: 3,
-  [WALLPAPER_RENDER_KIND.IMAGE]: 4,
+  [CORE_BG_RENDER_KIND.NONE]: 0,
+  [CORE_BG_RENDER_KIND.LINEAR_GRADIENT]: 1,
+  [CORE_BG_RENDER_KIND.RADIAL_GRADIENT]: 2,
+  [CORE_BG_RENDER_KIND.MESH_GRADIENT]: 3,
+  [CORE_BG_RENDER_KIND.IMAGE]: 4,
 } as const
 
-const getDprCap = (descriptor: TWallpaperRenderDescriptor | null): number => {
-  if (descriptor?.hasTexture && descriptor.texture.type === WALLPAPER_TEXTURE.OIL) {
+const getDprCap = (renderSpec: TCoreBgRenderSpec | null): number => {
+  if (renderSpec?.hasTexture && renderSpec.texture.type === WALLPAPER_TEXTURE.OIL) {
     return OIL_TEXTURE_DPR_CAP
   }
 
   if (
-    descriptor?.kind === WALLPAPER_RENDER_KIND.MESH_GRADIENT &&
-    descriptor.meshRecipe?.renderer === GRADIENT_RENDERER.FLOW
+    renderSpec?.kind === CORE_BG_RENDER_KIND.MESH_GRADIENT &&
+    renderSpec.meshRecipe?.renderer === GRADIENT_RENDERER.FLOW
   ) {
     return FLOW_DPR_CAP
   }
@@ -506,13 +505,13 @@ const getUniforms = (gl: WebGLRenderingContext, program: WebGLProgram): TUniform
   textureScale: gl.getUniformLocation(program, 'uTextureScale'),
 })
 
-const textureTypeToUniform = (descriptor: TWallpaperRenderDescriptor): number => {
-  if (!descriptor.hasTexture) return 0
+const textureTypeToUniform = (renderSpec: TCoreBgRenderSpec): number => {
+  if (!renderSpec.hasTexture) return 0
 
-  return TEXTURE_TYPE[descriptor.texture.type] ?? 0
+  return TEXTURE_TYPE[renderSpec.texture.type] ?? 0
 }
 
-class WallpaperWebglRenderer {
+class CoreBgWebglRenderer {
   private readonly canvas: HTMLCanvasElement
   private readonly gl: WebGLRenderingContext
   private readonly program: WebGLProgram
@@ -521,7 +520,7 @@ class WallpaperWebglRenderer {
   private readonly imageTexture: WebGLTexture
   private readonly textureScale: number
   private frame: number | null = null
-  private descriptor: TWallpaperRenderDescriptor | null = null
+  private renderSpec: TCoreBgRenderSpec | null = null
   private imageUrl = ''
   private imageWidth = 1
   private imageHeight = 1
@@ -549,14 +548,14 @@ class WallpaperWebglRenderer {
     this.prepare()
   }
 
-  update(descriptor: TWallpaperRenderDescriptor): void {
-    this.descriptor = descriptor
+  update(renderSpec: TCoreBgRenderSpec): void {
+    this.renderSpec = renderSpec
 
-    if (descriptor.kind === WALLPAPER_RENDER_KIND.IMAGE && descriptor.imageUrl !== this.imageUrl) {
-      this.loadImage(descriptor.imageUrl)
+    if (renderSpec.kind === CORE_BG_RENDER_KIND.IMAGE && renderSpec.imageUrl !== this.imageUrl) {
+      this.loadImage(renderSpec.imageUrl)
     }
 
-    if (descriptor.kind !== WALLPAPER_RENDER_KIND.IMAGE) {
+    if (renderSpec.kind !== CORE_BG_RENDER_KIND.IMAGE) {
       this.imageUrl = ''
       this.imageReady = false
     }
@@ -655,7 +654,7 @@ class WallpaperWebglRenderer {
 
   private syncSize(): void {
     const rect = this.canvas.getBoundingClientRect()
-    this.dpr = Math.min(window.devicePixelRatio || 1, getDprCap(this.descriptor))
+    this.dpr = Math.min(window.devicePixelRatio || 1, getDprCap(this.renderSpec))
     const width = Math.max(1, Math.round(rect.width * this.dpr))
     const height = Math.max(1, Math.round(rect.height * this.dpr))
 
@@ -667,26 +666,26 @@ class WallpaperWebglRenderer {
   }
 
   private render(): void {
-    const descriptor = this.descriptor
-    if (!descriptor) return
+    const renderSpec = this.renderSpec
+    if (!renderSpec) return
 
     const { gl, uniforms } = this
     this.syncSize()
 
     const colors = new Float32Array(MAX_COLORS * 3)
     const colorStops = new Float32Array(MAX_COLORS)
-    const descriptorColors = descriptor.colors.slice(0, MAX_COLORS)
-    for (let index = 0; index < descriptorColors.length; index += 1) {
-      const color = descriptorColors[index]
+    const renderSpecColors = renderSpec.colors.slice(0, MAX_COLORS)
+    for (let index = 0; index < renderSpecColors.length; index += 1) {
+      const color = renderSpecColors[index]
       const rgb = parseColor(color)
       colors[index * 3] = rgb[0]
       colors[index * 3 + 1] = rgb[1]
       colors[index * 3 + 2] = rgb[2]
-      colorStops[index] = clamp(descriptor.colorStops[index] ?? 0, 0, 100) / 100
+      colorStops[index] = clamp(renderSpec.colorStops[index] ?? 0, 0, 100) / 100
     }
 
-    const isContain = descriptor.bgSize === WALLPAPER_BG_SIZE.CONTAIN
-    const meshRecipe = descriptor.meshRecipe
+    const isContain = renderSpec.bgSize === WALLPAPER_BG_SIZE.CONTAIN
+    const meshRecipe = renderSpec.meshRecipe
     const meshModel =
       meshRecipe?.renderer === GRADIENT_RENDERER.LIQUID
         ? MESH_MODEL_UNIFORM[GRADIENT_RENDERER.LIQUID]
@@ -694,13 +693,13 @@ class WallpaperWebglRenderer {
     const meshSeed = meshRecipe?.seed ?? 1
     const meshWarp = meshRecipe?.warp ?? 55
     const meshScale = meshRecipe?.scale ?? 55
-    const meshBrightness = descriptor.meshRecipe?.brightness
-      ? descriptor.meshRecipe.brightness / 100
+    const meshBrightness = renderSpec.meshRecipe?.brightness
+      ? renderSpec.meshRecipe.brightness / 100
       : 1
-    const meshContrast = descriptor.meshRecipe?.contrast ? descriptor.meshRecipe.contrast / 100 : 1
+    const meshContrast = renderSpec.meshRecipe?.contrast ? renderSpec.meshRecipe.contrast / 100 : 1
     const radialRecipe =
-      descriptor.gradientRecipe?.renderer === GRADIENT_RENDERER.RADIAL
-        ? descriptor.gradientRecipe
+      renderSpec.gradientRecipe?.renderer === GRADIENT_RENDERER.RADIAL
+        ? renderSpec.gradientRecipe
         : null
     const radialRadius = radialRecipe ? clamp(radialRecipe.radius / 100, 0.01, 1) : 0.72
     const radialCenter = radialRecipe?.center ?? { x: 0.5, y: 0.5 }
@@ -709,13 +708,13 @@ class WallpaperWebglRenderer {
     gl.activeTexture(gl.TEXTURE0)
     gl.bindTexture(gl.TEXTURE_2D, this.imageTexture)
 
-    gl.uniform1i(uniforms.mode, MODE[descriptor.kind])
-    gl.uniform1i(uniforms.colorCount, Math.max(1, descriptorColors.length))
+    gl.uniform1i(uniforms.mode, MODE[renderSpec.kind])
+    gl.uniform1i(uniforms.colorCount, Math.max(1, renderSpecColors.length))
     gl.uniform1i(uniforms.meshModel, meshModel)
-    gl.uniform1i(uniforms.textureType, textureTypeToUniform(descriptor))
+    gl.uniform1i(uniforms.textureType, textureTypeToUniform(renderSpec))
     gl.uniform1i(uniforms.bgMode, isContain ? 1 : 0)
-    gl.uniform1f(uniforms.flow, descriptor.flow)
-    gl.uniform1f(uniforms.softness, descriptor.meshRecipe?.softness ?? 0)
+    gl.uniform1f(uniforms.flow, renderSpec.flow)
+    gl.uniform1f(uniforms.softness, renderSpec.meshRecipe?.softness ?? 0)
     gl.uniform1f(uniforms.meshSeed, meshSeed)
     gl.uniform1f(uniforms.meshWarp, meshWarp)
     gl.uniform1f(uniforms.meshScale, meshScale)
@@ -725,7 +724,7 @@ class WallpaperWebglRenderer {
     // share one blur/brightness/saturation behavior at the final layer.
     gl.uniform1f(
       uniforms.textureIntensity,
-      descriptor.hasTexture ? clamp(descriptor.texture.intensity, 0, 100) / 100 : 0,
+      renderSpec.hasTexture ? clamp(renderSpec.texture.intensity, 0, 100) / 100 : 0,
     )
     gl.uniform1f(uniforms.textureScale, clamp(this.textureScale, 0.35, 1.4))
     gl.uniform1f(uniforms.meshBrightness, meshBrightness)
@@ -742,10 +741,10 @@ class WallpaperWebglRenderer {
   }
 }
 
-export const createWallpaperWebglRenderer = (
+export const createCoreBgWebglRenderer = (
   canvas: HTMLCanvasElement,
   textureScale = 1,
-): WallpaperWebglRenderer | null => {
+): CoreBgWebglRenderer | null => {
   const gl = canvas.getContext('webgl', {
     alpha: true,
     antialias: false,
@@ -762,5 +761,5 @@ export const createWallpaperWebglRenderer = (
   const imageTexture = gl.createTexture()
   if (!program || !vertexBuffer || !imageTexture) return null
 
-  return new WallpaperWebglRenderer(canvas, gl, program, vertexBuffer, imageTexture, textureScale)
+  return new CoreBgWebglRenderer(canvas, gl, program, vertexBuffer, imageTexture, textureScale)
 }

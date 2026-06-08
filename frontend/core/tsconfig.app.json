@@ -48,8 +48,6 @@
       "~/oauth/*": ["../core/lib/oauth/*"],
       "~/helper": ["../core/lib/helper"],
       "~/helper/*": ["../core/lib/helper/*"],
-      "~/wallpaper": ["../core/lib/wallpaper"],
-      "~/wallpaper/*": ["../core/lib/wallpaper/*"],
       "~/i18n": ["../core/lib/i18n"],
       "~/i18n/*": ["../core/lib/i18n/*"],
       "~/validator": ["../core/lib/validator"],
