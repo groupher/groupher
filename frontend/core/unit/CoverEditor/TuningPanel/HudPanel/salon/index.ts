@@ -19,7 +19,10 @@ export default function useSalon() {
       primary('bg'),
       primary('border'),
     ),
-    lightDot: cn('absolute size-1 -translate-x-1/2 -translate-y-1/2 circle', bg('divider')),
+    magnifierDot: cn(
+      'absolute size-2 -translate-x-1/2 -translate-y-1/2 circle border border-white/70',
+      bg('divider'),
+    ),
     gridDotActive: primary('bg'),
     bgSwatch: cn('size-5 rounded-sm', bg('hoverBg')),
     expandBtn: cn('align-both size-6 shrink-0 rounded-md', hover('bg')),

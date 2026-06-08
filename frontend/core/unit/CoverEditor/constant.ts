@@ -39,12 +39,21 @@ export const GLASS_FRAME = {
   PADDING_Y: 6.5,
 } as const
 
+export const BORDER_HIGHLIGHT_MODE = {
+  SOLID: 'solid',
+  RAINBOW: 'rainbow',
+} as const
+
 export const BORDER_HIGHLIGHT_DEFAULT = {
   ENABLED: false,
   ANGLE: 35,
   LENGTH: 0.28,
   HUE: 39,
+  RAINBOW_HUE: 0,
+  SATURATION: 77,
+  LIGHTNESS: 83,
   OPACITY: 1,
+  MODE: BORDER_HIGHLIGHT_MODE.RAINBOW,
 } as const
 
 export const BORDER_HIGHLIGHT_LENGTH_RANGE = {
@@ -53,18 +62,22 @@ export const BORDER_HIGHLIGHT_LENGTH_RANGE = {
 } as const
 
 export const BORDER_HIGHLIGHT_COLOR = {
-  SATURATION: 77,
-  LIGHTNESS: 83,
+  SATURATION: BORDER_HIGHLIGHT_DEFAULT.SATURATION,
+  LIGHTNESS: BORDER_HIGHLIGHT_DEFAULT.LIGHTNESS,
+  RAINBOW_SATURATION: 96,
+  RAINBOW_LIGHTNESS: 66,
 } as const
 
-export const LIGHT_RADIUS_DEFAULT = 0.5
+export const MAGNIFIER_RADIUS_DEFAULT = 0.45
 
-export const LIGHT_RENDER_SIZE = {
-  MIN: 140,
-  MAX: 560,
+export const MAGNIFIER_RENDER_SIZE = {
+  MIN: 104,
+  MAX: 250,
 } as const
 
-export const LIGHT_RENDER_OPACITY = {
-  MIN: 0.07,
-  MAX: 0.2,
+export const MAGNIFIER_ZOOM_DEFAULT = 2
+
+export const MAGNIFIER_ZOOM_RANGE = {
+  MIN: 1.2,
+  MAX: 3,
 } as const

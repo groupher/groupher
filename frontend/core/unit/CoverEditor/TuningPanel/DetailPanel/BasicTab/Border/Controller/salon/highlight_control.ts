@@ -35,28 +35,8 @@ export default function useSalon() {
     centerActive: primary('fg'),
     handleMask: 'fill-card',
     handle: cn(
-      'pointer fill-current opacity-65 transition-opacity duration-100 group-hover/border-control:opacity-100',
+      'pointer fill-none stroke-current stroke-[3px] opacity-75 transition-opacity duration-100 group-hover/border-control:opacity-100',
       primary('fg'),
-    ),
-    colorTrigger: cn(
-      'block h-[3.375rem] w-3 shrink-0 overflow-hidden rounded-md p-0 leading-none outline-none trans-all-100 pointer',
-      'hover:scale-x-110 hover:saturate-150 focus-visible:scale-x-110 focus-visible:saturate-150',
-      'focus-visible:ring-2 focus-visible:ring-current',
-    ),
-    colorTriggerDisabled: 'opacity-50',
-    colorPanel: cn('column w-48 gap-3.5 p-0.5'),
-    colorField: 'column gap-1.5',
-    colorMeta: 'row-between items-center',
-    colorLabel: cn('text-xs', fg('digest')),
-    colorValue: cn('text-xs tabular-nums', fg('title')),
-    colorSlider: 'w-full cursor-ew-resize',
-    colorSliderTrack: cn(
-      'relative h-2 w-full cursor-ew-resize rounded-full overflow-visible ring-1 ring-black/10',
-      'dark:brightness-75',
-    ),
-    colorThumb: cn(
-      'absolute top-1/2 z-10 size-4 -translate-x-1/2 rounded-full border-2 border-white bg-[var(--thumb-color)] shadow-md outline-none',
-      'ring-1 ring-black/15 cursor-ew-resize',
     ),
   }
 }

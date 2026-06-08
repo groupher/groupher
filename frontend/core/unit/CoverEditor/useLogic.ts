@@ -4,7 +4,12 @@ import { proxy, useSnapshot } from 'valtio'
 import { COVER_GRADIENT_WALLPAPER, GRADIENT_DIRECTION } from '~/const/wallpaper'
 import type { TWallpaper, TWallpaperGradient, TWallpaperGradientDir } from '~/spec'
 
-import { BORDER_HIGHLIGHT_DEFAULT, IMAGE_SIZE_RANGE, LIGHT_RADIUS_DEFAULT } from './constant'
+import {
+  BORDER_HIGHLIGHT_DEFAULT,
+  IMAGE_SIZE_RANGE,
+  MAGNIFIER_RADIUS_DEFAULT,
+  MAGNIFIER_ZOOM_DEFAULT,
+} from './constant'
 import type { TBorderHighlight, TCoverPoint, TImageSize, TStore, TTuningSetting } from './spec'
 
 type TRet = {
@@ -18,8 +23,9 @@ type TRet = {
   sizeOnChange: (size: TImageSize) => void
   rotateOnChange: (rotate: number) => void
   glassBorderOnChange: (hasGlassBorder: boolean) => void
-  lightRadiationOnChange: (lightCenter: TCoverPoint, lightRadius: number) => void
-  lightOnChange: (hasLight: boolean) => void
+  magnifierRadiationOnChange: (magnifierCenter: TCoverPoint, magnifierRadius: number) => void
+  magnifierZoomOnChange: (magnifierZoom: number) => void
+  magnifierOnChange: (hasMagnifier: boolean) => void
 } & TStore
 
 // Neutral store defaults keep the editor empty-safe; this preset is only applied
@@ -32,30 +38,40 @@ const LOADED_IMAGE_DEFAULT_SETTING: Partial<TStore> = {
   borderRadius: 0,
   borderHighlight: {
     enabled: BORDER_HIGHLIGHT_DEFAULT.ENABLED,
+    mode: BORDER_HIGHLIGHT_DEFAULT.MODE,
     angle: BORDER_HIGHLIGHT_DEFAULT.ANGLE,
     length: BORDER_HIGHLIGHT_DEFAULT.LENGTH,
     hue: BORDER_HIGHLIGHT_DEFAULT.HUE,
+    rainbowHue: BORDER_HIGHLIGHT_DEFAULT.RAINBOW_HUE,
+    saturation: BORDER_HIGHLIGHT_DEFAULT.SATURATION,
+    lightness: BORDER_HIGHLIGHT_DEFAULT.LIGHTNESS,
     opacity: BORDER_HIGHLIGHT_DEFAULT.OPACITY,
   },
   hasGlassBorder: false,
-  hasLight: false,
-  lightRadius: LIGHT_RADIUS_DEFAULT,
+  hasMagnifier: false,
+  magnifierRadius: MAGNIFIER_RADIUS_DEFAULT,
+  magnifierZoom: MAGNIFIER_ZOOM_DEFAULT,
   wallpaper: 'pink',
   direction: GRADIENT_DIRECTION.BOTTOM_RIGHT,
 }
 
 const store = proxy<TStore>({
   position: { x: 0.5, y: 0.5 },
-  lightCenter: { x: 0.5, y: 0.5 },
-  lightRadius: LIGHT_RADIUS_DEFAULT,
-  hasLight: false,
+  magnifierCenter: { x: 0.5, y: 0.5 },
+  magnifierRadius: MAGNIFIER_RADIUS_DEFAULT,
+  magnifierZoom: MAGNIFIER_ZOOM_DEFAULT,
+  hasMagnifier: false,
   shadow: 0,
   borderRadius: 0,
   borderHighlight: {
     enabled: BORDER_HIGHLIGHT_DEFAULT.ENABLED,
+    mode: BORDER_HIGHLIGHT_DEFAULT.MODE,
     angle: BORDER_HIGHLIGHT_DEFAULT.ANGLE,
     length: BORDER_HIGHLIGHT_DEFAULT.LENGTH,
     hue: BORDER_HIGHLIGHT_DEFAULT.HUE,
+    rainbowHue: BORDER_HIGHLIGHT_DEFAULT.RAINBOW_HUE,
+    saturation: BORDER_HIGHLIGHT_DEFAULT.SATURATION,
+    lightness: BORDER_HIGHLIGHT_DEFAULT.LIGHTNESS,
     opacity: BORDER_HIGHLIGHT_DEFAULT.OPACITY,
   },
   size: IMAGE_SIZE_RANGE.MAX,
@@ -87,9 +103,10 @@ const store = proxy<TStore>({
   get tuningSetting(): TTuningSetting {
     const {
       position,
-      lightCenter,
-      lightRadius,
-      hasLight,
+      magnifierCenter,
+      magnifierRadius,
+      magnifierZoom,
+      hasMagnifier,
       shadow,
       borderRadius,
       borderHighlight,
@@ -103,9 +120,10 @@ const store = proxy<TStore>({
 
     return {
       position,
-      lightCenter,
-      lightRadius,
-      hasLight,
+      magnifierCenter,
+      magnifierRadius,
+      magnifierZoom,
+      hasMagnifier,
       shadow,
       borderRadius,
       borderHighlight,
@@ -149,9 +167,12 @@ export default function useLogic(): TRet {
 
   const glassBorderOnChange = (hasGlassBorder: boolean) => snap.commit({ hasGlassBorder })
 
-  const lightRadiationOnChange = (lightCenter: TCoverPoint, lightRadius: number): void =>
-    snap.commit({ lightCenter, lightRadius, hasLight: true })
-  const lightOnChange = (hasLight: boolean): void => snap.commit({ hasLight })
+  const magnifierRadiationOnChange = (
+    magnifierCenter: TCoverPoint,
+    magnifierRadius: number,
+  ): void => snap.commit({ magnifierCenter, magnifierRadius, hasMagnifier: true })
+  const magnifierZoomOnChange = (magnifierZoom: number): void => snap.commit({ magnifierZoom })
+  const magnifierOnChange = (hasMagnifier: boolean): void => snap.commit({ hasMagnifier })
 
   return {
     ...pick(keys(snap), snap),
@@ -165,7 +186,8 @@ export default function useLogic(): TRet {
     sizeOnChange,
     rotateOnChange,
     glassBorderOnChange,
-    lightRadiationOnChange,
-    lightOnChange,
+    magnifierRadiationOnChange,
+    magnifierZoomOnChange,
+    magnifierOnChange,
   }
 }

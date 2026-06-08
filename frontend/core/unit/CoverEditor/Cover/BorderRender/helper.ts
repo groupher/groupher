@@ -17,6 +17,7 @@ type TRoundedRect = TRect & {
 
 export type TBorderRenderSegment = {
   path: string
+  progress: number
   width: number
 }
 
@@ -423,6 +424,7 @@ const getStrokeSegments = (
         path: `M ${toPathPoint(getPointAtDistance(rect, start))} L ${toPathPoint(
           getPointAtDistance(rect, end),
         )}`,
+        progress: Number(formatNumber(clamp01((progress - startDistance) / segmentLength))),
         width: Number(formatNumber(width)),
       },
     ]

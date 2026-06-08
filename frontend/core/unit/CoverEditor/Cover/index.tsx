@@ -1,10 +1,16 @@
 import { isEmpty } from 'ramda'
 import { useRef, useState } from 'react'
-import type { CSSProperties, FC, PointerEvent } from 'react'
+import type { CSSProperties, FC, PointerEvent, ReactNode } from 'react'
 
 import { parseWallpaper } from '~/wallpaper'
 
-import { GLASS_FRAME, IMAGE_SIZE_RANGE, LIGHT_RENDER_OPACITY, LIGHT_RENDER_SIZE } from '../constant'
+import {
+  GLASS_FRAME,
+  IMAGE_CONTAINER_SIZE,
+  IMAGE_SIZE_RANGE,
+  MAGNIFIER_RENDER_SIZE,
+  MAGNIFIER_ZOOM_RANGE,
+} from '../constant'
 import { getImageShadow } from '../helper'
 import {
   getBorderRadiusFromCanvasPoint,
@@ -26,7 +32,14 @@ type TProps = {
   onUpload: () => void
 }
 
-type TInteractionMode = 'idle' | 'move' | 'radius' | 'resize'
+type TInteractionMode =
+  | 'idle'
+  | 'magnifier-move'
+  | 'magnifier-radius'
+  | 'magnifier-zoom'
+  | 'move'
+  | 'radius'
+  | 'resize'
 
 type TInteractionState =
   | {
@@ -53,6 +66,24 @@ type TInteractionState =
       startCenter: TCoverPoint
       startSize: TImageSize
       type: 'radius'
+    }
+  | {
+      pointerId: number
+      startCenter: TCoverPoint
+      startPoint: TCoverPoint
+      type: 'magnifier-move'
+    }
+  | {
+      pointerId: number
+      startCenter: TCoverPoint
+      startRadius: number
+      type: 'magnifier-radius'
+    }
+  | {
+      pointerId: number
+      startPoint: TCoverPoint
+      startZoom: number
+      type: 'magnifier-zoom'
     }
 
 type TResizeHandleConfig = {
@@ -123,10 +154,42 @@ const getRadiusDotTransform = (axis: { x: 1; y: -1 | 1 }, offset: number): strin
     (axis.y * offset) / Math.SQRT2
   }px))`
 
+const CANVAS_WIDTH = Number.parseFloat(IMAGE_CONTAINER_SIZE.WIDTH)
+const CANVAS_HEIGHT = Number.parseFloat(IMAGE_CONTAINER_SIZE.HEIGHT)
+
+const clamp01 = (value: number): number => Math.min(1, Math.max(0, value))
+
+const getMagnifierRenderSize = (radius: number): number =>
+  MAGNIFIER_RENDER_SIZE.MIN +
+  (MAGNIFIER_RENDER_SIZE.MAX - MAGNIFIER_RENDER_SIZE.MIN) * clamp01(radius)
+
+const getMagnifierRadiusFromCanvasPoint = (
+  point: TCoverPoint,
+  center: TCoverPoint,
+  startRadius: number,
+): number => {
+  const centerPoint = {
+    x: center.x * CANVAS_WIDTH,
+    y: center.y * CANVAS_HEIGHT,
+  }
+  const distance = Math.sqrt((point.x - centerPoint.x) ** 2 + (point.y - centerPoint.y) ** 2)
+  const minRadius = MAGNIFIER_RENDER_SIZE.MIN / 2
+  const maxRadius = MAGNIFIER_RENDER_SIZE.MAX / 2
+
+  if (distance <= 0) return startRadius
+
+  return clamp01((distance - minRadius) / (maxRadius - minRadius))
+}
+
+const clampMagnifierZoom = (zoom: number): number =>
+  Math.min(MAGNIFIER_ZOOM_RANGE.MAX, Math.max(MAGNIFIER_ZOOM_RANGE.MIN, Number(zoom.toFixed(1))))
+
 const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
   const {
     borderRadiusOnChange,
     imageLoadedOnChange,
+    magnifierRadiationOnChange,
+    magnifierZoomOnChange,
     positionOnChange,
     sizeOnChange,
     tuningSetting: setting,
@@ -137,9 +200,10 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     hasGlassBorder,
     borderRadius,
     borderHighlight,
-    hasLight,
-    lightCenter,
-    lightRadius,
+    hasMagnifier,
+    magnifierCenter,
+    magnifierRadius,
+    magnifierZoom,
     wallpaper,
     wallpapers,
     rotate,
@@ -150,6 +214,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
   const interactionRef = useRef<TInteractionState | null>(null)
   const [interactionMode, setInteractionMode] = useState<TInteractionMode>('idle')
   const [hoveredRadiusHandle, setHoveredRadiusHandle] = useState<TImageResizeHandle | null>(null)
+  const [magnifierHovered, setMagnifierHovered] = useState(false)
 
   const hasImage = !isEmpty(imageUrl)
   const imageFrameSize = s.getResponsiveImageSize(size)
@@ -236,6 +301,40 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     )
   }
 
+  const updateMagnifierMoveInteraction = (
+    state: Extract<TInteractionState, { type: 'magnifier-move' }>,
+    point: TCoverPoint,
+  ): void => {
+    magnifierRadiationOnChange(
+      {
+        x: clamp01(state.startCenter.x + (point.x - state.startPoint.x) / CANVAS_WIDTH),
+        y: clamp01(state.startCenter.y + (point.y - state.startPoint.y) / CANVAS_HEIGHT),
+      },
+      magnifierRadius,
+    )
+  }
+
+  const updateMagnifierRadiusInteraction = (
+    state: Extract<TInteractionState, { type: 'magnifier-radius' }>,
+    point: TCoverPoint,
+  ): void => {
+    magnifierRadiationOnChange(
+      state.startCenter,
+      getMagnifierRadiusFromCanvasPoint(point, state.startCenter, state.startRadius),
+    )
+  }
+
+  const updateMagnifierZoomInteraction = (
+    state: Extract<TInteractionState, { type: 'magnifier-zoom' }>,
+    point: TCoverPoint,
+  ): void => {
+    const dragDistance = (point.x - state.startPoint.x + point.y - state.startPoint.y) / Math.SQRT2
+    const zoomRange = MAGNIFIER_ZOOM_RANGE.MAX - MAGNIFIER_ZOOM_RANGE.MIN
+    const nextZoom = state.startZoom + (dragDistance / 120) * zoomRange
+
+    magnifierZoomOnChange(clampMagnifierZoom(nextZoom))
+  }
+
   const handleMovePointerDown = (event: PointerEvent<HTMLDivElement>): void => {
     if (!isPrimaryPointer(event)) return
 
@@ -302,6 +401,63 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
       updateRadiusInteraction(nextState, point)
     }
 
+  const handleMagnifierMovePointerDown = (event: PointerEvent<HTMLDivElement>): void => {
+    if (!isPrimaryPointer(event)) return
+
+    const startPoint = getCanvasPoint(event)
+    if (!startPoint) return
+
+    event.preventDefault()
+    event.stopPropagation()
+    event.currentTarget.setPointerCapture(event.pointerId)
+    interactionRef.current = {
+      pointerId: event.pointerId,
+      startCenter: magnifierCenter,
+      startPoint,
+      type: 'magnifier-move',
+    }
+    setInteractionMode('magnifier-move')
+  }
+
+  const handleMagnifierRadiusPointerDown = (event: PointerEvent<HTMLButtonElement>): void => {
+    if (!isPrimaryPointer(event)) return
+
+    const point = getCanvasPoint(event)
+    if (!point) return
+
+    event.preventDefault()
+    event.stopPropagation()
+    event.currentTarget.setPointerCapture(event.pointerId)
+    const nextState: Extract<TInteractionState, { type: 'magnifier-radius' }> = {
+      pointerId: event.pointerId,
+      startCenter: magnifierCenter,
+      startRadius: magnifierRadius,
+      type: 'magnifier-radius',
+    }
+
+    interactionRef.current = nextState
+    setInteractionMode('magnifier-radius')
+    updateMagnifierRadiusInteraction(nextState, point)
+  }
+
+  const handleMagnifierZoomPointerDown = (event: PointerEvent<HTMLButtonElement>): void => {
+    if (!isPrimaryPointer(event)) return
+
+    const point = getCanvasPoint(event)
+    if (!point) return
+
+    event.preventDefault()
+    event.stopPropagation()
+    event.currentTarget.setPointerCapture(event.pointerId)
+    interactionRef.current = {
+      pointerId: event.pointerId,
+      startPoint: point,
+      startZoom: magnifierZoom,
+      type: 'magnifier-zoom',
+    }
+    setInteractionMode('magnifier-zoom')
+  }
+
   const handlePointerMove = (event: PointerEvent<HTMLElement>): void => {
     const state = interactionRef.current
     if (!state || state.pointerId !== event.pointerId) return
@@ -314,7 +470,10 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
 
     if (state.type === 'move') updateMoveInteraction(state, point)
     else if (state.type === 'resize') updateResizeInteraction(state, point)
-    else updateRadiusInteraction(state, point)
+    else if (state.type === 'radius') updateRadiusInteraction(state, point)
+    else if (state.type === 'magnifier-move') updateMagnifierMoveInteraction(state, point)
+    else if (state.type === 'magnifier-radius') updateMagnifierRadiusInteraction(state, point)
+    else updateMagnifierZoomInteraction(state, point)
   }
 
   const handlePointerUp = (event: PointerEvent<HTMLElement>): void => {
@@ -368,62 +527,120 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     boxShadow: getImageShadow(shadow),
     borderRadius: borderRadiusValue,
   }
-  const lightRenderSize =
-    LIGHT_RENDER_SIZE.MIN + (LIGHT_RENDER_SIZE.MAX - LIGHT_RENDER_SIZE.MIN) * lightRadius
-  const lightRenderOpacity =
-    LIGHT_RENDER_OPACITY.MIN + (LIGHT_RENDER_OPACITY.MAX - LIGHT_RENDER_OPACITY.MIN) * lightRadius
 
-  const lightStyle: CSSProperties = {
-    top: `${lightCenter.y * 100}%`,
-    left: `${lightCenter.x * 100}%`,
-    width: `${lightRenderSize}px`,
-    height: `${lightRenderSize}px`,
-    background: `radial-gradient(
-      ellipse at center,
-      rgba(255, 255, 255, ${lightRenderOpacity}) 0%,
-      rgba(255, 255, 255, 0) 65%
-    )`,
+  const magnifierRenderSize = getMagnifierRenderSize(magnifierRadius)
+  const magnifierSizePercent = (magnifierRenderSize / CANVAS_WIDTH) * 100
+  const magnifierCanvasLeft = magnifierCenter.x * CANVAS_WIDTH - magnifierRenderSize / 2
+  const magnifierCanvasTop = magnifierCenter.y * CANVAS_HEIGHT - magnifierRenderSize / 2
+  const magnifierCloneStyle: CSSProperties = {
+    width: `${(CANVAS_WIDTH / magnifierRenderSize) * 100}%`,
+    height: `${(CANVAS_HEIGHT / magnifierRenderSize) * 100}%`,
+    left: `${(-magnifierCanvasLeft / magnifierRenderSize) * 100}%`,
+    top: `${(-magnifierCanvasTop / magnifierRenderSize) * 100}%`,
+    transform: `scale(${magnifierZoom})`,
+    transformOrigin: `${magnifierCenter.x * 100}% ${magnifierCenter.y * 100}%`,
+  }
+  const magnifierStyle: CSSProperties = {
+    width: `${magnifierSizePercent}%`,
+    left: `${magnifierCenter.x * 100}%`,
+    top: `${magnifierCenter.y * 100}%`,
+  }
+  const showMagnifierHandles =
+    magnifierHovered ||
+    interactionMode === 'magnifier-move' ||
+    interactionMode === 'magnifier-radius' ||
+    interactionMode === 'magnifier-zoom'
+
+  const renderCoverContent = (isMagnifierClone = false): ReactNode => (
+    <div className={s.contentLayer} style={wrapperBackgroundStyle}>
+      <div
+        className={s.cn(s.imageFrame, interactionMode !== 'idle' && s.imageFrameActive)}
+        style={imageFrameStyle}
+      >
+        <div
+          className={s.cn(s.cropViewport, interactionMode !== 'idle' && s.cropViewportActive)}
+          style={cropViewportStyle}
+        >
+          <img
+            className={s.cn(s.image, interactionMode !== 'idle' && s.imageActive)}
+            src={imageUrl}
+            alt=''
+            draggable={false}
+            onLoad={isMagnifierClone ? undefined : () => imageLoadedOnChange(imageUrl)}
+          />
+        </div>
+        <BorderRender
+          className={s.borderHighlight}
+          borderRadius={frameBorderRadiusValue}
+          borderHighlight={borderHighlight}
+          framePadding={framePadding}
+          size={size}
+        />
+      </div>
+    </div>
+  )
+
+  const renderMagnifier = (): ReactNode => {
+    if (!hasMagnifier) return null
+
+    return (
+      <div
+        className={s.cn(
+          s.magnifier,
+          interactionMode === 'magnifier-move' && s.magnifierMoving,
+          interactionMode === 'magnifier-radius' && s.magnifierResizing,
+          interactionMode === 'magnifier-zoom' && s.magnifierZooming,
+        )}
+        style={magnifierStyle}
+        aria-label='Move magnifier'
+        onPointerDown={handleMagnifierMovePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onPointerEnter={() => setMagnifierHovered(true)}
+        onPointerLeave={() => setMagnifierHovered(false)}
+      >
+        <div className={s.magnifierViewport}>
+          <div className={s.magnifierClone} style={magnifierCloneStyle}>
+            {renderCoverContent(true)}
+          </div>
+        </div>
+        {showMagnifierHandles && (
+          <>
+            <button
+              type='button'
+              className={s.magnifierRadiusHandle}
+              aria-label='Adjust magnifier size'
+              onPointerDown={handleMagnifierRadiusPointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+            />
+            <button
+              type='button'
+              className={s.magnifierZoomHandle}
+              aria-label='Adjust magnifier zoom'
+              onPointerDown={handleMagnifierZoomPointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+            />
+          </>
+        )}
+      </div>
+    )
   }
 
   return (
-    <div
-      ref={wrapperRef}
-      className={s.wrapper}
-      style={{
-        ...s.wrapperStyle,
-        ...wrapperBackgroundStyle,
-      }}
-    >
+    <div ref={wrapperRef} className={s.wrapper} style={s.wrapperStyle}>
       {hasImage && (
         <>
-          <div
-            className={s.cn(s.imageFrame, interactionMode !== 'idle' && s.imageFrameActive)}
-            style={imageFrameStyle}
-          >
-            <div
-              className={s.cn(s.cropViewport, interactionMode !== 'idle' && s.cropViewportActive)}
-              style={cropViewportStyle}
-            >
-              <img
-                className={s.cn(s.image, interactionMode !== 'idle' && s.imageActive)}
-                src={imageUrl}
-                alt=''
-                draggable={false}
-                onLoad={() => imageLoadedOnChange(imageUrl)}
-              />
-            </div>
-            <BorderRender
-              className={s.borderHighlight}
-              borderRadius={frameBorderRadiusValue}
-              borderHighlight={borderHighlight}
-              framePadding={framePadding}
-              size={size}
-            />
-          </div>
-          {hasLight && <div className={s.light} style={lightStyle} />}
+          {renderCoverContent()}
+          {renderMagnifier()}
           <div
             className={s.cn(
               s.editorFrame,
+              showMagnifierHandles && s.editorFrameHidden,
               interactionMode !== 'idle' && s.editorFrameActive,
               interactionMode === 'idle' && s.editorFrameMove,
               interactionMode === 'move' && s.editorFrameMoving,
@@ -436,7 +653,10 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
           >
-            <div className={s.editorBorder} style={{ borderRadius: frameBorderRadiusValue }} />
+            <div
+              className={s.cn(s.editorBorder, s.editorBorderTone)}
+              style={{ borderRadius: frameBorderRadiusValue }}
+            />
             {RESIZE_HANDLES.map(({ classNameKey, cursorClassNameKey, handle, label }) => {
               const radiusHandleVisible =
                 hoveredRadiusHandle === handle || activeRadiusHandle === handle
@@ -488,7 +708,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
                   {radiusHandleVisible && (
                     <>
                       <span className={s.radiusBridge} style={bridgeStyle} />
-                      <span className={s.radiusGuide} style={guideStyle} />
+                      <span className={s.cn(s.radiusGuide, s.radiusGuideTone)} style={guideStyle} />
                       {radiusDots.map(({ direction, key, transform }) => (
                         <button
                           key={key}

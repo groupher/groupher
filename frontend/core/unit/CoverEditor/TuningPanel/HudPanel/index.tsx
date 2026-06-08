@@ -23,8 +23,9 @@ export default function HudPanel({ setting, onExpand }: TProps) {
     borderRadius,
     borderHighlight,
     hasGlassBorder,
-    hasLight,
-    lightCenter,
+    hasMagnifier,
+    magnifierCenter,
+    magnifierZoom,
     position,
     rotate,
     shadow,
@@ -78,19 +79,20 @@ export default function HudPanel({ setting, onExpand }: TProps) {
           value={`${rotate}°`}
         />
         <HudItem
-          label='灯光'
-          active={hasLight}
+          label='放大镜'
+          active={hasMagnifier}
           icon={
             <span className={s.coverIcon}>
               <span
-                className={cn(s.lightDot, hasLight && s.gridDotActive)}
+                className={cn(s.magnifierDot, hasMagnifier && s.gridDotActive)}
                 style={{
-                  left: `${lightCenter.x * 100}%`,
-                  top: `${lightCenter.y * 100}%`,
+                  left: `${magnifierCenter.x * 100}%`,
+                  top: `${magnifierCenter.y * 100}%`,
                 }}
               />
             </span>
           }
+          value={hasMagnifier ? `${magnifierZoom}x` : undefined}
         />
         <HudItem
           label='背景'

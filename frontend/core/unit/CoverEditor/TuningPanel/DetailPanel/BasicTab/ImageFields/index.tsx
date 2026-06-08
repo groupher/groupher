@@ -1,11 +1,11 @@
 import AngleWheel from '~/widgets/AngleWheel'
-import RadiationControl from '~/widgets/RadiationControl'
 
 import type { TTuningSetting } from '../../../../spec'
 import useLogic from '../../../../useLogic'
 import Controller from '../Border/Controller'
 import GlassFrameControl from '../Border/GlassFrameControl'
 import Corner from '../Corner'
+import MagnifierControl from '../Magnifier/Control'
 import PositionController from '../Position/Controller'
 import Shadow from '../Shadow'
 import Size from '../Size'
@@ -19,8 +19,9 @@ export default function ImageFields({ setting }: TProps) {
   const s = useSalon()
   const {
     glassBorderOnChange,
-    lightOnChange,
-    lightRadiationOnChange,
+    magnifierOnChange,
+    magnifierRadiationOnChange,
+    magnifierZoomOnChange,
     positionOnChange,
     rotateOnChange,
   } = useLogic()
@@ -49,15 +50,22 @@ export default function ImageFields({ setting }: TProps) {
 
         <div className={s.quickItem}>
           <div className={s.quickControl}>
-            <RadiationControl
-              value={{ center: setting.lightCenter, radius: setting.lightRadius }}
-              label='Lighting'
-              disabled={!setting.hasLight}
-              onChange={(next) => lightRadiationOnChange(next.center, next.radius)}
-              onToggle={() => lightOnChange(!setting.hasLight)}
+            <MagnifierControl
+              value={{
+                center: setting.magnifierCenter,
+                radius: setting.magnifierRadius,
+                zoom: setting.magnifierZoom,
+              }}
+              label='Magnifier'
+              disabled={!setting.hasMagnifier}
+              onChange={(next) => {
+                magnifierRadiationOnChange(next.center, next.radius)
+                magnifierZoomOnChange(next.zoom)
+              }}
+              onToggle={() => magnifierOnChange(!setting.hasMagnifier)}
             />
           </div>
-          <div className={s.quickLabel}>Lighting</div>
+          <div className={s.quickLabel}>Magnifier</div>
         </div>
 
         <div className={s.quickItem}>

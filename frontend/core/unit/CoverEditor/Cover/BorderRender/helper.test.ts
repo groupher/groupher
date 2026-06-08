@@ -1,10 +1,14 @@
+import { BORDER_HIGHLIGHT_MODE } from '../../constant'
 import { getBorderRenderGeometry } from './helper'
 
 const borderHighlight = {
   enabled: true,
+  mode: BORDER_HIGHLIGHT_MODE.RAINBOW,
   angle: 45,
   length: 0.28,
   hue: 39,
+  saturation: 77,
+  lightness: 83,
   opacity: 1,
 }
 

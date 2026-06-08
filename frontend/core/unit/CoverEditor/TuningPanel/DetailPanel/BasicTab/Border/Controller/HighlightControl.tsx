@@ -1,17 +1,16 @@
 import type { KeyboardEvent, PointerEvent } from 'react'
 
-import type { TBorderHighlight } from '../../../../spec'
-import useLogic from '../../../../useLogic'
-import ColorControl from './ColorControl'
-import { CONTROL_LABEL, KEYBOARD_STEP, VIEWBOX } from './constant'
+import type { TBorderHighlight } from '../../../../../spec'
+import useLogic from '../../../../../useLogic'
+import { CONTROL_LABEL, KEYBOARD_STEP, VIEWBOX } from '../constant'
 import {
   clampLength,
   getBorderHighlightFromPoint,
   getHandlePoint,
   getPointFromPointer,
   normalizeAngle,
-} from './helper'
-import useSalon, { cn } from './salon/controller'
+} from '../helper'
+import useSalon, { cn } from './salon/highlight_control'
 
 type TProps = {
   borderHighlight: TBorderHighlight
@@ -24,7 +23,7 @@ type TPoint = {
 
 const CENTER_TOGGLE_RADIUS = 11
 const CENTER_DOT_RADIUS = 7
-const HANDLE_RADIUS = 4.5
+const HANDLE_RADIUS = 4
 const HANDLE_ARC_SPAN = 48
 
 const getDistance = (point: TPoint, center: TPoint): number => {
@@ -76,7 +75,7 @@ const getHandleArcPath = (angle: number, radius: number): string => {
   )} 0 0 1 ${end.x.toFixed(3)} ${end.y.toFixed(3)}`
 }
 
-export default function Controller({ borderHighlight }: TProps) {
+export default function HighlightControl({ borderHighlight }: TProps) {
   const s = useSalon()
   const { borderHighlightOnChange } = useLogic()
   const centerPoint = { x: VIEWBOX.centerX, y: VIEWBOX.centerY }
@@ -160,51 +159,47 @@ export default function Controller({ borderHighlight }: TProps) {
   }
 
   return (
-    <div className={s.wrapper}>
-      <button
-        type='button'
-        className={cn(s.control, borderHighlight.enabled && s.controlActive)}
-        aria-label={CONTROL_LABEL.EDIT}
-        aria-pressed={borderHighlight.enabled}
-        aria-valuetext={`${Math.round(borderHighlight.angle)}deg ${Math.round(
-          borderHighlight.length * 100,
-        )}%`}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        onKeyDown={handleKeyDown}
-      >
-        <span className={s.verticalLine} style={{ left: '33.333%' }} />
-        <span className={s.verticalLine} style={{ left: '66.667%' }} />
-        <span className={s.horizontalLine} style={{ top: '50%' }} />
-        <svg className={s.svg} viewBox={`0 0 ${VIEWBOX.width} ${VIEWBOX.height}`}>
-          {borderHighlight.enabled && (
-            <>
-              {stickLine && (
-                <line
-                  className={s.stick}
-                  x1={stickLine.start.x}
-                  y1={stickLine.start.y}
-                  x2={stickLine.end.x}
-                  y2={stickLine.end.y}
-                />
-              )}
-              <path className={s.handleArc} d={handleArcPath} strokeLinecap='round' />
-              <circle className={s.handleMask} cx={handlePoint.x} cy={handlePoint.y} r='4.5' />
-              <circle className={s.handle} cx={handlePoint.x} cy={handlePoint.y} r='4.5' />
-            </>
-          )}
-          <circle
-            className={cn(s.center, borderHighlight.enabled && s.centerActive)}
-            cx={centerPoint.x}
-            cy={centerPoint.y}
-            r={CENTER_DOT_RADIUS}
-          />
-        </svg>
-      </button>
-
-      <ColorControl borderHighlight={borderHighlight} />
-    </div>
+    <button
+      type='button'
+      className={cn(s.control, borderHighlight.enabled && s.controlActive)}
+      aria-label={CONTROL_LABEL.EDIT}
+      aria-pressed={borderHighlight.enabled}
+      aria-valuetext={`${Math.round(borderHighlight.angle)}deg ${Math.round(
+        borderHighlight.length * 100,
+      )}%`}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onKeyDown={handleKeyDown}
+    >
+      <span className={s.verticalLine} style={{ left: '33.333%' }} />
+      <span className={s.verticalLine} style={{ left: '66.667%' }} />
+      <span className={s.horizontalLine} style={{ top: '50%' }} />
+      <svg className={s.svg} viewBox={`0 0 ${VIEWBOX.width} ${VIEWBOX.height}`}>
+        {borderHighlight.enabled && (
+          <>
+            {stickLine && (
+              <line
+                className={s.stick}
+                x1={stickLine.start.x}
+                y1={stickLine.start.y}
+                x2={stickLine.end.x}
+                y2={stickLine.end.y}
+              />
+            )}
+            <path className={s.handleArc} d={handleArcPath} strokeLinecap='round' />
+            <circle className={s.handleMask} cx={handlePoint.x} cy={handlePoint.y} r='4.5' />
+            <circle className={s.handle} cx={handlePoint.x} cy={handlePoint.y} r={HANDLE_RADIUS} />
+          </>
+        )}
+        <circle
+          className={cn(s.center, borderHighlight.enabled && s.centerActive)}
+          cx={centerPoint.x}
+          cy={centerPoint.y}
+          r={CENTER_DOT_RADIUS}
+        />
+      </svg>
+    </button>
   )
 }

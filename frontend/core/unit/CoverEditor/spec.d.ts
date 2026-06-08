@@ -1,6 +1,8 @@
 import type { TConstValues, TWallpaper, TWallpaperGradientDir } from '~/spec'
 
-import type { IMAGE_POS } from './constant'
+import type { BORDER_HIGHLIGHT_MODE, IMAGE_POS } from './constant'
+
+export type TBorderHighlightMode = TConstValues<typeof BORDER_HIGHLIGHT_MODE>
 
 export type TCoverPoint = {
   x: number
@@ -9,17 +11,22 @@ export type TCoverPoint = {
 
 export type TBorderHighlight = {
   enabled: boolean
+  mode: TBorderHighlightMode
   angle: number
   length: number
   hue: number
+  rainbowHue?: number
+  saturation: number
+  lightness: number
   opacity: number
 }
 
 export type TStore = {
   position: TCoverPoint
-  lightCenter: TCoverPoint
-  lightRadius: number
-  hasLight: boolean
+  magnifierCenter: TCoverPoint
+  magnifierRadius: number
+  magnifierZoom: number
+  hasMagnifier: boolean
   shadow: number
   borderRadius: number
   borderHighlight: TBorderHighlight
@@ -51,9 +58,10 @@ export type TImageRotate = string
 
 export type TTuningSetting = {
   position: TCoverPoint
-  lightCenter: TCoverPoint
-  lightRadius: number
-  hasLight: boolean
+  magnifierCenter: TCoverPoint
+  magnifierRadius: number
+  magnifierZoom: number
+  hasMagnifier: boolean
   shadow: number
   borderRadius: number
   borderHighlight: TBorderHighlight

@@ -1,6 +1,11 @@
 import { useId, useMemo } from 'react'
 
-import { getBorderHighlightColor } from '../../helper'
+import { BORDER_HIGHLIGHT_MODE } from '../../constant'
+import {
+  getBorderHighlightColor,
+  getRainbowBorderHighlightColor,
+  normalizeBorderHighlightMode,
+} from '../../helper'
 import type { TBorderHighlight, TImageSize } from '../../spec'
 import type { TBorderFramePadding } from './helper'
 import { getBorderRenderGeometry } from './helper'
@@ -36,8 +41,12 @@ export default function BorderRender({
     borderHighlight.angle,
     borderHighlight.enabled,
     borderHighlight.hue,
+    borderHighlight.lightness,
     borderHighlight.length,
+    borderHighlight.mode,
     borderHighlight.opacity,
+    borderHighlight.rainbowHue,
+    borderHighlight.saturation,
     borderRadius,
     framePadding?.x,
     framePadding?.y,
@@ -47,6 +56,7 @@ export default function BorderRender({
   if (!geometry) return null
 
   const { clipPath, segments, viewBox } = geometry
+  const mode = normalizeBorderHighlightMode(borderHighlight.mode)
   const strokeColor = getBorderHighlightColor(borderHighlight)
 
   return (
@@ -57,14 +67,22 @@ export default function BorderRender({
         </clipPath>
       </defs>
       <g clipPath={`url(#${clipId})`}>
-        {segments.map(({ path, width }) => (
+        {segments.map(({ path, progress, width }) => (
           <path
             key={`${path}-${width}`}
             d={path}
             fill='none'
-            stroke={strokeColor}
+            stroke={
+              mode === BORDER_HIGHLIGHT_MODE.RAINBOW
+                ? getRainbowBorderHighlightColor(
+                    progress,
+                    borderHighlight.opacity,
+                    borderHighlight.rainbowHue,
+                  )
+                : strokeColor
+            }
             strokeWidth={width}
-            strokeLinecap='round'
+            strokeLinecap='butt'
             strokeLinejoin='round'
             vectorEffect='non-scaling-stroke'
           />
