@@ -45,5 +45,6 @@ export default function useSalon() {
     ),
     centerDot: cn('fill-current transition-colors duration-100', fg('digest')),
     centerDotActive: primary('fg'),
+    centerCheck: 'pointer-events-none fill-white',
   }
 }

@@ -33,6 +33,7 @@ export default function useSalon() {
     ),
     center: cn('pointer fill-current transition-colors duration-100', fg('digest')),
     centerActive: primary('fg'),
+    centerCheck: 'pointer-events-none fill-white',
     handleMask: 'fill-card',
     handle: cn(
       'pointer fill-none stroke-current stroke-[3px] opacity-75 transition-opacity duration-100 group-hover/border-control:opacity-100',

@@ -1,5 +1,7 @@
 import { type KeyboardEvent, type PointerEvent, useEffect, useRef, useState } from 'react'
 
+import CheckSVG from '~/icons/Check'
+
 import { MAGNIFIER_ZOOM_RANGE } from '../../../../constant'
 import type { TCoverPoint } from '../../../../spec'
 import useSalon, { cn } from './salon/control'
@@ -38,7 +40,8 @@ const KEYBOARD_STEP = {
   radius: 0.04,
 } as const
 
-const CENTER_DOT_RADIUS = 6.5
+const CENTER_DOT_RADIUS = 7.5
+const CENTER_CHECK_SIZE = 10
 const HANDLE_RADIUS = 4.5
 const HANDLE_RING_RADIUS = 4
 
@@ -420,6 +423,15 @@ export default function MagnifierControl({
           cy={centerPoint.y}
           r={CENTER_DOT_RADIUS}
         />
+        {!disabled && (
+          <CheckSVG
+            className={s.centerCheck}
+            x={centerPoint.x - CENTER_CHECK_SIZE / 2}
+            y={centerPoint.y - CENTER_CHECK_SIZE / 2}
+            width={CENTER_CHECK_SIZE}
+            height={CENTER_CHECK_SIZE}
+          />
+        )}
       </svg>
     </button>
   )

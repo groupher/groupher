@@ -22,9 +22,10 @@ export default function useSalon() {
       br('divider'),
     ),
     center: cn(
-      'pointer absolute left-1/2 top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 circle trans-all-100',
+      'align-both pointer absolute left-1/2 top-1/2 size-5 -translate-x-1/2 -translate-y-1/2 circle trans-all-100',
       bg('digest'),
     ),
     centerActive: primary('bg'),
+    checkIcon: 'size-3 fill-white',
   }
 }

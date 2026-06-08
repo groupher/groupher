@@ -1,5 +1,7 @@
 import type { KeyboardEvent, PointerEvent } from 'react'
 
+import CheckSVG from '~/icons/Check'
+
 import type { TBorderHighlight } from '../../../../../spec'
 import useLogic from '../../../../../useLogic'
 import { CONTROL_LABEL, KEYBOARD_STEP, VIEWBOX } from '../constant'
@@ -22,7 +24,8 @@ type TPoint = {
 }
 
 const CENTER_TOGGLE_RADIUS = 11
-const CENTER_DOT_RADIUS = 7
+const CENTER_DOT_RADIUS = 8
+const CENTER_CHECK_SIZE = 10
 const HANDLE_RADIUS = 4
 const HANDLE_ARC_SPAN = 48
 
@@ -199,6 +202,15 @@ export default function HighlightControl({ borderHighlight }: TProps) {
           cy={centerPoint.y}
           r={CENTER_DOT_RADIUS}
         />
+        {borderHighlight.enabled && (
+          <CheckSVG
+            className={s.centerCheck}
+            x={centerPoint.x - CENTER_CHECK_SIZE / 2}
+            y={centerPoint.y - CENTER_CHECK_SIZE / 2}
+            width={CENTER_CHECK_SIZE}
+            height={CENTER_CHECK_SIZE}
+          />
+        )}
       </svg>
     </button>
   )
