@@ -9,8 +9,8 @@ import AnimatedCount from '~/widgets/AnimatedCount'
 import Tooltip from '~/widgets/Tooltip'
 
 import { getEmotionName } from '../helper'
-import useSalon from './salon/emotion_unit'
 import EmotionIcon from './EmotionIcon'
+import useSalon from './salon/emotion_unit'
 import UsersPanel from './UsersPanel'
 
 type TProps = {

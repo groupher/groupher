@@ -2,8 +2,8 @@ import AccountUnit from '~/widgets/AccountUnit'
 import HomeLogo from '~/widgets/HomeLogo'
 import ThemeSwitch from '~/widgets/ThemeSwitch'
 
-import useSalon from './salon'
 import useLogic from '../useLogic'
+import useSalon from './salon'
 import StepMap from './StepMap'
 
 export default function Header() {

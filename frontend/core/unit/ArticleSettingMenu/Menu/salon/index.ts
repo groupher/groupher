@@ -2,8 +2,8 @@ import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TColorName } from '~/spec'
 
+import { getSubMenuWidth } from '../../salon/metric'
 import type { TSubMenu } from '../../spec'
-import { getSubMenuWidth } from '../metric'
 
 export { cn } from '~/css'
 

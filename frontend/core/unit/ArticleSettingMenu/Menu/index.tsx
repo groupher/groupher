@@ -11,11 +11,11 @@ import SlugSVG from '~/icons/Slug'
 import DeleteSVG from '~/icons/Trash'
 
 import { SUB_MENU } from '../constant'
-import useSalon, { cn } from './salon'
 import type { TSubMenu } from '../spec'
 import SubMenu from '../SubMenu'
 import CatItem from './CatItem'
 import PinItem from './PinItem'
+import useSalon, { cn } from './salon'
 import StatusItem from './StatusItem'
 import TagsItem from './TagsItem'
 

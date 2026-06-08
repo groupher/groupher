@@ -11,10 +11,10 @@ import EmotionSelector from '~/unit/EmotionSelector'
 import Upvote from '~/unit/Upvote'
 
 import { API_MODE } from '../constant'
-import useSalon from './salon/footer'
 import type { TAPIMode } from '../spec'
 import useActions from '../useLogic/useActions'
 import Actions from './Actions'
+import useSalon from './salon/footer'
 
 type TProps = {
   data: TComment

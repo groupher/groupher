@@ -2,8 +2,8 @@ import CheckSVG from '~/icons/CheckCircle'
 import { createKeyboardClick } from '~/lib/a11y'
 
 import { COMMUNITY_CATS } from '../../constant'
-import useSalon, { cn, Icon } from './salon/select_type/type_boxes'
 import useLogic from '../../useLogic'
+import useSalon, { cn, Icon } from '../salon/select_type/type_boxes'
 import IntroImages from './IntroImages'
 
 export default function TypeBoxes() {

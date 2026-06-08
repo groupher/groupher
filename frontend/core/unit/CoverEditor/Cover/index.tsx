@@ -509,6 +509,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     backgroundColor: hasGlassBorder ? 'rgba(255, 255, 255, 0.2)' : undefined,
     backdropFilter: hasGlassBorder ? 'blur(5px)' : undefined,
     WebkitBackdropFilter: hasGlassBorder ? 'blur(5px)' : undefined,
+    boxShadow: getImageShadow(shadow),
     transform: `translate(-50%, -50%) rotate(${rotate}deg)`,
   }
   const magnifierImageFrameStyle: CSSProperties = {
@@ -536,7 +537,6 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
 
   const cropViewportStyle: CSSProperties = {
     boxSizing: 'border-box',
-    boxShadow: getImageShadow(shadow),
     borderRadius: borderRadiusValue,
   }
 

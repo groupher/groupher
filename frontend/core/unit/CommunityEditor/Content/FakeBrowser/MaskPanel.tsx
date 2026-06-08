@@ -4,8 +4,8 @@ import CheckSVG from '~/icons/Check'
 import ArrowLinker from '~/widgets/ArrowLinker'
 
 import { STEP } from '../../constant'
-import useSalon, { cn } from './salon/fake_browser/mask_panel'
 import type { TStep } from '../../spec'
+import useSalon, { cn } from '../salon/fake_browser/mask_panel'
 
 type TProps = {
   step: TStep

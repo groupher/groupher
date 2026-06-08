@@ -5,9 +5,9 @@
  */
 
 import { STEP } from '../constant'
-import useSalon from './salon'
 import useLogic from '../useLogic'
 import Finished from './Finished'
+import useSalon from './salon'
 import SelectType from './SelectType'
 import SetupDomain from './SetupDomain'
 import SetupExtra from './SetupExtra'

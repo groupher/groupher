@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-import useSalon from './salon/select_type/warn_box'
+import useSalon from '../salon/select_type/warn_box'
 
 type TProps = {
   title: string

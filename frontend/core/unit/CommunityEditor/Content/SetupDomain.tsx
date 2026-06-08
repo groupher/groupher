@@ -1,7 +1,7 @@
 import { STEP } from '../constant'
-import useSalon from './salon/setup_domain'
 import useLogic from '../useLogic'
 import FakeBrowser from './FakeBrowser'
+import useSalon from './salon/setup_domain'
 
 export default function SetupDomain() {
   const s = useSalon()

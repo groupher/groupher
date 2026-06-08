@@ -4,8 +4,8 @@ import { ROUTE } from '~/const/route'
 import ArrowSVG from '~/icons/ArrowUpRight'
 import Img from '~/Img'
 
-import useSalon, { cn } from './salon/finished'
 import useLogic from '../useLogic'
+import useSalon, { cn } from './salon/finished'
 
 export default function Finished() {
   const s = useSalon()

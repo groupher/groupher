@@ -10,8 +10,8 @@ import Tooltip from '~/widgets/Tooltip'
 
 import type { TProps as TBase } from '..'
 import { MODE } from '../../constant'
-import useSalon, { cn } from '../salon/state_bar/sort_menu'
 import useActions from '../../useLogic/useActions'
+import useSalon, { cn } from '../salon/state_bar/sort_menu'
 
 type TProps = Pick<TBase, 'mode' | 'apiMode' | 'isAllFolded'>
 

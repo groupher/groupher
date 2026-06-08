@@ -2,8 +2,8 @@
  * KanbanThread
  */
 
-import useSalon from './salon'
 import Actions from './Actions'
+import useSalon from './salon'
 import Sections from './Sections'
 
 export default function WaterfallLayout() {

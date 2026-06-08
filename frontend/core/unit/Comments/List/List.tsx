@@ -5,11 +5,11 @@ import type { TComment, TID } from '~/spec'
 import Comment from '../Comment'
 import { MODE } from '../constant'
 import { passedDate } from '../helper'
-import useSalon from './salon/list'
 import type { TAPIMode, TMode } from '../spec'
 import useActions from '../useLogic/useActions'
 import DateDivider from './DateDivider'
 import RepliesList from './RepliesList'
+import useSalon from './salon/list'
 
 type TProps = {
   mode: TMode

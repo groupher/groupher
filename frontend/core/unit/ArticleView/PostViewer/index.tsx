@@ -13,11 +13,11 @@ import ViewportTracker from '~/widgets/ViewportTracker'
 
 import ArticleBroadcast from '../ArticleBroadcast'
 import ArticleFooter from '../ArticleFooter'
-import useSalon, { cn } from './salon'
 import useLogic from '../useLogic'
 import ArticleInfo from './ArticleInfo'
 import FixedHeader from './FixedHeader'
 import Header from './Header'
+import useSalon, { cn } from './salon'
 
 type TProps = {
   isFullView?: boolean

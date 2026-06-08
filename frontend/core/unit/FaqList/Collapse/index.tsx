@@ -4,10 +4,10 @@ import { type FC, useCallback, useState } from 'react'
 import type { TMenuOption } from '~/spec'
 
 import type { TProps as TIndex } from '..'
-import useSalon from './salon'
 import Banner from './Banner'
 import { DEFAULT_MENU, MENU } from './constant'
 import Footer from './Footer'
+import useSalon from './salon'
 import Section from './Section'
 
 type TProps = Pick<TIndex, 'sections'>

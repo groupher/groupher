@@ -6,8 +6,8 @@ import type { TModerator } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
 import NoteTip from '~/widgets/NoteTip'
 
-import useSalon, { cn } from './salon'
 import AdminMember from './AdminMember'
+import useSalon, { cn } from './salon'
 
 type TProps = {
   moderators: readonly TModerator[]

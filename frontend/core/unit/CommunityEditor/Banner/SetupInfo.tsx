@@ -6,9 +6,9 @@ import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import Input from '~/widgets/Input'
 import OSSUploader from '~/widgets/OSSUploader'
 
-import useSalon from './salon/setup_info'
 import useLogic from '../useLogic'
 import NextStepButton from './NextStepButton'
+import useSalon from './salon/setup_info'
 
 export default function SetupInfo() {
   const s = useSalon()
