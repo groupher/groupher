@@ -4,11 +4,9 @@ import type { TTuningSetting } from '../../../../spec'
 import useLogic from '../../../../useLogic'
 import Controller from '../Border/Controller'
 import GlassFrameControl from '../Border/GlassFrameControl'
-import Corner from '../Corner'
 import MagnifierControl from '../Magnifier/Control'
 import PositionController from '../Position/Controller'
 import Shadow from '../Shadow'
-import Size from '../Size'
 import useSalon from './salon'
 
 type TProps = {
@@ -88,11 +86,7 @@ export default function ImageFields({ setting }: TProps) {
 
       <div className={s.fineSettings}>
         <div className={s.fineColumn}>
-          <Size size={setting.size} />
-        </div>
-        <div className={s.fineColumn}>
           <Shadow shadow={setting.shadow} />
-          <Corner borderRadius={setting.borderRadius} />
         </div>
       </div>
     </>

@@ -1,5 +1,6 @@
-import DeleteSVG from '~/icons/Delete'
 import PlusSVG from '~/icons/Plus'
+import TrashSVG from '~/icons/Trash'
+import UploadSVG from '~/icons/Upload'
 
 import type { TTuningSetting } from '../../../spec'
 import ImageFields from './ImageFields'
@@ -18,26 +19,32 @@ export default function BasicTab({ setting, onDelete, onReplace }: TProps) {
   return (
     <div className={s.wrapper}>
       <section className={s.imageSection}>
-        <ImageTitle type='primary' />
-        <ImageFields setting={setting} />
+        <div className={s.primaryImageArea}>
+          <ImageTitle
+            type='primary'
+            action={
+              <div className={s.uploadActions}>
+                <button type='button' className={s.actionButton} onClick={onReplace}>
+                  <UploadSVG className={s.actionIcon} />
+                  replace
+                </button>
+                <button type='button' className={s.deleteButton} onClick={onDelete}>
+                  <TrashSVG className={s.deleteIcon} />
+                  delete
+                </button>
+              </div>
+            }
+          />
+          <ImageFields setting={setting} />
+        </div>
 
         <div className={s.sectionDivider} />
 
         <div className={s.actionArea}>
           <button type='button' className={s.addImageButton} disabled aria-label='Add second image'>
             <PlusSVG className={s.addImageIcon} />
-            Add image
+            Add secondary image
           </button>
-
-          <div className={s.uploadActions}>
-            <button type='button' className={s.actionButton} onClick={onReplace}>
-              Replace image
-            </button>
-            <button type='button' className={s.deleteButton} onClick={onDelete}>
-              <DeleteSVG className={s.deleteIcon} />
-              Delete
-            </button>
-          </div>
         </div>
       </section>
     </div>
