@@ -16,9 +16,42 @@ export const IMAGE_POS = {
   NONE: 'none',
 } as const
 
-export const IMAGE_SHADOW_RANGE = {
-  MIN: 0,
-  MAX: 100,
+export const COVER_SHADOW_PRESET = {
+  NONE: 'none',
+  XSMALL: 'xsmall',
+  SMALL: 'small',
+  MEDIUM: 'medium',
+  LARGE: 'large',
+  XLARGE: 'xlarge',
+  CUSTOM: 'custom',
+} as const
+
+export const COVER_SHADOW_COLOR_MODE = {
+  BLACK: 'black',
+  WHITE: 'white',
+  COLOR: 'color',
+  RAINBOW: 'rainbow',
+} as const
+
+export const COVER_SHADOW_DEFAULT = {
+  PRESET: COVER_SHADOW_PRESET.NONE,
+  COLOR_MODE: COVER_SHADOW_COLOR_MODE.BLACK,
+  HUE: 228,
+  RAINBOW_HUE: 0,
+  X: 0,
+  Y: 10,
+  BLUR: 24,
+  SPREAD: 0,
+  OPACITY: 0.35,
+} as const
+
+export const COVER_SHADOW_RANGE = {
+  X: { MIN: -40, MAX: 40 },
+  Y: { MIN: -40, MAX: 60 },
+  BLUR: { MIN: 0, MAX: 120 },
+  SPREAD: { MIN: -30, MAX: 40 },
+  OPACITY: { MIN: 0, MAX: 1 },
+  HUE: { MIN: 0, MAX: 359 },
 } as const
 
 export const IMAGE_SIZE_RANGE = {

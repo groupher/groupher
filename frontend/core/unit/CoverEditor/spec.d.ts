@@ -1,6 +1,11 @@
 import type { TConstValues, TWallpaper, TWallpaperGradientDir } from '~/spec'
 
-import type { BORDER_HIGHLIGHT_MODE, IMAGE_POS } from './constant'
+import type {
+  BORDER_HIGHLIGHT_MODE,
+  COVER_SHADOW_COLOR_MODE,
+  COVER_SHADOW_PRESET,
+  IMAGE_POS,
+} from './constant'
 
 export type TBorderHighlightMode = TConstValues<typeof BORDER_HIGHLIGHT_MODE>
 
@@ -21,13 +26,29 @@ export type TBorderHighlight = {
   opacity: number
 }
 
+export type TCoverShadowPreset = TConstValues<typeof COVER_SHADOW_PRESET>
+
+export type TCoverShadowColorMode = TConstValues<typeof COVER_SHADOW_COLOR_MODE>
+
+export type TCoverShadow = {
+  preset: TCoverShadowPreset
+  colorMode: TCoverShadowColorMode
+  hue: number
+  rainbowHue: number
+  x: number
+  y: number
+  blur: number
+  spread: number
+  opacity: number
+}
+
 export type TStore = {
   position: TCoverPoint
   magnifierCenter: TCoverPoint
   magnifierRadius: number
   magnifierZoom: number
   hasMagnifier: boolean
-  shadow: number
+  shadow: TCoverShadow
   borderRadius: number
   borderHighlight: TBorderHighlight
   size: TImageSize
@@ -62,7 +83,7 @@ export type TTuningSetting = {
   magnifierRadius: number
   magnifierZoom: number
   hasMagnifier: boolean
-  shadow: number
+  shadow: TCoverShadow
   borderRadius: number
   borderHighlight: TBorderHighlight
   wallpapers: Record<string, TWallpaper>

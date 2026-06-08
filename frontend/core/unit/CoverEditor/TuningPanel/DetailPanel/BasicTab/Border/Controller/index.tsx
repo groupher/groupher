@@ -5,15 +5,16 @@ import useSalon from './salon'
 
 type TProps = {
   borderHighlight: TBorderHighlight
+  showColorControl?: boolean
 }
 
-export default function Controller({ borderHighlight }: TProps) {
+export default function Controller({ borderHighlight, showColorControl = true }: TProps) {
   const s = useSalon()
 
   return (
     <div className={s.wrapper}>
       <HighlightControl borderHighlight={borderHighlight} />
-      <ColorControl borderHighlight={borderHighlight} />
+      {showColorControl && <ColorControl borderHighlight={borderHighlight} />}
     </div>
   )
 }

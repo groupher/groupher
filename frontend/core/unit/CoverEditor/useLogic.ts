@@ -6,16 +6,24 @@ import type { TWallpaper, TWallpaperGradient, TWallpaperGradientDir } from '~/sp
 
 import {
   BORDER_HIGHLIGHT_DEFAULT,
+  COVER_SHADOW_DEFAULT,
   IMAGE_SIZE_RANGE,
   MAGNIFIER_RADIUS_DEFAULT,
   MAGNIFIER_ZOOM_DEFAULT,
 } from './constant'
-import type { TBorderHighlight, TCoverPoint, TImageSize, TStore, TTuningSetting } from './spec'
+import type {
+  TBorderHighlight,
+  TCoverPoint,
+  TCoverShadow,
+  TImageSize,
+  TStore,
+  TTuningSetting,
+} from './spec'
 
 type TRet = {
   imageLoadedOnChange: (imageUrl: string) => void
   positionOnChange: (position: TCoverPoint) => void
-  shadowOnChange: (shadow: number) => void
+  shadowOnChange: (shadow: Partial<TCoverShadow>) => void
   borderRadiusOnChange: (borderRadius: number) => void
   borderHighlightOnChange: (borderHighlight: Partial<TBorderHighlight>) => void
   wallpaperOnChange: (wallpaper: string) => void
@@ -34,7 +42,17 @@ const LOADED_IMAGE_DEFAULT_SETTING: Partial<TStore> = {
   size: 94,
   rotate: 0,
   position: { x: 0.5, y: 0.5 },
-  shadow: 0,
+  shadow: {
+    preset: COVER_SHADOW_DEFAULT.PRESET,
+    colorMode: COVER_SHADOW_DEFAULT.COLOR_MODE,
+    hue: COVER_SHADOW_DEFAULT.HUE,
+    rainbowHue: COVER_SHADOW_DEFAULT.RAINBOW_HUE,
+    x: COVER_SHADOW_DEFAULT.X,
+    y: COVER_SHADOW_DEFAULT.Y,
+    blur: COVER_SHADOW_DEFAULT.BLUR,
+    spread: COVER_SHADOW_DEFAULT.SPREAD,
+    opacity: COVER_SHADOW_DEFAULT.OPACITY,
+  },
   borderRadius: 0,
   borderHighlight: {
     enabled: BORDER_HIGHLIGHT_DEFAULT.ENABLED,
@@ -61,7 +79,17 @@ const store = proxy<TStore>({
   magnifierRadius: MAGNIFIER_RADIUS_DEFAULT,
   magnifierZoom: MAGNIFIER_ZOOM_DEFAULT,
   hasMagnifier: false,
-  shadow: 0,
+  shadow: {
+    preset: COVER_SHADOW_DEFAULT.PRESET,
+    colorMode: COVER_SHADOW_DEFAULT.COLOR_MODE,
+    hue: COVER_SHADOW_DEFAULT.HUE,
+    rainbowHue: COVER_SHADOW_DEFAULT.RAINBOW_HUE,
+    x: COVER_SHADOW_DEFAULT.X,
+    y: COVER_SHADOW_DEFAULT.Y,
+    blur: COVER_SHADOW_DEFAULT.BLUR,
+    spread: COVER_SHADOW_DEFAULT.SPREAD,
+    opacity: COVER_SHADOW_DEFAULT.OPACITY,
+  },
   borderRadius: 0,
   borderHighlight: {
     enabled: BORDER_HIGHLIGHT_DEFAULT.ENABLED,
@@ -156,7 +184,8 @@ export default function useLogic(): TRet {
   }
 
   const positionOnChange = (position: TCoverPoint): void => snap.commit({ position })
-  const shadowOnChange = (shadow: number): void => snap.commit({ shadow })
+  const shadowOnChange = (shadow: Partial<TCoverShadow>): void =>
+    snap.commit({ shadow: { ...snap.shadow, ...shadow } })
   const borderRadiusOnChange = (borderRadius: number): void => snap.commit({ borderRadius })
   const borderHighlightOnChange = (borderHighlight: Partial<TBorderHighlight>): void =>
     snap.commit({ borderHighlight: { ...snap.borderHighlight, ...borderHighlight } })

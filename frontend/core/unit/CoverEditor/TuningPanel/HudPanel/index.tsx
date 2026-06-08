@@ -6,6 +6,7 @@ import ShadowSVG from '~/icons/Shadow'
 import { parseWallpaper } from '~/wallpaper'
 
 import { IMAGE_SIZE_RANGE } from '../../constant'
+import { isCoverShadowActive } from '../../helper'
 import { getImagePlacement, getResponsiveImageSize } from '../../salon/metric'
 import type { TTuningSetting } from '../../spec'
 import { getBorderValue, isCenterPoint } from './helper'
@@ -65,7 +66,11 @@ export default function HudPanel({ setting, onExpand }: TProps) {
           icon={<ImageSizeSVG className={s.icon} />}
           value={`${Math.round(size)}%`}
         />
-        <HudItem label='阴影' active={shadow > 0} icon={<ShadowSVG className={s.icon} />} />
+        <HudItem
+          label='阴影'
+          active={isCoverShadowActive(shadow)}
+          icon={<ShadowSVG className={s.icon} />}
+        />
         <HudItem
           label='边框'
           active={borderRadius > 0 || borderHighlight.enabled || hasGlassBorder}

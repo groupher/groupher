@@ -7,6 +7,7 @@ import {
   SliderTrack,
 } from 'react-aria-components'
 
+import SettingSVG from '~/icons/Setting'
 import Tooltip from '~/widgets/Tooltip'
 
 import { BORDER_HIGHLIGHT_DEFAULT, BORDER_HIGHLIGHT_MODE } from '../../../../../constant'
@@ -29,9 +30,10 @@ import type { TSliderStyle } from './spec'
 
 type TProps = {
   borderHighlight: TBorderHighlight
+  variant?: 'swatch' | 'setting'
 }
 
-export default function ColorControl({ borderHighlight }: TProps) {
+export default function ColorControl({ borderHighlight, variant = 'swatch' }: TProps) {
   const s = useSalon()
   const { borderHighlightOnChange } = useLogic()
   const mode = normalizeBorderHighlightMode(borderHighlight.mode)
@@ -92,6 +94,7 @@ export default function ColorControl({ borderHighlight }: TProps) {
       hideOnClick={false}
       maxWidth='none'
       offset={[8, 0]}
+      portalToBody
       content={
         <div className={s.colorPanel}>
           <RadioGroup
@@ -252,12 +255,18 @@ export default function ColorControl({ borderHighlight }: TProps) {
         </div>
       }
     >
-      <button
-        type='button'
-        className={cn(s.colorTrigger, !borderHighlight.enabled && s.colorTriggerDisabled)}
-        style={swatchStyle}
-        aria-label='Edit border color'
-      />
+      {variant === 'setting' ? (
+        <button type='button' className={s.settingButton} aria-label='Edit border color'>
+          <SettingSVG className={s.settingIcon} />
+        </button>
+      ) : (
+        <button
+          type='button'
+          className={cn(s.colorTrigger, !borderHighlight.enabled && s.colorTriggerDisabled)}
+          style={swatchStyle}
+          aria-label='Edit border color'
+        />
+      )}
     </Tooltip>
   )
 }
