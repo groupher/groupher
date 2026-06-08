@@ -8,6 +8,7 @@ import {
   BORDER_HIGHLIGHT_DEFAULT,
   COVER_SHADOW_DEFAULT,
   IMAGE_SIZE_RANGE,
+  MAGNIFIER_APPEARANCE_DEFAULT,
   MAGNIFIER_RADIUS_DEFAULT,
   MAGNIFIER_ZOOM_DEFAULT,
 } from './constant'
@@ -16,6 +17,7 @@ import type {
   TCoverPoint,
   TCoverShadow,
   TImageSize,
+  TMagnifierAppearance,
   TStore,
   TTuningSetting,
 } from './spec'
@@ -33,6 +35,7 @@ type TRet = {
   glassBorderOnChange: (hasGlassBorder: boolean) => void
   magnifierRadiationOnChange: (magnifierCenter: TCoverPoint, magnifierRadius: number) => void
   magnifierZoomOnChange: (magnifierZoom: number) => void
+  magnifierAppearanceOnChange: (magnifierAppearance: Partial<TMagnifierAppearance>) => void
   magnifierOnChange: (hasMagnifier: boolean) => void
 } & TStore
 
@@ -69,6 +72,13 @@ const LOADED_IMAGE_DEFAULT_SETTING: Partial<TStore> = {
   hasMagnifier: false,
   magnifierRadius: MAGNIFIER_RADIUS_DEFAULT,
   magnifierZoom: MAGNIFIER_ZOOM_DEFAULT,
+  magnifierAppearance: {
+    borderColor: MAGNIFIER_APPEARANCE_DEFAULT.BORDER_COLOR,
+    borderWidth: MAGNIFIER_APPEARANCE_DEFAULT.BORDER_WIDTH,
+    highlightCenter: { ...MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_CENTER },
+    highlightIntensity: MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_INTENSITY,
+    shadow: MAGNIFIER_APPEARANCE_DEFAULT.SHADOW,
+  },
   wallpaper: 'pink',
   direction: GRADIENT_DIRECTION.BOTTOM_RIGHT,
 }
@@ -78,6 +88,13 @@ const store = proxy<TStore>({
   magnifierCenter: { x: 0.5, y: 0.5 },
   magnifierRadius: MAGNIFIER_RADIUS_DEFAULT,
   magnifierZoom: MAGNIFIER_ZOOM_DEFAULT,
+  magnifierAppearance: {
+    borderColor: MAGNIFIER_APPEARANCE_DEFAULT.BORDER_COLOR,
+    borderWidth: MAGNIFIER_APPEARANCE_DEFAULT.BORDER_WIDTH,
+    highlightCenter: { ...MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_CENTER },
+    highlightIntensity: MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_INTENSITY,
+    shadow: MAGNIFIER_APPEARANCE_DEFAULT.SHADOW,
+  },
   hasMagnifier: false,
   shadow: {
     preset: COVER_SHADOW_DEFAULT.PRESET,
@@ -134,6 +151,7 @@ const store = proxy<TStore>({
       magnifierCenter,
       magnifierRadius,
       magnifierZoom,
+      magnifierAppearance,
       hasMagnifier,
       shadow,
       borderRadius,
@@ -151,6 +169,7 @@ const store = proxy<TStore>({
       magnifierCenter,
       magnifierRadius,
       magnifierZoom,
+      magnifierAppearance,
       hasMagnifier,
       shadow,
       borderRadius,
@@ -201,6 +220,11 @@ export default function useLogic(): TRet {
     magnifierRadius: number,
   ): void => snap.commit({ magnifierCenter, magnifierRadius, hasMagnifier: true })
   const magnifierZoomOnChange = (magnifierZoom: number): void => snap.commit({ magnifierZoom })
+  const magnifierAppearanceOnChange = (magnifierAppearance: Partial<TMagnifierAppearance>): void =>
+    snap.commit({
+      hasMagnifier: true,
+      magnifierAppearance: { ...snap.magnifierAppearance, ...magnifierAppearance },
+    })
   const magnifierOnChange = (hasMagnifier: boolean): void => snap.commit({ hasMagnifier })
 
   return {
@@ -217,6 +241,7 @@ export default function useLogic(): TRet {
     glassBorderOnChange,
     magnifierRadiationOnChange,
     magnifierZoomOnChange,
+    magnifierAppearanceOnChange,
     magnifierOnChange,
   }
 }

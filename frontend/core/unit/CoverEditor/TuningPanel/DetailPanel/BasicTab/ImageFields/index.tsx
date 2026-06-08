@@ -6,6 +6,7 @@ import Controller from '../Border/Controller'
 import ColorControl from '../Border/Controller/ColorControl'
 import GlassFrameControl from '../Border/GlassFrameControl'
 import MagnifierControl from '../Magnifier/Control'
+import MagnifierSettings from '../Magnifier/Settings'
 import Shadow, { ShadowSettings } from '../Shadow'
 import useSalon from './salon'
 
@@ -73,6 +74,9 @@ export default function ImageFields({ setting }: TProps) {
         </div>
         <div className={s.quickLabelRow}>
           <span className={s.quickLabel}>Magnifier</span>
+          <span className={s.quickAction}>
+            <MagnifierSettings appearance={setting.magnifierAppearance} />
+          </span>
         </div>
       </div>
 

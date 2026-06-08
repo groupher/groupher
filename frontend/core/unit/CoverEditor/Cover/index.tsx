@@ -11,7 +11,7 @@ import {
   MAGNIFIER_RENDER_SIZE,
   MAGNIFIER_ZOOM_RANGE,
 } from '../constant'
-import { getImageShadow } from '../helper'
+import { getImageShadow, getMagnifierAppearanceStyle } from '../helper'
 import {
   getBorderRadiusFromCanvasPoint,
   getCanvasPointFromClient,
@@ -204,6 +204,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     magnifierCenter,
     magnifierRadius,
     magnifierZoom,
+    magnifierAppearance,
     wallpaper,
     wallpapers,
     rotate,
@@ -505,6 +506,12 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     WebkitBackdropFilter: hasGlassBorder ? 'blur(5px)' : undefined,
     transform: `translate(-50%, -50%) rotate(${rotate}deg)`,
   }
+  const magnifierImageFrameStyle: CSSProperties = {
+    ...imageFrameStyle,
+    backgroundColor: hasGlassBorder ? 'rgba(255, 255, 255, 0.16)' : undefined,
+    backdropFilter: undefined,
+    WebkitBackdropFilter: undefined,
+  }
   const editorFrameStyle: CSSProperties = {
     borderRadius: frameBorderRadiusValue,
     width: imageFrameSize.width,
@@ -544,6 +551,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     width: `${magnifierSizePercent}%`,
     left: `${magnifierCenter.x * 100}%`,
     top: `${magnifierCenter.y * 100}%`,
+    ...getMagnifierAppearanceStyle(magnifierAppearance),
   }
   const showMagnifierHandles =
     magnifierHovered ||
@@ -555,7 +563,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     <div className={s.contentLayer} style={wrapperBackgroundStyle}>
       <div
         className={s.cn(s.imageFrame, interactionMode !== 'idle' && s.imageFrameActive)}
-        style={imageFrameStyle}
+        style={isMagnifierClone ? magnifierImageFrameStyle : imageFrameStyle}
       >
         <div
           className={s.cn(s.cropViewport, interactionMode !== 'idle' && s.cropViewportActive)}

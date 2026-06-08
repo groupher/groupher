@@ -114,3 +114,26 @@ export const MAGNIFIER_ZOOM_RANGE = {
   MIN: 1.2,
   MAX: 3,
 } as const
+
+export const MAGNIFIER_BORDER_COLOR = {
+  GRAY: 'gray',
+  BLACK: 'black',
+} as const
+
+export const MAGNIFIER_APPEARANCE_DEFAULT = {
+  BORDER_COLOR: MAGNIFIER_BORDER_COLOR.GRAY,
+  BORDER_WIDTH: 0,
+  HIGHLIGHT_CENTER: { x: 0.25, y: 0.22 },
+  HIGHLIGHT_INTENSITY: 0.52,
+  SHADOW: 20,
+} as const
+
+export const MAGNIFIER_BORDER_WIDTH_RANGE = {
+  MIN: 0,
+  MAX: 8,
+} as const
+
+export const MAGNIFIER_SHADOW_RANGE = {
+  MIN: 0,
+  MAX: 100,
+} as const

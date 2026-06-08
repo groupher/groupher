@@ -33,7 +33,7 @@ export default function useSalon() {
     magnifierResizing: '!transition-none cursor-crosshair',
     magnifierZooming: '!transition-none cursor-ew-resize',
     magnifierViewport:
-      'relative size-full overflow-hidden rounded-full border border-white/40 bg-white/[0.015] shadow-[0_2px_9px_rgba(0,0,0,0.08),0_8px_18px_rgba(0,0,0,0.06),inset_0_-5px_10px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,0.38)] before:absolute before:inset-0 before:z-10 before:rounded-full before:pointer-events-none before:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.32),inset_0_0_0_2px_rgba(0,0,0,0.045)] after:absolute after:inset-0 after:z-10 after:rounded-full after:pointer-events-none after:bg-[radial-gradient(32%_18%_at_30%_12%,rgba(255,255,255,0.12),rgba(255,255,255,0.04)_44%,rgba(255,255,255,0)_78%)]',
+      'relative size-full overflow-hidden rounded-full bg-white/[0.01] shadow-[var(--magnifier-shadow)] before:absolute before:inset-0 before:z-10 before:rounded-full before:pointer-events-none before:bg-[image:var(--magnifier-rim)] before:shadow-[var(--magnifier-edge-shadow)] after:absolute after:inset-0 after:z-10 after:rounded-full after:pointer-events-none after:bg-[image:var(--magnifier-crescent)] after:blur-[1.5px] after:[mask-image:var(--magnifier-crescent-mask)] after:[-webkit-mask-image:var(--magnifier-crescent-mask)]',
     magnifierClone: 'absolute overflow-hidden pointer-events-none',
     magnifierRadiusHandle: cn(
       'absolute left-[75%] top-[6.7%] z-10 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_2px_7px_rgba(0,0,0,0.28)] cursor-nesw-resize outline-none pointer-events-auto',

@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react'
+
 import {
   BORDER_HIGHLIGHT_COLOR,
   BORDER_HIGHLIGHT_DEFAULT,
@@ -6,6 +8,10 @@ import {
   COVER_SHADOW_DEFAULT,
   COVER_SHADOW_PRESET,
   COVER_SHADOW_RANGE,
+  MAGNIFIER_APPEARANCE_DEFAULT,
+  MAGNIFIER_BORDER_COLOR,
+  MAGNIFIER_BORDER_WIDTH_RANGE,
+  MAGNIFIER_SHADOW_RANGE,
 } from './constant'
 import type {
   TBorderHighlight,
@@ -13,6 +19,8 @@ import type {
   TCoverShadow,
   TCoverShadowColorMode,
   TCoverShadowPreset,
+  TMagnifierAppearance,
+  TMagnifierBorderColor,
 } from './spec'
 
 const clamp = (value: number, min: number, max: number): number =>
@@ -284,4 +292,104 @@ export const getRainbowBorderHighlightColor = (
   const alpha = normalizeBorderHighlightOpacity(opacity)
 
   return `hsla(${shiftedHue}, ${BORDER_HIGHLIGHT_COLOR.RAINBOW_SATURATION}%, ${BORDER_HIGHLIGHT_COLOR.RAINBOW_LIGHTNESS}%, ${formatAlpha(alpha)})`
+}
+
+export const normalizeMagnifierShadow = (shadow: number | undefined): number =>
+  Math.round(
+    clamp(
+      getFiniteNumber(shadow, MAGNIFIER_APPEARANCE_DEFAULT.SHADOW),
+      MAGNIFIER_SHADOW_RANGE.MIN,
+      MAGNIFIER_SHADOW_RANGE.MAX,
+    ),
+  )
+
+export const normalizeMagnifierBorderColor = (
+  borderColor: TMagnifierBorderColor | undefined,
+): TMagnifierBorderColor =>
+  borderColor === MAGNIFIER_BORDER_COLOR.BLACK
+    ? MAGNIFIER_BORDER_COLOR.BLACK
+    : MAGNIFIER_BORDER_COLOR.GRAY
+
+export const normalizeMagnifierBorderWidth = (borderWidth: number | undefined): number =>
+  Math.round(
+    clamp(
+      getFiniteNumber(borderWidth, MAGNIFIER_APPEARANCE_DEFAULT.BORDER_WIDTH),
+      MAGNIFIER_BORDER_WIDTH_RANGE.MIN,
+      MAGNIFIER_BORDER_WIDTH_RANGE.MAX,
+    ),
+  )
+
+const normalizeMagnifierHighlightCenter = (
+  center: Partial<TMagnifierAppearance['highlightCenter']> | undefined,
+): TMagnifierAppearance['highlightCenter'] => ({
+  x: clamp(getFiniteNumber(center?.x, MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_CENTER.x), 0, 1),
+  y: clamp(getFiniteNumber(center?.y, MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_CENTER.y), 0, 1),
+})
+
+export const normalizeMagnifierHighlightIntensity = (intensity: number | undefined): number =>
+  clamp(getFiniteNumber(intensity, MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_INTENSITY), 0, 1)
+
+export const normalizeMagnifierAppearance = (
+  appearance: Partial<TMagnifierAppearance> | undefined,
+): TMagnifierAppearance => ({
+  borderColor: normalizeMagnifierBorderColor(appearance?.borderColor),
+  borderWidth: normalizeMagnifierBorderWidth(appearance?.borderWidth),
+  highlightCenter: normalizeMagnifierHighlightCenter(appearance?.highlightCenter),
+  highlightIntensity: normalizeMagnifierHighlightIntensity(appearance?.highlightIntensity),
+  shadow: normalizeMagnifierShadow(appearance?.shadow),
+})
+
+const getMagnifierOuterShadow = (shadow: number): string => {
+  if (shadow <= 0) return ''
+
+  const ratio = (shadow / MAGNIFIER_SHADOW_RANGE.MAX) ** 0.7
+  const liftY = Math.round(2 + ratio * 5)
+  const liftBlur = Math.round(8 + ratio * 16)
+  const ambientY = Math.round(6 + ratio * 10)
+  const ambientBlur = Math.round(14 + ratio * 24)
+  const liftAlpha = formatAlpha(0.025 + ratio * 0.075)
+  const ambientAlpha = formatAlpha(0.018 + ratio * 0.055)
+
+  return `0 ${liftY}px ${liftBlur}px rgba(0, 0, 0, ${liftAlpha}), 0 ${ambientY}px ${ambientBlur}px rgba(0, 0, 0, ${ambientAlpha}), `
+}
+
+export type TMagnifierAppearanceStyle = CSSProperties & {
+  '--magnifier-shadow': string
+  '--magnifier-rim': string
+  '--magnifier-edge-shadow': string
+  '--magnifier-crescent': string
+  '--magnifier-crescent-mask': string
+}
+
+export const getMagnifierAppearanceStyle = (
+  appearance: Partial<TMagnifierAppearance> | undefined,
+): TMagnifierAppearanceStyle => {
+  const normalized = normalizeMagnifierAppearance(appearance)
+  const outerShadow = getMagnifierOuterShadow(normalized.shadow)
+  const highlightX = Math.round(normalized.highlightCenter.x * 100)
+  const highlightY = Math.round(normalized.highlightCenter.y * 100)
+  const gradientX = Math.round((1 - normalized.highlightCenter.x) * 100)
+  const gradientY = Math.round((1 - normalized.highlightCenter.y) * 100)
+  const intensity = normalized.highlightIntensity
+  const lowAlpha = formatAlpha(intensity * 0.045)
+  const midAlpha = formatAlpha(intensity * 0.16)
+  const peakAlpha = formatAlpha(intensity * 0.3)
+  const tailAlpha = formatAlpha(intensity * 0.11)
+  const borderWidth = normalized.borderWidth
+  const borderColor =
+    normalized.borderColor === MAGNIFIER_BORDER_COLOR.BLACK
+      ? 'rgba(0, 0, 0, 0.7)'
+      : 'rgba(120, 120, 120, 0.62)'
+  const rimShadow =
+    'inset 0 -1px 2px rgba(0, 0, 0, 0.055), inset 0 1px 2px rgba(255, 255, 255, 0.12)'
+  const borderShadow = borderWidth > 0 ? `, inset 0 0 0 ${borderWidth}px ${borderColor}` : ''
+
+  return {
+    '--magnifier-shadow': `${outerShadow}inset 0 -5px 10px rgba(0, 0, 0, 0.055), inset 0 1px 0 rgba(255, 255, 255, 0.24)`,
+    '--magnifier-rim':
+      'radial-gradient(86% 28% at 55% 98%, rgba(0, 0, 0, 0.035), rgba(0, 0, 0, 0.012) 38%, rgba(0, 0, 0, 0) 82%)',
+    '--magnifier-edge-shadow': `${rimShadow}${borderShadow}`,
+    '--magnifier-crescent': `radial-gradient(circle at ${gradientX}% ${gradientY}%, transparent 48%, rgba(255, 255, 255, ${lowAlpha}) 59%, rgba(255, 255, 255, ${midAlpha}) 70%, rgba(255, 255, 255, ${peakAlpha}) 80%, rgba(255, 255, 255, ${tailAlpha}) 89%, transparent 98%)`,
+    '--magnifier-crescent-mask': `radial-gradient(circle at ${highlightX}% ${highlightY}%, black 0%, black 50%, rgba(0, 0, 0, 0.52) 68%, transparent 86%)`,
+  }
 }
