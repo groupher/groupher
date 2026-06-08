@@ -6,7 +6,7 @@ import type { TColorName } from '~/spec'
 import useArticle from '~/stores/article/hooks'
 import TagNode from '~/widgets/TagNode'
 
-import useSalon, { cn } from '../salon/menu/tags_item'
+import useSalon, { cn } from './salon/tags_item'
 
 type TProps = {
   onClick: () => void

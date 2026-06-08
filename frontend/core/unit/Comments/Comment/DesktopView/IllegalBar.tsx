@@ -3,7 +3,7 @@ import { type FC, Fragment, memo } from 'react'
 import useTrans from '~/hooks/useTrans'
 import BotSVG from '~/icons/Bot'
 
-import useSalon, { cn } from '../../salon/comment/desktop_view/illegal_bar'
+import useSalon, { cn } from '../salon/desktop_view/illegal_bar'
 
 type TProps = {
   illegalReason: string[]

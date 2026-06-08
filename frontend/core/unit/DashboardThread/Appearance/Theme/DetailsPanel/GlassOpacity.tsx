@@ -2,8 +2,8 @@ import useTrans from '~/hooks/useTrans'
 import type { TSpace } from '~/spec'
 
 import { FIELD } from '../../../constant'
-import useSettingRowSalon from '../salon/details_panel/setting_row'
 import type { TThemeDetails } from '../spec'
+import useSettingRowSalon from './salon/setting_row'
 import ThemeRangeInput from './ThemeRangeInput'
 
 type TProps = {

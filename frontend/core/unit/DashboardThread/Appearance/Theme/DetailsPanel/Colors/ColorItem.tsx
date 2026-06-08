@@ -4,8 +4,8 @@ import useTrans from '~/hooks/useTrans'
 import type { TColorName } from '~/spec'
 import ColorSelector from '~/widgets/ColorSelector'
 
-import useSalon from '../../salon/details_panel/colors/color_item'
 import type { TThemePresetOverwrite, TThemePresetTokens } from '../../spec'
+import useSalon from '../salon/colors/color_item'
 import type { TColorDetail } from './constant'
 import {
   findPresetColor,

@@ -7,7 +7,7 @@ import MoreSVG from '~/icons/menu/MoreL'
 import RefreshSVG from '~/icons/Refresh'
 import StarSVG from '~/icons/Star5'
 
-import useSalon, { cn } from '../../salon/content/fake_browser/browser_head'
+import useSalon, { cn } from '../salon/fake_browser/browser_head'
 import Favicon from './Favicon'
 
 type TProps = {

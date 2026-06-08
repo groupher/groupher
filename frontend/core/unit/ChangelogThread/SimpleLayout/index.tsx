@@ -10,9 +10,9 @@ import Tabs from '~/widgets/Switcher/Tabs'
 
 import ChangelogItem from '../ChangelogItem'
 import { TABS_MODE_OPTIONS } from '../constant'
-import useSalon from '../salon/simple_layout'
 import type { TTagsMode } from '../spec'
 import FilterBar from './FilterBar'
+import useSalon from './salon'
 
 export default function SimpleLayout() {
   const s = useSalon()

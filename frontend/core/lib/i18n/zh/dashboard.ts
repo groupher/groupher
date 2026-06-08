@@ -1,7 +1,6 @@
 export default {
   'cover_editor.placeholder.action': '拖拽图片到此处，或点击上传',
   'cover_editor.placeholder.theme_desc': '浅色/深色主题可分别设置不同封面。',
-  'cover_editor.placeholder.ratio_desc': '推荐使用 16:9 比例。',
   'dsb.info.basic': '常规信息',
   'dsb.info.logo': 'Logo',
   'dsb.info.social': '社交媒体',

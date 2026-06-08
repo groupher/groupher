@@ -1,7 +1,7 @@
 import { QRCodeSVG } from 'qrcode.react'
 import { type FC, memo } from 'react'
 
-import useSalon from '../salon/modal_panel/wechat_board'
+import useSalon from './salon/wechat_board'
 
 const WechatBoard: FC = () => {
   const s = useSalon()

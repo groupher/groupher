@@ -5,7 +5,7 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import type { TFAQSection } from '~/spec'
 import Markdown from '~/widgets/Markdown'
 
-import useSalon from '../salon/left_right/section'
+import useSalon from './salon/section'
 
 type TProps = {
   item: TFAQSection

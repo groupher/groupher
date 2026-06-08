@@ -5,7 +5,7 @@ import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import TagsList from '~/unit/TagsList'
 import DotDivider from '~/widgets/DotDivider'
 
-import useSalon from '../salon/post_viewer/header'
+import useSalon from './salon/header'
 
 type TProps = {
   article: TPost

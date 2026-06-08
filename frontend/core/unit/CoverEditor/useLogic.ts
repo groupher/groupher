@@ -6,70 +6,121 @@ import type { TWallpaper, TWallpaperGradient, TWallpaperGradientDir } from '~/sp
 
 import {
   BORDER_HIGHLIGHT_DEFAULT,
-  IMAGE_RATIO,
+  COVER_SHADOW_DEFAULT,
   IMAGE_SIZE_RANGE,
-  LIGHT_RADIUS_DEFAULT,
+  MAGNIFIER_APPEARANCE_DEFAULT,
+  MAGNIFIER_RADIUS_DEFAULT,
+  MAGNIFIER_ZOOM_DEFAULT,
 } from './constant'
 import type {
   TBorderHighlight,
   TCoverPoint,
-  TImageRadio,
+  TCoverShadow,
   TImageSize,
+  TMagnifierAppearance,
   TStore,
   TTuningSetting,
 } from './spec'
 
 type TRet = {
-  imageLoadedOnChange: (imageUrl: string) => void
+  imageLoadedOnChange: (imageUrl: string, imageDominantColor: string | null) => void
   positionOnChange: (position: TCoverPoint) => void
-  shadowOnChange: (shadow: number) => void
+  shadowOnChange: (shadow: Partial<TCoverShadow>) => void
   borderRadiusOnChange: (borderRadius: number) => void
   borderHighlightOnChange: (borderHighlight: Partial<TBorderHighlight>) => void
   wallpaperOnChange: (wallpaper: string) => void
   gradientDirOnChange: (direction: TWallpaperGradientDir) => void
   sizeOnChange: (size: TImageSize) => void
-  ratioOnChange: (ratio: TImageRadio) => void
   rotateOnChange: (rotate: number) => void
   glassBorderOnChange: (hasGlassBorder: boolean) => void
-  lightRadiationOnChange: (lightCenter: TCoverPoint, lightRadius: number) => void
-  lightOnChange: (hasLight: boolean) => void
+  magnifierRadiationOnChange: (magnifierCenter: TCoverPoint, magnifierRadius: number) => void
+  magnifierZoomOnChange: (magnifierZoom: number) => void
+  magnifierAppearanceOnChange: (magnifierAppearance: Partial<TMagnifierAppearance>) => void
+  magnifierOnChange: (hasMagnifier: boolean) => void
 } & TStore
 
 // Neutral store defaults keep the editor empty-safe; this preset is only applied
 // once a real image finishes loading so the first visible cover has a polished frame.
 const LOADED_IMAGE_DEFAULT_SETTING: Partial<TStore> = {
   size: 94,
-  ratio: IMAGE_RATIO.SCREEN,
   rotate: 0,
   position: { x: 0.5, y: 0.5 },
-  shadow: 0,
+  shadow: {
+    preset: COVER_SHADOW_DEFAULT.PRESET,
+    colorMode: COVER_SHADOW_DEFAULT.COLOR_MODE,
+    hue: COVER_SHADOW_DEFAULT.HUE,
+    rainbowHue: COVER_SHADOW_DEFAULT.RAINBOW_HUE,
+    x: COVER_SHADOW_DEFAULT.X,
+    y: COVER_SHADOW_DEFAULT.Y,
+    blur: COVER_SHADOW_DEFAULT.BLUR,
+    spread: COVER_SHADOW_DEFAULT.SPREAD,
+    opacity: COVER_SHADOW_DEFAULT.OPACITY,
+  },
   borderRadius: 0,
   borderHighlight: {
     enabled: BORDER_HIGHLIGHT_DEFAULT.ENABLED,
+    mode: BORDER_HIGHLIGHT_DEFAULT.MODE,
     angle: BORDER_HIGHLIGHT_DEFAULT.ANGLE,
     length: BORDER_HIGHLIGHT_DEFAULT.LENGTH,
+    hue: BORDER_HIGHLIGHT_DEFAULT.HUE,
+    rainbowHue: BORDER_HIGHLIGHT_DEFAULT.RAINBOW_HUE,
+    saturation: BORDER_HIGHLIGHT_DEFAULT.SATURATION,
+    lightness: BORDER_HIGHLIGHT_DEFAULT.LIGHTNESS,
+    opacity: BORDER_HIGHLIGHT_DEFAULT.OPACITY,
   },
   hasGlassBorder: false,
-  hasLight: false,
-  lightRadius: LIGHT_RADIUS_DEFAULT,
+  hasMagnifier: false,
+  magnifierRadius: MAGNIFIER_RADIUS_DEFAULT,
+  magnifierZoom: MAGNIFIER_ZOOM_DEFAULT,
+  magnifierAppearance: {
+    borderColor: MAGNIFIER_APPEARANCE_DEFAULT.BORDER_COLOR,
+    borderWidth: MAGNIFIER_APPEARANCE_DEFAULT.BORDER_WIDTH,
+    highlightCenter: { ...MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_CENTER },
+    highlightIntensity: MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_INTENSITY,
+    shadow: MAGNIFIER_APPEARANCE_DEFAULT.SHADOW,
+  },
   wallpaper: 'pink',
   direction: GRADIENT_DIRECTION.BOTTOM_RIGHT,
 }
 
 const store = proxy<TStore>({
+  imageDominantColor: null,
   position: { x: 0.5, y: 0.5 },
-  lightCenter: { x: 0.5, y: 0.5 },
-  lightRadius: LIGHT_RADIUS_DEFAULT,
-  hasLight: false,
-  shadow: 0,
+  magnifierCenter: { x: 0.5, y: 0.5 },
+  magnifierRadius: MAGNIFIER_RADIUS_DEFAULT,
+  magnifierZoom: MAGNIFIER_ZOOM_DEFAULT,
+  magnifierAppearance: {
+    borderColor: MAGNIFIER_APPEARANCE_DEFAULT.BORDER_COLOR,
+    borderWidth: MAGNIFIER_APPEARANCE_DEFAULT.BORDER_WIDTH,
+    highlightCenter: { ...MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_CENTER },
+    highlightIntensity: MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_INTENSITY,
+    shadow: MAGNIFIER_APPEARANCE_DEFAULT.SHADOW,
+  },
+  hasMagnifier: false,
+  shadow: {
+    preset: COVER_SHADOW_DEFAULT.PRESET,
+    colorMode: COVER_SHADOW_DEFAULT.COLOR_MODE,
+    hue: COVER_SHADOW_DEFAULT.HUE,
+    rainbowHue: COVER_SHADOW_DEFAULT.RAINBOW_HUE,
+    x: COVER_SHADOW_DEFAULT.X,
+    y: COVER_SHADOW_DEFAULT.Y,
+    blur: COVER_SHADOW_DEFAULT.BLUR,
+    spread: COVER_SHADOW_DEFAULT.SPREAD,
+    opacity: COVER_SHADOW_DEFAULT.OPACITY,
+  },
   borderRadius: 0,
   borderHighlight: {
     enabled: BORDER_HIGHLIGHT_DEFAULT.ENABLED,
+    mode: BORDER_HIGHLIGHT_DEFAULT.MODE,
     angle: BORDER_HIGHLIGHT_DEFAULT.ANGLE,
     length: BORDER_HIGHLIGHT_DEFAULT.LENGTH,
+    hue: BORDER_HIGHLIGHT_DEFAULT.HUE,
+    rainbowHue: BORDER_HIGHLIGHT_DEFAULT.RAINBOW_HUE,
+    saturation: BORDER_HIGHLIGHT_DEFAULT.SATURATION,
+    lightness: BORDER_HIGHLIGHT_DEFAULT.LIGHTNESS,
+    opacity: BORDER_HIGHLIGHT_DEFAULT.OPACITY,
   },
   size: IMAGE_SIZE_RANGE.MAX,
-  ratio: IMAGE_RATIO.SCREEN,
   rotate: 0,
   hasGlassBorder: false,
 
@@ -97,10 +148,13 @@ const store = proxy<TStore>({
 
   get tuningSetting(): TTuningSetting {
     const {
+      imageDominantColor,
       position,
-      lightCenter,
-      lightRadius,
-      hasLight,
+      magnifierCenter,
+      magnifierRadius,
+      magnifierZoom,
+      magnifierAppearance,
+      hasMagnifier,
       shadow,
       borderRadius,
       borderHighlight,
@@ -108,16 +162,18 @@ const store = proxy<TStore>({
       gradientWallpapers,
       direction,
       size,
-      ratio,
       rotate,
       hasGlassBorder,
     } = store
 
     return {
+      imageDominantColor,
       position,
-      lightCenter,
-      lightRadius,
-      hasLight,
+      magnifierCenter,
+      magnifierRadius,
+      magnifierZoom,
+      magnifierAppearance,
+      hasMagnifier,
       shadow,
       borderRadius,
       borderHighlight,
@@ -125,7 +181,6 @@ const store = proxy<TStore>({
       wallpaper,
       direction: direction as TWallpaperGradientDir,
       size,
-      ratio: ratio as TImageRadio,
       rotate,
       hasGlassBorder,
     }
@@ -139,33 +194,42 @@ const store = proxy<TStore>({
 export default function useLogic(): TRet {
   const snap = useSnapshot(store)
 
-  const imageLoadedOnChange = (imageUrl: string): void => {
+  const imageLoadedOnChange = (imageUrl: string, imageDominantColor: string | null): void => {
     if (!imageUrl || snap.loadedImageUrl === imageUrl) return
 
     // Apply the polished cover preset only after the actual image succeeds loading.
     // Tracking imageUrl prevents a browser re-load from resetting user tuning edits.
     snap.commit({
       ...LOADED_IMAGE_DEFAULT_SETTING,
+      imageDominantColor,
       loadedImageUrl: imageUrl,
     })
   }
 
   const positionOnChange = (position: TCoverPoint): void => snap.commit({ position })
-  const shadowOnChange = (shadow: number): void => snap.commit({ shadow })
+  const shadowOnChange = (shadow: Partial<TCoverShadow>): void =>
+    snap.commit({ shadow: { ...snap.shadow, ...shadow } })
   const borderRadiusOnChange = (borderRadius: number): void => snap.commit({ borderRadius })
   const borderHighlightOnChange = (borderHighlight: Partial<TBorderHighlight>): void =>
     snap.commit({ borderHighlight: { ...snap.borderHighlight, ...borderHighlight } })
   const wallpaperOnChange = (wallpaper: string): void => snap.commit({ wallpaper })
   const gradientDirOnChange = (direction: TWallpaperGradientDir): void => snap.commit({ direction })
   const sizeOnChange = (size: TImageSize): void => snap.commit({ size })
-  const ratioOnChange = (ratio: TImageRadio): void => snap.commit({ ratio })
   const rotateOnChange = (rotate: number): void => snap.commit({ rotate })
 
   const glassBorderOnChange = (hasGlassBorder: boolean) => snap.commit({ hasGlassBorder })
 
-  const lightRadiationOnChange = (lightCenter: TCoverPoint, lightRadius: number): void =>
-    snap.commit({ lightCenter, lightRadius, hasLight: true })
-  const lightOnChange = (hasLight: boolean): void => snap.commit({ hasLight })
+  const magnifierRadiationOnChange = (
+    magnifierCenter: TCoverPoint,
+    magnifierRadius: number,
+  ): void => snap.commit({ magnifierCenter, magnifierRadius, hasMagnifier: true })
+  const magnifierZoomOnChange = (magnifierZoom: number): void => snap.commit({ magnifierZoom })
+  const magnifierAppearanceOnChange = (magnifierAppearance: Partial<TMagnifierAppearance>): void =>
+    snap.commit({
+      hasMagnifier: true,
+      magnifierAppearance: { ...snap.magnifierAppearance, ...magnifierAppearance },
+    })
+  const magnifierOnChange = (hasMagnifier: boolean): void => snap.commit({ hasMagnifier })
 
   return {
     ...pick(keys(snap), snap),
@@ -177,10 +241,11 @@ export default function useLogic(): TRet {
     wallpaperOnChange,
     gradientDirOnChange,
     sizeOnChange,
-    ratioOnChange,
     rotateOnChange,
     glassBorderOnChange,
-    lightRadiationOnChange,
-    lightOnChange,
+    magnifierRadiationOnChange,
+    magnifierZoomOnChange,
+    magnifierAppearanceOnChange,
+    magnifierOnChange,
   }
 }

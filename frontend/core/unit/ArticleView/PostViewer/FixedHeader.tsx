@@ -6,7 +6,7 @@ import ArticleCatStatus from '~/unit/ArticleCatStatus'
 import Upvote from '~/unit/Upvote'
 // import ArticleBaseStats from '~/widgets/ArticleBaseStats'
 
-import useSalon from '../salon/post_viewer/fixed_header'
+import useSalon from './salon/fixed_header'
 
 type TProps = {
   article: TArticle

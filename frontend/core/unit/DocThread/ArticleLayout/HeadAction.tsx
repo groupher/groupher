@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import ShareSVG from '~/icons/Share'
 import ReportSVG from '~/icons/WarningLight'
 
-import useSalon from '../salon/article_layout/head_action'
+import useSalon from './salon/head_action'
 
 const HeadAction: FC = () => {
   const s = useSalon()

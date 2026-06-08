@@ -4,7 +4,7 @@ import { cn } from '~/css'
 import useTrans from '~/hooks/useTrans'
 import type { TWallpaperData } from '~/spec'
 
-import useSalon from '../../salon/tuning_panel/detail_panel'
+import useSalon from '../salon/detail_panel'
 import Basic from './Basic'
 import { GROUP } from './constant'
 import Content from './Content'

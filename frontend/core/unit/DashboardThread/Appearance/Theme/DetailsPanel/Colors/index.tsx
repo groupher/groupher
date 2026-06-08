@@ -2,8 +2,8 @@ import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
 import { useState } from 'react'
 
 import { SAVING_BAR_LAYOUT_TRANSITION } from '../../../../SavingBar/constant'
-import useSalon from '../../salon/details_panel/colors'
 import type { TThemeDetails } from '../../spec'
+import useSalon from '../salon/colors'
 import ColorItem from './ColorItem'
 import { MAIN_COLOR_DETAILS, EXTRA_COLOR_DETAILS } from './constant'
 

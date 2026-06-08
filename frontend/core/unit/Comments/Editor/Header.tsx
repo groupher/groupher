@@ -7,8 +7,8 @@ import Img from '~/Img'
 import { createKeyboardClick } from '~/lib/a11y'
 import type { TAccount } from '~/spec'
 
-import useSalon from '../salon/editor/header'
 import useActions from '../useLogic/useActions'
+import useSalon from './salon/header'
 
 type TProps = {
   accountInfo: TAccount

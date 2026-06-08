@@ -3,7 +3,7 @@ import type { FC } from 'react'
 import Img from '~/Img'
 import type { TUser } from '~/spec'
 
-import useSalon from '../salon/classic_layout/author'
+import useSalon from './salon/author'
 
 type TProps = {
   user: TUser

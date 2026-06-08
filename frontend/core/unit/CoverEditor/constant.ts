@@ -1,4 +1,3 @@
-// default size it's based on ratio 16:9
 export const IMAGE_CONTAINER_SIZE = {
   WIDTH: '710px', // 16:9
   HEIGHT: '400px',
@@ -17,15 +16,51 @@ export const IMAGE_POS = {
   NONE: 'none',
 } as const
 
-export const IMAGE_SHADOW_RANGE = {
-  MIN: 0,
-  MAX: 100,
+export const COVER_SHADOW_PRESET = {
+  NONE: 'none',
+  XSMALL: 'xsmall',
+  SMALL: 'small',
+  MEDIUM: 'medium',
+  LARGE: 'large',
+  XLARGE: 'xlarge',
+  CUSTOM: 'custom',
+} as const
+
+export const COVER_SHADOW_COLOR_MODE = {
+  BLACK: 'black',
+  WHITE: 'white',
+  COLOR: 'color',
+  RAINBOW: 'rainbow',
+} as const
+
+export const COVER_SHADOW_DEFAULT = {
+  PRESET: COVER_SHADOW_PRESET.NONE,
+  COLOR_MODE: COVER_SHADOW_COLOR_MODE.BLACK,
+  HUE: 228,
+  RAINBOW_HUE: 0,
+  X: 0,
+  Y: 10,
+  BLUR: 24,
+  SPREAD: 0,
+  OPACITY: 0.35,
+} as const
+
+export const COVER_SHADOW_RANGE = {
+  X: { MIN: -40, MAX: 40 },
+  Y: { MIN: -40, MAX: 60 },
+  BLUR: { MIN: 0, MAX: 120 },
+  SPREAD: { MIN: -30, MAX: 40 },
+  OPACITY: { MIN: 0, MAX: 1 },
+  HUE: { MIN: 0, MAX: 359 },
 } as const
 
 export const IMAGE_SIZE_RANGE = {
   MIN: 50,
   MAX: 100,
 } as const
+
+// Minimum visible area, in the 710x400 cover design canvas, kept inside the viewport.
+export const COVER_IMAGE_MIN_VISIBLE_SIZE = 200
 
 export const IMAGE_BORDER_RADIUS_RANGE = {
   MIN: 0,
@@ -37,16 +72,21 @@ export const GLASS_FRAME = {
   PADDING_Y: 6.5,
 } as const
 
-export const IMAGE_RATIO = {
-  SQUARE: 'square',
-  TV: 'tv',
-  SCREEN: 'screen',
+export const BORDER_HIGHLIGHT_MODE = {
+  SOLID: 'solid',
+  RAINBOW: 'rainbow',
 } as const
 
 export const BORDER_HIGHLIGHT_DEFAULT = {
   ENABLED: false,
   ANGLE: 35,
   LENGTH: 0.28,
+  HUE: 39,
+  RAINBOW_HUE: 0,
+  SATURATION: 77,
+  LIGHTNESS: 83,
+  OPACITY: 1,
+  MODE: BORDER_HIGHLIGHT_MODE.RAINBOW,
 } as const
 
 export const BORDER_HIGHLIGHT_LENGTH_RANGE = {
@@ -54,33 +94,46 @@ export const BORDER_HIGHLIGHT_LENGTH_RANGE = {
   MAX: 0.72,
 } as const
 
-export const BORDER_HIGHLIGHT_STROKE_COLOR = 'wheat'
-
-export const LIGHT_RADIUS_DEFAULT = 0.5
-
-export const LIGHT_RENDER_SIZE = {
-  MIN: 140,
-  MAX: 560,
+export const BORDER_HIGHLIGHT_COLOR = {
+  SATURATION: BORDER_HIGHLIGHT_DEFAULT.SATURATION,
+  LIGHTNESS: BORDER_HIGHLIGHT_DEFAULT.LIGHTNESS,
+  RAINBOW_SATURATION: 96,
+  RAINBOW_LIGHTNESS: 66,
 } as const
 
-export const LIGHT_RENDER_OPACITY = {
-  MIN: 0.07,
-  MAX: 0.2,
+export const MAGNIFIER_RADIUS_DEFAULT = 0.45
+
+export const MAGNIFIER_RENDER_SIZE = {
+  MIN: 104,
+  MAX: 250,
 } as const
 
-export const IMAGE_RATIO_SIZE = {
-  [IMAGE_RATIO.SCREEN]: {
-    width: IMAGE_CONTAINER_SIZE.WIDTH,
-    height: IMAGE_CONTAINER_SIZE.HEIGHT,
-  },
+export const MAGNIFIER_ZOOM_DEFAULT = 2
 
-  [IMAGE_RATIO.TV]: {
-    width: '4',
-    height: '3',
-  },
+export const MAGNIFIER_ZOOM_RANGE = {
+  MIN: 1.2,
+  MAX: 3,
+} as const
 
-  [IMAGE_RATIO.SQUARE]: {
-    width: '1',
-    height: '1',
-  },
-}
+export const MAGNIFIER_BORDER_COLOR = {
+  GRAY: 'gray',
+  BLACK: 'black',
+} as const
+
+export const MAGNIFIER_APPEARANCE_DEFAULT = {
+  BORDER_COLOR: MAGNIFIER_BORDER_COLOR.GRAY,
+  BORDER_WIDTH: 0,
+  HIGHLIGHT_CENTER: { x: 0.25, y: 0.22 },
+  HIGHLIGHT_INTENSITY: 0.52,
+  SHADOW: 20,
+} as const
+
+export const MAGNIFIER_BORDER_WIDTH_RANGE = {
+  MIN: 0,
+  MAX: 8,
+} as const
+
+export const MAGNIFIER_SHADOW_RANGE = {
+  MIN: 0,
+  MAX: 100,
+} as const

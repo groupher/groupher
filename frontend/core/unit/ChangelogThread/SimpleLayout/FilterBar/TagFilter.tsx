@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 
-import useSalon from '../../salon/simple_layout/filter_bar'
+import useSalon from './salon'
 
 const TagFilter: FC = () => {
   const s = useSalon()

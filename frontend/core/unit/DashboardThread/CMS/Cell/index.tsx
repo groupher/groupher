@@ -12,7 +12,7 @@ import TagsList from '~/unit/TagsList'
 import { thread2Path } from '~/utils/thread'
 import TimeAgo from '~/widgets/TimeAgo'
 
-import useSalon, { cn } from '../salon/cell'
+import useSalon, { cn } from './salon'
 
 const EMPTY_ARR: TTag[] = []
 

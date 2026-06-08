@@ -6,7 +6,7 @@ import type { TComment } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
 import TimeAgo from '~/widgets/TimeAgo'
 
-import useSalon from '../../salon/comment/header/article'
+import useSalon from '../salon/header/article'
 
 type TProps = {
   data: TComment

@@ -18,9 +18,9 @@ import CoverImage from '~/widgets/CoverImage'
 import ReadableDate from '~/widgets/ReadableDate'
 
 import { demoEmotion, demoTags } from '../constant'
-import useSalon from '../salon/classic_layout/article_layout'
 import SolidTagList from '../SolidTagList'
 import Author from './Author'
+import useSalon from './salon/article_layout'
 
 type TProps = {
   article: TChangelog

@@ -6,9 +6,9 @@ import { DEFAULT_WALLPAPER_TEXTURE_INTENSITY, type TWallpaperTexture } from '~/l
 import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
 import RangeInput from '~/widgets/RangeInput'
 
-import useSalon from '../../../salon/tuning_panel/detail_panel/texture'
 import TextureStylePicker from '../../../TextureStylePicker'
 import useLogic from '../../../useLogic'
+import useSalon from '../../salon/detail_panel/texture'
 import GroupItem from '../GroupItem'
 import GroupTitle from '../GroupTitle'
 

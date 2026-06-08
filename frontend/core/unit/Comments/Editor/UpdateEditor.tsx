@@ -5,10 +5,10 @@ import type { TSubmitState } from '~/spec'
 import CustomScroller from '~/widgets/CustomScroller'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
-import useSalon from '../salon/editor/update_editor'
 import useActions from '../useLogic/useActions'
 import BodyEditor from './BodyEditor'
 import Footer from './Footer'
+import useSalon from './salon/update_editor'
 
 type TProps = {
   body: string

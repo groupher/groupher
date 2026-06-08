@@ -18,7 +18,7 @@ import type { TKanbanBoard, TPagedPosts } from '~/spec'
 
 import KanbanItem from '../KanbanItem'
 import EmptyItem from '../KanbanItem/EmptyItem'
-import useSalon from '../salon/classic_layout/columns'
+import useSalon from './salon/columns'
 
 type TColumn = {
   key: string

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import useSalon from '../../salon/tuning_panel/detail_panel/group_title'
+import useSalon from '../salon/detail_panel/group_title'
 
 type Props = {
   children: ReactNode

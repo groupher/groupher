@@ -1,9 +1,9 @@
 import SavingBar from '../../../SavingBar'
-import useSalon from '../salon/preview_panel'
 import TuningPanel from '../TuningPanel'
 import useLogic from '../useLogic'
 import AuthPreview from './AuthPreview'
 import GlobalPreview from './GlobalPreview'
+import useSalon from './salon'
 
 export default function PreviewPanel() {
   const s = useSalon()

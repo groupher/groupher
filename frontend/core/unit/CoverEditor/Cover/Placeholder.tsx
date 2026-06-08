@@ -58,7 +58,6 @@ export default function Placeholder({ onDropFile, onUpload }: TProps) {
         <div className={s.title}>{t('cover_editor.placeholder.action')}</div>
         <div className={s.desc}>
           <span>{t('cover_editor.placeholder.theme_desc')}</span>
-          <span>{t('cover_editor.placeholder.ratio_desc')}</span>
         </div>
       </div>
     </button>

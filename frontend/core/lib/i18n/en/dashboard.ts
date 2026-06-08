@@ -1,7 +1,6 @@
 export default {
   'cover_editor.placeholder.action': 'Drag & drop or click to upload',
   'cover_editor.placeholder.theme_desc': 'light/dark themes can use separate covers.',
-  'cover_editor.placeholder.ratio_desc': '16:9 ratio is recommended.',
   'dsb.info.basic': 'Basic info',
   'dsb.info.logo': 'Logo',
   'dsb.info.social': 'Social',

@@ -10,11 +10,11 @@ import { ArticleContentLoading } from '~/widgets/Loading'
 import ViewportTracker from '~/widgets/ViewportTracker'
 
 import ArticleFooter from '../ArticleFooter'
-import useSalon, { cn } from '../salon/changelog_viewer'
 import useLogic from '../useLogic'
 import ArticleInfo from './ArticleInfo'
 import FixedHeader from './FixedHeader'
 import Header from './Header'
+import useSalon, { cn } from './salon'
 
 type TProps = {
   isFullView?: boolean

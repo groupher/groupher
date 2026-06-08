@@ -7,7 +7,7 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import CategorySVG from '~/icons/Category'
 
 import { ICON } from '../constant'
-import useSalon, { cn } from '../salon/menu'
+import useSalon, { cn } from './salon'
 
 type TProps = {
   onClick: () => void

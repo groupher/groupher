@@ -6,7 +6,7 @@
 import usePagedChangelogs from '~/hooks/usePagedChangelogs'
 
 import ChangelogItem from '../ChangelogItem'
-import useSalon from '../salon/classic_layout'
+import useSalon from './salon'
 import Sidebar from './Sidebar'
 
 export default function ClassicLayout() {

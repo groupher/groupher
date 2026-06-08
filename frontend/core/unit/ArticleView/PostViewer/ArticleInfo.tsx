@@ -6,7 +6,7 @@ import type { TArticle } from '~/spec'
 import Upvote from '~/unit/Upvote'
 
 import ArticleBaseStats from '../ArticleBaseStats'
-import useSalon from '../salon/post_viewer/article_info'
+import useSalon from './salon/article_info'
 
 type TProps = {
   article: TArticle

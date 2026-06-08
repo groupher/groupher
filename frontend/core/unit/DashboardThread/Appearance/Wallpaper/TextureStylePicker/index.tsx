@@ -3,8 +3,8 @@ import { WALLPAPER_TEXTURE_OPTIONS } from '~/lib/wallpaperMesh'
 import type { TImageTextureType } from '~/lib/wallpaperMesh'
 import Tooltip from '~/widgets/Tooltip'
 
-import useSalon, { cn } from '../salon/texture_style_picker'
-import TextureSwatchPreview from './TextureSwatchPreview'
+import useSalon, { cn } from './salon'
+import SwatchPreview from './SwatchPreview'
 
 type Props = {
   value: TImageTextureType
@@ -38,7 +38,7 @@ export default function TextureStylePicker({
                 aria-label={label}
                 onClick={() => onChange(type)}
               >
-                <TextureSwatchPreview type={type} variant='picker' />
+                <SwatchPreview type={type} variant='picker' />
               </button>
             </Tooltip>
           )

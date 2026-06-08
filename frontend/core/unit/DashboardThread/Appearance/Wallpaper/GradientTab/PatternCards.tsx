@@ -7,7 +7,7 @@ import useTrans from '~/hooks/useTrans'
 import type { TWallpaperData, TWallpaperPattern } from '~/spec'
 
 import { isGradientWallpaper } from '../helper'
-import useSalon, { cnMerge } from '../salon/gradient_tab/pattern_cards'
+import useSalon, { cnMerge } from './salon/pattern_cards'
 
 type TProps = {
   patternId: string

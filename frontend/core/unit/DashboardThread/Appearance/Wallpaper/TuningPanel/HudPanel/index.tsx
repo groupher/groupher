@@ -3,8 +3,8 @@ import CheckerSVG from '~/icons/Checker'
 import { GRADIENT_RENDERER } from '~/lib/wallpaperMesh'
 import type { TWallpaperData } from '~/spec'
 
-import useSalon from '../../salon/tuning_panel/hud_panel'
-import TextureSwatchPreview from '../../TextureStylePicker/TextureSwatchPreview'
+import SwatchPreview from '../../TextureStylePicker/SwatchPreview'
+import useSalon from '../salon/hud_panel'
 
 type Props = {
   wallpaper: TWallpaperData
@@ -59,7 +59,7 @@ export default function HudPanel({
           <div className={s.hudItem}>
             <span className={s.hudLabel}>Texture</span>
             <span className={s.hudSwatchWrap}>
-              <TextureSwatchPreview type={texture.type} variant='hud' />
+              <SwatchPreview type={texture.type} variant='hud' />
             </span>
           </div>
         )}

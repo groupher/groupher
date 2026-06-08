@@ -3,7 +3,7 @@ import type { FC } from 'react'
 
 import type { TArticle, TColorName } from '~/spec'
 
-import useSalon from '../salon/search_hint/cat_section'
+import useSalon from './salon/cat_section'
 
 type TProps = {
   item: {

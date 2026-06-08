@@ -4,7 +4,7 @@ import BookSVG from '~/icons/Book'
 import PeopleSVG from '~/icons/People'
 import Button from '~/widgets/Buttons/Button'
 
-import useSalon from '../salon/collapse/footer'
+import useSalon from './salon/footer'
 
 const Footer: FC = () => {
   const s = useSalon()

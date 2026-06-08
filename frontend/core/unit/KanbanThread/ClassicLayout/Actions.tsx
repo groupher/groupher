@@ -2,7 +2,7 @@ import KanbanSVG from '~/icons/Kanban'
 import { mockUsers } from '~/mock'
 import Facepile from '~/widgets/Facepile'
 
-import useSalon from '../salon/classic_layout/actions'
+import useSalon from './salon/actions'
 
 export default function Actions() {
   const s = useSalon()

@@ -8,10 +8,10 @@ import type { FC } from 'react'
 import type { TArticle } from '~/spec'
 import Modal from '~/widgets/Modal'
 
-import useSalon, { cn } from '../salon/modal_panel'
 import type { TLinksData } from '../spec'
 import InfoPanel from './InfoPanel'
 import Platforms from './Platforms'
+import useSalon, { cn } from './salon'
 
 type TProps = {
   show: boolean

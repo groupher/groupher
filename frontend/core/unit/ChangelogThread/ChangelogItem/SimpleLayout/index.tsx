@@ -18,7 +18,7 @@ import TagsList from '~/unit/TagsList'
 import ReadableDate from '~/widgets/ReadableDate'
 
 import { demoEmotion, demoTags } from '../constant'
-import useSalon from '../salon/simple_layout/article_layout'
+import useSalon from './salon/article_layout'
 
 type TProps = {
   article: TChangelog

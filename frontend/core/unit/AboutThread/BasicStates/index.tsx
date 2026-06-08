@@ -7,7 +7,7 @@ import PostSVG from '~/icons/Post'
 import PulseSVG from '~/icons/Pulse'
 import UserSVG from '~/icons/Users'
 
-import useSalon, { cn } from '../salon/basic_states'
+import useSalon, { cn } from './salon'
 
 type TTrendProps = {
   smooth?: boolean

@@ -7,9 +7,9 @@
 import type { UIEvent } from 'react'
 import { useEffect, useRef, useState } from 'react'
 
-import useSalon from '../salon/classic_layout'
 import Actions from './Actions'
 import { BodyRow, HeaderRow, useColumnsData } from './Columns'
+import useSalon from './salon'
 
 export default function ClassicLayout() {
   const s = useSalon()

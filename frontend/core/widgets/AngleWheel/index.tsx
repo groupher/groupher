@@ -9,9 +9,9 @@ import {
 
 import useSalon from './salon'
 
-const WHEEL_SIZE = 56
+const WHEEL_SIZE = 48
 const WHEEL_RADIUS = WHEEL_SIZE / 2
-const DOT_SIZE = 10
+const DOT_SIZE = 8
 const GUIDE_ARC_SPAN = 78
 const SNAP_STEP = 45
 const SNAP_THRESHOLD = 1

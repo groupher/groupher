@@ -10,10 +10,10 @@ import type { TArticle } from '~/spec'
 
 import useCMSInfo from '../../hooks/useCMSInfo'
 import { ArticleCell, AuthorCell, DateCell, StatusCell } from '../Cell'
-import useSalon, { cn } from '../salon/changelogs'
 import CmsDataTable from '../Table/CmsDataTable'
 import CmsTableToolbar from '../Table/CmsTableToolbar'
 import useCmsTableController from '../Table/useCmsTableController'
+import useSalon, { cn } from './salon'
 
 export default function Changelogs() {
   const { pagedChangelogs, loading, loadChangelogs } = useCMSInfo()

@@ -1,8 +1,8 @@
 import { mockHelpCats } from '~/mock'
 import NodeStylePicker from '~/widgets/NodeStylePicker'
 
-import useSalon from '../salon/brief_cards_layout'
 import Category from './Category'
+import useSalon from './salon'
 
 export default function BriefCardsLayout() {
   const cats = mockHelpCats()

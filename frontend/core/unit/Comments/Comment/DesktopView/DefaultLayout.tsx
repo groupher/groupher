@@ -6,12 +6,12 @@ import PinSVG from '~/icons/Pin'
 import type { TComment } from '~/spec'
 import ArtimentBody from '~/widgets/ArtimentBody'
 
-import useSalon, { cn } from '../../salon/comment/desktop_view'
 import type { TAPIMode } from '../../spec'
 import useActions from '../../useLogic/useActions'
 import Footer from '../Footer'
 import Header from '../Header'
 import ReplyBar from '../ReplyBar'
+import useSalon, { cn } from '../salon/desktop_view'
 import IllegalBar from './IllegalBar'
 
 type TProps = {

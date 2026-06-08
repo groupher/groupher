@@ -5,10 +5,10 @@ import useViewingArticle from '~/hooks/useViewingArticle'
 import { toast, updateViewingArticle } from '~/signal'
 import Input from '~/widgets/Input'
 
-import useSalon from '../salon/sub_menu/title_setting'
 import S from '../schema'
 import useTouched from '../useTouched'
 import Footer from './Footer'
+import useSalon from './salon/title_setting'
 
 type TProps = {
   onBack: () => void

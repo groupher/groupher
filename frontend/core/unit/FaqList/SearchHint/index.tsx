@@ -6,8 +6,8 @@ import useCommunity from '~/stores/community/hooks'
 import ArrowLinker from '~/widgets/ArrowLinker'
 
 import type { TProps as TIndex } from '..'
-import useSalon from '../salon/search_hint'
 import CatSection from './CatSection'
+import useSalon from './salon'
 
 type TProps = Pick<TIndex, 'sections'>
 

@@ -4,10 +4,10 @@ import { cutRest } from '~/fmt'
 import DomainSVG from '~/icons/Domain'
 import ArrowButton from '~/widgets/Buttons/ArrowButton'
 
-import useSalon from '../salon/banner/setup_domain'
 import useLogic from '../useLogic'
 import InputBox from './InputBox'
 import NextStepButton from './NextStepButton'
+import useSalon from './salon/setup_domain'
 
 export default function SetupDomain() {
   const s = useSalon()

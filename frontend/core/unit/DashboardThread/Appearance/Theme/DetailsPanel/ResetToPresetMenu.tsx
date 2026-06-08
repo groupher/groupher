@@ -6,8 +6,8 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import type { TTransKey } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
 
-import useSalon from '../salon/details_panel/reset_to_preset_menu'
 import type { TThemePresetOption } from '../spec'
+import useSalon from './salon/reset_to_preset_menu'
 
 type TProps = {
   activePresetBase: TThemePresetOption['value']

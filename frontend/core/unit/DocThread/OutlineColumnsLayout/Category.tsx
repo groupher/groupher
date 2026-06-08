@@ -2,8 +2,8 @@ import type { FC } from 'react'
 
 import type { TArticle, TColorName } from '~/spec'
 
-import useSalon from '../salon/outline_columns_layout/category'
 import useLogic from '../useLogic'
+import useSalon from './salon/category'
 
 type TProps = {
   categoryIndex: number

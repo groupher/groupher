@@ -2,8 +2,8 @@ import BookSVG from '~/icons/Book'
 import QuestionSVG from '~/icons/Question'
 import GithubSVG from '~/icons/social/Github'
 
-import useSalon, { cn } from '../salon/article_layout/pined_tree'
 import useLogic from '../useLogic'
+import useSalon, { cn } from './salon/pined_tree'
 
 export default function PinedTree() {
   const s = useSalon()

@@ -1,7 +1,12 @@
 import { useId, useMemo } from 'react'
 
-import { BORDER_HIGHLIGHT_STROKE_COLOR } from '../../constant'
-import type { TBorderHighlight, TImageRadio, TImageSize } from '../../spec'
+import { BORDER_HIGHLIGHT_MODE } from '../../constant'
+import {
+  getBorderHighlightColor,
+  getRainbowBorderHighlightColor,
+  normalizeBorderHighlightMode,
+} from '../../helper'
+import type { TBorderHighlight, TImageSize } from '../../spec'
 import type { TBorderFramePadding } from './helper'
 import { getBorderRenderGeometry } from './helper'
 
@@ -10,7 +15,6 @@ type TProps = {
   borderHighlight: TBorderHighlight
   className: string
   framePadding?: TBorderFramePadding
-  ratio: TImageRadio
   size: TImageSize
 }
 
@@ -21,7 +25,6 @@ export default function BorderRender({
   borderHighlight,
   className,
   framePadding,
-  ratio,
   size,
 }: TProps) {
   const clipId = `${CLIP_ID_PREFIX}-${useId().replaceAll(':', '')}`
@@ -32,23 +35,29 @@ export default function BorderRender({
       borderRadius,
       borderHighlight,
       framePadding,
-      ratio,
       size,
     })
   }, [
     borderHighlight.angle,
     borderHighlight.enabled,
+    borderHighlight.hue,
+    borderHighlight.lightness,
     borderHighlight.length,
+    borderHighlight.mode,
+    borderHighlight.opacity,
+    borderHighlight.rainbowHue,
+    borderHighlight.saturation,
     borderRadius,
     framePadding?.x,
     framePadding?.y,
-    ratio,
     size,
   ])
 
   if (!geometry) return null
 
   const { clipPath, segments, viewBox } = geometry
+  const mode = normalizeBorderHighlightMode(borderHighlight.mode)
+  const strokeColor = getBorderHighlightColor(borderHighlight)
 
   return (
     <svg className={className} viewBox={viewBox} preserveAspectRatio='none' aria-hidden>
@@ -58,14 +67,22 @@ export default function BorderRender({
         </clipPath>
       </defs>
       <g clipPath={`url(#${clipId})`}>
-        {segments.map(({ path, width }) => (
+        {segments.map(({ path, progress, width }) => (
           <path
             key={`${path}-${width}`}
             d={path}
             fill='none'
-            stroke={BORDER_HIGHLIGHT_STROKE_COLOR}
+            stroke={
+              mode === BORDER_HIGHLIGHT_MODE.RAINBOW
+                ? getRainbowBorderHighlightColor(
+                    progress,
+                    borderHighlight.opacity,
+                    borderHighlight.rainbowHue,
+                  )
+                : strokeColor
+            }
             strokeWidth={width}
-            strokeLinecap='round'
+            strokeLinecap='butt'
             strokeLinejoin='round'
             vectorEffect='non-scaling-stroke'
           />

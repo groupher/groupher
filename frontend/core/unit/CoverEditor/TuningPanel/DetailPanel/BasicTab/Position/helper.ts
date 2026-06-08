@@ -1,10 +1,9 @@
 import { getCanvasPointFromClient, getImagePositionFromCanvasPoint } from '../../../../salon/metric'
-import type { TCoverPoint, TImageRadio, TImageSize } from '../../../../spec'
+import type { TCoverPoint, TImageSize } from '../../../../spec'
 import { KEYBOARD_DELTA } from './constant'
 
 type TPositionParams = {
   size: TImageSize
-  ratio: TImageRadio
   rotate: number
 }
 
@@ -17,14 +16,9 @@ export const getPositionFromPointer = (
   clientX: number,
   clientY: number,
   rect: DOMRect,
-  { size, ratio, rotate }: TPositionParams,
+  { size, rotate }: TPositionParams,
 ): TCoverPoint =>
-  getImagePositionFromCanvasPoint(
-    getCanvasPointFromClient(clientX, clientY, rect),
-    size,
-    ratio,
-    rotate,
-  )
+  getImagePositionFromCanvasPoint(getCanvasPointFromClient(clientX, clientY, rect), size, rotate)
 
 export const getPositionFromKeyboard = (position: TCoverPoint, key: string): TCoverPoint | null => {
   const nextPosition = {

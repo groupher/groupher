@@ -3,10 +3,10 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { WALLPAPER_PATTERN_TONE, WALLPAPER_TYPE } from '~/const/wallpaper'
 
 import { isGradientWallpaper } from '../helper'
-import useSalon from '../salon/tuning_panel'
 import useLogic from '../useLogic'
 import DetailPanel from './DetailPanel'
 import HudPanel from './HudPanel'
+import useSalon from './salon'
 
 type TRangeDraft = {
   blurIntensity: number

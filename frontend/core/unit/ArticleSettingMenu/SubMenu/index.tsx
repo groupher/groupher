@@ -1,11 +1,11 @@
 import type { FC } from 'react'
 
 import { SUB_MENU } from '../constant'
-import useSalon from '../salon/sub_menu'
 import type { TSubMenu } from '../spec'
 import CatSetting from './CatSetting'
 import Header from './Header'
 import Mirror2Home from './Mirror2Home'
+import useSalon from './salon'
 import SlugSetting from './SlugSetting'
 import StatusSetting from './StatusSetting'
 import TagsSetting from './TagsSetting'
