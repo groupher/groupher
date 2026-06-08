@@ -7,7 +7,7 @@ import ArrowsSplitSVG from '~/icons/ArrowsSplit'
 import type { TThemePresetCardMode, TThemePresetOption } from '../spec'
 import { CARD_LAYOUT_TRANSITION, cardVariants, listVariants, ROTATE_ANGLES } from './constant'
 import PresetCard from './PresetCard'
-import useSalon, { cn } from './salon'
+import useSalon from './salon'
 import type { TPresetListItem, TProps } from './spec'
 import useForkDotsAnimation from './useForkDotsAnimation'
 

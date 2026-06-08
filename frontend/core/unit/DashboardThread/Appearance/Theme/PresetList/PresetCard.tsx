@@ -6,7 +6,7 @@ import Checker from '~/widgets/Checker'
 import { PRESET_FIELD } from '../constant'
 import MiniBars from '../MiniBars'
 import type { TThemePresetCardMode, TThemePresetOption } from '../spec'
-import useSalon, { cn } from './salon/preset_card'
+import useSalon from './salon/preset_card'
 
 type TProps = {
   preset: TThemePresetOption

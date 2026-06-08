@@ -1,4 +1,4 @@
-import useBase from '..'
+import useBase from '../../salon'
 
 export default function useSalon() {
   const base = useBase()

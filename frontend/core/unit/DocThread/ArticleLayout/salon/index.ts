@@ -1,6 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-import useBase from '..'
+import useBase from '../../salon'
 
 type TProps = {
   outlineOpen: boolean

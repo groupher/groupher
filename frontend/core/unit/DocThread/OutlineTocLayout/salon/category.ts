@@ -1,6 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-import useBase from '..'
+import useBase from '../../salon'
 
 export default function useSalon() {
   const { cn, cnMerge, fg } = useTwBelt()
