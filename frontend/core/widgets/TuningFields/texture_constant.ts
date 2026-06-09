@@ -1,4 +1,3 @@
-/* 瓦片纹理：网格布局的行 */
 export const TILE_ROWS = [
   ['a1', 'a2', 'a3', 'a4'],
   ['b1', 'b2', 'b3', 'b4'],
@@ -7,10 +6,8 @@ export const TILE_ROWS = [
   ['e1', 'e2', 'e3', 'e4'],
 ]
 
-/* 点阵纹理：九宫格定位标识 */
 export const DOTS = ['tl', 'tc', 'tr', 'ml', 'mc', 'mr', 'bl', 'bc', 'br']
 
-/* 噪点纹理：每个噪点的 id 与 Tailwind 定位 className */
 export const NOISE_DOTS = [
   { id: 'n1', className: 'left-1 top-1 size-0.5' },
   { id: 'n2', className: 'left-3 top-0.5 size-1' },
@@ -30,7 +27,6 @@ export const NOISE_DOTS = [
   { id: 'n14', className: 'right-4 bottom-1 size-0.5' },
 ]
 
-/* ASCII 纹理：行字符配置 */
 export const ASCII_ROWS = [
   [
     { id: 'a1', char: 'J' },
@@ -49,7 +45,6 @@ export const ASCII_ROWS = [
   ],
 ]
 
-/* 油彩纹理：斑块的 Tailwind 定位 className */
 export const OIL_PATCHES = [
   'left-0 top-0 h-2.5 w-3',
   'left-2 top-1 h-3 w-3.5',

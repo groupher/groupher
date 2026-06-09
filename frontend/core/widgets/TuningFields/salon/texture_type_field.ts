@@ -1,13 +1,17 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
+import useBase from '.'
+
 export { cn } from '~/css'
 
 export default function useSalon() {
-  const { cn, br, fg, primary } = useTwBelt()
+  const { cn, br, primary } = useTwBelt()
+  const base = useBase()
 
   return {
-    wrapper: 'flex items-center gap-3',
-    label: cn('w-20 shrink-0 text-sm leading-none', fg('digest')),
+    wrapper: base.wrapper,
+    label: base.label,
+    content: base.content,
     options: 'row-center gap-1.5',
     swatch: 'size-5 circle overflow-hidden relative border pointer trans-all-200 align-both',
     swatchIdle: cn(br('divider'), `hover:${br('digest')}`),

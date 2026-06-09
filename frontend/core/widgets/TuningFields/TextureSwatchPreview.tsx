@@ -2,15 +2,15 @@ import useTwBelt from '~/hooks/useTwBelt'
 import { WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 import type { TImageTextureType } from '~/lib/wallpaperMesh'
 
-import { TILE_ROWS, DOTS, NOISE_DOTS, ASCII_ROWS, OIL_PATCHES } from './constant'
-import useSalon from './salon/swatch_preview'
+import useSalon from './salon/texture_swatch_preview'
+import { TILE_ROWS, DOTS, NOISE_DOTS, ASCII_ROWS, OIL_PATCHES } from './texture_constant'
 
 type Props = {
   type: TImageTextureType
   variant?: 'picker' | 'hud'
 }
 
-export default function SwatchPreview({ type, variant = 'picker' }: Props) {
+export default function TextureSwatchPreview({ type, variant = 'picker' }: Props) {
   const { cn } = useTwBelt()
   const s = useSalon()
 

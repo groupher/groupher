@@ -1,7 +1,5 @@
 import { COLOR } from '~/const/colors'
-import SIZE from '~/const/size'
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
-import { cn } from '~/css'
 import useTheme from '~/hooks/useTheme'
 import {
   buildColorChips,
@@ -19,15 +17,18 @@ import {
   type TWallpaperTexture,
 } from '~/lib/wallpaperMesh'
 import type { TColorName } from '~/spec'
-import TextureStylePicker from '~/unit/DashboardThread/Appearance/Wallpaper/TextureStylePicker'
-import AngleWheelControl from '~/widgets/AngleWheel'
-import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
-import ColorSelector from '~/widgets/ColorSelector'
-import ColorsPresetBall from '~/widgets/ColorsPresetBall'
-import RangeInput from '~/widgets/RangeInput'
+import AngleField from '~/widgets/TuningFields/AngleField'
+import BlurField from '~/widgets/TuningFields/BlurField'
+import BrightnessField from '~/widgets/TuningFields/BrightnessField'
+import ColorsField from '~/widgets/TuningFields/ColorsField'
+import RendererField from '~/widgets/TuningFields/RendererField'
+import SaturationField from '~/widgets/TuningFields/SaturationField'
+import SpreadField from '~/widgets/TuningFields/SpreadField'
+import TextureIntensityField from '~/widgets/TuningFields/TextureIntensityField'
+import TextureTypeField from '~/widgets/TuningFields/TextureTypeField'
+import ToggleField from '~/widgets/TuningFields/ToggleField'
 
 import useLogic from '../../../useLogic'
-import GroupItem from '../GroupItem'
 import useSalon from './salon/tuning'
 
 type TProps = {
@@ -74,159 +75,94 @@ export default function Tuning({ background }: TProps) {
   return (
     <div className={s.tuningGrid}>
       <div className={s.tuningColumn}>
-        <GroupItem label='Brightness'>
-          <RangeInput
-            value={background.brightness}
-            min={60}
-            max={140}
-            step={5}
-            width='w-36'
-            hideLabel
-            valueLabel='Brightness'
-            aria-label='Brightness'
-            onChange={(brightness) => backgroundOnChange({ brightness })}
-          />
-        </GroupItem>
+        <BrightnessField
+          label='Brightness'
+          value={background.brightness}
+          width='w-36'
+          onChange={(brightness) => backgroundOnChange({ brightness })}
+        />
 
-        <GroupItem label='Saturation'>
-          <RangeInput
-            value={background.saturation}
-            min={0}
-            max={160}
-            step={5}
-            width='w-36'
-            hideLabel
-            valueLabel='Saturation'
-            aria-label='Saturation'
-            onChange={(saturation) => backgroundOnChange({ saturation })}
-          />
-        </GroupItem>
+        <SaturationField
+          label='Saturation'
+          value={background.saturation}
+          width='w-36'
+          onChange={(saturation) => backgroundOnChange({ saturation })}
+        />
 
-        <GroupItem label='Blur'>
-          <RangeInput
-            value={background.blurIntensity}
-            min={0}
-            max={100}
-            step={5}
-            width='w-36'
-            hideLabel
-            valueLabel='Blur'
-            aria-label='Blur'
-            onChange={(blurIntensity) => backgroundOnChange({ blurIntensity })}
-          />
-        </GroupItem>
+        <BlurField
+          label='Blur'
+          value={background.blurIntensity}
+          width='w-36'
+          onChange={(blurIntensity) => backgroundOnChange({ blurIntensity })}
+        />
       </div>
 
       <div className={s.tuningColumn}>
-        <GroupItem label='Texture'>
-          <ToggleSwitch
-            size={SIZE.TINY}
-            checked={background.hasTexture}
-            aria-label='Enable texture'
-            onChange={toggleBackgroundTexture}
-          />
-        </GroupItem>
+        <ToggleField
+          label='Texture'
+          checked={background.hasTexture}
+          onChange={toggleBackgroundTexture}
+        />
 
-        <GroupItem label='Type'>
-          <TextureStylePicker
-            value={background.texture.type}
-            active={background.hasTexture}
-            showLabel={false}
-            onChange={(type) => updateTexture({ type })}
-          />
-        </GroupItem>
+        <TextureTypeField
+          label='Type'
+          value={background.texture.type}
+          active={background.hasTexture}
+          onChange={(type) => updateTexture({ type })}
+        />
 
         {background.hasTexture && (
-          <GroupItem label='Intensity'>
-            <RangeInput
-              value={background.texture.intensity}
-              min={0}
-              max={100}
-              step={1}
-              width='w-36'
-              hideLabel
-              valueLabel='Texture intensity'
-              aria-label='Texture intensity'
-              onChange={(intensity) => updateTexture({ intensity })}
-            />
-          </GroupItem>
+          <TextureIntensityField
+            label='Intensity'
+            value={background.texture.intensity}
+            width='w-36'
+            onChange={(intensity) => updateTexture({ intensity })}
+          />
         )}
       </div>
 
       {isGradient && gradient && (
         <div className={s.gradientTuning}>
           <div className={s.tuningColumn}>
-            <GroupItem label='Colors'>
-              <div className={s.colorChips}>
-                {buildColorChips(gradient).map(({ color, index, key }) => (
-                  <ColorSelector
-                    key={key}
-                    activeColor={findPresetColor(color, theme)}
-                    customColor={color}
-                    allowCustomColor
-                    placement='top'
-                    onChange={(selectedColor) => updatePresetColor(index, selectedColor)}
-                    onCustomColorChange={(customColor) => updateColor(index, customColor)}
-                  >
-                    <ColorsPresetBall
-                      colors={[color]}
-                      interactive
-                      label={`Change gradient color ${index + 1}`}
-                      size={SIZE.SMALL}
-                    />
-                  </ColorSelector>
-                ))}
-              </div>
-            </GroupItem>
+            <ColorsField
+              label='Colors'
+              chips={buildColorChips(gradient).map(({ color, index, key }) => ({
+                color,
+                activeColor: findPresetColor(color, theme),
+                key,
+                label: `Change gradient color ${index + 1}`,
+                onChange: (selectedColor) => updatePresetColor(index, selectedColor),
+                onCustomColorChange: (customColor) => updateColor(index, customColor),
+              }))}
+            />
 
-            <GroupItem label='Renderer' align='start'>
-              <div className={s.rendererGrid}>
-                {rendererOptions.map(({ renderer, labelKey }) => {
-                  const selected = gradient.renderer === renderer
-
-                  return (
-                    <button
-                      type='button'
-                      key={renderer}
-                      className={cn(s.rendererButton, selected && s.rendererButtonActive)}
-                      aria-pressed={selected}
-                      onClick={() =>
-                        backgroundGradientRendererOnChange(renderer as TGradientRenderer)
-                      }
-                    >
-                      {labelKey.split('.').at(-1)}
-                    </button>
-                  )
-                })}
-              </div>
-            </GroupItem>
+            <RendererField
+              label='Renderer'
+              value={gradient.renderer}
+              options={rendererOptions.map(({ renderer, labelKey }) => ({
+                renderer,
+                label: labelKey.split('.').at(-1) ?? labelKey,
+              }))}
+              onChange={(renderer) =>
+                backgroundGradientRendererOnChange(renderer as TGradientRenderer)
+              }
+            />
           </div>
 
           <div className={s.tuningColumn}>
-            <GroupItem label='Spread'>
-              <RangeInput
-                value={getGradientSpreadValue(gradient)}
-                min={0}
-                max={100}
-                step={1}
-                width='w-36'
-                hideLabel
-                valueLabel='Gradient spread'
-                aria-label='Gradient spread'
-                onChange={(spread) => updateGradient(applyGradientSpreadValue(gradient, spread))}
-              />
-            </GroupItem>
+            <SpreadField
+              label='Spread'
+              value={getGradientSpreadValue(gradient)}
+              width='w-36'
+              onChange={(spread) => updateGradient(applyGradientSpreadValue(gradient, spread))}
+            />
 
             {gradient.renderer !== GRADIENT_RENDERER.RADIAL && (
-              <GroupItem label='Direction'>
-                <div className={s.angle}>
-                  <AngleWheelControl
-                    value={gradient.angle}
-                    onChange={backgroundGradientAngleOnChange}
-                    onCommit={() => {}}
-                  />
-                </div>
-              </GroupItem>
+              <AngleField
+                value={gradient.angle}
+                onChange={backgroundGradientAngleOnChange}
+                onCommit={() => {}}
+              />
             )}
           </div>
         </div>
