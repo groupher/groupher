@@ -10,7 +10,7 @@ import {
 } from '~/const/wallpaper'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useWallpaper, { resolveWallpaperBgRenderSpec } from '~/hooks/useWallpaper'
-import { BG_RENDER_KIND } from '~/lib/bg/constant'
+import { BG_RENDER_TYPE } from '~/lib/bg/constant'
 import {
   buildGradientRecipeForRenderer,
   GRADIENT_RENDERER,
@@ -83,7 +83,7 @@ describe('useWallpaper', () => {
       bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
-    expect(renderSpec.kind).toBe(BG_RENDER_KIND.MESH_GRADIENT)
+    expect(renderSpec.kind).toBe(BG_RENDER_TYPE.MESH_GRADIENT)
     expect(renderSpec.meshRecipe?.renderer).toBe(GRADIENT_RENDERER.LIQUID)
     expect(renderSpec.colors).toEqual(gradient.colors)
   })
@@ -182,7 +182,7 @@ describe('useWallpaper', () => {
       bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
-    expect(renderSpec.kind).toBe(BG_RENDER_KIND.LINEAR_GRADIENT)
+    expect(renderSpec.kind).toBe(BG_RENDER_TYPE.LINEAR_GRADIENT)
     expect(renderSpec.patternImage).toBe('/wallpaper/pattern/01.png')
     expect(renderSpec.patternOpacity).toBe(0.65)
     expect(renderSpec.patternColor).toBe('#000000')
@@ -241,7 +241,7 @@ describe('useWallpaper', () => {
       bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
-    expect(renderSpec.kind).toBe(BG_RENDER_KIND.LINEAR_GRADIENT)
+    expect(renderSpec.kind).toBe(BG_RENDER_TYPE.LINEAR_GRADIENT)
     expect(renderSpec.colorStops).toEqual([46, 54])
   })
 
@@ -270,7 +270,7 @@ describe('useWallpaper', () => {
       bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
-    expect(renderSpec.kind).toBe(BG_RENDER_KIND.RADIAL_GRADIENT)
+    expect(renderSpec.kind).toBe(BG_RENDER_TYPE.RADIAL_GRADIENT)
     expect(renderSpec.colorStops).toEqual([0, 20, 39, 59])
     expect(renderSpec.background).toContain('radial-gradient')
     expect(renderSpec.background).not.toContain('transparent')
@@ -301,7 +301,7 @@ describe('useWallpaper', () => {
       bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
-    expect(renderSpec.kind).toBe(BG_RENDER_KIND.RADIAL_GRADIENT)
+    expect(renderSpec.kind).toBe(BG_RENDER_TYPE.RADIAL_GRADIENT)
     expect(renderSpec.colorStops).toEqual([0, 20, 70, 100])
   })
 
@@ -481,7 +481,7 @@ describe('useWallpaper', () => {
       bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
-    expect(renderSpec.kind).toBe(BG_RENDER_KIND.MESH_GRADIENT)
+    expect(renderSpec.kind).toBe(BG_RENDER_TYPE.MESH_GRADIENT)
     expect(renderSpec.hasTexture).toBe(true)
     expect(renderSpec.texture).toEqual({
       type: WALLPAPER_TEXTURE.ASCII,

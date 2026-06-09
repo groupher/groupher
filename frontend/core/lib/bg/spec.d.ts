@@ -6,7 +6,7 @@ import type {
   TWallpaperType,
 } from '~/spec'
 
-import type { BG_RENDER_KIND } from './constant'
+import type { BG_RENDER_TYPE } from './constant'
 
 /**
  * Single-theme core background config.
@@ -68,7 +68,7 @@ export type TBgThemeConfig = {
   dark: TBgConfig
 }
 
-export type TBgRenderKind = BG_RENDER_KIND
+export type TBgRenderKind = BG_RENDER_TYPE
 
 /**
  * Renderer-ready description of a core background.

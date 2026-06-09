@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
-import { BG_RENDER_KIND } from '~/lib/bg/constant'
+import { BG_RENDER_TYPE } from '~/lib/bg/constant'
 import type { TBgConfig, TBgRenderSpec } from '~/lib/bg/spec'
 
 /**
@@ -54,7 +54,7 @@ export const shouldCrossfade = (previous: TBgRenderSpec, next: TBgRenderSpec): b
   canAnimate() && getVisualIdentity(previous) !== getVisualIdentity(next)
 
 export const preloadImage = (renderSpec: TBgRenderSpec): Promise<void> => {
-  if (renderSpec.kind !== BG_RENDER_KIND.IMAGE || !renderSpec.imageUrl) return Promise.resolve()
+  if (renderSpec.kind !== BG_RENDER_TYPE.IMAGE || !renderSpec.imageUrl) return Promise.resolve()
 
   return new Promise((resolve) => {
     const image = new Image()

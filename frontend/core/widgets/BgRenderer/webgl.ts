@@ -1,5 +1,5 @@
 import { WALLPAPER_BG_SIZE } from '~/const/wallpaper'
-import { BG_RENDER_KIND } from '~/lib/bg/constant'
+import { BG_RENDER_TYPE } from '~/lib/bg/constant'
 import type { TBgRenderSpec } from '~/lib/bg/spec'
 import { GRADIENT_RENDERER, WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 import {
@@ -355,11 +355,11 @@ ${TEXTURE_SHADER_UV}
 `
 
 const MODE = {
-  [BG_RENDER_KIND.NONE]: 0,
-  [BG_RENDER_KIND.LINEAR_GRADIENT]: 1,
-  [BG_RENDER_KIND.RADIAL_GRADIENT]: 2,
-  [BG_RENDER_KIND.MESH_GRADIENT]: 3,
-  [BG_RENDER_KIND.IMAGE]: 4,
+  [BG_RENDER_TYPE.NONE]: 0,
+  [BG_RENDER_TYPE.LINEAR_GRADIENT]: 1,
+  [BG_RENDER_TYPE.RADIAL_GRADIENT]: 2,
+  [BG_RENDER_TYPE.MESH_GRADIENT]: 3,
+  [BG_RENDER_TYPE.IMAGE]: 4,
 } as const
 
 const getDprCap = (renderSpec: TBgRenderSpec | null): number => {
@@ -368,7 +368,7 @@ const getDprCap = (renderSpec: TBgRenderSpec | null): number => {
   }
 
   if (
-    renderSpec?.kind === BG_RENDER_KIND.MESH_GRADIENT &&
+    renderSpec?.kind === BG_RENDER_TYPE.MESH_GRADIENT &&
     renderSpec.meshRecipe?.renderer === GRADIENT_RENDERER.FLOW
   ) {
     return FLOW_DPR_CAP
@@ -551,11 +551,11 @@ class BgWebglRenderer {
   update(renderSpec: TBgRenderSpec): void {
     this.renderSpec = renderSpec
 
-    if (renderSpec.kind === BG_RENDER_KIND.IMAGE && renderSpec.imageUrl !== this.imageUrl) {
+    if (renderSpec.kind === BG_RENDER_TYPE.IMAGE && renderSpec.imageUrl !== this.imageUrl) {
       this.loadImage(renderSpec.imageUrl)
     }
 
-    if (renderSpec.kind !== BG_RENDER_KIND.IMAGE) {
+    if (renderSpec.kind !== BG_RENDER_TYPE.IMAGE) {
       this.imageUrl = ''
       this.imageReady = false
     }

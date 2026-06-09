@@ -13,7 +13,7 @@ import type { TWallpaperFmt, TWallpaperPic } from '~/spec'
 import type { TStore, TWallpaperThemeState } from '~/stores/wallpaper/spec'
 
 import { buildActiveBgGradientWallpapers, buildActiveBgPatternWallpapers } from './catalog'
-import { BG_RENDER_KIND } from './constant'
+import { BG_RENDER_TYPE } from './constant'
 import { parseBgGradientRecipe, parseBgWallpaper, resolveBgPattern } from './parse'
 import type { TBgConfig, TBgRenderSpec } from './spec'
 
@@ -204,18 +204,18 @@ export const resolveBgRenderSpec = (
   }
 
   if (config.type === WALLPAPER_TYPE.NONE) {
-    return { ...base, kind: BG_RENDER_KIND.NONE }
+    return { ...base, kind: BG_RENDER_TYPE.NONE }
   }
 
   if (config.type === WALLPAPER_TYPE.GRADIENT) {
     const gradient = getActiveBgGradientRecipe(config)
-    if (!gradient) return { ...base, kind: BG_RENDER_KIND.NONE }
+    if (!gradient) return { ...base, kind: BG_RENDER_TYPE.NONE }
 
     if (isMeshGradientRecipe(gradient)) {
       const meshRecipe = normalizeMeshRecipe(gradient)
       return {
         ...base,
-        kind: BG_RENDER_KIND.MESH_GRADIENT,
+        kind: BG_RENDER_TYPE.MESH_GRADIENT,
         hasPattern: config.hasPattern,
         patternImage: resolveBgPattern(config.patternId),
         patternOpacity: getPatternOpacity(config.patternIntensity),
@@ -232,8 +232,8 @@ export const resolveBgRenderSpec = (
       ...base,
       kind:
         gradient.renderer === GRADIENT_RENDERER.RADIAL
-          ? BG_RENDER_KIND.RADIAL_GRADIENT
-          : BG_RENDER_KIND.LINEAR_GRADIENT,
+          ? BG_RENDER_TYPE.RADIAL_GRADIENT
+          : BG_RENDER_TYPE.LINEAR_GRADIENT,
       hasPattern: config.hasPattern,
       patternImage: resolveBgPattern(config.patternId),
       patternOpacity: getPatternOpacity(config.patternIntensity),
@@ -247,7 +247,7 @@ export const resolveBgRenderSpec = (
   }
 
   if (!config.source) {
-    return { ...base, kind: BG_RENDER_KIND.NONE }
+    return { ...base, kind: BG_RENDER_TYPE.NONE }
   }
 
   if (config.type === WALLPAPER_TYPE.PATTERN) {
@@ -257,7 +257,7 @@ export const resolveBgRenderSpec = (
 
     return {
       ...base,
-      kind: wallpaper?.image ? BG_RENDER_KIND.IMAGE : BG_RENDER_KIND.NONE,
+      kind: wallpaper?.image ? BG_RENDER_TYPE.IMAGE : BG_RENDER_TYPE.NONE,
       imageUrl: wallpaper?.image || '',
     }
   }
@@ -265,10 +265,10 @@ export const resolveBgRenderSpec = (
   if (config.type === WALLPAPER_TYPE.UPLOAD) {
     return {
       ...base,
-      kind: config.source ? BG_RENDER_KIND.IMAGE : BG_RENDER_KIND.NONE,
+      kind: config.source ? BG_RENDER_TYPE.IMAGE : BG_RENDER_TYPE.NONE,
       imageUrl: config.source,
     }
   }
 
-  return { ...base, kind: BG_RENDER_KIND.NONE }
+  return { ...base, kind: BG_RENDER_TYPE.NONE }
 }
