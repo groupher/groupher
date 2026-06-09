@@ -368,7 +368,7 @@ const getDprCap = (renderSpec: TBgRenderSpec | null): number => {
   }
 
   if (
-    renderSpec?.kind === BG_RENDER_TYPE.MESH_GRADIENT &&
+    renderSpec?.type === BG_RENDER_TYPE.MESH_GRADIENT &&
     renderSpec.meshRecipe?.renderer === GRADIENT_RENDERER.FLOW
   ) {
     return FLOW_DPR_CAP
@@ -551,11 +551,11 @@ class BgWebglRenderer {
   update(renderSpec: TBgRenderSpec): void {
     this.renderSpec = renderSpec
 
-    if (renderSpec.kind === BG_RENDER_TYPE.IMAGE && renderSpec.imageUrl !== this.imageUrl) {
+    if (renderSpec.type === BG_RENDER_TYPE.IMAGE && renderSpec.imageUrl !== this.imageUrl) {
       this.loadImage(renderSpec.imageUrl)
     }
 
-    if (renderSpec.kind !== BG_RENDER_TYPE.IMAGE) {
+    if (renderSpec.type !== BG_RENDER_TYPE.IMAGE) {
       this.imageUrl = ''
       this.imageReady = false
     }
@@ -708,7 +708,7 @@ class BgWebglRenderer {
     gl.activeTexture(gl.TEXTURE0)
     gl.bindTexture(gl.TEXTURE_2D, this.imageTexture)
 
-    gl.uniform1i(uniforms.mode, MODE[renderSpec.kind])
+    gl.uniform1i(uniforms.mode, MODE[renderSpec.type])
     gl.uniform1i(uniforms.colorCount, Math.max(1, renderSpecColors.length))
     gl.uniform1i(uniforms.meshModel, meshModel)
     gl.uniform1i(uniforms.textureType, textureTypeToUniform(renderSpec))

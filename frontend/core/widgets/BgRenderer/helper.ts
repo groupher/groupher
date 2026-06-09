@@ -45,7 +45,7 @@ export const getPatternLayerStyle = (
 })
 
 export const getVisualIdentity = (renderSpec: TBgRenderSpec): string =>
-  [renderSpec.kind, renderSpec.source, renderSpec.imageUrl].join('|')
+  [renderSpec.type, renderSpec.source, renderSpec.imageUrl].join('|')
 
 const canAnimate = (): boolean =>
   typeof window !== 'undefined' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -54,7 +54,7 @@ export const shouldCrossfade = (previous: TBgRenderSpec, next: TBgRenderSpec): b
   canAnimate() && getVisualIdentity(previous) !== getVisualIdentity(next)
 
 export const preloadImage = (renderSpec: TBgRenderSpec): Promise<void> => {
-  if (renderSpec.kind !== BG_RENDER_TYPE.IMAGE || !renderSpec.imageUrl) return Promise.resolve()
+  if (renderSpec.type !== BG_RENDER_TYPE.IMAGE || !renderSpec.imageUrl) return Promise.resolve()
 
   return new Promise((resolve) => {
     const image = new Image()

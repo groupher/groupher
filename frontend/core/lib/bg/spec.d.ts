@@ -68,7 +68,7 @@ export type TBgThemeConfig = {
   dark: TBgConfig
 }
 
-export type TBgRenderKind = BG_RENDER_TYPE
+export type TBgRenderType = BG_RENDER_TYPE
 
 /**
  * Renderer-ready description of a core background.
@@ -81,7 +81,7 @@ export type TBgRenderKind = BG_RENDER_TYPE
  * return <BgRenderer renderSpec={renderSpec} />
  */
 export type TBgRenderSpec = {
-  kind: TBgRenderKind
+  type: TBgRenderType
   background: string
   filter: string
   hasPattern: boolean
