@@ -23,7 +23,10 @@
 - 一个文件不要定义多个组件，需要拆分成独立的文件和 salon
 - 拆分组件时，禁止把 `const s = useSalon()` 中的 `s` 作为 props 向下传递
 - 下层组件如果需要 salon 相关能力，应自行引用 `useSalon()`
-- 如果多个地方都有同类需求，优先考虑拆分单独的 `salon/xxx` 方向组件或能力封装
+- 如果有跨页面可复用的最小控件，按“字段级”抽离：封装为独立组件并拆到 `widgets` 目录，包含自身 `salon`
+- 可复用组件内部可引用自己模块内的 `salon/index.ts`，并按需 `import` 上层公共 salon；不得跨组件直接引用其它页面的私有 salon
+- 复用策略要求“各组件 own its salon”：子组件只在自己的 salon 中管理样式/语义能力，公共能力仅通过公共 salon 间接复用
+- 布局（group/section/row）按页面组合，不应作为公共字段组件的一部分抽走
 - 如果一个组件有多种 layout / mode，优先拆成独立子组件，各自使用自己的 salon；顶层 `index.tsx` 只负责公共外壳和分发
 - 简单子组件不要过度目录化；优先使用 `Foo.tsx` + `salon/foo.ts`，不要为几行组件创建 `Foo/index.tsx` + `Foo/salon/index.ts`
 - 不要有散落在组件里的 class names, 都收紧到对应的 salon 里去
