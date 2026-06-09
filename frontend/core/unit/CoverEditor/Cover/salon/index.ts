@@ -20,6 +20,7 @@ export default function useSalon() {
       backgroundSize: '16px 16px',
     },
     contentLayer: 'absolute inset-0 overflow-hidden',
+    backgroundLayer: 'absolute inset-0',
     imageFrame: 'absolute trans-all-200',
     imageFrameActive: '!transition-none',
     cropViewport: 'relative size-full overflow-hidden trans-all-200',

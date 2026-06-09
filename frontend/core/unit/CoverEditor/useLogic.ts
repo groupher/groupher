@@ -1,9 +1,20 @@
-import { clone, forEach, keys, mergeDeepRight, pick } from 'ramda'
+import { clone, equals, keys, mergeDeepRight, pick } from 'ramda'
 import { proxy, useSnapshot } from 'valtio'
 
-import { COVER_GRADIENT_WALLPAPER, GRADIENT_DIRECTION } from '~/const/wallpaper'
-import type { TWallpaper, TWallpaperGradient, TWallpaperGradientDir } from '~/spec'
+import { WALLPAPER_TYPE } from '~/const/wallpaper'
+import useTheme from '~/hooks/useTheme'
+import type { TBgConfig } from '~/lib/bg/spec'
+import {
+  DEFAULT_WALLPAPER_TEXTURE_INTENSITY,
+  GRADIENT_RENDERER,
+  buildGradientRecipeForRenderer,
+  isMeshGradientRecipe,
+  type TGradientRecipe,
+  type TGradientRenderer,
+  type TWallpaperTexture,
+} from '~/lib/wallpaperMesh'
 
+import { buildCoverGradientRecipe, createCoverBgThemeConfig } from './background'
 import {
   BORDER_HIGHLIGHT_DEFAULT,
   COVER_SHADOW_DEFAULT,
@@ -14,6 +25,7 @@ import {
 } from './constant'
 import type {
   TBorderHighlight,
+  TCoverBackgroundPatch,
   TCoverPoint,
   TCoverShadow,
   TImageSize,
@@ -28,8 +40,15 @@ type TRet = {
   shadowOnChange: (shadow: Partial<TCoverShadow>) => void
   borderRadiusOnChange: (borderRadius: number) => void
   borderHighlightOnChange: (borderHighlight: Partial<TBorderHighlight>) => void
-  wallpaperOnChange: (wallpaper: string) => void
-  gradientDirOnChange: (direction: TWallpaperGradientDir) => void
+  backgroundOnChange: (patch: TCoverBackgroundPatch) => void
+  rollbackBackground: () => void
+  gradientBackgroundOnChange: (source: string) => void
+  pictureBackgroundOnChange: (source: string) => void
+  backgroundGradientOnChange: (gradient: TGradientRecipe) => void
+  backgroundGradientRendererOnChange: (renderer: TGradientRenderer) => void
+  backgroundGradientAngleOnChange: (angle: number) => void
+  toggleBackgroundTexture: (hasTexture: boolean) => void
+  backgroundTextureOnChange: (texture: TWallpaperTexture) => void
   sizeOnChange: (size: TImageSize) => void
   rotateOnChange: (rotate: number) => void
   glassBorderOnChange: (hasGlassBorder: boolean) => void
@@ -79,8 +98,8 @@ const LOADED_IMAGE_DEFAULT_SETTING: Partial<TStore> = {
     highlightIntensity: MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_INTENSITY,
     shadow: MAGNIFIER_APPEARANCE_DEFAULT.SHADOW,
   },
-  wallpaper: 'pink',
-  direction: GRADIENT_DIRECTION.BOTTOM_RIGHT,
+  background: createCoverBgThemeConfig(),
+  originalBackground: createCoverBgThemeConfig(),
 }
 
 const store = proxy<TStore>({
@@ -125,26 +144,9 @@ const store = proxy<TStore>({
   hasGlassBorder: false,
 
   // for background
-  wallpaper: '',
-  hasPattern: false,
-  hasBlur: true,
-  direction: GRADIENT_DIRECTION.BOTTOM_RIGHT,
+  background: createCoverBgThemeConfig(),
+  originalBackground: createCoverBgThemeConfig(),
   loadedImageUrl: '',
-
-  get gradientWallpapers(): Record<string, TWallpaper> {
-    const wallpapers = clone(COVER_GRADIENT_WALLPAPER)
-    const paperKeys = keys(COVER_GRADIENT_WALLPAPER)
-
-    forEach((key) => {
-      const wallpaperObj = wallpapers[key] as TWallpaperGradient
-
-      wallpaperObj.hasPattern = store.hasPattern
-      wallpaperObj.blurIntensity = store.hasBlur ? 60 : 0
-      wallpaperObj.direction = store.direction as TWallpaperGradientDir
-    }, paperKeys)
-
-    return wallpapers
-  },
 
   get tuningSetting(): TTuningSetting {
     const {
@@ -158,9 +160,8 @@ const store = proxy<TStore>({
       shadow,
       borderRadius,
       borderHighlight,
-      wallpaper,
-      gradientWallpapers,
-      direction,
+      background,
+      originalBackground,
       size,
       rotate,
       hasGlassBorder,
@@ -177,9 +178,9 @@ const store = proxy<TStore>({
       shadow,
       borderRadius,
       borderHighlight,
-      wallpapers: gradientWallpapers,
-      wallpaper,
-      direction: direction as TWallpaperGradientDir,
+      background,
+      activeBackground: background.light,
+      isBackgroundTouched: !equals(clone(originalBackground), clone(background)),
       size,
       rotate,
       hasGlassBorder,
@@ -193,9 +194,18 @@ const store = proxy<TStore>({
 
 export default function useLogic(): TRet {
   const snap = useSnapshot(store)
+  const { isDarkTheme } = useTheme()
+  const activeThemeKey = isDarkTheme ? 'dark' : 'light'
+  const activeBackground = snap.background[activeThemeKey] as TBgConfig
+  const tuningSetting = {
+    ...snap.tuningSetting,
+    activeBackground,
+    isBackgroundTouched: !equals(clone(snap.originalBackground), clone(snap.background)),
+  } as TTuningSetting
 
   const imageLoadedOnChange = (imageUrl: string, imageDominantColor: string | null): void => {
     if (!imageUrl || snap.loadedImageUrl === imageUrl) return
+    const background = createCoverBgThemeConfig()
 
     // Apply the polished cover preset only after the actual image succeeds loading.
     // Tracking imageUrl prevents a browser re-load from resetting user tuning edits.
@@ -203,6 +213,8 @@ export default function useLogic(): TRet {
       ...LOADED_IMAGE_DEFAULT_SETTING,
       imageDominantColor,
       loadedImageUrl: imageUrl,
+      background,
+      originalBackground: clone(background),
     })
   }
 
@@ -212,8 +224,66 @@ export default function useLogic(): TRet {
   const borderRadiusOnChange = (borderRadius: number): void => snap.commit({ borderRadius })
   const borderHighlightOnChange = (borderHighlight: Partial<TBorderHighlight>): void =>
     snap.commit({ borderHighlight: { ...snap.borderHighlight, ...borderHighlight } })
-  const wallpaperOnChange = (wallpaper: string): void => snap.commit({ wallpaper })
-  const gradientDirOnChange = (direction: TWallpaperGradientDir): void => snap.commit({ direction })
+  const backgroundOnChange = (patch: TCoverBackgroundPatch): void =>
+    snap.commit({
+      background: {
+        ...snap.background,
+        [activeThemeKey]: {
+          ...activeBackground,
+          ...patch,
+        },
+      } as TStore['background'],
+    })
+  const rollbackBackground = (): void =>
+    snap.commit({ background: clone(snap.originalBackground) as TStore['background'] })
+  const gradientBackgroundOnChange = (source: string): void => {
+    const renderer = activeBackground.gradient?.renderer ?? GRADIENT_RENDERER.LINEAR
+
+    backgroundOnChange({
+      source,
+      type: WALLPAPER_TYPE.GRADIENT,
+      gradient: buildCoverGradientRecipe(source, renderer),
+      customWallpaper: null,
+    })
+  }
+  const pictureBackgroundOnChange = (source: string): void =>
+    backgroundOnChange({
+      source,
+      type: WALLPAPER_TYPE.PATTERN,
+      gradient: null,
+      customWallpaper: null,
+    })
+  const backgroundGradientOnChange = (gradient: TGradientRecipe): void =>
+    backgroundOnChange({
+      source: gradient.preset,
+      type: WALLPAPER_TYPE.GRADIENT,
+      gradient,
+      customWallpaper: null,
+    })
+  const backgroundGradientRendererOnChange = (renderer: TGradientRenderer): void => {
+    const gradient =
+      activeBackground.gradient ?? buildCoverGradientRecipe(activeBackground.source || 'pink')
+
+    backgroundGradientOnChange(buildGradientRecipeForRenderer(gradient, renderer))
+  }
+  const backgroundGradientAngleOnChange = (angle: number): void => {
+    const gradient = activeBackground.gradient
+    if (!gradient) return
+
+    if (gradient.renderer === GRADIENT_RENDERER.LINEAR || isMeshGradientRecipe(gradient)) {
+      backgroundGradientOnChange({ ...gradient, angle })
+    }
+  }
+  const toggleBackgroundTexture = (hasTexture: boolean): void => {
+    const texture =
+      hasTexture && activeBackground.texture.intensity === 0
+        ? { ...activeBackground.texture, intensity: DEFAULT_WALLPAPER_TEXTURE_INTENSITY }
+        : activeBackground.texture
+
+    backgroundOnChange({ hasTexture, texture })
+  }
+  const backgroundTextureOnChange = (texture: TWallpaperTexture): void =>
+    backgroundOnChange({ hasTexture: true, texture })
   const sizeOnChange = (size: TImageSize): void => snap.commit({ size })
   const rotateOnChange = (rotate: number): void => snap.commit({ rotate })
 
@@ -233,13 +303,23 @@ export default function useLogic(): TRet {
 
   return {
     ...pick(keys(snap), snap),
+    background: snap.background as TStore['background'],
+    originalBackground: snap.originalBackground as TStore['originalBackground'],
+    tuningSetting,
     imageLoadedOnChange,
     positionOnChange,
     shadowOnChange,
     borderRadiusOnChange,
     borderHighlightOnChange,
-    wallpaperOnChange,
-    gradientDirOnChange,
+    backgroundOnChange,
+    rollbackBackground,
+    gradientBackgroundOnChange,
+    pictureBackgroundOnChange,
+    backgroundGradientOnChange,
+    backgroundGradientRendererOnChange,
+    backgroundGradientAngleOnChange,
+    toggleBackgroundTexture,
+    backgroundTextureOnChange,
     sizeOnChange,
     rotateOnChange,
     glassBorderOnChange,

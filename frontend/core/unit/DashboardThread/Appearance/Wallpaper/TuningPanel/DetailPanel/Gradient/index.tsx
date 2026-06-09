@@ -5,6 +5,13 @@ import { cn } from '~/css'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import {
+  buildColorChips,
+  findPresetColor,
+  getGradientSpreadValue,
+  resolvePresetColor,
+  applyGradientSpreadValue,
+} from '~/lib/bg/gradient'
+import {
   GRADIENT_RENDERER,
   WALLPAPER_GRADIENT_RENDERER_OPTIONS,
   type TGradientRecipe,
@@ -20,13 +27,6 @@ import useSalon from '../../salon/detail_panel/gradient'
 import AngleWheel from '../AngleWheel'
 import GroupItem from '../GroupItem'
 import GroupTitle from '../GroupTitle'
-import {
-  applyGradientSpreadValue,
-  buildColorChips,
-  findPresetColor,
-  getGradientSpreadValue,
-  resolvePresetColor,
-} from './helper'
 
 type Props = {
   gradient: TGradientRecipe | null

@@ -13,6 +13,10 @@
 - 尽量不要使用 `[]` 这类自定义 Tailwind 写法
 - 这类写法容易增大 class 体积，只有在确实没有合适现成方案时再使用
 - 优先复用项目已有的全局 class，参考 `frontend/core/tailwind/common/utils.css`
+- 注意区分 cn/cnMerge, 前者不会 merge class, 根据场合酌情使用
+- class names 不要放在 `constant.ts`，也不要在组件 JSX 里裸写；样式归对应 `salon`
+- `constant.ts` 只放语义常量、枚举、非样式配置；不要把 `wrapper/item/content` 这类 class map 塞进去
+- 简单尺寸/状态 class 优先在 `useSalon()` 返回值里直接表达，不要为了几项 class 再引入局部 const map
 
 ## 组件拆分
 
@@ -20,6 +24,11 @@
 - 拆分组件时，禁止把 `const s = useSalon()` 中的 `s` 作为 props 向下传递
 - 下层组件如果需要 salon 相关能力，应自行引用 `useSalon()`
 - 如果多个地方都有同类需求，优先考虑拆分单独的 `salon/xxx` 方向组件或能力封装
+- 如果一个组件有多种 layout / mode，优先拆成独立子组件，各自使用自己的 salon；顶层 `index.tsx` 只负责公共外壳和分发
+- 简单子组件不要过度目录化；优先使用 `Foo.tsx` + `salon/foo.ts`，不要为几行组件创建 `Foo/index.tsx` + `Foo/salon/index.ts`
+- 不要有散落在组件里的 class names, 都收紧到对应的 salon 里去
+- 不要出现裸露的字符串，封装到 ./constant.ts
+- 工具函数封装到 ./helper.ts, 多模块复用的加在 utils 下
 
 ## 测试
 

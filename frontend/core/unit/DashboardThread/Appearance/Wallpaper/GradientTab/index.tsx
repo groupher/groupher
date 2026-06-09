@@ -1,12 +1,13 @@
 import { keys } from 'ramda'
 
+import SIZE from '~/const/size'
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
+import ColorsPresetBall from '~/widgets/ColorsPresetBall'
 
 import { isActiveWallpaperSource } from '../helper'
 import useLogic from '../useLogic'
-import GradientSwatchPreview from './GradientSwatchPreview'
 import PatternCards from './PatternCards'
-import useSalon, { cnMerge } from './salon'
+import useSalon from './salon'
 
 export default function GradientTab() {
   const s = useSalon()
@@ -19,24 +20,23 @@ export default function GradientTab() {
 
   return (
     <div className={s.wrapper}>
-      <div className={s.gradientGrid}>
+      <div className={s.gradientGrid} style={s.gradientGridStyle}>
         {gradientKeys.map((name) => {
           const palette = gradientPalettes[name]
           const selected = isActiveWallpaperSource(wallpaper, WALLPAPER_TYPE.GRADIENT, name)
 
           return (
-            <button
-              type='button'
+            <ColorsPresetBall
               key={name}
-              className={cnMerge(s.card, selected && s.cardActive)}
-              aria-label={palette.label}
-              title={palette.label}
+              colors={palette.colors}
+              active={selected}
+              interactive
+              label={palette.label}
+              size={SIZE.LARGE}
               onClick={() => {
                 if (!selected) changeGradientWallpaper(name)
               }}
-            >
-              <GradientSwatchPreview className={s.preview} palette={palette} />
-            </button>
+            />
           )
         })}
       </div>
