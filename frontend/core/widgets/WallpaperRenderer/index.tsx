@@ -2,13 +2,10 @@
 
 import { useCallback } from 'react'
 
-import {
-  resolveWallpaperCoreBgRenderSpec,
-  useWallpaperCoreBgRenderSpec,
-} from '~/hooks/useWallpaper'
+import { resolveWallpaperBgRenderSpec, useWallpaperBgRenderSpec } from '~/hooks/useWallpaper'
 import { subscribeWallpaperPreview } from '~/lib/wallpaperPreview'
-import CoreBgRenderer from '~/widgets/CoreBgRenderer'
-import type { TCoreBgPreviewSubscriber } from '~/widgets/CoreBgRenderer/spec'
+import BgRenderer from '~/widgets/BgRenderer'
+import type { TBgPreviewSubscriber } from '~/widgets/BgRenderer/spec'
 
 import type { TProps } from './spec'
 
@@ -18,17 +15,17 @@ export default function WallpaperRenderer({
   positioned = true,
   textureScale = 1,
 }: TProps) {
-  const renderSpec = useWallpaperCoreBgRenderSpec()
-  const previewSubscriber = useCallback<TCoreBgPreviewSubscriber>(
+  const renderSpec = useWallpaperBgRenderSpec()
+  const previewSubscriber = useCallback<TBgPreviewSubscriber>(
     (listener) =>
       subscribeWallpaperPreview((state) => {
-        listener(state ? resolveWallpaperCoreBgRenderSpec(state) : null)
+        listener(state ? resolveWallpaperBgRenderSpec(state) : null)
       }),
     [],
   )
 
   return (
-    <CoreBgRenderer
+    <BgRenderer
       className={className}
       renderSpec={renderSpec}
       patternSize={patternSize}

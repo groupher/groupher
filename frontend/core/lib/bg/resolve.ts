@@ -12,12 +12,12 @@ import {
 import type { TWallpaperFmt, TWallpaperPic } from '~/spec'
 import type { TStore, TWallpaperThemeState } from '~/stores/wallpaper/spec'
 
-import { buildActiveCoreBgGradientWallpapers, buildActiveCoreBgPatternWallpapers } from './catalog'
-import { CORE_BG_RENDER_KIND } from './constant'
-import { parseCoreBgGradientRecipe, parseCoreBgWallpaper, resolveCoreBgPattern } from './parse'
-import type { TCoreBgConfig, TCoreBgRenderSpec } from './spec'
+import { buildActiveBgGradientWallpapers, buildActiveBgPatternWallpapers } from './catalog'
+import { BG_RENDER_KIND } from './constant'
+import { parseBgGradientRecipe, parseBgWallpaper, resolveBgPattern } from './parse'
+import type { TBgConfig, TBgRenderSpec } from './spec'
 
-type TResolvedCoreBg = { source: string } & TWallpaperFmt
+type TResolvedBg = { source: string } & TWallpaperFmt
 
 const DEFAULT_RENDER_COLORS = ['#fbeede', '#d8b9e3']
 
@@ -30,8 +30,8 @@ const getPatternOpacity = (patternIntensity: number): number =>
 const getPatternColor = (patternTone: TWallpaperThemeState['patternTone']): string =>
   patternTone === WALLPAPER_PATTERN_TONE.LIGHT ? '#ffffff' : '#000000'
 
-const getActiveCoreBgGradientRecipe = (config: TCoreBgConfig): TGradientRecipe | null => {
-  const gradientWallpapers = buildActiveCoreBgGradientWallpapers({
+const getActiveBgGradientRecipe = (config: TBgConfig): TGradientRecipe | null => {
+  const gradientWallpapers = buildActiveBgGradientWallpapers({
     source: config.source,
     type: config.type,
     gradient: config.gradient,
@@ -41,15 +41,15 @@ const getActiveCoreBgGradientRecipe = (config: TCoreBgConfig): TGradientRecipe |
 }
 
 /**
- * Maps the current Wallpaper store shape into the common single-theme CoreBg shape.
+ * Maps the current Wallpaper store shape into the common single-theme Bg shape.
  *
  * This is a compatibility adapter while Wallpaper still persists flat light/dark
- * fields. New consumers should prefer constructing `TCoreBgConfig` directly.
+ * fields. New consumers should prefer constructing `TBgConfig` directly.
  *
  * @example
- * const bg = toCoreBgConfig(resolveWallpaperThemeState(store, isDarkTheme))
+ * const bg = toBgConfig(resolveWallpaperThemeState(store, isDarkTheme))
  */
-export const toCoreBgConfig = (store: Pick<TStore, keyof TWallpaperThemeState>): TCoreBgConfig => ({
+export const toBgConfig = (store: Pick<TStore, keyof TWallpaperThemeState>): TBgConfig => ({
   source: store.source,
   hasPattern: store.hasPattern,
   patternId: store.patternId,
@@ -67,31 +67,29 @@ export const toCoreBgConfig = (store: Pick<TStore, keyof TWallpaperThemeState>):
 })
 
 /**
- * Maps store state to the CSS fallback-only CoreBg config.
+ * Maps store state to the CSS fallback-only Bg config.
  *
  * Wallpaper's CSS hook intentionally ignores WebGL texture because the texture is
- * rendered by `CoreBgRenderer`, while CSS fallback only needs background/filter.
+ * rendered by `BgRenderer`, while CSS fallback only needs background/filter.
  *
  * @example
- * const cssBg = resolveCoreBg(toCoreBgCssConfig(wallpaperState))
+ * const cssBg = resolveBg(toBgCssConfig(wallpaperState))
  */
-export const toCoreBgCssConfig = (
-  store: Pick<TStore, keyof TWallpaperThemeState>,
-): TCoreBgConfig => ({
-  ...toCoreBgConfig(store),
+export const toBgCssConfig = (store: Pick<TStore, keyof TWallpaperThemeState>): TBgConfig => ({
+  ...toBgConfig(store),
   texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
 })
 
 /**
- * Resolves a CoreBg config to CSS-compatible background and filter strings.
+ * Resolves a Bg config to CSS-compatible background and filter strings.
  *
  * Use this for non-WebGL fallbacks and simple CSS consumers. Components that need
- * texture, mesh, or pattern overlay should use `resolveCoreBgRenderSpec`.
+ * texture, mesh, or pattern overlay should use `resolveBgRenderSpec`.
  *
  * @example
- * const { background, effect } = resolveCoreBg(bg)
+ * const { background, effect } = resolveBg(bg)
  */
-export const resolveCoreBg = (config: TCoreBgConfig): TResolvedCoreBg => {
+export const resolveBg = (config: TBgConfig): TResolvedBg => {
   const {
     source,
     hasPattern,
@@ -129,7 +127,7 @@ export const resolveCoreBg = (config: TCoreBgConfig): TResolvedCoreBg => {
     }
   }
 
-  const patternWallpapers = buildActiveCoreBgPatternWallpapers({
+  const patternWallpapers = buildActiveBgPatternWallpapers({
     source,
     type,
     blurIntensity,
@@ -137,12 +135,12 @@ export const resolveCoreBg = (config: TCoreBgConfig): TResolvedCoreBg => {
     saturation,
   })
 
-  const gradientWallpapers = buildActiveCoreBgGradientWallpapers({ source, type, gradient })
+  const gradientWallpapers = buildActiveBgGradientWallpapers({ source, type, gradient })
 
   const wallpapers = { ...gradientWallpapers, ...patternWallpapers }
-  const activeGradient = getActiveCoreBgGradientRecipe(config)
+  const activeGradient = getActiveBgGradientRecipe(config)
   if (type === WALLPAPER_TYPE.GRADIENT && activeGradient) {
-    const parsed = parseCoreBgGradientRecipe(activeGradient, {
+    const parsed = parseBgGradientRecipe(activeGradient, {
       hasPattern,
       patternId,
       blurIntensity,
@@ -155,7 +153,7 @@ export const resolveCoreBg = (config: TCoreBgConfig): TResolvedCoreBg => {
     }
   }
 
-  const parsed = parseCoreBgWallpaper(wallpapers, source, customWallpaper)
+  const parsed = parseBgWallpaper(wallpapers, source, customWallpaper)
 
   return {
     source,
@@ -164,7 +162,7 @@ export const resolveCoreBg = (config: TCoreBgConfig): TResolvedCoreBg => {
 }
 
 /**
- * Resolves a CoreBg config to the full renderer render spec.
+ * Resolves a Bg config to the full renderer render spec.
  *
  * This is the canonical bridge from model to rendering/export. Runtime renderers,
  * previews, and frontend static export should all consume this render spec rather
@@ -175,19 +173,19 @@ export const resolveCoreBg = (config: TCoreBgConfig): TResolvedCoreBg => {
  * pattern as a separate overlay.
  *
  * @example
- * const renderSpec = resolveCoreBgRenderSpec(bg, fallbackBg)
- * return <CoreBgRenderer renderSpec={renderSpec} />
+ * const renderSpec = resolveBgRenderSpec(bg, fallbackBg)
+ * return <BgRenderer renderSpec={renderSpec} />
  */
-export const resolveCoreBgRenderSpec = (
-  config: TCoreBgConfig,
-  fallbackConfig: TCoreBgConfig = config,
-): TCoreBgRenderSpec => {
-  const { background, effect } = resolveCoreBg(fallbackConfig)
+export const resolveBgRenderSpec = (
+  config: TBgConfig,
+  fallbackConfig: TBgConfig = config,
+): TBgRenderSpec => {
+  const { background, effect } = resolveBg(fallbackConfig)
   const base = {
     background: background || 'transparent',
     filter: getFilterValue(effect),
     hasPattern: false,
-    patternImage: resolveCoreBgPattern(config.patternId),
+    patternImage: resolveBgPattern(config.patternId),
     patternOpacity: getPatternOpacity(config.patternIntensity),
     patternColor: getPatternColor(config.patternTone),
     hasTexture: config.hasTexture,
@@ -206,20 +204,20 @@ export const resolveCoreBgRenderSpec = (
   }
 
   if (config.type === WALLPAPER_TYPE.NONE) {
-    return { ...base, kind: CORE_BG_RENDER_KIND.NONE }
+    return { ...base, kind: BG_RENDER_KIND.NONE }
   }
 
   if (config.type === WALLPAPER_TYPE.GRADIENT) {
-    const gradient = getActiveCoreBgGradientRecipe(config)
-    if (!gradient) return { ...base, kind: CORE_BG_RENDER_KIND.NONE }
+    const gradient = getActiveBgGradientRecipe(config)
+    if (!gradient) return { ...base, kind: BG_RENDER_KIND.NONE }
 
     if (isMeshGradientRecipe(gradient)) {
       const meshRecipe = normalizeMeshRecipe(gradient)
       return {
         ...base,
-        kind: CORE_BG_RENDER_KIND.MESH_GRADIENT,
+        kind: BG_RENDER_KIND.MESH_GRADIENT,
         hasPattern: config.hasPattern,
-        patternImage: resolveCoreBgPattern(config.patternId),
+        patternImage: resolveBgPattern(config.patternId),
         patternOpacity: getPatternOpacity(config.patternIntensity),
         patternColor: getPatternColor(config.patternTone),
         hasTexture: config.hasTexture,
@@ -234,10 +232,10 @@ export const resolveCoreBgRenderSpec = (
       ...base,
       kind:
         gradient.renderer === GRADIENT_RENDERER.RADIAL
-          ? CORE_BG_RENDER_KIND.RADIAL_GRADIENT
-          : CORE_BG_RENDER_KIND.LINEAR_GRADIENT,
+          ? BG_RENDER_KIND.RADIAL_GRADIENT
+          : BG_RENDER_KIND.LINEAR_GRADIENT,
       hasPattern: config.hasPattern,
-      patternImage: resolveCoreBgPattern(config.patternId),
+      patternImage: resolveBgPattern(config.patternId),
       patternOpacity: getPatternOpacity(config.patternIntensity),
       patternColor: getPatternColor(config.patternTone),
       hasTexture: config.hasTexture,
@@ -249,17 +247,17 @@ export const resolveCoreBgRenderSpec = (
   }
 
   if (!config.source) {
-    return { ...base, kind: CORE_BG_RENDER_KIND.NONE }
+    return { ...base, kind: BG_RENDER_KIND.NONE }
   }
 
   if (config.type === WALLPAPER_TYPE.PATTERN) {
-    const wallpaper = buildActiveCoreBgPatternWallpapers(config)[config.source] as
+    const wallpaper = buildActiveBgPatternWallpapers(config)[config.source] as
       | TWallpaperPic
       | undefined
 
     return {
       ...base,
-      kind: wallpaper?.image ? CORE_BG_RENDER_KIND.IMAGE : CORE_BG_RENDER_KIND.NONE,
+      kind: wallpaper?.image ? BG_RENDER_KIND.IMAGE : BG_RENDER_KIND.NONE,
       imageUrl: wallpaper?.image || '',
     }
   }
@@ -267,10 +265,10 @@ export const resolveCoreBgRenderSpec = (
   if (config.type === WALLPAPER_TYPE.UPLOAD) {
     return {
       ...base,
-      kind: config.source ? CORE_BG_RENDER_KIND.IMAGE : CORE_BG_RENDER_KIND.NONE,
+      kind: config.source ? BG_RENDER_KIND.IMAGE : BG_RENDER_KIND.NONE,
       imageUrl: config.source,
     }
   }
 
-  return { ...base, kind: CORE_BG_RENDER_KIND.NONE }
+  return { ...base, kind: BG_RENDER_KIND.NONE }
 }

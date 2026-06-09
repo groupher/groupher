@@ -2,7 +2,7 @@ import { isEmpty } from 'ramda'
 import { useRef, useState } from 'react'
 import type { CSSProperties, FC, PointerEvent, ReactNode } from 'react'
 
-import { parseCoreBgWallpaper } from '~/lib/coreBg/parse'
+import { parseBgWallpaper } from '~/lib/bg/parse'
 import { extractDominantColorFromImage } from '~/lib/imageColor/dominant'
 
 import {
@@ -232,7 +232,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     ? { x: GLASS_FRAME.PADDING_X, y: GLASS_FRAME.PADDING_Y }
     : undefined
   const wrapperBackgroundStyle: CSSProperties = hasWallpaper
-    ? { backgroundImage: parseCoreBgWallpaper(wallpapers, wallpaper).background }
+    ? { backgroundImage: parseBgWallpaper(wallpapers, wallpaper).background }
     : shouldShowTransparentGrid
       ? s.transparentGridStyle
       : {}

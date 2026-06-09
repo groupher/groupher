@@ -25,7 +25,7 @@ type TWallpaperTexture = {
 - `ascii.ts`: luminance-sampled ASCII glyph field.
 - `dots.ts`: regular dotted field where intensity controls visible dot count.
 - `index.ts`: Canvas dispatcher and preview/dataURL helpers.
-- `shader.ts`: WebGL texture registry and shader snippets consumed by `widgets/CoreBgRenderer/webgl.ts`.
+- `shader.ts`: WebGL texture registry and shader snippets consumed by `widgets/BgRenderer/webgl.ts`.
 
 Global texture constants and UI options live one level up in `../constant.ts`.
 Types in `../spec.d.ts` are derived from those constants.

@@ -5,26 +5,26 @@ import { useEffect, useRef, useState } from 'react'
 import { FADE_MS } from './constant'
 import { getFallbackStyle, getFilterLayerStyle, getPatternLayerStyle } from './helper'
 import useSalon, { cn } from './salon'
-import type { TCoreBgLayerProps } from './spec'
-import { createCoreBgWebglRenderer } from './webgl'
+import type { TBgLayerProps } from './spec'
+import { createBgWebglRenderer } from './webgl'
 
 /**
- * Renders one visual layer for a resolved CoreBg render spec.
+ * Renders one visual layer for a resolved Bg render spec.
  *
  * The layer owns WebGL lifecycle, CSS fallback, filter, and pattern overlay. The
  * parent renderer may keep two layers mounted during crossfade transitions.
  */
-export default function CoreBgLayer({
+export default function BgLayer({
   className,
   renderSpec,
   exiting = false,
   patternSize,
   textureScale,
   onExited,
-}: TCoreBgLayerProps) {
+}: TBgLayerProps) {
   const s = useSalon()
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const rendererRef = useRef<ReturnType<typeof createCoreBgWebglRenderer>>(null)
+  const rendererRef = useRef<ReturnType<typeof createBgWebglRenderer>>(null)
   const renderSpecRef = useRef(renderSpec)
   const [fadeOut, setFadeOut] = useState(false)
 
@@ -39,7 +39,7 @@ export default function CoreBgLayer({
 
     const mountRenderer = (): void => {
       rendererRef.current?.destroy()
-      rendererRef.current = createCoreBgWebglRenderer(canvas, textureScale)
+      rendererRef.current = createBgWebglRenderer(canvas, textureScale)
       rendererRef.current?.update(renderSpecRef.current)
     }
 

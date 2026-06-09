@@ -1,10 +1,10 @@
 import { GRADIENT_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
 import useTheme from '~/hooks/useTheme'
 import {
-  buildCoreBgGradientCatalogPalettes,
-  buildCoreBgGradientCatalogWallpapers,
-  buildCoreBgPatternCatalogWallpapers,
-} from '~/lib/coreBg/catalog'
+  buildBgGradientCatalogPalettes,
+  buildBgGradientCatalogWallpapers,
+  buildBgPatternCatalogWallpapers,
+} from '~/lib/bg/catalog'
 import type { TGradientRecipe } from '~/lib/wallpaperMesh'
 import type { TGradientPalette, TWallpaper, TWallpaperData } from '~/spec'
 import { resolveWallpaperThemeState, toWallpaperThemePatch } from '~/stores/wallpaper/helper'
@@ -25,15 +25,15 @@ export default function useFullWallpaper(): TRet {
   const { isDarkTheme } = useTheme()
 
   const getGradientWallpapers = (): Record<string, TGradientRecipe> => {
-    return buildCoreBgGradientCatalogWallpapers()
+    return buildBgGradientCatalogWallpapers()
   }
 
   const getGradientPalettes = (): Record<string, TGradientPalette> => {
-    return buildCoreBgGradientCatalogPalettes()
+    return buildBgGradientCatalogPalettes()
   }
 
   const getPatternWallpapers = (): Record<string, TWallpaper> => {
-    return buildCoreBgPatternCatalogWallpapers()
+    return buildBgPatternCatalogWallpapers()
   }
 
   const getWallpaper = (): TWallpaperData => {

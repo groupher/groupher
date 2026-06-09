@@ -24,36 +24,36 @@ type TPatternEffectState = {
 }
 
 /**
- * Returns the shared gradient recipe catalog for CoreBg selection UIs.
+ * Returns the shared gradient recipe catalog for Bg selection UIs.
  *
  * The clone lets editors patch the active recipe locally without mutating the
  * source catalog used by other previews or editor sessions.
  *
  * @example
- * const gradients = buildCoreBgGradientCatalogWallpapers()
+ * const gradients = buildBgGradientCatalogWallpapers()
  */
-export const buildCoreBgGradientCatalogWallpapers = (): Record<string, TGradientRecipe> =>
+export const buildBgGradientCatalogWallpapers = (): Record<string, TGradientRecipe> =>
   clone(GRADIENT_WALLPAPER)
 
 /**
  * Returns the shared gradient palette catalog for swatch grids.
  *
  * @example
- * const palettes = buildCoreBgGradientCatalogPalettes()
+ * const palettes = buildBgGradientCatalogPalettes()
  */
-export const buildCoreBgGradientCatalogPalettes = (): Record<string, TGradientPalette> =>
+export const buildBgGradientCatalogPalettes = (): Record<string, TGradientPalette> =>
   clone(GRADIENT_PALETTE)
 
 /**
- * Returns the shared picture catalog for CoreBg picture mode.
+ * Returns the shared picture catalog for Bg picture mode.
  *
  * Catalog items are normalized to no blur so editor-specific blur/brightness/
  * saturation are only applied to the active selection.
  *
  * @example
- * const pictures = buildCoreBgPatternCatalogWallpapers()
+ * const pictures = buildBgPatternCatalogWallpapers()
  */
-export const buildCoreBgPatternCatalogWallpapers = (): Record<string, TWallpaper> => {
+export const buildBgPatternCatalogWallpapers = (): Record<string, TWallpaper> => {
   const wallpapers = clone(PATTERN_WALLPAPER)
 
   for (const wallpaper of Object.values(wallpapers) as TWallpaperPic[]) {
@@ -70,9 +70,9 @@ export const buildCoreBgPatternCatalogWallpapers = (): Record<string, TWallpaper
  * spread, renderer, or angle.
  *
  * @example
- * const wallpapers = buildActiveCoreBgGradientWallpapers({ source, type, gradient })
+ * const wallpapers = buildActiveBgGradientWallpapers({ source, type, gradient })
  */
-export const buildActiveCoreBgGradientWallpapers = (
+export const buildActiveBgGradientWallpapers = (
   state: TGradientEffectState,
 ): Record<string, TGradientRecipe> => {
   const wallpapers = clone(GRADIENT_WALLPAPER)
@@ -88,7 +88,7 @@ export const buildActiveCoreBgGradientWallpapers = (
  * Returns picture catalog data with active visual effects applied to the selected item.
  *
  * @example
- * const wallpapers = buildActiveCoreBgPatternWallpapers({
+ * const wallpapers = buildActiveBgPatternWallpapers({
  *   source,
  *   type,
  *   blurIntensity,
@@ -96,7 +96,7 @@ export const buildActiveCoreBgGradientWallpapers = (
  *   saturation,
  * })
  */
-export const buildActiveCoreBgPatternWallpapers = (
+export const buildActiveBgPatternWallpapers = (
   state: TPatternEffectState,
 ): Record<string, TWallpaper> => {
   const wallpapers = clone(PATTERN_WALLPAPER)

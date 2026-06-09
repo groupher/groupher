@@ -19,16 +19,16 @@ const DEFAULT_SATURATION = 100
 const MAX_BLUR_PX = 6
 
 /**
- * Resolves the shared CoreBg pattern asset for CSS masks and CSS fallbacks.
+ * Resolves the shared Bg pattern asset for CSS masks and CSS fallbacks.
  *
  * Wallpaper and CoverEditor may expose different UI affordances, but their
  * pattern IDs resolve through the same catalog so preview, runtime rendering,
  * and export can point at the same bitmap asset.
  *
  * @example
- * const patternImage = resolveCoreBgPattern('unicorn')
+ * const patternImage = resolveBgPattern('unicorn')
  */
-export const resolveCoreBgPattern = (patternId?: string): string => {
+export const resolveBgPattern = (patternId?: string): string => {
   const pattern = WALLPAPER_PATTERN[patternId || DEFAULT_WALLPAPER_PATTERN_ID]
 
   return pattern?.image || WALLPAPER_PATTERN[DEFAULT_WALLPAPER_PATTERN_ID]?.image || ''
@@ -56,21 +56,21 @@ const buildFilterEffect = ({
 }
 
 /**
- * Parses a CoreBg source catalog entry or custom value into CSS fallback output.
+ * Parses a Bg source catalog entry or custom value into CSS fallback output.
  *
  * The fallback string is intentionally limited to CSS-compatible effects. WebGL
- * texture, mesh, and export paths consume `TCoreBgRenderSpec` instead of this
+ * texture, mesh, and export paths consume `TBgRenderSpec` instead of this
  * CSS-only shape.
  *
  * @example
- * const css = parseCoreBgWallpaper(wallpapers, source, customWallpaper)
+ * const css = parseBgWallpaper(wallpapers, source, customWallpaper)
  */
-export const parseCoreBgWallpaper = (
+export const parseBgWallpaper = (
   wallpapers: Record<string, TWallpaper | TGradientRecipe>,
   name: string,
   customWallpaper?: TCustomWallpaper,
 ): TWallpaperFmt => {
-  if (customWallpaper) return parseResolvedCoreBgWallpaper(wallpapers[name], customWallpaper)
+  if (customWallpaper) return parseResolvedBgWallpaper(wallpapers[name], customWallpaper)
 
   if (isEmpty(name)) {
     return {
@@ -79,39 +79,39 @@ export const parseCoreBgWallpaper = (
     }
   }
 
-  return parseResolvedCoreBgWallpaper(wallpapers[name], customWallpaper)
+  return parseResolvedBgWallpaper(wallpapers[name], customWallpaper)
 }
 
-const parseResolvedCoreBgWallpaper = (
+const parseResolvedBgWallpaper = (
   wallpaper: TWallpaper | TGradientRecipe,
   customWallpaper?: TCustomWallpaper,
 ): TWallpaperFmt => {
   if (customWallpaper) {
     return 'colors' in customWallpaper
-      ? parseCoreBgGradientBackground(customWallpaper)
-      : parseCoreBgPicBackground(customWallpaper)
+      ? parseBgGradientBackground(customWallpaper)
+      : parseBgPicBackground(customWallpaper)
   }
-  if (wallpaper && 'renderer' in wallpaper) return parseCoreBgGradientRecipe(wallpaper)
+  if (wallpaper && 'renderer' in wallpaper) return parseBgGradientRecipe(wallpaper)
 
   // Legacy cover gradients still arrive as `TWallpaperGradient` entries until
   // CoverEditor moves to `TGradientRecipe`; keep this branch as the compatibility
   // bridge for the old catalog shape.
   return wallpaper && 'colors' in wallpaper
-    ? parseCoreBgGradientBackground(wallpaper as TWallpaperGradient)
-    : parseCoreBgPicBackground(wallpaper as TWallpaperPic)
+    ? parseBgGradientBackground(wallpaper as TWallpaperGradient)
+    : parseBgPicBackground(wallpaper as TWallpaperPic)
 }
 
 /**
  * Converts a gradient recipe into the CSS fallback background string.
  *
- * Renderer code uses the same recipe object in `TCoreBgRenderSpec`, while this
+ * Renderer code uses the same recipe object in `TBgRenderSpec`, while this
  * helper provides the CSS fallback used before WebGL paints or when WebGL is not
  * available.
  *
  * @example
- * const { background } = parseCoreBgGradientRecipe(recipe, { hasPattern: true })
+ * const { background } = parseBgGradientRecipe(recipe, { hasPattern: true })
  */
-export const parseCoreBgGradientRecipe = (
+export const parseBgGradientRecipe = (
   gradient: TGradientRecipe,
   {
     hasPattern = false,
@@ -127,7 +127,7 @@ export const parseCoreBgGradientRecipe = (
     saturation?: number
   } = {},
 ): TWallpaperFmt => {
-  const patternPic = resolveCoreBgPattern(patternId)
+  const patternPic = resolveBgPattern(patternId)
   const background = buildGradientBackground(gradient)
   const effect = buildFilterEffect({ blurIntensity, brightness, saturation })
 
@@ -137,7 +137,7 @@ export const parseCoreBgGradientRecipe = (
   }
 }
 
-const parseCoreBgGradientBackground = (gradient: TWallpaperGradient): TWallpaperFmt => {
+const parseBgGradientBackground = (gradient: TWallpaperGradient): TWallpaperFmt => {
   const DIR = '/wallpaper'
   const { direction, hasPattern, blurIntensity, brightness, saturation } = gradient
   const colors = gradient.colors.join(',')
@@ -164,7 +164,7 @@ const formatGradientDirection = (direction = '180deg'): string => {
   return `to ${direction$}`
 }
 
-const parseCoreBgPicBackground = (pic: TWallpaperPic): TWallpaperFmt => {
+const parseBgPicBackground = (pic: TWallpaperPic): TWallpaperFmt => {
   if (!pic) {
     return {
       effect: '',

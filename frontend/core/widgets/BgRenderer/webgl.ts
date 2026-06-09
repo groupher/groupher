@@ -1,6 +1,6 @@
 import { WALLPAPER_BG_SIZE } from '~/const/wallpaper'
-import { CORE_BG_RENDER_KIND } from '~/lib/coreBg/constant'
-import type { TCoreBgRenderSpec } from '~/lib/coreBg/spec'
+import { BG_RENDER_KIND } from '~/lib/bg/constant'
+import type { TBgRenderSpec } from '~/lib/bg/spec'
 import { GRADIENT_RENDERER, WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 import {
   TEXTURE_SHADER_BRANCHES,
@@ -355,20 +355,20 @@ ${TEXTURE_SHADER_UV}
 `
 
 const MODE = {
-  [CORE_BG_RENDER_KIND.NONE]: 0,
-  [CORE_BG_RENDER_KIND.LINEAR_GRADIENT]: 1,
-  [CORE_BG_RENDER_KIND.RADIAL_GRADIENT]: 2,
-  [CORE_BG_RENDER_KIND.MESH_GRADIENT]: 3,
-  [CORE_BG_RENDER_KIND.IMAGE]: 4,
+  [BG_RENDER_KIND.NONE]: 0,
+  [BG_RENDER_KIND.LINEAR_GRADIENT]: 1,
+  [BG_RENDER_KIND.RADIAL_GRADIENT]: 2,
+  [BG_RENDER_KIND.MESH_GRADIENT]: 3,
+  [BG_RENDER_KIND.IMAGE]: 4,
 } as const
 
-const getDprCap = (renderSpec: TCoreBgRenderSpec | null): number => {
+const getDprCap = (renderSpec: TBgRenderSpec | null): number => {
   if (renderSpec?.hasTexture && renderSpec.texture.type === WALLPAPER_TEXTURE.OIL) {
     return OIL_TEXTURE_DPR_CAP
   }
 
   if (
-    renderSpec?.kind === CORE_BG_RENDER_KIND.MESH_GRADIENT &&
+    renderSpec?.kind === BG_RENDER_KIND.MESH_GRADIENT &&
     renderSpec.meshRecipe?.renderer === GRADIENT_RENDERER.FLOW
   ) {
     return FLOW_DPR_CAP
@@ -505,13 +505,13 @@ const getUniforms = (gl: WebGLRenderingContext, program: WebGLProgram): TUniform
   textureScale: gl.getUniformLocation(program, 'uTextureScale'),
 })
 
-const textureTypeToUniform = (renderSpec: TCoreBgRenderSpec): number => {
+const textureTypeToUniform = (renderSpec: TBgRenderSpec): number => {
   if (!renderSpec.hasTexture) return 0
 
   return TEXTURE_TYPE[renderSpec.texture.type] ?? 0
 }
 
-class CoreBgWebglRenderer {
+class BgWebglRenderer {
   private readonly canvas: HTMLCanvasElement
   private readonly gl: WebGLRenderingContext
   private readonly program: WebGLProgram
@@ -520,7 +520,7 @@ class CoreBgWebglRenderer {
   private readonly imageTexture: WebGLTexture
   private readonly textureScale: number
   private frame: number | null = null
-  private renderSpec: TCoreBgRenderSpec | null = null
+  private renderSpec: TBgRenderSpec | null = null
   private imageUrl = ''
   private imageWidth = 1
   private imageHeight = 1
@@ -548,14 +548,14 @@ class CoreBgWebglRenderer {
     this.prepare()
   }
 
-  update(renderSpec: TCoreBgRenderSpec): void {
+  update(renderSpec: TBgRenderSpec): void {
     this.renderSpec = renderSpec
 
-    if (renderSpec.kind === CORE_BG_RENDER_KIND.IMAGE && renderSpec.imageUrl !== this.imageUrl) {
+    if (renderSpec.kind === BG_RENDER_KIND.IMAGE && renderSpec.imageUrl !== this.imageUrl) {
       this.loadImage(renderSpec.imageUrl)
     }
 
-    if (renderSpec.kind !== CORE_BG_RENDER_KIND.IMAGE) {
+    if (renderSpec.kind !== BG_RENDER_KIND.IMAGE) {
       this.imageUrl = ''
       this.imageReady = false
     }
@@ -741,10 +741,10 @@ class CoreBgWebglRenderer {
   }
 }
 
-export const createCoreBgWebglRenderer = (
+export const createBgWebglRenderer = (
   canvas: HTMLCanvasElement,
   textureScale = 1,
-): CoreBgWebglRenderer | null => {
+): BgWebglRenderer | null => {
   const gl = canvas.getContext('webgl', {
     alpha: true,
     antialias: false,
@@ -761,5 +761,5 @@ export const createCoreBgWebglRenderer = (
   const imageTexture = gl.createTexture()
   if (!program || !vertexBuffer || !imageTexture) return null
 
-  return new CoreBgWebglRenderer(canvas, gl, program, vertexBuffer, imageTexture, textureScale)
+  return new BgWebglRenderer(canvas, gl, program, vertexBuffer, imageTexture, textureScale)
 }

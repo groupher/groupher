@@ -2,26 +2,26 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import type { TCoreBgRenderSpec } from '~/lib/coreBg/spec'
+import type { TBgRenderSpec } from '~/lib/bg/spec'
 
-import CoreBgLayer from './CoreBgLayer'
+import BgLayer from './BgLayer'
 import { getVisualIdentity, preloadImage, shouldCrossfade } from './helper'
 import useSalon, { cn } from './salon'
 import type { TProps } from './spec'
 
 /**
- * Shared runtime renderer for CoreBg backgrounds.
+ * Shared runtime renderer for Bg backgrounds.
  *
  * This is used for the global Wallpaper through `WallpaperRenderer`, and it is
  * also the component CoverEditor should use for background previews/runtime
- * rendering once Cover adopts CoreBg. It receives a render spec instead of
+ * rendering once Cover adopts Bg. It receives a render spec instead of
  * reading module stores, so business adapters stay outside the common layer.
  *
  * @example
- * const renderSpec = resolveCoreBgRenderSpec(bg)
- * return <CoreBgRenderer renderSpec={renderSpec} />
+ * const renderSpec = resolveBgRenderSpec(bg)
+ * return <BgRenderer renderSpec={renderSpec} />
  */
-export default function CoreBgRenderer({
+export default function BgRenderer({
   className,
   renderSpec,
   patternSize = 'auto',
@@ -30,13 +30,13 @@ export default function CoreBgRenderer({
   textureScale = 1,
 }: TProps) {
   const s = useSalon()
-  const [activeSpec, setActiveSpec] = useState<TCoreBgRenderSpec>(renderSpec)
-  const [exitingSpec, setExitingSpec] = useState<TCoreBgRenderSpec | null>(null)
+  const [activeSpec, setActiveSpec] = useState<TBgRenderSpec>(renderSpec)
+  const [exitingSpec, setExitingSpec] = useState<TBgRenderSpec | null>(null)
   const committedSpecRef = useRef(renderSpec)
   const activeSpecRef = useRef(renderSpec)
   const transitionTokenRef = useRef(0)
 
-  const applySpec = useCallback((nextSpec: TCoreBgRenderSpec) => {
+  const applySpec = useCallback((nextSpec: TBgRenderSpec) => {
     const previousSpec = activeSpecRef.current
     const shouldAnimate = shouldCrossfade(previousSpec, nextSpec)
     const transitionToken = transitionTokenRef.current + 1
@@ -72,9 +72,9 @@ export default function CoreBgRenderer({
 
   return (
     <div className={cn(positioned && s.wrapperPositioned, s.wrapper, className)} aria-hidden='true'>
-      <CoreBgLayer renderSpec={activeSpec} patternSize={patternSize} textureScale={textureScale} />
+      <BgLayer renderSpec={activeSpec} patternSize={patternSize} textureScale={textureScale} />
       {exitingSpec && (
-        <CoreBgLayer
+        <BgLayer
           key={getVisualIdentity(exitingSpec)}
           renderSpec={exitingSpec}
           exiting

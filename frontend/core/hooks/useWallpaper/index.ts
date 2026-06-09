@@ -3,32 +3,27 @@
 import { useMemo } from 'react'
 
 import useTheme from '~/hooks/useTheme'
-import {
-  resolveCoreBg,
-  resolveCoreBgRenderSpec,
-  toCoreBgConfig,
-  toCoreBgCssConfig,
-} from '~/lib/coreBg/resolve'
-import type { TCoreBgRenderSpec } from '~/lib/coreBg/spec'
+import { resolveBg, resolveBgRenderSpec, toBgConfig, toBgCssConfig } from '~/lib/bg/resolve'
+import type { TBgRenderSpec } from '~/lib/bg/spec'
 import type { TWallpaperFmt } from '~/spec'
 import { resolveWallpaperThemeState } from '~/stores/wallpaper/helper'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 import type { TStore } from '~/stores/wallpaper/spec'
 import type { TWallpaperThemeState } from '~/stores/wallpaper/spec'
-import { getCoreBgRendererFallbackConfig } from '~/widgets/CoreBgRenderer/helper'
+import { getBgRendererFallbackConfig } from '~/widgets/BgRenderer/helper'
 
 type TRet = { source: string; hasShadow: boolean } & TWallpaperFmt
 
-export const toWallpaperCoreBgConfig = (
+export const toWallpaperBgConfig = (
   store: Pick<TStore, keyof TWallpaperThemeState>,
-): TWallpaperThemeState => ({ ...toCoreBgConfig(store), hasShadow: store.hasShadow })
+): TWallpaperThemeState => ({ ...toBgConfig(store), hasShadow: store.hasShadow })
 
-const toWallpaperCoreBgCssConfig = (
+const toWallpaperBgCssConfig = (
   store: Pick<TStore, keyof TWallpaperThemeState>,
-): TWallpaperThemeState => ({ ...toCoreBgCssConfig(store), hasShadow: store.hasShadow })
+): TWallpaperThemeState => ({ ...toBgCssConfig(store), hasShadow: store.hasShadow })
 
 export const resolveWallpaper = (state: TWallpaperThemeState): TRet => {
-  const parsed = resolveCoreBg(state)
+  const parsed = resolveBg(state)
 
   return {
     ...parsed,
@@ -36,16 +31,14 @@ export const resolveWallpaper = (state: TWallpaperThemeState): TRet => {
   }
 }
 
-export const resolveWallpaperCoreBgRenderSpec = (
-  state: TWallpaperThemeState,
-): TCoreBgRenderSpec => {
-  return resolveCoreBgRenderSpec(state, getCoreBgRendererFallbackConfig(state))
+export const resolveWallpaperBgRenderSpec = (state: TWallpaperThemeState): TBgRenderSpec => {
+  return resolveBgRenderSpec(state, getBgRendererFallbackConfig(state))
 }
 
 export default function useWallpaper(): TRet {
   const store = useWallpaperDomain()
   const { isDarkTheme } = useTheme()
-  const state = toWallpaperCoreBgCssConfig(resolveWallpaperThemeState(store, isDarkTheme))
+  const state = toWallpaperBgCssConfig(resolveWallpaperThemeState(store, isDarkTheme))
 
   return useMemo(
     () => resolveWallpaper(state),
@@ -67,13 +60,13 @@ export default function useWallpaper(): TRet {
   )
 }
 
-export function useWallpaperCoreBgRenderSpec(): TCoreBgRenderSpec {
+export function useWallpaperBgRenderSpec(): TBgRenderSpec {
   const store = useWallpaperDomain()
   const { isDarkTheme } = useTheme()
-  const state = toWallpaperCoreBgConfig(resolveWallpaperThemeState(store, isDarkTheme))
+  const state = toWallpaperBgConfig(resolveWallpaperThemeState(store, isDarkTheme))
 
   return useMemo(
-    () => resolveWallpaperCoreBgRenderSpec(state),
+    () => resolveWallpaperBgRenderSpec(state),
     [
       state.source,
       state.hasPattern,

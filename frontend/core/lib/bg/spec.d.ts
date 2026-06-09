@@ -6,7 +6,7 @@ import type {
   TWallpaperType,
 } from '~/spec'
 
-import type { CORE_BG_RENDER_KIND } from './constant'
+import type { BG_RENDER_KIND } from './constant'
 
 /**
  * Single-theme core background config.
@@ -16,7 +16,7 @@ import type { CORE_BG_RENDER_KIND } from './constant'
  * transform/frame/magnifier settings.
  *
  * @example
- * const bg: TCoreBgConfig = {
+ * const bg: TBgConfig = {
  *   type: WALLPAPER_TYPE.GRADIENT,
  *   source: 'amber_mauve',
  *   gradient: GRADIENT_WALLPAPER.amber_mauve,
@@ -33,7 +33,7 @@ import type { CORE_BG_RENDER_KIND } from './constant'
  *   texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
  * }
  */
-export type TCoreBgConfig = {
+export type TBgConfig = {
   customWallpaper: TCustomWallpaper
   source: string
   type: TWallpaperType
@@ -63,25 +63,25 @@ export type TCoreBgConfig = {
  * @example
  * const current = theme === THEME.DARK ? themeBg.dark : themeBg.light
  */
-export type TCoreThemeBgConfig = {
-  light: TCoreBgConfig
-  dark: TCoreBgConfig
+export type TBgThemeConfig = {
+  light: TBgConfig
+  dark: TBgConfig
 }
 
-export type TCoreBgRenderKind = CORE_BG_RENDER_KIND
+export type TBgRenderKind = BG_RENDER_KIND
 
 /**
  * Renderer-ready description of a core background.
  *
- * `CoreBgRenderer` and the future frontend export path should consume this same
+ * `BgRenderer` and the future frontend export path should consume this same
  * render spec so runtime preview and static image export cannot drift apart.
  *
  * @example
- * const renderSpec = resolveCoreBgRenderSpec(bg)
- * return <CoreBgRenderer renderSpec={renderSpec} />
+ * const renderSpec = resolveBgRenderSpec(bg)
+ * return <BgRenderer renderSpec={renderSpec} />
  */
-export type TCoreBgRenderSpec = {
-  kind: TCoreBgRenderKind
+export type TBgRenderSpec = {
+  kind: TBgRenderKind
   background: string
   filter: string
   hasPattern: boolean

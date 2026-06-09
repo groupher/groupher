@@ -1,5 +1,5 @@
 import { COVER_GRADIENT_WALLPAPER } from '~/const/wallpaper'
-import { parseCoreBgWallpaper } from '~/lib/coreBg/parse'
+import { parseBgWallpaper } from '~/lib/bg/parse'
 import type { TWallpaper } from '~/spec'
 
 import useLogic from '../../../../useLogic'
@@ -35,7 +35,7 @@ export default function Color({ wallpapers, wallpaper }: TProps) {
           >
             <span
               className={s.imageBlock}
-              style={{ background: parseCoreBgWallpaper(wallpapers, themeName).background }}
+              style={{ background: parseBgWallpaper(wallpapers, themeName).background }}
             />
           </button>
         ))}

@@ -1,4 +1,4 @@
-import type { TCoreBgRenderSpec } from '~/lib/coreBg/spec'
+import type { TBgRenderSpec } from '~/lib/bg/spec'
 
 /**
  * Optional preview subscription hook for adapter components.
@@ -7,38 +7,38 @@ import type { TCoreBgRenderSpec } from '~/lib/coreBg/spec'
  * skip it and pass render spec changes directly from its active editor draft.
  *
  * @example
- * const previewSubscriber: TCoreBgPreviewSubscriber = (listener) =>
+ * const previewSubscriber: TBgPreviewSubscriber = (listener) =>
  *   subscribePreview((state) => listener(state ? resolveSpec(state) : null))
  */
-export type TCoreBgPreviewSubscriber = (
-  listener: (renderSpec: TCoreBgRenderSpec | null) => void,
+export type TBgPreviewSubscriber = (
+  listener: (renderSpec: TBgRenderSpec | null) => void,
 ) => () => void
 
 /**
- * Props for the shared CoreBg renderer.
+ * Props for the shared Bg renderer.
  *
  * This component renders actual backgrounds, not only thumbnails. Global Wallpaper,
  * Wallpaper previews, and CoverEditor backgrounds should all use this component
- * with render specs produced by `resolveCoreBgRenderSpec`.
+ * with render specs produced by `resolveBgRenderSpec`.
  *
  * @example
- * <CoreBgRenderer renderSpec={renderSpec} className="absolute inset-0" />
+ * <BgRenderer renderSpec={renderSpec} className="absolute inset-0" />
  */
 export type TProps = {
   className?: string
-  renderSpec: TCoreBgRenderSpec
+  renderSpec: TBgRenderSpec
   patternSize?: string
   positioned?: boolean
-  previewSubscriber?: TCoreBgPreviewSubscriber
+  previewSubscriber?: TBgPreviewSubscriber
   textureScale?: number
 }
 
 /**
  * Internal layer props used for active/exiting crossfade layers.
  */
-export type TCoreBgLayerProps = {
+export type TBgLayerProps = {
   className?: string
-  renderSpec: TCoreBgRenderSpec
+  renderSpec: TBgRenderSpec
   exiting?: boolean
   patternSize: string
   textureScale: number
