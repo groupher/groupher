@@ -10,7 +10,6 @@ import { resolveWallpaperThemeState } from '~/stores/wallpaper/helper'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 import type { TStore } from '~/stores/wallpaper/spec'
 import type { TWallpaperThemeState } from '~/stores/wallpaper/spec'
-import { getBgRendererFallbackConfig } from '~/widgets/BgRenderer/helper'
 
 type TRet = { source: string; hasShadow: boolean } & TWallpaperFmt
 
@@ -32,7 +31,7 @@ export const resolveWallpaper = (state: TWallpaperThemeState): TRet => {
 }
 
 export const resolveWallpaperBgRenderSpec = (state: TWallpaperThemeState): TBgRenderSpec => {
-  return resolveBgRenderSpec(state, getBgRendererFallbackConfig(state))
+  return resolveBgRenderSpec(state)
 }
 
 export default function useWallpaper(): TRet {

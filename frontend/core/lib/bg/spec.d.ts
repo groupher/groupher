@@ -1,6 +1,7 @@
 import type { TGradientRecipe, TMeshGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
 import type {
   TCustomWallpaper,
+  TWallpaper,
   TWallpaperBgSize,
   TWallpaperPatternTone,
   TWallpaperType,
@@ -51,6 +52,14 @@ export type TBgConfig = {
   texture: TWallpaperTexture
 
   bgSize: TWallpaperBgSize
+}
+
+export type TBgResolveOptions = {
+  pictureCatalog?: Record<string, TWallpaper>
+}
+
+export type TBgRenderResolveOptions = TBgResolveOptions & {
+  fallbackConfig?: TBgConfig
 }
 
 /**

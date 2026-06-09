@@ -15,7 +15,7 @@ import type { TStore, TWallpaperThemeState } from '~/stores/wallpaper/spec'
 import { buildActiveBgGradientWallpapers, buildActiveBgPatternWallpapers } from './catalog'
 import { BG_RENDER_TYPE } from './constant'
 import { parseBgGradientRecipe, parseBgWallpaper, resolveBgPattern } from './parse'
-import type { TBgConfig, TBgRenderSpec } from './spec'
+import type { TBgConfig, TBgRenderResolveOptions, TBgRenderSpec, TBgResolveOptions } from './spec'
 
 type TResolvedBg = { source: string } & TWallpaperFmt
 
@@ -39,6 +39,11 @@ const getActiveBgGradientRecipe = (config: TBgConfig): TGradientRecipe | null =>
 
   return config.gradient || gradientWallpapers[config.source] || null
 }
+
+const getBgRenderFallbackConfig = (config: TBgConfig): TBgConfig =>
+  config.type === WALLPAPER_TYPE.GRADIENT && config.hasPattern
+    ? { ...config, hasPattern: false }
+    : config
 
 /**
  * Maps the current Wallpaper store shape into the common single-theme Bg shape.
@@ -89,7 +94,7 @@ export const toBgCssConfig = (store: Pick<TStore, keyof TWallpaperThemeState>): 
  * @example
  * const { background, effect } = resolveBg(bg)
  */
-export const resolveBg = (config: TBgConfig): TResolvedBg => {
+export const resolveBg = (config: TBgConfig, options: TBgResolveOptions = {}): TResolvedBg => {
   const {
     source,
     hasPattern,
@@ -102,6 +107,7 @@ export const resolveBg = (config: TBgConfig): TResolvedBg => {
     type,
     bgSize,
   } = config
+  const { pictureCatalog } = options
   let customWallpaper = customWallpaperValue
 
   if (
@@ -127,13 +133,16 @@ export const resolveBg = (config: TBgConfig): TResolvedBg => {
     }
   }
 
-  const patternWallpapers = buildActiveBgPatternWallpapers({
-    source,
-    type,
-    blurIntensity,
-    brightness,
-    saturation,
-  })
+  const patternWallpapers = buildActiveBgPatternWallpapers(
+    {
+      source,
+      type,
+      blurIntensity,
+      brightness,
+      saturation,
+    },
+    pictureCatalog,
+  )
 
   const gradientWallpapers = buildActiveBgGradientWallpapers({ source, type, gradient })
 
@@ -168,19 +177,20 @@ export const resolveBg = (config: TBgConfig): TResolvedBg => {
  * previews, and frontend static export should all consume this render spec rather
  * than re-implementing gradient, pattern, texture, or image logic.
  *
- * Pass `fallbackConfig` when the renderer needs a CSS fallback that differs from
- * the WebGL layer, such as stripping pattern from the fallback while rendering
- * pattern as a separate overlay.
+ * The default fallback is renderer-safe: gradient patterns are stripped from
+ * the CSS fallback because `BgRenderer` renders pattern as a separate overlay.
+ * Pass `options.fallbackConfig` only for a custom non-renderer fallback.
  *
  * @example
- * const renderSpec = resolveBgRenderSpec(bg, fallbackBg)
+ * const renderSpec = resolveBgRenderSpec(bg)
  * return <BgRenderer renderSpec={renderSpec} />
  */
 export const resolveBgRenderSpec = (
   config: TBgConfig,
-  fallbackConfig: TBgConfig = config,
+  options: TBgRenderResolveOptions = {},
 ): TBgRenderSpec => {
-  const { background, effect } = resolveBg(fallbackConfig)
+  const fallbackConfig = options.fallbackConfig ?? getBgRenderFallbackConfig(config)
+  const { background, effect } = resolveBg(fallbackConfig, options)
   const base = {
     background: background || 'transparent',
     filter: getFilterValue(effect),
@@ -251,9 +261,9 @@ export const resolveBgRenderSpec = (
   }
 
   if (config.type === WALLPAPER_TYPE.PATTERN) {
-    const wallpaper = buildActiveBgPatternWallpapers(config)[config.source] as
-      | TWallpaperPic
-      | undefined
+    const wallpaper = buildActiveBgPatternWallpapers(config, options.pictureCatalog)[
+      config.source
+    ] as TWallpaperPic | undefined
 
     return {
       ...base,

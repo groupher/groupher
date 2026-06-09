@@ -1,23 +1,7 @@
 import type { CSSProperties } from 'react'
 
-import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import { BG_RENDER_TYPE } from '~/lib/bg/constant'
-import type { TBgConfig, TBgRenderSpec } from '~/lib/bg/spec'
-
-/**
- * Builds the CSS fallback input used behind the WebGL Bg layer.
- *
- * The renderer draws gradient patterns as a separate opacity-controlled overlay,
- * so the fallback background must be pattern-free to avoid a full-opacity pattern
- * flash before WebGL and the overlay finish painting.
- *
- * @example
- * const renderSpec = resolveBgRenderSpec(bg, getBgRendererFallbackConfig(bg))
- */
-export const getBgRendererFallbackConfig = (config: TBgConfig): TBgConfig =>
-  config.type === WALLPAPER_TYPE.GRADIENT && config.hasPattern
-    ? { ...config, hasPattern: false }
-    : config
+import type { TBgRenderSpec } from '~/lib/bg/spec'
 
 export const getFallbackStyle = (renderSpec: TBgRenderSpec): CSSProperties => ({
   background: renderSpec.background,

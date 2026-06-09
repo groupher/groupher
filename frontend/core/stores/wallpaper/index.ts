@@ -45,6 +45,20 @@ export const INITIAL_WALLPAPER_STATE = {
   bgSizeDark: WALLPAPER_BG_SIZE.COVER,
 } satisfies TWallpaperState
 
+/**
+ * Builds the initial wallpaper state from SSR data or defaults.
+ *
+ * Wallpaper stores build gradient recipes eagerly — when SSR delivers a
+ * `source` without `gradient`, this function resolves it from the catalog
+ * so the store always holds a ready-to-render `TGradientRecipe`.
+ *
+ * CoverEditor and new consumers that prefer lazy resolution do the
+ * equivalent in their own adapter layer instead of relying on this.
+ *
+ * @example
+ * const state = resolveInitialWallpaperState({ source: 'sky', type: 'gradient' })
+ * // state.gradient === GRADIENT_WALLPAPER.sky
+ */
 const resolveInitialWallpaperState = (init: TInit): TWallpaperState => {
   const state = {
     ...INITIAL_WALLPAPER_STATE,

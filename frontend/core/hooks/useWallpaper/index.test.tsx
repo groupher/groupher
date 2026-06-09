@@ -11,6 +11,7 @@ import {
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import useWallpaper, { resolveWallpaperBgRenderSpec } from '~/hooks/useWallpaper'
 import { BG_RENDER_TYPE } from '~/lib/bg/constant'
+import { resolveBgRenderSpec } from '~/lib/bg/resolve'
 import {
   buildGradientRecipeForRenderer,
   GRADIENT_RENDERER,
@@ -195,7 +196,7 @@ describe('useWallpaper', () => {
   })
 
   it('keeps gradient pattern out of the renderer fallback background', () => {
-    const renderSpec = resolveWallpaperBgRenderSpec({
+    const bg = {
       customWallpaper: null,
       source: GRADIENT_WALLPAPER_NAME.STONE_GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
@@ -211,12 +212,45 @@ describe('useWallpaper', () => {
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
       bgSize: WALLPAPER_BG_SIZE.COVER,
-    })
+    }
+    const renderSpec = resolveWallpaperBgRenderSpec(bg)
+    const directRenderSpec = resolveBgRenderSpec(bg)
 
     expect(renderSpec.hasPattern).toBe(true)
     expect(renderSpec.patternOpacity).toBe(0.1)
     expect(renderSpec.background).toContain('linear-gradient(90deg')
     expect(renderSpec.background).not.toContain('/wallpaper/pattern/')
+    expect(directRenderSpec.background).not.toContain('/wallpaper/pattern/')
+  })
+
+  it('resolves picture wallpaper from adapter-owned catalog', () => {
+    const renderSpec = resolveBgRenderSpec(
+      {
+        customWallpaper: null,
+        source: 'cover-only-picture',
+        type: WALLPAPER_TYPE.PATTERN,
+        hasPattern: false,
+        patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+        patternIntensity: 0,
+        patternTone: WALLPAPER_PATTERN_TONE.DARK,
+        hasTexture: false,
+        gradient: null,
+        blurIntensity: 0,
+        brightness: 100,
+        saturation: 100,
+        texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
+        bgSize: WALLPAPER_BG_SIZE.COVER,
+      },
+      {
+        pictureCatalog: {
+          'cover-only-picture': { image: '/cover/picture/custom.webp' },
+        },
+      },
+    )
+
+    expect(renderSpec.type).toBe(BG_RENDER_TYPE.IMAGE)
+    expect(renderSpec.imageUrl).toBe('/cover/picture/custom.webp')
+    expect(renderSpec.background).toBe('url(/cover/picture/custom.webp) center / cover no-repeat')
   })
 
   it('normalizes linear gradient spread as a centered transition band', () => {

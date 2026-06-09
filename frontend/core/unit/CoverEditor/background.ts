@@ -1,6 +1,7 @@
 import {
   COVER_GRADIENT_WALLPAPER,
   DEFAULT_WALLPAPER_PATTERN_ID,
+  PATTERN_WALLPAPER,
   WALLPAPER_BG_SIZE,
   WALLPAPER_PATTERN_TONE,
   WALLPAPER_TYPE,
@@ -13,8 +14,7 @@ import {
   buildGradientRecipeForRenderer,
   type TGradientRecipe,
 } from '~/lib/wallpaperMesh'
-import type { TGradientPalette, TWallpaperGradient } from '~/spec'
-import { getBgRendererFallbackConfig } from '~/widgets/BgRenderer/helper'
+import type { TGradientPalette, TWallpaperGradient, TWallpaperPic } from '~/spec'
 
 const COVER_DEFAULT_GRADIENT = {
   LIGHT: 'pink',
@@ -67,6 +67,8 @@ export const COVER_GRADIENT_PALETTE = Object.fromEntries(
   ]),
 ) as Record<string, TGradientPalette>
 
+export const COVER_PICTURE_WALLPAPER = PATTERN_WALLPAPER as Record<string, TWallpaperPic>
+
 export const buildCoverGradientRecipe = (
   source: string,
   renderer = GRADIENT_RENDERER.LINEAR,
@@ -113,4 +115,4 @@ export const createCoverBgThemeConfig = (): TBgThemeConfig => ({
 })
 
 export const resolveCoverBgRenderSpec = (background: TBgConfig): TBgRenderSpec =>
-  resolveBgRenderSpec(background, getBgRendererFallbackConfig(background))
+  resolveBgRenderSpec(background, { pictureCatalog: COVER_PICTURE_WALLPAPER })

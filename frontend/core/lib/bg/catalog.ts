@@ -53,8 +53,10 @@ export const buildBgGradientCatalogPalettes = (): Record<string, TGradientPalett
  * @example
  * const pictures = buildBgPatternCatalogWallpapers()
  */
-export const buildBgPatternCatalogWallpapers = (): Record<string, TWallpaper> => {
-  const wallpapers = clone(PATTERN_WALLPAPER)
+export const buildBgPictureCatalogWallpapers = (
+  catalog: Record<string, TWallpaper> = PATTERN_WALLPAPER,
+): Record<string, TWallpaper> => {
+  const wallpapers = clone(catalog)
 
   for (const wallpaper of Object.values(wallpapers) as TWallpaperPic[]) {
     wallpaper.blurIntensity = 0
@@ -62,6 +64,9 @@ export const buildBgPatternCatalogWallpapers = (): Record<string, TWallpaper> =>
 
   return wallpapers
 }
+
+export const buildBgPatternCatalogWallpapers = (): Record<string, TWallpaper> =>
+  buildBgPictureCatalogWallpapers()
 
 /**
  * Returns gradient catalog data with the active custom recipe patched in.
@@ -98,8 +103,9 @@ export const buildActiveBgGradientWallpapers = (
  */
 export const buildActiveBgPatternWallpapers = (
   state: TPatternEffectState,
+  catalog: Record<string, TWallpaper> = PATTERN_WALLPAPER,
 ): Record<string, TWallpaper> => {
-  const wallpapers = clone(PATTERN_WALLPAPER)
+  const wallpapers = clone(catalog)
 
   if (state.type !== WALLPAPER_TYPE.PATTERN) return wallpapers
 
