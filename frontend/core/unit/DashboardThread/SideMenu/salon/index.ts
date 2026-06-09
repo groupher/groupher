@@ -9,7 +9,7 @@ export default function useSalon({ collapsed }: TProps) {
 
   return {
     wrapper: cn(
-      'column min-h-screen transition-all duration-150 ease-out',
+      'column h-full min-h-screen transition-all duration-150 ease-out',
       collapsed ? 'w-0 min-w-0' : 'w-40 min-w-40',
       fg('digest'),
     ),
