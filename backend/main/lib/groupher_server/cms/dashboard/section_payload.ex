@@ -1,7 +1,7 @@
 defmodule GroupherServer.CMS.Dashboard.SectionPayload do
   @moduledoc false
 
-  import Helper.Utils, only: [strip_struct: 1]
+  import Helper.Utils, only: [strip_struct: 1, deep_merge: 2]
 
   alias GroupherServer.CMS.Dashboard.LinkValidator
   alias GroupherServer.CMS.Model.{CommunityDashboard, Embeds}
@@ -82,12 +82,4 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
 
   # Replace-style sections are already the final payload.
   def prepare(%CommunityDashboard{}, _key, args), do: {:ok, args}
-
-  defp deep_merge(left, right) when is_map(left) and is_map(right) do
-    Map.merge(left, right, fn _key, left_value, right_value ->
-      deep_merge(left_value, right_value)
-    end)
-  end
-
-  defp deep_merge(_left, right), do: right
 end

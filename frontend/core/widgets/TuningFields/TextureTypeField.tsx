@@ -36,6 +36,7 @@ export default function TextureTypeField({ label, value, active = true, onChange
                   type='button'
                   className={cn(s.swatch, selected ? s.swatchActive : s.swatchIdle)}
                   aria-label={optionLabel}
+                  aria-pressed={selected}
                   onClick={() => onChange(type)}
                 >
                   <TextureSwatchPreview type={type} variant='picker' />

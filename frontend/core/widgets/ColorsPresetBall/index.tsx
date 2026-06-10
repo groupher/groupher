@@ -49,15 +49,17 @@ export default function ColorsPresetBall({
       <Stack colors={safeColors} />
     )
 
+  const interactiveLabel = label ?? safeColors.join(',')
+
   if (interactive) {
     return (
       <button
         type='button'
         className={cnMerge(s.wrapper, className)}
         style={containerStyle}
-        aria-label={label}
+        aria-label={interactiveLabel}
         aria-pressed={active}
-        title={label}
+        title={interactiveLabel}
         onClick={onClick}
       >
         {content}

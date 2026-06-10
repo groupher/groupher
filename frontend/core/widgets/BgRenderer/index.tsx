@@ -45,6 +45,7 @@ export default function BgRenderer({
     if (!shouldAnimate) {
       activeSpecRef.current = nextSpec
       setActiveSpec(nextSpec)
+      setExitingSpec(null)
       return
     }
 

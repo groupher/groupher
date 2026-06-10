@@ -154,10 +154,11 @@ export const parseBgGradientRecipe = (
 const parseBgGradientBackground = (gradient: TWallpaperGradient): TWallpaperFmt => {
   const DIR = '/wallpaper'
   const { direction, hasPattern, blurIntensity, brightness, saturation } = gradient
+  const patternId = (gradient as { patternId?: string }).patternId
   const colors = gradient.colors.join(',')
   let background = `linear-gradient(${formatGradientDirection(direction)}, ${colors})`
 
-  const patternPic = `${DIR}/pattern/${DEFAULT_WALLPAPER_PATTERN_ID}.png`
+  const patternPic = `${DIR}/pattern/${patternId || DEFAULT_WALLPAPER_PATTERN_ID}.png`
   background = hasPattern ? `url(${patternPic}) repeat, ${background}` : background
 
   const effect = composeFilterEffect({ blurIntensity, brightness, saturation })

@@ -691,10 +691,8 @@ class BgWebglRenderer {
     const meshSeed = meshRecipe?.seed ?? 1
     const meshWarp = meshRecipe?.warp ?? 55
     const meshScale = meshRecipe?.scale ?? 55
-    const meshBrightness = renderSpec.meshRecipe?.brightness
-      ? renderSpec.meshRecipe.brightness / 100
-      : 1
-    const meshContrast = renderSpec.meshRecipe?.contrast ? renderSpec.meshRecipe.contrast / 100 : 1
+    const meshBrightness = (meshRecipe?.brightness ?? 1) / 100
+    const meshContrast = (meshRecipe?.contrast ?? 1) / 100
     const radialRecipe =
       renderSpec.gradientRecipe?.renderer === GRADIENT_RENDERER.RADIAL
         ? renderSpec.gradientRecipe
@@ -757,7 +755,13 @@ export const createBgWebglRenderer = (
   const program = createProgram(gl)
   const vertexBuffer = gl.createBuffer()
   const imageTexture = gl.createTexture()
-  if (!program || !vertexBuffer || !imageTexture) return null
+  if (!program || !vertexBuffer || !imageTexture) {
+    if (program) gl.deleteProgram(program)
+    if (vertexBuffer) gl.deleteBuffer(vertexBuffer)
+    if (imageTexture) gl.deleteTexture(imageTexture)
+
+    return null
+  }
 
   return new BgWebglRenderer(canvas, gl, program, vertexBuffer, imageTexture, textureScale)
 }

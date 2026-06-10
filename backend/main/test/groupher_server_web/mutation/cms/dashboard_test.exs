@@ -64,7 +64,6 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       |> gq_mutation(@update_info_query, variables)
 
       {:ok, found} = Community |> ORM.find(community.id, preload: :dashboard)
-
       assert found.locale == "lt"
       assert found.dashboard.base_info.introduction |> String.length() == 828
       assert found.dashboard.base_info.title == "groupher"

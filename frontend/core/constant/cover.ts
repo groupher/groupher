@@ -87,12 +87,12 @@ export const COVER_GRADIENT_PALETTE = {
   },
   rainbox: {
     key: COVER_GRADIENT_WALLPAPER_NAME.RAINBOX,
-    label: 'Rainbox',
+    label: 'Rainbow',
     colors: ['#FF695C', '#A46AAF', '#5A6DEC'],
   },
   rainbox2: {
     key: COVER_GRADIENT_WALLPAPER_NAME.RAINBOX2,
-    label: 'Rainbox 2',
+    label: 'Rainbow 2',
     colors: ['#FF987F', '#B4B8F8'],
   },
 } satisfies Record<string, TGradientPalette>

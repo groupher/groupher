@@ -71,7 +71,7 @@ export default function PatternCards({ patternId, wallpaper, onPatternSelect }: 
               key={id}
               className={cnMerge(
                 s.card,
-                selected ? s.cardActive : s.cardHover,
+                selected ? s.cardActive : canSelectPattern ? s.cardHover : null,
                 !canSelectPattern && s.cardDisabled,
               )}
               aria-label={`Pattern ${id}`}

@@ -33,7 +33,11 @@ export default function GradientsSection({ background }: TProps) {
               label={palette.label}
               layout={COLORS_PRESET_BALL_LAYOUT.GRID}
               size={SIZE.SMALL}
-              onClick={() => gradientBackgroundOnChange(palette.key)}
+              onClick={() => {
+                if (!selected) {
+                  gradientBackgroundOnChange(palette.key)
+                }
+              }}
             />
           )
         })}

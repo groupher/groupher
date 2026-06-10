@@ -18,8 +18,9 @@ const targetApps = requestedApps.length > 0 ? requestedApps : allowedApps
 
 const runGenerate = () => {
   console.log('[sync-fa-icons] Generating source icons because optimized assets are missing.')
+  const command = process.platform === 'win32' ? 'yarn.cmd' : 'yarn'
 
-  const result = spawnSync('yarn', ['generate:fa-icons'], {
+  const result = spawnSync(command, ['generate:fa-icons'], {
     cwd: repoRoot,
     stdio: 'inherit',
   })

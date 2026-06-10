@@ -562,7 +562,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
 
   const renderCoverContent = (isMagnifierClone = false): ReactNode => (
     <div className={s.contentLayer}>
-      {hasWallpaper && (
+      {hasWallpaper && !isMagnifierClone && (
         <BgRenderer
           className={s.backgroundLayer}
           renderSpec={backgroundRenderSpec}

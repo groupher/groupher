@@ -181,8 +181,19 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
 
     defp number_in_range?(_, _, _), do: false
 
-    defp map_get(map, key) when is_map(map),
-      do: Map.get(map, key) || Map.get(map, String.to_atom(key))
+    defp map_get(map, key) when is_map(map) do
+      case Map.get(map, key) do
+        nil ->
+          try do
+            Map.get(map, String.to_existing_atom(key))
+          rescue
+            ArgumentError -> nil
+          end
+
+        value ->
+          value
+      end
+    end
 
     defp map_get(_, _), do: nil
   end
