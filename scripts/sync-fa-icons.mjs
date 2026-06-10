@@ -1,4 +1,5 @@
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -14,6 +15,23 @@ const providers = ['fa', 'lucide', 'heroicons', 'phosphor']
 const allowedApps = ['main', 'dashboard', 'landing']
 const requestedApps = process.argv.slice(2)
 const targetApps = requestedApps.length > 0 ? requestedApps : allowedApps
+
+const runGenerate = () => {
+  console.log('[sync-fa-icons] Generating source icons because optimized assets are missing.')
+
+  const result = spawnSync('yarn', ['generate:fa-icons'], {
+    cwd: repoRoot,
+    stdio: 'inherit',
+  })
+
+  if (result.status !== 0) {
+    throw new Error('Failed to generate icon assets, run `yarn generate:fa-icons` manually')
+  }
+}
+
+if (!existsSync(optimizedSourceDir) || !existsSync(spriteSourceDir)) {
+  runGenerate()
+}
 
 if (!existsSync(optimizedSourceDir)) {
   throw new Error(`Optimized icon source directory not found: ${optimizedSourceDir}`)
