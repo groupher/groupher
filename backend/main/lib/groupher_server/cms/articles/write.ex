@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Articles.Write do
   alias CMS.Articles.{Document, States}
   alias CMS.Communities.TagStats
   alias CMS.Model.{Author, Community, Embeds}
-  alias CMS.{Communities, Events, FrontDesk}
+  alias CMS.{Communities, Covers, Events, FrontDesk}
   alias Helper.{Constant, ContentPipeline, Multi, Later, ORM, T, Transaction}
 
   @default_emotions Embeds.ArticleEmotion.default_emotions()
@@ -41,15 +41,18 @@ defmodule GroupherServer.CMS.Articles.Write do
         |> Multi.run(:create_document, fn _, %{create_article: article} ->
           Document.create(article, attrs)
         end)
-        |> Multi.run(:mirror_article, fn _, %{create_article: article} ->
+        |> Multi.run(:upsert_cover, fn _, %{create_article: article} ->
+          Covers.upsert_article_cover(article, attrs)
+        end)
+        |> Multi.run(:mirror_article, fn _, %{upsert_cover: article} ->
           States.mirror(community, article)
         end)
-        |> Multi.run(:set_community_tags, fn _, %{create_article: article} ->
+        |> Multi.run(:set_community_tags, fn _, %{upsert_cover: article} ->
           Communities.set_tags(community, thread, article, %{
             community_tags: Map.get(attrs, :community_tags, [])
           })
         end)
-        |> Multi.run(:set_active_at_timestamp, fn _, %{create_article: article} ->
+        |> Multi.run(:set_active_at_timestamp, fn _, %{upsert_cover: article} ->
           ORM.update(article, %{active_at: article.inserted_at})
         end)
         |> Multi.run(:update_community_article_count, fn _, _ ->
@@ -115,7 +118,10 @@ defmodule GroupherServer.CMS.Articles.Write do
       |> Multi.run(:update_document, fn _, %{update_article: update_article} ->
         Document.update(update_article, attrs)
       end)
-      |> Multi.run(:set_community_tags, fn _, %{update_article: article} ->
+      |> Multi.run(:upsert_cover, fn _, %{update_article: update_article} ->
+        Covers.upsert_article_cover(update_article, attrs)
+      end)
+      |> Multi.run(:set_community_tags, fn _, %{upsert_cover: article} ->
         Communities.overwrite_tags(
           %Community{id: article.community_id},
           article.meta.thread,
@@ -245,6 +251,9 @@ defmodule GroupherServer.CMS.Articles.Write do
     |> Multi.run(:delete_document, fn _, _ ->
       Document.remove(thread, article.id)
       {:ok, :pass}
+    end)
+    |> Multi.run(:delete_cover, fn _, _ ->
+      Covers.delete_cover_edit_info(article.cover_edit_info_id)
     end)
     |> Repo.transaction()
     |> result()

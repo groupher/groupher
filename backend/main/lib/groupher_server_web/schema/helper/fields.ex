@@ -27,6 +27,12 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:views, :integer)
       field(:is_pinned, :boolean)
       field(:mark_delete, :boolean)
+      field(:cover_url, :string)
+      field(:cover_url_dark, :string)
+
+      field(:cover_edit_info, :cover_edit_info,
+        resolve: &GroupherServerWeb.Resolvers.CMS.cover_edit_info/3
+      )
 
       field(:community_tags, list_of(:community_tag), resolve: dataloader(CMS, :community_tags))
       field(:author, :user, resolve: dataloader(CMS, :author))

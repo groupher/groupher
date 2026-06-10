@@ -8,7 +8,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   alias Accounts.Model.User
   alias CMS.Helper.EmotionFormatter
-  alias CMS.Model.{Category, Community}
+  alias CMS.Model.{Author, Category, Community, CoverEditInfo}
   alias Helper.{OgInfo, ORM}
 
   # #######################
@@ -77,6 +77,21 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def has_pending_community_apply?(_root, _, %{context: %{cur_user: user}}) do
     CMS.Communities.has_pending_apply?(user)
   end
+
+  def cover_edit_info(%{cover_edit_info_id: nil}, _, _), do: {:ok, nil}
+
+  def cover_edit_info(%{author_id: author_id, cover_edit_info_id: cover_edit_info_id}, _, %{
+        context: %{cur_user: %User{id: user_id}}
+      }) do
+    with {:ok, %Author{user_id: ^user_id}} <- ORM.find(Author, author_id),
+         {:ok, cover_edit_info} <- ORM.find(CoverEditInfo, cover_edit_info_id) do
+      {:ok, cover_edit_info}
+    else
+      _ -> {:ok, nil}
+    end
+  end
+
+  def cover_edit_info(_, _, _), do: {:ok, nil}
 
   # #######################
   # community thread (post, job), login user should be logged
