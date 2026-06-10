@@ -1,9 +1,7 @@
-import SIZE from '~/const/size'
 import useTrans from '~/hooks/useTrans'
-import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
+import ToggleField from '~/widgets/TuningFields/ToggleField'
 
 import useSalon from '../../salon/detail_panel/content'
-import GroupItem from '../GroupItem'
 import GroupTitle from '../GroupTitle'
 
 type Props = {
@@ -20,14 +18,11 @@ export default function Content({ hasShadow, onToggleShadow }: Props) {
       <GroupTitle>{t('dsb.appearance.wallpaper.editor.content')}</GroupTitle>
 
       <div className={s.items}>
-        <GroupItem label={t('dsb.appearance.wallpaper.editor.shadow')}>
-          <ToggleSwitch
-            size={SIZE.TINY}
-            checked={hasShadow}
-            aria-label={t('dsb.appearance.wallpaper.editor.shadow')}
-            onChange={onToggleShadow}
-          />
-        </GroupItem>
+        <ToggleField
+          label={t('dsb.appearance.wallpaper.editor.shadow')}
+          checked={hasShadow}
+          onChange={onToggleShadow}
+        />
       </div>
     </section>
   )

@@ -42,34 +42,36 @@ export const footerOnelineLink = `
   url
 `
 export const wallpaper = `
-  type
-  source
-  typeDark
-  sourceDark
-  gradient
-  gradientDark
-  bgSize
-  bgSizeDark
-  hasPattern
-  hasPatternDark
-  patternId
-  patternIdDark
-  patternIntensity
-  patternIntensityDark
-  patternTone
-  patternToneDark
-  hasTexture
-  hasTextureDark
-  blurIntensity
-  blurIntensityDark
-  hasShadow
-  hasShadowDark
-  brightness
-  brightnessDark
-  saturation
-  saturationDark
-  texture
-  textureDark
+  light {
+    type
+    source
+    gradient
+    hasPattern
+    patternId
+    patternIntensity
+    patternTone
+    hasTexture
+    blurIntensity
+    hasShadow
+    brightness
+    saturation
+    texture
+  }
+  dark {
+    type
+    source
+    gradient
+    hasPattern
+    patternId
+    patternIntensity
+    patternTone
+    hasTexture
+    blurIntensity
+    hasShadow
+    brightness
+    saturation
+    texture
+  }
 `
 export const seo = `
   seoEnable

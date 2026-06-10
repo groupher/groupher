@@ -3,8 +3,9 @@ import { useRef, useState } from 'react'
 import type { CSSProperties, FC, PointerEvent, ReactNode } from 'react'
 
 import { extractDominantColorFromImage } from '~/lib/imageColor/dominant'
-import { parseWallpaper } from '~/wallpaper'
+import BgRenderer from '~/widgets/BgRenderer'
 
+import { adaptCoverBgRenderSpec } from '../background'
 import {
   GLASS_FRAME,
   IMAGE_CONTAINER_SIZE,
@@ -206,8 +207,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     magnifierRadius,
     magnifierZoom,
     magnifierAppearance,
-    wallpaper,
-    wallpapers,
+    activeBackground,
     rotate,
     position,
   } = setting
@@ -221,7 +221,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
   const hasImage = !isEmpty(imageUrl)
   const imageFrameSize = s.getResponsiveImageSize(size)
   const imagePlacement = s.getImagePlacement(position, size, rotate)
-  const hasWallpaper = !isEmpty(wallpaper)
+  const hasWallpaper = !isEmpty(activeBackground.source)
   const isFullFrame = size === IMAGE_SIZE_RANGE.MAX && rotate === 0
   const shouldShowTransparentGrid = !hasWallpaper && !isFullFrame
   const borderRadiusValue = `${borderRadius}px`
@@ -231,11 +231,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
   const framePadding = hasGlassBorder
     ? { x: GLASS_FRAME.PADDING_X, y: GLASS_FRAME.PADDING_Y }
     : undefined
-  const wrapperBackgroundStyle: CSSProperties = hasWallpaper
-    ? { backgroundImage: parseWallpaper(wallpapers, wallpaper).background }
-    : shouldShowTransparentGrid
-      ? s.transparentGridStyle
-      : {}
+  const backgroundRenderSpec = adaptCoverBgRenderSpec(activeBackground)
 
   const getCanvasPoint = (event: PointerEvent<HTMLElement>): TCoverPoint | null => {
     const rect = wrapperRef.current?.getBoundingClientRect()
@@ -565,7 +561,18 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     interactionMode === 'magnifier-zoom'
 
   const renderCoverContent = (isMagnifierClone = false): ReactNode => (
-    <div className={s.contentLayer} style={wrapperBackgroundStyle}>
+    <div className={s.contentLayer}>
+      {hasWallpaper && (
+        <BgRenderer
+          className={s.backgroundLayer}
+          renderSpec={backgroundRenderSpec}
+          positioned={false}
+          textureScale={0.82}
+        />
+      )}
+      {shouldShowTransparentGrid && (
+        <div className={s.backgroundLayer} style={s.transparentGridStyle} />
+      )}
       <div
         className={s.cn(s.imageFrame, interactionMode !== 'idle' && s.imageFrameActive)}
         style={isMagnifierClone ? magnifierImageFrameStyle : imageFrameStyle}

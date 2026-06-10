@@ -1,77 +1,21 @@
 import { GRADIENT_RENDERER, type TGradientRecipe } from '~/lib/wallpaperMesh'
-import type { TGradientEffectInit, TGradientPalette, TWallpaper } from '~/spec'
+import type { TGradientEffectInit, TGradientPalette } from '~/spec'
 
 export { PATTERN_WALLPAPER, WALLPAPER_PATTERN } from './wallpaper.generated'
 
 export const DEFAULT_WALLPAPER_PATTERN_ID = '01'
 
+/**
+ * Pattern overlay tone for background texture composition.
+ *
+ * This is not the global app theme; it's the visual tone used for pattern
+ * overlays. It intentionally remains separate from THEME so the UI can force
+ * either light/dark pattern rendering independent of light/dark page mode.
+ */
 export enum WALLPAPER_PATTERN_TONE {
   DARK = 'dark',
   LIGHT = 'light',
 }
-
-export const WALLPAPER_STATE_KEYS = [
-  'customWallpaper',
-  'source',
-  'type',
-  'sourceDark',
-  'typeDark',
-  'hasPattern',
-  'patternId',
-  'patternIntensity',
-  'patternTone',
-  'hasTexture',
-  'hasPatternDark',
-  'patternIdDark',
-  'patternIntensityDark',
-  'patternToneDark',
-  'hasTextureDark',
-  'blurIntensity',
-  'hasShadow',
-  'brightness',
-  'saturation',
-  'blurIntensityDark',
-  'hasShadowDark',
-  'brightnessDark',
-  'saturationDark',
-  'gradient',
-  'gradientDark',
-  'texture',
-  'textureDark',
-  'bgSize',
-  'bgSizeDark',
-] as const
-
-export const WALLPAPER_SAVABLE_STATE_KEYS = [
-  'source',
-  'type',
-  'sourceDark',
-  'typeDark',
-  'hasPattern',
-  'patternId',
-  'patternIntensity',
-  'patternTone',
-  'hasTexture',
-  'hasPatternDark',
-  'patternIdDark',
-  'patternIntensityDark',
-  'patternToneDark',
-  'hasTextureDark',
-  'blurIntensity',
-  'hasShadow',
-  'brightness',
-  'saturation',
-  'blurIntensityDark',
-  'hasShadowDark',
-  'brightnessDark',
-  'saturationDark',
-  'gradient',
-  'gradientDark',
-  'texture',
-  'textureDark',
-  'bgSize',
-  'bgSizeDark',
-] as const
 
 export enum WALLPAPER_TYPE {
   PATTERN = 'picture',
@@ -79,91 +23,6 @@ export enum WALLPAPER_TYPE {
   UPLOAD = 'upload',
   NONE = 'none',
 }
-
-export enum WALLPAPER_BG_SIZE {
-  COVER = 'cover',
-  CONTAIN = 'contain',
-  AUTO = 'auto',
-}
-
-const DEFAULT_GRADIENT_EFFECT = {
-  hasPattern: false,
-  blurIntensity: 0,
-  direction: '180deg',
-}
-
-export const COVER_GRADIENT_WALLPAPER = {
-  // linear gradient
-  // background: #2c3e50; /* fallback for old browsers */
-  // background: -webkit-linear-gradient(#C6D183, #72B58C); /* Chrome 10-25, Safari 5.1-6 */
-  grey: {
-    colors: ['#eef2f3', '#8e9eab'],
-    ...DEFAULT_GRADIENT_EFFECT,
-    hasPattern: true,
-  },
-  grey2: {
-    colors: ['#fff', '#abbaab'],
-    ...DEFAULT_GRADIENT_EFFECT,
-    hasPattern: true,
-  },
-  grey3: {
-    colors: ['#fff', '#DED9D2'],
-    ...DEFAULT_GRADIENT_EFFECT,
-    hasPattern: true,
-  },
-  pink: {
-    colors: ['#E8DADA', '#D4D0D6'],
-    ...DEFAULT_GRADIENT_EFFECT,
-    blurIntensity: 60,
-  },
-  green: {
-    colors: ['#C6D183', '#72B58C'],
-    ...DEFAULT_GRADIENT_EFFECT,
-    hasPattern: true,
-  },
-  green2: {
-    colors: ['#00D8BF', '#3B8DC0'],
-    ...DEFAULT_GRADIENT_EFFECT,
-    hasPattern: true,
-  },
-  purple: {
-    colors: ['#BBA4C9', '#8390CD'],
-    ...DEFAULT_GRADIENT_EFFECT,
-  },
-  purple2: {
-    colors: ['#323455', '#624b77'],
-    ...DEFAULT_GRADIENT_EFFECT,
-  },
-  purple3: {
-    // colors: ['#BE5C4C', '#006588'],
-    colors: ['#AEB8BE', '#D6A795'],
-    ...DEFAULT_GRADIENT_EFFECT,
-  },
-  yellow: {
-    colors: ['#F7CE7E', '#E17D43'],
-    ...DEFAULT_GRADIENT_EFFECT,
-  },
-  kangaroo: {
-    colors: ['#7CB29B', '#EECA95', '#F5EED9'],
-    ...DEFAULT_GRADIENT_EFFECT,
-  },
-  blue: {
-    colors: ['#85AADA', '#274AA1'],
-    ...DEFAULT_GRADIENT_EFFECT,
-  },
-  red: {
-    colors: ['#FFA69E', '#861657'],
-    ...DEFAULT_GRADIENT_EFFECT,
-  },
-  rainbox: {
-    colors: ['#FF695C', '#A46AAF', '#5A6DEC'],
-    ...DEFAULT_GRADIENT_EFFECT,
-  },
-  rainbox2: {
-    colors: ['#FF987F', '#B4B8F8'],
-    ...DEFAULT_GRADIENT_EFFECT,
-  },
-} satisfies Record<string, TWallpaper>
 
 export const GRADIENT_WALLPAPER_NAME = {
   AMBER_MAUVE: 'amber_mauve',
@@ -389,7 +248,13 @@ const GRADIENT_EFFECT_INIT: Record<string, TGradientEffectInit> = {
   [GRADIENT_WALLPAPER_NAME.SKY_MAUVE_SLATE]: { angle: 180, spread: 78 },
 } satisfies Record<string, TGradientEffectInit>
 
-const buildGradientWallpaper = (palette: TGradientPalette): TGradientRecipe => ({
+/**
+ * Compose a renderer-ready wallpaper gradient recipe from palette metadata.
+ *
+ * @example
+ * const recipe = composeGradientWallpaper(GRADIENT_PALETTE.amber_mauve)
+ */
+const composeGradientWallpaper = (palette: TGradientPalette): TGradientRecipe => ({
   version: 2,
   renderer: GRADIENT_RENDERER.LINEAR,
   preset: palette.key,
@@ -398,16 +263,8 @@ const buildGradientWallpaper = (palette: TGradientPalette): TGradientRecipe => (
 })
 
 export const GRADIENT_WALLPAPER = Object.fromEntries(
-  Object.values(GRADIENT_PALETTE).map((palette) => [palette.key, buildGradientWallpaper(palette)]),
+  Object.values(GRADIENT_PALETTE).map((palette) => [
+    palette.key,
+    composeGradientWallpaper(palette),
+  ]),
 ) as Record<string, TGradientRecipe>
-
-export const GRADIENT_DIRECTION = {
-  TOP: 'top',
-  TOP_RIGHT: 'top right',
-  RIGHT: 'right',
-  BOTTOM_RIGHT: 'bottom right',
-  BOTTOM: 'bottom',
-  BOTTOM_LEFT: 'bottom left',
-  LEFT: 'left',
-  TOP_LEFT: 'top left',
-} as const

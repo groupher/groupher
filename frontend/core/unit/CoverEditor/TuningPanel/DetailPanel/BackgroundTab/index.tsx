@@ -1,27 +1,22 @@
-import type { TWallpaper, TWallpaperGradientDir } from '~/spec'
+import type { TBgConfig } from '~/lib/bg'
 
-import GroupTitle from '../GroupTitle'
-import Color from './Color'
-import Direction from './Direction'
+import GradientsSection from './GradientsSection'
+import PicturesSection from './PictureSection'
 import useSalon from './salon'
+import TuningSection from './TuningSection'
 
 type TProps = {
-  wallpapers: Record<string, TWallpaper>
-  wallpaper: string
-  direction: TWallpaperGradientDir
+  background: TBgConfig
 }
 
-export default function BackgroundTab({ wallpapers, wallpaper, direction }: TProps) {
+export default function BackgroundTab({ background }: TProps) {
   const s = useSalon()
 
   return (
     <section className={s.wrapper}>
-      <GroupTitle>Background</GroupTitle>
-
-      <div className={s.items}>
-        <Color wallpapers={wallpapers} wallpaper={wallpaper} />
-        <Direction direction={direction} />
-      </div>
+      <GradientsSection background={background} />
+      <PicturesSection background={background} />
+      <TuningSection background={background} />
     </section>
   )
 }

@@ -3,7 +3,7 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import ImageSizeSVG from '~/icons/ImageSize'
 import RotateSVG from '~/icons/Rotate'
 import ShadowSVG from '~/icons/Shadow'
-import { parseWallpaper } from '~/wallpaper'
+import { composeBgCss } from '~/lib/bg'
 
 import { IMAGE_SIZE_RANGE } from '../../constant'
 import { isCoverShadowActive } from '../../helper'
@@ -31,13 +31,13 @@ export default function HudPanel({ setting, onExpand }: TProps) {
     rotate,
     shadow,
     size,
-    wallpaper,
-    wallpapers,
+    activeBackground,
   } = setting
 
   const borderValue = getBorderValue({ borderRadius, borderHighlight, hasGlassBorder })
   const frameSize = getResponsiveImageSize(size)
   const framePlacement = getImagePlacement(position, size, rotate)
+  const backgroundPreview = composeBgCss(activeBackground)
 
   return (
     <div className={s.wrapper}>
@@ -101,14 +101,11 @@ export default function HudPanel({ setting, onExpand }: TProps) {
         />
         <HudItem
           label='背景'
-          active={wallpaper !== ''}
+          active={activeBackground.source !== ''}
           icon={
-            <span
-              className={s.bgSwatch}
-              style={{ background: parseWallpaper(wallpapers, wallpaper).background }}
-            />
+            <span className={s.bgSwatch} style={{ background: backgroundPreview.background }} />
           }
-          value={wallpaper || '0'}
+          value={activeBackground.source || '0'}
         />
       </div>
 

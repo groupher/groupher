@@ -137,7 +137,12 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object(:dsb_rss, do: dsb_gq_fields(:rss))
   object(:dsb_seo, do: dsb_gq_fields(:seo))
-  object(:dsb_wallpaper, do: dsb_gq_fields(:wallpaper))
+  object(:dsb_bg_config, do: dsb_gq_fields(:wallpaper_bg))
+
+  object :dsb_wallpaper do
+    field(:light, :dsb_bg_config)
+    field(:dark, :dsb_bg_config)
+  end
 
   object :dsb_layout do
     dsb_gq_fields(:layout, except: [:custom_theme_preset])

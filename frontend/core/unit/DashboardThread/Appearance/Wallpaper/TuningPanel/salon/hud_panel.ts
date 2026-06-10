@@ -20,8 +20,6 @@ export default function useSalon() {
       'absolute left-1/2 top-0 size-1.5 -ml-0.75 -mt-0.75 circle origin-[3px_10px]',
       primary('bg'),
     ),
-    hudColorBalls: 'row-center pl-0.5',
-    hudColorBall: 'size-5 circle -ml-1.5 first:ml-0 shrink-0',
     expandBtn: cn('size-6 shrink-0', hover('bg')),
     expandIcon: cn('size-3 shrink-0 -rotate-90', fg('digest')),
   }

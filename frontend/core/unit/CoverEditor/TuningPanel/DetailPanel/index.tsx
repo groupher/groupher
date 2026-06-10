@@ -53,13 +53,7 @@ export default function DetailPanel({ setting, onDelete, onReplace, onCollapse }
           <BasicTab setting={setting} onDelete={onDelete} onReplace={onReplace} />
         )}
 
-        {tab === TAB.BACKGROUND && (
-          <BackgroundTab
-            wallpapers={setting.wallpapers}
-            wallpaper={setting.wallpaper}
-            direction={setting.direction}
-          />
-        )}
+        {tab === TAB.BACKGROUND && <BackgroundTab background={setting.activeBackground} />}
       </div>
 
       <div className={s.collapseRow}>

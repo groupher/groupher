@@ -1,6 +1,3 @@
-import { GRADIENT_DIRECTION } from '~/const/wallpaper'
-import type { TWallpaperGradientDir } from '~/spec'
-
 import {
   COVER_IMAGE_MIN_VISIBLE_SIZE,
   IMAGE_BORDER_RADIUS_RANGE,
@@ -282,34 +279,4 @@ export const getBorderRadiusFromCanvasPoint = ({
     ((point.x - corner.x) * direction.x + (point.y - corner.y) * direction.y) / directionLength
 
   return clampBorderRadius(projection * 2 - BORDER_RADIUS_HANDLE_MIN_LENGTH)
-}
-
-export const getBgGradientDirAngle = (dir: TWallpaperGradientDir): string => {
-  switch (dir) {
-    case GRADIENT_DIRECTION.TOP: {
-      return '90deg'
-    }
-    case GRADIENT_DIRECTION.TOP_RIGHT: {
-      return '135deg'
-    }
-    case GRADIENT_DIRECTION.RIGHT: {
-      return '180deg'
-    }
-    case GRADIENT_DIRECTION.BOTTOM_RIGHT: {
-      return '225deg'
-    }
-    case GRADIENT_DIRECTION.BOTTOM: {
-      return '270deg'
-    }
-    case GRADIENT_DIRECTION.BOTTOM_LEFT: {
-      return '315deg'
-    }
-    case GRADIENT_DIRECTION.LEFT: {
-      return '0'
-    }
-    // TOP_LEFT
-    default: {
-      return '45deg'
-    }
-  }
 }

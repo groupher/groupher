@@ -35,8 +35,6 @@
       "~/oauth/*": ["./lib/oauth/*"],
       "~/helper": ["./lib/helper"],
       "~/helper/*": ["./lib/helper/*"],
-      "~/wallpaper": ["./lib/wallpaper"],
-      "~/wallpaper/*": ["./lib/wallpaper/*"],
       "~/i18n": ["./lib/i18n"],
       "~/i18n/*": ["./lib/i18n/*"],
       "~/validator": ["./lib/validator"],

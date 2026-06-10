@@ -381,13 +381,13 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
   ## Example
 
-      input_object :dsb_wallpaper_input do
-        dsb_input_fields(:wallpaper)
+      input_object :dsb_bg_config_input do
+        dsb_input_fields(:wallpaper_bg)
       end
 
-  A field like `:pattern_intensity_dark` is defined once in
-  `macro_schema(:wallpaper)`, exposed by Absinthe as `patternIntensityDark`,
-  and cast by the dashboard embed as `:pattern_intensity_dark`.
+  A field like `:pattern_intensity` is defined once in
+  `macro_schema(:wallpaper_bg)`, exposed by Absinthe as `patternIntensity`,
+  and cast by the dashboard bg embed as `:pattern_intensity`.
   """
   defmacro dsb_input_fields(section \\ :layout, opts \\ []) do
     build_dsb_gq_fields(section, opts)

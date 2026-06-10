@@ -1,19 +1,13 @@
 import { clone, equals, pick } from 'ramda'
 import { createContext, use, useEffect, useMemo, useState } from 'react'
 
-import {
-  GRADIENT_PALETTE,
-  GRADIENT_WALLPAPER,
-  WALLPAPER_SAVABLE_STATE_KEYS,
-  WALLPAPER_STATE_KEYS,
-  WALLPAPER_TYPE,
-} from '~/const/wallpaper'
+import { GRADIENT_PALETTE, GRADIENT_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
 import useFullWallpaper from '~/hooks/useFullWallpaper'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTheme from '~/hooks/useTheme'
 import {
   applyGradientPalette,
-  buildGradientRecipeForRenderer,
+  composeGradientRecipeForRenderer,
   DEFAULT_WALLPAPER_TEXTURE_INTENSITY,
   GRADIENT_RENDERER,
   isMeshGradientRecipe,
@@ -22,13 +16,14 @@ import type { TGradientRecipe, TGradientRenderer, TWallpaperTexture } from '~/li
 import { toast } from '~/signal'
 import type { TWallpaperData, TWallpaperType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
+import { WALLPAPER_SAVABLE_STATE_KEYS, WALLPAPER_STATE_KEYS } from '~/stores/wallpaper/constant'
 import {
   getWallpaperSavablePatch,
-  resolveWallpaperThemeState,
+  pickWallpaperThemeState,
   toWallpaperThemePatch,
 } from '~/stores/wallpaper/helper'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
-import type { TWallpaperState, TWallpaperThemeState } from '~/stores/wallpaper/spec'
+import type { TWallpaperPatch, TWallpaperThemeState } from '~/stores/wallpaper/spec'
 import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
 
 import { TAB } from './constant'
@@ -133,7 +128,16 @@ const radialCenterFromAngle = (
   }
 }
 
-export const buildGradientWallpaperPatch = (
+/**
+ * Compose the patch for switching the active wallpaper gradient preset.
+ *
+ * In gradient mode it preserves the current renderer/shape and only applies the
+ * new palette. From non-gradient modes it starts from the catalog recipe.
+ *
+ * @example
+ * const patch = composeGradientWallpaperPatch(wallpaperState, 'stone_green')
+ */
+export const composeGradientWallpaperPatch = (
   wallpaper: Pick<TWallpaperThemeState, 'type' | 'gradient'>,
   source: string,
 ): Pick<TWallpaperThemeState, 'source' | 'type' | 'gradient'> => {
@@ -142,7 +146,7 @@ export const buildGradientWallpaperPatch = (
   const gradient =
     wallpaper.type === WALLPAPER_TYPE.GRADIENT && wallpaper.gradient
       ? applyGradientPalette(wallpaper.gradient, palette)
-      : buildGradientRecipeForRenderer(initialGradient, GRADIENT_RENDERER.LINEAR)
+      : composeGradientRecipeForRenderer(initialGradient, GRADIENT_RENDERER.LINEAR)
 
   return {
     source,
@@ -151,12 +155,17 @@ export const buildGradientWallpaperPatch = (
   }
 }
 
-const serializeWallpaperPatch = (patch: Partial<TWallpaperState>): Record<string, unknown> => {
-  const serialized = { ...patch } as Record<string, unknown>
+const serializeWallpaperPatch = (patch: TWallpaperPatch): Record<string, unknown> => {
+  const serialized = clone(patch) as Record<string, unknown>
 
-  for (const key of ['gradient', 'gradientDark', 'texture', 'textureDark']) {
-    if (key in serialized && serialized[key] !== null && serialized[key] !== undefined) {
-      serialized[key] = JSON.stringify(serialized[key])
+  for (const theme of ['light', 'dark']) {
+    const themePatch = serialized[theme] as Record<string, unknown> | undefined
+    if (!themePatch) continue
+
+    for (const key of ['gradient', 'texture']) {
+      if (key in themePatch && themePatch[key] !== null && themePatch[key] !== undefined) {
+        themePatch[key] = JSON.stringify(themePatch[key])
+      }
     }
   }
 
@@ -172,43 +181,12 @@ export function useLogicValue(): TWallpaperLogic {
 
   const { mutate } = useGraphQLClient()
   const [tab, setTab] = useState<TTab>(() =>
-    getInitialTab(resolveWallpaperThemeState(wallpaper$, isDarkTheme).type),
+    getInitialTab(pickWallpaperThemeState(wallpaper$, isDarkTheme).type),
   )
   const [loading, setLoading] = useState(false)
   const wallpaperState = useMemo(
-    () => resolveWallpaperThemeState(wallpaper$, isDarkTheme),
-    [
-      isDarkTheme,
-      wallpaper$.customWallpaper,
-      wallpaper$.source,
-      wallpaper$.type,
-      wallpaper$.sourceDark,
-      wallpaper$.typeDark,
-      wallpaper$.hasPattern,
-      wallpaper$.patternId,
-      wallpaper$.patternIntensity,
-      wallpaper$.patternTone,
-      wallpaper$.hasTexture,
-      wallpaper$.hasPatternDark,
-      wallpaper$.patternIdDark,
-      wallpaper$.patternIntensityDark,
-      wallpaper$.patternToneDark,
-      wallpaper$.hasTextureDark,
-      wallpaper$.gradient,
-      wallpaper$.gradientDark,
-      wallpaper$.blurIntensity,
-      wallpaper$.hasShadow,
-      wallpaper$.brightness,
-      wallpaper$.saturation,
-      wallpaper$.blurIntensityDark,
-      wallpaper$.hasShadowDark,
-      wallpaper$.brightnessDark,
-      wallpaper$.saturationDark,
-      wallpaper$.texture,
-      wallpaper$.textureDark,
-      wallpaper$.bgSize,
-      wallpaper$.bgSizeDark,
-    ],
+    () => pickWallpaperThemeState(wallpaper$, isDarkTheme),
+    [isDarkTheme, wallpaper$.light, wallpaper$.dark],
   )
   const [angleDraft, setAngleDraft] = useState(() => getAngleDraft(wallpaperState))
   const {
@@ -234,7 +212,7 @@ export function useLogicValue(): TWallpaperLogic {
   }, [wallpaperState])
 
   const initRollback = (): void =>
-    liveWallpaper$.commit({ original: pick(WALLPAPER_STATE_KEYS, liveWallpaper$) })
+    liveWallpaper$.commit({ original: clone(pick(WALLPAPER_STATE_KEYS, liveWallpaper$)) })
 
   const commitWallpaperPatch = (patch: Partial<TWallpaperThemeState>): void => {
     flushWallpaperDraft()
@@ -309,7 +287,7 @@ export function useLogicValue(): TWallpaperLogic {
     )
   }
   const changeGradientWallpaper = (source: string): void =>
-    commitWallpaperPatch(buildGradientWallpaperPatch(wallpaperState, source))
+    commitWallpaperPatch(composeGradientWallpaperPatch(wallpaperState, source))
   const changeGradientRecipe = (gradient: TGradientRecipe): void =>
     commitWallpaperPatch({ source: gradient.preset, type: WALLPAPER_TYPE.GRADIENT, gradient })
   const changeGradientRenderer = (renderer: TGradientRenderer): void => {
@@ -318,12 +296,12 @@ export function useLogicValue(): TWallpaperLogic {
     commitWallpaperPatch({
       source: gradient.preset,
       type: WALLPAPER_TYPE.GRADIENT,
-      gradient: buildGradientRecipeForRenderer(gradient, renderer),
+      gradient: composeGradientRecipeForRenderer(gradient, renderer),
     })
   }
   const changePatternId = (patternId: string): void =>
     commitWallpaperPatch({ patternId, hasPattern: true })
-  const changePatternTone = (patternTone: TWallpaperState['patternTone']): void =>
+  const changePatternTone = (patternTone: TWallpaperThemeState['patternTone']): void =>
     commitWallpaperPatch({ patternTone })
   const changePatternWallpaper = (source: string): void =>
     commitWallpaperPatch({ source, type: WALLPAPER_TYPE.PATTERN })

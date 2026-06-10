@@ -1,12 +1,10 @@
-import SIZE from '~/const/size'
 import { WALLPAPER_PATTERN_TONE } from '~/const/wallpaper'
 import useTrans from '~/hooks/useTrans'
 import type { TWallpaperPatternTone } from '~/spec'
-import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
-import RangeInput from '~/widgets/RangeInput'
+import PatternIntensityField from '~/widgets/TuningFields/PatternIntensityField'
+import ToggleField from '~/widgets/TuningFields/ToggleField'
 
 import useSalon from '../../salon/detail_panel/pattern'
-import GroupItem from '../GroupItem'
 import GroupTitle from '../GroupTitle'
 
 type Props = {
@@ -36,39 +34,25 @@ export default function Pattern({
       <GroupTitle>{t('dsb.appearance.wallpaper.editor.pattern')}</GroupTitle>
 
       <div className={s.items}>
-        <GroupItem label={t('dsb.appearance.wallpaper.editor.enable')}>
-          <ToggleSwitch
-            size={SIZE.TINY}
-            checked={hasPattern}
-            aria-label={t('dsb.appearance.wallpaper.editor.enable')}
-            onChange={onTogglePattern}
-          />
-        </GroupItem>
+        <ToggleField
+          label={t('dsb.appearance.wallpaper.editor.enable')}
+          checked={hasPattern}
+          onChange={onTogglePattern}
+        />
 
         {hasPattern && (
           <>
-            <GroupItem label={t('dsb.appearance.wallpaper.editor.invert_tone')}>
-              <ToggleSwitch
-                size={SIZE.TINY}
-                checked={patternTone === WALLPAPER_PATTERN_TONE.LIGHT}
-                aria-label={t('dsb.appearance.wallpaper.editor.invert_tone')}
-                onChange={onPatternToneChange}
-              />
-            </GroupItem>
+            <ToggleField
+              label={t('dsb.appearance.wallpaper.editor.invert_tone')}
+              checked={patternTone === WALLPAPER_PATTERN_TONE.LIGHT}
+              onChange={onPatternToneChange}
+            />
 
-            <GroupItem label={t('dsb.appearance.wallpaper.editor.pattern_intensity')}>
-              <RangeInput
-                value={patternIntensity}
-                min={0}
-                max={100}
-                step={5}
-                hideLabel
-                valueLabel={t('dsb.appearance.wallpaper.editor.pattern_intensity')}
-                aria-label={t('dsb.appearance.wallpaper.editor.pattern_intensity')}
-                onChange={onPatternIntensityChange}
-                onChangeEnd={onRangeChangeEnd}
-              />
-            </GroupItem>
+            <PatternIntensityField
+              value={patternIntensity}
+              onChange={onPatternIntensityChange}
+              onChangeEnd={onRangeChangeEnd}
+            />
           </>
         )}
       </div>

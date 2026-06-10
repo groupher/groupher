@@ -1,11 +1,9 @@
-import AngleWheelControl from '~/widgets/AngleWheel'
+import AngleField from '~/widgets/TuningFields/AngleField'
 
 import useLogic from '../../useLogic'
 
 export default function AnglePanel() {
   const { angleDraft, changeAngle, flushWallpaperDraft } = useLogic()
 
-  return (
-    <AngleWheelControl value={angleDraft} onChange={changeAngle} onCommit={flushWallpaperDraft} />
-  )
+  return <AngleField value={angleDraft} onChange={changeAngle} onCommit={flushWallpaperDraft} />
 }

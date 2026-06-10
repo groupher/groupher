@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef } from 'react'
 
 import useDebouncedPreviewCommit from '~/hooks/useDebouncedPreviewCommit'
 import useUpdatePreviewCssVars from '~/hooks/useUpdatePreviewCssVars'
-import { resolveWallpaper } from '~/hooks/useWallpaper'
-import { emitWallpaperPreview } from '~/lib/wallpaperRenderer/preview'
+import { composeWallpaperBgCss } from '~/hooks/useWallpaper'
+import { emitWallpaperPreview } from '~/lib/wallpaperPreview'
 import type { TWallpaperThemeState } from '~/stores/wallpaper/spec'
 
 type TWallpaperPreviewVars = Record<`--${string}`, string | null>
@@ -20,7 +20,13 @@ const PREVIEW_CSS_VAR_CLEANUP: TWallpaperPreviewVars = {
 
 const MAX_BLUR_PX = 6
 
-const buildFilterValue = ({
+/**
+ * Compose the live preview filter value from the active wallpaper state.
+ *
+ * @example
+ * const filter = composeFilterValue(state)
+ */
+const composeFilterValue = ({
   blurIntensity = 0,
   brightness = 100,
   saturation = 100,
@@ -31,12 +37,18 @@ const buildFilterValue = ({
   return `blur(${blurPx}px) brightness(${brightness}%) saturate(${saturation}%)`
 }
 
-const buildPreviewCssVars = (state: TWallpaperThemeState): TWallpaperPreviewVars => {
-  const { background } = resolveWallpaper(state)
+/**
+ * Compose the CSS variable patch used by the dashboard wallpaper live preview.
+ *
+ * @example
+ * updatePreviewCssVars(composePreviewCssVars(draft))
+ */
+const composePreviewCssVars = (state: TWallpaperThemeState): TWallpaperPreviewVars => {
+  const { background } = composeWallpaperBgCss(state)
 
   return {
     '--preview-wallpaper-bg': background || 'transparent',
-    '--preview-wallpaper-filter': buildFilterValue(state),
+    '--preview-wallpaper-filter': composeFilterValue(state),
   }
 }
 
@@ -60,7 +72,7 @@ export default function useWallpaperPreview({ state, onCommit }: TOptions) {
         ...patch,
       }
 
-      updatePreviewCssVars(buildPreviewCssVars(draftRef.current))
+      updatePreviewCssVars(composePreviewCssVars(draftRef.current))
       emitWallpaperPreview(draftRef.current)
     },
     [updatePreviewCssVars],

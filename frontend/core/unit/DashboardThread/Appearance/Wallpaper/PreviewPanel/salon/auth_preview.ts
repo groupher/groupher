@@ -1,4 +1,6 @@
+import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
+import { pickWallpaperThemeState } from '~/stores/wallpaper/helper'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 
 import useBase from '../../../useAppearanceBaseSalon'
@@ -8,7 +10,9 @@ export { cnMerge } from '~/css'
 export default function useSalon() {
   const { cn, br, bg, shadow, primary } = useTwBelt()
 
-  const { hasShadow } = useWallpaperDomain()
+  const { isDarkTheme } = useTheme()
+  const wallpaper = useWallpaperDomain()
+  const { hasShadow } = pickWallpaperThemeState(wallpaper, isDarkTheme)
   const base = useBase()
 
   return {

@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react'
 
-import SIZE from '~/const/size'
 import useTrans from '~/hooks/useTrans'
 import { DEFAULT_WALLPAPER_TEXTURE_INTENSITY, type TWallpaperTexture } from '~/lib/wallpaperMesh'
-import ToggleSwitch from '~/widgets/Buttons/ToggleSwitch'
-import RangeInput from '~/widgets/RangeInput'
+import TextureIntensityField from '~/widgets/TuningFields/TextureIntensityField'
+import TextureTypeField from '~/widgets/TuningFields/TextureTypeField'
+import ToggleField from '~/widgets/TuningFields/ToggleField'
 
-import TextureStylePicker from '../../../TextureStylePicker'
 import useLogic from '../../../useLogic'
 import useSalon from '../../salon/detail_panel/texture'
-import GroupItem from '../GroupItem'
 import GroupTitle from '../GroupTitle'
 
 type Props = {
@@ -66,38 +64,24 @@ export default function Texture({ hasTexture, texture, onToggleTexture }: Props)
       <GroupTitle>{t('dsb.appearance.wallpaper.texture')}</GroupTitle>
 
       <div className={s.items}>
-        <GroupItem label={t('dsb.appearance.wallpaper.editor.enable')}>
-          <ToggleSwitch
-            size={SIZE.TINY}
-            checked={hasTexture}
-            aria-label={t('dsb.appearance.wallpaper.editor.enable')}
-            onChange={onToggleTexture}
-          />
-        </GroupItem>
+        <ToggleField
+          label={t('dsb.appearance.wallpaper.editor.enable')}
+          checked={hasTexture}
+          onChange={onToggleTexture}
+        />
 
-        <GroupItem label={t('dsb.appearance.wallpaper.editor.type')}>
-          <TextureStylePicker
-            value={draftTexture.type}
-            active={hasTexture}
-            showLabel={false}
-            onChange={(type) => updateTexture({ type })}
-          />
-        </GroupItem>
+        <TextureTypeField
+          value={draftTexture.type}
+          active={hasTexture}
+          onChange={(type) => updateTexture({ type })}
+        />
 
         {hasTexture && (
-          <GroupItem label={t('dsb.appearance.wallpaper.texture.intensity')}>
-            <RangeInput
-              value={draftTexture.intensity}
-              min={0}
-              max={100}
-              step={1}
-              hideLabel
-              valueLabel={t('dsb.appearance.wallpaper.texture.intensity')}
-              aria-label={t('dsb.appearance.wallpaper.texture.intensity')}
-              onChange={updateTextureIntensityDraft}
-              onChangeEnd={commitTextureIntensity}
-            />
-          </GroupItem>
+          <TextureIntensityField
+            value={draftTexture.intensity}
+            onChange={updateTextureIntensityDraft}
+            onChangeEnd={commitTextureIntensity}
+          />
         )}
       </div>
     </section>

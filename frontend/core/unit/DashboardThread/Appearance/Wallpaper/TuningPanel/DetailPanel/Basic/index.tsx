@@ -1,8 +1,9 @@
 import useTrans from '~/hooks/useTrans'
-import RangeInput from '~/widgets/RangeInput'
+import BlurField from '~/widgets/TuningFields/BlurField'
+import BrightnessField from '~/widgets/TuningFields/BrightnessField'
+import SaturationField from '~/widgets/TuningFields/SaturationField'
 
 import useSalon from '../../salon/detail_panel/basic'
-import GroupItem from '../GroupItem'
 import GroupTitle from '../GroupTitle'
 
 type TRangeDraft = {
@@ -34,47 +35,23 @@ export default function Basic({
       <GroupTitle>{t('dsb.appearance.wallpaper.editor.basic')}</GroupTitle>
 
       <div className={s.items}>
-        <GroupItem label={t('dsb.appearance.wallpaper.editor.brightness')}>
-          <RangeInput
-            value={rangeDraft.brightness}
-            min={60}
-            max={140}
-            step={5}
-            hideLabel
-            valueLabel={t('dsb.appearance.wallpaper.editor.brightness')}
-            aria-label={t('dsb.appearance.wallpaper.editor.brightness')}
-            onChange={onBrightnessChange}
-            onChangeEnd={onRangeChangeEnd}
-          />
-        </GroupItem>
+        <BrightnessField
+          value={rangeDraft.brightness}
+          onChange={onBrightnessChange}
+          onChangeEnd={onRangeChangeEnd}
+        />
 
-        <GroupItem label={t('dsb.appearance.wallpaper.editor.saturation')}>
-          <RangeInput
-            value={rangeDraft.saturation}
-            min={0}
-            max={160}
-            step={5}
-            hideLabel
-            valueLabel={t('dsb.appearance.wallpaper.editor.saturation')}
-            aria-label={t('dsb.appearance.wallpaper.editor.saturation')}
-            onChange={onSaturationChange}
-            onChangeEnd={onRangeChangeEnd}
-          />
-        </GroupItem>
+        <SaturationField
+          value={rangeDraft.saturation}
+          onChange={onSaturationChange}
+          onChangeEnd={onRangeChangeEnd}
+        />
 
-        <GroupItem label={t('dsb.appearance.wallpaper.editor.blur')}>
-          <RangeInput
-            value={rangeDraft.blurIntensity}
-            min={0}
-            max={100}
-            step={5}
-            hideLabel
-            valueLabel={t('dsb.appearance.wallpaper.editor.blur')}
-            aria-label={t('dsb.appearance.wallpaper.editor.blur')}
-            onChange={onBlurIntensityChange}
-            onChangeEnd={onRangeChangeEnd}
-          />
-        </GroupItem>
+        <BlurField
+          value={rangeDraft.blurIntensity}
+          onChange={onBlurIntensityChange}
+          onChangeEnd={onRangeChangeEnd}
+        />
       </div>
     </section>
   )

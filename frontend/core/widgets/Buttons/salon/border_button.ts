@@ -1,6 +1,7 @@
 import { GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
 import useTheme from '~/hooks/useTheme'
 import useTwBelt from '~/hooks/useTwBelt'
+import { pickWallpaperThemeState } from '~/stores/wallpaper/helper'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 
 export { cn } from '~/css'
@@ -34,7 +35,8 @@ const getGithubGradient = (wallpaper: string): string => {
 export default function useSalon() {
   const { isLightTheme } = useTheme()
   const { cn, shadow, fill, br } = useTwBelt()
-  const { source } = useWallpaperDomain()
+  const wallpaper = useWallpaperDomain()
+  const { source } = pickWallpaperThemeState(wallpaper, !isLightTheme)
 
   return {
     wrapper: 'relative group',

@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react'
 
 import { COLOR } from '~/const/colors'
-import { cn } from '~/css'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
+import {
+  composeColorChips,
+  findPresetColor,
+  getGradientSpreadValue,
+  applyGradientSpreadValue,
+} from '~/lib/bg'
+import { mapToPresetColorHex } from '~/lib/color'
 import {
   GRADIENT_RENDERER,
   WALLPAPER_GRADIENT_RENDERER_OPTIONS,
@@ -11,22 +17,16 @@ import {
   type TGradientRenderer,
 } from '~/lib/wallpaperMesh'
 import type { TColorName } from '~/spec'
-import ColorSelector from '~/widgets/ColorSelector'
 import FocalPointControl, { type TPoint } from '~/widgets/FocalPointControl'
-import RangeInput from '~/widgets/RangeInput'
+import ColorsField from '~/widgets/TuningFields/ColorsField'
+import RendererField from '~/widgets/TuningFields/RendererField'
+import SpreadField from '~/widgets/TuningFields/SpreadField'
 
 import useLogic from '../../../useLogic'
 import useSalon from '../../salon/detail_panel/gradient'
 import AngleWheel from '../AngleWheel'
 import GroupItem from '../GroupItem'
 import GroupTitle from '../GroupTitle'
-import {
-  applyGradientSpreadValue,
-  buildColorChips,
-  findPresetColor,
-  getGradientSpreadValue,
-  resolvePresetColor,
-} from './helper'
 
 type Props = {
   gradient: TGradientRecipe | null
@@ -41,7 +41,7 @@ export default function Gradient({ gradient, canUseAngle }: Props) {
   const [draftGradient, setDraftGradient] = useState<TGradientRecipe | null>(gradient)
   const activeGradient = draftGradient ?? gradient
   const spread = activeGradient ? getGradientSpreadValue(activeGradient) : 50
-  const colorChips = activeGradient ? buildColorChips(activeGradient) : []
+  const colorChips = activeGradient ? composeColorChips(activeGradient) : []
 
   useEffect(() => {
     setDraftGradient(gradient)
@@ -66,7 +66,7 @@ export default function Gradient({ gradient, canUseAngle }: Props) {
 
   const updatePresetColor = (index: number, color: TColorName): void => {
     if (color === COLOR.CUSTOM) return
-    updateColor(index, resolvePresetColor(color, theme))
+    updateColor(index, mapToPresetColorHex(color, theme))
   }
 
   const updateSpreadDraft = (value: number): void => {
@@ -100,65 +100,29 @@ export default function Gradient({ gradient, canUseAngle }: Props) {
       <GroupTitle>{t('dsb.appearance.wallpaper.editor.gradient')}</GroupTitle>
 
       <div className={s.items}>
-        <GroupItem label={t('dsb.appearance.wallpaper.editor.colors')}>
-          <div className={s.chips}>
-            {colorChips.map(({ color, index, key }) => (
-              <ColorSelector
-                key={key}
-                activeColor={findPresetColor(color, theme)}
-                customColor={color}
-                allowCustomColor
-                placement='top'
-                onChange={(selectedColor) => updatePresetColor(index, selectedColor)}
-                onCustomColorChange={(customColor) => updateColor(index, customColor)}
-              >
-                <button
-                  type='button'
-                  className={s.chip}
-                  style={{ backgroundColor: color }}
-                  aria-label={`${t('dsb.appearance.wallpaper.editor.change_gradient_color')} ${
-                    index + 1
-                  }`}
-                />
-              </ColorSelector>
-            ))}
-          </div>
-        </GroupItem>
+        <ColorsField
+          label={t('dsb.appearance.wallpaper.editor.colors')}
+          chips={colorChips.map(({ color, index, key }) => ({
+            color,
+            activeColor: findPresetColor(color, theme),
+            key,
+            label: `${t('dsb.appearance.wallpaper.editor.change_gradient_color')} ${index + 1}`,
+            onChange: (selectedColor) => updatePresetColor(index, selectedColor),
+            onCustomColorChange: (customColor) => updateColor(index, customColor),
+          }))}
+        />
 
-        <GroupItem label={t('dsb.appearance.wallpaper.editor.renderer')} align='start'>
-          <div className={s.renderers}>
-            {WALLPAPER_GRADIENT_RENDERER_OPTIONS.map(({ renderer, labelKey }) => {
-              const selected = activeGradient.renderer === renderer
-              const label = t(labelKey)
+        <RendererField
+          label={t('dsb.appearance.wallpaper.editor.renderer')}
+          value={activeGradient.renderer}
+          options={WALLPAPER_GRADIENT_RENDERER_OPTIONS.map(({ renderer, labelKey }) => ({
+            renderer,
+            label: t(labelKey),
+          }))}
+          onChange={updateRenderer}
+        />
 
-              return (
-                <button
-                  type='button'
-                  key={renderer}
-                  className={cn(s.rendererButton, selected && s.rendererButtonActive)}
-                  aria-pressed={selected}
-                  onClick={() => updateRenderer(renderer)}
-                >
-                  {label}
-                </button>
-              )
-            })}
-          </div>
-        </GroupItem>
-
-        <GroupItem label={t('dsb.appearance.wallpaper.editor.spread')}>
-          <RangeInput
-            value={spread}
-            min={0}
-            max={100}
-            step={1}
-            hideLabel
-            valueLabel={t('dsb.appearance.wallpaper.editor.spread')}
-            aria-label={t('dsb.appearance.wallpaper.editor.spread')}
-            onChange={updateSpreadDraft}
-            onChangeEnd={commitSpread}
-          />
-        </GroupItem>
+        <SpreadField value={spread} onChange={updateSpreadDraft} onChangeEnd={commitSpread} />
 
         {activeGradient.renderer === GRADIENT_RENDERER.RADIAL && (
           <GroupItem label={t('dsb.appearance.wallpaper.editor.focal_point')} align='start'>
@@ -171,13 +135,7 @@ export default function Gradient({ gradient, canUseAngle }: Props) {
           </GroupItem>
         )}
 
-        {canUseAngle && activeGradient.renderer !== GRADIENT_RENDERER.RADIAL && (
-          <GroupItem label={t('dsb.appearance.wallpaper.editor.direction')}>
-            <div className={s.angle}>
-              <AngleWheel />
-            </div>
-          </GroupItem>
-        )}
+        {canUseAngle && activeGradient.renderer !== GRADIENT_RENDERER.RADIAL && <AngleWheel />}
       </div>
     </section>
   )

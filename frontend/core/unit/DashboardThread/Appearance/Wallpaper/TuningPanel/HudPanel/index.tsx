@@ -1,9 +1,11 @@
+import SIZE from '~/const/size'
 import ArrowSVG from '~/icons/ArrowSimple'
 import CheckerSVG from '~/icons/Checker'
 import { GRADIENT_RENDERER } from '~/lib/wallpaperMesh'
 import type { TWallpaperData } from '~/spec'
+import ColorsPresetBall from '~/widgets/ColorsPresetBall'
+import TextureSwatchPreview from '~/widgets/TuningFields/TextureSwatchPreview'
 
-import SwatchPreview from '../../TextureStylePicker/SwatchPreview'
 import useSalon from '../salon/hud_panel'
 
 type Props = {
@@ -59,7 +61,7 @@ export default function HudPanel({
           <div className={s.hudItem}>
             <span className={s.hudLabel}>Texture</span>
             <span className={s.hudSwatchWrap}>
-              <SwatchPreview type={texture.type} variant='hud' />
+              <TextureSwatchPreview type={texture.type} variant='hud' />
             </span>
           </div>
         )}
@@ -80,15 +82,7 @@ export default function HudPanel({
         </div>
 
         {gradientColors.length > 0 && (
-          <div className={s.hudColorBalls} aria-label='Gradient colors'>
-            {gradientColors.map((color, index) => (
-              <span
-                key={`${color}-${index}`}
-                className={s.hudColorBall}
-                style={{ backgroundColor: color }}
-              />
-            ))}
-          </div>
+          <ColorsPresetBall colors={gradientColors} label='Gradient colors' size={SIZE.TINY} />
         )}
 
         {hasShadow && (

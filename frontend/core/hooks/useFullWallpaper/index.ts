@@ -1,15 +1,14 @@
 import { GRADIENT_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
 import useTheme from '~/hooks/useTheme'
+import {
+  composeBgGradientAssetWallpapers,
+  composeBgGradientPaletteWallpapers,
+  composeBgPatternAssetWallpapers,
+} from '~/lib/bg'
 import type { TGradientRecipe } from '~/lib/wallpaperMesh'
 import type { TGradientPalette, TWallpaper, TWallpaperData } from '~/spec'
-import { resolveWallpaperThemeState, toWallpaperThemePatch } from '~/stores/wallpaper/helper'
+import { pickWallpaperThemeState, toWallpaperThemePatch } from '~/stores/wallpaper/helper'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
-
-import {
-  buildGradientCatalogPalettes,
-  buildGradientCatalogWallpapers,
-  buildPatternCatalogWallpapers,
-} from './helper'
 
 type TRet = {
   source: string
@@ -21,24 +20,34 @@ type TRet = {
   getPatternWallpapers: () => Record<string, TWallpaper>
 }
 
+/**
+ * Shared accessors and mutators for the wallpaper panel data model.
+ *
+ * Exposed to non-UI consumers (for example tabs/selectors) so they share the same
+ * catalog/protocol sources as hook-level background rendering.
+ *
+ * @example
+ * const fullWallpaper = useFullWallpaper()
+ * const wallpapers = fullWallpaper.getGradientWallpapers()
+ */
 export default function useFullWallpaper(): TRet {
   const store = useWallpaperDomain()
   const { isDarkTheme } = useTheme()
 
   const getGradientWallpapers = (): Record<string, TGradientRecipe> => {
-    return buildGradientCatalogWallpapers()
+    return composeBgGradientAssetWallpapers()
   }
 
   const getGradientPalettes = (): Record<string, TGradientPalette> => {
-    return buildGradientCatalogPalettes()
+    return composeBgGradientPaletteWallpapers()
   }
 
   const getPatternWallpapers = (): Record<string, TWallpaper> => {
-    return buildPatternCatalogWallpapers()
+    return composeBgPatternAssetWallpapers()
   }
 
   const getWallpaper = (): TWallpaperData => {
-    const themedState = resolveWallpaperThemeState(store, isDarkTheme)
+    const themedState = pickWallpaperThemeState(store, isDarkTheme)
     const {
       gradient,
       hasPattern,
@@ -53,7 +62,6 @@ export default function useFullWallpaper(): TRet {
       texture,
       source,
       type,
-      bgSize,
     } = themedState
 
     const hasBlur = blurIntensity > 0
@@ -61,37 +69,22 @@ export default function useFullWallpaper(): TRet {
 
     return {
       source,
-      sourceDark: store.sourceDark,
       type,
-      typeDark: store.typeDark,
       hasPattern,
-      hasPatternDark: store.hasPatternDark,
       patternId,
-      patternIdDark: store.patternIdDark,
       patternIntensity,
-      patternIntensityDark: store.patternIntensityDark,
       patternTone,
-      patternToneDark: store.patternToneDark,
       hasTexture,
-      hasTextureDark: store.hasTextureDark,
       hasBlur,
       blurIntensity,
-      blurIntensityDark: store.blurIntensityDark,
       hasShadow,
-      hasShadowDark: store.hasShadowDark,
       brightness,
-      brightnessDark: store.brightnessDark,
       saturation,
-      saturationDark: store.saturationDark,
       gradient: activeGradient,
-      gradientDark: store.gradientDark,
       texture,
-      textureDark: store.textureDark,
       gradientPalettes: getGradientPalettes(),
       gradientWallpapers: getGradientWallpapers(),
       patternWallpapers: getPatternWallpapers(),
-      bgSize,
-      bgSizeDark: store.bgSizeDark,
     }
   }
 
@@ -102,7 +95,7 @@ export default function useFullWallpaper(): TRet {
     store.commit(toWallpaperThemePatch({ source, type: WALLPAPER_TYPE.PATTERN }, isDarkTheme))
 
   return {
-    source: resolveWallpaperThemeState(store, isDarkTheme).source,
+    source: pickWallpaperThemeState(store, isDarkTheme).source,
     changeWallpaper,
     changePatternWallpaper,
     getGradientPalettes,

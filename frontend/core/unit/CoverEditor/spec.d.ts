@@ -1,4 +1,6 @@
-import type { TConstValues, TWallpaper, TWallpaperGradientDir } from '~/spec'
+import type { TBgConfig, TBgThemeConfig } from '~/lib/bg'
+import type { TGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
+import type { TConstValues } from '~/spec'
 
 import type {
   BORDER_HIGHLIGHT_MODE,
@@ -67,14 +69,11 @@ export type TStore = {
   size: TImageSize
   rotate: number
   hasGlassBorder: boolean
-  wallpaper: string
-  hasPattern: boolean
-  hasBlur: boolean
-  direction: TWallpaperGradientDir
+  background: TBgThemeConfig
+  originalBackground: TBgThemeConfig
   loadedImageUrl: string
 
   // derived
-  gradientWallpapers: Record<string, TWallpaper>
   tuningSetting: TTuningSetting
 
   commit: (patch: Partial<TStore>) => void
@@ -101,10 +100,18 @@ export type TTuningSetting = {
   shadow: TCoverShadow
   borderRadius: number
   borderHighlight: TBorderHighlight
-  wallpapers: Record<string, TWallpaper>
-  wallpaper: string
-  direction: TWallpaperGradientDir
+  background: TBgThemeConfig
+  activeBackground: TBgConfig
+  isBackgroundTouched: boolean
   size: TImageSize
   rotate: number
   hasGlassBorder: boolean
 }
+
+export type TCoverBackgroundPatch = Partial<TBgConfig>
+
+export type TCoverBackgroundRange = Pick<TBgConfig, 'blurIntensity' | 'brightness' | 'saturation'>
+
+export type TCoverBackgroundGradientPatch = Partial<TGradientRecipe>
+
+export type TCoverBackgroundTexturePatch = Partial<TWallpaperTexture>

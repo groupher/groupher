@@ -1,6 +1,5 @@
-export default function useSalon() {
+export default function useBackgroundTabSalon() {
   return {
-    wrapper: 'column w-full max-w-2xl mx-auto',
-    items: 'column gap-3 w-full',
+    wrapper: 'column gap-7 w-full mx-auto pl-2 mt-2.5',
   }
 }

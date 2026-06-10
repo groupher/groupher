@@ -1,4 +1,4 @@
-import type { WALLPAPER_BG_SIZE, WALLPAPER_PATTERN_TONE, WALLPAPER_TYPE } from '~/const/wallpaper'
+import type { WALLPAPER_PATTERN_TONE, WALLPAPER_TYPE } from '~/const/wallpaper'
 import type { TGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
 
 export type TWallpaperFmt = {
@@ -22,7 +22,6 @@ export type TWallpaperGradient = {
 export type TWallpaperPic = {
   image?: string
   preview?: string
-  bgSize?: TWallpaperBgSize
 
   // Applied by dashboard wallpaper settings before parsing the render background.
   blurIntensity?: number
@@ -43,8 +42,6 @@ export type TCustomWallpaper = TWallpaper | null
 export type TWallpaperType = WALLPAPER_TYPE
 
 export type TWallpaperPatternTone = WALLPAPER_PATTERN_TONE
-
-export type TWallpaperBgSize = WALLPAPER_BG_SIZE
 
 export type TGradientPalette = {
   key: string
@@ -69,39 +66,47 @@ export type TWallpaperInfo = {
 
 export type TWallpaperData = {
   source: string
-  sourceDark: string
   gradientPalettes: Record<string, TGradientPalette>
   gradientWallpapers: Record<string, TGradientRecipe>
   patternWallpapers: Record<string, TWallpaper>
   type: TWallpaperType
-  typeDark: TWallpaperType
   hasPattern: boolean
-  hasPatternDark: boolean
   patternId: string
-  patternIdDark: string
   patternIntensity: number
-  patternIntensityDark: number
   patternTone: TWallpaperPatternTone
-  patternToneDark: TWallpaperPatternTone
   hasTexture: boolean
-  hasTextureDark: boolean
   hasBlur: boolean
   blurIntensity: number
-  blurIntensityDark: number
   hasShadow: boolean
-  hasShadowDark: boolean
   brightness: number
-  brightnessDark: number
   saturation: number
-  saturationDark: number
   gradient: TGradientRecipe | null
-  gradientDark: TGradientRecipe | null
   texture: TWallpaperTexture
-  textureDark: TWallpaperTexture
-  bgSize: TWallpaperBgSize
-  bgSizeDark: TWallpaperBgSize
 }
 
-export type TParsedWallpaper = TWallpaperData & {
-  initWallpaper: TWallpaperData
+export type TWallpaperConfigData = {
+  customWallpaper: TCustomWallpaper
+  source: string
+  type: TWallpaperType
+  hasPattern: boolean
+  patternId: string
+  patternIntensity: number
+  patternTone: TWallpaperPatternTone
+  hasTexture: boolean
+  hasBlur?: boolean
+  blurIntensity: number
+  hasShadow: boolean
+  brightness: number
+  saturation: number
+  gradient: TGradientRecipe | null
+  texture: TWallpaperTexture
+}
+
+export type TWallpaperConfig = {
+  light: Partial<TWallpaperConfigData>
+  dark: Partial<TWallpaperConfigData>
+}
+
+export type TParsedWallpaper = Partial<TWallpaperConfig> & {
+  initWallpaper?: Partial<TWallpaperConfig>
 }

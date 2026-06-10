@@ -26,7 +26,7 @@ import type { TColorName } from './color'
 import type { TModerator } from './community'
 import type { TResolvedThemePreset, TThemePreset, TThemePresetOption } from './theme_preset'
 import type { TEditValue, TFooterOnelineLink, TLinkItem, TSocialItem } from './utils'
-import type { TWallpaperData } from './wallpaper'
+import type { TWallpaperConfig } from './wallpaper'
 
 export type TTagLayout = TConstValues<typeof TAG_LAYOUT>
 export type TInlineTagLayout = TConstValues<typeof INLINE_TAG_LAYOUT>
@@ -127,7 +127,7 @@ export type TDsb = {
   footerLinks?: readonly TLinkItem[]
   footerOnelineLinks?: readonly TFooterOnelineLink[]
 
-  wallpaper?: TWallpaperData
+  wallpaper?: TWallpaperConfig
   baseInfo?: {
     title?: string
     bio?: string
