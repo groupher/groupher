@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
-import type { TCommunity, TLocale, TMetric, TParsedWallpaper, TParseDashboard } from '~/spec'
+import type { TCommunity, TLocale, TMetric, TParseDashboard } from '~/spec'
 import AccountStoreProvider from '~/stores/account/provider'
 import CommunityStoreProvider from '~/stores/community/provider'
 import DashboardStoreProvider from '~/stores/dashboard/provider'
@@ -10,10 +10,11 @@ import LocaleStoreProvider from '~/stores/locale/provider'
 import ThemeStoreProvider from '~/stores/theme/provider'
 import ThemePresetStoreProvider from '~/stores/ThemePreset/provider'
 import WallpaperStoreProvider from '~/stores/wallpaper/provider'
+import type { TInit as TWallpaperInit } from '~/stores/wallpaper/spec'
 
 type TProps = {
   children: React.ReactNode
-  initData: { community: TCommunity; dashboard: TParseDashboard; wallpaper?: TParsedWallpaper }
+  initData: { community: TCommunity; dashboard: TParseDashboard; wallpaper?: TWallpaperInit }
   locale?: TLocale
   localeData?: string
   noAccount?: boolean

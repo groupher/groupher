@@ -1,4 +1,4 @@
-import { COLOR } from '~/const/colors'
+import { COLOR, RAINBOW_COLOR_HEX } from '~/const/colors'
 import THEME from '~/const/theme'
 import type { TColorName } from '~/spec'
 
@@ -85,6 +85,22 @@ export const normalizePageBgIntensity = (value?: number | null): number => {
 
   return clamp(value, 0, 100)
 }
+
+/**
+ * Map a preset color token to an actual hex color in the target theme.
+ *
+ * This is the shared palette resolver for wallpaper and theme flows. It accepts a
+ * `TColorName` and theme key, then falls back to `COLOR.BLACK` when the token
+ * is missing in the target palette.
+ *
+ * @example
+ * mapToPresetColorHex(COLOR.PINK, THEME.LIGHT)
+ * // => '#FBEFDE'
+ */
+export const mapToPresetColorHex = (
+  color: TColorName,
+  theme: keyof typeof RAINBOW_COLOR_HEX,
+): string => RAINBOW_COLOR_HEX[theme][color] ?? RAINBOW_COLOR_HEX[theme][COLOR.BLACK]
 
 export const getPageBgCustomColor = (
   theme: string,

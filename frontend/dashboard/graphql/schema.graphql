@@ -917,8 +917,6 @@ type DsbWallpaper {
   hasTextureDark: Boolean
   gradient: Json
   gradientDark: Json
-  bgSize: String
-  bgSizeDark: String
   blurIntensity: Int
   hasShadow: Boolean
   brightness: Int
@@ -1888,8 +1886,6 @@ input DsbWallpaperInput {
   hasTextureDark: Boolean
   gradient: Json
   gradientDark: Json
-  bgSize: String
-  bgSizeDark: String
   blurIntensity: Int
   hasShadow: Boolean
   brightness: Int

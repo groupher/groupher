@@ -2,13 +2,13 @@ import { COLOR } from '~/const/colors'
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import useTheme from '~/hooks/useTheme'
 import {
-  buildColorChips,
+  composeColorChips,
   findPresetColor,
   getGradientSpreadValue,
   applyGradientSpreadValue,
-  resolvePresetColor,
-} from '~/lib/bg/gradient'
-import type { TBgConfig } from '~/lib/bg/spec'
+} from '~/lib/bg'
+import type { TBgConfig } from '~/lib/bg'
+import { mapToPresetColorHex } from '~/lib/color'
 import {
   GRADIENT_RENDERER,
   WALLPAPER_GRADIENT_RENDERER_OPTIONS,
@@ -66,7 +66,7 @@ export default function Tuning({ background }: TProps) {
 
   const updatePresetColor = (index: number, color: TColorName): void => {
     if (color === COLOR.CUSTOM) return
-    updateColor(index, resolvePresetColor(color, theme))
+    updateColor(index, mapToPresetColorHex(color, theme))
   }
 
   const updateTexture = (patch: Partial<TWallpaperTexture>): void =>
@@ -126,7 +126,7 @@ export default function Tuning({ background }: TProps) {
           <div className={s.tuningColumn}>
             <ColorsField
               label='Colors'
-              chips={buildColorChips(gradient).map(({ color, index, key }) => ({
+              chips={composeColorChips(gradient).map(({ color, index, key }) => ({
                 color,
                 activeColor: findPresetColor(color, theme),
                 key,

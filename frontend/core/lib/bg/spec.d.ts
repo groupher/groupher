@@ -1,11 +1,5 @@
 import type { TGradientRecipe, TMeshGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
-import type {
-  TCustomWallpaper,
-  TWallpaper,
-  TWallpaperBgSize,
-  TWallpaperPatternTone,
-  TWallpaperType,
-} from '~/spec'
+import type { TCustomWallpaper, TWallpaper, TWallpaperPatternTone, TWallpaperType } from '~/spec'
 
 import type { BG_RENDER_TYPE } from './constant'
 
@@ -22,7 +16,6 @@ import type { BG_RENDER_TYPE } from './constant'
  *   source: 'amber_mauve',
  *   gradient: GRADIENT_WALLPAPER.amber_mauve,
  *   customWallpaper: null,
- *   bgSize: WALLPAPER_BG_SIZE.COVER,
  *   brightness: 100,
  *   saturation: 100,
  *   blurIntensity: 0,
@@ -50,24 +43,39 @@ export type TBgConfig = {
   brightness: number
   saturation: number
   texture: TWallpaperTexture
-
-  bgSize: TWallpaperBgSize
 }
 
 export type TBgResolveOptions = {
+  /**
+   * Optional catalog override for pattern wallpaper resolution.
+   *
+   * @example
+   * composeBgCss(config, { pictureCatalog })
+   */
   pictureCatalog?: Record<string, TWallpaper>
 }
 
+/**
+ * Render-spec resolution options for `composeBgRenderSpec`.
+ *
+ * @example
+ * const spec = composeBgRenderSpec(config, {
+ *   pictureCatalog,
+ *   fallbackConfig: customFallback,
+ * })
+ */
 export type TBgRenderResolveOptions = TBgResolveOptions & {
+  /**
+   * Optional fallback config used when renderer-safe defaults are needed.
+   */
   fallbackConfig?: TBgConfig
 }
 
 /**
  * Light/dark wrapper for modules that support theme-specific backgrounds.
  *
- * Keep theme pairing here instead of leaking flat persistence fields such as
- * `sourceDark` into common UI and renderer code. Wallpaper/Cover adapters can
- * serialize this shape to their own API fields.
+ * Keep theme pairing here instead of leaking persistence concerns into common
+ * UI and renderer code.
  *
  * @example
  * const current = theme === THEME.DARK ? themeBg.dark : themeBg.light
@@ -77,6 +85,12 @@ export type TBgThemeConfig = {
   dark: TBgConfig
 }
 
+/**
+ * Alias for renderer output type to keep render contracts explicit.
+ *
+ * @example
+ * const mode: TBgRenderType = BG_RENDER_TYPE.IMAGE
+ */
 export type TBgRenderType = BG_RENDER_TYPE
 
 /**
@@ -86,7 +100,7 @@ export type TBgRenderType = BG_RENDER_TYPE
  * render spec so runtime preview and static image export cannot drift apart.
  *
  * @example
- * const renderSpec = resolveBgRenderSpec(bg)
+ * const renderSpec = composeBgRenderSpec(bg)
  * return <BgRenderer renderSpec={renderSpec} />
  */
 export type TBgRenderSpec = {
@@ -99,7 +113,6 @@ export type TBgRenderSpec = {
   patternColor: string
   hasTexture: boolean
   source: string
-  bgSize: TWallpaperBgSize
   colors: string[]
   colorStops: number[]
   flow: number

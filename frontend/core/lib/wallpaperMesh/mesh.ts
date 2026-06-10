@@ -44,7 +44,14 @@ type TGradientPaletteLike = {
   colors: string[]
 }
 
-export const buildGradientRecipeForRenderer = (
+/**
+ * Compose a gradient recipe for a target renderer while preserving the user's
+ * current angle/spread where the renderer supports them.
+ *
+ * @example
+ * const radial = composeGradientRecipeForRenderer(linearRecipe, GRADIENT_RENDERER.RADIAL)
+ */
+export const composeGradientRecipeForRenderer = (
   recipe: TGradientRecipe,
   renderer: TGradientRenderer,
 ): TGradientRecipe => {
@@ -103,7 +110,7 @@ export const applyGradientPalette = (
   current: TGradientRecipe,
   palette: TGradientPaletteLike,
 ): TGradientRecipe => {
-  return buildGradientRecipeForRenderer(
+  return composeGradientRecipeForRenderer(
     {
       ...current,
       preset: palette.key,
@@ -203,7 +210,13 @@ const formatColorStops = (colors: string[], stops: number[]): string => {
   return safeColors.map((color, index) => `${color} ${stops[index] ?? 0}%`).join(',')
 }
 
-export const buildLinearGradientBackground = (recipe: TGradientRecipe): string => {
+/**
+ * Compose the CSS fallback string for a linear gradient recipe.
+ *
+ * @example
+ * const css = composeLinearGradientBackground(recipe)
+ */
+export const composeLinearGradientBackground = (recipe: TGradientRecipe): string => {
   if (recipe.renderer !== GRADIENT_RENDERER.LINEAR) return ''
 
   return `linear-gradient(${recipe.angle}deg, ${formatColorStops(
@@ -212,7 +225,13 @@ export const buildLinearGradientBackground = (recipe: TGradientRecipe): string =
   )})`
 }
 
-export const buildRadialGradientBackground = (recipe: TGradientRecipe): string => {
+/**
+ * Compose the CSS fallback string for a radial gradient recipe.
+ *
+ * @example
+ * const css = composeRadialGradientBackground(recipe)
+ */
+export const composeRadialGradientBackground = (recipe: TGradientRecipe): string => {
   if (recipe.renderer !== GRADIENT_RENDERER.RADIAL) return ''
 
   return `radial-gradient(${recipe.shape} at ${Math.round(recipe.center.x * 100)}% ${Math.round(
@@ -224,12 +243,12 @@ export const buildRadialGradientBackground = (recipe: TGradientRecipe): string =
 }
 
 /**
- * Build the CSS fallback for a mesh wallpaper when WebGL is unavailable.
+ * Compose the CSS fallback for a mesh wallpaper when WebGL is unavailable.
  *
  * @example
- * const background = buildMeshGradientFallback(recipe)
+ * const background = composeMeshGradientFallback(recipe)
  */
-export const buildMeshGradientFallback = (recipe: TMeshGradientRecipe): string => {
+export const composeMeshGradientFallback = (recipe: TMeshGradientRecipe): string => {
   const safeRecipe = normalizeMeshRecipe(recipe)
 
   return `linear-gradient(${safeRecipe.angle}deg, ${formatColorStops(
@@ -238,11 +257,17 @@ export const buildMeshGradientFallback = (recipe: TMeshGradientRecipe): string =
   )})`
 }
 
-export const buildGradientBackground = (recipe: TGradientRecipe): string => {
-  if (recipe.renderer === GRADIENT_RENDERER.LINEAR) return buildLinearGradientBackground(recipe)
-  if (recipe.renderer === GRADIENT_RENDERER.RADIAL) return buildRadialGradientBackground(recipe)
+/**
+ * Compose the CSS fallback string for any gradient recipe renderer.
+ *
+ * @example
+ * const background = composeGradientBackground(recipe)
+ */
+export const composeGradientBackground = (recipe: TGradientRecipe): string => {
+  if (recipe.renderer === GRADIENT_RENDERER.LINEAR) return composeLinearGradientBackground(recipe)
+  if (recipe.renderer === GRADIENT_RENDERER.RADIAL) return composeRadialGradientBackground(recipe)
 
-  return buildMeshGradientFallback(recipe)
+  return composeMeshGradientFallback(recipe)
 }
 
 /**

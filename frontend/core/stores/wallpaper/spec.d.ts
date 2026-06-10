@@ -1,10 +1,5 @@
 import type { TGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
-import type {
-  TCustomWallpaper,
-  TWallpaperBgSize,
-  TWallpaperPatternTone,
-  TWallpaperType,
-} from '~/spec'
+import type { TCustomWallpaper, TWallpaperPatternTone, TWallpaperType } from '~/spec'
 
 export type TWallpaperThemeState = {
   customWallpaper: TCustomWallpaper
@@ -22,35 +17,22 @@ export type TWallpaperThemeState = {
   brightness: number
   saturation: number
   texture: TWallpaperTexture
-
-  bgSize: TWallpaperBgSize
 }
 
-export type TWallpaperDarkState = {
-  sourceDark: string
-  typeDark: TWallpaperType
-
-  hasPatternDark: boolean
-  patternIdDark: string
-  patternIntensityDark: number
-  patternToneDark: TWallpaperPatternTone
-  hasTextureDark: boolean
-  gradientDark: TGradientRecipe | null
-  blurIntensityDark: number
-  hasShadowDark: boolean
-  brightnessDark: number
-  saturationDark: number
-  textureDark: TWallpaperTexture
-
-  bgSizeDark: TWallpaperBgSize
+export type TWallpaperState = {
+  light: TWallpaperThemeState
+  dark: TWallpaperThemeState
 }
 
-export type TWallpaperState = TWallpaperThemeState & TWallpaperDarkState
+export type TWallpaperPatch = {
+  light?: Partial<TWallpaperThemeState>
+  dark?: Partial<TWallpaperThemeState>
+}
 
 export type TStore = TWallpaperState & {
   original: TWallpaperState
   // actions
-  commit: (patch: Partial<TStore>) => void
+  commit: (patch: Partial<Omit<TStore, 'light' | 'dark' | 'commit'>> & TWallpaperPatch) => void
 }
 
-export type TInit = Partial<TStore>
+export type TInit = TWallpaperPatch

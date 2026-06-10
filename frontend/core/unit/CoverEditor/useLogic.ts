@@ -3,18 +3,18 @@ import { proxy, useSnapshot } from 'valtio'
 
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import useTheme from '~/hooks/useTheme'
-import type { TBgConfig } from '~/lib/bg/spec'
+import type { TBgConfig } from '~/lib/bg'
 import {
   DEFAULT_WALLPAPER_TEXTURE_INTENSITY,
   GRADIENT_RENDERER,
-  buildGradientRecipeForRenderer,
+  composeGradientRecipeForRenderer,
   isMeshGradientRecipe,
   type TGradientRecipe,
   type TGradientRenderer,
   type TWallpaperTexture,
 } from '~/lib/wallpaperMesh'
 
-import { buildCoverGradientRecipe, createCoverBgThemeConfig } from './background'
+import { composeCoverGradientRecipe, createCoverBgThemeConfig } from './background'
 import {
   BORDER_HIGHLIGHT_DEFAULT,
   COVER_SHADOW_DEFAULT,
@@ -242,7 +242,7 @@ export default function useLogic(): TRet {
     backgroundOnChange({
       source,
       type: WALLPAPER_TYPE.GRADIENT,
-      gradient: buildCoverGradientRecipe(source, renderer),
+      gradient: composeCoverGradientRecipe(source, renderer),
       customWallpaper: null,
     })
   }
@@ -262,9 +262,9 @@ export default function useLogic(): TRet {
     })
   const backgroundGradientRendererOnChange = (renderer: TGradientRenderer): void => {
     const gradient =
-      activeBackground.gradient ?? buildCoverGradientRecipe(activeBackground.source || 'pink')
+      activeBackground.gradient ?? composeCoverGradientRecipe(activeBackground.source || 'pink')
 
-    backgroundGradientOnChange(buildGradientRecipeForRenderer(gradient, renderer))
+    backgroundGradientOnChange(composeGradientRecipeForRenderer(gradient, renderer))
   }
   const backgroundGradientAngleOnChange = (angle: number): void => {
     const gradient = activeBackground.gradient

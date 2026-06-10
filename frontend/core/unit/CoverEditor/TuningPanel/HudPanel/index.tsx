@@ -3,7 +3,7 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import ImageSizeSVG from '~/icons/ImageSize'
 import RotateSVG from '~/icons/Rotate'
 import ShadowSVG from '~/icons/Shadow'
-import { resolveBg } from '~/lib/bg/resolve'
+import { composeBgCss } from '~/lib/bg'
 
 import { IMAGE_SIZE_RANGE } from '../../constant'
 import { isCoverShadowActive } from '../../helper'
@@ -37,7 +37,7 @@ export default function HudPanel({ setting, onExpand }: TProps) {
   const borderValue = getBorderValue({ borderRadius, borderHighlight, hasGlassBorder })
   const frameSize = getResponsiveImageSize(size)
   const framePlacement = getImagePlacement(position, size, rotate)
-  const backgroundPreview = resolveBg(activeBackground)
+  const backgroundPreview = composeBgCss(activeBackground)
 
   return (
     <div className={s.wrapper}>

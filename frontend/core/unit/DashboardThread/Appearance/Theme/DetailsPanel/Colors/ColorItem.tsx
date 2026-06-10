@@ -1,18 +1,14 @@
 import { COLOR } from '~/const/colors'
 import useThemeKV from '~/hooks/useThemeKV'
 import useTrans from '~/hooks/useTrans'
+import { mapToPresetColorHex } from '~/lib/color'
 import type { TColorName } from '~/spec'
 import ColorSelector from '~/widgets/ColorSelector'
 
 import type { TThemePresetOverwrite, TThemePresetTokens } from '../../spec'
 import useSalon from '../salon/colors/color_item'
 import type { TColorDetail } from './constant'
-import {
-  findPresetColor,
-  getContrastBallShadow,
-  getContrastRingColor,
-  resolvePresetColor,
-} from './helper'
+import { findPresetColor, getContrastBallShadow, getContrastRingColor } from './helper'
 
 type TProps = {
   detail: TColorDetail
@@ -38,7 +34,7 @@ export default function ColorItem({ detail, selectedTokens, onThemePresetCommit 
   const handlePresetChange = (selectedColor: TColorName) => {
     if (selectedColor === COLOR.CUSTOM) return
 
-    onThemePresetCommit({ [activeColorKey]: resolvePresetColor(selectedColor, theme) })
+    onThemePresetCommit({ [activeColorKey]: mapToPresetColorHex(selectedColor, theme) })
   }
 
   const handleCustomChange = (customColor: string) => {

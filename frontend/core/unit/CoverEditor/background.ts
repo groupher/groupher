@@ -1,20 +1,21 @@
 import {
-  COVER_GRADIENT_WALLPAPER,
   DEFAULT_WALLPAPER_PATTERN_ID,
   PATTERN_WALLPAPER,
-  WALLPAPER_BG_SIZE,
   WALLPAPER_PATTERN_TONE,
   WALLPAPER_TYPE,
 } from '~/const/wallpaper'
-import { resolveBgRenderSpec } from '~/lib/bg/resolve'
-import type { TBgConfig, TBgRenderSpec, TBgThemeConfig } from '~/lib/bg/spec'
+import { COVER_GRADIENT_EFFECT, COVER_GRADIENT_WALLPAPER } from '~/constant/cover'
+import { composeBgRenderSpec } from '~/lib/bg'
+import type { TBgConfig, TBgRenderSpec, TBgThemeConfig } from '~/lib/bg'
 import {
   GRADIENT_RENDERER,
   WALLPAPER_TEXTURE,
-  buildGradientRecipeForRenderer,
+  composeGradientRecipeForRenderer,
   type TGradientRecipe,
 } from '~/lib/wallpaperMesh'
-import type { TGradientPalette, TWallpaperGradient, TWallpaperPic } from '~/spec'
+import type { TWallpaperPic } from '~/spec'
+
+export { COVER_GRADIENT_PALETTE } from '~/constant/cover'
 
 const COVER_DEFAULT_GRADIENT = {
   LIGHT: 'pink',
@@ -27,69 +28,36 @@ const COVER_DEFAULT_TEXTURE = {
   params: {},
 }
 
-const formatPresetLabel = (key: string): string =>
-  key
-    .split(/[-_]/)
-    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
-    .join(' ')
-
-const directionToAngle = (direction: string | undefined): number => {
-  switch (direction) {
-    case 'top':
-      return 0
-    case 'top right':
-      return 45
-    case 'right':
-      return 90
-    case 'bottom right':
-      return 135
-    case 'bottom':
-      return 180
-    case 'bottom left':
-      return 225
-    case 'left':
-      return 270
-    case 'top left':
-      return 315
-    default:
-      return 180
-  }
-}
-
-export const COVER_GRADIENT_PALETTE = Object.fromEntries(
-  Object.entries(COVER_GRADIENT_WALLPAPER).map(([key, value]) => [
-    key,
-    {
-      key,
-      label: formatPresetLabel(key),
-      colors: (value as TWallpaperGradient).colors,
-    },
-  ]),
-) as Record<string, TGradientPalette>
-
 export const COVER_PICTURE_WALLPAPER = PATTERN_WALLPAPER as Record<string, TWallpaperPic>
 
-export const buildCoverGradientRecipe = (
+/**
+ * Compose a cover gradient recipe from the cover-only preset catalog.
+ *
+ * Cover keeps its own palette, but the output is the same `TGradientRecipe`
+ * protocol consumed by Wallpaper and `BgRenderer`.
+ *
+ * @example
+ * const recipe = composeCoverGradientRecipe('pink', GRADIENT_RENDERER.RADIAL)
+ */
+export const composeCoverGradientRecipe = (
   source: string,
   renderer = GRADIENT_RENDERER.LINEAR,
 ): TGradientRecipe => {
   const key = source in COVER_GRADIENT_WALLPAPER ? source : COVER_DEFAULT_GRADIENT.LIGHT
-  const preset = COVER_GRADIENT_WALLPAPER[key] as TWallpaperGradient
-  const base: TGradientRecipe = {
-    version: 2,
-    renderer: GRADIENT_RENDERER.LINEAR,
-    preset: key,
-    colors: [...preset.colors],
-    angle: directionToAngle(preset.direction),
-    spread: 58,
-  }
+  const recipe = COVER_GRADIENT_WALLPAPER[key]
 
-  return buildGradientRecipeForRenderer(base, renderer)
+  return composeGradientRecipeForRenderer(recipe, renderer)
 }
 
+/**
+ * Create a single-theme cover Bg config from a cover preset.
+ *
+ * @example
+ * const lightBg = createCoverBgConfig('pink')
+ */
 export const createCoverBgConfig = (source: string = COVER_DEFAULT_GRADIENT.LIGHT): TBgConfig => {
-  const gradient = buildCoverGradientRecipe(source)
-  const preset = COVER_GRADIENT_WALLPAPER[source] as TWallpaperGradient | undefined
+  const gradient = composeCoverGradientRecipe(source)
+  const effect = COVER_GRADIENT_EFFECT[source] ?? {}
 
   return {
     customWallpaper: null,
@@ -98,21 +66,39 @@ export const createCoverBgConfig = (source: string = COVER_DEFAULT_GRADIENT.LIGH
     hasPattern: false,
     patternId: DEFAULT_WALLPAPER_PATTERN_ID,
     patternIntensity: 0,
+    // Pattern tone defaults to dark since the default cover config does not enable
+    // patterns by default, and it should remain independent from global theme.
     patternTone: WALLPAPER_PATTERN_TONE.DARK,
     hasTexture: false,
     gradient,
-    blurIntensity: preset?.blurIntensity ?? 0,
-    brightness: preset?.brightness ?? 100,
-    saturation: preset?.saturation ?? 100,
+    blurIntensity: effect.blurIntensity ?? 0,
+    brightness: effect.brightness ?? 100,
+    saturation: effect.saturation ?? 100,
     texture: { ...COVER_DEFAULT_TEXTURE },
-    bgSize: WALLPAPER_BG_SIZE.COVER,
   }
 }
 
+/**
+ * Compose a dual-theme default cover background config.
+ *
+ * @example
+ * const coverBg = createCoverBgThemeConfig()
+ * // coverBg.light.source === 'pink'
+ * // coverBg.dark.source === 'purple2'
+ */
 export const createCoverBgThemeConfig = (): TBgThemeConfig => ({
   light: createCoverBgConfig(COVER_DEFAULT_GRADIENT.LIGHT),
   dark: createCoverBgConfig(COVER_DEFAULT_GRADIENT.DARK),
 })
 
-export const resolveCoverBgRenderSpec = (background: TBgConfig): TBgRenderSpec =>
-  resolveBgRenderSpec(background, { pictureCatalog: COVER_PICTURE_WALLPAPER })
+/**
+ * Adapt a cover background config to the shared Bg render spec.
+ *
+ * The only cover-specific rendering input is its picture catalog; gradient,
+ * pattern, texture, and filter composition all stay in `composeBgRenderSpec`.
+ *
+ * @example
+ * const renderSpec = adaptCoverBgRenderSpec(activeBackground)
+ */
+export const adaptCoverBgRenderSpec = (background: TBgConfig): TBgRenderSpec =>
+  composeBgRenderSpec(background, { pictureCatalog: COVER_PICTURE_WALLPAPER })

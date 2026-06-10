@@ -9,6 +9,9 @@ import type { TColorName } from '~/spec'
 /**
  * Resolve which preset color name matches an actual hex string under current theme.
  * Returns COLOR.CUSTOM when no preset color matches.
+ *
+ * @example
+ * const name = findPresetColor('#fbeede', 'light')
  */
 export const findPresetColor = (
   color: string,
@@ -20,18 +23,12 @@ export const findPresetColor = (
 }
 
 /**
- * Resolve preset color name into hex string for current theme.
- * Falls back to black when the theme palette has no mapping for the name.
+ * Compose deterministic color chip metadata consumed by color selectors.
+ *
+ * @example
+ * const chips = composeColorChips(recipe)
  */
-export const resolvePresetColor = (
-  color: TColorName,
-  theme: keyof typeof RAINBOW_COLOR_HEX,
-): string => RAINBOW_COLOR_HEX[theme][color] ?? RAINBOW_COLOR_HEX[theme][COLOR.BLACK]
-
-/**
- * Build deterministic color chip metadata consumed by color selectors.
- */
-export const buildColorChips = (
+export const composeColorChips = (
   gradient: TGradientRecipe,
 ): Array<{ color: string; index: number; key: string }> => {
   return gradient.colors.map((color, index) => ({
@@ -44,6 +41,9 @@ export const buildColorChips = (
 /**
  * Read user-facing spread value from a gradient recipe.
  * Delegates to renderer-specific logic in wallpaperMesh.
+ *
+ * @example
+ * const spread = getGradientSpreadValue(recipe)
  */
 export const getGradientSpreadValue = (gradient: TGradientRecipe): number =>
   getGradientRecipeSpread(gradient)
@@ -51,6 +51,9 @@ export const getGradientSpreadValue = (gradient: TGradientRecipe): number =>
 /**
  * Apply user-facing spread control value back to gradient recipe.
  * Mesh gradients store spread-like tuning in `softness`, non-mesh use `spread`.
+ *
+ * @example
+ * const next = applyGradientSpreadValue(recipe, 58)
  */
 export const applyGradientSpreadValue = (
   gradient: TGradientRecipe,

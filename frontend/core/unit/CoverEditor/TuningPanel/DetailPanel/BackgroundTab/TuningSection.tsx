@@ -1,4 +1,4 @@
-import type { TBgConfig } from '~/lib/bg/spec'
+import type { TBgConfig } from '~/lib/bg'
 
 import GroupTitle from '../GroupTitle'
 import useSalon from './salon/tuning'

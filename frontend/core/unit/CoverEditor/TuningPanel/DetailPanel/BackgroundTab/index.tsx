@@ -1,4 +1,4 @@
-import type { TBgConfig } from '~/lib/bg/spec'
+import type { TBgConfig } from '~/lib/bg'
 
 import GradientsSection from './GradientsSection'
 import PicturesSection from './PictureSection'

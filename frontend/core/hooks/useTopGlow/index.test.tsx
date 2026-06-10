@@ -32,7 +32,7 @@ describe('useTopGlow', () => {
   it('disables glow on landing when wallpaper is not AMBER_MAUVE', () => {
     const wrapper = makeStoreWrapper({
       metric: METRIC.LANDING,
-      wallpaper: { source: 'sky_mauve_blue', type: WALLPAPER_TYPE.GRADIENT },
+      wallpaper: { light: { source: 'sky_mauve_blue', type: WALLPAPER_TYPE.GRADIENT } },
       dashboard: { themeTokens: { glowType: null, glowTypeDark: null } },
     })
 
@@ -61,7 +61,7 @@ describe('useTopGlow', () => {
 
   it('keeps glow enabled for regular pages without wallpaper', async () => {
     const wrapper = makeStoreWrapper({
-      wallpaper: { source: '', type: WALLPAPER_TYPE.GRADIENT },
+      wallpaper: { light: { source: '', type: WALLPAPER_TYPE.GRADIENT } },
       dashboard: {
         themePreset: THEME_PRESET.CUSTOM,
         themeTokens: {

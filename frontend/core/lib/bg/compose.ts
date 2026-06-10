@@ -10,28 +10,56 @@ import {
   WALLPAPER_TEXTURE,
 } from '~/lib/wallpaperMesh'
 import type { TWallpaperFmt, TWallpaperPic } from '~/spec'
-import type { TStore, TWallpaperThemeState } from '~/stores/wallpaper/spec'
+import type { TWallpaperThemeState } from '~/stores/wallpaper/spec'
 
-import { buildActiveBgGradientWallpapers, buildActiveBgPatternWallpapers } from './catalog'
-import { BG_RENDER_TYPE } from './constant'
-import { parseBgGradientRecipe, parseBgWallpaper, resolveBgPattern } from './parse'
+import {
+  BG_RENDER_TYPE,
+  BG_PATTERN_DARK_COLOR,
+  BG_PATTERN_LIGHT_COLOR,
+  DEFAULT_RENDER_COLORS,
+} from './constant'
+import { composeActiveBgGradientWallpapers, composeActiveBgPatternWallpapers } from './copier'
+import { parseBgGradientRecipe, parseBgWallpaper, resolveBgPattern } from './css_adapter'
 import type { TBgConfig, TBgRenderResolveOptions, TBgRenderSpec, TBgResolveOptions } from './spec'
 
 type TResolvedBg = { source: string } & TWallpaperFmt
 
-const DEFAULT_RENDER_COLORS = ['#fbeede', '#d8b9e3']
-
+/**
+ * Extract CSS `filter` token from parse output.
+ *
+ * @example
+ * getFilterValue('filter: blur(2px)') // "blur(2px)"
+ */
 const getFilterValue = (effect: string): string =>
   effect.replace(/^filter:\s*/, '').trim() || 'none'
 
+/**
+ * Convert pattern intensity percent into alpha.
+ *
+ * @example
+ * getPatternOpacity(50) // 0.5
+ */
 const getPatternOpacity = (patternIntensity: number): number =>
   Math.max(0, Math.min(100, patternIntensity)) / 100
 
+/**
+ * Pattern tone is a per-background visual hint, independent from the global theme.
+ *
+ * It controls how the pattern overlay is rendered on the background:
+ * - LIGHT -> white pattern color
+ * - DARK  -> black pattern color
+ */
 const getPatternColor = (patternTone: TWallpaperThemeState['patternTone']): string =>
-  patternTone === WALLPAPER_PATTERN_TONE.LIGHT ? '#ffffff' : '#000000'
+  patternTone === WALLPAPER_PATTERN_TONE.LIGHT ? BG_PATTERN_LIGHT_COLOR : BG_PATTERN_DARK_COLOR
 
+/**
+ * Resolve active gradient recipe from config and active catalog patch.
+ *
+ * @example
+ * const recipe = getActiveBgGradientRecipe(config)
+ */
 const getActiveBgGradientRecipe = (config: TBgConfig): TGradientRecipe | null => {
-  const gradientWallpapers = buildActiveBgGradientWallpapers({
+  const gradientWallpapers = composeActiveBgGradientWallpapers({
     source: config.source,
     type: config.type,
     gradient: config.gradient,
@@ -40,6 +68,12 @@ const getActiveBgGradientRecipe = (config: TBgConfig): TGradientRecipe | null =>
   return config.gradient || gradientWallpapers[config.source] || null
 }
 
+/**
+ * Build renderer-safe fallback for gradient + pattern combinations.
+ *
+ * @example
+ * const fallback = getBgRenderFallbackConfig(config)
+ */
 const getBgRenderFallbackConfig = (config: TBgConfig): TBgConfig =>
   config.type === WALLPAPER_TYPE.GRADIENT && config.hasPattern
     ? { ...config, hasPattern: false }
@@ -52,9 +86,9 @@ const getBgRenderFallbackConfig = (config: TBgConfig): TBgConfig =>
  * fields. New consumers should prefer constructing `TBgConfig` directly.
  *
  * @example
- * const bg = toBgConfig(resolveWallpaperThemeState(store, isDarkTheme))
+ * const bg = toBgConfig(pickWallpaperThemeState(store, isDarkTheme))
  */
-export const toBgConfig = (store: Pick<TStore, keyof TWallpaperThemeState>): TBgConfig => ({
+export const toBgConfig = (store: TWallpaperThemeState): TBgConfig => ({
   source: store.source,
   hasPattern: store.hasPattern,
   patternId: store.patternId,
@@ -68,7 +102,6 @@ export const toBgConfig = (store: Pick<TStore, keyof TWallpaperThemeState>): TBg
   texture: store.texture,
   customWallpaper: store.customWallpaper,
   type: store.type,
-  bgSize: store.bgSize,
 })
 
 /**
@@ -78,9 +111,9 @@ export const toBgConfig = (store: Pick<TStore, keyof TWallpaperThemeState>): TBg
  * rendered by `BgRenderer`, while CSS fallback only needs background/filter.
  *
  * @example
- * const cssBg = resolveBg(toBgCssConfig(wallpaperState))
+ * const cssBg = composeBgCss(toBgCssConfig(wallpaperState))
  */
-export const toBgCssConfig = (store: Pick<TStore, keyof TWallpaperThemeState>): TBgConfig => ({
+export const toBgCssConfig = (store: TWallpaperThemeState): TBgConfig => ({
   ...toBgConfig(store),
   texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
 })
@@ -89,12 +122,12 @@ export const toBgCssConfig = (store: Pick<TStore, keyof TWallpaperThemeState>): 
  * Resolves a Bg config to CSS-compatible background and filter strings.
  *
  * Use this for non-WebGL fallbacks and simple CSS consumers. Components that need
- * texture, mesh, or pattern overlay should use `resolveBgRenderSpec`.
+ * texture, mesh, or pattern overlay should use `composeBgRenderSpec`.
  *
  * @example
- * const { background, effect } = resolveBg(bg)
+ * const { background, effect } = composeBgCss(bg)
  */
-export const resolveBg = (config: TBgConfig, options: TBgResolveOptions = {}): TResolvedBg => {
+export const composeBgCss = (config: TBgConfig, options: TBgResolveOptions = {}): TResolvedBg => {
   const {
     source,
     hasPattern,
@@ -105,7 +138,6 @@ export const resolveBg = (config: TBgConfig, options: TBgResolveOptions = {}): T
     gradient,
     customWallpaper: customWallpaperValue,
     type,
-    bgSize,
   } = config
   const { pictureCatalog } = options
   let customWallpaper = customWallpaperValue
@@ -126,14 +158,13 @@ export const resolveBg = (config: TBgConfig, options: TBgResolveOptions = {}): T
   if (type === WALLPAPER_TYPE.UPLOAD && source) {
     customWallpaper = {
       image: source,
-      bgSize,
       blurIntensity,
       brightness,
       saturation,
     }
   }
 
-  const patternWallpapers = buildActiveBgPatternWallpapers(
+  const patternWallpapers = composeActiveBgPatternWallpapers(
     {
       source,
       type,
@@ -144,7 +175,7 @@ export const resolveBg = (config: TBgConfig, options: TBgResolveOptions = {}): T
     pictureCatalog,
   )
 
-  const gradientWallpapers = buildActiveBgGradientWallpapers({ source, type, gradient })
+  const gradientWallpapers = composeActiveBgGradientWallpapers({ source, type, gradient })
 
   const wallpapers = { ...gradientWallpapers, ...patternWallpapers }
   const activeGradient = getActiveBgGradientRecipe(config)
@@ -182,15 +213,15 @@ export const resolveBg = (config: TBgConfig, options: TBgResolveOptions = {}): T
  * Pass `options.fallbackConfig` only for a custom non-renderer fallback.
  *
  * @example
- * const renderSpec = resolveBgRenderSpec(bg)
+ * const renderSpec = composeBgRenderSpec(bg)
  * return <BgRenderer renderSpec={renderSpec} />
  */
-export const resolveBgRenderSpec = (
+export const composeBgRenderSpec = (
   config: TBgConfig,
   options: TBgRenderResolveOptions = {},
 ): TBgRenderSpec => {
   const fallbackConfig = options.fallbackConfig ?? getBgRenderFallbackConfig(config)
-  const { background, effect } = resolveBg(fallbackConfig, options)
+  const { background, effect } = composeBgCss(fallbackConfig, options)
   const base = {
     background: background || 'transparent',
     filter: getFilterValue(effect),
@@ -200,7 +231,6 @@ export const resolveBgRenderSpec = (
     patternColor: getPatternColor(config.patternTone),
     hasTexture: config.hasTexture,
     source: config.source,
-    bgSize: config.bgSize,
     colors: DEFAULT_RENDER_COLORS,
     colorStops: normalizeEvenGradientStops(DEFAULT_RENDER_COLORS.length),
     flow: config.gradient?.renderer === GRADIENT_RENDERER.LINEAR ? config.gradient.angle : 180,
@@ -261,7 +291,7 @@ export const resolveBgRenderSpec = (
   }
 
   if (config.type === WALLPAPER_TYPE.PATTERN) {
-    const wallpaper = buildActiveBgPatternWallpapers(config, options.pictureCatalog)[
+    const wallpaper = composeActiveBgPatternWallpapers(config, options.pictureCatalog)[
       config.source
     ] as TWallpaperPic | undefined
 

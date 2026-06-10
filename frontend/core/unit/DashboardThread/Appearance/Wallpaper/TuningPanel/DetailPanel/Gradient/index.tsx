@@ -4,12 +4,12 @@ import { COLOR } from '~/const/colors'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import {
-  buildColorChips,
+  composeColorChips,
   findPresetColor,
   getGradientSpreadValue,
-  resolvePresetColor,
   applyGradientSpreadValue,
-} from '~/lib/bg/gradient'
+} from '~/lib/bg'
+import { mapToPresetColorHex } from '~/lib/color'
 import {
   GRADIENT_RENDERER,
   WALLPAPER_GRADIENT_RENDERER_OPTIONS,
@@ -41,7 +41,7 @@ export default function Gradient({ gradient, canUseAngle }: Props) {
   const [draftGradient, setDraftGradient] = useState<TGradientRecipe | null>(gradient)
   const activeGradient = draftGradient ?? gradient
   const spread = activeGradient ? getGradientSpreadValue(activeGradient) : 50
-  const colorChips = activeGradient ? buildColorChips(activeGradient) : []
+  const colorChips = activeGradient ? composeColorChips(activeGradient) : []
 
   useEffect(() => {
     setDraftGradient(gradient)
@@ -66,7 +66,7 @@ export default function Gradient({ gradient, canUseAngle }: Props) {
 
   const updatePresetColor = (index: number, color: TColorName): void => {
     if (color === COLOR.CUSTOM) return
-    updateColor(index, resolvePresetColor(color, theme))
+    updateColor(index, mapToPresetColorHex(color, theme))
   }
 
   const updateSpreadDraft = (value: number): void => {

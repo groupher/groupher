@@ -47,7 +47,7 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
       when key in @validated_embed_section_fields do
     embed_module = Map.fetch!(@embed_section_modules, key)
     current_embed = community_dashboard[key] || struct(embed_module)
-    merged_args = current_embed |> Map.merge(args) |> strip_struct()
+    merged_args = current_embed |> deep_merge(args) |> strip_struct()
 
     case embed_module.changeset(current_embed, merged_args) do
       %{valid?: true} = changeset ->
@@ -82,4 +82,12 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
 
   # Replace-style sections are already the final payload.
   def prepare(%CommunityDashboard{}, _key, args), do: {:ok, args}
+
+  defp deep_merge(left, right) when is_map(left) and is_map(right) do
+    Map.merge(left, right, fn _key, left_value, right_value ->
+      deep_merge(left_value, right_value)
+    end)
+  end
+
+  defp deep_merge(_left, right), do: right
 end

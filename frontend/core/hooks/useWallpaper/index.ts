@@ -3,26 +3,36 @@
 import { useMemo } from 'react'
 
 import useTheme from '~/hooks/useTheme'
-import { resolveBg, resolveBgRenderSpec, toBgConfig, toBgCssConfig } from '~/lib/bg/resolve'
-import type { TBgRenderSpec } from '~/lib/bg/spec'
+import { composeBgCss, composeBgRenderSpec, toBgConfig, toBgCssConfig } from '~/lib/bg'
+import type { TBgRenderSpec } from '~/lib/bg'
 import type { TWallpaperFmt } from '~/spec'
-import { resolveWallpaperThemeState } from '~/stores/wallpaper/helper'
+import { pickWallpaperThemeState } from '~/stores/wallpaper/helper'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
-import type { TStore } from '~/stores/wallpaper/spec'
 import type { TWallpaperThemeState } from '~/stores/wallpaper/spec'
 
 type TRet = { source: string; hasShadow: boolean } & TWallpaperFmt
 
-export const toWallpaperBgConfig = (
-  store: Pick<TStore, keyof TWallpaperThemeState>,
-): TWallpaperThemeState => ({ ...toBgConfig(store), hasShadow: store.hasShadow })
+export const toWallpaperBgConfig = (store: TWallpaperThemeState): TWallpaperThemeState => ({
+  ...toBgConfig(store),
+  hasShadow: store.hasShadow,
+})
 
-const toWallpaperBgCssConfig = (
-  store: Pick<TStore, keyof TWallpaperThemeState>,
-): TWallpaperThemeState => ({ ...toBgCssConfig(store), hasShadow: store.hasShadow })
+const toWallpaperBgCssConfig = (store: TWallpaperThemeState): TWallpaperThemeState => ({
+  ...toBgCssConfig(store),
+  hasShadow: store.hasShadow,
+})
 
-export const resolveWallpaper = (state: TWallpaperThemeState): TRet => {
-  const parsed = resolveBg(state)
+/**
+ * Compose wallpaper CSS fallback output from one theme branch.
+ *
+ * This keeps wallpaper-only fields such as `hasShadow` outside the shared Bg
+ * composer while reusing `composeBgCss` for the actual background string.
+ *
+ * @example
+ * const css = composeWallpaperBgCss(pickWallpaperThemeState(store, isDarkTheme))
+ */
+export const composeWallpaperBgCss = (state: TWallpaperThemeState): TRet => {
+  const parsed = composeBgCss(state)
 
   return {
     ...parsed,
@@ -30,17 +40,23 @@ export const resolveWallpaper = (state: TWallpaperThemeState): TRet => {
   }
 }
 
-export const resolveWallpaperBgRenderSpec = (state: TWallpaperThemeState): TBgRenderSpec => {
-  return resolveBgRenderSpec(state)
+/**
+ * Adapt one wallpaper theme branch to the shared Bg render spec.
+ *
+ * @example
+ * const renderSpec = adaptWallpaperBgRenderSpec(wallpaper.light)
+ */
+export const adaptWallpaperBgRenderSpec = (state: TWallpaperThemeState): TBgRenderSpec => {
+  return composeBgRenderSpec(state)
 }
 
 export default function useWallpaper(): TRet {
   const store = useWallpaperDomain()
   const { isDarkTheme } = useTheme()
-  const state = toWallpaperBgCssConfig(resolveWallpaperThemeState(store, isDarkTheme))
+  const state = toWallpaperBgCssConfig(pickWallpaperThemeState(store, isDarkTheme))
 
   return useMemo(
-    () => resolveWallpaper(state),
+    () => composeWallpaperBgCss(state),
     [
       state.source,
       state.hasPattern,
@@ -54,7 +70,6 @@ export default function useWallpaper(): TRet {
       state.gradient,
       state.customWallpaper,
       state.type,
-      state.bgSize,
     ],
   )
 }
@@ -62,10 +77,10 @@ export default function useWallpaper(): TRet {
 export function useWallpaperBgRenderSpec(): TBgRenderSpec {
   const store = useWallpaperDomain()
   const { isDarkTheme } = useTheme()
-  const state = toWallpaperBgConfig(resolveWallpaperThemeState(store, isDarkTheme))
+  const state = toWallpaperBgConfig(pickWallpaperThemeState(store, isDarkTheme))
 
   return useMemo(
-    () => resolveWallpaperBgRenderSpec(state),
+    () => adaptWallpaperBgRenderSpec(state),
     [
       state.source,
       state.hasPattern,
@@ -81,7 +96,6 @@ export function useWallpaperBgRenderSpec(): TBgRenderSpec {
       state.gradient,
       state.customWallpaper,
       state.type,
-      state.bgSize,
     ],
   )
 }

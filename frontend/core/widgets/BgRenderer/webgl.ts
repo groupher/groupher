@@ -1,6 +1,5 @@
-import { WALLPAPER_BG_SIZE } from '~/const/wallpaper'
-import { BG_RENDER_TYPE } from '~/lib/bg/constant'
-import type { TBgRenderSpec } from '~/lib/bg/spec'
+import { BG_RENDER_TYPE } from '~/lib/bg'
+import type { TBgRenderSpec } from '~/lib/bg'
 import { GRADIENT_RENDERER, WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 import {
   TEXTURE_SHADER_BRANCHES,
@@ -684,7 +683,6 @@ class BgWebglRenderer {
       colorStops[index] = clamp(renderSpec.colorStops[index] ?? 0, 0, 100) / 100
     }
 
-    const isContain = renderSpec.bgSize === WALLPAPER_BG_SIZE.CONTAIN
     const meshRecipe = renderSpec.meshRecipe
     const meshModel =
       meshRecipe?.renderer === GRADIENT_RENDERER.LIQUID
@@ -712,7 +710,7 @@ class BgWebglRenderer {
     gl.uniform1i(uniforms.colorCount, Math.max(1, renderSpecColors.length))
     gl.uniform1i(uniforms.meshModel, meshModel)
     gl.uniform1i(uniforms.textureType, textureTypeToUniform(renderSpec))
-    gl.uniform1i(uniforms.bgMode, isContain ? 1 : 0)
+    gl.uniform1i(uniforms.bgMode, 0)
     gl.uniform1f(uniforms.flow, renderSpec.flow)
     gl.uniform1f(uniforms.softness, renderSpec.meshRecipe?.softness ?? 0)
     gl.uniform1f(uniforms.meshSeed, meshSeed)

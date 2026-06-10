@@ -1,20 +1,20 @@
 import { GRADIENT_WALLPAPER, GRADIENT_WALLPAPER_NAME, WALLPAPER_TYPE } from '~/const/wallpaper'
 import {
-  buildGradientRecipeForRenderer,
+  composeGradientRecipeForRenderer,
   getGradientRecipeSpread,
   GRADIENT_RENDERER,
 } from '~/lib/wallpaperMesh'
 
-import { buildGradientWallpaperPatch } from './useLogic'
+import { composeGradientWallpaperPatch } from './useLogic'
 
-describe('buildGradientWallpaperPatch', () => {
+describe('composeGradientWallpaperPatch', () => {
   it('defaults to linear when switching from picture to gradient', () => {
-    const previousGradient = buildGradientRecipeForRenderer(
+    const previousGradient = composeGradientRecipeForRenderer(
       GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.VIOLET_TEAL_AMBER],
       GRADIENT_RENDERER.LIQUID,
     )
 
-    const patch = buildGradientWallpaperPatch(
+    const patch = composeGradientWallpaperPatch(
       { type: WALLPAPER_TYPE.PATTERN, gradient: previousGradient },
       GRADIENT_WALLPAPER_NAME.STONE_GREEN,
     )
@@ -25,12 +25,12 @@ describe('buildGradientWallpaperPatch', () => {
   })
 
   it('keeps the active renderer when switching presets inside gradient mode', () => {
-    const previousGradient = buildGradientRecipeForRenderer(
+    const previousGradient = composeGradientRecipeForRenderer(
       GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.VIOLET_TEAL_AMBER],
       GRADIENT_RENDERER.LIQUID,
     )
 
-    const patch = buildGradientWallpaperPatch(
+    const patch = composeGradientWallpaperPatch(
       { type: WALLPAPER_TYPE.GRADIENT, gradient: previousGradient },
       GRADIENT_WALLPAPER_NAME.STONE_GREEN,
     )
@@ -47,11 +47,11 @@ describe('buildGradientWallpaperPatch', () => {
 
   it('keeps the original gradient shape after switching away and back', () => {
     const originalGradient = GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.AMBER_MAUVE]
-    const awayPatch = buildGradientWallpaperPatch(
+    const awayPatch = composeGradientWallpaperPatch(
       { type: WALLPAPER_TYPE.GRADIENT, gradient: originalGradient },
       GRADIENT_WALLPAPER_NAME.STONE_GREEN,
     )
-    const backPatch = buildGradientWallpaperPatch(
+    const backPatch = composeGradientWallpaperPatch(
       { type: WALLPAPER_TYPE.GRADIENT, gradient: awayPatch.gradient },
       GRADIENT_WALLPAPER_NAME.AMBER_MAUVE,
     )

@@ -42,7 +42,12 @@ defmodule GroupherServerWeb.Schema.CMS.Dashboard.Metrics.Inputs do
     dsb_gq_fields(:media_report)
   end
 
+  input_object :dsb_bg_config_input do
+    dsb_input_fields(:wallpaper_bg)
+  end
+
   input_object :dsb_wallpaper_input do
-    dsb_input_fields(:wallpaper)
+    field(:light, :dsb_bg_config_input)
+    field(:dark, :dsb_bg_config_input)
   end
 end

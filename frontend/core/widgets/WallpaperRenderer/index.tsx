@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react'
 
-import { resolveWallpaperBgRenderSpec, useWallpaperBgRenderSpec } from '~/hooks/useWallpaper'
+import { adaptWallpaperBgRenderSpec, useWallpaperBgRenderSpec } from '~/hooks/useWallpaper'
 import { subscribeWallpaperPreview } from '~/lib/wallpaperPreview'
 import BgRenderer from '~/widgets/BgRenderer'
 import type { TBgPreviewSubscriber } from '~/widgets/BgRenderer/spec'
@@ -19,7 +19,7 @@ export default function WallpaperRenderer({
   const previewSubscriber = useCallback<TBgPreviewSubscriber>(
     (listener) =>
       subscribeWallpaperPreview((state) => {
-        listener(state ? resolveWallpaperBgRenderSpec(state) : null)
+        listener(state ? adaptWallpaperBgRenderSpec(state) : null)
       }),
     [],
   )

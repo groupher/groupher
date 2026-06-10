@@ -32,7 +32,6 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
   @default_wallpaper_pattern_id "01"
   @default_wallpaper_pattern_tone "dark"
   @default_wallpaper_gradient_renderer "linear"
-  @default_wallpaper_bg_size "cover"
   @default_wallpaper_texture_type "noise"
   # Single source of truth for dashboard enums.
   #
@@ -236,10 +235,15 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
 
   def macro_schema(:wallpaper) do
     [
+      [:light, :map, wallpaper_bg_default()],
+      [:dark, :map, wallpaper_bg_default()]
+    ]
+  end
+
+  def macro_schema(:wallpaper_bg) do
+    [
       [:type, :string, @default_wallpaper_type],
       [:source, :string, @default_wallpaper_source],
-      [:type_dark, :string, @default_wallpaper_type],
-      [:source_dark, :string, @default_wallpaper_source],
 
       # gradient
       [:has_pattern, :boolean, true],
@@ -247,11 +251,6 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
       [:pattern_intensity, :integer, 50],
       [:pattern_tone, :string, @default_wallpaper_pattern_tone],
       [:has_texture, :boolean, false],
-      [:has_pattern_dark, :boolean, true],
-      [:pattern_id_dark, :string, @default_wallpaper_pattern_id],
-      [:pattern_intensity_dark, :integer, 50],
-      [:pattern_tone_dark, :string, @default_wallpaper_pattern_tone],
-      [:has_texture_dark, :boolean, false],
       [
         :gradient,
         :map,
@@ -264,44 +263,35 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
           "spread" => 52
         }
       ],
-      [
-        :gradient_dark,
-        :map,
-        %{
-          "version" => 2,
-          "renderer" => @default_wallpaper_gradient_renderer,
-          "preset" => @default_wallpaper_source,
-          "colors" => ["#FBEFDE", "#D8B9E3"],
-          "angle" => 180,
-          "spread" => 52
-        }
-      ],
-
-      # image
-      [:bg_size, :string, @default_wallpaper_bg_size],
-      [:bg_size_dark, :string, @default_wallpaper_bg_size],
 
       # global effects
       [:blur_intensity, :integer, 0],
       [:has_shadow, :boolean, false],
       [:brightness, :integer, 100],
       [:saturation, :integer, 100],
-      [:blur_intensity_dark, :integer, 0],
-      [:has_shadow_dark, :boolean, false],
-      [:brightness_dark, :integer, 100],
-      [:saturation_dark, :integer, 100],
 
       # renderer-specific config/effects
       [
         :texture,
         :map,
         %{"type" => @default_wallpaper_texture_type, "intensity" => 0, "params" => %{}}
-      ],
-      [
-        :texture_dark,
-        :map,
-        %{"type" => @default_wallpaper_texture_type, "intensity" => 0, "params" => %{}}
       ]
     ]
+  end
+
+  def wallpaper_bg_default do
+    macro_schema(:wallpaper_bg)
+    |> Enum.reduce(%{}, fn [key, _type, default], acc ->
+      Map.put(acc, key, default)
+    end)
+  end
+
+  def wallpaper_default do
+    bg = wallpaper_bg_default()
+
+    %{
+      light: bg,
+      dark: bg
+    }
   end
 end

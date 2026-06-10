@@ -1,11 +1,7 @@
 import { isEmpty } from 'ramda'
 
-import {
-  DEFAULT_WALLPAPER_PATTERN_ID,
-  WALLPAPER_BG_SIZE,
-  WALLPAPER_PATTERN,
-} from '~/const/wallpaper'
-import { buildGradientBackground, type TGradientRecipe } from '~/lib/wallpaperMesh'
+import { DEFAULT_WALLPAPER_PATTERN_ID, WALLPAPER_PATTERN } from '~/const/wallpaper'
+import { composeGradientBackground, type TGradientRecipe } from '~/lib/wallpaperMesh'
 import type {
   TCustomWallpaper,
   TWallpaper,
@@ -34,7 +30,13 @@ export const resolveBgPattern = (patternId?: string): string => {
   return pattern?.image || WALLPAPER_PATTERN[DEFAULT_WALLPAPER_PATTERN_ID]?.image || ''
 }
 
-const buildFilterEffect = ({
+/**
+ * Compose the CSS filter declaration for a Bg fallback background.
+ *
+ * @example
+ * const effect = composeFilterEffect({ blurIntensity: 30, brightness: 90 })
+ */
+const composeFilterEffect = ({
   blurIntensity = 0,
   brightness = DEFAULT_BRIGHTNESS,
   saturation = DEFAULT_SATURATION,
@@ -93,9 +95,8 @@ const parseResolvedBgWallpaper = (
   }
   if (wallpaper && 'renderer' in wallpaper) return parseBgGradientRecipe(wallpaper)
 
-  // Legacy cover gradients still arrive as `TWallpaperGradient` entries until
-  // CoverEditor moves to `TGradientRecipe`; keep this branch as the compatibility
-  // bridge for the old catalog shape.
+  // Custom wallpaper payloads may still use the legacy CSS-gradient shape.
+  // Catalog gradients should use `TGradientRecipe`.
   return wallpaper && 'colors' in wallpaper
     ? parseBgGradientBackground(wallpaper as TWallpaperGradient)
     : parseBgPicBackground(wallpaper as TWallpaperPic)
@@ -128,8 +129,8 @@ export const parseBgGradientRecipe = (
   } = {},
 ): TWallpaperFmt => {
   const patternPic = resolveBgPattern(patternId)
-  const background = buildGradientBackground(gradient)
-  const effect = buildFilterEffect({ blurIntensity, brightness, saturation })
+  const background = composeGradientBackground(gradient)
+  const effect = composeFilterEffect({ blurIntensity, brightness, saturation })
 
   return {
     effect,
@@ -137,6 +138,19 @@ export const parseBgGradientRecipe = (
   }
 }
 
+/**
+ * Parse legacy gradient wallpaper payloads into CSS fallback output.
+ *
+ * @example
+ * const css = parseBgGradientBackground({
+ *   direction: 'to right',
+ *   colors: ['#fff', '#000'],
+ *   hasPattern: false,
+ *   blurIntensity: 12,
+ *   brightness: 90,
+ *   saturation: 110,
+ * })
+ */
 const parseBgGradientBackground = (gradient: TWallpaperGradient): TWallpaperFmt => {
   const DIR = '/wallpaper'
   const { direction, hasPattern, blurIntensity, brightness, saturation } = gradient
@@ -146,7 +160,7 @@ const parseBgGradientBackground = (gradient: TWallpaperGradient): TWallpaperFmt 
   const patternPic = `${DIR}/pattern/${DEFAULT_WALLPAPER_PATTERN_ID}.png`
   background = hasPattern ? `url(${patternPic}) repeat, ${background}` : background
 
-  const effect = buildFilterEffect({ blurIntensity, brightness, saturation })
+  const effect = composeFilterEffect({ blurIntensity, brightness, saturation })
 
   return {
     effect,
@@ -154,6 +168,12 @@ const parseBgGradientBackground = (gradient: TWallpaperGradient): TWallpaperFmt 
   }
 }
 
+/**
+ * Normalize gradient direction to browser-compatible syntax.
+ *
+ * @example
+ * formatGradientDirection('top right') // "to top right"
+ */
 const formatGradientDirection = (direction = '180deg'): string => {
   const direction$ = direction.trim()
 
@@ -164,6 +184,12 @@ const formatGradientDirection = (direction = '180deg'): string => {
   return `to ${direction$}`
 }
 
+/**
+ * Parse picture wallpaper payload into CSS fallback output.
+ *
+ * @example
+ * const css = parseBgPicBackground({ image: '/cover.webp', blurIntensity: 10 })
+ */
 const parseBgPicBackground = (pic: TWallpaperPic): TWallpaperFmt => {
   if (!pic) {
     return {
@@ -172,10 +198,10 @@ const parseBgPicBackground = (pic: TWallpaperPic): TWallpaperFmt => {
     }
   }
 
-  const { image, bgSize = WALLPAPER_BG_SIZE.COVER, blurIntensity, brightness, saturation } = pic
-  const background = `url(${image}) center / ${bgSize} no-repeat`
+  const { image, blurIntensity, brightness, saturation } = pic
+  const background = `url(${image}) center / cover no-repeat`
 
-  const filter = buildFilterEffect({ blurIntensity, brightness, saturation })
+  const filter = composeFilterEffect({ blurIntensity, brightness, saturation })
 
   return {
     effect: filter,

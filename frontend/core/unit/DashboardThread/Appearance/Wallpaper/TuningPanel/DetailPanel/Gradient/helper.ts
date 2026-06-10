@@ -1,7 +1,8 @@
+export { mapToPresetColorHex } from '~/lib/color'
+
 export {
   applyGradientSpreadValue,
-  buildColorChips,
+  composeColorChips,
   findPresetColor,
   getGradientSpreadValue,
-  resolvePresetColor,
-} from '~/lib/bg/gradient'
+} from '~/lib/bg'

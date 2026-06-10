@@ -1,4 +1,4 @@
-import type { TBgConfig, TBgThemeConfig } from '~/lib/bg/spec'
+import type { TBgConfig, TBgThemeConfig } from '~/lib/bg'
 import type { TGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
 import type { TConstValues } from '~/spec'
 

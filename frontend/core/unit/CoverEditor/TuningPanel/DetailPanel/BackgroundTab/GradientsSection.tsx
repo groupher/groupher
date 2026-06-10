@@ -1,6 +1,6 @@
 import SIZE from '~/const/size'
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
-import type { TBgConfig } from '~/lib/bg/spec'
+import type { TBgConfig } from '~/lib/bg'
 import ColorsPresetBall, { COLORS_PRESET_BALL_LAYOUT } from '~/widgets/ColorsPresetBall'
 
 import { COVER_GRADIENT_PALETTE } from '../../../background'

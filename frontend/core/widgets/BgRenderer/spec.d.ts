@@ -1,4 +1,4 @@
-import type { TBgRenderSpec } from '~/lib/bg/spec'
+import type { TBgRenderSpec } from '~/lib/bg'
 
 /**
  * Optional preview subscription hook for adapter components.
@@ -19,7 +19,7 @@ export type TBgPreviewSubscriber = (
  *
  * This component renders actual backgrounds, not only thumbnails. Global Wallpaper,
  * Wallpaper previews, and CoverEditor backgrounds should all use this component
- * with render specs produced by `resolveBgRenderSpec`.
+ * with render specs produced by `composeBgRenderSpec`.
  *
  * @example
  * <BgRenderer renderSpec={renderSpec} className="absolute inset-0" />

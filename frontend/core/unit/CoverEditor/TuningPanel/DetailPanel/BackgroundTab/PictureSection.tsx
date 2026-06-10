@@ -1,6 +1,6 @@
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import { cnMerge } from '~/css'
-import type { TBgConfig } from '~/lib/bg/spec'
+import type { TBgConfig } from '~/lib/bg'
 
 import { COVER_PICTURE_WALLPAPER } from '../../../background'
 import useLogic from '../../../useLogic'

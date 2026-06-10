@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import type { TBgRenderSpec } from '~/lib/bg/spec'
+import type { TBgRenderSpec } from '~/lib/bg'
 
 import BgLayer from './BgLayer'
 import { getVisualIdentity, preloadImage, shouldCrossfade } from './helper'
@@ -18,7 +18,7 @@ import type { TProps } from './spec'
  * reading module stores, so business adapters stay outside the common layer.
  *
  * @example
- * const renderSpec = resolveBgRenderSpec(bg)
+ * const renderSpec = composeBgRenderSpec(bg)
  * return <BgRenderer renderSpec={renderSpec} />
  */
 export default function BgRenderer({

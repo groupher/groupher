@@ -17,18 +17,20 @@ describe('useFullWallpaper', () => {
   it('returns data and can commit wallpaper changes', async () => {
     const wrapper = makeStoreWrapper({
       wallpaper: {
-        source: GRADIENT_WALLPAPER_NAME.AMBER_MAUVE,
-        type: WALLPAPER_TYPE.GRADIENT,
-        hasPattern: true,
-        patternId: DEFAULT_WALLPAPER_PATTERN_ID,
-        patternIntensity: 100,
-        patternTone: WALLPAPER_PATTERN_TONE.DARK,
-        hasTexture: false,
-        blurIntensity: 0,
-        brightness: 100,
-        saturation: 100,
-        texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-        gradient: GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.AMBER_MAUVE],
+        light: {
+          source: GRADIENT_WALLPAPER_NAME.AMBER_MAUVE,
+          type: WALLPAPER_TYPE.GRADIENT,
+          hasPattern: true,
+          patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+          patternIntensity: 100,
+          patternTone: WALLPAPER_PATTERN_TONE.DARK,
+          hasTexture: false,
+          blurIntensity: 0,
+          brightness: 100,
+          saturation: 100,
+          texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
+          gradient: GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.AMBER_MAUVE],
+        },
       },
     })
 
@@ -66,14 +68,19 @@ describe('useFullWallpaper', () => {
   it('keeps gradient catalog previews static', () => {
     const wrapper = makeStoreWrapper({
       wallpaper: {
-        source: GRADIENT_WALLPAPER_NAME.TEAL_INDIGO_MAUVE,
-        type: WALLPAPER_TYPE.GRADIENT,
-        hasPattern: true,
-        patternId: DEFAULT_WALLPAPER_PATTERN_ID,
-        patternIntensity: 100,
-        patternTone: WALLPAPER_PATTERN_TONE.DARK,
-        blurIntensity: 50,
-        gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.TEAL_INDIGO_MAUVE], angle: 90 },
+        light: {
+          source: GRADIENT_WALLPAPER_NAME.TEAL_INDIGO_MAUVE,
+          type: WALLPAPER_TYPE.GRADIENT,
+          hasPattern: true,
+          patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+          patternIntensity: 100,
+          patternTone: WALLPAPER_PATTERN_TONE.DARK,
+          blurIntensity: 50,
+          gradient: {
+            ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.TEAL_INDIGO_MAUVE],
+            angle: 90,
+          },
+        },
       },
     })
 
@@ -91,11 +98,13 @@ describe('useFullWallpaper', () => {
   it('keeps pattern catalog previews static', () => {
     const wrapper = makeStoreWrapper({
       wallpaper: {
-        source: 'backiee-1',
-        type: WALLPAPER_TYPE.PATTERN,
-        blurIntensity: 50,
-        brightness: 75,
-        saturation: 130,
+        light: {
+          source: 'backiee-1',
+          type: WALLPAPER_TYPE.PATTERN,
+          blurIntensity: 50,
+          brightness: 75,
+          saturation: 130,
+        },
       },
     })
 

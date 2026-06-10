@@ -10,13 +10,15 @@ import useMetric from '~/hooks/useMetric'
 import useTheme from '~/hooks/useTheme'
 import useThemePreset from '~/hooks/useThemePreset'
 import type { TTopGlow } from '~/spec'
+import { pickWallpaperThemeState } from '~/stores/wallpaper/helper'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 
 const LANDING_GLOW_OPACITY = 65
 
 export default function useTopGlow(): TTopGlow {
-  const { source } = useWallpaperDomain()
+  const wallpaper = useWallpaperDomain()
   const { isLightTheme } = useTheme()
+  const { source } = pickWallpaperThemeState(wallpaper, !isLightTheme)
   const { themePreset, glowType, glowTypeDark, glowFixed, glowOpacity, glowOpacityDark } =
     useThemePreset()
   const activeGlowType = isLightTheme ? glowType : glowTypeDark

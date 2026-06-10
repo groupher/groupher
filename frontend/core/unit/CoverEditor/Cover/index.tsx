@@ -5,7 +5,7 @@ import type { CSSProperties, FC, PointerEvent, ReactNode } from 'react'
 import { extractDominantColorFromImage } from '~/lib/imageColor/dominant'
 import BgRenderer from '~/widgets/BgRenderer'
 
-import { resolveCoverBgRenderSpec } from '../background'
+import { adaptCoverBgRenderSpec } from '../background'
 import {
   GLASS_FRAME,
   IMAGE_CONTAINER_SIZE,
@@ -231,7 +231,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
   const framePadding = hasGlassBorder
     ? { x: GLASS_FRAME.PADDING_X, y: GLASS_FRAME.PADDING_Y }
     : undefined
-  const backgroundRenderSpec = resolveCoverBgRenderSpec(activeBackground)
+  const backgroundRenderSpec = adaptCoverBgRenderSpec(activeBackground)
 
   const getCanvasPoint = (event: PointerEvent<HTMLElement>): TCoverPoint | null => {
     const rect = wrapperRef.current?.getBoundingClientRect()

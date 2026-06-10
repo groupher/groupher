@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react'
 
-import { BG_RENDER_TYPE } from '~/lib/bg/constant'
-import type { TBgRenderSpec } from '~/lib/bg/spec'
+import { BG_RENDER_TYPE } from '~/lib/bg'
+import type { TBgRenderSpec } from '~/lib/bg'
 
 export const getFallbackStyle = (renderSpec: TBgRenderSpec): CSSProperties => ({
   background: renderSpec.background,

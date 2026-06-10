@@ -44,7 +44,6 @@ type TTwitterCard = 'summary' | 'summary_large_image' | 'player' | 'app'
 
 export const parseWallpaper = (community: TCommunity): TParsedWallpaper => {
   // NOTE: if the backend is not ready, return default config
-  // @ts-expect-error
   if (!community) return {}
 
   const { dashboard } = community

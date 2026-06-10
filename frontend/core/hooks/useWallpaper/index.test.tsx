@@ -4,16 +4,15 @@ import {
   DEFAULT_WALLPAPER_PATTERN_ID,
   GRADIENT_WALLPAPER,
   GRADIENT_WALLPAPER_NAME,
-  WALLPAPER_BG_SIZE,
   WALLPAPER_PATTERN_TONE,
   WALLPAPER_TYPE,
 } from '~/const/wallpaper'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
-import useWallpaper, { resolveWallpaperBgRenderSpec } from '~/hooks/useWallpaper'
-import { BG_RENDER_TYPE } from '~/lib/bg/constant'
-import { resolveBgRenderSpec } from '~/lib/bg/resolve'
+import useWallpaper, { adaptWallpaperBgRenderSpec } from '~/hooks/useWallpaper'
+import { BG_RENDER_TYPE } from '~/lib/bg'
+import { composeBgRenderSpec } from '~/lib/bg'
 import {
-  buildGradientRecipeForRenderer,
+  composeGradientRecipeForRenderer,
   GRADIENT_RENDERER,
   WALLPAPER_TEXTURE,
 } from '~/lib/wallpaperMesh'
@@ -41,15 +40,17 @@ describe('useWallpaper', () => {
   it('parses mesh wallpaper', () => {
     const wrapper = makeStoreWrapper({
       wallpaper: {
-        source: mesh.preset,
-        type: WALLPAPER_TYPE.GRADIENT,
-        gradient: mesh,
-        hasPattern: false,
-        patternId: DEFAULT_WALLPAPER_PATTERN_ID,
-        patternIntensity: 100,
-        patternTone: WALLPAPER_PATTERN_TONE.DARK,
-        blurIntensity: 50,
-        hasShadow: true,
+        light: {
+          source: mesh.preset,
+          type: WALLPAPER_TYPE.GRADIENT,
+          gradient: mesh,
+          hasPattern: false,
+          patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+          patternIntensity: 100,
+          patternTone: WALLPAPER_PATTERN_TONE.DARK,
+          blurIntensity: 50,
+          hasShadow: true,
+        },
       },
     })
 
@@ -62,11 +63,11 @@ describe('useWallpaper', () => {
   })
 
   it('resolves lagoon as liquid wallpaper', () => {
-    const gradient = buildGradientRecipeForRenderer(
+    const gradient = composeGradientRecipeForRenderer(
       GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.ROSE_AMBER_SKY],
       GRADIENT_RENDERER.LIQUID,
     )
-    const renderSpec = resolveWallpaperBgRenderSpec({
+    const renderSpec = adaptWallpaperBgRenderSpec({
       customWallpaper: null,
       source: GRADIENT_WALLPAPER_NAME.ROSE_AMBER_SKY,
       type: WALLPAPER_TYPE.GRADIENT,
@@ -81,7 +82,6 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
     expect(renderSpec.type).toBe(BG_RENDER_TYPE.MESH_GRADIENT)
@@ -92,14 +92,19 @@ describe('useWallpaper', () => {
   it('applies current gradient effects to the rendered wallpaper', () => {
     const wrapper = makeStoreWrapper({
       wallpaper: {
-        source: GRADIENT_WALLPAPER_NAME.TEAL_INDIGO_MAUVE,
-        type: WALLPAPER_TYPE.GRADIENT,
-        gradient: { ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.TEAL_INDIGO_MAUVE], angle: 90 },
-        hasPattern: true,
-        patternId: DEFAULT_WALLPAPER_PATTERN_ID,
-        patternIntensity: 100,
-        patternTone: WALLPAPER_PATTERN_TONE.DARK,
-        blurIntensity: 50,
+        light: {
+          source: GRADIENT_WALLPAPER_NAME.TEAL_INDIGO_MAUVE,
+          type: WALLPAPER_TYPE.GRADIENT,
+          gradient: {
+            ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.TEAL_INDIGO_MAUVE],
+            angle: 90,
+          },
+          hasPattern: true,
+          patternId: DEFAULT_WALLPAPER_PATTERN_ID,
+          patternIntensity: 100,
+          patternTone: WALLPAPER_PATTERN_TONE.DARK,
+          blurIntensity: 50,
+        },
       },
     })
 
@@ -113,11 +118,13 @@ describe('useWallpaper', () => {
   it('renders selected picture wallpaper with the full image', () => {
     const wrapper = makeStoreWrapper({
       wallpaper: {
-        source: 'backiee-1',
-        type: WALLPAPER_TYPE.PATTERN,
-        blurIntensity: 50,
-        brightness: 85,
-        saturation: 120,
+        light: {
+          source: 'backiee-1',
+          type: WALLPAPER_TYPE.PATTERN,
+          blurIntensity: 50,
+          brightness: 85,
+          saturation: 120,
+        },
       },
     })
 
@@ -135,10 +142,12 @@ describe('useWallpaper', () => {
   it('keeps default picture adjustment values out of the filter', () => {
     const wrapper = makeStoreWrapper({
       wallpaper: {
-        source: 'backiee-1',
-        type: WALLPAPER_TYPE.PATTERN,
-        brightness: 100,
-        saturation: 100,
+        light: {
+          source: 'backiee-1',
+          type: WALLPAPER_TYPE.PATTERN,
+          brightness: 100,
+          saturation: 100,
+        },
       },
     })
 
@@ -150,22 +159,8 @@ describe('useWallpaper', () => {
     expect(result.current.effect).not.toContain('saturate')
   })
 
-  it('uses cover for picture wallpaper even when hidden bgSize state differs', () => {
-    const wrapper = makeStoreWrapper({
-      wallpaper: {
-        source: 'backiee-1',
-        type: WALLPAPER_TYPE.PATTERN,
-        bgSize: WALLPAPER_BG_SIZE.CONTAIN,
-      },
-    })
-
-    const { result } = renderHook(() => useWallpaper(), { wrapper })
-
-    expect(result.current.background).toContain('center / cover no-repeat')
-  })
-
   it('resolves small texture renderSpec separately from CSS wallpaper output', () => {
-    const renderSpec = resolveWallpaperBgRenderSpec({
+    const renderSpec = adaptWallpaperBgRenderSpec({
       customWallpaper: null,
       source: GRADIENT_WALLPAPER_NAME.STONE_GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
@@ -180,7 +175,6 @@ describe('useWallpaper', () => {
       brightness: 90,
       saturation: 120,
       texture: { type: WALLPAPER_TEXTURE.BEAM, intensity: 55, params: {} },
-      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
     expect(renderSpec.type).toBe(BG_RENDER_TYPE.LINEAR_GRADIENT)
@@ -211,10 +205,9 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-      bgSize: WALLPAPER_BG_SIZE.COVER,
     }
-    const renderSpec = resolveWallpaperBgRenderSpec(bg)
-    const directRenderSpec = resolveBgRenderSpec(bg)
+    const renderSpec = adaptWallpaperBgRenderSpec(bg)
+    const directRenderSpec = composeBgRenderSpec(bg)
 
     expect(renderSpec.hasPattern).toBe(true)
     expect(renderSpec.patternOpacity).toBe(0.1)
@@ -224,7 +217,7 @@ describe('useWallpaper', () => {
   })
 
   it('resolves picture wallpaper from adapter-owned catalog', () => {
-    const renderSpec = resolveBgRenderSpec(
+    const renderSpec = composeBgRenderSpec(
       {
         customWallpaper: null,
         source: 'cover-only-picture',
@@ -239,7 +232,6 @@ describe('useWallpaper', () => {
         brightness: 100,
         saturation: 100,
         texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-        bgSize: WALLPAPER_BG_SIZE.COVER,
       },
       {
         pictureCatalog: {
@@ -254,7 +246,7 @@ describe('useWallpaper', () => {
   })
 
   it('normalizes linear gradient spread as a centered transition band', () => {
-    const renderSpec = resolveWallpaperBgRenderSpec({
+    const renderSpec = adaptWallpaperBgRenderSpec({
       customWallpaper: null,
       source: GRADIENT_WALLPAPER_NAME.STONE_GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
@@ -272,7 +264,6 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
     expect(renderSpec.type).toBe(BG_RENDER_TYPE.LINEAR_GRADIENT)
@@ -280,13 +271,13 @@ describe('useWallpaper', () => {
   })
 
   it('normalizes radial gradient spread as outward palette reach', () => {
-    const radialGradient = buildGradientRecipeForRenderer(
+    const radialGradient = composeGradientRecipeForRenderer(
       GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.SKY_MAUVE_BLUE],
       GRADIENT_RENDERER.RADIAL,
     )
     if (radialGradient.renderer !== GRADIENT_RENDERER.RADIAL) throw new Error('expected radial')
 
-    const renderSpec = resolveWallpaperBgRenderSpec({
+    const renderSpec = adaptWallpaperBgRenderSpec({
       customWallpaper: null,
       source: GRADIENT_WALLPAPER_NAME.SKY_MAUVE_BLUE,
       type: WALLPAPER_TYPE.GRADIENT,
@@ -301,7 +292,6 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
     expect(renderSpec.type).toBe(BG_RENDER_TYPE.RADIAL_GRADIENT)
@@ -311,13 +301,13 @@ describe('useWallpaper', () => {
   })
 
   it('uses explicit radial gradient stops in the renderer render spec', () => {
-    const radialGradient = buildGradientRecipeForRenderer(
+    const radialGradient = composeGradientRecipeForRenderer(
       GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.SKY_MAUVE_BLUE],
       GRADIENT_RENDERER.RADIAL,
     )
     if (radialGradient.renderer !== GRADIENT_RENDERER.RADIAL) throw new Error('expected radial')
 
-    const renderSpec = resolveWallpaperBgRenderSpec({
+    const renderSpec = adaptWallpaperBgRenderSpec({
       customWallpaper: null,
       source: GRADIENT_WALLPAPER_NAME.SKY_MAUVE_BLUE,
       type: WALLPAPER_TYPE.GRADIENT,
@@ -332,7 +322,6 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
     expect(renderSpec.type).toBe(BG_RENDER_TYPE.RADIAL_GRADIENT)
@@ -340,7 +329,7 @@ describe('useWallpaper', () => {
   })
 
   it('falls back unsupported texture payloads to noise', () => {
-    const renderSpec = resolveWallpaperBgRenderSpec({
+    const renderSpec = adaptWallpaperBgRenderSpec({
       customWallpaper: null,
       source: GRADIENT_WALLPAPER_NAME.STONE_GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
@@ -359,7 +348,6 @@ describe('useWallpaper', () => {
         intensity: 65,
         params: {},
       } as unknown as TWallpaperTexture,
-      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
     expect(renderSpec.texture).toEqual({
@@ -370,7 +358,7 @@ describe('useWallpaper', () => {
   })
 
   it('accepts dots texture renderSpecs', () => {
-    const renderSpec = resolveWallpaperBgRenderSpec({
+    const renderSpec = adaptWallpaperBgRenderSpec({
       customWallpaper: null,
       source: GRADIENT_WALLPAPER_NAME.STONE_GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
@@ -385,7 +373,6 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.DOTS, intensity: 70, params: {} },
-      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
     expect(renderSpec.texture).toEqual({
@@ -396,7 +383,7 @@ describe('useWallpaper', () => {
   })
 
   it('accepts oil texture renderSpecs', () => {
-    const renderSpec = resolveWallpaperBgRenderSpec({
+    const renderSpec = adaptWallpaperBgRenderSpec({
       customWallpaper: null,
       source: GRADIENT_WALLPAPER_NAME.STONE_GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
@@ -411,7 +398,6 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.OIL, intensity: 70, params: {} },
-      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
     expect(renderSpec.texture).toEqual({
@@ -422,7 +408,7 @@ describe('useWallpaper', () => {
   })
 
   it('accepts tile texture renderSpecs', () => {
-    const renderSpec = resolveWallpaperBgRenderSpec({
+    const renderSpec = adaptWallpaperBgRenderSpec({
       customWallpaper: null,
       source: GRADIENT_WALLPAPER_NAME.STONE_GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
@@ -437,7 +423,6 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.TILE, intensity: 70, params: {} },
-      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
     expect(renderSpec.texture).toEqual({
@@ -448,7 +433,7 @@ describe('useWallpaper', () => {
   })
 
   it('keeps texture settings while marking them disabled', () => {
-    const renderSpec = resolveWallpaperBgRenderSpec({
+    const renderSpec = adaptWallpaperBgRenderSpec({
       customWallpaper: null,
       source: GRADIENT_WALLPAPER_NAME.STONE_GREEN,
       type: WALLPAPER_TYPE.GRADIENT,
@@ -463,7 +448,6 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.TILE, intensity: 70, params: {} },
-      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
     expect(renderSpec.hasTexture).toBe(false)
@@ -475,7 +459,7 @@ describe('useWallpaper', () => {
   })
 
   it('uses a light pattern color when pattern tone is light', () => {
-    const renderSpec = resolveWallpaperBgRenderSpec({
+    const renderSpec = adaptWallpaperBgRenderSpec({
       customWallpaper: null,
       source: GRADIENT_WALLPAPER_NAME.VIOLET_TEAL_AMBER,
       type: WALLPAPER_TYPE.GRADIENT,
@@ -490,14 +474,13 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
     expect(renderSpec.patternColor).toBe('#ffffff')
   })
 
   it('resolves mesh gradient texture renderSpec', () => {
-    const renderSpec = resolveWallpaperBgRenderSpec({
+    const renderSpec = adaptWallpaperBgRenderSpec({
       customWallpaper: null,
       source: mesh.preset,
       type: WALLPAPER_TYPE.GRADIENT,
@@ -512,7 +495,6 @@ describe('useWallpaper', () => {
       brightness: 100,
       saturation: 100,
       texture: { type: WALLPAPER_TEXTURE.ASCII, intensity: 80, params: {} },
-      bgSize: WALLPAPER_BG_SIZE.COVER,
     })
 
     expect(renderSpec.type).toBe(BG_RENDER_TYPE.MESH_GRADIENT)
