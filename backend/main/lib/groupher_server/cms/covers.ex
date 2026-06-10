@@ -81,7 +81,11 @@ defmodule GroupherServer.CMS.Covers do
   defp do_upsert_article_cover(article, attrs) do
     old_cover_edit_info_id = Map.get(article, :cover_edit_info_id)
 
-    with {:ok, cover_attrs} <- prepare_cover_edit_info(Map.get(attrs, :cover_edit_info)),
+    reusable_background_ids =
+      old_cover_edit_info_id |> find_cover_edit_info() |> reusable_background_ids()
+
+    with {:ok, cover_attrs} <-
+           prepare_cover_edit_info(Map.get(attrs, :cover_edit_info), reusable_background_ids),
          {:ok, cover_edit_info} <-
            create_or_update_cover_edit_info(old_cover_edit_info_id, cover_attrs),
          {:ok, article} <-
@@ -101,6 +105,31 @@ defmodule GroupherServer.CMS.Covers do
       {:ok, info} -> ORM.update(info, attrs)
       {:error, _} -> ORM.create(CoverEditInfo, attrs)
     end
+  end
+
+  defp find_cover_edit_info(nil), do: nil
+
+  defp find_cover_edit_info(id) do
+    case ORM.find(CoverEditInfo, id) do
+      {:ok, info} -> info
+      {:error, _} -> nil
+    end
+  end
+
+  defp reusable_background_ids(nil), do: MapSet.new()
+
+  defp reusable_background_ids(%CoverEditInfo{} = info) do
+    [info.light, info.dark]
+    |> Enum.flat_map(fn
+      %{background_id: background_id, original_background_id: original_background_id} ->
+        [background_id, original_background_id]
+
+      _ ->
+        []
+    end)
+    |> Enum.reject(&is_nil/1)
+    |> Enum.map(&to_string/1)
+    |> MapSet.new()
   end
 
   defp validate_cover_pair(attrs) do
@@ -124,18 +153,19 @@ defmodule GroupherServer.CMS.Covers do
     end
   end
 
-  defp prepare_cover_edit_info(attrs) when is_map(attrs) do
-    with {:ok, light} <- prepare_cover_config(Map.get(attrs, :light)),
-         {:ok, dark} <- prepare_cover_config(Map.get(attrs, :dark)) do
+  defp prepare_cover_edit_info(attrs, reusable_background_ids) when is_map(attrs) do
+    with {:ok, light} <- prepare_cover_config(Map.get(attrs, :light), reusable_background_ids),
+         {:ok, dark} <- prepare_cover_config(Map.get(attrs, :dark), reusable_background_ids) do
       {:ok, attrs |> Map.put(:light, light) |> Map.put(:dark, dark)}
     end
   end
 
-  defp prepare_cover_edit_info(_), do: {:error, {:changeset, "cover_edit_info is invalid"}}
+  defp prepare_cover_edit_info(_, _), do: {:error, {:changeset, "cover_edit_info is invalid"}}
 
-  defp prepare_cover_config(config) when is_map(config) do
-    with {:ok, background_id} <- resolve_background_id(config),
-         {:ok, original_background_id} <- resolve_original_background_id(config) do
+  defp prepare_cover_config(config, reusable_background_ids) when is_map(config) do
+    with {:ok, background_id} <- resolve_background_id(config, reusable_background_ids),
+         {:ok, original_background_id} <-
+           resolve_original_background_id(config, reusable_background_ids) do
       config =
         config
         |> Map.drop([:background, :original_background])
@@ -146,29 +176,38 @@ defmodule GroupherServer.CMS.Covers do
     end
   end
 
-  defp prepare_cover_config(_), do: {:error, {:changeset, "cover config is invalid"}}
+  defp prepare_cover_config(_, _), do: {:error, {:changeset, "cover config is invalid"}}
 
-  defp resolve_background_id(%{background_id: id}) when not is_nil(id), do: {:ok, id}
+  defp resolve_background_id(%{background_id: id}, reusable_background_ids) when not is_nil(id),
+    do: resolve_reusable_background_id(id, reusable_background_ids)
 
-  defp resolve_background_id(%{background: background}) when is_map(background) do
+  defp resolve_background_id(%{background: background}, _) when is_map(background) do
     with {:ok, background} <- ORM.create(CoverBackground, background) do
       {:ok, background.id}
     end
   end
 
-  defp resolve_background_id(_), do: {:error, {:changeset, "background is required"}}
+  defp resolve_background_id(_, _), do: {:error, {:changeset, "background is required"}}
 
-  defp resolve_original_background_id(%{original_background_id: id}) when not is_nil(id),
-    do: {:ok, id}
+  defp resolve_original_background_id(%{original_background_id: id}, reusable_background_ids)
+       when not is_nil(id),
+       do: resolve_reusable_background_id(id, reusable_background_ids)
 
-  defp resolve_original_background_id(%{original_background: background})
+  defp resolve_original_background_id(%{original_background: background}, _)
        when is_map(background) do
     with {:ok, background} <- ORM.create(CoverBackground, background) do
       {:ok, background.id}
     end
   end
 
-  defp resolve_original_background_id(_), do: {:ok, nil}
+  defp resolve_original_background_id(_, _), do: {:ok, nil}
+
+  defp resolve_reusable_background_id(id, reusable_background_ids) do
+    case MapSet.member?(reusable_background_ids, to_string(id)) do
+      true -> {:ok, id}
+      false -> {:error, {:changeset, "background is invalid"}}
+    end
+  end
 
   defp put_optional(map, _key, nil), do: map
   defp put_optional(map, key, value), do: Map.put(map, key, value)

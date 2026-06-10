@@ -223,6 +223,25 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           assert user_conn |> mutation_error?(cover_create_schema(@thread), variables)
         end
 
+        test unquote("create #{thread_name} rejects raw background id") do
+          {community, _article, _, _user} = mock_article(@thread)
+          user_conn = simu_conn(:user)
+
+          variables =
+            mock_attrs(@thread)
+            |> Map.merge(%{
+              community: community.slug,
+              coverUrl: cover_url(@thread, "invalid-raw-bg"),
+              coverEditInfo:
+                cover_edit_info_input(%{
+                  light: cover_config_id_input("light", 1),
+                  dark: cover_config_input("dark")
+                })
+            })
+
+          assert user_conn |> mutation_error?(cover_create_schema(@thread), variables)
+        end
+
         test unquote("update #{thread_name} rejects cover url without edit info") do
           {community, article, _, _user} = mock_article(@thread)
           owner_conn = simu_conn(:owner, article)
@@ -246,6 +265,37 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
 
           assert owner_conn |> mutation_error?(cover_update_schema(@thread), variables)
         end
+
+        test unquote("update #{thread_name} rejects background id from another cover") do
+          {community, article, _, user} = mock_article(@thread)
+          {_community, other_article, _, _user} = mock_article(@thread, community, user)
+          owner_conn = simu_conn(:owner, article)
+          other_owner_conn = simu_conn(:owner, other_article)
+
+          other_variables = %{
+            article: %{inner_id: other_article.inner_id, community: community.slug},
+            coverUrl: cover_url(@thread, "other-light"),
+            coverUrlDark: cover_url(@thread, "other-dark"),
+            coverEditInfo: cover_edit_info_input()
+          }
+
+          other_updated =
+            other_owner_conn |> gq_mutation(cover_update_schema(@thread), other_variables)
+
+          other_background_id = other_updated["coverEditInfo"]["light"]["background"]["id"]
+
+          variables = %{
+            article: %{inner_id: article.inner_id, community: community.slug},
+            coverUrl: cover_url(@thread, "foreign-bg"),
+            coverEditInfo:
+              cover_edit_info_input(%{
+                light: cover_config_id_input("light", other_background_id),
+                dark: cover_config_input("dark")
+              })
+          }
+
+          assert owner_conn |> mutation_error?(cover_update_schema(@thread), variables)
+        end
       end
     end
   end
@@ -259,6 +309,20 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
       dark: cover_config_input("dark")
     }
     |> Map.merge(overrides)
+  end
+
+  def cover_config_input(theme) do
+    %{
+      background: cover_background_input(theme),
+      images: cover_images_input(theme)
+    }
+  end
+
+  def cover_config_id_input(theme, background_id) do
+    %{
+      backgroundId: background_id,
+      images: cover_images_input(theme)
+    }
   end
 
   def cover_create_schema(thread) do
@@ -373,33 +437,34 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
 
   def cover_url(thread, suffix), do: "https://img.test/#{thread}-cover-#{suffix}.png"
 
-  defp cover_config_input(theme) do
+  defp cover_background_input(theme) do
     %{
-      background: %{
-        type: "gradient",
-        source: theme,
-        gradient:
-          Jason.encode!(%{
-            version: 2,
-            renderer: "linear",
-            preset: theme,
-            colors: ["#FFFFFF", "#111111"],
-            angle: 180,
-            spread: 50
-          }),
-        texture: Jason.encode!(%{type: "noise", intensity: 0, params: %{}})
-      },
-      images: [
+      type: "gradient",
+      source: theme,
+      gradient:
         Jason.encode!(%{
-          url: "https://img.test/#{theme}.png",
-          x: 10,
-          y: 20,
-          width: 320,
-          height: 180,
-          border: %{width: 1},
-          shadow: %{blur: 12}
-        })
-      ]
+          version: 2,
+          renderer: "linear",
+          preset: theme,
+          colors: ["#FFFFFF", "#111111"],
+          angle: 180,
+          spread: 50
+        }),
+      texture: Jason.encode!(%{type: "noise", intensity: 0, params: %{}})
     }
+  end
+
+  defp cover_images_input(theme) do
+    [
+      Jason.encode!(%{
+        url: "https://img.test/#{theme}.png",
+        x: 10,
+        y: 20,
+        width: 320,
+        height: 180,
+        border: %{width: 1},
+        shadow: %{blur: 12}
+      })
+    ]
   end
 end
