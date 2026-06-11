@@ -58,10 +58,10 @@ const composePreviewCssVars = (state: TWallpaperThemeState): TWallpaperPreviewVa
   }
 }
 
-const mergeWallpaperPreviewPatch = (
-  state: TWallpaperThemeState,
-  patch: TWallpaperPreviewPatch,
-): TWallpaperThemeState => ({
+const mergeNestedWallpaperPatch = <TState extends Partial<TWallpaperPreviewPatch>>(
+  state: TState,
+  patch: Partial<TWallpaperPreviewPatch>,
+): TState & Partial<TWallpaperPreviewPatch> => ({
   ...state,
   ...patch,
   contentShadow: patch.contentShadow
@@ -72,19 +72,15 @@ const mergeWallpaperPreviewPatch = (
   texture: patch.texture ? { ...state.texture, ...patch.texture } : state.texture,
 })
 
+const mergeWallpaperPreviewPatch = (
+  state: TWallpaperThemeState,
+  patch: TWallpaperPreviewPatch,
+): TWallpaperThemeState => mergeNestedWallpaperPatch(state, patch) as TWallpaperThemeState
+
 const mergeWallpaperDraftPatch = (
   currentPatch: Partial<TWallpaperPreviewPatch> | null,
   patch: Partial<TWallpaperPreviewPatch>,
-): Partial<TWallpaperPreviewPatch> => ({
-  ...currentPatch,
-  ...patch,
-  contentShadow: patch.contentShadow
-    ? { ...currentPatch?.contentShadow, ...patch.contentShadow }
-    : currentPatch?.contentShadow,
-  effect: patch.effect ? { ...currentPatch?.effect, ...patch.effect } : currentPatch?.effect,
-  pattern: patch.pattern ? { ...currentPatch?.pattern, ...patch.pattern } : currentPatch?.pattern,
-  texture: patch.texture ? { ...currentPatch?.texture, ...patch.texture } : currentPatch?.texture,
-})
+): Partial<TWallpaperPreviewPatch> => mergeNestedWallpaperPatch(currentPatch ?? {}, patch)
 
 export default function useWallpaperPreview({ state, onCommit }: TOptions) {
   const updatePreviewCssVars = useUpdatePreviewCssVars({ selector: 'html' })
