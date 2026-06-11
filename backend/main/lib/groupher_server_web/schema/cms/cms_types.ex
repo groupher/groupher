@@ -632,7 +632,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   defp resolve_cover_background(id) do
     case ORM.find(CoverBackground, id) do
       {:ok, background} -> {:ok, background}
-      {:error, _} -> {:ok, nil}
+      {:error, {:not_exist, _}} -> {:ok, nil}
+      {:error, reason} -> {:error, reason}
     end
   end
 end

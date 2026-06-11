@@ -94,5 +94,7 @@ defmodule GroupherServer.Repo.Migrations.NestDashboardWallpaperBgFeatures do
     """)
   end
 
-  def down, do: :ok
+  def down do
+    raise "irreversible migration: dashboard wallpaper JSON was rewritten to the nested bg config shape"
+  end
 end

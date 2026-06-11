@@ -48,5 +48,7 @@ defmodule GroupherServer.Repo.Migrations.NestCoverBackgroundBgFeatures do
     end
   end
 
-  def down, do: :ok
+  def down do
+    raise "irreversible migration: cover background legacy columns were folded into nested bg config fields"
+  end
 end

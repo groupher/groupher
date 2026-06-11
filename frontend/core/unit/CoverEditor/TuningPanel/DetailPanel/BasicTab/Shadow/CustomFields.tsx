@@ -15,7 +15,7 @@ export default function CustomFields({ shadow, showCustom, which }: TProps) {
   const s = useSalon()
   const { flushImageDraft, scheduleImagePatch } = useImageDraftContext()
   const scheduleShadowPatch = (patch: Partial<TCoverShadow>): void =>
-    scheduleImagePatch(which, { shadow: { ...shadow, ...patch } })
+    scheduleImagePatch(which, { shadow: patch })
   const showHue =
     shadow.colorMode === COVER_SHADOW_COLOR_MODE.COLOR ||
     shadow.colorMode === COVER_SHADOW_COLOR_MODE.RAINBOW

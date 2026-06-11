@@ -3,7 +3,7 @@ defmodule GroupherServer.CMS.Covers do
   Cover persistence helpers.
   """
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{CMS, Repo}
   alias CMS.Model.{CoverBackground, CoverEditInfo}
   alias Helper.{ORM, T}
 
@@ -55,17 +55,21 @@ defmodule GroupherServer.CMS.Covers do
 
   @spec remove_article_cover(article()) :: T.domain_res(article())
   def remove_article_cover(article) do
-    old_cover_edit_info_id = Map.get(article, :cover_edit_info_id)
+    Repo.transaction(fn ->
+      old_cover_edit_info_id = Map.get(article, :cover_edit_info_id)
 
-    with {:ok, article} <-
-           update_article_cover_fields(article, %{
-             cover_url: nil,
-             cover_url_dark: nil,
-             cover_edit_info_id: nil
-           }),
-         {:ok, _} <- delete_cover_edit_info(old_cover_edit_info_id) do
-      {:ok, article}
-    end
+      with {:ok, article} <-
+             update_article_cover_fields(article, %{
+               cover_url: nil,
+               cover_url_dark: nil,
+               cover_edit_info_id: nil
+             }),
+           {:ok, _} <- delete_cover_edit_info(old_cover_edit_info_id) do
+        article
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
   @spec delete_cover_edit_info(nil | T.id()) :: {:ok, :pass | CoverEditInfo.t()}
@@ -79,23 +83,27 @@ defmodule GroupherServer.CMS.Covers do
   end
 
   defp do_upsert_article_cover(article, attrs) do
-    old_cover_edit_info_id = Map.get(article, :cover_edit_info_id)
+    Repo.transaction(fn ->
+      old_cover_edit_info_id = Map.get(article, :cover_edit_info_id)
 
-    reusable_background_ids =
-      old_cover_edit_info_id |> find_cover_edit_info() |> reusable_background_ids()
+      reusable_background_ids =
+        old_cover_edit_info_id |> find_cover_edit_info() |> reusable_background_ids()
 
-    with {:ok, cover_attrs} <-
-           prepare_cover_edit_info(Map.get(attrs, :cover_edit_info), reusable_background_ids),
-         {:ok, cover_edit_info} <-
-           create_or_update_cover_edit_info(old_cover_edit_info_id, cover_attrs),
-         {:ok, article} <-
-           update_article_cover_fields(article, %{
-             cover_url: Map.get(attrs, :cover_url),
-             cover_url_dark: Map.get(attrs, :cover_url_dark),
-             cover_edit_info_id: cover_edit_info.id
-           }) do
-      {:ok, article}
-    end
+      with {:ok, cover_attrs} <-
+             prepare_cover_edit_info(Map.get(attrs, :cover_edit_info), reusable_background_ids),
+           {:ok, cover_edit_info} <-
+             create_or_update_cover_edit_info(old_cover_edit_info_id, cover_attrs),
+           {:ok, article} <-
+             update_article_cover_fields(article, %{
+               cover_url: Map.get(attrs, :cover_url),
+               cover_url_dark: Map.get(attrs, :cover_url_dark),
+               cover_edit_info_id: cover_edit_info.id
+             }) do
+        article
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
   defp create_or_update_cover_edit_info(nil, attrs), do: ORM.create(CoverEditInfo, attrs)

@@ -72,16 +72,35 @@ const mergeWallpaperPreviewPatch = (
   texture: patch.texture ? { ...state.texture, ...patch.texture } : state.texture,
 })
 
+const mergeWallpaperDraftPatch = (
+  currentPatch: Partial<TWallpaperPreviewPatch> | null,
+  patch: Partial<TWallpaperPreviewPatch>,
+): Partial<TWallpaperPreviewPatch> => ({
+  ...currentPatch,
+  ...patch,
+  contentShadow: patch.contentShadow
+    ? { ...currentPatch?.contentShadow, ...patch.contentShadow }
+    : currentPatch?.contentShadow,
+  effect: patch.effect ? { ...currentPatch?.effect, ...patch.effect } : currentPatch?.effect,
+  pattern: patch.pattern ? { ...currentPatch?.pattern, ...patch.pattern } : currentPatch?.pattern,
+  texture: patch.texture ? { ...currentPatch?.texture, ...patch.texture } : currentPatch?.texture,
+})
+
 export default function useWallpaperPreview({ state, onCommit }: TOptions) {
   const updatePreviewCssVars = useUpdatePreviewCssVars({ selector: 'html' })
   const draftRef = useRef(state)
+  const stateRef = useRef(state)
   const {
     schedule: scheduleWallpaperDraft,
     flush: flushWallpaperDraft,
     clear: clearPendingWallpaperDraft,
-  } = useDebouncedPreviewCommit<TWallpaperThemeState>({ onCommit })
+  } = useDebouncedPreviewCommit<TWallpaperPreviewPatch>({
+    mergePatch: mergeWallpaperDraftPatch,
+    onCommit: (patch) => onCommit(mergeWallpaperPreviewPatch(stateRef.current, patch)),
+  })
 
   useEffect(() => {
+    stateRef.current = state
     draftRef.current = state
   }, [state])
 
@@ -98,7 +117,7 @@ export default function useWallpaperPreview({ state, onCommit }: TOptions) {
   const scheduleWallpaperPreview = useCallback(
     (patch: TWallpaperPreviewPatch) => {
       previewWallpaper(patch)
-      scheduleWallpaperDraft(draftRef.current)
+      scheduleWallpaperDraft(patch)
     },
     [previewWallpaper, scheduleWallpaperDraft],
   )

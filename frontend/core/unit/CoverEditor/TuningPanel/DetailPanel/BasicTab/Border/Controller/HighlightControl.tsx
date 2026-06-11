@@ -96,12 +96,12 @@ export default function HighlightControl({ borderHighlight, which }: TProps) {
       getPointFromPointer(event.clientX, event.clientY, rect),
     )
 
-    scheduleImagePatch(which, { borderHighlight: { ...borderHighlight, enabled: true, ...next } })
+    scheduleImagePatch(which, { borderHighlight: { enabled: true, ...next } })
   }
 
   const toggleHighlight = (): void => {
     scheduleImagePatch(which, {
-      borderHighlight: { ...borderHighlight, enabled: !borderHighlight.enabled },
+      borderHighlight: { enabled: !borderHighlight.enabled },
     })
     flushImageDraft()
   }
@@ -162,7 +162,6 @@ export default function HighlightControl({ borderHighlight, which }: TProps) {
     event.preventDefault()
     scheduleImagePatch(which, {
       borderHighlight: {
-        ...borderHighlight,
         enabled: true,
         angle: normalizeAngle(nextAngle),
         length: clampLength(nextLength),

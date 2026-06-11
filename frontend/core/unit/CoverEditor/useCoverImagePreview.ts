@@ -1,5 +1,5 @@
 import { equals, mergeDeepRight } from 'ramda'
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import useDebouncedPreviewCommit from '~/hooks/useDebouncedPreviewCommit'
 
@@ -56,6 +56,8 @@ export default function useCoverImagePreview(): TCoverImageDraftContext {
   const committedStateRef = useRef(committedState)
   const committedSourceKeyRef = useRef(getCommittedSourceKey(committedImages))
   const previewStateRef = useRef<TCoverImagePreviewState>(committedState)
+  const [draftContextState, setDraftContextState] =
+    useState<TCoverImagePreviewState>(committedState)
   const pendingPreviewStateRef = useRef<TCoverImagePreviewState | null>(null)
   const imagePatchOnChangeRef = useRef(imagePatchOnChange)
   const imagesOnChangeRef = useRef(imagesOnChange)
@@ -76,7 +78,13 @@ export default function useCoverImagePreview(): TCoverImageDraftContext {
 
     previewFrameRef.current = window.requestAnimationFrame(() => {
       previewFrameRef.current = null
-      emitCoverImagePreview(pendingPreviewStateRef.current)
+      const pendingState = pendingPreviewStateRef.current
+
+      if (pendingState) {
+        setDraftContextState((current) => (equals(current, pendingState) ? current : pendingState))
+      }
+
+      emitCoverImagePreview(pendingState)
     })
   }, [])
 
@@ -96,6 +104,9 @@ export default function useCoverImagePreview(): TCoverImageDraftContext {
 
     clearFrameRef.current = window.requestAnimationFrame(() => {
       clearFrameRef.current = null
+      setDraftContextState((current) =>
+        equals(current, committedStateRef.current) ? current : committedStateRef.current,
+      )
       emitCoverImagePreview(null)
     })
   }, [])
@@ -124,6 +135,7 @@ export default function useCoverImagePreview(): TCoverImageDraftContext {
 
     committedStateRef.current = nextState
     previewStateRef.current = nextState
+    setDraftContextState(nextState)
     imagesOnChangeRef.current(images, activeImageWhich)
   }, [])
 
@@ -138,6 +150,9 @@ export default function useCoverImagePreview(): TCoverImageDraftContext {
   useEffect(() => {
     if (!isPreviewingRef.current) {
       previewStateRef.current = committedState
+      setDraftContextState((current) =>
+        equals(current, committedState) ? current : committedState,
+      )
     }
   }, [committedState])
 
@@ -243,9 +258,9 @@ export default function useCoverImagePreview(): TCoverImageDraftContext {
 
   return useMemo<TCoverImageDraftContext>(
     () => ({
-      images: committedState.images,
-      activeImageWhich: committedState.activeImageWhich,
-      activeImage: getActiveImage(committedState.images, committedState.activeImageWhich),
+      images: draftContextState.images,
+      activeImageWhich: draftContextState.activeImageWhich,
+      activeImage: getActiveImage(draftContextState.images, draftContextState.activeImageWhich),
       activateImageDraft,
       scheduleImagePatch,
       commitImagePatch,
@@ -256,7 +271,7 @@ export default function useCoverImagePreview(): TCoverImageDraftContext {
       activateImageDraft,
       clearImageDraft,
       commitImagePatch,
-      committedState,
+      draftContextState,
       flushImageDraft,
       scheduleImagePatch,
     ],

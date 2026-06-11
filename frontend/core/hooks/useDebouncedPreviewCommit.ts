@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from 'react'
 
 type TOptions<T extends object> = {
   delay?: number
+  mergePatch?: (current: Partial<T> | null, patch: Partial<T>) => Partial<T>
   onCommit: (patch: Partial<T>) => void
 }
 
@@ -24,6 +25,7 @@ type TOptions<T extends object> = {
  */
 export default function useDebouncedPreviewCommit<T extends object>({
   delay = 300,
+  mergePatch,
   onCommit,
 }: TOptions<T>) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -49,10 +51,12 @@ export default function useDebouncedPreviewCommit<T extends object>({
 
   const schedule = useCallback(
     (patch: Partial<T>) => {
-      pendingPatchRef.current = {
-        ...pendingPatchRef.current,
-        ...patch,
-      }
+      pendingPatchRef.current = mergePatch
+        ? mergePatch(pendingPatchRef.current, patch)
+        : {
+            ...pendingPatchRef.current,
+            ...patch,
+          }
 
       if (timerRef.current) {
         clearTimeout(timerRef.current)
@@ -60,7 +64,7 @@ export default function useDebouncedPreviewCommit<T extends object>({
 
       timerRef.current = setTimeout(flush, delay)
     },
-    [delay, flush],
+    [delay, flush, mergePatch],
   )
 
   useEffect(() => clear, [clear])

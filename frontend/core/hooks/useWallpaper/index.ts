@@ -63,7 +63,6 @@ export function useWallpaperBgRenderSpec(): TBgRenderSpec {
       state.source,
       state.pattern,
       state.effect,
-      state.contentShadow.enabled,
       state.texture,
       state.gradient,
       state.customWallpaper,

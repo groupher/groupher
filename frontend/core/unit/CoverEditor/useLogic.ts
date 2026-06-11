@@ -74,8 +74,6 @@ type TRet = {
   sizeOnChange: (which: TCoverImageWhich, size: TImageSize) => void
   rotateOnChange: (which: TCoverImageWhich, rotate: number) => void
   glassBorderOnChange: (which: TCoverImageWhich, enabled: boolean) => void
-  magnifierRadiationOnChange: (which: TCoverImageWhich, center: TCoverPoint, radius: number) => void
-  magnifierZoomOnChange: (which: TCoverImageWhich, zoom: number) => void
   magnifierSettingsOnChange: (which: TCoverImageWhich, magnifier: Partial<TCoverMagnifier>) => void
   magnifierOnChange: (which: TCoverImageWhich, enabled: boolean) => void
 } & TStore
@@ -298,13 +296,6 @@ export default function useLogic(): TRet {
   const glassBorderOnChange = (which: TCoverImageWhich, enabled: boolean) =>
     imagePatchOnChange(which, { glassBorder: { enabled } })
 
-  const magnifierRadiationOnChange = (
-    which: TCoverImageWhich,
-    center: TCoverPoint,
-    radius: number,
-  ): void => imagePatchOnChange(which, { magnifier: { center, radius, enabled: true } })
-  const magnifierZoomOnChange = (which: TCoverImageWhich, zoom: number): void =>
-    imagePatchOnChange(which, { magnifier: { zoom } })
   const magnifierSettingsOnChange = (
     which: TCoverImageWhich,
     magnifier: Partial<TCoverMagnifier>,
@@ -350,8 +341,6 @@ export default function useLogic(): TRet {
     sizeOnChange,
     rotateOnChange,
     glassBorderOnChange,
-    magnifierRadiationOnChange,
-    magnifierZoomOnChange,
     magnifierSettingsOnChange,
     magnifierOnChange,
   }

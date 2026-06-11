@@ -10,6 +10,7 @@ import {
 import type { TBgConfig, TBgTexture } from '~/lib/bg'
 import { mapToPresetColorHex } from '~/lib/color'
 import {
+  DEFAULT_WALLPAPER_TEXTURE_INTENSITY,
   GRADIENT_RENDERER,
   WALLPAPER_GRADIENT_RENDERER_OPTIONS,
   type TGradientRecipe,
@@ -68,8 +69,18 @@ export default function Tuning({ background }: TProps) {
     updateColor(index, mapToPresetColorHex(color, theme))
   }
 
-  const updateTexture = (patch: Partial<TBgTexture>): void =>
-    backgroundTextureOnChange({ ...background.texture, ...patch })
+  const updateTexture = (patch: Partial<TBgTexture>): void => {
+    const shouldSeedIntensity = !background.texture.enabled && background.texture.intensity === 0
+
+    backgroundTextureOnChange({
+      ...background.texture,
+      ...patch,
+      intensity:
+        shouldSeedIntensity && (patch.type || patch.enabled)
+          ? DEFAULT_WALLPAPER_TEXTURE_INTENSITY
+          : (patch.intensity ?? background.texture.intensity),
+    })
+  }
 
   return (
     <div className={s.tuningGrid}>
