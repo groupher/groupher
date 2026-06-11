@@ -149,15 +149,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:original_background_id, :id)
 
     field :background, :cover_background do
-      resolve(fn config, _, _ ->
-        config.background_id |> resolve_cover_background()
-      end)
+      resolve(dataloader(CMS, &cover_background_loader(:background_id, &1, &2, &3)))
     end
 
     field :original_background, :cover_background do
-      resolve(fn config, _, _ ->
-        config.original_background_id |> resolve_cover_background()
-      end)
+      resolve(dataloader(CMS, &cover_background_loader(:original_background_id, &1, &2, &3)))
     end
 
     field(:images, list_of(:json))
@@ -627,13 +623,10 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:locale, :string)
   end
 
-  defp resolve_cover_background(nil), do: {:ok, nil}
-
-  defp resolve_cover_background(id) do
-    case ORM.find(CoverBackground, id) do
-      {:ok, background} -> {:ok, background}
-      {:error, {:not_exist, _}} -> {:ok, nil}
-      {:error, reason} -> {:error, reason}
-    end
+  defp cover_background_loader(field, config, args, _resolution) do
+    # CoverConfig is an embedded schema, so there is no Ecto association for
+    # Absinthe to preload. Use the stored background id as the Dataloader item
+    # key so light/dark cover backgrounds still batch through the CMS loader.
+    %{batch: {CoverBackground, args}, item: Map.get(config, field)}
   end
 end

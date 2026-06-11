@@ -80,10 +80,25 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def cover_edit_info(%{cover_edit_info_id: nil}, _, _), do: {:ok, nil}
 
-  def cover_edit_info(%{author_id: author_id, cover_edit_info_id: cover_edit_info_id}, _, %{
-        context: %{cur_user: %User{id: user_id}}
-      }) do
+  def cover_edit_info(
+        %{
+          __struct__: article_schema,
+          id: article_id,
+          author_id: author_id,
+          cover_edit_info_id: cover_edit_info_id
+        },
+        _,
+        %{
+          context: %{cur_user: %User{id: user_id}}
+        }
+      ) do
     with {:ok, %Author{user_id: ^user_id}} <- ORM.find(Author, author_id),
+         {:ok, _article} <-
+           ORM.find_by(article_schema,
+             id: article_id,
+             author_id: author_id,
+             cover_edit_info_id: cover_edit_info_id
+           ),
          {:ok, cover_edit_info} <- ORM.find(CoverEditInfo, cover_edit_info_id) do
       {:ok, cover_edit_info}
     else
