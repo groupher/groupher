@@ -7,6 +7,15 @@ import { emitWallpaperPreview } from '~/lib/wallpaperPreview'
 import type { TWallpaperThemeState } from '~/stores/wallpaper/spec'
 
 type TWallpaperPreviewVars = Record<`--${string}`, string | null>
+
+/**
+ * A preview-safe patch type for wallpaper state.
+ *
+ * Top-level fields ({@link type}, {@link source}) are replaced wholesale while
+ * nested sub-objects ({@link contentShadow}, {@link effect}, {@link pattern},
+ * {@link texture}) accept partial updates so callers never need to pass the
+ * full sub-object to change one field.
+ */
 export type TWallpaperPreviewPatch = Partial<
   Omit<TWallpaperThemeState, 'contentShadow' | 'effect' | 'pattern' | 'texture'>
 > & {
@@ -17,15 +26,7 @@ export type TWallpaperPreviewPatch = Partial<
 }
 
 type TOptions = {
-  /**
-   * The most recent committed wallpaper state for one theme branch (light or
-   * dark). This is the source of truth the preview reverts to when cleared.
-   */
   state: TWallpaperThemeState
-  /**
-   * Called with the merged patch when a debounced commit fires. The caller
-   * should write the patch into the wallpaper store's touched fields.
-   */
   onCommit: (patch: Partial<TWallpaperThemeState>) => void
 }
 
@@ -60,10 +61,17 @@ const composeFilterValue = ({
 }
 
 /**
- * Compose the CSS variable patch used by the dashboard wallpaper live preview.
+ * Compose the CSS variable patch used by the wallpaper live preview.
+ *
+ * Problem scenario: the live preview writes to two CSS variables —
+ * `--preview-wallpaper-bg` for the rendered background and
+ * `--preview-wallpaper-filter` for effect adjustments. Both must be built from
+ * the draft wallpaper state on every preview pulse so the DOM always sees the
+ * full, up-to-date visual.
  *
  * @example
- * updatePreviewCssVars(composePreviewCssVars(draft))
+ * const vars = composePreviewCssVars(draftState)
+ * // => { '--preview-wallpaper-bg': 'linear-gradient(...)', '--preview-wallpaper-filter': 'blur(0px) ...' }
  */
 const composePreviewCssVars = (state: TWallpaperThemeState): TWallpaperPreviewVars => {
   const { background } = composeWallpaperBgCss(state)
@@ -76,14 +84,14 @@ const composePreviewCssVars = (state: TWallpaperThemeState): TWallpaperPreviewVa
 
 /**
  * Merge a wallpaper preview patch into existing state with deep merge for
- * nested sub-objects ({@link contentShadow}, {@link effect}, {@link pattern},
- * {@link texture}).
+ * nested sub-objects.
  *
- * Problem scenario: wallpaper config has four nested sub-objects. A plain
- * spread would overwrite an entire nested object even when the caller only
- * intends to change one field inside it (e.g., only `pattern.intensity`).
- * Deep-merging preserves unmentioned sub-fields while still shallow-merging
- * top-level fields like {@link type} and {@link source}.
+ * Problem scenario: wallpaper config has four nested sub-objects — `contentShadow`,
+ * `effect`, `pattern`, and `texture`. A plain spread would overwrite an entire
+ * nested object even when the caller only intends to change one field inside it
+ * (e.g., only `pattern.intensity`). Deep-merging preserves unmentioned
+ * sub-fields while still shallow-merging top-level fields like `type` and
+ * `source`.
  *
  * @example
  * mergeNestedWallpaperPatch(
@@ -107,14 +115,15 @@ const mergeNestedWallpaperPatch = <TState extends Partial<TWallpaperPreviewPatch
 })
 
 /**
- * Apply a preview patch on top of the current committed state.
+ * Apply a preview patch on top of the current committed state for commit
+ * purposes.
  *
  * Problem scenario: the debounced commit fires **after** the user may have
- * already made more preview changes. If we applied the accumulated patch on
- * top of the live {@link draftRef} (which already contains subsequent preview
- * edits), we would double-apply those later edits. Committing against the
- * most recent {@link stateRef} ensures each persisted patch is exactly what
- * the user saw at the time they paused.
+ * already made more preview changes. If we applied the accumulated patch on top
+ * of the live draft (which already contains subsequent preview edits), we would
+ * double-apply those later edits. Committing against the most recent committed
+ * state ensures each persisted patch is exactly what the user saw at the time
+ * they paused.
  *
  * @example
  * // Inside the debounced onCommit callback:
@@ -129,17 +138,17 @@ const mergeWallpaperPreviewPatch = (
 /**
  * Accumulate incremental patches into the pending debounced draft.
  *
- * Problem scenario: the user may drag a slider across several ticks within
- * the debounce window. Each tick produces a patch (e.g., `{ effect: {
- * blurIntensity: 30 } }` followed by `{ effect: { blurIntensity: 35 } }`).
- * Without merging, the first patch would be lost. This accumulator
- * deep-merges each new patch into the pending batch so the final commit
- * carries the latest value of every field that was touched.
+ * Problem scenario: the user may drag a slider across several ticks within the
+ * debounce window (300 ms). Each tick produces a patch — e.g.
+ * `{ effect: { blurIntensity: 30 } }` followed by `{ effect: { blurIntensity: 35 } }`.
+ * Without merging, the first patch would be lost. This accumulator deep-merges
+ * each new patch into the pending batch so the final commit carries the latest
+ * value of every field that was touched.
  *
  * @example
- * // first tick → pending: { effect: { blurIntensity: 30 } }
- * // second tick (within 300 ms) → pending: { effect: { blurIntensity: 35 } }
- * // commit fires → only { effect: { blurIntensity: 35 } }
+ * // First tick  → pending: { effect: { blurIntensity: 30 } }
+ * // Second tick → pending: { effect: { blurIntensity: 35 } }
+ * // Commit fires → { effect: { blurIntensity: 35 } }
  */
 const mergeWallpaperDraftPatch = (
   currentPatch: Partial<TWallpaperPreviewPatch> | null,
@@ -149,42 +158,46 @@ const mergeWallpaperDraftPatch = (
 /**
  * Orchestrate live wallpaper preview with dual-path updates.
  *
- * Problem scenario: the wallpaper editor has controls (gradient picker,
- * pattern toggle, effect sliders) that must feel real-time during interaction
- * but should only trigger saveable store writes after the user pauses.
- * Writing to the store on every control event would cause excessive
- * re-renders; writing only on commit would feel laggy.
+ * Problem scenario: the wallpaper editor has controls (gradient picker, pattern
+ * toggle, effect sliders) that must feel real-time during interaction but
+ * should only trigger saveable store writes after the user pauses. Writing to
+ * the store on every control event would cause excessive re-renders; writing
+ * only on commit would feel laggy.
  *
  * This hook implements two parallel paths:
  *
  * 1. **Preview path** (instant, every frame)
- *    - Writes CSS variables to the DOM via
- *      {@link useUpdatePreviewCssVars `useUpdatePreviewCssVars`}.
- *    - Dispatches a {@link emitWallpaperPreview `wallpaper-preview`} custom
- *      event so other components (e.g. preview panels) can react immediately.
+ *    - Writes CSS variables to the DOM via `useUpdatePreviewCssVars`.
+ *    - Dispatches a `wallpaper-preview` custom event so other components
+ *      (e.g. preview panels) can react immediately.
  *
  * 2. **Commit path** (debounced, 300 ms)
- *    - Accumulates incremental patches via
- *      {@link useDebouncedPreviewCommit `useDebouncedPreviewCommit`}.
- *    - Fires {@link onCommit} with the merged patch when the user pauses.
+ *    - Accumulates incremental patches via `useDebouncedPreviewCommit`.
+ *    - Fires `onCommit` with the merged patch when the user pauses.
  *
  * @param state - The latest committed wallpaper state for this theme branch.
- *   The hook keeps an internal reference to this value so commit callbacks
- *   always merge against the correct baseline.
+ *   The hook keeps an internal ref so commits always merge against the correct
+ *   baseline.
  * @param onCommit - Callback invoked with the merged patch when a debounced
  *   commit fires. Typically writes to the wallpaper store's touched fields.
  *
- * @returns
+ * @returns An object with these methods:
+ *
  * | Method | Purpose |
  * |---|---|
- * | `previewWallpaper(patch)` | Apply visual preview **without** scheduling a commit. Use for hover states or drags where only the final value should persist. |
+ * | `previewWallpaper(patch)` | Apply visual preview **without** scheduling a commit. Use for hover or drag interactions where only the final value should persist. |
  * | `scheduleWallpaperPreview(patch)` | Apply visual preview **and** schedule a debounced commit. Use for slider changes that should auto-save. |
- * | `flushWallpaperDraft()` | Immediately flush any pending debounced commit. Call this before navigating away or triggering an explicit save. |
+ * | `flushWallpaperDraft()` | Immediately flush any pending debounced commit. Call before navigating away or triggering an explicit save. |
  * | `clearPendingWallpaperDraft()` | Cancel any pending debounced commit without flushing. Use when rolling back unsaved changes. |
  * | `clearWallpaperPreview()` | Remove all preview CSS variables from the DOM and emit a `null` preview event. Call when closing the editor. |
  *
  * @example
- * const { previewWallpaper, scheduleWallpaperPreview, flushWallpaperDraft, clearWallpaperPreview } = useWallpaperPreview({
+ * const {
+ *   previewWallpaper,
+ *   scheduleWallpaperPreview,
+ *   flushWallpaperDraft,
+ *   clearWallpaperPreview,
+ * } = useWallpaperPreview({
  *   state: pickWallpaperThemeState(wallpaperStore, isDarkTheme),
  *   onCommit: (patch) => wallpaperStore.commit(
  *     isDarkTheme ? { dark: patch } : { light: patch },
