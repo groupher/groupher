@@ -23,6 +23,12 @@ export const ssrThemeInitScript = () => `
 type TCSSVarMap = Record<string, string>
 const HEX_COLOR_RE = /^#[0-9a-f]{6}$/i
 
+/**
+ * Keep dashboard color variables restricted to hex values before SSR injection.
+ *
+ * Problem scenario: SSR renders this map into a raw `<style>` tag; any unexpected
+ * token value must not leak into CSS without going through another escape path.
+ */
 const sanitizeCSSVars = (vars: TCSSVarMap): TCSSVarMap => {
   const sanitized: TCSSVarMap = {}
 
@@ -47,8 +53,16 @@ const serializeCSSVars = (selector: string, vars: TCSSVarMap): string => {
   return `${selector} {\n${body}\n}`
 }
 
-// Build first-paint dashboard color variables on the server so custom colors do
-// not wait for client hydration to override the base token defaults.
+/**
+ * Build first-paint dashboard color variables on the server side.
+ *
+ * Problem scenario: custom color overrides should be visible immediately on first
+ * render, before hydration.
+ *
+ * Example:
+ *   resolveDsbColorVars({ themeTokens: { ... } })
+ *   // => [[':root', {'--color-page-custom': '#fff'}], ["[data-theme='dark']", ...]]
+ */
 const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string, TCSSVarMap]> => {
   if (!dashboard.themeTokens?.light?.primaryColor || !dashboard.themeTokens?.dark?.primaryColor) {
     return []
@@ -64,10 +78,17 @@ const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string
   ]
 }
 
-// Keep the public API dashboard-shaped so new color tokens can be added in one
-// place without changing every app layout that needs first-paint SSR colors.
-// Values are sanitized here because the result is injected into a raw <style>
-// tag during SSR and must stay within a strict CSS color shape.
+/**
+ * Build the first-paint theme CSS string for the dashboard payload.
+ *
+ * Problem scenario: each app layout consumes dashboard theme tokens differently,
+ * but first-paint style generation should stay in one place and match the
+ * existing `composeThemePresetCssVars` semantics.
+ *
+ * Example:
+ *   injectDsbColors(dashboard)
+ *   // => ':root { --color-page-custom: #fff; }\n[data-theme='dark'] { --color-page-custom-dark: #111; }'
+ */
 export const injectDsbColors = (dashboard: Partial<TParseDashboard>): string => {
   return resolveDsbColorVars(dashboard)
     .map(([selector, vars]) => serializeCSSVars(selector, vars))

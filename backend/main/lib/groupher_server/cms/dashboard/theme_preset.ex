@@ -267,7 +267,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
   end
 
   @doc """
-  Build a stored Custom preset definition.
+  Compose a stored Custom preset definition.
 
   Problem scenario: Custom creation must stay enabled even when its overwrite is
   empty after reset. The nullable Custom preset map is the source of existence;
@@ -275,11 +275,11 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
 
   Example:
 
-      ThemePreset.build_custom_preset(:claude, %{})
+      ThemePreset.compose_custom_preset(:claude, %{})
       #=> %{"basePreset" => "claude", "overwrite" => %{}}
 
   """
-  def build_custom_preset(base_preset, overwrite) do
+  def compose_custom_preset(base_preset, overwrite) do
     %{
       "basePreset" => normalize_preset(base_preset) |> Atom.to_string(),
       "overwrite" => prune_empty_sections(overwrite || %{})

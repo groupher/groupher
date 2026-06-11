@@ -5,7 +5,7 @@ import useUpdatePreviewCssVars from '~/hooks/useUpdatePreviewCssVars'
 
 import { PREVIEW_CSS_VAR_CLEANUP } from '../constant'
 import type { TPageBgDraft } from '../DetailsPanel/CustomPageBg/hooks'
-import { buildPageBgPreviewCssVars, buildThemePresetPreviewCssVars } from '../helper'
+import { composePageBgPreviewCssVars, composeThemePresetPreviewCssVars } from '../helper'
 import type {
   TPreviewCssVars,
   TThemePresetOverwrite,
@@ -68,7 +68,7 @@ export default function useThemePresetPreview({
   const previewPageBg = useCallback(
     (patch: Partial<TPageBgDraft>) => {
       writePreviewCssVars(
-        buildPageBgPreviewCssVars({
+        composePageBgPreviewCssVars({
           selectedTokens: selectedTokensRef.current,
           selectedPageBgDraft: selectedPageBgDraftRef.current,
           patch,
@@ -82,7 +82,7 @@ export default function useThemePresetPreview({
   const previewThemePresetOverwrite = useCallback(
     (overwrite: TThemePresetOverwrite) => {
       writePreviewCssVars(
-        buildThemePresetPreviewCssVars({
+        composeThemePresetPreviewCssVars({
           selectedTokens: selectedTokensRef.current,
           overwrite,
           isLightTheme,

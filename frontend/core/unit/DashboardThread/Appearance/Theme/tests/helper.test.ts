@@ -2,9 +2,9 @@ import { THEME_PRESET } from '~/const/theme_preset'
 
 import { resolveRawBg } from '../DetailsPanel/CustomPageBg/hooks'
 import {
-  buildCustomPresetEditOverwrite,
-  buildCustomPresetResetOverwrite,
-  buildPresetSelectionFields,
+  composeCustomPresetEditFields,
+  composeCustomPresetResetFields,
+  composePresetSelectionFields,
   toCssOpacity,
   toPageBgDraft,
 } from '../helper'
@@ -71,7 +71,7 @@ describe('theme preset model helpers', () => {
   })
 
   it('forks readonly preset edits into custom tokens and sparse overwrite', () => {
-    const { dashboardFields, nextCustomTokensDraft } = buildCustomPresetEditOverwrite({
+    const { dashboardFields, nextCustomTokensDraft } = composeCustomPresetEditFields({
       activePreset: THEME_PRESET.CLAUDE,
       activePresetBase: THEME_PRESET.CLAUDE,
       selectedTokens: tokens,
@@ -94,7 +94,7 @@ describe('theme preset model helpers', () => {
       ...tokens,
       light: { ...tokens.light, primaryColor: '#777777' },
     }
-    const { dashboardFields, nextCustomTokensDraft } = buildCustomPresetEditOverwrite({
+    const { dashboardFields, nextCustomTokensDraft } = composeCustomPresetEditFields({
       activePreset: THEME_PRESET.CUSTOM,
       activePresetBase: THEME_PRESET.CLAUDE,
       selectedTokens: tokens,
@@ -116,7 +116,7 @@ describe('theme preset model helpers', () => {
   })
 
   it('builds preset selection fields for readonly presets', () => {
-    const { dashboardFields } = buildPresetSelectionFields({
+    const { dashboardFields } = composePresetSelectionFields({
       preset: { value: THEME_PRESET.DEFAULT, tokens },
       currentThemePresetBase: THEME_PRESET.CLAUDE,
       customTokensDraft: null,
@@ -130,7 +130,7 @@ describe('theme preset model helpers', () => {
   })
 
   it('resets custom tokens to the selected preset and clears sparse overwrite', () => {
-    const { dashboardFields, nextCustomTokensDraft } = buildCustomPresetResetOverwrite({
+    const { dashboardFields, nextCustomTokensDraft } = composeCustomPresetResetFields({
       value: THEME_PRESET.SOLARIZED,
       tokens,
     })

@@ -79,7 +79,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
 
     with {:ok, overwrite} <-
            ThemePreset.merge_overwrite(base_preset, existing_overwrite, incoming_overwrite) do
-      {:ok, ThemePreset.build_custom_preset(base_preset, overwrite)}
+      {:ok, ThemePreset.compose_custom_preset(base_preset, overwrite)}
     end
   end
 

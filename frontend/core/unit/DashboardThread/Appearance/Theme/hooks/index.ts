@@ -9,10 +9,10 @@ import type { TResolvedThemePreset } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import {
-  buildThemeOverwrite,
-  buildCustomPresetEditOverwrite,
-  buildCustomPresetResetOverwrite,
-  buildPresetSelectionFields,
+  composeCustomPresetEditFields,
+  composeCustomPresetResetFields,
+  composePresetSelectionFields,
+  composeThemeOverwrite,
   toPageBgDraft,
 } from '../helper'
 import type {
@@ -115,7 +115,7 @@ export default function useAppearance({
       updateEditingDetails(true)
       updateShowForkRelation(dsb$.themePreset !== THEME_PRESET.CUSTOM)
 
-      const { dashboardFields, nextCustomTokensDraft } = buildCustomPresetEditOverwrite({
+      const { dashboardFields, nextCustomTokensDraft } = composeCustomPresetEditFields({
         activePreset: dsb$.themePreset,
         activePresetBase: savedCustomPresetBase,
         selectedTokens: selectedTokensRef.current,
@@ -166,7 +166,7 @@ export default function useAppearance({
     clearPreviewCssVars()
 
     editThemePresetFields(
-      buildPresetSelectionFields({
+      composePresetSelectionFields({
         preset,
         currentThemePresetBase: savedCustomPresetBase,
         customTokensDraft: customTokensDraftRef.current,
@@ -178,7 +178,7 @@ export default function useAppearance({
     (preset: TThemePresetOption) => {
       if (dsb$.themePreset !== THEME_PRESET.CUSTOM) return
 
-      const { dashboardFields, nextCustomTokensDraft } = buildCustomPresetResetOverwrite(preset)
+      const { dashboardFields, nextCustomTokensDraft } = composeCustomPresetResetFields(preset)
 
       clearPendingThemePresetPreviewCommit()
       clearPreviewCssVars()
@@ -216,7 +216,7 @@ export default function useAppearance({
 
   const schedulePageBgOverwrite = useCallback(
     (patch) => {
-      scheduleThemePresetOverwrite(buildThemeOverwrite(isLightTheme, patch))
+      scheduleThemePresetOverwrite(composeThemeOverwrite(isLightTheme, patch))
     },
     [isLightTheme, scheduleThemePresetOverwrite],
   )
