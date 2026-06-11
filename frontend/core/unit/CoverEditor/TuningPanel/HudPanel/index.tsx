@@ -20,21 +20,22 @@ type TProps = {
 
 export default function HudPanel({ setting, onExpand }: TProps) {
   const s = useSalon()
-  const {
-    borderRadius,
-    borderHighlight,
-    hasGlassBorder,
-    hasMagnifier,
-    magnifierCenter,
-    magnifierZoom,
-    position,
-    rotate,
-    shadow,
-    size,
-    activeBackground,
-  } = setting
+  const { activeImage, activeBackground } = setting
+  const borderRadius = activeImage?.borderRadius ?? 0
+  const borderHighlight = activeImage?.borderHighlight
+  const glassBorder = activeImage?.glassBorder ?? { enabled: false }
+  const magnifier = activeImage?.magnifier
+  const magnifierEnabled = magnifier?.enabled ?? false
+  const magnifierCenter = magnifier?.center ?? { x: 0.5, y: 0.5 }
+  const magnifierZoom = magnifier?.zoom ?? 1
+  const position = activeImage?.position ?? { x: 0.5, y: 0.5 }
+  const rotate = activeImage?.rotate ?? 0
+  const shadow = activeImage?.shadow
+  const size = activeImage?.size ?? IMAGE_SIZE_RANGE.MAX
 
-  const borderValue = getBorderValue({ borderRadius, borderHighlight, hasGlassBorder })
+  const borderValue = borderHighlight
+    ? getBorderValue({ borderRadius, borderHighlight, glassBorder })
+    : ''
   const frameSize = getResponsiveImageSize(size)
   const framePlacement = getImagePlacement(position, size, rotate)
   const backgroundPreview = composeBgCss(activeBackground)
@@ -68,12 +69,12 @@ export default function HudPanel({ setting, onExpand }: TProps) {
         />
         <HudItem
           label='阴影'
-          active={isCoverShadowActive(shadow)}
+          active={shadow ? isCoverShadowActive(shadow) : false}
           icon={<ShadowSVG className={s.icon} />}
         />
         <HudItem
           label='边框'
-          active={borderRadius > 0 || borderHighlight.enabled || hasGlassBorder}
+          active={borderRadius > 0 || Boolean(borderHighlight?.enabled) || glassBorder.enabled}
           icon={<ArchSVG className={s.icon} />}
           value={borderValue}
         />
@@ -85,11 +86,11 @@ export default function HudPanel({ setting, onExpand }: TProps) {
         />
         <HudItem
           label='放大镜'
-          active={hasMagnifier}
+          active={magnifierEnabled}
           icon={
             <span className={s.coverIcon}>
               <span
-                className={cn(s.magnifierDot, hasMagnifier && s.gridDotActive)}
+                className={cn(s.magnifierDot, magnifierEnabled && s.gridDotActive)}
                 style={{
                   left: `${magnifierCenter.x * 100}%`,
                   top: `${magnifierCenter.y * 100}%`,
@@ -97,7 +98,7 @@ export default function HudPanel({ setting, onExpand }: TProps) {
               />
             </span>
           }
-          value={hasMagnifier ? `${magnifierZoom}x` : undefined}
+          value={magnifierEnabled ? `${magnifierZoom}x` : undefined}
         />
         <HudItem
           label='背景'

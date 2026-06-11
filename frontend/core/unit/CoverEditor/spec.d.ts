@@ -1,9 +1,10 @@
 import type { TBgConfig, TBgThemeConfig } from '~/lib/bg'
-import type { TGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
+import type { TGradientRecipe } from '~/lib/wallpaperMesh'
 import type { TConstValues } from '~/spec'
 
 import type {
   BORDER_HIGHLIGHT_MODE,
+  COVER_IMAGE_WHICH,
   COVER_SHADOW_COLOR_MODE,
   COVER_SHADOW_PRESET,
   IMAGE_POS,
@@ -47,7 +48,15 @@ export type TCoverShadow = {
 
 export type TMagnifierBorderColor = TConstValues<typeof MAGNIFIER_BORDER_COLOR>
 
-export type TMagnifierAppearance = {
+export type TCoverGlassBorder = {
+  enabled: boolean
+}
+
+export type TCoverMagnifier = {
+  enabled: boolean
+  center: TCoverPoint
+  radius: number
+  zoom: number
   borderColor: TMagnifierBorderColor
   borderWidth: number
   highlightCenter: TCoverPoint
@@ -55,23 +64,44 @@ export type TMagnifierAppearance = {
   shadow: number
 }
 
-export type TStore = {
-  imageDominantColor: string | null
+export type TCoverImageWhich = TConstValues<typeof COVER_IMAGE_WHICH>
+
+export type TCoverImageConfig = {
+  which: TCoverImageWhich
+  zIndex: number
+  source: string
+  dominantColor: string | null
   position: TCoverPoint
-  magnifierCenter: TCoverPoint
-  magnifierRadius: number
-  magnifierZoom: number
-  magnifierAppearance: TMagnifierAppearance
-  hasMagnifier: boolean
+  magnifier: TCoverMagnifier
   shadow: TCoverShadow
   borderRadius: number
   borderHighlight: TBorderHighlight
   size: TImageSize
   rotate: number
-  hasGlassBorder: boolean
+  glassBorder: TCoverGlassBorder
+}
+
+export type TCoverImages = Record<TCoverImageWhich, TCoverImageConfig | null>
+
+export type TCoverImagePatch = Partial<
+  Omit<TCoverImageConfig, 'borderHighlight' | 'glassBorder' | 'magnifier' | 'shadow' | 'which'>
+> & {
+  borderHighlight?: Partial<TBorderHighlight>
+  glassBorder?: Partial<TCoverGlassBorder>
+  magnifier?: Partial<TCoverMagnifier>
+  shadow?: Partial<TCoverShadow>
+}
+
+export type TCoverConfig = {
+  images: TCoverImages
+  background: TBgThemeConfig
+}
+
+export type TStore = {
+  images: TCoverImages
+  activeImageWhich: TCoverImageWhich
   background: TBgThemeConfig
   originalBackground: TBgThemeConfig
-  loadedImageUrl: string
 
   // derived
   tuningSetting: TTuningSetting
@@ -90,28 +120,22 @@ export type TImageSize = number
 export type TImageRotate = string
 
 export type TTuningSetting = {
-  imageDominantColor: string | null
-  position: TCoverPoint
-  magnifierCenter: TCoverPoint
-  magnifierRadius: number
-  magnifierZoom: number
-  magnifierAppearance: TMagnifierAppearance
-  hasMagnifier: boolean
-  shadow: TCoverShadow
-  borderRadius: number
-  borderHighlight: TBorderHighlight
+  images: TCoverImages
+  activeImageWhich: TCoverImageWhich
+  activeImage: TCoverImageConfig | null
   background: TBgThemeConfig
   activeBackground: TBgConfig
   isBackgroundTouched: boolean
-  size: TImageSize
-  rotate: number
-  hasGlassBorder: boolean
 }
 
-export type TCoverBackgroundPatch = Partial<TBgConfig>
+export type TCoverBackgroundPatch = Partial<Omit<TBgConfig, 'effect' | 'pattern' | 'texture'>> & {
+  effect?: Partial<TBgConfig['effect']>
+  pattern?: Partial<TBgConfig['pattern']>
+  texture?: Partial<TBgConfig['texture']>
+}
 
-export type TCoverBackgroundRange = Pick<TBgConfig, 'blurIntensity' | 'brightness' | 'saturation'>
+export type TCoverBackgroundRange = TBgConfig['effect']
 
 export type TCoverBackgroundGradientPatch = Partial<TGradientRecipe>
 
-export type TCoverBackgroundTexturePatch = Partial<TWallpaperTexture>
+export type TCoverBackgroundTexturePatch = Partial<TBgConfig['texture']>

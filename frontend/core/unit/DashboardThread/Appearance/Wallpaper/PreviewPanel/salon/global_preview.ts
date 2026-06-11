@@ -12,7 +12,7 @@ export default function useSalon() {
 
   const { isDarkTheme } = useTheme()
   const wallpaper = useWallpaperDomain()
-  const { hasShadow } = pickWallpaperThemeState(wallpaper, isDarkTheme)
+  const { contentShadow } = pickWallpaperThemeState(wallpaper, isDarkTheme)
   const base = useBase()
 
   return {
@@ -25,7 +25,7 @@ export default function useSalon() {
     realPreview: 'relative h-44 w-full overflow-hidden',
     content: cn(
       'absolute bottom-0 left-8 right-8 h-40 backdrop-blur-sm column-start px-5 pt-3 pb-4 rounded-t-md',
-      hasShadow && shadow('md'),
+      contentShadow.enabled && shadow('md'),
     ),
     contentTop: 'column gap-3',
     contentBottom: 'column gap-3 mt-auto',

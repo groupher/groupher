@@ -30,15 +30,15 @@ export default function TuningPanel() {
     flushWallpaperDraft,
   } = useLogic()
   const wallpaper = getWallpaper()
-  const { type, blurIntensity, patternIntensity, brightness, saturation } = wallpaper
+  const { type, effect, pattern } = wallpaper
   const contentRef = useRef<HTMLDivElement | null>(null)
   const [expanded, setExpanded] = useState(false)
   const [panelHeight, setPanelHeight] = useState<number | null>(null)
   const [rangeDraft, setRangeDraft] = useState<TRangeDraft>({
-    blurIntensity,
-    patternIntensity,
-    brightness,
-    saturation,
+    blurIntensity: effect.blurIntensity,
+    patternIntensity: pattern.intensity,
+    brightness: effect.brightness,
+    saturation: effect.saturation,
   })
 
   const s = useSalon()
@@ -66,12 +66,12 @@ export default function TuningPanel() {
 
   useEffect(() => {
     setRangeDraft({
-      blurIntensity,
-      patternIntensity,
-      brightness,
-      saturation,
+      blurIntensity: effect.blurIntensity,
+      patternIntensity: pattern.intensity,
+      brightness: effect.brightness,
+      saturation: effect.saturation,
     })
-  }, [blurIntensity, patternIntensity, brightness, saturation])
+  }, [effect.blurIntensity, effect.brightness, effect.saturation, pattern.intensity])
 
   const handleBlurIntensityChange = (value: number): void => {
     setRangeDraft((current) => ({ ...current, blurIntensity: value }))

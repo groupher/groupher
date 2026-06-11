@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import { DEFAULT_WALLPAPER_TEXTURE_INTENSITY, type TWallpaperTexture } from '~/lib/wallpaperMesh'
+import type { TBgTexture } from '~/lib/bg'
+import { DEFAULT_WALLPAPER_TEXTURE_INTENSITY } from '~/lib/wallpaperMesh'
 import TextureIntensityField from '~/widgets/TuningFields/TextureIntensityField'
 import TextureTypeField from '~/widgets/TuningFields/TextureTypeField'
 import ToggleField from '~/widgets/TuningFields/ToggleField'
@@ -11,16 +12,15 @@ import useSalon from '../../salon/detail_panel/texture'
 import GroupTitle from '../GroupTitle'
 
 type Props = {
-  hasTexture: boolean
-  texture: TWallpaperTexture
-  onToggleTexture: (hasTexture: boolean) => void
+  texture: TBgTexture
+  onToggleTexture: (enabled: boolean) => void
 }
 
-export default function Texture({ hasTexture, texture, onToggleTexture }: Props) {
+export default function Texture({ texture, onToggleTexture }: Props) {
   const { t } = useTrans()
   const s = useSalon()
   const { changeTexture, flushWallpaperDraft } = useLogic()
-  const [draftTexture, setDraftTexture] = useState<TWallpaperTexture>({
+  const [draftTexture, setDraftTexture] = useState<TBgTexture>({
     ...texture,
   })
 
@@ -28,18 +28,18 @@ export default function Texture({ hasTexture, texture, onToggleTexture }: Props)
     setDraftTexture(texture)
   }, [texture])
 
-  const updateTexture = (patch: Partial<TWallpaperTexture>): void => {
+  const updateTexture = (patch: Partial<TBgTexture>): void => {
     const nextTexture = {
       ...draftTexture,
       ...patch,
       intensity:
-        patch.type && !hasTexture && draftTexture.intensity === 0
+        patch.type && !texture.enabled && draftTexture.intensity === 0
           ? DEFAULT_WALLPAPER_TEXTURE_INTENSITY
           : (patch.intensity ?? draftTexture.intensity),
+      enabled: patch.enabled ?? (patch.type && !texture.enabled ? true : draftTexture.enabled),
     }
 
     setDraftTexture(nextTexture)
-    if (!hasTexture) onToggleTexture(true)
     changeTexture(nextTexture)
     flushWallpaperDraft()
   }
@@ -66,17 +66,17 @@ export default function Texture({ hasTexture, texture, onToggleTexture }: Props)
       <div className={s.items}>
         <ToggleField
           label={t('dsb.appearance.wallpaper.editor.enable')}
-          checked={hasTexture}
+          checked={texture.enabled}
           onChange={onToggleTexture}
         />
 
         <TextureTypeField
           value={draftTexture.type}
-          active={hasTexture}
+          active={texture.enabled}
           onChange={(type) => updateTexture({ type })}
         />
 
-        {hasTexture && (
+        {texture.enabled && (
           <TextureIntensityField
             value={draftTexture.intensity}
             onChange={updateTextureIntensityDraft}

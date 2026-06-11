@@ -22,6 +22,13 @@ const WALLPAPER_TEXTURE = {
   NOISE: 'noise',
 }
 
+const WALLPAPER_PATTERN_TONE = {
+  DARK: 'dark',
+}
+
+const DEFAULT_WALLPAPER_SOURCE = 'amber_mauve'
+const DEFAULT_WALLPAPER_PATTERN_ID = '01'
+
 const DEFAULT_THEME_TOKENS = {
   pageBg: '#fffcfc',
   pageBgDark: '#25161d',
@@ -51,6 +58,35 @@ const DEFAULT_THEME_TOKENS = {
 }
 
 const makeThemeTokens = () => ({ ...DEFAULT_THEME_TOKENS })
+
+const makeWallpaperTheme = (overrides = {}) => ({
+  type: WALLPAPER_TYPE.GRADIENT,
+  source: DEFAULT_WALLPAPER_SOURCE,
+  pattern: {
+    enabled: true,
+    id: DEFAULT_WALLPAPER_PATTERN_ID,
+    intensity: 50,
+    tone: WALLPAPER_PATTERN_TONE.DARK,
+  },
+  gradient: {
+    version: 2,
+    renderer: GRADIENT_RENDERER.LINEAR,
+    preset: DEFAULT_WALLPAPER_SOURCE,
+    colors: ['#FBEFDE', '#D8B9E3'],
+    angle: 180,
+    spread: 58,
+  },
+  contentShadow: {
+    enabled: false,
+  },
+  effect: {
+    blurIntensity: 0,
+    brightness: 100,
+    saturation: 100,
+  },
+  texture: { enabled: false, type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
+  ...overrides,
+})
 
 const makeUser = (overrides = {}) => {
   return {
@@ -83,50 +119,17 @@ const makeDashboard = (slug = 'home') => {
       twImageHeight: '630',
     },
     wallpaper: {
-      light: {
-        type: WALLPAPER_TYPE.GRADIENT,
-        source: 'pink',
-        hasPattern: false,
+      light: makeWallpaperTheme(),
+      dark: makeWallpaperTheme({
         gradient: {
           version: 2,
           renderer: GRADIENT_RENDERER.LINEAR,
-          preset: 'pink',
-          colors: ['#FBEFDE', '#D8B9E3'],
-          angle: 180,
-          spread: 52,
-        },
-        patternId: '01',
-        patternIntensity: 50,
-        patternTone: 'dark',
-        hasTexture: false,
-        blurIntensity: 0,
-        hasShadow: false,
-        brightness: 100,
-        saturation: 100,
-        texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-      },
-      dark: {
-        type: WALLPAPER_TYPE.GRADIENT,
-        source: 'pink',
-        hasPattern: false,
-        gradient: {
-          version: 2,
-          renderer: GRADIENT_RENDERER.LINEAR,
-          preset: 'pink',
+          preset: DEFAULT_WALLPAPER_SOURCE,
           colors: ['#25161d', '#3a2945'],
           angle: 180,
-          spread: 52,
+          spread: 58,
         },
-        patternId: '01',
-        patternIntensity: 50,
-        patternTone: 'dark',
-        hasTexture: false,
-        blurIntensity: 0,
-        hasShadow: false,
-        brightness: 100,
-        saturation: 100,
-        texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
-      },
+      }),
     },
     layout: {
       themePreset: THEME_PRESET.DEFAULT,

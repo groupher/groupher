@@ -1,20 +1,21 @@
 import CheckSVG from '~/icons/Check'
 
 import { getImageShadow, normalizeCoverShadow } from '../../../../helper'
-import type { TCoverShadow } from '../../../../spec'
+import type { TCoverImageWhich, TCoverShadow } from '../../../../spec'
 import useLogic from '../../../../useLogic'
 import { PRESET_OPTIONS, type TShadowPanelStyle } from './constant'
 import useSalon from './salon/preset_grid'
 
 type TProps = {
   shadow: TCoverShadow
+  which: TCoverImageWhich
 }
 
 const toPreviewStyle = (shadow: TCoverShadow): TShadowPanelStyle => ({
   '--shadow-preview': getImageShadow(shadow) || 'none',
 })
 
-export default function PresetGrid({ shadow }: TProps) {
+export default function PresetGrid({ shadow, which }: TProps) {
   const s = useSalon()
   const { shadowOnChange } = useLogic()
 
@@ -33,7 +34,7 @@ export default function PresetGrid({ shadow }: TProps) {
             type='button'
             className={s.presetButton(active)}
             aria-pressed={active}
-            onClick={() => shadowOnChange({ preset: option.value })}
+            onClick={() => shadowOnChange(which, { preset: option.value })}
           >
             <span className={s.presetPreview}>
               <span className={s.presetBlock} style={toPreviewStyle(optionShadow)} />

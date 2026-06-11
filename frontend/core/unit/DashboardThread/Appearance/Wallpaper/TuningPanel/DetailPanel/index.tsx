@@ -26,9 +26,9 @@ type Props = {
   canUseTexture: boolean
   canUseAngle: boolean
   hasRightPanel: boolean
-  onTogglePattern: (hasPattern: boolean) => void
-  onToggleTexture: (hasTexture: boolean) => void
-  onToggleShadow: (hasShadow: boolean) => void
+  onTogglePattern: (enabled: boolean) => void
+  onToggleTexture: (enabled: boolean) => void
+  onToggleShadow: (enabled: boolean) => void
   onPatternToneChange: (lightPattern: boolean) => void
   onBlurIntensityChange: (value: number) => void
   onPatternIntensityChange: (value: number) => void
@@ -56,7 +56,7 @@ export default function DetailPanel({
   onRangeChangeEnd,
   onCollapse,
 }: Props) {
-  const { gradient, hasPattern, patternTone, hasTexture, hasShadow, texture } = wallpaper
+  const { contentShadow, gradient, pattern, texture } = wallpaper
   const { t } = useTrans()
   const s = useSalon()
   const groups: Array<{ key: GROUP; node: ReactNode } | null> = [
@@ -74,15 +74,14 @@ export default function DetailPanel({
     },
     {
       key: GROUP.CONTENT,
-      node: <Content hasShadow={hasShadow} onToggleShadow={onToggleShadow} />,
+      node: <Content contentShadow={contentShadow} onToggleShadow={onToggleShadow} />,
     },
     isGradient
       ? {
           key: GROUP.PATTERN,
           node: (
             <Pattern
-              hasPattern={hasPattern}
-              patternTone={patternTone}
+              pattern={pattern}
               patternIntensity={rangeDraft.patternIntensity}
               onTogglePattern={onTogglePattern}
               onPatternToneChange={onPatternToneChange}
@@ -95,9 +94,7 @@ export default function DetailPanel({
     canUseTexture
       ? {
           key: GROUP.TEXTURE,
-          node: (
-            <Texture hasTexture={hasTexture} texture={texture} onToggleTexture={onToggleTexture} />
-          ),
+          node: <Texture texture={texture} onToggleTexture={onToggleTexture} />,
         }
       : null,
     isGradient

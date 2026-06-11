@@ -10,7 +10,7 @@ export default function useSalon() {
   const { topbarBg } = useTopbar()
   const { isDarkTheme } = useTheme()
   const wallpaper = useWallpaperDomain()
-  const { hasShadow } = pickWallpaperThemeState(wallpaper, isDarkTheme)
+  const { contentShadow } = pickWallpaperThemeState(wallpaper, isDarkTheme)
 
   return {
     wrapper: cn(
@@ -18,7 +18,7 @@ export default function useSalon() {
       'column relative isolate s-full min-h-fit',
       // NOTICE: this class will cause children's position fixed fail,
       'transition-transform transition-shadow backdrop-blur-2xl',
-      hasShadow && 'shadow-lg',
+      contentShadow.enabled && 'shadow-lg',
       bg('pageBg'),
       page(),
     ),

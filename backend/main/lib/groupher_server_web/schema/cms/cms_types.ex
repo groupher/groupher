@@ -16,7 +16,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   alias GroupherServer.{Accounts, CMS}
   alias CMS.Dashboard.ThemePreset
-  alias CMS.Model.Community
+  alias CMS.Model.{Community, CoverBackground}
   alias Helper.ORM
   alias GroupherServerWeb.Schema
 
@@ -138,6 +138,59 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object(:dsb_rss, do: dsb_gq_fields(:rss))
   object(:dsb_seo, do: dsb_gq_fields(:seo))
   object(:dsb_bg_config, do: dsb_gq_fields(:wallpaper_bg))
+
+  object :cover_background do
+    field(:id, :id)
+    dsb_gq_fields(:wallpaper_bg)
+  end
+
+  object :cover_config do
+    field(:background_id, :id)
+    field(:original_background_id, :id)
+
+    field :background, :cover_background do
+      resolve(dataloader(CMS, &cover_background_loader(:background_id, &1, &2, &3)))
+    end
+
+    field :original_background, :cover_background do
+      resolve(dataloader(CMS, &cover_background_loader(:original_background_id, &1, &2, &3)))
+    end
+
+    field(:images, list_of(:json))
+  end
+
+  object :cover_edit_info do
+    field(:id, :id)
+    field(:canvas_width, :integer)
+    field(:canvas_height, :integer)
+    field(:ratio, :float)
+    field(:version, :integer)
+    field(:light, :cover_config)
+    field(:dark, :cover_config)
+
+    timestamp_fields()
+  end
+
+  input_object :cover_background_input do
+    dsb_input_fields(:wallpaper_bg)
+  end
+
+  input_object :cover_config_input do
+    field(:background_id, :id)
+    field(:background, :cover_background_input)
+    field(:original_background_id, :id)
+    field(:original_background, :cover_background_input)
+    field(:images, list_of(:json))
+  end
+
+  input_object :cover_edit_info_input do
+    field(:canvas_width, non_null(:integer))
+    field(:canvas_height, non_null(:integer))
+    field(:ratio, non_null(:float))
+    field(:version, :integer)
+    field(:light, non_null(:cover_config_input))
+    field(:dark, non_null(:cover_config_input))
+  end
 
   object :dsb_wallpaper do
     field(:light, :dsb_bg_config)
@@ -568,5 +621,12 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :client_locale do
     field(:locale, :string)
+  end
+
+  defp cover_background_loader(field, config, args, _resolution) do
+    # CoverConfig is an embedded schema, so there is no Ecto association for
+    # Absinthe to preload. Use the stored background id as the Dataloader item
+    # key so light/dark cover backgrounds still batch through the CMS loader.
+    %{batch: {CoverBackground, args}, item: Map.get(config, field)}
   end
 end

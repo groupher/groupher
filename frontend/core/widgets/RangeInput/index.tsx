@@ -6,7 +6,16 @@
  *
  */
 
-import { type CSSProperties, type FC, memo, useId, useMemo } from 'react'
+import {
+  type CSSProperties,
+  type FC,
+  memo,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+} from 'react'
 
 import { cnMerge } from '~/css'
 import type { TSpace } from '~/spec'
@@ -67,11 +76,32 @@ const RangeInput: FC<TProps> = ({
   const inputId = id || reactId
   const s = useSalon({ width, labelPlacement, hideLabel, ...spacing })
   const shouldShowValue = !hideLabel && (showValue ?? labelPlacement !== 'left')
-  const safeValue = clamp(value, min, max)
+  const safePropValue = clamp(value, min, max)
+  const [draftValue, setDraftValue] = useState(safePropValue)
+  const safeValue = clamp(draftValue, min, max)
   const ratio = clamp(getRatio(safeValue, min, max), 0, 100)
   const visualRatio = getVisualRatio(ratio)
   const showLeftDot = ratio >= MIN_VISUAL_RATIO
   const showRightDot = ratio < MAX_RIGHT_DOT_RATIO
+
+  useEffect(() => {
+    setDraftValue(safePropValue)
+  }, [safePropValue])
+
+  const handleChange = useCallback(
+    (nextValue: number): void => {
+      setDraftValue(nextValue)
+      onChange?.(nextValue)
+    },
+    [onChange],
+  )
+  const handleChangeEnd = useCallback(
+    (nextValue: number): void => {
+      setDraftValue(nextValue)
+      onChangeEnd?.(nextValue)
+    },
+    [onChangeEnd],
+  )
 
   const activeTrackStyle = useMemo<TRangeVars>(
     () => ({
@@ -118,8 +148,8 @@ const RangeInput: FC<TProps> = ({
     max,
     step,
     disabled,
-    onChange,
-    onChangeEnd,
+    onChange: handleChange,
+    onChangeEnd: handleChangeEnd,
   })
 
   return (

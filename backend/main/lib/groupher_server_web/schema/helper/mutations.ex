@@ -40,6 +40,14 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
     )
   end
 
+  defmacro article_cover_args do
+    quote do
+      arg(:cover_url, :string)
+      arg(:cover_url_dark, :string)
+      arg(:cover_edit_info, :cover_edit_info_input)
+    end
+  end
+
   @doc """
   upvote mutation for article
 

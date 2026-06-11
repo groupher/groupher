@@ -1,4 +1,4 @@
-import { equals, pick } from 'ramda'
+import { equals, mergeDeepRight, pick } from 'ramda'
 
 import { GRADIENT_WALLPAPER, WALLPAPER_TYPE } from '~/const/wallpaper'
 
@@ -25,9 +25,8 @@ import type { TInit, TStore, TWallpaperPatch, TWallpaperState, TWallpaperThemeSt
  */
 const initStateByTheme = (init: Partial<TWallpaperThemeState> = {}): TWallpaperThemeState => {
   const state = {
-    ...INITIAL_WALLPAPER_THEME_STATE,
-    ...pick(WALLPAPER_THEME_STATE_KEYS, init),
-  }
+    ...mergeDeepRight(INITIAL_WALLPAPER_THEME_STATE, pick(WALLPAPER_THEME_STATE_KEYS, init)),
+  } as TWallpaperThemeState
 
   if (state.type === WALLPAPER_TYPE.GRADIENT && !state.gradient) {
     state.gradient = GRADIENT_WALLPAPER[state.source] ?? GRADIENT_WALLPAPER.amber_mauve

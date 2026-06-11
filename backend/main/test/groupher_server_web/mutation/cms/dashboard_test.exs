@@ -112,26 +112,18 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
             type
             source
             gradient
-            patternId
-            patternIntensity
-            patternTone
-            hasTexture
-            blurIntensity
-            brightness
-            saturation
+            pattern
+            contentShadow
+            effect
             texture
           }
           dark {
             type
             source
             gradient
-            patternId
-            patternIntensity
-            patternTone
-            hasTexture
-            blurIntensity
-            brightness
-            saturation
+            pattern
+            contentShadow
+            effect
             texture
           }
         }
@@ -147,13 +139,20 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
           light: %{
             source: "orange",
             type: "gradient",
-            hasTexture: true,
-            patternId: "02",
-            patternIntensity: 65,
-            patternTone: "light",
-            blurIntensity: 35,
-            brightness: 85,
-            saturation: 120,
+            pattern:
+              Jason.encode!(%{
+                enabled: true,
+                id: "02",
+                intensity: 65,
+                tone: "light"
+              }),
+            contentShadow: Jason.encode!(%{enabled: true}),
+            effect:
+              Jason.encode!(%{
+                blurIntensity: 35,
+                brightness: 85,
+                saturation: 120
+              }),
             gradient:
               Jason.encode!(%{
                 version: 2,
@@ -168,18 +167,25 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
                 contrast: 100,
                 brightness: 100
               }),
-            texture: Jason.encode!(%{type: "ascii", intensity: 55, params: %{}})
+            texture: Jason.encode!(%{enabled: true, type: "ascii", intensity: 55, params: %{}})
           },
           dark: %{
             source: "purple",
             type: "gradient",
-            hasTexture: true,
-            patternId: "03",
-            patternIntensity: 35,
-            patternTone: "dark",
-            blurIntensity: 15,
-            brightness: 90,
-            saturation: 80,
+            pattern:
+              Jason.encode!(%{
+                enabled: true,
+                id: "03",
+                intensity: 35,
+                tone: "dark"
+              }),
+            contentShadow: Jason.encode!(%{enabled: false}),
+            effect:
+              Jason.encode!(%{
+                blurIntensity: 15,
+                brightness: 90,
+                saturation: 80
+              }),
             gradient:
               Jason.encode!(%{
                 version: 2,
@@ -189,7 +195,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
                 angle: 90,
                 spread: 50
               }),
-            texture: Jason.encode!(%{type: "tile", intensity: 45, params: %{}})
+            texture: Jason.encode!(%{enabled: true, type: "tile", intensity: 45, params: %{}})
           }
         }
       }
@@ -200,23 +206,25 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
 
       assert get_in(updated, ["wallpaper", "light", "source"]) == "orange"
       assert get_in(updated, ["wallpaper", "dark", "source"]) == "purple"
-      assert get_in(updated, ["wallpaper", "light", "patternId"]) == "02"
-      assert get_in(updated, ["wallpaper", "dark", "patternId"]) == "03"
-      assert get_in(updated, ["wallpaper", "light", "patternIntensity"]) == 65
-      assert get_in(updated, ["wallpaper", "dark", "patternIntensity"]) == 35
-      assert get_in(updated, ["wallpaper", "light", "patternTone"]) == "light"
-      assert get_in(updated, ["wallpaper", "dark", "patternTone"]) == "dark"
-      assert get_in(updated, ["wallpaper", "light", "hasTexture"]) == true
-      assert get_in(updated, ["wallpaper", "dark", "hasTexture"]) == true
-      assert get_in(updated, ["wallpaper", "light", "blurIntensity"]) == 35
-      assert get_in(updated, ["wallpaper", "dark", "blurIntensity"]) == 15
-      assert get_in(updated, ["wallpaper", "light", "brightness"]) == 85
-      assert get_in(updated, ["wallpaper", "dark", "brightness"]) == 90
-      assert get_in(updated, ["wallpaper", "light", "saturation"]) == 120
-      assert get_in(updated, ["wallpaper", "dark", "saturation"]) == 80
+      assert get_in(updated, ["wallpaper", "light", "pattern", "id"]) == "02"
+      assert get_in(updated, ["wallpaper", "dark", "pattern", "id"]) == "03"
+      assert get_in(updated, ["wallpaper", "light", "pattern", "intensity"]) == 65
+      assert get_in(updated, ["wallpaper", "dark", "pattern", "intensity"]) == 35
+      assert get_in(updated, ["wallpaper", "light", "pattern", "tone"]) == "light"
+      assert get_in(updated, ["wallpaper", "dark", "pattern", "tone"]) == "dark"
+      assert get_in(updated, ["wallpaper", "light", "contentShadow", "enabled"]) == true
+      assert get_in(updated, ["wallpaper", "dark", "contentShadow", "enabled"]) == false
+      assert get_in(updated, ["wallpaper", "light", "effect", "blurIntensity"]) == 35
+      assert get_in(updated, ["wallpaper", "dark", "effect", "blurIntensity"]) == 15
+      assert get_in(updated, ["wallpaper", "light", "effect", "brightness"]) == 85
+      assert get_in(updated, ["wallpaper", "dark", "effect", "brightness"]) == 90
+      assert get_in(updated, ["wallpaper", "light", "effect", "saturation"]) == 120
+      assert get_in(updated, ["wallpaper", "dark", "effect", "saturation"]) == 80
       assert get_in(updated, ["wallpaper", "light", "gradient", "preset"]) == "test"
       assert get_in(updated, ["wallpaper", "light", "gradient", "renderer"]) == "flow"
       assert get_in(updated, ["wallpaper", "dark", "gradient", "preset"]) == "dark-test"
+      assert get_in(updated, ["wallpaper", "light", "texture", "enabled"]) == true
+      assert get_in(updated, ["wallpaper", "dark", "texture", "enabled"]) == true
       assert get_in(updated, ["wallpaper", "light", "texture", "type"]) == "ascii"
       assert get_in(updated, ["wallpaper", "light", "texture", "intensity"]) == 55
       assert get_in(updated, ["wallpaper", "dark", "texture", "type"]) == "tile"
@@ -228,23 +236,25 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.wallpaper.dark.source == "purple"
       assert found.dashboard.wallpaper.light.type == "gradient"
       assert found.dashboard.wallpaper.dark.type == "gradient"
-      assert found.dashboard.wallpaper.light.has_texture == true
-      assert found.dashboard.wallpaper.dark.has_texture == true
-      assert found.dashboard.wallpaper.light.pattern_id == "02"
-      assert found.dashboard.wallpaper.dark.pattern_id == "03"
-      assert found.dashboard.wallpaper.light.pattern_intensity == 65
-      assert found.dashboard.wallpaper.dark.pattern_intensity == 35
-      assert found.dashboard.wallpaper.light.pattern_tone == "light"
-      assert found.dashboard.wallpaper.dark.pattern_tone == "dark"
-      assert found.dashboard.wallpaper.light.blur_intensity == 35
-      assert found.dashboard.wallpaper.dark.blur_intensity == 15
-      assert found.dashboard.wallpaper.light.brightness == 85
-      assert found.dashboard.wallpaper.dark.brightness == 90
-      assert found.dashboard.wallpaper.light.saturation == 120
-      assert found.dashboard.wallpaper.dark.saturation == 80
+      assert found.dashboard.wallpaper.light.pattern["id"] == "02"
+      assert found.dashboard.wallpaper.dark.pattern["id"] == "03"
+      assert found.dashboard.wallpaper.light.pattern["intensity"] == 65
+      assert found.dashboard.wallpaper.dark.pattern["intensity"] == 35
+      assert found.dashboard.wallpaper.light.pattern["tone"] == "light"
+      assert found.dashboard.wallpaper.dark.pattern["tone"] == "dark"
+      assert found.dashboard.wallpaper.light.content_shadow["enabled"] == true
+      assert found.dashboard.wallpaper.dark.content_shadow["enabled"] == false
+      assert found.dashboard.wallpaper.light.effect["blurIntensity"] == 35
+      assert found.dashboard.wallpaper.dark.effect["blurIntensity"] == 15
+      assert found.dashboard.wallpaper.light.effect["brightness"] == 85
+      assert found.dashboard.wallpaper.dark.effect["brightness"] == 90
+      assert found.dashboard.wallpaper.light.effect["saturation"] == 120
+      assert found.dashboard.wallpaper.dark.effect["saturation"] == 80
       assert found.dashboard.wallpaper.light.gradient["preset"] == "test"
       assert found.dashboard.wallpaper.light.gradient["renderer"] == "flow"
       assert found.dashboard.wallpaper.dark.gradient["preset"] == "dark-test"
+      assert found.dashboard.wallpaper.light.texture["enabled"] == true
+      assert found.dashboard.wallpaper.dark.texture["enabled"] == true
       assert found.dashboard.wallpaper.light.texture["type"] == "ascii"
       assert found.dashboard.wallpaper.light.texture["intensity"] == 55
       assert found.dashboard.wallpaper.dark.texture["type"] == "tile"
@@ -255,7 +265,9 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         |> gq_mutation(@update_wallpaper_query, %{
           community: community.slug,
           wallpaper: %{
-            light: %{texture: Jason.encode!(%{type: "dots", intensity: 42, params: %{}})}
+            light: %{
+              texture: Jason.encode!(%{enabled: true, type: "dots", intensity: 42, params: %{}})
+            }
           }
         })
 
@@ -272,7 +284,9 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
         |> gq_mutation(@update_wallpaper_query, %{
           community: community.slug,
           wallpaper: %{
-            light: %{texture: Jason.encode!(%{type: "oil", intensity: 68, params: %{}})}
+            light: %{
+              texture: Jason.encode!(%{enabled: true, type: "oil", intensity: 68, params: %{}})
+            }
           }
         })
 

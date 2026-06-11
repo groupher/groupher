@@ -27,6 +27,12 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:views, :integer)
       field(:is_pinned, :boolean)
       field(:mark_delete, :boolean)
+      field(:cover_url, :string)
+      field(:cover_url_dark, :string)
+
+      field(:cover_edit_info, :cover_edit_info,
+        resolve: &GroupherServerWeb.Resolvers.CMS.cover_edit_info/3
+      )
 
       field(:community_tags, list_of(:community_tag), resolve: dataloader(CMS, :community_tags))
       field(:author, :user, resolve: dataloader(CMS, :author))
@@ -385,9 +391,9 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
         dsb_input_fields(:wallpaper_bg)
       end
 
-  A field like `:pattern_intensity` is defined once in
-  `macro_schema(:wallpaper_bg)`, exposed by Absinthe as `patternIntensity`,
-  and cast by the dashboard bg embed as `:pattern_intensity`.
+  A field like `:content_shadow` is defined once in
+  `macro_schema(:wallpaper_bg)`, exposed by Absinthe as `contentShadow`,
+  and cast by the dashboard bg embed as `:content_shadow`.
   """
   defmacro dsb_input_fields(section \\ :layout, opts \\ []) do
     build_dsb_gq_fields(section, opts)

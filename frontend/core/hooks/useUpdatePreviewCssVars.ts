@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { type RefObject, useCallback, useEffect, useRef } from 'react'
 
-type TPreviewCssVarValue = string | number | null | undefined
-type TPreviewCssVars = Record<`--${string}`, TPreviewCssVarValue>
+export type TPreviewCssVarValue = string | number | null | undefined
+export type TPreviewCssVars = Record<`--${string}`, TPreviewCssVarValue>
 
 type TOptions = {
   cleanup?: boolean
   selector?: string
+  targetRef?: RefObject<HTMLElement | null>
 }
 
 const getPreviewTarget = (selector: string): HTMLElement | null =>
@@ -36,19 +37,40 @@ const getPreviewTarget = (selector: string): HTMLElement | null =>
  * saveable values should still be committed to store/draft outside this hook.
  */
 export default function useUpdatePreviewCssVars(options: TOptions = {}) {
-  const { cleanup = true, selector = 'main' } = options
+  const { cleanup = true, selector = 'main', targetRef } = options
   const frameRef = useRef<number | null>(null)
-  const pendingVarsRef = useRef<TPreviewCssVars>({})
+  const pendingVarsRef = useRef<TPreviewCssVars | null>({})
   const writtenKeysRef = useRef<Set<`--${string}`>>(new Set())
+
+  const getTarget = useCallback(
+    (): HTMLElement | null => (targetRef ? targetRef.current : getPreviewTarget(selector)),
+    [selector, targetRef],
+  )
+
+  const clearWrittenVars = useCallback((): void => {
+    const target = getTarget()
+    if (!target) return
+
+    for (const key of writtenKeysRef.current) {
+      target.style.removeProperty(key)
+    }
+
+    writtenKeysRef.current.clear()
+  }, [getTarget])
 
   const flush = useCallback(() => {
     frameRef.current = null
 
-    const target = getPreviewTarget(selector)
+    const target = getTarget()
     if (!target) return
 
     const pendingVars = pendingVarsRef.current
     pendingVarsRef.current = {}
+
+    if (pendingVars === null) {
+      clearWrittenVars()
+      return
+    }
 
     for (const [key, value] of Object.entries(pendingVars) as [
       `--${string}`,
@@ -63,14 +85,17 @@ export default function useUpdatePreviewCssVars(options: TOptions = {}) {
 
       target.style.setProperty(key, String(value))
     }
-  }, [selector])
+  }, [clearWrittenVars, getTarget])
 
   const updatePreviewCssVars = useCallback(
-    (vars: TPreviewCssVars) => {
-      pendingVarsRef.current = {
-        ...pendingVarsRef.current,
-        ...vars,
-      }
+    (vars: TPreviewCssVars | null) => {
+      pendingVarsRef.current =
+        vars === null
+          ? null
+          : {
+              ...pendingVarsRef.current,
+              ...vars,
+            }
 
       if (frameRef.current) return
 
@@ -88,14 +113,9 @@ export default function useUpdatePreviewCssVars(options: TOptions = {}) {
 
       if (!cleanup) return
 
-      const target = getPreviewTarget(selector)
-      if (!target) return
-
-      for (const key of writtenKeysRef.current) {
-        target.style.removeProperty(key)
-      }
+      clearWrittenVars()
     }
-  }, [cleanup, selector])
+  }, [cleanup, clearWrittenVars])
 
   return updatePreviewCssVars
 }

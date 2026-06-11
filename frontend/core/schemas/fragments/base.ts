@@ -46,30 +46,18 @@ export const wallpaper = `
     type
     source
     gradient
-    hasPattern
-    patternId
-    patternIntensity
-    patternTone
-    hasTexture
-    blurIntensity
-    hasShadow
-    brightness
-    saturation
+    pattern
+    contentShadow
+    effect
     texture
   }
   dark {
     type
     source
     gradient
-    hasPattern
-    patternId
-    patternIntensity
-    patternTone
-    hasTexture
-    blurIntensity
-    hasShadow
-    brightness
-    saturation
+    pattern
+    contentShadow
+    effect
     texture
   }
 `

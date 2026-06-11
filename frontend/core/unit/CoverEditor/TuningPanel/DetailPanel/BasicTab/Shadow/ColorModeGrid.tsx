@@ -1,15 +1,16 @@
 import { Radio, RadioGroup } from 'react-aria-components'
 
-import type { TCoverShadow, TCoverShadowColorMode } from '../../../../spec'
+import type { TCoverImageWhich, TCoverShadow, TCoverShadowColorMode } from '../../../../spec'
 import useLogic from '../../../../useLogic'
 import { COLOR_OPTIONS } from './constant'
 import useSalon, { cn } from './salon/color_mode_grid'
 
 type TProps = {
   shadow: TCoverShadow
+  which: TCoverImageWhich
 }
 
-export default function ColorModeGrid({ shadow }: TProps) {
+export default function ColorModeGrid({ shadow, which }: TProps) {
   const s = useSalon()
   const { shadowOnChange } = useLogic()
 
@@ -18,7 +19,9 @@ export default function ColorModeGrid({ shadow }: TProps) {
       aria-label='Shadow color mode'
       className={s.colorRow}
       value={shadow.colorMode}
-      onChange={(nextValue) => shadowOnChange({ colorMode: nextValue as TCoverShadowColorMode })}
+      onChange={(nextValue) =>
+        shadowOnChange(which, { colorMode: nextValue as TCoverShadowColorMode })
+      }
     >
       {COLOR_OPTIONS.map((option) => (
         <Radio key={option.value} className={s.colorOption} value={option.value}>

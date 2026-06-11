@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
     Community,
     CommunityJoinTag,
     CommunityTag,
+    CoverEditInfo,
     Embeds
   }
 
@@ -239,8 +240,11 @@ defmodule GroupherServer.CMS.Helper.Macros do
       field(:views, :integer, default: 0)
       field(:is_pinned, :boolean, default: false, virtual: true)
       field(:mark_delete, :boolean, default: false)
+      field(:cover_url, :string)
+      field(:cover_url_dark, :string)
 
       belongs_to(:author, Author)
+      belongs_to(:cover_edit_info, CoverEditInfo)
 
       field(:link_addr, :string)
 

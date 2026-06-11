@@ -11,7 +11,9 @@ import {
   MAGNIFIER_APPEARANCE_DEFAULT,
   MAGNIFIER_BORDER_COLOR,
   MAGNIFIER_BORDER_WIDTH_RANGE,
+  MAGNIFIER_RADIUS_DEFAULT,
   MAGNIFIER_SHADOW_RANGE,
+  MAGNIFIER_ZOOM_DEFAULT,
 } from './constant'
 import type {
   TBorderHighlight,
@@ -19,7 +21,7 @@ import type {
   TCoverShadow,
   TCoverShadowColorMode,
   TCoverShadowPreset,
-  TMagnifierAppearance,
+  TCoverMagnifier,
   TMagnifierBorderColor,
 } from './spec'
 
@@ -320,8 +322,8 @@ export const normalizeMagnifierBorderWidth = (borderWidth: number | undefined): 
   )
 
 const normalizeMagnifierHighlightCenter = (
-  center: Partial<TMagnifierAppearance['highlightCenter']> | undefined,
-): TMagnifierAppearance['highlightCenter'] => ({
+  center: Partial<TCoverMagnifier['highlightCenter']> | undefined,
+): TCoverMagnifier['highlightCenter'] => ({
   x: clamp(getFiniteNumber(center?.x, MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_CENTER.x), 0, 1),
   y: clamp(getFiniteNumber(center?.y, MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_CENTER.y), 0, 1),
 })
@@ -330,8 +332,12 @@ export const normalizeMagnifierHighlightIntensity = (intensity: number | undefin
   clamp(getFiniteNumber(intensity, MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_INTENSITY), 0, 1)
 
 export const normalizeMagnifierAppearance = (
-  appearance: Partial<TMagnifierAppearance> | undefined,
-): TMagnifierAppearance => ({
+  appearance: Partial<TCoverMagnifier> | undefined,
+): TCoverMagnifier => ({
+  enabled: appearance?.enabled ?? false,
+  center: appearance?.center ?? { x: 0.5, y: 0.5 },
+  radius: appearance?.radius ?? MAGNIFIER_RADIUS_DEFAULT,
+  zoom: appearance?.zoom ?? MAGNIFIER_ZOOM_DEFAULT,
   borderColor: normalizeMagnifierBorderColor(appearance?.borderColor),
   borderWidth: normalizeMagnifierBorderWidth(appearance?.borderWidth),
   highlightCenter: normalizeMagnifierHighlightCenter(appearance?.highlightCenter),
@@ -362,7 +368,7 @@ export type TMagnifierAppearanceStyle = CSSProperties & {
 }
 
 export const getMagnifierAppearanceStyle = (
-  appearance: Partial<TMagnifierAppearance> | undefined,
+  appearance: Partial<TCoverMagnifier> | undefined,
 ): TMagnifierAppearanceStyle => {
   const normalized = normalizeMagnifierAppearance(appearance)
   const outerShadow = getMagnifierOuterShadow(normalized.shadow)

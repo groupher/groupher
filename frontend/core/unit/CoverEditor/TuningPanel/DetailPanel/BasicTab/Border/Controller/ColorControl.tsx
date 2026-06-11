@@ -21,7 +21,7 @@ import {
   normalizeBorderHighlightRainbowHue,
   normalizeBorderHighlightSaturation,
 } from '../../../../../helper'
-import type { TBorderHighlight } from '../../../../../spec'
+import type { TBorderHighlight, TCoverImageWhich } from '../../../../../spec'
 import useLogic from '../../../../../useLogic'
 import { COLOR_OPTION } from './constant'
 import { getHueTrackStyle, getRainbowStyle, getSwatchStyle } from './helper'
@@ -31,9 +31,10 @@ import type { TSliderStyle } from './spec'
 type TProps = {
   borderHighlight: TBorderHighlight
   variant?: 'swatch' | 'setting'
+  which: TCoverImageWhich
 }
 
-export default function ColorControl({ borderHighlight, variant = 'swatch' }: TProps) {
+export default function ColorControl({ borderHighlight, variant = 'swatch', which }: TProps) {
   const s = useSalon()
   const { borderHighlightOnChange } = useLogic()
   const mode = normalizeBorderHighlightMode(borderHighlight.mode)
@@ -80,7 +81,7 @@ export default function ColorControl({ borderHighlight, variant = 'swatch' }: TP
         : COLOR_OPTION.COLOR
 
   const selectSolidColor = (patch: Partial<TBorderHighlight>): void => {
-    borderHighlightOnChange({
+    borderHighlightOnChange(which, {
       enabled: true,
       mode: BORDER_HIGHLIGHT_MODE.SOLID,
       ...patch,
@@ -126,7 +127,7 @@ export default function ColorControl({ borderHighlight, variant = 'swatch' }: TP
                   })
                   break
                 case COLOR_OPTION.RAINBOW:
-                  borderHighlightOnChange({
+                  borderHighlightOnChange(which, {
                     enabled: true,
                     mode: BORDER_HIGHLIGHT_MODE.RAINBOW,
                     rainbowHue: BORDER_HIGHLIGHT_DEFAULT.RAINBOW_HUE,
@@ -208,7 +209,7 @@ export default function ColorControl({ borderHighlight, variant = 'swatch' }: TP
                   channel='hue'
                   style={sliderStyle}
                   onChange={(nextColor) => {
-                    borderHighlightOnChange({
+                    borderHighlightOnChange(which, {
                       enabled: true,
                       mode: BORDER_HIGHLIGHT_MODE.RAINBOW,
                       rainbowHue: normalizeBorderHighlightRainbowHue(
@@ -238,7 +239,7 @@ export default function ColorControl({ borderHighlight, variant = 'swatch' }: TP
                 channel='alpha'
                 style={opacitySliderStyle}
                 onChange={(nextColor) => {
-                  borderHighlightOnChange({
+                  borderHighlightOnChange(which, {
                     enabled: true,
                     opacity: normalizeBorderHighlightOpacity(
                       Number(nextColor.getChannelValue('alpha').toFixed(2)),

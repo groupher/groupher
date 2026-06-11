@@ -48,38 +48,18 @@ export default function useFullWallpaper(): TRet {
 
   const getWallpaper = (): TWallpaperData => {
     const themedState = pickWallpaperThemeState(store, isDarkTheme)
-    const {
-      gradient,
-      hasPattern,
-      patternId,
-      patternIntensity,
-      patternTone,
-      hasTexture,
-      blurIntensity,
-      hasShadow,
-      brightness,
-      saturation,
-      texture,
-      source,
-      type,
-    } = themedState
+    const { gradient, pattern, contentShadow, effect, texture, source, type } = themedState
 
-    const hasBlur = blurIntensity > 0
+    const hasBlur = effect.blurIntensity > 0
     const activeGradient = gradient || GRADIENT_WALLPAPER[source] || GRADIENT_WALLPAPER.amber_mauve
 
     return {
       source,
       type,
-      hasPattern,
-      patternId,
-      patternIntensity,
-      patternTone,
-      hasTexture,
+      pattern,
       hasBlur,
-      blurIntensity,
-      hasShadow,
-      brightness,
-      saturation,
+      contentShadow,
+      effect,
       gradient: activeGradient,
       texture,
       gradientPalettes: getGradientPalettes(),

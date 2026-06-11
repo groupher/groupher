@@ -335,12 +335,12 @@ type RootMutationType {
 
   "create a post"
   createPost(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID]
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
   ): Post
 
   "update a cms\/post"
   updatePost(
-    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID]
+    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
   ): Post
 
   "set cat for a post"
@@ -402,12 +402,12 @@ type RootMutationType {
 
   "create a blog"
   createBlog(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID]
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
   ): Blog
 
   "update a cms\/blog"
   updateBlog(
-    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID]
+    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
   ): Blog
 
   "upvote to blog"
@@ -463,12 +463,12 @@ type RootMutationType {
 
   "create a changelog"
   createChangelog(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID]
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
   ): Changelog
 
   "update a cms\/changelog"
   updateChangelog(
-    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID]
+    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
   ): Changelog
 
   "upvote to changelog"
@@ -524,12 +524,12 @@ type RootMutationType {
 
   "create a doc"
   createDoc(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID]
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
   ): Doc
 
   "update a cms\/doc"
   updateDoc(
-    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID]
+    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
   ): Doc
 
   "upvote to doc"
@@ -734,6 +734,9 @@ type Post implements Article {
   views: Int
   isPinned: Boolean
   markDelete: Boolean
+  coverUrl: String
+  coverUrlDark: String
+  coverEditInfo: CoverEditInfo
   communityTags: [CommunityTag]
   author: User
   community: Community
@@ -770,6 +773,9 @@ type Changelog implements Article {
   views: Int
   isPinned: Boolean
   markDelete: Boolean
+  coverUrl: String
+  coverUrlDark: String
+  coverEditInfo: CoverEditInfo
   communityTags: [CommunityTag]
   author: User
   community: Community
@@ -804,6 +810,9 @@ type Doc implements Article {
   views: Int
   isPinned: Boolean
   markDelete: Boolean
+  coverUrl: String
+  coverUrlDark: String
+  coverEditInfo: CoverEditInfo
   communityTags: [CommunityTag]
   author: User
   community: Community
@@ -838,6 +847,9 @@ type Blog implements Article {
   views: Int
   isPinned: Boolean
   markDelete: Boolean
+  coverUrl: String
+  coverUrlDark: String
+  coverEditInfo: CoverEditInfo
   communityTags: [CommunityTag]
   author: User
   community: Community
@@ -903,6 +915,17 @@ type DsbSeo {
 type DsbBgConfig {
   type: String
   source: String
+  pattern: Json
+  gradient: Json
+  contentShadow: Json
+  effect: Json
+  texture: Json
+}
+
+type CoverBackground {
+  id: ID
+  type: String
+  source: String
   hasPattern: Boolean
   patternId: String
   patternIntensity: Int
@@ -914,6 +937,59 @@ type DsbBgConfig {
   brightness: Int
   saturation: Int
   texture: Json
+}
+
+type CoverConfig {
+  backgroundId: ID
+  originalBackgroundId: ID
+  background: CoverBackground
+  originalBackground: CoverBackground
+  images: [Json]
+}
+
+type CoverEditInfo {
+  id: ID
+  canvasWidth: Int
+  canvasHeight: Int
+  ratio: Float
+  version: Int
+  light: CoverConfig
+  dark: CoverConfig
+  insertedAt: DateTime
+  updatedAt: DateTime
+}
+
+input CoverBackgroundInput {
+  type: String
+  source: String
+  hasPattern: Boolean
+  patternId: String
+  patternIntensity: Int
+  patternTone: String
+  hasTexture: Boolean
+  gradient: Json
+  blurIntensity: Int
+  hasShadow: Boolean
+  brightness: Int
+  saturation: Int
+  texture: Json
+}
+
+input CoverConfigInput {
+  backgroundId: ID
+  background: CoverBackgroundInput
+  originalBackgroundId: ID
+  originalBackground: CoverBackgroundInput
+  images: [Json]
+}
+
+input CoverEditInfoInput {
+  canvasWidth: Int!
+  canvasHeight: Int!
+  ratio: Float!
+  version: Int
+  light: CoverConfigInput!
+  dark: CoverConfigInput!
 }
 
 type DsbWallpaper {
@@ -1489,6 +1565,8 @@ interface Article {
   upvotesCount: Int
   meta: ArticleMeta
   pending: Int
+  coverUrl: String
+  coverUrlDark: String
 }
 
 enum PostThread {
@@ -1864,16 +1942,10 @@ input DsbMediaReportMap {
 input DsbBgConfigInput {
   type: String
   source: String
-  hasPattern: Boolean
-  patternId: String
-  patternIntensity: Int
-  patternTone: String
-  hasTexture: Boolean
+  pattern: Json
   gradient: Json
-  blurIntensity: Int
-  hasShadow: Boolean
-  brightness: Int
-  saturation: Int
+  contentShadow: Json
+  effect: Json
   texture: Json
 }
 

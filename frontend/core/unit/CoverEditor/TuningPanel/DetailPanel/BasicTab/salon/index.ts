@@ -7,7 +7,7 @@ export default function useSalon() {
   return {
     wrapper: 'w-full min-h-32 mt-4 pl-1.5 pr-0.5',
     imageSection: 'column w-full',
-    primaryImageArea: 'group column w-full',
+    imageArea: 'group column w-full',
     sectionDivider: cn(sexyBorder(), 'w-full mt-6'),
     actionArea: 'row-center w-full pt-4',
     uploadActions:

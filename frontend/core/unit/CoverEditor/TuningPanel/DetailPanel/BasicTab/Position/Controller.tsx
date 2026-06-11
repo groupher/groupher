@@ -18,9 +18,10 @@ type TProps = {
   size: TImageSize
   rotate: number
   onChange: (position: TCoverPoint) => void
+  onCommit?: () => void
 }
 
-export default function Controller({ position, size, rotate, onChange }: TProps) {
+export default function Controller({ position, size, rotate, onChange, onCommit }: TProps) {
   const panelRef = useRef<HTMLButtonElement | null>(null)
   const [draftPosition, setDraftPosition] = useState(position)
   const [isDragging, setIsDragging] = useState(false)
@@ -62,6 +63,7 @@ export default function Controller({ position, size, rotate, onChange }: TProps)
     updatePosition(event.clientX, event.clientY)
     event.currentTarget.releasePointerCapture(event.pointerId)
     setIsDragging(false)
+    onCommit?.()
   }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>): void => {
@@ -71,6 +73,7 @@ export default function Controller({ position, size, rotate, onChange }: TProps)
     event.preventDefault()
     setDraftPosition(nextPosition)
     onChange(nextPosition)
+    onCommit?.()
   }
 
   const frameSize = getResponsiveImageSize(size)

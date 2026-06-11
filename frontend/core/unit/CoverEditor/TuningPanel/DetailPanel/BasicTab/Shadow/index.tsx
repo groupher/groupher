@@ -4,7 +4,7 @@ import Tooltip from '~/widgets/Tooltip'
 import { IMAGE_SIZE_RANGE } from '../../../../constant'
 import { getImageShadow, normalizeCoverShadow } from '../../../../helper'
 import { getImagePlacement, getResponsiveImageSize } from '../../../../salon/metric'
-import type { TCoverPoint, TCoverShadow, TImageSize } from '../../../../spec'
+import type { TCoverImageWhich, TCoverPoint, TCoverShadow, TImageSize } from '../../../../spec'
 import { POSITION_PREVIEW_FRAME_SCALE } from '../Position/constant'
 import Panel from './Panel'
 import useSalon from './salon'
@@ -19,9 +19,10 @@ type TProps = {
 
 type TSettingsProps = {
   shadow: TCoverShadow
+  which: TCoverImageWhich
 }
 
-export function ShadowSettings({ shadow }: TSettingsProps) {
+export function ShadowSettings({ shadow, which }: TSettingsProps) {
   const s = useSalon()
   const normalizedShadow = normalizeCoverShadow(shadow)
 
@@ -33,7 +34,7 @@ export function ShadowSettings({ shadow }: TSettingsProps) {
       maxWidth='none'
       offset={[8, 0]}
       portalToBody
-      content={<Panel shadow={normalizedShadow} />}
+      content={<Panel shadow={normalizedShadow} which={which} />}
     >
       <button type='button' className={s.settingButton} aria-label='Shadow settings'>
         <SettingSVG className={s.settingIcon} />

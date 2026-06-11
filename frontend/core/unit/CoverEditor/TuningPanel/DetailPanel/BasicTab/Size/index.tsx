@@ -1,18 +1,19 @@
 import RangeInput from '~/widgets/RangeInput'
 
 import { IMAGE_SIZE_RANGE } from '../../../../constant'
-import type { TImageSize } from '../../../../spec'
-import useLogic from '../../../../useLogic'
+import { useImageDraftContext } from '../../../../imageDraftContext'
+import type { TCoverImageWhich, TImageSize } from '../../../../spec'
 import GroupItem from '../../GroupItem'
 import useSalon from './salon'
 
 type TProps = {
   size: TImageSize
+  which: TCoverImageWhich
 }
 
-export default function Size({ size }: TProps) {
+export default function Size({ size, which }: TProps) {
   const s = useSalon()
-  const { sizeOnChange } = useLogic()
+  const { flushImageDraft, scheduleImagePatch } = useImageDraftContext()
 
   return (
     <section className={s.wrapper}>
@@ -27,7 +28,8 @@ export default function Size({ size }: TProps) {
             valueLabel='Size'
             aria-label='Size'
             hideLabel
-            onChange={sizeOnChange}
+            onChange={(nextSize) => scheduleImagePatch(which, { size: nextSize })}
+            onChangeEnd={flushImageDraft}
           />
         </div>
       </GroupItem>

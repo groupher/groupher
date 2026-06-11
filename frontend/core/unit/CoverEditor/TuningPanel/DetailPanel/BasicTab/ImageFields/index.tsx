@@ -1,6 +1,7 @@
 import AngleWheel from '~/widgets/AngleWheel'
 
-import type { TTuningSetting } from '../../../../spec'
+import { useImageDraftContext } from '../../../../imageDraftContext'
+import type { TCoverImageConfig } from '../../../../spec'
 import useLogic from '../../../../useLogic'
 import Controller from '../Border/Controller'
 import ColorControl from '../Border/Controller/ColorControl'
@@ -11,47 +12,50 @@ import Shadow, { ShadowSettings } from '../Shadow'
 import useSalon from './salon'
 
 type TProps = {
-  setting: TTuningSetting
+  image: TCoverImageConfig
 }
 
-export default function ImageFields({ setting }: TProps) {
+export default function ImageFields({ image }: TProps) {
   const s = useSalon()
-  const {
-    glassBorderOnChange,
-    magnifierOnChange,
-    magnifierRadiationOnChange,
-    magnifierZoomOnChange,
-    rotateOnChange,
-  } = useLogic()
+  const { glassBorderOnChange, magnifierOnChange } = useLogic()
+  const { flushImageDraft, scheduleImagePatch } = useImageDraftContext()
 
   return (
     <div className={s.quickControls}>
       <div className={s.quickItem}>
         <div className={s.quickControl}>
           <Shadow
-            imageDominantColor={setting.imageDominantColor}
-            position={setting.position}
-            shadow={setting.shadow}
-            size={setting.size}
-            rotate={setting.rotate}
+            imageDominantColor={image.dominantColor}
+            position={image.position}
+            shadow={image.shadow}
+            size={image.size}
+            rotate={image.rotate}
           />
         </div>
         <div className={s.quickLabelRow}>
           <span className={s.quickLabel}>Shadow</span>
           <span className={s.quickAction}>
-            <ShadowSettings shadow={setting.shadow} />
+            <ShadowSettings shadow={image.shadow} which={image.which} />
           </span>
         </div>
       </div>
 
       <div className={s.quickItem}>
         <div className={s.quickControl}>
-          <Controller borderHighlight={setting.borderHighlight} showColorControl={false} />
+          <Controller
+            borderHighlight={image.borderHighlight}
+            showColorControl={false}
+            which={image.which}
+          />
         </div>
         <div className={s.quickLabelRow}>
           <span className={s.quickLabel}>Border</span>
           <span className={s.quickAction}>
-            <ColorControl borderHighlight={setting.borderHighlight} variant='setting' />
+            <ColorControl
+              borderHighlight={image.borderHighlight}
+              variant='setting'
+              which={image.which}
+            />
           </span>
         </div>
       </div>
@@ -60,23 +64,30 @@ export default function ImageFields({ setting }: TProps) {
         <div className={s.quickControl}>
           <MagnifierControl
             value={{
-              center: setting.magnifierCenter,
-              radius: setting.magnifierRadius,
-              zoom: setting.magnifierZoom,
+              center: image.magnifier.center,
+              radius: image.magnifier.radius,
+              zoom: image.magnifier.zoom,
             }}
             label='Magnifier'
-            disabled={!setting.hasMagnifier}
+            disabled={!image.magnifier.enabled}
             onChange={(next) => {
-              magnifierRadiationOnChange(next.center, next.radius)
-              magnifierZoomOnChange(next.zoom)
+              scheduleImagePatch(image.which, {
+                magnifier: {
+                  center: next.center,
+                  radius: next.radius,
+                  zoom: next.zoom,
+                  enabled: true,
+                },
+              })
             }}
-            onToggle={() => magnifierOnChange(!setting.hasMagnifier)}
+            onToggle={() => magnifierOnChange(image.which, !image.magnifier.enabled)}
+            onCommit={flushImageDraft}
           />
         </div>
         <div className={s.quickLabelRow}>
           <span className={s.quickLabel}>Magnifier</span>
           <span className={s.quickAction}>
-            <MagnifierSettings appearance={setting.magnifierAppearance} />
+            <MagnifierSettings magnifier={image.magnifier} which={image.which} />
           </span>
         </div>
       </div>
@@ -84,8 +95,8 @@ export default function ImageFields({ setting }: TProps) {
       <div className={s.quickItem}>
         <div className={s.quickControl}>
           <GlassFrameControl
-            enabled={setting.hasGlassBorder}
-            onToggle={() => glassBorderOnChange(!setting.hasGlassBorder)}
+            enabled={image.glassBorder.enabled}
+            onToggle={() => glassBorderOnChange(image.which, !image.glassBorder.enabled)}
           />
         </div>
         <div className={s.quickLabelRow}>
@@ -95,7 +106,12 @@ export default function ImageFields({ setting }: TProps) {
 
       <div className={s.quickItem}>
         <div className={s.quickControl}>
-          <AngleWheel value={setting.rotate} label='Angle' onChange={rotateOnChange} />
+          <AngleWheel
+            value={image.rotate}
+            label='Angle'
+            onChange={(rotate) => scheduleImagePatch(image.which, { rotate })}
+            onCommit={flushImageDraft}
+          />
         </div>
         <div className={s.quickLabelRow}>
           <span className={s.quickLabel}>Angle</span>

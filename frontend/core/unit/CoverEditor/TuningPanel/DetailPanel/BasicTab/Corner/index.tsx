@@ -1,17 +1,19 @@
 import RangeInput from '~/widgets/RangeInput'
 
 import { IMAGE_BORDER_RADIUS_RANGE } from '../../../../constant'
-import useLogic from '../../../../useLogic'
+import { useImageDraftContext } from '../../../../imageDraftContext'
+import type { TCoverImageWhich } from '../../../../spec'
 import GroupItem from '../../GroupItem'
 import useSalon from './salon'
 
 type TProps = {
   borderRadius: number
+  which: TCoverImageWhich
 }
 
-export default function Corner({ borderRadius }: TProps) {
+export default function Corner({ borderRadius, which }: TProps) {
   const s = useSalon()
-  const { borderRadiusOnChange } = useLogic()
+  const { flushImageDraft, scheduleImagePatch } = useImageDraftContext()
 
   return (
     <section className={s.wrapper}>
@@ -26,7 +28,10 @@ export default function Corner({ borderRadius }: TProps) {
             valueLabel='Corner'
             aria-label='Corner'
             hideLabel
-            onChange={borderRadiusOnChange}
+            onChange={(nextBorderRadius) =>
+              scheduleImagePatch(which, { borderRadius: nextBorderRadius })
+            }
+            onChangeEnd={flushImageDraft}
           />
         </div>
       </GroupItem>

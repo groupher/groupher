@@ -900,33 +900,19 @@ type DsbSeo {
   twImageHeight: String
 }
 
-type DsbWallpaper {
+type DsbBgConfig {
   type: String
   source: String
-  typeDark: String
-  sourceDark: String
-  hasPattern: Boolean
-  patternId: String
-  patternIntensity: Int
-  patternTone: String
-  hasTexture: Boolean
-  hasPatternDark: Boolean
-  patternIdDark: String
-  patternIntensityDark: Int
-  patternToneDark: String
-  hasTextureDark: Boolean
+  pattern: Json
   gradient: Json
-  gradientDark: Json
-  blurIntensity: Int
-  hasShadow: Boolean
-  brightness: Int
-  saturation: Int
-  blurIntensityDark: Int
-  hasShadowDark: Boolean
-  brightnessDark: Int
-  saturationDark: Int
+  contentShadow: Json
+  effect: Json
   texture: Json
-  textureDark: Json
+}
+
+type DsbWallpaper {
+  light: DsbBgConfig
+  dark: DsbBgConfig
 }
 
 type DsbLayout {
@@ -1869,33 +1855,19 @@ input DsbMediaReportMap {
   url: String
 }
 
-input DsbWallpaperInput {
+input DsbBgConfigInput {
   type: String
   source: String
-  typeDark: String
-  sourceDark: String
-  hasPattern: Boolean
-  patternId: String
-  patternIntensity: Int
-  patternTone: String
-  hasTexture: Boolean
-  hasPatternDark: Boolean
-  patternIdDark: String
-  patternIntensityDark: Int
-  patternToneDark: String
-  hasTextureDark: Boolean
+  pattern: Json
   gradient: Json
-  gradientDark: Json
-  blurIntensity: Int
-  hasShadow: Boolean
-  brightness: Int
-  saturation: Int
-  blurIntensityDark: Int
-  hasShadowDark: Boolean
-  brightnessDark: Int
-  saturationDark: Int
+  contentShadow: Json
+  effect: Json
   texture: Json
-  textureDark: Json
+}
+
+input DsbWallpaperInput {
+  light: DsbBgConfigInput
+  dark: DsbBgConfigInput
 }
 
 enum DsbSection {
