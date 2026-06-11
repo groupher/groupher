@@ -28,7 +28,10 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
   @kanban_bg_colors_default [:black, :yellow, :purple, :green, :red]
   @theme_presets [:default, :claude, :solarized, :hn, :custom]
   @default_wallpaper_type "gradient"
-  @default_wallpaper_source "pink"
+  # Keep this in sync with frontend/core/stores/wallpaper/constant.ts
+  # INITIAL_WALLPAPER_THEME_STATE.source. SSR fallback and hydrated store defaults
+  # should paint the same preset to avoid first-frame wallpaper flashes.
+  @default_wallpaper_source "amber_mauve"
   @default_wallpaper_pattern_id "01"
   @default_wallpaper_pattern_tone "dark"
   @default_wallpaper_gradient_renderer "linear"
@@ -240,17 +243,23 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
     ]
   end
 
+  # Shared nested background config for dashboard wallpaper and cover backgrounds.
+  # Feature switches live inside their feature maps as `enabled`, instead of old
+  # flat fields like `has_pattern` or `blur_intensity`.
   def macro_schema(:wallpaper_bg) do
     [
       [:type, :string, @default_wallpaper_type],
       [:source, :string, @default_wallpaper_source],
-
-      # gradient
-      [:has_pattern, :boolean, true],
-      [:pattern_id, :string, @default_wallpaper_pattern_id],
-      [:pattern_intensity, :integer, 50],
-      [:pattern_tone, :string, @default_wallpaper_pattern_tone],
-      [:has_texture, :boolean, false],
+      [
+        :pattern,
+        :map,
+        %{
+          "enabled" => true,
+          "id" => @default_wallpaper_pattern_id,
+          "intensity" => 50,
+          "tone" => @default_wallpaper_pattern_tone
+        }
+      ],
       [
         :gradient,
         :map,
@@ -263,18 +272,25 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
           "spread" => 52
         }
       ],
-
-      # global effects
-      [:blur_intensity, :integer, 0],
-      [:has_shadow, :boolean, false],
-      [:brightness, :integer, 100],
-      [:saturation, :integer, 100],
-
-      # renderer-specific config/effects
+      [:content_shadow, :map, %{"enabled" => false}],
+      [
+        :effect,
+        :map,
+        %{
+          "blurIntensity" => 0,
+          "brightness" => 100,
+          "saturation" => 100
+        }
+      ],
       [
         :texture,
         :map,
-        %{"type" => @default_wallpaper_texture_type, "intensity" => 0, "params" => %{}}
+        %{
+          "enabled" => false,
+          "type" => @default_wallpaper_texture_type,
+          "intensity" => 0,
+          "params" => %{}
+        }
       ]
     ]
   end

@@ -1,51 +1,38 @@
-import PlusSVG from '~/icons/Plus'
-import TrashSVG from '~/icons/Trash'
-import UploadSVG from '~/icons/Upload'
-
-import type { TTuningSetting } from '../../../spec'
-import ImageFields from './ImageFields'
-import ImageTitle from './ImageTitle'
+import { COVER_IMAGE_WHICH } from '../../../constant'
+import type { TCoverImageWhich, TTuningSetting } from '../../../spec'
+import ImageSection from './ImageSection'
 import useSalon from './salon'
 
 type TProps = {
   setting: TTuningSetting
-  onDelete: () => void
-  onReplace: () => void
+  onAddImage: (which: TCoverImageWhich) => void
+  onDelete: (which: TCoverImageWhich) => void
+  onReplace: (which: TCoverImageWhich) => void
 }
 
-export default function BasicTab({ setting, onDelete, onReplace }: TProps) {
+export default function BasicTab({ setting, onAddImage, onDelete, onReplace }: TProps) {
   const s = useSalon()
 
   return (
     <div className={s.wrapper}>
       <section className={s.imageSection}>
-        <div className={s.primaryImageArea}>
-          <ImageTitle
-            type='primary'
-            action={
-              <div className={s.uploadActions}>
-                <button type='button' className={s.actionButton} onClick={onReplace}>
-                  <UploadSVG className={s.actionIcon} />
-                  replace
-                </button>
-                <button type='button' className={s.deleteButton} onClick={onDelete}>
-                  <TrashSVG className={s.deleteIcon} />
-                  delete
-                </button>
-              </div>
-            }
-          />
-          <ImageFields setting={setting} />
-        </div>
+        <ImageSection
+          image={setting.images.primary}
+          which={COVER_IMAGE_WHICH.PRIMARY}
+          onAddImage={onAddImage}
+          onDelete={onDelete}
+          onReplace={onReplace}
+        />
 
         <div className={s.sectionDivider} />
 
-        <div className={s.actionArea}>
-          <button type='button' className={s.addImageButton} disabled aria-label='Add second image'>
-            <PlusSVG className={s.addImageIcon} />
-            Add secondary image
-          </button>
-        </div>
+        <ImageSection
+          image={setting.images.secondary}
+          which={COVER_IMAGE_WHICH.SECONDARY}
+          onAddImage={onAddImage}
+          onDelete={onDelete}
+          onReplace={onReplace}
+        />
       </section>
     </div>
   )

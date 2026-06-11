@@ -3,6 +3,16 @@ export const IMAGE_CONTAINER_SIZE = {
   HEIGHT: '400px',
 }
 
+export const COVER_IMAGE_WHICH = {
+  PRIMARY: 'primary',
+  SECONDARY: 'secondary',
+} as const
+
+export const COVER_IMAGE_Z_INDEX = {
+  BASE: 10,
+  TOP: 20,
+} as const
+
 export const IMAGE_POS = {
   TOP_LEFT: 'top_left',
   TOP_CENTER: 'top_center',

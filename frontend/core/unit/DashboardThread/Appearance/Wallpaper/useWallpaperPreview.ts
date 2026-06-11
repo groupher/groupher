@@ -7,6 +7,14 @@ import { emitWallpaperPreview } from '~/lib/wallpaperPreview'
 import type { TWallpaperThemeState } from '~/stores/wallpaper/spec'
 
 type TWallpaperPreviewVars = Record<`--${string}`, string | null>
+export type TWallpaperPreviewPatch = Partial<
+  Omit<TWallpaperThemeState, 'contentShadow' | 'effect' | 'pattern' | 'texture'>
+> & {
+  contentShadow?: Partial<TWallpaperThemeState['contentShadow']>
+  effect?: Partial<TWallpaperThemeState['effect']>
+  pattern?: Partial<TWallpaperThemeState['pattern']>
+  texture?: Partial<TWallpaperThemeState['texture']>
+}
 
 type TOptions = {
   state: TWallpaperThemeState
@@ -27,9 +35,7 @@ const MAX_BLUR_PX = 6
  * const filter = composeFilterValue(state)
  */
 const composeFilterValue = ({
-  blurIntensity = 0,
-  brightness = 100,
-  saturation = 100,
+  effect: { blurIntensity = 0, brightness = 100, saturation = 100 },
 }: TWallpaperThemeState): string => {
   const safeBlurIntensity = Math.max(0, Math.min(100, blurIntensity))
   const blurPx = Number(((safeBlurIntensity / 100) * MAX_BLUR_PX).toFixed(1))
@@ -52,6 +58,20 @@ const composePreviewCssVars = (state: TWallpaperThemeState): TWallpaperPreviewVa
   }
 }
 
+const mergeWallpaperPreviewPatch = (
+  state: TWallpaperThemeState,
+  patch: TWallpaperPreviewPatch,
+): TWallpaperThemeState => ({
+  ...state,
+  ...patch,
+  contentShadow: patch.contentShadow
+    ? { ...state.contentShadow, ...patch.contentShadow }
+    : state.contentShadow,
+  effect: patch.effect ? { ...state.effect, ...patch.effect } : state.effect,
+  pattern: patch.pattern ? { ...state.pattern, ...patch.pattern } : state.pattern,
+  texture: patch.texture ? { ...state.texture, ...patch.texture } : state.texture,
+})
+
 export default function useWallpaperPreview({ state, onCommit }: TOptions) {
   const updatePreviewCssVars = useUpdatePreviewCssVars({ selector: 'html' })
   const draftRef = useRef(state)
@@ -66,11 +86,8 @@ export default function useWallpaperPreview({ state, onCommit }: TOptions) {
   }, [state])
 
   const previewWallpaper = useCallback(
-    (patch: Partial<TWallpaperThemeState>) => {
-      draftRef.current = {
-        ...draftRef.current,
-        ...patch,
-      }
+    (patch: TWallpaperPreviewPatch) => {
+      draftRef.current = mergeWallpaperPreviewPatch(draftRef.current, patch)
 
       updatePreviewCssVars(composePreviewCssVars(draftRef.current))
       emitWallpaperPreview(draftRef.current)
@@ -79,9 +96,9 @@ export default function useWallpaperPreview({ state, onCommit }: TOptions) {
   )
 
   const scheduleWallpaperPreview = useCallback(
-    (patch: Partial<TWallpaperThemeState>) => {
+    (patch: TWallpaperPreviewPatch) => {
       previewWallpaper(patch)
-      scheduleWallpaperDraft(patch)
+      scheduleWallpaperDraft(draftRef.current)
     },
     [previewWallpaper, scheduleWallpaperDraft],
   )

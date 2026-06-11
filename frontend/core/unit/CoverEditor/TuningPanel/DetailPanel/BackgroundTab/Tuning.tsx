@@ -7,14 +7,13 @@ import {
   getGradientSpreadValue,
   applyGradientSpreadValue,
 } from '~/lib/bg'
-import type { TBgConfig } from '~/lib/bg'
+import type { TBgConfig, TBgTexture } from '~/lib/bg'
 import { mapToPresetColorHex } from '~/lib/color'
 import {
   GRADIENT_RENDERER,
   WALLPAPER_GRADIENT_RENDERER_OPTIONS,
   type TGradientRecipe,
   type TGradientRenderer,
-  type TWallpaperTexture,
 } from '~/lib/wallpaperMesh'
 import type { TColorName } from '~/spec'
 import AngleField from '~/widgets/TuningFields/AngleField'
@@ -69,7 +68,7 @@ export default function Tuning({ background }: TProps) {
     updateColor(index, mapToPresetColorHex(color, theme))
   }
 
-  const updateTexture = (patch: Partial<TWallpaperTexture>): void =>
+  const updateTexture = (patch: Partial<TBgTexture>): void =>
     backgroundTextureOnChange({ ...background.texture, ...patch })
 
   return (
@@ -77,41 +76,41 @@ export default function Tuning({ background }: TProps) {
       <div className={s.tuningColumn}>
         <BrightnessField
           label='Brightness'
-          value={background.brightness}
+          value={background.effect.brightness}
           width='w-36'
-          onChange={(brightness) => backgroundOnChange({ brightness })}
+          onChange={(brightness) => backgroundOnChange({ effect: { brightness } })}
         />
 
         <SaturationField
           label='Saturation'
-          value={background.saturation}
+          value={background.effect.saturation}
           width='w-36'
-          onChange={(saturation) => backgroundOnChange({ saturation })}
+          onChange={(saturation) => backgroundOnChange({ effect: { saturation } })}
         />
 
         <BlurField
           label='Blur'
-          value={background.blurIntensity}
+          value={background.effect.blurIntensity}
           width='w-36'
-          onChange={(blurIntensity) => backgroundOnChange({ blurIntensity })}
+          onChange={(blurIntensity) => backgroundOnChange({ effect: { blurIntensity } })}
         />
       </div>
 
       <div className={s.tuningColumn}>
         <ToggleField
           label='Texture'
-          checked={background.hasTexture}
+          checked={background.texture.enabled}
           onChange={toggleBackgroundTexture}
         />
 
         <TextureTypeField
           label='Type'
           value={background.texture.type}
-          active={background.hasTexture}
+          active={background.texture.enabled}
           onChange={(type) => updateTexture({ type })}
         />
 
-        {background.hasTexture && (
+        {background.texture.enabled && (
           <TextureIntensityField
             label='Intensity'
             value={background.texture.intensity}

@@ -1,7 +1,8 @@
 import { isEmpty } from 'ramda'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, FC, PointerEvent, ReactNode } from 'react'
 
+import useUpdatePreviewCssVars from '~/hooks/useUpdatePreviewCssVars'
 import { extractDominantColorFromImage } from '~/lib/imageColor/dominant'
 import BgRenderer from '~/widgets/BgRenderer'
 
@@ -13,7 +14,16 @@ import {
   MAGNIFIER_RENDER_SIZE,
   MAGNIFIER_ZOOM_RANGE,
 } from '../constant'
+import {
+  getCoverImageVarValue,
+  getCoverPreviewCssVars,
+  getFrameBorderRadiusValue,
+  getFramePaddingValue,
+  getMagnifierRenderSize,
+} from '../coverImageCssVars'
+import { subscribeCoverImagePreview } from '../coverImagePreview'
 import { getImageShadow, getMagnifierAppearanceStyle } from '../helper'
+import { useImageDraftContext } from '../imageDraftContext'
 import {
   getBorderRadiusFromCanvasPoint,
   getCanvasPointFromClient,
@@ -22,14 +32,13 @@ import {
   getImageResizeFromCanvasPoint,
   type TImageResizeHandle,
 } from '../salon/metric'
-import type { TCoverPoint, TImageSize } from '../spec'
+import type { TCoverImageConfig, TCoverImageWhich, TCoverPoint, TImageSize } from '../spec'
 import useLogic from '../useLogic'
 import BorderRender from './BorderRender'
 import Placeholder from './Placeholder'
 import useSalon from './salon'
 
 type TProps = {
-  imageUrl: string
   onDropFile: (file: File) => void
   onUpload: () => void
 }
@@ -51,6 +60,7 @@ type TInteractionState =
       startPoint: TCoverPoint
       startSize: TImageSize
       type: 'move'
+      which: TCoverImageWhich
     }
   | {
       handle: TImageResizeHandle
@@ -59,6 +69,7 @@ type TInteractionState =
       startCenter: TCoverPoint
       startSize: TImageSize
       type: 'resize'
+      which: TCoverImageWhich
     }
   | {
       handle: TImageResizeHandle
@@ -68,24 +79,29 @@ type TInteractionState =
       startCenter: TCoverPoint
       startSize: TImageSize
       type: 'radius'
+      which: TCoverImageWhich
     }
   | {
       pointerId: number
       startCenter: TCoverPoint
       startPoint: TCoverPoint
+      startRadius: number
       type: 'magnifier-move'
+      which: TCoverImageWhich
     }
   | {
       pointerId: number
       startCenter: TCoverPoint
       startRadius: number
       type: 'magnifier-radius'
+      which: TCoverImageWhich
     }
   | {
       pointerId: number
       startPoint: TCoverPoint
       startZoom: number
       type: 'magnifier-zoom'
+      which: TCoverImageWhich
     }
 
 type TResizeHandleConfig = {
@@ -161,10 +177,6 @@ const CANVAS_HEIGHT = Number.parseFloat(IMAGE_CONTAINER_SIZE.HEIGHT)
 
 const clamp01 = (value: number): number => Math.min(1, Math.max(0, value))
 
-const getMagnifierRenderSize = (radius: number): number =>
-  MAGNIFIER_RENDER_SIZE.MIN +
-  (MAGNIFIER_RENDER_SIZE.MAX - MAGNIFIER_RENDER_SIZE.MIN) * clamp01(radius)
-
 const getMagnifierRadiusFromCanvasPoint = (
   point: TCoverPoint,
   center: TCoverPoint,
@@ -186,52 +198,107 @@ const getMagnifierRadiusFromCanvasPoint = (
 const clampMagnifierZoom = (zoom: number): number =>
   Math.min(MAGNIFIER_ZOOM_RANGE.MAX, Math.max(MAGNIFIER_ZOOM_RANGE.MIN, Number(zoom.toFixed(1))))
 
-const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
+const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
+  const { imageLoadedOnChange, tuningSetting: setting } = useLogic()
+  const { activeBackground } = setting
   const {
-    borderRadiusOnChange,
-    imageLoadedOnChange,
-    magnifierRadiationOnChange,
-    magnifierZoomOnChange,
-    positionOnChange,
-    sizeOnChange,
-    tuningSetting: setting,
-  } = useLogic()
-  const {
-    size,
-    shadow,
-    hasGlassBorder,
-    borderRadius,
-    borderHighlight,
-    hasMagnifier,
-    magnifierCenter,
-    magnifierRadius,
-    magnifierZoom,
-    magnifierAppearance,
-    activeBackground,
-    rotate,
-    position,
-  } = setting
+    activeImage,
+    activeImageWhich,
+    activateImageDraft,
+    flushImageDraft,
+    images,
+    scheduleImagePatch,
+  } = useImageDraftContext()
   const s = useSalon()
   const wrapperRef = useRef<HTMLDivElement | null>(null)
+  const updatePreviewCssVars = useUpdatePreviewCssVars({ targetRef: wrapperRef })
   const interactionRef = useRef<TInteractionState | null>(null)
   const [interactionMode, setInteractionMode] = useState<TInteractionMode>('idle')
   const [hoveredRadiusHandle, setHoveredRadiusHandle] = useState<TImageResizeHandle | null>(null)
-  const [magnifierHovered, setMagnifierHovered] = useState(false)
+  const [hoveredMagnifierWhich, setHoveredMagnifierWhich] = useState<TCoverImageWhich | null>(null)
 
-  const hasImage = !isEmpty(imageUrl)
-  const imageFrameSize = s.getResponsiveImageSize(size)
-  const imagePlacement = s.getImagePlacement(position, size, rotate)
+  const imageList = (
+    [images.primary, images.secondary].filter(Boolean) as TCoverImageConfig[]
+  ).sort((a, b) => a.zIndex - b.zIndex)
+  const hasImage = imageList.length > 0
   const hasWallpaper = !isEmpty(activeBackground.source)
-  const isFullFrame = size === IMAGE_SIZE_RANGE.MAX && rotate === 0
+  const isFullFrame = imageList.some(
+    (image) => image.size === IMAGE_SIZE_RANGE.MAX && image.rotate === 0,
+  )
   const shouldShowTransparentGrid = !hasWallpaper && !isFullFrame
-  const borderRadiusValue = `${borderRadius}px`
-  const frameBorderRadiusValue = hasGlassBorder
-    ? `${borderRadius + GLASS_FRAME.PADDING_Y}px`
-    : borderRadiusValue
-  const framePadding = hasGlassBorder
-    ? { x: GLASS_FRAME.PADDING_X, y: GLASS_FRAME.PADDING_Y }
-    : undefined
   const backgroundRenderSpec = adaptCoverBgRenderSpec(activeBackground)
+
+  const getImageRenderState = (image: TCoverImageConfig) => {
+    const imageFrameSize = s.getResponsiveImageSize(image.size)
+    const imagePlacement = s.getImagePlacement(image.position, image.size, image.rotate)
+    const borderRadiusValue = `${image.borderRadius}px`
+    const frameBorderRadiusValue = getFrameBorderRadiusValue(image)
+    const framePadding = image.glassBorder.enabled
+      ? { x: GLASS_FRAME.PADDING_X, y: GLASS_FRAME.PADDING_Y }
+      : undefined
+    const imageVar = (key: string, fallback: string | number): string =>
+      getCoverImageVarValue(image.which, key, fallback)
+    const framePaddingValue = getFramePaddingValue(image)
+    const imageFrameStyle: CSSProperties = {
+      borderRadius: imageVar('frame-radius', frameBorderRadiusValue),
+      width: imageVar('width', imageFrameSize.width),
+      height: imageVar('height', imageFrameSize.height),
+      left: imageVar('left', imagePlacement.left),
+      top: imageVar('top', imagePlacement.top),
+      padding: imageVar('padding', framePaddingValue),
+      boxSizing: 'content-box',
+      backgroundColor: image.glassBorder.enabled ? 'rgba(255, 255, 255, 0.2)' : undefined,
+      backdropFilter: image.glassBorder.enabled ? 'blur(5px)' : undefined,
+      WebkitBackdropFilter: image.glassBorder.enabled ? 'blur(5px)' : undefined,
+      boxShadow: imageVar('shadow', getImageShadow(image.shadow) ?? 'none'),
+      transform: `translate(-50%, -50%) rotate(${imageVar('rotate', `${image.rotate}deg`)})`,
+      zIndex: imageVar('z-index', image.zIndex),
+    }
+    const magnifierImageFrameStyle: CSSProperties = {
+      ...imageFrameStyle,
+      backgroundColor: image.glassBorder.enabled ? 'rgba(255, 255, 255, 0.16)' : undefined,
+      backdropFilter: undefined,
+      WebkitBackdropFilter: undefined,
+    }
+    const editorFrameStyle: CSSProperties = {
+      borderRadius: imageVar('frame-radius', frameBorderRadiusValue),
+      width: imageVar('width', imageFrameSize.width),
+      height: imageVar('height', imageFrameSize.height),
+      left: imageVar('left', imagePlacement.left),
+      top: imageVar('top', imagePlacement.top),
+      padding: imageVar('padding', framePaddingValue),
+      boxSizing: 'content-box',
+      transform: `translate(-50%, -50%) rotate(${imageVar('rotate', `${image.rotate}deg`)})`,
+      zIndex: imageVar('editor-z-index', image.zIndex + 1),
+    }
+    const cropViewportStyle: CSSProperties = {
+      boxSizing: 'border-box',
+      borderRadius: imageVar('crop-radius', borderRadiusValue),
+    }
+
+    return {
+      borderRadiusValue,
+      cropViewportStyle,
+      editorFrameStyle,
+      frameBorderRadiusValue,
+      framePadding,
+      imageFrameStyle,
+      magnifierImageFrameStyle,
+    }
+  }
+
+  useEffect(() => {
+    const unsubscribe = subscribeCoverImagePreview((previewState) => {
+      if (!previewState) {
+        updatePreviewCssVars(null)
+        return
+      }
+
+      updatePreviewCssVars(getCoverPreviewCssVars(previewState))
+    })
+
+    return unsubscribe
+  }, [updatePreviewCssVars])
 
   const getCanvasPoint = (event: PointerEvent<HTMLElement>): TCoverPoint | null => {
     const rect = wrapperRef.current?.getBoundingClientRect()
@@ -253,6 +320,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     interactionRef.current = null
     if (state?.type === 'radius') setHoveredRadiusHandle(null)
     setInteractionMode('idle')
+    flushImageDraft()
   }
 
   const updateMoveInteraction = (
@@ -264,7 +332,9 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
       y: state.startCenter.y + point.y - state.startPoint.y,
     }
 
-    positionOnChange(getImagePositionFromCanvasPoint(nextCenter, state.startSize, state.rotate))
+    scheduleImagePatch(state.which, {
+      position: getImagePositionFromCanvasPoint(nextCenter, state.startSize, state.rotate),
+    })
   }
 
   const updateResizeInteraction = (
@@ -279,16 +349,18 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
       startSize: state.startSize,
     })
 
-    sizeOnChange(next.size)
-    positionOnChange(getImagePositionFromCanvasPoint(next.center, next.size, state.rotate))
+    scheduleImagePatch(state.which, {
+      size: next.size,
+      position: getImagePositionFromCanvasPoint(next.center, next.size, state.rotate),
+    })
   }
 
   const updateRadiusInteraction = (
     state: Extract<TInteractionState, { type: 'radius' }>,
     point: TCoverPoint,
   ): void => {
-    borderRadiusOnChange(
-      getBorderRadiusFromCanvasPoint({
+    scheduleImagePatch(state.which, {
+      borderRadius: getBorderRadiusFromCanvasPoint({
         center: state.startCenter,
         handle: state.handle,
         localDirection: state.localDirection,
@@ -296,30 +368,36 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
         rotate: state.rotate,
         size: state.startSize,
       }),
-    )
+    })
   }
 
   const updateMagnifierMoveInteraction = (
     state: Extract<TInteractionState, { type: 'magnifier-move' }>,
     point: TCoverPoint,
   ): void => {
-    magnifierRadiationOnChange(
-      {
-        x: clamp01(state.startCenter.x + (point.x - state.startPoint.x) / CANVAS_WIDTH),
-        y: clamp01(state.startCenter.y + (point.y - state.startPoint.y) / CANVAS_HEIGHT),
+    scheduleImagePatch(state.which, {
+      magnifier: {
+        center: {
+          x: clamp01(state.startCenter.x + (point.x - state.startPoint.x) / CANVAS_WIDTH),
+          y: clamp01(state.startCenter.y + (point.y - state.startPoint.y) / CANVAS_HEIGHT),
+        },
+        radius: state.startRadius,
+        enabled: true,
       },
-      magnifierRadius,
-    )
+    })
   }
 
   const updateMagnifierRadiusInteraction = (
     state: Extract<TInteractionState, { type: 'magnifier-radius' }>,
     point: TCoverPoint,
   ): void => {
-    magnifierRadiationOnChange(
-      state.startCenter,
-      getMagnifierRadiusFromCanvasPoint(point, state.startCenter, state.startRadius),
-    )
+    scheduleImagePatch(state.which, {
+      magnifier: {
+        center: state.startCenter,
+        radius: getMagnifierRadiusFromCanvasPoint(point, state.startCenter, state.startRadius),
+        enabled: true,
+      },
+    })
   }
 
   const updateMagnifierZoomInteraction = (
@@ -330,49 +408,55 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     const zoomRange = MAGNIFIER_ZOOM_RANGE.MAX - MAGNIFIER_ZOOM_RANGE.MIN
     const nextZoom = state.startZoom + (dragDistance / 120) * zoomRange
 
-    magnifierZoomOnChange(clampMagnifierZoom(nextZoom))
+    scheduleImagePatch(state.which, { magnifier: { zoom: clampMagnifierZoom(nextZoom) } })
   }
 
-  const handleMovePointerDown = (event: PointerEvent<HTMLDivElement>): void => {
-    if (!isPrimaryPointer(event)) return
+  const handleMovePointerDown =
+    (image: TCoverImageConfig) =>
+    (event: PointerEvent<HTMLDivElement>): void => {
+      if (!isPrimaryPointer(event)) return
 
-    const startPoint = getCanvasPoint(event)
-    if (!startPoint) return
+      const startPoint = getCanvasPoint(event)
+      if (!startPoint) return
 
-    event.preventDefault()
-    event.currentTarget.setPointerCapture(event.pointerId)
-    interactionRef.current = {
-      pointerId: event.pointerId,
-      rotate,
-      startCenter: getImageCanvasCenter(position, size, rotate),
-      startPoint,
-      startSize: size,
-      type: 'move',
+      event.preventDefault()
+      activateImageDraft(image.which)
+      event.currentTarget.setPointerCapture(event.pointerId)
+      interactionRef.current = {
+        pointerId: event.pointerId,
+        rotate: image.rotate,
+        startCenter: getImageCanvasCenter(image.position, image.size, image.rotate),
+        startPoint,
+        startSize: image.size,
+        type: 'move',
+        which: image.which,
+      }
+      setInteractionMode('move')
     }
-    setInteractionMode('move')
-  }
 
   const handleResizePointerDown =
-    (handle: TImageResizeHandle) =>
-    (event: PointerEvent<HTMLButtonElement>): void => {
+    (image: TCoverImageConfig, handle: TImageResizeHandle) =>
+    (event: PointerEvent<HTMLElement>): void => {
       if (!isPrimaryPointer(event)) return
 
       event.preventDefault()
       event.stopPropagation()
+      activateImageDraft(image.which)
       event.currentTarget.setPointerCapture(event.pointerId)
       interactionRef.current = {
         handle,
         pointerId: event.pointerId,
-        rotate,
-        startCenter: getImageCanvasCenter(position, size, rotate),
-        startSize: size,
+        rotate: image.rotate,
+        startCenter: getImageCanvasCenter(image.position, image.size, image.rotate),
+        startSize: image.size,
         type: 'resize',
+        which: image.which,
       }
       setInteractionMode('resize')
     }
 
   const handleRadiusPointerDown =
-    (handle: TImageResizeHandle, localDirection: TCoverPoint) =>
+    (image: TCoverImageConfig, handle: TImageResizeHandle, localDirection: TCoverPoint) =>
     (event: PointerEvent<HTMLButtonElement>): void => {
       if (!isPrimaryPointer(event)) return
 
@@ -381,16 +465,18 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
 
       event.preventDefault()
       event.stopPropagation()
+      activateImageDraft(image.which)
       event.currentTarget.setPointerCapture(event.pointerId)
 
       const nextState: Extract<TInteractionState, { type: 'radius' }> = {
         handle,
         localDirection,
         pointerId: event.pointerId,
-        rotate,
-        startCenter: getImageCanvasCenter(position, size, rotate),
-        startSize: size,
+        rotate: image.rotate,
+        startCenter: getImageCanvasCenter(image.position, image.size, image.rotate),
+        startSize: image.size,
         type: 'radius',
+        which: image.which,
       }
 
       interactionRef.current = nextState
@@ -399,62 +485,75 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
       updateRadiusInteraction(nextState, point)
     }
 
-  const handleMagnifierMovePointerDown = (event: PointerEvent<HTMLDivElement>): void => {
-    if (!isPrimaryPointer(event)) return
+  const handleMagnifierMovePointerDown =
+    (image: TCoverImageConfig) =>
+    (event: PointerEvent<HTMLDivElement>): void => {
+      if (!isPrimaryPointer(event)) return
 
-    const startPoint = getCanvasPoint(event)
-    if (!startPoint) return
+      const point = getCanvasPoint(event)
+      if (!point) return
 
-    event.preventDefault()
-    event.stopPropagation()
-    event.currentTarget.setPointerCapture(event.pointerId)
-    interactionRef.current = {
-      pointerId: event.pointerId,
-      startCenter: magnifierCenter,
-      startPoint,
-      type: 'magnifier-move',
-    }
-    setInteractionMode('magnifier-move')
-  }
-
-  const handleMagnifierRadiusPointerDown = (event: PointerEvent<HTMLButtonElement>): void => {
-    if (!isPrimaryPointer(event)) return
-
-    const point = getCanvasPoint(event)
-    if (!point) return
-
-    event.preventDefault()
-    event.stopPropagation()
-    event.currentTarget.setPointerCapture(event.pointerId)
-    const nextState: Extract<TInteractionState, { type: 'magnifier-radius' }> = {
-      pointerId: event.pointerId,
-      startCenter: magnifierCenter,
-      startRadius: magnifierRadius,
-      type: 'magnifier-radius',
+      event.preventDefault()
+      event.stopPropagation()
+      activateImageDraft(image.which)
+      event.currentTarget.setPointerCapture(event.pointerId)
+      interactionRef.current = {
+        pointerId: event.pointerId,
+        startCenter: image.magnifier.center,
+        startPoint: point,
+        startRadius: image.magnifier.radius,
+        type: 'magnifier-move',
+        which: image.which,
+      }
+      setInteractionMode('magnifier-move')
     }
 
-    interactionRef.current = nextState
-    setInteractionMode('magnifier-radius')
-    updateMagnifierRadiusInteraction(nextState, point)
-  }
+  const handleMagnifierRadiusPointerDown =
+    (image: TCoverImageConfig) =>
+    (event: PointerEvent<HTMLButtonElement>): void => {
+      if (!isPrimaryPointer(event)) return
 
-  const handleMagnifierZoomPointerDown = (event: PointerEvent<HTMLButtonElement>): void => {
-    if (!isPrimaryPointer(event)) return
+      const point = getCanvasPoint(event)
+      if (!point) return
 
-    const point = getCanvasPoint(event)
-    if (!point) return
+      event.preventDefault()
+      event.stopPropagation()
+      activateImageDraft(image.which)
+      event.currentTarget.setPointerCapture(event.pointerId)
+      const nextState: Extract<TInteractionState, { type: 'magnifier-radius' }> = {
+        pointerId: event.pointerId,
+        startCenter: image.magnifier.center,
+        startRadius: image.magnifier.radius,
+        type: 'magnifier-radius',
+        which: image.which,
+      }
 
-    event.preventDefault()
-    event.stopPropagation()
-    event.currentTarget.setPointerCapture(event.pointerId)
-    interactionRef.current = {
-      pointerId: event.pointerId,
-      startPoint: point,
-      startZoom: magnifierZoom,
-      type: 'magnifier-zoom',
+      interactionRef.current = nextState
+      setInteractionMode('magnifier-radius')
+      updateMagnifierRadiusInteraction(nextState, point)
     }
-    setInteractionMode('magnifier-zoom')
-  }
+
+  const handleMagnifierZoomPointerDown =
+    (image: TCoverImageConfig) =>
+    (event: PointerEvent<HTMLButtonElement>): void => {
+      if (!isPrimaryPointer(event)) return
+
+      const point = getCanvasPoint(event)
+      if (!point) return
+
+      event.preventDefault()
+      event.stopPropagation()
+      activateImageDraft(image.which)
+      event.currentTarget.setPointerCapture(event.pointerId)
+      interactionRef.current = {
+        pointerId: event.pointerId,
+        startPoint: point,
+        startZoom: image.magnifier.zoom,
+        type: 'magnifier-zoom',
+        which: image.which,
+      }
+      setInteractionMode('magnifier-zoom')
+    }
 
   const handlePointerMove = (event: PointerEvent<HTMLElement>): void => {
     const state = interactionRef.current
@@ -482,83 +581,83 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     finishInteraction(event)
   }
 
-  const handleImageLoad = (image: HTMLImageElement): void => {
-    imageLoadedOnChange(imageUrl, extractDominantColorFromImage(image)?.css ?? null)
+  const handleImageLoad = (coverImage: TCoverImageConfig, image: HTMLImageElement): void => {
+    imageLoadedOnChange(
+      coverImage.which,
+      coverImage.source,
+      extractDominantColorFromImage(image)?.css ?? null,
+    )
   }
 
   if (!hasImage) {
     return (
-      <div className={s.wrapper} style={s.wrapperStyle}>
+      <div ref={wrapperRef} className={s.wrapper} style={s.wrapperStyle}>
         <Placeholder onDropFile={onDropFile} onUpload={onUpload} />
       </div>
     )
   }
 
-  const imageFrameStyle: CSSProperties = {
-    borderRadius: frameBorderRadiusValue,
-    width: imageFrameSize.width,
-    height: imageFrameSize.height,
-    left: imagePlacement.left,
-    top: imagePlacement.top,
-    padding: hasGlassBorder ? `${GLASS_FRAME.PADDING_Y}px ${GLASS_FRAME.PADDING_X}px` : 0,
-    boxSizing: 'content-box',
-    backgroundColor: hasGlassBorder ? 'rgba(255, 255, 255, 0.2)' : undefined,
-    backdropFilter: hasGlassBorder ? 'blur(5px)' : undefined,
-    WebkitBackdropFilter: hasGlassBorder ? 'blur(5px)' : undefined,
-    boxShadow: getImageShadow(shadow),
-    transform: `translate(-50%, -50%) rotate(${rotate}deg)`,
-  }
-  const magnifierImageFrameStyle: CSSProperties = {
-    ...imageFrameStyle,
-    backgroundColor: hasGlassBorder ? 'rgba(255, 255, 255, 0.16)' : undefined,
-    backdropFilter: undefined,
-    WebkitBackdropFilter: undefined,
-  }
-  const editorFrameStyle: CSSProperties = {
-    borderRadius: frameBorderRadiusValue,
-    width: imageFrameSize.width,
-    height: imageFrameSize.height,
-    left: imagePlacement.left,
-    top: imagePlacement.top,
-    padding: hasGlassBorder ? `${GLASS_FRAME.PADDING_Y}px ${GLASS_FRAME.PADDING_X}px` : 0,
-    boxSizing: 'content-box',
-    transform: `translate(-50%, -50%) rotate(${rotate}deg)`,
-  }
   const activeRadiusHandle =
-    interactionMode === 'radius' && interactionRef.current?.type === 'radius'
+    interactionMode === 'radius' &&
+    interactionRef.current?.type === 'radius' &&
+    interactionRef.current.which === activeImageWhich
       ? interactionRef.current.handle
       : null
-  const radiusHandleLength = getRadiusHandleLength(borderRadius)
+  const radiusHandleLength = getRadiusHandleLength(activeImage?.borderRadius ?? 0)
   const radiusDotOffset = radiusHandleLength / 2
 
-  const cropViewportStyle: CSSProperties = {
-    boxSizing: 'border-box',
-    borderRadius: borderRadiusValue,
-  }
+  const getShowMagnifierHandles = (image: TCoverImageConfig): boolean =>
+    hoveredMagnifierWhich === image.which ||
+    (interactionRef.current?.which === image.which &&
+      (interactionMode === 'magnifier-move' ||
+        interactionMode === 'magnifier-radius' ||
+        interactionMode === 'magnifier-zoom'))
 
-  const magnifierRenderSize = getMagnifierRenderSize(magnifierRadius)
-  const magnifierSizePercent = (magnifierRenderSize / CANVAS_WIDTH) * 100
-  const magnifierCanvasLeft = magnifierCenter.x * CANVAS_WIDTH - magnifierRenderSize / 2
-  const magnifierCanvasTop = magnifierCenter.y * CANVAS_HEIGHT - magnifierRenderSize / 2
-  const magnifierCloneStyle: CSSProperties = {
-    width: `${(CANVAS_WIDTH / magnifierRenderSize) * 100}%`,
-    height: `${(CANVAS_HEIGHT / magnifierRenderSize) * 100}%`,
-    left: `${(-magnifierCanvasLeft / magnifierRenderSize) * 100}%`,
-    top: `${(-magnifierCanvasTop / magnifierRenderSize) * 100}%`,
-    transform: `scale(${magnifierZoom})`,
-    transformOrigin: `${magnifierCenter.x * 100}% ${magnifierCenter.y * 100}%`,
+  const renderImageLayer = (image: TCoverImageConfig, isMagnifierClone = false): ReactNode => {
+    const {
+      cropViewportStyle,
+      frameBorderRadiusValue,
+      framePadding,
+      imageFrameStyle,
+      magnifierImageFrameStyle,
+    } = getImageRenderState(image)
+    const isInteracting =
+      interactionMode !== 'idle' && interactionRef.current?.which === image.which
+
+    return (
+      <div
+        key={image.which}
+        className={s.cn(s.imageFrame, isInteracting && s.imageFrameActive)}
+        style={isMagnifierClone ? magnifierImageFrameStyle : imageFrameStyle}
+        onPointerDown={isMagnifierClone ? undefined : handleMovePointerDown(image)}
+        onPointerMove={isMagnifierClone ? undefined : handlePointerMove}
+        onPointerUp={isMagnifierClone ? undefined : handlePointerUp}
+        onPointerCancel={isMagnifierClone ? undefined : handlePointerUp}
+      >
+        <div
+          className={s.cn(s.cropViewport, isInteracting && s.cropViewportActive)}
+          style={cropViewportStyle}
+        >
+          <img
+            className={s.cn(s.image, isInteracting && s.imageActive)}
+            src={image.source}
+            alt=''
+            draggable={false}
+            onLoad={
+              isMagnifierClone ? undefined : (event) => handleImageLoad(image, event.currentTarget)
+            }
+          />
+        </div>
+        <BorderRender
+          className={s.borderHighlight}
+          borderRadius={frameBorderRadiusValue}
+          borderHighlight={image.borderHighlight}
+          framePadding={framePadding}
+          size={image.size}
+        />
+      </div>
+    )
   }
-  const magnifierStyle: CSSProperties = {
-    width: `${magnifierSizePercent}%`,
-    left: `${magnifierCenter.x * 100}%`,
-    top: `${magnifierCenter.y * 100}%`,
-    ...getMagnifierAppearanceStyle(magnifierAppearance),
-  }
-  const showMagnifierHandles =
-    magnifierHovered ||
-    interactionMode === 'magnifier-move' ||
-    interactionMode === 'magnifier-radius' ||
-    interactionMode === 'magnifier-zoom'
 
   const renderCoverContent = (isMagnifierClone = false): ReactNode => (
     <div className={s.contentLayer}>
@@ -573,52 +672,65 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
       {shouldShowTransparentGrid && (
         <div className={s.backgroundLayer} style={s.transparentGridStyle} />
       )}
-      <div
-        className={s.cn(s.imageFrame, interactionMode !== 'idle' && s.imageFrameActive)}
-        style={isMagnifierClone ? magnifierImageFrameStyle : imageFrameStyle}
-      >
-        <div
-          className={s.cn(s.cropViewport, interactionMode !== 'idle' && s.cropViewportActive)}
-          style={cropViewportStyle}
-        >
-          <img
-            className={s.cn(s.image, interactionMode !== 'idle' && s.imageActive)}
-            src={imageUrl}
-            alt=''
-            draggable={false}
-            onLoad={isMagnifierClone ? undefined : (event) => handleImageLoad(event.currentTarget)}
-          />
-        </div>
-        <BorderRender
-          className={s.borderHighlight}
-          borderRadius={frameBorderRadiusValue}
-          borderHighlight={borderHighlight}
-          framePadding={framePadding}
-          size={size}
-        />
-      </div>
+      {imageList.map((image) => renderImageLayer(image, isMagnifierClone))}
     </div>
   )
 
-  const renderMagnifier = (): ReactNode => {
-    if (!hasMagnifier) return null
+  const renderMagnifier = (image: TCoverImageConfig): ReactNode => {
+    if (!image.magnifier.enabled) return null
+
+    const magnifierRenderSize = getMagnifierRenderSize(image.magnifier.radius)
+    const magnifierSizePercent = (magnifierRenderSize / CANVAS_WIDTH) * 100
+    const magnifierCanvasLeft = image.magnifier.center.x * CANVAS_WIDTH - magnifierRenderSize / 2
+    const magnifierCanvasTop = image.magnifier.center.y * CANVAS_HEIGHT - magnifierRenderSize / 2
+    const imageVar = (key: string, fallback: string | number): string =>
+      getCoverImageVarValue(image.which, key, fallback)
+    const magnifierCloneStyle: CSSProperties = {
+      width: imageVar('magnifier-clone-width', `${(CANVAS_WIDTH / magnifierRenderSize) * 100}%`),
+      height: imageVar('magnifier-clone-height', `${(CANVAS_HEIGHT / magnifierRenderSize) * 100}%`),
+      left: imageVar(
+        'magnifier-clone-left',
+        `${(-magnifierCanvasLeft / magnifierRenderSize) * 100}%`,
+      ),
+      top: imageVar('magnifier-clone-top', `${(-magnifierCanvasTop / magnifierRenderSize) * 100}%`),
+      transform: imageVar('magnifier-clone-transform', `scale(${image.magnifier.zoom})`),
+      transformOrigin: imageVar(
+        'magnifier-clone-origin',
+        `${image.magnifier.center.x * 100}% ${image.magnifier.center.y * 100}%`,
+      ),
+    }
+    const magnifierStyle: CSSProperties = {
+      width: imageVar('magnifier-width', `${magnifierSizePercent}%`),
+      left: imageVar('magnifier-left', `${image.magnifier.center.x * 100}%`),
+      top: imageVar('magnifier-top', `${image.magnifier.center.y * 100}%`),
+      zIndex: imageVar('magnifier-z-index', image.zIndex + 2),
+      ...getMagnifierAppearanceStyle(image.magnifier),
+    }
+    const showMagnifierHandles = getShowMagnifierHandles(image)
 
     return (
       <div
+        key={image.which}
         className={s.cn(
           s.magnifier,
-          interactionMode === 'magnifier-move' && s.magnifierMoving,
-          interactionMode === 'magnifier-radius' && s.magnifierResizing,
-          interactionMode === 'magnifier-zoom' && s.magnifierZooming,
+          interactionMode === 'magnifier-move' &&
+            interactionRef.current?.which === image.which &&
+            s.magnifierMoving,
+          interactionMode === 'magnifier-radius' &&
+            interactionRef.current?.which === image.which &&
+            s.magnifierResizing,
+          interactionMode === 'magnifier-zoom' &&
+            interactionRef.current?.which === image.which &&
+            s.magnifierZooming,
         )}
         style={magnifierStyle}
         aria-label='Move magnifier'
-        onPointerDown={handleMagnifierMovePointerDown}
+        onPointerDown={handleMagnifierMovePointerDown(image)}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        onPointerEnter={() => setMagnifierHovered(true)}
-        onPointerLeave={() => setMagnifierHovered(false)}
+        onPointerEnter={() => setHoveredMagnifierWhich(image.which)}
+        onPointerLeave={() => setHoveredMagnifierWhich(null)}
       >
         <div className={s.magnifierViewport}>
           <div className={s.magnifierClone} style={magnifierCloneStyle}>
@@ -631,7 +743,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
               type='button'
               className={s.magnifierRadiusHandle}
               aria-label='Adjust magnifier size'
-              onPointerDown={handleMagnifierRadiusPointerDown}
+              onPointerDown={handleMagnifierRadiusPointerDown(image)}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerUp}
@@ -640,7 +752,7 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
               type='button'
               className={s.magnifierZoomHandle}
               aria-label='Adjust magnifier zoom'
-              onPointerDown={handleMagnifierZoomPointerDown}
+              onPointerDown={handleMagnifierZoomPointerDown(image)}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerUp}
@@ -651,103 +763,118 @@ const Cover: FC<TProps> = ({ imageUrl, onDropFile, onUpload }) => {
     )
   }
 
+  const renderEditorFrame = (image: TCoverImageConfig): ReactNode => {
+    const { editorFrameStyle, frameBorderRadiusValue } = getImageRenderState(image)
+    const showMagnifierHandles = getShowMagnifierHandles(image)
+
+    return (
+      <div
+        className={s.cn(
+          s.editorFrame,
+          showMagnifierHandles && s.editorFrameHidden,
+          interactionMode !== 'idle' &&
+            interactionRef.current?.which === image.which &&
+            s.editorFrameActive,
+          interactionMode === 'idle' && s.editorFrameMove,
+          interactionMode === 'move' &&
+            interactionRef.current?.which === image.which &&
+            s.editorFrameMoving,
+          interactionMode === 'resize' &&
+            interactionRef.current?.which === image.which &&
+            s.editorFrameResizing,
+        )}
+        style={editorFrameStyle}
+        aria-label='Move image'
+        onPointerDown={handleMovePointerDown(image)}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+      >
+        <div
+          className={s.cn(s.editorBorder, s.editorBorderTone)}
+          style={{ borderRadius: frameBorderRadiusValue }}
+        />
+        {RESIZE_HANDLES.map(({ classNameKey, cursorClassNameKey, handle, label }) => {
+          const radiusHandleVisible =
+            hoveredRadiusHandle === handle || activeRadiusHandle === handle
+          const radiusVisual = RADIUS_HANDLE_VISUAL[handle]
+          const guideStyle: CSSProperties = {
+            transform: radiusVisual.guideTransform,
+            width: `${radiusHandleLength}px`,
+          }
+          const bridgeStyle: CSSProperties = {
+            height: `${radiusHandleLength + 16}px`,
+            transform: radiusVisual.guideTransform,
+            width: `${radiusHandleLength + 16}px`,
+          }
+          const radiusDots = [
+            {
+              direction: {
+                x: -radiusVisual.axis.x,
+                y: -radiusVisual.axis.y,
+              },
+              key: 'start',
+              transform: getRadiusDotTransform(radiusVisual.axis, -radiusDotOffset),
+            },
+            {
+              direction: {
+                x: radiusVisual.axis.x,
+                y: radiusVisual.axis.y,
+              },
+              key: 'end',
+              transform: getRadiusDotTransform(radiusVisual.axis, radiusDotOffset),
+            },
+          ]
+
+          return (
+            <div
+              key={handle}
+              className={s.cn(s.resizeHandleGroup, s[classNameKey])}
+              onPointerDown={handleResizePointerDown(image, handle)}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerCancel={handlePointerUp}
+              onPointerEnter={() => setHoveredRadiusHandle(handle)}
+              onPointerLeave={() => setHoveredRadiusHandle(null)}
+            >
+              <button
+                type='button'
+                className={s.cn(s.resizeHandle, s[cursorClassNameKey])}
+                aria-label={label}
+              />
+              {radiusHandleVisible && (
+                <>
+                  <span className={s.radiusBridge} style={bridgeStyle} />
+                  <span className={s.cn(s.radiusGuide, s.radiusGuideTone)} style={guideStyle} />
+                  {radiusDots.map(({ direction, key, transform }) => (
+                    <button
+                      key={key}
+                      type='button'
+                      className={s.radiusDot}
+                      style={{ transform }}
+                      aria-label={`Adjust corner radius from ${handle}`}
+                      onPointerDown={handleRadiusPointerDown(image, handle, direction)}
+                      onPointerMove={handlePointerMove}
+                      onPointerUp={handlePointerUp}
+                      onPointerCancel={handlePointerUp}
+                    />
+                  ))}
+                </>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
   return (
     <div ref={wrapperRef} className={s.wrapper} style={s.wrapperStyle}>
       {hasImage && (
         <>
           {renderCoverContent()}
-          {renderMagnifier()}
-          <div
-            className={s.cn(
-              s.editorFrame,
-              showMagnifierHandles && s.editorFrameHidden,
-              interactionMode !== 'idle' && s.editorFrameActive,
-              interactionMode === 'idle' && s.editorFrameMove,
-              interactionMode === 'move' && s.editorFrameMoving,
-              interactionMode === 'resize' && s.editorFrameResizing,
-            )}
-            style={editorFrameStyle}
-            aria-label='Move image'
-            onPointerDown={handleMovePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
-          >
-            <div
-              className={s.cn(s.editorBorder, s.editorBorderTone)}
-              style={{ borderRadius: frameBorderRadiusValue }}
-            />
-            {RESIZE_HANDLES.map(({ classNameKey, cursorClassNameKey, handle, label }) => {
-              const radiusHandleVisible =
-                hoveredRadiusHandle === handle || activeRadiusHandle === handle
-              const radiusVisual = RADIUS_HANDLE_VISUAL[handle]
-              const guideStyle: CSSProperties = {
-                transform: radiusVisual.guideTransform,
-                width: `${radiusHandleLength}px`,
-              }
-              const bridgeStyle: CSSProperties = {
-                height: `${radiusHandleLength + 16}px`,
-                transform: radiusVisual.guideTransform,
-                width: `${radiusHandleLength + 16}px`,
-              }
-              const radiusDots = [
-                {
-                  direction: {
-                    x: -radiusVisual.axis.x,
-                    y: -radiusVisual.axis.y,
-                  },
-                  key: 'start',
-                  transform: getRadiusDotTransform(radiusVisual.axis, -radiusDotOffset),
-                },
-                {
-                  direction: {
-                    x: radiusVisual.axis.x,
-                    y: radiusVisual.axis.y,
-                  },
-                  key: 'end',
-                  transform: getRadiusDotTransform(radiusVisual.axis, radiusDotOffset),
-                },
-              ]
-
-              return (
-                <div
-                  key={handle}
-                  className={s.cn(s.resizeHandleGroup, s[classNameKey])}
-                  onPointerEnter={() => setHoveredRadiusHandle(handle)}
-                  onPointerLeave={() => setHoveredRadiusHandle(null)}
-                >
-                  <button
-                    type='button'
-                    className={s.cn(s.resizeHandle, s[cursorClassNameKey])}
-                    aria-label={label}
-                    onPointerDown={handleResizePointerDown(handle)}
-                    onPointerMove={handlePointerMove}
-                    onPointerUp={handlePointerUp}
-                    onPointerCancel={handlePointerUp}
-                  />
-                  {radiusHandleVisible && (
-                    <>
-                      <span className={s.radiusBridge} style={bridgeStyle} />
-                      <span className={s.cn(s.radiusGuide, s.radiusGuideTone)} style={guideStyle} />
-                      {radiusDots.map(({ direction, key, transform }) => (
-                        <button
-                          key={key}
-                          type='button'
-                          className={s.radiusDot}
-                          style={{ transform }}
-                          aria-label={`Adjust corner radius from ${handle}`}
-                          onPointerDown={handleRadiusPointerDown(handle, direction)}
-                          onPointerMove={handlePointerMove}
-                          onPointerUp={handlePointerUp}
-                          onPointerCancel={handlePointerUp}
-                        />
-                      ))}
-                    </>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+          {imageList.map((image) => renderMagnifier(image))}
+          {activeImage && renderEditorFrame(activeImage)}
         </>
       )}
     </div>

@@ -1,18 +1,21 @@
 import RangeInput from '~/widgets/RangeInput'
 
 import { COVER_SHADOW_COLOR_MODE, COVER_SHADOW_RANGE } from '../../../../constant'
-import type { TCoverShadow } from '../../../../spec'
-import useLogic from '../../../../useLogic'
+import { useImageDraftContext } from '../../../../imageDraftContext'
+import type { TCoverImageWhich, TCoverShadow } from '../../../../spec'
 import useSalon from './salon/custom_fields'
 
 type TProps = {
   showCustom: boolean
   shadow: TCoverShadow
+  which: TCoverImageWhich
 }
 
-export default function CustomFields({ shadow, showCustom }: TProps) {
+export default function CustomFields({ shadow, showCustom, which }: TProps) {
   const s = useSalon()
-  const { shadowOnChange } = useLogic()
+  const { flushImageDraft, scheduleImagePatch } = useImageDraftContext()
+  const scheduleShadowPatch = (patch: Partial<TCoverShadow>): void =>
+    scheduleImagePatch(which, { shadow: { ...shadow, ...patch } })
   const showHue =
     shadow.colorMode === COVER_SHADOW_COLOR_MODE.COLOR ||
     shadow.colorMode === COVER_SHADOW_COLOR_MODE.RAINBOW
@@ -37,12 +40,13 @@ export default function CustomFields({ shadow, showCustom }: TProps) {
             hideLabel
             unit='deg'
             onChange={(nextValue) => {
-              shadowOnChange(
+              scheduleShadowPatch(
                 shadow.colorMode === COVER_SHADOW_COLOR_MODE.RAINBOW
                   ? { rainbowHue: nextValue }
                   : { hue: nextValue },
               )
             }}
+            onChangeEnd={flushImageDraft}
           />
         </div>
       )}
@@ -64,7 +68,8 @@ export default function CustomFields({ shadow, showCustom }: TProps) {
                   aria-label='Shadow horizontal offset'
                   hideLabel
                   unit='px'
-                  onChange={(nextValue) => shadowOnChange({ x: nextValue })}
+                  onChange={(nextValue) => scheduleShadowPatch({ x: nextValue })}
+                  onChangeEnd={flushImageDraft}
                 />
               </div>
               <div className={s.offsetField}>
@@ -79,7 +84,8 @@ export default function CustomFields({ shadow, showCustom }: TProps) {
                   aria-label='Shadow vertical offset'
                   hideLabel
                   unit='px'
-                  onChange={(nextValue) => shadowOnChange({ y: nextValue })}
+                  onChange={(nextValue) => scheduleShadowPatch({ y: nextValue })}
+                  onChangeEnd={flushImageDraft}
                 />
               </div>
             </div>
@@ -97,7 +103,8 @@ export default function CustomFields({ shadow, showCustom }: TProps) {
               aria-label='Shadow blur radius'
               hideLabel
               unit='px'
-              onChange={(nextValue) => shadowOnChange({ blur: nextValue })}
+              onChange={(nextValue) => scheduleShadowPatch({ blur: nextValue })}
+              onChangeEnd={flushImageDraft}
             />
           </div>
 
@@ -113,7 +120,8 @@ export default function CustomFields({ shadow, showCustom }: TProps) {
               aria-label='Shadow spread radius'
               hideLabel
               unit='px'
-              onChange={(nextValue) => shadowOnChange({ spread: nextValue })}
+              onChange={(nextValue) => scheduleShadowPatch({ spread: nextValue })}
+              onChangeEnd={flushImageDraft}
             />
           </div>
 
@@ -130,7 +138,8 @@ export default function CustomFields({ shadow, showCustom }: TProps) {
               hideLabel
               unit=''
               formatValue={(value) => value.toFixed(2)}
-              onChange={(nextValue) => shadowOnChange({ opacity: nextValue })}
+              onChange={(nextValue) => scheduleShadowPatch({ opacity: nextValue })}
+              onChangeEnd={flushImageDraft}
             />
           </div>
         </div>

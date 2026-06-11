@@ -13,6 +13,14 @@ type TOptions<T extends object> = {
  * after the user pauses briefly. It deliberately does not know about any store;
  * callers decide whether the merged patch writes to local draft, dashboard
  * touched fields, or another saveable state.
+ *
+ * Example:
+ *   const { schedule, flush } = useDebouncedPreviewCommit({
+ *     onCommit: (patch) => store.commit(patch),
+ *   })
+ *
+ *   previewWithCssVars(patch)
+ *   schedule(patch)
  */
 export default function useDebouncedPreviewCommit<T extends object>({
   delay = 300,

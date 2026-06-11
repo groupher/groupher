@@ -1,4 +1,5 @@
-import type { TCoverPoint } from '../../../../spec'
+import { useImageDraftContext } from '../../../../imageDraftContext'
+import type { TCoverImageWhich, TCoverPoint } from '../../../../spec'
 import useLogic from '../../../../useLogic'
 import GroupItem from '../../GroupItem'
 import MagnifierControl from './Control'
@@ -9,11 +10,13 @@ type TProps = {
   radius: number
   zoom: number
   enabled: boolean
+  which: TCoverImageWhich
 }
 
-export default function Magnifier({ center, radius, zoom, enabled }: TProps) {
+export default function Magnifier({ center, radius, zoom, enabled, which }: TProps) {
   const s = useSalon()
-  const { magnifierRadiationOnChange, magnifierZoomOnChange, magnifierOnChange } = useLogic()
+  const { magnifierOnChange } = useLogic()
+  const { flushImageDraft, scheduleImagePatch } = useImageDraftContext()
 
   return (
     <section className={s.wrapper}>
@@ -23,10 +26,17 @@ export default function Magnifier({ center, radius, zoom, enabled }: TProps) {
           label='Magnifier position'
           disabled={!enabled}
           onChange={(next) => {
-            magnifierRadiationOnChange(next.center, next.radius)
-            magnifierZoomOnChange(next.zoom)
+            scheduleImagePatch(which, {
+              magnifier: {
+                center: next.center,
+                radius: next.radius,
+                zoom: next.zoom,
+                enabled: true,
+              },
+            })
           }}
-          onToggle={() => magnifierOnChange(!enabled)}
+          onToggle={() => magnifierOnChange(which, !enabled)}
+          onCommit={flushImageDraft}
         />
       </GroupItem>
     </section>

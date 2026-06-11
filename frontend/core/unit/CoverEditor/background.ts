@@ -63,18 +63,21 @@ export const createCoverBgConfig = (source: string = COVER_DEFAULT_GRADIENT.LIGH
     customWallpaper: null,
     source,
     type: WALLPAPER_TYPE.GRADIENT,
-    hasPattern: false,
-    patternId: DEFAULT_WALLPAPER_PATTERN_ID,
-    patternIntensity: 0,
-    // Pattern tone defaults to dark since the default cover config does not enable
-    // patterns by default, and it should remain independent from global theme.
-    patternTone: WALLPAPER_PATTERN_TONE.DARK,
-    hasTexture: false,
+    pattern: {
+      enabled: false,
+      id: DEFAULT_WALLPAPER_PATTERN_ID,
+      intensity: 0,
+      // Pattern tone defaults to dark since the default cover config does not enable
+      // patterns by default, and it should remain independent from global theme.
+      tone: WALLPAPER_PATTERN_TONE.DARK,
+    },
     gradient,
-    blurIntensity: effect.blurIntensity ?? 0,
-    brightness: effect.brightness ?? 100,
-    saturation: effect.saturation ?? 100,
-    texture: { ...COVER_DEFAULT_TEXTURE },
+    effect: {
+      blurIntensity: effect.blurIntensity ?? 0,
+      brightness: effect.brightness ?? 100,
+      saturation: effect.saturation ?? 100,
+    },
+    texture: { enabled: false, ...COVER_DEFAULT_TEXTURE },
   }
 }
 

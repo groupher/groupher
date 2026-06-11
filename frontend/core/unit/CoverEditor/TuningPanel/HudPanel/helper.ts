@@ -1,4 +1,4 @@
-import type { TCoverPoint, TTuningSetting } from '../../spec'
+import type { TCoverImageConfig, TCoverPoint } from '../../spec'
 
 const CENTER_POINT_THRESHOLD = 0.001
 
@@ -9,12 +9,12 @@ export const isCenterPoint = (point: TCoverPoint): boolean =>
 export const getBorderValue = ({
   borderRadius,
   borderHighlight,
-  hasGlassBorder,
-}: Pick<TTuningSetting, 'borderHighlight' | 'borderRadius' | 'hasGlassBorder'>): string => {
+  glassBorder,
+}: Pick<TCoverImageConfig, 'borderHighlight' | 'borderRadius' | 'glassBorder'>): string => {
   const value = [
     borderRadius > 0 ? '角' : '',
     borderHighlight.enabled ? '光' : '',
-    hasGlassBorder ? '框' : '',
+    glassBorder.enabled ? '框' : '',
   ]
     .filter(Boolean)
     .join('/')

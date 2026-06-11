@@ -1,5 +1,6 @@
 import type { WALLPAPER_PATTERN_TONE, WALLPAPER_TYPE } from '~/const/wallpaper'
-import type { TGradientRecipe, TWallpaperTexture } from '~/lib/wallpaperMesh'
+import type { TBgEffect, TBgPattern, TBgTexture } from '~/lib/bg'
+import type { TGradientRecipe } from '~/lib/wallpaperMesh'
 
 export type TWallpaperFmt = {
   effect: string
@@ -70,36 +71,28 @@ export type TWallpaperData = {
   gradientWallpapers: Record<string, TGradientRecipe>
   patternWallpapers: Record<string, TWallpaper>
   type: TWallpaperType
-  hasPattern: boolean
-  patternId: string
-  patternIntensity: number
-  patternTone: TWallpaperPatternTone
-  hasTexture: boolean
+  pattern: TBgPattern
+  texture: TBgTexture
   hasBlur: boolean
-  blurIntensity: number
-  hasShadow: boolean
-  brightness: number
-  saturation: number
+  contentShadow: {
+    enabled: boolean
+  }
+  effect: TBgEffect
   gradient: TGradientRecipe | null
-  texture: TWallpaperTexture
 }
 
 export type TWallpaperConfigData = {
   customWallpaper: TCustomWallpaper
   source: string
   type: TWallpaperType
-  hasPattern: boolean
-  patternId: string
-  patternIntensity: number
-  patternTone: TWallpaperPatternTone
-  hasTexture: boolean
+  pattern: TBgPattern
+  texture: TBgTexture
   hasBlur?: boolean
-  blurIntensity: number
-  hasShadow: boolean
-  brightness: number
-  saturation: number
+  contentShadow: {
+    enabled: boolean
+  }
+  effect: TBgEffect
   gradient: TGradientRecipe | null
-  texture: TWallpaperTexture
 }
 
 export type TWallpaperConfig = {

@@ -9,7 +9,7 @@ describe('stores/wallpaper/helper', () => {
     const store = setupStore({
       light: {
         source: 'amber_mauve',
-        brightness: 100,
+        effect: { blurIntensity: 0, brightness: 100, saturation: 100 },
         gradient: {
           version: 2,
           renderer: GRADIENT_RENDERER.LINEAR,
@@ -21,7 +21,7 @@ describe('stores/wallpaper/helper', () => {
       },
       dark: {
         source: 'teal_indigo_mauve',
-        brightness: 82,
+        effect: { blurIntensity: 0, brightness: 82, saturation: 100 },
         gradient: {
           version: 2,
           renderer: GRADIENT_RENDERER.LINEAR,
@@ -35,12 +35,12 @@ describe('stores/wallpaper/helper', () => {
 
     expect(pickWallpaperThemeState(store, false)).toMatchObject({
       source: 'amber_mauve',
-      brightness: 100,
+      effect: { brightness: 100 },
       gradient: expect.objectContaining({ preset: 'amber_mauve' }),
     })
     expect(pickWallpaperThemeState(store, true)).toMatchObject({
       source: 'teal_indigo_mauve',
-      brightness: 82,
+      effect: { brightness: 82 },
       gradient: expect.objectContaining({ preset: 'teal_indigo_mauve' }),
     })
   })
@@ -63,25 +63,25 @@ describe('stores/wallpaper/helper', () => {
     const store = setupStore({
       light: {
         source: 'amber_mauve',
-        texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
+        texture: { enabled: false, type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
       },
       dark: {
         source: 'teal_indigo_mauve',
-        texture: { type: WALLPAPER_TEXTURE.TILE, intensity: 40, params: {} },
+        texture: { enabled: true, type: WALLPAPER_TEXTURE.TILE, intensity: 40, params: {} },
       },
     })
 
     store.commit({
       dark: {
         source: 'sky_mauve_blue',
-        texture: { type: WALLPAPER_TEXTURE.ASCII, intensity: 55, params: {} },
+        texture: { enabled: true, type: WALLPAPER_TEXTURE.ASCII, intensity: 55, params: {} },
       },
     })
 
     expect(getWallpaperSavablePatch(store)).toEqual({
       dark: {
         source: 'sky_mauve_blue',
-        texture: { type: WALLPAPER_TEXTURE.ASCII, intensity: 55, params: {} },
+        texture: { enabled: true, type: WALLPAPER_TEXTURE.ASCII, intensity: 55, params: {} },
       },
     })
   })

@@ -16,12 +16,18 @@ import {
   normalizeMagnifierHighlightIntensity,
   normalizeMagnifierShadow,
 } from '../../../../helper'
-import type { TCoverPoint, TMagnifierAppearance, TMagnifierBorderColor } from '../../../../spec'
+import type {
+  TCoverMagnifier,
+  TCoverImageWhich,
+  TCoverPoint,
+  TMagnifierBorderColor,
+} from '../../../../spec'
 import useLogic from '../../../../useLogic'
 import useSalon, { cn } from './salon/settings'
 
 type TProps = {
-  appearance: TMagnifierAppearance
+  magnifier: TCoverMagnifier
+  which: TCoverImageWhich
 }
 
 type TColorOption = {
@@ -247,10 +253,10 @@ function LightControl({
   )
 }
 
-export default function MagnifierSettings({ appearance }: TProps) {
+export default function MagnifierSettings({ magnifier, which }: TProps) {
   const s = useSalon()
-  const { magnifierAppearanceOnChange } = useLogic()
-  const normalized = normalizeMagnifierAppearance(appearance)
+  const { magnifierSettingsOnChange } = useLogic()
+  const normalized = normalizeMagnifierAppearance(magnifier)
 
   return (
     <Tooltip
@@ -271,7 +277,7 @@ export default function MagnifierSettings({ appearance }: TProps) {
               }}
               label='Magnifier highlight'
               onChange={(nextValue) =>
-                magnifierAppearanceOnChange({
+                magnifierSettingsOnChange(which, {
                   highlightCenter: nextValue.center,
                   highlightIntensity: normalizeMagnifierHighlightIntensity(nextValue.radius),
                 })
@@ -296,7 +302,7 @@ export default function MagnifierSettings({ appearance }: TProps) {
                     )}
                     aria-label={option.label}
                     aria-pressed={normalized.borderColor === option.value}
-                    onClick={() => magnifierAppearanceOnChange({ borderColor: option.value })}
+                    onClick={() => magnifierSettingsOnChange(which, { borderColor: option.value })}
                   />
                 ))}
               </div>
@@ -311,7 +317,7 @@ export default function MagnifierSettings({ appearance }: TProps) {
                 hideLabel
                 unit='px'
                 onChange={(nextValue) =>
-                  magnifierAppearanceOnChange({
+                  magnifierSettingsOnChange(which, {
                     borderWidth: normalizeMagnifierBorderWidth(nextValue),
                   })
                 }
@@ -332,7 +338,7 @@ export default function MagnifierSettings({ appearance }: TProps) {
               hideLabel
               unit='%'
               onChange={(nextValue) =>
-                magnifierAppearanceOnChange({
+                magnifierSettingsOnChange(which, {
                   shadow: normalizeMagnifierShadow(nextValue),
                 })
               }

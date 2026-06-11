@@ -3,7 +3,7 @@ import { proxy, useSnapshot } from 'valtio'
 
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import useTheme from '~/hooks/useTheme'
-import type { TBgConfig } from '~/lib/bg'
+import type { TBgConfig, TBgTexture } from '~/lib/bg'
 import {
   DEFAULT_WALLPAPER_TEXTURE_INTENSITY,
   GRADIENT_RENDERER,
@@ -11,35 +11,57 @@ import {
   isMeshGradientRecipe,
   type TGradientRecipe,
   type TGradientRenderer,
-  type TWallpaperTexture,
 } from '~/lib/wallpaperMesh'
 
 import { composeCoverGradientRecipe, createCoverBgThemeConfig } from './background'
+import { COVER_IMAGE_WHICH } from './constant'
 import {
-  BORDER_HIGHLIGHT_DEFAULT,
-  COVER_SHADOW_DEFAULT,
-  IMAGE_SIZE_RANGE,
-  MAGNIFIER_APPEARANCE_DEFAULT,
-  MAGNIFIER_RADIUS_DEFAULT,
-  MAGNIFIER_ZOOM_DEFAULT,
-} from './constant'
+  createCoverImageConfig,
+  EMPTY_COVER_IMAGES,
+  getActiveImage,
+  getNextActiveImageWhich,
+  getRaisedImages,
+} from './coverImageModel'
 import type {
   TBorderHighlight,
   TCoverBackgroundPatch,
+  TCoverConfig,
+  TCoverImageConfig,
+  TCoverImagePatch,
+  TCoverImages,
+  TCoverImageWhich,
+  TCoverMagnifier,
   TCoverPoint,
   TCoverShadow,
   TImageSize,
-  TMagnifierAppearance,
   TStore,
   TTuningSetting,
 } from './spec'
 
 type TRet = {
-  imageLoadedOnChange: (imageUrl: string, imageDominantColor: string | null) => void
-  positionOnChange: (position: TCoverPoint) => void
-  shadowOnChange: (shadow: Partial<TCoverShadow>) => void
-  borderRadiusOnChange: (borderRadius: number) => void
-  borderHighlightOnChange: (borderHighlight: Partial<TBorderHighlight>) => void
+  coverConfig: TCoverConfig
+  imageSourceOnChange: (which: TCoverImageWhich, imageUrl: string) => void
+  imageLoadedOnChange: (
+    which: TCoverImageWhich,
+    imageUrl: string,
+    imageDominantColor: string | null,
+  ) => void
+  imagesOnChange: (nextImages: TCoverImages, nextActiveImageWhich?: TCoverImageWhich) => void
+  imagePatchOnChange: (
+    which: TCoverImageWhich,
+    patch: TCoverImagePatch,
+    options?: { raise?: boolean },
+  ) => void
+  imageDeleteOnChange: (which: TCoverImageWhich) => void
+  imageActivateOnChange: (which: TCoverImageWhich) => void
+  resetImages: () => void
+  positionOnChange: (which: TCoverImageWhich, position: TCoverPoint) => void
+  shadowOnChange: (which: TCoverImageWhich, shadow: Partial<TCoverShadow>) => void
+  borderRadiusOnChange: (which: TCoverImageWhich, borderRadius: number) => void
+  borderHighlightOnChange: (
+    which: TCoverImageWhich,
+    borderHighlight: Partial<TBorderHighlight>,
+  ) => void
   backgroundOnChange: (patch: TCoverBackgroundPatch) => void
   rollbackBackground: () => void
   gradientBackgroundOnChange: (source: string) => void
@@ -47,148 +69,40 @@ type TRet = {
   backgroundGradientOnChange: (gradient: TGradientRecipe) => void
   backgroundGradientRendererOnChange: (renderer: TGradientRenderer) => void
   backgroundGradientAngleOnChange: (angle: number) => void
-  toggleBackgroundTexture: (hasTexture: boolean) => void
-  backgroundTextureOnChange: (texture: TWallpaperTexture) => void
-  sizeOnChange: (size: TImageSize) => void
-  rotateOnChange: (rotate: number) => void
-  glassBorderOnChange: (hasGlassBorder: boolean) => void
-  magnifierRadiationOnChange: (magnifierCenter: TCoverPoint, magnifierRadius: number) => void
-  magnifierZoomOnChange: (magnifierZoom: number) => void
-  magnifierAppearanceOnChange: (magnifierAppearance: Partial<TMagnifierAppearance>) => void
-  magnifierOnChange: (hasMagnifier: boolean) => void
+  toggleBackgroundTexture: (enabled: boolean) => void
+  backgroundTextureOnChange: (texture: TBgTexture) => void
+  sizeOnChange: (which: TCoverImageWhich, size: TImageSize) => void
+  rotateOnChange: (which: TCoverImageWhich, rotate: number) => void
+  glassBorderOnChange: (which: TCoverImageWhich, enabled: boolean) => void
+  magnifierRadiationOnChange: (which: TCoverImageWhich, center: TCoverPoint, radius: number) => void
+  magnifierZoomOnChange: (which: TCoverImageWhich, zoom: number) => void
+  magnifierSettingsOnChange: (which: TCoverImageWhich, magnifier: Partial<TCoverMagnifier>) => void
+  magnifierOnChange: (which: TCoverImageWhich, enabled: boolean) => void
 } & TStore
 
-// Neutral store defaults keep the editor empty-safe; this preset is only applied
-// once a real image finishes loading so the first visible cover has a polished frame.
-const LOADED_IMAGE_DEFAULT_SETTING: Partial<TStore> = {
-  size: 94,
-  rotate: 0,
-  position: { x: 0.5, y: 0.5 },
-  shadow: {
-    preset: COVER_SHADOW_DEFAULT.PRESET,
-    colorMode: COVER_SHADOW_DEFAULT.COLOR_MODE,
-    hue: COVER_SHADOW_DEFAULT.HUE,
-    rainbowHue: COVER_SHADOW_DEFAULT.RAINBOW_HUE,
-    x: COVER_SHADOW_DEFAULT.X,
-    y: COVER_SHADOW_DEFAULT.Y,
-    blur: COVER_SHADOW_DEFAULT.BLUR,
-    spread: COVER_SHADOW_DEFAULT.SPREAD,
-    opacity: COVER_SHADOW_DEFAULT.OPACITY,
-  },
-  borderRadius: 0,
-  borderHighlight: {
-    enabled: BORDER_HIGHLIGHT_DEFAULT.ENABLED,
-    mode: BORDER_HIGHLIGHT_DEFAULT.MODE,
-    angle: BORDER_HIGHLIGHT_DEFAULT.ANGLE,
-    length: BORDER_HIGHLIGHT_DEFAULT.LENGTH,
-    hue: BORDER_HIGHLIGHT_DEFAULT.HUE,
-    rainbowHue: BORDER_HIGHLIGHT_DEFAULT.RAINBOW_HUE,
-    saturation: BORDER_HIGHLIGHT_DEFAULT.SATURATION,
-    lightness: BORDER_HIGHLIGHT_DEFAULT.LIGHTNESS,
-    opacity: BORDER_HIGHLIGHT_DEFAULT.OPACITY,
-  },
-  hasGlassBorder: false,
-  hasMagnifier: false,
-  magnifierRadius: MAGNIFIER_RADIUS_DEFAULT,
-  magnifierZoom: MAGNIFIER_ZOOM_DEFAULT,
-  magnifierAppearance: {
-    borderColor: MAGNIFIER_APPEARANCE_DEFAULT.BORDER_COLOR,
-    borderWidth: MAGNIFIER_APPEARANCE_DEFAULT.BORDER_WIDTH,
-    highlightCenter: { ...MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_CENTER },
-    highlightIntensity: MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_INTENSITY,
-    shadow: MAGNIFIER_APPEARANCE_DEFAULT.SHADOW,
-  },
-  background: createCoverBgThemeConfig(),
-  originalBackground: createCoverBgThemeConfig(),
-}
-
 const store = proxy<TStore>({
-  imageDominantColor: null,
-  position: { x: 0.5, y: 0.5 },
-  magnifierCenter: { x: 0.5, y: 0.5 },
-  magnifierRadius: MAGNIFIER_RADIUS_DEFAULT,
-  magnifierZoom: MAGNIFIER_ZOOM_DEFAULT,
-  magnifierAppearance: {
-    borderColor: MAGNIFIER_APPEARANCE_DEFAULT.BORDER_COLOR,
-    borderWidth: MAGNIFIER_APPEARANCE_DEFAULT.BORDER_WIDTH,
-    highlightCenter: { ...MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_CENTER },
-    highlightIntensity: MAGNIFIER_APPEARANCE_DEFAULT.HIGHLIGHT_INTENSITY,
-    shadow: MAGNIFIER_APPEARANCE_DEFAULT.SHADOW,
-  },
-  hasMagnifier: false,
-  shadow: {
-    preset: COVER_SHADOW_DEFAULT.PRESET,
-    colorMode: COVER_SHADOW_DEFAULT.COLOR_MODE,
-    hue: COVER_SHADOW_DEFAULT.HUE,
-    rainbowHue: COVER_SHADOW_DEFAULT.RAINBOW_HUE,
-    x: COVER_SHADOW_DEFAULT.X,
-    y: COVER_SHADOW_DEFAULT.Y,
-    blur: COVER_SHADOW_DEFAULT.BLUR,
-    spread: COVER_SHADOW_DEFAULT.SPREAD,
-    opacity: COVER_SHADOW_DEFAULT.OPACITY,
-  },
-  borderRadius: 0,
-  borderHighlight: {
-    enabled: BORDER_HIGHLIGHT_DEFAULT.ENABLED,
-    mode: BORDER_HIGHLIGHT_DEFAULT.MODE,
-    angle: BORDER_HIGHLIGHT_DEFAULT.ANGLE,
-    length: BORDER_HIGHLIGHT_DEFAULT.LENGTH,
-    hue: BORDER_HIGHLIGHT_DEFAULT.HUE,
-    rainbowHue: BORDER_HIGHLIGHT_DEFAULT.RAINBOW_HUE,
-    saturation: BORDER_HIGHLIGHT_DEFAULT.SATURATION,
-    lightness: BORDER_HIGHLIGHT_DEFAULT.LIGHTNESS,
-    opacity: BORDER_HIGHLIGHT_DEFAULT.OPACITY,
-  },
-  size: IMAGE_SIZE_RANGE.MAX,
-  rotate: 0,
-  hasGlassBorder: false,
+  images: clone(EMPTY_COVER_IMAGES),
+  activeImageWhich: COVER_IMAGE_WHICH.PRIMARY,
 
   // for background
   background: createCoverBgThemeConfig(),
   originalBackground: createCoverBgThemeConfig(),
-  loadedImageUrl: '',
 
   get tuningSetting(): TTuningSetting {
-    const {
-      imageDominantColor,
-      position,
-      magnifierCenter,
-      magnifierRadius,
-      magnifierZoom,
-      magnifierAppearance,
-      hasMagnifier,
-      shadow,
-      borderRadius,
-      borderHighlight,
-      background,
-      originalBackground,
-      size,
-      rotate,
-      hasGlassBorder,
-    } = store
+    const { images, activeImageWhich, background, originalBackground } = store
 
     return {
-      imageDominantColor,
-      position,
-      magnifierCenter,
-      magnifierRadius,
-      magnifierZoom,
-      magnifierAppearance,
-      hasMagnifier,
-      shadow,
-      borderRadius,
-      borderHighlight,
+      images,
+      activeImageWhich,
+      activeImage: getActiveImage(images, activeImageWhich),
       background,
       activeBackground: background.light,
       isBackgroundTouched: !equals(clone(originalBackground), clone(background)),
-      size,
-      rotate,
-      hasGlassBorder,
     }
   },
 
   commit: (patch: Partial<TStore>): void => {
-    Object.assign(store, mergeDeepRight(store, patch))
+    Object.assign(store, patch)
   },
 })
 
@@ -197,41 +111,133 @@ export default function useLogic(): TRet {
   const { isDarkTheme } = useTheme()
   const activeThemeKey = isDarkTheme ? 'dark' : 'light'
   const activeBackground = snap.background[activeThemeKey] as TBgConfig
+  const images = snap.images as TCoverImages
+  const activeImageWhich = getNextActiveImageWhich(images, snap.activeImageWhich)
   const tuningSetting = {
     ...snap.tuningSetting,
+    images,
+    activeImageWhich,
+    activeImage: getActiveImage(images, activeImageWhich),
     activeBackground,
     isBackgroundTouched: !equals(clone(snap.originalBackground), clone(snap.background)),
   } as TTuningSetting
+  const coverConfig: TCoverConfig = {
+    images,
+    background: snap.background as TStore['background'],
+  }
 
-  const imageLoadedOnChange = (imageUrl: string, imageDominantColor: string | null): void => {
-    if (!imageUrl || snap.loadedImageUrl === imageUrl) return
-    const background = createCoverBgThemeConfig()
+  const commitImages = (
+    nextImages: TCoverImages,
+    nextActiveImageWhich = activeImageWhich,
+  ): void => {
+    const resolvedActiveImageWhich = getNextActiveImageWhich(nextImages, nextActiveImageWhich)
+    if (activeImageWhich === resolvedActiveImageWhich && equals(images, nextImages)) return
 
-    // Apply the polished cover preset only after the actual image succeeds loading.
-    // Tracking imageUrl prevents a browser re-load from resetting user tuning edits.
     snap.commit({
-      ...LOADED_IMAGE_DEFAULT_SETTING,
-      imageDominantColor,
-      loadedImageUrl: imageUrl,
-      background,
-      originalBackground: clone(background),
+      images: nextImages,
+      activeImageWhich: resolvedActiveImageWhich,
     })
   }
 
-  const positionOnChange = (position: TCoverPoint): void => snap.commit({ position })
-  const shadowOnChange = (shadow: Partial<TCoverShadow>): void =>
-    snap.commit({ shadow: { ...snap.shadow, ...shadow } })
-  const borderRadiusOnChange = (borderRadius: number): void => snap.commit({ borderRadius })
-  const borderHighlightOnChange = (borderHighlight: Partial<TBorderHighlight>): void =>
-    snap.commit({ borderHighlight: { ...snap.borderHighlight, ...borderHighlight } })
+  const imagesOnChange = (
+    nextImages: TCoverImages,
+    nextActiveImageWhich = activeImageWhich,
+  ): void => {
+    commitImages(nextImages, nextActiveImageWhich)
+  }
+
+  const imagePatchOnChange = (
+    which: TCoverImageWhich,
+    patch: TCoverImagePatch,
+    options: { raise?: boolean } = {},
+  ): void => {
+    const image = images[which]
+    if (!image) return
+
+    const nextImage = mergeDeepRight(image, patch) as TCoverImageConfig
+    if (equals(image, nextImage)) return
+
+    const nextImages = {
+      ...images,
+      [which]: nextImage,
+    }
+
+    commitImages(
+      options.raise === false ? nextImages : getRaisedImages(nextImages, which),
+      options.raise === false ? activeImageWhich : which,
+    )
+  }
+
+  const imageSourceOnChange = (which: TCoverImageWhich, imageUrl: string): void => {
+    if (!imageUrl) return
+
+    const currentImage = images[which]
+    const nextImage = currentImage
+      ? {
+          ...currentImage,
+          source: imageUrl,
+          dominantColor: currentImage.source === imageUrl ? currentImage.dominantColor : null,
+        }
+      : createCoverImageConfig(which, imageUrl)
+
+    commitImages(getRaisedImages({ ...images, [which]: nextImage }, which), which)
+  }
+
+  const imageLoadedOnChange = (
+    which: TCoverImageWhich,
+    imageUrl: string,
+    imageDominantColor: string | null,
+  ): void => {
+    const image = images[which]
+    if (!image || image.source !== imageUrl || image.dominantColor === imageDominantColor) return
+
+    imagePatchOnChange(which, { dominantColor: imageDominantColor }, { raise: false })
+  }
+
+  const imageDeleteOnChange = (which: TCoverImageWhich): void => {
+    commitImages(
+      { ...images, [which]: null },
+      activeImageWhich === which ? which : activeImageWhich,
+    )
+  }
+
+  const imageActivateOnChange = (which: TCoverImageWhich): void => {
+    if (!images[which]) return
+
+    const nextImages = getRaisedImages(images, which)
+    if (activeImageWhich === which && equals(images, nextImages)) return
+
+    commitImages(nextImages, which)
+  }
+
+  const resetImages = (): void => {
+    commitImages(clone(EMPTY_COVER_IMAGES), COVER_IMAGE_WHICH.PRIMARY)
+  }
+
+  const positionOnChange = (which: TCoverImageWhich, position: TCoverPoint): void =>
+    imagePatchOnChange(which, { position })
+  const shadowOnChange = (which: TCoverImageWhich, shadow: Partial<TCoverShadow>): void => {
+    const image = images[which]
+    if (!image) return
+
+    imagePatchOnChange(which, { shadow: { ...image.shadow, ...shadow } })
+  }
+  const borderRadiusOnChange = (which: TCoverImageWhich, borderRadius: number): void =>
+    imagePatchOnChange(which, { borderRadius })
+  const borderHighlightOnChange = (
+    which: TCoverImageWhich,
+    borderHighlight: Partial<TBorderHighlight>,
+  ): void => {
+    const image = images[which]
+    if (!image) return
+
+    imagePatchOnChange(which, { borderHighlight: { ...image.borderHighlight, ...borderHighlight } })
+  }
   const backgroundOnChange = (patch: TCoverBackgroundPatch): void =>
     snap.commit({
       background: {
         ...snap.background,
-        [activeThemeKey]: {
-          ...activeBackground,
-          ...patch,
-        },
+        [activeThemeKey]: mergeDeepRight(activeBackground, patch),
       } as TStore['background'],
     })
   const rollbackBackground = (): void =>
@@ -274,39 +280,60 @@ export default function useLogic(): TRet {
       backgroundGradientOnChange({ ...gradient, angle })
     }
   }
-  const toggleBackgroundTexture = (hasTexture: boolean): void => {
+  const toggleBackgroundTexture = (enabled: boolean): void => {
     const texture =
-      hasTexture && activeBackground.texture.intensity === 0
+      enabled && activeBackground.texture.intensity === 0
         ? { ...activeBackground.texture, intensity: DEFAULT_WALLPAPER_TEXTURE_INTENSITY }
         : activeBackground.texture
 
-    backgroundOnChange({ hasTexture, texture })
+    backgroundOnChange({ texture: { ...texture, enabled } })
   }
-  const backgroundTextureOnChange = (texture: TWallpaperTexture): void =>
-    backgroundOnChange({ hasTexture: true, texture })
-  const sizeOnChange = (size: TImageSize): void => snap.commit({ size })
-  const rotateOnChange = (rotate: number): void => snap.commit({ rotate })
+  const backgroundTextureOnChange = (texture: TBgTexture): void =>
+    backgroundOnChange({ texture: { ...texture, enabled: true } })
+  const sizeOnChange = (which: TCoverImageWhich, size: TImageSize): void =>
+    imagePatchOnChange(which, { size })
+  const rotateOnChange = (which: TCoverImageWhich, rotate: number): void =>
+    imagePatchOnChange(which, { rotate })
 
-  const glassBorderOnChange = (hasGlassBorder: boolean) => snap.commit({ hasGlassBorder })
+  const glassBorderOnChange = (which: TCoverImageWhich, enabled: boolean) =>
+    imagePatchOnChange(which, { glassBorder: { enabled } })
 
   const magnifierRadiationOnChange = (
-    magnifierCenter: TCoverPoint,
-    magnifierRadius: number,
-  ): void => snap.commit({ magnifierCenter, magnifierRadius, hasMagnifier: true })
-  const magnifierZoomOnChange = (magnifierZoom: number): void => snap.commit({ magnifierZoom })
-  const magnifierAppearanceOnChange = (magnifierAppearance: Partial<TMagnifierAppearance>): void =>
-    snap.commit({
-      hasMagnifier: true,
-      magnifierAppearance: { ...snap.magnifierAppearance, ...magnifierAppearance },
+    which: TCoverImageWhich,
+    center: TCoverPoint,
+    radius: number,
+  ): void => imagePatchOnChange(which, { magnifier: { center, radius, enabled: true } })
+  const magnifierZoomOnChange = (which: TCoverImageWhich, zoom: number): void =>
+    imagePatchOnChange(which, { magnifier: { zoom } })
+  const magnifierSettingsOnChange = (
+    which: TCoverImageWhich,
+    magnifier: Partial<TCoverMagnifier>,
+  ): void => {
+    const image = images[which]
+    if (!image) return
+
+    imagePatchOnChange(which, {
+      magnifier: { ...image.magnifier, ...magnifier, enabled: true },
     })
-  const magnifierOnChange = (hasMagnifier: boolean): void => snap.commit({ hasMagnifier })
+  }
+  const magnifierOnChange = (which: TCoverImageWhich, enabled: boolean): void =>
+    imagePatchOnChange(which, { magnifier: { enabled } })
 
   return {
     ...pick(keys(snap), snap),
+    images,
+    activeImageWhich,
     background: snap.background as TStore['background'],
     originalBackground: snap.originalBackground as TStore['originalBackground'],
     tuningSetting,
+    coverConfig,
+    imageSourceOnChange,
     imageLoadedOnChange,
+    imagesOnChange,
+    imagePatchOnChange,
+    imageDeleteOnChange,
+    imageActivateOnChange,
+    resetImages,
     positionOnChange,
     shadowOnChange,
     borderRadiusOnChange,
@@ -325,7 +352,7 @@ export default function useLogic(): TRet {
     glassBorderOnChange,
     magnifierRadiationOnChange,
     magnifierZoomOnChange,
-    magnifierAppearanceOnChange,
+    magnifierSettingsOnChange,
     magnifierOnChange,
   }
 }

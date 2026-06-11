@@ -20,15 +20,14 @@ describe('useFullWallpaper', () => {
         light: {
           source: GRADIENT_WALLPAPER_NAME.AMBER_MAUVE,
           type: WALLPAPER_TYPE.GRADIENT,
-          hasPattern: true,
-          patternId: DEFAULT_WALLPAPER_PATTERN_ID,
-          patternIntensity: 100,
-          patternTone: WALLPAPER_PATTERN_TONE.DARK,
-          hasTexture: false,
-          blurIntensity: 0,
-          brightness: 100,
-          saturation: 100,
-          texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
+          pattern: {
+            enabled: true,
+            id: DEFAULT_WALLPAPER_PATTERN_ID,
+            intensity: 100,
+            tone: WALLPAPER_PATTERN_TONE.DARK,
+          },
+          effect: { blurIntensity: 0, brightness: 100, saturation: 100 },
+          texture: { enabled: false, type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
           gradient: GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.AMBER_MAUVE],
         },
       },
@@ -39,13 +38,18 @@ describe('useFullWallpaper', () => {
     const data = result.current.getWallpaper()
     expect(data.source).toBe(GRADIENT_WALLPAPER_NAME.AMBER_MAUVE)
     expect(data.type).toBe(WALLPAPER_TYPE.GRADIENT)
-    expect(data.patternId).toBe(DEFAULT_WALLPAPER_PATTERN_ID)
-    expect(data.patternIntensity).toBe(100)
-    expect(data.patternTone).toBe(WALLPAPER_PATTERN_TONE.DARK)
-    expect(data.hasTexture).toBe(false)
-    expect(data.brightness).toBe(100)
-    expect(data.saturation).toBe(100)
-    expect(data.texture).toEqual({ type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} })
+    expect(data.pattern.id).toBe(DEFAULT_WALLPAPER_PATTERN_ID)
+    expect(data.pattern.intensity).toBe(100)
+    expect(data.pattern.tone).toBe(WALLPAPER_PATTERN_TONE.DARK)
+    expect(data.texture.enabled).toBe(false)
+    expect(data.effect.brightness).toBe(100)
+    expect(data.effect.saturation).toBe(100)
+    expect(data.texture).toEqual({
+      enabled: false,
+      type: WALLPAPER_TEXTURE.NOISE,
+      intensity: 0,
+      params: {},
+    })
 
     const amberMauve = data.gradientWallpapers.amber_mauve
     expect('colors' in amberMauve).toBe(true)
@@ -71,11 +75,13 @@ describe('useFullWallpaper', () => {
         light: {
           source: GRADIENT_WALLPAPER_NAME.TEAL_INDIGO_MAUVE,
           type: WALLPAPER_TYPE.GRADIENT,
-          hasPattern: true,
-          patternId: DEFAULT_WALLPAPER_PATTERN_ID,
-          patternIntensity: 100,
-          patternTone: WALLPAPER_PATTERN_TONE.DARK,
-          blurIntensity: 50,
+          pattern: {
+            enabled: true,
+            id: DEFAULT_WALLPAPER_PATTERN_ID,
+            intensity: 100,
+            tone: WALLPAPER_PATTERN_TONE.DARK,
+          },
+          effect: { blurIntensity: 50, brightness: 100, saturation: 100 },
           gradient: {
             ...GRADIENT_WALLPAPER[GRADIENT_WALLPAPER_NAME.TEAL_INDIGO_MAUVE],
             angle: 90,
@@ -101,9 +107,7 @@ describe('useFullWallpaper', () => {
         light: {
           source: 'backiee-1',
           type: WALLPAPER_TYPE.PATTERN,
-          blurIntensity: 50,
-          brightness: 75,
-          saturation: 130,
+          effect: { blurIntensity: 50, brightness: 75, saturation: 130 },
         },
       },
     })

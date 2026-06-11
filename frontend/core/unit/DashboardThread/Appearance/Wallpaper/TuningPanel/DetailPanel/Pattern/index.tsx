@@ -1,6 +1,6 @@
 import { WALLPAPER_PATTERN_TONE } from '~/const/wallpaper'
 import useTrans from '~/hooks/useTrans'
-import type { TWallpaperPatternTone } from '~/spec'
+import type { TBgPattern } from '~/lib/bg'
 import PatternIntensityField from '~/widgets/TuningFields/PatternIntensityField'
 import ToggleField from '~/widgets/TuningFields/ToggleField'
 
@@ -8,18 +8,16 @@ import useSalon from '../../salon/detail_panel/pattern'
 import GroupTitle from '../GroupTitle'
 
 type Props = {
-  hasPattern: boolean
-  patternTone: TWallpaperPatternTone
+  pattern: TBgPattern
   patternIntensity: number
-  onTogglePattern: (hasPattern: boolean) => void
+  onTogglePattern: (enabled: boolean) => void
   onPatternToneChange: (lightPattern: boolean) => void
   onPatternIntensityChange: (value: number) => void
   onRangeChangeEnd: () => void
 }
 
 export default function Pattern({
-  hasPattern,
-  patternTone,
+  pattern,
   patternIntensity,
   onTogglePattern,
   onPatternToneChange,
@@ -36,15 +34,15 @@ export default function Pattern({
       <div className={s.items}>
         <ToggleField
           label={t('dsb.appearance.wallpaper.editor.enable')}
-          checked={hasPattern}
+          checked={pattern.enabled}
           onChange={onTogglePattern}
         />
 
-        {hasPattern && (
+        {pattern.enabled && (
           <>
             <ToggleField
               label={t('dsb.appearance.wallpaper.editor.invert_tone')}
-              checked={patternTone === WALLPAPER_PATTERN_TONE.LIGHT}
+              checked={pattern.tone === WALLPAPER_PATTERN_TONE.LIGHT}
               onChange={onPatternToneChange}
             />
 

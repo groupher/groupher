@@ -12,7 +12,7 @@ import {
   GRADIENT_RENDERER,
   isMeshGradientRecipe,
 } from '~/lib/wallpaperMesh'
-import type { TGradientRecipe, TGradientRenderer, TWallpaperTexture } from '~/lib/wallpaperMesh'
+import type { TGradientRecipe, TGradientRenderer } from '~/lib/wallpaperMesh'
 import { toast } from '~/signal'
 import type { TWallpaperData, TWallpaperType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -29,7 +29,7 @@ import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
 import { TAB } from './constant'
 import S from './schema'
 import type { TTab } from './spec'
-import useWallpaperPreview from './useWallpaperPreview'
+import useWallpaperPreview, { type TWallpaperPreviewPatch } from './useWallpaperPreview'
 
 const getInitialTab = (type: TWallpaperType): TTab => {
   switch (type) {
@@ -64,19 +64,19 @@ export type TWallpaperLogic = {
   changeGradientRecipe: (gradient: TGradientRecipe) => void
   changeGradientRenderer: (renderer: TGradientRenderer) => void
   changePatternId: (patternId: string) => void
-  changePatternTone: (patternTone: TWallpaperThemeState['patternTone']) => void
+  changePatternTone: (patternTone: TWallpaperThemeState['pattern']['tone']) => void
   changePatternWallpaper: (source: string) => void
   changeWallpaperType: (type: TWallpaperType) => void
-  togglePattern: (hasPattern: boolean) => void
-  toggleTexture: (hasTexture: boolean) => void
+  togglePattern: (enabled: boolean) => void
+  toggleTexture: (enabled: boolean) => void
   changeBlurIntensity: (blurIntensity: number) => void
   changePatternIntensity: (patternIntensity: number) => void
-  toggleShadow: (hasShadow: boolean) => void
+  toggleShadow: (enabled: boolean) => void
   changeBrightness: (brightness: number) => void
   changeSaturation: (saturation: number) => void
-  changeTexture: (texture: TWallpaperTexture) => void
-  previewWallpaper: (patch: Partial<TWallpaperThemeState>) => void
-  scheduleWallpaperPreview: (patch: Partial<TWallpaperThemeState>) => void
+  changeTexture: (texture: TWallpaperThemeState['texture']) => void
+  previewWallpaper: (patch: TWallpaperPreviewPatch) => void
+  scheduleWallpaperPreview: (patch: TWallpaperPreviewPatch) => void
   flushWallpaperDraft: () => void
   clearPendingWallpaperDraft: () => void
   clearWallpaperPreview: () => void
@@ -300,9 +300,9 @@ export function useLogicValue(): TWallpaperLogic {
     })
   }
   const changePatternId = (patternId: string): void =>
-    commitWallpaperPatch({ patternId, hasPattern: true })
-  const changePatternTone = (patternTone: TWallpaperThemeState['patternTone']): void =>
-    commitWallpaperPatch({ patternTone })
+    commitWallpaperPatch({ pattern: { ...wallpaperState.pattern, id: patternId, enabled: true } })
+  const changePatternTone = (patternTone: TWallpaperThemeState['pattern']['tone']): void =>
+    commitWallpaperPatch({ pattern: { ...wallpaperState.pattern, tone: patternTone } })
   const changePatternWallpaper = (source: string): void =>
     commitWallpaperPatch({ source, type: WALLPAPER_TYPE.PATTERN })
 
@@ -310,23 +310,30 @@ export function useLogicValue(): TWallpaperLogic {
     commitWallpaperPatch({ type })
   }
 
-  const togglePattern = (hasPattern: boolean): void => commitWallpaperPatch({ hasPattern })
-  const toggleTexture = (hasTexture: boolean): void => {
+  const togglePattern = (enabled: boolean): void =>
+    commitWallpaperPatch({ pattern: { ...wallpaperState.pattern, enabled } })
+  const toggleTexture = (enabled: boolean): void => {
     const texture =
-      hasTexture && wallpaperState.texture.intensity === 0
+      enabled && wallpaperState.texture.intensity === 0
         ? { ...wallpaperState.texture, intensity: DEFAULT_WALLPAPER_TEXTURE_INTENSITY }
         : wallpaperState.texture
 
-    commitWallpaperPatch({ hasTexture, texture })
+    commitWallpaperPatch({ texture: { ...texture, enabled } })
   }
   const changeBlurIntensity = (blurIntensity: number): void =>
-    scheduleWallpaperPreview({ blurIntensity })
+    scheduleWallpaperPreview({ effect: { blurIntensity } })
   const changePatternIntensity = (patternIntensity: number): void =>
-    scheduleWallpaperPreview({ patternIntensity })
-  const toggleShadow = (hasShadow: boolean): void => commitWallpaperPatch({ hasShadow })
-  const changeBrightness = (brightness: number): void => scheduleWallpaperPreview({ brightness })
-  const changeSaturation = (saturation: number): void => scheduleWallpaperPreview({ saturation })
-  const changeTexture = (texture: TWallpaperTexture): void => scheduleWallpaperPreview({ texture })
+    scheduleWallpaperPreview({
+      pattern: { intensity: patternIntensity },
+    })
+  const toggleShadow = (enabled: boolean): void =>
+    commitWallpaperPatch({ contentShadow: { enabled } })
+  const changeBrightness = (brightness: number): void =>
+    scheduleWallpaperPreview({ effect: { brightness } })
+  const changeSaturation = (saturation: number): void =>
+    scheduleWallpaperPreview({ effect: { saturation } })
+  const changeTexture = (texture: TWallpaperThemeState['texture']): void =>
+    scheduleWallpaperPreview({ texture })
 
   return {
     tab,

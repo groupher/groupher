@@ -441,6 +441,13 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
     %{
       type: "gradient",
       source: theme,
+      pattern:
+        Jason.encode!(%{
+          enabled: false,
+          id: "01",
+          intensity: 0,
+          tone: "dark"
+        }),
       gradient:
         Jason.encode!(%{
           version: 2,
@@ -450,7 +457,9 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           angle: 180,
           spread: 50
         }),
-      texture: Jason.encode!(%{type: "noise", intensity: 0, params: %{}})
+      contentShadow: Jason.encode!(%{enabled: false}),
+      effect: Jason.encode!(%{blurIntensity: 0, brightness: 100, saturation: 100}),
+      texture: Jason.encode!(%{enabled: false, type: "noise", intensity: 0, params: %{}})
     }
   end
 

@@ -1,7 +1,8 @@
 import RangeInput from '~/widgets/RangeInput'
 
 import { IMAGE_BORDER_RADIUS_RANGE } from '../../../../constant'
-import type { TBorderHighlight } from '../../../../spec'
+import { useImageDraftContext } from '../../../../imageDraftContext'
+import type { TBorderHighlight, TCoverGlassBorder, TCoverImageWhich } from '../../../../spec'
 import useLogic from '../../../../useLogic'
 import GroupItem from '../../GroupItem'
 import Controller from './Controller'
@@ -11,12 +12,14 @@ import useSalon from './salon'
 type TProps = {
   borderRadius: number
   borderHighlight: TBorderHighlight
-  hasGlassBorder: boolean
+  glassBorder: TCoverGlassBorder
+  which: TCoverImageWhich
 }
 
-export default function Border({ borderRadius, borderHighlight, hasGlassBorder }: TProps) {
+export default function Border({ borderRadius, borderHighlight, glassBorder, which }: TProps) {
   const s = useSalon()
-  const { borderRadiusOnChange, glassBorderOnChange } = useLogic()
+  const { glassBorderOnChange } = useLogic()
+  const { flushImageDraft, scheduleImagePatch } = useImageDraftContext()
 
   return (
     <section className={s.wrapper}>
@@ -32,19 +35,22 @@ export default function Border({ borderRadius, borderHighlight, hasGlassBorder }
               valueLabel='Corner'
               aria-label='Corner'
               hideLabel
-              onChange={borderRadiusOnChange}
+              onChange={(nextBorderRadius) =>
+                scheduleImagePatch(which, { borderRadius: nextBorderRadius })
+              }
+              onChangeEnd={flushImageDraft}
             />
           </div>
         </GroupItem>
 
         <GroupItem label='Border'>
-          <Controller borderHighlight={borderHighlight} />
+          <Controller borderHighlight={borderHighlight} which={which} />
         </GroupItem>
 
         <GroupItem label='Frame'>
           <GlassFrameControl
-            enabled={hasGlassBorder}
-            onToggle={() => glassBorderOnChange(!hasGlassBorder)}
+            enabled={glassBorder.enabled}
+            onToggle={() => glassBorderOnChange(which, !glassBorder.enabled)}
           />
         </GroupItem>
       </div>

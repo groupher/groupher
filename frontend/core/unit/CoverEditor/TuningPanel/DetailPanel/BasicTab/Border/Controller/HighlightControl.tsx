@@ -2,8 +2,8 @@ import type { KeyboardEvent, PointerEvent } from 'react'
 
 import CheckSVG from '~/icons/Check'
 
-import type { TBorderHighlight } from '../../../../../spec'
-import useLogic from '../../../../../useLogic'
+import { useImageDraftContext } from '../../../../../imageDraftContext'
+import type { TBorderHighlight, TCoverImageWhich } from '../../../../../spec'
 import { CONTROL_LABEL, KEYBOARD_STEP, VIEWBOX } from '../constant'
 import {
   clampLength,
@@ -16,6 +16,7 @@ import useSalon, { cn } from './salon/highlight_control'
 
 type TProps = {
   borderHighlight: TBorderHighlight
+  which: TCoverImageWhich
 }
 
 type TPoint = {
@@ -78,9 +79,9 @@ const getHandleArcPath = (angle: number, radius: number): string => {
   )} 0 0 1 ${end.x.toFixed(3)} ${end.y.toFixed(3)}`
 }
 
-export default function HighlightControl({ borderHighlight }: TProps) {
+export default function HighlightControl({ borderHighlight, which }: TProps) {
   const s = useSalon()
-  const { borderHighlightOnChange } = useLogic()
+  const { flushImageDraft, scheduleImagePatch } = useImageDraftContext()
   const centerPoint = { x: VIEWBOX.centerX, y: VIEWBOX.centerY }
   const handlePoint = getHandlePoint(borderHighlight)
   const handleArcPath = getHandleArcPath(
@@ -95,10 +96,14 @@ export default function HighlightControl({ borderHighlight }: TProps) {
       getPointFromPointer(event.clientX, event.clientY, rect),
     )
 
-    borderHighlightOnChange({
-      enabled: true,
-      ...next,
+    scheduleImagePatch(which, { borderHighlight: { ...borderHighlight, enabled: true, ...next } })
+  }
+
+  const toggleHighlight = (): void => {
+    scheduleImagePatch(which, {
+      borderHighlight: { ...borderHighlight, enabled: !borderHighlight.enabled },
     })
+    flushImageDraft()
   }
 
   const handlePointerDown = (event: PointerEvent<HTMLButtonElement>): void => {
@@ -110,7 +115,7 @@ export default function HighlightControl({ borderHighlight }: TProps) {
     event.currentTarget.focus()
 
     if (isCenterPress) {
-      borderHighlightOnChange({ enabled: !borderHighlight.enabled })
+      toggleHighlight()
       return
     }
 
@@ -133,12 +138,13 @@ export default function HighlightControl({ borderHighlight }: TProps) {
 
     updateFromPointer(event)
     event.currentTarget.releasePointerCapture(event.pointerId)
+    flushImageDraft()
   }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>): void => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
-      borderHighlightOnChange({ enabled: !borderHighlight.enabled })
+      toggleHighlight()
       return
     }
 
@@ -154,11 +160,15 @@ export default function HighlightControl({ borderHighlight }: TProps) {
     else return
 
     event.preventDefault()
-    borderHighlightOnChange({
-      enabled: true,
-      angle: normalizeAngle(nextAngle),
-      length: clampLength(nextLength),
+    scheduleImagePatch(which, {
+      borderHighlight: {
+        ...borderHighlight,
+        enabled: true,
+        angle: normalizeAngle(nextAngle),
+        length: clampLength(nextLength),
+      },
     })
+    flushImageDraft()
   }
 
   return (

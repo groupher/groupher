@@ -6,6 +6,7 @@ import {
   PATTERN_WALLPAPER,
   WALLPAPER_TYPE,
 } from '~/const/wallpaper'
+import type { TBgEffect } from '~/lib/bg/spec'
 import type { TGradientRecipe } from '~/lib/wallpaperMesh'
 import type { TGradientPalette, TWallpaper, TWallpaperPic, TWallpaperType } from '~/spec'
 
@@ -35,9 +36,7 @@ type TGradientEffectState = {
 type TPatternEffectState = {
   source: string
   type: TWallpaperType
-  blurIntensity: number
-  brightness: number
-  saturation: number
+  effect: TBgEffect
 }
 
 /**
@@ -116,9 +115,7 @@ export const composeActiveBgGradientWallpapers = (
  * const wallpapers = composeActiveBgPatternWallpapers({
  *   source,
  *   type,
- *   blurIntensity,
- *   brightness,
- *   saturation,
+ *   effect,
  * })
  */
 export const composeActiveBgPatternWallpapers = (
@@ -132,9 +129,9 @@ export const composeActiveBgPatternWallpapers = (
   const activeWallpaper = wallpapers[state.source] as TWallpaperPic | undefined
   if (!activeWallpaper) return wallpapers
 
-  activeWallpaper.blurIntensity = state.blurIntensity
-  activeWallpaper.brightness = state.brightness
-  activeWallpaper.saturation = state.saturation
+  activeWallpaper.blurIntensity = state.effect.blurIntensity
+  activeWallpaper.brightness = state.effect.brightness
+  activeWallpaper.saturation = state.effect.saturation
 
   return wallpapers
 }

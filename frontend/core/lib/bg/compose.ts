@@ -49,7 +49,7 @@ const getPatternOpacity = (patternIntensity: number): number =>
  * - LIGHT -> white pattern color
  * - DARK  -> black pattern color
  */
-const getPatternColor = (patternTone: TWallpaperThemeState['patternTone']): string =>
+const getPatternColor = (patternTone: TWallpaperThemeState['pattern']['tone']): string =>
   patternTone === WALLPAPER_PATTERN_TONE.LIGHT ? BG_PATTERN_LIGHT_COLOR : BG_PATTERN_DARK_COLOR
 
 /**
@@ -75,30 +75,21 @@ const getActiveBgGradientRecipe = (config: TBgConfig): TGradientRecipe | null =>
  * const fallback = getBgRenderFallbackConfig(config)
  */
 const getBgRenderFallbackConfig = (config: TBgConfig): TBgConfig =>
-  config.type === WALLPAPER_TYPE.GRADIENT && config.hasPattern
-    ? { ...config, hasPattern: false }
+  config.type === WALLPAPER_TYPE.GRADIENT && config.pattern.enabled
+    ? { ...config, pattern: { ...config.pattern, enabled: false } }
     : config
 
 /**
  * Maps the current Wallpaper store shape into the common single-theme Bg shape.
- *
- * This is a compatibility adapter while Wallpaper still persists flat light/dark
- * fields. New consumers should prefer constructing `TBgConfig` directly.
  *
  * @example
  * const bg = toBgConfig(pickWallpaperThemeState(store, isDarkTheme))
  */
 export const toBgConfig = (store: TWallpaperThemeState): TBgConfig => ({
   source: store.source,
-  hasPattern: store.hasPattern,
-  patternId: store.patternId,
-  patternIntensity: store.patternIntensity,
-  patternTone: store.patternTone,
-  hasTexture: store.hasTexture,
+  pattern: store.pattern,
   gradient: store.gradient,
-  blurIntensity: store.blurIntensity,
-  brightness: store.brightness,
-  saturation: store.saturation,
+  effect: store.effect,
   texture: store.texture,
   customWallpaper: store.customWallpaper,
   type: store.type,
@@ -115,7 +106,7 @@ export const toBgConfig = (store: TWallpaperThemeState): TBgConfig => ({
  */
 export const toBgCssConfig = (store: TWallpaperThemeState): TBgConfig => ({
   ...toBgConfig(store),
-  texture: { type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
+  texture: { enabled: false, type: WALLPAPER_TEXTURE.NOISE, intensity: 0, params: {} },
 })
 
 /**
@@ -128,17 +119,7 @@ export const toBgCssConfig = (store: TWallpaperThemeState): TBgConfig => ({
  * const { background, effect } = composeBgCss(bg)
  */
 export const composeBgCss = (config: TBgConfig, options: TBgResolveOptions = {}): TResolvedBg => {
-  const {
-    source,
-    hasPattern,
-    patternId,
-    blurIntensity,
-    brightness,
-    saturation,
-    gradient,
-    customWallpaper: customWallpaperValue,
-    type,
-  } = config
+  const { source, pattern, effect, gradient, customWallpaper: customWallpaperValue, type } = config
   const { pictureCatalog } = options
   let customWallpaper = customWallpaperValue
 
@@ -149,18 +130,14 @@ export const composeBgCss = (config: TBgConfig, options: TBgResolveOptions = {})
   ) {
     customWallpaper = {
       ...customWallpaperValue,
-      blurIntensity,
-      brightness,
-      saturation,
+      ...effect,
     }
   }
 
   if (type === WALLPAPER_TYPE.UPLOAD && source) {
     customWallpaper = {
       image: source,
-      blurIntensity,
-      brightness,
-      saturation,
+      ...effect,
     }
   }
 
@@ -168,9 +145,7 @@ export const composeBgCss = (config: TBgConfig, options: TBgResolveOptions = {})
     {
       source,
       type,
-      blurIntensity,
-      brightness,
-      saturation,
+      effect,
     },
     pictureCatalog,
   )
@@ -181,11 +156,9 @@ export const composeBgCss = (config: TBgConfig, options: TBgResolveOptions = {})
   const activeGradient = getActiveBgGradientRecipe(config)
   if (type === WALLPAPER_TYPE.GRADIENT && activeGradient) {
     const parsed = parseBgGradientRecipe(activeGradient, {
-      hasPattern,
-      patternId,
-      blurIntensity,
-      brightness,
-      saturation,
+      hasPattern: pattern.enabled,
+      patternId: pattern.id,
+      ...effect,
     })
     return {
       source,
@@ -226,18 +199,18 @@ export const composeBgRenderSpec = (
     background: background || 'transparent',
     filter: getFilterValue(effect),
     hasPattern: false,
-    patternImage: resolveBgPattern(config.patternId),
-    patternOpacity: getPatternOpacity(config.patternIntensity),
-    patternColor: getPatternColor(config.patternTone),
-    hasTexture: config.hasTexture,
+    patternImage: resolveBgPattern(config.pattern.id),
+    patternOpacity: getPatternOpacity(config.pattern.intensity),
+    patternColor: getPatternColor(config.pattern.tone),
+    hasTexture: config.texture.enabled,
     source: config.source,
     colors: DEFAULT_RENDER_COLORS,
     colorStops: normalizeEvenGradientStops(DEFAULT_RENDER_COLORS.length),
     flow: config.gradient?.renderer === GRADIENT_RENDERER.LINEAR ? config.gradient.angle : 180,
     texture: normalizeTexture(config.texture),
-    blurIntensity: config.blurIntensity,
-    brightness: config.brightness,
-    saturation: config.saturation,
+    blurIntensity: config.effect.blurIntensity,
+    brightness: config.effect.brightness,
+    saturation: config.effect.saturation,
     gradientRecipe: null,
     meshRecipe: null,
     imageUrl: '',
@@ -256,11 +229,11 @@ export const composeBgRenderSpec = (
       return {
         ...base,
         type: BG_RENDER_TYPE.MESH_GRADIENT,
-        hasPattern: config.hasPattern,
-        patternImage: resolveBgPattern(config.patternId),
-        patternOpacity: getPatternOpacity(config.patternIntensity),
-        patternColor: getPatternColor(config.patternTone),
-        hasTexture: config.hasTexture,
+        hasPattern: config.pattern.enabled,
+        patternImage: resolveBgPattern(config.pattern.id),
+        patternOpacity: getPatternOpacity(config.pattern.intensity),
+        patternColor: getPatternColor(config.pattern.tone),
+        hasTexture: config.texture.enabled,
         colors: meshRecipe.colors,
         colorStops: normalizeGradientStops(meshRecipe),
         flow: meshRecipe.angle,
@@ -274,11 +247,11 @@ export const composeBgRenderSpec = (
         gradient.renderer === GRADIENT_RENDERER.RADIAL
           ? BG_RENDER_TYPE.RADIAL_GRADIENT
           : BG_RENDER_TYPE.LINEAR_GRADIENT,
-      hasPattern: config.hasPattern,
-      patternImage: resolveBgPattern(config.patternId),
-      patternOpacity: getPatternOpacity(config.patternIntensity),
-      patternColor: getPatternColor(config.patternTone),
-      hasTexture: config.hasTexture,
+      hasPattern: config.pattern.enabled,
+      patternImage: resolveBgPattern(config.pattern.id),
+      patternOpacity: getPatternOpacity(config.pattern.intensity),
+      patternColor: getPatternColor(config.pattern.tone),
+      hasTexture: config.texture.enabled,
       colors: gradient.colors,
       colorStops: normalizeGradientStops(gradient),
       flow: gradient.renderer === GRADIENT_RENDERER.LINEAR ? gradient.angle : 180,

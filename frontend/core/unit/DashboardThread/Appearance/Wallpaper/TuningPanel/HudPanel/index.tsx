@@ -26,8 +26,7 @@ export default function HudPanel({
   onExpand,
 }: Props) {
   const s = useSalon()
-  const { hasPattern, hasTexture, hasShadow, blurIntensity, brightness, saturation, texture } =
-    wallpaper
+  const { contentShadow, effect, pattern, texture } = wallpaper
   const renderer = isGradient && canUseAngle ? wallpaper.gradient?.renderer : null
   const showDirection = renderer && renderer !== GRADIENT_RENDERER.RADIAL
   const gradientColors = isGradient ? (wallpaper.gradient?.colors ?? []) : []
@@ -35,7 +34,7 @@ export default function HudPanel({
   return (
     <div className={s.wrapper}>
       <div className={s.hudItems}>
-        {isGradient && hasPattern && (
+        {isGradient && pattern.enabled && (
           <div className={s.hudItem}>
             <span className={s.hudLabel}>Pattern</span>
             <span className={s.hudSwatchWrap}>
@@ -57,7 +56,7 @@ export default function HudPanel({
           </div>
         )}
 
-        {canUseTexture && hasTexture && (
+        {canUseTexture && texture.enabled && (
           <div className={s.hudItem}>
             <span className={s.hudLabel}>Texture</span>
             <span className={s.hudSwatchWrap}>
@@ -68,24 +67,24 @@ export default function HudPanel({
 
         <div className={s.hudItem}>
           <span className={s.hudLabel}>Blur</span>
-          <span className={s.hudValue}>{blurIntensity}</span>
+          <span className={s.hudValue}>{effect.blurIntensity}</span>
         </div>
 
         <div className={s.hudItem}>
           <span className={s.hudLabel}>Bright</span>
-          <span className={s.hudValue}>{brightness}</span>
+          <span className={s.hudValue}>{effect.brightness}</span>
         </div>
 
         <div className={s.hudItem}>
           <span className={s.hudLabel}>Sat</span>
-          <span className={s.hudValue}>{saturation}</span>
+          <span className={s.hudValue}>{effect.saturation}</span>
         </div>
 
         {gradientColors.length > 0 && (
           <ColorsPresetBall colors={gradientColors} label='Gradient colors' size={SIZE.TINY} />
         )}
 
-        {hasShadow && (
+        {contentShadow.enabled && (
           <div className={s.hudItem}>
             <span className={s.hudLabel}>Shadow</span>
             <span className={s.hudValue}>on</span>

@@ -14,7 +14,7 @@ export default function GradientTab() {
   const { getWallpaper, changeGradientWallpaper, changePatternId } = useLogic()
 
   const wallpaper = getWallpaper()
-  const { gradientPalettes, patternId } = wallpaper
+  const { gradientPalettes, pattern } = wallpaper
 
   const gradientKeys = keys(gradientPalettes)
 
@@ -41,7 +41,11 @@ export default function GradientTab() {
         })}
       </div>
 
-      <PatternCards patternId={patternId} wallpaper={wallpaper} onPatternSelect={changePatternId} />
+      <PatternCards
+        patternId={pattern.id}
+        wallpaper={wallpaper}
+        onPatternSelect={changePatternId}
+      />
     </div>
   )
 }
