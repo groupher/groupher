@@ -29,19 +29,12 @@ const EMPTY_INIT_DATA: TInit = {}
 // unmounting the preset provider does not leave stale theme values on <html>.
 const PRESET_CSS_VAR_KEYS = [
   '--color-primary-custom',
-  '--color-primary-custom-dark',
   '--color-accent-custom',
-  '--color-accent-custom-dark',
   '--color-page-custom',
-  '--color-page-custom-dark',
   '--color-title',
-  '--color-title-dark',
   '--color-digest',
-  '--color-digest-dark',
   '--color-card',
-  '--color-card-dark',
   '--color-divider',
-  '--color-divider-dark',
 ] as const
 
 export const StoreContext = createContext<TStore | null>(null)

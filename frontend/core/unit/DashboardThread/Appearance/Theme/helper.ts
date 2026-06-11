@@ -1,10 +1,8 @@
-import THEME from '~/const/theme'
 import { THEME_PRESET } from '~/const/theme_preset'
 import { blurRGB } from '~/fmt'
-import { getThemePresetSection } from '~/lib/themePreset'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
 
-import { resolveRawBg, type TPageBgDraft } from './DetailsPanel/CustomPageBg/hooks'
+import { resolveRawBg } from './DetailsPanel/CustomPageBg/hooks'
 import type {
   TCustomPresetEditOptions,
   TPageBgPreviewOptions,
@@ -35,31 +33,11 @@ export const toCssOpacity = (opacity = 100): number => {
   return Math.min(Math.max(percent, 0), 100) / 100
 }
 
-const getThemeSection = (isLightTheme: boolean): 'light' | 'dark' =>
-  isLightTheme ? 'light' : 'dark'
-
-/**
- * Compose a preset overwrite for a specific theme branch.
- *
- * Intent: page background edits are always scoped to one active branch, while
- * persisted overwrite payloads keep `{ light, dark, shared }` shape.
- *
- * Example:
- *   composeThemeOverwrite(true, { pageBg: '#ffffff' })
- *   // => { light: { pageBg: '#ffffff' } }
- */
-export const composeThemeOverwrite = (
-  isLightTheme: boolean,
-  patch: Partial<TPageBgDraft>,
-): TThemePresetOverwrite => ({
-  [getThemeSection(isLightTheme)]: patch,
-})
-
 /**
  * Merge resolved preset tokens with a sparse overwrite payload.
  *
  * Intent: keep base token values for untouched fields and apply overwrite values
- * across `shared`, `light`, and `dark` sections.
+ * across `shared` plus the `light`/`dark` theme branches.
  *
  * Example:
  *   const base = { shared: { glowFixed: true }, light: { pageBg: '#111' }, dark: { pageBg: '#222' } }
@@ -85,10 +63,10 @@ export const mergeThemePresetOverwrite = (
 })
 
 /**
- * Merge two overwrite patches in-place by section without dropping nested keys.
+ * Merge two overwrite patches in-place by token group without dropping nested keys.
  *
  * Intent: use this for debounced batches so incremental edits on the same
- * section preserve previous changes.
+ * theme branch preserve previous changes.
  *
  * Example:
  *   mergeThemePresetOverwritePatch(
@@ -125,24 +103,6 @@ export const mergeThemePresetOverwritePatch = (
         },
       }
     : {}),
-})
-
-/**
- * Convert resolved preset tokens into the compact page-background draft shape.
- *
- * Intent: `CustomPageBg` edits only light/dark background tokens. Keeping this
- * adapter here prevents the UI hook from knowing how that widget names its
- * draft fields.
- *
- * Example:
- *   toPageBgDraft(tokens, true)
- *   // => { pageBg: tokens.light.pageBg, ... }
- */
-export const toPageBgDraft = (tokens: TThemePresetTokens, isLightTheme: boolean): TPageBgDraft => ({
-  pageBg: getThemePresetSection(tokens, isLightTheme ? THEME.LIGHT : THEME.DARK).pageBg,
-  pageBgHue: getThemePresetSection(tokens, isLightTheme ? THEME.LIGHT : THEME.DARK).pageBgHue,
-  pageBgIntensity: getThemePresetSection(tokens, isLightTheme ? THEME.LIGHT : THEME.DARK)
-    .pageBgIntensity,
 })
 
 /**
@@ -287,20 +247,17 @@ export const composeCustomPresetResetFields = (
  *     selectedTokens,
  *     selectedPageBgDraft,
  *     patch: { pageBg: '#ffffff' },
- *     isLightTheme: true,
+ *     themeKey: 'light',
  *   }) // => { '--preview-page-bg': 'rgb(...)' }
  */
 export const composePageBgPreviewCssVars = ({
   selectedTokens,
   selectedPageBgDraft,
   patch,
-  isLightTheme,
+  themeKey,
 }: TPageBgPreviewOptions): TPreviewCssVars => {
-  const previewRawBg = resolveRawBg({ ...selectedPageBgDraft, ...patch }, isLightTheme)
-  const activeGaussBlur = getThemePresetSection(
-    selectedTokens,
-    isLightTheme ? THEME.LIGHT : THEME.DARK,
-  ).gaussBlur
+  const previewRawBg = resolveRawBg({ ...selectedPageBgDraft, ...patch })
+  const activeGaussBlur = selectedTokens[themeKey].gaussBlur
   const previewBackground = previewRawBg ? blurRGB(previewRawBg, activeGaussBlur) : null
 
   return { '--preview-page-bg': previewBackground }
@@ -320,25 +277,28 @@ export const composePageBgPreviewCssVars = ({
  *   composeThemePresetPreviewCssVars({
  *     selectedTokens,
  *     overwrite: { light: { glowOpacity: 80 } },
- *     isLightTheme: true,
+ *     themeKey: 'light',
  *   }) // => { '--preview-page-bg': ..., '--preview-glow-opacity': 0.8 }
  */
 export const composeThemePresetPreviewCssVars = ({
   selectedTokens,
   overwrite,
-  isLightTheme,
+  themeKey,
 }: TThemePresetPreviewOptions): TPreviewCssVars => {
   const nextTokens = mergeThemePresetOverwrite(selectedTokens, overwrite)
-  const section = getThemeSection(isLightTheme)
-  const activeTokens = nextTokens[section]
-  const previewRawBg = resolveRawBg(toPageBgDraft(nextTokens, isLightTheme), isLightTheme)
+  const activeTokens = nextTokens[themeKey]
+  const previewRawBg = resolveRawBg({
+    pageBg: activeTokens.pageBg,
+    pageBgHue: activeTokens.pageBgHue,
+    pageBgIntensity: activeTokens.pageBgIntensity,
+  })
   const activeGaussBlur = activeTokens.gaussBlur
   const previewBackground = previewRawBg ? blurRGB(previewRawBg, activeGaussBlur) : null
   const previewVars: TPreviewCssVars = {
     '--preview-page-bg': previewBackground,
   }
 
-  if (overwrite[section]?.glowOpacity !== undefined) {
+  if (overwrite[themeKey]?.glowOpacity !== undefined) {
     previewVars['--preview-glow-opacity'] = toCssOpacity(activeTokens.glowOpacity)
   }
 

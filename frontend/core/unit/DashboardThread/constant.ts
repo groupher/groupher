@@ -1,8 +1,8 @@
 import { ONE_LINK_GROUP, TW_CARD } from '~/const/dashboard'
 import { DSB_ALIAS_ROUTE, DSB_COVERS, DSB_ROUTE } from '~/const/route'
+import { PRESET_FIELD } from '~/const/theme_preset'
 import type { TDsbFieldMap, TDsbStoreFieldKey } from '~/stores/dashboard/spec'
 
-import { PRESET_FIELD } from './Appearance/Theme/constant'
 import type { TDsbMenu } from './spec'
 
 export { SEO_KEYS } from '~/const/seo'
@@ -17,8 +17,8 @@ export const DSB_MENU_ICON = {
 } as const
 
 // Keep these keys aligned with ordinary dashboard layout state.
-// Theme preset keys live under Appearance/Theme/constant.ts because they are
-// persisted through dedicated theme mutations instead of updateDashboardLayout.
+// Theme preset keys are included in dashboard draft state, but persisted through
+// dedicated theme mutations instead of updateDashboardLayout.
 export const LAYOUT_FIELD = {
   POST_LAYOUT: 'postLayout',
   KANBAN_LAYOUT: 'kanbanLayout',

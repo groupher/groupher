@@ -1,4 +1,9 @@
-import type { TResolvedThemePreset, TThemePresetOverwrite, TThemePresetOption } from '~/spec'
+import type {
+  TResolvedThemePreset,
+  TThemeName,
+  TThemePresetOverwrite,
+  TThemePresetOption,
+} from '~/spec'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
 
 import type { TPageBgDraft } from './DetailsPanel/CustomPageBg/hooks'
@@ -31,13 +36,13 @@ export type TPageBgPreviewOptions = {
   selectedTokens: TThemePresetTokens
   selectedPageBgDraft: TPageBgDraft
   patch: Partial<TPageBgDraft>
-  isLightTheme: boolean
+  themeKey: TThemeName
 }
 
 export type TThemePresetPreviewOptions = {
   selectedTokens: TThemePresetTokens
   overwrite: TThemePresetOverwrite
-  isLightTheme: boolean
+  themeKey: TThemeName
 }
 
 export type TUseAppearanceOptions = {
@@ -47,7 +52,7 @@ export type TUseAppearanceOptions = {
 export type TUseThemePresetPreviewOptions = {
   selectedTokens: TThemePresetTokens
   selectedPageBgDraft: TPageBgDraft
-  isLightTheme: boolean
+  themeKey: TThemeName
   onCommit: (overwrite: TThemePresetOverwrite) => void
 }
 
@@ -68,7 +73,7 @@ export type TThemePresetMutationRet = {
    * Roll back all preset-owned dashboard fields to their original values.
    *
    * Intent: cancel ThemePreset edits as one field group, covering selected
-   * preset, Custom base/tokens, and flat mirrored title/digest/blur values.
+   * preset, Custom base/tokens, resolved tokens, and sparse overwrite data.
    *
    * Example:
    *   const { rollbackThemePreset } = useThemePresetMutation()
@@ -168,7 +173,6 @@ export type TUseThemePresetDraftRet = {
 export type TThemeDetails = {
   selectedTokens: TThemePresetTokens
   selectedPageBgDraft: TPageBgDraft
-  isLightTheme: boolean
   pageBgResetKey: string
   /**
    * Preview page background edits through CSS vars only.
@@ -228,8 +232,8 @@ export type TUseAppearanceRet = {
   /**
    * Select a built-in or existing Custom preset card.
    *
-   * Intent: update active preset, resolved tokens, and mirrored dashboard fields
-   * as one batch while clearing any pending realtime preview.
+   * Intent: update active preset, resolved tokens, and ThemePreset-owned
+   * dashboard fields as one batch while clearing any pending realtime preview.
    *
    * Example:
    *   selectPreset(presetOptions[0])

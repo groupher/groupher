@@ -6,7 +6,6 @@ import {
   composeCustomPresetResetFields,
   composePresetSelectionFields,
   toCssOpacity,
-  toPageBgDraft,
 } from '../helper'
 import type { TThemePresetTokens } from '../spec'
 
@@ -50,24 +49,14 @@ describe('theme preset model helpers', () => {
     expect(toCssOpacity(Number.NaN)).toBe(1)
   })
 
-  it('adapts theme tokens to page background drafts', () => {
-    expect(toPageBgDraft(tokens, true)).toEqual({
-      pageBg: tokens.light.pageBg,
+  it('falls back to the theme css variable when page background draft is empty', () => {
+    const draft = {
+      pageBg: '',
       pageBgHue: tokens.light.pageBgHue,
       pageBgIntensity: tokens.light.pageBgIntensity,
-    })
-    expect(toPageBgDraft(tokens, false)).toEqual({
-      pageBg: tokens.dark.pageBg,
-      pageBgHue: tokens.dark.pageBgHue,
-      pageBgIntensity: tokens.dark.pageBgIntensity,
-    })
-  })
+    }
 
-  it('falls back to the theme css variable when page background draft is empty', () => {
-    const draft = { ...toPageBgDraft(tokens, true), pageBg: '' }
-
-    expect(resolveRawBg(draft, true)).toBe('var(--color-page-custom)')
-    expect(resolveRawBg(draft, false)).toBe('var(--color-page-custom-dark)')
+    expect(resolveRawBg(draft)).toBe('var(--color-page-custom)')
   })
 
   it('forks readonly preset edits into custom tokens and sparse overwrite', () => {

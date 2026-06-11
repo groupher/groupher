@@ -161,19 +161,27 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
     }
   }
 
-  @shared_token_keys @defaults.default["shared"] |> Map.keys() |> MapSet.new()
-  @theme_token_keys @defaults.default["light"] |> Map.keys() |> MapSet.new()
-  @color_token_keys MapSet.new([
-                      "pageBg",
-                      "primaryColor",
-                      "accentColor",
-                      "textTitle",
-                      "textDigest",
-                      "cardColor",
-                      "dividerColor"
-                    ])
-  @hue_token_keys MapSet.new(["pageBgHue"])
-  @percent_token_keys MapSet.new(["pageBgIntensity", "gaussBlur", "glowOpacity"])
+  @shared_token_specs %{
+    "glowFixed" => :boolean
+  }
+
+  @theme_token_specs %{
+    "pageBg" => :hex_color,
+    "pageBgHue" => {:number_range, 0, 360},
+    "pageBgIntensity" => {:number_range, 0, 100},
+    "primaryColor" => :hex_color,
+    "accentColor" => :hex_color,
+    "textTitle" => :hex_color,
+    "textDigest" => :hex_color,
+    "cardColor" => :hex_color,
+    "dividerColor" => :hex_color,
+    "gaussBlur" => {:number_range, 0, 100},
+    "glowType" => :string,
+    "glowOpacity" => {:number_range, 0, 100}
+  }
+
+  @shared_token_keys @shared_token_specs |> Map.keys() |> MapSet.new()
+  @theme_token_keys @theme_token_specs |> Map.keys() |> MapSet.new()
 
   def token_keys do
     %{
@@ -529,19 +537,29 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
     end
   end
 
-  defp valid_token_value?("shared", "glowFixed", value), do: is_boolean(value)
+  defp valid_token_value?("shared", key, value) do
+    @shared_token_specs
+    |> Map.get(key)
+    |> valid_spec_value?(value)
+  end
 
   defp valid_token_value?(section, key, value) when section in @theme_sections do
-    cond do
-      is_binary(value) and MapSet.member?(@color_token_keys, key) -> valid_hex_color?(value)
-      is_binary(value) and key == "glowType" -> true
-      is_number(value) and MapSet.member?(@hue_token_keys, key) -> value >= 0 and value <= 360
-      is_number(value) and MapSet.member?(@percent_token_keys, key) -> value >= 0 and value <= 100
-      true -> false
-    end
+    @theme_token_specs
+    |> Map.get(key)
+    |> valid_spec_value?(value)
   end
 
   defp valid_token_value?(_, _, _), do: false
+
+  defp valid_spec_value?(:boolean, value), do: is_boolean(value)
+  defp valid_spec_value?(:hex_color, value), do: is_binary(value) and valid_hex_color?(value)
+  defp valid_spec_value?(:string, value), do: is_binary(value)
+
+  defp valid_spec_value?({:number_range, min, max}, value) do
+    is_number(value) and value >= min and value <= max
+  end
+
+  defp valid_spec_value?(_, _), do: false
 
   defp deep_merge(left, right) when is_map(left) and is_map(right) do
     Map.merge(left, right, fn _key, left_value, right_value ->

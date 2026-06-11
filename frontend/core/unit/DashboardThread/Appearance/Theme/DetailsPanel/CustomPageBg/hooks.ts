@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import THEME from '~/const/theme'
 import { getPageBgCustomColor, normalizePageBgHue, normalizePageBgIntensity } from '~/lib/color'
-import { getThemePresetPageBgCssVar } from '~/lib/themePreset'
+import { THEME_PRESET_PAGE_BG_CSS_VAR } from '~/lib/themePreset'
 
 export type TPageBgDraft = {
   pageBg: string
@@ -22,13 +22,9 @@ type TUseCustomPageBgControlsArgs = {
   onImmediateCommitPatch?: TPageBgPatchHandler
 }
 
-export const resolveRawBg = (draft: TPageBgDraft, isLightTheme: boolean) => {
-  const theme = isLightTheme ? THEME.LIGHT : THEME.DARK
+export const resolveRawBg = (draft: TPageBgDraft) => draft.pageBg || THEME_PRESET_PAGE_BG_CSS_VAR
 
-  return draft.pageBg || getThemePresetPageBgCssVar(theme)
-}
-
-const getThemePageBgState = (draft: TPageBgDraft, theme: TThemeName) => {
+const getThemePageBgState = (draft: TPageBgDraft) => {
   const color = draft.pageBg
   const hue = normalizePageBgHue(draft.pageBgHue)
   const intensity = normalizePageBgIntensity(draft.pageBgIntensity)
@@ -55,7 +51,7 @@ export const useCustomPageBgControls = ({
   onScheduleCommitPatch,
   onImmediateCommitPatch,
 }: TUseCustomPageBgControlsArgs) => {
-  const { color, hue, intensity } = useMemo(() => getThemePageBgState(draft, theme), [draft, theme])
+  const { color, hue, intensity } = useMemo(() => getThemePageBgState(draft), [draft])
   const hasPreviewPatch = !!onPreviewPatch
   const [localHue, setLocalHue] = useState(hue)
   const [localIntensity, setLocalIntensity] = useState(intensity)

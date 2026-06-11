@@ -1,11 +1,6 @@
-import THEME from '~/const/theme'
 import type { TResolvedThemePreset } from '~/spec'
 
-import {
-  composeThemePresetCssVars,
-  getThemePresetPageBgCssVar,
-  getThemePresetSection,
-} from './themePreset'
+import { composeThemePresetCssVars, THEME_PRESET_PAGE_BG_CSS_VAR } from './themePreset'
 
 const tokens: TResolvedThemePreset = {
   shared: { glowFixed: true },
@@ -39,24 +34,33 @@ const tokens: TResolvedThemePreset = {
   },
 }
 
-describe('getThemePresetSection', () => {
-  it('reads the concrete light or dark token section', () => {
-    expect(getThemePresetSection(tokens, THEME.LIGHT).textTitle).toBe('#111111')
-    expect(getThemePresetSection(tokens, THEME.DARK).textTitle).toBe('#eeeeee')
-  })
-})
-
-describe('getThemePresetPageBgCssVar', () => {
-  it('returns the css variable fallback for one concrete theme', () => {
-    expect(getThemePresetPageBgCssVar(THEME.LIGHT)).toBe('var(--color-page-custom)')
-    expect(getThemePresetPageBgCssVar(THEME.DARK)).toBe('var(--color-page-custom-dark)')
+describe('THEME_PRESET_PAGE_BG_CSS_VAR', () => {
+  it('holds the active page background css variable fallback', () => {
+    expect(THEME_PRESET_PAGE_BG_CSS_VAR).toBe('var(--color-page-custom)')
   })
 })
 
 describe('composeThemePresetCssVars', () => {
   it('builds css variables from backend resolved tokens for the requested theme', () => {
-    expect(composeThemePresetCssVars(tokens, THEME.LIGHT)['--color-title']).toBe('#111111')
-    expect(composeThemePresetCssVars(tokens, THEME.DARK)['--color-title']).toBe('#eeeeee')
-    expect(composeThemePresetCssVars(tokens, THEME.DARK)['--color-card']).toBe('#202020')
+    const lightVars = composeThemePresetCssVars(tokens, 'light')
+    const darkVars = composeThemePresetCssVars(tokens, 'dark')
+
+    expect(lightVars['--color-title']).toBe('#111111')
+    expect(darkVars['--color-title']).toBe('#eeeeee')
+    expect(darkVars['--color-card']).toBe('#202020')
+    expect(lightVars['--color-page-custom']).toBe('#ffffff')
+    expect(darkVars['--color-page-custom']).toBe('#101010')
+
+    for (const key of [
+      '--color-primary-custom-dark',
+      '--color-accent-custom-dark',
+      '--color-page-custom-dark',
+      '--color-title-dark',
+      '--color-digest-dark',
+      '--color-card-dark',
+      '--color-divider-dark',
+    ]) {
+      expect(darkVars).not.toHaveProperty(key)
+    }
   })
 })

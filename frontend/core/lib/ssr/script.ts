@@ -87,7 +87,7 @@ const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string
  *
  * Example:
  *   injectDsbColors(dashboard)
- *   // => ':root { --color-page-custom: #fff; }\n[data-theme='dark'] { --color-page-custom-dark: #111; }'
+ *   // => ':root { --color-page-custom: #fff; }\n[data-theme='dark'] { --color-page-custom: #111; }'
  */
 export const injectDsbColors = (dashboard: Partial<TParseDashboard>): string => {
   return resolveDsbColorVars(dashboard)

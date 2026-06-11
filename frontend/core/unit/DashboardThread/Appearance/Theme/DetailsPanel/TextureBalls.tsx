@@ -1,10 +1,9 @@
 import { useState } from 'react'
 
 import { TOP_GLOW_KEYS } from '~/const/top_glow'
-import useThemeKV from '~/hooks/useThemeKV'
+import useTheme from '~/hooks/useTheme'
 import CloseSVG from '~/icons/CloseLight'
 
-import { PRESET_FIELD } from '../constant'
 import type { TThemePresetOverwrite, TThemePresetTokens } from '../spec'
 import useSalon, { cn, cnMerge } from './salon/texture_balls'
 
@@ -22,12 +21,12 @@ export default function TextureBalls({
   rowClassName,
 }: TProps) {
   const s = useSalon()
-  const { section, value, patch } = useThemeKV()
+  const { theme } = useTheme()
   const [expanded, setExpanded] = useState(false)
 
-  const glowType = value(selectedTokens, PRESET_FIELD.GLOW_TYPE)
-  const otherSection = section === 'light' ? 'dark' : 'light'
-  const otherGlowType = selectedTokens[otherSection].glowType
+  const glowType = selectedTokens[theme].glowType
+  const otherTheme = theme === 'dark' ? 'light' : 'dark'
+  const otherGlowType = selectedTokens[otherTheme].glowType
   const allOptions = ['', ...TOP_GLOW_KEYS]
   const activeHidden =
     !!glowType && allOptions.slice(COLLAPSED_OPTION_COUNT).includes(glowType as string)
@@ -41,10 +40,10 @@ export default function TextureBalls({
   const hiddenCount = allOptions.length - visibleOptions.length
 
   const commitGlowType = (effect: string) => {
-    const overwrite: TThemePresetOverwrite = patch({ glowType: effect })
+    const overwrite: TThemePresetOverwrite = { [theme]: { glowType: effect } }
 
     if (effect && !glowType && !otherGlowType) {
-      overwrite[otherSection] = { glowType: effect }
+      overwrite[otherTheme] = { glowType: effect }
     }
 
     onThemePresetCommit(overwrite)

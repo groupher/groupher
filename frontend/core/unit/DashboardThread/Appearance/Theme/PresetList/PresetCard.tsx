@@ -1,9 +1,8 @@
-import useThemeKV from '~/hooks/useThemeKV'
+import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import type { TTransKey } from '~/spec'
 import Checker from '~/widgets/Checker'
 
-import { PRESET_FIELD } from '../constant'
 import MiniBars from '../MiniBars'
 import type { TThemePresetCardMode, TThemePresetOption } from '../spec'
 import useSalon from './salon/preset_card'
@@ -29,14 +28,15 @@ export default function PresetCard({
     rotateAngle,
   })
   const { t } = useTrans()
-  const { value } = useThemeKV()
+  const { theme } = useTheme()
   const disabled = mode === 'forkBase'
   const presetKey = preset.value.toLowerCase()
-  const cardBg = value(preset.tokens, PRESET_FIELD.PAGE_BG)
-  const primaryColor = value(preset.tokens, PRESET_FIELD.PRIMARY_COLOR)
-  const accentColor = value(preset.tokens, PRESET_FIELD.ACCENT_COLOR)
-  const textTitle = value(preset.tokens, PRESET_FIELD.TEXT_TITLE)
-  const textDigest = value(preset.tokens, PRESET_FIELD.TEXT_DIGEST)
+  const sectionTokens = preset.tokens[theme]
+  const cardBg = sectionTokens.pageBg
+  const primaryColor = sectionTokens.primaryColor
+  const accentColor = sectionTokens.accentColor
+  const textTitle = sectionTokens.textTitle
+  const textDigest = sectionTokens.textDigest
 
   return (
     <div

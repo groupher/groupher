@@ -1,5 +1,5 @@
 import { COLOR } from '~/const/colors'
-import useThemeKV from '~/hooks/useThemeKV'
+import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import { mapToPresetColorHex } from '~/lib/color'
 import type { TColorName } from '~/spec'
@@ -19,8 +19,8 @@ type TProps = {
 export default function ColorItem({ detail, selectedTokens, onThemePresetCommit }: TProps) {
   const s = useSalon({ isLarge: detail.isLarge })
   const { t } = useTrans()
-  const { theme, value, patch } = useThemeKV()
-  const color = value(selectedTokens, detail.key) as string
+  const { theme } = useTheme()
+  const color = selectedTokens[theme][detail.key] as string
 
   const wrapperStyle = {
     borderColor: detail.hasContrastRing ? getContrastRingColor(theme) : color,
@@ -33,11 +33,11 @@ export default function ColorItem({ detail, selectedTokens, onThemePresetCommit 
   const handlePresetChange = (selectedColor: TColorName) => {
     if (selectedColor === COLOR.CUSTOM) return
 
-    onThemePresetCommit(patch({ [detail.key]: mapToPresetColorHex(selectedColor, theme) }))
+    onThemePresetCommit({ [theme]: { [detail.key]: mapToPresetColorHex(selectedColor, theme) } })
   }
 
   const handleCustomChange = (customColor: string) => {
-    onThemePresetCommit(patch({ [detail.key]: customColor }))
+    onThemePresetCommit({ [theme]: { [detail.key]: customColor } })
   }
 
   return (

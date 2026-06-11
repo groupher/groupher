@@ -1,7 +1,7 @@
-import useThemeKV from '~/hooks/useThemeKV'
+import { PRESET_FIELD } from '~/const/theme_preset'
+import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 
-import { PRESET_FIELD } from '../constant'
 import type { TThemeDetails } from '../spec'
 import useSalon from './salon/page_glow'
 import useSettingRowSalon from './salon/setting_row'
@@ -16,7 +16,7 @@ export default function PageGlow({ details }: TProps) {
   const s = useSalon()
   const row = useSettingRowSalon()
   const { t } = useTrans()
-  const { value } = useThemeKV()
+  const { theme } = useTheme()
 
   const {
     selectedTokens,
@@ -25,7 +25,7 @@ export default function PageGlow({ details }: TProps) {
     onThemePresetFlush,
     onThemePresetCommit,
   } = details
-  const glowType = value(selectedTokens, PRESET_FIELD.GLOW_TYPE)
+  const glowType = selectedTokens[theme].glowType
 
   return (
     <>

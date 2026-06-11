@@ -1,8 +1,6 @@
 import { PRESET_FIELD } from '~/const/theme_preset'
 import type { TDsbStoreFieldKey } from '~/stores/dashboard/spec'
 
-export { PRESET_FIELD }
-
 export const THEME_PRESET_STORE_FIELDS = [
   PRESET_FIELD.THEME_PRESET,
   PRESET_FIELD.THEME_PRESET_BASE,
