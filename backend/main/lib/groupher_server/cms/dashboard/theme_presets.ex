@@ -67,7 +67,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
     # readonly preset.
     existing_overwrite =
       cond do
-        current_layout.theme_preset == :custom and incoming_overwrite == %{} ->
+        custom_selected?(current_layout.theme_preset) and incoming_overwrite == %{} ->
           %{}
 
         is_map(current_custom_preset) and current_base_preset == base_preset ->
@@ -82,4 +82,6 @@ defmodule GroupherServer.CMS.Dashboard.ThemePresets do
       {:ok, ThemePreset.build_custom_preset(base_preset, overwrite)}
     end
   end
+
+  defp custom_selected?(theme_preset), do: theme_preset in [:custom, "custom", "CUSTOM"]
 end

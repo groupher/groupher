@@ -30,6 +30,15 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
   }
   @validated_embed_section_fields Map.keys(@embed_section_modules)
 
+  # Most embeds_one sections support sparse updates and can be deep-merged.
+  # Some map fields are opaque definitions where an empty nested map is
+  # meaningful. `layout.custom_theme_preset.overwrite: %{}` must clear the old
+  # overwrite, so the whole `custom_theme_preset` value replaces the previous
+  # value after the section-level merge.
+  @replace_merged_fields %{
+    layout: [:custom_theme_preset]
+  }
+
   @spec section_args(atom(), map()) :: map() | list() | nil
   def section_args(key, args) when key in @replace_section_fields do
     args
@@ -47,7 +56,12 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
       when key in @validated_embed_section_fields do
     embed_module = Map.fetch!(@embed_section_modules, key)
     current_embed = community_dashboard[key] || struct(embed_module)
-    merged_args = current_embed |> deep_merge(args) |> strip_struct()
+
+    merged_args =
+      current_embed
+      |> deep_merge(args)
+      |> replace_merged_fields(key, args)
+      |> strip_struct()
 
     case embed_module.changeset(current_embed, merged_args) do
       %{valid?: true} = changeset ->
@@ -82,4 +96,12 @@ defmodule GroupherServer.CMS.Dashboard.SectionPayload do
 
   # Replace-style sections are already the final payload.
   def prepare(%CommunityDashboard{}, _key, args), do: {:ok, args}
+
+  defp replace_merged_fields(merged_args, key, args) do
+    @replace_merged_fields
+    |> Map.get(key, [])
+    |> Enum.reduce(merged_args, fn field, acc ->
+      if Map.has_key?(args, field), do: Map.put(acc, field, Map.get(args, field)), else: acc
+    end)
+  end
 end
