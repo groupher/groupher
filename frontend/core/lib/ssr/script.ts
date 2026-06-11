@@ -1,5 +1,5 @@
 import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
-import { buildThemePresetCssVars } from '~/lib/themePreset'
+import { composeThemePresetCssVars } from '~/lib/themePreset'
 import type { TParseDashboard, TResolvedThemePreset } from '~/spec'
 
 export const ssrThemeInitScript = () => `
@@ -55,8 +55,8 @@ const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string
   }
 
   const themeTokens = dashboard.themeTokens as TResolvedThemePreset
-  const lightVars = buildThemePresetCssVars(themeTokens, THEME.LIGHT)
-  const darkVars = buildThemePresetCssVars(themeTokens, THEME.DARK)
+  const lightVars = composeThemePresetCssVars(themeTokens, THEME.LIGHT)
+  const darkVars = composeThemePresetCssVars(themeTokens, THEME.DARK)
 
   return [
     [':root', sanitizeCSSVars(lightVars)],

@@ -11,7 +11,7 @@ import {
 import { useSnapshot } from 'valtio'
 
 import useTheme from '~/hooks/useTheme'
-import { buildThemePresetCssVars } from '~/lib/themePreset'
+import { composeThemePresetCssVars } from '~/lib/themePreset'
 import type { TResolvedThemePreset } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
@@ -57,8 +57,8 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
   const { theme } = useTheme()
   const cssVars = useMemo(
     () =>
-      preset$.themeTokens?.light
-        ? buildThemePresetCssVars(preset$.themeTokens as TResolvedThemePreset, theme)
+      preset$.themeTokens?.light && preset$.themeTokens?.dark
+        ? composeThemePresetCssVars(preset$.themeTokens as TResolvedThemePreset, theme)
         : {},
     [preset$.themeTokens, theme],
   )

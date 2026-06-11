@@ -1,7 +1,11 @@
 import THEME from '~/const/theme'
 import type { TResolvedThemePreset } from '~/spec'
 
-import { buildThemePresetCssVars, getThemePresetPageBgCssVar, getThemePresetSection } from './themePreset'
+import {
+  composeThemePresetCssVars,
+  getThemePresetPageBgCssVar,
+  getThemePresetSection,
+} from './themePreset'
 
 const tokens: TResolvedThemePreset = {
   shared: { glowFixed: true },
@@ -49,10 +53,10 @@ describe('getThemePresetPageBgCssVar', () => {
   })
 })
 
-describe('buildThemePresetCssVars', () => {
+describe('composeThemePresetCssVars', () => {
   it('builds css variables from backend resolved tokens for the requested theme', () => {
-    expect(buildThemePresetCssVars(tokens, THEME.LIGHT)['--color-title']).toBe('#111111')
-    expect(buildThemePresetCssVars(tokens, THEME.DARK)['--color-title']).toBe('#eeeeee')
-    expect(buildThemePresetCssVars(tokens, THEME.DARK)['--color-card']).toBe('#202020')
+    expect(composeThemePresetCssVars(tokens, THEME.LIGHT)['--color-title']).toBe('#111111')
+    expect(composeThemePresetCssVars(tokens, THEME.DARK)['--color-title']).toBe('#eeeeee')
+    expect(composeThemePresetCssVars(tokens, THEME.DARK)['--color-card']).toBe('#202020')
   })
 })

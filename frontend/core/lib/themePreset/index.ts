@@ -42,10 +42,10 @@ export const getThemePresetPageBgCssVar = (theme: typeof THEME.LIGHT | typeof TH
  *   those variables directly inside dark selectors.
  *
  * Example:
- *   buildThemePresetCssVars(tokens, THEME.DARK)['--color-title']
+ *   composeThemePresetCssVars(tokens, THEME.DARK)['--color-title']
  *   // => tokens.dark.textTitle
  */
-export const buildThemePresetCssVars = (
+export const composeThemePresetCssVars = (
   tokens: TResolvedThemePreset,
   theme: typeof THEME.LIGHT | typeof THEME.DARK,
 ): TThemePresetCssVars => {
