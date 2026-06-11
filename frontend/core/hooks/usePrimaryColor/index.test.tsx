@@ -6,7 +6,7 @@ import usePrimaryColor from '~/hooks/usePrimaryColor'
 
 describe('usePrimaryColor', () => {
   it('uses the primary CSS-var rainbow token', () => {
-    const wrapper = makeStoreWrapper({ dashboard: { themeTokens: { primaryColor: '#112233' } } })
+    const wrapper = makeStoreWrapper()
     const { result } = renderHook(() => usePrimaryColor(), { wrapper })
     expect(result.current).toBe(COLOR.CUSTOM)
   })

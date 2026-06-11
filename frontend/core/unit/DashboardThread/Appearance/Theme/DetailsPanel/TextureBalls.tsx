@@ -22,14 +22,12 @@ export default function TextureBalls({
   rowClassName,
 }: TProps) {
   const s = useSalon()
-  const { key, value } = useThemeKV()
+  const { section, value, patch } = useThemeKV()
   const [expanded, setExpanded] = useState(false)
 
   const glowType = value(selectedTokens, PRESET_FIELD.GLOW_TYPE)
-  const glowTypeKey = key(PRESET_FIELD.GLOW_TYPE)
-  const otherGlowTypeKey =
-    glowTypeKey === PRESET_FIELD.GLOW_TYPE ? PRESET_FIELD.GLOW_TYPE_DARK : PRESET_FIELD.GLOW_TYPE
-  const otherGlowType = selectedTokens[otherGlowTypeKey]
+  const otherSection = section === 'light' ? 'dark' : 'light'
+  const otherGlowType = selectedTokens[otherSection].glowType
   const allOptions = ['', ...TOP_GLOW_KEYS]
   const activeHidden =
     !!glowType && allOptions.slice(COLLAPSED_OPTION_COUNT).includes(glowType as string)
@@ -43,10 +41,10 @@ export default function TextureBalls({
   const hiddenCount = allOptions.length - visibleOptions.length
 
   const commitGlowType = (effect: string) => {
-    const overwrite: TThemePresetOverwrite = { [glowTypeKey]: effect }
+    const overwrite: TThemePresetOverwrite = patch({ glowType: effect })
 
     if (effect && !glowType && !otherGlowType) {
-      overwrite[otherGlowTypeKey] = effect
+      overwrite[otherSection] = { glowType: effect }
     }
 
     onThemePresetCommit(overwrite)

@@ -19,9 +19,8 @@ type TProps = {
 export default function ColorItem({ detail, selectedTokens, onThemePresetCommit }: TProps) {
   const s = useSalon({ isLarge: detail.isLarge })
   const { t } = useTrans()
-  const { theme, key, value } = useThemeKV()
+  const { theme, value, patch } = useThemeKV()
   const color = value(selectedTokens, detail.key) as string
-  const activeColorKey = key(detail.key)
 
   const wrapperStyle = {
     borderColor: detail.hasContrastRing ? getContrastRingColor(theme) : color,
@@ -34,11 +33,11 @@ export default function ColorItem({ detail, selectedTokens, onThemePresetCommit 
   const handlePresetChange = (selectedColor: TColorName) => {
     if (selectedColor === COLOR.CUSTOM) return
 
-    onThemePresetCommit({ [activeColorKey]: mapToPresetColorHex(selectedColor, theme) })
+    onThemePresetCommit(patch({ [detail.key]: mapToPresetColorHex(selectedColor, theme) }))
   }
 
   const handleCustomChange = (customColor: string) => {
-    onThemePresetCommit({ [activeColorKey]: customColor })
+    onThemePresetCommit(patch({ [detail.key]: customColor }))
   }
 
   return (

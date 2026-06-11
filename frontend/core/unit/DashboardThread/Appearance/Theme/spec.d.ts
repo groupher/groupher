@@ -1,4 +1,4 @@
-import type { TResolvedThemePreset, TThemePresetOption } from '~/spec'
+import type { TResolvedThemePreset, TThemePresetOverwrite, TThemePresetOption } from '~/spec'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
 
 import type { TPageBgDraft } from './DetailsPanel/CustomPageBg/hooks'
@@ -8,7 +8,7 @@ export type { TThemePresetOption } from '~/spec'
 export type TThemePresetCardMode = 'stacked' | 'forkActive' | 'forkBase'
 
 export type TThemePresetTokens = TResolvedThemePreset
-export type TThemePresetOverwrite = Partial<TResolvedThemePreset>
+export type { TThemePresetOverwrite }
 
 export type TPreviewCssVars = Record<`--${string}`, string | number | null>
 
@@ -174,7 +174,7 @@ export type TThemeDetails = {
    * Preview page background edits through CSS vars only.
    *
    * Example:
-   *   details.onPageBgPreview({ pageBgDark: '#111111' })
+   *   details.onPageBgPreview({ pageBg: '#111111' })
    */
   onPageBgPreview: (patch: Partial<TPageBgDraft>) => void
   /**
@@ -188,14 +188,14 @@ export type TThemeDetails = {
    * Preview token edits through CSS vars only.
    *
    * Example:
-   *   details.onThemePresetPreview({ glowOpacity: 60 })
+   *   details.onThemePresetPreview({ dark: { glowOpacity: 60 } })
    */
   onThemePresetPreview: (overwrite: TThemePresetOverwrite) => void
   /**
    * Schedule token edits as a debounced Custom preset overwrite.
    *
    * Example:
-   *   details.onThemePresetSchedule({ textTitle: '#222222' })
+   *   details.onThemePresetSchedule({ light: { textTitle: '#222222' } })
    */
   onThemePresetSchedule: (overwrite: TThemePresetOverwrite) => void
   /**
@@ -209,7 +209,7 @@ export type TThemeDetails = {
    * Commit token edits immediately as Custom preset fields.
    *
    * Example:
-   *   details.onThemePresetCommit({ accentColor: '#333333' })
+   *   details.onThemePresetCommit({ light: { accentColor: '#333333' } })
    */
   onThemePresetCommit: (overwrite: TThemePresetOverwrite) => void
 }

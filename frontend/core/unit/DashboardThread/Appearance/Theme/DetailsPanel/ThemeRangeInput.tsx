@@ -29,9 +29,8 @@ export default function ThemeRangeInput({
   onThemePresetSchedule,
   onThemePresetFlush,
 }: TProps) {
-  const { key, value } = useThemeKV()
+  const { value, patch } = useThemeKV()
   const activeValue = value(selectedTokens, baseKey) as number
-  const activeKey = key(baseKey)
   const [draftValue, setDraftValue] = useState({
     sourceValue: activeValue,
     value: activeValue,
@@ -39,7 +38,7 @@ export default function ThemeRangeInput({
   const displayValue = draftValue.sourceValue === activeValue ? draftValue.value : activeValue
 
   const getOverwrite = (value: number): TThemePresetOverwrite => ({
-    [activeKey]: value,
+    ...patch({ [baseKey]: value }),
   })
 
   return (

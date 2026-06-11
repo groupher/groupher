@@ -9,6 +9,7 @@ import type { TResolvedThemePreset } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import {
+  buildThemeOverwrite,
   buildCustomPresetEditOverwrite,
   buildCustomPresetResetOverwrite,
   buildPresetSelectionFields,
@@ -61,7 +62,10 @@ export default function useAppearance({
   const savedCustomPresetBase = dsb$.themePresetBase ?? THEME_PRESET.DEFAULT
   const activePresetBase =
     activePreset === THEME_PRESET.CUSTOM ? savedCustomPresetBase : activePreset
-  const selectedPageBgDraft = useMemo(() => toPageBgDraft(selectedTokens), [selectedTokens])
+  const selectedPageBgDraft = useMemo(
+    () => toPageBgDraft(selectedTokens, isLightTheme),
+    [isLightTheme, selectedTokens],
+  )
   const customPresetOption = presetOptions.find((preset) => preset.value === THEME_PRESET.CUSTOM)
   const customBaseTokens =
     presetOptions.find((preset) => preset.value === savedCustomPresetBase)?.tokens ?? selectedTokens
@@ -210,6 +214,13 @@ export default function useAppearance({
     [dsb$, scheduleThemePresetPreviewOverwrite, updateEditingDetails, updateShowForkRelation],
   )
 
+  const schedulePageBgOverwrite = useCallback(
+    (patch) => {
+      scheduleThemePresetOverwrite(buildThemeOverwrite(isLightTheme, patch))
+    },
+    [isLightTheme, scheduleThemePresetOverwrite],
+  )
+
   const saveAppearance = () => {
     flushThemePresetPreviewCommit()
     clearPreviewCssVars()
@@ -243,7 +254,7 @@ export default function useAppearance({
     isLightTheme,
     pageBgResetKey,
     onPageBgPreview: previewPageBg,
-    onPageBgCommit: scheduleThemePresetOverwrite,
+    onPageBgCommit: schedulePageBgOverwrite,
     onThemePresetPreview: previewThemePresetOverwrite,
     onThemePresetSchedule: scheduleThemePresetOverwrite,
     onThemePresetFlush: flushThemePresetPreviewCommit,

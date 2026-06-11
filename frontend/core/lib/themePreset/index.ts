@@ -1,34 +1,14 @@
 import THEME from '~/const/theme'
-import { PRESET_FIELD } from '~/const/theme_preset'
-import { createThemeKeyPicker } from '~/lib/themeKey'
-import type { TResolvedThemePreset } from '~/spec'
+import type { TResolvedThemePreset, TThemePresetThemeTokens } from '~/spec'
 
-import type { TThemePresetBaseField, TThemePresetCssVars } from './spec'
+import type { TThemePresetCssVars } from './spec'
 
-/**
- * Read a theme token by base key using the `xx / xxDark` naming convention.
- *
- * Problem scenario: callers should pass `PRESET_FIELD.TEXT_TITLE` once and let
- * the current theme decide whether `textTitle` or `textTitleDark` is read.
- *
- * Input:
- *   - `tokens`: resolved theme tokens from the backend.
- *   - `baseKey`: the light/base token key, never the `Dark` key.
- *   - `theme`: the theme to read for.
- *
- * Output:
- *   The token value at `baseKey` for light theme or `${baseKey}Dark` for dark
- *   theme.
- *
- * Example:
- *   getThemePresetValue(tokens, PRESET_FIELD.TEXT_TITLE, THEME.DARK)
- *   // => tokens.textTitleDark
- */
-export const getThemePresetValue = <TKey extends TThemePresetBaseField>(
+type TThemeName = typeof THEME.LIGHT | typeof THEME.DARK
+
+export const getThemePresetSection = (
   tokens: TResolvedThemePreset,
-  baseKey: TKey,
-  theme: typeof THEME.LIGHT | typeof THEME.DARK,
-): TResolvedThemePreset[TKey] => createThemeKeyPicker(theme).value(tokens, baseKey) as never
+  theme: TThemeName,
+): TThemePresetThemeTokens => (theme === THEME.DARK ? tokens.dark : tokens.light)
 
 /**
  * Return the CSS variable that already carries the resolved page background.
@@ -63,28 +43,28 @@ export const getThemePresetPageBgCssVar = (theme: typeof THEME.LIGHT | typeof TH
  *
  * Example:
  *   buildThemePresetCssVars(tokens, THEME.DARK)['--color-title']
- *   // => tokens.textTitleDark
+ *   // => tokens.dark.textTitle
  */
 export const buildThemePresetCssVars = (
   tokens: TResolvedThemePreset,
   theme: typeof THEME.LIGHT | typeof THEME.DARK,
-): TThemePresetCssVars => ({
-  '--color-primary-custom': getThemePresetValue(tokens, PRESET_FIELD.PRIMARY_COLOR, THEME.LIGHT),
-  '--color-primary-custom-dark': getThemePresetValue(
-    tokens,
-    PRESET_FIELD.PRIMARY_COLOR,
-    THEME.DARK,
-  ),
-  '--color-accent-custom': getThemePresetValue(tokens, PRESET_FIELD.ACCENT_COLOR, THEME.LIGHT),
-  '--color-accent-custom-dark': getThemePresetValue(tokens, PRESET_FIELD.ACCENT_COLOR, THEME.DARK),
-  '--color-page-custom': getThemePresetValue(tokens, PRESET_FIELD.PAGE_BG, THEME.LIGHT),
-  '--color-page-custom-dark': getThemePresetValue(tokens, PRESET_FIELD.PAGE_BG, THEME.DARK),
-  '--color-title': getThemePresetValue(tokens, PRESET_FIELD.TEXT_TITLE, theme),
-  '--color-title-dark': getThemePresetValue(tokens, PRESET_FIELD.TEXT_TITLE, THEME.DARK),
-  '--color-digest': getThemePresetValue(tokens, PRESET_FIELD.TEXT_DIGEST, theme),
-  '--color-digest-dark': getThemePresetValue(tokens, PRESET_FIELD.TEXT_DIGEST, THEME.DARK),
-  '--color-card': getThemePresetValue(tokens, PRESET_FIELD.CARD_COLOR, theme),
-  '--color-card-dark': getThemePresetValue(tokens, PRESET_FIELD.CARD_COLOR, THEME.DARK),
-  '--color-divider': getThemePresetValue(tokens, PRESET_FIELD.DIVIDER_COLOR, theme),
-  '--color-divider-dark': getThemePresetValue(tokens, PRESET_FIELD.DIVIDER_COLOR, THEME.DARK),
-})
+): TThemePresetCssVars => {
+  const active = getThemePresetSection(tokens, theme)
+
+  return {
+    '--color-primary-custom': tokens.light.primaryColor,
+    '--color-primary-custom-dark': tokens.dark.primaryColor,
+    '--color-accent-custom': tokens.light.accentColor,
+    '--color-accent-custom-dark': tokens.dark.accentColor,
+    '--color-page-custom': tokens.light.pageBg,
+    '--color-page-custom-dark': tokens.dark.pageBg,
+    '--color-title': active.textTitle,
+    '--color-title-dark': tokens.dark.textTitle,
+    '--color-digest': active.textDigest,
+    '--color-digest-dark': tokens.dark.textDigest,
+    '--color-card': active.cardColor,
+    '--color-card-dark': tokens.dark.cardColor,
+    '--color-divider': active.dividerColor,
+    '--color-divider-dark': tokens.dark.dividerColor,
+  }
+}

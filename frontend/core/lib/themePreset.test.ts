@@ -1,44 +1,44 @@
 import THEME from '~/const/theme'
 import type { TResolvedThemePreset } from '~/spec'
 
-import {
-  buildThemePresetCssVars,
-  getThemePresetPageBgCssVar,
-  getThemePresetValue,
-} from './themePreset'
+import { buildThemePresetCssVars, getThemePresetPageBgCssVar, getThemePresetSection } from './themePreset'
 
 const tokens: TResolvedThemePreset = {
-  pageBg: '#ffffff',
-  pageBgDark: '#101010',
-  pageBgHue: 0,
-  pageBgHueDark: 0,
-  pageBgIntensity: 0,
-  pageBgIntensityDark: 0,
-  primaryColor: '#112233',
-  primaryColorDark: '#223344',
-  accentColor: '#334455',
-  accentColorDark: '#445566',
-  textTitle: '#111111',
-  textTitleDark: '#eeeeee',
-  textDigest: '#666666',
-  textDigestDark: '#aaaaaa',
-  cardColor: '#ffffff',
-  cardColorDark: '#202020',
-  dividerColor: '#dddddd',
-  dividerColorDark: '#333333',
-  gaussBlur: 100,
-  gaussBlurDark: 100,
-  glowType: '',
-  glowTypeDark: '',
-  glowFixed: true,
-  glowOpacity: 100,
-  glowOpacityDark: 100,
+  shared: { glowFixed: true },
+  light: {
+    pageBg: '#ffffff',
+    pageBgHue: 0,
+    pageBgIntensity: 0,
+    primaryColor: '#112233',
+    accentColor: '#334455',
+    textTitle: '#111111',
+    textDigest: '#666666',
+    cardColor: '#ffffff',
+    dividerColor: '#dddddd',
+    gaussBlur: 100,
+    glowType: '',
+    glowOpacity: 100,
+  },
+  dark: {
+    pageBg: '#101010',
+    pageBgHue: 0,
+    pageBgIntensity: 0,
+    primaryColor: '#223344',
+    accentColor: '#445566',
+    textTitle: '#eeeeee',
+    textDigest: '#aaaaaa',
+    cardColor: '#202020',
+    dividerColor: '#333333',
+    gaussBlur: 100,
+    glowType: '',
+    glowOpacity: 100,
+  },
 }
 
-describe('getThemePresetValue', () => {
-  it('reads dark keys from a base key by convention', () => {
-    expect(getThemePresetValue(tokens, 'textTitle', THEME.LIGHT)).toBe('#111111')
-    expect(getThemePresetValue(tokens, 'textTitle', THEME.DARK)).toBe('#eeeeee')
+describe('getThemePresetSection', () => {
+  it('reads the concrete light or dark token section', () => {
+    expect(getThemePresetSection(tokens, THEME.LIGHT).textTitle).toBe('#111111')
+    expect(getThemePresetSection(tokens, THEME.DARK).textTitle).toBe('#eeeeee')
   })
 })
 

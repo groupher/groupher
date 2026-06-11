@@ -7,7 +7,7 @@ export type TInit = {
   presetOptions?: readonly TThemePresetOption[]
 }
 
-export type TStore = Partial<TResolvedThemePreset> & {
+export type TStore = {
   themePreset: TThemePreset | string
   themePresetBase: TThemePreset | string
   themeTokens: Partial<TResolvedThemePreset>

@@ -9,152 +9,180 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
 
       base preset defaults + custom overwrite
 
+  Theme-aware appearance data follows the same boundary used by other
+  light/dark editor data:
+
+    * `light` / `dark` contain values that can differ by theme.
+    * `shared` contains business configuration that applies to both themes.
+    * `meta` is reserved for resource/document metadata, such as cover canvas
+      dimensions. ThemePreset currently has no metadata, so it does not emit an
+      empty `meta` object.
+
   Keeping this on the backend gives every client the same token source for
   Appearance preset details, including page background, primary/accent colors,
   typography colors, frosted glass opacity, and page glow.
   """
 
   @preset_keys [:default, :claude, :solarized, :hn]
+  @theme_sections ["light", "dark"]
 
   @defaults %{
     default: %{
-      "pageBg" => "#fffcfc",
-      "pageBgDark" => "#25161d",
-      "pageBgHue" => 0,
-      "pageBgHueDark" => 332,
-      "pageBgIntensity" => 0,
-      "pageBgIntensityDark" => 6,
-      "primaryColor" => "#7d519e",
-      "primaryColorDark" => "#9669b9",
-      "accentColor" => "#5073c6",
-      "accentColorDark" => "#3a7ec7",
-      "textTitle" => "#243041",
-      "textTitleDark" => "#f5f5f5",
-      "textDigest" => "#6b7280",
-      "textDigestDark" => "#949494",
-      "cardColor" => "#ffffff",
-      "cardColorDark" => "#252525",
-      "dividerColor" => "#eae9e9",
-      "dividerColorDark" => "#353535",
-      "gaussBlur" => 100,
-      "gaussBlurDark" => 100,
-      "glowType" => "",
-      "glowTypeDark" => "",
-      "glowFixed" => true,
-      "glowOpacity" => 100,
-      "glowOpacityDark" => 100
+      "shared" => %{
+        "glowFixed" => true
+      },
+      "light" => %{
+        "pageBg" => "#fffcfc",
+        "pageBgHue" => 0,
+        "pageBgIntensity" => 0,
+        "primaryColor" => "#7d519e",
+        "accentColor" => "#5073c6",
+        "textTitle" => "#243041",
+        "textDigest" => "#6b7280",
+        "cardColor" => "#ffffff",
+        "dividerColor" => "#eae9e9",
+        "gaussBlur" => 100,
+        "glowType" => "",
+        "glowOpacity" => 100
+      },
+      "dark" => %{
+        "pageBg" => "#25161d",
+        "pageBgHue" => 332,
+        "pageBgIntensity" => 6,
+        "primaryColor" => "#9669b9",
+        "accentColor" => "#3a7ec7",
+        "textTitle" => "#f5f5f5",
+        "textDigest" => "#949494",
+        "cardColor" => "#252525",
+        "dividerColor" => "#353535",
+        "gaussBlur" => 100,
+        "glowType" => "",
+        "glowOpacity" => 100
+      }
     },
     claude: %{
-      # "#fefaf1",
-      "pageBg" => "#faf9f5",
-      "pageBgDark" => "#1e141b",
-      "pageBgHue" => 48,
-      "pageBgHueDark" => 318,
-      "pageBgIntensity" => 32,
-      "pageBgIntensityDark" => 0,
-      "primaryColor" => "#c96442",
-      "primaryColorDark" => "#d97757",
-      "accentColor" => "#5073c6",
-      "accentColorDark" => "#3a7ec7",
-      "textTitle" => "#2f2a24",
-      "textTitleDark" => "#f4eee7",
-      "textDigest" => "#786f63",
-      "textDigestDark" => "#a9a19a",
-      "cardColor" => "#fffdf8",
-      "cardColorDark" => "#261b22",
-      "dividerColor" => "#e6ded2",
-      "dividerColorDark" => "#3a3035",
-      "gaussBlur" => 100,
-      "gaussBlurDark" => 100,
-      "glowType" => "",
-      "glowTypeDark" => "",
-      "glowFixed" => true,
-      "glowOpacity" => 100,
-      "glowOpacityDark" => 100
+      "shared" => %{
+        "glowFixed" => true
+      },
+      "light" => %{
+        "pageBg" => "#faf9f5",
+        "pageBgHue" => 48,
+        "pageBgIntensity" => 32,
+        "primaryColor" => "#c96442",
+        "accentColor" => "#5073c6",
+        "textTitle" => "#2f2a24",
+        "textDigest" => "#786f63",
+        "cardColor" => "#fffdf8",
+        "dividerColor" => "#e6ded2",
+        "gaussBlur" => 100,
+        "glowType" => "",
+        "glowOpacity" => 100
+      },
+      "dark" => %{
+        "pageBg" => "#1e141b",
+        "pageBgHue" => 318,
+        "pageBgIntensity" => 0,
+        "primaryColor" => "#d97757",
+        "accentColor" => "#3a7ec7",
+        "textTitle" => "#f4eee7",
+        "textDigest" => "#a9a19a",
+        "cardColor" => "#261b22",
+        "dividerColor" => "#3a3035",
+        "gaussBlur" => 100,
+        "glowType" => "",
+        "glowOpacity" => 100
+      }
     },
     solarized: %{
-      "pageBg" => "#fdf7e7",
-      "pageBgDark" => "#122732",
-      "pageBgHue" => 44,
-      "pageBgHueDark" => 201,
-      "pageBgIntensity" => 100,
-      "pageBgIntensityDark" => 22,
-      "primaryColor" => "#859900",
-      "primaryColorDark" => "#b6c65b",
-      "accentColor" => "#5073c6",
-      "accentColorDark" => "#3a7ec7",
-      "textTitle" => "#073642",
-      "textTitleDark" => "#e8f0ed",
-      "textDigest" => "#657b83",
-      "textDigestDark" => "#93a1a1",
-      "cardColor" => "#fff9e8",
-      "cardColorDark" => "#18313d",
-      "dividerColor" => "#e2dccb",
-      "dividerColorDark" => "#2f4c57",
-      "gaussBlur" => 100,
-      "gaussBlurDark" => 100,
-      "glowType" => "",
-      "glowTypeDark" => "",
-      "glowFixed" => true,
-      "glowOpacity" => 100,
-      "glowOpacityDark" => 100
+      "shared" => %{
+        "glowFixed" => true
+      },
+      "light" => %{
+        "pageBg" => "#fdf7e7",
+        "pageBgHue" => 44,
+        "pageBgIntensity" => 100,
+        "primaryColor" => "#859900",
+        "accentColor" => "#5073c6",
+        "textTitle" => "#073642",
+        "textDigest" => "#657b83",
+        "cardColor" => "#fff9e8",
+        "dividerColor" => "#e2dccb",
+        "gaussBlur" => 100,
+        "glowType" => "",
+        "glowOpacity" => 100
+      },
+      "dark" => %{
+        "pageBg" => "#122732",
+        "pageBgHue" => 201,
+        "pageBgIntensity" => 22,
+        "primaryColor" => "#b6c65b",
+        "accentColor" => "#3a7ec7",
+        "textTitle" => "#e8f0ed",
+        "textDigest" => "#93a1a1",
+        "cardColor" => "#18313d",
+        "dividerColor" => "#2f4c57",
+        "gaussBlur" => 100,
+        "glowType" => "",
+        "glowOpacity" => 100
+      }
     },
     hn: %{
-      "pageBg" => "#fefef0",
-      "pageBgDark" => "#1e1c1b",
-      "pageBgHue" => 60,
-      "pageBgHueDark" => 20,
-      "pageBgIntensity" => 54,
-      "pageBgIntensityDark" => 1,
-      "primaryColor" => "#333333",
-      "primaryColorDark" => "#333333",
-      "accentColor" => "#5073c6",
-      "accentColorDark" => "#3a7ec7",
-      "textTitle" => "#222222",
-      "textTitleDark" => "#e6e6e6",
-      "textDigest" => "#666666",
-      "textDigestDark" => "#9a9a9a",
-      "cardColor" => "#fffff5",
-      "cardColorDark" => "#292625",
-      "dividerColor" => "#e6e6d6",
-      "dividerColorDark" => "#3c3938",
-      "gaussBlur" => 100,
-      "gaussBlurDark" => 100,
-      "glowType" => "",
-      "glowTypeDark" => "",
-      "glowFixed" => true,
-      "glowOpacity" => 100,
-      "glowOpacityDark" => 100
+      "shared" => %{
+        "glowFixed" => true
+      },
+      "light" => %{
+        "pageBg" => "#fefef0",
+        "pageBgHue" => 60,
+        "pageBgIntensity" => 54,
+        "primaryColor" => "#333333",
+        "accentColor" => "#5073c6",
+        "textTitle" => "#222222",
+        "textDigest" => "#666666",
+        "cardColor" => "#fffff5",
+        "dividerColor" => "#e6e6d6",
+        "gaussBlur" => 100,
+        "glowType" => "",
+        "glowOpacity" => 100
+      },
+      "dark" => %{
+        "pageBg" => "#1e1c1b",
+        "pageBgHue" => 20,
+        "pageBgIntensity" => 1,
+        "primaryColor" => "#333333",
+        "accentColor" => "#3a7ec7",
+        "textTitle" => "#e6e6e6",
+        "textDigest" => "#9a9a9a",
+        "cardColor" => "#292625",
+        "dividerColor" => "#3c3938",
+        "gaussBlur" => 100,
+        "glowType" => "",
+        "glowOpacity" => 100
+      }
     }
   }
-  @token_keys @defaults.default |> Map.keys() |> MapSet.new()
+
+  @shared_token_keys @defaults.default["shared"] |> Map.keys() |> MapSet.new()
+  @theme_token_keys @defaults.default["light"] |> Map.keys() |> MapSet.new()
   @color_token_keys MapSet.new([
                       "pageBg",
-                      "pageBgDark",
                       "primaryColor",
-                      "primaryColorDark",
                       "accentColor",
-                      "accentColorDark",
                       "textTitle",
-                      "textTitleDark",
                       "textDigest",
-                      "textDigestDark",
                       "cardColor",
-                      "cardColorDark",
-                      "dividerColor",
-                      "dividerColorDark"
+                      "dividerColor"
                     ])
-  @hue_token_keys MapSet.new(["pageBgHue", "pageBgHueDark"])
-  @percent_token_keys MapSet.new([
-                        "pageBgIntensity",
-                        "pageBgIntensityDark",
-                        "gaussBlur",
-                        "gaussBlurDark",
-                        "glowOpacity",
-                        "glowOpacityDark"
-                      ])
+  @hue_token_keys MapSet.new(["pageBgHue"])
+  @percent_token_keys MapSet.new(["pageBgIntensity", "gaussBlur", "glowOpacity"])
 
-  def token_keys, do: MapSet.to_list(@token_keys)
+  def token_keys do
+    %{
+      "shared" => MapSet.to_list(@shared_token_keys),
+      "light" => MapSet.to_list(@theme_token_keys),
+      "dark" => MapSet.to_list(@theme_token_keys)
+    }
+  end
+
   def preset_keys, do: @preset_keys
 
   @doc """
@@ -166,7 +194,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
 
   Example:
 
-      ThemePreset.tokens(:claude)["cardColor"]
+      ThemePreset.tokens(:claude)["light"]["cardColor"]
       #=> "#fffdf8"
 
   """
@@ -214,8 +242,8 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
 
   Example:
 
-      ThemePreset.resolve(:custom, %{"basePreset" => "claude", "overwrite" => %{"cardColor" => "#ffffff"}})
-      #=> %{"cardColor" => "#ffffff", "pageBg" => "#faf9f5", ...}
+      ThemePreset.resolve(:custom, %{"basePreset" => "claude", "overwrite" => %{"light" => %{"cardColor" => "#ffffff"}}})
+      #=> %{"shared" => ..., "light" => %{"cardColor" => "#ffffff", ...}, "dark" => ...}
 
   """
   def resolve(:custom, custom_preset), do: resolve_custom_preset(custom_preset)
@@ -230,14 +258,12 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
 
   Example:
 
-      ThemePreset.resolve_custom(:claude, %{"cardColor" => "#ffffff"})["pageBg"]
+      ThemePreset.resolve_custom(:claude, %{"light" => %{"cardColor" => "#ffffff"}})["light"]["pageBg"]
       #=> "#faf9f5"
 
   """
   def resolve_custom(base_preset, overwrite) do
-    base_preset
-    |> tokens()
-    |> Map.merge(overwrite || %{})
+    deep_merge(tokens(base_preset), overwrite || %{})
   end
 
   @doc """
@@ -256,7 +282,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
   def build_custom_preset(base_preset, overwrite) do
     %{
       "basePreset" => normalize_preset(base_preset) |> Atom.to_string(),
-      "overwrite" => overwrite || %{}
+      "overwrite" => prune_empty_sections(overwrite || %{})
     }
   end
 
@@ -282,8 +308,8 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
 
   Example:
 
-      ThemePreset.custom_overwrite(%{"overwrite" => %{"primaryColor" => "#112233"}})
-      #=> %{"primaryColor" => "#112233"}
+      ThemePreset.custom_overwrite(%{"overwrite" => %{"light" => %{"primaryColor" => "#112233"}}})
+      #=> %{"light" => %{"primaryColor" => "#112233"}}
 
   """
   def custom_overwrite(custom_preset) when is_map(custom_preset) do
@@ -395,29 +421,34 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
 
   Example:
 
-      ThemePreset.validate_overwrite(%{"gaussBlur" => 72})
-      #=> {:ok, %{"gaussBlur" => 72}}
+      ThemePreset.validate_overwrite(%{"light" => %{"gaussBlur" => 72}})
+      #=> {:ok, %{"light" => %{"gaussBlur" => 72}}}
 
-      ThemePreset.validate_overwrite(%{"gaussBlur" => "bad"})
-      #=> {:error, {:custom, "invalid theme overwrite value: gaussBlur"}}
+      ThemePreset.validate_overwrite(%{"light" => %{"gaussBlur" => "bad"}})
+      #=> {:error, {:custom, "invalid theme overwrite value: light.gaussBlur"}}
 
   """
   def validate_overwrite(overwrite) when is_map(overwrite) do
-    Enum.reduce_while(overwrite, {:ok, %{}}, fn {key, value}, {:ok, acc} ->
+    overwrite
+    |> Enum.reduce_while({:ok, %{}}, fn {section, section_overwrite}, {:ok, acc} ->
       cond do
-        not is_binary(key) ->
-          {:halt, invalid_key(key)}
+        not is_binary(section) ->
+          {:halt, invalid_key(section)}
 
-        not MapSet.member?(@token_keys, key) ->
-          {:halt, invalid_key(key)}
+        section == "shared" ->
+          validate_section(section, section_overwrite, @shared_token_keys, acc)
 
-        not valid_token_value?(key, value) ->
-          {:halt, invalid_value(key)}
+        section in @theme_sections ->
+          validate_section(section, section_overwrite, @theme_token_keys, acc)
 
         true ->
-          {:cont, {:ok, Map.put(acc, key, value)}}
+          {:halt, invalid_key(section)}
       end
     end)
+    |> case do
+      {:ok, normalized} -> {:ok, prune_empty_sections(normalized)}
+      error -> error
+    end
   end
 
   def validate_overwrite(_), do: {:error, {:custom, "theme overwrite must be a map"}}
@@ -432,7 +463,7 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
 
   Example:
 
-      ThemePreset.merge_overwrite(:claude, %{"cardColor" => "#ffffff"}, %{"cardColor" => "#fffdf8"})
+      ThemePreset.merge_overwrite(:claude, %{"light" => %{"cardColor" => "#ffffff"}}, %{"light" => %{"cardColor" => "#fffdf8"}})
       #=> {:ok, %{}}
 
   """
@@ -443,9 +474,9 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
          {:ok, incoming} <- validate_overwrite(incoming_overwrite || %{}) do
       overwrite =
         existing
-        |> Map.merge(incoming)
-        |> Enum.reject(fn {key, value} -> Map.get(base_tokens, key) == value end)
-        |> Map.new()
+        |> deep_merge(incoming)
+        |> strip_base_equal_values(base_tokens)
+        |> prune_empty_sections()
 
       {:ok, overwrite}
     end
@@ -471,24 +502,73 @@ defmodule GroupherServer.CMS.Dashboard.ThemePreset do
   defp normalize_preset(preset) when is_atom(preset), do: preset
   defp normalize_preset(_), do: :default
 
-  defp valid_token_value?(key, value) when is_binary(value) do
+  defp validate_section(_section, section_overwrite, _allowed_keys, _acc)
+       when not is_map(section_overwrite),
+       do: {:halt, {:error, {:custom, "theme overwrite section must be a map"}}}
+
+  defp validate_section(section, section_overwrite, allowed_keys, acc) do
+    section_overwrite
+    |> Enum.reduce_while({:ok, %{}}, fn {key, value}, {:ok, section_acc} ->
+      cond do
+        not is_binary(key) ->
+          {:halt, invalid_key("#{section}.#{inspect(key)}")}
+
+        not MapSet.member?(allowed_keys, key) ->
+          {:halt, invalid_key("#{section}.#{key}")}
+
+        not valid_token_value?(section, key, value) ->
+          {:halt, invalid_value("#{section}.#{key}")}
+
+        true ->
+          {:cont, {:ok, Map.put(section_acc, key, value)}}
+      end
+    end)
+    |> case do
+      {:ok, normalized_section} -> {:cont, {:ok, Map.put(acc, section, normalized_section)}}
+      error -> {:halt, error}
+    end
+  end
+
+  defp valid_token_value?("shared", "glowFixed", value), do: is_boolean(value)
+
+  defp valid_token_value?(section, key, value) when section in @theme_sections do
     cond do
-      MapSet.member?(@color_token_keys, key) -> valid_hex_color?(value)
-      key in ["glowType", "glowTypeDark"] -> true
+      is_binary(value) and MapSet.member?(@color_token_keys, key) -> valid_hex_color?(value)
+      is_binary(value) and key == "glowType" -> true
+      is_number(value) and MapSet.member?(@hue_token_keys, key) -> value >= 0 and value <= 360
+      is_number(value) and MapSet.member?(@percent_token_keys, key) -> value >= 0 and value <= 100
       true -> false
     end
   end
 
-  defp valid_token_value?(key, value) when is_number(value) do
-    cond do
-      MapSet.member?(@hue_token_keys, key) -> value >= 0 and value <= 360
-      MapSet.member?(@percent_token_keys, key) -> value >= 0 and value <= 100
-      true -> false
-    end
+  defp valid_token_value?(_, _, _), do: false
+
+  defp deep_merge(left, right) when is_map(left) and is_map(right) do
+    Map.merge(left, right, fn _key, left_value, right_value ->
+      deep_merge(left_value, right_value)
+    end)
   end
 
-  defp valid_token_value?(key, value) when is_boolean(value), do: key == "glowFixed"
-  defp valid_token_value?(_, _), do: false
+  defp deep_merge(_left, right), do: right
+
+  defp strip_base_equal_values(overwrite, base_tokens) do
+    Enum.reduce(overwrite, %{}, fn {section, section_overwrite}, acc ->
+      base_section = Map.get(base_tokens, section, %{})
+
+      cleaned_section =
+        section_overwrite
+        |> Enum.reject(fn {key, value} -> Map.get(base_section, key) == value end)
+        |> Map.new()
+
+      Map.put(acc, section, cleaned_section)
+    end)
+  end
+
+  defp prune_empty_sections(overwrite) do
+    overwrite
+    |> Enum.reject(fn {_section, section_overwrite} -> section_overwrite == %{} end)
+    |> Map.new()
+  end
 
   defp valid_hex_color?(value), do: Regex.match?(~r/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, value)
 

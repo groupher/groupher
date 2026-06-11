@@ -1,16 +1,16 @@
 import THEME from '~/const/theme'
 import { THEME_PRESET } from '~/const/theme_preset'
 import { blurRGB } from '~/fmt'
-import { createThemeKeyPicker } from '~/lib/themeKey'
+import { getThemePresetSection } from '~/lib/themePreset'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
 
-import { PRESET_FIELD } from './constant'
 import { resolveRawBg, type TPageBgDraft } from './DetailsPanel/CustomPageBg/hooks'
 import type {
   TCustomPresetEditOptions,
   TPageBgPreviewOptions,
   TPreviewCssVars,
   TPresetSelectionOptions,
+  TThemePresetOverwrite,
   TThemePresetTokens,
   TThemePresetOption,
   TThemePresetPreviewOptions,
@@ -35,6 +35,64 @@ export const toCssOpacity = (opacity = 100): number => {
   return Math.min(Math.max(percent, 0), 100) / 100
 }
 
+const getThemeSection = (isLightTheme: boolean): 'light' | 'dark' =>
+  isLightTheme ? 'light' : 'dark'
+
+export const buildThemeOverwrite = (
+  isLightTheme: boolean,
+  patch: Partial<TPageBgDraft>,
+): TThemePresetOverwrite => ({
+  [getThemeSection(isLightTheme)]: patch,
+})
+
+export const mergeThemePresetOverwrite = (
+  tokens: TThemePresetTokens,
+  overwrite: TThemePresetOverwrite = {},
+): TThemePresetTokens => ({
+  shared: {
+    ...tokens.shared,
+    ...overwrite.shared,
+  },
+  light: {
+    ...tokens.light,
+    ...overwrite.light,
+  },
+  dark: {
+    ...tokens.dark,
+    ...overwrite.dark,
+  },
+})
+
+export const mergeThemePresetOverwritePatch = (
+  current: TThemePresetOverwrite = {},
+  overwrite: TThemePresetOverwrite = {},
+): TThemePresetOverwrite => ({
+  ...(current.shared || overwrite.shared
+    ? {
+        shared: {
+          ...current.shared,
+          ...overwrite.shared,
+        },
+      }
+    : {}),
+  ...(current.light || overwrite.light
+    ? {
+        light: {
+          ...current.light,
+          ...overwrite.light,
+        },
+      }
+    : {}),
+  ...(current.dark || overwrite.dark
+    ? {
+        dark: {
+          ...current.dark,
+          ...overwrite.dark,
+        },
+      }
+    : {}),
+})
+
 /**
  * Convert resolved preset tokens into the compact page-background draft shape.
  *
@@ -43,16 +101,14 @@ export const toCssOpacity = (opacity = 100): number => {
  * draft fields.
  *
  * Example:
- *   toPageBgDraft(overwrite)
- *   // => { pageBg: overwrite.pageBg, pageBgDark: overwrite.pageBgDark }
+ *   toPageBgDraft(tokens, true)
+ *   // => { pageBg: tokens.light.pageBg, ... }
  */
-export const toPageBgDraft = (tokens: TThemePresetTokens): TPageBgDraft => ({
-  pageBg: tokens.pageBg,
-  pageBgDark: tokens.pageBgDark,
-  pageBgHue: tokens.pageBgHue,
-  pageBgHueDark: tokens.pageBgHueDark,
-  pageBgIntensity: tokens.pageBgIntensity,
-  pageBgIntensityDark: tokens.pageBgIntensityDark,
+export const toPageBgDraft = (tokens: TThemePresetTokens, isLightTheme: boolean): TPageBgDraft => ({
+  pageBg: getThemePresetSection(tokens, isLightTheme ? THEME.LIGHT : THEME.DARK).pageBg,
+  pageBgHue: getThemePresetSection(tokens, isLightTheme ? THEME.LIGHT : THEME.DARK).pageBgHue,
+  pageBgIntensity: getThemePresetSection(tokens, isLightTheme ? THEME.LIGHT : THEME.DARK)
+    .pageBgIntensity,
 })
 
 /**
@@ -76,8 +132,8 @@ export const toPageBgDraft = (tokens: TThemePresetTokens): TPageBgDraft => ({
  *     selectedTokens,
  *     customTokensDraft: null,
  *     currentThemeOverwrite: {},
- *     overwrite: { primaryColor: '#222222' },
- *   }).dashboardFields.themeOverwrite // { primaryColor: '#222222' }
+ *     overwrite: { light: { primaryColor: '#222222' } },
+ *   }).dashboardFields.themeOverwrite // { light: { primaryColor: '#222222' } }
  */
 export const buildCustomPresetEditOverwrite = ({
   activePreset,
@@ -94,12 +150,11 @@ export const buildCustomPresetEditOverwrite = ({
     activePreset === THEME_PRESET.CUSTOM ? (activePresetBase ?? THEME_PRESET.DEFAULT) : activePreset
   const baseTokens =
     activePreset === THEME_PRESET.CUSTOM ? (customTokensDraft ?? selectedTokens) : selectedTokens
-  const nextTokens = {
-    ...baseTokens,
-    ...overwrite,
-  }
+  const nextTokens = mergeThemePresetOverwrite(baseTokens, overwrite)
   const nextOverwrite =
-    activePreset === THEME_PRESET.CUSTOM ? { ...currentThemeOverwrite, ...overwrite } : overwrite
+    activePreset === THEME_PRESET.CUSTOM
+      ? mergeThemePresetOverwritePatch(currentThemeOverwrite, overwrite)
+      : overwrite
 
   return {
     dashboardFields: {
@@ -208,7 +263,10 @@ export const buildPageBgPreviewCssVars = ({
   isLightTheme,
 }: TPageBgPreviewOptions): TPreviewCssVars => {
   const previewRawBg = resolveRawBg({ ...selectedPageBgDraft, ...patch }, isLightTheme)
-  const activeGaussBlur = isLightTheme ? selectedTokens.gaussBlur : selectedTokens.gaussBlurDark
+  const activeGaussBlur = getThemePresetSection(
+    selectedTokens,
+    isLightTheme ? THEME.LIGHT : THEME.DARK,
+  ).gaussBlur
   const previewBackground = previewRawBg ? blurRGB(previewRawBg, activeGaussBlur) : null
 
   return { '--preview-page-bg': previewBackground }
@@ -227,7 +285,7 @@ export const buildPageBgPreviewCssVars = ({
  * Example:
  *   buildThemePresetPreviewCssVars({
  *     selectedTokens,
- *     overwrite: { glowOpacity: 80 },
+ *     overwrite: { light: { glowOpacity: 80 } },
  *     isLightTheme: true,
  *   }) // => { '--preview-page-bg': ..., '--preview-glow-opacity': 0.8 }
  */
@@ -236,21 +294,18 @@ export const buildThemePresetPreviewCssVars = ({
   overwrite,
   isLightTheme,
 }: TThemePresetPreviewOptions): TPreviewCssVars => {
-  const nextTokens = {
-    ...selectedTokens,
-    ...overwrite,
-  }
-  const { key, value } = createThemeKeyPicker(isLightTheme ? THEME.LIGHT : THEME.DARK)
-  const previewRawBg = resolveRawBg(toPageBgDraft(nextTokens), isLightTheme)
-  const activeGaussBlur = value(nextTokens, PRESET_FIELD.GAUSS_BLUR)
+  const nextTokens = mergeThemePresetOverwrite(selectedTokens, overwrite)
+  const section = getThemeSection(isLightTheme)
+  const activeTokens = nextTokens[section]
+  const previewRawBg = resolveRawBg(toPageBgDraft(nextTokens, isLightTheme), isLightTheme)
+  const activeGaussBlur = activeTokens.gaussBlur
   const previewBackground = previewRawBg ? blurRGB(previewRawBg, activeGaussBlur) : null
-  const glowOpacityKey = key(PRESET_FIELD.GLOW_OPACITY)
   const previewVars: TPreviewCssVars = {
     '--preview-page-bg': previewBackground,
   }
 
-  if (overwrite[glowOpacityKey] !== undefined) {
-    previewVars['--preview-glow-opacity'] = toCssOpacity(nextTokens[glowOpacityKey])
+  if (overwrite[section]?.glowOpacity !== undefined) {
+    previewVars['--preview-glow-opacity'] = toCssOpacity(activeTokens.glowOpacity)
   }
 
   return previewVars

@@ -1,22 +1,38 @@
 import { useMemo } from 'react'
 
-import { createThemeKeyPicker } from '~/lib/themeKey'
+import THEME from '~/const/theme'
+import type { TResolvedThemePreset, TThemePresetThemeTokens } from '~/spec'
 
 import useTheme from './useTheme'
 
 /**
- * Resolve `xx / xxDark` keys and values for the current theme.
+ * Read and patch the active light/dark theme section.
  *
- * Intent: components should read the current theme once, then pass base keys
- * only. This works for any object that follows the paired key convention.
+ * Intent: ThemePreset data is physically split into `light` and `dark`
+ * sections. Components should select one section, not synthesize old `Dark`
+ * suffix keys at runtime.
  *
  * Example:
- *   const { theme, key, value } = useThemeKV()
- *   const colorKey = key('cardColor')
- *   const color = value(source, 'cardColor')
+ *   const { theme, section, value, patch } = useThemeKV()
+ *   const color = value(tokens, 'cardColor')
+ *   onCommit(patch({ cardColor: '#ffffff' }))
  */
 export default function useThemeKV() {
   const { theme } = useTheme()
+  const section = theme === THEME.DARK ? 'dark' : 'light'
 
-  return useMemo(() => createThemeKeyPicker(theme), [theme])
+  return useMemo(
+    () => ({
+      theme,
+      section,
+      value: <TKey extends keyof TThemePresetThemeTokens>(
+        tokens: Pick<TResolvedThemePreset, typeof section>,
+        key: TKey,
+      ): TThemePresetThemeTokens[TKey] => tokens[section][key],
+      patch: (patch: Partial<TThemePresetThemeTokens>) => ({
+        [section]: patch,
+      }),
+    }),
+    [section, theme],
+  )
 }

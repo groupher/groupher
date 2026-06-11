@@ -57,8 +57,10 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
   const { theme } = useTheme()
   const cssVars = useMemo(
     () =>
-      preset$.primaryColor ? buildThemePresetCssVars(preset$ as TResolvedThemePreset, theme) : {},
-    [preset$, theme],
+      preset$.themeTokens?.light
+        ? buildThemePresetCssVars(preset$.themeTokens as TResolvedThemePreset, theme)
+        : {},
+    [preset$.themeTokens, theme],
   )
 
   useEffect(() => {

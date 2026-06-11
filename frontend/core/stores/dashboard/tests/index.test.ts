@@ -133,31 +133,35 @@ describe('stores/dashboard', () => {
     const claude = {
       value: THEME_PRESET.CLAUDE,
       tokens: {
-        pageBg: '#fefaf1',
-        pageBgDark: '#1e141b',
-        pageBgHue: 48,
-        pageBgHueDark: 318,
-        pageBgIntensity: 32,
-        pageBgIntensityDark: 0,
-        primaryColor: '#c96442',
-        primaryColorDark: '#d97757',
-        accentColor: '#5073c6',
-        accentColorDark: '#3a7ec7',
-        textTitle: '#2f2a24',
-        textTitleDark: '#f4eee7',
-        textDigest: '#786f63',
-        textDigestDark: '#a9a19a',
-        cardColor: '#fffdf8',
-        cardColorDark: '#261b22',
-        dividerColor: '#e6ded2',
-        dividerColorDark: '#3a3035',
-        gaussBlur: 100,
-        gaussBlurDark: 100,
-        glowType: '',
-        glowTypeDark: '',
-        glowFixed: true,
-        glowOpacity: 100,
-        glowOpacityDark: 100,
+        shared: { glowFixed: true },
+        light: {
+          pageBg: '#fefaf1',
+          pageBgHue: 48,
+          pageBgIntensity: 32,
+          primaryColor: '#c96442',
+          accentColor: '#5073c6',
+          textTitle: '#2f2a24',
+          textDigest: '#786f63',
+          cardColor: '#fffdf8',
+          dividerColor: '#e6ded2',
+          gaussBlur: 100,
+          glowType: '',
+          glowOpacity: 100,
+        },
+        dark: {
+          pageBg: '#1e141b',
+          pageBgHue: 318,
+          pageBgIntensity: 0,
+          primaryColor: '#d97757',
+          accentColor: '#3a7ec7',
+          textTitle: '#f4eee7',
+          textDigest: '#a9a19a',
+          cardColor: '#261b22',
+          dividerColor: '#3a3035',
+          gaussBlur: 100,
+          glowType: '',
+          glowOpacity: 100,
+        },
       },
     }
 
@@ -170,13 +174,13 @@ describe('stores/dashboard', () => {
 
     expect(store.themePreset).toBe(THEME_PRESET.CLAUDE)
     expect(store.themePresetBase).toBe(THEME_PRESET.CLAUDE)
-    expect(store.themeTokens.pageBg).toBe(claude.tokens.pageBg)
-    expect(store.themeTokens.pageBgDark).toBe(claude.tokens.pageBgDark)
-    expect(store.themeTokens.primaryColor).toBe('#c96442')
-    expect(store.themeTokens.primaryColorDark).toBe('#d97757')
-    expect(store.themeTokens.accentColor).toBe('#5073c6')
-    expect(store.themeTokens.accentColorDark).toBe('#3a7ec7')
-    expect(store.themePresets[0]?.tokens.primaryColor).toBe('#c96442')
+    expect(store.themeTokens.light?.pageBg).toBe(claude.tokens.light.pageBg)
+    expect(store.themeTokens.dark?.pageBg).toBe(claude.tokens.dark.pageBg)
+    expect(store.themeTokens.light?.primaryColor).toBe('#c96442')
+    expect(store.themeTokens.dark?.primaryColor).toBe('#d97757')
+    expect(store.themeTokens.light?.accentColor).toBe('#5073c6')
+    expect(store.themeTokens.dark?.accentColor).toBe('#3a7ec7')
+    expect(store.themePresets[0]?.tokens.light.primaryColor).toBe('#c96442')
     expect(
       store.anyTouched(['themePreset', 'themePresetBase', 'themeTokens', 'themePresets']),
     ).toBe(true)

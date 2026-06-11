@@ -50,7 +50,9 @@ const serializeCSSVars = (selector: string, vars: TCSSVarMap): string => {
 // Build first-paint dashboard color variables on the server so custom colors do
 // not wait for client hydration to override the base token defaults.
 const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string, TCSSVarMap]> => {
-  if (!dashboard.themeTokens?.primaryColor) return []
+  if (!dashboard.themeTokens?.light?.primaryColor || !dashboard.themeTokens?.dark?.primaryColor) {
+    return []
+  }
 
   const themeTokens = dashboard.themeTokens as TResolvedThemePreset
   const lightVars = buildThemePresetCssVars(themeTokens, THEME.LIGHT)

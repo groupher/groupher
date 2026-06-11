@@ -35,6 +35,7 @@ import type {
   TTagGroup,
   TTagLayout,
   TThemePreset,
+  TThemePresetOverwrite,
   TThemePresetOption,
   TResolvedThemePreset,
   TThread,
@@ -77,7 +78,7 @@ export type TDsbFieldMap = {
   themePresetBase: TThemePreset | null
   themeTokens: Partial<TResolvedThemePreset>
   themePresets: readonly TThemePresetOption[]
-  themeOverwrite: Partial<TResolvedThemePreset>
+  themeOverwrite: TThemePresetOverwrite
 
   // seo
   seoEnable: boolean

@@ -30,34 +30,40 @@ const DEFAULT_WALLPAPER_SOURCE = 'amber_mauve'
 const DEFAULT_WALLPAPER_PATTERN_ID = '01'
 
 const DEFAULT_THEME_TOKENS = {
-  pageBg: '#fffcfc',
-  pageBgDark: '#25161d',
-  pageBgHue: 0,
-  pageBgHueDark: 332,
-  pageBgIntensity: 0,
-  pageBgIntensityDark: 6,
-  primaryColor: '#7d519e',
-  primaryColorDark: '#9669b9',
-  accentColor: '#5073c6',
-  accentColorDark: '#3a7ec7',
-  textTitle: '#243041',
-  textTitleDark: '#f5f5f5',
-  textDigest: '#6b7280',
-  textDigestDark: '#949494',
-  cardColor: '#ffffff',
-  cardColorDark: '#252525',
-  dividerColor: '#eae9e9',
-  dividerColorDark: '#353535',
-  gaussBlur: 100,
-  gaussBlurDark: 100,
-  glowType: '',
-  glowTypeDark: '',
-  glowFixed: true,
-  glowOpacity: 100,
-  glowOpacityDark: 100,
+  shared: {
+    glowFixed: true,
+  },
+  light: {
+    pageBg: '#fffcfc',
+    pageBgHue: 0,
+    pageBgIntensity: 0,
+    primaryColor: '#7d519e',
+    accentColor: '#5073c6',
+    textTitle: '#243041',
+    textDigest: '#6b7280',
+    cardColor: '#ffffff',
+    dividerColor: '#eae9e9',
+    gaussBlur: 100,
+    glowType: '',
+    glowOpacity: 100,
+  },
+  dark: {
+    pageBg: '#25161d',
+    pageBgHue: 332,
+    pageBgIntensity: 6,
+    primaryColor: '#9669b9',
+    accentColor: '#3a7ec7',
+    textTitle: '#f5f5f5',
+    textDigest: '#949494',
+    cardColor: '#252525',
+    dividerColor: '#353535',
+    gaussBlur: 100,
+    glowType: '',
+    glowOpacity: 100,
+  },
 }
 
-const makeThemeTokens = () => ({ ...DEFAULT_THEME_TOKENS })
+const makeThemeTokens = () => JSON.parse(JSON.stringify(DEFAULT_THEME_TOKENS))
 
 const makeWallpaperTheme = (overrides = {}) => ({
   type: WALLPAPER_TYPE.GRADIENT,
