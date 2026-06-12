@@ -5,7 +5,7 @@ export default function useSalon(spacing: TSpace = {}) {
   const { cn, fg, margin } = useTwBelt()
 
   return {
-    wrapper: cn(margin(spacing)),
+    wrapper: margin(spacing),
     inner: cn('w-full'),
     settingRow: 'row-end gap-4 py-3',
     labelGroup: 'w-2/5 min-w-2/5',
