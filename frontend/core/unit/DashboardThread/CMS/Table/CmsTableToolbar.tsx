@@ -130,11 +130,15 @@ export default function CmsTableToolbar({
                     batchActions.withDelete) && (
                     <div className={s.actionBarActionNotes}>
                       <div className={s.actionBarNote}>{t('dsb.cms.action.label')}</div>
-                      {batchActions.withCategory && <div className={s.actionBarNote}>Category</div>}
+                      {batchActions.withCategory && (
+                        <div className={s.actionBarNote}>{t('dsb.cms.table.category')}</div>
+                      )}
                       {batchActions.withStatus && (
                         <div className={s.actionBarNote}>{t('dsb.cms.table.status')}</div>
                       )}
-                      {batchActions.withTags && <div className={s.actionBarNote}>Tags</div>}
+                      {batchActions.withTags && (
+                        <div className={s.actionBarNote}>{t('dsb.cms.table.tags')}</div>
+                      )}
                       {batchActions.withDelete && (
                         <div className={s.actionBarDeleteNote}>{t('dsb.cms.action.delete')}</div>
                       )}

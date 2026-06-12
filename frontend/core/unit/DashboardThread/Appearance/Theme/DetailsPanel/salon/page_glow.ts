@@ -8,7 +8,7 @@ export default function useSalon() {
     swatches: 'w-2/5 pl-1 row align-start justify-end',
     swatchRow: cn('w-full wrap justify-start gap-x-2 gap-y-2'),
     row: {
-      wrapper: cn(margin({})),
+      wrapper: margin({}),
       inner: 'w-full',
       settingRow: 'row-end gap-4 py-3',
       labelGroup: 'w-2/5 min-w-2/5',

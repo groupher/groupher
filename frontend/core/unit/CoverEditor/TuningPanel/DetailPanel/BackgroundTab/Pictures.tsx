@@ -31,7 +31,11 @@ export default function Pictures({ background }: TProps) {
                 aria-label={key}
                 aria-pressed={selected}
                 className={s.button(selected)}
-                onClick={() => pictureBackgroundOnChange(key)}
+                onClick={() => {
+                  if (!selected) {
+                    pictureBackgroundOnChange(key)
+                  }
+                }}
               >
                 {selected && (
                   <span className={s.activeSign}>
