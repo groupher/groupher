@@ -1,4 +1,5 @@
 import type { TPreviewCssVars } from '~/hooks/useUpdatePreviewCssVars'
+import { normalizeSignedAngle } from '~/lib/angle'
 
 import { GLASS_FRAME, IMAGE_CONTAINER_SIZE, MAGNIFIER_RENDER_SIZE } from './constant'
 import { COVER_IMAGE_WHICH_LIST } from './coverImageModel'
@@ -86,7 +87,7 @@ const getCoverImagePreviewCssVars = (image: TCoverImageConfig): TCoverImagePrevi
     [getCoverImageVarName(image.which, 'frame-radius')]: getFrameBorderRadiusValue(image),
     [getCoverImageVarName(image.which, 'crop-radius')]: `${image.borderRadius}px`,
     [getCoverImageVarName(image.which, 'shadow')]: getImageShadow(image.shadow) ?? 'none',
-    [getCoverImageVarName(image.which, 'rotate')]: `${image.rotate}deg`,
+    [getCoverImageVarName(image.which, 'rotate')]: `${normalizeSignedAngle(image.rotate)}deg`,
     [getCoverImageVarName(image.which, 'z-index')]: image.zIndex,
     [getCoverImageVarName(image.which, 'editor-z-index')]: image.zIndex + 1,
     [getCoverImageVarName(image.which, 'magnifier-width')]: `${magnifierSizePercent}%`,

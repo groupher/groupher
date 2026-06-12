@@ -1,3 +1,5 @@
+import { normalizeSignedAngle } from '~/lib/angle'
+
 import {
   DEFAULT_MESH_COLORS,
   PREVIEW_HEIGHT,
@@ -156,9 +158,9 @@ const parseGradientAngle = (direction = '180deg'): number => {
     right: 90,
     'bottom right': 135,
     bottom: 180,
-    'bottom left': 225,
-    left: 270,
-    'top left': 315,
+    'bottom left': -135,
+    left: -90,
+    'top left': -45,
   }
 
   if (direction$ in legacy) return legacy[direction$]
@@ -166,7 +168,7 @@ const parseGradientAngle = (direction = '180deg'): number => {
   const match = direction$.match(/^(-?\d+(?:\.\d+)?)deg$/)
   if (!match) return 180
 
-  return Math.round(((Number(match[1]) % 360) + 360) % 360)
+  return normalizeSignedAngle(Number(match[1]))
 }
 
 /**

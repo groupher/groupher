@@ -3,6 +3,7 @@ import { proxy, useSnapshot } from 'valtio'
 
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
 import useTheme from '~/hooks/useTheme'
+import { normalizeSignedAngle } from '~/lib/angle'
 import type { TBgConfig, TBgTexture } from '~/lib/bg'
 import {
   DEFAULT_WALLPAPER_TEXTURE_INTENSITY,
@@ -273,9 +274,10 @@ export default function useLogic(): TRet {
   const backgroundGradientAngleOnChange = (angle: number): void => {
     const gradient = activeBackground.gradient
     if (!gradient) return
+    const nextAngle = normalizeSignedAngle(angle)
 
     if (gradient.renderer === GRADIENT_RENDERER.LINEAR || isMeshGradientRecipe(gradient)) {
-      backgroundGradientOnChange({ ...gradient, angle })
+      backgroundGradientOnChange({ ...gradient, angle: nextAngle })
     }
   }
   const toggleBackgroundTexture = (enabled: boolean): void => {
@@ -291,7 +293,7 @@ export default function useLogic(): TRet {
   const sizeOnChange = (which: TCoverImageWhich, size: TImageSize): void =>
     imagePatchOnChange(which, { size })
   const rotateOnChange = (which: TCoverImageWhich, rotate: number): void =>
-    imagePatchOnChange(which, { rotate })
+    imagePatchOnChange(which, { rotate: normalizeSignedAngle(rotate) })
 
   const glassBorderOnChange = (which: TCoverImageWhich, enabled: boolean) =>
     imagePatchOnChange(which, { glassBorder: { enabled } })
