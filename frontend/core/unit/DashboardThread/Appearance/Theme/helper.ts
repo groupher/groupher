@@ -76,34 +76,40 @@ export const mergeThemePresetOverwrite = (
  *   // => { pageBg: '#111', glowOpacity: 80 }
  */
 export const mergeThemePresetOverwritePatch = (
-  current: TThemePresetOverwrite = {},
+  current: TThemePresetOverwrite | null = null,
   overwrite: TThemePresetOverwrite = {},
-): TThemePresetOverwrite => ({
-  ...(current.shared || overwrite.shared
-    ? {
-        shared: {
-          ...current.shared,
-          ...overwrite.shared,
-        },
-      }
-    : {}),
-  ...(current.light || overwrite.light
-    ? {
-        light: {
-          ...current.light,
-          ...overwrite.light,
-        },
-      }
-    : {}),
-  ...(current.dark || overwrite.dark
-    ? {
-        dark: {
-          ...current.dark,
-          ...overwrite.dark,
-        },
-      }
-    : {}),
-})
+): TThemePresetOverwrite => {
+  // `themeOverwrite` is nullable at the API/hydration boundary. Treat only the
+  // overwrite container null as empty; nested token keys still merge normally.
+  const currentOverwrite = current ?? {}
+
+  return {
+    ...(currentOverwrite.shared || overwrite.shared
+      ? {
+          shared: {
+            ...currentOverwrite.shared,
+            ...overwrite.shared,
+          },
+        }
+      : {}),
+    ...(currentOverwrite.light || overwrite.light
+      ? {
+          light: {
+            ...currentOverwrite.light,
+            ...overwrite.light,
+          },
+        }
+      : {}),
+    ...(currentOverwrite.dark || overwrite.dark
+      ? {
+          dark: {
+            ...currentOverwrite.dark,
+            ...overwrite.dark,
+          },
+        }
+      : {}),
+  }
+}
 
 /**
  * Compose the dashboard fields for editing preset details as a Custom preset.

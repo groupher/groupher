@@ -5,6 +5,7 @@ import {
   composeCustomPresetEditFields,
   composeCustomPresetResetFields,
   composePresetSelectionFields,
+  mergeThemePresetOverwritePatch,
   toCssOpacity,
 } from '../helper'
 import type { TThemePresetTokens } from '../spec'
@@ -101,6 +102,12 @@ describe('theme preset model helpers', () => {
         primaryColor: '#777777',
         accentColor: '#888888',
       },
+    })
+  })
+
+  it('treats nullable custom overwrite as an empty patch container', () => {
+    expect(mergeThemePresetOverwritePatch(null, { light: { pageBgHue: 120 } })).toEqual({
+      light: { pageBgHue: 120 },
     })
   })
 

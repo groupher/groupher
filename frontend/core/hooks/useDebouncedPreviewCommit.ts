@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef } from 'react'
 
 type TOptions<T extends object> = {
   delay?: number
-  mergePatch?: (current: Partial<T> | null, patch: Partial<T>) => Partial<T>
+  mergePatch?: (current: Partial<T>, patch: Partial<T>) => Partial<T>
   onCommit: (patch: Partial<T>) => void
 }
 
@@ -51,10 +51,15 @@ export default function useDebouncedPreviewCommit<T extends object>({
 
   const schedule = useCallback(
     (patch: Partial<T>) => {
+      // `null` is only the queue's "no pending patch yet" sentinel. Normalize
+      // the patch container here so domain merge helpers can preserve meaningful
+      // field-level nulls such as `{ gradient: null }` or `{ secondary: null }`.
+      const currentPatch = pendingPatchRef.current ?? {}
+
       pendingPatchRef.current = mergePatch
-        ? mergePatch(pendingPatchRef.current, patch)
+        ? mergePatch(currentPatch, patch)
         : {
-            ...pendingPatchRef.current,
+            ...currentPatch,
             ...patch,
           }
 

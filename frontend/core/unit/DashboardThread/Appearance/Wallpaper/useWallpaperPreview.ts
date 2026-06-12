@@ -151,9 +151,14 @@ const mergeWallpaperPreviewPatch = (
  * // Commit fires → { effect: { blurIntensity: 35 } }
  */
 const mergeWallpaperDraftPatch = (
-  currentPatch: Partial<TWallpaperPreviewPatch> | null,
+  currentPatch: Partial<TWallpaperPreviewPatch>,
   patch: Partial<TWallpaperPreviewPatch>,
-): Partial<TWallpaperPreviewPatch> => mergeNestedWallpaperPatch(currentPatch ?? {}, patch)
+): Partial<TWallpaperPreviewPatch> => {
+  // The debounce hook already normalizes the pending patch container to `{}`.
+  // Keep this merge focused on wallpaper semantics so valid field nulls like
+  // `gradient: null` and `customWallpaper: null` keep their meaning.
+  return mergeNestedWallpaperPatch(currentPatch, patch)
+}
 
 /**
  * Orchestrate live wallpaper preview with dual-path updates.

@@ -22,7 +22,7 @@ export type TCustomPresetEditOptions = {
   activePresetBase: TThemePresetOption['value'] | null
   selectedTokens: TThemePresetTokens
   customTokensDraft: TThemePresetTokens | null
-  currentThemeOverwrite: TThemePresetOverwrite
+  currentThemeOverwrite: TThemePresetOverwrite | null
   overwrite?: TThemePresetOverwrite
 }
 
