@@ -72,7 +72,8 @@ export const getMagnifierRenderSize = (radius: number): number =>
 
 const getCoverImagePreviewCssVars = (image: TCoverImageConfig): TCoverImagePreviewCssVars => {
   const imageFrameSize = getResponsiveImageSize(image.size)
-  const imagePlacement = getImagePlacement(image.position, image.size, image.rotate)
+  const rotate = normalizeSignedAngle(image.rotate)
+  const imagePlacement = getImagePlacement(image.position, image.size, rotate)
   const magnifierRenderSize = getMagnifierRenderSize(image.magnifier.radius)
   const magnifierSizePercent = (magnifierRenderSize / CANVAS_WIDTH) * 100
   const magnifierCanvasLeft = image.magnifier.center.x * CANVAS_WIDTH - magnifierRenderSize / 2
@@ -87,7 +88,7 @@ const getCoverImagePreviewCssVars = (image: TCoverImageConfig): TCoverImagePrevi
     [getCoverImageVarName(image.which, 'frame-radius')]: getFrameBorderRadiusValue(image),
     [getCoverImageVarName(image.which, 'crop-radius')]: `${image.borderRadius}px`,
     [getCoverImageVarName(image.which, 'shadow')]: getImageShadow(image.shadow) ?? 'none',
-    [getCoverImageVarName(image.which, 'rotate')]: `${normalizeSignedAngle(image.rotate)}deg`,
+    [getCoverImageVarName(image.which, 'rotate')]: `${rotate}deg`,
     [getCoverImageVarName(image.which, 'z-index')]: image.zIndex,
     [getCoverImageVarName(image.which, 'editor-z-index')]: image.zIndex + 1,
     [getCoverImageVarName(image.which, 'magnifier-width')]: `${magnifierSizePercent}%`,

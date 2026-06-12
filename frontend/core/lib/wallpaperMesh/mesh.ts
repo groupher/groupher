@@ -221,8 +221,9 @@ const formatColorStops = (colors: string[], stops: number[]): string => {
  */
 export const composeLinearGradientBackground = (recipe: TGradientRecipe): string => {
   if (recipe.renderer !== GRADIENT_RENDERER.LINEAR) return ''
+  const angle = getRecipeAngle(recipe)
 
-  return `linear-gradient(${normalizeSignedAngle(recipe.angle)}deg, ${formatColorStops(
+  return `linear-gradient(${angle}deg, ${formatColorStops(
     recipe.colors,
     normalizeLinearGradientStops(recipe.colors.length, recipe.spread, recipe.stops),
   )})`
