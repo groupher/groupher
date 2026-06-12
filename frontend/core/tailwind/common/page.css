@@ -1,9 +1,3 @@
-@utility page-customLight {
+@utility page-custom {
   --color-pageBg: var(--color-page-custom);
-}
-
-@utility page-customDark {
-  @variant dark {
-    --color-pageBg: var(--color-page-custom-dark);
-  }
 }

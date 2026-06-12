@@ -11,7 +11,7 @@ import {
 import { useSnapshot } from 'valtio'
 
 import useTheme from '~/hooks/useTheme'
-import { buildThemePresetCssVars } from '~/lib/themePreset'
+import { composeThemePresetCssVars } from '~/lib/themePreset'
 import type { TResolvedThemePreset } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
@@ -29,19 +29,12 @@ const EMPTY_INIT_DATA: TInit = {}
 // unmounting the preset provider does not leave stale theme values on <html>.
 const PRESET_CSS_VAR_KEYS = [
   '--color-primary-custom',
-  '--color-primary-custom-dark',
   '--color-accent-custom',
-  '--color-accent-custom-dark',
   '--color-page-custom',
-  '--color-page-custom-dark',
   '--color-title',
-  '--color-title-dark',
   '--color-digest',
-  '--color-digest-dark',
   '--color-card',
-  '--color-card-dark',
   '--color-divider',
-  '--color-divider-dark',
 ] as const
 
 export const StoreContext = createContext<TStore | null>(null)
@@ -57,8 +50,10 @@ const ThemePresetScope = ({ children, store }: TScopeProps) => {
   const { theme } = useTheme()
   const cssVars = useMemo(
     () =>
-      preset$.primaryColor ? buildThemePresetCssVars(preset$ as TResolvedThemePreset, theme) : {},
-    [preset$, theme],
+      preset$.themeTokens?.light && preset$.themeTokens?.dark
+        ? composeThemePresetCssVars(preset$.themeTokens as TResolvedThemePreset, theme)
+        : {},
+    [preset$.themeTokens, theme],
   )
 
   useEffect(() => {

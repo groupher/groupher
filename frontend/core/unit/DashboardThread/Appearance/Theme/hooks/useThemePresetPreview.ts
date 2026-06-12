@@ -5,7 +5,11 @@ import useUpdatePreviewCssVars from '~/hooks/useUpdatePreviewCssVars'
 
 import { PREVIEW_CSS_VAR_CLEANUP } from '../constant'
 import type { TPageBgDraft } from '../DetailsPanel/CustomPageBg/hooks'
-import { buildPageBgPreviewCssVars, buildThemePresetPreviewCssVars } from '../helper'
+import {
+  composePageBgPreviewCssVars,
+  composeThemePresetPreviewCssVars,
+  mergeThemePresetOverwritePatch,
+} from '../helper'
 import type {
   TPreviewCssVars,
   TThemePresetOverwrite,
@@ -29,7 +33,7 @@ import type {
  *   const preview = useThemePresetPreview({
  *     selectedTokens,
  *     selectedPageBgDraft,
- *     isLightTheme,
+ *     themeKey: 'light',
  *     onCommit: (overwrite) => commitThemePresetOverwrite(overwrite),
  *   })
  *
@@ -39,22 +43,27 @@ import type {
 export default function useThemePresetPreview({
   selectedTokens,
   selectedPageBgDraft,
-  isLightTheme,
+  themeKey,
   onCommit,
 }: TUseThemePresetPreviewOptions): TUseThemePresetPreviewRet {
   const updatePreviewCssVars = useUpdatePreviewCssVars()
   const selectedTokensRef = useRef(selectedTokens)
   const selectedPageBgDraftRef = useRef(selectedPageBgDraft)
+  const themeKeyRef = useRef(themeKey)
   const {
     schedule: scheduleThemePresetOverwrite,
     flush: flushThemePresetPreviewCommit,
     clear: clearPendingThemePresetPreviewCommit,
-  } = useDebouncedPreviewCommit<TThemePresetOverwrite>({ onCommit })
+  } = useDebouncedPreviewCommit<TThemePresetOverwrite>({
+    mergePatch: mergeThemePresetOverwritePatch,
+    onCommit,
+  })
 
   useEffect(() => {
     selectedTokensRef.current = selectedTokens
     selectedPageBgDraftRef.current = selectedPageBgDraft
-  }, [selectedTokens, selectedPageBgDraft])
+    themeKeyRef.current = themeKey
+  }, [selectedTokens, selectedPageBgDraft, themeKey])
 
   const writePreviewCssVars = useCallback(
     (vars: TPreviewCssVars) => updatePreviewCssVars(vars),
@@ -68,28 +77,28 @@ export default function useThemePresetPreview({
   const previewPageBg = useCallback(
     (patch: Partial<TPageBgDraft>) => {
       writePreviewCssVars(
-        buildPageBgPreviewCssVars({
+        composePageBgPreviewCssVars({
           selectedTokens: selectedTokensRef.current,
           selectedPageBgDraft: selectedPageBgDraftRef.current,
           patch,
-          isLightTheme,
+          themeKey: themeKeyRef.current,
         }),
       )
     },
-    [isLightTheme, writePreviewCssVars],
+    [writePreviewCssVars],
   )
 
   const previewThemePresetOverwrite = useCallback(
     (overwrite: TThemePresetOverwrite) => {
       writePreviewCssVars(
-        buildThemePresetPreviewCssVars({
+        composeThemePresetPreviewCssVars({
           selectedTokens: selectedTokensRef.current,
           overwrite,
-          isLightTheme,
+          themeKey: themeKeyRef.current,
         }),
       )
     },
-    [isLightTheme, writePreviewCssVars],
+    [writePreviewCssVars],
   )
 
   return {

@@ -1,4 +1,4 @@
-import { PRESET_FIELD } from '../../constant'
+import { PRESET_FIELD } from '~/const/theme_preset'
 
 export const MAIN_COLOR_DETAILS = [
   {

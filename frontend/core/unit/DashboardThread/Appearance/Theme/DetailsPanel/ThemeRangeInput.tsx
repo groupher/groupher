@@ -1,9 +1,9 @@
 import { useState } from 'react'
 
-import useThemeKV from '~/hooks/useThemeKV'
+import { PRESET_FIELD } from '~/const/theme_preset'
+import useTheme from '~/hooks/useTheme'
 import RangeInput from '~/widgets/RangeInput'
 
-import { PRESET_FIELD } from '../constant'
 import type { TThemePresetOverwrite, TThemePresetTokens } from '../spec'
 
 type TNumericRangeKey = typeof PRESET_FIELD.GAUSS_BLUR | typeof PRESET_FIELD.GLOW_OPACITY
@@ -29,9 +29,8 @@ export default function ThemeRangeInput({
   onThemePresetSchedule,
   onThemePresetFlush,
 }: TProps) {
-  const { key, value } = useThemeKV()
-  const activeValue = value(selectedTokens, baseKey) as number
-  const activeKey = key(baseKey)
+  const { theme } = useTheme()
+  const activeValue = selectedTokens[theme][baseKey] as number
   const [draftValue, setDraftValue] = useState({
     sourceValue: activeValue,
     value: activeValue,
@@ -39,7 +38,7 @@ export default function ThemeRangeInput({
   const displayValue = draftValue.sourceValue === activeValue ? draftValue.value : activeValue
 
   const getOverwrite = (value: number): TThemePresetOverwrite => ({
-    [activeKey]: value,
+    [theme]: { [baseKey]: value },
   })
 
   return (

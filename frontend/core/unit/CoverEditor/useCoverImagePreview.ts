@@ -144,6 +144,9 @@ export default function useCoverImagePreview(): TCoverImageDraftContext {
     flush: flushPendingImageDraft,
     clear: clearPendingImageDraft,
   } = useDebouncedPreviewCommit<TCoverImageDraftPatch>({
+    // Cover image patch values may intentionally be null to clear a slot. The
+    // shared debounce hook only normalizes its pending container, so those
+    // field-level nulls are still passed through to the image draft commit.
     onCommit: commitDraftImages,
   })
 

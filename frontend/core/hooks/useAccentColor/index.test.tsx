@@ -6,7 +6,7 @@ import useAccentColor from '~/hooks/useAccentColor'
 
 describe('useAccentColor', () => {
   it('uses the accent CSS-var rainbow token', () => {
-    const wrapper = makeStoreWrapper({ dashboard: { themeTokens: { accentColor: '#334455' } } })
+    const wrapper = makeStoreWrapper()
     const { result } = renderHook(() => useAccentColor(), { wrapper })
 
     expect(result.current).toBe(COLOR.CUSTOM)

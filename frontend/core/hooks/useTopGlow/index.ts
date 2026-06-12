@@ -9,7 +9,7 @@ import { GRADIENT_WALLPAPER_NAME } from '~/const/wallpaper'
 import useMetric from '~/hooks/useMetric'
 import useTheme from '~/hooks/useTheme'
 import useThemePreset from '~/hooks/useThemePreset'
-import type { TTopGlow } from '~/spec'
+import type { TResolvedThemePreset, TTopGlow } from '~/spec'
 import { pickWallpaperThemeState } from '~/stores/wallpaper/helper'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 
@@ -17,12 +17,14 @@ const LANDING_GLOW_OPACITY = 65
 
 export default function useTopGlow(): TTopGlow {
   const wallpaper = useWallpaperDomain()
-  const { isLightTheme } = useTheme()
+  const { theme, isLightTheme } = useTheme()
   const { source } = pickWallpaperThemeState(wallpaper, !isLightTheme)
-  const { themePreset, glowType, glowTypeDark, glowFixed, glowOpacity, glowOpacityDark } =
-    useThemePreset()
-  const activeGlowType = isLightTheme ? glowType : glowTypeDark
-  const activeGlowOpacity = isLightTheme ? glowOpacity : glowOpacityDark
+  const { themePreset, themeTokens } = useThemePreset()
+  const tokens = themeTokens as Partial<TResolvedThemePreset>
+  const activeTokens = tokens[theme]
+  const glowFixed = tokens.shared?.glowFixed ?? true
+  const activeGlowType = activeTokens?.glowType ?? ''
+  const activeGlowOpacity = activeTokens?.glowOpacity ?? 100
 
   const metric = useMetric()
 

@@ -38,9 +38,7 @@ export default function useTwBelt(): TRet {
   const metricLower = metric.toLowerCase()
   const containerClass = `container-${metricLower}`
 
-  // keep your page-bg strategy (no flash)
-  const pageLightClass = 'page-customLight'
-  const pageDarkClass = 'page-customDark'
+  const pageClass = 'page-custom'
 
   /**
    * ✅ New token scheme:
@@ -233,7 +231,7 @@ export default function useTwBelt(): TRet {
     }
   }
 
-  const page = () => `${pageLightClass} ${pageDarkClass}`
+  const page = () => pageClass
 
   return useMemo<TRet>(
     () => ({
@@ -286,6 +284,6 @@ export default function useTwBelt(): TRet {
       page,
     }),
     // deps: only those that can affect returned behaviors/strings
-    [containerClass, pageLightClass, pageDarkClass, isAvatarSquare, primaryColor, accentColor],
+    [containerClass, pageClass, isAvatarSquare, primaryColor, accentColor],
   )
 }

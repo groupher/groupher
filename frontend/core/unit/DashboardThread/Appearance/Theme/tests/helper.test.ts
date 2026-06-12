@@ -2,40 +2,44 @@ import { THEME_PRESET } from '~/const/theme_preset'
 
 import { resolveRawBg } from '../DetailsPanel/CustomPageBg/hooks'
 import {
-  buildCustomPresetEditOverwrite,
-  buildCustomPresetResetOverwrite,
-  buildPresetSelectionFields,
+  composeCustomPresetEditFields,
+  composeCustomPresetResetFields,
+  composePresetSelectionFields,
+  mergeThemePresetOverwritePatch,
   toCssOpacity,
-  toPageBgDraft,
 } from '../helper'
 import type { TThemePresetTokens } from '../spec'
 
 const tokens: TThemePresetTokens = {
-  pageBg: '#ffffff',
-  pageBgDark: '#111111',
-  pageBgHue: 42,
-  pageBgHueDark: 318,
-  pageBgIntensity: 52,
-  pageBgIntensityDark: 61,
-  primaryColor: '#222222',
-  primaryColorDark: '#eeeeee',
-  accentColor: '#333333',
-  accentColorDark: '#dddddd',
-  textTitle: '#444444',
-  textTitleDark: '#cccccc',
-  textDigest: '#555555',
-  textDigestDark: '#bbbbbb',
-  cardColor: '#666666',
-  cardColorDark: '#aaaaaa',
-  dividerColor: '#777777',
-  dividerColorDark: '#999999',
-  gaussBlur: 80,
-  gaussBlurDark: 40,
-  glowType: 'radial',
-  glowTypeDark: 'radial',
-  glowFixed: true,
-  glowOpacity: 70,
-  glowOpacityDark: 30,
+  shared: { glowFixed: true },
+  light: {
+    pageBg: '#ffffff',
+    pageBgHue: 42,
+    pageBgIntensity: 52,
+    primaryColor: '#222222',
+    accentColor: '#333333',
+    textTitle: '#444444',
+    textDigest: '#555555',
+    cardColor: '#666666',
+    dividerColor: '#777777',
+    gaussBlur: 80,
+    glowType: 'radial',
+    glowOpacity: 70,
+  },
+  dark: {
+    pageBg: '#111111',
+    pageBgHue: 318,
+    pageBgIntensity: 61,
+    primaryColor: '#eeeeee',
+    accentColor: '#dddddd',
+    textTitle: '#cccccc',
+    textDigest: '#bbbbbb',
+    cardColor: '#aaaaaa',
+    dividerColor: '#999999',
+    gaussBlur: 40,
+    glowType: 'radial',
+    glowOpacity: 30,
+  },
 }
 
 describe('theme preset model helpers', () => {
@@ -46,66 +50,69 @@ describe('theme preset model helpers', () => {
     expect(toCssOpacity(Number.NaN)).toBe(1)
   })
 
-  it('adapts theme tokens to page background drafts', () => {
-    expect(toPageBgDraft(tokens)).toEqual({
-      pageBg: tokens.pageBg,
-      pageBgDark: tokens.pageBgDark,
-      pageBgHue: tokens.pageBgHue,
-      pageBgHueDark: tokens.pageBgHueDark,
-      pageBgIntensity: tokens.pageBgIntensity,
-      pageBgIntensityDark: tokens.pageBgIntensityDark,
-    })
-  })
-
   it('falls back to the theme css variable when page background draft is empty', () => {
-    const draft = { ...toPageBgDraft(tokens), pageBg: '', pageBgDark: '' }
+    const draft = {
+      pageBg: '',
+      pageBgHue: tokens.light.pageBgHue,
+      pageBgIntensity: tokens.light.pageBgIntensity,
+    }
 
-    expect(resolveRawBg(draft, true)).toBe('var(--color-page-custom)')
-    expect(resolveRawBg(draft, false)).toBe('var(--color-page-custom-dark)')
+    expect(resolveRawBg(draft)).toBe('var(--color-page-custom)')
   })
 
   it('forks readonly preset edits into custom tokens and sparse overwrite', () => {
-    const { dashboardFields, nextCustomTokensDraft } = buildCustomPresetEditOverwrite({
+    const { dashboardFields, nextCustomTokensDraft } = composeCustomPresetEditFields({
       activePreset: THEME_PRESET.CLAUDE,
       activePresetBase: THEME_PRESET.CLAUDE,
       selectedTokens: tokens,
       customTokensDraft: null,
       currentThemeOverwrite: {},
-      overwrite: { primaryColor: '#999999' },
+      overwrite: { light: { primaryColor: '#999999' } },
     })
 
     expect(dashboardFields).toMatchObject({
       themePreset: THEME_PRESET.CUSTOM,
       themePresetBase: THEME_PRESET.CLAUDE,
       themeTokens: nextCustomTokensDraft,
-      themeOverwrite: { primaryColor: '#999999' },
+      themeOverwrite: { light: { primaryColor: '#999999' } },
     })
-    expect(nextCustomTokensDraft.primaryColor).toBe('#999999')
+    expect(nextCustomTokensDraft.light.primaryColor).toBe('#999999')
   })
 
   it('keeps existing custom tokens as the edit base and merges overwrite', () => {
-    const customTokensDraft = { ...tokens, primaryColor: '#777777' }
-    const { dashboardFields, nextCustomTokensDraft } = buildCustomPresetEditOverwrite({
+    const customTokensDraft = {
+      ...tokens,
+      light: { ...tokens.light, primaryColor: '#777777' },
+    }
+    const { dashboardFields, nextCustomTokensDraft } = composeCustomPresetEditFields({
       activePreset: THEME_PRESET.CUSTOM,
       activePresetBase: THEME_PRESET.CLAUDE,
       selectedTokens: tokens,
       customTokensDraft,
-      currentThemeOverwrite: { primaryColor: '#777777' },
-      overwrite: { accentColor: '#888888' },
+      currentThemeOverwrite: { light: { primaryColor: '#777777' } },
+      overwrite: { light: { accentColor: '#888888' } },
     })
 
-    expect(nextCustomTokensDraft).toMatchObject({
+    expect(nextCustomTokensDraft.light).toMatchObject({
       primaryColor: '#777777',
       accentColor: '#888888',
     })
     expect(dashboardFields.themeOverwrite).toEqual({
-      primaryColor: '#777777',
-      accentColor: '#888888',
+      light: {
+        primaryColor: '#777777',
+        accentColor: '#888888',
+      },
+    })
+  })
+
+  it('treats nullable custom overwrite as an empty patch container', () => {
+    expect(mergeThemePresetOverwritePatch(null, { light: { pageBgHue: 120 } })).toEqual({
+      light: { pageBgHue: 120 },
     })
   })
 
   it('builds preset selection fields for readonly presets', () => {
-    const { dashboardFields } = buildPresetSelectionFields({
+    const { dashboardFields } = composePresetSelectionFields({
       preset: { value: THEME_PRESET.DEFAULT, tokens },
       currentThemePresetBase: THEME_PRESET.CLAUDE,
       customTokensDraft: null,
@@ -119,7 +126,7 @@ describe('theme preset model helpers', () => {
   })
 
   it('resets custom tokens to the selected preset and clears sparse overwrite', () => {
-    const { dashboardFields, nextCustomTokensDraft } = buildCustomPresetResetOverwrite({
+    const { dashboardFields, nextCustomTokensDraft } = composeCustomPresetResetFields({
       value: THEME_PRESET.SOLARIZED,
       tokens,
     })

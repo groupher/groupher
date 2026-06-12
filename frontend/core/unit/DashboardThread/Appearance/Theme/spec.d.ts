@@ -1,4 +1,9 @@
-import type { TResolvedThemePreset, TThemePresetOption } from '~/spec'
+import type {
+  TResolvedThemePreset,
+  TThemeName,
+  TThemePresetOverwrite,
+  TThemePresetOption,
+} from '~/spec'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
 
 import type { TPageBgDraft } from './DetailsPanel/CustomPageBg/hooks'
@@ -8,7 +13,7 @@ export type { TThemePresetOption } from '~/spec'
 export type TThemePresetCardMode = 'stacked' | 'forkActive' | 'forkBase'
 
 export type TThemePresetTokens = TResolvedThemePreset
-export type TThemePresetOverwrite = Partial<TResolvedThemePreset>
+export type { TThemePresetOverwrite }
 
 export type TPreviewCssVars = Record<`--${string}`, string | number | null>
 
@@ -17,7 +22,7 @@ export type TCustomPresetEditOptions = {
   activePresetBase: TThemePresetOption['value'] | null
   selectedTokens: TThemePresetTokens
   customTokensDraft: TThemePresetTokens | null
-  currentThemeOverwrite: TThemePresetOverwrite
+  currentThemeOverwrite: TThemePresetOverwrite | null
   overwrite?: TThemePresetOverwrite
 }
 
@@ -31,13 +36,13 @@ export type TPageBgPreviewOptions = {
   selectedTokens: TThemePresetTokens
   selectedPageBgDraft: TPageBgDraft
   patch: Partial<TPageBgDraft>
-  isLightTheme: boolean
+  themeKey: TThemeName
 }
 
 export type TThemePresetPreviewOptions = {
   selectedTokens: TThemePresetTokens
   overwrite: TThemePresetOverwrite
-  isLightTheme: boolean
+  themeKey: TThemeName
 }
 
 export type TUseAppearanceOptions = {
@@ -47,7 +52,7 @@ export type TUseAppearanceOptions = {
 export type TUseThemePresetPreviewOptions = {
   selectedTokens: TThemePresetTokens
   selectedPageBgDraft: TPageBgDraft
-  isLightTheme: boolean
+  themeKey: TThemeName
   onCommit: (overwrite: TThemePresetOverwrite) => void
 }
 
@@ -68,7 +73,7 @@ export type TThemePresetMutationRet = {
    * Roll back all preset-owned dashboard fields to their original values.
    *
    * Intent: cancel ThemePreset edits as one field group, covering selected
-   * preset, Custom base/tokens, and flat mirrored title/digest/blur values.
+   * preset, Custom base/tokens, resolved tokens, and sparse overwrite data.
    *
    * Example:
    *   const { rollbackThemePreset } = useThemePresetMutation()
@@ -168,13 +173,12 @@ export type TUseThemePresetDraftRet = {
 export type TThemeDetails = {
   selectedTokens: TThemePresetTokens
   selectedPageBgDraft: TPageBgDraft
-  isLightTheme: boolean
   pageBgResetKey: string
   /**
    * Preview page background edits through CSS vars only.
    *
    * Example:
-   *   details.onPageBgPreview({ pageBgDark: '#111111' })
+   *   details.onPageBgPreview({ pageBg: '#111111' })
    */
   onPageBgPreview: (patch: Partial<TPageBgDraft>) => void
   /**
@@ -188,14 +192,14 @@ export type TThemeDetails = {
    * Preview token edits through CSS vars only.
    *
    * Example:
-   *   details.onThemePresetPreview({ glowOpacity: 60 })
+   *   details.onThemePresetPreview({ dark: { glowOpacity: 60 } })
    */
   onThemePresetPreview: (overwrite: TThemePresetOverwrite) => void
   /**
    * Schedule token edits as a debounced Custom preset overwrite.
    *
    * Example:
-   *   details.onThemePresetSchedule({ textTitle: '#222222' })
+   *   details.onThemePresetSchedule({ light: { textTitle: '#222222' } })
    */
   onThemePresetSchedule: (overwrite: TThemePresetOverwrite) => void
   /**
@@ -209,7 +213,7 @@ export type TThemeDetails = {
    * Commit token edits immediately as Custom preset fields.
    *
    * Example:
-   *   details.onThemePresetCommit({ accentColor: '#333333' })
+   *   details.onThemePresetCommit({ light: { accentColor: '#333333' } })
    */
   onThemePresetCommit: (overwrite: TThemePresetOverwrite) => void
 }
@@ -228,8 +232,8 @@ export type TUseAppearanceRet = {
   /**
    * Select a built-in or existing Custom preset card.
    *
-   * Intent: update active preset, resolved tokens, and mirrored dashboard fields
-   * as one batch while clearing any pending realtime preview.
+   * Intent: update active preset, resolved tokens, and ThemePreset-owned
+   * dashboard fields as one batch while clearing any pending realtime preview.
    *
    * Example:
    *   selectPreset(presetOptions[0])

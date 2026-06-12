@@ -1,16 +1,14 @@
-import THEME from '~/const/theme'
 import { THEME_PRESET } from '~/const/theme_preset'
 import { blurRGB } from '~/fmt'
-import { createThemeKeyPicker } from '~/lib/themeKey'
 import type { TDsbFieldMap } from '~/stores/dashboard/spec'
 
-import { PRESET_FIELD } from './constant'
-import { resolveRawBg, type TPageBgDraft } from './DetailsPanel/CustomPageBg/hooks'
+import { resolveRawBg } from './DetailsPanel/CustomPageBg/hooks'
 import type {
   TCustomPresetEditOptions,
   TPageBgPreviewOptions,
   TPreviewCssVars,
   TPresetSelectionOptions,
+  TThemePresetOverwrite,
   TThemePresetTokens,
   TThemePresetOption,
   TThemePresetPreviewOptions,
@@ -36,27 +34,85 @@ export const toCssOpacity = (opacity = 100): number => {
 }
 
 /**
- * Convert resolved preset tokens into the compact page-background draft shape.
+ * Merge resolved preset tokens with a sparse overwrite payload.
  *
- * Intent: `CustomPageBg` edits only light/dark background tokens. Keeping this
- * adapter here prevents the UI hook from knowing how that widget names its
- * draft fields.
+ * Intent: keep base token values for untouched fields and apply overwrite values
+ * across `shared` plus the `light`/`dark` theme branches.
  *
  * Example:
- *   toPageBgDraft(overwrite)
- *   // => { pageBg: overwrite.pageBg, pageBgDark: overwrite.pageBgDark }
+ *   const base = { shared: { glowFixed: true }, light: { pageBg: '#111' }, dark: { pageBg: '#222' } }
+ *   const overwrite = { dark: { pageBg: '#333' } }
+ *   mergeThemePresetOverwrite(base, overwrite).dark.pageBg // '#333'
  */
-export const toPageBgDraft = (tokens: TThemePresetTokens): TPageBgDraft => ({
-  pageBg: tokens.pageBg,
-  pageBgDark: tokens.pageBgDark,
-  pageBgHue: tokens.pageBgHue,
-  pageBgHueDark: tokens.pageBgHueDark,
-  pageBgIntensity: tokens.pageBgIntensity,
-  pageBgIntensityDark: tokens.pageBgIntensityDark,
+export const mergeThemePresetOverwrite = (
+  tokens: TThemePresetTokens,
+  overwrite: TThemePresetOverwrite = {},
+): TThemePresetTokens => ({
+  shared: {
+    ...tokens.shared,
+    ...overwrite.shared,
+  },
+  light: {
+    ...tokens.light,
+    ...overwrite.light,
+  },
+  dark: {
+    ...tokens.dark,
+    ...overwrite.dark,
+  },
 })
 
 /**
- * Build the dashboard fields for editing preset details as a Custom preset.
+ * Merge two overwrite patches in-place by token group without dropping nested keys.
+ *
+ * Intent: use this for debounced batches so incremental edits on the same
+ * theme branch preserve previous changes.
+ *
+ * Example:
+ *   mergeThemePresetOverwritePatch(
+ *     { light: { pageBg: '#111' } },
+ *     { light: { glowOpacity: 80 } },
+ *   ).light
+ *   // => { pageBg: '#111', glowOpacity: 80 }
+ */
+export const mergeThemePresetOverwritePatch = (
+  current: TThemePresetOverwrite | null = null,
+  overwrite: TThemePresetOverwrite = {},
+): TThemePresetOverwrite => {
+  // `themeOverwrite` is nullable at the API/hydration boundary. Treat only the
+  // overwrite container null as empty; nested token keys still merge normally.
+  const currentOverwrite = current ?? {}
+
+  return {
+    ...(currentOverwrite.shared || overwrite.shared
+      ? {
+          shared: {
+            ...currentOverwrite.shared,
+            ...overwrite.shared,
+          },
+        }
+      : {}),
+    ...(currentOverwrite.light || overwrite.light
+      ? {
+          light: {
+            ...currentOverwrite.light,
+            ...overwrite.light,
+          },
+        }
+      : {}),
+    ...(currentOverwrite.dark || overwrite.dark
+      ? {
+          dark: {
+            ...currentOverwrite.dark,
+            ...overwrite.dark,
+          },
+        }
+      : {}),
+  }
+}
+
+/**
+ * Compose the dashboard fields for editing preset details as a Custom preset.
  *
  * Problem scenario: a UI edit needs both full `themeTokens` for immediate
  * rendering and sparse `themeOverwrite` for saving. Writing full tokens to the
@@ -70,16 +126,16 @@ export const toPageBgDraft = (tokens: TThemePresetTokens): TPageBgDraft => ({
  * Readonly preset selection does not persist overwrite fields.
  *
  * Example:
- *   buildCustomPresetEditOverwrite({
+ *   composeCustomPresetEditFields({
  *     activePreset: THEME_PRESET.CLAUDE,
  *     activePresetBase: THEME_PRESET.CLAUDE,
  *     selectedTokens,
  *     customTokensDraft: null,
  *     currentThemeOverwrite: {},
- *     overwrite: { primaryColor: '#222222' },
- *   }).dashboardFields.themeOverwrite // { primaryColor: '#222222' }
+ *     overwrite: { light: { primaryColor: '#222222' } },
+ *   }).dashboardFields.themeOverwrite // { light: { primaryColor: '#222222' } }
  */
-export const buildCustomPresetEditOverwrite = ({
+export const composeCustomPresetEditFields = ({
   activePreset,
   activePresetBase,
   selectedTokens,
@@ -94,12 +150,11 @@ export const buildCustomPresetEditOverwrite = ({
     activePreset === THEME_PRESET.CUSTOM ? (activePresetBase ?? THEME_PRESET.DEFAULT) : activePreset
   const baseTokens =
     activePreset === THEME_PRESET.CUSTOM ? (customTokensDraft ?? selectedTokens) : selectedTokens
-  const nextTokens = {
-    ...baseTokens,
-    ...overwrite,
-  }
+  const nextTokens = mergeThemePresetOverwrite(baseTokens, overwrite)
   const nextOverwrite =
-    activePreset === THEME_PRESET.CUSTOM ? { ...currentThemeOverwrite, ...overwrite } : overwrite
+    activePreset === THEME_PRESET.CUSTOM
+      ? mergeThemePresetOverwritePatch(currentThemeOverwrite, overwrite)
+      : overwrite
 
   return {
     dashboardFields: {
@@ -113,7 +168,7 @@ export const buildCustomPresetEditOverwrite = ({
 }
 
 /**
- * Build the dashboard fields for choosing a preset card.
+ * Compose the dashboard fields for choosing a preset card.
  *
  * Problem scenario: preset selection changes the render tokens immediately,
  * but should not turn readonly preset tokens into a Custom overwrite payload.
@@ -123,13 +178,13 @@ export const buildCustomPresetEditOverwrite = ({
  * created a Custom preset.
  *
  * Example:
- *   buildPresetSelectionFields({
+ *   composePresetSelectionFields({
  *     preset: defaultPreset,
  *     currentThemePresetBase: THEME_PRESET.CLAUDE,
  *     customTokensDraft: null,
  *   }).dashboardFields.themePreset // defaultPreset.value
  */
-export const buildPresetSelectionFields = ({
+export const composePresetSelectionFields = ({
   preset,
   currentThemePresetBase,
   customTokensDraft,
@@ -151,7 +206,7 @@ export const buildPresetSelectionFields = ({
 }
 
 /**
- * Build the dashboard fields for resetting Custom tokens to a readonly preset.
+ * Compose the dashboard fields for resetting Custom tokens to a readonly preset.
  *
  * Problem scenario: reset is replace semantics, not merge semantics. The
  * Custom preset should point at the selected base and clear sparse overwrite.
@@ -161,10 +216,10 @@ export const buildPresetSelectionFields = ({
  * draft so later card switching keeps the unsaved reset result alive.
  *
  * Example:
- *   buildCustomPresetResetOverwrite(claudePreset).dashboardFields.themePresetBase
+ *   composeCustomPresetResetFields(claudePreset).dashboardFields.themePresetBase
  *   // => claudePreset.value
  */
-export const buildCustomPresetResetOverwrite = (
+export const composeCustomPresetResetFields = (
   preset: TThemePresetOption,
 ): {
   dashboardFields: Partial<TDsbFieldMap>
@@ -184,7 +239,7 @@ export const buildCustomPresetResetOverwrite = (
 }
 
 /**
- * Build preview CSS vars for page background edits.
+ * Compose preview CSS vars for page background edits.
  *
  * Intent: background pickers need immediate DOM feedback without touching the
  * dashboard store. This helper computes the same blurred background value the
@@ -194,28 +249,28 @@ export const buildCustomPresetResetOverwrite = (
  * isolated background layer so tint/glass sliders do not repaint <main>.
  *
  * Example:
- *   buildPageBgPreviewCssVars({
+ *   composePageBgPreviewCssVars({
  *     selectedTokens,
  *     selectedPageBgDraft,
  *     patch: { pageBg: '#ffffff' },
- *     isLightTheme: true,
+ *     themeKey: 'light',
  *   }) // => { '--preview-page-bg': 'rgb(...)' }
  */
-export const buildPageBgPreviewCssVars = ({
+export const composePageBgPreviewCssVars = ({
   selectedTokens,
   selectedPageBgDraft,
   patch,
-  isLightTheme,
+  themeKey,
 }: TPageBgPreviewOptions): TPreviewCssVars => {
-  const previewRawBg = resolveRawBg({ ...selectedPageBgDraft, ...patch }, isLightTheme)
-  const activeGaussBlur = isLightTheme ? selectedTokens.gaussBlur : selectedTokens.gaussBlurDark
+  const previewRawBg = resolveRawBg({ ...selectedPageBgDraft, ...patch })
+  const activeGaussBlur = selectedTokens[themeKey].gaussBlur
   const previewBackground = previewRawBg ? blurRGB(previewRawBg, activeGaussBlur) : null
 
   return { '--preview-page-bg': previewBackground }
 }
 
 /**
- * Build preview CSS vars for full theme-token edits.
+ * Compose preview CSS vars for full theme-token edits.
  *
  * Intent: detail controls can change multiple preset tokens. This helper keeps
  * preview-only CSS concerns together, including the special glow opacity var
@@ -225,32 +280,32 @@ export const buildPageBgPreviewCssVars = ({
  * because <main> itself is transparent and the background layer owns the color.
  *
  * Example:
- *   buildThemePresetPreviewCssVars({
+ *   composeThemePresetPreviewCssVars({
  *     selectedTokens,
- *     overwrite: { glowOpacity: 80 },
- *     isLightTheme: true,
+ *     overwrite: { light: { glowOpacity: 80 } },
+ *     themeKey: 'light',
  *   }) // => { '--preview-page-bg': ..., '--preview-glow-opacity': 0.8 }
  */
-export const buildThemePresetPreviewCssVars = ({
+export const composeThemePresetPreviewCssVars = ({
   selectedTokens,
   overwrite,
-  isLightTheme,
+  themeKey,
 }: TThemePresetPreviewOptions): TPreviewCssVars => {
-  const nextTokens = {
-    ...selectedTokens,
-    ...overwrite,
-  }
-  const { key, value } = createThemeKeyPicker(isLightTheme ? THEME.LIGHT : THEME.DARK)
-  const previewRawBg = resolveRawBg(toPageBgDraft(nextTokens), isLightTheme)
-  const activeGaussBlur = value(nextTokens, PRESET_FIELD.GAUSS_BLUR)
+  const nextTokens = mergeThemePresetOverwrite(selectedTokens, overwrite)
+  const activeTokens = nextTokens[themeKey]
+  const previewRawBg = resolveRawBg({
+    pageBg: activeTokens.pageBg,
+    pageBgHue: activeTokens.pageBgHue,
+    pageBgIntensity: activeTokens.pageBgIntensity,
+  })
+  const activeGaussBlur = activeTokens.gaussBlur
   const previewBackground = previewRawBg ? blurRGB(previewRawBg, activeGaussBlur) : null
-  const glowOpacityKey = key(PRESET_FIELD.GLOW_OPACITY)
   const previewVars: TPreviewCssVars = {
     '--preview-page-bg': previewBackground,
   }
 
-  if (overwrite[glowOpacityKey] !== undefined) {
-    previewVars['--preview-glow-opacity'] = toCssOpacity(nextTokens[glowOpacityKey])
+  if (overwrite[themeKey]?.glowOpacity !== undefined) {
+    previewVars['--preview-glow-opacity'] = toCssOpacity(activeTokens.glowOpacity)
   }
 
   return previewVars

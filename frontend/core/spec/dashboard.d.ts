@@ -24,7 +24,12 @@ import type { TDsbFieldKey, TDsbFieldMap } from '~/stores/dashboard/spec'
 
 import type { TColorName } from './color'
 import type { TModerator } from './community'
-import type { TResolvedThemePreset, TThemePreset, TThemePresetOption } from './theme_preset'
+import type {
+  TResolvedThemePreset,
+  TThemePreset,
+  TThemePresetOption,
+  TThemePresetOverwrite,
+} from './theme_preset'
 import type { TEditValue, TFooterOnelineLink, TLinkItem, TSocialItem } from './utils'
 import type { TWallpaperConfig } from './wallpaper'
 
@@ -94,7 +99,7 @@ export type TDsb = {
     themePresetBase?: TThemePreset | null
     themeTokens?: TResolvedThemePreset | null
     themePresets?: readonly TThemePresetOption[] | null
-    themeOverwrite?: Partial<TResolvedThemePreset> | null
+    themeOverwrite?: TThemePresetOverwrite | null
     topbarEnabled: boolean
     topbarBg: TColorName
     topbarBgCustomColor: string
