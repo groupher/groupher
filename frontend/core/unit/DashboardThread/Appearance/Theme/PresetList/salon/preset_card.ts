@@ -16,7 +16,7 @@ export default function useSalon({
   mode = 'stacked',
   rotateAngle = 0,
 }: TArgs = {}) {
-  const { cn, bg, br, fg, primary, shadow } = useTwBelt()
+  const { cn, bg, br, fg, selectable, shadow } = useTwBelt()
   const isForkMode = mode !== 'stacked'
   const disabled = mode === 'forkBase'
   const rotateClass = getRotateClass(rotateAngle)
@@ -34,12 +34,12 @@ export default function useSalon({
       shadow('sm'),
       bg('card'),
       br('divider'),
+      selectable('box', { active, base: false, disabled }),
       active
         ? cn(
             isForkMode ? 'translate-y-0' : '-translate-y-4',
             'rounded-lg',
             isForkMode ? 'rotate-0' : 'rotate-3',
-            primary('borderSoft'),
             shadow('lg'),
           )
         : cn(
@@ -53,6 +53,7 @@ export default function useSalon({
     ),
     preview: cn('relative h-24 w-full rounded-sm border', br('divider')),
     title: cn('mb-1 text-xs', fg('title')),
-    checker: 'pointer-events-none absolute top-3 right-3',
+    activeSign: selectable('badge'),
+    checkIcon: selectable('check'),
   }
 }

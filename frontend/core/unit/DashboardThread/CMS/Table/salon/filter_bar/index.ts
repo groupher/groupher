@@ -1,9 +1,10 @@
+import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn, cnMerge } from '~/css'
 
 export default function useSalon() {
-  const { cn, bg, br, fg, fill, hover, primary, shadow } = useTwBelt()
+  const { cn, bg, br, fg, fill, hover, primary, rainbow, shadow } = useTwBelt()
 
   return {
     wrapper: 'w-full h-fit ml-1 pb-5 -mt-3',
@@ -47,5 +48,14 @@ export default function useSalon() {
     dateRangeCalendarCell: cn('align-both size-8 rounded-md text-sm outline-none', fg('digest')),
     dateRangeCalendarCellActive: cn(bg('hoverBg'), fg('title')),
     dateRangeCalendarCellToday: cn('border', br('table.border')),
+    actionBarWrapper: cn('w-full pl-2 py-1.5 rounded-md', bg('hoverBg')),
+    actionBarMain: 'row-center w-full -ml-2 pl-2.5 pr-0 h-8',
+    actionBarNote: cn('row-center text-xs', fg('digest')),
+    actionBarFocus: cn('text-sm mx-1 -mt-0.5', rainbow(COLOR.RED, 'fg')),
+    actionBarActionNotes: 'row-center ml-1',
+    actionBarDeleteNote: cn('text-xs bold ml-2', rainbow(COLOR.RED, 'fg')),
+    actionBarSpacer: 'mr-1',
+    actionBarPanel: 'overflow-hidden',
+    grow: 'grow',
   }
 }

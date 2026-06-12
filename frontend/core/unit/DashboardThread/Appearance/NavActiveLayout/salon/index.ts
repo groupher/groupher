@@ -1,12 +1,25 @@
+import { NAV_ACTIVE_LAYOUT } from '~/const/layout'
+import useLayout from '~/hooks/useLayout'
+import { getActiveNavLayoutStyles } from '~/hooks/useNavActiveLayoutSalon'
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TNavActiveLayout } from '~/spec'
 
 import useBase from '../../useAppearanceBaseSalon'
 
 export { cnMerge } from '~/css'
 
-export default function useSalon() {
-  const { cn, fg } = useTwBelt()
+type TArgs = {
+  layout?: TNavActiveLayout | null
+}
+
+export default function useSalon({ layout: currentLayout }: TArgs = {}) {
+  const { bg, cn, fg, primary } = useTwBelt()
   const base = useBase()
+  const { navActiveLayout } = useLayout()
+  const resolvedLayout: TNavActiveLayout =
+    currentLayout ?? navActiveLayout ?? NAV_ACTIVE_LAYOUT.TEXT
+
+  const activeLayoutStyles = getActiveNavLayoutStyles({ cn, bg, primary }, resolvedLayout)
 
   return {
     wrapper: base.baseSection,
@@ -17,5 +30,6 @@ export default function useSalon() {
     preview: 'row-center gap-1.5',
     previewItem: cn('row-center h-7 rounded-lg px-2 text-sm', fg('digest')),
     previewItemInactive: 'opacity-50',
+    previewItemActive: activeLayoutStyles.item,
   }
 }

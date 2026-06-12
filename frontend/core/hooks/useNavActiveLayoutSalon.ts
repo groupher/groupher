@@ -3,8 +3,52 @@ import useLayout from '~/hooks/useLayout'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TNavActiveLayout } from '~/spec'
 
+type TActiveLayoutStyle = {
+  item: string
+  text: string
+  icon: string
+}
+
 type TProps = {
   layout?: TNavActiveLayout | null
+}
+
+type TNavActiveStyleHelpers = {
+  cn: (className: string, ...rest: Array<string | false | null | undefined>) => string
+  bg: (key: string) => string
+  primary: (key: string) => string
+}
+
+export const getNavActiveLayoutStyles = ({
+  cn,
+  bg,
+  primary,
+}: TNavActiveStyleHelpers): Record<TNavActiveLayout, TActiveLayoutStyle> => ({
+  [NAV_ACTIVE_LAYOUT.TEXT]: {
+    item: cn(primary('fg'), 'bold-sm'),
+    text: cn(primary('fg'), 'bold-sm'),
+    icon: primary('fill'),
+  },
+  [NAV_ACTIVE_LAYOUT.GRAY_BG]: {
+    item: cn(primary('fg'), bg('hoverBg'), 'bold-sm'),
+    text: cn(primary('fg'), 'bold-sm'),
+    icon: primary('fill'),
+  },
+  [NAV_ACTIVE_LAYOUT.SOFT_BG]: {
+    item: cn(primary('fg'), primary('bgSoft'), 'bold-sm'),
+    text: cn(primary('fg'), 'bold-sm'),
+    icon: primary('fill'),
+  },
+})
+
+export const getActiveNavLayoutStyles = (
+  { cn, bg, primary }: TNavActiveStyleHelpers,
+  layout: TNavActiveLayout | null | undefined,
+) => {
+  const activeStyles = getNavActiveLayoutStyles({ cn, bg, primary })
+  const resolvedLayout = layout ?? NAV_ACTIVE_LAYOUT.TEXT
+
+  return activeStyles[resolvedLayout] ?? activeStyles[NAV_ACTIVE_LAYOUT.TEXT]
 }
 
 export default function useNavActiveLayoutSalon({ layout }: TProps = {}) {
@@ -13,31 +57,5 @@ export default function useNavActiveLayoutSalon({ layout }: TProps = {}) {
 
   const resolvedLayout = layout ?? navActiveLayout
 
-  // Centralize the active-state tone mapping for nav/thread items so dashboard
-  // preview cards and real community navigation resolve the same layout enum to
-  // the same color treatment.
-  //
-  // This hook intentionally stays at the "active look" layer only. Business
-  // components still own their local spacing, opacity, radius, and most of
-  // their typography. `bold-sm` is kept here because active nav items should
-  // share the same emphasis baseline across these supported surfaces.
-  const ACTIVE_LAYOUTS = {
-    [NAV_ACTIVE_LAYOUT.TEXT]: {
-      item: cn(primary('fg'), 'bold-sm'),
-      text: cn(primary('fg'), 'bold-sm'),
-      icon: primary('fill'),
-    },
-    [NAV_ACTIVE_LAYOUT.GRAY_BG]: {
-      item: cn(primary('fg'), bg('hoverBg'), 'bold-sm'),
-      text: cn(primary('fg'), 'bold-sm'),
-      icon: primary('fill'),
-    },
-    [NAV_ACTIVE_LAYOUT.SOFT_BG]: {
-      item: cn(primary('fg'), primary('bgSoft'), 'bold-sm'),
-      text: cn(primary('fg'), 'bold-sm'),
-      icon: primary('fill'),
-    },
-  }
-
-  return ACTIVE_LAYOUTS[resolvedLayout] ?? ACTIVE_LAYOUTS[NAV_ACTIVE_LAYOUT.TEXT]
+  return getActiveNavLayoutStyles({ cn, bg, primary }, resolvedLayout)
 }

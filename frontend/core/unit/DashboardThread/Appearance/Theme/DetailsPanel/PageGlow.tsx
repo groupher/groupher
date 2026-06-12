@@ -4,7 +4,6 @@ import useTrans from '~/hooks/useTrans'
 
 import type { TThemeDetails } from '../spec'
 import useSalon from './salon/page_glow'
-import useSettingRowSalon from './salon/setting_row'
 import TextureBalls from './TextureBalls'
 import ThemeRangeInput from './ThemeRangeInput'
 
@@ -14,7 +13,6 @@ type TProps = {
 
 export default function PageGlow({ details }: TProps) {
   const s = useSalon()
-  const row = useSettingRowSalon()
   const { t } = useTrans()
   const { theme } = useTheme()
 
@@ -30,12 +28,12 @@ export default function PageGlow({ details }: TProps) {
   return (
     <>
       <div className={s.settingRow}>
-        <div className={row.labelGroup}>
-          <div className={row.label}>{t('dsb.appearance.glow.title')}</div>
-          <div className={row.hint}>{t('dsb.appearance.glow.desc')}</div>
+        <div className={s.row.labelGroup}>
+          <div className={s.row.label}>{t('dsb.appearance.glow.title')}</div>
+          <div className={s.row.hint}>{t('dsb.appearance.glow.desc')}</div>
         </div>
 
-        <div className='grow' />
+        <div className={s.row.grow} />
         <div className={s.swatches}>
           <TextureBalls
             selectedTokens={selectedTokens}
@@ -46,13 +44,13 @@ export default function PageGlow({ details }: TProps) {
       </div>
 
       {!!glowType && (
-        <div className={row.settingRow}>
-          <div className={row.labelGroup}>
-            <div className={row.label}>{t('dsb.appearance.glow.intensity.title')}</div>
+        <div className={s.row.settingRow}>
+          <div className={s.row.labelGroup}>
+            <div className={s.row.label}>{t('dsb.appearance.glow.intensity.title')}</div>
           </div>
 
-          <div className='grow' />
-          <div className={row.rangeGroup}>
+          <div className={s.row.grow} />
+          <div className={s.row.rangeGroup}>
             <ThemeRangeInput
               baseKey={PRESET_FIELD.GLOW_OPACITY}
               selectedTokens={selectedTokens}

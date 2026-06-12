@@ -10,6 +10,15 @@ export type TMenuPart = 'bg' | 'bar' | 'title' | 'link' | 'icon' | 'activeBox' |
 export type TShadowType = 'sm' | 'md' | 'lg' | 'xl' | 'card' | 'drawer' | 'modal'
 export type TDimLevel = 'lg' | 'md' | 'sm'
 export type THoverPart = 'bg' | 'box' | 'icon' | 'bg-red' | 'icon-red' | 'fg' | 'fg-red'
+export type TSelectablePart = 'box' | 'badge' | 'check'
+export type TSelectableSize = 'sm' | 'md'
+export type TSelectableOptions = {
+  active?: boolean
+  base?: boolean
+  disabled?: boolean
+  isCircle?: boolean
+  size?: TSelectableSize
+}
 export type TCutWWidth = `w-${number}` | `w-[${number}px]`
 
 /**
@@ -93,6 +102,7 @@ export type TRet = {
   cut: (classname?: TCutWWidth) => string
   landingTitle: () => string
   hover: (part: THoverPart) => string
+  selectable: (part: TSelectablePart, options?: TSelectableOptions) => string
 
   zIndex: (key: TZIndexType, visible?: boolean) => string
   page: () => string

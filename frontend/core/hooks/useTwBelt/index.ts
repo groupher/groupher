@@ -25,6 +25,8 @@ import type {
   TLinkColorPrefix,
   TMenuPart,
   TRet,
+  TSelectableOptions,
+  TSelectablePart,
   TShadowType,
   TTextKey,
 } from './spec'
@@ -186,6 +188,41 @@ export default function useTwBelt(): TRet {
     }
   }
 
+  const selectable = (part: TSelectablePart, options: TSelectableOptions = {}): string => {
+    const { active = false, base = true, disabled = false, isCircle = false, size = 'md' } = options
+    const resolvedSize = isCircle ? 'sm' : size
+
+    switch (part) {
+      case 'box':
+        return cn(
+          base && 'border border-transparent',
+          disabled ? 'cursor-default' : 'pointer',
+          active ? primary('border') : !disabled && `hover:${br('digest')}`,
+          active && `hover:${primary('border')}`,
+          active && bg('cardAlpha'),
+        )
+
+      case 'badge':
+        return cn(
+          'absolute z-20 circle border',
+          isCircle ? '-top-1 -right-0.5 scale-90' : '-top-2 -right-2',
+          resolvedSize === 'sm' ? 'size-4' : 'size-5',
+          primary('bg'),
+          primary('border'),
+        )
+
+      case 'check':
+        return cn(
+          'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
+          resolvedSize === 'sm' ? 'size-2.5' : 'size-3',
+          fill('button.fg'),
+        )
+
+      default:
+        return ''
+    }
+  }
+
   const zIndex = (type: TZIndexType, visible?: boolean): string => {
     if (visible === false) return '-z-10'
     return `z-${type}`
@@ -279,6 +316,7 @@ export default function useTwBelt(): TRet {
       landingTitle,
 
       hover,
+      selectable,
       zIndex,
 
       page,

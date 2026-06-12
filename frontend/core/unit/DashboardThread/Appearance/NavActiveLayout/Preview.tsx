@@ -1,5 +1,4 @@
 import { NAV_ACTIVE_LAYOUT } from '~/const/layout'
-import useNavActiveLayoutSalon from '~/hooks/useNavActiveLayoutSalon'
 import useTrans from '~/hooks/useTrans'
 
 import useSalon, { cnMerge } from './salon'
@@ -15,9 +14,8 @@ type TProps = {
 }
 
 export default function Preview({ layout }: TProps) {
-  const s = useSalon()
+  const s = useSalon({ layout })
   const { t } = useTrans()
-  const activeStyle = useNavActiveLayoutSalon({ layout })
 
   return (
     <div className={s.preview}>
@@ -30,7 +28,7 @@ export default function Preview({ layout }: TProps) {
             className={cnMerge(
               s.previewItem,
               !isActive && s.previewItemInactive,
-              isActive && activeStyle.item,
+              isActive && s.previewItemActive,
             )}
           >
             {t(titleKey)}

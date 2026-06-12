@@ -1,18 +1,19 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default function usePicturesSectionSalon() {
-  const { cn, bg, br, primary } = useTwBelt()
+export default function useSalon() {
+  const { cn, bg, selectable, cnMerge } = useTwBelt()
 
   return {
     section: 'column gap-3 w-full',
     pictureGrid: 'grid grid-cols-6 gap-2.5',
-    pictureCard: cn(
-      'h-16 w-24 rounded-md overflow-hidden relative border border-transparent pointer trans-all-200',
-      'p-0.5',
-      bg('card'),
-      `hover:${br('digest')}`,
-    ),
-    pictureCardActive: primary('border'),
+    button: (active: boolean) =>
+      cnMerge(
+        `relative p-1 shrink-0 rounded-md trans-all-200 text-left h-16 w-24 ${bg('card')}`,
+        selectable('box', { active }),
+      ),
+    pictureContent: 'relative row-center s-full overflow-hidden rounded-md',
     pictureImage: 'object-cover w-full h-full rounded-xs',
+    activeSign: cnMerge(selectable('badge', { size: 'sm' }), '-top-1.5 -right-2.5'),
+    checkIcon: cn(selectable('check', { size: 'sm' })),
   }
 }

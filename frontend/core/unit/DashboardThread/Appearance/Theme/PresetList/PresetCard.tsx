@@ -1,7 +1,7 @@
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
+import CheckedSVG from '~/icons/CheckBold'
 import type { TTransKey } from '~/spec'
-import Checker from '~/widgets/Checker'
 
 import MiniBars from '../MiniBars'
 import type { TThemePresetCardMode, TThemePresetOption } from '../spec'
@@ -37,6 +37,7 @@ export default function PresetCard({
   const accentColor = sectionTokens.accentColor
   const textTitle = sectionTokens.textTitle
   const textDigest = sectionTokens.textDigest
+  const title = t(`dsb.appearance.theme.preset.${presetKey}.title` as TTransKey)
 
   return (
     <div
@@ -57,6 +58,12 @@ export default function PresetCard({
       }}
     >
       <div className={s.card}>
+        {active && (
+          <span className={s.activeSign}>
+            <CheckedSVG className={s.checkIcon} />
+          </span>
+        )}
+
         <div className={s.preview} style={{ backgroundColor: cardBg }}>
           <MiniBars
             active={active}
@@ -67,20 +74,7 @@ export default function PresetCard({
           />
         </div>
 
-        <div className={s.title}>
-          {t(`dsb.appearance.theme.preset.${presetKey}.title` as TTransKey)}
-        </div>
-
-        {active && (
-          <div className={s.checker}>
-            <Checker
-              checked
-              hiddenMode
-              size='small'
-              aria-label={t(`dsb.appearance.theme.preset.${presetKey}.title` as TTransKey)}
-            />
-          </div>
-        )}
+        <div className={s.title}>{title}</div>
       </div>
     </div>
   )

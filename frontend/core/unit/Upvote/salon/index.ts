@@ -4,9 +4,9 @@ import type { TSpace } from '~/spec'
 type TProps = TSpace
 
 export default function useSalon(spacing: TProps) {
-  const { cn, margin } = useTwBelt()
+  const { margin } = useTwBelt()
 
   return {
-    wrapper: cn(margin(spacing)),
+    wrapper: margin(spacing),
   }
 }

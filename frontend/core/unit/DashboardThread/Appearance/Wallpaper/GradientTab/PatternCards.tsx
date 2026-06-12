@@ -5,9 +5,10 @@ import { WALLPAPER_PATTERN } from '~/const/wallpaper'
 import useTheme from '~/hooks/useTheme'
 import useTrans from '~/hooks/useTrans'
 import type { TWallpaperData, TWallpaperPattern } from '~/spec'
+import SelectableCard from '~/widgets/SelectableCard'
 
 import { isGradientWallpaper } from '../helper'
-import useSalon, { cnMerge } from './salon/pattern_cards'
+import useSalon from './salon/pattern_cards'
 
 type TProps = {
   patternId: string
@@ -66,21 +67,16 @@ export default function PatternCards({ patternId, wallpaper, onPatternSelect }: 
           }
 
           return (
-            <button
-              type='button'
+            <SelectableCard
               key={id}
-              className={cnMerge(
-                s.card,
-                selected ? s.cardActive : canSelectPattern ? s.cardHover : null,
-                !canSelectPattern && s.cardDisabled,
-              )}
-              aria-label={`Pattern ${id}`}
-              aria-pressed={selected}
+              active={selected}
+              ariaLabel={`Pattern ${id}`}
+              className={s.card}
               disabled={!canSelectPattern}
               onClick={() => onPatternSelect(id)}
             >
               <span className={s.preview} style={previewStyle} />
-            </button>
+            </SelectableCard>
           )
         })}
 
