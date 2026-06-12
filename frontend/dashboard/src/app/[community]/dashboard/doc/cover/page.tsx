@@ -1,6 +1,6 @@
 'use client'
 
-import CMS from '~/unit/DashboardThread/CMS/Docs/Cover'
+import CMS from '~/unit/DashboardThread/CMS/Docs/Cover/indext'
 
 const DashboardDocPage = () => {
   return <CMS />

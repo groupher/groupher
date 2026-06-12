@@ -33,6 +33,12 @@ export const DOC_MENU_ITEMS = [
     path: DSB_DOC_ROUTE.LAYOUT,
   },
   {
+    icon: 'cover',
+    title: 'dsb.menu.doc.cover',
+    slug: DSB_DOC_ROUTE.COVER,
+    path: DSB_DOC_ROUTE.COVER,
+  },
+  {
     icon: 'editor',
     title: 'dsb.menu.doc.editor',
     slug: DSB_DOC_ROUTE.EDITOR,
