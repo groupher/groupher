@@ -31,7 +31,6 @@ import Button from '~/widgets/Buttons/Button'
 import Input from '~/widgets/Input'
 
 import useSalon, { cn, cnMerge } from './salon/filter_bar'
-import useActionBarSalon from './salon/filter_bar/action_bar'
 import type { TCmsTableToolbarProps } from './types'
 
 const DEFAULT_DATE_RANGE = (() => {
@@ -57,7 +56,6 @@ export default function CmsTableToolbar({
   withTags = false,
 }: TCmsTableToolbarProps) {
   const s = useSalon()
-  const actionBar = useActionBarSalon()
   const { t } = useTrans()
   const showBatchActions = !!batchActions && multiSelectEnabled && selectedCount > 0
 
@@ -92,7 +90,7 @@ export default function CmsTableToolbar({
 
         {withDateRange && <CmsDateRangePicker label={t('dsb.cms.filter.date_range')} />}
 
-        <div className='grow' />
+        <div className={s.grow} />
 
         {withReset && (
           <Button size='small' ghost noBorder onClick={onResetAction ?? undefined}>
@@ -116,13 +114,13 @@ export default function CmsTableToolbar({
                 opacity: { duration: 0.16, ease: 'easeOut' },
                 y: { duration: 0.18, ease: 'easeOut' },
               }}
-              className='overflow-hidden'
+              className={s.actionBarPanel}
             >
-              <div className={actionBar.wrapper}>
-                <div className={actionBar.main}>
-                  <div className={actionBar.note}>
+              <div className={s.actionBarWrapper}>
+                <div className={s.actionBarMain}>
+                  <div className={s.actionBarNote}>
                     {t('dsb.cms.action.selected_prefix')}
-                    <div className={actionBar.focus}>{selectedCount}</div>
+                    <div className={s.actionBarFocus}>{selectedCount}</div>
                     {t('dsb.cms.action.selected_suffix')}
                   </div>
 
@@ -130,24 +128,24 @@ export default function CmsTableToolbar({
                     batchActions.withStatus ||
                     batchActions.withTags ||
                     batchActions.withDelete) && (
-                    <div className={actionBar.actionNotes}>
-                      <div className={actionBar.note}>{t('dsb.cms.action.label')}</div>
-                      {batchActions.withCategory && <div className={actionBar.note}>Category</div>}
+                    <div className={s.actionBarActionNotes}>
+                      <div className={s.actionBarNote}>{t('dsb.cms.action.label')}</div>
+                      {batchActions.withCategory && <div className={s.actionBarNote}>Category</div>}
                       {batchActions.withStatus && (
-                        <div className={actionBar.note}>{t('dsb.cms.table.status')}</div>
+                        <div className={s.actionBarNote}>{t('dsb.cms.table.status')}</div>
                       )}
-                      {batchActions.withTags && <div className={actionBar.note}>Tags</div>}
+                      {batchActions.withTags && <div className={s.actionBarNote}>Tags</div>}
                       {batchActions.withDelete && (
-                        <div className={actionBar.deleteNote}>{t('dsb.cms.action.delete')}</div>
+                        <div className={s.actionBarDeleteNote}>{t('dsb.cms.action.delete')}</div>
                       )}
                     </div>
                   )}
 
-                  <div className='grow' />
+                  <div className={s.grow} />
                   <Button size='small' ghost noBorder onClick={batchActions.onCancelAction}>
                     {t('dsb.cms.action.cancel')}
                   </Button>
-                  <div className='mr-1' />
+                  <div className={s.actionBarSpacer} />
                   <Button size='small' space={2} onClick={batchActions.onConfirmAction}>
                     {t('dsb.cms.action.confirm')}
                   </Button>

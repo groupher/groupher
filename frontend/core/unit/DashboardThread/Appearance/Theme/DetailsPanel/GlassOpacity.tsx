@@ -3,7 +3,7 @@ import type { TSpace } from '~/spec'
 
 import { FIELD } from '../../../constant'
 import type { TThemeDetails } from '../spec'
-import useSettingRowSalon from './salon/setting_row'
+import useSalon from './salon/glass_opacity'
 import ThemeRangeInput from './ThemeRangeInput'
 
 type TProps = {
@@ -11,7 +11,7 @@ type TProps = {
 } & TSpace
 
 export default function GlassOpacity({ details, ...spacing }: TProps) {
-  const s = useSettingRowSalon(spacing)
+  const s = useSalon(spacing)
   const { t } = useTrans()
   const { selectedTokens, onThemePresetPreview, onThemePresetSchedule, onThemePresetFlush } =
     details
@@ -25,7 +25,7 @@ export default function GlassOpacity({ details, ...spacing }: TProps) {
             <div className={s.hint}>{t('dsb.appearance.theme.glass_opacity.desc')}</div>
           </div>
 
-          <div className='grow' />
+          <div className={s.grow} />
           <div className={s.rangeGroup}>
             <ThemeRangeInput
               baseKey={FIELD.GAUSS_BLUR}
