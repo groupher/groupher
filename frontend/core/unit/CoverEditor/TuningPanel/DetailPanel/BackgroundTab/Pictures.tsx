@@ -1,5 +1,5 @@
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
-import { cnMerge } from '~/css'
+import CheckedSVG from '~/icons/CheckBold'
 import type { TBgConfig } from '~/lib/bg'
 
 import { COVER_PICTURE_WALLPAPER } from '../../../background'
@@ -11,7 +11,7 @@ type TProps = {
   background: TBgConfig
 }
 
-export default function PictureSection({ background }: TProps) {
+export default function Pictures({ background }: TProps) {
   const s = useSalon()
   const { pictureBackgroundOnChange } = useLogic()
 
@@ -28,12 +28,19 @@ export default function PictureSection({ background }: TProps) {
               <button
                 type='button'
                 key={key}
-                className={cnMerge(s.pictureCard, selected && s.pictureCardActive)}
                 aria-label={key}
-                title={key}
+                aria-pressed={selected}
+                className={s.button(selected)}
                 onClick={() => pictureBackgroundOnChange(key)}
               >
-                <img className={s.pictureImage} src={picture.preview ?? picture.image} alt='' />
+                {selected && (
+                  <span className={s.activeSign}>
+                    <CheckedSVG className={s.checkIcon} />
+                  </span>
+                )}
+                <span className={s.pictureContent}>
+                  <img className={s.pictureImage} src={picture.preview ?? picture.image} alt='' />
+                </span>
               </button>
             )
           })}

@@ -1,7 +1,7 @@
 import type { TBgConfig } from '~/lib/bg'
 
-import GradientsSection from './GradientsSection'
-import PicturesSection from './PictureSection'
+import Gradients from './Gradients'
+import Pictures from './Pictures'
 import useSalon from './salon'
 import TuningSection from './TuningSection'
 
@@ -14,8 +14,8 @@ export default function BackgroundTab({ background }: TProps) {
 
   return (
     <section className={s.wrapper}>
-      <GradientsSection background={background} />
-      <PicturesSection background={background} />
+      <Gradients background={background} />
+      <Pictures background={background} />
       <TuningSection background={background} />
     </section>
   )

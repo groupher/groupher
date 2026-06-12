@@ -1,19 +1,14 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export { cnMerge } from '~/css'
-
 export default function useSalon() {
-  const { cn, br, fg, primary, hover, bg, sexyBorder } = useTwBelt()
+  const { cn, br, fg, hover, bg, sexyBorder } = useTwBelt()
   const toggleBase = 'h-8 px-5 rounded-full'
 
   return {
     wrapper: 'w-full mt-5',
     title: cn('text-sm mb-5', fg('digest')),
     grid: 'grid w-full grid-cols-7 gap-4',
-    card: 'h-40 w-full rounded-3xl p-1 border border-transparent pointer trans-all-200 overflow-hidden',
-    cardHover: `hover:${br('digest')}`,
-    cardActive: cn(primary('border'), `hover:${primary('border')}`),
-    cardDisabled: 'cursor-default opacity-70',
+    card: 'h-40 w-full',
     preview: 'block s-full rounded-md',
     toggleSlot: 'h-40 row-center',
     toggle: cn(

@@ -1,5 +1,6 @@
 import SIZE from '~/const/size'
 import { WALLPAPER_TYPE } from '~/const/wallpaper'
+import CheckedSVG from '~/icons/CheckBold'
 import type { TBgConfig } from '~/lib/bg'
 import ColorsPresetBall, { COLORS_PRESET_BALL_LAYOUT } from '~/widgets/ColorsPresetBall'
 
@@ -12,7 +13,7 @@ type TProps = {
   background: TBgConfig
 }
 
-export default function GradientsSection({ background }: TProps) {
+export default function Gradients({ background }: TProps) {
   const s = useSalon()
   const { gradientBackgroundOnChange } = useLogic()
 
@@ -25,20 +26,33 @@ export default function GradientsSection({ background }: TProps) {
             background.type === WALLPAPER_TYPE.GRADIENT && background.source === palette.key
 
           return (
-            <ColorsPresetBall
+            <button
+              type='button'
               key={palette.key}
-              colors={palette.colors}
-              active={selected}
-              interactive
-              label={palette.label}
-              layout={COLORS_PRESET_BALL_LAYOUT.GRID}
-              size={SIZE.SMALL}
+              aria-label={palette.label}
+              aria-pressed={selected}
+              className={s.button(selected)}
               onClick={() => {
                 if (!selected) {
                   gradientBackgroundOnChange(palette.key)
                 }
               }}
-            />
+            >
+              {selected && (
+                <span className={s.activeSign}>
+                  <CheckedSVG className={s.checkIcon} />
+                </span>
+              )}
+
+              <span className={s.content}>
+                <ColorsPresetBall
+                  colors={palette.colors}
+                  label={palette.label}
+                  layout={COLORS_PRESET_BALL_LAYOUT.GRID}
+                  size={SIZE.MEDIUM}
+                />
+              </span>
+            </button>
           )
         })}
       </div>
