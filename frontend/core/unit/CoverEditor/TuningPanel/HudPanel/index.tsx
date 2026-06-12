@@ -3,6 +3,7 @@ import ArrowSVG from '~/icons/ArrowSimple'
 import ImageSizeSVG from '~/icons/ImageSize'
 import RotateSVG from '~/icons/Rotate'
 import ShadowSVG from '~/icons/Shadow'
+import { normalizeSignedAngle } from '~/lib/angle'
 import { composeBgCss } from '~/lib/bg'
 
 import { IMAGE_SIZE_RANGE } from '../../constant'
@@ -29,7 +30,7 @@ export default function HudPanel({ setting, onExpand }: TProps) {
   const magnifierCenter = magnifier?.center ?? { x: 0.5, y: 0.5 }
   const magnifierZoom = magnifier?.zoom ?? 1
   const position = activeImage?.position ?? { x: 0.5, y: 0.5 }
-  const rotate = activeImage?.rotate ?? 0
+  const rotate = normalizeSignedAngle(activeImage?.rotate ?? 0)
   const shadow = activeImage?.shadow
   const size = activeImage?.size ?? IMAGE_SIZE_RANGE.MAX
 

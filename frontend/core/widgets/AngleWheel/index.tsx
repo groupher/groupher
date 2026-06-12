@@ -7,14 +7,11 @@ import {
   useState,
 } from 'react'
 
-import useSalon from './salon'
+import { normalizeSignedAngle } from '~/lib/angle'
 
-const WHEEL_SIZE = 48
-const WHEEL_RADIUS = WHEEL_SIZE / 2
-const DOT_SIZE = 8
-const GUIDE_ARC_SPAN = 78
-const SNAP_STEP = 45
-const SNAP_THRESHOLD = 1
+import { MAJOR_TICK_STEP, TICKS, WHEEL_SIZE } from './constant'
+import { angleFromPointer, arcPathFromAngle, pointFromAngle, tickLineFromAngle } from './helper'
+import useSalon from './salon'
 
 type TProps = {
   value: number
@@ -23,77 +20,26 @@ type TProps = {
   onCommit?: () => void
 }
 
-const normalizeAngle = (angle: number): number => Math.round(((angle % 360) + 360) % 360)
-
-const circularDistance = (angle: number, target: number): number => {
-  const diff = Math.abs(normalizeAngle(angle) - normalizeAngle(target))
-
-  return Math.min(diff, 360 - diff)
-}
-
-const snapAngle = (angle: number): number => {
-  const normalizedAngle = normalizeAngle(angle)
-  const target = Math.round(normalizedAngle / SNAP_STEP) * SNAP_STEP
-
-  if (circularDistance(normalizedAngle, target) <= SNAP_THRESHOLD) {
-    return normalizeAngle(target)
-  }
-
-  return normalizedAngle
-}
-
-const angleFromPointer = (clientX: number, clientY: number, rect: DOMRect): number => {
-  const centerX = rect.left + rect.width / 2
-  const centerY = rect.top + rect.height / 2
-  const mathAngle = (Math.atan2(clientY - centerY, clientX - centerX) * 180) / Math.PI
-
-  return snapAngle(mathAngle + 90)
-}
-
-const pointFromAngle = (angle: number): { left: number; top: number } => {
-  const rad = (angle * Math.PI) / 180
-  const x = Math.sin(rad) * WHEEL_RADIUS
-  const y = -Math.cos(rad) * WHEEL_RADIUS
-
-  return {
-    left: WHEEL_RADIUS + x - DOT_SIZE / 2,
-    top: WHEEL_RADIUS + y - DOT_SIZE / 2,
-  }
-}
-
-const svgPointFromAngle = (angle: number): { x: number; y: number } => {
-  const rad = (angle * Math.PI) / 180
-
-  return {
-    x: WHEEL_RADIUS + Math.sin(rad) * WHEEL_RADIUS,
-    y: WHEEL_RADIUS - Math.cos(rad) * WHEEL_RADIUS,
-  }
-}
-
-const arcPathFromAngle = (angle: number): string => {
-  const start = svgPointFromAngle(angle - GUIDE_ARC_SPAN / 2)
-  const end = svgPointFromAngle(angle + GUIDE_ARC_SPAN / 2)
-
-  return `M ${start.x.toFixed(3)} ${start.y.toFixed(3)} A ${WHEEL_RADIUS} ${WHEEL_RADIUS} 0 0 1 ${end.x.toFixed(3)} ${end.y.toFixed(3)}`
-}
-
 export default function AngleWheel({ value, label = 'Angle', onChange, onCommit }: TProps) {
   const panelRef = useRef<HTMLDivElement | null>(null)
-  const [angle, setAngle] = useState(() => normalizeAngle(value))
+  const [angle, setAngle] = useState(() => normalizeSignedAngle(value))
   const [dragging, setDragging] = useState(false)
   const s = useSalon()
 
   const pointStyle = pointFromAngle(angle)
   const guidePath = arcPathFromAngle(angle)
+  const isNegative = angle < 0
+  const displayAngle = Math.abs(angle)
 
   useEffect(() => {
-    setAngle(normalizeAngle(value))
+    setAngle(normalizeSignedAngle(value))
   }, [value])
 
   const commitAngle = useCallback(
     (angle: number) => {
-      setAngle(angle)
-      onChange(angle)
+      const nextAngle = normalizeSignedAngle(angle)
+      setAngle(nextAngle)
+      onChange(nextAngle)
     },
     [onChange],
   )
@@ -115,7 +61,7 @@ export default function AngleWheel({ value, label = 'Angle', onChange, onCommit 
     if (!isIncrease && !isDecrease) return
 
     event.preventDefault()
-    commitAngle(normalizeAngle(angle + (isIncrease ? 1 : -1)))
+    commitAngle(angle + (isIncrease ? 1 : -1))
     onCommit?.()
   }
 
@@ -167,14 +113,32 @@ export default function AngleWheel({ value, label = 'Angle', onChange, onCommit 
       role='slider'
       tabIndex={0}
       aria-label={label}
-      aria-valuemin={0}
-      aria-valuemax={359}
+      aria-valuemin={-180}
+      aria-valuemax={180}
       aria-valuenow={angle}
       onMouseDown={handleMouseDown}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
     >
       <svg className={s.guide} viewBox={`0 0 ${WHEEL_SIZE} ${WHEEL_SIZE}`} aria-hidden='true'>
+        <g className={s.ticks(dragging)}>
+          {TICKS.map((tickAngle) => {
+            const major = tickAngle % MAJOR_TICK_STEP === 0
+            const line = tickLineFromAngle(tickAngle, major)
+
+            return (
+              <line
+                key={tickAngle}
+                className={major ? s.majorTick : s.tick}
+                x1={line.x1.toFixed(3)}
+                y1={line.y1.toFixed(3)}
+                x2={line.x2.toFixed(3)}
+                y2={line.y2.toFixed(3)}
+                strokeLinecap='round'
+              />
+            )
+          })}
+        </g>
         <path className={s.guideArc} d={guidePath} strokeLinecap='round' />
       </svg>
       <button
@@ -184,7 +148,8 @@ export default function AngleWheel({ value, label = 'Angle', onChange, onCommit 
         onMouseDown={handleResetMouseDown}
         onClick={handleResetClick}
       >
-        {angle}°
+        {isNegative && <span className={s.negativeSign}>-</span>}
+        <span>{displayAngle}°</span>
       </button>
       <div className={s.point} style={pointStyle} />
     </div>

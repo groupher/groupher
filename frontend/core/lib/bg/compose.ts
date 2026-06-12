@@ -1,4 +1,5 @@
 import { WALLPAPER_PATTERN_TONE, WALLPAPER_TYPE } from '~/const/wallpaper'
+import { normalizeSignedAngle } from '~/lib/angle'
 import {
   GRADIENT_RENDERER,
   isMeshGradientRecipe,
@@ -206,7 +207,10 @@ export const composeBgRenderSpec = (
     source: config.source,
     colors: DEFAULT_RENDER_COLORS,
     colorStops: normalizeEvenGradientStops(DEFAULT_RENDER_COLORS.length),
-    flow: config.gradient?.renderer === GRADIENT_RENDERER.LINEAR ? config.gradient.angle : 180,
+    flow:
+      config.gradient?.renderer === GRADIENT_RENDERER.LINEAR
+        ? normalizeSignedAngle(config.gradient.angle)
+        : 180,
     texture: normalizeTexture(config.texture),
     blurIntensity: config.effect.blurIntensity,
     brightness: config.effect.brightness,
@@ -254,7 +258,8 @@ export const composeBgRenderSpec = (
       hasTexture: config.texture.enabled,
       colors: gradient.colors,
       colorStops: normalizeGradientStops(gradient),
-      flow: gradient.renderer === GRADIENT_RENDERER.LINEAR ? gradient.angle : 180,
+      flow:
+        gradient.renderer === GRADIENT_RENDERER.LINEAR ? normalizeSignedAngle(gradient.angle) : 180,
       gradientRecipe: gradient,
     }
   }

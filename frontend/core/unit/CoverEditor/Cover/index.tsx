@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, FC, PointerEvent, ReactNode } from 'react'
 
 import useUpdatePreviewCssVars from '~/hooks/useUpdatePreviewCssVars'
+import { normalizeSignedAngle } from '~/lib/angle'
 import { extractDominantColorFromImage } from '~/lib/imageColor/dominant'
 import BgRenderer from '~/widgets/BgRenderer'
 
@@ -223,14 +224,15 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
   const hasImage = imageList.length > 0
   const hasWallpaper = !isEmpty(activeBackground.source)
   const isFullFrame = imageList.some(
-    (image) => image.size === IMAGE_SIZE_RANGE.MAX && image.rotate === 0,
+    (image) => image.size === IMAGE_SIZE_RANGE.MAX && normalizeSignedAngle(image.rotate) === 0,
   )
   const shouldShowTransparentGrid = !hasWallpaper && !isFullFrame
   const backgroundRenderSpec = adaptCoverBgRenderSpec(activeBackground)
 
   const getImageRenderState = (image: TCoverImageConfig) => {
     const imageFrameSize = s.getResponsiveImageSize(image.size)
-    const imagePlacement = s.getImagePlacement(image.position, image.size, image.rotate)
+    const rotate = normalizeSignedAngle(image.rotate)
+    const imagePlacement = s.getImagePlacement(image.position, image.size, rotate)
     const borderRadiusValue = `${image.borderRadius}px`
     const frameBorderRadiusValue = getFrameBorderRadiusValue(image)
     const framePadding = image.glassBorder.enabled
@@ -251,7 +253,7 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
       backdropFilter: image.glassBorder.enabled ? 'blur(5px)' : undefined,
       WebkitBackdropFilter: image.glassBorder.enabled ? 'blur(5px)' : undefined,
       boxShadow: imageVar('shadow', getImageShadow(image.shadow) ?? 'none'),
-      transform: `translate(-50%, -50%) rotate(${imageVar('rotate', `${image.rotate}deg`)})`,
+      transform: `translate(-50%, -50%) rotate(${imageVar('rotate', `${rotate}deg`)})`,
       zIndex: imageVar('z-index', image.zIndex),
     }
     const magnifierImageFrameStyle: CSSProperties = {
@@ -268,7 +270,7 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
       top: imageVar('top', imagePlacement.top),
       padding: imageVar('padding', framePaddingValue),
       boxSizing: 'content-box',
-      transform: `translate(-50%, -50%) rotate(${imageVar('rotate', `${image.rotate}deg`)})`,
+      transform: `translate(-50%, -50%) rotate(${imageVar('rotate', `${rotate}deg`)})`,
       zIndex: imageVar('editor-z-index', image.zIndex + 1),
     }
     const cropViewportStyle: CSSProperties = {
@@ -422,10 +424,11 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
       event.preventDefault()
       activateImageDraft(image.which)
       event.currentTarget.setPointerCapture(event.pointerId)
+      const rotate = normalizeSignedAngle(image.rotate)
       interactionRef.current = {
         pointerId: event.pointerId,
-        rotate: image.rotate,
-        startCenter: getImageCanvasCenter(image.position, image.size, image.rotate),
+        rotate,
+        startCenter: getImageCanvasCenter(image.position, image.size, rotate),
         startPoint,
         startSize: image.size,
         type: 'move',
@@ -443,11 +446,12 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
       event.stopPropagation()
       activateImageDraft(image.which)
       event.currentTarget.setPointerCapture(event.pointerId)
+      const rotate = normalizeSignedAngle(image.rotate)
       interactionRef.current = {
         handle,
         pointerId: event.pointerId,
-        rotate: image.rotate,
-        startCenter: getImageCanvasCenter(image.position, image.size, image.rotate),
+        rotate,
+        startCenter: getImageCanvasCenter(image.position, image.size, rotate),
         startSize: image.size,
         type: 'resize',
         which: image.which,
@@ -467,13 +471,14 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
       event.stopPropagation()
       activateImageDraft(image.which)
       event.currentTarget.setPointerCapture(event.pointerId)
+      const rotate = normalizeSignedAngle(image.rotate)
 
       const nextState: Extract<TInteractionState, { type: 'radius' }> = {
         handle,
         localDirection,
         pointerId: event.pointerId,
-        rotate: image.rotate,
-        startCenter: getImageCanvasCenter(image.position, image.size, image.rotate),
+        rotate,
+        startCenter: getImageCanvasCenter(image.position, image.size, rotate),
         startSize: image.size,
         type: 'radius',
         which: image.which,

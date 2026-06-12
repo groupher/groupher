@@ -5,6 +5,7 @@ import { GRADIENT_PALETTE, GRADIENT_WALLPAPER, WALLPAPER_TYPE } from '~/const/wa
 import useFullWallpaper from '~/hooks/useFullWallpaper'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTheme from '~/hooks/useTheme'
+import { normalizeSignedAngle } from '~/lib/angle'
 import {
   applyGradientPalette,
   composeGradientRecipeForRenderer,
@@ -93,7 +94,7 @@ const getAngleDraft = (state: TWallpaperThemeState): number => {
     return radialCenterToAngle(gradient.center)
   }
   if (gradient.renderer === GRADIENT_RENDERER.LINEAR || isMeshGradientRecipe(gradient)) {
-    return gradient.angle
+    return normalizeSignedAngle(gradient.angle)
   }
 
   return 180
@@ -101,15 +102,13 @@ const getAngleDraft = (state: TWallpaperThemeState): number => {
 
 const RADIAL_DEFAULT_CENTER_DISTANCE = 0.22
 
-const normalizeAngle = (angle: number): number => Math.round(((angle % 360) + 360) % 360)
-
 const radialCenterToAngle = ({ x, y }: { x: number; y: number }): number => {
   const dx = x - 0.5
   const dy = y - 0.5
 
   if (Math.hypot(dx, dy) < 0.001) return 180
 
-  return normalizeAngle((Math.atan2(dx, -dy) * 180) / Math.PI)
+  return normalizeSignedAngle((Math.atan2(dx, -dy) * 180) / Math.PI)
 }
 
 const radialCenterFromAngle = (
@@ -120,7 +119,7 @@ const radialCenterFromAngle = (
   // existing center distance so the preset shape stays intact while rotating.
   const currentDistance = Math.hypot(center.x - 0.5, center.y - 0.5)
   const distance = currentDistance > 0.001 ? currentDistance : RADIAL_DEFAULT_CENTER_DISTANCE
-  const rad = (normalizeAngle(angle) * Math.PI) / 180
+  const rad = (normalizeSignedAngle(angle) * Math.PI) / 180
 
   return {
     x: 0.5 + Math.sin(rad) * distance,
@@ -252,15 +251,16 @@ export function useLogicValue(): TWallpaperLogic {
 
   const changeTab = (tab: TTab): void => setTab(tab)
   const changeAngle = (angle: number): void => {
-    setAngleDraft(angle)
+    const nextAngle = normalizeSignedAngle(angle)
+    setAngleDraft(nextAngle)
 
     if (wallpaperState.gradient?.renderer === GRADIENT_RENDERER.LINEAR) {
-      scheduleWallpaperPreview({ gradient: { ...wallpaperState.gradient, angle } })
+      scheduleWallpaperPreview({ gradient: { ...wallpaperState.gradient, angle: nextAngle } })
       return
     }
 
     if (wallpaperState.gradient && isMeshGradientRecipe(wallpaperState.gradient)) {
-      scheduleWallpaperPreview({ gradient: { ...wallpaperState.gradient, angle } })
+      scheduleWallpaperPreview({ gradient: { ...wallpaperState.gradient, angle: nextAngle } })
       return
     }
 
@@ -268,7 +268,7 @@ export function useLogicValue(): TWallpaperLogic {
       scheduleWallpaperPreview({
         gradient: {
           ...wallpaperState.gradient,
-          center: radialCenterFromAngle(angle, wallpaperState.gradient.center),
+          center: radialCenterFromAngle(nextAngle, wallpaperState.gradient.center),
         },
       })
       return
@@ -277,7 +277,7 @@ export function useLogicValue(): TWallpaperLogic {
     if (wallpaperState.gradient) return
 
     const fallback = GRADIENT_WALLPAPER.amber_mauve
-    scheduleWallpaperPreview({ gradient: { ...fallback, angle } })
+    scheduleWallpaperPreview({ gradient: { ...fallback, angle: nextAngle } })
   }
   const removeWallpaper = (): void => {
     clearPendingWallpaperDraft()

@@ -1,3 +1,5 @@
+import { normalizeSignedAngle } from '~/lib/angle'
+
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -31,7 +33,8 @@ const clampFinite = (value: number, fallback: number, min: number, max: number):
 const getFinite = (value: number | undefined, fallback: number): number =>
   Number.isFinite(value) ? (value as number) : fallback
 
-const getRecipeAngle = (recipe: TGradientRecipe): number => getFinite(recipe.angle, DEFAULT_ANGLE)
+const getRecipeAngle = (recipe: TGradientRecipe): number =>
+  normalizeSignedAngle(getFinite(recipe.angle, DEFAULT_ANGLE))
 
 export const getGradientRecipeSpread = (recipe: TGradientRecipe): number =>
   isMeshGradientRecipe(recipe) ? recipe.softness : recipe.spread
@@ -124,7 +127,7 @@ export const applyGradientPalette = (
  * Normalize a persisted mesh recipe before rendering or previewing it.
  *
  * @example
- * normalizeMeshRecipe(recipe).angle // clamped to 0..359
+ * normalizeMeshRecipe(recipe).angle // normalized to -180..180
  */
 export const normalizeMeshRecipe = (recipe: TMeshGradientRecipe): TMeshGradientRecipe => ({
   ...recipe,
@@ -132,7 +135,7 @@ export const normalizeMeshRecipe = (recipe: TMeshGradientRecipe): TMeshGradientR
   renderer: isMeshGradientRenderer(recipe.renderer) ? recipe.renderer : DEFAULT_MESH_RENDERER,
   seed: Number.isFinite(recipe.seed) ? recipe.seed : 1,
   colors: recipe.colors?.length ? recipe.colors : [...DEFAULT_MESH_COLORS],
-  angle: clampFinite(recipe.angle, DEFAULT_ANGLE, 0, 359),
+  angle: normalizeSignedAngle(getFinite(recipe.angle, DEFAULT_ANGLE)),
   softness: clampFinite(recipe.softness, 72, 0, 100),
   warp: clampFinite(recipe.warp, 55, 0, 100),
   scale: clampFinite(recipe.scale, 55, 0, 100),
@@ -218,8 +221,9 @@ const formatColorStops = (colors: string[], stops: number[]): string => {
  */
 export const composeLinearGradientBackground = (recipe: TGradientRecipe): string => {
   if (recipe.renderer !== GRADIENT_RENDERER.LINEAR) return ''
+  const angle = getRecipeAngle(recipe)
 
-  return `linear-gradient(${recipe.angle}deg, ${formatColorStops(
+  return `linear-gradient(${angle}deg, ${formatColorStops(
     recipe.colors,
     normalizeLinearGradientStops(recipe.colors.length, recipe.spread, recipe.stops),
   )})`
