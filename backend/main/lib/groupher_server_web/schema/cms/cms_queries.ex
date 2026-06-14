@@ -18,6 +18,13 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(fn _, _, _ -> {:ok, ThemePreset.options()} end)
     end
 
+    @desc "community docs side tree"
+    field :doc_tree, :doc_tree do
+      arg(:community, non_null(:string))
+
+      resolve(&R.CMS.doc_tree/3)
+    end
+
     @desc "spec community info"
     field :community, :community do
       # arg(:id, non_null(:id))

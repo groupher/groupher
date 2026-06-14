@@ -54,6 +54,52 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Dashboard.select_theme_preset(community, args)
   end
 
+  def doc_tree(_root, %{community: community}, _info) do
+    with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
+      CMS.DocTree.read(community)
+    end
+  end
+
+  def create_doc_tree_group(_root, %{community: community, input: input} = args, _info) do
+    CMS.DocTree.create_group(community, Map.put(input, :base_revision, args[:base_revision]))
+  end
+
+  def create_doc_tree_page(
+        _root,
+        %{community: community, input: input} = args,
+        %{context: %{cur_user: user}}
+      ) do
+    CMS.DocTree.create_page(community, Map.put(input, :base_revision, args[:base_revision]), user)
+  end
+
+  def create_doc_tree_link(_root, %{community: community, input: input} = args, _info) do
+    CMS.DocTree.create_link(community, Map.put(input, :base_revision, args[:base_revision]))
+  end
+
+  def update_doc_tree_node(
+        _root,
+        %{community: community, id: id, patch: patch} = args,
+        _info
+      ) do
+    CMS.DocTree.update_node(community, id, Map.put(patch, :base_revision, args[:base_revision]))
+  end
+
+  def delete_doc_tree_node(_root, %{community: community, id: id} = args, _info) do
+    CMS.DocTree.delete_node(community, id, %{base_revision: args[:base_revision]})
+  end
+
+  def duplicate_doc_tree_node(_root, %{community: community, id: id} = args, _info) do
+    CMS.DocTree.duplicate_node(community, id, %{base_revision: args[:base_revision]})
+  end
+
+  def move_doc_tree_node(_root, %{community: community, id: id} = args, _info) do
+    CMS.DocTree.move_node(community, id, %{
+      base_revision: args[:base_revision],
+      target_parent_id: args[:target_parent_id],
+      target_index: args.target_index
+    })
+  end
+
   def open_graph_info(_root, %{url: url}, _info), do: OgInfo.get(url)
 
   def delete_community(_root, %{id: id}, _info), do: Community |> ORM.find_delete!(id)

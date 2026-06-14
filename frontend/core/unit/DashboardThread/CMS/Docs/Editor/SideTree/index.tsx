@@ -80,7 +80,7 @@ const SideTree: FC = () => {
         )}
       </SideTreeDndContext>
 
-      <GroupAdder onAddGroup={addGroup} />
+      <GroupAdder hasGroups={groups.length > 0} onAddGroup={addGroup} />
     </aside>
   )
 }

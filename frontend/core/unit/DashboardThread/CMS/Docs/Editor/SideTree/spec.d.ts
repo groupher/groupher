@@ -15,6 +15,7 @@ export type TSideTreeGroup = {
   id: string
   type: typeof SIDE_TREE_NODE_TYPE.GROUP
   title: string
+  slug?: string
   icon?: TNodeStyleValue
   hidden?: boolean
   expanded?: boolean
@@ -25,6 +26,7 @@ export type TSideTreePage = {
   id: string
   type: typeof SIDE_TREE_NODE_TYPE.PAGE
   title?: string
+  slug?: string
   docId?: string
   path?: string
   href?: string
@@ -37,6 +39,7 @@ export type TSideTreeLink = {
   id: string
   type: typeof SIDE_TREE_NODE_TYPE.LINK
   title: string
+  slug?: string
   href: string
   icon?: TNodeStyleValue
   badge?: string

@@ -4,11 +4,12 @@ import PlusSVG from '~/icons/Plus'
 import useSalon from './salon/group_adder'
 
 type TProps = {
+  hasGroups: boolean
   onAddGroup: () => void
 }
 
-const GroupAdder = ({ onAddGroup }: TProps) => {
-  const s = useSalon()
+const GroupAdder = ({ hasGroups, onAddGroup }: TProps) => {
+  const s = useSalon(hasGroups)
   const { t } = useTrans()
 
   return (

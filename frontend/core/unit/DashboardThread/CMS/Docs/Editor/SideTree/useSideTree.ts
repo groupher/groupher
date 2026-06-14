@@ -1,19 +1,19 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
+import useGraphQLClient from '~/hooks/useGraphQLClient'
+import useQuery from '~/hooks/useQuery'
 import useTrans from '~/hooks/useTrans'
+import { slugify } from '~/lib/slug'
+import { toast } from '~/signal'
+import useCommunity from '~/stores/community/hooks'
 
+import S from '../../../../schema'
 import {
-  DEMO_SIDE_TREE_GROUPS,
   SIDE_TREE_NODE_MENU_ACTION,
   SIDE_TREE_NODE_TYPE,
   UNTITLED_TITLE_I18N_KEY,
 } from './constant'
-import {
-  cloneDemoGroups,
-  createSideTreeChild,
-  createSideTreeGroup,
-  duplicateSideTreeChild,
-} from './helper'
+import { createSideTreeChild, createSideTreeGroup, duplicateSideTreeChild } from './helper'
 import type {
   TEditingTarget,
   TSideTreeChild,
@@ -40,17 +40,297 @@ type TRet = {
   reorderGroups: (groups: readonly TSideTreeGroup[]) => void
 }
 
+type TDocTreeNodeDTO = {
+  id: string
+  parentId?: string | null
+  docId?: string | null
+  type: TSideTreeGroup['type'] | TSideTreeChild['type']
+  title?: string | null
+  slug?: string | null
+  index?: number | null
+  href?: string | null
+  icon?: TSideTreeChild['icon'] | null
+  badge?: string | null
+  hidden?: boolean | null
+  expanded?: boolean | null
+  children?: TDocTreeNodeDTO[] | null
+}
+
+type TDocTreeMutationPayload = {
+  revision: number
+  conflict?: boolean | null
+  node?: TDocTreeNodeDTO | null
+  affectedNodes?: TDocTreeNodeDTO[] | null
+}
+
+const formatMutationError = (err: unknown): string => {
+  const graphQLErrors = (err as { graphQLErrors?: Array<{ message?: unknown }> })?.graphQLErrors
+
+  if (Array.isArray(graphQLErrors) && graphQLErrors.length > 0) {
+    return graphQLErrors
+      .map((error) => {
+        const { message } = error
+
+        if (Array.isArray(message)) {
+          return message
+            .map((item) => {
+              if (typeof item === 'string') return item
+              if (item && typeof item === 'object' && 'message' in item) {
+                const key = 'key' in item ? `${item.key}: ` : ''
+                return `${key}${item.message}`
+              }
+              return JSON.stringify(item)
+            })
+            .join('; ')
+        }
+
+        if (typeof message === 'string') return message
+        return JSON.stringify(message)
+      })
+      .join('; ')
+  }
+
+  return err instanceof Error ? err.message : String(err)
+}
+
+const toInputIcon = (icon: TSideTreeChild['icon']): string | undefined =>
+  icon ? JSON.stringify(icon) : undefined
+
+const mapNode = (node: TDocTreeNodeDTO): TSideTreeChild => {
+  if (node.type === SIDE_TREE_NODE_TYPE.LINK) {
+    return {
+      id: node.id,
+      type: SIDE_TREE_NODE_TYPE.LINK,
+      title: node.title || '',
+      slug: node.slug || undefined,
+      href: node.href || '',
+      icon: node.icon || undefined,
+      badge: node.badge || undefined,
+      hidden: node.hidden || undefined,
+    }
+  }
+
+  return {
+    id: node.id,
+    type: SIDE_TREE_NODE_TYPE.PAGE,
+    title: node.title || undefined,
+    slug: node.slug || undefined,
+    docId: node.docId || undefined,
+    path: node.slug || undefined,
+    href: undefined,
+    icon: node.icon || undefined,
+    badge: node.badge || undefined,
+    hidden: node.hidden || undefined,
+  }
+}
+
+const mapGroup = (node: TDocTreeNodeDTO): TSideTreeGroup => ({
+  id: node.id,
+  type: SIDE_TREE_NODE_TYPE.GROUP,
+  title: node.title || '',
+  slug: node.slug || undefined,
+  icon: node.icon || undefined,
+  hidden: node.hidden || undefined,
+  expanded: node.expanded ?? true,
+  children: (node.children || []).map(mapNode),
+})
+
+const isDraftId = (id: string): boolean =>
+  id.startsWith(`${SIDE_TREE_NODE_TYPE.GROUP}-`) ||
+  id.startsWith(`${SIDE_TREE_NODE_TYPE.PAGE}-`) ||
+  id.startsWith(`${SIDE_TREE_NODE_TYPE.LINK}-`)
+
+const removeDraftTarget = (
+  groups: readonly TSideTreeGroup[],
+  target: TEditingTarget,
+): TSideTreeGroup[] | null => {
+  if (!target) return null
+
+  if (target.type === SIDE_TREE_NODE_TYPE.GROUP && isDraftId(target.groupId)) {
+    return groups.filter((group) => group.id !== target.groupId)
+  }
+
+  if ('childId' in target && isDraftId(target.childId)) {
+    return groups.map((group) =>
+      group.id === target.groupId
+        ? { ...group, children: group.children.filter((child) => child.id !== target.childId) }
+        : group,
+    )
+  }
+
+  return null
+}
+
+const replaceGroupId = (
+  groups: readonly TSideTreeGroup[],
+  localId: string,
+  remote: TSideTreeGroup,
+): TSideTreeGroup[] => groups.map((group) => (group.id === localId ? remote : group))
+
+const replaceChildId = (
+  groups: readonly TSideTreeGroup[],
+  groupId: string,
+  localId: string,
+  remote: TSideTreeChild,
+): TSideTreeGroup[] =>
+  groups.map((group) =>
+    group.id === groupId
+      ? {
+          ...group,
+          children: group.children.map((child) => (child.id === localId ? remote : child)),
+        }
+      : group,
+  )
+
+const findGroupIndex = (groups: readonly TSideTreeGroup[], groupId: string): number =>
+  groups.findIndex((group) => group.id === groupId)
+
+const findChildIndex = (
+  groups: readonly TSideTreeGroup[],
+  groupId: string,
+  childId: string,
+): number => {
+  const group = groups.find((item) => item.id === groupId)
+  if (!group) return -1
+  return group.children.findIndex((child) => child.id === childId)
+}
+
+const patchNode = (groups: readonly TSideTreeGroup[], node: TDocTreeNodeDTO): TSideTreeGroup[] => {
+  if (node.type === SIDE_TREE_NODE_TYPE.GROUP) {
+    return groups.map((group) => (group.id === node.id ? { ...group, ...mapGroup(node) } : group))
+  }
+
+  const child = mapNode(node)
+
+  return groups.map((group) => ({
+    ...group,
+    children: group.children.map((item) => (item.id === child.id ? child : item)),
+  }))
+}
+
+const findMovedNode = (
+  prevGroups: readonly TSideTreeGroup[],
+  nextGroups: readonly TSideTreeGroup[],
+): { id: string; targetParentId: string | null; targetIndex: number } | null => {
+  const prevPositions = new Map<string, { parentId: string | null; index: number }>()
+
+  prevGroups.forEach((group, index) => {
+    prevPositions.set(group.id, { parentId: null, index })
+    group.children.forEach((child, childIndex) => {
+      prevPositions.set(child.id, { parentId: group.id, index: childIndex })
+    })
+  })
+
+  for (const [index, group] of nextGroups.entries()) {
+    const prev = prevPositions.get(group.id)
+    if (prev && (prev.parentId !== null || prev.index !== index)) {
+      return { id: group.id, targetParentId: null, targetIndex: index }
+    }
+
+    for (const [childIndex, child] of group.children.entries()) {
+      const prevChild = prevPositions.get(child.id)
+      if (prevChild && (prevChild.parentId !== group.id || prevChild.index !== childIndex)) {
+        return { id: child.id, targetParentId: group.id, targetIndex: childIndex }
+      }
+    }
+  }
+
+  return null
+}
+
 export default function useSideTree(): TRet {
   const { t } = useTrans()
-  const [groups, setGroups] = useState<TSideTreeGroup[]>(cloneDemoGroups)
-  const [activeId, setActiveId] = useState<string | null>(
-    DEMO_SIDE_TREE_GROUPS[0]?.children[0]?.id ?? null,
+  const { slug: community } = useCommunity()
+  const { mutate } = useGraphQLClient()
+  const { data, reload } = useQuery<{ docTree?: { revision: number; groups: TDocTreeNodeDTO[] } }>(
+    S.docTree,
+    { community },
   )
+  const [groups, setGroups] = useState<TSideTreeGroup[]>([])
+  const groupsRef = useRef<TSideTreeGroup[]>([])
+  const revisionRef = useRef<number | null>(null)
+  const [activeId, setActiveId] = useState<string | null>(null)
   const [editingTarget, setEditingTarget] = useState<TEditingTarget>(null)
 
-  const reorderGroups = useCallback((nextGroups: readonly TSideTreeGroup[]): void => {
-    setGroups([...nextGroups])
+  useEffect(() => {
+    if (!data?.docTree) return
+
+    const nextGroups = data.docTree.groups.map(mapGroup)
+    revisionRef.current = data.docTree.revision
+    groupsRef.current = nextGroups
+    setGroups(nextGroups)
+    setActiveId(nextGroups[0]?.children[0]?.id ?? null)
+  }, [data])
+
+  const commitGroups = useCallback((nextGroups: TSideTreeGroup[]): void => {
+    groupsRef.current = nextGroups
+    setGroups(nextGroups)
   }, [])
+
+  const handlePayload = useCallback(
+    (payload?: TDocTreeMutationPayload | null): boolean => {
+      if (!payload) return false
+
+      if (payload.conflict) {
+        reload()
+        toast('目录树已更新，请重试', 'error')
+        return false
+      }
+
+      revisionRef.current = payload.revision
+      return true
+    },
+    [reload],
+  )
+
+  const persist = useCallback(
+    async (
+      schema,
+      variables: Record<string, unknown>,
+      pickPayload: (data: any) => TDocTreeMutationPayload | null | undefined,
+    ): Promise<TDocTreeMutationPayload | null | undefined> => {
+      try {
+        const data = await mutate(schema, {
+          community,
+          baseRevision: revisionRef.current,
+          ...variables,
+        })
+        const payload = pickPayload(data)
+        handlePayload(payload)
+        return payload
+      } catch (err) {
+        console.error('## doc tree mutation error: ', err)
+        toast(formatMutationError(err), 'error')
+        reload()
+        return null
+      }
+    },
+    [community, handlePayload, mutate, reload],
+  )
+
+  const reorderGroups = useCallback(
+    (nextGroups: readonly TSideTreeGroup[]): void => {
+      const prevGroups = groupsRef.current
+      const moved = findMovedNode(prevGroups, nextGroups)
+      const localGroups = [...nextGroups]
+
+      commitGroups(localGroups)
+
+      if (!moved) return
+      if (isDraftId(moved.id) || (moved.targetParentId && isDraftId(moved.targetParentId))) return
+
+      persist(
+        S.moveDocTreeNode,
+        {
+          id: moved.id,
+          targetParentId: moved.targetParentId,
+          targetIndex: moved.targetIndex,
+        },
+        (data) => data?.moveDocTreeNode,
+      )
+    },
+    [commitGroups, persist],
+  )
 
   /**
    * Patch group metadata while preserving child order.
@@ -58,11 +338,14 @@ export default function useSideTree(): TRet {
    * @example
    * updateGroup('group-getting-started', { title: 'Guides' })
    */
-  const updateGroup = useCallback((groupId: string, patch: Partial<TSideTreeGroup>): void => {
-    setGroups((items) =>
-      items.map((group) => (group.id === groupId ? { ...group, ...patch } : group)),
-    )
-  }, [])
+  const updateGroup = useCallback(
+    (groupId: string, patch: Partial<TSideTreeGroup>): void => {
+      commitGroups(
+        groupsRef.current.map((group) => (group.id === groupId ? { ...group, ...patch } : group)),
+      )
+    },
+    [commitGroups],
+  )
 
   /**
    * Append a new empty group and start editing its title.
@@ -72,9 +355,9 @@ export default function useSideTree(): TRet {
    */
   const addGroup = useCallback((): void => {
     const group = createSideTreeGroup(t(UNTITLED_TITLE_I18N_KEY))
-    setGroups((items) => [...items, group])
+    commitGroups([...groupsRef.current, group])
     setEditingTarget({ type: SIDE_TREE_NODE_TYPE.GROUP, groupId: group.id })
-  }, [t])
+  }, [commitGroups, t])
 
   /**
    * Append a new page/link into a group, expand the group, and focus the new child.
@@ -86,17 +369,16 @@ export default function useSideTree(): TRet {
     (groupId: string, action: TSideTreeChildMenuAction): void => {
       const child = createSideTreeChild(action, t(UNTITLED_TITLE_I18N_KEY))
 
-      setGroups((items) =>
-        items.map((group) =>
-          group.id === groupId
-            ? { ...group, expanded: true, children: [...group.children, child] }
-            : group,
-        ),
+      const nextGroups = groupsRef.current.map((group) =>
+        group.id === groupId
+          ? { ...group, expanded: true, children: [...group.children, child] }
+          : group,
       )
+      commitGroups(nextGroups)
       setActiveId(child.id)
       setEditingTarget({ type: child.type, groupId, childId: child.id })
     },
-    [t],
+    [commitGroups, t],
   )
 
   /**
@@ -107,15 +389,19 @@ export default function useSideTree(): TRet {
    */
   const deleteGroup = useCallback(
     (groupId: string): void => {
-      const group = groups.find((item) => item.id === groupId)
+      const group = groupsRef.current.find((item) => item.id === groupId)
       const activeInGroup = group?.children.some((child) => child.id === activeId) ?? false
       const editingInGroup = editingTarget?.groupId === groupId
 
-      setGroups((items) => items.filter((item) => item.id !== groupId))
+      commitGroups(groupsRef.current.filter((item) => item.id !== groupId))
       if (activeInGroup) setActiveId(null)
       if (editingInGroup) setEditingTarget(null)
+
+      if (isDraftId(groupId)) return
+
+      persist(S.deleteDocTreeNode, { id: groupId }, (data) => data?.deleteDocTreeNode)
     },
-    [activeId, editingTarget, groups],
+    [activeId, commitGroups, editingTarget, persist],
   )
 
   /**
@@ -124,13 +410,27 @@ export default function useSideTree(): TRet {
    * @example
    * toggleGroup('group-getting-started')
    */
-  const toggleGroup = useCallback((groupId: string): void => {
-    setGroups((items) =>
-      items.map((group) =>
-        group.id === groupId ? { ...group, expanded: group.expanded === false } : group,
-      ),
-    )
-  }, [])
+  const toggleGroup = useCallback(
+    (groupId: string): void => {
+      const group = groupsRef.current.find((item) => item.id === groupId)
+      const expanded = group?.expanded === false
+
+      commitGroups(
+        groupsRef.current.map((group) =>
+          group.id === groupId ? { ...group, expanded: group.expanded === false } : group,
+        ),
+      )
+
+      if (isDraftId(groupId)) return
+
+      persist(
+        S.updateDocTreeNode,
+        { id: groupId, patch: { expanded } },
+        (data) => data?.updateDocTreeNode,
+      )
+    },
+    [commitGroups, persist],
+  )
 
   /**
    * Commit a group title edit and leave edit mode.
@@ -142,8 +442,55 @@ export default function useSideTree(): TRet {
     (groupId: string, title: string): void => {
       updateGroup(groupId, { title })
       setEditingTarget(null)
+
+      if (isDraftId(groupId)) {
+        const index = findGroupIndex(groupsRef.current, groupId)
+        if (index === -1) return
+
+        slugify(title)
+          .then((slug) =>
+            persist(
+              S.createDocTreeGroup,
+              {
+                input: {
+                  title,
+                  slug,
+                  index,
+                },
+              },
+              (data) => data?.createDocTreeGroup,
+            ),
+          )
+          .then((payload) => {
+            if (!payload?.node || payload.conflict) return
+            commitGroups(replaceGroupId(groupsRef.current, groupId, mapGroup(payload.node)))
+          })
+          .catch((err) => {
+            console.error('## doc tree create group error: ', err)
+            reload()
+          })
+        return
+      }
+
+      slugify(title)
+        .then((slug) =>
+          persist(
+            S.updateDocTreeNode,
+            { id: groupId, patch: { title, slug } },
+            (data) => data?.updateDocTreeNode,
+          ),
+        )
+        .then((payload) => {
+          if (payload?.node && !payload.conflict) {
+            commitGroups(patchNode(groupsRef.current, payload.node))
+          }
+        })
+        .catch((err) => {
+          console.error('## doc tree rename group error: ', err)
+          reload()
+        })
     },
-    [updateGroup],
+    [commitGroups, persist, reload, updateGroup],
   )
 
   /**
@@ -152,21 +499,89 @@ export default function useSideTree(): TRet {
    * @example
    * renameChild('group-getting-started', 'page-welcome', 'Welcome')
    */
-  const renameChild = useCallback((groupId: string, childId: string, title: string): void => {
-    setGroups((items) =>
-      items.map((group) =>
-        group.id === groupId
-          ? {
-              ...group,
-              children: group.children.map((child) =>
-                child.id === childId ? { ...child, title } : child,
-              ),
-            }
-          : group,
-      ),
-    )
-    setEditingTarget(null)
-  }, [])
+  const renameChild = useCallback(
+    (groupId: string, childId: string, title: string): void => {
+      commitGroups(
+        groupsRef.current.map((group) =>
+          group.id === groupId
+            ? {
+                ...group,
+                children: group.children.map((child) =>
+                  child.id === childId ? { ...child, title } : child,
+                ),
+              }
+            : group,
+        ),
+      )
+      setEditingTarget(null)
+
+      if (isDraftId(childId)) {
+        if (isDraftId(groupId)) {
+          toast('请先确认分组名称', 'error')
+          return
+        }
+
+        const group = groupsRef.current.find((item) => item.id === groupId)
+        const child = group?.children.find((item) => item.id === childId)
+        const index = findChildIndex(groupsRef.current, groupId, childId)
+        if (!child || index === -1) return
+
+        const schema =
+          child.type === SIDE_TREE_NODE_TYPE.LINK ? S.createDocTreeLink : S.createDocTreePage
+
+        slugify(title)
+          .then((slug) =>
+            persist(
+              schema,
+              {
+                input: {
+                  parentId: groupId,
+                  title,
+                  slug,
+                  index,
+                  href: child.type === SIDE_TREE_NODE_TYPE.LINK ? child.href : undefined,
+                  icon: toInputIcon(child.icon),
+                },
+              },
+              (data) =>
+                child.type === SIDE_TREE_NODE_TYPE.LINK
+                  ? data?.createDocTreeLink
+                  : data?.createDocTreePage,
+            ),
+          )
+          .then((payload) => {
+            if (!payload?.node || payload.conflict) return
+            const remote = mapNode(payload.node)
+            commitGroups(replaceChildId(groupsRef.current, groupId, childId, remote))
+            setActiveId((current) => (current === childId ? remote.id : current))
+          })
+          .catch((err) => {
+            console.error('## doc tree create child error: ', err)
+            reload()
+          })
+        return
+      }
+
+      slugify(title)
+        .then((slug) =>
+          persist(
+            S.updateDocTreeNode,
+            { id: childId, patch: { title, slug } },
+            (data) => data?.updateDocTreeNode,
+          ),
+        )
+        .then((payload) => {
+          if (payload?.node && !payload.conflict) {
+            commitGroups(patchNode(groupsRef.current, payload.node))
+          }
+        })
+        .catch((err) => {
+          console.error('## doc tree rename child error: ', err)
+          reload()
+        })
+    },
+    [commitGroups, persist, reload],
+  )
 
   /**
    * Cancel any active inline title editor.
@@ -175,8 +590,30 @@ export default function useSideTree(): TRet {
    * cancelEdit()
    */
   const cancelEdit = useCallback((): void => {
+    if (editingTarget) {
+      const nextGroups = removeDraftTarget(groupsRef.current, editingTarget)
+      const group =
+        editingTarget.type === SIDE_TREE_NODE_TYPE.GROUP
+          ? groupsRef.current.find((item) => item.id === editingTarget.groupId)
+          : null
+
+      if (nextGroups) {
+        commitGroups(nextGroups)
+
+        if ('childId' in editingTarget && activeId === editingTarget.childId) {
+          setActiveId(null)
+        }
+
+        if (editingTarget.type === SIDE_TREE_NODE_TYPE.GROUP) {
+          if (group?.children.some((child) => child.id === activeId)) {
+            setActiveId(null)
+          }
+        }
+      }
+    }
+
     setEditingTarget(null)
-  }, [])
+  }, [activeId, commitGroups, editingTarget])
 
   /**
    * Update the icon/color/emoji style for a page or quick link.
@@ -186,8 +623,8 @@ export default function useSideTree(): TRet {
    */
   const updateChildStyle = useCallback(
     (groupId: string, childId: string, icon: TSideTreeChild['icon']): void => {
-      setGroups((items) =>
-        items.map((group) =>
+      commitGroups(
+        groupsRef.current.map((group) =>
           group.id === groupId
             ? {
                 ...group,
@@ -198,8 +635,16 @@ export default function useSideTree(): TRet {
             : group,
         ),
       )
+
+      if (isDraftId(childId)) return
+
+      persist(
+        S.updateDocTreeNode,
+        { id: childId, patch: { icon: toInputIcon(icon) } },
+        (data) => data?.updateDocTreeNode,
+      )
     },
-    [],
+    [commitGroups, persist],
   )
 
   /**
@@ -212,15 +657,17 @@ export default function useSideTree(): TRet {
   const handleChildAction = useCallback(
     (groupId: string, childId: string, action: TSideTreeNodeMenuAction): void => {
       if (action === SIDE_TREE_NODE_MENU_ACTION.RENAME) {
-        const group = groups.find((item) => item.id === groupId)
+        const group = groupsRef.current.find((item) => item.id === groupId)
         const child = group?.children.find((item) => item.id === childId)
         if (!child) return
         setEditingTarget({ type: child.type, groupId, childId })
         return
       }
 
-      setGroups((items) =>
-        items.map((group) => {
+      let duplicatedId: string | null = null
+
+      commitGroups(
+        groupsRef.current.map((group) => {
           if (group.id !== groupId) return group
 
           if (action === SIDE_TREE_NODE_MENU_ACTION.DELETE) {
@@ -235,6 +682,7 @@ export default function useSideTree(): TRet {
           if (childIndex === -1 || !child) return group
 
           const duplicated = duplicateSideTreeChild(child, t(UNTITLED_TITLE_I18N_KEY))
+          duplicatedId = duplicated.id
           const children = [...group.children]
           children.splice(childIndex + 1, 0, duplicated)
 
@@ -252,9 +700,26 @@ export default function useSideTree(): TRet {
         ) {
           setEditingTarget(null)
         }
+
+        if (isDraftId(childId)) return
+
+        persist(S.deleteDocTreeNode, { id: childId }, (data) => data?.deleteDocTreeNode)
+        return
+      }
+
+      if (action === SIDE_TREE_NODE_MENU_ACTION.DUPLICATE && duplicatedId) {
+        if (isDraftId(childId)) return
+
+        persist(S.duplicateDocTreeNode, { id: childId }, (data) => data?.duplicateDocTreeNode).then(
+          (payload) => {
+            if (!payload?.node || payload.conflict || !duplicatedId) return
+            const remote = mapNode(payload.node)
+            commitGroups(replaceChildId(groupsRef.current, groupId, duplicatedId, remote))
+          },
+        )
       }
     },
-    [activeId, editingTarget, groups, t],
+    [activeId, commitGroups, editingTarget, persist, t],
   )
 
   return {

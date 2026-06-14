@@ -393,6 +393,119 @@ const updateDashboardDocFaq = gql`
   }
 `
 
+const docTreeNodeFields = `
+  id
+  parentId
+  docId
+  type
+  title
+  slug
+  index
+  href
+  icon
+  badge
+  hidden
+  expanded
+`
+
+const docTree = gql`
+  query docTree($community: String!) {
+    docTree(community: $community) {
+      revision
+      groups {
+        ${docTreeNodeFields}
+        children {
+          ${docTreeNodeFields}
+        }
+      }
+    }
+  }
+`
+
+const docTreeMutationPayload = `
+  revision
+  conflict
+  node {
+    ${docTreeNodeFields}
+  }
+  affectedNodes {
+    ${docTreeNodeFields}
+  }
+`
+
+const createDocTreeGroup = gql`
+  mutation ($community: String!, $baseRevision: Int, $input: DocTreeNodeInput!) {
+    createDocTreeGroup(community: $community, baseRevision: $baseRevision, input: $input) {
+      ${docTreeMutationPayload}
+    }
+  }
+`
+
+const createDocTreePage = gql`
+  mutation ($community: String!, $baseRevision: Int, $input: DocTreeNodeInput!) {
+    createDocTreePage(community: $community, baseRevision: $baseRevision, input: $input) {
+      ${docTreeMutationPayload}
+    }
+  }
+`
+
+const createDocTreeLink = gql`
+  mutation ($community: String!, $baseRevision: Int, $input: DocTreeNodeInput!) {
+    createDocTreeLink(community: $community, baseRevision: $baseRevision, input: $input) {
+      ${docTreeMutationPayload}
+    }
+  }
+`
+
+const updateDocTreeNode = gql`
+  mutation (
+    $community: String!
+    $id: ID!
+    $baseRevision: Int
+    $patch: DocTreeNodePatchInput!
+  ) {
+    updateDocTreeNode(community: $community, id: $id, baseRevision: $baseRevision, patch: $patch) {
+      ${docTreeMutationPayload}
+    }
+  }
+`
+
+const deleteDocTreeNode = gql`
+  mutation ($community: String!, $id: ID!, $baseRevision: Int) {
+    deleteDocTreeNode(community: $community, id: $id, baseRevision: $baseRevision) {
+      ${docTreeMutationPayload}
+    }
+  }
+`
+
+const duplicateDocTreeNode = gql`
+  mutation ($community: String!, $id: ID!, $baseRevision: Int) {
+    duplicateDocTreeNode(community: $community, id: $id, baseRevision: $baseRevision) {
+      ${docTreeMutationPayload}
+    }
+  }
+`
+
+const moveDocTreeNode = gql`
+  mutation (
+    $community: String!
+    $id: ID!
+    $baseRevision: Int
+    $targetParentId: ID
+    $targetIndex: Int!
+  ) {
+    moveDocTreeNode(
+      community: $community
+      id: $id
+      baseRevision: $baseRevision
+      targetParentId: $targetParentId
+      targetIndex: $targetIndex
+    ) {
+      ${docTreeMutationPayload}
+    }
+  }
+`
+
 const updateModerators = gql`
   query community($slug: String!, $incViews: Boolean) {
     community(slug: $slug, incViews: $incViews) {
@@ -541,6 +654,14 @@ const schema = {
   pagedPosts,
   pagedChangelogs,
   updateDashboardDocFaq,
+  docTree,
+  createDocTreeGroup,
+  createDocTreePage,
+  createDocTreeLink,
+  updateDocTreeNode,
+  deleteDocTreeNode,
+  duplicateDocTreeNode,
+  moveDocTreeNode,
   updateModerators,
   searchUsers,
   addModerator,
