@@ -1,6 +1,7 @@
 import type { TFeedbackBucket } from './spec'
 
 export const DEFAULT_FEEDBACK_VALUE = 72
+export const FEEDBACK_SPECTRUM_LABEL = 'Rate this doc'
 
 export const DEFAULT_DISTRIBUTION: TFeedbackBucket[] = [
   { id: 'very-unhappy', score: 12, count: 3 },

@@ -1,0 +1,23 @@
+.paperSpectrum {
+  overflow: hidden;
+  background: linear-gradient(90deg, #ebb3aa 0%, #e4dc9b 48%, #a5dcaf 100%);
+}
+
+.paperSpectrum::before,
+.paperSpectrum::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.paperSpectrum::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.32), transparent 60%);
+  mix-blend-mode: screen;
+}
+
+.paperSpectrum::after {
+  opacity: 0.12;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+}

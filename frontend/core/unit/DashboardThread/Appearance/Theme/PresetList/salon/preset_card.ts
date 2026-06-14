@@ -34,7 +34,7 @@ export default function useSalon({
       shadow('sm'),
       bg('card'),
       br('divider'),
-      selectable('box', { active, base: false, disabled }),
+      selectable('box', { active, border: false, disabled }),
       active
         ? cn(
             isForkMode ? 'translate-y-0' : '-translate-y-4',
