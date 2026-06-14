@@ -40,6 +40,7 @@ defmodule Helper.ContentPipeline do
         markdown: Map.get(converted, :markdown, ""),
         markdown_toc: Map.get(converted, :markdown_toc, %{}),
         html: Map.get(converted, :html, ""),
+        xml: Map.get(converted, :xml, ""),
         rss: Map.get(converted, :rss, ""),
         plain_text: plain_text,
         digest: plain_text |> String.slice(0, @digest_length),

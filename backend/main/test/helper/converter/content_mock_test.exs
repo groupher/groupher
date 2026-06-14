@@ -19,6 +19,7 @@ defmodule GroupherServer.Test.Helper.Converter.ContentMock do
       assert is_binary(result.markdown)
       assert is_map(result.markdown_toc)
       assert is_binary(result.html)
+      assert is_binary(result.xml)
       assert is_binary(result.rss)
       assert is_binary(result.plain_text)
     end

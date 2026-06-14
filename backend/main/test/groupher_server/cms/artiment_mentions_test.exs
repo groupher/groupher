@@ -91,6 +91,65 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       assert mention.occurrences |> List.first() |> Map.get("display") == mentioned_user.login
     end
 
+    test "syncs current editor ast user mentions and links",
+         ~m(community post_attrs mentioned_user user)a do
+      body =
+        plate_body([
+          %{
+            "type" => "h1",
+            "id" => "title-1",
+            "_id" => "title-1",
+            "children" => [%{"text" => "Plate Editor"}]
+          },
+          %{
+            "type" => "p",
+            "id" => "mention-block",
+            "_id" => "mention-block",
+            "children" => [
+              %{"text" => "hello "},
+              mention(%{
+                "value" => mentioned_user.login,
+                "id" => "mention-1",
+                "children" => [%{"text" => ""}]
+              }),
+              %{"text" => " see https://example.com/doc"}
+            ]
+          },
+          %{
+            "children" => [%{"text" => "todo item"}],
+            "type" => "p",
+            "id" => "todo-1",
+            "_id" => "todo-1",
+            "indent" => 1,
+            "checked" => false,
+            "listStyleType" => "todo"
+          },
+          %{
+            "type" => "toggle",
+            "id" => "toggle-1",
+            "_id" => "toggle-1",
+            "children" => [%{"text" => "Toggle blocks can hide content."}]
+          }
+        ])
+
+      {:ok, post} =
+        CMS.Articles.create(community, :post, Map.merge(post_attrs, %{body: body}), user)
+
+      {:ok, {2, nil}} = ArtimentMentions.sync(post)
+
+      {:ok, result} = ArtimentMentions.mentions(:post, post.id, %{page: 1, size: 10})
+
+      user_mention = Enum.find(result.entries, &(&1.mentioned_type == :user))
+      assert user_mention.mentioned_id == mentioned_user.id
+      assert user_mention.mention_case == :inline_mention
+      assert user_mention.occurrences |> List.first() |> Map.get("block_id") == "mention-block"
+      assert user_mention.occurrences |> List.first() |> Map.get("path") == [1, 1]
+
+      external = Enum.find(result.entries, &(&1.mentioned_type == :url))
+      assert external.mentioned_url == "https://example.com/doc"
+      assert external.mention_case == :link
+    end
+
     test "supports cross article mentions among post, blog, and changelog",
          ~m(post blog changelog)a do
       blog_body =
@@ -312,6 +371,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       external_changeset = ArtimentMention.changeset(%ArtimentMention{}, external_attrs)
 
       refute internal_changeset.valid?
+
       assert %{mention_case: ["must be inline_mention"], mentioned_url_hash: ["must be blank"]} =
                errors_on(internal_changeset)
 

@@ -54,6 +54,7 @@ defmodule GroupherServer.Test.Mutation.Articles.DocumentFlow do
         assert created["document"]["json"] == @plate_body
         assert is_binary(created["document"]["html"])
         assert is_binary(created["document"]["markdown"])
+        assert is_binary(created["document"]["xml"])
         assert is_binary(created["document"]["rss"])
         assert is_map(created["document"]["markdownToc"])
 
@@ -88,6 +89,7 @@ defmodule GroupherServer.Test.Mutation.Articles.DocumentFlow do
           markdown
           markdownToc
           html
+          xml
           rss
         }
       }
@@ -106,6 +108,7 @@ defmodule GroupherServer.Test.Mutation.Articles.DocumentFlow do
           markdown
           markdownToc
           html
+          xml
           rss
         }
       }
@@ -124,6 +127,7 @@ defmodule GroupherServer.Test.Mutation.Articles.DocumentFlow do
           markdown
           markdownToc
           html
+          xml
           rss
         }
       }
