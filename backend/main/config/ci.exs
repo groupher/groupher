@@ -28,4 +28,4 @@ config :groupher_server, :github_oauth,
   client_id: "3b4281c5e54ffd801f85",
   client_secret: "68462fdbab195251bb71662eb2bc9dd2cb083305"
 
-config :groupher_server, Helper.Converter.Content, provider: Helper.Converter.Content.Mock
+config :groupher_server, Helper.Converter.Content, provider: Helper.Converter.Content.Plate
