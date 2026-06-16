@@ -1142,12 +1142,13 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@groupher/rich-editor@file:.yalc/@groupher/rich-editor::locator=%40groupher%2Froot%40workspace%3A.":
-  version: 0.0.13
-  resolution: "@groupher/rich-editor@file:.yalc/@groupher/rich-editor#.yalc/@groupher/rich-editor::hash=93f626&locator=%40groupher%2Froot%40workspace%3A."
+"@groupher/rich-editor@npm:0.0.10":
+  version: 0.0.10
+  resolution: "@groupher/rich-editor@npm:0.0.10"
   dependencies:
     "@ariakit/react": "npm:^0.4.12"
     "@emoji-mart/data": "npm:^1.2.1"
+    "@groupher/rich-editor": "npm:^0.0.8"
     "@platejs/autoformat": "npm:^49.0.0"
     "@platejs/basic-nodes": "npm:^49.0.0"
     "@platejs/callout": "npm:^49.0.0"
@@ -1172,13 +1173,89 @@ __metadata:
     clsx: "npm:^2.1.1"
     lucide-react: "npm:^0.542.0"
     platejs: "npm:^49.2.21"
+    react: "npm:19.1.1"
+    react-dom: "npm:19.1.1"
+    tailwind-merge: "npm:^3.3.1"
+    tailwind-scrollbar-hide: "npm:^4.0.0"
+    tailwindcss: "npm:^4.1.12"
+  checksum: 10c0/2eae179db2bc80421b03f37382c562cd1610c71279d5110a6e570478d1a84083458d6a4e05a3fe8ebc3b56e33fec02868ca32cf4e4fb841bd7a647914bbcfa15
+  languageName: node
+  linkType: hard
+
+"@groupher/rich-editor@npm:^0.0.6":
+  version: 0.0.6
+  resolution: "@groupher/rich-editor@npm:0.0.6"
+  dependencies:
+    "@platejs/basic-nodes": "npm:^49.0.0"
+    "@radix-ui/react-dropdown-menu": "npm:^2.1.16"
+    "@radix-ui/react-separator": "npm:^1.1.7"
+    "@radix-ui/react-slot": "npm:^1.2.3"
+    "@radix-ui/react-toolbar": "npm:^1.1.11"
+    "@radix-ui/react-tooltip": "npm:^1.2.8"
+    "@tailwindcss/vite": "npm:^4.1.12"
+    class-variance-authority: "npm:^0.7.1"
+    clsx: "npm:^2.1.1"
+    lucide-react: "npm:^0.542.0"
+    platejs: "npm:^49.2.12"
+    react: "npm:19.1.1"
+    react-dom: "npm:19.1.1"
     tailwind-merge: "npm:^3.3.1"
     tailwind-scrollbar-hide: "npm:^4.0.0"
     tailwindcss: "npm:^4.1.12"
   peerDependencies:
-    react: ^18.2.0 || ^19.0.0
-    react-dom: ^18.2.0 || ^19.0.0
-  checksum: 10c0/1a720404439970a72045ecbd040df98779befb22fb9645e351635a71881d06944db93be79a9515091a0db4b184da0760a1aa6caedf38c15851d4c385b9892a3a
+    react: ">=16.8.0 <20.0.0"
+    react-dom: ">=16.8.0 <20.0.0"
+  checksum: 10c0/aad73edf963f47a9120c5ee149271cb3d4f5b2dfee34aa0e76ca24d4cebfdfaeaf8ffff2ebeddbe14f6a6f8a29db771906b003808388b80e22393875a46f84f2
+  languageName: node
+  linkType: hard
+
+"@groupher/rich-editor@npm:^0.0.7":
+  version: 0.0.7
+  resolution: "@groupher/rich-editor@npm:0.0.7"
+  dependencies:
+    "@groupher/rich-editor": "npm:^0.0.6"
+    "@platejs/basic-nodes": "npm:^49.0.0"
+    "@radix-ui/react-dropdown-menu": "npm:^2.1.16"
+    "@radix-ui/react-separator": "npm:^1.1.7"
+    "@radix-ui/react-slot": "npm:^1.2.3"
+    "@radix-ui/react-toolbar": "npm:^1.1.11"
+    "@radix-ui/react-tooltip": "npm:^1.2.8"
+    "@tailwindcss/vite": "npm:^4.1.12"
+    class-variance-authority: "npm:^0.7.1"
+    clsx: "npm:^2.1.1"
+    lucide-react: "npm:^0.542.0"
+    platejs: "npm:^49.2.12"
+    react: "npm:19.1.1"
+    react-dom: "npm:19.1.1"
+    tailwind-merge: "npm:^3.3.1"
+    tailwind-scrollbar-hide: "npm:^4.0.0"
+    tailwindcss: "npm:^4.1.12"
+  checksum: 10c0/e297313663c7c6591e12e74e156eb1a9c11c4a3231126009951530bf211a3b58c164498288382623123adee34c1a1f364524ebd2519915a1d2c48d5363176df8
+  languageName: node
+  linkType: hard
+
+"@groupher/rich-editor@npm:^0.0.8":
+  version: 0.0.8
+  resolution: "@groupher/rich-editor@npm:0.0.8"
+  dependencies:
+    "@groupher/rich-editor": "npm:^0.0.7"
+    "@platejs/basic-nodes": "npm:^49.0.0"
+    "@radix-ui/react-dropdown-menu": "npm:^2.1.16"
+    "@radix-ui/react-separator": "npm:^1.1.7"
+    "@radix-ui/react-slot": "npm:^1.2.3"
+    "@radix-ui/react-toolbar": "npm:^1.1.11"
+    "@radix-ui/react-tooltip": "npm:^1.2.8"
+    "@tailwindcss/vite": "npm:^4.1.12"
+    class-variance-authority: "npm:^0.7.1"
+    clsx: "npm:^2.1.1"
+    lucide-react: "npm:^0.542.0"
+    platejs: "npm:^49.2.21"
+    react: "npm:19.1.1"
+    react-dom: "npm:19.1.1"
+    tailwind-merge: "npm:^3.3.1"
+    tailwind-scrollbar-hide: "npm:^4.0.0"
+    tailwindcss: "npm:^4.1.12"
+  checksum: 10c0/4723f007f17fcddcf84c3064a1db8fe6a4f88bdc8832b2b91c04a5068399c7e4b8d99547530040d52997b76eb5dfe23ea1fc8ab5cd6645e16ff53bef84119b4e
   languageName: node
   linkType: hard
 
@@ -1197,7 +1274,7 @@ __metadata:
     "@fortawesome/react-fontawesome": "npm:^0.2.0"
     "@graphql-tools/mock": "npm:^9.1.7"
     "@graphql-tools/schema": "npm:^10.0.33"
-    "@groupher/rich-editor": "file:.yalc/@groupher/rich-editor"
+    "@groupher/rich-editor": "npm:0.0.10"
     "@groupher/tooltip": "npm:4.2.7"
     "@groupher/use-mobile-detect-hook": "npm:^2.0.2"
     "@heroicons/react": "npm:^2.2.0"
@@ -11398,7 +11475,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"platejs@npm:^49.2.21":
+"platejs@npm:^49.2.12, platejs@npm:^49.2.21":
   version: 49.2.21
   resolution: "platejs@npm:49.2.21"
   dependencies:
@@ -11826,6 +11903,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-dom@npm:19.1.1":
+  version: 19.1.1
+  resolution: "react-dom@npm:19.1.1"
+  dependencies:
+    scheduler: "npm:^0.26.0"
+  peerDependencies:
+    react: ^19.1.1
+  checksum: 10c0/8c91198510521299c56e4e8d5e3a4508b2734fb5e52f29eeac33811de64e76fe586ad32c32182e2e84e070d98df67125da346c3360013357228172dbcd20bcdd
+  languageName: node
+  linkType: hard
+
 "react-dom@npm:^19.2.5":
   version: 19.2.5
   resolution: "react-dom@npm:19.2.5"
@@ -12148,6 +12236,13 @@ __metadata:
     react: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
     react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
   checksum: 10c0/5ae8da1bc5c47d8f0a428b28a600256e2db511975573e52cb65a9b27ed1a0e5b9f7b3bee5a54fb0da93956d782c24010be434be451072f46ba5a89159d2b3944
+  languageName: node
+  linkType: hard
+
+"react@npm:19.1.1":
+  version: 19.1.1
+  resolution: "react@npm:19.1.1"
+  checksum: 10c0/8c9769a2dfd02e603af6445058325e6c8a24b47b185d0e461f66a6454765ddcaecb3f0a90184836c68bb509f3c38248359edbc42f0d07c23eb500a5c30c87b4e
   languageName: node
   linkType: hard
 
@@ -12708,6 +12803,13 @@ __metadata:
   dependencies:
     xmlchars: "npm:^2.2.0"
   checksum: 10c0/3847b839f060ef3476eb8623d099aa502ad658f5c40fd60c105ebce86d244389b0d76fcae30f4d0c728d7705ceb2f7e9b34bb54717b6a7dbedaf5dad2d9a4b74
+  languageName: node
+  linkType: hard
+
+"scheduler@npm:^0.26.0":
+  version: 0.26.0
+  resolution: "scheduler@npm:0.26.0"
+  checksum: 10c0/5b8d5bfddaae3513410eda54f2268e98a376a429931921a81b5c3a2873aab7ca4d775a8caac5498f8cbc7d0daeab947cf923dbd8e215d61671f9f4e392d34356
   languageName: node
   linkType: hard
 
