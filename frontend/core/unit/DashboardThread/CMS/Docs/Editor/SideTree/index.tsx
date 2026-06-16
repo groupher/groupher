@@ -5,7 +5,6 @@ import type { FC } from 'react'
 
 import SideTreeDndContext from './Dnd/SideTreeDndContext'
 import Group from './Group'
-import GroupAdder from './GroupAdder'
 import useSalon from './salon'
 import type { TSideTreeController } from './useSideTree'
 
@@ -21,7 +20,6 @@ const SideTree: FC<TProps> = ({ controller }) => {
     activeId,
     editingTarget,
     activate,
-    addGroup,
     addChild,
     deleteGroup,
     toggleGroup,
@@ -83,8 +81,6 @@ const SideTree: FC<TProps> = ({ controller }) => {
           </div>
         )}
       </SideTreeDndContext>
-
-      <GroupAdder hasGroups={groups.length > 0} onAddGroup={addGroup} />
     </aside>
   )
 }
