@@ -20,6 +20,8 @@ test-results/
 # Dependencies
 # =====================
 **/node_modules/
+.yalc/
+yalc.lock
 bun.lockb
 npm-debug.log
 yarn-error.log
