@@ -1,0 +1,8 @@
+.receiptDivider {
+  width: 100%;
+  height: 3px;
+  border-top-width: 1px;
+  border-top-style: dotted;
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+}

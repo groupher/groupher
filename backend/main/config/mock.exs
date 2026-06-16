@@ -34,4 +34,4 @@ config :groupher_server, GroupherServer.Repo,
 config :groupher_server, :oauth,
   oauth_trust_code: "fWrFuWs1j+TGcrok7XHkwDLiOVTGOnUR3JWF3cbcu2Tcnbj7TvSS1mMVeekvjgNQ"
 
-config :groupher_server, Helper.Converter.Content, provider: Helper.Converter.Content.Mock
+config :groupher_server, Helper.Converter.Content, provider: Helper.Converter.Content.Plate

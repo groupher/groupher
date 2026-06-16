@@ -16,6 +16,6 @@ defmodule Helper.Converter.Content do
 
   defp converter_provider do
     Application.get_env(:groupher_server, __MODULE__, [])
-    |> Keyword.get(:provider, Helper.Converter.Content.Mock)
+    |> Keyword.get(:provider, Helper.Converter.Content.Plate)
   end
 end

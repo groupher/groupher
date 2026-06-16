@@ -11,10 +11,10 @@ export type TShadowType = 'sm' | 'md' | 'lg' | 'xl' | 'card' | 'drawer' | 'modal
 export type TDimLevel = 'lg' | 'md' | 'sm'
 export type THoverPart = 'bg' | 'box' | 'icon' | 'bg-red' | 'icon-red' | 'fg' | 'fg-red'
 export type TSelectablePart = 'box' | 'badge' | 'check'
-export type TSelectableSize = 'sm' | 'md'
+export type TSelectableSize = 'xs' | 'sm' | 'md'
 export type TSelectableOptions = {
   active?: boolean
-  base?: boolean
+  border?: boolean
   disabled?: boolean
   isCircle?: boolean
   size?: TSelectableSize

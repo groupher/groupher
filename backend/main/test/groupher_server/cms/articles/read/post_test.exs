@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert post.title == post_attrs.title
       assert is_list(body_map)
 
-      assert post.document.html |> String.contains?(~s(<p>))
+      assert post.document.html |> String.contains?("<p")
 
       assert is_binary(post.digest)
       assert String.length(post.digest) <= @article_digest_length

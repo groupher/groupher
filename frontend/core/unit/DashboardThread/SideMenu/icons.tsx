@@ -63,6 +63,7 @@ export const DSB_MENU_ICONS = {
   widgets: WidgetsIcon,
   analysis: AnalysisIcon,
   layout: LayoutIcon,
+  cover: DocsIcon,
   editor: EditorIcon,
   faq: FAQIcon,
   gitSync: GitSyncIcon,

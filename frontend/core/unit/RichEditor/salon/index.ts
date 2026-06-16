@@ -6,8 +6,8 @@ export default function useSalon() {
   const { cn, fg } = useTwBelt()
 
   return {
-    wrapper: 'column-center relative w-full',
-    inner: 'w-[680px]',
-    editor: cn('min-h-96 w-full pt-2.5 pb-8 pl-2.5 pr-0', fg('title')),
+    wrapper: 'relative w-full',
+    inner: 'w-full max-w-3xl',
+    editor: cn('min-h-96 w-full debug-g', fg('title')),
   }
 }

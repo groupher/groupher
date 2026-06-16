@@ -48,7 +48,7 @@ config :groupher_server, :oauth,
 config :groupher_server, :site_favicon_adapter, Helper.TestFakes.SiteFavicon
 config :groupher_server, :open_graph_adapter, Helper.TestFakes.OpenGraph
 
-config :groupher_server, Helper.Converter.Content, provider: Helper.Converter.Content.Mock
+config :groupher_server, Helper.Converter.Content, provider: Helper.Converter.Content.Plate
 
 config :groupher_server, :plausible,
   token: "tDsEjaIBqmfVpkKByebYgrCs1Kl1V3N3prFACyFJq33eeEumg8hAFgm-3ZQamwAq"

@@ -191,7 +191,6 @@ export type TMenuOption = {
   qrLink?: string
 }
 
-export type TToastType = 'info' | 'error' | 'success'
 export type TPublishMode = TConstValues<typeof PUBLISH_MODE>
 export type TDsbLayout = TConstValues<typeof DSB_DESC_LAYOUT>
 

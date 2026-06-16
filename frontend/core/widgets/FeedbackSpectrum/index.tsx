@@ -1,14 +1,21 @@
 'use client'
 
 import { domAnimation, LazyMotion } from 'motion/react'
-import { type ChangeEvent, type CSSProperties, type FC, memo, useId, useState } from 'react'
-
-import useTrans from '~/hooks/useTrans'
+import {
+  type ChangeEvent,
+  type CSSProperties,
+  type FC,
+  memo,
+  type PointerEvent,
+  useId,
+  useRef,
+  useState,
+} from 'react'
 
 import Bucket from './Bucket'
 import Face from './Face'
 import { darkenColor, getMood, getMoodLabel, normalizeScore } from './helper'
-import { DEFAULT_DISTRIBUTION, DEFAULT_FEEDBACK_VALUE } from './model'
+import { DEFAULT_DISTRIBUTION, DEFAULT_FEEDBACK_VALUE, FEEDBACK_SPECTRUM_LABEL } from './model'
 import useSalon from './salon'
 import type { TFeedbackBucket } from './spec'
 
@@ -19,6 +26,7 @@ type TProps = {
   disabled?: boolean
   onChange?: (value: number) => void
   onCommit?: (value: number) => void
+  onDragEnd?: (value: number) => void
 }
 
 type TSquircleStyle = CSSProperties & {
@@ -27,7 +35,6 @@ type TSquircleStyle = CSSProperties & {
 
 const TRACK_STYLE: TSquircleStyle = { cornerShape: 'squircle' }
 const TRACK_SHADE_STYLE: TSquircleStyle = {
-  background: 'linear-gradient(90deg, #dc6b5d, #d8c95b, #5fbf78)',
   cornerShape: 'squircle',
 }
 
@@ -38,12 +45,13 @@ const FeedbackSpectrum: FC<TProps> = ({
   disabled = false,
   onChange,
   onCommit,
+  onDragEnd,
 }) => {
   const s = useSalon()
-  const { t } = useTrans()
   const reactId = useId()
   const inputId = `${reactId}-input`
-  const labelId = `${reactId}-label`
+  const dragStartXRef = useRef<number | null>(null)
+  const dragMovedRef = useRef(false)
   const [innerValue, setInnerValue] = useState(DEFAULT_FEEDBACK_VALUE)
   const [active, setActive] = useState(false)
   const score = normalizeScore(value ?? innerValue)
@@ -63,16 +71,41 @@ const FeedbackSpectrum: FC<TProps> = ({
   }
 
   const handleCommit = () => onCommit?.(score)
+  const handlePointerDown = (event: PointerEvent<HTMLInputElement>) => {
+    dragStartXRef.current = event.clientX
+    dragMovedRef.current = false
+    setActive(true)
+  }
+
+  const handlePointerMove = (event: PointerEvent<HTMLInputElement>) => {
+    if (dragStartXRef.current === null) return
+
+    if (Math.abs(event.clientX - dragStartXRef.current) > 3) {
+      dragMovedRef.current = true
+    }
+  }
+
+  const handlePointerEnd = (event: PointerEvent<HTMLInputElement>) => {
+    const nextScore = normalizeScore(Number.parseInt(event.currentTarget.value, 10))
+
+    setActive(false)
+    handleCommit()
+
+    if (dragMovedRef.current) onDragEnd?.(nextScore)
+
+    dragStartXRef.current = null
+    dragMovedRef.current = false
+  }
+
+  const handlePointerCancel = () => {
+    setActive(false)
+    dragStartXRef.current = null
+    dragMovedRef.current = false
+  }
 
   return (
     <section className={s.panel} data-testid={testid}>
       <div className={s.wrapper}>
-        <div className={s.head}>
-          <label id={labelId} className={s.title} htmlFor={inputId}>
-            {t('dsb.cms.docs.feedback.title')}
-          </label>
-        </div>
-
         <LazyMotion features={domAnimation}>
           <div className={s.control}>
             <div className={s.trackWrap}>
@@ -100,17 +133,15 @@ const FeedbackSpectrum: FC<TProps> = ({
               step='1'
               value={score}
               disabled={disabled}
-              aria-labelledby={labelId}
+              aria-label={FEEDBACK_SPECTRUM_LABEL}
               aria-valuetext={`${moodLabel}, ${score} of 100`}
               onChange={handleChange}
               onBlur={handleCommit}
               onKeyUp={handleCommit}
-              onPointerDown={() => setActive(true)}
-              onPointerCancel={() => setActive(false)}
-              onPointerUp={() => {
-                setActive(false)
-                handleCommit()
-              }}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerCancel={handlePointerCancel}
+              onPointerUp={handlePointerEnd}
             />
           </div>
         </LazyMotion>

@@ -62,7 +62,6 @@ defmodule GroupherServer.CMS.Comments.Write do
       |> Multi.run(:after_events, fn _, %{create_comment: comment} ->
         Later.run({Events, :emit, [:sync_mentions, %{artiment: comment}]})
         Later.run({Events, :emit, [:notify_comment, %{comment: comment, from_user: user}]})
-        Later.run({Events, :emit, [:mention, %{artiment: comment}]})
         Later.run({Events, :emit, [:audition, %{artiment: comment}]})
 
         Later.run(

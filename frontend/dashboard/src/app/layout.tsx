@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import RootLayoutShell from '~/widgets/RootLayoutShell'
 
+import '@groupher/rich-editor/style.css'
 import '~/tailwind/global.css'
 import './domain.css'
 

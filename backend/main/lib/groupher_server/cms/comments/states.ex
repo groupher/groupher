@@ -142,7 +142,7 @@ defmodule GroupherServer.CMS.Comments.States do
           {Events, :emit, [:notify_reply, %{reply_comment: replied_comment, from_user: user}]}
         )
 
-        Later.run({Events, :emit, [:mention, %{artiment: replied_comment}]})
+        Later.run({Events, :emit, [:sync_mentions, %{artiment: replied_comment}]})
       end)
       |> Repo.transaction()
       |> result()

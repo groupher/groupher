@@ -32,6 +32,72 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:done, :boolean)
   end
 
+  enum :doc_tree_node_type do
+    value(:group)
+    value(:page)
+    value(:link)
+  end
+
+  object :doc_tree_node do
+    field(:id, :id)
+    field(:parent_id, :id)
+    field(:doc_id, :id)
+    field(:type, :doc_tree_node_type)
+    field(:title, :string)
+    field(:slug, :string)
+    field(:index, :integer)
+    field(:href, :string)
+    field(:icon, :json)
+    field(:badge, :string)
+    field(:hidden, :boolean)
+    field(:expanded, :boolean)
+    field(:children, list_of(:doc_tree_node))
+  end
+
+  object :doc_tree do
+    field(:revision, :integer)
+    field(:groups, list_of(:doc_tree_node))
+  end
+
+  object :doc_draft do
+    field(:id, :id)
+    field(:title, :string)
+    field(:slug, :string)
+    field(:digest, :string)
+    field(:document, :thread_document)
+  end
+
+  object :doc_tree_mutation_payload do
+    field(:revision, :integer)
+    field(:node, :doc_tree_node)
+    field(:affected_nodes, list_of(:doc_tree_node))
+    field(:conflict, :boolean)
+  end
+
+  input_object :doc_tree_node_input do
+    field(:parent_id, :id)
+    field(:doc_id, :id)
+    field(:title, non_null(:string))
+    field(:slug, :string)
+    field(:index, :integer)
+    field(:href, :string)
+    field(:icon, :json)
+    field(:badge, :string)
+    field(:hidden, :boolean)
+    field(:expanded, :boolean)
+  end
+
+  input_object :doc_tree_node_patch_input do
+    field(:doc_id, :id)
+    field(:title, :string)
+    field(:slug, :string)
+    field(:href, :string)
+    field(:icon, :json)
+    field(:badge, :string)
+    field(:hidden, :boolean)
+    field(:expanded, :boolean)
+  end
+
   object :dsb_theme_preset_option do
     field(:value, non_null(:dsb_theme_preset))
     field(:tokens, non_null(:json))
@@ -75,6 +141,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:markdown, :string)
     field(:markdown_toc, :json)
     field(:html, :string)
+    field(:xml, :string)
     field(:rss, :string)
   end
 

@@ -76,6 +76,9 @@ type RootQueryType {
   "dashboard theme preset registry"
   themePresets: [DsbThemePresetOption!]!
 
+  "community docs side tree"
+  docTree(community: String!): DocTree
+
   "spec community info"
   community(slug: String!, incViews: Boolean): Community
 
@@ -678,6 +681,27 @@ type RootMutationType {
 
   "update docs FAQ in dashboard"
   updateDashboardDocFaq(community: String!, dsbSection: DsbSection, docFaq: DsbDocFaqInput!): Dsb
+
+  "create a docs tree group"
+  createDocTreeGroup(community: String!, baseRevision: Int, input: DocTreeNodeInput!): DocTreeMutationPayload
+
+  "create a docs tree page"
+  createDocTreePage(community: String!, baseRevision: Int, input: DocTreeNodeInput!): DocTreeMutationPayload
+
+  "create a docs tree quick link"
+  createDocTreeLink(community: String!, baseRevision: Int, input: DocTreeNodeInput!): DocTreeMutationPayload
+
+  "update a docs tree node"
+  updateDocTreeNode(community: String!, id: ID!, baseRevision: Int, patch: DocTreeNodePatchInput!): DocTreeMutationPayload
+
+  "delete a docs tree node"
+  deleteDocTreeNode(community: String!, id: ID!, baseRevision: Int): DocTreeMutationPayload
+
+  "duplicate a docs tree node"
+  duplicateDocTreeNode(community: String!, id: ID!, baseRevision: Int): DocTreeMutationPayload
+
+  "move a docs tree node"
+  moveDocTreeNode(community: String!, id: ID!, baseRevision: Int, targetParentId: ID, targetIndex: Int!): DocTreeMutationPayload
 }
 
 type CheckState {
@@ -688,6 +712,64 @@ type CheckState {
 type DoneState {
   "Whether the requested operation completed successfully."
   done: Boolean
+}
+
+enum DocTreeNodeType {
+  GROUP
+  PAGE
+  LINK
+}
+
+type DocTreeNode {
+  id: ID
+  parentId: ID
+  docId: ID
+  type: DocTreeNodeType
+  title: String
+  slug: String
+  index: Int
+  href: String
+  icon: Json
+  badge: String
+  hidden: Boolean
+  expanded: Boolean
+  children: [DocTreeNode]
+}
+
+type DocTree {
+  revision: Int
+  groups: [DocTreeNode]
+}
+
+type DocTreeMutationPayload {
+  revision: Int
+  node: DocTreeNode
+  affectedNodes: [DocTreeNode]
+  conflict: Boolean
+}
+
+input DocTreeNodeInput {
+  parentId: ID
+  docId: ID
+  title: String!
+  slug: String
+  index: Int
+  href: String
+  icon: Json
+  badge: String
+  hidden: Boolean
+  expanded: Boolean
+}
+
+input DocTreeNodePatchInput {
+  docId: ID
+  title: String
+  slug: String
+  href: String
+  icon: Json
+  badge: String
+  hidden: Boolean
+  expanded: Boolean
 }
 
 type DsbThemePresetOption {
@@ -723,6 +805,7 @@ type ThreadDocument {
   markdown: String
   markdownToc: Json
   html: String
+  xml: String
   rss: String
 }
 
@@ -926,16 +1009,10 @@ type CoverBackground {
   id: ID
   type: String
   source: String
-  hasPattern: Boolean
-  patternId: String
-  patternIntensity: Int
-  patternTone: String
-  hasTexture: Boolean
+  pattern: Json
   gradient: Json
-  blurIntensity: Int
-  hasShadow: Boolean
-  brightness: Int
-  saturation: Int
+  contentShadow: Json
+  effect: Json
   texture: Json
 }
 
@@ -962,16 +1039,10 @@ type CoverEditInfo {
 input CoverBackgroundInput {
   type: String
   source: String
-  hasPattern: Boolean
-  patternId: String
-  patternIntensity: Int
-  patternTone: String
-  hasTexture: Boolean
+  pattern: Json
   gradient: Json
-  blurIntensity: Int
-  hasShadow: Boolean
-  brightness: Int
-  saturation: Int
+  contentShadow: Json
+  effect: Json
   texture: Json
 }
 

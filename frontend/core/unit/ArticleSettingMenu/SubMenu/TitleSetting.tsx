@@ -2,8 +2,9 @@ import { type FC, useState } from 'react'
 import { useMutation } from 'urql'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
-import { toast, updateViewingArticle } from '~/signal'
+import { updateViewingArticle } from '~/signal'
 import Input from '~/widgets/Input'
+import { toast } from '~/widgets/Toaster'
 
 import S from '../schema'
 import useTouched from '../useTouched'

@@ -189,13 +189,28 @@ export default function useTwBelt(): TRet {
   }
 
   const selectable = (part: TSelectablePart, options: TSelectableOptions = {}): string => {
-    const { active = false, base = true, disabled = false, isCircle = false, size = 'md' } = options
+    const {
+      active = false,
+      border = true,
+      disabled = false,
+      isCircle = false,
+      size = 'md',
+    } = options
     const resolvedSize = isCircle ? 'sm' : size
+    const sizeClass = resolvedSize === 'xs' ? 'size-3' : resolvedSize === 'sm' ? 'size-4' : 'size-5'
+    const checkSizeClass =
+      resolvedSize === 'xs' ? 'size-2' : resolvedSize === 'sm' ? 'size-2.5' : 'size-3'
+    const positionClass =
+      resolvedSize === 'xs'
+        ? '-top-1 -right-1'
+        : isCircle
+          ? '-top-1 -right-0.5 scale-90'
+          : '-top-2 -right-2'
 
     switch (part) {
       case 'box':
         return cn(
-          base && 'border border-transparent',
+          border && 'border border-transparent',
           disabled ? 'cursor-default' : 'pointer',
           active ? primary('border') : !disabled && `hover:${br('digest')}`,
           active && `hover:${primary('border')}`,
@@ -205,8 +220,8 @@ export default function useTwBelt(): TRet {
       case 'badge':
         return cn(
           'absolute z-20 circle border',
-          isCircle ? '-top-1 -right-0.5 scale-90' : '-top-2 -right-2',
-          resolvedSize === 'sm' ? 'size-4' : 'size-5',
+          positionClass,
+          sizeClass,
           primary('bg'),
           primary('border'),
         )
@@ -214,7 +229,7 @@ export default function useTwBelt(): TRet {
       case 'check':
         return cn(
           'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
-          resolvedSize === 'sm' ? 'size-2.5' : 'size-3',
+          checkSizeClass,
           fill('button.fg'),
         )
 

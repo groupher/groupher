@@ -234,6 +234,7 @@ export const DOC_TABS: TDsbTabs = {
   items: [
     { title: 'dsb.doc.analysis', slug: DSB_DOC_ROUTE.ANALYSIS },
     { title: 'dsb.doc.layout', slug: DSB_DOC_ROUTE.LAYOUT },
+    { title: 'dsb.doc.cover', slug: DSB_DOC_ROUTE.COVER },
     { title: 'dsb.doc.editor', slug: DSB_DOC_ROUTE.EDITOR },
     { title: 'dsb.doc.faq', slug: DSB_DOC_ROUTE.FAQ },
     { title: 'dsb.doc.git_sync', slug: DSB_DOC_ROUTE.GIT_SYNC },

@@ -22,7 +22,8 @@ defmodule GroupherServer.CMS.Communities.Write do
   @spec create(map(), User.t()) :: T.domain_res(Community.t())
   def create(args, %User{} = user) do
     with {:ok, community} <- do_create(args, user),
-         {:ok, _} <- init_community_root(community, user) do
+         {:ok, _} <- init_community_root(community, user),
+         {:ok, _} <- CMS.DocTree.ensure_demo_template(community, user) do
       Read.read(community.slug, inc_views: false)
     end
   end

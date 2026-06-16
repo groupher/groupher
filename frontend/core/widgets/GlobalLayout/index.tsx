@@ -7,6 +7,7 @@
 import { type FC, lazy, type ReactNode, Suspense } from 'react'
 
 import Mushroom from '~/widgets/Mushroom'
+import Toaster from '~/widgets/Toaster'
 
 import DemoModeSnackbarGate from './DemoModeSnackbarGate'
 // import Broadcast from '~/widgets/Broadcast'
@@ -58,6 +59,7 @@ const GlobalLayout: FC<TProps> = ({ children, mainBlock }) => {
 
       <ThemeMonitor />
 
+      <Toaster />
       <DemoModeSnackbarGate />
     </>
   )

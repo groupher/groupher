@@ -70,7 +70,6 @@ defmodule GroupherServer.CMS.Articles.Write do
         end)
         |> Multi.run(:after_events, fn _, %{create_article: article} ->
           Later.run({Events, :emit, [:sync_mentions, %{artiment: article}]})
-          Later.run({Events, :emit, [:mention, %{artiment: article}]})
           Later.run({Events, :emit, [:audition, %{artiment: article}]})
           Later.run({__MODULE__, :notify_admin_new_article, [article]})
         end)
@@ -141,7 +140,6 @@ defmodule GroupherServer.CMS.Articles.Write do
       end)
       |> Multi.run(:after_events, fn _, %{update_article: update_article} ->
         Later.run({Events, :emit, [:sync_mentions, %{artiment: update_article}]})
-        Later.run({Events, :emit, [:mention, %{artiment: update_article}]})
         Later.run({Events, :emit, [:audition, %{artiment: update_article}]})
       end)
       |> Repo.transaction()

@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Model.BlogDocument do
   @min_body_length get_config(:article, :min_length)
 
   @required_fields ~w(json blog_id)a
-  @optional_fields ~w(markdown markdown_toc html rss plain_text digest content_hash schema_version)a
+  @optional_fields ~w(markdown markdown_toc html xml rss plain_text digest content_hash schema_version)a
 
   @schema_prefix DBPrefix.cms()
 
@@ -33,6 +33,7 @@ defmodule GroupherServer.CMS.Model.BlogDocument do
     field(:markdown, :string)
     field(:markdown_toc, :map)
     field(:html, :string)
+    field(:xml, :string)
     field(:rss, :string)
     field(:plain_text, :string)
     field(:digest, :string)
