@@ -6,13 +6,13 @@ import { DSB_INFO_ROUTE } from '~/const/route'
 import useDsbDemoMode from '~/hooks/useDsbDemoMode'
 import useDsbTab from '~/hooks/useDsbTab'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
-import { toast } from '~/signal'
 import type { TEditValue, TKanbanBoard, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 import { buildDsbDemoConfig, setDsbDemoConfig } from '~/utils/dsb-demo'
 import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
 import { slugify } from '~/utils/slug'
+import { toast } from '~/widgets/Toaster'
 
 import {
   BASEINFO_BASIC_KEYS,

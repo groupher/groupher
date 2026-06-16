@@ -3,8 +3,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { slugify } from '~/lib/slug'
-import { toast } from '~/signal'
 import useCommunity from '~/stores/community/hooks'
+import { toast } from '~/widgets/Toaster'
 
 import S from '../../../../schema'
 import { SIDE_TREE_NODE_TYPE } from '../SideTree/constant'

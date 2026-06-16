@@ -1,6 +1,6 @@
 import { startsWith } from 'ramda'
 
-import { toast } from '~/signal'
+import { toast } from '~/widgets/Toaster'
 
 export const initOSSClient = (): null => {
   // OSS STS token endpoint removed from backend

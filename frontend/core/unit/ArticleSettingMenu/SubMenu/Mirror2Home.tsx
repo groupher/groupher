@@ -2,7 +2,8 @@ import type { FC } from 'react'
 import { useMutation } from 'urql'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
-import { toast, updateViewingArticle } from '~/signal'
+import { updateViewingArticle } from '~/signal'
+import { toast } from '~/widgets/Toaster'
 
 import S from '../schema'
 import useTouched from '../useTouched'

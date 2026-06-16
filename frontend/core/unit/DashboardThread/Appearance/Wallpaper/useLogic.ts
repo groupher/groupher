@@ -14,7 +14,6 @@ import {
   isMeshGradientRecipe,
 } from '~/lib/wallpaperMesh'
 import type { TGradientRecipe, TGradientRenderer } from '~/lib/wallpaperMesh'
-import { toast } from '~/signal'
 import type { TWallpaperData, TWallpaperType } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import { WALLPAPER_SAVABLE_STATE_KEYS, WALLPAPER_STATE_KEYS } from '~/stores/wallpaper/constant'
@@ -26,6 +25,7 @@ import {
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 import type { TWallpaperPatch, TWallpaperThemeState } from '~/stores/wallpaper/spec'
 import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
+import { toast } from '~/widgets/Toaster'
 
 import { TAB } from './constant'
 import S from './schema'

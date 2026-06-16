@@ -1,19 +1,8 @@
 import EVENT from '~/const/event'
 import TYPE from '~/const/type'
-import type { TArticle, TArticlePubSelector, TToastType } from '~/spec'
+import type { TArticle, TArticlePubSelector } from '~/spec'
 
 import PubSub from './pubsub'
-
-export const toast = (msg: string, type: TToastType = 'info'): void => {
-  if (typeof window === 'undefined') return
-
-  if (type === 'error') {
-    console.error(msg)
-    return
-  }
-
-  console.info(msg)
-}
 
 /**
  * publish event message, 'send' inspired by Elixir

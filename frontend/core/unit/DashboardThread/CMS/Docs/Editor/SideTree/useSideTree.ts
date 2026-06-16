@@ -4,8 +4,8 @@ import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useQuery from '~/hooks/useQuery'
 import useTrans from '~/hooks/useTrans'
 import { slugify } from '~/lib/slug'
-import { toast } from '~/signal'
 import useCommunity from '~/stores/community/hooks'
+import { toast } from '~/widgets/Toaster'
 
 import S from '../../../../schema'
 import {

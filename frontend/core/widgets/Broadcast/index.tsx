@@ -9,7 +9,7 @@ import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/Arrow'
 import CrossSVG from '~/icons/CloseCross'
 import NotifySVG from '~/icons/Trumpet'
-import { toast } from '~/signal'
+import { toast } from '~/widgets/Toaster'
 
 import useSalon, { cn } from './salon'
 
