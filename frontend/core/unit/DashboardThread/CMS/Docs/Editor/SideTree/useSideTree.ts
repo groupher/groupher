@@ -22,7 +22,7 @@ import type {
   TSideTreeNodeMenuAction,
 } from './spec'
 
-type TRet = {
+export type TSideTreeController = {
   groups: TSideTreeGroup[]
   activeId: string | null
   editingTarget: TEditingTarget
@@ -37,6 +37,7 @@ type TRet = {
   edit: (target: TEditingTarget) => void
   handleChildAction: (groupId: string, childId: string, action: TSideTreeNodeMenuAction) => void
   updateChildStyle: (groupId: string, childId: string, icon: TSideTreeChild['icon']) => void
+  patchChild: (childId: string, patch: Partial<TSideTreeChild>) => void
   reorderGroups: (groups: readonly TSideTreeGroup[]) => void
 }
 
@@ -238,7 +239,7 @@ const findMovedNode = (
   return null
 }
 
-export default function useSideTree(): TRet {
+export default function useSideTree(): TSideTreeController {
   const { t } = useTrans()
   const { slug: community } = useCommunity()
   const { mutate } = useGraphQLClient()
@@ -647,6 +648,20 @@ export default function useSideTree(): TRet {
     [commitGroups, persist],
   )
 
+  const patchChild = useCallback(
+    (childId: string, patch: Partial<TSideTreeChild>): void => {
+      commitGroups(
+        groupsRef.current.map((group) => ({
+          ...group,
+          children: group.children.map((child) =>
+            child.id === childId ? ({ ...child, ...patch } as TSideTreeChild) : child,
+          ),
+        })),
+      )
+    },
+    [commitGroups],
+  )
+
   /**
    * Handle row action-menu events: rename starts editing, duplicate inserts a copy,
    * and delete removes the child.
@@ -737,6 +752,7 @@ export default function useSideTree(): TRet {
     edit: setEditingTarget,
     handleChildAction,
     updateChildStyle,
+    patchChild,
     reorderGroups,
   }
 }

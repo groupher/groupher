@@ -113,6 +113,22 @@ defmodule GroupherServer.CMS.DocTree.Write do
     end)
   end
 
+  @spec update_draft(Community.t(), T.id(), map()) :: T.domain_res(DocDraft.t())
+  def update_draft(%Community{} = community, id, args) do
+    Transaction.lock_global("doc_draft:#{community.id}:#{id}", fn ->
+      with {:ok, _site_state} <- Read.ensure_site_state(community),
+           {:ok, draft} <- Read.read_draft(community, id),
+           {:ok, payload} <- maybe_parse_body(args),
+           draft_attrs <- draft_attrs(community, draft, args, payload),
+           doc_attrs <- doc_attrs(payload),
+           {:ok, draft} <- maybe_update_draft(draft, draft_attrs),
+           {:ok, _document} <- maybe_update_document(draft, doc_attrs),
+           {:ok, _state} <- Revision.bump_site_draft(community) do
+        Read.read_draft(community, id)
+      end
+    end)
+  end
+
   @spec delete_node(Community.t(), T.id(), map()) :: T.domain_res(payload())
   def delete_node(%Community{} = community, id, args) do
     operate(community, args, fn state ->
@@ -256,6 +272,57 @@ defmodule GroupherServer.CMS.DocTree.Write do
 
   defp normalize_doc_draft_id(args), do: args
 
+  defp maybe_parse_body(%{body: body}) when is_binary(body),
+    do: ContentPipeline.parse(%{body: body})
+
+  defp maybe_parse_body(_args), do: {:ok, nil}
+
+  defp draft_attrs(%Community{} = community, %DocDraft{} = draft, args, payload) do
+    args
+    |> Map.take([:title, :slug])
+    |> maybe_put_slug_from_title()
+    |> unique_update_doc_draft_slug(community, draft)
+    |> maybe_put_digest(payload)
+  end
+
+  defp maybe_put_slug_from_title(%{slug: slug} = attrs) when is_binary(slug), do: attrs
+
+  defp maybe_put_slug_from_title(%{title: title} = attrs) when is_binary(title) do
+    Map.put(attrs, :slug, title)
+  end
+
+  defp maybe_put_slug_from_title(attrs), do: attrs
+
+  defp unique_update_doc_draft_slug(%{slug: slug} = attrs, community, draft)
+       when is_binary(slug) do
+    Map.put(attrs, :slug, unique_doc_draft_slug(community, normalize_doc_slug(slug), draft.id))
+  end
+
+  defp unique_update_doc_draft_slug(attrs, _community, _draft), do: attrs
+
+  defp maybe_put_digest(attrs, %{digest: digest}) when is_binary(digest),
+    do: Map.put(attrs, :digest, digest)
+
+  defp maybe_put_digest(attrs, _payload), do: attrs
+
+  defp doc_attrs(nil), do: %{}
+  defp doc_attrs(payload), do: ContentPayload.pick_valid_fields(payload)
+
+  defp maybe_update_draft(draft, attrs) when map_size(attrs) == 0, do: {:ok, draft}
+  defp maybe_update_draft(draft, attrs), do: ORM.update(draft, attrs)
+
+  defp maybe_update_document(_draft, attrs) when map_size(attrs) == 0, do: {:ok, nil}
+
+  defp maybe_update_document(%DocDraft{document: %DocDocumentDraft{} = document}, attrs) do
+    ORM.update(document, attrs)
+  end
+
+  defp maybe_update_document(%DocDraft{} = draft, attrs) do
+    attrs
+    |> Map.put(:doc_draft_id, draft.id)
+    |> then(&ORM.create(DocDocumentDraft, &1))
+  end
+
   defp ensure_page_doc_draft(%Community{} = community, %{doc_id: doc_id} = args, _user)
        when not is_nil(doc_id) do
     with :ok <- validate_doc_draft(community, doc_id) do
@@ -273,7 +340,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
 
   defp create_default_doc_draft(%Community{} = community, args, %User{} = user) do
     title = Map.get(args, :title, "Untitled")
-    slug = Map.get(args, :slug, title) |> Slug.normalize()
+    slug = Map.get(args, :slug, title) |> normalize_doc_slug()
 
     with {:ok, author} <- ensure_author_exists(user),
          {:ok, payload} <- default_page_payload(title),
@@ -309,10 +376,27 @@ defmodule GroupherServer.CMS.DocTree.Write do
     |> then(&ContentPipeline.parse(%{body: &1}))
   end
 
-  defp unique_doc_draft_slug(%Community{} = community, slug) do
-    existing =
+  defp normalize_doc_slug(slug) do
+    case Slug.normalize(slug) do
+      "" -> "untitled"
+      normalized -> normalized
+    end
+  end
+
+  defp unique_doc_draft_slug(%Community{} = community, slug, exclude_id \\ nil) do
+    query =
       DocDraft
       |> where([d], d.community_id == ^community.id)
+
+    query =
+      if is_nil(exclude_id) do
+        query
+      else
+        where(query, [d], d.id != ^exclude_id)
+      end
+
+    existing =
+      query
       |> select([d], d.slug)
       |> Repo.all()
       |> MapSet.new()

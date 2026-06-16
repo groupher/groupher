@@ -47,6 +47,8 @@ export default {
   'dsb.doc.import': '导入',
   'dsb.doc.backup': '备份',
   'dsb.doc.import_export': '导入导出',
+  'dsb.doc.action.edit': '编辑',
+  'dsb.doc.action.preview': '预览',
   'dsb.widget.drawer': '侧边栏',
   'dsb.widget.modal': '居中模态框',
   'dsb.widget.popup': '弹出提示',

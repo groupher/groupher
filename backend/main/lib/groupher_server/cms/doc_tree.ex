@@ -31,6 +31,9 @@ defmodule GroupherServer.CMS.DocTree do
   @spec read(Community.t()) :: T.domain_res(map())
   def read(%Community{} = community), do: Read.read(community)
 
+  @spec read_draft(Community.t(), T.id()) :: T.domain_res(map())
+  def read_draft(%Community{} = community, id), do: Read.read_draft(community, id)
+
   @spec ensure_demo_template(Community.t(), User.t()) :: T.domain_res(map())
   def ensure_demo_template(%Community{} = community, %User{} = user) do
     Template.ensure_demo_template(community, user)
@@ -62,6 +65,10 @@ defmodule GroupherServer.CMS.DocTree do
 
   @spec update_node(Community.t(), T.id(), map()) :: T.domain_res(map())
   def update_node(%Community{} = community, id, args), do: Write.update_node(community, id, args)
+
+  @spec update_draft(Community.t(), T.id(), map()) :: T.domain_res(map())
+  def update_draft(%Community{} = community, id, args),
+    do: Write.update_draft(community, id, args)
 
   @spec delete_node(Community.t(), T.id(), map()) :: T.domain_res(map())
   def delete_node(%Community{} = community, id, args), do: Write.delete_node(community, id, args)

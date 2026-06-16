@@ -50,6 +50,19 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       resolve(&R.CMS.update_doc_tree_node/3)
     end
 
+    @desc "update a docs draft document"
+    field :update_doc_draft, :doc_draft do
+      arg(:community, non_null(:string))
+      arg(:id, non_null(:id))
+      arg(:title, :string)
+      arg(:slug, :string)
+      arg(:body, :string)
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.update_doc_draft/3)
+    end
+
     @desc "delete a docs tree node"
     field :delete_doc_tree_node, :doc_tree_mutation_payload do
       arg(:community, non_null(:string))

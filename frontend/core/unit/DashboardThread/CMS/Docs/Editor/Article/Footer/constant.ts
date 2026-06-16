@@ -1,7 +1,7 @@
 import CommentSVG from '~/icons/Comment'
 import EditSVG from '~/icons/EditPen'
-import QRCodeSVG from '~/icons/QRCode'
 import MoreSVG from '~/icons/menu/MoreDot'
+import QRCodeSVG from '~/icons/QRCode'
 
 export const FOOTER_TITLE = 'Help us improve the doc'
 export const FEEDBACK_TAGS_TITLE = 'What can be improved?'

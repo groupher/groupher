@@ -60,6 +60,16 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
+  def doc_draft(_root, %{community: %Community{} = community, id: id}, _info) do
+    CMS.DocTree.read_draft(community, id)
+  end
+
+  def doc_draft(_root, %{community: community, id: id}, _info) do
+    with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
+      CMS.DocTree.read_draft(community, id)
+    end
+  end
+
   def create_doc_tree_group(_root, %{community: community, input: input} = args, _info) do
     CMS.DocTree.create_group(community, Map.put(input, :base_revision, args[:base_revision]))
   end
@@ -82,6 +92,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         _info
       ) do
     CMS.DocTree.update_node(community, id, Map.put(patch, :base_revision, args[:base_revision]))
+  end
+
+  def update_doc_draft(_root, %{community: community, id: id} = args, _info) do
+    CMS.DocTree.update_draft(community, id, Map.take(args, [:title, :slug, :body]))
   end
 
   def delete_doc_tree_node(_root, %{community: community, id: id} = args, _info) do

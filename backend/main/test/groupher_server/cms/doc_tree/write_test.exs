@@ -17,6 +17,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
     DocTreeNodeDraft
   }
 
+  @plate_body Jason.encode!([
+                %{"type" => "h1", "children" => [%{"text" => "Updated Draft"}]},
+                %{"type" => "p", "children" => [%{"text" => "draft body"}]}
+              ])
+
   describe "[doc tree draft writes]" do
     test "creating a page without doc_id creates a draft doc and bumps revisions" do
       {:ok, user} = db_insert(:user)
@@ -93,6 +98,57 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
              |> where([n], n.community_id == ^community.id)
              |> select([n], n.title)
              |> Repo.all() == ["One"]
+    end
+
+    test "updating a doc draft stores parsed body payload and bumps site draft revision only" do
+      {:ok, user} = db_insert(:user)
+      {:ok, community} = empty_docs_community(user)
+      {:ok, before_tree_state} = ORM.find_by(DocTreeDraftState, community_id: community.id)
+      {:ok, before_site_state} = ORM.find_by(DocsSiteState, community_id: community.id)
+
+      {:ok, group_payload} =
+        CMS.DocTree.create_group(community, %{
+          title: "Guides",
+          slug: "guides",
+          base_revision: before_tree_state.revision
+        })
+
+      {:ok, page_payload} =
+        CMS.DocTree.create_page(
+          community,
+          %{
+            parent_id: group_payload.node.id,
+            title: "Install",
+            slug: "install",
+            base_revision: group_payload.revision
+          },
+          user
+        )
+
+      {:ok, draft} =
+        CMS.DocTree.update_draft(community, page_payload.node.doc_id, %{
+          title: "Updated Install",
+          slug: "updated-install",
+          body: @plate_body
+        })
+
+      assert draft.title == "Updated Install"
+      assert draft.slug == "updated-install"
+      assert draft.document.json == @plate_body
+      assert is_binary(draft.document.html)
+      assert is_binary(draft.document.xml)
+      assert draft.document.digest =~ "Updated Draft"
+
+      {:ok, page_node} = ORM.find(DocTreeNodeDraft, page_payload.node.id)
+      assert page_node.title == "Install"
+      assert page_node.slug == "install"
+
+      {:ok, tree_state} = ORM.find_by(DocTreeDraftState, community_id: community.id)
+      {:ok, site_state} = ORM.find_by(DocsSiteState, community_id: community.id)
+
+      assert tree_state.revision == group_payload.revision + 1
+      assert site_state.draft_revision == before_site_state.draft_revision + 3
+      assert site_state.published_revision == 0
     end
   end
 

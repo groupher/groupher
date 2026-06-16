@@ -422,6 +422,25 @@ const docTree = gql`
   }
 `
 
+const docDraft = gql`
+  query docDraft($community: String!, $id: ID!) {
+    docDraft(community: $community, id: $id) {
+      id
+      title
+      slug
+      digest
+      document {
+        json
+        markdown
+        markdownToc
+        html
+        xml
+        rss
+      }
+    }
+  }
+`
+
 const docTreeMutationPayload = `
   revision
   conflict
@@ -466,6 +485,25 @@ const updateDocTreeNode = gql`
   ) {
     updateDocTreeNode(community: $community, id: $id, baseRevision: $baseRevision, patch: $patch) {
       ${docTreeMutationPayload}
+    }
+  }
+`
+
+const updateDocDraft = gql`
+  mutation ($community: String!, $id: ID!, $title: String, $slug: String, $body: String) {
+    updateDocDraft(community: $community, id: $id, title: $title, slug: $slug, body: $body) {
+      id
+      title
+      slug
+      digest
+      document {
+        json
+        markdown
+        markdownToc
+        html
+        xml
+        rss
+      }
     }
   }
 `
@@ -655,10 +693,12 @@ const schema = {
   pagedChangelogs,
   updateDashboardDocFaq,
   docTree,
+  docDraft,
   createDocTreeGroup,
   createDocTreePage,
   createDocTreeLink,
   updateDocTreeNode,
+  updateDocDraft,
   deleteDocTreeNode,
   duplicateDocTreeNode,
   moveDocTreeNode,

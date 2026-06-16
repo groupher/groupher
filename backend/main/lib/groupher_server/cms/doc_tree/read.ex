@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Community, DocsSiteState, DocTreeDraftState, DocTreeNodeDraft}
+  alias CMS.Model.{Community, DocDraft, DocsSiteState, DocTreeDraftState, DocTreeNodeDraft}
   alias Helper.{ORM, T, Transaction}
 
   @spec read(Community.t()) :: T.domain_res(map())
@@ -34,6 +34,12 @@ defmodule GroupherServer.CMS.DocTree.Read do
 
       {:ok, %{revision: state.revision, groups: build_groups(nodes)}}
     end
+  end
+
+  @spec read_draft(Community.t(), T.id()) :: T.domain_res(DocDraft.t())
+  def read_draft(%Community{} = community, id) do
+    DocDraft
+    |> ORM.find_by([id: id, community_id: community.id], preload: :document)
   end
 
   @spec ensure_draft_state(Community.t()) :: T.domain_res(DocTreeDraftState.t())

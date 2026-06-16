@@ -39,6 +39,22 @@ defmodule GroupherServer.CMS.DocTree.Revision do
     |> result()
   end
 
+  @spec bump_site_draft(Community.t()) :: T.domain_res(DocsSiteState.t())
+  def bump_site_draft(%Community{} = community) do
+    Multi.new()
+    |> Multi.run(:site_state, fn _, _ ->
+      ORM.find_by(DocsSiteState, community_id: community.id)
+    end)
+    |> Multi.update(:updated_site_state, fn %{site_state: site_state} ->
+      Ecto.Changeset.change(site_state, %{draft_revision: site_state.draft_revision + 1})
+    end)
+    |> Repo.transaction()
+    |> site_result()
+  end
+
   defp result({:ok, %{tree_state: tree_state}}), do: {:ok, tree_state}
   defp result({:error, _step, reason, _changes}), do: {:error, reason}
+
+  defp site_result({:ok, %{updated_site_state: site_state}}), do: {:ok, site_state}
+  defp site_result({:error, _step, reason, _changes}), do: {:error, reason}
 end

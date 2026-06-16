@@ -7,9 +7,13 @@ import SideTreeDndContext from './Dnd/SideTreeDndContext'
 import Group from './Group'
 import GroupAdder from './GroupAdder'
 import useSalon from './salon'
-import useSideTree from './useSideTree'
+import type { TSideTreeController } from './useSideTree'
 
-const SideTree: FC = () => {
+type TProps = {
+  controller: TSideTreeController
+}
+
+const SideTree: FC<TProps> = ({ controller }) => {
   const s = useSalon()
 
   const {
@@ -28,7 +32,7 @@ const SideTree: FC = () => {
     handleChildAction,
     updateChildStyle,
     reorderGroups,
-  } = useSideTree()
+  } = controller
 
   return (
     <aside className={s.wrapper}>

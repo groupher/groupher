@@ -211,6 +211,27 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
+  def q(:doc_draft) do
+    """
+    query($community: String!, $id: ID!) {
+      docDraft(community: $community, id: $id) {
+        id
+        title
+        slug
+        digest
+        document {
+          json
+          markdown
+          markdownToc
+          html
+          xml
+          rss
+        }
+      }
+    }
+    """
+  end
+
   def m(:pin_article, thread) do
     """
     mutation($article: ArticleRefInput!){
@@ -467,6 +488,27 @@ defmodule GroupherServer.Test.Helper.Schema do
       undoReport#{t(thread)}(article: $article) {
         innerId
         title
+      }
+    }
+    """
+  end
+
+  def m(:update_doc_draft) do
+    """
+    mutation($community: String!, $id: ID!, $title: String, $slug: String, $body: String) {
+      updateDocDraft(community: $community, id: $id, title: $title, slug: $slug, body: $body) {
+        id
+        title
+        slug
+        digest
+        document {
+          json
+          markdown
+          markdownToc
+          html
+          xml
+          rss
+        }
       }
     }
     """

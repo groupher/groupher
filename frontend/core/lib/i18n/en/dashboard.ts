@@ -47,6 +47,8 @@ export default {
   'dsb.doc.import': 'Import',
   'dsb.doc.backup': 'Backup',
   'dsb.doc.import_export': 'Import/Export',
+  'dsb.doc.action.edit': 'Edit',
+  'dsb.doc.action.preview': 'Preview',
   'dsb.widget.drawer': 'Drawer',
   'dsb.widget.modal': 'Centered modal',
   'dsb.widget.popup': 'Popup',

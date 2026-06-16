@@ -25,6 +25,16 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.doc_tree/3)
     end
 
+    @desc "dashboard docs draft document"
+    field :doc_draft, :doc_draft do
+      arg(:community, non_null(:string))
+      arg(:id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.doc_draft/3)
+    end
+
     @desc "spec community info"
     field :community, :community do
       # arg(:id, non_null(:id))

@@ -59,6 +59,14 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:groups, list_of(:doc_tree_node))
   end
 
+  object :doc_draft do
+    field(:id, :id)
+    field(:title, :string)
+    field(:slug, :string)
+    field(:digest, :string)
+    field(:document, :thread_document)
+  end
+
   object :doc_tree_mutation_payload do
     field(:revision, :integer)
     field(:node, :doc_tree_node)
