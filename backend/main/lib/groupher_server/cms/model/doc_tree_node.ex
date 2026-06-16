@@ -92,10 +92,12 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
   defp validate_node_shape(changeset) do
     type = get_field(changeset, :type)
     parent_id = get_field(changeset, :parent_id)
+    doc_id = get_field(changeset, :doc_id)
     href = get_field(changeset, :href)
 
     changeset
     |> validate_group_parent(type, parent_id)
+    |> validate_doc_ref(type, doc_id)
     |> validate_link_href(type, href)
   end
 
@@ -111,6 +113,20 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
   defp validate_group_parent(changeset, _type, _parent_id), do: changeset
 
+  defp validate_doc_ref(changeset, :page, nil) do
+    add_error(changeset, :doc_id, "page nodes require doc_id")
+  end
+
+  defp validate_doc_ref(changeset, :page, _doc_id), do: changeset
+
+  defp validate_doc_ref(changeset, type, doc_id) when type in [:group, :link] do
+    if is_nil(doc_id) do
+      changeset
+    else
+      add_error(changeset, :doc_id, "#{type} nodes can not reference docs")
+    end
+  end
+
   defp validate_link_href(changeset, :link, href) when is_binary(href) do
     if String.trim(href) == "" do
       add_error(changeset, :href, "link nodes require href")
@@ -122,5 +138,11 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
   defp validate_link_href(changeset, :link, _href),
     do: add_error(changeset, :href, "link nodes require href")
 
-  defp validate_link_href(changeset, _type, _href), do: changeset
+  defp validate_link_href(changeset, type, href) when type in [:group, :page] do
+    if is_nil(href) or (is_binary(href) and String.trim(href) == "") do
+      changeset
+    else
+      add_error(changeset, :href, "#{type} nodes can not have href")
+    end
+  end
 end

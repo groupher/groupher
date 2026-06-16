@@ -12,11 +12,13 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
     {:ok, user} = db_insert(:user)
     {:ok, community} = empty_docs_community(user)
     user_conn = simu_conn(:user, user)
+    {:ok, tree_state} = ORM.find_by(CMS.Model.DocTreeDraftState, community_id: community.id)
 
     {:ok, group_payload} =
       CMS.DocTree.create_group(community, %{
         title: "Guides",
-        slug: "guides"
+        slug: "guides",
+        base_revision: tree_state.revision
       })
 
     {:ok, page_payload} =

@@ -22,6 +22,8 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     field :doc_tree, :doc_tree do
       arg(:community, non_null(:string))
 
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
       resolve(&R.CMS.doc_tree/3)
     end
 

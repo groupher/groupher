@@ -58,6 +58,7 @@ defmodule GroupherServer.CMS.Model.DocDocumentDraft do
     draft
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> validate_length(:plain_text, min: @min_body_length, max: @max_body_length)
+    |> foreign_key_constraint(:doc_draft_id)
     |> unique_constraint(:doc_draft_id)
   end
 end

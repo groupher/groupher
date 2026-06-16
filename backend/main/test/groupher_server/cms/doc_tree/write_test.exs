@@ -4,6 +4,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
   use GroupherServer.TestMate
 
   import Ecto.Query, warn: false
+  import GroupherServer.DataCase, only: [errors_on: 1]
 
   alias GroupherServer.Repo
 
@@ -98,6 +99,50 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
              |> where([n], n.community_id == ^community.id)
              |> select([n], n.title)
              |> Repo.all() == ["One"]
+    end
+
+    test "missing base_revision is rejected" do
+      {:ok, user} = db_insert(:user)
+      {:ok, community} = empty_docs_community(user)
+
+      assert {:error, {:custom, "base_revision is required"}} =
+               CMS.DocTree.create_group(community, %{
+                 title: "One",
+                 slug: "one"
+               })
+    end
+
+    test "page nodes can not be updated to remove doc draft reference" do
+      {:ok, user} = db_insert(:user)
+      {:ok, community} = empty_docs_community(user)
+      {:ok, before_tree_state} = ORM.find_by(DocTreeDraftState, community_id: community.id)
+
+      {:ok, group_payload} =
+        CMS.DocTree.create_group(community, %{
+          title: "Guides",
+          slug: "guides",
+          base_revision: before_tree_state.revision
+        })
+
+      {:ok, page_payload} =
+        CMS.DocTree.create_page(
+          community,
+          %{
+            parent_id: group_payload.node.id,
+            title: "Install",
+            slug: "install",
+            base_revision: group_payload.revision
+          },
+          user
+        )
+
+      assert {:error, changeset} =
+               CMS.DocTree.update_node(community, page_payload.node.id, %{
+                 doc_id: nil,
+                 base_revision: page_payload.revision
+               })
+
+      assert %{doc_draft_id: ["page nodes require doc_draft_id"]} = errors_on(changeset)
     end
 
     test "updating a doc draft stores parsed body payload and bumps site draft revision only" do

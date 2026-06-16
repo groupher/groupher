@@ -453,7 +453,7 @@ const docTreeMutationPayload = `
 `
 
 const createDocTreeGroup = gql`
-  mutation ($community: String!, $baseRevision: Int, $input: DocTreeNodeInput!) {
+  mutation ($community: String!, $baseRevision: Int!, $input: DocTreeNodeInput!) {
     createDocTreeGroup(community: $community, baseRevision: $baseRevision, input: $input) {
       ${docTreeMutationPayload}
     }
@@ -461,7 +461,7 @@ const createDocTreeGroup = gql`
 `
 
 const createDocTreePage = gql`
-  mutation ($community: String!, $baseRevision: Int, $input: DocTreeNodeInput!) {
+  mutation ($community: String!, $baseRevision: Int!, $input: DocTreeNodeInput!) {
     createDocTreePage(community: $community, baseRevision: $baseRevision, input: $input) {
       ${docTreeMutationPayload}
     }
@@ -469,7 +469,7 @@ const createDocTreePage = gql`
 `
 
 const createDocTreeLink = gql`
-  mutation ($community: String!, $baseRevision: Int, $input: DocTreeNodeInput!) {
+  mutation ($community: String!, $baseRevision: Int!, $input: DocTreeNodeInput!) {
     createDocTreeLink(community: $community, baseRevision: $baseRevision, input: $input) {
       ${docTreeMutationPayload}
     }
@@ -480,7 +480,7 @@ const updateDocTreeNode = gql`
   mutation (
     $community: String!
     $id: ID!
-    $baseRevision: Int
+    $baseRevision: Int!
     $patch: DocTreeNodePatchInput!
   ) {
     updateDocTreeNode(community: $community, id: $id, baseRevision: $baseRevision, patch: $patch) {
@@ -509,7 +509,7 @@ const updateDocDraft = gql`
 `
 
 const deleteDocTreeNode = gql`
-  mutation ($community: String!, $id: ID!, $baseRevision: Int) {
+  mutation ($community: String!, $id: ID!, $baseRevision: Int!) {
     deleteDocTreeNode(community: $community, id: $id, baseRevision: $baseRevision) {
       ${docTreeMutationPayload}
     }
@@ -517,7 +517,7 @@ const deleteDocTreeNode = gql`
 `
 
 const duplicateDocTreeNode = gql`
-  mutation ($community: String!, $id: ID!, $baseRevision: Int) {
+  mutation ($community: String!, $id: ID!, $baseRevision: Int!) {
     duplicateDocTreeNode(community: $community, id: $id, baseRevision: $baseRevision) {
       ${docTreeMutationPayload}
     }
@@ -528,7 +528,7 @@ const moveDocTreeNode = gql`
   mutation (
     $community: String!
     $id: ID!
-    $baseRevision: Int
+    $baseRevision: Int!
     $targetParentId: ID
     $targetIndex: Int!
   ) {

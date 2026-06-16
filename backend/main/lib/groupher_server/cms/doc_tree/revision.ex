@@ -28,12 +28,11 @@ defmodule GroupherServer.CMS.DocTree.Revision do
     |> Multi.run(:site_state, fn _, _ ->
       ORM.find_by(DocsSiteState, community_id: community.id)
     end)
-    |> Multi.update(
-      :tree_state,
-      Ecto.Changeset.change(tree_state, %{revision: tree_state.revision + 1})
-    )
-    |> Multi.update(:updated_site_state, fn %{site_state: site_state} ->
-      Ecto.Changeset.change(site_state, %{draft_revision: site_state.draft_revision + 1})
+    |> Multi.run(:tree_state, fn _, _ ->
+      ORM.inc(tree_state, :revision)
+    end)
+    |> Multi.run(:updated_site_state, fn _, %{site_state: site_state} ->
+      ORM.inc(site_state, :draft_revision)
     end)
     |> Repo.transaction()
     |> result()
@@ -45,8 +44,8 @@ defmodule GroupherServer.CMS.DocTree.Revision do
     |> Multi.run(:site_state, fn _, _ ->
       ORM.find_by(DocsSiteState, community_id: community.id)
     end)
-    |> Multi.update(:updated_site_state, fn %{site_state: site_state} ->
-      Ecto.Changeset.change(site_state, %{draft_revision: site_state.draft_revision + 1})
+    |> Multi.run(:updated_site_state, fn _, %{site_state: site_state} ->
+      ORM.inc(site_state, :draft_revision)
     end)
     |> Repo.transaction()
     |> site_result()

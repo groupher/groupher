@@ -54,6 +54,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Dashboard.select_theme_preset(community, args)
   end
 
+  def doc_tree(_root, %{community: %Community{} = community}, _info) do
+    CMS.DocTree.read(community)
+  end
+
   def doc_tree(_root, %{community: community}, _info) do
     with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
       CMS.DocTree.read(community)

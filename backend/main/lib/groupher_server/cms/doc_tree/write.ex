@@ -219,7 +219,8 @@ defmodule GroupherServer.CMS.DocTree.Write do
     end)
   end
 
-  defp revision_check(%DocTreeDraftState{}, nil), do: :ok
+  defp revision_check(%DocTreeDraftState{}, nil),
+    do: {:error, {:custom, "base_revision is required"}}
 
   defp revision_check(%DocTreeDraftState{} = state, revision) when revision == state.revision,
     do: :ok

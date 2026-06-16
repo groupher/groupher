@@ -25,14 +25,22 @@ defmodule GroupherServer.CMS.DocTree.Read do
 
   @spec read(Community.t()) :: T.domain_res(map())
   def read(%Community{} = community) do
-    with {:ok, state} <- ensure_draft_state(community) do
-      nodes =
-        DocTreeNodeDraft
-        |> where([n], n.community_id == ^community.id)
-        |> order_by([n], asc: n.index, asc: n.id)
-        |> Repo.all()
+    with {:ok, _state} <- ensure_draft_state(community) do
+      Repo.transaction(fn ->
+        {:ok, state} = ORM.find_by(DocTreeDraftState, community_id: community.id)
 
-      {:ok, %{revision: state.revision, groups: build_groups(nodes)}}
+        nodes =
+          DocTreeNodeDraft
+          |> where([n], n.community_id == ^community.id)
+          |> order_by([n], asc: n.index, asc: n.id)
+          |> Repo.all()
+
+        %{revision: state.revision, groups: build_groups(nodes)}
+      end)
+      |> case do
+        {:ok, payload} -> {:ok, payload}
+        {:error, reason} -> {:error, reason}
+      end
     end
   end
 
