@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert changelog.title == changelog_attrs.title
       assert is_list(body_map)
 
-      assert changelog.document.html |> String.contains?(~s(<p>))
+      assert changelog.document.html |> String.contains?("<p")
 
       assert is_binary(changelog.digest)
       assert String.length(changelog.digest) <= @article_digest_length
