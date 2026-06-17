@@ -1,7 +1,8 @@
 import { isEmpty } from 'ramda'
 import { useEffect, useRef, useState } from 'react'
-import type { CSSProperties, FC, PointerEvent, ReactNode } from 'react'
+import type { CSSProperties, FC, PointerEvent, ReactNode, WheelEvent } from 'react'
 
+import usePageLock from '~/hooks/usePageLock'
 import useUpdatePreviewCssVars from '~/hooks/useUpdatePreviewCssVars'
 import { normalizeSignedAngle } from '~/lib/angle'
 import { extractDominantColorFromImage } from '~/lib/imageColor/dominant'
@@ -9,8 +10,12 @@ import BgRenderer from '~/widgets/BgRenderer'
 
 import { adaptCoverBgRenderSpec } from '../background'
 import {
+  COVER_IMAGE_CROP_ZOOM_RANGE,
+  COVER_IMAGE_WHICH,
   COVER_HEIGHT_RANGE,
   GLASS_FRAME,
+  IMAGE_EDIT_MODE,
+  IMAGE_EDIT_MODE_LABEL,
   IMAGE_SIZE_RANGE,
   MAGNIFIER_RENDER_SIZE,
   MAGNIFIER_ZOOM_RANGE,
@@ -23,7 +28,12 @@ import {
   getMagnifierRenderSize,
 } from '../coverImageCssVars'
 import { subscribeCoverImagePreview } from '../coverImagePreview'
-import { getImageShadow, getMagnifierAppearanceStyle } from '../helper'
+import {
+  clampCoverImageCropZoom,
+  getCoverImageLocalDragDelta,
+  getImageShadow,
+  getMagnifierAppearanceStyle,
+} from '../helper'
 import { useImageDraftContext } from '../imageDraftContext'
 import {
   getBorderRadiusFromCanvasPoint,
@@ -34,10 +44,18 @@ import {
   getImageResizeFromCanvasPoint,
   type TImageResizeHandle,
 } from '../salon/metric'
-import type { TCoverImageConfig, TCoverImageWhich, TCoverPoint, TImageSize } from '../spec'
+import type {
+  TCoverImageConfig,
+  TCoverImageCrop,
+  TCoverImageWhich,
+  TCoverPoint,
+  TImageEditMode,
+  TImageSize,
+} from '../spec'
 import useLogic from '../useLogic'
 import BorderRender from './BorderRender'
 import HeightResizer from './HeightResizer'
+import ImageModeToggle from './ImageModeToggle'
 import Placeholder from './Placeholder'
 import useSalon from './salon'
 
@@ -55,6 +73,7 @@ type TInteractionMode =
   | 'radius'
   | 'resize'
   | 'cover-height'
+  | 'crop'
 
 type TInteractionState =
   | {
@@ -114,6 +133,17 @@ type TInteractionState =
       startWrapperWidth: number
       type: 'cover-height'
       which?: null
+    }
+  | {
+      frameHeight: number
+      frameWidth: number
+      pointerId: number
+      rotate: number
+      startClientX: number
+      startClientY: number
+      startCrop: TCoverImageCrop
+      type: 'crop'
+      which: TCoverImageWhich
     }
 
 type TResizeHandleConfig = {
@@ -225,12 +255,21 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
     scheduleImagePatch,
   } = useImageDraftContext()
   const s = useSalon()
+  const { lockPageOnce, unlockPageOnce } = usePageLock()
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const coverHeightPreviewRef = useRef(setting.canvasHeight)
-  const updatePreviewCssVars = useUpdatePreviewCssVars({ targetRef: wrapperRef })
+  const cropWheelFlushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const updatePreviewCssVars = useUpdatePreviewCssVars({
+    targetRef: wrapperRef,
+  })
   const interactionRef = useRef<TInteractionState | null>(null)
   const [interactionMode, setInteractionMode] = useState<TInteractionMode>('idle')
+  const [coverPointerInside, setCoverPointerInside] = useState(false)
   const [heightHandleHover, setHeightHandleHover] = useState(false)
+  const [imageEditModes, setImageEditModes] = useState<Record<TCoverImageWhich, TImageEditMode>>({
+    [COVER_IMAGE_WHICH.PRIMARY]: IMAGE_EDIT_MODE.MOVE,
+    [COVER_IMAGE_WHICH.SECONDARY]: IMAGE_EDIT_MODE.MOVE,
+  })
   const [hoveredRadiusHandle, setHoveredRadiusHandle] = useState<TImageResizeHandle | null>(null)
   const [hoveredMagnifierWhich, setHoveredMagnifierWhich] = useState<TCoverImageWhich | null>(null)
 
@@ -255,6 +294,7 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
     const rotate = normalizeSignedAngle(image.rotate)
     const imagePlacement = s.getImagePlacement(image.position, image.size, rotate, renderCanvas)
     const borderRadiusValue = `${image.borderRadius}px`
+    const cropPositionValue = `${image.crop.x * 100}% ${image.crop.y * 100}%`
     const frameBorderRadiusValue = getFrameBorderRadiusValue(image)
     const framePadding = image.glassBorder.enabled
       ? { x: GLASS_FRAME.PADDING_X, y: GLASS_FRAME.PADDING_Y }
@@ -298,6 +338,11 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
       boxSizing: 'border-box',
       borderRadius: imageVar('crop-radius', borderRadiusValue),
     }
+    const imageStyle: CSSProperties = {
+      objectPosition: imageVar('crop-object-position', cropPositionValue),
+      transform: imageVar('crop-transform', `scale(${image.crop.zoom})`),
+      transformOrigin: imageVar('crop-transform-origin', cropPositionValue),
+    }
 
     return {
       borderRadiusValue,
@@ -306,6 +351,7 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
       frameBorderRadiusValue,
       framePadding,
       imageFrameStyle,
+      imageStyle,
       magnifierImageFrameStyle,
     }
   }
@@ -327,6 +373,27 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
     coverHeightPreviewRef.current = setting.canvasHeight
   }, [setting.canvasHeight])
 
+  useEffect(
+    () => () => {
+      if (cropWheelFlushTimerRef.current) clearTimeout(cropWheelFlushTimerRef.current)
+    },
+    [],
+  )
+
+  useEffect(() => {
+    const shouldLockPage =
+      coverPointerInside &&
+      activeImage &&
+      getImageEditMode(activeImage.which) === IMAGE_EDIT_MODE.REPOSITION
+
+    if (shouldLockPage) {
+      lockPageOnce()
+      return unlockPageOnce
+    }
+
+    unlockPageOnce()
+  }, [activeImage, coverPointerInside, imageEditModes, lockPageOnce, unlockPageOnce])
+
   const getCanvasPoint = (event: PointerEvent<HTMLElement>): TCoverPoint | null => {
     const rect = wrapperRef.current?.getBoundingClientRect()
     if (!rect) return null
@@ -336,6 +403,14 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
 
   const isPrimaryPointer = (event: PointerEvent<HTMLElement>): boolean =>
     event.isPrimary && (event.pointerType !== 'mouse' || event.button === 0)
+
+  const getImageEditMode = (which: TCoverImageWhich): TImageEditMode => imageEditModes[which]
+
+  const imageEditModeOnChange = (which: TCoverImageWhich, mode: TImageEditMode): void => {
+    setImageEditModes((current) =>
+      current[which] === mode ? current : { ...current, [which]: mode },
+    )
+  }
 
   const finishInteraction = (event: PointerEvent<HTMLElement>): void => {
     const state = interactionRef.current
@@ -453,7 +528,9 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
     const zoomRange = MAGNIFIER_ZOOM_RANGE.MAX - MAGNIFIER_ZOOM_RANGE.MIN
     const nextZoom = state.startZoom + (dragDistance / 120) * zoomRange
 
-    scheduleImagePatch(state.which, { magnifier: { zoom: clampMagnifierZoom(nextZoom) } })
+    scheduleImagePatch(state.which, {
+      magnifier: { zoom: clampMagnifierZoom(nextZoom) },
+    })
   }
 
   const updateCoverHeightInteraction = (
@@ -468,6 +545,26 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
     if (wrapperRef.current) {
       wrapperRef.current.style.aspectRatio = `${setting.canvasWidth} / ${nextCanvasHeight}`
     }
+  }
+
+  const updateCropInteraction = (
+    state: Extract<TInteractionState, { type: 'crop' }>,
+    event: PointerEvent<HTMLElement>,
+  ): void => {
+    const delta = getCoverImageLocalDragDelta(
+      event.clientX - state.startClientX,
+      event.clientY - state.startClientY,
+      state.rotate,
+    )
+    const zoom = Math.max(COVER_IMAGE_CROP_ZOOM_RANGE.MIN, state.startCrop.zoom)
+
+    scheduleImagePatch(state.which, {
+      crop: {
+        x: clamp01(state.startCrop.x - delta.x / (state.frameWidth * zoom)),
+        y: clamp01(state.startCrop.y - delta.y / (state.frameHeight * zoom)),
+        zoom: state.startCrop.zoom,
+      },
+    })
   }
 
   const handleMovePointerDown =
@@ -492,6 +589,42 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
         which: image.which,
       }
       setInteractionMode('move')
+    }
+
+  const handleCropPointerDown =
+    (image: TCoverImageConfig) =>
+    (event: PointerEvent<HTMLDivElement>): void => {
+      if (!isPrimaryPointer(event)) return
+
+      const rect = event.currentTarget.getBoundingClientRect()
+      if (!rect.width || !rect.height) return
+
+      event.preventDefault()
+      activateImageDraft(image.which)
+      event.currentTarget.setPointerCapture(event.pointerId)
+      interactionRef.current = {
+        frameHeight: rect.height,
+        frameWidth: rect.width,
+        pointerId: event.pointerId,
+        rotate: normalizeSignedAngle(image.rotate),
+        startClientX: event.clientX,
+        startClientY: event.clientY,
+        startCrop: image.crop,
+        type: 'crop',
+        which: image.which,
+      }
+      setInteractionMode('crop')
+    }
+
+  const handleImagePointerDown =
+    (image: TCoverImageConfig) =>
+    (event: PointerEvent<HTMLDivElement>): void => {
+      if (getImageEditMode(image.which) === IMAGE_EDIT_MODE.REPOSITION) {
+        handleCropPointerDown(image)(event)
+        return
+      }
+
+      handleMovePointerDown(image)(event)
     }
 
   const handleResizePointerDown =
@@ -649,6 +782,11 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
       return
     }
 
+    if (state.type === 'crop') {
+      updateCropInteraction(state, event)
+      return
+    }
+
     const point = getCanvasPoint(event)
     if (!point) return
 
@@ -659,6 +797,32 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
     else if (state.type === 'magnifier-radius') updateMagnifierRadiusInteraction(state, point)
     else updateMagnifierZoomInteraction(state, point)
   }
+
+  const handleCropWheel =
+    (image: TCoverImageConfig) =>
+    (event: WheelEvent<HTMLDivElement>): void => {
+      if (getImageEditMode(image.which) !== IMAGE_EDIT_MODE.REPOSITION) return
+
+      event.preventDefault()
+      event.stopPropagation()
+      activateImageDraft(image.which)
+      const direction = event.deltaY > 0 ? -1 : 1
+
+      scheduleImagePatch(image.which, {
+        crop: {
+          ...image.crop,
+          zoom: clampCoverImageCropZoom(
+            image.crop.zoom + direction * COVER_IMAGE_CROP_ZOOM_RANGE.STEP,
+          ),
+        },
+      })
+
+      if (cropWheelFlushTimerRef.current) clearTimeout(cropWheelFlushTimerRef.current)
+      cropWheelFlushTimerRef.current = setTimeout(() => {
+        cropWheelFlushTimerRef.current = null
+        flushImageDraft()
+      }, 300)
+    }
 
   const handlePointerUp = (event: PointerEvent<HTMLElement>): void => {
     const state = interactionRef.current
@@ -682,6 +846,7 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
   }
 
   const handleCoverPointerLeave = (): void => {
+    setCoverPointerInside(false)
     setHeightHandleHover(false)
   }
 
@@ -723,6 +888,7 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
       frameBorderRadiusValue,
       framePadding,
       imageFrameStyle,
+      imageStyle,
       magnifierImageFrameStyle,
     } = getImageRenderState(image)
     const isInteracting =
@@ -733,10 +899,11 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
         key={image.which}
         className={s.cn(s.imageFrame, isInteracting && s.imageFrameActive)}
         style={isMagnifierClone ? magnifierImageFrameStyle : imageFrameStyle}
-        onPointerDown={isMagnifierClone ? undefined : handleMovePointerDown(image)}
+        onPointerDown={isMagnifierClone ? undefined : handleImagePointerDown(image)}
         onPointerMove={isMagnifierClone ? undefined : handlePointerMove}
         onPointerUp={isMagnifierClone ? undefined : handlePointerUp}
         onPointerCancel={isMagnifierClone ? undefined : handlePointerUp}
+        onWheel={isMagnifierClone ? undefined : handleCropWheel(image)}
       >
         <div
           className={s.cn(s.cropViewport, isInteracting && s.cropViewportActive)}
@@ -747,6 +914,7 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
             src={image.source}
             alt=''
             draggable={false}
+            style={imageStyle}
             onLoad={
               isMagnifierClone ? undefined : (event) => handleImageLoad(image, event.currentTarget)
             }
@@ -877,6 +1045,9 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
 
   const renderEditorFrame = (image: TCoverImageConfig): ReactNode => {
     const { editorFrameStyle, frameBorderRadiusValue } = getImageRenderState(image)
+    const imageEditMode = getImageEditMode(image.which)
+    const isCurrentImageInteracting =
+      interactionMode !== 'idle' && interactionRef.current?.which === image.which
     const showMagnifierHandles = getShowMagnifierHandles(image)
 
     return (
@@ -884,98 +1055,109 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
         className={s.cn(
           s.editorFrame,
           showMagnifierHandles && s.editorFrameHidden,
-          interactionMode !== 'idle' &&
-            interactionRef.current?.which === image.which &&
-            s.editorFrameActive,
-          interactionMode === 'idle' && s.editorFrameMove,
+          isCurrentImageInteracting && s.editorFrameActive,
+          interactionMode === 'idle' && imageEditMode === IMAGE_EDIT_MODE.MOVE && s.editorFrameMove,
+          interactionMode === 'idle' &&
+            imageEditMode === IMAGE_EDIT_MODE.REPOSITION &&
+            s.editorFrameCropping,
           interactionMode === 'move' &&
             interactionRef.current?.which === image.which &&
             s.editorFrameMoving,
+          interactionMode === 'crop' &&
+            interactionRef.current?.which === image.which &&
+            s.editorFrameCroppingActive,
           interactionMode === 'resize' &&
             interactionRef.current?.which === image.which &&
             s.editorFrameResizing,
         )}
         style={editorFrameStyle}
-        aria-label='Move image'
-        onPointerDown={handleMovePointerDown(image)}
+        aria-label={IMAGE_EDIT_MODE_LABEL[imageEditMode]}
+        onPointerDown={handleImagePointerDown(image)}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
+        onWheel={handleCropWheel(image)}
       >
+        <ImageModeToggle
+          active={imageEditMode === IMAGE_EDIT_MODE.REPOSITION || isCurrentImageInteracting}
+          mode={imageEditMode}
+          onChange={(mode) => imageEditModeOnChange(image.which, mode)}
+        />
         <div
           className={s.cn(s.editorBorder, s.editorBorderTone)}
           style={{ borderRadius: frameBorderRadiusValue }}
         />
-        {RESIZE_HANDLES.map(({ classNameKey, cursorClassNameKey, handle, label }) => {
-          const radiusHandleVisible =
-            hoveredRadiusHandle === handle || activeRadiusHandle === handle
-          const radiusVisual = RADIUS_HANDLE_VISUAL[handle]
-          const guideStyle: CSSProperties = {
-            transform: radiusVisual.guideTransform,
-            width: `${radiusHandleLength}px`,
-          }
-          const bridgeStyle: CSSProperties = {
-            height: `${radiusHandleLength + 16}px`,
-            transform: radiusVisual.guideTransform,
-            width: `${radiusHandleLength + 16}px`,
-          }
-          const radiusDots = [
-            {
-              direction: {
-                x: -radiusVisual.axis.x,
-                y: -radiusVisual.axis.y,
+        {imageEditMode === IMAGE_EDIT_MODE.MOVE &&
+          RESIZE_HANDLES.map(({ classNameKey, cursorClassNameKey, handle, label }) => {
+            const radiusHandleVisible =
+              hoveredRadiusHandle === handle || activeRadiusHandle === handle
+            const radiusVisual = RADIUS_HANDLE_VISUAL[handle]
+            const guideStyle: CSSProperties = {
+              transform: radiusVisual.guideTransform,
+              width: `${radiusHandleLength}px`,
+            }
+            const bridgeStyle: CSSProperties = {
+              height: `${radiusHandleLength + 16}px`,
+              transform: radiusVisual.guideTransform,
+              width: `${radiusHandleLength + 16}px`,
+            }
+            const radiusDots = [
+              {
+                direction: {
+                  x: -radiusVisual.axis.x,
+                  y: -radiusVisual.axis.y,
+                },
+                key: 'start',
+                transform: getRadiusDotTransform(radiusVisual.axis, -radiusDotOffset),
               },
-              key: 'start',
-              transform: getRadiusDotTransform(radiusVisual.axis, -radiusDotOffset),
-            },
-            {
-              direction: {
-                x: radiusVisual.axis.x,
-                y: radiusVisual.axis.y,
+              {
+                direction: {
+                  x: radiusVisual.axis.x,
+                  y: radiusVisual.axis.y,
+                },
+                key: 'end',
+                transform: getRadiusDotTransform(radiusVisual.axis, radiusDotOffset),
               },
-              key: 'end',
-              transform: getRadiusDotTransform(radiusVisual.axis, radiusDotOffset),
-            },
-          ]
+            ]
 
-          return (
-            <div
-              key={handle}
-              className={s.cn(s.resizeHandleGroup, s[classNameKey])}
-              onPointerDown={handleResizePointerDown(image, handle)}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerCancel={handlePointerUp}
-              onPointerEnter={() => setHoveredRadiusHandle(handle)}
-              onPointerLeave={() => setHoveredRadiusHandle(null)}
-            >
-              <button
-                type='button'
-                className={s.cn(s.resizeHandle, s[cursorClassNameKey])}
-                aria-label={label}
-              />
-              {radiusHandleVisible && (
-                <>
-                  <span className={s.radiusBridge} style={bridgeStyle} />
-                  <span className={s.cn(s.radiusGuide, s.radiusGuideTone)} style={guideStyle} />
-                  {radiusDots.map(({ direction, key, transform }) => (
-                    <button
-                      key={key}
-                      type='button'
-                      className={s.radiusDot}
-                      style={{ transform }}
-                      aria-label={`Adjust corner radius from ${handle}`}
-                      onPointerDown={handleRadiusPointerDown(image, handle, direction)}
-                      onPointerMove={handlePointerMove}
-                      onPointerUp={handlePointerUp}
-                      onPointerCancel={handlePointerUp}
-                    />
-                  ))}
-                </>
-              )}
-            </div>
-          )
-        })}
+            return (
+              <div
+                key={handle}
+                className={s.cn(s.resizeHandleGroup, s[classNameKey])}
+                onPointerDown={handleResizePointerDown(image, handle)}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                onPointerEnter={() => setHoveredRadiusHandle(handle)}
+                onPointerLeave={() => setHoveredRadiusHandle(null)}
+              >
+                <button
+                  type='button'
+                  className={s.cn(s.resizeHandle, s[cursorClassNameKey])}
+                  aria-label={label}
+                />
+                {radiusHandleVisible && (
+                  <>
+                    <span className={s.radiusBridge} style={bridgeStyle} />
+                    <span className={s.cn(s.radiusGuide, s.radiusGuideTone)} style={guideStyle} />
+                    {radiusDots.map(({ direction, key, transform }) => (
+                      <button
+                        key={key}
+                        type='button'
+                        className={s.radiusDot}
+                        style={{ transform }}
+                        aria-label={`Adjust corner radius from ${handle}`}
+                        onPointerDown={handleRadiusPointerDown(image, handle, direction)}
+                        onPointerMove={handlePointerMove}
+                        onPointerUp={handlePointerUp}
+                        onPointerCancel={handlePointerUp}
+                      />
+                    ))}
+                  </>
+                )}
+              </div>
+            )
+          })}
       </div>
     )
   }
@@ -985,6 +1167,7 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
       ref={wrapperRef}
       className={s.wrapper}
       style={canvasStyle}
+      onPointerEnter={() => setCoverPointerInside(true)}
       onPointerMove={updateHeightHandleHover}
       onPointerLeave={handleCoverPointerLeave}
     >

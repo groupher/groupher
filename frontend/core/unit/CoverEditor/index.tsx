@@ -3,12 +3,13 @@
  *
  */
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ChangeEvent, FC } from 'react'
 
 import { COVER_IMAGE_WHICH } from './constant'
 import Cover from './Cover'
 import ImageDraftProvider from './ImageDraftProvider'
+import KeyboardDeleteHandler from './KeyboardDeleteHandler'
 import useSalon from './salon'
 import type { TCoverImageWhich } from './spec'
 import TuningPanel from './TuningPanel'
@@ -22,6 +23,7 @@ type TProps = {
 const CoverEditor: FC<TProps> = ({ onDelete = console.log, onReplace = console.log }) => {
   const s = useSalon()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const [keyboardDeleteEnabled, setKeyboardDeleteEnabled] = useState(false)
   const pendingImageWhichRef = useRef<TCoverImageWhich>(COVER_IMAGE_WHICH.PRIMARY)
   const objectUrlRef = useRef<Record<TCoverImageWhich, string>>({
     [COVER_IMAGE_WHICH.PRIMARY]: '',
@@ -83,7 +85,16 @@ const CoverEditor: FC<TProps> = ({ onDelete = console.log, onReplace = console.l
   )
 
   return (
-    <div className={s.wrapper} style={s.wrapperStyle}>
+    <div
+      className={s.wrapper}
+      style={s.wrapperStyle}
+      onPointerEnter={() => setKeyboardDeleteEnabled(true)}
+      onPointerLeave={() => setKeyboardDeleteEnabled(false)}
+      onFocusCapture={() => setKeyboardDeleteEnabled(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setKeyboardDeleteEnabled(false)
+      }}
+    >
       <input
         ref={fileInputRef}
         className='hidden'
@@ -92,6 +103,7 @@ const CoverEditor: FC<TProps> = ({ onDelete = console.log, onReplace = console.l
         onChange={handleFileChange}
       />
       <ImageDraftProvider>
+        <KeyboardDeleteHandler enabled={keyboardDeleteEnabled} onDelete={handleDelete} />
         <Cover
           onDropFile={(file) => setLocalImageFile(COVER_IMAGE_WHICH.PRIMARY, file)}
           onUpload={() => openFilePicker(COVER_IMAGE_WHICH.PRIMARY)}

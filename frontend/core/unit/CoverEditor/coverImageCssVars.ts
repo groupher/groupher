@@ -18,6 +18,9 @@ const COVER_IMAGE_VAR_KEYS = [
   'padding',
   'frame-radius',
   'crop-radius',
+  'crop-object-position',
+  'crop-transform',
+  'crop-transform-origin',
   'shadow',
   'rotate',
   'z-index',
@@ -90,6 +93,11 @@ const getCoverImagePreviewCssVars = (
     [getCoverImageVarName(image.which, 'padding')]: getFramePaddingValue(image),
     [getCoverImageVarName(image.which, 'frame-radius')]: getFrameBorderRadiusValue(image),
     [getCoverImageVarName(image.which, 'crop-radius')]: `${image.borderRadius}px`,
+    [getCoverImageVarName(image.which, 'crop-object-position')]:
+      `${image.crop.x * 100}% ${image.crop.y * 100}%`,
+    [getCoverImageVarName(image.which, 'crop-transform')]: `scale(${image.crop.zoom})`,
+    [getCoverImageVarName(image.which, 'crop-transform-origin')]:
+      `${image.crop.x * 100}% ${image.crop.y * 100}%`,
     [getCoverImageVarName(image.which, 'shadow')]: getImageShadow(image.shadow) ?? 'none',
     [getCoverImageVarName(image.which, 'rotate')]: `${rotate}deg`,
     [getCoverImageVarName(image.which, 'z-index')]: image.zIndex,

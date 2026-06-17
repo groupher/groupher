@@ -10,6 +10,7 @@ import {
 } from './constant'
 import type {
   TBorderHighlight,
+  TCoverImageCrop,
   TCoverImageConfig,
   TCoverImages,
   TCoverImageWhich,
@@ -74,6 +75,12 @@ const createDefaultMagnifier = (): TCoverMagnifier => ({
   shadow: MAGNIFIER_APPEARANCE_DEFAULT.SHADOW,
 })
 
+const createDefaultCrop = (): TCoverImageCrop => ({
+  x: 0.5,
+  y: 0.5,
+  zoom: 1,
+})
+
 export const createCoverImageConfig = (
   which: TCoverImageWhich,
   source: string,
@@ -88,6 +95,7 @@ export const createCoverImageConfig = (
     size: isSecondary ? 62 : 94,
     rotate: 0,
     position: isSecondary ? { x: 0.58, y: 0.38 } : { x: 0.5, y: 0.5 },
+    crop: createDefaultCrop(),
     shadow: {
       ...createDefaultShadow(),
       preset: isSecondary ? COVER_SHADOW_PRESET.LARGE : COVER_SHADOW_DEFAULT.PRESET,

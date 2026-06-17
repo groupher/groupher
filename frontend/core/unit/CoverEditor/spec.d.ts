@@ -7,6 +7,7 @@ import type {
   COVER_IMAGE_WHICH,
   COVER_SHADOW_COLOR_MODE,
   COVER_SHADOW_PRESET,
+  IMAGE_EDIT_MODE,
   IMAGE_POS,
   MAGNIFIER_BORDER_COLOR,
 } from './constant'
@@ -71,12 +72,21 @@ export type TCoverCanvas = {
   canvasHeight: number
 }
 
+export type TCoverImageCrop = {
+  x: number
+  y: number
+  zoom: number
+}
+
+export type TImageEditMode = TConstValues<typeof IMAGE_EDIT_MODE>
+
 export type TCoverImageConfig = {
   which: TCoverImageWhich
   zIndex: number
   source: string
   dominantColor: string | null
   position: TCoverPoint
+  crop: TCoverImageCrop
   magnifier: TCoverMagnifier
   shadow: TCoverShadow
   borderRadius: number
@@ -91,6 +101,7 @@ export type TCoverImages = Record<TCoverImageWhich, TCoverImageConfig | null>
 export type TCoverImagePatch = Partial<
   Omit<TCoverImageConfig, 'borderHighlight' | 'glassBorder' | 'magnifier' | 'shadow' | 'which'>
 > & {
+  crop?: Partial<TCoverImageCrop>
   borderHighlight?: Partial<TBorderHighlight>
   glassBorder?: Partial<TCoverGlassBorder>
   magnifier?: Partial<TCoverMagnifier>

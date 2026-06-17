@@ -48,11 +48,13 @@ export default function useSalon() {
       `focus-visible:${accent('border')}`,
     ),
     editorFrame:
-      'absolute z-40 touch-none select-none opacity-0 transition-opacity duration-150 hover:opacity-100',
+      'group/image-editor absolute z-40 touch-none select-none opacity-0 transition-opacity duration-150 hover:opacity-100',
     editorFrameHidden: '!opacity-0',
     editorFrameActive: 'opacity-100 !transition-none',
     editorFrameMove: 'cursor-move',
     editorFrameMoving: 'cursor-grabbing',
+    editorFrameCropping: 'cursor-grab',
+    editorFrameCroppingActive: 'cursor-grabbing',
     editorFrameResizing: 'cursor-crosshair',
     editorBorder:
       'absolute inset-0 pointer-events-none border border-current shadow-[0_0_0_1px_currentColor] opacity-80',

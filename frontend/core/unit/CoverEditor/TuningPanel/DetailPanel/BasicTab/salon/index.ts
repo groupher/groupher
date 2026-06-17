@@ -2,13 +2,12 @@ import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {
-  const { cn, bg, br, fg, hover, rainbow, sexyBorder, shadow } = useTwBelt()
+  const { cn, bg, br, fg, hover, rainbow, shadow } = useTwBelt()
 
   return {
     wrapper: 'w-full min-h-32 mt-4 pl-1.5 pr-0.5',
     imageSection: 'column w-full',
     imageArea: 'group column w-full',
-    sectionDivider: cn(sexyBorder(), 'w-full mt-6'),
     actionArea: 'row-center w-full pt-4',
     uploadActions:
       'row-center gap-3 translate-x-1 opacity-0 pointer-events-none transition-[opacity,transform] duration-150 ease-out group-hover:translate-x-0 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:translate-x-0 group-focus-within:opacity-100 group-focus-within:pointer-events-auto',
