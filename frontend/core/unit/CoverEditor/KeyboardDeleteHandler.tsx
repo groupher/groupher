@@ -24,6 +24,7 @@ export default function KeyboardDeleteHandler({ enabled, onDelete }: TProps) {
     const handleKeyDown = (event: KeyboardEvent): void => {
       if (!enabled || !activeImage) return
       if (!IMAGE_DELETE_KEYS.some((key) => key === event.key)) return
+      if (event.repeat) return
       if (event.metaKey || event.ctrlKey || event.altKey) return
       if (isEditableTarget(event.target)) return
 

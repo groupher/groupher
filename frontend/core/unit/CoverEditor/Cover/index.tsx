@@ -472,6 +472,7 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
   ): void => {
     scheduleImagePatch(state.which, {
       borderRadius: getBorderRadiusFromCanvasPoint({
+        canvas: renderCanvas,
         center: state.startCenter,
         handle: state.handle,
         localDirection: state.localDirection,
@@ -802,6 +803,7 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
     (image: TCoverImageConfig) =>
     (event: WheelEvent<HTMLDivElement>): void => {
       if (getImageEditMode(image.which) !== IMAGE_EDIT_MODE.REPOSITION) return
+      if (event.deltaY === 0) return
 
       event.preventDefault()
       event.stopPropagation()

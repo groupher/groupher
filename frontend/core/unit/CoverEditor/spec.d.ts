@@ -99,7 +99,10 @@ export type TCoverImageConfig = {
 export type TCoverImages = Record<TCoverImageWhich, TCoverImageConfig | null>
 
 export type TCoverImagePatch = Partial<
-  Omit<TCoverImageConfig, 'borderHighlight' | 'glassBorder' | 'magnifier' | 'shadow' | 'which'>
+  Omit<
+    TCoverImageConfig,
+    'borderHighlight' | 'crop' | 'glassBorder' | 'magnifier' | 'shadow' | 'which'
+  >
 > & {
   crop?: Partial<TCoverImageCrop>
   borderHighlight?: Partial<TBorderHighlight>

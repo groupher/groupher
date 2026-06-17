@@ -23,7 +23,8 @@ type TProps = {
 const CoverEditor: FC<TProps> = ({ onDelete = console.log, onReplace = console.log }) => {
   const s = useSalon()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const [keyboardDeleteEnabled, setKeyboardDeleteEnabled] = useState(false)
+  const [keyboardDeleteFocused, setKeyboardDeleteFocused] = useState(false)
+  const [keyboardDeleteHovered, setKeyboardDeleteHovered] = useState(false)
   const pendingImageWhichRef = useRef<TCoverImageWhich>(COVER_IMAGE_WHICH.PRIMARY)
   const objectUrlRef = useRef<Record<TCoverImageWhich, string>>({
     [COVER_IMAGE_WHICH.PRIMARY]: '',
@@ -88,11 +89,11 @@ const CoverEditor: FC<TProps> = ({ onDelete = console.log, onReplace = console.l
     <div
       className={s.wrapper}
       style={s.wrapperStyle}
-      onPointerEnter={() => setKeyboardDeleteEnabled(true)}
-      onPointerLeave={() => setKeyboardDeleteEnabled(false)}
-      onFocusCapture={() => setKeyboardDeleteEnabled(true)}
+      onPointerEnter={() => setKeyboardDeleteHovered(true)}
+      onPointerLeave={() => setKeyboardDeleteHovered(false)}
+      onFocusCapture={() => setKeyboardDeleteFocused(true)}
       onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget)) setKeyboardDeleteEnabled(false)
+        if (!event.currentTarget.contains(event.relatedTarget)) setKeyboardDeleteFocused(false)
       }}
     >
       <input
@@ -103,7 +104,10 @@ const CoverEditor: FC<TProps> = ({ onDelete = console.log, onReplace = console.l
         onChange={handleFileChange}
       />
       <ImageDraftProvider>
-        <KeyboardDeleteHandler enabled={keyboardDeleteEnabled} onDelete={handleDelete} />
+        <KeyboardDeleteHandler
+          enabled={keyboardDeleteFocused || keyboardDeleteHovered}
+          onDelete={handleDelete}
+        />
         <Cover
           onDropFile={(file) => setLocalImageFile(COVER_IMAGE_WHICH.PRIMARY, file)}
           onUpload={() => openFilePicker(COVER_IMAGE_WHICH.PRIMARY)}

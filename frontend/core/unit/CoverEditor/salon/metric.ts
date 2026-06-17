@@ -20,13 +20,16 @@ const getCanvasSize = (
   height: canvas.canvasHeight ?? DEFAULT_CANVAS.canvasHeight,
 })
 
-export const getCoverRenderCanvas = ({
-  canvasWidth,
-  canvasHeight,
-}: TCoverCanvas): TCoverCanvas => ({
-  canvasWidth: CANVAS_WIDTH,
-  canvasHeight: (CANVAS_WIDTH * canvasHeight) / canvasWidth,
-})
+export const getCoverRenderCanvas = ({ canvasWidth, canvasHeight }: TCoverCanvas): TCoverCanvas => {
+  if (!Number.isFinite(canvasWidth) || !Number.isFinite(canvasHeight) || canvasWidth <= 0) {
+    return DEFAULT_CANVAS
+  }
+
+  return {
+    canvasWidth: CANVAS_WIDTH,
+    canvasHeight: (CANVAS_WIDTH * canvasHeight) / canvasWidth,
+  }
+}
 
 export const getImageSize = (
   size: TImageSize,
@@ -91,6 +94,7 @@ type TResizeResult = {
 }
 
 type TRadiusParams = {
+  canvas?: Partial<Pick<TCoverCanvas, 'canvasWidth' | 'canvasHeight'>>
   center: TCoverPoint
   handle: TImageResizeHandle
   localDirection: TCoverPoint
@@ -296,6 +300,7 @@ export const getImageResizeFromCanvasPoint = ({
 }
 
 export const getBorderRadiusFromCanvasPoint = ({
+  canvas = DEFAULT_CANVAS,
   center,
   handle,
   localDirection,
@@ -303,7 +308,7 @@ export const getBorderRadiusFromCanvasPoint = ({
   rotate,
   size,
 }: TRadiusParams): number => {
-  const cornerOffset = getResizeHandleOffset(handle, size, rotate)
+  const cornerOffset = getResizeHandleOffset(handle, size, rotate, canvas)
   const corner = {
     x: center.x + cornerOffset.x,
     y: center.y + cornerOffset.y,

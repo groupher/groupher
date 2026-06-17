@@ -306,6 +306,8 @@ export default function useLogic(): TRet {
     imagePatchOnChange(which, { rotate: normalizeSignedAngle(rotate) })
 
   const canvasHeightOnChange = (canvasHeight: number): void => {
+    if (!Number.isFinite(canvasHeight)) return
+
     const nextCanvasHeight = Math.min(
       COVER_HEIGHT_RANGE.MAX,
       Math.max(COVER_HEIGHT_RANGE.MIN, Math.round(canvasHeight)),
