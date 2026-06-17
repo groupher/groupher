@@ -4,21 +4,40 @@ import {
   IMAGE_CONTAINER_SIZE,
   IMAGE_SIZE_RANGE,
 } from '../constant'
-import type { TCoverPoint, TImageSize, TImageSizeValue } from '../spec'
+import type { TCoverCanvas, TCoverPoint, TImageSize, TImageSizeValue } from '../spec'
 
 const CANVAS_WIDTH = Number.parseFloat(IMAGE_CONTAINER_SIZE.WIDTH)
 const CANVAS_HEIGHT = Number.parseFloat(IMAGE_CONTAINER_SIZE.HEIGHT)
+const DEFAULT_CANVAS: TCoverCanvas = {
+  canvasWidth: CANVAS_WIDTH,
+  canvasHeight: CANVAS_HEIGHT,
+}
 
-const IMAGE_FRAME_ASPECT = CANVAS_WIDTH / CANVAS_HEIGHT
+const getCanvasSize = (
+  canvas: Partial<Pick<TCoverCanvas, 'canvasWidth' | 'canvasHeight'>> = DEFAULT_CANVAS,
+): { width: number; height: number } => ({
+  width: canvas.canvasWidth ?? DEFAULT_CANVAS.canvasWidth,
+  height: canvas.canvasHeight ?? DEFAULT_CANVAS.canvasHeight,
+})
 
-export const getImageSize = (size: TImageSize): TImageSizeValue => {
+export const getCoverRenderCanvas = ({
+  canvasWidth,
+  canvasHeight,
+}: TCoverCanvas): TCoverCanvas => ({
+  canvasWidth: CANVAS_WIDTH,
+  canvasHeight: (CANVAS_WIDTH * canvasHeight) / canvasWidth,
+})
+
+export const getImageSize = (
+  size: TImageSize,
+  canvas: Partial<Pick<TCoverCanvas, 'canvasWidth' | 'canvasHeight'>> = DEFAULT_CANVAS,
+): TImageSizeValue => {
   const scale = size / 100
-  const height = CANVAS_HEIGHT * scale
-  const width = height * IMAGE_FRAME_ASPECT
+  const canvasSize = getCanvasSize(canvas)
 
   return {
-    width: `${width}px`,
-    height: `${height}px`,
+    width: `${canvasSize.width * scale}px`,
+    height: `${canvasSize.height * scale}px`,
   }
 }
 
@@ -26,12 +45,16 @@ const toCanvasPercent = (value: string, base: string): string => {
   return `${(Number.parseFloat(value) / Number.parseFloat(base)) * 100}%`
 }
 
-export const getResponsiveImageSize = (size: TImageSize): TImageSizeValue => {
-  const imageSize = getImageSize(size)
+export const getResponsiveImageSize = (
+  size: TImageSize,
+  canvas: Partial<Pick<TCoverCanvas, 'canvasWidth' | 'canvasHeight'>> = DEFAULT_CANVAS,
+): TImageSizeValue => {
+  const imageSize = getImageSize(size, canvas)
+  const canvasSize = getCanvasSize(canvas)
 
   return {
-    width: toCanvasPercent(imageSize.width, IMAGE_CONTAINER_SIZE.WIDTH),
-    height: toCanvasPercent(imageSize.height, IMAGE_CONTAINER_SIZE.HEIGHT),
+    width: toCanvasPercent(imageSize.width, `${canvasSize.width}px`),
+    height: toCanvasPercent(imageSize.height, `${canvasSize.height}px`),
   }
 }
 
@@ -39,8 +62,11 @@ export const clamp01 = (value: number): number => Math.min(1, Math.max(0, value)
 
 const normalizeAngle = (angle: number): number => ((angle % 360) + 360) % 360
 
-const getImageSizeNumber = (size: TImageSize): { width: number; height: number } => {
-  const imageSize = getImageSize(size)
+const getImageSizeNumber = (
+  size: TImageSize,
+  canvas: Partial<Pick<TCoverCanvas, 'canvasWidth' | 'canvasHeight'>> = DEFAULT_CANVAS,
+): { width: number; height: number } => {
+  const imageSize = getImageSize(size, canvas)
 
   return {
     width: Number.parseFloat(imageSize.width),
@@ -51,6 +77,7 @@ const getImageSizeNumber = (size: TImageSize): { width: number; height: number }
 export type TImageResizeHandle = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
 
 type TResizeParams = {
+  canvas?: Partial<Pick<TCoverCanvas, 'canvasWidth' | 'canvasHeight'>>
   handle: TImageResizeHandle
   point: TCoverPoint
   rotate: number
@@ -108,9 +135,10 @@ const getResizeHandleOffset = (
   handle: TImageResizeHandle,
   size: TImageSize,
   rotate: number,
+  canvas: Partial<Pick<TCoverCanvas, 'canvasWidth' | 'canvasHeight'>> = DEFAULT_CANVAS,
 ): TCoverPoint => {
   const sign = RESIZE_HANDLE_SIGN[handle]
-  const frameSize = getImageCanvasSize(size)
+  const frameSize = getImageSizeNumber(size, canvas)
 
   return rotatePoint(
     {
@@ -139,9 +167,11 @@ const getRotatedSize = (
 const getPlacementBounds = (
   size: TImageSize,
   rotate: number,
+  canvas: Partial<Pick<TCoverCanvas, 'canvasWidth' | 'canvasHeight'>> = DEFAULT_CANVAS,
 ): { minX: number; maxX: number; minY: number; maxY: number } => {
-  const imageSize = getImageSizeNumber(size)
+  const imageSize = getImageSizeNumber(size, canvas)
   const rotatedSize = getRotatedSize(imageSize.width, imageSize.height, rotate)
+  const canvasSize = getCanvasSize(canvas)
 
   const getAxisBounds = (canvasSize: number, frameSize: number): { min: number; max: number } => {
     // Allow dragging outside the cover while keeping enough visible area to recover the image.
@@ -153,8 +183,8 @@ const getPlacementBounds = (
     }
   }
 
-  const xBounds = getAxisBounds(CANVAS_WIDTH, rotatedSize.width)
-  const yBounds = getAxisBounds(CANVAS_HEIGHT, rotatedSize.height)
+  const xBounds = getAxisBounds(canvasSize.width, rotatedSize.width)
+  const yBounds = getAxisBounds(canvasSize.height, rotatedSize.height)
 
   return {
     minX: xBounds.min,
@@ -176,12 +206,14 @@ export const getImagePlacement = (
   position: TCoverPoint,
   size: TImageSize,
   rotate: number,
+  canvas: Partial<Pick<TCoverCanvas, 'canvasWidth' | 'canvasHeight'>> = DEFAULT_CANVAS,
 ): { left: string; top: string } => {
-  const { minX, maxX, minY, maxY } = getPlacementBounds(size, rotate)
+  const { minX, maxX, minY, maxY } = getPlacementBounds(size, rotate, canvas)
+  const canvasSize = getCanvasSize(canvas)
 
   return {
-    left: `${(getCenterValue(position.x, minX, maxX) / CANVAS_WIDTH) * 100}%`,
-    top: `${(getCenterValue(position.y, minY, maxY) / CANVAS_HEIGHT) * 100}%`,
+    left: `${(getCenterValue(position.x, minX, maxX) / canvasSize.width) * 100}%`,
+    top: `${(getCenterValue(position.y, minY, maxY) / canvasSize.height) * 100}%`,
   }
 }
 
@@ -189,8 +221,9 @@ export const getImageCanvasCenter = (
   position: TCoverPoint,
   size: TImageSize,
   rotate: number,
+  canvas: Partial<Pick<TCoverCanvas, 'canvasWidth' | 'canvasHeight'>> = DEFAULT_CANVAS,
 ): TCoverPoint => {
-  const { minX, maxX, minY, maxY } = getPlacementBounds(size, rotate)
+  const { minX, maxX, minY, maxY } = getPlacementBounds(size, rotate, canvas)
 
   return {
     x: getCenterValue(position.x, minX, maxX),
@@ -202,8 +235,9 @@ export const getImagePositionFromCanvasPoint = (
   point: TCoverPoint,
   size: TImageSize,
   rotate: number,
+  canvas: Partial<Pick<TCoverCanvas, 'canvasWidth' | 'canvasHeight'>> = DEFAULT_CANVAS,
 ): TCoverPoint => {
-  const { minX, maxX, minY, maxY } = getPlacementBounds(size, rotate)
+  const { minX, maxX, minY, maxY } = getPlacementBounds(size, rotate, canvas)
   const xRange = maxX - minX
   const yRange = maxY - minY
 
@@ -217,21 +251,25 @@ export const getCanvasPointFromClient = (
   clientX: number,
   clientY: number,
   rect: DOMRect,
+  canvas: Partial<Pick<TCoverCanvas, 'canvasWidth' | 'canvasHeight'>> = DEFAULT_CANVAS,
 ): TCoverPoint => {
+  const canvasSize = getCanvasSize(canvas)
+
   return {
-    x: ((clientX - rect.left) / rect.width) * CANVAS_WIDTH,
-    y: ((clientY - rect.top) / rect.height) * CANVAS_HEIGHT,
+    x: ((clientX - rect.left) / rect.width) * canvasSize.width,
+    y: ((clientY - rect.top) / rect.height) * canvasSize.height,
   }
 }
 
 export const getImageResizeFromCanvasPoint = ({
+  canvas = DEFAULT_CANVAS,
   handle,
   point,
   rotate,
   startCenter,
   startSize,
 }: TResizeParams): TResizeResult => {
-  const rotatedCorner = getResizeHandleOffset(handle, startSize, rotate)
+  const rotatedCorner = getResizeHandleOffset(handle, startSize, rotate, canvas)
   const anchor = {
     x: startCenter.x - rotatedCorner.x,
     y: startCenter.y - rotatedCorner.y,

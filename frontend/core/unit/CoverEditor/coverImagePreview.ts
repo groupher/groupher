@@ -1,11 +1,11 @@
-import type { TCoverImages, TCoverImageWhich } from './spec'
+import type { TCoverCanvas, TCoverImages, TCoverImageWhich } from './spec'
 
 export const COVER_IMAGE_PREVIEW_EVENT = 'groupher:cover-image-preview'
 
 export type TCoverImagePreviewState = {
   images: TCoverImages
   activeImageWhich: TCoverImageWhich
-}
+} & TCoverCanvas
 
 export type TCoverImagePreviewDetail = {
   state: TCoverImagePreviewState | null

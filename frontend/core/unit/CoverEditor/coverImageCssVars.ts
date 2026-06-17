@@ -1,17 +1,14 @@
 import type { TPreviewCssVars } from '~/hooks/useUpdatePreviewCssVars'
 import { normalizeSignedAngle } from '~/lib/angle'
 
-import { GLASS_FRAME, IMAGE_CONTAINER_SIZE, MAGNIFIER_RENDER_SIZE } from './constant'
+import { GLASS_FRAME, MAGNIFIER_RENDER_SIZE } from './constant'
 import { COVER_IMAGE_WHICH_LIST } from './coverImageModel'
 import type { TCoverImagePreviewState } from './coverImagePreview'
 import { getImageShadow } from './helper'
-import { getImagePlacement, getResponsiveImageSize } from './salon/metric'
+import { getCoverRenderCanvas, getImagePlacement, getResponsiveImageSize } from './salon/metric'
 import type { TCoverImageConfig, TCoverImageWhich } from './spec'
 
 type TCoverImagePreviewCssVars = TPreviewCssVars
-
-const CANVAS_WIDTH = Number.parseFloat(IMAGE_CONTAINER_SIZE.WIDTH)
-const CANVAS_HEIGHT = Number.parseFloat(IMAGE_CONTAINER_SIZE.HEIGHT)
 
 const COVER_IMAGE_VAR_KEYS = [
   'width',
@@ -70,14 +67,20 @@ export const getMagnifierRenderSize = (radius: number): number =>
   MAGNIFIER_RENDER_SIZE.MIN +
   (MAGNIFIER_RENDER_SIZE.MAX - MAGNIFIER_RENDER_SIZE.MIN) * Math.min(1, Math.max(0, radius))
 
-const getCoverImagePreviewCssVars = (image: TCoverImageConfig): TCoverImagePreviewCssVars => {
-  const imageFrameSize = getResponsiveImageSize(image.size)
+const getCoverImagePreviewCssVars = (
+  image: TCoverImageConfig,
+  canvas: TCoverImagePreviewState,
+): TCoverImagePreviewCssVars => {
+  const renderCanvas = getCoverRenderCanvas(canvas)
+  const imageFrameSize = getResponsiveImageSize(image.size, renderCanvas)
   const rotate = normalizeSignedAngle(image.rotate)
-  const imagePlacement = getImagePlacement(image.position, image.size, rotate)
+  const imagePlacement = getImagePlacement(image.position, image.size, rotate, renderCanvas)
   const magnifierRenderSize = getMagnifierRenderSize(image.magnifier.radius)
-  const magnifierSizePercent = (magnifierRenderSize / CANVAS_WIDTH) * 100
-  const magnifierCanvasLeft = image.magnifier.center.x * CANVAS_WIDTH - magnifierRenderSize / 2
-  const magnifierCanvasTop = image.magnifier.center.y * CANVAS_HEIGHT - magnifierRenderSize / 2
+  const magnifierSizePercent = (magnifierRenderSize / renderCanvas.canvasWidth) * 100
+  const magnifierCanvasLeft =
+    image.magnifier.center.x * renderCanvas.canvasWidth - magnifierRenderSize / 2
+  const magnifierCanvasTop =
+    image.magnifier.center.y * renderCanvas.canvasHeight - magnifierRenderSize / 2
 
   return {
     [getCoverImageVarName(image.which, 'width')]: imageFrameSize.width,
@@ -96,9 +99,9 @@ const getCoverImagePreviewCssVars = (image: TCoverImageConfig): TCoverImagePrevi
     [getCoverImageVarName(image.which, 'magnifier-top')]: `${image.magnifier.center.y * 100}%`,
     [getCoverImageVarName(image.which, 'magnifier-z-index')]: image.zIndex + 2,
     [getCoverImageVarName(image.which, 'magnifier-clone-width')]:
-      `${(CANVAS_WIDTH / magnifierRenderSize) * 100}%`,
+      `${(renderCanvas.canvasWidth / magnifierRenderSize) * 100}%`,
     [getCoverImageVarName(image.which, 'magnifier-clone-height')]:
-      `${(CANVAS_HEIGHT / magnifierRenderSize) * 100}%`,
+      `${(renderCanvas.canvasHeight / magnifierRenderSize) * 100}%`,
     [getCoverImageVarName(image.which, 'magnifier-clone-left')]:
       `${(-magnifierCanvasLeft / magnifierRenderSize) * 100}%`,
     [getCoverImageVarName(image.which, 'magnifier-clone-top')]:
@@ -125,7 +128,7 @@ export const getCoverPreviewCssVars = (state: TCoverImagePreviewState): TCoverIm
   ).reduce<TCoverImagePreviewCssVars>(
     (vars, image) => ({
       ...vars,
-      ...getCoverImagePreviewCssVars(image),
+      ...getCoverImagePreviewCssVars(image, state),
     }),
     { ...COVER_IMAGE_PREVIEW_CLEANUP_CSS_VARS },
   )

@@ -66,6 +66,11 @@ export type TCoverMagnifier = {
 
 export type TCoverImageWhich = TConstValues<typeof COVER_IMAGE_WHICH>
 
+export type TCoverCanvas = {
+  canvasWidth: number
+  canvasHeight: number
+}
+
 export type TCoverImageConfig = {
   which: TCoverImageWhich
   zIndex: number
@@ -93,6 +98,8 @@ export type TCoverImagePatch = Partial<
 }
 
 export type TCoverConfig = {
+  canvasWidth: number
+  canvasHeight: number
   images: TCoverImages
   background: TBgThemeConfig
 }
@@ -100,6 +107,8 @@ export type TCoverConfig = {
 export type TStore = {
   images: TCoverImages
   activeImageWhich: TCoverImageWhich
+  canvasWidth: number
+  canvasHeight: number
   background: TBgThemeConfig
   originalBackground: TBgThemeConfig
 
@@ -123,6 +132,8 @@ export type TTuningSetting = {
   images: TCoverImages
   activeImageWhich: TCoverImageWhich
   activeImage: TCoverImageConfig | null
+  canvasWidth: number
+  canvasHeight: number
   background: TBgThemeConfig
   activeBackground: TBgConfig
   isBackgroundTouched: boolean

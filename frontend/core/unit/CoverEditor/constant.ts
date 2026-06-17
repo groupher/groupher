@@ -3,6 +3,16 @@ export const IMAGE_CONTAINER_SIZE = {
   HEIGHT: '400px',
 }
 
+export const COVER_CANVAS_SIZE = {
+  WIDTH: 1200,
+  HEIGHT: 630,
+} as const
+
+export const COVER_HEIGHT_RANGE = {
+  MIN: 320,
+  MAX: 900,
+} as const
+
 export const COVER_IMAGE_WHICH = {
   PRIMARY: 'primary',
   SECONDARY: 'secondary',

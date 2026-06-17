@@ -9,8 +9,8 @@ import BgRenderer from '~/widgets/BgRenderer'
 
 import { adaptCoverBgRenderSpec } from '../background'
 import {
+  COVER_HEIGHT_RANGE,
   GLASS_FRAME,
-  IMAGE_CONTAINER_SIZE,
   IMAGE_SIZE_RANGE,
   MAGNIFIER_RENDER_SIZE,
   MAGNIFIER_ZOOM_RANGE,
@@ -28,6 +28,7 @@ import { useImageDraftContext } from '../imageDraftContext'
 import {
   getBorderRadiusFromCanvasPoint,
   getCanvasPointFromClient,
+  getCoverRenderCanvas,
   getImageCanvasCenter,
   getImagePositionFromCanvasPoint,
   getImageResizeFromCanvasPoint,
@@ -36,6 +37,7 @@ import {
 import type { TCoverImageConfig, TCoverImageWhich, TCoverPoint, TImageSize } from '../spec'
 import useLogic from '../useLogic'
 import BorderRender from './BorderRender'
+import HeightResizer from './HeightResizer'
 import Placeholder from './Placeholder'
 import useSalon from './salon'
 
@@ -52,6 +54,7 @@ type TInteractionMode =
   | 'move'
   | 'radius'
   | 'resize'
+  | 'cover-height'
 
 type TInteractionState =
   | {
@@ -103,6 +106,14 @@ type TInteractionState =
       startZoom: number
       type: 'magnifier-zoom'
       which: TCoverImageWhich
+    }
+  | {
+      pointerId: number
+      startCanvasHeight: number
+      startClientY: number
+      startWrapperWidth: number
+      type: 'cover-height'
+      which?: null
     }
 
 type TResizeHandleConfig = {
@@ -173,19 +184,22 @@ const getRadiusDotTransform = (axis: { x: 1; y: -1 | 1 }, offset: number): strin
     (axis.y * offset) / Math.SQRT2
   }px))`
 
-const CANVAS_WIDTH = Number.parseFloat(IMAGE_CONTAINER_SIZE.WIDTH)
-const CANVAS_HEIGHT = Number.parseFloat(IMAGE_CONTAINER_SIZE.HEIGHT)
-
 const clamp01 = (value: number): number => Math.min(1, Math.max(0, value))
+
+const clampCoverHeight = (height: number): number =>
+  Math.min(COVER_HEIGHT_RANGE.MAX, Math.max(COVER_HEIGHT_RANGE.MIN, Math.round(height)))
+
+const HEIGHT_HANDLE_HOVER_START = 0.75
 
 const getMagnifierRadiusFromCanvasPoint = (
   point: TCoverPoint,
   center: TCoverPoint,
   startRadius: number,
+  canvas: { canvasWidth: number; canvasHeight: number },
 ): number => {
   const centerPoint = {
-    x: center.x * CANVAS_WIDTH,
-    y: center.y * CANVAS_HEIGHT,
+    x: center.x * canvas.canvasWidth,
+    y: center.y * canvas.canvasHeight,
   }
   const distance = Math.sqrt((point.x - centerPoint.x) ** 2 + (point.y - centerPoint.y) ** 2)
   const minRadius = MAGNIFIER_RENDER_SIZE.MIN / 2
@@ -200,7 +214,7 @@ const clampMagnifierZoom = (zoom: number): number =>
   Math.min(MAGNIFIER_ZOOM_RANGE.MAX, Math.max(MAGNIFIER_ZOOM_RANGE.MIN, Number(zoom.toFixed(1))))
 
 const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
-  const { imageLoadedOnChange, tuningSetting: setting } = useLogic()
+  const { canvasHeightOnChange, imageLoadedOnChange, tuningSetting: setting } = useLogic()
   const { activeBackground } = setting
   const {
     activeImage,
@@ -212,9 +226,11 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
   } = useImageDraftContext()
   const s = useSalon()
   const wrapperRef = useRef<HTMLDivElement | null>(null)
+  const coverHeightPreviewRef = useRef(setting.canvasHeight)
   const updatePreviewCssVars = useUpdatePreviewCssVars({ targetRef: wrapperRef })
   const interactionRef = useRef<TInteractionState | null>(null)
   const [interactionMode, setInteractionMode] = useState<TInteractionMode>('idle')
+  const [heightHandleHover, setHeightHandleHover] = useState(false)
   const [hoveredRadiusHandle, setHoveredRadiusHandle] = useState<TImageResizeHandle | null>(null)
   const [hoveredMagnifierWhich, setHoveredMagnifierWhich] = useState<TCoverImageWhich | null>(null)
 
@@ -223,6 +239,11 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
   ).sort((a, b) => a.zIndex - b.zIndex)
   const hasImage = imageList.length > 0
   const hasWallpaper = !isEmpty(activeBackground.source)
+  const renderCanvas = getCoverRenderCanvas(setting)
+  const canvasStyle: CSSProperties = {
+    ...s.wrapperStyle,
+    aspectRatio: `${setting.canvasWidth} / ${setting.canvasHeight}`,
+  }
   const isFullFrame = imageList.some(
     (image) => image.size === IMAGE_SIZE_RANGE.MAX && normalizeSignedAngle(image.rotate) === 0,
   )
@@ -230,9 +251,9 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
   const backgroundRenderSpec = adaptCoverBgRenderSpec(activeBackground)
 
   const getImageRenderState = (image: TCoverImageConfig) => {
-    const imageFrameSize = s.getResponsiveImageSize(image.size)
+    const imageFrameSize = s.getResponsiveImageSize(image.size, renderCanvas)
     const rotate = normalizeSignedAngle(image.rotate)
-    const imagePlacement = s.getImagePlacement(image.position, image.size, rotate)
+    const imagePlacement = s.getImagePlacement(image.position, image.size, rotate, renderCanvas)
     const borderRadiusValue = `${image.borderRadius}px`
     const frameBorderRadiusValue = getFrameBorderRadiusValue(image)
     const framePadding = image.glassBorder.enabled
@@ -302,11 +323,15 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
     return unsubscribe
   }, [updatePreviewCssVars])
 
+  useEffect(() => {
+    coverHeightPreviewRef.current = setting.canvasHeight
+  }, [setting.canvasHeight])
+
   const getCanvasPoint = (event: PointerEvent<HTMLElement>): TCoverPoint | null => {
     const rect = wrapperRef.current?.getBoundingClientRect()
     if (!rect) return null
 
-    return getCanvasPointFromClient(event.clientX, event.clientY, rect)
+    return getCanvasPointFromClient(event.clientX, event.clientY, rect, renderCanvas)
   }
 
   const isPrimaryPointer = (event: PointerEvent<HTMLElement>): boolean =>
@@ -321,6 +346,9 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
 
     interactionRef.current = null
     if (state?.type === 'radius') setHoveredRadiusHandle(null)
+    if (state?.type === 'cover-height') {
+      canvasHeightOnChange(coverHeightPreviewRef.current)
+    }
     setInteractionMode('idle')
     flushImageDraft()
   }
@@ -335,7 +363,12 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
     }
 
     scheduleImagePatch(state.which, {
-      position: getImagePositionFromCanvasPoint(nextCenter, state.startSize, state.rotate),
+      position: getImagePositionFromCanvasPoint(
+        nextCenter,
+        state.startSize,
+        state.rotate,
+        renderCanvas,
+      ),
     })
   }
 
@@ -349,11 +382,12 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
       rotate: state.rotate,
       startCenter: state.startCenter,
       startSize: state.startSize,
+      canvas: renderCanvas,
     })
 
     scheduleImagePatch(state.which, {
       size: next.size,
-      position: getImagePositionFromCanvasPoint(next.center, next.size, state.rotate),
+      position: getImagePositionFromCanvasPoint(next.center, next.size, state.rotate, renderCanvas),
     })
   }
 
@@ -380,8 +414,12 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
     scheduleImagePatch(state.which, {
       magnifier: {
         center: {
-          x: clamp01(state.startCenter.x + (point.x - state.startPoint.x) / CANVAS_WIDTH),
-          y: clamp01(state.startCenter.y + (point.y - state.startPoint.y) / CANVAS_HEIGHT),
+          x: clamp01(
+            state.startCenter.x + (point.x - state.startPoint.x) / renderCanvas.canvasWidth,
+          ),
+          y: clamp01(
+            state.startCenter.y + (point.y - state.startPoint.y) / renderCanvas.canvasHeight,
+          ),
         },
         radius: state.startRadius,
         enabled: true,
@@ -396,7 +434,12 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
     scheduleImagePatch(state.which, {
       magnifier: {
         center: state.startCenter,
-        radius: getMagnifierRadiusFromCanvasPoint(point, state.startCenter, state.startRadius),
+        radius: getMagnifierRadiusFromCanvasPoint(
+          point,
+          state.startCenter,
+          state.startRadius,
+          renderCanvas,
+        ),
         enabled: true,
       },
     })
@@ -411,6 +454,20 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
     const nextZoom = state.startZoom + (dragDistance / 120) * zoomRange
 
     scheduleImagePatch(state.which, { magnifier: { zoom: clampMagnifierZoom(nextZoom) } })
+  }
+
+  const updateCoverHeightInteraction = (
+    state: Extract<TInteractionState, { type: 'cover-height' }>,
+    event: PointerEvent<HTMLElement>,
+  ): void => {
+    const canvasDelta =
+      ((event.clientY - state.startClientY) / state.startWrapperWidth) * setting.canvasWidth
+    const nextCanvasHeight = clampCoverHeight(state.startCanvasHeight + canvasDelta)
+
+    coverHeightPreviewRef.current = nextCanvasHeight
+    if (wrapperRef.current) {
+      wrapperRef.current.style.aspectRatio = `${setting.canvasWidth} / ${nextCanvasHeight}`
+    }
   }
 
   const handleMovePointerDown =
@@ -428,7 +485,7 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
       interactionRef.current = {
         pointerId: event.pointerId,
         rotate,
-        startCenter: getImageCanvasCenter(image.position, image.size, rotate),
+        startCenter: getImageCanvasCenter(image.position, image.size, rotate, renderCanvas),
         startPoint,
         startSize: image.size,
         type: 'move',
@@ -451,7 +508,7 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
         handle,
         pointerId: event.pointerId,
         rotate,
-        startCenter: getImageCanvasCenter(image.position, image.size, rotate),
+        startCenter: getImageCanvasCenter(image.position, image.size, rotate, renderCanvas),
         startSize: image.size,
         type: 'resize',
         which: image.which,
@@ -478,7 +535,7 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
         localDirection,
         pointerId: event.pointerId,
         rotate,
-        startCenter: getImageCanvasCenter(image.position, image.size, rotate),
+        startCenter: getImageCanvasCenter(image.position, image.size, rotate, renderCanvas),
         startSize: image.size,
         type: 'radius',
         which: image.which,
@@ -489,6 +546,26 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
       setInteractionMode('radius')
       updateRadiusInteraction(nextState, point)
     }
+
+  const handleCoverHeightPointerDown = (event: PointerEvent<HTMLButtonElement>): void => {
+    if (!isPrimaryPointer(event)) return
+
+    const rect = wrapperRef.current?.getBoundingClientRect()
+    if (!rect) return
+
+    event.preventDefault()
+    event.stopPropagation()
+    event.currentTarget.setPointerCapture(event.pointerId)
+    interactionRef.current = {
+      pointerId: event.pointerId,
+      startCanvasHeight: setting.canvasHeight,
+      startClientY: event.clientY,
+      startWrapperWidth: rect.width,
+      type: 'cover-height',
+    }
+    coverHeightPreviewRef.current = setting.canvasHeight
+    setInteractionMode('cover-height')
+  }
 
   const handleMagnifierMovePointerDown =
     (image: TCoverImageConfig) =>
@@ -565,10 +642,15 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
     if (!state || state.pointerId !== event.pointerId) return
     if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
 
+    event.preventDefault()
+
+    if (state.type === 'cover-height') {
+      updateCoverHeightInteraction(state, event)
+      return
+    }
+
     const point = getCanvasPoint(event)
     if (!point) return
-
-    event.preventDefault()
 
     if (state.type === 'move') updateMoveInteraction(state, point)
     else if (state.type === 'resize') updateResizeInteraction(state, point)
@@ -586,6 +668,23 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
     finishInteraction(event)
   }
 
+  const updateHeightHandleHover = (event: PointerEvent<HTMLElement>): void => {
+    const state = interactionRef.current
+    if (state && state.type !== 'cover-height') return
+
+    const rect = wrapperRef.current?.getBoundingClientRect()
+    if (!rect) return
+
+    const y = event.clientY - rect.top
+    const nextHover = y >= rect.height * HEIGHT_HANDLE_HOVER_START
+
+    setHeightHandleHover((current) => (current === nextHover ? current : nextHover))
+  }
+
+  const handleCoverPointerLeave = (): void => {
+    setHeightHandleHover(false)
+  }
+
   const handleImageLoad = (coverImage: TCoverImageConfig, image: HTMLImageElement): void => {
     imageLoadedOnChange(
       coverImage.which,
@@ -596,7 +695,7 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
 
   if (!hasImage) {
     return (
-      <div ref={wrapperRef} className={s.wrapper} style={s.wrapperStyle}>
+      <div ref={wrapperRef} className={s.wrapper} style={canvasStyle}>
         <Placeholder onDropFile={onDropFile} onUpload={onUpload} />
       </div>
     )
@@ -685,14 +784,22 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
     if (!image.magnifier.enabled) return null
 
     const magnifierRenderSize = getMagnifierRenderSize(image.magnifier.radius)
-    const magnifierSizePercent = (magnifierRenderSize / CANVAS_WIDTH) * 100
-    const magnifierCanvasLeft = image.magnifier.center.x * CANVAS_WIDTH - magnifierRenderSize / 2
-    const magnifierCanvasTop = image.magnifier.center.y * CANVAS_HEIGHT - magnifierRenderSize / 2
+    const magnifierSizePercent = (magnifierRenderSize / renderCanvas.canvasWidth) * 100
+    const magnifierCanvasLeft =
+      image.magnifier.center.x * renderCanvas.canvasWidth - magnifierRenderSize / 2
+    const magnifierCanvasTop =
+      image.magnifier.center.y * renderCanvas.canvasHeight - magnifierRenderSize / 2
     const imageVar = (key: string, fallback: string | number): string =>
       getCoverImageVarValue(image.which, key, fallback)
     const magnifierCloneStyle: CSSProperties = {
-      width: imageVar('magnifier-clone-width', `${(CANVAS_WIDTH / magnifierRenderSize) * 100}%`),
-      height: imageVar('magnifier-clone-height', `${(CANVAS_HEIGHT / magnifierRenderSize) * 100}%`),
+      width: imageVar(
+        'magnifier-clone-width',
+        `${(renderCanvas.canvasWidth / magnifierRenderSize) * 100}%`,
+      ),
+      height: imageVar(
+        'magnifier-clone-height',
+        `${(renderCanvas.canvasHeight / magnifierRenderSize) * 100}%`,
+      ),
       left: imageVar(
         'magnifier-clone-left',
         `${(-magnifierCanvasLeft / magnifierRenderSize) * 100}%`,
@@ -874,12 +981,27 @@ const Cover: FC<TProps> = ({ onDropFile, onUpload }) => {
   }
 
   return (
-    <div ref={wrapperRef} className={s.wrapper} style={s.wrapperStyle}>
+    <div
+      ref={wrapperRef}
+      className={s.wrapper}
+      style={canvasStyle}
+      onPointerMove={updateHeightHandleHover}
+      onPointerLeave={handleCoverPointerLeave}
+    >
       {hasImage && (
         <>
-          {renderCoverContent()}
-          {imageList.map((image) => renderMagnifier(image))}
-          {activeImage && renderEditorFrame(activeImage)}
+          <div className={s.editorClipLayer}>
+            {renderCoverContent()}
+            {imageList.map((image) => renderMagnifier(image))}
+            {activeImage && renderEditorFrame(activeImage)}
+          </div>
+          <HeightResizer
+            onPointerDown={handleCoverHeightPointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            visible={heightHandleHover || interactionMode === 'cover-height'}
+          />
         </>
       )}
     </div>
