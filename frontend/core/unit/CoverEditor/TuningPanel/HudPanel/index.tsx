@@ -8,7 +8,7 @@ import { composeBgCss } from '~/lib/bg'
 
 import { IMAGE_SIZE_RANGE } from '../../constant'
 import { isCoverShadowActive } from '../../helper'
-import { getImagePlacement, getResponsiveImageSize } from '../../salon/metric'
+import { getCoverRenderCanvas, getImagePlacement, getResponsiveImageSize } from '../../salon/metric'
 import type { TTuningSetting } from '../../spec'
 import { getBorderValue, isCenterPoint } from './helper'
 import HudItem from './HudItem'
@@ -33,12 +33,13 @@ export default function HudPanel({ setting, onExpand }: TProps) {
   const rotate = normalizeSignedAngle(activeImage?.rotate ?? 0)
   const shadow = activeImage?.shadow
   const size = activeImage?.size ?? IMAGE_SIZE_RANGE.MAX
+  const renderCanvas = getCoverRenderCanvas(setting)
 
   const borderValue = borderHighlight
     ? getBorderValue({ borderRadius, borderHighlight, glassBorder })
     : ''
-  const frameSize = getResponsiveImageSize(size)
-  const framePlacement = getImagePlacement(position, size, rotate)
+  const frameSize = getResponsiveImageSize(size, renderCanvas)
+  const framePlacement = getImagePlacement(position, size, rotate, renderCanvas)
   const backgroundPreview = composeBgCss(activeBackground)
 
   return (

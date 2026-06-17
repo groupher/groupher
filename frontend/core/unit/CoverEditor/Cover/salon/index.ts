@@ -6,7 +6,7 @@ export default function useSalon() {
   const { cn, primary, accent } = useTwBelt()
 
   return {
-    wrapper: cn('w-full aspect-[71/40] rounded relative overflow-hidden'),
+    wrapper: cn('group/cover-canvas w-full rounded relative overflow-visible'),
     wrapperStyle: {},
     transparentGridStyle: {
       backgroundColor: 'rgba(255, 252, 247, 0.9)',
@@ -19,7 +19,8 @@ export default function useSalon() {
       backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
       backgroundSize: '16px 16px',
     },
-    contentLayer: 'absolute inset-0 overflow-hidden',
+    contentLayer: 'absolute inset-0 rounded overflow-hidden',
+    editorClipLayer: 'absolute inset-0 rounded overflow-hidden',
     backgroundLayer: 'absolute inset-0',
     imageFrame: 'absolute trans-all-200',
     imageFrameActive: '!transition-none',
@@ -47,11 +48,13 @@ export default function useSalon() {
       `focus-visible:${accent('border')}`,
     ),
     editorFrame:
-      'absolute z-40 touch-none select-none opacity-0 transition-opacity duration-150 hover:opacity-100',
+      'group/image-editor absolute z-40 touch-none select-none opacity-0 transition-opacity duration-150 hover:opacity-100',
     editorFrameHidden: '!opacity-0',
     editorFrameActive: 'opacity-100 !transition-none',
     editorFrameMove: 'cursor-move',
     editorFrameMoving: 'cursor-grabbing',
+    editorFrameCropping: 'cursor-grab',
+    editorFrameCroppingActive: 'cursor-grabbing',
     editorFrameResizing: 'cursor-crosshair',
     editorBorder:
       'absolute inset-0 pointer-events-none border border-current shadow-[0_0_0_1px_currentColor] opacity-80',

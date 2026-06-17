@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.Model.CoverEditInfo do
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
 
-  @required_fields ~w(canvas_width canvas_height ratio)a
+  @required_fields ~w(canvas_width canvas_height)a
   @optional_fields ~w(version)a
 
   @type t :: %CoverEditInfo{}
@@ -21,7 +21,6 @@ defmodule GroupherServer.CMS.Model.CoverEditInfo do
   schema "cover_edit_infos" do
     field(:canvas_width, :integer)
     field(:canvas_height, :integer)
-    field(:ratio, :float)
     field(:version, :integer, default: 1)
 
     embeds_one(:light, __MODULE__.CoverConfig, on_replace: :update)
@@ -36,7 +35,6 @@ defmodule GroupherServer.CMS.Model.CoverEditInfo do
     |> validate_required(@required_fields)
     |> validate_number(:canvas_width, greater_than: 0)
     |> validate_number(:canvas_height, greater_than: 0)
-    |> validate_number(:ratio, greater_than: 0)
     |> validate_number(:version, greater_than: 0)
     |> cast_embed(:light, required: true, with: &__MODULE__.CoverConfig.changeset/2)
     |> cast_embed(:dark, required: true, with: &__MODULE__.CoverConfig.changeset/2)

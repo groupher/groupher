@@ -1,9 +1,12 @@
 import type { CSSProperties } from 'react'
 
+import { normalizeSignedAngle } from '~/lib/angle'
+
 import {
   BORDER_HIGHLIGHT_COLOR,
   BORDER_HIGHLIGHT_DEFAULT,
   BORDER_HIGHLIGHT_MODE,
+  COVER_IMAGE_CROP_ZOOM_RANGE,
   COVER_SHADOW_COLOR_MODE,
   COVER_SHADOW_DEFAULT,
   COVER_SHADOW_PRESET,
@@ -36,6 +39,39 @@ const getFiniteNumber = (value: number | undefined, fallback: number): number =>
 const RAINBOW_HUE_STOPS = [0, 28, 55, 118, 178, 224, 282, 360]
 
 type TShadowCssParams = Pick<TCoverShadow, 'x' | 'y' | 'blur' | 'spread' | 'opacity'>
+
+/**
+ * Clamp user-controlled cover image crop zoom into the supported range.
+ *
+ * @example
+ * clampCoverImageCropZoom(4.6) // 4
+ * clampCoverImageCropZoom(1.234) // 1.23
+ */
+export const clampCoverImageCropZoom = (zoom: number): number =>
+  Math.min(
+    COVER_IMAGE_CROP_ZOOM_RANGE.MAX,
+    Math.max(COVER_IMAGE_CROP_ZOOM_RANGE.MIN, Number(zoom.toFixed(2))),
+  )
+
+/**
+ * Convert a screen-space drag delta into the rotated image frame's local axis.
+ * Used by crop reposition so dragging remains intuitive after the image is rotated.
+ *
+ * @example
+ * getCoverImageLocalDragDelta(10, 0, 90) // approximately { x: 0, y: -10 }
+ */
+export const getCoverImageLocalDragDelta = (
+  deltaX: number,
+  deltaY: number,
+  rotate: number,
+): { x: number; y: number } => {
+  const radian = (-normalizeSignedAngle(rotate) * Math.PI) / 180
+
+  return {
+    x: deltaX * Math.cos(radian) - deltaY * Math.sin(radian),
+    y: deltaX * Math.sin(radian) + deltaY * Math.cos(radian),
+  }
+}
 
 const SHADOW_PRESET_PARAMS: Record<Exclude<TCoverShadowPreset, 'custom'>, TShadowCssParams> = {
   [COVER_SHADOW_PRESET.NONE]: {

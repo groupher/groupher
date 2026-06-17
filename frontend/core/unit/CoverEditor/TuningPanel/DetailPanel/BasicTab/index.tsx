@@ -24,8 +24,6 @@ export default function BasicTab({ setting, onAddImage, onDelete, onReplace }: T
           onReplace={onReplace}
         />
 
-        <div className={s.sectionDivider} />
-
         <ImageSection
           image={setting.images.secondary}
           which={COVER_IMAGE_WHICH.SECONDARY}

@@ -26,7 +26,6 @@ defmodule GroupherServer.Repo.Migrations.CreateCoverTables do
     create table(:cover_edit_infos, prefix: @prefix) do
       add(:canvas_width, :integer, null: false)
       add(:canvas_height, :integer, null: false)
-      add(:ratio, :float, null: false)
       add(:version, :integer, default: 1, null: false)
       add(:light, :map, null: false)
       add(:dark, :map, null: false)

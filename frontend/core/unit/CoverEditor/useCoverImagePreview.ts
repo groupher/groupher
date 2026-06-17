@@ -42,6 +42,8 @@ const hasImageDraftPatch = (patch: TCoverImageDraftPatch): boolean =>
 export default function useCoverImagePreview(): TCoverImageDraftContext {
   const {
     activeImageWhich: committedActiveImageWhich,
+    canvasHeight,
+    canvasWidth,
     images: committedImages,
     imagePatchOnChange,
     imagesOnChange,
@@ -50,8 +52,16 @@ export default function useCoverImagePreview(): TCoverImageDraftContext {
     () => ({
       images: committedImages,
       activeImageWhich: committedActiveImageWhich,
+      canvasWidth,
+      canvasHeight,
     }),
-    [committedActiveImageWhich, committedImages.primary, committedImages.secondary],
+    [
+      canvasHeight,
+      canvasWidth,
+      committedActiveImageWhich,
+      committedImages.primary,
+      committedImages.secondary,
+    ],
   )
   const committedStateRef = useRef(committedState)
   const committedSourceKeyRef = useRef(getCommittedSourceKey(committedImages))
@@ -131,7 +141,11 @@ export default function useCoverImagePreview(): TCoverImageDraftContext {
       images,
       previewStateRef.current.activeImageWhich,
     )
-    const nextState = { images, activeImageWhich }
+    const nextState = {
+      ...committedStateRef.current,
+      images,
+      activeImageWhich,
+    }
 
     committedStateRef.current = nextState
     previewStateRef.current = nextState
@@ -195,6 +209,7 @@ export default function useCoverImagePreview(): TCoverImageDraftContext {
       if (!image) return
 
       const nextState = {
+        ...currentState,
         images: getRaisedImages(currentState.images, which),
         activeImageWhich: which,
       }
@@ -227,6 +242,7 @@ export default function useCoverImagePreview(): TCoverImageDraftContext {
         [which]: nextImage,
       }
       const nextState = {
+        ...currentState,
         images: shouldRaise ? getRaisedImages(patchedImages, which) : patchedImages,
         activeImageWhich: shouldRaise ? which : currentState.activeImageWhich,
       }

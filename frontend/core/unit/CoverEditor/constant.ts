@@ -3,6 +3,36 @@ export const IMAGE_CONTAINER_SIZE = {
   HEIGHT: '400px',
 }
 
+export const COVER_CANVAS_SIZE = {
+  WIDTH: 1200,
+  HEIGHT: 630,
+} as const
+
+export const COVER_HEIGHT_RANGE = {
+  MIN: 320,
+  MAX: 900,
+} as const
+
+export const COVER_IMAGE_CROP_ZOOM_RANGE = {
+  MIN: 1,
+  MAX: 4,
+  STEP: 0.08,
+} as const
+
+export const IMAGE_EDIT_MODE = {
+  MOVE: 'move',
+  REPOSITION: 'reposition',
+} as const
+
+export const IMAGE_EDIT_MODE_LABEL = {
+  [IMAGE_EDIT_MODE.MOVE]: 'Move',
+  [IMAGE_EDIT_MODE.REPOSITION]: 'Reposition',
+} as const
+
+export const IMAGE_DELETE_KEYS = ['Delete', 'Backspace'] as const
+
+export const EDITABLE_KEY_TARGET_TAGS = ['input', 'textarea', 'select'] as const
+
 export const COVER_IMAGE_WHICH = {
   PRIMARY: 'primary',
   SECONDARY: 'secondary',

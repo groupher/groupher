@@ -230,7 +230,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:id, :id)
     field(:canvas_width, :integer)
     field(:canvas_height, :integer)
-    field(:ratio, :float)
     field(:version, :integer)
     field(:light, :cover_config)
     field(:dark, :cover_config)
@@ -253,7 +252,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   input_object :cover_edit_info_input do
     field(:canvas_width, non_null(:integer))
     field(:canvas_height, non_null(:integer))
-    field(:ratio, non_null(:float))
     field(:version, :integer)
     field(:light, non_null(:cover_config_input))
     field(:dark, non_null(:cover_config_input))

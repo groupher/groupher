@@ -304,7 +304,6 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
     %{
       canvasWidth: 1200,
       canvasHeight: 630,
-      ratio: 1.9,
       light: cover_config_input("light"),
       dark: cover_config_input("dark")
     }
@@ -416,7 +415,6 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
       id
       canvasWidth
       canvasHeight
-      ratio
       light {
         background {
           id

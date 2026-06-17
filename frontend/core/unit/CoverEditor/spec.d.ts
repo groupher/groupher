@@ -7,6 +7,7 @@ import type {
   COVER_IMAGE_WHICH,
   COVER_SHADOW_COLOR_MODE,
   COVER_SHADOW_PRESET,
+  IMAGE_EDIT_MODE,
   IMAGE_POS,
   MAGNIFIER_BORDER_COLOR,
 } from './constant'
@@ -66,12 +67,26 @@ export type TCoverMagnifier = {
 
 export type TCoverImageWhich = TConstValues<typeof COVER_IMAGE_WHICH>
 
+export type TCoverCanvas = {
+  canvasWidth: number
+  canvasHeight: number
+}
+
+export type TCoverImageCrop = {
+  x: number
+  y: number
+  zoom: number
+}
+
+export type TImageEditMode = TConstValues<typeof IMAGE_EDIT_MODE>
+
 export type TCoverImageConfig = {
   which: TCoverImageWhich
   zIndex: number
   source: string
   dominantColor: string | null
   position: TCoverPoint
+  crop: TCoverImageCrop
   magnifier: TCoverMagnifier
   shadow: TCoverShadow
   borderRadius: number
@@ -84,8 +99,12 @@ export type TCoverImageConfig = {
 export type TCoverImages = Record<TCoverImageWhich, TCoverImageConfig | null>
 
 export type TCoverImagePatch = Partial<
-  Omit<TCoverImageConfig, 'borderHighlight' | 'glassBorder' | 'magnifier' | 'shadow' | 'which'>
+  Omit<
+    TCoverImageConfig,
+    'borderHighlight' | 'crop' | 'glassBorder' | 'magnifier' | 'shadow' | 'which'
+  >
 > & {
+  crop?: Partial<TCoverImageCrop>
   borderHighlight?: Partial<TBorderHighlight>
   glassBorder?: Partial<TCoverGlassBorder>
   magnifier?: Partial<TCoverMagnifier>
@@ -93,6 +112,8 @@ export type TCoverImagePatch = Partial<
 }
 
 export type TCoverConfig = {
+  canvasWidth: number
+  canvasHeight: number
   images: TCoverImages
   background: TBgThemeConfig
 }
@@ -100,6 +121,8 @@ export type TCoverConfig = {
 export type TStore = {
   images: TCoverImages
   activeImageWhich: TCoverImageWhich
+  canvasWidth: number
+  canvasHeight: number
   background: TBgThemeConfig
   originalBackground: TBgThemeConfig
 
@@ -123,6 +146,8 @@ export type TTuningSetting = {
   images: TCoverImages
   activeImageWhich: TCoverImageWhich
   activeImage: TCoverImageConfig | null
+  canvasWidth: number
+  canvasHeight: number
   background: TBgThemeConfig
   activeBackground: TBgConfig
   isBackgroundTouched: boolean

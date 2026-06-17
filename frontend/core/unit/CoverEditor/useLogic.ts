@@ -15,7 +15,7 @@ import {
 } from '~/lib/wallpaperMesh'
 
 import { composeCoverGradientRecipe, createCoverBgThemeConfig } from './background'
-import { COVER_IMAGE_WHICH } from './constant'
+import { COVER_CANVAS_SIZE, COVER_HEIGHT_RANGE, COVER_IMAGE_WHICH } from './constant'
 import {
   createCoverImageConfig,
   EMPTY_COVER_IMAGES,
@@ -74,6 +74,7 @@ type TRet = {
   backgroundTextureOnChange: (texture: TBgTexture) => void
   sizeOnChange: (which: TCoverImageWhich, size: TImageSize) => void
   rotateOnChange: (which: TCoverImageWhich, rotate: number) => void
+  canvasHeightOnChange: (canvasHeight: number) => void
   glassBorderOnChange: (which: TCoverImageWhich, enabled: boolean) => void
   magnifierSettingsOnChange: (which: TCoverImageWhich, magnifier: Partial<TCoverMagnifier>) => void
   magnifierOnChange: (which: TCoverImageWhich, enabled: boolean) => void
@@ -82,18 +83,23 @@ type TRet = {
 const store = proxy<TStore>({
   images: clone(EMPTY_COVER_IMAGES),
   activeImageWhich: COVER_IMAGE_WHICH.PRIMARY,
+  canvasWidth: COVER_CANVAS_SIZE.WIDTH,
+  canvasHeight: COVER_CANVAS_SIZE.HEIGHT,
 
   // for background
   background: createCoverBgThemeConfig(),
   originalBackground: createCoverBgThemeConfig(),
 
   get tuningSetting(): TTuningSetting {
-    const { images, activeImageWhich, background, originalBackground } = store
+    const { images, activeImageWhich, background, originalBackground, canvasWidth, canvasHeight } =
+      store
 
     return {
       images,
       activeImageWhich,
       activeImage: getActiveImage(images, activeImageWhich),
+      canvasWidth,
+      canvasHeight,
       background,
       activeBackground: background.light,
       isBackgroundTouched: !equals(clone(originalBackground), clone(background)),
@@ -117,10 +123,14 @@ export default function useLogic(): TRet {
     images,
     activeImageWhich,
     activeImage: getActiveImage(images, activeImageWhich),
+    canvasWidth: snap.canvasWidth,
+    canvasHeight: snap.canvasHeight,
     activeBackground,
     isBackgroundTouched: !equals(clone(snap.originalBackground), clone(snap.background)),
   } as TTuningSetting
   const coverConfig: TCoverConfig = {
+    canvasWidth: snap.canvasWidth,
+    canvasHeight: snap.canvasHeight,
     images,
     background: snap.background as TStore['background'],
   }
@@ -295,6 +305,18 @@ export default function useLogic(): TRet {
   const rotateOnChange = (which: TCoverImageWhich, rotate: number): void =>
     imagePatchOnChange(which, { rotate: normalizeSignedAngle(rotate) })
 
+  const canvasHeightOnChange = (canvasHeight: number): void => {
+    if (!Number.isFinite(canvasHeight)) return
+
+    const nextCanvasHeight = Math.min(
+      COVER_HEIGHT_RANGE.MAX,
+      Math.max(COVER_HEIGHT_RANGE.MIN, Math.round(canvasHeight)),
+    )
+    if (nextCanvasHeight === snap.canvasHeight) return
+
+    snap.commit({ canvasHeight: nextCanvasHeight })
+  }
+
   const glassBorderOnChange = (which: TCoverImageWhich, enabled: boolean) =>
     imagePatchOnChange(which, { glassBorder: { enabled } })
 
@@ -342,6 +364,7 @@ export default function useLogic(): TRet {
     backgroundTextureOnChange,
     sizeOnChange,
     rotateOnChange,
+    canvasHeightOnChange,
     glassBorderOnChange,
     magnifierSettingsOnChange,
     magnifierOnChange,
