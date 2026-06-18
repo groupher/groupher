@@ -33,7 +33,9 @@ const MarkerRender: FC<TProps> = ({
     <IconNode
       value={value}
       size={size}
-      className={value.provider === 'dev' ? devClassName : (iconClassName ?? className)}
+      className={
+        value.provider === 'dev' ? (devClassName ?? className) : (iconClassName ?? className)
+      }
     />
   )
 }

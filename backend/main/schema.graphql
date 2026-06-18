@@ -707,7 +707,7 @@ type RootMutationType {
   duplicateDocTreeNode(community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
 
   "move a docs tree node"
-  moveDocTreeNode(community: String!, id: ID!, baseRevision: Int!, targetParentId: ID, targetIndex: Int!): DocTreeMutationPayload
+  moveDocTreeNode(community: String!, id: ID!, baseRevision: Int!, targetParentId: ID, targetIndex: Int): DocTreeMutationPayload
 }
 
 type CheckState {

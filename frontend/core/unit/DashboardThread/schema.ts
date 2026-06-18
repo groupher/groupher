@@ -577,7 +577,7 @@ const moveDocTreeNode = gql`
     $id: ID!
     $baseRevision: Int!
     $targetParentId: ID
-    $targetIndex: Int!
+    $targetIndex: Int
   ) {
     moveDocTreeNode(
       community: $community

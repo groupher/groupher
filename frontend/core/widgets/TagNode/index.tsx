@@ -50,8 +50,8 @@ const TagNode: FC<TProps> = ({ boldHash = false, ...restProps }) => {
         <MarkerRender
           value={restProps.marker ?? s.defaultIcon}
           size={restProps.iconSize ?? 3}
-          className={s.iconColor}
           iconClassName={s.iconColor}
+          emojiClassName={s.emoji}
           devClassName={s.devIcon}
         />
       </span>

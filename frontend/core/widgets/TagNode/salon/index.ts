@@ -30,6 +30,7 @@ export default function useSalon({
     hash: cn(zise(hashSize), rainbow(color, 'fill'), margin(hashSpacing)),
     icon: cn('align-both shrink-0', margin(iconSpacing)),
     iconColor: rainbow(color, 'bg'),
+    emoji: 'align-both',
     devIcon: 'object-contain',
   }
 }
