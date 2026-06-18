@@ -3,7 +3,7 @@
 import type { FC } from 'react'
 import { Group as PanelGroup, Panel, Separator } from 'react-resizable-panels'
 
-import DocsActionSnackbar from '../DocsActionSnackbar'
+import ActionSnackbar from '../ActionSnackbar'
 import Article from './Article'
 import useSalon from './salon'
 import SideTree from './SideTree'
@@ -41,7 +41,7 @@ const Editor: FC = () => {
             <Article sideTree={sideTree} />
           </Panel>
         </PanelGroup>
-        <DocsActionSnackbar />
+        <ActionSnackbar />
       </div>
     </DocsEditorStoreProvider>
   )

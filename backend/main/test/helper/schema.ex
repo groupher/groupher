@@ -219,6 +219,13 @@ defmodule GroupherServer.Test.Helper.Schema do
         title
         slug
         digest
+        insertedAt
+        updatedAt
+        author {
+          login
+          nickname
+          avatar
+        }
         document {
           json
           markdown
@@ -501,6 +508,13 @@ defmodule GroupherServer.Test.Helper.Schema do
         title
         slug
         digest
+        insertedAt
+        updatedAt
+        author {
+          login
+          nickname
+          avatar
+        }
         document {
           json
           markdown

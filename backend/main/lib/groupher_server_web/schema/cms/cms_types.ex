@@ -86,6 +86,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:title, :string)
     field(:slug, :string)
     field(:digest, :string)
+    field(:author, :user, resolve: dataloader(CMS, :author))
+    timestamp_fields()
     field(:document, :thread_document)
   end
 

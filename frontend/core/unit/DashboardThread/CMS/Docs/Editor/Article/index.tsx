@@ -14,21 +14,8 @@ type TProps = {
 
 const Article: FC<TProps> = ({ sideTree }) => {
   const s = useSalon()
-  const {
-    activePage,
-    bodyValue,
-    dirty,
-    editable,
-    error,
-    invalid,
-    loading,
-    saving,
-    save,
-    setBodyValue,
-    setTitle,
-    slug,
-    title,
-  } = useDocDraftEditor(sideTree)
+  const { activePage, bodyValue, editable, error, loading, setBodyValue, setTitle, slug, title } =
+    useDocDraftEditor(sideTree)
 
   if (!activePage) {
     return (
@@ -49,22 +36,14 @@ const Article: FC<TProps> = ({ sideTree }) => {
   return (
     <article className={s.wrapper}>
       <Cover />
-      <Title value={title} disabled={loading || saving} onChange={setTitle} />
+      <Title value={title} disabled={loading} onChange={setTitle} />
       <Body
         value={bodyValue}
         editorKey={activePage.docId}
         disabled={loading}
         onChange={setBodyValue}
       />
-      <div className={s.saveBar}>
-        <button
-          type='button'
-          className={s.saveButton}
-          disabled={loading || saving || invalid || !dirty}
-          onClick={save}
-        >
-          {saving ? 'Saving...' : 'Save'}
-        </button>
+      <div className={s.statusBar}>
         {slug && <span className={s.slug}>/{slug}</span>}
         {error && <span className={s.error}>{error}</span>}
       </div>

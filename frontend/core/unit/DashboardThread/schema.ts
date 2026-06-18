@@ -476,6 +476,13 @@ const docDraft = gql`
       title
       slug
       digest
+      insertedAt
+      updatedAt
+      author {
+        login
+        nickname
+        avatar
+      }
       document {
         json
         markdown
@@ -543,6 +550,13 @@ const updateDocDraft = gql`
       title
       slug
       digest
+      insertedAt
+      updatedAt
+      author {
+        login
+        nickname
+        avatar
+      }
       document {
         json
         markdown

@@ -16,7 +16,7 @@ import useSalon from './salon'
 import SaveZone from './SaveZone'
 import TabAdder from './TabAdder'
 
-const DocsActionSnackbar: FC = () => {
+const ActionSnackbar: FC = () => {
   const s = useSalon()
   const overlayDark = useOverlayDark()
 
@@ -48,4 +48,4 @@ const DocsActionSnackbar: FC = () => {
   )
 }
 
-export default DocsActionSnackbar
+export default ActionSnackbar

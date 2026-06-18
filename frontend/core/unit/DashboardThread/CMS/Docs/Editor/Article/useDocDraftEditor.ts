@@ -10,12 +10,21 @@ import S from '../../../../schema'
 import { SIDE_TREE_NODE_TYPE } from '../SideTree/constant'
 import type { TSideTreePage } from '../SideTree/spec'
 import type { TSideTreeController } from '../SideTree/useSideTree'
+import useDocsEditor from '../store/hooks'
+import { countEditorText, DOC_AUTO_SAVE_DELAY } from './helper'
 
 type TDocDraftDTO = {
   id: string
   title?: string | null
   slug?: string | null
   digest?: string | null
+  insertedAt?: string | null
+  updatedAt?: string | null
+  author?: {
+    login?: string | null
+    nickname?: string | null
+    avatar?: string | null
+  } | null
   document?: {
     json?: string | null
   } | null
@@ -56,6 +65,7 @@ const findActivePage = (groups: TSideTreeController['groups'], activeId: string 
 
 export default function useDocDraftEditor(sideTree: TSideTreeController) {
   const { slug: community } = useCommunity()
+  const { attachSaveDocDraft, live$: docsEditor$, setDocDraftSession } = useDocsEditor()
   const { query, mutate } = useGraphQLClient()
   const activePage = useMemo(
     () => findActivePage(sideTree.groups, sideTree.activeId),
@@ -68,9 +78,20 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const loadIdRef = useRef(0)
+  const bodyValueRef = useRef<TRichEditorValue>(EMPTY_EDITOR_VALUE)
   const savedTitleRef = useRef('')
   const savedBodyRef = useRef(serializeEditorValue(EMPTY_EDITOR_VALUE))
+  const savingRef = useRef(false)
   const slugTitleRef = useRef('')
+  const titleRef = useRef('')
+
+  useEffect(() => {
+    titleRef.current = title
+  }, [title])
+
+  useEffect(() => {
+    bodyValueRef.current = bodyValue
+  }, [bodyValue])
 
   useEffect(() => {
     loadIdRef.current += 1
@@ -84,11 +105,26 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
       setError(null)
       savedTitleRef.current = ''
       savedBodyRef.current = serializeEditorValue(EMPTY_EDITOR_VALUE)
+      setDocDraftSession({
+        docDraftInfo: {
+          id: '',
+          title: '',
+          slug: '',
+          insertedAt: null,
+          updatedAt: null,
+          author: null,
+          wordCount: 0,
+          characterCount: 0,
+        },
+        saveError: null,
+        saveStatus: 'idle',
+      })
       return
     }
 
     setLoading(true)
     setError(null)
+    setDocDraftSession({ saveError: null, saveStatus: 'idle' })
 
     query<{ docDraft?: TDocDraftDTO }>(S.docDraft, { community, id: activePage.docId })
       .then((data) => {
@@ -104,15 +140,30 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
         setSlug(draft?.slug || '')
         savedTitleRef.current = nextTitle
         savedBodyRef.current = nextBodyJson
+        setDocDraftSession({
+          docDraftInfo: {
+            id: draft?.id || activePage.docId,
+            title: nextTitle,
+            slug: draft?.slug || '',
+            insertedAt: draft?.insertedAt || null,
+            updatedAt: draft?.updatedAt || null,
+            author: draft?.author || null,
+            ...countEditorText(nextBody),
+          },
+          saveError: null,
+          saveStatus: 'saved',
+        })
       })
       .catch((err) => {
         if (loadIdRef.current !== loadId) return
-        setError(err instanceof Error ? err.message : String(err))
+        const message = err instanceof Error ? err.message : String(err)
+        setError(message)
+        setDocDraftSession({ saveError: message, saveStatus: 'error' })
       })
       .finally(() => {
         if (loadIdRef.current === loadId) setLoading(false)
       })
-  }, [activePage?.docId, activePage?.id, community, query])
+  }, [activePage?.docId, activePage?.id, community, query, setDocDraftSession])
 
   useEffect(() => {
     const trimmedTitle = title.trim()
@@ -140,20 +191,23 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
     title !== savedTitleRef.current || serializeEditorValue(bodyValue) !== savedBodyRef.current
   const editable = !!activePage?.docId
   const invalid = !title.trim()
+  const bodyStats = useMemo(() => countEditorText(bodyValue), [bodyValue])
 
   const save = useCallback(async () => {
-    if (!activePage?.docId || invalid) return
+    if (!activePage?.docId || invalid || savingRef.current) return
 
     const nextTitle = title.trim()
     const body = serializeEditorValue(bodyValue)
 
+    savingRef.current = true
     setSaving(true)
     setError(null)
+    setDocDraftSession({ saveError: null, saveStatus: 'saving' })
 
     try {
       const nextSlug = slugTitleRef.current === nextTitle && slug ? slug : await slugify(nextTitle)
 
-      await mutate(S.updateDocDraft, {
+      const data = await mutate<{ updateDocDraft?: TDocDraftDTO }>(S.updateDocDraft, {
         community,
         id: activePage.docId,
         title: nextTitle,
@@ -161,19 +215,70 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
         body,
       })
 
-      setTitle(nextTitle)
-      setSlug(nextSlug)
+      const savedDraft = data?.updateDocDraft
+      const savedSlug = savedDraft?.slug || nextSlug
+      const currentTitle = titleRef.current
+      const currentBody = serializeEditorValue(bodyValueRef.current)
+
+      if (currentTitle === title) setTitle(nextTitle)
+      if (currentTitle.trim() === nextTitle) setSlug(savedSlug)
       savedTitleRef.current = nextTitle
       savedBodyRef.current = body
-      toast('设置已保存')
+      setDocDraftSession({
+        docDraftInfo: {
+          id: savedDraft?.id || activePage.docId,
+          title: currentTitle === title ? nextTitle : currentTitle,
+          slug: currentTitle.trim() === nextTitle ? savedSlug : slug,
+          insertedAt: savedDraft?.insertedAt || null,
+          updatedAt: savedDraft?.updatedAt || new Date().toISOString(),
+          author: savedDraft?.author || null,
+          ...countEditorText(bodyValueRef.current),
+        },
+        saveError: null,
+        saveStatus: currentTitle !== title || currentBody !== body ? 'dirty' : 'saved',
+      })
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       setError(message)
+      setDocDraftSession({ saveError: message, saveStatus: 'error' })
       toast(message, 'error')
     } finally {
+      savingRef.current = false
       setSaving(false)
     }
-  }, [activePage, bodyValue, community, invalid, mutate, slug, title])
+  }, [activePage, bodyValue, community, invalid, mutate, setDocDraftSession, slug, title])
+
+  useEffect(() => {
+    attachSaveDocDraft(save)
+
+    return () => attachSaveDocDraft(null)
+  }, [attachSaveDocDraft, save])
+
+  useEffect(() => {
+    if (!activePage?.docId) return
+
+    setDocDraftSession({
+      docDraftInfo: {
+        ...docsEditor$.docDraftInfo,
+        id: activePage.docId,
+        title,
+        slug,
+        ...bodyStats,
+      },
+      saveError: dirty ? null : docsEditor$.saveError,
+      saveStatus: dirty ? 'dirty' : docsEditor$.saveStatus === 'saving' ? 'saving' : 'saved',
+    })
+  }, [activePage?.docId, bodyStats, community, dirty, docsEditor$, setDocDraftSession, slug, title])
+
+  useEffect(() => {
+    if (!dirty || !editable || invalid || loading || saving) return
+
+    const timer = window.setTimeout(() => {
+      save()
+    }, DOC_AUTO_SAVE_DELAY)
+
+    return () => window.clearTimeout(timer)
+  }, [dirty, editable, invalid, loading, save, saving])
 
   return {
     activePage,

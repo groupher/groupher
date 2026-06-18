@@ -70,6 +70,17 @@
     }
   }
 
+  @keyframes save-status-marquee {
+    0%,
+    22% {
+      transform: translate3d(0, 0, 0);
+    }
+    78%,
+    100% {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
   .animate-loading-grow {
     animation: loading-grow 1s linear infinite;
   }
@@ -80,6 +91,10 @@
 
   .animate-section-label-touched-in {
     animation: section-label-touched-in 180ms ease-out both;
+  }
+
+  .animate-save-status-marquee {
+    animation: save-status-marquee 3.2s ease-in-out infinite;
   }
 
   .arrow-button:hover .group-hover-arrow-right,

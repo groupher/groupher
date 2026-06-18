@@ -773,6 +773,9 @@ type DocDraft {
   title: String
   slug: String
   digest: String
+  author: User
+  insertedAt: DateTime
+  updatedAt: DateTime
   document: ThreadDocument
 }
 
