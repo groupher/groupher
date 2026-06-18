@@ -76,6 +76,16 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE, initialGroup 
         <div className='mb-6' />
         <div className={s.title}>{t('dsb.tags.editor.icon')}</div>
         <div className={s.iconSetting}>
+          <div className={s.iconPicker}>
+            <MarkerPicker
+              compact
+              value={editingMarker}
+              color={markerIsEmoji ? undefined : (editingTag.color as TColorName) || COLOR.BLACK}
+              iconSize={4}
+              triggerClassName='size-full'
+              onChange={(marker) => edit(marker, 'marker')}
+            />
+          </div>
           {!markerIsEmoji && (
             <ColorSelector
               activeColor={editingTag.color || COLOR.BLACK}
@@ -93,11 +103,6 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE, initialGroup 
               </div>
             </ColorSelector>
           )}
-          <MarkerPicker
-            value={editingMarker}
-            color={markerIsEmoji ? undefined : (editingTag.color as TColorName) || COLOR.BLACK}
-            onChange={(marker) => edit(marker, 'marker')}
-          />
         </div>
 
         <div className='mb-6' />
