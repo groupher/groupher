@@ -1,14 +1,14 @@
-import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TColorName } from '~/spec'
 
 type TProps = {
   compact?: boolean
   active?: boolean
+  color?: TColorName
 }
 
-export default function useSalon({ compact = false, active = false }: TProps = {}) {
-  const { bg, cn, br, fg, fill, hover, primary, rainbow, shadow } = useTwBelt()
+export default function useSalon({ compact = false, active = false, color }: TProps = {}) {
+  const { bg, cn, br, fg, hover, primary, rainbow, shadow } = useTwBelt()
 
   return {
     wrapper: 'w-fit',
@@ -41,19 +41,9 @@ export default function useSalon({ compact = false, active = false }: TProps = {
       '[&_.epr-emoji-category-label]:leading-none',
     ),
     todo: cn('align-both h-80 text-lg', fg('digest')),
-    // The trigger preview renders through NodeStyleRender mask mode.
-    previewIconColor: active ? primary('bg') : bg('digest'),
+    // The trigger preview renders through MarkerRender mask mode.
+    previewIconColor: color ? rainbow(color, 'bg') : active ? primary('bg') : bg('digest'),
     // Devicon logos are colored images, not masks; don't pass bg color classes to <img>.
     previewDevLogo: 'object-contain',
-    colorGrid: 'grid grid-cols-6 gap-3 px-4 pt-3',
-    colorButton: 'align-both size-8 circle appearance-none',
-    colorDot: (color: TColorName, active: boolean) =>
-      cn(
-        'size-7 circle align-both border pointer trans-all-100 hover:-mt-0.5',
-        color === COLOR.BLACK ? br('outline') : 'border-transparent',
-        rainbow(color, 'bg'),
-        active && cn('size-8 align-both hover:mt-0', primary('borderSoft'), shadow('md')),
-      ),
-    colorCheckIcon: cn('size-3', fill('button.fg')),
   }
 }

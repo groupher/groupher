@@ -12,12 +12,18 @@ import useLayout from '~/hooks/useLayout'
 import HashSVG from '~/icons/HashTag'
 // import THEME from '~/const/theme'
 import HashSVGBold from '~/icons/HashTagBold'
-import type { TColorName } from '~/spec'
+import type { TColorName, TMarkerValue } from '~/spec'
+import MarkerRender from '~/widgets/MarkerRender'
 
 import useSalon from './salon'
 
 export type TProps = {
   color?: TColorName
+  marker?: TMarkerValue | null
+  iconSize?: number
+  iconRight?: number | 'px'
+  iconLeft?: number | 'px'
+  iconTop?: number
   dotSize?: number
   dotRight?: number
   dotLeft?: number
@@ -37,6 +43,20 @@ const TagNode: FC<TProps> = ({ boldHash = false, ...restProps }) => {
   // const darkTheme = theme === THEME.DARK
 
   const HashIcon = boldHash ? HashSVGBold : HashSVG
+
+  if (tagLayout === TAG_LAYOUT.ICON) {
+    return (
+      <span className={s.icon}>
+        <MarkerRender
+          value={restProps.marker ?? s.defaultIcon}
+          size={restProps.iconSize ?? 3}
+          iconClassName={s.iconColor}
+          emojiClassName={s.emoji}
+          devClassName={s.devIcon}
+        />
+      </span>
+    )
+  }
 
   return tagLayout === TAG_LAYOUT.DOT ? <div className={s.dot} /> : <HashIcon className={s.hash} />
 }

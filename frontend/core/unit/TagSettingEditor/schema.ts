@@ -16,6 +16,7 @@ const createCommunityTag = gql`
     $color: RainbowColor!
     $groupId: ID!
     $community: String!
+    $marker: MarkerInput
   ) {
     createCommunityTag(
       thread: $thread
@@ -25,6 +26,7 @@ const createCommunityTag = gql`
       color: $color
       groupId: $groupId
       community: $community
+      marker: $marker
     ) {
       id
     }
@@ -40,6 +42,7 @@ const updateCommunityTag = gql`
     $slug: String
     $community: String!
     $groupId: ID
+    $marker: MarkerInput
   ) {
     updateCommunityTag(
       id: $id
@@ -50,6 +53,7 @@ const updateCommunityTag = gql`
       slug: $slug
       community: $community
       groupId: $groupId
+      marker: $marker
     ) {
       id
     }

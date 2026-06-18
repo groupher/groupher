@@ -1,4 +1,4 @@
-import type { TDevLogo } from '~/widgets/NodeStylePicker/constant/dev_logo'
+import type { TDevLogo } from '~/widgets/MarkerPicker/constant/dev_logo'
 
 const TWEMOJI_VERSION = '14.0.2'
 

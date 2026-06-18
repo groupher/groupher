@@ -8,10 +8,12 @@ export default function useSalon() {
   return {
     wrapper: 'flex min-h-screen flex-col',
     basicInfo: 'row-center mb-6 px-6',
-    dotSelector: cn('align-both size-8 circle border pointer', br('divider'), bg('hoverBg')),
-    titleDot: 'size-7 circle',
+    iconPicker: cn('align-both size-8 rounded-md border', br('divider'), bg('card')),
+    dotSelector: cn('align-both size-8 rounded-md border p-1 pointer', br('divider'), bg('card')),
+    titleDot: 'h-full w-full rounded',
     title: cn('text-sm bold-sm px-6 mb-2', fg('title')),
-    titleInput: 'ml-2.5 h-9',
+    titleInput: 'h-9',
+    iconSetting: 'row-center gap-2 px-6',
     //
     selectorWrapper: 'px-6 mt-2.5',
     desc: cn('text-xs px-6 mb-2.5 leading-5', fg('digest')),

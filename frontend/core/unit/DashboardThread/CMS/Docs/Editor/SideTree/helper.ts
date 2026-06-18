@@ -1,7 +1,7 @@
 import {
   DEFAULT_LINK_HREF,
-  DEFAULT_LINK_STYLE,
-  DEFAULT_PAGE_STYLE,
+  DEFAULT_LINK_MARKER,
+  DEFAULT_PAGE_MARKER,
   DEMO_SIDE_TREE_GROUPS,
   DUPLICATE_TITLE_SUFFIX,
   SIDE_TREE_CHILD_MENU_ACTION,
@@ -69,14 +69,14 @@ export const createSideTreeChild = (
         id: makeSideTreeId(SIDE_TREE_ID_PREFIX.PAGE),
         type: SIDE_TREE_NODE_TYPE.PAGE,
         title: untitledTitle,
-        icon: DEFAULT_PAGE_STYLE,
+        marker: DEFAULT_PAGE_MARKER,
       }
     : {
         id: makeSideTreeId(SIDE_TREE_ID_PREFIX.LINK),
         type: SIDE_TREE_NODE_TYPE.LINK,
         title: untitledTitle,
         href: DEFAULT_LINK_HREF,
-        icon: DEFAULT_LINK_STYLE,
+        marker: DEFAULT_LINK_MARKER,
       }
 
 /**

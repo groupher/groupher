@@ -3,7 +3,7 @@
 import EmojiPicker, { Categories, EmojiStyle, Theme } from 'emoji-picker-react'
 import type { CSSProperties, FC, ReactNode } from 'react'
 
-import { NODE_STYLE } from '~/const/node_style'
+import { MARKER } from '~/const/marker'
 import { camelize } from '~/fmt'
 import useOverlayDark from '~/hooks/useOverlayDark'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
@@ -17,7 +17,7 @@ import PlaneSVG from '~/icons/Plane'
 import PuzzleSVG from '~/icons/Puzzle'
 import SeedSVG from '~/icons/Seed'
 import WatchSVG from '~/icons/Watch'
-import type { TNodeStyleValue } from '~/spec'
+import type { TMarkerValue } from '~/spec'
 
 import useSalon from '../salon'
 
@@ -26,7 +26,7 @@ import styles from './index.module.css'
 
 type TProps = {
   open: boolean
-  onChange: (value: TNodeStyleValue) => void
+  onChange: (value: TMarkerValue) => void
 }
 
 const renderCategoryIcon = (icon: ReactNode) => (
@@ -112,7 +112,7 @@ const EmojiTab: FC<TProps> = ({ open, onChange }) => {
         style={pickerStyle}
         onEmojiClick={(emojiData) =>
           onChange({
-            type: NODE_STYLE.EMOJI,
+            type: MARKER.EMOJI,
             unified: emojiData.unified,
           })
         }

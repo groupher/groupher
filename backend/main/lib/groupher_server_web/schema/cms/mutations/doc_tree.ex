@@ -91,7 +91,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       arg(:id, non_null(:id))
       arg(:base_revision, non_null(:integer))
       arg(:target_parent_id, :id)
-      arg(:target_index, non_null(:integer))
+      arg(:target_index, :integer)
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)

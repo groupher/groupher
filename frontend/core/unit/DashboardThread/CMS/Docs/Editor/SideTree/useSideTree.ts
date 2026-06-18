@@ -36,7 +36,7 @@ export type TSideTreeController = {
   cancelEdit: () => void
   edit: (target: TEditingTarget) => void
   handleChildAction: (groupId: string, childId: string, action: TSideTreeNodeMenuAction) => void
-  updateChildStyle: (groupId: string, childId: string, icon: TSideTreeChild['icon']) => void
+  updateChildStyle: (groupId: string, childId: string, marker: TSideTreeChild['marker']) => void
   patchChild: (childId: string, patch: Partial<TSideTreeChild>) => void
   reorderGroups: (groups: readonly TSideTreeGroup[]) => void
 }
@@ -50,7 +50,7 @@ type TDocTreeNodeDTO = {
   slug?: string | null
   index?: number | null
   href?: string | null
-  icon?: TSideTreeChild['icon'] | null
+  marker?: TSideTreeChild['marker'] | null
   badge?: string | null
   hidden?: boolean | null
   expanded?: boolean | null
@@ -63,6 +63,8 @@ type TDocTreeMutationPayload = {
   node?: TDocTreeNodeDTO | null
   affectedNodes?: TDocTreeNodeDTO[] | null
 }
+
+type TDocTreeMutationData = Record<string, TDocTreeMutationPayload | null | undefined>
 
 const formatMutationError = (err: unknown): string => {
   const graphQLErrors = (err as { graphQLErrors?: Array<{ message?: unknown }> })?.graphQLErrors
@@ -94,9 +96,6 @@ const formatMutationError = (err: unknown): string => {
   return err instanceof Error ? err.message : String(err)
 }
 
-const toInputIcon = (icon: TSideTreeChild['icon']): string | undefined =>
-  icon ? JSON.stringify(icon) : undefined
-
 const mapNode = (node: TDocTreeNodeDTO): TSideTreeChild => {
   if (node.type === SIDE_TREE_NODE_TYPE.LINK) {
     return {
@@ -105,7 +104,7 @@ const mapNode = (node: TDocTreeNodeDTO): TSideTreeChild => {
       title: node.title || '',
       slug: node.slug || undefined,
       href: node.href || '',
-      icon: node.icon || undefined,
+      marker: node.marker || undefined,
       badge: node.badge || undefined,
       hidden: node.hidden || undefined,
     }
@@ -119,7 +118,7 @@ const mapNode = (node: TDocTreeNodeDTO): TSideTreeChild => {
     docId: node.docId || undefined,
     path: node.slug || undefined,
     href: undefined,
-    icon: node.icon || undefined,
+    marker: node.marker || undefined,
     badge: node.badge || undefined,
     hidden: node.hidden || undefined,
   }
@@ -130,7 +129,7 @@ const mapGroup = (node: TDocTreeNodeDTO): TSideTreeGroup => ({
   type: SIDE_TREE_NODE_TYPE.GROUP,
   title: node.title || '',
   slug: node.slug || undefined,
-  icon: node.icon || undefined,
+  marker: node.marker || undefined,
   hidden: node.hidden || undefined,
   expanded: node.expanded ?? true,
   children: (node.children || []).map(mapNode),
@@ -215,12 +214,12 @@ const findMovedNode = (
 ): { id: string; targetParentId: string | null; targetIndex: number } | null => {
   const prevPositions = new Map<string, { parentId: string | null; index: number }>()
 
-  prevGroups.forEach((group, index) => {
+  for (const [index, group] of prevGroups.entries()) {
     prevPositions.set(group.id, { parentId: null, index })
-    group.children.forEach((child, childIndex) => {
+    for (const [childIndex, child] of group.children.entries()) {
       prevPositions.set(child.id, { parentId: group.id, index: childIndex })
-    })
-  })
+    }
+  }
 
   for (const [index, group] of nextGroups.entries()) {
     const prev = prevPositions.get(group.id)
@@ -288,14 +287,14 @@ export default function useSideTree(): TSideTreeController {
     async (
       schema,
       variables: Record<string, unknown>,
-      pickPayload: (data: any) => TDocTreeMutationPayload | null | undefined,
+      pickPayload: (data: TDocTreeMutationData) => TDocTreeMutationPayload | null | undefined,
     ): Promise<TDocTreeMutationPayload | null | undefined> => {
       try {
-        const data = await mutate(schema, {
+        const data = (await mutate(schema, {
           community,
           baseRevision: revisionRef.current,
           ...variables,
-        })
+        })) as TDocTreeMutationData
         const payload = pickPayload(data)
         handlePayload(payload)
         return payload
@@ -541,7 +540,7 @@ export default function useSideTree(): TSideTreeController {
                   slug,
                   index,
                   href: child.type === SIDE_TREE_NODE_TYPE.LINK ? child.href : undefined,
-                  icon: toInputIcon(child.icon),
+                  marker: child.marker,
                 },
               },
               (data) =>
@@ -617,20 +616,20 @@ export default function useSideTree(): TSideTreeController {
   }, [activeId, commitGroups, editingTarget])
 
   /**
-   * Update the icon/color/emoji style for a page or quick link.
+   * Update the marker style for a page or quick link.
    *
    * @example
-   * updateChildStyle('group-getting-started', 'page-welcome', nextIcon)
+   * updateChildStyle('group-getting-started', 'page-welcome', nextMarker)
    */
   const updateChildStyle = useCallback(
-    (groupId: string, childId: string, icon: TSideTreeChild['icon']): void => {
+    (groupId: string, childId: string, marker: TSideTreeChild['marker']): void => {
       commitGroups(
         groupsRef.current.map((group) =>
           group.id === groupId
             ? {
                 ...group,
                 children: group.children.map((child) =>
-                  child.id === childId ? { ...child, icon } : child,
+                  child.id === childId ? { ...child, marker } : child,
                 ),
               }
             : group,
@@ -641,7 +640,7 @@ export default function useSideTree(): TSideTreeController {
 
       persist(
         S.updateDocTreeNode,
-        { id: childId, patch: { icon: toInputIcon(icon) } },
+        { id: childId, patch: { marker } },
         (data) => data?.updateDocTreeNode,
       )
     },

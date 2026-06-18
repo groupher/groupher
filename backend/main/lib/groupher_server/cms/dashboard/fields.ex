@@ -57,7 +57,7 @@ defmodule GroupherServer.CMS.Dashboard.Fields do
       :stack_cards
     ],
     doc_faq_layout: [:flat, :collapse, :search_hint, :left_right],
-    tag_layout: [:hash, :dot],
+    tag_layout: [:hash, :dot, :icon],
     inline_tag_layout: [:morandi, :soft, :solid, :border, :simple],
     avatar_layout: [:circle, :square],
     brand_layout: [:both, :logo, :text],

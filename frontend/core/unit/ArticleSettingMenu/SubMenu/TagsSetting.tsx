@@ -89,7 +89,13 @@ const TagSetting: FC<TProps> = ({ onBack }) => {
           key={item.id}
           onClick={() => handleCheck(item.id, !includes(String(item.id), checked))}
         >
-          <TagNode dotSize={2.5} color={item.color as TColorName} hashSize={3.5} />
+          <TagNode
+            dotSize={2.5}
+            color={item.color as TColorName}
+            marker={item.marker}
+            hashSize={3.5}
+            iconSize={3.5}
+          />
           <div className={s.title}>{item.title}</div>
           <div className='grow' />
           <Checker size='small' checked={includes(item.id, checked)} />

@@ -31,6 +31,10 @@ const TagsItem: FC<TProps> = ({ onClick }) => {
           hashRight={1.5}
           hashSize={3.5}
           color={tag.color as TColorName}
+          marker={tag.marker}
+          iconLeft='px'
+          iconRight={1.5}
+          iconSize={3.5}
         />
         <div className={s.tagTitle}>{tag.title}</div>
         {tags.length > 1 && <div className={s.tagCount}>({tags.length})</div>}

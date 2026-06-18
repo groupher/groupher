@@ -1,5 +1,5 @@
 import { mockHelpCats } from '~/mock'
-import NodeStylePicker from '~/widgets/NodeStylePicker'
+import MarkerPicker from '~/widgets/MarkerPicker'
 
 import Category from './Category'
 import useSalon from './salon'
@@ -12,9 +12,9 @@ export default function BriefCardsLayout() {
     <div className={s.wrapper}>
       <div className='column mb-8 gap-8'>
         <section className='column gap-4'>
-          <h3 className='text-title text-lg'>NodeStylePicker</h3>
+          <h3 className='text-title text-lg'>MarkerPicker</h3>
           <div className='row items-center gap-4'>
-            <NodeStylePicker />
+            <MarkerPicker />
           </div>
         </section>
       </div>

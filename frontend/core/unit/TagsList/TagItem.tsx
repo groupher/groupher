@@ -18,10 +18,13 @@ export default function TagItem({ tag, size, withTitle }: TProps) {
     <div className={s.wrapper}>
       <TagNode
         color={tag.color as TColorName}
+        marker={tag.marker}
         dotSize={dotSize}
         hashSize={hashSize}
+        iconSize={hashSize}
         dotRight={dotRight}
         hashRight={hashRight}
+        iconRight={hashRight}
       />
 
       {withTitle && <div className={s.title}>{tag.title}</div>}

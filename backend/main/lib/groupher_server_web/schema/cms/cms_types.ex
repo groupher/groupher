@@ -15,6 +15,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
   alias GroupherServer.{Accounts, CMS}
+  alias CMS.Marker
   alias CMS.Dashboard.ThemePreset
   alias CMS.Model.{Community, CoverBackground}
   alias Helper.ORM
@@ -38,6 +39,27 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     value(:link)
   end
 
+  enum :marker_type do
+    value(:icon)
+    value(:emoji)
+  end
+
+  object :marker do
+    field(:type, non_null(:marker_type), resolve: &resolve_marker_field(:type, &1, &2, &3))
+    field(:provider, :string, resolve: &resolve_marker_field(:provider, &1, &2, &3))
+    field(:name, :string, resolve: &resolve_marker_field(:name, &1, &2, &3))
+    field(:src, :string, resolve: &resolve_marker_field(:src, &1, &2, &3))
+    field(:unified, :string, resolve: &resolve_marker_field(:unified, &1, &2, &3))
+  end
+
+  input_object :marker_input do
+    field(:type, non_null(:marker_type))
+    field(:provider, :string)
+    field(:name, :string)
+    field(:src, :string)
+    field(:unified, :string)
+  end
+
   object :doc_tree_node do
     field(:id, :id)
     field(:parent_id, :id)
@@ -47,7 +69,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:slug, :string)
     field(:index, :integer)
     field(:href, :string)
-    field(:icon, :json)
+    field(:marker, :marker)
     field(:badge, :string)
     field(:hidden, :boolean)
     field(:expanded, :boolean)
@@ -81,7 +103,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:slug, :string)
     field(:index, :integer)
     field(:href, :string)
-    field(:icon, :json)
+    field(:marker, :marker_input)
     field(:badge, :string)
     field(:hidden, :boolean)
     field(:expanded, :boolean)
@@ -92,7 +114,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:title, :string)
     field(:slug, :string)
     field(:href, :string)
-    field(:icon, :json)
+    field(:marker, :marker_input)
     field(:badge, :string)
     field(:hidden, :boolean)
     field(:expanded, :boolean)
@@ -486,7 +508,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:group, :string, resolve: &R.CMS.community_tag_group_title/3)
     field(:group_id, :id)
     field(:extra, list_of(:string))
-    field(:icon, :string)
+    field(:marker, :marker)
     field(:index, :integer)
 
     field(:author, :user, resolve: dataloader(CMS, :author))
@@ -506,6 +528,10 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:community, :community, resolve: dataloader(CMS, :community))
 
     timestamp_fields()
+  end
+
+  defp resolve_marker_field(field, marker, _args, _info) do
+    {:ok, Marker.field(marker, field)}
   end
 
   object :community_tag_stat do

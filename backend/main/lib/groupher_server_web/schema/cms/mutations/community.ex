@@ -173,7 +173,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:group_id, non_null(:id))
       arg(:thread, :thread, default_value: :post)
       arg(:extra, list_of(:string))
-      arg(:icon, :string)
+      arg(:marker, :marker_input)
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community_tag.create")
@@ -193,7 +193,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:group_id, :id)
       arg(:thread, :thread, default_value: :post)
       arg(:extra, list_of(:string))
-      arg(:icon, :string)
+      arg(:marker, :marker_input)
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community_tag.update")

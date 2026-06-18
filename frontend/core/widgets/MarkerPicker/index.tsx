@@ -3,45 +3,49 @@
 import { LazyMotion, domAnimation, m } from 'motion/react'
 import { type FC, useState } from 'react'
 
-import { NODE_STYLE } from '~/const/node_style'
-import type { TNodeStyleValue } from '~/spec'
+import { MARKER } from '~/const/marker'
+import type { TMarkerValue } from '~/spec'
 import { getIconFilePath } from '~/widgets/IconHub/sprite'
-import NodeStyleRender from '~/widgets/NodeStyleRender'
+import MarkerRender from '~/widgets/MarkerRender'
 import { Tabs } from '~/widgets/Switcher'
 import Tooltip from '~/widgets/Tooltip'
 
-import ColorTab from './ColorTab'
 import { DEFAULT_ICON_NAME, DEFAULT_PROVIDER, TAB, TAB_ITEMS } from './constant'
 import EmojiTab from './EmojiTab'
 import IconTab from './IconTab'
 import useSalon from './salon'
-import type { TNodeStylePickerProps, TTab } from './spec'
+import type { TMarkerPickerProps, TTab } from './spec'
 
-const TAB_ORDER = [TAB.ICON, TAB.COLOR, TAB.EMOJI] as const
+const TAB_ORDER = [TAB.ICON, TAB.EMOJI] as const
 const TAB_TRANSITION = {
   duration: 0.18,
   ease: 'easeOut',
 } as const
 
-const NodeStylePicker: FC<TNodeStylePickerProps> = ({
-  testid = 'node-style-picker',
+const MarkerPicker: FC<TMarkerPickerProps> = ({
+  testid = 'marker-picker',
   compact = false,
   active = false,
   value,
-  onChange = console.log,
+  color,
+  triggerClassName,
+  iconClassName,
+  iconSize,
+  emojiClassName,
+  devClassName,
+  onChange = () => undefined,
 }) => {
-  const s = useSalon({ compact, active })
+  const s = useSalon({ compact, active, color })
 
   const [tab, setTab] = useState<TTab>(TAB.ICON)
   const [direction, setDirection] = useState(1)
   const [panelOpen, setPanelOpen] = useState(false)
   const [mountedTabs, setMountedTabs] = useState<Record<TTab, boolean>>({
     [TAB.ICON]: true,
-    [TAB.COLOR]: false,
     [TAB.EMOJI]: false,
   })
-  const [innerValue, setInnerValue] = useState<TNodeStyleValue>({
-    type: NODE_STYLE.ICON,
+  const [innerValue, setInnerValue] = useState<TMarkerValue>({
+    type: MARKER.ICON,
     provider: DEFAULT_PROVIDER,
     name: DEFAULT_ICON_NAME,
     src: getIconFilePath(DEFAULT_PROVIDER, DEFAULT_ICON_NAME),
@@ -49,7 +53,7 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
 
   const selectedValue = value ?? innerValue
 
-  const handleStyleChange = (nextValue: TNodeStyleValue) => {
+  const handleStyleChange = (nextValue: TMarkerValue) => {
     setInnerValue(nextValue)
     onChange(nextValue)
   }
@@ -105,26 +109,9 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
                     <IconTab
                       panelOpen={panelOpen && tab === TAB.ICON}
                       selectedValue={selectedValue}
+                      color={color}
                       onChange={handleStyleChange}
                     />
-                  </m.div>
-                )}
-
-                {mountedTabs[TAB.COLOR] && (
-                  <m.div
-                    initial={{ opacity: 0, x: hiddenX, scale: 0.985 }}
-                    inert={tab !== TAB.COLOR}
-                    animate={{
-                      opacity: tab === TAB.COLOR ? 1 : 0,
-                      x: tab === TAB.COLOR ? 0 : hiddenX,
-                      scale: tab === TAB.COLOR ? 1 : 0.985,
-                      pointerEvents: tab === TAB.COLOR ? 'auto' : 'none',
-                    }}
-                    transition={TAB_TRANSITION}
-                    aria-hidden={tab !== TAB.COLOR}
-                    className={`${s.tabPanel} ${tab === TAB.COLOR ? s.tabPanelActive : s.tabPanelInactive}`}
-                  >
-                    <ColorTab selectedValue={selectedValue} onChange={handleStyleChange} />
                   </m.div>
                 )}
 
@@ -150,13 +137,16 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
           </div>
         }
       >
-        <button type='button' className={s.trigger}>
-          <NodeStyleRender
+        <button
+          type='button'
+          className={triggerClassName ? `${s.trigger} ${triggerClassName}` : s.trigger}
+        >
+          <MarkerRender
             value={selectedValue}
-            size={compact ? 14 : 18}
-            className={s.previewIconColor}
-            iconClassName={s.previewIconColor}
-            devClassName={s.previewDevLogo}
+            size={iconSize ?? (compact ? 3.5 : 4.5)}
+            iconClassName={iconClassName ?? s.previewIconColor}
+            emojiClassName={emojiClassName}
+            devClassName={devClassName ?? s.previewDevLogo}
           />
         </button>
       </Tooltip>
@@ -164,4 +154,4 @@ const NodeStylePicker: FC<TNodeStylePickerProps> = ({
   )
 }
 
-export default NodeStylePicker
+export default MarkerPicker

@@ -10,7 +10,7 @@ export {
   getIconSymbolId,
   PROVIDERS,
 } from './sprite'
-export type { TIconProvider } from './sprite'
+export type { TIconProvider, TMarkerIconProvider } from './sprite'
 
 export const PICKER_PROVIDERS = ['all', ...PROVIDERS] as const
 

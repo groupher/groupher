@@ -30,11 +30,15 @@ export default function TagNote({ ...spacing }: TProps) {
         <div className={s.tagWrapper}>
           <TagNode
             color={tag.color as TColorName}
+            marker={tag.marker}
             dotSize={8}
             hashSize={3}
+            iconSize={3}
             dotLeft={5}
             hashLeft={0.5}
+            iconLeft={0.5}
             hashRight={1}
+            iconRight={1}
             boldHash
           />
           <div className={s.title}>{tag.title}</div>

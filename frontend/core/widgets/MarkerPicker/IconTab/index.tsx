@@ -2,7 +2,7 @@
 
 import { type FC, useState } from 'react'
 
-import { NODE_STYLE } from '~/const/node_style'
+import { MARKER } from '~/const/marker'
 import { getDevLogoFilePath } from '~/utils/icons'
 import type { TIconName } from '~/widgets/IconHub/icons'
 import { getIconFilePath } from '~/widgets/IconHub/sprite'
@@ -15,7 +15,7 @@ import IconList from './IconList'
 import useSalon from './salon'
 import SearchBar from './SearchBar'
 
-const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, onChange }) => {
+const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, color, onChange }) => {
   const s = useSalon()
   const [providerTab, setProviderTab] = useState<TPickerTabProvider>('all')
   const [query, setQuery] = useState('')
@@ -27,7 +27,7 @@ const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, onChange }) => {
     }
 
     onChange({
-      type: NODE_STYLE.ICON,
+      type: MARKER.ICON,
       provider,
       name: name as TIconName,
       src: getIconFilePath(provider, name),
@@ -36,7 +36,8 @@ const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, onChange }) => {
 
   const handleDevSelect = (name: Parameters<typeof getDevLogoFilePath>[0]) => {
     onChange({
-      type: NODE_STYLE.DEV,
+      type: MARKER.ICON,
+      provider: 'dev',
       name,
       src: getDevLogoFilePath(name),
     })
@@ -55,6 +56,7 @@ const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, onChange }) => {
             providerTab={providerTab}
             query={query}
             selectedValue={selectedValue}
+            color={color}
             onSelect={handleSelect}
           />
         )}

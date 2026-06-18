@@ -1,17 +1,13 @@
-import { NODE_STYLE } from '~/const/node_style'
+import { MARKER } from '~/const/marker'
 import type { TIconName } from '~/widgets/IconHub/icons'
 import type { TIconProvider } from '~/widgets/IconHub/sprite'
 
-export const TAB = NODE_STYLE
+export const TAB = MARKER
 
 export const TAB_ITEMS = [
   {
     title: 'icon',
     slug: TAB.ICON,
-  },
-  {
-    title: 'color',
-    slug: TAB.COLOR,
   },
   {
     title: 'emoji',

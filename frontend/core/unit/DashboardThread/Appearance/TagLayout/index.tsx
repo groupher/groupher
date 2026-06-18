@@ -1,6 +1,7 @@
 import { TAG_LAYOUT } from '~/const/layout'
 import useTrans from '~/hooks/useTrans'
 import HashTagSVG from '~/icons/HashTag'
+import TagSVG from '~/icons/Tag'
 import CheckLabel from '~/widgets/CheckLabel'
 
 import { FIELD } from '../../constant'
@@ -17,6 +18,10 @@ const TAG_LAYOUT_OPTIONS = [
   {
     value: TAG_LAYOUT.DOT,
     titleKey: 'dsb.appearance.tag.option.dot',
+  },
+  {
+    value: TAG_LAYOUT.ICON,
+    titleKey: 'dsb.appearance.tag.option.icon',
   },
 ] as const
 
@@ -51,11 +56,9 @@ export default function TagLayout() {
                 <div className={s.previewList}>
                   {PREVIEW_ITEMS.map((item) => (
                     <div key={`${value}-${item}`} className={s.previewItem}>
-                      {value === TAG_LAYOUT.HASH ? (
-                        <HashTagSVG className={s.hashIcon} />
-                      ) : (
-                        <div className={s.circle} />
-                      )}
+                      {value === TAG_LAYOUT.HASH && <HashTagSVG className={s.hashIcon} />}
+                      {value === TAG_LAYOUT.DOT && <div className={s.circle} />}
+                      {value === TAG_LAYOUT.ICON && <TagSVG className={s.hashIcon} />}
                       <div className={s.bar} />
                     </div>
                   ))}

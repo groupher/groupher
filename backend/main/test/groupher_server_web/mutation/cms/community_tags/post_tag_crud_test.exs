@@ -111,8 +111,8 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
     end
 
     @update_tag_query """
-    mutation($id: ID!, $color: RainbowColor, $title: String, $desc: String, $slug: String, $community: String!, $extra: [String], $icon: String, $groupId: ID) {
-      updateCommunityTag(id: $id, color: $color, title: $title, desc: $desc, slug: $slug, community: $community, extra: $extra, icon: $icon, groupId: $groupId) {
+    mutation($id: ID!, $color: RainbowColor, $title: String, $desc: String, $slug: String, $community: String!, $extra: [String], $marker: MarkerInput, $groupId: ID) {
+      updateCommunityTag(id: $id, color: $color, title: $title, desc: $desc, slug: $slug, community: $community, extra: $extra, marker: $marker, groupId: $groupId) {
         id
         title
         desc
@@ -120,7 +120,13 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
         group
         groupId
         extra
-        icon
+        marker {
+          type
+          provider
+          name
+          src
+          unified
+        }
       }
     }
     """
@@ -139,7 +145,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
         community: community.slug,
         groupId: new_group.id,
         extra: ["newMenuID"],
-        icon: "icon"
+        marker: %{type: "ICON", provider: "lucide", name: "tag", src: "/icons/lucide/tag.svg"}
       }
 
       passport_rules = %{community.title => %{"post.community_tag.update" => true}}
@@ -153,7 +159,14 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
       assert updated["group"] == "new group"
       assert updated["groupId"] == to_string(new_group.id)
       assert updated["extra"] == ["newMenuID"]
-      assert updated["icon"] == "icon"
+
+      assert updated["marker"] == %{
+               "type" => "ICON",
+               "provider" => "lucide",
+               "name" => "tag",
+               "src" => "/icons/lucide/tag.svg",
+               "unified" => nil
+             }
     end
 
     test "auth user can update a tag with markdown note longer than varchar default",
@@ -180,8 +193,12 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
     test "auth user cannot move a tag to a group in another community",
          ~m(community_tag_attrs community user)a do
       {:ok, other_community} = mock_community(user)
-      {:ok, other_group} = CMS.Communities.create_tag_group(other_community, :post, %{title: "other"})
-      {:ok, community_tag} = CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
+
+      {:ok, other_group} =
+        CMS.Communities.create_tag_group(other_community, :post, %{title: "other"})
+
+      {:ok, community_tag} =
+        CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
 
       variables = %{
         id: community_tag.id,
@@ -192,7 +209,8 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
       passport_rules = %{community.title => %{"post.community_tag.update" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      assert rule_conn |> mutation_error?(@update_tag_query, variables, ecode(:invalid_domain_tag))
+      assert rule_conn
+             |> mutation_error?(@update_tag_query, variables, ecode(:invalid_domain_tag))
     end
 
     @delete_tag_query """
@@ -243,7 +261,9 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
     """
     test "auth user cannot update a group in another community", ~m(community user)a do
       {:ok, other_community} = mock_community(user)
-      {:ok, other_group} = CMS.Communities.create_tag_group(other_community, :post, %{title: "other"})
+
+      {:ok, other_group} =
+        CMS.Communities.create_tag_group(other_community, :post, %{title: "other"})
 
       variables = %{
         id: other_group.id,
@@ -255,7 +275,8 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
       passport_rules = %{community.title => %{"post.community_tag.update" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      assert rule_conn |> mutation_error?(@update_group_query, variables, ecode(:invalid_domain_tag))
+      assert rule_conn
+             |> mutation_error?(@update_group_query, variables, ecode(:invalid_domain_tag))
     end
 
     @delete_group_query """
@@ -267,7 +288,9 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
     """
     test "auth user cannot delete a group in another community", ~m(community user)a do
       {:ok, other_community} = mock_community(user)
-      {:ok, other_group} = CMS.Communities.create_tag_group(other_community, :post, %{title: "other"})
+
+      {:ok, other_group} =
+        CMS.Communities.create_tag_group(other_community, :post, %{title: "other"})
 
       variables = %{
         id: other_group.id,
@@ -278,7 +301,8 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
       passport_rules = %{community.title => %{"post.community_tag.delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      assert rule_conn |> mutation_error?(@delete_group_query, variables, ecode(:invalid_domain_tag))
+      assert rule_conn
+             |> mutation_error?(@delete_group_query, variables, ecode(:invalid_domain_tag))
     end
   end
 end
