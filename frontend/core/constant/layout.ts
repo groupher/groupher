@@ -13,6 +13,7 @@ export const UPVOTE_LAYOUT = {
 export const TAG_LAYOUT = {
   HASH: 'HASH',
   DOT: 'DOT',
+  ICON: 'ICON',
 } as const
 
 export const INLINE_TAG_LAYOUT = {

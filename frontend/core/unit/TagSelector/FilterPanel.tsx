@@ -35,7 +35,7 @@ const GroupTags: FC<TGroupTags> = ({ tags, activeTag, onSelect }) => {
             onClick={() => onSelect(tag)}
             onKeyDown={createKeyboardClick(() => onSelect(tag))}
           >
-            <TagNode color={tag.color as TColorName} boldHash />
+            <TagNode color={tag.color as TColorName} marker={tag.marker} boldHash />
             <div className={s.title}>{tag.title}</div>
           </div>
         )

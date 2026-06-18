@@ -21,10 +21,13 @@ export default function TagItem({ tag, layout }: TProps) {
       {!noTagNode && (
         <TagNode
           color={tag.color as TColorName}
+          marker={tag.marker}
           dotSize={1.5}
           hashSize={2.5}
+          iconSize={2.5}
           dotRight={1}
           hashRight={0.5}
+          iconRight={0.5}
         />
       )}
 

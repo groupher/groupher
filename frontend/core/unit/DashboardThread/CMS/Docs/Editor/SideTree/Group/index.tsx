@@ -40,7 +40,7 @@ type TProps = {
   onChildStyleChange: (
     groupId: string,
     childId: string,
-    icon: TSideTreeGroup['children'][number]['icon'],
+    marker: TSideTreeGroup['children'][number]['marker'],
   ) => void
 }
 

@@ -1,4 +1,4 @@
-import type { TNodeStyleValue } from '~/spec'
+import type { TMarkerValue } from '~/spec'
 
 import type {
   SIDE_TREE_CHILD_MENU_ACTION,
@@ -16,7 +16,7 @@ export type TSideTreeGroup = {
   type: typeof SIDE_TREE_NODE_TYPE.GROUP
   title: string
   slug?: string
-  icon?: TNodeStyleValue
+  marker?: TMarkerValue
   hidden?: boolean
   expanded?: boolean
   children: readonly TSideTreeChild[]
@@ -30,7 +30,7 @@ export type TSideTreePage = {
   docId?: string
   path?: string
   href?: string
-  icon?: TNodeStyleValue
+  marker?: TMarkerValue
   badge?: string
   hidden?: boolean
 }
@@ -41,7 +41,7 @@ export type TSideTreeLink = {
   title: string
   slug?: string
   href: string
-  icon?: TNodeStyleValue
+  marker?: TMarkerValue
   badge?: string
   hidden?: boolean
 }

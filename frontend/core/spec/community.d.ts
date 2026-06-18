@@ -1,5 +1,6 @@
 import type { TSimpleUser } from './account'
 import type { TDsb, TParseDashboard } from './dashboard'
+import type { TMarkerValue } from './marker'
 import type { TThread, TCommunityThread } from './thread'
 import type { TID, TPagi } from './utils'
 import type { TParsedWallpaper } from './wallpaper'
@@ -62,6 +63,7 @@ export type TTag = {
   desc?: string
   thread?: TThread
   color?: string
+  marker?: TMarkerValue | null
   group?: string
   community?: TCommunity
   insertedAt?: string

@@ -103,7 +103,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
       slug: node.slug,
       index: node.index,
       href: node.href,
-      icon: node.icon,
+      marker: node.marker,
       badge: node.badge,
       hidden: node.hidden,
       expanded: node.expanded,

@@ -9,14 +9,17 @@ import { type FC, useEffect } from 'react'
 import { COLOR } from '~/const/colors'
 import { DRAWER_SCROLLER } from '~/const/dom'
 import { POST_LAYOUT } from '~/const/layout'
+import { MARKER } from '~/const/marker'
 import { CHANGE_MODE } from '~/const/mode'
 import { ROUTE } from '~/const/route'
+import { DEFAULT_TAG_MARKER } from '~/const/tag'
 import useTrans from '~/hooks/useTrans'
 import type { TChangeMode, TColorName, TSelectOption, TTransKey } from '~/spec'
 import ColorSelector from '~/widgets/ColorSelector'
 import CustomScroller from '~/widgets/CustomScroller'
 import Input from '~/widgets/Input'
 import MarkdownEditor from '~/widgets/MarkdownEditor'
+import MarkerPicker from '~/widgets/MarkerPicker'
 import Select from '~/widgets/Select'
 
 import Footer from './Footer'
@@ -42,6 +45,9 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE, initialGroup 
 
   if (!editingTag) return null
 
+  const editingMarker = editingTag.marker ?? DEFAULT_TAG_MARKER
+  const markerIsEmoji = editingMarker.type === MARKER.EMOJI
+
   return (
     <div className={s.wrapper}>
       <CustomScroller
@@ -57,22 +63,6 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE, initialGroup 
             <div className='mb-6' />
             <div className={s.title}>{t('dsb.tags.editor.name')}</div>
             <div className={s.basicInfo}>
-              <ColorSelector
-                activeColor={editingTag.color || COLOR.BLACK}
-                onChange={(color) => edit(color, 'color')}
-                placement='bottom-start'
-                offset={[0, 0]}
-              >
-                <div className={s.dotSelector}>
-                  <div
-                    className={cn(
-                      s.titleDot,
-                      s.rainbow((editingTag.color as TColorName) || COLOR.BLACK, 'bg'),
-                    )}
-                  />
-                </div>
-              </ColorSelector>
-
               <Input
                 className={s.titleInput}
                 width='w-72'
@@ -82,6 +72,33 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE, initialGroup 
             </div>
           </>
         )}
+
+        <div className='mb-6' />
+        <div className={s.title}>{t('dsb.tags.editor.icon')}</div>
+        <div className={s.iconSetting}>
+          {!markerIsEmoji && (
+            <ColorSelector
+              activeColor={editingTag.color || COLOR.BLACK}
+              onChange={(color) => edit(color, 'color')}
+              placement='bottom-start'
+              offset={[0, 0]}
+            >
+              <div className={s.dotSelector}>
+                <div
+                  className={cn(
+                    s.titleDot,
+                    s.rainbow((editingTag.color as TColorName) || COLOR.BLACK, 'bg'),
+                  )}
+                />
+              </div>
+            </ColorSelector>
+          )}
+          <MarkerPicker
+            value={editingMarker}
+            color={markerIsEmoji ? undefined : (editingTag.color as TColorName) || COLOR.BLACK}
+            onChange={(marker) => edit(marker, 'marker')}
+          />
+        </div>
 
         <div className='mb-6' />
         <div className={s.title}>{t('dsb.tags.editor.group')}</div>

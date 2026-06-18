@@ -84,6 +84,13 @@ export const tag = `
   desc
   slug
   color
+  marker {
+    type
+    provider
+    name
+    src
+    unified
+  }
   thread
   group
   groupId

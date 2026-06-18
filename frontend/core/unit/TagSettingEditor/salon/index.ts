@@ -11,7 +11,8 @@ export default function useSalon() {
     dotSelector: cn('align-both size-8 circle border pointer', br('divider'), bg('hoverBg')),
     titleDot: 'size-7 circle',
     title: cn('text-sm bold-sm px-6 mb-2', fg('title')),
-    titleInput: 'ml-2.5 h-9',
+    titleInput: 'h-9',
+    iconSetting: 'row-center gap-2 px-6',
     //
     selectorWrapper: 'px-6 mt-2.5',
     desc: cn('text-xs px-6 mb-2.5 leading-5', fg('digest')),

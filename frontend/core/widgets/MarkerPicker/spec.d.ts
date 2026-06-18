@@ -1,19 +1,26 @@
 import type { ComponentType } from 'react'
 
-import type { TNodeStyleValue } from '~/spec'
-import type { TIconName, TIconProvider, TPickerProvider } from '~/widgets/IconHub/icons'
-import type { TDevLogo } from '~/widgets/NodeStylePicker/constant/dev_logo'
+import type { TColorName, TMarkerValue } from '~/spec'
+import type { TIconName, TPickerProvider } from '~/widgets/IconHub/icons'
+import type { TIconProvider, TMarkerIconProvider } from '~/widgets/IconHub/sprite'
+import type { TDevLogo } from '~/widgets/MarkerPicker/constant/dev_logo'
 
 import type { TAB_ITEMS } from './constant'
 
 export type TTab = (typeof TAB_ITEMS)[number]['slug']
 
-export type TNodeStylePickerProps = {
+export type TMarkerPickerProps = {
   testid?: string
-  value?: TNodeStyleValue | null
+  value?: TMarkerValue | null
   compact?: boolean
   active?: boolean
-  onChange?: (value: TNodeStyleValue) => void
+  color?: TColorName
+  triggerClassName?: string
+  iconClassName?: string
+  iconSize?: number
+  emojiClassName?: string
+  devClassName?: string
+  onChange?: (value: TMarkerValue) => void
 }
 
 export type TIconOption = {
@@ -45,8 +52,9 @@ export type TVirtualListProps<T> = {
 
 export type TIconTabProps = {
   panelOpen: boolean
-  selectedValue: TNodeStyleValue
-  onChange: (value: TNodeStyleValue) => void
+  selectedValue: TMarkerValue
+  color?: TColorName
+  onChange: (value: TMarkerValue) => void
 }
 
 export type TProviderTabsProps = {
@@ -54,4 +62,4 @@ export type TProviderTabsProps = {
   onChange: (value: TPickerTabProvider) => void
 }
 
-export type TIconSelect = (provider: TIconProvider | 'dev', name: TIconName | TDevLogo) => void
+export type TIconSelect = (provider: TMarkerIconProvider, name: TIconName | TDevLogo) => void

@@ -183,7 +183,7 @@ export default function useMutation(): TRet {
     _handleDone(field)
   }
 
-  const mutation = (field: TDsbFieldKey, e: TEditValue): Promise<void> => {
+  const mutation = (field: TDsbFieldKey, _e: TEditValue): Promise<void> => {
     if (isDemoMode) {
       handleDemoMutation(field)
       return Promise.resolve()
@@ -365,15 +365,17 @@ export default function useMutation(): TRet {
     }
 
     if (includes(field, values(LAYOUT_FIELD))) {
+      const currentValue = storeRef.current[field]
+
       if (field === FIELD.KANBAN_BOARDS) {
         handleMutation(S.updateDashboardLayout, {
           community,
-          [field]: serializeKanbanBoards(e as readonly TKanbanBoard[]),
+          [field]: serializeKanbanBoards(currentValue as readonly TKanbanBoard[]),
         })
         return
       }
 
-      handleMutation(S.updateDashboardLayout, { community, [field]: e })
+      handleMutation(S.updateDashboardLayout, { community, [field]: currentValue })
       return
     }
   }

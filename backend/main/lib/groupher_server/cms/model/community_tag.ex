@@ -10,13 +10,14 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
   alias GroupherServer.CMS
 
   alias CMS.Artiment.Threads
+  alias CMS.{Marker}
   alias CMS.Model.{Author, Community, CommunityTagGroup}
   alias CMS.Dashboard.Fields, as: Dashboard
   alias Helper.Constant.DBPrefix
   alias Helper.Validator.Slug
 
   @required_fields ~w(thread title color author_id community_id group_id slug)a
-  @updatable_fields ~w(thread title desc color community_id group_id extra icon slug index layout)a
+  @updatable_fields ~w(thread title desc color community_id group_id extra marker slug index layout)a
 
   @schema_prefix DBPrefix.cms()
 
@@ -29,7 +30,7 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
     field(:thread, Ecto.Enum, values: Threads.enums())
     field(:group, :string)
     field(:extra, {:array, :string})
-    field(:icon, :string)
+    field(:marker, :map)
     field(:index, :integer)
     field(:layout, :string)
 
@@ -43,6 +44,7 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
   def changeset(%CommunityTag{} = tag, attrs) do
     tag
     |> cast(attrs, @required_fields ++ @updatable_fields)
+    |> Marker.normalize_changeset(:marker)
     |> validate_required(@required_fields)
     |> Slug.validate_changeset(:slug)
     |> foreign_key_constraint(:user_id)
@@ -54,6 +56,7 @@ defmodule GroupherServer.CMS.Model.CommunityTag do
   def update_changeset(%CommunityTag{} = tag, attrs) do
     tag
     |> cast(attrs, @updatable_fields)
+    |> Marker.normalize_changeset(:marker)
     |> Slug.validate_changeset(:slug)
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:community_id)

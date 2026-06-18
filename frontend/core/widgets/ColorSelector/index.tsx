@@ -110,6 +110,7 @@ const ColorSelector: FC<TProps> = ({
       hideOnClick={false}
       maxWidth='none'
       offset={offset}
+      portalToBody
       onShow={() => setCustomExpanded(isCustomSelected)}
       onHide={() => setCustomExpanded(false)}
       content={

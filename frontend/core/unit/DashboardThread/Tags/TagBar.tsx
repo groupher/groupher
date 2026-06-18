@@ -1,8 +1,11 @@
 import { memo, type FC, useState } from 'react'
 
+import { MARKER } from '~/const/marker'
+import { DEFAULT_TAG_MARKER } from '~/const/tag'
 import type { TColorName, TTag } from '~/spec'
 import ColorSelector from '~/widgets/ColorSelector'
 import Input from '~/widgets/Input'
+import MarkerPicker from '~/widgets/MarkerPicker'
 import TagNode from '~/widgets/TagNode'
 
 import useTags from '../logic/useTags'
@@ -34,9 +37,11 @@ const TagBar: FC<TProps> = ({
   const [draftTag, setDraftTag] = useState<TTag | null>(null)
   const editingDraft = draftTag ?? tag
   const [saving, setSaving] = useState(false)
-  const s = useSalon({ color: editingTag?.color as TColorName, editing: isEditMode })
+  const s = useSalon({ color: editingDraft.color as TColorName, editing: isEditMode })
   const canSaveInline = !isEditMode || !!editingDraft.title?.trim()
   const desc = tag.desc?.trim()
+  const editingMarker = editingDraft.marker ?? DEFAULT_TAG_MARKER
+  const markerIsEmoji = editingMarker.type === MARKER.EMOJI
 
   const cancelEdit = (): void => {
     setDraftTag(null)
@@ -72,18 +77,31 @@ const TagBar: FC<TProps> = ({
         onConfirm={() => void saveEdit()}
       >
         {isEditMode ? (
-          <ColorSelector
-            activeColor={editingDraft.color}
-            onChange={(color) => setDraftTag((prev) => ({ ...(prev ?? tag), color }))}
-            placement='bottom-start'
-            offset={[-8, 0]}
-          >
-            <div className={s.dotSelector}>
-              <div className={s.dot} />
+          <div className={s.styleControls}>
+            <div className={s.iconPicker}>
+              <MarkerPicker
+                compact
+                value={editingMarker}
+                color={markerIsEmoji ? undefined : (editingDraft.color as TColorName)}
+                iconSize={3.5}
+                onChange={(marker) => setDraftTag((prev) => ({ ...(prev ?? tag), marker }))}
+              />
             </div>
-          </ColorSelector>
+            {!markerIsEmoji && (
+              <ColorSelector
+                activeColor={editingDraft.color}
+                onChange={(color) => setDraftTag((prev) => ({ ...(prev ?? tag), color }))}
+                placement='bottom-start'
+                offset={[-8, 0]}
+              >
+                <div className={s.dotSelector}>
+                  <div className={s.dot} />
+                </div>
+              </ColorSelector>
+            )}
+          </div>
         ) : (
-          <TagNode color={tag.color as TColorName} boldHash dotTop={1} />
+          <TagNode color={tag.color as TColorName} marker={tag.marker} boldHash dotTop={1} />
         )}
         {isEditMode ? (
           <Input

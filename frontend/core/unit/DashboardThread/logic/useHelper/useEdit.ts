@@ -108,9 +108,11 @@ export default function useEdit(): TRet {
 
   const onSave = (field: TDsbFieldKey): void => {
     console.log('## on save: ', field)
-    dsb$.commit({ saving: true, savingField: field })
+    const liveDsb$ = dsb$.live$ ?? dsb$
 
-    mutation(field, dsb$[field])
+    liveDsb$.commit({ saving: true, savingField: field })
+
+    mutation(field, liveDsb$[field])
   }
 
   return {

@@ -155,7 +155,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
             :doc_draft_id,
             :type,
             :href,
-            :icon,
+            :marker,
             :badge,
             :hidden
           ])

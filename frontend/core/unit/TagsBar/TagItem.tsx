@@ -21,7 +21,7 @@ const TagItem: FC<TProps> = ({ tag, active, onSelect }) => {
   return (
     <div className={s.wrapper}>
       <button type='button' className={s.tag} onClick={() => onSelect(tag)}>
-        <TagNode color={tag.color as TColorName} boldHash />
+        <TagNode color={tag.color as TColorName} marker={tag.marker} boldHash />
         <div className={s.title}>{cutRest(tag.title, 10)}</div>
       </button>
       {active && (

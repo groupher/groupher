@@ -20,6 +20,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
   import Ecto.Changeset
 
   alias GroupherServer.CMS
+  alias CMS.Marker
   alias CMS.Model.{Community, DocDraft}
   alias Helper.Constant.DBPrefix
   alias Helper.Validator.Slug
@@ -29,7 +30,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
 
   @node_types [:group, :page, :link]
   @required_fields ~w(community_id type title slug index)a
-  @optional_fields ~w(parent_id doc_draft_id href icon badge hidden expanded template_key)a
+  @optional_fields ~w(parent_id doc_draft_id href marker badge hidden expanded template_key)a
 
   @type t :: %DocTreeNodeDraft{}
   schema "doc_tree_node_drafts" do
@@ -42,7 +43,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
     field(:slug, :string)
     field(:index, :integer, default: 0)
     field(:href, :string)
-    field(:icon, :map)
+    field(:marker, :map)
     field(:badge, :string)
     field(:hidden, :boolean, default: false)
     field(:expanded, :boolean, default: true)
@@ -56,6 +57,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
   def changeset(%DocTreeNodeDraft{} = node, attrs) do
     node
     |> cast(attrs, @required_fields ++ @optional_fields)
+    |> Marker.normalize_changeset(:marker)
     |> normalize_slug()
     |> validate_required(@required_fields)
     |> validate_length(:title, min: 1, max: 100)
@@ -78,6 +80,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
   def update_changeset(%DocTreeNodeDraft{} = node, attrs) do
     node
     |> cast(attrs, @required_fields ++ @optional_fields)
+    |> Marker.normalize_changeset(:marker)
     |> normalize_slug()
     |> validate_length(:title, min: 1, max: 100)
     |> validate_length(:slug, min: 1, max: 120)

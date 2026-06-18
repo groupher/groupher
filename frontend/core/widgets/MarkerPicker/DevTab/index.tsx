@@ -3,8 +3,8 @@
 import NextImage from 'next/image'
 import { type FC, useMemo } from 'react'
 
-import { NODE_STYLE } from '~/const/node_style'
-import type { TNodeStyleValue } from '~/spec'
+import { MARKER } from '~/const/marker'
+import type { TMarkerValue } from '~/spec'
 import { getDevLogoFilePath, getDevLogoSrc } from '~/utils/icons'
 
 import { DEV_LOGOS, type TDevLogo } from '../constant/dev_logo'
@@ -13,7 +13,7 @@ import VirtualList from '../VirtualList'
 
 type TProps = {
   query: string
-  selectedValue: TNodeStyleValue
+  selectedValue: TMarkerValue
   onSelect: (name: TDevLogo) => void
 }
 
@@ -26,8 +26,10 @@ type TLogoContentProps = {
 
 const normalizeQuery = (value: string): string => value.trim().toLowerCase().replaceAll(/\s+/g, '')
 
-const isSelectedDevLogo = (selectedValue: TNodeStyleValue, name: TDevLogo): boolean =>
-  selectedValue.type === NODE_STYLE.DEV && selectedValue.name === name
+const isSelectedDevLogo = (selectedValue: TMarkerValue, name: TDevLogo): boolean =>
+  selectedValue.type === MARKER.ICON &&
+  selectedValue.provider === 'dev' &&
+  selectedValue.name === name
 
 const LogoContent: FC<TLogoContentProps> = ({ item }) => {
   const src = getDevLogoSrc(getDevLogoFilePath(item))

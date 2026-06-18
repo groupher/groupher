@@ -22,12 +22,12 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.BlogTagTest do
       assert article_tag.group_id
     end
 
-    test "create article tag with extra & icon data", ~m(community article_tag_attrs user)a do
-      tag_attrs = Map.merge(article_tag_attrs, %{extra: ["menuID", "menuID2"], icon: "icon addr"})
+    test "create article tag with extra & marker data", ~m(community article_tag_attrs user)a do
+      tag_attrs = Map.merge(article_tag_attrs, %{extra: ["menuID", "menuID2"], marker: %{type: "ICON", provider: "lucide", name: "tag", src: "/icons/lucide/tag.svg"}})
       {:ok, article_tag} = CMS.Communities.create_tag(community, :blog, tag_attrs, user)
 
       assert article_tag.extra == ["menuID", "menuID2"]
-      assert article_tag.icon == "icon addr"
+      assert article_tag.marker == %{type: :icon, provider: "lucide", name: "tag", src: "/icons/lucide/tag.svg"}
     end
 
     test "can update an article tag", ~m(community article_tag_attrs user)a do

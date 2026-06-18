@@ -176,10 +176,13 @@ const updateDashboardLayout = gql`
     $navActiveLayout: DsbNavActiveLayout
     $broadcastEnable: Boolean
     $kanbanBgColors: [RainbowColor]
+    $broadcastLayout: DsbBroadcastLayout
     $broadcastBg: RainbowColor
     $broadcastCustomBg: String
+    $broadcastArticleLayout: DsbBroadcastArticleLayout
     $broadcastArticleBg: RainbowColor
     $broadcastArticleCustomBg: String
+    $broadcastArticleEnable: Boolean
     $overlayDark: Boolean
     $brandLayout: DsbBrandLayout
     $communityLayout: DsbCommunityLayout
@@ -203,10 +206,13 @@ const updateDashboardLayout = gql`
       avatarLayout: $avatarLayout
       navActiveLayout: $navActiveLayout
       broadcastEnable: $broadcastEnable
+      broadcastLayout: $broadcastLayout
       broadcastBg: $broadcastBg
       broadcastCustomBg: $broadcastCustomBg
+      broadcastArticleLayout: $broadcastArticleLayout
       broadcastArticleBg: $broadcastArticleBg
       broadcastArticleCustomBg: $broadcastArticleCustomBg
+      broadcastArticleEnable: $broadcastArticleEnable
       kanbanBgColors: $kanbanBgColors
       overlayDark: $overlayDark
       brandLayout: $brandLayout
@@ -217,6 +223,33 @@ const updateDashboardLayout = gql`
     ) {
       layout {
         postLayout
+        kanbanLayout
+        kanbanCardLayout
+        kanbanBoards
+        kanbanBgColors
+        docCoverLayout
+        docFaqLayout
+        tagLayout
+        inlineTagLayout
+        avatarLayout
+        brandLayout
+        communityLayout
+        navActiveLayout
+        topbarEnabled
+        topbarBg
+        topbarBgCustomColor
+        broadcastLayout
+        broadcastBg
+        broadcastCustomBg
+        broadcastEnable
+        broadcastArticleLayout
+        broadcastArticleBg
+        broadcastArticleCustomBg
+        broadcastArticleEnable
+        changelogLayout
+        footerLayout
+        headerLayout
+        overlayDark
       }
     }
   }
@@ -266,7 +299,7 @@ const updateCommunityTag = gql`
     $slug: String
     $community: String!
     $extra: [String]
-    $icon: String
+    $marker: MarkerInput
     $groupId: ID
   ) {
     updateCommunityTag(
@@ -276,7 +309,7 @@ const updateCommunityTag = gql`
       slug: $slug
       community: $community
       extra: $extra
-      icon: $icon
+      marker: $marker
       groupId: $groupId
     ) {
       id
@@ -285,7 +318,13 @@ const updateCommunityTag = gql`
       color
       groupId
       extra
-      icon
+      marker {
+        type
+        provider
+        name
+        src
+        unified
+      }
     }
   }
 `
@@ -325,6 +364,7 @@ const createCommunityTag = gql`
     $color: RainbowColor!
     $groupId: ID!
     $community: String!
+    $marker: MarkerInput
   ) {
     createCommunityTag(
       thread: $thread
@@ -334,6 +374,7 @@ const createCommunityTag = gql`
       color: $color
       groupId: $groupId
       community: $community
+      marker: $marker
     ) {
       id
     }
@@ -402,7 +443,13 @@ const docTreeNodeFields = `
   slug
   index
   href
-  icon
+  marker {
+    type
+    provider
+    name
+    src
+    unified
+  }
   badge
   hidden
   expanded

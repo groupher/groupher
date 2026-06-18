@@ -110,13 +110,19 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.DocTagCRUD do
     end
 
     @update_tag_query """
-    mutation($id: ID!, $color: RainbowColor, $title: String, $slug: String, $community: String!, $thread: Thread, $extra: [String], $icon: String) {
-      updateCommunityTag(id: $id, color: $color, title: $title, slug: $slug, community: $community, thread: $thread, extra: $extra, icon: $icon) {
+    mutation($id: ID!, $color: RainbowColor, $title: String, $slug: String, $community: String!, $thread: Thread, $extra: [String], $marker: MarkerInput) {
+      updateCommunityTag(id: $id, color: $color, title: $title, slug: $slug, community: $community, thread: $thread, extra: $extra, marker: $marker) {
         id
         title
         color
         extra
-        icon
+        marker {
+          type
+          provider
+          name
+          src
+          unified
+        }
       }
     }
     """
@@ -131,7 +137,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.DocTagCRUD do
         slug: "new_title",
         community: community.slug,
         extra: ["newMenuID"],
-        icon: "icon",
+        marker: %{type: "ICON", provider: "lucide", name: "tag", src: "/icons/lucide/tag.svg"},
         thread: "DOC"
       }
 
@@ -143,7 +149,14 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.DocTagCRUD do
       assert updated["color"] == "YELLOW"
       assert updated["title"] == "new title"
       assert updated["extra"] == ["newMenuID"]
-      assert updated["icon"] == "icon"
+
+      assert updated["marker"] == %{
+               "type" => "ICON",
+               "provider" => "lucide",
+               "name" => "tag",
+               "src" => "/icons/lucide/tag.svg",
+               "unified" => nil
+             }
     end
 
     @delete_tag_query """

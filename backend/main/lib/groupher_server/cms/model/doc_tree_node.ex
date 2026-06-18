@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
   import Ecto.Changeset
 
   alias GroupherServer.CMS
+  alias CMS.Marker
   alias CMS.Model.{Community, Doc}
   alias Helper.Constant.DBPrefix
   alias Helper.Validator.Slug
@@ -23,7 +24,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
   @node_types [:group, :page, :link]
   @required_fields ~w(community_id type title slug index)a
-  @optional_fields ~w(parent_id doc_id href icon badge hidden expanded)a
+  @optional_fields ~w(parent_id doc_id href marker badge hidden expanded)a
 
   @type t :: %DocTreeNode{}
   schema "doc_tree_nodes" do
@@ -36,7 +37,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     field(:slug, :string)
     field(:index, :integer, default: 0)
     field(:href, :string)
-    field(:icon, :map)
+    field(:marker, :map)
     field(:badge, :string)
     field(:hidden, :boolean, default: false)
     field(:expanded, :boolean, default: true)
@@ -49,6 +50,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
   def changeset(%DocTreeNode{} = node, attrs) do
     node
     |> cast(attrs, @required_fields ++ @optional_fields)
+    |> Marker.normalize_changeset(:marker)
     |> normalize_slug()
     |> validate_required(@required_fields)
     |> validate_length(:title, min: 1, max: 100)
@@ -68,6 +70,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
   def update_changeset(%DocTreeNode{} = node, attrs) do
     node
     |> cast(attrs, @required_fields ++ @optional_fields)
+    |> Marker.normalize_changeset(:marker)
     |> normalize_slug()
     |> validate_length(:title, min: 1, max: 100)
     |> validate_length(:slug, min: 1, max: 120)

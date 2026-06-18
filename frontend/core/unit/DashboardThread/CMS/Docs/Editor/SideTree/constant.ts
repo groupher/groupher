@@ -1,6 +1,5 @@
-import { COLOR } from '~/const/colors'
-import { NODE_STYLE } from '~/const/node_style'
-import type { TNodeStyleValue } from '~/spec'
+import { MARKER } from '~/const/marker'
+import type { TMarkerValue } from '~/spec'
 import { getIconFilePath } from '~/widgets/IconHub/sprite'
 
 import type { TSideTreeGroup } from './spec'
@@ -39,23 +38,25 @@ export const UNTITLED_TITLE_I18N_KEY = 'dsb.cms.docs.side_tree.untitled'
 export const DUPLICATE_TITLE_SUFFIX = 'copy'
 export const DEFAULT_LINK_HREF = 'https://example.com'
 
-export const DEFAULT_PAGE_STYLE: TNodeStyleValue = {
-  type: NODE_STYLE.ICON,
+export const DEFAULT_PAGE_MARKER: TMarkerValue = {
+  type: MARKER.ICON,
   provider: 'lucide',
   name: 'file-text',
   src: getIconFilePath('lucide', 'file-text'),
 }
 
-export const DEFAULT_LINK_STYLE: TNodeStyleValue = {
-  type: NODE_STYLE.ICON,
+export const DEFAULT_LINK_MARKER: TMarkerValue = {
+  type: MARKER.ICON,
   provider: 'lucide',
   name: 'external-link',
   src: getIconFilePath('lucide', 'external-link'),
 }
 
-export const DEFAULT_GROUP_STYLE: TNodeStyleValue = {
-  type: NODE_STYLE.COLOR,
-  color: COLOR.GREEN,
+export const DEFAULT_GROUP_MARKER: TMarkerValue = {
+  type: MARKER.ICON,
+  provider: 'lucide',
+  name: 'folder',
+  src: getIconFilePath('lucide', 'folder'),
 }
 
 export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
@@ -63,7 +64,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
     id: 'group-getting-started',
     type: SIDE_TREE_NODE_TYPE.GROUP,
     title: 'Getting started',
-    icon: DEFAULT_GROUP_STYLE,
+    marker: DEFAULT_GROUP_MARKER,
     expanded: true,
     children: [
       {
@@ -73,7 +74,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
         docId: 'doc_welcome',
         path: 'introduction/welcome',
         href: '/docs/introduction/welcome',
-        icon: DEFAULT_PAGE_STYLE,
+        marker: DEFAULT_PAGE_MARKER,
       },
       {
         id: 'page-quick-start',
@@ -82,7 +83,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
         docId: 'doc_quick_start',
         path: 'introduction/quick-start',
         href: '/docs/introduction/quick-start',
-        icon: DEFAULT_PAGE_STYLE,
+        marker: DEFAULT_PAGE_MARKER,
         badge: 'New',
       },
     ],
@@ -91,7 +92,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
     id: 'group-foundations',
     type: SIDE_TREE_NODE_TYPE.GROUP,
     title: 'Foundations',
-    icon: DEFAULT_GROUP_STYLE,
+    marker: DEFAULT_GROUP_MARKER,
     expanded: true,
     children: [
       {
@@ -101,7 +102,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
         docId: 'doc_content_model',
         path: 'foundations/content-model',
         href: '/docs/foundations/content-model',
-        icon: DEFAULT_PAGE_STYLE,
+        marker: DEFAULT_PAGE_MARKER,
       },
       {
         id: 'page-navigation',
@@ -110,7 +111,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
         docId: 'doc_navigation',
         path: 'foundations/navigation',
         href: '/docs/foundations/navigation',
-        icon: DEFAULT_PAGE_STYLE,
+        marker: DEFAULT_PAGE_MARKER,
       },
       {
         id: 'page-permissions',
@@ -119,7 +120,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
         docId: 'doc_permissions',
         path: 'foundations/permissions',
         href: '/docs/foundations/permissions',
-        icon: DEFAULT_PAGE_STYLE,
+        marker: DEFAULT_PAGE_MARKER,
       },
     ],
   },
@@ -127,7 +128,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
     id: 'group-writing',
     type: SIDE_TREE_NODE_TYPE.GROUP,
     title: 'Writing',
-    icon: DEFAULT_GROUP_STYLE,
+    marker: DEFAULT_GROUP_MARKER,
     expanded: true,
     children: [
       {
@@ -137,7 +138,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
         docId: 'doc_editor_basics',
         path: 'writing/editor-basics',
         href: '/docs/writing/editor-basics',
-        icon: DEFAULT_PAGE_STYLE,
+        marker: DEFAULT_PAGE_MARKER,
       },
       {
         id: 'page-markdown',
@@ -146,7 +147,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
         docId: 'doc_markdown',
         path: 'writing/markdown',
         href: '/docs/writing/markdown',
-        icon: DEFAULT_PAGE_STYLE,
+        marker: DEFAULT_PAGE_MARKER,
       },
       {
         id: 'page-assets',
@@ -155,7 +156,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
         docId: 'doc_assets',
         path: 'writing/assets',
         href: '/docs/writing/assets',
-        icon: DEFAULT_PAGE_STYLE,
+        marker: DEFAULT_PAGE_MARKER,
       },
       {
         id: 'page-publishing',
@@ -164,7 +165,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
         docId: 'doc_publishing',
         path: 'writing/publishing',
         href: '/docs/writing/publishing',
-        icon: DEFAULT_PAGE_STYLE,
+        marker: DEFAULT_PAGE_MARKER,
       },
     ],
   },
@@ -172,7 +173,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
     id: 'group-customization',
     type: SIDE_TREE_NODE_TYPE.GROUP,
     title: 'Customization',
-    icon: DEFAULT_GROUP_STYLE,
+    marker: DEFAULT_GROUP_MARKER,
     expanded: true,
     children: [
       {
@@ -182,7 +183,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
         docId: 'doc_theme',
         path: 'customization/theme',
         href: '/docs/customization/theme',
-        icon: DEFAULT_PAGE_STYLE,
+        marker: DEFAULT_PAGE_MARKER,
       },
       {
         id: 'page-layout',
@@ -191,7 +192,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
         docId: 'doc_layout',
         path: 'customization/layout',
         href: '/docs/customization/layout',
-        icon: DEFAULT_PAGE_STYLE,
+        marker: DEFAULT_PAGE_MARKER,
       },
       {
         id: 'page-side-tree',
@@ -200,7 +201,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
         docId: 'doc_side_tree',
         path: 'customization/side-tree',
         href: '/docs/customization/side-tree',
-        icon: DEFAULT_PAGE_STYLE,
+        marker: DEFAULT_PAGE_MARKER,
         badge: 'Beta',
       },
     ],
@@ -209,7 +210,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
     id: 'group-deployment',
     type: SIDE_TREE_NODE_TYPE.GROUP,
     title: 'Deployment',
-    icon: DEFAULT_GROUP_STYLE,
+    marker: DEFAULT_GROUP_MARKER,
     expanded: true,
     children: [
       {
@@ -219,7 +220,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
         docId: 'doc_checklist',
         path: 'deployment/checklist',
         href: '/docs/deployment/checklist',
-        icon: DEFAULT_PAGE_STYLE,
+        marker: DEFAULT_PAGE_MARKER,
       },
       {
         id: 'page-domains',
@@ -228,7 +229,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
         docId: 'doc_domains',
         path: 'deployment/domains',
         href: '/docs/deployment/domains',
-        icon: DEFAULT_PAGE_STYLE,
+        marker: DEFAULT_PAGE_MARKER,
       },
       {
         id: 'page-analytics',
@@ -237,7 +238,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
         docId: 'doc_analytics',
         path: 'deployment/analytics',
         href: '/docs/deployment/analytics',
-        icon: DEFAULT_PAGE_STYLE,
+        marker: DEFAULT_PAGE_MARKER,
       },
       {
         id: 'page-changelog',
@@ -246,7 +247,7 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
         docId: 'doc_changelog',
         path: 'deployment/changelog',
         href: '/docs/deployment/changelog',
-        icon: DEFAULT_PAGE_STYLE,
+        marker: DEFAULT_PAGE_MARKER,
       },
     ],
   },

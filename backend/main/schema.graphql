@@ -79,6 +79,9 @@ type RootQueryType {
   "community docs side tree"
   docTree(community: String!): DocTree
 
+  "dashboard docs draft document"
+  docDraft(community: String!, id: ID!): DocDraft
+
   "spec community info"
   community(slug: String!, incViews: Boolean): Community
 
@@ -274,12 +277,12 @@ type RootMutationType {
 
   "create a tag"
   createCommunityTag(
-    title: String!, slug: String!, color: RainbowColor!, layout: String, community: String!, groupId: ID!, thread: Thread, extra: [String], icon: String
+    title: String!, slug: String!, color: RainbowColor!, layout: String, community: String!, groupId: ID!, thread: Thread, extra: [String], marker: MarkerInput
   ): CommunityTag
 
   "update a tag"
   updateCommunityTag(
-    id: ID!, community: String!, title: String, layout: String, desc: String, slug: String, color: RainbowColor, groupId: ID, thread: Thread, extra: [String], icon: String
+    id: ID!, community: String!, title: String, layout: String, desc: String, slug: String, color: RainbowColor, groupId: ID, thread: Thread, extra: [String], marker: MarkerInput
   ): CommunityTag
 
   "create a tag group"
@@ -683,25 +686,28 @@ type RootMutationType {
   updateDashboardDocFaq(community: String!, dsbSection: DsbSection, docFaq: DsbDocFaqInput!): Dsb
 
   "create a docs tree group"
-  createDocTreeGroup(community: String!, baseRevision: Int, input: DocTreeNodeInput!): DocTreeMutationPayload
+  createDocTreeGroup(community: String!, baseRevision: Int!, input: DocTreeNodeInput!): DocTreeMutationPayload
 
   "create a docs tree page"
-  createDocTreePage(community: String!, baseRevision: Int, input: DocTreeNodeInput!): DocTreeMutationPayload
+  createDocTreePage(community: String!, baseRevision: Int!, input: DocTreeNodeInput!): DocTreeMutationPayload
 
   "create a docs tree quick link"
-  createDocTreeLink(community: String!, baseRevision: Int, input: DocTreeNodeInput!): DocTreeMutationPayload
+  createDocTreeLink(community: String!, baseRevision: Int!, input: DocTreeNodeInput!): DocTreeMutationPayload
 
   "update a docs tree node"
-  updateDocTreeNode(community: String!, id: ID!, baseRevision: Int, patch: DocTreeNodePatchInput!): DocTreeMutationPayload
+  updateDocTreeNode(community: String!, id: ID!, baseRevision: Int!, patch: DocTreeNodePatchInput!): DocTreeMutationPayload
+
+  "update a docs draft document"
+  updateDocDraft(community: String!, id: ID!, title: String, slug: String, body: String): DocDraft
 
   "delete a docs tree node"
-  deleteDocTreeNode(community: String!, id: ID!, baseRevision: Int): DocTreeMutationPayload
+  deleteDocTreeNode(community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
 
   "duplicate a docs tree node"
-  duplicateDocTreeNode(community: String!, id: ID!, baseRevision: Int): DocTreeMutationPayload
+  duplicateDocTreeNode(community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
 
   "move a docs tree node"
-  moveDocTreeNode(community: String!, id: ID!, baseRevision: Int, targetParentId: ID, targetIndex: Int!): DocTreeMutationPayload
+  moveDocTreeNode(community: String!, id: ID!, baseRevision: Int!, targetParentId: ID, targetIndex: Int!): DocTreeMutationPayload
 }
 
 type CheckState {
@@ -720,6 +726,27 @@ enum DocTreeNodeType {
   LINK
 }
 
+enum MarkerType {
+  ICON
+  EMOJI
+}
+
+type Marker {
+  type: MarkerType!
+  provider: String
+  name: String
+  src: String
+  unified: String
+}
+
+input MarkerInput {
+  type: MarkerType!
+  provider: String
+  name: String
+  src: String
+  unified: String
+}
+
 type DocTreeNode {
   id: ID
   parentId: ID
@@ -729,7 +756,7 @@ type DocTreeNode {
   slug: String
   index: Int
   href: String
-  icon: Json
+  marker: Marker
   badge: String
   hidden: Boolean
   expanded: Boolean
@@ -739,6 +766,14 @@ type DocTreeNode {
 type DocTree {
   revision: Int
   groups: [DocTreeNode]
+}
+
+type DocDraft {
+  id: ID
+  title: String
+  slug: String
+  digest: String
+  document: ThreadDocument
 }
 
 type DocTreeMutationPayload {
@@ -755,7 +790,7 @@ input DocTreeNodeInput {
   slug: String
   index: Int
   href: String
-  icon: Json
+  marker: MarkerInput
   badge: String
   hidden: Boolean
   expanded: Boolean
@@ -766,7 +801,7 @@ input DocTreeNodePatchInput {
   title: String
   slug: String
   href: String
-  icon: Json
+  marker: MarkerInput
   badge: String
   hidden: Boolean
   expanded: Boolean
@@ -1028,7 +1063,6 @@ type CoverEditInfo {
   id: ID
   canvasWidth: Int
   canvasHeight: Int
-  ratio: Float
   version: Int
   light: CoverConfig
   dark: CoverConfig
@@ -1057,7 +1091,6 @@ input CoverConfigInput {
 input CoverEditInfoInput {
   canvasWidth: Int!
   canvasHeight: Int!
-  ratio: Float!
   version: Int
   light: CoverConfigInput!
   dark: CoverConfigInput!
@@ -1367,7 +1400,7 @@ type CommunityTag {
   group: String
   groupId: ID
   extra: [String]
-  icon: String
+  marker: Marker
   index: Int
   author: User
   community: Community
@@ -2108,6 +2141,7 @@ enum DsbDocFaqLayout {
 enum DsbTagLayout {
   HASH
   DOT
+  ICON
 }
 
 enum DsbInlineTagLayout {

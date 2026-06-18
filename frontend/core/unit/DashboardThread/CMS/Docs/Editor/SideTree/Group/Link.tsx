@@ -1,8 +1,8 @@
 import { type FC, useState } from 'react'
 
-import NodeStylePicker from '~/widgets/NodeStylePicker'
+import MarkerPicker from '~/widgets/MarkerPicker'
 
-import { DEFAULT_LINK_STYLE, SIDE_TREE_NODE_MENU_ACTION, SIDE_TREE_NODE_TYPE } from '../constant'
+import { DEFAULT_LINK_MARKER, SIDE_TREE_NODE_MENU_ACTION, SIDE_TREE_NODE_TYPE } from '../constant'
 import useSalon from '../salon/group/link'
 import type { TEditingTarget, TSideTreeLink, TSideTreeNodeMenuAction } from '../spec'
 import ChildMenu from './ChildMenu'
@@ -18,7 +18,7 @@ type TProps = {
   onCancelEdit: () => void
   onEdit: (target: TEditingTarget) => void
   onAction: (groupId: string, childId: string, action: TSideTreeNodeMenuAction) => void
-  onStyleChange: (groupId: string, childId: string, icon: TSideTreeLink['icon']) => void
+  onStyleChange: (groupId: string, childId: string, marker: TSideTreeLink['marker']) => void
 }
 
 const Link: FC<TProps> = ({
@@ -41,10 +41,10 @@ const Link: FC<TProps> = ({
   return (
     <div className={s.wrapper}>
       <div className={s.pickerSlot}>
-        <NodeStylePicker
+        <MarkerPicker
           compact
           active={active}
-          value={item.icon ?? DEFAULT_LINK_STYLE}
+          value={item.marker ?? DEFAULT_LINK_MARKER}
           onChange={(value) => onStyleChange(groupId, item.id, value)}
         />
       </div>

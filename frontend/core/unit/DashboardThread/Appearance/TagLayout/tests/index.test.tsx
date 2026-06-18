@@ -60,15 +60,22 @@ vi.mock('~/icons/HashTag', () => ({
   ),
 }))
 
+vi.mock('~/icons/Tag', () => ({
+  default: ({ className }: { className?: string }) => (
+    <svg data-testid='tag-icon' className={className} />
+  ),
+}))
+
 describe('<TagLayout />', () => {
-  it('renders two toggle buttons with current active state', () => {
+  it('renders tag layout toggle buttons with current active state', () => {
     render(<TagLayout />)
 
     const buttons = screen.getAllByRole('button')
-    expect(buttons).toHaveLength(2)
+    expect(buttons).toHaveLength(3)
     expect(buttons[0]).toHaveAttribute('type', 'button')
     expect(buttons[0]).toHaveAttribute('aria-pressed', 'true')
     expect(buttons[1]).toHaveAttribute('aria-pressed', 'false')
+    expect(buttons[2]).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByTestId('saving-bar')).toHaveTextContent(FIELD.TAG_LAYOUT)
   })
 

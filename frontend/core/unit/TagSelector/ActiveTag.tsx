@@ -17,7 +17,7 @@ const ActiveTag: FC<TProps> = ({ activeTag, mode }) => {
     <div className={s.wrapper}>
       {activeTag?.id ? (
         <div className={s.tagItem}>
-          <TagNode color={activeTag.color as TColorName} boldHash />
+          <TagNode color={activeTag.color as TColorName} marker={activeTag.marker} boldHash />
           <div className={s.tagTitle}>{activeTag.title}</div>
         </div>
       ) : mode === 'default' ? (

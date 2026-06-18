@@ -1,6 +1,7 @@
 export const PROVIDERS = ['fa', 'lucide', 'heroicons', 'phosphor'] as const
 
 export type TIconProvider = (typeof PROVIDERS)[number]
+export type TMarkerIconProvider = TIconProvider | 'dev'
 
 export const getIconSymbolId = (provider: TIconProvider, name: string): string =>
   `${provider}-${name}`
