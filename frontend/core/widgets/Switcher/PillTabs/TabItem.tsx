@@ -5,6 +5,7 @@ import { cloneElement, isValidElement, type FC, type ReactElement, type SVGProps
 
 import useSalon, { cn } from '../salon/pill_tabs/tab_item'
 import type { TPillTabItemProps } from './spec'
+import { cnMerge } from '~/css'
 
 const TabItem: FC<TPillTabItemProps> = ({
   item,
@@ -22,7 +23,7 @@ const TabItem: FC<TPillTabItemProps> = ({
 
   const renderedIconComp = iconCompElement
     ? cloneElement(iconCompElement, {
-        className: cn(s.iconCompClassName, iconCompElement.props.className),
+        className: cnMerge(s.iconCompClassName, iconCompElement.props.className),
         'aria-hidden': true,
       })
     : item.iconComp

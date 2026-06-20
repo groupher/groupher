@@ -22,7 +22,7 @@ export default function useSalon() {
     panelItem: menu('bar'),
     outside: 'hover-underline',
     // icon: cn('size-3.5 mr-3 pointer', fill('digest'), `group-hover:${fill('title')}`),
-    icon: cn(menu('icon')),
+    icon: menu('icon'),
     //
     divider: cn(sexyBorder(), 'my-1.5'),
     //

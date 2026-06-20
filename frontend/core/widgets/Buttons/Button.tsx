@@ -112,7 +112,7 @@ const Button: FC<TProps> = ({
         onClick?.()
       }}
     >
-      <div className={cn(s.inner)} style={s.innerStyle}>
+      <div className={s.inner} style={s.innerStyle}>
         <div className={s.children}>{children}</div>
       </div>
     </button>

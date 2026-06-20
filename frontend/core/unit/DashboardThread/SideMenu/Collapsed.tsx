@@ -13,6 +13,7 @@ import type { TSubMenuItem } from './constant'
 import { dispatchMenuView, type TMenuView } from './events'
 import DsbMenuIcon from './icons'
 import useSalon, { cn } from './salon/collapsed'
+import { cnMerge } from '~/css'
 
 type TProps = {
   activeSlug: string | null
@@ -43,7 +44,7 @@ export default function Collapsed({
   const activeSlug = activeSlugProp ?? subTab ?? defaultSlug
 
   return (
-    <div className={cn(s.wrapper, className)}>
+    <div className={cnMerge(s.wrapper, className)}>
       <div className={s.menu} aria-label='Dashboard menu'>
         <button
           type='button'

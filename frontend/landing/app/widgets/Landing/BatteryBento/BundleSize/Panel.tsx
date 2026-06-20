@@ -24,7 +24,7 @@ const Panel: FC<TProps> = ({ hovering }) => {
           <div key={item.title} className={cn(!hovering && item.opacity)}>
             <div className={s.header}>
               <div className={s.iconBox}>
-                <Img src={item.icon} className={cn(item.iconSize || 'size-3')} />
+                <Img src={item.icon} className={item.iconSize || 'size-3'} />
               </div>
               <h4 className={cn(s.title, $good && s.textGreen)}>{item.title}</h4>
               {hovering && index > 3 && <LoadingGapSVG className={s.loading} />}

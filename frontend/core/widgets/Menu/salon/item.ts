@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TActive } from '~/spec'
 
-export { cnMerge } from '~/css'
+export { cn } from '~/css'
 
 type TProps = TActive
 

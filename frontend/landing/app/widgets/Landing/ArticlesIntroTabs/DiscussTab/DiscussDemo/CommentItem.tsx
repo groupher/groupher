@@ -3,6 +3,7 @@ import type { FC } from 'react'
 import Img from '~/Img'
 import type { TUser } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
+import { cnMerge } from '~/css'
 
 import useSalon, {
   cn,
@@ -18,7 +19,7 @@ const CommentItem: FC<TProps> = ({ user, className = '' }) => {
   const s = useSalon()
 
   return (
-    <div className={cn(s.wrapper, className)}>
+    <div className={cnMerge(s.wrapper, className)}>
       <Img src={user.avatar} className={s.avatar} fallback={<ImgFallback user={user} />} />
       <div className={s.rightPart}>
         <div className={s.nickname}>{user.nickname}</div>

@@ -12,7 +12,7 @@ export default function useSalon() {
 
   return {
     wrapper: cn(base.blockBase, 'w-full h-32'),
-    active: cn(base.blockBaseActive),
+    active: base.blockBaseActive,
     notifyBar: cn(
       'row-center px-2.5 absolute top-0 left-0 w-full h-5 border rounded-t',
       rainbow(broadcastBg, 'bg'),

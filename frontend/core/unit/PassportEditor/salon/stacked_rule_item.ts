@@ -22,7 +22,7 @@ export default function useSalon({ active }: TProps) {
     detailList: 'column gap-y-1',
     itemTitle: cn('text-sm ml-2 min-w-0 flex-1 truncate', fg('digest')),
     primaryItemTitle: cn('text-sm ml-2 min-w-0 flex-1 truncate', primary('fg')),
-    itemBars: cn('ml-2 row-center shrink-0 gap-0.5 rounded px-1 py-0.5 trans-all-100'),
+    itemBars: 'ml-2 row-center shrink-0 gap-0.5 rounded px-1 py-0.5 trans-all-100',
     itemBar: 'h-3 w-1 rounded-full trans-all-100',
     itemBarDone: cn(rainbow(COLOR.GREEN, 'bg'), 'opacity-40'),
     itemBarPartial: cn(rainbow(COLOR.ORANGE, 'bg'), 'opacity-80'),

@@ -5,7 +5,9 @@ import UpvoteSVG from '~/icons/Upvote'
 import type { TActive, TArticleCat } from '~/spec'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
 
-import useSalon, { cn } from '../../../salon/articles_intro_tabs/discuss_tab/discuss_demo/post_item'
+import { cnMerge } from '~/css'
+
+import useSalon from '../../../salon/articles_intro_tabs/discuss_tab/discuss_demo/post_item'
 
 type TProps = {
   title?: string
@@ -25,7 +27,7 @@ const PostItem: FC<TProps> = ({
   const s = useSalon({ active })
 
   return (
-    <div className={cn(s.wrapper, className)}>
+    <div className={cnMerge(s.wrapper, className)}>
       <div className={s.upvote}>
         <UpvoteSVG className={s.upvoteIcon} />
         <div className={s.count}>{count}</div>

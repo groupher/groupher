@@ -6,8 +6,9 @@ import type { TBgRenderSpec } from '~/lib/bg'
 
 import BgLayer from './BgLayer'
 import { getVisualIdentity, preloadImage, shouldCrossfade } from './helper'
-import useSalon, { cn } from './salon'
+import useSalon from './salon'
 import type { TProps } from './spec'
+import { cnMerge } from '~/css'
 
 /**
  * Shared runtime renderer for Bg backgrounds.
@@ -72,7 +73,7 @@ export default function BgRenderer({
   }, [applySpec, previewSubscriber])
 
   return (
-    <div className={cn(positioned && s.wrapperPositioned, s.wrapper, className)} aria-hidden='true'>
+    <div className={cnMerge(positioned && s.wrapperPositioned, s.wrapper, className)} aria-hidden='true'>
       <BgLayer renderSpec={activeSpec} patternSize={patternSize} textureScale={textureScale} />
       {exitingSpec && (
         <BgLayer

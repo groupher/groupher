@@ -13,6 +13,7 @@ import { nilOrEmpty } from '~/validator'
 
 import useSalon, { cn } from './salon'
 import Textarea from './Textarea'
+import { cnMerge } from '~/css'
 
 type TProps = {
   testid?: string
@@ -82,7 +83,7 @@ const Input: FC<TProps> = ({
         )}
       </div>
       <input
-        className={cn(
+        className={cnMerge(
           s.input,
           !nilOrEmpty(prefixIcon) && 'pl-7',
           !nilOrEmpty(suffixIcon) && 'pr-7',

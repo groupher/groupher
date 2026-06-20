@@ -11,7 +11,7 @@ export default function useSalon({ ...spacing }: TProps) {
   return {
     wrapper: margin(spacing),
     settingBox: cn(' size-7', hover('bg')),
-    settingBoxActive: cn(bg('hoverBg')),
+    settingBoxActive: bg('hoverBg'),
     settingIcon: cn(
       'size-5 trans-all-200 rotate-45',
       'group-hover:rotate-180 group-smoky-80',

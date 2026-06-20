@@ -6,7 +6,7 @@ export default function useSalon() {
   const { cn, fg } = useTwBelt()
 
   return {
-    wrapper: cn('group w-56 max-w-full column'),
+    wrapper: 'group w-56 max-w-full column',
     title: cn('text-sm mb-2', fg('digest')),
     meta: cn('text-xs', fg('hint')),
     control: 'relative h-9',

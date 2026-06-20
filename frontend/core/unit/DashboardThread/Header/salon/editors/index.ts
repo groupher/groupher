@@ -19,7 +19,7 @@ export default function useSalon() {
     linkGroup: 'row wrap justify-start mt-7 w-full gap-x-5 gap-y-6',
     columnWrapper: 'w-[30%] h-full',
     itemsWrapper: 'column gap-y-1 mt-1 mb-5 min-h-32 rounded-md',
-    itemsWrapperOver: cn(bg('hoverBg')),
+    itemsWrapperOver: bg('hoverBg'),
     itemsWrapperTarget: cn('border border-dashed', primary('border')),
     addLinkRow: 'row justify-start w-full',
   }

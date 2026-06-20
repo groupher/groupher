@@ -15,7 +15,7 @@ export default function useSalon() {
       shadow('xl'),
     ),
     menuItem: cn(menu('bar'), 'px-1'),
-    menuTitle: cn(menu('title')),
+    menuTitle: menu('title'),
     icon: cn('size-3.5 mr-1.5', fill('digest')),
     tagIcon: cn('size-3.5 mr-1.5', rainbow(COLOR.BLUE, 'fill')),
     //

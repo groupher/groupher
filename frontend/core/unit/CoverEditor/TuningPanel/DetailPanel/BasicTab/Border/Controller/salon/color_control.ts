@@ -12,7 +12,7 @@ export default function useSalon() {
       'focus-visible:ring-2 focus-visible:ring-current',
     ),
     colorTriggerDisabled: 'opacity-50',
-    colorPanel: cn('column w-42 gap-4 p-0.5'),
+    colorPanel: 'column w-42 gap-4 p-0.5',
     colorOptionRow: 'grid grid-cols-2 gap-x-3',
     colorOption: cn(
       'row-center h-7 gap-2 text-left opacity-80 outline-none trans-all-100 pointer',

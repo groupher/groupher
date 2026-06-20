@@ -27,6 +27,7 @@ import TableLoading from '~/widgets/Loading/Table'
 import useCMSInfo from '../../hooks/useCMSInfo'
 import FilterBar from '../FilterBar'
 import useSalon, { cn } from './salon'
+import { cnMerge } from '~/css'
 
 const SORTABLE_COLUMN = ['subscribersCount', 'views', 'articlesCount']
 const CLASSIC_ALIGN_LEFT = ['name', 'desc']
@@ -178,7 +179,7 @@ export default function Communities() {
                   <button
                     key={header.id}
                     type='button'
-                    className={cn(
+                    className={cnMerge(
                       s.table.actionBtn,
                       CLASSIC_ALIGN_LEFT.includes(col.id) && '!justify-start',
                       CLASSIC_ALIGN_RIGHT.includes(col.id) && '!justify-end',
@@ -225,7 +226,7 @@ export default function Communities() {
                     return (
                       <div
                         key={cell.id}
-                        className={cn(s.table.cell, isSelectCol && 'table-col-select', p.className)}
+                        className={cnMerge(s.table.cell, isSelectCol && 'table-col-select', p.className)}
                         style={p.style}
                       >
                         {isSelectCol ? (

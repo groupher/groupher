@@ -12,7 +12,7 @@ export default function useSalon() {
   return {
     wrapper: 'row-center gap-x-2 h-4',
     linkItem,
-    menuPanel: cn(bg('popover.bg')),
+    menuPanel: bg('popover.bg'),
     groupItem: cn(linkItem, 'relative'),
     arrowIcon: cn('size-3 ml-1 opacity-80 -rotate-90', fill('digest')),
   }

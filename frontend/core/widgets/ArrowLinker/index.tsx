@@ -10,7 +10,8 @@ import type { FC, ReactNode } from 'react'
 import ArrowSVG from '~/icons/ArrowUpRight'
 import type { TColorName, TSpace } from '~/spec'
 
-import useSalon, { cn } from './salon'
+import useSalon from './salon'
+import { cnMerge } from '~/css'
 
 type TProps = {
   testid?: string
@@ -40,7 +41,7 @@ const ArrowLinker: FC<TProps> = ({
 
   return (
     <Link href={href} target={target} className='inline-block'>
-      <div className={cn(s.wrapper, className)} data-testid={testid}>
+      <div className={cnMerge(s.wrapper, className)} data-testid={testid}>
         <div className={s.title}>{children}</div>
         <ArrowSVG className={s.arrowIcon} />
       </div>

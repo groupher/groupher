@@ -1,5 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TColorName } from '~/spec'
+import { cnMerge } from '~/css'
 
 type TProps = {
   color?: TColorName
@@ -7,9 +8,9 @@ type TProps = {
 }
 
 export default function useSalon({ color, className }: TProps) {
-  const { cn, rainbow } = useTwBelt()
+  const { rainbow } = useTwBelt()
 
   return {
-    color: cn('inline-block circle', color && rainbow(color, 'bg'), className),
+    color: cnMerge('inline-block circle', color && rainbow(color, 'bg'), className),
   }
 }

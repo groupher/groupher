@@ -12,9 +12,7 @@ export default function useSalon({ tab }: TProps) {
   const { isDarkTheme } = useTheme()
   const { cn, fg, landingTitle } = useTwBelt()
 
-  const bgGradient = cn(
-    'absolute top-0 left-0 s-full opacity-0 transition-opacity duration-500 -z-10',
-  )
+  const bgGradient = 'absolute top-0 left-0 s-full opacity-0 transition-opacity duration-500 -z-10'
 
   return {
     wrapper: 'column-align-both w-full mt-20 mb-16',

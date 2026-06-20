@@ -8,7 +8,8 @@ import type { FC } from 'react'
 
 import PinSVG from '~/icons/Pin'
 
-import useSalon, { cn } from './salon'
+import useSalon from './salon'
+import { cnMerge } from '~/css'
 
 type TProps = {
   className?: string
@@ -17,7 +18,7 @@ type TProps = {
 const ArticlePinLabel: FC<TProps> = ({ isPinned, className }) => {
   const s = useSalon()
 
-  if (isPinned) return <PinSVG className={cn(s.pinIcon, className)} />
+  if (isPinned) return <PinSVG className={cnMerge(s.pinIcon, className)} />
 
   return null
 }

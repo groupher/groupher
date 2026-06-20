@@ -42,7 +42,7 @@ export default function useSalon() {
     dateRangeCalendarNav: cn('align-both size-6 rounded-md', hover('bg')),
     dateRangeCalendarNavPrev: 'size-3 rotate-180',
     dateRangeCalendarNavNext: 'size-3',
-    dateRangeCalendarNavIcon: cn(fill('digest')),
+    dateRangeCalendarNavIcon: fill('digest'),
     dateRangeCalendarGrid: 'w-full border-separate border-spacing-y-1',
     dateRangeCalendarWeekHeader: cn('pb-1 text-xs', fg('hint')),
     dateRangeCalendarCell: cn('align-both size-8 rounded-md text-sm outline-none', fg('digest')),

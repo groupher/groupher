@@ -6,7 +6,7 @@ export default function useSalon() {
   const { cn, primary, accent } = useTwBelt()
 
   return {
-    wrapper: cn('group/cover-canvas w-full rounded relative overflow-visible'),
+    wrapper: 'group/cover-canvas w-full rounded relative overflow-visible',
     wrapperStyle: {},
     transparentGridStyle: {
       backgroundColor: 'rgba(255, 252, 247, 0.9)',

@@ -51,7 +51,7 @@ export default function useSalon() {
     pillGadient3: 'absolute s-full gradient-red',
     pillGadient4: 'absolute s-full gradient-blue',
     pillIcon: cn('size-5 absolute bottom-2 left-3.5', fill('digest')),
-    pillHighlighIcon: cn(rainbow(COLOR.PURPLE, 'fill')),
+    pillHighlighIcon: rainbow(COLOR.PURPLE, 'fill'),
 
     avatar: 'absolute size-7 circle saturate-50 opacity-20',
     avatarHighlight: 'saturate-100 opacity-100',

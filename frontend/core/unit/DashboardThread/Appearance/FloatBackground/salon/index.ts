@@ -2,11 +2,11 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 import useBase from '../../useAppearanceBaseSalon'
 
-export { cnMerge } from '~/css'
+export { cn, cnMerge } from '~/css'
 
 export default function useSalon() {
   const base = useBase()
-  const { cnMerge, shadow } = useTwBelt()
+  const { cn, cnMerge, shadow } = useTwBelt()
 
   return {
     wrapper: base.baseSection,
@@ -26,7 +26,7 @@ export default function useSalon() {
     panelNarrow: 'w-12 opacity-20',
     panelWideDim: 'w-20 opacity-10',
 
-    popover: cnMerge(
+    popover: cn(
       'absolute h-20 opacity-95 w-30 rounded-md bg-black z-20 border border-dotted',
       shadow('md'),
     ),

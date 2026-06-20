@@ -8,7 +8,7 @@ export default function useSalon(spacing: TSpace = {}) {
     wrapper: margin(spacing),
     enableRow: 'row-center mb-4 pr-2 text-sm w-full',
     selectorRow: 'row-center justify-end mb-4 pr-2 w-full',
-    inner: cn('w-full'),
+    inner: 'w-full',
     settingRow: 'row-end gap-4 py-3',
     labelGroup: 'w-2/5 min-w-2/5',
     label: cn('text-base', fg('title')),
@@ -16,7 +16,7 @@ export default function useSalon(spacing: TSpace = {}) {
     controlGroup: 'w-2/5 row-center gap-3 dark:brightness-65 pb-1.5',
     rangeGroup: 'w-2/5 pl-px pb-0.5',
     slider: 'w-full cursor-ew-resize',
-    sliderTrack: cn('relative w-full h-2 cursor-ew-resize rounded-full overflow-visible'),
+    sliderTrack: 'relative w-full h-2 cursor-ew-resize rounded-full overflow-visible',
     colorThumb: cn(
       'absolute top-1/2 z-10 size-5 rounded-full border-2 border-white bg-[var(--thumb-color)] shadow-md outline-none',
       'ring-1 ring-black/15',

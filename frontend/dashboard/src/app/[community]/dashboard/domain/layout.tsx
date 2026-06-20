@@ -7,7 +7,7 @@ import useDsbTabs from '~/hooks/useDsbTabs'
 import useTrans from '~/hooks/useTrans'
 import type { TCrumbConfig } from '~/spec'
 import Portal from '~/unit/DashboardThread/Portal'
-import useSalon, { cnMerge } from '~/unit/DashboardThread/salon'
+import useSalon from '~/unit/DashboardThread/salon'
 import Tabs from '~/widgets/Switcher/Tabs'
 
 const seg = DOMAIN_TABS.segment
@@ -29,7 +29,7 @@ export default function Layout({ children }) {
   const crumbItems = useDsbCrumbItems(CRUMB_CONFIG)
 
   return (
-    <div className={cnMerge(s.content)}>
+    <div className={s.content}>
       <Portal
         title={t('dsb.portal.domain.title')}
         desc={t('dsb.portal.domain.desc')}

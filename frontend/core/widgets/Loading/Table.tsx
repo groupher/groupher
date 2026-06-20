@@ -3,6 +3,7 @@
 import type { TSpace } from '~/spec'
 
 import useSalon, { cn } from './salon/table'
+import { cnMerge } from '~/css'
 
 const randDelay = () => ({
   animationDelay: `${Math.random() * 0.8}s`,
@@ -14,7 +15,7 @@ export default function TableLoading({ className = '', ...spacing }: TProps) {
   const s = useSalon(spacing)
 
   return (
-    <div className={cn(s.wrapper, className)}>
+    <div className={cnMerge(s.wrapper, className)}>
       {Array.from({ length: 8 }).map((_, i) => (
         <div key={`row-${i + 1}`} className={s.row}>
           <div style={randDelay()} className={cn(s.item, 'h-4 w-60')} />

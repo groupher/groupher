@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react'
 
 import { DSB_COVERS } from '~/const/route'
-import { cnMerge } from '~/css'
+import { cn } from '~/css'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useTrans from '~/hooks/useTrans'
 import { mockUsers } from '~/mock'
@@ -49,7 +49,7 @@ export default function createCmsSectionLayout({
     const adminList = showAdmins ? mockUsers(4) : null
     const hasBreadcrumbs = !submenuCollapsed && crumbItems.length > 0
     const hasPortalContent = hasBreadcrumbs || !hideTitle || !!desc || withDivider
-    const sectionBodyClass = cnMerge('w-full', hasPortalContent && !withDivider && SECTION_BODY_GAP)
+    const sectionBodyClass = cn('w-full', hasPortalContent && !withDivider && SECTION_BODY_GAP)
 
     return (
       <>

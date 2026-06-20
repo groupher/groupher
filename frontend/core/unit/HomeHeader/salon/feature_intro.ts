@@ -41,7 +41,7 @@ export default function useSalon() {
 
     menuIcon: cn('size-6 z-10 opacity-65', fill('digest')),
     menuBarColumn: 'column !items-start py-2',
-    menuTitle: cn(menu('title')),
+    menuTitle: menu('title'),
     menuDesc: cn('text-xs mt-1 pr-1 opacity-80', fg('digest')),
   }
 }

@@ -11,7 +11,7 @@ export default function useSalon({ ...spacing }: TProps) {
   return {
     wrapper: cn('row-center gap-x-5', margin(spacing)),
     label: cn('group row-center pointer', `hover:${fg('title')}`, fg('digest')),
-    labelChecked: cn(fg('title')),
+    labelChecked: fg('title'),
     circle: cn('size-3 circle mr-2 border-2 opacity-40', br('digest')),
     checked: cn('size-3.5 border-4 opacity-100', primary('border')),
   }

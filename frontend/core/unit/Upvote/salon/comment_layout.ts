@@ -16,7 +16,7 @@ export default function useSalon({ viewerHasUpvoted }: TProps) {
       `hover:${br('digest')}`,
       `hover:${bg('alphaBg2')}`,
       'trans-all-200',
-      viewerHasUpvoted && cn(rainbowSoft(color)),
+      viewerHasUpvoted && rainbowSoft(color),
 
       br('divider'),
     ),

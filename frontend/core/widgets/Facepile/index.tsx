@@ -13,8 +13,9 @@ import ImgFallback from '~/widgets/ImgFallback'
 
 import MoreItem from './MoreItem'
 import RealAvatar from './RealAvatar'
-import useSalon, { cn } from './salon'
+import useSalon from './salon'
 import type { TAvatarSize } from './spec'
+import { cnMerge } from '~/css'
 
 const validUser = compose(not, isNil)
 
@@ -78,7 +79,7 @@ const Facepile: FC<TProps> = ({
   // delete restProps?.forwardRef
 
   return (
-    <ul className={cn(s.wrapper, classNames)}>
+    <ul className={cnMerge(s.wrapper, classNames)}>
       {totalCount === 1 ? (
         <Suspense fallback={<ImgFallback className={s.avatarFallback} user={sortedUsers[0]} />}>
           <RealAvatar

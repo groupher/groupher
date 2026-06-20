@@ -34,7 +34,7 @@ export default function HeadTabs({ tab, onChange }: TProps) {
             onClick={() => onChange(tabKey as TIntroTab)}
           >
             <div className={cn(s.iconBox, s[iconBoxColor], isActive && 'opacity-60')}>
-              <Icon className={cn(s.icon)} />
+              <Icon className={s.icon} />
             </div>
             {title}
           </button>

@@ -53,8 +53,8 @@ export default function useSalon() {
     //
     demoPanel: cn('column gap-x-0.5 py-0.5 w-32', menu('bg')),
     demoItem: cn(menu('bar'), 'py-1'),
-    demoItemTitle: cn(menu('title')),
-    outLink: cn(menu('link')),
+    demoItemTitle: menu('title'),
+    outLink: menu('link'),
     arrow: cn('size-3.5 rotate-180 ml-0.5', fill('digest')),
     //
     divider: cn('mb-20 mt-14', sexyBorder()),

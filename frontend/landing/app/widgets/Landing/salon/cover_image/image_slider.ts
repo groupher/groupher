@@ -16,7 +16,7 @@ export default function useSalon() {
     //
     leftNavi: cn(navi, '-left-36'),
     rightNavi: cn(navi, '-right-36'),
-    leftArrow: cn(naviArrow),
+    leftArrow: naviArrow,
     rightArrow: cn(naviArrow, 'rotate-180'),
 
     slideBox: 'relative w-11/12 h-full rounded-t-lg',

@@ -82,7 +82,7 @@ export default function CmsDataTable<TData>({
                 <button
                   key={header.id}
                   type='button'
-                  className={cn(
+                  className={cnMerge(
                     s.table.actionBtn,
                     alignClassName(align),
                     canSort && s.table.canSort,

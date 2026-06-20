@@ -16,7 +16,7 @@ export default function useSalon(columnsCount = 5) {
     headerRowViewport: 'w-full overflow-hidden',
     columnsTrack: cn('flex items-start gap-5', isCompactBoard ? 'w-full min-w-0' : 'min-w-max'),
     columnBase: 'column min-h-96',
-    scrollColumn: cn(isCompactBoard ? 'grow basis-0 min-w-0' : 'shrink-0 w-64'),
+    scrollColumn: isCompactBoard ? 'grow basis-0 min-w-0' : 'shrink-0 w-64',
     header: 'row-center py-1.5 w-full pl-0.5',
     label: cn('text-base bold ml-2.5', fg('digest')),
     subTitle: cn('text-sm ml-1.5', fg('hint')),

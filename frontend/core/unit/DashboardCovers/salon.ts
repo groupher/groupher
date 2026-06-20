@@ -32,7 +32,7 @@ export default function useSalon() {
       hover('bg'),
     ),
 
-    pinBtnActive: cn(bg('alphaBg')),
+    pinBtnActive: bg('alphaBg'),
     pinIcon: cn('size-4 rotate-12 group-smoky-0', fill('digest')),
     pinIconActive: cn('opacity-80', primary('fill')),
   }

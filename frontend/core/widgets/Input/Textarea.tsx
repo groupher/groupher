@@ -10,7 +10,8 @@ import TextareaAutosize from 'react-textarea-autosize'
 
 import useAutoFocus from '~/hooks/useAutoFocus'
 
-import useSalon, { cn } from './salon/textarea'
+import useSalon from './salon/textarea'
+import { cnMerge } from '~/css'
 
 type TProps = {
   testid?: string
@@ -48,7 +49,7 @@ const Textarea: FC<TProps> = ({
 
   return (
     <TextareaAutosize
-      className={cn(s.wrapper, className)}
+      className={cnMerge(s.wrapper, className)}
       data-testid={testid}
       onChange={handleOnChange}
       onKeyDown={handleKeydown}

@@ -41,11 +41,7 @@ export default function useSalon({
     ),
 
     // 让 input 语义存在，但视觉隐藏；仍可聚焦/可读屏/可键盘切换
-    input: cn(
-      'sr-only',
-      // 如果你不想用 sr-only，也可用 absolute opacity-0 等方案
-      // 'absolute opacity-0 pointer-events-none'
-    ),
+    input: 'sr-only',
 
     iconBox: cn(
       size === SIZE.SMALL ? 'size-3' : 'size-4',

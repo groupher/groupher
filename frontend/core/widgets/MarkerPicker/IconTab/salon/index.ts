@@ -6,7 +6,7 @@ export default function useSalon() {
   return {
     wrapper: 'flex h-full min-h-0 flex-col',
     listWrapper: 'min-h-0 flex-1',
-    searchWrapper: cn('px-2 pt-2 pb-1'),
+    searchWrapper: 'px-2 pt-2 pb-1',
     searchBox: (focused: boolean) =>
       cn(
         'row-center rounded-md border px-2.5 h-8 trans-all-100',

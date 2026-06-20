@@ -10,7 +10,8 @@ import InfoSVG from '~/icons/Info'
 import type { TSpace, TTooltipPlacement } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
 
-import useSalon, { cn } from './salon'
+import useSalon from './salon'
+import { cnMerge } from '~/css'
 
 type TProps = {
   className?: string
@@ -29,7 +30,7 @@ const NoteTip: FC<TProps> = ({
   const s = useSalon({ ...spacing })
 
   return (
-    <div className={cn(s.wrapper, className)}>
+    <div className={cnMerge(s.wrapper, className)}>
       <Tooltip
         placement={placement}
         content={<div className={s.note}>{children}</div>}

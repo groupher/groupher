@@ -13,7 +13,7 @@ export default function useSalon() {
     iconBox: 'align-both size-7',
     storeIcon: 'w-40 h-auto',
     icon: 'size-6',
-    linkIcon: cn(menu('link')),
+    linkIcon: menu('link'),
     divider: cn(sexyBorder(), 'mt-2 mb-1.5'),
   }
 }

@@ -42,7 +42,7 @@ export default function useSalon({ expand }: TProps) {
 
     topBox: cn(iconBox, badgeInView ? 'max-w-0' : 'max-w-6'),
     iconBox,
-    iconActive: cn(bg('hoverBg')),
+    iconActive: bg('hoverBg'),
     tipText: cn('py-0.5 px-1', fg('digest')),
 
     buttonBar: cn(

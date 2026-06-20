@@ -4,6 +4,7 @@ import type { TImageTextureType } from '~/lib/wallpaperMesh'
 
 import useSalon from './salon/texture_swatch_preview'
 import { TILE_ROWS, DOTS, NOISE_DOTS, ASCII_ROWS, OIL_PATCHES } from './texture_constant'
+import { cnMerge } from '~/css'
 
 type Props = {
   type: TImageTextureType
@@ -61,7 +62,7 @@ export default function TextureSwatchPreview({ type, variant = 'picker' }: Props
       {type === WALLPAPER_TEXTURE.NOISE && (
         <div className='relative size-full'>
           {NOISE_DOTS.map(({ id, className }) => (
-            <span key={id} className={cn(s.noiseDot, className)} />
+            <span key={id} className={cnMerge(s.noiseDot, className)} />
           ))}
         </div>
       )}
