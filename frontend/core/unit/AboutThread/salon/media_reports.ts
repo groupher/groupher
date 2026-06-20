@@ -13,7 +13,7 @@ export default function useSalon() {
     siteName: cn('text-xs break-keep', fg('digest')),
     //
     title: cn(
-      'text-sm no-underline hover:underline',
+      'text-sm hover-underline',
       `hover:${fg('title')}`,
       communityLayout === COMMUNITY_LAYOUT.SIDEBAR ? cut('w-44') : cut('w-28'),
       fg('digest'),

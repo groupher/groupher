@@ -49,7 +49,7 @@ export default function useSalon({
 
   return {
     overlay: cn(
-      'fixed bottom-0 left-0 overflow-auto h-full w-full',
+      'fixed bottom-0 left-0 overflow-auto s-full',
       bg('drawer.mask'),
       visible ? 'opacity-50 pointer-events-auto' : 'opacity-0 pointer-events-none',
       zIndex('drawerOverlay', true),

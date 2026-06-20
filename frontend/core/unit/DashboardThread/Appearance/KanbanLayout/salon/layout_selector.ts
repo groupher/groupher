@@ -14,7 +14,7 @@ export default function useSalon() {
     blockActive: base.blockBaseActive,
     layout: 'column-align-both',
 
-    frame: 'flex h-full w-full flex-col gap-5',
+    frame: 'column s-full gap-5',
     toolbar: 'flex items-center justify-between',
     toolbarLeft: 'w-12',
     toolbarRight: 'w-6 opacity-30',

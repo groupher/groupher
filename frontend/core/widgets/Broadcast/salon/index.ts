@@ -11,7 +11,7 @@ export default function useSalon() {
     desc: 'text-sm bold-sm',
     linkText: cn('text-sm bold-sm text-xs underline', fg('button.fg')),
     linkBtn: cn(
-      'px-3 py-px rounded bold-sm pointer no-underline hover:underline border-0',
+      'px-3 py-px rounded bold-sm pointer hover-underline border-0',
       fg('button.fg'),
     ),
     icon: cn('size-4 mr-3', fill('button.fg')),

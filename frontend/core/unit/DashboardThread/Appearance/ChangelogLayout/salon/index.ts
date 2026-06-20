@@ -16,9 +16,9 @@ export default function useSalon() {
     bar: cnMerge(base.bar, 'h-1.5 w-20 opacity-40'),
     layout: 'column-align-both group',
 
-    frame: 'column h-full w-full',
+    frame: 'column s-full',
 
-    classicList: 'column h-full w-full justify-between',
+    classicList: 'column s-full justify-between',
     classicEntry: 'column gap-4',
     classicCover: cnMerge(base.bar, 'static h-20 w-40 self-center rounded-md opacity-15'),
     classicText: 'column w-40 self-center gap-2',
@@ -26,8 +26,8 @@ export default function useSalon() {
     classicBodyWide: cnMerge(base.bar, 'static h-1.5 w-32 opacity-20'),
     classicBodyNarrow: cnMerge(base.bar, 'static h-1.5 w-28 opacity-10'),
 
-    minimalList: 'column h-full w-full justify-between',
-    minimalListInner: 'mx-auto column h-full w-full justify-between',
+    minimalList: 'column s-full justify-between',
+    minimalListInner: 'mx-auto column s-full justify-between',
     minimalEntry: 'column-center w-full',
     minimalHeader: 'row-start w-2/3',
     minimalText: 'column gap-2.5',

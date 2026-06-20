@@ -33,6 +33,6 @@ export default function useSalon({ color, editing = false }: TProps) {
     dotSep: cn('size-0.5 shrink-0 circle', bg('dot')),
     catNote: cn('text-xs ml-3', fg('hint')),
     input: 'h-8',
-    dot: cn('h-full w-full rounded', color && rainbow(color, 'bg')),
+    dot: cn('s-full rounded', color && rainbow(color, 'bg')),
   }
 }

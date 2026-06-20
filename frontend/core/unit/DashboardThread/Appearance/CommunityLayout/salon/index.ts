@@ -22,7 +22,7 @@ export default function useSalon() {
     hDivider: sexyBorder(),
     vDivider: sexyVBorder(35),
 
-    frame: 'column h-full w-full',
+    frame: 'column s-full',
     nav: 'row-between items-center',
     navCenter: 'row-center gap-3 ml-5',
     mainClassic: 'row h-full gap-4 pt-4',

@@ -103,7 +103,7 @@ export default function useSalon({ loading }: { loading: boolean }) {
       inlineSelection: 'shrink-0 pt-1',
       titleContent: (multiSelectMode: boolean) =>
         cn('min-w-0 flex-1 overflow-hidden', multiSelectMode && 'cursor-pointer'),
-      selectionWrap: 'flex min-h-12 h-full w-full items-center justify-center',
+      selectionWrap: 'align-both min-h-12 s-full',
     },
   }
 }

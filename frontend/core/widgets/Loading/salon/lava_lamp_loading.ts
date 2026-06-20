@@ -10,7 +10,7 @@ export default function useSalon({ ...spacing }: TProps) {
 
   return {
     wrapper: cn('w-20 h-5', margin(spacing)),
-    container: 'row-center h-full w-full relative',
+    container: 'row-center s-full relative',
     circle: cn('size-1 circle mr-0.5', primary('bg')),
     tiny: 'w-1',
     speedMap: {
