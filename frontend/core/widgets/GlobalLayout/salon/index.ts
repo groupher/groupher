@@ -6,6 +6,6 @@ export default function useSalon() {
   return {
     wrapper: 'row justify-center',
     scrollWrapper: 'absolute w-full',
-    skeleton: 'w-screen h-screen antialiased',
+    skeleton: 's-screen antialiased',
   }
 }

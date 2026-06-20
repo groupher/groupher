@@ -34,7 +34,7 @@ export default function useSalon() {
     itemInner: 'flex w-full min-w-0 items-start text-left',
     avatarBox: 'flex h-9 w-9 shrink-0 items-start justify-start',
     avatar: 'block size-9 rounded-md',
-    itemIntro: 'column min-w-0 flex-1 ml-3 pt-0.5 text-left',
+    itemIntro: 'column min-w-flex ml-3 pt-0.5 text-left',
     itemHeader: 'flex min-w-0 items-baseline text-left',
     itemName: cn('text-sm bold-sm truncate', fg('title')),
     itemLogin: cn('text-xs ml-2 shrink-0', fg('hint')),
@@ -49,7 +49,7 @@ export default function useSalon() {
     selectedAvatar: 'size-6 shrink-0 rounded',
     selectedName: cn('ml-1.5 max-w-20 truncate text-xs', fg('title')),
     removeButton: cn(
-      'align-both ml-1 size-4 shrink-0 rounded border-0 bg-transparent p-0',
+      'align-both ml-1 size-4 shrink-0 rounded plain-button',
       hover('bg'),
     ),
     removeIcon: cn('size-2.5 opacity-50', fill('digest')),

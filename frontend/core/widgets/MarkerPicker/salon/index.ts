@@ -24,7 +24,7 @@ export default function useSalon({ compact = false, active = false, color }: TPr
         ),
     panel: cn('w-80 pt-1 pb-0.5', shadow('xl')),
     content: 'relative h-80 min-w-0 overflow-hidden',
-    tabPanel: 'absolute inset-0 will-change-transform',
+    tabPanel: 'abs-full will-change-transform',
     tabPanelActive: 'z-10',
     tabPanelInactive: 'z-0',
     emojiWrapper: cn(

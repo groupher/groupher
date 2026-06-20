@@ -40,7 +40,7 @@ export default function useSalon() {
     blackColorButton: 'border-neutral-600 bg-black',
     colorButtonActive: primary('border'),
     settingButton: cn(
-      'align-both size-5 rounded-none border-0 bg-transparent p-0 outline-none pointer trans-all-100',
+      'align-both size-5 rounded-none plain-button outline-none pointer trans-all-100',
       'hover:scale-110 focus-visible:scale-110',
     ),
     settingIcon: cn('size-4', fill('digest')),

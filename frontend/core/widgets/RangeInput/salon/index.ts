@@ -41,7 +41,7 @@ export default function useSalon({ width, labelPlacement, hideLabel, ...spacing 
     leftDot: 'bg-white -ml-1',
     rightDot: cn(primary('bg'), 'ml-1'),
     indicatorFocus: cn('outline-2 outline-offset-2', primary('border')),
-    range: 'absolute inset-0 size-full m-0 opacity-0 appearance-none pointer cursor-ew-resize',
+    range: 'abs-full size-full m-0 opacity-0 appearance-none pointer cursor-ew-resize',
     disabled: 'opacity-50',
   }
 }

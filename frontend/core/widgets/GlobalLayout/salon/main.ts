@@ -26,7 +26,7 @@ export default function useSalon() {
     // Dedicated repaint target for high-frequency theme background preview.
     // Do not move --preview-page-bg back onto wrapper/<main>; it regresses
     // slider performance because the wrapper owns the full page and blur styles.
-    background: 'pointer-events-none absolute inset-0 z-0',
+    background: 'pointer-events-none abs-full z-0',
     scrollWrapper: 'absolute w-full',
     body: 'column-align-both relative z-10 w-full',
     footer: 'relative z-10 w-full',

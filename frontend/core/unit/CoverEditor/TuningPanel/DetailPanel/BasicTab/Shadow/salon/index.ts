@@ -15,9 +15,9 @@ export default function useSalon() {
       CHECKER_BG,
     ),
     frameBlock: 'absolute rounded-sm pointer-events-none',
-    frameFill: cn('absolute inset-0 rounded-sm pointer-events-none opacity-85', primary('bg')),
+    frameFill: cn('abs-full rounded-sm pointer-events-none opacity-85', primary('bg')),
     settingButton: cn(
-      'align-both size-5 rounded-none border-0 bg-transparent p-0 outline-none pointer trans-all-100',
+      'align-both size-5 rounded-none plain-button outline-none pointer trans-all-100',
       'hover:scale-110 focus-visible:scale-110',
     ),
     settingIcon: cn('size-4', fill('digest')),

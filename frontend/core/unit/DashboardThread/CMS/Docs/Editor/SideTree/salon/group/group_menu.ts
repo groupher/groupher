@@ -6,7 +6,7 @@ export default function useSalon() {
   const { cn, fill, menu } = useTwBelt()
 
   return {
-    trigger: 'row-center bg-transparent border-0 p-0',
+    trigger: 'row-center plain-button',
     moreIcon: cn('size-3.5 pointer', fill('digest')),
     menu: cn('column w-36 p-1', menu('bg')),
     item: cn(menu('bar'), 'h-8 justify-start text-left'),

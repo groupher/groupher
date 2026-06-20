@@ -13,7 +13,7 @@ export default function useSalon({ stacked = false } = {}) {
       stacked && 'scale-80',
     ),
     dotRing: cn(
-      'absolute inset-0 rounded-full',
+      'abs-full rounded-full',
       'bg-[conic-gradient(from_180deg,_#ff6b6b,_#f59e0b,_#facc15,_#22c55e,_#06b6d4,_#3b82f6,_#8b5cf6,_#ec4899,_#ff6b6b)]',
       '[mask-image:radial-gradient(circle,transparent_50%,black_55%)]',
       '[mask-repeat:no-repeat]',

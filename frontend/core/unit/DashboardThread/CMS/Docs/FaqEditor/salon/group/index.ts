@@ -10,15 +10,15 @@ export default function useSalon() {
     wrapperTarget: '',
     head: 'row-center relative mb-1.5 min-h-8',
     dragHandle: cn(
-      'row-center absolute -left-7 top-1/2 size-5 -translate-y-1/2 cursor-grab border-0 bg-transparent p-0 opacity-0 trans-all-100',
+      'row-center absolute -left-7 top-1/2 size-5 -translate-y-1/2 cursor-grab plain-button opacity-0 trans-all-100',
       'group-hover:opacity-100 focus-visible:opacity-100 active:cursor-grabbing',
       fill('digest'),
     ),
-    titleRow: 'row-center min-w-0 flex-1',
+    titleRow: 'row-center min-w-flex',
     title: cn('text-sm', fg('title')),
     line: cn('ml-4 h-px flex-1', bg('divider')),
     editButton: cn(
-      'row-center size-6 shrink-0 rounded border-0 bg-transparent p-0',
+      'row-center size-6 shrink-0 rounded plain-button',
       'opacity-0 trans-all-100',
       'group-hover:opacity-100 focus-visible:opacity-100',
       hover('bg'),

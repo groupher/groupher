@@ -66,7 +66,7 @@ const SortableFaqItem = memo(function SortableFaqItem({
           ref={setActivatorNodeRef}
           type='button'
           className={cn(
-            'row-center absolute left-1 top-2.5 size-5 cursor-grab border-0 bg-transparent p-0 opacity-0 trans-all-100',
+            'row-center absolute left-1 top-2.5 size-5 cursor-grab plain-button opacity-0 trans-all-100',
             'group-hover/doc-faq-sortable-item:opacity-100 focus-visible:opacity-100 active:cursor-grabbing',
             fill('digest'),
           )}

@@ -8,7 +8,7 @@ export default function useSalon() {
     wrapper: 'px-8 pt-6',
     profile: 'flex items-start',
     avatar: cn('size-11 shrink-0 rounded-md', primary('borderSoft')),
-    profileIntro: 'column min-w-0 flex-1 ml-4',
+    profileIntro: 'column min-w-flex ml-4',
     profileHeader: 'flex min-w-0 items-baseline',
     nickname: cn('text-sm bold-sm', fg('title')),
     login: cn('text-xs ml-2', fg('hint')),

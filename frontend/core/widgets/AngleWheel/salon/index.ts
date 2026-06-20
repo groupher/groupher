@@ -9,7 +9,7 @@ export default function useSalon() {
       br('divider'),
       bg('card'),
     ),
-    guide: 'absolute inset-0 size-full overflow-visible pointer-events-none',
+    guide: 'abs-full size-full overflow-visible pointer-events-none',
     ticks: (active: boolean) =>
       cn(
         'opacity-0 transition-opacity duration-150 ease-out group-hover/angle:opacity-100 group-focus-within/angle:opacity-100',
@@ -19,7 +19,7 @@ export default function useSalon() {
     majorTick: cn('stroke-current stroke-[1px] opacity-45', fg('digest')),
     guideArc: cn('fill-none stroke-current stroke-[1px]', primary('fg')),
     center: cn(
-      'align-both absolute inset-0 m-0 border-0 bg-transparent p-0 text-xs leading-none tabular-nums pointer outline-none',
+      'align-both abs-full m-0 plain-button text-xs leading-none tabular-nums pointer outline-none',
       fg('digest'),
     ),
     negativeSign: 'mb-px text-[10px] leading-none opacity-60',

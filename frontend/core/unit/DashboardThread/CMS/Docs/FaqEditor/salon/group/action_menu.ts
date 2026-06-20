@@ -9,7 +9,7 @@ export default function useSalon() {
     iconBox: 'align-both size-6 shrink-0',
     icon: cn(menu('icon'), 'size-3.5 shrink-0'),
     title: menu('title'),
-    trigger: cn('row-center size-6 rounded border-0 bg-transparent p-0', hover('bg')),
+    trigger: cn('row-center size-6 rounded plain-button', hover('bg')),
     triggerIcon: cn('size-3.5 pointer', fill('digest')),
   }
 }

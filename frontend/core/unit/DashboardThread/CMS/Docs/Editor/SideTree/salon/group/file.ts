@@ -20,7 +20,7 @@ export default function useSalon({
     ),
     pickerSlot: 'row-center size-4 shrink-0',
     titleButton: cn(
-      'min-w-0 max-w-28 text-left bg-transparent border-0 p-0 text-sm truncate pointer',
+      'min-w-0 max-w-28 text-left plain-button text-sm truncate pointer',
       !active && `hover:${fg('title')}`,
       active ? primary('fg') : fg('digest'),
     ),

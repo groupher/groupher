@@ -20,7 +20,7 @@ export default function useSalon() {
       br('divider'),
     ),
     frameBlock: 'group/frame absolute rounded-sm pointer-events-auto',
-    frameFill: cn('absolute inset-0 rounded-sm pointer-events-none opacity-85', primary('bg')),
+    frameFill: cn('abs-full rounded-sm pointer-events-none opacity-85', primary('bg')),
     dragIcon:
       'pointer-events-none absolute left-1/2 top-1/2 z-10 size-6 -translate-x-1/2 -translate-y-1/2 fill-white transition-opacity duration-100',
     dragIconIdle: 'opacity-30 group-hover/frame:opacity-50',

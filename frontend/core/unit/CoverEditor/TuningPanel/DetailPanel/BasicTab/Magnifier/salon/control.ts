@@ -21,7 +21,7 @@ export default function useSalon() {
       'absolute left-0 h-0 w-full -translate-y-1/2 border-t pointer-events-none',
       br('divider'),
     ),
-    svg: 'absolute inset-0 size-full pointer-events-none',
+    svg: 'abs-full-pe-none size-full',
     lensRing: 'fill-current stroke-current transition-opacity duration-100',
     lensRingActive: cn('opacity-20 stroke-[1.5px]', primary('fg')),
     lensRingDisabled: cn('opacity-20 stroke-[1.5px]', fg('digest')),

@@ -7,9 +7,9 @@ export default function useSalon() {
 
   return {
     wrapper: 'row-center gap-x-1',
-    iconBox: cn('align-both size-5 rounded-md border-0 bg-transparent p-0', hover('bg')),
+    iconBox: cn('align-both size-5 rounded-md plain-button', hover('bg')),
     editIconBox: cn(
-      'align-both size-5 rounded-md border-0 bg-transparent p-0 group-smoky-0 focus-visible:opacity-100',
+      'align-both size-5 rounded-md plain-button group-smoky-0 focus-visible:opacity-100',
       hover('bg'),
     ),
     icon: cn('size-3.5', hover('icon')),

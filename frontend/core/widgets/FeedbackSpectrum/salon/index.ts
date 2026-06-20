@@ -14,9 +14,9 @@ export default function useSalon() {
     track: 'relative h-8 w-full overflow-visible rounded-3xl',
     trackShade: cn(
       styles.paperSpectrum,
-      'absolute inset-0 rounded-3xl opacity-80 saturate-100 dark:opacity-70',
+      'abs-full rounded-3xl opacity-80 saturate-100 dark:opacity-70',
     ),
-    glowClip: 'absolute inset-0 overflow-hidden rounded-3xl pointer-events-none',
+    glowClip: 'abs-full overflow-hidden rounded-3xl pointer-events-none',
     handleGlow:
       'absolute top-1/2 size-10 -translate-x-1/2 -translate-y-1/2 circle opacity-75 blur-md',
     range: 'absolute inset-x-0 top-0 z-30 h-16 w-full cursor-ew-resize opacity-0',

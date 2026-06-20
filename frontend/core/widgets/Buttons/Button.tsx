@@ -88,7 +88,7 @@ const Button: FC<TProps> = ({
       <div className={cnMerge(s.wrapper, className, 'border-0 bg-transparent')} aria-busy>
         <div className={cnMerge(s.inner, 'bg-transparent border-transparent')} style={s.innerStyle}>
           <div className={cn(s.children, 'invisible select-none')}>{children}</div>
-          <div className='align-both absolute inset-0'>
+          <div className='align-both abs-full'>
             <LavaLampLoading size='small' className='!h-3 !w-10 overflow-hidden' />
           </div>
         </div>
