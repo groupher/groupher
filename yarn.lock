@@ -1341,6 +1341,7 @@ __metadata:
     chalk: "npm:^2.4.1"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
+    cnfast: "npm:0.0.6"
     commitizen: "npm:3.1.2"
     coveralls: "npm:3.0.14"
     cross-env: "npm:^10.1.0"
@@ -1400,7 +1401,6 @@ __metadata:
     sentry-testkit: "npm:^2.1.0"
     stringz: "npm:^2.0.0"
     svgo: "npm:^4.0.1"
-    tailwind-merge: "npm:3.6.0"
     tailwindcss: "npm:4.3.1"
     tailwindcss-animated: "npm:^2.0.0"
     tinykeys: "npm:^2.1.0"
@@ -4555,13 +4555,6 @@ __metadata:
   linkType: hard
 
 
-"tailwind-merge@npm:3.6.0":
-  version: 3.6.0
-  resolution: "tailwind-merge@npm:3.6.0"
-  checksum: 10c0/a728d929f4786bcb48641db4228cc8c006a7545491783a658fb4d24d177dab960620991d17805a047309228de50ab949ca8d9e112c30183da0432367796ae186
-  languageName: node
-  linkType: hard
-
 
 "tailwindcss@npm:4.3.1":
   version: 4.3.1
@@ -6444,6 +6437,16 @@ __metadata:
   version: 2.1.1
   resolution: "clsx@npm:2.1.1"
   checksum: 10c0/c4c8eb865f8c82baab07e71bfa8897c73454881c4f99d6bc81585aecd7c441746c1399d08363dc096c550cceaf97bd4ce1e8854e1771e9998d9f94c4fe075839
+  languageName: node
+  linkType: hard
+
+
+"cnfast@npm:0.0.6":
+  version: 0.0.6
+  resolution: "cnfast@npm:0.0.6"
+  bin:
+    cnfast: bin/cli.js
+  checksum: 10c0/d63ed244c636edad349ef2611ce0946c1b5360fa29d1e3b631c1364c29e1aa3f3007de49ea8a71729ab872ad7c428fd5a80479ca3311adafef33a6519746b2c0
   languageName: node
   linkType: hard
 
