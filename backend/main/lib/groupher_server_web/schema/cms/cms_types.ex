@@ -39,6 +39,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     value(:link)
   end
 
+  enum :article_revision_type do
+    value(:draft)
+    value(:published)
+  end
+
   enum :marker_type do
     value(:icon)
     value(:emoji)
@@ -88,7 +93,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:digest, :string)
     field(:author, :user, resolve: dataloader(CMS, :author))
     timestamp_fields()
-    field(:document, :thread_document)
+    field(:document, :thread_document, resolve: fn draft, _, _ -> {:ok, draft} end)
   end
 
   object :doc_tree_mutation_payload do
@@ -167,6 +172,23 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:html, :string)
     field(:xml, :string)
     field(:rss, :string)
+  end
+
+  object :article_revision do
+    field(:id, :id)
+    field(:thread, :thread)
+    field(:type, :article_revision_type)
+    field(:article_id, :id)
+    field(:article_draft_id, :id)
+    field(:title, :string)
+    field(:slug, :string)
+    field(:digest, :string)
+    field(:document_json, :string)
+    field(:content_hash, :string)
+    field(:revision_number, :integer)
+    field(:schema_version, :integer)
+    field(:author, :user, resolve: dataloader(CMS, :author))
+    timestamp_fields()
   end
 
   object :post do

@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Articles.Write do
 
   @spec create(Community.t(), atom(), map(), User.t()) :: T.domain_res(term())
   def create(%Community{} = community, thread, attrs, %User{} = user) do
-    with {:ok, attrs} <- attrs |> attach_content_payload(),
+    with {:ok, attrs} <- attrs |> attach_article_payload(),
          {:ok, author} <- ensure_author_exists(user),
          {:ok, info} <- match(thread) do
       Transaction.lock_row(community, fn community ->
@@ -109,7 +109,7 @@ defmodule GroupherServer.CMS.Articles.Write do
   def update(article, attrs) do
     with {:ok, attrs} <-
            attrs
-           |> attach_content_payload() do
+           |> attach_article_payload() do
       Multi.new()
       |> Multi.run(:update_article, fn _, _ ->
         do_update_article(article, attrs)
@@ -289,14 +289,14 @@ defmodule GroupherServer.CMS.Articles.Write do
     end
   end
 
-  defp add_digest_attrs(%{content_payload: %{digest: digest}} = attrs) do
+  defp add_digest_attrs(%{article_payload: %{digest: digest}} = attrs) do
     attrs |> Map.merge(%{digest: digest}) |> done
   end
 
   defp add_digest_attrs(%{body: body} = attrs) when not is_nil(body) do
     with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
       attrs
-      |> Map.put(:content_payload, payload)
+      |> Map.put(:article_payload, payload)
       |> Map.put(:digest, payload.digest)
       |> done
     end
@@ -306,23 +306,23 @@ defmodule GroupherServer.CMS.Articles.Write do
 
   defp ensure_body_from_payload(%{body: body} = attrs) when is_binary(body), do: attrs
 
-  defp ensure_body_from_payload(%{content_payload: %{json: json}} = attrs) when is_binary(json) do
+  defp ensure_body_from_payload(%{article_payload: %{json: json}} = attrs) when is_binary(json) do
     Map.put(attrs, :body, json)
   end
 
   defp ensure_body_from_payload(attrs), do: attrs
 
-  defp attach_content_payload(%{content_payload: %{} = _payload} = attrs), do: done(attrs)
+  defp attach_article_payload(%{article_payload: %{} = _payload} = attrs), do: done(attrs)
 
-  defp attach_content_payload(%{body: body} = attrs) when is_binary(body) do
+  defp attach_article_payload(%{body: body} = attrs) when is_binary(body) do
     with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
       attrs
-      |> Map.put(:content_payload, payload)
+      |> Map.put(:article_payload, payload)
       |> done
     end
   end
 
-  defp attach_content_payload(attrs), do: done(attrs)
+  defp attach_article_payload(attrs), do: done(attrs)
 
   defp do_batch_mark_delete(community, thread, inner_id_list, delete_flag) do
     with {:ok, info} <- match(thread) do

@@ -13,6 +13,13 @@ const EMPTY_DOC_DRAFT_INFO: TDocDraftInfo = {
   characterCount: 0,
 }
 
+const EMPTY_EDITOR_VALUE = [
+  {
+    type: 'p',
+    children: [{ text: '' }],
+  },
+]
+
 export default function DocsEditorStore(init: TInit): TStore {
   // Docs editor actions are split across the tree, article, snackbar, and future drawers.
   // Keep cross-region session commands here so toolbar actions do not reach into SideTree props.
@@ -20,7 +27,10 @@ export default function DocsEditorStore(init: TInit): TStore {
   let saveDocDraftHandler: (() => Promise<void>) | null = null
 
   const initialStore: TStore = {
+    baselineValue: EMPTY_EDITOR_VALUE,
+    bodyValue: EMPTY_EDITOR_VALUE,
     docDraftInfo: EMPTY_DOC_DRAFT_INFO,
+    revisionReloadKey: 0,
     saveError: null,
     saveStatus: 'idle',
 
@@ -34,6 +44,10 @@ export default function DocsEditorStore(init: TInit): TStore {
 
     attachSaveDocDraft: (handler): void => {
       saveDocDraftHandler = handler
+    },
+
+    reloadDocDraft: (): void => {
+      store.revisionReloadKey += 1
     },
 
     saveDocDraft: async (): Promise<void> => {

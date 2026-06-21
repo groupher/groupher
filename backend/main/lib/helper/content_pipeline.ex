@@ -1,17 +1,17 @@
 defmodule Helper.ContentPipeline do
   @moduledoc """
-  Parse and enrich canonical body payload once.
+  Parse and enrich canonical article body payload once.
   """
 
   import Helper.Utils, only: [done: 1, get_config: 2]
 
-  alias Helper.{ContentPayload, Converter.Content}
+  alias Helper.{ArticlePayload, Converter.Content}
 
   @digest_length get_config(:article, :digest_length)
-  @type t :: ContentPayload.t()
+  @type t :: ArticlePayload.t()
 
   @doc """
-  Parses a `body` JSON string and returns a normalized content payload.
+  Parses a `body` JSON string and returns a normalized article payload.
 
   Accepts Plate AST JSON only (array root).
 
@@ -44,7 +44,7 @@ defmodule Helper.ContentPipeline do
         rss: Map.get(converted, :rss, ""),
         plain_text: plain_text,
         digest: plain_text |> String.slice(0, @digest_length),
-        content_hash: content_hash(body),
+        content_hash: content_hash(ast),
         schema_version: 1,
         ast: ast,
         mentions: extract_mentions(ast)
@@ -167,10 +167,28 @@ defmodule Helper.ContentPipeline do
   # Keep accumulator unchanged for nodes without children.
   defp acc_from_children(_, acc, _extractor), do: acc
 
-  # Build deterministic SHA256 hash from raw body JSON.
-  defp content_hash(body) do
+  # Build deterministic SHA256 hash from semantic Plate content rather than raw
+  # JSON. Editor-generated node ids are useful for UI diff identity, but they
+  # should not create a new checkpoint when visible content did not change.
+  defp content_hash(ast) do
     :sha256
-    |> :crypto.hash(body)
+    |> :crypto.hash(:erlang.term_to_binary(normalize_hash_value(ast)))
     |> Base.encode16(case: :lower)
   end
+
+  defp normalize_hash_value(nodes) when is_list(nodes),
+    do: Enum.map(nodes, &normalize_hash_value/1)
+
+  defp normalize_hash_value(node) when is_map(node) do
+    node
+    |> Enum.reject(fn {key, _value} -> hash_ignored_key?(key) end)
+    |> Enum.map(fn {key, value} -> {to_string(key), normalize_hash_value(value)} end)
+    |> Enum.sort_by(fn {key, _value} -> key end)
+  end
+
+  defp normalize_hash_value(value), do: value
+
+  defp hash_ignored_key?(key) when key in ["id", "_id"], do: true
+  defp hash_ignored_key?(key) when key in [:id, :_id], do: true
+  defp hash_ignored_key?(_key), do: false
 end

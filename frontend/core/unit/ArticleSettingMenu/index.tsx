@@ -23,18 +23,24 @@ const ArticleSettingMenu: FC<TProps> = ({
 }) => {
   const s = useSalon({ ...spacing })
 
-  const [visible, setVisible] = useState(null)
-  const [subMenuOpen, setSubMenuOpen] = useState(null)
+  const [visible, setVisible] = useState(false)
+  const [subMenuOpen, setSubMenuOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
   const doClose = () => {
-    setSubMenuOpen(null)
+    setSubMenuOpen(false)
     setVisible(false)
     setMenuOpen(false)
+  }
 
-    setTimeout(() => {
-      setVisible(null)
-    })
+  const handleToggle = () => {
+    if (visible) {
+      doClose()
+      return
+    }
+
+    setVisible(true)
+    setMenuOpen(true)
   }
 
   return (
@@ -53,10 +59,9 @@ const ArticleSettingMenu: FC<TProps> = ({
           if (subMenuOpen) return
           doClose()
         }}
-        trigger='click'
         noPadding
       >
-        <div className={cn(s.settingBox, menuOpen && s.settingBoxActive)}>
+        <div className={cn(s.settingBox, menuOpen && s.settingBoxActive)} onClick={handleToggle}>
           <SettingSVG className={s.settingIcon} />
         </div>
       </Tooltip>

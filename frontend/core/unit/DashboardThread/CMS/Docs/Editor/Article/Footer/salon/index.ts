@@ -10,7 +10,7 @@ export default function useSalon() {
     heading: 'row-center w-full gap-5',
     title: cn('shrink-0 text-sm', fg('digest')),
     topDivider: cn('h-px flex-1 border-b opacity-55', br('divider')),
-    content: cn('row-center row-between w-full gap-8 py-4'),
+    content: 'row-center row-between w-full gap-8 py-4',
     actions: 'row-center gap-4.5 shrink-0 mb-0.5',
     feedbackTagsMotion: 'w-full overflow-hidden',
     bottomDivider: cn(styles.receiptDivider, br('divider')),

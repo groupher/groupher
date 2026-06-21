@@ -3,10 +3,43 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
 
   use GroupherServer.DataCase, async: true
 
-  alias GroupherServer.CMS.Model.{DocDocumentDraft, DocTreeNode, DocTreeNodeDraft}
+  alias GroupherServer.CMS.Model.{ArticleDraft, DocTreeNode, DocTreeNodeDraft}
+
+  describe "ArticleDraft changeset" do
+    test "rejects invalid slug format" do
+      changeset =
+        ArticleDraft.changeset(%ArticleDraft{}, %{
+          community_id: 1,
+          thread: :doc,
+          title: "Install",
+          slug: "install_page",
+          digest: "Install",
+          json: "[]"
+        })
+
+      refute changeset.valid?
+      assert "only lowercase letters, numbers and hyphen are allowed" in errors_on(changeset).slug
+    end
+  end
 
   describe "DocTreeNodeDraft changeset" do
-    test "page nodes require doc_draft_id" do
+    test "rejects invalid slug format" do
+      changeset =
+        DocTreeNodeDraft.changeset(%DocTreeNodeDraft{}, %{
+          community_id: 1,
+          parent_id: 1,
+          article_draft_id: 2,
+          type: :page,
+          title: "Install",
+          slug: "install_page",
+          index: 0
+        })
+
+      refute changeset.valid?
+      assert "only lowercase letters, numbers and hyphen are allowed" in errors_on(changeset).slug
+    end
+
+    test "page nodes require article_draft_id" do
       changeset =
         DocTreeNodeDraft.changeset(%DocTreeNodeDraft{}, %{
           community_id: 1,
@@ -18,15 +51,15 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
         })
 
       refute changeset.valid?
-      assert "page nodes require doc_draft_id" in errors_on(changeset).doc_draft_id
+      assert "page nodes require article_draft_id" in errors_on(changeset).article_draft_id
     end
 
-    test "link nodes can not carry doc_draft_id" do
+    test "link nodes can not carry article_draft_id" do
       changeset =
         DocTreeNodeDraft.changeset(%DocTreeNodeDraft{}, %{
           community_id: 1,
           parent_id: 1,
-          doc_draft_id: 2,
+          article_draft_id: 2,
           type: :link,
           title: "Docs",
           slug: "docs",
@@ -35,11 +68,28 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
         })
 
       refute changeset.valid?
-      assert "link nodes can not reference doc drafts" in errors_on(changeset).doc_draft_id
+
+      assert "link nodes can not reference article drafts" in errors_on(changeset).article_draft_id
     end
   end
 
   describe "DocTreeNode changeset" do
+    test "rejects invalid slug format" do
+      changeset =
+        DocTreeNode.changeset(%DocTreeNode{}, %{
+          community_id: 1,
+          parent_id: 1,
+          doc_id: 2,
+          type: :page,
+          title: "Install",
+          slug: "install_page",
+          index: 0
+        })
+
+      refute changeset.valid?
+      assert "only lowercase letters, numbers and hyphen are allowed" in errors_on(changeset).slug
+    end
+
     test "page nodes require doc_id" do
       changeset =
         DocTreeNode.changeset(%DocTreeNode{}, %{
@@ -68,21 +118,6 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
 
       refute changeset.valid?
       assert "group nodes can not have href" in errors_on(changeset).href
-    end
-  end
-
-  describe "DocDocumentDraft update_changeset" do
-    test "accepts doc_draft_id as a constrained field" do
-      changeset =
-        DocDocumentDraft.update_changeset(%DocDocumentDraft{}, %{
-          doc_draft_id: 1,
-          plain_text: "body"
-        })
-
-      assert Enum.any?(changeset.constraints, fn constraint ->
-               constraint.field == :doc_draft_id and
-                 constraint.constraint == "doc_document_drafts_doc_draft_id_fkey"
-             end)
     end
   end
 end

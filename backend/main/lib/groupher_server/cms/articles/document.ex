@@ -8,23 +8,23 @@ defmodule GroupherServer.CMS.Articles.Document do
 
   alias CMS.FrontDesk
   alias CMS.Model.ArticleDocument
-  alias Helper.{ContentPayload, ContentPipeline, Multi, ORM, T}
+  alias Helper.{ArticlePayload, ContentPipeline, Multi, ORM, T}
 
   @type document_result :: {:ok, map()} | {:error, map()}
 
   @spec create(map(), map()) :: document_result()
   def create(article, %{readme: readme} = attrs) do
     with {:ok, payload} <- ContentPipeline.from_readme(readme) do
-      attrs = attrs |> Map.drop([:readme]) |> Map.put(:content_payload, payload)
+      attrs = attrs |> Map.drop([:readme]) |> Map.put(:article_payload, payload)
       create(article, attrs)
     end
   end
 
   @spec create(map(), map()) :: document_result()
-  def create(article, %{content_payload: payload}) do
+  def create(article, %{article_payload: payload}) do
     with {:ok, article_thread} <- FrontDesk.thread_of(article),
          false <- article_document_exist(article) do
-      attrs = ContentPayload.pick_valid_fields(payload)
+      attrs = ArticlePayload.pick_valid_fields(payload)
 
       Multi.new()
       |> Multi.run(:create_article_document, fn _, _ ->
@@ -54,7 +54,7 @@ defmodule GroupherServer.CMS.Articles.Document do
 
   def create(article, %{body: body}) when is_binary(body) do
     with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
-      create(article, %{content_payload: payload})
+      create(article, %{article_payload: payload})
     end
   end
 
@@ -73,11 +73,11 @@ defmodule GroupherServer.CMS.Articles.Document do
   update both article and thread document
   """
   @spec update(map(), map()) :: document_result()
-  def update(article, %{content_payload: payload}) do
+  def update(article, %{article_payload: payload}) do
     with {:ok, article_thread} <- FrontDesk.thread_of(article),
          {:ok, article_doc} <- find_article_document(article_thread, article),
          {:ok, thread_doc} <- find_thread_document(article_thread, article) do
-      attrs = ContentPayload.pick_valid_fields(payload)
+      attrs = ArticlePayload.pick_valid_fields(payload)
 
       Multi.new()
       |> Multi.run(:update_article_document, fn _, _ ->
@@ -94,7 +94,7 @@ defmodule GroupherServer.CMS.Articles.Document do
 
   def update(article, %{body: body}) when is_binary(body) do
     with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
-      __MODULE__.update(article, %{content_payload: payload})
+      __MODULE__.update(article, %{article_payload: payload})
     end
   end
 

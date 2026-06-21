@@ -32,31 +32,18 @@ defmodule GroupherServer.Repo.Migrations.CreateDocTreeNodes do
 
     create(unique_index(:doc_tree_draft_states, [:community_id], prefix: @prefix))
 
-    create table(:doc_drafts, prefix: @prefix) do
+    create table(:article_drafts, prefix: @prefix) do
       add(:community_id, references(:communities, prefix: @prefix, on_delete: :delete_all),
         null: false
       )
 
-      add(:published_doc_id, references(:docs, prefix: @prefix, on_delete: :nilify_all))
+      add(:thread, :string, null: false)
+      add(:article_id, :bigint)
       add(:author_id, references(:authors, prefix: @prefix, on_delete: :nilify_all))
       add(:title, :string, null: false)
-      add(:slug, :string, null: false)
+      add(:slug, :string)
       add(:digest, :string, null: false)
       add(:template_key, :string)
-
-      timestamps()
-    end
-
-    create(index(:doc_drafts, [:community_id], prefix: @prefix))
-    create(index(:doc_drafts, [:published_doc_id], prefix: @prefix))
-    create(index(:doc_drafts, [:author_id], prefix: @prefix))
-    create(unique_index(:doc_drafts, [:community_id, :slug], prefix: @prefix))
-    create(unique_index(:doc_drafts, [:community_id, :template_key], prefix: @prefix))
-
-    create table(:doc_document_drafts, prefix: @prefix) do
-      add(:doc_draft_id, references(:doc_drafts, prefix: @prefix, on_delete: :delete_all),
-        null: false
-      )
 
       add(:json, :text, null: false)
       add(:markdown, :text)
@@ -65,14 +52,17 @@ defmodule GroupherServer.Repo.Migrations.CreateDocTreeNodes do
       add(:xml, :text)
       add(:rss, :text)
       add(:plain_text, :text)
-      add(:digest, :text)
       add(:content_hash, :string)
       add(:schema_version, :integer, null: false, default: 1)
 
       timestamps()
     end
 
-    create(unique_index(:doc_document_drafts, [:doc_draft_id], prefix: @prefix))
+    create(index(:article_drafts, [:community_id], prefix: @prefix))
+    create(index(:article_drafts, [:thread, :article_id], prefix: @prefix))
+    create(index(:article_drafts, [:author_id], prefix: @prefix))
+    create(index(:article_drafts, [:content_hash], prefix: @prefix))
+    create(unique_index(:article_drafts, [:community_id, :template_key], prefix: @prefix))
 
     create table(:doc_tree_nodes, prefix: @prefix) do
       add(:community_id, references(:communities, prefix: @prefix, on_delete: :delete_all),
@@ -137,7 +127,7 @@ defmodule GroupherServer.Repo.Migrations.CreateDocTreeNodes do
       )
 
       add(:parent_id, references(:doc_tree_node_drafts, prefix: @prefix, on_delete: :delete_all))
-      add(:doc_draft_id, references(:doc_drafts, prefix: @prefix, on_delete: :nilify_all))
+      add(:article_draft_id, references(:article_drafts, prefix: @prefix, on_delete: :nilify_all))
 
       add(:type, :string, null: false)
       add(:title, :string, null: false)
@@ -155,7 +145,7 @@ defmodule GroupherServer.Repo.Migrations.CreateDocTreeNodes do
 
     create(index(:doc_tree_node_drafts, [:community_id], prefix: @prefix))
     create(index(:doc_tree_node_drafts, [:parent_id], prefix: @prefix))
-    create(index(:doc_tree_node_drafts, [:doc_draft_id], prefix: @prefix))
+    create(index(:doc_tree_node_drafts, [:article_draft_id], prefix: @prefix))
     create(unique_index(:doc_tree_node_drafts, [:community_id, :template_key], prefix: @prefix))
 
     create(

@@ -82,6 +82,12 @@ type RootQueryType {
   "dashboard docs draft document"
   docDraft(community: String!, id: ID!): DocDraft
 
+  "dashboard docs draft revision history"
+  docDraftRevisions(community: String!, id: ID!, type: ArticleRevisionType, limit: Int): [ArticleRevision]
+
+  "one dashboard docs draft revision"
+  docDraftRevision(community: String!, id: ID!, revisionId: ID!): ArticleRevision
+
   "spec community info"
   community(slug: String!, incViews: Boolean): Community
 
@@ -700,6 +706,15 @@ type RootMutationType {
   "update a docs draft document"
   updateDocDraft(community: String!, id: ID!, title: String, slug: String, body: String): DocDraft
 
+  "save current docs draft as an article revision checkpoint"
+  checkpointDocDraftRevision(community: String!, id: ID!): ArticleRevision
+
+  "publish current docs draft as a published article revision"
+  publishDocDraftRevision(community: String!, id: ID!): ArticleRevision
+
+  "restore a docs draft from an article revision"
+  restoreDocDraftRevision(community: String!, id: ID!, revisionId: ID!): DocDraft
+
   "delete a docs tree node"
   deleteDocTreeNode(community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
 
@@ -724,6 +739,11 @@ enum DocTreeNodeType {
   GROUP
   PAGE
   LINK
+}
+
+enum ArticleRevisionType {
+  DRAFT
+  PUBLISHED
 }
 
 enum MarkerType {
@@ -845,6 +865,24 @@ type ThreadDocument {
   html: String
   xml: String
   rss: String
+}
+
+type ArticleRevision {
+  id: ID
+  thread: Thread
+  type: ArticleRevisionType
+  articleId: ID
+  articleDraftId: ID
+  title: String
+  slug: String
+  digest: String
+  documentJson: String
+  contentHash: String
+  revisionNumber: Int
+  schemaVersion: Int
+  author: User
+  insertedAt: DateTime
+  updatedAt: DateTime
 }
 
 type Post implements Article {

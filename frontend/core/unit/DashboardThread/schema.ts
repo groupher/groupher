@@ -495,6 +495,31 @@ const docDraft = gql`
   }
 `
 
+const docDraftRevisions = gql`
+  query docDraftRevisions($community: String!, $id: ID!, $type: ArticleRevisionType) {
+    docDraftRevisions(community: $community, id: $id, type: $type) {
+      id
+      thread
+      type
+      articleId
+      articleDraftId
+      title
+      slug
+      digest
+      documentJson
+      contentHash
+      revisionNumber
+      schemaVersion
+      insertedAt
+      author {
+        login
+        nickname
+        avatar
+      }
+    }
+  }
+`
+
 const docTreeMutationPayload = `
   revision
   conflict
@@ -546,6 +571,79 @@ const updateDocTreeNode = gql`
 const updateDocDraft = gql`
   mutation ($community: String!, $id: ID!, $title: String, $slug: String, $body: String) {
     updateDocDraft(community: $community, id: $id, title: $title, slug: $slug, body: $body) {
+      id
+      title
+      slug
+      digest
+      insertedAt
+      updatedAt
+      author {
+        login
+        nickname
+        avatar
+      }
+      document {
+        json
+        markdown
+        markdownToc
+        html
+        xml
+        rss
+      }
+    }
+  }
+`
+
+const checkpointDocDraftRevision = gql`
+  mutation checkpointDocDraftRevision($community: String!, $id: ID!) {
+    checkpointDocDraftRevision(community: $community, id: $id) {
+      id
+      thread
+      type
+      articleDraftId
+      title
+      slug
+      documentJson
+      contentHash
+      revisionNumber
+      schemaVersion
+      insertedAt
+      author {
+        login
+        nickname
+        avatar
+      }
+    }
+  }
+`
+
+const publishDocDraftRevision = gql`
+  mutation publishDocDraftRevision($community: String!, $id: ID!) {
+    publishDocDraftRevision(community: $community, id: $id) {
+      id
+      thread
+      type
+      articleId
+      articleDraftId
+      title
+      slug
+      documentJson
+      contentHash
+      revisionNumber
+      schemaVersion
+      insertedAt
+      author {
+        login
+        nickname
+        avatar
+      }
+    }
+  }
+`
+
+const restoreDocDraftRevision = gql`
+  mutation restoreDocDraftRevision($community: String!, $id: ID!, $revisionId: ID!) {
+    restoreDocDraftRevision(community: $community, id: $id, revisionId: $revisionId) {
       id
       title
       slug
@@ -755,11 +853,15 @@ const schema = {
   updateDashboardDocFaq,
   docTree,
   docDraft,
+  docDraftRevisions,
   createDocTreeGroup,
   createDocTreePage,
   createDocTreeLink,
   updateDocTreeNode,
   updateDocDraft,
+  checkpointDocDraftRevision,
+  publishDocDraftRevision,
+  restoreDocDraftRevision,
   deleteDocTreeNode,
   duplicateDocTreeNode,
   moveDocTreeNode,

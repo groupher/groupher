@@ -6,6 +6,7 @@ type TTextNode = {
 }
 
 export const DOC_AUTO_SAVE_DELAY = 1600
+export const DOC_DRAFT_REVISION_CHECKPOINT_DELAY = 120_000
 
 const collectText = (nodes: TTextNode[]): string => {
   let text = ''

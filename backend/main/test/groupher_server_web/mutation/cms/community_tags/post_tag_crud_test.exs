@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
 
       variables = %{
         title: "tag title",
-        slug: "tag_raw",
+        slug: "tag-raw",
         community: community.slug,
         thread: "POST",
         color: "GREEN",
@@ -141,7 +141,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
         color: "YELLOW",
         title: "new title",
         desc: "this tag is awesome",
-        slug: "new_title",
+        slug: "new-title",
         community: community.slug,
         groupId: new_group.id,
         extra: ["newMenuID"],

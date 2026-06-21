@@ -7,11 +7,12 @@ import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/widgets/Toaster'
 
 import S from '../../../../schema'
+import { REVISION_DRAWER } from '../../ActionSnackbar/constant'
 import { SIDE_TREE_NODE_TYPE } from '../SideTree/constant'
 import type { TSideTreePage } from '../SideTree/spec'
 import type { TSideTreeController } from '../SideTree/useSideTree'
 import useDocsEditor from '../store/hooks'
-import { countEditorText, DOC_AUTO_SAVE_DELAY } from './helper'
+import { countEditorText, DOC_AUTO_SAVE_DELAY, DOC_DRAFT_REVISION_CHECKPOINT_DELAY } from './helper'
 
 type TDocDraftDTO = {
   id: string
@@ -65,7 +66,12 @@ const findActivePage = (groups: TSideTreeController['groups'], activeId: string 
 
 export default function useDocDraftEditor(sideTree: TSideTreeController) {
   const { slug: community } = useCommunity()
-  const { attachSaveDocDraft, live$: docsEditor$, setDocDraftSession } = useDocsEditor()
+  const {
+    attachSaveDocDraft,
+    live$: docsEditor$,
+    revisionReloadKey,
+    setDocDraftSession,
+  } = useDocsEditor()
   const { query, mutate } = useGraphQLClient()
   const activePage = useMemo(
     () => findActivePage(sideTree.groups, sideTree.activeId),
@@ -82,6 +88,10 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
   const savedTitleRef = useRef('')
   const savedBodyRef = useRef(serializeEditorValue(EMPTY_EDITOR_VALUE))
   const savingRef = useRef(false)
+  const checkpointingRef = useRef(false)
+  const pendingRevisionCheckpointRef = useRef(false)
+  const lastAutosavedAtRef = useRef(Date.now())
+  const lastCheckpointedBodyRef = useRef(serializeEditorValue(EMPTY_EDITOR_VALUE))
   const slugTitleRef = useRef('')
   const titleRef = useRef('')
 
@@ -105,7 +115,12 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
       setError(null)
       savedTitleRef.current = ''
       savedBodyRef.current = serializeEditorValue(EMPTY_EDITOR_VALUE)
+      pendingRevisionCheckpointRef.current = false
+      lastAutosavedAtRef.current = Date.now()
+      lastCheckpointedBodyRef.current = serializeEditorValue(EMPTY_EDITOR_VALUE)
       setDocDraftSession({
+        baselineValue: EMPTY_EDITOR_VALUE,
+        bodyValue: EMPTY_EDITOR_VALUE,
         docDraftInfo: {
           id: '',
           title: '',
@@ -140,7 +155,12 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
         setSlug(draft?.slug || '')
         savedTitleRef.current = nextTitle
         savedBodyRef.current = nextBodyJson
+        pendingRevisionCheckpointRef.current = false
+        lastAutosavedAtRef.current = Date.now()
+        lastCheckpointedBodyRef.current = nextBodyJson
         setDocDraftSession({
+          baselineValue: nextBody,
+          bodyValue: nextBody,
           docDraftInfo: {
             id: draft?.id || activePage.docId,
             title: nextTitle,
@@ -163,7 +183,7 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
       .finally(() => {
         if (loadIdRef.current === loadId) setLoading(false)
       })
-  }, [activePage?.docId, activePage?.id, community, query, setDocDraftSession])
+  }, [activePage?.docId, activePage?.id, community, query, revisionReloadKey, setDocDraftSession])
 
   useEffect(() => {
     const trimmedTitle = title.trim()
@@ -224,7 +244,10 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
       if (currentTitle.trim() === nextTitle) setSlug(savedSlug)
       savedTitleRef.current = nextTitle
       savedBodyRef.current = body
+      lastAutosavedAtRef.current = Date.now()
+      pendingRevisionCheckpointRef.current = body !== lastCheckpointedBodyRef.current
       setDocDraftSession({
+        bodyValue: bodyValueRef.current,
         docDraftInfo: {
           id: savedDraft?.id || activePage.docId,
           title: currentTitle === title ? nextTitle : currentTitle,
@@ -248,6 +271,51 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
     }
   }, [activePage, bodyValue, community, invalid, mutate, setDocDraftSession, slug, title])
 
+  const checkpointRevision = useCallback(async () => {
+    if (!activePage?.docId || checkpointingRef.current || !pendingRevisionCheckpointRef.current) {
+      return
+    }
+
+    const checkpointBody = savedBodyRef.current
+    checkpointingRef.current = true
+
+    try {
+      await mutate(S.checkpointDocDraftRevision, {
+        community,
+        id: activePage.docId,
+      })
+      lastCheckpointedBodyRef.current = checkpointBody
+      pendingRevisionCheckpointRef.current = savedBodyRef.current !== checkpointBody
+    } catch (err) {
+      const message = err instanceof Error ? err.message : REVISION_DRAWER.CHECKPOINT_FAILED
+      lastAutosavedAtRef.current = Date.now()
+      toast(message, 'error')
+    } finally {
+      checkpointingRef.current = false
+    }
+  }, [activePage?.docId, community, mutate])
+
+  const markRevisionCheckpointPending = useCallback(() => {
+    pendingRevisionCheckpointRef.current = true
+  }, [])
+
+  const editTitle = useCallback(
+    (value: string): void => {
+      markRevisionCheckpointPending()
+      setTitle(value)
+    },
+    [markRevisionCheckpointPending],
+  )
+
+  const editBodyValue = useCallback(
+    (value: TRichEditorValue): void => {
+      markRevisionCheckpointPending()
+      setBodyValue(value)
+      setDocDraftSession({ bodyValue: value })
+    },
+    [markRevisionCheckpointPending, setDocDraftSession],
+  )
+
   useEffect(() => {
     attachSaveDocDraft(save)
 
@@ -258,6 +326,7 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
     if (!activePage?.docId) return
 
     setDocDraftSession({
+      bodyValue,
       docDraftInfo: {
         ...docsEditor$.docDraftInfo,
         id: activePage.docId,
@@ -280,6 +349,27 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
     return () => window.clearTimeout(timer)
   }, [dirty, editable, invalid, loading, save, saving])
 
+  useEffect(() => {
+    if (
+      !activePage?.docId ||
+      !editable ||
+      invalid ||
+      loading ||
+      saving ||
+      savedBodyRef.current === lastCheckpointedBodyRef.current
+    ) {
+      return
+    }
+
+    const elapsed = Date.now() - lastAutosavedAtRef.current
+    const delay = Math.max(DOC_DRAFT_REVISION_CHECKPOINT_DELAY - elapsed, 0)
+    const timer = window.setTimeout(() => {
+      void checkpointRevision()
+    }, delay)
+
+    return () => window.clearTimeout(timer)
+  }, [activePage?.docId, checkpointRevision, editable, invalid, loading, saving])
+
   return {
     activePage,
     bodyValue,
@@ -290,8 +380,8 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
     loading,
     saving,
     save,
-    setBodyValue,
-    setTitle,
+    setBodyValue: editBodyValue,
+    setTitle: editTitle,
     slug,
     title,
   }

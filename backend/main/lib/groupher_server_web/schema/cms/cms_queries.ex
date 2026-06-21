@@ -37,6 +37,29 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.doc_draft/3)
     end
 
+    @desc "dashboard docs draft revision history"
+    field :doc_draft_revisions, list_of(:article_revision) do
+      arg(:community, non_null(:string))
+      arg(:id, non_null(:id))
+      arg(:type, :article_revision_type)
+      arg(:limit, :integer, default_value: 30)
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.doc_draft_revisions/3)
+    end
+
+    @desc "one dashboard docs draft revision"
+    field :doc_draft_revision, :article_revision do
+      arg(:community, non_null(:string))
+      arg(:id, non_null(:id))
+      arg(:revision_id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.doc_draft_revision/3)
+    end
+
     @desc "spec community info"
     field :community, :community do
       # arg(:id, non_null(:id))

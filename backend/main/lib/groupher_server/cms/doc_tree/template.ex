@@ -2,9 +2,9 @@ defmodule GroupherServer.CMS.DocTree.Template do
   @moduledoc """
   Demo template management for docs draft workspaces.
 
-  The template is dashboard-only. It creates draft tree nodes and draft docs so
-  a new community has editable docs content immediately, but it never writes to
-  the published `docs` or `doc_tree_nodes` tables.
+  The template is dashboard-only. It creates draft tree nodes and article drafts
+  so a new community has editable docs content immediately, but it never writes
+  to the published `docs` or `doc_tree_nodes` tables.
 
       ensure_demo_template
               |
@@ -15,8 +15,8 @@ defmodule GroupherServer.CMS.DocTree.Template do
       create demo groups/pages
               |
               +-- group -> doc_tree_node_drafts
-              +-- page  -> doc_drafts + doc_document_drafts
-                         -> doc_tree_node_drafts.doc_draft_id
+              +-- page  -> article_drafts(thread=doc)
+                         -> doc_tree_node_drafts.article_draft_id
 
   `template_key` marks all generated rows. The internal delete/reset helpers use
   this marker to remove only demo draft content and leave user-created draft
@@ -28,17 +28,17 @@ defmodule GroupherServer.CMS.DocTree.Template do
 
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
+  alias CMS.Articles.Draft
   alias CMS.DocTree.{Read, Revision}
 
   alias CMS.Model.{
     Author,
+    ArticleDraft,
     Community,
-    DocDocumentDraft,
-    DocDraft,
     DocTreeNodeDraft
   }
 
-  alias Helper.{ContentPayload, ContentPipeline, ORM, T, Transaction}
+  alias Helper.{ORM, T, Transaction}
 
   @template [
     %{
@@ -129,7 +129,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
       |> where([n], n.template_key in ^template_keys)
       |> Repo.delete_all()
 
-      DocDraft
+      ArticleDraft
       |> where([d], d.community_id == ^community.id)
       |> where([d], d.template_key in ^template_keys)
       |> Repo.delete_all()
@@ -188,7 +188,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
       attrs = %{
         community_id: community.id,
         parent_id: group.id,
-        doc_draft_id: draft.id,
+        article_draft_id: draft.id,
         type: :page,
         title: page.title,
         slug: page.slug,
@@ -201,26 +201,20 @@ defmodule GroupherServer.CMS.DocTree.Template do
   end
 
   defp create_doc_draft(%Community{} = community, page, %Author{} = author) do
-    with {:ok, payload} <- page_content_payload(page),
-         {:ok, draft} <-
-           ORM.create(DocDraft, %{
-             community_id: community.id,
-             author_id: author.id,
-             title: page.title,
-             slug: page.slug,
-             digest: payload.digest,
-             template_key: template_key("doc:#{page.key}")
-           }),
-         {:ok, _document} <-
-           payload
-           |> ContentPayload.pick_valid_fields()
-           |> Map.put(:doc_draft_id, draft.id)
-           |> then(&ORM.create(DocDocumentDraft, &1)) do
-      {:ok, draft}
-    end
+    Draft.create_with_author(
+      community,
+      :doc,
+      %{
+        title: page.title,
+        slug: page.slug,
+        body: page_content(page),
+        template_key: template_key("doc:#{page.key}")
+      },
+      author
+    )
   end
 
-  defp page_content_payload(page) do
+  defp page_content(page) do
     [
       %{
         "type" => "h1",
@@ -237,7 +231,6 @@ defmodule GroupherServer.CMS.DocTree.Template do
       }
     ]
     |> Jason.encode!()
-    |> then(&ContentPipeline.parse(%{body: &1}))
   end
 
   defp draft_tree_empty?(%Community{} = community) do

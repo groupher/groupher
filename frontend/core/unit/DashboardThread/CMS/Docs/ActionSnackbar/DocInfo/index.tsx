@@ -14,7 +14,6 @@ const DocInfo: FC = () => {
   return (
     <Tooltip
       content={<DocInfoPanel />}
-      trigger='click'
       placement='top'
       offset={[55, 10]}
       maxWidth='none'

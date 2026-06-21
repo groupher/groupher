@@ -1,3 +1,5 @@
+import type { TRichEditorValue } from '@groupher/rich-editor'
+
 import type { TSideTreeController } from '../SideTree/useSideTree'
 
 export type TDocSaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
@@ -24,14 +26,20 @@ export type TInit = {
 }
 
 export type TStore = {
+  baselineValue: TRichEditorValue
+  bodyValue: TRichEditorValue
   docDraftInfo: TDocDraftInfo
+  revisionReloadKey: number
   saveError: string | null
   saveStatus: TDocSaveStatus
   addGroup: () => void
   attachSideTree: (sideTree: TSideTreeController) => void
   attachSaveDocDraft: (handler: (() => Promise<void>) | null) => void
+  reloadDocDraft: () => void
   saveDocDraft: () => Promise<void>
   setDocDraftSession: (
-    patch: Partial<Pick<TStore, 'docDraftInfo' | 'saveError' | 'saveStatus'>>,
+    patch: Partial<
+      Pick<TStore, 'baselineValue' | 'bodyValue' | 'docDraftInfo' | 'saveError' | 'saveStatus'>
+    >,
   ) => void
 }

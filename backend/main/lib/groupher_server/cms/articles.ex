@@ -13,10 +13,12 @@ defmodule GroupherServer.CMS.Articles do
 
   alias __MODULE__.{
     Collects,
+    Draft,
     List,
     Moderation,
     Reactions,
     Read,
+    Revision,
     States,
     Upvotes,
     Write
@@ -62,6 +64,53 @@ defmodule GroupherServer.CMS.Articles do
 
   @spec update(T.article(), map()) :: T.domain_res(T.article())
   def update(article, attrs), do: Write.update(article, attrs)
+
+  # Revision
+
+  @spec read_article_draft(Community.t(), T.id()) :: T.domain_res(CMS.Model.ArticleDraft.t())
+  def read_article_draft(%Community{} = community, article_draft_id) do
+    Draft.read(community, article_draft_id)
+  end
+
+  @spec list_doc_draft_revisions(Community.t(), T.id(), keyword()) ::
+          T.domain_res([CMS.Model.ArticleRevision.t()])
+  def list_doc_draft_revisions(%Community{} = community, article_draft_id, opts \\ []) do
+    Revision.list_doc_draft(community, article_draft_id, opts)
+  end
+
+  @spec get_doc_draft_revision(Community.t(), T.id(), T.id()) ::
+          T.domain_res(CMS.Model.ArticleRevision.t())
+  def get_doc_draft_revision(%Community{} = community, article_draft_id, revision_id) do
+    Revision.get_doc_draft_revision(community, article_draft_id, revision_id)
+  end
+
+  @spec checkpoint_doc_draft_revision(Community.t(), T.id(), User.t() | nil, keyword()) ::
+          T.domain_res(CMS.Model.ArticleRevision.t())
+  def checkpoint_doc_draft_revision(
+        %Community{} = community,
+        article_draft_id,
+        user \\ nil,
+        opts \\ []
+      ) do
+    Revision.checkpoint_doc_draft(community, article_draft_id, user, opts)
+  end
+
+  @spec restore_doc_draft_revision(Community.t(), T.id(), T.id(), User.t() | nil) ::
+          T.domain_res(CMS.Model.ArticleDraft.t())
+  def restore_doc_draft_revision(
+        %Community{} = community,
+        article_draft_id,
+        revision_id,
+        user \\ nil
+      ) do
+    Revision.restore_doc_draft(community, article_draft_id, revision_id, user)
+  end
+
+  @spec publish_doc_draft_revision(Community.t(), T.id(), User.t()) ::
+          T.domain_res(CMS.Model.ArticleRevision.t())
+  def publish_doc_draft_revision(%Community{} = community, article_draft_id, %User{} = user) do
+    Revision.publish_doc_draft(community, article_draft_id, user)
+  end
 
   # Lifecycle
 

@@ -23,12 +23,12 @@ export default function useSalon() {
     textTrackItem: 'block pr-4',
     publishGroup: 'row-center ml-1',
     publishButton: cn(
-      'h-7 px-3 rounded-l-lg rounded-r-none button-reset text-xs bold-sm pr-1.5',
+      'h-7 px-3 rounded-l-lg rounded-r-none button-reset text-xs bold-sm pr-1.5 disabled:opacity-60 disabled:cursor-not-allowed',
       primary('bg'),
       fg('button.fg'),
     ),
     publishMenuButton: cn(
-      'align-both h-7 w-5 rounded-r-lg rounded-l-none button-reset pr-2',
+      'align-both h-7 w-5 rounded-r-lg rounded-l-none button-reset pr-2 disabled:opacity-60 disabled:cursor-not-allowed',
       primary('bg'),
       fg('button.fg'),
     ),

@@ -51,6 +51,8 @@ const TYPE = {
     CREATE_TAG: 'CREATE_TAG',
     EDIT_TAG: 'EDIT_TAG',
 
+    DOC_REVISION: 'DOC_REVISION',
+
     //
     LIST_USERS: 'LIST_USERS',
   },

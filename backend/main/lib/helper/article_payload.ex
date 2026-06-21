@@ -1,6 +1,6 @@
-defmodule Helper.ContentPayload do
+defmodule Helper.ArticlePayload do
   @moduledoc """
-  Canonical content payload contract shared across pipeline and persistence.
+  Canonical article editor payload contract shared across parsing and persistence.
   """
 
   @valid_fields [
@@ -32,12 +32,12 @@ defmodule Helper.ContentPayload do
         }
 
   @doc """
-  Picks only valid keys from a full content payload.
+  Picks only persistable article document fields from a full editor payload.
 
   ## Examples
 
       iex> payload = %{json: "[]", html: "<p>x</p>", mentions: ["Tom"], schema_version: 1}
-      iex> Helper.ContentPayload.pick_valid_fields(payload)
+      iex> Helper.ArticlePayload.pick_valid_fields(payload)
       %{html: "<p>x</p>", json: "[]", schema_version: 1}
   """
   @spec pick_valid_fields(map()) :: map()

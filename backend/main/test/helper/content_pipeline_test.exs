@@ -69,7 +69,7 @@ defmodule GroupherServer.Test.Helper.ContentPipeline do
   @demo_body Jason.encode!(@demo_ast)
 
   describe "parse/1" do
-    test "returns enriched content payload" do
+    test "returns enriched article payload" do
       {:ok, parsed} = ContentPipeline.parse(%{body: @demo_body})
 
       assert parsed.json == @demo_body

@@ -8,19 +8,19 @@ defmodule GroupherServer.CMS.DocTree.Read do
 
       doc_tree_node_drafts(parent_id: nil)
           group A
-            page -> doc_draft_id
+            page -> article_draft_id
             link -> href
           group B
-            page -> doc_draft_id
+            page -> article_draft_id
 
   The returned map keeps the API field as `doc_id` for frontend compatibility,
-  but the value is a `doc_draft_id` while this resolver is in draft mode.
+  but the value is an `article_draft_id` while this resolver is in draft mode.
   """
 
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Community, DocDraft, DocsSiteState, DocTreeDraftState, DocTreeNodeDraft}
+  alias CMS.Model.{ArticleDraft, Community, DocsSiteState, DocTreeDraftState, DocTreeNodeDraft}
   alias Helper.{ORM, T, Transaction}
 
   @spec read(Community.t()) :: T.domain_res(map())
@@ -44,10 +44,18 @@ defmodule GroupherServer.CMS.DocTree.Read do
     end
   end
 
-  @spec read_draft(Community.t(), T.id()) :: T.domain_res(DocDraft.t())
+  @doc """
+  Reads one staged article draft from the docs editor scope.
+
+  ## Examples
+
+      iex> Read.read_draft(community, page.doc_id)
+      {:ok, %ArticleDraft{thread: :doc}}
+  """
+  @spec read_draft(Community.t(), T.id()) :: T.domain_res(ArticleDraft.t())
   def read_draft(%Community{} = community, id) do
-    DocDraft
-    |> ORM.find_by([id: id, community_id: community.id], preload: :document)
+    ArticleDraft
+    |> ORM.find_by(id: id, community_id: community.id, thread: :doc)
   end
 
   @spec ensure_draft_state(Community.t()) :: T.domain_res(DocTreeDraftState.t())
@@ -97,7 +105,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
     %{
       id: node.id,
       parent_id: node.parent_id,
-      doc_id: node.doc_draft_id,
+      doc_id: node.article_draft_id,
       type: node.type,
       title: node.title,
       slug: node.slug,

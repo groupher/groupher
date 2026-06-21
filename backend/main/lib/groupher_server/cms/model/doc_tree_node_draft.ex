@@ -5,12 +5,12 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
   `doc_tree_nodes` is reserved for published navigation. This draft table is
   what the dashboard editor mutates.
 
-      group: parent_id=nil, no doc_draft_id
-      page:  parent_id=group.id, doc_draft_id points to DocDraft
+      group: parent_id=nil, no article_draft_id
+      page:  parent_id=group.id, article_draft_id points to ArticleDraft
       link:  parent_id=group.id, href stores external/internal URL
 
   The public GraphQL shape exposes `docId`; while reading draft data that value
-  maps to `doc_draft_id`.
+  maps to `article_draft_id`.
   """
   alias __MODULE__
 
@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
 
   alias GroupherServer.CMS
   alias CMS.Marker
-  alias CMS.Model.{Community, DocDraft}
+  alias CMS.Model.{ArticleDraft, Community}
   alias Helper.Constant.DBPrefix
   alias Helper.Validator.Slug
 
@@ -30,13 +30,13 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
 
   @node_types [:group, :page, :link]
   @required_fields ~w(community_id type title slug index)a
-  @optional_fields ~w(parent_id doc_draft_id href marker badge hidden expanded template_key)a
+  @optional_fields ~w(parent_id article_draft_id href marker badge hidden expanded template_key)a
 
   @type t :: %DocTreeNodeDraft{}
   schema "doc_tree_node_drafts" do
     belongs_to(:community, Community)
     belongs_to(:parent, DocTreeNodeDraft)
-    belongs_to(:doc_draft, DocDraft)
+    belongs_to(:article_draft, ArticleDraft)
 
     field(:type, Ecto.Enum, values: @node_types)
     field(:title, :string)
@@ -58,7 +58,6 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
     node
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> Marker.normalize_changeset(:marker)
-    |> normalize_slug()
     |> validate_required(@required_fields)
     |> validate_length(:title, min: 1, max: 100)
     |> validate_length(:slug, min: 1, max: 120)
@@ -67,7 +66,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
     |> validate_node_shape()
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:parent_id)
-    |> foreign_key_constraint(:doc_draft_id)
+    |> foreign_key_constraint(:article_draft_id)
     |> unique_constraint(:template_key,
       name: :doc_tree_node_drafts_community_id_template_key_index
     )
@@ -81,14 +80,13 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
     node
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> Marker.normalize_changeset(:marker)
-    |> normalize_slug()
     |> validate_length(:title, min: 1, max: 100)
     |> validate_length(:slug, min: 1, max: 120)
     |> validate_length(:href, max: 400)
     |> Slug.validate_changeset(:slug)
     |> validate_node_shape()
     |> foreign_key_constraint(:parent_id)
-    |> foreign_key_constraint(:doc_draft_id)
+    |> foreign_key_constraint(:article_draft_id)
     |> unique_constraint(:template_key,
       name: :doc_tree_node_drafts_community_id_template_key_index
     )
@@ -98,22 +96,15 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
     |> unique_constraint(:title, name: :doc_tree_node_drafts_sibling_title_index)
   end
 
-  defp normalize_slug(changeset) do
-    case get_change(changeset, :slug) do
-      slug when is_binary(slug) -> put_change(changeset, :slug, Slug.normalize(slug))
-      _ -> changeset
-    end
-  end
-
   defp validate_node_shape(changeset) do
     type = get_field(changeset, :type)
     parent_id = get_field(changeset, :parent_id)
-    doc_draft_id = get_field(changeset, :doc_draft_id)
+    article_draft_id = get_field(changeset, :article_draft_id)
     href = get_field(changeset, :href)
 
     changeset
     |> validate_group_parent(type, parent_id)
-    |> validate_doc_draft_ref(type, doc_draft_id)
+    |> validate_article_draft_ref(type, article_draft_id)
     |> validate_link_href(type, href)
   end
 
@@ -129,17 +120,18 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
 
   defp validate_group_parent(changeset, _type, _parent_id), do: changeset
 
-  defp validate_doc_draft_ref(changeset, :page, nil) do
-    add_error(changeset, :doc_draft_id, "page nodes require doc_draft_id")
+  defp validate_article_draft_ref(changeset, :page, nil) do
+    add_error(changeset, :article_draft_id, "page nodes require article_draft_id")
   end
 
-  defp validate_doc_draft_ref(changeset, :page, _doc_draft_id), do: changeset
+  defp validate_article_draft_ref(changeset, :page, _article_draft_id), do: changeset
 
-  defp validate_doc_draft_ref(changeset, type, doc_draft_id) when type in [:group, :link] do
-    if is_nil(doc_draft_id) do
+  defp validate_article_draft_ref(changeset, type, article_draft_id)
+       when type in [:group, :link] do
+    if is_nil(article_draft_id) do
       changeset
     else
-      add_error(changeset, :doc_draft_id, "#{type} nodes can not reference doc drafts")
+      add_error(changeset, :article_draft_id, "#{type} nodes can not reference article drafts")
     end
   end
 
