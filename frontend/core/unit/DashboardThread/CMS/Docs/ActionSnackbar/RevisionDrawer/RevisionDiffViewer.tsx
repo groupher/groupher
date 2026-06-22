@@ -1,8 +1,8 @@
 import type { FC } from 'react'
 
 import { REVISION_DRAWER } from '../constant'
-import useSalon, { cn } from './salon/revision_diff'
 import type { TRevisionDiffBlock, TRevisionInlineDiff } from './helper'
+import useSalon, { cn } from './salon/revision_diff'
 
 type TProps = {
   blocks: TRevisionDiffBlock[]

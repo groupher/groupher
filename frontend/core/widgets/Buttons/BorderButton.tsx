@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react'
 
+import { cnMerge } from '~/css'
 import useWallpaper from '~/hooks/useWallpaper'
 import ArrowSVG from '~/icons/ArrowSimple'
 
 import Button from './Button'
 import useSalon from './salon/border_button'
-import { cnMerge } from '~/css'
 
 type TProps = {
   children: ReactNode

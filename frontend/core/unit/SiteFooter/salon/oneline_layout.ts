@@ -7,10 +7,6 @@ export default function useSalon() {
     wrapper: 'row-between w-full',
     brandLink: cn('text-sm bold hover-underline', fg('title')),
     linksInfo: 'row-center gap-x-4',
-    linkItem: cn(
-      'text-sm hover-underline pointer',
-      `hover:${fg('title')}`,
-      fg('digest'),
-    ),
+    linkItem: cn('text-sm hover-underline pointer', `hover:${fg('title')}`, fg('digest')),
   }
 }

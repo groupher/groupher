@@ -1,11 +1,10 @@
 import type { FC } from 'react'
 
 import { ARTICLE_CAT } from '~/const/gtd'
+import { cnMerge } from '~/css'
 import UpvoteSVG from '~/icons/Upvote'
 import type { TActive, TArticleCat } from '~/spec'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
-
-import { cnMerge } from '~/css'
 
 import useSalon from '../../../salon/articles_intro_tabs/discuss_tab/discuss_demo/post_item'
 

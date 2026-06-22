@@ -9,9 +9,9 @@ import {
   getRevisionAuthorInitial,
   getRevisionAuthorName,
 } from './helper'
+import type { TRevisionDiffStats } from './helper'
 import useSalon, { cn } from './salon/item'
 import type { TArticleRevision } from './spec'
-import type { TRevisionDiffStats } from './helper'
 
 type TProps = {
   revision: TArticleRevision

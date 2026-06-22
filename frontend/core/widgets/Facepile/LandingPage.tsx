@@ -1,10 +1,10 @@
 import type { FC } from 'react'
 
+import { cnMerge } from '~/css'
 import Img from '~/Img'
 import type { TSpace, TUser } from '~/spec'
 
 import useSalon from './salon/landing_page'
-import { cnMerge } from '~/css'
 
 type TProps = {
   users: TUser[]

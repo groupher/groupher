@@ -8,6 +8,7 @@ import { compose, filter, isNil, not, reverse as reverseFn } from 'ramda'
 import { type FC, Suspense } from 'react'
 
 import SIZE from '~/const/size'
+import { cnMerge } from '~/css'
 import type { TSpace, TUser } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
 
@@ -15,7 +16,6 @@ import MoreItem from './MoreItem'
 import RealAvatar from './RealAvatar'
 import useSalon from './salon'
 import type { TAvatarSize } from './spec'
-import { cnMerge } from '~/css'
 
 const validUser = compose(not, isNil)
 

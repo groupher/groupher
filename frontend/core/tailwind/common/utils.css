@@ -156,7 +156,7 @@
   }
 
   .abs-full-pe-none {
-    @apply absolute inset-0 pointer-events-none;
+    @apply pointer-events-none absolute inset-0;
   }
 
   .min-w-flex {

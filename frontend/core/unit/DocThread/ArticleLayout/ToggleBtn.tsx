@@ -1,10 +1,10 @@
 import { type FC, memo } from 'react'
 
+import { cnMerge } from '~/css'
 import ArrowSVG from '~/icons/ArrowSimple'
 import ListSVG from '~/icons/List'
 
 import useSalon from './salon/toggle_btn'
-import { cnMerge } from '~/css'
 
 type TProps = {
   open: boolean

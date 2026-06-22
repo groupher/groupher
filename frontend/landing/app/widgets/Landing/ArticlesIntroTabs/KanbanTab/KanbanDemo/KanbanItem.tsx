@@ -1,12 +1,11 @@
 import type { FC } from 'react'
 
 import { ARTICLE_CAT } from '~/const/gtd'
+import { cnMerge } from '~/css'
 import useTrans from '~/hooks/useTrans'
 import UpvoteSVG from '~/icons/Upvote'
 import type { TArticleCat } from '~/spec'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
-
-import { cnMerge } from '~/css'
 
 import useSalon from '../../../salon/articles_intro_tabs/kanban_tab/kanban_demo/kanban_item'
 

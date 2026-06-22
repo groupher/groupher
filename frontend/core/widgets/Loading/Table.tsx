@@ -1,9 +1,9 @@
 'use client'
 
+import { cnMerge } from '~/css'
 import type { TSpace } from '~/spec'
 
 import useSalon, { cn } from './salon/table'
-import { cnMerge } from '~/css'
 
 const randDelay = () => ({
   animationDelay: `${Math.random() * 0.8}s`,

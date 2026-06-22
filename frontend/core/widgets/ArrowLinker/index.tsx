@@ -7,11 +7,11 @@
 import Link from 'next/link'
 import type { FC, ReactNode } from 'react'
 
+import { cnMerge } from '~/css'
 import ArrowSVG from '~/icons/ArrowUpRight'
 import type { TColorName, TSpace } from '~/spec'
 
 import useSalon from './salon'
-import { cnMerge } from '~/css'
 
 type TProps = {
   testid?: string

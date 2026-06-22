@@ -48,10 +48,7 @@ export default function useSalon() {
     ),
     selectedAvatar: 'size-6 shrink-0 rounded',
     selectedName: cn('ml-1.5 max-w-20 truncate text-xs', fg('title')),
-    removeButton: cn(
-      'align-both ml-1 size-4 shrink-0 rounded plain-button',
-      hover('bg'),
-    ),
+    removeButton: cn('align-both ml-1 size-4 shrink-0 rounded plain-button', hover('bg')),
     removeIcon: cn('size-2.5 opacity-50', fill('digest')),
     plusIcon: cn('size-3 -ml-0.5 mr-1.5', fill('button.fg')),
     addBtn: 'ml-4 -mt-1.5',

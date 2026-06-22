@@ -3,9 +3,10 @@
 import NextImage from 'next/image'
 import { cloneElement, isValidElement, type FC, type ReactElement, type SVGProps } from 'react'
 
+import { cnMerge } from '~/css'
+
 import useSalon, { cn } from '../salon/pill_tabs/tab_item'
 import type { TPillTabItemProps } from './spec'
-import { cnMerge } from '~/css'
 
 const TabItem: FC<TPillTabItemProps> = ({
   item,

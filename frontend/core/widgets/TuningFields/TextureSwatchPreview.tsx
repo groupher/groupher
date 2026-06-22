@@ -1,10 +1,10 @@
+import { cnMerge } from '~/css'
 import useTwBelt from '~/hooks/useTwBelt'
 import { WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
 import type { TImageTextureType } from '~/lib/wallpaperMesh'
 
 import useSalon from './salon/texture_swatch_preview'
 import { TILE_ROWS, DOTS, NOISE_DOTS, ASCII_ROWS, OIL_PATCHES } from './texture_constant'
-import { cnMerge } from '~/css'
 
 type Props = {
   type: TImageTextureType

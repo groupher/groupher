@@ -6,10 +6,10 @@
 
 import type { FC } from 'react'
 
+import { cnMerge } from '~/css'
 import PinSVG from '~/icons/Pin'
 
 import useSalon from './salon'
-import { cnMerge } from '~/css'
 
 type TProps = {
   className?: string

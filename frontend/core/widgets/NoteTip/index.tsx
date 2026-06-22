@@ -6,12 +6,12 @@
 
 import type { FC, ReactNode } from 'react'
 
+import { cnMerge } from '~/css'
 import InfoSVG from '~/icons/Info'
 import type { TSpace, TTooltipPlacement } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
 
 import useSalon from './salon'
-import { cnMerge } from '~/css'
 
 type TProps = {
   className?: string

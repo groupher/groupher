@@ -9,6 +9,7 @@ import {
 } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 
+import { cnMerge } from '~/css'
 import { useAutoFocusTarget } from '~/hooks/useAutoFocus'
 import useTrans from '~/hooks/useTrans'
 import type { TSpace } from '~/spec'
@@ -20,7 +21,6 @@ import useSalon, { cn } from './salon'
 import type { TTab } from './spec'
 import useFormats from './useFormats'
 import { continueListOnEnter, safeValue } from './utils'
-import { cnMerge } from '~/css'
 
 type TProps = {
   value?: string

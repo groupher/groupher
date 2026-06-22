@@ -16,11 +16,7 @@ export default function useSalon() {
     closeIcon: cn('size-3.5', fill('digest'), hover('icon')),
     body: 'min-h-0 flex-1 overflow-y-auto px-4 py-3',
     tabs: cn('mb-3 grid grid-cols-2 rounded-lg border p-0.5', br('divider'), bg('card')),
-    tabButton: cn(
-      'h-8 rounded-md button-reset text-xs bold-sm',
-      fg('digest'),
-      hover('box'),
-    ),
+    tabButton: cn('h-8 rounded-md button-reset text-xs bold-sm', fg('digest'), hover('box')),
     tabButtonActive: cn(bg('hoverBg'), fg('title')),
     list: 'column gap-2',
     currentChangesButton: cn(

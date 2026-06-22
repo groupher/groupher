@@ -1,7 +1,8 @@
 import { type FC, Fragment, memo } from 'react'
 
-import useSalon from './salon/absolute_fmt'
 import { cnMerge } from '~/css'
+
+import useSalon from './salon/absolute_fmt'
 
 const calcRange = (hours) => {
   if (hours >= 0 && hours <= 6) return '凌晨'

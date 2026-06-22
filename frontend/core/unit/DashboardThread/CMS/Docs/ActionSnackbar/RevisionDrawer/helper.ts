@@ -174,10 +174,8 @@ const pushInlineSegment = (
   segments.push(createInlineSegment(type, text, index))
 }
 
-const makeFullInline = (
-  text: string,
-  type: TRevisionInlineDiffType,
-): TRevisionInlineDiff[] => (text ? [createInlineSegment(type, text, 0)] : [])
+const makeFullInline = (text: string, type: TRevisionInlineDiffType): TRevisionInlineDiff[] =>
+  text ? [createInlineSegment(type, text, 0)] : []
 
 const makeSameInline = (text: string): TRevisionInlineDiff[] => makeFullInline(text, 'same')
 
@@ -238,12 +236,19 @@ const buildInlineDiff = (
   let segmentIndex = 0
 
   while (i < previousTokens.length || j < currentTokens.length) {
-    if (i < previousTokens.length && j < currentTokens.length && previousTokens[i] === currentTokens[j]) {
+    if (
+      i < previousTokens.length &&
+      j < currentTokens.length &&
+      previousTokens[i] === currentTokens[j]
+    ) {
       pushInlineSegment(before, 'same', previousTokens[i], segmentIndex)
       pushInlineSegment(after, 'same', currentTokens[j], segmentIndex)
       i += 1
       j += 1
-    } else if (i < previousTokens.length && (j >= currentTokens.length || dp[i + 1][j] >= dp[i][j + 1])) {
+    } else if (
+      i < previousTokens.length &&
+      (j >= currentTokens.length || dp[i + 1][j] >= dp[i][j + 1])
+    ) {
       pushInlineSegment(before, 'removed', previousTokens[i], segmentIndex)
       i += 1
     } else if (j < currentTokens.length) {

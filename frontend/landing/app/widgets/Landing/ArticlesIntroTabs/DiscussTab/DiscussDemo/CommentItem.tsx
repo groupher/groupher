@@ -1,9 +1,9 @@
 import type { FC } from 'react'
 
+import { cnMerge } from '~/css'
 import Img from '~/Img'
 import type { TUser } from '~/spec'
 import ImgFallback from '~/widgets/ImgFallback'
-import { cnMerge } from '~/css'
 
 import useSalon, {
   cn,

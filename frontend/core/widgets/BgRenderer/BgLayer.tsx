@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 
+import { cnMerge } from '~/css'
+
 import { FADE_MS } from './constant'
 import { getFallbackStyle, getFilterLayerStyle, getPatternLayerStyle } from './helper'
 import useSalon from './salon'
 import type { TBgLayerProps } from './spec'
 import { createBgWebglRenderer } from './webgl'
-import { cnMerge } from '~/css'
 
 /**
  * Renders one visual layer for a resolved Bg render spec.

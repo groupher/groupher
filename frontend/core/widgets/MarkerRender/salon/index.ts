@@ -1,6 +1,6 @@
+import { cnMerge } from '~/css'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TColorName } from '~/spec'
-import { cnMerge } from '~/css'
 
 type TProps = {
   color?: TColorName

@@ -1,6 +1,6 @@
+import { cnMerge } from '~/css'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TSpace } from '~/spec'
-import { cnMerge } from '~/css'
 
 export { cn } from '~/css'
 

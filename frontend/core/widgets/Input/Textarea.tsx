@@ -8,10 +8,10 @@ import { pickBy } from 'ramda'
 import { type FC, memo, useCallback } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 
+import { cnMerge } from '~/css'
 import useAutoFocus from '~/hooks/useAutoFocus'
 
 import useSalon from './salon/textarea'
-import { cnMerge } from '~/css'
 
 type TProps = {
   testid?: string

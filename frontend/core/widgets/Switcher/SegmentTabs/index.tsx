@@ -3,11 +3,11 @@
 import { type FC, type KeyboardEvent, memo, useMemo } from 'react'
 
 import SIZE from '~/constant/size'
+import { cnMerge } from '~/css'
 
 import useSalon from '../salon/segment_tabs'
 import type { TProps } from './spec'
 import TabItem from './TabItem'
-import { cnMerge } from '~/css'
 
 const SegmentTabs: FC<TProps> = ({
   items,

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 
 import { DSB_ROUTE } from '~/const/route'
+import { cnMerge } from '~/css'
 import useDsbTab from '~/hooks/useDsbTab'
 import useTrans from '~/hooks/useTrans'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
@@ -13,7 +14,6 @@ import type { TSubMenuItem } from './constant'
 import { dispatchMenuView, type TMenuView } from './events'
 import DsbMenuIcon from './icons'
 import useSalon, { cn } from './salon/collapsed'
-import { cnMerge } from '~/css'
 
 type TProps = {
   activeSlug: string | null

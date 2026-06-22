@@ -26,7 +26,8 @@ export default function useSalon({ width, labelPlacement, hideLabel, ...spacing 
     valueLabelAmount: fg('title'),
     control: 'relative grid min-h-4 flex-1 items-center',
     track: 'relative z-10 h-4 pointer-events-none',
-    trackPart: 'absolute top-0 h-4 rounded-sm border origin-center scale-y-50 transition-transform delay-1000 duration-200 ease-out group-hover/range-input:delay-100 group-hover/range-input:scale-y-100 group-focus-within/range-input:delay-0 group-focus-within/range-input:scale-y-100',
+    trackPart:
+      'absolute top-0 h-4 rounded-sm border origin-center scale-y-50 transition-transform delay-1000 duration-200 ease-out group-hover/range-input:delay-100 group-hover/range-input:scale-y-100 group-focus-within/range-input:delay-0 group-focus-within/range-input:scale-y-100',
     trackLeft: 'left-0 rounded-l-md',
     trackRight: 'right-0 rounded-r-md',
     activeTrack: cn(primary('bg'), primary('border')),

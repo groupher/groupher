@@ -1,10 +1,10 @@
 import type { FC } from 'react'
 
+import { cnMerge } from '~/css'
 import UpvoteSVG from '~/icons/Upvote'
 import type { TThemeName } from '~/spec'
 
 import useSalon, { cn } from '../../salon/battery_bento/dark_mode/article_card'
-import { cnMerge } from '~/css'
 
 type TProps = {
   className?: string

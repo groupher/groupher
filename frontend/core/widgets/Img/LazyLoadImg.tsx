@@ -97,9 +97,7 @@ const LazyLoadImg: FC<TProps> = ({
       aria-label={alt}
     >
       {fallback && (
-        <div className={cn(s.fallbackInFlow, hideFallback && s.fallbackHidden)}>
-          {fallback}
-        </div>
+        <div className={cn(s.fallbackInFlow, hideFallback && s.fallbackHidden)}>{fallback}</div>
       )}
 
       <LazyLoad

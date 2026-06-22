@@ -7,13 +7,13 @@
 import { pickBy } from 'ramda'
 import { type FC, useCallback } from 'react'
 
+import { cnMerge } from '~/css'
 import useAutoFocus from '~/hooks/useAutoFocus'
 import Img from '~/Img'
 import { nilOrEmpty } from '~/validator'
 
 import useSalon, { cn } from './salon'
 import Textarea from './Textarea'
-import { cnMerge } from '~/css'
 
 type TProps = {
   testid?: string
