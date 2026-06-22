@@ -5,17 +5,19 @@ import Body from './Body'
 import Cover from './Cover'
 import Footer from './Footer'
 import useSalon from './salon'
+import type { TDocDraftInitialData } from './spec'
 import Title from './Title'
-import useDocDraftEditor from './useDocDraftEditor'
+import useLogic from './useLogic'
 
 type TProps = {
   sideTree: TSideTreeController
+  initialDraft?: TDocDraftInitialData | null
 }
 
-const Article: FC<TProps> = ({ sideTree }) => {
+const Article: FC<TProps> = ({ sideTree, initialDraft }) => {
   const s = useSalon()
   const { activePage, bodyValue, editable, error, loading, setBodyValue, setTitle, slug, title } =
-    useDocDraftEditor(sideTree)
+    useLogic(sideTree, initialDraft)
 
   if (!activePage) {
     return (

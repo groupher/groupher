@@ -13,7 +13,7 @@ export default function useSalon({
 
   return {
     wrapper: cn(
-      'group/docs-tree-row row-center gap-x-2 rounded-md px-1 py-1',
+      'group/docs-tree-row row-center gap-x-2 rounded-md px-1 py-1 pointer',
       active && 'bold-sm',
       active && bg('hoverBg'),
       hover('box'),

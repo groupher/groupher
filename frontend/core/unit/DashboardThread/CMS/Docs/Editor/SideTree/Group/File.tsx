@@ -1,4 +1,4 @@
-import { type FC, useState } from 'react'
+import { type FC, type KeyboardEvent, type MouseEvent, useState } from 'react'
 
 import MarkerPicker from '~/widgets/MarkerPicker'
 
@@ -37,10 +37,26 @@ const File: FC<TProps> = ({
   const s = useSalon({ active, actionVisible: menuOpen })
   const editing =
     editingTarget?.type === SIDE_TREE_NODE_TYPE.PAGE && editingTarget.childId === item.id
+  const activate = (): void => onActivate(item.id)
+  const stopRowActivate = (event: MouseEvent<HTMLDivElement>): void => event.stopPropagation()
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
+    if (editing) return
+
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      activate()
+    }
+  }
 
   return (
-    <div className={s.wrapper}>
-      <div className={s.pickerSlot}>
+    <div
+      className={s.wrapper}
+      role={editing ? undefined : 'button'}
+      tabIndex={editing ? undefined : 0}
+      onClick={editing ? undefined : activate}
+      onKeyDown={handleKeyDown}
+    >
+      <div className={s.pickerSlot} onClick={stopRowActivate}>
         <MarkerPicker
           compact
           active={active}
@@ -55,12 +71,10 @@ const File: FC<TProps> = ({
           onConfirm={(title) => onRename(groupId, item.id, title)}
         />
       ) : (
-        <button type='button' className={s.titleButton} onClick={() => onActivate(item.id)}>
-          {item.title || item.path || 'Untitled'}
-        </button>
+        <span className={s.titleButton}>{item.title || item.path || 'Untitled'}</span>
       )}
       {item.badge && <div className={s.badge}>{item.badge}</div>}
-      <div className={s.actions}>
+      <div className={s.actions} onClick={stopRowActivate}>
         <ChildMenu
           onOpenChange={setMenuOpen}
           onSelect={(action) => {

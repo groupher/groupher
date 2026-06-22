@@ -5,14 +5,24 @@ import { Group as PanelGroup, Panel, Separator } from 'react-resizable-panels'
 
 import ActionSnackbar from '../ActionSnackbar'
 import Article from './Article'
+import type { TDocDraftInitialData } from './Article/spec'
 import useSalon from './salon'
 import SideTree from './SideTree'
-import useSideTree from './SideTree/useSideTree'
+import useSideTree, { type TDocTreeInitialData } from './SideTree/useSideTree'
 import DocsEditorStoreProvider from './store/provider'
 
-const Editor: FC = () => {
+export type TDocsEditorInitialData = {
+  docTree?: TDocTreeInitialData | null
+  docDraft?: TDocDraftInitialData | null
+}
+
+type TProps = {
+  initialData?: TDocsEditorInitialData
+}
+
+const Editor: FC<TProps> = ({ initialData }) => {
   const s = useSalon()
-  const sideTree = useSideTree()
+  const sideTree = useSideTree(initialData?.docTree ?? undefined)
 
   return (
     <DocsEditorStoreProvider initData={{ sideTree }}>
@@ -38,7 +48,7 @@ const Editor: FC = () => {
           </Separator>
 
           <Panel id='docs-editor-space' className={s.fillPanel} minSize={0}>
-            <Article sideTree={sideTree} />
+            <Article sideTree={sideTree} initialDraft={initialData?.docDraft ?? null} />
           </Panel>
         </PanelGroup>
         <ActionSnackbar />

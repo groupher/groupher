@@ -1,12 +1,13 @@
 import type { TRichEditorValue } from '@groupher/rich-editor'
 
+import type { TSideTreePage } from '../SideTree/spec'
+import { EMPTY_EDITOR_VALUE } from './constant'
+import type { TDocDraftDTO, TDocDraftSession } from './spec'
+
 type TTextNode = {
   text?: unknown
   children?: TTextNode[]
 }
-
-export const DOC_AUTO_SAVE_DELAY = 1600
-export const DOC_DRAFT_REVISION_CHECKPOINT_DELAY = 120_000
 
 const collectText = (nodes: TTextNode[]): string => {
   let text = ''
@@ -24,6 +25,13 @@ const collectText = (nodes: TTextNode[]): string => {
   return text
 }
 
+/**
+ * Count plain-text stats from the rich-editor document tree.
+ *
+ * @example
+ * countEditorText([{ type: 'p', children: [{ text: 'hello doc' }] }])
+ * // => { characterCount: 8, wordCount: 2 }
+ */
 export const countEditorText = (value: TRichEditorValue) => {
   const text = collectText(value as TTextNode[]).trim()
   const words = text ? text.split(/\s+/).filter(Boolean).length : 0
@@ -31,5 +39,63 @@ export const countEditorText = (value: TRichEditorValue) => {
   return {
     characterCount: text.replace(/\s/g, '').length,
     wordCount: words,
+  }
+}
+
+/**
+ * Parse the persisted editor JSON into a valid rich-editor value.
+ *
+ * @example
+ * parseEditorValue('[{"type":"p","children":[{"text":"hello"}]}]')
+ * // => [{ type: 'p', children: [{ text: 'hello' }] }]
+ */
+export const parseEditorValue = (json?: string | null): TRichEditorValue => {
+  if (!json) return EMPTY_EDITOR_VALUE
+
+  try {
+    const value = JSON.parse(json)
+    return Array.isArray(value) ? (value as TRichEditorValue) : EMPTY_EDITOR_VALUE
+  } catch {
+    return EMPTY_EDITOR_VALUE
+  }
+}
+
+/**
+ * Serialize the rich-editor value for draft persistence.
+ *
+ * @example
+ * serializeEditorValue([{ type: 'p', children: [{ text: 'hello' }] }])
+ * // => '[{"type":"p","children":[{"text":"hello"}]}]'
+ */
+export const serializeEditorValue = (value: TRichEditorValue): string => JSON.stringify(value)
+
+/**
+ * Normalize a fetched draft and its active tree page into editor session state.
+ *
+ * @example
+ * resolveDraftSession({ id: 'doc_1', title: 'Intro' }, { docId: 'doc_1', title: 'Fallback' })
+ * // => { title: 'Intro', slug: '', body: EMPTY_EDITOR_VALUE, ... }
+ */
+export const resolveDraftSession = (
+  draft: TDocDraftDTO | null | undefined,
+  activePage: TSideTreePage | null,
+): TDocDraftSession => {
+  const title = draft?.title || activePage?.title || ''
+  const body = parseEditorValue(draft?.document?.json)
+
+  return {
+    body,
+    bodyJson: serializeEditorValue(body),
+    info: {
+      id: draft?.id || activePage?.docId || '',
+      title,
+      slug: draft?.slug || '',
+      insertedAt: draft?.insertedAt || null,
+      updatedAt: draft?.updatedAt || null,
+      author: draft?.author || null,
+      ...countEditorText(body),
+    },
+    slug: draft?.slug || '',
+    title,
   }
 }

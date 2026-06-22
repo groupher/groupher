@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useQuery from '~/hooks/useQuery'
@@ -8,6 +9,7 @@ import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/widgets/Toaster'
 
 import S from '../../../../schema'
+import { DOC_EDITOR_QUERY_PARAM } from '../constant'
 import {
   SIDE_TREE_NODE_MENU_ACTION,
   SIDE_TREE_NODE_TYPE,
@@ -41,7 +43,7 @@ export type TSideTreeController = {
   reorderGroups: (groups: readonly TSideTreeGroup[]) => void
 }
 
-type TDocTreeNodeDTO = {
+export type TDocTreeNodeDTO = {
   id: string
   parentId?: string | null
   docId?: string | null
@@ -65,6 +67,11 @@ type TDocTreeMutationPayload = {
 }
 
 type TDocTreeMutationData = Record<string, TDocTreeMutationPayload | null | undefined>
+
+export type TDocTreeInitialData = {
+  revision: number
+  groups: TDocTreeNodeDTO[]
+}
 
 const formatMutationError = (err: unknown): string => {
   const graphQLErrors = (err as { graphQLErrors?: Array<{ message?: unknown }> })?.graphQLErrors
@@ -208,6 +215,47 @@ const patchNode = (groups: readonly TSideTreeGroup[], node: TDocTreeNodeDTO): TS
   }))
 }
 
+const findFirstPage = (groups: readonly TSideTreeGroup[]): TSideTreeChild | null => {
+  for (const group of groups) {
+    const child = group.children.find((item) => item.type === SIDE_TREE_NODE_TYPE.PAGE)
+    if (child) return child
+  }
+
+  return null
+}
+
+const findChild = (groups: readonly TSideTreeGroup[], childId: string): TSideTreeChild | null => {
+  for (const group of groups) {
+    const child = group.children.find((item) => item.id === childId)
+    if (child) return child
+  }
+
+  return null
+}
+
+const findPageByDocId = (
+  groups: readonly TSideTreeGroup[],
+  docId: string | null,
+): TSideTreeChild | null => {
+  if (!docId) return null
+
+  for (const group of groups) {
+    const child = group.children.find(
+      (item) => item.type === SIDE_TREE_NODE_TYPE.PAGE && item.docId === docId,
+    )
+    if (child) return child
+  }
+
+  return null
+}
+
+const resolveActiveId = (
+  groups: readonly TSideTreeGroup[],
+  docId: string | null,
+): string | null => {
+  return (findPageByDocId(groups, docId) || findFirstPage(groups))?.id ?? null
+}
+
 const findMovedNode = (
   prevGroups: readonly TSideTreeGroup[],
   nextGroups: readonly TSideTreeGroup[],
@@ -238,19 +286,48 @@ const findMovedNode = (
   return null
 }
 
-export default function useSideTree(): TSideTreeController {
+export default function useSideTree(initialData?: TDocTreeInitialData): TSideTreeController {
   const { t } = useTrans()
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const searchString = searchParams.toString()
+  const currentDocId = searchParams.get(DOC_EDITOR_QUERY_PARAM.DOC_ID)
   const { slug: community } = useCommunity()
   const { mutate } = useGraphQLClient()
   const { data, reload } = useQuery<{ docTree?: { revision: number; groups: TDocTreeNodeDTO[] } }>(
     S.docTree,
     { community },
   )
-  const [groups, setGroups] = useState<TSideTreeGroup[]>([])
-  const groupsRef = useRef<TSideTreeGroup[]>([])
-  const revisionRef = useRef<number | null>(null)
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const initialGroups = useMemo(() => initialData?.groups.map(mapGroup) ?? [], [initialData])
+  const [groups, setGroups] = useState<TSideTreeGroup[]>(initialGroups)
+  const groupsRef = useRef<TSideTreeGroup[]>(initialGroups)
+  const revisionRef = useRef<number | null>(initialData?.revision ?? null)
+  const [activeId, setActiveId] = useState<string | null>(() =>
+    resolveActiveId(initialGroups, currentDocId),
+  )
   const [editingTarget, setEditingTarget] = useState<TEditingTarget>(null)
+
+  const syncDocIdToUrl = useCallback(
+    (docId: string | null): void => {
+      const nextSearchParams = new URLSearchParams(searchString)
+
+      if (docId) {
+        nextSearchParams.set(DOC_EDITOR_QUERY_PARAM.DOC_ID, docId)
+      } else {
+        nextSearchParams.delete(DOC_EDITOR_QUERY_PARAM.DOC_ID)
+      }
+
+      const nextQuery = nextSearchParams.toString()
+      const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname
+      const currentUrl = searchString ? `${pathname}?${searchString}` : pathname
+
+      if (nextUrl === currentUrl) return
+
+      router.replace(nextUrl, { scroll: false })
+    },
+    [pathname, router, searchString],
+  )
 
   useEffect(() => {
     if (!data?.docTree) return
@@ -259,8 +336,17 @@ export default function useSideTree(): TSideTreeController {
     revisionRef.current = data.docTree.revision
     groupsRef.current = nextGroups
     setGroups(nextGroups)
-    setActiveId(nextGroups[0]?.children[0]?.id ?? null)
-  }, [data])
+    setActiveId(resolveActiveId(nextGroups, currentDocId))
+  }, [currentDocId, data])
+
+  useEffect(() => {
+    const activeChild = activeId ? findChild(groups, activeId) : null
+
+    if (activeChild?.type !== SIDE_TREE_NODE_TYPE.PAGE || !activeChild.docId) return
+    if (currentDocId === activeChild.docId) return
+
+    syncDocIdToUrl(activeChild.docId)
+  }, [activeId, currentDocId, groups, syncDocIdToUrl])
 
   const commitGroups = useCallback((nextGroups: TSideTreeGroup[]): void => {
     groupsRef.current = nextGroups
@@ -394,14 +480,17 @@ export default function useSideTree(): TSideTreeController {
       const editingInGroup = editingTarget?.groupId === groupId
 
       commitGroups(groupsRef.current.filter((item) => item.id !== groupId))
-      if (activeInGroup) setActiveId(null)
+      if (activeInGroup) {
+        setActiveId(null)
+        syncDocIdToUrl(null)
+      }
       if (editingInGroup) setEditingTarget(null)
 
       if (isDraftId(groupId)) return
 
       persist(S.deleteDocTreeNode, { id: groupId }, (data) => data?.deleteDocTreeNode)
     },
-    [activeId, commitGroups, editingTarget, persist],
+    [activeId, commitGroups, editingTarget, persist, syncDocIdToUrl],
   )
 
   /**
@@ -553,7 +642,15 @@ export default function useSideTree(): TSideTreeController {
             if (!payload?.node || payload.conflict) return
             const remote = mapNode(payload.node)
             commitGroups(replaceChildId(groupsRef.current, groupId, childId, remote))
-            setActiveId((current) => (current === childId ? remote.id : current))
+            setActiveId((current) => {
+              if (current !== childId) return current
+
+              if (remote.type === SIDE_TREE_NODE_TYPE.PAGE) {
+                syncDocIdToUrl(remote.docId ?? null)
+              }
+
+              return remote.id
+            })
           })
           .catch((err) => {
             console.error('## doc tree create child error: ', err)
@@ -580,7 +677,7 @@ export default function useSideTree(): TSideTreeController {
           reload()
         })
     },
-    [commitGroups, persist, reload],
+    [commitGroups, persist, reload, syncDocIdToUrl],
   )
 
   /**
@@ -602,18 +699,20 @@ export default function useSideTree(): TSideTreeController {
 
         if ('childId' in editingTarget && activeId === editingTarget.childId) {
           setActiveId(null)
+          syncDocIdToUrl(null)
         }
 
         if (editingTarget.type === SIDE_TREE_NODE_TYPE.GROUP) {
           if (group?.children.some((child) => child.id === activeId)) {
             setActiveId(null)
+            syncDocIdToUrl(null)
           }
         }
       }
     }
 
     setEditingTarget(null)
-  }, [activeId, commitGroups, editingTarget])
+  }, [activeId, commitGroups, editingTarget, syncDocIdToUrl])
 
   /**
    * Update the marker style for a page or quick link.
@@ -705,7 +804,10 @@ export default function useSideTree(): TSideTreeController {
       )
 
       if (action === SIDE_TREE_NODE_MENU_ACTION.DELETE) {
-        if (activeId === childId) setActiveId(null)
+        if (activeId === childId) {
+          setActiveId(null)
+          syncDocIdToUrl(null)
+        }
         if (
           editingTarget &&
           editingTarget.type !== SIDE_TREE_NODE_TYPE.GROUP &&
@@ -733,14 +835,24 @@ export default function useSideTree(): TSideTreeController {
         )
       }
     },
-    [activeId, commitGroups, editingTarget, persist, t],
+    [activeId, commitGroups, editingTarget, persist, syncDocIdToUrl, t],
+  )
+
+  const activate = useCallback(
+    (id: string): void => {
+      const child = findChild(groupsRef.current, id)
+
+      setActiveId(id)
+      syncDocIdToUrl(child?.type === SIDE_TREE_NODE_TYPE.PAGE && child.docId ? child.docId : null)
+    },
+    [syncDocIdToUrl],
   )
 
   return {
     groups,
     activeId,
     editingTarget,
-    activate: setActiveId,
+    activate,
     addGroup,
     addChild,
     deleteGroup,

@@ -12,44 +12,13 @@ import { SIDE_TREE_NODE_TYPE } from '../SideTree/constant'
 import type { TSideTreePage } from '../SideTree/spec'
 import type { TSideTreeController } from '../SideTree/useSideTree'
 import useDocsEditor from '../store/hooks'
-import { countEditorText, DOC_AUTO_SAVE_DELAY, DOC_DRAFT_REVISION_CHECKPOINT_DELAY } from './helper'
-
-type TDocDraftDTO = {
-  id: string
-  title?: string | null
-  slug?: string | null
-  digest?: string | null
-  insertedAt?: string | null
-  updatedAt?: string | null
-  author?: {
-    login?: string | null
-    nickname?: string | null
-    avatar?: string | null
-  } | null
-  document?: {
-    json?: string | null
-  } | null
-}
-
-export const EMPTY_EDITOR_VALUE: TRichEditorValue = [
-  {
-    type: 'p',
-    children: [{ text: '' }],
-  },
-]
-
-const parseEditorValue = (json?: string | null): TRichEditorValue => {
-  if (!json) return EMPTY_EDITOR_VALUE
-
-  try {
-    const value = JSON.parse(json)
-    return Array.isArray(value) ? (value as TRichEditorValue) : EMPTY_EDITOR_VALUE
-  } catch {
-    return EMPTY_EDITOR_VALUE
-  }
-}
-
-const serializeEditorValue = (value: TRichEditorValue): string => JSON.stringify(value)
+import {
+  DOC_AUTO_SAVE_DELAY,
+  DOC_DRAFT_REVISION_CHECKPOINT_DELAY,
+  EMPTY_EDITOR_VALUE,
+} from './constant'
+import { countEditorText, resolveDraftSession, serializeEditorValue } from './helper'
+import type { TDocDraftDTO, TDocDraftInitialData } from './spec'
 
 const findActivePage = (groups: TSideTreeController['groups'], activeId: string | null) => {
   if (!activeId) return null
@@ -64,7 +33,17 @@ const findActivePage = (groups: TSideTreeController['groups'], activeId: string 
   return null
 }
 
-export default function useDocDraftEditor(sideTree: TSideTreeController) {
+/**
+ * Own the active doc draft editing lifecycle for the Article editor.
+ *
+ * @example
+ * const editor = useLogic(sideTree, initialDraft)
+ * editor.setTitle('New title')
+ */
+export default function useLogic(
+  sideTree: TSideTreeController,
+  initialDraft?: TDocDraftInitialData | null,
+) {
   const { slug: community } = useCommunity()
   const {
     attachSaveDocDraft,
@@ -77,21 +56,31 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
     () => findActivePage(sideTree.groups, sideTree.activeId),
     [sideTree.activeId, sideTree.groups],
   )
-  const [title, setTitle] = useState('')
-  const [bodyValue, setBodyValue] = useState<TRichEditorValue>(EMPTY_EDITOR_VALUE)
-  const [slug, setSlug] = useState('')
+  const initialSession =
+    initialDraft && activePage?.docId === initialDraft.id
+      ? resolveDraftSession(initialDraft, activePage)
+      : null
+  const [title, setTitle] = useState(initialSession?.title ?? '')
+  const [bodyValue, setBodyValue] = useState<TRichEditorValue>(
+    initialSession?.body ?? EMPTY_EDITOR_VALUE,
+  )
+  const [slug, setSlug] = useState(initialSession?.slug ?? '')
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const loadIdRef = useRef(0)
   const bodyValueRef = useRef<TRichEditorValue>(EMPTY_EDITOR_VALUE)
-  const savedTitleRef = useRef('')
-  const savedBodyRef = useRef(serializeEditorValue(EMPTY_EDITOR_VALUE))
+  const savedTitleRef = useRef(initialSession?.title ?? '')
+  const savedBodyRef = useRef(initialSession?.bodyJson ?? serializeEditorValue(EMPTY_EDITOR_VALUE))
   const savingRef = useRef(false)
   const checkpointingRef = useRef(false)
   const pendingRevisionCheckpointRef = useRef(false)
   const lastAutosavedAtRef = useRef(Date.now())
-  const lastCheckpointedBodyRef = useRef(serializeEditorValue(EMPTY_EDITOR_VALUE))
+  const lastCheckpointedBodyRef = useRef(
+    initialSession?.bodyJson ?? serializeEditorValue(EMPTY_EDITOR_VALUE),
+  )
+  const lastLoadedDocIdRef = useRef<string | null>(initialSession?.info.id ?? null)
+  const initialDraftConsumedRef = useRef(false)
   const slugTitleRef = useRef('')
   const titleRef = useRef('')
 
@@ -115,6 +104,7 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
       setError(null)
       savedTitleRef.current = ''
       savedBodyRef.current = serializeEditorValue(EMPTY_EDITOR_VALUE)
+      lastLoadedDocIdRef.current = null
       pendingRevisionCheckpointRef.current = false
       lastAutosavedAtRef.current = Date.now()
       lastCheckpointedBodyRef.current = serializeEditorValue(EMPTY_EDITOR_VALUE)
@@ -137,6 +127,38 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
       return
     }
 
+    if (activePage.docId === lastLoadedDocIdRef.current && !revisionReloadKey) {
+      return
+    }
+
+    if (
+      !initialDraftConsumedRef.current &&
+      initialDraft &&
+      initialDraft.id === activePage.docId &&
+      !revisionReloadKey
+    ) {
+      const nextSession = resolveDraftSession(initialDraft, activePage)
+
+      initialDraftConsumedRef.current = true
+      setTitle(nextSession.title)
+      setBodyValue(nextSession.body)
+      setSlug(nextSession.slug)
+      savedTitleRef.current = nextSession.title
+      savedBodyRef.current = nextSession.bodyJson
+      lastLoadedDocIdRef.current = activePage.docId
+      pendingRevisionCheckpointRef.current = false
+      lastAutosavedAtRef.current = Date.now()
+      lastCheckpointedBodyRef.current = nextSession.bodyJson
+      setDocDraftSession({
+        baselineValue: nextSession.body,
+        bodyValue: nextSession.body,
+        docDraftInfo: nextSession.info,
+        saveError: null,
+        saveStatus: 'saved',
+      })
+      return
+    }
+
     setLoading(true)
     setError(null)
     setDocDraftSession({ saveError: null, saveStatus: 'idle' })
@@ -146,30 +168,21 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
         if (loadIdRef.current !== loadId) return
 
         const draft = data?.docDraft
-        const nextTitle = draft?.title || activePage.title || ''
-        const nextBody = parseEditorValue(draft?.document?.json)
-        const nextBodyJson = serializeEditorValue(nextBody)
+        const nextSession = resolveDraftSession(draft, activePage)
 
-        setTitle(nextTitle)
-        setBodyValue(nextBody)
-        setSlug(draft?.slug || '')
-        savedTitleRef.current = nextTitle
-        savedBodyRef.current = nextBodyJson
+        setTitle(nextSession.title)
+        setBodyValue(nextSession.body)
+        setSlug(nextSession.slug)
+        savedTitleRef.current = nextSession.title
+        savedBodyRef.current = nextSession.bodyJson
+        lastLoadedDocIdRef.current = activePage.docId
         pendingRevisionCheckpointRef.current = false
         lastAutosavedAtRef.current = Date.now()
-        lastCheckpointedBodyRef.current = nextBodyJson
+        lastCheckpointedBodyRef.current = nextSession.bodyJson
         setDocDraftSession({
-          baselineValue: nextBody,
-          bodyValue: nextBody,
-          docDraftInfo: {
-            id: draft?.id || activePage.docId,
-            title: nextTitle,
-            slug: draft?.slug || '',
-            insertedAt: draft?.insertedAt || null,
-            updatedAt: draft?.updatedAt || null,
-            author: draft?.author || null,
-            ...countEditorText(nextBody),
-          },
+          baselineValue: nextSession.body,
+          bodyValue: nextSession.body,
+          docDraftInfo: nextSession.info,
           saveError: null,
           saveStatus: 'saved',
         })
@@ -183,7 +196,16 @@ export default function useDocDraftEditor(sideTree: TSideTreeController) {
       .finally(() => {
         if (loadIdRef.current === loadId) setLoading(false)
       })
-  }, [activePage?.docId, activePage?.id, community, query, revisionReloadKey, setDocDraftSession])
+  }, [
+    activePage,
+    activePage?.docId,
+    activePage?.id,
+    community,
+    initialDraft,
+    query,
+    revisionReloadKey,
+    setDocDraftSession,
+  ])
 
   useEffect(() => {
     const trimmedTitle = title.trim()
