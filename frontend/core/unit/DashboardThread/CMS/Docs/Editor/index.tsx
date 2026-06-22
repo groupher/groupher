@@ -8,7 +8,8 @@ import Article from './Article'
 import type { TDocDraftInitialData } from './Article/spec'
 import useSalon from './salon'
 import SideTree from './SideTree'
-import useSideTree, { type TDocTreeInitialData } from './SideTree/useSideTree'
+import type { TDocTreeInitialData } from './SideTree/spec'
+import useSideTreeLogic from './SideTree/useLogic'
 import DocsEditorStoreProvider from './store/provider'
 
 export type TDocsEditorInitialData = {
@@ -22,7 +23,7 @@ type TProps = {
 
 const Editor: FC<TProps> = ({ initialData }) => {
   const s = useSalon()
-  const sideTree = useSideTree(initialData?.docTree ?? undefined)
+  const sideTree = useSideTreeLogic(initialData?.docTree ?? undefined)
 
   return (
     <DocsEditorStoreProvider initData={{ sideTree }}>

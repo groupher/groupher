@@ -3,7 +3,7 @@ import { headers } from 'next/headers'
 
 import { GRAPHQL_ENDPOINT } from '~/config'
 import type { TDocsEditorInitialData } from '~/unit/DashboardThread/CMS/Docs/Editor'
-import type { TDocTreeNodeDTO } from '~/unit/DashboardThread/CMS/Docs/Editor/SideTree/useSideTree'
+import type { TDocTreeNodeDTO } from '~/unit/DashboardThread/CMS/Docs/Editor/SideTree/spec'
 import S from '~/unit/DashboardThread/schema'
 
 import type { TDocDraftQueryData, TDocTreeQueryData, TGraphQLResult } from './spec'

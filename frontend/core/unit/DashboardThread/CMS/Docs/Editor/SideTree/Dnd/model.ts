@@ -1,7 +1,7 @@
 import { arrayMove } from '@dnd-kit/sortable'
 
-import type { TSideTreeDragTarget } from './Dnd/spec'
-import type { TSideTreeChild, TSideTreeGroup } from './spec'
+import type { TSideTreeChild, TSideTreeGroup } from '../spec'
+import type { TSideTreeDragTarget } from './spec'
 
 // The persisted shape is already group-first, so flattening for the shared
 // draft controller is just returning the groups in their current order.

@@ -1,5 +1,6 @@
 import { proxy } from 'valtio'
 
+import { DOC_EDITOR_MODE } from '../constant'
 import type { TDocDraftInfo, TInit, TStore } from './spec'
 
 const EMPTY_DOC_DRAFT_INFO: TDocDraftInfo = {
@@ -30,6 +31,7 @@ export default function DocsEditorStore(init: TInit): TStore {
     baselineValue: EMPTY_EDITOR_VALUE,
     bodyValue: EMPTY_EDITOR_VALUE,
     docDraftInfo: EMPTY_DOC_DRAFT_INFO,
+    mode: DOC_EDITOR_MODE.EDIT,
     revisionReloadKey: 0,
     saveError: null,
     saveStatus: 'idle',
@@ -52,6 +54,10 @@ export default function DocsEditorStore(init: TInit): TStore {
 
     saveDocDraft: async (): Promise<void> => {
       await saveDocDraftHandler?.()
+    },
+
+    setMode: (mode): void => {
+      store.mode = mode
     },
 
     setDocDraftSession: (patch): void => {

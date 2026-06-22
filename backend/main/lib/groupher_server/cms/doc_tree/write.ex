@@ -62,19 +62,23 @@ defmodule GroupherServer.CMS.DocTree.Write do
   @spec create_page(Community.t(), map(), User.t() | nil) :: T.domain_res(payload())
   def create_page(%Community{} = community, args, user \\ nil) do
     operate(community, args, fn state ->
-      with {:ok, parent} <- group_parent(community, Map.get(args, :parent_id)),
-           {:ok, args} <- ensure_page_article_draft(community, args, user) do
-        attrs =
+      with {:ok, parent} <- group_parent(community, Map.get(args, :parent_id)) do
+        args =
           args
-          |> normalize_article_draft_id()
-          |> Map.merge(%{type: :page, community_id: community.id, parent_id: parent.id})
           |> normalize_title_slug()
-          |> unique_create_identity(community, parent.id)
-          |> ensure_index(community, parent.id)
+          |> unique_create_page_identity(community, parent.id)
 
-        with {:ok, node} <- ORM.create(DocTreeNodeDraft, attrs),
-             {:ok, state} <- bump_revision(community, state) do
-          {:ok, payload(state, node)}
+        with {:ok, args} <- ensure_page_article_draft(community, args, user) do
+          attrs =
+            args
+            |> normalize_article_draft_id()
+            |> Map.merge(%{type: :page, community_id: community.id, parent_id: parent.id})
+            |> ensure_index(community, parent.id)
+
+          with {:ok, node} <- ORM.create(DocTreeNodeDraft, attrs),
+               {:ok, state} <- bump_revision(community, state) do
+            {:ok, payload(state, node)}
+          end
         end
       end
     end)
@@ -342,6 +346,32 @@ defmodule GroupherServer.CMS.DocTree.Write do
     unique_value(community, parent_id, :slug, slug, "-")
   end
 
+  defp unique_create_page_identity(attrs, %Community{} = community, parent_id) do
+    title = Map.get(attrs, :title)
+    slug = Map.get(attrs, :slug)
+
+    if sibling_value_exists?(community, parent_id, :title, title) or
+         sibling_value_exists?(community, parent_id, :slug, slug) do
+      attrs
+      |> Map.put(:title, unique_page_copy_title(community, parent_id, title))
+      |> Map.put(:slug, unique_page_copy_slug(community, parent_id, slug))
+    else
+      attrs
+    end
+  end
+
+  defp unique_page_copy_title(_community, _parent_id, nil), do: nil
+
+  defp unique_page_copy_title(community, parent_id, title) do
+    unique_value(community, parent_id, :title, "#{title}-copy", "-")
+  end
+
+  defp unique_page_copy_slug(_community, _parent_id, nil), do: nil
+
+  defp unique_page_copy_slug(community, parent_id, slug) do
+    unique_value(community, parent_id, :slug, "#{slug}-copy", "-")
+  end
+
   defp ensure_index(attrs, %Community{} = community, parent_id) do
     case Map.get(attrs, :index) do
       nil -> Map.put(attrs, :index, next_index(community, parent_id))
@@ -468,6 +498,16 @@ defmodule GroupherServer.CMS.DocTree.Write do
 
   defp unique_copy_slug(community, parent_id, slug) do
     unique_value(community, parent_id, :slug, "#{slug}-copy", "-")
+  end
+
+  defp sibling_value_exists?(_community, _parent_id, _field, nil), do: false
+
+  defp sibling_value_exists?(community, parent_id, field, value) do
+    DocTreeNodeDraft
+    |> where([n], n.community_id == ^community.id)
+    |> where_parent(parent_id)
+    |> where([n], field(n, ^field) == ^value)
+    |> Repo.exists?()
   end
 
   defp unique_value(community, parent_id, field, base, separator) do

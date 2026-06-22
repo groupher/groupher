@@ -9,6 +9,7 @@ import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TEditValue, TKanbanBoard, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
+import S from '~/unit/DashboardThread/schema'
 import { buildDsbDemoConfig, setDsbDemoConfig } from '~/utils/dsb-demo'
 import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
 import { slugify } from '~/utils/slug'
@@ -25,7 +26,6 @@ import {
   SEO_KEYS,
   TAG_STORE_FIELDS,
 } from '../constant'
-import S from '../schema'
 import type { TDsbFieldKey, TDsbStoreFieldKey } from '../spec'
 
 type TRet = {

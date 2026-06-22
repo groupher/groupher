@@ -1,14 +1,14 @@
 import { useMemo } from 'react'
 
 import useSortableDraft from '../../../../../LinkEditor/Dnd/useSortableDraft'
+import type { TSideTreeChild, TSideTreeGroup } from '../spec'
 import {
   findGroupWithChild,
   flattenSideTreeGroups,
   moveSideTreeChildInGroups,
   moveSideTreeGroup,
   sameSideTreeGroups,
-} from '../model'
-import type { TSideTreeChild, TSideTreeGroup } from '../spec'
+} from './model'
 import type { TSideTreeDragTarget } from './spec'
 
 type TProps = {

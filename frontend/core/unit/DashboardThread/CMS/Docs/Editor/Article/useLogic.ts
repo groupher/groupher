@@ -4,13 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { slugify } from '~/lib/slug'
 import useCommunity from '~/stores/community/hooks'
+import S from '~/unit/DashboardThread/schema'
 import { toast } from '~/widgets/Toaster'
 
-import S from '../../../../schema'
 import { REVISION_DRAWER } from '../../ActionSnackbar/constant'
 import { SIDE_TREE_NODE_TYPE } from '../SideTree/constant'
-import type { TSideTreePage } from '../SideTree/spec'
-import type { TSideTreeController } from '../SideTree/useSideTree'
+import { findChild } from '../SideTree/helper'
+import type { TSideTreeController } from '../SideTree/spec'
 import useDocsEditor from '../store/hooks'
 import {
   DOC_AUTO_SAVE_DELAY,
@@ -19,19 +19,6 @@ import {
 } from './constant'
 import { countEditorText, resolveDraftSession, serializeEditorValue } from './helper'
 import type { TDocDraftDTO, TDocDraftInitialData } from './spec'
-
-const findActivePage = (groups: TSideTreeController['groups'], activeId: string | null) => {
-  if (!activeId) return null
-
-  for (const group of groups) {
-    const child = group.children.find((item) => item.id === activeId)
-    if (child?.type === SIDE_TREE_NODE_TYPE.PAGE) {
-      return child as TSideTreePage
-    }
-  }
-
-  return null
-}
 
 /**
  * Own the active doc draft editing lifecycle for the Article editor.
@@ -52,10 +39,11 @@ export default function useLogic(
     setDocDraftSession,
   } = useDocsEditor()
   const { query, mutate } = useGraphQLClient()
-  const activePage = useMemo(
-    () => findActivePage(sideTree.groups, sideTree.activeId),
-    [sideTree.activeId, sideTree.groups],
-  )
+  const activePage = useMemo(() => {
+    const child = sideTree.activeId ? findChild(sideTree.groups, sideTree.activeId) : null
+
+    return child?.type === SIDE_TREE_NODE_TYPE.PAGE ? child : null
+  }, [sideTree.activeId, sideTree.groups])
   const initialSession =
     initialDraft && activePage?.docId === initialDraft.id
       ? resolveDraftSession(initialDraft, activePage)

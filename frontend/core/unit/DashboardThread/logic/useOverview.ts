@@ -4,8 +4,7 @@ import useQuery from '~/hooks/useQuery'
 import type { TCommunity, TOverview } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
-
-import S from '../schema'
+import S from '~/unit/DashboardThread/schema'
 
 export default function useOverview(): TOverview {
   const dsb$ = useDashboard()

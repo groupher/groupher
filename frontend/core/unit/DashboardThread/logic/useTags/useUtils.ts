@@ -4,9 +4,8 @@ import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TColorName, TTag, TTagGroup, TThread } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
+import S from '~/unit/DashboardThread/schema'
 import { slugify } from '~/utils/slug'
-
-import S from '../../schema'
 
 type TRet = {
   loadTags: (thread?: TThread) => void

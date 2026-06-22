@@ -1143,8 +1143,8 @@ __metadata:
   linkType: soft
 
 "@groupher/rich-editor@file:.yalc/@groupher/rich-editor::locator=%40groupher%2Froot%40workspace%3A.":
-  version: 0.0.16
-  resolution: "@groupher/rich-editor@file:.yalc/@groupher/rich-editor#.yalc/@groupher/rich-editor::hash=1d72b8&locator=%40groupher%2Froot%40workspace%3A."
+  version: 0.0.17
+  resolution: "@groupher/rich-editor@file:.yalc/@groupher/rich-editor#.yalc/@groupher/rich-editor::hash=64d384&locator=%40groupher%2Froot%40workspace%3A."
   dependencies:
     "@ariakit/react": "npm:^0.4.12"
     "@emoji-mart/data": "npm:^1.2.1"
@@ -1178,7 +1178,7 @@ __metadata:
   peerDependencies:
     react: ^18.2.0 || ^19.0.0
     react-dom: ^18.2.0 || ^19.0.0
-  checksum: 10c0/d21caeabbfbd84ee672bd5cdfb1d1498c296a58a066aff229bb9dee959b8abfe3578b73ef72e07965ca93d90a8ffa9d7d38a5cfd3b17f92296e3224fb1435728
+  checksum: 10c0/88350a43b380c50b25dafe96bd6dcedca7c22093a014b033b48a89325eed3c4eeea8375ba4e5d4b91f2c0bcaa4fa0343aea8e51f9c5df6fc5d112a22c84b3b61
   languageName: node
   linkType: hard
 
@@ -1203,6 +1203,7 @@ __metadata:
     "@heroicons/react": "npm:^2.2.0"
     "@next/bundle-analyzer": "npm:^16.2.4"
     "@phosphor-icons/core": "npm:^2.1.1"
+    "@platejs/core": "npm:^53.2.1"
     "@playwright/test": "npm:^1.59.1"
     "@tailwindcss/postcss": "npm:4.3.1"
     "@tailwindcss/typography": "npm:0.5.20"
@@ -1230,7 +1231,7 @@ __metadata:
     chalk: "npm:^2.4.1"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
-    cnfast: "npm:0.0.6"
+    cnfast: "npm:0.0.8"
     commitizen: "npm:3.1.2"
     coveralls: "npm:3.0.14"
     cross-env: "npm:^10.1.0"
@@ -5880,12 +5881,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cnfast@npm:0.0.6":
-  version: 0.0.6
-  resolution: "cnfast@npm:0.0.6"
+"cnfast@npm:0.0.8":
+  version: 0.0.8
+  resolution: "cnfast@npm:0.0.8"
   bin:
     cnfast: bin/cli.js
-  checksum: 10c0/d63ed244c636edad349ef2611ce0946c1b5360fa29d1e3b631c1364c29e1aa3f3007de49ea8a71729ab872ad7c428fd5a80479ca3311adafef33a6519746b2c0
+  checksum: 10c0/14fbe40c36fa22ae8405ae22967a9a362d81a56872fc626d37444d30f5aa648cbf6627d9ee3822b7617ce45ad95fd3775d78420c3727dfb56d85f295f8941456
   languageName: node
   linkType: hard
 

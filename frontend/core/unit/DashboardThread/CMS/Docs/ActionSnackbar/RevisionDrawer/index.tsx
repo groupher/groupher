@@ -4,10 +4,10 @@ import TYPE from '~/const/type'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import CloseLightSVG from '~/icons/CloseLight'
 import useCommunity from '~/stores/community/hooks'
+import S from '~/unit/DashboardThread/schema'
 import Drawer from '~/widgets/Drawer'
 import { toast } from '~/widgets/Toaster'
 
-import S from '../../../../schema'
 import useDocsEditor from '../../Editor/store/hooks'
 import { REVISION_DRAWER } from '../constant'
 import {
@@ -141,7 +141,7 @@ const RevisionDrawer: FC<TProps> = ({ show, onClose }) => {
         ? parseRevisionDocumentValue(visibleDraftRevisions[0].documentJson)
         : latestPublishedRevision
           ? parseRevisionDocumentValue(latestPublishedRevision.documentJson)
-        : baselineValue,
+          : baselineValue,
     [baselineValue, latestPublishedRevision, visibleDraftRevisions],
   )
   const currentDiffBlocks = useMemo(
@@ -218,9 +218,7 @@ const RevisionDrawer: FC<TProps> = ({ show, onClose }) => {
                   selectedKey === CURRENT_CHANGES_KEY && s.currentChangesButtonActive,
                 )}
                 onClick={() =>
-                  setSelectedKey((key) =>
-                    key === CURRENT_CHANGES_KEY ? '' : CURRENT_CHANGES_KEY,
-                  )
+                  setSelectedKey((key) => (key === CURRENT_CHANGES_KEY ? '' : CURRENT_CHANGES_KEY))
                 }
               >
                 <span>{REVISION_DRAWER.CURRENT_CHANGES}</span>

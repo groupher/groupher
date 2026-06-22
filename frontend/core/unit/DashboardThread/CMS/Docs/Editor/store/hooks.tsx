@@ -10,5 +10,6 @@ export default createStoreHook(StoreContext, [
   'attachSaveDocDraft',
   'reloadDocDraft',
   'saveDocDraft',
+  'setMode',
   'setDocDraftSession',
 ])

@@ -70,6 +70,51 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
       assert site_state.last_published_draft_revision == 0
     end
 
+    test "creating a duplicate page uses copy title and slug for tree and draft" do
+      {:ok, user} = db_insert(:user)
+      {:ok, community} = empty_docs_community(user)
+      {:ok, before_tree_state} = ORM.find_by(DocTreeDraftState, community_id: community.id)
+
+      {:ok, group_payload} =
+        CMS.DocTree.create_group(community, %{
+          title: "Guides",
+          slug: "guides",
+          base_revision: before_tree_state.revision
+        })
+
+      {:ok, first_payload} =
+        CMS.DocTree.create_page(
+          community,
+          %{
+            parent_id: group_payload.node.id,
+            title: "page-3",
+            slug: "page-3",
+            base_revision: group_payload.revision
+          },
+          user
+        )
+
+      {:ok, duplicate_payload} =
+        CMS.DocTree.create_page(
+          community,
+          %{
+            parent_id: group_payload.node.id,
+            title: "page-3",
+            slug: "page-3",
+            base_revision: first_payload.revision
+          },
+          user
+        )
+
+      assert duplicate_payload.node.title == "page-3-copy"
+      assert duplicate_payload.node.slug == "page-3-copy"
+
+      {:ok, doc_draft} = ORM.find(ArticleDraft, duplicate_payload.node.doc_id)
+      assert doc_draft.title == "page-3-copy"
+      assert doc_draft.slug == "page-3-copy"
+      assert doc_draft.json =~ "page-3-copy"
+    end
+
     test "stale base_revision returns conflict and does not mutate draft tree" do
       {:ok, user} = db_insert(:user)
       {:ok, community} = empty_docs_community(user)

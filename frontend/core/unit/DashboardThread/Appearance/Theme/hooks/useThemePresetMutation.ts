@@ -7,13 +7,13 @@ import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TResolvedThemePreset, TThemePreset, TThemePresetOption } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
+import * as S from '~/unit/DashboardThread/Appearance/Theme/schema'
 import { buildDsbDemoConfig, setDsbDemoConfig } from '~/utils/dsb-demo'
 import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
 import { toast } from '~/widgets/Toaster'
 
 import { FIELD } from '../../../constant'
 import { THEME_PRESET_STORE_FIELDS } from '../constant'
-import * as S from '../schema'
 import type { TThemePresetMutationRet } from '../spec'
 
 type TThemePresetMutationLayout = {

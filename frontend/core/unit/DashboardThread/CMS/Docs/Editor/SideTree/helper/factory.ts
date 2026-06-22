@@ -7,8 +7,8 @@ import {
   SIDE_TREE_CHILD_MENU_ACTION,
   SIDE_TREE_ID_PREFIX,
   SIDE_TREE_NODE_TYPE,
-} from './constant'
-import type { TSideTreeChild, TSideTreeChildMenuAction, TSideTreeGroup } from './spec'
+} from '../constant'
+import type { TSideTreeChild, TSideTreeChildMenuAction, TSideTreeGroup } from '../spec'
 
 let nextId = 0
 

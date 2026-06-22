@@ -1,43 +1,23 @@
 'use client'
 
-import {
-  type CSSProperties,
-  type FC,
-  type SVGProps,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from 'react'
+import { type CSSProperties, type FC, useLayoutEffect, useRef, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import EditPenSVG from '~/icons/EditPen'
-import JoinEyeSVG from '~/icons/JoinEye'
-import type { TTransKey } from '~/spec'
 
-import useSalon from './salon/edit_toggle'
-
-type TMode = 'edit' | 'preview'
-
-type TModeItem = {
-  key: TMode
-  label: TTransKey
-  Icon: FC<SVGProps<SVGSVGElement>>
-}
-
-const MODE_ITEMS: readonly TModeItem[] = [
-  { key: 'edit', label: 'dsb.doc.action.edit', Icon: EditPenSVG },
-  { key: 'preview', label: 'dsb.doc.action.preview', Icon: JoinEyeSVG },
-]
+import { DOC_EDITOR_MODE, type TDocEditorMode } from '../../Editor/constant'
+import useDocsEditor from '../../Editor/store/hooks'
+import useSalon from '../salon/edit_toggle'
+import { MODE_ITEMS } from './constant'
 
 const EditToggle: FC = () => {
   const s = useSalon()
   const { t } = useTrans()
+  const { mode: activeMode, setMode } = useDocsEditor()
   const trackRef = useRef<HTMLDivElement>(null)
-  const itemRefs = useRef<Record<TMode, HTMLButtonElement | null>>({
-    edit: null,
-    preview: null,
+  const itemRefs = useRef<Record<TDocEditorMode, HTMLButtonElement | null>>({
+    [DOC_EDITOR_MODE.EDIT]: null,
+    [DOC_EDITOR_MODE.PREVIEW]: null,
   })
-  const [activeMode, setActiveMode] = useState<TMode>('edit')
   const [indicatorStyle, setIndicatorStyle] = useState<CSSProperties>()
 
   useLayoutEffect(() => {
@@ -86,7 +66,7 @@ const EditToggle: FC = () => {
               aria-selected={active}
               aria-label={text}
               className={active ? s.itemActive : s.item}
-              onClick={() => setActiveMode(key)}
+              onClick={() => setMode?.(key)}
             >
               <Icon className={s.icon} />
               <span className={active ? s.labelActive : s.label}>{text}</span>
