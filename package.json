@@ -108,7 +108,7 @@
     "@fortawesome/free-regular-svg-icons": "^6.2.1",
     "@fortawesome/free-solid-svg-icons": "^6.2.1",
     "@fortawesome/react-fontawesome": "^0.2.0",
-    "@groupher/rich-editor": "file:.yalc/@groupher/rich-editor",
+    "@groupher/rich-editor": "0.0.12",
     "@groupher/tooltip": "4.2.7",
     "@groupher/use-mobile-detect-hook": "^2.0.2",
     "@next/bundle-analyzer": "^16.2.4",
