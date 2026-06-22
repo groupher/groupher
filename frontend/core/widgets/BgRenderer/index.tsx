@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { cnMerge } from '~/css'
 import type { TBgRenderSpec } from '~/lib/bg'
 
 import BgLayer from './BgLayer'
 import { getVisualIdentity, preloadImage, shouldCrossfade } from './helper'
-import useSalon, { cn } from './salon'
+import useSalon from './salon'
 import type { TProps } from './spec'
 
 /**
@@ -72,7 +73,10 @@ export default function BgRenderer({
   }, [applySpec, previewSubscriber])
 
   return (
-    <div className={cn(positioned && s.wrapperPositioned, s.wrapper, className)} aria-hidden='true'>
+    <div
+      className={cnMerge(positioned && s.wrapperPositioned, s.wrapper, className)}
+      aria-hidden='true'
+    >
       <BgLayer renderSpec={activeSpec} patternSize={patternSize} textureScale={textureScale} />
       {exitingSpec && (
         <BgLayer

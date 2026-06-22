@@ -13,7 +13,7 @@ export default function useSalon({ width }) {
     prefix: cn(addon, 'left-0'),
     suffix: cn(addon, 'right-0'),
     icon: cn('size-3.5 group-smoky-80', fill('digest')),
-    iconActive: cn(primary('fill')),
+    iconActive: primary('fill'),
     input: cn(
       'outline-none tabular-nums box-border m-0 list-none relative inline-block w-full bg-none border appearance-none',
       'px-2.5 py-1 h-9 rounded-md text-sm text-left leading-normal caret-inherit',

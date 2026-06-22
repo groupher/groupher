@@ -13,10 +13,10 @@ export default function useSalon() {
 
   return {
     wrapper: 'row-center gap-x-4',
-    menuPanel: cn(bg('popover.bg')),
+    menuPanel: bg('popover.bg'),
     linkItem: cn(linkItem, `hover:${bg('hoverBg')}`),
     groupItem: cn(linkItem, 'relative', `hover:${bg('hoverBg')}`),
-    groupItemActive: cn(bg('hoverBg')),
+    groupItemActive: bg('hoverBg'),
     icon: cn('size-3.5 mr-1 ml-px', fill('digest')),
     arrowIcon: cn('size-3.5 ml-1 opacity-80 -rotate-90', fill('digest')),
   }

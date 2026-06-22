@@ -10,7 +10,7 @@ export default function useSalon() {
 
   return {
     wrapper: cn('h-14 rounded-md px-1.5 py-1 pt-2.5', bg('alphaBg')),
-    frame: 'flex h-full w-full flex-col',
+    frame: 'column s-full',
     header: 'flex flex-col gap-1',
     headerRow: 'flex items-end justify-between gap-2',
     footer: 'mt-auto row-center justify-between',

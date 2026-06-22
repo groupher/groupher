@@ -7,8 +7,8 @@ export default function useSalon() {
 
   return {
     wrapper: 'mb-5',
-    header: cn('group/group-title row-center min-h-9 mb-2'),
-    editBox: cn('row-center h-12 w-full pl-2 rounded-lg saving-bar-right-linear'),
+    header: 'group/group-title row-center min-h-9 mb-2',
+    editBox: 'row-center h-12 w-full pl-2 rounded-lg saving-bar-right-linear',
     foldButton: cn('align-both size-5 ml-2 rounded-md', fg('hint'), hover('bg')),
     foldIcon: cn('size-3.5 trans-all-200', fill('digest')),
     title: cn('text-sm font-medium', fg('title')),
@@ -36,9 +36,9 @@ export default function useSalon() {
     sortableTag: 'group group/tag-row relative w-full will-change-transform',
     sortableTagDragging: cn('z-10 select-none', bg('sandBox')),
     groupInput: 'h-8',
-    tags: cn('rounded-md trans-all-200'),
+    tags: 'rounded-md trans-all-200',
     tagsOver: bg('hoverBg'),
-    firstTagEdit: cn('row-center h-11 w-full mb-3 rounded-lg saving-bar-right-linear'),
+    firstTagEdit: 'row-center h-11 w-full mb-3 rounded-lg saving-bar-right-linear',
     dotSelector: cn('align-both size-7 circle border-2 p-0.5 ml-2 mr-2 pointer', br('divider')),
     dot: 'size-5 circle',
     tagInput: 'h-8',

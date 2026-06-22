@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.BlogTagCRUD do
 
       variables = %{
         title: "tag title",
-        slug: "tag_raw",
+        slug: "tag-raw",
         community: community.slug,
         thread: "BLOG",
         color: "GREEN",
@@ -134,7 +134,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.BlogTagCRUD do
         id: community_tag.id,
         color: "YELLOW",
         title: "new title",
-        slug: "new_title",
+        slug: "new-title",
         community: community.slug,
         extra: ["newMenuID"],
         marker: %{type: "ICON", provider: "lucide", name: "tag", src: "/icons/lucide/tag.svg"},

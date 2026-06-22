@@ -11,9 +11,9 @@ export default function useSalon() {
       rainbow(COLOR.RED, 'border'),
       fg('digest'),
     ),
-    title: cn('flex flex-wrap items-center text-sm mb-3', fg('digest')),
+    title: cn('row-center wrap text-sm mb-3', fg('digest')),
     reason: fg('title'),
-    content: 'flex flex-wrap items-center',
+    content: 'row-center wrap',
     illegalItem: cn(
       'text-xs py-0.5 px-1.5 mr-2.5 -ml-0.5 mb-1.5 rounded',
       fg('title'),

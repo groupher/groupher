@@ -3,6 +3,7 @@
 import Link from 'next/link'
 
 import { DSB_ROUTE } from '~/const/route'
+import { cnMerge } from '~/css'
 import useDsbTab from '~/hooks/useDsbTab'
 import useTrans from '~/hooks/useTrans'
 import useURLSearchParams from '~/hooks/useURLSearchParams'
@@ -43,7 +44,7 @@ export default function Collapsed({
   const activeSlug = activeSlugProp ?? subTab ?? defaultSlug
 
   return (
-    <div className={cn(s.wrapper, className)}>
+    <div className={cnMerge(s.wrapper, className)}>
       <div className={s.menu} aria-label='Dashboard menu'>
         <button
           type='button'

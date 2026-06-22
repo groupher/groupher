@@ -15,7 +15,7 @@ export default function useSalon({ viewerHasUpvoted }: TProps) {
       'align-both w-44 py-2 rounded-xl border',
       br('divider'),
       `hover:${bg('alphaBg2')}`,
-      viewerHasUpvoted && cn(rainbowSoft(color)),
+      viewerHasUpvoted && rainbowSoft(color),
     ),
     alias: cn('text-sm ml-1.5 mt-px', viewerHasUpvoted ? primary('fg') : fg('digest')),
   }

@@ -14,7 +14,7 @@ const FeatureIntros: FC = () => {
 
   return (
     <div className={s.wrapper}>
-      <div className={cn(s.block)}>
+      <div className={s.block}>
         <div className={s.iconBlock}>
           <div className={s.blockPurple} />
           <div className={s.blockGrey} />
@@ -27,7 +27,7 @@ const FeatureIntros: FC = () => {
         </div>
       </div>
 
-      <div className={cn(s.block)}>
+      <div className={s.block}>
         <div className={s.iconBlock}>
           <div className={s.blockBlue} />
           <div className={s.blockGrey} />
@@ -40,7 +40,7 @@ const FeatureIntros: FC = () => {
         </div>
       </div>
 
-      <div className={cn(s.block)}>
+      <div className={s.block}>
         <div className={s.iconBlock}>
           <div className={s.blockRed} />
           <div className={s.blockGrey} />
@@ -53,7 +53,7 @@ const FeatureIntros: FC = () => {
         </div>
       </div>
 
-      <div className={cn(s.block)}>
+      <div className={s.block}>
         <div className={s.iconBlock}>
           <div className={s.blockCyan} />
           <div className={s.blockGrey} />

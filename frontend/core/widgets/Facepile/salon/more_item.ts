@@ -19,6 +19,6 @@ export default function useSalon({ size }: TProps) {
       bg('hoverBg'),
       avatar(),
     ),
-    textMore: cn('align-both text-lg h-full w-full pb-2', fg('hint')),
+    textMore: cn('align-both text-lg s-full pb-2', fg('hint')),
   }
 }

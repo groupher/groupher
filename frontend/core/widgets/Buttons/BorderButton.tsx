@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react'
 
+import { cnMerge } from '~/css'
 import useWallpaper from '~/hooks/useWallpaper'
 import ArrowSVG from '~/icons/ArrowSimple'
 
 import Button from './Button'
-import useSalon, { cn } from './salon/border_button'
+import useSalon from './salon/border_button'
 
 type TProps = {
   children: ReactNode
@@ -21,7 +22,7 @@ export default function BorderButton({ children, space = 2, className }: TProps)
       <ArrowSVG className={s.arrow} />
       <div className={s.background}>
         <div className={s.realBg} style={{ background }} />
-        <Button space={space} className={cn(s.button, className)} noBorder>
+        <Button space={space} className={cnMerge(s.button, className)} noBorder>
           {children}
         </Button>
       </div>

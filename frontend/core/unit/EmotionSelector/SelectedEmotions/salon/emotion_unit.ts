@@ -5,6 +5,6 @@ export default function useSalon() {
 
   return {
     wrapper: cn('row-center pointer mr-1.5 px-2 py-1 ml-0.5 rounded-md border', br('divider')),
-    count: cn(fg('digest')),
+    count: fg('digest'),
   }
 }

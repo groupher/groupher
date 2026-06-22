@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.DocTree do
       Dashboard editor / preview
               |
               v
-      doc_tree_node_drafts  --->  doc_drafts  --->  doc_document_drafts
+      doc_tree_node_drafts  --->  article_drafts(thread=doc)
               |
               | publish, not implemented here
               v

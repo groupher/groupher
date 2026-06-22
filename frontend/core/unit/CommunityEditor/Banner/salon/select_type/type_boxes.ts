@@ -34,7 +34,7 @@ export default function useSalon() {
     //
     header: 'row-between w-full',
     title: cn('text-base bold-sm mt-2 ml-1 transition-colors', fg('digest')),
-    titleActive: cn(fg('title')),
+    titleActive: fg('title'),
     emptyCheck: cn('size-4 circle border-2', bg('card'), br('divider')),
     checkIcon: cn('size-4', primary('fill')),
     icon: cn('size-5 opacity-65 ml-1', fill('digest')),

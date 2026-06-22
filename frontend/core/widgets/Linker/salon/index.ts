@@ -11,7 +11,7 @@ export default function useSalon({ ...spacing }: TProps) {
   return {
     wrapper: cn('items-center', margin(spacing)),
     popHint: cn('text-xs px-2.5 py-1', fg('title')),
-    sourceLink: cn('text-xs line-clamp-1 break-all no-underline hover:underline', fg('link')),
+    sourceLink: cn('text-xs line-clamp-1 break-all hover-underline', fg('link')),
     plainColor: fg('link'),
     //
     linkIcon: cn('size-4 mt-0.5 mr-0.5 opacity-60', fill('digest')),

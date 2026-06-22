@@ -1,12 +1,13 @@
 import type { FC } from 'react'
 
 import { ARTICLE_CAT } from '~/const/gtd'
+import { cnMerge } from '~/css'
 import useTrans from '~/hooks/useTrans'
 import UpvoteSVG from '~/icons/Upvote'
 import type { TArticleCat } from '~/spec'
 import ArticleCatStatus from '~/unit/ArticleCatStatus'
 
-import useSalon, { cn } from '../../../salon/articles_intro_tabs/kanban_tab/kanban_demo/kanban_item'
+import useSalon from '../../../salon/articles_intro_tabs/kanban_tab/kanban_demo/kanban_item'
 
 type TProps = {
   count?: number
@@ -37,7 +38,7 @@ const KanbanItem: FC<TProps> = ({
   }
 
   return (
-    <div className={cn(s.wrapper, draging && s.draging, className)}>
+    <div className={cnMerge(s.wrapper, draging && s.draging, className)}>
       <div className={s.title}>{title || t('landing.articles.kanban.item.default_title')}</div>
 
       <div className={s.footer}>

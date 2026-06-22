@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 
+import { cnMerge } from '~/css'
+
 import { FADE_MS } from './constant'
 import { getFallbackStyle, getFilterLayerStyle, getPatternLayerStyle } from './helper'
-import useSalon, { cn } from './salon'
+import useSalon from './salon'
 import type { TBgLayerProps } from './spec'
 import { createBgWebglRenderer } from './webgl'
 
@@ -89,7 +91,7 @@ export default function BgLayer({
 
   return (
     <div
-      className={cn(s.layer, exiting && (fadeOut ? s.layerFadeOut : s.layerFadeIn), className)}
+      className={cnMerge(s.layer, exiting && (fadeOut ? s.layerFadeOut : s.layerFadeIn), className)}
       style={getFilterLayerStyle(renderSpec)}
     >
       <div className={s.fallback} style={getFallbackStyle(renderSpec)} />

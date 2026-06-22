@@ -1,3 +1,4 @@
+import { cnMerge } from '~/css'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TSpace } from '~/spec'
 
@@ -11,7 +12,7 @@ export default function useSalon({ className, ...spacing }: TProps) {
   const { bg, br, cn, fg, margin, primary } = useTwBelt()
 
   return {
-    wrapper: cn(
+    wrapper: cnMerge(
       'w-full overflow-hidden rounded-lg border',
       bg('card'),
       br('divider'),

@@ -12,6 +12,6 @@ export default function useSalon() {
     block: 'column w-1/3',
     hint: cn('row-center text-sm mb-1', fg('hint')),
     title: cn('text-sm', fg('title')),
-    inActive: cn(fg('digest')),
+    inActive: fg('digest'),
   }
 }

@@ -19,6 +19,22 @@
     @apply flex flex-row items-center justify-center;
   }
 
+  .align-center {
+    @apply items-center;
+  }
+
+  .align-start {
+    @apply items-start;
+  }
+
+  .align-end {
+    @apply items-end;
+  }
+
+  .align-baseline {
+    @apply items-baseline;
+  }
+
   .row-between {
     @apply flex flex-row items-center justify-between;
   }
@@ -123,8 +139,28 @@
     @apply cursor-pointer text-left leading-none;
   }
 
+  .plain-button {
+    @apply border-0 bg-transparent p-0;
+  }
+
   .s-full {
     @apply h-full w-full;
+  }
+
+  .s-screen {
+    @apply h-screen w-screen;
+  }
+
+  .abs-full {
+    @apply absolute inset-0;
+  }
+
+  .abs-full-pe-none {
+    @apply pointer-events-none absolute inset-0;
+  }
+
+  .min-w-flex {
+    @apply min-w-0 flex-1;
   }
 
   .text-shadow-none {

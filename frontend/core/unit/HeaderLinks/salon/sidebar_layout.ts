@@ -12,10 +12,10 @@ export default function useSalon() {
     linkItem: cn(linkItem, `hover:${bg('hoverBg')}`),
     linkActive: cn(fg('title'), primary()),
     groupItem: cn(linkItem, 'relative', `hover:${bg('hoverBg')}`),
-    groupItemActive: cn(bg('hoverBg')),
-    menuPanel: cn(bg('popover.bg')),
+    groupItemActive: bg('hoverBg'),
+    menuPanel: bg('popover.bg'),
     menuItem: cn(linkItem, `hover:${bg('menuHoverBg')}`),
-    menuItemActive: cn(bg('menuHoverBg')),
+    menuItemActive: bg('menuHoverBg'),
     icon: cn('size-3.5 mr-3 ml-px', fill('digest')),
     arrowIcon: cn('size-3.5 absolute right-2 opacity-80 -rotate-90', fill('digest')),
   }

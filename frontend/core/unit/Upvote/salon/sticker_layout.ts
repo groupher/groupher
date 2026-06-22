@@ -17,7 +17,7 @@ export default function useSalon({ viewerHasUpvoted }: TProps) {
       `hover:${bg('alphaBg2')}`,
       'trans-all-200',
       br('divider'),
-      viewerHasUpvoted && cn(rainbowSoft(color)),
+      viewerHasUpvoted && rainbowSoft(color),
     ),
   }
 }

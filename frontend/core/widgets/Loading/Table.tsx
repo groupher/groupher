@@ -1,5 +1,6 @@
 'use client'
 
+import { cnMerge } from '~/css'
 import type { TSpace } from '~/spec'
 
 import useSalon, { cn } from './salon/table'
@@ -14,7 +15,7 @@ export default function TableLoading({ className = '', ...spacing }: TProps) {
   const s = useSalon(spacing)
 
   return (
-    <div className={cn(s.wrapper, className)}>
+    <div className={cnMerge(s.wrapper, className)}>
       {Array.from({ length: 8 }).map((_, i) => (
         <div key={`row-${i + 1}`} className={s.row}>
           <div style={randDelay()} className={cn(s.item, 'h-4 w-60')} />

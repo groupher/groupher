@@ -29,6 +29,7 @@ describe('slugify', () => {
   it('shares the same slug validator contract', () => {
     expect(validateSlug('react-19-zhong-wen').valid).toBe(true)
     expect(validateSlug('React').valid).toBe(false)
+    expect(validateSlug('react_19').valid).toBe(false)
     expect(validateSlug('react--tag').valid).toBe(false)
     expect(validateSlug('-react').valid).toBe(false)
     expect(validateSlug('').valid).toBe(false)

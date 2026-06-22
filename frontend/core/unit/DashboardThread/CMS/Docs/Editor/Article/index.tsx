@@ -1,34 +1,26 @@
 import type { FC } from 'react'
 
-import type { TSideTreeController } from '../SideTree/useSideTree'
+import { DOC_EDITOR_MODE } from '../constant'
+import type { TSideTreeController } from '../SideTree/spec'
+import useDocsEditor from '../store/hooks'
 import Body from './Body'
 import Cover from './Cover'
 import Footer from './Footer'
 import useSalon from './salon'
+import type { TDocDraftInitialData } from './spec'
 import Title from './Title'
-import useDocDraftEditor from './useDocDraftEditor'
+import useLogic from './useLogic'
 
 type TProps = {
   sideTree: TSideTreeController
+  initialDraft?: TDocDraftInitialData | null
 }
 
-const Article: FC<TProps> = ({ sideTree }) => {
+const Article: FC<TProps> = ({ sideTree, initialDraft }) => {
   const s = useSalon()
-  const {
-    activePage,
-    bodyValue,
-    dirty,
-    editable,
-    error,
-    invalid,
-    loading,
-    saving,
-    save,
-    setBodyValue,
-    setTitle,
-    slug,
-    title,
-  } = useDocDraftEditor(sideTree)
+  const { mode } = useDocsEditor()
+  const { activePage, bodyValue, editable, error, loading, setBodyValue, setTitle, title } =
+    useLogic(sideTree, initialDraft)
 
   if (!activePage) {
     return (
@@ -49,25 +41,19 @@ const Article: FC<TProps> = ({ sideTree }) => {
   return (
     <article className={s.wrapper}>
       <Cover />
-      <Title value={title} disabled={loading || saving} onChange={setTitle} />
+      <Title
+        value={title}
+        disabled={loading || mode === DOC_EDITOR_MODE.PREVIEW}
+        onChange={setTitle}
+      />
       <Body
         value={bodyValue}
+        mode={mode}
         editorKey={activePage.docId}
         disabled={loading}
         onChange={setBodyValue}
       />
-      <div className={s.saveBar}>
-        <button
-          type='button'
-          className={s.saveButton}
-          disabled={loading || saving || invalid || !dirty}
-          onClick={save}
-        >
-          {saving ? 'Saving...' : 'Save'}
-        </button>
-        {slug && <span className={s.slug}>/{slug}</span>}
-        {error && <span className={s.error}>{error}</span>}
-      </div>
+      {error && <div className={s.error}>{error}</div>}
       <Footer />
     </article>
   )

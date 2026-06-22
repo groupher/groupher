@@ -4,7 +4,7 @@ import useTrans from '~/hooks/useTrans'
 import type { TActive, TMenu } from '~/spec'
 
 import Icon from './Icon'
-import useSalon, { cnMerge } from './salon/item'
+import useSalon, { cn } from './salon/item'
 import type { TMenuItem } from './spec'
 
 type TProps = {
@@ -20,12 +20,12 @@ const Item: FC<TProps> = ({ item, withDesc = false, active, onClick }) => {
 
   if (withDesc) {
     return (
-      <button type='button' className={cnMerge(s.wrapper, s.full)} onClick={onClick}>
+      <button type='button' className={cn(s.wrapper, s.full)} onClick={onClick}>
         <div className={s.fullIconBox}>
           <Icon type={item.icon as TMenu} />
         </div>
         <div className={s.main}>
-          <div className={cnMerge(s.title, s.fullTitle)}>{t(item.title)}</div>
+          <div className={cn(s.title, s.fullTitle)}>{t(item.title)}</div>
           <div className={s.desc}>{item.desc || '--'}</div>
         </div>
       </button>

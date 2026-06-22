@@ -102,8 +102,8 @@ export default function useSalon({ loading }: { loading: boolean }) {
       titleCell: 'flex w-full items-start gap-3 overflow-hidden',
       inlineSelection: 'shrink-0 pt-1',
       titleContent: (multiSelectMode: boolean) =>
-        cn('min-w-0 flex-1 overflow-hidden', multiSelectMode && 'cursor-pointer'),
-      selectionWrap: 'flex min-h-12 h-full w-full items-center justify-center',
+        cn('min-w-flex overflow-hidden', multiSelectMode && 'cursor-pointer'),
+      selectionWrap: 'align-both min-h-12 s-full',
     },
   }
 }

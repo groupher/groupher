@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
   Dashboard editing does not mutate this table. Publish will copy validated
   draft nodes from `doc_tree_node_drafts` into this table and convert page
-  references from `doc_draft_id` to the published `doc_id`.
+  references from `article_draft_id` to the published `doc_id`.
   """
   alias __MODULE__
 
@@ -51,7 +51,6 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     node
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> Marker.normalize_changeset(:marker)
-    |> normalize_slug()
     |> validate_required(@required_fields)
     |> validate_length(:title, min: 1, max: 100)
     |> validate_length(:slug, min: 1, max: 120)
@@ -71,7 +70,6 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     node
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> Marker.normalize_changeset(:marker)
-    |> normalize_slug()
     |> validate_length(:title, min: 1, max: 100)
     |> validate_length(:slug, min: 1, max: 120)
     |> validate_length(:href, max: 400)
@@ -83,13 +81,6 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     |> unique_constraint(:title, name: :doc_tree_nodes_root_title_index)
     |> unique_constraint(:slug, name: :doc_tree_nodes_sibling_slug_index)
     |> unique_constraint(:title, name: :doc_tree_nodes_sibling_title_index)
-  end
-
-  defp normalize_slug(changeset) do
-    case get_change(changeset, :slug) do
-      slug when is_binary(slug) -> put_change(changeset, :slug, Slug.normalize(slug))
-      _ -> changeset
-    end
   end
 
   defp validate_node_shape(changeset) do

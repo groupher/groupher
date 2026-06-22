@@ -3,6 +3,8 @@
 import NextImage from 'next/image'
 import { cloneElement, isValidElement, type FC, type ReactElement, type SVGProps } from 'react'
 
+import { cnMerge } from '~/css'
+
 import useSalon, { cn } from '../salon/pill_tabs/tab_item'
 import type { TPillTabItemProps } from './spec'
 
@@ -22,7 +24,7 @@ const TabItem: FC<TPillTabItemProps> = ({
 
   const renderedIconComp = iconCompElement
     ? cloneElement(iconCompElement, {
-        className: cn(s.iconCompClassName, iconCompElement.props.className),
+        className: cnMerge(s.iconCompClassName, iconCompElement.props.className),
         'aria-hidden': true,
       })
     : item.iconComp

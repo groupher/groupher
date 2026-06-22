@@ -171,17 +171,16 @@ const Tooltip: FC<TProps> = ({
   )
 
   const tippyProps: TTippyReactProps = useMemo(() => {
+    const isControlled = visible !== null
     const props: TTippyReactProps = {
       ref: triggerRef as React.RefObject<HTMLDivElement>, // triggerRef is compatible (nullable current)
       content: PopoverContent,
       maxWidth,
       placement,
-      hideOnClick,
       zIndex: 3000,
       delay: [delay, 0],
       offset,
       duration,
-      trigger,
       interactive,
 
       // Let tippy manage `.tippy-box[data-theme=...]` (stable)
@@ -209,8 +208,12 @@ const Tooltip: FC<TProps> = ({
       },
     }
 
+    if (!isControlled) {
+      props.hideOnClick = hideOnClick
+      props.trigger = trigger
+    }
     if (portalToBody) props.appendTo = () => document.body
-    if (visible !== null) props.visible = visible
+    if (isControlled) props.visible = visible
     return props
   }, [
     PopoverContent,

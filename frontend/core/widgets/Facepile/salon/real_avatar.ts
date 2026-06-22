@@ -25,7 +25,7 @@ export default function useSalon({ size, isFirst, isLast }: TProps) {
       br('divider'),
       avatar(),
     ),
-    avatar: 'absolute inset-0 text-xs text-center',
+    avatar: 'abs-full text-xs text-center',
     avatarFallback: cn('border', br('divider')),
   }
 }

@@ -9,16 +9,16 @@ export default function useSalon({ actionVisible }: { actionVisible: boolean }) 
 
   return {
     wrapper: 'column group/docs-tree-group border-b border-transparent -mt-0.5',
-    wrapperTarget: cn(primary('border')),
+    wrapperTarget: primary('border'),
     head: 'row-center relative -ml-7 w-[calc(100%+1.75rem)] pl-7',
     dragHandle: cn(
-      'row-center absolute left-1 top-1/2 z-10 size-5 -translate-y-1/2 cursor-grab border-0 bg-transparent p-0 opacity-0 trans-all-100',
+      'row-center absolute left-1 top-1/2 z-10 size-5 -translate-y-1/2 cursor-grab plain-button opacity-0 trans-all-100',
       'group-hover/docs-tree-group:opacity-100 focus-visible:opacity-100 active:cursor-grabbing',
       actionVisible && 'opacity-100',
       fill('digest'),
     ),
     dragIcon: 'size-3.5',
-    titleButton: cn('row-center min-w-0 bg-transparent border-0 p-0 text-left', fg('digest')),
+    titleButton: cn('row-center min-w-0 plain-button text-left', fg('digest')),
     arrowIcon: cn('size-3 ml-1.5 -rotate-90 trans-all-100', fill('digest')),
     arrowCollapsed: 'rotate-180',
     title: cn('truncate text-sm pointer smoky-65', `hover:${fg('title')}`),

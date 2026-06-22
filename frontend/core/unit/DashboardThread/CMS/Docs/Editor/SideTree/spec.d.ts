@@ -59,3 +59,52 @@ export type TSideTreeGroupMenuAction =
   (typeof SIDE_TREE_GROUP_MENU_ACTION)[keyof typeof SIDE_TREE_GROUP_MENU_ACTION]
 export type TSideTreeNodeMenuAction =
   (typeof SIDE_TREE_NODE_MENU_ACTION)[keyof typeof SIDE_TREE_NODE_MENU_ACTION]
+
+export type TSideTreeController = {
+  groups: TSideTreeGroup[]
+  activeId: string | null
+  editingTarget: TEditingTarget
+  activate: (id: string) => void
+  addGroup: () => void
+  addChild: (groupId: string, action: TSideTreeChildMenuAction) => void
+  deleteGroup: (groupId: string) => void
+  toggleGroup: (groupId: string) => void
+  renameGroup: (groupId: string, title: string) => void
+  renameChild: (groupId: string, childId: string, title: string) => void
+  cancelEdit: () => void
+  edit: (target: TEditingTarget) => void
+  handleChildAction: (groupId: string, childId: string, action: TSideTreeNodeMenuAction) => void
+  updateChildStyle: (groupId: string, childId: string, marker: TSideTreeChild['marker']) => void
+  patchChild: (childId: string, patch: Partial<TSideTreeChild>) => void
+  reorderGroups: (groups: readonly TSideTreeGroup[]) => void
+}
+
+export type TDocTreeNodeDTO = {
+  id: string
+  parentId?: string | null
+  docId?: string | null
+  type: TSideTreeGroup['type'] | TSideTreeChild['type']
+  title?: string | null
+  slug?: string | null
+  index?: number | null
+  href?: string | null
+  marker?: TSideTreeChild['marker'] | null
+  badge?: string | null
+  hidden?: boolean | null
+  expanded?: boolean | null
+  children?: TDocTreeNodeDTO[] | null
+}
+
+export type TDocTreeMutationPayload = {
+  revision: number
+  conflict?: boolean | null
+  node?: TDocTreeNodeDTO | null
+  affectedNodes?: TDocTreeNodeDTO[] | null
+}
+
+export type TDocTreeMutationData = Record<string, TDocTreeMutationPayload | null | undefined>
+
+export type TDocTreeInitialData = {
+  revision: number
+  groups: TDocTreeNodeDTO[]
+}

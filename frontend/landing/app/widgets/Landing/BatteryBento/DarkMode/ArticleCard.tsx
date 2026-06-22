@@ -1,5 +1,6 @@
 import type { FC } from 'react'
 
+import { cnMerge } from '~/css'
 import UpvoteSVG from '~/icons/Upvote'
 import type { TThemeName } from '~/spec'
 
@@ -14,11 +15,11 @@ const ArticleCard: FC<TProps> = ({ className = '', theme }) => {
   const s = useSalon()
 
   return (
-    <div className={cn(s.wrapper, className)} data-theme={theme}>
+    <div className={cnMerge(s.wrapper, className)} data-theme={theme}>
       <h4 className={s.title}>AI 辅助总结</h4>
       <div className={s.codeBox}>
         <div className={s.codeItem}>
-          <div className={cn(s.bar)} />
+          <div className={s.bar} />
           <div className={cn(s.bar, 'w-5')} />
           <div className={cn(s.bar, 'w-3')} />
         </div>

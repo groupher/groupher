@@ -6,7 +6,7 @@ import LazyLoad from '~/widgets/LazyLoad'
 
 import type { TProps as TPropsBase } from '.'
 import { hasLoadedSrc, markLoadedSrc } from './cache'
-import useSalon, { cnMerge } from './salon/lazy_load_image'
+import useSalon, { cn, cnMerge } from './salon/lazy_load_image'
 
 type TProps = Omit<Required<TPropsBase>, 'noLazy'>
 type TImageState = {
@@ -97,9 +97,7 @@ const LazyLoadImg: FC<TProps> = ({
       aria-label={alt}
     >
       {fallback && (
-        <div className={cnMerge(s.fallbackInFlow, hideFallback && s.fallbackHidden)}>
-          {fallback}
-        </div>
+        <div className={cn(s.fallbackInFlow, hideFallback && s.fallbackHidden)}>{fallback}</div>
       )}
 
       <LazyLoad

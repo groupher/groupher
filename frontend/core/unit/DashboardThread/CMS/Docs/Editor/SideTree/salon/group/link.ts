@@ -15,7 +15,7 @@ export default function useSalon({
     wrapper: cn('group/docs-tree-row row-center h-7 gap-x-2 rounded-md', active && 'bold-sm'),
     pickerSlot: 'row-center size-4 shrink-0',
     titleButton: cn(
-      'min-w-0 max-w-28 text-left bg-transparent border-0 p-0 text-sm truncate',
+      'min-w-0 max-w-28 text-left plain-button text-sm truncate',
       active ? primary('fg') : fg('digest'),
     ),
     href: cn('max-w-16 truncate text-xs', fg('hint')),

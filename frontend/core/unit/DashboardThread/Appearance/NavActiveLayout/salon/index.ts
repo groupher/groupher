@@ -13,7 +13,7 @@ type TArgs = {
 }
 
 export default function useSalon({ layout: currentLayout }: TArgs = {}) {
-  const { bg, cn, fg, primary } = useTwBelt()
+  const { bg, cn, cnMerge, fg, primary } = useTwBelt()
   const base = useBase()
   const { navActiveLayout } = useLayout()
   const resolvedLayout: TNavActiveLayout =
@@ -23,9 +23,9 @@ export default function useSalon({ layout: currentLayout }: TArgs = {}) {
 
   return {
     wrapper: base.baseSection,
-    select: 'row-center gap-8 w-full wrap',
-    layout: 'column-align-both',
-    block: cn(base.blockBase, 'align-both w-44 h-14'),
+    select: 'grid w-full grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3',
+    layout: 'column-align-both w-full min-w-0',
+    block: cnMerge(base.blockBase, 'align-both w-full h-14'),
     blockActive: base.blockBaseActive,
     preview: 'row-center gap-1.5',
     previewItem: cn('row-center h-7 rounded-lg px-2 text-sm', fg('digest')),

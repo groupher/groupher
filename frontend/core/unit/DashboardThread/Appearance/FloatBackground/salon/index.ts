@@ -2,19 +2,19 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 import useBase from '../../useAppearanceBaseSalon'
 
-export { cnMerge } from '~/css'
+export { cn, cnMerge } from '~/css'
 
 export default function useSalon() {
   const base = useBase()
-  const { cnMerge, shadow } = useTwBelt()
+  const { cn, cnMerge, shadow } = useTwBelt()
 
   return {
     wrapper: base.baseSection,
     blockActive: base.blockBaseActive,
-    block: cnMerge(base.blockBase, 'row w-72 h-44 p-0 overflow-hidden'),
-    select: 'row-center gap-x-10 w-full h-auto',
+    block: cnMerge(base.blockBase, 'row w-full h-44 p-0 overflow-hidden'),
+    select: 'grid w-full grid-cols-1 gap-8 md:grid-cols-2',
     bar: cnMerge(base.bar, 'static h-2 opacity-40 z-10'),
-    layout: 'column-align-both group',
+    layout: 'column-align-both group w-full min-w-0',
 
     panel: 'column-start h-full w-1/2 px-5 pt-5 gap-3',
     lightPanel: 'bg-white',
@@ -26,7 +26,7 @@ export default function useSalon() {
     panelNarrow: 'w-12 opacity-20',
     panelWideDim: 'w-20 opacity-10',
 
-    popover: cnMerge(
+    popover: cn(
       'absolute h-20 opacity-95 w-30 rounded-md bg-black z-20 border border-dotted',
       shadow('md'),
     ),

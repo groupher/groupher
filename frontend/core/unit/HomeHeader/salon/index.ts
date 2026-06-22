@@ -33,14 +33,14 @@ export default function useSalon({ extend = false, isSticky = false }: TProps = 
       br('divider'),
     ),
     inner: 'row-between w-full px-28 h-16',
-    brand: cn(linkable()),
+    brand: linkable(),
     links: 'row-center gap-x-4 ml-16 mt-px',
     linkItem: hoverLink(),
     linkItemActive: fg('title'),
     stackLink: cn(hoverLink(), 'pl-3 hover:no-underline'),
     linkActive: cn(fg('title'), bg('hoverBg')),
     //
-    requestDemoLink: cn(hoverLink('text-sm')),
+    requestDemoLink: hoverLink('text-sm'),
     demoIcon: cn(hoverLinkIcon(), 'mt-px'),
     arrowIcon: cn(hoverLinkIcon(), '-rotate-90 mt-px mr-0 ml-1'),
     //
@@ -62,7 +62,7 @@ export default function useSalon({ extend = false, isSticky = false }: TProps = 
 
     menuIcon: cn('size-5', fill('digest')),
     menuBarColumn: 'column !items-start py-2',
-    menuTitle: cn(menu('title')),
+    menuTitle: menu('title'),
     menuDesc: cn('text-xs mt-1 pr-1 opacity-80', fg('digest')),
   }
 }

@@ -6,7 +6,7 @@ export default function useSalon() {
   const { cn, primary, accent } = useTwBelt()
 
   return {
-    wrapper: cn('group/cover-canvas w-full rounded relative overflow-visible'),
+    wrapper: 'group/cover-canvas w-full rounded relative overflow-visible',
     wrapperStyle: {},
     transparentGridStyle: {
       backgroundColor: 'rgba(255, 252, 247, 0.9)',
@@ -19,16 +19,16 @@ export default function useSalon() {
       backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
       backgroundSize: '16px 16px',
     },
-    contentLayer: 'absolute inset-0 rounded overflow-hidden',
-    editorClipLayer: 'absolute inset-0 rounded overflow-hidden',
-    backgroundLayer: 'absolute inset-0',
+    contentLayer: 'abs-full rounded overflow-hidden',
+    editorClipLayer: 'abs-full rounded overflow-hidden',
+    backgroundLayer: 'abs-full',
     imageFrame: 'absolute trans-all-200',
     imageFrameActive: '!transition-none',
     cropViewport: 'relative size-full overflow-hidden trans-all-200',
     cropViewportActive: '!transition-none',
     image: 'block size-full trans-all-200 object-cover pointer-events-none select-none',
     imageActive: '!transition-none',
-    borderHighlight: 'absolute inset-0 z-20 pointer-events-none overflow-visible',
+    borderHighlight: 'abs-full z-20 pointer-events-none overflow-visible',
     magnifier:
       'absolute z-50 aspect-square -translate-x-1/2 -translate-y-1/2 touch-none select-none cursor-move rounded-full trans-all-200',
     magnifierMoving: '!transition-none cursor-grabbing',
@@ -57,7 +57,7 @@ export default function useSalon() {
     editorFrameCroppingActive: 'cursor-grabbing',
     editorFrameResizing: 'cursor-crosshair',
     editorBorder:
-      'absolute inset-0 pointer-events-none border border-current shadow-[0_0_0_1px_currentColor] opacity-80',
+      'abs-full-pe-none border border-current shadow-[0_0_0_1px_currentColor] opacity-80',
     editorBorderTone: primary('fg'),
     resizeHandleGroup: 'absolute z-10 size-24 cursor-default pointer-events-auto',
     resizeHandle: cn(

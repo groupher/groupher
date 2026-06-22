@@ -6,7 +6,7 @@ import type { FC } from 'react'
 import SideTreeDndContext from './Dnd/SideTreeDndContext'
 import Group from './Group'
 import useSalon from './salon'
-import type { TSideTreeController } from './useSideTree'
+import type { TSideTreeController } from './spec'
 
 type TProps = {
   controller: TSideTreeController

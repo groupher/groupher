@@ -8,9 +8,10 @@ import { pickBy } from 'ramda'
 import { type FC, memo, useCallback } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
 
+import { cnMerge } from '~/css'
 import useAutoFocus from '~/hooks/useAutoFocus'
 
-import useSalon, { cn } from './salon/textarea'
+import useSalon from './salon/textarea'
 
 type TProps = {
   testid?: string
@@ -48,7 +49,7 @@ const Textarea: FC<TProps> = ({
 
   return (
     <TextareaAutosize
-      className={cn(s.wrapper, className)}
+      className={cnMerge(s.wrapper, className)}
       data-testid={testid}
       onChange={handleOnChange}
       onKeyDown={handleKeydown}

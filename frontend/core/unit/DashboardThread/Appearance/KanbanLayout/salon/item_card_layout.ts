@@ -19,7 +19,7 @@ export default function useSalon() {
     block: cn(base.blockBase, 'w-72 h-24 scale-90'),
     blockActive: base.blockBaseActive,
     layout: 'column-align-both w-1/2',
-    frame: 'column h-full w-full',
+    frame: 'column s-full',
     header: 'column gap-2',
     headerRow: 'row-center justify-between gap-4',
     footer: 'row-center mt-auto justify-between',

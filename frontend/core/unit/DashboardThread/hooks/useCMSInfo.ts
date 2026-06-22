@@ -4,10 +4,10 @@ import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TDocFaq, TID, TPagedArticles, TPagedCommunities } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
+import S from '~/unit/DashboardThread/schema'
 
 import { FIELD } from '../constant'
 import useHelper from '../logic/useHelper'
-import S from '../schema'
 
 type TRet = {
   loading: boolean

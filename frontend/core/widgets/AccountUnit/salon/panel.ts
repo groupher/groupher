@@ -15,7 +15,7 @@ export default function useSalon() {
   return {
     wrapper: 'column px-5 py-2.5 text-sm min-h-64 relative',
     header: cn('text-base mt-2.5 ml-0.5 z-1', fg('title')),
-    body: 'flex flex-wrap gap-x-4 gap-y-3 mt-8 min-h-32 mb-5 z-10',
+    body: 'row wrap gap-x-4 gap-y-3 mt-8 min-h-32 mb-5 z-10',
     socialItem: cn(
       'row-center h-9 px-2 rounded-lg border',
       fg('digest'),

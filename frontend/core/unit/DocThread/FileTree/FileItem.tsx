@@ -14,7 +14,7 @@ const FileItem: FC<TProps> = ({ tag, active, onSelect }) => {
   const s = useSalon()
 
   return (
-    <div className={cn(s.wrapper)}>
+    <div className={s.wrapper}>
       <button
         type='button'
         className={cn(s.file, active && 'py-0.5')}

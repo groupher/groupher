@@ -16,10 +16,10 @@ export default function useSalon() {
     slash: cn('text-xs mx-1', fg('hint')),
     plusIcon: cn('size-2.5 mr-1', primary('fill')),
     //
-    linkGroup: 'row wrap justify-start mt-7 w-full gap-x-5 gap-y-6',
-    columnWrapper: 'w-[30%] h-full',
+    linkGroup: 'grid mt-7 w-full grid-cols-3 gap-x-5 gap-y-6',
+    columnWrapper: 'h-full w-full min-w-0',
     itemsWrapper: 'column gap-y-1 mt-1 mb-5 min-h-32 rounded-md',
-    itemsWrapperOver: cn(bg('hoverBg')),
+    itemsWrapperOver: bg('hoverBg'),
     itemsWrapperTarget: cn('border border-dashed', primary('border')),
     addLinkRow: 'row justify-start w-full',
   }

@@ -129,10 +129,10 @@ export default function useTwBelt(): TRet {
   const VDivider = () => cn(STATIC_CLS.vDivider, fg('digest'))
 
   const sexyBorder = (turn = 35, classNames?: string) =>
-    cn(STATIC_CLS.sexyBorderBase, `sexy-border-${turn}`, classNames)
+    cnMerge(STATIC_CLS.sexyBorderBase, `sexy-border-${turn}`, classNames)
 
   const sexyVBorder = (turn: number, classNames = '') =>
-    cn(STATIC_CLS.sexyVBorderBase, `sexy-border-${turn}`, classNames)
+    cnMerge(STATIC_CLS.sexyVBorderBase, `sexy-border-${turn}`, classNames)
 
   const avatar = (level: 'md' | 'sm' | '' = 'md') => {
     if (isAvatarSquare) return level === '' ? 'rounded' : `rounded-${level}`

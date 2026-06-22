@@ -37,7 +37,7 @@ const EditorPreview: FC = () => {
       <Toolbox />
 
       <div className={s.content}>
-        <div className={cn(s.bar)} />
+        <div className={s.bar} />
         <div className={cn(s.bar, 'w-32 opacity-20')} />
         <div className={cn(s.bar, 'w-20 opacity-15')} />
       </div>

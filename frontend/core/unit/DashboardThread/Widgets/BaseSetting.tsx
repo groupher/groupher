@@ -9,7 +9,7 @@ import { FIELD } from '../constant'
 import useWidgets from '../logic/useWidgets'
 import SavingBar from '../SavingBar'
 import SectionLabel from '../SectionLabel'
-import useSalon, { cn } from './salon/base_setting'
+import useSalon from './salon/base_setting'
 
 export default function BaseSetting() {
   const s = useSalon()
@@ -93,7 +93,7 @@ export default function BaseSetting() {
         </div>
       </div>
 
-      <div className={cn(isThreadTouched ? 'mt-5' : 'mt-14')} />
+      <div className={isThreadTouched ? 'mt-5' : 'mt-14'} />
 
       <SavingBar isTouched={isThreadTouched} field={FIELD.WIDGETS_THREADS} top={10} bottom={10} />
     </div>

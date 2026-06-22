@@ -84,7 +84,7 @@ const NodeBlock: FC<TProps> = ({
       </div>
       <div className={cn(s.innerCard, cat === 'DEFAULT' && 'h-20')}>
         <div className={cn(s.bar, 'w-24')} />
-        <div className={cn(s.bar)} />
+        <div className={s.bar} />
 
         <div className='grow' />
         <div className={s.footer}>

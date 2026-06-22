@@ -69,7 +69,7 @@ defmodule GroupherServer.Support.Factory do
     unique_num = System.unique_integer([:positive, :monotonic])
     random_num = Enum.random(0..2000)
 
-    title = "community_#{random_num}_#{unique_num}"
+    title = "community-#{random_num}-#{unique_num}"
 
     %{
       title: title,

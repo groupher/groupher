@@ -15,9 +15,9 @@ export default function useSalon() {
   return {
     wrapper: 'row w-full',
     layout: cn(
-      isSidebarLayout && `min-w-0 flex-1 ${isMasonary ? 'px-[12%]' : 'px-[20%]'}`,
-      isClassicLayout && `min-w-0 flex-1 mt-3 mr-12 pr-16 border-r ${br('divider')}`,
-      isHeroLayout && 'min-w-0 flex-1 mt-3.5 mr-12',
+      isSidebarLayout && `min-w-flex ${isMasonary ? 'px-[12%]' : 'px-[20%]'}`,
+      isClassicLayout && `min-w-flex mt-3 mr-12 pr-16 border-r ${br('divider')}`,
+      isHeroLayout && 'min-w-flex mt-3.5 mr-12',
     ),
   }
 }

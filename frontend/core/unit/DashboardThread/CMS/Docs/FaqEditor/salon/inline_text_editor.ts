@@ -17,7 +17,7 @@ export default function useSalon({ grow, multiline }: TProps) {
     ),
     text: cn('min-w-0 truncate', grow && 'grow', fg('digest')),
     editButton: cn(
-      'row-center ml-2 size-6 shrink-0 rounded border-0 bg-transparent p-0 opacity-0 trans-all-100',
+      'row-center ml-2 size-6 shrink-0 rounded plain-button opacity-0 trans-all-100',
       'group-hover/doc-faq-inline-editor:opacity-100 focus-visible:opacity-100',
       hover('bg'),
     ),

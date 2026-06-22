@@ -13,7 +13,7 @@ export default function useSalon() {
       'smoky-65',
       hover('bg'),
     ),
-    collapseIcon: cn('size-3.5'),
+    collapseIcon: 'size-3.5',
     menu: 'column gap-1 ml-1.5 mt-2 border-l border-transparent sexy-border-50',
     item: cn(
       'block relative no-underline w-full text-sm px-1 py-1 pl-5 rounded-lg overflow-hidden',

@@ -219,6 +219,13 @@ defmodule GroupherServer.Test.Helper.Schema do
         title
         slug
         digest
+        insertedAt
+        updatedAt
+        author {
+          login
+          nickname
+          avatar
+        }
         document {
           json
           markdown
@@ -226,6 +233,31 @@ defmodule GroupherServer.Test.Helper.Schema do
           html
           xml
           rss
+        }
+      }
+    }
+    """
+  end
+
+  def q(:doc_draft_revisions) do
+    """
+    query($community: String!, $id: ID!, $type: ArticleRevisionType) {
+      docDraftRevisions(community: $community, id: $id, type: $type) {
+        id
+        thread
+        type
+        articleId
+        articleDraftId
+        title
+        slug
+        digest
+        documentJson
+        contentHash
+        revisionNumber
+        schemaVersion
+        insertedAt
+        author {
+          login
         }
       }
     }
@@ -501,6 +533,13 @@ defmodule GroupherServer.Test.Helper.Schema do
         title
         slug
         digest
+        insertedAt
+        updatedAt
+        author {
+          login
+          nickname
+          avatar
+        }
         document {
           json
           markdown
@@ -508,6 +547,64 @@ defmodule GroupherServer.Test.Helper.Schema do
           html
           xml
           rss
+        }
+      }
+    }
+    """
+  end
+
+  def m(:checkpoint_doc_draft_revision) do
+    """
+    mutation($community: String!, $id: ID!) {
+      checkpointDocDraftRevision(community: $community, id: $id) {
+        id
+        thread
+        type
+        articleDraftId
+        title
+        slug
+        documentJson
+        contentHash
+        revisionNumber
+        author {
+          login
+        }
+      }
+    }
+    """
+  end
+
+  def m(:publish_doc_draft_revision) do
+    """
+    mutation($community: String!, $id: ID!) {
+      publishDocDraftRevision(community: $community, id: $id) {
+        id
+        thread
+        type
+        articleId
+        articleDraftId
+        title
+        slug
+        documentJson
+        contentHash
+        revisionNumber
+        author {
+          login
+        }
+      }
+    }
+    """
+  end
+
+  def m(:restore_doc_draft_revision) do
+    """
+    mutation($community: String!, $id: ID!, $revisionId: ID!) {
+      restoreDocDraftRevision(community: $community, id: $id, revisionId: $revisionId) {
+        id
+        title
+        slug
+        document {
+          json
         }
       }
     }

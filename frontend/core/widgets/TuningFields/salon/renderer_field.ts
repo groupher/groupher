@@ -15,7 +15,7 @@ export default function useSalon() {
     labelStart: base.labelStart,
     content: base.content,
     contentStart: base.contentStart,
-    renderers: 'flex flex-wrap items-start justify-start gap-1.5',
+    renderers: 'row-start wrap justify-start gap-1.5',
     rendererButton: cn(
       'h-6 px-1.5 rounded-md border text-xs leading-none pointer trans-all-200',
       br('divider'),

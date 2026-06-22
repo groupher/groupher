@@ -13,6 +13,6 @@ export default function useSalon() {
     active: base.templateActive,
     center: 'row-center gap-x-5',
     right: 'row-center gap-x-4',
-    linkItem: cn('text-xs no-underline hover:underline pointer', cut('w-12'), fg('digest')),
+    linkItem: cn('text-xs hover-underline pointer', cut('w-12'), fg('digest')),
   }
 }

@@ -1,9 +1,10 @@
 import type { FC } from 'react'
 
+import { cnMerge } from '~/css'
 import Img from '~/Img'
 import type { TSpace, TUser } from '~/spec'
 
-import useSalon, { cn } from './salon/landing_page'
+import useSalon from './salon/landing_page'
 
 type TProps = {
   users: TUser[]
@@ -15,7 +16,7 @@ const LandingPage: FC<TProps> = ({ users, circle = false, className = '', ...spa
   const s = useSalon({ circle, ...spacing })
 
   return (
-    <div className={cn(s.wrapper, className)}>
+    <div className={cnMerge(s.wrapper, className)}>
       {users.map((user) => (
         <Img key={user.login} src={user.avatar} className={s.avatar} />
       ))}

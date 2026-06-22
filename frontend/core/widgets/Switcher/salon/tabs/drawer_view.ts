@@ -20,7 +20,7 @@ export default function useSalon({ slipBarPos, topSpace, bottomSpace, ...spacing
     ),
     tabsContainer: 'row-center s-full relative z-10',
     tabItem: cn('align-both h-full grow rounded-md text-xs pointer', fg('digest')),
-    activeTabItem: cn(fg('title')),
+    activeTabItem: fg('title'),
     slider: cn(
       'absolute left-1 rounded-md transition-all duration-200 ease-in-out',
       slipBarPos === 'top' ? `top-${topSpace}` : 'top-1',

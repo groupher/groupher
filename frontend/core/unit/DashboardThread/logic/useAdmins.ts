@@ -5,9 +5,8 @@ import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TModerator, TUser } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
+import S from '~/unit/DashboardThread/schema'
 import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
-
-import S from '../schema'
 
 type TRet = {
   moderators: TModerator[]

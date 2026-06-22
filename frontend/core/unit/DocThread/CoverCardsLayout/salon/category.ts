@@ -8,7 +8,7 @@ export default function useSalon() {
 
   return {
     section: 'column',
-    wrapper: cn('column overflow-hidden text-left trans-all-200'),
+    wrapper: 'column overflow-hidden text-left trans-all-200',
     title: cn('text-lg bold-sm', fg('title')),
     sectionDesc: cn('mb-5 text-sm leading-8', fg('digest')),
     cards: 'grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3',

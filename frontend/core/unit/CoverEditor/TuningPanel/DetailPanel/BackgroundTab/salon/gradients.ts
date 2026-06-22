@@ -1,7 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {
-  const { cn, cnMerge, selectable } = useTwBelt()
+  const { cnMerge, selectable } = useTwBelt()
 
   return {
     section: 'column gap-3 w-full',
@@ -16,6 +16,6 @@ export default function useSalon() {
       selectable('badge', { isCircle: true, size: 'sm' }),
       '-top-1.5 -right-1 scale-80',
     ),
-    checkIcon: cn(selectable('check', { isCircle: true, size: 'sm' })),
+    checkIcon: selectable('check', { isCircle: true, size: 'sm' }),
   }
 }

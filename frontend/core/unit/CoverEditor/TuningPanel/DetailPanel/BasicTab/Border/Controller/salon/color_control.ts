@@ -12,7 +12,7 @@ export default function useSalon() {
       'focus-visible:ring-2 focus-visible:ring-current',
     ),
     colorTriggerDisabled: 'opacity-50',
-    colorPanel: cn('column w-42 gap-4 p-0.5'),
+    colorPanel: 'column w-42 gap-4 p-0.5',
     colorOptionRow: 'grid grid-cols-2 gap-x-3',
     colorOption: cn(
       'row-center h-7 gap-2 text-left opacity-80 outline-none trans-all-100 pointer',
@@ -31,7 +31,7 @@ export default function useSalon() {
     colorSlider: 'w-full cursor-ew-resize',
     colorSliderTrack:
       'relative h-2 w-full cursor-ew-resize rounded-full overflow-visible dark:brightness-75',
-    colorSliderRail: 'absolute inset-0 rounded-full overflow-hidden ring-1 ring-black/10',
+    colorSliderRail: 'abs-full rounded-full overflow-hidden ring-1 ring-black/10',
     colorThumb: cn(
       'absolute top-1/2 z-10 size-4 rounded-full border-2 border-white bg-[var(--thumb-color)] shadow-md outline-none',
       'ring-1 ring-black/15 cursor-ew-resize',
@@ -39,7 +39,7 @@ export default function useSalon() {
     opacitySliderTrack:
       'relative h-2 w-full cursor-ew-resize rounded-full overflow-visible ring-1 ring-black/10 dark:brightness-75',
     settingButton: cn(
-      'align-both size-5 rounded-none border-0 bg-transparent p-0 outline-none pointer trans-all-100',
+      'align-both size-5 rounded-none plain-button outline-none pointer trans-all-100',
       'hover:scale-110 focus-visible:scale-110',
     ),
     settingIcon: cn('size-4', fill('digest')),

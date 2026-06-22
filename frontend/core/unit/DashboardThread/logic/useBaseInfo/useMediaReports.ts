@@ -3,9 +3,9 @@ import { equals, filter, find, isEmpty, mergeRight, reject, startsWith } from 'r
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TMediaReport } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
+import S from '~/unit/DashboardThread/schema'
 
 import { EMPTY_MEDIA_REPORT } from '../../constant'
-import S from '../../schema'
 
 export type TRet = {
   queryingMediaReportIndex: number | null

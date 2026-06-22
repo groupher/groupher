@@ -5,7 +5,7 @@ export default function useSalon() {
 
   return {
     wrapper: cn(
-      'column-align-center relative w-full rounded-xl border border-b-none w-[680px] h-96',
+      'column-center relative w-full rounded-xl border border-b-none w-[680px] h-96',
       bg('alphaBg'),
       br('divider'),
     ),

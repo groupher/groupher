@@ -9,9 +9,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
   alias GroupherServer.Repo
 
   alias CMS.Model.{
+    ArticleDraft,
     Doc,
-    DocDraft,
-    DocDocumentDraft,
     DocsSiteState,
     DocTreeDraftState,
     DocTreeNode,
@@ -52,14 +51,13 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
       assert page_payload.node.type == :page
       assert page_payload.node.doc_id
 
-      {:ok, doc_draft} = ORM.find(DocDraft, page_payload.node.doc_id, preload: :document)
+      {:ok, doc_draft} = ORM.find(ArticleDraft, page_payload.node.doc_id)
       assert doc_draft.title == "Install"
       assert doc_draft.slug == "install"
-      assert doc_draft.document.json =~ "Start writing your docs draft here."
+      assert doc_draft.json =~ "Start writing your docs draft here."
 
       assert draft_count(DocTreeNodeDraft, community.id) == 2
-      assert draft_count(DocDraft, community.id) == 1
-      assert Repo.aggregate(DocDocumentDraft, :count, :id) == 1
+      assert draft_count(ArticleDraft, community.id) == 1
       assert draft_count(DocTreeNode, community.id) == 0
       assert draft_count(Doc, community.id) == 0
 
@@ -70,6 +68,51 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
       assert site_state.draft_revision == before_site_state.draft_revision + 2
       assert site_state.published_revision == 0
       assert site_state.last_published_draft_revision == 0
+    end
+
+    test "creating a duplicate page uses copy title and slug for tree and draft" do
+      {:ok, user} = db_insert(:user)
+      {:ok, community} = empty_docs_community(user)
+      {:ok, before_tree_state} = ORM.find_by(DocTreeDraftState, community_id: community.id)
+
+      {:ok, group_payload} =
+        CMS.DocTree.create_group(community, %{
+          title: "Guides",
+          slug: "guides",
+          base_revision: before_tree_state.revision
+        })
+
+      {:ok, first_payload} =
+        CMS.DocTree.create_page(
+          community,
+          %{
+            parent_id: group_payload.node.id,
+            title: "page-3",
+            slug: "page-3",
+            base_revision: group_payload.revision
+          },
+          user
+        )
+
+      {:ok, duplicate_payload} =
+        CMS.DocTree.create_page(
+          community,
+          %{
+            parent_id: group_payload.node.id,
+            title: "page-3",
+            slug: "page-3",
+            base_revision: first_payload.revision
+          },
+          user
+        )
+
+      assert duplicate_payload.node.title == "page-3-copy"
+      assert duplicate_payload.node.slug == "page-3-copy"
+
+      {:ok, doc_draft} = ORM.find(ArticleDraft, duplicate_payload.node.doc_id)
+      assert doc_draft.title == "page-3-copy"
+      assert doc_draft.slug == "page-3-copy"
+      assert doc_draft.json =~ "page-3-copy"
     end
 
     test "stale base_revision returns conflict and does not mutate draft tree" do
@@ -142,7 +185,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
                  base_revision: page_payload.revision
                })
 
-      assert %{doc_draft_id: ["page nodes require doc_draft_id"]} = errors_on(changeset)
+      assert %{article_draft_id: ["page nodes require article_draft_id"]} = errors_on(changeset)
     end
 
     test "updating a doc draft stores parsed body payload and bumps site draft revision only" do
@@ -179,10 +222,10 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
 
       assert draft.title == "Updated Install"
       assert draft.slug == "updated-install"
-      assert draft.document.json == @plate_body
-      assert is_binary(draft.document.html)
-      assert is_binary(draft.document.xml)
-      assert draft.document.digest =~ "Updated Draft"
+      assert draft.json == @plate_body
+      assert is_binary(draft.html)
+      assert is_binary(draft.xml)
+      assert draft.digest =~ "Updated Draft"
 
       {:ok, page_node} = ORM.find(DocTreeNodeDraft, page_payload.node.id)
       assert page_node.title == "Install"

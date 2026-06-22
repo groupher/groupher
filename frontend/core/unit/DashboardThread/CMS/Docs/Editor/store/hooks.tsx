@@ -4,4 +4,12 @@ import createStoreHook from '~/stores/createStoreHook'
 
 import { StoreContext } from './provider'
 
-export default createStoreHook(StoreContext, ['addGroup', 'attachSideTree'])
+export default createStoreHook(StoreContext, [
+  'addGroup',
+  'attachSideTree',
+  'attachSaveDocDraft',
+  'reloadDocDraft',
+  'saveDocDraft',
+  'setMode',
+  'setDocDraftSession',
+])

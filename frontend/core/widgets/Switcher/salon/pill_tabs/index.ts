@@ -10,6 +10,6 @@ export default function useSalon({ ...spacing }: TProps) {
 
   return {
     wrapper: cn('max-w-full', margin(spacing)),
-    nav: cn('inline-flex max-w-full items-center gap-1 whitespace-nowrap'),
+    nav: 'inline-flex max-w-full items-center gap-1 whitespace-nowrap',
   }
 }

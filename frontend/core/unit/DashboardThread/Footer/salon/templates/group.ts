@@ -16,6 +16,6 @@ export default function useSalon() {
     desc: cn('line-clamp-2 w-40 mt-1.5 text-xs', fg('digest')),
     center: 'column gap-x-2',
     groupTitle: cn('text-xs bold-sm mb-1.5', fg('title')),
-    linkItem: cn('text-xs pointer no-underline hover:underline mb-1', fg('digest'), cut('w-20')),
+    linkItem: cn('text-xs pointer hover-underline mb-1', fg('digest'), cut('w-20')),
   }
 }

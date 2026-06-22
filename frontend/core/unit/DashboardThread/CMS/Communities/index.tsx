@@ -11,6 +11,7 @@ import {
 import { includes } from 'ramda'
 import { startTransition, useMemo, useState } from 'react'
 
+import { cnMerge } from '~/css'
 import {
   SELECT_COL_ID,
   type TSortDir,
@@ -178,7 +179,7 @@ export default function Communities() {
                   <button
                     key={header.id}
                     type='button'
-                    className={cn(
+                    className={cnMerge(
                       s.table.actionBtn,
                       CLASSIC_ALIGN_LEFT.includes(col.id) && '!justify-start',
                       CLASSIC_ALIGN_RIGHT.includes(col.id) && '!justify-end',
@@ -225,7 +226,11 @@ export default function Communities() {
                     return (
                       <div
                         key={cell.id}
-                        className={cn(s.table.cell, isSelectCol && 'table-col-select', p.className)}
+                        className={cnMerge(
+                          s.table.cell,
+                          isSelectCol && 'table-col-select',
+                          p.className,
+                        )}
                         style={p.style}
                       >
                         {isSelectCol ? (

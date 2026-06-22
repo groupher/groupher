@@ -74,6 +74,35 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
+  def doc_draft_revisions(_root, %{community: %Community{} = community, id: id} = args, _info) do
+    opts =
+      args
+      |> Map.take([:type, :limit])
+      |> Enum.to_list()
+
+    CMS.Articles.list_doc_draft_revisions(community, id, opts)
+  end
+
+  def doc_draft_revisions(_root, %{community: community} = args, _info) do
+    with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
+      doc_draft_revisions(nil, Map.put(args, :community, community), nil)
+    end
+  end
+
+  def doc_draft_revision(
+        _root,
+        %{community: %Community{} = community, id: id, revision_id: revision_id},
+        _info
+      ) do
+    CMS.Articles.get_doc_draft_revision(community, id, revision_id)
+  end
+
+  def doc_draft_revision(_root, %{community: community} = args, _info) do
+    with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
+      doc_draft_revision(nil, Map.put(args, :community, community), nil)
+    end
+  end
+
   def create_doc_tree_group(_root, %{community: community, input: input} = args, _info) do
     CMS.DocTree.create_group(community, Map.put(input, :base_revision, args[:base_revision]))
   end
@@ -100,6 +129,42 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def update_doc_draft(_root, %{community: community, id: id} = args, _info) do
     CMS.DocTree.update_draft(community, id, Map.take(args, [:title, :slug, :body]))
+  end
+
+  def checkpoint_doc_draft_revision(
+        _root,
+        %{community: community, id: id, cur_user: user},
+        _info
+      ) do
+    CMS.Articles.checkpoint_doc_draft_revision(community, id, user)
+  end
+
+  def checkpoint_doc_draft_revision(_root, %{community: community, id: id}, _info) do
+    CMS.Articles.checkpoint_doc_draft_revision(community, id)
+  end
+
+  def restore_doc_draft_revision(
+        _root,
+        %{community: community, id: id, revision_id: revision_id, cur_user: user},
+        _info
+      ) do
+    CMS.Articles.restore_doc_draft_revision(community, id, revision_id, user)
+  end
+
+  def restore_doc_draft_revision(
+        _root,
+        %{community: community, id: id, revision_id: revision_id},
+        _info
+      ) do
+    CMS.Articles.restore_doc_draft_revision(community, id, revision_id)
+  end
+
+  def publish_doc_draft_revision(
+        _root,
+        %{community: community, id: id, cur_user: user},
+        _info
+      ) do
+    CMS.Articles.publish_doc_draft_revision(community, id, user)
   end
 
   def delete_doc_tree_node(_root, %{community: community, id: id} = args, _info) do

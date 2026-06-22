@@ -18,7 +18,7 @@ const DNSSetup: FC<TProps> = ({ onNext }) => {
   return (
     <div className={s.wrapper}>
       <div className={s.title}>{t('dsb.domain.custom.dns.title')}</div>
-      <div className={cn(s.desc)}>{t('dsb.domain.custom.dns.desc')}</div>
+      <div className={s.desc}>{t('dsb.domain.custom.dns.desc')}</div>
 
       <DnsRecordsTable records={DNS_RECORDS} />
 

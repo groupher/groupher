@@ -6,10 +6,10 @@ export { cnMerge } from '~/css'
 type TProps = TSpace
 
 export default function useSalon({ ...spacing }: TProps) {
-  const { cn, cnMerge, bg, fg, br, margin, shadow } = useTwBelt()
+  const { cn, bg, fg, br, margin, shadow } = useTwBelt()
 
   return {
-    wrapper: cnMerge('border rounded-md', br('divider'), `hover:${br('digest')}`, margin(spacing)),
+    wrapper: cn('border rounded-md', br('divider'), `hover:${br('digest')}`, margin(spacing)),
     optionRow: 'row items-center gap-2',
     optionTitle: cn('text-sm px-1.5 rounded', fg('digest')),
     optionTitleActive: fg('title'),

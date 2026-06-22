@@ -22,7 +22,7 @@ export default function useSalon() {
       'absolute left-0 h-0 w-full -translate-y-1/2 border-t pointer-events-none',
       br('divider'),
     ),
-    svg: 'absolute inset-0 size-full',
+    svg: 'abs-full size-full',
     stick: cn(
       'stroke-current stroke-[3px] opacity-65 transition-opacity duration-100 group-hover/border-control:opacity-100',
       primary('fg'),

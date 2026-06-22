@@ -6,7 +6,7 @@ export default function useSalon() {
   const { cn, fg, fill, primary } = useTwBelt()
 
   return {
-    panel: cn('column w-40 gap-3.5 p-0.5'),
+    panel: 'column w-40 gap-3.5 p-0.5',
     fieldRow: 'grid grid-cols-[3.25rem_minmax(0,1fr)] items-center gap-2.5',
     lightFieldRow: 'grid grid-cols-[3.25rem_minmax(0,1fr)] items-start gap-2.5',
     fieldLabel: cn('text-xs', fg('digest')),
@@ -40,7 +40,7 @@ export default function useSalon() {
     blackColorButton: 'border-neutral-600 bg-black',
     colorButtonActive: primary('border'),
     settingButton: cn(
-      'align-both size-5 rounded-none border-0 bg-transparent p-0 outline-none pointer trans-all-100',
+      'align-both size-5 rounded-none plain-button outline-none pointer trans-all-100',
       'hover:scale-110 focus-visible:scale-110',
     ),
     settingIcon: cn('size-4', fill('digest')),

@@ -16,7 +16,7 @@ export default function useSalon({ ...spacing }: TProps) {
       bg('divider'),
       fg('button.fg'),
     ),
-    mainBtn: 'min-w-0 flex-1',
+    mainBtn: 'min-w-flex',
     menuBtn: 'h-8 w-8 shrink-0',
 
     arrowBtn: 'h-full w-8',

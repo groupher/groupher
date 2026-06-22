@@ -82,7 +82,7 @@ export default function CmsDataTable<TData>({
                 <button
                   key={header.id}
                   type='button'
-                  className={cn(
+                  className={cnMerge(
                     s.table.actionBtn,
                     alignClassName(align),
                     canSort && s.table.canSort,
@@ -99,7 +99,7 @@ export default function CmsDataTable<TData>({
                         flexRender(header.column.columnDef.header, header.getContext())}
                     </div>
                   ) : (
-                    <span className='min-w-0 flex-1 truncate'>
+                    <span className='min-w-flex truncate'>
                       {!header.isPlaceholder &&
                         flexRender(header.column.columnDef.header, header.getContext())}
                     </span>

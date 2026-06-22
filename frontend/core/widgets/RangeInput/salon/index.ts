@@ -26,9 +26,8 @@ export default function useSalon({ width, labelPlacement, hideLabel, ...spacing 
     valueLabelAmount: fg('title'),
     control: 'relative grid min-h-4 flex-1 items-center',
     track: 'relative z-10 h-4 pointer-events-none',
-    trackPart: cn(
+    trackPart:
       'absolute top-0 h-4 rounded-sm border origin-center scale-y-50 transition-transform delay-1000 duration-200 ease-out group-hover/range-input:delay-100 group-hover/range-input:scale-y-100 group-focus-within/range-input:delay-0 group-focus-within/range-input:scale-y-100',
-    ),
     trackLeft: 'left-0 rounded-l-md',
     trackRight: 'right-0 rounded-r-md',
     activeTrack: cn(primary('bg'), primary('border')),
@@ -43,7 +42,7 @@ export default function useSalon({ width, labelPlacement, hideLabel, ...spacing 
     leftDot: 'bg-white -ml-1',
     rightDot: cn(primary('bg'), 'ml-1'),
     indicatorFocus: cn('outline-2 outline-offset-2', primary('border')),
-    range: 'absolute inset-0 size-full m-0 opacity-0 appearance-none pointer cursor-ew-resize',
+    range: 'abs-full size-full m-0 opacity-0 appearance-none pointer cursor-ew-resize',
     disabled: 'opacity-50',
   }
 }

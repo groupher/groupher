@@ -16,7 +16,7 @@ export default function BriefCardsLayout() {
       <div className={cnMerge(s.itemTitle, 'mb-3 w-1/4 opacity-40 ml-0.5')} />
       <div className={s.items}>
         <div className={s.item}>
-          <div className={cnMerge(s.iconBox)}>
+          <div className={s.iconBox}>
             <BookSVG className={s.icon} />
           </div>
           <div className={s.copy}>
@@ -27,7 +27,7 @@ export default function BriefCardsLayout() {
         </div>
 
         <div className={s.item}>
-          <div className={cnMerge(s.iconBox)}>
+          <div className={s.iconBox}>
             <AdminSVG className={s.icon} />
           </div>
           <div className={s.copy}>
@@ -38,7 +38,7 @@ export default function BriefCardsLayout() {
         </div>
 
         <div className={s.item}>
-          <div className={cnMerge(s.iconBox)}>
+          <div className={s.iconBox}>
             <BillingSVG className={s.icon} />
           </div>
           <div className={s.copy}>
@@ -49,7 +49,7 @@ export default function BriefCardsLayout() {
         </div>
 
         <div className={s.item}>
-          <div className={cnMerge(s.iconBox)}>
+          <div className={s.iconBox}>
             <AirBallonSVG className={s.icon} />
           </div>
           <div className={s.copy}>
@@ -60,7 +60,7 @@ export default function BriefCardsLayout() {
         </div>
 
         <div className={s.item}>
-          <div className={cnMerge(s.iconBox)}>
+          <div className={s.iconBox}>
             <CmsSVG className={s.icon} />
           </div>
           <div className={s.copy}>
@@ -74,7 +74,7 @@ export default function BriefCardsLayout() {
       <div className={cnMerge(s.itemTitle, 'mt-5 mb-3 w-1/5 opacity-40 ml-0.5')} />
       <div className={s.items}>
         <div className={s.item}>
-          <div className={cnMerge(s.iconBox)}>
+          <div className={s.iconBox}>
             <MirrorSVG className={s.icon} />
           </div>
           <div className={s.copy}>
@@ -85,7 +85,7 @@ export default function BriefCardsLayout() {
         </div>
 
         <div className={s.item}>
-          <div className={cnMerge(s.iconBox)}>
+          <div className={s.iconBox}>
             <AdminSVG className={s.icon} />
           </div>
           <div className={s.copy}>
@@ -99,7 +99,7 @@ export default function BriefCardsLayout() {
       <div className={cnMerge(s.itemTitle, 'mt-5 mb-3 w-1/5 opacity-40 ml-0.5')} />
       <div className={s.items}>
         <div className={s.item}>
-          <div className={cnMerge(s.iconBox)}>
+          <div className={s.iconBox}>
             <BillingSVG className={s.icon} />
           </div>
           <div className={s.copy}>
@@ -110,7 +110,7 @@ export default function BriefCardsLayout() {
         </div>
 
         <div className={s.item}>
-          <div className={cnMerge(s.iconBox)}>
+          <div className={s.iconBox}>
             <AirBallonSVG className={s.icon} />
           </div>
           <div className={s.copy}>
@@ -121,7 +121,7 @@ export default function BriefCardsLayout() {
         </div>
 
         <div className={s.item}>
-          <div className={cnMerge(s.iconBox)}>
+          <div className={s.iconBox}>
             <CmsSVG className={s.icon} />
           </div>
           <div className={s.copy}>

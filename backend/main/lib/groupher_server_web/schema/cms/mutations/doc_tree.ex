@@ -63,6 +63,40 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       resolve(&R.CMS.update_doc_draft/3)
     end
 
+    @desc "save current docs draft as an article revision checkpoint"
+    field :checkpoint_doc_draft_revision, :article_revision do
+      arg(:community, non_null(:string))
+      arg(:id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
+      resolve(&R.CMS.checkpoint_doc_draft_revision/3)
+    end
+
+    @desc "publish current docs draft as a published article revision"
+    field :publish_doc_draft_revision, :article_revision do
+      arg(:community, non_null(:string))
+      arg(:id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
+      resolve(&R.CMS.publish_doc_draft_revision/3)
+    end
+
+    @desc "restore a docs draft from an article revision"
+    field :restore_doc_draft_revision, :doc_draft do
+      arg(:community, non_null(:string))
+      arg(:id, non_null(:id))
+      arg(:revision_id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
+      resolve(&R.CMS.restore_doc_draft_revision/3)
+    end
+
     @desc "delete a docs tree node"
     field :delete_doc_tree_node, :doc_tree_mutation_payload do
       arg(:community, non_null(:string))

@@ -23,7 +23,7 @@ export default function useSalon({ compact = false }: { compact?: boolean } = {}
     ),
     blockActive: base.blockBaseActive,
 
-    frame: 'column h-full w-full',
+    frame: 'column s-full',
     topRow: 'row-between',
     header: cn('column', compact ? 'gap-1.5' : 'gap-2'),
     footer: 'row-between mt-auto',

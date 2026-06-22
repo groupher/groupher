@@ -5,7 +5,7 @@ export default function useSalon() {
 
   return {
     wrapper: 'row-center min-w-0 w-full overflow-hidden',
-    title: cn('text-sm ml-2 min-w-0 flex-1 truncate', fg('digest')),
-    primaryTitle: cn('text-sm ml-2 min-w-0 flex-1 truncate', primary('fg')),
+    title: cn('text-sm ml-2 min-w-flex truncate', fg('digest')),
+    primaryTitle: cn('text-sm ml-2 min-w-flex truncate', primary('fg')),
   }
 }

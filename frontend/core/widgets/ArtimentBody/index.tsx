@@ -97,7 +97,7 @@ const ArtimentBody: FC<TProps> = ({
           }}
         />
       ) : (
-        <div className={cn(mode === 'article' ? 'w-auto' : 'w-4')} />
+        <div className={mode === 'article' ? 'w-auto' : 'w-4'} />
       )}
     </div>
   )

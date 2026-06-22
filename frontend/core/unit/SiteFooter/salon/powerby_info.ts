@@ -7,7 +7,7 @@ export default function useSalon() {
     wrapper: 'column-align-both w-full mt-12',
     note: cn('text-xs', fg('digest')),
     link: cn(
-      'text-xs ml-0.5 mr-0.5 no-underline hover:underline transition-colors',
+      'text-xs ml-0.5 mr-0.5 hover-underline transition-colors',
       `hover:${fg('title')}`,
       fg('digest'),
     ),

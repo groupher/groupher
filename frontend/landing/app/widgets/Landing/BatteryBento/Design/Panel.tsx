@@ -39,7 +39,7 @@ const Panel: FC<TProps> = ({ hovering }) => {
           )}
         >
           <CursorSVG className={s.cursorIcon} style={s.cursorIconStyle} />
-          <div className={cn(s.cursorText)} style={s.cursorTextStyle}>
+          <div className={s.cursorText} style={s.cursorTextStyle}>
             Mr. Tony
           </div>
         </div>

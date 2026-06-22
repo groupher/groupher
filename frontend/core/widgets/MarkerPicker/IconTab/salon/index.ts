@@ -4,9 +4,9 @@ export default function useSalon() {
   const { bg, br, cn, fg, fill, hover, primary } = useTwBelt()
 
   return {
-    wrapper: 'flex h-full min-h-0 flex-col',
+    wrapper: 'column h-full min-h-0',
     listWrapper: 'min-h-0 flex-1',
-    searchWrapper: cn('px-2 pt-2 pb-1'),
+    searchWrapper: 'px-2 pt-2 pb-1',
     searchBox: (focused: boolean) =>
       cn(
         'row-center rounded-md border px-2.5 h-8 trans-all-100',

@@ -3,8 +3,9 @@
 import { type FC, type KeyboardEvent, memo, useMemo } from 'react'
 
 import SIZE from '~/constant/size'
+import { cnMerge } from '~/css'
 
-import useSalon, { cn } from '../salon/segment_tabs'
+import useSalon from '../salon/segment_tabs'
 import type { TProps } from './spec'
 import TabItem from './TabItem'
 
@@ -77,7 +78,7 @@ const SegmentTabs: FC<TProps> = ({
   }
 
   return (
-    <div role='tablist' aria-orientation='horizontal' className={cn(s.wrapper, className)}>
+    <div role='tablist' aria-orientation='horizontal' className={cnMerge(s.wrapper, className)}>
       {items.map((item, index) => (
         <TabItem
           key={item.key}

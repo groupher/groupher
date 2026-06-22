@@ -6,7 +6,7 @@ export default function useSalon(spacing: TSpace = {}) {
 
   return {
     wrapper: margin(spacing),
-    inner: cn('w-full'),
+    inner: 'w-full',
     settingRow: 'row-end gap-4 py-3',
     labelGroup: 'w-2/5 min-w-2/5',
     label: cn('text-base', fg('title')),

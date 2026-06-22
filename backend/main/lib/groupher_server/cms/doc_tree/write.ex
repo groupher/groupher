@@ -9,14 +9,14 @@ defmodule GroupherServer.CMS.DocTree.Write do
               v
       doc_tree_node_drafts
               |
-              +-- page nodes point at doc_drafts via doc_draft_id
+              +-- page nodes point at article_drafts via article_draft_id
               +-- link nodes store href directly
               +-- group nodes are root-only containers
 
-  Creating a page without an explicit `doc_id` creates a default `DocDraft` and
-  `DocDocumentDraft` first, then stores that draft id on the tree node. The
+  Creating a page without an explicit `doc_id` creates a default `ArticleDraft`
+  first, then stores that draft id on the tree node. The
   GraphQL input/output field is still called `doc_id`; in this draft path it
-  means `doc_draft_id`.
+  means `article_draft_id`.
 
   Every successful mutation bumps both the tree draft revision and the docs site
   draft revision through `DocTree.Revision`, so conflict checks and the future
@@ -24,21 +24,20 @@ defmodule GroupherServer.CMS.DocTree.Write do
   """
 
   import Ecto.Query, warn: false
-  import GroupherServer.CMS.Articles.Write, only: [ensure_author_exists: 1]
 
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
+  alias CMS.Articles.Draft
   alias CMS.DocTree.{Read, Revision}
 
   alias CMS.Model.{
+    ArticleDraft,
     Community,
-    DocDocumentDraft,
-    DocDraft,
     DocTreeDraftState,
     DocTreeNodeDraft
   }
 
-  alias Helper.{ContentPayload, ContentPipeline, ORM, T, Transaction}
+  alias Helper.{ORM, T, Transaction}
   alias Helper.Validator.Slug
 
   @type payload :: map()
@@ -63,19 +62,23 @@ defmodule GroupherServer.CMS.DocTree.Write do
   @spec create_page(Community.t(), map(), User.t() | nil) :: T.domain_res(payload())
   def create_page(%Community{} = community, args, user \\ nil) do
     operate(community, args, fn state ->
-      with {:ok, parent} <- group_parent(community, Map.get(args, :parent_id)),
-           {:ok, args} <- ensure_page_doc_draft(community, args, user) do
-        attrs =
+      with {:ok, parent} <- group_parent(community, Map.get(args, :parent_id)) do
+        args =
           args
-          |> normalize_doc_draft_id()
-          |> Map.merge(%{type: :page, community_id: community.id, parent_id: parent.id})
           |> normalize_title_slug()
-          |> unique_create_identity(community, parent.id)
-          |> ensure_index(community, parent.id)
+          |> unique_create_page_identity(community, parent.id)
 
-        with {:ok, node} <- ORM.create(DocTreeNodeDraft, attrs),
-             {:ok, state} <- bump_revision(community, state) do
-          {:ok, payload(state, node)}
+        with {:ok, args} <- ensure_page_article_draft(community, args, user) do
+          attrs =
+            args
+            |> normalize_article_draft_id()
+            |> Map.merge(%{type: :page, community_id: community.id, parent_id: parent.id})
+            |> ensure_index(community, parent.id)
+
+          with {:ok, node} <- ORM.create(DocTreeNodeDraft, attrs),
+               {:ok, state} <- bump_revision(community, state) do
+            {:ok, payload(state, node)}
+          end
         end
       end
     end)
@@ -104,8 +107,8 @@ defmodule GroupherServer.CMS.DocTree.Write do
   def update_node(%Community{} = community, id, args) do
     operate(community, args, fn state ->
       with {:ok, node} <- find_node(community, id),
-           :ok <- validate_doc_draft(community, Map.get(args, :doc_id)),
-           attrs <- args |> normalize_doc_draft_id() |> normalize_title_slug(),
+           :ok <- validate_article_draft(community, Map.get(args, :doc_id)),
+           attrs <- args |> normalize_article_draft_id() |> normalize_title_slug(),
            {:ok, node} <- ORM.update(node, attrs),
            {:ok, state} <- bump_revision(community, state) do
         {:ok, payload(state, node)}
@@ -113,20 +116,25 @@ defmodule GroupherServer.CMS.DocTree.Write do
     end)
   end
 
-  @spec update_draft(Community.t(), T.id(), map()) :: T.domain_res(DocDraft.t())
+  @doc """
+  Updates the staged article draft behind a docs page.
+
+  The docs tree owns only the page-to-draft reference. Content parsing and
+  persistence are delegated to `CMS.Articles.Draft`, then the docs site draft
+  revision is bumped so publish/status UI can notice the content change.
+
+  ## Examples
+
+      iex> Write.update_draft(community, page.doc_id, %{body: json})
+      {:ok, %ArticleDraft{thread: :doc}}
+  """
+  @spec update_draft(Community.t(), T.id(), map()) :: T.domain_res(ArticleDraft.t())
   def update_draft(%Community{} = community, id, args) do
-    Transaction.lock_global("doc_draft:#{community.id}:#{id}", fn ->
-      with {:ok, _site_state} <- Read.ensure_site_state(community),
-           {:ok, draft} <- Read.read_draft(community, id),
-           {:ok, payload} <- maybe_parse_body(args),
-           draft_attrs <- draft_attrs(community, draft, args, payload),
-           doc_attrs <- doc_attrs(payload),
-           {:ok, draft} <- maybe_update_draft(draft, draft_attrs),
-           {:ok, _document} <- maybe_update_document(draft, doc_attrs),
-           {:ok, _state} <- Revision.bump_site_draft(community) do
-        Read.read_draft(community, id)
-      end
-    end)
+    with {:ok, _site_state} <- Read.ensure_site_state(community),
+         {:ok, draft} <- Draft.update(community, id, args),
+         {:ok, _state} <- Revision.bump_site_draft(community) do
+      {:ok, draft}
+    end
   end
 
   @spec delete_node(Community.t(), T.id(), map()) :: T.domain_res(payload())
@@ -152,7 +160,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
           |> Map.take([
             :community_id,
             :parent_id,
-            :doc_draft_id,
+            :article_draft_id,
             :type,
             :href,
             :marker,
@@ -255,7 +263,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
 
     cond do
       is_binary(slug) ->
-        Map.put(args, :slug, Slug.normalize(slug))
+        Map.put(args, :slug, String.trim(slug))
 
       is_binary(title) ->
         Map.put(args, :slug, Slug.normalize(title))
@@ -265,104 +273,42 @@ defmodule GroupherServer.CMS.DocTree.Write do
     end
   end
 
-  defp normalize_doc_draft_id(%{doc_id: doc_id} = args) do
+  defp normalize_article_draft_id(%{doc_id: doc_id} = args) do
     args
     |> Map.delete(:doc_id)
-    |> Map.put(:doc_draft_id, doc_id)
+    |> Map.put(:article_draft_id, doc_id)
   end
 
-  defp normalize_doc_draft_id(args), do: args
+  defp normalize_article_draft_id(args), do: args
 
-  defp maybe_parse_body(%{body: body}) when is_binary(body),
-    do: ContentPipeline.parse(%{body: body})
-
-  defp maybe_parse_body(_args), do: {:ok, nil}
-
-  defp draft_attrs(%Community{} = community, %DocDraft{} = draft, args, payload) do
-    args
-    |> Map.take([:title, :slug])
-    |> maybe_put_slug_from_title()
-    |> unique_update_doc_draft_slug(community, draft)
-    |> maybe_put_digest(payload)
-  end
-
-  defp maybe_put_slug_from_title(%{slug: slug} = attrs) when is_binary(slug), do: attrs
-
-  defp maybe_put_slug_from_title(%{title: title} = attrs) when is_binary(title) do
-    Map.put(attrs, :slug, title)
-  end
-
-  defp maybe_put_slug_from_title(attrs), do: attrs
-
-  defp unique_update_doc_draft_slug(%{slug: slug} = attrs, community, draft)
-       when is_binary(slug) do
-    Map.put(attrs, :slug, unique_doc_draft_slug(community, normalize_doc_slug(slug), draft.id))
-  end
-
-  defp unique_update_doc_draft_slug(attrs, _community, _draft), do: attrs
-
-  defp maybe_put_digest(attrs, %{digest: digest}) when is_binary(digest),
-    do: Map.put(attrs, :digest, digest)
-
-  defp maybe_put_digest(attrs, _payload), do: attrs
-
-  defp doc_attrs(nil), do: %{}
-  defp doc_attrs(payload), do: ContentPayload.pick_valid_fields(payload)
-
-  defp maybe_update_draft(draft, attrs) when map_size(attrs) == 0, do: {:ok, draft}
-  defp maybe_update_draft(draft, attrs), do: ORM.update(draft, attrs)
-
-  defp maybe_update_document(_draft, attrs) when map_size(attrs) == 0, do: {:ok, nil}
-
-  defp maybe_update_document(%DocDraft{document: %DocDocumentDraft{} = document}, attrs) do
-    ORM.update(document, attrs)
-  end
-
-  defp maybe_update_document(%DocDraft{} = draft, attrs) do
-    attrs
-    |> Map.put(:doc_draft_id, draft.id)
-    |> then(&ORM.create(DocDocumentDraft, &1))
-  end
-
-  defp ensure_page_doc_draft(%Community{} = community, %{doc_id: doc_id} = args, _user)
+  defp ensure_page_article_draft(%Community{} = community, %{doc_id: doc_id} = args, _user)
        when not is_nil(doc_id) do
-    with :ok <- validate_doc_draft(community, doc_id) do
+    with :ok <- validate_article_draft(community, doc_id) do
       {:ok, args}
     end
   end
 
-  defp ensure_page_doc_draft(_community, args, nil), do: {:ok, args}
+  defp ensure_page_article_draft(_community, args, nil), do: {:ok, args}
 
-  defp ensure_page_doc_draft(%Community{} = community, args, %User{} = user) do
-    with {:ok, draft} <- create_default_doc_draft(community, args, user) do
+  defp ensure_page_article_draft(%Community{} = community, args, %User{} = user) do
+    with {:ok, draft} <- create_default_article_draft(community, args, user) do
       {:ok, Map.put(args, :doc_id, draft.id)}
     end
   end
 
-  defp create_default_doc_draft(%Community{} = community, args, %User{} = user) do
+  defp create_default_article_draft(%Community{} = community, args, %User{} = user) do
     title = Map.get(args, :title, "Untitled")
-    slug = Map.get(args, :slug, title) |> normalize_doc_slug()
+    slug = Map.get(args, :slug) || normalize_doc_slug(title)
 
-    with {:ok, author} <- ensure_author_exists(user),
-         {:ok, payload} <- default_page_payload(title),
-         {:ok, draft} <-
-           ORM.create(DocDraft, %{
-             community_id: community.id,
-             author_id: author.id,
-             title: title,
-             slug: unique_doc_draft_slug(community, slug),
-             digest: payload.digest
-           }),
-         {:ok, _document} <-
-           payload
-           |> ContentPayload.pick_valid_fields()
-           |> Map.put(:doc_draft_id, draft.id)
-           |> then(&ORM.create(DocDocumentDraft, &1)) do
-      {:ok, draft}
-    end
+    Draft.create(
+      community,
+      :doc,
+      %{title: title, slug: slug, body: default_page_body(title)},
+      user
+    )
   end
 
-  defp default_page_payload(title) do
+  defp default_page_body(title) do
     [
       %{
         "type" => "h1",
@@ -374,7 +320,6 @@ defmodule GroupherServer.CMS.DocTree.Write do
       }
     ]
     |> Jason.encode!()
-    |> then(&ContentPipeline.parse(%{body: &1}))
   end
 
   defp normalize_doc_slug(slug) do
@@ -382,35 +327,6 @@ defmodule GroupherServer.CMS.DocTree.Write do
       "" -> "untitled"
       normalized -> normalized
     end
-  end
-
-  defp unique_doc_draft_slug(%Community{} = community, slug, exclude_id \\ nil) do
-    query =
-      DocDraft
-      |> where([d], d.community_id == ^community.id)
-
-    query =
-      if is_nil(exclude_id) do
-        query
-      else
-        where(query, [d], d.id != ^exclude_id)
-      end
-
-    existing =
-      query
-      |> select([d], d.slug)
-      |> Repo.all()
-      |> MapSet.new()
-
-    Stream.iterate(0, &(&1 + 1))
-    |> Enum.find_value(fn
-      0 ->
-        if MapSet.member?(existing, slug), do: nil, else: slug
-
-      index ->
-        value = "#{slug}-#{index}"
-        if MapSet.member?(existing, value), do: nil, else: value
-    end)
   end
 
   defp unique_create_identity(attrs, %Community{} = community, parent_id) do
@@ -428,6 +344,32 @@ defmodule GroupherServer.CMS.DocTree.Write do
 
   defp unique_create_slug(community, parent_id, slug) do
     unique_value(community, parent_id, :slug, slug, "-")
+  end
+
+  defp unique_create_page_identity(attrs, %Community{} = community, parent_id) do
+    title = Map.get(attrs, :title)
+    slug = Map.get(attrs, :slug)
+
+    if sibling_value_exists?(community, parent_id, :title, title) or
+         sibling_value_exists?(community, parent_id, :slug, slug) do
+      attrs
+      |> Map.put(:title, unique_page_copy_title(community, parent_id, title))
+      |> Map.put(:slug, unique_page_copy_slug(community, parent_id, slug))
+    else
+      attrs
+    end
+  end
+
+  defp unique_page_copy_title(_community, _parent_id, nil), do: nil
+
+  defp unique_page_copy_title(community, parent_id, title) do
+    unique_value(community, parent_id, :title, "#{title}-copy", "-")
+  end
+
+  defp unique_page_copy_slug(_community, _parent_id, nil), do: nil
+
+  defp unique_page_copy_slug(community, parent_id, slug) do
+    unique_value(community, parent_id, :slug, "#{slug}-copy", "-")
   end
 
   defp ensure_index(attrs, %Community{} = community, parent_id) do
@@ -488,22 +430,23 @@ defmodule GroupherServer.CMS.DocTree.Write do
     end
   end
 
-  defp validate_doc_draft(_community, nil), do: :ok
+  defp validate_article_draft(_community, nil), do: :ok
 
-  defp validate_doc_draft(%Community{} = community, doc_id) do
+  defp validate_article_draft(%Community{} = community, doc_id) do
     case Ecto.Type.cast(:id, doc_id) do
       {:ok, doc_id} ->
-        DocDraft
+        ArticleDraft
         |> where([d], d.community_id == ^community.id)
+        |> where([d], d.thread == :doc)
         |> where([d], d.id == ^doc_id)
         |> Repo.exists?()
         |> case do
           true -> :ok
-          false -> {:error, {:custom, "doc draft not in same community"}}
+          false -> {:error, {:custom, "article draft not in same community"}}
         end
 
       :error ->
-        {:error, {:custom, "invalid doc draft id"}}
+        {:error, {:custom, "invalid article draft id"}}
     end
   end
 
@@ -555,6 +498,16 @@ defmodule GroupherServer.CMS.DocTree.Write do
 
   defp unique_copy_slug(community, parent_id, slug) do
     unique_value(community, parent_id, :slug, "#{slug}-copy", "-")
+  end
+
+  defp sibling_value_exists?(_community, _parent_id, _field, nil), do: false
+
+  defp sibling_value_exists?(community, parent_id, field, value) do
+    DocTreeNodeDraft
+    |> where([n], n.community_id == ^community.id)
+    |> where_parent(parent_id)
+    |> where([n], field(n, ^field) == ^value)
+    |> Repo.exists?()
   end
 
   defp unique_value(community, parent_id, field, base, separator) do

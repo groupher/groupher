@@ -13,14 +13,14 @@ export default function useSalon({
 
   return {
     wrapper: cn(
-      'group/docs-tree-row row-center gap-x-2 rounded-md px-1 py-1',
+      'group/docs-tree-row row-center gap-x-2 rounded-md px-1 py-1 pointer',
       active && 'bold-sm',
       active && bg('hoverBg'),
       hover('box'),
     ),
     pickerSlot: 'row-center size-4 shrink-0',
     titleButton: cn(
-      'min-w-0 max-w-28 text-left bg-transparent border-0 p-0 text-sm truncate pointer',
+      'min-w-0 max-w-28 text-left plain-button text-sm truncate pointer',
       !active && `hover:${fg('title')}`,
       active ? primary('fg') : fg('digest'),
     ),
