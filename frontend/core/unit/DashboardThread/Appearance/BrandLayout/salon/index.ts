@@ -10,13 +10,13 @@ export default function useSalon() {
 
   return {
     wrapper: base.baseSection,
-    block: cnMerge(base.blockBase, 'w-44 h-20'),
+    block: cnMerge(base.blockBase, 'w-full h-20'),
     blockActive: base.blockBaseActive,
-    select: 'row-center gap-x-10 w-full',
-    brand: 'row-center',
+    select: 'grid w-full grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3',
+    brand: 'row-center min-w-0',
     brandIcon: cn('size-6', primary('fill')),
-    brandTitle: cn('text-base', fg('digest')),
-    layout: 'column-align-both group',
+    brandTitle: cn('min-w-0 truncate text-base', fg('digest')),
+    layout: 'column-align-both group w-full min-w-0',
     layoutTitleActive: 'opacity-100',
     divider: cn(sexyBorder(), 'mt-4'),
   }

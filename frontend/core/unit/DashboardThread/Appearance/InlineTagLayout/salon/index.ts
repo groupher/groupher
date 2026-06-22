@@ -5,15 +5,15 @@ import useBase from '../../useAppearanceBaseSalon'
 export { cnMerge } from '~/css'
 
 export default function useSalon() {
-  const { cn } = useTwBelt()
+  const { cn, cnMerge } = useTwBelt()
   const base = useBase()
 
   return {
     wrapper: base.baseSection,
-    block: cn(base.blockBase, 'align-both w-44 h-14 gap-2'),
+    block: cnMerge(base.blockBase, 'align-both w-full h-14 gap-2'),
     blockActive: base.blockBaseActive,
-    select: 'row-center gap-8 w-full wrap',
-    layout: 'column-align-both',
+    select: 'grid w-full grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3',
+    layout: 'column-align-both w-full min-w-0',
 
     bar: cn(base.bar, 'h-1.5 w-20 opacity-40'),
     circle: cn(base.circle, 'size-3.5 opacity-40'),

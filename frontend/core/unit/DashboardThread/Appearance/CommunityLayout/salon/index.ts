@@ -10,8 +10,8 @@ export default function useSalon() {
 
   return {
     wrapper: base.baseSection,
-    select: 'grid w-full grid-cols-1 gap-x-12 gap-y-8 md:grid-cols-[18rem_18rem]',
-    layout: 'group button-reset column-align-both w-72',
+    select: 'grid w-full grid-cols-1 gap-8 md:grid-cols-2',
+    layout: 'group button-reset column-align-both w-full min-w-0',
     block: cnMerge(base.blockBase, 'h-56 w-full px-4 pt-4 pb-3'),
     blockActive: base.blockBaseActive,
     communityTitle: cn('text-xs bold-sm', cut('w-14'), primary('fg')),

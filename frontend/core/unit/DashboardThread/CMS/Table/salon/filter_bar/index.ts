@@ -16,7 +16,7 @@ export default function useSalon() {
     dateRange: cn('text-sm', fg('digest')),
     dateRangePicker: 'shrink-0',
     dateRangeGroup: cn(
-      'row-center h-7 min-w-[250px] gap-x-1 rounded-md border px-2.5 text-sm',
+      'row-center h-7 min-w-64 gap-x-1 rounded-md border px-2.5 text-sm',
       br('table.border'),
       bg('pageBg'),
       fg('digest'),
@@ -36,7 +36,7 @@ export default function useSalon() {
       shadow('md'),
     ),
     dateRangeDialog: 'outline-none',
-    dateRangeCalendar: 'w-[280px]',
+    dateRangeCalendar: 'w-72',
     dateRangeCalendarHeader: 'row-between mb-2.5',
     dateRangeCalendarTitle: cn('text-sm bold-sm', fg('title')),
     dateRangeCalendarNav: cn('align-both size-6 rounded-md', hover('bg')),
