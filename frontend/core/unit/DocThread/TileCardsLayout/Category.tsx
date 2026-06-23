@@ -1,4 +1,4 @@
-import type { FC } from 'react'
+import type { FC, KeyboardEvent } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import { mockUsers } from '~/mock'
@@ -25,18 +25,33 @@ const Category: FC<TProps> = ({ title, desc, color, articles }) => {
     new Set(articles.flatMap((article) => article.author?.login || article.author?.id || []))
       .size || 2
   const articleCount = articles.length
+  const handleOpen = () => gotoDetailLayout()
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return
+
+    event.preventDefault()
+    handleOpen()
+  }
 
   return (
-    <button type='button' className={s.wrapper} onClick={() => gotoDetailLayout()}>
+    <div
+      role='button'
+      tabIndex={0}
+      className={s.wrapper}
+      onClick={handleOpen}
+      onKeyDown={handleKeyDown}
+    >
       <div className={s.iconBox}>
-        <IconHub provider='fa' icon='star' mode='mask' size={20} color={color} opacity={0.7} />
+        <IconHub provider='fa' icon='star' mode='mask' size={6} color={color} opacity={0.7} />
       </div>
 
       <h3 className={s.title}>{title}</h3>
       <p className={s.desc}>{desc}</p>
 
       <div className={s.footer}>
-        <Facepile users={mockUsers(2)} total={2} showMore={false} />
+        <div onClick={(event) => event.stopPropagation()}>
+          <Facepile users={mockUsers(2)} total={2} showMore={false} classNames={s.facepile} />
+        </div>
         <div className={s.count}>
           {authorsCount} {t(authorsCount > 1 ? 'doc.thread.authors' : 'doc.thread.author')}
         </div>
@@ -46,7 +61,7 @@ const Category: FC<TProps> = ({ title, desc, color, articles }) => {
         </div>
         <div className='grow' />
       </div>
-    </button>
+    </div>
   )
 }
 

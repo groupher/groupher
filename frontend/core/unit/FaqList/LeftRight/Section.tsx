@@ -9,17 +9,17 @@ import useSalon from './salon/section'
 
 type TProps = {
   item: TFAQSection
-  openedIndexes: number[]
-  toggle: (index: number) => void
+  openedIds: string[]
+  toggle: (id: string) => void
 }
 
-const Section: FC<TProps> = ({ item, openedIndexes, toggle }) => {
-  const isOpened = includes(item.index, openedIndexes)
+const Section: FC<TProps> = ({ item, openedIds, toggle }) => {
+  const isOpened = includes(item.id, openedIds)
   const s = useSalon({ isOpened })
 
   return (
     <div className={s.wrapper}>
-      <button type='button' className={s.header} onClick={() => toggle(item.index)}>
+      <button type='button' className={s.header} onClick={() => toggle(item.id)}>
         <div className={s.title}>{item.title}</div>
         <ArrowSVG
           className={s.arrowIcon}

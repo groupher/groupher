@@ -5,17 +5,22 @@ import type { TAvatarSize } from '../spec'
 
 type TProps = {
   size?: TAvatarSize
+  interactive: boolean
 }
 
-export default function useSalon({ size }: TProps) {
+export default function useSalon({ size, interactive }: TProps) {
   const { cn, avatar, fg, bg, br } = useTwBelt()
 
   return {
     wrapper: cn(
-      'align-both border border-dashed border-transparent pointer',
+      'relative -ml-1 z-20 list-none shrink-0',
       size === SIZE.SMALL ? 'size-5' : 'size-6',
-      `hover:${br('digest')}`,
-      'trans-all-200',
+    ),
+    control: cn(
+      'plain-button align-both s-full border border-dashed border-transparent',
+      interactive ? 'pointer' : 'cursor-default',
+      interactive && `hover:${br('digest')}`,
+      'transition-colors duration-200 ease-out',
       bg('hoverBg'),
       avatar(),
     ),

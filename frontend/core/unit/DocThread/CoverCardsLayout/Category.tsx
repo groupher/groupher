@@ -24,7 +24,7 @@ const Category: FC<TProps> = ({ title, desc, articles }) => {
       <div className={s.sectionDesc}>{desc}</div>
 
       <div className={s.cards}>
-        {articles.map((article) => (
+        {articles.map((article, index) => (
           <button
             key={article.id}
             type='button'
@@ -34,7 +34,7 @@ const Category: FC<TProps> = ({ title, desc, articles }) => {
             <div
               className={s.cover}
               style={{
-                backgroundImage: `url(${mockImage()})`,
+                backgroundImage: `url(${mockImage(`${title}-${article.id}-${index}`)})`,
               }}
             />
 

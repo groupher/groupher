@@ -1,37 +1,48 @@
-/*
- *
- * Facepile
- *
- */
-
-import { compose, filter, isNil, not, reverse as reverseFn } from 'ramda'
-import { type FC, Suspense } from 'react'
+import type { FC } from 'react'
 
 import SIZE from '~/const/size'
 import { cnMerge } from '~/css'
 import type { TSpace, TUser } from '~/spec'
-import ImgFallback from '~/widgets/ImgFallback'
 
+import AvatarItem from './AvatarItem'
 import MoreItem from './MoreItem'
-import RealAvatar from './RealAvatar'
 import useSalon from './salon'
 import type { TAvatarSize } from './spec'
 
-const validUser = compose(not, isNil)
+type TDisplayUser = {
+  key: string
+  user: TUser
+}
 
-const getUniqueArray = (arr, comp) => {
+const getUserKey = (user: TUser): string | null => {
+  return (
+    user.login ||
+    user.id ||
+    user.extraId ||
+    user.email ||
+    user.avatar ||
+    user.nickname ||
+    user.name ||
+    null
+  )
+}
+
+const getDisplayUsers = (users: TUser[]): TDisplayUser[] => {
   const seen = new Set()
-  const unique = []
+  const uniqueUsers: TDisplayUser[] = []
 
-  for (const item of arr) {
-    const key = item?.[comp]
+  for (const user of users) {
+    if (!user) continue
+
+    const key = getUserKey(user)
+    if (!key) continue
     if (seen.has(key)) continue
 
     seen.add(key)
-    unique.push(item)
+    uniqueUsers.push({ key, user })
   }
 
-  return unique
+  return uniqueUsers
 }
 
 export type TProps = {
@@ -57,67 +68,42 @@ const Facepile: FC<TProps> = ({
   users = DEFAULT_USERS,
   limit = 4,
   noLazyLoad = false,
-  onUserSelect = console.log,
-  onTotalSelect = console.log,
+  onUserSelect,
+  onTotalSelect,
   showMore = true,
   reverse = false,
   popCardPlacement = 'bottom',
   classNames = '',
   ...spacing
 }) => {
-  const totalCount = total || users.length
+  const displayUsers = getDisplayUsers(users)
+  const sortedUsers = reverse ? [...displayUsers].reverse() : displayUsers
+  const visibleUsers = sortedUsers.slice(0, Math.max(limit, 0))
+  const totalCount = total ?? users.length
+  const showMoreItem = showMore && totalCount > 1
 
   const s = useSalon({ total: totalCount, ...spacing })
 
-  if (users.length === 0) {
-    return <span />
+  if (visibleUsers.length === 0) {
+    return null
   }
-
-  const uniqueUsers = filter(validUser, getUniqueArray(users, 'login'))
-  const sortedUsers = reverse ? reverseFn(uniqueUsers) : uniqueUsers
-
-  // delete restProps?.forwardRef
 
   return (
     <ul className={cnMerge(s.wrapper, classNames)}>
-      {totalCount === 1 ? (
-        <Suspense fallback={<ImgFallback className={s.avatarFallback} user={sortedUsers[0]} />}>
-          <RealAvatar
-            isFirst
-            isLast
-            user={sortedUsers[0]}
-            size={size}
-            noLazyLoad={noLazyLoad}
-            onUserSelect={onUserSelect}
-            popCardPlacement={popCardPlacement}
-          />
-        </Suspense>
-      ) : (
-        <div className={s.avatars}>
-          {sortedUsers.slice(0, limit).map((user, index) => (
-            <Suspense
-              key={user.login}
-              fallback={<ImgFallback className={s.avatarFallback} user={user} />}
-            >
-              <RealAvatar
-                isFirst={index === 0}
-                isLast={index === limit}
-                user={user}
-                size={size}
-                noLazyLoad={noLazyLoad}
-                onUserSelect={onUserSelect}
-                popCardPlacement={popCardPlacement}
-              />
-            </Suspense>
-          ))}
-        </div>
-      )}
+      {visibleUsers.map(({ key, user }, index) => (
+        <AvatarItem
+          key={key}
+          isFirst={index === 0}
+          isLast={index === visibleUsers.length - 1 && !showMoreItem}
+          user={user}
+          size={size}
+          noLazyLoad={noLazyLoad}
+          onUserSelect={onUserSelect}
+          popCardPlacement={popCardPlacement}
+        />
+      ))}
 
-      {totalCount <= 1 || !showMore ? (
-        <div className={s.totalOneOffset} />
-      ) : (
-        <MoreItem size={size} onTotalSelect={onTotalSelect} />
-      )}
+      {showMoreItem && <MoreItem size={size} onTotalSelect={onTotalSelect} />}
     </ul>
   )
 }

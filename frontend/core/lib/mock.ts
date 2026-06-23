@@ -182,7 +182,17 @@ const images = [
   'https://files.muzli.cloud/5b0e2e6b3b586a4f1d430c12c5ba374e.jpg',
 ]
 
-export const mockImage = (): string => {
+const getStableImageIndex = (seed: string | number): number => {
+  return (
+    String(seed)
+      .split('')
+      .reduce((sum, char) => sum + char.charCodeAt(0), 0) % images.length
+  )
+}
+
+export const mockImage = (seed?: string | number): string => {
+  if (seed !== undefined) return images[getStableImageIndex(seed)]
+
   return images[getRandomInt(0, 4)]
 }
 

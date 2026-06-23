@@ -21,7 +21,11 @@ export default function useSalon() {
     desc: cn('text-sm mt-1.5', fg('digest')),
     //
     items: 'column gap-3 mt-1.5 trans-all-200',
-    item: cn('text-sm hover:underline line-clamp-1 pointer', `hover:${fg('title')}`, fg('digest')),
+    item: cn(
+      'w-full text-left text-sm hover:underline line-clamp-1 pointer',
+      `hover:${fg('title')}`,
+      fg('digest'),
+    ),
     footer: cn(
       'align-both h-8 w-full rounded mt-4 group arrow-button-scope pointer',
       bg('hoverBg'),

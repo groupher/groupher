@@ -214,6 +214,7 @@ export type TArticlePubSelector = {
 }
 
 export type TFAQSection = {
+  id: string
   title: string
   body: string
   index: number
