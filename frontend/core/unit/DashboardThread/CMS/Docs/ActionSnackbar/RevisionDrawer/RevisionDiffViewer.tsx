@@ -1,6 +1,8 @@
 import type { FC } from 'react'
 
-import { REVISION_DRAWER } from '../constant'
+import useTrans from '~/hooks/useTrans'
+
+import { REVISION_LABEL_KEY } from '../constant'
 import type { TRevisionDiffBlock, TRevisionInlineDiff } from './helper'
 import useSalon, { cn } from './salon/revision_diff'
 
@@ -78,12 +80,13 @@ const makeRenderRows = (blocks: TRevisionDiffBlock[]): TRenderRow[] => {
 
 const RevisionDiffViewer: FC<TProps> = ({ blocks }) => {
   const s = useSalon()
+  const { t } = useTrans()
   const rows = makeRenderRows(blocks)
   const visibleRows = rows.filter((row) => row.type !== 'context' || row.segments.length > 0)
   const hasChanges = blocks.some((block) => block.type !== 'context')
 
   if (!hasChanges) {
-    return <div className={s.empty}>{REVISION_DRAWER.NO_CURRENT_CHANGES}</div>
+    return <div className={s.empty}>{t(REVISION_LABEL_KEY.NO_CURRENT_CHANGES)}</div>
   }
 
   return (

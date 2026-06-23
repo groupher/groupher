@@ -2,12 +2,13 @@ import type { TRichEditorValue } from '@groupher/rich-editor'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import useGraphQLClient from '~/hooks/useGraphQLClient'
+import useTrans from '~/hooks/useTrans'
 import { slugify } from '~/lib/slug'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
 import { toast } from '~/widgets/Toaster'
 
-import { REVISION_DRAWER } from '../../ActionSnackbar/constant'
+import { REVISION_LABEL_KEY } from '../../ActionSnackbar/constant'
 import { SIDE_TREE_NODE_TYPE } from '../SideTree/constant'
 import { findChild } from '../SideTree/helper'
 import type { TSideTreeController } from '../SideTree/spec'
@@ -31,6 +32,7 @@ export default function useLogic(
   sideTree: TSideTreeController,
   initialDraft?: TDocDraftInitialData | null,
 ) {
+  const { t } = useTrans()
   const { slug: community } = useCommunity()
   const {
     attachSaveDocDraft,
@@ -297,13 +299,13 @@ export default function useLogic(
       lastCheckpointedBodyRef.current = checkpointBody
       pendingRevisionCheckpointRef.current = savedBodyRef.current !== checkpointBody
     } catch (err) {
-      const message = err instanceof Error ? err.message : REVISION_DRAWER.CHECKPOINT_FAILED
+      const message = err instanceof Error ? err.message : t(REVISION_LABEL_KEY.CHECKPOINT_FAILED)
       lastAutosavedAtRef.current = Date.now()
       toast(message, 'error')
     } finally {
       checkpointingRef.current = false
     }
-  }, [activePage?.docId, community, mutate])
+  }, [activePage?.docId, community, mutate, t])
 
   const markRevisionCheckpointPending = useCallback(() => {
     pendingRevisionCheckpointRef.current = true

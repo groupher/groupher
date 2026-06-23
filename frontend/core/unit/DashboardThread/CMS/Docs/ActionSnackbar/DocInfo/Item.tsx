@@ -1,6 +1,6 @@
 import type { FC, ReactNode } from 'react'
 
-import { DOC_INFO_MODAL } from '../constant'
+import { DOC_INFO_EMPTY } from '../constant'
 import useSalon from '../salon/doc_info/item'
 
 type TProps = {
@@ -13,7 +13,7 @@ const DocInfoItem: FC<TProps> = ({ label, value }) => {
 
   return (
     <div className={s.item}>
-      <div className={s.value}>{value ?? DOC_INFO_MODAL.EMPTY}</div>
+      <div className={s.value}>{value ?? DOC_INFO_EMPTY}</div>
       <div className={s.label}>{label}</div>
     </div>
   )

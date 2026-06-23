@@ -1,6 +1,8 @@
 import type { TRichEditorValue } from '@groupher/rich-editor'
 
-import { REVISION_DRAWER } from '../constant'
+import type { TTransKey } from '~/spec'
+
+import { REVISION_LABEL_KEY } from '../constant'
 import type { TArticleRevision, TArticleRevisionAuthor } from './spec'
 
 type TPlateNode = {
@@ -471,29 +473,33 @@ export const dedupeRevisionsBySnapshot = (revisions: TArticleRevision[]): TDedup
   }
 }
 
-export const getRevisionAuthorName = (author?: TArticleRevisionAuthor | null): string =>
-  author?.nickname || author?.login || REVISION_DRAWER.UNKNOWN_AUTHOR
+type TTranslate = (key: TTransKey) => string
+
+export const getRevisionAuthorName = (
+  t: TTranslate,
+  author?: TArticleRevisionAuthor | null,
+): string => author?.nickname || author?.login || t(REVISION_LABEL_KEY.UNKNOWN_AUTHOR)
 
 export const getRevisionAuthorInitial = (author?: TArticleRevisionAuthor | null): string =>
-  getRevisionAuthorName(author).trim().charAt(0).toUpperCase() || '?'
+  (author?.nickname || author?.login || '').trim().charAt(0).toUpperCase() || '?'
 
-export const formatRelativeRevisionTime = (datetime?: string | null): string => {
-  if (!datetime) return REVISION_DRAWER.UNKNOWN_TIME
+export const formatRelativeRevisionTime = (t: TTranslate, datetime?: string | null): string => {
+  if (!datetime) return t(REVISION_LABEL_KEY.UNKNOWN_TIME)
 
   const timestamp = new Date(datetime).getTime()
-  if (Number.isNaN(timestamp)) return REVISION_DRAWER.UNKNOWN_TIME
+  if (Number.isNaN(timestamp)) return t(REVISION_LABEL_KEY.UNKNOWN_TIME)
 
   const seconds = Math.max(Math.floor((Date.now() - timestamp) / 1000), 0)
-  if (seconds < 60) return REVISION_DRAWER.JUST_NOW
+  if (seconds < 60) return t(REVISION_LABEL_KEY.JUST_NOW)
 
   const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes} min ago`
+  if (minutes < 60) return `${minutes} ${t(REVISION_LABEL_KEY.MIN_AGO)}`
 
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours} hr ago`
+  if (hours < 24) return `${hours} ${t(REVISION_LABEL_KEY.HR_AGO)}`
 
   const days = Math.floor(hours / 24)
-  if (days < 7) return `${days} d ago`
+  if (days < 7) return `${days} ${t(REVISION_LABEL_KEY.DAY_AGO)}`
 
   return new Intl.DateTimeFormat(undefined, {
     day: 'numeric',
@@ -502,17 +508,17 @@ export const formatRelativeRevisionTime = (datetime?: string | null): string => 
   }).format(new Date(timestamp))
 }
 
-export const buildRevisionExcerpt = (revision: TArticleRevision): string => {
+export const buildRevisionExcerpt = (t: TTranslate, revision: TArticleRevision): string => {
   if (revision.digest) return revision.digest
 
-  if (!revision.documentJson) return REVISION_DRAWER.EMPTY_EXCERPT
+  if (!revision.documentJson) return t(REVISION_LABEL_KEY.EMPTY_EXCERPT)
 
   try {
     const value = JSON.parse(revision.documentJson)
-    if (!Array.isArray(value)) return REVISION_DRAWER.EMPTY_EXCERPT
+    if (!Array.isArray(value)) return t(REVISION_LABEL_KEY.EMPTY_EXCERPT)
 
-    return collectPlateText(value).trim() || REVISION_DRAWER.EMPTY_EXCERPT
+    return collectPlateText(value).trim() || t(REVISION_LABEL_KEY.EMPTY_EXCERPT)
   } catch {
-    return REVISION_DRAWER.EMPTY_EXCERPT
+    return t(REVISION_LABEL_KEY.EMPTY_EXCERPT)
   }
 }
