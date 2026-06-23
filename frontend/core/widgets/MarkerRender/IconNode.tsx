@@ -2,6 +2,7 @@
 
 import type { FC } from 'react'
 
+import { cnMerge } from '~/css'
 import type { TMarkerIconValue } from '~/spec'
 import { getDevLogoSrc } from '~/utils/icons'
 import IconHub from '~/widgets/IconHub'
@@ -24,7 +25,7 @@ const IconNode: FC<TProps> = ({ value, size, className }) => {
         height={pixelSize}
         alt=''
         draggable={false}
-        className={className}
+        className={cnMerge('block', className)}
       />
     )
   }

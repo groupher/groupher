@@ -15,9 +15,9 @@ export default function useSalon({ color, size, className, mode, ...spacing }: T
   const colorClass = color ? rainbow(color, colorKey) : className || primary(colorKey)
 
   return {
-    wrapper: margin(spacing),
+    wrapper: cn('inline-flex items-center justify-center leading-none', margin(spacing)),
     icon: cn(
-      'inline-block shrink-0',
+      'block shrink-0',
       mode === 'mask' && 'mask-no-repeat mask-contain mask-center',
       zise(size),
       colorClass,

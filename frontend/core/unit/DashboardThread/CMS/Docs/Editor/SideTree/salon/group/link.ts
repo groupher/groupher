@@ -9,16 +9,21 @@ export default function useSalon({
   active: boolean
   actionVisible: boolean
 }) {
-  const { cn, fg, fill, primary } = useTwBelt()
+  const { cn, bg, fg, fill, hover, primary } = useTwBelt()
 
   return {
-    wrapper: cn('group/docs-tree-row row-center h-7 gap-x-2 rounded-md', active && 'bold-sm'),
-    pickerSlot: 'row-center size-4 shrink-0',
+    wrapper: cn(
+      'group/docs-tree-row row-center h-7 gap-x-2 rounded-md px-1',
+      active && 'bold-sm',
+      active && bg('hoverBg'),
+      hover('box'),
+    ),
+    pickerSlot: 'align-both size-5 shrink-0',
     titleButton: cn(
-      'min-w-0 max-w-28 text-left plain-button text-sm truncate',
+      'min-w-0 max-w-28 text-left plain-button text-sm leading-5 truncate',
       active ? primary('fg') : fg('digest'),
     ),
-    href: cn('max-w-16 truncate text-xs', fg('hint')),
+    href: cn('max-w-16 truncate text-xs leading-5', fg('hint')),
     actions: cn(
       'row-center ml-auto opacity-0 group-hover/docs-tree-row:opacity-100 group-focus-within/docs-tree-row:opacity-100 trans-all-100',
       actionVisible && 'opacity-100',

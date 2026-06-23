@@ -14,7 +14,7 @@ export default function useSalon({ compact = false, active = false, color }: TPr
     wrapper: 'w-fit',
     trigger: compact
       ? cn(
-          'align-both size-4 rounded bg-transparent border-0 transition-all duration-150',
+          'button-reset align-both size-4 rounded border-0 bg-transparent p-0 transition-all duration-150',
           hover('bg'),
         )
       : cn(
