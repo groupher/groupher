@@ -5,7 +5,7 @@ export default function useSalon() {
 
   return {
     wrapper: cn(
-      'row-center sticky bottom-16 self-center',
+      'pointer-events-auto row-center',
       'h-12 w-fit pr-4 pl-3 rounded-2xl shadow-lg z-30',
       bg('card'),
     ),

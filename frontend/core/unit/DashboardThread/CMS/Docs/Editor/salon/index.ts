@@ -6,8 +6,11 @@ export default function useSalon() {
   const { cn, sexyVBorder } = useTwBelt()
 
   return {
-    wrapper: 'relative flex w-full min-w-0 flex-col overflow-visible!',
-    panelGroup: 'w-full min-w-0 min-h-96 overflow-visible!',
+    wrapper: 'relative w-full min-w-0 overflow-visible!',
+    surface: 'grid min-h-screen w-full min-w-0 overflow-visible!',
+    panelGroup: 'col-start-1 row-start-1 w-full min-w-0 min-h-96 overflow-visible!',
+    snackbarRail:
+      'pointer-events-none sticky col-start-1 row-start-1 z-30 flex h-12 w-full items-center justify-center',
     sidePanel: 'min-h-96 overflow-visible!',
     resizeHandle: cn(
       'group/docs-tree-resizer relative row-center w-3 shrink-0 pointer col-resize outline-none',
