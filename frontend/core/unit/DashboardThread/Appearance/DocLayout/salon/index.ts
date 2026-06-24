@@ -1,6 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-import useBase from '../../useAppearanceBaseSalon'
+import useBase from '../../../useDsbSalon'
 
 export { cn } from '~/css'
 
@@ -9,9 +9,9 @@ export default function useSalon() {
   const base = useBase()
 
   return {
-    wrapper: base.baseSection,
-    block: cn(base.blockBase, 'align-both h-60 w-full'),
-    blockActive: base.blockBaseActive,
+    wrapper: base.section,
+    block: cn(base.card, 'align-both h-60 w-full'),
+    blockActive: base.cardActive,
     select: 'grid w-full grid-cols-1 gap-8 lg:grid-cols-2 xl:grid-cols-3',
     layout: 'column-align-both min-w-0',
     divider: cn(base.divider, 'mt-14 mb-16'),

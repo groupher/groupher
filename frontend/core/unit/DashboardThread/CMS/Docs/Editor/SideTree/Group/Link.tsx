@@ -1,20 +1,30 @@
 import { type FC, useState } from 'react'
 
+import useTrans from '~/hooks/useTrans'
 import MarkerPicker from '~/widgets/MarkerPicker'
 
-import { DEFAULT_LINK_MARKER, SIDE_TREE_NODE_MENU_ACTION, SIDE_TREE_NODE_TYPE } from '../constant'
-import useSalon from '../salon/group/link'
-import type { TEditingTarget, TSideTreeLink, TSideTreeNodeMenuAction } from '../spec'
+import {
+  DEFAULT_LINK_MARKER,
+  SIDE_TREE_NODE_MENU_ACTION,
+  SIDE_TREE_NODE_TYPE,
+  UNTITLED_TITLE_I18N_KEY,
+} from '../constant'
+import { getDefaultLinkTitle } from '../helper'
+import useSalon, { cn } from '../salon/group/link'
+import type {
+  TEditingTarget,
+  TSideTreeLink,
+  TSideTreeLinkInput,
+  TSideTreeNodeMenuAction,
+} from '../spec'
 import ChildMenu from './ChildMenu'
-import InlineTitleInput from './InlineTitleInput'
+import LinkInlineEditor from './LinkInlineEditor'
 
 type TProps = {
   groupId: string
   item: TSideTreeLink
-  active: boolean
   editingTarget: TEditingTarget
-  onActivate: (id: string) => void
-  onRename: (groupId: string, childId: string, title: string) => void
+  onRename: (groupId: string, childId: string, input: TSideTreeLinkInput) => void
   onCancelEdit: () => void
   onEdit: (target: TEditingTarget) => void
   onAction: (groupId: string, childId: string, action: TSideTreeNodeMenuAction) => void
@@ -24,9 +34,7 @@ type TProps = {
 const Link: FC<TProps> = ({
   groupId,
   item,
-  active,
   editingTarget,
-  onActivate,
   onRename,
   onCancelEdit,
   onEdit,
@@ -34,44 +42,50 @@ const Link: FC<TProps> = ({
   onStyleChange,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false)
-  const s = useSalon({ active, actionVisible: menuOpen })
+  const { t } = useTrans()
+  const s = useSalon({ actionVisible: menuOpen })
   const editing =
     editingTarget?.type === SIDE_TREE_NODE_TYPE.LINK && editingTarget.childId === item.id
+  const titleValue =
+    item.title && item.title !== t(UNTITLED_TITLE_I18N_KEY)
+      ? item.title
+      : getDefaultLinkTitle(item.href)
 
   return (
-    <div className={s.wrapper}>
+    <div className={cn(s.wrapper, editing && s.wrapperEditing)}>
       <div className={s.pickerSlot}>
         <MarkerPicker
           compact
-          active={active}
           value={item.marker ?? DEFAULT_LINK_MARKER}
           onChange={(value) => onStyleChange(groupId, item.id, value)}
         />
       </div>
       {editing ? (
-        <InlineTitleInput
-          value={item.title}
+        <LinkInlineEditor
+          href={item.href}
+          title={titleValue}
           onCancel={onCancelEdit}
-          onConfirm={(title) => onRename(groupId, item.id, title)}
+          onConfirm={(input) => onRename(groupId, item.id, input)}
         />
       ) : (
-        <button type='button' className={s.titleButton} onClick={() => onActivate(item.id)}>
+        <a href={item.href} target='_blank' rel='noreferrer' className={s.titleButton}>
           {item.title}
-        </button>
+        </a>
       )}
-      <div className={s.href}>{item.href}</div>
-      <div className={s.actions}>
-        <ChildMenu
-          onOpenChange={setMenuOpen}
-          onSelect={(action) => {
-            if (action === SIDE_TREE_NODE_MENU_ACTION.RENAME) {
-              onEdit({ type: SIDE_TREE_NODE_TYPE.LINK, groupId, childId: item.id })
-              return
-            }
-            onAction(groupId, item.id, action)
-          }}
-        />
-      </div>
+      {!editing && (
+        <div className={s.actions}>
+          <ChildMenu
+            onOpenChange={setMenuOpen}
+            onSelect={(action) => {
+              if (action === SIDE_TREE_NODE_MENU_ACTION.RENAME) {
+                onEdit({ type: SIDE_TREE_NODE_TYPE.LINK, groupId, childId: item.id })
+                return
+              }
+              onAction(groupId, item.id, action)
+            }}
+          />
+        </div>
+      )}
     </div>
   )
 }

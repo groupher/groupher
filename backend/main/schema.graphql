@@ -79,6 +79,9 @@ type RootQueryType {
   "community docs side tree"
   docTree(community: String!): DocTree
 
+  "public community docs cover"
+  docCover(community: String!, view: DocCoverView): DocCover
+
   "dashboard docs draft document"
   docDraft(community: String!, id: ID!): DocDraft
 
@@ -710,7 +713,19 @@ type RootMutationType {
   checkpointDocDraftRevision(community: String!, id: ID!): ArticleRevision
 
   "publish current docs draft as a published article revision"
-  publishDocDraftRevision(community: String!, id: ID!): ArticleRevision
+  publishDocDraftRevision(community: String!, id: ID!, mode: DocPublishMode): ArticleRevision
+
+  "publish every docs draft page that has not been published yet"
+  publishAllUnpublishedDocDrafts(community: String!, mode: DocPublishMode): DoneState
+
+  "publish one docs side-tree group and its children"
+  publishDocTreeGroup(community: String!, groupId: ID!, mode: DocPublishMode): DoneState
+
+  "move one published docs page back to draft visibility"
+  moveDocToDraft(community: String!, id: ID!): DoneState
+
+  "move one docs side-tree group and its children back to draft visibility"
+  moveDocTreeGroupToDraft(community: String!, groupId: ID!): DoneState
 
   "restore a docs draft from an article revision"
   restoreDocDraftRevision(community: String!, id: ID!, revisionId: ID!): DocDraft
@@ -723,6 +738,36 @@ type RootMutationType {
 
   "move a docs tree node"
   moveDocTreeNode(community: String!, id: ID!, baseRevision: Int!, targetParentId: ID, targetIndex: Int): DocTreeMutationPayload
+
+  "add a published docs side-tree group to cover"
+  addDocCoverGroup(community: String!, groupId: ID!): DocCoverGroup
+
+  "remove a docs side-tree group from cover"
+  removeDocCoverGroup(community: String!, groupId: ID!): DocCoverGroup
+
+  "toggle a docs page visibility in its cover group"
+  setDocCoverItemHidden(community: String!, nodeId: ID!, hidden: Boolean!): DocCoverItem
+
+  "reorder docs cover groups"
+  reorderDocCoverGroups(community: String!, ids: [ID!]!): DoneState
+
+  "reorder docs cover items inside a cover group"
+  reorderDocCoverItems(community: String!, coverGroupId: ID!, ids: [ID!]!): DoneState
+
+  "update docs cover group UI config"
+  updateDocCoverGroupUiConfig(community: String!, id: ID!, uiConfig: Json!): DocCoverGroup
+
+  "update docs cover item UI config"
+  updateDocCoverItemUiConfig(community: String!, id: ID!, uiConfig: Json!): DocCoverItem
+
+  "pin a published docs page to cover"
+  pinDocCoverItem(community: String!, nodeId: ID!, uiConfig: Json): DocCoverPinnedItem
+
+  "remove a published docs page from cover pins"
+  unpinDocCoverItem(community: String!, nodeId: ID!): DocCoverPinnedItem
+
+  "update a pinned docs cover UI config"
+  updateDocCoverPinnedUiConfig(community: String!, nodeId: ID!, uiConfig: Json!): DocCoverPinnedItem
 }
 
 type CheckState {
@@ -744,6 +789,21 @@ enum DocTreeNodeType {
 enum ArticleRevisionType {
   DRAFT
   PUBLISHED
+}
+
+enum DocPublishMode {
+  WITH_COVER_SYNC
+  DOC_ONLY
+}
+
+enum DocPublishStatus {
+  DRAFT
+  PUBLIC
+}
+
+enum DocCoverView {
+  PUBLIC
+  DASHBOARD
 }
 
 enum MarkerType {
@@ -780,12 +840,72 @@ type DocTreeNode {
   badge: String
   hidden: Boolean
   expanded: Boolean
+  publishState: DocTreeNodePublishState
   children: [DocTreeNode]
+}
+
+type DocTreeNodePublishState {
+  status: DocPublishStatus
+  published: Boolean
+  publishedBefore: Boolean
+  publishedNodeId: ID
+  publishedDocId: ID
+  hasUnpublishedChanges: Boolean
+  lastPublishedAt: DateTime
+  inCover: Boolean
+  hiddenFromCover: Boolean
+  pinnedToCover: Boolean
 }
 
 type DocTree {
   revision: Int
   groups: [DocTreeNode]
+}
+
+type DocCover {
+  groups: [DocCoverGroup]
+  pinnedItems: [DocCoverPinnedItem]
+}
+
+type DocCoverGroup {
+  id: ID
+  groupId: ID
+  index: Int
+  uiConfig: Json
+  title: String
+  group: DocTreeNode
+  items: [DocCoverItem]
+}
+
+type DocCoverItem {
+  id: ID
+  nodeId: ID
+  index: Int
+  hidden: Boolean
+  uiConfig: Json
+  docId: ID
+  type: DocTreeNodeType
+  title: String
+  href: String
+  marker: Marker
+  digest: String
+  badge: String
+  node: DocTreeNode
+}
+
+type DocCoverPinnedItem {
+  id: ID
+  nodeId: ID
+  index: Int
+  uiConfig: Json
+  docId: ID
+  type: DocTreeNodeType
+  title: String
+  href: String
+  marker: Marker
+  digest: String
+  badge: String
+  node: DocTreeNode
 }
 
 type DocDraft {

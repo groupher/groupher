@@ -2,26 +2,16 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export default function useSalon({
-  active,
-  actionVisible,
-}: {
-  active: boolean
-  actionVisible: boolean
-}) {
-  const { cn, bg, fg, fill, hover, primary } = useTwBelt()
+export default function useSalon({ actionVisible }: { actionVisible: boolean }) {
+  const { cn, fg, fill, hover } = useTwBelt()
 
   return {
-    wrapper: cn(
-      'group/docs-tree-row row-center h-7 gap-x-2 rounded-md px-1',
-      active && 'bold-sm',
-      active && bg('hoverBg'),
-      hover('box'),
-    ),
+    wrapper: cn('group/docs-tree-row row-center h-7 gap-x-2 rounded-md px-1', hover('box')),
+    wrapperEditing: 'h-auto items-start py-1',
     pickerSlot: 'align-both size-5 shrink-0',
     titleButton: cn(
       'min-w-0 max-w-28 text-left plain-button text-sm leading-5 truncate',
-      active ? primary('fg') : fg('digest'),
+      fg('digest'),
     ),
     href: cn('max-w-16 truncate text-xs leading-5', fg('hint')),
     actions: cn(

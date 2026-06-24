@@ -44,6 +44,21 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     value(:published)
   end
 
+  enum :doc_publish_mode do
+    value(:with_cover_sync)
+    value(:doc_only)
+  end
+
+  enum :doc_publish_status do
+    value(:draft)
+    value(:public)
+  end
+
+  enum :doc_cover_view do
+    value(:public)
+    value(:dashboard)
+  end
+
   enum :marker_type do
     value(:icon)
     value(:emoji)
@@ -78,12 +93,72 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:badge, :string)
     field(:hidden, :boolean)
     field(:expanded, :boolean)
+    field(:publish_state, :doc_tree_node_publish_state)
     field(:children, list_of(:doc_tree_node))
+  end
+
+  object :doc_tree_node_publish_state do
+    field(:status, :doc_publish_status)
+    field(:published, :boolean)
+    field(:published_before, :boolean)
+    field(:published_node_id, :id)
+    field(:published_doc_id, :id)
+    field(:has_unpublished_changes, :boolean)
+    field(:last_published_at, :datetime)
+    field(:in_cover, :boolean)
+    field(:hidden_from_cover, :boolean)
+    field(:pinned_to_cover, :boolean)
   end
 
   object :doc_tree do
     field(:revision, :integer)
     field(:groups, list_of(:doc_tree_node))
+  end
+
+  object :doc_cover do
+    field(:groups, list_of(:doc_cover_group))
+    field(:pinned_items, list_of(:doc_cover_pinned_item))
+  end
+
+  object :doc_cover_group do
+    field(:id, :id)
+    field(:group_id, :id)
+    field(:index, :integer)
+    field(:ui_config, :json)
+    field(:title, :string)
+    field(:group, :doc_tree_node)
+    field(:items, list_of(:doc_cover_item))
+  end
+
+  object :doc_cover_item do
+    field(:id, :id)
+    field(:node_id, :id)
+    field(:index, :integer)
+    field(:hidden, :boolean)
+    field(:ui_config, :json)
+    field(:doc_id, :id)
+    field(:type, :doc_tree_node_type)
+    field(:title, :string)
+    field(:href, :string)
+    field(:marker, :marker)
+    field(:digest, :string)
+    field(:badge, :string)
+    field(:node, :doc_tree_node)
+  end
+
+  object :doc_cover_pinned_item do
+    field(:id, :id)
+    field(:node_id, :id)
+    field(:index, :integer)
+    field(:ui_config, :json)
+    field(:doc_id, :id)
+    field(:type, :doc_tree_node_type)
+    field(:title, :string)
+    field(:href, :string)
+    field(:marker, :marker)
+    field(:digest, :string)
+    field(:badge, :string)
+    field(:node, :doc_tree_node)
   end
 
   object :doc_draft do

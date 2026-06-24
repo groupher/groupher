@@ -4,7 +4,7 @@ import { getActiveNavLayoutStyles } from '~/hooks/useNavActiveLayoutSalon'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TNavActiveLayout } from '~/spec'
 
-import useBase from '../../useAppearanceBaseSalon'
+import useBase from '../../../useDsbSalon'
 
 export { cnMerge } from '~/css'
 
@@ -22,11 +22,11 @@ export default function useSalon({ layout: currentLayout }: TArgs = {}) {
   const activeLayoutStyles = getActiveNavLayoutStyles({ cn, bg, primary }, resolvedLayout)
 
   return {
-    wrapper: base.baseSection,
+    wrapper: base.section,
     select: 'grid w-full grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3',
     layout: 'column-align-both w-full min-w-0',
-    block: cnMerge(base.blockBase, 'align-both w-full h-14'),
-    blockActive: base.blockBaseActive,
+    block: cnMerge(base.card, 'align-both w-full h-14'),
+    blockActive: base.cardActive,
     preview: 'row-center gap-1.5',
     previewItem: cn('row-center h-7 rounded-lg px-2 text-sm', fg('digest')),
     previewItemInactive: 'opacity-50',

@@ -1,6 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-import useBase from '../../useAppearanceBaseSalon'
+import useBase from '../../../useDsbSalon'
 
 export { cnMerge } from '~/css'
 
@@ -9,9 +9,9 @@ export default function useSalon() {
   const base = useBase()
 
   return {
-    wrapper: base.baseSection,
-    block: cnMerge(base.blockBase, 'w-72 h-80 p-5'),
-    blockActive: base.blockBaseActive,
+    wrapper: base.section,
+    block: cnMerge(base.card, 'w-72 h-80 p-5'),
+    blockActive: base.cardActive,
     select: 'row-center gap-x-10 w-full',
     bar: cnMerge(base.bar, 'h-1.5 w-20 opacity-40'),
     layout: 'column-align-both group',

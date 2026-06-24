@@ -10,6 +10,7 @@ const EMPTY_DOC_DRAFT_INFO: TDocDraftInfo = {
   insertedAt: null,
   updatedAt: null,
   author: null,
+  publishState: null,
   wordCount: 0,
   characterCount: 0,
 }
@@ -50,6 +51,10 @@ export default function DocsEditorStore(init: TInit): TStore {
 
     reloadDocDraft: (): void => {
       store.revisionReloadKey += 1
+    },
+
+    reloadSideTree: (): void => {
+      sideTree.reload()
     },
 
     saveDocDraft: async (): Promise<void> => {

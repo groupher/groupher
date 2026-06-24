@@ -1,7 +1,7 @@
 import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
-import useBase from '../../useAppearanceBaseSalon'
+import useBase from '../../../useDsbSalon'
 
 export { cn } from '~/css'
 
@@ -10,9 +10,9 @@ export default function useSalon() {
   const base = useBase()
 
   return {
-    wrapper: base.baseSection,
-    block: cnMerge(base.blockBase, 'align-both w-full h-20'),
-    blockActive: base.blockBaseActive,
+    wrapper: base.section,
+    block: cnMerge(base.card, 'align-both w-full h-20'),
+    blockActive: base.cardActive,
     select: 'grid w-full grid-cols-1 gap-8 md:grid-cols-2',
     layout: 'column-align-both w-full min-w-0',
     list: 'row-center gap-x-2',

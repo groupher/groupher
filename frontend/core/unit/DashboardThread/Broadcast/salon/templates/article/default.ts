@@ -9,8 +9,8 @@ export default function useSalon() {
   const base = useBase()
 
   return {
-    wrapper: cn(base.blockBase, 'w-full h-80 px-12 py-8'),
-    active: base.blockBaseActive,
+    wrapper: cn(base.card, 'w-full h-80 px-12 py-8'),
+    active: base.cardActive,
     bar: cn('h-1 w-20 rounded opacity-40', bg('digest')),
     icon: cn('size-3', fill('button.fg')),
   }

@@ -7,8 +7,8 @@ type TProps = {
   color?: TColorName
 }
 
-export default function useSalon({ compact = false, active = false, color }: TProps = {}) {
-  const { bg, cn, br, fg, hover, primary, rainbow, shadow } = useTwBelt()
+export default function useSalon({ compact = false }: TProps = {}) {
+  const { cn, br, fg, hover, shadow } = useTwBelt()
 
   return {
     wrapper: 'w-fit',
@@ -41,9 +41,5 @@ export default function useSalon({ compact = false, active = false, color }: TPr
       '[&_.epr-emoji-category-label]:leading-none',
     ),
     todo: cn('align-both h-80 text-lg', fg('digest')),
-    // The trigger preview renders through MarkerRender mask mode.
-    previewIconColor: color ? rainbow(color, 'bg') : active ? primary('bg') : bg('digest'),
-    // Devicon logos are colored images, not masks; don't pass bg color classes to <img>.
-    previewDevLogo: 'object-contain',
   }
 }

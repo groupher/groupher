@@ -3,6 +3,7 @@
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import type { FC } from 'react'
 
+import CoverWarningModal from './CoverWarningModal'
 import SideTreeDndContext from './Dnd/SideTreeDndContext'
 import Group from './Group'
 import useSalon from './salon'
@@ -19,12 +20,18 @@ const SideTree: FC<TProps> = ({ controller }) => {
     groups,
     activeId,
     editingTarget,
+    coverWarning,
     activate,
     addChild,
+    clearCoverWarning,
     deleteGroup,
     toggleGroup,
+    toggleCoverGroup,
+    publishGroup,
+    moveGroupToDraft,
     renameGroup,
     renameChild,
+    renameLink,
     cancelEdit,
     edit,
     handleChildAction,
@@ -34,6 +41,8 @@ const SideTree: FC<TProps> = ({ controller }) => {
 
   return (
     <aside className={s.wrapper}>
+      <CoverWarningModal message={coverWarning} onClose={clearCoverWarning} />
+
       <SideTreeDndContext groups={groups} onCommit={reorderGroups}>
         {({
           activeDragColumnId,
@@ -67,9 +76,13 @@ const SideTree: FC<TProps> = ({ controller }) => {
                     onActivate={activate}
                     onToggle={toggleGroup}
                     onAddChild={addChild}
+                    onCoverGroupAction={toggleCoverGroup}
+                    onPublishGroup={publishGroup}
+                    onMoveGroupToDraft={moveGroupToDraft}
                     onDeleteGroup={deleteGroup}
                     onRenameGroup={renameGroup}
                     onRenameChild={renameChild}
+                    onRenameLink={renameLink}
                     onCancelEdit={cancelEdit}
                     onEdit={edit}
                     onChildAction={handleChildAction}

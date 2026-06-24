@@ -1,7 +1,10 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
+import useDsbSalon from '../../useDsbSalon'
+
 export default function useSalon() {
-  const { cn, br, hoverBr, bg, primary, shadow } = useTwBelt()
+  const { cn, br } = useTwBelt()
+  const dsb = useDsbSalon()
 
   return {
     wrapper: 'column-center w-8/12 pl-32',
@@ -9,17 +12,7 @@ export default function useSalon() {
     tabs: 'absolute bottom-0 -left-2',
     content: 'column w-full',
 
-    blockBase: cn(
-      'relative w-72 rounded-md px-4 py-4 pointer saturate-0 opacity-80',
-      'hover:opacity-100 hover:saturate-100',
-      hoverBr(),
-      bg('alphaBg'),
-    ),
-    blockBaseActive: cn(
-      'opacity-100 saturate-100',
-      primary('borderSoft'),
-      `hover:${primary('border')}`,
-      shadow('md'),
-    ),
+    card: dsb.card,
+    cardActive: dsb.cardActive,
   }
 }

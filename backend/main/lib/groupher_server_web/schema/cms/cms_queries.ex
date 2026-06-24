@@ -27,6 +27,15 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.doc_tree/3)
     end
 
+    @desc "public community docs cover"
+    field :doc_cover, :doc_cover do
+      arg(:community, non_null(:string))
+      arg(:view, :doc_cover_view, default_value: :public)
+
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.doc_cover/3)
+    end
+
     @desc "dashboard docs draft document"
     field :doc_draft, :doc_draft do
       arg(:community, non_null(:string))

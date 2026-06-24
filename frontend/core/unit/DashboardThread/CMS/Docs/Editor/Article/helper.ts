@@ -93,6 +93,7 @@ export const resolveDraftSession = (
       insertedAt: draft?.insertedAt || null,
       updatedAt: draft?.updatedAt || null,
       author: draft?.author || null,
+      publishState: activePage?.publishState || null,
       ...countEditorText(body),
     },
     slug: draft?.slug || '',

@@ -9,6 +9,7 @@ export default createStoreHook(StoreContext, [
   'attachSideTree',
   'attachSaveDocDraft',
   'reloadDocDraft',
+  'reloadSideTree',
   'saveDocDraft',
   'setMode',
   'setDocDraftSession',

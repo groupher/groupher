@@ -81,6 +81,15 @@
     }
   }
 
+  @keyframes overflow-marquee {
+    0% {
+      transform: translate3d(0, 0, 0);
+    }
+    100% {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
   .animate-loading-grow {
     animation: loading-grow 1s linear infinite;
   }
@@ -95,6 +104,25 @@
 
   .animate-save-status-marquee {
     animation: save-status-marquee 3.2s ease-in-out infinite;
+  }
+
+  .overflow-marquee-track {
+    display: none;
+  }
+
+  .overflow-marquee-ready:hover .overflow-marquee-base,
+  .overflow-marquee-ready:focus-within .overflow-marquee-base,
+  .group:hover .overflow-marquee-ready .overflow-marquee-base,
+  .group:focus-within .overflow-marquee-ready .overflow-marquee-base {
+    opacity: 0;
+  }
+
+  .overflow-marquee-ready:hover .overflow-marquee-track,
+  .overflow-marquee-ready:focus-within .overflow-marquee-track,
+  .group:hover .overflow-marquee-ready .overflow-marquee-track,
+  .group:focus-within .overflow-marquee-ready .overflow-marquee-track {
+    display: flex;
+    animation: overflow-marquee var(--overflow-marquee-duration, 2.8s) linear infinite;
   }
 
   .arrow-button:hover .group-hover-arrow-right,

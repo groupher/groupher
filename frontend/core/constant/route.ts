@@ -68,6 +68,11 @@ export const DSB_DOC_ROUTE = {
   BACKUP: 'backup',
 } as const
 
+export const DSB_DOC_LAYOUT_ROUTE = {
+  COVER: 'cover',
+  FAQ: 'faq',
+} as const
+
 export const DSB_POST_ROUTE = {
   ANALYSIS: 'analysis',
   LAYOUT: 'layout',
@@ -241,6 +246,14 @@ export const DOC_TABS: TDsbTabs = {
     { title: 'dsb.doc.domain', slug: DSB_DOC_ROUTE.DOMAIN },
     { title: 'dsb.doc.import', slug: DSB_DOC_ROUTE.IMPORT },
     { title: 'dsb.doc.backup', slug: DSB_DOC_ROUTE.BACKUP },
+  ],
+}
+
+export const DOC_LAYOUT_TABS: TDsbTabs = {
+  segment: `${DSB_ROUTE.DOC}/${DSB_DOC_ROUTE.LAYOUT}`,
+  items: [
+    { title: 'dsb.doc.layout.cover', slug: DSB_DOC_LAYOUT_ROUTE.COVER },
+    { title: 'dsb.doc.layout.faq', slug: DSB_DOC_LAYOUT_ROUTE.FAQ },
   ],
 }
 

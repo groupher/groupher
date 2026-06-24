@@ -2,8 +2,9 @@ import { fireEvent, render, screen } from '@testing-library/react'
 
 import { DOC_COVER_LAYOUT, DOC_FAQ_LAYOUT } from '~/const/layout'
 
-import DocLayout from '..'
 import { FIELD } from '../../../constant'
+import DocCoverLayout from '../Cover'
+import DocFaqLayout from '../Faq'
 
 const edit = vi.fn()
 
@@ -87,35 +88,49 @@ describe('<DocLayout />', () => {
     edit.mockClear()
   })
 
-  it('renders doc and faq layout groups with their saving bars', () => {
-    render(<DocLayout />)
+  it('renders doc cover layout group with its saving bar', () => {
+    render(<DocCoverLayout />)
 
     const buttons = screen.getAllByRole('button')
-    expect(buttons).toHaveLength(9)
+    expect(buttons).toHaveLength(6)
     expect(buttons[0]).toHaveAttribute('aria-pressed', 'false')
     expect(buttons[1]).toHaveAttribute('aria-pressed', 'true')
-    expect(buttons[6]).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByTestId(`saving-bar-${FIELD.DOC_COVER_LAYOUT}`)).toBeInTheDocument()
-    expect(screen.getByTestId(`saving-bar-${FIELD.DOC_FAQ_LAYOUT}`)).toBeInTheDocument()
     expect(
       screen.getByTestId(`main-template-${DOC_COVER_LAYOUT.OUTLINE_COLUMNS}`),
     ).toBeInTheDocument()
+  })
+
+  it('renders faq layout group with its saving bar', () => {
+    render(<DocFaqLayout />)
+
+    const buttons = screen.getAllByRole('button')
+    expect(buttons).toHaveLength(3)
+    expect(buttons[0]).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByTestId(`saving-bar-${FIELD.DOC_FAQ_LAYOUT}`)).toBeInTheDocument()
     expect(screen.getByTestId(`faq-template-${DOC_FAQ_LAYOUT.COLLAPSE}`)).toBeInTheDocument()
   })
 
-  it('updates doc and faq layout when options are clicked', () => {
-    render(<DocLayout />)
+  it('updates doc cover layout when an option is clicked', () => {
+    render(<DocCoverLayout />)
 
     const buttons = screen.getAllByRole('button')
     fireEvent.click(buttons[2])
-    fireEvent.click(buttons[8])
 
     expect(edit).toHaveBeenNthCalledWith(1, DOC_COVER_LAYOUT.OUTLINE_TOC, FIELD.DOC_COVER_LAYOUT)
-    expect(edit).toHaveBeenNthCalledWith(2, DOC_FAQ_LAYOUT.LEFT_RIGHT, FIELD.DOC_FAQ_LAYOUT)
+  })
+
+  it('updates faq layout when an option is clicked', () => {
+    render(<DocFaqLayout />)
+
+    const buttons = screen.getAllByRole('button')
+    fireEvent.click(buttons[2])
+
+    expect(edit).toHaveBeenNthCalledWith(1, DOC_FAQ_LAYOUT.LEFT_RIGHT, FIELD.DOC_FAQ_LAYOUT)
   })
 
   it('keeps tile cards before cover cards in layout options', () => {
-    render(<DocLayout />)
+    render(<DocCoverLayout />)
 
     const buttons = screen.getAllByRole('button')
     fireEvent.click(buttons[4])

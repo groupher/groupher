@@ -9,6 +9,7 @@ import useSalon from '../salon/doc_info/panel'
 import DocInfoAuthor from './Author'
 import { formatDocInfoDate, formatDocInfoSlug, getDocInfoAuthorName } from './helper'
 import DocInfoItem from './Item'
+import DocInfoVisibility from './Visibility'
 
 const DocInfoPanel: FC = () => {
   const s = useSalon()
@@ -29,6 +30,10 @@ const DocInfoPanel: FC = () => {
       </div>
 
       <div className={s.grid}>
+        <DocInfoItem
+          label={t(DOC_INFO_LABEL_KEY.VISIBILITY_LABEL)}
+          value={docDraftInfo.id ? <DocInfoVisibility state={docDraftInfo.publishState} /> : null}
+        />
         <DocInfoItem label={t(DOC_INFO_LABEL_KEY.TITLE_LABEL)} value={docDraftInfo.title} />
         <DocInfoItem
           label={t(DOC_INFO_LABEL_KEY.SLUG_LABEL)}

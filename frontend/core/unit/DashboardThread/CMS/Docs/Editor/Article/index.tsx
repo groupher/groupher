@@ -19,21 +19,15 @@ type TProps = {
 const Article: FC<TProps> = ({ sideTree, initialDraft }) => {
   const s = useSalon()
   const { mode } = useDocsEditor()
-  const { activePage, bodyValue, editable, error, loading, setBodyValue, setTitle, title } =
-    useLogic(sideTree, initialDraft)
+  const { activePage, bodyValue, error, loading, setBodyValue, setTitle, title } = useLogic(
+    sideTree,
+    initialDraft,
+  )
 
   if (!activePage) {
     return (
       <article className={s.wrapper}>
         <div className={s.empty}>选择一个文档页面开始编辑</div>
-      </article>
-    )
-  }
-
-  if (!editable) {
-    return (
-      <article className={s.wrapper}>
-        <div className={s.empty}>当前页面缺少 docId</div>
       </article>
     )
   }

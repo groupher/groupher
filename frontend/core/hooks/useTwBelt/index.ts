@@ -262,6 +262,26 @@ export default function useTwBelt(): TRet {
       case 'icon':
         return cn(STATIC_CLS.menuIconBase, fill('digest'), `group-hover/menubar:${primary('fill')}`)
 
+      case 'dangerBar':
+        // Danger rows keep the regular menu geometry but use rainbow red hover tokens
+        // from the active menu theme instead of a page-level ad-hoc class bundle.
+        return cn(
+          STATIC_CLS.menuBarBase,
+          `hover:${fg('rainbow.red')}`,
+          `hover:${bg('rainbow.redSoft')}`,
+          fg('digest'),
+        )
+
+      case 'dangerTitle':
+        return cn(STATIC_CLS.menuTitleBase, `group-hover/menubar:${fg('rainbow.red')}`)
+
+      case 'dangerIcon':
+        return cn(
+          STATIC_CLS.menuIconBase,
+          fill('digest'),
+          `group-hover/menubar:${fill('rainbow.red')}`,
+        )
+
       case 'activeBox':
         return cn(
           'opacity-100 scale-100',

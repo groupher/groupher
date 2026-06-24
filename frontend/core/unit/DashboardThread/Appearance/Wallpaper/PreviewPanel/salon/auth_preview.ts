@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 import { pickWallpaperThemeState } from '~/stores/wallpaper/helper'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 
-import useBase from '../../../useAppearanceBaseSalon'
+import useBase from '../../../../useDsbSalon'
 
 export { cnMerge } from '~/css'
 

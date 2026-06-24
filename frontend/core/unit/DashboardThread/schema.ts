@@ -453,6 +453,18 @@ const docTreeNodeFields = `
   badge
   hidden
   expanded
+  publishState {
+    status
+    published
+    publishedBefore
+    publishedNodeId
+    publishedDocId
+    hasUnpublishedChanges
+    lastPublishedAt
+    inCover
+    hiddenFromCover
+    pinnedToCover
+  }
 `
 
 const docTree = gql`
@@ -618,8 +630,8 @@ const checkpointDocDraftRevision = gql`
 `
 
 const publishDocDraftRevision = gql`
-  mutation publishDocDraftRevision($community: String!, $id: ID!) {
-    publishDocDraftRevision(community: $community, id: $id) {
+  mutation publishDocDraftRevision($community: String!, $id: ID!, $mode: DocPublishMode) {
+    publishDocDraftRevision(community: $community, id: $id, mode: $mode) {
       id
       thread
       type
@@ -637,6 +649,38 @@ const publishDocDraftRevision = gql`
         nickname
         avatar
       }
+    }
+  }
+`
+
+const publishAllUnpublishedDocDrafts = gql`
+  mutation publishAllUnpublishedDocDrafts($community: String!, $mode: DocPublishMode) {
+    publishAllUnpublishedDocDrafts(community: $community, mode: $mode) {
+      done
+    }
+  }
+`
+
+const publishDocTreeGroup = gql`
+  mutation publishDocTreeGroup($community: String!, $groupId: ID!, $mode: DocPublishMode) {
+    publishDocTreeGroup(community: $community, groupId: $groupId, mode: $mode) {
+      done
+    }
+  }
+`
+
+const moveDocToDraft = gql`
+  mutation moveDocToDraft($community: String!, $id: ID!) {
+    moveDocToDraft(community: $community, id: $id) {
+      done
+    }
+  }
+`
+
+const moveDocTreeGroupToDraft = gql`
+  mutation moveDocTreeGroupToDraft($community: String!, $groupId: ID!) {
+    moveDocTreeGroupToDraft(community: $community, groupId: $groupId) {
+      done
     }
   }
 `
@@ -699,6 +743,101 @@ const moveDocTreeNode = gql`
       targetIndex: $targetIndex
     ) {
       ${docTreeMutationPayload}
+    }
+  }
+`
+
+const addDocCoverGroup = gql`
+  mutation addDocCoverGroup($community: String!, $groupId: ID!) {
+    addDocCoverGroup(community: $community, groupId: $groupId) {
+      id
+      groupId
+      index
+      uiConfig
+    }
+  }
+`
+
+const removeDocCoverGroup = gql`
+  mutation removeDocCoverGroup($community: String!, $groupId: ID!) {
+    removeDocCoverGroup(community: $community, groupId: $groupId) {
+      id
+      groupId
+      index
+      uiConfig
+    }
+  }
+`
+
+const setDocCoverItemHidden = gql`
+  mutation setDocCoverItemHidden($community: String!, $nodeId: ID!, $hidden: Boolean!) {
+    setDocCoverItemHidden(community: $community, nodeId: $nodeId, hidden: $hidden) {
+      id
+      nodeId
+      hidden
+    }
+  }
+`
+
+const reorderDocCoverGroups = gql`
+  mutation reorderDocCoverGroups($community: String!, $ids: [ID!]!) {
+    reorderDocCoverGroups(community: $community, ids: $ids) {
+      done
+    }
+  }
+`
+
+const reorderDocCoverItems = gql`
+  mutation reorderDocCoverItems($community: String!, $coverGroupId: ID!, $ids: [ID!]!) {
+    reorderDocCoverItems(community: $community, coverGroupId: $coverGroupId, ids: $ids) {
+      done
+    }
+  }
+`
+
+const pinDocCoverItem = gql`
+  mutation pinDocCoverItem($community: String!, $nodeId: ID!, $uiConfig: Json) {
+    pinDocCoverItem(community: $community, nodeId: $nodeId, uiConfig: $uiConfig) {
+      id
+      nodeId
+      uiConfig
+    }
+  }
+`
+
+const unpinDocCoverItem = gql`
+  mutation unpinDocCoverItem($community: String!, $nodeId: ID!) {
+    unpinDocCoverItem(community: $community, nodeId: $nodeId) {
+      id
+      nodeId
+    }
+  }
+`
+
+const updateDocCoverGroupUiConfig = gql`
+  mutation updateDocCoverGroupUiConfig($community: String!, $id: ID!, $uiConfig: Json!) {
+    updateDocCoverGroupUiConfig(community: $community, id: $id, uiConfig: $uiConfig) {
+      id
+      uiConfig
+    }
+  }
+`
+
+const updateDocCoverItemUiConfig = gql`
+  mutation updateDocCoverItemUiConfig($community: String!, $id: ID!, $uiConfig: Json!) {
+    updateDocCoverItemUiConfig(community: $community, id: $id, uiConfig: $uiConfig) {
+      id
+      uiConfig
+    }
+  }
+`
+
+const updateDocCoverPinnedUiConfig = gql`
+  mutation updateDocCoverPinnedUiConfig($community: String!, $nodeId: ID!, $uiConfig: Json!) {
+    updateDocCoverPinnedUiConfig(community: $community, nodeId: $nodeId, uiConfig: $uiConfig) {
+      id
+      nodeId
+      uiConfig
     }
   }
 `
@@ -861,10 +1000,24 @@ const schema = {
   updateDocDraft,
   checkpointDocDraftRevision,
   publishDocDraftRevision,
+  publishAllUnpublishedDocDrafts,
+  publishDocTreeGroup,
+  moveDocToDraft,
+  moveDocTreeGroupToDraft,
   restoreDocDraftRevision,
   deleteDocTreeNode,
   duplicateDocTreeNode,
   moveDocTreeNode,
+  addDocCoverGroup,
+  removeDocCoverGroup,
+  setDocCoverItemHidden,
+  reorderDocCoverGroups,
+  reorderDocCoverItems,
+  pinDocCoverItem,
+  unpinDocCoverItem,
+  updateDocCoverGroupUiConfig,
+  updateDocCoverItemUiConfig,
+  updateDocCoverPinnedUiConfig,
   updateModerators,
   searchUsers,
   addModerator,

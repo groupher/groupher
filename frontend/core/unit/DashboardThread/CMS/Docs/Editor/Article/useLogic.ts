@@ -44,7 +44,7 @@ export default function useLogic(
   const activePage = useMemo(() => {
     const child = sideTree.activeId ? findChild(sideTree.groups, sideTree.activeId) : null
 
-    return child?.type === SIDE_TREE_NODE_TYPE.PAGE ? child : null
+    return child?.type === SIDE_TREE_NODE_TYPE.PAGE && child.docId ? child : null
   }, [sideTree.activeId, sideTree.groups])
   const initialSession =
     initialDraft && activePage?.docId === initialDraft.id
@@ -108,6 +108,7 @@ export default function useLogic(
           insertedAt: null,
           updatedAt: null,
           author: null,
+          publishState: null,
           wordCount: 0,
           characterCount: 0,
         },
@@ -267,6 +268,7 @@ export default function useLogic(
           insertedAt: savedDraft?.insertedAt || null,
           updatedAt: savedDraft?.updatedAt || new Date().toISOString(),
           author: savedDraft?.author || null,
+          publishState: activePage.publishState || null,
           ...countEditorText(bodyValueRef.current),
         },
         saveError: null,
@@ -344,12 +346,23 @@ export default function useLogic(
         id: activePage.docId,
         title,
         slug,
+        publishState: activePage.publishState || null,
         ...bodyStats,
       },
       saveError: dirty ? null : docsEditor$.saveError,
       saveStatus: dirty ? 'dirty' : docsEditor$.saveStatus === 'saving' ? 'saving' : 'saved',
     })
-  }, [activePage?.docId, bodyStats, community, dirty, docsEditor$, setDocDraftSession, slug, title])
+  }, [
+    activePage?.docId,
+    activePage?.publishState,
+    bodyStats,
+    community,
+    dirty,
+    docsEditor$,
+    setDocDraftSession,
+    slug,
+    title,
+  ])
 
   useEffect(() => {
     if (!dirty || !editable || invalid || loading || saving) return

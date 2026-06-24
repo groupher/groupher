@@ -1,5 +1,6 @@
 import {
   DSB_CHANGELOG_ROUTE,
+  DSB_DOC_LAYOUT_ROUTE,
   DSB_DOC_ROUTE,
   DSB_KANBAN_ROUTE,
   DSB_POST_ROUTE,
@@ -30,7 +31,7 @@ export const DOC_MENU_ITEMS = [
     icon: 'layout',
     title: 'dsb.menu.doc.layout',
     slug: DSB_DOC_ROUTE.LAYOUT,
-    path: DSB_DOC_ROUTE.LAYOUT,
+    path: `${DSB_DOC_ROUTE.LAYOUT}/${DSB_DOC_LAYOUT_ROUTE.COVER}`,
   },
   {
     icon: 'cover',

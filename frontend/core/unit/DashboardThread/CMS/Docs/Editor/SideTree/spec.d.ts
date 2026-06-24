@@ -11,6 +11,23 @@ export type TSideTreeNodeType = (typeof SIDE_TREE_NODE_TYPE)[keyof typeof SIDE_T
 
 export type TSideTreeChildType = typeof SIDE_TREE_NODE_TYPE.PAGE | typeof SIDE_TREE_NODE_TYPE.LINK
 
+export type TDocTreeNodePublishState = {
+  status?: 'draft' | 'public' | null
+  published: boolean
+  publishedBefore?: boolean | null
+  publishedNodeId?: string | null
+  publishedDocId?: string | null
+  hasUnpublishedChanges?: boolean | null
+  lastPublishedAt?: string | null
+  inCover?: boolean | null
+  hiddenFromCover?: boolean | null
+  pinnedToCover?: boolean | null
+}
+
+type TSideTreePublishable = {
+  publishState?: TDocTreeNodePublishState | null
+}
+
 export type TSideTreeGroup = {
   id: string
   type: typeof SIDE_TREE_NODE_TYPE.GROUP
@@ -20,7 +37,7 @@ export type TSideTreeGroup = {
   hidden?: boolean
   expanded?: boolean
   children: readonly TSideTreeChild[]
-}
+} & TSideTreePublishable
 
 export type TSideTreePage = {
   id: string
@@ -33,7 +50,7 @@ export type TSideTreePage = {
   marker?: TMarkerValue
   badge?: string
   hidden?: boolean
-}
+} & TSideTreePublishable
 
 export type TSideTreeLink = {
   id: string
@@ -44,9 +61,10 @@ export type TSideTreeLink = {
   marker?: TMarkerValue
   badge?: string
   hidden?: boolean
-}
+} & TSideTreePublishable
 
 export type TSideTreeChild = TSideTreePage | TSideTreeLink
+export type TSideTreeLinkInput = Pick<TSideTreeLink, 'href' | 'title'>
 
 export type TEditingTarget =
   | { type: typeof SIDE_TREE_NODE_TYPE.GROUP; groupId: string }
@@ -64,18 +82,25 @@ export type TSideTreeController = {
   groups: TSideTreeGroup[]
   activeId: string | null
   editingTarget: TEditingTarget
+  coverWarning: string | null
   activate: (id: string) => void
   addGroup: () => void
   addChild: (groupId: string, action: TSideTreeChildMenuAction) => void
+  clearCoverWarning: () => void
   deleteGroup: (groupId: string) => void
   toggleGroup: (groupId: string) => void
+  toggleCoverGroup: (groupId: string, inCover: boolean) => void
+  publishGroup: (groupId: string) => void
+  moveGroupToDraft: (groupId: string) => void
   renameGroup: (groupId: string, title: string) => void
   renameChild: (groupId: string, childId: string, title: string) => void
+  renameLink: (groupId: string, childId: string, input: TSideTreeLinkInput) => void
   cancelEdit: () => void
   edit: (target: TEditingTarget) => void
   handleChildAction: (groupId: string, childId: string, action: TSideTreeNodeMenuAction) => void
   updateChildStyle: (groupId: string, childId: string, marker: TSideTreeChild['marker']) => void
   patchChild: (childId: string, patch: Partial<TSideTreeChild>) => void
+  reload: () => void
   reorderGroups: (groups: readonly TSideTreeGroup[]) => void
 }
 
@@ -83,7 +108,7 @@ export type TDocTreeNodeDTO = {
   id: string
   parentId?: string | null
   docId?: string | null
-  type: TSideTreeGroup['type'] | TSideTreeChild['type']
+  type: TSideTreeGroup['type'] | TSideTreeChild['type'] | 'GROUP' | 'PAGE' | 'LINK'
   title?: string | null
   slug?: string | null
   index?: number | null
@@ -92,6 +117,7 @@ export type TDocTreeNodeDTO = {
   badge?: string | null
   hidden?: boolean | null
   expanded?: boolean | null
+  publishState?: TDocTreeNodePublishState | null
   children?: TDocTreeNodeDTO[] | null
 }
 

@@ -1,11 +1,11 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-import useBase from '../../useAppearanceBaseSalon'
+import useBase from '../../../useDsbSalon'
 
 export { cnMerge } from '~/css'
 
 export default function useSalon() {
-  const { cnMerge, primary, br } = useTwBelt()
+  const { cnMerge, br, primary } = useTwBelt()
   const base = useBase()
 
   return {
