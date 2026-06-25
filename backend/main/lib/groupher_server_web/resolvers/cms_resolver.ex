@@ -138,7 +138,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def update_doc_draft(_root, %{community: community, id: id} = args, _info) do
-    CMS.DocTree.update_draft(community, id, Map.take(args, [:title, :slug, :body]))
+    CMS.DocTree.update_draft(community, id, Map.take(args, [:title, :subtitle, :slug, :body]))
   end
 
   def checkpoint_doc_draft_revision(

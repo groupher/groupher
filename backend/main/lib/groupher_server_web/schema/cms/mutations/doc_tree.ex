@@ -55,6 +55,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:title, :string)
+      arg(:subtitle, :string)
       arg(:slug, :string)
       arg(:body, :string)
 

@@ -707,7 +707,7 @@ type RootMutationType {
   updateDocTreeNode(community: String!, id: ID!, baseRevision: Int!, patch: DocTreeNodePatchInput!): DocTreeMutationPayload
 
   "update a docs draft document"
-  updateDocDraft(community: String!, id: ID!, title: String, slug: String, body: String): DocDraft
+  updateDocDraft(community: String!, id: ID!, title: String, subtitle: String, slug: String, body: String): DocDraft
 
   "save current docs draft as an article revision checkpoint"
   checkpointDocDraftRevision(community: String!, id: ID!): ArticleRevision
@@ -911,6 +911,7 @@ type DocCoverPinnedItem {
 type DocDraft {
   id: ID
   title: String
+  subtitle: String
   slug: String
   digest: String
   author: User
@@ -995,6 +996,7 @@ type ArticleRevision {
   articleDraftId: ID
   title: String
   slug: String
+  subtitle: String
   digest: String
   documentJson: String
   contentHash: String
@@ -1110,6 +1112,7 @@ type Doc implements Article {
   copyRight: String
   linkAddr: String
   pending: Int
+  subtitle: String
   commentsParticipants: [User]
   commentsParticipantsCount: Int
   commentsCount: Int

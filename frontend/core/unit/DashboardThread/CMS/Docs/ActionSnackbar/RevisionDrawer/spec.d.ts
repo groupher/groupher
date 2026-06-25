@@ -14,6 +14,7 @@ export type TArticleRevision = {
   articleDraftId?: string | null
   title?: string | null
   slug?: string | null
+  subtitle?: string | null
   digest?: string | null
   documentJson?: string | null
   contentHash?: string | null

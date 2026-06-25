@@ -21,6 +21,8 @@ import {
 import { countEditorText, resolveDraftSession, serializeEditorValue } from './helper'
 import type { TDocDraftDTO, TDocDraftInitialData } from './spec'
 
+const revisionSignature = (bodyJson: string, subtitle: string): string => `${subtitle}\n${bodyJson}`
+
 /**
  * Own the active doc draft editing lifecycle for the Article editor.
  *
@@ -51,6 +53,7 @@ export default function useLogic(
       ? resolveDraftSession(initialDraft, activePage)
       : null
   const [title, setTitle] = useState(initialSession?.title ?? '')
+  const [subtitle, setSubtitle] = useState(initialSession?.subtitle ?? '')
   const [bodyValue, setBodyValue] = useState<TRichEditorValue>(
     initialSession?.body ?? EMPTY_EDITOR_VALUE,
   )
@@ -61,22 +64,31 @@ export default function useLogic(
   const loadIdRef = useRef(0)
   const bodyValueRef = useRef<TRichEditorValue>(EMPTY_EDITOR_VALUE)
   const savedTitleRef = useRef(initialSession?.title ?? '')
+  const savedSubtitleRef = useRef(initialSession?.subtitle ?? '')
   const savedBodyRef = useRef(initialSession?.bodyJson ?? serializeEditorValue(EMPTY_EDITOR_VALUE))
   const savingRef = useRef(false)
   const checkpointingRef = useRef(false)
   const pendingRevisionCheckpointRef = useRef(false)
   const lastAutosavedAtRef = useRef(Date.now())
-  const lastCheckpointedBodyRef = useRef(
-    initialSession?.bodyJson ?? serializeEditorValue(EMPTY_EDITOR_VALUE),
+  const lastCheckpointedSignatureRef = useRef(
+    revisionSignature(
+      initialSession?.bodyJson ?? serializeEditorValue(EMPTY_EDITOR_VALUE),
+      initialSession?.subtitle ?? '',
+    ),
   )
   const lastLoadedDocIdRef = useRef<string | null>(initialSession?.info.id ?? null)
   const initialDraftConsumedRef = useRef(false)
   const slugTitleRef = useRef('')
   const titleRef = useRef('')
+  const subtitleRef = useRef('')
 
   useEffect(() => {
     titleRef.current = title
   }, [title])
+
+  useEffect(() => {
+    subtitleRef.current = subtitle
+  }, [subtitle])
 
   useEffect(() => {
     bodyValueRef.current = bodyValue
@@ -88,22 +100,28 @@ export default function useLogic(
 
     if (!activePage?.docId) {
       setTitle('')
+      setSubtitle('')
       setBodyValue(EMPTY_EDITOR_VALUE)
       setSlug('')
       setLoading(false)
       setError(null)
       savedTitleRef.current = ''
+      savedSubtitleRef.current = ''
       savedBodyRef.current = serializeEditorValue(EMPTY_EDITOR_VALUE)
       lastLoadedDocIdRef.current = null
       pendingRevisionCheckpointRef.current = false
       lastAutosavedAtRef.current = Date.now()
-      lastCheckpointedBodyRef.current = serializeEditorValue(EMPTY_EDITOR_VALUE)
+      lastCheckpointedSignatureRef.current = revisionSignature(
+        serializeEditorValue(EMPTY_EDITOR_VALUE),
+        '',
+      )
       setDocDraftSession({
         baselineValue: EMPTY_EDITOR_VALUE,
         bodyValue: EMPTY_EDITOR_VALUE,
         docDraftInfo: {
           id: '',
           title: '',
+          subtitle: '',
           slug: '',
           insertedAt: null,
           updatedAt: null,
@@ -132,14 +150,19 @@ export default function useLogic(
 
       initialDraftConsumedRef.current = true
       setTitle(nextSession.title)
+      setSubtitle(nextSession.subtitle)
       setBodyValue(nextSession.body)
       setSlug(nextSession.slug)
       savedTitleRef.current = nextSession.title
+      savedSubtitleRef.current = nextSession.subtitle
       savedBodyRef.current = nextSession.bodyJson
       lastLoadedDocIdRef.current = activePage.docId
       pendingRevisionCheckpointRef.current = false
       lastAutosavedAtRef.current = Date.now()
-      lastCheckpointedBodyRef.current = nextSession.bodyJson
+      lastCheckpointedSignatureRef.current = revisionSignature(
+        nextSession.bodyJson,
+        nextSession.subtitle,
+      )
       setDocDraftSession({
         baselineValue: nextSession.body,
         bodyValue: nextSession.body,
@@ -162,14 +185,19 @@ export default function useLogic(
         const nextSession = resolveDraftSession(draft, activePage)
 
         setTitle(nextSession.title)
+        setSubtitle(nextSession.subtitle)
         setBodyValue(nextSession.body)
         setSlug(nextSession.slug)
         savedTitleRef.current = nextSession.title
+        savedSubtitleRef.current = nextSession.subtitle
         savedBodyRef.current = nextSession.bodyJson
         lastLoadedDocIdRef.current = activePage.docId
         pendingRevisionCheckpointRef.current = false
         lastAutosavedAtRef.current = Date.now()
-        lastCheckpointedBodyRef.current = nextSession.bodyJson
+        lastCheckpointedSignatureRef.current = revisionSignature(
+          nextSession.bodyJson,
+          nextSession.subtitle,
+        )
         setDocDraftSession({
           baselineValue: nextSession.body,
           bodyValue: nextSession.body,
@@ -221,7 +249,9 @@ export default function useLogic(
   }, [activePage, title])
 
   const dirty =
-    title !== savedTitleRef.current || serializeEditorValue(bodyValue) !== savedBodyRef.current
+    title !== savedTitleRef.current ||
+    subtitle !== savedSubtitleRef.current ||
+    serializeEditorValue(bodyValue) !== savedBodyRef.current
   const editable = !!activePage?.docId
   const invalid = !title.trim()
   const bodyStats = useMemo(() => countEditorText(bodyValue), [bodyValue])
@@ -230,6 +260,7 @@ export default function useLogic(
     if (!activePage?.docId || invalid || savingRef.current) return
 
     const nextTitle = title.trim()
+    const nextSubtitle = subtitle.trim()
     const body = serializeEditorValue(bodyValue)
 
     savingRef.current = true
@@ -244,6 +275,7 @@ export default function useLogic(
         community,
         id: activePage.docId,
         title: nextTitle,
+        subtitle: nextSubtitle,
         slug: nextSlug,
         body,
       })
@@ -251,19 +283,24 @@ export default function useLogic(
       const savedDraft = data?.updateDocDraft
       const savedSlug = savedDraft?.slug || nextSlug
       const currentTitle = titleRef.current
+      const currentSubtitle = subtitleRef.current
       const currentBody = serializeEditorValue(bodyValueRef.current)
 
       if (currentTitle === title) setTitle(nextTitle)
+      if (currentSubtitle === subtitle) setSubtitle(nextSubtitle)
       if (currentTitle.trim() === nextTitle) setSlug(savedSlug)
       savedTitleRef.current = nextTitle
+      savedSubtitleRef.current = nextSubtitle
       savedBodyRef.current = body
       lastAutosavedAtRef.current = Date.now()
-      pendingRevisionCheckpointRef.current = body !== lastCheckpointedBodyRef.current
+      pendingRevisionCheckpointRef.current =
+        revisionSignature(body, nextSubtitle) !== lastCheckpointedSignatureRef.current
       setDocDraftSession({
         bodyValue: bodyValueRef.current,
         docDraftInfo: {
           id: savedDraft?.id || activePage.docId,
           title: currentTitle === title ? nextTitle : currentTitle,
+          subtitle: currentSubtitle === subtitle ? nextSubtitle : currentSubtitle,
           slug: currentTitle.trim() === nextTitle ? savedSlug : slug,
           insertedAt: savedDraft?.insertedAt || null,
           updatedAt: savedDraft?.updatedAt || new Date().toISOString(),
@@ -272,7 +309,10 @@ export default function useLogic(
           ...countEditorText(bodyValueRef.current),
         },
         saveError: null,
-        saveStatus: currentTitle !== title || currentBody !== body ? 'dirty' : 'saved',
+        saveStatus:
+          currentTitle !== title || currentSubtitle !== subtitle || currentBody !== body
+            ? 'dirty'
+            : 'saved',
       })
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
@@ -283,14 +323,14 @@ export default function useLogic(
       savingRef.current = false
       setSaving(false)
     }
-  }, [activePage, bodyValue, community, invalid, mutate, setDocDraftSession, slug, title])
+  }, [activePage, bodyValue, community, invalid, mutate, setDocDraftSession, slug, subtitle, title])
 
   const checkpointRevision = useCallback(async () => {
     if (!activePage?.docId || checkpointingRef.current || !pendingRevisionCheckpointRef.current) {
       return
     }
 
-    const checkpointBody = savedBodyRef.current
+    const checkpointSignature = revisionSignature(savedBodyRef.current, savedSubtitleRef.current)
     checkpointingRef.current = true
 
     try {
@@ -298,8 +338,9 @@ export default function useLogic(
         community,
         id: activePage.docId,
       })
-      lastCheckpointedBodyRef.current = checkpointBody
-      pendingRevisionCheckpointRef.current = savedBodyRef.current !== checkpointBody
+      lastCheckpointedSignatureRef.current = checkpointSignature
+      pendingRevisionCheckpointRef.current =
+        revisionSignature(savedBodyRef.current, savedSubtitleRef.current) !== checkpointSignature
     } catch (err) {
       const message = err instanceof Error ? err.message : t(REVISION_LABEL_KEY.CHECKPOINT_FAILED)
       lastAutosavedAtRef.current = Date.now()
@@ -317,6 +358,14 @@ export default function useLogic(
     (value: string): void => {
       markRevisionCheckpointPending()
       setTitle(value)
+    },
+    [markRevisionCheckpointPending],
+  )
+
+  const editSubtitle = useCallback(
+    (value: string): void => {
+      markRevisionCheckpointPending()
+      setSubtitle(value)
     },
     [markRevisionCheckpointPending],
   )
@@ -345,6 +394,7 @@ export default function useLogic(
         ...docsEditor$.docDraftInfo,
         id: activePage.docId,
         title,
+        subtitle,
         slug,
         publishState: activePage.publishState || null,
         ...bodyStats,
@@ -361,6 +411,7 @@ export default function useLogic(
     docsEditor$,
     setDocDraftSession,
     slug,
+    subtitle,
     title,
   ])
 
@@ -381,7 +432,8 @@ export default function useLogic(
       invalid ||
       loading ||
       saving ||
-      savedBodyRef.current === lastCheckpointedBodyRef.current
+      revisionSignature(savedBodyRef.current, savedSubtitleRef.current) ===
+        lastCheckpointedSignatureRef.current
     ) {
       return
     }
@@ -406,8 +458,10 @@ export default function useLogic(
     saving,
     save,
     setBodyValue: editBodyValue,
+    setSubtitle: editSubtitle,
     setTitle: editTitle,
     slug,
+    subtitle,
     title,
   }
 }

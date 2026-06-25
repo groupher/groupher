@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Model.ArticleRevision do
 
   @revision_types [:draft, :published]
   @required_fields ~w(community_id thread type title document_json content_hash revision_number)a
-  @optional_fields ~w(article_id article_draft_id author_id slug digest schema_version)a
+  @optional_fields ~w(article_id article_draft_id author_id slug subtitle digest schema_version)a
 
   @type revision_type :: :draft | :published
   @type t :: %ArticleRevision{}
@@ -50,6 +50,7 @@ defmodule GroupherServer.CMS.Model.ArticleRevision do
     field(:article_id, :id)
     field(:title, :string)
     field(:slug, :string)
+    field(:subtitle, :string)
     field(:digest, :string)
     field(:document_json, :string)
     field(:content_hash, :string)

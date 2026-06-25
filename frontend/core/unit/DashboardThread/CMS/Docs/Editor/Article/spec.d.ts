@@ -5,6 +5,7 @@ import type { TDocDraftInfo } from '../store/spec'
 export type TDocDraftDTO = {
   id: string
   title?: string | null
+  subtitle?: string | null
   slug?: string | null
   digest?: string | null
   insertedAt?: string | null
@@ -26,5 +27,6 @@ export type TDocDraftSession = {
   bodyJson: string
   info: TDocDraftInfo
   slug: string
+  subtitle: string
   title: string
 }

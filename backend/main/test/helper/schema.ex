@@ -217,6 +217,7 @@ defmodule GroupherServer.Test.Helper.Schema do
       docDraft(community: $community, id: $id) {
         id
         title
+        subtitle
         slug
         digest
         insertedAt
@@ -250,6 +251,7 @@ defmodule GroupherServer.Test.Helper.Schema do
         articleDraftId
         title
         slug
+        subtitle
         digest
         documentJson
         contentHash
@@ -527,10 +529,11 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:update_doc_draft) do
     """
-    mutation($community: String!, $id: ID!, $title: String, $slug: String, $body: String) {
-      updateDocDraft(community: $community, id: $id, title: $title, slug: $slug, body: $body) {
+    mutation($community: String!, $id: ID!, $title: String, $subtitle: String, $slug: String, $body: String) {
+      updateDocDraft(community: $community, id: $id, title: $title, subtitle: $subtitle, slug: $slug, body: $body) {
         id
         title
+        subtitle
         slug
         digest
         insertedAt
@@ -563,6 +566,8 @@ defmodule GroupherServer.Test.Helper.Schema do
         articleDraftId
         title
         slug
+        subtitle
+        digest
         documentJson
         contentHash
         revisionNumber
@@ -585,6 +590,8 @@ defmodule GroupherServer.Test.Helper.Schema do
         articleDraftId
         title
         slug
+        subtitle
+        digest
         documentJson
         contentHash
         revisionNumber
@@ -602,7 +609,9 @@ defmodule GroupherServer.Test.Helper.Schema do
       restoreDocDraftRevision(community: $community, id: $id, revisionId: $revisionId) {
         id
         title
+        subtitle
         slug
+        digest
         document {
           json
         }

@@ -20,8 +20,9 @@ defmodule GroupherServer.CMS.Model.Doc do
 
   @required_fields ~w(title digest)a
   @article_cast_fields general_article_cast_fields()
-  @optional_fields ~w(updated_at inserted_at active_at archived_at inner_id)a ++
+  @optional_fields ~w(subtitle updated_at inserted_at active_at archived_at inner_id)a ++
                      @article_cast_fields
+  @max_subtitle_length 240
 
   @type t :: %Doc{}
   schema "docs" do
@@ -29,6 +30,7 @@ defmodule GroupherServer.CMS.Model.Doc do
     article_tags_field(:doc)
     article_communities_field(:doc)
     general_article_fields(:doc)
+    field(:subtitle, :string)
   end
 
   @doc false
@@ -50,8 +52,10 @@ defmodule GroupherServer.CMS.Model.Doc do
   defp geneal_changeset(changeset) do
     changeset
     |> validate_length(:title, min: 3, max: 100)
+    |> validate_length(:subtitle, max: @max_subtitle_length)
     |> cast_embed(:emotions, with: &Embeds.ArticleEmotion.changeset/2)
     |> validate_length(:link_addr, min: 5, max: 400)
+    |> HTML.safe_string(:subtitle)
     |> HTML.safe_string(:body)
   end
 end

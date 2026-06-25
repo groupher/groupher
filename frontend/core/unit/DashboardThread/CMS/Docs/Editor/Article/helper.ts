@@ -81,6 +81,7 @@ export const resolveDraftSession = (
   activePage: TSideTreePage | null,
 ): TDocDraftSession => {
   const title = draft?.title || activePage?.title || ''
+  const subtitle = draft?.subtitle || ''
   const body = parseEditorValue(draft?.document?.json)
 
   return {
@@ -89,6 +90,7 @@ export const resolveDraftSession = (
     info: {
       id: draft?.id || activePage?.docId || '',
       title,
+      subtitle,
       slug: draft?.slug || '',
       insertedAt: draft?.insertedAt || null,
       updatedAt: draft?.updatedAt || null,
@@ -97,6 +99,7 @@ export const resolveDraftSession = (
       ...countEditorText(body),
     },
     slug: draft?.slug || '',
+    subtitle,
     title,
   }
 }

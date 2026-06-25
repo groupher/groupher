@@ -14,6 +14,7 @@ export type TDocDraftAuthor = {
 export type TDocDraftInfo = {
   id: string
   title: string
+  subtitle: string
   slug: string
   insertedAt: string | null
   updatedAt: string | null

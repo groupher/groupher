@@ -6,6 +6,7 @@ import type { TDocDraftInfo, TInit, TStore } from './spec'
 const EMPTY_DOC_DRAFT_INFO: TDocDraftInfo = {
   id: '',
   title: '',
+  subtitle: '',
   slug: '',
   insertedAt: null,
   updatedAt: null,

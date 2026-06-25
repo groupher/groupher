@@ -164,6 +164,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :doc_draft do
     field(:id, :id)
     field(:title, :string)
+    field(:subtitle, :string)
     field(:slug, :string)
     field(:digest, :string)
     field(:author, :user, resolve: dataloader(CMS, :author))
@@ -257,6 +258,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:article_draft_id, :id)
     field(:title, :string)
     field(:slug, :string)
+    field(:subtitle, :string)
     field(:digest, :string)
     field(:document_json, :string)
     field(:content_hash, :string)
@@ -294,6 +296,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     interface(:article)
 
     general_article_fields()
+    field(:subtitle, :string)
     comments_fields()
 
     timestamp_fields(:article)
