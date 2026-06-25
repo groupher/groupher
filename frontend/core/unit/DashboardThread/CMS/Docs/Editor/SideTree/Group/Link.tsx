@@ -18,12 +18,15 @@ import type {
   TSideTreeNodeMenuAction,
 } from '../spec'
 import ChildMenu from './ChildMenu'
+import HighlightTitle from './HighlightTitle'
 import LinkInlineEditor from './LinkInlineEditor'
 
 type TProps = {
   groupId: string
   item: TSideTreeLink
   editingTarget: TEditingTarget
+  searchQuery?: string
+  searching?: boolean
   onRename: (groupId: string, childId: string, input: TSideTreeLinkInput) => void
   onCancelEdit: () => void
   onEdit: (target: TEditingTarget) => void
@@ -35,6 +38,8 @@ const Link: FC<TProps> = ({
   groupId,
   item,
   editingTarget,
+  searchQuery = '',
+  searching = false,
   onRename,
   onCancelEdit,
   onEdit,
@@ -43,7 +48,7 @@ const Link: FC<TProps> = ({
 }) => {
   const [menuOpen, setMenuOpen] = useState(false)
   const { t } = useTrans()
-  const s = useSalon({ actionVisible: menuOpen })
+  const s = useSalon({ actionVisible: !searching && menuOpen })
   const editing =
     editingTarget?.type === SIDE_TREE_NODE_TYPE.LINK && editingTarget.childId === item.id
   const titleValue =
@@ -57,7 +62,11 @@ const Link: FC<TProps> = ({
         <MarkerPicker
           compact
           value={item.marker ?? DEFAULT_LINK_MARKER}
-          onChange={(value) => onStyleChange(groupId, item.id, value)}
+          triggerClassName={searching ? s.markerReadonly : undefined}
+          onChange={(value) => {
+            if (searching) return
+            onStyleChange(groupId, item.id, value)
+          }}
         />
       </div>
       {editing ? (
@@ -68,11 +77,13 @@ const Link: FC<TProps> = ({
           onConfirm={(input) => onRename(groupId, item.id, input)}
         />
       ) : (
-        <a href={item.href} target='_blank' rel='noreferrer' className={s.titleButton}>
-          {item.title}
-        </a>
+        <div className={s.titleCluster}>
+          <a href={item.href} target='_blank' rel='noreferrer' className={s.titleButton}>
+            <HighlightTitle className={s.titleText} query={searchQuery} text={item.title} />
+          </a>
+        </div>
       )}
-      {!editing && (
+      {!searching && !editing && (
         <div className={s.actions}>
           <ChildMenu
             onOpenChange={setMenuOpen}

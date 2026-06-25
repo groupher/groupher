@@ -37,6 +37,8 @@ type TProps = {
   group: TSideTreeGroup
   activeId: string | null
   editingTarget: TEditingTarget
+  searchQuery?: string
+  searching?: boolean
   showTargetLine: boolean
   targetDragItemId: string | null
   targetDragPosition: TSideTreeDragTarget['position'] | null
@@ -64,6 +66,8 @@ const Group: FC<TProps> = ({
   group,
   activeId,
   editingTarget,
+  searchQuery = '',
+  searching = false,
   showTargetLine,
   targetDragItemId,
   targetDragPosition,
@@ -140,12 +144,12 @@ const Group: FC<TProps> = ({
     <SortableSideTreeColumn
       className={cn(s.wrapper, showTargetLine && s.wrapperTarget)}
       columnId={group.id}
-      disabled={editing}
+      disabled={searching || editing}
     >
       {({ attributes, listeners, setActivatorNodeRef }) => (
         <>
           <div className={s.head}>
-            {!editing && (
+            {!searching && !editing && (
               <button
                 ref={setActivatorNodeRef}
                 type='button'
@@ -164,18 +168,22 @@ const Group: FC<TProps> = ({
                 onConfirm={(title) => onRenameGroup(group.id, title)}
               />
             ) : (
-              <button type='button' className={s.titleButton} onClick={() => onToggle(group.id)}>
+              <button
+                type='button'
+                className={s.titleButton}
+                onClick={searching ? undefined : () => onToggle(group.id)}
+              >
                 <span className={s.title}>{group.title}</span>
                 <ArrowSVG className={cn(s.arrowIcon, collapsed && s.arrowCollapsed)} />
               </button>
             )}
             <div className={s.actionSlot}>
-              {!editing && !groupInCover && (
+              {!searching && !editing && !groupInCover && (
                 <div className={s.coverStatus} aria-label='Hidden from cover'>
                   <CalendarSlashSVG className={s.coverStatusIcon} />
                 </div>
               )}
-              {!editing && (
+              {!searching && !editing && (
                 <button
                   type='button'
                   className={s.addButton}
@@ -186,7 +194,7 @@ const Group: FC<TProps> = ({
                   <PlusSVG className={s.actionIcon} />
                 </button>
               )}
-              {!editing && publishGroupShortcutVisible && (
+              {!searching && !editing && publishGroupShortcutVisible && (
                 <button
                   type='button'
                   className={s.publishButton}
@@ -197,23 +205,25 @@ const Group: FC<TProps> = ({
                   <PaperPlaneTiltSVG className={s.publishIcon} />
                 </button>
               )}
-              <div className={s.actions}>
-                <GroupMenu
-                  inCover={groupInCover}
-                  open={menuOpen}
-                  publishVisible={publishGroupVisible}
-                  draftVisible={draftGroupVisible}
-                  onOpenChange={setMenuOpen}
-                  onSelect={handleGroupMenuSelect}
-                />
-              </div>
+              {!searching && (
+                <div className={s.actions}>
+                  <GroupMenu
+                    inCover={groupInCover}
+                    open={menuOpen}
+                    publishVisible={publishGroupVisible}
+                    draftVisible={draftGroupVisible}
+                    onOpenChange={setMenuOpen}
+                    onSelect={handleGroupMenuSelect}
+                  />
+                </div>
+              )}
             </div>
           </div>
           <SortableSideTreeGroup
             className={cn(s.children, collapsed && s.collapsed)}
             columnId={group.id}
             ids={group.children.map((child) => child.id)}
-            disabled={collapsed}
+            disabled={searching || collapsed}
             externalListRef={childrenListRef}
           >
             {group.children.map((child) => {
@@ -227,6 +237,7 @@ const Group: FC<TProps> = ({
                   key={child.id}
                   id={child.id}
                   columnId={group.id}
+                  disabled={searching}
                   editing={childEditing}
                   targetPosition={targetDragItemId === child.id ? targetDragPosition : null}
                 >
@@ -237,6 +248,8 @@ const Group: FC<TProps> = ({
                       item={child}
                       active={activeId === child.id}
                       editingTarget={editingTarget}
+                      searchQuery={searchQuery}
+                      searching={searching}
                       onActivate={onActivate}
                       onRename={onRenameChild}
                       onCancelEdit={onCancelEdit}
@@ -249,6 +262,8 @@ const Group: FC<TProps> = ({
                       groupId={group.id}
                       item={child}
                       editingTarget={editingTarget}
+                      searchQuery={searchQuery}
+                      searching={searching}
                       onRename={onRenameLink}
                       onCancelEdit={onCancelEdit}
                       onEdit={onEdit}

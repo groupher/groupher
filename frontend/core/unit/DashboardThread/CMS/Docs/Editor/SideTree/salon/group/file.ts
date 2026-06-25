@@ -19,6 +19,7 @@ export default function useSalon({
       hover('box'),
     ),
     pickerSlot: 'align-both size-5 shrink-0',
+    markerReadonly: 'pointer-events-none',
     titleCluster: 'row-center min-w-0 flex-1 gap-1 leading-5',
     titleButton: cn(
       'min-w-0 max-w-full text-left plain-button text-sm leading-5 truncate pointer',

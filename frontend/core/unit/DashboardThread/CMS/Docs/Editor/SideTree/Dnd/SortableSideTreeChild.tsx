@@ -12,6 +12,7 @@ import { toTranslateOnlyTransform } from './helper'
 type TProps = {
   children: ReactNode
   columnId: string
+  disabled?: boolean
   editing?: boolean
   id: string
   targetPosition?: 'before' | 'after' | null
@@ -22,6 +23,7 @@ type TProps = {
 const SortableSideTreeChild = memo(function SortableSideTreeChild({
   children,
   columnId,
+  disabled = false,
   editing = false,
   id,
   targetPosition = null,
@@ -43,7 +45,7 @@ const SortableSideTreeChild = memo(function SortableSideTreeChild({
     isDragging,
   } = useSortable({
     id,
-    disabled: editing,
+    disabled: disabled || editing,
     data: {
       childId: id,
       type: SIDE_TREE_DND_TYPE.CHILD,
@@ -69,7 +71,7 @@ const SortableSideTreeChild = memo(function SortableSideTreeChild({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {!editing && (
+      {!disabled && !editing && (
         <button
           ref={setActivatorNodeRef}
           type='button'

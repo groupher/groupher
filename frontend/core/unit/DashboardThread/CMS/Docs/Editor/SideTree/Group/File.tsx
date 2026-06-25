@@ -7,6 +7,7 @@ import { isPublicDoc, needsPublishAttention } from '../helper'
 import useSalon from '../salon/group/file'
 import type { TEditingTarget, TSideTreeNodeMenuAction, TSideTreePage } from '../spec'
 import ChildMenu from './ChildMenu'
+import HighlightTitle from './HighlightTitle'
 import InlineTitleInput from './InlineTitleInput'
 
 type TProps = {
@@ -15,6 +16,8 @@ type TProps = {
   item: TSideTreePage
   active: boolean
   editingTarget: TEditingTarget
+  searchQuery?: string
+  searching?: boolean
   onActivate: (id: string) => void
   onRename: (groupId: string, childId: string, title: string) => void
   onCancelEdit: () => void
@@ -29,6 +32,8 @@ const File: FC<TProps> = ({
   item,
   active,
   editingTarget,
+  searchQuery = '',
+  searching = false,
   onActivate,
   onRename,
   onCancelEdit,
@@ -37,7 +42,7 @@ const File: FC<TProps> = ({
   onStyleChange,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false)
-  const s = useSalon({ active, actionVisible: menuOpen })
+  const s = useSalon({ active, actionVisible: !searching && menuOpen })
   const editing =
     editingTarget?.type === SIDE_TREE_NODE_TYPE.PAGE && editingTarget.childId === item.id
   const showPublishDot = needsPublishAttention(item.publishState)
@@ -66,7 +71,11 @@ const File: FC<TProps> = ({
           compact
           active={active}
           value={item.marker ?? DEFAULT_PAGE_MARKER}
-          onChange={(value) => onStyleChange(groupId, item.id, value)}
+          triggerClassName={searching ? s.markerReadonly : undefined}
+          onChange={(value) => {
+            if (searching) return
+            onStyleChange(groupId, item.id, value)
+          }}
         />
       </div>
       {editing ? (
@@ -77,7 +86,11 @@ const File: FC<TProps> = ({
         />
       ) : (
         <div className={s.titleCluster}>
-          <span className={s.titleButton}>{item.title || item.path || 'Untitled'}</span>
+          <HighlightTitle
+            className={s.titleButton}
+            query={searchQuery}
+            text={item.title || item.path || 'Untitled'}
+          />
         </div>
       )}
       {item.badge && <div className={s.badge}>{item.badge}</div>}
@@ -87,21 +100,23 @@ const File: FC<TProps> = ({
             <span className={s.unpublishedDot} aria-hidden='true' />
           </div>
         )}
-        <div className={s.actions}>
-          <ChildMenu
-            moveToDraftVisible={publicDoc}
-            coverToggleVisible={groupInCover && publicDoc}
-            hiddenFromCover={item.publishState?.hiddenFromCover === true}
-            onOpenChange={setMenuOpen}
-            onSelect={(action) => {
-              if (action === SIDE_TREE_NODE_MENU_ACTION.RENAME) {
-                onEdit({ type: SIDE_TREE_NODE_TYPE.PAGE, groupId, childId: item.id })
-                return
-              }
-              onAction(groupId, item.id, action)
-            }}
-          />
-        </div>
+        {!searching && (
+          <div className={s.actions}>
+            <ChildMenu
+              moveToDraftVisible={publicDoc}
+              coverToggleVisible={groupInCover && publicDoc}
+              hiddenFromCover={item.publishState?.hiddenFromCover === true}
+              onOpenChange={setMenuOpen}
+              onSelect={(action) => {
+                if (action === SIDE_TREE_NODE_MENU_ACTION.RENAME) {
+                  onEdit({ type: SIDE_TREE_NODE_TYPE.PAGE, groupId, childId: item.id })
+                  return
+                }
+                onAction(groupId, item.id, action)
+              }}
+            />
+          </div>
+        )}
       </div>
     </div>
   )

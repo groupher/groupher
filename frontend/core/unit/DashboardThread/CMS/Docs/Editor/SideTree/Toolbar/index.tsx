@@ -1,10 +1,12 @@
-import type { ComponentType, FC, SVGProps } from 'react'
+import { type ChangeEvent, type ComponentType, type FC, type SVGProps } from 'react'
 
+import CloseSVG from '~/icons/CloseLight'
 import FilePlusSVG from '~/icons/FilePlus'
 import FolderPlusSVG from '~/icons/FolderPlus'
 import MagnifyingGlassSVG from '~/icons/MagnifyingGlass'
 import MapPinPlusSVG from '~/icons/MapPinPlus'
 import MoreSVG from '~/icons/menu/MoreL'
+import Input from '~/widgets/Input'
 
 import useSalon from '../salon/toolbar'
 
@@ -21,29 +23,73 @@ const ACTIONS: TToolbarAction[] = [
   { label: 'More', Icon: MoreSVG, compact: true },
 ]
 
-const Toolbar: FC = () => {
+type TProps = {
+  query: string
+  searching: boolean
+  onChangeQuery: (query: string) => void
+  onCloseSearch: () => void
+  onOpenSearch: () => void
+}
+
+const Toolbar: FC<TProps> = ({ query, searching, onChangeQuery, onCloseSearch, onOpenSearch }) => {
   const s = useSalon()
+
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    onChangeQuery(event.target.value)
+  }
 
   return (
     <div className={s.wrapper}>
-      <button type='button' className={s.search} aria-label='Search docs tree' title='Search'>
-        <MagnifyingGlassSVG className={s.searchIcon} />
-        <span className={s.searchText}>Search</span>
-      </button>
-
-      <div className={s.actions}>
-        {ACTIONS.map(({ label, Icon, compact }) => (
+      {searching ? (
+        <div className={s.searchField}>
+          <MagnifyingGlassSVG className={s.searchInputIcon} />
+          <Input
+            autoFocus
+            testid='docs-side-tree-search-input'
+            width='w-full'
+            className={s.searchInput}
+            value={query}
+            placeholder='Search'
+            onChange={handleInputChange}
+          />
           <button
-            key={label}
             type='button'
-            className={compact ? s.moreButton : s.actionButton}
-            aria-label={compact ? 'More tree actions' : `Add ${label}`}
-            title={compact ? 'More tree actions' : `Add ${label}`}
+            className={s.closeSearch}
+            aria-label='Clear docs tree search'
+            title='Clear search'
+            onClick={onCloseSearch}
           >
-            <Icon className={s.actionIcon} />
+            <CloseSVG className={s.closeIcon} />
           </button>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <button
+          type='button'
+          className={s.search}
+          aria-label='Search docs tree'
+          title='Search'
+          onClick={onOpenSearch}
+        >
+          <MagnifyingGlassSVG className={s.searchIcon} />
+          <span className={s.searchText}>Search</span>
+        </button>
+      )}
+
+      {!searching && (
+        <div className={s.actions}>
+          {ACTIONS.map(({ label, Icon, compact }) => (
+            <button
+              key={label}
+              type='button'
+              className={compact ? s.moreButton : s.actionButton}
+              aria-label={compact ? 'More tree actions' : `Add ${label}`}
+              title={compact ? 'More tree actions' : `Add ${label}`}
+            >
+              <Icon className={s.actionIcon} />
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
