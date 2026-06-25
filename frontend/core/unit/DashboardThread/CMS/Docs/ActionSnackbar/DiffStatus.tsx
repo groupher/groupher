@@ -1,12 +1,13 @@
 import { type FC, useEffect, useMemo, useState } from 'react'
 
 import useGraphQLClient from '~/hooks/useGraphQLClient'
+import useTrans from '~/hooks/useTrans'
 import MergeSVG from '~/icons/Merge'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
 
 import useDocsEditor from '../Editor/store/hooks'
-import { DOC_ACTION } from './constant'
+import { DOC_ACTION_LABEL_KEY } from './constant'
 import RevisionDrawer from './RevisionDrawer'
 import { computeRevisionDiffStats, parseRevisionDocumentValue } from './RevisionDrawer/helper'
 import type { TArticleRevision, TDocDraftRevisionPayload } from './RevisionDrawer/spec'
@@ -14,12 +15,14 @@ import useSalon, { cn } from './salon/diff_status'
 
 const DiffStatus: FC = () => {
   const s = useSalon()
+  const { t } = useTrans()
   const { slug: community } = useCommunity()
   const { query } = useGraphQLClient()
   const { baselineValue, bodyValue, docDraftInfo } = useDocsEditor()
   const [visible, setVisible] = useState(false)
   const [latestPublished, setLatestPublished] = useState<TArticleRevision | null>(null)
   const docDraftId = docDraftInfo.id
+  const label = t(DOC_ACTION_LABEL_KEY.DIFF)
 
   useEffect(() => {
     if (!docDraftId) {
@@ -52,8 +55,8 @@ const DiffStatus: FC = () => {
       <button
         type='button'
         className={cn(s.button, visible && s.buttonActive)}
-        aria-label={DOC_ACTION.DIFF}
-        title={DOC_ACTION.DIFF}
+        aria-label={label}
+        title={label}
         onClick={() => setVisible(true)}
       >
         <MergeSVG className={cn(s.icon, visible && s.iconActive)} />

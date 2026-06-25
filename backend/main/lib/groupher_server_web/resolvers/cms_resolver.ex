@@ -64,6 +64,16 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
+  def doc_cover(_root, %{community: %Community{} = community} = args, _info) do
+    CMS.DocCover.read(community, doc_cover_view(args))
+  end
+
+  def doc_cover(_root, %{community: community} = args, _info) do
+    with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
+      CMS.DocCover.read(community, doc_cover_view(args))
+    end
+  end
+
   def doc_draft(_root, %{community: %Community{} = community, id: id}, _info) do
     CMS.DocTree.read_draft(community, id)
   end
@@ -128,7 +138,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def update_doc_draft(_root, %{community: community, id: id} = args, _info) do
-    CMS.DocTree.update_draft(community, id, Map.take(args, [:title, :slug, :body]))
+    CMS.DocTree.update_draft(community, id, Map.take(args, [:title, :subtitle, :slug, :body]))
   end
 
   def checkpoint_doc_draft_revision(
@@ -161,10 +171,105 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def publish_doc_draft_revision(
         _root,
-        %{community: community, id: id, cur_user: user},
+        %{community: community, id: id, cur_user: user} = args,
         _info
       ) do
-    CMS.Articles.publish_doc_draft_revision(community, id, user)
+    sync_cover? = publish_with_cover_sync?(args)
+
+    CMS.DocTree.publish_doc(community, id, user, sync_cover: sync_cover?)
+  end
+
+  def publish_all_unpublished_doc_drafts(
+        _root,
+        %{community: community, cur_user: user} = args,
+        _info
+      ) do
+    sync_cover? = publish_with_cover_sync?(args)
+
+    CMS.DocTree.publish_all_unpublished_docs(community, user, sync_cover: sync_cover?)
+  end
+
+  def publish_doc_tree_group(
+        _root,
+        %{community: community, group_id: group_id, cur_user: user} = args,
+        _info
+      ) do
+    sync_cover? = publish_with_cover_sync?(args)
+
+    CMS.DocTree.publish_group(community, group_id, user, sync_cover: sync_cover?)
+  end
+
+  defp doc_cover_view(args), do: Map.get(args, :view) || :public
+
+  defp publish_with_cover_sync?(args),
+    do: (Map.get(args, :mode) || :with_cover_sync) == :with_cover_sync
+
+  def move_doc_to_draft(_root, %{community: community, id: id}, _info) do
+    CMS.DocTree.move_doc_to_draft(community, id)
+  end
+
+  def move_doc_tree_group_to_draft(_root, %{community: community, group_id: group_id}, _info) do
+    CMS.DocTree.move_group_to_draft(community, group_id)
+  end
+
+  def add_doc_cover_group(_root, %{community: community, group_id: group_id}, _info) do
+    CMS.DocCover.add_group(community, group_id)
+  end
+
+  def remove_doc_cover_group(_root, %{community: community, group_id: group_id}, _info) do
+    CMS.DocCover.remove_group(community, group_id)
+  end
+
+  def set_doc_cover_item_hidden(
+        _root,
+        %{community: community, node_id: node_id, hidden: hidden},
+        _info
+      ) do
+    CMS.DocCover.set_item_hidden(community, node_id, hidden)
+  end
+
+  def reorder_doc_cover_groups(_root, %{community: community, ids: ids}, _info) do
+    CMS.DocCover.reorder_groups(community, ids)
+  end
+
+  def reorder_doc_cover_items(
+        _root,
+        %{community: community, cover_group_id: cover_group_id, ids: ids},
+        _info
+      ) do
+    CMS.DocCover.reorder_items(community, cover_group_id, ids)
+  end
+
+  def update_doc_cover_group_ui_config(
+        _root,
+        %{community: community, id: id, ui_config: ui_config},
+        _info
+      ) do
+    CMS.DocCover.update_group_ui_config(community, id, ui_config)
+  end
+
+  def update_doc_cover_item_ui_config(
+        _root,
+        %{community: community, id: id, ui_config: ui_config},
+        _info
+      ) do
+    CMS.DocCover.update_item_ui_config(community, id, ui_config)
+  end
+
+  def pin_doc_cover_item(_root, %{community: community, node_id: node_id} = args, _info) do
+    CMS.DocCover.pin_item(community, node_id, Map.get(args, :ui_config, %{}))
+  end
+
+  def unpin_doc_cover_item(_root, %{community: community, node_id: node_id}, _info) do
+    CMS.DocCover.unpin_item(community, node_id)
+  end
+
+  def update_doc_cover_pinned_ui_config(
+        _root,
+        %{community: community, node_id: node_id, ui_config: ui_config},
+        _info
+      ) do
+    CMS.DocCover.update_pinned_ui_config(community, node_id, ui_config)
   end
 
   def delete_doc_tree_node(_root, %{community: community, id: id} = args, _info) do

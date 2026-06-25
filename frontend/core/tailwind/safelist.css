@@ -20,6 +20,9 @@
   'border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,custom,subCustom,black}/50'
 );
 @source inline(
+  'hover:border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,custom,subCustom,black}'
+);
+@source inline(
   '{hover:}border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,custom,subCustom,black}/50'
 );
 

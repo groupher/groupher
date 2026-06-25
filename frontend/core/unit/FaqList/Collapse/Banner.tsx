@@ -9,18 +9,15 @@ import useSalon from './salon/banner'
 
 type TProps = {
   menuOptions: TMenuOption[]
-  setOpenedIndexes: (ids: number[]) => void
+  setOpenedIds: (ids: string[]) => void
   sections: TFAQSection[]
 }
 
-const Banner: FC<TProps> = ({ menuOptions, setOpenedIndexes, sections }) => {
+const Banner: FC<TProps> = ({ menuOptions, setOpenedIds, sections }) => {
   const s = useSalon()
 
-  const foldAll = () => setOpenedIndexes([])
-  const unFoldAll = useCallback(
-    () => setOpenedIndexes(pluck('index', sections)),
-    [sections, setOpenedIndexes],
-  )
+  const foldAll = () => setOpenedIds([])
+  const unFoldAll = useCallback(() => setOpenedIds(pluck('id', sections)), [sections, setOpenedIds])
 
   const handleMenu = (key) => {
     switch (key) {

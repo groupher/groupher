@@ -29,10 +29,7 @@ const MarkerPicker: FC<TMarkerPickerProps> = ({
   value,
   color,
   triggerClassName,
-  iconClassName,
   iconSize,
-  emojiClassName,
-  devClassName,
   onChange = () => undefined,
 }) => {
   const s = useSalon({ compact, active, color })
@@ -144,9 +141,8 @@ const MarkerPicker: FC<TMarkerPickerProps> = ({
           <MarkerRender
             value={selectedValue}
             size={iconSize ?? (compact ? 3.5 : 4.5)}
-            iconClassName={iconClassName ?? s.previewIconColor}
-            emojiClassName={emojiClassName}
-            devClassName={devClassName ?? s.previewDevLogo}
+            color={color}
+            tone={active ? 'primary' : 'digest'}
           />
         </button>
       </Tooltip>

@@ -96,7 +96,12 @@ const RealModal: FC<TProps> = ({
           />
           <ViewportTracker onEnter={handleEnterPage} />
           {showCloseBtn && (
-            <button type='button' className={s.closeBox} onKeyUp={handleClose}>
+            <button
+              type='button'
+              className={s.closeBox}
+              onClick={handleClose}
+              onKeyUp={handleClose}
+            >
               <CloseCrossSVG className={s.closeIcon} />
             </button>
           )}

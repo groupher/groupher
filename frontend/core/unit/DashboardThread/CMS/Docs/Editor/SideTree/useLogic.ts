@@ -1,3 +1,4 @@
+import type { AnyVariables, DocumentInput } from '@urql/core'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -11,6 +12,7 @@ import { toast } from '~/widgets/Toaster'
 
 import { DOC_EDITOR_QUERY_PARAM } from '../constant'
 import {
+  DEFAULT_LINK_MARKER,
   SIDE_TREE_NODE_MENU_ACTION,
   SIDE_TREE_NODE_TYPE,
   UNTITLED_TITLE_I18N_KEY,
@@ -29,8 +31,10 @@ import {
   findMovedNode,
   formatMutationError,
   getDocIdFromPage,
+  getDefaultLinkTitle,
   isActiveRemovedByTarget,
   isDraftId,
+  isLinkHref,
   mapGroup,
   mapNode,
   patchChildInGroups,
@@ -56,6 +60,7 @@ import type {
   TSideTreeChildMenuAction,
   TSideTreeController,
   TSideTreeGroup,
+  TSideTreeLinkInput,
   TSideTreeNodeMenuAction,
 } from './spec'
 
@@ -81,6 +86,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     resolveActiveIdFromUrl(initialGroups, currentDocId),
   )
   const [editingTarget, setEditingTarget] = useState<TEditingTarget>(null)
+  const [coverWarning, setCoverWarning] = useState<string | null>(null)
 
   function syncDocIdToUrl(docId: string | null): void {
     const nextUrl = buildDocEditorUrl(pathname, searchString, docId)
@@ -102,11 +108,8 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       return
     }
 
-    const firstPageId = findFirstPage(sourceGroups)?.id ?? null
-
     setActiveId((current) => {
-      if (current && findChild(sourceGroups, current)) return current
-      return current === firstPageId ? current : firstPageId
+      return current === null ? current : null
     })
   }, [])
 
@@ -177,6 +180,25 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
         toast(formatMutationError(err), 'error')
         reload()
         return null
+      }
+    },
+    [community, mutate, reload],
+  )
+
+  const persistCoverAction = useCallback(
+    async (
+      schema: DocumentInput<unknown, AnyVariables>,
+      variables: Record<string, unknown>,
+    ): Promise<boolean> => {
+      try {
+        await mutate(schema, { community, ...variables })
+        reload()
+        return true
+      } catch (err) {
+        const message = formatMutationError(err)
+        setCoverWarning(message)
+        reload()
+        return false
       }
     },
     [community, mutate, reload],
@@ -310,6 +332,47 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     )
   }
 
+  function toggleCoverGroup(groupId: string, inCover: boolean): void {
+    persistCoverAction(inCover ? S.removeDocCoverGroup : S.addDocCoverGroup, { groupId }).then(
+      (ok) => {
+        if (!ok) return
+        toast(
+          inCover
+            ? t('dsb.cms.docs.side_tree.cover.removed')
+            : t('dsb.cms.docs.side_tree.cover.added'),
+        )
+      },
+    )
+  }
+
+  function publishGroup(groupId: string): void {
+    mutate(S.publishDocTreeGroup, {
+      community,
+      groupId,
+      mode: 'WITH_COVER_SYNC',
+    })
+      .then(() => {
+        reload()
+        toast(t('dsb.cms.docs.side_tree.publish.group_published'))
+      })
+      .catch((err) => {
+        toast(formatMutationError(err), 'error')
+        reload()
+      })
+  }
+
+  function moveGroupToDraft(groupId: string): void {
+    mutate(S.moveDocTreeGroupToDraft, { community, groupId })
+      .then(() => {
+        reload()
+        toast(t('dsb.cms.docs.side_tree.publish.group_draft_moved'))
+      })
+      .catch((err) => {
+        toast(formatMutationError(err), 'error')
+        reload()
+      })
+  }
+
   function createDraftGroup(groupId: string, title: string): void {
     const index = findGroupIndex(readGroups(), groupId)
     if (index === -1) return
@@ -342,6 +405,19 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
         updateGroups((currentGroups) => patchNode(currentGroups, node))
       },
       errorLabel,
+    )
+  }
+
+  function updateRemoteLink(nodeId: string, input: TSideTreeLinkInput): void {
+    persistTitleMutation(
+      input.title,
+      S.updateDocTreeNode,
+      (slug) => ({ id: nodeId, patch: { href: input.href, title: input.title, slug } }),
+      (data) => data?.updateDocTreeNode,
+      (node) => {
+        updateGroups((currentGroups) => patchNode(currentGroups, node))
+      },
+      'rename link',
     )
   }
 
@@ -410,6 +486,27 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       return
     }
 
+    const currentChild = findChild(readGroups(), childId)
+
+    if (
+      isDraftId(childId) &&
+      currentChild?.type === SIDE_TREE_NODE_TYPE.PAGE &&
+      isLinkHref(title)
+    ) {
+      const href = title.trim()
+      updateGroups((currentGroups) =>
+        replaceChildId(currentGroups, groupId, childId, {
+          id: childId,
+          type: SIDE_TREE_NODE_TYPE.LINK,
+          href,
+          title: getDefaultLinkTitle(href) || t(UNTITLED_TITLE_I18N_KEY),
+          marker: DEFAULT_LINK_MARKER,
+        }),
+      )
+      setEditingTarget({ type: SIDE_TREE_NODE_TYPE.LINK, groupId, childId })
+      return
+    }
+
     updateChildTitle(groupId, childId, title)
     setEditingTarget(null)
 
@@ -419,6 +516,31 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     }
 
     updateRemoteTitle(childId, title, 'rename child')
+  }
+
+  function renameLink(groupId: string, childId: string, input: TSideTreeLinkInput): void {
+    if (isDraftId(groupId)) {
+      toast('请先确认分组名称', 'error')
+      return
+    }
+
+    const href = input.href.trim()
+    if (!isLinkHref(href)) {
+      toast(t('dsb.cms.docs.side_tree.link.invalid_href'), 'error')
+      return
+    }
+
+    const title = input.title.trim() || getDefaultLinkTitle(href) || t(UNTITLED_TITLE_I18N_KEY)
+
+    updateGroups((currentGroups) => patchChildInGroups(currentGroups, childId, { href, title }))
+    setEditingTarget(null)
+
+    if (isDraftId(childId)) {
+      createDraftChild(groupId, childId, title)
+      return
+    }
+
+    updateRemoteLink(childId, { href, title })
   }
 
   /**
@@ -553,30 +675,74 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
     if (action === SIDE_TREE_NODE_MENU_ACTION.DUPLICATE) {
       duplicateChild(groupId, childId)
+      return
+    }
+
+    if (action === SIDE_TREE_NODE_MENU_ACTION.MOVE_TO_DRAFT) {
+      mutate(S.moveDocToDraft, { community, id: childId })
+        .then(() => {
+          reload()
+          toast(t('dsb.cms.docs.side_tree.publish.draft_moved'))
+        })
+        .catch((err) => {
+          toast(formatMutationError(err), 'error')
+          reload()
+        })
+      return
+    }
+
+    if (
+      action === SIDE_TREE_NODE_MENU_ACTION.HIDE_FROM_COVER ||
+      action === SIDE_TREE_NODE_MENU_ACTION.SHOW_IN_COVER
+    ) {
+      persistCoverAction(S.setDocCoverItemHidden, {
+        nodeId: childId,
+        hidden: action === SIDE_TREE_NODE_MENU_ACTION.HIDE_FROM_COVER,
+      }).then((ok) => {
+        if (!ok) return
+        toast(
+          action === SIDE_TREE_NODE_MENU_ACTION.HIDE_FROM_COVER
+            ? t('dsb.cms.docs.side_tree.cover.hidden')
+            : t('dsb.cms.docs.side_tree.cover.shown'),
+        )
+      })
     }
   }
 
   function activate(id: string): void {
+    const child = findChild(readGroups(), id)
+
+    if (child?.type === SIDE_TREE_NODE_TYPE.LINK) {
+      return
+    }
+
     // Route through selectPage so active state and URL stay coupled for stale ids too.
-    selectPage(findChild(readGroups(), id))
+    selectPage(child)
   }
 
   return {
     groups,
     activeId,
     editingTarget,
+    coverWarning,
     activate,
     addGroup,
     addChild,
+    clearCoverWarning: () => setCoverWarning(null),
     deleteGroup,
     toggleGroup,
+    toggleCoverGroup,
+    publishGroup,
+    moveGroupToDraft,
     renameGroup,
     renameChild,
+    renameLink,
     cancelEdit,
     edit: setEditingTarget,
     handleChildAction,
     updateChildStyle,
     patchChild,
+    reload,
     reorderGroups,
   }
 }

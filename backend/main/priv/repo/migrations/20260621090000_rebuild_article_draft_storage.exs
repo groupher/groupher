@@ -38,21 +38,7 @@ defmodule GroupherServer.Repo.Migrations.RebuildArticleDraftStorage do
       unique_index(:article_drafts, [:community_id, :template_key], prefix: @prefix)
     )
 
-    alter table(:doc_tree_node_drafts, prefix: @prefix) do
-      add_if_not_exists(
-        :article_draft_id,
-        references(:article_drafts, prefix: @prefix, on_delete: :nilify_all)
-      )
-    end
-
     create_if_not_exists(index(:doc_tree_node_drafts, [:article_draft_id], prefix: @prefix))
-
-    alter table(:article_revisions, prefix: @prefix) do
-      add_if_not_exists(
-        :article_draft_id,
-        references(:article_drafts, prefix: @prefix, on_delete: :nilify_all)
-      )
-    end
 
     execute("DELETE FROM cms.article_revisions WHERE type = 'draft';")
 

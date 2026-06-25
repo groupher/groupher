@@ -2,6 +2,7 @@ import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
 
 import TYPE from '~/const/type'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
+import useTrans from '~/hooks/useTrans'
 import CloseLightSVG from '~/icons/CloseLight'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
@@ -9,7 +10,7 @@ import Drawer from '~/widgets/Drawer'
 import { toast } from '~/widgets/Toaster'
 
 import useDocsEditor from '../../Editor/store/hooks'
-import { REVISION_DRAWER } from '../constant'
+import { REVISION_LABEL_KEY } from '../constant'
 import {
   buildRevisionDiffBlocks,
   computeRevisionDiffStatsFromBlocks,
@@ -33,6 +34,7 @@ const CURRENT_CHANGES_KEY = 'current'
 
 const RevisionDrawer: FC<TProps> = ({ show, onClose }) => {
   const s = useSalon()
+  const { t } = useTrans()
   const { slug: community } = useCommunity()
   const { query, mutate } = useGraphQLClient()
   const { baselineValue, bodyValue, docDraftInfo, reloadDocDraft, saveStatus } = useDocsEditor()
@@ -114,17 +116,17 @@ const RevisionDrawer: FC<TProps> = ({ show, onClose }) => {
           id: docDraftId,
           revisionId,
         })
-        toast(REVISION_DRAWER.RESTORED)
+        toast(t(REVISION_LABEL_KEY.RESTORED))
         reloadDocDraft?.()
         await loadRevisions()
       } catch (err) {
-        const message = err instanceof Error ? err.message : REVISION_DRAWER.RESTORE_FAILED
+        const message = err instanceof Error ? err.message : t(REVISION_LABEL_KEY.RESTORE_FAILED)
         toast(message, 'error')
       } finally {
         setRestoringId(null)
       }
     },
-    [community, docDraftId, loadRevisions, mutate, reloadDocDraft, restoringId],
+    [community, docDraftId, loadRevisions, mutate, reloadDocDraft, restoringId, t],
   )
 
   const restoreDisabled = saveStatus !== 'saved'
@@ -178,13 +180,13 @@ const RevisionDrawer: FC<TProps> = ({ show, onClose }) => {
       <div className={s.wrapper}>
         <div className={s.header}>
           <div className={s.titleGroup}>
-            <div className={s.title}>{REVISION_DRAWER.TITLE}</div>
+            <div className={s.title}>{t(REVISION_LABEL_KEY.TITLE)}</div>
             <div className={s.subtitle}>{docDraftInfo.title}</div>
           </div>
           <button
             type='button'
             className={s.closeButton}
-            aria-label='Close version history'
+            aria-label={t(REVISION_LABEL_KEY.CLOSE)}
             onClick={onClose}
           >
             <CloseLightSVG className={s.closeIcon} />
@@ -198,14 +200,14 @@ const RevisionDrawer: FC<TProps> = ({ show, onClose }) => {
               className={cn(s.tabButton, activeTab === 'staged' && s.tabButtonActive)}
               onClick={() => setActiveTab('staged')}
             >
-              {REVISION_DRAWER.STAGED_TAB}
+              {t(REVISION_LABEL_KEY.STAGED_TAB)}
             </button>
             <button
               type='button'
               className={cn(s.tabButton, activeTab === 'published' && s.tabButtonActive)}
               onClick={() => setActiveTab('published')}
             >
-              {REVISION_DRAWER.PUBLISHED_TAB}
+              {t(REVISION_LABEL_KEY.PUBLISHED_TAB)}
             </button>
           </div>
 
@@ -221,12 +223,12 @@ const RevisionDrawer: FC<TProps> = ({ show, onClose }) => {
                   setSelectedKey((key) => (key === CURRENT_CHANGES_KEY ? '' : CURRENT_CHANGES_KEY))
                 }
               >
-                <span>{REVISION_DRAWER.CURRENT_CHANGES}</span>
+                <span>{t(REVISION_LABEL_KEY.CURRENT_CHANGES)}</span>
                 <span className={s.currentChangesMeta}>
                   <span className={s.additions}>+{currentDiffStats.additions}</span>
                   <span className={s.deletions}>-{currentDiffStats.deletions}</span>
                   <span className={s.currentChangesHint}>
-                    {REVISION_DRAWER.COMPARE_WITH_LATEST_SAVED}
+                    {t(REVISION_LABEL_KEY.COMPARE_WITH_LATEST_SAVED)}
                   </span>
                 </span>
               </button>
@@ -240,13 +242,15 @@ const RevisionDrawer: FC<TProps> = ({ show, onClose }) => {
           )}
 
           {restoreDisabled && (
-            <div className={s.restoreHint}>{REVISION_DRAWER.SAVE_BEFORE_RESTORE}</div>
+            <div className={s.restoreHint}>{t(REVISION_LABEL_KEY.SAVE_BEFORE_RESTORE)}</div>
           )}
 
-          {loading && <div className={s.stateBox}>{REVISION_DRAWER.LOADING}</div>}
-          {!loading && error && <div className={s.errorBox}>{REVISION_DRAWER.LOAD_FAILED}</div>}
+          {loading && <div className={s.stateBox}>{t(REVISION_LABEL_KEY.LOADING)}</div>}
+          {!loading && error && (
+            <div className={s.errorBox}>{t(REVISION_LABEL_KEY.LOAD_FAILED)}</div>
+          )}
           {!loading && !error && activeRevisions.length === 0 && (
-            <div className={s.stateBox}>{REVISION_DRAWER.EMPTY}</div>
+            <div className={s.stateBox}>{t(REVISION_LABEL_KEY.EMPTY)}</div>
           )}
           {!loading && !error && activeRevisions.length > 0 && (
             <div className={s.list}>
@@ -272,7 +276,7 @@ const RevisionDrawer: FC<TProps> = ({ show, onClose }) => {
           )}
           {!loading && !error && activeTab === 'staged' && hiddenDuplicateCount > 0 && (
             <div className={s.hiddenNote}>
-              {hiddenDuplicateCount} {REVISION_DRAWER.HIDDEN_DUPLICATES}
+              {hiddenDuplicateCount} {t(REVISION_LABEL_KEY.HIDDEN_DUPLICATES)}
             </div>
           )}
         </div>

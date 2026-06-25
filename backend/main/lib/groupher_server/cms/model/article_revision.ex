@@ -33,9 +33,10 @@ defmodule GroupherServer.CMS.Model.ArticleRevision do
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
 
+  @max_subtitle_length 240
   @revision_types [:draft, :published]
   @required_fields ~w(community_id thread type title document_json content_hash revision_number)a
-  @optional_fields ~w(article_id article_draft_id author_id slug digest schema_version)a
+  @optional_fields ~w(article_id article_draft_id author_id slug subtitle digest schema_version)a
 
   @type revision_type :: :draft | :published
   @type t :: %ArticleRevision{}
@@ -50,6 +51,7 @@ defmodule GroupherServer.CMS.Model.ArticleRevision do
     field(:article_id, :id)
     field(:title, :string)
     field(:slug, :string)
+    field(:subtitle, :string)
     field(:digest, :string)
     field(:document_json, :string)
     field(:content_hash, :string)
@@ -67,6 +69,7 @@ defmodule GroupherServer.CMS.Model.ArticleRevision do
     |> validate_required(@required_fields)
     |> validate_inclusion(:type, @revision_types)
     |> validate_length(:title, min: 1, max: 100)
+    |> validate_length(:subtitle, max: @max_subtitle_length)
     |> validate_target()
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:article_draft_id)

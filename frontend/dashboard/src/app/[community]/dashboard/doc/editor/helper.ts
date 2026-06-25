@@ -123,9 +123,7 @@ export const getDocEditorInitialData = async (
   try {
     const treeData = await fetchDashboardGraphQL<TDocTreeQueryData>(S.docTree, { community })
     const docTree = treeData?.docTree ?? null
-    const activePage = docTree
-      ? findPageByDocId(docTree.groups, docId) || findFirstPage(docTree.groups)
-      : null
+    const activePage = docTree ? findPageByDocId(docTree.groups, docId) : null
     const activeDocId = activePage?.docId ?? null
 
     if (!docTree || !activeDocId) return { docTree, docDraft: null }

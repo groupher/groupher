@@ -45,6 +45,7 @@ export default function Landing() {
     ['landing.faq.5.title', 'landing.faq.5.body'],
   ] as const
   const faqs = faqKeys.map(([titleKey, bodyKey], index) => ({
+    id: `${titleKey}:${bodyKey}`,
     title: t(titleKey),
     body: t(bodyKey),
     index,

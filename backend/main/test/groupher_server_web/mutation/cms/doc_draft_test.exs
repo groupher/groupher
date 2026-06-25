@@ -62,6 +62,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       assert queried["id"] == to_string(doc_id)
       assert queried["title"] == "Install"
+      assert queried["subtitle"] == nil
       assert queried["document"]["json"] =~ "Start writing your docs draft here."
 
       updated =
@@ -70,12 +71,15 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
           community: community.slug,
           id: doc_id,
           title: "测试一下中文",
+          subtitle: "这是页面副标题",
           slug: "ce-shi-yi-xia-zhong-wen",
           body: @plate_body
         })
 
       assert updated["id"] == to_string(doc_id)
       assert updated["title"] == "测试一下中文"
+      assert updated["subtitle"] == "这是页面副标题"
+      assert updated["digest"] == "这是页面副标题"
       assert updated["slug"] == "ce-shi-yi-xia-zhong-wen"
       assert updated["document"]["json"] == @plate_body
       assert is_binary(updated["document"]["html"])
@@ -117,6 +121,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
           community: community.slug,
           id: doc_id,
           title: "Versioned Draft",
+          subtitle: "First subtitle",
           slug: "versioned-draft",
           body: @plate_body
         })
@@ -133,6 +138,8 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       assert first_revision["articleDraftId"] == to_string(doc_id)
       assert first_revision["revisionNumber"] == 1
       assert first_revision["title"] == first_draft["title"]
+      assert first_revision["subtitle"] == "First subtitle"
+      assert first_revision["digest"] == "First subtitle"
       assert first_revision["documentJson"] == @plate_body
       assert first_revision["author"]["login"]
 
@@ -150,6 +157,29 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
         community: community.slug,
         id: doc_id,
         title: "Versioned Draft",
+        subtitle: "Second subtitle",
+        slug: "versioned-draft",
+        body: @plate_body_with_node_ids
+      })
+
+      subtitle_revision =
+        user_conn
+        |> gq_mutation(Schema.m(:checkpoint_doc_draft_revision), %{
+          community: community.slug,
+          id: doc_id
+        })
+
+      assert subtitle_revision["id"] != first_revision["id"]
+      assert subtitle_revision["revisionNumber"] == 2
+      assert subtitle_revision["subtitle"] == "Second subtitle"
+      assert subtitle_revision["documentJson"] == @plate_body_with_node_ids
+
+      user_conn
+      |> gq_mutation(Schema.m(:update_doc_draft), %{
+        community: community.slug,
+        id: doc_id,
+        title: "Versioned Draft",
+        subtitle: "Second subtitle",
         slug: "versioned-draft",
         body: @plate_body_with_node_ids
       })
@@ -161,13 +191,14 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
           id: doc_id
         })
 
-      assert id_only_revision["id"] == first_revision["id"]
+      assert id_only_revision["id"] == subtitle_revision["id"]
 
       user_conn
       |> gq_mutation(Schema.m(:update_doc_draft), %{
         community: community.slug,
         id: doc_id,
         title: "Versioned Draft",
+        subtitle: "Second subtitle",
         slug: "versioned-draft",
         body: @plate_body_updated
       })
@@ -180,7 +211,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
         })
 
       assert second_revision["id"] != first_revision["id"]
-      assert second_revision["revisionNumber"] == 2
+      assert second_revision["revisionNumber"] == 3
       assert second_revision["documentJson"] == @plate_body_updated
 
       revisions =
@@ -191,7 +222,11 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
           type: "DRAFT"
         })
 
-      assert Enum.map(revisions, & &1["id"]) == [second_revision["id"], first_revision["id"]]
+      assert Enum.map(revisions, & &1["id"]) == [
+               second_revision["id"],
+               subtitle_revision["id"],
+               first_revision["id"]
+             ]
 
       restored =
         user_conn
@@ -202,6 +237,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
         })
 
       assert restored["document"]["json"] == @plate_body
+      assert restored["subtitle"] == "First subtitle"
 
       all_revisions =
         user_conn
@@ -219,6 +255,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
         community: community.slug,
         id: doc_id,
         title: "Published Draft",
+        subtitle: "Published subtitle",
         slug: "published-draft",
         body: @plate_body
       })
@@ -242,6 +279,8 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       assert first_published["articleId"]
       assert first_published["articleDraftId"] == nil
       assert first_published["revisionNumber"] == 1
+      assert first_published["subtitle"] == "Published subtitle"
+      assert first_published["digest"] == "Published subtitle"
       assert first_published["documentJson"] == @plate_body
 
       draft_revisions_after_publish =
@@ -259,6 +298,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
         community: community.slug,
         id: doc_id,
         title: "Published Draft",
+        subtitle: "Published subtitle updated",
         slug: "published-draft",
         body: @plate_body_updated
       })
@@ -279,6 +319,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       assert second_published["articleId"] == first_published["articleId"]
       assert second_published["revisionNumber"] == 2
+      assert second_published["subtitle"] == "Published subtitle updated"
       assert second_published["documentJson"] == @plate_body_updated
 
       published_revisions =

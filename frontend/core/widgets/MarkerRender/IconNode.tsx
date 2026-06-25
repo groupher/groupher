@@ -10,10 +10,10 @@ import type { TIconName } from '~/widgets/IconHub/icons'
 type TProps = {
   value: TMarkerIconValue
   size: number
-  className?: string
+  iconColorClass: string
 }
 
-const IconNode: FC<TProps> = ({ value, size, className }) => {
+const IconNode: FC<TProps> = ({ value, size, iconColorClass }) => {
   const pixelSize = size * 4
 
   if (value.provider === 'dev') {
@@ -24,7 +24,7 @@ const IconNode: FC<TProps> = ({ value, size, className }) => {
         height={pixelSize}
         alt=''
         draggable={false}
-        className={className}
+        className='block object-contain'
       />
     )
   }
@@ -35,7 +35,7 @@ const IconNode: FC<TProps> = ({ value, size, className }) => {
       icon={value.name as TIconName}
       mode='mask'
       size={size}
-      className={className}
+      className={iconColorClass}
     />
   )
 }

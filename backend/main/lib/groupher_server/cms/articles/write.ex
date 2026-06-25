@@ -289,6 +289,10 @@ defmodule GroupherServer.CMS.Articles.Write do
     end
   end
 
+  defp add_digest_attrs(%{digest: digest} = attrs) when is_binary(digest) and digest != "" do
+    done(attrs)
+  end
+
   defp add_digest_attrs(%{article_payload: %{digest: digest}} = attrs) do
     attrs |> Map.merge(%{digest: digest}) |> done
   end

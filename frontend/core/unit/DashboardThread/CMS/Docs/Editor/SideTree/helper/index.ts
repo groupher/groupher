@@ -1,5 +1,6 @@
 export * from './error'
 export * from './factory'
 export * from './mapper'
+export * from './publishState'
 export * from './tree'
 export * from './url'

@@ -1,6 +1,6 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-import useBase from '../../useAppearanceBaseSalon'
+import useBase from '../../../useDsbSalon'
 
 export { cnMerge } from '~/css'
 
@@ -9,19 +9,16 @@ export default function useSalon({ compact = false }: { compact?: boolean } = {}
   const { cn, cnMerge, avatar, primary } = useTwBelt()
 
   return {
-    wrapper: base.baseSection,
+    wrapper: base.section,
     select: 'row-center wrap gap-x-5 gap-y-8 w-full',
     inline: 'inline-block',
     layout: 'column-center justify-between h-32',
-    block: cnMerge(
-      base.blockBase,
-      compact ? 'w-full h-[72px] min-h-[72px] p-3' : 'h-24 min-h-24 p-4',
-    ),
+    block: cnMerge(base.card, compact ? 'w-full h-[72px] min-h-[72px] p-3' : 'h-24 min-h-24 p-4'),
     masonryBlock: cnMerge(
-      base.blockBase,
+      base.card,
       compact ? 'w-full h-[72px] min-h-[72px] px-2.5 py-0' : 'h-24 min-h-24 px-3 py-0',
     ),
-    blockActive: base.blockBaseActive,
+    blockActive: base.cardActive,
 
     frame: 'column s-full',
     topRow: 'row-between',

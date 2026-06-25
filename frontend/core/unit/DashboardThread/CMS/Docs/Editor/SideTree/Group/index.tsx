@@ -1,6 +1,8 @@
 import { type FC, useState } from 'react'
 
+import PlusSVG from '~/icons/Add'
 import ArrowSVG from '~/icons/ArrowSimple'
+import CalendarSlashSVG from '~/icons/CalendarSlash'
 import GrabDotsSVG from '~/icons/GrabDots'
 
 import { SIDE_TREE_GROUP_MENU_ACTION, SIDE_TREE_NODE_TYPE } from '../constant'
@@ -8,12 +10,14 @@ import SortableSideTreeChild from '../Dnd/SortableSideTreeChild'
 import SortableSideTreeColumn from '../Dnd/SortableSideTreeColumn'
 import SortableSideTreeGroup from '../Dnd/SortableSideTreeGroup'
 import type { TSideTreeDragTarget } from '../Dnd/spec'
+import { isPublicDoc, needsPublishAttention } from '../helper'
 import useSalon, { cn } from '../salon/group'
 import type {
   TEditingTarget,
   TSideTreeChildMenuAction,
   TSideTreeGroupMenuAction,
   TSideTreeGroup,
+  TSideTreeLinkInput,
   TSideTreeNodeMenuAction,
 } from '../spec'
 import File from './File'
@@ -31,9 +35,13 @@ type TProps = {
   onActivate: (id: string) => void
   onToggle: (groupId: string) => void
   onAddChild: (groupId: string, action: TSideTreeChildMenuAction) => void
+  onCoverGroupAction: (groupId: string, inCover: boolean) => void
+  onPublishGroup: (groupId: string) => void
+  onMoveGroupToDraft: (groupId: string) => void
   onDeleteGroup: (groupId: string) => void
   onRenameGroup: (groupId: string, title: string) => void
   onRenameChild: (groupId: string, childId: string, title: string) => void
+  onRenameLink: (groupId: string, childId: string, input: TSideTreeLinkInput) => void
   onCancelEdit: () => void
   onEdit: (target: TEditingTarget) => void
   onChildAction: (groupId: string, childId: string, action: TSideTreeNodeMenuAction) => void
@@ -54,9 +62,13 @@ const Group: FC<TProps> = ({
   onActivate,
   onToggle,
   onAddChild,
+  onCoverGroupAction,
+  onPublishGroup,
+  onMoveGroupToDraft,
   onDeleteGroup,
   onRenameGroup,
   onRenameChild,
+  onRenameLink,
   onCancelEdit,
   onEdit,
   onChildAction,
@@ -65,6 +77,15 @@ const Group: FC<TProps> = ({
   const [menuOpen, setMenuOpen] = useState(false)
   const s = useSalon({ actionVisible: menuOpen })
   const collapsed = group.expanded === false
+  const groupInCover = group.publishState?.inCover === true
+  const publishableChildCount = group.children.filter((child) =>
+    needsPublishAttention(child.publishState),
+  ).length
+  const draftableChildCount = group.children.filter((child) =>
+    isPublicDoc(child.publishState),
+  ).length
+  const publishGroupVisible = publishableChildCount >= 2
+  const draftGroupVisible = draftableChildCount >= 2
   const editing =
     editingTarget?.type === SIDE_TREE_NODE_TYPE.GROUP && editingTarget.groupId === group.id
   const handleGroupMenuSelect = (action: TSideTreeGroupMenuAction): void => {
@@ -78,6 +99,24 @@ const Group: FC<TProps> = ({
 
     if (action === SIDE_TREE_GROUP_MENU_ACTION.RENAME) {
       onEdit({ type: SIDE_TREE_NODE_TYPE.GROUP, groupId: group.id })
+      return
+    }
+
+    if (
+      action === SIDE_TREE_GROUP_MENU_ACTION.ADD_TO_COVER ||
+      action === SIDE_TREE_GROUP_MENU_ACTION.REMOVE_FROM_COVER
+    ) {
+      onCoverGroupAction(group.id, groupInCover)
+      return
+    }
+
+    if (action === SIDE_TREE_GROUP_MENU_ACTION.PUBLISH_GROUP) {
+      onPublishGroup(group.id)
+      return
+    }
+
+    if (action === SIDE_TREE_GROUP_MENU_ACTION.MOVE_GROUP_TO_DRAFT) {
+      onMoveGroupToDraft(group.id)
       return
     }
 
@@ -117,8 +156,32 @@ const Group: FC<TProps> = ({
                 <ArrowSVG className={cn(s.arrowIcon, collapsed && s.arrowCollapsed)} />
               </button>
             )}
-            <div className={s.actions}>
-              <GroupMenu onOpenChange={setMenuOpen} onSelect={handleGroupMenuSelect} />
+            <div className={s.actionSlot}>
+              {!editing && !groupInCover && (
+                <div className={s.coverStatus} aria-label='Hidden from cover'>
+                  <CalendarSlashSVG className={s.coverStatusIcon} />
+                </div>
+              )}
+              {!editing && (
+                <button
+                  type='button'
+                  className={s.addButton}
+                  aria-label='Add page or link'
+                  onClick={() => onAddChild(group.id, SIDE_TREE_GROUP_MENU_ACTION.PAGE)}
+                >
+                  <PlusSVG className={s.actionIcon} />
+                </button>
+              )}
+              <div className={s.actions}>
+                <GroupMenu
+                  inCover={groupInCover}
+                  open={menuOpen}
+                  publishVisible={publishGroupVisible}
+                  draftVisible={draftGroupVisible}
+                  onOpenChange={setMenuOpen}
+                  onSelect={handleGroupMenuSelect}
+                />
+              </div>
             </div>
           </div>
           <SortableSideTreeGroup
@@ -144,6 +207,7 @@ const Group: FC<TProps> = ({
                   {child.type === SIDE_TREE_NODE_TYPE.PAGE ? (
                     <File
                       groupId={group.id}
+                      groupInCover={groupInCover}
                       item={child}
                       active={activeId === child.id}
                       editingTarget={editingTarget}
@@ -158,10 +222,8 @@ const Group: FC<TProps> = ({
                     <Link
                       groupId={group.id}
                       item={child}
-                      active={activeId === child.id}
                       editingTarget={editingTarget}
-                      onActivate={onActivate}
-                      onRename={onRenameChild}
+                      onRename={onRenameLink}
                       onCancelEdit={onCancelEdit}
                       onEdit={onEdit}
                       onAction={onChildAction}

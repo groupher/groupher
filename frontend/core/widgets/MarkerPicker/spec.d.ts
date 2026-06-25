@@ -16,10 +16,7 @@ export type TMarkerPickerProps = {
   active?: boolean
   color?: TColorName
   triggerClassName?: string
-  iconClassName?: string
   iconSize?: number
-  emojiClassName?: string
-  devClassName?: string
   onChange?: (value: TMarkerValue) => void
 }
 

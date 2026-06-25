@@ -6,12 +6,9 @@ export { cn } from '~/css'
 type TProps = { total: number } & TSpace
 
 export default function useSalon({ total: _total, ...spacing }: TProps) {
-  const { cn, margin, br } = useTwBelt()
+  const { cn, margin } = useTwBelt()
 
   return {
-    wrapper: cn('row-center list-none m-auto', margin(spacing)),
-    avatars: 'row-center',
-    totalOneOffset: 'mr-2.5',
-    avatarFallback: cn('border', br('divider')),
+    wrapper: cn('row-center list-none m-0 p-0', margin(spacing)),
   }
 }

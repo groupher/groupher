@@ -1,8 +1,8 @@
-import { MARKER } from '~/const/marker'
-import type { TMarkerValue } from '~/spec'
-import { getIconFilePath } from '~/widgets/IconHub/sprite'
+import { DEFAULT_GROUP_MARKER, DEFAULT_LINK_MARKER, DEFAULT_PAGE_MARKER } from '~/const/marker'
 
 import type { TSideTreeGroup } from './spec'
+
+export { DEFAULT_GROUP_MARKER, DEFAULT_LINK_MARKER, DEFAULT_PAGE_MARKER }
 
 export const SIDE_TREE_NODE_TYPE = {
   GROUP: 'group',
@@ -18,6 +18,10 @@ export const SIDE_TREE_CHILD_MENU_ACTION = {
 export const SIDE_TREE_GROUP_MENU_ACTION = {
   PAGE: SIDE_TREE_NODE_TYPE.PAGE,
   LINK: SIDE_TREE_NODE_TYPE.LINK,
+  PUBLISH_GROUP: 'publish_group',
+  MOVE_GROUP_TO_DRAFT: 'move_group_to_draft',
+  ADD_TO_COVER: 'add_to_cover',
+  REMOVE_FROM_COVER: 'remove_from_cover',
   RENAME: 'rename',
   DELETE: 'delete',
 } as const
@@ -25,6 +29,9 @@ export const SIDE_TREE_GROUP_MENU_ACTION = {
 export const SIDE_TREE_NODE_MENU_ACTION = {
   RENAME: 'rename',
   DUPLICATE: 'duplicate',
+  MOVE_TO_DRAFT: 'move_to_draft',
+  SHOW_IN_COVER: 'show_in_cover',
+  HIDE_FROM_COVER: 'hide_from_cover',
   DELETE: 'delete',
 } as const
 
@@ -37,27 +44,6 @@ export const SIDE_TREE_ID_PREFIX = {
 export const UNTITLED_TITLE_I18N_KEY = 'dsb.cms.docs.side_tree.untitled'
 export const DUPLICATE_TITLE_SUFFIX = 'copy'
 export const DEFAULT_LINK_HREF = 'https://example.com'
-
-export const DEFAULT_PAGE_MARKER: TMarkerValue = {
-  type: MARKER.ICON,
-  provider: 'lucide',
-  name: 'file-text',
-  src: getIconFilePath('lucide', 'file-text'),
-}
-
-export const DEFAULT_LINK_MARKER: TMarkerValue = {
-  type: MARKER.ICON,
-  provider: 'lucide',
-  name: 'external-link',
-  src: getIconFilePath('lucide', 'external-link'),
-}
-
-export const DEFAULT_GROUP_MARKER: TMarkerValue = {
-  type: MARKER.ICON,
-  provider: 'lucide',
-  name: 'folder',
-  src: getIconFilePath('lucide', 'folder'),
-}
 
 export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
   {

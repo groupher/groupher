@@ -6,12 +6,20 @@ import useSalon from './salon/more_item'
 type TProps = Pick<TAvatarsProps, 'size' | 'onTotalSelect'>
 
 const MoreItem: FC<TProps> = ({ size, onTotalSelect }) => {
-  const s = useSalon({ size })
+  const interactive = Boolean(onTotalSelect)
+  const s = useSalon({ size, interactive })
+  const content = <div className={s.textMore}>..</div>
 
   return (
-    <button type='button' className={s.wrapper} onClick={() => onTotalSelect()}>
-      <div className={s.textMore}>..</div>
-    </button>
+    <li className={s.wrapper}>
+      {interactive ? (
+        <button type='button' className={s.control} onClick={() => onTotalSelect?.()}>
+          {content}
+        </button>
+      ) : (
+        <span className={s.control}>{content}</span>
+      )}
+    </li>
   )
 }
 

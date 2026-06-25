@@ -12,12 +12,12 @@ import Section from './Section'
 
 type TProps = Pick<TIndex, 'sections'>
 
-const getMenuOptions = (openedIndexes: number[], articleIds: number[]): TMenuOption[] => {
-  if (isEmpty(openedIndexes)) {
+const getMenuOptions = (openedIds: string[], articleIds: string[]): TMenuOption[] => {
+  if (isEmpty(openedIds)) {
     return [MENU.UNFOLD_ALL, MENU.AUTH_EDIT]
   }
 
-  if (openedIndexes.length === articleIds.length) {
+  if (openedIds.length === articleIds.length) {
     return [MENU.FOLD_ALL, MENU.AUTH_EDIT]
   }
 
@@ -27,28 +27,28 @@ const getMenuOptions = (openedIndexes: number[], articleIds: number[]): TMenuOpt
 const Collapse: FC<TProps> = ({ sections }) => {
   const s = useSalon()
 
-  const [openedIndexes, setOpenedIndexes] = useState<number[]>([])
-  const articleIds = pluck('index', sections)
-  const menuOptions = getMenuOptions(openedIndexes, articleIds)
+  const [openedIds, setOpenedIds] = useState<string[]>([])
+  const articleIds = pluck('id', sections)
+  const menuOptions = getMenuOptions(openedIds, articleIds)
 
   // fold/unfold one item
   const toggle = useCallback(
     (id) => {
-      if (includes(id, openedIndexes)) {
-        setOpenedIndexes(reject((_id) => _id === id, openedIndexes))
+      if (includes(id, openedIds)) {
+        setOpenedIds(reject((_id) => _id === id, openedIds))
       } else {
-        setOpenedIndexes((prev) => [id, ...prev])
+        setOpenedIds((prev) => [id, ...prev])
       }
     },
-    [openedIndexes],
+    [openedIds],
   )
 
   return (
     <div className={s.wrapper}>
-      <Banner menuOptions={menuOptions} setOpenedIndexes={setOpenedIndexes} sections={sections} />
+      <Banner menuOptions={menuOptions} setOpenedIds={setOpenedIds} sections={sections} />
 
       {sections.map((item) => (
-        <Section key={item.index} item={item} openedIndexes={openedIndexes} toggle={toggle} />
+        <Section key={item.id} item={item} openedIds={openedIds} toggle={toggle} />
       ))}
 
       <Footer />

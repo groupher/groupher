@@ -1,9 +1,10 @@
 import { type FC, type ReactNode, useState } from 'react'
 
+import useTrans from '~/hooks/useTrans'
 import Img from '~/Img'
 import Button from '~/widgets/Buttons/Button'
 
-import { REVISION_DRAWER } from '../constant'
+import { REVISION_LABEL_KEY } from '../constant'
 import {
   formatRelativeRevisionTime,
   getRevisionAuthorInitial,
@@ -35,6 +36,7 @@ const RevisionItem: FC<TProps> = ({
   onRestore,
 }) => {
   const s = useSalon()
+  const { t } = useTrans()
   const [confirming, setConfirming] = useState(false)
   const selectRevision = (): void => onSelect(revision.id)
 
@@ -52,7 +54,7 @@ const RevisionItem: FC<TProps> = ({
         }}
       >
         <div className={s.summary}>
-          <span>{formatRelativeRevisionTime(revision.insertedAt)}</span>
+          <span>{formatRelativeRevisionTime(t, revision.insertedAt)}</span>
           <span className={s.additions}>+{stats.additions}</span>
           <span className={s.deletions}>-{stats.deletions}</span>
         </div>
@@ -63,7 +65,9 @@ const RevisionItem: FC<TProps> = ({
           ) : (
             <span className={s.avatarFallback}>{getRevisionAuthorInitial(revision.author)}</span>
           )}
-          <span>by {getRevisionAuthorName(revision.author)}</span>
+          <span>
+            {t(REVISION_LABEL_KEY.BY)} {getRevisionAuthorName(t, revision.author)}
+          </span>
         </div>
       </div>
 
@@ -86,7 +90,7 @@ const RevisionItem: FC<TProps> = ({
                 onRestore(revision.id)
               }}
             >
-              {confirming ? REVISION_DRAWER.CONFIRM_RESTORE : REVISION_DRAWER.RESTORE}
+              {confirming ? t(REVISION_LABEL_KEY.CONFIRM_RESTORE) : t(REVISION_LABEL_KEY.RESTORE)}
             </Button>
           </div>
         </div>

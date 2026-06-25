@@ -27,6 +27,9 @@ defmodule GroupherServer.CMS.Articles.Draft do
   alias CMS.Model.{ArticleDraft, Author, Community}
   alias Helper.{ArticlePayload, ContentPipeline, ORM, T, Transaction}
   alias Helper.Validator.Slug
+  import Helper.Utils, only: [get_config: 2]
+
+  @digest_length get_config(:article, :digest_length)
 
   @doc """
   Reads one draft with its community scope.
@@ -114,7 +117,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
   def update_unlocked(%Community{} = community, id, attrs) do
     with {:ok, draft} <- read(community, id),
          {:ok, payload} <- maybe_parse_body(attrs),
-         {:ok, draft_attrs} <- update_attrs(attrs, payload),
+         {:ok, draft_attrs} <- update_attrs(draft, attrs, payload),
          {:ok, draft} <- maybe_update_draft(draft, draft_attrs) do
       {:ok, draft}
     end
@@ -187,8 +190,9 @@ defmodule GroupherServer.CMS.Articles.Draft do
         thread: thread,
         author_id: author.id,
         title: Map.get(attrs, :title),
+        subtitle: normalize_subtitle(Map.get(attrs, :subtitle)),
         slug: Map.get(attrs, :slug),
-        digest: payload.digest,
+        digest: resolve_digest(Map.get(attrs, :subtitle), fallback_digest(nil, payload)),
         template_key: Map.get(attrs, :template_key)
       })
       |> maybe_put_article_id(Map.get(attrs, :article_id))
@@ -196,21 +200,25 @@ defmodule GroupherServer.CMS.Articles.Draft do
     {:ok, attrs}
   end
 
-  defp update_attrs(%{title: _title} = attrs, payload) do
+  defp update_attrs(draft, %{title: _title} = attrs, payload) do
     if is_binary(Map.get(attrs, :slug)) do
-      do_update_attrs(attrs, payload)
+      do_update_attrs(draft, attrs, payload)
     else
       {:error, {:custom, "article draft slug is required"}}
     end
   end
 
-  defp update_attrs(attrs, payload), do: do_update_attrs(attrs, payload)
+  defp update_attrs(draft, attrs, payload), do: do_update_attrs(draft, attrs, payload)
 
-  defp do_update_attrs(attrs, payload) do
+  defp do_update_attrs(%ArticleDraft{} = draft, attrs, payload) do
+    subtitle = next_subtitle(draft, attrs)
+    fallback_digest = fallback_digest(draft, payload)
+
     attrs
-    |> Map.take([:title, :slug])
+    |> Map.take([:title, :slug, :subtitle])
+    |> normalize_subtitle_attr()
     |> maybe_put_payload(payload)
-    |> maybe_put_existing_digest(payload)
+    |> maybe_put_digest(attrs, payload, subtitle, fallback_digest)
     |> then(&{:ok, &1})
   end
 
@@ -220,10 +228,61 @@ defmodule GroupherServer.CMS.Articles.Draft do
     Map.merge(attrs, ArticlePayload.pick_valid_fields(payload))
   end
 
-  defp maybe_put_existing_digest(attrs, %{digest: digest}) when is_binary(digest),
-    do: Map.put(attrs, :digest, digest)
+  defp next_subtitle(%ArticleDraft{} = draft, attrs) do
+    if Map.has_key?(attrs, :subtitle), do: Map.get(attrs, :subtitle), else: draft.subtitle
+  end
 
-  defp maybe_put_existing_digest(attrs, _payload), do: attrs
+  defp normalize_subtitle_attr(attrs) do
+    if Map.has_key?(attrs, :subtitle) do
+      Map.put(attrs, :subtitle, normalize_subtitle(Map.get(attrs, :subtitle)))
+    else
+      attrs
+    end
+  end
+
+  defp normalize_subtitle(value) when is_binary(value) do
+    value
+    |> String.trim()
+    |> case do
+      "" -> nil
+      subtitle -> subtitle
+    end
+  end
+
+  defp normalize_subtitle(_), do: nil
+
+  defp maybe_put_digest(attrs, input_attrs, payload, subtitle, fallback_digest) do
+    if payload || Map.has_key?(input_attrs, :subtitle) do
+      Map.put(attrs, :digest, resolve_digest(subtitle, fallback_digest))
+    else
+      attrs
+    end
+  end
+
+  defp resolve_digest(subtitle, fallback_digest) do
+    case normalize_subtitle(subtitle) do
+      nil -> fallback_digest
+      subtitle -> String.slice(subtitle, 0, 400)
+    end
+  end
+
+  defp fallback_digest(_draft, %{plain_text: plain_text}) when is_binary(plain_text),
+    do: first_sentence_digest(plain_text)
+
+  defp fallback_digest(%ArticleDraft{plain_text: plain_text}, _payload)
+       when is_binary(plain_text),
+       do: first_sentence_digest(plain_text)
+
+  defp fallback_digest(%ArticleDraft{digest: digest}, _payload) when is_binary(digest), do: digest
+
+  defp first_sentence_digest(plain_text) do
+    text = String.trim(plain_text)
+
+    case Regex.run(~r/^.*?[.!?。！？]/u, text) do
+      [sentence] -> String.slice(sentence, 0, @digest_length)
+      _ -> String.slice(text, 0, @digest_length)
+    end
+  end
 
   defp maybe_update_draft(draft, attrs) when map_size(attrs) == 0, do: {:ok, draft}
   defp maybe_update_draft(draft, attrs), do: ORM.update(draft, attrs)
@@ -255,6 +314,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
   defp publish_attrs(%ArticleDraft{} = draft) do
     %{
       title: draft.title,
+      subtitle: draft.subtitle,
       slug: draft.slug,
       digest: draft.digest,
       body: draft.json,

@@ -55,6 +55,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:title, :string)
+      arg(:subtitle, :string)
       arg(:slug, :string)
       arg(:body, :string)
 
@@ -78,11 +79,57 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
     field :publish_doc_draft_revision, :article_revision do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
+      arg(:mode, :doc_publish_mode, default_value: :with_cover_sync)
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
       resolve(&R.CMS.publish_doc_draft_revision/3)
+    end
+
+    @desc "publish every docs draft page that has not been published yet"
+    field :publish_all_unpublished_doc_drafts, :done_state do
+      arg(:community, non_null(:string))
+      arg(:mode, :doc_publish_mode, default_value: :with_cover_sync)
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
+      resolve(&R.CMS.publish_all_unpublished_doc_drafts/3)
+    end
+
+    @desc "publish one docs side-tree group and its children"
+    field :publish_doc_tree_group, :done_state do
+      arg(:community, non_null(:string))
+      arg(:group_id, non_null(:id))
+      arg(:mode, :doc_publish_mode, default_value: :with_cover_sync)
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
+      resolve(&R.CMS.publish_doc_tree_group/3)
+    end
+
+    @desc "move one published docs page back to draft visibility"
+    field :move_doc_to_draft, :done_state do
+      arg(:community, non_null(:string))
+      arg(:id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
+      resolve(&R.CMS.move_doc_to_draft/3)
+    end
+
+    @desc "move one docs side-tree group and its children back to draft visibility"
+    field :move_doc_tree_group_to_draft, :done_state do
+      arg(:community, non_null(:string))
+      arg(:group_id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
+      resolve(&R.CMS.move_doc_tree_group_to_draft/3)
     end
 
     @desc "restore a docs draft from an article revision"
@@ -130,6 +177,112 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.move_doc_tree_node/3)
+    end
+
+    @desc "add a published docs side-tree group to cover"
+    field :add_doc_cover_group, :doc_cover_group do
+      arg(:community, non_null(:string))
+      arg(:group_id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.add_doc_cover_group/3)
+    end
+
+    @desc "remove a docs side-tree group from cover"
+    field :remove_doc_cover_group, :doc_cover_group do
+      arg(:community, non_null(:string))
+      arg(:group_id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.remove_doc_cover_group/3)
+    end
+
+    @desc "toggle a docs page visibility in its cover group"
+    field :set_doc_cover_item_hidden, :doc_cover_item do
+      arg(:community, non_null(:string))
+      arg(:node_id, non_null(:id))
+      arg(:hidden, non_null(:boolean))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.set_doc_cover_item_hidden/3)
+    end
+
+    @desc "reorder docs cover groups"
+    field :reorder_doc_cover_groups, :done_state do
+      arg(:community, non_null(:string))
+      arg(:ids, non_null(list_of(non_null(:id))))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.reorder_doc_cover_groups/3)
+    end
+
+    @desc "reorder docs cover items inside a cover group"
+    field :reorder_doc_cover_items, :done_state do
+      arg(:community, non_null(:string))
+      arg(:cover_group_id, non_null(:id))
+      arg(:ids, non_null(list_of(non_null(:id))))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.reorder_doc_cover_items/3)
+    end
+
+    @desc "update docs cover group UI config"
+    field :update_doc_cover_group_ui_config, :doc_cover_group do
+      arg(:community, non_null(:string))
+      arg(:id, non_null(:id))
+      arg(:ui_config, non_null(:json))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.update_doc_cover_group_ui_config/3)
+    end
+
+    @desc "update docs cover item UI config"
+    field :update_doc_cover_item_ui_config, :doc_cover_item do
+      arg(:community, non_null(:string))
+      arg(:id, non_null(:id))
+      arg(:ui_config, non_null(:json))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.update_doc_cover_item_ui_config/3)
+    end
+
+    @desc "pin a published docs page to cover"
+    field :pin_doc_cover_item, :doc_cover_pinned_item do
+      arg(:community, non_null(:string))
+      arg(:node_id, non_null(:id))
+      arg(:ui_config, :json)
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.pin_doc_cover_item/3)
+    end
+
+    @desc "remove a published docs page from cover pins"
+    field :unpin_doc_cover_item, :doc_cover_pinned_item do
+      arg(:community, non_null(:string))
+      arg(:node_id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.unpin_doc_cover_item/3)
+    end
+
+    @desc "update a pinned docs cover UI config"
+    field :update_doc_cover_pinned_ui_config, :doc_cover_pinned_item do
+      arg(:community, non_null(:string))
+      arg(:node_id, non_null(:id))
+      arg(:ui_config, non_null(:json))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.update_doc_cover_pinned_ui_config/3)
     end
   end
 end

@@ -42,10 +42,11 @@ defmodule GroupherServer.CMS.Model.ArticleDraft do
 
   @max_body_length get_config(:article, :max_length)
   @min_body_length get_config(:article, :min_length)
+  @max_subtitle_length 240
 
   @required_fields ~w(community_id thread title slug digest json)a
   @optional_fields ~w(
-    article_id author_id template_key markdown markdown_toc html xml rss
+    article_id author_id template_key subtitle markdown markdown_toc html xml rss
     plain_text content_hash schema_version
   )a
 
@@ -57,6 +58,7 @@ defmodule GroupherServer.CMS.Model.ArticleDraft do
     field(:thread, Ecto.Enum, values: Threads.article_enums())
     field(:article_id, :id)
     field(:title, :string)
+    field(:subtitle, :string)
     field(:slug, :string)
     field(:digest, :string)
     field(:template_key, :string)
@@ -95,11 +97,13 @@ defmodule GroupherServer.CMS.Model.ArticleDraft do
   defp validate_common(changeset) do
     changeset
     |> validate_length(:title, min: 3, max: 100)
+    |> validate_length(:subtitle, max: @max_subtitle_length)
     |> validate_length(:slug, min: 1, max: 120)
     |> validate_length(:digest, min: 1, max: 400)
     |> validate_length(:plain_text, min: @min_body_length, max: @max_body_length)
     |> Slug.validate_changeset(:slug)
     |> HTML.safe_string(:title)
+    |> HTML.safe_string(:subtitle)
     |> HTML.safe_string(:digest)
   end
 end

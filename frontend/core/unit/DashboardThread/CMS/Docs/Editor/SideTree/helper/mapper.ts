@@ -1,5 +1,18 @@
 import { SIDE_TREE_NODE_TYPE } from '../constant'
 import type { TDocTreeNodeDTO, TSideTreeChild, TSideTreeGroup } from '../spec'
+import { isLinkHref } from './url'
+
+const normalizeNodeType = (type: TDocTreeNodeDTO['type'] | string | null | undefined): string =>
+  String(type || '').toLowerCase()
+
+const isLinkNode = (node: TDocTreeNodeDTO): boolean => {
+  const type = normalizeNodeType(node.type)
+
+  return (
+    type === SIDE_TREE_NODE_TYPE.LINK ||
+    (type === SIDE_TREE_NODE_TYPE.PAGE && !node.docId && !!node.href && isLinkHref(node.href))
+  )
+}
 
 /**
  * Convert a backend page/link node into the local SideTree child shape.
@@ -9,7 +22,7 @@ import type { TDocTreeNodeDTO, TSideTreeChild, TSideTreeGroup } from '../spec'
  * child.type === SIDE_TREE_NODE_TYPE.PAGE
  */
 export const mapNode = (node: TDocTreeNodeDTO): TSideTreeChild => {
-  if (node.type === SIDE_TREE_NODE_TYPE.LINK) {
+  if (isLinkNode(node)) {
     return {
       id: node.id,
       type: SIDE_TREE_NODE_TYPE.LINK,
@@ -19,6 +32,7 @@ export const mapNode = (node: TDocTreeNodeDTO): TSideTreeChild => {
       marker: node.marker || undefined,
       badge: node.badge || undefined,
       hidden: node.hidden || undefined,
+      publishState: node.publishState || undefined,
     }
   }
 
@@ -33,6 +47,7 @@ export const mapNode = (node: TDocTreeNodeDTO): TSideTreeChild => {
     marker: node.marker || undefined,
     badge: node.badge || undefined,
     hidden: node.hidden || undefined,
+    publishState: node.publishState || undefined,
   }
 }
 
@@ -51,6 +66,7 @@ export const mapGroup = (node: TDocTreeNodeDTO): TSideTreeGroup => ({
   marker: node.marker || undefined,
   hidden: node.hidden || undefined,
   expanded: node.expanded ?? true,
+  publishState: node.publishState || undefined,
   children: (node.children || []).map(mapNode),
 })
 
@@ -65,7 +81,7 @@ export const patchNode = (
   groups: readonly TSideTreeGroup[],
   node: TDocTreeNodeDTO,
 ): TSideTreeGroup[] => {
-  if (node.type === SIDE_TREE_NODE_TYPE.GROUP) {
+  if (normalizeNodeType(node.type) === SIDE_TREE_NODE_TYPE.GROUP) {
     return groups.map((group) => (group.id === node.id ? { ...group, ...mapGroup(node) } : group))
   }
 

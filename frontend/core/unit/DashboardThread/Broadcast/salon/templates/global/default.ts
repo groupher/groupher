@@ -11,8 +11,8 @@ export default function useSalon() {
   const base = useBase()
 
   return {
-    wrapper: cn(base.blockBase, 'w-full h-32'),
-    active: base.blockBaseActive,
+    wrapper: cn(base.card, 'w-full h-32'),
+    active: base.cardActive,
     notifyBar: cn(
       'row-center px-2.5 absolute top-0 left-0 w-full h-5 border rounded-t',
       rainbow(broadcastBg, 'bg'),

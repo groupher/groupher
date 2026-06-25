@@ -416,9 +416,10 @@ defmodule GroupherServer.CMS.Articles.Revision do
          author_id: author_id || draft.author_id,
          title: draft.title,
          slug: draft.slug,
+         subtitle: draft.subtitle,
          digest: draft.digest,
          document_json: draft.json,
-         content_hash: draft.content_hash,
+         content_hash: revision_content_hash(draft.content_hash, draft.subtitle),
          schema_version: draft.schema_version || 1
        }}
     end
@@ -439,9 +440,10 @@ defmodule GroupherServer.CMS.Articles.Revision do
          author_id: author_id || article.author_id,
          title: article.title,
          slug: Map.get(article, :slug),
+         subtitle: Map.get(article, :subtitle),
          digest: article.digest || Map.get(document, :digest),
          document_json: document.json,
-         content_hash: document.content_hash,
+         content_hash: revision_content_hash(document.content_hash, Map.get(article, :subtitle)),
          schema_version: document.schema_version || 1
        }}
     end
@@ -461,8 +463,14 @@ defmodule GroupherServer.CMS.Articles.Revision do
   end
 
   defp restore_attrs(%ArticleRevision{} = revision, %ArticleDraft{} = draft) do
-    %{title: revision.title, body: revision.document_json}
+    %{title: revision.title, subtitle: revision.subtitle, body: revision.document_json}
     |> maybe_put_slug(revision.slug || draft.slug)
+  end
+
+  defp revision_content_hash(content_hash, subtitle) do
+    :sha256
+    |> :crypto.hash(:erlang.term_to_binary({content_hash, subtitle}))
+    |> Base.encode16(case: :lower)
   end
 
   defp maybe_put_slug(attrs, slug) when is_binary(slug), do: Map.put(attrs, :slug, slug)

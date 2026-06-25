@@ -3,6 +3,7 @@ import { type FC, type KeyboardEvent, type MouseEvent, useState } from 'react'
 import MarkerPicker from '~/widgets/MarkerPicker'
 
 import { DEFAULT_PAGE_MARKER, SIDE_TREE_NODE_MENU_ACTION, SIDE_TREE_NODE_TYPE } from '../constant'
+import { isPublicDoc, needsPublishAttention } from '../helper'
 import useSalon from '../salon/group/file'
 import type { TEditingTarget, TSideTreeNodeMenuAction, TSideTreePage } from '../spec'
 import ChildMenu from './ChildMenu'
@@ -10,6 +11,7 @@ import InlineTitleInput from './InlineTitleInput'
 
 type TProps = {
   groupId: string
+  groupInCover?: boolean
   item: TSideTreePage
   active: boolean
   editingTarget: TEditingTarget
@@ -23,6 +25,7 @@ type TProps = {
 
 const File: FC<TProps> = ({
   groupId,
+  groupInCover = false,
   item,
   active,
   editingTarget,
@@ -37,6 +40,8 @@ const File: FC<TProps> = ({
   const s = useSalon({ active, actionVisible: menuOpen })
   const editing =
     editingTarget?.type === SIDE_TREE_NODE_TYPE.PAGE && editingTarget.childId === item.id
+  const showPublishDot = needsPublishAttention(item.publishState)
+  const publicDoc = isPublicDoc(item.publishState)
   const activate = (): void => onActivate(item.id)
   const stopRowActivate = (event: MouseEvent<HTMLDivElement>): void => event.stopPropagation()
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
@@ -71,20 +76,32 @@ const File: FC<TProps> = ({
           onConfirm={(title) => onRename(groupId, item.id, title)}
         />
       ) : (
-        <span className={s.titleButton}>{item.title || item.path || 'Untitled'}</span>
+        <div className={s.titleCluster}>
+          <span className={s.titleButton}>{item.title || item.path || 'Untitled'}</span>
+        </div>
       )}
       {item.badge && <div className={s.badge}>{item.badge}</div>}
-      <div className={s.actions} onClick={stopRowActivate}>
-        <ChildMenu
-          onOpenChange={setMenuOpen}
-          onSelect={(action) => {
-            if (action === SIDE_TREE_NODE_MENU_ACTION.RENAME) {
-              onEdit({ type: SIDE_TREE_NODE_TYPE.PAGE, groupId, childId: item.id })
-              return
-            }
-            onAction(groupId, item.id, action)
-          }}
-        />
+      <div className={s.meta} onClick={stopRowActivate}>
+        {showPublishDot && (
+          <div className={s.publishDotSlot}>
+            <span className={s.unpublishedDot} aria-hidden='true' />
+          </div>
+        )}
+        <div className={s.actions}>
+          <ChildMenu
+            moveToDraftVisible={publicDoc}
+            coverToggleVisible={groupInCover && publicDoc}
+            hiddenFromCover={item.publishState?.hiddenFromCover === true}
+            onOpenChange={setMenuOpen}
+            onSelect={(action) => {
+              if (action === SIDE_TREE_NODE_MENU_ACTION.RENAME) {
+                onEdit({ type: SIDE_TREE_NODE_TYPE.PAGE, groupId, childId: item.id })
+                return
+              }
+              onAction(groupId, item.id, action)
+            }}
+          />
+        </div>
       </div>
     </div>
   )

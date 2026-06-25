@@ -4,8 +4,8 @@ export default function useSalon() {
   const { cn, bg, fg, fill } = useTwBelt()
 
   return {
-    wrapper: cn('w-176 px-3.5 py-3.5 rounded-md', bg('popover.bg')),
-    header: 'row-center gap-2 mb-3.5',
+    wrapper: cn('w-176 pl-6 pr-3 py-4.5 rounded-md', bg('popover.bg')),
+    header: 'row-center gap-2 mb-5 -ml-1',
     iconBox: 'align-both size-4.5 shrink-0',
     icon: cn('size-4.5', fill('title')),
     title: cn('text-sm bold text-left', fg('title')),

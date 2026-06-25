@@ -27,17 +27,27 @@ export type TProps = {
 
 const DEFAULT_SECTIONS: TFAQSection[] = []
 
-const flattenDocFaq = (docFaq?: TDocFaq): TFAQSection[] =>
-  docFaq
-    ? (docFaq.groupedView
-        ? docFaq.groupItems.flatMap((group) => group.items)
-        : docFaq.flatItems
-      ).map((item) => ({
+const flattenDocFaq = (docFaq?: TDocFaq): TFAQSection[] => {
+  if (!docFaq) return DEFAULT_SECTIONS
+
+  if (docFaq.groupedView) {
+    return docFaq.groupItems.flatMap((group) =>
+      group.items.map((item) => ({
+        id: `${group.id}:${item.id}`,
         title: item.title,
         body: item.detail,
         index: item.index,
-      }))
-    : DEFAULT_SECTIONS
+      })),
+    )
+  }
+
+  return docFaq.flatItems.map((item) => ({
+    id: item.id,
+    title: item.title,
+    body: item.detail,
+    index: item.index,
+  }))
+}
 
 const FaqList: FC<TProps> = ({
   testid: _testid = 'faq-list',

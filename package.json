@@ -61,6 +61,8 @@
     "ci": "cross-env NODE_ENV=ci next dev",
     "update.version": "node -p \"'export const APP_VERSION = ' + JSON.stringify(require('./package.json').version)\" > config/version.ts",
     "type-check": "yarn workspace @groupher/frontend-core type-check && yarn workspace @groupher/frontend-main type-check && yarn workspace @groupher/frontend-dashboard type-check && yarn workspace @groupher/frontend-landing type-check && yarn workspace @groupher/frontend-inspire-me type-check && yarn workspace @groupher/frontend-gateway type-check",
+    "tsc:ts7": "node ./node_modules/typescript-7/bin/tsc",
+    "type-check:ts7": "yarn tsc:ts7 --noEmit --project frontend/core/tsconfig.app.json && yarn tsc:ts7 --noEmit --project frontend/main/tsconfig.json && yarn tsc:ts7 --noEmit --project frontend/dashboard/tsconfig.json && yarn tsc:ts7 --noEmit --project frontend/landing/tsconfig.json && yarn tsc:ts7 --noEmit --project frontend/inspire-me/tsconfig.json && yarn tsc:ts7 --noEmit --project frontend/gateway/tsconfig.json",
     "build": "yarn workspaces run build",
     "dev": "next dev",
     "start": "next start",
@@ -217,6 +219,7 @@
     "svgo": "^4.0.1",
     "tsc-files": "^1.1.4",
     "typescript": "6.0.3",
+    "typescript-7": "npm:typescript@rc",
     "vite": "^8.0.10",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.5"

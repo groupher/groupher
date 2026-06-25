@@ -11,18 +11,18 @@ type TProps = Pick<TIndex, 'sections'>
 const LeftRight: FC<TProps> = ({ sections }) => {
   const s = useSalon()
 
-  const [openedIndexes, setOpenedIndexes] = useState<number[]>([])
+  const [openedIds, setOpenedIds] = useState<string[]>([])
 
   // fold/unfold one item
   const toggle = useCallback(
     (id) => {
-      if (includes(id, openedIndexes)) {
-        setOpenedIndexes(reject((_id) => _id === id, openedIndexes))
+      if (includes(id, openedIds)) {
+        setOpenedIds(reject((_id) => _id === id, openedIds))
       } else {
-        setOpenedIndexes((prev) => [id, ...prev])
+        setOpenedIds((prev) => [id, ...prev])
       }
     },
-    [openedIndexes],
+    [openedIds],
   )
 
   return (
@@ -31,7 +31,7 @@ const LeftRight: FC<TProps> = ({ sections }) => {
 
       <div className={s.sections}>
         {sections.map((item) => (
-          <Section key={item.index} item={item} openedIndexes={openedIndexes} toggle={toggle} />
+          <Section key={item.id} item={item} openedIds={openedIds} toggle={toggle} />
         ))}
       </div>
     </div>
