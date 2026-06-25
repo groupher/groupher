@@ -1,5 +1,5 @@
-import useTwBelt from '~/hooks/useTwBelt'
 import { cnMerge } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 

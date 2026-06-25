@@ -1,11 +1,4 @@
-import {
-  type CSSProperties,
-  type FC,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react'
+import { type CSSProperties, type FC, useCallback, useEffect, useRef, useState } from 'react'
 
 import { cn } from '~/css'
 
@@ -85,9 +78,7 @@ const OverflowMarqueeText: FC<TProps> = ({
   if (!active) {
     return (
       <span ref={viewportRef} className={cn('block min-w-0 overflow-hidden', className)}>
-        <span className={cn('block min-w-0 max-w-full truncate', itemClassName)}>
-          {text}
-        </span>
+        <span className={cn('block min-w-0 max-w-full truncate', itemClassName)}>{text}</span>
       </span>
     )
   }
@@ -99,9 +90,7 @@ const OverflowMarqueeText: FC<TProps> = ({
         className={cn('block min-w-0 overflow-hidden whitespace-nowrap', className)}
       >
         <span className='animate-save-status-marquee flex w-max'>
-          <span className={cn('block pr-4', itemClassName)}>
-            {text}
-          </span>
+          <span className={cn('block pr-4', itemClassName)}>{text}</span>
           <span className={cn('block pr-4', itemClassName)} aria-hidden='true'>
             {text}
           </span>
@@ -142,9 +131,7 @@ const OverflowMarqueeText: FC<TProps> = ({
           style={trackStyle}
           aria-hidden='true'
         >
-          <span className={cn('block shrink-0 whitespace-nowrap pr-4', itemClassName)}>
-            {text}
-          </span>
+          <span className={cn('block shrink-0 whitespace-nowrap pr-4', itemClassName)}>{text}</span>
           <span
             className={cn('block shrink-0 whitespace-nowrap pr-4', itemClassName)}
             aria-hidden='true'
