@@ -438,6 +438,7 @@ const docTreeNodeFields = `
   id
   parentId
   docId
+  targetNodeId
   type
   title
   slug
@@ -453,6 +454,29 @@ const docTreeNodeFields = `
   badge
   hidden
   expanded
+  uiConfig
+  target {
+    id
+    parentId
+    docId
+    targetNodeId
+    type
+    title
+    slug
+    index
+    href
+    marker {
+      type
+      provider
+      name
+      src
+      unified
+    }
+    badge
+    hidden
+    expanded
+    uiConfig
+  }
   publishState {
     status
     published
@@ -471,6 +495,26 @@ const docTree = gql`
   query docTree($community: String!) {
     docTree(community: $community) {
       revision
+      treeState {
+        hasUnpublishedChanges
+        stagedEventCount
+        baseRevisionId
+        latestRevisionId
+        latestRevisionNumber
+        revision
+      }
+      stagedEvents {
+        id
+        seq
+        eventType
+        payload
+        inversePayload
+        status
+        insertedAt
+      }
+      pins {
+        ${docTreeNodeFields}
+      }
       groups {
         ${docTreeNodeFields}
         children {
@@ -536,6 +580,14 @@ const docDraftRevisions = gql`
 
 const docTreeMutationPayload = `
   revision
+  treeState {
+    hasUnpublishedChanges
+    stagedEventCount
+    baseRevisionId
+    latestRevisionId
+    latestRevisionNumber
+    revision
+  }
   conflict
   node {
     ${docTreeNodeFields}
@@ -685,6 +737,14 @@ const publishAllUnpublishedDocDrafts = gql`
 const publishDocTreeGroup = gql`
   mutation publishDocTreeGroup($community: String!, $groupId: ID!, $mode: DocPublishMode) {
     publishDocTreeGroup(community: $community, groupId: $groupId, mode: $mode) {
+      done
+    }
+  }
+`
+
+const publishDocTree = gql`
+  mutation publishDocTree($community: String!) {
+    publishDocTree(community: $community) {
       done
     }
   }
@@ -1024,6 +1084,7 @@ const schema = {
   publishDocDraftRevision,
   publishAllUnpublishedDocDrafts,
   publishDocTreeGroup,
+  publishDocTree,
   moveDocToDraft,
   moveDocTreeGroupToDraft,
   restoreDocDraftRevision,

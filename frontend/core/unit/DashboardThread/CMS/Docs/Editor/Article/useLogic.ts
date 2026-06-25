@@ -458,7 +458,7 @@ export default function useLogic(
     bodyValue,
     dirty,
     editable,
-    editorDocId: loadedDocId ?? activePage?.docId ?? '',
+    editorDocId: loadedDocId ?? '',
     error,
     invalid,
     loading,

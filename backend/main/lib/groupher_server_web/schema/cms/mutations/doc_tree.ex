@@ -13,6 +13,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.create_doc_tree_group/3)
     end
 
@@ -24,6 +25,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.create_doc_tree_page/3)
     end
 
@@ -35,6 +37,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.create_doc_tree_link/3)
     end
 
@@ -47,6 +50,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.update_doc_tree_node/3)
     end
 
@@ -110,6 +114,16 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       resolve(&R.CMS.publish_doc_tree_group/3)
     end
 
+    @desc "publish staged docs tree changes"
+    field :publish_doc_tree, :done_state do
+      arg(:community, non_null(:string))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
+      resolve(&R.CMS.publish_doc_tree/3)
+    end
+
     @desc "move one published docs page back to draft visibility"
     field :move_doc_to_draft, :done_state do
       arg(:community, non_null(:string))
@@ -152,6 +166,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.delete_doc_tree_node/3)
     end
 
@@ -163,6 +178,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.duplicate_doc_tree_node/3)
     end
 
@@ -176,6 +192,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.move_doc_tree_node/3)
     end
 

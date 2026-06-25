@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
 
-  alias CMS.DocTree.{ChangeDetection, PublishedFields}
+  alias CMS.DocTree.{ChangeDetection, Events, PublishedFields, Read}
 
   alias CMS.Model.{
     ArticleDraft,
@@ -34,7 +34,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     DocTreeNodePublishMapping
   }
 
-  alias Helper.{ORM, T}
+  alias Helper.{ORM, T, Transaction}
 
   @doc """
   Publishes one docs draft and its side-tree page node.
@@ -131,6 +131,54 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   end
 
   @doc """
+  Publishes only the docs Tree scope.
+
+      draft tree rows + staged tree events
+                    |
+                    v
+          published tree rows + TreeRevision
+
+  This does not publish article drafts. Page nodes must already have public doc
+  mappings; a future combined publish can compose doc publication with this
+  operation.
+  """
+  @spec publish_tree(Community.t(), User.t(), keyword()) :: T.domain_res(map())
+  def publish_tree(%Community{} = community, %User{} = user, opts \\ []) do
+    Transaction.lock_global("doc_tree:#{community.id}", fn ->
+      Repo.transaction(fn ->
+        with {:ok, state} <- Read.ensure_draft_state(community),
+             draft_nodes <- active_draft_tree_nodes(community),
+             deleted_nodes <- deleted_draft_tree_nodes(community),
+             draft_groups <- Enum.filter(draft_nodes, &(&1.type == :group)),
+             children_by_parent <-
+               draft_nodes |> Enum.filter(& &1.parent_id) |> Enum.group_by(& &1.parent_id),
+             context <- batch_publish_context(community, nil, draft_nodes),
+             {:ok, _published_groups} <-
+               publish_tree_groups(community, draft_groups, children_by_parent, context),
+             pin_context <- batch_publish_context(community, nil, draft_nodes),
+             :ok <- publish_tree_pins(community, draft_nodes, pin_context),
+             :ok <- cleanup_deleted_tree_nodes(community, deleted_nodes),
+             {:ok, revision} <-
+               Events.publish_snapshot(community, user.id, Keyword.get(opts, :message)),
+             {:ok, state} <-
+               ORM.update(state, %{
+                 base_revision_id: revision.id,
+                 staged_event_count: 0
+               }) do
+          %{done: true, revision: state.revision, tree_revision: revision}
+        else
+          {:error, reason} -> Repo.rollback(reason)
+          reason -> Repo.rollback(reason)
+        end
+      end)
+      |> case do
+        {:ok, result} -> {:ok, result}
+        {:error, reason} -> {:error, reason}
+      end
+    end)
+  end
+
+  @doc """
   Moves one public docs page back to draft visibility.
 
       doc_tree_node_publish_mappings.visibility
@@ -204,6 +252,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     |> where([n], n.community_id == ^community.id)
     |> where([n], n.type == :page)
     |> where([n], n.article_draft_id == ^article_draft_id)
+    |> where([n], is_nil(n.deleted_at))
     |> Repo.one()
     |> case do
       %DocTreeNodeDraft{} = node -> {:ok, node}
@@ -216,6 +265,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     |> where([n], n.community_id == ^community.id)
     |> where([n], n.type == :group)
     |> where([n], n.id == ^group_id)
+    |> where([n], is_nil(n.deleted_at))
     |> Repo.one()
     |> case do
       %DocTreeNodeDraft{} = node -> {:ok, node}
@@ -228,6 +278,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     |> where([n], n.community_id == ^community.id)
     |> where([n], n.type == :page)
     |> where([n], n.id == ^draft_node_id)
+    |> where([n], is_nil(n.deleted_at))
     |> Repo.one()
     |> case do
       %DocTreeNodeDraft{} = node -> {:ok, node}
@@ -240,6 +291,23 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     |> where([n], n.community_id == ^community.id)
     |> where([n], n.parent_id == ^group_id)
     |> where([n], n.type in [:page, :link])
+    |> where([n], is_nil(n.deleted_at))
+    |> order_by([n], asc: n.index, asc: n.id)
+    |> Repo.all()
+  end
+
+  defp active_draft_tree_nodes(%Community{} = community) do
+    DocTreeNodeDraft
+    |> where([n], n.community_id == ^community.id)
+    |> where([n], is_nil(n.deleted_at))
+    |> order_by([n], asc: n.index, asc: n.id)
+    |> Repo.all()
+  end
+
+  defp deleted_draft_tree_nodes(%Community{} = community) do
+    DocTreeNodeDraft
+    |> where([n], n.community_id == ^community.id)
+    |> where([n], not is_nil(n.deleted_at))
     |> order_by([n], asc: n.index, asc: n.id)
     |> Repo.all()
   end
@@ -249,7 +317,9 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     |> where([n], n.community_id == ^community.id)
     |> where([n], n.type == :page)
     |> where([n], not is_nil(n.article_draft_id))
+    |> where([n], is_nil(n.deleted_at))
     |> join(:inner, [n], g in DocTreeNodeDraft, on: g.id == n.parent_id)
+    |> where([_n, g], is_nil(g.deleted_at))
     |> join(:left, [n, _g], m in DocTreeNodePublishMapping,
       on: m.community_id == n.community_id and m.draft_node_id == n.id
     )
@@ -266,8 +336,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     |> Enum.map(fn {node, _mapping, _published_node, _draft_doc} -> node end)
   end
 
-  defp batch_publish_context(%Community{} = community, %DocTreeNodeDraft{} = group, children) do
-    draft_nodes = [group | children]
+  defp batch_publish_context(%Community{} = community, group, children) do
+    draft_nodes = if is_nil(group), do: children, else: [group | children]
     draft_node_ids = Enum.map(draft_nodes, & &1.id)
     draft_doc_ids = draft_nodes |> Enum.map(& &1.article_draft_id) |> Enum.reject(&is_nil/1)
 
@@ -295,6 +365,158 @@ defmodule GroupherServer.CMS.DocTree.Publish do
       |> Map.new(&{&1.id, &1})
 
     %{draft_docs: draft_docs, mappings: mappings, published_nodes: published_nodes}
+  end
+
+  defp publish_tree_groups(%Community{} = community, draft_groups, children_by_parent, context) do
+    draft_groups
+    |> Enum.reduce_while({:ok, []}, fn draft_group, {:ok, acc} ->
+      with {:ok, published_group} <- upsert_published_group(community, draft_group, context),
+           {:ok, _mapping} <-
+             upsert_mapping(community, draft_group, published_group, nil, nil, context),
+           {:ok, _children} <-
+             publish_tree_children(
+               community,
+               Map.get(children_by_parent, draft_group.id, []),
+               published_group,
+               context
+             ) do
+        {:cont, {:ok, [published_group | acc]}}
+      else
+        error -> {:halt, error}
+      end
+    end)
+    |> case do
+      {:ok, groups} -> {:ok, Enum.reverse(groups)}
+      error -> error
+    end
+  end
+
+  defp publish_tree_children(
+         %Community{} = community,
+         children,
+         %DocTreeNode{} = published_group,
+         context
+       ) do
+    children
+    |> Enum.reduce_while({:ok, []}, fn child, {:ok, acc} ->
+      result =
+        case child.type do
+          :page -> publish_tree_page(community, child, published_group, context)
+          :link -> publish_group_link(community, child, published_group, context)
+        end
+
+      case result do
+        {:ok, node} -> {:cont, {:ok, [node | acc]}}
+        error -> {:halt, error}
+      end
+    end)
+    |> case do
+      {:ok, nodes} -> {:ok, Enum.reverse(nodes)}
+      error -> error
+    end
+  end
+
+  defp publish_tree_page(
+         %Community{} = community,
+         %DocTreeNodeDraft{} = draft_page,
+         %DocTreeNode{} = published_group,
+         context
+       ) do
+    with %DocTreeNodePublishMapping{} = mapping <- Map.get(context.mappings, draft_page.id),
+         published_doc_id when not is_nil(published_doc_id) <- mapping.published_doc_id,
+         {:ok, published_page} <-
+           upsert_published_page(
+             community,
+             draft_page,
+             published_group.id,
+             published_doc_id,
+             context
+           ),
+         {:ok, _mapping} <-
+           upsert_mapping(
+             community,
+             draft_page,
+             published_page,
+             Map.get(context.draft_docs, draft_page.article_draft_id),
+             published_doc_id,
+             context
+           ) do
+      {:ok, published_page}
+    else
+      nil -> {:error, {:custom, "Publish docs before publishing tree."}}
+      _ -> {:error, {:custom, "Publish docs before publishing tree."}}
+    end
+  end
+
+  defp publish_tree_pins(%Community{} = community, draft_nodes, context) do
+    draft_nodes
+    |> Enum.filter(&(&1.type == :pin))
+    |> Enum.reduce_while(:ok, fn draft_pin, :ok ->
+      with %DocTreeNodePublishMapping{} = target_mapping <-
+             Map.get(context.mappings, draft_pin.target_node_id),
+           published_target_id when not is_nil(published_target_id) <-
+             target_mapping.published_node_id,
+           {:ok, published_pin} <-
+             upsert_published_pin(community, draft_pin, published_target_id, context),
+           {:ok, _mapping} <-
+             upsert_mapping(community, draft_pin, published_pin, nil, nil, context) do
+        {:cont, :ok}
+      else
+        _ -> {:halt, {:error, {:custom, "Publish pinned docs before publishing tree."}}}
+      end
+    end)
+  end
+
+  defp cleanup_deleted_tree_nodes(_community, []), do: :ok
+
+  defp cleanup_deleted_tree_nodes(%Community{} = community, deleted_nodes) do
+    draft_node_ids = Enum.map(deleted_nodes, & &1.id)
+
+    mappings =
+      DocTreeNodePublishMapping
+      |> where([m], m.community_id == ^community.id)
+      |> where([m], m.draft_node_id in ^draft_node_ids)
+      |> Repo.all()
+      |> Map.new(&{&1.draft_node_id, &1})
+
+    published_nodes =
+      mappings
+      |> Map.values()
+      |> Enum.map(& &1.published_node_id)
+      |> public_nodes_by_id(community)
+
+    deleted_nodes
+    |> Enum.sort_by(fn node -> if is_nil(node.parent_id), do: 1, else: 0 end)
+    |> Enum.reduce_while(:ok, fn node, :ok ->
+      mapping = Map.get(mappings, node.id)
+      published_node = mapping && Map.get(published_nodes, mapping.published_node_id)
+
+      with :ok <- maybe_delete_published_node(published_node),
+           {:ok, _node} <- ORM.delete(node) do
+        {:cont, :ok}
+      else
+        error -> {:halt, error}
+      end
+    end)
+  end
+
+  defp public_nodes_by_id([], _community), do: %{}
+
+  defp public_nodes_by_id(ids, %Community{} = community) do
+    DocTreeNode
+    |> where([n], n.community_id == ^community.id)
+    |> where([n], n.id in ^ids)
+    |> Repo.all()
+    |> Map.new(&{&1.id, &1})
+  end
+
+  defp maybe_delete_published_node(nil), do: :ok
+
+  defp maybe_delete_published_node(%DocTreeNode{} = node) do
+    case ORM.delete(node) do
+      {:ok, _node} -> :ok
+      error -> error
+    end
   end
 
   defp publish_group_children(
@@ -373,6 +595,24 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     end
   end
 
+  defp upsert_published_pin(
+         %Community{} = community,
+         %DocTreeNodeDraft{} = draft_pin,
+         published_target_id,
+         context
+       ) do
+    case published_node_for_draft(community, draft_pin.id, context) do
+      {:ok, published} ->
+        ORM.update(published, published_attrs(draft_pin, nil, nil, nil, published_target_id))
+
+      {:error, _} ->
+        ORM.create(
+          DocTreeNode,
+          published_attrs(draft_pin, community.id, nil, nil, published_target_id)
+        )
+    end
+  end
+
   defp upsert_published_group(
          %Community{} = community,
          %DocTreeNodeDraft{} = draft_group,
@@ -442,16 +682,21 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     end
   end
 
-  defp published_attrs(%DocTreeNodeDraft{} = draft_node, community_id, parent_id, doc_id \\ nil) do
+  defp published_attrs(
+         %DocTreeNodeDraft{} = draft_node,
+         community_id,
+         parent_id,
+         doc_id \\ nil,
+         target_node_id \\ nil
+       ) do
     draft_node
     |> Map.take(PublishedFields.node_fields())
     |> Map.merge(%{
       community_id: community_id || draft_node.community_id,
       parent_id: parent_id,
-      doc_id: doc_id
+      doc_id: doc_id,
+      target_node_id: target_node_id
     })
-    |> Enum.reject(fn {_key, value} -> is_nil(value) end)
-    |> Map.new()
   end
 
   defp upsert_mapping(

@@ -721,6 +721,9 @@ type RootMutationType {
   "publish one docs side-tree group and its children"
   publishDocTreeGroup(community: String!, groupId: ID!, mode: DocPublishMode): DoneState
 
+  "publish staged docs tree changes"
+  publishDocTree(community: String!): DoneState
+
   "move one published docs page back to draft visibility"
   moveDocToDraft(community: String!, id: ID!): DoneState
 
@@ -784,6 +787,7 @@ enum DocTreeNodeType {
   GROUP
   PAGE
   LINK
+  PIN
 }
 
 enum ArticleRevisionType {
@@ -831,6 +835,7 @@ type DocTreeNode {
   id: ID
   parentId: ID
   docId: ID
+  targetNodeId: ID
   type: DocTreeNodeType
   title: String
   slug: String
@@ -840,6 +845,8 @@ type DocTreeNode {
   badge: String
   hidden: Boolean
   expanded: Boolean
+  uiConfig: Json
+  target: DocTreeNode
   publishState: DocTreeNodePublishState
   children: [DocTreeNode]
 }
@@ -857,8 +864,30 @@ type DocTreeNodePublishState {
   pinnedToCover: Boolean
 }
 
+type DocTreeState {
+  hasUnpublishedChanges: Boolean
+  stagedEventCount: Int
+  baseRevisionId: ID
+  latestRevisionId: ID
+  latestRevisionNumber: Int
+  revision: Int
+}
+
+type DocTreeEvent {
+  id: ID
+  seq: Int
+  eventType: String
+  payload: Json
+  inversePayload: Json
+  status: String
+  insertedAt: DateTime
+}
+
 type DocTree {
   revision: Int
+  treeState: DocTreeState
+  stagedEvents: [DocTreeEvent]
+  pins: [DocTreeNode]
   groups: [DocTreeNode]
 }
 
@@ -922,6 +951,7 @@ type DocDraft {
 
 type DocTreeMutationPayload {
   revision: Int
+  treeState: DocTreeState
   node: DocTreeNode
   affectedNodes: [DocTreeNode]
   conflict: Boolean
@@ -930,7 +960,8 @@ type DocTreeMutationPayload {
 input DocTreeNodeInput {
   parentId: ID
   docId: ID
-  title: String!
+  targetNodeId: ID
+  title: String
   slug: String
   index: Int
   href: String
@@ -938,10 +969,12 @@ input DocTreeNodeInput {
   badge: String
   hidden: Boolean
   expanded: Boolean
+  uiConfig: Json
 }
 
 input DocTreeNodePatchInput {
   docId: ID
+  targetNodeId: ID
   title: String
   slug: String
   href: String
@@ -949,6 +982,7 @@ input DocTreeNodePatchInput {
   badge: String
   hidden: Boolean
   expanded: Boolean
+  uiConfig: Json
 }
 
 type DsbThemePresetOption {

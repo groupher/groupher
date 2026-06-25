@@ -18,7 +18,8 @@ export const getDocPublishStatus = (state?: TDocTreeNodePublishState | null): TD
 }
 
 /**
- * The side-tree dot means the public docs do not match the current draft.
+ * The page dot only represents article-content draft state. Tree structure
+ * changes are shown by the SideTree footer instead.
  */
 export const needsPublishAttention = (state?: TDocTreeNodePublishState | null): boolean => {
   const status = getDocPublishStatus(state)

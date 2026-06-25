@@ -65,6 +65,14 @@ defmodule GroupherServer.CMS.DocTree do
   end
 
   @doc """
+  Publishes only Tree-scope changes into a Tree revision.
+  """
+  @spec publish_tree(Community.t(), User.t(), keyword()) :: T.domain_res(map())
+  def publish_tree(%Community{} = community, %User{} = user, opts \\ []) do
+    Publish.publish_tree(community, user, opts)
+  end
+
+  @doc """
   Moves one public docs page back to draft visibility.
   """
   @spec move_doc_to_draft(Community.t(), T.id()) :: T.domain_res(map())

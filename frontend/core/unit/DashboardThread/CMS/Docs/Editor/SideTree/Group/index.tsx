@@ -26,7 +26,7 @@ import type {
 import File from './File'
 import GroupMenu from './GroupMenu'
 import InlineTitleInput from './InlineTitleInput'
-import Link from './Link'
+import SideTreeLinkItem from './Link'
 
 const CHILD_LAYOUT_TRANSITION = {
   duration: 180,
@@ -92,8 +92,8 @@ const Group: FC<TProps> = ({
   const s = useSalon({ actionVisible: menuOpen })
   const collapsed = group.expanded === false
   const groupInCover = group.publishState?.inCover === true
-  const publishableChildCount = group.children.filter((child) =>
-    needsPublishAttention(child.publishState),
+  const publishableChildCount = group.children.filter(
+    (child) => child.type === SIDE_TREE_NODE_TYPE.PAGE && needsPublishAttention(child.publishState),
   ).length
   const draftableChildCount = group.children.filter((child) =>
     isPublicDoc(child.publishState),
@@ -261,7 +261,7 @@ const Group: FC<TProps> = ({
                       onStyleChange={onChildStyleChange}
                     />
                   ) : (
-                    <Link
+                    <SideTreeLinkItem
                       groupId={group.id}
                       item={child}
                       editingTarget={editingTarget}

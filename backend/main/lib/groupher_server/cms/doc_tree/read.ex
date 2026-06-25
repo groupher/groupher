@@ -21,6 +21,8 @@ defmodule GroupherServer.CMS.DocTree.Read do
 
   alias GroupherServer.{CMS, Repo}
 
+  alias CMS.DocTree.Events
+
   alias CMS.Model.{
     ArticleDraft,
     Community,
@@ -28,10 +30,12 @@ defmodule GroupherServer.CMS.DocTree.Read do
     DocCoverItem,
     DocCoverPinnedItem,
     DocsSiteState,
+    DocTreeEvent,
     DocTreeDraftState,
     DocTreeNode,
     DocTreeNodeDraft,
-    DocTreeNodePublishMapping
+    DocTreeNodePublishMapping,
+    DocTreeRevision
   }
 
   alias CMS.DocTree.ChangeDetection
@@ -46,18 +50,45 @@ defmodule GroupherServer.CMS.DocTree.Read do
         nodes =
           DocTreeNodeDraft
           |> where([n], n.community_id == ^community.id)
+          |> where([n], is_nil(n.deleted_at))
           |> order_by([n], asc: n.index, asc: n.id)
           |> Repo.all()
 
         context = publish_context(community, nodes)
 
-        %{revision: state.revision, groups: build_groups(nodes, context)}
+        %{
+          revision: state.revision,
+          tree_state: tree_state(community, state),
+          staged_events: Enum.map(Events.staged_events(community), &event_to_map/1),
+          pins: pins(nodes, context),
+          groups: build_groups(nodes, context)
+        }
       end)
       |> case do
         {:ok, payload} -> {:ok, payload}
         {:error, reason} -> {:error, reason}
       end
     end
+  end
+
+  @doc """
+  Returns the Tree-level draft/publish state for footer UI.
+
+      item publish_state.has_unpublished_changes -> doc content only
+      tree_state.has_unpublished_changes         -> navigation/tree staged events
+  """
+  @spec tree_state(Community.t(), DocTreeDraftState.t()) :: map()
+  def tree_state(%Community{} = community, %DocTreeDraftState{} = state) do
+    latest_revision = latest_tree_revision(community)
+
+    %{
+      has_unpublished_changes: state.staged_event_count > 0,
+      staged_event_count: state.staged_event_count,
+      base_revision_id: state.base_revision_id,
+      latest_revision_id: latest_revision && latest_revision.id,
+      latest_revision_number: latest_revision && latest_revision.revision_number,
+      revision: state.revision
+    }
   end
 
   @doc """
@@ -108,7 +139,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
       |> Enum.group_by(& &1.parent_id)
 
     nodes
-    |> Enum.filter(&is_nil(&1.parent_id))
+    |> Enum.filter(&(&1.type == :group))
     |> Enum.map(fn group ->
       group
       |> to_map(context)
@@ -125,6 +156,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
       id: node.id,
       parent_id: node.parent_id,
       doc_id: node.article_draft_id,
+      target_node_id: node.target_node_id,
       type: node.type,
       title: node.title,
       slug: node.slug,
@@ -134,6 +166,8 @@ defmodule GroupherServer.CMS.DocTree.Read do
       badge: node.badge,
       hidden: node.hidden,
       expanded: node.expanded,
+      ui_config: node.ui_config,
+      target: target_map(node, context),
       publish_state: publish_state(node, context),
       children: []
     }
@@ -198,6 +232,28 @@ defmodule GroupherServer.CMS.DocTree.Read do
     }
   end
 
+  defp pins(nodes, context) do
+    nodes_by_id = Map.new(nodes, &{&1.id, &1})
+    context = Map.put(context, :nodes_by_id, nodes_by_id)
+
+    nodes
+    |> Enum.filter(&(&1.type == :pin))
+    |> Enum.map(&to_map(&1, context))
+  end
+
+  defp target_map(%DocTreeNodeDraft{type: :pin, target_node_id: target_node_id}, context)
+       when not is_nil(target_node_id) do
+    context
+    |> Map.get(:nodes_by_id, %{})
+    |> Map.get(target_node_id)
+    |> case do
+      %DocTreeNodeDraft{} = target -> to_map(target, Map.delete(context, :nodes_by_id))
+      _ -> nil
+    end
+  end
+
+  defp target_map(_node, _context), do: nil
+
   defp publish_state(%DocTreeNodeDraft{} = node, %{mappings: mappings} = context) do
     case Map.get(mappings, node.id) do
       %DocTreeNodePublishMapping{} = mapping ->
@@ -254,12 +310,30 @@ defmodule GroupherServer.CMS.DocTree.Read do
   defp unpublished_changes?(
          %DocTreeNodeDraft{} = node,
          %DocTreeNodePublishMapping{} = mapping,
-         %{draft_docs: draft_docs, published_nodes: published_nodes}
+         %{draft_docs: draft_docs}
        ) do
-    published_node = Map.get(published_nodes, mapping.published_node_id)
     draft_doc = node.article_draft_id && Map.get(draft_docs, node.article_draft_id)
 
-    ChangeDetection.node_changed?(node, mapping, published_node) or
-      ChangeDetection.draft_doc_content_changed?(draft_doc, mapping.draft_doc_content_hash)
+    ChangeDetection.draft_doc_content_changed?(draft_doc, mapping.draft_doc_content_hash)
+  end
+
+  defp latest_tree_revision(%Community{} = community) do
+    DocTreeRevision
+    |> where([r], r.community_id == ^community.id)
+    |> order_by([r], desc: r.revision_number)
+    |> limit(1)
+    |> Repo.one()
+  end
+
+  defp event_to_map(%DocTreeEvent{} = event) do
+    %{
+      id: event.id,
+      seq: event.seq,
+      event_type: event.event_type,
+      payload: event.payload,
+      inverse_payload: event.inverse_payload,
+      status: to_string(event.status),
+      inserted_at: event.inserted_at
+    }
   end
 end

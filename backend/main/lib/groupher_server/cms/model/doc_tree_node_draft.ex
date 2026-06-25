@@ -8,6 +8,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
       group: parent_id=nil, no article_draft_id
       page:  parent_id=group.id, article_draft_id points to ArticleDraft
       link:  parent_id=group.id, href stores external/internal URL
+      pin:   parent_id=nil, target_node_id points at the original page/link
 
   The public GraphQL shape exposes `docId`; while reading draft data that value
   maps to `article_draft_id`.
@@ -28,15 +29,16 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
 
-  @node_types [:group, :page, :link]
-  @required_fields ~w(community_id type title slug index)a
-  @optional_fields ~w(parent_id article_draft_id href marker badge hidden expanded template_key)a
+  @node_types [:group, :page, :link, :pin]
+  @required_fields ~w(community_id type index)a
+  @optional_fields ~w(parent_id article_draft_id target_node_id title slug href marker badge hidden expanded template_key ui_config deleted_at)a
 
   @type t :: %DocTreeNodeDraft{}
   schema "doc_tree_node_drafts" do
     belongs_to(:community, Community)
     belongs_to(:parent, DocTreeNodeDraft)
     belongs_to(:article_draft, ArticleDraft)
+    belongs_to(:target_node, DocTreeNodeDraft)
 
     field(:type, Ecto.Enum, values: @node_types)
     field(:title, :string)
@@ -48,6 +50,8 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
     field(:hidden, :boolean, default: false)
     field(:expanded, :boolean, default: true)
     field(:template_key, :string)
+    field(:ui_config, :map, default: %{})
+    field(:deleted_at, :utc_datetime)
 
     timestamps(type: :utc_datetime)
   end
@@ -67,6 +71,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:parent_id)
     |> foreign_key_constraint(:article_draft_id)
+    |> foreign_key_constraint(:target_node_id)
     |> unique_constraint(:template_key,
       name: :doc_tree_node_drafts_community_id_template_key_index
     )
@@ -87,6 +92,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
     |> validate_node_shape()
     |> foreign_key_constraint(:parent_id)
     |> foreign_key_constraint(:article_draft_id)
+    |> foreign_key_constraint(:target_node_id)
     |> unique_constraint(:template_key,
       name: :doc_tree_node_drafts_community_id_template_key_index
     )
@@ -100,18 +106,33 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
     type = get_field(changeset, :type)
     parent_id = get_field(changeset, :parent_id)
     article_draft_id = get_field(changeset, :article_draft_id)
+    target_node_id = get_field(changeset, :target_node_id)
     href = get_field(changeset, :href)
 
     changeset
+    |> validate_title_slug_ref(type)
     |> validate_group_parent(type, parent_id)
     |> validate_article_draft_ref(type, article_draft_id)
+    |> validate_target_ref(type, target_node_id)
     |> validate_link_href(type, href)
   end
 
+  defp validate_title_slug_ref(changeset, :pin), do: changeset
+
+  defp validate_title_slug_ref(changeset, type) when type in [:group, :page, :link] do
+    changeset
+    |> validate_required([:title, :slug])
+  end
+
   defp validate_group_parent(changeset, :group, nil), do: changeset
+  defp validate_group_parent(changeset, :pin, nil), do: changeset
 
   defp validate_group_parent(changeset, :group, _parent_id) do
     add_error(changeset, :parent_id, "group nodes must be root nodes")
+  end
+
+  defp validate_group_parent(changeset, :pin, _parent_id) do
+    add_error(changeset, :parent_id, "pin nodes must be root nodes")
   end
 
   defp validate_group_parent(changeset, type, nil) when type in [:page, :link] do
@@ -127,11 +148,26 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
   defp validate_article_draft_ref(changeset, :page, _article_draft_id), do: changeset
 
   defp validate_article_draft_ref(changeset, type, article_draft_id)
-       when type in [:group, :link] do
+       when type in [:group, :link, :pin] do
     if is_nil(article_draft_id) do
       changeset
     else
       add_error(changeset, :article_draft_id, "#{type} nodes can not reference article drafts")
+    end
+  end
+
+  defp validate_target_ref(changeset, :pin, nil) do
+    add_error(changeset, :target_node_id, "pin nodes require target_node_id")
+  end
+
+  defp validate_target_ref(changeset, :pin, _target_node_id), do: changeset
+
+  defp validate_target_ref(changeset, type, target_node_id)
+       when type in [:group, :page, :link] do
+    if is_nil(target_node_id) do
+      changeset
+    else
+      add_error(changeset, :target_node_id, "#{type} nodes can not reference target nodes")
     end
   end
 
@@ -146,7 +182,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
   defp validate_link_href(changeset, :link, _href),
     do: add_error(changeset, :href, "link nodes require href")
 
-  defp validate_link_href(changeset, type, href) when type in [:group, :page] do
+  defp validate_link_href(changeset, type, href) when type in [:group, :page, :pin] do
     if is_nil(href) or (is_binary(href) and String.trim(href) == "") do
       changeset
     else

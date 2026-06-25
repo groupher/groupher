@@ -180,7 +180,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       assert Enum.all?(group.children, &(&1.publish_state.published_before == true))
     end
 
-    test "publishes public docs with draft changes in the bulk action",
+    test "tree node changes are staged at Tree scope instead of page publish scope",
          ~m(user community page_payload)a do
       {:ok, _revision} = CMS.DocTree.publish_doc(community, page_payload.node.doc_id, user)
       {:ok, tree} = CMS.DocTree.read(community)
@@ -202,10 +202,131 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       [page] = group.children
 
       assert page.publish_state.status == :public
-      assert page.publish_state.has_unpublished_changes
+      refute page.publish_state.has_unpublished_changes
+      assert tree.tree_state.has_unpublished_changes
+      assert tree.tree_state.staged_event_count > 0
+      assert Enum.any?(tree.staged_events, &(&1.event_type == "node.rename"))
 
-      assert {:ok, %{done: true, count: 1}} =
+      assert {:ok, %{done: true, count: 0}} =
                CMS.DocTree.publish_all_unpublished_docs(community, user)
+    end
+
+    test "publishes staged Tree changes into a Tree revision",
+         ~m(user community page_payload)a do
+      {:ok, _revision} = CMS.DocTree.publish_doc(community, page_payload.node.doc_id, user)
+
+      {:ok, payload} =
+        CMS.DocTree.update_node(community, page_payload.node.id, %{
+          title: "Install v2",
+          slug: "install-v2",
+          base_revision: page_payload.revision
+        })
+
+      assert payload.tree_state.has_unpublished_changes
+
+      assert {:ok, %{done: true, tree_revision: tree_revision}} =
+               CMS.DocTree.publish_tree(community, user)
+
+      {:ok, tree} = CMS.DocTree.read(community)
+      [group] = tree.groups
+      [page] = group.children
+
+      refute tree.tree_state.has_unpublished_changes
+      assert tree.tree_state.base_revision_id == tree_revision.id
+      assert tree.tree_state.latest_revision_number == tree_revision.revision_number
+      assert tree.staged_events == []
+      assert page.title == "Install v2"
+      assert page.publish_state.status == :public
+      refute page.publish_state.has_unpublished_changes
+    end
+
+    test "Tree publish copies pin nodes through the normal node tables",
+         ~m(user community page_payload)a do
+      {:ok, _revision} = CMS.DocTree.publish_doc(community, page_payload.node.doc_id, user)
+
+      {:ok, pin} =
+        ORM.create(CMS.Model.DocTreeNodeDraft, %{
+          community_id: community.id,
+          type: :pin,
+          target_node_id: page_payload.node.id,
+          index: 0,
+          ui_config: %{"variant" => "compact"}
+        })
+
+      pin_id = pin.id
+      pin_json_id = to_string(pin.id)
+      target_json_id = to_string(page_payload.node.id)
+
+      {:ok, tree} = CMS.DocTree.read(community)
+      assert [%{id: ^pin_id, type: :pin, target: %{title: "Install"}}] = tree.pins
+
+      assert {:ok, %{done: true, tree_revision: tree_revision}} =
+               CMS.DocTree.publish_tree(community, user)
+
+      {:ok, tree} = CMS.DocTree.read(community)
+      [group] = tree.groups
+      [page] = group.children
+
+      assert [%{id: ^pin_id, type: :pin, target_node_id: target_node_id}] = tree.pins
+      assert target_node_id == page_payload.node.id
+      assert page.publish_state.published_node_id
+
+      {:ok, published_pin} =
+        ORM.find_by(CMS.Model.DocTreeNode, community_id: community.id, type: :pin)
+
+      assert published_pin.target_node_id == page.publish_state.published_node_id
+      assert published_pin.ui_config == %{"variant" => "compact"}
+
+      assert [
+               %{
+                 "id" => ^pin_json_id,
+                 "type" => "pin",
+                 "targetNodeId" => ^target_json_id,
+                 "uiConfig" => %{"variant" => "compact"}
+               }
+             ] = tree_revision.tree_json["pins"]
+    end
+
+    test "Tree publish requires page docs to be published first",
+         ~m(user community page_payload)a do
+      assert {:error, {:custom, "Publish docs before publishing tree."}} =
+               CMS.DocTree.publish_tree(community, user)
+
+      {:ok, tree} = CMS.DocTree.read(community)
+      assert tree.tree_state.has_unpublished_changes
+      assert Enum.any?(tree.staged_events, &(&1.event_type == "node.create"))
+      assert page_payload.node.title == "Install"
+    end
+
+    test "Tree publish removes public nodes deleted from the draft tree",
+         ~m(user community page_payload)a do
+      {:ok, _revision} = CMS.DocTree.publish_doc(community, page_payload.node.doc_id, user)
+      {:ok, _tree_publish} = CMS.DocTree.publish_tree(community, user)
+      {:ok, tree} = CMS.DocTree.read(community)
+      [group] = tree.groups
+      [page] = group.children
+
+      assert page.publish_state.status == :public
+
+      assert {:ok, _payload} =
+               CMS.DocTree.delete_node(community, page_payload.node.id, %{
+                 base_revision: tree.revision
+               })
+
+      {:ok, tree} = CMS.DocTree.read(community)
+      [group] = tree.groups
+      assert group.children == []
+      assert tree.tree_state.has_unpublished_changes
+
+      assert {:ok, %{done: true}} = CMS.DocTree.publish_tree(community, user)
+
+      {:ok, tree} = CMS.DocTree.read(community)
+      {:ok, cover} = CMS.DocCover.read(community)
+
+      [group] = tree.groups
+      assert group.children == []
+      refute tree.tree_state.has_unpublished_changes
+      assert [%{items: []}] = cover.groups
     end
 
     test "moving a public doc to draft hides it from cover without deleting curation",

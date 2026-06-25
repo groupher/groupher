@@ -13,6 +13,7 @@ import {
 import { SIDE_TREE_NODE_TYPE } from './constant'
 import CoverWarningModal from './CoverWarningModal'
 import SideTreeDndContext from './Dnd/SideTreeDndContext'
+import Footer from './Footer'
 import Group from './Group'
 import useSalon from './salon'
 import type { TSideTreeController, TSideTreeGroup } from './spec'
@@ -62,6 +63,7 @@ const SideTree: FC<TProps> = ({ controller }) => {
     activeId,
     editingTarget,
     coverWarning,
+    treeState,
     activate,
     addChild,
     clearCoverWarning,
@@ -78,6 +80,7 @@ const SideTree: FC<TProps> = ({ controller }) => {
     handleChildAction,
     updateChildStyle,
     reorderGroups,
+    publishTree,
   } = controller
   const deferredSearchQuery = useDeferredValue(searchQuery)
   const normalizedDeferredSearchQuery = normalizeSearchQuery(deferredSearchQuery)
@@ -172,6 +175,7 @@ const SideTree: FC<TProps> = ({ controller }) => {
           </div>
         )}
       </SideTreeDndContext>
+      <Footer treeState={treeState} onPublish={publishTree} />
     </aside>
   )
 }

@@ -24,6 +24,25 @@ export type TDocTreeNodePublishState = {
   pinnedToCover?: boolean | null
 }
 
+export type TDocTreeState = {
+  hasUnpublishedChanges?: boolean | null
+  stagedEventCount?: number | null
+  baseRevisionId?: string | null
+  latestRevisionId?: string | null
+  latestRevisionNumber?: number | null
+  revision?: number | null
+}
+
+export type TDocTreeEvent = {
+  id: string
+  seq?: number | null
+  eventType: string
+  payload?: Record<string, unknown> | null
+  inversePayload?: Record<string, unknown> | null
+  status?: string | null
+  insertedAt?: string | null
+}
+
 type TSideTreePublishable = {
   publishState?: TDocTreeNodePublishState | null
 }
@@ -80,6 +99,8 @@ export type TSideTreeNodeMenuAction =
 
 export type TSideTreeController = {
   groups: TSideTreeGroup[]
+  treeState: TDocTreeState | null
+  stagedEvents: TDocTreeEvent[]
   activeId: string | null
   editingTarget: TEditingTarget
   coverWarning: string | null
@@ -100,6 +121,7 @@ export type TSideTreeController = {
   handleChildAction: (groupId: string, childId: string, action: TSideTreeNodeMenuAction) => void
   updateChildStyle: (groupId: string, childId: string, marker: TSideTreeChild['marker']) => void
   patchChild: (childId: string, patch: Partial<TSideTreeChild>) => void
+  publishTree: () => Promise<void>
   reload: () => void
   reorderGroups: (groups: readonly TSideTreeGroup[]) => void
 }
@@ -108,7 +130,8 @@ export type TDocTreeNodeDTO = {
   id: string
   parentId?: string | null
   docId?: string | null
-  type: TSideTreeGroup['type'] | TSideTreeChild['type'] | 'GROUP' | 'PAGE' | 'LINK'
+  targetNodeId?: string | null
+  type: TSideTreeGroup['type'] | TSideTreeChild['type'] | 'pin' | 'GROUP' | 'PAGE' | 'LINK' | 'PIN'
   title?: string | null
   slug?: string | null
   index?: number | null
@@ -117,12 +140,15 @@ export type TDocTreeNodeDTO = {
   badge?: string | null
   hidden?: boolean | null
   expanded?: boolean | null
+  uiConfig?: Record<string, unknown> | null
+  target?: TDocTreeNodeDTO | null
   publishState?: TDocTreeNodePublishState | null
   children?: TDocTreeNodeDTO[] | null
 }
 
 export type TDocTreeMutationPayload = {
   revision: number
+  treeState?: TDocTreeState | null
   conflict?: boolean | null
   node?: TDocTreeNodeDTO | null
   affectedNodes?: TDocTreeNodeDTO[] | null
@@ -132,5 +158,8 @@ export type TDocTreeMutationData = Record<string, TDocTreeMutationPayload | null
 
 export type TDocTreeInitialData = {
   revision: number
+  treeState?: TDocTreeState | null
+  stagedEvents?: TDocTreeEvent[] | null
+  pins?: TDocTreeNodeDTO[] | null
   groups: TDocTreeNodeDTO[]
 }

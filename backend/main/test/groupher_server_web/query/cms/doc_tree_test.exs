@@ -7,8 +7,23 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
   query($community: String!) {
     docTree(community: $community) {
       revision
+      treeState {
+        hasUnpublishedChanges
+        stagedEventCount
+      }
+      stagedEvents {
+        eventType
+      }
       groups {
         id
+      }
+      pins {
+        id
+        type
+        targetNodeId
+        target {
+          id
+        }
       }
     }
   }
@@ -50,7 +65,11 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
     result = user_conn |> gq_query(@query, %{community: community.slug})
 
     assert result["revision"] == group_payload.revision
+    assert result["treeState"]["hasUnpublishedChanges"] == true
+    assert result["treeState"]["stagedEventCount"] == 1
+    assert [%{"eventType" => "node.create"}] = result["stagedEvents"]
     assert length(result["groups"]) == 1
+    assert result["pins"] == []
   end
 
   defp empty_docs_community(user) do

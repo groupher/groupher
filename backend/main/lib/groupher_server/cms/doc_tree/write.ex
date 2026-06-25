@@ -8,10 +8,11 @@ defmodule GroupherServer.CMS.DocTree.Write do
               |
               v
       doc_tree_node_drafts
-              |
-              +-- page nodes point at article_drafts via article_draft_id
-              +-- link nodes store href directly
-              +-- group nodes are root-only containers
+      |
+      +-- page nodes point at article_drafts via article_draft_id
+      +-- link nodes store href directly
+      +-- group nodes are root-only containers
+      +-- pin nodes are root-only pointers to page/link nodes
 
   Creating a page without an explicit `doc_id` creates a default `ArticleDraft`
   first, then stores that draft id on the tree node. The
@@ -28,13 +29,14 @@ defmodule GroupherServer.CMS.DocTree.Write do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.Articles.Draft
-  alias CMS.DocTree.{Read, Revision}
+  alias CMS.DocTree.{Events, Read, Revision}
 
   alias CMS.Model.{
     ArticleDraft,
     Community,
     DocTreeDraftState,
-    DocTreeNodeDraft
+    DocTreeNodeDraft,
+    DocTreeNodePublishMapping
   }
 
   alias Helper.{ORM, T, Transaction}
@@ -53,8 +55,9 @@ defmodule GroupherServer.CMS.DocTree.Write do
         |> ensure_index(community, nil)
 
       with {:ok, node} <- ORM.create(DocTreeNodeDraft, attrs),
-           {:ok, state} <- bump_revision(community, state) do
-        {:ok, payload(state, node)}
+           {:ok, event_count} <- record_tree_events(community, args, [Events.create_event(node)]),
+           {:ok, state} <- bump_revision(community, state, event_count) do
+        {:ok, payload(community, state, node)}
       end
     end)
   end
@@ -76,8 +79,10 @@ defmodule GroupherServer.CMS.DocTree.Write do
             |> ensure_index(community, parent.id)
 
           with {:ok, node} <- ORM.create(DocTreeNodeDraft, attrs),
-               {:ok, state} <- bump_revision(community, state) do
-            {:ok, payload(state, node)}
+               {:ok, event_count} <-
+                 record_tree_events(community, args, [Events.create_event(node)]),
+               {:ok, state} <- bump_revision(community, state, event_count) do
+            {:ok, payload(community, state, node)}
           end
         end
       end
@@ -96,8 +101,10 @@ defmodule GroupherServer.CMS.DocTree.Write do
           |> ensure_index(community, parent.id)
 
         with {:ok, node} <- ORM.create(DocTreeNodeDraft, attrs),
-             {:ok, state} <- bump_revision(community, state) do
-          {:ok, payload(state, node)}
+             {:ok, event_count} <-
+               record_tree_events(community, args, [Events.create_event(node)]),
+             {:ok, state} <- bump_revision(community, state, event_count) do
+          {:ok, payload(community, state, node)}
         end
       end
     end)
@@ -109,9 +116,11 @@ defmodule GroupherServer.CMS.DocTree.Write do
       with {:ok, node} <- find_node(community, id),
            :ok <- validate_article_draft(community, Map.get(args, :doc_id)),
            attrs <- args |> normalize_article_draft_id() |> normalize_title_slug(),
-           {:ok, node} <- ORM.update(node, attrs),
-           {:ok, state} <- bump_revision(community, state) do
-        {:ok, payload(state, node)}
+           {:ok, updated_node} <- ORM.update(node, attrs),
+           events <- Events.update_events(node, updated_node),
+           {:ok, event_count} <- record_tree_events(community, args, events),
+           {:ok, state} <- bump_revision(community, state, event_count) do
+        {:ok, payload(community, state, updated_node)}
       end
     end)
   end
@@ -142,10 +151,12 @@ defmodule GroupherServer.CMS.DocTree.Write do
     operate(community, args, fn state ->
       with {:ok, node} <- find_node(community, id),
            parent_id <- node.parent_id,
-           {:ok, _node} <- ORM.delete(node),
-           :ok <- normalize_sibling_indexes(community, parent_id),
-           {:ok, state} <- bump_revision(community, state) do
-        {:ok, payload(state, nil, affected_nodes(community, parent_id))}
+           node_type <- node.type,
+           :ok <- delete_or_tombstone_subtree(community, node),
+           :ok <- normalize_sibling_indexes(community, parent_id, node_type),
+           {:ok, event_count} <- record_tree_events(community, args, [Events.delete_event(node)]),
+           {:ok, state} <- bump_revision(community, state, event_count) do
+        {:ok, payload(community, state, nil, affected_nodes(community, parent_id, node_type))}
       end
     end)
   end
@@ -154,7 +165,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
   def duplicate_node(%Community{} = community, id, args) do
     operate(community, args, fn state ->
       with {:ok, node} <- find_node(community, id),
-           false <- node.type == :group do
+           false <- node.type in [:group, :pin] do
         attrs =
           node
           |> Map.take([
@@ -174,14 +185,23 @@ defmodule GroupherServer.CMS.DocTree.Write do
             expanded: node.expanded
           })
 
-        with :ok <- shift_sibling_indexes(community, node.parent_id, node.index + 1),
+        with :ok <-
+               shift_sibling_indexes(community, node.parent_id, node.index + 1, nil, node.type),
              {:ok, duplicated} <- ORM.create(DocTreeNodeDraft, attrs),
-             :ok <- normalize_sibling_indexes(community, node.parent_id),
-             {:ok, state} <- bump_revision(community, state) do
-          {:ok, payload(state, duplicated, affected_nodes(community, node.parent_id))}
+             :ok <- normalize_sibling_indexes(community, node.parent_id, node.type),
+             {:ok, event_count} <-
+               record_tree_events(community, args, [Events.create_event(duplicated)]),
+             {:ok, state} <- bump_revision(community, state, event_count) do
+          {:ok,
+           payload(
+             community,
+             state,
+             duplicated,
+             affected_nodes(community, node.parent_id, node.type)
+           )}
         end
       else
-        true -> {:error, {:custom, "group nodes can not be duplicated"}}
+        true -> {:error, {:custom, "group or pin nodes can not be duplicated"}}
         error -> error
       end
     end)
@@ -196,17 +216,22 @@ defmodule GroupherServer.CMS.DocTree.Write do
       with {:ok, node} <- find_node(community, id),
            {:ok, parent_id} <- validate_target_parent(community, node, target_parent_id),
            old_parent_id <- node.parent_id,
-           :ok <- shift_sibling_indexes(community, parent_id, target_index, node.id),
+           old_index <- node.index,
+           :ok <- shift_sibling_indexes(community, parent_id, target_index, node.id, node.type),
            {:ok, node} <- ORM.update(node, %{parent_id: parent_id, index: target_index}),
-           :ok <- normalize_sibling_indexes(community, old_parent_id),
-           :ok <- normalize_sibling_indexes(community, parent_id),
-           {:ok, state} <- bump_revision(community, state) do
+           :ok <- normalize_sibling_indexes(community, old_parent_id, node.type),
+           :ok <- normalize_sibling_indexes(community, parent_id, node.type),
+           {:ok, event_count} <-
+             record_tree_events(community, args, [
+               Events.move_event(node, old_parent_id, old_index, parent_id, node.index)
+             ]),
+           {:ok, state} <- bump_revision(community, state, event_count) do
         affected =
           [old_parent_id, parent_id]
           |> Enum.uniq()
-          |> Enum.flat_map(&affected_nodes(community, &1))
+          |> Enum.flat_map(&affected_nodes(community, &1, node.type))
 
-        {:ok, payload(state, node, affected)}
+        {:ok, payload(community, state, node, affected)}
       end
     end)
   end
@@ -219,7 +244,13 @@ defmodule GroupherServer.CMS.DocTree.Write do
         fun.(state)
       else
         {:conflict, state} ->
-          {:ok, %{revision: state.revision, conflict: true, affected_nodes: []}}
+          {:ok,
+           %{
+             revision: state.revision,
+             tree_state: Read.tree_state(community, state),
+             conflict: true,
+             affected_nodes: []
+           }}
 
         error ->
           error
@@ -235,12 +266,19 @@ defmodule GroupherServer.CMS.DocTree.Write do
 
   defp revision_check(%DocTreeDraftState{} = state, _revision), do: {:conflict, state}
 
-  defp bump_revision(%Community{} = community, %DocTreeDraftState{} = state),
-    do: Revision.bump_draft(community, state)
+  defp bump_revision(%Community{} = community, %DocTreeDraftState{} = state, event_count),
+    do: Revision.bump_draft(community, state, staged_event_delta: event_count)
 
-  defp payload(%DocTreeDraftState{} = state, node, affected \\ []) do
+  defp record_tree_events(%Community{} = community, args, events) do
+    with {:ok, events} <- Events.record_staged_many(community, events, Map.get(args, :actor_id)) do
+      {:ok, length(events)}
+    end
+  end
+
+  defp payload(%Community{} = community, %DocTreeDraftState{} = state, node, affected \\ []) do
     %{
       revision: state.revision,
+      tree_state: Read.tree_state(community, state),
       node: map_node(node),
       affected_nodes: Enum.map(affected, &Read.to_map/1),
       conflict: false
@@ -249,6 +287,52 @@ defmodule GroupherServer.CMS.DocTree.Write do
 
   defp map_node(nil), do: nil
   defp map_node(%DocTreeNodeDraft{} = node), do: Read.to_map(node)
+
+  defp delete_or_tombstone_subtree(%Community{} = community, %DocTreeNodeDraft{} = node) do
+    nodes = subtree_nodes(community, node)
+    mapped_ids = mapped_draft_node_ids(community, Enum.map(nodes, & &1.id))
+    deleted_at = DateTime.utc_now(:second)
+
+    nodes
+    |> Enum.reduce_while(:ok, fn node, :ok ->
+      result =
+        if MapSet.member?(mapped_ids, node.id) do
+          ORM.update(node, %{deleted_at: deleted_at})
+        else
+          ORM.delete(node)
+        end
+
+      case result do
+        {:ok, _node} -> {:cont, :ok}
+        error -> {:halt, error}
+      end
+    end)
+  end
+
+  defp subtree_nodes(%Community{} = community, %DocTreeNodeDraft{type: :group} = group) do
+    children =
+      DocTreeNodeDraft
+      |> where([n], n.community_id == ^community.id)
+      |> where([n], is_nil(n.deleted_at))
+      |> where([n], n.parent_id == ^group.id)
+      |> order_by([n], desc: n.index, desc: n.id)
+      |> Repo.all()
+
+    children ++ [group]
+  end
+
+  defp subtree_nodes(_community, %DocTreeNodeDraft{} = node), do: [node]
+
+  defp mapped_draft_node_ids(_community, []), do: MapSet.new()
+
+  defp mapped_draft_node_ids(%Community{} = community, ids) do
+    DocTreeNodePublishMapping
+    |> where([m], m.community_id == ^community.id)
+    |> where([m], m.draft_node_id in ^ids)
+    |> select([m], m.draft_node_id)
+    |> Repo.all()
+    |> MapSet.new()
+  end
 
   defp normalize_title_slug(args) do
     title = Map.get(args, :title)
@@ -332,57 +416,61 @@ defmodule GroupherServer.CMS.DocTree.Write do
   defp unique_create_identity(attrs, %Community{} = community, parent_id) do
     title = Map.get(attrs, :title)
     slug = Map.get(attrs, :slug)
+    type = Map.get(attrs, :type)
 
     attrs
-    |> Map.put(:title, unique_create_title(community, parent_id, title))
-    |> Map.put(:slug, unique_create_slug(community, parent_id, slug))
+    |> Map.put(:title, unique_create_title(community, parent_id, type, title))
+    |> Map.put(:slug, unique_create_slug(community, parent_id, type, slug))
   end
 
-  defp unique_create_title(community, parent_id, title) do
-    unique_value(community, parent_id, :title, title, " ")
+  defp unique_create_title(community, parent_id, type, title) do
+    unique_value(community, parent_id, type, :title, title, " ")
   end
 
-  defp unique_create_slug(community, parent_id, slug) do
-    unique_value(community, parent_id, :slug, slug, "-")
+  defp unique_create_slug(community, parent_id, type, slug) do
+    unique_value(community, parent_id, type, :slug, slug, "-")
   end
 
   defp unique_create_page_identity(attrs, %Community{} = community, parent_id) do
     title = Map.get(attrs, :title)
     slug = Map.get(attrs, :slug)
 
-    if sibling_value_exists?(community, parent_id, :title, title) or
-         sibling_value_exists?(community, parent_id, :slug, slug) do
+    type = Map.get(attrs, :type)
+
+    if sibling_value_exists?(community, parent_id, type, :title, title) or
+         sibling_value_exists?(community, parent_id, type, :slug, slug) do
       attrs
-      |> Map.put(:title, unique_page_copy_title(community, parent_id, title))
-      |> Map.put(:slug, unique_page_copy_slug(community, parent_id, slug))
+      |> Map.put(:title, unique_page_copy_title(community, parent_id, type, title))
+      |> Map.put(:slug, unique_page_copy_slug(community, parent_id, type, slug))
     else
       attrs
     end
   end
 
-  defp unique_page_copy_title(_community, _parent_id, nil), do: nil
+  defp unique_page_copy_title(_community, _parent_id, _type, nil), do: nil
 
-  defp unique_page_copy_title(community, parent_id, title) do
-    unique_value(community, parent_id, :title, "#{title}-copy", "-")
+  defp unique_page_copy_title(community, parent_id, type, title) do
+    unique_value(community, parent_id, type, :title, "#{title}-copy", "-")
   end
 
-  defp unique_page_copy_slug(_community, _parent_id, nil), do: nil
+  defp unique_page_copy_slug(_community, _parent_id, _type, nil), do: nil
 
-  defp unique_page_copy_slug(community, parent_id, slug) do
-    unique_value(community, parent_id, :slug, "#{slug}-copy", "-")
+  defp unique_page_copy_slug(community, parent_id, type, slug) do
+    unique_value(community, parent_id, type, :slug, "#{slug}-copy", "-")
   end
 
   defp ensure_index(attrs, %Community{} = community, parent_id) do
     case Map.get(attrs, :index) do
-      nil -> Map.put(attrs, :index, next_index(community, parent_id))
+      nil -> Map.put(attrs, :index, next_index(community, parent_id, Map.get(attrs, :type)))
       _ -> attrs
     end
   end
 
-  defp next_index(%Community{} = community, parent_id) do
+  defp next_index(%Community{} = community, parent_id, type) do
     DocTreeNodeDraft
     |> where([n], n.community_id == ^community.id)
-    |> where_parent(parent_id)
+    |> where([n], is_nil(n.deleted_at))
+    |> where_sibling_scope(parent_id, type)
     |> select([n], max(n.index))
     |> Repo.one()
     |> case do
@@ -397,6 +485,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
         DocTreeNodeDraft
         |> where([n], n.community_id == ^community.id)
         |> where([n], n.id == ^id)
+        |> where([n], is_nil(n.deleted_at))
         |> Repo.one()
         |> case do
           %DocTreeNodeDraft{} = node -> {:ok, node}
@@ -418,10 +507,12 @@ defmodule GroupherServer.CMS.DocTree.Write do
     end
   end
 
-  defp validate_target_parent(_community, %{type: :group}, nil), do: {:ok, nil}
+  defp validate_target_parent(_community, %{type: type}, nil) when type in [:group, :pin],
+    do: {:ok, nil}
 
-  defp validate_target_parent(_community, %{type: :group}, _parent_id) do
-    {:error, {:custom, "group nodes must be root nodes"}}
+  defp validate_target_parent(_community, %{type: type}, _parent_id)
+       when type in [:group, :pin] do
+    {:error, {:custom, "#{type} nodes must be root nodes"}}
   end
 
   defp validate_target_parent(community, _node, parent_id) do
@@ -450,11 +541,12 @@ defmodule GroupherServer.CMS.DocTree.Write do
     end
   end
 
-  defp shift_sibling_indexes(community, parent_id, from_index, exclude_id \\ nil) do
+  defp shift_sibling_indexes(community, parent_id, from_index, exclude_id, type) do
     query =
       DocTreeNodeDraft
       |> where([n], n.community_id == ^community.id)
-      |> where_parent(parent_id)
+      |> where([n], is_nil(n.deleted_at))
+      |> where_sibling_scope(parent_id, type)
       |> where([n], n.index >= ^from_index)
 
     query =
@@ -468,10 +560,11 @@ defmodule GroupherServer.CMS.DocTree.Write do
     :ok
   end
 
-  defp normalize_sibling_indexes(%Community{} = community, parent_id) do
+  defp normalize_sibling_indexes(%Community{} = community, parent_id, type) do
     DocTreeNodeDraft
     |> where([n], n.community_id == ^community.id)
-    |> where_parent(parent_id)
+    |> where([n], is_nil(n.deleted_at))
+    |> where_sibling_scope(parent_id, type)
     |> order_by([n], asc: n.index, asc: n.id)
     |> Repo.all()
     |> Enum.with_index()
@@ -484,37 +577,40 @@ defmodule GroupherServer.CMS.DocTree.Write do
     :ok
   end
 
-  defp affected_nodes(%Community{} = community, parent_id) do
+  defp affected_nodes(%Community{} = community, parent_id, type) do
     DocTreeNodeDraft
     |> where([n], n.community_id == ^community.id)
-    |> where_parent(parent_id)
+    |> where([n], is_nil(n.deleted_at))
+    |> where_sibling_scope(parent_id, type)
     |> order_by([n], asc: n.index, asc: n.id)
     |> Repo.all()
   end
 
   defp unique_copy_title(community, parent_id, title) do
-    unique_value(community, parent_id, :title, "#{title} copy", " ")
+    unique_value(community, parent_id, nil, :title, "#{title} copy", " ")
   end
 
   defp unique_copy_slug(community, parent_id, slug) do
-    unique_value(community, parent_id, :slug, "#{slug}-copy", "-")
+    unique_value(community, parent_id, nil, :slug, "#{slug}-copy", "-")
   end
 
-  defp sibling_value_exists?(_community, _parent_id, _field, nil), do: false
+  defp sibling_value_exists?(_community, _parent_id, _type, _field, nil), do: false
 
-  defp sibling_value_exists?(community, parent_id, field, value) do
+  defp sibling_value_exists?(community, parent_id, type, field, value) do
     DocTreeNodeDraft
     |> where([n], n.community_id == ^community.id)
-    |> where_parent(parent_id)
+    |> where([n], is_nil(n.deleted_at))
+    |> where_sibling_scope(parent_id, type)
     |> where([n], field(n, ^field) == ^value)
     |> Repo.exists?()
   end
 
-  defp unique_value(community, parent_id, field, base, separator) do
+  defp unique_value(community, parent_id, type, field, base, separator) do
     existing =
       DocTreeNodeDraft
       |> where([n], n.community_id == ^community.id)
-      |> where_parent(parent_id)
+      |> where([n], is_nil(n.deleted_at))
+      |> where_sibling_scope(parent_id, type)
       |> select([n], field(n, ^field))
       |> Repo.all()
       |> MapSet.new()
@@ -532,4 +628,14 @@ defmodule GroupherServer.CMS.DocTree.Write do
 
   defp where_parent(query, nil), do: where(query, [n], is_nil(n.parent_id))
   defp where_parent(query, parent_id), do: where(query, [n], n.parent_id == ^parent_id)
+
+  defp where_sibling_scope(query, nil, nil), do: where_parent(query, nil)
+
+  defp where_sibling_scope(query, nil, type) do
+    query
+    |> where_parent(nil)
+    |> where([n], n.type == ^type)
+  end
+
+  defp where_sibling_scope(query, parent_id, _type), do: where_parent(query, parent_id)
 end

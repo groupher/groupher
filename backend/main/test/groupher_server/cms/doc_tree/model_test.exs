@@ -71,6 +71,19 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
 
       assert "link nodes can not reference article drafts" in errors_on(changeset).article_draft_id
     end
+
+    test "pin nodes require only a target node reference" do
+      changeset =
+        DocTreeNodeDraft.changeset(%DocTreeNodeDraft{}, %{
+          community_id: 1,
+          type: :pin,
+          target_node_id: 2,
+          index: 0,
+          ui_config: %{"variant" => "compact"}
+        })
+
+      assert changeset.valid?
+    end
   end
 
   describe "DocTreeNode changeset" do
@@ -118,6 +131,18 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
 
       refute changeset.valid?
       assert "group nodes can not have href" in errors_on(changeset).href
+    end
+
+    test "pin nodes require target_node_id" do
+      changeset =
+        DocTreeNode.changeset(%DocTreeNode{}, %{
+          community_id: 1,
+          type: :pin,
+          index: 0
+        })
+
+      refute changeset.valid?
+      assert "pin nodes require target_node_id" in errors_on(changeset).target_node_id
     end
   end
 end

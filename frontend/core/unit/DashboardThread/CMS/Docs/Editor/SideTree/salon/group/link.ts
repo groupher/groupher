@@ -17,6 +17,7 @@ export default function useSalon({ actionVisible }: { actionVisible: boolean }) 
     ),
     titleText: '',
     href: cn('max-w-16 truncate text-xs leading-5', fg('hint')),
+    meta: 'row-center ml-auto h-5 shrink-0',
     actions: cn(
       'row-center w-0 overflow-hidden opacity-0',
       'group-hover/docs-tree-row:w-4 group-hover/docs-tree-row:opacity-100',

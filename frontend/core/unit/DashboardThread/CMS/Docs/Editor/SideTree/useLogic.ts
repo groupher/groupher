@@ -52,9 +52,11 @@ import {
 } from './helper'
 import type {
   TDocTreeInitialData,
+  TDocTreeEvent,
   TDocTreeMutationData,
   TDocTreeMutationPayload,
   TDocTreeNodeDTO,
+  TDocTreeState,
   TEditingTarget,
   TSideTreeChild,
   TSideTreeChildMenuAction,
@@ -73,12 +75,18 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   const currentDocId = searchParams.get(DOC_EDITOR_QUERY_PARAM.DOC_ID)
   const { slug: community } = useCommunity()
   const { mutate } = useGraphQLClient()
-  const { data, reload } = useQuery<{ docTree?: { revision: number; groups: TDocTreeNodeDTO[] } }>(
-    S.docTree,
-    { community },
-  )
+  const { data, reload } = useQuery<{
+    docTree?: {
+      revision: number
+      treeState?: TDocTreeState | null
+      stagedEvents?: TDocTreeEvent[] | null
+      groups: TDocTreeNodeDTO[]
+    }
+  }>(S.docTree, { community })
   const initialGroups = useMemo(() => initialData?.groups.map(mapGroup) ?? [], [initialData])
   const [groups, setGroups] = useState<TSideTreeGroup[]>(initialGroups)
+  const [treeState, setTreeState] = useState<TDocTreeState | null>(initialData?.treeState ?? null)
+  const [stagedEvents, setStagedEvents] = useState<TDocTreeEvent[]>(initialData?.stagedEvents ?? [])
   const groupsRef = useRef<TSideTreeGroup[]>(initialGroups)
   const currentDocIdRef = useRef<string | null>(currentDocId)
   const revisionRef = useRef<number | null>(initialData?.revision ?? null)
@@ -144,6 +152,8 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
     const nextGroups = data.docTree.groups.map(mapGroup)
     revisionRef.current = data.docTree.revision
+    setTreeState(data.docTree.treeState ?? null)
+    setStagedEvents(data.docTree.stagedEvents ?? [])
     commitGroups(nextGroups)
     syncActiveIdFromUrl(nextGroups)
   }, [commitGroups, data, syncActiveIdFromUrl])
@@ -172,7 +182,10 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
           return payload
         }
 
-        if (payload) revisionRef.current = payload.revision
+        if (payload) {
+          revisionRef.current = payload.revision
+          if (payload.treeState) setTreeState(payload.treeState)
+        }
 
         return payload
       } catch (err) {
@@ -371,6 +384,20 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
         toast(formatMutationError(err), 'error')
         reload()
       })
+  }
+
+  /**
+   * Publish staged Tree events without publishing article drafts.
+   */
+  async function publishTree(): Promise<void> {
+    try {
+      await mutate(S.publishDocTree, { community })
+      reload()
+      toast('Tree changes saved')
+    } catch (err) {
+      toast(formatMutationError(err), 'error')
+      reload()
+    }
   }
 
   function createDraftGroup(groupId: string, title: string): void {
@@ -722,6 +749,8 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
   return {
     groups,
+    treeState,
+    stagedEvents,
     activeId,
     editingTarget,
     coverWarning,
@@ -742,6 +771,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     handleChildAction,
     updateChildStyle,
     patchChild,
+    publishTree,
     reload,
     reorderGroups,
   }

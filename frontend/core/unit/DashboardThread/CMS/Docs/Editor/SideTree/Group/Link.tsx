@@ -83,20 +83,22 @@ const Link: FC<TProps> = ({
           </a>
         </div>
       )}
-      {!searching && !editing && (
-        <div className={s.actions}>
-          <ChildMenu
-            onOpenChange={setMenuOpen}
-            onSelect={(action) => {
-              if (action === SIDE_TREE_NODE_MENU_ACTION.RENAME) {
-                onEdit({ type: SIDE_TREE_NODE_TYPE.LINK, groupId, childId: item.id })
-                return
-              }
-              onAction(groupId, item.id, action)
-            }}
-          />
-        </div>
-      )}
+      <div className={s.meta}>
+        {!searching && !editing && (
+          <div className={s.actions}>
+            <ChildMenu
+              onOpenChange={setMenuOpen}
+              onSelect={(action) => {
+                if (action === SIDE_TREE_NODE_MENU_ACTION.RENAME) {
+                  onEdit({ type: SIDE_TREE_NODE_TYPE.LINK, groupId, childId: item.id })
+                  return
+                }
+                onAction(groupId, item.id, action)
+              }}
+            />
+          </div>
+        )}
+      </div>
     </div>
   )
 }

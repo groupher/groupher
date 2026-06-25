@@ -114,7 +114,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def create_doc_tree_group(_root, %{community: community, input: input} = args, _info) do
-    CMS.DocTree.create_group(community, Map.put(input, :base_revision, args[:base_revision]))
+    CMS.DocTree.create_group(
+      community,
+      input |> Map.put(:base_revision, args[:base_revision]) |> with_doc_tree_actor(args)
+    )
   end
 
   def create_doc_tree_page(
@@ -122,11 +125,18 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         %{community: community, input: input} = args,
         %{context: %{cur_user: user}}
       ) do
-    CMS.DocTree.create_page(community, Map.put(input, :base_revision, args[:base_revision]), user)
+    CMS.DocTree.create_page(
+      community,
+      input |> Map.put(:base_revision, args[:base_revision]) |> with_doc_tree_actor(args),
+      user
+    )
   end
 
   def create_doc_tree_link(_root, %{community: community, input: input} = args, _info) do
-    CMS.DocTree.create_link(community, Map.put(input, :base_revision, args[:base_revision]))
+    CMS.DocTree.create_link(
+      community,
+      input |> Map.put(:base_revision, args[:base_revision]) |> with_doc_tree_actor(args)
+    )
   end
 
   def update_doc_tree_node(
@@ -134,7 +144,11 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         %{community: community, id: id, patch: patch} = args,
         _info
       ) do
-    CMS.DocTree.update_node(community, id, Map.put(patch, :base_revision, args[:base_revision]))
+    CMS.DocTree.update_node(
+      community,
+      id,
+      patch |> Map.put(:base_revision, args[:base_revision]) |> with_doc_tree_actor(args)
+    )
   end
 
   def update_doc_draft(_root, %{community: community, id: id} = args, _info) do
@@ -199,10 +213,19 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.DocTree.publish_group(community, group_id, user, sync_cover: sync_cover?)
   end
 
+  def publish_doc_tree(_root, %{community: community, cur_user: user}, _info) do
+    CMS.DocTree.publish_tree(community, user)
+  end
+
   defp doc_cover_view(args), do: Map.get(args, :view) || :public
 
   defp publish_with_cover_sync?(args),
     do: (Map.get(args, :mode) || :with_cover_sync) == :with_cover_sync
+
+  defp with_doc_tree_actor(attrs, %{cur_user: %{id: user_id}}),
+    do: Map.put(attrs, :actor_id, user_id)
+
+  defp with_doc_tree_actor(attrs, _args), do: attrs
 
   def move_doc_to_draft(_root, %{community: community, id: id}, _info) do
     CMS.DocTree.move_doc_to_draft(community, id)
@@ -273,19 +296,32 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def delete_doc_tree_node(_root, %{community: community, id: id} = args, _info) do
-    CMS.DocTree.delete_node(community, id, %{base_revision: args[:base_revision]})
+    CMS.DocTree.delete_node(
+      community,
+      id,
+      %{base_revision: args[:base_revision]} |> with_doc_tree_actor(args)
+    )
   end
 
   def duplicate_doc_tree_node(_root, %{community: community, id: id} = args, _info) do
-    CMS.DocTree.duplicate_node(community, id, %{base_revision: args[:base_revision]})
+    CMS.DocTree.duplicate_node(
+      community,
+      id,
+      %{base_revision: args[:base_revision]} |> with_doc_tree_actor(args)
+    )
   end
 
   def move_doc_tree_node(_root, %{community: community, id: id} = args, _info) do
-    CMS.DocTree.move_node(community, id, %{
-      base_revision: args[:base_revision],
-      target_parent_id: args[:target_parent_id],
-      target_index: args.target_index
-    })
+    CMS.DocTree.move_node(
+      community,
+      id,
+      %{
+        base_revision: args[:base_revision],
+        target_parent_id: args[:target_parent_id],
+        target_index: args.target_index
+      }
+      |> with_doc_tree_actor(args)
+    )
   end
 
   def open_graph_info(_root, %{url: url}, _info), do: OgInfo.get(url)

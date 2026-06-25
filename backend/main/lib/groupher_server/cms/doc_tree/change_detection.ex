@@ -18,16 +18,14 @@ defmodule GroupherServer.CMS.DocTree.ChangeDetection do
         draft_doc_content_hash
         visibility
 
-  A public mapping is considered changed when either side differs from the last
-  published snapshot:
+  A public mapping is considered content-dirty only when the document draft
+  differs from the last published article snapshot:
 
-      draft node updated_at != mapping.draft_node_updated_at
-      OR copied public node fields differ from draft node fields
-      OR article draft content_hash != mapping.draft_doc_content_hash
+      article draft content_hash != mapping.draft_doc_content_hash
 
-  `Read` uses this module to show the dashboard "unpublished changes" signal.
-  `Publish` uses the same boundary to decide what bulk publish should publish.
-  Keep the comparison rules here so the signal and the action stay aligned.
+  Tree-node fields such as title, href, marker, parent, and index are now owned
+  by Tree staged events. They should light up the Tree footer, not every page or
+  link row.
   """
 
   alias GroupherServer.CMS.Model.{
@@ -56,13 +54,12 @@ defmodule GroupherServer.CMS.DocTree.ChangeDetection do
       do: true
 
   def unpublished_mapping?(
-        %DocTreeNodeDraft{} = node,
+        %DocTreeNodeDraft{},
         %DocTreeNodePublishMapping{visibility: :public} = mapping,
-        published_node,
+        _published_node,
         draft_doc
       ) do
-    node_changed?(node, mapping, published_node) or
-      draft_doc_content_changed?(draft_doc, mapping.draft_doc_content_hash)
+    draft_doc_content_changed?(draft_doc, mapping.draft_doc_content_hash)
   end
 
   @spec node_changed?(

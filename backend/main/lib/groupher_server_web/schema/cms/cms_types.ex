@@ -37,6 +37,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     value(:group)
     value(:page)
     value(:link)
+    value(:pin)
   end
 
   enum :article_revision_type do
@@ -84,6 +85,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:id, :id)
     field(:parent_id, :id)
     field(:doc_id, :id)
+    field(:target_node_id, :id)
     field(:type, :doc_tree_node_type)
     field(:title, :string)
     field(:slug, :string)
@@ -93,6 +95,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:badge, :string)
     field(:hidden, :boolean)
     field(:expanded, :boolean)
+    field(:ui_config, :json)
+    field(:target, :doc_tree_node)
     field(:publish_state, :doc_tree_node_publish_state)
     field(:children, list_of(:doc_tree_node))
   end
@@ -110,8 +114,30 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:pinned_to_cover, :boolean)
   end
 
+  object :doc_tree_state do
+    field(:has_unpublished_changes, :boolean)
+    field(:staged_event_count, :integer)
+    field(:base_revision_id, :id)
+    field(:latest_revision_id, :id)
+    field(:latest_revision_number, :integer)
+    field(:revision, :integer)
+  end
+
+  object :doc_tree_event do
+    field(:id, :id)
+    field(:seq, :integer)
+    field(:event_type, :string)
+    field(:payload, :json)
+    field(:inverse_payload, :json)
+    field(:status, :string)
+    field(:inserted_at, :datetime)
+  end
+
   object :doc_tree do
     field(:revision, :integer)
+    field(:tree_state, :doc_tree_state)
+    field(:staged_events, list_of(:doc_tree_event))
+    field(:pins, list_of(:doc_tree_node))
     field(:groups, list_of(:doc_tree_node))
   end
 
@@ -174,6 +200,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :doc_tree_mutation_payload do
     field(:revision, :integer)
+    field(:tree_state, :doc_tree_state)
     field(:node, :doc_tree_node)
     field(:affected_nodes, list_of(:doc_tree_node))
     field(:conflict, :boolean)
@@ -182,7 +209,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   input_object :doc_tree_node_input do
     field(:parent_id, :id)
     field(:doc_id, :id)
-    field(:title, non_null(:string))
+    field(:target_node_id, :id)
+    field(:title, :string)
     field(:slug, :string)
     field(:index, :integer)
     field(:href, :string)
@@ -190,10 +218,12 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:badge, :string)
     field(:hidden, :boolean)
     field(:expanded, :boolean)
+    field(:ui_config, :json)
   end
 
   input_object :doc_tree_node_patch_input do
     field(:doc_id, :id)
+    field(:target_node_id, :id)
     field(:title, :string)
     field(:slug, :string)
     field(:href, :string)
@@ -201,6 +231,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:badge, :string)
     field(:hidden, :boolean)
     field(:expanded, :boolean)
+    field(:ui_config, :json)
   end
 
   object :dsb_theme_preset_option do
