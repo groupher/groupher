@@ -110,10 +110,18 @@ defmodule GroupherServer.CMS.DocCover.Sync do
   end
 
   defp insert_with_savepoint(schema, attrs) do
-    schema
-    |> struct()
-    |> schema.changeset(attrs)
-    |> Repo.insert(mode: :savepoint)
+    changeset =
+      schema
+      |> struct()
+      |> schema.changeset(attrs)
+
+    # Savepoints let a surrounding transaction recover from unique races, but
+    # Ecto raises when `mode: :savepoint` is used outside a transaction.
+    if Repo.in_transaction?() do
+      Repo.insert(changeset, mode: :savepoint)
+    else
+      Repo.insert(changeset)
+    end
   end
 
   defp unique_constraint_error?(%Ecto.Changeset{errors: errors}, field) do
