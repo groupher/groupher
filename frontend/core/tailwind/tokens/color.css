@@ -89,9 +89,26 @@
   --color-primary-custom: #333333;
   --color-accent-custom: #333333;
   --color-rainbow-custom: var(--color-primary-custom);
-  --color-rainbow-customSoft: color-mix(in srgb, var(--color-primary-custom) 18%, transparent);
+  /*
+   * Derived soft tokens for custom theme colors.
+   *
+   * Backend only persists the resolved primary/accent colors. Soft variants are
+   * generated in CSS so all primary('bgSoft') / accent('bgSoft') consumers can
+   * reuse the same visual contract without adding persisted fields. Mix against
+   * the current card surface instead of transparent so the tint stays stable on
+   * page/card/hover backgrounds.
+   */
+  --color-rainbow-customSoft: color-mix(
+    in srgb,
+    var(--color-primary-custom) 14%,
+    var(--color-card)
+  );
   --color-rainbow-subCustom: var(--color-accent-custom);
-  --color-rainbow-subCustomSoft: color-mix(in srgb, var(--color-accent-custom) 18%, transparent);
+  --color-rainbow-subCustomSoft: color-mix(
+    in srgb,
+    var(--color-accent-custom) 14%,
+    var(--color-card)
+  );
 
   --color-rainbow-black: #333333;
   --color-rainbow-blackBtn: oklch(27.8% 0.033 256.848); /* gray.800 */
@@ -254,9 +271,21 @@
     --color-rainbow-pinkSoft: #73526159;
 
     --color-rainbow-custom: var(--color-primary-custom);
-    --color-rainbow-customSoft: color-mix(in srgb, var(--color-primary-custom) 20%, transparent);
+    /*
+     * Dark surfaces need a stronger mix to read as a tint instead of a shadow.
+     * This remains derived from the resolved custom color and is not persisted.
+     */
+    --color-rainbow-customSoft: color-mix(
+      in srgb,
+      var(--color-primary-custom) 22%,
+      var(--color-card)
+    );
     --color-rainbow-subCustom: var(--color-accent-custom);
-    --color-rainbow-subCustomSoft: color-mix(in srgb, var(--color-accent-custom) 20%, transparent);
+    --color-rainbow-subCustomSoft: color-mix(
+      in srgb,
+      var(--color-accent-custom) 22%,
+      var(--color-card)
+    );
 
     --color-rainbow-black: #4e4e4e;
     --color-rainbow-blackBtn: #e6e6e6;
