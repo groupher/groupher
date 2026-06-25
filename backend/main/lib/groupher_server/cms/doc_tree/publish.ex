@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
 
-  alias CMS.DocTree.ChangeDetection
+  alias CMS.DocTree.{ChangeDetection, PublishedFields}
 
   alias CMS.Model.{
     ArticleDraft,
@@ -443,20 +443,13 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   end
 
   defp published_attrs(%DocTreeNodeDraft{} = draft_node, community_id, parent_id, doc_id \\ nil) do
-    %{
+    draft_node
+    |> Map.take(PublishedFields.node_fields())
+    |> Map.merge(%{
       community_id: community_id || draft_node.community_id,
       parent_id: parent_id,
-      doc_id: doc_id,
-      type: draft_node.type,
-      title: draft_node.title,
-      slug: draft_node.slug,
-      index: draft_node.index,
-      href: draft_node.href,
-      marker: draft_node.marker,
-      badge: draft_node.badge,
-      hidden: draft_node.hidden,
-      expanded: draft_node.expanded
-    }
+      doc_id: doc_id
+    })
     |> Enum.reject(fn {_key, value} -> is_nil(value) end)
     |> Map.new()
   end

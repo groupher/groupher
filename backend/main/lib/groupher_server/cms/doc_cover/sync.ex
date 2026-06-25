@@ -49,11 +49,18 @@ defmodule GroupherServer.CMS.DocCover.Sync do
         {:ok, cover_group}
 
       {:error, _} ->
-        ORM.create(DocCoverGroup, %{
+        attrs = %{
           community_id: community.id,
           group_id: group.id,
           index: next_group_index(community)
-        })
+        }
+
+        create_or_find(
+          DocCoverGroup,
+          attrs,
+          [community_id: community.id, group_id: group.id],
+          :group_id
+        )
     end
   end
 
@@ -72,13 +79,48 @@ defmodule GroupherServer.CMS.DocCover.Sync do
         {:ok, item}
 
       {:error, _} ->
-        ORM.create(DocCoverItem, %{
+        attrs = %{
           community_id: community.id,
           cover_group_id: cover_group.id,
           node_id: page.id,
           index: next_item_index(cover_group)
-        })
+        }
+
+        create_or_find(
+          DocCoverItem,
+          attrs,
+          [cover_group_id: cover_group.id, node_id: page.id],
+          :node_id
+        )
     end
+  end
+
+  defp create_or_find(schema, attrs, lookup, unique_field) do
+    case insert_with_savepoint(schema, attrs) do
+      {:ok, row} ->
+        {:ok, row}
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        if unique_constraint_error?(changeset, unique_field) do
+          ORM.find_by(schema, lookup)
+        else
+          {:error, changeset}
+        end
+    end
+  end
+
+  defp insert_with_savepoint(schema, attrs) do
+    schema
+    |> struct()
+    |> schema.changeset(attrs)
+    |> Repo.insert(mode: :savepoint)
+  end
+
+  defp unique_constraint_error?(%Ecto.Changeset{errors: errors}, field) do
+    Enum.any?(errors, fn
+      {^field, {_message, opts}} -> opts[:constraint] == :unique
+      _ -> false
+    end)
   end
 
   defp next_group_index(%Community{} = community) do

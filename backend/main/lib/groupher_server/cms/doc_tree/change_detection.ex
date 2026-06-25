@@ -37,7 +37,7 @@ defmodule GroupherServer.CMS.DocTree.ChangeDetection do
     DocTreeNodePublishMapping
   }
 
-  @published_node_fields ~w(type title slug index href marker badge hidden expanded)a
+  alias GroupherServer.CMS.DocTree.PublishedFields
 
   @spec unpublished_mapping?(
           DocTreeNodeDraft.t(),
@@ -89,6 +89,8 @@ defmodule GroupherServer.CMS.DocTree.ChangeDetection do
   defp published_node_fields_changed?(_node, nil), do: false
 
   defp published_node_fields_changed?(%DocTreeNodeDraft{} = node, %DocTreeNode{} = published_node) do
-    Map.take(node, @published_node_fields) != Map.take(published_node, @published_node_fields)
+    fields = PublishedFields.node_fields()
+
+    Map.take(node, fields) != Map.take(published_node, fields)
   end
 end

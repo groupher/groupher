@@ -65,12 +65,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def doc_cover(_root, %{community: %Community{} = community} = args, _info) do
-    CMS.DocCover.read(community, Map.get(args, :view, :public))
+    CMS.DocCover.read(community, doc_cover_view(args))
   end
 
   def doc_cover(_root, %{community: community} = args, _info) do
     with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
-      CMS.DocCover.read(community, Map.get(args, :view, :public))
+      CMS.DocCover.read(community, doc_cover_view(args))
     end
   end
 
@@ -174,7 +174,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         %{community: community, id: id, cur_user: user} = args,
         _info
       ) do
-    sync_cover? = Map.get(args, :mode, :with_cover_sync) == :with_cover_sync
+    sync_cover? = publish_with_cover_sync?(args)
 
     CMS.DocTree.publish_doc(community, id, user, sync_cover: sync_cover?)
   end
@@ -184,7 +184,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         %{community: community, cur_user: user} = args,
         _info
       ) do
-    sync_cover? = Map.get(args, :mode, :with_cover_sync) == :with_cover_sync
+    sync_cover? = publish_with_cover_sync?(args)
 
     CMS.DocTree.publish_all_unpublished_docs(community, user, sync_cover: sync_cover?)
   end
@@ -194,10 +194,15 @@ defmodule GroupherServerWeb.Resolvers.CMS do
         %{community: community, group_id: group_id, cur_user: user} = args,
         _info
       ) do
-    sync_cover? = Map.get(args, :mode, :with_cover_sync) == :with_cover_sync
+    sync_cover? = publish_with_cover_sync?(args)
 
     CMS.DocTree.publish_group(community, group_id, user, sync_cover: sync_cover?)
   end
+
+  defp doc_cover_view(args), do: Map.get(args, :view) || :public
+
+  defp publish_with_cover_sync?(args),
+    do: (Map.get(args, :mode) || :with_cover_sync) == :with_cover_sync
 
   def move_doc_to_draft(_root, %{community: community, id: id}, _info) do
     CMS.DocTree.move_doc_to_draft(community, id)

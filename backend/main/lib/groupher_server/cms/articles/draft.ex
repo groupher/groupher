@@ -218,7 +218,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
     |> Map.take([:title, :slug, :subtitle])
     |> normalize_subtitle_attr()
     |> maybe_put_payload(payload)
-    |> Map.put(:digest, resolve_digest(subtitle, fallback_digest))
+    |> maybe_put_digest(attrs, payload, subtitle, fallback_digest)
     |> then(&{:ok, &1})
   end
 
@@ -250,6 +250,14 @@ defmodule GroupherServer.CMS.Articles.Draft do
   end
 
   defp normalize_subtitle(_), do: nil
+
+  defp maybe_put_digest(attrs, input_attrs, payload, subtitle, fallback_digest) do
+    if payload || Map.has_key?(input_attrs, :subtitle) do
+      Map.put(attrs, :digest, resolve_digest(subtitle, fallback_digest))
+    else
+      attrs
+    end
+  end
 
   defp resolve_digest(subtitle, fallback_digest) do
     case normalize_subtitle(subtitle) do
