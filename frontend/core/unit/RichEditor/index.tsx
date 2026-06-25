@@ -23,6 +23,7 @@ type TProps = {
   locale?: TGroupherRichEditorProps['locale']
   mentionOptions?: TGroupherRichEditorProps['mentionOptions']
   onMentionSearch?: TGroupherRichEditorProps['onMentionSearch']
+  fluid?: boolean
 }
 
 const RichEditor: FC<TProps> = ({
@@ -36,8 +37,9 @@ const RichEditor: FC<TProps> = ({
   locale = 'zh-CN',
   mentionOptions,
   onMentionSearch,
+  fluid = false,
 }) => {
-  const s = useSalon()
+  const s = useSalon({ fluid })
 
   return (
     <div className={s.wrapper}>

@@ -370,6 +370,7 @@ export const findPageByDocId = (
 
 /**
  * Resolve the active side-tree id from the current URL doc id.
+ * No doc id means the editor route should stay in its empty workspace state.
  *
  * @example
  * const activeId = resolveActiveIdFromUrl(groups, currentDocId)
@@ -380,7 +381,7 @@ export const resolveActiveIdFromUrl = (
 ): string | null => {
   if (docId) return findPageByDocId(groups, docId)?.id ?? null
 
-  return findFirstPage(groups)?.id ?? null
+  return null
 }
 
 /**
