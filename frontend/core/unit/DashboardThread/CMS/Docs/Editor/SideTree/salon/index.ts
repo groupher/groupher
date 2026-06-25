@@ -2,7 +2,7 @@ export { cn } from '~/css'
 
 export default function useSalon() {
   return {
-    wrapper: 'column min-h-96 pr-3 overflow-visible',
-    groupList: 'column gap-y-4',
+    wrapper: 'sticky column min-h-0 pr-2 overflow-hidden',
+    groupList: 'column min-h-0 flex-1 gap-y-4 overflow-y-auto overscroll-contain pr-1 pb-4',
   }
 }

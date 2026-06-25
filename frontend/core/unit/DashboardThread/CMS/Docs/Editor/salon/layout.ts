@@ -1,3 +1,5 @@
+import { DASHBOARD_SIDE_MENU_STICKY_OFFSET } from '../../../../constant'
+
 // Shared visual rhythm for the docs editor top action row.
 // The -mt-0.5 compensates for the dashboard sub-route item padding so the
 // submenu item, tree toolbar, and article action line align visually.
@@ -11,3 +13,8 @@ export const DOC_EDITOR_CONTENT_BOTTOM_RESERVE = 'pb-44'
 
 // Position the snackbar in the document panel, above the lower editor controls.
 export const DOC_EDITOR_SNACKBAR_STICKY_TOP = 'calc(100dvh - 7rem)'
+
+// Match DashboardThread/SideMenu's Sticky offset so the docs tree aligns with
+// the route submenu header while keeping long outlines locally scrollable.
+export const DOC_EDITOR_SIDE_TREE_STICKY_TOP = `${DASHBOARD_SIDE_MENU_STICKY_OFFSET}px`
+export const DOC_EDITOR_SIDE_TREE_STICKY_HEIGHT = `calc(100dvh - ${DASHBOARD_SIDE_MENU_STICKY_OFFSET}px)`

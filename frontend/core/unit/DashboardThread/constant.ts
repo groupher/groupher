@@ -8,6 +8,7 @@ import type { TDsbMenu } from './spec'
 export { SEO_KEYS } from '~/const/seo'
 
 export const DSB_DEMO_KEY = 'DSB_DEMO'
+export const DASHBOARD_SIDE_MENU_STICKY_OFFSET = 36
 
 export const DSB_MENU_ICON = {
   BASIC: 'basic',

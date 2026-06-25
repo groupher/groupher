@@ -4,6 +4,10 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import type { FC } from 'react'
 
+import {
+  DOC_EDITOR_SIDE_TREE_STICKY_HEIGHT,
+  DOC_EDITOR_SIDE_TREE_STICKY_TOP,
+} from '../salon/layout'
 import CoverWarningModal from './CoverWarningModal'
 import SideTreeDndContext from './Dnd/SideTreeDndContext'
 import Group from './Group'
@@ -48,7 +52,13 @@ const SideTree: FC<TProps> = ({ controller }) => {
   } = controller
 
   return (
-    <aside className={s.wrapper}>
+    <aside
+      className={s.wrapper}
+      style={{
+        top: DOC_EDITOR_SIDE_TREE_STICKY_TOP,
+        height: DOC_EDITOR_SIDE_TREE_STICKY_HEIGHT,
+      }}
+    >
       <CoverWarningModal message={coverWarning} onClose={clearCoverWarning} />
       <Toolbar />
 
