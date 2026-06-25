@@ -12,6 +12,7 @@ import Subtitle from './Subtitle'
 import Title from './Title'
 import TitleActions from './TitleActions'
 import useLogic from './useLogic'
+import WorkspaceActions from './WorkspaceActions'
 
 type TProps = {
   sideTree: TSideTreeController
@@ -42,7 +43,7 @@ const Article: FC<TProps> = ({ sideTree, initialDraft }) => {
   if (!activePage) {
     return (
       <article className={s.wrapper}>
-        <div className={s.empty}>选择一个文档页面开始编辑</div>
+        <WorkspaceActions onAddGroup={sideTree.addGroup} />
       </article>
     )
   }

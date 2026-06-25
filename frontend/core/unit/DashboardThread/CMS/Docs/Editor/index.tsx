@@ -54,9 +54,11 @@ const Editor: FC<TProps> = ({ initialData }) => {
             </Panel>
           </PanelGroup>
 
-          <div className={s.snackbarRail} style={{ top: 'calc(100dvh - 7rem)' }}>
-            <ActionSnackbar />
-          </div>
+          {sideTree.activeId && (
+            <div className={s.snackbarRail} style={{ top: 'calc(100dvh - 7rem)' }}>
+              <ActionSnackbar />
+            </div>
+          )}
         </div>
       </div>
     </DocsEditorStoreProvider>

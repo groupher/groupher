@@ -108,13 +108,8 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       return
     }
 
-    const firstPageId = findFirstPage(sourceGroups)?.id ?? null
-
     setActiveId((current) => {
-      const currentChild = current ? findChild(sourceGroups, current) : null
-      if (currentChild?.type === SIDE_TREE_NODE_TYPE.PAGE && currentChild.docId) return current
-
-      return current === firstPageId ? current : firstPageId
+      return current === null ? current : null
     })
   }, [])
 
