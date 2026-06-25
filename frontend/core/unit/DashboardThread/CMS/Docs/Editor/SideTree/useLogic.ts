@@ -168,7 +168,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
         if (payload?.conflict) {
           reload()
-          toast('目录树已更新，请重试', 'error')
+          toast(t('dsb.cms.docs.side_tree.error.tree_conflict'), 'error')
           return payload
         }
 
@@ -182,7 +182,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
         return null
       }
     },
-    [community, mutate, reload],
+    [community, mutate, reload, t],
   )
 
   const persistCoverAction = useCallback(
@@ -482,7 +482,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   function renameChild(groupId: string, childId: string, title: string): void {
     if (isDraftId(groupId)) {
       // Keep the inline editor open so a child title cannot appear saved before its parent group exists.
-      toast('请先确认分组名称', 'error')
+      toast(t('dsb.cms.docs.side_tree.error.confirm_group_first'), 'error')
       return
     }
 
@@ -520,7 +520,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
   function renameLink(groupId: string, childId: string, input: TSideTreeLinkInput): void {
     if (isDraftId(groupId)) {
-      toast('请先确认分组名称', 'error')
+      toast(t('dsb.cms.docs.side_tree.error.confirm_group_first'), 'error')
       return
     }
 

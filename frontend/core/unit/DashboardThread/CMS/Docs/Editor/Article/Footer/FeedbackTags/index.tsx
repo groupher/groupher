@@ -1,9 +1,11 @@
 import { AnimatePresence, m } from 'motion/react'
 import { type ChangeEvent, type FC, useEffect, useMemo, useState } from 'react'
 
+import useTrans from '~/hooks/useTrans'
+import type { TTransKey } from '~/spec'
 import Input from '~/widgets/Input'
 
-import { FEEDBACK_NOTE_PLACEHOLDER, FEEDBACK_TAGS_TITLE } from '../constant'
+import { FEEDBACK_NOTE_PLACEHOLDER_I18N_KEY, FEEDBACK_TAGS_TITLE_I18N_KEY } from '../constant'
 import { getFeedbackTagsByScore, toggleFeedbackTag } from '../helper'
 import useSalon from './salon'
 import TagLabel from './TagLabel'
@@ -14,8 +16,9 @@ type TProps = {
 
 const FeedbackTags: FC<TProps> = ({ score }) => {
   const s = useSalon()
+  const { t } = useTrans()
   const tags = useMemo(() => getFeedbackTagsByScore(score), [score])
-  const [selectedTags, setSelectedTags] = useState<string[]>([])
+  const [selectedTags, setSelectedTags] = useState<TTransKey[]>([])
   const [note, setNote] = useState('')
   const hasSelectedTag = selectedTags.length > 0
 
@@ -24,7 +27,7 @@ const FeedbackTags: FC<TProps> = ({ score }) => {
     setNote('')
   }, [tags])
 
-  const handleTagClick = (tag: string) => {
+  const handleTagClick = (tag: TTransKey) => {
     setSelectedTags((selected) => toggleFeedbackTag(selected, tag))
   }
 
@@ -34,13 +37,13 @@ const FeedbackTags: FC<TProps> = ({ score }) => {
 
   return (
     <div className={s.wrapper}>
-      <div className={s.title}>{FEEDBACK_TAGS_TITLE}</div>
+      <div className={s.title}>{t(FEEDBACK_TAGS_TITLE_I18N_KEY)}</div>
 
       <div className={s.tags}>
         {tags.map((tag) => (
           <TagLabel
             key={tag}
-            label={tag}
+            label={t(tag)}
             active={selectedTags.includes(tag)}
             onClick={() => handleTagClick(tag)}
           />
@@ -59,7 +62,7 @@ const FeedbackTags: FC<TProps> = ({ score }) => {
           >
             <Input
               value={note}
-              placeholder={FEEDBACK_NOTE_PLACEHOLDER}
+              placeholder={t(FEEDBACK_NOTE_PLACEHOLDER_I18N_KEY)}
               onChange={handleNoteChange}
             />
           </m.div>

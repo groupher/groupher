@@ -20,7 +20,13 @@ const DomainAdder: FC<TProps> = ({ onNext }) => {
       <div className={s.desc}>{t('dsb.domain.custom.adder.desc')}</div>
 
       <div className={s.inputWrapper}>
-        <Input value='' placeholder='your domain' disableEnter focusOnMount width='w-full' />
+        <Input
+          value=''
+          placeholder={t('dsb.domain.custom.adder.placeholder')}
+          disableEnter
+          focusOnMount
+          width='w-full'
+        />
       </div>
 
       <div className={s.desc}>{t('dsb.domain.custom.adder.tip')}</div>

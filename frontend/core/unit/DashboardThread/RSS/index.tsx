@@ -1,3 +1,4 @@
+import useTrans from '~/hooks/useTrans'
 import RangeSlider from '~/widgets/RangeSlider'
 import Radio from '~/widgets/Switcher/Radio'
 
@@ -8,24 +9,25 @@ import useSalon from './salon'
 
 export default function RSS() {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { rssFeedType, rssFeedCount, isTouched, edit, rssOnSave, rssOnCancel } = useRSS()
 
   return (
     <div className={s.wrapper}>
-      <Portal title='RSS 设置' desc='RSS 设置说明。' />
+      <Portal title={t('dsb.rss.title')} desc={t('dsb.rss.desc')} />
       <div className={s.innerWrapper}>
         <div className={s.setting}>
-          <h3 className={s.title}>Feed 类型</h3>
+          <h3 className={s.title}>{t('dsb.rss.feed_type')}</h3>
           <Radio
             size='small'
             items={[
               {
-                value: '帖子全文',
+                value: t('dsb.rss.feed_full'),
                 key: 'full',
               },
               {
-                value: '帖子摘要',
+                value: t('dsb.rss.feed_digest'),
                 key: 'digest',
               },
             ]}
@@ -35,7 +37,7 @@ export default function RSS() {
         </div>
 
         <div className={s.setting}>
-          <h3 className={s.title}>Feed 数目</h3>
+          <h3 className={s.title}>{t('dsb.rss.feed_count')}</h3>
           <RangeSlider
             width='w-48'
             bottom={12}
@@ -43,7 +45,7 @@ export default function RSS() {
             min={5}
             max={50}
             onChange={(v) => edit(v, 'rssFeedCount')}
-            unit='条'
+            unit={t('dsb.rss.unit')}
           />
         </div>
 

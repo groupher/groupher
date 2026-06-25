@@ -1,7 +1,11 @@
 'use client'
 
+import useTrans from '~/hooks/useTrans'
+
 const CommunityPostPage = () => {
-  return <h2>served from dashboard app</h2>
+  const { t } = useTrans()
+
+  return <h2>{t('dsb.page.community_served')}</h2>
 }
 
 export default CommunityPostPage

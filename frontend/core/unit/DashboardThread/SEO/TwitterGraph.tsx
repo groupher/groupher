@@ -1,3 +1,4 @@
+import useTrans from '~/hooks/useTrans'
 import type { TSelectOption } from '~/spec'
 import Input from '~/widgets/Input'
 import Select from '~/widgets/Select'
@@ -9,6 +10,7 @@ import TwitterPreview from './TwitterPreview'
 
 export default function TwitterGraph() {
   const s = useSalon()
+  const { t } = useTrans()
   const { twTitle, twDescription, twUrl, twSite, twCard, edit } = useSEO()
 
   return (
@@ -49,7 +51,7 @@ export default function TwitterGraph() {
         <Select
           value={{ label: twCard, value: twCard }}
           options={TW_CARD_OPTIONS}
-          placeholder='请选择标签所在分组'
+          placeholder={t('dsb.tags.editor.group.placeholder')}
           onChange={(option: TSelectOption) => edit(option.value, 'twCard')}
         />
       </div>

@@ -30,7 +30,7 @@ const Templates: FC<TProps> = ({ links }) => {
   return (
     <div className={s.wrapper}>
       <fieldset className='w-full'>
-        <legend className='sr-only'>Header layout</legend>
+        <legend className='sr-only'>{t('dsb.aria.header_layout')}</legend>
 
         <div className={s.options}>
           <div

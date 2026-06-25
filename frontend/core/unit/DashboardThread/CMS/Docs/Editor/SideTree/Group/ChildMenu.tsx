@@ -126,7 +126,11 @@ const ChildMenu: FC<TProps> = ({
         </div>
       }
     >
-      <button type='button' className={s.trigger} aria-label='More actions'>
+      <button
+        type='button'
+        className={s.trigger}
+        aria-label={t('dsb.cms.docs.side_tree.more_actions')}
+      >
         <MoreSVG className={s.moreIcon} />
       </button>
     </Tooltip>

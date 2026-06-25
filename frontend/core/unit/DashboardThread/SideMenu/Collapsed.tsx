@@ -45,11 +45,11 @@ export default function Collapsed({
 
   return (
     <div className={cnMerge(s.wrapper, className)}>
-      <div className={s.menu} aria-label='Dashboard menu'>
+      <div className={s.menu} aria-label={t('dsb.aria.dashboard_menu')}>
         <button
           type='button'
           className={s.toggleItem}
-          aria-label='Expand dashboard submenu'
+          aria-label={t('dsb.aria.expand_dashboard_submenu')}
           onClick={onExpand}
         >
           <DsbMenuIcon type='sidebar' className={s.icon} />

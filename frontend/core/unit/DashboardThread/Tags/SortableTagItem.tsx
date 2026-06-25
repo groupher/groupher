@@ -3,6 +3,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { memo, useCallback, useRef } from 'react'
 
 import { cn } from '~/css'
+import useTrans from '~/hooks/useTrans'
 import GrabDotsSVG from '~/icons/GrabDots'
 import type { TTag } from '~/spec'
 
@@ -45,6 +46,7 @@ const SortableTagItemInner = memo(function SortableTagItemInner({
   total,
   onSetting,
 }: TSortableProps) {
+  const { t } = useTrans()
   const cardRef = useRef<HTMLDivElement | null>(null)
   const setCardRef = useCallback((node: HTMLDivElement | null): void => {
     cardRef.current = node
@@ -88,7 +90,7 @@ const SortableTagItemInner = memo(function SortableTagItemInner({
         ref={setActivatorNodeRef}
         type='button'
         className={handleClassName}
-        aria-label='Drag tag'
+        aria-label={t('dsb.aria.drag_tag')}
         {...attributes}
         {...listeners}
       >

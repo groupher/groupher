@@ -1,94 +1,108 @@
+import type { ComponentType, SVGProps } from 'react'
+
 import CommentSVG from '~/icons/Comment'
 import EditSVG from '~/icons/EditPen'
 import MoreSVG from '~/icons/menu/MoreDot'
 import QRCodeSVG from '~/icons/QRCode'
+import type { TTransKey } from '~/spec'
 
-export const FOOTER_TITLE = 'Help us improve the doc'
-export const FEEDBACK_TAGS_TITLE = 'What can be improved?'
-export const FEEDBACK_NOTE_PLACEHOLDER = '(optional) can you tell us more?'
+type TFooterAction = {
+  key: string
+  label: TTransKey
+  Icon: ComponentType<SVGProps<SVGSVGElement>>
+  count: string | null
+}
 
-export const FEEDBACK_TAG_GROUPS = [
+export const FOOTER_TITLE_I18N_KEY = 'dsb.cms.docs.footer.help_us_improve'
+export const FEEDBACK_TAGS_TITLE_I18N_KEY = 'dsb.cms.docs.feedback_tags.title'
+export const FEEDBACK_NOTE_PLACEHOLDER_I18N_KEY = 'dsb.cms.docs.feedback_tags.note_placeholder'
+
+export const FEEDBACK_TAG_GROUPS: readonly {
+  min: number
+  max: number
+  labels: readonly TTransKey[]
+}[] = [
   {
     min: 0,
     max: 30,
     labels: [
-      '内容不同步',
-      '描述不清晰',
-      '步骤缺失',
-      '示例不可运行',
-      '信息过时',
-      '和实际界面不一致',
-      '链接失效',
-      '缺少错误处理',
+      'dsb.cms.docs.feedback_tags.outdated',
+      'dsb.cms.docs.feedback_tags.unclear',
+      'dsb.cms.docs.feedback_tags.missing_steps',
+      'dsb.cms.docs.feedback_tags.example_broken',
+      'dsb.cms.docs.feedback_tags.info_stale',
+      'dsb.cms.docs.feedback_tags.ui_mismatch',
+      'dsb.cms.docs.feedback_tags.dead_link',
+      'dsb.cms.docs.feedback_tags.missing_error_handling',
     ],
   },
   {
     min: 31,
     max: 60,
     labels: [
-      '示例不够',
-      '步骤不完整',
-      '术语不懂',
-      '结构混乱',
-      '配置不完整',
-      '缺少截图',
-      '缺少故障排查',
-      '需要最佳实践',
+      'dsb.cms.docs.feedback_tags.not_enough_examples',
+      'dsb.cms.docs.feedback_tags.incomplete_steps',
+      'dsb.cms.docs.feedback_tags.terms_unclear',
+      'dsb.cms.docs.feedback_tags.messy_structure',
+      'dsb.cms.docs.feedback_tags.incomplete_config',
+      'dsb.cms.docs.feedback_tags.missing_screenshots',
+      'dsb.cms.docs.feedback_tags.missing_troubleshooting',
+      'dsb.cms.docs.feedback_tags.need_best_practice',
     ],
   },
   {
     min: 61,
     max: 90,
     labels: [
-      '步骤清楚',
-      '示例有用',
-      '容易理解',
-      '结构清晰',
-      '信息完整',
-      '截图有帮助',
-      '解决了问题',
-      '最佳实践有用',
+      'dsb.cms.docs.feedback_tags.clear_steps',
+      'dsb.cms.docs.feedback_tags.useful_examples',
+      'dsb.cms.docs.feedback_tags.easy_to_understand',
+      'dsb.cms.docs.feedback_tags.clear_structure',
+      'dsb.cms.docs.feedback_tags.complete_info',
+      'dsb.cms.docs.feedback_tags.helpful_screenshots',
+      'dsb.cms.docs.feedback_tags.solved_problem',
+      'dsb.cms.docs.feedback_tags.useful_best_practice',
     ],
   },
   {
     min: 91,
     max: 100,
     labels: [
-      '非常清楚',
-      '很有帮助',
-      '示例很棒',
-      '解释到位',
-      '上手很快',
-      '内容及时',
-      '体验很好',
-      '值得推荐',
+      'dsb.cms.docs.feedback_tags.very_clear',
+      'dsb.cms.docs.feedback_tags.very_helpful',
+      'dsb.cms.docs.feedback_tags.great_examples',
+      'dsb.cms.docs.feedback_tags.well_explained',
+      'dsb.cms.docs.feedback_tags.fast_onboarding',
+      'dsb.cms.docs.feedback_tags.timely_content',
+      'dsb.cms.docs.feedback_tags.good_experience',
+      'dsb.cms.docs.feedback_tags.recommendable',
     ],
   },
-] as const
+]
 
-export const FOOTER_ACTIONS = [
+export const FOOTER_ACTIONS: readonly TFooterAction[] = [
   {
     key: 'comment',
-    label: 'Discuss this doc',
+    label: 'dsb.cms.docs.editor.footer.discuss',
     Icon: CommentSVG,
     count: '269',
   },
   {
     key: 'suggest-edit',
-    label: 'Suggest edit',
+    label: 'dsb.cms.docs.editor.footer.suggest_edit',
     Icon: EditSVG,
     count: null,
   },
   {
     key: 'share',
-    label: 'Share doc',
+    label: 'dsb.cms.docs.editor.footer.share',
     Icon: QRCodeSVG,
     count: null,
   },
   {
     key: 'more',
-    label: 'More actions',
+    label: 'dsb.cms.docs.editor.footer.more_actions',
     Icon: MoreSVG,
     count: null,
   },
-] as const
+]

@@ -1,9 +1,15 @@
+'use client'
+
+import useTrans from '~/hooks/useTrans'
+
 // https://nextjs.org/docs/app/api-reference/file-conventions/route-segment-config
 export default function Page() {
+  const { t } = useTrans()
+
   return (
     <>
-      <h2>some thing wrong with proxy.</h2>
-      <p>landing should serve by landing repo.</p>
+      <h2>{t('dsb.page.proxy_error')}</h2>
+      <p>{t('dsb.page.landing_proxy_hint')}</p>
     </>
   )
 }

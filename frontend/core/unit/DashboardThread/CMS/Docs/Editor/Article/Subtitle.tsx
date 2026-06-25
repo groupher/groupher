@@ -1,5 +1,7 @@
 import type { ChangeEvent, FC } from 'react'
 
+import useTrans from '~/hooks/useTrans'
+
 import useSalon from './salon/subtitle'
 
 type TProps = {
@@ -10,6 +12,7 @@ type TProps = {
 
 const Subtitle: FC<TProps> = ({ value, disabled = false, onChange }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     onChange(event.target.value)
@@ -20,7 +23,7 @@ const Subtitle: FC<TProps> = ({ value, disabled = false, onChange }) => {
       className={s.wrapper}
       value={value}
       disabled={disabled}
-      placeholder='Page description (optional)'
+      placeholder={t('dsb.cms.docs.editor.subtitle_placeholder')}
       onChange={handleChange}
     />
   )

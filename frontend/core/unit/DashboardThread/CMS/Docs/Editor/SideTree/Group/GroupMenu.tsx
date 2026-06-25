@@ -142,7 +142,11 @@ const GroupMenu: FC<TProps> = ({
         </div>
       }
     >
-      <button type='button' className={s.trigger} aria-label='Group actions'>
+      <button
+        type='button'
+        className={s.trigger}
+        aria-label={t('dsb.cms.docs.side_tree.group_actions')}
+      >
         <MoreSVG className={s.moreIcon} />
       </button>
     </Tooltip>

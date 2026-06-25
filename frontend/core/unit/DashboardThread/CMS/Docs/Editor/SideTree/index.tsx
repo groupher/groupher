@@ -2,7 +2,9 @@
 
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useAutoAnimate } from '@formkit/auto-animate/react'
-import { type FC, useMemo, useState } from 'react'
+import { type FC, useDeferredValue, useMemo, useState } from 'react'
+
+import useTrans from '~/hooks/useTrans'
 
 import {
   DOC_EDITOR_SIDE_TREE_STICKY_HEIGHT,
@@ -27,7 +29,7 @@ type TProps = {
 
 const normalizeSearchQuery = (query: string): string => query.trim().toLowerCase()
 
-const filterGroupsByTitle = (
+const filterGroupsByDocTitle = (
   groups: readonly TSideTreeGroup[],
   query: string,
 ): TSideTreeGroup[] => {
@@ -50,6 +52,7 @@ const filterGroupsByTitle = (
 
 const SideTree: FC<TProps> = ({ controller }) => {
   const s = useSalon()
+  const { t } = useTrans()
   const [groupListRef] = useAutoAnimate(GROUP_LAYOUT_TRANSITION)
   const [searching, setSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -76,11 +79,12 @@ const SideTree: FC<TProps> = ({ controller }) => {
     updateChildStyle,
     reorderGroups,
   } = controller
-  const normalizedSearchQuery = normalizeSearchQuery(searchQuery)
-  const searchActive = searching && normalizedSearchQuery.length > 0
+  const deferredSearchQuery = useDeferredValue(searchQuery)
+  const normalizedDeferredSearchQuery = normalizeSearchQuery(deferredSearchQuery)
+  const searchActive = searching && normalizedDeferredSearchQuery.length > 0
   const visibleGroups = useMemo(
-    () => filterGroupsByTitle(groups, searchQuery),
-    [groups, searchQuery],
+    () => filterGroupsByDocTitle(groups, deferredSearchQuery),
+    [groups, deferredSearchQuery],
   )
 
   const closeSearch = (): void => {
@@ -120,7 +124,7 @@ const SideTree: FC<TProps> = ({ controller }) => {
         }) => (
           <div ref={groupListRef} className={s.groupList}>
             {searchActive && columns.length === 0 ? (
-              <div className={s.empty}>No matching docs</div>
+              <div className={s.empty}>{t('dsb.cms.docs.side_tree.search_empty')}</div>
             ) : (
               <SortableContext
                 items={columns.map((group) => `docs-side-tree-sortable-group:${group.id}`)}
@@ -141,7 +145,7 @@ const SideTree: FC<TProps> = ({ controller }) => {
                       group={group}
                       activeId={activeId}
                       editingTarget={editingTarget}
-                      searchQuery={searchQuery}
+                      searchQuery={deferredSearchQuery}
                       searching={searching}
                       showTargetLine={showGroupTargetLine}
                       targetDragItemId={searching ? null : targetDragItemId}

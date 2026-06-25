@@ -1,5 +1,6 @@
 import type { FC } from 'react'
 
+import useTrans from '~/hooks/useTrans'
 import ImgUploadSVG from '~/icons/ImgUpload'
 
 import useSalon from './salon/title_actions'
@@ -12,6 +13,7 @@ type TProps = {
 
 const TitleActions: FC<TProps> = ({ coverVisible, disabled = false, onAddCover }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   if (coverVisible) return null
 
@@ -19,7 +21,7 @@ const TitleActions: FC<TProps> = ({ coverVisible, disabled = false, onAddCover }
     <div className={s.wrapper}>
       <button type='button' className={s.action} disabled={disabled} onClick={onAddCover}>
         <ImgUploadSVG className={s.icon} />
-        <span>Add cover</span>
+        <span>{t('dsb.cms.docs.editor.add_cover')}</span>
       </button>
     </div>
   )

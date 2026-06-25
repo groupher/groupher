@@ -6,6 +6,7 @@ import { DSB_INFO_ROUTE } from '~/const/route'
 import useDsbDemoMode from '~/hooks/useDsbDemoMode'
 import useDsbTab from '~/hooks/useDsbTab'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
+import useTrans from '~/hooks/useTrans'
 import type { TEditValue, TKanbanBoard, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
@@ -38,6 +39,7 @@ export default function useMutation(): TRet {
   const liveDashboard$ = dashboard$.live$ ?? dashboard$
   const community$ = useCommunity()
   const { mutate } = useGraphQLClient()
+  const { t } = useTrans()
   const { subTab } = useDsbTab()
   const isDemoMode = useDsbDemoMode()
 
@@ -149,7 +151,7 @@ export default function useMutation(): TRet {
   const handleMutation = (schema, params, okCb = null) => {
     mutate(schema, params)
       .then(async (data) => {
-        toast('设置已保存')
+        toast(t('dsb.appearance.saved'))
         if (okCb) okCb(data)
         try {
           await revalidateCommunityCache(community)
@@ -179,7 +181,7 @@ export default function useMutation(): TRet {
     }
 
     setDsbDemoConfig(buildDsbDemoConfig(storeRef.current))
-    toast('设置已保存')
+    toast(t('dsb.appearance.saved'))
     _handleDone(field)
   }
 

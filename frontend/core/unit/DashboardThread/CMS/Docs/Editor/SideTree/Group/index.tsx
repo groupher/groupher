@@ -14,7 +14,7 @@ import SortableSideTreeColumn from '../Dnd/SortableSideTreeColumn'
 import SortableSideTreeGroup from '../Dnd/SortableSideTreeGroup'
 import type { TSideTreeDragTarget } from '../Dnd/spec'
 import { isPublicDoc, needsPublishAttention } from '../helper'
-import useSalon, { cn } from '../salon/group'
+import useSalon, { cn } from '../salon/group/index'
 import type {
   TEditingTarget,
   TSideTreeChildMenuAction,
@@ -154,7 +154,7 @@ const Group: FC<TProps> = ({
                 ref={setActivatorNodeRef}
                 type='button'
                 className={s.dragHandle}
-                aria-label='Drag docs group'
+                aria-label={t('dsb.cms.docs.side_tree.drag_group')}
                 {...attributes}
                 {...listeners}
               >
@@ -179,7 +179,10 @@ const Group: FC<TProps> = ({
             )}
             <div className={s.actionSlot}>
               {!searching && !editing && !groupInCover && (
-                <div className={s.coverStatus} aria-label='Hidden from cover'>
+                <div
+                  className={s.coverStatus}
+                  aria-label={t('dsb.cms.docs.side_tree.hidden_from_cover')}
+                >
                   <CalendarSlashSVG className={s.coverStatusIcon} />
                 </div>
               )}

@@ -1,6 +1,7 @@
 import { pick } from 'ramda'
 
 import { COLOR } from '~/const/colors'
+import useTrans from '~/hooks/useTrans'
 import type { TDocCoverLayout, TDocFAQLayout, TEditFunc } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
@@ -21,10 +22,11 @@ type TRet = {
 export default function useDoc(): TRet {
   const dsb$ = useDashboard()
   const { isChanged, edit } = useHelper()
+  const { t } = useTrans()
 
   const addDocCategory = (): void => {
     const docCategories = dsb$.docCategories.concat({
-      name: '新分类',
+      name: t('dsb.cms.docs.category.new'),
       index: dsb$.docCategories.length,
       color: COLOR.BLACK,
       files: [],
