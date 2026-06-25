@@ -966,10 +966,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formkit/auto-animate@npm:^0.8.0":
-  version: 0.8.4
-  resolution: "@formkit/auto-animate@npm:0.8.4"
-  checksum: 10c0/b921dfc7af1aed71edb2dc4341ad38cc0785342b5f415eea6ba67f5214781bad6b1d64c9cf3ec932608edcc2f0e3d57a49837fc59518530690f2730fa778099b
+"@formkit/auto-animate@npm:^0.9.0":
+  version: 0.9.0
+  resolution: "@formkit/auto-animate@npm:0.9.0"
+  checksum: 10c0/5337bb905761d347cc07cf323b54fbd9967c1eac5469cb63f6ad67cf6705b08493c80ddafc470f317eee82fcc1c05f34391eb05896d41aa9f2f8a02738614ce4
   languageName: node
   linkType: hard
 
@@ -1190,7 +1190,7 @@ __metadata:
     "@dnd-kit/core": "npm:^6.3.1"
     "@dnd-kit/sortable": "npm:^10.0.0"
     "@dnd-kit/utilities": "npm:^3.2.2"
-    "@formkit/auto-animate": "npm:^0.8.0"
+    "@formkit/auto-animate": "npm:^0.9.0"
     "@fortawesome/fontawesome-svg-core": "npm:^6.2.1"
     "@fortawesome/free-regular-svg-icons": "npm:^6.2.1"
     "@fortawesome/free-solid-svg-icons": "npm:^6.2.1"
