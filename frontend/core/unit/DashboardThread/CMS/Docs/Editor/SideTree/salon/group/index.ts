@@ -10,6 +10,7 @@ export default function useSalon({ actionVisible }: { actionVisible: boolean }) 
 
   return {
     wrapper: 'column group/docs-tree-group border-b border-transparent -mt-0.5',
+    wrapperCollapsed: '-mb-2',
     wrapperTarget: primary('border'),
     head: 'group/docs-tree-head row-center relative h-7 -ml-7 w-[calc(100%+1.75rem)] pl-8 pr-1',
     dragHandle: cn(

@@ -142,7 +142,7 @@ const Group: FC<TProps> = ({
 
   return (
     <SortableSideTreeColumn
-      className={cn(s.wrapper, showTargetLine && s.wrapperTarget)}
+      className={cn(s.wrapper, collapsed && s.wrapperCollapsed, showTargetLine && s.wrapperTarget)}
       columnId={group.id}
       disabled={searching || editing}
     >
