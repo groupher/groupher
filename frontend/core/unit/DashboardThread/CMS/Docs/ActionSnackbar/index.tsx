@@ -9,12 +9,10 @@ import ContentCheck from './ContentCheck'
 import DiffStatus from './DiffStatus'
 import DocInfo from './DocInfo'
 import EditToggle from './EditToggle'
-import GroupAdder from './GroupAdder'
 import ImportContent from './ImportContent'
 import More from './More'
 import useSalon from './salon'
 import SaveZone from './SaveZone'
-import TabAdder from './TabAdder'
 
 const ActionSnackbar: FC = () => {
   const s = useSalon()
@@ -22,13 +20,6 @@ const ActionSnackbar: FC = () => {
 
   return (
     <div className={s.wrapper} data-theme={overlayDark ? 'dark' : undefined}>
-      <div className={s.treeGroup}>
-        <TabAdder />
-        <GroupAdder />
-      </div>
-
-      <div className={s.divider} />
-
       <div className={s.actionGroup}>
         <EditToggle />
         <DocInfo />

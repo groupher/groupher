@@ -1,9 +1,12 @@
+import { useAutoAnimate } from '@formkit/auto-animate/react'
 import { type FC, useState } from 'react'
 
+import useTrans from '~/hooks/useTrans'
 import PlusSVG from '~/icons/Add'
 import ArrowSVG from '~/icons/ArrowSimple'
 import CalendarSlashSVG from '~/icons/CalendarSlash'
 import GrabDotsSVG from '~/icons/GrabDots'
+import PaperPlaneTiltSVG from '~/icons/PaperPlaneTilt'
 
 import { SIDE_TREE_GROUP_MENU_ACTION, SIDE_TREE_NODE_TYPE } from '../constant'
 import SortableSideTreeChild from '../Dnd/SortableSideTreeChild'
@@ -24,6 +27,11 @@ import File from './File'
 import GroupMenu from './GroupMenu'
 import InlineTitleInput from './InlineTitleInput'
 import Link from './Link'
+
+const CHILD_LAYOUT_TRANSITION = {
+  duration: 180,
+  easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+} as const
 
 type TProps = {
   group: TSideTreeGroup
@@ -75,6 +83,8 @@ const Group: FC<TProps> = ({
   onChildStyleChange,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [childrenListRef] = useAutoAnimate(CHILD_LAYOUT_TRANSITION)
+  const { t } = useTrans()
   const s = useSalon({ actionVisible: menuOpen })
   const collapsed = group.expanded === false
   const groupInCover = group.publishState?.inCover === true
@@ -85,7 +95,10 @@ const Group: FC<TProps> = ({
     isPublicDoc(child.publishState),
   ).length
   const publishGroupVisible = publishableChildCount >= 2
+  const publishGroupShortcutVisible = publishableChildCount > 0
   const draftGroupVisible = draftableChildCount >= 2
+  const addDocLabel = t('dsb.cms.docs.side_tree.tooltip.new_doc')
+  const publishGroupChangesLabel = t('dsb.cms.docs.side_tree.tooltip.publish_group_changes')
   const editing =
     editingTarget?.type === SIDE_TREE_NODE_TYPE.GROUP && editingTarget.groupId === group.id
   const handleGroupMenuSelect = (action: TSideTreeGroupMenuAction): void => {
@@ -166,10 +179,22 @@ const Group: FC<TProps> = ({
                 <button
                   type='button'
                   className={s.addButton}
-                  aria-label='Add page or link'
+                  aria-label={addDocLabel}
+                  title={addDocLabel}
                   onClick={() => onAddChild(group.id, SIDE_TREE_GROUP_MENU_ACTION.PAGE)}
                 >
                   <PlusSVG className={s.actionIcon} />
+                </button>
+              )}
+              {!editing && publishGroupShortcutVisible && (
+                <button
+                  type='button'
+                  className={s.publishButton}
+                  aria-label={publishGroupChangesLabel}
+                  title={publishGroupChangesLabel}
+                  onClick={() => onPublishGroup(group.id)}
+                >
+                  <PaperPlaneTiltSVG className={s.publishIcon} />
                 </button>
               )}
               <div className={s.actions}>
@@ -189,6 +214,7 @@ const Group: FC<TProps> = ({
             columnId={group.id}
             ids={group.children.map((child) => child.id)}
             disabled={collapsed}
+            externalListRef={childrenListRef}
           >
             {group.children.map((child) => {
               const childEditing =

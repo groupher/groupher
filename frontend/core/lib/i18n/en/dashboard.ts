@@ -600,6 +600,8 @@ export default {
   'dsb.cms.docs.side_tree.untitled': 'Untitled',
   'dsb.cms.docs.side_tree.add_group': 'Add group',
   'dsb.cms.docs.side_tree.drag_item': 'Drag docs item',
+  'dsb.cms.docs.side_tree.tooltip.new_doc': 'New doc',
+  'dsb.cms.docs.side_tree.tooltip.publish_group_changes': 'Publish group changes',
   'dsb.cms.docs.side_tree.menu.new_page': 'Page/Link',
   'dsb.cms.docs.side_tree.menu.quick_link': 'Add link',
   'dsb.cms.docs.side_tree.link.invalid_href': 'Enter a valid link.',

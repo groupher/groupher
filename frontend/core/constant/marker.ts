@@ -8,9 +8,9 @@ export const MARKER = {
 
 export const DEFAULT_PAGE_MARKER: TMarkerValue = {
   type: MARKER.ICON,
-  provider: 'lucide',
+  provider: 'phosphor',
   name: 'file-text',
-  src: getIconFilePath('lucide', 'file-text'),
+  src: getIconFilePath('phosphor', 'file-text'),
 }
 
 export const DEFAULT_LINK_MARKER: TMarkerValue = {

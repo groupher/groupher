@@ -3,10 +3,13 @@
 import type { FC } from 'react'
 import { Group as PanelGroup, Panel, Separator } from 'react-resizable-panels'
 
+import useDashboardStore from '~/stores/dashboard/hooks'
+
 import ActionSnackbar from '../ActionSnackbar'
 import Article from './Article'
 import type { TDocDraftInitialData } from './Article/spec'
 import useSalon from './salon'
+import { DOC_EDITOR_SNACKBAR_STICKY_TOP } from './salon/layout'
 import SideTree from './SideTree'
 import type { TDocTreeInitialData } from './SideTree/spec'
 import useSideTreeLogic from './SideTree/useLogic'
@@ -22,7 +25,8 @@ type TProps = {
 }
 
 const Editor: FC<TProps> = ({ initialData }) => {
-  const s = useSalon()
+  const { submenuCollapsed } = useDashboardStore()
+  const s = useSalon({ submenuCollapsed })
   const sideTree = useSideTreeLogic(initialData?.docTree ?? undefined)
 
   return (
@@ -51,14 +55,14 @@ const Editor: FC<TProps> = ({ initialData }) => {
 
             <Panel id='docs-editor-space' className={s.fillPanel} minSize={0}>
               <Article sideTree={sideTree} initialDraft={initialData?.docDraft ?? null} />
+
+              {sideTree.activeId && (
+                <div className={s.snackbarRail} style={{ top: DOC_EDITOR_SNACKBAR_STICKY_TOP }}>
+                  <ActionSnackbar />
+                </div>
+              )}
             </Panel>
           </PanelGroup>
-
-          {sideTree.activeId && (
-            <div className={s.snackbarRail} style={{ top: 'calc(100dvh - 7rem)' }}>
-              <ActionSnackbar />
-            </div>
-          )}
         </div>
       </div>
     </DocsEditorStoreProvider>

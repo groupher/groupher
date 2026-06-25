@@ -3,9 +3,10 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default function useSalon({ actionVisible }: { actionVisible: boolean }) {
-  const { cn, fg, fill, primary } = useTwBelt()
+  const { cn, fg, fill, hover, primary } = useTwBelt()
 
   const icon = cn('size-3.5 pointer', fill('digest'))
+  const fgIcon = cn('size-3 pointer', fg('digest'))
 
   return {
     wrapper: 'column group/docs-tree-group border-b border-transparent -mt-0.5',
@@ -22,7 +23,7 @@ export default function useSalon({ actionVisible }: { actionVisible: boolean }) 
     arrowIcon: cn('size-3 ml-1.5 -rotate-90 trans-all-100', fill('digest')),
     arrowCollapsed: 'rotate-180',
     title: cn('truncate text-sm pointer smoky-65', `hover:${fg('title')}`),
-    actionSlot: 'row-center relative ml-auto h-5 w-12 shrink-0 justify-end',
+    actionSlot: 'row-center relative ml-auto h-5 w-16 shrink-0 justify-end',
     coverStatus: cn(
       'align-both absolute right-0 top-1/2 size-4 -translate-y-1/2 pointer-events-none opacity-100',
       'group-hover/docs-tree-head:opacity-0',
@@ -35,6 +36,14 @@ export default function useSalon({ actionVisible }: { actionVisible: boolean }) 
       'group-hover/docs-tree-head:opacity-100',
       'group-focus-within/docs-tree-head:opacity-100',
       actionVisible && 'opacity-100',
+      hover('box'),
+    ),
+    publishButton: cn(
+      'align-both size-5 plain-button opacity-0 trans-all-100',
+      'group-hover/docs-tree-head:opacity-100',
+      'group-focus-within/docs-tree-head:opacity-100',
+      actionVisible && 'opacity-100',
+      hover('box'),
     ),
     actions: cn(
       'row-center size-5 opacity-0 trans-all-100',
@@ -42,7 +51,8 @@ export default function useSalon({ actionVisible }: { actionVisible: boolean }) 
       'group-focus-within/docs-tree-head:opacity-100',
       actionVisible && 'opacity-100',
     ),
-    actionIcon: icon,
+    actionIcon: cn(icon, hover('icon')),
+    publishIcon: cn(fgIcon, hover('fg')),
     children: 'column gap-y-1.5 mt-2 min-h-3 border-b border-transparent',
     collapsed: 'hidden',
   }

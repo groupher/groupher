@@ -1,6 +1,6 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { type ReactNode, memo, useRef } from 'react'
+import { type ReactNode, type RefCallback, memo, useCallback, useRef } from 'react'
 
 import { cnMerge } from '~/css'
 
@@ -12,6 +12,7 @@ type TProps = {
   columnId: string
   dndType: TLinkDndType
   ids: string[]
+  externalListRef?: RefCallback<HTMLDivElement>
   disabled?: boolean
   idPrefix: string
   overClassName: string
@@ -24,12 +25,14 @@ const SortableGroup = memo(function SortableGroup({
   columnId,
   disabled = false,
   dndType,
+  externalListRef,
   idPrefix,
   ids,
   overClassName,
   targetClassName = '',
 }: TProps) {
   const listRef = useRef<HTMLDivElement | null>(null)
+  const externalNodeRef = useRef<HTMLDivElement | null>(null)
   const { setNodeRef, isOver } = useDroppable({
     id: `${idPrefix}:${columnId}`,
     disabled,
@@ -40,10 +43,19 @@ const SortableGroup = memo(function SortableGroup({
     },
   })
 
-  const setListNodeRef = (node: HTMLDivElement | null): void => {
-    listRef.current = node
-    setNodeRef(node)
-  }
+  const setListNodeRef = useCallback(
+    (node: HTMLDivElement | null): void => {
+      listRef.current = node
+
+      if (externalNodeRef.current !== node) {
+        externalNodeRef.current = node
+        externalListRef?.(node)
+      }
+
+      setNodeRef(node)
+    },
+    [externalListRef, setNodeRef],
+  )
 
   return (
     <SortableContext id={columnId} items={ids} strategy={verticalListSortingStrategy}>

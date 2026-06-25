@@ -578,6 +578,8 @@ export default {
   'dsb.cms.docs.side_tree.untitled': '未命名',
   'dsb.cms.docs.side_tree.add_group': '添加分组',
   'dsb.cms.docs.side_tree.drag_item': '拖拽文档项',
+  'dsb.cms.docs.side_tree.tooltip.new_doc': '新建文档',
+  'dsb.cms.docs.side_tree.tooltip.publish_group_changes': '发布组内改动',
   'dsb.cms.docs.side_tree.menu.new_page': 'Page/Link',
   'dsb.cms.docs.side_tree.menu.quick_link': '添加链接',
   'dsb.cms.docs.side_tree.link.invalid_href': '请输入有效链接。',
