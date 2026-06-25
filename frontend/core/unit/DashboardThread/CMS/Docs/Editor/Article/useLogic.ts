@@ -58,6 +58,7 @@ export default function useLogic(
     initialSession?.body ?? EMPTY_EDITOR_VALUE,
   )
   const [slug, setSlug] = useState(initialSession?.slug ?? '')
+  const [loadedDocId, setLoadedDocId] = useState<string | null>(initialSession?.info.id ?? null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -103,6 +104,7 @@ export default function useLogic(
       setSubtitle('')
       setBodyValue(EMPTY_EDITOR_VALUE)
       setSlug('')
+      setLoadedDocId(null)
       setLoading(false)
       setError(null)
       savedTitleRef.current = ''
@@ -153,6 +155,7 @@ export default function useLogic(
       setSubtitle(nextSession.subtitle)
       setBodyValue(nextSession.body)
       setSlug(nextSession.slug)
+      setLoadedDocId(activePage.docId)
       savedTitleRef.current = nextSession.title
       savedSubtitleRef.current = nextSession.subtitle
       savedBodyRef.current = nextSession.bodyJson
@@ -188,6 +191,7 @@ export default function useLogic(
         setSubtitle(nextSession.subtitle)
         setBodyValue(nextSession.body)
         setSlug(nextSession.slug)
+        setLoadedDocId(activePage.docId)
         savedTitleRef.current = nextSession.title
         savedSubtitleRef.current = nextSession.subtitle
         savedBodyRef.current = nextSession.bodyJson
@@ -387,6 +391,7 @@ export default function useLogic(
 
   useEffect(() => {
     if (!activePage?.docId) return
+    if (activePage.docId !== loadedDocId) return
 
     setDocDraftSession({
       bodyValue,
@@ -409,6 +414,7 @@ export default function useLogic(
     community,
     dirty,
     docsEditor$,
+    loadedDocId,
     setDocDraftSession,
     slug,
     subtitle,
@@ -452,6 +458,7 @@ export default function useLogic(
     bodyValue,
     dirty,
     editable,
+    editorDocId: loadedDocId ?? activePage?.docId ?? '',
     error,
     invalid,
     loading,

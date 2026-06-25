@@ -17,8 +17,6 @@ type TProps = {
 const Body: FC<TProps> = ({ value, mode, disabled = false, editorKey = '', onChange }) => {
   const s = useSalon()
 
-  if (disabled) return <div className={s.wrapper} />
-
   return (
     <div className={s.wrapper}>
       {mode === DOC_EDITOR_MODE.PREVIEW ? (
@@ -26,6 +24,7 @@ const Body: FC<TProps> = ({ value, mode, disabled = false, editorKey = '', onCha
       ) : (
         <Editor editorKey={editorKey} value={value} onChange={onChange} />
       )}
+      {disabled && <div className={s.disabledMask} />}
     </div>
   )
 }

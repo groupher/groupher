@@ -25,6 +25,7 @@ const Article: FC<TProps> = ({ sideTree, initialDraft }) => {
   const {
     activePage,
     bodyValue,
+    editorDocId,
     error,
     loading,
     setBodyValue,
@@ -61,7 +62,7 @@ const Article: FC<TProps> = ({ sideTree, initialDraft }) => {
       <Body
         value={bodyValue}
         mode={mode}
-        editorKey={activePage.docId}
+        editorKey={editorDocId}
         disabled={loading}
         onChange={setBodyValue}
       />
