@@ -24,7 +24,7 @@ export default function useSalon({ actionVisible }: { actionVisible: boolean }) 
     title: cn('truncate text-sm pointer smoky-65', `hover:${fg('title')}`),
     actionSlot: 'row-center relative ml-auto h-5 w-12 shrink-0 justify-end',
     coverStatus: cn(
-      'row-center absolute inset-0 pointer-events-none opacity-100',
+      'align-both absolute right-0 top-1/2 size-4 -translate-y-1/2 pointer-events-none opacity-100',
       'group-hover/docs-tree-head:opacity-0',
       'group-focus-within/docs-tree-head:opacity-0',
       actionVisible && 'opacity-0',
