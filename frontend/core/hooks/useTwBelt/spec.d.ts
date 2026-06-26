@@ -19,6 +19,7 @@ export type TMenuPart =
   | 'activeIcon'
 export type TShadowType = 'sm' | 'md' | 'lg' | 'xl' | 'card' | 'drawer' | 'modal'
 export type TDimLevel = 'lg' | 'md' | 'sm'
+export type TScrollbarType = 'thin'
 export type THoverPart = 'bg' | 'box' | 'icon' | 'bg-red' | 'icon-red' | 'fg' | 'fg-red'
 export type TSelectablePart = 'box' | 'badge' | 'check'
 export type TSelectableSize = 'xs' | 'sm' | 'md'
@@ -108,6 +109,7 @@ export type TRet = {
 
   menu: (part: TMenuPart) => string
   shadow: (size: TShadowType) => string
+  scrollbar: (type?: TScrollbarType) => string
 
   cut: (classname?: TCutWWidth) => string
   landingTitle: () => string

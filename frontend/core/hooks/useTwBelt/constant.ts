@@ -33,6 +33,9 @@ export const STATIC_CLS = {
   cutBase: 'truncate w-fit w-auto',
 
   vividDarkWhenDark: 'dark:saturate-150 dark:brightness-125',
+
+  scrollbarThin:
+    '[scrollbar-width:thin] [scrollbar-color:color-mix(in_oklab,var(--color-digest)_35%,transparent)_transparent] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-digest/35 hover:[&::-webkit-scrollbar-thumb]:bg-digest/50',
 } as const
 
 export const RAINBOW_ALIAS: Record<TColorPrefix, string> = {

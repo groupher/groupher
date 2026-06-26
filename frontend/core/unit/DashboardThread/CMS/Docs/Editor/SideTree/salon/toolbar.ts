@@ -8,7 +8,7 @@ export default function useSalon() {
   return {
     wrapper: cn('group/tree-toolbar row-center gap-1 pr-1', DOC_EDITOR_TOP_ROW),
     search: cn(
-      'row-center flex-1 min-w-0 pl-0.5',
+      'row-center flex-1 min-w-0 pl-0.5 pointer',
       DOC_EDITOR_TOP_ROW_CONTROL,
       'transition-colors duration-150',
       fg('hint'),
