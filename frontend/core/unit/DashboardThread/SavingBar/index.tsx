@@ -6,6 +6,7 @@ import RevertSVG from '~/icons/Back'
 import SaveSVG from '~/icons/Save'
 import type { TSpace } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
+import Button from '~/widgets/Buttons/Button'
 
 import useHelper from '../logic/useHelper'
 import type { TDsbFieldKey } from '../spec.d'
@@ -80,29 +81,29 @@ const SavingBar: FC<TProps> = ({
   }
   const actions = (
     <div className={s.actions}>
-      <button
-        type='button'
+      <Button
+        ghost
+        noBorder
+        size='small'
         className={s.cancelButton}
         disabled={resolvedLoading}
-        aria-label={resolvedCancelText}
-        title={resolvedCancelText}
+        ariaLabel={resolvedCancelText}
         onClick={cancel}
       >
         <CancelIcon className={s.cancelIcon} />
         <span className={s.cancelLabel}>{resolvedCancelText}</span>
-      </button>
-      <button
-        type='button'
+      </Button>
+      <Button
+        noBorder
+        size='small'
         className={s.saveButton}
         disabled={disabled || resolvedLoading}
-        aria-label={resolvedSaveText}
-        aria-busy={resolvedLoading}
-        title={resolvedSaveText}
+        ariaLabel={resolvedSaveText}
         onClick={confirm}
       >
         <SaveIcon className={s.saveIcon} />
         <span className={s.saveLabel}>{resolvedSaveText}</span>
-      </button>
+      </Button>
     </div>
   )
 
