@@ -30,17 +30,14 @@ defmodule GroupherServer.CMS.DocTree.ChangeDetection do
 
   alias GroupherServer.CMS.Model.{
     ArticleDraft,
-    DocTreeNode,
     DocTreeNodeDraft,
     DocTreeNodePublishMapping
   }
 
-  alias GroupherServer.CMS.DocTree.PublishedFields
-
   @spec unpublished_mapping?(
           DocTreeNodeDraft.t(),
           DocTreeNodePublishMapping.t() | nil,
-          DocTreeNode.t() | nil,
+          term(),
           ArticleDraft.t() | nil
         ) :: boolean()
   def unpublished_mapping?(_node, nil, _published_node, _draft_doc), do: true
@@ -62,32 +59,10 @@ defmodule GroupherServer.CMS.DocTree.ChangeDetection do
     draft_doc_content_changed?(draft_doc, mapping.draft_doc_content_hash)
   end
 
-  @spec node_changed?(
-          DocTreeNodeDraft.t(),
-          DocTreeNodePublishMapping.t(),
-          DocTreeNode.t() | nil
-        ) :: boolean()
-  def node_changed?(
-        %DocTreeNodeDraft{} = node,
-        %DocTreeNodePublishMapping{} = mapping,
-        published_node
-      ) do
-    node.updated_at != mapping.draft_node_updated_at or
-      published_node_fields_changed?(node, published_node)
-  end
-
   @spec draft_doc_content_changed?(ArticleDraft.t() | nil, String.t() | nil) :: boolean()
   def draft_doc_content_changed?(nil, _content_hash), do: false
 
   def draft_doc_content_changed?(%ArticleDraft{} = draft_doc, content_hash) do
     draft_doc.content_hash != content_hash
-  end
-
-  defp published_node_fields_changed?(_node, nil), do: false
-
-  defp published_node_fields_changed?(%DocTreeNodeDraft{} = node, %DocTreeNode{} = published_node) do
-    fields = PublishedFields.node_fields()
-
-    Map.take(node, fields) != Map.take(published_node, fields)
   end
 end

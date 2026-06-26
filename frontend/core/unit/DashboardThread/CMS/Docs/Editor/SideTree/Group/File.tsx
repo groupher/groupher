@@ -1,8 +1,14 @@
-import { type FC, type KeyboardEvent, type MouseEvent, useState } from 'react'
+import { type FC, type KeyboardEvent, type MouseEvent, useEffect, useState } from 'react'
 
+import useTrans from '~/hooks/useTrans'
 import MarkerPicker from '~/widgets/MarkerPicker'
 
-import { DEFAULT_PAGE_MARKER, SIDE_TREE_NODE_MENU_ACTION, SIDE_TREE_NODE_TYPE } from '../constant'
+import {
+  DEFAULT_PAGE_MARKER,
+  SIDE_TREE_NODE_MENU_ACTION,
+  SIDE_TREE_NODE_TYPE,
+  UNTITLED_TITLE_I18N_KEY,
+} from '../constant'
 import { isPublicDoc, needsPublishAttention } from '../helper'
 import useSalon from '../salon/group/file'
 import type { TEditingTarget, TSideTreeNodeMenuAction, TSideTreePage } from '../spec'
@@ -42,6 +48,7 @@ const File: FC<TProps> = ({
   onStyleChange,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false)
+  const { t } = useTrans()
   const s = useSalon({ active, actionVisible: !searching && menuOpen })
   const editing =
     editingTarget?.type === SIDE_TREE_NODE_TYPE.PAGE && editingTarget.childId === item.id
@@ -57,6 +64,9 @@ const File: FC<TProps> = ({
       activate()
     }
   }
+  useEffect(() => {
+    if (searching) setMenuOpen(false)
+  }, [searching])
 
   return (
     <div
@@ -89,7 +99,7 @@ const File: FC<TProps> = ({
           <HighlightTitle
             className={s.titleButton}
             query={searchQuery}
-            text={item.title || item.path || 'Untitled'}
+            text={item.title || item.path || t(UNTITLED_TITLE_I18N_KEY)}
           />
         </div>
       )}

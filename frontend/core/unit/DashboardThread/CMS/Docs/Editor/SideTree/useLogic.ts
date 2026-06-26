@@ -184,7 +184,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
         if (payload) {
           revisionRef.current = payload.revision
-          if (payload.treeState) setTreeState(payload.treeState)
+          setTreeState(payload.treeState ?? null)
         }
 
         return payload
@@ -383,7 +383,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     try {
       await mutate(S.publishDocTree, { community })
       reload()
-      toast('Tree changes saved')
+      toast(t('dsb.cms.docs.side_tree.publish.tree_saved'))
     } catch (err) {
       toast(formatMutationError(err), 'error')
       reload()

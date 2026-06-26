@@ -323,17 +323,16 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     |> join(:left, [n, _g], m in DocTreeNodePublishMapping,
       on: m.community_id == n.community_id and m.draft_node_id == n.id
     )
-    |> join(:left, [_n, _g, m], p in DocTreeNode, on: p.id == m.published_node_id)
-    |> join(:left, [n, _g, _m, _p], d in ArticleDraft,
+    |> join(:left, [n, _g, _m], d in ArticleDraft,
       on: d.community_id == n.community_id and d.id == n.article_draft_id
     )
-    |> order_by([n, g, _m, _p, _d], asc: g.index, asc: n.index, asc: n.id)
-    |> select([n, _g, m, p, d], {n, m, p, d})
+    |> order_by([n, g, _m, _d], asc: g.index, asc: n.index, asc: n.id)
+    |> select([n, _g, m, d], {n, m, d})
     |> Repo.all()
-    |> Enum.filter(fn {node, mapping, published_node, draft_doc} ->
-      ChangeDetection.unpublished_mapping?(node, mapping, published_node, draft_doc)
+    |> Enum.filter(fn {node, mapping, draft_doc} ->
+      ChangeDetection.unpublished_mapping?(node, mapping, nil, draft_doc)
     end)
-    |> Enum.map(fn {node, _mapping, _published_node, _draft_doc} -> node end)
+    |> Enum.map(fn {node, _mapping, _draft_doc} -> node end)
   end
 
   defp batch_publish_context(%Community{} = community, group, children) do
@@ -422,7 +421,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          %DocTreeNode{} = published_group,
          context
        ) do
-    with %DocTreeNodePublishMapping{} = mapping <- Map.get(context.mappings, draft_page.id),
+    with %DocTreeNodePublishMapping{visibility: :public} = mapping <-
+           Map.get(context.mappings, draft_page.id),
          published_doc_id when not is_nil(published_doc_id) <- mapping.published_doc_id,
          {:ok, published_page} <-
            upsert_published_page(
@@ -443,7 +443,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
            ) do
       {:ok, published_page}
     else
-      nil -> {:error, {:custom, "Publish docs before publishing tree."}}
+      {:error, _reason} = error -> error
       _ -> {:error, {:custom, "Publish docs before publishing tree."}}
     end
   end
@@ -452,19 +452,33 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     draft_nodes
     |> Enum.filter(&(&1.type == :pin))
     |> Enum.reduce_while(:ok, fn draft_pin, :ok ->
-      with %DocTreeNodePublishMapping{} = target_mapping <-
+      with %DocTreeNodePublishMapping{visibility: :public} = target_mapping <-
              Map.get(context.mappings, draft_pin.target_node_id),
            published_target_id when not is_nil(published_target_id) <-
              target_mapping.published_node_id,
+           :ok <- ensure_pin_target_type(draft_nodes, draft_pin.target_node_id),
            {:ok, published_pin} <-
              upsert_published_pin(community, draft_pin, published_target_id, context),
            {:ok, _mapping} <-
              upsert_mapping(community, draft_pin, published_pin, nil, nil, context) do
         {:cont, :ok}
       else
+        {:error, _reason} = error -> {:halt, error}
         _ -> {:halt, {:error, {:custom, "Publish pinned docs before publishing tree."}}}
       end
     end)
+  end
+
+  defp ensure_pin_target_type(draft_nodes, target_node_id) do
+    draft_nodes
+    |> Enum.find(&(&1.id == target_node_id))
+    |> case do
+      %DocTreeNodeDraft{type: type} when type in [:page, :link] ->
+        :ok
+
+      _ ->
+        {:error, {:custom, "Pin target must be a doc or link."}}
+    end
   end
 
   defp cleanup_deleted_tree_nodes(_community, []), do: :ok

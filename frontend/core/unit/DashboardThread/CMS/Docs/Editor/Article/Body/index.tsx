@@ -19,7 +19,7 @@ const Body: FC<TProps> = ({ value, mode, disabled = false, editorKey = '', onCha
 
   return (
     <div className={s.wrapper}>
-      {mode === DOC_EDITOR_MODE.PREVIEW ? (
+      {mode === DOC_EDITOR_MODE.PREVIEW || disabled ? (
         <Preview value={value} />
       ) : (
         <Editor editorKey={editorKey} value={value} onChange={onChange} />

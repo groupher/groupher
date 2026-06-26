@@ -56,12 +56,6 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
     timestamps(type: :utc_datetime)
   end
 
-  @doc "Returns allowed lifecycle statuses for Tree events."
-  def statuses, do: @statuses
-
-  @doc "Returns domain event types supported by Tree staged diffs."
-  def event_types, do: @event_types
-
   @doc false
   def changeset(%DocTreeEvent{} = event, attrs) do
     event

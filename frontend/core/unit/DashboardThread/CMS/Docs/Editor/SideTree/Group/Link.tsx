@@ -1,4 +1,4 @@
-import { type FC, useState } from 'react'
+import { type FC, useEffect, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import MarkerPicker from '~/widgets/MarkerPicker'
@@ -55,6 +55,9 @@ const Link: FC<TProps> = ({
     item.title && item.title !== t(UNTITLED_TITLE_I18N_KEY)
       ? item.title
       : getDefaultLinkTitle(item.href)
+  useEffect(() => {
+    if (searching) setMenuOpen(false)
+  }, [searching])
 
   return (
     <div className={cn(s.wrapper, editing && s.wrapperEditing)}>
@@ -79,7 +82,7 @@ const Link: FC<TProps> = ({
       ) : (
         <div className={s.titleCluster}>
           <a href={item.href} target='_blank' rel='noreferrer' className={s.titleButton}>
-            <HighlightTitle className={s.titleText} query={searchQuery} text={item.title} />
+            <HighlightTitle className={s.titleText} query={searchQuery} text={titleValue} />
           </a>
         </div>
       )}

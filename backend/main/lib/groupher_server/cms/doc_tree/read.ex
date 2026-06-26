@@ -32,7 +32,6 @@ defmodule GroupherServer.CMS.DocTree.Read do
     DocsSiteState,
     DocTreeEvent,
     DocTreeDraftState,
-    DocTreeNode,
     DocTreeNodeDraft,
     DocTreeNodePublishMapping,
     DocTreeRevision
@@ -190,14 +189,11 @@ defmodule GroupherServer.CMS.DocTree.Read do
       |> Repo.all()
       |> Map.new(&{&1.id, &1})
 
-    published_node_ids = mappings |> Map.values() |> Enum.map(& &1.published_node_id)
-
-    published_nodes =
-      DocTreeNode
-      |> where([n], n.community_id == ^community.id)
-      |> where([n], n.id in ^published_node_ids)
-      |> Repo.all()
-      |> Map.new(&{&1.id, &1})
+    published_node_ids =
+      mappings
+      |> Map.values()
+      |> Enum.map(& &1.published_node_id)
+      |> Enum.reject(&is_nil/1)
 
     cover_groups =
       DocCoverGroup
@@ -224,7 +220,6 @@ defmodule GroupherServer.CMS.DocTree.Read do
     %{
       mappings: mappings,
       draft_docs: draft_docs,
-      published_nodes: published_nodes,
       cover_groups: cover_groups,
       cover_items: cover_items,
       pinned_items: pinned_items

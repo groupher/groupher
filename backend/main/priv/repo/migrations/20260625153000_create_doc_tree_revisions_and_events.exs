@@ -40,8 +40,8 @@ defmodule GroupherServer.Repo.Migrations.CreateDocTreeRevisionsAndEvents do
     end
 
     alter table(:doc_tree_node_drafts, prefix: @prefix) do
-      modify(:title, :string, null: true)
-      modify(:slug, :string, null: true)
+      modify(:title, :string, null: true, from: {:string, null: false})
+      modify(:slug, :string, null: true, from: {:string, null: false})
 
       add(
         :target_node_id,
@@ -56,8 +56,8 @@ defmodule GroupherServer.Repo.Migrations.CreateDocTreeRevisionsAndEvents do
     create(index(:doc_tree_node_drafts, [:target_node_id], prefix: @prefix))
 
     alter table(:doc_tree_nodes, prefix: @prefix) do
-      modify(:title, :string, null: true)
-      modify(:slug, :string, null: true)
+      modify(:title, :string, null: true, from: {:string, null: false})
+      modify(:slug, :string, null: true, from: {:string, null: false})
       add(:target_node_id, references(:doc_tree_nodes, prefix: @prefix, on_delete: :delete_all))
       add(:ui_config, :map, null: false, default: %{})
     end

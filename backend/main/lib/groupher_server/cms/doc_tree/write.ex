@@ -220,6 +220,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
            {:ok, node} <- ORM.update(node, %{parent_id: parent_id, index: target_index}),
            :ok <- normalize_sibling_indexes(community, old_parent_id, node.type),
            :ok <- normalize_sibling_indexes(community, parent_id, node.type),
+           {:ok, node} <- find_node(community, node.id),
            {:ok, event_count} <-
              record_tree_events(community, args, [
                Events.move_event(node, old_parent_id, old_index, parent_id, node.index)

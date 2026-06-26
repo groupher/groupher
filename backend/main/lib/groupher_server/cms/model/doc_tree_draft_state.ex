@@ -45,11 +45,13 @@ defmodule GroupherServer.CMS.Model.DocTreeDraftState do
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:community_id)
+    |> foreign_key_constraint(:base_revision_id)
     |> unique_constraint(:community_id)
   end
 
   def update_changeset(%DocTreeDraftState{} = state, attrs) do
     state
     |> cast(attrs, @optional_fields)
+    |> foreign_key_constraint(:base_revision_id)
   end
 end

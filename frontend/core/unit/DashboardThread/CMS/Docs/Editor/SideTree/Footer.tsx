@@ -1,5 +1,6 @@
 import { type FC, useState } from 'react'
 
+import useTrans from '~/hooks/useTrans'
 import BoxAddSVG from '~/icons/BoxAdd'
 import SendSVG from '~/icons/PaperPlaneTilt'
 import QuestionSVG from '~/icons/Question'
@@ -16,6 +17,7 @@ type TProps = {
 
 const Footer: FC<TProps> = ({ treeState, onPublish }) => {
   const s = useSalon()
+  const { t } = useTrans()
   const [publishing, setPublishing] = useState(false)
   const changed = treeState?.hasUnpublishedChanges === true
   const eventCount = treeState?.stagedEventCount ?? 0
@@ -38,13 +40,13 @@ const Footer: FC<TProps> = ({ treeState, onPublish }) => {
             width='w-full'
             loading={publishing}
             disabled={publishing}
-            saveText='Publish'
+            saveText={t('dsb.cms.docs.side_tree.publish.tree_publish')}
             saveIcon={SendSVG}
             onCancel={() => undefined}
             onConfirm={handlePublish}
           >
             <div className={s.publishLabel}>
-              Changes
+              {t('dsb.cms.docs.side_tree.publish.changes')}
               {eventCount > 0 && <span className={s.eventCount}>{eventCount}</span>}
             </div>
           </SavingBar>
