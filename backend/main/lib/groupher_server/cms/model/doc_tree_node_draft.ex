@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
 
   @node_types [:group, :page, :link, :pin]
   @required_fields ~w(community_id type index)a
-  @optional_fields ~w(parent_id article_draft_id target_node_id title slug href marker badge hidden expanded template_key ui_config deleted_at)a
+  @optional_fields ~w(parent_id article_draft_id target_node_id title slug href marker badge hidden template_key ui_config deleted_at)a
 
   @type t :: %DocTreeNodeDraft{}
   schema "doc_tree_node_drafts" do
@@ -48,7 +48,6 @@ defmodule GroupherServer.CMS.Model.DocTreeNodeDraft do
     field(:marker, :map)
     field(:badge, :string)
     field(:hidden, :boolean, default: false)
-    field(:expanded, :boolean, default: true)
     field(:template_key, :string)
     field(:ui_config, :map, default: %{})
     field(:deleted_at, :utc_datetime)

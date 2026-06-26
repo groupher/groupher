@@ -94,7 +94,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:marker, :marker)
     field(:badge, :string)
     field(:hidden, :boolean)
-    field(:expanded, :boolean)
     field(:ui_config, :json)
     field(:target, :doc_tree_node)
     field(:publish_state, :doc_tree_node_publish_state)
@@ -217,7 +216,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:marker, :marker_input)
     field(:badge, :string)
     field(:hidden, :boolean)
-    field(:expanded, :boolean)
     field(:ui_config, :json)
   end
 
@@ -230,7 +228,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:marker, :marker_input)
     field(:badge, :string)
     field(:hidden, :boolean)
-    field(:expanded, :boolean)
     field(:ui_config, :json)
   end
 

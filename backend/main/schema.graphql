@@ -844,7 +844,6 @@ type DocTreeNode {
   marker: Marker
   badge: String
   hidden: Boolean
-  expanded: Boolean
   uiConfig: Json
   target: DocTreeNode
   publishState: DocTreeNodePublishState
@@ -968,7 +967,6 @@ input DocTreeNodeInput {
   marker: MarkerInput
   badge: String
   hidden: Boolean
-  expanded: Boolean
   uiConfig: Json
 }
 
@@ -981,7 +979,6 @@ input DocTreeNodePatchInput {
   marker: MarkerInput
   badge: String
   hidden: Boolean
-  expanded: Boolean
   uiConfig: Json
 }
 

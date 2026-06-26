@@ -84,7 +84,6 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
       "marker" => node.marker,
       "badge" => node.badge,
       "hidden" => node.hidden,
-      "expanded" => node.expanded,
       "uiConfig" => node.ui_config
     }
     |> Enum.reject(fn {_key, value} -> is_nil(value) end)

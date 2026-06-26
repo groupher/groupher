@@ -331,18 +331,8 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
    * toggleGroup('group-getting-started')
    */
   function toggleGroup(groupId: string): void {
-    const { groups: nextGroups, expanded } = toggleGroupExpandedInGroups(readGroups(), groupId)
-
-    // Keep this explicit commit because the helper also returns the persisted expanded value.
+    const { groups: nextGroups } = toggleGroupExpandedInGroups(readGroups(), groupId)
     commitGroups(nextGroups)
-
-    if (isDraftId(groupId)) return
-
-    persist(
-      S.updateDocTreeNode,
-      { id: groupId, patch: { expanded } },
-      (data) => data?.updateDocTreeNode,
-    )
   }
 
   function toggleCoverGroup(groupId: string, inCover: boolean): void {

@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
   @node_types [:group, :page, :link, :pin]
   @required_fields ~w(community_id type index)a
-  @optional_fields ~w(parent_id doc_id target_node_id title slug href marker badge hidden expanded ui_config)a
+  @optional_fields ~w(parent_id doc_id target_node_id title slug href marker badge hidden ui_config)a
 
   @type t :: %DocTreeNode{}
   schema "doc_tree_nodes" do
@@ -43,7 +43,6 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     field(:marker, :map)
     field(:badge, :string)
     field(:hidden, :boolean, default: false)
-    field(:expanded, :boolean, default: true)
     field(:ui_config, :map, default: %{})
 
     timestamps(type: :utc_datetime)

@@ -181,8 +181,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
           |> Map.merge(%{
             title: unique_copy_title(community, node.parent_id, node.title),
             slug: unique_copy_slug(community, node.parent_id, node.slug),
-            index: node.index + 1,
-            expanded: node.expanded
+            index: node.index + 1
           })
 
         with :ok <-

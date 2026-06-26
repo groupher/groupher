@@ -139,7 +139,6 @@ export type TDocTreeNodeDTO = {
   marker?: TSideTreeChild['marker'] | null
   badge?: string | null
   hidden?: boolean | null
-  expanded?: boolean | null
   uiConfig?: Record<string, unknown> | null
   target?: TDocTreeNodeDTO | null
   publishState?: TDocTreeNodePublishState | null

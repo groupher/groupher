@@ -158,23 +158,19 @@ export const removeGroupFromGroups = (
 ): TSideTreeGroup[] => groups.filter((group) => group.id !== groupId)
 
 /**
- * Toggle one group and return the next expanded value for persistence.
+ * Toggle one group in local UI state.
  *
  * @example
- * const { groups: nextGroups, expanded } = toggleGroupExpandedInGroups(groups, groupId)
+ * const { groups: nextGroups } = toggleGroupExpandedInGroups(groups, groupId)
  */
 export const toggleGroupExpandedInGroups = (
   groups: readonly TSideTreeGroup[],
   groupId: string,
-): { groups: TSideTreeGroup[]; expanded: boolean } => {
-  const group = groups.find((item) => item.id === groupId)
-  const expanded = group?.expanded === false
-
+): { groups: TSideTreeGroup[] } => {
   return {
     groups: groups.map((group) =>
       group.id === groupId ? { ...group, expanded: group.expanded === false } : group,
     ),
-    expanded,
   }
 }
 

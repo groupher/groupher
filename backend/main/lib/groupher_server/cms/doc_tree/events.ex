@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
   alias CMS.Model.{Community, DocTreeEvent, DocTreeNodeDraft, DocTreeRevision}
   alias Helper.{ORM, T}
 
-  @tree_fields ~w(title slug marker badge hidden expanded href target_node_id ui_config)a
+  @tree_fields ~w(title slug marker badge hidden href target_node_id ui_config)a
 
   @doc """
   Records one staged Tree event.

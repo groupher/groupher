@@ -149,7 +149,6 @@ defmodule GroupherServer.CMS.DocTree.Template do
       slug: group.slug,
       index: index,
       parent_id: nil,
-      expanded: true,
       template_key: template_key(group.key)
     }
 

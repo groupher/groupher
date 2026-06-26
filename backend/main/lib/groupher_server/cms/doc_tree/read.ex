@@ -165,7 +165,6 @@ defmodule GroupherServer.CMS.DocTree.Read do
       marker: node.marker,
       badge: node.badge,
       hidden: node.hidden,
-      expanded: node.expanded,
       ui_config: node.ui_config,
       target: target_map(node, context),
       publish_state: publish_state(node, context),

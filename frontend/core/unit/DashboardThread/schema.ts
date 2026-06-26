@@ -453,7 +453,6 @@ const docTreeNodeFields = `
   }
   badge
   hidden
-  expanded
   uiConfig
   target {
     id
@@ -474,7 +473,6 @@ const docTreeNodeFields = `
     }
     badge
     hidden
-    expanded
     uiConfig
   }
   publishState {

@@ -65,7 +65,6 @@ export const mapGroup = (node: TDocTreeNodeDTO): TSideTreeGroup => ({
   slug: node.slug || undefined,
   marker: node.marker || undefined,
   hidden: node.hidden || undefined,
-  expanded: node.expanded ?? true,
   publishState: node.publishState || undefined,
   children: (node.children || []).map(mapNode),
 })

@@ -207,7 +207,6 @@ defmodule GroupherServer.CMS.DocCover.Read do
       marker: node.marker,
       badge: node.badge,
       hidden: node.hidden,
-      expanded: node.expanded,
       children: []
     }
   end
