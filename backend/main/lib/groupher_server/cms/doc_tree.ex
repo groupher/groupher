@@ -2,18 +2,18 @@ defmodule GroupherServer.CMS.DocTree do
   @moduledoc """
   CMS docs side-tree facade.
 
-  Docs editing is draft-first. Dashboard/editor APIs always read and mutate the
-  draft copy; public docs cover rendering reads independently curated cover rows
-  that point at the published tree.
+  Docs editing owns a staged tree and a public tree in the same table. Dashboard
+  APIs mutate only the staged rows; publish copies the staged snapshot into
+  public rows and records a tree snapshot.
 
       Dashboard editor / preview
               |
               v
-      doc_tree_node_drafts  --->  article_drafts(thread=doc)
+      doc_tree_nodes(stage=draft)  --->  article_workspaces(stage=draft)
               |
-              | DocTree.Publish
+              | publish article / publish tree
               v
-      doc_tree_nodes        --->  docs        --->  doc_documents
+      doc_tree_nodes(stage=public) --->  docs  --->  doc_documents
               |
               v
       doc_cover_groups/items/pinned_items
@@ -21,9 +21,8 @@ defmodule GroupherServer.CMS.DocTree do
               v
       Public docs site
 
-  The preview mode currently uses the same draft read path as the dashboard. It
-  is intentionally not a versioned preview snapshot, so there is no branch-like
-  state to merge or publish from.
+  Pins are independent top-level link nodes with `type=pin`. They are published
+  and diffed with the Tree, but they do not point at existing page/link nodes.
   """
 
   alias GroupherServer.Accounts.Model.User
@@ -38,38 +37,27 @@ defmodule GroupherServer.CMS.DocTree do
   def read_draft(%Community{} = community, id), do: Read.read_draft(community, id)
 
   @doc """
-  Publishes one docs draft page and its public side-tree node.
+  Builds the unified docs publish checklist.
 
-  Pass `sync_cover: false` for the publish-menu option that should publish the
-  doc without adding/syncing it into the docs cover.
-  """
-  @spec publish_doc(Community.t(), T.id(), User.t(), keyword()) :: T.domain_res(map())
-  def publish_doc(%Community{} = community, id, %User{} = user, opts \\ []) do
-    Publish.publish_doc(community, id, user, opts)
-  end
+  ## Examples
 
-  @doc """
-  Publishes all docs pages with a draft-only state or newer draft edits.
+      iex> DocTree.publish_plan(community).total_count
+      2
   """
-  @spec publish_all_unpublished_docs(Community.t(), User.t(), keyword()) :: T.domain_res(map())
-  def publish_all_unpublished_docs(%Community{} = community, %User{} = user, opts \\ []) do
-    Publish.publish_all_unpublished_docs(community, user, opts)
-  end
+  @spec publish_plan(Community.t()) :: map()
+  def publish_plan(%Community{} = community), do: Publish.plan(community)
 
   @doc """
-  Publishes one docs group and its page/link children.
-  """
-  @spec publish_group(Community.t(), T.id(), User.t(), keyword()) :: T.domain_res(map())
-  def publish_group(%Community{} = community, id, %User{} = user, opts \\ []) do
-    Publish.publish_group(community, id, user, opts)
-  end
+  Publishes selected docs changes and creates one release checkpoint.
 
-  @doc """
-  Publishes only Tree-scope changes into a Tree revision.
+  ## Examples
+
+      iex> DocTree.publish_changes(community, %{doc_change_ids: ["doc:1"]}, user)
+      {:ok, %{done: true}}
   """
-  @spec publish_tree(Community.t(), User.t(), keyword()) :: T.domain_res(map())
-  def publish_tree(%Community{} = community, %User{} = user, opts \\ []) do
-    Publish.publish_tree(community, user, opts)
+  @spec publish_changes(Community.t(), map(), User.t(), keyword()) :: T.domain_res(map())
+  def publish_changes(%Community{} = community, args, %User{} = user, opts \\ []) do
+    Publish.publish_changes(community, args, user, opts)
   end
 
   @doc """
@@ -114,6 +102,9 @@ defmodule GroupherServer.CMS.DocTree do
 
   @spec create_link(Community.t(), map()) :: T.domain_res(map())
   def create_link(%Community{} = community, args), do: Write.create_link(community, args)
+
+  @spec create_pin(Community.t(), map()) :: T.domain_res(map())
+  def create_pin(%Community{} = community, args), do: Write.create_pin(community, args)
 
   @spec update_node(Community.t(), T.id(), map()) :: T.domain_res(map())
   def update_node(%Community{} = community, id, args), do: Write.update_node(community, id, args)

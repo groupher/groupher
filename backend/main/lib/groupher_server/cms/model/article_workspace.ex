@@ -1,26 +1,23 @@
-defmodule GroupherServer.CMS.Model.ArticleDraft do
+defmodule GroupherServer.CMS.Model.ArticleWorkspace do
   @moduledoc """
-  Universal working copy for article content.
+  Editable workspace row for article content.
 
-  The draft layer is shared by posts, changelogs, blogs, and docs. Published
-  content still lives in each thread's article/document tables; this table only
-  stores the staged working copy that autosave, version history, and publish use.
+  The workspace is the current draft copy only. Publishing copies it into the
+  runtime article table (`docs` + `DocDocument` for docs) and records an
+  immutable ArticleSnapshot.
 
-      editor autosave
-            |
-            v
-      article_drafts  --checkpoint-->  article_revisions(type=draft)
-            |
-            | publish
-            v
-      cms_posts / cms_docs / ...
-            |
-            v
-      article_revisions(type=published)
+      article_id = stable content identity
+      stage      = draft
 
-  For docs, the docs tree owns page structure and path slugs. A page node points
-  to this draft through `article_draft_id`; restoring an article revision does
-  not rewrite the tree node slug.
+      article_workspaces(stage=draft)
+             |
+             | publish
+             v
+      runtime article table + ArticleSnapshot(stage=public)
+
+  Docs are one article thread that consumes this common version layer. Docs
+  trash is intentionally not modeled here because restoring a doc also restores
+  tree nodes and pins, which is docs-specific product behavior.
   """
   alias __MODULE__
 
@@ -44,19 +41,21 @@ defmodule GroupherServer.CMS.Model.ArticleDraft do
   @min_body_length get_config(:article, :min_length)
   @max_subtitle_length 240
 
-  @required_fields ~w(community_id thread title slug digest json)a
+  @stages [:draft]
+  @required_fields ~w(community_id article_thread stage title slug digest json)a
   @optional_fields ~w(
     article_id author_id template_key subtitle markdown markdown_toc html xml rss
     plain_text content_hash schema_version
   )a
 
-  @type t :: %ArticleDraft{}
-  schema "article_drafts" do
+  @type t :: %ArticleWorkspace{}
+  schema "article_workspaces" do
     belongs_to(:community, Community)
     belongs_to(:author, Author)
 
-    field(:thread, Ecto.Enum, values: Threads.article_enums())
     field(:article_id, :id)
+    field(:article_thread, Ecto.Enum, values: Threads.article_enums())
+    field(:stage, Ecto.Enum, values: @stages)
     field(:title, :string)
     field(:subtitle, :string)
     field(:slug, :string)
@@ -76,22 +75,26 @@ defmodule GroupherServer.CMS.Model.ArticleDraft do
     timestamps(type: :utc_datetime)
   end
 
-  def changeset(%ArticleDraft{} = draft, attrs) do
+  def stages, do: @stages
+
+  def changeset(%ArticleWorkspace{} = draft, attrs) do
     draft
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_common()
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:author_id)
-    |> unique_constraint(:template_key, name: :article_drafts_community_id_template_key_index)
+    |> unique_constraint(:template_key, name: :article_workspaces_community_id_template_key_index)
+    |> unique_constraint(:stage, name: :article_workspaces_identity_stage_index)
   end
 
-  def update_changeset(%ArticleDraft{} = draft, attrs) do
+  def update_changeset(%ArticleWorkspace{} = draft, attrs) do
     draft
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_common()
     |> foreign_key_constraint(:author_id)
-    |> unique_constraint(:template_key, name: :article_drafts_community_id_template_key_index)
+    |> unique_constraint(:template_key, name: :article_workspaces_community_id_template_key_index)
+    |> unique_constraint(:stage, name: :article_workspaces_identity_stage_index)
   end
 
   defp validate_common(changeset) do

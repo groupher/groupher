@@ -2,18 +2,25 @@ defmodule GroupherServer.CMS.Model.DocsSiteState do
   @moduledoc """
   Community-level state for the docs workspace and published snapshot.
 
-      draft_revision
+      tree_lock_version
+          bumps on tree mutations and backs the editor `baseRevision` lock
+
+      site_draft_version
           bumps on any dashboard docs draft mutation
 
-      published_revision
-          will bump when the future publish service updates public docs
+      published_version
+          records which site draft version was last published
 
-      last_published_draft_revision
-          records which draft revision was last published
+      base_snapshot_id
+          published tree snapshot the staged events sit on
 
-  `has_unpublished_changes` is intentionally not stored. It is derived as:
+      staged_event_count
+          footer badge / tree dirty-state fast path
 
-      draft_revision != last_published_draft_revision
+  Site-level `has_unpublished_changes` is intentionally not stored. It is derived
+  as:
+
+      site_draft_version != published_version
   """
   alias __MODULE__
 
@@ -24,23 +31,25 @@ defmodule GroupherServer.CMS.Model.DocsSiteState do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.Community
+  alias CMS.Model.{Community, DocTreeSnapshot}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
 
   @required_fields ~w(community_id)a
-  @optional_fields ~w(draft_revision published_revision last_published_draft_revision last_published_at last_published_by_id)a
+  @optional_fields ~w(tree_lock_version site_draft_version published_version base_snapshot_id staged_event_count last_published_at last_published_by_id)a
 
   @type t :: %DocsSiteState{}
   schema "docs_site_states" do
     belongs_to(:community, Community)
+    belongs_to(:base_snapshot, DocTreeSnapshot)
     belongs_to(:last_published_by, User)
 
-    field(:draft_revision, :integer, default: 0)
-    field(:published_revision, :integer, default: 0)
-    field(:last_published_draft_revision, :integer, default: 0)
+    field(:tree_lock_version, :integer, default: 0)
+    field(:site_draft_version, :integer, default: 0)
+    field(:published_version, :integer, default: 0)
+    field(:staged_event_count, :integer, default: 0)
     field(:last_published_at, :utc_datetime)
 
     timestamps(type: :utc_datetime)
@@ -51,6 +60,7 @@ defmodule GroupherServer.CMS.Model.DocsSiteState do
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:community_id)
+    |> foreign_key_constraint(:base_snapshot_id)
     |> foreign_key_constraint(:last_published_by_id)
     |> unique_constraint(:community_id)
   end
@@ -58,6 +68,7 @@ defmodule GroupherServer.CMS.Model.DocsSiteState do
   def update_changeset(%DocsSiteState{} = state, attrs) do
     state
     |> cast(attrs, @optional_fields)
+    |> foreign_key_constraint(:base_snapshot_id)
     |> foreign_key_constraint(:last_published_by_id)
   end
 end

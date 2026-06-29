@@ -24,7 +24,7 @@ export default function useSalon({ actionVisible }: { actionVisible: boolean }) 
     arrowIcon: cn('size-3 ml-1.5 shrink-0 -rotate-90 trans-all-100', fill('digest')),
     arrowCollapsed: 'rotate-180',
     title: cn('truncate text-sm pointer smoky-65', `hover:${fg('title')}`),
-    actionSlot: '@max-[13rem]:hidden row-center relative ml-auto h-5 w-16 shrink-0 justify-end',
+    actionSlot: 'row-center relative ml-auto h-5 w-10 shrink-0 justify-end',
     coverStatus: cn(
       'align-both absolute right-0 top-1/2 size-4 -translate-y-1/2 pointer-events-none opacity-100',
       'group-hover/docs-tree-head:opacity-0',
@@ -40,7 +40,7 @@ export default function useSalon({ actionVisible }: { actionVisible: boolean }) 
       hover('box'),
     ),
     publishButton: cn(
-      'align-both size-5 plain-button opacity-0 trans-all-100',
+      'hidden',
       'group-hover/docs-tree-head:opacity-100',
       'group-focus-within/docs-tree-head:opacity-100',
       actionVisible && 'opacity-100',

@@ -343,20 +343,20 @@ export const findChildEditingTarget = (
 }
 
 /**
- * Find the local page child that owns a backend doc draft id.
+ * Find the local page child that owns a backend article workspace id.
  *
  * @example
- * const page = findPageByDocId(groups, currentDocId)
+ * const page = findPageByWorkspaceId(groups, currentWorkspaceId)
  */
-export const findPageByDocId = (
+export const findPageByWorkspaceId = (
   groups: readonly TSideTreeGroup[],
-  docId: string | null,
+  workspaceId: string | null,
 ): TSideTreeChild | null => {
-  if (!docId) return null
+  if (!workspaceId) return null
 
   for (const group of groups) {
     const child = group.children.find(
-      (item) => item.type === SIDE_TREE_NODE_TYPE.PAGE && item.docId === docId,
+      (item) => item.type === SIDE_TREE_NODE_TYPE.PAGE && item.workspaceId === workspaceId,
     )
     if (child) return child
   }
@@ -365,17 +365,17 @@ export const findPageByDocId = (
 }
 
 /**
- * Resolve the active side-tree id from the current URL doc id.
- * No doc id means the editor route should stay in its empty workspace state.
+ * Resolve the active side-tree id from the current URL workspace id.
+ * No workspace id means the editor route should stay in its empty workspace state.
  *
  * @example
- * const activeId = resolveActiveIdFromUrl(groups, currentDocId)
+ * const activeId = resolveActiveIdFromUrl(groups, currentWorkspaceId)
  */
 export const resolveActiveIdFromUrl = (
   groups: readonly TSideTreeGroup[],
-  docId: string | null,
+  workspaceId: string | null,
 ): string | null => {
-  if (docId) return findPageByDocId(groups, docId)?.id ?? null
+  if (workspaceId) return findPageByWorkspaceId(groups, workspaceId)?.id ?? null
 
   return null
 }
@@ -390,26 +390,26 @@ export const resolveActiveIdFromUrl = (
 export const findMovedNode = (
   prevGroups: readonly TSideTreeGroup[],
   nextGroups: readonly TSideTreeGroup[],
-): { id: string; targetParentId: string | null; targetIndex: number } | null => {
-  const prevPositions = new Map<string, { parentId: string | null; index: number }>()
+): { id: string; targetGroupId: string | null; targetIndex: number } | null => {
+  const prevPositions = new Map<string, { groupId: string | null; index: number }>()
 
   for (const [index, group] of prevGroups.entries()) {
-    prevPositions.set(group.id, { parentId: null, index })
+    prevPositions.set(group.id, { groupId: null, index })
     for (const [childIndex, child] of group.children.entries()) {
-      prevPositions.set(child.id, { parentId: group.id, index: childIndex })
+      prevPositions.set(child.id, { groupId: group.id, index: childIndex })
     }
   }
 
   for (const [index, group] of nextGroups.entries()) {
     const prev = prevPositions.get(group.id)
-    if (prev && (prev.parentId !== null || prev.index !== index)) {
-      return { id: group.id, targetParentId: null, targetIndex: index }
+    if (prev && (prev.groupId !== null || prev.index !== index)) {
+      return { id: group.id, targetGroupId: null, targetIndex: index }
     }
 
     for (const [childIndex, child] of group.children.entries()) {
       const prevChild = prevPositions.get(child.id)
-      if (prevChild && (prevChild.parentId !== group.id || prevChild.index !== childIndex)) {
-        return { id: child.id, targetParentId: group.id, targetIndex: childIndex }
+      if (prevChild && (prevChild.groupId !== group.id || prevChild.index !== childIndex)) {
+        return { id: child.id, targetGroupId: group.id, targetIndex: childIndex }
       }
     }
   }

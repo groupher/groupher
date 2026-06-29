@@ -7,10 +7,10 @@ import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
 
 import useDocsEditor from '../Editor/store/hooks'
-import { DOC_ACTION_LABEL_KEY } from './constant'
+import { DOC_ACTION_LABEL_KEY, DOC_REVISION_RELOAD_EVENT } from './constant'
 import RevisionDrawer from './RevisionDrawer'
-import { computeRevisionDiffStats, parseRevisionDocumentValue } from './RevisionDrawer/helper'
-import type { TArticleRevision, TDocDraftRevisionPayload } from './RevisionDrawer/spec'
+import { buildRevisionDiffModel, hasRevisionDiffStats } from './RevisionDrawer/helper'
+import type { TArticleSnapshot, TDocDraftSnapshotsPayload } from './RevisionDrawer/spec'
 import useSalon, { cn } from './salon/diff_status'
 
 const DiffStatus: FC = () => {
@@ -20,35 +20,58 @@ const DiffStatus: FC = () => {
   const { query } = useGraphQLClient()
   const { baselineValue, bodyValue, docDraftInfo } = useDocsEditor()
   const [visible, setVisible] = useState(false)
-  const [latestPublished, setLatestPublished] = useState<TArticleRevision | null>(null)
+  const [draftRevisions, setDraftRevisions] = useState<TArticleSnapshot[]>([])
+  const [publishedRevisions, setPublishedRevisions] = useState<TArticleSnapshot[]>([])
   const docDraftId = docDraftInfo.id
   const label = t(DOC_ACTION_LABEL_KEY.DIFF)
 
   useEffect(() => {
     if (!docDraftId) {
-      setLatestPublished(null)
+      setDraftRevisions([])
+      setPublishedRevisions([])
       return
     }
 
-    query<TDocDraftRevisionPayload>(S.docDraftRevisions, {
-      community,
-      id: docDraftId,
-      type: 'PUBLISHED',
-    })
-      .then((data) => {
-        setLatestPublished(data?.docDraftRevisions?.[0] || null)
-      })
-      .catch(() => {
-        setLatestPublished(null)
-      })
+    const loadRevisions = (): void => {
+      Promise.all([
+        query<TDocDraftSnapshotsPayload>(S.docDraftSnapshots, {
+          community,
+          id: docDraftId,
+          stage: 'DRAFT',
+        }),
+        query<TDocDraftSnapshotsPayload>(S.docDraftSnapshots, {
+          community,
+          id: docDraftId,
+          stage: 'PUBLIC',
+        }),
+      ])
+        .then(([draftData, publishedData]) => {
+          setDraftRevisions(draftData?.docDraftSnapshots || [])
+          setPublishedRevisions(publishedData?.docDraftSnapshots || [])
+        })
+        .catch(() => {
+          setDraftRevisions([])
+          setPublishedRevisions([])
+        })
+    }
+
+    loadRevisions()
+
+    window.addEventListener(DOC_REVISION_RELOAD_EVENT, loadRevisions)
+    return () => {
+      window.removeEventListener(DOC_REVISION_RELOAD_EVENT, loadRevisions)
+    }
   }, [community, docDraftId, query])
 
   const stats = useMemo(() => {
-    const previousValue = latestPublished
-      ? parseRevisionDocumentValue(latestPublished.documentJson)
-      : baselineValue
-    return computeRevisionDiffStats(previousValue, bodyValue)
-  }, [baselineValue, bodyValue, latestPublished])
+    return buildRevisionDiffModel({
+      baselineValue,
+      bodyValue,
+      draftRevisions,
+      publishedRevisions,
+    }).stagedStats
+  }, [baselineValue, bodyValue, draftRevisions, publishedRevisions])
+  const hasStats = hasRevisionDiffStats(stats)
 
   return (
     <>
@@ -60,8 +83,12 @@ const DiffStatus: FC = () => {
         onClick={() => setVisible(true)}
       >
         <MergeSVG className={cn(s.icon, visible && s.iconActive)} />
-        <span className={s.additions}>+{stats.additions}</span>
-        <span className={s.deletions}>-{stats.deletions}</span>
+        {hasStats && (
+          <>
+            <span className={s.additions}>+{stats.additions}</span>
+            <span className={s.deletions}>-{stats.deletions}</span>
+          </>
+        )}
       </button>
 
       <RevisionDrawer show={visible} onClose={() => setVisible(false)} />

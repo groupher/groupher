@@ -9,9 +9,10 @@ defmodule GroupherServer.Repo.Migrations.CreateDocTreeNodes do
         null: false
       )
 
-      add(:draft_revision, :integer, null: false, default: 0)
-      add(:published_revision, :integer, null: false, default: 0)
-      add(:last_published_draft_revision, :integer, null: false, default: 0)
+      add(:tree_lock_version, :integer, null: false, default: 0)
+      add(:site_draft_version, :integer, null: false, default: 0)
+      add(:published_version, :integer, null: false, default: 0)
+      add(:staged_event_count, :integer, null: false, default: 0)
       add(:last_published_at, :timestamptz)
       add(:last_published_by_id, references(:users, prefix: "account", on_delete: :nilify_all))
 
@@ -19,18 +20,6 @@ defmodule GroupherServer.Repo.Migrations.CreateDocTreeNodes do
     end
 
     create(unique_index(:docs_site_states, [:community_id], prefix: @prefix))
-
-    create table(:doc_tree_draft_states, prefix: @prefix) do
-      add(:community_id, references(:communities, prefix: @prefix, on_delete: :delete_all),
-        null: false
-      )
-
-      add(:revision, :integer, null: false, default: 0)
-
-      timestamps()
-    end
-
-    create(unique_index(:doc_tree_draft_states, [:community_id], prefix: @prefix))
 
     create table(:article_drafts, prefix: @prefix) do
       add(:community_id, references(:communities, prefix: @prefix, on_delete: :delete_all),

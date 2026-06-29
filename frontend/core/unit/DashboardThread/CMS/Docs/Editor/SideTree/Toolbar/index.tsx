@@ -12,6 +12,7 @@ import Input from '~/widgets/Input'
 import useSalon from '../salon/toolbar'
 
 type TToolbarAction = {
+  key: 'top' | 'group' | 'doc' | 'more'
   label:
     | 'dsb.cms.docs.side_tree.action.top'
     | 'dsb.cms.docs.side_tree.action.group'
@@ -22,10 +23,10 @@ type TToolbarAction = {
 }
 
 const ACTIONS: TToolbarAction[] = [
-  { label: 'dsb.cms.docs.side_tree.action.top', Icon: MapPinPlusSVG },
-  { label: 'dsb.cms.docs.side_tree.action.group', Icon: FolderPlusSVG },
-  { label: 'dsb.cms.docs.side_tree.action.doc', Icon: FilePlusSVG },
-  { label: 'dsb.cms.docs.side_tree.action.more', Icon: MoreSVG, compact: true },
+  { key: 'top', label: 'dsb.cms.docs.side_tree.action.top', Icon: MapPinPlusSVG },
+  { key: 'group', label: 'dsb.cms.docs.side_tree.action.group', Icon: FolderPlusSVG },
+  { key: 'doc', label: 'dsb.cms.docs.side_tree.action.doc', Icon: FilePlusSVG },
+  { key: 'more', label: 'dsb.cms.docs.side_tree.action.more', Icon: MoreSVG, compact: true },
 ]
 
 type TProps = {
@@ -33,10 +34,18 @@ type TProps = {
   searching: boolean
   onChangeQuery: (query: string) => void
   onCloseSearch: () => void
+  onAddGroup: () => void
   onOpenSearch: () => void
 }
 
-const Toolbar: FC<TProps> = ({ query, searching, onChangeQuery, onCloseSearch, onOpenSearch }) => {
+const Toolbar: FC<TProps> = ({
+  query,
+  searching,
+  onChangeQuery,
+  onCloseSearch,
+  onAddGroup,
+  onOpenSearch,
+}) => {
   const s = useSalon()
   const { t } = useTrans()
 
@@ -83,7 +92,7 @@ const Toolbar: FC<TProps> = ({ query, searching, onChangeQuery, onCloseSearch, o
 
       {!searching && (
         <div className={s.actions}>
-          {ACTIONS.map(({ label, Icon, compact }) => {
+          {ACTIONS.map(({ key, label, Icon, compact }) => {
             const actionText = t(label)
             const buttonLabel = compact
               ? t('dsb.cms.docs.side_tree.action.more_tree')
@@ -96,6 +105,7 @@ const Toolbar: FC<TProps> = ({ query, searching, onChangeQuery, onCloseSearch, o
                 className={compact ? s.moreButton : s.actionButton}
                 aria-label={buttonLabel}
                 title={buttonLabel}
+                onClick={key === 'group' ? onAddGroup : undefined}
               >
                 <Icon className={s.actionIcon} />
               </button>

@@ -16,6 +16,7 @@ export type TSegmentTabProps = {
   activeKey: string
   ariaLabel?: string
   className?: string
+  itemClassName?: string
   onChange?: TSegmentTabOnChange
 }
 
@@ -23,6 +24,7 @@ export type TSegmentTabOptionProps = {
   item: TSegmentTabOption
   index: number
   active: boolean
+  itemClassName?: string
   onClick: (index: number) => void
   onKeyDown: (event: KeyboardEvent<HTMLButtonElement>, index: number) => void
 }

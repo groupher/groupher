@@ -73,7 +73,7 @@ export const serializeEditorValue = (value: TRichEditorValue): string => JSON.st
  * Normalize a fetched draft and its active tree page into editor session state.
  *
  * @example
- * resolveDraftSession({ id: 'doc_1', title: 'Intro' }, { docId: 'doc_1', title: 'Fallback' })
+ * resolveDraftSession({ id: 'workspace_1', title: 'Intro' }, { workspaceId: 'workspace_1', title: 'Fallback' })
  * // => { title: 'Intro', slug: '', body: EMPTY_EDITOR_VALUE, ... }
  */
 export const resolveDraftSession = (
@@ -88,7 +88,7 @@ export const resolveDraftSession = (
     body,
     bodyJson: serializeEditorValue(body),
     info: {
-      id: draft?.id || activePage?.docId || '',
+      id: draft?.id || activePage?.workspaceId || '',
       title,
       subtitle,
       slug: draft?.slug || '',

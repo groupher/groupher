@@ -232,6 +232,9 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
   """
   defmacro general_article_fields(thread) do
+    document_module =
+      Module.concat(CMS.Model, "#{Recase.to_title(to_string(thread))}Document")
+
     quote do
       field(:inner_id, :id)
       field(:title, :string)
@@ -250,7 +253,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
       has_one(
         :document,
-        unquote(Module.concat(CMS.Model, "#{Recase.to_title(to_string(thread))}Document"))
+        unquote(document_module)
       )
 
       embeds_one(:meta, Embeds.ArticleMeta, on_replace: :update)

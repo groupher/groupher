@@ -15,8 +15,8 @@ export type TDocTreeNodePublishState = {
   status?: 'draft' | 'public' | null
   published: boolean
   publishedBefore?: boolean | null
-  publishedNodeId?: string | null
-  publishedDocId?: string | null
+  publicNodeId?: string | null
+  publicDocId?: string | null
   hasUnpublishedChanges?: boolean | null
   lastPublishedAt?: string | null
   inCover?: boolean | null
@@ -27,9 +27,10 @@ export type TDocTreeNodePublishState = {
 export type TDocTreeState = {
   hasUnpublishedChanges?: boolean | null
   stagedEventCount?: number | null
-  baseRevisionId?: string | null
-  latestRevisionId?: string | null
-  latestRevisionNumber?: number | null
+  baseSnapshotId?: string | null
+  latestSnapshotId?: string | null
+  latestReleaseId?: string | null
+  latestReleaseNumber?: number | null
   revision?: number | null
 }
 
@@ -40,6 +41,8 @@ export type TDocTreeEvent = {
   payload?: Record<string, unknown> | null
   inversePayload?: Record<string, unknown> | null
   status?: string | null
+  owner?: 'tree' | 'doc' | string | null
+  workspaceId?: string | null
   insertedAt?: string | null
 }
 
@@ -63,7 +66,8 @@ export type TSideTreePage = {
   type: typeof SIDE_TREE_NODE_TYPE.PAGE
   title?: string
   slug?: string
-  docId?: string
+  workspaceId?: string
+  docId?: string | null
   path?: string
   href?: string
   marker?: TMarkerValue
@@ -111,8 +115,6 @@ export type TSideTreeController = {
   deleteGroup: (groupId: string) => void
   toggleGroup: (groupId: string) => void
   toggleCoverGroup: (groupId: string, inCover: boolean) => void
-  publishGroup: (groupId: string) => void
-  moveGroupToDraft: (groupId: string) => void
   renameGroup: (groupId: string, title: string) => void
   renameChild: (groupId: string, childId: string, title: string) => void
   renameLink: (groupId: string, childId: string, input: TSideTreeLinkInput) => void
@@ -121,16 +123,15 @@ export type TSideTreeController = {
   handleChildAction: (groupId: string, childId: string, action: TSideTreeNodeMenuAction) => void
   updateChildStyle: (groupId: string, childId: string, marker: TSideTreeChild['marker']) => void
   patchChild: (childId: string, patch: Partial<TSideTreeChild>) => void
-  publishTree: () => Promise<void>
   reload: () => void
   reorderGroups: (groups: readonly TSideTreeGroup[]) => void
 }
 
 export type TDocTreeNodeDTO = {
   id: string
-  parentId?: string | null
+  groupId?: string | null
+  workspaceId?: string | null
   docId?: string | null
-  targetNodeId?: string | null
   type: TSideTreeGroup['type'] | TSideTreeChild['type'] | 'pin' | 'GROUP' | 'PAGE' | 'LINK' | 'PIN'
   title?: string | null
   slug?: string | null
@@ -140,7 +141,6 @@ export type TDocTreeNodeDTO = {
   badge?: string | null
   hidden?: boolean | null
   uiConfig?: Record<string, unknown> | null
-  target?: TDocTreeNodeDTO | null
   publishState?: TDocTreeNodePublishState | null
   children?: TDocTreeNodeDTO[] | null
 }

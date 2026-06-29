@@ -7,8 +7,8 @@ export default function useSalon() {
   const { cn, fg, rainbow } = useTwBelt()
 
   return {
-    wrapper: 'w-full min-w-0 overflow-hidden rounded-md text-xs leading-5',
-    row: cn('flex w-full min-w-0 gap-0.5 py-0.5', fg('digest')),
+    wrapper: 'block w-full min-w-full overflow-hidden rounded-md text-xs leading-5',
+    row: cn('flex w-full min-w-full basis-full self-stretch gap-0.5 py-0.5', fg('digest')),
     addedRow: rainbow(COLOR.GREEN, 'bgSoft'),
     removedRow: rainbow(COLOR.RED, 'bgSoft'),
     addedSegment: 'bg-lime-200/80 bold-sm',

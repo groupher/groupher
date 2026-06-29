@@ -84,32 +84,32 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
-  def doc_draft_revisions(_root, %{community: %Community{} = community, id: id} = args, _info) do
+  def doc_draft_snapshots(_root, %{community: %Community{} = community, id: id} = args, _info) do
     opts =
       args
-      |> Map.take([:type, :limit])
+      |> Map.take([:stage, :limit])
       |> Enum.to_list()
 
-    CMS.Articles.list_doc_draft_revisions(community, id, opts)
+    CMS.Articles.list_doc_draft_snapshots(community, id, opts)
   end
 
-  def doc_draft_revisions(_root, %{community: community} = args, _info) do
+  def doc_draft_snapshots(_root, %{community: community} = args, _info) do
     with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
-      doc_draft_revisions(nil, Map.put(args, :community, community), nil)
+      doc_draft_snapshots(nil, Map.put(args, :community, community), nil)
     end
   end
 
-  def doc_draft_revision(
+  def doc_draft_snapshot(
         _root,
-        %{community: %Community{} = community, id: id, revision_id: revision_id},
+        %{community: %Community{} = community, id: id, snapshot_id: snapshot_id},
         _info
       ) do
-    CMS.Articles.get_doc_draft_revision(community, id, revision_id)
+    CMS.Articles.get_doc_draft_snapshot(community, id, snapshot_id)
   end
 
-  def doc_draft_revision(_root, %{community: community} = args, _info) do
+  def doc_draft_snapshot(_root, %{community: community} = args, _info) do
     with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
-      doc_draft_revision(nil, Map.put(args, :community, community), nil)
+      doc_draft_snapshot(nil, Map.put(args, :community, community), nil)
     end
   end
 
@@ -139,6 +139,13 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     )
   end
 
+  def create_doc_tree_pin(_root, %{community: community, input: input} = args, _info) do
+    CMS.DocTree.create_pin(
+      community,
+      input |> Map.put(:base_revision, args[:base_revision]) |> with_doc_tree_actor(args)
+    )
+  end
+
   def update_doc_tree_node(
         _root,
         %{community: community, id: id, patch: patch} = args,
@@ -155,66 +162,47 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.DocTree.update_draft(community, id, Map.take(args, [:title, :subtitle, :slug, :body]))
   end
 
-  def checkpoint_doc_draft_revision(
+  def checkpoint_doc_draft_snapshot(
         _root,
         %{community: community, id: id, cur_user: user},
         _info
       ) do
-    CMS.Articles.checkpoint_doc_draft_revision(community, id, user)
+    CMS.Articles.checkpoint_doc_draft_snapshot(community, id, user)
   end
 
-  def checkpoint_doc_draft_revision(_root, %{community: community, id: id}, _info) do
-    CMS.Articles.checkpoint_doc_draft_revision(community, id)
+  def checkpoint_doc_draft_snapshot(_root, %{community: community, id: id}, _info) do
+    CMS.Articles.checkpoint_doc_draft_snapshot(community, id)
   end
 
-  def restore_doc_draft_revision(
+  def restore_doc_draft_snapshot(
         _root,
-        %{community: community, id: id, revision_id: revision_id, cur_user: user},
+        %{community: community, id: id, snapshot_id: snapshot_id, cur_user: user},
         _info
       ) do
-    CMS.Articles.restore_doc_draft_revision(community, id, revision_id, user)
+    CMS.Articles.restore_doc_draft_snapshot(community, id, snapshot_id, user)
   end
 
-  def restore_doc_draft_revision(
+  def restore_doc_draft_snapshot(
         _root,
-        %{community: community, id: id, revision_id: revision_id},
+        %{community: community, id: id, snapshot_id: snapshot_id},
         _info
       ) do
-    CMS.Articles.restore_doc_draft_revision(community, id, revision_id)
+    CMS.Articles.restore_doc_draft_snapshot(community, id, snapshot_id)
   end
 
-  def publish_doc_draft_revision(
-        _root,
-        %{community: community, id: id, cur_user: user} = args,
-        _info
-      ) do
-    sync_cover? = publish_with_cover_sync?(args)
-
-    CMS.DocTree.publish_doc(community, id, user, sync_cover: sync_cover?)
+  def doc_publish_plan(_root, %{community: community}, _info) do
+    {:ok, CMS.DocTree.publish_plan(community)}
   end
 
-  def publish_all_unpublished_doc_drafts(
+  def publish_doc_changes(
         _root,
         %{community: community, cur_user: user} = args,
         _info
       ) do
+    input = Map.get(args, :input) || %{}
     sync_cover? = publish_with_cover_sync?(args)
 
-    CMS.DocTree.publish_all_unpublished_docs(community, user, sync_cover: sync_cover?)
-  end
-
-  def publish_doc_tree_group(
-        _root,
-        %{community: community, group_id: group_id, cur_user: user} = args,
-        _info
-      ) do
-    sync_cover? = publish_with_cover_sync?(args)
-
-    CMS.DocTree.publish_group(community, group_id, user, sync_cover: sync_cover?)
-  end
-
-  def publish_doc_tree(_root, %{community: community, cur_user: user}, _info) do
-    CMS.DocTree.publish_tree(community, user)
+    CMS.DocTree.publish_changes(community, input, user, sync_cover: sync_cover?)
   end
 
   defp doc_cover_view(args), do: Map.get(args, :view) || :public
@@ -317,7 +305,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
       id,
       %{
         base_revision: args[:base_revision],
-        target_parent_id: args[:target_parent_id],
+        target_group_id: args[:target_group_id],
         target_index: args.target_index
       }
       |> with_doc_tree_actor(args)

@@ -1,66 +1,69 @@
 defmodule GroupherServer.CMS.DocTree.Snapshot do
   @moduledoc """
-  Canonical JSON snapshots for docs Tree.
+  Canonical JSON snapshots for docs Tree publish history.
 
-      doc_tree_node_drafts(type=group/page/link/pin)
-                     |
-                     v
-              canonical tree_json
-                     |
-          +----------+----------+
-          |                     |
-      tree_hash          doc_tree_revisions
+      doc_tree_nodes(stage=draft/public)
+                    |
+                    v
+             canonical tree_json
+                    |
+                    v
+             doc_tree_snapshots
 
-  The snapshot is deliberately a product-level JSON shape, not raw DB rows. It
-  is stable enough for review/diff and small enough to materialize on publish.
+  Snapshot JSON uses stable `node_id` values, not physical row ids. This is the
+  middle layer used by Tree diff/review UI.
   """
 
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-
-  alias CMS.Model.{
-    Community,
-    DocTreeNode,
-    DocTreeNodeDraft
-  }
+  alias CMS.Model.{Community, DocTreeNode}
 
   @tree_version 1
 
   @doc """
   Returns canonical draft-tree JSON for one community.
 
-  Pins are root-level Tree nodes, so they live beside groups in the same
-  snapshot even though the feature UI is not implemented yet.
+  ## Examples
+
+      iex> Snapshot.draft_json(community)
+      %{"version" => 1, "groups" => groups}
   """
   @spec draft_json(Community.t()) :: map()
-  def draft_json(%Community{} = community) do
-    nodes =
-      DocTreeNodeDraft
-      |> where([n], n.community_id == ^community.id)
-      |> where([n], is_nil(n.deleted_at))
-      |> order_by([n], asc: n.index, asc: n.id)
-      |> Repo.all()
-
-    tree_json(nodes)
-  end
+  def draft_json(%Community{} = community), do: stage_json(community, :draft)
 
   @doc """
-  Returns canonical published-tree JSON for one community.
+  Returns canonical public-tree JSON for one community.
+
+  ## Examples
+
+      iex> Snapshot.published_json(community)
+      %{"version" => 1}
   """
   @spec published_json(Community.t()) :: map()
-  def published_json(%Community{} = community) do
-    nodes =
-      DocTreeNode
-      |> where([n], n.community_id == ^community.id)
-      |> order_by([n], asc: n.index, asc: n.id)
-      |> Repo.all()
+  def published_json(%Community{} = community), do: stage_json(community, :public)
 
-    tree_json(nodes)
-  end
+  @doc """
+  Returns canonical JSON from a pre-filtered node list.
+
+  Tree publish uses this after filtering out doc-owned draft-only pages, so the
+  stored snapshot matches the public tree materialized in the same transaction.
+
+  ## Examples
+
+      iex> Snapshot.from_nodes(nodes)["version"]
+      1
+  """
+  @spec from_nodes(list(DocTreeNode.t())) :: map()
+  def from_nodes(nodes) when is_list(nodes), do: tree_json(nodes)
 
   @doc """
   Computes a stable content hash for canonical tree JSON.
+
+  ## Examples
+
+      iex> Snapshot.hash(%{"version" => 1})
+      "..."
   """
   @spec hash(map()) :: String.t()
   def hash(tree_json) when is_map(tree_json) do
@@ -69,17 +72,21 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   end
 
   @doc """
-  Converts a draft or published node into the canonical snapshot node shape.
+  Converts a tree node into the canonical snapshot node shape.
+
+  ## Examples
+
+      iex> Snapshot.node_json(node)["id"] == node.node_id
+      true
   """
-  @spec node_json(DocTreeNodeDraft.t() | DocTreeNode.t()) :: map()
-  def node_json(node) do
+  @spec node_json(DocTreeNode.t()) :: map()
+  def node_json(%DocTreeNode{} = node) do
     %{
-      "id" => to_string(node.id),
+      "id" => node.node_id,
       "type" => to_string(node.type),
       "title" => node.title,
       "slug" => node.slug,
-      "docId" => doc_id(node),
-      "targetNodeId" => target_node_id(node),
+      article_ref_key(node) => article_ref_id(node),
       "href" => node.href,
       "marker" => node.marker,
       "badge" => node.badge,
@@ -90,8 +97,24 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
     |> Map.new()
   end
 
+  defp article_ref_key(%DocTreeNode{stage: :draft}), do: "workspaceId"
+  defp article_ref_key(%DocTreeNode{stage: :public}), do: "docId"
+  defp article_ref_key(_node), do: "docId"
+
+  defp stage_json(%Community{} = community, stage) do
+    DocTreeNode
+    |> where([n], n.community_id == ^community.id)
+    |> where([n], n.stage == ^stage)
+    |> order_by([n], asc: n.index, asc: n.id)
+    |> Repo.all()
+    |> tree_json()
+  end
+
   defp tree_json(nodes) do
-    children_by_parent = nodes |> Enum.filter(& &1.parent_id) |> Enum.group_by(& &1.parent_id)
+    children_by_group =
+      nodes
+      |> Enum.filter(&(&1.group_id && &1.type in [:page, :link]))
+      |> Enum.group_by(& &1.group_id)
 
     pins =
       nodes
@@ -100,27 +123,22 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
 
     groups =
       nodes
-      |> Enum.filter(&(&1.type == :group))
+      |> Enum.filter(&(&1.type == :group and &1.node_id != "pin"))
       |> Enum.map(fn group ->
         group
         |> node_json()
         |> Map.put(
           "children",
-          Enum.map(Map.get(children_by_parent, group.id, []), &node_json/1)
+          Enum.map(Map.get(children_by_group, group.node_id, []), &node_json/1)
         )
       end)
 
-    %{
-      "version" => @tree_version,
-      "pins" => pins,
-      "groups" => groups
-    }
+    %{"version" => @tree_version, "pins" => pins, "groups" => groups}
   end
 
-  defp doc_id(%DocTreeNodeDraft{} = node),
-    do: node.article_draft_id && to_string(node.article_draft_id)
+  defp article_ref_id(%DocTreeNode{stage: :draft} = node),
+    do: node.workspace_id && to_string(node.workspace_id)
 
-  defp doc_id(%DocTreeNode{} = node), do: node.doc_id && to_string(node.doc_id)
-
-  defp target_node_id(node), do: node.target_node_id && to_string(node.target_node_id)
+  defp article_ref_id(%DocTreeNode{stage: :public} = node),
+    do: node.doc_id && to_string(node.doc_id)
 end

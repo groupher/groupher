@@ -2,14 +2,20 @@ defmodule GroupherServer.CMS.DocTree.Events do
   @moduledoc """
   Event log for Tree staged changes.
 
-      user tree action
+      user tree action                         new docs page
             |
             v
-      materialized draft rows  +  doc_tree_events(status=staged)
+      materialized draft rows  +  doc_tree_events(owner=tree, status=staged)
             |                                |
             | publish tree                   | diff/revert UI
             v                                v
-      doc_tree_revisions            human-readable Tree changes
+      doc_tree_snapshots            human-readable Tree changes
+
+      doc_tree_events(owner=doc, workspace_id=draft.id)
+            |
+            | publish doc
+            v
+      public page node + published doc event
 
   Events are intentionally domain-level. They are not a raw JSON patch; each one
   can be rendered, reviewed, and eventually reverted with its inverse payload.
@@ -19,22 +25,31 @@ defmodule GroupherServer.CMS.DocTree.Events do
 
   alias GroupherServer.{CMS, Repo}
   alias CMS.DocTree.Snapshot
-  alias CMS.Model.{Community, DocTreeEvent, DocTreeNodeDraft, DocTreeRevision}
+  alias CMS.Model.{Community, DocTreeEvent, DocTreeNode, DocTreeSnapshot}
   alias Helper.{ORM, T}
 
-  @tree_fields ~w(title slug marker badge hidden href target_node_id ui_config)a
+  @tree_fields ~w(title slug marker badge hidden href ui_config)a
 
   @doc """
   Records one staged Tree event.
+
+  ## Examples
+
+      iex> Events.record_staged(community, "node.rename", payload, inverse)
+      {:ok, %DocTreeEvent{owner: :tree}}
+
+      iex> Events.record_staged(community, "node.create", payload, inverse, user.id, owner: :doc, workspace_id: draft.id)
+      {:ok, %DocTreeEvent{owner: :doc}}
   """
-  @spec record_staged(Community.t(), String.t(), map(), map(), integer() | nil) ::
+  @spec record_staged(Community.t(), String.t(), map(), map(), integer() | nil, keyword()) ::
           T.domain_res(DocTreeEvent.t())
   def record_staged(
         %Community{} = community,
         event_type,
         payload,
         inverse_payload,
-        author_id \\ nil
+        author_id \\ nil,
+        opts \\ []
       ) do
     ORM.create(DocTreeEvent, %{
       community_id: community.id,
@@ -43,20 +58,32 @@ defmodule GroupherServer.CMS.DocTree.Events do
       payload: payload,
       inverse_payload: inverse_payload,
       status: :staged,
+      owner: Keyword.get(opts, :owner, :tree),
+      workspace_id: Keyword.get(opts, :workspace_id),
       author_id: author_id
     })
   end
 
   @doc """
   Records a list of staged Tree events.
+
+  ## Examples
+
+      iex> Events.record_staged_many(community, [%{type: "node.rename", payload: %{}, inverse: %{}}])
+      {:ok, [%DocTreeEvent{owner: :tree}]}
   """
   @spec record_staged_many(Community.t(), list(map()), integer() | nil) ::
           T.domain_res(list(DocTreeEvent.t()))
   def record_staged_many(%Community{} = community, events, author_id \\ nil) do
     events
-    |> Enum.reduce_while({:ok, []}, fn %{type: type, payload: payload, inverse: inverse},
+    |> Enum.reduce_while({:ok, []}, fn %{type: type, payload: payload, inverse: inverse} = attrs,
                                        {:ok, acc} ->
-      case record_staged(community, type, payload, inverse, author_id) do
+      opts =
+        attrs
+        |> Map.take([:owner, :workspace_id])
+        |> Enum.into([])
+
+      case record_staged(community, type, payload, inverse, author_id, opts) do
         {:ok, event} -> {:cont, {:ok, [event | acc]}}
         error -> {:halt, error}
       end
@@ -70,20 +97,40 @@ defmodule GroupherServer.CMS.DocTree.Events do
   @doc """
   Returns staged events in user-action order.
   """
-  @spec staged_events(Community.t()) :: list(DocTreeEvent.t())
-  def staged_events(%Community{} = community) do
+  @spec staged_events(Community.t(), keyword()) :: list(DocTreeEvent.t())
+  def staged_events(%Community{} = community, opts \\ []) do
+    owner = Keyword.get(opts, :owner)
+
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
     |> where([e], e.status == :staged)
+    |> maybe_filter_owner(owner)
     |> order_by([e], asc: e.seq, asc: e.id)
     |> Repo.all()
   end
 
   @doc """
+  Counts staged Tree-owned events that should drive the Tree SavingBar.
+
+  ## Examples
+
+      iex> Events.staged_tree_event_count(community)
+      2
+  """
+  @spec staged_tree_event_count(Community.t()) :: non_neg_integer()
+  def staged_tree_event_count(%Community{} = community) do
+    DocTreeEvent
+    |> where([e], e.community_id == ^community.id)
+    |> where([e], e.status == :staged)
+    |> where([e], e.owner == :tree)
+    |> Repo.aggregate(:count, :id)
+  end
+
+  @doc """
   Builds domain events for a node patch by comparing the before/after node.
   """
-  @spec update_events(DocTreeNodeDraft.t(), DocTreeNodeDraft.t()) :: list(map())
-  def update_events(%DocTreeNodeDraft{} = before, %DocTreeNodeDraft{} = after_node) do
+  @spec update_events(DocTreeNode.t(), DocTreeNode.t()) :: list(map())
+  def update_events(%DocTreeNode{} = before, %DocTreeNode{} = after_node) do
     @tree_fields
     |> Enum.flat_map(fn field ->
       before_value = Map.get(before, field)
@@ -100,8 +147,8 @@ defmodule GroupherServer.CMS.DocTree.Events do
   @doc """
   Builds a create event for a new group/page/link node.
   """
-  @spec create_event(DocTreeNodeDraft.t()) :: map()
-  def create_event(%DocTreeNodeDraft{} = node) do
+  @spec create_event(DocTreeNode.t()) :: map()
+  def create_event(%DocTreeNode{} = node) do
     node_payload = node_payload(node)
 
     %{
@@ -114,8 +161,8 @@ defmodule GroupherServer.CMS.DocTree.Events do
   @doc """
   Builds a delete event for a removed group/page/link node.
   """
-  @spec delete_event(DocTreeNodeDraft.t()) :: map()
-  def delete_event(%DocTreeNodeDraft{} = node) do
+  @spec delete_event(DocTreeNode.t()) :: map()
+  def delete_event(%DocTreeNode{} = node) do
     node_payload = node_payload(node)
 
     %{
@@ -129,7 +176,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
   Builds a move event for one node.
   """
   @spec move_event(
-          DocTreeNodeDraft.t(),
+          DocTreeNode.t(),
           Ecto.UUID.t() | nil,
           integer(),
           Ecto.UUID.t() | nil,
@@ -137,43 +184,44 @@ defmodule GroupherServer.CMS.DocTree.Events do
         ) ::
           map()
   def move_event(
-        %DocTreeNodeDraft{} = node,
-        before_parent_id,
+        %DocTreeNode{} = node,
+        before_group_id,
         before_index,
-        after_parent_id,
+        after_group_id,
         after_index
       ) do
     %{
       type: "node.move",
       payload: %{
-        "nodeId" => to_string(node.id),
+        "nodeId" => node.node_id,
         "title" => node.title,
-        "beforeParentId" => stringify_id(before_parent_id),
-        "afterParentId" => stringify_id(after_parent_id),
+        "beforeGroupId" => before_group_id,
+        "afterGroupId" => after_group_id,
         "beforeIndex" => before_index,
         "afterIndex" => after_index
       },
       inverse: %{
-        "nodeId" => to_string(node.id),
-        "targetParentId" => stringify_id(before_parent_id),
+        "nodeId" => node.node_id,
+        "targetGroupId" => before_group_id,
         "targetIndex" => before_index
       }
     }
   end
 
   @doc """
-  Marks all staged events as published by the given Tree revision.
+  Marks staged Tree-owned events as published by the given Tree snapshot.
   """
-  @spec mark_staged_published(Community.t(), DocTreeRevision.t()) :: non_neg_integer()
-  def mark_staged_published(%Community{} = community, %DocTreeRevision{} = revision) do
+  @spec mark_staged_published(Community.t(), DocTreeSnapshot.t()) :: non_neg_integer()
+  def mark_staged_published(%Community{} = community, %DocTreeSnapshot{} = snapshot) do
     {count, _} =
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
       |> where([e], e.status == :staged)
+      |> where([e], e.owner == :tree)
       |> Repo.update_all(
         set: [
           status: :published,
-          published_revision_id: revision.id,
+          snapshot_id: snapshot.id,
           updated_at: DateTime.utc_now(:second)
         ]
       )
@@ -182,25 +230,123 @@ defmodule GroupherServer.CMS.DocTree.Events do
   end
 
   @doc """
-  Creates a Tree revision from the current draft snapshot and archives events.
-  """
-  @spec publish_snapshot(Community.t(), integer() | nil, String.t() | nil) ::
-          T.domain_res(DocTreeRevision.t())
-  def publish_snapshot(%Community{} = community, author_id \\ nil, message \\ nil) do
-    tree_json = Snapshot.draft_json(community)
+  Marks selected staged Tree-owned events as published by the given Tree snapshot.
 
-    with {:ok, revision} <-
-           ORM.create(DocTreeRevision, %{
+  Unified publish can publish a subset of the pending checklist. In that path we
+  must not archive every staged Tree event, otherwise unchecked items disappear
+  from the next `publishPlan`.
+
+  ## Examples
+
+      iex> Events.mark_tree_events_published(community, snapshot, [1, 2])
+      2
+  """
+  @spec mark_tree_events_published(Community.t(), DocTreeSnapshot.t(), list(T.id())) ::
+          non_neg_integer()
+  def mark_tree_events_published(%Community{} = community, %DocTreeSnapshot{} = snapshot, ids) do
+    ids = Enum.map(ids, &to_string/1)
+
+    {count, _} =
+      DocTreeEvent
+      |> where([e], e.community_id == ^community.id)
+      |> where([e], e.status == :staged)
+      |> where([e], e.owner == :tree)
+      |> where([e], fragment("?::text", e.id) in ^ids)
+      |> Repo.update_all(
+        set: [
+          status: :published,
+          snapshot_id: snapshot.id,
+          updated_at: DateTime.utc_now(:second)
+        ]
+      )
+
+    count
+  end
+
+  @doc """
+  Marks doc-bound events for one article draft as published.
+
+  The article publish flow owns these events, so they intentionally do not get a
+  `snapshot_id` from Tree publish. Legacy tree-owned page create events are
+  included so page creation stays an atomic docs publish operation.
+
+  ## Examples
+
+      iex> Events.mark_doc_bound_published(community, draft.id)
+      1
+  """
+  @spec mark_doc_bound_published(Community.t(), T.id()) :: non_neg_integer()
+  def mark_doc_bound_published(%Community{} = community, workspace_id) do
+    {count, _} =
+      DocTreeEvent
+      |> where([e], e.community_id == ^community.id)
+      |> where([e], e.status == :staged)
+      |> where([e], e.owner == :doc)
+      |> where([e], e.workspace_id == ^workspace_id)
+      |> Repo.update_all(
+        set: [
+          status: :published,
+          updated_at: DateTime.utc_now(:second)
+        ]
+      )
+
+    {legacy_count, _} =
+      DocTreeEvent
+      |> where([e], e.community_id == ^community.id)
+      |> where([e], e.status == :staged)
+      |> where([e], e.owner == :tree)
+      |> where([e], e.event_type == "node.create")
+      |> where([e], fragment("?->'node'->>'type'", e.payload) == "page")
+      |> where(
+        [e],
+        fragment("?->'node'->>'workspaceId'", e.payload) == ^to_string(workspace_id)
+      )
+      |> Repo.update_all(
+        set: [
+          status: :published,
+          updated_at: DateTime.utc_now(:second)
+        ]
+      )
+
+    count + legacy_count
+  end
+
+  @doc """
+  Creates a Tree snapshot from canonical JSON and archives events.
+
+  When `:event_ids` is omitted, all staged tree-owned events are archived. When
+  it is provided, only those staged events are marked published.
+
+  ## Examples
+
+      iex> Events.publish_snapshot(community, user.id, "rename")
+      {:ok, %DocTreeSnapshot{}}
+
+      iex> Events.publish_snapshot(community, user.id, "selected", event_ids: [1])
+      {:ok, %DocTreeSnapshot{}}
+  """
+  @spec publish_snapshot(Community.t(), integer() | nil, String.t() | nil, keyword()) ::
+          T.domain_res(DocTreeSnapshot.t())
+  def publish_snapshot(%Community{} = community, author_id \\ nil, message \\ nil, opts \\ []) do
+    tree_json = Keyword.get(opts, :tree_json) || Snapshot.draft_json(community)
+    event_ids = Keyword.get(opts, :event_ids)
+
+    with {:ok, snapshot} <-
+           ORM.create(DocTreeSnapshot, %{
              community_id: community.id,
-             revision_number: next_revision_number(community),
              tree_json: tree_json,
              tree_hash: Snapshot.hash(tree_json),
              author_id: author_id,
              message: message,
              published_at: DateTime.utc_now(:second)
            }) do
-      mark_staged_published(community, revision)
-      {:ok, revision}
+      if is_list(event_ids) do
+        mark_tree_events_published(community, snapshot, event_ids)
+      else
+        mark_staged_published(community, snapshot)
+      end
+
+      {:ok, snapshot}
     end
   end
 
@@ -242,7 +388,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
 
   defp base_field_payload(node, field, before_value, after_value) do
     %{
-      "nodeId" => to_string(node.id),
+      "nodeId" => node.node_id,
       "nodeType" => to_string(node.type),
       "title" => node.title,
       "field" => field,
@@ -253,22 +399,19 @@ defmodule GroupherServer.CMS.DocTree.Events do
 
   defp inverse_field_payload(node, field, value) do
     %{
-      "nodeId" => to_string(node.id),
+      "nodeId" => node.node_id,
       "field" => field,
       "value" => value
     }
   end
 
-  defp node_payload(%DocTreeNodeDraft{} = node) do
+  defp node_payload(%DocTreeNode{} = node) do
     Snapshot.node_json(node)
     |> Map.merge(%{
-      "parentId" => stringify_id(node.parent_id),
+      "groupId" => node.group_id,
       "index" => node.index
     })
   end
-
-  defp stringify_id(nil), do: nil
-  defp stringify_id(id), do: to_string(id)
 
   defp next_seq(%Community{} = community) do
     DocTreeEvent
@@ -281,14 +424,6 @@ defmodule GroupherServer.CMS.DocTree.Events do
     end
   end
 
-  defp next_revision_number(%Community{} = community) do
-    DocTreeRevision
-    |> where([r], r.community_id == ^community.id)
-    |> select([r], max(r.revision_number))
-    |> Repo.one()
-    |> case do
-      nil -> 1
-      revision -> revision + 1
-    end
-  end
+  defp maybe_filter_owner(query, nil), do: query
+  defp maybe_filter_owner(query, owner), do: where(query, [e], e.owner == ^owner)
 end

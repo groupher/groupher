@@ -13,7 +13,7 @@ export default function useSalon() {
       bg('card'),
       hover('box'),
     ),
-    itemSelected: cn(rainbow(COLOR.ORANGE, 'border'), bg('hoverBg')),
+    itemSelected: rainbow(COLOR.ORANGE, 'border'),
     selectButton: 'block w-full min-w-0 button-reset text-left',
     summary: cn('row-center gap-2 text-sm bold-sm', fg('title')),
     additions: rainbow(COLOR.GREEN, 'fg'),
@@ -26,6 +26,6 @@ export default function useSalon() {
       fg('hint'),
     ),
     actions: 'mt-2 row-center w-full justify-end px-3',
-    diffSlot: cn('mt-2 -mx-3 block min-w-0 border-t pt-2', br('divider')),
+    diffSlot: 'mt-3 -mx-3 block w-auto min-w-0 self-stretch',
   }
 }

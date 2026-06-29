@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.DocCover do
 
       dashboard side tree(draft ids)
                  |
-                 | resolve through doc_tree_node_publish_mappings
+                 | resolve same node_id at stage=public
                  v
       doc_cover_groups/items/pinned_items
                  |

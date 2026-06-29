@@ -1,7 +1,7 @@
 defmodule GroupherServer.Repo.Migrations.AddXmlToArticleDocuments do
   use Ecto.Migration
 
-  @thread_document_tables [:post_documents, :doc_documents, :changelog_documents, :blog_documents]
+  @thread_document_tables [:post_documents, :doc_contents, :changelog_documents, :blog_documents]
 
   def up do
     alter table(:article_documents, prefix: :cms) do

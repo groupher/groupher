@@ -5,10 +5,10 @@ defmodule GroupherServer.CMS.DocCover.Write do
       dashboard action(draft id)
                 |
                 v
-      doc_tree_node_publish_mappings
+      doc_tree_nodes(stage=draft, node_id)
                 |
                 v
-      published doc_tree_nodes
+      doc_tree_nodes(stage=public, same node_id)
                 |
                 v
       doc_cover_groups/items/pinned_items
@@ -26,9 +26,7 @@ defmodule GroupherServer.CMS.DocCover.Write do
     DocCoverGroup,
     DocCoverItem,
     DocCoverPinnedItem,
-    DocTreeNode,
-    DocTreeNodeDraft,
-    DocTreeNodePublishMapping
+    DocTreeNode
   }
 
   alias Helper.{ORM, T}
@@ -66,7 +64,10 @@ defmodule GroupherServer.CMS.DocCover.Write do
   def set_item_hidden(%Community{} = community, draft_node_id, hidden) when is_boolean(hidden) do
     with {:ok, page} <- resolve_published_page(community, draft_node_id),
          {:ok, cover_group} <-
-           ORM.find_by(DocCoverGroup, community_id: community.id, group_id: page.parent_id),
+           ORM.find_by(DocCoverGroup,
+             community_id: community.id,
+             group_id: public_group_row_id(community, page.group_id)
+           ),
          {:ok, item} <- ensure_cover_item(community, cover_group, page) do
       ORM.update(item, %{hidden: hidden})
     end
@@ -202,15 +203,8 @@ defmodule GroupherServer.CMS.DocCover.Write do
   end
 
   defp resolve_published_node(%Community{} = community, draft_node_id) do
-    with {:ok, mapping} <-
-           ORM.find_by(DocTreeNodePublishMapping,
-             community_id: community.id,
-             draft_node_id: draft_node_id,
-             visibility: :public
-           ),
-         {:ok, published} <- ORM.find(DocTreeNode, mapping.published_node_id) do
-      {:ok, published}
-    else
+    case CMS.DocTree.Publish.public_node_for_draft(community, draft_node_id) do
+      {:ok, published} -> {:ok, published}
       {:error, _} -> {:error, {:custom, "Publish it before adding it to cover."}}
     end
   end
@@ -220,20 +214,17 @@ defmodule GroupherServer.CMS.DocCover.Write do
 
   defp published_pages_for_draft_group(%Community{} = community, draft_group_id) do
     pages =
-      DocTreeNodeDraft
+      DocTreeNode
       |> where([n], n.community_id == ^community.id)
-      |> where([n], n.parent_id == ^draft_group_id)
+      |> where([n], n.stage == :draft)
+      |> where([n], n.group_id == ^to_string(draft_group_id))
       |> where([n], n.type == :page)
-      |> join(:inner, [n], m in DocTreeNodePublishMapping,
-        on:
-          m.community_id == n.community_id and m.draft_node_id == n.id and
-            m.visibility == :public
-      )
-      |> join(:inner, [_n, m], p in DocTreeNode, on: p.id == m.published_node_id)
-      |> where([_n, _m, p], p.type == :page)
-      |> order_by([n, _m, p], asc: n.index, asc: p.id)
-      |> select([_n, _m, p], p)
       |> Repo.all()
+      |> Enum.map(&CMS.DocTree.Publish.public_node_for_draft(community, &1.node_id))
+      |> Enum.flat_map(fn
+        {:ok, %DocTreeNode{type: :page} = node} -> [node]
+        _ -> []
+      end)
 
     {:ok, pages}
   end
@@ -242,6 +233,13 @@ defmodule GroupherServer.CMS.DocCover.Write do
     do: {:error, {:custom, "Publish a doc before adding this group to cover."}}
 
   defp ensure_has_pages(_pages), do: :ok
+
+  defp public_group_row_id(%Community{} = community, group_node_id) do
+    case CMS.DocTree.Publish.public_node_for_draft(community, group_node_id) do
+      {:ok, group} -> group.id
+      _ -> nil
+    end
+  end
 
   defp seed_items(%Community{} = community, %DocCoverGroup{} = cover_group, pages) do
     pages

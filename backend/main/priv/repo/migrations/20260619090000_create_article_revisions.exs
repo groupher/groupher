@@ -1,10 +1,10 @@
-defmodule GroupherServer.Repo.Migrations.CreateArticleRevisions do
+defmodule GroupherServer.Repo.Migrations.CreateArticleSnapshots do
   use Ecto.Migration
 
   @prefix "cms"
 
   def change do
-    create table(:article_revisions, prefix: @prefix) do
+    create table(:article_snapshots, prefix: @prefix) do
       add(:community_id, references(:communities, prefix: @prefix, on_delete: :delete_all),
         null: false
       )
@@ -28,25 +28,25 @@ defmodule GroupherServer.Repo.Migrations.CreateArticleRevisions do
       timestamps()
     end
 
-    create(index(:article_revisions, [:community_id], prefix: @prefix))
-    create(index(:article_revisions, [:thread, :article_id], prefix: @prefix))
-    create(index(:article_revisions, [:thread, :article_draft_id], prefix: @prefix))
-    create(index(:article_revisions, [:type], prefix: @prefix))
-    create(index(:article_revisions, [:content_hash], prefix: @prefix))
-    create(index(:article_revisions, [:inserted_at], prefix: @prefix))
+    create(index(:article_snapshots, [:community_id], prefix: @prefix))
+    create(index(:article_snapshots, [:thread, :article_id], prefix: @prefix))
+    create(index(:article_snapshots, [:thread, :article_draft_id], prefix: @prefix))
+    create(index(:article_snapshots, [:type], prefix: @prefix))
+    create(index(:article_snapshots, [:content_hash], prefix: @prefix))
+    create(index(:article_snapshots, [:inserted_at], prefix: @prefix))
 
     create(
-      index(:article_revisions, [:community_id, :thread, :type, :article_id], prefix: @prefix)
+      index(:article_snapshots, [:community_id, :thread, :type, :article_id], prefix: @prefix)
     )
 
     create(
-      index(:article_revisions, [:community_id, :thread, :type, :article_draft_id],
+      index(:article_snapshots, [:community_id, :thread, :type, :article_draft_id],
         prefix: @prefix
       )
     )
 
     create(
-      constraint(:article_revisions, :article_revisions_target_check,
+      constraint(:article_snapshots, :article_snapshots_target_check,
         prefix: @prefix,
         check:
           "(type = 'draft' AND article_draft_id IS NOT NULL AND article_id IS NULL) OR (type = 'published' AND article_id IS NOT NULL AND article_draft_id IS NULL)"
@@ -54,14 +54,14 @@ defmodule GroupherServer.Repo.Migrations.CreateArticleRevisions do
     )
 
     create(
-      constraint(:article_revisions, :article_revisions_type_check,
+      constraint(:article_snapshots, :article_snapshots_type_check,
         prefix: @prefix,
         check: "type IN ('draft', 'published')"
       )
     )
 
     create(
-      constraint(:article_revisions, :article_revisions_thread_check,
+      constraint(:article_snapshots, :article_snapshots_thread_check,
         prefix: @prefix,
         check: "thread IN ('post', 'doc', 'changelog', 'blog')"
       )

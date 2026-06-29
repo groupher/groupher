@@ -1,7 +1,6 @@
 import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import InfoSVG from '~/icons/Info'
 
 import useDocsEditor from '../../Editor/store/hooks'
 import { DOC_INFO_LABEL_KEY } from '../constant'
@@ -9,7 +8,7 @@ import useSalon from '../salon/doc_info/panel'
 import DocInfoAuthor from './Author'
 import { formatDocInfoDate, formatDocInfoSlug, getDocInfoAuthorName } from './helper'
 import DocInfoItem from './Item'
-import DocInfoVisibility from './Visibility'
+import DocInfoStage from './Visibility'
 
 const DocInfoPanel: FC = () => {
   const s = useSalon()
@@ -22,17 +21,10 @@ const DocInfoPanel: FC = () => {
 
   return (
     <div className={s.wrapper}>
-      <div className={s.header}>
-        <div className={s.iconBox}>
-          <InfoSVG className={s.icon} />
-        </div>
-        <h2 className={s.title}>{t(DOC_INFO_LABEL_KEY.TITLE)}</h2>
-      </div>
-
       <div className={s.grid}>
         <DocInfoItem
-          label={t(DOC_INFO_LABEL_KEY.VISIBILITY_LABEL)}
-          value={docDraftInfo.id ? <DocInfoVisibility state={docDraftInfo.publishState} /> : null}
+          label={t(DOC_INFO_LABEL_KEY.STAGE_LABEL)}
+          value={docDraftInfo.id ? <DocInfoStage state={docDraftInfo.publishState} /> : null}
         />
         <DocInfoItem label={t(DOC_INFO_LABEL_KEY.TITLE_LABEL)} value={docDraftInfo.title} />
         <DocInfoItem

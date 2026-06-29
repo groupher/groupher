@@ -1,6 +1,7 @@
 import type { ChangeEvent, FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
+import Input from '~/widgets/Input'
 
 import useSalon from './salon/subtitle'
 
@@ -14,16 +15,19 @@ const Subtitle: FC<TProps> = ({ value, disabled = false, onChange }) => {
   const s = useSalon()
   const { t } = useTrans()
 
-  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     onChange(event.target.value)
   }
 
   return (
-    <input
+    <Input
+      behavior='textarea'
+      fgColor='digest'
       className={s.wrapper}
       value={value}
       disabled={disabled}
       placeholder={t('dsb.cms.docs.editor.subtitle_placeholder')}
+      disableEnter
       onChange={handleChange}
     />
   )

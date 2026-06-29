@@ -13,8 +13,5 @@ export default function useSalon() {
     iconOnlyButton: 'grid place-items-center size-8 rounded-sm hover:bg-hover transition-colors',
     icon: 'size-4 opacity-80',
     count: 'text-xs leading-none text-digest',
-    publishLabel: 'row-center gap-x-1 pl-2.5 text-xs text-title',
-    eventCount:
-      'grid h-3.5 min-w-3.5 place-items-center rounded-full bg-hover px-1 text-[9px] leading-none text-digest tabular-nums',
   }
 }

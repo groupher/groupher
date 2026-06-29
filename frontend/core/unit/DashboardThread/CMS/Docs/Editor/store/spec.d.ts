@@ -1,5 +1,6 @@
 import type { TRichEditorValue } from '@groupher/rich-editor'
 
+import type { TDocDraftInitialData } from '../Article/spec'
 import type { TDocEditorMode } from '../constant'
 import type { TDocTreeNodePublishState, TSideTreeController } from '../SideTree/spec'
 
@@ -26,6 +27,7 @@ export type TDocDraftInfo = {
 
 export type TInit = {
   sideTree: TSideTreeController
+  article?: TDocDraftInitialData | null
 }
 
 export type TStore = {

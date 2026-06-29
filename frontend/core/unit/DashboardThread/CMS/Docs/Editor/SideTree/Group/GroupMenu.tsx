@@ -2,11 +2,9 @@ import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import PlusSVG from '~/icons/Add'
-import ArchivedSVG from '~/icons/Archived'
 import CalendarPlusSVG from '~/icons/CalendarPlus'
 import CalendarSlashSVG from '~/icons/CalendarSlash'
 import MoreSVG from '~/icons/menu/MoreL'
-import PaperPlaneTiltSVG from '~/icons/PaperPlaneTilt'
 import EditSVG from '~/icons/PencilSimple'
 import DeleteSVG from '~/icons/Trash'
 import OverflowMarqueeText from '~/widgets/OverflowMarqueeText'
@@ -19,8 +17,6 @@ import type { TSideTreeGroupMenuAction } from '../spec'
 type TProps = {
   inCover?: boolean
   open?: boolean
-  publishVisible?: boolean
-  draftVisible?: boolean
   onSelect: (action: TSideTreeGroupMenuAction) => void
   onOpenChange?: (open: boolean) => void
 }
@@ -28,8 +24,6 @@ type TProps = {
 const GroupMenu: FC<TProps> = ({
   inCover = false,
   open = false,
-  publishVisible = false,
-  draftVisible = false,
   onSelect,
   onOpenChange,
 }) => {
@@ -96,36 +90,6 @@ const GroupMenu: FC<TProps> = ({
             </div>
             <OverflowMarqueeText text={coverActionTitle} className={s.itemTitle} />
           </button>
-          {publishVisible && (
-            <button
-              type='button'
-              className={s.item}
-              onClick={() => onSelect(SIDE_TREE_GROUP_MENU_ACTION.PUBLISH_GROUP)}
-            >
-              <div className={s.iconBox}>
-                <PaperPlaneTiltSVG className={s.itemIcon} />
-              </div>
-              <OverflowMarqueeText
-                text={t('dsb.cms.docs.side_tree.menu.publish_group')}
-                className={s.itemTitle}
-              />
-            </button>
-          )}
-          {draftVisible && (
-            <button
-              type='button'
-              className={s.item}
-              onClick={() => onSelect(SIDE_TREE_GROUP_MENU_ACTION.MOVE_GROUP_TO_DRAFT)}
-            >
-              <div className={s.iconBox}>
-                <ArchivedSVG className={s.itemIcon} />
-              </div>
-              <OverflowMarqueeText
-                text={t('dsb.cms.docs.side_tree.menu.move_group_to_draft')}
-                className={s.itemTitle}
-              />
-            </button>
-          )}
           <button
             type='button'
             className={s.itemDanger}

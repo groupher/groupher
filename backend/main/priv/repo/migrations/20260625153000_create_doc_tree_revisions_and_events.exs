@@ -1,4 +1,4 @@
-defmodule GroupherServer.Repo.Migrations.CreateDocTreeRevisionsAndEvents do
+defmodule GroupherServer.Repo.Migrations.CreateDocTreeSnapshotsAndEvents do
   use Ecto.Migration
 
   @prefix "cms"
@@ -9,7 +9,6 @@ defmodule GroupherServer.Repo.Migrations.CreateDocTreeRevisionsAndEvents do
         null: false
       )
 
-      add(:revision_number, :integer, null: false)
       add(:tree_json, :map, null: false)
       add(:tree_hash, :string, null: false)
       add(:message, :text)
@@ -23,20 +22,11 @@ defmodule GroupherServer.Repo.Migrations.CreateDocTreeRevisionsAndEvents do
     create(index(:doc_tree_revisions, [:tree_hash], prefix: @prefix))
     create(index(:doc_tree_revisions, [:published_at], prefix: @prefix))
 
-    create(
-      unique_index(:doc_tree_revisions, [:community_id, :revision_number],
-        prefix: @prefix,
-        name: :doc_tree_revisions_community_revision_index
-      )
-    )
-
-    alter table(:doc_tree_draft_states, prefix: @prefix) do
+    alter table(:docs_site_states, prefix: @prefix) do
       add(
-        :base_revision_id,
+        :base_snapshot_id,
         references(:doc_tree_revisions, prefix: @prefix, on_delete: :nilify_all)
       )
-
-      add(:staged_event_count, :integer, null: false, default: 0)
     end
 
     alter table(:doc_tree_node_drafts, prefix: @prefix) do
@@ -164,10 +154,12 @@ defmodule GroupherServer.Repo.Migrations.CreateDocTreeRevisionsAndEvents do
       add(:payload, :map, null: false)
       add(:inverse_payload, :map, null: false)
       add(:status, :string, null: false, default: "staged")
+      add(:owner, :string, null: false, default: "tree")
+      add(:workspace_id, :bigint)
       add(:author_id, references(:users, prefix: "account", on_delete: :nilify_all))
 
       add(
-        :published_revision_id,
+        :snapshot_id,
         references(:doc_tree_revisions, prefix: @prefix, on_delete: :nilify_all)
       )
 
@@ -181,7 +173,13 @@ defmodule GroupherServer.Repo.Migrations.CreateDocTreeRevisionsAndEvents do
 
     create(index(:doc_tree_events, [:community_id], prefix: @prefix))
     create(index(:doc_tree_events, [:community_id, :status], prefix: @prefix))
-    create(index(:doc_tree_events, [:published_revision_id], prefix: @prefix))
+    create(index(:doc_tree_events, [:community_id, :status, :owner], prefix: @prefix))
+
+    create(
+      index(:doc_tree_events, [:community_id, :owner, :workspace_id, :status], prefix: @prefix)
+    )
+
+    create(index(:doc_tree_events, [:snapshot_id], prefix: @prefix))
 
     create(
       unique_index(:doc_tree_events, [:community_id, :seq],
@@ -194,6 +192,13 @@ defmodule GroupherServer.Repo.Migrations.CreateDocTreeRevisionsAndEvents do
       constraint(:doc_tree_events, :doc_tree_events_status_check,
         prefix: @prefix,
         check: "status IN ('staged', 'published', 'reverted', 'discarded')"
+      )
+    )
+
+    create(
+      constraint(:doc_tree_events, :doc_tree_events_owner_check,
+        prefix: @prefix,
+        check: "owner IN ('tree', 'doc')"
       )
     )
   end

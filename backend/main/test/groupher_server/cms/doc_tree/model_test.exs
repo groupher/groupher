@@ -3,14 +3,20 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
 
   use GroupherServer.DataCase, async: true
 
-  alias GroupherServer.CMS.Model.{ArticleDraft, DocTreeNode, DocTreeNodeDraft}
+  alias GroupherServer.CMS.Model.{
+    ArticleWorkspace,
+    DocTreeNode,
+    DocTreeTrashItem,
+    PublishRequest
+  }
 
-  describe "ArticleDraft changeset" do
+  describe "ArticleWorkspace changeset" do
     test "rejects invalid slug format" do
       changeset =
-        ArticleDraft.changeset(%ArticleDraft{}, %{
+        ArticleWorkspace.changeset(%ArticleWorkspace{}, %{
           community_id: 1,
-          thread: :doc,
+          article_thread: :doc,
+          stage: :draft,
           title: "Install",
           slug: "install_page",
           digest: "Install",
@@ -22,13 +28,15 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
     end
   end
 
-  describe "DocTreeNodeDraft changeset" do
+  describe "DocTreeNode changeset" do
     test "rejects invalid slug format" do
       changeset =
-        DocTreeNodeDraft.changeset(%DocTreeNodeDraft{}, %{
+        DocTreeNode.changeset(%DocTreeNode{}, %{
           community_id: 1,
-          parent_id: 1,
-          article_draft_id: 2,
+          node_id: "node-1",
+          stage: :draft,
+          group_id: "group-1",
+          workspace_id: 2,
           type: :page,
           title: "Install",
           slug: "install_page",
@@ -39,11 +47,13 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
       assert "only lowercase letters, numbers and hyphen are allowed" in errors_on(changeset).slug
     end
 
-    test "page nodes require article_draft_id" do
+    test "draft page nodes require workspace_id only" do
       changeset =
-        DocTreeNodeDraft.changeset(%DocTreeNodeDraft{}, %{
+        DocTreeNode.changeset(%DocTreeNode{}, %{
           community_id: 1,
-          parent_id: 1,
+          node_id: "node-1",
+          stage: :draft,
+          group_id: "group-1",
           type: :page,
           title: "Install",
           slug: "install",
@@ -51,15 +61,36 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
         })
 
       refute changeset.valid?
-      assert "page nodes require article_draft_id" in errors_on(changeset).article_draft_id
+
+      assert "draft pages require workspace_id only" in errors_on(changeset).workspace_id
     end
 
-    test "link nodes can not carry article_draft_id" do
+    test "public page nodes require doc_id only" do
       changeset =
-        DocTreeNodeDraft.changeset(%DocTreeNodeDraft{}, %{
+        DocTreeNode.changeset(%DocTreeNode{}, %{
           community_id: 1,
-          parent_id: 1,
-          article_draft_id: 2,
+          node_id: "node-1",
+          stage: :public,
+          group_id: "group-1",
+          workspace_id: 2,
+          type: :page,
+          title: "Install",
+          slug: "install",
+          index: 0
+        })
+
+      refute changeset.valid?
+      assert "public pages require doc_id only" in errors_on(changeset).doc_id
+    end
+
+    test "link nodes can not carry article refs" do
+      changeset =
+        DocTreeNode.changeset(%DocTreeNode{}, %{
+          community_id: 1,
+          node_id: "node-1",
+          stage: :draft,
+          group_id: "group-1",
+          workspace_id: 2,
           type: :link,
           title: "Docs",
           slug: "docs",
@@ -68,16 +99,19 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
         })
 
       refute changeset.valid?
-
-      assert "link nodes can not reference article drafts" in errors_on(changeset).article_draft_id
+      assert "link nodes can not reference articles" in errors_on(changeset).workspace_id
     end
 
-    test "pin nodes require only a target node reference" do
+    test "pin nodes are independent top-level links" do
       changeset =
-        DocTreeNodeDraft.changeset(%DocTreeNodeDraft{}, %{
+        DocTreeNode.changeset(%DocTreeNode{}, %{
           community_id: 1,
+          node_id: "pin-1",
+          stage: :draft,
           type: :pin,
-          target_node_id: 2,
+          title: "GitHub",
+          slug: "github",
+          href: "https://github.com/groupher/groupher",
           index: 0,
           ui_config: %{"variant" => "compact"}
         })
@@ -86,63 +120,31 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
     end
   end
 
-  describe "DocTreeNode changeset" do
-    test "rejects invalid slug format" do
+  describe "PublishRequest changeset" do
+    test "accepts future doc tree review request shape" do
       changeset =
-        DocTreeNode.changeset(%DocTreeNode{}, %{
-          community_id: 1,
-          parent_id: 1,
-          doc_id: 2,
-          type: :page,
-          title: "Install",
-          slug: "install_page",
-          index: 0
+        PublishRequest.changeset(%PublishRequest{}, %{
+          target_type: "doc_tree",
+          target_id: "42",
+          status: :pending
         })
 
-      refute changeset.valid?
-      assert "only lowercase letters, numbers and hyphen are allowed" in errors_on(changeset).slug
+      assert changeset.valid?
     end
+  end
 
-    test "page nodes require doc_id" do
+  describe "DocTreeTrashItem changeset" do
+    test "stores docs-specific tree trash snapshot" do
       changeset =
-        DocTreeNode.changeset(%DocTreeNode{}, %{
+        DocTreeTrashItem.changeset(%DocTreeTrashItem{}, %{
           community_id: 1,
-          parent_id: 1,
-          type: :page,
-          title: "Install",
-          slug: "install",
-          index: 0
+          node_id: "page-1",
+          workspace_id: 2,
+          node_snapshot: %{"id" => "page-1"},
+          deleted_at: DateTime.utc_now(:second)
         })
 
-      refute changeset.valid?
-      assert "page nodes require doc_id" in errors_on(changeset).doc_id
-    end
-
-    test "group nodes can not carry href" do
-      changeset =
-        DocTreeNode.changeset(%DocTreeNode{}, %{
-          community_id: 1,
-          type: :group,
-          title: "Guides",
-          slug: "guides",
-          index: 0,
-          href: "https://example.com"
-        })
-
-      refute changeset.valid?
-      assert "group nodes can not have href" in errors_on(changeset).href
-    end
-
-    test "pin nodes require target_node_id" do
-      changeset =
-        DocTreeNode.changeset(%DocTreeNode{}, %{
-          community_id: 1,
-          type: :pin,
-          index: 0
-        })
-
-      refute changeset.valid?
-      assert "pin nodes require target_node_id" in errors_on(changeset).target_node_id
+      assert changeset.valid?
     end
   end
 end

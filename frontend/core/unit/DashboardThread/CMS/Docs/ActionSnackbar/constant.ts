@@ -1,5 +1,10 @@
 import type { TTransKey } from '~/spec'
 
+export const ACTION_SNACKBAR_WIDTH = 'w-fit'
+
+export const DOC_PUBLISH_PLAN_RELOAD_EVENT = 'groupher:doc-publish-plan:reload'
+export const DOC_REVISION_RELOAD_EVENT = 'groupher:doc-revision:reload'
+
 export const TREE_ACTION_LABEL_KEY = {
   TAB: 'dsb.doc.action.tab',
   TAB_ADDED: 'dsb.doc.action.tab_added',
@@ -33,6 +38,9 @@ export const SAVE_ACTION_LABEL_KEY = {
   PUBLISHED: 'dsb.doc.save.published',
   PUBLISHED_ALL_UNPUBLISHED: 'dsb.doc.save.published_all_unpublished',
   PUBLISH_FAILED: 'dsb.doc.save.publish_failed',
+  PUBLISH_DOC_CHANGES: 'dsb.doc.save.publish_doc_changes',
+  PUBLISH_TREE_CHANGES: 'dsb.doc.save.publish_tree_changes',
+  PUBLISH_NO_CHANGES: 'dsb.doc.save.publish_no_changes',
 } as const satisfies Record<string, TTransKey>
 
 export const SAVE_STATUS_LABEL = {
@@ -45,13 +53,14 @@ export const SAVE_STATUS_LABEL = {
 
 export const DOC_INFO_LABEL_KEY = {
   TITLE: 'dsb.doc.info.title',
+  CLOSE: 'dsb.doc.info.close',
   TITLE_LABEL: 'dsb.doc.info.field.title',
   SLUG_LABEL: 'dsb.doc.info.field.slug',
   DOCUMENT_ID_LABEL: 'dsb.doc.info.field.document_id',
   WORD_COUNT_LABEL: 'dsb.doc.info.field.word_count',
-  VISIBILITY_LABEL: 'dsb.doc.info.field.visibility',
-  VISIBILITY_PUBLISHED: 'dsb.doc.info.visibility.published',
-  VISIBILITY_UNPUBLISHED: 'dsb.doc.info.visibility.unpublished',
+  STAGE_LABEL: 'dsb.doc.info.field.stage',
+  STAGE_PUBLISHED: 'dsb.doc.info.stage.published',
+  STAGE_UNPUBLISHED: 'dsb.doc.info.stage.unpublished',
   CREATION_DATE_LABEL: 'dsb.doc.info.field.creation_date',
   CREATED_BY_LABEL: 'dsb.doc.info.field.created_by',
   LAST_MODIFIED_LABEL: 'dsb.doc.info.field.last_modified',

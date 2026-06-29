@@ -7,25 +7,23 @@ import Body from './Body'
 import Cover from './Cover'
 import Footer from './Footer'
 import useSalon from './salon'
-import type { TDocDraftInitialData } from './spec'
-import Subtitle from './Subtitle'
 import Title from './Title'
+import Subtitle from './Title/Subtitle'
 import TitleActions from './TitleActions'
 import useLogic from './useLogic'
 import WorkspaceActions from './WorkspaceActions'
 
 type TProps = {
   sideTree: TSideTreeController
-  initialDraft?: TDocDraftInitialData | null
 }
 
-const Article: FC<TProps> = ({ sideTree, initialDraft }) => {
+const Article: FC<TProps> = ({ sideTree }) => {
   const s = useSalon()
   const { mode } = useDocsEditor()
   const {
     activePage,
     bodyValue,
-    editorDocId,
+    editorWorkspaceId,
     error,
     loading,
     setBodyValue,
@@ -33,13 +31,13 @@ const Article: FC<TProps> = ({ sideTree, initialDraft }) => {
     setTitle,
     subtitle,
     title,
-  } = useLogic(sideTree, initialDraft)
+  } = useLogic(sideTree)
   const [coverVisible, setCoverVisible] = useState(false)
   const disabled = loading || mode === DOC_EDITOR_MODE.PREVIEW
 
   useEffect(() => {
     setCoverVisible(false)
-  }, [activePage?.docId])
+  }, [activePage?.workspaceId])
 
   if (!activePage) {
     return (
@@ -57,12 +55,17 @@ const Article: FC<TProps> = ({ sideTree, initialDraft }) => {
         disabled={disabled}
         onAddCover={() => setCoverVisible(true)}
       />
-      <Title value={title} disabled={disabled} onChange={setTitle} />
+      <Title
+        value={title}
+        disabled={disabled}
+        publishState={activePage.publishState}
+        onChange={setTitle}
+      />
       <Subtitle value={subtitle} disabled={disabled} onChange={setSubtitle} />
       <Body
         value={bodyValue}
         mode={mode}
-        editorKey={editorDocId}
+        editorKey={editorWorkspaceId}
         disabled={loading}
         onChange={setBodyValue}
       />

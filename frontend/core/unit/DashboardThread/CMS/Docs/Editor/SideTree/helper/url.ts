@@ -5,23 +5,23 @@ import type { TSideTreeChild } from '../spec'
 const LINK_PROTOCOLS = new Set(['http:', 'https:', 'ftp:', 'mailto:', 'tel:'])
 
 /**
- * Build the editor URL after applying or clearing the active doc id query.
+ * Build the editor URL after applying or clearing the active workspace id query.
  *
  * @example
  * const nextUrl = buildDocEditorUrl('/home/dashboard/doc/editor', 'foo=1', '42')
- * nextUrl.includes('docId=42')
+ * nextUrl.includes('workspaceId=42')
  */
 export const buildDocEditorUrl = (
   pathname: string,
   searchString: string,
-  docId: string | null,
+  workspaceId: string | null,
 ): string => {
   const nextSearchParams = new URLSearchParams(searchString)
 
-  if (docId) {
-    nextSearchParams.set(DOC_EDITOR_QUERY_PARAM.DOC_ID, docId)
+  if (workspaceId) {
+    nextSearchParams.set(DOC_EDITOR_QUERY_PARAM.WORKSPACE_ID, workspaceId)
   } else {
-    nextSearchParams.delete(DOC_EDITOR_QUERY_PARAM.DOC_ID)
+    nextSearchParams.delete(DOC_EDITOR_QUERY_PARAM.WORKSPACE_ID)
   }
 
   const nextQuery = nextSearchParams.toString()
@@ -29,14 +29,14 @@ export const buildDocEditorUrl = (
 }
 
 /**
- * Resolve the URL doc id from a selected page child.
+ * Resolve the URL workspace id from a selected page child.
  *
  * @example
- * const docId = getDocIdFromPage(activePage)
- * syncDocIdToUrl(docId)
+ * const workspaceId = getWorkspaceIdFromPage(activePage)
+ * syncWorkspaceIdToUrl(workspaceId)
  */
-export const getDocIdFromPage = (page: TSideTreeChild | null): string | null =>
-  page?.type === SIDE_TREE_NODE_TYPE.PAGE && page.docId ? page.docId : null
+export const getWorkspaceIdFromPage = (page: TSideTreeChild | null): string | null =>
+  page?.type === SIDE_TREE_NODE_TYPE.PAGE && page.workspaceId ? page.workspaceId : null
 
 export const isLinkHref = (href: string): boolean => {
   const value = href.trim()

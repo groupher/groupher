@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Articles.Document do
   @spec create(map(), map()) :: document_result()
   def create(article, %{article_payload: payload}) do
     with {:ok, article_thread} <- FrontDesk.thread_of(article),
-         false <- article_document_exist(article) do
+         false <- article_document_exists?(article) do
       attrs = ArticlePayload.pick_valid_fields(payload)
 
       Multi.new()
@@ -40,8 +40,8 @@ defmodule GroupherServer.CMS.Articles.Document do
       |> Multi.run(:create_thread_document, fn _, _ ->
         attrs = attrs |> Map.put(:"#{article_thread}_id", article.id)
 
-        CMS.Model
-        |> Module.concat("#{Recase.to_title(to_string(article_thread))}Document")
+        article_thread
+        |> thread_document_module()
         |> ORM.create(attrs)
       end)
       |> Repo.transaction()
@@ -58,7 +58,7 @@ defmodule GroupherServer.CMS.Articles.Document do
     end
   end
 
-  defp article_document_exist(article) do
+  defp article_document_exists?(article) do
     with {:ok, article_thread} <- FrontDesk.thread_of(article) do
       {:ok, count} =
         ArticleDocument
@@ -112,9 +112,14 @@ defmodule GroupherServer.CMS.Articles.Document do
   end
 
   defp find_thread_document(article_thread, article) do
+    article_thread
+    |> thread_document_module()
+    |> ORM.find_by(%{:"#{article_thread}_id" => article.id})
+  end
+
+  defp thread_document_module(article_thread) do
     CMS.Model
     |> Module.concat("#{Recase.to_title(to_string(article_thread))}Document")
-    |> ORM.find_by(%{:"#{article_thread}_id" => article.id})
   end
 
   @doc """

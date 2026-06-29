@@ -28,9 +28,10 @@ const Editor: FC<TProps> = ({ initialData }) => {
   const { submenuCollapsed } = useDashboardStore()
   const s = useSalon({ submenuCollapsed })
   const sideTree = useSideTreeLogic(initialData?.docTree ?? undefined)
+  const hasTree = sideTree.groups.length > 0
 
   return (
-    <DocsEditorStoreProvider initData={{ sideTree }}>
+    <DocsEditorStoreProvider initData={{ sideTree, article: initialData?.docDraft ?? null }}>
       <div className={s.wrapper}>
         <div className={s.surface}>
           <PanelGroup
@@ -38,23 +39,27 @@ const Editor: FC<TProps> = ({ initialData }) => {
             orientation='horizontal'
             resizeTargetMinimumSize={{ fine: 12, coarse: 28 }}
           >
-            <Panel
-              id='docs-side-tree'
-              className={s.sidePanel}
-              defaultSize={180}
-              minSize={120}
-              maxSize={210}
-              groupResizeBehavior='preserve-pixel-size'
-            >
-              <SideTree controller={sideTree} />
-            </Panel>
+            {hasTree && (
+              <Panel
+                id='docs-side-tree'
+                className={s.sidePanel}
+                defaultSize={180}
+                minSize={120}
+                maxSize={210}
+                groupResizeBehavior='preserve-pixel-size'
+              >
+                <SideTree controller={sideTree} />
+              </Panel>
+            )}
 
-            <Separator id='docs-side-tree-resizer' className={s.resizeHandle}>
-              <div className={s.resizeLine} />
-            </Separator>
+            {hasTree && (
+              <Separator id='docs-side-tree-resizer' className={s.resizeHandle}>
+                <div className={s.resizeLine} />
+              </Separator>
+            )}
 
             <Panel id='docs-editor-space' className={s.fillPanel} minSize={0}>
-              <Article sideTree={sideTree} initialDraft={initialData?.docDraft ?? null} />
+              <Article sideTree={sideTree} />
 
               {sideTree.activeId && (
                 <div className={s.snackbarRail} style={{ top: DOC_EDITOR_SNACKBAR_STICKY_TOP }}>

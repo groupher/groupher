@@ -1,9 +1,16 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
+import type { TFgColor } from '..'
+
 export { cn } from '~/css'
 
-export default function useSalon() {
+type TProps = {
+  fgColor?: TFgColor
+}
+
+export default function useSalon({ fgColor = 'default' }: TProps = {}) {
   const { cn, fg, bg, br } = useTwBelt()
+  const fgClass = fgColor === 'title' ? fg('title') : fg('digest')
 
   return {
     wrapper: cn(
@@ -16,7 +23,7 @@ export default function useSalon() {
       `active:${br('digest')}`,
       br('divider'),
       bg('card'),
-      fg('digest'),
+      fgClass,
     ),
   }
 }

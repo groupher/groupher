@@ -1,6 +1,10 @@
 import { proxy } from 'valtio'
 
+import { EMPTY_EDITOR_VALUE } from '../Article/constant'
+import { resolveDraftSession } from '../Article/helper'
 import { DOC_EDITOR_MODE } from '../constant'
+import { SIDE_TREE_NODE_TYPE } from '../SideTree/constant'
+import { findChild } from '../SideTree/helper'
 import type { TDocDraftInfo, TInit, TStore } from './spec'
 
 const EMPTY_DOC_DRAFT_INFO: TDocDraftInfo = {
@@ -16,27 +20,27 @@ const EMPTY_DOC_DRAFT_INFO: TDocDraftInfo = {
   characterCount: 0,
 }
 
-const EMPTY_EDITOR_VALUE = [
-  {
-    type: 'p',
-    children: [{ text: '' }],
-  },
-]
-
 export default function DocsEditorStore(init: TInit): TStore {
   // Docs editor actions are split across the tree, article, snackbar, and future drawers.
   // Keep cross-region session commands here so toolbar actions do not reach into SideTree props.
   let sideTree = init.sideTree
   let saveDocDraftHandler: (() => Promise<void>) | null = null
+  const activeChild = sideTree.activeId ? findChild(sideTree.groups, sideTree.activeId) : null
+  const activePage =
+    activeChild?.type === SIDE_TREE_NODE_TYPE.PAGE && activeChild.workspaceId ? activeChild : null
+  const initialArticleSession =
+    activePage && String(init.article?.id) === String(activePage.workspaceId)
+      ? resolveDraftSession(init.article, activePage)
+      : null
 
   const initialStore: TStore = {
-    baselineValue: EMPTY_EDITOR_VALUE,
-    bodyValue: EMPTY_EDITOR_VALUE,
-    docDraftInfo: EMPTY_DOC_DRAFT_INFO,
+    baselineValue: initialArticleSession?.body ?? EMPTY_EDITOR_VALUE,
+    bodyValue: initialArticleSession?.body ?? EMPTY_EDITOR_VALUE,
+    docDraftInfo: initialArticleSession?.info ?? EMPTY_DOC_DRAFT_INFO,
     mode: DOC_EDITOR_MODE.EDIT,
     revisionReloadKey: 0,
     saveError: null,
-    saveStatus: 'idle',
+    saveStatus: initialArticleSession ? 'saved' : 'idle',
 
     addGroup: (): void => {
       sideTree.addGroup()

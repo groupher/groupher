@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Articles do
     Moderation,
     Reactions,
     Read,
-    Revision,
+    Snapshot,
     States,
     Upvotes,
     Write
@@ -26,20 +26,21 @@ defmodule GroupherServer.CMS.Articles do
 
   # Read
   @spec read(String.t(), T.article_thread(), T.id()) :: T.domain_res(T.article())
-  def read(community_slug, thread, inner_id), do: Read.read(community_slug, thread, inner_id)
+  def read(community_slug, article_thread, inner_id),
+    do: Read.read(community_slug, article_thread, inner_id)
 
   @spec read(String.t(), T.article_thread(), T.id(), User.t()) :: T.domain_res(T.article())
-  def read(community_slug, thread, inner_id, %User{} = user) do
-    Read.read(community_slug, thread, inner_id, user)
+  def read(community_slug, article_thread, inner_id, %User{} = user) do
+    Read.read(community_slug, article_thread, inner_id, user)
   end
 
   # List
 
   @spec page(T.article_thread(), map()) :: T.domain_res(T.paged_data())
-  def page(thread, filter), do: List.page(thread, filter)
+  def page(article_thread, filter), do: List.page(article_thread, filter)
 
   @spec page(T.article_thread(), map(), User.t()) :: T.domain_res(T.paged_data())
-  def page(thread, filter, %User{} = user), do: List.page(thread, filter, user)
+  def page(article_thread, filter, %User{} = user), do: List.page(article_thread, filter, user)
 
   @spec grouped_kanban(Community.t()) :: T.domain_res(term())
   def grouped_kanban(%Community{} = community), do: List.grouped_kanban(community)
@@ -48,68 +49,70 @@ defmodule GroupherServer.CMS.Articles do
   def paged_kanban(%Community{} = community, filter), do: List.paged_kanban(community, filter)
 
   @spec paged_published(T.article_thread(), map(), User.t()) :: T.domain_res(T.paged_data())
-  def paged_published(thread, filter, %User{} = user) do
-    List.paged_published(thread, filter, user)
+  def paged_published(article_thread, filter, %User{} = user) do
+    List.paged_published(article_thread, filter, user)
   end
 
   @spec count_published(T.article_thread(), User.t()) :: T.domain_res(non_neg_integer())
-  def count_published(thread, %User{} = user), do: List.count_published(thread, user)
+  def count_published(article_thread, %User{} = user),
+    do: List.count_published(article_thread, user)
 
   # Write
 
   @spec create(Community.t(), T.article_thread(), map(), User.t()) :: T.domain_res(T.article())
-  def create(%Community{} = community, thread, attrs, %User{} = user) do
-    Write.create(community, thread, attrs, user)
+  def create(%Community{} = community, article_thread, attrs, %User{} = user) do
+    Write.create(community, article_thread, attrs, user)
   end
 
   @spec update(T.article(), map()) :: T.domain_res(T.article())
   def update(article, attrs), do: Write.update(article, attrs)
 
-  # Revision
+  # Snapshot
 
-  @spec read_article_draft(Community.t(), T.id()) :: T.domain_res(CMS.Model.ArticleDraft.t())
-  def read_article_draft(%Community{} = community, article_draft_id) do
-    Draft.read(community, article_draft_id)
+  @spec read_article_workspace(Community.t(), T.id()) ::
+          T.domain_res(CMS.Model.ArticleWorkspace.t())
+  def read_article_workspace(%Community{} = community, workspace_id) do
+    Draft.read(community, workspace_id)
   end
 
-  @spec list_doc_draft_revisions(Community.t(), T.id(), keyword()) ::
-          T.domain_res([CMS.Model.ArticleRevision.t()])
-  def list_doc_draft_revisions(%Community{} = community, article_draft_id, opts \\ []) do
-    Revision.list_doc_draft(community, article_draft_id, opts)
+  @spec list_doc_draft_snapshots(Community.t(), T.id(), keyword()) ::
+          T.domain_res([CMS.Model.ArticleSnapshot.t()])
+  def list_doc_draft_snapshots(%Community{} = community, workspace_id, opts \\ []) do
+    Snapshot.list_doc_draft(community, workspace_id, opts)
   end
 
-  @spec get_doc_draft_revision(Community.t(), T.id(), T.id()) ::
-          T.domain_res(CMS.Model.ArticleRevision.t())
-  def get_doc_draft_revision(%Community{} = community, article_draft_id, revision_id) do
-    Revision.get_doc_draft_revision(community, article_draft_id, revision_id)
+  @spec get_doc_draft_snapshot(Community.t(), T.id(), T.id()) ::
+          T.domain_res(CMS.Model.ArticleSnapshot.t())
+  def get_doc_draft_snapshot(%Community{} = community, workspace_id, snapshot_id) do
+    Snapshot.get_doc_draft_snapshot(community, workspace_id, snapshot_id)
   end
 
-  @spec checkpoint_doc_draft_revision(Community.t(), T.id(), User.t() | nil, keyword()) ::
-          T.domain_res(CMS.Model.ArticleRevision.t())
-  def checkpoint_doc_draft_revision(
+  @spec checkpoint_doc_draft_snapshot(Community.t(), T.id(), User.t() | nil, keyword()) ::
+          T.domain_res(CMS.Model.ArticleSnapshot.t())
+  def checkpoint_doc_draft_snapshot(
         %Community{} = community,
-        article_draft_id,
+        workspace_id,
         user \\ nil,
         opts \\ []
       ) do
-    Revision.checkpoint_doc_draft(community, article_draft_id, user, opts)
+    Snapshot.checkpoint_doc_draft(community, workspace_id, user, opts)
   end
 
-  @spec restore_doc_draft_revision(Community.t(), T.id(), T.id(), User.t() | nil) ::
-          T.domain_res(CMS.Model.ArticleDraft.t())
-  def restore_doc_draft_revision(
+  @spec restore_doc_draft_snapshot(Community.t(), T.id(), T.id(), User.t() | nil) ::
+          T.domain_res(CMS.Model.ArticleWorkspace.t())
+  def restore_doc_draft_snapshot(
         %Community{} = community,
-        article_draft_id,
-        revision_id,
+        workspace_id,
+        snapshot_id,
         user \\ nil
       ) do
-    Revision.restore_doc_draft(community, article_draft_id, revision_id, user)
+    Snapshot.restore_doc_draft(community, workspace_id, snapshot_id, user)
   end
 
-  @spec publish_doc_draft_revision(Community.t(), T.id(), User.t()) ::
-          T.domain_res(CMS.Model.ArticleRevision.t())
-  def publish_doc_draft_revision(%Community{} = community, article_draft_id, %User{} = user) do
-    Revision.publish_doc_draft(community, article_draft_id, user)
+  @spec publish_article_workspace(Community.t(), T.id(), User.t()) ::
+          T.domain_res(CMS.Model.ArticleSnapshot.t())
+  def publish_article_workspace(%Community{} = community, workspace_id, %User{} = user) do
+    Snapshot.publish_article_workspace(community, workspace_id, user)
   end
 
   # Lifecycle
@@ -127,16 +130,16 @@ defmodule GroupherServer.CMS.Articles do
   def delete(article, reason), do: Write.delete(article, reason)
 
   @spec archive(T.article_thread()) :: T.domain_res(term())
-  def archive(thread), do: States.archive(thread)
+  def archive(article_thread), do: States.archive(article_thread)
 
   @spec batch_mark_delete(String.t(), T.article_thread(), [T.id()]) :: T.domain_res(term())
-  def batch_mark_delete(community, thread, id_list) do
-    Write.batch_mark_delete(community, thread, id_list)
+  def batch_mark_delete(community, article_thread, id_list) do
+    Write.batch_mark_delete(community, article_thread, id_list)
   end
 
   @spec batch_undo_mark_delete(String.t(), T.article_thread(), [T.id()]) :: T.domain_res(term())
-  def batch_undo_mark_delete(community, thread, id_list) do
-    Write.batch_undo_mark_delete(community, thread, id_list)
+  def batch_undo_mark_delete(community, article_thread, id_list) do
+    Write.batch_undo_mark_delete(community, article_thread, id_list)
   end
 
   @spec sink(T.article()) :: T.domain_res(T.article())
@@ -154,20 +157,22 @@ defmodule GroupherServer.CMS.Articles do
   def set_status(article, status), do: States.set_status(article, status)
 
   @spec update_active_timestamp(T.article_thread(), T.article()) :: T.domain_res(T.article())
-  def update_active_timestamp(thread, article) do
-    States.update_active_timestamp(thread, article)
+  def update_active_timestamp(article_thread, article) do
+    States.update_active_timestamp(article_thread, article)
   end
 
   # Moderation
 
   @spec set_illegal(T.article_thread(), T.id(), map()) :: T.domain_res(T.article())
-  def set_illegal(thread, id, attrs), do: Moderation.set_illegal(thread, id, attrs)
+  def set_illegal(article_thread, id, attrs),
+    do: Moderation.set_illegal(article_thread, id, attrs)
 
   @spec set_illegal(T.article(), map()) :: T.domain_res(T.article())
   def set_illegal(article, attrs), do: Moderation.set_illegal(article, attrs)
 
   @spec unset_illegal(T.article_thread(), T.id(), map()) :: T.domain_res(T.article())
-  def unset_illegal(thread, id, attrs), do: Moderation.unset_illegal(thread, id, attrs)
+  def unset_illegal(article_thread, id, attrs),
+    do: Moderation.unset_illegal(article_thread, id, attrs)
 
   @spec unset_illegal(T.article(), map()) :: T.domain_res(T.article())
   def unset_illegal(article, attrs), do: Moderation.unset_illegal(article, attrs)
@@ -176,7 +181,8 @@ defmodule GroupherServer.CMS.Articles do
   def set_audit_failed(article, state), do: Moderation.set_audit_failed(article, state)
 
   @spec paged_audit_failed(T.article_thread(), map()) :: T.domain_res(T.paged_data())
-  def paged_audit_failed(thread, filter), do: Moderation.paged_audit_failed(thread, filter)
+  def paged_audit_failed(article_thread, filter),
+    do: Moderation.paged_audit_failed(article_thread, filter)
 
   # Placement
 

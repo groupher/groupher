@@ -18,6 +18,11 @@ import { useRef, useState } from 'react'
 import { getOverRect } from './helper'
 import type { TLinkDndColumnBase, TLinkDndTarget, TSortableDndContextProps } from './spec'
 
+const sameDragTarget = (left: TLinkDndTarget | null, right: TLinkDndTarget | null): boolean =>
+  left?.columnId === right?.columnId &&
+  left?.itemId === right?.itemId &&
+  left?.position === right?.position
+
 // DnD shell shared by header/footer link editors. It owns sensor setup,
 // collision detection, and event routing, while each editor owns the actual data
 // transformation through its controller. Link drag targets carry item placement;
@@ -105,6 +110,8 @@ export default function SortableDndContext<
   const handleDragOver = (event: DragOverEvent): void => {
     if (event.active.data.current?.type === dndType.sortableColumn) {
       const targetColumnId = getColumnDragTargetId(event) || null
+      if (lastColumnTargetIdRef.current === targetColumnId) return
+
       lastColumnTargetIdRef.current = targetColumnId
       setTargetDragColumnId(targetColumnId)
       setTargetDragItemId(null)
@@ -113,6 +120,8 @@ export default function SortableDndContext<
     }
 
     const target = getDragTarget(event) || null
+    if (sameDragTarget(lastDragTargetRef.current, target)) return
+
     lastDragTargetRef.current = target
     setTargetDragColumnId(target?.columnId || null)
     setTargetDragItemId(target?.itemId || null)

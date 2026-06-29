@@ -3,12 +3,12 @@ defmodule GroupherServer.Repo.Migrations.RebuildArticleDocumentsForPlateContent 
 
   def up do
     rebuild_thread_document(:post_documents)
-    rebuild_thread_document(:doc_documents)
+    rebuild_thread_document(:doc_contents)
     rebuild_thread_document(:changelog_documents)
     rebuild_thread_document(:blog_documents)
 
     ensure_thread_markdown_column(:post_documents)
-    ensure_thread_markdown_column(:doc_documents)
+    ensure_thread_markdown_column(:doc_contents)
     ensure_thread_markdown_column(:changelog_documents)
     ensure_thread_markdown_column(:blog_documents)
 
@@ -30,7 +30,7 @@ defmodule GroupherServer.Repo.Migrations.RebuildArticleDocumentsForPlateContent 
 
   def down do
     rollback_thread_document(:post_documents)
-    rollback_thread_document(:doc_documents)
+    rollback_thread_document(:doc_contents)
     rollback_thread_document(:changelog_documents)
     rollback_thread_document(:blog_documents)
 

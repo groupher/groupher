@@ -11,8 +11,9 @@ export const DOC_EDITOR_TOP_ROW_CONTROL = 'h-6'
 // viewport bottom without letting them cover the editable content.
 export const DOC_EDITOR_CONTENT_BOTTOM_RESERVE = 'pb-44'
 
-// Position the snackbar in the document panel, above the lower editor controls.
-export const DOC_EDITOR_SNACKBAR_STICKY_TOP = 'calc(100dvh - 7rem)'
+// Position the snackbar in the document panel. Its bottom edge aligns with the
+// side tree SavingBar, which floats just above the persistent tree footer.
+export const DOC_EDITOR_SNACKBAR_STICKY_TOP = 'calc(100dvh - 6.5rem)'
 
 // Match DashboardThread/SideMenu's Sticky offset so the docs tree aligns with
 // the route submenu header while keeping long outlines locally scrollable.

@@ -33,6 +33,7 @@ const SortableGroup = memo(function SortableGroup({
 }: TProps) {
   const listRef = useRef<HTMLDivElement | null>(null)
   const externalNodeRef = useRef<HTMLDivElement | null>(null)
+  const externalListRefRef = useRef(externalListRef)
   const { setNodeRef, isOver } = useDroppable({
     id: `${idPrefix}:${columnId}`,
     disabled,
@@ -42,20 +43,23 @@ const SortableGroup = memo(function SortableGroup({
       getListRect: () => listRef.current?.getBoundingClientRect(),
     },
   })
+  const setNodeRefRef = useRef(setNodeRef)
 
-  const setListNodeRef = useCallback(
-    (node: HTMLDivElement | null): void => {
-      listRef.current = node
+  externalListRefRef.current = externalListRef
+  setNodeRefRef.current = setNodeRef
 
-      if (externalNodeRef.current !== node) {
-        externalNodeRef.current = node
-        externalListRef?.(node)
-      }
+  const setListNodeRef = useCallback((node: HTMLDivElement | null): void => {
+    if (listRef.current === node && externalNodeRef.current === node) return
 
-      setNodeRef(node)
-    },
-    [externalListRef, setNodeRef],
-  )
+    listRef.current = node
+
+    if (externalNodeRef.current !== node) {
+      externalNodeRef.current = node
+      externalListRefRef.current?.(node)
+    }
+
+    setNodeRefRef.current(node)
+  }, [])
 
   return (
     <SortableContext id={columnId} items={ids} strategy={verticalListSortingStrategy}>

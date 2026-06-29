@@ -11,6 +11,7 @@ type TProps<TColumn extends TLinkDndColumnBase, TLink, TTarget extends TLinkDndT
   flattenColumns: (columns: readonly TColumn[]) => readonly TOutput[]
   moveLinkInColumns: (columns: readonly TColumn[], itemId: string, target: TTarget) => TColumn[]
   moveColumn?: (columns: readonly TColumn[], columnId: string, targetColumnId: string) => TColumn[]
+  previewDrag?: boolean
   sameLinks: (left: readonly TOutput[], right: readonly TOutput[]) => boolean
   onCommit: (links: readonly TOutput[]) => void
 }
@@ -44,6 +45,7 @@ export default function useSortableDraft<
   flattenColumns,
   moveLinkInColumns,
   moveColumn,
+  previewDrag = true,
   sameLinks,
   onCommit,
 }: TProps<TColumn, TLink, TTarget, TOutput>): TRet<TColumn, TLink, TTarget> {
@@ -117,6 +119,8 @@ export default function useSortableDraft<
 
   const moveDrag = useCallback(
     (target?: TTarget | null): void => {
+      if (!previewDrag) return
+
       const activeId = activeIdRef.current
       if (!activeId || !target?.columnId) return
 
@@ -130,7 +134,7 @@ export default function useSortableDraft<
       latestColumnsRef.current = nextColumns
       setColumns(nextColumns)
     },
-    [findColumnWithLink, flattenColumns, moveLinkInColumns, sameLinks],
+    [findColumnWithLink, flattenColumns, moveLinkInColumns, previewDrag, sameLinks],
   )
 
   const commitDrag = useCallback(

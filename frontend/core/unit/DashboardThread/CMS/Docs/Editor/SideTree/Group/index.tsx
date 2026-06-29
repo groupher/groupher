@@ -6,14 +6,12 @@ import PlusSVG from '~/icons/Add'
 import ArrowSVG from '~/icons/ArrowSimple'
 import CalendarSlashSVG from '~/icons/CalendarSlash'
 import GrabDotsSVG from '~/icons/GrabDots'
-import PaperPlaneTiltSVG from '~/icons/PaperPlaneTilt'
 
 import { SIDE_TREE_GROUP_MENU_ACTION, SIDE_TREE_NODE_TYPE } from '../constant'
 import SortableSideTreeChild from '../Dnd/SortableSideTreeChild'
 import SortableSideTreeColumn from '../Dnd/SortableSideTreeColumn'
 import SortableSideTreeGroup from '../Dnd/SortableSideTreeGroup'
 import type { TSideTreeDragTarget } from '../Dnd/spec'
-import { isPublicDoc, needsPublishAttention } from '../helper'
 import useSalon, { cn } from '../salon/group/index'
 import type {
   TEditingTarget,
@@ -46,8 +44,6 @@ type TProps = {
   onToggle: (groupId: string) => void
   onAddChild: (groupId: string, action: TSideTreeChildMenuAction) => void
   onCoverGroupAction: (groupId: string, inCover: boolean) => void
-  onPublishGroup: (groupId: string) => void
-  onMoveGroupToDraft: (groupId: string) => void
   onDeleteGroup: (groupId: string) => void
   onRenameGroup: (groupId: string, title: string) => void
   onRenameChild: (groupId: string, childId: string, title: string) => void
@@ -75,8 +71,6 @@ const Group: FC<TProps> = ({
   onToggle,
   onAddChild,
   onCoverGroupAction,
-  onPublishGroup,
-  onMoveGroupToDraft,
   onDeleteGroup,
   onRenameGroup,
   onRenameChild,
@@ -92,17 +86,7 @@ const Group: FC<TProps> = ({
   const s = useSalon({ actionVisible: menuOpen })
   const collapsed = group.expanded === false
   const groupInCover = group.publishState?.inCover === true
-  const publishableChildCount = group.children.filter(
-    (child) => child.type === SIDE_TREE_NODE_TYPE.PAGE && needsPublishAttention(child.publishState),
-  ).length
-  const draftableChildCount = group.children.filter((child) =>
-    isPublicDoc(child.publishState),
-  ).length
-  const publishGroupVisible = publishableChildCount >= 2
-  const publishGroupShortcutVisible = publishableChildCount > 0
-  const draftGroupVisible = draftableChildCount >= 2
   const addDocLabel = t('dsb.cms.docs.side_tree.tooltip.new_doc')
-  const publishGroupChangesLabel = t('dsb.cms.docs.side_tree.tooltip.publish_group_changes')
   const editing =
     editingTarget?.type === SIDE_TREE_NODE_TYPE.GROUP && editingTarget.groupId === group.id
   const handleGroupMenuSelect = (action: TSideTreeGroupMenuAction): void => {
@@ -124,16 +108,6 @@ const Group: FC<TProps> = ({
       action === SIDE_TREE_GROUP_MENU_ACTION.REMOVE_FROM_COVER
     ) {
       onCoverGroupAction(group.id, groupInCover)
-      return
-    }
-
-    if (action === SIDE_TREE_GROUP_MENU_ACTION.PUBLISH_GROUP) {
-      onPublishGroup(group.id)
-      return
-    }
-
-    if (action === SIDE_TREE_GROUP_MENU_ACTION.MOVE_GROUP_TO_DRAFT) {
-      onMoveGroupToDraft(group.id)
       return
     }
 
@@ -197,24 +171,11 @@ const Group: FC<TProps> = ({
                   <PlusSVG className={s.actionIcon} />
                 </button>
               )}
-              {!searching && !editing && publishGroupShortcutVisible && (
-                <button
-                  type='button'
-                  className={s.publishButton}
-                  aria-label={publishGroupChangesLabel}
-                  title={publishGroupChangesLabel}
-                  onClick={() => onPublishGroup(group.id)}
-                >
-                  <PaperPlaneTiltSVG className={s.publishIcon} />
-                </button>
-              )}
               {!searching && (
                 <div className={s.actions}>
                   <GroupMenu
                     inCover={groupInCover}
                     open={menuOpen}
-                    publishVisible={publishGroupVisible}
-                    draftVisible={draftGroupVisible}
                     onOpenChange={setMenuOpen}
                     onSelect={handleGroupMenuSelect}
                   />

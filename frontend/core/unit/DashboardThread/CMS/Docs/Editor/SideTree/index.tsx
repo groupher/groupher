@@ -63,15 +63,13 @@ const SideTree: FC<TProps> = ({ controller }) => {
     activeId,
     editingTarget,
     coverWarning,
-    treeState,
     activate,
+    addGroup,
     addChild,
     clearCoverWarning,
     deleteGroup,
     toggleGroup,
     toggleCoverGroup,
-    publishGroup,
-    moveGroupToDraft,
     renameGroup,
     renameChild,
     renameLink,
@@ -80,7 +78,6 @@ const SideTree: FC<TProps> = ({ controller }) => {
     handleChildAction,
     updateChildStyle,
     reorderGroups,
-    publishTree,
   } = controller
   const deferredSearchQuery = useDeferredValue(searchQuery)
   const normalizedDeferredSearchQuery = normalizeSearchQuery(deferredSearchQuery)
@@ -114,6 +111,7 @@ const SideTree: FC<TProps> = ({ controller }) => {
         searching={searching}
         onChangeQuery={setSearchQuery}
         onCloseSearch={closeSearch}
+        onAddGroup={addGroup}
         onOpenSearch={openSearch}
       />
 
@@ -157,8 +155,6 @@ const SideTree: FC<TProps> = ({ controller }) => {
                       onToggle={toggleGroup}
                       onAddChild={addChild}
                       onCoverGroupAction={toggleCoverGroup}
-                      onPublishGroup={publishGroup}
-                      onMoveGroupToDraft={moveGroupToDraft}
                       onDeleteGroup={deleteGroup}
                       onRenameGroup={renameGroup}
                       onRenameChild={renameChild}
@@ -175,7 +171,7 @@ const SideTree: FC<TProps> = ({ controller }) => {
           </div>
         )}
       </SideTreeDndContext>
-      <Footer treeState={treeState} onPublish={publishTree} />
+      <Footer />
     </aside>
   )
 }

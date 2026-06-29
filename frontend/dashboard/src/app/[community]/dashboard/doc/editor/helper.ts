@@ -8,6 +8,8 @@ import S from '~/unit/DashboardThread/schema'
 
 import type { TDocDraftQueryData, TDocTreeQueryData, TGraphQLResult } from './spec'
 
+const isPageNode = (node: TDocTreeNodeDTO): boolean => String(node.type).toLowerCase() === 'page'
+
 /**
  * Normalize one Next.js search param value into a single string.
  *
@@ -76,12 +78,12 @@ export const fetchDashboardGraphQL = async <TData>(
  * Resolve the first page node in the docs side tree.
  *
  * @example
- * findFirstPage([{ children: [{ type: 'page', docId: 'doc_1' }] }])
- * // => { type: 'page', docId: 'doc_1' }
+ * findFirstPage([{ children: [{ type: 'page', workspaceId: 'workspace_1' }] }])
+ * // => { type: 'page', workspaceId: 'workspace_1' }
  */
 export const findFirstPage = (groups: readonly TDocTreeNodeDTO[]): TDocTreeNodeDTO | null => {
   for (const group of groups) {
-    const page = group.children?.find((child) => child.type === 'page')
+    const page = group.children?.find(isPageNode)
     if (page) return page
   }
 
@@ -89,20 +91,22 @@ export const findFirstPage = (groups: readonly TDocTreeNodeDTO[]): TDocTreeNodeD
 }
 
 /**
- * Resolve a page node by its article draft docId.
+ * Resolve a page node by its article workspace id.
  *
  * @example
- * findPageByDocId([{ children: [{ type: 'page', docId: 'doc_1' }] }], 'doc_1')
- * // => { type: 'page', docId: 'doc_1' }
+ * findPageByWorkspaceId([{ children: [{ type: 'page', workspaceId: 'workspace_1' }] }], 'workspace_1')
+ * // => { type: 'page', workspaceId: 'workspace_1' }
  */
-export const findPageByDocId = (
+export const findPageByWorkspaceId = (
   groups: readonly TDocTreeNodeDTO[],
-  docId: string | null,
+  workspaceId: string | null,
 ): TDocTreeNodeDTO | null => {
-  if (!docId) return null
+  if (!workspaceId) return null
 
   for (const group of groups) {
-    const page = group.children?.find((child) => child.type === 'page' && child.docId === docId)
+    const page = group.children?.find(
+      (child) => isPageNode(child) && String(child.workspaceId) === workspaceId,
+    )
     if (page) return page
   }
 
@@ -110,27 +114,27 @@ export const findPageByDocId = (
 }
 
 /**
- * Fetch the docs editor SSR payload for the selected docId.
+ * Fetch the docs editor SSR payload for the selected workspaceId.
  *
  * @example
- * await getDocEditorInitialData('home', 'doc_welcome')
- * // => { docTree: { ... }, docDraft: { id: 'doc_welcome', ... } }
+ * await getDocEditorInitialData('home', 'workspace_welcome')
+ * // => { docTree: { ... }, docDraft: { id: 'workspace_welcome', ... } }
  */
 export const getDocEditorInitialData = async (
   community: string,
-  docId: string | null,
+  workspaceId: string | null,
 ): Promise<TDocsEditorInitialData> => {
   try {
     const treeData = await fetchDashboardGraphQL<TDocTreeQueryData>(S.docTree, { community })
     const docTree = treeData?.docTree ?? null
-    const activePage = docTree ? findPageByDocId(docTree.groups, docId) : null
-    const activeDocId = activePage?.docId ?? null
+    const activePage = docTree ? findPageByWorkspaceId(docTree.groups, workspaceId) : null
+    const activeWorkspaceId = activePage?.workspaceId ?? null
 
-    if (!docTree || !activeDocId) return { docTree, docDraft: null }
+    if (!docTree || !activeWorkspaceId) return { docTree, docDraft: null }
 
     const draftData = await fetchDashboardGraphQL<TDocDraftQueryData>(S.docDraft, {
       community,
-      id: activeDocId,
+      id: activeWorkspaceId,
     })
 
     return {
