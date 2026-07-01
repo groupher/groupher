@@ -32,20 +32,31 @@ defmodule GroupherServer.Repo.Migrations.UnifyDocPublishReleaseDocIds do
   defp ensure_article_snapshots_doc_id do
     execute("""
     DO $$
+    DECLARE
+      doc_id_type text;
     BEGIN
-      IF EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_schema = '#{@prefix}' AND table_name = 'article_snapshots'
-          AND column_name = 'doc_id' AND data_type = 'bigint'
-      ) THEN
-        ALTER TABLE #{@prefix}.article_snapshots DROP COLUMN doc_id;
+      IF to_regclass('#{@prefix}.article_snapshots') IS NULL THEN
+        RETURN;
       END IF;
 
-      IF NOT EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_schema = '#{@prefix}' AND table_name = 'article_snapshots'
-          AND column_name = 'doc_id'
-      ) THEN
+      SELECT data_type INTO doc_id_type
+      FROM information_schema.columns
+      WHERE table_schema = '#{@prefix}'
+        AND table_name = 'article_snapshots'
+        AND column_name = 'doc_id';
+
+      IF doc_id_type IS NOT NULL AND doc_id_type <> 'uuid' THEN
+        ALTER TABLE #{@prefix}.article_snapshots RENAME COLUMN doc_id TO legacy_doc_row_id;
+        ALTER TABLE #{@prefix}.article_snapshots ADD COLUMN doc_id uuid;
+
+        UPDATE #{@prefix}.article_snapshots AS target
+        SET doc_id = docs.doc_id
+        FROM #{@prefix}.docs AS docs
+        WHERE docs.id = target.legacy_doc_row_id
+          AND target.doc_id IS NULL;
+
+        ALTER TABLE #{@prefix}.article_snapshots DROP COLUMN legacy_doc_row_id;
+      ELSIF doc_id_type IS NULL THEN
         ALTER TABLE #{@prefix}.article_snapshots ADD COLUMN doc_id uuid;
       END IF;
     END $$;
@@ -53,6 +64,25 @@ defmodule GroupherServer.Repo.Migrations.UnifyDocPublishReleaseDocIds do
   end
 
   defp normalize_article_snapshots_target_check do
+    execute("""
+    DO $$
+    BEGIN
+      IF to_regclass('#{@prefix}.article_snapshots') IS NOT NULL
+        AND EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_schema = '#{@prefix}' AND table_name = 'article_snapshots'
+            AND column_name = 'article_id'
+        )
+      THEN
+        UPDATE #{@prefix}.article_snapshots AS target
+        SET doc_id = docs.doc_id
+        FROM #{@prefix}.docs AS docs
+        WHERE target.doc_id IS NULL
+          AND docs.id = target.article_id;
+      END IF;
+    END $$;
+    """)
+
     execute("DELETE FROM #{@prefix}.article_snapshots WHERE doc_id IS NULL;")
 
     execute(
@@ -104,6 +134,13 @@ defmodule GroupherServer.Repo.Migrations.UnifyDocPublishReleaseDocIds do
         END IF;
 
         ALTER TABLE #{@prefix}.publish_release_articles DROP COLUMN IF EXISTS article_id;
+
+        UPDATE #{@prefix}.publish_release_articles AS target
+        SET doc_id = snapshots.doc_id
+        FROM #{@prefix}.article_snapshots AS snapshots
+        WHERE target.snapshot_id = snapshots.id
+          AND target.doc_id IS NULL
+          AND snapshots.doc_id IS NOT NULL;
 
         DELETE FROM #{@prefix}.publish_release_articles
         WHERE doc_id IS NULL

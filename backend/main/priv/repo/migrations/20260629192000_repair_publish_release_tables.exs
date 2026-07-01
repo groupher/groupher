@@ -104,7 +104,7 @@ defmodule GroupherServer.Repo.Migrations.RepairPublishReleaseTables do
         null: false
       )
 
-      add(:article_id, :bigint, null: false)
+      add(:doc_id, :uuid, null: false)
 
       add(
         :snapshot_id,
@@ -124,7 +124,7 @@ defmodule GroupherServer.Repo.Migrations.RepairPublishReleaseTables do
     ensure_publish_release_articles_columns()
 
     create_if_not_exists(index(:publish_release_articles, [:release_id], prefix: @prefix))
-    create_if_not_exists(index(:publish_release_articles, [:article_id], prefix: @prefix))
+    create_if_not_exists(index(:publish_release_articles, [:doc_id], prefix: @prefix))
     create_if_not_exists(index(:publish_release_articles, [:snapshot_id], prefix: @prefix))
     create_if_not_exists(index(:publish_release_articles, [:node_id], prefix: @prefix))
   end
@@ -164,7 +164,7 @@ defmodule GroupherServer.Repo.Migrations.RepairPublishReleaseTables do
       "bigint REFERENCES #{@prefix}.publish_releases(id) ON DELETE CASCADE"
     )
 
-    add_column_if_missing(:publish_release_articles, :article_id, "bigint")
+    add_column_if_missing(:publish_release_articles, :doc_id, "uuid")
 
     add_column_if_missing(
       :publish_release_articles,

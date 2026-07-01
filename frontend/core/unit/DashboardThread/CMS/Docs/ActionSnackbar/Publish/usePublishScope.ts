@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
 
 import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import useEvent from '~/hooks/useEvent'
@@ -10,12 +10,34 @@ import useDocsEditor from '../../Editor/store/hooks'
 import { getScopeItems } from './helper'
 import type { TPublishScope, TPublishSelectedInput } from './spec'
 
+const reconcileSelectedIds = (
+  items: TPublishScope['docChanges'],
+  currentIds: string[],
+  seenIdsRef: MutableRefObject<Set<string>>,
+): string[] => {
+  const selectableIds = new Set(items.filter((item) => item.selectable).map((item) => item.id))
+  const nextSeenIds = new Set(items.map((item) => item.id))
+  const selectedIds = new Set(currentIds.filter((id) => selectableIds.has(id)))
+
+  for (const item of items) {
+    if (item.selectable && item.selectedByDefault && !seenIdsRef.current.has(item.id)) {
+      selectedIds.add(item.id)
+    }
+  }
+
+  seenIdsRef.current = nextSeenIds
+
+  return Array.from(selectedIds)
+}
+
 export default function usePublishScope() {
   const { slug: community } = useCommunity()
   const { setPublishRuntime } = useDocsEditor()
   const { data: publishScopeData, reload: reloadPublishScope } = useQuery<{
     docPublishScope?: TPublishScope | null
   }>(S.docPublishScope, { community })
+  const seenDocIdsRef = useRef<Set<string>>(new Set())
+  const seenTreeIdsRef = useRef<Set<string>>(new Set())
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([])
   const [selectedTreeIds, setSelectedTreeIds] = useState<string[]>([])
   const publishScope = publishScopeData?.docPublishScope ?? null
@@ -50,15 +72,11 @@ export default function usePublishScope() {
   useEffect(() => {
     if (!publishScope) return
 
-    setSelectedDocIds(
-      publishScope.docChanges
-        .filter((item) => item.selectable && item.selectedByDefault)
-        .map((item) => item.id),
+    setSelectedDocIds((currentIds) =>
+      reconcileSelectedIds(publishScope.docChanges, currentIds, seenDocIdsRef),
     )
-    setSelectedTreeIds(
-      publishScope.treeChanges
-        .filter((item) => item.selectable && item.selectedByDefault)
-        .map((item) => item.id),
+    setSelectedTreeIds((currentIds) =>
+      reconcileSelectedIds(publishScope.treeChanges, currentIds, seenTreeIdsRef),
     )
   }, [publishScope])
 

@@ -176,12 +176,14 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   useEffect(() => {
     if (!data?.docTree) return
     if (revisionRef.current !== null && data.docTree.revision < revisionRef.current) return
-    if (hasDraftNode(groupsRef.current)) return
 
-    const nextGroups = data.docTree.groups.map(mapGroup)
     revisionRef.current = data.docTree.revision
     setTreeState(data.docTree.treeState ?? null)
     setStagedEvents(data.docTree.stagedEvents ?? [])
+
+    if (hasDraftNode(groupsRef.current)) return
+
+    const nextGroups = data.docTree.groups.map(mapGroup)
     commitGroups(nextGroups)
     syncActiveIdFromUrl(nextGroups)
   }, [commitGroups, data, syncActiveIdFromUrl])

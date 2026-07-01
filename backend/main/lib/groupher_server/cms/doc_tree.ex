@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.DocTree do
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.DocTree.{Publish, Read, Template, Write}
-  alias GroupherServer.CMS.Model.Community
+  alias GroupherServer.CMS.Model.{Community, Doc}
   alias Helper.T
 
   @spec read(Community.t()) :: T.domain_res(map())

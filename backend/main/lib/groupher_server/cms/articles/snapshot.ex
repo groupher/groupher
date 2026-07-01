@@ -103,15 +103,17 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
         user \\ nil,
         opts \\ []
       ) do
-    stage = Keyword.get(opts, :stage, CMS.Const.stage(:draft))
-    force? = Keyword.get(opts, :force, false)
+    Transaction.lock_global(Draft.lock_key(community, doc_id), fn ->
+      stage = Keyword.get(opts, :stage, CMS.Const.stage(:draft))
+      force? = Keyword.get(opts, :force, false)
 
-    with {:ok, draft} <- read_doc_draft(community, doc_id),
-         {:ok, attrs} <- snapshot_attrs_from_doc(draft, stage, user) do
-      attrs
-      |> put_next_snapshot_number()
-      |> maybe_create_draft_snapshot(force?)
-    end
+      with {:ok, draft} <- read_doc_draft(community, doc_id),
+           {:ok, attrs} <- snapshot_attrs_from_doc(draft, stage, user) do
+        attrs
+        |> put_next_snapshot_number()
+        |> maybe_create_draft_snapshot(force?)
+      end
+    end)
   end
 
   @doc """

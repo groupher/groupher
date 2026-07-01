@@ -55,11 +55,29 @@ defmodule GroupherServer.Repo.Migrations.CreatePublishReleases do
     end
 
     create_if_not_exists(index(:publish_release_articles, [:release_id], prefix: @prefix))
-    create_if_not_exists(index(:publish_release_articles, [:article_id], prefix: @prefix))
 
-    create_if_not_exists(
-      index(:publish_release_articles, [:snapshot_id], prefix: @prefix)
+    execute(
+      """
+      DO $$
+      BEGIN
+        IF to_regclass('#{@prefix}.publish_release_articles') IS NOT NULL
+          AND EXISTS (
+            SELECT 1
+            FROM information_schema.columns
+            WHERE table_schema = '#{@prefix}'
+              AND table_name = 'publish_release_articles'
+              AND column_name = 'article_id'
+          )
+        THEN
+          EXECUTE 'CREATE INDEX IF NOT EXISTS publish_release_articles_article_id_index ON #{@prefix}.publish_release_articles (article_id)';
+        END IF;
+      END
+      $$;
+      """,
+      "DROP INDEX IF EXISTS #{@prefix}.publish_release_articles_article_id_index"
     )
+
+    create_if_not_exists(index(:publish_release_articles, [:snapshot_id], prefix: @prefix))
 
     create_if_not_exists(index(:publish_release_articles, [:node_id], prefix: @prefix))
 

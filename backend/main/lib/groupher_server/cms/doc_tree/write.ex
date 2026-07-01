@@ -378,7 +378,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
          subtree
        ) do
     if Enum.any?(subtree, &public_node_exists?(community, &1.node_id)) do
-      record_tree_events(community, args, [Events.delete_event(node)])
+      record_tree_events(community, args, [Events.delete_event(node, subtree)])
     else
       discarded =
         subtree
@@ -460,13 +460,13 @@ defmodule GroupherServer.CMS.DocTree.Write do
   end
 
   defp delete_subtree_doc_drafts(%Community{} = community, %DocTreeNode{} = node) do
+    nodes = subtree_nodes(community, node)
+    subtree_node_ids = Enum.map(nodes, & &1.node_id)
+
     doc_ids =
-      community
-      |> subtree_nodes(node)
-      |> Enum.filter(&(&1.type == :page))
-      |> Enum.map(& &1.doc_id)
-      |> Enum.reject(&is_nil/1)
-      |> Enum.uniq()
+      nodes
+      |> subtree_doc_ids()
+      |> unreferenced_doc_ids(community, subtree_node_ids)
 
     case doc_ids do
       [] ->
@@ -482,6 +482,31 @@ defmodule GroupherServer.CMS.DocTree.Write do
         Events.discard_doc_bound_staged(community, doc_ids)
         :ok
     end
+  end
+
+  defp subtree_doc_ids(nodes) do
+    nodes
+    |> Enum.filter(&(&1.type == :page))
+    |> Enum.map(& &1.doc_id)
+    |> Enum.reject(&is_nil/1)
+    |> Enum.uniq()
+  end
+
+  defp unreferenced_doc_ids([], _community, _subtree_node_ids), do: []
+
+  defp unreferenced_doc_ids(doc_ids, %Community{} = community, subtree_node_ids) do
+    referenced_doc_ids =
+      DocTreeNode
+      |> where([n], n.community_id == ^community.id)
+      |> where([n], n.stage == CMS.Const.stage(:draft))
+      |> where([n], n.type == :page)
+      |> where([n], n.doc_id in ^doc_ids)
+      |> where([n], n.node_id not in ^subtree_node_ids)
+      |> select([n], n.doc_id)
+      |> Repo.all()
+      |> MapSet.new()
+
+    Enum.reject(doc_ids, &MapSet.member?(referenced_doc_ids, &1))
   end
 
   defp subtree_nodes(%Community{} = community, %DocTreeNode{type: :group} = group) do

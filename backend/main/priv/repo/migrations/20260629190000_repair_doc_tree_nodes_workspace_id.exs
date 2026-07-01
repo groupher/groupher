@@ -55,7 +55,23 @@ defmodule GroupherServer.Repo.Migrations.RepairDocTreeNodesWorkspaceId do
     $$;
     """)
 
-    create_if_not_exists(index(:doc_tree_nodes, [:workspace_id], prefix: @prefix))
+    execute("""
+    DO $$
+    BEGIN
+      IF to_regclass('#{@prefix}.doc_tree_nodes') IS NOT NULL
+        AND EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = '#{@prefix}'
+            AND table_name = 'doc_tree_nodes'
+            AND column_name = 'workspace_id'
+        )
+      THEN
+        EXECUTE 'CREATE INDEX IF NOT EXISTS doc_tree_nodes_workspace_id_index ON #{@prefix}.doc_tree_nodes (workspace_id)';
+      END IF;
+    END
+    $$;
+    """)
   end
 
   def down do

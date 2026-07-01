@@ -163,14 +163,19 @@ defmodule GroupherServer.CMS.DocTree.Events do
   @doc """
   Builds a delete event for a removed group/page/link node.
   """
-  @spec delete_event(DocTreeNode.t()) :: map()
-  def delete_event(%DocTreeNode{} = node) do
+  @spec delete_event(DocTreeNode.t(), list(DocTreeNode.t())) :: map()
+  def delete_event(%DocTreeNode{} = node, subtree \\ []) do
     node_payload = node_payload(node)
+
+    children_payload =
+      subtree
+      |> Enum.reject(&(&1.node_id == node.node_id))
+      |> Enum.map(&node_payload/1)
 
     %{
       type: CMS.Const.tree_event(:node_delete),
       payload: %{"node" => node_payload},
-      inverse: %{"node" => node_payload}
+      inverse: %{"node" => node_payload, "children" => children_payload}
     }
   end
 

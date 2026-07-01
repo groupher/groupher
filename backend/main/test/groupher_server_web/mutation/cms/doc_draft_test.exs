@@ -338,6 +338,22 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       assert second_published["subtitle"] == "Published subtitle updated"
       assert second_published["documentJson"] == @plate_body_updated
 
+      {:ok, public_doc} =
+        ORM.find_by(CMS.Model.Doc,
+          community_id: community.id,
+          doc_id: doc_id,
+          stage: :public
+        )
+
+      {:ok, public_doc_document} =
+        ORM.find_by(CMS.Model.DocDocument, doc_id: public_doc.id)
+
+      {:ok, public_article_document} =
+        ORM.find_by(CMS.Model.ArticleDocument, article_id: public_doc.id, thread: :doc)
+
+      assert public_doc_document.json == @plate_body_updated
+      assert public_article_document.json == @plate_body_updated
+
       published_versions =
         user_conn
         |> gq_query(Schema.q(:doc_draft_snapshots), %{

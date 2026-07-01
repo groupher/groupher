@@ -10,7 +10,7 @@ defmodule GroupherServer.Repo.Migrations.DropDocsPublishedSlugIndex do
 
   def down do
     create_if_not_exists(
-      index(:docs, [:community_id, :slug],
+      unique_index(:docs, [:community_id, :slug],
         prefix: @prefix,
         where: "stage = 'public' AND slug IS NOT NULL",
         name: :docs_published_slug_idx

@@ -137,8 +137,22 @@ $$;
 
 DROP INDEX IF EXISTS cms.doc_tree_trash_items_article_workspace_id_index;
 DROP INDEX IF EXISTS cms.doc_tree_trash_items_article_version_id_index;
-CREATE INDEX IF NOT EXISTS doc_tree_trash_items_workspace_id_index
-  ON cms.doc_tree_trash_items (workspace_id);
+DO $$
+BEGIN
+  IF to_regclass('cms.doc_tree_trash_items') IS NOT NULL
+    AND EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'cms'
+        AND table_name = 'doc_tree_trash_items'
+        AND column_name = 'workspace_id'
+    )
+  THEN
+    CREATE INDEX IF NOT EXISTS doc_tree_trash_items_workspace_id_index
+      ON cms.doc_tree_trash_items (workspace_id);
+  END IF;
+END
+$$;
 
 DELETE FROM public.schema_migrations
 WHERE version IN (

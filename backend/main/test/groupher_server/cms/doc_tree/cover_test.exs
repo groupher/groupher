@@ -160,7 +160,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       assert link_payload.node.title == "External"
     end
 
-    test "move group to draft is a deprecated no-op in the stage model",
+    test "move group to draft returns an explicit unsupported operation error",
          ~m(user community group_payload page_payload)a do
       {:ok, _link_payload} =
         CMS.DocTree.create_link(community, %{
@@ -173,7 +173,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
       assert {:ok, %{done: true}} = publish_all_changes(community, user)
 
-      assert {:ok, %{done: true}} =
+      assert {:error, {:custom, "Group draft state is managed by unpublished tree events."}} =
                CMS.DocTree.move_group_to_draft(community, group_payload.node.id)
 
       {:ok, cover} = CMS.DocCover.read(community)

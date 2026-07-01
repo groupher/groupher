@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
   same staged/published state machine.
   """
 
-  alias GroupherServer.CMS
+  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Articles.Document
   alias CMS.Model.{Doc, Author, Community}
@@ -95,10 +95,16 @@ defmodule GroupherServer.CMS.Articles.Draft do
           T.domain_res(Doc.t())
   def create_with_author(%Community{} = community, thread, attrs, %Author{} = author) do
     with {:ok, payload} <- parse_body(attrs),
-         {:ok, draft_attrs} <- build_attrs(community, thread, attrs, payload, author),
-         {:ok, draft} <- ORM.create(Doc, draft_attrs),
-         {:ok, _} <- Document.create_doc(draft, %{article_payload: payload}) do
-      {:ok, draft}
+         {:ok, draft_attrs} <- build_attrs(community, thread, attrs, payload, author) do
+      Repo.transaction(fn ->
+        with {:ok, draft} <- ORM.create(Doc, draft_attrs),
+             {:ok, _} <- Document.create_doc(draft, %{article_payload: payload}) do
+          draft
+        else
+          {:error, reason} -> Repo.rollback(reason)
+          reason -> Repo.rollback(reason)
+        end
+      end)
     end
   end
 
@@ -372,8 +378,9 @@ defmodule GroupherServer.CMS.Articles.Draft do
            stage: CMS.Const.stage(:public)
          ) do
       {:ok, public_doc} ->
-        with {:ok, public_doc} <- ORM.update(public_doc, publish_content_attrs(draft)) do
-          ORM.delete(draft)
+        with {:ok, public_doc} <- ORM.update(public_doc, publish_content_attrs(draft)),
+             {:ok, _document} <- Document.update_doc(public_doc, document_attrs_from_doc(draft)),
+             {:ok, _draft} <- ORM.delete(draft) do
           {:ok, public_doc}
         end
 
@@ -388,7 +395,13 @@ defmodule GroupherServer.CMS.Articles.Draft do
       subtitle: draft.subtitle,
       slug: draft.slug,
       digest: draft.digest,
-      json: draft.json
+      json: draft.json,
+      content_hash: draft.content_hash,
+      schema_version: draft.schema_version
     }
+  end
+
+  defp document_attrs_from_doc(%Doc{} = doc) do
+    %{article_payload: doc, title: doc.title}
   end
 end

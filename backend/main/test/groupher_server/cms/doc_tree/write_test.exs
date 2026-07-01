@@ -122,6 +122,48 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
       assert doc_draft.json =~ "page-3-copy"
     end
 
+    test "deleting one duplicated page keeps shared draft doc referenced by the other page" do
+      {:ok, user} = db_insert(:user)
+      {:ok, community} = empty_docs_community(user)
+      {:ok, before_tree_state} = ORM.find_by(DocsSiteState, community_id: community.id)
+
+      {:ok, group_payload} =
+        CMS.DocTree.create_group(community, %{
+          title: "Guides",
+          slug: "guides",
+          base_revision: before_tree_state.tree_lock_version
+        })
+
+      {:ok, page_payload} =
+        CMS.DocTree.create_page(
+          community,
+          %{
+            group_id: group_payload.node.id,
+            title: "Install",
+            slug: "install",
+            base_revision: group_payload.revision
+          },
+          user
+        )
+
+      {:ok, duplicate_payload} =
+        CMS.DocTree.duplicate_node(community, page_payload.node.id, %{
+          base_revision: page_payload.revision
+        })
+
+      assert duplicate_payload.node.doc_id == page_payload.node.doc_id
+
+      {:ok, _payload} =
+        CMS.DocTree.delete_node(community, page_payload.node.id, %{
+          base_revision: duplicate_payload.revision,
+          actor_id: user.id
+        })
+
+      refute draft_node_exists?(community, page_payload.node.id)
+      assert draft_node_exists?(community, duplicate_payload.node.id)
+      assert {:ok, %Doc{}} = draft_doc(community, page_payload.node.doc_id)
+    end
+
     test "stale base_revision returns conflict and does not mutate draft tree" do
       {:ok, user} = db_insert(:user)
       {:ok, community} = empty_docs_community(user)

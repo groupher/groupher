@@ -58,6 +58,12 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     "ui_config" => :ui_config
   }
 
+  @event_node_types %{
+    "group" => :group,
+    "link" => :link,
+    "pin" => :pin
+  }
+
   @doc """
   Builds the unified publish checklist consumed by the editor ActionSnackbar.
 
@@ -200,7 +206,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   Deprecated by the stage model; tree draft/public state is owned by tree events.
   """
   @spec move_group_to_draft(Community.t(), T.id()) :: T.domain_res(map())
-  def move_group_to_draft(_community, _group_id), do: {:ok, %{done: true}}
+  def move_group_to_draft(_community, _group_id),
+    do: {:error, {:custom, "Group draft state is managed by unpublished tree events."}}
 
   @doc """
   Resolves the public-stage node for a stable draft `node_id`.
@@ -451,23 +458,25 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   end
 
   defp public_attrs_from_event_node(%Community{} = community, node) do
-    {:ok,
-     %{
-       community_id: community.id,
-       node_id: node["id"],
-       stage: CMS.Const.stage(:public),
-       type: String.to_existing_atom(node["type"]),
-       group_id: node["groupId"],
-       doc_id: nil,
-       title: node["title"],
-       slug: node["slug"],
-       index: node["index"] || 0,
-       href: node["href"],
-       marker: node["marker"],
-       badge: node["badge"],
-       hidden: Map.get(node, "hidden", false),
-       ui_config: Map.get(node, "uiConfig", %{})
-     }}
+    with {:ok, type} <- node_type_atom(node["type"]) do
+      {:ok,
+       %{
+         community_id: community.id,
+         node_id: node["id"],
+         stage: CMS.Const.stage(:public),
+         type: type,
+         group_id: node["groupId"],
+         doc_id: nil,
+         title: node["title"],
+         slug: node["slug"],
+         index: node["index"] || 0,
+         href: node["href"],
+         marker: node["marker"],
+         badge: node["badge"],
+         hidden: Map.get(node, "hidden", false),
+         ui_config: Map.get(node, "uiConfig", %{})
+       }}
+    end
   end
 
   defp upsert_public_node_attrs(%Community{} = community, node_id, attrs) do
@@ -487,9 +496,9 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   defp delete_public_node_by_node_id(%Community{} = community, node_id) do
     case public_node_by_node_id(community, node_id) do
       %DocTreeNode{type: :group} = node ->
-        delete_public_group_children(community, node.node_id)
-
-        ORM.delete(node)
+        with :ok <- delete_public_group_children(community, node.node_id) do
+          ORM.delete(node)
+        end
 
       %DocTreeNode{} = node ->
         ORM.delete(node)
@@ -502,9 +511,12 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   defp delete_public_group_children(%Community{} = community, group_id) do
     community
     |> public_group_children(group_id)
-    |> Enum.each(&ORM.delete/1)
-
-    :ok
+    |> Enum.reduce_while(:ok, fn node, :ok ->
+      case ORM.delete(node) do
+        {:ok, _node} -> {:cont, :ok}
+        error -> {:halt, error}
+      end
+    end)
   end
 
   defp public_node_by_node_id(%Community{} = community, node_id) do
@@ -527,6 +539,13 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     case Map.fetch(@event_public_fields, field) do
       {:ok, atom} -> {:ok, atom}
       :error -> {:error, {:custom, "Unsupported docs tree field: #{field}"}}
+    end
+  end
+
+  defp node_type_atom(type) do
+    case Map.fetch(@event_node_types, type) do
+      {:ok, atom} -> {:ok, atom}
+      :error -> {:error, {:custom, "Unsupported docs tree node type: #{type}"}}
     end
   end
 
