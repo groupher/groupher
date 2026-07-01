@@ -25,10 +25,7 @@ export default function useSalon() {
       bg('card'),
     ),
     currentChangesCardActive: rainbow(COLOR.ORANGE, 'border'),
-    currentChangesButton: cn(
-      'block w-full min-w-0 text-left button-reset',
-      fg('title'),
-    ),
+    currentChangesButton: cn('block w-full min-w-0 text-left button-reset', fg('title')),
     currentChangesSummary: cn('row-center gap-2 text-sm bold-sm', fg('title')),
     additions: rainbow(COLOR.GREEN, 'fg'),
     deletions: rainbow(COLOR.RED, 'fg'),

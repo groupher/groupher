@@ -21,12 +21,7 @@ type TProps = {
   onOpenChange?: (open: boolean) => void
 }
 
-const GroupMenu: FC<TProps> = ({
-  inCover = false,
-  open = false,
-  onSelect,
-  onOpenChange,
-}) => {
+const GroupMenu: FC<TProps> = ({ inCover = false, open = false, onSelect, onOpenChange }) => {
   const s = useSalon({ active: open })
   const { t } = useTrans()
   const coverActionTitle = t(
