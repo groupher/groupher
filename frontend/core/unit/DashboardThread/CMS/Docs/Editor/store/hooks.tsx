@@ -12,5 +12,6 @@ export default createStoreHook(StoreContext, [
   'reloadSideTree',
   'saveDocDraft',
   'setMode',
+  'setPublishRuntime',
   'setDocDraftSession',
 ])

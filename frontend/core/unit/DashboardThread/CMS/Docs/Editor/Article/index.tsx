@@ -23,7 +23,8 @@ const Article: FC<TProps> = ({ sideTree }) => {
   const {
     activePage,
     bodyValue,
-    editorWorkspaceId,
+    editable,
+    editorDocId,
     error,
     loading,
     setBodyValue,
@@ -33,11 +34,11 @@ const Article: FC<TProps> = ({ sideTree }) => {
     title,
   } = useLogic(sideTree)
   const [coverVisible, setCoverVisible] = useState(false)
-  const disabled = loading || mode === DOC_EDITOR_MODE.PREVIEW
+  const disabled = loading || !editable || mode === DOC_EDITOR_MODE.PREVIEW
 
   useEffect(() => {
     setCoverVisible(false)
-  }, [activePage?.workspaceId])
+  }, [activePage?.docId])
 
   if (!activePage) {
     return (
@@ -65,8 +66,8 @@ const Article: FC<TProps> = ({ sideTree }) => {
       <Body
         value={bodyValue}
         mode={mode}
-        editorKey={editorWorkspaceId}
-        disabled={loading}
+        editorKey={editorDocId}
+        disabled={disabled}
         onChange={setBodyValue}
       />
       {error && <div className={s.error}>{error}</div>}

@@ -343,20 +343,20 @@ export const findChildEditingTarget = (
 }
 
 /**
- * Find the local page child that owns a backend article workspace id.
+ * Find the local page child that owns a backend doc id.
  *
  * @example
- * const page = findPageByWorkspaceId(groups, currentWorkspaceId)
+ * const page = findPageByDocId(groups, currentDocId)
  */
-export const findPageByWorkspaceId = (
+export const findPageByDocId = (
   groups: readonly TSideTreeGroup[],
-  workspaceId: string | null,
+  docId: string | null,
 ): TSideTreeChild | null => {
-  if (!workspaceId) return null
+  if (!docId) return null
 
   for (const group of groups) {
     const child = group.children.find(
-      (item) => item.type === SIDE_TREE_NODE_TYPE.PAGE && item.workspaceId === workspaceId,
+      (item) => item.type === SIDE_TREE_NODE_TYPE.PAGE && item.docId === docId,
     )
     if (child) return child
   }
@@ -365,17 +365,17 @@ export const findPageByWorkspaceId = (
 }
 
 /**
- * Resolve the active side-tree id from the current URL workspace id.
- * No workspace id means the editor route should stay in its empty workspace state.
+ * Resolve the active side-tree id from the current URL doc id.
+ * No doc id means the editor route should stay in its empty workspace state.
  *
  * @example
- * const activeId = resolveActiveIdFromUrl(groups, currentWorkspaceId)
+ * const activeId = resolveActiveIdFromUrl(groups, currentDocId)
  */
 export const resolveActiveIdFromUrl = (
   groups: readonly TSideTreeGroup[],
-  workspaceId: string | null,
+  docId: string | null,
 ): string | null => {
-  if (workspaceId) return findPageByWorkspaceId(groups, workspaceId)?.id ?? null
+  if (docId) return findPageByDocId(groups, docId)?.id ?? null
 
   return null
 }

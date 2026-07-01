@@ -95,7 +95,7 @@ export const duplicateSideTreeChild = (
         ...child,
         id: makeSideTreeId(SIDE_TREE_ID_PREFIX.PAGE),
         title: `${child.title || untitledTitle} ${DUPLICATE_TITLE_SUFFIX}`,
-        workspaceId: undefined,
+        docId: undefined,
         path: undefined,
         href: undefined,
       }

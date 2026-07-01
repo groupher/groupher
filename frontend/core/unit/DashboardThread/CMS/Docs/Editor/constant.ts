@@ -1,7 +1,7 @@
 import type { TTransKey } from '~/spec'
 
 export const DOC_EDITOR_QUERY_PARAM = {
-  WORKSPACE_ID: 'workspaceId',
+  DOC_ID: 'docId',
 } as const
 
 export const DOC_EDITOR_LABEL_KEY = {

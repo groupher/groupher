@@ -10,7 +10,10 @@ import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
 import { toast } from '~/widgets/Toaster'
 
-import { DOC_PUBLISH_PLAN_RELOAD_EVENT } from '../../ActionSnackbar/constant'
+import {
+  DOC_DRAFT_PATCH_EVENT,
+  DOC_PUBLISH_SCOPE_RELOAD_EVENT,
+} from '../../ActionSnackbar/constant'
 import { DOC_EDITOR_QUERY_PARAM } from '../constant'
 import {
   DEFAULT_LINK_MARKER,
@@ -31,7 +34,7 @@ import {
   findGroupIndex,
   findMovedNode,
   formatMutationError,
-  getWorkspaceIdFromPage,
+  getDocIdFromPage,
   getDefaultLinkTitle,
   isActiveRemovedByTarget,
   isDraftId,
@@ -57,6 +60,7 @@ import type {
   TDocTreeMutationData,
   TDocTreeMutationPayload,
   TDocTreeNodeDTO,
+  TDocTreeNodePublishState,
   TDocTreeState,
   TEditingTarget,
   TSideTreeChild,
@@ -67,8 +71,16 @@ import type {
   TSideTreeNodeMenuAction,
 } from './spec'
 
-const reloadDocPublishPlan = (): void => {
-  window.dispatchEvent(new Event(DOC_PUBLISH_PLAN_RELOAD_EVENT))
+const reloadDocPublishScope = (): void => {
+  window.dispatchEvent(new Event(DOC_PUBLISH_SCOPE_RELOAD_EVENT))
+}
+
+type TMoveDocToDraftData = {
+  moveDocToDraft?: {
+    docId?: string | null
+    stage?: 'draft' | 'public' | null
+    publishState?: TDocTreeNodePublishState | null
+  } | null
 }
 
 const hasDraftNode = (groups: readonly TSideTreeGroup[]): boolean =>
@@ -80,7 +92,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const searchString = searchParams.toString()
-  const currentWorkspaceId = searchParams.get(DOC_EDITOR_QUERY_PARAM.WORKSPACE_ID)
+  const currentDocId = searchParams.get(DOC_EDITOR_QUERY_PARAM.DOC_ID)
   const { slug: community } = useCommunity()
   const { mutate } = useGraphQLClient()
   const { data, reload } = useQuery<{
@@ -96,16 +108,19 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   const [treeState, setTreeState] = useState<TDocTreeState | null>(initialData?.treeState ?? null)
   const [stagedEvents, setStagedEvents] = useState<TDocTreeEvent[]>(initialData?.stagedEvents ?? [])
   const groupsRef = useRef<TSideTreeGroup[]>(initialGroups)
-  const currentWorkspaceIdRef = useRef<string | null>(currentWorkspaceId)
+  const currentDocIdRef = useRef<string | null>(currentDocId)
   const revisionRef = useRef<number | null>(initialData?.revision ?? null)
-  const [activeId, setActiveId] = useState<string | null>(() =>
-    resolveActiveIdFromUrl(initialGroups, currentWorkspaceId),
+  const [activeId, setActiveId] = useState<string | null>(
+    () =>
+      resolveActiveIdFromUrl(initialGroups, currentDocId) ??
+      findFirstPage(initialGroups)?.id ??
+      null,
   )
   const [editingTarget, setEditingTarget] = useState<TEditingTarget>(null)
   const [coverWarning, setCoverWarning] = useState<string | null>(null)
 
-  function syncWorkspaceIdToUrl(workspaceId: string | null): void {
-    const nextUrl = buildDocEditorUrl(pathname, searchString, workspaceId)
+  function syncDocIdToUrl(docId: string | null): void {
+    const nextUrl = buildDocEditorUrl(pathname, searchString, docId)
     const currentUrl = searchString ? `${pathname}?${searchString}` : pathname
 
     if (nextUrl === currentUrl) return
@@ -114,24 +129,30 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   }
 
   const syncActiveIdFromUrl = useCallback((sourceGroups: readonly TSideTreeGroup[]): void => {
-    const workspaceId = currentWorkspaceIdRef.current
+    const docId = currentDocIdRef.current
 
-    if (workspaceId) {
-      const nextActiveId = resolveActiveIdFromUrl(sourceGroups, workspaceId)
-      if (!nextActiveId) return
+    if (docId) {
+      const nextActiveId = resolveActiveIdFromUrl(sourceGroups, docId)
+      if (!nextActiveId) {
+        const fallback = findFirstPage(sourceGroups)
+
+        setActiveId((current) => (current === fallback?.id ? current : (fallback?.id ?? null)))
+        return
+      }
 
       setActiveId((current) => (current === nextActiveId ? current : nextActiveId))
       return
     }
 
     setActiveId((current) => {
-      return current === null ? current : null
+      const fallback = findFirstPage(sourceGroups)
+      return current === fallback?.id ? current : (fallback?.id ?? null)
     })
   }, [])
 
   function selectPage(page: TSideTreeChild | null): void {
     setActiveId(page?.id ?? null)
-    syncWorkspaceIdToUrl(getWorkspaceIdFromPage(page))
+    syncDocIdToUrl(getDocIdFromPage(page))
   }
 
   function readGroups(): TSideTreeGroup[] {
@@ -151,8 +172,8 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   }
 
   useEffect(() => {
-    currentWorkspaceIdRef.current = currentWorkspaceId
-  }, [currentWorkspaceId])
+    currentDocIdRef.current = currentDocId
+  }, [currentDocId])
 
   useEffect(() => {
     if (!data?.docTree) return
@@ -169,7 +190,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
   useEffect(() => {
     syncActiveIdFromUrl(groupsRef.current)
-  }, [currentWorkspaceId, syncActiveIdFromUrl])
+  }, [currentDocId, syncActiveIdFromUrl])
 
   const persist = useCallback(
     async (
@@ -194,7 +215,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
         if (payload) {
           revisionRef.current = payload.revision
           setTreeState(payload.treeState ?? null)
-          reloadDocPublishPlan()
+          reloadDocPublishScope()
         }
 
         return payload
@@ -664,14 +685,35 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     }
 
     if (action === SIDE_TREE_NODE_MENU_ACTION.MOVE_TO_DRAFT) {
-      mutate(S.moveDocToDraft, { community, id: childId })
-        .then(() => {
-          reload()
+      mutate<TMoveDocToDraftData>(S.moveDocToDraft, { community, id: childId })
+        .then((data) => {
+          const payload = data?.moveDocToDraft
+          const current = findChild(readGroups(), childId)
+          const publishState = {
+            ...(current?.publishState ?? {}),
+            ...(payload?.publishState ?? {}),
+            status: 'draft',
+            published: true,
+            publishedBefore: true,
+            hasDraft: true,
+          } satisfies TDocTreeNodePublishState
+
+          patchChild(childId, { publishState })
+          reloadDocPublishScope()
+          window.dispatchEvent(
+            new CustomEvent(DOC_DRAFT_PATCH_EVENT, {
+              detail: {
+                docId:
+                  payload?.docId ??
+                  (current?.type === SIDE_TREE_NODE_TYPE.PAGE ? current.docId : null),
+                stage: payload?.stage ?? 'draft',
+              },
+            }),
+          )
           toast(t('dsb.cms.docs.side_tree.publish.draft_moved'))
         })
         .catch((err) => {
           toast(formatMutationError(err), 'error')
-          reload()
         })
       return
     }

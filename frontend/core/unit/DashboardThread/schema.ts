@@ -437,7 +437,6 @@ const updateDashboardDocFaq = gql`
 const docTreeNodeFields = `
   id
   groupId
-  workspaceId
   docId
   type
   title
@@ -455,10 +454,11 @@ const docTreeNodeFields = `
   hidden
   uiConfig
   publishState {
-    status
-    published
-    publishedBefore
-    publicNodeId
+      status
+      published
+      publishedBefore
+      hasDraft
+      publicNodeId
     publicDocId
     hasUnpublishedChanges
     lastPublishedAt
@@ -503,22 +503,24 @@ const docTree = gql`
   }
 `
 
-const docPublishPlanItemFields = `
+const docPublishScopeItemFields = `
   id
   title
   action
   selectedByDefault
+  selectable
+  disabledReason
 `
 
-const docPublishPlan = gql`
-  query docPublishPlan($community: String!) {
-    docPublishPlan(community: $community) {
+const docPublishScope = gql`
+  query docPublishScope($community: String!) {
+    docPublishScope(community: $community) {
       totalCount
       docChanges {
-        ${docPublishPlanItemFields}
+        ${docPublishScopeItemFields}
       }
       treeChanges {
-        ${docPublishPlanItemFields}
+        ${docPublishScopeItemFields}
       }
     }
   }
@@ -528,9 +530,11 @@ const docDraft = gql`
   query docDraft($community: String!, $id: ID!) {
     docDraft(community: $community, id: $id) {
       id
+      docId
       title
       subtitle
       slug
+      stage
       digest
       insertedAt
       updatedAt
@@ -557,8 +561,7 @@ const docDraftSnapshots = gql`
       id
       articleThread
       stage
-      articleId
-      workspaceId
+      docId
       title
       slug
       subtitle
@@ -660,6 +663,7 @@ const updateDocDraft = gql`
       body: $body
     ) {
       id
+      docId
       title
       subtitle
       slug
@@ -689,7 +693,7 @@ const checkpointDocDraftSnapshot = gql`
       id
       articleThread
       stage
-      workspaceId
+      docId
       title
       slug
       subtitle
@@ -721,13 +725,13 @@ const publishDocChanges = gql`
         releaseNumber
         publishedAt
       }
-      plan {
+      scope {
         totalCount
         docChanges {
-          ${docPublishPlanItemFields}
+          ${docPublishScopeItemFields}
         }
         treeChanges {
-          ${docPublishPlanItemFields}
+          ${docPublishScopeItemFields}
         }
       }
     }
@@ -737,7 +741,21 @@ const publishDocChanges = gql`
 const moveDocToDraft = gql`
   mutation moveDocToDraft($community: String!, $id: ID!) {
     moveDocToDraft(community: $community, id: $id) {
-      done
+      docId
+      stage
+      publishState {
+        status
+        published
+        publishedBefore
+        hasDraft
+        publicNodeId
+        publicDocId
+        hasUnpublishedChanges
+        lastPublishedAt
+        inCover
+        hiddenFromCover
+        pinnedToCover
+      }
     }
   }
 `
@@ -1057,7 +1075,7 @@ const schema = {
   pagedChangelogs,
   updateDashboardDocFaq,
   docTree,
-  docPublishPlan,
+  docPublishScope,
   docDraft,
   docDraftSnapshots,
   createDocTreeGroup,

@@ -15,6 +15,7 @@ export type TDocTreeNodePublishState = {
   status?: 'draft' | 'public' | null
   published: boolean
   publishedBefore?: boolean | null
+  hasDraft?: boolean | null
   publicNodeId?: string | null
   publicDocId?: string | null
   hasUnpublishedChanges?: boolean | null
@@ -42,7 +43,7 @@ export type TDocTreeEvent = {
   inversePayload?: Record<string, unknown> | null
   status?: string | null
   owner?: 'tree' | 'doc' | string | null
-  workspaceId?: string | null
+  docId?: string | null
   insertedAt?: string | null
 }
 
@@ -66,7 +67,6 @@ export type TSideTreePage = {
   type: typeof SIDE_TREE_NODE_TYPE.PAGE
   title?: string
   slug?: string
-  workspaceId?: string
   docId?: string | null
   path?: string
   href?: string
@@ -130,7 +130,6 @@ export type TSideTreeController = {
 export type TDocTreeNodeDTO = {
   id: string
   groupId?: string | null
-  workspaceId?: string | null
   docId?: string | null
   type: TSideTreeGroup['type'] | TSideTreeChild['type'] | 'pin' | 'GROUP' | 'PAGE' | 'LINK' | 'PIN'
   title?: string | null

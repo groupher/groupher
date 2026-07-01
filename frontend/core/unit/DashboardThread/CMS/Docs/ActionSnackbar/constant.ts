@@ -1,8 +1,14 @@
 import type { TTransKey } from '~/spec'
 
 export const ACTION_SNACKBAR_WIDTH = 'w-fit'
+export const ACTION_SNACKBAR_LAYOUT_TRANSITION = {
+  type: 'spring',
+  duration: 0.3,
+  bounce: 0,
+} as const
 
-export const DOC_PUBLISH_PLAN_RELOAD_EVENT = 'groupher:doc-publish-plan:reload'
+export const DOC_PUBLISH_SCOPE_RELOAD_EVENT = 'groupher:doc-publish-scope:reload'
+export const DOC_DRAFT_PATCH_EVENT = 'groupher:doc-draft:patch'
 export const DOC_REVISION_RELOAD_EVENT = 'groupher:doc-revision:reload'
 
 export const TREE_ACTION_LABEL_KEY = {
@@ -22,11 +28,13 @@ export const DOC_ACTION_LABEL_KEY = {
 
 export const SAVE_ACTION_LABEL_KEY = {
   SAVED: 'dsb.doc.save.saved',
+  UNSAVED: 'dsb.doc.save.unsaved',
   SYNCING: 'dsb.doc.save.syncing',
   SAVE_FAILED: 'dsb.doc.save.failed',
   PUBLISH: 'dsb.doc.save.publish',
   PUBLISH_CURRENT: 'dsb.doc.save.publish_current',
   PUBLISH_OPTIONS: 'dsb.doc.save.publish_options',
+  PUBLISH_OPTIONS_CLOSE: 'dsb.doc.save.publish_options_close',
   PUBLISH_SCOPE: 'dsb.doc.save.publish_scope',
   PUBLISH_WITH_COVER_SYNC: 'dsb.doc.save.publish_with_cover_sync',
   PUBLISH_WITH_COVER_SYNC_DESC: 'dsb.doc.save.publish_with_cover_sync_desc',
@@ -46,7 +54,7 @@ export const SAVE_ACTION_LABEL_KEY = {
 export const SAVE_STATUS_LABEL = {
   idle: SAVE_ACTION_LABEL_KEY.SAVED,
   saved: SAVE_ACTION_LABEL_KEY.SAVED,
-  dirty: SAVE_ACTION_LABEL_KEY.SAVED,
+  dirty: SAVE_ACTION_LABEL_KEY.UNSAVED,
   saving: SAVE_ACTION_LABEL_KEY.SYNCING,
   error: SAVE_ACTION_LABEL_KEY.SAVE_FAILED,
 } as const

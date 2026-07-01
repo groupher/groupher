@@ -1,25 +1,33 @@
 'use client'
 
+import { m } from 'motion/react'
 import type { FC } from 'react'
 
 import useOverlayDark from '~/hooks/useOverlayDark'
 
 import Comment from './Comment'
+import { ACTION_SNACKBAR_LAYOUT_TRANSITION } from './constant'
 import ContentCheck from './ContentCheck'
 import DiffStatus from './DiffStatus'
 import DocInfo from './DocInfo'
 import EditToggle from './EditToggle'
 import ImportContent from './ImportContent'
 import More from './More'
+import Publish from './Publish'
 import useSalon from './salon'
-import SaveZone from './SaveZone'
+import SyncDraft from './SyncDraft'
 
 const ActionSnackbar: FC = () => {
   const s = useSalon()
   const overlayDark = useOverlayDark()
 
   return (
-    <div className={s.wrapper} data-theme={overlayDark ? 'dark' : undefined}>
+    <m.div
+      layout
+      transition={{ layout: ACTION_SNACKBAR_LAYOUT_TRANSITION }}
+      className={s.wrapper}
+      data-theme={overlayDark ? 'dark' : undefined}
+    >
       <div className={s.actionGroup}>
         <EditToggle />
         <DocInfo />
@@ -33,9 +41,10 @@ const ActionSnackbar: FC = () => {
       <div className={s.divider} />
 
       <div className={s.commitGroup}>
-        <SaveZone />
+        <SyncDraft />
+        <Publish />
       </div>
-    </div>
+    </m.div>
   )
 }
 

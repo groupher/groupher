@@ -10,8 +10,7 @@ export type TArticleSnapshot = {
   id: string
   articleThread?: string | null
   stage: TArticleSnapshotStage
-  articleId?: string | null
-  workspaceId?: string | null
+  docId?: string | null
   title?: string | null
   slug?: string | null
   subtitle?: string | null

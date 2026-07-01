@@ -8,7 +8,7 @@ export default function useSalon() {
   return {
     wrapper: cn(
       'pointer-events-auto row-center',
-      'h-12 pr-4 pl-3 rounded-2xl shadow-lg z-30',
+      'h-12 pr-4 pl-3 rounded-2xl shadow-lg z-30 overflow-hidden',
       ACTION_SNACKBAR_WIDTH,
       bg('card'),
     ),

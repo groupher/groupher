@@ -5,6 +5,29 @@ import type { TDocEditorMode } from '../constant'
 import type { TDocTreeNodePublishState, TSideTreeController } from '../SideTree/spec'
 
 export type TDocSaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
+export type TDocPublishScopeStatus = 'checking' | 'pending' | 'none'
+
+export type TDocPublishRuntime = {
+  isPublishing: boolean
+  scopeLoaded: boolean
+  publishCount: number
+  hasSelectableScopeItems: boolean
+}
+
+export type TDocPublishView = {
+  activeNodeId: string | null
+  activeDocId: string | null
+  hasTreeChanges: boolean
+  hasScopeItems: boolean
+  isDirty: boolean
+  isSaving: boolean
+  isPublishing: boolean
+  showActions: boolean
+  publishDisabled: boolean
+  optionsDisabled: boolean
+  publishCount: number
+  scopeStatus: TDocPublishScopeStatus
+}
 
 export type TDocDraftAuthor = {
   login?: string | null
@@ -17,6 +40,7 @@ export type TDocDraftInfo = {
   title: string
   subtitle: string
   slug: string
+  stage?: 'draft' | 'public' | null
   insertedAt: string | null
   updatedAt: string | null
   author: TDocDraftAuthor | null
@@ -35,6 +59,7 @@ export type TStore = {
   bodyValue: TRichEditorValue
   docDraftInfo: TDocDraftInfo
   mode: TDocEditorMode
+  publishView: TDocPublishView
   revisionReloadKey: number
   saveError: string | null
   saveStatus: TDocSaveStatus
@@ -45,6 +70,7 @@ export type TStore = {
   reloadSideTree: () => void
   saveDocDraft: () => Promise<void>
   setMode: (mode: TDocEditorMode) => void
+  setPublishRuntime: (patch: Partial<TDocPublishRuntime>) => void
   setDocDraftSession: (
     patch: Partial<
       Pick<TStore, 'baselineValue' | 'bodyValue' | 'docDraftInfo' | 'saveError' | 'saveStatus'>

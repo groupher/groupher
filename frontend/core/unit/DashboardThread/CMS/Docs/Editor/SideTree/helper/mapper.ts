@@ -10,11 +10,7 @@ const isLinkNode = (node: TDocTreeNodeDTO): boolean => {
 
   return (
     type === SIDE_TREE_NODE_TYPE.LINK ||
-    (type === SIDE_TREE_NODE_TYPE.PAGE &&
-      !node.workspaceId &&
-      !node.docId &&
-      !!node.href &&
-      isLinkHref(node.href))
+    (type === SIDE_TREE_NODE_TYPE.PAGE && !node.docId && !!node.href && isLinkHref(node.href))
   )
 }
 
@@ -45,7 +41,6 @@ export const mapNode = (node: TDocTreeNodeDTO): TSideTreeChild => {
     type: SIDE_TREE_NODE_TYPE.PAGE,
     title: node.title || undefined,
     slug: node.slug || undefined,
-    workspaceId: node.workspaceId || undefined,
     docId: node.docId || undefined,
     path: node.slug || undefined,
     href: undefined,

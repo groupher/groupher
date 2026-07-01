@@ -4,9 +4,11 @@ import type { TDocDraftInfo } from '../store/spec'
 
 export type TDocDraftDTO = {
   id: string
+  docId?: string | null
   title?: string | null
   subtitle?: string | null
   slug?: string | null
+  stage?: 'draft' | 'public' | null
   digest?: string | null
   insertedAt?: string | null
   updatedAt?: string | null
