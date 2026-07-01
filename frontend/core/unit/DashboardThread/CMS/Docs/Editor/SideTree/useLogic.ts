@@ -2,18 +2,16 @@ import type { AnyVariables, DocumentInput } from '@urql/core'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { DOC_STAGE, DSB_DOC_EVENT, type TDocStage } from '~/const/dsb/docs'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useQuery from '~/hooks/useQuery'
 import useTrans from '~/hooks/useTrans'
+import { send } from '~/lib/signal'
 import { slugify } from '~/lib/slug'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
 import { toast } from '~/widgets/Toaster'
 
-import {
-  DOC_DRAFT_PATCH_EVENT,
-  DOC_PUBLISH_SCOPE_RELOAD_EVENT,
-} from '../../ActionSnackbar/constant'
 import { DOC_EDITOR_QUERY_PARAM } from '../constant'
 import {
   DEFAULT_LINK_MARKER,
@@ -72,13 +70,13 @@ import type {
 } from './spec'
 
 const reloadDocPublishScope = (): void => {
-  window.dispatchEvent(new Event(DOC_PUBLISH_SCOPE_RELOAD_EVENT))
+  send(DSB_DOC_EVENT.PUBLISH_SCOPE_RELOAD)
 }
 
 type TMoveDocToDraftData = {
   moveDocToDraft?: {
     docId?: string | null
-    stage?: 'draft' | 'public' | null
+    stage?: TDocStage | null
     publishState?: TDocTreeNodePublishState | null
   } | null
 }
@@ -692,7 +690,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
           const publishState = {
             ...(current?.publishState ?? {}),
             ...(payload?.publishState ?? {}),
-            status: 'draft',
+            status: DOC_STAGE.DRAFT,
             published: true,
             publishedBefore: true,
             hasDraft: true,
@@ -700,16 +698,11 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
           patchChild(childId, { publishState })
           reloadDocPublishScope()
-          window.dispatchEvent(
-            new CustomEvent(DOC_DRAFT_PATCH_EVENT, {
-              detail: {
-                docId:
-                  payload?.docId ??
-                  (current?.type === SIDE_TREE_NODE_TYPE.PAGE ? current.docId : null),
-                stage: payload?.stage ?? 'draft',
-              },
-            }),
-          )
+          send(DSB_DOC_EVENT.DRAFT_PATCH, {
+            docId:
+              payload?.docId ?? (current?.type === SIDE_TREE_NODE_TYPE.PAGE ? current.docId : null),
+            stage: payload?.stage ?? DOC_STAGE.DRAFT,
+          })
           toast(t('dsb.cms.docs.side_tree.publish.draft_moved'))
         })
         .catch((err) => {

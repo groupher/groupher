@@ -15,9 +15,10 @@ export default function useSalon() {
     menu: cn('column w-full gap-3', fg('digest')),
     footer: cn('row-center justify-end shrink-0 border-t px-5 py-4', br('divider')),
     publishButton: cn(
-      'h-8 px-4 rounded-lg button-reset text-sm bold-sm whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed',
+      'row-center h-8 px-4 rounded-lg button-reset text-sm bold-sm whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed',
       primary('bg'),
       fg('button.fg'),
     ),
+    publishCount: 'ml-1 opacity-80',
   }
 }

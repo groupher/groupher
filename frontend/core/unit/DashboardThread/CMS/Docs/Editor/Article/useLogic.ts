@@ -1,19 +1,17 @@
 import type { TRichEditorValue } from '@groupher/rich-editor'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { DOC_STAGE, DSB_DOC_EVENT, type TDocDraftPatchPayload } from '~/const/dsb/docs'
+import useEvent from '~/hooks/useEvent'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTrans from '~/hooks/useTrans'
+import { send } from '~/lib/signal'
 import { slugify } from '~/lib/slug'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
 import { toast } from '~/widgets/Toaster'
 
-import {
-  DOC_DRAFT_PATCH_EVENT,
-  DOC_PUBLISH_SCOPE_RELOAD_EVENT,
-  DOC_REVISION_RELOAD_EVENT,
-  REVISION_LABEL_KEY,
-} from '../../ActionSnackbar/constant'
+import { REVISION_LABEL_KEY } from '../../ActionSnackbar/constant'
 import { SIDE_TREE_NODE_TYPE } from '../SideTree/constant'
 import { findChild } from '../SideTree/helper'
 import type { TDocTreeNodePublishState, TSideTreeController } from '../SideTree/spec'
@@ -28,17 +26,12 @@ import type { TDocDraftDTO } from './spec'
 
 const snapshotSignature = (bodyJson: string, subtitle: string): string => `${subtitle}\n${bodyJson}`
 
-type TDocDraftPatchDetail = {
-  docId?: string | null
-  stage?: 'draft' | 'public' | null
-}
-
 const reloadDocPublishScope = (): void => {
-  window.dispatchEvent(new Event(DOC_PUBLISH_SCOPE_RELOAD_EVENT))
+  send(DSB_DOC_EVENT.PUBLISH_SCOPE_RELOAD)
 }
 
 const reloadDocRevisions = (): void => {
-  window.dispatchEvent(new Event(DOC_REVISION_RELOAD_EVENT))
+  send(DSB_DOC_EVENT.REVISION_RELOAD)
 }
 
 /**
@@ -58,11 +51,10 @@ export default function useLogic(sideTree: TSideTreeController) {
     setDocDraftSession,
   } = useDocsEditor()
   const { query, mutate } = useGraphQLClient()
-  const activePage = useMemo(() => {
-    const child = sideTree.activeId ? findChild(sideTree.groups, sideTree.activeId) : null
+  const activeChild = sideTree.activeId ? findChild(sideTree.groups, sideTree.activeId) : null
+  const activePage =
+    activeChild?.type === SIDE_TREE_NODE_TYPE.PAGE && activeChild.docId ? activeChild : null
 
-    return child?.type === SIDE_TREE_NODE_TYPE.PAGE && child.docId ? child : null
-  }, [sideTree.activeId, sideTree.groups])
   const initialBodyValue = docsEditor$.bodyValue
   const initialBodyJson = serializeEditorValue(initialBodyValue)
   const [title, setTitle] = useState(docsEditor$.docDraftInfo.title)
@@ -209,25 +201,24 @@ export default function useLogic(sideTree: TSideTreeController) {
     setDocDraftSession,
   ])
 
-  useEffect(() => {
-    const applyDraftPatch = (event: Event): void => {
-      const detail = (event as CustomEvent<TDocDraftPatchDetail>).detail
+  useEvent<TDocDraftPatchPayload>(
+    DSB_DOC_EVENT.DRAFT_PATCH,
+    (_msg, detail): void => {
+      if (!detail) return
 
       if (!activePage?.docId || detail?.docId !== activePage.docId) return
 
       setDocDraftSession({
         docDraftInfo: {
           ...docsEditor$.docDraftInfo,
-          stage: detail.stage ?? 'draft',
+          stage: detail.stage ?? DOC_STAGE.DRAFT,
         },
         saveError: null,
         saveStatus: 'saved',
       })
-    }
-
-    window.addEventListener(DOC_DRAFT_PATCH_EVENT, applyDraftPatch)
-    return () => window.removeEventListener(DOC_DRAFT_PATCH_EVENT, applyDraftPatch)
-  }, [activePage?.docId, docsEditor$, setDocDraftSession])
+    },
+    [activePage?.docId, docsEditor$, setDocDraftSession],
+  )
 
   useEffect(() => {
     const trimmedTitle = title.trim()
@@ -287,7 +278,7 @@ export default function useLogic(sideTree: TSideTreeController) {
       const savedSlug = savedDraft?.slug || nextSlug
       const publishState: TDocTreeNodePublishState = {
         ...(activePage.publishState ?? {}),
-        status: 'draft',
+        status: DOC_STAGE.DRAFT,
         published: activePage.publishState?.published ?? false,
         hasDraft: true,
       }
@@ -312,7 +303,7 @@ export default function useLogic(sideTree: TSideTreeController) {
           title: currentTitle === title ? nextTitle : currentTitle,
           subtitle: currentSubtitle === subtitle ? nextSubtitle : currentSubtitle,
           slug: currentTitle.trim() === nextTitle ? savedSlug : slug,
-          stage: savedDraft?.stage || 'draft',
+          stage: savedDraft?.stage || DOC_STAGE.DRAFT,
           insertedAt: savedDraft?.insertedAt || null,
           updatedAt: savedDraft?.updatedAt || new Date().toISOString(),
           author: savedDraft?.author || null,

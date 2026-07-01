@@ -1,5 +1,8 @@
 import { useEffect, useState, type FC } from 'react'
 
+import { DOC_STAGE, DSB_DOC_EVENT, type TDocPublishSuccessPayload } from '~/const/dsb/docs'
+import useEvent from '~/hooks/useEvent'
+
 import { DOC_EDITOR_MODE } from '../constant'
 import type { TSideTreeController } from '../SideTree/spec'
 import useDocsEditor from '../store/hooks'
@@ -40,6 +43,24 @@ const Article: FC<TProps> = ({ sideTree }) => {
     setCoverVisible(false)
   }, [activePage?.docId])
 
+  useEvent<TDocPublishSuccessPayload>(
+    DSB_DOC_EVENT.PUBLISH_SUCCESS,
+    (_msg, payload): void => {
+      if (!activePage?.docId || !payload?.docIds.includes(activePage.docId)) return
+
+      sideTree.patchChild(activePage.id, {
+        publishState: {
+          ...(activePage.publishState ?? {}),
+          hasDraft: false,
+          hasUnpublishedChanges: false,
+          published: true,
+          status: DOC_STAGE.PUBLIC,
+        },
+      })
+    },
+    [activePage?.docId, activePage?.id, activePage?.publishState, sideTree],
+  )
+
   if (!activePage) {
     return (
       <article className={s.wrapper}>
@@ -59,6 +80,7 @@ const Article: FC<TProps> = ({ sideTree }) => {
       <Title
         value={title}
         disabled={disabled}
+        docId={activePage.docId}
         publishState={activePage.publishState}
         onChange={setTitle}
       />

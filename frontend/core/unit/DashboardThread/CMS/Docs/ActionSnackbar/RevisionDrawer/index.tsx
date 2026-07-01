@@ -1,6 +1,8 @@
 import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
 
+import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import TYPE from '~/const/type'
+import useEvent from '~/hooks/useEvent'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTrans from '~/hooks/useTrans'
 import CloseLightSVG from '~/icons/CloseLight'
@@ -11,7 +13,7 @@ import { SegmentTab } from '~/widgets/Switcher'
 import { toast } from '~/widgets/Toaster'
 
 import useDocsEditor from '../../Editor/store/hooks'
-import { DOC_REVISION_RELOAD_EVENT, REVISION_LABEL_KEY } from '../constant'
+import { REVISION_LABEL_KEY } from '../constant'
 import { buildRevisionDiffModel, hasRevisionDiffStats } from './helper'
 import RevisionDiffViewer from './RevisionDiffViewer'
 import RevisionItem from './RevisionItem'
@@ -100,16 +102,14 @@ const RevisionDrawer: FC<TProps> = ({ show, onClose }) => {
     void loadRevisions()
   }, [loadRevisions, show])
 
-  useEffect(() => {
-    if (!show) return
-
-    const reload = (): void => {
+  useEvent(
+    DSB_DOC_EVENT.REVISION_RELOAD,
+    (): void => {
+      if (!show) return
       void loadRevisions()
-    }
-
-    window.addEventListener(DOC_REVISION_RELOAD_EVENT, reload)
-    return () => window.removeEventListener(DOC_REVISION_RELOAD_EVENT, reload)
-  }, [loadRevisions, show])
+    },
+    [loadRevisions, show],
+  )
 
   useEffect(() => {
     setSelectedKey(activeTab === 'staged' ? CURRENT_CHANGES_KEY : '')

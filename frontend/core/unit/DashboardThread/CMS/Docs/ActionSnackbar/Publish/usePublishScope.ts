@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { DSB_DOC_EVENT } from '~/const/dsb/docs'
+import useEvent from '~/hooks/useEvent'
 import useQuery from '~/hooks/useQuery'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
 
 import useDocsEditor from '../../Editor/store/hooks'
-import { DOC_PUBLISH_SCOPE_RELOAD_EVENT } from '../constant'
 import { getScopeItems } from './helper'
 import type { TPublishScope, TPublishSelectedInput } from './spec'
 
@@ -61,15 +62,14 @@ export default function usePublishScope() {
     )
   }, [publishScope])
 
-  useEffect(() => {
-    const reload = (): void => {
+  useEvent(
+    DSB_DOC_EVENT.PUBLISH_SCOPE_RELOAD,
+    (): void => {
       setPublishRuntime?.({ scopeLoaded: false })
       reloadPublishScope()
-    }
-
-    window.addEventListener(DOC_PUBLISH_SCOPE_RELOAD_EVENT, reload)
-    return () => window.removeEventListener(DOC_PUBLISH_SCOPE_RELOAD_EVENT, reload)
-  }, [reloadPublishScope, setPublishRuntime])
+    },
+    [reloadPublishScope, setPublishRuntime],
+  )
 
   const selectedInput = useCallback((): TPublishSelectedInput | undefined => {
     if (!publishScope) return undefined

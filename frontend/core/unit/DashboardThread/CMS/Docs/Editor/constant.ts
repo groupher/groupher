@@ -6,6 +6,7 @@ export const DOC_EDITOR_QUERY_PARAM = {
 
 export const DOC_EDITOR_LABEL_KEY = {
   STAGE_DRAFT: 'dsb.doc.editor.stage.draft',
+  STAGE_PUBLISHED: 'dsb.doc.editor.stage.published',
 } as const satisfies Record<string, TTransKey>
 
 export const DOC_EDITOR_MODE = {

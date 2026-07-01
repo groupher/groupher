@@ -1,16 +1,23 @@
 import { useCallback } from 'react'
 
+import { DOC_STAGE, DSB_DOC_EVENT } from '~/const/dsb/docs'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTrans from '~/hooks/useTrans'
+import { send } from '~/lib/signal'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
 import { toast } from '~/widgets/Toaster'
 
+import { needsPublishAttention } from '../../Editor/SideTree/helper'
 import useDocsEditor from '../../Editor/store/hooks'
 import { SAVE_ACTION_LABEL_KEY } from '../constant'
 import { PUBLISH_MODE, type TPublishMode } from './constant'
 import { hasSelectableScopeItems } from './helper'
 import type { TPublishChangesData, TPublishSelectedInput } from './spec'
+
+const docIdFromScopeItemId = (id: string): string | null => {
+  return id.startsWith('doc:') ? id.slice(4) : null
+}
 
 type TArgs = {
   reloadPublishScope: () => void
@@ -47,9 +54,19 @@ export default function usePublishActions({
 
       try {
         if (publishView.isDirty) await saveDocDraft()
+        const input = mode === PUBLISH_MODE.SELECTED ? selectedInput() : undefined
+        const currentDocId = docDraftInfo.id
+        const currentDocNeedsPublish =
+          publishView.isDirty || needsPublishAttention(docDraftInfo.publishState)
+        const publishedDocIds =
+          mode === PUBLISH_MODE.SELECTED
+            ? (input?.docChangeIds.map(docIdFromScopeItemId).filter(Boolean) as string[])
+            : currentDocId && currentDocNeedsPublish
+              ? [currentDocId]
+              : []
         const data = await mutate<TPublishChangesData>(S.publishDocChanges, {
           community,
-          input: mode === PUBLISH_MODE.SELECTED ? selectedInput() : undefined,
+          input,
           mode: 'WITH_COVER_SYNC',
         })
         const nextScope = data?.publishDocChanges?.scope ?? null
@@ -66,20 +83,23 @@ export default function usePublishActions({
         setDocDraftSession?.({
           docDraftInfo: {
             ...docDraftInfo,
-            stage: 'public',
+            stage: DOC_STAGE.PUBLIC,
             publishState: docDraftInfo.publishState
               ? {
                   ...docDraftInfo.publishState,
                   hasDraft: false,
                   hasUnpublishedChanges: false,
                   published: true,
-                  status: 'public',
+                  status: DOC_STAGE.PUBLIC,
                 }
               : null,
           },
           saveError: null,
           saveStatus: 'saved',
         })
+        if (publishedDocIds.length > 0) {
+          send(DSB_DOC_EVENT.PUBLISH_SUCCESS, { docIds: publishedDocIds })
+        }
         toast(t(SAVE_ACTION_LABEL_KEY.PUBLISHED))
         reloadSideTree?.()
         reloadPublishScope()

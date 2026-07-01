@@ -1,3 +1,4 @@
+import type { TDocStage } from '~/const/dsb/docs'
 import type { TMarkerValue } from '~/spec'
 
 import type {
@@ -12,7 +13,7 @@ export type TSideTreeNodeType = (typeof SIDE_TREE_NODE_TYPE)[keyof typeof SIDE_T
 export type TSideTreeChildType = typeof SIDE_TREE_NODE_TYPE.PAGE | typeof SIDE_TREE_NODE_TYPE.LINK
 
 export type TDocTreeNodePublishState = {
-  status?: 'draft' | 'public' | null
+  status?: TDocStage | null
   published: boolean
   publishedBefore?: boolean | null
   hasDraft?: boolean | null

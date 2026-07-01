@@ -7,10 +7,6 @@ export const ACTION_SNACKBAR_LAYOUT_TRANSITION = {
   bounce: 0,
 } as const
 
-export const DOC_PUBLISH_SCOPE_RELOAD_EVENT = 'groupher:doc-publish-scope:reload'
-export const DOC_DRAFT_PATCH_EVENT = 'groupher:doc-draft:patch'
-export const DOC_REVISION_RELOAD_EVENT = 'groupher:doc-revision:reload'
-
 export const TREE_ACTION_LABEL_KEY = {
   TAB: 'dsb.doc.action.tab',
   TAB_ADDED: 'dsb.doc.action.tab_added',

@@ -64,16 +64,17 @@ const buildPublishView = (
   const scopeSaysClean = runtime.scopeLoaded && !hasScopeItems
   const isDirty = saveStatus === 'dirty'
   const isSaving = saveStatus === 'saving'
+  const hasPublishedScope =
+    runtime.scopeLoaded &&
+    runtime.hasSelectableScopeItems &&
+    (treeChanges || nodeChanges || hasScopeItems)
+  const activePageNeedsPublish = needsPublishAttention(activePage?.publishState)
   const showActions =
-    (!scopeSaysClean && (treeChanges || nodeChanges)) ||
-    hasScopeItems ||
-    isDirty ||
-    isSaving ||
-    runtime.isPublishing
+    hasPublishedScope || activePageNeedsPublish || isDirty || isSaving || runtime.isPublishing
 
   // Keep command availability separate from visibility:
   // - publishing keeps the button visible but blocks duplicate publish mutations.
-  // - saving keeps the button visible but avoids racing save and publish writes.
+  // - saving keeps publish disabled until the backend has a durable draft/scope.
   // - a freshly loaded empty publish scope means the server sees nothing to publish;
   //   this wins over stale SideTree node state until the tree reload catches up.
   // - if there are no selectable scope items, no tree/node changes, and no dirty editor,
@@ -81,6 +82,8 @@ const buildPublishView = (
   const publishDisabled =
     runtime.isPublishing ||
     isSaving ||
+    isDirty ||
+    !hasPublishedScope ||
     (!runtime.hasSelectableScopeItems &&
       (scopeSaysClean || (!treeChanges && !nodeChanges)) &&
       !isDirty)

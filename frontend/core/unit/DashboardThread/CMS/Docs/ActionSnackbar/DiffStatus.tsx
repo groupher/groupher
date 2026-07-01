@@ -1,5 +1,7 @@
-import { type FC, useEffect, useMemo, useState } from 'react'
+import { type FC, useCallback, useEffect, useMemo, useState } from 'react'
 
+import { DSB_DOC_EVENT } from '~/const/dsb/docs'
+import useEvent from '~/hooks/useEvent'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTrans from '~/hooks/useTrans'
 import MergeSVG from '~/icons/Merge'
@@ -7,7 +9,7 @@ import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
 
 import useDocsEditor from '../Editor/store/hooks'
-import { DOC_ACTION_LABEL_KEY, DOC_REVISION_RELOAD_EVENT } from './constant'
+import { DOC_ACTION_LABEL_KEY } from './constant'
 import RevisionDrawer from './RevisionDrawer'
 import { buildRevisionDiffModel, hasRevisionDiffStats } from './RevisionDrawer/helper'
 import type { TArticleSnapshot, TDocDraftSnapshotsPayload } from './RevisionDrawer/spec'
@@ -25,43 +27,40 @@ const DiffStatus: FC = () => {
   const docDraftId = docDraftInfo.id
   const label = t(DOC_ACTION_LABEL_KEY.DIFF)
 
-  useEffect(() => {
+  const loadRevisions = useCallback((): void => {
     if (!docDraftId) {
       setDraftRevisions([])
       setPublishedRevisions([])
       return
     }
 
-    const loadRevisions = (): void => {
-      Promise.all([
-        query<TDocDraftSnapshotsPayload>(S.docDraftSnapshots, {
-          community,
-          id: docDraftId,
-          stage: 'DRAFT',
-        }),
-        query<TDocDraftSnapshotsPayload>(S.docDraftSnapshots, {
-          community,
-          id: docDraftId,
-          stage: 'PUBLIC',
-        }),
-      ])
-        .then(([draftData, publishedData]) => {
-          setDraftRevisions(draftData?.docDraftSnapshots || [])
-          setPublishedRevisions(publishedData?.docDraftSnapshots || [])
-        })
-        .catch(() => {
-          setDraftRevisions([])
-          setPublishedRevisions([])
-        })
-    }
-
-    loadRevisions()
-
-    window.addEventListener(DOC_REVISION_RELOAD_EVENT, loadRevisions)
-    return () => {
-      window.removeEventListener(DOC_REVISION_RELOAD_EVENT, loadRevisions)
-    }
+    Promise.all([
+      query<TDocDraftSnapshotsPayload>(S.docDraftSnapshots, {
+        community,
+        id: docDraftId,
+        stage: 'DRAFT',
+      }),
+      query<TDocDraftSnapshotsPayload>(S.docDraftSnapshots, {
+        community,
+        id: docDraftId,
+        stage: 'PUBLIC',
+      }),
+    ])
+      .then(([draftData, publishedData]) => {
+        setDraftRevisions(draftData?.docDraftSnapshots || [])
+        setPublishedRevisions(publishedData?.docDraftSnapshots || [])
+      })
+      .catch(() => {
+        setDraftRevisions([])
+        setPublishedRevisions([])
+      })
   }, [community, docDraftId, query])
+
+  useEffect(() => {
+    loadRevisions()
+  }, [loadRevisions])
+
+  useEvent(DSB_DOC_EVENT.REVISION_RELOAD, loadRevisions, [loadRevisions])
 
   const stats = useMemo(() => {
     return buildRevisionDiffModel({

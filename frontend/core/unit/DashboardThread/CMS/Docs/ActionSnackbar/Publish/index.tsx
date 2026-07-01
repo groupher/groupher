@@ -29,9 +29,7 @@ const Publish: FC = () => {
 
   const publishLabel = publishView.isPublishing
     ? t(SAVE_ACTION_LABEL_KEY.PUBLISHING)
-    : publishView.publishCount > 0
-      ? `${t(SAVE_ACTION_LABEL_KEY.PUBLISH)} (${publishView.publishCount})`
-      : t(SAVE_ACTION_LABEL_KEY.PUBLISH)
+    : t(SAVE_ACTION_LABEL_KEY.PUBLISH)
 
   const closeDrawer = useCallback(() => setDrawerVisible(false), [])
 
@@ -50,6 +48,7 @@ const Publish: FC = () => {
     <>
       <ActionGroup
         publishLabel={publishLabel}
+        publishCount={publishView.publishCount}
         showActions={publishView.showActions}
         publishDisabled={publishView.publishDisabled}
         optionsDisabled={publishView.optionsDisabled}
@@ -62,6 +61,7 @@ const Publish: FC = () => {
           show={drawerVisible}
           publishScope={publishScope}
           publishLabel={publishLabel}
+          publishCount={publishView.publishCount}
           selectedDocIds={selectedDocIds}
           selectedTreeIds={selectedTreeIds}
           selectedPublishDisabled={selectedPublishDisabled}

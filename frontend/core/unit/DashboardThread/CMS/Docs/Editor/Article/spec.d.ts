@@ -1,5 +1,7 @@
 import type { TRichEditorValue } from '@groupher/rich-editor'
 
+import type { TDocStage } from '~/const/dsb/docs'
+
 import type { TDocDraftInfo } from '../store/spec'
 
 export type TDocDraftDTO = {
@@ -8,7 +10,7 @@ export type TDocDraftDTO = {
   title?: string | null
   subtitle?: string | null
   slug?: string | null
-  stage?: 'draft' | 'public' | null
+  stage?: TDocStage | null
   digest?: string | null
   insertedAt?: string | null
   updatedAt?: string | null

@@ -1,5 +1,7 @@
 import type { TRichEditorValue } from '@groupher/rich-editor'
 
+import type { TDocStage } from '~/const/dsb/docs'
+
 import type { TDocDraftInitialData } from '../Article/spec'
 import type { TDocEditorMode } from '../constant'
 import type { TDocTreeNodePublishState, TSideTreeController } from '../SideTree/spec'
@@ -40,7 +42,7 @@ export type TDocDraftInfo = {
   title: string
   subtitle: string
   slug: string
-  stage?: 'draft' | 'public' | null
+  stage?: TDocStage | null
   insertedAt: string | null
   updatedAt: string | null
   author: TDocDraftAuthor | null

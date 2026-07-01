@@ -15,6 +15,7 @@ type TProps = {
   show: boolean
   publishScope: TPublishScope | null
   publishLabel: string
+  publishCount: number
   selectedDocIds: string[]
   selectedTreeIds: string[]
   selectedPublishDisabled: boolean
@@ -28,6 +29,7 @@ const PublishDrawer: FC<TProps> = ({
   show,
   publishScope,
   publishLabel,
+  publishCount,
   selectedDocIds,
   selectedTreeIds,
   selectedPublishDisabled,
@@ -86,6 +88,7 @@ const PublishDrawer: FC<TProps> = ({
             onClick={onPublishSelected}
           >
             {publishLabel}
+            {publishCount > 0 && <span className={s.publishCount}>{publishCount}</span>}
           </button>
         </div>
       </div>
