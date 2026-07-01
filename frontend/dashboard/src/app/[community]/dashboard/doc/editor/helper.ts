@@ -2,11 +2,15 @@ import { print, type DocumentNode } from 'graphql'
 import { headers } from 'next/headers'
 
 import { GRAPHQL_ENDPOINT } from '~/config'
-import type { TDocsEditorInitialData } from '~/unit/DashboardThread/CMS/Docs/Editor'
 import type { TDocTreeNodeDTO } from '~/unit/DashboardThread/CMS/Docs/Editor/SideTree/spec'
 import S from '~/unit/DashboardThread/schema'
 
-import type { TDocDraftQueryData, TDocTreeQueryData, TGraphQLResult } from './spec'
+import type {
+  TDocDraftQueryData,
+  TDocEditorInitialDataResult,
+  TDocTreeQueryData,
+  TGraphQLResult,
+} from './spec'
 
 const isPageNode = (node: TDocTreeNodeDTO): boolean => String(node.type).toLowerCase() === 'page'
 
@@ -78,8 +82,8 @@ export const fetchDashboardGraphQL = async <TData>(
  * Resolve the first page node in the docs side tree.
  *
  * @example
- * findFirstPage([{ children: [{ type: 'page', workspaceId: 'workspace_1' }] }])
- * // => { type: 'page', workspaceId: 'workspace_1' }
+ * findFirstPage([{ children: [{ type: 'page', docId: 'doc_1' }] }])
+ * // => { type: 'page', docId: 'doc_1' }
  */
 export const findFirstPage = (groups: readonly TDocTreeNodeDTO[]): TDocTreeNodeDTO | null => {
   for (const group of groups) {
@@ -91,22 +95,20 @@ export const findFirstPage = (groups: readonly TDocTreeNodeDTO[]): TDocTreeNodeD
 }
 
 /**
- * Resolve a page node by its article workspace id.
+ * Resolve a page node by its doc id.
  *
  * @example
- * findPageByWorkspaceId([{ children: [{ type: 'page', workspaceId: 'workspace_1' }] }], 'workspace_1')
- * // => { type: 'page', workspaceId: 'workspace_1' }
+ * findPageByDocId([{ children: [{ type: 'page', docId: 'doc_1' }] }], 'doc_1')
+ * // => { type: 'page', docId: 'doc_1' }
  */
-export const findPageByWorkspaceId = (
+export const findPageByDocId = (
   groups: readonly TDocTreeNodeDTO[],
-  workspaceId: string | null,
+  docId: string | null,
 ): TDocTreeNodeDTO | null => {
-  if (!workspaceId) return null
+  if (!docId) return null
 
   for (const group of groups) {
-    const page = group.children?.find(
-      (child) => isPageNode(child) && String(child.workspaceId) === workspaceId,
-    )
+    const page = group.children?.find((child) => isPageNode(child) && String(child.docId) === docId)
     if (page) return page
   }
 
@@ -114,35 +116,40 @@ export const findPageByWorkspaceId = (
 }
 
 /**
- * Fetch the docs editor SSR payload for the selected workspaceId.
+ * Fetch the docs editor SSR payload for the selected docId.
  *
  * @example
- * await getDocEditorInitialData('home', 'workspace_welcome')
- * // => { docTree: { ... }, docDraft: { id: 'workspace_welcome', ... } }
+ * await getDocEditorInitialData('home', 'doc_welcome')
+ * // => { docTree: { ... }, docDraft: { docId: 'doc_welcome', ... } }
  */
 export const getDocEditorInitialData = async (
   community: string,
-  workspaceId: string | null,
-): Promise<TDocsEditorInitialData> => {
+  docId: string | null,
+): Promise<TDocEditorInitialDataResult> => {
   try {
     const treeData = await fetchDashboardGraphQL<TDocTreeQueryData>(S.docTree, { community })
     const docTree = treeData?.docTree ?? null
-    const activePage = docTree ? findPageByWorkspaceId(docTree.groups, workspaceId) : null
-    const activeWorkspaceId = activePage?.workspaceId ?? null
+    // The editor route must have a concrete doc id. If the URL is empty or stale,
+    // pick the first page so SSR can hydrate matching tree + document data.
+    const activePage = docTree
+      ? findPageByDocId(docTree.groups, docId) || findFirstPage(docTree.groups)
+      : null
+    const activeDocId = activePage?.docId ?? null
 
-    if (!docTree || !activeWorkspaceId) return { docTree, docDraft: null }
+    if (!docTree || !activeDocId) return { docTree, docDraft: null, activeDocId: null }
 
     const draftData = await fetchDashboardGraphQL<TDocDraftQueryData>(S.docDraft, {
       community,
-      id: activeWorkspaceId,
+      id: activeDocId,
     })
 
     return {
       docTree,
       docDraft: draftData?.docDraft ?? null,
+      activeDocId,
     }
   } catch (err) {
     console.error('## doc editor ssr error: ', err)
-    return { docTree: null, docDraft: null }
+    return { docTree: null, docDraft: null, activeDocId: null }
   }
 }

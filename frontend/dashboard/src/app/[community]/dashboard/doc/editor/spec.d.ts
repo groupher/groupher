@@ -13,3 +13,9 @@ export type TDocTreeQueryData = {
 export type TDocDraftQueryData = {
   docDraft?: TDocDraftInitialData | null
 }
+
+export type TDocEditorInitialDataResult = {
+  docTree?: TDocTreeInitialData | null
+  docDraft?: TDocDraftInitialData | null
+  activeDocId: string | null
+}

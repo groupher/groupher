@@ -6,8 +6,8 @@ import { getDocEditorInitialData, getSearchValue } from './helper'
 export default async function DashboardDocEditorPage({ params, searchParams }) {
   const params$ = await params
   const searchParams$ = await searchParams
-  const workspaceId = getSearchValue(searchParams$?.[DOC_EDITOR_QUERY_PARAM.WORKSPACE_ID])
-  const initialData = await getDocEditorInitialData(params$.community, workspaceId)
+  const docId = getSearchValue(searchParams$?.[DOC_EDITOR_QUERY_PARAM.DOC_ID])
+  const initialData = await getDocEditorInitialData(params$.community, docId)
 
   return <Editor initialData={initialData} />
 }
