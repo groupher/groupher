@@ -103,6 +103,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
         with {:ok, doc_ids} <- selected_ids(args, :doc_change_ids, current_scope.doc_changes),
              {:ok, tree_ids} <- selected_ids(args, :tree_change_ids, current_scope.tree_changes),
+             tree_ids <- include_doc_shell_tree_ids(community, args, doc_ids, tree_ids),
              {:ok, tree_result} <- prepare_tree_scope_items(community, tree_ids),
              :ok <- preapply_tree_delete_events(community, tree_result.events),
              {:ok, doc_revisions} <-
@@ -304,6 +305,30 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     end
   end
 
+  defp include_doc_shell_tree_ids(%Community{} = community, args, [], tree_ids) do
+    if tree_selection_omitted?(args) do
+      community
+      |> doc_shell_tree_ids()
+      |> Enum.concat(tree_ids)
+      |> Enum.uniq()
+    else
+      tree_ids
+    end
+  end
+
+  defp include_doc_shell_tree_ids(_community, _args, _doc_ids, tree_ids), do: tree_ids
+
+  defp tree_selection_omitted?(args) do
+    not (Map.has_key?(args, :tree_change_ids) or Map.has_key?(args, "tree_change_ids"))
+  end
+
+  defp doc_shell_tree_ids(%Community{} = community) do
+    community
+    |> Events.staged_events(owner: CMS.Const.tree_event_owner(:tree))
+    |> Enum.filter(&doc_bound_group_create_event?(community, &1))
+    |> Enum.map(&"tree:#{&1.id}")
+  end
+
   defp prepare_tree_scope_items(%Community{} = community, tree_ids) do
     events = selected_tree_events(community, tree_ids)
 
@@ -318,7 +343,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp preapply_tree_delete_events(%Community{} = community, events) do
     events
-    |> Enum.filter(&(&1.event_type == CMS.Const.doc_tree_action(:node_delete)))
+    |> Enum.filter(&(&1.event_type == CMS.Const.tree_event(:node_delete)))
     |> apply_tree_events_to_public(community)
   end
 
@@ -346,8 +371,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
-    |> where([e], e.status == CMS.Const.doc_tree_event_status(:staged))
-    |> where([e], e.owner == CMS.Const.doc_tree_action_owner(:tree))
+    |> where([e], e.status == CMS.Const.tree_event_status(:staged))
+    |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
     |> where([e], e.id in ^ids)
     |> order_by([e], asc: e.seq, asc: e.id)
     |> Repo.all()
@@ -355,7 +380,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp apply_tree_event_to_public(
          %Community{} = community,
-         %DocTreeEvent{event_type: CMS.Const.doc_tree_action(:node_create)} = event
+         %DocTreeEvent{event_type: CMS.Const.tree_event(:node_create)} = event
        ) do
     node = event.payload["node"] || %{}
 
@@ -366,7 +391,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp apply_tree_event_to_public(
          %Community{} = community,
-         %DocTreeEvent{event_type: CMS.Const.doc_tree_action(:node_delete)} = event
+         %DocTreeEvent{event_type: CMS.Const.tree_event(:node_delete)} = event
        ) do
     node = event.payload["node"] || %{}
 
@@ -375,7 +400,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp apply_tree_event_to_public(
          %Community{} = community,
-         %DocTreeEvent{event_type: CMS.Const.doc_tree_action(:node_move)} = event
+         %DocTreeEvent{event_type: CMS.Const.tree_event(:node_move)} = event
        ) do
     payload = event.payload
 
@@ -653,7 +678,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   defp release_article_snapshots_before_tree_event(
          %Community{} = community,
          %DocTreeEvent{
-           event_type: CMS.Const.doc_tree_action(:node_delete),
+           event_type: CMS.Const.tree_event(:node_delete),
            payload: %{"node" => %{"type" => "group", "id" => id}}
          } = event
        ) do
@@ -668,7 +693,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   defp release_article_snapshots_before_tree_event(
          %Community{} = community,
          %DocTreeEvent{
-           event_type: CMS.Const.doc_tree_action(:node_delete),
+           event_type: CMS.Const.tree_event(:node_delete),
            payload: %{"node" => %{"type" => "page"}}
          } = event
        ) do
@@ -770,13 +795,13 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   end
 
   defp article_node_ids_from_tree_event(%DocTreeEvent{
-         event_type: CMS.Const.doc_tree_action(:node_create),
+         event_type: CMS.Const.tree_event(:node_create),
          payload: %{"node" => %{"type" => "page", "id" => id}}
        }),
        do: [id]
 
   defp article_node_ids_from_tree_event(%DocTreeEvent{
-         event_type: CMS.Const.doc_tree_action(:node_delete),
+         event_type: CMS.Const.tree_event(:node_delete),
          payload: %{"node" => %{"type" => "page", "id" => id}}
        }),
        do: [id]
@@ -836,7 +861,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp tree_change_items(%Community{} = community) do
     community
-    |> Events.staged_events(owner: CMS.Const.doc_tree_action_owner(:tree))
+    |> Events.staged_events(owner: CMS.Const.tree_event_owner(:tree))
     |> Enum.reject(&doc_bound_page_create_event?(community, &1))
     |> Enum.reject(&doc_bound_group_create_event?(community, &1))
     |> Enum.map(fn event ->
@@ -857,7 +882,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   defp doc_bound_page_create_event?(
          %Community{} = community,
          %DocTreeEvent{
-           event_type: CMS.Const.doc_tree_action(:node_create),
+           event_type: CMS.Const.tree_event(:node_create),
            payload: %{"node" => %{"type" => "page", "docId" => doc_id}}
          }
        ) do
@@ -872,7 +897,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   defp doc_bound_group_create_event?(
          %Community{} = community,
          %DocTreeEvent{
-           event_type: CMS.Const.doc_tree_action(:node_create),
+           event_type: CMS.Const.tree_event(:node_create),
            payload: %{"node" => %{"type" => "group", "id" => group_id}}
          }
        ) do
@@ -897,7 +922,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   defp tree_event_select_state(
          %Community{} = community,
          %DocTreeEvent{
-           event_type: CMS.Const.doc_tree_action(:node_create),
+           event_type: CMS.Const.tree_event(:node_create),
            payload: %{"node" => %{"type" => "page"} = node}
          }
        ) do
@@ -926,46 +951,46 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     |> Repo.one()
   end
 
-  defp tree_event_action(%DocTreeEvent{event_type: CMS.Const.doc_tree_action(:node_create)}),
+  defp tree_event_action(%DocTreeEvent{event_type: CMS.Const.tree_event(:node_create)}),
     do: "created"
 
-  defp tree_event_action(%DocTreeEvent{event_type: CMS.Const.doc_tree_action(:node_delete)}),
+  defp tree_event_action(%DocTreeEvent{event_type: CMS.Const.tree_event(:node_delete)}),
     do: "deleted"
 
-  defp tree_event_action(%DocTreeEvent{event_type: CMS.Const.doc_tree_action(:node_move)}),
+  defp tree_event_action(%DocTreeEvent{event_type: CMS.Const.tree_event(:node_move)}),
     do: "moved"
 
   defp tree_event_action(%DocTreeEvent{event_type: type})
        when type in [
-              CMS.Const.doc_tree_action(:group_rename),
-              CMS.Const.doc_tree_action(:node_rename)
+              CMS.Const.tree_event(:group_rename),
+              CMS.Const.tree_event(:node_rename)
             ],
        do: "renamed"
 
   defp tree_event_action(%DocTreeEvent{}), do: "modified"
 
   defp tree_event_label(%DocTreeEvent{
-         event_type: CMS.Const.doc_tree_action(:node_create),
+         event_type: CMS.Const.tree_event(:node_create),
          payload: %{"node" => node}
        }),
        do: "Added #{node["title"] || node["id"]}"
 
   defp tree_event_label(%DocTreeEvent{
-         event_type: CMS.Const.doc_tree_action(:node_delete),
+         event_type: CMS.Const.tree_event(:node_delete),
          payload: %{"node" => node}
        }),
        do: "Deleted #{node["title"] || node["id"]}"
 
   defp tree_event_label(%DocTreeEvent{
-         event_type: CMS.Const.doc_tree_action(:node_move),
+         event_type: CMS.Const.tree_event(:node_move),
          payload: payload
        }),
        do: "Moved #{payload["title"] || payload["nodeId"]}"
 
   defp tree_event_label(%DocTreeEvent{event_type: type, payload: payload})
        when type in [
-              CMS.Const.doc_tree_action(:group_rename),
-              CMS.Const.doc_tree_action(:node_rename)
+              CMS.Const.tree_event(:group_rename),
+              CMS.Const.tree_event(:node_rename)
             ] do
     "Renamed #{payload["before"] || payload["title"]} -> #{payload["after"]}"
   end

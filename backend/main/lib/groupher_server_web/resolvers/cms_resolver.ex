@@ -74,23 +74,23 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
-  def doc_draft(_root, %{community: %Community{} = community, id: id}, _info) do
-    CMS.DocTree.read_draft(community, id)
+  def doc_draft(_root, %{community: %Community{} = community, id: doc_id}, _info) do
+    CMS.Articles.read_doc_editor(community, doc_id)
   end
 
-  def doc_draft(_root, %{community: community, id: id}, _info) do
+  def doc_draft(_root, %{community: community, id: doc_id}, _info) do
     with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
-      CMS.DocTree.read_draft(community, id)
+      CMS.Articles.read_doc_editor(community, doc_id)
     end
   end
 
-  def doc_draft_snapshots(_root, %{community: %Community{} = community, id: id} = args, _info) do
+  def doc_draft_snapshots(_root, %{community: %Community{} = community, id: doc_id} = args, _info) do
     opts =
       args
       |> Map.take([:stage, :limit])
       |> Enum.to_list()
 
-    CMS.Articles.list_doc_draft_snapshots(community, id, opts)
+    CMS.Articles.list_doc_draft_snapshots(community, doc_id, opts)
   end
 
   def doc_draft_snapshots(_root, %{community: community} = args, _info) do
@@ -101,10 +101,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def doc_draft_snapshot(
         _root,
-        %{community: %Community{} = community, id: id, snapshot_id: snapshot_id},
+        %{community: %Community{} = community, id: doc_id, snapshot_id: snapshot_id},
         _info
       ) do
-    CMS.Articles.get_doc_draft_snapshot(community, id, snapshot_id)
+    CMS.Articles.get_doc_draft_snapshot(community, doc_id, snapshot_id)
   end
 
   def doc_draft_snapshot(_root, %{community: community} = args, _info) do
@@ -158,40 +158,49 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     )
   end
 
-  def update_doc_draft(_root, %{community: community, id: id} = args, _info) do
-    CMS.DocTree.update_draft(community, id, Map.take(args, [:title, :subtitle, :slug, :body]))
+  def update_doc_draft(
+        _root,
+        %{community: community, id: doc_id, cur_user: user} = args,
+        _info
+      ) do
+    CMS.DocTree.update_draft(
+      community,
+      doc_id,
+      Map.take(args, [:title, :subtitle, :slug, :body]),
+      user
+    )
   end
 
   def checkpoint_doc_draft_snapshot(
         _root,
-        %{community: community, id: id, cur_user: user},
+        %{community: community, id: doc_id, cur_user: user},
         _info
       ) do
-    CMS.Articles.checkpoint_doc_draft_snapshot(community, id, user)
+    CMS.Articles.checkpoint_doc_draft_snapshot(community, doc_id, user)
   end
 
-  def checkpoint_doc_draft_snapshot(_root, %{community: community, id: id}, _info) do
-    CMS.Articles.checkpoint_doc_draft_snapshot(community, id)
+  def checkpoint_doc_draft_snapshot(_root, %{community: community, id: doc_id}, _info) do
+    CMS.Articles.checkpoint_doc_draft_snapshot(community, doc_id)
   end
 
   def restore_doc_draft_snapshot(
         _root,
-        %{community: community, id: id, snapshot_id: snapshot_id, cur_user: user},
+        %{community: community, id: doc_id, snapshot_id: snapshot_id, cur_user: user},
         _info
       ) do
-    CMS.Articles.restore_doc_draft_snapshot(community, id, snapshot_id, user)
+    CMS.Articles.restore_doc_draft_snapshot(community, doc_id, snapshot_id, user)
   end
 
   def restore_doc_draft_snapshot(
         _root,
-        %{community: community, id: id, snapshot_id: snapshot_id},
+        %{community: community, id: doc_id, snapshot_id: snapshot_id},
         _info
       ) do
-    CMS.Articles.restore_doc_draft_snapshot(community, id, snapshot_id)
+    CMS.Articles.restore_doc_draft_snapshot(community, doc_id, snapshot_id)
   end
 
-  def doc_publish_plan(_root, %{community: community}, _info) do
-    {:ok, CMS.DocTree.publish_plan(community)}
+  def doc_publish_scope(_root, %{community: community}, _info) do
+    {:ok, CMS.DocTree.publish_scope(community)}
   end
 
   def publish_doc_changes(
@@ -215,8 +224,22 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   defp with_doc_tree_actor(attrs, _args), do: attrs
 
-  def move_doc_to_draft(_root, %{community: community, id: id}, _info) do
-    CMS.DocTree.move_doc_to_draft(community, id)
+  def move_doc_to_draft(_root, %{community: community, id: id, cur_user: user}, _info) do
+    with {:ok, draft} <- CMS.DocTree.move_doc_to_draft(community, id, user) do
+      {:ok,
+       %{
+         doc_id: draft.doc_id,
+         stage: draft.stage,
+         publish_state: %{
+           status: :draft,
+           published: true,
+           published_before: true,
+           has_draft: true,
+           public_doc_id: draft.doc_id,
+           has_unpublished_changes: false
+         }
+       }}
+    end
   end
 
   def move_doc_tree_group_to_draft(_root, %{community: community, group_id: group_id}, _info) do

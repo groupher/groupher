@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
     test "default publish syncs the group and page into the cover",
          ~m(user community page_payload)a do
-      {:ok, revision} = publish_doc_change(community, page_payload.node.workspace_id, user)
+      {:ok, revision} = publish_doc_change(community, page_payload.node.doc_id, user)
       {:ok, cover} = CMS.DocCover.read(community)
       {:ok, tree} = CMS.DocTree.read(community)
 
@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       assert group.publish_state.in_cover == true
       assert page.publish_state.status == :public
       assert page.publish_state.published == true
-      assert page.publish_state.public_doc_id == revision.article_id
+      assert page.publish_state.public_doc_id == revision.doc_id
       assert page.publish_state.last_published_at
       assert page.publish_state.in_cover == true
       assert page.publish_state.hidden_from_cover == false
@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
         ORM.find_by(CMS.Model.DocTreeEvent,
           community_id: community.id,
           owner: :doc,
-          workspace_id: page_payload.node.workspace_id
+          doc_id: page_payload.node.doc_id
         )
 
       assert page_event.status == :published
@@ -68,19 +68,19 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
     test "dashboard cover view returns editor hrefs with draft doc ids",
          ~m(user community page_payload)a do
-      {:ok, _revision} = publish_doc_change(community, page_payload.node.workspace_id, user)
+      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
       {:ok, cover} = CMS.DocCover.read(community, :dashboard)
 
       assert [%{items: [%{node: %{href: href}}]}] = cover.groups
 
       assert href ==
-               "/#{community.slug}/dashboard/doc/editor?workspaceId=#{page_payload.node.workspace_id}"
+               "/#{community.slug}/dashboard/doc/editor?docId=#{page_payload.node.doc_id}"
     end
 
     test "doc-only publish creates published mapping without cover rows",
          ~m(user community page_payload)a do
       {:ok, revision} =
-        publish_doc_change(community, page_payload.node.workspace_id, user, sync_cover: false)
+        publish_doc_change(community, page_payload.node.doc_id, user, sync_cover: false)
 
       {:ok, cover} = CMS.DocCover.read(community)
       {:ok, tree} = CMS.DocTree.read(community)
@@ -125,7 +125,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       assert Enum.all?(group.children, & &1.publish_state.published)
       assert Enum.all?(group.children, & &1.publish_state.in_cover)
 
-      assert CMS.DocTree.publish_plan(community).doc_changes == []
+      assert CMS.DocTree.publish_scope(community).doc_changes == []
 
       assert second_page_payload.node.title == "Advanced"
     end
@@ -189,7 +189,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
     test "tree node changes are staged at Tree scope instead of page publish scope",
          ~m(user community page_payload)a do
-      {:ok, _revision} = publish_doc_change(community, page_payload.node.workspace_id, user)
+      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
       {:ok, tree} = CMS.DocTree.read(community)
       [group] = tree.groups
       [page] = group.children
@@ -214,12 +214,12 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       assert tree.tree_state.staged_event_count > 0
       assert Enum.any?(tree.staged_events, &(&1.event_type == "node.rename"))
 
-      assert CMS.DocTree.publish_plan(community).doc_changes == []
+      assert CMS.DocTree.publish_scope(community).doc_changes == []
     end
 
     test "publishes staged Tree changes into a Tree snapshot release",
          ~m(user community page_payload)a do
-      {:ok, _revision} = publish_doc_change(community, page_payload.node.workspace_id, user)
+      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
 
       {:ok, payload} =
         CMS.DocTree.update_node(community, page_payload.node.id, %{
@@ -249,7 +249,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
     test "Tree publish copies independent pin link nodes through the normal node tables",
          ~m(user community page_payload)a do
-      {:ok, _revision} = publish_doc_change(community, page_payload.node.workspace_id, user)
+      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
 
       {:ok, tree} = CMS.DocTree.read(community)
 
@@ -327,7 +327,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
     test "Tree publish removes public nodes deleted from the draft tree",
          ~m(user community page_payload)a do
-      {:ok, _revision} = publish_doc_change(community, page_payload.node.workspace_id, user)
+      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
       {:ok, _tree_publish} = publish_tree_changes(community, user)
       {:ok, tree} = CMS.DocTree.read(community)
       [group] = tree.groups
@@ -356,9 +356,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       assert [%{items: []}] = cover.groups
     end
 
-    test "move doc to draft is a deprecated no-op in the stage model",
+    test "move doc to draft creates a draft copy while public cover stays intact",
          ~m(user community page_payload)a do
-      {:ok, _revision} = publish_doc_change(community, page_payload.node.workspace_id, user)
+      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
       {:ok, tree} = CMS.DocTree.read(community)
       [group] = tree.groups
       [page] = group.children
@@ -367,7 +367,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       assert page.publish_state.status == :public
       assert page.publish_state.in_cover == true
 
-      assert {:ok, %{done: true}} = CMS.DocTree.move_doc_to_draft(community, page_payload.node.id)
+      assert {:ok, %{stage: :draft}} =
+               CMS.DocTree.move_doc_to_draft(community, page_payload.node.id, user)
 
       {:ok, cover} = CMS.DocCover.read(community)
       {:ok, tree} = CMS.DocTree.read(community)
@@ -384,12 +385,17 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       assert page.publish_state.in_cover == true
 
       {:ok, _draft} =
-        CMS.DocTree.update_draft(community, page_payload.node.workspace_id, %{
-          subtitle: "Later update"
-        })
+        CMS.DocTree.update_draft(
+          community,
+          page_payload.node.doc_id,
+          %{
+            subtitle: "Later update"
+          },
+          user
+        )
 
       {:ok, _revision} =
-        publish_doc_change(community, page_payload.node.workspace_id, user, sync_cover: false)
+        publish_doc_change(community, page_payload.node.doc_id, user, sync_cover: false)
 
       {:ok, cover} = CMS.DocCover.read(community)
       {:ok, tree} = CMS.DocTree.read(community)
@@ -411,17 +417,22 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
     end
 
     test "hide from cover survives later publish sync", ~m(user community page_payload)a do
-      {:ok, _revision} = publish_doc_change(community, page_payload.node.workspace_id, user)
+      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
       {:ok, item} = CMS.DocCover.set_item_hidden(community, page_payload.node.id, true)
 
       assert item.hidden == true
 
       {:ok, _draft} =
-        CMS.DocTree.update_draft(community, page_payload.node.workspace_id, %{
-          subtitle: "Later update"
-        })
+        CMS.DocTree.update_draft(
+          community,
+          page_payload.node.doc_id,
+          %{
+            subtitle: "Later update"
+          },
+          user
+        )
 
-      {:ok, _revision} = publish_doc_change(community, page_payload.node.workspace_id, user)
+      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
       {:ok, cover} = CMS.DocCover.read(community)
       {:ok, tree} = CMS.DocTree.read(community)
 
@@ -444,8 +455,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
     end
   end
 
-  defp publish_doc_change(community, workspace_id, user, opts \\ []) do
-    input = %{doc_change_ids: ["doc:#{workspace_id}"], tree_change_ids: []}
+  defp publish_doc_change(community, doc_id, user, opts \\ []) do
+    input = %{doc_change_ids: ["doc:#{doc_id}"], tree_change_ids: []}
 
     with {:ok, %{release: release}} <- CMS.DocTree.publish_changes(community, input, user, opts) do
       release = Repo.preload(release, :articles)

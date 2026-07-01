@@ -47,13 +47,13 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
     field(:inverse_payload, :map)
 
     field(:status, Ecto.Enum,
-      values: CMS.Const.doc_tree_event_status_values(),
-      default: CMS.Const.doc_tree_event_status(:staged)
+      values: CMS.Const.tree_event_status_values(),
+      default: CMS.Const.tree_event_status(:staged)
     )
 
     field(:owner, Ecto.Enum,
-      values: CMS.Const.doc_tree_action_owner_values(),
-      default: CMS.Const.doc_tree_action_owner(:tree)
+      values: CMS.Const.tree_event_owner_values(),
+      default: CMS.Const.tree_event_owner(:tree)
     )
 
     timestamps(type: :utc_datetime)
@@ -65,7 +65,7 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_number(:seq, greater_than: 0)
-    |> validate_inclusion(:event_type, CMS.Const.doc_tree_action_enum_values())
+    |> validate_inclusion(:event_type, CMS.Const.tree_event_enum_values())
     |> validate_doc_owner_binding()
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:author_id)
@@ -78,14 +78,14 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
   def update_changeset(%DocTreeEvent{} = event, attrs) do
     event
     |> cast(attrs, @optional_fields ++ [:status, :owner])
-    |> validate_inclusion(:status, CMS.Const.doc_tree_event_status_enum_values())
-    |> validate_inclusion(:owner, CMS.Const.doc_tree_action_owner_enum_values())
+    |> validate_inclusion(:status, CMS.Const.tree_event_status_enum_values())
+    |> validate_inclusion(:owner, CMS.Const.tree_event_owner_enum_values())
     |> validate_doc_owner_binding()
   end
 
   defp validate_doc_owner_binding(changeset) do
     case get_field(changeset, :owner) do
-      CMS.Const.doc_tree_action_owner(:doc) -> validate_required(changeset, [:doc_id])
+      CMS.Const.tree_event_owner(:doc) -> validate_required(changeset, [:doc_id])
       _ -> changeset
     end
   end

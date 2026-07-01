@@ -77,6 +77,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.update_doc_draft/3)
     end
 
@@ -104,7 +105,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
     end
 
     @desc "move one published docs page back to draft visibility"
-    field :move_doc_to_draft, :done_state do
+    field :move_doc_to_draft, :move_doc_to_draft_payload do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
 

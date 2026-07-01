@@ -367,7 +367,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
 
   defp record_tree_events(%Community{} = community, args, events) do
     with {:ok, events} <- Events.record_staged_many(community, events, Map.get(args, :actor_id)) do
-      {:ok, Enum.count(events, &(&1.owner == CMS.Const.doc_tree_action_owner(:tree)))}
+      {:ok, Enum.count(events, &(&1.owner == CMS.Const.tree_event_owner(:tree)))}
     end
   end
 
@@ -400,7 +400,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
   defp doc_owned_create_event(%DocTreeNode{} = node) do
     node
     |> Events.create_event()
-    |> Map.merge(%{owner: CMS.Const.doc_tree_action_owner(:doc), doc_id: node.doc_id})
+    |> Map.merge(%{owner: CMS.Const.tree_event_owner(:doc), doc_id: node.doc_id})
   end
 
   defp payload(%Community{} = community, %DocsSiteState{} = state, node, affected \\ []) do

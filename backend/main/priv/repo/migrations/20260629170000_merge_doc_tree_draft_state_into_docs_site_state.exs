@@ -9,14 +9,10 @@ defmodule GroupherServer.Repo.Migrations.MergeDocTreeDraftStateIntoDocsSiteState
       add_if_not_exists(:site_draft_version, :integer, null: false, default: 0)
       add_if_not_exists(:published_version, :integer, null: false, default: 0)
       add_if_not_exists(:staged_event_count, :integer, null: false, default: 0)
-
-      add_if_not_exists(
-        :base_snapshot_id,
-        references(:doc_tree_snapshots, prefix: @prefix, on_delete: :nilify_all)
-      )
     end
 
     flush()
+    ensure_base_snapshot_id()
 
     execute("""
     DO $$
@@ -91,6 +87,35 @@ defmodule GroupherServer.Repo.Migrations.MergeDocTreeDraftStateIntoDocsSiteState
     end
 
     drop_if_exists(table(:doc_tree_draft_states, prefix: @prefix))
+  end
+
+  defp ensure_base_snapshot_id do
+    execute("""
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = '#{@prefix}'
+          AND table_name = 'docs_site_states'
+          AND column_name = 'base_snapshot_id'
+      ) THEN
+        ALTER TABLE #{@prefix}.docs_site_states ADD COLUMN base_snapshot_id bigint;
+      END IF;
+
+      IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'docs_site_states_base_snapshot_id_fkey'
+          AND conrelid = '#{@prefix}.docs_site_states'::regclass
+      ) THEN
+        ALTER TABLE #{@prefix}.docs_site_states
+          ADD CONSTRAINT docs_site_states_base_snapshot_id_fkey
+          FOREIGN KEY (base_snapshot_id)
+          REFERENCES #{@prefix}.doc_tree_snapshots(id)
+          ON DELETE SET NULL;
+      END IF;
+    END $$;
+    """)
   end
 
   def down do

@@ -31,16 +31,16 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
       {:ok, ~m(user community group_payload page_payload)a}
     end
 
-    test "builds one publish plan from doc drafts and tree events",
+    test "builds one publish scope from doc drafts and tree events",
          ~m(community page_payload)a do
-      plan = CMS.DocTree.publish_plan(community)
+      plan = CMS.DocTree.publish_scope(community)
 
-      assert plan.total_count == 2
+      assert plan.total_count == 1
       assert [%{id: "doc:" <> _, title: "Install", action: "created"}] = plan.doc_changes
-      assert [%{id: "tree:" <> _, action: "created"}] = plan.tree_changes
+      assert [] = plan.tree_changes
 
       [doc_change] = plan.doc_changes
-      assert doc_change.workspace_id == page_payload.node.workspace_id
+      assert doc_change.doc_id == page_payload.node.doc_id
       assert doc_change.selected_by_default
       assert doc_change.selectable
     end
@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
               "title" => page_payload.node.title,
               "slug" => page_payload.node.slug,
               "groupId" => group_payload.node.id,
-              "workspaceId" => page_payload.node.workspace_id,
+              "docId" => page_payload.node.doc_id,
               "index" => page_payload.node.index
             }
           },
@@ -66,16 +66,16 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
           user.id
         )
 
-      plan = CMS.DocTree.publish_plan(community)
+      plan = CMS.DocTree.publish_scope(community)
 
-      assert plan.total_count == 2
+      assert plan.total_count == 1
       assert [%{title: "Install", action: "created"}] = plan.doc_changes
       refute Enum.any?(plan.tree_changes, &(&1.title == "Added Install"))
 
-      assert {:ok, %{done: true, plan: next_plan}} =
+      assert {:ok, %{done: true, scope: next_scope}} =
                CMS.DocTree.publish_changes(community, %{}, user)
 
-      assert next_plan.total_count == 0
+      assert next_scope.total_count == 0
 
       {:ok, legacy_event} = ORM.find(CMS.Model.DocTreeEvent, legacy_event.id)
       assert legacy_event.status == :published
@@ -83,11 +83,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
 
     test "publishes selected changes as one release",
          ~m(user community)a do
-      assert {:ok, %{done: true, release: release, plan: next_plan}} =
+      assert {:ok, %{done: true, release: release, scope: next_scope}} =
                CMS.DocTree.publish_changes(community, %{}, user)
 
       assert release.release_number == 1
-      assert next_plan.total_count == 0
+      assert next_scope.total_count == 0
 
       {:ok, state} = ORM.find_by(CMS.Model.DocsSiteState, community_id: community.id)
       assert state.published_version == state.site_draft_version
@@ -101,14 +101,78 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
       assert [%CMS.Model.PublishReleaseArticle{actions: ["created"], title: "Install"}] =
                release.articles
 
-      assert [
-               %CMS.Model.PublishReleaseTreeEvent{
-                 event_type: "node.create",
-                 label: "Added Guides"
-               }
-             ] = release.tree_events
+      assert [] = release.tree_events
 
-      assert CMS.DocTree.publish_plan(community).total_count == 0
+      assert CMS.DocTree.publish_scope(community).total_count == 0
+    end
+
+    test "publishes multiple newly created pages from one scope",
+         ~m(user community group_payload page_payload)a do
+      {:ok, second_page_payload} =
+        CMS.DocTree.create_page(
+          community,
+          %{
+            group_id: group_payload.node.id,
+            title: "Usage",
+            slug: "usage",
+            base_revision: page_payload.revision
+          },
+          user
+        )
+
+      scope = CMS.DocTree.publish_scope(community)
+
+      assert length(scope.doc_changes) == 2
+      assert Enum.all?(scope.doc_changes, & &1.selectable)
+
+      assert Enum.sort(Enum.map(scope.doc_changes, & &1.page_node_id)) ==
+               Enum.sort([page_payload.node.id, second_page_payload.node.id])
+
+      assert {:ok, %{done: true, scope: next_scope}} =
+               CMS.DocTree.publish_changes(community, %{}, user)
+
+      assert next_scope.total_count == 0
+
+      for page_payload <- [page_payload, second_page_payload] do
+        {:ok, public_page} =
+          ORM.find_by(CMS.Model.DocTreeNode,
+            community_id: community.id,
+            stage: :public,
+            node_id: page_payload.node.id
+          )
+
+        assert public_page.doc_id == page_payload.node.doc_id
+      end
+    end
+
+    test "publishes pages with the same slug in different groups",
+         ~m(user community page_payload)a do
+      {:ok, second_group_payload} =
+        CMS.DocTree.create_group(community, %{
+          title: "API",
+          slug: "api",
+          base_revision: page_payload.revision
+        })
+
+      {:ok, second_page_payload} =
+        CMS.DocTree.create_page(
+          community,
+          %{
+            group_id: second_group_payload.node.id,
+            title: "Install",
+            slug: "install",
+            base_revision: second_group_payload.revision
+          },
+          user
+        )
+
+      assert page_payload.node.slug == second_page_payload.node.slug
+      refute page_payload.node.doc_id == second_page_payload.node.doc_id
+
+      assert {:ok, %{done: true, scope: next_scope}} =
+               CMS.DocTree.publish_changes(community, %{}, user)
+
+      assert next_scope.total_count == 0
     end
 
     test "publishes only selected tree events and leaves unchecked events staged",
@@ -129,7 +193,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
           base_revision: rename_payload.revision
         })
 
-      plan = CMS.DocTree.publish_plan(community)
+      plan = CMS.DocTree.publish_scope(community)
       tree_change_count = length(plan.tree_changes)
       assert tree_change_count >= 2
 
@@ -142,10 +206,10 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
                  user
                )
 
-      next_plan = CMS.DocTree.publish_plan(community)
+      next_scope = CMS.DocTree.publish_scope(community)
 
-      assert length(next_plan.tree_changes) == tree_change_count - 1
-      assert hd(next_plan.tree_changes).id != first_tree_change.id
+      assert length(next_scope.tree_changes) == tree_change_count - 1
+      assert hd(next_scope.tree_changes).id != first_tree_change.id
       assert move_payload.tree_state.revision
 
       {:ok, state} = ORM.find_by(CMS.Model.DocsSiteState, community_id: community.id)
@@ -166,9 +230,14 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
         })
 
       {:ok, _draft} =
-        CMS.DocTree.update_draft(community, page_payload.node.workspace_id, %{
-          subtitle: "Edited subtitle"
-        })
+        CMS.DocTree.update_draft(
+          community,
+          page_payload.node.doc_id,
+          %{
+            subtitle: "Edited subtitle"
+          },
+          user
+        )
 
       {:ok, _move_payload} =
         CMS.DocTree.move_node(community, page_payload.node.id, %{
@@ -230,6 +299,49 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
       assert snapshot_id
     end
 
+    test "deleting a group removes child page draft docs from publish scope",
+         ~m(user community page_payload)a do
+      {:ok, _release} = CMS.DocTree.publish_changes(community, %{}, user)
+
+      {:ok, _draft} =
+        CMS.DocTree.update_draft(
+          community,
+          page_payload.node.doc_id,
+          %{subtitle: "Draft before delete"},
+          user
+        )
+
+      assert Enum.any?(
+               CMS.DocTree.publish_scope(community).doc_changes,
+               &(&1.doc_id == page_payload.node.doc_id)
+             )
+
+      {:ok, tree} = CMS.DocTree.read(community)
+      [group] = tree.groups
+
+      assert {:ok, _delete_payload} =
+               CMS.DocTree.delete_node(community, group.id, %{
+                 base_revision: tree.revision
+               })
+
+      assert {:error, _} =
+               ORM.find_by(CMS.Model.Doc,
+                 community_id: community.id,
+                 stage: :draft,
+                 doc_id: page_payload.node.doc_id
+               )
+
+      refute Enum.any?(
+               CMS.DocTree.publish_scope(community).doc_changes,
+               &(&1.doc_id == page_payload.node.doc_id)
+             )
+
+      assert {:ok, %{done: true, scope: next_scope}} =
+               CMS.DocTree.publish_changes(community, %{doc_change_ids: []}, user)
+
+      assert next_scope.total_count == 0
+    end
+
     test "publishes rebuilt group with same slug after deleting published group",
          ~m(user community group_payload)a do
       {:ok, _release} = CMS.DocTree.publish_changes(community, %{}, user)
@@ -259,10 +371,10 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
           user
         )
 
-      assert {:ok, %{done: true, plan: next_plan}} =
+      assert {:ok, %{done: true, scope: next_scope}} =
                CMS.DocTree.publish_changes(community, %{}, user)
 
-      assert next_plan.total_count == 0
+      assert next_scope.total_count == 0
 
       {:ok, published_group} =
         ORM.find_by(CMS.Model.DocTreeNode,

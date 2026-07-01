@@ -84,7 +84,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :doc_tree_node do
     field(:id, :id)
     field(:group_id, :id)
-    field(:workspace_id, :id)
     field(:doc_id, :id)
     field(:type, :doc_tree_node_type)
     field(:title, :string)
@@ -103,6 +102,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:status, :doc_publish_status)
     field(:published, :boolean)
     field(:published_before, :boolean)
+    field(:has_draft, :boolean)
     field(:public_node_id, :id)
     field(:public_doc_id, :id)
     field(:has_unpublished_changes, :boolean)
@@ -130,7 +130,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:inverse_payload, :json)
     field(:status, :string)
     field(:owner, :string)
-    field(:workspace_id, :id)
+    field(:doc_id, :id)
     field(:inserted_at, :datetime)
   end
 
@@ -142,7 +142,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:groups, list_of(:doc_tree_node))
   end
 
-  object :doc_publish_plan_item do
+  object :doc_publish_scope_item do
     field(:id, non_null(:id))
     field(:title, non_null(:string))
     field(:action, non_null(:string))
@@ -151,10 +151,10 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:disabled_reason, :string)
   end
 
-  object :doc_publish_plan do
+  object :doc_publish_scope do
     field(:total_count, non_null(:integer))
-    field(:doc_changes, non_null(list_of(non_null(:doc_publish_plan_item))))
-    field(:tree_changes, non_null(list_of(non_null(:doc_publish_plan_item))))
+    field(:doc_changes, non_null(list_of(non_null(:doc_publish_scope_item))))
+    field(:tree_changes, non_null(list_of(non_null(:doc_publish_scope_item))))
   end
 
   object :publish_release do
@@ -166,7 +166,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :doc_publish_changes_payload do
     field(:done, non_null(:boolean))
     field(:release, :publish_release)
-    field(:plan, non_null(:doc_publish_plan))
+    field(:scope, non_null(:doc_publish_scope))
   end
 
   input_object :doc_publish_changes_input do
@@ -222,9 +222,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :doc_draft do
     field(:id, :id)
+    field(:doc_id, :id)
     field(:title, :string)
     field(:subtitle, :string)
     field(:slug, :string)
+    field(:stage, :article_snapshot_stage)
     field(:digest, :string)
     field(:author, :user, resolve: dataloader(CMS, :author))
     timestamp_fields()
@@ -239,9 +241,14 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:conflict, :boolean)
   end
 
+  object :move_doc_to_draft_payload do
+    field(:doc_id, :id)
+    field(:stage, :article_snapshot_stage)
+    field(:publish_state, :doc_tree_node_publish_state)
+  end
+
   input_object :doc_tree_node_input do
     field(:group_id, :id)
-    field(:workspace_id, :id)
     field(:title, :string)
     field(:slug, :string)
     field(:index, :integer)
@@ -253,7 +260,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   input_object :doc_tree_node_patch_input do
-    field(:workspace_id, :id)
     field(:title, :string)
     field(:slug, :string)
     field(:href, :string)
@@ -314,8 +320,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:id, :id)
     field(:article_thread, :thread)
     field(:stage, :article_snapshot_stage)
-    field(:article_id, :id)
-    field(:workspace_id, :id)
+    field(:doc_id, :string)
     field(:title, :string)
     field(:slug, :string)
     field(:subtitle, :string)

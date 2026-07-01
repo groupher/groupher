@@ -69,50 +69,56 @@ defmodule GroupherServer.CMS.Articles do
 
   # Snapshot
 
-  @spec read_article_workspace(Community.t(), T.id()) ::
-          T.domain_res(CMS.Model.ArticleWorkspace.t())
-  def read_article_workspace(%Community{} = community, workspace_id) do
-    Draft.read(community, workspace_id)
+  @spec read_doc_draft(Community.t(), String.t()) ::
+          T.domain_res(CMS.Model.Doc.t())
+  def read_doc_draft(%Community{} = community, doc_id) do
+    Draft.read(community, doc_id)
   end
 
-  @spec list_doc_draft_snapshots(Community.t(), T.id(), keyword()) ::
+  @spec read_doc_editor(Community.t(), String.t()) ::
+          T.domain_res(CMS.Model.Doc.t())
+  def read_doc_editor(%Community{} = community, doc_id) do
+    Draft.read_editor(community, doc_id)
+  end
+
+  @spec list_doc_draft_snapshots(Community.t(), String.t(), keyword()) ::
           T.domain_res([CMS.Model.ArticleSnapshot.t()])
-  def list_doc_draft_snapshots(%Community{} = community, workspace_id, opts \\ []) do
-    Snapshot.list_doc_draft(community, workspace_id, opts)
+  def list_doc_draft_snapshots(%Community{} = community, doc_id, opts \\ []) do
+    Snapshot.list_doc_draft(community, doc_id, opts)
   end
 
-  @spec get_doc_draft_snapshot(Community.t(), T.id(), T.id()) ::
+  @spec get_doc_draft_snapshot(Community.t(), String.t(), T.id()) ::
           T.domain_res(CMS.Model.ArticleSnapshot.t())
-  def get_doc_draft_snapshot(%Community{} = community, workspace_id, snapshot_id) do
-    Snapshot.get_doc_draft_snapshot(community, workspace_id, snapshot_id)
+  def get_doc_draft_snapshot(%Community{} = community, doc_id, snapshot_id) do
+    Snapshot.get_doc_draft_snapshot(community, doc_id, snapshot_id)
   end
 
-  @spec checkpoint_doc_draft_snapshot(Community.t(), T.id(), User.t() | nil, keyword()) ::
+  @spec checkpoint_doc_draft_snapshot(Community.t(), String.t(), User.t() | nil, keyword()) ::
           T.domain_res(CMS.Model.ArticleSnapshot.t())
   def checkpoint_doc_draft_snapshot(
         %Community{} = community,
-        workspace_id,
+        doc_id,
         user \\ nil,
         opts \\ []
       ) do
-    Snapshot.checkpoint_doc_draft(community, workspace_id, user, opts)
+    Snapshot.checkpoint_doc_draft(community, doc_id, user, opts)
   end
 
-  @spec restore_doc_draft_snapshot(Community.t(), T.id(), T.id(), User.t() | nil) ::
-          T.domain_res(CMS.Model.ArticleWorkspace.t())
+  @spec restore_doc_draft_snapshot(Community.t(), String.t(), T.id(), User.t() | nil) ::
+          T.domain_res(CMS.Model.Doc.t())
   def restore_doc_draft_snapshot(
         %Community{} = community,
-        workspace_id,
+        doc_id,
         snapshot_id,
         user \\ nil
       ) do
-    Snapshot.restore_doc_draft(community, workspace_id, snapshot_id, user)
+    Snapshot.restore_doc_draft(community, doc_id, snapshot_id, user)
   end
 
-  @spec publish_article_workspace(Community.t(), T.id(), User.t()) ::
+  @spec publish_doc_draft(Community.t(), String.t(), User.t()) ::
           T.domain_res(CMS.Model.ArticleSnapshot.t())
-  def publish_article_workspace(%Community{} = community, workspace_id, %User{} = user) do
-    Snapshot.publish_article_workspace(community, workspace_id, user)
+  def publish_doc_draft(%Community{} = community, doc_id, %User{} = user) do
+    Snapshot.publish_doc_draft(community, doc_id, user)
   end
 
   # Lifecycle

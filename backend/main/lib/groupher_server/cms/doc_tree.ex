@@ -9,7 +9,7 @@ defmodule GroupherServer.CMS.DocTree do
       Dashboard editor / preview
               |
               v
-      doc_tree_nodes(stage=draft)  --->  article_workspaces(stage=draft)
+      doc_tree_nodes(stage=draft)  --->  docs(stage=draft)
               |
               | publish article / publish tree
               v
@@ -41,11 +41,11 @@ defmodule GroupherServer.CMS.DocTree do
 
   ## Examples
 
-      iex> DocTree.publish_plan(community).total_count
+      iex> DocTree.publish_scope(community).total_count
       2
   """
-  @spec publish_plan(Community.t()) :: map()
-  def publish_plan(%Community{} = community), do: Publish.plan(community)
+  @spec publish_scope(Community.t()) :: map()
+  def publish_scope(%Community{} = community), do: Publish.scope(community)
 
   @doc """
   Publishes selected docs changes and creates one release checkpoint.
@@ -63,9 +63,9 @@ defmodule GroupherServer.CMS.DocTree do
   @doc """
   Moves one public docs page back to draft visibility.
   """
-  @spec move_doc_to_draft(Community.t(), T.id()) :: T.domain_res(map())
-  def move_doc_to_draft(%Community{} = community, id),
-    do: Publish.move_doc_to_draft(community, id)
+  @spec move_doc_to_draft(Community.t(), T.id(), User.t()) :: T.domain_res(Doc.t())
+  def move_doc_to_draft(%Community{} = community, id, %User{} = user),
+    do: Publish.move_doc_to_draft(community, id, user)
 
   @doc """
   Moves one docs group and all published page/link children back to draft visibility.
@@ -109,9 +109,9 @@ defmodule GroupherServer.CMS.DocTree do
   @spec update_node(Community.t(), T.id(), map()) :: T.domain_res(map())
   def update_node(%Community{} = community, id, args), do: Write.update_node(community, id, args)
 
-  @spec update_draft(Community.t(), T.id(), map()) :: T.domain_res(map())
-  def update_draft(%Community{} = community, id, args),
-    do: Write.update_draft(community, id, args)
+  @spec update_draft(Community.t(), T.id(), map(), User.t()) :: T.domain_res(map())
+  def update_draft(%Community{} = community, id, args, %User{} = user),
+    do: Write.update_draft(community, id, args, user)
 
   @spec delete_node(Community.t(), T.id(), map()) :: T.domain_res(map())
   def delete_node(%Community{} = community, id, args), do: Write.delete_node(community, id, args)

@@ -41,14 +41,14 @@ defmodule GroupherServer.CMS.DocCover.Read do
   @type view :: :public | :dashboard
 
   @doc "Allowed cover read views."
-  def view_values, do: CMS.Const.doc_cover_view_enum_values()
+  def view_values, do: CMS.Const.cover_view_enum_values()
 
   @doc """
   Reads visible cover groups, items, and pinned items for one community.
   """
   @spec read(Community.t(), view()) :: T.domain_res(map())
-  def read(%Community{} = community, view \\ CMS.Const.doc_cover_view(:public))
-      when view in CMS.Const.doc_cover_view_values() do
+  def read(%Community{} = community, view \\ CMS.Const.cover_view(:public))
+      when view in CMS.Const.cover_view_values() do
     groups =
       DocCoverGroup
       |> where([g], g.community_id == ^community.id)

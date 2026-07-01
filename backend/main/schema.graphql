@@ -79,13 +79,13 @@ type RootQueryType {
   "community docs side tree"
   docTree(community: String!): DocTree
 
-  "dashboard docs unified publish checklist"
-  docPublishPlan(community: String!): DocPublishPlan
+  "dashboard docs unified publish scope"
+  docPublishScope(community: String!): DocPublishScope
 
   "public community docs cover"
   docCover(community: String!, view: DocCoverView): DocCover
 
-  "dashboard docs draft document"
+  "dashboard docs editor document, preferring draft and falling back to public"
   docDraft(community: String!, id: ID!): DocDraft
 
   "dashboard docs draft revision history"
@@ -722,7 +722,7 @@ type RootMutationType {
   publishDocChanges(community: String!, input: DocPublishChangesInput, mode: DocPublishMode): DocPublishChangesPayload
 
   "move one published docs page back to draft visibility"
-  moveDocToDraft(community: String!, id: ID!): DoneState
+  moveDocToDraft(community: String!, id: ID!): MoveDocToDraftPayload
 
   "move one docs side-tree group and its children back to draft visibility"
   moveDocTreeGroupToDraft(community: String!, groupId: ID!): DoneState
@@ -831,7 +831,6 @@ input MarkerInput {
 type DocTreeNode {
   id: ID
   groupId: ID
-  workspaceId: ID
   docId: ID
   type: DocTreeNodeType
   title: String
@@ -850,6 +849,7 @@ type DocTreeNodePublishState {
   status: DocPublishStatus
   published: Boolean
   publishedBefore: Boolean
+  hasDraft: Boolean
   publicNodeId: ID
   publicDocId: ID
   hasUnpublishedChanges: Boolean
@@ -877,7 +877,7 @@ type DocTreeEvent {
   inversePayload: Json
   status: String
   owner: String
-  workspaceId: ID
+  docId: ID
   insertedAt: DateTime
 }
 
@@ -889,7 +889,7 @@ type DocTree {
   groups: [DocTreeNode]
 }
 
-type DocPublishPlanItem {
+type DocPublishScopeItem {
   id: ID!
   title: String!
   action: String!
@@ -898,10 +898,10 @@ type DocPublishPlanItem {
   disabledReason: String
 }
 
-type DocPublishPlan {
+type DocPublishScope {
   totalCount: Int!
-  docChanges: [DocPublishPlanItem!]!
-  treeChanges: [DocPublishPlanItem!]!
+  docChanges: [DocPublishScopeItem!]!
+  treeChanges: [DocPublishScopeItem!]!
 }
 
 type PublishRelease {
@@ -913,7 +913,7 @@ type PublishRelease {
 type DocPublishChangesPayload {
   done: Boolean!
   release: PublishRelease
-  plan: DocPublishPlan!
+  scope: DocPublishScope!
 }
 
 input DocPublishChangesInput {
@@ -969,9 +969,11 @@ type DocCoverPinnedItem {
 
 type DocDraft {
   id: ID
+  docId: ID
   title: String
   subtitle: String
   slug: String
+  stage: ArticleSnapshotStage
   digest: String
   author: User
   insertedAt: DateTime
@@ -987,9 +989,14 @@ type DocTreeMutationPayload {
   conflict: Boolean
 }
 
+type MoveDocToDraftPayload {
+  docId: ID
+  stage: ArticleSnapshotStage
+  publishState: DocTreeNodePublishState
+}
+
 input DocTreeNodeInput {
   groupId: ID
-  workspaceId: ID
   title: String
   slug: String
   index: Int
@@ -1001,7 +1008,6 @@ input DocTreeNodeInput {
 }
 
 input DocTreeNodePatchInput {
-  workspaceId: ID
   title: String
   slug: String
   href: String
@@ -1052,8 +1058,7 @@ type ArticleSnapshot {
   id: ID
   articleThread: Thread
   stage: ArticleSnapshotStage
-  articleId: ID
-  workspaceId: ID
+  docId: String
   title: String
   slug: String
   subtitle: String
@@ -1650,7 +1655,7 @@ type CommunityTagStat {
 }
 
 type EmotionStat {
-  stage: EmotionType
+  type: EmotionType
   count: Int
   viewerHasReacted: Boolean
   latestUsers: [CommonUser]

@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.Model.DocTreeTrashItem do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.{ArticleWorkspace, Community}
+  alias CMS.Model.{Community}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Model.DocTreeTrashItem do
 
   @required_fields ~w(community_id node_id node_snapshot deleted_at)a
   @optional_fields ~w(
-    article_id workspace_id deleted_from_group_id
+    doc_id deleted_from_group_id
     deleted_from_index deleted_by_id restored_at
   )a
 
@@ -43,11 +43,10 @@ defmodule GroupherServer.CMS.Model.DocTreeTrashItem do
 
   schema "doc_tree_trash_items" do
     belongs_to(:community, Community)
-    belongs_to(:workspace, ArticleWorkspace)
+    field(:doc_id, Ecto.UUID)
     belongs_to(:deleted_by, User)
 
     field(:node_id, :string)
-    field(:article_id, :id)
     field(:node_snapshot, :map)
     field(:deleted_from_group_id, :string)
     field(:deleted_from_index, :integer)
@@ -72,7 +71,6 @@ defmodule GroupherServer.CMS.Model.DocTreeTrashItem do
     |> validate_length(:node_id, min: 1, max: 80)
     |> validate_number(:deleted_from_index, greater_than_or_equal_to: 0)
     |> foreign_key_constraint(:community_id)
-    |> foreign_key_constraint(:workspace_id)
     |> foreign_key_constraint(:deleted_by_id)
   end
 

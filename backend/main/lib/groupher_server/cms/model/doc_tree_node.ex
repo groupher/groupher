@@ -49,7 +49,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     field(:doc_id, Ecto.UUID)
     field(:node_id, :string)
     field(:stage, Ecto.Enum, values: CMS.Const.stage_values())
-    field(:type, Ecto.Enum, values: CMS.Const.doc_tree_node_values())
+    field(:type, Ecto.Enum, values: CMS.Const.tree_node_type_values())
     field(:group_id, :string)
     field(:title, :string)
     field(:slug, :string)
@@ -64,7 +64,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     timestamps(type: :utc_datetime)
   end
 
-  def node_types, do: CMS.Const.doc_tree_node_enum_values()
+  def node_types, do: CMS.Const.tree_node_type_enum_values()
   def stages, do: CMS.Const.stage_enum_values()
 
   @doc """

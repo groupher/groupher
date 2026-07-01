@@ -27,13 +27,13 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.doc_tree/3)
     end
 
-    @desc "dashboard docs unified publish checklist"
-    field :doc_publish_plan, :doc_publish_plan do
+    @desc "dashboard docs unified publish scope"
+    field :doc_publish_scope, :doc_publish_scope do
       arg(:community, non_null(:string))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.doc_publish_plan/3)
+      resolve(&R.CMS.doc_publish_scope/3)
     end
 
     @desc "public community docs cover"
@@ -45,7 +45,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.doc_cover/3)
     end
 
-    @desc "dashboard docs draft document"
+    @desc "dashboard docs editor document, preferring draft and falling back to public"
     field :doc_draft, :doc_draft do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))

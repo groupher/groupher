@@ -57,7 +57,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
           tree_state: tree_state(community, state),
           staged_events:
             Enum.map(
-              Events.staged_events(community, owner: CMS.Const.doc_tree_action_owner(:tree)),
+              Events.staged_events(community, owner: CMS.Const.tree_event_owner(:tree)),
               &event_to_map/1
             ),
           pins: pins(nodes, context),

@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Const do
 
   enum(stage, do: [draft: :draft, public: :public])
 
-  enum doc_tree_node do
+  enum tree_node_type do
     [
       group: :group,
       page: :page,
@@ -16,9 +16,9 @@ defmodule GroupherServer.CMS.Const do
     ]
   end
 
-  enum(doc_cover_view, do: [public: :public, dashboard: :dashboard])
+  enum(cover_view, do: [public: :public, dashboard: :dashboard])
 
-  enum doc_tree_event_status do
+  enum tree_event_status do
     [
       staged: :staged,
       published: :published,
@@ -27,9 +27,9 @@ defmodule GroupherServer.CMS.Const do
     ]
   end
 
-  enum(doc_tree_action_owner, do: [tree: :tree, doc: :doc])
+  enum(tree_event_owner, do: [tree: :tree, doc: :doc])
 
-  enum doc_tree_action do
+  enum tree_event do
     [
       group_rename: "group.rename",
       node_rename: "node.rename",
