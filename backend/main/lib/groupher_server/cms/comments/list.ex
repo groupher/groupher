@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Comments.List do
 
   @pinned_comment_limit Comment.pinned_comment_limit()
 
-  @spec comments_state(T.article_thread(), T.id()) :: T.domain_res(map())
+  @spec comments_state(T.thread(), T.id()) :: T.domain_res(map())
   def comments_state(thread, article_id) do
     filter = %{page: 1, size: 20}
 
@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.Comments.List do
     end
   end
 
-  @spec comments_state(T.article_thread(), T.id(), User.t()) :: T.domain_res(map())
+  @spec comments_state(T.thread(), T.id(), User.t()) :: T.domain_res(map())
   def comments_state(thread, article_id, %User{} = user) do
     with {:ok, thread_query} <- match(thread, :query, article_id),
          {:ok, state} <- comments_state(thread, article_id) do
@@ -60,7 +60,7 @@ defmodule GroupherServer.CMS.Comments.List do
     end
   end
 
-  @spec paged_comments(T.article_thread(), T.id(), map(), atom(), User.t() | nil) ::
+  @spec paged_comments(T.thread(), T.id(), map(), atom(), User.t() | nil) ::
           T.domain_res(T.paged_data())
   def paged_comments(thread, article_id, filters, mode, user \\ nil)
 
@@ -96,7 +96,7 @@ defmodule GroupherServer.CMS.Comments.List do
     |> done()
   end
 
-  @spec paged_published_comments(User.t(), T.article_thread(), map()) ::
+  @spec paged_published_comments(User.t(), T.thread(), map()) ::
           T.domain_res(T.paged_data())
   def paged_published_comments(%User{id: user_id}, thread, filter) do
     %{page: page, size: size} = filter
@@ -114,13 +114,13 @@ defmodule GroupherServer.CMS.Comments.List do
     |> done()
   end
 
-  @spec paged_folded_comments(T.article_thread(), T.id(), map()) :: T.domain_res(T.paged_data())
+  @spec paged_folded_comments(T.thread(), T.id(), map()) :: T.domain_res(T.paged_data())
   def paged_folded_comments(thread, article_id, filters) do
     where_query = dynamic([c], c.is_folded and not c.is_pinned)
     do_paged_comment(thread, article_id, filters, where_query, nil)
   end
 
-  @spec paged_folded_comments(T.article_thread(), T.id(), map(), User.t()) ::
+  @spec paged_folded_comments(T.thread(), T.id(), map(), User.t()) ::
           T.domain_res(T.paged_data())
   def paged_folded_comments(thread, article_id, filters, %User{} = user) do
     where_query = dynamic([c], c.is_folded and not c.is_pinned)
@@ -134,7 +134,7 @@ defmodule GroupherServer.CMS.Comments.List do
     do_paged_comment_replies(comment_id, filters, user)
   end
 
-  @spec paged_comments_participants(T.article_thread(), T.id(), map()) ::
+  @spec paged_comments_participants(T.thread(), T.id(), map()) ::
           T.domain_res(T.paged_users())
   def paged_comments_participants(thread, article_id, filters) do
     with {:ok, thread_query} <- match(thread, :query, article_id),

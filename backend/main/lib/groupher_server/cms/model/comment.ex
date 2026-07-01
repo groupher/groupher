@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.Model.Comment do
   @schema_prefix DBPrefix.cms()
 
   # alias Helper.HTML
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   @required_fields ~w(body author_id)a
   @optional_fields ~w(body_html reply_to_id root_comment_id replies_count is_folded is_deleted floor is_article_author thread is_for_question is_solution pending)a
@@ -50,7 +50,7 @@ defmodule GroupherServer.CMS.Model.Comment do
     root_comment_id
   )a
 
-  @article_fields @article_threads |> Enum.map(&:"#{&1}_id")
+  @article_fields @threads |> Enum.map(&:"#{&1}_id")
 
   @max_participator_count 5
   @max_parent_replies_count 3

@@ -8,7 +8,7 @@ export type TArticleSnapshotAuthor = {
 
 export type TArticleSnapshot = {
   id: string
-  articleThread?: string | null
+  thread?: string | null
   stage: TArticleSnapshotStage
   docId?: string | null
   title?: string | null

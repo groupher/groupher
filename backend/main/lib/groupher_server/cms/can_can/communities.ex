@@ -39,7 +39,7 @@ defmodule GroupherServer.CMS.CanCan.Communities do
   alias GroupherServer.CMS.FrontDesk
   alias GroupherServer.CMS.Artiment.Threads
 
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
   @emotions_whitelist get_config(:article, :emotions_whitelist)
   @default_thread_emotions get_config(:article, :default_thread_emotions)
 
@@ -82,7 +82,7 @@ defmodule GroupherServer.CMS.CanCan.Communities do
 
   @spec thread_keys() :: [atom()]
   def thread_keys do
-    @article_threads ++ Enum.map(@article_threads, &:"#{&1}_comment")
+    @threads ++ Enum.map(@threads, &:"#{&1}_comment")
   end
 
   @spec allowed_emotions(String.t() | nil, scope(), atom()) :: [atom()]

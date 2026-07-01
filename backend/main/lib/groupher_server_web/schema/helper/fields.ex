@@ -15,7 +15,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   @emotions get_config(:article, :emotions)
   @comment_emotions get_config(:article, :comment_emotions)
   @all_emotions (@emotions ++ @comment_emotions) |> Enum.uniq()
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   @doc "general article fields for GraphQL resolve fields"
   defmacro general_article_fields do
@@ -64,7 +64,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   end
 
   @doc """
-  generate thread enum based on @article_threads
+  generate thread enum based on @threads
 
   e.g:
 
@@ -72,8 +72,8 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   enum :xxx_thread, do: value(:xxx)
   # ..
   """
-  defmacro article_thread_enums do
-    @article_threads
+  defmacro thread_enums do
+    @threads
     |> Enum.map(
       &quote do
         enum(unquote(:"#{&1}_thread"), do: value(unquote(&1)))
@@ -82,7 +82,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   end
 
   @doc """
-  generate thread value based on @article_threads
+  generate thread value based on @threads
 
   e.g:
 
@@ -90,7 +90,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   # ...
   """
   defmacro article_values do
-    @article_threads
+    @threads
     |> Enum.map(
       &quote do
         value(unquote(&1))
@@ -253,7 +253,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   end
 
   defmacro threads_count_fields do
-    @article_threads
+    @threads
     |> Enum.map(
       &quote do
         field(unquote(:"#{plural(&1)}_count"), :integer)
@@ -273,7 +273,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
   general collect folder meta info
   """
   defmacro collect_folder_meta_fields do
-    @article_threads
+    @threads
     |> Enum.map(fn thread ->
       quote do
         field(unquote(:"has_#{thread}"), :boolean)

@@ -32,7 +32,7 @@ defmodule GroupherServer.CMS.Model.ArticleSnapshot do
   @timestamps_opts [type: :utc_datetime]
 
   @max_subtitle_length 240
-  @required_fields ~w(community_id article_thread stage title document_json content_hash snapshot_number)a
+  @required_fields ~w(community_id thread stage title document_json content_hash snapshot_number)a
   @optional_fields ~w(doc_id author_id slug subtitle digest schema_version)a
 
   @type snapshot_stage :: :draft | :public
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Model.ArticleSnapshot do
     belongs_to(:author, Author)
 
     field(:doc_id, Ecto.UUID)
-    field(:article_thread, Ecto.Enum, values: Threads.article_enums())
+    field(:thread, Ecto.Enum, values: Threads.article_enums())
     field(:stage, Ecto.Enum, values: CMS.Const.stage_values())
     field(:title, :string)
     field(:slug, :string)
@@ -71,7 +71,7 @@ defmodule GroupherServer.CMS.Model.ArticleSnapshot do
     |> foreign_key_constraint(:author_id)
     |> check_constraint(:doc_id, name: :article_snapshots_target_check)
     |> check_constraint(:stage, name: :article_snapshots_stage_check)
-    |> check_constraint(:article_thread, name: :article_snapshots_article_thread_check)
+    |> check_constraint(:thread, name: :article_snapshots_thread_check)
   end
 
   def update_changeset(%ArticleSnapshot{} = snapshot, attrs), do: changeset(snapshot, attrs)

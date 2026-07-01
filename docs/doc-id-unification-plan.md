@@ -120,38 +120,38 @@ docs:
   ...
 ```
 
-| 表 | 旧 FK | 新 FK | 说明 |
-|---|--------|--------|------|
-| `DocTreeNode` | `workspace_id` + `doc_id` | `doc_id` | 统一一个 FK |
-| `ArticleSnapshot` | `workspace_id` + `article_id` | `doc_id` | 统一一个 FK |
-| `DocTreeEvent` | `workspace_id` | `doc_id` | 事件绑定的 doc |
-| `DocTreeTrashItem` | `workspace_id` | `doc_id` | 垃圾箱 |
-| `DocDocument` | `doc_id`（不变） | `doc_id` | 不变 |
+| 表                 | 旧 FK                         | 新 FK    | 说明           |
+| ------------------ | ----------------------------- | -------- | -------------- |
+| `DocTreeNode`      | `workspace_id` + `doc_id`     | `doc_id` | 统一一个 FK    |
+| `ArticleSnapshot`  | `workspace_id` + `article_id` | `doc_id` | 统一一个 FK    |
+| `DocTreeEvent`     | `workspace_id`                | `doc_id` | 事件绑定的 doc |
+| `DocTreeTrashItem` | `workspace_id`                | `doc_id` | 垃圾箱         |
+| `DocDocument`      | `doc_id`（不变）              | `doc_id` | 不变           |
 
 ### 删除
 
-| 删除 | 原因 |
-|------|------|
-| `ArticleWorkspace` 表 | draft 行进 `docs` |
-| `ArticleWorkspace.article_id` | 不需要 link back——两行共享 `doc_id` |
-| `DocTreeNode.workspace_id` | 统一为 `doc_id` |
-| R4（GQL `doc_id` 拆分） | 只有一个 `docId` |
-| `ensure_page_article_workspace` | → `ensure_doc_draft` |
-| `normalize_workspace_id` bridge | 前端直接传 `docId` |
+| 删除                            | 原因                                |
+| ------------------------------- | ----------------------------------- |
+| `ArticleWorkspace` 表           | draft 行进 `docs`                   |
+| `ArticleWorkspace.article_id`   | 不需要 link back——两行共享 `doc_id` |
+| `DocTreeNode.workspace_id`      | 统一为 `doc_id`                     |
+| R4（GQL `doc_id` 拆分）         | 只有一个 `docId`                    |
+| `ensure_page_article_workspace` | → `ensure_doc_draft`                |
+| `normalize_workspace_id` bridge | 前端直接传 `docId`                  |
 
 ### 不变的
 
-| 模块 / 表 | 说明 |
-|-----------|------|
-| `DocTreeNode`（树结构、stage） | 结构不变，只 FK 统一 |
-| `DocTreeEvent`（事件系统） | 逻辑不变 |
-| `DocTreeSnapshot` | 完全不变 |
-| `PublishRelease` | 完全不变 |
-| `ArticleSnapshot` | 逻辑不变 |
-| `DocDocument` | 完全不变 |
-| `DocsSiteState` | 完全不变 |
-| diff 逻辑 | 源从 `ArticleWorkspace` 换成 `docs(stage=draft)` |
-| 跨 thread 通用逻辑 | 继续走 `inner_id` |
+| 模块 / 表                      | 说明                                             |
+| ------------------------------ | ------------------------------------------------ |
+| `DocTreeNode`（树结构、stage） | 结构不变，只 FK 统一                             |
+| `DocTreeEvent`（事件系统）     | 逻辑不变                                         |
+| `DocTreeSnapshot`              | 完全不变                                         |
+| `PublishRelease`               | 完全不变                                         |
+| `ArticleSnapshot`              | 逻辑不变                                         |
+| `DocDocument`                  | 完全不变                                         |
+| `DocsSiteState`                | 完全不变                                         |
+| diff 逻辑                      | 源从 `ArticleWorkspace` 换成 `docs(stage=draft)` |
+| 跨 thread 通用逻辑             | 继续走 `inner_id`                                |
 
 ### FK 约束说明
 
@@ -164,7 +164,7 @@ docs:
 ### draft 创建
 
 ```sql
-INSERT INTO docs (doc_id, inner_id, community_id, article_thread, stage, ...)
+INSERT INTO docs (doc_id, inner_id, community_id, thread, stage, ...)
 VALUES (42, 42, 1, 'doc', 'draft', ...)
 -- → id=5, doc_id=42, stage=draft
 --   doc_id 从序列生成，id 自增 PK
@@ -223,12 +223,12 @@ CREATE UNIQUE INDEX docs_published_slug_idx
 
 ### 前端影响
 
-| 位置 | 旧 | 新 |
-|------|-----|-----|
-| GQL `DocTreeNode` | `workspaceId` + `docId` | `docId` |
-| URL query param | `workspaceId` | `docId` |
-| SSR helper | `workspaceId` 参数 | `docId` 参数 |
-| SideTree useLogic | `workspaceId` | `docId` |
+| 位置              | 旧                      | 新           |
+| ----------------- | ----------------------- | ------------ |
+| GQL `DocTreeNode` | `workspaceId` + `docId` | `docId`      |
+| URL query param   | `workspaceId`           | `docId`      |
+| SSR helper        | `workspaceId` 参数      | `docId` 参数 |
+| SideTree useLogic | `workspaceId`           | `docId`      |
 
 ### 不需要的
 
@@ -252,17 +252,17 @@ docs(doc_id=42, stage=draft, branch="feat-x", version=nil)
 
 ## 七、场景覆盖
 
-| 场景 | 处理 | 风险 |
-|------|------|------|
-| 新建 doc → publish | 一行 `UPDATE stage='public'` | 无 |
-| 编辑已发布 doc | 新 draft 行 + 旧 public 行，共享 `doc_id` | 无 |
-| 删除 draft | `DELETE` 行。有 snapshot 兜底 | 无 |
-| 删除 public doc | 树 event 处理可见性，docs 行可选软删 | 和旧行为一致 |
-| restore from snapshot | 覆盖 draft 行内容 | 无 |
-| 多人并发创建 | PG sequence 保证 `doc_id` 唯一 | 无 |
-| tree diff | draft node 树 ↔ `DocTreeSnapshot.tree_json`，不涉及 docs | 无 |
-| branch preview | row: `(doc_id, stage=public, branch="feat-x")` | 无 |
-| v1/v2 版本共存 | row: `(doc_id, stage=public, version="v1")` | 唯一键 `(doc_id, stage, branch, version)` 保证 |
+| 场景                  | 处理                                                     | 风险                                           |
+| --------------------- | -------------------------------------------------------- | ---------------------------------------------- |
+| 新建 doc → publish    | 一行 `UPDATE stage='public'`                             | 无                                             |
+| 编辑已发布 doc        | 新 draft 行 + 旧 public 行，共享 `doc_id`                | 无                                             |
+| 删除 draft            | `DELETE` 行。有 snapshot 兜底                            | 无                                             |
+| 删除 public doc       | 树 event 处理可见性，docs 行可选软删                     | 和旧行为一致                                   |
+| restore from snapshot | 覆盖 draft 行内容                                        | 无                                             |
+| 多人并发创建          | PG sequence 保证 `doc_id` 唯一                           | 无                                             |
+| tree diff             | draft node 树 ↔ `DocTreeSnapshot.tree_json`，不涉及 docs | 无                                             |
+| branch preview        | row: `(doc_id, stage=public, branch="feat-x")`           | 无                                             |
+| v1/v2 版本共存        | row: `(doc_id, stage=public, version="v1")`              | 唯一键 `(doc_id, stage, branch, version)` 保证 |
 
 ---
 

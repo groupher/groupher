@@ -8,7 +8,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
   alias GroupherServer.Repo
   alias Helper.{ORM, T}
 
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   @spec paged(T.id(), map()) :: T.domain_res(T.paged_data())
   def paged(folder_id, filter) do
@@ -34,7 +34,7 @@ defmodule GroupherServer.Accounts.CollectFolders.Articles do
 
   defp do_paged(folder, filter) do
     article_preload =
-      Enum.reduce(@article_threads, [], fn thread, acc ->
+      Enum.reduce(@threads, [], fn thread, acc ->
         acc ++ Keyword.new([{thread, [author: :user]}])
       end)
 

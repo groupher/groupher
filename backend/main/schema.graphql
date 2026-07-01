@@ -1031,7 +1031,7 @@ type CommonUser {
 }
 
 type CommonArticle {
-  articleThread: Thread
+  thread: Thread
   id: ID
   title: String
   author: CommonUser
@@ -1056,7 +1056,7 @@ type ThreadDocument {
 
 type ArticleSnapshot {
   id: ID
-  articleThread: Thread
+  thread: Thread
   stage: ArticleSnapshotStage
   docId: String
   title: String
@@ -1625,7 +1625,7 @@ type CommunityTag {
   layout: String
   slug: String
   color: RainbowColor
-  articleThread: Thread
+  thread: Thread
   group: String
   groupId: ID
   extra: [String]
@@ -1641,7 +1641,7 @@ type CommunityTag {
 type CommunityTagGroup {
   id: ID
   title: String
-  articleThread: Thread
+  thread: Thread
   index: Int
   tags: [CommunityTag]
   community: Community
@@ -1865,7 +1865,7 @@ type PagedArticles {
 
 "article meta info"
 type ArticleMeta {
-  articleThread: Thread
+  thread: Thread
   isEdited: Boolean
   isCommentLocked: Boolean
   lastActiveAt: DateTime

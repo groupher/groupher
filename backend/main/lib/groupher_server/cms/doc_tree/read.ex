@@ -234,7 +234,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
       ArticleSnapshot
       |> where([s], s.community_id == ^community.id)
       |> where([s], s.stage == CMS.Const.stage(:public))
-      |> where([s], s.article_thread == :doc)
+      |> where([s], s.thread == :doc)
       |> where([s], s.doc_id in ^doc_ids)
       |> order_by([s], desc: s.snapshot_number, desc: s.id)
       |> Repo.all()

@@ -2,7 +2,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
   @moduledoc """
   Universal doc draft/snapshot workflow.
 
-  This module owns the staged content lifecycle for every article_thread. Docs
+  This module owns the staged content lifecycle for every thread. Docs
   tree code may reference a draft, but it does not own the draft content.
 
       create/update
@@ -69,13 +69,13 @@ defmodule GroupherServer.CMS.Articles.Draft do
   ## Examples
 
       iex> Draft.create(community, :post, %{title: "Hello", slug: "hello", body: "[...]"}, user)
-      {:ok, %Doc{article_thread: :post}}
+      {:ok, %Doc{thread: :post}}
   """
-  @spec create(Community.t(), T.article_thread(), map(), User.t()) ::
+  @spec create(Community.t(), T.thread(), map(), User.t()) ::
           T.domain_res(Doc.t())
-  def create(%Community{} = community, article_thread, attrs, %User{} = user) do
+  def create(%Community{} = community, thread, attrs, %User{} = user) do
     with {:ok, %Author{} = author} <- CMS.Articles.Write.ensure_author_exists(user) do
-      create_with_author(community, article_thread, attrs, author)
+      create_with_author(community, thread, attrs, author)
     end
   end
 
@@ -91,11 +91,11 @@ defmodule GroupherServer.CMS.Articles.Draft do
       iex> Draft.create_with_author(community, :doc, attrs, author)
       {:ok, %Doc{author_id: author.id}}
   """
-  @spec create_with_author(Community.t(), T.article_thread(), map(), Author.t()) ::
+  @spec create_with_author(Community.t(), T.thread(), map(), Author.t()) ::
           T.domain_res(Doc.t())
-  def create_with_author(%Community{} = community, article_thread, attrs, %Author{} = author) do
+  def create_with_author(%Community{} = community, thread, attrs, %Author{} = author) do
     with {:ok, payload} <- parse_body(attrs),
-         {:ok, draft_attrs} <- build_attrs(community, article_thread, attrs, payload, author),
+         {:ok, draft_attrs} <- build_attrs(community, thread, attrs, payload, author),
          {:ok, draft} <- ORM.create(Doc, draft_attrs),
          {:ok, _} <- Document.create_doc(draft, %{article_payload: payload}) do
       {:ok, draft}
@@ -223,7 +223,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
 
   defp maybe_parse_body(_attrs), do: {:ok, nil}
 
-  defp build_attrs(%Community{} = community, _article_thread, attrs, payload, %Author{} = author) do
+  defp build_attrs(%Community{} = community, _thread, attrs, payload, %Author{} = author) do
     attrs =
       payload
       |> ArticlePayload.pick_valid_fields()

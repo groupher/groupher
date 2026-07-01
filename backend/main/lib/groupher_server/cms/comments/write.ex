@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Comments.Write do
   @article_cat Enums.cat_values() |> Enum.into(%{}, &{&1, &1})
   @article_status Enums.status_values() |> Enum.into(%{}, &{&1, &1})
 
-  @spec create(Community.t(), T.article_thread(), T.id(), String.t(), User.t()) ::
+  @spec create(Community.t(), T.thread(), T.id(), String.t(), User.t()) ::
           T.domain_res(Comment.t())
   def create(%Community{slug: community_slug}, thread, article_id, body, %User{} = user) do
     with {:ok, info} <- match(thread),

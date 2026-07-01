@@ -5,9 +5,9 @@ defmodule GroupherServer.CMS.Helper.Constraints do
   """
   import Ecto.Changeset
 
-  @article_threads Application.compile_env(:groupher_server, :article, [])
+  @threads Application.compile_env(:groupher_server, :article, [])
                    |> Keyword.get(:threads, [])
-  @article_fields @article_threads |> Enum.map(&:"#{&1}_id")
+  @article_fields @threads |> Enum.map(&:"#{&1}_id")
 
   @doc """
   foreign_key_constraint for articles thread

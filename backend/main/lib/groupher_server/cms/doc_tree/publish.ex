@@ -787,7 +787,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     ArticleSnapshot
     |> where([r], r.community_id == ^community_id)
     |> where([r], r.stage == CMS.Const.stage(:public))
-    |> where([r], r.article_thread == :doc)
+    |> where([r], r.thread == :doc)
     |> where([r], r.doc_id == ^doc_id)
     |> order_by([r], desc: r.snapshot_number, desc: r.id)
     |> limit(1)
@@ -944,7 +944,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     ArticleSnapshot
     |> where([s], s.community_id == ^community.id)
     |> where([s], s.stage == CMS.Const.stage(:public))
-    |> where([s], s.article_thread == :doc)
+    |> where([s], s.thread == :doc)
     |> where([s], s.doc_id == ^doc_id)
     |> order_by([s], desc: s.snapshot_number, desc: s.id)
     |> limit(1)

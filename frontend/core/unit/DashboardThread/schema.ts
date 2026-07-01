@@ -559,7 +559,7 @@ const docDraftSnapshots = gql`
   query docDraftSnapshots($community: String!, $id: ID!, $stage: ArticleSnapshotStage) {
     docDraftSnapshots(community: $community, id: $id, stage: $stage) {
       id
-      articleThread
+      thread
       stage
       docId
       title
@@ -691,7 +691,7 @@ const checkpointDocDraftSnapshot = gql`
   mutation checkpointDocDraftSnapshot($community: String!, $id: ID!) {
     checkpointDocDraftSnapshot(community: $community, id: $id) {
       id
-      articleThread
+      thread
       stage
       docId
       title

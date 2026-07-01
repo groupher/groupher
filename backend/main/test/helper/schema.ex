@@ -216,6 +216,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     query($community: String!, $id: ID!) {
       docDraft(community: $community, id: $id) {
         id
+        docId
         title
         subtitle
         slug
@@ -245,10 +246,9 @@ defmodule GroupherServer.Test.Helper.Schema do
     query($community: String!, $id: ID!, $stage: ArticleSnapshotStage) {
       docDraftSnapshots(community: $community, id: $id, stage: $stage) {
         id
-        articleThread
+        thread
         stage
-        articleId
-        workspaceId
+        docId
         title
         slug
         subtitle
@@ -532,6 +532,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     mutation($community: String!, $id: ID!, $title: String, $subtitle: String, $slug: String, $body: String) {
       updateDocDraft(community: $community, id: $id, title: $title, subtitle: $subtitle, slug: $slug, body: $body) {
         id
+        docId
         title
         subtitle
         slug
@@ -561,9 +562,9 @@ defmodule GroupherServer.Test.Helper.Schema do
     mutation($community: String!, $id: ID!) {
       checkpointDocDraftSnapshot(community: $community, id: $id) {
         id
-        articleThread
+        thread
         stage
-        workspaceId
+        docId
         title
         slug
         subtitle
@@ -588,7 +589,7 @@ defmodule GroupherServer.Test.Helper.Schema do
           id
           releaseNumber
         }
-        plan {
+        scope {
           totalCount
         }
       }

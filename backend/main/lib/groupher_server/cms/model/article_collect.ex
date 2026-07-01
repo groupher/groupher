@@ -23,12 +23,12 @@ defmodule GroupherServer.CMS.Model.ArticleCollect do
 
   @schema_prefix DBPrefix.cms()
 
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   @required_fields ~w(user_id)a
   @optional_fields ~w(thread)a
 
-  @article_fields @article_threads |> Enum.map(&:"#{&1}_id")
+  @article_fields @threads |> Enum.map(&:"#{&1}_id")
 
   @type t :: %ArticleCollect{}
   schema "article_collects" do

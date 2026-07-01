@@ -9,7 +9,6 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
   alias GroupherServer.Repo
 
   alias CMS.Model.{
-    ArticleWorkspace,
     Doc,
     DocsSiteState,
     DocTreeEvent,
@@ -23,7 +22,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
               ])
 
   describe "[doc tree draft writes]" do
-    test "creating a page without workspace_id creates a draft doc and bumps revisions" do
+    test "creating a page without doc_id creates a draft doc and bumps revisions" do
       {:ok, user} = db_insert(:user)
       {:ok, community} = empty_docs_community(user)
       {:ok, before_tree_state} = ORM.find_by(DocsSiteState, community_id: community.id)
@@ -49,17 +48,17 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
         )
 
       assert page_payload.node.type == :page
-      assert page_payload.node.workspace_id
+      assert page_payload.node.doc_id
 
-      {:ok, doc_draft} = ORM.find(ArticleWorkspace, page_payload.node.workspace_id)
+      {:ok, doc_draft} = draft_doc(community, page_payload.node.doc_id)
       assert doc_draft.title == "Install"
       assert doc_draft.slug == "install"
       assert doc_draft.json =~ "Start writing your docs draft here."
 
       assert stage_count(DocTreeNode, community.id, :draft) == 2
-      assert stage_count(ArticleWorkspace, community.id, :draft) == 1
+      assert stage_count(Doc, community.id, :draft) == 1
       assert stage_count(DocTreeNode, community.id, :public) == 0
-      assert draft_count(Doc, community.id) == 0
+      assert stage_count(Doc, community.id, :public) == 0
 
       {:ok, tree_state} = ORM.find_by(DocsSiteState, community_id: community.id)
       {:ok, site_state} = ORM.find_by(DocsSiteState, community_id: community.id)
@@ -72,9 +71,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
       {:ok, tree} = CMS.DocTree.read(community)
       assert [%{owner: "tree", event_type: "node.create"}] = tree.staged_events
 
-      workspace_id = page_payload.node.workspace_id
+      doc_id = page_payload.node.doc_id
 
-      assert %DocTreeEvent{owner: :doc, workspace_id: ^workspace_id} =
+      assert %DocTreeEvent{owner: :doc, doc_id: ^doc_id} =
                doc_owned_create_event(community, page_payload.node.id)
     end
 
@@ -117,7 +116,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
       assert duplicate_payload.node.title == "page-3-copy"
       assert duplicate_payload.node.slug == "page-3-copy"
 
-      {:ok, doc_draft} = ORM.find(ArticleWorkspace, duplicate_payload.node.workspace_id)
+      {:ok, doc_draft} = draft_doc(community, duplicate_payload.node.doc_id)
       assert doc_draft.title == "page-3-copy"
       assert doc_draft.slug == "page-3-copy"
       assert doc_draft.json =~ "page-3-copy"
@@ -216,11 +215,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
 
       assert {:error, changeset} =
                CMS.DocTree.update_node(community, page_payload.node.id, %{
-                 workspace_id: nil,
+                 doc_id: nil,
                  base_revision: page_payload.revision
                })
 
-      assert %{workspace_id: ["draft pages require workspace_id only"]} =
+      assert %{doc_id: ["page nodes require doc_id"]} =
                errors_on(changeset)
     end
 
@@ -250,17 +249,20 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
         )
 
       {:ok, draft} =
-        CMS.DocTree.update_draft(community, page_payload.node.workspace_id, %{
-          title: "Updated Install",
-          slug: "updated-install",
-          body: @plate_body
-        })
+        CMS.DocTree.update_draft(
+          community,
+          page_payload.node.doc_id,
+          %{
+            title: "Updated Install",
+            slug: "updated-install",
+            body: @plate_body
+          },
+          user
+        )
 
       assert draft.title == "Updated Install"
       assert draft.slug == "updated-install"
       assert draft.json == @plate_body
-      assert is_binary(draft.html)
-      assert is_binary(draft.xml)
       assert draft.digest =~ "Updated Draft"
 
       {:ok, page_node} =
@@ -317,7 +319,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
       {:ok, trash} =
         ORM.find_by(DocTreeTrashItem, community_id: community.id, node_id: page_payload.node.id)
 
-      assert trash.workspace_id == page_payload.node.workspace_id
+      assert trash.doc_id == page_payload.node.doc_id
       assert trash.node_snapshot["id"] == page_payload.node.id
       assert trash.deleted_from_group_id == group_payload.node.id
     end
@@ -330,12 +332,6 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
          {:ok, _} <- CMS.DocTree.delete_demo_template(community) do
       {:ok, community}
     end
-  end
-
-  defp draft_count(schema, community_id) do
-    schema
-    |> where([item], item.community_id == ^community_id)
-    |> Repo.aggregate(:count, :id)
   end
 
   defp stage_count(schema, community_id, stage) do
@@ -360,5 +356,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
     |> where([e], e.event_type == "node.create")
     |> where([e], fragment("?->'node'->>'id'", e.payload) == ^node_id)
     |> Repo.one()
+  end
+
+  defp draft_doc(community, doc_id) do
+    ORM.find_by(Doc, community_id: community.id, doc_id: doc_id, stage: :draft)
   end
 end

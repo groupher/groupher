@@ -12,7 +12,7 @@ defmodule Helper.Scheduler do
 
   alias GroupherServer.CMS.Events
 
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   @doc """
   clear all the cache in Cachex
@@ -26,7 +26,7 @@ defmodule Helper.Scheduler do
   archive articles and comments based on config
   """
   def archive_artiments do
-    Enum.map(@article_threads, &CMS.Articles.archive(&1))
+    Enum.map(@threads, &CMS.Articles.archive(&1))
     |> done
   end
 

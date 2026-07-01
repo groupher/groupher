@@ -7,11 +7,11 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
   alias GroupherServerWeb.Middleware, as: M
   alias GroupherServerWeb.Resolvers, as: R
 
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   # user published articles
   defmacro published_article_queries do
-    @article_threads
+    @threads
     |> Enum.map(fn thread ->
       quote do
         @desc unquote("paged published #{plural(thread)}")
@@ -29,7 +29,7 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
   end
 
   defmacro article_search_queries do
-    @article_threads
+    @threads
     |> Enum.map(fn thread ->
       quote do
         @desc unquote("get #{thread} by id")
@@ -49,7 +49,7 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
   post, page_posts ...
   """
   defmacro article_queries do
-    @article_threads
+    @threads
     |> Enum.map(fn thread ->
       quote do
         @desc unquote("get #{thread} by id")

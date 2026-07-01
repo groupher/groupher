@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
 
   import Helper.Utils, only: [done: 1, get_config: 2]
 
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   @export_author_keys [:id, :login, :nickname, :avatar]
   @export_article_keys [:id, :title, :digest, :upvotes_count, :views]
@@ -46,7 +46,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
       query =
         from(r in AbuseReport,
           where: field(r, ^info.foreign_key) == ^content_id,
-          preload: [comment: ^@article_threads],
+          preload: [comment: ^@threads],
           preload: [comment: :author]
         )
 
@@ -56,7 +56,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
 
   @spec paged_reports(map()) :: T.domain_res(T.paged_data())
   def paged_reports(%{content_type: thread, content_id: content_id} = filter)
-      when thread in @article_threads do
+      when thread in @threads do
     with {:ok, info} <- match(thread) do
       query =
         from(r in AbuseReport,
@@ -125,7 +125,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   end
 
   defp reports_formatter(%{entries: entries} = paged_reports, thread)
-       when thread in @article_threads do
+       when thread in @threads do
     paged_reports
     |> Map.put(
       :entries,
@@ -159,20 +159,20 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   end
 
   defp extract_article_in_comment(%Comment{} = comment) do
-    article_thread =
-      Enum.find(@article_threads, fn thread ->
+    thread =
+      Enum.find(@threads, fn thread ->
         not is_nil(Map.get(comment, :"#{thread}_id"))
       end)
 
-    case article_thread do
+    case thread do
       nil ->
         %{thread: nil}
 
       _ ->
         comment
-        |> Map.get(article_thread)
+        |> Map.get(thread)
         |> Map.take(@export_article_keys)
-        |> Map.merge(%{thread: article_thread})
+        |> Map.merge(%{thread: thread})
     end
   end
 end

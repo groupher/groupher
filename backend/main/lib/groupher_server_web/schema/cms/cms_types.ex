@@ -286,7 +286,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object :common_article do
-    field(:article_thread, :thread)
+    field(:thread, :thread)
     field(:id, :id)
     # field(:body_html, :string)
     field(:title, :string)
@@ -318,7 +318,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :article_snapshot do
     field(:id, :id)
-    field(:article_thread, :thread)
+    field(:thread, :thread)
     field(:stage, :article_snapshot_stage)
     field(:doc_id, :string)
     field(:title, :string)
@@ -671,7 +671,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:layout, :string)
     field(:slug, :string)
     field(:color, :rainbow_color)
-    field(:article_thread, :thread)
+    field(:thread, :thread)
     field(:group, :string, resolve: &R.CMS.community_tag_group_title/3)
     field(:group_id, :id)
     field(:extra, list_of(:string))
@@ -688,7 +688,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :community_tag_group do
     field(:id, :id)
     field(:title, :string)
-    field(:article_thread, :thread)
+    field(:thread, :thread)
     field(:index, :integer)
     field(:tags, list_of(:community_tag), resolve: dataloader(CMS, :tags))
 
@@ -853,7 +853,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   @desc "article meta info"
   object :article_meta do
-    field(:article_thread, :thread)
+    field(:thread, :thread)
     field(:is_edited, :boolean)
     field(:is_comment_locked, :boolean)
     field(:last_active_at, :datetime)

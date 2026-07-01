@@ -25,22 +25,22 @@ defmodule GroupherServer.CMS.Articles do
   }
 
   # Read
-  @spec read(String.t(), T.article_thread(), T.id()) :: T.domain_res(T.article())
-  def read(community_slug, article_thread, inner_id),
-    do: Read.read(community_slug, article_thread, inner_id)
+  @spec read(String.t(), T.thread(), T.id()) :: T.domain_res(T.article())
+  def read(community_slug, thread, inner_id),
+    do: Read.read(community_slug, thread, inner_id)
 
-  @spec read(String.t(), T.article_thread(), T.id(), User.t()) :: T.domain_res(T.article())
-  def read(community_slug, article_thread, inner_id, %User{} = user) do
-    Read.read(community_slug, article_thread, inner_id, user)
+  @spec read(String.t(), T.thread(), T.id(), User.t()) :: T.domain_res(T.article())
+  def read(community_slug, thread, inner_id, %User{} = user) do
+    Read.read(community_slug, thread, inner_id, user)
   end
 
   # List
 
-  @spec page(T.article_thread(), map()) :: T.domain_res(T.paged_data())
-  def page(article_thread, filter), do: List.page(article_thread, filter)
+  @spec page(T.thread(), map()) :: T.domain_res(T.paged_data())
+  def page(thread, filter), do: List.page(thread, filter)
 
-  @spec page(T.article_thread(), map(), User.t()) :: T.domain_res(T.paged_data())
-  def page(article_thread, filter, %User{} = user), do: List.page(article_thread, filter, user)
+  @spec page(T.thread(), map(), User.t()) :: T.domain_res(T.paged_data())
+  def page(thread, filter, %User{} = user), do: List.page(thread, filter, user)
 
   @spec grouped_kanban(Community.t()) :: T.domain_res(term())
   def grouped_kanban(%Community{} = community), do: List.grouped_kanban(community)
@@ -48,20 +48,20 @@ defmodule GroupherServer.CMS.Articles do
   @spec paged_kanban(Community.t(), map()) :: T.domain_res(term())
   def paged_kanban(%Community{} = community, filter), do: List.paged_kanban(community, filter)
 
-  @spec paged_published(T.article_thread(), map(), User.t()) :: T.domain_res(T.paged_data())
-  def paged_published(article_thread, filter, %User{} = user) do
-    List.paged_published(article_thread, filter, user)
+  @spec paged_published(T.thread(), map(), User.t()) :: T.domain_res(T.paged_data())
+  def paged_published(thread, filter, %User{} = user) do
+    List.paged_published(thread, filter, user)
   end
 
-  @spec count_published(T.article_thread(), User.t()) :: T.domain_res(non_neg_integer())
-  def count_published(article_thread, %User{} = user),
-    do: List.count_published(article_thread, user)
+  @spec count_published(T.thread(), User.t()) :: T.domain_res(non_neg_integer())
+  def count_published(thread, %User{} = user),
+    do: List.count_published(thread, user)
 
   # Write
 
-  @spec create(Community.t(), T.article_thread(), map(), User.t()) :: T.domain_res(T.article())
-  def create(%Community{} = community, article_thread, attrs, %User{} = user) do
-    Write.create(community, article_thread, attrs, user)
+  @spec create(Community.t(), T.thread(), map(), User.t()) :: T.domain_res(T.article())
+  def create(%Community{} = community, thread, attrs, %User{} = user) do
+    Write.create(community, thread, attrs, user)
   end
 
   @spec update(T.article(), map()) :: T.domain_res(T.article())
@@ -135,17 +135,17 @@ defmodule GroupherServer.CMS.Articles do
   @spec delete(T.article(), String.t()) :: T.domain_res(term())
   def delete(article, reason), do: Write.delete(article, reason)
 
-  @spec archive(T.article_thread()) :: T.domain_res(term())
-  def archive(article_thread), do: States.archive(article_thread)
+  @spec archive(T.thread()) :: T.domain_res(term())
+  def archive(thread), do: States.archive(thread)
 
-  @spec batch_mark_delete(String.t(), T.article_thread(), [T.id()]) :: T.domain_res(term())
-  def batch_mark_delete(community, article_thread, id_list) do
-    Write.batch_mark_delete(community, article_thread, id_list)
+  @spec batch_mark_delete(String.t(), T.thread(), [T.id()]) :: T.domain_res(term())
+  def batch_mark_delete(community, thread, id_list) do
+    Write.batch_mark_delete(community, thread, id_list)
   end
 
-  @spec batch_undo_mark_delete(String.t(), T.article_thread(), [T.id()]) :: T.domain_res(term())
-  def batch_undo_mark_delete(community, article_thread, id_list) do
-    Write.batch_undo_mark_delete(community, article_thread, id_list)
+  @spec batch_undo_mark_delete(String.t(), T.thread(), [T.id()]) :: T.domain_res(term())
+  def batch_undo_mark_delete(community, thread, id_list) do
+    Write.batch_undo_mark_delete(community, thread, id_list)
   end
 
   @spec sink(T.article()) :: T.domain_res(T.article())
@@ -162,23 +162,23 @@ defmodule GroupherServer.CMS.Articles do
   @spec set_status(T.article(), Enums.status_enum() | nil) :: T.domain_res(T.article())
   def set_status(article, status), do: States.set_status(article, status)
 
-  @spec update_active_timestamp(T.article_thread(), T.article()) :: T.domain_res(T.article())
-  def update_active_timestamp(article_thread, article) do
-    States.update_active_timestamp(article_thread, article)
+  @spec update_active_timestamp(T.thread(), T.article()) :: T.domain_res(T.article())
+  def update_active_timestamp(thread, article) do
+    States.update_active_timestamp(thread, article)
   end
 
   # Moderation
 
-  @spec set_illegal(T.article_thread(), T.id(), map()) :: T.domain_res(T.article())
-  def set_illegal(article_thread, id, attrs),
-    do: Moderation.set_illegal(article_thread, id, attrs)
+  @spec set_illegal(T.thread(), T.id(), map()) :: T.domain_res(T.article())
+  def set_illegal(thread, id, attrs),
+    do: Moderation.set_illegal(thread, id, attrs)
 
   @spec set_illegal(T.article(), map()) :: T.domain_res(T.article())
   def set_illegal(article, attrs), do: Moderation.set_illegal(article, attrs)
 
-  @spec unset_illegal(T.article_thread(), T.id(), map()) :: T.domain_res(T.article())
-  def unset_illegal(article_thread, id, attrs),
-    do: Moderation.unset_illegal(article_thread, id, attrs)
+  @spec unset_illegal(T.thread(), T.id(), map()) :: T.domain_res(T.article())
+  def unset_illegal(thread, id, attrs),
+    do: Moderation.unset_illegal(thread, id, attrs)
 
   @spec unset_illegal(T.article(), map()) :: T.domain_res(T.article())
   def unset_illegal(article, attrs), do: Moderation.unset_illegal(article, attrs)
@@ -186,9 +186,9 @@ defmodule GroupherServer.CMS.Articles do
   @spec set_audit_failed(T.article(), map()) :: T.domain_res(T.article())
   def set_audit_failed(article, state), do: Moderation.set_audit_failed(article, state)
 
-  @spec paged_audit_failed(T.article_thread(), map()) :: T.domain_res(T.paged_data())
-  def paged_audit_failed(article_thread, filter),
-    do: Moderation.paged_audit_failed(article_thread, filter)
+  @spec paged_audit_failed(T.thread(), map()) :: T.domain_res(T.paged_data())
+  def paged_audit_failed(thread, filter),
+    do: Moderation.paged_audit_failed(thread, filter)
 
   # Placement
 

@@ -85,7 +85,12 @@ defmodule GroupherServer.Test.Query.CMS.CommunityTagGroups do
     test "guest user can get post tag stats through tag groups",
          ~m(guest_conn community tag_attrs user)a do
       {:ok, article_tag} =
-        CMS.Communities.create_tag(community, :post, Map.merge(tag_attrs, %{group: "General"}), user)
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          Map.merge(tag_attrs, %{group: "General"}),
+          user
+        )
 
       post_attrs = mock_attrs(:post) |> Map.merge(%{community_tags: [article_tag.id]})
       {:ok, _post} = CMS.Articles.create(community, :post, post_attrs, user)

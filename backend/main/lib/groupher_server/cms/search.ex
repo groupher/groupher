@@ -22,6 +22,6 @@ defmodule GroupherServer.CMS.Search do
     Community.search(title, category, user)
   end
 
-  @spec article(T.article_thread(), String.t()) :: T.domain_res(T.paged_data())
+  @spec article(T.thread(), String.t()) :: T.domain_res(T.paged_data())
   def article(thread, title) when is_binary(title), do: Article.search(thread, title)
 end

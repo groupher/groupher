@@ -12,7 +12,7 @@ defmodule GroupherServer.Accounts.Upvotes do
   alias CMS.Model.ArticleUpvote
   alias Helper.{ORM, QueryBuilder}
 
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   def paged_articles(user_id, %{thread: thread} = filter) when is_atom(thread) do
     where_query = dynamic([a], a.user_id == ^user_id and a.thread == ^thread)
@@ -29,7 +29,7 @@ defmodule GroupherServer.Accounts.Upvotes do
 
   defp load_articles(where_query, %{page: page, size: size} = filter) do
     article_preload =
-      Enum.reduce(@article_threads, [], fn thread, acc ->
+      Enum.reduce(@threads, [], fn thread, acc ->
         acc ++ Keyword.new([{thread, [author: :user]}])
       end)
 
