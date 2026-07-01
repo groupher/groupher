@@ -1,29 +1,28 @@
-export type TArticleRevisionType = 'DRAFT' | 'PUBLISHED'
+export type TArticleSnapshotStage = 'DRAFT' | 'PUBLIC'
 
-export type TArticleRevisionAuthor = {
+export type TArticleSnapshotAuthor = {
   login?: string | null
   nickname?: string | null
   avatar?: string | null
 }
 
-export type TArticleRevision = {
+export type TArticleSnapshot = {
   id: string
   thread?: string | null
-  type: TArticleRevisionType
-  articleId?: string | null
-  articleDraftId?: string | null
+  stage: TArticleSnapshotStage
+  docId?: string | null
   title?: string | null
   slug?: string | null
   subtitle?: string | null
   digest?: string | null
   documentJson?: string | null
   contentHash?: string | null
-  revisionNumber?: number | null
+  snapshotNumber?: number | null
   schemaVersion?: number | null
   insertedAt?: string | null
-  author?: TArticleRevisionAuthor | null
+  author?: TArticleSnapshotAuthor | null
 }
 
-export type TDocDraftRevisionPayload = {
-  docDraftRevisions?: TArticleRevision[] | null
+export type TDocDraftSnapshotsPayload = {
+  docDraftSnapshots?: TArticleSnapshot[] | null
 }

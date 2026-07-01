@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Template do
   import Ecto.Query, warn: false
 
   alias GroupherServer.Repo
-  alias CMS.Model.{ArticleDraft, Doc, DocTreeNode, DocTreeNodeDraft}
+  alias CMS.Model.{Doc, DocTreeNode}
 
   describe "[doc tree demo template]" do
     test "community creation initializes docs draft template only" do
@@ -26,11 +26,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Template do
              |> Enum.flat_map(& &1.children)
              |> Enum.all?(& &1.doc_id)
 
-      assert draft_count(DocTreeNodeDraft, community.id) == 6
-      assert draft_count(ArticleDraft, community.id) == 4
+      assert stage_count(DocTreeNode, community.id, :draft) == 6
+      assert stage_count(Doc, community.id, :draft) == 4
 
-      assert draft_count(DocTreeNode, community.id) == 0
-      assert draft_count(Doc, community.id) == 0
+      assert stage_count(DocTreeNode, community.id, :public) == 0
+      assert stage_count(Doc, community.id, :public) == 0
     end
 
     test "can delete and reset docs draft template" do
@@ -41,19 +41,20 @@ defmodule GroupherServer.Test.CMS.DocTree.Template do
 
       {:ok, tree} = CMS.DocTree.delete_demo_template(community)
       assert tree.groups == []
-      assert draft_count(DocTreeNodeDraft, community.id) == 0
-      assert draft_count(ArticleDraft, community.id) == 0
+      assert stage_count(DocTreeNode, community.id, :draft) == 0
+      assert stage_count(Doc, community.id, :draft) == 0
 
       {:ok, tree} = CMS.DocTree.reset_demo_template(community, user)
       assert Enum.map(tree.groups, & &1.title) == ["Getting started", "Core Features"]
-      assert draft_count(DocTreeNodeDraft, community.id) == 6
-      assert draft_count(ArticleDraft, community.id) == 4
+      assert stage_count(DocTreeNode, community.id, :draft) == 6
+      assert stage_count(Doc, community.id, :draft) == 4
     end
   end
 
-  defp draft_count(schema, community_id) do
+  defp stage_count(schema, community_id, stage) do
     schema
     |> where([item], item.community_id == ^community_id)
+    |> where([item], item.stage == ^stage)
     |> Repo.aggregate(:count, :id)
   end
 end

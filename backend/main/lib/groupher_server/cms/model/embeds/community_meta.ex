@@ -4,10 +4,10 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta.Macro do
 
   import Helper.Utils, only: [get_config: 2, plural: 1]
 
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   defmacro thread_count_fields do
-    @article_threads
+    @threads
     |> Enum.map(fn thread ->
       quote do
         field(unquote(:"#{plural(thread)}_count"), :integer, default: 0)
@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta.Macro do
   end
 
   defmacro thread_inner_id_index_fields do
-    @article_threads
+    @threads
     |> Enum.map(fn thread ->
       quote do
         field(unquote(:"#{plural(thread)}_inner_id_index"), :integer, default: 0)
@@ -38,7 +38,7 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta do
   import Helper.Utils, only: [get_config: 2, plural: 1]
   import GroupherServer.CMS.Model.Embeds.CommunityMeta.Macro
 
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   @general_options %{
     moderators_ids: [],
@@ -49,17 +49,17 @@ defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta do
   }
 
   @optional_fields Map.keys(@general_options) ++
-                     Enum.map(@article_threads, &:"#{plural(&1)}_count") ++
-                     Enum.map(@article_threads, &:"#{plural(&1)}_inner_id_index")
+                     Enum.map(@threads, &:"#{plural(&1)}_count") ++
+                     Enum.map(@threads, &:"#{plural(&1)}_inner_id_index")
 
   def default_meta do
     threads_counts =
-      @article_threads
+      @threads
       |> Enum.reduce([], &(&2 ++ ["#{plural(&1)}_count": 0]))
       |> Enum.into(%{})
 
     threads_inner_id_indexes =
-      @article_threads
+      @threads
       |> Enum.reduce([], &(&2 ++ ["#{plural(&1)}_inner_id_index": 0]))
       |> Enum.into(%{})
 

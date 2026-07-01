@@ -1,5 +1,12 @@
 import type { TTransKey } from '~/spec'
 
+export const ACTION_SNACKBAR_WIDTH = 'w-fit'
+export const ACTION_SNACKBAR_LAYOUT_TRANSITION = {
+  type: 'spring',
+  duration: 0.3,
+  bounce: 0,
+} as const
+
 export const TREE_ACTION_LABEL_KEY = {
   TAB: 'dsb.doc.action.tab',
   TAB_ADDED: 'dsb.doc.action.tab_added',
@@ -17,11 +24,13 @@ export const DOC_ACTION_LABEL_KEY = {
 
 export const SAVE_ACTION_LABEL_KEY = {
   SAVED: 'dsb.doc.save.saved',
+  UNSAVED: 'dsb.doc.save.unsaved',
   SYNCING: 'dsb.doc.save.syncing',
   SAVE_FAILED: 'dsb.doc.save.failed',
   PUBLISH: 'dsb.doc.save.publish',
   PUBLISH_CURRENT: 'dsb.doc.save.publish_current',
   PUBLISH_OPTIONS: 'dsb.doc.save.publish_options',
+  PUBLISH_OPTIONS_CLOSE: 'dsb.doc.save.publish_options_close',
   PUBLISH_SCOPE: 'dsb.doc.save.publish_scope',
   PUBLISH_WITH_COVER_SYNC: 'dsb.doc.save.publish_with_cover_sync',
   PUBLISH_WITH_COVER_SYNC_DESC: 'dsb.doc.save.publish_with_cover_sync_desc',
@@ -33,25 +42,29 @@ export const SAVE_ACTION_LABEL_KEY = {
   PUBLISHED: 'dsb.doc.save.published',
   PUBLISHED_ALL_UNPUBLISHED: 'dsb.doc.save.published_all_unpublished',
   PUBLISH_FAILED: 'dsb.doc.save.publish_failed',
+  PUBLISH_DOC_CHANGES: 'dsb.doc.save.publish_doc_changes',
+  PUBLISH_TREE_CHANGES: 'dsb.doc.save.publish_tree_changes',
+  PUBLISH_NO_CHANGES: 'dsb.doc.save.publish_no_changes',
 } as const satisfies Record<string, TTransKey>
 
 export const SAVE_STATUS_LABEL = {
   idle: SAVE_ACTION_LABEL_KEY.SAVED,
   saved: SAVE_ACTION_LABEL_KEY.SAVED,
-  dirty: SAVE_ACTION_LABEL_KEY.SAVED,
+  dirty: SAVE_ACTION_LABEL_KEY.UNSAVED,
   saving: SAVE_ACTION_LABEL_KEY.SYNCING,
   error: SAVE_ACTION_LABEL_KEY.SAVE_FAILED,
 } as const
 
 export const DOC_INFO_LABEL_KEY = {
   TITLE: 'dsb.doc.info.title',
+  CLOSE: 'dsb.doc.info.close',
   TITLE_LABEL: 'dsb.doc.info.field.title',
   SLUG_LABEL: 'dsb.doc.info.field.slug',
   DOCUMENT_ID_LABEL: 'dsb.doc.info.field.document_id',
   WORD_COUNT_LABEL: 'dsb.doc.info.field.word_count',
-  VISIBILITY_LABEL: 'dsb.doc.info.field.visibility',
-  VISIBILITY_PUBLISHED: 'dsb.doc.info.visibility.published',
-  VISIBILITY_UNPUBLISHED: 'dsb.doc.info.visibility.unpublished',
+  STAGE_LABEL: 'dsb.doc.info.field.stage',
+  STAGE_PUBLISHED: 'dsb.doc.info.stage.published',
+  STAGE_UNPUBLISHED: 'dsb.doc.info.stage.unpublished',
   CREATION_DATE_LABEL: 'dsb.doc.info.field.creation_date',
   CREATED_BY_LABEL: 'dsb.doc.info.field.created_by',
   LAST_MODIFIED_LABEL: 'dsb.doc.info.field.last_modified',

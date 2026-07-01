@@ -30,14 +30,14 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.ThreadEmotions do
   import Ecto.Changeset
   import Helper.Utils, only: [get_config: 2]
 
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
   @emotions_whitelist get_config(:article, :emotions_whitelist)
   @article_emotions get_config(:article, :emotions)
   @comment_emotions get_config(:article, :comment_emotions)
   @default_thread_emotions get_config(:article, :default_thread_emotions)
 
-  @comment_thread_fields Enum.map(@article_threads, &:"#{&1}_comment")
-  @thread_fields @article_threads ++ @comment_thread_fields
+  @comment_thread_fields Enum.map(@threads, &:"#{&1}_comment")
+  @thread_fields @threads ++ @comment_thread_fields
 
   @optional_fields @thread_fields
 
@@ -60,7 +60,7 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.ThreadEmotions do
   def changeset(struct, params) do
     struct
     |> cast(params, @optional_fields)
-    |> validate_scope(:article, @article_threads, @article_emotions)
+    |> validate_scope(:article, @threads, @article_emotions)
     |> validate_scope(:comment, @comment_thread_fields, @comment_emotions)
   end
 

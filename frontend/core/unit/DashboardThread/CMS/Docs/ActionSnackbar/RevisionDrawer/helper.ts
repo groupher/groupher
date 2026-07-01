@@ -3,7 +3,7 @@ import type { TRichEditorValue } from '@groupher/rich-editor'
 import type { TTransKey } from '~/spec'
 
 import { REVISION_LABEL_KEY } from '../constant'
-import type { TArticleRevision, TArticleRevisionAuthor } from './spec'
+import type { TArticleSnapshot, TArticleSnapshotAuthor } from './spec'
 
 type TPlateNode = {
   children?: TPlateNode[]
@@ -48,7 +48,26 @@ export type TRevisionDiffStats = {
 
 export type TDedupedRevisions = {
   hiddenCount: number
-  revisions: TArticleRevision[]
+  revisions: TArticleSnapshot[]
+}
+
+export type TRevisionDiffEntry = {
+  blocks: TRevisionDiffBlock[]
+  revision: TArticleSnapshot
+  stats: TRevisionDiffStats
+}
+
+export type TRevisionDiffModel = {
+  currentBlocks: TRevisionDiffBlock[]
+  currentStats: TRevisionDiffStats
+  hasCurrentDiff: boolean
+  hiddenDraftDuplicateCount: number
+  latestPublishedRevision?: TArticleSnapshot
+  publishedEntries: TRevisionDiffEntry[]
+  stagedEntries: TRevisionDiffEntry[]
+  stagedStats: TRevisionDiffStats
+  visibleDraftRevisions: TArticleSnapshot[]
+  visiblePublishedRevisions: TArticleSnapshot[]
 }
 
 const BLOCK_ATTR_IGNORE_KEYS = new Set(['children', 'id', 'text', 'type'])
@@ -454,9 +473,9 @@ export const parseRevisionDocumentValue = (json?: string | null): TRichEditorVal
   }
 }
 
-export const dedupeRevisionsBySnapshot = (revisions: TArticleRevision[]): TDedupedRevisions => {
+export const dedupeRevisionsBySnapshot = (revisions: TArticleSnapshot[]): TDedupedRevisions => {
   const seen = new Set<string>()
-  const deduped: TArticleRevision[] = []
+  const deduped: TArticleSnapshot[] = []
 
   for (const revision of revisions) {
     const key = revision.contentHash || revision.documentJson || revision.id
@@ -473,14 +492,93 @@ export const dedupeRevisionsBySnapshot = (revisions: TArticleRevision[]): TDedup
   }
 }
 
+export const hasRevisionDiffStats = (stats: TRevisionDiffStats): boolean =>
+  stats.additions > 0 || stats.deletions > 0
+
+export const addRevisionDiffStats = (
+  left: TRevisionDiffStats,
+  right: TRevisionDiffStats,
+): TRevisionDiffStats => ({
+  additions: left.additions + right.additions,
+  deletions: left.deletions + right.deletions,
+})
+
+export const buildSnapshotDiffEntries = (
+  revisions: TArticleSnapshot[],
+  options: {
+    latestPublishedRevision?: TArticleSnapshot
+    useLatestPublishedFallback?: boolean
+  } = {},
+): TRevisionDiffEntry[] =>
+  revisions
+    .map((revision, index) => {
+      const previousRevision =
+        revisions[index + 1] ||
+        (options.useLatestPublishedFallback ? options.latestPublishedRevision : undefined)
+      const previousValue = previousRevision
+        ? parseRevisionDocumentValue(previousRevision.documentJson)
+        : EMPTY_REVISION_VALUE
+      const revisionValue = parseRevisionDocumentValue(revision.documentJson)
+      const blocks = buildRevisionDiffBlocks(previousValue, revisionValue)
+      const stats = computeRevisionDiffStatsFromBlocks(blocks)
+
+      return {
+        blocks,
+        revision,
+        stats,
+      }
+    })
+    .filter((entry) => hasRevisionDiffStats(entry.stats))
+
+export const buildRevisionDiffModel = (params: {
+  baselineValue: TRichEditorValue
+  bodyValue: TRichEditorValue
+  draftRevisions: TArticleSnapshot[]
+  publishedRevisions: TArticleSnapshot[]
+}): TRevisionDiffModel => {
+  const { hiddenCount: hiddenDraftDuplicateCount, revisions: visibleDraftRevisions } =
+    dedupeRevisionsBySnapshot(params.draftRevisions)
+  const visiblePublishedRevisions = params.publishedRevisions
+  const latestPublishedRevision = visiblePublishedRevisions[0]
+  const currentBaselineValue = visibleDraftRevisions[0]
+    ? parseRevisionDocumentValue(visibleDraftRevisions[0].documentJson)
+    : latestPublishedRevision
+      ? parseRevisionDocumentValue(latestPublishedRevision.documentJson)
+      : params.baselineValue
+  const currentBlocks = buildRevisionDiffBlocks(currentBaselineValue, params.bodyValue)
+  const currentStats = computeRevisionDiffStatsFromBlocks(currentBlocks)
+  const stagedEntries = buildSnapshotDiffEntries(visibleDraftRevisions, {
+    latestPublishedRevision,
+    useLatestPublishedFallback: true,
+  })
+  const publishedEntries = buildSnapshotDiffEntries(visiblePublishedRevisions)
+  const stagedStats = stagedEntries.reduce(
+    (total, entry) => addRevisionDiffStats(total, entry.stats),
+    currentStats,
+  )
+
+  return {
+    currentBlocks,
+    currentStats,
+    hasCurrentDiff: hasRevisionDiffStats(currentStats),
+    hiddenDraftDuplicateCount,
+    latestPublishedRevision,
+    publishedEntries,
+    stagedEntries,
+    stagedStats,
+    visibleDraftRevisions,
+    visiblePublishedRevisions,
+  }
+}
+
 type TTranslate = (key: TTransKey) => string
 
 export const getRevisionAuthorName = (
   t: TTranslate,
-  author?: TArticleRevisionAuthor | null,
+  author?: TArticleSnapshotAuthor | null,
 ): string => author?.nickname || author?.login || t(REVISION_LABEL_KEY.UNKNOWN_AUTHOR)
 
-export const getRevisionAuthorInitial = (author?: TArticleRevisionAuthor | null): string =>
+export const getRevisionAuthorInitial = (author?: TArticleSnapshotAuthor | null): string =>
   (author?.nickname || author?.login || '').trim().charAt(0).toUpperCase() || '?'
 
 export const formatRelativeRevisionTime = (t: TTranslate, datetime?: string | null): string => {
@@ -508,7 +606,7 @@ export const formatRelativeRevisionTime = (t: TTranslate, datetime?: string | nu
   }).format(new Date(timestamp))
 }
 
-export const buildRevisionExcerpt = (t: TTranslate, revision: TArticleRevision): string => {
+export const buildRevisionExcerpt = (t: TTranslate, revision: TArticleSnapshot): string => {
   if (revision.digest) return revision.digest
 
   if (!revision.documentJson) return t(REVISION_LABEL_KEY.EMPTY_EXCERPT)

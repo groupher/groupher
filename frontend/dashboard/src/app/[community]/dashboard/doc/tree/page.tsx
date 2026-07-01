@@ -1,7 +1,11 @@
 'use client'
 
+import useTrans from '~/hooks/useTrans'
+
 const DashboardDocPage = () => {
-  return <h2>TODO: Tree page</h2>
+  const { t } = useTrans()
+
+  return <h2>{t('dsb.page.doc.tree_todo')}</h2>
 }
 
 export default DashboardDocPage

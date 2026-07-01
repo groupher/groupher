@@ -9,8 +9,8 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   alias CMS.Model.Comment
 
   @site_host get_config(:general, :site_host)
-  @article_threads get_config(:article, :threads)
-  @valid_article_prefix Enum.map(@article_threads, &"#{@site_host}/#{&1}/")
+  @threads get_config(:article, :threads)
+  @valid_article_prefix Enum.map(@threads, &"#{@site_host}/#{&1}/")
   @href_regex ~r/<a\b[^>]*\bhref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i
   @url_regex ~r/https?:\/\/[^\s<>"']+/u
 
@@ -264,7 +264,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   defp load_internal_mention(:comment, value),
     do: load_comment_from_url("#{@site_host}/post/0?comment_id=#{value}")
 
-  defp load_internal_mention(type, value) when type in @article_threads do
+  defp load_internal_mention(type, value) when type in @threads do
     with {:ok, info} <- match(type),
          {:ok, article} <- FrontDesk.get(info.model, value) do
       {:ok, %{type: type, id: article.id, url: article_url(type, article.id), artiment: article}}

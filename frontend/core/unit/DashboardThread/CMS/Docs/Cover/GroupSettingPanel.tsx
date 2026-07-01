@@ -3,6 +3,7 @@ import { type FC, useEffect, useMemo, useState } from 'react'
 
 import { DOC_COVER_LAYOUT } from '~/const/layout'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
+import useTrans from '~/hooks/useTrans'
 import useTwBelt from '~/hooks/useTwBelt'
 import type { TDocCoverLayout, TMarkerValue } from '~/spec'
 import SavingBar from '~/unit/DashboardThread/SavingBar'
@@ -46,6 +47,7 @@ const comparableUiConfig = (value: TDocCoverGroupUiConfig): TDocCoverGroupUiConf
 const GroupSettingPanel: FC<TProps> = ({ group, layout, community, onDone }) => {
   const { cn, bg, br, fg } = useTwBelt()
   const { mutate } = useGraphQLClient()
+  const { t } = useTrans()
   const capabilities = useMemo(() => getCapabilities(layout), [layout])
   const initialUiConfig = useMemo(
     () => normalizeUiConfig(group.uiConfig),
@@ -83,7 +85,7 @@ const GroupSettingPanel: FC<TProps> = ({ group, layout, community, onDone }) => 
         id: group.id,
         uiConfig,
       })
-      toast('Cover group settings saved.')
+      toast(t('dsb.cms.docs.cover.group.saved'))
       setBaselineUiConfig(uiConfig)
       onDone({ ...group, uiConfig })
     } finally {
@@ -95,12 +97,14 @@ const GroupSettingPanel: FC<TProps> = ({ group, layout, community, onDone }) => 
     <div className='column gap-6 p-8'>
       <div className='column gap-2'>
         <div className={cn('text-xl bold-sm', fg('title'))}>{group.title}</div>
-        <div className={cn('text-sm', fg('digest'))}>Doc cover group settings</div>
+        <div className={cn('text-sm', fg('digest'))}>{t('dsb.cms.docs.cover.group.settings')}</div>
       </div>
 
       {capabilities.marker && (
         <div className='column gap-3'>
-          <div className={cn('text-sm bold-sm', fg('title'))}>Group icon</div>
+          <div className={cn('text-sm bold-sm', fg('title'))}>
+            {t('dsb.cms.docs.cover.group.icon')}
+          </div>
           <div className='row-center gap-3'>
             <div className={cn('align-both size-10 rounded border', bg('card'), br('divider'))}>
               <MarkerPicker
@@ -111,18 +115,22 @@ const GroupSettingPanel: FC<TProps> = ({ group, layout, community, onDone }) => 
                 onChange={(marker: TMarkerValue) => updateConfig('marker', marker)}
               />
             </div>
-            <div className={cn('text-sm', fg('digest'))}>Used by layouts with group icons.</div>
+            <div className={cn('text-sm', fg('digest'))}>
+              {t('dsb.cms.docs.cover.group.icon_desc')}
+            </div>
           </div>
         </div>
       )}
 
       {capabilities.desc && (
         <div className='column gap-3'>
-          <div className={cn('text-sm bold-sm', fg('title'))}>Group description</div>
+          <div className={cn('text-sm bold-sm', fg('title'))}>
+            {t('dsb.cms.docs.cover.group.desc')}
+          </div>
           <Input
             behavior='textarea'
             value={uiConfig.desc ?? ''}
-            placeholder='Describe this group'
+            placeholder={t('dsb.cms.docs.cover.group.desc_placeholder')}
             className='min-h-24'
             onChange={(event) => updateConfig('desc', event.target.value)}
           />
@@ -131,7 +139,7 @@ const GroupSettingPanel: FC<TProps> = ({ group, layout, community, onDone }) => 
 
       {!capabilities.marker && !capabilities.desc && (
         <div className={cn('rounded border p-4 text-sm', bg('card'), br('divider'), fg('digest'))}>
-          This layout has no group settings yet.
+          {t('dsb.cms.docs.cover.group.empty')}
         </div>
       )}
 

@@ -54,7 +54,7 @@ export default function SubMenu({
         <button
           type='button'
           className={s.collapseToggle}
-          aria-label='Collapse dashboard submenu'
+          aria-label={t('dsb.aria.collapse_dashboard_submenu')}
           onClick={onCollapse}
         >
           <SidebarIcon className={s.collapseIcon} />

@@ -137,7 +137,7 @@ export default function DetailPanel({
         <button
           type='button'
           className={s.collapseBtn}
-          aria-label='Collapse wallpaper tuning panel'
+          aria-label={t('dsb.appearance.wallpaper.hud.collapse')}
           onClick={onCollapse}
         >
           {t('tags.fold.collapse')}

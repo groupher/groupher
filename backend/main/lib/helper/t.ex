@@ -33,7 +33,7 @@ defmodule Helper.T do
 
   @type id :: non_neg_integer() | String.t()
 
-  @type article_thread :: :post | :blog | :changelog | :doc
+  @type thread :: :post | :blog | :changelog | :doc
 
   @type paged_filter :: %{
           page: integer(),
@@ -85,7 +85,7 @@ defmodule Helper.T do
         }
 
   @type article_info :: %{
-          thread: article_thread,
+          thread: thread,
           article: %{
             title: String.t()
           },

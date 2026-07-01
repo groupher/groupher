@@ -24,7 +24,7 @@ export default function useSalon() {
       hover('bg'),
     ),
     groupSettingButtonStatic: cn('button-reset align-both size-6 rounded', bg('hoverBg')),
-    groupSettingIcon: bg('digest'),
+    groupSettingIcon: fg('digest'),
     pageItem,
     pageTextLink,
     tocItem: cn(

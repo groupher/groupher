@@ -1,5 +1,6 @@
 import type { FC } from 'react'
 
+import useTrans from '~/hooks/useTrans'
 import EditSVG from '~/icons/EditPen'
 import SettingSVG from '~/icons/Setting'
 
@@ -13,6 +14,7 @@ type TProps = TTagBarProps & {
 
 const TagAction: FC<TProps> = ({ tag, onSetting, onEdit }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   const { editingTag, editTag } = useTags()
   const isEditMode = editingTag?.id === tag.id
@@ -25,10 +27,20 @@ const TagAction: FC<TProps> = ({ tag, onSetting, onEdit }) => {
 
   return (
     <div className={s.wrapper}>
-      <button type='button' className={s.editIconBox} onClick={onEdit} aria-label='Edit tag'>
+      <button
+        type='button'
+        className={s.editIconBox}
+        onClick={onEdit}
+        aria-label={t('dsb.aria.edit_tag')}
+      >
         <EditSVG className={s.icon} />
       </button>
-      <button type='button' className={s.iconBox} onClick={openSetting} aria-label='Tag settings'>
+      <button
+        type='button'
+        className={s.iconBox}
+        onClick={openSetting}
+        aria-label={t('dsb.aria.tag_settings')}
+      >
         <SettingSVG className={s.icon} />
       </button>
     </div>

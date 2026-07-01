@@ -18,8 +18,6 @@ export const SIDE_TREE_CHILD_MENU_ACTION = {
 export const SIDE_TREE_GROUP_MENU_ACTION = {
   PAGE: SIDE_TREE_NODE_TYPE.PAGE,
   LINK: SIDE_TREE_NODE_TYPE.LINK,
-  PUBLISH_GROUP: 'publish_group',
-  MOVE_GROUP_TO_DRAFT: 'move_group_to_draft',
   ADD_TO_COVER: 'add_to_cover',
   REMOVE_FROM_COVER: 'remove_from_cover',
   RENAME: 'rename',

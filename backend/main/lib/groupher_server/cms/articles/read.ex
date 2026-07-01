@@ -20,22 +20,22 @@ defmodule GroupherServer.CMS.Articles.Read do
   alias Helper.{Multi, Constant, Datetime, ORM, T}
 
   @active_period get_config(:article, :active_period_days)
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
   @audit_legal Constant.CMS.pending(:legal)
   @audit_illegal Constant.CMS.pending(:illegal)
   @audit_failed Constant.CMS.pending(:audit_failed)
 
-  @spec read(String.t(), T.article_thread(), T.id()) :: T.domain_res(T.article())
-  def read(community_slug, thread, inner_id) when thread in @article_threads do
+  @spec read(String.t(), T.thread(), T.id()) :: T.domain_res(T.article())
+  def read(community_slug, thread, inner_id) when thread in @threads do
     with {:ok, _thread} <- CanCan.allow_thread(community_slug, thread),
          {:ok, article} <- if_article_legal(community_slug, thread, inner_id) do
       do_read_article(article, community_slug, thread)
     end
   end
 
-  @spec read(String.t(), T.article_thread(), T.id(), User.t()) :: T.domain_res(T.article())
+  @spec read(String.t(), T.thread(), T.id(), User.t()) :: T.domain_res(T.article())
   def read(community_slug, thread, inner_id, %User{id: user_id} = user)
-      when thread in @article_threads do
+      when thread in @threads do
     with {:ok, _thread} <- CanCan.allow_thread(community_slug, thread),
          {:ok, article} <- if_article_legal(community_slug, thread, inner_id, user) do
       Multi.new()
@@ -93,7 +93,7 @@ defmodule GroupherServer.CMS.Articles.Read do
   end
 
   defp if_article_legal(community_slug, thread, inner_id, user)
-       when thread in @article_threads do
+       when thread in @threads do
     clauses = %{community_slug: community_slug, inner_id: inner_id}
 
     with {:ok, info} <- match(thread),
@@ -103,7 +103,7 @@ defmodule GroupherServer.CMS.Articles.Read do
   end
 
   defp if_article_legal(community_slug, thread, inner_id)
-       when thread in @article_threads do
+       when thread in @threads do
     clauses = %{community_slug: community_slug, inner_id: inner_id}
 
     with {:ok, info} <- match(thread),

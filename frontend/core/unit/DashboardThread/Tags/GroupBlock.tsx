@@ -224,7 +224,7 @@ const GroupBlock: FC<TProps> = ({
                 ref={setActivatorNodeRef}
                 type='button'
                 className={s.groupDragHandle}
-                aria-label='Drag group'
+                aria-label={t('dsb.aria.drag_group')}
                 {...attributes}
                 {...listeners}
               >
@@ -236,7 +236,7 @@ const GroupBlock: FC<TProps> = ({
             <button
               type='button'
               className={s.foldButton}
-              aria-label={folded ? 'Expand group' : 'Collapse group'}
+              aria-label={folded ? t('dsb.aria.expand_group') : t('dsb.aria.collapse_group')}
               onClick={() => setFolded(!folded)}
             >
               <ArrowSVG className={cn(s.foldIcon, folded ? 'rotate-180' : '-rotate-90')} />
@@ -277,7 +277,11 @@ const GroupBlock: FC<TProps> = ({
                 hideOnClick
                 noPadding
               >
-                <button type='button' className={s.iconButton} aria-label='Group actions'>
+                <button
+                  type='button'
+                  className={s.iconButton}
+                  aria-label={t('dsb.aria.group_actions')}
+                >
                   <MoreSVG className={s.icon} />
                 </button>
               </Tooltip>

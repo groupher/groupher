@@ -1,6 +1,6 @@
 import type { FC, MouseEvent } from 'react'
 
-import IconHub from '~/widgets/IconHub'
+import SlidersHorizontalSVG from '~/icons/SlidersHorizontal'
 
 import type { TDocCoverGroup } from './spec'
 
@@ -20,13 +20,7 @@ const GroupSettingButton: FC<TProps> = ({ group, className, iconClassName, onEdi
 
   return (
     <button type='button' aria-label='Edit cover group' className={className} onClick={handleClick}>
-      <IconHub
-        provider='lucide'
-        icon='sliders-horizontal'
-        mode='mask'
-        size={3.5}
-        className={iconClassName}
-      />
+      <SlidersHorizontalSVG className={iconClassName} />
     </button>
   )
 }

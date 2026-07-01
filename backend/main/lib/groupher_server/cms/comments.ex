@@ -30,14 +30,14 @@ defmodule GroupherServer.CMS.Comments do
   @spec one_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
   def one_comment(id, %User{} = user), do: Read.one_comment(id, user)
 
-  @spec comments_state(T.article_thread(), T.id()) :: T.domain_res(map())
+  @spec comments_state(T.thread(), T.id()) :: T.domain_res(map())
   def comments_state(thread, article_id), do: List.comments_state(thread, article_id)
 
-  @spec comments_state(T.article_thread(), T.id(), User.t()) :: T.domain_res(map())
+  @spec comments_state(T.thread(), T.id(), User.t()) :: T.domain_res(map())
   def comments_state(thread, article_id, %User{} = user),
     do: List.comments_state(thread, article_id, user)
 
-  @spec paged_comments(T.article_thread(), T.id(), map(), atom(), User.t() | nil) ::
+  @spec paged_comments(T.thread(), T.id(), map(), atom(), User.t() | nil) ::
           T.domain_res(T.paged_data())
   def paged_comments(thread, article_id, filters, mode, user \\ nil),
     do: List.paged_comments(thread, article_id, filters, mode, user)
@@ -46,16 +46,16 @@ defmodule GroupherServer.CMS.Comments do
   def paged_published_comments(%User{} = user, filters),
     do: List.paged_published_comments(user, filters)
 
-  @spec paged_published_comments(User.t(), T.article_thread(), map()) ::
+  @spec paged_published_comments(User.t(), T.thread(), map()) ::
           T.domain_res(T.paged_data())
   def paged_published_comments(%User{} = user, thread, filters),
     do: List.paged_published_comments(user, thread, filters)
 
-  @spec paged_folded_comments(T.article_thread(), T.id(), map()) :: T.domain_res(T.paged_data())
+  @spec paged_folded_comments(T.thread(), T.id(), map()) :: T.domain_res(T.paged_data())
   def paged_folded_comments(thread, article_id, filters),
     do: List.paged_folded_comments(thread, article_id, filters)
 
-  @spec paged_folded_comments(T.article_thread(), T.id(), map(), User.t()) ::
+  @spec paged_folded_comments(T.thread(), T.id(), map(), User.t()) ::
           T.domain_res(T.paged_data())
   def paged_folded_comments(thread, article_id, filters, %User{} = user),
     do: List.paged_folded_comments(thread, article_id, filters, user)
@@ -68,12 +68,12 @@ defmodule GroupherServer.CMS.Comments do
   def paged_comment_replies(comment_id, filters, user),
     do: List.paged_comment_replies(comment_id, filters, user)
 
-  @spec paged_comments_participants(T.article_thread(), T.id(), map()) ::
+  @spec paged_comments_participants(T.thread(), T.id(), map()) ::
           T.domain_res(T.paged_users())
   def paged_comments_participants(thread, article_id, filters),
     do: List.paged_comments_participants(thread, article_id, filters)
 
-  @spec create_comment(Community.t(), T.article_thread(), T.id(), String.t(), User.t()) ::
+  @spec create_comment(Community.t(), T.thread(), T.id(), String.t(), User.t()) ::
           T.domain_res(Comment.t())
   def create_comment(%Community{} = community, thread, article_id, body, %User{} = user) do
     Write.create(community, thread, article_id, body, user)

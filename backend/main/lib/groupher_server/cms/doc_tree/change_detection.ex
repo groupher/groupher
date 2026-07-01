@@ -1,96 +1,48 @@
 defmodule GroupherServer.CMS.DocTree.ChangeDetection do
   @moduledoc """
-  Shared change detection for the docs draft tree and the published tree.
+  Change helpers shared by docs tree projections.
 
-  The docs editor keeps a draft-side tree and publishing copies nodes to the
-  public-side tree. A mapping row records the pair and the draft snapshot that
-  was last published.
+  Tree structure changes are event-driven and belong to the Tree footer. Article
+  content changes compare the draft Doc and the latest public snapshot:
 
-      draft tree                         published tree
-      ----------                         --------------
-      doc_tree_node_drafts.id  ----+---> doc_tree_nodes.id
-                                  |
-                                  v
-      doc_tree_node_publish_mappings
-        draft_node_id
-        published_node_id
-        draft_node_updated_at
-        draft_doc_content_hash
-        visibility
-
-  A public mapping is considered changed when either side differs from the last
-  published snapshot:
-
-      draft node updated_at != mapping.draft_node_updated_at
-      OR copied public node fields differ from draft node fields
-      OR article draft content_hash != mapping.draft_doc_content_hash
-
-  `Read` uses this module to show the dashboard "unpublished changes" signal.
-  `Publish` uses the same boundary to decide what bulk publish should publish.
-  Keep the comparison rules here so the signal and the action stay aligned.
+      snapshot_hash(docs(stage=draft))
+                    !=
+      article_snapshots(stage=public).content_hash
   """
 
-  alias GroupherServer.CMS.Model.{
-    ArticleDraft,
-    DocTreeNode,
-    DocTreeNodeDraft,
-    DocTreeNodePublishMapping
-  }
+  alias GroupherServer.CMS.Model.{ArticleSnapshot, Doc}
 
-  alias GroupherServer.CMS.DocTree.PublishedFields
+  @doc """
+  Returns whether a draft doc version differs from its public version.
 
-  @spec unpublished_mapping?(
-          DocTreeNodeDraft.t(),
-          DocTreeNodePublishMapping.t() | nil,
-          DocTreeNode.t() | nil,
-          ArticleDraft.t() | nil
-        ) :: boolean()
-  def unpublished_mapping?(_node, nil, _published_node, _draft_doc), do: true
+  ## Examples
 
-  def unpublished_mapping?(
-        _node,
-        %DocTreeNodePublishMapping{visibility: :draft},
-        _published_node,
-        _draft_doc
-      ),
-      do: true
-
-  def unpublished_mapping?(
-        %DocTreeNodeDraft{} = node,
-        %DocTreeNodePublishMapping{visibility: :public} = mapping,
-        published_node,
-        draft_doc
-      ) do
-    node_changed?(node, mapping, published_node) or
-      draft_doc_content_changed?(draft_doc, mapping.draft_doc_content_hash)
+      iex> ChangeDetection.draft_content_changed?(draft, public_snapshot)
+      true
+  """
+  @spec draft_content_changed?(Doc.t() | nil, ArticleSnapshot.t() | nil) :: boolean()
+  def draft_content_changed?(%Doc{} = draft, %ArticleSnapshot{} = public_snapshot) do
+    snapshot_hash(draft) != public_snapshot.content_hash
   end
 
-  @spec node_changed?(
-          DocTreeNodeDraft.t(),
-          DocTreeNodePublishMapping.t(),
-          DocTreeNode.t() | nil
-        ) :: boolean()
-  def node_changed?(
-        %DocTreeNodeDraft{} = node,
-        %DocTreeNodePublishMapping{} = mapping,
-        published_node
-      ) do
-    node.updated_at != mapping.draft_node_updated_at or
-      published_node_fields_changed?(node, published_node)
-  end
+  def draft_content_changed?(%Doc{}, nil), do: true
+  def draft_content_changed?(_, _), do: false
 
-  @spec draft_doc_content_changed?(ArticleDraft.t() | nil, String.t() | nil) :: boolean()
-  def draft_doc_content_changed?(nil, _content_hash), do: false
+  @doc """
+  Returns the content hash shape stored by `ArticleSnapshot`.
 
-  def draft_doc_content_changed?(%ArticleDraft{} = draft_doc, content_hash) do
-    draft_doc.content_hash != content_hash
-  end
+  The Doc row keeps the raw parsed document hash, while snapshots include
+  subtitle in the hash so subtitle-only checkpoints are not deduplicated away.
 
-  defp published_node_fields_changed?(_node, nil), do: false
+  ## Examples
 
-  defp published_node_fields_changed?(%DocTreeNodeDraft{} = node, %DocTreeNode{} = published_node) do
-    fields = PublishedFields.node_fields()
-
-    Map.take(node, fields) != Map.take(published_node, fields)
+      iex> ChangeDetection.snapshot_hash(draft) == public_snapshot.content_hash
+      true
+  """
+  @spec snapshot_hash(Doc.t()) :: String.t()
+  def snapshot_hash(%Doc{} = draft) do
+    :sha256
+    |> :crypto.hash(:erlang.term_to_binary({draft.content_hash, draft.subtitle}))
+    |> Base.encode16(case: :lower)
   end
 end

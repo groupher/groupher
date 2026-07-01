@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   alias CMS.Model.{Comment, Community, CommunityTag, Embeds}
   alias Helper.{ORM, QueryBuilder, T}
 
-  @article_threads Application.compile_env(:groupher_server, :article, [])
+  @threads Application.compile_env(:groupher_server, :article, [])
                    |> Keyword.get(:threads, [])
   @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
   @max_latest_upvoted_users_count Application.compile_env(:groupher_server, :article, [])
@@ -133,8 +133,8 @@ defmodule GroupherServer.CMS.FrontDesk do
   @doc "get parent article of a comment"
   @spec article_of(Comment.t()) :: {:ok, map()} | {:error, map()}
   def article_of(%Comment{} = comment) do
-    with {:ok, article_thread} <- thread_of(comment) do
-      comment |> Repo.preload(article_thread) |> Map.get(article_thread) |> done
+    with {:ok, thread} <- thread_of(comment) do
+      comment |> Repo.preload(thread) |> Map.get(thread) |> done
     end
   end
 
@@ -360,15 +360,15 @@ defmodule GroupherServer.CMS.FrontDesk do
 
   @spec get_full_comment(integer()) :: T.domain_res(T.article_info())
   defp get_full_comment(comment_id) do
-    query = from(c in Comment, where: c.id == ^comment_id, preload: ^@article_threads)
+    query = from(c in Comment, where: c.id == ^comment_id, preload: ^@threads)
 
     with {:ok, comment} <- Repo.one(query) |> done(),
-         article_thread <- find_comment_article_thread(comment) do
-      do_extract_article_info(article_thread, Map.get(comment, article_thread))
+         thread <- find_comment_thread(comment) do
+      do_extract_article_info(thread, Map.get(comment, thread))
     end
   end
 
-  @spec do_extract_article_info(T.article_thread(), T.article_common()) ::
+  @spec do_extract_article_info(T.thread(), T.article_common()) ::
           T.domain_res(T.article_info())
   defp do_extract_article_info(thread, article) do
     with {:ok, article_with_author} <- Repo.preload(article, author: :user) |> done(),
@@ -385,8 +385,8 @@ defmodule GroupherServer.CMS.FrontDesk do
     end
   end
 
-  defp find_comment_article_thread(%Comment{} = comment) do
-    @article_threads
+  defp find_comment_thread(%Comment{} = comment) do
+    @threads
     |> Enum.filter(&Map.get(comment, :"#{&1}_id"))
     |> List.first()
   end

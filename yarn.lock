@@ -966,10 +966,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@formkit/auto-animate@npm:^0.8.0":
-  version: 0.8.4
-  resolution: "@formkit/auto-animate@npm:0.8.4"
-  checksum: 10c0/b921dfc7af1aed71edb2dc4341ad38cc0785342b5f415eea6ba67f5214781bad6b1d64c9cf3ec932608edcc2f0e3d57a49837fc59518530690f2730fa778099b
+"@formkit/auto-animate@npm:^0.9.0":
+  version: 0.9.0
+  resolution: "@formkit/auto-animate@npm:0.9.0"
+  checksum: 10c0/5337bb905761d347cc07cf323b54fbd9967c1eac5469cb63f6ad67cf6705b08493c80ddafc470f317eee82fcc1c05f34391eb05896d41aa9f2f8a02738614ce4
   languageName: node
   linkType: hard
 
@@ -1190,7 +1190,7 @@ __metadata:
     "@dnd-kit/core": "npm:^6.3.1"
     "@dnd-kit/sortable": "npm:^10.0.0"
     "@dnd-kit/utilities": "npm:^3.2.2"
-    "@formkit/auto-animate": "npm:^0.8.0"
+    "@formkit/auto-animate": "npm:^0.9.0"
     "@fortawesome/fontawesome-svg-core": "npm:^6.2.1"
     "@fortawesome/free-regular-svg-icons": "npm:^6.2.1"
     "@fortawesome/free-solid-svg-icons": "npm:^6.2.1"
@@ -1272,7 +1272,7 @@ __metadata:
     react-dom: "npm:^19.2.5"
     react-error-boundary: "npm:^6.1.1"
     react-flip-numbers: "npm:^3.0.8"
-    react-highlight-words: "npm:^0.18.0"
+    react-highlight-words: "npm:^0.21.0"
     react-json-view-lite: "npm:^2.5.0"
     react-masonry-css: "npm:^1.0.16"
     react-resizable-panels: "npm:^4.11.2"
@@ -12159,16 +12159,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-highlight-words@npm:^0.18.0":
-  version: 0.18.0
-  resolution: "react-highlight-words@npm:0.18.0"
+"react-highlight-words@npm:^0.21.0":
+  version: 0.21.0
+  resolution: "react-highlight-words@npm:0.21.0"
   dependencies:
     highlight-words-core: "npm:^1.2.0"
     memoize-one: "npm:^4.0.0"
-    prop-types: "npm:^15.5.8"
   peerDependencies:
-    react: ^0.14.0 || ^15.0.0 || ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
-  checksum: 10c0/01a3ff3c9dcc07878c015ac43d4b00c7528f67447d24191b5d0c54818ba0d86fe350fc31065502a0a39f7e9d9e52b1c242f71b0c721399bff644f58e4208c7c0
+    react: ^0.14.0 || ^15.0.0 || ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0 || ^19.0.0-0
+  checksum: 10c0/8704097b6ca2b08a943e55e66493fab21d523362c8ea754ef4c7a351b4625b684d7ed1e9155f97d033be78783dacdd88bb83e2766cfc3d462c311551552b8ad5
   languageName: node
   linkType: hard
 

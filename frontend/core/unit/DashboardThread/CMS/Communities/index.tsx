@@ -54,7 +54,7 @@ export default function Communities() {
       {
         id: 'name',
         header: () => <div className={s.title}>{t('dsb.cms.communities.name')}</div>,
-        cell: () => <div>TODO: CommunityCell</div>,
+        cell: () => <div>{t('dsb.cms.communities.cell.todo')}</div>,
         size: 180,
         meta: { sticky: 'left' },
       },
@@ -74,7 +74,7 @@ export default function Communities() {
         header: () => (
           <div className={cn(s.title, 'text-center')}>{t('dsb.cms.communities.status')}</div>
         ),
-        cell: () => <div className='text-center'>TODO: PendingCell</div>,
+        cell: () => <div className='text-center'>{t('dsb.cms.communities.pending.todo')}</div>,
         size: 90,
       },
 
@@ -122,7 +122,7 @@ export default function Communities() {
         header: () => (
           <div className={cn(s.title, 'text-right')}>{t('dsb.cms.communities.timestamps')}</div>
         ),
-        cell: () => <div className='text-right'>TODO: TimestampCell</div>,
+        cell: () => <div className='text-right'>{t('dsb.cms.communities.timestamp.todo')}</div>,
         size: 120,
       },
     ]

@@ -1,5 +1,8 @@
 import { useEffect, useState, type FC } from 'react'
 
+import { DOC_STAGE, DSB_DOC_EVENT, type TDocPublishSuccessPayload } from '~/const/dsb/docs'
+import useEvent from '~/hooks/useEvent'
+
 import { DOC_EDITOR_MODE } from '../constant'
 import type { TSideTreeController } from '../SideTree/spec'
 import useDocsEditor from '../store/hooks'
@@ -7,24 +10,24 @@ import Body from './Body'
 import Cover from './Cover'
 import Footer from './Footer'
 import useSalon from './salon'
-import type { TDocDraftInitialData } from './spec'
-import Subtitle from './Subtitle'
 import Title from './Title'
+import Subtitle from './Title/Subtitle'
 import TitleActions from './TitleActions'
 import useLogic from './useLogic'
 import WorkspaceActions from './WorkspaceActions'
 
 type TProps = {
   sideTree: TSideTreeController
-  initialDraft?: TDocDraftInitialData | null
 }
 
-const Article: FC<TProps> = ({ sideTree, initialDraft }) => {
+const Article: FC<TProps> = ({ sideTree }) => {
   const s = useSalon()
   const { mode } = useDocsEditor()
   const {
     activePage,
     bodyValue,
+    editable,
+    editorDocId,
     error,
     loading,
     setBodyValue,
@@ -32,13 +35,31 @@ const Article: FC<TProps> = ({ sideTree, initialDraft }) => {
     setTitle,
     subtitle,
     title,
-  } = useLogic(sideTree, initialDraft)
+  } = useLogic(sideTree)
   const [coverVisible, setCoverVisible] = useState(false)
-  const disabled = loading || mode === DOC_EDITOR_MODE.PREVIEW
+  const disabled = loading || !editable || mode === DOC_EDITOR_MODE.PREVIEW
 
   useEffect(() => {
     setCoverVisible(false)
   }, [activePage?.docId])
+
+  useEvent<TDocPublishSuccessPayload>(
+    DSB_DOC_EVENT.PUBLISH_SUCCESS,
+    (_msg, payload): void => {
+      if (!activePage?.docId || !payload?.docIds.includes(activePage.docId)) return
+
+      sideTree.patchChild(activePage.id, {
+        publishState: {
+          ...(activePage.publishState ?? {}),
+          hasDraft: false,
+          hasUnpublishedChanges: false,
+          published: true,
+          status: DOC_STAGE.PUBLIC,
+        },
+      })
+    },
+    [activePage?.docId, activePage?.id, activePage?.publishState, sideTree],
+  )
 
   if (!activePage) {
     return (
@@ -56,13 +77,19 @@ const Article: FC<TProps> = ({ sideTree, initialDraft }) => {
         disabled={disabled}
         onAddCover={() => setCoverVisible(true)}
       />
-      <Title value={title} disabled={disabled} onChange={setTitle} />
+      <Title
+        value={title}
+        disabled={disabled}
+        docId={activePage.docId}
+        publishState={activePage.publishState}
+        onChange={setTitle}
+      />
       <Subtitle value={subtitle} disabled={disabled} onChange={setSubtitle} />
       <Body
         value={bodyValue}
         mode={mode}
-        editorKey={activePage.docId}
-        disabled={loading}
+        editorKey={editorDocId}
+        disabled={disabled}
         onChange={setBodyValue}
       />
       {error && <div className={s.error}>{error}</div>}

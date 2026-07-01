@@ -19,6 +19,7 @@ const SegmentTab: FC<TSegmentTabProps> = ({
   activeKey,
   ariaLabel,
   className,
+  itemClassName,
   onChange = console.log,
 }) => {
   const s = useSalon()
@@ -127,6 +128,7 @@ const SegmentTab: FC<TSegmentTabProps> = ({
           item={item}
           index={index}
           active={item.key === renderActiveKey}
+          itemClassName={itemClassName}
           onClick={handleChange}
           onKeyDown={handleKeyDown}
         />

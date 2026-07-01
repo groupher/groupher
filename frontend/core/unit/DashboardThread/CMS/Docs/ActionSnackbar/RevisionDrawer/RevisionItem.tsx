@@ -12,10 +12,10 @@ import {
 } from './helper'
 import type { TRevisionDiffStats } from './helper'
 import useSalon, { cn } from './salon/item'
-import type { TArticleRevision } from './spec'
+import type { TArticleSnapshot } from './spec'
 
 type TProps = {
-  revision: TArticleRevision
+  revision: TArticleSnapshot
   selected: boolean
   restoreDisabled: boolean
   restoring: boolean
@@ -39,6 +39,7 @@ const RevisionItem: FC<TProps> = ({
   const { t } = useTrans()
   const [confirming, setConfirming] = useState(false)
   const selectRevision = (): void => onSelect(revision.id)
+  const hasStats = stats.additions > 0 || stats.deletions > 0
 
   return (
     <article className={cn(s.item, selected && s.itemSelected)}>
@@ -55,8 +56,12 @@ const RevisionItem: FC<TProps> = ({
       >
         <div className={s.summary}>
           <span>{formatRelativeRevisionTime(t, revision.insertedAt)}</span>
-          <span className={s.additions}>+{stats.additions}</span>
-          <span className={s.deletions}>-{stats.deletions}</span>
+          {hasStats && (
+            <>
+              <span className={s.additions}>+{stats.additions}</span>
+              <span className={s.deletions}>-{stats.deletions}</span>
+            </>
+          )}
         </div>
 
         <div className={s.authorLine}>

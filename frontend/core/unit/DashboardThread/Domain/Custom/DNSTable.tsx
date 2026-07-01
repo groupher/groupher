@@ -1,3 +1,5 @@
+import useTrans from '~/hooks/useTrans'
+
 import useSalon, { cn } from '../salon/custom/dns_table'
 import type { TDnsRecord } from './constant'
 
@@ -7,15 +9,16 @@ type Props = {
 
 export default function DnsRecordsTable({ records }: Props) {
   const s = useSalon()
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper}>
       <table className={s.table}>
         <thead className={s.thead}>
           <tr>
-            <th className={s.th}>Type</th>
-            <th className={s.th}>Host name</th>
-            <th className={s.th}>Value</th>
+            <th className={s.th}>{t('dsb.domain.custom.dns.type')}</th>
+            <th className={s.th}>{t('dsb.domain.custom.dns.host_name')}</th>
+            <th className={s.th}>{t('dsb.domain.custom.dns.value')}</th>
           </tr>
         </thead>
 

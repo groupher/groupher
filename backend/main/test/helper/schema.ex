@@ -216,6 +216,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     query($community: String!, $id: ID!) {
       docDraft(community: $community, id: $id) {
         id
+        docId
         title
         subtitle
         slug
@@ -240,22 +241,21 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
-  def q(:doc_draft_revisions) do
+  def q(:doc_draft_snapshots) do
     """
-    query($community: String!, $id: ID!, $type: ArticleRevisionType) {
-      docDraftRevisions(community: $community, id: $id, type: $type) {
+    query($community: String!, $id: ID!, $stage: ArticleSnapshotStage) {
+      docDraftSnapshots(community: $community, id: $id, stage: $stage) {
         id
         thread
-        type
-        articleId
-        articleDraftId
+        stage
+        docId
         title
         slug
         subtitle
         digest
         documentJson
         contentHash
-        revisionNumber
+        snapshotNumber
         schemaVersion
         insertedAt
         author {
@@ -532,6 +532,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     mutation($community: String!, $id: ID!, $title: String, $subtitle: String, $slug: String, $body: String) {
       updateDocDraft(community: $community, id: $id, title: $title, subtitle: $subtitle, slug: $slug, body: $body) {
         id
+        docId
         title
         subtitle
         slug
@@ -556,21 +557,21 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
-  def m(:checkpoint_doc_draft_revision) do
+  def m(:checkpoint_doc_draft_snapshot) do
     """
     mutation($community: String!, $id: ID!) {
-      checkpointDocDraftRevision(community: $community, id: $id) {
+      checkpointDocDraftSnapshot(community: $community, id: $id) {
         id
         thread
-        type
-        articleDraftId
+        stage
+        docId
         title
         slug
         subtitle
         digest
         documentJson
         contentHash
-        revisionNumber
+        snapshotNumber
         author {
           login
         }
@@ -579,34 +580,27 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
-  def m(:publish_doc_draft_revision) do
+  def m(:publish_doc_changes) do
     """
-    mutation($community: String!, $id: ID!) {
-      publishDocDraftRevision(community: $community, id: $id) {
-        id
-        thread
-        type
-        articleId
-        articleDraftId
-        title
-        slug
-        subtitle
-        digest
-        documentJson
-        contentHash
-        revisionNumber
-        author {
-          login
+    mutation($community: String!, $input: DocPublishChangesInput) {
+      publishDocChanges(community: $community, input: $input) {
+        done
+        release {
+          id
+          releaseNumber
+        }
+        scope {
+          totalCount
         }
       }
     }
     """
   end
 
-  def m(:restore_doc_draft_revision) do
+  def m(:restore_doc_draft_snapshot) do
     """
-    mutation($community: String!, $id: ID!, $revisionId: ID!) {
-      restoreDocDraftRevision(community: $community, id: $id, revisionId: $revisionId) {
+    mutation($community: String!, $id: ID!, $snapshotId: ID!) {
+      restoreDocDraftSnapshot(community: $community, id: $id, snapshotId: $snapshotId) {
         id
         title
         subtitle

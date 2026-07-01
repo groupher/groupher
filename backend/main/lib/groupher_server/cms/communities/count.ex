@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.Communities.Count do
   alias CMS.Model.{Community, CommunityTag}
   alias Helper.{Constant, ORM, T, Transaction}
 
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   @doc """
   update community_tags_count / thread / article_count / subscribers_count of a community
@@ -125,6 +125,6 @@ defmodule GroupherServer.CMS.Communities.Count do
   def count(_community, _type), do: {:error, {:custom, "invalid count type"}}
 
   defp recount_articles_count(meta) do
-    @article_threads |> Enum.reduce(0, &(&2 + Map.get(meta, :"#{plural(&1)}_count")))
+    @threads |> Enum.reduce(0, &(&2 + Map.get(meta, :"#{plural(&1)}_count")))
   end
 end

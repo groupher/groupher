@@ -3,15 +3,17 @@
 import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
 import { type FC, useCallback, useState } from 'react'
 
+import useTrans from '~/hooks/useTrans'
 import FeedbackSpectrum from '~/widgets/FeedbackSpectrum'
 
 import ActionButton from './ActionButton'
-import { FOOTER_ACTIONS, FOOTER_TITLE } from './constant'
+import { FOOTER_ACTIONS, FOOTER_TITLE_I18N_KEY } from './constant'
 import FeedbackTags from './FeedbackTags'
 import useSalon from './salon'
 
 const Footer: FC = () => {
   const s = useSalon()
+  const { t } = useTrans()
   const [showFeedbackTags, setShowFeedbackTags] = useState(false)
   const [feedbackScore, setFeedbackScore] = useState(0)
 
@@ -23,7 +25,7 @@ const Footer: FC = () => {
   return (
     <footer className={s.wrapper}>
       <div className={s.heading}>
-        <span className={s.title}>{FOOTER_TITLE}</span>
+        <span className={s.title}>{t(FOOTER_TITLE_I18N_KEY)}</span>
         <span className={s.topDivider} />
       </div>
 

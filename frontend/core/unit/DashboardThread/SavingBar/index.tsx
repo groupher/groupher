@@ -1,11 +1,12 @@
 import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
-import type { FC, ReactNode } from 'react'
+import type { ComponentType, FC, ReactNode, SVGProps } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import InfoSVG from '~/icons/Save'
+import RevertSVG from '~/icons/Back'
+import SaveSVG from '~/icons/Save'
 import type { TSpace } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
-import YesOrNoButtons from '~/widgets/Buttons/YesOrNoButtons'
+import Button from '~/widgets/Buttons/Button'
 
 import useHelper from '../logic/useHelper'
 import type { TDsbFieldKey } from '../spec.d'
@@ -16,6 +17,8 @@ import {
 } from './constant'
 import useSalon, { cn } from './salon'
 
+type TActionIcon = ComponentType<SVGProps<SVGSVGElement>>
+
 type TProps = {
   field?: TDsbFieldKey | null
   prefix?: string
@@ -25,6 +28,10 @@ type TProps = {
   isTouched?: boolean
   minimal?: boolean
   disabled?: boolean
+  cancelText?: string
+  saveText?: string
+  cancelIcon?: TActionIcon
+  saveIcon?: TActionIcon
   width?: string
   wrapperClassName?: string
   onCancel?: () => void
@@ -40,6 +47,10 @@ const SavingBar: FC<TProps> = ({
   loading,
   minimal = false,
   disabled = false,
+  cancelText,
+  saveText,
+  cancelIcon: CancelIcon = RevertSVG,
+  saveIcon: SaveIcon = SaveSVG,
   onCancel = console.log,
   onConfirm = console.log,
   width = 'w-full',
@@ -51,32 +62,48 @@ const SavingBar: FC<TProps> = ({
   const { rollbackEdit, onSave } = useHelper()
   const { t } = useTrans()
   const resolvedPrefix = prefix ?? t('dsb.saving_bar.prefix')
-  const cancelText = t('dsb.saving_bar.cancel')
-  const saveText = t('dsb.saving_bar.save')
+  const resolvedCancelText = cancelText ?? t('dsb.saving_bar.cancel')
+  const resolvedSaveText = saveText ?? t('dsb.saving_bar.save')
   const resolvedLoading = loading ?? dsb$.saving
+  const cancel = (): void => {
+    onCancel?.()
+    if (field) {
+      rollbackEdit(field)
+    }
+  }
+  const confirm = (): void => {
+    if (field) {
+      onSave(field)
+      setTimeout(() => onConfirm?.(), 500)
+    } else {
+      onConfirm?.()
+    }
+  }
   const actions = (
     <div className={s.actions}>
-      <YesOrNoButtons
-        cancelText={cancelText}
-        saveText={saveText}
-        disabled={disabled}
-        loading={resolvedLoading}
-        space={!resolvedLoading ? 1.5 : 0}
-        onCancel={() => {
-          onCancel?.()
-          if (field) {
-            rollbackEdit(field)
-          }
-        }}
-        onConfirm={() => {
-          if (field) {
-            onSave(field)
-            setTimeout(() => onConfirm?.(), 500)
-          } else {
-            onConfirm?.()
-          }
-        }}
-      />
+      <Button
+        ghost
+        noBorder
+        size='small'
+        className={s.cancelButton}
+        disabled={resolvedLoading}
+        ariaLabel={resolvedCancelText}
+        onClick={cancel}
+      >
+        <CancelIcon className={s.cancelIcon} />
+        <span className={s.cancelLabel}>{resolvedCancelText}</span>
+      </Button>
+      <Button
+        noBorder
+        size='small'
+        className={s.saveButton}
+        disabled={disabled || resolvedLoading}
+        ariaLabel={resolvedSaveText}
+        onClick={confirm}
+      >
+        <SaveIcon className={s.saveIcon} />
+        <span className={s.saveLabel}>{resolvedSaveText}</span>
+      </Button>
     </div>
   )
 
@@ -90,11 +117,13 @@ const SavingBar: FC<TProps> = ({
             animate={SAVING_BAR_ANIMATION.animate}
             exit={SAVING_BAR_ANIMATION.exit}
             transition={SAVING_BAR_TRANSITION}
-            className={cn(s.wrapper, 'saving-bar-right-linear')}
+            className={s.container}
           >
-            {children}
-            <div className='grow' />
-            {actions}
+            <div className={cn(s.wrapper, 'saving-bar-right-linear')}>
+              {children}
+              <div className='grow' />
+              {actions}
+            </div>
           </m.div>
         </LazyMotion>
       )
@@ -122,16 +151,18 @@ const SavingBar: FC<TProps> = ({
               transition={SAVING_BAR_TRANSITION}
               className={wrapperClassName}
             >
-              <div className={cn(s.wrapper, 'pl-2.5', 'saving-bar-right-linear')}>
-                <div className='row-center'>
-                  <InfoSVG className={s.infoIcon} />
-                  <div className={s.hintText}>
-                    {resolvedPrefix}
-                    {hint && <div className={s.hint}>{hint}</div>}?
+              <div className={s.container}>
+                <div className={cn(s.wrapper, 'pl-2.5', 'saving-bar-right-linear')}>
+                  <div className='row-center'>
+                    <SaveSVG className={s.infoIcon} />
+                    <div className={s.hintText}>
+                      {resolvedPrefix}
+                      {hint && <div className={s.hint}>{hint}</div>}?
+                    </div>
                   </div>
+                  <div className='grow' />
+                  {actions}
                 </div>
-                <div className='grow' />
-                {actions}
               </div>
             </m.div>
           </m.div>

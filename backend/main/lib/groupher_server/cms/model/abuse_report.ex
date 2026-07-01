@@ -20,13 +20,13 @@ defmodule GroupherServer.CMS.Model.AbuseReport do
 
   @schema_prefix DBPrefix.cms()
 
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   # @required_fields ~w(comment_id user_id received_user_id)a
   @optional_fields ~w(comment_id account_id operate_user_id deal_with report_cases_count)a
   @update_fields ~w(operate_user_id deal_with report_cases_count)a
 
-  @article_fields @article_threads |> Enum.map(&:"#{&1}_id")
+  @article_fields @threads |> Enum.map(&:"#{&1}_id")
 
   @type t :: %AbuseReport{}
   schema "abuse_reports" do

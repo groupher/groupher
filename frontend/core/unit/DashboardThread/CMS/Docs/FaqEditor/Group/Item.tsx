@@ -1,4 +1,3 @@
-import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
 import { useState } from 'react'
 
 import ArrowSVG from '~/icons/ArrowSimple'
@@ -12,11 +11,6 @@ import InlineTextEditor from '../InlineTextEditor'
 import useSalon, { cn } from '../salon/group/item'
 import type { TFaqEditorItem, TFaqSaveZone } from '../spec'
 import ActionMenu, { ITEM_MENU_ITEMS } from './ActionMenu'
-
-const DETAIL_TRANSITION = {
-  duration: 0.18,
-  ease: [0.16, 1, 0.3, 1],
-} as const
 
 type TProps = {
   groupId: string
@@ -93,41 +87,34 @@ export default function Item({
         )}
       </div>
 
-      <LazyMotion features={domAnimation}>
-        <AnimatePresence initial={false}>
-          {opened && (
-            <m.div
-              className={s.detailMotion}
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={DETAIL_TRANSITION}
-            >
-              <MarkdownEditor
-                className={s.detailEditor}
-                textareaClassName={s.detailTextarea}
-                disabled={editLocked && !detailActive}
-                minRows={4}
-                maxRows={12}
-                value={item.detail}
-                onChange={(detail) => updateDetail(groupId, item.id, detail)}
+      <div
+        className={cn(s.detailMotion, opened ? s.detailMotionOpen : s.detailMotionClosed)}
+        aria-hidden={!opened}
+      >
+        <div className={s.detailClip}>
+          <MarkdownEditor
+            className={s.detailEditor}
+            textareaClassName={s.detailTextarea}
+            disabled={!opened || (editLocked && !detailActive)}
+            minRows={4}
+            maxRows={12}
+            value={item.detail}
+            onChange={(detail) => updateDetail(groupId, item.id, detail)}
+          />
+          {opened && detailActive && (
+            <div className={s.detailSavingBar}>
+              <SavingBar
+                field={FIELD.DOC_FAQ}
+                isTouched={isDocFaqTouched}
+                minimal
+                top={2}
+                bottom={2}
+                onCancel={clearSaveZone}
               />
-              {detailActive && (
-                <div className={s.detailSavingBar}>
-                  <SavingBar
-                    field={FIELD.DOC_FAQ}
-                    isTouched={isDocFaqTouched}
-                    minimal
-                    top={2}
-                    bottom={2}
-                    onCancel={clearSaveZone}
-                  />
-                </div>
-              )}
-            </m.div>
+            </div>
           )}
-        </AnimatePresence>
-      </LazyMotion>
+        </div>
+      </div>
     </div>
   )
 }

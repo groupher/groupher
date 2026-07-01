@@ -1,6 +1,7 @@
 import { isEmpty } from 'ramda'
 import { type FC, memo } from 'react'
 
+import useTrans from '~/hooks/useTrans'
 import Button from '~/widgets/Buttons/Button'
 
 import useSalon from './salon/suggestion'
@@ -12,12 +13,13 @@ type TProps = {
 
 const Suggestion: FC<TProps> = ({ items, onChange }) => {
   const s = useSalon()
+  const { t } = useTrans()
 
   if (isEmpty(items)) return null
 
   return (
     <div className={s.wrapper}>
-      <div className={s.hint}>常用别名:</div>
+      <div className={s.hint}>{t('dsb.alias.suggestion')}</div>
       <div className={s.list}>
         {items.map((item) => (
           <Button

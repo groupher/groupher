@@ -23,7 +23,7 @@ export default function useSalon({
   rightOffset = '0px',
   fromContentEdge = true,
 }: TProps) {
-  const { cn, bg, br, shadow, zIndex } = useTwBelt()
+  const { cn, bg, br, shadow, scrollbar, zIndex } = useTwBelt()
 
   const drawerStyle = useMemo(() => {
     const openTransform = getDesktopTransform(visible, fromContentEdge)
@@ -60,7 +60,8 @@ export default function useSalon({
     },
 
     drawerContent: cn(
-      'relative w-full border rounded-tl-md overflow-y-auto h-auto scrollbar-thin scrollbar-thumb-neutral-400 scrollbar-track-transparent dark:scrollbar-thumb-neutral-600',
+      'relative w-full border rounded-tl-md overflow-y-auto h-auto',
+      scrollbar('thin'),
       br('divider'),
       bg('card'),
       !isWideMode(type) && 'rounded-md',

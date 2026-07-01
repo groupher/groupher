@@ -16,11 +16,11 @@ defmodule GroupherServer.CMS.Model.PinnedArticle do
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   @required_fields ~w(community_id thread)a
   # @optional_fields ~w(post_id job_id repo_id)a
-  @article_fields @article_threads |> Enum.map(&:"#{&1}_id")
+  @article_fields @threads |> Enum.map(&:"#{&1}_id")
 
   @type t :: %PinnedArticle{}
   schema "pinned_articles" do

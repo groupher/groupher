@@ -1,3 +1,4 @@
+import type { TDocStage } from '~/const/dsb/docs'
 import type { TMarkerValue } from '~/spec'
 
 import type {
@@ -12,16 +13,39 @@ export type TSideTreeNodeType = (typeof SIDE_TREE_NODE_TYPE)[keyof typeof SIDE_T
 export type TSideTreeChildType = typeof SIDE_TREE_NODE_TYPE.PAGE | typeof SIDE_TREE_NODE_TYPE.LINK
 
 export type TDocTreeNodePublishState = {
-  status?: 'draft' | 'public' | null
+  status?: TDocStage | null
   published: boolean
   publishedBefore?: boolean | null
-  publishedNodeId?: string | null
-  publishedDocId?: string | null
+  hasDraft?: boolean | null
+  publicNodeId?: string | null
+  publicDocId?: string | null
   hasUnpublishedChanges?: boolean | null
   lastPublishedAt?: string | null
   inCover?: boolean | null
   hiddenFromCover?: boolean | null
   pinnedToCover?: boolean | null
+}
+
+export type TDocTreeState = {
+  hasUnpublishedChanges?: boolean | null
+  stagedEventCount?: number | null
+  baseSnapshotId?: string | null
+  latestSnapshotId?: string | null
+  latestReleaseId?: string | null
+  latestReleaseNumber?: number | null
+  revision?: number | null
+}
+
+export type TDocTreeEvent = {
+  id: string
+  seq?: number | null
+  eventType: string
+  payload?: Record<string, unknown> | null
+  inversePayload?: Record<string, unknown> | null
+  status?: string | null
+  owner?: 'tree' | 'doc' | string | null
+  docId?: string | null
+  insertedAt?: string | null
 }
 
 type TSideTreePublishable = {
@@ -44,7 +68,7 @@ export type TSideTreePage = {
   type: typeof SIDE_TREE_NODE_TYPE.PAGE
   title?: string
   slug?: string
-  docId?: string
+  docId?: string | null
   path?: string
   href?: string
   marker?: TMarkerValue
@@ -80,6 +104,8 @@ export type TSideTreeNodeMenuAction =
 
 export type TSideTreeController = {
   groups: TSideTreeGroup[]
+  treeState: TDocTreeState | null
+  stagedEvents: TDocTreeEvent[]
   activeId: string | null
   editingTarget: TEditingTarget
   coverWarning: string | null
@@ -90,8 +116,6 @@ export type TSideTreeController = {
   deleteGroup: (groupId: string) => void
   toggleGroup: (groupId: string) => void
   toggleCoverGroup: (groupId: string, inCover: boolean) => void
-  publishGroup: (groupId: string) => void
-  moveGroupToDraft: (groupId: string) => void
   renameGroup: (groupId: string, title: string) => void
   renameChild: (groupId: string, childId: string, title: string) => void
   renameLink: (groupId: string, childId: string, input: TSideTreeLinkInput) => void
@@ -106,9 +130,9 @@ export type TSideTreeController = {
 
 export type TDocTreeNodeDTO = {
   id: string
-  parentId?: string | null
+  groupId?: string | null
   docId?: string | null
-  type: TSideTreeGroup['type'] | TSideTreeChild['type'] | 'GROUP' | 'PAGE' | 'LINK'
+  type: TSideTreeGroup['type'] | TSideTreeChild['type'] | 'pin' | 'GROUP' | 'PAGE' | 'LINK' | 'PIN'
   title?: string | null
   slug?: string | null
   index?: number | null
@@ -116,13 +140,14 @@ export type TDocTreeNodeDTO = {
   marker?: TSideTreeChild['marker'] | null
   badge?: string | null
   hidden?: boolean | null
-  expanded?: boolean | null
+  uiConfig?: Record<string, unknown> | null
   publishState?: TDocTreeNodePublishState | null
   children?: TDocTreeNodeDTO[] | null
 }
 
 export type TDocTreeMutationPayload = {
   revision: number
+  treeState?: TDocTreeState | null
   conflict?: boolean | null
   node?: TDocTreeNodeDTO | null
   affectedNodes?: TDocTreeNodeDTO[] | null
@@ -132,5 +157,8 @@ export type TDocTreeMutationData = Record<string, TDocTreeMutationPayload | null
 
 export type TDocTreeInitialData = {
   revision: number
+  treeState?: TDocTreeState | null
+  stagedEvents?: TDocTreeEvent[] | null
+  pins?: TDocTreeNodeDTO[] | null
   groups: TDocTreeNodeDTO[]
 }

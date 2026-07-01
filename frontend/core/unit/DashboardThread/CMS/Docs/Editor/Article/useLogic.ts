@@ -1,8 +1,11 @@
 import type { TRichEditorValue } from '@groupher/rich-editor'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { DOC_STAGE, DSB_DOC_EVENT, type TDocDraftPatchPayload } from '~/const/dsb/docs'
+import useEvent from '~/hooks/useEvent'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTrans from '~/hooks/useTrans'
+import { send } from '~/lib/signal'
 import { slugify } from '~/lib/slug'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
@@ -11,7 +14,7 @@ import { toast } from '~/widgets/Toaster'
 import { REVISION_LABEL_KEY } from '../../ActionSnackbar/constant'
 import { SIDE_TREE_NODE_TYPE } from '../SideTree/constant'
 import { findChild } from '../SideTree/helper'
-import type { TSideTreeController } from '../SideTree/spec'
+import type { TDocTreeNodePublishState, TSideTreeController } from '../SideTree/spec'
 import useDocsEditor from '../store/hooks'
 import {
   DOC_AUTO_SAVE_DELAY,
@@ -19,21 +22,26 @@ import {
   EMPTY_EDITOR_VALUE,
 } from './constant'
 import { countEditorText, resolveDraftSession, serializeEditorValue } from './helper'
-import type { TDocDraftDTO, TDocDraftInitialData } from './spec'
+import type { TDocDraftDTO } from './spec'
 
-const revisionSignature = (bodyJson: string, subtitle: string): string => `${subtitle}\n${bodyJson}`
+const snapshotSignature = (bodyJson: string, subtitle: string): string => `${subtitle}\n${bodyJson}`
+
+const reloadDocPublishScope = (): void => {
+  send(DSB_DOC_EVENT.PUBLISH_SCOPE_RELOAD)
+}
+
+const reloadDocRevisions = (): void => {
+  send(DSB_DOC_EVENT.REVISION_RELOAD)
+}
 
 /**
  * Own the active doc draft editing lifecycle for the Article editor.
  *
  * @example
- * const editor = useLogic(sideTree, initialDraft)
+ * const editor = useLogic(sideTree)
  * editor.setTitle('New title')
  */
-export default function useLogic(
-  sideTree: TSideTreeController,
-  initialDraft?: TDocDraftInitialData | null,
-) {
+export default function useLogic(sideTree: TSideTreeController) {
   const { t } = useTrans()
   const { slug: community } = useCommunity()
   const {
@@ -43,44 +51,37 @@ export default function useLogic(
     setDocDraftSession,
   } = useDocsEditor()
   const { query, mutate } = useGraphQLClient()
-  const activePage = useMemo(() => {
-    const child = sideTree.activeId ? findChild(sideTree.groups, sideTree.activeId) : null
+  const activeChild = sideTree.activeId ? findChild(sideTree.groups, sideTree.activeId) : null
+  const activePage =
+    activeChild?.type === SIDE_TREE_NODE_TYPE.PAGE && activeChild.docId ? activeChild : null
 
-    return child?.type === SIDE_TREE_NODE_TYPE.PAGE && child.docId ? child : null
-  }, [sideTree.activeId, sideTree.groups])
-  const initialSession =
-    initialDraft && activePage?.docId === initialDraft.id
-      ? resolveDraftSession(initialDraft, activePage)
-      : null
-  const [title, setTitle] = useState(initialSession?.title ?? '')
-  const [subtitle, setSubtitle] = useState(initialSession?.subtitle ?? '')
-  const [bodyValue, setBodyValue] = useState<TRichEditorValue>(
-    initialSession?.body ?? EMPTY_EDITOR_VALUE,
-  )
-  const [slug, setSlug] = useState(initialSession?.slug ?? '')
+  const initialBodyValue = docsEditor$.bodyValue
+  const initialBodyJson = serializeEditorValue(initialBodyValue)
+  const [title, setTitle] = useState(docsEditor$.docDraftInfo.title)
+  const [subtitle, setSubtitle] = useState(docsEditor$.docDraftInfo.subtitle)
+  const [bodyValue, setBodyValue] = useState<TRichEditorValue>(initialBodyValue)
+  const [slug, setSlug] = useState(docsEditor$.docDraftInfo.slug)
+  const [loadedDocId, setLoadedDocId] = useState<string | null>(docsEditor$.docDraftInfo.id || null)
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const loadIdRef = useRef(0)
-  const bodyValueRef = useRef<TRichEditorValue>(EMPTY_EDITOR_VALUE)
-  const savedTitleRef = useRef(initialSession?.title ?? '')
-  const savedSubtitleRef = useRef(initialSession?.subtitle ?? '')
-  const savedBodyRef = useRef(initialSession?.bodyJson ?? serializeEditorValue(EMPTY_EDITOR_VALUE))
+  const bodyValueRef = useRef<TRichEditorValue>(initialBodyValue)
+  const savedTitleRef = useRef(docsEditor$.docDraftInfo.title)
+  const savedSubtitleRef = useRef(docsEditor$.docDraftInfo.subtitle)
+  const savedBodyRef = useRef(initialBodyJson)
   const savingRef = useRef(false)
   const checkpointingRef = useRef(false)
   const pendingRevisionCheckpointRef = useRef(false)
   const lastAutosavedAtRef = useRef(Date.now())
   const lastCheckpointedSignatureRef = useRef(
-    revisionSignature(
-      initialSession?.bodyJson ?? serializeEditorValue(EMPTY_EDITOR_VALUE),
-      initialSession?.subtitle ?? '',
-    ),
+    snapshotSignature(initialBodyJson, docsEditor$.docDraftInfo.subtitle),
   )
-  const lastLoadedDocIdRef = useRef<string | null>(initialSession?.info.id ?? null)
-  const initialDraftConsumedRef = useRef(false)
+  const lastLoadedDocIdRef = useRef<string | null>(docsEditor$.docDraftInfo.id || null)
+  const handledReloadKeyRef = useRef(revisionReloadKey)
   const slugTitleRef = useRef('')
-  const titleRef = useRef('')
-  const subtitleRef = useRef('')
+  const titleRef = useRef(docsEditor$.docDraftInfo.title)
+  const subtitleRef = useRef(docsEditor$.docDraftInfo.subtitle)
 
   useEffect(() => {
     titleRef.current = title
@@ -103,6 +104,7 @@ export default function useLogic(
       setSubtitle('')
       setBodyValue(EMPTY_EDITOR_VALUE)
       setSlug('')
+      setLoadedDocId(null)
       setLoading(false)
       setError(null)
       savedTitleRef.current = ''
@@ -111,7 +113,7 @@ export default function useLogic(
       lastLoadedDocIdRef.current = null
       pendingRevisionCheckpointRef.current = false
       lastAutosavedAtRef.current = Date.now()
-      lastCheckpointedSignatureRef.current = revisionSignature(
+      lastCheckpointedSignatureRef.current = snapshotSignature(
         serializeEditorValue(EMPTY_EDITOR_VALUE),
         '',
       )
@@ -123,6 +125,7 @@ export default function useLogic(
           title: '',
           subtitle: '',
           slug: '',
+          stage: null,
           insertedAt: null,
           updatedAt: null,
           author: null,
@@ -136,43 +139,15 @@ export default function useLogic(
       return
     }
 
-    if (activePage.docId === lastLoadedDocIdRef.current && !revisionReloadKey) {
+    const reloadRequested = revisionReloadKey !== handledReloadKeyRef.current
+
+    if (activePage.docId === lastLoadedDocIdRef.current && !reloadRequested) {
       return
     }
 
-    if (
-      !initialDraftConsumedRef.current &&
-      initialDraft &&
-      initialDraft.id === activePage.docId &&
-      !revisionReloadKey
-    ) {
-      const nextSession = resolveDraftSession(initialDraft, activePage)
-
-      initialDraftConsumedRef.current = true
-      setTitle(nextSession.title)
-      setSubtitle(nextSession.subtitle)
-      setBodyValue(nextSession.body)
-      setSlug(nextSession.slug)
-      savedTitleRef.current = nextSession.title
-      savedSubtitleRef.current = nextSession.subtitle
-      savedBodyRef.current = nextSession.bodyJson
-      lastLoadedDocIdRef.current = activePage.docId
-      pendingRevisionCheckpointRef.current = false
-      lastAutosavedAtRef.current = Date.now()
-      lastCheckpointedSignatureRef.current = revisionSignature(
-        nextSession.bodyJson,
-        nextSession.subtitle,
-      )
-      setDocDraftSession({
-        baselineValue: nextSession.body,
-        bodyValue: nextSession.body,
-        docDraftInfo: nextSession.info,
-        saveError: null,
-        saveStatus: 'saved',
-      })
-      return
-    }
-
+    // revisionReloadKey is a one-shot signal. Consume it before the request so
+    // store writes from the response cannot retrigger the same load.
+    handledReloadKeyRef.current = revisionReloadKey
     setLoading(true)
     setError(null)
     setDocDraftSession({ saveError: null, saveStatus: 'idle' })
@@ -188,13 +163,14 @@ export default function useLogic(
         setSubtitle(nextSession.subtitle)
         setBodyValue(nextSession.body)
         setSlug(nextSession.slug)
+        setLoadedDocId(activePage.docId)
         savedTitleRef.current = nextSession.title
         savedSubtitleRef.current = nextSession.subtitle
         savedBodyRef.current = nextSession.bodyJson
         lastLoadedDocIdRef.current = activePage.docId
         pendingRevisionCheckpointRef.current = false
         lastAutosavedAtRef.current = Date.now()
-        lastCheckpointedSignatureRef.current = revisionSignature(
+        lastCheckpointedSignatureRef.current = snapshotSignature(
           nextSession.bodyJson,
           nextSession.subtitle,
         )
@@ -220,11 +196,29 @@ export default function useLogic(
     activePage?.docId,
     activePage?.id,
     community,
-    initialDraft,
     query,
     revisionReloadKey,
     setDocDraftSession,
   ])
+
+  useEvent<TDocDraftPatchPayload>(
+    DSB_DOC_EVENT.DRAFT_PATCH,
+    (_msg, detail): void => {
+      if (!detail) return
+
+      if (!activePage?.docId || detail?.docId !== activePage.docId) return
+
+      setDocDraftSession({
+        docDraftInfo: {
+          ...docsEditor$.docDraftInfo,
+          stage: detail.stage ?? DOC_STAGE.DRAFT,
+        },
+        saveError: null,
+        saveStatus: 'saved',
+      })
+    },
+    [activePage?.docId, docsEditor$, setDocDraftSession],
+  )
 
   useEffect(() => {
     const trimmedTitle = title.trim()
@@ -282,6 +276,12 @@ export default function useLogic(
 
       const savedDraft = data?.updateDocDraft
       const savedSlug = savedDraft?.slug || nextSlug
+      const publishState: TDocTreeNodePublishState = {
+        ...(activePage.publishState ?? {}),
+        status: DOC_STAGE.DRAFT,
+        published: activePage.publishState?.published ?? false,
+        hasDraft: true,
+      }
       const currentTitle = titleRef.current
       const currentSubtitle = subtitleRef.current
       const currentBody = serializeEditorValue(bodyValueRef.current)
@@ -294,18 +294,20 @@ export default function useLogic(
       savedBodyRef.current = body
       lastAutosavedAtRef.current = Date.now()
       pendingRevisionCheckpointRef.current =
-        revisionSignature(body, nextSubtitle) !== lastCheckpointedSignatureRef.current
+        snapshotSignature(body, nextSubtitle) !== lastCheckpointedSignatureRef.current
+      sideTree.patchChild(activePage.id, { publishState })
       setDocDraftSession({
         bodyValue: bodyValueRef.current,
         docDraftInfo: {
-          id: savedDraft?.id || activePage.docId,
+          id: savedDraft?.docId || activePage.docId,
           title: currentTitle === title ? nextTitle : currentTitle,
           subtitle: currentSubtitle === subtitle ? nextSubtitle : currentSubtitle,
           slug: currentTitle.trim() === nextTitle ? savedSlug : slug,
+          stage: savedDraft?.stage || DOC_STAGE.DRAFT,
           insertedAt: savedDraft?.insertedAt || null,
           updatedAt: savedDraft?.updatedAt || new Date().toISOString(),
           author: savedDraft?.author || null,
-          publishState: activePage.publishState || null,
+          publishState,
           ...countEditorText(bodyValueRef.current),
         },
         saveError: null,
@@ -314,6 +316,7 @@ export default function useLogic(
             ? 'dirty'
             : 'saved',
       })
+      reloadDocPublishScope()
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       setError(message)
@@ -323,24 +326,36 @@ export default function useLogic(
       savingRef.current = false
       setSaving(false)
     }
-  }, [activePage, bodyValue, community, invalid, mutate, setDocDraftSession, slug, subtitle, title])
+  }, [
+    activePage,
+    bodyValue,
+    community,
+    invalid,
+    mutate,
+    setDocDraftSession,
+    sideTree,
+    slug,
+    subtitle,
+    title,
+  ])
 
-  const checkpointRevision = useCallback(async () => {
+  const checkpointSnapshot = useCallback(async () => {
     if (!activePage?.docId || checkpointingRef.current || !pendingRevisionCheckpointRef.current) {
       return
     }
 
-    const checkpointSignature = revisionSignature(savedBodyRef.current, savedSubtitleRef.current)
+    const checkpointSignature = snapshotSignature(savedBodyRef.current, savedSubtitleRef.current)
     checkpointingRef.current = true
 
     try {
-      await mutate(S.checkpointDocDraftRevision, {
+      await mutate(S.checkpointDocDraftSnapshot, {
         community,
         id: activePage.docId,
       })
       lastCheckpointedSignatureRef.current = checkpointSignature
       pendingRevisionCheckpointRef.current =
-        revisionSignature(savedBodyRef.current, savedSubtitleRef.current) !== checkpointSignature
+        snapshotSignature(savedBodyRef.current, savedSubtitleRef.current) !== checkpointSignature
+      reloadDocRevisions()
     } catch (err) {
       const message = err instanceof Error ? err.message : t(REVISION_LABEL_KEY.CHECKPOINT_FAILED)
       lastAutosavedAtRef.current = Date.now()
@@ -387,6 +402,7 @@ export default function useLogic(
 
   useEffect(() => {
     if (!activePage?.docId) return
+    if (activePage.docId !== loadedDocId) return
 
     setDocDraftSession({
       bodyValue,
@@ -409,6 +425,7 @@ export default function useLogic(
     community,
     dirty,
     docsEditor$,
+    loadedDocId,
     setDocDraftSession,
     slug,
     subtitle,
@@ -432,7 +449,7 @@ export default function useLogic(
       invalid ||
       loading ||
       saving ||
-      revisionSignature(savedBodyRef.current, savedSubtitleRef.current) ===
+      snapshotSignature(savedBodyRef.current, savedSubtitleRef.current) ===
         lastCheckpointedSignatureRef.current
     ) {
       return
@@ -441,17 +458,18 @@ export default function useLogic(
     const elapsed = Date.now() - lastAutosavedAtRef.current
     const delay = Math.max(DOC_DRAFT_REVISION_CHECKPOINT_DELAY - elapsed, 0)
     const timer = window.setTimeout(() => {
-      void checkpointRevision()
+      void checkpointSnapshot()
     }, delay)
 
     return () => window.clearTimeout(timer)
-  }, [activePage?.docId, checkpointRevision, editable, invalid, loading, saving])
+  }, [activePage?.docId, checkpointSnapshot, editable, invalid, loading, saving])
 
   return {
     activePage,
     bodyValue,
     dirty,
     editable,
+    editorDocId: loadedDocId ?? '',
     error,
     invalid,
     loading,

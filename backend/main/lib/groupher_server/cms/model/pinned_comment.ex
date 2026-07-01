@@ -19,12 +19,12 @@ defmodule GroupherServer.CMS.Model.PinnedComment do
 
   @schema_prefix DBPrefix.cms()
   # alias Helper.HTML
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   @required_fields ~w(comment_id)a
   # @optional_fields ~w(post_id job_id repo_id)a
 
-  @article_fields @article_threads |> Enum.map(&:"#{&1}_id")
+  @article_fields @threads |> Enum.map(&:"#{&1}_id")
 
   schema_base_type(comment_id: integer() | nil)
 

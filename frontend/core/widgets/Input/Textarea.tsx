@@ -11,12 +11,14 @@ import TextareaAutosize from 'react-textarea-autosize'
 import { cnMerge } from '~/css'
 import useAutoFocus from '~/hooks/useAutoFocus'
 
+import type { TFgColor } from '.'
 import useSalon from './salon/textarea'
 
 type TProps = {
   testid?: string
   placeholder?: string
   className?: string
+  fgColor?: TFgColor
   value?: string | null
   focusOnMount: boolean
   disableEnter: boolean
@@ -27,11 +29,12 @@ const Textarea: FC<TProps> = ({
   onChange = null,
   testid = 'textarea',
   className = '',
+  fgColor = 'default',
   focusOnMount,
   disableEnter,
   ...restProps
 }) => {
-  const s = useSalon()
+  const s = useSalon({ fgColor })
   const textareaRef = useAutoFocus<HTMLTextAreaElement>(focusOnMount)
 
   const handleOnChange = useCallback((e) => onChange?.(e), [onChange])

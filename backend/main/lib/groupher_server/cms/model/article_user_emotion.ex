@@ -19,10 +19,10 @@ defmodule GroupherServer.CMS.Model.ArticleUserEmotion do
 
   @schema_prefix DBPrefix.cms()
   @supported_emotions get_config(:article, :emotions)
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   @required_fields ~w(user_id received_user_id emotion)a
-  @optional_fields Enum.map(@article_threads, &:"#{&1}_id")
+  @optional_fields Enum.map(@threads, &:"#{&1}_id")
 
   @type t :: %__MODULE__{}
   schema "articles_users_emotions" do

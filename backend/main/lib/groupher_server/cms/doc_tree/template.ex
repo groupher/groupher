@@ -1,22 +1,22 @@
 defmodule GroupherServer.CMS.DocTree.Template do
   @moduledoc """
-  Demo template management for docs draft workspaces.
+  Demo template management for docs drafts.
 
-  The template is dashboard-only. It creates draft tree nodes and article drafts
+  The template is dashboard-only. It creates draft tree nodes and docs
   so a new community has editable docs content immediately, but it never writes
   to the published `docs` or `doc_tree_nodes` tables.
 
       ensure_demo_template
               |
               v
-      if doc_tree_node_drafts is empty
+      if doc_tree_nodes(stage=draft) is empty
               |
               v
       create demo groups/pages
               |
-              +-- group -> doc_tree_node_drafts
-              +-- page  -> article_drafts(thread=doc)
-                         -> doc_tree_node_drafts.article_draft_id
+              +-- group -> doc_tree_nodes(stage=draft, node_id=...)
+              +-- page  -> docs(stage=draft)
+                         -> doc_tree_nodes.group_id = group.node_id
 
   `template_key` marks all generated rows. The internal delete/reset helpers use
   this marker to remove only demo draft content and leave user-created draft
@@ -31,11 +31,13 @@ defmodule GroupherServer.CMS.DocTree.Template do
   alias CMS.Articles.Draft
   alias CMS.DocTree.{Read, Revision}
 
+  require CMS.Const
+
   alias CMS.Model.{
     Author,
-    ArticleDraft,
+    Doc,
     Community,
-    DocTreeNodeDraft
+    DocTreeNode
   }
 
   alias Helper.{ORM, T, Transaction}
@@ -108,7 +110,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
       end)
       |> case do
         {:ok, _} ->
-          with {:ok, _state} <- Revision.bump_draft(community, state),
+          with {:ok, _state} <- Revision.bump_tree_draft(community, state),
                {:ok, tree} <- Read.read(community) do
             {:ok, tree}
           end
@@ -124,17 +126,17 @@ defmodule GroupherServer.CMS.DocTree.Template do
          {:ok, state} <- Read.ensure_draft_state(community) do
       template_keys = template_keys()
 
-      DocTreeNodeDraft
+      DocTreeNode
       |> where([n], n.community_id == ^community.id)
       |> where([n], n.template_key in ^template_keys)
       |> Repo.delete_all()
 
-      ArticleDraft
+      Doc
       |> where([d], d.community_id == ^community.id)
       |> where([d], d.template_key in ^template_keys)
       |> Repo.delete_all()
 
-      with {:ok, _state} <- Revision.bump_draft(community, state),
+      with {:ok, _state} <- Revision.bump_tree_draft(community, state),
            {:ok, tree} <- Read.read(community) do
         {:ok, tree}
       end
@@ -144,16 +146,17 @@ defmodule GroupherServer.CMS.DocTree.Template do
   defp create_group(%Community{} = community, group, index, %Author{} = author) do
     attrs = %{
       community_id: community.id,
+      node_id: template_node_id("group:#{group.key}"),
+      stage: CMS.Const.stage(:draft),
       type: :group,
       title: group.title,
       slug: group.slug,
       index: index,
-      parent_id: nil,
-      expanded: true,
+      group_id: nil,
       template_key: template_key(group.key)
     }
 
-    with {:ok, node} <- ORM.create(DocTreeNodeDraft, attrs),
+    with {:ok, node} <- ORM.create(DocTreeNode, attrs),
          {:ok, _pages} <- create_pages(community, node, group.key, group.pages, author) do
       {:ok, node}
     end
@@ -161,7 +164,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
 
   defp create_pages(
          %Community{} = community,
-         %DocTreeNodeDraft{} = group,
+         %DocTreeNode{} = group,
          group_key,
          pages,
          %Author{} = author
@@ -178,7 +181,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
 
   defp create_page(
          %Community{} = community,
-         %DocTreeNodeDraft{} = group,
+         %DocTreeNode{} = group,
          group_key,
          page,
          index,
@@ -187,8 +190,10 @@ defmodule GroupherServer.CMS.DocTree.Template do
     with {:ok, draft} <- create_doc_draft(community, page, author) do
       attrs = %{
         community_id: community.id,
-        parent_id: group.id,
-        article_draft_id: draft.id,
+        node_id: template_node_id("page:#{group_key}:#{page.key}"),
+        stage: CMS.Const.stage(:draft),
+        group_id: group.node_id,
+        doc_id: draft.doc_id,
         type: :page,
         title: page.title,
         slug: page.slug,
@@ -196,7 +201,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
         template_key: template_key("#{group_key}:#{page.key}")
       }
 
-      ORM.create(DocTreeNodeDraft, attrs)
+      ORM.create(DocTreeNode, attrs)
     end
   end
 
@@ -234,8 +239,9 @@ defmodule GroupherServer.CMS.DocTree.Template do
   end
 
   defp draft_tree_empty?(%Community{} = community) do
-    DocTreeNodeDraft
+    DocTreeNode
     |> where([n], n.community_id == ^community.id)
+    |> where([n], n.stage == CMS.Const.stage(:draft))
     |> Repo.exists?()
     |> Kernel.not()
   end
@@ -254,4 +260,5 @@ defmodule GroupherServer.CMS.DocTree.Template do
   end
 
   defp template_key(key), do: "demo:#{key}"
+  defp template_node_id(key), do: "demo:#{key}"
 end

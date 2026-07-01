@@ -5,6 +5,7 @@ import { GRADIENT_PALETTE, GRADIENT_WALLPAPER, WALLPAPER_TYPE } from '~/const/wa
 import useFullWallpaper from '~/hooks/useFullWallpaper'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTheme from '~/hooks/useTheme'
+import useTrans from '~/hooks/useTrans'
 import { normalizeSignedAngle } from '~/lib/angle'
 import {
   applyGradientPalette,
@@ -177,6 +178,7 @@ export function useLogicValue(): TWallpaperLogic {
   const community$ = useCommunity()
   const { getWallpaper } = useFullWallpaper()
   const { isDarkTheme } = useTheme()
+  const { t } = useTrans()
 
   const { mutate } = useGraphQLClient()
   const [tab, setTab] = useState<TTab>(() =>
@@ -239,7 +241,7 @@ export function useLogicValue(): TWallpaperLogic {
     mutate(S.updateDashboardWallpaper, params)
       .then(async () => {
         await revalidateCommunityCache(community)
-        toast('设置已保存')
+        toast(t('dsb.appearance.saved'))
         setLoading(false)
         initRollback()
       })

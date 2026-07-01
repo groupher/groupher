@@ -19,7 +19,7 @@ defmodule GroupherServer.CMS.Comments.Helper do
   @max_participator_count Comment.max_participator_count()
   @default_emotions Embeds.CommentEmotion.default_emotions()
   @default_comment_meta Embeds.CommentMeta.default_meta()
-  @article_threads Threads.article_enums()
+  @threads Threads.article_enums()
 
   @spec can_comment?(map(), User.t()) :: boolean()
   def can_comment?(article, _user) do
@@ -158,7 +158,7 @@ defmodule GroupherServer.CMS.Comments.Helper do
   end
 
   defp thread_from_foreign_key(foreign_key) when is_atom(foreign_key) do
-    case Enum.find(@article_threads, fn thread -> foreign_key == :"#{thread}_id" end) do
+    case Enum.find(@threads, fn thread -> foreign_key == :"#{thread}_id" end) do
       nil -> {:error, {:custom, "invalid article"}}
       thread -> {:ok, thread}
     end

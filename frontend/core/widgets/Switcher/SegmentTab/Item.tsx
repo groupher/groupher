@@ -2,6 +2,8 @@
 
 import type { FC } from 'react'
 
+import { cnMerge } from '~/css'
+
 import useSalon from '../salon/segment_tab/item'
 import type { TSegmentTabOptionProps } from './spec'
 
@@ -9,6 +11,7 @@ const SegmentTabItem: FC<TSegmentTabOptionProps> = ({
   item,
   index,
   active,
+  itemClassName,
   onClick,
   onKeyDown,
 }) => {
@@ -22,7 +25,7 @@ const SegmentTabItem: FC<TSegmentTabOptionProps> = ({
       aria-checked={active}
       disabled={item.disabled}
       data-segment-tab-active={active ? 'true' : undefined}
-      className={s.item}
+      className={cnMerge(s.item, itemClassName)}
       onClick={() => onClick(index)}
       onKeyDown={(event) => onKeyDown(event, index)}
     >

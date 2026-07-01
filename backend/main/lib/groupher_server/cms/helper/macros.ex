@@ -18,7 +18,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
     Embeds
   }
 
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   @doc """
   generate base schema type with shared fields for artiments
@@ -81,7 +81,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
   ...
   """
   defmacro article_belongs_to_fields do
-    @article_threads
+    @threads
     |> Enum.map(fn thread ->
       quote do
         belongs_to(
@@ -232,6 +232,9 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
   """
   defmacro general_article_fields(thread) do
+    document_module =
+      Module.concat(CMS.Model, "#{Recase.to_title(to_string(thread))}Document")
+
     quote do
       field(:inner_id, :id)
       field(:title, :string)
@@ -250,7 +253,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
       has_one(
         :document,
-        unquote(Module.concat(CMS.Model, "#{Recase.to_title(to_string(thread))}Document"))
+        unquote(document_module)
       )
 
       embeds_one(:meta, Embeds.ArticleMeta, on_replace: :update)

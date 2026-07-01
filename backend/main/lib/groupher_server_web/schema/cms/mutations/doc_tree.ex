@@ -13,6 +13,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.create_doc_tree_group/3)
     end
 
@@ -24,6 +25,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.create_doc_tree_page/3)
     end
 
@@ -35,7 +37,20 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.create_doc_tree_link/3)
+    end
+
+    @desc "create a docs tree top pin link"
+    field :create_doc_tree_pin, :doc_tree_mutation_payload do
+      arg(:community, non_null(:string))
+      arg(:base_revision, non_null(:integer))
+      arg(:input, non_null(:doc_tree_node_input))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
+      resolve(&R.CMS.create_doc_tree_pin/3)
     end
 
     @desc "update a docs tree node"
@@ -47,6 +62,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.update_doc_tree_node/3)
     end
 
@@ -61,57 +77,35 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.update_doc_draft/3)
     end
 
     @desc "save current docs draft as an article revision checkpoint"
-    field :checkpoint_doc_draft_revision, :article_revision do
+    field :checkpoint_doc_draft_snapshot, :article_snapshot do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.checkpoint_doc_draft_revision/3)
+      resolve(&R.CMS.checkpoint_doc_draft_snapshot/3)
     end
 
-    @desc "publish current docs draft as a published article revision"
-    field :publish_doc_draft_revision, :article_revision do
+    @desc "publish selected docs content and tree changes as one release"
+    field :publish_doc_changes, :doc_publish_changes_payload do
       arg(:community, non_null(:string))
-      arg(:id, non_null(:id))
+      arg(:input, :doc_publish_changes_input)
       arg(:mode, :doc_publish_mode, default_value: :with_cover_sync)
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.publish_doc_draft_revision/3)
-    end
-
-    @desc "publish every docs draft page that has not been published yet"
-    field :publish_all_unpublished_doc_drafts, :done_state do
-      arg(:community, non_null(:string))
-      arg(:mode, :doc_publish_mode, default_value: :with_cover_sync)
-
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      middleware(M.PutCurrentUser)
-      resolve(&R.CMS.publish_all_unpublished_doc_drafts/3)
-    end
-
-    @desc "publish one docs side-tree group and its children"
-    field :publish_doc_tree_group, :done_state do
-      arg(:community, non_null(:string))
-      arg(:group_id, non_null(:id))
-      arg(:mode, :doc_publish_mode, default_value: :with_cover_sync)
-
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      middleware(M.PutCurrentUser)
-      resolve(&R.CMS.publish_doc_tree_group/3)
+      resolve(&R.CMS.publish_doc_changes/3)
     end
 
     @desc "move one published docs page back to draft visibility"
-    field :move_doc_to_draft, :done_state do
+    field :move_doc_to_draft, :move_doc_to_draft_payload do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
 
@@ -133,15 +127,15 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
     end
 
     @desc "restore a docs draft from an article revision"
-    field :restore_doc_draft_revision, :doc_draft do
+    field :restore_doc_draft_snapshot, :doc_draft do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
-      arg(:revision_id, non_null(:id))
+      arg(:snapshot_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.restore_doc_draft_revision/3)
+      resolve(&R.CMS.restore_doc_draft_snapshot/3)
     end
 
     @desc "delete a docs tree node"
@@ -152,6 +146,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.delete_doc_tree_node/3)
     end
 
@@ -163,6 +158,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.duplicate_doc_tree_node/3)
     end
 
@@ -171,11 +167,12 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:base_revision, non_null(:integer))
-      arg(:target_parent_id, :id)
+      arg(:target_group_id, :id)
       arg(:target_index, :integer)
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
       resolve(&R.CMS.move_doc_tree_node/3)
     end
 

@@ -102,6 +102,14 @@ export const PATTERN_WALLPAPER = {
     image: '/wallpaper/picture/backiee-9.webp',
     preview: '/wallpaper/picture-preview/backiee-9.webp',
   },
+  'mint-1': {
+    image: '/wallpaper/picture/mint-1.webp',
+    preview: '/wallpaper/picture-preview/mint-1.webp',
+  },
+  'mint-2': {
+    image: '/wallpaper/picture/mint-2.webp',
+    preview: '/wallpaper/picture-preview/mint-2.webp',
+  },
   mp_teal: {
     image: '/wallpaper/picture/mp_teal.webp',
     preview: '/wallpaper/picture-preview/mp_teal.webp',

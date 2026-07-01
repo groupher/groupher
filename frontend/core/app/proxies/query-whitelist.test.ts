@@ -22,6 +22,14 @@ describe('queryWhitelistProxy', () => {
     )
   })
 
+  it('keeps docs editor selected workspace query param for SSR', () => {
+    const response = queryWhitelistProxy(
+      request('http://localhost/home/dashboard/doc/editor?workspaceId=11'),
+    )
+
+    expect(response.headers.get('x-middleware-rewrite')).toBeNull()
+  })
+
   it('does not skip dotted page pathnames', () => {
     const response = queryWhitelistProxy(request('http://localhost/profile/john.doe?page=2&x=1'))
 

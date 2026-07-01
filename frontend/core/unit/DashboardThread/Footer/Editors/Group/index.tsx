@@ -102,7 +102,7 @@ const Group: FC = () => {
                             dragHandle={
                               <GroupDragHandle
                                 attributes={attributes}
-                                label='Drag footer group'
+                                label={t('dsb.aria.drag_footer_group')}
                                 listeners={listeners}
                                 setActivatorNodeRef={setActivatorNodeRef}
                               />

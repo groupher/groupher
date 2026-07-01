@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import { TOP_GLOW_KEYS } from '~/const/top_glow'
 import useTheme from '~/hooks/useTheme'
+import useTrans from '~/hooks/useTrans'
 import CloseSVG from '~/icons/CloseLight'
 
 import type { TThemePresetOverwrite, TThemePresetTokens } from '../spec'
@@ -22,6 +23,7 @@ export default function TextureBalls({
 }: TProps) {
   const s = useSalon()
   const { theme } = useTheme()
+  const { t } = useTrans()
   const [expanded, setExpanded] = useState(false)
 
   const glowType = selectedTokens[theme].glowType
@@ -77,7 +79,7 @@ export default function TextureBalls({
             aria-expanded={expanded}
             onClick={() => setExpanded(true)}
           >
-            {hiddenCount} more
+            {hiddenCount} {t('dsb.appearance.theme.more')}
           </button>
         )}
       </div>
@@ -85,7 +87,7 @@ export default function TextureBalls({
       {expanded && (
         <div className={s.dividerRow}>
           <div className={s.toggleMask} aria-hidden>
-            show less
+            {t('dsb.appearance.theme.show_less')}
           </div>
           <button
             type='button'
@@ -93,7 +95,7 @@ export default function TextureBalls({
             aria-expanded={expanded}
             onClick={() => setExpanded(false)}
           >
-            <span className={s.toggleText}>show less</span>
+            <span className={s.toggleText}>{t('dsb.appearance.theme.show_less')}</span>
           </button>
         </div>
       )}

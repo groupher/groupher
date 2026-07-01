@@ -1,5 +1,7 @@
+import { useAutoAnimate } from '@formkit/auto-animate/react'
 import { type FC, useState } from 'react'
 
+import useTrans from '~/hooks/useTrans'
 import PlusSVG from '~/icons/Add'
 import ArrowSVG from '~/icons/ArrowSimple'
 import CalendarSlashSVG from '~/icons/CalendarSlash'
@@ -10,8 +12,7 @@ import SortableSideTreeChild from '../Dnd/SortableSideTreeChild'
 import SortableSideTreeColumn from '../Dnd/SortableSideTreeColumn'
 import SortableSideTreeGroup from '../Dnd/SortableSideTreeGroup'
 import type { TSideTreeDragTarget } from '../Dnd/spec'
-import { isPublicDoc, needsPublishAttention } from '../helper'
-import useSalon, { cn } from '../salon/group'
+import useSalon, { cn } from '../salon/group/index'
 import type {
   TEditingTarget,
   TSideTreeChildMenuAction,
@@ -23,12 +24,19 @@ import type {
 import File from './File'
 import GroupMenu from './GroupMenu'
 import InlineTitleInput from './InlineTitleInput'
-import Link from './Link'
+import SideTreeLinkItem from './Link'
+
+const CHILD_LAYOUT_TRANSITION = {
+  duration: 180,
+  easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+} as const
 
 type TProps = {
   group: TSideTreeGroup
   activeId: string | null
   editingTarget: TEditingTarget
+  searchQuery?: string
+  searching?: boolean
   showTargetLine: boolean
   targetDragItemId: string | null
   targetDragPosition: TSideTreeDragTarget['position'] | null
@@ -36,8 +44,6 @@ type TProps = {
   onToggle: (groupId: string) => void
   onAddChild: (groupId: string, action: TSideTreeChildMenuAction) => void
   onCoverGroupAction: (groupId: string, inCover: boolean) => void
-  onPublishGroup: (groupId: string) => void
-  onMoveGroupToDraft: (groupId: string) => void
   onDeleteGroup: (groupId: string) => void
   onRenameGroup: (groupId: string, title: string) => void
   onRenameChild: (groupId: string, childId: string, title: string) => void
@@ -56,6 +62,8 @@ const Group: FC<TProps> = ({
   group,
   activeId,
   editingTarget,
+  searchQuery = '',
+  searching = false,
   showTargetLine,
   targetDragItemId,
   targetDragPosition,
@@ -63,8 +71,6 @@ const Group: FC<TProps> = ({
   onToggle,
   onAddChild,
   onCoverGroupAction,
-  onPublishGroup,
-  onMoveGroupToDraft,
   onDeleteGroup,
   onRenameGroup,
   onRenameChild,
@@ -75,17 +81,12 @@ const Group: FC<TProps> = ({
   onChildStyleChange,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [childrenListRef] = useAutoAnimate(CHILD_LAYOUT_TRANSITION)
+  const { t } = useTrans()
   const s = useSalon({ actionVisible: menuOpen })
   const collapsed = group.expanded === false
   const groupInCover = group.publishState?.inCover === true
-  const publishableChildCount = group.children.filter((child) =>
-    needsPublishAttention(child.publishState),
-  ).length
-  const draftableChildCount = group.children.filter((child) =>
-    isPublicDoc(child.publishState),
-  ).length
-  const publishGroupVisible = publishableChildCount >= 2
-  const draftGroupVisible = draftableChildCount >= 2
+  const addDocLabel = t('dsb.cms.docs.side_tree.tooltip.new_doc')
   const editing =
     editingTarget?.type === SIDE_TREE_NODE_TYPE.GROUP && editingTarget.groupId === group.id
   const handleGroupMenuSelect = (action: TSideTreeGroupMenuAction): void => {
@@ -110,34 +111,24 @@ const Group: FC<TProps> = ({
       return
     }
 
-    if (action === SIDE_TREE_GROUP_MENU_ACTION.PUBLISH_GROUP) {
-      onPublishGroup(group.id)
-      return
-    }
-
-    if (action === SIDE_TREE_GROUP_MENU_ACTION.MOVE_GROUP_TO_DRAFT) {
-      onMoveGroupToDraft(group.id)
-      return
-    }
-
     onDeleteGroup(group.id)
   }
 
   return (
     <SortableSideTreeColumn
-      className={cn(s.wrapper, showTargetLine && s.wrapperTarget)}
+      className={cn(s.wrapper, collapsed && s.wrapperCollapsed, showTargetLine && s.wrapperTarget)}
       columnId={group.id}
-      disabled={editing}
+      disabled={searching || editing}
     >
       {({ attributes, listeners, setActivatorNodeRef }) => (
         <>
           <div className={s.head}>
-            {!editing && (
+            {!searching && !editing && (
               <button
                 ref={setActivatorNodeRef}
                 type='button'
                 className={s.dragHandle}
-                aria-label='Drag docs group'
+                aria-label={t('dsb.cms.docs.side_tree.drag_group')}
                 {...attributes}
                 {...listeners}
               >
@@ -151,44 +142,53 @@ const Group: FC<TProps> = ({
                 onConfirm={(title) => onRenameGroup(group.id, title)}
               />
             ) : (
-              <button type='button' className={s.titleButton} onClick={() => onToggle(group.id)}>
+              <button
+                type='button'
+                className={s.titleButton}
+                onClick={searching ? undefined : () => onToggle(group.id)}
+              >
                 <span className={s.title}>{group.title}</span>
                 <ArrowSVG className={cn(s.arrowIcon, collapsed && s.arrowCollapsed)} />
               </button>
             )}
             <div className={s.actionSlot}>
-              {!editing && !groupInCover && (
-                <div className={s.coverStatus} aria-label='Hidden from cover'>
+              {!searching && !editing && !groupInCover && (
+                <div
+                  className={s.coverStatus}
+                  aria-label={t('dsb.cms.docs.side_tree.hidden_from_cover')}
+                >
                   <CalendarSlashSVG className={s.coverStatusIcon} />
                 </div>
               )}
-              {!editing && (
+              {!searching && !editing && (
                 <button
                   type='button'
                   className={s.addButton}
-                  aria-label='Add page or link'
+                  aria-label={addDocLabel}
+                  title={addDocLabel}
                   onClick={() => onAddChild(group.id, SIDE_TREE_GROUP_MENU_ACTION.PAGE)}
                 >
                   <PlusSVG className={s.actionIcon} />
                 </button>
               )}
-              <div className={s.actions}>
-                <GroupMenu
-                  inCover={groupInCover}
-                  open={menuOpen}
-                  publishVisible={publishGroupVisible}
-                  draftVisible={draftGroupVisible}
-                  onOpenChange={setMenuOpen}
-                  onSelect={handleGroupMenuSelect}
-                />
-              </div>
+              {!searching && (
+                <div className={s.actions}>
+                  <GroupMenu
+                    inCover={groupInCover}
+                    open={menuOpen}
+                    onOpenChange={setMenuOpen}
+                    onSelect={handleGroupMenuSelect}
+                  />
+                </div>
+              )}
             </div>
           </div>
           <SortableSideTreeGroup
             className={cn(s.children, collapsed && s.collapsed)}
             columnId={group.id}
             ids={group.children.map((child) => child.id)}
-            disabled={collapsed}
+            disabled={searching || collapsed}
+            externalListRef={childrenListRef}
           >
             {group.children.map((child) => {
               const childEditing =
@@ -201,6 +201,7 @@ const Group: FC<TProps> = ({
                   key={child.id}
                   id={child.id}
                   columnId={group.id}
+                  disabled={searching}
                   editing={childEditing}
                   targetPosition={targetDragItemId === child.id ? targetDragPosition : null}
                 >
@@ -211,6 +212,8 @@ const Group: FC<TProps> = ({
                       item={child}
                       active={activeId === child.id}
                       editingTarget={editingTarget}
+                      searchQuery={searchQuery}
+                      searching={searching}
                       onActivate={onActivate}
                       onRename={onRenameChild}
                       onCancelEdit={onCancelEdit}
@@ -219,10 +222,12 @@ const Group: FC<TProps> = ({
                       onStyleChange={onChildStyleChange}
                     />
                   ) : (
-                    <Link
+                    <SideTreeLinkItem
                       groupId={group.id}
                       item={child}
                       editingTarget={editingTarget}
+                      searchQuery={searchQuery}
+                      searching={searching}
                       onRename={onRenameLink}
                       onCancelEdit={onCancelEdit}
                       onEdit={onEdit}

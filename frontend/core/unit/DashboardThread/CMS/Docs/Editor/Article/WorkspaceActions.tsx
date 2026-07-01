@@ -1,8 +1,8 @@
 import type { FC, SVGProps } from 'react'
 
 import useTrans from '~/hooks/useTrans'
+import DatabaseArrowUpSVG from '~/icons/DatabaseArrowUp'
 import FolderPlusSVG from '~/icons/FolderPlus'
-import ImgUploadSVG from '~/icons/ImgUpload'
 import InfoSVG from '~/icons/Info'
 import TabsAddSVG from '~/icons/TabsAdd'
 import type { TTransKey } from '~/spec'
@@ -23,16 +23,6 @@ type TProps = {
 
 const ACTIONS: TAction[] = [
   {
-    key: 'status',
-    labelKey: 'dsb.doc.empty_action.status',
-    Icon: InfoSVG,
-  },
-  {
-    key: 'addTab',
-    labelKey: 'dsb.doc.empty_action.add_tab',
-    Icon: TabsAddSVG,
-  },
-  {
     key: 'addGroup',
     labelKey: 'dsb.doc.empty_action.add_group',
     Icon: FolderPlusSVG,
@@ -40,7 +30,17 @@ const ACTIONS: TAction[] = [
   {
     key: 'importContent',
     labelKey: 'dsb.doc.empty_action.import_content',
-    Icon: ImgUploadSVG,
+    Icon: DatabaseArrowUpSVG,
+  },
+  {
+    key: 'addTab',
+    labelKey: 'dsb.doc.empty_action.add_tab',
+    Icon: TabsAddSVG,
+  },
+  {
+    key: 'status',
+    labelKey: 'dsb.doc.empty_action.status',
+    Icon: InfoSVG,
   },
 ]
 

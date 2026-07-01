@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import { DEFAULT_THEME_PRESET, THEME_PRESET } from '~/const/theme_preset'
 import useDsbDemoMode from '~/hooks/useDsbDemoMode'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
+import useTrans from '~/hooks/useTrans'
 import type { TResolvedThemePreset, TThemePreset, TThemePresetOption } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
@@ -47,6 +48,7 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
   const liveDashboard$ = dashboard$.live$ ?? dashboard$
   const { mutate } = useGraphQLClient()
   const isDemoMode = useDsbDemoMode()
+  const { t } = useTrans()
   const storeRef = useRef(liveDashboard$)
   const { slug: community } = useCommunity()
 
@@ -107,7 +109,7 @@ export default function useThemePresetMutation(): TThemePresetMutationRet {
     layout?: TThemePresetMutationLayout
     revalidate?: boolean
   } = {}): Promise<void> => {
-    toast('设置已保存')
+    toast(t('dsb.appearance.saved'))
 
     if (revalidate) {
       try {

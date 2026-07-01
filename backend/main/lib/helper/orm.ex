@@ -34,7 +34,7 @@ defmodule Helper.ORM do
   alias CMS.Model.{Community, CommunityDashboard}
   alias Helper.{ORMAtom, QueryBuilder, T}
 
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   @doc """
   Safely updates JSONB `meta` fields and returns the updated struct.
@@ -600,7 +600,7 @@ defmodule Helper.ORM do
   def extract_and_assign_article(%{entries: entries} = paged_articles) do
     entries =
       Enum.map(entries, fn item ->
-        thread = Enum.find(@article_threads, &(not is_nil(Map.get(item, :"#{&1}_id"))))
+        thread = Enum.find(@threads, &(not is_nil(Map.get(item, :"#{&1}_id"))))
         Map.merge(item, %{article: export_article_info(thread, Map.get(item, thread))})
       end)
 
@@ -616,7 +616,7 @@ defmodule Helper.ORM do
       %{entries: [%{id: 1, title: "...", thread: :post}]}
   """
   @spec extract_articles(T.paged_data(), [atom()]) :: T.paged_article_common()
-  def extract_articles(%{entries: entries} = paged_articles, threads \\ @article_threads) do
+  def extract_articles(%{entries: entries} = paged_articles, threads \\ @threads) do
     paged_articles
     |> Map.put(:entries, Enum.map(entries, &extract_article_info(&1, threads)))
   end

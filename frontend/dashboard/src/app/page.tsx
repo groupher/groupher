@@ -2,8 +2,8 @@
 export default function Page() {
   return (
     <>
-      <h2>some thing wrong with proxy.</h2>
-      <p>landing should serve by landing repo.</p>
+      <h2>Proxy error</h2>
+      <p>Open the dashboard through a community route.</p>
     </>
   )
 }

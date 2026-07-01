@@ -158,23 +158,19 @@ export const removeGroupFromGroups = (
 ): TSideTreeGroup[] => groups.filter((group) => group.id !== groupId)
 
 /**
- * Toggle one group and return the next expanded value for persistence.
+ * Toggle one group in local UI state.
  *
  * @example
- * const { groups: nextGroups, expanded } = toggleGroupExpandedInGroups(groups, groupId)
+ * const { groups: nextGroups } = toggleGroupExpandedInGroups(groups, groupId)
  */
 export const toggleGroupExpandedInGroups = (
   groups: readonly TSideTreeGroup[],
   groupId: string,
-): { groups: TSideTreeGroup[]; expanded: boolean } => {
-  const group = groups.find((item) => item.id === groupId)
-  const expanded = group?.expanded === false
-
+): { groups: TSideTreeGroup[] } => {
   return {
     groups: groups.map((group) =>
       group.id === groupId ? { ...group, expanded: group.expanded === false } : group,
     ),
-    expanded,
   }
 }
 
@@ -347,7 +343,7 @@ export const findChildEditingTarget = (
 }
 
 /**
- * Find the local page child that owns a backend doc draft id.
+ * Find the local page child that owns a backend doc id.
  *
  * @example
  * const page = findPageByDocId(groups, currentDocId)
@@ -370,6 +366,7 @@ export const findPageByDocId = (
 
 /**
  * Resolve the active side-tree id from the current URL doc id.
+ * No doc id means the editor route should stay in its empty workspace state.
  *
  * @example
  * const activeId = resolveActiveIdFromUrl(groups, currentDocId)
@@ -380,7 +377,7 @@ export const resolveActiveIdFromUrl = (
 ): string | null => {
   if (docId) return findPageByDocId(groups, docId)?.id ?? null
 
-  return findFirstPage(groups)?.id ?? null
+  return null
 }
 
 /**
@@ -393,26 +390,26 @@ export const resolveActiveIdFromUrl = (
 export const findMovedNode = (
   prevGroups: readonly TSideTreeGroup[],
   nextGroups: readonly TSideTreeGroup[],
-): { id: string; targetParentId: string | null; targetIndex: number } | null => {
-  const prevPositions = new Map<string, { parentId: string | null; index: number }>()
+): { id: string; targetGroupId: string | null; targetIndex: number } | null => {
+  const prevPositions = new Map<string, { groupId: string | null; index: number }>()
 
   for (const [index, group] of prevGroups.entries()) {
-    prevPositions.set(group.id, { parentId: null, index })
+    prevPositions.set(group.id, { groupId: null, index })
     for (const [childIndex, child] of group.children.entries()) {
-      prevPositions.set(child.id, { parentId: group.id, index: childIndex })
+      prevPositions.set(child.id, { groupId: group.id, index: childIndex })
     }
   }
 
   for (const [index, group] of nextGroups.entries()) {
     const prev = prevPositions.get(group.id)
-    if (prev && (prev.parentId !== null || prev.index !== index)) {
-      return { id: group.id, targetParentId: null, targetIndex: index }
+    if (prev && (prev.groupId !== null || prev.index !== index)) {
+      return { id: group.id, targetGroupId: null, targetIndex: index }
     }
 
     for (const [childIndex, child] of group.children.entries()) {
       const prevChild = prevPositions.get(child.id)
-      if (prevChild && (prevChild.parentId !== group.id || prevChild.index !== childIndex)) {
-        return { id: child.id, targetParentId: group.id, targetIndex: childIndex }
+      if (prevChild && (prevChild.groupId !== group.id || prevChild.index !== childIndex)) {
+        return { id: child.id, targetGroupId: group.id, targetIndex: childIndex }
       }
     }
   }

@@ -58,8 +58,8 @@ defmodule GroupherServer.CMS.ArtimentMentions do
   alias CMS.Model.{ArtimentMention, Comment}
   alias Helper.{ORM, QueryBuilder, T}
 
-  @article_threads get_config(:article, :threads)
-  @mention_types @article_threads ++ [:comment, :user, :url]
+  @threads get_config(:article, :threads)
+  @mention_types @threads ++ [:comment, :user, :url]
 
   @type sync_result :: {:ok, term()} | {:error, term()}
 
@@ -329,7 +329,7 @@ defmodule GroupherServer.CMS.ArtimentMentions do
   end
 
   defp mentioning_itself?(article, %{mentioned_type: mentioned_type, mentioned_id: id})
-       when mentioned_type in @article_threads do
+       when mentioned_type in @threads do
     case FrontDesk.thread_of(article) do
       {:ok, ^mentioned_type} -> article.id == id
       _ -> false

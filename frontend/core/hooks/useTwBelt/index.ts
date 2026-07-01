@@ -25,6 +25,7 @@ import type {
   TLinkColorPrefix,
   TMenuPart,
   TRet,
+  TScrollbarType,
   TSelectableOptions,
   TSelectablePart,
   TShadowType,
@@ -156,6 +157,14 @@ export default function useTwBelt(): TRet {
   }
 
   const shadow = (size: TShadowType): string => `shadow-${size}`
+  const scrollbar = (type: TScrollbarType = 'thin'): string => {
+    switch (type) {
+      case 'thin':
+        return STATIC_CLS.scrollbarThin
+      default:
+        return ''
+    }
+  }
 
   const cut = (w: TCutWWidth = 'w-12'): string => {
     const maxWidth = w.replace('w-', 'max-w-')
@@ -347,6 +356,7 @@ export default function useTwBelt(): TRet {
       menu,
 
       shadow,
+      scrollbar,
       cut,
       landingTitle,
 

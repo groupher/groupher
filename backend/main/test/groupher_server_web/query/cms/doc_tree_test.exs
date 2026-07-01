@@ -7,8 +7,21 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
   query($community: String!) {
     docTree(community: $community) {
       revision
+      treeState {
+        hasUnpublishedChanges
+        stagedEventCount
+      }
+      stagedEvents {
+        eventType
+      }
       groups {
         id
+      }
+      pins {
+        id
+        type
+        title
+        href
       }
     }
   }
@@ -18,13 +31,13 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
     guest_conn = simu_conn(:guest)
     {:ok, user} = db_insert(:user)
     {:ok, community} = empty_docs_community(user)
-    {:ok, tree_state} = ORM.find_by(CMS.Model.DocTreeDraftState, community_id: community.id)
+    {:ok, tree_state} = ORM.find_by(CMS.Model.DocsSiteState, community_id: community.id)
 
     {:ok, group_payload} =
       CMS.DocTree.create_group(community, %{
         title: "Guides",
         slug: "guides",
-        base_revision: tree_state.revision
+        base_revision: tree_state.tree_lock_version
       })
 
     user_conn = simu_conn(:user, user)
@@ -50,7 +63,11 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
     result = user_conn |> gq_query(@query, %{community: community.slug})
 
     assert result["revision"] == group_payload.revision
+    assert result["treeState"]["hasUnpublishedChanges"] == true
+    assert result["treeState"]["stagedEventCount"] == 1
+    assert [%{"eventType" => "node.create"}] = result["stagedEvents"]
     assert length(result["groups"]) == 1
+    assert result["pins"] == []
   end
 
   defp empty_docs_community(user) do

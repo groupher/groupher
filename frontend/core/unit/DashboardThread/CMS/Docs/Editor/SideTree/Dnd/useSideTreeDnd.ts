@@ -38,6 +38,7 @@ export default function useSideTreeDnd({ groups, onCommit }: TProps): TRet {
     flattenColumns: flattenSideTreeGroups,
     moveLinkInColumns: moveSideTreeChildInGroups,
     moveColumn: moveSideTreeGroup,
+    previewDrag: false,
     sameLinks: sameSideTreeGroups,
     onCommit,
   })

@@ -2,9 +2,11 @@ import type { AnyVariables, DocumentInput } from '@urql/core'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { DOC_STAGE, DSB_DOC_EVENT, type TDocStage } from '~/const/dsb/docs'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useQuery from '~/hooks/useQuery'
 import useTrans from '~/hooks/useTrans'
+import { send } from '~/lib/signal'
 import { slugify } from '~/lib/slug'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
@@ -52,9 +54,12 @@ import {
 } from './helper'
 import type {
   TDocTreeInitialData,
+  TDocTreeEvent,
   TDocTreeMutationData,
   TDocTreeMutationPayload,
   TDocTreeNodeDTO,
+  TDocTreeNodePublishState,
+  TDocTreeState,
   TEditingTarget,
   TSideTreeChild,
   TSideTreeChildMenuAction,
@@ -63,6 +68,21 @@ import type {
   TSideTreeLinkInput,
   TSideTreeNodeMenuAction,
 } from './spec'
+
+const reloadDocPublishScope = (): void => {
+  send(DSB_DOC_EVENT.PUBLISH_SCOPE_RELOAD)
+}
+
+type TMoveDocToDraftData = {
+  moveDocToDraft?: {
+    docId?: string | null
+    stage?: TDocStage | null
+    publishState?: TDocTreeNodePublishState | null
+  } | null
+}
+
+const hasDraftNode = (groups: readonly TSideTreeGroup[]): boolean =>
+  groups.some((group) => isDraftId(group.id) || group.children.some((child) => isDraftId(child.id)))
 
 export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeController {
   const { t } = useTrans()
@@ -73,17 +93,26 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   const currentDocId = searchParams.get(DOC_EDITOR_QUERY_PARAM.DOC_ID)
   const { slug: community } = useCommunity()
   const { mutate } = useGraphQLClient()
-  const { data, reload } = useQuery<{ docTree?: { revision: number; groups: TDocTreeNodeDTO[] } }>(
-    S.docTree,
-    { community },
-  )
+  const { data, reload } = useQuery<{
+    docTree?: {
+      revision: number
+      treeState?: TDocTreeState | null
+      stagedEvents?: TDocTreeEvent[] | null
+      groups: TDocTreeNodeDTO[]
+    }
+  }>(S.docTree, { community })
   const initialGroups = useMemo(() => initialData?.groups.map(mapGroup) ?? [], [initialData])
   const [groups, setGroups] = useState<TSideTreeGroup[]>(initialGroups)
+  const [treeState, setTreeState] = useState<TDocTreeState | null>(initialData?.treeState ?? null)
+  const [stagedEvents, setStagedEvents] = useState<TDocTreeEvent[]>(initialData?.stagedEvents ?? [])
   const groupsRef = useRef<TSideTreeGroup[]>(initialGroups)
   const currentDocIdRef = useRef<string | null>(currentDocId)
   const revisionRef = useRef<number | null>(initialData?.revision ?? null)
-  const [activeId, setActiveId] = useState<string | null>(() =>
-    resolveActiveIdFromUrl(initialGroups, currentDocId),
+  const [activeId, setActiveId] = useState<string | null>(
+    () =>
+      resolveActiveIdFromUrl(initialGroups, currentDocId) ??
+      findFirstPage(initialGroups)?.id ??
+      null,
   )
   const [editingTarget, setEditingTarget] = useState<TEditingTarget>(null)
   const [coverWarning, setCoverWarning] = useState<string | null>(null)
@@ -102,14 +131,20 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
     if (docId) {
       const nextActiveId = resolveActiveIdFromUrl(sourceGroups, docId)
-      if (!nextActiveId) return
+      if (!nextActiveId) {
+        const fallback = findFirstPage(sourceGroups)
+
+        setActiveId((current) => (current === fallback?.id ? current : (fallback?.id ?? null)))
+        return
+      }
 
       setActiveId((current) => (current === nextActiveId ? current : nextActiveId))
       return
     }
 
     setActiveId((current) => {
-      return current === null ? current : null
+      const fallback = findFirstPage(sourceGroups)
+      return current === fallback?.id ? current : (fallback?.id ?? null)
     })
   }, [])
 
@@ -142,8 +177,13 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     if (!data?.docTree) return
     if (revisionRef.current !== null && data.docTree.revision < revisionRef.current) return
 
-    const nextGroups = data.docTree.groups.map(mapGroup)
     revisionRef.current = data.docTree.revision
+    setTreeState(data.docTree.treeState ?? null)
+    setStagedEvents(data.docTree.stagedEvents ?? [])
+
+    if (hasDraftNode(groupsRef.current)) return
+
+    const nextGroups = data.docTree.groups.map(mapGroup)
     commitGroups(nextGroups)
     syncActiveIdFromUrl(nextGroups)
   }, [commitGroups, data, syncActiveIdFromUrl])
@@ -168,11 +208,15 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
         if (payload?.conflict) {
           reload()
-          toast('目录树已更新，请重试', 'error')
+          toast(t('dsb.cms.docs.side_tree.error.tree_conflict'), 'error')
           return payload
         }
 
-        if (payload) revisionRef.current = payload.revision
+        if (payload) {
+          revisionRef.current = payload.revision
+          setTreeState(payload.treeState ?? null)
+          reloadDocPublishScope()
+        }
 
         return payload
       } catch (err) {
@@ -182,7 +226,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
         return null
       }
     },
-    [community, mutate, reload],
+    [community, mutate, reload, t],
   )
 
   const persistCoverAction = useCallback(
@@ -234,13 +278,13 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       commitGroups(localGroups)
 
       if (!moved) return
-      if (isDraftId(moved.id) || (moved.targetParentId && isDraftId(moved.targetParentId))) return
+      if (isDraftId(moved.id) || (moved.targetGroupId && isDraftId(moved.targetGroupId))) return
 
       persist(
         S.moveDocTreeNode,
         {
           id: moved.id,
-          targetParentId: moved.targetParentId,
+          targetGroupId: moved.targetGroupId,
           targetIndex: moved.targetIndex,
         },
         (data) => data?.moveDocTreeNode,
@@ -318,18 +362,8 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
    * toggleGroup('group-getting-started')
    */
   function toggleGroup(groupId: string): void {
-    const { groups: nextGroups, expanded } = toggleGroupExpandedInGroups(readGroups(), groupId)
-
-    // Keep this explicit commit because the helper also returns the persisted expanded value.
+    const { groups: nextGroups } = toggleGroupExpandedInGroups(readGroups(), groupId)
     commitGroups(nextGroups)
-
-    if (isDraftId(groupId)) return
-
-    persist(
-      S.updateDocTreeNode,
-      { id: groupId, patch: { expanded } },
-      (data) => data?.updateDocTreeNode,
-    )
   }
 
   function toggleCoverGroup(groupId: string, inCover: boolean): void {
@@ -343,34 +377,6 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
         )
       },
     )
-  }
-
-  function publishGroup(groupId: string): void {
-    mutate(S.publishDocTreeGroup, {
-      community,
-      groupId,
-      mode: 'WITH_COVER_SYNC',
-    })
-      .then(() => {
-        reload()
-        toast(t('dsb.cms.docs.side_tree.publish.group_published'))
-      })
-      .catch((err) => {
-        toast(formatMutationError(err), 'error')
-        reload()
-      })
-  }
-
-  function moveGroupToDraft(groupId: string): void {
-    mutate(S.moveDocTreeGroupToDraft, { community, groupId })
-      .then(() => {
-        reload()
-        toast(t('dsb.cms.docs.side_tree.publish.group_draft_moved'))
-      })
-      .catch((err) => {
-        toast(formatMutationError(err), 'error')
-        reload()
-      })
   }
 
   function createDraftGroup(groupId: string, title: string): void {
@@ -436,7 +442,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       schema,
       (slug) => ({
         input: {
-          parentId: groupId,
+          groupId: groupId,
           title,
           slug,
           index,
@@ -482,7 +488,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   function renameChild(groupId: string, childId: string, title: string): void {
     if (isDraftId(groupId)) {
       // Keep the inline editor open so a child title cannot appear saved before its parent group exists.
-      toast('请先确认分组名称', 'error')
+      toast(t('dsb.cms.docs.side_tree.error.confirm_group_first'), 'error')
       return
     }
 
@@ -520,7 +526,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
   function renameLink(groupId: string, childId: string, input: TSideTreeLinkInput): void {
     if (isDraftId(groupId)) {
-      toast('请先确认分组名称', 'error')
+      toast(t('dsb.cms.docs.side_tree.error.confirm_group_first'), 'error')
       return
     }
 
@@ -679,14 +685,30 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     }
 
     if (action === SIDE_TREE_NODE_MENU_ACTION.MOVE_TO_DRAFT) {
-      mutate(S.moveDocToDraft, { community, id: childId })
-        .then(() => {
-          reload()
+      mutate<TMoveDocToDraftData>(S.moveDocToDraft, { community, id: childId })
+        .then((data) => {
+          const payload = data?.moveDocToDraft
+          const current = findChild(readGroups(), childId)
+          const publishState = {
+            ...(current?.publishState ?? {}),
+            ...(payload?.publishState ?? {}),
+            status: DOC_STAGE.DRAFT,
+            published: true,
+            publishedBefore: true,
+            hasDraft: true,
+          } satisfies TDocTreeNodePublishState
+
+          patchChild(childId, { publishState })
+          reloadDocPublishScope()
+          send(DSB_DOC_EVENT.DRAFT_PATCH, {
+            docId:
+              payload?.docId ?? (current?.type === SIDE_TREE_NODE_TYPE.PAGE ? current.docId : null),
+            stage: payload?.stage ?? DOC_STAGE.DRAFT,
+          })
           toast(t('dsb.cms.docs.side_tree.publish.draft_moved'))
         })
         .catch((err) => {
           toast(formatMutationError(err), 'error')
-          reload()
         })
       return
     }
@@ -722,6 +744,8 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
   return {
     groups,
+    treeState,
+    stagedEvents,
     activeId,
     editingTarget,
     coverWarning,
@@ -732,8 +756,6 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     deleteGroup,
     toggleGroup,
     toggleCoverGroup,
-    publishGroup,
-    moveGroupToDraft,
     renameGroup,
     renameChild,
     renameLink,

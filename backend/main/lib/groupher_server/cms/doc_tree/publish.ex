@@ -1,493 +1,1207 @@
 defmodule GroupherServer.CMS.DocTree.Publish do
   @moduledoc """
-  Publishes dashboard docs tree nodes into the public tree.
+  Publish workflows for docs and docs tree snapshots.
 
-      dashboard draft tree                 public tree
-      --------------------                 -----------
-      doc_tree_node_drafts(group)  --->    doc_tree_nodes(group)
-              |                                      |
-              v                                      v
-      doc_tree_node_drafts(page)   --->    doc_tree_nodes(page)
-              |                                      |
-              v                                      v
-      article_drafts              --->    docs
+      Dashboard Editor
+      ├─ Doc draft changes
+      │    docs(stage=draft)
+      │
+      └─ Tree draft changes
+           doc_tree_events(owner=tree, status=staged)
 
-      doc_tree_node_publish_mappings keeps the draft/public pairs.
-      doc_cover_* always points at the public tree side.
+                 |
+                 v
+          publish_changes/3
+                 |
+                 ├─ docs + DocDocument
+                 ├─ doc_tree_nodes(stage=public)
+                 └─ publish_releases
+                      ├─ tree_snapshot_id -> doc_tree_snapshots
+                      ├─ publish_release_articles
+                      └─ publish_release_tree_events
 
-  This module owns tree-node publication only. Article content publication stays
-  in `CMS.Articles`; cover synchronization is delegated to `CMS.DocCover.Sync`.
+  Tree and article are still separate domains internally, but the public product
+  surface exposes one publish action. The release row is the snapshot anchor that
+  lets history and rollback talk about the full public docs site at one moment.
   """
 
   import Ecto.Query, warn: false
 
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
+  alias CMS.DocTree.Events
 
-  alias CMS.DocTree.{ChangeDetection, PublishedFields}
+  require CMS.Const
 
   alias CMS.Model.{
-    ArticleDraft,
+    ArticleSnapshot,
     Community,
+    Doc,
+    DocTreeEvent,
     DocTreeNode,
-    DocTreeNodeDraft,
-    DocTreeNodePublishMapping
+    DocsSiteState,
+    PublishRelease,
+    PublishReleaseArticle,
+    PublishReleaseTreeEvent
   }
 
-  alias Helper.{ORM, T}
+  alias Helper.{ORM, T, Transaction}
+
+  @event_public_fields %{
+    "title" => :title,
+    "slug" => :slug,
+    "href" => :href,
+    "marker" => :marker,
+    "badge" => :badge,
+    "hidden" => :hidden,
+    "uiConfig" => :ui_config,
+    "ui_config" => :ui_config
+  }
+
+  @event_node_types %{
+    "group" => :group,
+    "link" => :link,
+    "pin" => :pin
+  }
 
   @doc """
-  Publishes one docs draft and its side-tree page node.
+  Builds the unified publish checklist consumed by the editor ActionSnackbar.
 
-  The default mode also syncs the published page into the docs cover. Pass
-  `sync_cover: false` for the "publish doc only" menu option.
+  The returned ids are opaque UI ids. The frontend should show them as a simple
+  checklist and send selected ids back to `publish_changes/4`; dependency
+  resolution stays server-side.
+
+  ## Examples
+
+      iex> Publish.scope(community).total_count
+      3
   """
-  @spec publish_doc(Community.t(), T.id(), User.t(), keyword()) ::
-          T.domain_res(CMS.Model.ArticleRevision.t())
-  def publish_doc(%Community{} = community, article_draft_id, %User{} = user, opts \\ []) do
+  @spec scope(Community.t()) :: map()
+  def scope(%Community{} = community) do
+    doc_changes = doc_change_items(community)
+    tree_changes = tree_change_items(community)
+
+    %{
+      total_count: length(doc_changes) + length(tree_changes),
+      doc_changes: doc_changes,
+      tree_changes: tree_changes
+    }
+  end
+
+  @doc """
+  Publishes selected doc and tree changes as a single release.
+
+  Nil selections mean "publish every selected-by-default item" from the current
+  scope. Explicit lists publish only those opaque scope item ids.
+
+  ## Examples
+
+      iex> Publish.publish_changes(community, %{doc_change_ids: ["doc:12"]}, user)
+      {:ok, %{done: true, release: %PublishRelease{}}}
+  """
+  @spec publish_changes(Community.t(), map(), User.t(), keyword()) :: T.domain_res(map())
+  def publish_changes(%Community{} = community, args, %User{} = user, opts \\ []) do
     sync_cover? = Keyword.get(opts, :sync_cover, true)
 
-    with {:ok, draft_page} <- find_draft_page(community, article_draft_id),
-         {:ok, draft_group} <- find_draft_group(community, draft_page.parent_id),
-         {:ok, revision} <-
-           CMS.Articles.publish_doc_draft_revision(community, article_draft_id, user),
-         {:ok, article_draft} <- ORM.find(ArticleDraft, article_draft_id),
-         {:ok, published_group} <- upsert_published_group(community, draft_group),
-         {:ok, published_page} <-
-           upsert_published_page(community, draft_page, published_group.id, revision.article_id),
-         {:ok, _group_mapping} <-
-           upsert_mapping(community, draft_group, published_group, nil, nil),
-         {:ok, _page_mapping} <-
-           upsert_mapping(
-             community,
-             draft_page,
-             published_page,
-             article_draft,
-             revision.article_id
+    Transaction.lock_global("doc_tree:#{community.id}", fn ->
+      Repo.transaction(fn ->
+        current_scope = scope(community)
+
+        with {:ok, doc_ids} <- selected_ids(args, :doc_change_ids, current_scope.doc_changes),
+             {:ok, tree_ids} <- selected_ids(args, :tree_change_ids, current_scope.tree_changes),
+             tree_ids <- include_doc_shell_tree_ids(community, args, doc_ids, tree_ids),
+             {:ok, tree_result} <- prepare_tree_scope_items(community, tree_ids),
+             :ok <- preapply_tree_delete_events(community, tree_result.events),
+             {:ok, doc_revisions} <-
+               publish_doc_scope_items(
+                 community,
+                 current_scope.doc_changes,
+                 doc_ids,
+                 user,
+                 sync_cover?
+               ),
+             :ok <- apply_tree_events_to_public(community, tree_result.events),
+             {:ok, release} <- create_release(community, user, doc_revisions, tree_result),
+             next_scope <- scope(community),
+             {:ok, _state} <- mark_site_release_published(community, user, next_scope) do
+          %{done: true, release: release, scope: next_scope}
+        else
+          {:error, reason} -> Repo.rollback(reason)
+          reason -> Repo.rollback(reason)
+        end
+      end)
+      |> case do
+        {:ok, result} -> {:ok, result}
+        {:error, reason} -> {:error, reason}
+      end
+    end)
+  end
+
+  @doc """
+  Moves a published doc page back to draft by creating a new draft row sharing
+  the same `doc_id`. The public row is left untouched — it stays served until
+  the next publish overwrites it.
+
+  Content is copied from the public `DocDocument` JSON body and flows through
+  `Articles.Draft.create` so all derived fields (markdown, html, content_hash,
+  etc.) are regenerated by ContentPipeline. The caller's `user` is recorded as
+  the draft author for audit.
+
+  ## Examples
+
+      iex> Publish.move_doc_to_draft(community, draft_node.node_id, user)
+      {:ok, %Doc{stage: CMS.Const.stage(:draft), doc_id: "a1b2c3d4-..."}}
+  """
+  @spec move_doc_to_draft(Community.t(), T.id(), User.t()) :: T.domain_res(Doc.t())
+  def move_doc_to_draft(%Community{} = community, node_id, %User{} = user) do
+    alias CMS.Articles.Draft
+
+    with {:ok, draft_node} <- find_draft_node(community, node_id),
+         {:ok, public_doc} <-
+           ORM.find_by(Doc,
+             community_id: community.id,
+             doc_id: draft_node.doc_id,
+             stage: CMS.Const.stage(:public)
            ),
-         {:ok, _sync} <-
-           maybe_sync_cover(community, published_group, published_page, sync_cover?) do
-      {:ok, revision}
+         {:ok, document} <-
+           ORM.find_by(CMS.Model.DocDocument, doc_id: public_doc.id) do
+      case Draft.read(community, public_doc.doc_id) do
+        {:ok, draft} ->
+          {:ok, draft}
+
+        {:error, _} ->
+          Draft.create(
+            community,
+            :doc,
+            %{
+              doc_id: public_doc.doc_id,
+              title: public_doc.title,
+              slug: public_doc.slug,
+              body: document.json
+            },
+            user
+          )
+      end
+    end
+  end
+
+  defp find_draft_node(%Community{} = community, node_id) do
+    node_id = to_string(node_id)
+
+    DocTreeNode
+    |> where(
+      [node],
+      node.community_id == ^community.id and node.stage == CMS.Const.stage(:draft) and
+        (node.node_id == ^node_id or fragment("?::text", node.id) == ^node_id)
+    )
+    |> limit(1)
+    |> Repo.one()
+    |> case do
+      %DocTreeNode{} = node -> {:ok, node}
+      nil -> {:error, {:custom, "Doc tree node(draft) not found"}}
     end
   end
 
   @doc """
-  Publishes every draft page that currently shows an unpublished signal.
-
-      draft tree pages
-             |
-             v
-      no public mapping OR draft has changed?
-             |
-             v
-      publish_doc(...)
-
-  The side-tree dot uses the same boundary, so the bulk action clears both docs
-  that are currently draft-only and docs that are public with newer draft edits.
+  Deprecated by the stage model; tree draft/public state is owned by tree events.
   """
-  @spec publish_all_unpublished_docs(Community.t(), User.t(), keyword()) :: T.domain_res(map())
-  def publish_all_unpublished_docs(%Community{} = community, %User{} = user, opts \\ []) do
-    sync_cover? = Keyword.get(opts, :sync_cover, true)
+  @spec move_group_to_draft(Community.t(), T.id()) :: T.domain_res(map())
+  def move_group_to_draft(_community, _group_id),
+    do: {:error, {:custom, "Group draft state is managed by unpublished tree events."}}
 
-    community
-    |> unpublished_draft_pages()
-    |> Enum.reduce_while({:ok, 0}, fn %DocTreeNodeDraft{article_draft_id: article_draft_id},
-                                      {:ok, count} ->
-      case publish_doc(community, article_draft_id, user, sync_cover: sync_cover?) do
-        {:ok, _revision} -> {:cont, {:ok, count + 1}}
+  @doc """
+  Resolves the public-stage node for a stable draft `node_id`.
+
+  Cover mutations use this to translate editor ids into public tree rows.
+
+  ## Examples
+
+      iex> Publish.public_node_for_draft(community, draft.node_id)
+      {:ok, %DocTreeNode{stage: CMS.Const.stage(:public)}}
+  """
+  @spec public_node_for_draft(Community.t(), T.id()) :: T.domain_res(DocTreeNode.t())
+  def public_node_for_draft(%Community{} = community, node_id) do
+    ORM.find_by(DocTreeNode,
+      community_id: community.id,
+      stage: CMS.Const.stage(:public),
+      node_id: to_string(node_id)
+    )
+  end
+
+  defp publish_doc_draft(
+         %Community{} = community,
+         %{doc_id: doc_id, page_node_id: page_node_id},
+         %User{} = user,
+         sync_cover?
+       ) do
+    with {:ok, page} <- find_publish_page(community, doc_id, page_node_id),
+         {:ok, group} <- find_publish_group(community, page.group_id, page.stage),
+         {:ok, snapshot} <- CMS.Articles.publish_doc_draft(community, doc_id, user),
+         {:ok, public_group} <- upsert_public_node(community, group),
+         {:ok, public_page} <-
+           upsert_public_node(
+             community,
+             page,
+             public_group.node_id,
+             snapshot.doc_id
+           ),
+         {:ok, _sync} <- maybe_sync_cover(community, public_group, public_page, sync_cover?) do
+      Events.mark_doc_bound_published(community, doc_id)
+      Events.mark_tree_create_published(community, [group.node_id])
+      {:ok, snapshot}
+    end
+  end
+
+  defp selected_ids(args, key, items) do
+    case Map.get(args, key) || Map.get(args, Atom.to_string(key)) do
+      nil ->
+        {:ok, items |> Enum.filter(& &1.selectable) |> Enum.map(& &1.id)}
+
+      ids when is_list(ids) ->
+        by_id = Map.new(items, &{&1.id, &1})
+
+        ids
+        |> Enum.map(&to_string/1)
+        |> Enum.reduce_while({:ok, []}, fn id, {:ok, acc} ->
+          case Map.get(by_id, id) do
+            nil ->
+              {:halt, {:error, {:custom, "Selected publish item no longer exists."}}}
+
+            %{selectable: false, disabled_reason: reason} ->
+              {:halt, {:error, {:custom, reason || "Selected publish item is not available."}}}
+
+            _item ->
+              {:cont, {:ok, [id | acc]}}
+          end
+        end)
+        |> case do
+          {:ok, selected} -> {:ok, Enum.reverse(selected)}
+          error -> error
+        end
+    end
+  end
+
+  defp publish_doc_scope_items(
+         %Community{} = community,
+         scope_items,
+         doc_ids,
+         %User{} = user,
+         sync_cover?
+       ) do
+    items = Map.new(scope_items, &{&1.id, &1})
+
+    doc_ids
+    |> Enum.reduce_while({:ok, []}, fn id, {:ok, acc} ->
+      with %{doc_id: _doc_id} = item <- Map.get(items, id),
+           {:ok, snapshot} <-
+             publish_doc_draft(
+               community,
+               item,
+               user,
+               sync_cover?
+             ) do
+        {:cont, {:ok, [%{snapshot: snapshot, scope_item: item} | acc]}}
+      else
+        nil -> {:halt, {:error, {:custom, "Selected docs publish item no longer exists."}}}
         error -> {:halt, error}
       end
     end)
     |> case do
-      {:ok, count} -> {:ok, %{done: true, count: count}}
+      {:ok, entries} -> {:ok, Enum.reverse(entries)}
       error -> error
     end
   end
 
-  @doc """
-  Publishes one docs side-tree group and all of its children.
-
-  Group publish is batch-scoped by design: the draft group and its children are
-  loaded once, the public group is upserted once, and cover sync ensures the
-  cover group once before seeding page items. Page children still publish their
-  article draft revisions; link children only publish their tree-node mapping.
-  """
-  @spec publish_group(Community.t(), T.id(), User.t(), keyword()) :: T.domain_res(map())
-  def publish_group(%Community{} = community, draft_group_id, %User{} = user, opts \\ []) do
-    sync_cover? = Keyword.get(opts, :sync_cover, true)
-
-    with {:ok, draft_group} <- find_draft_group(community, draft_group_id),
-         children <- draft_group_children(community, draft_group.id),
-         context <- batch_publish_context(community, draft_group, children),
-         {:ok, published_group} <- upsert_published_group(community, draft_group, context),
-         {:ok, _group_mapping} <-
-           upsert_mapping(community, draft_group, published_group, nil, nil, context),
-         {:ok, result} <-
-           publish_group_children(community, children, published_group, user, context),
-         {:ok, _sync} <-
-           maybe_sync_cover_group(community, published_group, result.pages, sync_cover?) do
-      {:ok, %{done: true, count: result.count}}
+  defp include_doc_shell_tree_ids(%Community{} = community, args, [], tree_ids) do
+    if tree_selection_omitted?(args) do
+      community
+      |> doc_shell_tree_ids()
+      |> Enum.concat(tree_ids)
+      |> Enum.uniq()
+    else
+      tree_ids
     end
   end
 
-  @doc """
-  Moves one public docs page back to draft visibility.
+  defp include_doc_shell_tree_ids(_community, _args, _doc_ids, tree_ids), do: tree_ids
 
-      doc_tree_node_publish_mappings.visibility
-                 |
-          public +--> draft
+  defp tree_selection_omitted?(args) do
+    not (Map.has_key?(args, :tree_change_ids) or Map.has_key?(args, "tree_change_ids"))
+  end
 
-  The published node and doc row are intentionally kept. Re-publishing the draft
-  flips the same mapping back to public instead of creating a new public id.
-  """
-  @spec move_doc_to_draft(Community.t(), T.id()) :: T.domain_res(map())
-  def move_doc_to_draft(%Community{} = community, draft_node_id) do
-    with {:ok, draft_page} <- find_draft_page_by_node_id(community, draft_node_id),
-         {:ok, mapping} <- mapping_for_draft(community, draft_page.id),
-         :ok <- ensure_public_mapping(mapping) do
-      ORM.update(mapping, %{
-        visibility: :draft,
-        last_moved_to_draft_at: DateTime.utc_now(:second)
-      })
-      |> case do
-        {:ok, _mapping} -> {:ok, %{done: true}}
-        error -> error
+  defp doc_shell_tree_ids(%Community{} = community) do
+    community
+    |> Events.staged_events(owner: CMS.Const.tree_event_owner(:tree))
+    |> Enum.filter(&doc_bound_group_create_event?(community, &1))
+    |> Enum.map(&"tree:#{&1.id}")
+  end
+
+  defp prepare_tree_scope_items(%Community{} = community, tree_ids) do
+    events = selected_tree_events(community, tree_ids)
+
+    if length(events) != length(tree_ids) do
+      {:error, {:custom, "Selected tree publish item no longer exists."}}
+    else
+      article_snapshots = release_article_snapshots_before_tree_events(community, events)
+
+      {:ok, %{events: events, article_snapshots: article_snapshots}}
+    end
+  end
+
+  defp preapply_tree_delete_events(%Community{} = community, events) do
+    events
+    |> Enum.filter(&(&1.event_type == CMS.Const.tree_event(:node_delete)))
+    |> apply_tree_events_to_public(community)
+  end
+
+  defp apply_tree_events_to_public(events, %Community{} = community),
+    do: apply_tree_events_to_public(community, events)
+
+  defp apply_tree_events_to_public(%Community{} = community, events) do
+    events
+    |> Enum.reduce_while(:ok, fn event, :ok ->
+      case apply_tree_event_to_public(community, event) do
+        :ok -> {:cont, :ok}
+        {:ok, _node} -> {:cont, :ok}
+        error -> {:halt, error}
       end
+    end)
+  end
+
+  defp selected_tree_events(_community, []), do: []
+
+  defp selected_tree_events(%Community{} = community, tree_ids) do
+    ids =
+      tree_ids
+      |> Enum.map(&String.replace_prefix(&1, "tree:", ""))
+      |> Enum.map(&String.to_integer/1)
+
+    DocTreeEvent
+    |> where([e], e.community_id == ^community.id)
+    |> where([e], e.status == CMS.Const.tree_event_status(:staged))
+    |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
+    |> where([e], e.id in ^ids)
+    |> order_by([e], asc: e.seq, asc: e.id)
+    |> Repo.all()
+  end
+
+  defp apply_tree_event_to_public(
+         %Community{} = community,
+         %DocTreeEvent{event_type: CMS.Const.tree_event(:node_create)} = event
+       ) do
+    node = event.payload["node"] || %{}
+
+    with {:ok, attrs} <- public_attrs_from_event_node(community, node) do
+      upsert_public_node_attrs(community, node["id"], attrs)
     end
   end
 
-  @doc """
-  Moves one public docs side-tree group and all published children to draft visibility.
+  defp apply_tree_event_to_public(
+         %Community{} = community,
+         %DocTreeEvent{event_type: CMS.Const.tree_event(:node_delete)} = event
+       ) do
+    node = event.payload["node"] || %{}
 
-  The published rows stay in place. Public reads already filter by mapping
-  visibility, so this is a bulk mapping update rather than a destructive cover
-  or public-tree cleanup.
-  """
-  @spec move_group_to_draft(Community.t(), T.id()) :: T.domain_res(map())
-  def move_group_to_draft(%Community{} = community, draft_group_id) do
-    with {:ok, draft_group} <- find_draft_group(community, draft_group_id) do
-      draft_node_ids =
-        [draft_group | draft_group_children(community, draft_group.id)]
-        |> Enum.map(& &1.id)
+    delete_public_node_by_node_id(community, node["id"])
+  end
 
-      {count, _} =
-        DocTreeNodePublishMapping
-        |> where([m], m.community_id == ^community.id)
-        |> where([m], m.draft_node_id in ^draft_node_ids)
-        |> where([m], m.visibility == :public)
-        |> Repo.update_all(
-          set: [
-            visibility: :draft,
-            last_moved_to_draft_at: DateTime.utc_now(:second)
-          ]
-        )
+  defp apply_tree_event_to_public(
+         %Community{} = community,
+         %DocTreeEvent{event_type: CMS.Const.tree_event(:node_move)} = event
+       ) do
+    payload = event.payload
 
-      {:ok, %{done: true, count: count}}
+    update_public_node_by_node_id(community, payload["nodeId"], %{
+      group_id: payload["afterGroupId"],
+      index: payload["afterIndex"]
+    })
+  end
+
+  defp apply_tree_event_to_public(%Community{} = community, %DocTreeEvent{} = event) do
+    payload = event.payload
+
+    with {:ok, field} <- field_atom(payload["field"]) do
+      update_public_node_by_node_id(community, payload["nodeId"], %{field => payload["after"]})
     end
   end
 
-  @doc """
-  Returns the published mapping for one draft tree node.
+  defp public_attrs_from_event_node(%Community{} = community, %{"type" => "page"} = node) do
+    doc_id = node["docId"]
 
-  Cover mutations use this to resolve dashboard draft ids into public tree ids.
-  """
-  @spec mapping_for_draft(Community.t(), T.id()) :: T.domain_res(DocTreeNodePublishMapping.t())
-  def mapping_for_draft(%Community{} = community, draft_node_id) do
-    ORM.find_by(DocTreeNodePublishMapping,
-      community_id: community.id,
-      draft_node_id: draft_node_id
+    with {:ok, _draft} <-
+           ORM.find_by(Doc,
+             doc_id: doc_id,
+             stage: CMS.Const.stage(:draft),
+             community_id: community.id
+           ) do
+      {:ok,
+       %{
+         community_id: community.id,
+         node_id: node["id"],
+         stage: CMS.Const.stage(:public),
+         type: :page,
+         group_id: node["groupId"],
+         doc_id: doc_id,
+         title: node["title"],
+         slug: node["slug"],
+         index: node["index"] || 0,
+         href: node["href"],
+         marker: node["marker"],
+         badge: node["badge"],
+         hidden: Map.get(node, "hidden", false),
+         ui_config: Map.get(node, "uiConfig", %{})
+       }}
+    else
+      {:error, _} -> {:error, {:custom, "Publish docs before publishing tree."}}
+      error -> error
+    end
+  end
+
+  defp public_attrs_from_event_node(%Community{} = community, node) do
+    with {:ok, type} <- node_type_atom(node["type"]) do
+      {:ok,
+       %{
+         community_id: community.id,
+         node_id: node["id"],
+         stage: CMS.Const.stage(:public),
+         type: type,
+         group_id: node["groupId"],
+         doc_id: nil,
+         title: node["title"],
+         slug: node["slug"],
+         index: node["index"] || 0,
+         href: node["href"],
+         marker: node["marker"],
+         badge: node["badge"],
+         hidden: Map.get(node, "hidden", false),
+         ui_config: Map.get(node, "uiConfig", %{})
+       }}
+    end
+  end
+
+  defp upsert_public_node_attrs(%Community{} = community, node_id, attrs) do
+    case public_node_by_identity(community, node_id, attrs) do
+      %DocTreeNode{} = node -> ORM.update(node, attrs)
+      nil -> ORM.create(DocTreeNode, attrs)
+    end
+  end
+
+  defp update_public_node_by_node_id(%Community{} = community, node_id, attrs) do
+    case public_node_by_node_id(community, node_id) do
+      %DocTreeNode{} = node -> ORM.update(node, attrs)
+      nil -> {:ok, :missing}
+    end
+  end
+
+  defp delete_public_node_by_node_id(%Community{} = community, node_id) do
+    case public_node_by_node_id(community, node_id) do
+      %DocTreeNode{type: :group} = node ->
+        with :ok <- delete_public_group_children(community, node.node_id) do
+          ORM.delete(node)
+        end
+
+      %DocTreeNode{} = node ->
+        ORM.delete(node)
+
+      nil ->
+        delete_public_group_children(community, node_id)
+    end
+  end
+
+  defp delete_public_group_children(%Community{} = community, group_id) do
+    community
+    |> public_group_children(group_id)
+    |> Enum.reduce_while(:ok, fn node, :ok ->
+      case ORM.delete(node) do
+        {:ok, _node} -> {:cont, :ok}
+        error -> {:halt, error}
+      end
+    end)
+  end
+
+  defp public_node_by_node_id(%Community{} = community, node_id) do
+    DocTreeNode
+    |> where([n], n.community_id == ^community.id)
+    |> where([n], n.stage == CMS.Const.stage(:public))
+    |> where([n], n.node_id == ^to_string(node_id))
+    |> Repo.one()
+  end
+
+  defp public_group_children(%Community{} = community, group_id) do
+    DocTreeNode
+    |> where([n], n.community_id == ^community.id)
+    |> where([n], n.stage == CMS.Const.stage(:public))
+    |> where([n], n.group_id == ^group_id)
+    |> Repo.all()
+  end
+
+  defp field_atom(field) do
+    case Map.fetch(@event_public_fields, field) do
+      {:ok, atom} -> {:ok, atom}
+      :error -> {:error, {:custom, "Unsupported docs tree field: #{field}"}}
+    end
+  end
+
+  defp node_type_atom(type) do
+    case Map.fetch(@event_node_types, type) do
+      {:ok, atom} -> {:ok, atom}
+      :error -> {:error, {:custom, "Unsupported docs tree node type: #{type}"}}
+    end
+  end
+
+  defp create_release(
+         %Community{} = community,
+         %User{} = user,
+         doc_entries,
+         %{events: tree_events, article_snapshots: article_snapshots}
+       ) do
+    tree_json = CMS.DocTree.Snapshot.published_json(community)
+    event_ids = Enum.map(tree_events, & &1.id)
+
+    with {:ok, tree_snapshot} <-
+           Events.publish_snapshot(community, user.id, "publish release",
+             tree_json: tree_json,
+             event_ids: event_ids
+           ),
+         {:ok, _state} <- mark_tree_release_published(community, tree_snapshot),
+         {:ok, release} <-
+           ORM.create(PublishRelease, %{
+             community_id: community.id,
+             release_number: next_release_number(community),
+             tree_snapshot_id: tree_snapshot.id,
+             author_id: user.id,
+             published_at: DateTime.utc_now(:second)
+           }),
+         {:ok, _articles} <-
+           create_release_articles(release, doc_entries, tree_events, article_snapshots),
+         {:ok, _events} <- create_release_tree_events(release, tree_events) do
+      {:ok, release}
+    end
+  end
+
+  defp mark_tree_release_published(%Community{} = community, tree_snapshot) do
+    with {:ok, state} <- ORM.find_by(DocsSiteState, community_id: community.id) do
+      ORM.update(state, %{
+        base_snapshot_id: tree_snapshot.id,
+        staged_event_count: Events.staged_tree_event_count(community)
+      })
+    end
+  end
+
+  defp mark_site_release_published(%Community{} = community, %User{} = user, next_scope) do
+    with {:ok, state} <- ORM.find_by(DocsSiteState, community_id: community.id) do
+      attrs = %{
+        last_published_at: DateTime.utc_now(:second),
+        last_published_by_id: user.id
+      }
+
+      attrs =
+        if next_scope.total_count == 0 do
+          Map.put(attrs, :published_version, state.site_draft_version)
+        else
+          attrs
+        end
+
+      ORM.update(state, attrs)
+    end
+  end
+
+  defp create_release_articles(
+         %PublishRelease{} = release,
+         doc_entries,
+         tree_events,
+         article_snapshots
+       ) do
+    doc_rows = Enum.map(doc_entries, &release_article_attrs_from_doc(release, &1))
+
+    tree_rows = release_article_attrs_from_tree_events(release, tree_events, article_snapshots)
+
+    (doc_rows ++ tree_rows)
+    |> Enum.reject(&is_nil/1)
+    |> merge_release_article_attrs()
+    |> Enum.reduce_while({:ok, []}, fn attrs, {:ok, acc} ->
+      case ORM.create(PublishReleaseArticle, attrs) do
+        {:ok, row} -> {:cont, {:ok, [row | acc]}}
+        error -> {:halt, error}
+      end
+    end)
+    |> case do
+      {:ok, rows} -> {:ok, Enum.reverse(rows)}
+      error -> error
+    end
+  end
+
+  defp release_article_attrs_from_doc(%PublishRelease{} = release, %{
+         snapshot: %ArticleSnapshot{} = snapshot,
+         scope_item: scope_item
+       }) do
+    node = public_page_by_doc_id(release.community_id, snapshot.doc_id)
+
+    %{
+      release_id: release.id,
+      doc_id: snapshot.doc_id,
+      snapshot_id: snapshot.id,
+      node_id: node && node.node_id,
+      group_node_id: node && node.group_id,
+      index: node && node.index,
+      title: snapshot.title,
+      actions: [scope_item.action]
+    }
+  end
+
+  defp release_article_attrs_from_tree_events(
+         %PublishRelease{} = release,
+         tree_events,
+         article_snapshots
+       ) do
+    snapshot_rows =
+      article_snapshots
+      |> Map.values()
+      |> Enum.map(&Map.put(&1, :release_id, release.id))
+
+    current_rows =
+      tree_events
+      |> Enum.flat_map(&article_node_ids_from_tree_event/1)
+      |> Enum.uniq()
+      |> Enum.map(fn node_id ->
+        with %DocTreeNode{doc_id: doc_id} = node when not is_nil(doc_id) <-
+               public_page_by_node_id(release.community_id, node_id),
+             %ArticleSnapshot{} = snapshot <-
+               latest_public_article_snapshot(release.community_id, doc_id) do
+          %{
+            release_id: release.id,
+            doc_id: doc_id,
+            snapshot_id: snapshot.id,
+            node_id: node.node_id,
+            group_node_id: node.group_id,
+            index: node.index,
+            title: snapshot.title,
+            actions: actions_from_tree_events(tree_events, node.node_id)
+          }
+        else
+          _ -> nil
+        end
+      end)
+
+    snapshot_rows ++ current_rows
+  end
+
+  defp release_article_snapshots_before_tree_events(%Community{} = community, tree_events) do
+    tree_events
+    |> Enum.flat_map(&release_article_snapshots_before_tree_event(community, &1))
+    |> Enum.reject(&is_nil/1)
+    |> merge_release_article_attrs()
+    |> Map.new(&{&1.node_id, Map.delete(&1, :release_id)})
+  end
+
+  defp release_article_snapshots_before_tree_event(
+         %Community{} = community,
+         %DocTreeEvent{
+           event_type: CMS.Const.tree_event(:node_delete),
+           payload: %{"node" => %{"type" => "group", "id" => id}}
+         } = event
+       ) do
+    community
+    |> public_group_children(id)
+    |> Enum.filter(&(&1.type == :page))
+    |> Enum.map(
+      &release_article_attrs_from_public_node(community.id, &1, [tree_event_action(event)])
     )
   end
 
-  defp find_draft_page(%Community{} = community, article_draft_id) do
-    DocTreeNodeDraft
-    |> where([n], n.community_id == ^community.id)
-    |> where([n], n.type == :page)
-    |> where([n], n.article_draft_id == ^article_draft_id)
-    |> Repo.one()
-    |> case do
-      %DocTreeNodeDraft{} = node -> {:ok, node}
-      nil -> {:error, {:custom, "docs draft page has not been added to the side tree"}}
+  defp release_article_snapshots_before_tree_event(
+         %Community{} = community,
+         %DocTreeEvent{
+           event_type: CMS.Const.tree_event(:node_delete),
+           payload: %{"node" => %{"type" => "page"}}
+         } = event
+       ) do
+    event
+    |> article_node_ids_from_tree_event()
+    |> Enum.map(fn node_id ->
+      with %DocTreeNode{} = node <- public_page_by_node_id(community.id, node_id) do
+        release_article_attrs_from_public_node(community.id, node, [tree_event_action(event)])
+      end
+    end)
+  end
+
+  defp release_article_snapshots_before_tree_event(_community, _event), do: []
+
+  defp release_article_attrs_from_public_node(
+         community_id,
+         %DocTreeNode{doc_id: doc_id} = node,
+         actions
+       )
+       when not is_nil(doc_id) do
+    with %ArticleSnapshot{} = snapshot <- latest_public_article_snapshot(community_id, doc_id) do
+      %{
+        doc_id: doc_id,
+        snapshot_id: snapshot.id,
+        node_id: node.node_id,
+        group_node_id: node.group_id,
+        index: node.index,
+        title: snapshot.title,
+        actions: actions
+      }
     end
   end
 
-  defp find_draft_group(%Community{} = community, group_id) do
-    DocTreeNodeDraft
+  defp release_article_attrs_from_public_node(_community_id, _node, _actions), do: nil
+
+  defp merge_release_article_attrs(rows) do
+    rows
+    |> Enum.group_by(& &1.doc_id)
+    |> Enum.map(fn {_doc_id, grouped_rows} ->
+      Enum.reduce(grouped_rows, %{}, fn row, acc ->
+        Map.merge(acc, row, fn
+          :actions, left, right -> Enum.uniq(left ++ right)
+          _key, nil, right -> right
+          _key, left, nil -> left
+          _key, _left, right -> right
+        end)
+      end)
+    end)
+  end
+
+  defp create_release_tree_events(%PublishRelease{} = release, tree_events) do
+    tree_events
+    |> Enum.reduce_while({:ok, []}, fn event, {:ok, acc} ->
+      case ORM.create(PublishReleaseTreeEvent, %{
+             release_id: release.id,
+             doc_tree_event_id: event.id,
+             event_type: event.event_type,
+             label: tree_event_label(event),
+             payload: event.payload,
+             inverse_payload: event.inverse_payload
+           }) do
+        {:ok, row} -> {:cont, {:ok, [row | acc]}}
+        error -> {:halt, error}
+      end
+    end)
+    |> case do
+      {:ok, rows} -> {:ok, Enum.reverse(rows)}
+      error -> error
+    end
+  end
+
+  defp public_page_by_doc_id(community_id, doc_id) do
+    DocTreeNode
+    |> where([n], n.community_id == ^community_id)
+    |> where([n], n.stage == CMS.Const.stage(:public))
+    |> where([n], n.type == :page)
+    |> where([n], n.doc_id == ^doc_id)
+    |> Repo.one()
+  end
+
+  defp public_page_by_node_id(community_id, node_id) do
+    DocTreeNode
+    |> where([n], n.community_id == ^community_id)
+    |> where([n], n.stage == CMS.Const.stage(:public))
+    |> where([n], n.type == :page)
+    |> where([n], n.node_id == ^node_id)
+    |> Repo.one()
+  end
+
+  defp latest_public_article_snapshot(community_id, doc_id) do
+    ArticleSnapshot
+    |> where([r], r.community_id == ^community_id)
+    |> where([r], r.stage == CMS.Const.stage(:public))
+    |> where([r], r.thread == :doc)
+    |> where([r], r.doc_id == ^doc_id)
+    |> order_by([r], desc: r.snapshot_number, desc: r.id)
+    |> limit(1)
+    |> Repo.one()
+  end
+
+  defp article_node_ids_from_tree_event(%DocTreeEvent{
+         event_type: CMS.Const.tree_event(:node_create),
+         payload: %{"node" => %{"type" => "page", "id" => id}}
+       }),
+       do: [id]
+
+  defp article_node_ids_from_tree_event(%DocTreeEvent{
+         event_type: CMS.Const.tree_event(:node_delete),
+         payload: %{"node" => %{"type" => "page", "id" => id}}
+       }),
+       do: [id]
+
+  defp article_node_ids_from_tree_event(%DocTreeEvent{payload: %{"nodeId" => id}}), do: [id]
+  defp article_node_ids_from_tree_event(_event), do: []
+
+  defp actions_from_tree_events(tree_events, node_id) do
+    tree_events
+    |> Enum.filter(&(node_id in article_node_ids_from_tree_event(&1)))
+    |> Enum.map(&tree_event_action/1)
+    |> Enum.uniq()
+  end
+
+  defp next_release_number(%Community{} = community) do
+    PublishRelease
+    |> where([r], r.community_id == ^community.id)
+    |> select([r], max(r.release_number))
+    |> Repo.one()
+    |> case do
+      nil -> 1
+      number -> number + 1
+    end
+  end
+
+  defp doc_change_items(%Community{} = community) do
+    drafts =
+      Doc
+      |> where([d], d.community_id == ^community.id)
+      |> where([d], d.stage == CMS.Const.stage(:draft))
+      |> order_by([d], asc: d.inserted_at, asc: d.id)
+      |> Repo.all()
+
+    drafts_by_doc_id = Map.new(drafts, &{&1.doc_id, &1})
+    pages = publish_pages_for_drafts(community, Map.keys(drafts_by_doc_id))
+    pages_by_doc_id = Map.new(pages, &{&1.doc_id, &1})
+
+    Enum.map(drafts, fn draft ->
+      page = Map.get(pages_by_doc_id, draft.doc_id)
+      public = public_article_snapshot(community, draft)
+      action = if public, do: "modified", else: "created"
+      selectable = not is_nil(page)
+      disabled_reason = unless selectable, do: "Doc draft is not attached to a tree page."
+
+      %{
+        id: "doc:#{draft.doc_id}",
+        doc_id: draft.doc_id,
+        page_node_id: page && page.node_id,
+        title: draft.title,
+        action: action,
+        selected_by_default: selectable,
+        selectable: selectable,
+        disabled_reason: disabled_reason
+      }
+    end)
+  end
+
+  defp tree_change_items(%Community{} = community) do
+    community
+    |> Events.staged_events(owner: CMS.Const.tree_event_owner(:tree))
+    |> Enum.reject(&doc_bound_page_create_event?(community, &1))
+    |> Enum.reject(&doc_bound_group_create_event?(community, &1))
+    |> Enum.map(fn event ->
+      {selectable, disabled_reason} = tree_event_select_state(community, event)
+
+      %{
+        id: "tree:#{event.id}",
+        event_id: event.id,
+        title: tree_event_label(event),
+        action: tree_event_action(event),
+        selected_by_default: selectable,
+        selectable: selectable,
+        disabled_reason: disabled_reason
+      }
+    end)
+  end
+
+  defp doc_bound_page_create_event?(
+         %Community{} = community,
+         %DocTreeEvent{
+           event_type: CMS.Const.tree_event(:node_create),
+           payload: %{"node" => %{"type" => "page", "docId" => doc_id}}
+         }
+       ) do
+    match?(
+      {:ok, %Doc{}},
+      ORM.find_by(Doc, community_id: community.id, doc_id: doc_id, stage: CMS.Const.stage(:draft))
+    )
+  end
+
+  defp doc_bound_page_create_event?(_community, _event), do: false
+
+  defp doc_bound_group_create_event?(
+         %Community{} = community,
+         %DocTreeEvent{
+           event_type: CMS.Const.tree_event(:node_create),
+           payload: %{"node" => %{"type" => "group", "id" => group_id}}
+         }
+       ) do
+    draft_doc_ids =
+      Doc
+      |> where([d], d.community_id == ^community.id)
+      |> where([d], d.stage == CMS.Const.stage(:draft))
+      |> select([d], d.doc_id)
+      |> Repo.all()
+
+    DocTreeNode
     |> where([n], n.community_id == ^community.id)
+    |> where([n], n.stage == CMS.Const.stage(:draft))
+    |> where([n], n.type == :page)
+    |> where([n], n.group_id == ^group_id)
+    |> where([n], n.doc_id in ^draft_doc_ids)
+    |> Repo.exists?()
+  end
+
+  defp doc_bound_group_create_event?(_community, _event), do: false
+
+  defp tree_event_select_state(
+         %Community{} = community,
+         %DocTreeEvent{
+           event_type: CMS.Const.tree_event(:node_create),
+           payload: %{"node" => %{"type" => "page"} = node}
+         }
+       ) do
+    with {:ok, %Doc{community_id: _cid}} <-
+           ORM.find_by(Doc,
+             doc_id: node["docId"],
+             stage: CMS.Const.stage(:draft),
+             community_id: community.id
+           ) do
+      {true, nil}
+    else
+      _ -> {false, "Publish the page content first."}
+    end
+  end
+
+  defp tree_event_select_state(_community, _event), do: {true, nil}
+
+  defp public_article_snapshot(%Community{} = community, %Doc{doc_id: doc_id}) do
+    ArticleSnapshot
+    |> where([s], s.community_id == ^community.id)
+    |> where([s], s.stage == CMS.Const.stage(:public))
+    |> where([s], s.thread == :doc)
+    |> where([s], s.doc_id == ^doc_id)
+    |> order_by([s], desc: s.snapshot_number, desc: s.id)
+    |> limit(1)
+    |> Repo.one()
+  end
+
+  defp tree_event_action(%DocTreeEvent{event_type: CMS.Const.tree_event(:node_create)}),
+    do: "created"
+
+  defp tree_event_action(%DocTreeEvent{event_type: CMS.Const.tree_event(:node_delete)}),
+    do: "deleted"
+
+  defp tree_event_action(%DocTreeEvent{event_type: CMS.Const.tree_event(:node_move)}),
+    do: "moved"
+
+  defp tree_event_action(%DocTreeEvent{event_type: type})
+       when type in [
+              CMS.Const.tree_event(:group_rename),
+              CMS.Const.tree_event(:node_rename)
+            ],
+       do: "renamed"
+
+  defp tree_event_action(%DocTreeEvent{}), do: "modified"
+
+  defp tree_event_label(%DocTreeEvent{
+         event_type: CMS.Const.tree_event(:node_create),
+         payload: %{"node" => node}
+       }),
+       do: "Added #{node["title"] || node["id"]}"
+
+  defp tree_event_label(%DocTreeEvent{
+         event_type: CMS.Const.tree_event(:node_delete),
+         payload: %{"node" => node}
+       }),
+       do: "Deleted #{node["title"] || node["id"]}"
+
+  defp tree_event_label(%DocTreeEvent{
+         event_type: CMS.Const.tree_event(:node_move),
+         payload: payload
+       }),
+       do: "Moved #{payload["title"] || payload["nodeId"]}"
+
+  defp tree_event_label(%DocTreeEvent{event_type: type, payload: payload})
+       when type in [
+              CMS.Const.tree_event(:group_rename),
+              CMS.Const.tree_event(:node_rename)
+            ] do
+    "Renamed #{payload["before"] || payload["title"]} -> #{payload["after"]}"
+  end
+
+  defp tree_event_label(%DocTreeEvent{payload: payload}),
+    do: "Updated #{payload["title"] || payload["nodeId"]}"
+
+  defp find_publish_page(%Community{} = community, doc_id, page_node_id) do
+    page =
+      find_page_by_node_id(community, page_node_id, :public) ||
+        find_page_by_node_id(community, page_node_id, :draft) ||
+        find_page_by_doc_id(community, doc_id, :public) ||
+        find_page_by_doc_id(community, doc_id, :draft)
+
+    case page do
+      %DocTreeNode{} = node -> {:ok, node}
+      nil -> {:error, {:custom, "docs page has not been added to the side tree"}}
+    end
+  end
+
+  defp find_page_by_node_id(_community, nil, _stage), do: nil
+
+  defp find_page_by_node_id(%Community{} = community, node_id, stage) do
+    DocTreeNode
+    |> where([n], n.community_id == ^community.id)
+    |> where([n], n.stage == ^stage)
+    |> where([n], n.type == :page)
+    |> where([n], n.node_id == ^to_string(node_id))
+    |> Repo.one()
+  end
+
+  defp find_page_by_doc_id(%Community{} = community, doc_id, stage) do
+    DocTreeNode
+    |> where([n], n.community_id == ^community.id)
+    |> where([n], n.stage == ^stage)
+    |> where([n], n.type == :page)
+    |> where([n], n.doc_id == ^doc_id)
+    |> Repo.one()
+  end
+
+  defp find_publish_group(%Community{} = community, group_id, stage) do
+    DocTreeNode
+    |> where([n], n.community_id == ^community.id)
+    |> where([n], n.stage == ^stage)
     |> where([n], n.type == :group)
-    |> where([n], n.id == ^group_id)
+    |> where([n], n.node_id == ^to_string(group_id))
     |> Repo.one()
     |> case do
-      %DocTreeNodeDraft{} = node -> {:ok, node}
-      nil -> {:error, {:custom, "docs draft page group does not exist"}}
+      %DocTreeNode{} = node -> {:ok, node}
+      nil -> {:error, {:custom, "docs page group does not exist"}}
     end
   end
 
-  defp find_draft_page_by_node_id(%Community{} = community, draft_node_id) do
-    DocTreeNodeDraft
+  defp publish_pages_for_drafts(_community, []), do: []
+
+  defp publish_pages_for_drafts(%Community{} = community, doc_ids) do
+    public_pages = pages_by_doc_ids(community, doc_ids, :public)
+    draft_pages = pages_by_doc_ids(community, doc_ids, :draft)
+
+    public_pages
+    |> Enum.concat(draft_pages)
+    |> Enum.reduce(%{}, fn page, acc -> Map.put_new(acc, page.doc_id, page) end)
+    |> Map.values()
+    |> Enum.sort_by(&{&1.index || 0, &1.id})
+  end
+
+  defp pages_by_doc_ids(%Community{} = community, doc_ids, stage) do
+    DocTreeNode
     |> where([n], n.community_id == ^community.id)
+    |> where([n], n.stage == ^stage)
     |> where([n], n.type == :page)
-    |> where([n], n.id == ^draft_node_id)
-    |> Repo.one()
-    |> case do
-      %DocTreeNodeDraft{} = node -> {:ok, node}
-      nil -> {:error, {:custom, "docs draft page does not exist"}}
-    end
-  end
-
-  defp draft_group_children(%Community{} = community, group_id) do
-    DocTreeNodeDraft
-    |> where([n], n.community_id == ^community.id)
-    |> where([n], n.parent_id == ^group_id)
-    |> where([n], n.type in [:page, :link])
+    |> where([n], n.doc_id in ^doc_ids)
     |> order_by([n], asc: n.index, asc: n.id)
     |> Repo.all()
   end
 
-  defp unpublished_draft_pages(%Community{} = community) do
-    DocTreeNodeDraft
-    |> where([n], n.community_id == ^community.id)
-    |> where([n], n.type == :page)
-    |> where([n], not is_nil(n.article_draft_id))
-    |> join(:inner, [n], g in DocTreeNodeDraft, on: g.id == n.parent_id)
-    |> join(:left, [n, _g], m in DocTreeNodePublishMapping,
-      on: m.community_id == n.community_id and m.draft_node_id == n.id
-    )
-    |> join(:left, [_n, _g, m], p in DocTreeNode, on: p.id == m.published_node_id)
-    |> join(:left, [n, _g, _m, _p], d in ArticleDraft,
-      on: d.community_id == n.community_id and d.id == n.article_draft_id
-    )
-    |> order_by([n, g, _m, _p, _d], asc: g.index, asc: n.index, asc: n.id)
-    |> select([n, _g, m, p, d], {n, m, p, d})
-    |> Repo.all()
-    |> Enum.filter(fn {node, mapping, published_node, draft_doc} ->
-      ChangeDetection.unpublished_mapping?(node, mapping, published_node, draft_doc)
-    end)
-    |> Enum.map(fn {node, _mapping, _published_node, _draft_doc} -> node end)
-  end
-
-  defp batch_publish_context(%Community{} = community, %DocTreeNodeDraft{} = group, children) do
-    draft_nodes = [group | children]
-    draft_node_ids = Enum.map(draft_nodes, & &1.id)
-    draft_doc_ids = draft_nodes |> Enum.map(& &1.article_draft_id) |> Enum.reject(&is_nil/1)
-
-    mappings =
-      DocTreeNodePublishMapping
-      |> where([m], m.community_id == ^community.id)
-      |> where([m], m.draft_node_id in ^draft_node_ids)
-      |> Repo.all()
-      |> Map.new(&{&1.draft_node_id, &1})
-
-    published_node_ids = mappings |> Map.values() |> Enum.map(& &1.published_node_id)
-
-    published_nodes =
-      DocTreeNode
-      |> where([n], n.community_id == ^community.id)
-      |> where([n], n.id in ^published_node_ids)
-      |> Repo.all()
-      |> Map.new(&{&1.id, &1})
-
-    draft_docs =
-      ArticleDraft
-      |> where([d], d.community_id == ^community.id)
-      |> where([d], d.id in ^draft_doc_ids)
-      |> Repo.all()
-      |> Map.new(&{&1.id, &1})
-
-    %{draft_docs: draft_docs, mappings: mappings, published_nodes: published_nodes}
-  end
-
-  defp publish_group_children(
+  defp upsert_public_node(
          %Community{} = community,
-         children,
-         %DocTreeNode{} = group,
-         user,
-         context
+         %DocTreeNode{} = draft_node,
+         group_id \\ nil,
+         doc_id \\ nil,
+         public_nodes \\ nil
        ) do
-    children
-    |> Enum.reduce_while({:ok, %{count: 0, pages: []}}, fn child, {:ok, acc} ->
-      result =
-        case child.type do
-          :page -> publish_group_page(community, child, group, user, context)
-          :link -> publish_group_link(community, child, group, context)
-        end
+    public_nodes =
+      public_nodes ||
+        DocTreeNode
+        |> where([n], n.community_id == ^community.id)
+        |> where([n], n.stage == CMS.Const.stage(:public))
+        |> where([n], n.node_id == ^draft_node.node_id)
+        |> Repo.all()
+        |> Map.new(&{&1.node_id, &1})
 
-      case result do
-        {:ok, %DocTreeNode{type: :page} = page} ->
-          {:cont, {:ok, %{acc | count: acc.count + 1, pages: [page | acc.pages]}}}
+    attrs = public_attrs(draft_node, group_id, doc_id)
 
-        {:ok, %DocTreeNode{}} ->
-          {:cont, {:ok, %{acc | count: acc.count + 1}}}
-
-        error ->
-          {:halt, error}
-      end
-    end)
-    |> case do
-      {:ok, result} -> {:ok, %{result | pages: Enum.reverse(result.pages)}}
-      error -> error
+    case Map.get(public_nodes, draft_node.node_id) ||
+           public_node_by_unique_attrs(community, attrs) do
+      %DocTreeNode{} = public_node -> ORM.update(public_node, attrs)
+      nil -> ORM.create(DocTreeNode, attrs)
     end
   end
 
-  defp publish_group_page(
-         %Community{} = community,
-         %DocTreeNodeDraft{} = draft_page,
-         %DocTreeNode{} = published_group,
-         %User{} = user,
-         context
-       ) do
-    with {:ok, revision} <-
-           CMS.Articles.publish_doc_draft_revision(community, draft_page.article_draft_id, user),
-         {:ok, published_page} <-
-           upsert_published_page(
-             community,
-             draft_page,
-             published_group.id,
-             revision.article_id,
-             context
-           ),
-         {:ok, _page_mapping} <-
-           upsert_mapping(
-             community,
-             draft_page,
-             published_page,
-             Map.get(context.draft_docs, draft_page.article_draft_id),
-             revision.article_id,
-             context
-           ) do
-      {:ok, published_page}
-    end
-  end
-
-  defp publish_group_link(
-         %Community{} = community,
-         %DocTreeNodeDraft{} = draft_link,
-         %DocTreeNode{} = published_group,
-         context
-       ) do
-    with {:ok, published_link} <-
-           upsert_published_link(community, draft_link, published_group.id, context),
-         {:ok, _link_mapping} <-
-           upsert_mapping(community, draft_link, published_link, nil, nil, context) do
-      {:ok, published_link}
-    end
-  end
-
-  defp upsert_published_group(
-         %Community{} = community,
-         %DocTreeNodeDraft{} = draft_group,
-         context \\ nil
-       ) do
-    case published_node_for_draft(community, draft_group.id, context) do
-      {:ok, published} ->
-        ORM.update(published, published_attrs(draft_group, nil, nil))
-
-      {:error, _} ->
-        ORM.create(DocTreeNode, published_attrs(draft_group, community.id, nil))
-    end
-  end
-
-  defp upsert_published_link(
-         %Community{} = community,
-         %DocTreeNodeDraft{} = draft_link,
-         published_group_id,
-         context
-       ) do
-    case published_node_for_draft(community, draft_link.id, context) do
-      {:ok, published} ->
-        ORM.update(published, published_attrs(draft_link, nil, published_group_id))
-
-      {:error, _} ->
-        ORM.create(
-          DocTreeNode,
-          published_attrs(draft_link, community.id, published_group_id)
-        )
-    end
-  end
-
-  defp upsert_published_page(
-         %Community{} = community,
-         %DocTreeNodeDraft{} = draft_page,
-         published_group_id,
-         published_doc_id,
-         context \\ nil
-       ) do
-    case published_node_for_draft(community, draft_page.id, context) do
-      {:ok, published} ->
-        ORM.update(
-          published,
-          published_attrs(draft_page, nil, published_group_id, published_doc_id)
-        )
-
-      {:error, _} ->
-        ORM.create(
-          DocTreeNode,
-          published_attrs(draft_page, community.id, published_group_id, published_doc_id)
-        )
-    end
-  end
-
-  defp published_node_for_draft(%Community{} = community, draft_node_id, nil) do
-    with {:ok, mapping} <- mapping_for_draft(community, draft_node_id) do
-      ORM.find(DocTreeNode, mapping.published_node_id)
-    end
-  end
-
-  defp published_node_for_draft(%Community{}, draft_node_id, context) do
-    with %DocTreeNodePublishMapping{} = mapping <- Map.get(context.mappings, draft_node_id),
-         %DocTreeNode{} = published <- Map.get(context.published_nodes, mapping.published_node_id) do
-      {:ok, published}
-    else
-      _ -> {:error, :not_found}
-    end
-  end
-
-  defp published_attrs(%DocTreeNodeDraft{} = draft_node, community_id, parent_id, doc_id \\ nil) do
+  defp public_attrs(%DocTreeNode{} = draft_node, group_id, doc_id) do
     draft_node
-    |> Map.take(PublishedFields.node_fields())
-    |> Map.merge(%{
-      community_id: community_id || draft_node.community_id,
-      parent_id: parent_id,
-      doc_id: doc_id
-    })
-    |> Enum.reject(fn {_key, value} -> is_nil(value) end)
-    |> Map.new()
+    |> Map.take([
+      :community_id,
+      :node_id,
+      :type,
+      :title,
+      :slug,
+      :index,
+      :href,
+      :marker,
+      :badge,
+      :hidden,
+      :ui_config
+    ])
+    |> Map.merge(%{stage: CMS.Const.stage(:public), group_id: group_id, doc_id: doc_id})
   end
 
-  defp upsert_mapping(
+  defp public_node_by_identity(%Community{} = community, node_id, attrs) do
+    public_node_by_node_id(community, node_id) || public_node_by_unique_attrs(community, attrs)
+  end
+
+  defp public_node_by_unique_attrs(
          %Community{} = community,
-         %DocTreeNodeDraft{} = draft_node,
-         %DocTreeNode{} = published_node,
-         draft_doc,
-         published_doc_id,
-         context \\ nil
+         %{type: :group, group_id: nil} = attrs
        ) do
-    attrs = %{
-      community_id: community.id,
-      draft_node_id: draft_node.id,
-      published_node_id: published_node.id,
-      draft_doc_id: draft_doc && draft_doc.id,
-      published_doc_id: published_doc_id,
-      draft_node_updated_at: draft_node.updated_at,
-      draft_doc_content_hash: draft_doc && draft_doc.content_hash,
-      visibility: :public,
-      last_published_at: DateTime.utc_now(:second)
-    }
-
-    case mapping_for_upsert(community, draft_node.id, context) do
-      {:ok, mapping} -> ORM.update(mapping, attrs)
-      {:error, _} -> ORM.create(DocTreeNodePublishMapping, attrs)
-    end
+    public_root_group_by_slug(community, Map.get(attrs, :slug)) ||
+      public_root_group_by_title(community, Map.get(attrs, :title))
   end
 
-  defp mapping_for_upsert(%Community{} = community, draft_node_id, nil),
-    do: mapping_for_draft(community, draft_node_id)
+  defp public_node_by_unique_attrs(%Community{} = community, %{group_id: group_id} = attrs)
+       when not is_nil(group_id) do
+    public_child_by_slug(community, group_id, Map.get(attrs, :slug)) ||
+      public_child_by_title(community, group_id, Map.get(attrs, :title))
+  end
 
-  defp mapping_for_upsert(%Community{}, draft_node_id, context) do
-    case Map.get(context.mappings, draft_node_id) do
-      %DocTreeNodePublishMapping{} = mapping -> {:ok, mapping}
-      nil -> {:error, :not_found}
-    end
+  defp public_node_by_unique_attrs(_community, _attrs), do: nil
+
+  defp public_root_group_by_slug(_community, slug) when is_nil(slug) or slug == "", do: nil
+
+  defp public_root_group_by_slug(%Community{} = community, slug) do
+    DocTreeNode
+    |> where([n], n.community_id == ^community.id)
+    |> where([n], n.stage == CMS.Const.stage(:public))
+    |> where([n], n.type == :group)
+    |> where([n], is_nil(n.group_id))
+    |> where([n], n.slug == ^slug)
+    |> order_by([n], desc: n.updated_at, desc: n.id)
+    |> limit(1)
+    |> Repo.one()
+  end
+
+  defp public_root_group_by_title(_community, title) when is_nil(title) or title == "", do: nil
+
+  defp public_root_group_by_title(%Community{} = community, title) do
+    DocTreeNode
+    |> where([n], n.community_id == ^community.id)
+    |> where([n], n.stage == CMS.Const.stage(:public))
+    |> where([n], n.type == :group)
+    |> where([n], is_nil(n.group_id))
+    |> where([n], n.title == ^title)
+    |> order_by([n], desc: n.updated_at, desc: n.id)
+    |> limit(1)
+    |> Repo.one()
+  end
+
+  defp public_child_by_slug(_community, _group_id, slug) when is_nil(slug) or slug == "", do: nil
+
+  defp public_child_by_slug(%Community{} = community, group_id, slug) do
+    DocTreeNode
+    |> where([n], n.community_id == ^community.id)
+    |> where([n], n.stage == CMS.Const.stage(:public))
+    |> where([n], n.group_id == ^group_id)
+    |> where([n], n.slug == ^slug)
+    |> order_by([n], desc: n.updated_at, desc: n.id)
+    |> limit(1)
+    |> Repo.one()
+  end
+
+  defp public_child_by_title(_community, _group_id, title) when is_nil(title) or title == "",
+    do: nil
+
+  defp public_child_by_title(%Community{} = community, group_id, title) do
+    DocTreeNode
+    |> where([n], n.community_id == ^community.id)
+    |> where([n], n.stage == CMS.Const.stage(:public))
+    |> where([n], n.group_id == ^group_id)
+    |> where([n], n.title == ^title)
+    |> order_by([n], desc: n.updated_at, desc: n.id)
+    |> limit(1)
+    |> Repo.one()
   end
 
   defp maybe_sync_cover(_community, _published_group, _published_page, false), do: {:ok, :skipped}
@@ -497,32 +1211,6 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          %DocTreeNode{} = group,
          %DocTreeNode{} = page,
          true
-       ) do
-    CMS.DocCover.Sync.sync_published_page(community, group, page)
-  end
-
-  defp maybe_sync_cover_group(_community, _published_group, _pages, false), do: {:ok, :skipped}
-  defp maybe_sync_cover_group(_community, _published_group, [], true), do: {:ok, :skipped}
-
-  defp maybe_sync_cover_group(
-         %Community{} = community,
-         %DocTreeNode{} = group,
-         pages,
-         true
-       ) do
-    with {:ok, cover_group} <- CMS.DocCover.Sync.ensure_cover_group(community, group) do
-      pages
-      |> Enum.reduce_while({:ok, :synced}, fn page, {:ok, _acc} ->
-        case CMS.DocCover.Sync.ensure_cover_item(community, cover_group, page) do
-          {:ok, _item} -> {:cont, {:ok, :synced}}
-          error -> {:halt, error}
-        end
-      end)
-    end
-  end
-
-  defp ensure_public_mapping(%DocTreeNodePublishMapping{visibility: :public}), do: :ok
-
-  defp ensure_public_mapping(%DocTreeNodePublishMapping{}),
-    do: {:error, {:custom, "This doc is already draft."}}
+       ),
+       do: CMS.DocCover.Sync.sync_published_page(community, group, page)
 end

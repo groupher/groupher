@@ -7,7 +7,7 @@ export default function useSalon() {
 
   return {
     input: cn(
-      'h-7 w-full rounded-md border px-2 text-sm outline-none',
+      'h-6 w-full rounded-md border px-2 text-sm outline-none focus:border-digest',
       bg('card'),
       br('divider'),
       fg('title'),

@@ -2,8 +2,15 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export default function useSalon() {
+type TProps = {
+  submenuCollapsed: boolean
+}
+
+export default function useSalon({ submenuCollapsed }: TProps) {
   const { cn, sexyVBorder } = useTwBelt()
+  // The article gutter intentionally grows when the dashboard submenu collapses;
+  // the collapsed icon rail is narrower, so the document needs more breathing room.
+  const articleGutter = submenuCollapsed ? 'pl-20' : 'pl-10'
 
   return {
     wrapper: 'relative w-full min-w-0 overflow-visible!',
@@ -24,6 +31,9 @@ export default function useSalon() {
       'dark:group-hover/docs-tree-resizer:brightness-110',
       'dark:group-data-[separator=active]/docs-tree-resizer:brightness-110',
     ),
-    fillPanel: 'min-w-0 min-h-96',
+    fillPanel: cn(
+      'grid relative min-w-0 min-h-96 overflow-visible! transition-all duration-150 ease-out',
+      articleGutter,
+    ),
   }
 }

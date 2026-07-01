@@ -27,13 +27,18 @@ const MarkerRender: FC<TProps> = ({
   opacity,
   className,
 }) => {
-  const { bg, primary, rainbow } = useTwBelt()
+  const { bg, fg, primary, rainbow } = useTwBelt()
   const wrapperStyle: CSSProperties | undefined = opacity == null ? undefined : { opacity }
   const iconColorClass = color
     ? rainbow(color, 'bg')
     : tone === 'digest'
       ? bg('digest')
       : primary('bg')
+  const strokeIconClass = color
+    ? rainbow(color, 'fg')
+    : tone === 'digest'
+      ? fg('digest')
+      : primary('fg')
 
   if (value.type === MARKER.EMOJI) {
     return (
@@ -51,7 +56,12 @@ const MarkerRender: FC<TProps> = ({
       className={cnMerge('inline-flex items-center justify-center leading-none', className)}
       style={wrapperStyle}
     >
-      <IconNode value={value} size={size} iconColorClass={iconColorClass} />
+      <IconNode
+        value={value}
+        size={size}
+        iconColorClass={iconColorClass}
+        strokeIconClass={strokeIconClass}
+      />
     </span>
   )
 }

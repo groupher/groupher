@@ -2,37 +2,44 @@ defmodule GroupherServer.CMS.DocTree.Revision do
   @moduledoc """
   Revision bookkeeping for docs draft mutations.
 
-  Two counters move together:
+  Tree writes and doc-content writes intentionally share one state row but keep
+  different counters:
 
-      doc_tree_draft_states.revision
-          - narrow counter returned to the editor for conflict detection
+      docs_site_states.tree_lock_version
+          - narrow counter returned to the editor for tree conflict detection
 
-      docs_site_states.draft_revision
-          - site-level counter used to compare with last_published_draft_revision
+      docs_site_states.staged_event_count
+          - count of staged Tree domain events since the latest Tree publish
 
-      has_unpublished_changes =
-        draft_revision != last_published_draft_revision
+      docs_site_states.site_draft_version
+          - site-level counter used to compare with published_version
 
-  They are updated through one `Ecto.Multi` so callers do not accidentally bump
-  the tree revision without bumping the site draft revision.
+  Tree mutations bump the tree lock and site draft version. Doc content
+  mutations only bump the site draft version through `bump_site_draft/1`.
   """
 
   alias Ecto.Multi
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Community, DocsSiteState, DocTreeDraftState}
+  alias CMS.Model.{Community, DocsSiteState}
   alias Helper.{ORM, T}
 
-  @spec bump_draft(Community.t(), DocTreeDraftState.t()) :: T.domain_res(DocTreeDraftState.t())
-  def bump_draft(%Community{} = community, %DocTreeDraftState{} = tree_state) do
+  @spec bump_tree_draft(Community.t(), DocsSiteState.t(), keyword()) ::
+          T.domain_res(DocsSiteState.t())
+  def bump_tree_draft(%Community{} = community, %DocsSiteState{} = state, opts \\ []) do
+    staged_event_delta = Keyword.get(opts, :staged_event_delta, 0)
+
     Multi.new()
     |> Multi.run(:site_state, fn _, _ ->
-      ORM.find_by(DocsSiteState, community_id: community.id)
+      ensure_current_state(community, state)
     end)
-    |> Multi.run(:tree_state, fn _, _ ->
-      ORM.inc(tree_state, :revision)
-    end)
-    |> Multi.run(:updated_site_state, fn _, %{site_state: site_state} ->
-      ORM.inc(site_state, :draft_revision)
+    |> Multi.run(:updated_site_state, fn _, %{site_state: state} ->
+      state
+      |> Ecto.Changeset.change(%{
+        tree_lock_version: state.tree_lock_version + 1,
+        site_draft_version: state.site_draft_version + 1,
+        staged_event_count: state.staged_event_count + staged_event_delta
+      })
+      |> Repo.update()
     end)
     |> Repo.transaction()
     |> result()
@@ -45,15 +52,16 @@ defmodule GroupherServer.CMS.DocTree.Revision do
       ORM.find_by(DocsSiteState, community_id: community.id)
     end)
     |> Multi.run(:updated_site_state, fn _, %{site_state: site_state} ->
-      ORM.inc(site_state, :draft_revision)
+      ORM.inc(site_state, :site_draft_version)
     end)
     |> Repo.transaction()
-    |> site_result()
+    |> result()
   end
 
-  defp result({:ok, %{tree_state: tree_state}}), do: {:ok, tree_state}
-  defp result({:error, _step, reason, _changes}), do: {:error, reason}
+  defp ensure_current_state(%Community{} = community, %DocsSiteState{} = state) do
+    ORM.find_by(DocsSiteState, id: state.id, community_id: community.id)
+  end
 
-  defp site_result({:ok, %{updated_site_state: site_state}}), do: {:ok, site_state}
-  defp site_result({:error, _step, reason, _changes}), do: {:error, reason}
+  defp result({:ok, %{updated_site_state: state}}), do: {:ok, state}
+  defp result({:error, _step, reason, _changes}), do: {:error, reason}
 end

@@ -21,7 +21,7 @@ defmodule GroupherServer.CMS.Articles.List do
   alias CMS.Dashboard.KanbanBoards
   alias CMS.FrontDesk
   alias CMS.Artiment.Enums
-  alias CMS.Model.{Community, PinnedArticle, Post}
+  alias CMS.Model.{Community, Embeds, PinnedArticle, Post}
   alias Helper.{ORM, QueryBuilder, T}
 
   @article_status Enums.status_values() |> Enum.into(%{}, &{&1, &1})
@@ -45,6 +45,7 @@ defmodule GroupherServer.CMS.Articles.List do
       |> QueryBuilder.filter_pack(Map.merge(filter, flags))
       |> ORM.paginator(~m(page size)a)
       |> add_pin_articles_ifneed(info.model, filter)
+      |> normalize_article_entries(thread)
       |> done()
     end
   end
@@ -233,6 +234,37 @@ defmodule GroupherServer.CMS.Articles.List do
     |> Map.put(:entries, pinned_entries ++ normal_entries)
     |> Map.put(:total_count, normal_count)
   end
+
+  defp normalize_article_entries(%{entries: entries} = articles, thread) do
+    entries = Enum.map(entries, &normalize_article_entry(&1, thread))
+    Map.put(articles, :entries, entries)
+  end
+
+  defp normalize_article_entries(articles, _thread), do: articles
+
+  defp normalize_article_entry(article, thread) do
+    article
+    |> ensure_article_meta(thread)
+    |> ensure_active_at()
+  end
+
+  defp ensure_article_meta(%{meta: nil} = article, thread) do
+    meta = Embeds.ArticleMeta.default_meta() |> Map.merge(%{thread: thread})
+    Map.put(article, :meta, meta)
+  end
+
+  defp ensure_article_meta(%{meta: %{thread: nil} = meta} = article, thread) do
+    Map.put(article, :meta, Map.put(meta, :thread, thread))
+  end
+
+  defp ensure_article_meta(article, _thread), do: article
+
+  defp ensure_active_at(%{active_at: nil, inserted_at: inserted_at} = article)
+       when not is_nil(inserted_at) do
+    Map.put(article, :active_at, inserted_at)
+  end
+
+  defp ensure_active_at(article), do: article
 
   defp mark_viewer_has_states(%{entries: []} = articles, _), do: articles
 

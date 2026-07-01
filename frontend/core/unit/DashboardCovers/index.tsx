@@ -3,6 +3,7 @@
 import Link from 'next/link'
 
 import { DSB_SEG } from '~/const/route'
+import useTrans from '~/hooks/useTrans'
 import PinSVG from '~/icons/Pin'
 import type { TDsbCoversConfig } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
@@ -19,6 +20,7 @@ type Props = {
 
 export default function DsbCovers({ config }: Props) {
   const s = useSalon()
+  const { t } = useTrans()
   const { slug } = useCommunity()
 
   const buildHref = (seg: string) => joinPath(slug, DSB_SEG, seg)
@@ -48,7 +50,7 @@ export default function DsbCovers({ config }: Props) {
                       type='button'
                       className={cn(s.pinBtn, pinned && s.pinBtnActive)}
                       aria-pressed={pinned}
-                      aria-label={pinned ? '取消置顶' : '置顶'}
+                      aria-label={pinned ? t('dsb.covers.unpin') : t('dsb.covers.pin')}
                       onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()

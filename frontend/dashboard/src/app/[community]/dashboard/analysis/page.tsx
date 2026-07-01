@@ -1,13 +1,16 @@
 'use client'
 
+import useTrans from '~/hooks/useTrans'
 import DsbCovers from '~/unit/DashboardCovers'
 
 export default function AnalysisCoversPage() {
+  const { t } = useTrans()
+
   return (
     <DsbCovers
       config={{
-        title: '统计分析',
-        desc: '访问趋势，日志及数据分析。',
+        title: t('dsb.menu.analysis'),
+        desc: t('dsb.covers.analysis.desc'),
         items: [],
       }}
     />

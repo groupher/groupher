@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Comments.States do
 
   alias CMS.Events
 
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   @max_parent_replies_count Comment.max_parent_replies_count()
   @pinned_comment_limit Comment.pinned_comment_limit()
@@ -38,8 +38,8 @@ defmodule GroupherServer.CMS.Comments.States do
   def pin(comment_id) do
     with {:ok, comment} <- CommentRead.fetch_comment(comment_id),
          {:ok, comment} <- maybe_existing_pinned_comment(comment),
-         {article_thread, article} <- get_article(comment),
-         {:ok, info} <- match(article_thread) do
+         {thread, article} <- get_article(comment),
+         {:ok, info} <- match(thread) do
       Multi.new()
       |> Multi.run(:checked_pined_comments_count, fn _, _ ->
         pined_comments_query =
@@ -240,10 +240,10 @@ defmodule GroupherServer.CMS.Comments.States do
     end)
     |> Multi.run(:update_article_fold_count, fn _, _ ->
       {:ok, article} = FrontDesk.article_of(comment)
-      {:ok, article_thread} = FrontDesk.thread_of(article)
+      {:ok, thread} = FrontDesk.thread_of(article)
 
       {:ok, %{total_count: total_count}} =
-        CommentList.paged_folded_comments(article_thread, article.id, %{page: 1, size: 1})
+        CommentList.paged_folded_comments(thread, article.id, %{page: 1, size: 1})
 
       meta = article.meta |> Map.put(:folded_comment_count, total_count)
       article |> ORM.update_meta(meta)
@@ -307,16 +307,16 @@ defmodule GroupherServer.CMS.Comments.States do
   end
 
   defp get_article(%Comment{} = comment) do
-    with article_thread <- find_comment_article_thread(comment),
-         {:ok, info} <- match(article_thread),
+    with thread <- find_comment_thread(comment),
+         {:ok, info} <- match(thread),
          article_id <- Map.get(comment, info.foreign_key),
          {:ok, article} <- FrontDesk.get(info.model, article_id, preload: [author: :user]) do
-      {article_thread, article}
+      {thread, article}
     end
   end
 
-  defp find_comment_article_thread(%Comment{} = comment) do
-    @article_threads
+  defp find_comment_thread(%Comment{} = comment) do
+    @threads
     |> Enum.filter(&Map.get(comment, :"#{&1}_id"))
     |> List.first()
   end

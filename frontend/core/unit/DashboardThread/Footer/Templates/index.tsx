@@ -30,7 +30,7 @@ const Templates: FC = () => {
   return (
     <div className={s.wrapper}>
       <fieldset className='w-full'>
-        <legend className='sr-only'>Footer layout</legend>
+        <legend className='sr-only'>{t('dsb.aria.footer_layout')}</legend>
 
         <div className={s.options}>
           <div

@@ -1,3 +1,5 @@
+import type { TTransKey } from '~/spec'
+
 import { FEEDBACK_TAG_GROUPS } from './constant'
 
 /**
@@ -7,7 +9,7 @@ import { FEEDBACK_TAG_GROUPS } from './constant'
  * toggleFeedbackTag(['unclear'], 'typo')
  * // => ['unclear', 'typo']
  */
-export const toggleFeedbackTag = (selected: readonly string[], tag: string): string[] => {
+export const toggleFeedbackTag = (selected: readonly TTransKey[], tag: TTransKey): TTransKey[] => {
   if (selected.includes(tag)) return selected.filter((item) => item !== tag)
 
   return [...selected, tag]
@@ -20,7 +22,7 @@ export const toggleFeedbackTag = (selected: readonly string[], tag: string): str
  * getFeedbackTagsByScore(3)
  * // => ['unclear', ...]
  */
-export const getFeedbackTagsByScore = (score: number): readonly string[] => {
+export const getFeedbackTagsByScore = (score: number): readonly TTransKey[] => {
   return (
     FEEDBACK_TAG_GROUPS.find(({ min, max }) => score >= min && score <= max)?.labels ??
     FEEDBACK_TAG_GROUPS[0].labels

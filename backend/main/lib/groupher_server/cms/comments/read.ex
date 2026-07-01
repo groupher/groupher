@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Comments.Read do
   alias CMS.Comments.Helper, as: CommentHelper
   alias Helper.T
 
-  @article_threads get_config(:article, :threads)
+  @threads get_config(:article, :threads)
 
   @spec fetch_comment(T.id()) :: T.domain_res(Comment.t())
   def fetch_comment(comment_id) do
@@ -44,11 +44,11 @@ defmodule GroupherServer.CMS.Comments.Read do
 
   @spec get_full_comment(T.id()) :: T.domain_res(T.article_info())
   defp get_full_comment(comment_id) do
-    query = from(c in Comment, where: c.id == ^comment_id, preload: ^@article_threads)
+    query = from(c in Comment, where: c.id == ^comment_id, preload: ^@threads)
 
     with {:ok, comment} <- Repo.one(query) |> done(),
-         article_thread <- find_comment_article_thread(comment) do
-      do_extract_article_info(article_thread, Map.get(comment, article_thread))
+         thread <- find_comment_thread(comment) do
+      do_extract_article_info(thread, Map.get(comment, thread))
     end
   end
 
@@ -67,8 +67,8 @@ defmodule GroupherServer.CMS.Comments.Read do
     end
   end
 
-  defp find_comment_article_thread(%Comment{} = comment) do
-    @article_threads
+  defp find_comment_thread(%Comment{} = comment) do
+    @threads
     |> Enum.filter(&Map.get(comment, :"#{&1}_id"))
     |> List.first()
   end

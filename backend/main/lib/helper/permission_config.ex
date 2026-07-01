@@ -25,7 +25,7 @@ defmodule Helper.PermissionConfig do
   @doc """
   Returns configured article thread slugs.
   """
-  def article_threads, do: get_config(:article, :threads) |> Enum.map(&to_string/1)
+  def threads, do: get_config(:article, :threads) |> Enum.map(&to_string/1)
 
   @doc """
   Returns valid system-level grants.
@@ -265,11 +265,11 @@ defmodule Helper.PermissionConfig do
   end
 
   defp thread_scoped?(grant) do
-    Enum.any?(article_threads(), &String.starts_with?(grant, "#{&1}."))
+    Enum.any?(threads(), &String.starts_with?(grant, "#{&1}."))
   end
 
   defp generated_thread_action_requirements do
-    article_threads()
+    threads()
     |> Enum.reduce(%{}, fn thread, acc ->
       acc
       |> Map.merge(direct_thread_requirements(thread, @article_ops))
@@ -293,7 +293,7 @@ defmodule Helper.PermissionConfig do
 
   defp threaded_grants(suffixes) do
     Enum.flat_map(suffixes, fn suffix ->
-      Enum.map(article_threads(), &"#{&1}.#{suffix}")
+      Enum.map(threads(), &"#{&1}.#{suffix}")
     end)
   end
 end

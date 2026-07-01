@@ -86,7 +86,7 @@ const HeaderColumn: FC<TProps> = ({ column, editor, isCollapsed, isCrossGroupTar
               !isMore ? (
                 <GroupDragHandle
                   attributes={attributes}
-                  label='Drag header group'
+                  label={t('dsb.aria.drag_header_group')}
                   listeners={listeners}
                   setActivatorNodeRef={setActivatorNodeRef}
                 />

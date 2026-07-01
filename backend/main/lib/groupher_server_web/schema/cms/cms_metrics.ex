@@ -33,7 +33,7 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     resolve_type(fn parent_module, _ -> module_to_atom(parent_module) end)
   end
 
-  article_thread_enums()
+  thread_enums()
 
   @desc "emotion options of article"
   enum(:article_emotion, do: emotion_values())

@@ -10,7 +10,7 @@ type TProps = {
 }
 
 const Editor: FC<TProps> = ({ value, editorKey = '', onChange }) => {
-  return <RichEditor key={editorKey} defaultValue={value} onChange={onChange} />
+  return <RichEditor key={editorKey} fluid defaultValue={value} onChange={onChange} />
 }
 
 export default Editor

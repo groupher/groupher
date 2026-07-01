@@ -9,7 +9,7 @@ import type { TDsbPath } from '~/spec'
 import useDashboardStore from '~/stores/dashboard/hooks'
 import Sticky from '~/widgets/Sticky'
 
-import { MENU, MENU_VIEW } from '../constant'
+import { DASHBOARD_SIDE_MENU_STICKY_OFFSET, MENU, MENU_VIEW } from '../constant'
 import { getMenuDirection, menuVariants, type TMenuDirection } from './animation'
 import Collapsed from './Collapsed'
 import { SUBMENU_CONFIG, SUBMENU_ROUTE_VIEW } from './constant'
@@ -171,7 +171,7 @@ export default function SideMenu() {
 
   return (
     <div className={s.wrapper}>
-      <Sticky offsetTop={collapsed ? 0 : 36}>{menuContent}</Sticky>
+      <Sticky offsetTop={DASHBOARD_SIDE_MENU_STICKY_OFFSET}>{menuContent}</Sticky>
     </div>
   )
 }

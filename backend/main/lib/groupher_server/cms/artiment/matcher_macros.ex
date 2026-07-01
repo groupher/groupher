@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Artiment.MatcherMacros do
 
   alias CMS.Model.Embeds
 
-  @article_threads Application.compile_env(:groupher_server, :article, [])
+  @threads Application.compile_env(:groupher_server, :article, [])
                    |> Keyword.get(:threads, [])
 
   @doc """
@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Artiment.MatcherMacros do
   }
   """
   defmacro thread_matches do
-    @article_threads
+    @threads
     |> Enum.map(fn thread ->
       quote do
         @spec match(unquote(thread)) :: {:ok, GroupherServer.CMS.Artiment.Matcher.match_info()}
@@ -51,7 +51,7 @@ defmodule GroupherServer.CMS.Artiment.MatcherMacros do
   %{dynamic([c], field(c, :post_id) == ^id)}
   """
   defmacro thread_query_matches do
-    @article_threads
+    @threads
     |> Enum.map(fn thread ->
       quote do
         def match(unquote(thread), :query, id) do

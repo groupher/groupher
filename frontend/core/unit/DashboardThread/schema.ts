@@ -436,7 +436,7 @@ const updateDashboardDocFaq = gql`
 
 const docTreeNodeFields = `
   id
-  parentId
+  groupId
   docId
   type
   title
@@ -452,13 +452,14 @@ const docTreeNodeFields = `
   }
   badge
   hidden
-  expanded
+  uiConfig
   publishState {
-    status
-    published
-    publishedBefore
-    publishedNodeId
-    publishedDocId
+      status
+      published
+      publishedBefore
+      hasDraft
+      publicNodeId
+    publicDocId
     hasUnpublishedChanges
     lastPublishedAt
     inCover
@@ -471,6 +472,27 @@ const docTree = gql`
   query docTree($community: String!) {
     docTree(community: $community) {
       revision
+      treeState {
+        hasUnpublishedChanges
+        stagedEventCount
+        baseSnapshotId
+        latestSnapshotId
+        latestReleaseId
+        latestReleaseNumber
+        revision
+      }
+      stagedEvents {
+        id
+        seq
+        eventType
+        payload
+        inversePayload
+        status
+        insertedAt
+      }
+      pins {
+        ${docTreeNodeFields}
+      }
       groups {
         ${docTreeNodeFields}
         children {
@@ -481,13 +503,38 @@ const docTree = gql`
   }
 `
 
+const docPublishScopeItemFields = `
+  id
+  title
+  action
+  selectedByDefault
+  selectable
+  disabledReason
+`
+
+const docPublishScope = gql`
+  query docPublishScope($community: String!) {
+    docPublishScope(community: $community) {
+      totalCount
+      docChanges {
+        ${docPublishScopeItemFields}
+      }
+      treeChanges {
+        ${docPublishScopeItemFields}
+      }
+    }
+  }
+`
+
 const docDraft = gql`
   query docDraft($community: String!, $id: ID!) {
     docDraft(community: $community, id: $id) {
       id
+      docId
       title
       subtitle
       slug
+      stage
       digest
       insertedAt
       updatedAt
@@ -508,21 +555,20 @@ const docDraft = gql`
   }
 `
 
-const docDraftRevisions = gql`
-  query docDraftRevisions($community: String!, $id: ID!, $type: ArticleRevisionType) {
-    docDraftRevisions(community: $community, id: $id, type: $type) {
+const docDraftSnapshots = gql`
+  query docDraftSnapshots($community: String!, $id: ID!, $stage: ArticleSnapshotStage) {
+    docDraftSnapshots(community: $community, id: $id, stage: $stage) {
       id
       thread
-      type
-      articleId
-      articleDraftId
+      stage
+      docId
       title
       slug
       subtitle
       digest
       documentJson
       contentHash
-      revisionNumber
+      snapshotNumber
       schemaVersion
       insertedAt
       author {
@@ -536,6 +582,15 @@ const docDraftRevisions = gql`
 
 const docTreeMutationPayload = `
   revision
+  treeState {
+    hasUnpublishedChanges
+    stagedEventCount
+    baseSnapshotId
+    latestSnapshotId
+    latestReleaseId
+    latestReleaseNumber
+    revision
+  }
   conflict
   node {
     ${docTreeNodeFields}
@@ -564,6 +619,14 @@ const createDocTreePage = gql`
 const createDocTreeLink = gql`
   mutation ($community: String!, $baseRevision: Int!, $input: DocTreeNodeInput!) {
     createDocTreeLink(community: $community, baseRevision: $baseRevision, input: $input) {
+      ${docTreeMutationPayload}
+    }
+  }
+`
+
+const createDocTreePin = gql`
+  mutation ($community: String!, $baseRevision: Int!, $input: DocTreeNodeInput!) {
+    createDocTreePin(community: $community, baseRevision: $baseRevision, input: $input) {
       ${docTreeMutationPayload}
     }
   }
@@ -600,6 +663,7 @@ const updateDocDraft = gql`
       body: $body
     ) {
       id
+      docId
       title
       subtitle
       slug
@@ -623,20 +687,20 @@ const updateDocDraft = gql`
   }
 `
 
-const checkpointDocDraftRevision = gql`
-  mutation checkpointDocDraftRevision($community: String!, $id: ID!) {
-    checkpointDocDraftRevision(community: $community, id: $id) {
+const checkpointDocDraftSnapshot = gql`
+  mutation checkpointDocDraftSnapshot($community: String!, $id: ID!) {
+    checkpointDocDraftSnapshot(community: $community, id: $id) {
       id
       thread
-      type
-      articleDraftId
+      stage
+      docId
       title
       slug
       subtitle
       documentJson
       digest
       contentHash
-      revisionNumber
+      snapshotNumber
       schemaVersion
       insertedAt
       author {
@@ -648,44 +712,28 @@ const checkpointDocDraftRevision = gql`
   }
 `
 
-const publishDocDraftRevision = gql`
-  mutation publishDocDraftRevision($community: String!, $id: ID!, $mode: DocPublishMode) {
-    publishDocDraftRevision(community: $community, id: $id, mode: $mode) {
-      id
-      thread
-      type
-      articleId
-      articleDraftId
-      title
-      slug
-      subtitle
-      documentJson
-      digest
-      contentHash
-      revisionNumber
-      schemaVersion
-      insertedAt
-      author {
-        login
-        nickname
-        avatar
+const publishDocChanges = gql`
+  mutation publishDocChanges(
+    $community: String!
+    $input: DocPublishChangesInput
+    $mode: DocPublishMode
+  ) {
+    publishDocChanges(community: $community, input: $input, mode: $mode) {
+      done
+      release {
+        id
+        releaseNumber
+        publishedAt
       }
-    }
-  }
-`
-
-const publishAllUnpublishedDocDrafts = gql`
-  mutation publishAllUnpublishedDocDrafts($community: String!, $mode: DocPublishMode) {
-    publishAllUnpublishedDocDrafts(community: $community, mode: $mode) {
-      done
-    }
-  }
-`
-
-const publishDocTreeGroup = gql`
-  mutation publishDocTreeGroup($community: String!, $groupId: ID!, $mode: DocPublishMode) {
-    publishDocTreeGroup(community: $community, groupId: $groupId, mode: $mode) {
-      done
+      scope {
+        totalCount
+        docChanges {
+          ${docPublishScopeItemFields}
+        }
+        treeChanges {
+          ${docPublishScopeItemFields}
+        }
+      }
     }
   }
 `
@@ -693,7 +741,21 @@ const publishDocTreeGroup = gql`
 const moveDocToDraft = gql`
   mutation moveDocToDraft($community: String!, $id: ID!) {
     moveDocToDraft(community: $community, id: $id) {
-      done
+      docId
+      stage
+      publishState {
+        status
+        published
+        publishedBefore
+        hasDraft
+        publicNodeId
+        publicDocId
+        hasUnpublishedChanges
+        lastPublishedAt
+        inCover
+        hiddenFromCover
+        pinnedToCover
+      }
     }
   }
 `
@@ -706,9 +768,9 @@ const moveDocTreeGroupToDraft = gql`
   }
 `
 
-const restoreDocDraftRevision = gql`
-  mutation restoreDocDraftRevision($community: String!, $id: ID!, $revisionId: ID!) {
-    restoreDocDraftRevision(community: $community, id: $id, revisionId: $revisionId) {
+const restoreDocDraftSnapshot = gql`
+  mutation restoreDocDraftSnapshot($community: String!, $id: ID!, $snapshotId: ID!) {
+    restoreDocDraftSnapshot(community: $community, id: $id, snapshotId: $snapshotId) {
       id
       title
       subtitle
@@ -754,14 +816,14 @@ const moveDocTreeNode = gql`
     $community: String!
     $id: ID!
     $baseRevision: Int!
-    $targetParentId: ID
+    $targetGroupId: ID
     $targetIndex: Int
   ) {
     moveDocTreeNode(
       community: $community
       id: $id
       baseRevision: $baseRevision
-      targetParentId: $targetParentId
+      targetGroupId: $targetGroupId
       targetIndex: $targetIndex
     ) {
       ${docTreeMutationPayload}
@@ -1013,20 +1075,20 @@ const schema = {
   pagedChangelogs,
   updateDashboardDocFaq,
   docTree,
+  docPublishScope,
   docDraft,
-  docDraftRevisions,
+  docDraftSnapshots,
   createDocTreeGroup,
   createDocTreePage,
   createDocTreeLink,
+  createDocTreePin,
   updateDocTreeNode,
   updateDocDraft,
-  checkpointDocDraftRevision,
-  publishDocDraftRevision,
-  publishAllUnpublishedDocDrafts,
-  publishDocTreeGroup,
+  checkpointDocDraftSnapshot,
+  publishDocChanges,
   moveDocToDraft,
   moveDocTreeGroupToDraft,
-  restoreDocDraftRevision,
+  restoreDocDraftSnapshot,
   deleteDocTreeNode,
   duplicateDocTreeNode,
   moveDocTreeNode,

@@ -27,6 +27,15 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.doc_tree/3)
     end
 
+    @desc "dashboard docs unified publish scope"
+    field :doc_publish_scope, :doc_publish_scope do
+      arg(:community, non_null(:string))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.doc_publish_scope/3)
+    end
+
     @desc "public community docs cover"
     field :doc_cover, :doc_cover do
       arg(:community, non_null(:string))
@@ -36,7 +45,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.doc_cover/3)
     end
 
-    @desc "dashboard docs draft document"
+    @desc "dashboard docs editor document, preferring draft and falling back to public"
     field :doc_draft, :doc_draft do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
@@ -47,26 +56,26 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     end
 
     @desc "dashboard docs draft revision history"
-    field :doc_draft_revisions, list_of(:article_revision) do
+    field :doc_draft_snapshots, list_of(:article_snapshot) do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
-      arg(:type, :article_revision_type)
+      arg(:stage, :article_snapshot_stage)
       arg(:limit, :integer, default_value: 30)
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.doc_draft_revisions/3)
+      resolve(&R.CMS.doc_draft_snapshots/3)
     end
 
     @desc "one dashboard docs draft revision"
-    field :doc_draft_revision, :article_revision do
+    field :doc_draft_snapshot, :article_snapshot do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
-      arg(:revision_id, non_null(:id))
+      arg(:snapshot_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.doc_draft_revision/3)
+      resolve(&R.CMS.doc_draft_snapshot/3)
     end
 
     @desc "spec community info"

@@ -79,17 +79,20 @@ type RootQueryType {
   "community docs side tree"
   docTree(community: String!): DocTree
 
+  "dashboard docs unified publish scope"
+  docPublishScope(community: String!): DocPublishScope
+
   "public community docs cover"
   docCover(community: String!, view: DocCoverView): DocCover
 
-  "dashboard docs draft document"
+  "dashboard docs editor document, preferring draft and falling back to public"
   docDraft(community: String!, id: ID!): DocDraft
 
   "dashboard docs draft revision history"
-  docDraftRevisions(community: String!, id: ID!, type: ArticleRevisionType, limit: Int): [ArticleRevision]
+  docDraftSnapshots(community: String!, id: ID!, stage: ArticleSnapshotStage, limit: Int): [ArticleSnapshot]
 
   "one dashboard docs draft revision"
-  docDraftRevision(community: String!, id: ID!, revisionId: ID!): ArticleRevision
+  docDraftSnapshot(community: String!, id: ID!, snapshotId: ID!): ArticleSnapshot
 
   "spec community info"
   community(slug: String!, incViews: Boolean): Community
@@ -703,6 +706,9 @@ type RootMutationType {
   "create a docs tree quick link"
   createDocTreeLink(community: String!, baseRevision: Int!, input: DocTreeNodeInput!): DocTreeMutationPayload
 
+  "create a docs tree top pin link"
+  createDocTreePin(community: String!, baseRevision: Int!, input: DocTreeNodeInput!): DocTreeMutationPayload
+
   "update a docs tree node"
   updateDocTreeNode(community: String!, id: ID!, baseRevision: Int!, patch: DocTreeNodePatchInput!): DocTreeMutationPayload
 
@@ -710,25 +716,19 @@ type RootMutationType {
   updateDocDraft(community: String!, id: ID!, title: String, subtitle: String, slug: String, body: String): DocDraft
 
   "save current docs draft as an article revision checkpoint"
-  checkpointDocDraftRevision(community: String!, id: ID!): ArticleRevision
+  checkpointDocDraftSnapshot(community: String!, id: ID!): ArticleSnapshot
 
-  "publish current docs draft as a published article revision"
-  publishDocDraftRevision(community: String!, id: ID!, mode: DocPublishMode): ArticleRevision
-
-  "publish every docs draft page that has not been published yet"
-  publishAllUnpublishedDocDrafts(community: String!, mode: DocPublishMode): DoneState
-
-  "publish one docs side-tree group and its children"
-  publishDocTreeGroup(community: String!, groupId: ID!, mode: DocPublishMode): DoneState
+  "publish selected docs content and tree changes as one release"
+  publishDocChanges(community: String!, input: DocPublishChangesInput, mode: DocPublishMode): DocPublishChangesPayload
 
   "move one published docs page back to draft visibility"
-  moveDocToDraft(community: String!, id: ID!): DoneState
+  moveDocToDraft(community: String!, id: ID!): MoveDocToDraftPayload
 
   "move one docs side-tree group and its children back to draft visibility"
   moveDocTreeGroupToDraft(community: String!, groupId: ID!): DoneState
 
   "restore a docs draft from an article revision"
-  restoreDocDraftRevision(community: String!, id: ID!, revisionId: ID!): DocDraft
+  restoreDocDraftSnapshot(community: String!, id: ID!, snapshotId: ID!): DocDraft
 
   "delete a docs tree node"
   deleteDocTreeNode(community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
@@ -737,7 +737,7 @@ type RootMutationType {
   duplicateDocTreeNode(community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
 
   "move a docs tree node"
-  moveDocTreeNode(community: String!, id: ID!, baseRevision: Int!, targetParentId: ID, targetIndex: Int): DocTreeMutationPayload
+  moveDocTreeNode(community: String!, id: ID!, baseRevision: Int!, targetGroupId: ID, targetIndex: Int): DocTreeMutationPayload
 
   "add a published docs side-tree group to cover"
   addDocCoverGroup(community: String!, groupId: ID!): DocCoverGroup
@@ -784,11 +784,12 @@ enum DocTreeNodeType {
   GROUP
   PAGE
   LINK
+  PIN
 }
 
-enum ArticleRevisionType {
+enum ArticleSnapshotStage {
   DRAFT
-  PUBLISHED
+  PUBLIC
 }
 
 enum DocPublishMode {
@@ -829,7 +830,7 @@ input MarkerInput {
 
 type DocTreeNode {
   id: ID
-  parentId: ID
+  groupId: ID
   docId: ID
   type: DocTreeNodeType
   title: String
@@ -839,7 +840,7 @@ type DocTreeNode {
   marker: Marker
   badge: String
   hidden: Boolean
-  expanded: Boolean
+  uiConfig: Json
   publishState: DocTreeNodePublishState
   children: [DocTreeNode]
 }
@@ -848,8 +849,9 @@ type DocTreeNodePublishState {
   status: DocPublishStatus
   published: Boolean
   publishedBefore: Boolean
-  publishedNodeId: ID
-  publishedDocId: ID
+  hasDraft: Boolean
+  publicNodeId: ID
+  publicDocId: ID
   hasUnpublishedChanges: Boolean
   lastPublishedAt: DateTime
   inCover: Boolean
@@ -857,9 +859,66 @@ type DocTreeNodePublishState {
   pinnedToCover: Boolean
 }
 
+type DocTreeState {
+  hasUnpublishedChanges: Boolean
+  stagedEventCount: Int
+  baseSnapshotId: ID
+  latestSnapshotId: ID
+  latestReleaseId: ID
+  latestReleaseNumber: Int
+  revision: Int
+}
+
+type DocTreeEvent {
+  id: ID
+  seq: Int
+  eventType: String
+  payload: Json
+  inversePayload: Json
+  status: String
+  owner: String
+  docId: ID
+  insertedAt: DateTime
+}
+
 type DocTree {
   revision: Int
+  treeState: DocTreeState
+  stagedEvents: [DocTreeEvent]
+  pins: [DocTreeNode]
   groups: [DocTreeNode]
+}
+
+type DocPublishScopeItem {
+  id: ID!
+  title: String!
+  action: String!
+  selectedByDefault: Boolean!
+  selectable: Boolean!
+  disabledReason: String
+}
+
+type DocPublishScope {
+  totalCount: Int!
+  docChanges: [DocPublishScopeItem!]!
+  treeChanges: [DocPublishScopeItem!]!
+}
+
+type PublishRelease {
+  id: ID!
+  releaseNumber: Int!
+  publishedAt: DateTime!
+}
+
+type DocPublishChangesPayload {
+  done: Boolean!
+  release: PublishRelease
+  scope: DocPublishScope!
+}
+
+input DocPublishChangesInput {
+  docChangeIds: [ID]
+  treeChangeIds: [ID]
 }
 
 type DocCover {
@@ -910,9 +969,11 @@ type DocCoverPinnedItem {
 
 type DocDraft {
   id: ID
+  docId: ID
   title: String
   subtitle: String
   slug: String
+  stage: ArticleSnapshotStage
   digest: String
   author: User
   insertedAt: DateTime
@@ -922,33 +983,38 @@ type DocDraft {
 
 type DocTreeMutationPayload {
   revision: Int
+  treeState: DocTreeState
   node: DocTreeNode
   affectedNodes: [DocTreeNode]
   conflict: Boolean
 }
 
-input DocTreeNodeInput {
-  parentId: ID
+type MoveDocToDraftPayload {
   docId: ID
-  title: String!
+  stage: ArticleSnapshotStage
+  publishState: DocTreeNodePublishState
+}
+
+input DocTreeNodeInput {
+  groupId: ID
+  title: String
   slug: String
   index: Int
   href: String
   marker: MarkerInput
   badge: String
   hidden: Boolean
-  expanded: Boolean
+  uiConfig: Json
 }
 
 input DocTreeNodePatchInput {
-  docId: ID
   title: String
   slug: String
   href: String
   marker: MarkerInput
   badge: String
   hidden: Boolean
-  expanded: Boolean
+  uiConfig: Json
 }
 
 type DsbThemePresetOption {
@@ -988,19 +1054,18 @@ type ThreadDocument {
   rss: String
 }
 
-type ArticleRevision {
+type ArticleSnapshot {
   id: ID
   thread: Thread
-  type: ArticleRevisionType
-  articleId: ID
-  articleDraftId: ID
+  stage: ArticleSnapshotStage
+  docId: String
   title: String
   slug: String
   subtitle: String
   digest: String
   documentJson: String
   contentHash: String
-  revisionNumber: Int
+  snapshotNumber: Int
   schemaVersion: Int
   author: User
   insertedAt: DateTime

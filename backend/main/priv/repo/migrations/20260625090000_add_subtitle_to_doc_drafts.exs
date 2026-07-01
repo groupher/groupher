@@ -12,7 +12,7 @@ defmodule GroupherServer.Repo.Migrations.AddSubtitleToDocDrafts do
       add(:subtitle, :string)
     end
 
-    alter table(:article_revisions, prefix: @prefix) do
+    alter table(:article_snapshots, prefix: @prefix) do
       add(:subtitle, :string)
     end
   end

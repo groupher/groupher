@@ -1,7 +1,9 @@
+'use client'
+
 const NotFound = () => {
   return (
     <div>
-      <div>not found thread ?</div>
+      <div>Community Not Found</div>
     </div>
   )
 }

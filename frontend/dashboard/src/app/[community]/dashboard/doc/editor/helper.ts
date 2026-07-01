@@ -2,11 +2,17 @@ import { print, type DocumentNode } from 'graphql'
 import { headers } from 'next/headers'
 
 import { GRAPHQL_ENDPOINT } from '~/config'
-import type { TDocsEditorInitialData } from '~/unit/DashboardThread/CMS/Docs/Editor'
 import type { TDocTreeNodeDTO } from '~/unit/DashboardThread/CMS/Docs/Editor/SideTree/spec'
 import S from '~/unit/DashboardThread/schema'
 
-import type { TDocDraftQueryData, TDocTreeQueryData, TGraphQLResult } from './spec'
+import type {
+  TDocDraftQueryData,
+  TDocEditorInitialDataResult,
+  TDocTreeQueryData,
+  TGraphQLResult,
+} from './spec'
+
+const isPageNode = (node: TDocTreeNodeDTO): boolean => String(node.type).toLowerCase() === 'page'
 
 /**
  * Normalize one Next.js search param value into a single string.
@@ -81,7 +87,7 @@ export const fetchDashboardGraphQL = async <TData>(
  */
 export const findFirstPage = (groups: readonly TDocTreeNodeDTO[]): TDocTreeNodeDTO | null => {
   for (const group of groups) {
-    const page = group.children?.find((child) => child.type === 'page')
+    const page = group.children?.find(isPageNode)
     if (page) return page
   }
 
@@ -89,7 +95,7 @@ export const findFirstPage = (groups: readonly TDocTreeNodeDTO[]): TDocTreeNodeD
 }
 
 /**
- * Resolve a page node by its article draft docId.
+ * Resolve a page node by its doc id.
  *
  * @example
  * findPageByDocId([{ children: [{ type: 'page', docId: 'doc_1' }] }], 'doc_1')
@@ -102,7 +108,7 @@ export const findPageByDocId = (
   if (!docId) return null
 
   for (const group of groups) {
-    const page = group.children?.find((child) => child.type === 'page' && child.docId === docId)
+    const page = group.children?.find((child) => isPageNode(child) && String(child.docId) === docId)
     if (page) return page
   }
 
@@ -114,19 +120,23 @@ export const findPageByDocId = (
  *
  * @example
  * await getDocEditorInitialData('home', 'doc_welcome')
- * // => { docTree: { ... }, docDraft: { id: 'doc_welcome', ... } }
+ * // => { docTree: { ... }, docDraft: { docId: 'doc_welcome', ... } }
  */
 export const getDocEditorInitialData = async (
   community: string,
   docId: string | null,
-): Promise<TDocsEditorInitialData> => {
+): Promise<TDocEditorInitialDataResult> => {
   try {
     const treeData = await fetchDashboardGraphQL<TDocTreeQueryData>(S.docTree, { community })
     const docTree = treeData?.docTree ?? null
-    const activePage = docTree ? findPageByDocId(docTree.groups, docId) : null
+    // The editor route must have a concrete doc id. If the URL is empty or stale,
+    // pick the first page so SSR can hydrate matching tree + document data.
+    const activePage = docTree
+      ? findPageByDocId(docTree.groups, docId) || findFirstPage(docTree.groups)
+      : null
     const activeDocId = activePage?.docId ?? null
 
-    if (!docTree || !activeDocId) return { docTree, docDraft: null }
+    if (!docTree || !activeDocId) return { docTree, docDraft: null, activeDocId: null }
 
     const draftData = await fetchDashboardGraphQL<TDocDraftQueryData>(S.docDraft, {
       community,
@@ -136,9 +146,10 @@ export const getDocEditorInitialData = async (
     return {
       docTree,
       docDraft: draftData?.docDraft ?? null,
+      activeDocId,
     }
   } catch (err) {
     console.error('## doc editor ssr error: ', err)
-    return { docTree: null, docDraft: null }
+    return { docTree: null, docDraft: null, activeDocId: null }
   }
 }

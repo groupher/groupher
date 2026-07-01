@@ -19,7 +19,11 @@ export default function useSalon() {
     chevron: cn('size-3.5 -rotate-90 trans-all-100', fill('digest')),
     chevronOpen: 'rotate-90',
     detail: cn('mt-3 pb-3 text-base leading-7', fg('digest')),
-    detailMotion: 'overflow-hidden',
+    detailMotion:
+      'grid overflow-hidden transition-[grid-template-rows,opacity] duration-200 ease-out',
+    detailMotionOpen: 'grid-rows-[1fr] opacity-100',
+    detailMotionClosed: 'grid-rows-[0fr] opacity-0 pointer-events-none',
+    detailClip: 'min-h-0 overflow-hidden',
     detailEditor: 'mt-2',
     detailTextarea: 'text-sm',
     detailSavingBar: 'mt-2',

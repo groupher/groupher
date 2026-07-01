@@ -15,9 +15,12 @@ import { nilOrEmpty } from '~/validator'
 import useSalon, { cn } from './salon'
 import Textarea from './Textarea'
 
+export type TFgColor = 'default' | 'title' | 'digest'
+
 type TProps = {
   testid?: string
   behavior?: 'default' | 'textarea'
+  fgColor?: TFgColor
   placeholder?: string
   value?: string | null
   prefixIcon?: string | null
@@ -40,6 +43,7 @@ type TProps = {
 
 const Input: FC<TProps> = ({
   behavior = 'default',
+  fgColor = 'default',
   id = null,
   onChange = null,
   onEnter = null,
@@ -112,6 +116,7 @@ const Input: FC<TProps> = ({
       onChange={onChange}
       focusOnMount={shouldFocusOnMount}
       disableEnter={disableEnter}
+      fgColor={fgColor}
       {...restProps}
     />
   )

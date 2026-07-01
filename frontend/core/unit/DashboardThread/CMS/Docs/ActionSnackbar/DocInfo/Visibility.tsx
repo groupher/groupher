@@ -12,7 +12,7 @@ type TProps = {
   state?: TDocTreeNodePublishState | null
 }
 
-const DocInfoVisibility: FC<TProps> = ({ state }) => {
+const DocInfoStage: FC<TProps> = ({ state }) => {
   const s = useSalon()
   const { t } = useTrans()
   const published = getDocPublishStatus(state) === DOC_PUBLISH_STATUS.PUBLIC
@@ -21,7 +21,7 @@ const DocInfoVisibility: FC<TProps> = ({ state }) => {
     return (
       <div className={s.published}>
         <PaperPlaneTiltSVG className={s.publishedIcon} />
-        <span>{t(DOC_INFO_LABEL_KEY.VISIBILITY_PUBLISHED)}</span>
+        <span>{t(DOC_INFO_LABEL_KEY.STAGE_PUBLISHED)}</span>
       </div>
     )
   }
@@ -29,9 +29,9 @@ const DocInfoVisibility: FC<TProps> = ({ state }) => {
   return (
     <div className={s.unpublished}>
       <span className={s.unpublishedDot} aria-hidden='true' />
-      <span>{t(DOC_INFO_LABEL_KEY.VISIBILITY_UNPUBLISHED)}</span>
+      <span>{t(DOC_INFO_LABEL_KEY.STAGE_UNPUBLISHED)}</span>
     </div>
   )
 }
 
-export default DocInfoVisibility
+export default DocInfoStage
