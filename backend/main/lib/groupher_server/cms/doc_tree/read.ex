@@ -19,9 +19,11 @@ defmodule GroupherServer.CMS.DocTree.Read do
   alias GroupherServer.{CMS, Repo}
   alias CMS.DocTree.{ChangeDetection, Events}
 
+  require CMS.Const
+
   alias CMS.Model.{
     ArticleSnapshot,
-    ArticleWorkspace,
+    Doc,
     Community,
     DocCoverGroup,
     DocCoverItem,
@@ -53,7 +55,11 @@ defmodule GroupherServer.CMS.DocTree.Read do
         %{
           revision: state.tree_lock_version,
           tree_state: tree_state(community, state),
-          staged_events: Enum.map(Events.staged_events(community, owner: :tree), &event_to_map/1),
+          staged_events:
+            Enum.map(
+              Events.staged_events(community, owner: CMS.Const.doc_tree_action_owner(:tree)),
+              &event_to_map/1
+            ),
           pins: pins(nodes, context),
           groups: build_groups(nodes, context)
         }
@@ -95,13 +101,13 @@ defmodule GroupherServer.CMS.DocTree.Read do
 
   ## Examples
 
-      iex> Read.read_draft(community, page.workspace_id)
-      {:ok, %ArticleWorkspace{article_thread: :doc, stage: :draft}}
+      iex> Read.read_draft(community, page.doc_id)
+      {:ok, %Doc{stage: CMS.Const.stage(:draft)}}
   """
-  @spec read_draft(Community.t(), T.id()) :: T.domain_res(ArticleWorkspace.t())
-  def read_draft(%Community{} = community, id) do
-    ArticleWorkspace
-    |> ORM.find_by(id: id, community_id: community.id, article_thread: :doc, stage: :draft)
+  @spec read_draft(Community.t(), String.t()) :: T.domain_res(Doc.t())
+  def read_draft(%Community{} = community, doc_id) do
+    Doc
+    |> ORM.find_by(doc_id: doc_id, community_id: community.id, stage: CMS.Const.stage(:draft))
   end
 
   @doc """
@@ -167,7 +173,6 @@ defmodule GroupherServer.CMS.DocTree.Read do
     %{
       id: node.node_id,
       group_id: node.group_id,
-      workspace_id: node.workspace_id,
       doc_id: node.doc_id,
       type: node.type,
       title: node.title,
@@ -206,40 +211,35 @@ defmodule GroupherServer.CMS.DocTree.Read do
   defp publish_context(%Community{} = community, draft_nodes) do
     node_ids = Enum.map(draft_nodes, & &1.node_id)
 
-    workspace_ids =
-      draft_nodes |> Enum.map(& &1.workspace_id) |> Enum.reject(&is_nil/1)
+    doc_ids =
+      draft_nodes |> Enum.map(& &1.doc_id) |> Enum.reject(&is_nil/1)
 
     public_nodes =
       DocTreeNode
       |> where([n], n.community_id == ^community.id)
-      |> where([n], n.stage == :public)
+      |> where([n], n.stage == CMS.Const.stage(:public))
       |> where([n], n.node_id in ^node_ids)
       |> Repo.all()
       |> Map.new(&{&1.node_id, &1})
 
     draft_versions =
-      ArticleWorkspace
+      Doc
       |> where([v], v.community_id == ^community.id)
-      |> where([v], v.id in ^workspace_ids)
+      |> where([v], v.doc_id in ^doc_ids)
+      |> where([v], v.stage == CMS.Const.stage(:draft))
       |> Repo.all()
-      |> Map.new(&{&1.id, &1})
-
-    public_article_ids =
-      draft_versions
-      |> Map.values()
-      |> Enum.map(& &1.article_id)
-      |> Enum.reject(&is_nil/1)
+      |> Map.new(&{&1.doc_id, &1})
 
     public_versions =
       ArticleSnapshot
       |> where([s], s.community_id == ^community.id)
-      |> where([s], s.stage == :public)
+      |> where([s], s.stage == CMS.Const.stage(:public))
       |> where([s], s.article_thread == :doc)
-      |> where([s], s.article_id in ^public_article_ids)
+      |> where([s], s.doc_id in ^doc_ids)
       |> order_by([s], desc: s.snapshot_number, desc: s.id)
       |> Repo.all()
-      |> Enum.uniq_by(& &1.article_id)
-      |> Map.new(&{&1.article_id, &1})
+      |> Enum.uniq_by(& &1.doc_id)
+      |> Map.new(&{&1.doc_id, &1})
 
     public_row_ids =
       public_nodes
@@ -288,11 +288,10 @@ defmodule GroupherServer.CMS.DocTree.Read do
     public_node = Map.get(context.public_nodes, node.node_id)
 
     draft_version =
-      node.workspace_id && Map.get(context.draft_versions, node.workspace_id)
+      node.doc_id && Map.get(context.draft_versions, node.doc_id)
 
     public_version =
-      draft_version && draft_version.article_id &&
-        Map.get(context.public_versions, draft_version.article_id)
+      draft_version && Map.get(context.public_versions, node.doc_id)
 
     public_row_id = public_node && public_node.id
     cover_group = public_row_id && Map.get(context.cover_groups, public_row_id)
@@ -302,6 +301,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
       status: if(public_node, do: :public, else: :draft),
       published: not is_nil(public_node),
       published_before: not is_nil(public_node),
+      has_draft: not is_nil(draft_version),
       public_node_id: public_node && public_node.node_id,
       public_doc_id: public_node && public_node.doc_id,
       has_unpublished_changes: article_changed?(draft_version, public_version),
@@ -333,7 +333,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
       inverse_payload: event.inverse_payload,
       status: to_string(event.status),
       owner: to_string(event.owner),
-      workspace_id: event.workspace_id,
+      doc_id: event.doc_id,
       inserted_at: event.inserted_at
     }
   end

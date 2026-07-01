@@ -1,8 +1,8 @@
 defmodule GroupherServer.CMS.DocTree.Template do
   @moduledoc """
-  Demo template management for docs draft workspaces.
+  Demo template management for docs drafts.
 
-  The template is dashboard-only. It creates draft tree nodes and article versions
+  The template is dashboard-only. It creates draft tree nodes and docs
   so a new community has editable docs content immediately, but it never writes
   to the published `docs` or `doc_tree_nodes` tables.
 
@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
       create demo groups/pages
               |
               +-- group -> doc_tree_nodes(stage=draft, node_id=...)
-              +-- page  -> article_workspaces(article_thread=doc, stage=draft)
+              +-- page  -> docs(stage=draft)
                          -> doc_tree_nodes.group_id = group.node_id
 
   `template_key` marks all generated rows. The internal delete/reset helpers use
@@ -31,9 +31,11 @@ defmodule GroupherServer.CMS.DocTree.Template do
   alias CMS.Articles.Draft
   alias CMS.DocTree.{Read, Revision}
 
+  require CMS.Const
+
   alias CMS.Model.{
     Author,
-    ArticleWorkspace,
+    Doc,
     Community,
     DocTreeNode
   }
@@ -129,7 +131,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
       |> where([n], n.template_key in ^template_keys)
       |> Repo.delete_all()
 
-      ArticleWorkspace
+      Doc
       |> where([d], d.community_id == ^community.id)
       |> where([d], d.template_key in ^template_keys)
       |> Repo.delete_all()
@@ -145,7 +147,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
     attrs = %{
       community_id: community.id,
       node_id: template_node_id("group:#{group.key}"),
-      stage: :draft,
+      stage: CMS.Const.stage(:draft),
       type: :group,
       title: group.title,
       slug: group.slug,
@@ -189,9 +191,9 @@ defmodule GroupherServer.CMS.DocTree.Template do
       attrs = %{
         community_id: community.id,
         node_id: template_node_id("page:#{group_key}:#{page.key}"),
-        stage: :draft,
+        stage: CMS.Const.stage(:draft),
         group_id: group.node_id,
-        workspace_id: draft.id,
+        doc_id: draft.doc_id,
         type: :page,
         title: page.title,
         slug: page.slug,
@@ -239,7 +241,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
   defp draft_tree_empty?(%Community{} = community) do
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
-    |> where([n], n.stage == :draft)
+    |> where([n], n.stage == CMS.Const.stage(:draft))
     |> Repo.exists?()
     |> Kernel.not()
   end

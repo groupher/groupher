@@ -19,6 +19,8 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   alias GroupherServer.{CMS, Repo}
   alias CMS.Model.{Community, DocTreeNode}
 
+  require CMS.Const
+
   @tree_version 1
 
   @doc """
@@ -97,8 +99,8 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
     |> Map.new()
   end
 
-  defp article_ref_key(%DocTreeNode{stage: :draft}), do: "workspaceId"
-  defp article_ref_key(%DocTreeNode{stage: :public}), do: "docId"
+  defp article_ref_key(%DocTreeNode{stage: CMS.Const.stage(:draft)}), do: "docId"
+  defp article_ref_key(%DocTreeNode{stage: CMS.Const.stage(:public)}), do: "docId"
   defp article_ref_key(_node), do: "docId"
 
   defp stage_json(%Community{} = community, stage) do
@@ -136,9 +138,9 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
     %{"version" => @tree_version, "pins" => pins, "groups" => groups}
   end
 
-  defp article_ref_id(%DocTreeNode{stage: :draft} = node),
-    do: node.workspace_id && to_string(node.workspace_id)
+  defp article_ref_id(%DocTreeNode{stage: CMS.Const.stage(:draft)} = node),
+    do: node.doc_id && to_string(node.doc_id)
 
-  defp article_ref_id(%DocTreeNode{stage: :public} = node),
+  defp article_ref_id(%DocTreeNode{stage: CMS.Const.stage(:public)} = node),
     do: node.doc_id && to_string(node.doc_id)
 end

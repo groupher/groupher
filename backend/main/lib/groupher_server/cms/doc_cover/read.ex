@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.DocCover.Read do
           href -> /:community/doc/:slug
 
       view: :dashboard
-          href -> /:community/dashboard/doc/editor?workspaceId=:workspace_id
+          href -> /:community/dashboard/doc/editor?docId=:doc_id
 
   `view` is intentionally about href generation only. Visibility filtering still
   uses public tree rows, so dashboard preview and public docs look at the same
@@ -25,6 +25,8 @@ defmodule GroupherServer.CMS.DocCover.Read do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
+
+  require CMS.Const
 
   alias CMS.Model.{
     Community,
@@ -38,15 +40,15 @@ defmodule GroupherServer.CMS.DocCover.Read do
 
   @type view :: :public | :dashboard
 
-  @view_values [:public, :dashboard]
   @doc "Allowed cover read views."
-  def view_values, do: @view_values
+  def view_values, do: CMS.Const.doc_cover_view_enum_values()
 
   @doc """
   Reads visible cover groups, items, and pinned items for one community.
   """
   @spec read(Community.t(), view()) :: T.domain_res(map())
-  def read(%Community{} = community, view \\ :public) when view in @view_values do
+  def read(%Community{} = community, view \\ CMS.Const.doc_cover_view(:public))
+      when view in CMS.Const.doc_cover_view_values() do
     groups =
       DocCoverGroup
       |> where([g], g.community_id == ^community.id)
@@ -204,10 +206,10 @@ defmodule GroupherServer.CMS.DocCover.Read do
   end
 
   defp node_href(%Community{slug: community}, :dashboard, _node, %DocTreeNode{
-         workspace_id: workspace_id
+         doc_id: doc_id
        })
-       when not is_nil(workspace_id) do
-    query = URI.encode_query(%{workspaceId: workspace_id})
+       when not is_nil(doc_id) do
+    query = URI.encode_query(%{docId: doc_id})
 
     "/#{community}/dashboard/doc/editor?#{query}"
   end
@@ -233,7 +235,7 @@ defmodule GroupherServer.CMS.DocCover.Read do
     draft_nodes =
       DocTreeNode
       |> where([n], n.community_id == ^community.id)
-      |> where([n], n.stage == :draft)
+      |> where([n], n.stage == CMS.Const.stage(:draft))
       |> where([n], n.node_id in ^node_ids)
       |> Repo.all()
       |> Map.new(&{&1.node_id, &1})

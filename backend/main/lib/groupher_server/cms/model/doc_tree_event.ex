@@ -22,31 +22,16 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.{ArticleWorkspace, Community, DocTreeSnapshot}
+  alias CMS.Model.{Community, DocTreeSnapshot}
   alias Helper.Constant.DBPrefix
+
+  require CMS.Const
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
 
-  @statuses ~w(staged published reverted discarded)a
-  @owners ~w(tree doc)a
-  @event_types ~w(
-    group.rename
-    node.rename
-    node.move
-    node.marker.update
-    link.href.update
-    node.update
-    node.create
-    node.delete
-    pin.add
-    pin.remove
-    pin.reorder
-    pin.update
-  )
-
   @required_fields ~w(community_id seq event_type payload inverse_payload status owner)a
-  @optional_fields ~w(author_id snapshot_id reverted_by_event_id workspace_id)a
+  @optional_fields ~w(author_id snapshot_id reverted_by_event_id doc_id)a
 
   @type t :: %DocTreeEvent{}
   schema "doc_tree_events" do
@@ -54,14 +39,22 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
     belongs_to(:author, User)
     belongs_to(:snapshot, DocTreeSnapshot)
     belongs_to(:reverted_by_event, DocTreeEvent)
-    belongs_to(:workspace, ArticleWorkspace)
+    field(:doc_id, Ecto.UUID)
 
     field(:seq, :integer)
     field(:event_type, :string)
     field(:payload, :map)
     field(:inverse_payload, :map)
-    field(:status, Ecto.Enum, values: @statuses, default: :staged)
-    field(:owner, Ecto.Enum, values: @owners, default: :tree)
+
+    field(:status, Ecto.Enum,
+      values: CMS.Const.doc_tree_event_status_values(),
+      default: CMS.Const.doc_tree_event_status(:staged)
+    )
+
+    field(:owner, Ecto.Enum,
+      values: CMS.Const.doc_tree_action_owner_values(),
+      default: CMS.Const.doc_tree_action_owner(:tree)
+    )
 
     timestamps(type: :utc_datetime)
   end
@@ -72,13 +65,12 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_number(:seq, greater_than: 0)
-    |> validate_inclusion(:event_type, @event_types)
+    |> validate_inclusion(:event_type, CMS.Const.doc_tree_action_enum_values())
     |> validate_doc_owner_binding()
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:author_id)
     |> foreign_key_constraint(:snapshot_id)
     |> foreign_key_constraint(:reverted_by_event_id)
-    |> foreign_key_constraint(:workspace_id)
     |> unique_constraint(:seq, name: :doc_tree_events_community_seq_index)
   end
 
@@ -86,14 +78,14 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
   def update_changeset(%DocTreeEvent{} = event, attrs) do
     event
     |> cast(attrs, @optional_fields ++ [:status, :owner])
-    |> validate_inclusion(:status, @statuses)
-    |> validate_inclusion(:owner, @owners)
+    |> validate_inclusion(:status, CMS.Const.doc_tree_event_status_enum_values())
+    |> validate_inclusion(:owner, CMS.Const.doc_tree_action_owner_enum_values())
     |> validate_doc_owner_binding()
   end
 
   defp validate_doc_owner_binding(changeset) do
     case get_field(changeset, :owner) do
-      :doc -> validate_required(changeset, [:workspace_id])
+      CMS.Const.doc_tree_action_owner(:doc) -> validate_required(changeset, [:doc_id])
       _ -> changeset
     end
   end

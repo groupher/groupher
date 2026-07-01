@@ -24,18 +24,18 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
   alias GroupherServer.CMS
   alias CMS.Marker
-  alias CMS.Model.{ArticleWorkspace, Community, Doc}
+  alias CMS.Model.{Community}
   alias Helper.Constant.DBPrefix
   alias Helper.Validator.Slug
+
+  require CMS.Const
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
 
-  @node_types [:group, :page, :link, :pin]
-  @stages [:draft, :public]
   @required_fields ~w(community_id node_id stage type index)a
   @optional_fields ~w(
-    group_id workspace_id doc_id title slug href marker badge
+    group_id doc_id title slug href marker badge
     hidden template_key ui_config
   )a
 
@@ -45,12 +45,11 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
   schema "doc_tree_nodes" do
     belongs_to(:community, Community)
-    belongs_to(:workspace, ArticleWorkspace)
-    belongs_to(:doc, Doc)
 
+    field(:doc_id, Ecto.UUID)
     field(:node_id, :string)
-    field(:stage, Ecto.Enum, values: @stages)
-    field(:type, Ecto.Enum, values: @node_types)
+    field(:stage, Ecto.Enum, values: CMS.Const.stage_values())
+    field(:type, Ecto.Enum, values: CMS.Const.doc_tree_node_values())
     field(:group_id, :string)
     field(:title, :string)
     field(:slug, :string)
@@ -65,8 +64,8 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     timestamps(type: :utc_datetime)
   end
 
-  def node_types, do: @node_types
-  def stages, do: @stages
+  def node_types, do: CMS.Const.doc_tree_node_enum_values()
+  def stages, do: CMS.Const.stage_enum_values()
 
   @doc """
   Builds a changeset for creating a docs tree node.
@@ -83,8 +82,6 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     |> validate_required(@required_fields)
     |> validate_common()
     |> foreign_key_constraint(:community_id)
-    |> foreign_key_constraint(:workspace_id)
-    |> foreign_key_constraint(:doc_id)
     |> unique_constraint(:node_id, name: :doc_tree_nodes_stage_node_id_index)
     |> unique_constraint(:template_key, name: :doc_tree_nodes_community_stage_template_key_index)
     |> unique_constraint(:slug, name: :doc_tree_nodes_root_slug_index)
@@ -106,8 +103,6 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> Marker.normalize_changeset(:marker)
     |> validate_common()
-    |> foreign_key_constraint(:workspace_id)
-    |> foreign_key_constraint(:doc_id)
     |> unique_constraint(:node_id, name: :doc_tree_nodes_stage_node_id_index)
     |> unique_constraint(:template_key, name: :doc_tree_nodes_community_stage_template_key_index)
     |> unique_constraint(:slug, name: :doc_tree_nodes_root_slug_index)
@@ -118,9 +113,8 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
   defp validate_common(changeset) do
     type = get_field(changeset, :type)
-    stage = get_field(changeset, :stage)
+    _stage = get_field(changeset, :stage)
     group_id = get_field(changeset, :group_id)
-    workspace_id = get_field(changeset, :workspace_id)
     doc_id = get_field(changeset, :doc_id)
     href = get_field(changeset, :href)
 
@@ -133,7 +127,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     |> Slug.validate_changeset(:slug)
     |> validate_title_slug_ref(type)
     |> validate_group_ref(type, group_id)
-    |> validate_article_ref(type, stage, workspace_id, doc_id)
+    |> validate_article_ref(type, doc_id)
     |> validate_link_href(type, href)
   end
 
@@ -157,29 +151,22 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
   defp validate_group_ref(changeset, _type, _group_id), do: changeset
 
-  defp validate_article_ref(changeset, :page, :draft, workspace_id, nil)
-       when not is_nil(workspace_id),
-       do: changeset
+  defp validate_article_ref(changeset, :page, nil),
+    do: add_error(changeset, :doc_id, "page nodes require doc_id")
 
-  defp validate_article_ref(changeset, :page, :public, nil, doc_id) when not is_nil(doc_id),
+  defp validate_article_ref(changeset, :page, doc_id) when not is_nil(doc_id),
     do: changeset
 
-  defp validate_article_ref(changeset, :page, :draft, _workspace_id, _doc_id),
-    do: add_error(changeset, :workspace_id, "draft pages require workspace_id only")
-
-  defp validate_article_ref(changeset, :page, :public, _workspace_id, _doc_id),
-    do: add_error(changeset, :doc_id, "public pages require doc_id only")
-
-  defp validate_article_ref(changeset, type, _stage, workspace_id, doc_id)
+  defp validate_article_ref(changeset, type, doc_id)
        when type in [:group, :link, :pin] do
-    if is_nil(workspace_id) and is_nil(doc_id) do
+    if is_nil(doc_id) do
       changeset
     else
-      add_error(changeset, :workspace_id, "#{type} nodes can not reference articles")
+      add_error(changeset, :doc_id, "#{type} nodes can not reference articles")
     end
   end
 
-  defp validate_article_ref(changeset, _type, _stage, _workspace_id, _doc_id),
+  defp validate_article_ref(changeset, _type, _doc_id),
     do: changeset
 
   defp validate_link_href(changeset, type, href) when type in [:link, :pin] and is_binary(href) do

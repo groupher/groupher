@@ -3,12 +3,12 @@ defmodule GroupherServer.CMS.Model.PublishReleaseArticle do
   Article snapshot membership for one docs release.
 
   The row stores immutable `snapshot_id` rather than the mutable
-  `workspace_id`. The physical public version row may be overwritten by a
+  `doc_id`. The physical public version row may be overwritten by a
   later publish, while the snapshot remains the frozen content used by release
   diff and rollback.
 
       publish_release_articles
-      ├─ article_id          # stable public article identity
+      ├─ doc_id      # stable docs identity
       ├─ snapshot_id # immutable content snapshot
       ├─ node_id/group/index # tree position in this release view
       └─ actions             # release-level summary, e.g. ["modified", "moved"]
@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Model.PublishReleaseArticle do
   ## Example
 
       %PublishReleaseArticle{
-        article_id: 12,
+        doc_id: "7a8f6e3c-1b61-4fc3-bd7b-8f89cf34d522",
         snapshot_id: 98,
         actions: ["modified", "moved"]
       }
@@ -29,14 +29,16 @@ defmodule GroupherServer.CMS.Model.PublishReleaseArticle do
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.Model.{ArticleSnapshot, PublishRelease}
+  alias GroupherServer.CMS
+  alias CMS.Model.{ArticleSnapshot, PublishRelease}
   alias Helper.Constant.DBPrefix
+
+  require CMS.Const
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
 
-  @actions ~w(created modified deleted renamed moved unchanged)
-  @required_fields ~w(release_id article_id snapshot_id title actions)a
+  @required_fields ~w(release_id doc_id snapshot_id title actions)a
   @optional_fields ~w(node_id group_node_id index)a
 
   @type t :: %PublishReleaseArticle{}
@@ -44,7 +46,7 @@ defmodule GroupherServer.CMS.Model.PublishReleaseArticle do
     belongs_to(:release, PublishRelease)
     belongs_to(:snapshot, ArticleSnapshot)
 
-    field(:article_id, :integer)
+    field(:doc_id, Ecto.UUID)
     field(:node_id, :string)
     field(:group_node_id, :string)
     field(:index, :integer)
@@ -59,8 +61,7 @@ defmodule GroupherServer.CMS.Model.PublishReleaseArticle do
     row
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
-    |> validate_number(:article_id, greater_than: 0)
-    |> validate_subset(:actions, @actions)
+    |> validate_subset(:actions, CMS.Const.release_article_action_enum_values())
     |> foreign_key_constraint(:release_id)
     |> foreign_key_constraint(:snapshot_id)
   end

@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
 
   Every write targets `doc_tree_nodes(stage=draft)`. Explicit tree edits append
   `owner=tree` events for the Tree SavingBar. Creating a docs page appends an
-  `owner=doc` event bound to the draft article so the node is published with the
+  `owner=doc` event bound to the draft doc so the node is published with the
   document content instead of through Tree publish.
 
       group/link/pin rename/sort/delete
@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
       page create
                     |
                     v
-      doc_tree_events(owner=doc, workspace_id)  ->  Doc publish
+      doc_tree_events(owner=doc, doc_id)  ->  Doc publish
   """
 
   import Ecto.Query, warn: false
@@ -24,9 +24,11 @@ defmodule GroupherServer.CMS.DocTree.Write do
   alias Accounts.Model.User
   alias CMS.Articles.Draft
   alias CMS.DocTree.{Events, Read, Revision}
-  alias CMS.Model.{ArticleWorkspace, Community, DocsSiteState, DocTreeNode, DocTreeTrashItem}
+  alias CMS.Model.{Doc, Community, DocsSiteState, DocTreeNode, DocTreeTrashItem}
   alias Helper.{ORM, T, Transaction}
   alias Helper.Validator.Slug
+
+  require CMS.Const
 
   @type payload :: map()
 
@@ -43,7 +45,12 @@ defmodule GroupherServer.CMS.DocTree.Write do
     operate(community, args, fn state ->
       attrs =
         args
-        |> Map.merge(%{type: :group, community_id: community.id, stage: :draft, group_id: nil})
+        |> Map.merge(%{
+          type: :group,
+          community_id: community.id,
+          stage: CMS.Const.stage(:draft),
+          group_id: nil
+        })
         |> put_new_node_id()
         |> normalize_title_slug()
         |> unique_create_identity(community, nil)
@@ -58,7 +65,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
   end
 
   @doc """
-  Creates a page node and its default article draft when needed.
+  Creates a page node and its default doc draft when needed.
 
   ## Examples
 
@@ -73,13 +80,13 @@ defmodule GroupherServer.CMS.DocTree.Write do
              args
              |> normalize_title_slug()
              |> unique_create_page_identity(community, parent.node_id),
-           {:ok, args} <- ensure_page_article_workspace(community, args, user) do
+           {:ok, args} <- ensure_doc_draft(community, args, user) do
         attrs =
           args
           |> Map.merge(%{
             type: :page,
             community_id: community.id,
-            stage: :draft,
+            stage: CMS.Const.stage(:draft),
             group_id: parent.node_id
           })
           |> put_new_node_id()
@@ -112,7 +119,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
           |> Map.merge(%{
             type: :link,
             community_id: community.id,
-            stage: :draft,
+            stage: CMS.Const.stage(:draft),
             group_id: parent.node_id
           })
           |> put_new_node_id()
@@ -149,7 +156,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
         |> Map.merge(%{
           type: :pin,
           community_id: community.id,
-          stage: :draft,
+          stage: CMS.Const.stage(:draft),
           group_id: nil
         })
         |> put_new_node_id()
@@ -177,7 +184,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
   def update_node(%Community{} = community, node_id, args) do
     operate(community, args, fn state ->
       with {:ok, node} <- find_node(community, node_id),
-           :ok <- validate_article_workspace(community, Map.get(args, :workspace_id)),
+           :ok <- validate_doc_draft(community, Map.get(args, :doc_id)),
            attrs <- normalize_title_slug(args),
            {:ok, updated_node} <- ORM.update(node, attrs),
            events <- Events.update_events(node, updated_node),
@@ -189,17 +196,17 @@ defmodule GroupherServer.CMS.DocTree.Write do
   end
 
   @doc """
-  Updates the staged article version behind a docs page.
+  Updates the staged doc version behind a docs page.
 
   ## Examples
 
-      iex> Write.update_draft(community, page.workspace_id, %{body: json})
-      {:ok, %ArticleWorkspace{stage: :draft}}
+      iex> Write.update_draft(community, page.doc_id, %{body: json})
+      {:ok, %Doc{stage: CMS.Const.stage(:draft)}}
   """
-  @spec update_draft(Community.t(), T.id(), map()) :: T.domain_res(ArticleWorkspace.t())
-  def update_draft(%Community{} = community, id, args) do
+  @spec update_draft(Community.t(), String.t(), map(), User.t()) :: T.domain_res(Doc.t())
+  def update_draft(%Community{} = community, doc_id, args, %User{} = user) do
     with {:ok, _site_state} <- Read.ensure_site_state(community),
-         {:ok, draft} <- Draft.update(community, id, args),
+         {:ok, draft} <- Draft.update_or_create_from_public(community, doc_id, args, user),
          {:ok, _state} <- Revision.bump_site_draft(community) do
       {:ok, draft}
     end
@@ -209,7 +216,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
   Deletes a draft tree node into docs trash.
 
   The trash snapshot is docs-specific because it stores Tree placement together
-  with the staged article version. Other article threads use their own
+  with the staged doc version. Other article threads use their own
   mark-delete flow.
 
   ## Examples
@@ -222,11 +229,14 @@ defmodule GroupherServer.CMS.DocTree.Write do
     operate(community, args, fn state ->
       with {:ok, node} <- find_node(community, node_id),
            group_id <- node.group_id,
+           subtree <- subtree_nodes(community, node),
            {:ok, _trash_items} <- trash_subtree(community, node, Map.get(args, :actor_id)),
+           :ok <- delete_subtree_doc_drafts(community, node),
            :ok <- delete_subtree(community, node),
            :ok <- normalize_sibling_indexes(community, group_id),
-           {:ok, event_count} <- record_tree_events(community, args, [Events.delete_event(node)]),
-           {:ok, state} <- bump_revision(community, state, event_count) do
+           {:ok, event_delta} <-
+             record_delete_or_discard_tree_events(community, args, node, subtree),
+           {:ok, state} <- bump_revision(community, state, event_delta) do
         {:ok, payload(community, state, nil, affected_nodes(community, group_id))}
       end
     end)
@@ -251,7 +261,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
             :community_id,
             :stage,
             :group_id,
-            :workspace_id,
+            :doc_id,
             :type,
             :href,
             :marker,
@@ -357,14 +367,40 @@ defmodule GroupherServer.CMS.DocTree.Write do
 
   defp record_tree_events(%Community{} = community, args, events) do
     with {:ok, events} <- Events.record_staged_many(community, events, Map.get(args, :actor_id)) do
-      {:ok, Enum.count(events, &(&1.owner == :tree))}
+      {:ok, Enum.count(events, &(&1.owner == CMS.Const.doc_tree_action_owner(:tree)))}
     end
+  end
+
+  defp record_delete_or_discard_tree_events(
+         %Community{} = community,
+         args,
+         %DocTreeNode{} = node,
+         subtree
+       ) do
+    if Enum.any?(subtree, &public_node_exists?(community, &1.node_id)) do
+      record_tree_events(community, args, [Events.delete_event(node)])
+    else
+      discarded =
+        subtree
+        |> Enum.map(& &1.node_id)
+        |> then(&Events.discard_tree_create_staged(community, &1))
+
+      {:ok, -discarded}
+    end
+  end
+
+  defp public_node_exists?(%Community{} = community, node_id) do
+    DocTreeNode
+    |> where([n], n.community_id == ^community.id)
+    |> where([n], n.stage == CMS.Const.stage(:public))
+    |> where([n], n.node_id == ^to_string(node_id))
+    |> Repo.exists?()
   end
 
   defp doc_owned_create_event(%DocTreeNode{} = node) do
     node
     |> Events.create_event()
-    |> Map.merge(%{owner: :doc, workspace_id: node.workspace_id})
+    |> Map.merge(%{owner: CMS.Const.doc_tree_action_owner(:doc), doc_id: node.doc_id})
   end
 
   defp payload(%Community{} = community, %DocsSiteState{} = state, node, affected \\ []) do
@@ -402,8 +438,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
     %{
       community_id: community.id,
       node_id: node.node_id,
-      article_id: node.doc_id,
-      workspace_id: node.workspace_id,
+      doc_id: node.doc_id,
       node_snapshot: Read.to_map(node),
       deleted_from_group_id: node.group_id,
       deleted_from_index: node.index,
@@ -424,11 +459,36 @@ defmodule GroupherServer.CMS.DocTree.Write do
     end)
   end
 
+  defp delete_subtree_doc_drafts(%Community{} = community, %DocTreeNode{} = node) do
+    doc_ids =
+      community
+      |> subtree_nodes(node)
+      |> Enum.filter(&(&1.type == :page))
+      |> Enum.map(& &1.doc_id)
+      |> Enum.reject(&is_nil/1)
+      |> Enum.uniq()
+
+    case doc_ids do
+      [] ->
+        :ok
+
+      doc_ids ->
+        Doc
+        |> where([d], d.community_id == ^community.id)
+        |> where([d], d.stage == CMS.Const.stage(:draft))
+        |> where([d], d.doc_id in ^doc_ids)
+        |> Repo.delete_all()
+
+        Events.discard_doc_bound_staged(community, doc_ids)
+        :ok
+    end
+  end
+
   defp subtree_nodes(%Community{} = community, %DocTreeNode{type: :group} = group) do
     children =
       DocTreeNode
       |> where([n], n.community_id == ^community.id)
-      |> where([n], n.stage == :draft)
+      |> where([n], n.stage == CMS.Const.stage(:draft))
       |> where([n], n.group_id == ^group.node_id)
       |> order_by([n], desc: n.index, desc: n.id)
       |> Repo.all()
@@ -451,24 +511,24 @@ defmodule GroupherServer.CMS.DocTree.Write do
     end
   end
 
-  defp ensure_page_article_workspace(
+  defp ensure_doc_draft(
          %Community{} = community,
-         %{workspace_id: workspace_id} = args,
+         %{doc_id: doc_id} = args,
          _user
        )
-       when not is_nil(workspace_id) do
-    with :ok <- validate_article_workspace(community, workspace_id), do: {:ok, args}
+       when not is_nil(doc_id) do
+    with :ok <- validate_doc_draft(community, doc_id), do: {:ok, args}
   end
 
-  defp ensure_page_article_workspace(_community, args, nil), do: {:ok, args}
+  defp ensure_doc_draft(_community, args, nil), do: {:ok, args}
 
-  defp ensure_page_article_workspace(%Community{} = community, args, %User{} = user) do
-    with {:ok, draft} <- create_default_article_workspace(community, args, user) do
-      {:ok, Map.put(args, :workspace_id, draft.id)}
+  defp ensure_doc_draft(%Community{} = community, args, %User{} = user) do
+    with {:ok, draft} <- create_default_doc_draft(community, args, user) do
+      {:ok, Map.put(args, :doc_id, draft.doc_id)}
     end
   end
 
-  defp create_default_article_workspace(%Community{} = community, args, %User{} = user) do
+  defp create_default_doc_draft(%Community{} = community, args, %User{} = user) do
     title = Map.get(args, :title, "Untitled")
     slug = Map.get(args, :slug) || normalize_doc_slug(title)
 
@@ -533,7 +593,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
   defp next_index(%Community{} = community, group_id, type) do
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
-    |> where([n], n.stage == :draft)
+    |> where([n], n.stage == CMS.Const.stage(:draft))
     |> where_sibling_scope(group_id, type)
     |> select([n], max(n.index))
     |> Repo.one()
@@ -546,7 +606,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
   defp find_node(%Community{} = community, node_id) do
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
-    |> where([n], n.stage == :draft)
+    |> where([n], n.stage == CMS.Const.stage(:draft))
     |> where([n], n.node_id == ^to_string(node_id))
     |> Repo.one()
     |> case do
@@ -582,18 +642,17 @@ defmodule GroupherServer.CMS.DocTree.Write do
     with {:ok, parent} <- group_parent(community, group_id), do: {:ok, parent.node_id}
   end
 
-  defp validate_article_workspace(_community, nil), do: :ok
+  defp validate_doc_draft(_community, nil), do: :ok
 
-  defp validate_article_workspace(%Community{} = community, workspace_id) do
-    ArticleWorkspace
+  defp validate_doc_draft(%Community{} = community, doc_id) do
+    Doc
     |> where([d], d.community_id == ^community.id)
-    |> where([d], d.article_thread == :doc)
-    |> where([d], d.stage == :draft)
-    |> where([d], d.id == ^workspace_id)
+    |> where([d], d.stage == CMS.Const.stage(:draft))
+    |> where([d], d.doc_id == ^doc_id)
     |> Repo.exists?()
     |> case do
       true -> :ok
-      false -> {:error, {:custom, "article draft not in same community"}}
+      false -> {:error, {:custom, "doc draft not found in this community"}}
     end
   end
 
@@ -601,7 +660,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
     query =
       DocTreeNode
       |> where([n], n.community_id == ^community.id)
-      |> where([n], n.stage == :draft)
+      |> where([n], n.stage == CMS.Const.stage(:draft))
       |> where_sibling_scope(group_id, nil)
       |> where([n], n.index >= ^from_index)
 
@@ -617,7 +676,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
   defp normalize_sibling_indexes(%Community{} = community, group_id) do
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
-    |> where([n], n.stage == :draft)
+    |> where([n], n.stage == CMS.Const.stage(:draft))
     |> where_sibling_scope(group_id, nil)
     |> order_by([n], asc: n.index, asc: n.id)
     |> Repo.all()
@@ -632,7 +691,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
   defp affected_nodes(%Community{} = community, group_id) do
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
-    |> where([n], n.stage == :draft)
+    |> where([n], n.stage == CMS.Const.stage(:draft))
     |> where_sibling_scope(group_id, nil)
     |> order_by([n], asc: n.index, asc: n.id)
     |> Repo.all()
@@ -649,7 +708,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
   defp sibling_value_exists?(community, group_id, type, field, value) do
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
-    |> where([n], n.stage == :draft)
+    |> where([n], n.stage == CMS.Const.stage(:draft))
     |> where_sibling_scope(group_id, type)
     |> where([n], field(n, ^field) == ^value)
     |> Repo.exists?()
@@ -661,7 +720,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
     existing =
       DocTreeNode
       |> where([n], n.community_id == ^community.id)
-      |> where([n], n.stage == :draft)
+      |> where([n], n.stage == CMS.Const.stage(:draft))
       |> where_sibling_scope(group_id, type)
       |> select([n], field(n, ^field))
       |> Repo.all()

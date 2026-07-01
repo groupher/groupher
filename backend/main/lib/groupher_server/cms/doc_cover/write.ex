@@ -21,6 +21,8 @@ defmodule GroupherServer.CMS.DocCover.Write do
 
   alias GroupherServer.{CMS, Repo}
 
+  require CMS.Const
+
   alias CMS.Model.{
     Community,
     DocCoverGroup,
@@ -216,7 +218,7 @@ defmodule GroupherServer.CMS.DocCover.Write do
     pages =
       DocTreeNode
       |> where([n], n.community_id == ^community.id)
-      |> where([n], n.stage == :draft)
+      |> where([n], n.stage == CMS.Const.stage(:draft))
       |> where([n], n.group_id == ^to_string(draft_group_id))
       |> where([n], n.type == :page)
       |> Repo.all()

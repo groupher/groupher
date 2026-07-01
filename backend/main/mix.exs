@@ -116,6 +116,7 @@ defmodule GroupherServer.Mixfile do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.10"},
       {:esbuild, "~> 0.10", runtime: Mix.env() == :mock},
+      {:ex_const, "~> 0.3.0"},
       {:tailwind, "~> 0.4", runtime: Mix.env() == :mock},
       {:heroicons,
        github: "tailwindlabs/heroicons",
