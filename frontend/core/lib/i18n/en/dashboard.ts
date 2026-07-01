@@ -725,7 +725,7 @@ export default {
   'dsb.cms.docs.side_tree.menu.hide_from_cover': 'Hide in Cover',
   'dsb.cms.docs.side_tree.menu.publish_group': 'Publish all',
   'dsb.cms.docs.side_tree.menu.move_group_to_draft': 'Draft all',
-  'dsb.cms.docs.side_tree.menu.move_to_draft': 'Move to draft',
+  'dsb.cms.docs.side_tree.menu.move_to_draft': 'To Draft',
   'dsb.cms.docs.side_tree.menu.rename': 'Rename',
   'dsb.cms.docs.side_tree.menu.duplicate': 'Duplicate',
   'dsb.cms.docs.side_tree.menu.delete': 'Delete',
