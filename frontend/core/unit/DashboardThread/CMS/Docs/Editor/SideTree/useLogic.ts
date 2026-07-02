@@ -10,6 +10,7 @@ import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
 import { toast } from '~/widgets/Toaster'
 
+import { reloadDocPublishScope } from '../helper'
 import {
   DEFAULT_LINK_MARKER,
   SIDE_TREE_NODE_MENU_ACTION,
@@ -65,10 +66,7 @@ import type {
   TSideTreeNodeMenuAction,
 } from './spec'
 import useDocEditorUrl from './useDocEditorUrl'
-import useSideTreePersistence, {
-  reloadDocPublishScope,
-  type TSideTreeMutationSchema,
-} from './usePersistence'
+import useSideTreePersistence, { type TSideTreeMutationSchema } from './usePersistence'
 
 type TMoveDocToDraftData = {
   moveDocToDraft?: {

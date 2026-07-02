@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef } from 'react'
 
-import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
-import { send } from '~/lib/signal'
 import { slugify } from '~/lib/slug'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
 import { toast } from '~/widgets/Toaster'
 
+import { reloadDocPublishScope } from '../helper'
 import type { TSideTreeChild } from '../SideTree/spec'
 import useDocsEditor from '../store/hooks'
 import { DOC_AUTO_SAVE_DELAY } from './constant'
@@ -22,10 +21,6 @@ import type { TDraftEditorState } from './useDraftEditorState'
 
 type TParams = {
   patchSideTreeChild: (childId: string, patch: Partial<TSideTreeChild>) => void
-}
-
-const reloadDocPublishScope = (): void => {
-  send(DSB_DOC_EVENT.PUBLISH_SCOPE_RELOAD)
 }
 
 export default function useDraftAutoSave(
@@ -107,6 +102,8 @@ export default function useDraftAutoSave(
       })
       reloadDocPublishScope()
     } catch (err) {
+      if (latestDocIdRef.current !== requestDocId) return
+
       const message = err instanceof Error ? err.message : String(err)
       setSaveError(message)
       toast(message, 'error')

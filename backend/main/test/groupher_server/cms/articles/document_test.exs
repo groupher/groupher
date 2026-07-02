@@ -15,10 +15,10 @@ defmodule GroupherServer.Test.CMS.Articles.Document do
     end
 
     test "returns custom error shape when document already exists", ~m(doc)a do
-      assert {:error, {:custom, "document already exist"}} =
+      assert {:error, {:custom, "document already exists"}} =
                CMS.Articles.Document.create(doc, %{body: @plate_body})
 
-      assert {:error, {:custom, "document already exist"}} =
+      assert {:error, {:custom, "document already exists"}} =
                CMS.Articles.Document.create_doc(doc, %{body: @plate_body})
     end
   end

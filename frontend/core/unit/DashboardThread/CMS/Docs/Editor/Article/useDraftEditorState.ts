@@ -139,7 +139,7 @@ export default function useDraftEditorState(sideTree: TSideTreeController): TDra
         const title = current.title === startedDraft.title ? requestDraft.title : current.title
         const subtitle =
           current.subtitle === startedDraft.subtitle ? requestDraft.subtitle : current.subtitle
-        const slug = current.title === startedDraft.title ? requestDraft.slug : current.slug
+        const slug = current.slug === startedDraft.slug ? requestDraft.slug : current.slug
         const bodyValue =
           current.bodyJson === startedDraft.bodyJson ? requestDraft.bodyValue : current.bodyValue
 
@@ -178,13 +178,22 @@ export default function useDraftEditorState(sideTree: TSideTreeController): TDra
       return
     }
 
+    let canceled = false
+
     const timer = window.setTimeout(() => {
       slugify(trimmedTitle)
-        .then(setDraftSlug)
-        .catch(() => setDraftSlug(''))
+        .then((slug) => {
+          if (!canceled) setDraftSlug(slug)
+        })
+        .catch(() => {
+          if (!canceled) setDraftSlug('')
+        })
     }, 260)
 
-    return () => window.clearTimeout(timer)
+    return () => {
+      canceled = true
+      window.clearTimeout(timer)
+    }
   }, [activePage, draft.title, setDraftSlug])
 
   const setLoading = useCallback((): void => {

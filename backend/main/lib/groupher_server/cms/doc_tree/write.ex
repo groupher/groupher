@@ -378,14 +378,14 @@ defmodule GroupherServer.CMS.DocTree.Write do
          subtree
        ) do
     subtree_node_ids = Enum.map(subtree, & &1.node_id)
+    discarded = Events.discard_tree_create_staged(community, subtree_node_ids)
 
     if public_nodes_exist?(community, subtree_node_ids) do
-      record_tree_events(community, args, [Events.delete_event(node, subtree)])
+      with {:ok, event_count} <-
+             record_tree_events(community, args, [Events.delete_event(node, subtree)]) do
+        {:ok, event_count - discarded}
+      end
     else
-      discarded =
-        subtree_node_ids
-        |> then(&Events.discard_tree_create_staged(community, &1))
-
       {:ok, -discarded}
     end
   end

@@ -1,27 +1,22 @@
 import type { AnyVariables, DocumentInput } from '@urql/core'
-import { type MutableRefObject, useCallback } from 'react'
+import { useCallback } from 'react'
 
-import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTrans from '~/hooks/useTrans'
-import { send } from '~/lib/signal'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/widgets/Toaster'
 
+import { reloadDocPublishScope } from '../helper'
 import { formatMutationError } from './helper'
 import type { TDocTreeMutationData, TDocTreeMutationPayload, TDocTreeState } from './spec'
 
 export type TSideTreeMutationSchema = DocumentInput<TDocTreeMutationData, AnyVariables>
 
 type TParams = {
-  revisionRef: MutableRefObject<number | null>
+  revisionRef: { current: number | null }
   setTreeState: (state: TDocTreeState | null) => void
   setCoverWarning: (message: string | null) => void
   reload: () => void
-}
-
-export const reloadDocPublishScope = (): void => {
-  send(DSB_DOC_EVENT.PUBLISH_SCOPE_RELOAD)
 }
 
 export default function useSideTreePersistence({

@@ -21,7 +21,7 @@ export default function useLogic(sideTree: TSideTreeController) {
     dirty: draftState.dirty,
     editable: draftState.editable,
     editorDocId: draftState.loadStatus.loadedDocId ?? '',
-    error: draftState.loadStatus.error || draftState.saveStatus.error,
+    error: draftState.saveStatus.error || draftState.loadStatus.error,
     invalid: draftState.invalid,
     loading: draftState.loadStatus.loading,
     save,

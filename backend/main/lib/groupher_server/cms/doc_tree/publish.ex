@@ -381,7 +381,9 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     doc_bound_event_ids = doc_bound_tree_event_ids(community, events)
 
     events
-    |> Enum.filter(&MapSet.member?(doc_bound_event_ids, &1.id))
+    |> Enum.filter(fn event ->
+      not is_nil(group_create_event_id(event)) and MapSet.member?(doc_bound_event_ids, event.id)
+    end)
     |> Enum.map(&"tree:#{&1.id}")
   end
 

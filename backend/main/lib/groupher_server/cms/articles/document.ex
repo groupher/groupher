@@ -117,7 +117,7 @@ defmodule GroupherServer.CMS.Articles.Document do
 
   defp maybe_parse_payload(_), do: {:error, {:custom, "payload is required"}}
 
-  defp document_already_exists_error, do: {:error, {:custom, "document already exist"}}
+  defp document_already_exists_error, do: {:error, {:custom, "document already exists"}}
 
   defp article_document_exists?(%Doc{} = article) do
     {:ok, count} =

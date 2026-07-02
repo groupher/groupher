@@ -81,7 +81,9 @@ export const serializeEditorValue = (value: TRichEditorValue): string => JSON.st
 export const draftSignature = ({
   bodyJson,
   subtitle,
-}: Pick<TEditorDraft, 'bodyJson' | 'subtitle'>): string => `${subtitle}\n${bodyJson}`
+  title,
+}: Pick<TEditorDraft, 'bodyJson' | 'subtitle' | 'title'>): string =>
+  `${title}\n${subtitle}\n${bodyJson}`
 
 export const composeEditorDraft = ({
   bodyValue,
@@ -161,9 +163,6 @@ export const composeEditorDraftFromSession = (session: TDocDraftSession): TEdito
     subtitle: session.subtitle,
     title: session.title,
   })
-
-export const composeSavedDraftFromSession = (session: TDocDraftSession): TSavedDraft =>
-  composeSavedDraft(composeEditorDraftFromSession(session))
 
 export const composeDocDraftInfo = ({
   bodyStats,

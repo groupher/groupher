@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
   @moduledoc false
 
   use GroupherServer.TestMate
+  require CMS.Const
 
   import Ecto.Query, warn: false
   import GroupherServer.DataCase, only: [errors_on: 1]
@@ -365,6 +366,57 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
       assert trash.node_snapshot["id"] == page_payload.node.id
       assert trash.deleted_from_group_id == group_payload.node.id
     end
+
+    test "deleting mixed public and draft subtree discards stale staged creates" do
+      {:ok, user} = db_insert(:user)
+      {:ok, community} = empty_docs_community(user)
+      {:ok, before_tree_state} = ORM.find_by(DocsSiteState, community_id: community.id)
+
+      {:ok, group_payload} =
+        CMS.DocTree.create_group(community, %{
+          title: "Guides",
+          slug: "guides",
+          base_revision: before_tree_state.tree_lock_version
+        })
+
+      {:ok, _page_payload} =
+        CMS.DocTree.create_page(
+          community,
+          %{
+            group_id: group_payload.node.id,
+            title: "Install",
+            slug: "install",
+            base_revision: group_payload.revision
+          },
+          user
+        )
+
+      assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+      {:ok, tree} = CMS.DocTree.read(community)
+      [group] = tree.groups
+
+      {:ok, link_payload} =
+        CMS.DocTree.create_link(community, %{
+          group_id: group.id,
+          title: "Draft Link",
+          slug: "draft-link",
+          href: "https://example.com",
+          base_revision: tree.revision
+        })
+
+      {:ok, link_event} = tree_create_event(community, link_payload.node.id)
+      assert link_event.status == CMS.Const.tree_event_status(:staged)
+
+      assert {:ok, _delete_payload} =
+               CMS.DocTree.delete_node(community, group.id, %{
+                 base_revision: link_payload.revision,
+                 actor_id: user.id
+               })
+
+      {:ok, link_event} = ORM.find(DocTreeEvent, link_event.id)
+      assert link_event.status == CMS.Const.tree_event_status(:discarded)
+      assert tree_delete_event_exists?(community, group.id)
+    end
   end
 
   defp empty_docs_community(user) do
@@ -392,15 +444,51 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
   end
 
   defp doc_owned_create_event(community, node_id) do
+    doc_owner = CMS.Const.tree_event_owner(:doc)
+    node_create = CMS.Const.tree_event(:node_create)
+    node_id_path = [CMS.Const.doc_tree_json_key(:node), CMS.Const.doc_tree_json_key(:id)]
+
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
-    |> where([e], e.owner == :doc)
-    |> where([e], e.event_type == "node.create")
-    |> where([e], fragment("?->'node'->>'id'", e.payload) == ^node_id)
+    |> where([e], e.owner == ^doc_owner)
+    |> where([e], e.event_type == ^node_create)
+    |> where([e], fragment("? #>> ?", e.payload, ^node_id_path) == ^node_id)
     |> Repo.one()
   end
 
   defp draft_doc(community, doc_id) do
-    ORM.find_by(Doc, community_id: community.id, doc_id: doc_id, stage: :draft)
+    ORM.find_by(Doc, community_id: community.id, doc_id: doc_id, stage: CMS.Const.stage(:draft))
+  end
+
+  defp tree_create_event(community, node_id) do
+    tree_owner = CMS.Const.tree_event_owner(:tree)
+    node_create = CMS.Const.tree_event(:node_create)
+    node_id_path = [CMS.Const.doc_tree_json_key(:node), CMS.Const.doc_tree_json_key(:id)]
+
+    DocTreeEvent
+    |> where([e], e.community_id == ^community.id)
+    |> where([e], e.owner == ^tree_owner)
+    |> where([e], e.event_type == ^node_create)
+    |> where([e], fragment("? #>> ?", e.payload, ^node_id_path) == ^node_id)
+    |> Repo.one()
+    |> case do
+      %DocTreeEvent{} = event -> {:ok, event}
+      nil -> {:error, {:custom, "Tree create event not found."}}
+    end
+  end
+
+  defp tree_delete_event_exists?(community, node_id) do
+    tree_owner = CMS.Const.tree_event_owner(:tree)
+    staged = CMS.Const.tree_event_status(:staged)
+    node_delete = CMS.Const.tree_event(:node_delete)
+    node_id_path = [CMS.Const.doc_tree_json_key(:node), CMS.Const.doc_tree_json_key(:id)]
+
+    DocTreeEvent
+    |> where([e], e.community_id == ^community.id)
+    |> where([e], e.owner == ^tree_owner)
+    |> where([e], e.status == ^staged)
+    |> where([e], e.event_type == ^node_delete)
+    |> where([e], fragment("? #>> ?", e.payload, ^node_id_path) == ^node_id)
+    |> Repo.exists?()
   end
 end

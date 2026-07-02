@@ -15,10 +15,11 @@ export default function useDraftStoreSync(draftState: TDraftEditorState): void {
       return
     }
 
-    const saveError = dirty ? null : loadStatus.error || saveStatus.error
+    const hasError = !dirty && !!(loadStatus.error || saveStatus.error)
+    const saveError = hasError ? loadStatus.error || saveStatus.error : null
     const storeSaveStatus = saveStatus.saving
       ? 'saving'
-      : loadStatus.error || saveStatus.error
+      : hasError
         ? 'error'
         : dirty
           ? 'dirty'

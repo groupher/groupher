@@ -79,7 +79,44 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
       assert next_scope.total_count == 0
 
       {:ok, legacy_event} = ORM.find(CMS.Model.DocTreeEvent, legacy_event.id)
-      assert legacy_event.status == :published
+      assert legacy_event.status == CMS.Const.tree_event_status(:published)
+    end
+
+    test "tree-only publish does not auto-publish doc-bound page creates",
+         ~m(user community group_payload page_payload)a do
+      {:ok, legacy_event} =
+        CMS.DocTree.Events.record_staged(
+          community,
+          CMS.Const.tree_event(:node_create),
+          %{
+            CMS.Const.doc_tree_json_key(:node) => %{
+              CMS.Const.doc_tree_json_key(:id) => page_payload.node.id,
+              CMS.Const.doc_tree_json_key(:type) => to_string(CMS.Const.tree_node_type(:page)),
+              "title" => page_payload.node.title,
+              "slug" => page_payload.node.slug,
+              "groupId" => group_payload.node.id,
+              CMS.Const.doc_tree_json_key(:doc_id) => page_payload.node.doc_id,
+              "index" => page_payload.node.index
+            }
+          },
+          %{"nodeId" => page_payload.node.id},
+          user.id
+        )
+
+      assert {:ok, %{done: true, scope: next_scope}} =
+               CMS.DocTree.publish_changes(community, %{doc_change_ids: []}, user)
+
+      assert Enum.any?(next_scope.doc_changes, &(&1.doc_id == page_payload.node.doc_id))
+
+      assert {:error, _} =
+               ORM.find_by(CMS.Model.DocTreeNode,
+                 community_id: community.id,
+                 stage: CMS.Const.stage(:public),
+                 node_id: page_payload.node.id
+               )
+
+      {:ok, legacy_event} = ORM.find(CMS.Model.DocTreeEvent, legacy_event.id)
+      assert legacy_event.status == CMS.Const.tree_event_status(:staged)
     end
 
     test "publishes selected changes as one release",

@@ -43,6 +43,9 @@ export default function useDraftLoader(draftState: TDraftEditorState): void {
     }
 
     handledReloadKeyRef.current = revisionReloadKey
+    if (loadStatus.loadedDocId !== null && activePage.docId !== loadStatus.loadedDocId) {
+      resetDraft()
+    }
     setLoading()
 
     const abortController = new AbortController()
