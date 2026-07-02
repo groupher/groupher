@@ -61,6 +61,7 @@ export type TStore = {
   bodyValue: TRichEditorValue
   docDraftInfo: TDocDraftInfo
   mode: TDocEditorMode
+  publishRuntime: TDocPublishRuntime
   publishView: TDocPublishView
   revisionReloadKey: number
   saveError: string | null

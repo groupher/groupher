@@ -224,10 +224,12 @@ defmodule GroupherServer.CMS.DocCover.Read do
 
   defp draft_nodes_by_public_row(%Community{} = community, groups, items, pinned_items) do
     public_nodes =
-      groups
-      |> Enum.map(& &1.group)
-      |> Kernel.++(Enum.map(items, & &1.node))
-      |> Kernel.++(Enum.map(pinned_items, & &1.node))
+      [
+        Enum.map(groups, & &1.group),
+        Enum.map(items, & &1.node),
+        Enum.map(pinned_items, & &1.node)
+      ]
+      |> Enum.concat()
       |> Enum.reject(&is_nil/1)
 
     node_ids = public_nodes |> Enum.map(& &1.node_id) |> Enum.uniq()

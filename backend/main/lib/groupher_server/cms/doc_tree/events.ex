@@ -31,6 +31,12 @@ defmodule GroupherServer.CMS.DocTree.Events do
   require CMS.Const
 
   @tree_fields ~w(title slug marker badge hidden href ui_config)a
+  @doc_tree_json_key_node CMS.Const.doc_tree_json_key(:node)
+  @doc_tree_json_key_id CMS.Const.doc_tree_json_key(:id)
+  @doc_tree_json_key_type CMS.Const.doc_tree_json_key(:type)
+  @doc_tree_json_key_doc_id CMS.Const.doc_tree_json_key(:doc_id)
+  @tree_node_type_group CMS.Const.tree_node_type(:group)
+  @tree_node_type_page_key to_string(CMS.Const.tree_node_type(:page))
 
   @doc """
   Records one staged Tree event.
@@ -155,8 +161,8 @@ defmodule GroupherServer.CMS.DocTree.Events do
 
     %{
       type: CMS.Const.tree_event(:node_create),
-      payload: %{"node" => node_payload},
-      inverse: %{"nodeId" => node_payload["id"]}
+      payload: %{@doc_tree_json_key_node => node_payload},
+      inverse: %{"nodeId" => node_payload[@doc_tree_json_key_id]}
     }
   end
 
@@ -174,8 +180,8 @@ defmodule GroupherServer.CMS.DocTree.Events do
 
     %{
       type: CMS.Const.tree_event(:node_delete),
-      payload: %{"node" => node_payload},
-      inverse: %{"node" => node_payload, "children" => children_payload}
+      payload: %{@doc_tree_json_key_node => node_payload},
+      inverse: %{@doc_tree_json_key_node => node_payload, "children" => children_payload}
     }
   end
 
@@ -303,10 +309,15 @@ defmodule GroupherServer.CMS.DocTree.Events do
       |> where([e], e.status == CMS.Const.tree_event_status(:staged))
       |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
       |> where([e], e.event_type == CMS.Const.tree_event(:node_create))
-      |> where([e], fragment("?->'node'->>'type'", e.payload) == "page")
       |> where(
         [e],
-        fragment("?->'node'->>'docId'", e.payload) == ^doc_id
+        fragment("? #>> ?", e.payload, ^[@doc_tree_json_key_node, @doc_tree_json_key_type]) ==
+          ^@tree_node_type_page_key
+      )
+      |> where(
+        [e],
+        fragment("? #>> ?", e.payload, ^[@doc_tree_json_key_node, @doc_tree_json_key_doc_id]) ==
+          ^doc_id
       )
       |> Repo.update_all(
         set: [
@@ -334,7 +345,10 @@ defmodule GroupherServer.CMS.DocTree.Events do
       |> where([e], e.status == CMS.Const.tree_event_status(:staged))
       |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
       |> where([e], e.event_type == CMS.Const.tree_event(:node_create))
-      |> where([e], fragment("?->'node'->>'id'", e.payload) in ^node_ids)
+      |> where(
+        [e],
+        fragment("? #>> ?", e.payload, ^[@doc_tree_json_key_node, @doc_tree_json_key_id]) in ^node_ids
+      )
       |> Repo.update_all(
         set: [
           status: CMS.Const.tree_event_status(:published),
@@ -374,8 +388,15 @@ defmodule GroupherServer.CMS.DocTree.Events do
       |> where([e], e.status == CMS.Const.tree_event_status(:staged))
       |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
       |> where([e], e.event_type == CMS.Const.tree_event(:node_create))
-      |> where([e], fragment("?->'node'->>'type'", e.payload) == "page")
-      |> where([e], fragment("?->'node'->>'docId'", e.payload) in ^doc_ids)
+      |> where(
+        [e],
+        fragment("? #>> ?", e.payload, ^[@doc_tree_json_key_node, @doc_tree_json_key_type]) ==
+          ^@tree_node_type_page_key
+      )
+      |> where(
+        [e],
+        fragment("? #>> ?", e.payload, ^[@doc_tree_json_key_node, @doc_tree_json_key_doc_id]) in ^doc_ids
+      )
       |> Repo.update_all(
         set: [
           status: CMS.Const.tree_event_status(:discarded),
@@ -454,7 +475,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
 
   defp field_update_event(before, after_node, :title, before_value, after_value) do
     type =
-      if before.type == :group,
+      if before.type == @tree_node_type_group,
         do: CMS.Const.tree_event(:group_rename),
         else: CMS.Const.tree_event(:node_rename)
 

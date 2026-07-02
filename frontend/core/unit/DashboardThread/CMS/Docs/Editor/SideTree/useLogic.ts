@@ -1,5 +1,3 @@
-import type { AnyVariables, DocumentInput } from '@urql/core'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { DOC_STAGE, DSB_DOC_EVENT, type TDocStage } from '~/const/dsb/docs'
@@ -12,7 +10,6 @@ import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
 import { toast } from '~/widgets/Toaster'
 
-import { DOC_EDITOR_QUERY_PARAM } from '../constant'
 import {
   DEFAULT_LINK_MARKER,
   SIDE_TREE_NODE_MENU_ACTION,
@@ -21,7 +18,6 @@ import {
 } from './constant'
 import {
   appendChildToGroup,
-  buildDocEditorUrl,
   createSideTreeChild,
   createSideTreeGroup,
   duplicateChildInGroup,
@@ -68,10 +64,11 @@ import type {
   TSideTreeLinkInput,
   TSideTreeNodeMenuAction,
 } from './spec'
-
-const reloadDocPublishScope = (): void => {
-  send(DSB_DOC_EVENT.PUBLISH_SCOPE_RELOAD)
-}
+import useDocEditorUrl from './useDocEditorUrl'
+import useSideTreePersistence, {
+  reloadDocPublishScope,
+  type TSideTreeMutationSchema,
+} from './usePersistence'
 
 type TMoveDocToDraftData = {
   moveDocToDraft?: {
@@ -86,11 +83,7 @@ const hasDraftNode = (groups: readonly TSideTreeGroup[]): boolean =>
 
 export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeController {
   const { t } = useTrans()
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const searchString = searchParams.toString()
-  const currentDocId = searchParams.get(DOC_EDITOR_QUERY_PARAM.DOC_ID)
+  const { currentDocId, syncDocIdToUrl } = useDocEditorUrl()
   const { slug: community } = useCommunity()
   const { mutate } = useGraphQLClient()
   const { data, reload } = useQuery<{
@@ -116,15 +109,12 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   )
   const [editingTarget, setEditingTarget] = useState<TEditingTarget>(null)
   const [coverWarning, setCoverWarning] = useState<string | null>(null)
-
-  function syncDocIdToUrl(docId: string | null): void {
-    const nextUrl = buildDocEditorUrl(pathname, searchString, docId)
-    const currentUrl = searchString ? `${pathname}?${searchString}` : pathname
-
-    if (nextUrl === currentUrl) return
-
-    router.replace(nextUrl, { scroll: false })
-  }
+  const { persist, persistCoverAction } = useSideTreePersistence({
+    revisionRef,
+    setTreeState,
+    setCoverWarning,
+    reload,
+  })
 
   const syncActiveIdFromUrl = useCallback((sourceGroups: readonly TSideTreeGroup[]): void => {
     const docId = currentDocIdRef.current
@@ -192,65 +182,9 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     syncActiveIdFromUrl(groupsRef.current)
   }, [currentDocId, syncActiveIdFromUrl])
 
-  const persist = useCallback(
-    async (
-      schema,
-      variables: Record<string, unknown>,
-      pickPayload: (data: TDocTreeMutationData) => TDocTreeMutationPayload | null | undefined,
-    ): Promise<TDocTreeMutationPayload | null | undefined> => {
-      try {
-        const data = (await mutate(schema, {
-          community,
-          baseRevision: revisionRef.current,
-          ...variables,
-        })) as TDocTreeMutationData
-        const payload = pickPayload(data)
-
-        if (payload?.conflict) {
-          reload()
-          toast(t('dsb.cms.docs.side_tree.error.tree_conflict'), 'error')
-          return payload
-        }
-
-        if (payload) {
-          revisionRef.current = payload.revision
-          setTreeState(payload.treeState ?? null)
-          reloadDocPublishScope()
-        }
-
-        return payload
-      } catch (err) {
-        console.error('## doc tree mutation error: ', err)
-        toast(formatMutationError(err), 'error')
-        reload()
-        return null
-      }
-    },
-    [community, mutate, reload, t],
-  )
-
-  const persistCoverAction = useCallback(
-    async (
-      schema: DocumentInput<unknown, AnyVariables>,
-      variables: Record<string, unknown>,
-    ): Promise<boolean> => {
-      try {
-        await mutate(schema, { community, ...variables })
-        reload()
-        return true
-      } catch (err) {
-        const message = formatMutationError(err)
-        setCoverWarning(message)
-        reload()
-        return false
-      }
-    },
-    [community, mutate, reload],
-  )
-
   function persistTitleMutation(
     title: string,
-    schema: unknown,
+    schema: TSideTreeMutationSchema,
     variables: (slug: string) => Record<string, unknown>,
     pickPayload: (data: TDocTreeMutationData) => TDocTreeMutationPayload | null | undefined,
     onSuccess: (node: TDocTreeNodeDTO) => void,

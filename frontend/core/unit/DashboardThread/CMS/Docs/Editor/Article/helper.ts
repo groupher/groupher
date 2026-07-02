@@ -1,8 +1,17 @@
 import type { TRichEditorValue } from '@groupher/rich-editor'
 
+import { DOC_STAGE } from '~/const/dsb/docs'
+
 import type { TSideTreePage } from '../SideTree/spec'
 import { EMPTY_EDITOR_VALUE } from './constant'
-import type { TDocDraftDTO, TDocDraftSession } from './spec'
+import type {
+  TDocDraftDTO,
+  TDocDraftSession,
+  TEditorDraft,
+  TEditorDraftMeta,
+  TEditorDraftStorePatchInput,
+  TSavedDraft,
+} from './spec'
 
 type TTextNode = {
   text?: unknown
@@ -69,6 +78,141 @@ export const parseEditorValue = (json?: string | null): TRichEditorValue => {
  */
 export const serializeEditorValue = (value: TRichEditorValue): string => JSON.stringify(value)
 
+export const draftSignature = ({
+  bodyJson,
+  subtitle,
+}: Pick<TEditorDraft, 'bodyJson' | 'subtitle'>): string => `${subtitle}\n${bodyJson}`
+
+export const composeEditorDraft = ({
+  bodyValue,
+  docId,
+  slug,
+  subtitle,
+  title,
+}: Omit<TEditorDraft, 'bodyJson'>): TEditorDraft => ({
+  bodyJson: serializeEditorValue(bodyValue),
+  bodyValue,
+  docId,
+  slug,
+  subtitle,
+  title,
+})
+
+export const composeEmptyEditorDraft = (): TEditorDraft =>
+  composeEditorDraft({
+    bodyValue: EMPTY_EDITOR_VALUE,
+    docId: '',
+    slug: '',
+    subtitle: '',
+    title: '',
+  })
+
+export const composeSavedDraft = (draft: TEditorDraft): TSavedDraft => ({
+  bodyJson: draft.bodyJson,
+  docId: draft.docId,
+  revisionSignature: draftSignature(draft),
+  subtitle: draft.subtitle,
+  title: draft.title,
+})
+
+export const composeEmptySavedDraft = (): TSavedDraft =>
+  composeSavedDraft(composeEmptyEditorDraft())
+
+export const composeEditorDraftMeta = (
+  source?: Partial<TEditorDraftMeta> | null,
+): TEditorDraftMeta => ({
+  author: source?.author ?? null,
+  insertedAt: source?.insertedAt ?? null,
+  stage: source?.stage ?? null,
+  updatedAt: source?.updatedAt ?? null,
+})
+
+export const isDraftDirty = (draft: TEditorDraft, savedDraft: TSavedDraft): boolean => {
+  if (!draft.docId) return false
+  if (draft.docId !== savedDraft.docId) return true
+
+  return (
+    draft.title !== savedDraft.title ||
+    draft.subtitle !== savedDraft.subtitle ||
+    draft.bodyJson !== savedDraft.bodyJson
+  )
+}
+
+export const composeDraftSaveInput = (draft: TEditorDraft, slug: string) => ({
+  body: draft.bodyJson,
+  id: draft.docId,
+  slug,
+  subtitle: draft.subtitle.trim(),
+  title: draft.title.trim(),
+})
+
+export const composeDraftPublishState = (publishState: TSideTreePage['publishState']) => ({
+  ...(publishState ?? {}),
+  hasDraft: true,
+  published: publishState?.published ?? false,
+  status: DOC_STAGE.DRAFT,
+})
+
+export const composeEditorDraftFromSession = (session: TDocDraftSession): TEditorDraft =>
+  composeEditorDraft({
+    bodyValue: session.body,
+    docId: session.info.id,
+    slug: session.slug,
+    subtitle: session.subtitle,
+    title: session.title,
+  })
+
+export const composeSavedDraftFromSession = (session: TDocDraftSession): TSavedDraft =>
+  composeSavedDraft(composeEditorDraftFromSession(session))
+
+export const composeDocDraftInfo = ({
+  bodyStats,
+  draft,
+  meta,
+  publishState,
+}: Pick<TEditorDraftStorePatchInput, 'bodyStats' | 'draft' | 'meta' | 'publishState'>) => ({
+  author: meta.author,
+  characterCount: bodyStats.characterCount,
+  id: draft.docId,
+  insertedAt: meta.insertedAt,
+  publishState: publishState ?? null,
+  slug: draft.slug,
+  stage: meta.stage ?? null,
+  subtitle: draft.subtitle,
+  title: draft.title,
+  updatedAt: meta.updatedAt,
+  wordCount: bodyStats.wordCount,
+})
+
+export const composeEmptyDraftEditorStorePatch = () => ({
+  baselineValue: EMPTY_EDITOR_VALUE,
+  bodyValue: EMPTY_EDITOR_VALUE,
+  docDraftInfo: composeDocDraftInfo({
+    bodyStats: countEditorText(EMPTY_EDITOR_VALUE),
+    draft: composeEmptyEditorDraft(),
+    meta: composeEditorDraftMeta(),
+    publishState: null,
+  }),
+  saveError: null,
+  saveStatus: 'idle' as const,
+})
+
+export const composeDraftEditorStorePatch = ({
+  bodyStats,
+  draft,
+  meta,
+  publishState,
+  saveError,
+  savedDraft,
+  saveStatus,
+}: TEditorDraftStorePatchInput) => ({
+  baselineValue: parseEditorValue(savedDraft.bodyJson),
+  bodyValue: draft.bodyValue,
+  docDraftInfo: composeDocDraftInfo({ bodyStats, draft, meta, publishState }),
+  saveError,
+  saveStatus,
+})
+
 /**
  * Normalize a fetched draft and its active tree page into editor session state.
  *
@@ -76,7 +220,7 @@ export const serializeEditorValue = (value: TRichEditorValue): string => JSON.st
  * resolveDraftSession({ docId: 'doc_1', title: 'Intro' }, { docId: 'doc_1', title: 'Fallback' })
  * // => { title: 'Intro', slug: '', body: EMPTY_EDITOR_VALUE, ... }
  */
-export const resolveDraftSession = (
+export const composeLoadedDraftSession = (
   draft: TDocDraftDTO | null | undefined,
   activePage: TSideTreePage | null,
 ): TDocDraftSession => {
@@ -104,3 +248,5 @@ export const resolveDraftSession = (
     title,
   }
 }
+
+export const resolveDraftSession = composeLoadedDraftSession

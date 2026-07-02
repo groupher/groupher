@@ -22,6 +22,11 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   require CMS.Const
 
   @tree_version 1
+  @tree_node_type_group CMS.Const.tree_node_type(:group)
+  @tree_node_type_page CMS.Const.tree_node_type(:page)
+  @tree_node_type_link CMS.Const.tree_node_type(:link)
+  @tree_node_type_pin CMS.Const.tree_node_type(:pin)
+  @pin_node_id to_string(@tree_node_type_pin)
 
   @doc """
   Returns canonical draft-tree JSON for one community.
@@ -32,7 +37,7 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
       %{"version" => 1, "groups" => groups}
   """
   @spec draft_json(Community.t()) :: map()
-  def draft_json(%Community{} = community), do: stage_json(community, :draft)
+  def draft_json(%Community{} = community), do: stage_json(community, CMS.Const.stage(:draft))
 
   @doc """
   Returns canonical public-tree JSON for one community.
@@ -43,7 +48,8 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
       %{"version" => 1}
   """
   @spec published_json(Community.t()) :: map()
-  def published_json(%Community{} = community), do: stage_json(community, :public)
+  def published_json(%Community{} = community),
+    do: stage_json(community, CMS.Const.stage(:public))
 
   @doc """
   Returns canonical JSON from a pre-filtered node list.
@@ -88,7 +94,7 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
       "type" => to_string(node.type),
       "title" => node.title,
       "slug" => node.slug,
-      article_ref_key(node) => article_ref_id(node),
+      CMS.Const.doc_tree_json_key(:doc_id) => article_ref_id(node),
       "href" => node.href,
       "marker" => node.marker,
       "badge" => node.badge,
@@ -98,10 +104,6 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
     |> Enum.reject(fn {_key, value} -> is_nil(value) end)
     |> Map.new()
   end
-
-  defp article_ref_key(%DocTreeNode{stage: CMS.Const.stage(:draft)}), do: "docId"
-  defp article_ref_key(%DocTreeNode{stage: CMS.Const.stage(:public)}), do: "docId"
-  defp article_ref_key(_node), do: "docId"
 
   defp stage_json(%Community{} = community, stage) do
     DocTreeNode
@@ -115,17 +117,17 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   defp tree_json(nodes) do
     children_by_group =
       nodes
-      |> Enum.filter(&(&1.group_id && &1.type in [:page, :link]))
+      |> Enum.filter(&(&1.group_id && &1.type in [@tree_node_type_page, @tree_node_type_link]))
       |> Enum.group_by(& &1.group_id)
 
     pins =
       nodes
-      |> Enum.filter(&(&1.type == :pin))
+      |> Enum.filter(&(&1.type == @tree_node_type_pin))
       |> Enum.map(&node_json/1)
 
     groups =
       nodes
-      |> Enum.filter(&(&1.type == :group and &1.node_id != "pin"))
+      |> Enum.filter(&(&1.type == @tree_node_type_group and &1.node_id != @pin_node_id))
       |> Enum.map(fn group ->
         group
         |> node_json()

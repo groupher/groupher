@@ -52,7 +52,7 @@ defmodule GroupherServer.CMS.Articles.Document do
       |> Repo.transaction()
       |> result()
     else
-      true -> {:error, {:already_exist, "document already exist"}}
+      true -> document_already_exists_error()
     end
   end
 
@@ -82,7 +82,7 @@ defmodule GroupherServer.CMS.Articles.Document do
       |> Repo.transaction()
       |> result()
     else
-      true -> {:error, {:already_exist, "document already exist"}}
+      true -> document_already_exists_error()
       {:error, _} = error -> error
     end
   end
@@ -116,6 +116,8 @@ defmodule GroupherServer.CMS.Articles.Document do
     do: ContentPipeline.parse(%{body: body})
 
   defp maybe_parse_payload(_), do: {:error, {:custom, "payload is required"}}
+
+  defp document_already_exists_error, do: {:error, {:custom, "document already exist"}}
 
   defp article_document_exists?(%Doc{} = article) do
     {:ok, count} =

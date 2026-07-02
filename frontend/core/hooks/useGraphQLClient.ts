@@ -1,6 +1,6 @@
 'use client'
 
-import type { AnyVariables, DocumentInput } from '@urql/core'
+import type { AnyVariables, DocumentInput, OperationContext } from '@urql/core'
 import { useCallback } from 'react'
 import { useClient } from 'urql'
 
@@ -31,8 +31,11 @@ export default function useGraphQL() {
     async <TData, TVars extends AnyVariables = AnyVariables>(
       schema: DocumentInput<TData, TVars>,
       variables?: TVars,
+      context?: Partial<OperationContext>,
     ) => {
-      const res = await client.query<TData, TVars>(schema, clarifyVariables(variables)).toPromise()
+      const res = await client
+        .query<TData, TVars>(schema, clarifyVariables(variables), context)
+        .toPromise()
       if (res.error) throw res.error
       return res.data as TData
     },
@@ -43,9 +46,10 @@ export default function useGraphQL() {
     async <TData, TVars extends AnyVariables = AnyVariables>(
       schema: DocumentInput<TData, TVars>,
       variables?: TVars,
+      context?: Partial<OperationContext>,
     ) => {
       const res = await client
-        .mutation<TData, TVars>(schema, clarifyVariables(variables))
+        .mutation<TData, TVars>(schema, clarifyVariables(variables), context)
         .toPromise()
       if (res.error) throw res.error
       return res.data as TData
