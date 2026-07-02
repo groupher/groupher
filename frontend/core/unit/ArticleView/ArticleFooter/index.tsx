@@ -23,7 +23,13 @@ export default function ArticleFooter() {
   return (
     <div className={s.wrapper}>
       <div className={s.tabs}>
-        <Tabs items={TAB_ITEMS} size='small' activeKey={tab} onChange={(tab) => setTab(tab)} />
+        <Tabs
+          items={TAB_ITEMS}
+          size='small'
+          activeKey={tab}
+          bottomSpace={0}
+          onChange={(tab) => setTab(tab)}
+        />
       </div>
       <div className={s.content}>
         {tab === TAB_ACTIVITIES && <Activities />}

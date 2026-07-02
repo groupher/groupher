@@ -18,13 +18,12 @@ export default function useSalon() {
       primary('bg'),
       fg('button.fg'),
     ),
-    publishCount: 'ml-1 text-xs opacity-80',
+    publishCount: 'text-xs opacity-60',
     optionsButton: cn(
-      'align-both h-7 w-6 rounded-r-lg rounded-l-none button-reset disabled:cursor-not-allowed',
+      'align-both h-7 w-fit px-2 rounded-r-lg rounded-l-none button-reset disabled:cursor-not-allowed',
       primary('bg'),
       fg('button.fg'),
     ),
     divider: cn('absolute left-0 top-1 h-5 w-px bg-white opacity-20'),
-    icon: 'size-3.5 fill-current',
   }
 }

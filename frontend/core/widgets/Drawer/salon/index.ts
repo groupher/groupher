@@ -3,6 +3,7 @@ export { cn } from '~/css'
 import { useMemo } from 'react'
 
 import { pixelAdd } from '~/dom'
+import usePageBg from '~/hooks/usePageBg'
 import useTwBelt from '~/hooks/useTwBelt'
 
 import { CLOSE_ANIMATION_MS, NARROW_HEIGHT_OFFSET } from './constant'
@@ -23,7 +24,8 @@ export default function useSalon({
   rightOffset = '0px',
   fromContentEdge = true,
 }: TProps) {
-  const { cn, bg, br, shadow, scrollbar, zIndex } = useTwBelt()
+  const { cn, bg, br, page, shadow, scrollbar, zIndex } = useTwBelt()
+  const { background } = usePageBg()
 
   const drawerStyle = useMemo(() => {
     const openTransform = getDesktopTransform(visible, fromContentEdge)
@@ -63,12 +65,14 @@ export default function useSalon({
       'relative w-full border rounded-tl-md overflow-y-auto h-auto',
       scrollbar('thin'),
       br('divider'),
-      bg('card'),
+      bg('pageBg'),
+      page(),
       !isWideMode(type) && 'rounded-md',
       shadow('drawer'),
     ),
 
     drawerContentStyle: {
+      backgroundColor: `var(--preview-page-bg, ${background})`,
       height: isWideMode(type) ? '100vh' : `calc(100vh - ${NARROW_HEIGHT_OFFSET * 2}px)`,
     },
 

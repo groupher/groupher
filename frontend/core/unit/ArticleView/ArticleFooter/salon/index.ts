@@ -11,7 +11,7 @@ export default function useSalon() {
       br('divider'),
       fg('digest'),
     ),
-    tabs: 'absolute -top-11 -left-2.5',
+    tabs: 'absolute left-0 top-0 -translate-y-full',
     content: 'row justify-between',
   }
 }

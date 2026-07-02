@@ -78,24 +78,19 @@ const LazyLoadImg: FC<TProps> = ({
   const showImg = started && !errored
 
   if (!src) {
-    return (
-      <button
-        type='button'
-        onClick={onClick}
-        className={cnMerge(s.normal, className, clickable && 'pointer')}
-      >
-        {fallback}
-      </button>
-    )
+    if (clickable) {
+      return (
+        <button type='button' onClick={onClick} className={cnMerge(s.normal, className, 'pointer')}>
+          {fallback}
+        </button>
+      )
+    }
+
+    return <div className={cnMerge(s.normal, className)}>{fallback}</div>
   }
 
-  return (
-    <button
-      type='button'
-      onClick={onClick}
-      className={cnMerge(s.normal, className, clickable && 'pointer')}
-      aria-label={alt}
-    >
+  const content = (
+    <>
       {fallback && (
         <div className={cn(s.fallbackInFlow, hideFallback && s.fallbackHidden)}>{fallback}</div>
       )}
@@ -123,7 +118,26 @@ const LazyLoadImg: FC<TProps> = ({
           ) : null
         }
       </LazyLoad>
-    </button>
+    </>
+  )
+
+  if (clickable) {
+    return (
+      <button
+        type='button'
+        onClick={onClick}
+        className={cnMerge(s.normal, className, 'pointer')}
+        aria-label={alt}
+      >
+        {content}
+      </button>
+    )
+  }
+
+  return (
+    <div className={cnMerge(s.normal, className)} aria-label={alt}>
+      {content}
+    </div>
   )
 }
 

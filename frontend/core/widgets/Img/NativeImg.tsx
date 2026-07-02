@@ -89,14 +89,8 @@ const NativeImg: FC<TProps> = ({
   const showFallback = !!fallback && status !== 'loaded'
   const showImg = status === 'loaded' && !!resolvedSrc
 
-  return (
-    <button
-      type='button'
-      disabled={!clickable}
-      onClick={clickable ? onClick : undefined}
-      className={cnMerge(s.wrapper, className, clickable && 'pointer')}
-      aria-label={alt}
-    >
+  const content = (
+    <>
       {showFallback && <span className={s.fallbackOverlay}>{fallback}</span>}
 
       {showImg && (
@@ -109,7 +103,26 @@ const NativeImg: FC<TProps> = ({
           draggable={false}
         />
       )}
-    </button>
+    </>
+  )
+
+  if (clickable) {
+    return (
+      <button
+        type='button'
+        onClick={onClick}
+        className={cnMerge(s.wrapper, className, 'pointer')}
+        aria-label={alt}
+      >
+        {content}
+      </button>
+    )
+  }
+
+  return (
+    <span className={cnMerge(s.wrapper, className)} aria-label={alt}>
+      {content}
+    </span>
   )
 }
 

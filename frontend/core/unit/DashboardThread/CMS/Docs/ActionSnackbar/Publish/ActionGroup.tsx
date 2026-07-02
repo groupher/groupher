@@ -1,7 +1,6 @@
 import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import FilterSVG from '~/icons/Filter'
 
 import { SAVE_ACTION_LABEL_KEY } from '../constant'
 import useSalon, { cn } from './salon/action_group'
@@ -45,7 +44,6 @@ const ActionGroup: FC<TProps> = ({
           onClick={onPublishAll}
         >
           {publishLabel}
-          {publishCount > 0 && <span className={s.publishCount}>{publishCount}</span>}
         </button>
         <button
           type='button'
@@ -57,7 +55,7 @@ const ActionGroup: FC<TProps> = ({
           onClick={onOpenOptions}
         >
           <div className={s.divider} />
-          <FilterSVG className={s.icon} />
+          {publishCount > 0 && <span className={s.publishCount}>{publishCount}</span>}
         </button>
       </div>
     </div>

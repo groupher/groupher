@@ -79,6 +79,15 @@ export const getLocaleData = async (
   return loadLocaleFile(locale, namespaces)
 }
 
+// Minute-cached SSR seed for relative time. The client refreshes it on mount;
+// keeping it cached avoids `Date.now()` blocking Cache Components prerendering.
+export const getCachedInitialNow = async (): Promise<number> => {
+  'use cache'
+  cacheLife('minutes')
+
+  return Date.now()
+}
+
 const fetchThemePresets = async (): Promise<TThemePresetOption[]> => {
   'use cache'
   cacheLife('days')

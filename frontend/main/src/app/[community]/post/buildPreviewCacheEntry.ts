@@ -35,6 +35,6 @@ export default function buildPreviewCacheEntry({
     commentsInitData: pagedComments
       ? { pagedComments, totalCount: pagedComments.totalCount || 0, initialized: true }
       : { initialized: false },
-    cachedAt: Date.now(),
+    cachedAt: 0,
   }
 }

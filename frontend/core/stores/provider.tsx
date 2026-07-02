@@ -2,6 +2,7 @@ import type { FC } from 'react'
 
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
+import { InitialNowProvider } from '~/hooks/useInitialNow'
 import type { TCommunity, TLocale, TMetric, TParseDashboard } from '~/spec'
 import AccountStoreProvider from '~/stores/account/provider'
 import CommunityStoreProvider from '~/stores/community/provider'
@@ -17,6 +18,7 @@ type TProps = {
   initData: { community: TCommunity; dashboard: TParseDashboard; wallpaper?: TWallpaperInit }
   locale?: TLocale
   localeData?: string
+  initialNow?: number
   noAccount?: boolean
   metric?: TMetric
 }
@@ -31,25 +33,27 @@ const MainProvider: FC<TProps> = ({
   initData,
   locale = LOCALE.EN,
   localeData = '{}',
+  initialNow,
   noAccount = false,
   metric = METRIC.COMMUNITY,
 }) => {
   const { dashboard, community, wallpaper } = initData
-  const now = Date.now()
 
   return (
     <ThemeStoreProvider>
-      <LocaleStoreProvider initData={{ locale, localeData }}>
-        <AccountWrapper noAccount={noAccount}>
-          <CommunityStoreProvider initData={community}>
-            <DashboardStoreProvider initData={{ ...dashboard, metric, now }}>
-              <ThemePresetStoreProvider initData={dashboard}>
-                <WallpaperStoreProvider initData={wallpaper}>{children}</WallpaperStoreProvider>
-              </ThemePresetStoreProvider>
-            </DashboardStoreProvider>
-          </CommunityStoreProvider>
-        </AccountWrapper>
-      </LocaleStoreProvider>
+      <InitialNowProvider initialNow={initialNow}>
+        <LocaleStoreProvider initData={{ locale, localeData }}>
+          <AccountWrapper noAccount={noAccount}>
+            <CommunityStoreProvider initData={community}>
+              <DashboardStoreProvider initData={{ ...dashboard, metric }}>
+                <ThemePresetStoreProvider initData={dashboard}>
+                  <WallpaperStoreProvider initData={wallpaper}>{children}</WallpaperStoreProvider>
+                </ThemePresetStoreProvider>
+              </DashboardStoreProvider>
+            </CommunityStoreProvider>
+          </AccountWrapper>
+        </LocaleStoreProvider>
+      </InitialNowProvider>
     </ThemeStoreProvider>
   )
 }
