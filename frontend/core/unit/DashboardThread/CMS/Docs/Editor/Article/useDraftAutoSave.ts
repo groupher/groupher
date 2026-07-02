@@ -51,7 +51,8 @@ export default function useDraftAutoSave(
   }, [draft.docId])
 
   const save = useCallback(async (): Promise<void> => {
-    if (!activePage?.docId || invalid || saveInFlightRef.current) return
+    if (!activePage?.docId || !editable || invalid || loadStatus.loading || saveInFlightRef.current)
+      return
 
     const startedDraft = draft
     const requestDocId = startedDraft.docId || activePage.docId
@@ -115,7 +116,9 @@ export default function useDraftAutoSave(
     applySaved,
     community,
     draft,
+    editable,
     invalid,
+    loadStatus.loading,
     mutate,
     patchSideTreeChild,
     setSaveError,

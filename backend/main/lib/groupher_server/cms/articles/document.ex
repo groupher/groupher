@@ -53,6 +53,7 @@ defmodule GroupherServer.CMS.Articles.Document do
       |> result()
     else
       true -> document_already_exists_error()
+      {:error, _} = error -> error
     end
   end
 

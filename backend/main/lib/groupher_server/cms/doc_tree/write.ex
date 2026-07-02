@@ -380,6 +380,8 @@ defmodule GroupherServer.CMS.DocTree.Write do
     subtree_node_ids = Enum.map(subtree, & &1.node_id)
     discarded = Events.discard_tree_create_staged(community, subtree_node_ids)
 
+    # The returned delta adjusts the tree staged counter: public subtrees add a
+    # delete event, while draft-only creates are only discarded.
     if public_nodes_exist?(community, subtree_node_ids) do
       with {:ok, event_count} <-
              record_tree_events(community, args, [Events.delete_event(node, subtree)]) do

@@ -21,5 +21,10 @@ defmodule GroupherServer.Test.CMS.Articles.Document do
       assert {:error, {:custom, "document already exists"}} =
                CMS.Articles.Document.create_doc(doc, %{body: @plate_body})
     end
+
+    test "returns invalid article errors" do
+      assert {:error, {:custom, "invalid article"}} =
+               CMS.Articles.Document.create(%{}, %{body: @plate_body})
+    end
   end
 end
