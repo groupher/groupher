@@ -29,6 +29,15 @@ defmodule GroupherServer.CMS.Const do
 
   enum(tree_event_owner, do: [tree: :tree, doc: :doc])
 
+  enum doc_tree_json_key do
+    [
+      node: "node",
+      id: "id",
+      type: "type",
+      doc_id: "docId"
+    ]
+  end
+
   enum tree_event do
     [
       group_rename: "group.rename",

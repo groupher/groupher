@@ -1,7 +1,7 @@
 import { proxy } from 'valtio'
 
 import { EMPTY_EDITOR_VALUE } from '../Article/constant'
-import { resolveDraftSession } from '../Article/helper'
+import { composeLoadedDraftSession } from '../Article/helper'
 import { DOC_EDITOR_MODE } from '../constant'
 import { SIDE_TREE_NODE_TYPE } from '../SideTree/constant'
 import { findChild, needsPublishAttention } from '../SideTree/helper'
@@ -110,7 +110,6 @@ export default function DocsEditorStore(init: TInit): TStore {
   // Docs editor actions are split across the tree, article, snackbar, and future drawers.
   // Keep cross-region session commands here so toolbar actions do not reach into SideTree props.
   let sideTree = init.sideTree
-  const publishRuntime: TDocPublishRuntime = { ...DEFAULT_PUBLISH_RUNTIME }
   let saveDocDraftHandler: (() => Promise<void>) | null = null
   let store: TStore
   const activeChild = sideTree.activeId ? findChild(sideTree.groups, sideTree.activeId) : null
@@ -118,12 +117,12 @@ export default function DocsEditorStore(init: TInit): TStore {
     activeChild?.type === SIDE_TREE_NODE_TYPE.PAGE && activeChild.docId ? activeChild : null
   const initialArticleSession =
     activePage && String(init.article?.docId) === String(activePage.docId)
-      ? resolveDraftSession(init.article, activePage)
+      ? composeLoadedDraftSession(init.article, activePage)
       : null
   const initialSaveStatus: TDocSaveStatus = initialArticleSession ? 'saved' : 'idle'
 
   const refreshPublishView = (): void => {
-    store.publishView = buildPublishView(sideTree, store.saveStatus, publishRuntime)
+    store.publishView = buildPublishView(sideTree, store.saveStatus, store.publishRuntime)
   }
 
   const initialStore: TStore = {
@@ -131,7 +130,8 @@ export default function DocsEditorStore(init: TInit): TStore {
     bodyValue: initialArticleSession?.body ?? EMPTY_EDITOR_VALUE,
     docDraftInfo: initialArticleSession?.info ?? EMPTY_DOC_DRAFT_INFO,
     mode: DOC_EDITOR_MODE.EDIT,
-    publishView: buildPublishView(sideTree, initialSaveStatus, publishRuntime),
+    publishRuntime: { ...DEFAULT_PUBLISH_RUNTIME },
+    publishView: buildPublishView(sideTree, initialSaveStatus, DEFAULT_PUBLISH_RUNTIME),
     revisionReloadKey: 0,
     saveError: null,
     saveStatus: initialSaveStatus,
@@ -166,7 +166,7 @@ export default function DocsEditorStore(init: TInit): TStore {
     },
 
     setPublishRuntime: (patch): void => {
-      Object.assign(publishRuntime, patch)
+      Object.assign(store.publishRuntime, patch)
       refreshPublishView()
     },
 

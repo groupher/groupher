@@ -10,7 +10,8 @@ defmodule GroupherServer.CMS.DocTree.ChangeDetection do
       article_snapshots(stage=public).content_hash
   """
 
-  alias GroupherServer.CMS.Model.{ArticleSnapshot, Doc}
+  alias GroupherServer.CMS
+  alias CMS.Model.{ArticleSnapshot, Doc}
 
   @doc """
   Returns whether a draft doc version differs from its public version.
@@ -41,8 +42,6 @@ defmodule GroupherServer.CMS.DocTree.ChangeDetection do
   """
   @spec snapshot_hash(Doc.t()) :: String.t()
   def snapshot_hash(%Doc{} = draft) do
-    :sha256
-    |> :crypto.hash(:erlang.term_to_binary({draft.content_hash, draft.subtitle}))
-    |> Base.encode16(case: :lower)
+    CMS.Hash.article_snapshot_content_hash(draft.content_hash, draft.subtitle)
   end
 end

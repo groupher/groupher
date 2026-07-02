@@ -64,6 +64,7 @@ export default function usePublishActions({
             : currentDocId && currentDocNeedsPublish
               ? [currentDocId]
               : []
+        const currentDocPublished = currentDocId ? publishedDocIds.includes(currentDocId) : false
         const data = await mutate<TPublishChangesData>(S.publishDocChanges, {
           community,
           input,
@@ -80,23 +81,25 @@ export default function usePublishActions({
         }
         // Publish may consume the draft row. Keep the current editor document in
         // place and refresh tree/scope state instead of forcing a draft-only reload.
-        setDocDraftSession?.({
-          docDraftInfo: {
-            ...docDraftInfo,
-            stage: DOC_STAGE.PUBLIC,
-            publishState: docDraftInfo.publishState
-              ? {
-                  ...docDraftInfo.publishState,
-                  hasDraft: false,
-                  hasUnpublishedChanges: false,
-                  published: true,
-                  status: DOC_STAGE.PUBLIC,
-                }
-              : null,
-          },
-          saveError: null,
-          saveStatus: 'saved',
-        })
+        if (currentDocPublished) {
+          setDocDraftSession?.({
+            docDraftInfo: {
+              ...docDraftInfo,
+              stage: DOC_STAGE.PUBLIC,
+              publishState: docDraftInfo.publishState
+                ? {
+                    ...docDraftInfo.publishState,
+                    hasDraft: false,
+                    hasUnpublishedChanges: false,
+                    published: true,
+                    status: DOC_STAGE.PUBLIC,
+                  }
+                : null,
+            },
+            saveError: null,
+            saveStatus: 'saved',
+          })
+        }
         if (publishedDocIds.length > 0) {
           send(DSB_DOC_EVENT.PUBLISH_SUCCESS, { docIds: publishedDocIds })
         }

@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
   @moduledoc false
 
   use GroupherServer.TestMate
+  require CMS.Const
 
   describe "[doc publish release]" do
     setup do
@@ -50,15 +51,15 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
       {:ok, legacy_event} =
         CMS.DocTree.Events.record_staged(
           community,
-          "node.create",
+          CMS.Const.tree_event(:node_create),
           %{
-            "node" => %{
-              "id" => page_payload.node.id,
-              "type" => "page",
+            CMS.Const.doc_tree_json_key(:node) => %{
+              CMS.Const.doc_tree_json_key(:id) => page_payload.node.id,
+              CMS.Const.doc_tree_json_key(:type) => to_string(CMS.Const.tree_node_type(:page)),
               "title" => page_payload.node.title,
               "slug" => page_payload.node.slug,
               "groupId" => group_payload.node.id,
-              "docId" => page_payload.node.doc_id,
+              CMS.Const.doc_tree_json_key(:doc_id) => page_payload.node.doc_id,
               "index" => page_payload.node.index
             }
           },
@@ -78,7 +79,44 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
       assert next_scope.total_count == 0
 
       {:ok, legacy_event} = ORM.find(CMS.Model.DocTreeEvent, legacy_event.id)
-      assert legacy_event.status == :published
+      assert legacy_event.status == CMS.Const.tree_event_status(:published)
+    end
+
+    test "tree-only publish does not auto-publish doc-bound page creates",
+         ~m(user community group_payload page_payload)a do
+      {:ok, legacy_event} =
+        CMS.DocTree.Events.record_staged(
+          community,
+          CMS.Const.tree_event(:node_create),
+          %{
+            CMS.Const.doc_tree_json_key(:node) => %{
+              CMS.Const.doc_tree_json_key(:id) => page_payload.node.id,
+              CMS.Const.doc_tree_json_key(:type) => to_string(CMS.Const.tree_node_type(:page)),
+              "title" => page_payload.node.title,
+              "slug" => page_payload.node.slug,
+              "groupId" => group_payload.node.id,
+              CMS.Const.doc_tree_json_key(:doc_id) => page_payload.node.doc_id,
+              "index" => page_payload.node.index
+            }
+          },
+          %{"nodeId" => page_payload.node.id},
+          user.id
+        )
+
+      assert {:ok, %{done: true, scope: next_scope}} =
+               CMS.DocTree.publish_changes(community, %{doc_change_ids: []}, user)
+
+      assert Enum.any?(next_scope.doc_changes, &(&1.doc_id == page_payload.node.doc_id))
+
+      assert {:error, _} =
+               ORM.find_by(CMS.Model.DocTreeNode,
+                 community_id: community.id,
+                 stage: CMS.Const.stage(:public),
+                 node_id: page_payload.node.id
+               )
+
+      {:ok, legacy_event} = ORM.find(CMS.Model.DocTreeEvent, legacy_event.id)
+      assert legacy_event.status == CMS.Const.tree_event_status(:staged)
     end
 
     test "publishes selected changes as one release",
@@ -104,6 +142,31 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
       assert [] = release.tree_events
 
       assert CMS.DocTree.publish_scope(community).total_count == 0
+    end
+
+    test "does not create a release when publish scope is empty", ~m(user community)a do
+      assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
+
+      release_count_before = release_count(community)
+
+      assert {:ok, %{done: true, release: nil, scope: %{total_count: 0}}} =
+               CMS.DocTree.publish_changes(community, %{}, user)
+
+      assert release_count(community) == release_count_before
+    end
+
+    test "rejects explicit empty publish selection while changes exist", ~m(user community)a do
+      release_count_before = release_count(community)
+
+      assert {:error, {:custom, "No publish changes selected."}} =
+               CMS.DocTree.publish_changes(
+                 community,
+                 %{doc_change_ids: [], tree_change_ids: []},
+                 user
+               )
+
+      assert release_count(community) == release_count_before
+      assert CMS.DocTree.publish_scope(community).total_count == 1
     end
 
     test "publishes multiple newly created pages from one scope",
@@ -137,7 +200,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
         {:ok, public_page} =
           ORM.find_by(CMS.Model.DocTreeNode,
             community_id: community.id,
-            stage: :public,
+            stage: CMS.Const.stage(:public),
             node_id: page_payload.node.id
           )
 
@@ -271,7 +334,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
       [group] = tree.groups
       [page] = group.children
 
-      assert page.publish_state.status == :public
+      assert page.publish_state.status == CMS.Const.stage(:public)
 
       {:ok, _delete_payload} =
         CMS.DocTree.delete_node(community, page_payload.node.id, %{
@@ -327,7 +390,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
       assert {:error, _} =
                ORM.find_by(CMS.Model.Doc,
                  community_id: community.id,
-                 stage: :draft,
+                 stage: CMS.Const.stage(:draft),
                  doc_id: page_payload.node.doc_id
                )
 
@@ -379,14 +442,14 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
       {:ok, published_group} =
         ORM.find_by(CMS.Model.DocTreeNode,
           community_id: community.id,
-          stage: :public,
+          stage: CMS.Const.stage(:public),
           node_id: rebuilt_group_payload.node.id
         )
 
       {:ok, published_page} =
         ORM.find_by(CMS.Model.DocTreeNode,
           community_id: community.id,
-          stage: :public,
+          stage: CMS.Const.stage(:public),
           node_id: rebuilt_page_payload.node.id
         )
 
@@ -402,5 +465,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Release do
          {:ok, _} <- CMS.DocTree.delete_demo_template(community) do
       {:ok, community}
     end
+  end
+
+  defp release_count(community) do
+    CMS.Model.PublishRelease
+    |> where([r], r.community_id == ^community.id)
+    |> Repo.aggregate(:count, :id)
   end
 end

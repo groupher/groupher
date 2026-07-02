@@ -236,7 +236,6 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
     |> where([r], r.thread == ^snapshot.thread)
     |> where([r], r.stage == CMS.Const.stage(:public))
     |> where([r], r.doc_id == ^doc_id)
-    |> where([r], r.stage == CMS.Const.stage(:public))
     |> where([r], r.snapshot_number > ^snapshot.snapshot_number)
     |> where([r], r.id not in subquery(release_snapshot_ids))
     |> ORM.delete_all(:if_exist)
@@ -259,7 +258,7 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
   defp maybe_filter_stage(query, stage), do: where(query, [r], r.stage == ^stage)
 
   defp maybe_create_draft_snapshot(%{stage: CMS.Const.stage(:draft)} = attrs, false) do
-    case latest_snapshot(attrs, :draft) do
+    case latest_snapshot(attrs, CMS.Const.stage(:draft)) do
       %ArticleSnapshot{content_hash: content_hash} = snapshot
       when content_hash == attrs.content_hash ->
         {:ok, snapshot}
@@ -347,7 +346,7 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
          subtitle: doc.subtitle,
          digest: doc.digest,
          document_json: doc.json,
-         content_hash: snapshot_content_hash(doc.content_hash, doc.subtitle),
+         content_hash: CMS.Hash.article_snapshot_content_hash(doc.content_hash, doc.subtitle),
          schema_version: doc.schema_version || 1
        }}
     end
@@ -365,8 +364,20 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
         Draft.update_unlocked(community, doc_id, restore_attrs(snapshot, current_draft))
 
       {:error, _} ->
-        create_restored_draft(community, doc_id, snapshot, user)
+        restore_snapshot_into_missing_draft(community, doc_id, snapshot, user)
     end
+  end
+
+  defp restore_snapshot_into_missing_draft(
+         %Community{} = community,
+         doc_id,
+         %ArticleSnapshot{} = snapshot,
+         %User{} = user
+       ),
+       do: create_restored_draft(community, doc_id, snapshot, user)
+
+  defp restore_snapshot_into_missing_draft(_community, _doc_id, _snapshot, _user) do
+    {:error, {:custom, "doc draft restore requires user"}}
   end
 
   defp create_restored_draft(
@@ -383,19 +394,9 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
     Draft.create(community, :doc, attrs, user)
   end
 
-  defp create_restored_draft(_community, _doc_id, _snapshot, _user) do
-    {:error, {:custom, "doc draft restore requires user"}}
-  end
-
   defp restore_attrs(%ArticleSnapshot{} = snapshot, %Doc{} = draft) do
     %{title: snapshot.title, subtitle: snapshot.subtitle, body: snapshot.document_json}
     |> maybe_put_slug(snapshot.slug || draft.slug)
-  end
-
-  defp snapshot_content_hash(content_hash, subtitle) do
-    :sha256
-    |> :crypto.hash(:erlang.term_to_binary({content_hash, subtitle}))
-    |> Base.encode16(case: :lower)
   end
 
   defp maybe_put_slug(attrs, slug) when is_binary(slug), do: Map.put(attrs, :slug, slug)

@@ -33,6 +33,9 @@ defmodule GroupherServer.CMS.DocCover.Write do
 
   alias Helper.{ORM, T}
 
+  @tree_node_type_group CMS.Const.tree_node_type(:group)
+  @tree_node_type_page CMS.Const.tree_node_type(:page)
+
   @doc """
   Adds one published side-tree group to the cover and seeds its published pages.
   """
@@ -192,14 +195,16 @@ defmodule GroupherServer.CMS.DocCover.Write do
 
   defp resolve_published_group(%Community{} = community, draft_group_id) do
     with {:ok, published} <- resolve_published_node(community, draft_group_id),
-         :ok <- expect_type(published, :group, "This group has not been published yet.") do
+         :ok <-
+           expect_type(published, @tree_node_type_group, "This group has not been published yet.") do
       {:ok, published}
     end
   end
 
   defp resolve_published_page(%Community{} = community, draft_node_id) do
     with {:ok, published} <- resolve_published_node(community, draft_node_id),
-         :ok <- expect_type(published, :page, "This doc has not been published yet.") do
+         :ok <-
+           expect_type(published, @tree_node_type_page, "This doc has not been published yet.") do
       {:ok, published}
     end
   end
@@ -215,17 +220,30 @@ defmodule GroupherServer.CMS.DocCover.Write do
   defp expect_type(_node, _type, message), do: {:error, {:custom, message}}
 
   defp published_pages_for_draft_group(%Community{} = community, draft_group_id) do
-    pages =
+    draft_node_ids =
       DocTreeNode
       |> where([n], n.community_id == ^community.id)
       |> where([n], n.stage == CMS.Const.stage(:draft))
       |> where([n], n.group_id == ^to_string(draft_group_id))
-      |> where([n], n.type == :page)
+      |> where([n], n.type == @tree_node_type_page)
+      |> order_by([n], asc: n.index, asc: n.id)
+      |> select([n], n.node_id)
       |> Repo.all()
-      |> Enum.map(&CMS.DocTree.Publish.public_node_for_draft(community, &1.node_id))
-      |> Enum.flat_map(fn
-        {:ok, %DocTreeNode{type: :page} = node} -> [node]
-        _ -> []
+
+    pages_by_node_id =
+      DocTreeNode
+      |> where([n], n.community_id == ^community.id)
+      |> where([n], n.stage == CMS.Const.stage(:public))
+      |> where([n], n.type == @tree_node_type_page)
+      |> where([n], n.node_id in ^draft_node_ids)
+      |> Repo.all()
+      |> Map.new(&{&1.node_id, &1})
+
+    pages =
+      Enum.flat_map(draft_node_ids, fn node_id ->
+        pages_by_node_id
+        |> Map.get(node_id)
+        |> List.wrap()
       end)
 
     {:ok, pages}
@@ -256,7 +274,7 @@ defmodule GroupherServer.CMS.DocCover.Write do
   defp ensure_cover_item(
          %Community{} = community,
          %DocCoverGroup{} = cover_group,
-         %DocTreeNode{type: :page} = page
+         %DocTreeNode{type: @tree_node_type_page} = page
        ) do
     CMS.DocCover.Sync.ensure_cover_item(community, cover_group, page)
   end

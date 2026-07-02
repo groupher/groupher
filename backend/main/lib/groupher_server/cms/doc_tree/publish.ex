@@ -47,6 +47,19 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   alias Helper.{ORM, T, Transaction}
 
+  @doc_tree_json_key_node CMS.Const.doc_tree_json_key(:node)
+  @doc_tree_json_key_id CMS.Const.doc_tree_json_key(:id)
+  @doc_tree_json_key_type CMS.Const.doc_tree_json_key(:type)
+  @doc_tree_json_key_doc_id CMS.Const.doc_tree_json_key(:doc_id)
+  @tree_node_type_group CMS.Const.tree_node_type(:group)
+  @tree_node_type_page CMS.Const.tree_node_type(:page)
+  @tree_node_type_link CMS.Const.tree_node_type(:link)
+  @tree_node_type_pin CMS.Const.tree_node_type(:pin)
+  @tree_node_type_group_key to_string(@tree_node_type_group)
+  @tree_node_type_page_key to_string(@tree_node_type_page)
+  @tree_node_type_link_key to_string(@tree_node_type_link)
+  @tree_node_type_pin_key to_string(@tree_node_type_pin)
+
   @event_public_fields %{
     "title" => :title,
     "slug" => :slug,
@@ -59,9 +72,9 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   }
 
   @event_node_types %{
-    "group" => :group,
-    "link" => :link,
-    "pin" => :pin
+    @tree_node_type_group_key => @tree_node_type_group,
+    @tree_node_type_link_key => @tree_node_type_link,
+    @tree_node_type_pin_key => @tree_node_type_pin
   }
 
   @doc """
@@ -110,21 +123,25 @@ defmodule GroupherServer.CMS.DocTree.Publish do
         with {:ok, doc_ids} <- selected_ids(args, :doc_change_ids, current_scope.doc_changes),
              {:ok, tree_ids} <- selected_ids(args, :tree_change_ids, current_scope.tree_changes),
              tree_ids <- include_doc_shell_tree_ids(community, args, doc_ids, tree_ids),
-             {:ok, tree_result} <- prepare_tree_scope_items(community, tree_ids),
-             :ok <- preapply_tree_delete_events(community, tree_result.events),
-             {:ok, doc_revisions} <-
-               publish_doc_scope_items(
-                 community,
-                 current_scope.doc_changes,
-                 doc_ids,
-                 user,
-                 sync_cover?
-               ),
-             :ok <- apply_tree_events_to_public(community, tree_result.events),
-             {:ok, release} <- create_release(community, user, doc_revisions, tree_result),
-             next_scope <- scope(community),
-             {:ok, _state} <- mark_site_release_published(community, user, next_scope) do
-          %{done: true, release: release, scope: next_scope}
+             {:ok, publish_mode} <- publish_mode(current_scope, doc_ids, tree_ids) do
+          case publish_mode do
+            :noop ->
+              %{done: true, release: nil, scope: current_scope}
+
+            :publish ->
+              case publish_selected_changes(
+                     community,
+                     current_scope,
+                     doc_ids,
+                     tree_ids,
+                     user,
+                     sync_cover?
+                   ) do
+                {:ok, result} -> result
+                {:error, reason} -> Repo.rollback(reason)
+                reason -> Repo.rollback(reason)
+              end
+          end
         else
           {:error, reason} -> Repo.rollback(reason)
           reason -> Repo.rollback(reason)
@@ -281,6 +298,36 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     end
   end
 
+  defp publish_mode(%{total_count: 0}, [], []), do: {:ok, :noop}
+  defp publish_mode(_scope, [], []), do: {:error, {:custom, "No publish changes selected."}}
+  defp publish_mode(_scope, _doc_ids, _tree_ids), do: {:ok, :publish}
+
+  defp publish_selected_changes(
+         %Community{} = community,
+         current_scope,
+         doc_ids,
+         tree_ids,
+         %User{} = user,
+         sync_cover?
+       ) do
+    with {:ok, tree_result} <- prepare_tree_scope_items(community, tree_ids),
+         :ok <- preapply_tree_delete_events(community, tree_result.events),
+         {:ok, doc_revisions} <-
+           publish_doc_scope_items(
+             community,
+             current_scope.doc_changes,
+             doc_ids,
+             user,
+             sync_cover?
+           ),
+         :ok <- apply_tree_events_to_public(community, tree_result.events),
+         {:ok, release} <- create_release(community, user, doc_revisions, tree_result),
+         next_scope <- scope(community),
+         {:ok, _state} <- mark_site_release_published(community, user, next_scope) do
+      {:ok, %{done: true, release: release, scope: next_scope}}
+    end
+  end
+
   defp publish_doc_scope_items(
          %Community{} = community,
          scope_items,
@@ -330,9 +377,13 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   end
 
   defp doc_shell_tree_ids(%Community{} = community) do
-    community
-    |> Events.staged_events(owner: CMS.Const.tree_event_owner(:tree))
-    |> Enum.filter(&doc_bound_group_create_event?(community, &1))
+    events = Events.staged_events(community, owner: CMS.Const.tree_event_owner(:tree))
+    doc_bound_event_ids = doc_bound_tree_event_ids(community, events)
+
+    events
+    |> Enum.filter(fn event ->
+      not is_nil(group_create_event_id(event)) and MapSet.member?(doc_bound_event_ids, event.id)
+    end)
     |> Enum.map(&"tree:#{&1.id}")
   end
 
@@ -425,8 +476,11 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     end
   end
 
-  defp public_attrs_from_event_node(%Community{} = community, %{"type" => "page"} = node) do
-    doc_id = node["docId"]
+  defp public_attrs_from_event_node(
+         %Community{} = community,
+         %{@doc_tree_json_key_type => @tree_node_type_page_key} = node
+       ) do
+    doc_id = node[@doc_tree_json_key_doc_id]
 
     with {:ok, _draft} <-
            ORM.find_by(Doc,
@@ -439,7 +493,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          community_id: community.id,
          node_id: node["id"],
          stage: CMS.Const.stage(:public),
-         type: :page,
+         type: @tree_node_type_page,
          group_id: node["groupId"],
          doc_id: doc_id,
          title: node["title"],
@@ -495,7 +549,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp delete_public_node_by_node_id(%Community{} = community, node_id) do
     case public_node_by_node_id(community, node_id) do
-      %DocTreeNode{type: :group} = node ->
+      %DocTreeNode{type: @tree_node_type_group} = node ->
         with :ok <- delete_public_group_children(community, node.node_id) do
           ORM.delete(node)
         end
@@ -698,12 +752,17 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          %Community{} = community,
          %DocTreeEvent{
            event_type: CMS.Const.tree_event(:node_delete),
-           payload: %{"node" => %{"type" => "group", "id" => id}}
+           payload: %{
+             @doc_tree_json_key_node => %{
+               @doc_tree_json_key_type => @tree_node_type_group_key,
+               @doc_tree_json_key_id => id
+             }
+           }
          } = event
        ) do
     community
     |> public_group_children(id)
-    |> Enum.filter(&(&1.type == :page))
+    |> Enum.filter(&(&1.type == @tree_node_type_page))
     |> Enum.map(
       &release_article_attrs_from_public_node(community.id, &1, [tree_event_action(event)])
     )
@@ -713,7 +772,9 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          %Community{} = community,
          %DocTreeEvent{
            event_type: CMS.Const.tree_event(:node_delete),
-           payload: %{"node" => %{"type" => "page"}}
+           payload: %{
+             @doc_tree_json_key_node => %{@doc_tree_json_key_type => @tree_node_type_page_key}
+           }
          } = event
        ) do
     event
@@ -788,7 +849,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     DocTreeNode
     |> where([n], n.community_id == ^community_id)
     |> where([n], n.stage == CMS.Const.stage(:public))
-    |> where([n], n.type == :page)
+    |> where([n], n.type == @tree_node_type_page)
     |> where([n], n.doc_id == ^doc_id)
     |> Repo.one()
   end
@@ -797,7 +858,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     DocTreeNode
     |> where([n], n.community_id == ^community_id)
     |> where([n], n.stage == CMS.Const.stage(:public))
-    |> where([n], n.type == :page)
+    |> where([n], n.type == @tree_node_type_page)
     |> where([n], n.node_id == ^node_id)
     |> Repo.one()
   end
@@ -815,13 +876,23 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp article_node_ids_from_tree_event(%DocTreeEvent{
          event_type: CMS.Const.tree_event(:node_create),
-         payload: %{"node" => %{"type" => "page", "id" => id}}
+         payload: %{
+           @doc_tree_json_key_node => %{
+             @doc_tree_json_key_type => @tree_node_type_page_key,
+             @doc_tree_json_key_id => id
+           }
+         }
        }),
        do: [id]
 
   defp article_node_ids_from_tree_event(%DocTreeEvent{
          event_type: CMS.Const.tree_event(:node_delete),
-         payload: %{"node" => %{"type" => "page", "id" => id}}
+         payload: %{
+           @doc_tree_json_key_node => %{
+             @doc_tree_json_key_type => @tree_node_type_page_key,
+             @doc_tree_json_key_id => id
+           }
+         }
        }),
        do: [id]
 
@@ -879,10 +950,11 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   end
 
   defp tree_change_items(%Community{} = community) do
-    community
-    |> Events.staged_events(owner: CMS.Const.tree_event_owner(:tree))
-    |> Enum.reject(&doc_bound_page_create_event?(community, &1))
-    |> Enum.reject(&doc_bound_group_create_event?(community, &1))
+    events = Events.staged_events(community, owner: CMS.Const.tree_event_owner(:tree))
+    doc_bound_event_ids = doc_bound_tree_event_ids(community, events)
+
+    events
+    |> Enum.reject(&MapSet.member?(doc_bound_event_ids, &1.id))
     |> Enum.map(fn event ->
       {selectable, disabled_reason} = tree_event_select_state(community, event)
 
@@ -898,56 +970,107 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     end)
   end
 
-  defp doc_bound_page_create_event?(
-         %Community{} = community,
-         %DocTreeEvent{
-           event_type: CMS.Const.tree_event(:node_create),
-           payload: %{"node" => %{"type" => "page", "docId" => doc_id}}
-         }
-       ) do
-    match?(
-      {:ok, %Doc{}},
-      ORM.find_by(Doc, community_id: community.id, doc_id: doc_id, stage: CMS.Const.stage(:draft))
-    )
+  defp doc_bound_tree_event_ids(_community, []), do: MapSet.new()
+
+  defp doc_bound_tree_event_ids(%Community{} = community, events) do
+    draft_doc_ids = draft_doc_ids(community)
+
+    page_event_ids =
+      events
+      |> Enum.filter(fn event ->
+        doc_id = page_create_event_doc_id(event)
+        not is_nil(doc_id) and MapSet.member?(draft_doc_ids, doc_id)
+      end)
+      |> MapSet.new(& &1.id)
+
+    group_ids =
+      events
+      |> Enum.map(&group_create_event_id/1)
+      |> Enum.reject(&is_nil/1)
+
+    doc_bound_group_ids = draft_group_ids_with_draft_docs(community, group_ids, draft_doc_ids)
+
+    group_event_ids =
+      events
+      |> Enum.filter(fn event ->
+        group_id = group_create_event_id(event)
+        not is_nil(group_id) and MapSet.member?(doc_bound_group_ids, group_id)
+      end)
+      |> MapSet.new(& &1.id)
+
+    MapSet.union(page_event_ids, group_event_ids)
   end
 
-  defp doc_bound_page_create_event?(_community, _event), do: false
-
-  defp doc_bound_group_create_event?(
-         %Community{} = community,
-         %DocTreeEvent{
-           event_type: CMS.Const.tree_event(:node_create),
-           payload: %{"node" => %{"type" => "group", "id" => group_id}}
+  defp page_create_event_doc_id(%DocTreeEvent{
+         event_type: CMS.Const.tree_event(:node_create),
+         payload: %{
+           @doc_tree_json_key_node => %{
+             @doc_tree_json_key_type => @tree_node_type_page_key,
+             @doc_tree_json_key_doc_id => doc_id
+           }
          }
-       ) do
-    draft_doc_ids =
-      Doc
-      |> where([d], d.community_id == ^community.id)
-      |> where([d], d.stage == CMS.Const.stage(:draft))
-      |> select([d], d.doc_id)
+       }),
+       do: doc_id
+
+  defp page_create_event_doc_id(_event), do: nil
+
+  defp group_create_event_id(%DocTreeEvent{
+         event_type: CMS.Const.tree_event(:node_create),
+         payload: %{
+           @doc_tree_json_key_node => %{
+             @doc_tree_json_key_type => @tree_node_type_group_key,
+             @doc_tree_json_key_id => group_id
+           }
+         }
+       }),
+       do: group_id
+
+  defp group_create_event_id(_event), do: nil
+
+  defp draft_doc_ids(%Community{} = community) do
+    Doc
+    |> where([d], d.community_id == ^community.id)
+    |> where([d], d.stage == CMS.Const.stage(:draft))
+    |> select([d], d.doc_id)
+    |> Repo.all()
+    |> MapSet.new()
+  end
+
+  defp draft_group_ids_with_draft_docs(_community, [], _draft_doc_ids), do: MapSet.new()
+
+  defp draft_group_ids_with_draft_docs(%Community{} = community, group_ids, draft_doc_ids) do
+    if MapSet.size(draft_doc_ids) == 0 do
+      MapSet.new()
+    else
+      group_ids = Enum.uniq(group_ids)
+      draft_doc_ids = MapSet.to_list(draft_doc_ids)
+
+      DocTreeNode
+      |> where([n], n.community_id == ^community.id)
+      |> where([n], n.stage == CMS.Const.stage(:draft))
+      |> where([n], n.type == @tree_node_type_page)
+      |> where([n], n.group_id in ^group_ids)
+      |> where([n], n.doc_id in ^draft_doc_ids)
+      |> select([n], n.group_id)
       |> Repo.all()
-
-    DocTreeNode
-    |> where([n], n.community_id == ^community.id)
-    |> where([n], n.stage == CMS.Const.stage(:draft))
-    |> where([n], n.type == :page)
-    |> where([n], n.group_id == ^group_id)
-    |> where([n], n.doc_id in ^draft_doc_ids)
-    |> Repo.exists?()
+      |> MapSet.new()
+    end
   end
-
-  defp doc_bound_group_create_event?(_community, _event), do: false
 
   defp tree_event_select_state(
          %Community{} = community,
          %DocTreeEvent{
            event_type: CMS.Const.tree_event(:node_create),
-           payload: %{"node" => %{"type" => "page"} = node}
+           payload: %{
+             @doc_tree_json_key_node =>
+               %{@doc_tree_json_key_type => @tree_node_type_page_key} =
+                 node
+           }
          }
        ) do
     with {:ok, %Doc{community_id: _cid}} <-
            ORM.find_by(Doc,
-             doc_id: node["docId"],
+             doc_id: node[@doc_tree_json_key_doc_id],
              stage: CMS.Const.stage(:draft),
              community_id: community.id
            ) do
@@ -1019,10 +1142,10 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp find_publish_page(%Community{} = community, doc_id, page_node_id) do
     page =
-      find_page_by_node_id(community, page_node_id, :public) ||
-        find_page_by_node_id(community, page_node_id, :draft) ||
-        find_page_by_doc_id(community, doc_id, :public) ||
-        find_page_by_doc_id(community, doc_id, :draft)
+      find_page_by_node_id(community, page_node_id, CMS.Const.stage(:public)) ||
+        find_page_by_node_id(community, page_node_id, CMS.Const.stage(:draft)) ||
+        find_page_by_doc_id(community, doc_id, CMS.Const.stage(:public)) ||
+        find_page_by_doc_id(community, doc_id, CMS.Const.stage(:draft))
 
     case page do
       %DocTreeNode{} = node -> {:ok, node}
@@ -1036,7 +1159,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
     |> where([n], n.stage == ^stage)
-    |> where([n], n.type == :page)
+    |> where([n], n.type == @tree_node_type_page)
     |> where([n], n.node_id == ^to_string(node_id))
     |> Repo.one()
   end
@@ -1045,7 +1168,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
     |> where([n], n.stage == ^stage)
-    |> where([n], n.type == :page)
+    |> where([n], n.type == @tree_node_type_page)
     |> where([n], n.doc_id == ^doc_id)
     |> Repo.one()
   end
@@ -1054,7 +1177,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
     |> where([n], n.stage == ^stage)
-    |> where([n], n.type == :group)
+    |> where([n], n.type == @tree_node_type_group)
     |> where([n], n.node_id == ^to_string(group_id))
     |> Repo.one()
     |> case do
@@ -1066,8 +1189,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   defp publish_pages_for_drafts(_community, []), do: []
 
   defp publish_pages_for_drafts(%Community{} = community, doc_ids) do
-    public_pages = pages_by_doc_ids(community, doc_ids, :public)
-    draft_pages = pages_by_doc_ids(community, doc_ids, :draft)
+    public_pages = pages_by_doc_ids(community, doc_ids, CMS.Const.stage(:public))
+    draft_pages = pages_by_doc_ids(community, doc_ids, CMS.Const.stage(:draft))
 
     public_pages
     |> Enum.concat(draft_pages)
@@ -1080,7 +1203,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
     |> where([n], n.stage == ^stage)
-    |> where([n], n.type == :page)
+    |> where([n], n.type == @tree_node_type_page)
     |> where([n], n.doc_id in ^doc_ids)
     |> order_by([n], asc: n.index, asc: n.id)
     |> Repo.all()
@@ -1135,7 +1258,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp public_node_by_unique_attrs(
          %Community{} = community,
-         %{type: :group, group_id: nil} = attrs
+         %{type: @tree_node_type_group, group_id: nil} = attrs
        ) do
     public_root_group_by_slug(community, Map.get(attrs, :slug)) ||
       public_root_group_by_title(community, Map.get(attrs, :title))
@@ -1155,7 +1278,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
     |> where([n], n.stage == CMS.Const.stage(:public))
-    |> where([n], n.type == :group)
+    |> where([n], n.type == @tree_node_type_group)
     |> where([n], is_nil(n.group_id))
     |> where([n], n.slug == ^slug)
     |> order_by([n], desc: n.updated_at, desc: n.id)
@@ -1169,7 +1292,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
     |> where([n], n.stage == CMS.Const.stage(:public))
-    |> where([n], n.type == :group)
+    |> where([n], n.type == @tree_node_type_group)
     |> where([n], is_nil(n.group_id))
     |> where([n], n.title == ^title)
     |> order_by([n], desc: n.updated_at, desc: n.id)

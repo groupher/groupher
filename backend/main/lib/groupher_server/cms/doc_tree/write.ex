@@ -377,23 +377,30 @@ defmodule GroupherServer.CMS.DocTree.Write do
          %DocTreeNode{} = node,
          subtree
        ) do
-    if Enum.any?(subtree, &public_node_exists?(community, &1.node_id)) do
-      record_tree_events(community, args, [Events.delete_event(node, subtree)])
-    else
-      discarded =
-        subtree
-        |> Enum.map(& &1.node_id)
-        |> then(&Events.discard_tree_create_staged(community, &1))
+    subtree_node_ids = Enum.map(subtree, & &1.node_id)
+    discarded = Events.discard_tree_create_staged(community, subtree_node_ids)
 
+    # The returned delta adjusts the tree staged counter: public subtrees add a
+    # delete event, while draft-only creates are only discarded.
+    if public_nodes_exist?(community, subtree_node_ids) do
+      with {:ok, event_count} <-
+             record_tree_events(community, args, [Events.delete_event(node, subtree)]) do
+        {:ok, event_count - discarded}
+      end
+    else
       {:ok, -discarded}
     end
   end
 
-  defp public_node_exists?(%Community{} = community, node_id) do
+  defp public_nodes_exist?(_community, []), do: false
+
+  defp public_nodes_exist?(%Community{} = community, node_ids) do
+    node_ids = Enum.map(node_ids, &to_string/1)
+
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
     |> where([n], n.stage == CMS.Const.stage(:public))
-    |> where([n], n.node_id == ^to_string(node_id))
+    |> where([n], n.node_id in ^node_ids)
     |> Repo.exists?()
   end
 
