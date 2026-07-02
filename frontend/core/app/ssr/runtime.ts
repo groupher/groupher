@@ -79,7 +79,9 @@ export const getLocaleData = async (
   return loadLocaleFile(locale, namespaces)
 }
 
-export const getInitialNow = async (): Promise<number> => {
+// Minute-cached SSR seed for relative time. The client refreshes it on mount;
+// keeping it cached avoids `Date.now()` blocking Cache Components prerendering.
+export const getCachedInitialNow = async (): Promise<number> => {
   'use cache'
   cacheLife('minutes')
 

@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
-import { NowProvider } from '~/hooks/useNow'
+import { InitialNowProvider } from '~/hooks/useInitialNow'
 import type { TCommunity, TLocale, TMetric, TParseDashboard } from '~/spec'
 import AccountStoreProvider from '~/stores/account/provider'
 import CommunityStoreProvider from '~/stores/community/provider'
@@ -41,7 +41,7 @@ const MainProvider: FC<TProps> = ({
 
   return (
     <ThemeStoreProvider>
-      <NowProvider initialNow={initialNow}>
+      <InitialNowProvider initialNow={initialNow}>
         <LocaleStoreProvider initData={{ locale, localeData }}>
           <AccountWrapper noAccount={noAccount}>
             <CommunityStoreProvider initData={community}>
@@ -53,7 +53,7 @@ const MainProvider: FC<TProps> = ({
             </CommunityStoreProvider>
           </AccountWrapper>
         </LocaleStoreProvider>
-      </NowProvider>
+      </InitialNowProvider>
     </ThemeStoreProvider>
   )
 }

@@ -86,7 +86,7 @@ const LazyLoadImg: FC<TProps> = ({
       )
     }
 
-    return <span className={cnMerge(s.normal, className)}>{fallback}</span>
+    return <div className={cnMerge(s.normal, className)}>{fallback}</div>
   }
 
   const content = (
@@ -135,9 +135,9 @@ const LazyLoadImg: FC<TProps> = ({
   }
 
   return (
-    <span className={cnMerge(s.normal, className)} aria-label={alt}>
+    <div className={cnMerge(s.normal, className)} aria-label={alt}>
       {content}
-    </span>
+    </div>
   )
 }
 

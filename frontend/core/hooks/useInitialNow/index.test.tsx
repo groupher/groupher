@@ -1,21 +1,21 @@
 import { renderHook } from '@testing-library/react'
 import type { ReactNode } from 'react'
 
-import useNow, { NowProvider } from '~/hooks/useNow'
+import useInitialNow, { InitialNowProvider } from '~/hooks/useInitialNow'
 
-describe('useNow', () => {
+describe('useInitialNow', () => {
   it('reads initialNow from provider', () => {
     const wrapper = ({ children }: { children: ReactNode }) => (
-      <NowProvider initialNow={123}>{children}</NowProvider>
+      <InitialNowProvider initialNow={123}>{children}</InitialNowProvider>
     )
 
-    const { result } = renderHook(() => useNow(), { wrapper })
+    const { result } = renderHook(() => useInitialNow(), { wrapper })
 
     expect(result.current).toBe(123)
   })
 
   it('returns null without provider', () => {
-    const { result } = renderHook(() => useNow())
+    const { result } = renderHook(() => useInitialNow())
 
     expect(result.current).toBeNull()
   })

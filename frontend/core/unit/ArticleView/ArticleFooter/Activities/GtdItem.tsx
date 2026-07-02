@@ -12,8 +12,7 @@ export default function GtdItem() {
       <div className={s.tail} />
       <GtdWipSVG className={s.icon} />
       <div className={s.content}>
-        <span className={s.highlight}>bbb</span>
-        {t('article.footer.activity.changed_status')}{' '}
+        <span className={s.highlight}>bbb</span> {t('article.footer.activity.changed_status')}{' '}
         <span className={s.highlight}>{t('article.footer.status.wip')}</span>
       </div>
     </div>

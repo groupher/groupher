@@ -35,7 +35,7 @@ export default function Activities() {
       <MentionItem />
 
       <div className={s.lastUpdate}>
-        {t('article.footer.activity.last_reply')}: 14{t('article.footer.time.days_ago')}
+        {t('article.footer.activity.last_reply')}: 14 {t('article.footer.time.days_ago')}
       </div>
     </div>
   )
