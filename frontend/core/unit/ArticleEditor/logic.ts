@@ -76,8 +76,8 @@
 
 // const doCreate = () => {
 //   console.log('## TODO doCreate')
-//   // const { thread, editData, communityId } = store
-//   // const variables = { communityId, ...editData }
+//   // const { thread, editData, community } = store
+//   // const variables = { community, ...editData }
 //   // const schema = S[`create${titleCase(thread)}`]
 //   // sr71$.mutate(schema, variables)
 // }

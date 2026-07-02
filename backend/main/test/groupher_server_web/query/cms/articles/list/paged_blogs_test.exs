@@ -117,7 +117,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       assert first_blog["views"] > last_blog["views"]
     end
 
-    test "should get valid thread document", ~m(guest_conn community user)a do
+    test "should get valid article document", ~m(guest_conn community user)a do
       blog_attrs = mock_attrs(:blog, %{community_id: community.id})
       Process.sleep(2000)
       {:ok, _} = CMS.Articles.create(community, :blog, blog_attrs, user)
@@ -164,7 +164,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
 
       blog = results["entries"] |> List.first()
       assert results["totalCount"] == 4
-      assert exist_in?(%{id: to_string(community.id)}, blog["communities"])
+      assert exist_in?(%{slug: community.slug}, blog["communities"])
     end
 
     test "returns cancan error when community blog thread is disabled",
@@ -311,7 +311,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
       variables = %{filter: %{when: "THIS_YEAR"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :blog), variables)
 
-      assert results["entries"] |> Enum.any?(&(&1["id"] != blog_last_year.id))
+      assert results["entries"]
+             |> Enum.any?(&(&1["innerId"] != to_string(blog_last_year.inner_id)))
     end
 
     test "TODAY option should work", ~m(guest_conn)a do

@@ -27,7 +27,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
 
     @desc "update a cms/blog"
     field :update_blog, :blog do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:title, :string)
       arg(:body, :string)
       arg(:digest, :string)
@@ -37,9 +37,8 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
       article_cover_args()
 
       middleware(M.Authorize, :login)
-      middleware(M.ArticleArgs, thread: :blog)
-      middleware(M.Passport, action: "blog.update")
-      middleware(M.ArticleLoader)
+      middleware(M.Passport, action: "blog.update", thread: :blog)
+      middleware(M.ArticleLoader, thread: :blog)
 
       resolve(&R.CMS.update_article/3)
     end

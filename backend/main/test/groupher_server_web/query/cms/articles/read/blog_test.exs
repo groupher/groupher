@@ -16,7 +16,10 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
        ~m(user_conn community user blog_attrs)a do
     {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
-    variables = %{article: %{inner_id: blog.inner_id, community: blog.community_slug}}
+    variables = %{
+      article: %{inner_id: blog.inner_id, community: blog.community_slug, thread: "BLOG"}
+    }
+
     results = user_conn |> gq_query(Schema.q(:article, :blog), variables)
 
     assert results["innerId"] == to_string(blog.inner_id)
@@ -36,7 +39,10 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
        ~m(guest_conn community blog_attrs user)a do
     {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
-    variables = %{article: %{inner_id: blog.inner_id, community: blog.community_slug}}
+    variables = %{
+      article: %{inner_id: blog.inner_id, community: blog.community_slug, thread: "BLOG"}
+    }
+
     results = guest_conn |> gq_query(Schema.q(:article, :blog), variables)
 
     assert results["innerId"] == to_string(blog.inner_id)
@@ -45,7 +51,11 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
 
   test "pending state should in meta", ~m(guest_conn user_conn community user blog_attrs)a do
     {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
-    variables = %{article: %{inner_id: blog.inner_id, community: blog.community_slug}}
+
+    variables = %{
+      article: %{inner_id: blog.inner_id, community: blog.community_slug, thread: "BLOG"}
+    }
+
     results = user_conn |> gq_query(Schema.q(:article, :blog), variables)
 
     assert results |> get_in(["meta", "isLegal"])
@@ -80,7 +90,9 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
         blog: false
       })
 
-    variables = %{article: %{inner_id: blog.inner_id, community: blog.community_slug}}
+    variables = %{
+      article: %{inner_id: blog.inner_id, community: blog.community_slug, thread: "BLOG"}
+    }
 
     assert guest_conn
            |> query_error?(Schema.q(:article, :blog), variables, ecode(:thread_not_visible))

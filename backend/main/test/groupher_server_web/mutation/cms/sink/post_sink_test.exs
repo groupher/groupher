@@ -13,7 +13,10 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
 
   describe "[post sink]" do
     test "login user can sink a post", ~m(community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
+
       passport_rules = %{community.slug => %{"post.sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
@@ -26,7 +29,9 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
     end
 
     test "unauth user sink a post fails", ~m(guest_conn community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
 
       assert guest_conn
              |> mutation_error?(
@@ -37,7 +42,9 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
     end
 
     test "login user can undo sink to a post", ~m(community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
 
       passport_rules = %{community.slug => %{"post.undo_sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -52,7 +59,9 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
     end
 
     test "unauth user undo sink a post fails", ~m(guest_conn community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
 
       assert guest_conn
              |> mutation_error?(

@@ -118,8 +118,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
     @desc "paged subscribers of a community"
     field :paged_community_subscribers, :paged_users do
-      arg(:id, :id)
-      arg(:community, :string)
+      arg(:community, non_null(:string))
       arg(:filter, :pagi_filter)
 
       middleware(M.PageSizeProof)
@@ -128,7 +127,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
     @desc "paged subscribers of a community"
     field :paged_community_moderators, :paged_users do
-      arg(:id, non_null(:id))
+      arg(:community, non_null(:string))
       arg(:filter, :pagi_filter)
 
       middleware(M.PageSizeProof)
@@ -162,44 +161,49 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
     @desc "got basic comments state"
     field :comments_state, :comments_list_state do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:freshkey, :string)
 
+      middleware(M.ArticleLoader)
       resolve(&R.CMS.comments_state/3)
     end
 
-    @desc "got spec comment by id"
+    @desc "got spec comment by ref"
     field :one_comment, :comment do
-      arg(:id, non_null(:id))
+      arg(:comment, non_null(:comment_path_input))
 
+      middleware(M.FrontDesk, :comment)
       resolve(&R.CMS.one_comment/3)
     end
 
     @desc "get paged article comments"
     field :paged_comments, :paged_comments do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:mode, :comments_mode, default_value: :replies)
       arg(:filter, :comments_filter)
 
+      middleware(M.ArticleLoader)
       middleware(M.PageSizeProof)
       resolve(&R.CMS.paged_comments/3)
     end
 
     @desc "get paged article comments participants"
     field :paged_comments_participants, :paged_users do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:filter, :pagi_filter)
 
+      middleware(M.ArticleLoader)
       middleware(M.PageSizeProof)
       resolve(&R.CMS.paged_comments_participants/3)
     end
 
     @desc "get paged replies of a comment"
     field :paged_comment_replies, :paged_comment_replies do
-      arg(:id, non_null(:id))
+      arg(:comment, non_null(:comment_path_input))
       arg(:filter, :comments_filter)
 
       middleware(M.PageSizeProof)
+      middleware(M.FrontDesk, :comment)
       resolve(&R.CMS.paged_comment_replies/3)
     end
 
@@ -212,8 +216,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
     @desc "mentions created by an artiment"
     field :mentions, :paged_mentions do
-      arg(:id, non_null(:id))
-      arg(:type, non_null(:mention_type))
+      arg(:source, non_null(:mention_source_input))
       arg(:filter, :pagi_filter)
 
       middleware(M.PageSizeProof)
@@ -222,8 +225,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
 
     @desc "artiments mentioning an internal target"
     field :mentioned_by, :paged_mentions do
-      arg(:id, non_null(:id))
-      arg(:type, non_null(:mention_type))
+      arg(:target, non_null(:mention_target_input))
       arg(:filter, :pagi_filter)
 
       middleware(M.PageSizeProof)

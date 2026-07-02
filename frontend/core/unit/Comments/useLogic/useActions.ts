@@ -55,7 +55,7 @@ export default function useActions(): TActions {
   }
 
   const closeUpdateEditor = (): void => {
-    commentsStore.commit({ showUpdateEditor: false, updateId: null })
+    commentsStore.commit({ showUpdateEditor: false, updateInnerId: null })
   }
 
   const setWordsCountState = (wordsCountReady: boolean): void => {
@@ -86,7 +86,7 @@ export default function useActions(): TActions {
   }
 
   const foldAllComments = (): void => {
-    const foldedCommentIds = commentsStore.pagedComments.entries.map((c) => c.id)
+    const foldedCommentIds = commentsStore.pagedComments.entries.map((c) => c.innerId)
     commentsStore.commit({ foldedCommentIds })
   }
 

@@ -3,7 +3,6 @@ import { gql } from 'urql'
 import { titleCase } from '~/fmt'
 
 export const community = `
-  id
   title
   slug
   index
@@ -233,7 +232,7 @@ export const emotionQuery = `
 // comment
 
 export const commentFields = `
-  id
+  innerId
   bodyHtml
   author {
     ${author}
@@ -256,7 +255,7 @@ export const commentFields = `
   isArticleAuthor
   viewerHasUpvoted
   repliesCount
-  replyToId
+  replyToInnerId
   insertedAt
   updatedAt
 `
@@ -302,7 +301,7 @@ export const pagi = `
 export const getUpvote = (thread, withLatestUser = false) => {
   if (withLatestUser) {
     return gql`
-    mutation ($article: ArticleRefInput!) {
+    mutation ($article: ArticlePathInput!) {
       upvote${titleCase(thread)}(article: $article) {
         innerId
         upvotesCount
@@ -316,7 +315,7 @@ export const getUpvote = (thread, withLatestUser = false) => {
   `
   }
   return gql`
-    mutation ($article: ArticleRefInput!) {
+    mutation ($article: ArticlePathInput!) {
       upvote${titleCase(thread)}(article: $article) {
         innerId
         upvotesCount
@@ -328,7 +327,7 @@ export const getUpvote = (thread, withLatestUser = false) => {
 export const getUndoUpvote = (thread, withLatestUser = false) => {
   if (withLatestUser) {
     return gql`
-    mutation ($article: ArticleRefInput!) {
+    mutation ($article: ArticlePathInput!) {
       undoUpvote${titleCase(thread)}(article: $article) {
         innerId
         upvotesCount
@@ -342,7 +341,7 @@ export const getUndoUpvote = (thread, withLatestUser = false) => {
   `
   }
   return gql`
-    mutation ($article: ArticleRefInput!) {
+    mutation ($article: ArticlePathInput!) {
       undoUpvote${titleCase(thread)}(article: $article) {
         innerId
         upvotesCount

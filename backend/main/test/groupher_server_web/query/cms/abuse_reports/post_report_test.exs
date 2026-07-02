@@ -21,7 +21,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.PostReport do
           id
           dealWith
           article {
-            id
+            innerId
             thread
             title
           }
@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.PostReport do
             login
           }
           comment {
-            id
+            innerId
             bodyHtml
             author {
               login
@@ -78,7 +78,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.PostReport do
       report = results["entries"] |> List.first()
 
       assert get_in(report, ["article", "thread"]) == "POST"
-      assert get_in(report, ["article", "id"]) == to_string(post.id)
+      assert get_in(report, ["article", "innerId"]) == to_string(post.inner_id)
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 1
@@ -98,7 +98,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.PostReport do
       assert is_list(report_case)
 
       assert get_in(report, ["comment", "bodyHtml"]) |> String.contains?(~s(comment</p>))
-      assert get_in(report, ["comment", "id"]) == to_string(comment.id)
+      assert get_in(report, ["comment", "innerId"]) == to_string(comment.floor)
       assert not is_nil(get_in(report, ["comment", "author", "login"]))
     end
   end

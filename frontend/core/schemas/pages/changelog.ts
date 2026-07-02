@@ -1,7 +1,7 @@
 import F from '../fragments'
 
 export const changelog = `
-  query changelog($article: ArticleRefInput!, $userHasLogin: Boolean!) {
+  query changelog($article: ArticlePathInput!, $userHasLogin: Boolean!) {
     changelog(article: $article) {
       ${F.article}
       ${F.articleDetail}

@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.DocTagCRUD do
         groupId
         extra
         community {
-          id
+          slug
           logo
           title
         }
@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.DocTagCRUD do
       assert found.thread == :doc
       assert found.group_id == group.id
       assert created["group"] == "awesome"
-      assert belong_community["id"] == to_string(community.id)
+      assert belong_community["slug"] == community.slug
     end
 
     test "create tag with extra", ~m(community)a do

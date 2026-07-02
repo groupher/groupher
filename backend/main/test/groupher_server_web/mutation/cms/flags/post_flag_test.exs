@@ -18,7 +18,9 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
 
   describe "[mutation post flag curd]" do
     test "auth user can markDelete post", ~m(community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
 
       passport_rules = %{community.slug => %{"post.mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -38,7 +40,10 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.posts_count == 1
 
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
+
       passport_rules = %{community.slug => %{"post.mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
@@ -50,7 +55,10 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
 
     test "unauth user markDelete post fails",
          ~m(user_conn guest_conn community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
+
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       schema = Schema.m(:mark_delete_article, :post)
@@ -61,7 +69,9 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
     end
 
     test "auth user can undo markDelete post", ~m(community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
 
       {:ok, _} = CMS.Articles.mark_delete(post)
 
@@ -85,7 +95,10 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.posts_count == 0
 
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
+
       passport_rules = %{community.slug => %{"post.undo_mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
       rule_conn |> gq_mutation(Schema.m(:undo_mark_delete_article, :post), variables)
@@ -96,7 +109,10 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
 
     test "unauth user undo markDelete post fails",
          ~m(user_conn guest_conn community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
+
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       schema = Schema.m(:undo_mark_delete_article, :post)
@@ -110,7 +126,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
          ~m(community post post2 post3)a do
       variables = %{
         community: community.slug,
-        ids: [post.inner_id, post2.inner_id]
+        innerIds: [post.inner_id, post2.inner_id]
       }
 
       passport_rules = %{community.slug => %{"post.mark_delete" => true}}
@@ -137,7 +153,7 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
 
       variables = %{
         community: community.slug,
-        ids: [post.inner_id, post2.inner_id]
+        innerIds: [post.inner_id, post2.inner_id]
       }
 
       passport_rules = %{community.slug => %{"post.undo_mark_delete" => true}}
@@ -158,7 +174,9 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
     end
 
     test "auth user can pin post", ~m(community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
 
       passport_rules = %{community.slug => %{"post.pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -169,7 +187,10 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
     end
 
     test "unauth user pin post fails", ~m(user_conn guest_conn community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
+
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
@@ -187,7 +208,9 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
     end
 
     test "auth user can undo pin post", ~m(community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
 
       passport_rules = %{community.slug => %{"post.undo_pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
@@ -199,7 +222,10 @@ defmodule GroupherServer.Test.Mutation.Flags.PostFlag do
     end
 
     test "unauth user undo pin post fails", ~m(user_conn guest_conn community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
+
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn

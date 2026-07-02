@@ -1,16 +1,16 @@
 import { gql } from 'urql'
 
 const simpleMutation = gql`
-  mutation ($id: ID!) {
-    post(id: $id) {
-      id
+  mutation ($article: ArticlePathInput!) {
+    post(article: $article) {
+      innerId
     }
   }
 `
 const simpleQuery = gql`
-  query ($filter: filter!) {
-    post(id: $id) {
-      id
+  query ($article: ArticlePathInput!) {
+    post(article: $article) {
+      innerId
     }
   }
 `

@@ -15,19 +15,27 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.BlogReport do
 
   describe "[blog report/undo_report]" do
     test "login user can report a blog", ~m(community blog user_conn)a do
-      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}, reason: "reason"}
+      variables = %{
+        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        reason: "reason"
+      }
 
       article = user_conn |> gq_mutation(Schema.m(:report_article, :blog), variables)
       assert article["innerId"] == to_string(blog.inner_id)
     end
 
     test "login user can undo report a blog", ~m(community blog user_conn)a do
-      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}, reason: "reason"}
+      variables = %{
+        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"},
+        reason: "reason"
+      }
 
       article = user_conn |> gq_mutation(Schema.m(:report_article, :blog), variables)
       assert article["innerId"] == to_string(blog.inner_id)
 
-      variables = %{article: %{inner_id: blog.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
+      }
 
       article = user_conn |> gq_mutation(Schema.m(:undo_report_article, :blog), variables)
       assert article["innerId"] == to_string(blog.inner_id)

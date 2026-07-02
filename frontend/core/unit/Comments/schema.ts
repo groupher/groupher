@@ -7,7 +7,7 @@ import { F } from '~/schemas'
 
 const pagedComments = gql`
   query pagedComments(
-    $article: ArticleRefInput!
+    $article: ArticlePathInput!
     $mode: CommentsMode,
     $filter: CommentsFilter!
   ) {
@@ -21,8 +21,8 @@ const pagedComments = gql`
 `
 
 const pagedCommentReplies = gql`
-  query($id: ID!, $filter: CommentsFilter!) {
-    pagedCommentReplies(id: $id, filter: $filter) {
+  query($comment: CommentPathInput!, $filter: CommentsFilter!) {
+    pagedCommentReplies(comment: $comment, filter: $filter) {
       entries {
         ${F.commentFields}
 
@@ -36,24 +36,24 @@ const pagedCommentReplies = gql`
 `
 
 const createComment = gql`
-  mutation ($thread: Thread!, $id: ID!, $body: String!) {
-    createComment(thread: $thread, id: $id, body: $body) {
-      id
+  mutation ($article: ArticlePathInput!, $body: String!) {
+    createComment(article: $article, body: $body) {
+      innerId
       bodyHtml
     }
   }
 `
 const updateComment = gql`
-  mutation ($id: ID!, $body: String!) {
-    updateComment(id: $id, body: $body) {
-      id
+  mutation ($comment: CommentPathInput!, $body: String!) {
+    updateComment(comment: $comment, body: $body) {
+      innerId
       bodyHtml
-      replyToId
+      replyToInnerId
     }
   }
 `
 const commentsState = gql`
-  query ($article: ArticleRefInput!, $freshkey: String) {
+  query ($article: ArticlePathInput!, $freshkey: String) {
     commentsState(article: $article, freshkey: $freshkey) {
       totalCount
       isViewerJoined
@@ -68,61 +68,61 @@ const commentsState = gql`
   }
 `
 const oneComment = gql`
-  query ($id: ID!) {
-    oneComment(id: $id) {
-      id
+  query ($comment: CommentPathInput!) {
+    oneComment(comment: $comment) {
+      innerId
       body
     }
   }
 `
 
 const replyComment = gql`
-  mutation ($id: ID!, $body: String!) {
-    replyComment(id: $id, body: $body) {
-      id
+  mutation ($comment: CommentPathInput!, $body: String!) {
+    replyComment(comment: $comment, body: $body) {
+      innerId
       bodyHtml
     }
   }
 `
 const deleteComment = gql`
-  mutation ($id: ID!) {
-    deleteComment(id: $id) {
-      id
+  mutation ($comment: CommentPathInput!) {
+    deleteComment(comment: $comment) {
+      innerId
     }
   }
 `
 
 const upvoteComment = gql`
-  mutation ($id: ID!) {
-    upvoteComment(id: $id) {
-      id
+  mutation ($comment: CommentPathInput!) {
+    upvoteComment(comment: $comment) {
+      innerId
       meta {
         isArticleAuthorUpvoted
       }
       upvotesCount
       viewerHasUpvoted
-      replyToId
+      replyToInnerId
     }
   }
 `
 const undoUpvoteComment = gql`
-  mutation ($id: ID!) {
-    undoUpvoteComment(id: $id) {
-      id
+  mutation ($comment: CommentPathInput!) {
+    undoUpvoteComment(comment: $comment) {
+      innerId
       meta {
         isArticleAuthorUpvoted
       }
       upvotesCount
       viewerHasUpvoted
-      replyToId
+      replyToInnerId
     }
   }
 `
 const emotionToComment = gql`
-  mutation ($id: ID!, $emotion: CommentEmotion!) {
-    emotionToComment(id: $id, emotion: $emotion) {
-      id
-      replyToId
+  mutation ($comment: CommentPathInput!, $emotion: CommentEmotion!) {
+    emotionToComment(comment: $comment, emotion: $emotion) {
+      innerId
+      replyToInnerId
       emotions {
         ${F.emotionQuery}
       }
@@ -130,10 +130,10 @@ const emotionToComment = gql`
   }
 `
 const undoEmotionToComment = gql`
-  mutation ($id: ID!, $emotion: CommentEmotion!) {
-    undoEmotionToComment(id: $id, emotion: $emotion) {
-      id
-      replyToId
+  mutation ($comment: CommentPathInput!, $emotion: CommentEmotion!) {
+    undoEmotionToComment(comment: $comment, emotion: $emotion) {
+      innerId
+      replyToInnerId
       emotions {
         ${F.emotionQuery}
       }
@@ -161,7 +161,7 @@ const pagedPublishedComments = gql`
       entries {
         ${F.comment}
         article {
-          id
+          innerId
           title
           thread
           author {

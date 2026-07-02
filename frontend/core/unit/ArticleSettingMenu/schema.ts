@@ -3,7 +3,7 @@ import { gql } from 'urql'
 import { F } from '~/schemas'
 
 const updatePost = gql`
-  mutation ($article: ArticleRefInput!, $title: String, $body: String, $communityTags: [ID]) {
+  mutation ($article: ArticlePathInput!, $title: String, $body: String, $communityTags: [ID]) {
     updatePost(article: $article, title: $title, body: $body, communityTags: $communityTags) {
       id
       title
@@ -14,7 +14,7 @@ const updatePost = gql`
   }
 `
 const setPostCat = gql`
-  mutation ($article: ArticleRefInput!, $cat: ArticleCatEnum!) {
+  mutation ($article: ArticlePathInput!, $cat: ArticleCatEnum!) {
     setPostCat(article: $article, cat: $cat) {
       id
       cat
@@ -22,7 +22,7 @@ const setPostCat = gql`
   }
 `
 const setPostStatus = gql`
-  mutation ($article: ArticleRefInput!, $status: ArticleStatusEnum!) {
+  mutation ($article: ArticlePathInput!, $status: ArticleStatusEnum!) {
     setPostStatus(article: $article, status: $status) {
       id
       status
@@ -31,7 +31,7 @@ const setPostStatus = gql`
 `
 
 const pinPost = gql`
-  mutation ($article: ArticleRefInput!) {
+  mutation ($article: ArticlePathInput!) {
     pinPost(article: $article) {
       id
     }
@@ -39,7 +39,7 @@ const pinPost = gql`
 `
 
 const undoPinPost = gql`
-  mutation ($article: ArticleRefInput!) {
+  mutation ($article: ArticlePathInput!) {
     undoPinPost(article: $article) {
       id
       isPinned

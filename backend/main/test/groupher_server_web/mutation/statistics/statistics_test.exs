@@ -56,9 +56,9 @@ defmodule GroupherServer.Test.Mutation.Statistics do
     end
 
     @write_comment_query """
-    mutation($community: String!, $thread: Thread!, $id: ID!, $body: String!) {
-      createComment(community: $community, thread: $thread, id: $id, body: $body) {
-        id
+    mutation($article: ArticlePathInput!, $body: String!) {
+      createComment(article: $article, body: $body) {
+        innerId
         bodyHtml
       }
     }
@@ -66,9 +66,7 @@ defmodule GroupherServer.Test.Mutation.Statistics do
     test "user should have contribute list after create a comment",
          ~m(user_conn community post user2)a do
       variables = %{
-        community: community.slug,
-        thread: "POST",
-        id: post.inner_id,
+        article: article_path(community, post, :post),
         body: mock_comment()
       }
 

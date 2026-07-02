@@ -17,8 +17,8 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
   describe "[query artiment mentions]" do
     @mentions_query """
-    query($type: MentionType!, $id: ID!, $filter: PagiFilter!) {
-      mentions(type: $type, id: $id, filter: $filter) {
+    query($source: MentionSourceInput!, $filter: PagiFilter!) {
+      mentions(source: $source, filter: $filter) {
         entries {
           mentionerType
           mentionerId
@@ -39,8 +39,8 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     """
 
     @mentioned_by_query """
-    query($type: MentionType!, $id: ID!, $filter: PagiFilter!) {
-      mentionedBy(type: $type, id: $id, filter: $filter) {
+    query($target: MentionTargetInput!, $filter: PagiFilter!) {
+      mentionedBy(target: $target, filter: $filter) {
         entries {
           mentionerType
           mentionerId
@@ -58,8 +58,8 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
     """
 
     @mentions_without_filter_query """
-    query($type: MentionType!, $id: ID!) {
-      mentions(type: $type, id: $id) {
+    query($source: MentionSourceInput!) {
+      mentions(source: $source) {
         entries {
           mentionerType
           mentionerId
@@ -89,7 +89,11 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
       {:ok, {2, nil}} = ArtimentMentions.sync(post)
 
-      variables = %{type: "POST", id: post.id, filter: %{page: 1, size: 10}}
+      variables = %{
+        source: %{article: article_path(community, post, :post)},
+        filter: %{page: 1, size: 10}
+      }
+
       mentions = guest_conn |> gq_query(@mentions_query, variables)
 
       assert mentions["totalCount"] == 2
@@ -109,8 +113,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
       mentioned_by =
         guest_conn
         |> gq_query(@mentioned_by_query, %{
-          type: "BLOG",
-          id: blog.id,
+          target: %{article: article_path(community, blog, :blog)},
           filter: %{page: 1, size: 10}
         })
 
@@ -139,7 +142,7 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
 
       {:ok, {1, nil}} = ArtimentMentions.sync(post)
 
-      variables = %{type: "POST", id: post.id}
+      variables = %{source: %{article: article_path(community, post, :post)}}
       mentions = guest_conn |> gq_query(@mentions_without_filter_query, variables)
 
       assert mentions["totalCount"] == 1

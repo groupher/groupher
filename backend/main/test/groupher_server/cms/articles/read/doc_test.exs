@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
   use GroupherServer.TestMate
 
   alias CMS.FrontDesk
-  alias CMS.Model.{ArticleDocument, DocDocument}
+  alias CMS.Model.ArticleDocument
   @article_digest_length get_config(:article, :digest_length)
 
   setup do
@@ -274,10 +274,7 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
 
       {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: doc.id, thread: :doc})
 
-      {:ok, doc_doc} = ORM.find_by(DocDocument, %{doc_id: doc.id})
-
-      assert doc.document.json == doc_doc.json
-      assert article_doc.json == doc_doc.json
+      assert doc.document.json == article_doc.json
     end
 
     test "delete doc should also delete related document",
@@ -285,13 +282,11 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
       {:ok, _} = ORM.find_by(ArticleDocument, %{article_id: doc.id, thread: :doc})
-      {:ok, _} = ORM.find_by(DocDocument, %{doc_id: doc.id})
 
       {:ok, _} = CMS.Articles.delete(doc)
 
       {:error, _} = ORM.find(Doc, doc.id)
       {:error, _} = ORM.find_by(ArticleDocument, %{article_id: doc.id, thread: :doc})
-      {:error, _} = ORM.find_by(DocDocument, %{doc_id: doc.id})
     end
 
     test "update doc should also update related document",
@@ -303,9 +298,6 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
 
       {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: doc.id, thread: :doc})
 
-      {:ok, doc_doc} = ORM.find_by(DocDocument, %{doc_id: doc.id})
-
-      assert String.contains?(doc_doc.json, "new content")
       assert String.contains?(article_doc.json, "new content")
     end
   end

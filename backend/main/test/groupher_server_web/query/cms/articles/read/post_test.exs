@@ -16,7 +16,10 @@ defmodule GroupherServer.Test.Query.Articles.Post do
        ~m(user_conn community user post_attrs)a do
     {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-    variables = %{article: %{inner_id: post.inner_id, community: post.community_slug}}
+    variables = %{
+      article: %{inner_id: post.inner_id, community: post.community_slug, thread: "POST"}
+    }
+
     results = user_conn |> gq_query(Schema.q(:article, :post), variables)
 
     assert results["innerId"] == to_string(post.inner_id)
@@ -36,7 +39,10 @@ defmodule GroupherServer.Test.Query.Articles.Post do
        ~m(guest_conn community post_attrs user)a do
     {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
 
-    variables = %{article: %{inner_id: post.inner_id, community: post.community_slug}}
+    variables = %{
+      article: %{inner_id: post.inner_id, community: post.community_slug, thread: "POST"}
+    }
+
     results = guest_conn |> gq_query(Schema.q(:article, :post), variables)
 
     assert results["innerId"] == to_string(post.inner_id)
@@ -45,7 +51,11 @@ defmodule GroupherServer.Test.Query.Articles.Post do
 
   test "pending state should in meta", ~m(guest_conn user_conn community user post_attrs)a do
     {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
-    variables = %{article: %{inner_id: post.inner_id, community: post.community_slug}}
+
+    variables = %{
+      article: %{inner_id: post.inner_id, community: post.community_slug, thread: "POST"}
+    }
+
     results = user_conn |> gq_query(Schema.q(:article, :post), variables)
 
     assert results |> get_in(["meta", "isLegal"])
@@ -80,7 +90,9 @@ defmodule GroupherServer.Test.Query.Articles.Post do
         post: false
       })
 
-    variables = %{article: %{inner_id: post.inner_id, community: post.community_slug}}
+    variables = %{
+      article: %{inner_id: post.inner_id, community: post.community_slug, thread: "POST"}
+    }
 
     assert guest_conn
            |> query_error?(Schema.q(:article, :post), variables, ecode(:thread_not_visible))

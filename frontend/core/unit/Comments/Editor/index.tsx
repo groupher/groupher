@@ -17,7 +17,7 @@ const CommentEditor: FC<TProps> = ({ editState }) => {
   const {
     // update
     showUpdateEditor,
-    updateId,
+    updateInnerId,
     updateBody,
     // reply
     showReplyEditor,
@@ -30,7 +30,7 @@ const CommentEditor: FC<TProps> = ({ editState }) => {
     <Fragment>
       <Modal show={showUpdateEditor} width='680px' onClose={closeUpdateEditor} showCloseBtn>
         {showUpdateEditor && (
-          <UpdateEditor id={updateId} body={updateBody} submitState={submitState} />
+          <UpdateEditor innerId={updateInnerId} body={updateBody} submitState={submitState} />
         )}
       </Modal>
 

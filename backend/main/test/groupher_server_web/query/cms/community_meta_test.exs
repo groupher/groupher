@@ -15,7 +15,7 @@ defmodule GroupherServer.Test.Query.CMS.CommunityMeta do
     @query """
     query($slug: String!) {
       community(slug: $slug) {
-        id
+        slug
         title
         articlesCount
         meta {

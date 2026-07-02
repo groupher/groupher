@@ -3,7 +3,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
 
   use GroupherServer.TestMate
 
-  alias CMS.Model.{ArticleDocument, ChangelogDocument}
+  alias CMS.Model.ArticleDocument
   @article_digest_length get_config(:article, :digest_length)
 
   setup do
@@ -298,10 +298,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, article_doc} =
         ORM.find_by(ArticleDocument, %{article_id: changelog.id, thread: :changelog})
 
-      {:ok, changelog_doc} = ORM.find_by(ChangelogDocument, %{changelog_id: changelog.id})
-
-      assert changelog.document.json == changelog_doc.json
-      assert article_doc.json == changelog_doc.json
+      assert changelog.document.json == article_doc.json
     end
 
     test "delete changelog should also delete related document",
@@ -311,13 +308,10 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, _article_doc} =
         ORM.find_by(ArticleDocument, %{article_id: changelog.id, thread: :changelog})
 
-      {:ok, _changelog_doc} = ORM.find_by(ChangelogDocument, %{changelog_id: changelog.id})
-
       {:ok, _} = CMS.Articles.delete(changelog)
 
       {:error, _} = ORM.find(Changelog, changelog.id)
       {:error, _} = ORM.find_by(ArticleDocument, %{article_id: changelog.id, thread: :changelog})
-      {:error, _} = ORM.find_by(ChangelogDocument, %{changelog_id: changelog.id})
     end
 
     test "update changelog should also update related document",
@@ -330,9 +324,6 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, article_doc} =
         ORM.find_by(ArticleDocument, %{article_id: changelog.id, thread: :changelog})
 
-      {:ok, changelog_doc} = ORM.find_by(ChangelogDocument, %{changelog_id: changelog.id})
-
-      assert String.contains?(changelog_doc.json, "new content")
       assert String.contains?(article_doc.json, "new content")
     end
   end

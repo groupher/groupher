@@ -4,7 +4,7 @@ defmodule GroupherServer.CMS.Model.PublishRelease do
 
       Dashboard editor
       ├─ tree changes     -> doc_tree_nodes(stage=public)
-      └─ article changes  -> runtime docs + DocDocument
+      └─ article changes  -> runtime docs + ArticleDocument
              |
              v
       publish_changes/3 creates one PublishRelease

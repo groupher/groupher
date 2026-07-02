@@ -13,10 +13,10 @@ import useSalon from './salon/update_editor'
 type TProps = {
   body: string
   submitState: TSubmitState
-  id: string | null
+  innerId: string | null
 }
 
-const UpdateEditor: FC<TProps> = ({ id, body, submitState }) => {
+const UpdateEditor: FC<TProps> = ({ innerId, body, submitState }) => {
   const s = useSalon()
   const { commentOnChange, updateComment, closeUpdateEditor } = useActions()
   const { t } = useTrans()
@@ -26,7 +26,7 @@ const UpdateEditor: FC<TProps> = ({ id, body, submitState }) => {
       <div className={s.header}>{t('comment.update.title')}</div>
       <CustomScroller direction='vertical' height='320px' showShadow={false} autoHide={false}>
         <div className={s.editorWrapper}>
-          {id ? (
+          {innerId ? (
             <BodyEditor body={body} onChange={(v) => commentOnChange(v)} />
           ) : (
             <LavaLampLoading top={10} left={30} />

@@ -10,11 +10,12 @@ defmodule GroupherServer.CMS.FrontDesk do
 
   alias Accounts.Model.User
   alias CMS.Artiment.Threads
+  alias CMS.Helper.ArticlePath
   alias CMS.Model.{Comment, Community, CommunityTag, Embeds}
   alias Helper.{ORM, QueryBuilder, T}
 
   @threads Application.compile_env(:groupher_server, :article, [])
-                   |> Keyword.get(:threads, [])
+           |> Keyword.get(:threads, [])
   @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
   @max_latest_upvoted_users_count Application.compile_env(:groupher_server, :article, [])
                                   |> Keyword.get(:max_upvoted_users_count, 10)
@@ -42,6 +43,21 @@ defmodule GroupherServer.CMS.FrontDesk do
   @spec comment(integer()) :: T.domain_res(Comment.t())
   def comment(comment_id) do
     with {:ok, comment} <- ORM.find(Comment, comment_id, preload: :author) do
+      ORM.fill_meta(comment)
+    end
+  end
+
+  @spec comment(map(), integer() | String.t(), keyword()) :: T.domain_res(Comment.t())
+  def comment(%{} = article_path, inner_id, opts \\ []) do
+    preload = Keyword.get(opts, :preload, :author)
+
+    with {:ok, %{community: community, thread: thread, inner_id: article_inner_id}} <-
+           ArticlePath.normalize(article_path),
+         {:ok, floor} <- parse_comment_inner_id(inner_id),
+         {:ok, article} <- article(community, thread, article_inner_id),
+         {:ok, info} <- match(thread),
+         query <- %{thread: thread, floor: floor} |> Map.put(info.foreign_key, article.id),
+         {:ok, comment} <- ORM.find_by(Comment, query, preload: preload) do
       ORM.fill_meta(comment)
     end
   end
@@ -357,6 +373,17 @@ defmodule GroupherServer.CMS.FrontDesk do
       {:error, _} -> {:error, {:article_not_found, "article not found"}}
     end
   end
+
+  defp parse_comment_inner_id(value) when is_integer(value) and value >= 0, do: {:ok, value}
+
+  defp parse_comment_inner_id(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, ""} when int >= 0 -> {:ok, int}
+      _ -> {:error, {:comment_not_found, "comment not found"}}
+    end
+  end
+
+  defp parse_comment_inner_id(_), do: {:error, {:comment_not_found, "comment not found"}}
 
   @spec get_full_comment(integer()) :: T.domain_res(T.article_info())
   defp get_full_comment(comment_id) do

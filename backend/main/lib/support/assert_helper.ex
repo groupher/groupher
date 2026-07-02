@@ -234,10 +234,24 @@ defmodule GroupherServer.Test.AssertHelper do
 
   @doc "check id is exist in list of Map<id: xxx> structure"
   @spec exist_in?(map(), [map()]) :: boolean
+  def exist_in?(%{floor: floor}, list) when is_integer(floor) and is_list(list) do
+    list
+    |> Enum.any?(fn item ->
+      to_string(floor) == to_string(Map.get(item, :innerId, Map.get(item, "innerId")))
+    end)
+  end
+
   def exist_in?(%{id: id}, list) when is_list(list) do
     list
     |> Enum.any?(fn item ->
       to_string(id) == to_string(Map.get(item, :id, Map.get(item, "id")))
+    end)
+  end
+
+  def exist_in?(%{slug: slug}, list) when is_list(list) do
+    list
+    |> Enum.any?(fn item ->
+      slug == Map.get(item, :slug, Map.get(item, "slug"))
     end)
   end
 

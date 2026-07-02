@@ -43,6 +43,18 @@ defmodule GroupherServer.TestMate do
       # which breaks time-threshold based tests (e.g. archive_threshold months: -3).
       @last_year Datetime.shift(@now, years: -1)
                  |> DateTime.truncate(:second)
+
+      def article_path(%Community{slug: slug}, article, thread) do
+        %{
+          community: slug,
+          inner_id: article.inner_id,
+          thread: thread |> to_string() |> String.upcase()
+        }
+      end
+
+      def comment_path(%Community{} = community, article, thread, %Comment{} = comment) do
+        %{article: article_path(community, article, thread), inner_id: comment.floor}
+      end
     end
   end
 end

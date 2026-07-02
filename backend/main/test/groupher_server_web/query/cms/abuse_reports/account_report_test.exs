@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.AccountReport do
             login
           }
           comment {
-            id
+            innerId
             bodyHtml
             author {
               login

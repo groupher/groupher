@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Articles.Document
-  alias CMS.Model.{Doc, Author, Community}
+  alias CMS.Model.{ArticleDocument, Doc, Author, Community}
   alias Helper.{ArticlePayload, ContentPipeline, ORM, T, Transaction}
   alias Helper.Validator.Slug
   import Helper.Utils, only: [get_config: 2]
@@ -378,8 +378,12 @@ defmodule GroupherServer.CMS.Articles.Draft do
            stage: CMS.Const.stage(:public)
          ) do
       {:ok, public_doc} ->
-        with {:ok, public_doc} <- ORM.update(public_doc, publish_content_attrs(draft)),
-             {:ok, _document} <- Document.update_doc(public_doc, document_attrs_from_doc(draft)),
+        with {:ok, draft_document} <-
+               ORM.find_by(ArticleDocument, article_id: draft.id, thread: :doc),
+             {:ok, public_doc} <- ORM.update(public_doc, publish_content_attrs(draft)),
+             {:ok, _document} <-
+               Document.update_doc(public_doc, document_attrs_from_draft(draft, draft_document)),
+             {:ok, _draft_document} <- Document.remove(:doc, draft.id),
              {:ok, _draft} <- ORM.delete(draft) do
           {:ok, public_doc}
         end
@@ -401,7 +405,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
     }
   end
 
-  defp document_attrs_from_doc(%Doc{} = doc) do
-    %{article_payload: doc, title: doc.title}
+  defp document_attrs_from_draft(%Doc{} = draft, %ArticleDocument{} = draft_document) do
+    %{article_payload: draft_document, title: draft.title}
   end
 end

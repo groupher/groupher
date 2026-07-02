@@ -16,7 +16,7 @@ import useHelper from './useHelper'
 //
 export type TRet = {
   loadComments: (page?: number) => void
-  loadCommentReplies: (id: TID) => void
+  loadCommentReplies: (innerId: TID) => void
   loadCommentsState: () => void
   loadPublishedComments: () => void
   openUpdateEditor: (comment: TComment) => void
@@ -47,12 +47,12 @@ export default function useQuery(): TRet {
   const stateRequestRef = useRef(0)
   const repliesRequestRef = useRef(0)
 
-  const articleKey = `${article.community?.slug || article.communitySlug || ''}:${article.meta.thread}:${article.innerId}`
-  const latestArticleKeyRef = useRef(articleKey)
+  const articlePath = `${article.community?.slug || article.communitySlug || ''}:${article.meta.thread}:${article.innerId}`
+  const latestArticlePathRef = useRef(articlePath)
 
   useEffect(() => {
-    latestArticleKeyRef.current = articleKey
-  }, [articleKey])
+    latestArticlePathRef.current = articlePath
+  }, [articlePath])
 
   useEffect(() => {
     isMountedRef.current = true
@@ -68,34 +68,39 @@ export default function useQuery(): TRet {
   const shouldIgnoreResult = (
     requestId: number,
     requestRef: MutableRefObject<number>,
-    requestArticleKey: string,
+    requestArticlePath: string,
   ): boolean => {
     return (
       !isMountedRef.current ||
       requestId !== requestRef.current ||
-      requestArticleKey !== latestArticleKeyRef.current
+      requestArticlePath !== latestArticlePathRef.current
     )
   }
 
-  const buildArticleRef = () => ({
+  const buildArticlePath = () => ({
     innerId: article.innerId,
     community: article.community?.slug || article.communitySlug,
     thread: article.meta.thread,
   })
 
+  const buildCommentPath = (commentOrInnerId: TComment | TID) => ({
+    article: buildArticlePath(),
+    innerId: typeof commentOrInnerId === 'object' ? commentOrInnerId.innerId : commentOrInnerId,
+  })
+
   const loadCommentsState = (): void => {
-    const requestArticleKey = latestArticleKeyRef.current
+    const requestArticlePath = latestArticlePathRef.current
     const requestId = stateRequestRef.current + 1
     stateRequestRef.current = requestId
 
     const params = {
-      article: buildArticleRef(),
+      article: buildArticlePath(),
       freshkey: uid.gen(),
     }
 
     // console.log('## loadCommentsState args: ', params)
     query(S.commentsState, params).then(({ commentsState }) => {
-      if (shouldIgnoreResult(requestId, stateRequestRef, requestArticleKey)) return
+      if (shouldIgnoreResult(requestId, stateRequestRef, requestArticlePath)) return
       commentsStore.commit({ ...commentsState })
     })
   }
@@ -105,14 +110,14 @@ export default function useQuery(): TRet {
   }
 
   const loadComments = (page = 1): void => {
-    const requestArticleKey = latestArticleKeyRef.current
+    const requestArticlePath = latestArticlePathRef.current
     const requestId = commentsRequestRef.current + 1
     commentsRequestRef.current = requestId
 
     commentsStore.commit({ loading: true })
 
     const params = {
-      article: buildArticleRef(),
+      article: buildArticlePath(),
       mode: commentsStore.mode,
       filter: { page, size: PAGI_SIZE },
     }
@@ -120,7 +125,7 @@ export default function useQuery(): TRet {
 
     query(S.pagedComments, params)
       .then(({ pagedComments }) => {
-        if (shouldIgnoreResult(requestId, commentsRequestRef, requestArticleKey)) return
+        if (shouldIgnoreResult(requestId, commentsRequestRef, requestArticlePath)) return
 
         repliesPagiNo = {}
         commentsStore.commit({ pagedComments, loading: false, initialized: true })
@@ -130,15 +135,15 @@ export default function useQuery(): TRet {
         }
       })
       .catch(() => {
-        if (shouldIgnoreResult(requestId, commentsRequestRef, requestArticleKey)) return
+        if (shouldIgnoreResult(requestId, commentsRequestRef, requestArticlePath)) return
         commentsStore.commit({ loading: false })
       })
   }
 
   const openUpdateEditor = (comment: TComment): void => {
     commentsStore.commit({ showUpdateEditor: true })
-    query(S.oneComment, { id: comment.id }).then(({ oneComment }) => {
-      commentsStore.commit({ updateId: oneComment.id, updateBody: oneComment.body })
+    query(S.oneComment, { comment: buildCommentPath(comment) }).then(({ oneComment }) => {
+      commentsStore.commit({ updateInnerId: oneComment.innerId, updateBody: oneComment.body })
     })
   }
 
@@ -148,35 +153,35 @@ export default function useQuery(): TRet {
     return curNo ? curNo + 1 : 1
   }
 
-  const loadCommentReplies = (id: TID): void => {
-    const requestArticleKey = latestArticleKeyRef.current
+  const loadCommentReplies = (innerId: TID): void => {
+    const requestArticlePath = latestArticlePathRef.current
     const requestId = repliesRequestRef.current + 1
     repliesRequestRef.current = requestId
 
-    const filter = { page: _getRepliesPagiNo(id), size: 30 }
-    const params = { id, filter }
+    const filter = { page: _getRepliesPagiNo(innerId), size: 30 }
+    const params = { comment: buildCommentPath(innerId), filter }
 
     commentsStore.commit({
-      repliesParentId: id,
+      repliesParentId: innerId,
       repliesLoading: true,
       repliesLoadingByParentId: {
         ...commentsStore.repliesLoadingByParentId,
-        [id]: true,
+        [innerId]: true,
       },
     })
     console.log('## loadCommentReplies args: ', params)
     query(S.pagedCommentReplies, params).then(({ pagedCommentReplies }) => {
-      if (shouldIgnoreResult(requestId, repliesRequestRef, requestArticleKey)) return
+      if (shouldIgnoreResult(requestId, repliesRequestRef, requestArticlePath)) return
 
-      addToReplies(id, pagedCommentReplies.entries)
+      addToReplies(innerId, pagedCommentReplies.entries)
 
-      repliesPagiNo[id] = pagedCommentReplies.pageNumber
+      repliesPagiNo[innerId] = pagedCommentReplies.pageNumber
       commentsStore.commit({
         repliesParentId: null,
         repliesLoading: false,
         repliesLoadingByParentId: {
           ...commentsStore.repliesLoadingByParentId,
-          [id]: false,
+          [innerId]: false,
         },
       })
     })
@@ -218,25 +223,28 @@ export default function useQuery(): TRet {
     name: TEmotionType,
     viewerHasReacted: boolean,
   ): void => {
-    const { id } = comment
+    const commentPath = buildCommentPath(comment)
     const emotion = name.toUpperCase()
     const nextEmotions = updateEmotionState(comment.emotions || [], name, !viewerHasReacted)
 
     if (viewerHasReacted) {
       upvoteEmotion(comment, nextEmotions)
-      mutate(S.undoEmotionToComment, { id, emotion }).then(({ undoEmotionToComment }) => {
-        upvoteEmotion(undoEmotionToComment, undoEmotionToComment.emotions)
-      })
+      mutate(S.undoEmotionToComment, { comment: commentPath, emotion }).then(
+        ({ undoEmotionToComment }) => {
+          upvoteEmotion(undoEmotionToComment, undoEmotionToComment.emotions)
+        },
+      )
     } else {
       upvoteEmotion(comment, nextEmotions)
-      mutate(S.emotionToComment, { id, emotion }).then(({ emotionToComment }) => {
+      mutate(S.emotionToComment, { comment: commentPath, emotion }).then(({ emotionToComment }) => {
         upvoteEmotion(emotionToComment, emotionToComment.emotions)
       })
     }
   }
 
   const handleUpvote = (comment: TComment, viewerHasUpvoted: boolean): void => {
-    const { id, upvotesCount } = comment
+    const { upvotesCount } = comment
+    const commentPath = buildCommentPath(comment)
 
     const updateBack = (upvoteComment: TComment) => {
       const { upvotesCount, viewerHasUpvoted, meta } = upvoteComment
@@ -253,14 +261,16 @@ export default function useQuery(): TRet {
         upvotesCount: upvotesCount + 1,
         viewerHasUpvoted: !viewerHasUpvoted,
       })
-      mutate(S.upvoteComment, { id }).then(({ upvoteComment }) => updateBack(upvoteComment))
+      mutate(S.upvoteComment, { comment: commentPath }).then(({ upvoteComment }) =>
+        updateBack(upvoteComment),
+      )
     } else {
       updateOneComment(comment, {
         upvotesCount: upvotesCount - 1,
         viewerHasUpvoted: !viewerHasUpvoted,
       })
 
-      mutate(S.undoUpvoteComment, { id }).then(({ undoUpvoteComment }) => {
+      mutate(S.undoUpvoteComment, { comment: commentPath }).then(({ undoUpvoteComment }) => {
         updateBack(undoUpvoteComment)
       })
     }
@@ -268,7 +278,9 @@ export default function useQuery(): TRet {
 
   const replyComment = (): void => {
     const { replyToComment, replyBody } = commentsStore
-    const params = { id: replyToComment.id, body: replyBody }
+    if (!replyToComment) return
+
+    const params = { comment: buildCommentPath(replyToComment), body: replyBody }
     commentsStore.commit({ publishing: true })
     mutate(S.replyComment, params).then(() => {
       commentsStore.commit({ needRefreshState: true })
@@ -282,9 +294,10 @@ export default function useQuery(): TRet {
 
   const updateComment = (): void => {
     if (!commentsStore.wordsCountReady) return
+    if (!commentsStore.updateInnerId) return
 
     const params = {
-      id: commentsStore.updateId,
+      comment: buildCommentPath(commentsStore.updateInnerId),
       body: commentsStore.updateBody,
     }
 

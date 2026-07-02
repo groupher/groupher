@@ -1,8 +1,9 @@
 defmodule GroupherServerWeb.Middleware.ArticleLoader do
   @moduledoc """
-  Load article entity from normalized args (`community`, `thread`, `id`).
+  Load article entity from `arguments.article_path` or public `arguments.article`.
 
-  Skip loading if article is already present in arguments.
+  This middleware may run after Passport. It repeats `ArticlePath` validation so
+  thread-specific fields cannot load a different article type by changing input.
   """
 
   @behaviour Absinthe.Middleware
@@ -17,7 +18,7 @@ defmodule GroupherServerWeb.Middleware.ArticleLoader do
     resolution
   end
 
-  def call(resolution, _) do
-    FrontDesk.call(resolution, :article)
+  def call(resolution, opts) do
+    FrontDesk.call(resolution, {:article, List.wrap(opts)})
   end
 end

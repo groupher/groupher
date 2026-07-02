@@ -19,7 +19,7 @@ export type TEditState = {
   showReplyEditor: boolean
   showUpdateEditor: boolean
   submitState: TSubmitState
-  updateId: TID | null
+  updateInnerId: TID | null
   replyToComment: TComment | null
 }
 

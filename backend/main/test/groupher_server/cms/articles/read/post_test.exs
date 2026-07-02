@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
   use GroupherServer.TestMate
 
   alias CMS.FrontDesk
-  alias CMS.Model.{ArticleDocument, PostDocument}
+  alias CMS.Model.ArticleDocument
   # @last_year Datetime.shift(Datetime.beginning_of_year(Datetime.now()), days: -3)
   #            |> DateTime.truncate(:second)
   @article_digest_length get_config(:article, :digest_length)
@@ -295,22 +295,18 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       assert not is_nil(post.document.html)
 
       {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: post.id, thread: :post})
-      {:ok, post_doc} = ORM.find_by(PostDocument, %{post_id: post.id})
 
-      assert post.document.json == post_doc.json
-      assert article_doc.json == post_doc.json
+      assert post.document.json == article_doc.json
     end
 
     test "delete post should also delete related document", ~m(user community post_attrs)a do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
       {:ok, _article_doc} = ORM.find_by(ArticleDocument, %{article_id: post.id, thread: :post})
-      {:ok, _post_doc} = ORM.find_by(PostDocument, %{post_id: post.id})
 
       {:ok, _} = CMS.Articles.delete(post)
 
       {:error, _} = ORM.find(Post, post.id)
       {:error, _} = ORM.find_by(ArticleDocument, %{article_id: post.id, thread: :post})
-      {:error, _} = ORM.find_by(PostDocument, %{post_id: post.id})
     end
 
     test "update post should also update related document", ~m(user community post_attrs)a do
@@ -320,9 +316,7 @@ defmodule GroupherServer.Test.CMS.Articles.Post do
       {:ok, post} = CMS.Articles.update(post, %{body: body})
 
       {:ok, article_doc} = ORM.find_by(ArticleDocument, %{article_id: post.id, thread: :post})
-      {:ok, post_doc} = ORM.find_by(PostDocument, %{post_id: post.id})
 
-      assert String.contains?(post_doc.json, "new content")
       assert String.contains?(article_doc.json, "new content")
     end
   end

@@ -74,7 +74,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           other_conn = simu_conn(:user)
 
           variables = %{
-            article: %{inner_id: article.inner_id, community: community.slug},
+            article: article_path(community, article, @thread),
             coverUrl: cover_url(@thread, "read-light"),
             coverUrlDark: cover_url(@thread, "read-dark"),
             coverEditInfo: cover_edit_info_input()
@@ -82,7 +82,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
 
           updated = owner_conn |> gq_mutation(cover_update_schema(@thread), variables)
 
-          read_variables = %{article: %{inner_id: article.inner_id, community: community.slug}}
+          read_variables = %{article: article_path(community, article, @thread)}
 
           result =
             owner_conn
@@ -118,7 +118,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           owner_conn = simu_conn(:owner, article)
 
           variables = %{
-            article: %{inner_id: article.inner_id, community: community.slug},
+            article: article_path(community, article, @thread),
             coverUrl: cover_url(@thread, "update-light"),
             coverUrlDark: cover_url(@thread, "update-dark"),
             coverEditInfo: cover_edit_info_input(%{canvasWidth: 1600, canvasHeight: 900})
@@ -145,7 +145,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           owner_conn = simu_conn(:owner, article)
 
           variables = %{
-            article: %{inner_id: article.inner_id, community: community.slug},
+            article: article_path(community, article, @thread),
             coverUrl: cover_url(@thread, "remove-light"),
             coverUrlDark: cover_url(@thread, "remove-dark"),
             coverEditInfo: cover_edit_info_input()
@@ -155,7 +155,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           cover_edit_info_id = updated["coverEditInfo"]["id"]
 
           remove_variables = %{
-            article: %{inner_id: article.inner_id, community: community.slug},
+            article: article_path(community, article, @thread),
             coverUrl: nil,
             coverUrlDark: nil,
             coverEditInfo: nil
@@ -176,7 +176,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           owner_conn = simu_conn(:owner, article)
 
           variables = %{
-            article: %{inner_id: article.inner_id, community: community.slug},
+            article: article_path(community, article, @thread),
             coverUrl: cover_url(@thread, "delete-light"),
             coverUrlDark: cover_url(@thread, "delete-dark"),
             coverEditInfo: cover_edit_info_input()
@@ -186,7 +186,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           cover_edit_info_id = updated["coverEditInfo"]["id"]
           background_id = updated["coverEditInfo"]["light"]["background"]["id"]
 
-          delete_variables = %{article: %{inner_id: article.inner_id, community: community.slug}}
+          delete_variables = %{article: article_path(community, article, @thread)}
 
           owner_conn
           |> gq_mutation(
@@ -247,7 +247,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           owner_conn = simu_conn(:owner, article)
 
           variables = %{
-            article: %{inner_id: article.inner_id, community: community.slug},
+            article: article_path(community, article, @thread),
             coverUrl: cover_url(@thread, "invalid")
           }
 
@@ -259,7 +259,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           owner_conn = simu_conn(:owner, article)
 
           variables = %{
-            article: %{inner_id: article.inner_id, community: community.slug},
+            article: article_path(community, article, @thread),
             coverEditInfo: cover_edit_info_input()
           }
 
@@ -273,7 +273,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           other_owner_conn = simu_conn(:owner, other_article)
 
           other_variables = %{
-            article: %{inner_id: other_article.inner_id, community: community.slug},
+            article: article_path(community, other_article, @thread),
             coverUrl: cover_url(@thread, "other-light"),
             coverUrlDark: cover_url(@thread, "other-dark"),
             coverEditInfo: cover_edit_info_input()
@@ -285,7 +285,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
           other_background_id = other_updated["coverEditInfo"]["light"]["background"]["id"]
 
           variables = %{
-            article: %{inner_id: article.inner_id, community: community.slug},
+            article: article_path(community, article, @thread),
             coverUrl: cover_url(@thread, "foreign-bg"),
             coverEditInfo:
               cover_edit_info_input(%{
@@ -376,7 +376,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
 
     """
     mutation(
-      $article: ArticleRefInput!
+      $article: ArticlePathInput!
       $coverUrl: String
       $coverUrlDark: String
       $coverEditInfo: CoverEditInfoInput

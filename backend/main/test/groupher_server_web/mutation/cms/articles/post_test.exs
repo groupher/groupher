@@ -23,7 +23,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       variables = post_attr |> Map.merge(%{community: community.slug, body: body})
       result = user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
 
-      assert result["community"]["id"] == to_string(community.id)
+      assert result["community"]["slug"] == community.slug
       assert result["linkAddr"] == "https://helloworld"
 
       assert {:ok, _} = ORM.find_by(Author, user_id: user.id)
@@ -83,7 +83,10 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
     end
 
     test "delete a post by post's owner", ~m(owner_conn community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
+
       result = owner_conn |> gq_mutation(Schema.m(:delete_article, :post), variables)
 
       assert result["innerId"] == to_string(post.inner_id)
@@ -95,7 +98,10 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       belongs_community_slug = post.communities |> List.first() |> Map.get(:slug)
       rule_conn = simu_conn(:user, cms: %{belongs_community_slug => %{"post.delete" => true}})
 
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
+
       result = rule_conn |> gq_mutation(Schema.m(:delete_article, :post), variables)
 
       assert result["innerId"] == to_string(post.inner_id)
@@ -103,7 +109,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
     end
 
     test "delete a post without login user fails", ~m(guest_conn community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
 
       assert guest_conn
              |> mutation_error?(
@@ -119,14 +127,20 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       passport_rules = %{post_community_slug => %{"post.delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
+
       result = rule_conn |> gq_mutation(Schema.m(:delete_article, :post), variables)
 
       assert result["innerId"] == to_string(post.inner_id)
     end
 
     test "unauth user delete post fails", ~m(user_conn guest_conn community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
+
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
       schema = Schema.m(:delete_article, :post)
 
@@ -139,7 +153,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug},
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -161,7 +175,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
         CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug},
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}"),
         copyRight: "translate",
@@ -197,7 +211,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
         CMS.Communities.create_tag(community, :post, community_tag_attrs3, user)
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug},
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
         communityTags: [community_tag.id, community_tag2.id]
       }
 
@@ -212,7 +226,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
                to_string(community_tag2.id)
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug},
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
         communityTags: [community_tag2.id, community_tag3.id]
       }
 
@@ -232,7 +246,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug},
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -252,7 +266,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug},
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -266,7 +280,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug},
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -298,7 +312,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: post_b.inner_id, community: community_b.slug},
+        article: %{inner_id: post_b.inner_id, community: community_b.slug, thread: "POST"},
         title: "cross-community-update-#{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -318,7 +332,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       passport_rules = %{community_a.slug => %{"post.delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{article: %{inner_id: post_b.inner_id, community: community_b.slug}}
+      variables = %{
+        article: %{inner_id: post_b.inner_id, community: community_b.slug, thread: "POST"}
+      }
 
       assert rule_conn
              |> mutation_error?(Schema.m(:delete_article, :post), variables, ecode(:passport))

@@ -133,7 +133,7 @@ export type TPagedArticles = {
 } & TPagi
 
 export type TComment = {
-  id: string
+  innerId: string
   thread?: TThread
   isPinned?: boolean
   floor?: number
@@ -144,7 +144,7 @@ export type TComment = {
   repliesCount?: number
   replies?: TComment[]
   replyTo?: TComment
-  replyToId?: TID
+  replyToInnerId?: TID
   upvotesCount?: number
   viewerHasUpvoted?: boolean
   isArticleAuthor?: boolean
@@ -157,7 +157,7 @@ export type TComment = {
     illegalWords?: string[]
   }
   article?: {
-    id?: string
+    innerId?: string
     title?: string
     thread?: TThread
     author?: {

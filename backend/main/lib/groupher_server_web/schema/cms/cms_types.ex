@@ -230,7 +230,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:digest, :string)
     field(:author, :user, resolve: dataloader(CMS, :author))
     timestamp_fields()
-    field(:document, :thread_document, resolve: fn draft, _, _ -> {:ok, draft} end)
+    field(:document, :article_document, resolve: fn draft, _, _ -> {:ok, draft} end)
   end
 
   object :doc_tree_mutation_payload do
@@ -287,14 +287,14 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :common_article do
     field(:thread, :thread)
-    field(:id, :id)
+    field(:inner_id, :id)
     # field(:body_html, :string)
     field(:title, :string)
     field(:author, :common_user)
   end
 
   object :common_comment do
-    field(:id, :id)
+    field(:inner_id, :id, resolve: &R.CMS.comment_inner_id/3)
     field(:body_html, :string)
     field(:upvotes_count, :integer)
     field(:author, :common_user)
@@ -307,7 +307,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:id, :id)
   end
 
-  object :thread_document do
+  object :article_document do
     field(:json, :string)
     field(:markdown, :string)
     field(:markdown_toc, :json)
@@ -607,8 +607,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :community do
     meta(:cache, max_age: 30)
-    @desc "Community identifier."
-    field(:id, :id)
     @desc "Community display title."
     field(:title, :string)
     @desc "Community introduction text."

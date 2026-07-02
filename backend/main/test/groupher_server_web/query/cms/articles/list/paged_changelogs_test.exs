@@ -122,7 +122,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       assert first_changelog["views"] > last_changelog["views"]
     end
 
-    test "should get valid thread document", ~m(guest_conn community user)a do
+    test "should get valid article document", ~m(guest_conn community user)a do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       Process.sleep(2000)
       {:ok, _} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
@@ -169,7 +169,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
       changelog = results["entries"] |> List.first()
       assert results["totalCount"] == 4
-      assert exist_in?(%{id: to_string(community.id)}, changelog["communities"])
+      assert exist_in?(%{slug: community.slug}, changelog["communities"])
     end
 
     test "returns cancan error when community changelog thread is disabled",
@@ -323,7 +323,8 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       variables = %{filter: %{when: "THIS_YEAR"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
 
-      assert results["entries"] |> Enum.any?(&(&1["id"] != changelog_last_year.id))
+      assert results["entries"]
+             |> Enum.any?(&(&1["innerId"] != to_string(changelog_last_year.inner_id)))
     end
 
     test "TODAY option should work", ~m(guest_conn)a do

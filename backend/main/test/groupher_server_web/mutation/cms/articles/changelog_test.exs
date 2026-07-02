@@ -23,7 +23,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       variables = changelog_attr |> Map.merge(%{community: community.slug, body: body})
       result = user_conn |> gq_mutation(Schema.m(:create_article, :changelog), variables)
 
-      assert result["community"]["id"] == to_string(community.id)
+      assert result["community"]["slug"] == community.slug
       assert result["linkAddr"] == "https://helloworld"
 
       assert {:ok, _} = ORM.find_by(Author, user_id: user.id)
@@ -93,7 +93,10 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     end
 
     test "delete a changelog by changelog's owner", ~m(owner_conn community changelog)a do
-      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+      }
+
       result = owner_conn |> gq_mutation(Schema.m(:delete_article, :changelog), variables)
 
       assert result["innerId"] == to_string(changelog.inner_id)
@@ -107,7 +110,10 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       rule_conn =
         simu_conn(:user, cms: %{belongs_community_slug => %{"changelog.delete" => true}})
 
-      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+      }
+
       result = rule_conn |> gq_mutation(Schema.m(:delete_article, :changelog), variables)
 
       assert result["innerId"] == to_string(changelog.inner_id)
@@ -115,7 +121,9 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
     end
 
     test "delete a changelog without login user fails", ~m(guest_conn community changelog)a do
-      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+      }
 
       assert guest_conn
              |> mutation_error?(
@@ -131,14 +139,20 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       passport_rules = %{changelog_community_slug => %{"changelog.delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+      }
+
       result = rule_conn |> gq_mutation(Schema.m(:delete_article, :changelog), variables)
 
       assert result["innerId"] == to_string(changelog.inner_id)
     end
 
     test "unauth user delete changelog fails", ~m(user_conn guest_conn community changelog)a do
-      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+      }
+
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
       schema = Schema.m(:delete_article, :changelog)
 
@@ -151,7 +165,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug},
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -178,7 +192,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
         )
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug},
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}"),
         communityTags: [community_tag.id]
@@ -226,7 +240,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
         )
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug},
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
         communityTags: [community_tag.id, community_tag2.id]
       }
 
@@ -241,7 +255,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
                to_string(community_tag2.id)
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug},
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
         communityTags: [community_tag2.id, community_tag3.id]
       }
 
@@ -261,7 +275,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug},
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -282,7 +296,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug},
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }
@@ -297,7 +311,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       unique_num = System.unique_integer([:positive, :monotonic])
 
       variables = %{
-        article: %{inner_id: changelog.inner_id, community: community.slug},
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
         title: "updated title #{unique_num}",
         body: mock_rich_text("updated body #{unique_num}")
       }

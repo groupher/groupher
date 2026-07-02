@@ -54,11 +54,10 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "set a community_tag to content"
     field :set_community_tag, :article do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:community_tag_id, non_null(:id))
 
       middleware(M.Authorize, :login)
-      middleware(M.ArticleArgs)
       middleware(M.Passport, action: "community_tag.set")
       middleware(M.ArticleLoader)
 
@@ -67,11 +66,10 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "unset a tag to content"
     field :unset_community_tag, :article do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:community_tag_id, non_null(:id))
 
       middleware(M.Authorize, :login)
-      middleware(M.ArticleArgs)
       middleware(M.Passport, action: "community_tag.unset")
       middleware(M.ArticleLoader)
 
@@ -117,12 +115,11 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "mirror article to other community"
     field :mirror_article, :article do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:target_community, non_null(:string))
       arg(:community_tags, list_of(:id), default_value: [])
 
       middleware(M.Authorize, :login)
-      middleware(M.ArticleArgs)
       middleware(M.Passport, action: "article.mirror")
       middleware(M.FrontDesk, :target_community)
       middleware(M.ArticleLoader)
@@ -132,11 +129,10 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "unmirror article for community"
     field :unmirror_article, :article do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:target_community, non_null(:string))
 
       middleware(M.Authorize, :login)
-      middleware(M.ArticleArgs)
       middleware(M.Passport, action: "article.unmirror")
       middleware(M.FrontDesk, :target_community)
       middleware(M.ArticleLoader)
@@ -146,12 +142,11 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "move article to other community"
     field :move_article, :article do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:target_community, non_null(:string))
       arg(:community_tags, list_of(:id), default_value: [])
 
       middleware(M.Authorize, :login)
-      middleware(M.ArticleArgs)
       middleware(M.Passport, action: "article.move")
       middleware(M.FrontDesk, :target_community)
       middleware(M.ArticleLoader)
@@ -161,11 +156,10 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "mirror article to home community"
     field :mirror_to_home, :article do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:community_tags, list_of(:id), default_value: [])
 
       middleware(M.Authorize, :login)
-      middleware(M.ArticleArgs)
       middleware(M.Passport, action: "article.mirror_home")
       middleware(M.FrontDesk, target_community: :home)
       middleware(M.ArticleLoader)
@@ -175,11 +169,10 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
     @desc "move article to other community"
     field :move_to_blackhole, :article do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:community_tags, list_of(:id), default_value: [])
 
       middleware(M.Authorize, :login)
-      middleware(M.ArticleArgs)
       middleware(M.Passport, action: "article.move_blackhole")
       middleware(M.FrontDesk, target_community: :blackhole)
       middleware(M.ArticleLoader)

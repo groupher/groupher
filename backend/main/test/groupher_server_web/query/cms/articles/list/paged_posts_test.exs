@@ -69,7 +69,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :post), variables)
       first_post = results["entries"] |> List.first()
-      assert first_post["id"] > post.id
+      assert first_post["innerId"] == to_string(post.inner_id)
     end
 
     test "upvotes_count order should work", ~m(guest_conn post_last_week user user2 user3)a do
@@ -154,7 +154,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
       assert results["totalCount"] == 1
     end
 
-    test "should get valid thread document", ~m(guest_conn community user)a do
+    test "should get valid article document", ~m(guest_conn community user)a do
       post_attrs = mock_attrs(:post, %{community_id: community.id})
       Process.sleep(2000)
       {:ok, _} = CMS.Articles.create(community, :post, post_attrs, user)
@@ -198,7 +198,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedPosts do
 
       post = results["entries"] |> List.first()
       assert results["totalCount"] == 4
-      assert exist_in?(%{id: to_string(community.id)}, post["communities"])
+      assert exist_in?(%{slug: community.slug}, post["communities"])
     end
 
     test "returns cancan error when community post thread is disabled",

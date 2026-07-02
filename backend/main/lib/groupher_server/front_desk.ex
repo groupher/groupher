@@ -18,7 +18,7 @@ defmodule GroupherServer.FrontDesk do
     Accounts.FrontDesk.user(login)
   end
 
-  def comment(id), do: CMS.FrontDesk.comment(id)
+  def comment(article_path, inner_id), do: CMS.FrontDesk.comment(article_path, inner_id)
 
   def article(community, thread, inner_id) when is_binary(community) do
     preload = [[author: :user], :community]

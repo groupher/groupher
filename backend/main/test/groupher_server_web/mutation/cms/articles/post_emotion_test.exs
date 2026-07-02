@@ -23,7 +23,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
   describe "[post emotion]" do
     test "login user can emotion to a post", ~m(community post user_conn)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug},
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
         emotion: "BEER"
       }
 
@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       {:ok, _} = CMS.Articles.emotion(post, :beer, user)
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug},
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
         emotion: "BEER"
       }
 
@@ -48,7 +48,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
 
     test "duplicate same emotion counts as 1", ~m(community post user_conn)a do
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug},
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
         emotion: "BEER"
       }
 
@@ -64,7 +64,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
     test "different emotions from different users both get counted",
          ~m(community post user_conn user2_conn)a do
       variables_beer = %{
-        article: %{inner_id: post.inner_id, community: community.slug},
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
         emotion: "BEER"
       }
 
@@ -72,7 +72,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       assert emotion_entry(article["emotions"], :beer)["count"] == 1
 
       variables_heart = %{
-        article: %{inner_id: post.inner_id, community: community.slug},
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
         emotion: "HEART"
       }
 
@@ -106,7 +106,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
         })
 
       variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug},
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
         emotion: "BEER"
       }
 

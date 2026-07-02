@@ -7,8 +7,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   alias GroupherServer.{Accounts, CMS}
 
   alias Accounts.Model.User
-  alias CMS.Helper.EmotionFormatter
-  alias CMS.Model.{Author, Category, Community, CoverEditInfo}
+  alias CMS.Helper.{ArticlePath, EmotionFormatter}
+  alias CMS.Model.{Author, Category, Comment, Community, CoverEditInfo}
   alias Helper.{OgInfo, ORM}
 
   # #######################
@@ -337,7 +337,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def open_graph_info(_root, %{url: url}, _info), do: OgInfo.get(url)
 
-  def delete_community(_root, %{id: id}, _info), do: Community |> ORM.find_delete!(id)
+  def delete_community(_root, %{community: community}, _info) do
+    Community |> ORM.find_delete!(community.id)
+  end
 
   def apply_community(_root, args, %{context: %{cur_user: user}}) do
     CMS.Communities.apply(args, user)
@@ -347,8 +349,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Communities.approve_apply(community)
   end
 
-  def deny_community_apply(_root, %{id: id}, _) do
-    CMS.Communities.deny_apply(id)
+  def deny_community_apply(_root, %{community: community}, _) do
+    CMS.Communities.deny_apply(community.id)
   end
 
   def community_exist?(_root, %{slug: slug}, _) do
@@ -392,14 +394,35 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # community thread (post, job), login user should be logged
   # #######################
-  def read_article(_root, %{community: community, thread: thread, id: id}, %{
-        context: %{cur_user: user}
-      }) do
-    CMS.Articles.read(community, thread, id, user)
+  def read_article(root, args, info), do: read_article(root, args, info, [])
+
+  def read_article(_root, %{article: article_path}, info, opts) do
+    with {:ok, article_path} <- ArticlePath.normalize(article_path, opts) do
+      do_read_article(article_path, info)
+    end
   end
 
-  def read_article(_root, %{community: community, thread: thread, id: id}, _info) do
-    CMS.Articles.read(community, thread, id)
+  def read_article(
+        _root,
+        %{community: community, thread: thread, article_inner_id: inner_id},
+        info,
+        _opts
+      ) do
+    do_read_article(%{community: community, thread: thread, inner_id: inner_id}, info)
+  end
+
+  def read_article(_root, %{community: community, thread: thread, id: inner_id}, info, _opts) do
+    do_read_article(%{community: community, thread: thread, inner_id: inner_id}, info)
+  end
+
+  defp do_read_article(%{community: community, thread: thread, inner_id: inner_id}, %{
+         context: %{cur_user: user}
+       }) do
+    CMS.Articles.read(community, thread, inner_id, user)
+  end
+
+  defp do_read_article(%{community: community, thread: thread, inner_id: inner_id}, _info) do
+    CMS.Articles.read(community, thread, inner_id)
   end
 
   def set_post_cat(_root, %{article: article, cat: cat}, _info) do
@@ -456,12 +479,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Articles.mark_delete(article)
   end
 
-  def batch_mark_delete_articles(_root, ~m(community thread ids)a, _info) do
-    CMS.Articles.batch_mark_delete(community, thread, ids)
+  def batch_mark_delete_articles(_root, ~m(community thread inner_ids)a, _info) do
+    CMS.Articles.batch_mark_delete(community, thread, inner_ids)
   end
 
-  def batch_undo_mark_delete_articles(_root, ~m(community thread ids)a, _info) do
-    CMS.Articles.batch_undo_mark_delete(community, thread, ids)
+  def batch_undo_mark_delete_articles(_root, ~m(community thread inner_ids)a, _info) do
+    CMS.Articles.batch_undo_mark_delete(community, thread, inner_ids)
   end
 
   def undo_mark_delete_article(_root, ~m(article)a, _info) do
@@ -476,12 +499,16 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.AbuseReports.undo_article(article, user)
   end
 
-  def mentions(_root, ~m(type id)a = args, _info) do
-    CMS.ArtimentMentions.mentions(type, id, Map.get(args, :filter))
+  def mentions(_root, %{source: source} = args, _info) do
+    with {:ok, {type, id}} <- resolve_mention_source(source) do
+      CMS.ArtimentMentions.mentions(type, id, Map.get(args, :filter))
+    end
   end
 
-  def mentioned_by(_root, ~m(type id)a = args, _info) do
-    CMS.ArtimentMentions.mentioned_by(type, id, Map.get(args, :filter))
+  def mentioned_by(_root, %{target: target} = args, _info) do
+    with {:ok, {type, id}} <- resolve_mention_target(target) do
+      CMS.ArtimentMentions.mentioned_by(type, id, Map.get(args, :filter))
+    end
   end
 
   # #######################
@@ -603,8 +630,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
-  def paged_community_moderators(_root, ~m(id filter)a, _info) do
-    CMS.Communities.members(:moderators, %Community{id: id}, filter)
+  def paged_community_moderators(_root, ~m(community filter)a, _info) do
+    CMS.Communities.members(:moderators, %Community{slug: community}, filter)
   end
 
   # #######################
@@ -700,15 +727,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def unsubscribe_community(_root, ~m(community)a, %{context: %{cur_user: cur_user}}) do
-    CMS.Communities.unsubscribe(community, cur_user)
-  end
-
-  def paged_community_subscribers(_root, ~m(id filter)a, %{context: %{cur_user: cur_user}}) do
-    CMS.Communities.members(:subscribers, %Community{id: id}, filter, cur_user)
-  end
-
-  def paged_community_subscribers(_root, ~m(id filter)a, _info) do
-    CMS.Communities.members(:subscribers, %Community{id: id}, filter)
+    with {:ok, _} <- CMS.Communities.unsubscribe(community, cur_user) do
+      {:ok, community}
+    end
   end
 
   def paged_community_subscribers(_root, ~m(community filter)a, %{context: %{cur_user: cur_user}}) do
@@ -744,48 +765,49 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # comments ..
   # #######################
-  def comments_state(_root, %{article: article_ref}, %{context: %{cur_user: user}}) do
-    with {:ok, {thread, article_id}} <- resolve_comment_article_ref(article_ref) do
-      CMS.Comments.comments_state(thread, article_id, user)
-    end
+  def comments_state(_root, %{article: article, thread: thread}, %{context: %{cur_user: user}}) do
+    CMS.Comments.comments_state(thread, article.id, user)
   end
 
-  def comments_state(_root, %{article: article_ref}, _) do
-    with {:ok, {thread, article_id}} <- resolve_comment_article_ref(article_ref) do
-      CMS.Comments.comments_state(thread, article_id)
-    end
+  def comments_state(_root, %{article: article, thread: thread}, _) do
+    CMS.Comments.comments_state(thread, article.id)
   end
 
-  def one_comment(_root, ~m(id)a, %{context: %{cur_user: user}}) do
-    CMS.Comments.one_comment(id, user)
+  def one_comment(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
+    CMS.Comments.one_comment(comment.id, user)
   end
 
-  def one_comment(_root, ~m(id)a, _) do
-    CMS.Comments.one_comment(id)
+  def one_comment(_root, %{comment: comment}, _) do
+    CMS.Comments.one_comment(comment.id)
   end
 
-  def paged_comments(_root, %{article: article_ref, filter: filter, mode: mode}, %{
+  def paged_comments(_root, %{article: article, thread: thread, filter: filter, mode: mode}, %{
         context: %{cur_user: user}
       }) do
-    with {:ok, {thread, article_id}} <- resolve_comment_article_ref(article_ref) do
-      CMS.Comments.paged_comments(thread, article_id, filter, mode, user)
-    end
+    CMS.Comments.paged_comments(thread, article.id, filter, mode, user)
   end
 
-  def paged_comments(_root, %{article: article_ref, filter: filter, mode: mode}, _info) do
-    with {:ok, {thread, article_id}} <- resolve_comment_article_ref(article_ref) do
-      CMS.Comments.paged_comments(thread, article_id, filter, mode)
-    end
+  def paged_comments(
+        _root,
+        %{article: article, thread: thread, filter: filter, mode: mode},
+        _info
+      ) do
+    CMS.Comments.paged_comments(thread, article.id, filter, mode)
   end
 
-  def paged_comments_participants(_root, %{article: article_ref, filter: filter}, _info) do
-    with {:ok, {thread, article_id}} <- resolve_comment_article_ref(article_ref) do
-      CMS.Comments.paged_comments_participants(thread, article_id, filter)
-    end
+  def paged_comments_participants(
+        _root,
+        %{article: article, thread: thread, filter: filter},
+        _info
+      ) do
+    CMS.Comments.paged_comments_participants(thread, article.id, filter)
   end
 
-  def create_comment(_root, ~m(community thread id body)a, %{context: %{cur_user: user}}) do
-    CMS.Comments.create_comment(community, thread, id, body, user)
+  def create_comment(_root, %{article: article_path, body: body}, %{context: %{cur_user: user}}) do
+    with {:ok, %{community: community, thread: thread, inner_id: inner_id}} <-
+           ArticlePath.normalize(article_path) do
+      CMS.Comments.create_comment(%Community{slug: community}, thread, inner_id, body, user)
+    end
   end
 
   def update_comment(_root, ~m(body comment)a, _info) do
@@ -796,37 +818,41 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Comments.delete_comment(comment)
   end
 
-  def reply_comment(_root, ~m(id body)a, %{context: %{cur_user: user}}) do
-    CMS.Comments.reply_comment(id, body, user)
+  def reply_comment(_root, %{comment: comment, body: body}, %{context: %{cur_user: user}}) do
+    CMS.Comments.reply_comment(comment.id, body, user)
   end
 
-  def upvote_comment(_root, ~m(id)a, %{context: %{cur_user: user}}) do
-    CMS.Comments.upvote_comment(id, user)
+  def upvote_comment(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
+    CMS.Comments.upvote_comment(comment.id, user)
   end
 
-  def undo_upvote_comment(_root, ~m(id)a, %{context: %{cur_user: user}}) do
-    CMS.Comments.undo_upvote_comment(id, user)
+  def undo_upvote_comment(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
+    CMS.Comments.undo_upvote_comment(comment.id, user)
   end
 
-  def emotion_to_comment(_root, ~m(id emotion)a, %{context: %{cur_user: user}}) do
-    CMS.Comments.emotion_to_comment(id, emotion, user)
+  def emotion_to_comment(_root, %{comment: comment, emotion: emotion}, %{
+        context: %{cur_user: user}
+      }) do
+    CMS.Comments.emotion_to_comment(comment.id, emotion, user)
   end
 
-  def undo_emotion_to_comment(_root, ~m(id emotion)a, %{context: %{cur_user: user}}) do
-    CMS.Comments.undo_emotion_to_comment(id, emotion, user)
+  def undo_emotion_to_comment(_root, %{comment: comment, emotion: emotion}, %{
+        context: %{cur_user: user}
+      }) do
+    CMS.Comments.undo_emotion_to_comment(comment.id, emotion, user)
   end
 
-  def mark_comment_solution(_root, ~m(id)a, %{context: %{cur_user: user}}) do
-    CMS.Comments.mark_comment_solution(id, user)
+  def mark_comment_solution(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
+    CMS.Comments.mark_comment_solution(comment.id, user)
   end
 
-  def undo_mark_comment_solution(_root, ~m(id)a, %{context: %{cur_user: user}}) do
-    CMS.Comments.undo_mark_comment_solution(id, user)
+  def undo_mark_comment_solution(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
+    CMS.Comments.undo_mark_comment_solution(comment.id, user)
   end
 
-  def pin_comment(_root, ~m(id)a, _info), do: CMS.Comments.pin_comment(id)
+  def pin_comment(_root, ~m(comment)a, _info), do: CMS.Comments.pin_comment(comment.id)
 
-  def undo_pin_comment(_root, ~m(id)a, _info), do: CMS.Comments.undo_pin_comment(id)
+  def undo_pin_comment(_root, ~m(comment)a, _info), do: CMS.Comments.undo_pin_comment(comment.id)
 
   def emotions(%{thread: _} = root, _args, _info) do
     {:ok, EmotionFormatter.format(root, :comment)}
@@ -836,28 +862,96 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     {:ok, EmotionFormatter.format(root, :article)}
   end
 
-  defp resolve_comment_article_ref(article_ref) do
-    inner_id = Map.get(article_ref, :inner_id) || Map.get(article_ref, :innerId)
-    community = Map.get(article_ref, :community)
+  def comment_inner_id(%{floor: floor}, _args, _info), do: {:ok, floor}
 
-    with {:ok, thread} <- normalize_thread(Map.get(article_ref, :thread, :post)),
-         {:ok, article} <- CMS.FrontDesk.article(community, thread, inner_id) do
-      {:ok, {thread, article.id}}
+  def comment_reply_to_inner_id(%{reply_to: %{floor: floor}}, _args, _info), do: {:ok, floor}
+
+  def comment_reply_to_inner_id(%{reply_to_id: nil}, _args, _info), do: {:ok, nil}
+
+  def comment_reply_to_inner_id(%{reply_to_id: reply_to_id}, _args, _info) do
+    case ORM.find(Comment, reply_to_id) do
+      {:ok, %{floor: floor}} -> {:ok, floor}
+      {:error, _} -> {:ok, nil}
     end
   end
 
-  defp normalize_thread(nil), do: {:ok, :post}
-  defp normalize_thread(thread) when is_atom(thread), do: {:ok, thread}
+  def comment_reply_to_inner_id(_comment, _args, _info), do: {:ok, nil}
 
-  ############
-  ############
-  ############
-  def paged_comment_replies(_root, ~m(id filter)a, %{context: %{cur_user: user}}) do
-    CMS.Comments.paged_comment_replies(id, filter, user)
+  defp resolve_article_path(article_path) do
+    with {:ok, %{community: community, thread: thread, inner_id: inner_id}} <-
+           ArticlePath.normalize(article_path),
+         {:ok, article} <- CMS.FrontDesk.article(community, thread, inner_id) do
+      {:ok, {thread, article}}
+    end
   end
 
-  def paged_comment_replies(_root, ~m(id filter)a, _info) do
-    CMS.Comments.paged_comment_replies(id, filter)
+  defp resolve_mention_source(source) do
+    with {:ok, key, value} <- one_of_input(source, [:article, :comment], "mention source") do
+      case key do
+        :article ->
+          with {:ok, {thread, article}} <- resolve_article_path(value) do
+            {:ok, {thread, article.id}}
+          end
+
+        :comment ->
+          with {:ok, comment} <- resolve_comment_path(value) do
+            {:ok, {:comment, comment.id}}
+          end
+      end
+    end
+  end
+
+  defp resolve_mention_target(target) do
+    with {:ok, key, value} <-
+           one_of_input(target, [:article, :comment, :user_login], "mention target") do
+      case key do
+        :article ->
+          with {:ok, {thread, article}} <- resolve_article_path(value) do
+            {:ok, {thread, article.id}}
+          end
+
+        :comment ->
+          with {:ok, comment} <- resolve_comment_path(value) do
+            {:ok, {:comment, comment.id}}
+          end
+
+        :user_login ->
+          with {:ok, user} <- ORM.find_user(value) do
+            {:ok, {:user, user.id}}
+          end
+      end
+    end
+  end
+
+  defp resolve_comment_path(%{article: article_path} = comment_path) do
+    inner_id = Map.get(comment_path, :inner_id) || Map.get(comment_path, :innerId)
+
+    CMS.FrontDesk.comment(article_path, inner_id)
+  end
+
+  defp one_of_input(input, keys, label) do
+    present_keys =
+      keys
+      |> Enum.filter(fn key -> not is_nil(Map.get(input, key)) end)
+
+    case present_keys do
+      [key] -> {:ok, key, Map.get(input, key)}
+      [] -> {:error, "missing #{label}"}
+      _ -> {:error, "ambiguous #{label}"}
+    end
+  end
+
+  ############
+  ############
+  ############
+  def paged_comment_replies(_root, %{comment: comment, filter: filter}, %{
+        context: %{cur_user: user}
+      }) do
+    CMS.Comments.paged_comment_replies(comment.id, filter, user)
+  end
+
+  def paged_comment_replies(_root, %{comment: comment, filter: filter}, _info) do
+    CMS.Comments.paged_comment_replies(comment.id, filter)
   end
 
   # #######################

@@ -37,7 +37,7 @@ const ReplyEditor: FC<TProps> = ({ body, submitState, replyTo }) => {
       </div>
       <CustomScroller direction='vertical' height='320px' showShadow={false} autoHide={false}>
         <div className={s.editorWrapper}>
-          {replyTo.id ? (
+          {replyTo?.innerId ? (
             <BodyEditor
               body={body}
               placeholder={t('comment.reply.placeholder')}

@@ -15,9 +15,9 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
 
   describe "[post only: article comment solution]" do
     @query """
-    mutation($id: ID!) {
-      markCommentSolution(id: $id) {
-        id
+    mutation($comment: CommentPathInput!) {
+      markCommentSolution(comment: $comment) {
+        innerId
         isForQuestion
         isSolution
       }
@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
 
       questioner_conn = simu_conn(:user, post_author)
 
-      variables = %{id: comment.id}
+      variables = %{comment: comment_path(community, post, :post, comment)}
 
       result = questioner_conn |> gq_mutation(@query, variables)
 
@@ -48,15 +48,15 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
 
-      variables = %{id: comment.id}
+      variables = %{comment: comment_path(community, post, :post, comment)}
       assert user_conn |> mutation_error?(@query, variables, ecode(:require_questioner))
       assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
     end
 
     @query """
-    mutation($id: ID!) {
-      undoMarkCommentSolution(id: $id) {
-        id
+    mutation($comment: CommentPathInput!) {
+      undoMarkCommentSolution(comment: $comment) {
+        innerId
         isForQuestion
         isSolution
       }
@@ -73,7 +73,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
 
       questioner_conn = simu_conn(:user, post_author)
 
-      variables = %{id: comment.id}
+      variables = %{comment: comment_path(community, post, :post, comment)}
       result = questioner_conn |> gq_mutation(@query, variables)
 
       assert result["isForQuestion"]
@@ -88,7 +88,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
       {:ok, comment} =
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), post_author)
 
-      variables = %{id: comment.id}
+      variables = %{comment: comment_path(community, post, :post, comment)}
       assert user_conn |> mutation_error?(@query, variables, ecode(:require_questioner))
       assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
     end

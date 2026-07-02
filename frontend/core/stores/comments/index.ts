@@ -31,7 +31,7 @@ export default function CommentsStore(init: TInit = {}): TStore {
     showReplyEditor: false,
 
     commentBody: '{}',
-    updateId: null,
+    updateInnerId: null,
     updateBody: '{}',
     replyToComment: null,
     replyBody: '{}',
