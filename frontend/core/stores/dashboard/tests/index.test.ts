@@ -13,11 +13,10 @@ const DESC_FIELD = 'desc'
 
 describe('stores/dashboard', () => {
   it('commits edge data and keeps actions working', () => {
-    const init: TInit = { metric: METRIC.COMMUNITY, now: 123 }
+    const init: TInit = { metric: METRIC.COMMUNITY }
     const store = setupStore(init)
 
     expect(store.metric).toBe(METRIC.COMMUNITY)
-    expect(store.now).toBe(123)
     expect(store.headerLinks).toEqual([])
 
     const headerLinks: readonly TLinkItem[] = [

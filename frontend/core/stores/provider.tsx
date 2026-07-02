@@ -17,6 +17,7 @@ type TProps = {
   initData: { community: TCommunity; dashboard: TParseDashboard; wallpaper?: TWallpaperInit }
   locale?: TLocale
   localeData?: string
+  initialNow?: number
   noAccount?: boolean
   metric?: TMetric
 }
@@ -31,18 +32,18 @@ const MainProvider: FC<TProps> = ({
   initData,
   locale = LOCALE.EN,
   localeData = '{}',
+  initialNow,
   noAccount = false,
   metric = METRIC.COMMUNITY,
 }) => {
   const { dashboard, community, wallpaper } = initData
-  const now = Date.now()
 
   return (
     <ThemeStoreProvider>
-      <LocaleStoreProvider initData={{ locale, localeData }}>
+      <LocaleStoreProvider initData={{ locale, localeData, initialNow }}>
         <AccountWrapper noAccount={noAccount}>
           <CommunityStoreProvider initData={community}>
-            <DashboardStoreProvider initData={{ ...dashboard, metric, now }}>
+            <DashboardStoreProvider initData={{ ...dashboard, metric }}>
               <ThemePresetStoreProvider initData={dashboard}>
                 <WallpaperStoreProvider initData={wallpaper}>{children}</WallpaperStoreProvider>
               </ThemePresetStoreProvider>

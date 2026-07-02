@@ -10,6 +10,10 @@ const baseConfig = {
   productionBrowserSourceMaps: false,
   cacheComponents: true,
   experimental: {
+    instantInsights: {
+      validationLevel: 'manual-warning',
+    },
+    reactDebugChannel: false,
     // Enable filesystem caching for `next dev`
     turbopackFileSystemCacheForDev: true,
     // Enable filesystem caching for `next build`

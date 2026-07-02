@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 
-import useNow from '~/hooks/useNow'
 import useLocale from '~/stores/locale/hooks'
 import { fmtRelativeTime } from '~/utils/fmt'
 
@@ -12,18 +11,23 @@ type TProps = {
 }
 
 export default function TimeAgo({ datetime, tickInterval = 60_000 }: TProps) {
-  const nowFromStore = useNow()
-  const { locale } = useLocale()
+  const { locale, initialNow } = useLocale()
 
-  const [tick, setTick] = useState(0)
+  const [now, setNow] = useState<number | null>(initialNow ?? null)
 
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), tickInterval)
+    const updateNow = () => setNow(Date.now())
+
+    updateNow()
+    const id = setInterval(updateNow, tickInterval)
+
     return () => clearInterval(id)
   }, [tickInterval])
 
-  const now = tick === 0 ? nowFromStore : Date.now()
+  const dateTime = datetime instanceof Date ? datetime.toISOString() : datetime
+  if (now === null) return <time dateTime={dateTime} />
+
   const text = fmtRelativeTime(datetime, now, locale)
 
-  return <time dateTime={datetime instanceof Date ? datetime.toISOString() : datetime}>{text}</time>
+  return <time dateTime={dateTime}>{text}</time>
 }

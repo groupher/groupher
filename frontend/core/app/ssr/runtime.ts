@@ -79,6 +79,13 @@ export const getLocaleData = async (
   return loadLocaleFile(locale, namespaces)
 }
 
+export const getInitialNow = async (): Promise<number> => {
+  'use cache'
+  cacheLife('minutes')
+
+  return Date.now()
+}
+
 const fetchThemePresets = async (): Promise<TThemePresetOption[]> => {
   'use cache'
   cacheLife('days')

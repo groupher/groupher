@@ -16,11 +16,10 @@ import type { TInit as TWallpaperInit } from '~/stores/wallpaper/spec'
 
 export type TWrapperOpts = {
   metric?: TMetric
-  now?: number
   locale?: TLocale
   localeData?: string
   community?: Partial<Omit<TCommunity, 'slug'>> & { slug?: string }
-  dashboard?: Partial<Omit<TDashboardInit, 'now' | 'metric'>>
+  dashboard?: Partial<Omit<TDashboardInit, 'metric'>>
   wallpaper?: TWallpaperInit
   articleList?: boolean
   articleListInit?: TArticleListInit
@@ -29,7 +28,6 @@ export type TWrapperOpts = {
 export const makeStoreWrapper = (opts: TWrapperOpts = {}): FC<{ children: ReactNode }> => {
   const {
     metric = METRIC.COMMUNITY,
-    now = 1,
     locale = 'en',
     localeData = '{}',
     community = {},
@@ -50,7 +48,6 @@ export const makeStoreWrapper = (opts: TWrapperOpts = {}): FC<{ children: ReactN
   }
 
   const initDashboard: TDashboardInit = {
-    now,
     metric,
     ...dashboard,
   }

@@ -1,3 +1,4 @@
+import useTrans from '~/hooks/useTrans'
 import Img from '~/Img'
 import { mockUsers } from '~/mock'
 import ImgFallback from '~/widgets/ImgFallback'
@@ -9,6 +10,7 @@ import TagItem from './TagItem'
 
 export default function Activities() {
   const s = useSalon()
+  const { t } = useTrans()
 
   const user = mockUsers(1)[0]
 
@@ -24,7 +26,7 @@ export default function Activities() {
 
         <div className={s.content}>
           <span className={cn(s.highlight, 'mr-1')}>mydearxym</span>
-          发布于 3 天前
+          {t('article.footer.activity.published_at')} 3 {t('article.footer.time.days_ago')}
         </div>
       </div>
 
@@ -32,7 +34,9 @@ export default function Activities() {
       <GtdItem />
       <MentionItem />
 
-      <div className={s.lastUpdate}>最后回复: 14天前</div>
+      <div className={s.lastUpdate}>
+        {t('article.footer.activity.last_reply')}: 14{t('article.footer.time.days_ago')}
+      </div>
     </div>
   )
 }

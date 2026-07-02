@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 import { GlobalProvider, GraphQLProvider } from '~/app/providers'
-import { getCommunityInfo, getLocaleData } from '~/app/ssr'
+import { getCommunityInfo, getInitialNow, getLocaleData } from '~/app/ssr'
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
 import { I18N_NS } from '~/i18n/namespaces'
@@ -26,12 +26,14 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 
 export default async ({ children, params, searchParams }) => {
   const params$ = await params
-  const locale = parseLocale(searchParams?.lang)
-  const isDemoMode = isDsbDemoMode(params$.community, searchParams?.mode)
+  const searchParams$ = await searchParams
+  const locale = parseLocale(searchParams$?.lang)
+  const isDemoMode = isDsbDemoMode(params$.community, searchParams$?.mode)
 
-  const [{ community, dashboard, wallpaper }, localeData] = await Promise.all([
+  const [{ community, dashboard, wallpaper }, localeData, initialNow] = await Promise.all([
     getCommunityInfo(params$.community),
     getLocaleData(locale, [...I18N_NS.DASHBOARD, ...I18N_NS.PASSPORT]),
+    getInitialNow(),
   ])
 
   return (
@@ -48,6 +50,7 @@ export default async ({ children, params, searchParams }) => {
         locale={locale}
         metric={METRIC.DASHBOARD}
         localeData={JSON.stringify(localeData)}
+        initialNow={initialNow}
       >
         <GraphQLProvider>
           <GlobalProvider>

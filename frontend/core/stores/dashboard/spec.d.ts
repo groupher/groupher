@@ -164,7 +164,6 @@ export type TDsbFieldMap = {
 
 export type TInit = {
   metric?: TMetric
-  now?: number
   initFilled?: boolean
   original?: TDsbFieldMap
 } & Partial<TDsbFieldMap>
@@ -182,7 +181,6 @@ export type TDocFaqSaveZone =
 
 export type TStore = TDsbFieldMap & {
   metric?: TMetric
-  now?: number
   initFilled: boolean
   original: TDsbFieldMap
   // Fields that are currently different from original.

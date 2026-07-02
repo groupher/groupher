@@ -16,7 +16,7 @@ type TProps = {
  */
 export default function PreviewCacheSync({ entry }: TProps) {
   useEffect(() => {
-    setPreviewCacheEntry(entry)
+    setPreviewCacheEntry({ ...entry, cachedAt: Date.now() })
     markPreviewReady(entry.key)
   }, [entry])
 
