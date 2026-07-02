@@ -5,15 +5,10 @@ import type { TLocale } from '~/spec'
 
 import type { TInit, TStore } from './spec'
 
-export default function Locale({
-  locale = LOCALE.EN,
-  localeData = '{}',
-  initialNow,
-}: TInit): TStore {
+export default function Locale({ locale = LOCALE.EN, localeData = '{}' }: TInit): TStore {
   const store = proxy({
     locale,
     localeData,
-    initialNow,
 
     // actions
     setLocale: (locale: TLocale): void => {

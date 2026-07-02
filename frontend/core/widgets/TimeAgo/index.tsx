@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
+import useNow from '~/hooks/useNow'
 import useLocale from '~/stores/locale/hooks'
 import { fmtRelativeTime } from '~/utils/fmt'
 
@@ -11,7 +12,8 @@ type TProps = {
 }
 
 export default function TimeAgo({ datetime, tickInterval = 60_000 }: TProps) {
-  const { locale, initialNow } = useLocale()
+  const { locale } = useLocale()
+  const initialNow = useNow()
 
   const [now, setNow] = useState<number | null>(initialNow ?? null)
 

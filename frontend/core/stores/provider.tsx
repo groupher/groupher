@@ -2,6 +2,7 @@ import type { FC } from 'react'
 
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
+import { NowProvider } from '~/hooks/useNow'
 import type { TCommunity, TLocale, TMetric, TParseDashboard } from '~/spec'
 import AccountStoreProvider from '~/stores/account/provider'
 import CommunityStoreProvider from '~/stores/community/provider'
@@ -40,17 +41,19 @@ const MainProvider: FC<TProps> = ({
 
   return (
     <ThemeStoreProvider>
-      <LocaleStoreProvider initData={{ locale, localeData, initialNow }}>
-        <AccountWrapper noAccount={noAccount}>
-          <CommunityStoreProvider initData={community}>
-            <DashboardStoreProvider initData={{ ...dashboard, metric }}>
-              <ThemePresetStoreProvider initData={dashboard}>
-                <WallpaperStoreProvider initData={wallpaper}>{children}</WallpaperStoreProvider>
-              </ThemePresetStoreProvider>
-            </DashboardStoreProvider>
-          </CommunityStoreProvider>
-        </AccountWrapper>
-      </LocaleStoreProvider>
+      <NowProvider initialNow={initialNow}>
+        <LocaleStoreProvider initData={{ locale, localeData }}>
+          <AccountWrapper noAccount={noAccount}>
+            <CommunityStoreProvider initData={community}>
+              <DashboardStoreProvider initData={{ ...dashboard, metric }}>
+                <ThemePresetStoreProvider initData={dashboard}>
+                  <WallpaperStoreProvider initData={wallpaper}>{children}</WallpaperStoreProvider>
+                </ThemePresetStoreProvider>
+              </DashboardStoreProvider>
+            </CommunityStoreProvider>
+          </AccountWrapper>
+        </LocaleStoreProvider>
+      </NowProvider>
     </ThemeStoreProvider>
   )
 }
