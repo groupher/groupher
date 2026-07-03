@@ -38,7 +38,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "changelog.update", thread: :changelog)
-      middleware(M.ArticleLoader, thread: :changelog)
+      middleware(M.FrontDesk, {:article, thread: :changelog})
 
       resolve(&R.CMS.update_article/3)
     end

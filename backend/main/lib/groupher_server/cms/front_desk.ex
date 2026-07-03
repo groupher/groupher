@@ -52,7 +52,7 @@ defmodule GroupherServer.CMS.FrontDesk do
     preload = Keyword.get(opts, :preload, :author)
 
     with {:ok, %{community: community, thread: thread, inner_id: article_inner_id}} <-
-           ArticlePath.normalize(article_path),
+           ArticlePath.parse(article_path),
          {:ok, floor} <- parse_comment_inner_id(inner_id),
          {:ok, article} <- article(community, thread, article_inner_id),
          {:ok, info} <- match(thread),

@@ -81,7 +81,7 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
         arg(:filter, non_null(:pagi_filter))
 
         middleware(M.PageSizeProof)
-        middleware(M.ArticleLoader)
+        middleware(M.FrontDesk, :article)
 
         resolve(unquote(resolver))
       end

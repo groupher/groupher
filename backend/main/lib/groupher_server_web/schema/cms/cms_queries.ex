@@ -164,7 +164,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:article, non_null(:article_path_input))
       arg(:freshkey, :string)
 
-      middleware(M.ArticleLoader)
+      middleware(M.FrontDesk, :article)
       resolve(&R.CMS.comments_state/3)
     end
 
@@ -182,7 +182,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:mode, :comments_mode, default_value: :replies)
       arg(:filter, :comments_filter)
 
-      middleware(M.ArticleLoader)
+      middleware(M.FrontDesk, :article)
       middleware(M.PageSizeProof)
       resolve(&R.CMS.paged_comments/3)
     end
@@ -192,7 +192,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:article, non_null(:article_path_input))
       arg(:filter, :pagi_filter)
 
-      middleware(M.ArticleLoader)
+      middleware(M.FrontDesk, :article)
       middleware(M.PageSizeProof)
       resolve(&R.CMS.paged_comments_participants/3)
     end

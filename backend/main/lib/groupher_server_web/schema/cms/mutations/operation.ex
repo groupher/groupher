@@ -59,7 +59,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community_tag.set")
-      middleware(M.ArticleLoader)
+      middleware(M.FrontDesk, :article)
 
       resolve(&R.CMS.set_community_tag/3)
     end
@@ -71,7 +71,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community_tag.unset")
-      middleware(M.ArticleLoader)
+      middleware(M.FrontDesk, :article)
 
       resolve(&R.CMS.unset_community_tag/3)
     end
@@ -122,7 +122,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "article.mirror")
       middleware(M.FrontDesk, :target_community)
-      middleware(M.ArticleLoader)
+      middleware(M.FrontDesk, :article)
 
       resolve(&R.CMS.mirror_article/3)
     end
@@ -135,7 +135,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "article.unmirror")
       middleware(M.FrontDesk, :target_community)
-      middleware(M.ArticleLoader)
+      middleware(M.FrontDesk, :article)
 
       resolve(&R.CMS.unmirror_article/3)
     end
@@ -149,7 +149,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "article.move")
       middleware(M.FrontDesk, :target_community)
-      middleware(M.ArticleLoader)
+      middleware(M.FrontDesk, :article)
 
       resolve(&R.CMS.move_article/3)
     end
@@ -162,7 +162,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "article.mirror_home")
       middleware(M.FrontDesk, target_community: :home)
-      middleware(M.ArticleLoader)
+      middleware(M.FrontDesk, :article)
 
       resolve(&R.CMS.mirror_to_home/3)
     end
@@ -175,7 +175,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "article.move_blackhole")
       middleware(M.FrontDesk, target_community: :blackhole)
-      middleware(M.ArticleLoader)
+      middleware(M.FrontDesk, :article)
 
       resolve(&R.CMS.move_to_blackhole/3)
     end

@@ -63,7 +63,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         arg(:article, non_null(:article_path_input))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleLoader, thread: unquote(thread))
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.upvote_article/3)
       end
@@ -73,7 +73,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         arg(:article, non_null(:article_path_input))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleLoader, thread: unquote(thread))
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.undo_upvote_article/3)
       end
@@ -101,7 +101,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
           thread: unquote(thread)
         )
 
-        middleware(M.ArticleLoader, thread: unquote(thread))
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.pin_article/3)
       end
@@ -117,7 +117,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
           thread: unquote(thread)
         )
 
-        middleware(M.ArticleLoader, thread: unquote(thread))
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.undo_pin_article/3)
       end
@@ -145,7 +145,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
           thread: unquote(thread)
         )
 
-        middleware(M.ArticleLoader, thread: unquote(thread))
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.mark_delete_article/3)
       end
@@ -161,7 +161,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
           thread: unquote(thread)
         )
 
-        middleware(M.ArticleLoader, thread: unquote(thread))
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.undo_mark_delete_article/3)
       end
@@ -214,7 +214,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
           thread: unquote(thread)
         )
 
-        middleware(M.ArticleLoader, thread: unquote(thread))
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.delete_article/3)
       end
@@ -237,7 +237,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         arg(:emotion, non_null(:article_emotion))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleLoader, thread: unquote(thread))
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.emotion_to_article/3)
       end
@@ -248,7 +248,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         arg(:emotion, non_null(:article_emotion))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleLoader, thread: unquote(thread))
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.undo_emotion_to_article/3)
       end
@@ -272,7 +272,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         arg(:attr, :string, default_value: "")
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleLoader, thread: unquote(thread))
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.report_article/3)
       end
@@ -282,7 +282,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         arg(:article, non_null(:article_path_input))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleLoader, thread: unquote(thread))
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.undo_report_article/3)
       end
@@ -310,7 +310,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
           thread: unquote(thread)
         )
 
-        middleware(M.ArticleLoader, thread: unquote(thread))
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.sink_article/3)
       end
@@ -326,7 +326,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
           thread: unquote(thread)
         )
 
-        middleware(M.ArticleLoader, thread: unquote(thread))
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.undo_sink_article/3)
       end
@@ -354,7 +354,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
           thread: unquote(thread)
         )
 
-        middleware(M.ArticleLoader, thread: unquote(thread))
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.lock_article_comments/3)
       end
@@ -370,7 +370,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
           thread: unquote(thread)
         )
 
-        middleware(M.ArticleLoader, thread: unquote(thread))
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.undo_lock_article_comments/3)
       end

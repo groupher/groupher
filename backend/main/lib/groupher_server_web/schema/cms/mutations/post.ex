@@ -38,7 +38,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "post.update", thread: :post)
-      middleware(M.ArticleLoader, thread: :post)
+      middleware(M.FrontDesk, {:article, thread: :post})
 
       resolve(&R.CMS.update_article/3)
     end
@@ -50,7 +50,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "post.set_category", thread: :post)
-      middleware(M.ArticleLoader, thread: :post)
+      middleware(M.FrontDesk, {:article, thread: :post})
 
       resolve(&R.CMS.set_post_cat/3)
     end
@@ -62,7 +62,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "post.set_status", thread: :post)
-      middleware(M.ArticleLoader, thread: :post)
+      middleware(M.FrontDesk, {:article, thread: :post})
 
       resolve(&R.CMS.set_post_status/3)
     end

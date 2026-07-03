@@ -30,6 +30,10 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     fetch_community(resolution, slug, :target_community)
   end
 
+  def call(%{arguments: %{article: %{__struct__: _}}} = resolution, {:article, _}), do: resolution
+
+  def call(%{arguments: %{article: %{__struct__: _}}} = resolution, :article), do: resolution
+
   def call(resolution, {:article, opts}), do: fetch_article(resolution, List.wrap(opts))
 
   def call(resolution, :article), do: fetch_article(resolution, [])
@@ -51,7 +55,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   end
 
   defp fetch_article(%{arguments: arguments} = resolution, opts) do
-    case ArticlePath.put_normalized(arguments, opts) do
+    case ArticlePath.parse_arguments(arguments, opts) do
       {:ok, arguments} ->
         do_fetch_article(%{resolution | arguments: arguments})
 
@@ -73,7 +77,6 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
         updated_arguments =
           arguments
           |> Map.put(:article, article)
-          |> Map.put(:thread, thread)
           |> maybe_put_article_passport_is_owner(article, resolution)
 
         %{resolution | arguments: updated_arguments}

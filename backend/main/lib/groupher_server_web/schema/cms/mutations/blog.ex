@@ -38,7 +38,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "blog.update", thread: :blog)
-      middleware(M.ArticleLoader, thread: :blog)
+      middleware(M.FrontDesk, {:article, thread: :blog})
 
       resolve(&R.CMS.update_article/3)
     end

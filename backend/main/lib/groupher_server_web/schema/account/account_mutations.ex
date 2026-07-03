@@ -96,7 +96,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       arg(:folder_id, non_null(:id))
 
       middleware(M.Authorize, :login)
-      middleware(M.ArticleLoader)
+      middleware(M.FrontDesk, :article)
 
       resolve(&R.Accounts.add_to_collect/3)
     end
@@ -107,7 +107,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       arg(:folder_id, non_null(:id))
 
       middleware(M.Authorize, :login)
-      middleware(M.ArticleLoader)
+      middleware(M.FrontDesk, :article)
 
       resolve(&R.Accounts.remove_from_collect/3)
     end

@@ -397,7 +397,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def read_article(root, args, info), do: read_article(root, args, info, [])
 
   def read_article(_root, %{article: article_path}, info, opts) do
-    with {:ok, article_path} <- ArticlePath.normalize(article_path, opts) do
+    with {:ok, article_path} <- ArticlePath.parse(article_path, opts) do
       do_read_article(article_path, info)
     end
   end
@@ -765,11 +765,13 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # comments ..
   # #######################
-  def comments_state(_root, %{article: article, thread: thread}, %{context: %{cur_user: user}}) do
+  def comments_state(_root, %{article: article, article_path: %{thread: thread}}, %{
+        context: %{cur_user: user}
+      }) do
     CMS.Comments.comments_state(thread, article.id, user)
   end
 
-  def comments_state(_root, %{article: article, thread: thread}, _) do
+  def comments_state(_root, %{article: article, article_path: %{thread: thread}}, _) do
     CMS.Comments.comments_state(thread, article.id)
   end
 
@@ -781,15 +783,17 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Comments.one_comment(comment.id)
   end
 
-  def paged_comments(_root, %{article: article, thread: thread, filter: filter, mode: mode}, %{
-        context: %{cur_user: user}
-      }) do
+  def paged_comments(
+        _root,
+        %{article: article, article_path: %{thread: thread}, filter: filter, mode: mode},
+        %{context: %{cur_user: user}}
+      ) do
     CMS.Comments.paged_comments(thread, article.id, filter, mode, user)
   end
 
   def paged_comments(
         _root,
-        %{article: article, thread: thread, filter: filter, mode: mode},
+        %{article: article, article_path: %{thread: thread}, filter: filter, mode: mode},
         _info
       ) do
     CMS.Comments.paged_comments(thread, article.id, filter, mode)
@@ -797,7 +801,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def paged_comments_participants(
         _root,
-        %{article: article, thread: thread, filter: filter},
+        %{article: article, article_path: %{thread: thread}, filter: filter},
         _info
       ) do
     CMS.Comments.paged_comments_participants(thread, article.id, filter)
@@ -805,7 +809,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def create_comment(_root, %{article: article_path, body: body}, %{context: %{cur_user: user}}) do
     with {:ok, %{community: community, thread: thread, inner_id: inner_id}} <-
-           ArticlePath.normalize(article_path) do
+           ArticlePath.parse(article_path) do
       CMS.Comments.create_comment(%Community{slug: community}, thread, inner_id, body, user)
     end
   end
@@ -879,7 +883,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   defp resolve_article_path(article_path) do
     with {:ok, %{community: community, thread: thread, inner_id: inner_id}} <-
-           ArticlePath.normalize(article_path),
+           ArticlePath.parse(article_path),
          {:ok, article} <- CMS.FrontDesk.article(community, thread, inner_id) do
       {:ok, {thread, article}}
     end
