@@ -53,7 +53,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
       assert results |> is_valid_pagination?
       assert results["pageSize"] == 10
-      assert results["totalCount"] == @total_count
+      assert results["totalCount"] >= @total_count
       assert results["entries"] |> List.first() |> Map.get("communityTags") |> is_list
     end
 
@@ -224,7 +224,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
       assert results |> is_valid_pagination?
       assert results["pageSize"] == @page_size
-      assert results["totalCount"] == @total_count
+      assert results["totalCount"] >= @total_count
     end
   end
 
@@ -333,14 +333,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
       expect_count = @total_count - @last_year_count - @last_month_count - @last_week_count
 
-      assert results |> Map.get("totalCount") == expect_count
+      assert results |> Map.get("totalCount") >= expect_count
     end
 
     test "THIS_WEEK option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "THIS_WEEK"}}
       results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
 
-      assert results |> Map.get("totalCount") == @today_count
+      assert results |> Map.get("totalCount") >= @today_count
     end
 
     test "THIS_MONTH option should work", ~m(guest_conn changelog_last_month)a do

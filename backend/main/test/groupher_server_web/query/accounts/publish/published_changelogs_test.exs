@@ -35,12 +35,18 @@ defmodule GroupherServer.Test.Query.Accounts.Publish.Changelogs do
       pub_comments =
         Enum.reduce(1..@publish_count, [], fn _, acc ->
           {:ok, comment} =
-            CMS.Comments.create_comment(community, :changelog, changelog.inner_id, mock_comment(), user)
+            CMS.Comments.create_comment(
+              community,
+              :changelog,
+              changelog.inner_id,
+              mock_comment(),
+              user
+            )
 
           acc ++ [comment]
         end)
 
-      random_comment_id = pub_comments |> Enum.random() |> Map.get(:id) |> to_string
+      random_comment_id = pub_comments |> Enum.random() |> Map.get(:floor) |> to_string
 
       variables = %{login: user.login, thread: "CHANGELOG", filter: %{page: 1, size: 20}}
       results = guest_conn |> gq_query(Schema.q(:paged_published_comments), variables)
@@ -51,9 +57,9 @@ defmodule GroupherServer.Test.Query.Accounts.Publish.Changelogs do
 
       assert entries |> Enum.all?(&(not is_nil(&1["article"]["author"])))
 
-      assert entries |> Enum.all?(&(&1["article"]["id"] == to_string(changelog.id)))
+      assert entries |> Enum.all?(&(&1["article"]["innerId"] == to_string(changelog.inner_id)))
       assert entries |> Enum.all?(&(&1["author"]["id"] == to_string(user.id)))
-      assert entries |> Enum.any?(&(&1["id"] == random_comment_id))
+      assert entries |> Enum.any?(&(&1["innerId"] == random_comment_id))
     end
   end
 end

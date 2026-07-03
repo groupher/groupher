@@ -234,9 +234,9 @@ defmodule GroupherServer.Test.AssertHelper do
 
   @doc "check id is exist in list of Map<id: xxx> structure"
   @spec exist_in?(map(), [map()]) :: boolean
-  # Comments expose database id internally, but GraphQL payloads expose floor as innerId.
+  # Comments expose database id internally, but GraphQL payloads expose inner_id as innerId.
   def exist_in?(%{id: id} = target, list) when is_list(list) do
-    floor = Map.get(target, :floor)
+    inner_id = Map.get(target, :inner_id)
 
     list
     |> Enum.any?(fn item ->
@@ -247,8 +247,8 @@ defmodule GroupherServer.Test.AssertHelper do
         not is_nil(item_id) ->
           to_string(id) == to_string(item_id)
 
-        is_integer(floor) and not is_nil(item_inner_id) ->
-          to_string(floor) == to_string(item_inner_id)
+        not is_nil(inner_id) and not is_nil(item_inner_id) ->
+          to_string(inner_id) == to_string(item_inner_id)
 
         true ->
           false
@@ -256,10 +256,10 @@ defmodule GroupherServer.Test.AssertHelper do
     end)
   end
 
-  def exist_in?(%{floor: floor}, list) when is_integer(floor) and is_list(list) do
+  def exist_in?(%{inner_id: inner_id}, list) when not is_nil(inner_id) and is_list(list) do
     list
     |> Enum.any?(fn item ->
-      to_string(floor) == to_string(Map.get(item, :innerId, Map.get(item, "innerId")))
+      to_string(inner_id) == to_string(Map.get(item, :innerId, Map.get(item, "innerId")))
     end)
   end
 

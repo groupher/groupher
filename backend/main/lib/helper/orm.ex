@@ -595,7 +595,7 @@ defmodule Helper.ORM do
   ## Examples
 
       iex> ORM.extract_and_assign_article(%{entries: reaction_entries})
-      %{entries: [%{article: %{id: 1, title: "..."}}]}
+      %{entries: [%{article: %{inner_id: 1, title: "..."}}]}
   """
   def extract_and_assign_article(%{entries: entries} = paged_articles) do
     entries =
@@ -613,7 +613,7 @@ defmodule Helper.ORM do
   ## Examples
 
       iex> ORM.extract_articles(%{entries: entries})
-      %{entries: [%{id: 1, title: "...", thread: :post}]}
+      %{entries: [%{inner_id: 1, title: "...", thread: :post}]}
   """
   @spec extract_articles(T.paged_data(), [atom()]) :: T.paged_article_common()
   def extract_articles(%{entries: entries} = paged_articles, threads \\ @threads) do
@@ -697,6 +697,7 @@ defmodule Helper.ORM do
     %{
       thread: thread,
       id: article.id,
+      inner_id: article.inner_id,
       title: article.title,
       upvotes_count: Map.get(article, :upvotes_count),
       author: author

@@ -48,7 +48,9 @@ const updateComment = gql`
     updateComment(comment: $comment, body: $body) {
       innerId
       bodyHtml
-      replyToInnerId
+      replyTo {
+        innerId
+      }
     }
   }
 `
@@ -101,7 +103,9 @@ const upvoteComment = gql`
       }
       upvotesCount
       viewerHasUpvoted
-      replyToInnerId
+      replyTo {
+        innerId
+      }
     }
   }
 `
@@ -114,7 +118,9 @@ const undoUpvoteComment = gql`
       }
       upvotesCount
       viewerHasUpvoted
-      replyToInnerId
+      replyTo {
+        innerId
+      }
     }
   }
 `
@@ -122,7 +128,9 @@ const emotionToComment = gql`
   mutation ($comment: CommentPathInput!, $emotion: CommentEmotion!) {
     emotionToComment(comment: $comment, emotion: $emotion) {
       innerId
-      replyToInnerId
+      replyTo {
+        innerId
+      }
       emotions {
         ${F.emotionQuery}
       }
@@ -133,7 +141,9 @@ const undoEmotionToComment = gql`
   mutation ($comment: CommentPathInput!, $emotion: CommentEmotion!) {
     undoEmotionToComment(comment: $comment, emotion: $emotion) {
       innerId
-      replyToInnerId
+      replyTo {
+        innerId
+      }
       emotions {
         ${F.emotionQuery}
       }

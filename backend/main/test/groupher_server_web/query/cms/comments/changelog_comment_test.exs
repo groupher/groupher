@@ -82,7 +82,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
     variables = %{comment: comment_path(community, changelog, :changelog, comment)}
     results = guest_conn |> gq_query(@query, variables)
 
-    assert results["innerId"] == to_string(comment.floor)
+    assert results["innerId"] == to_string(comment.inner_id)
   end
 
   test "can get one comment by ref with viewer states", ~m(user_conn community changelog user)a do
@@ -97,7 +97,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
     variables = %{comment: comment_path(community, changelog, :changelog, comment)}
     results = user_conn |> gq_query(@query, variables)
 
-    assert results["innerId"] == to_string(comment.floor)
+    assert results["innerId"] == to_string(comment.inner_id)
     assert results["viewerHasUpvoted"]
     assert emotion_entry(results["emotions"], :downvote)["viewerHasReacted"]
   end
@@ -267,18 +267,18 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       assert not exist_in?(replied_comment_2, results["entries"])
 
       random_comment =
-        Enum.find(results["entries"], &(&1["innerId"] == to_string(random_comment.floor)))
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(random_comment.inner_id)))
 
       assert random_comment["replies"] |> length == 2
       assert random_comment["repliesCount"] == 2
 
       assert random_comment["replies"] |> List.first() |> Map.get("innerId") ==
-               to_string(replied_comment_1.floor)
+               to_string(replied_comment_1.inner_id)
 
       assert not is_nil(random_comment["replies"] |> List.first() |> Map.get("replyTo"))
 
       assert random_comment["replies"] |> List.last() |> Map.get("innerId") ==
-               to_string(replied_comment_2.floor)
+               to_string(replied_comment_2.inner_id)
     end
 
     test "timeline-mode paged comments", ~m(guest_conn community changelog user user2)a do
@@ -325,7 +325,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       assert exist_in?(replied_comment_2, results["entries"])
 
       random_comment =
-        Enum.find(results["entries"], &(&1["innerId"] == to_string(random_comment.floor)))
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(random_comment.inner_id)))
 
       assert random_comment["replies"] |> length == 2
       assert random_comment["repliesCount"] == 2
@@ -377,19 +377,19 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       results = guest_conn |> gq_query(@query, variables)
 
       replied_comment_1 =
-        Enum.find(results["entries"], &(&1["innerId"] == to_string(replied_comment_1.floor)))
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(replied_comment_1.inner_id)))
 
       assert replied_comment_1 |> get_in(["replyTo", "innerId"]) ==
-               to_string(parent_comment.floor)
+               to_string(parent_comment.inner_id)
 
       assert replied_comment_1 |> get_in(["replyTo", "author", "id"]) ==
                to_string(parent_comment.author_id)
 
       replied_comment_2 =
-        Enum.find(results["entries"], &(&1["innerId"] == to_string(replied_comment_2.floor)))
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(replied_comment_2.inner_id)))
 
       assert replied_comment_2 |> get_in(["replyTo", "innerId"]) ==
-               to_string(parent_comment.floor)
+               to_string(parent_comment.inner_id)
 
       assert replied_comment_2 |> get_in(["replyTo", "author", "id"]) ==
                to_string(parent_comment.author_id)
@@ -458,10 +458,10 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       results = guest_conn |> gq_query(@query, variables)
 
       assert results["entries"] |> List.first() |> Map.get("innerId") ==
-               to_string(pinned_comment2.floor)
+               to_string(pinned_comment2.inner_id)
 
       assert results["entries"] |> Enum.at(1) |> Map.get("innerId") ==
-               to_string(pinned_comment.floor)
+               to_string(pinned_comment.inner_id)
 
       assert results["totalCount"] == total_count + 2
     end
@@ -525,8 +525,8 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       results = guest_conn |> gq_query(@query, variables)
 
-      assert List.first(results["entries"]) |> Map.get("innerId") == to_string(comment.floor)
-      assert List.last(results["entries"]) |> Map.get("innerId") == to_string(comment3.floor)
+      assert List.first(results["entries"]) |> Map.get("innerId") == to_string(comment.inner_id)
+      assert List.last(results["entries"]) |> Map.get("innerId") == to_string(comment3.inner_id)
     end
 
     test "the comments can be loaded in desc order in timeline-mode",
@@ -559,8 +559,8 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       results = guest_conn |> gq_query(@query, variables)
 
-      assert List.first(results["entries"]) |> Map.get("innerId") == to_string(comment3.floor)
-      assert List.last(results["entries"]) |> Map.get("innerId") == to_string(comment.floor)
+      assert List.first(results["entries"]) |> Map.get("innerId") == to_string(comment3.inner_id)
+      assert List.last(results["entries"]) |> Map.get("innerId") == to_string(comment.inner_id)
     end
 
     test "the comments can be loaded in desc order in replies-mode",
@@ -599,8 +599,8 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       results = guest_conn |> gq_query(@query, variables)
 
-      assert List.first(results["entries"]) |> Map.get("innerId") == to_string(comment3.floor)
-      assert List.last(results["entries"]) |> Map.get("innerId") == to_string(comment.floor)
+      assert List.first(results["entries"]) |> Map.get("innerId") == to_string(comment3.inner_id)
+      assert List.last(results["entries"]) |> Map.get("innerId") == to_string(comment.inner_id)
     end
 
     test "guest user can get paged comment with upvotes_count",
@@ -695,13 +695,13 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       results = guest_conn |> gq_query(@query, variables)
 
       the_author_comment =
-        Enum.find(results["entries"], &(&1["innerId"] == to_string(author_comment.floor)))
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(author_comment.inner_id)))
 
       assert the_author_comment["isArticleAuthor"]
       assert the_author_comment |> get_in(["meta", "isArticleAuthorUpvoted"])
 
       the_random_comment =
-        Enum.find(results["entries"], &(&1["innerId"] == to_string(random_comment.floor)))
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(random_comment.inner_id)))
 
       assert not the_random_comment["isArticleAuthor"]
       assert the_random_comment |> get_in(["meta", "isArticleAuthorUpvoted"])
@@ -747,7 +747,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       results = guest_conn |> gq_query(@query, variables)
 
       comment_emotion =
-        Enum.find(results["entries"], &(&1["innerId"] == to_string(comment.floor)))
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(comment.inner_id)))
         |> Map.get("emotions")
 
       assert is_nil(emotion_entry(comment_emotion, :popcorn))
@@ -764,7 +764,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       assert user2.login in latest_downvote_users_logins
 
       comment2_emotion =
-        Enum.find(results["entries"], &(&1["innerId"] == to_string(comment2.floor)))
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(comment2.inner_id)))
         |> Map.get("emotions")
 
       beer_emotion = emotion_entry(comment2_emotion, :beer)
@@ -814,7 +814,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
 
       results = user_conn |> gq_query(@query, variables)
 
-      assert Enum.find(results["entries"], &(&1["innerId"] == to_string(comment.floor)))
+      assert Enum.find(results["entries"], &(&1["innerId"] == to_string(comment.inner_id)))
              |> Map.get("emotions")
              |> emotion_entry(:downvote)
              |> Map.get("viewerHasReacted")
@@ -855,7 +855,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       results = user_conn |> gq_query(@query, variables)
 
       upvoted_comment =
-        Enum.find(results["entries"], &(&1["innerId"] == to_string(random_comment.floor)))
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(random_comment.inner_id)))
 
       assert upvoted_comment["viewerHasUpvoted"]
     end
@@ -993,7 +993,10 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       results = guest_conn |> gq_query(@query, variables)
 
       author_reply_comment =
-        Enum.find(results["entries"], &(&1["innerId"] == to_string(author_reply_comment.floor)))
+        Enum.find(
+          results["entries"],
+          &(&1["innerId"] == to_string(author_reply_comment.inner_id))
+        )
 
       assert author_reply_comment["isArticleAuthor"]
       assert results["entries"] |> length == total_count + 1

@@ -131,11 +131,12 @@
 //       // self.mentionList = uniq(concat(mentionList, self.participators))
 //     },
 //     updateOneComment(comment: TComment, fields = {}): void {
-//       const { innerId, replyToInnerId } = comment
+//       const { innerId, replyTo } = comment
+//       const replyToCommentId = replyTo?.innerId
 //       const { entries } = self.pagedCommentsData
 
-//       if (self.mode === MODE.REPLIES && replyToInnerId) {
-//         const parentIndex = findIndex(propEq(replyToInnerId, 'innerId'), entries)
+//       if (self.mode === MODE.REPLIES && replyToCommentId) {
+//         const parentIndex = findIndex(propEq(replyToCommentId, 'innerId'), entries)
 //         if (parentIndex < 0) return
 //         const parentComment = entries[parentIndex]
 //         const replyIndex = findIndex(propEq(innerId, 'innerId'), parentComment.replies)
@@ -163,12 +164,13 @@
 //     },
 
 //     upvoteEmotion(comment: TComment, emotion: TEmotion): void {
-//       const { innerId, replyToInnerId } = comment
+//       const { innerId, replyTo } = comment
+//       const replyToCommentId = replyTo?.innerId
 //       const slf = self as TStore
 //       const { entries } = slf.pagedCommentsData
 
-//       if (self.mode === MODE.REPLIES && replyToInnerId) {
-//         const parentIndex = findIndex(propEq(replyToInnerId, 'innerId'), entries)
+//       if (self.mode === MODE.REPLIES && replyToCommentId) {
+//         const parentIndex = findIndex(propEq(replyToCommentId, 'innerId'), entries)
 //         if (parentIndex < 0) return
 //         const parentComment = entries[parentIndex]
 //         const replyIndex = findIndex(propEq(innerId, 'innerId'), parentComment.replies)

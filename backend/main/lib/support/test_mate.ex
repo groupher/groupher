@@ -53,7 +53,7 @@ defmodule GroupherServer.TestMate do
       end
 
       def comment_path(%Community{} = community, article, thread, %Comment{} = comment) do
-        %{article: article_path(community, article, thread), inner_id: comment.floor}
+        %{article: article_path(community, article, thread), inner_id: comment.inner_id}
       end
     end
   end

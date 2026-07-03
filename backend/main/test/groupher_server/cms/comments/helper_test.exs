@@ -46,6 +46,40 @@ defmodule GroupherServer.Test.CMS.Comments.Helper do
     end
   end
 
+  describe "next_inner_id/2" do
+    test "should return 1 for first comment inner_id", ~m(post)a do
+      {:ok, inner_id} = CommentHelper.next_inner_id(post, :post_id)
+      assert inner_id == 1
+
+      {:ok, updated_post} = ORM.find(post.__struct__, post.id)
+      assert updated_post.meta.next_comment_inner_id == 1
+    end
+
+    test "should increment comment inner_id independently from floor", ~m(post)a do
+      {:ok, inner_id} = CommentHelper.next_inner_id(post, :post_id)
+      assert inner_id == 1
+
+      {:ok, updated_post} = ORM.find(post.__struct__, post.id)
+      {:ok, floor} = CommentHelper.next_floor(updated_post, :post_id)
+      assert floor == 1
+
+      {:ok, updated_post} = ORM.find(post.__struct__, post.id)
+      {:ok, inner_id} = CommentHelper.next_inner_id(updated_post, :post_id)
+      assert inner_id == 2
+
+      {:ok, updated_post} = ORM.find(post.__struct__, post.id)
+      assert updated_post.meta.next_comment_inner_id == 2
+      assert updated_post.meta.next_floor == 1
+    end
+
+    test "should return domain error when inner_id allocation fails", ~m(post)a do
+      post = put_in(post.meta.__struct__, nil)
+
+      {:error, reason} = CommentHelper.next_inner_id(post, :post_id)
+      assert error_code(reason) == ecode(:update_fails)
+    end
+  end
+
   describe "get_parent_comment/1" do
     test "should return the comment itself if it's not a reply", ~m(community user post)a do
       {:ok, comment} =

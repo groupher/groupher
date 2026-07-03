@@ -102,12 +102,18 @@ defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
       variables = %{filter: %{content_type: "COMMENT", page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)
 
-      report = results["entries"] |> List.first()
+      report =
+        Enum.find(
+          results["entries"],
+          &(get_in(&1, ["comment", "innerId"]) == to_string(comment.inner_id))
+        )
+
+      assert not is_nil(report)
       report_case = get_in(report, ["reportCases"])
       assert is_list(report_case)
 
       assert get_in(report, ["comment", "bodyHtml"]) |> String.contains?(~s(comment</p>))
-      assert get_in(report, ["comment", "innerId"]) == to_string(comment.floor)
+      assert get_in(report, ["comment", "innerId"]) == to_string(comment.inner_id)
       assert not is_nil(get_in(report, ["comment", "author", "login"]))
     end
   end

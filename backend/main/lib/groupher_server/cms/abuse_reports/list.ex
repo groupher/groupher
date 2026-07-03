@@ -148,7 +148,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   end
 
   defp extract_article_comment_info(%AbuseReport{} = report) do
-    keys = [:id, :floor, :upvotes_count, :body_html]
+    keys = [:id, :inner_id, :floor, :upvotes_count, :body_html]
     author = Map.take(report.comment.author, @export_author_keys)
 
     comment = Map.take(report.comment, keys)

@@ -144,7 +144,6 @@ export type TComment = {
   repliesCount?: number
   replies?: TComment[]
   replyTo?: TComment
-  replyToInnerId?: TID
   upvotesCount?: number
   viewerHasUpvoted?: boolean
   isArticleAuthor?: boolean

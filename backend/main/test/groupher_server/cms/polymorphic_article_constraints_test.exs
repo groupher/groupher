@@ -122,6 +122,7 @@ defmodule GroupherServer.Test.CMS.PolymorphicArticleConstraintsTest do
       author_id: user_id,
       body: "comment-body",
       body_html: "<p>comment-body</p>",
+      inner_id: 1,
       thread: :post,
       post_id: post_id,
       emotions: Embeds.CommentEmotion.default_emotions(),

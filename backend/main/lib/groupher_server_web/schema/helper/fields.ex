@@ -190,10 +190,6 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:viewer_has_upvoted, :boolean)
       field(:reply_to, :comment, resolve: dataloader(CMS, :reply_to))
 
-      field(:reply_to_inner_id, :id,
-        resolve: &GroupherServerWeb.Resolvers.CMS.comment_reply_to_inner_id/3
-      )
-
       field(:is_deleted, :boolean)
       field(:is_archived, :boolean)
       field(:archived_at, :datetime)

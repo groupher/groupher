@@ -47,7 +47,6 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
     query($login: String, $filter: PagiFilter!) {
       moderatorableCommunities(login: $login, filter: $filter) {
         entries {
-          id
           logo
           title
           slug
@@ -81,8 +80,8 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
       results = guest_conn |> gq_query(@query, variables)
 
       assert results["totalCount"] == 2
-      assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(community.id)))
-      assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(community2.id)))
+      assert results["entries"] |> Enum.any?(&(&1["slug"] == community.slug))
+      assert results["entries"] |> Enum.any?(&(&1["slug"] == community2.slug))
     end
   end
 

@@ -24,11 +24,12 @@ export default function useHelper(): TRet {
   const comments = commentsStore
 
   const updateOneComment = (comment: TComment, fields = {}): void => {
-    const { innerId, replyToInnerId } = comment
+    const { innerId, replyTo } = comment
+    const replyToCommentId = replyTo?.innerId
     const { entries } = comments.pagedComments
 
-    if (comments.mode === MODE.REPLIES && replyToInnerId) {
-      const parentIndex = findIndex(propEq(replyToInnerId, 'innerId'), entries)
+    if (comments.mode === MODE.REPLIES && replyToCommentId) {
+      const parentIndex = findIndex(propEq(replyToCommentId, 'innerId'), entries)
       if (parentIndex < 0) return
       const parentComment = entries[parentIndex]
       const replyIndex = findIndex(propEq(innerId, 'innerId'), parentComment.replies)
@@ -56,12 +57,13 @@ export default function useHelper(): TRet {
   }
 
   const upvoteEmotion = (comment: TComment, emotions: TEmotion[]): void => {
-    const { innerId, replyToInnerId } = comment
+    const { innerId, replyTo } = comment
+    const replyToCommentId = replyTo?.innerId
     const { entries } = comments.pagedComments
     const nextComments = [...entries]
 
-    if (comments.mode === MODE.REPLIES && replyToInnerId) {
-      const parentIndex = findIndex(propEq(replyToInnerId, 'innerId'), entries)
+    if (comments.mode === MODE.REPLIES && replyToCommentId) {
+      const parentIndex = findIndex(propEq(replyToCommentId, 'innerId'), entries)
       if (parentIndex < 0) return
       const parentComment = entries[parentIndex]
       const replyIndex = findIndex(propEq(innerId, 'innerId'), parentComment.replies)

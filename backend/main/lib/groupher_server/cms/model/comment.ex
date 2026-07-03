@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Model.Comment do
   @threads get_config(:article, :threads)
 
   @required_fields ~w(body author_id)a
-  @optional_fields ~w(body_html reply_to_id root_comment_id replies_count is_folded is_deleted floor is_article_author thread is_for_question is_solution pending)a
+  @optional_fields ~w(body_html reply_to_id root_comment_id replies_count is_folded is_deleted inner_id floor is_article_author thread is_for_question is_solution pending)a
   # @updatable_fields ~w(body_html is_folded is_deleted floor upvotes_count is_pinned is_for_question is_solution replies_count pending)a
   @updatable_fields ~w(
     body_html
@@ -88,6 +88,8 @@ defmodule GroupherServer.CMS.Model.Comment do
     field(:is_folded, :boolean, default: false)
     # 是否被删除
     field(:is_deleted, :boolean, default: false)
+    # Public comment locator within its article.
+    field(:inner_id, :id)
     # 楼层
     field(:floor, :integer, default: 0)
 

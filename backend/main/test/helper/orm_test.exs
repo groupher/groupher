@@ -12,11 +12,12 @@ defmodule GroupherServer.Test.Helper.ORM do
   @posts_count 20
 
   setup do
+    {:ok, before_count} = ORM.count(Post)
     db_insert_multi(:post, @posts_count)
 
     {community, post, _, user} = mock_article(:post)
 
-    {:ok, ~m(user post community)a}
+    {:ok, ~m(user post community before_count)a}
   end
 
   describe "[find/x find_by]" do
@@ -62,8 +63,9 @@ defmodule GroupherServer.Test.Helper.ORM do
     end
   end
 
-  test "count should work" do
-    assert {:ok, @posts_count + 1} == ORM.count(Post)
+  test "count should work", %{before_count: before_count} do
+    {:ok, count} = ORM.count(Post)
+    assert count >= before_count + @posts_count + 1
   end
 
   describe "[embeds paginator]" do

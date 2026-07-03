@@ -53,10 +53,10 @@ defmodule GroupherServer.CMS.FrontDesk do
 
     with {:ok, %{community: community, thread: thread, inner_id: article_inner_id}} <-
            ArticlePath.parse(article_path),
-         {:ok, floor} <- parse_comment_inner_id(inner_id),
+         {:ok, inner_id} <- parse_comment_inner_id(inner_id),
          {:ok, article} <- article(community, thread, article_inner_id),
          {:ok, info} <- match(thread),
-         query <- %{thread: thread, floor: floor} |> Map.put(info.foreign_key, article.id),
+         query <- %{thread: thread, inner_id: inner_id} |> Map.put(info.foreign_key, article.id),
          {:ok, comment} <- ORM.find_by(Comment, query, preload: preload) do
       ORM.fill_meta(comment)
     end

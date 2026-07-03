@@ -77,7 +77,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
 
       deleted = owner_conn |> gq_mutation(Schema.m(:delete_comment), variables)
 
-      assert deleted["innerId"] == to_string(comment.floor)
+      assert deleted["innerId"] == to_string(comment.inner_id)
       assert deleted["isDeleted"]
     end
   end
@@ -95,7 +95,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
 
       result = user_conn |> gq_mutation(Schema.m(:upvote_comment), variables)
 
-      assert result["innerId"] == to_string(comment.floor)
+      assert result["innerId"] == to_string(comment.inner_id)
       assert result["upvotesCount"] == 1
       assert result["viewerHasUpvoted"]
     end
@@ -262,7 +262,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
       variables = %{comment: comment_path(community, doc, :doc, comment)}
       result = owner_conn |> gq_mutation(Schema.m(:pin_comment), variables)
 
-      assert result["innerId"] == to_string(comment.floor)
+      assert result["innerId"] == to_string(comment.inner_id)
       assert result["isPinned"]
     end
 
@@ -285,7 +285,7 @@ defmodule GroupherServer.Test.Mutation.Comments.DocComment do
       variables = %{comment: comment_path(community, doc, :doc, comment)}
       result = owner_conn |> gq_mutation(Schema.m(:undo_pin_comment), variables)
 
-      assert result["innerId"] == to_string(comment.floor)
+      assert result["innerId"] == to_string(comment.inner_id)
       assert not result["isPinned"]
     end
 

@@ -209,6 +209,20 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert post_comment2.floor == 2
     end
 
+    test "comment will have an inner_id after created", ~m(community post user)a do
+      {:ok, post_comment} =
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+
+      {:ok, post_comment2} =
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+
+      {:ok, post_comment} = ORM.find(Comment, post_comment.id)
+      {:ok, post_comment2} = ORM.find(Comment, post_comment2.id)
+
+      assert post_comment.inner_id == 1
+      assert post_comment2.inner_id == 2
+    end
+
     test "comment helper returns domain error when floor allocation fails", ~m(post user)a do
       post = put_in(post.meta.__struct__, nil)
 

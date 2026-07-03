@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.Query.Accounts.UpvotesBlogs do
     query($login: String!, $filter: UpvotedArticlesFilter!) {
       pagedUpvotedArticles(login: $login, filter: $filter) {
         entries {
-          id
+          innerId
           title
           thread
         }

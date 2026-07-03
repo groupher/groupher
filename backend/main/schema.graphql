@@ -1681,7 +1681,6 @@ type CommentReply {
   thread: Thread
   viewerHasUpvoted: Boolean
   replyTo: Comment
-  replyToInnerId: ID
   isDeleted: Boolean
   isArchived: Boolean
   archivedAt: DateTime
@@ -1704,7 +1703,6 @@ type Comment {
   thread: Thread
   viewerHasUpvoted: Boolean
   replyTo: Comment
-  replyToInnerId: ID
   isDeleted: Boolean
   isArchived: Boolean
   archivedAt: DateTime

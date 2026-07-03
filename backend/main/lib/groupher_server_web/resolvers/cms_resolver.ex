@@ -8,7 +8,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   alias Accounts.Model.User
   alias CMS.Helper.{ArticlePath, EmotionFormatter}
-  alias CMS.Model.{Author, Category, Comment, Community, CoverEditInfo}
+  alias CMS.Model.{Author, Category, Community, CoverEditInfo}
   alias Helper.{OgInfo, ORM}
 
   # #######################
@@ -866,20 +866,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     {:ok, EmotionFormatter.format(root, :article)}
   end
 
-  def comment_inner_id(%{floor: floor}, _args, _info), do: {:ok, floor}
+  def comment_inner_id(%{inner_id: inner_id}, _args, _info) when not is_nil(inner_id),
+    do: {:ok, inner_id}
 
-  def comment_reply_to_inner_id(%{reply_to: %{floor: floor}}, _args, _info), do: {:ok, floor}
-
-  def comment_reply_to_inner_id(%{reply_to_id: nil}, _args, _info), do: {:ok, nil}
-
-  def comment_reply_to_inner_id(%{reply_to_id: reply_to_id}, _args, _info) do
-    case ORM.find(Comment, reply_to_id) do
-      {:ok, %{floor: floor}} -> {:ok, floor}
-      {:error, _} -> {:ok, nil}
-    end
-  end
-
-  def comment_reply_to_inner_id(_comment, _args, _info), do: {:ok, nil}
+  def comment_inner_id(_comment, _args, _info), do: {:ok, nil}
 
   defp resolve_article_path(article_path) do
     with {:ok, %{community: community, thread: thread, inner_id: inner_id}} <-

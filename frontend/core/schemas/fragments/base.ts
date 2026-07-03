@@ -255,7 +255,6 @@ export const commentFields = `
   isArticleAuthor
   viewerHasUpvoted
   repliesCount
-  replyToInnerId
   insertedAt
   updatedAt
 `
@@ -269,6 +268,7 @@ export const comment = `
   replies {
     ${commentFields}
     replyTo {
+      innerId
       author {
         login
         nickname

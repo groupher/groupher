@@ -43,12 +43,14 @@ defmodule GroupherServer.CMS.Comments.Helper do
           %{id: reply_to_id} -> reply_to_id
         end
 
-      with {:ok, floor} <- next_floor(article, foreign_key) do
+      with {:ok, inner_id} <- next_inner_id(article, foreign_key),
+           {:ok, floor} <- next_floor(article, foreign_key) do
         attrs = %{
           author_id: user_id,
           body: payload.json,
           body_html: payload.html,
           emotions: @default_emotions,
+          inner_id: inner_id,
           floor: floor,
           is_article_author: user_id == article.author.user.id,
           thread: thread,
@@ -111,6 +113,14 @@ defmodule GroupherServer.CMS.Comments.Helper do
   def next_floor(article, _foreign_key) do
     case ORM.inc_meta(article, :next_floor) do
       {:ok, _updated_article, new_floor} -> {:ok, new_floor}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec next_inner_id(map(), atom()) :: T.domain_res(integer())
+  def next_inner_id(article, _foreign_key) do
+    case ORM.inc_meta(article, :next_comment_inner_id) do
+      {:ok, _updated_article, new_inner_id} -> {:ok, new_inner_id}
       {:error, reason} -> {:error, reason}
     end
   end
