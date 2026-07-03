@@ -432,7 +432,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   end
 
   defp user_id_match?(user, user_id) do
-    Map.get(user, :user_id) == user_id || Map.get(user, "user_id") == user_id
+    Map.get(user, :user_id) == user_id
   end
 
   defp user_in_logins?([], _), do: false

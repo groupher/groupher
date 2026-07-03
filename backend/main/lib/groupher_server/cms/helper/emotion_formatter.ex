@@ -40,16 +40,11 @@ defmodule GroupherServer.CMS.Helper.EmotionFormatter do
   def format(emotions, kind) when is_map(emotions) do
     supported_emotions(kind)
     |> Enum.reduce([], fn emotion, acc ->
-      count = Map.get(emotions, :"#{emotion}_count", 0) || Map.get(emotions, "#{emotion}_count", 0)
+      count = Map.get(emotions, :"#{emotion}_count", 0) || 0
 
       if count > 0 do
-        latest_users =
-          Map.get(emotions, :"latest_#{emotion}_users", []) ||
-            Map.get(emotions, "latest_#{emotion}_users", [])
-
-        viewer_has_reacted =
-          Map.get(emotions, :"viewer_has_#{emotion}ed", false) ||
-            Map.get(emotions, "viewer_has_#{emotion}ed", false)
+        latest_users = Map.get(emotions, :"latest_#{emotion}_users", [])
+        viewer_has_reacted = Map.get(emotions, :"viewer_has_#{emotion}ed", false)
 
         acc ++
           [
