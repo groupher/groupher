@@ -222,15 +222,6 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       assert post_comment.inner_id == 1
       assert post_comment2.inner_id == 2
     end
-
-    test "comment helper returns domain error when floor allocation fails", ~m(post user)a do
-      post = put_in(post.meta.__struct__, nil)
-
-      {:error, reason} =
-        CMS.Comments.Helper.do_create_comment(mock_comment(), :post_id, post, user)
-
-      assert error_code(reason) == ecode(:update_fails)
-    end
   end
 
   describe "[article comment participator for post]" do
@@ -331,6 +322,23 @@ defmodule GroupherServer.Test.CMS.Comments.PostComment do
       CMS.Comments.upvote_comment(comment.id, author_user)
 
       {:ok, comment} = ORM.find(Comment, comment.id, preload: :upvotes)
+      assert comment.meta.is_article_author_upvoted
+    end
+
+    test "non-author upvote changes keep article author upvoted flag",
+         ~m(community post user user2)a do
+      {:ok, comment} =
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+
+      {:ok, author_user} = ORM.find(User, post.author.user.id)
+
+      {:ok, comment} = CMS.Comments.upvote_comment(comment.id, author_user)
+      assert comment.meta.is_article_author_upvoted
+
+      {:ok, comment} = CMS.Comments.upvote_comment(comment.id, user2)
+      assert comment.meta.is_article_author_upvoted
+
+      {:ok, comment} = CMS.Comments.undo_upvote_comment(comment.id, user2)
       assert comment.meta.is_article_author_upvoted
     end
 

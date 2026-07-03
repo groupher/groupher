@@ -66,13 +66,11 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   defp do_fetch_article(
          %{
-           arguments:
-             %{article_path: %{community: community, thread: thread, inner_id: inner_id}} =
-               arguments
+           arguments: %{article_path: article_path} = arguments
          } =
            resolution
        ) do
-    case apply(FrontDesk, :article, [community_slug(community), thread, inner_id]) do
+    case FrontDesk.article(article_path, preload: [author: :user]) do
       {:ok, article} ->
         updated_arguments =
           arguments
@@ -101,10 +99,8 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     end
   end
 
-  defp fetch_comment_by_path(%{article: article_path} = comment_path) do
-    inner_id = Map.get(comment_path, :inner_id) || Map.get(comment_path, :innerId)
-
-    FrontDesk.comment(article_path, inner_id)
+  defp fetch_comment_by_path(%{article: _article_path} = comment_path) do
+    FrontDesk.comment(comment_path)
   end
 
   defp maybe_put_article_passport_is_owner(arguments, article, %{
@@ -122,10 +118,6 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   end
 
   defp maybe_put_comment_passport_is_owner(arguments, _comment, _resolution), do: arguments
-
-  defp community_slug(%{slug: slug}) when is_binary(slug), do: slug
-  defp community_slug(community) when is_binary(community), do: community
-  defp community_slug(_), do: nil
 
   defp fetch_user(%{arguments: %{login: login} = arguments} = resolution) do
     case FrontDesk.user(login) do

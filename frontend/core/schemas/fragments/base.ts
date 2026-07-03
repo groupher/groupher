@@ -254,6 +254,7 @@ export const commentFields = `
   upvotesCount
   isArticleAuthor
   viewerHasUpvoted
+  viewerHasReported
   repliesCount
   insertedAt
   updatedAt
@@ -261,13 +262,13 @@ export const commentFields = `
 export const comment = `
   ${commentFields}
 
-  replyTo {
+  replyToComment {
     ${commentFields}
   }
 
   replies {
     ${commentFields}
-    replyTo {
+    replyToComment {
       innerId
       author {
         login

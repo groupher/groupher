@@ -131,8 +131,8 @@
 //       // self.mentionList = uniq(concat(mentionList, self.participators))
 //     },
 //     updateOneComment(comment: TComment, fields = {}): void {
-//       const { innerId, replyTo } = comment
-//       const replyToCommentId = replyTo?.innerId
+//       const { innerId, replyToComment } = comment
+//       const replyToCommentId = replyToComment?.innerId
 //       const { entries } = self.pagedCommentsData
 
 //       if (self.mode === MODE.REPLIES && replyToCommentId) {
@@ -164,8 +164,8 @@
 //     },
 
 //     upvoteEmotion(comment: TComment, emotion: TEmotion): void {
-//       const { innerId, replyTo } = comment
-//       const replyToCommentId = replyTo?.innerId
+//       const { innerId, replyToComment } = comment
+//       const replyToCommentId = replyToComment?.innerId
 //       const slf = self as TStore
 //       const { entries } = slf.pagedCommentsData
 

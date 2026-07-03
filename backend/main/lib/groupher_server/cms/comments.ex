@@ -15,7 +15,8 @@ defmodule GroupherServer.CMS.Comments do
     Emotion,
     List,
     Moderation,
-    Read
+    Read,
+    Upvotes
   }
 
   @spec fetch_comment(T.id()) :: T.domain_res(Comment.t())
@@ -24,10 +25,10 @@ defmodule GroupherServer.CMS.Comments do
   @spec fetch_full_comment(T.id()) :: T.domain_res(T.article_info())
   def fetch_full_comment(comment_id), do: Read.fetch_full_comment(comment_id)
 
-  @spec one_comment(T.id()) :: T.domain_res(Comment.t())
+  @spec one_comment(T.id() | Comment.t()) :: T.domain_res(Comment.t())
   def one_comment(id), do: Read.one_comment(id)
 
-  @spec one_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
+  @spec one_comment(T.id() | Comment.t(), User.t()) :: T.domain_res(Comment.t())
   def one_comment(id, %User{} = user), do: Read.one_comment(id, user)
 
   @spec comments_state(T.thread(), T.id()) :: T.domain_res(map())
@@ -94,15 +95,15 @@ defmodule GroupherServer.CMS.Comments do
     do: Write.undo_mark_solution(comment_id, user)
 
   @spec upvote_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
-  def upvote_comment(comment_id, %User{} = user), do: States.upvote(comment_id, user)
+  def upvote_comment(comment_id, %User{} = user), do: Upvotes.upvote(comment_id, user)
 
   @spec undo_upvote_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
   def undo_upvote_comment(comment_id, %User{} = user),
-    do: States.undo_upvote(comment_id, user)
+    do: Upvotes.undo(comment_id, user)
 
   @spec reply_comment(T.id(), String.t(), User.t()) :: T.domain_res(Comment.t())
   def reply_comment(comment_id, body, %User{} = user),
-    do: States.reply(comment_id, body, user)
+    do: Write.reply(comment_id, body, user)
 
   @spec pin_comment(T.id()) :: T.domain_res(Comment.t())
   def pin_comment(comment_id), do: States.pin(comment_id)

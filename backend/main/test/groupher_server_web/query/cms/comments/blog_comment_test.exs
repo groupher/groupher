@@ -173,7 +173,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
               illegalReason
               illegalWords
             }
-            replyTo {
+            replyToComment {
               innerId
               bodyHtml
               floor
@@ -187,7 +187,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
             replies {
               innerId
               bodyHtml
-              replyTo {
+              replyToComment {
                 innerId
                 author {
                   login
@@ -259,7 +259,7 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       assert random_comment["replies"] |> List.first() |> Map.get("innerId") ==
                to_string(replied_comment_1.inner_id)
 
-      assert not is_nil(random_comment["replies"] |> List.first() |> Map.get("replyTo"))
+      assert not is_nil(random_comment["replies"] |> List.first() |> Map.get("replyToComment"))
 
       assert random_comment["replies"] |> List.last() |> Map.get("innerId") ==
                to_string(replied_comment_2.inner_id)
@@ -355,19 +355,19 @@ defmodule GroupherServer.Test.Query.Comments.BlogComment do
       replied_comment_1 =
         Enum.find(results["entries"], &(&1["innerId"] == to_string(replied_comment_1.inner_id)))
 
-      assert replied_comment_1 |> get_in(["replyTo", "innerId"]) ==
+      assert replied_comment_1 |> get_in(["replyToComment", "innerId"]) ==
                to_string(parent_comment.inner_id)
 
-      assert replied_comment_1 |> get_in(["replyTo", "author", "id"]) ==
+      assert replied_comment_1 |> get_in(["replyToComment", "author", "id"]) ==
                to_string(parent_comment.author_id)
 
       replied_comment_2 =
         Enum.find(results["entries"], &(&1["innerId"] == to_string(replied_comment_2.inner_id)))
 
-      assert replied_comment_2 |> get_in(["replyTo", "innerId"]) ==
+      assert replied_comment_2 |> get_in(["replyToComment", "innerId"]) ==
                to_string(parent_comment.inner_id)
 
-      assert replied_comment_2 |> get_in(["replyTo", "author", "id"]) ==
+      assert replied_comment_2 |> get_in(["replyToComment", "author", "id"]) ==
                to_string(parent_comment.author_id)
     end
 

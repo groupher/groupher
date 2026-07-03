@@ -1252,6 +1252,7 @@ type CommentMeta {
   isLegal: Boolean
   illegalReason: [String]
   illegalWords: [String]
+  reportedCount: Int
 }
 
 type CommentReply {
@@ -1268,8 +1269,8 @@ type CommentReply {
   repliesCount: Int
   thread: Thread
   viewerHasUpvoted: Boolean
-  replyTo: Comment
-  replyToId: ID
+  viewerHasReported: Boolean
+  replyToComment: Comment
   isDeleted: Boolean
   isArchived: Boolean
   archivedAt: DateTime
@@ -1291,8 +1292,8 @@ type Comment {
   repliesCount: Int
   thread: Thread
   viewerHasUpvoted: Boolean
-  replyTo: Comment
-  replyToId: ID
+  viewerHasReported: Boolean
+  replyToComment: Comment
   isDeleted: Boolean
   isArchived: Boolean
   archivedAt: DateTime

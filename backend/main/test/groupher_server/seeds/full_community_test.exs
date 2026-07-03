@@ -79,7 +79,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       top_comment =
         Repo.one!(
           from(c in Comment,
-            where: c.post_id == ^post.id and is_nil(c.reply_to_id),
+            where: c.post_id == ^post.id and is_nil(c.reply_to_comment_id),
             limit: 1,
             order_by: [asc: c.id]
           )
@@ -97,7 +97,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       assert comment_emotion_total > 0
 
       reply_count =
-        from(c in Comment, where: c.post_id == ^post.id and not is_nil(c.reply_to_id))
+        from(c in Comment, where: c.post_id == ^post.id and not is_nil(c.reply_to_comment_id))
         |> count()
 
       assert reply_count > 0

@@ -42,7 +42,7 @@ const CommentHeader: FC<TProps> = ({ data, showInnerRef, isReply }) => {
             {showInnerRef && meta.isReplyToOthers && (
               <div className={s.refToOther}>
                 <div className={s.refLabel}>{t('comment.header.reply_to')}</div>
-                <div className={s.refUser}>{data.replyTo?.author?.nickname}</div>
+                <div className={s.refUser}>{data.replyToComment?.author?.nickname}</div>
               </div>
             )}
             <div className={s.createDate}>

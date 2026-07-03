@@ -103,7 +103,10 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
           do: CMS.Comments.fold_comment(comment.id, user),
           else: {:ok, comment}
       end)
-      |> Multi.run(:sync_embed_replies, fn _, %{update_report_meta: comment} ->
+      |> Multi.run(:viewer_states, fn _, %{update_report_meta: comment} ->
+        viewer_report_state(comment, user)
+      end)
+      |> Multi.run(:sync_embed_replies, fn _, %{viewer_states: comment} ->
         FrontDesk.sync_embed_replies(comment)
       end)
       |> Repo.transaction()
@@ -121,6 +124,9 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
       |> Multi.run(:update_report_meta, fn _, _ ->
         {:ok, info} = match(:comment)
         update_report_meta(info, comment)
+      end)
+      |> Multi.run(:viewer_states, fn _, %{update_report_meta: comment} ->
+        viewer_report_state(comment, user)
       end)
       |> Repo.transaction()
       |> result()
@@ -202,6 +208,12 @@ defmodule GroupherServer.CMS.AbuseReports.Report do
       end
 
     content |> ORM.update_meta(meta)
+  end
+
+  defp viewer_report_state(%Comment{} = comment, %User{id: user_id}) do
+    comment
+    |> Map.put(:viewer_has_reported, Enum.member?(comment.meta.reported_user_ids, user_id))
+    |> done()
   end
 
   defp not_reported_before(info, content_id, %User{login: login}) do

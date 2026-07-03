@@ -24,8 +24,8 @@ export default function useHelper(): TRet {
   const comments = commentsStore
 
   const updateOneComment = (comment: TComment, fields = {}): void => {
-    const { innerId, replyTo } = comment
-    const replyToCommentId = replyTo?.innerId
+    const { innerId, replyToComment } = comment
+    const replyToCommentId = replyToComment?.innerId
     const { entries } = comments.pagedComments
 
     if (comments.mode === MODE.REPLIES && replyToCommentId) {
@@ -57,8 +57,8 @@ export default function useHelper(): TRet {
   }
 
   const upvoteEmotion = (comment: TComment, emotions: TEmotion[]): void => {
-    const { innerId, replyTo } = comment
-    const replyToCommentId = replyTo?.innerId
+    const { innerId, replyToComment } = comment
+    const replyToCommentId = replyToComment?.innerId
     const { entries } = comments.pagedComments
     const nextComments = [...entries]
 

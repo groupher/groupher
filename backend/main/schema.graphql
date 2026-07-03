@@ -619,6 +619,12 @@ type RootMutationType {
   "undo upvote to a comment"
   undoUpvoteComment(comment: CommentPathInput!): Comment
 
+  "report a comment"
+  reportComment(comment: CommentPathInput!, reason: String!, attr: String): Comment
+
+  "undo report a comment"
+  undoReportComment(comment: CommentPathInput!): Comment
+
   "emotion to a comment"
   emotionToComment(comment: CommentPathInput!, emotion: CommentEmotion!): Comment
 
@@ -1664,6 +1670,7 @@ type CommentMeta {
   isLegal: Boolean
   illegalReason: [String]
   illegalWords: [String]
+  reportedCount: Int
 }
 
 type CommentReply {
@@ -1680,7 +1687,8 @@ type CommentReply {
   repliesCount: Int
   thread: Thread
   viewerHasUpvoted: Boolean
-  replyTo: Comment
+  viewerHasReported: Boolean
+  replyToComment: Comment
   isDeleted: Boolean
   isArchived: Boolean
   archivedAt: DateTime
@@ -1702,7 +1710,8 @@ type Comment {
   repliesCount: Int
   thread: Thread
   viewerHasUpvoted: Boolean
-  replyTo: Comment
+  viewerHasReported: Boolean
+  replyToComment: Comment
   isDeleted: Boolean
   isArchived: Boolean
   archivedAt: DateTime

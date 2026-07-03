@@ -264,7 +264,7 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
   defp delete_comment_relations(comment_ids) do
     delete_all(
       from(c in CommentReply,
-        where: c.comment_id in ^comment_ids or c.reply_to_id in ^comment_ids
+        where: c.comment_id in ^comment_ids or c.reply_to_comment_id in ^comment_ids
       )
     )
 

@@ -143,9 +143,10 @@ export type TComment = {
   author?: TUser
   repliesCount?: number
   replies?: TComment[]
-  replyTo?: TComment
+  replyToComment?: TComment
   upvotesCount?: number
   viewerHasUpvoted?: boolean
+  viewerHasReported?: boolean
   isArticleAuthor?: boolean
   emotions?: TEmotion[]
   meta?: {

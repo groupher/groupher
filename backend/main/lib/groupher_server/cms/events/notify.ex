@@ -69,8 +69,8 @@ defmodule GroupherServer.CMS.Events.Notify do
 
   @spec handle(:reply, Comment.t(), User.t()) :: notify_result()
   def handle(:reply, %Comment{} = reply_comment, %User{} = from_user) do
-    with %Comment{reply_to: %{author_id: reply_to_author_id}} = reply_comment <-
-           Repo.preload(reply_comment, reply_to: :author),
+    with %Comment{reply_to_comment: %{author_id: reply_to_author_id}} = reply_comment <-
+           Repo.preload(reply_comment, reply_to_comment: :author),
          {:ok, article} <- FrontDesk.article_of(reply_comment),
          {:ok, article} <- FrontDesk.preload_author(article),
          {:ok, thread} <- FrontDesk.thread_of(article) do
@@ -85,7 +85,7 @@ defmodule GroupherServer.CMS.Events.Notify do
 
       Messaging.send_notification(notify_attrs, from_user)
     else
-      %Comment{reply_to: nil} -> {:ok, :pass}
+      %Comment{reply_to_comment: nil} -> {:ok, :pass}
       error -> handle_missing_target(error)
     end
   end

@@ -26,7 +26,7 @@ const pagedCommentReplies = gql`
       entries {
         ${F.commentFields}
 
-        replyTo {
+        replyToComment {
           ${F.commentFields}
         }
       }
@@ -48,7 +48,7 @@ const updateComment = gql`
     updateComment(comment: $comment, body: $body) {
       innerId
       bodyHtml
-      replyTo {
+      replyToComment {
         innerId
       }
     }
@@ -103,7 +103,7 @@ const upvoteComment = gql`
       }
       upvotesCount
       viewerHasUpvoted
-      replyTo {
+      replyToComment {
         innerId
       }
     }
@@ -118,8 +118,30 @@ const undoUpvoteComment = gql`
       }
       upvotesCount
       viewerHasUpvoted
-      replyTo {
+      replyToComment {
         innerId
+      }
+    }
+  }
+`
+const reportComment = gql`
+  mutation ($comment: CommentPathInput!, $reason: String!, $attr: String) {
+    reportComment(comment: $comment, reason: $reason, attr: $attr) {
+      innerId
+      viewerHasReported
+      meta {
+        reportedCount
+      }
+    }
+  }
+`
+const undoReportComment = gql`
+  mutation ($comment: CommentPathInput!) {
+    undoReportComment(comment: $comment) {
+      innerId
+      viewerHasReported
+      meta {
+        reportedCount
       }
     }
   }
@@ -128,7 +150,7 @@ const emotionToComment = gql`
   mutation ($comment: CommentPathInput!, $emotion: CommentEmotion!) {
     emotionToComment(comment: $comment, emotion: $emotion) {
       innerId
-      replyTo {
+      replyToComment {
         innerId
       }
       emotions {
@@ -141,7 +163,7 @@ const undoEmotionToComment = gql`
   mutation ($comment: CommentPathInput!, $emotion: CommentEmotion!) {
     undoEmotionToComment(comment: $comment, emotion: $emotion) {
       innerId
-      replyTo {
+      replyToComment {
         innerId
       }
       emotions {
@@ -197,6 +219,8 @@ const schema = {
   searchUsers,
   upvoteComment,
   undoUpvoteComment,
+  reportComment,
+  undoReportComment,
   emotionToComment,
   undoEmotionToComment,
   pagedPublishedComments,

@@ -67,6 +67,26 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
       resolve(&R.CMS.undo_upvote_comment/3)
     end
 
+    @desc "report a comment"
+    field :report_comment, :comment do
+      arg(:comment, non_null(:comment_path_input))
+      arg(:reason, non_null(:string))
+      arg(:attr, :string)
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :comment)
+      resolve(&R.CMS.report_comment/3)
+    end
+
+    @desc "undo report a comment"
+    field :undo_report_comment, :comment do
+      arg(:comment, non_null(:comment_path_input))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :comment)
+      resolve(&R.CMS.undo_report_comment/3)
+    end
+
     @desc "emotion to a comment"
     field :emotion_to_comment, :comment do
       arg(:comment, non_null(:comment_path_input))

@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Comments.List do
   alias Accounts.Model.User
   alias CMS.FrontDesk
   alias CMS.Model.{Comment, PinnedComment}
-  alias CMS.Comments.Helper, as: CommentHelper
+  alias CMS.Comments.{Replies, ViewerState}
   alias Helper.{Later, ORM, QueryBuilder, T}
 
   @pinned_comment_limit Comment.pinned_comment_limit()
@@ -73,7 +73,7 @@ defmodule GroupherServer.CMS.Comments.List do
     where_query =
       dynamic(
         [c],
-        is_nil(c.reply_to_id) and not c.is_folded and not c.is_pinned
+        is_nil(c.reply_to_comment_id) and not c.is_folded and not c.is_pinned
       )
 
     do_paged_comment(thread, article_id, filters, where_query, user)
@@ -172,7 +172,7 @@ defmodule GroupherServer.CMS.Comments.List do
     sort = Map.get(filters, :sort, :asc_inserted)
 
     with {:ok, thread_query} <- match(thread, :query, article_id) do
-      query = from(c in Comment, preload: [reply_to: :author])
+      query = from(c in Comment, preload: [reply_to_comment: :author])
 
       query
       |> where(^thread_query)
@@ -181,7 +181,7 @@ defmodule GroupherServer.CMS.Comments.List do
       |> ORM.paginator(~m(page size)a)
       |> add_pinned_comments_ifneed(thread, article_id, filters)
       |> FrontDesk.mark_viewer_emotion_states(user)
-      |> CommentHelper.mark_viewer_has_upvoted(user)
+      |> ViewerState.mark_has_upvoted(user)
       |> done()
     end
   end
@@ -189,17 +189,26 @@ defmodule GroupherServer.CMS.Comments.List do
   defp do_paged_comment_replies(comment_id, filters, user) do
     %{page: page, size: size} = filters
     sort = Map.get(filters, :sort, :asc_inserted)
-    query = from(c in Comment, preload: [reply_to: :author])
 
-    where_query = dynamic([c], not c.is_folded and c.reply_to_id == ^comment_id)
+    with {:ok, root_comment_id} <- Replies.root_id(comment_id) do
+      query = from(c in Comment, preload: [reply_to_comment: :author])
 
-    query
-    |> where(^where_query)
-    |> QueryBuilder.filter_pack(Map.merge(filters, %{sort: sort}))
-    |> ORM.paginator(~m(page size)a)
-    |> FrontDesk.mark_viewer_emotion_states(user)
-    |> CommentHelper.mark_viewer_has_upvoted(user)
-    |> done()
+      where_query =
+        dynamic(
+          [c],
+          not c.is_folded and
+            (c.root_comment_id == ^root_comment_id or
+               (is_nil(c.root_comment_id) and c.reply_to_comment_id == ^root_comment_id))
+        )
+
+      query
+      |> where(^where_query)
+      |> QueryBuilder.filter_pack(Map.merge(filters, %{sort: sort}))
+      |> ORM.paginator(~m(page size)a)
+      |> FrontDesk.mark_viewer_emotion_states(user)
+      |> ViewerState.mark_has_upvoted(user)
+      |> done()
+    end
   end
 
   defp add_pinned_comments_ifneed(paged_comments, thread, article_id, %{page: 1}) do
@@ -213,7 +222,7 @@ defmodule GroupherServer.CMS.Comments.List do
           pinned_comments =
             sort_solution_to_front(thread, pinned_comments)
             |> Enum.slice(0, @pinned_comment_limit)
-            |> Repo.preload(reply_to: :author)
+            |> Repo.preload(reply_to_comment: :author)
 
           entries = pinned_comments ++ paged_comments.entries
           pinned_comment_count = length(pinned_comments)

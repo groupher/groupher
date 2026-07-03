@@ -752,6 +752,34 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
+  def m(:report_comment) do
+    """
+    mutation($comment: CommentPathInput!, $reason: String!, $attr: String) {
+      reportComment(comment: $comment, reason: $reason, attr: $attr) {
+        innerId
+        viewerHasReported
+        meta {
+          reportedCount
+        }
+      }
+    }
+    """
+  end
+
+  def m(:undo_report_comment) do
+    """
+    mutation($comment: CommentPathInput!) {
+      undoReportComment(comment: $comment) {
+        innerId
+        viewerHasReported
+        meta {
+          reportedCount
+        }
+      }
+    }
+    """
+  end
+
   def m(:pin_comment) do
     """
     mutation($comment: CommentPathInput!){

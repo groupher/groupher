@@ -36,7 +36,7 @@ const CommentEditor: FC<TProps> = ({ editState }) => {
 
       <Modal show={showReplyEditor} width='680px' onClose={onReplyEditorClose} showCloseBtn>
         {showReplyEditor && (
-          <ReplyEditor replyTo={replyToComment} body={replyBody} submitState={submitState} />
+          <ReplyEditor replyToComment={replyToComment} body={replyBody} submitState={submitState} />
         )}
       </Modal>
     </Fragment>

@@ -74,6 +74,14 @@ defmodule GroupherServer.CMS.CanCan.Communities do
   def allow_emotion(_community_slug, _scope, _thread, _emotion),
     do: {:error, {:custom, "invalid thread"}}
 
+  @spec allow_comment(map(), term()) :: {:ok, map()} | {:error, atom()}
+  def allow_comment(%{meta: %{is_comment_locked: false}} = article, _user), do: done(article)
+
+  def allow_comment(%{meta: %{is_comment_locked: true}}, _user),
+    do: {:error, :article_comments_locked}
+
+  def allow_comment(_article, _user), do: {:error, :article_comments_locked}
+
   @spec emotions_whitelist() :: [atom()]
   def emotions_whitelist, do: @emotions_whitelist
 

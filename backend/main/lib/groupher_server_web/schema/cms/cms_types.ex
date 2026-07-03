@@ -719,7 +719,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:is_legal, :boolean)
     field(:illegal_reason, list_of(:string))
     field(:illegal_words, list_of(:string))
-    # field(:report_count, :boolean)
+    field(:reported_count, :integer)
     # field(:is_solution, :boolean)
   end
 

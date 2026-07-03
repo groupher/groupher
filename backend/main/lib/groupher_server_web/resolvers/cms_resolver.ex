@@ -776,11 +776,11 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def one_comment(_root, %{comment: comment}, %{context: %{cur_user: user}}) do
-    CMS.Comments.one_comment(comment.id, user)
+    CMS.Comments.one_comment(comment, user)
   end
 
   def one_comment(_root, %{comment: comment}, _) do
-    CMS.Comments.one_comment(comment.id)
+    CMS.Comments.one_comment(comment)
   end
 
   def paged_comments(
@@ -834,6 +834,14 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Comments.undo_upvote_comment(comment.id, user)
   end
 
+  def report_comment(_root, ~m(comment reason attr)a, %{context: %{cur_user: user}}) do
+    CMS.AbuseReports.comment(comment, reason, attr, user)
+  end
+
+  def undo_report_comment(_root, ~m(comment)a, %{context: %{cur_user: user}}) do
+    CMS.AbuseReports.undo_comment(comment, user)
+  end
+
   def emotion_to_comment(_root, %{comment: comment, emotion: emotion}, %{
         context: %{cur_user: user}
       }) do
@@ -872,9 +880,9 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def comment_inner_id(_comment, _args, _info), do: {:ok, nil}
 
   defp resolve_article_path(article_path) do
-    with {:ok, %{community: community, thread: thread, inner_id: inner_id}} <-
+    with {:ok, %{thread: thread} = article_path} <-
            ArticlePath.parse(article_path),
-         {:ok, article} <- CMS.FrontDesk.article(community, thread, inner_id) do
+         {:ok, article} <- CMS.FrontDesk.article(article_path) do
       {:ok, {thread, article}}
     end
   end
@@ -917,10 +925,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
-  defp resolve_comment_path(%{article: article_path} = comment_path) do
-    inner_id = Map.get(comment_path, :inner_id) || Map.get(comment_path, :innerId)
-
-    CMS.FrontDesk.comment(article_path, inner_id)
+  defp resolve_comment_path(%{article: _article_path} = comment_path) do
+    CMS.FrontDesk.comment(comment_path)
   end
 
   defp one_of_input(input, keys, label) do
