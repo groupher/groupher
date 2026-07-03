@@ -5,9 +5,9 @@ defmodule GroupherServer.CMS.Comments.Read do
 
   import Helper.Utils, only: [done: 1]
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.CMS
+  alias GroupherServer.Accounts.Model.User
 
-  alias Accounts.Model.User
   alias CMS.FrontDesk
   alias CMS.Model.Comment
   alias CMS.Comments.ViewerState

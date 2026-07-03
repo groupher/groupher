@@ -7,10 +7,10 @@ defmodule GroupherServer.CMS.Comments.States do
 
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.Accounts.Model.User
   alias Helper.{Multi, ORM, T}
 
-  alias Accounts.Model.User
   alias CMS.FrontDesk
   alias CMS.Model.{Comment, PinnedComment}
 
@@ -124,7 +124,6 @@ defmodule GroupherServer.CMS.Comments.States do
     end
   end
 
-  defp result({:ok, %{sync_embed_replies: result}}), do: {:ok, result}
   defp result({:ok, %{update_comment_flag: result}}), do: {:ok, result}
   defp result({:ok, %{fold_comment: result}}), do: {:ok, result}
   defp result({:error, {:already_pinned, result}}), do: {:ok, result}

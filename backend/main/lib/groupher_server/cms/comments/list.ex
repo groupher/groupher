@@ -10,9 +10,9 @@ defmodule GroupherServer.CMS.Comments.List do
 
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.Accounts.Model.User
 
-  alias Accounts.Model.User
   alias CMS.FrontDesk
   alias CMS.Model.{Comment, PinnedComment}
   alias CMS.Comments.{Replies, ViewerState}
@@ -51,9 +51,7 @@ defmodule GroupherServer.CMS.Comments.List do
             from(c in Comment)
             |> where(^thread_query)
             |> where([c], c.author_id == ^user.id)
-            |> Repo.all()
-            |> length
-            |> Kernel.>(0)
+            |> Repo.exists?()
         end
 
       state |> Map.merge(%{is_viewer_joined: user_joined}) |> done

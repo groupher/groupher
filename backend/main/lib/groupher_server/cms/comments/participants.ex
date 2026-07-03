@@ -5,9 +5,9 @@ defmodule GroupherServer.CMS.Comments.Participants do
 
   import Helper.Utils, only: [strip_struct: 1]
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.Accounts.Model.User
 
-  alias Accounts.Model.User
   alias CMS.Model.{Comment, Embeds}
   alias Helper.{ORM, T}
 

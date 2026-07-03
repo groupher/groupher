@@ -10,11 +10,11 @@ defmodule GroupherServer.CMS.Comments.Write do
 
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.Accounts.Model.User
 
   alias CMS.{CanCan, FrontDesk}
 
-  alias Accounts.Model.User
   alias CMS.Comments.{Numbering, Participants, Replies, States}
   alias CMS.Events
   alias CMS.Artiment.Enums
@@ -184,7 +184,7 @@ defmodule GroupherServer.CMS.Comments.Write do
 
   @spec delete(Comment.t()) :: T.domain_res(Comment.t())
   def delete(%{is_archived: true}),
-    do: raise_error(:archived, "article is archived, can not be edit or delete")
+    do: raise_error(:archived, "comment is archived, can not be edit or delete")
 
   def delete(%Comment{} = comment) do
     Multi.new()
@@ -221,9 +221,10 @@ defmodule GroupherServer.CMS.Comments.Write do
   defp do_mark_comment_solution(post, %Comment{} = comment, %User{} = user, is_solution) do
     case user.id == post.author.user.id do
       true ->
-        batch_update_solution_flag(post, false)
-
         Multi.new()
+        |> Multi.run(:clear_solution_flags, fn _, _ ->
+          batch_update_solution_flag(post, false)
+        end)
         |> Multi.run(:pin_comment, fn _, _ ->
           if is_solution do
             States.pin(comment.id)

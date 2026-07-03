@@ -6,10 +6,10 @@ defmodule GroupherServer.CMS.Comments.Upvotes do
   import Helper.ErrorCode
   import Helper.Utils, only: [done: 1, strip_struct: 1]
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.Accounts.Model.User
   alias Helper.{Later, Multi, ORM, T}
 
-  alias Accounts.Model.User
   alias CMS.Events
   alias CMS.FrontDesk
   alias CMS.Model.{Comment, CommentUpvote}
@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Comments.Upvotes do
         ORM.inc(comment, :upvotes_count)
       end)
       |> Multi.run(:mark_article_author_upvoted, fn _, %{inc_upvotes_count: comment} ->
-        mark_article_author_upvoted_ifneed(comment, user_id)
+        mark_article_author_upvoted_ifneed(comment, user_id, true)
       end)
       |> Multi.run(:viewer_states, fn _, %{mark_article_author_upvoted: comment} ->
         viewer_states(comment, user_id)
@@ -64,7 +64,7 @@ defmodule GroupherServer.CMS.Comments.Upvotes do
         ORM.dec(comment, :upvotes_count)
       end)
       |> Multi.run(:unmark_article_author_upvoted, fn _, %{dec_upvotes_count: comment} ->
-        unmark_article_author_upvoted_ifneed(comment, user_id)
+        mark_article_author_upvoted_ifneed(comment, user_id, false)
       end)
       |> Multi.run(:viewer_states, fn _, %{unmark_article_author_upvoted: comment} ->
         viewer_states(comment, user_id)
@@ -82,24 +82,11 @@ defmodule GroupherServer.CMS.Comments.Upvotes do
     end
   end
 
-  defp mark_article_author_upvoted_ifneed(%Comment{} = comment, user_id) do
+  defp mark_article_author_upvoted_ifneed(%Comment{} = comment, user_id, value) do
     with {:ok, article} <- FrontDesk.article_of(comment, preload: [author: :user]) do
       case get_in(article, [:author, :user, :id]) == user_id do
         true ->
-          meta = comment.meta |> Map.put(:is_article_author_upvoted, true)
-          ORM.update_meta(comment, meta)
-
-        false ->
-          {:ok, comment}
-      end
-    end
-  end
-
-  defp unmark_article_author_upvoted_ifneed(%Comment{} = comment, user_id) do
-    with {:ok, article} <- FrontDesk.article_of(comment, preload: [author: :user]) do
-      case get_in(article, [:author, :user, :id]) == user_id do
-        true ->
-          meta = comment.meta |> Map.put(:is_article_author_upvoted, false)
+          meta = comment.meta |> Map.put(:is_article_author_upvoted, value)
           ORM.update_meta(comment, meta)
 
         false ->
