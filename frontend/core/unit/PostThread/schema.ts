@@ -22,7 +22,7 @@ const getArticleFreshSchema = () => {
   return gql`
     query post($article: ArticlePathInput!, $userHasLogin: Boolean!) {
       post(article: $article) {
-        id
+        innerId
         views
         upvotesCount
         commentsCount

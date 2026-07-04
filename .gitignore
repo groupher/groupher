@@ -89,6 +89,10 @@ frontend/dashboard/public/wallpaper/
 frontend/landing/public/wallpaper/
 frontend/core/assets/wallpaper/pattern-bak/
 
+# Frontend schema snapshots are generated from backend/main/schema.graphql when needed.
+frontend/main/graphql/schema.graphql
+frontend/dashboard/graphql/schema.graphql
+
 # =====================
 # Backend (Elixir / BEAM)
 # =====================

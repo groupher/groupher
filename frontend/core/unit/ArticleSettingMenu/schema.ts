@@ -5,7 +5,7 @@ import { F } from '~/schemas'
 const updatePost = gql`
   mutation ($article: ArticlePathInput!, $title: String, $body: String, $communityTags: [ID]) {
     updatePost(article: $article, title: $title, body: $body, communityTags: $communityTags) {
-      id
+      innerId
       title
       communityTags {
         ${F.tag}
@@ -16,7 +16,7 @@ const updatePost = gql`
 const setPostCat = gql`
   mutation ($article: ArticlePathInput!, $cat: ArticleCatEnum!) {
     setPostCat(article: $article, cat: $cat) {
-      id
+      innerId
       cat
     }
   }
@@ -24,7 +24,7 @@ const setPostCat = gql`
 const setPostStatus = gql`
   mutation ($article: ArticlePathInput!, $status: ArticleStatusEnum!) {
     setPostStatus(article: $article, status: $status) {
-      id
+      innerId
       status
     }
   }
@@ -33,7 +33,7 @@ const setPostStatus = gql`
 const pinPost = gql`
   mutation ($article: ArticlePathInput!) {
     pinPost(article: $article) {
-      id
+      innerId
     }
   }
 `
@@ -41,7 +41,7 @@ const pinPost = gql`
 const undoPinPost = gql`
   mutation ($article: ArticlePathInput!) {
     undoPinPost(article: $article) {
-      id
+      innerId
       isPinned
     }
   }

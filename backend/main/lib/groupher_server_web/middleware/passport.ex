@@ -45,7 +45,9 @@ defmodule GroupherServerWeb.Middleware.Passport do
   import Helper.ErrorCode
 
   alias GroupherServer.FrontDesk
+  alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Helper.ArticlePath
+  alias GroupherServer.CMS.Model.Comment
   alias Helper.PermissionRegistry
 
   def call(%{errors: errors} = resolution, _) when length(errors) > 0 do
@@ -229,16 +231,18 @@ defmodule GroupherServerWeb.Middleware.Passport do
 
   defp infer_owner?(%{
          context: %{cur_user: cur_user},
-         arguments: %{comment: %{__struct__: _} = comment}
+         arguments: %{comment: %Comment{author: %User{id: author_id}}}
        })
        when not is_nil(cur_user) do
-    comment.author.id == cur_user.id
+    author_id == cur_user.id
   end
+
+  defp infer_owner?(%{arguments: %{comment: %Comment{}}}), do: false
 
   defp infer_owner?(%{context: %{cur_user: cur_user}, arguments: %{comment: comment_path}})
        when not is_nil(cur_user) and is_map(comment_path) do
     case apply(FrontDesk, :comment, [comment_path]) do
-      {:ok, comment} -> comment.author.id == cur_user.id
+      {:ok, %Comment{author: %User{id: author_id}}} -> author_id == cur_user.id
       _ -> false
     end
   end

@@ -78,7 +78,7 @@ be.install:
 be.start:
 	cd ./backend/main && MIX_ENV=mock mix phx.server
 
-# generate graphql schema (SDL) and copy to front ends
+# generate graphql schema (SDL) and link it for the mock server
 be.gen.schema:
 	cd ./backend/main && mix absinthe.schema.sdl schema.graphql && cd - \
 	&& rm -f ./frontend/mock-server/schema.graphql \

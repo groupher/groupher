@@ -12,7 +12,9 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   import Helper.ErrorCode
 
   alias GroupherServer.FrontDesk
+  alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Helper.ArticlePath
+  alias GroupherServer.CMS.Model.Comment
 
   def call(%{errors: errors} = resolution, _) when length(errors) > 0 do
     resolution
@@ -114,10 +116,14 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   defp maybe_put_comment_passport_is_owner(arguments, comment, %{
          context: %{cur_user: %{id: user_id}}
        }) do
-    Map.put(arguments, :passport_is_owner, comment.author.id == user_id)
+    Map.put(arguments, :passport_is_owner, comment_owner?(comment, user_id))
   end
 
   defp maybe_put_comment_passport_is_owner(arguments, _comment, _resolution), do: arguments
+
+  defp comment_owner?(%Comment{author: %User{id: author_id}}, user_id), do: author_id == user_id
+
+  defp comment_owner?(_, _), do: false
 
   defp fetch_user(%{arguments: %{login: login} = arguments} = resolution) do
     case FrontDesk.user(login) do
