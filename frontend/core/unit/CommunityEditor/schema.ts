@@ -31,17 +31,17 @@ const searchCommunities = gql`
 `
 
 const subscribeCommunity = gql`
-  mutation($communityId: ID!) {
-    subscribeCommunity(communityId: $communityId) {
+  mutation($community: String!) {
+    subscribeCommunity(community: $community) {
       ${F.community}
       contributesDigest
     }
   }
 `
 const unsubscribeCommunity = gql`
-  mutation ($communityId: ID!) {
-    unsubscribeCommunity(communityId: $communityId) {
-      id
+  mutation ($community: String!) {
+    unsubscribeCommunity(community: $community) {
+      slug
     }
   }
 `

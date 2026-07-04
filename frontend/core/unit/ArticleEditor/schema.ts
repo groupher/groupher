@@ -7,7 +7,7 @@ const createPost = gql`
   mutation (
     $title: String!
     $body: String!
-    $communityId: ID!
+    $community: String!
     $communityTags: [ID]
     $linkAddr: String
     $copyRight: String
@@ -15,12 +15,12 @@ const createPost = gql`
     createPost(
       title: $title
       body: $body
-      communityId: $communityId
+      community: $community
       communityTags: $communityTags
       linkAddr: $linkAddr
       copyRight: $copyRight
     ) {
-      id
+      innerId
       title
       meta {
         thread
@@ -30,7 +30,7 @@ const createPost = gql`
 `
 const updatePost = gql`
   mutation (
-    $article: ArticleRefInput!
+    $article: ArticlePathInput!
     $title: String
     $body: String
     $linkAddr: String
@@ -45,7 +45,7 @@ const updatePost = gql`
       copyRight: $copyRight
       communityTags: $communityTags
     ) {
-      id
+      innerId
       title
       author {
         ${F.author}
@@ -64,7 +64,7 @@ const createJob = gql`
   mutation (
     $title: String!
     $body: String!
-    $communityId: ID!
+    $community: String!
     $company: String!
     $companyLink: String
     $communityTags: [ID]
@@ -72,12 +72,12 @@ const createJob = gql`
     createJob(
       title: $title
       body: $body
-      communityId: $communityId
+      community: $community
       company: $company
       companyLink: $companyLink
       communityTags: $communityTags
     ) {
-      id
+      innerId
       title
       meta {
         thread
@@ -88,7 +88,7 @@ const createJob = gql`
 
 const updateJob = gql`
   mutation (
-    $id: ID!
+    $article: ArticlePathInput!
     $title: String
     $company: String!
     $companyLink: String
@@ -96,14 +96,14 @@ const updateJob = gql`
     $communityTags: [ID]
   ) {
     updateJob(
-      id: $id
+      article: $article
       title: $title
       company: $company
       companyLink: $companyLink
       body: $body
       communityTags: $communityTags
     ) {
-      id
+      innerId
       title
       author {
         ${F.author}
@@ -124,17 +124,17 @@ const createRadar = gql`
     $title: String!
     $body: String
     $linkAddr: String!
-    $communityId: ID!
+    $community: String!
     $communityTags: [ID]
   ) {
     createRadar(
       title: $title
       body: $body
       linkAddr: $linkAddr
-      communityId: $communityId
+      community: $community
       communityTags: $communityTags
     ) {
-      id
+      innerId
       title
       meta {
         thread
@@ -144,20 +144,20 @@ const createRadar = gql`
 `
 const updateRadar = gql`
   mutation (
-    $id: ID!
+    $article: ArticlePathInput!
     $title: String
     $body: String
     $linkAddr: String
     $communityTags: [ID]
   ) {
     updateRadar(
-      id: $id
+      article: $article
       title: $title
       body: $body
       linkAddr: $linkAddr
       communityTags: $communityTags
     ) {
-      id
+      innerId
       title
       author {
         ${F.author}
@@ -176,7 +176,6 @@ const updateRadar = gql`
 const community = gql`
   query ($slug: String!) {
     community(slug: $slug) {
-      id
       logo
       title
       slug
@@ -187,9 +186,9 @@ const community = gql`
 `
 
 const post = gql`
-  query post($article: ArticleRefInput!) {
+  query post($article: ArticlePathInput!) {
     post(article: $article) {
-      id
+      innerId
       title
       linkAddr
       copyRight
@@ -221,9 +220,9 @@ const post = gql`
   }
 `
 const job = gql`
-  query job($id: ID!) {
-    job(id: $id) {
-      id
+  query job($article: ArticlePathInput!) {
+    job(article: $article) {
+      innerId
       title
       company
       companyLink
@@ -257,9 +256,9 @@ const job = gql`
   }
 `
 const radar = gql`
-  query radar($id: ID!) {
-    radar(id: $id) {
-      id
+  query radar($article: ArticlePathInput!) {
+    radar(article: $article) {
+      innerId
       title
       linkAddr
       copyRight

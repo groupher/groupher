@@ -31,11 +31,11 @@ const List: FC<TProps> = ({ mode, repliesLoadingByParentId, apiMode, entries, fo
   return (
     <>
       {entries.map((comment, index) => {
-        const isFolded = foldedIdSet.has(comment.id)
-        const isRepliesLoading = Boolean(repliesLoadingByParentId[comment.id])
+        const isFolded = foldedIdSet.has(comment.innerId)
+        const isRepliesLoading = Boolean(repliesLoadingByParentId[comment.innerId])
 
         return (
-          <div key={comment.id} className={s.wrapper} style={COMMENT_VISIBILITY_STYLE}>
+          <div key={comment.innerId} className={s.wrapper} style={COMMENT_VISIBILITY_STYLE}>
             <Comment
               data={comment}
               apiMode={apiMode}
@@ -49,7 +49,7 @@ const List: FC<TProps> = ({ mode, repliesLoadingByParentId, apiMode, entries, fo
 
             {mode === MODE.REPLIES && comment.replies?.length > 0 && !isFolded && (
               <RepliesList
-                parentId={comment.id}
+                parentId={comment.innerId}
                 apiMode={apiMode}
                 entries={comment.replies}
                 repliesCount={comment.repliesCount}
@@ -61,7 +61,7 @@ const List: FC<TProps> = ({ mode, repliesLoadingByParentId, apiMode, entries, fo
             <button
               type='button'
               className={s.indentLine}
-              onClick={() => foldComment(comment.id)}
+              onClick={() => foldComment(comment.innerId)}
             />
           </div>
         )

@@ -8,7 +8,11 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
   setup do
     {:ok, user} = db_insert(:user)
 
-    {:ok, posts} = db_insert_multi(:post, @total_count)
+    posts =
+      Enum.map(1..@total_count, fn inner_id ->
+        {:ok, post} = db_insert(:post, %{inner_id: inner_id})
+        post
+      end)
 
     guest_conn = simu_conn(:guest)
     user_conn = simu_conn(:user, user)
@@ -64,11 +68,11 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
 
   @query """
   query($folderId: ID!, $filter: CollectedArticlesFilter!) {
-    pagedCollectedArticles(folderId: $folderId, filter: $filter) {
-      entries {
-        id
-        title
-      }
+      pagedCollectedArticles(folderId: $folderId, filter: $filter) {
+        entries {
+          innerId
+          title
+        }
       totalPages
       totalCount
       pageSize
@@ -93,9 +97,9 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
     results2 = guest_conn |> gq_query(@query, variables)
 
     assert results["totalCount"] == @total_count
-    assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(post1.id)))
-    assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(post2.id)))
-    assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(post3.id)))
+    assert results["entries"] |> Enum.any?(&(&1["innerId"] == to_string(post1.inner_id)))
+    assert results["entries"] |> Enum.any?(&(&1["innerId"] == to_string(post2.inner_id)))
+    assert results["entries"] |> Enum.any?(&(&1["innerId"] == to_string(post3.inner_id)))
 
     assert results == results2
   end

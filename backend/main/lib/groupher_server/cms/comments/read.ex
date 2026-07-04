@@ -3,75 +3,46 @@ defmodule GroupherServer.CMS.Comments.Read do
   Read operations for comments.
   """
 
-  import Ecto.Query, warn: false
+  import Helper.Utils, only: [done: 1]
 
-  import Helper.Utils, only: [done: 1, get_config: 2]
+  alias GroupherServer.CMS
+  alias GroupherServer.Accounts.Model.User
 
-  alias GroupherServer.{Accounts, CMS, Repo}
-
-  alias Accounts.Model.User
   alias CMS.FrontDesk
   alias CMS.Model.Comment
-  alias CMS.Comments.Helper, as: CommentHelper
+  alias CMS.Comments.ViewerState
   alias Helper.T
-
-  @threads get_config(:article, :threads)
 
   @spec fetch_comment(T.id()) :: T.domain_res(Comment.t())
   def fetch_comment(comment_id) do
-    FrontDesk.get(Comment, comment_id)
+    FrontDesk.comment(comment_id)
   end
 
   @spec fetch_full_comment(T.id()) :: T.domain_res(T.article_info())
   def fetch_full_comment(comment_id) do
-    get_full_comment(comment_id)
+    FrontDesk.full_comment(comment_id)
   end
 
-  @spec one_comment(T.id()) :: T.domain_res(Comment.t())
-  def one_comment(id), do: FrontDesk.get(Comment, id)
+  @spec one_comment(T.id() | Comment.t()) :: T.domain_res(Comment.t())
+  def one_comment(%Comment{} = comment), do: {:ok, comment}
 
-  @spec one_comment(T.id(), User.t()) :: T.domain_res(Comment.t())
-  def one_comment(id, %User{} = user) do
-    with {:ok, comment} <- FrontDesk.get(Comment, id) do
+  def one_comment(id), do: FrontDesk.comment(id)
+
+  @spec one_comment(T.id() | Comment.t(), User.t()) :: T.domain_res(Comment.t())
+  def one_comment(%Comment{} = comment, %User{} = user) do
+    with {:ok, comment} <- one_comment(comment) do
       %{entries: [comment]}
       |> FrontDesk.mark_viewer_emotion_states(user)
-      |> CommentHelper.mark_viewer_has_upvoted(user)
+      |> ViewerState.mark_has_upvoted(user)
       |> Map.get(:entries)
       |> List.first()
       |> done
     end
   end
 
-  @spec get_full_comment(T.id()) :: T.domain_res(T.article_info())
-  defp get_full_comment(comment_id) do
-    query = from(c in Comment, where: c.id == ^comment_id, preload: ^@threads)
-
-    with {:ok, comment} <- Repo.one(query) |> done(),
-         thread <- find_comment_thread(comment) do
-      do_extract_article_info(thread, Map.get(comment, thread))
+  def one_comment(id, %User{} = user) do
+    with {:ok, comment} <- one_comment(id) do
+      one_comment(comment, user)
     end
   end
-
-  defp do_extract_article_info(thread, article) do
-    with {:ok, article_with_author} <- Repo.preload(article, author: :user) |> done(),
-         article_author <- get_in(article_with_author, [:author, :user]) do
-      article_info = %{title: article.title, id: article.id}
-
-      author_info = %{
-        id: article_author.id,
-        login: article_author.login,
-        nickname: article_author.nickname
-      }
-
-      {:ok, %{thread: thread, article: article_info, author: author_info}}
-    end
-  end
-
-  defp find_comment_thread(%Comment{} = comment) do
-    @threads
-    |> Enum.filter(&Map.get(comment, :"#{&1}_id"))
-    |> List.first()
-  end
-
-
 end

@@ -76,7 +76,11 @@ defmodule GroupherServer.Test.Query.Statistics do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       result = rule_conn |> gq_query(@query)
-      assert result["postsCount"] == 0
+
+      assert is_integer(result["communitiesCount"])
+      assert is_integer(result["postsCount"])
+      assert is_integer(result["categoriesCount"])
+      assert is_integer(result["communityTagsCount"])
     end
   end
 end

@@ -234,10 +234,39 @@ defmodule GroupherServer.Test.AssertHelper do
 
   @doc "check id is exist in list of Map<id: xxx> structure"
   @spec exist_in?(map(), [map()]) :: boolean
-  def exist_in?(%{id: id}, list) when is_list(list) do
+  # Comments expose database id internally, but GraphQL payloads expose inner_id as innerId.
+  def exist_in?(%{id: id} = target, list) when is_list(list) do
+    inner_id = Map.get(target, :inner_id)
+
     list
     |> Enum.any?(fn item ->
-      to_string(id) == to_string(Map.get(item, :id, Map.get(item, "id")))
+      item_id = Map.get(item, :id, Map.get(item, "id"))
+      item_inner_id = Map.get(item, :innerId, Map.get(item, "innerId"))
+
+      cond do
+        not is_nil(item_id) ->
+          to_string(id) == to_string(item_id)
+
+        not is_nil(inner_id) and not is_nil(item_inner_id) ->
+          to_string(inner_id) == to_string(item_inner_id)
+
+        true ->
+          false
+      end
+    end)
+  end
+
+  def exist_in?(%{inner_id: inner_id}, list) when not is_nil(inner_id) and is_list(list) do
+    list
+    |> Enum.any?(fn item ->
+      to_string(inner_id) == to_string(Map.get(item, :innerId, Map.get(item, "innerId")))
+    end)
+  end
+
+  def exist_in?(%{slug: slug}, list) when is_list(list) do
+    list
+    |> Enum.any?(fn item ->
+      slug == Map.get(item, :slug, Map.get(item, "slug"))
     end)
   end
 

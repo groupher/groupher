@@ -59,7 +59,7 @@ export const useCommentsEditState = (): TEditState => {
       publishDone: comments.publishDone,
       isReady: comments.wordsCountReady,
     },
-    updateId: comments.updateId,
+    updateInnerId: comments.updateInnerId,
     replyToComment: comments.replyToComment as TEditState['replyToComment'],
   }
 }

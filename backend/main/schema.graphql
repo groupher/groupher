@@ -110,10 +110,10 @@ type RootQueryType {
   pagedCommunities(filter: CommunitiesFilter!): PagedCommunities
 
   "paged subscribers of a community"
-  pagedCommunitySubscribers(id: ID, community: String, filter: PagiFilter): PagedUsers
+  pagedCommunitySubscribers(community: String!, filter: PagiFilter): PagedUsers
 
   "paged subscribers of a community"
-  pagedCommunityModerators(id: ID!, filter: PagiFilter): PagedUsers
+  pagedCommunityModerators(community: String!, filter: PagiFilter): PagedUsers
 
   "get all categories"
   pagedCategories(filter: PagiFilter): PagedCategories
@@ -125,28 +125,28 @@ type RootQueryType {
   communityTagStats(community: String!, thread: Thread!, slug: String!): CommunityTagStat
 
   "got basic comments state"
-  commentsState(article: ArticleRefInput!, freshkey: String): CommentsListState
+  commentsState(article: ArticlePathInput!, freshkey: String): CommentsListState
 
-  "got spec comment by id"
-  oneComment(id: ID!): Comment
+  "got spec comment by ref"
+  oneComment(comment: CommentPathInput!): Comment
 
   "get paged article comments"
-  pagedComments(article: ArticleRefInput!, mode: CommentsMode, filter: CommentsFilter): PagedComments
+  pagedComments(article: ArticlePathInput!, mode: CommentsMode, filter: CommentsFilter): PagedComments
 
   "get paged article comments participants"
-  pagedCommentsParticipants(article: ArticleRefInput!, filter: PagiFilter): PagedUsers
+  pagedCommentsParticipants(article: ArticlePathInput!, filter: PagiFilter): PagedUsers
 
   "get paged replies of a comment"
-  pagedCommentReplies(id: ID!, filter: CommentsFilter): PagedCommentReplies
+  pagedCommentReplies(comment: CommentPathInput!, filter: CommentsFilter): PagedCommentReplies
 
   "paged reports list"
   pagedAbuseReports(filter: ReportFilter!): PagedReports
 
   "mentions created by an artiment"
-  mentions(id: ID!, type: MentionType!, filter: PagiFilter): PagedMentions
+  mentions(source: MentionSourceInput!, filter: PagiFilter): PagedMentions
 
   "artiments mentioning an internal target"
-  mentionedBy(id: ID!, type: MentionType!, filter: PagiFilter): PagedMentions
+  mentionedBy(target: MentionTargetInput!, filter: PagiFilter): PagedMentions
 
   "search communities by title"
   searchCommunities(title: String!, category: String): PagedCommunities
@@ -173,31 +173,31 @@ type RootQueryType {
   searchDocs(title: String!, thread: DocThread): PagedDocs
 
   "get paged upvoted users of an article"
-  upvotedUsers(article: ArticleRefInput!, filter: PagiFilter!): PagedUsers
+  upvotedUsers(article: ArticlePathInput!, filter: PagiFilter!): PagedUsers
 
   "get paged collected users of an article"
-  collectedUsers(article: ArticleRefInput!, filter: PagiFilter!): PagedUsers
+  collectedUsers(article: ArticlePathInput!, filter: PagiFilter!): PagedUsers
 
   "get post by id"
-  post(article: ArticleRefInput!): Post!
+  post(article: ArticlePathInput!): Post!
 
   "get paged posts"
   pagedPosts(thread: PostThread, filter: PagedPostsFilter!): PagedPosts
 
   "get blog by id"
-  blog(article: ArticleRefInput!): Blog!
+  blog(article: ArticlePathInput!): Blog!
 
   "get paged blogs"
   pagedBlogs(thread: BlogThread, filter: PagedBlogsFilter!): PagedBlogs
 
   "get changelog by id"
-  changelog(article: ArticleRefInput!): Changelog!
+  changelog(article: ArticlePathInput!): Changelog!
 
   "get paged changelogs"
   pagedChangelogs(thread: ChangelogThread, filter: PagedChangelogsFilter!): PagedChangelogs
 
   "get doc by id"
-  doc(article: ArticleRefInput!): Doc!
+  doc(article: ArticlePathInput!): Doc!
 
   "get paged docs"
   pagedDocs(thread: DocThread, filter: PagedDocsFilter!): PagedDocs
@@ -232,10 +232,10 @@ type RootMutationType {
   deleteCollectFolder(id: ID!): CollectFolder
 
   "add article into a collect folder"
-  addToCollect(article: ArticleRefInput!, folderId: ID!): CollectFolder
+  addToCollect(article: ArticlePathInput!, folderId: ID!): CollectFolder
 
   "remove article from a collect folder"
-  removeFromCollect(article: ArticleRefInput!, folderId: ID!): CollectFolder
+  removeFromCollect(article: ArticlePathInput!, folderId: ID!): CollectFolder
 
   "mark a message as read"
   markRead(ids: [ID], type: MailboxType): Done
@@ -253,7 +253,7 @@ type RootMutationType {
   updateCommunity(community: String!, title: String, desc: String, slug: String, logo: String, locale: String): Community
 
   "delete a global community"
-  deleteCommunity(id: ID!): Community
+  deleteCommunity(community: String!): Community
 
   "apply to create a community"
   applyCommunity(
@@ -264,7 +264,7 @@ type RootMutationType {
   approveCommunityApply(community: String!): Community
 
   "deny the apply to create a community"
-  denyCommunityApply(id: ID!): Community
+  denyCommunityApply(community: String!): Community
 
   "create category"
   createCategory(community: String!, title: String!, slug: String!): Category
@@ -322,10 +322,10 @@ type RootMutationType {
   unsubscribeCommunity(community: String!): Community
 
   "set a community_tag to content"
-  setCommunityTag(article: ArticleRefInput!, communityTagId: ID!): Article
+  setCommunityTag(article: ArticlePathInput!, communityTagId: ID!): Article
 
   "unset a tag to content"
-  unsetCommunityTag(article: ArticleRefInput!, communityTagId: ID!): Article
+  unsetCommunityTag(article: ArticlePathInput!, communityTagId: ID!): Article
 
   "reindex tags in given group"
   reindexTagsInGroup(community: String!, thread: Thread, groupId: ID!, tags: [ReindexTagInput]): Done
@@ -337,19 +337,19 @@ type RootMutationType {
   reindexCommunityTagGroups(community: String!, thread: Thread, groups: [ReindexCommunityTagGroupInput]): Done
 
   "mirror article to other community"
-  mirrorArticle(article: ArticleRefInput!, targetCommunity: String!, communityTags: [ID]): Article
+  mirrorArticle(article: ArticlePathInput!, targetCommunity: String!, communityTags: [ID]): Article
 
   "unmirror article for community"
-  unmirrorArticle(article: ArticleRefInput!, targetCommunity: String!): Article
+  unmirrorArticle(article: ArticlePathInput!, targetCommunity: String!): Article
 
   "move article to other community"
-  moveArticle(article: ArticleRefInput!, targetCommunity: String!, communityTags: [ID]): Article
+  moveArticle(article: ArticlePathInput!, targetCommunity: String!, communityTags: [ID]): Article
 
   "mirror article to home community"
-  mirrorToHome(article: ArticleRefInput!, communityTags: [ID]): Article
+  mirrorToHome(article: ArticlePathInput!, communityTags: [ID]): Article
 
   "move article to other community"
-  moveToBlackhole(article: ArticleRefInput!, communityTags: [ID]): Article
+  moveToBlackhole(article: ArticlePathInput!, communityTags: [ID]): Article
 
   "create a post"
   createPost(
@@ -358,65 +358,65 @@ type RootMutationType {
 
   "update a cms\/post"
   updatePost(
-    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
+    article: ArticlePathInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
   ): Post
 
   "set cat for a post"
-  setPostCat(article: ArticleRefInput!, cat: ArticleCatEnum!): Post
+  setPostCat(article: ArticlePathInput!, cat: ArticleCatEnum!): Post
 
   "set status for a post"
-  setPostStatus(article: ArticleRefInput!, status: ArticleStatusEnum!): Post
+  setPostStatus(article: ArticlePathInput!, status: ArticleStatusEnum!): Post
 
   "upvote to post"
-  upvotePost(article: ArticleRefInput!): Article
+  upvotePost(article: ArticlePathInput!): Article
 
   "undo upvote to post"
-  undoUpvotePost(article: ArticleRefInput!): Article
+  undoUpvotePost(article: ArticlePathInput!): Article
 
   "pin to post"
-  pinPost(article: ArticleRefInput!): Post
+  pinPost(article: ArticlePathInput!): Post
 
   "undo pin to post"
-  undoPinPost(article: ArticleRefInput!): Post
+  undoPinPost(article: ArticlePathInput!): Post
 
   "mark delete a post type article, aka soft-delete"
-  markDeletePost(article: ArticleRefInput!): Post
+  markDeletePost(article: ArticlePathInput!): Post
 
   "undo mark delete a post type article"
-  undoMarkDeletePost(article: ArticleRefInput!): Post
+  undoMarkDeletePost(article: ArticlePathInput!): Post
 
   "batch mark delete posts type article, aka soft-delete"
-  batchMarkDeletePosts(community: String!, ids: [ID], thread: PostThread): DoneState
+  batchMarkDeletePosts(community: String!, innerIds: [Int!]!, thread: PostThread): DoneState
 
   "batch undo mark delete posts type article, aka soft-delete"
-  batchUndoMarkDeletePosts(community: String!, ids: [ID], thread: PostThread): DoneState
+  batchUndoMarkDeletePosts(community: String!, innerIds: [Int!]!, thread: PostThread): DoneState
 
   "permanently delete a post"
-  deletePost(article: ArticleRefInput!): Post
+  deletePost(article: ArticlePathInput!): Post
 
   "emotion to post"
-  emotionToPost(article: ArticleRefInput!, emotion: ArticleEmotion!): Post
+  emotionToPost(article: ArticlePathInput!, emotion: ArticleEmotion!): Post
 
   "undo emotion to post"
-  undoEmotionToPost(article: ArticleRefInput!, emotion: ArticleEmotion!): Post
+  undoEmotionToPost(article: ArticlePathInput!, emotion: ArticleEmotion!): Post
 
   "report a post"
-  reportPost(article: ArticleRefInput!, reason: String!, attr: String): Post
+  reportPost(article: ArticlePathInput!, reason: String!, attr: String): Post
 
   "undo report a post"
-  undoReportPost(article: ArticleRefInput!): Post
+  undoReportPost(article: ArticlePathInput!): Post
 
   "sink a post"
-  sinkPost(article: ArticleRefInput!): Article
+  sinkPost(article: ArticlePathInput!): Article
 
   "undo sink to post"
-  undoSinkPost(article: ArticleRefInput!): Article
+  undoSinkPost(article: ArticlePathInput!): Article
 
   "lock comment of a post"
-  lockPostComment(article: ArticleRefInput!): Article
+  lockPostComment(article: ArticlePathInput!): Article
 
   "undo lock to a post"
-  undoLockPostComment(article: ArticleRefInput!): Article
+  undoLockPostComment(article: ArticlePathInput!): Article
 
   "create a blog"
   createBlog(
@@ -425,59 +425,59 @@ type RootMutationType {
 
   "update a cms\/blog"
   updateBlog(
-    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
+    article: ArticlePathInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
   ): Blog
 
   "upvote to blog"
-  upvoteBlog(article: ArticleRefInput!): Article
+  upvoteBlog(article: ArticlePathInput!): Article
 
   "undo upvote to blog"
-  undoUpvoteBlog(article: ArticleRefInput!): Article
+  undoUpvoteBlog(article: ArticlePathInput!): Article
 
   "pin to blog"
-  pinBlog(article: ArticleRefInput!): Blog
+  pinBlog(article: ArticlePathInput!): Blog
 
   "undo pin to blog"
-  undoPinBlog(article: ArticleRefInput!): Blog
+  undoPinBlog(article: ArticlePathInput!): Blog
 
   "mark delete a blog type article, aka soft-delete"
-  markDeleteBlog(article: ArticleRefInput!): Blog
+  markDeleteBlog(article: ArticlePathInput!): Blog
 
   "undo mark delete a blog type article"
-  undoMarkDeleteBlog(article: ArticleRefInput!): Blog
+  undoMarkDeleteBlog(article: ArticlePathInput!): Blog
 
   "batch mark delete blogs type article, aka soft-delete"
-  batchMarkDeleteBlogs(community: String!, ids: [ID], thread: BlogThread): DoneState
+  batchMarkDeleteBlogs(community: String!, innerIds: [Int!]!, thread: BlogThread): DoneState
 
   "batch undo mark delete blogs type article, aka soft-delete"
-  batchUndoMarkDeleteBlogs(community: String!, ids: [ID], thread: BlogThread): DoneState
+  batchUndoMarkDeleteBlogs(community: String!, innerIds: [Int!]!, thread: BlogThread): DoneState
 
   "permanently delete a blog"
-  deleteBlog(article: ArticleRefInput!): Blog
+  deleteBlog(article: ArticlePathInput!): Blog
 
   "emotion to blog"
-  emotionToBlog(article: ArticleRefInput!, emotion: ArticleEmotion!): Blog
+  emotionToBlog(article: ArticlePathInput!, emotion: ArticleEmotion!): Blog
 
   "undo emotion to blog"
-  undoEmotionToBlog(article: ArticleRefInput!, emotion: ArticleEmotion!): Blog
+  undoEmotionToBlog(article: ArticlePathInput!, emotion: ArticleEmotion!): Blog
 
   "report a blog"
-  reportBlog(article: ArticleRefInput!, reason: String!, attr: String): Blog
+  reportBlog(article: ArticlePathInput!, reason: String!, attr: String): Blog
 
   "undo report a blog"
-  undoReportBlog(article: ArticleRefInput!): Blog
+  undoReportBlog(article: ArticlePathInput!): Blog
 
   "sink a blog"
-  sinkBlog(article: ArticleRefInput!): Article
+  sinkBlog(article: ArticlePathInput!): Article
 
   "undo sink to blog"
-  undoSinkBlog(article: ArticleRefInput!): Article
+  undoSinkBlog(article: ArticlePathInput!): Article
 
   "lock comment of a blog"
-  lockBlogComment(article: ArticleRefInput!): Article
+  lockBlogComment(article: ArticlePathInput!): Article
 
   "undo lock to a blog"
-  undoLockBlogComment(article: ArticleRefInput!): Article
+  undoLockBlogComment(article: ArticlePathInput!): Article
 
   "create a changelog"
   createChangelog(
@@ -486,59 +486,59 @@ type RootMutationType {
 
   "update a cms\/changelog"
   updateChangelog(
-    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
+    article: ArticlePathInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
   ): Changelog
 
   "upvote to changelog"
-  upvoteChangelog(article: ArticleRefInput!): Article
+  upvoteChangelog(article: ArticlePathInput!): Article
 
   "undo upvote to changelog"
-  undoUpvoteChangelog(article: ArticleRefInput!): Article
+  undoUpvoteChangelog(article: ArticlePathInput!): Article
 
   "pin to changelog"
-  pinChangelog(article: ArticleRefInput!): Changelog
+  pinChangelog(article: ArticlePathInput!): Changelog
 
   "undo pin to changelog"
-  undoPinChangelog(article: ArticleRefInput!): Changelog
+  undoPinChangelog(article: ArticlePathInput!): Changelog
 
   "mark delete a changelog type article, aka soft-delete"
-  markDeleteChangelog(article: ArticleRefInput!): Changelog
+  markDeleteChangelog(article: ArticlePathInput!): Changelog
 
   "undo mark delete a changelog type article"
-  undoMarkDeleteChangelog(article: ArticleRefInput!): Changelog
+  undoMarkDeleteChangelog(article: ArticlePathInput!): Changelog
 
   "batch mark delete changelogs type article, aka soft-delete"
-  batchMarkDeleteChangelogs(community: String!, ids: [ID], thread: ChangelogThread): DoneState
+  batchMarkDeleteChangelogs(community: String!, innerIds: [Int!]!, thread: ChangelogThread): DoneState
 
   "batch undo mark delete changelogs type article, aka soft-delete"
-  batchUndoMarkDeleteChangelogs(community: String!, ids: [ID], thread: ChangelogThread): DoneState
+  batchUndoMarkDeleteChangelogs(community: String!, innerIds: [Int!]!, thread: ChangelogThread): DoneState
 
   "permanently delete a changelog"
-  deleteChangelog(article: ArticleRefInput!): Changelog
+  deleteChangelog(article: ArticlePathInput!): Changelog
 
   "emotion to changelog"
-  emotionToChangelog(article: ArticleRefInput!, emotion: ArticleEmotion!): Changelog
+  emotionToChangelog(article: ArticlePathInput!, emotion: ArticleEmotion!): Changelog
 
   "undo emotion to changelog"
-  undoEmotionToChangelog(article: ArticleRefInput!, emotion: ArticleEmotion!): Changelog
+  undoEmotionToChangelog(article: ArticlePathInput!, emotion: ArticleEmotion!): Changelog
 
   "report a changelog"
-  reportChangelog(article: ArticleRefInput!, reason: String!, attr: String): Changelog
+  reportChangelog(article: ArticlePathInput!, reason: String!, attr: String): Changelog
 
   "undo report a changelog"
-  undoReportChangelog(article: ArticleRefInput!): Changelog
+  undoReportChangelog(article: ArticlePathInput!): Changelog
 
   "sink a changelog"
-  sinkChangelog(article: ArticleRefInput!): Article
+  sinkChangelog(article: ArticlePathInput!): Article
 
   "undo sink to changelog"
-  undoSinkChangelog(article: ArticleRefInput!): Article
+  undoSinkChangelog(article: ArticlePathInput!): Article
 
   "lock comment of a changelog"
-  lockChangelogComment(article: ArticleRefInput!): Article
+  lockChangelogComment(article: ArticlePathInput!): Article
 
   "undo lock to a changelog"
-  undoLockChangelogComment(article: ArticleRefInput!): Article
+  undoLockChangelogComment(article: ArticlePathInput!): Article
 
   "create a doc"
   createDoc(
@@ -547,95 +547,101 @@ type RootMutationType {
 
   "update a cms\/doc"
   updateDoc(
-    article: ArticleRefInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
+    article: ArticlePathInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
   ): Doc
 
   "upvote to doc"
-  upvoteDoc(article: ArticleRefInput!): Article
+  upvoteDoc(article: ArticlePathInput!): Article
 
   "undo upvote to doc"
-  undoUpvoteDoc(article: ArticleRefInput!): Article
+  undoUpvoteDoc(article: ArticlePathInput!): Article
 
   "pin to doc"
-  pinDoc(article: ArticleRefInput!): Doc
+  pinDoc(article: ArticlePathInput!): Doc
 
   "undo pin to doc"
-  undoPinDoc(article: ArticleRefInput!): Doc
+  undoPinDoc(article: ArticlePathInput!): Doc
 
   "mark delete a doc type article, aka soft-delete"
-  markDeleteDoc(article: ArticleRefInput!): Doc
+  markDeleteDoc(article: ArticlePathInput!): Doc
 
   "undo mark delete a doc type article"
-  undoMarkDeleteDoc(article: ArticleRefInput!): Doc
+  undoMarkDeleteDoc(article: ArticlePathInput!): Doc
 
   "batch mark delete docs type article, aka soft-delete"
-  batchMarkDeleteDocs(community: String!, ids: [ID], thread: DocThread): DoneState
+  batchMarkDeleteDocs(community: String!, innerIds: [Int!]!, thread: DocThread): DoneState
 
   "batch undo mark delete docs type article, aka soft-delete"
-  batchUndoMarkDeleteDocs(community: String!, ids: [ID], thread: DocThread): DoneState
+  batchUndoMarkDeleteDocs(community: String!, innerIds: [Int!]!, thread: DocThread): DoneState
 
   "permanently delete a doc"
-  deleteDoc(article: ArticleRefInput!): Doc
+  deleteDoc(article: ArticlePathInput!): Doc
 
   "emotion to doc"
-  emotionToDoc(article: ArticleRefInput!, emotion: ArticleEmotion!): Doc
+  emotionToDoc(article: ArticlePathInput!, emotion: ArticleEmotion!): Doc
 
   "undo emotion to doc"
-  undoEmotionToDoc(article: ArticleRefInput!, emotion: ArticleEmotion!): Doc
+  undoEmotionToDoc(article: ArticlePathInput!, emotion: ArticleEmotion!): Doc
 
   "report a doc"
-  reportDoc(article: ArticleRefInput!, reason: String!, attr: String): Doc
+  reportDoc(article: ArticlePathInput!, reason: String!, attr: String): Doc
 
   "undo report a doc"
-  undoReportDoc(article: ArticleRefInput!): Doc
+  undoReportDoc(article: ArticlePathInput!): Doc
 
   "sink a doc"
-  sinkDoc(article: ArticleRefInput!): Article
+  sinkDoc(article: ArticlePathInput!): Article
 
   "undo sink to doc"
-  undoSinkDoc(article: ArticleRefInput!): Article
+  undoSinkDoc(article: ArticlePathInput!): Article
 
   "lock comment of a doc"
-  lockDocComment(article: ArticleRefInput!): Article
+  lockDocComment(article: ArticlePathInput!): Article
 
   "undo lock to a doc"
-  undoLockDocComment(article: ArticleRefInput!): Article
+  undoLockDocComment(article: ArticlePathInput!): Article
 
   "write a comment"
-  createComment(community: String!, thread: Thread, id: ID!, body: String!): Comment
+  createComment(article: ArticlePathInput!, body: String!): Comment
 
   "update a comment"
-  updateComment(id: ID!, body: String!): Comment
+  updateComment(comment: CommentPathInput!, body: String!): Comment
 
   "delete a comment"
-  deleteComment(id: ID!): Comment
+  deleteComment(comment: CommentPathInput!): Comment
 
   "reply to a comment"
-  replyComment(id: ID!, body: String!): Comment
+  replyComment(comment: CommentPathInput!, body: String!): Comment
 
   "upvote to a comment"
-  upvoteComment(id: ID!): Comment
+  upvoteComment(comment: CommentPathInput!): Comment
 
   "undo upvote to a comment"
-  undoUpvoteComment(id: ID!): Comment
+  undoUpvoteComment(comment: CommentPathInput!): Comment
+
+  "report a comment"
+  reportComment(comment: CommentPathInput!, reason: String!, attr: String): Comment
+
+  "undo report a comment"
+  undoReportComment(comment: CommentPathInput!): Comment
 
   "emotion to a comment"
-  emotionToComment(id: ID!, emotion: CommentEmotion!): Comment
+  emotionToComment(comment: CommentPathInput!, emotion: CommentEmotion!): Comment
 
   "undo emotion to a comment"
-  undoEmotionToComment(id: ID!, emotion: CommentEmotion!): Comment
+  undoEmotionToComment(comment: CommentPathInput!, emotion: CommentEmotion!): Comment
 
   "mark a comment as question post's best solution"
-  markCommentSolution(id: ID!): Comment
+  markCommentSolution(comment: CommentPathInput!): Comment
 
   "mark a comment as question post's best solution"
-  undoMarkCommentSolution(id: ID!): Comment
+  undoMarkCommentSolution(comment: CommentPathInput!): Comment
 
   "pin a comment"
-  pinComment(id: ID!): Comment
+  pinComment(comment: CommentPathInput!): Comment
 
   "undo pin a comment"
-  undoPinComment(id: ID!): Comment
+  undoPinComment(comment: CommentPathInput!): Comment
 
   "update base info in dashboard"
   updateDashboardBaseInfo(
@@ -978,7 +984,7 @@ type DocDraft {
   author: User
   insertedAt: DateTime
   updatedAt: DateTime
-  document: ThreadDocument
+  document: ArticleDocument
 }
 
 type DocTreeMutationPayload {
@@ -1032,20 +1038,20 @@ type CommonUser {
 
 type CommonArticle {
   thread: Thread
-  id: ID
+  innerId: ID
   title: String
   author: CommonUser
 }
 
 type CommonComment {
-  id: ID
+  innerId: ID
   bodyHtml: String
   upvotesCount: Int
   author: CommonUser
   article: CommonArticle
 }
 
-type ThreadDocument {
+type ArticleDocument {
   json: String
   markdown: String
   markdownToc: Json
@@ -1075,7 +1081,7 @@ type ArticleSnapshot {
 type Post implements Article {
   innerId: ID
   title: String
-  document: ThreadDocument
+  document: ArticleDocument
   digest: String
   views: Int
   isPinned: Boolean
@@ -1114,7 +1120,7 @@ type Post implements Article {
 type Changelog implements Article {
   innerId: ID
   title: String
-  document: ThreadDocument
+  document: ArticleDocument
   digest: String
   views: Int
   isPinned: Boolean
@@ -1151,7 +1157,7 @@ type Changelog implements Article {
 type Doc implements Article {
   innerId: ID
   title: String
-  document: ThreadDocument
+  document: ArticleDocument
   digest: String
   views: Int
   isPinned: Boolean
@@ -1189,7 +1195,7 @@ type Doc implements Article {
 type Blog implements Article {
   innerId: ID
   title: String
-  document: ThreadDocument
+  document: ArticleDocument
   digest: String
   views: Int
   isPinned: Boolean
@@ -1546,9 +1552,6 @@ type AllRules {
 }
 
 type Community {
-  "Community identifier."
-  id: ID
-
   "Community display title."
   title: String
 
@@ -1667,10 +1670,11 @@ type CommentMeta {
   isLegal: Boolean
   illegalReason: [String]
   illegalWords: [String]
+  reportedCount: Int
 }
 
 type CommentReply {
-  id: ID
+  innerId: ID
   body: String
   bodyHtml: String
   author: User
@@ -1683,8 +1687,8 @@ type CommentReply {
   repliesCount: Int
   thread: Thread
   viewerHasUpvoted: Boolean
-  replyTo: Comment
-  replyToId: ID
+  viewerHasReported: Boolean
+  replyToComment: Comment
   isDeleted: Boolean
   isArchived: Boolean
   archivedAt: DateTime
@@ -1693,7 +1697,7 @@ type CommentReply {
 }
 
 type Comment {
-  id: ID
+  innerId: ID
   body: String
   bodyHtml: String
   author: User
@@ -1706,8 +1710,8 @@ type Comment {
   repliesCount: Int
   thread: Thread
   viewerHasUpvoted: Boolean
-  replyTo: Comment
-  replyToId: ID
+  viewerHasReported: Boolean
+  replyToComment: Comment
   isDeleted: Boolean
   isArchived: Boolean
   archivedAt: DateTime
@@ -2084,10 +2088,26 @@ input ReindexCommunityTagGroupInput {
   index: Int!
 }
 
-input ArticleRefInput {
+input ArticlePathInput {
   innerId: ID!
   community: String!
-  thread: Thread
+  thread: Thread!
+}
+
+input CommentPathInput {
+  article: ArticlePathInput!
+  innerId: ID!
+}
+
+input MentionSourceInput {
+  article: ArticlePathInput
+  comment: CommentPathInput
+}
+
+input MentionTargetInput {
+  article: ArticlePathInput
+  comment: CommentPathInput
+  userLogin: String
 }
 
 input PagiFilter {

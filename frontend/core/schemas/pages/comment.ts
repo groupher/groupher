@@ -2,7 +2,7 @@ import F from '../fragments'
 
 export const pagedComments = `
   query pagedComments(
-    $article: ArticleRefInput!
+    $article: ArticlePathInput!
     $mode: CommentsMode
     $filter: CommentsFilter!
   ) {

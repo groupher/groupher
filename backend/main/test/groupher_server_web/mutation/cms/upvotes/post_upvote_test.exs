@@ -14,7 +14,9 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
 
   describe "[post upvote]" do
     test "tmp login user can upvote a post", ~m(user_conn user2_conn community post user)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
 
       _created = user_conn |> gq_mutation(Schema.m(:upvote_article, :post), variables)
       created = user2_conn |> gq_mutation(Schema.m(:upvote_article, :post), variables)
@@ -25,7 +27,9 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
     end
 
     test "login user can upvote a post", ~m(user_conn user2_conn community post user)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
 
       _created = user_conn |> gq_mutation(Schema.m(:upvote_article, :post), variables)
       created = user2_conn |> gq_mutation(Schema.m(:upvote_article, :post), variables)
@@ -37,7 +41,9 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
     end
 
     test "unauth user upvote a post fails", ~m(guest_conn community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
 
       assert guest_conn
              |> mutation_error?(
@@ -50,7 +56,9 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
     test "login user can undo upvote to a post", ~m(user_conn community post user)a do
       {:ok, _} = CMS.Articles.upvote(post, user)
 
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
 
       updated = user_conn |> gq_mutation(Schema.m(:undo_upvote_article, :post), variables)
 
@@ -60,7 +68,9 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
 
     test "duplicate upvote returns error and count does not increase",
          ~m(user_conn community post user)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
 
       created = user_conn |> gq_mutation(Schema.m(:upvote_article, :post), variables)
       assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
@@ -79,7 +89,9 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
 
     test "undo upvote is idempotent (can undo even if not upvoted)",
          ~m(user_conn community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
 
       result = user_conn |> gq_mutation(Schema.m(:undo_upvote_article, :post), variables)
 
@@ -87,7 +99,9 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
     end
 
     test "unauth user undo upvote a post fails", ~m(guest_conn community post)a do
-      variables = %{article: %{inner_id: post.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
+      }
 
       assert guest_conn
              |> mutation_error?(

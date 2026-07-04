@@ -54,11 +54,11 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
       quote do
         @desc unquote("get #{thread} by id")
         field unquote(thread), non_null(unquote(thread)) do
-          arg(:article, non_null(:article_ref_input))
+          arg(:article, non_null(:article_path_input))
 
-          middleware(M.ArticleArgs, thread: unquote(thread))
-
-          resolve(&R.CMS.read_article/3)
+          resolve(fn root, args, info ->
+            R.CMS.read_article(root, args, info, thread: unquote(thread))
+          end)
         end
 
         @desc unquote("get paged #{plural(thread)}")
@@ -77,12 +77,11 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
     quote do
       @desc unquote("get paged #{past_verb(action)} users of an article")
       field unquote(:"#{past_verb(action)}_users"), :paged_users do
-        arg(:article, non_null(:article_ref_input))
+        arg(:article, non_null(:article_path_input))
         arg(:filter, non_null(:pagi_filter))
 
         middleware(M.PageSizeProof)
-        middleware(M.ArticleArgs)
-        middleware(M.ArticleLoader)
+        middleware(M.FrontDesk, :article)
 
         resolve(unquote(resolver))
       end

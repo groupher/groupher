@@ -4,11 +4,11 @@ defmodule GroupherServer.CMS.Articles.Document do
   """
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.CMS
 
   alias CMS.FrontDesk
-  alias CMS.Model.{ArticleDocument, Doc, DocDocument}
-  alias Helper.{ArticlePayload, ContentPipeline, Multi, ORM, T}
+  alias CMS.Model.{ArticleDocument, Doc}
+  alias Helper.{ArticlePayload, ContentPipeline, ORM, T}
 
   @type document_result :: {:ok, map()} | {:error, map()}
 
@@ -31,26 +31,14 @@ defmodule GroupherServer.CMS.Articles.Document do
          false <- article_document_exists?(article) do
       attrs = ArticlePayload.pick_valid_fields(payload)
 
-      Multi.new()
-      |> Multi.run(:create_article_document, fn _, _ ->
-        ArticleDocument
-        |> ORM.create(
-          Map.merge(attrs, %{
-            thread: thread,
-            article_id: article.id,
-            title: article.title
-          })
-        )
-      end)
-      |> Multi.run(:create_thread_document, fn _, _ ->
-        attrs = attrs |> Map.put(:"#{thread}_id", article.id)
-
-        thread
-        |> thread_document_module()
-        |> ORM.create(attrs)
-      end)
-      |> Repo.transaction()
-      |> result()
+      ArticleDocument
+      |> ORM.create(
+        Map.merge(attrs, %{
+          thread: thread,
+          article_id: article.id,
+          title: article.title
+        })
+      )
     else
       true -> document_already_exists_error()
       {:error, _} = error -> error
@@ -69,19 +57,10 @@ defmodule GroupherServer.CMS.Articles.Document do
          false <- article_document_exists?(article) do
       pick = ArticlePayload.pick_valid_fields(payload)
 
-      Multi.new()
-      |> Multi.run(:create_article_document, fn _, _ ->
-        ArticleDocument
-        |> ORM.create(
-          Map.merge(pick, %{thread: :doc, article_id: article.id, title: article.title})
-        )
-      end)
-      |> Multi.run(:create_thread_document, fn _, _ ->
-        DocDocument
-        |> ORM.create(Map.put(pick, :doc_id, article.id))
-      end)
-      |> Repo.transaction()
-      |> result()
+      ArticleDocument
+      |> ORM.create(
+        Map.merge(pick, %{thread: :doc, article_id: article.id, title: article.title})
+      )
     else
       true -> document_already_exists_error()
       {:error, _} = error -> error
@@ -94,20 +73,11 @@ defmodule GroupherServer.CMS.Articles.Document do
   @spec update_doc(Doc.t(), map()) :: document_result()
   def update_doc(%Doc{} = article, attrs) do
     with {:ok, payload} <- maybe_parse_payload(attrs),
-         {:ok, article_doc} <- find_article_document(:doc, article),
-         {:ok, doccontent} <- find_thread_document(:doc, article) do
+         {:ok, article_doc} <- find_article_document(:doc, article) do
       pick = ArticlePayload.pick_valid_fields(payload)
 
-      Multi.new()
-      |> Multi.run(:update_article_document, fn _, _ ->
-        article_doc
-        |> ORM.update(Map.merge(pick, %{title: Map.get(attrs, :title, article_doc.title)}))
-      end)
-      |> Multi.run(:update_thread_document, fn _, _ ->
-        doccontent |> ORM.update(pick)
-      end)
-      |> Repo.transaction()
-      |> result()
+      article_doc
+      |> ORM.update(Map.merge(pick, %{title: Map.get(attrs, :title, article_doc.title)}))
     end
   end
 
@@ -141,25 +111,16 @@ defmodule GroupherServer.CMS.Articles.Document do
   end
 
   @doc """
-  update both article and thread document
+  update article document
   """
   @spec update(map(), map()) :: document_result()
   def update(article, %{article_payload: payload}) do
     with {:ok, thread} <- FrontDesk.thread_of(article),
-         {:ok, article_doc} <- find_article_document(thread, article),
-         {:ok, thread_doc} <- find_thread_document(thread, article) do
+         {:ok, article_doc} <- find_article_document(thread, article) do
       attrs = ArticlePayload.pick_valid_fields(payload)
 
-      Multi.new()
-      |> Multi.run(:update_article_document, fn _, _ ->
-        article_doc
-        |> ORM.update(Map.merge(attrs, %{title: article.title}))
-      end)
-      |> Multi.run(:update_thread_document, fn _, _ ->
-        thread_doc |> ORM.update(attrs)
-      end)
-      |> Repo.transaction()
-      |> result()
+      article_doc
+      |> ORM.update(Map.merge(attrs, %{title: article.title}))
     end
   end
 
@@ -182,29 +143,11 @@ defmodule GroupherServer.CMS.Articles.Document do
     ORM.find_by(ArticleDocument, %{article_id: article.id, thread: thread})
   end
 
-  defp find_thread_document(thread, article) do
-    thread
-    |> thread_document_module()
-    |> ORM.find_by(%{:"#{thread}_id" => article.id})
-  end
-
-  defp thread_document_module(thread) do
-    CMS.Model
-    |> Module.concat("#{Recase.to_title(to_string(thread))}Document")
-  end
-
   @doc """
   remove article document forever
   """
   @spec remove(atom(), T.id()) :: {:ok, ArticleDocument.t()} | {:error, map()}
   def remove(thread, id) do
     ArticleDocument |> ORM.findby_delete!(%{thread: thread, article_id: id})
-  end
-
-  defp result({:ok, %{create_thread_document: result}}), do: {:ok, result}
-  defp result({:ok, %{update_article_document: result}}), do: {:ok, result}
-
-  defp result({:error, _, _result, _steps}) do
-    {:error, {:create_fails, "create document"}}
   end
 end

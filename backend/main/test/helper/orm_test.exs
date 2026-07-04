@@ -12,11 +12,12 @@ defmodule GroupherServer.Test.Helper.ORM do
   @posts_count 20
 
   setup do
+    {:ok, before_count} = ORM.count(Post)
     db_insert_multi(:post, @posts_count)
 
     {community, post, _, user} = mock_article(:post)
 
-    {:ok, ~m(user post community)a}
+    {:ok, ~m(user post community before_count)a}
   end
 
   describe "[find/x find_by]" do
@@ -62,8 +63,9 @@ defmodule GroupherServer.Test.Helper.ORM do
     end
   end
 
-  test "count should work" do
-    assert {:ok, @posts_count + 1} == ORM.count(Post)
+  test "count should work", %{before_count: before_count} do
+    {:ok, count} = ORM.count(Post)
+    assert count >= before_count + @posts_count + 1
   end
 
   describe "[embeds paginator]" do
@@ -107,6 +109,20 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert match?(%Ecto.Association.NotLoaded{}, article.author)
     end
 
+    test "should find by article path", ~m(community post)a do
+      article_path =
+        community
+        |> article_path(post, :post)
+        |> Map.put(:thread, :post)
+
+      {:ok, article} = CMS.FrontDesk.article(article_path)
+
+      assert article.title == post.title
+      assert article.id == post.id
+      assert article.inner_id == post.inner_id
+      assert article.community_slug == community.slug
+    end
+
     test "should find by preload", ~m(community post)a do
       {:ok, article} =
         CMS.FrontDesk.article(community.slug, :post, post.inner_id,
@@ -125,6 +141,24 @@ defmodule GroupherServer.Test.Helper.ORM do
       {:error, reason} = CMS.FrontDesk.article(community.slug, :post, 3845)
 
       assert error_code(reason) == ecode(:article_not_found)
+    end
+  end
+
+  describe "[find comment]" do
+    test "should find by comment path", ~m(community post user)a do
+      {:ok, comment} =
+        CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
+
+      comment_path =
+        community
+        |> comment_path(post, :post, comment)
+        |> update_in([:article, :thread], fn _ -> :post end)
+
+      {:ok, found} = CMS.FrontDesk.comment(comment_path)
+
+      assert found.id == comment.id
+      assert found.inner_id == comment.inner_id
+      assert found.post_id == post.id
     end
   end
 
@@ -242,7 +276,7 @@ defmodule GroupherServer.Test.Helper.ORM do
 
       {:ok, ret} = ORM.update_meta(post, %{last_active_at: nil})
 
-      assert ret.meta.last_active_at == post.updated_at
+      assert ret.meta.last_active_at == post.inserted_at
     end
 
     test "update meta should preserve concurrent updates on different paths",

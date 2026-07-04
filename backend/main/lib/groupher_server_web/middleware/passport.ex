@@ -33,6 +33,8 @@ defmodule GroupherServerWeb.Middleware.Passport do
 
   - `community_slug` comes from request arguments, then selects one community whitelist bucket.
   - `grant_by_thread` requirements are expanded at runtime into concrete grants via `thread` argument.
+  - Article mutations parse `arguments.article` into `arguments.article_path` here, but the
+    article is still loaded later by the `FrontDesk` article middleware.
   - `global.god == true` bypasses normal checks.
   - `<community_slug>.root == true` bypasses checks only inside that community.
   """
@@ -43,36 +45,32 @@ defmodule GroupherServerWeb.Middleware.Passport do
   import Helper.ErrorCode
 
   alias GroupherServer.FrontDesk
+  alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Helper.ArticlePath
+  alias GroupherServer.CMS.Model.Comment
   alias Helper.PermissionRegistry
 
   def call(%{errors: errors} = resolution, _) when length(errors) > 0 do
     resolution
   end
 
-  def call(resolution, action: action) when is_binary(action) do
+  def call(resolution, opts) when is_list(opts) do
+    case Keyword.fetch(opts, :action) do
+      {:ok, action} when is_binary(action) -> authorize_action(resolution, action, opts)
+      _ -> missing_action(resolution)
+    end
+  end
+
+  def call(resolution, _) do
+    missing_action(resolution)
+  end
+
+  defp authorize_action(resolution, action, opts) do
     case PermissionRegistry.requirement(action) do
       {:ok, requirement} ->
-        if owner_pass?(resolution, requirement) do
-          resolution
-        else
-          with {:ok, cur_passport} <- fetch_cur_passport(resolution),
-               true <- has_permission?(cur_passport, resolution, requirement) do
-            resolution
-          else
-            {:error, :missing_passport} ->
-              resolution
-              |> handle_absinthe_error(
-                "PassportError: your passport not qualified.",
-                ecode(:passport)
-              )
-
-            false ->
-              resolution
-              |> handle_absinthe_error(
-                "PassportError: your passport not qualified.",
-                ecode(:passport)
-              )
-          end
+        case maybe_put_article_path(resolution, opts) do
+          {:ok, resolution} -> check_requirement(resolution, requirement)
+          {:error, :invalid_article_path} -> invalid_article_path(resolution)
         end
 
       {:error, :unknown_action} ->
@@ -81,9 +79,55 @@ defmodule GroupherServerWeb.Middleware.Passport do
     end
   end
 
-  def call(resolution, _) do
+  defp check_requirement(resolution, requirement) do
+    if owner_pass?(resolution, requirement) do
+      resolution
+    else
+      with {:ok, cur_passport} <- fetch_cur_passport(resolution),
+           true <- has_permission?(cur_passport, resolution, requirement) do
+        resolution
+      else
+        {:error, :missing_passport} ->
+          passport_denied(resolution)
+
+        false ->
+          passport_denied(resolution)
+      end
+    end
+  end
+
+  defp maybe_put_article_path(%{arguments: arguments} = resolution, opts)
+       when is_map(arguments) do
+    if Map.has_key?(arguments, :article) or Map.has_key?(arguments, :article_path) do
+      # Passport runs before article loading, so it can only prepare the public
+      # locator for permission checks. It must not load the article here.
+      case ArticlePath.parse_arguments(arguments, Keyword.take(opts, [:thread])) do
+        {:ok, arguments} -> {:ok, %{resolution | arguments: arguments}}
+        {:error, :invalid_article_path} -> {:error, :invalid_article_path}
+      end
+    else
+      {:ok, resolution}
+    end
+  end
+
+  defp maybe_put_article_path(resolution, _), do: {:ok, resolution}
+
+  defp missing_action(resolution) do
     resolution
     |> handle_absinthe_error("PassportError: action is required.", ecode(:passport))
+  end
+
+  defp invalid_article_path(resolution) do
+    resolution
+    |> handle_absinthe_error("invalid article input", ecode(:custom))
+  end
+
+  defp passport_denied(resolution) do
+    resolution
+    |> handle_absinthe_error(
+      "PassportError: your passport not qualified.",
+      ecode(:passport)
+    )
   end
 
   defp owner_pass?(%{arguments: %{passport_is_owner: true}}, %{owner_fallback: true}), do: true
@@ -141,11 +185,22 @@ defmodule GroupherServerWeb.Middleware.Passport do
 
   defp resolve_grant(_, _), do: {:error, :invalid_requirement}
 
+  defp fetch_thread(%{arguments: %{article_path: %{thread: thread}}}) when is_atom(thread),
+    do: {:ok, Atom.to_string(thread)}
+
   defp fetch_thread(%{arguments: %{thread: thread}}) when is_atom(thread),
     do: {:ok, Atom.to_string(thread)}
 
   defp fetch_thread(%{arguments: %{thread: thread}}) when is_binary(thread), do: {:ok, thread}
   defp fetch_thread(_), do: {:error, :missing_thread}
+
+  defp fetch_community_slug(%{arguments: %{article_path: %{community: %{slug: slug}}}})
+       when is_binary(slug),
+       do: {:ok, slug}
+
+  defp fetch_community_slug(%{arguments: %{article_path: %{community: community}}})
+       when is_binary(community),
+       do: {:ok, community}
 
   defp fetch_community_slug(%{arguments: %{community: %{slug: slug}}}) when is_binary(slug),
     do: {:ok, slug}
@@ -165,19 +220,29 @@ defmodule GroupherServerWeb.Middleware.Passport do
 
   defp infer_owner?(%{
          context: %{cur_user: cur_user},
-         arguments: %{id: id, thread: thread, community: community}
+         arguments: %{article_path: %{community: community, thread: thread, inner_id: inner_id}}
        })
        when not is_nil(cur_user) do
-    case apply(FrontDesk, :article, [community_slug(community), thread, id]) do
+    case apply(FrontDesk, :article, [community_slug(community), thread, inner_id]) do
       {:ok, article} -> article.author.user.id == cur_user.id
       _ -> false
     end
   end
 
-  defp infer_owner?(%{context: %{cur_user: cur_user}, arguments: %{id: id}})
+  defp infer_owner?(%{
+         context: %{cur_user: cur_user},
+         arguments: %{comment: %Comment{author: %User{id: author_id}}}
+       })
        when not is_nil(cur_user) do
-    case apply(FrontDesk, :comment, [id]) do
-      {:ok, comment} -> comment.author.id == cur_user.id
+    author_id == cur_user.id
+  end
+
+  defp infer_owner?(%{arguments: %{comment: %Comment{}}}), do: false
+
+  defp infer_owner?(%{context: %{cur_user: cur_user}, arguments: %{comment: comment_path}})
+       when not is_nil(cur_user) and is_map(comment_path) do
+    case apply(FrontDesk, :comment, [comment_path]) do
+      {:ok, %Comment{author: %User{id: author_id}}} -> author_id == cur_user.id
       _ -> false
     end
   end

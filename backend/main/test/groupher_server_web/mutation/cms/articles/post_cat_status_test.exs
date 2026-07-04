@@ -16,7 +16,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatStatus do
   describe "[post cat & status]" do
     @set_cat_query """
     mutation(
-      $article: ArticleRefInput!
+      $article: ArticlePathInput!
       $cat: ArticleCatEnum!
     ) {
       setPostCat(
@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatStatus do
 
     @set_status_query """
     mutation(
-      $article: ArticleRefInput!
+      $article: ArticlePathInput!
       $status: ArticleStatusEnum!
     ) {
       setPostStatus(

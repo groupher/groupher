@@ -26,7 +26,7 @@ export type TInit = Partial<
     | 'showUpdateEditor'
     | 'showReplyEditor'
     | 'commentBody'
-    | 'updateId'
+    | 'updateInnerId'
     | 'updateBody'
     | 'replyToComment'
     | 'replyBody'
@@ -62,7 +62,7 @@ export type TStore = {
   showReplyEditor: boolean
 
   commentBody: string
-  updateId: string | null
+  updateInnerId: string | null
   updateBody: string
   replyToComment: TComment | null
   replyBody: string

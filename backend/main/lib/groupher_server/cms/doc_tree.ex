@@ -13,7 +13,7 @@ defmodule GroupherServer.CMS.DocTree do
               |
               | publish article / publish tree
               v
-      doc_tree_nodes(stage=public) --->  docs  --->  doc_documents
+      doc_tree_nodes(stage=public) --->  docs  --->  article_documents
               |
               v
       doc_cover_groups/items/pinned_items

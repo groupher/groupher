@@ -155,11 +155,10 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
       {:ok, _folder} = CollectFolders.add(post, folder.id, user)
       {:ok, _folder} = CollectFolders.add(post, folder2.id, user)
 
-      {:ok, result} = ORM.find_all(ArticleCollect, %{page: 1, size: 10})
-      article_collect = result.entries |> List.first()
+      {:ok, article_collect} =
+        ORM.find_by(ArticleCollect, %{user_id: user.id, post_id: post.id})
 
       assert article_collect.post_id == post.id
-      assert result.total_count == 1
     end
 
     test "can remove post to exist collect-folder", ~m(user post post2)a do
@@ -187,10 +186,10 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
 
       {:ok, _} = CollectFolders.remove(post, folder.id, user)
 
-      {:ok, result} = ORM.find_all(ArticleCollect, %{page: 1, size: 10})
+      {:ok, result} =
+        ORM.find_by(ArticleCollect, %{user_id: user.id, post_id: post.id})
 
-      article_collect =
-        result.entries |> List.first() |> Map.get(:collect_folders) |> List.first()
+      article_collect = result.collect_folders |> List.first()
 
       assert article_collect.id == folder2.id
     end
@@ -205,14 +204,13 @@ defmodule GroupherServer.Test.Accounts.CollectFolder do
 
       {:ok, _} = CollectFolders.remove(post, folder.id, user)
 
-      {:ok, result} = ORM.find_all(ArticleCollect, %{page: 1, size: 10})
-      article_collect = result.entries |> List.first()
+      {:ok, article_collect} =
+        ORM.find_by(ArticleCollect, %{user_id: user.id, post_id: post.id})
 
       assert article_collect.collect_folders |> length == 1
 
-      {:ok, _} = CollectFolders.remove(post, folder.id, user)
-      {:ok, result} = ORM.find_all(ArticleCollect, %{page: 1, size: 10})
-      assert result.total_count == 0
+      {:ok, _} = CollectFolders.remove(post, folder2.id, user)
+      assert {:error, _} = ORM.find_by(ArticleCollect, %{user_id: user.id, post_id: post.id})
     end
 
     test "add post to exist collect-folder should update meta", ~m(user post post2)a do

@@ -12,12 +12,12 @@ defmodule GroupherServer.CMS.Model.CommentReply do
 
   @schema_prefix DBPrefix.cms()
 
-  @required_fields ~w(comment_id reply_to_id)a
+  @required_fields ~w(comment_id reply_to_comment_id)a
 
   @type t :: %CommentReply{}
   schema "comments_replies" do
     belongs_to(:comment, Comment, foreign_key: :comment_id)
-    belongs_to(:reply_to, Comment, foreign_key: :reply_to_id)
+    belongs_to(:reply_to_comment, Comment, foreign_key: :reply_to_comment_id)
 
     timestamps(type: :utc_datetime)
   end
@@ -28,6 +28,6 @@ defmodule GroupherServer.CMS.Model.CommentReply do
     |> cast(attrs, @required_fields)
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:comment_id)
-    |> foreign_key_constraint(:reply_to_id)
+    |> foreign_key_constraint(:reply_to_comment_id)
   end
 end

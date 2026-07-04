@@ -160,14 +160,16 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
       {:ok, updated_community} =
         CMS.Communities.add_moderators(community, [user2, user3], cur_user)
 
-      {:ok, moderators} = CommunityModerator |> ORM.find_all(%{page: 1, size: 10})
-
-      assert moderators.total_count == 3
       assert updated_community.moderators_count == 3
 
-      moderator_user = moderators.entries |> Enum.find(&(&1.user_id == user.id))
-      moderator_user2 = moderators.entries |> Enum.find(&(&1.user_id == user2.id))
-      moderator_user3 = moderators.entries |> Enum.find(&(&1.user_id == user3.id))
+      {:ok, moderator_user} =
+        CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user.id})
+
+      {:ok, moderator_user2} =
+        CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user2.id})
+
+      {:ok, moderator_user3} =
+        CommunityModerator |> ORM.find_by(%{community_id: community.id, user_id: user3.id})
 
       assert not is_nil(moderator_user)
       assert not is_nil(moderator_user2)

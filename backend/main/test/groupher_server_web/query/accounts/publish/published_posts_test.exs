@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.Query.Accounts.Publish.Posts do
           acc ++ [comment]
         end)
 
-      random_comment_id = pub_comments |> Enum.random() |> Map.get(:id) |> to_string
+      random_comment_id = pub_comments |> Enum.random() |> Map.get(:inner_id) |> to_string
 
       # variables = %{login: user.login, thread: "POST", filter: %{page: 1, size: 20}}
       variables = %{login: user.login, filter: %{page: 1, size: 20}}
@@ -51,9 +51,9 @@ defmodule GroupherServer.Test.Query.Accounts.Publish.Posts do
 
       assert entries |> Enum.all?(&(not is_nil(&1["article"]["author"])))
 
-      assert entries |> Enum.all?(&(&1["article"]["id"] == to_string(post.id)))
+      assert entries |> Enum.all?(&(&1["article"]["innerId"] == to_string(post.inner_id)))
       assert entries |> Enum.all?(&(&1["author"]["id"] == to_string(user.id)))
-      assert entries |> Enum.any?(&(&1["id"] == random_comment_id))
+      assert entries |> Enum.any?(&(&1["innerId"] == random_comment_id))
     end
   end
 end

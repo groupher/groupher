@@ -41,9 +41,11 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
     @desc "delete a global community"
     field :delete_community, :community do
-      arg(:id, non_null(:id))
+      arg(:community, non_null(:string))
+
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.delete")
+      middleware(M.FrontDesk, :community)
 
       resolve(&R.CMS.delete_community/3)
     end
@@ -73,10 +75,11 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
     @desc "deny the apply to create a community"
     field :deny_community_apply, :community do
-      arg(:id, non_null(:id))
+      arg(:community, non_null(:string))
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "community.apply.deny")
+      middleware(M.FrontDesk, :community)
       resolve(&R.CMS.deny_community_apply/3)
     end
 

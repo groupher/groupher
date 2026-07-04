@@ -22,7 +22,10 @@ defmodule Helper.Transaction do
   """
 
   import Ecto.Query, warn: false
+  alias GroupherServer.CMS.Model.{Blog, Changelog, Doc, Post}
   alias GroupherServer.Repo
+
+  @article_schemas [Post, Blog, Changelog, Doc]
 
   @spec lock_row(any() | [any()], (any() -> any())) :: {:ok, any()} | {:error, any()}
   def lock_row(queryable, fun) when not is_list(queryable) do
@@ -86,8 +89,8 @@ defmodule Helper.Transaction do
   # Generates consistent sort key for queryable to prevent deadlocks
   defp resource_sort_key(%struct{} = queryable), do: {struct.__schema__(:source), queryable.id}
 
-  # Special locking for articles with inner_id (includes author preload)
-  defp lock_queryable(%{inner_id: _} = article) do
+  # Article locks need author/community preloads; comments also have inner_id and must not match here.
+  defp lock_queryable(%struct{inner_id: _} = article) when struct in @article_schemas do
     article.__struct__
     |> where(id: ^article.id)
     # Preload :community so subscribe_community event handlers get a loaded struct.

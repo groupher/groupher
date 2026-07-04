@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
   @moduledoc false
   use GroupherServerWeb.ConnCase, async: false
   @moduletag timeout: 300_000
+  @moduletag :later
   @default_threads [:post, :changelog, :kanban, :doc, :about]
 
   import Ecto.Query, warn: false
@@ -14,8 +15,9 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
 
   alias CMS.Model.{Changelog, Comment, Community, Doc, Post}
 
+  require CMS.Const
+
   describe "[full community seeds]" do
-    @tag :skip_ci
     test "seeds full community data including about dashboard" do
       allowed_cats = [nil | Enums.cat_values()]
       allowed_states = [nil, :backlog, :todo, :wip, :done, :resolved, :reject]
@@ -35,7 +37,10 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
         from(p in Changelog, where: p.community_id == ^community.id) |> count()
 
       doc_count =
-        from(p in Doc, where: p.community_id == ^community.id) |> count()
+        from(p in Doc,
+          where: p.community_id == ^community.id and p.stage == ^CMS.Const.stage(:public)
+        )
+        |> count()
 
       assert post_count == 23
       assert changelog_count == 23
@@ -79,7 +84,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       top_comment =
         Repo.one!(
           from(c in Comment,
-            where: c.post_id == ^post.id and is_nil(c.reply_to_id),
+            where: c.post_id == ^post.id and is_nil(c.reply_to_comment_id),
             limit: 1,
             order_by: [asc: c.id]
           )
@@ -97,7 +102,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
       assert comment_emotion_total > 0
 
       reply_count =
-        from(c in Comment, where: c.post_id == ^post.id and not is_nil(c.reply_to_id))
+        from(c in Comment, where: c.post_id == ^post.id and not is_nil(c.reply_to_comment_id))
         |> count()
 
       assert reply_count > 0

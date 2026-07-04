@@ -1,4 +1,4 @@
-import { follow, reaction, setTag, undoFollow, undoReaction, unsetTag } from './action'
+import { follow, setTag, undoFollow, unsetTag } from './action'
 import { changelog, pagedChangelogs } from './changelog'
 import { pagedComments } from './comment'
 import { community, pagedCommunities, subscribedCommunities } from './community'
@@ -37,8 +37,6 @@ const P = {
   // action
   // mentions
   mentions,
-  reaction,
-  undoReaction,
   setTag,
   unsetTag,
   follow,

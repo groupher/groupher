@@ -10,11 +10,13 @@ defmodule GroupherServer.CMS.FrontDesk do
 
   alias Accounts.Model.User
   alias CMS.Artiment.Threads
+  alias CMS.Comments.Replies
+  alias CMS.Helper.ArticlePath
   alias CMS.Model.{Comment, Community, CommunityTag, Embeds}
   alias Helper.{ORM, QueryBuilder, T}
 
   @threads Application.compile_env(:groupher_server, :article, [])
-                   |> Keyword.get(:threads, [])
+           |> Keyword.get(:threads, [])
   @default_article_meta CMS.Model.Embeds.ArticleMeta.default_meta()
   @max_latest_upvoted_users_count Application.compile_env(:groupher_server, :article, [])
                                   |> Keyword.get(:max_upvoted_users_count, 10)
@@ -39,9 +41,37 @@ defmodule GroupherServer.CMS.FrontDesk do
     end
   end
 
+  @spec comment(map()) :: T.domain_res(Comment.t())
+  def comment(%{} = comment_path), do: comment(comment_path, [])
+
   @spec comment(integer()) :: T.domain_res(Comment.t())
   def comment(comment_id) do
     with {:ok, comment} <- ORM.find(Comment, comment_id, preload: :author) do
+      ORM.fill_meta(comment)
+    end
+  end
+
+  @spec comment(map(), keyword()) :: T.domain_res(Comment.t())
+  def comment(%{} = comment_path, opts) when is_list(opts) do
+    with {:ok, article_path, inner_id} <- parse_comment_path(comment_path) do
+      comment(article_path, inner_id, opts)
+    end
+  end
+
+  @spec comment(map(), integer() | String.t()) :: T.domain_res(Comment.t())
+  def comment(%{} = article_path, inner_id), do: comment(article_path, inner_id, [])
+
+  @spec comment(map(), integer() | String.t(), keyword()) :: T.domain_res(Comment.t())
+  def comment(%{} = article_path, inner_id, opts) do
+    preload = Keyword.get(opts, :preload, :author)
+
+    with {:ok, %{community: community, thread: thread, inner_id: article_inner_id}} <-
+           ArticlePath.parse(article_path),
+         {:ok, inner_id} <- parse_comment_inner_id(inner_id),
+         {:ok, article} <- article(community, thread, article_inner_id),
+         {:ok, info} <- match(thread),
+         query <- %{thread: thread, inner_id: inner_id} |> Map.put(info.foreign_key, article.id),
+         {:ok, comment} <- ORM.find_by(Comment, query, preload: preload) do
       ORM.fill_meta(comment)
     end
   end
@@ -131,24 +161,33 @@ defmodule GroupherServer.CMS.FrontDesk do
   end
 
   @doc "get parent article of a comment"
-  @spec article_of(Comment.t()) :: {:ok, map()} | {:error, map()}
-  def article_of(%Comment{} = comment) do
-    with {:ok, thread} <- thread_of(comment) do
-      comment |> Repo.preload(thread) |> Map.get(thread) |> done
+  @spec article_of(Comment.t(), keyword()) :: {:ok, map()} | {:error, map()}
+  def article_of(comment, opts \\ [])
+
+  def article_of(%Comment{} = comment, opts) when is_list(opts) do
+    preload = Keyword.get(opts, :preload, [])
+
+    with {:ok, thread} <- thread_of(comment),
+         {:ok, info} <- match(thread),
+         article_id when not is_nil(article_id) <- Map.get(comment, info.foreign_key),
+         {:ok, article} <- get(info.model, article_id, preload: preload) do
+      {:ok, article}
+    else
+      nil -> {:error, {:custom, "invalid article"}}
+      {:error, _} = error -> error
     end
   end
 
-  @spec article_of(any()) :: {:error, {:custom, String.t()}}
-  def article_of(_), do: {:error, {:custom, "only support comment"}}
+  def article_of(_, _opts), do: {:error, {:custom, "only support comment"}}
 
   @doc "get thread of comment or article"
   @spec thread_of(Comment.t()) :: {:ok, atom()} | {:error, map()}
-  def thread_of(%Comment{thread: thread}) when is_atom(thread) do
+  def thread_of(%Comment{thread: thread}) when is_atom(thread) and not is_nil(thread) do
     Threads.to_atom(thread)
   end
 
   @spec thread_of(map()) :: {:ok, atom()} | {:error, map()}
-  def thread_of(%{meta: %{thread: thread}}) when is_atom(thread) do
+  def thread_of(%{meta: %{thread: thread}}) when is_atom(thread) and not is_nil(thread) do
     Threads.to_atom(thread)
   end
 
@@ -237,12 +276,12 @@ defmodule GroupherServer.CMS.FrontDesk do
   end
 
   @spec sync_embed_replies(Comment.t()) :: {:ok, Comment.t()}
-  def sync_embed_replies(%Comment{reply_to_id: nil} = comment) do
+  def sync_embed_replies(%Comment{reply_to_comment_id: nil} = comment) do
     {:ok, comment}
   end
 
-  def sync_embed_replies(%Comment{reply_to_id: reply_to_id} = comment) do
-    with {:ok, parent_comment} <- ORM.find(Comment, reply_to_id),
+  def sync_embed_replies(%Comment{} = comment) do
+    with %Comment{} = parent_comment <- Replies.root_comment(comment),
          embed_index <- Enum.find_index(parent_comment.replies, &(&1.id == comment.id)) do
       case is_nil(embed_index) do
         true ->
@@ -337,6 +376,14 @@ defmodule GroupherServer.CMS.FrontDesk do
     ORM.update_meta(article, meta)
   end
 
+  @spec article(ArticlePath.t(), keyword()) :: {:ok, struct()} | {:error, map()}
+  def article(%{} = article_path, opts \\ []) do
+    with {:ok, %{community: community, thread: thread, inner_id: inner_id}} <-
+           ArticlePath.parse(article_path) do
+      article(community, thread, inner_id, opts)
+    end
+  end
+
   @spec article(Community.t() | String.t(), atom(), integer() | String.t(), keyword()) ::
           {:ok, struct()} | {:error, map()}
   def article(community_or_slug, thread, inner_id, opts \\ [])
@@ -358,12 +405,29 @@ defmodule GroupherServer.CMS.FrontDesk do
     end
   end
 
+  defp parse_comment_inner_id(value) when is_integer(value) and value >= 0, do: {:ok, value}
+
+  defp parse_comment_inner_id(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {int, ""} when int >= 0 -> {:ok, int}
+      _ -> {:error, {:comment_not_found, "comment not found"}}
+    end
+  end
+
+  defp parse_comment_inner_id(_), do: {:error, {:comment_not_found, "comment not found"}}
+
+  defp parse_comment_path(%{article: article_path, inner_id: inner_id}) do
+    {:ok, article_path, inner_id}
+  end
+
+  defp parse_comment_path(_), do: {:error, {:comment_not_found, "comment not found"}}
+
   @spec get_full_comment(integer()) :: T.domain_res(T.article_info())
   defp get_full_comment(comment_id) do
     query = from(c in Comment, where: c.id == ^comment_id, preload: ^@threads)
 
     with {:ok, comment} <- Repo.one(query) |> done(),
-         thread <- find_comment_thread(comment) do
+         {:ok, thread} <- thread_of(comment) do
       do_extract_article_info(thread, Map.get(comment, thread))
     end
   end
@@ -385,12 +449,6 @@ defmodule GroupherServer.CMS.FrontDesk do
     end
   end
 
-  defp find_comment_thread(%Comment{} = comment) do
-    @threads
-    |> Enum.filter(&Map.get(comment, :"#{&1}_id"))
-    |> List.first()
-  end
-
   defp extract_embed_user(%User{} = user) do
     user
     |> Embeds.User.from_account_user()
@@ -405,7 +463,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   end
 
   defp user_id_match?(user, user_id) do
-    Map.get(user, :user_id) == user_id || Map.get(user, "user_id") == user_id
+    Map.get(user, :user_id) == user_id
   end
 
   defp user_in_logins?([], _), do: false

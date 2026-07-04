@@ -27,7 +27,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Doc do
 
     @desc "update a cms/doc"
     field :update_doc, :doc do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:title, :string)
       arg(:body, :string)
       arg(:digest, :string)
@@ -37,9 +37,8 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Doc do
       article_cover_args()
 
       middleware(M.Authorize, :login)
-      middleware(M.ArticleArgs, thread: :doc)
-      middleware(M.Passport, action: "doc.update")
-      middleware(M.ArticleLoader)
+      middleware(M.Passport, action: "doc.update", thread: :doc)
+      middleware(M.FrontDesk, {:article, thread: :doc})
 
       resolve(&R.CMS.update_article/3)
     end

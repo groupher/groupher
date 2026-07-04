@@ -29,7 +29,7 @@ const FoldLayout: FC<TProps> = ({ data, isReply = false }) => {
   const { isLegal, illegalReason, illegalWords } = meta
 
   return (
-    <button type='button' className={s.wrapper} onClick={() => expandComment(data.id)}>
+    <button type='button' className={s.wrapper} onClick={() => expandComment(data.innerId)}>
       {isReply && <ReplyCurveSVG className={s.replyCurve} />}
       <ExpandSVG className={s.expandIcon} />
       <Img

@@ -64,7 +64,7 @@ export default function useDerived(): TRet {
         'showEditor',
         'showReplyEditor',
         'showUpdateEditor',
-        'updateId',
+        'updateInnerId',
       ],
       commentsSnap,
     )

@@ -255,7 +255,6 @@ const makeDashboard = (slug = 'home') => {
 
 const makeCommunity = (slug = 'home') => {
   return {
-    id: `c_${slug}`,
     slug,
     title: `Mock Community (${slug})`,
     desc: 'Mocked community for e2e',

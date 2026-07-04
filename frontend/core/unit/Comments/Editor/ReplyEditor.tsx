@@ -13,10 +13,10 @@ import useSalon from './salon/reply_editor'
 type TProps = {
   body: string
   submitState: TSubmitState
-  replyTo: TComment | null
+  replyToComment: TComment | null
 }
 
-const ReplyEditor: FC<TProps> = ({ body, submitState, replyTo }) => {
+const ReplyEditor: FC<TProps> = ({ body, submitState, replyToComment }) => {
   const s = useSalon()
   const { commentOnChange, replyComment, closeReplyEditor } = useActions()
   const { t } = useTrans()
@@ -25,19 +25,20 @@ const ReplyEditor: FC<TProps> = ({ body, submitState, replyTo }) => {
     <div className={s.wrapper}>
       <div className={s.header}>
         <div className={s.replyToHint}>
-          {t('comment.reply.to')} <div className={s.replyToAuthor}>{replyTo?.author?.nickname}</div>
+          {t('comment.reply.to')}{' '}
+          <div className={s.replyToAuthor}>{replyToComment?.author?.nickname}</div>
         </div>
         <div
           className={s.replyToContent}
           // oxlint-disable-next-line react/no-danger -- Reply preview renders server-sanitized HTML returned by the comments API.
           dangerouslySetInnerHTML={{
-            __html: replyTo?.bodyHtml,
+            __html: replyToComment?.bodyHtml,
           }}
         />
       </div>
       <CustomScroller direction='vertical' height='320px' showShadow={false} autoHide={false}>
         <div className={s.editorWrapper}>
-          {replyTo.id ? (
+          {replyToComment?.innerId ? (
             <BodyEditor
               body={body}
               placeholder={t('comment.reply.placeholder')}

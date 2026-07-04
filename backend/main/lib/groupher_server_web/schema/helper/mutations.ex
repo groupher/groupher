@@ -60,22 +60,20 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
     quote do
       @desc unquote("upvote to #{thread}")
       field unquote(:"upvote_#{thread}"), :article do
-        arg(:article, non_null(:article_ref_input))
+        arg(:article, non_null(:article_path_input))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.ArticleLoader)
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.upvote_article/3)
       end
 
       @desc unquote("undo upvote to #{thread}")
       field unquote(:"undo_upvote_#{thread}"), :article do
-        arg(:article, non_null(:article_ref_input))
+        arg(:article, non_null(:article_path_input))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.ArticleLoader)
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.undo_upvote_article/3)
       end
@@ -94,24 +92,32 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
     quote do
       @desc unquote("pin to #{thread}")
       field unquote(:"pin_#{thread}"), unquote(thread) do
-        arg(:article, non_null(:article_ref_input))
+        arg(:article, non_null(:article_path_input))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, action: unquote("#{to_string(thread)}.pin"))
-        middleware(M.ArticleLoader)
+
+        middleware(M.Passport,
+          action: unquote("#{to_string(thread)}.pin"),
+          thread: unquote(thread)
+        )
+
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.pin_article/3)
       end
 
       @desc unquote("undo pin to #{thread}")
       field unquote(:"undo_pin_#{thread}"), unquote(thread) do
-        arg(:article, non_null(:article_ref_input))
+        arg(:article, non_null(:article_path_input))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, action: unquote("#{to_string(thread)}.undo_pin"))
-        middleware(M.ArticleLoader)
+
+        middleware(M.Passport,
+          action: unquote("#{to_string(thread)}.undo_pin"),
+          thread: unquote(thread)
+        )
+
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.undo_pin_article/3)
       end
@@ -130,24 +136,32 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
     quote do
       @desc unquote("mark delete a #{thread} type article, aka soft-delete")
       field unquote(:"mark_delete_#{thread}"), unquote(thread) do
-        arg(:article, non_null(:article_ref_input))
+        arg(:article, non_null(:article_path_input))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, action: unquote("#{to_string(thread)}.mark_delete"))
-        middleware(M.ArticleLoader)
+
+        middleware(M.Passport,
+          action: unquote("#{to_string(thread)}.mark_delete"),
+          thread: unquote(thread)
+        )
+
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.mark_delete_article/3)
       end
 
       @desc unquote("undo mark delete a #{thread} type article")
       field unquote(:"undo_mark_delete_#{thread}"), unquote(thread) do
-        arg(:article, non_null(:article_ref_input))
+        arg(:article, non_null(:article_path_input))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, action: unquote("#{to_string(thread)}.undo_mark_delete"))
-        middleware(M.ArticleLoader)
+
+        middleware(M.Passport,
+          action: unquote("#{to_string(thread)}.undo_mark_delete"),
+          thread: unquote(thread)
+        )
+
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.undo_mark_delete_article/3)
       end
@@ -155,7 +169,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       @desc unquote("batch mark delete #{plural(thread)} type article, aka soft-delete")
       field unquote(:"batch_mark_delete_#{plural(thread)}"), :done_state do
         arg(:community, non_null(:string))
-        arg(:ids, list_of(:id))
+        arg(:inner_ids, non_null(list_of(non_null(:integer))))
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
@@ -167,7 +181,7 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       @desc unquote("batch undo mark delete #{plural(thread)} type article, aka soft-delete")
       field unquote(:"batch_undo_mark_delete_#{plural(thread)}"), :done_state do
         arg(:community, non_null(:string))
-        arg(:ids, list_of(:id))
+        arg(:inner_ids, non_null(list_of(non_null(:integer))))
         arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
         middleware(M.Authorize, :login)
@@ -191,12 +205,16 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
     quote do
       @desc unquote("permanently delete a #{thread}")
       field unquote(:"delete_#{thread}"), unquote(thread) do
-        arg(:article, non_null(:article_ref_input))
+        arg(:article, non_null(:article_path_input))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, action: unquote("#{to_string(thread)}.delete"))
-        middleware(M.ArticleLoader)
+
+        middleware(M.Passport,
+          action: unquote("#{to_string(thread)}.delete"),
+          thread: unquote(thread)
+        )
+
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.delete_article/3)
       end
@@ -215,24 +233,22 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
     quote do
       @desc unquote("emotion to #{thread}")
       field unquote(:"emotion_to_#{thread}"), unquote(thread) do
-        arg(:article, non_null(:article_ref_input))
+        arg(:article, non_null(:article_path_input))
         arg(:emotion, non_null(:article_emotion))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.ArticleLoader)
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.emotion_to_article/3)
       end
 
       @desc unquote("undo emotion to #{thread}")
       field unquote(:"undo_emotion_to_#{thread}"), unquote(thread) do
-        arg(:article, non_null(:article_ref_input))
+        arg(:article, non_null(:article_path_input))
         arg(:emotion, non_null(:article_emotion))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.ArticleLoader)
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.undo_emotion_to_article/3)
       end
@@ -251,24 +267,22 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
     quote do
       @desc unquote("report a #{thread}")
       field unquote(:"report_#{thread}"), unquote(thread) do
-        arg(:article, non_null(:article_ref_input))
+        arg(:article, non_null(:article_path_input))
         arg(:reason, non_null(:string))
         arg(:attr, :string, default_value: "")
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.ArticleLoader)
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.report_article/3)
       end
 
       @desc unquote("undo report a #{thread}")
       field unquote(:"undo_report_#{thread}"), unquote(thread) do
-        arg(:article, non_null(:article_ref_input))
+        arg(:article, non_null(:article_path_input))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.ArticleLoader)
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.undo_report_article/3)
       end
@@ -287,24 +301,32 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
     quote do
       @desc unquote("sink a #{thread}")
       field unquote(:"sink_#{thread}"), :article do
-        arg(:article, non_null(:article_ref_input))
+        arg(:article, non_null(:article_path_input))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, action: unquote("#{to_string(thread)}.sink"))
-        middleware(M.ArticleLoader)
+
+        middleware(M.Passport,
+          action: unquote("#{to_string(thread)}.sink"),
+          thread: unquote(thread)
+        )
+
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.sink_article/3)
       end
 
       @desc unquote("undo sink to #{thread}")
       field unquote(:"undo_sink_#{thread}"), :article do
-        arg(:article, non_null(:article_ref_input))
+        arg(:article, non_null(:article_path_input))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, action: unquote("#{to_string(thread)}.undo_sink"))
-        middleware(M.ArticleLoader)
+
+        middleware(M.Passport,
+          action: unquote("#{to_string(thread)}.undo_sink"),
+          thread: unquote(thread)
+        )
+
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.undo_sink_article/3)
       end
@@ -323,24 +345,32 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
     quote do
       @desc unquote("lock comment of a #{thread}")
       field unquote(:"lock_#{thread}_comment"), :article do
-        arg(:article, non_null(:article_ref_input))
+        arg(:article, non_null(:article_path_input))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, action: unquote("#{to_string(thread)}.lock_comment"))
-        middleware(M.ArticleLoader)
+
+        middleware(M.Passport,
+          action: unquote("#{to_string(thread)}.lock_comment"),
+          thread: unquote(thread)
+        )
+
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.lock_article_comments/3)
       end
 
       @desc unquote("undo lock to a #{thread}")
       field unquote(:"undo_lock_#{thread}_comment"), :article do
-        arg(:article, non_null(:article_ref_input))
+        arg(:article, non_null(:article_path_input))
 
         middleware(M.Authorize, :login)
-        middleware(M.ArticleArgs, thread: unquote(thread))
-        middleware(M.Passport, action: unquote("#{to_string(thread)}.undo_lock_comment"))
-        middleware(M.ArticleLoader)
+
+        middleware(M.Passport,
+          action: unquote("#{to_string(thread)}.undo_lock_comment"),
+          thread: unquote(thread)
+        )
+
+        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.undo_lock_article_comments/3)
       end

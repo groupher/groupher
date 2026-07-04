@@ -318,6 +318,19 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
           id: doc_id
         })
 
+      {:ok, draft_before_second_publish} =
+        ORM.find_by(CMS.Model.Doc,
+          community_id: community.id,
+          doc_id: doc_id,
+          stage: :draft
+        )
+
+      {:ok, draft_document_before_second_publish} =
+        ORM.find_by(CMS.Model.ArticleDocument,
+          article_id: draft_before_second_publish.id,
+          thread: :doc
+        )
+
       assert %{"done" => true, "release" => %{"id" => _}} =
                user_conn
                |> gq_mutation(Schema.m(:publish_doc_changes), %{
@@ -345,14 +358,22 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
           stage: :public
         )
 
-      {:ok, public_doc_document} =
-        ORM.find_by(CMS.Model.DocDocument, doc_id: public_doc.id)
-
       {:ok, public_article_document} =
         ORM.find_by(CMS.Model.ArticleDocument, article_id: public_doc.id, thread: :doc)
 
-      assert public_doc_document.json == @plate_body_updated
       assert public_article_document.json == @plate_body_updated
+
+      document_payload_fields =
+        ~w(json markdown markdown_toc html xml rss plain_text digest content_hash schema_version)a
+
+      assert Map.take(public_article_document, document_payload_fields) ==
+               Map.take(draft_document_before_second_publish, document_payload_fields)
+
+      {:error, _} =
+        ORM.find_by(CMS.Model.ArticleDocument,
+          article_id: draft_before_second_publish.id,
+          thread: :doc
+        )
 
       published_versions =
         user_conn

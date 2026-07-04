@@ -13,7 +13,9 @@ defmodule GroupherServer.Test.Mutation.Upvotes.ChangelogUpvote do
 
   describe "[changelog upvote]" do
     test "login user can upvote a changelog", ~m(user_conn community changelog user)a do
-      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+      }
 
       created = user_conn |> gq_mutation(Schema.m(:upvote_article, :changelog), variables)
 
@@ -22,7 +24,9 @@ defmodule GroupherServer.Test.Mutation.Upvotes.ChangelogUpvote do
     end
 
     test "unauth user upvote a changelog fails", ~m(guest_conn community changelog)a do
-      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+      }
 
       assert guest_conn
              |> mutation_error?(
@@ -35,7 +39,9 @@ defmodule GroupherServer.Test.Mutation.Upvotes.ChangelogUpvote do
     test "login user can undo upvote to a changelog", ~m(user_conn community changelog user)a do
       {:ok, _} = CMS.Articles.upvote(changelog, user)
 
-      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+      }
 
       updated =
         user_conn |> gq_mutation(Schema.m(:undo_upvote_article, :changelog), variables)
@@ -45,7 +51,9 @@ defmodule GroupherServer.Test.Mutation.Upvotes.ChangelogUpvote do
     end
 
     test "unauth user undo upvote a changelog fails", ~m(guest_conn community changelog)a do
-      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug}}
+      variables = %{
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
+      }
 
       assert guest_conn
              |> mutation_error?(

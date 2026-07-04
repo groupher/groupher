@@ -24,7 +24,10 @@ defmodule GroupherServer.CMS.Articles.List do
   alias CMS.Model.{Community, Embeds, PinnedArticle, Post}
   alias Helper.{ORM, QueryBuilder, T}
 
+  require CMS.Const
+
   @article_status Enums.status_values() |> Enum.into(%{}, &{&1, &1})
+  @published_flags %{mark_delete: false, pending: :legal}
   @kanban_rejected_statuses [
     @article_status.reject,
     @article_status.reject_dup,
@@ -164,8 +167,9 @@ defmodule GroupherServer.CMS.Articles.List do
       info.model
       |> join(:inner, [article], author in assoc(article, :author))
       |> where([article, author], author.user_id == ^user.id)
+      |> filter_published_stage(thread)
       |> select([article, author], article)
-      |> QueryBuilder.filter_pack(filter)
+      |> QueryBuilder.filter_pack(published_filter(filter))
       |> ORM.paginator(~m(page size)a)
       |> FrontDesk.mark_viewer_emotion_states(user)
       |> mark_viewer_has_states(user)
@@ -175,18 +179,26 @@ defmodule GroupherServer.CMS.Articles.List do
 
   @spec count_published(atom(), User.t()) :: T.domain_res(non_neg_integer())
   def count_published(thread, %User{} = user) do
-    flags = %{mark_delete: false, pending: :legal}
-
     with {:ok, info} <- match(thread) do
       info.model
       |> join(:inner, [article], author in assoc(article, :author))
       |> where([article, author], author.user_id == ^user.id)
-      |> QueryBuilder.filter_pack(flags)
+      |> filter_published_stage(thread)
+      |> QueryBuilder.filter_pack(published_filter(%{}))
       |> select([article, author], count(article.id))
       |> Repo.one()
       |> done()
     end
   end
+
+  defp filter_published_stage(queryable, :doc) do
+    public_stage = CMS.Const.stage(:public)
+    queryable |> where([article, _author], article.stage == ^public_stage)
+  end
+
+  defp filter_published_stage(queryable, _thread), do: queryable
+
+  defp published_filter(filter), do: Map.merge(filter, @published_flags)
 
   defp add_pin_articles_ifneed(articles, queryable, %{community: community} = filter) do
     thread = module_to_atom(queryable)

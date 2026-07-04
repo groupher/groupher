@@ -38,4 +38,7 @@ defmodule GroupherServer.CMS.CanCan do
   def allow_emotion(community, scope, thread, emotion) do
     Communities.allow_emotion(community, scope, thread, emotion)
   end
+
+  @spec allow_comment(map(), term()) :: {:ok, map()} | {:error, atom()}
+  def allow_comment(article, user), do: Communities.allow_comment(article, user)
 end

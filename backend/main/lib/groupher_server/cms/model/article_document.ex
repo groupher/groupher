@@ -48,6 +48,7 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> validate_required(@required_fields)
     |> validate_length(:plain_text, min: @min_body_length, max: @max_body_length)
+    |> unique_constraint([:thread, :article_id], name: :article_documents_thread_article_id_index)
   end
 
   @doc false
@@ -55,5 +56,6 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
     doc
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> validate_length(:plain_text, min: @min_body_length, max: @max_body_length)
+    |> unique_constraint([:thread, :article_id], name: :article_documents_thread_article_id_index)
   end
 end

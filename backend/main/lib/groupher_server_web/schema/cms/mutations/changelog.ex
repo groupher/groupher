@@ -27,7 +27,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
 
     @desc "update a cms/changelog"
     field :update_changelog, :changelog do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:title, :string)
       arg(:body, :string)
       arg(:digest, :string)
@@ -37,9 +37,8 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
       article_cover_args()
 
       middleware(M.Authorize, :login)
-      middleware(M.ArticleArgs, thread: :changelog)
-      middleware(M.Passport, action: "changelog.update")
-      middleware(M.ArticleLoader)
+      middleware(M.Passport, action: "changelog.update", thread: :changelog)
+      middleware(M.FrontDesk, {:article, thread: :changelog})
 
       resolve(&R.CMS.update_article/3)
     end

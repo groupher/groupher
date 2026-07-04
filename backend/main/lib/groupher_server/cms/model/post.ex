@@ -46,8 +46,8 @@ defmodule GroupherServer.CMS.Model.Post do
   def changeset(%Post{} = post, attrs) do
     post
     |> cast(attrs, @optional_fields ++ @required_fields)
-    |> normalize_enum(:cat, Enums.cat_values())
-    |> normalize_enum(:status, Enums.status_values())
+    |> validate_enum_atom_attr(attrs, :cat)
+    |> validate_enum_atom_attr(attrs, :status)
     |> validate_required(@required_fields)
     |> cast_embed(:meta, required: false, with: &Embeds.ArticleMeta.changeset/2)
     |> geneal_changeset()
@@ -57,8 +57,8 @@ defmodule GroupherServer.CMS.Model.Post do
   def update_changeset(%Post{} = post, attrs) do
     post
     |> cast(attrs, @optional_fields ++ @required_fields)
-    |> normalize_enum(:cat, Enums.cat_values())
-    |> normalize_enum(:status, Enums.status_values())
+    |> validate_enum_atom_attr(attrs, :cat)
+    |> validate_enum_atom_attr(attrs, :status)
     |> geneal_changeset()
   end
 
@@ -69,27 +69,27 @@ defmodule GroupherServer.CMS.Model.Post do
     |> validate_length(:link_addr, min: 5, max: 400)
   end
 
-  # Accept:
-  # - atom: :todo
-  #
-  # Reject any other value with a changeset error.
-  defp normalize_enum(changeset, field, allowed_atoms) do
-    case fetch_change(changeset, field) do
-      :error ->
+  # Absinthe enum inputs reach CMS as atoms. Do not accept raw string enum
+  # values here; otherwise Ecto.Enum would silently cast them back to atoms.
+  defp validate_enum_atom_attr(changeset, attrs, field) when is_map(attrs) do
+    cond do
+      Map.has_key?(attrs, Atom.to_string(field)) ->
+        add_error(changeset, field, "must be an enum atom")
+
+      Map.has_key?(attrs, field) ->
+        validate_enum_atom_value(changeset, field, Map.get(attrs, field))
+
+      true ->
         changeset
-
-      {:ok, nil} ->
-        changeset
-
-      {:ok, v} when is_atom(v) ->
-        if v in allowed_atoms do
-          changeset
-        else
-          add_error(changeset, field, "invalid value")
-        end
-
-      {:ok, _other} ->
-        add_error(changeset, field, "invalid value")
     end
   end
+
+  defp validate_enum_atom_attr(changeset, _attrs, _field), do: changeset
+
+  defp validate_enum_atom_value(changeset, _field, nil), do: changeset
+
+  defp validate_enum_atom_value(changeset, _field, value) when is_atom(value), do: changeset
+
+  defp validate_enum_atom_value(changeset, field, _value),
+    do: add_error(changeset, field, "must be an enum atom")
 end

@@ -19,7 +19,6 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
   """
   interface :article do
     # article 所包含的共同字段
-    # field(:id, :id)
     field(:inner_id, :id)
     field(:title, :string)
     field(:views, :integer)
@@ -157,10 +156,26 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     field(:index, non_null(:integer))
   end
 
-  input_object :article_ref_input do
+  input_object :article_path_input do
     field(:inner_id, non_null(:id))
     field(:community, non_null(:string))
-    field(:thread, :thread)
+    field(:thread, non_null(:thread))
+  end
+
+  input_object :comment_path_input do
+    field(:article, non_null(:article_path_input))
+    field(:inner_id, non_null(:id))
+  end
+
+  input_object :mention_source_input do
+    field(:article, :article_path_input)
+    field(:comment, :comment_path_input)
+  end
+
+  input_object :mention_target_input do
+    field(:article, :article_path_input)
+    field(:comment, :comment_path_input)
+    field(:user_login, :string)
   end
 
   input_object :pagi_filter do

@@ -27,7 +27,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
 
     @desc "update a cms/post"
     field :update_post, :post do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:title, :string)
       arg(:body, :string)
       arg(:digest, :string)
@@ -37,35 +37,32 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
       article_cover_args()
 
       middleware(M.Authorize, :login)
-      middleware(M.ArticleArgs, thread: :post)
-      middleware(M.Passport, action: "post.update")
-      middleware(M.ArticleLoader)
+      middleware(M.Passport, action: "post.update", thread: :post)
+      middleware(M.FrontDesk, {:article, thread: :post})
 
       resolve(&R.CMS.update_article/3)
     end
 
     @desc "set cat for a post"
     field :set_post_cat, :post do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:cat, non_null(:article_cat_enum))
 
       middleware(M.Authorize, :login)
-      middleware(M.ArticleArgs, thread: :post)
-      middleware(M.Passport, action: "post.set_category")
-      middleware(M.ArticleLoader)
+      middleware(M.Passport, action: "post.set_category", thread: :post)
+      middleware(M.FrontDesk, {:article, thread: :post})
 
       resolve(&R.CMS.set_post_cat/3)
     end
 
     @desc "set status for a post"
     field :set_post_status, :post do
-      arg(:article, non_null(:article_ref_input))
+      arg(:article, non_null(:article_path_input))
       arg(:status, non_null(:article_status_enum))
 
       middleware(M.Authorize, :login)
-      middleware(M.ArticleArgs, thread: :post)
-      middleware(M.Passport, action: "post.set_status")
-      middleware(M.ArticleLoader)
+      middleware(M.Passport, action: "post.set_status", thread: :post)
+      middleware(M.FrontDesk, {:article, thread: :post})
 
       resolve(&R.CMS.set_post_status/3)
     end

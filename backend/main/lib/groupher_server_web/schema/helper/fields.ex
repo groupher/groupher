@@ -22,7 +22,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
     quote do
       field(:inner_id, :id)
       field(:title, :string)
-      field(:document, :thread_document, resolve: dataloader(CMS, :document))
+      field(:document, :article_document, resolve: dataloader(CMS, :document))
       field(:digest, :string)
       field(:views, :integer)
       field(:is_pinned, :boolean)
@@ -171,7 +171,7 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
 
   defmacro comment_general_fields do
     quote do
-      field(:id, :id)
+      field(:inner_id, :id, resolve: &GroupherServerWeb.Resolvers.CMS.comment_inner_id/3)
       field(:body, :string)
       field(:body_html, :string)
       field(:author, :user, resolve: dataloader(CMS, :author))
@@ -188,8 +188,8 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:replies_count, :integer)
       field(:thread, :thread)
       field(:viewer_has_upvoted, :boolean)
-      field(:reply_to, :comment, resolve: dataloader(CMS, :reply_to))
-      field(:reply_to_id, :id)
+      field(:viewer_has_reported, :boolean)
+      field(:reply_to_comment, :comment, resolve: dataloader(CMS, :reply_to_comment))
 
       field(:is_deleted, :boolean)
       field(:is_archived, :boolean)

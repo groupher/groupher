@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.Query.CMS.CommunityTagGroups do
           groupId
           index
           community {
-            id
+            slug
             title
             logo
           }

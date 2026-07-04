@@ -1,7 +1,7 @@
 import F from '../fragments'
 
 export const doc = `
-  query doc($article: ArticleRefInput!, $userHasLogin: Boolean!) {
+  query doc($article: ArticlePathInput!, $userHasLogin: Boolean!) {
     doc(article: $article) {
       ${F.article}
       ${F.articleDetail}

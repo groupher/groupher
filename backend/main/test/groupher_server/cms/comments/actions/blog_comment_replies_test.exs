@@ -17,8 +17,10 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      {:ok, replied_comment} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
-      assert replied_comment.reply_to.id == parent_comment.id
+      {:ok, replied_comment} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+
+      assert replied_comment.reply_to_comment.id == parent_comment.id
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
@@ -38,8 +40,11 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      {:ok, replied_comment_1} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
-      {:ok, replied_comment_2} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+      {:ok, replied_comment_1} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+
+      {:ok, replied_comment_2} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
@@ -52,9 +57,14 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      {:ok, replied_comment_1} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
-      {:ok, replied_comment_2} = CMS.Comments.reply_comment(replied_comment_1.id, mock_comment(), user2)
-      {:ok, replied_comment_3} = CMS.Comments.reply_comment(replied_comment_2.id, mock_comment(), user)
+      {:ok, replied_comment_1} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+
+      {:ok, replied_comment_2} =
+        CMS.Comments.reply_comment(replied_comment_1.id, mock_comment(), user2)
+
+      {:ok, replied_comment_3} =
+        CMS.Comments.reply_comment(replied_comment_2.id, mock_comment(), user)
 
       {:ok, parent_comment} = ORM.find(Comment, parent_comment.id)
 
@@ -66,9 +76,9 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
       {:ok, replied_comment_2} = ORM.find(Comment, replied_comment_2.id)
       {:ok, replied_comment_3} = ORM.find(Comment, replied_comment_3.id)
 
-      assert replied_comment_1.reply_to_id == parent_comment.id
-      assert replied_comment_2.reply_to_id == replied_comment_1.id
-      assert replied_comment_3.reply_to_id == replied_comment_2.id
+      assert replied_comment_1.reply_to_comment_id == parent_comment.id
+      assert replied_comment_2.reply_to_comment_id == replied_comment_1.id
+      assert replied_comment_3.reply_to_comment_id == replied_comment_2.id
     end
 
     test "reply to reply inside a comment should have is_reply_to_others flag in meta",
@@ -76,9 +86,14 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      {:ok, replied_comment_1} = CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
-      {:ok, replied_comment_2} = CMS.Comments.reply_comment(replied_comment_1.id, mock_comment(), user2)
-      {:ok, replied_comment_3} = CMS.Comments.reply_comment(replied_comment_2.id, mock_comment(), user)
+      {:ok, replied_comment_1} =
+        CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
+
+      {:ok, replied_comment_2} =
+        CMS.Comments.reply_comment(replied_comment_1.id, mock_comment(), user2)
+
+      {:ok, replied_comment_3} =
+        CMS.Comments.reply_comment(replied_comment_2.id, mock_comment(), user)
 
       {:ok, _parent_comment} = ORM.find(Comment, parent_comment.id)
 
@@ -101,7 +116,11 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
       reply_comment_list =
         Enum.reduce(1..total_reply_count, [], fn n, acc ->
           {:ok, replied_comment} =
-            CMS.Comments.reply_comment(parent_comment.id, mock_comment("reply_content_#{n}"), user)
+            CMS.Comments.reply_comment(
+              parent_comment.id,
+              mock_comment("reply_content_#{n}"),
+              user
+            )
 
           acc ++ [replied_comment]
         end)
@@ -150,7 +169,9 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
       {:ok, parent_comment} =
         CMS.Comments.create_comment(community, :blog, blog.inner_id, mock_comment(), user)
 
-      {:ok, paged_replies} = CMS.Comments.paged_comment_replies(parent_comment.id, %{page: 1, size: 20})
+      {:ok, paged_replies} =
+        CMS.Comments.paged_comment_replies(parent_comment.id, %{page: 1, size: 20})
+
       assert is_valid_pagination?(paged_replies, :raw, :empty)
 
       total_reply_count = 30
@@ -158,12 +179,17 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
       reply_comment_list =
         Enum.reduce(1..total_reply_count, [], fn n, acc ->
           {:ok, replied_comment} =
-            CMS.Comments.reply_comment(parent_comment.id, mock_comment("reply_content_#{n}"), user)
+            CMS.Comments.reply_comment(
+              parent_comment.id,
+              mock_comment("reply_content_#{n}"),
+              user
+            )
 
           acc ++ [replied_comment]
         end)
 
-      {:ok, paged_replies} = CMS.Comments.paged_comment_replies(parent_comment.id, %{page: 1, size: 20})
+      {:ok, paged_replies} =
+        CMS.Comments.paged_comment_replies(parent_comment.id, %{page: 1, size: 20})
 
       assert total_reply_count == paged_replies.total_count
       assert is_valid_pagination?(paged_replies, :raw)
@@ -174,7 +200,7 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
       assert Enum.all?(paged_replies.entries, &MapSet.member?(reply_ids, &1.id))
     end
 
-    test "can get reply_to info of a parent comment", ~m(community blog user)a do
+    test "can get reply_to_comment info of a parent comment", ~m(community blog user)a do
       page_number = 1
       page_size = 10
 
@@ -194,15 +220,15 @@ defmodule GroupherServer.Test.CMS.Comments.BlogCommentReplies do
 
       reply_comment = Enum.find(paged_comments.entries, &(&1.id == reply_comment.id))
 
-      assert reply_comment.reply_to.id == parent_comment.id
-      assert reply_comment.reply_to.body_html == parent_comment.body_html
-      assert reply_comment.reply_to.author.id == parent_comment.author_id
+      assert reply_comment.reply_to_comment.id == parent_comment.id
+      assert reply_comment.reply_to_comment.body_html == parent_comment.body_html
+      assert reply_comment.reply_to_comment.author.id == parent_comment.author_id
 
       reply_comment2 = Enum.find(paged_comments.entries, &(&1.id == reply_comment2.id))
 
-      assert reply_comment2.reply_to.id == parent_comment.id
-      assert reply_comment2.reply_to.body_html == parent_comment.body_html
-      assert reply_comment2.reply_to.author.id == parent_comment.author_id
+      assert reply_comment2.reply_to_comment.id == parent_comment.id
+      assert reply_comment2.reply_to_comment.body_html == parent_comment.body_html
+      assert reply_comment2.reply_to_comment.author.id == parent_comment.author_id
     end
   end
 end

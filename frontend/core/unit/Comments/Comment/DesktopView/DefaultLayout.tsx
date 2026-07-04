@@ -41,7 +41,11 @@ const DefaultLayout: FC<TProps> = ({ data, isReply = false, showInnerRef = false
       <div className={s.comment}>
         <div className={s.sidebar}>
           {isReply && (
-            <button type='button' className={s.indentLine} onClick={() => foldComment(data.id)} />
+            <button
+              type='button'
+              className={s.indentLine}
+              onClick={() => foldComment(data.innerId)}
+            />
           )}
         </div>
 
@@ -50,7 +54,7 @@ const DefaultLayout: FC<TProps> = ({ data, isReply = false, showInnerRef = false
           <div className={cn(isReply && 'ml-10')}>
             {isLegal ? (
               <Fragment>
-                {!isReply && data.replyTo && <ReplyBar data={data.replyTo} />}
+                {!isReply && data.replyToComment && <ReplyBar data={data.replyToComment} />}
                 <ArtimentBody
                   document={{ bodyHtml: data.bodyHtml }}
                   initLineClamp={6}

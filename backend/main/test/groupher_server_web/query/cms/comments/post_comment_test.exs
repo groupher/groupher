@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
   end
 
   @query """
-  query($article: ArticleRefInput!) {
+  query($article: ArticlePathInput!) {
     commentsState(article: $article) {
       totalCount
       isViewerJoined
@@ -54,9 +54,10 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
   end
 
   @query """
-  query($id: ID!) {
-    oneComment(id: $id) {
-      id
+  query($comment: CommentPathInput!) {
+    oneComment(comment: $comment) {
+      innerId
+      floor
       body
       isArchived
       archivedAt
@@ -70,19 +71,36 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
   }
   """
 
-  test "can get one comment by id", ~m(guest_conn community post user)a do
+  test "can get one comment by ref", ~m(guest_conn community post user)a do
     thread = :post
 
     {:ok, comment} =
       CMS.Comments.create_comment(community, thread, post.inner_id, mock_comment(), user)
 
-    variables = %{id: comment.id}
+    variables = %{comment: comment_path(community, post, :post, comment)}
     results = guest_conn |> gq_query(@query, variables)
 
-    assert results["id"] == to_string(comment.id)
+    assert results["innerId"] == to_string(comment.inner_id)
   end
 
-  test "can get one comment by id with viewer states", ~m(user_conn community post user)a do
+  test "can get one comment by inner_id when floor differs",
+       ~m(guest_conn community post user)a do
+    thread = :post
+
+    {:ok, comment} =
+      CMS.Comments.create_comment(community, thread, post.inner_id, mock_comment(), user)
+
+    changed_floor = comment.floor + 100
+    {:ok, comment} = ORM.update(comment, %{floor: changed_floor})
+
+    variables = %{comment: comment_path(community, post, :post, comment)}
+    results = guest_conn |> gq_query(@query, variables)
+
+    assert results["innerId"] == to_string(comment.inner_id)
+    assert results["floor"] == changed_floor
+  end
+
+  test "can get one comment by ref with viewer states", ~m(user_conn community post user)a do
     thread = :post
 
     {:ok, comment} =
@@ -91,10 +109,10 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
     {:ok, _} = CMS.Comments.upvote_comment(comment.id, user)
     {:ok, _} = CMS.Comments.emotion_to_comment(comment.id, :downvote, user)
 
-    variables = %{id: comment.id}
+    variables = %{comment: comment_path(community, post, :post, comment)}
     results = user_conn |> gq_query(@query, variables)
 
-    assert results["id"] == to_string(comment.id)
+    assert results["innerId"] == to_string(comment.inner_id)
     assert results["viewerHasUpvoted"]
     assert emotion_entry(results["emotions"], :downvote)["viewerHasReacted"]
   end
@@ -106,7 +124,10 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       {:ok, _} =
         CMS.Comments.create_comment(community, thread, post.inner_id, mock_comment(), user)
 
-      variables = %{article: %{inner_id: post.inner_id, community: post.community_slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: post.community_slug, thread: "POST"}
+      }
+
       results = guest_conn |> gq_query(Schema.q(:article, :post), variables)
 
       assert not results["isArchived"]
@@ -127,7 +148,10 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       {:ok, _} =
         CMS.Comments.create_comment(community, thread, post.inner_id, mock_comment(), user2)
 
-      variables = %{article: %{inner_id: post.inner_id, community: post.community_slug}}
+      variables = %{
+        article: %{inner_id: post.inner_id, community: post.community_slug, thread: "POST"}
+      }
+
       results = guest_conn |> gq_query(Schema.q(:article, :post), variables)
 
       comments_participants = results["commentsParticipants"]
@@ -139,10 +163,10 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
     end
 
     @query """
-      query($article: ArticleRefInput!, $mode: CommentsMode, $filter: CommentsFilter!) {
+      query($article: ArticlePathInput!, $mode: CommentsMode, $filter: CommentsFilter!) {
         pagedComments(article: $article, mode: $mode, filter: $filter) {
           entries {
-            id
+            innerId
             bodyHtml
             author {
               id
@@ -168,8 +192,8 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
               illegalReason
               illegalWords
             }
-            replyTo {
-              id
+            replyToComment {
+              innerId
               bodyHtml
               floor
               isArticleAuthor
@@ -180,10 +204,10 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
             }
             viewerHasUpvoted
             replies {
-              id
+              innerId
               bodyHtml
-              replyTo {
-                id
+              replyToComment {
+                innerId
                 author {
                   login
                   nickname
@@ -244,18 +268,19 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       assert not exist_in?(replied_comment_1, results["entries"])
       assert not exist_in?(replied_comment_2, results["entries"])
 
-      random_comment = Enum.find(results["entries"], &(&1["id"] == to_string(random_comment.id)))
+      random_comment =
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(random_comment.inner_id)))
 
       assert random_comment["replies"] |> length == 2
       assert random_comment["repliesCount"] == 2
 
-      assert random_comment["replies"] |> List.first() |> Map.get("id") ==
-               to_string(replied_comment_1.id)
+      assert random_comment["replies"] |> List.first() |> Map.get("innerId") ==
+               to_string(replied_comment_1.inner_id)
 
-      assert not is_nil(random_comment["replies"] |> List.first() |> Map.get("replyTo"))
+      assert not is_nil(random_comment["replies"] |> List.first() |> Map.get("replyToComment"))
 
-      assert random_comment["replies"] |> List.last() |> Map.get("id") ==
-               to_string(replied_comment_2.id)
+      assert random_comment["replies"] |> List.last() |> Map.get("innerId") ==
+               to_string(replied_comment_2.inner_id)
     end
 
     test "timeline-mode paged comments", ~m(guest_conn community post user user2)a do
@@ -297,7 +322,9 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       assert exist_in?(replied_comment_1, results["entries"])
       assert exist_in?(replied_comment_2, results["entries"])
 
-      random_comment = Enum.find(results["entries"], &(&1["id"] == to_string(random_comment.id)))
+      random_comment =
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(random_comment.inner_id)))
+
       assert random_comment["replies"] |> length == 2
       assert random_comment["repliesCount"] == 2
     end
@@ -344,19 +371,21 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       results = guest_conn |> gq_query(@query, variables)
 
       replied_comment_1 =
-        Enum.find(results["entries"], &(&1["id"] == to_string(replied_comment_1.id)))
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(replied_comment_1.inner_id)))
 
-      assert replied_comment_1 |> get_in(["replyTo", "id"]) == to_string(parent_comment.id)
+      assert replied_comment_1 |> get_in(["replyToComment", "innerId"]) ==
+               to_string(parent_comment.inner_id)
 
-      assert replied_comment_1 |> get_in(["replyTo", "author", "id"]) ==
+      assert replied_comment_1 |> get_in(["replyToComment", "author", "id"]) ==
                to_string(parent_comment.author_id)
 
       replied_comment_2 =
-        Enum.find(results["entries"], &(&1["id"] == to_string(replied_comment_2.id)))
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(replied_comment_2.inner_id)))
 
-      assert replied_comment_2 |> get_in(["replyTo", "id"]) == to_string(parent_comment.id)
+      assert replied_comment_2 |> get_in(["replyToComment", "innerId"]) ==
+               to_string(parent_comment.inner_id)
 
-      assert replied_comment_2 |> get_in(["replyTo", "author", "id"]) ==
+      assert replied_comment_2 |> get_in(["replyToComment", "author", "id"]) ==
                to_string(parent_comment.author_id)
     end
 
@@ -413,8 +442,11 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
       results = guest_conn |> gq_query(@query, variables)
 
-      assert results["entries"] |> List.first() |> Map.get("id") == to_string(pinned_comment2.id)
-      assert results["entries"] |> Enum.at(1) |> Map.get("id") == to_string(pinned_comment.id)
+      assert results["entries"] |> List.first() |> Map.get("innerId") ==
+               to_string(pinned_comment2.inner_id)
+
+      assert results["entries"] |> Enum.at(1) |> Map.get("innerId") ==
+               to_string(pinned_comment.inner_id)
 
       assert results["totalCount"] == total_count + 2
     end
@@ -469,7 +501,9 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
       results = guest_conn |> gq_query(@query, variables)
 
-      assert results["entries"] |> List.first() |> Map.get("id") == to_string(solution_comment.id)
+      assert results["entries"] |> List.first() |> Map.get("innerId") ==
+               to_string(solution_comment.inner_id)
+
       assert results["totalCount"] == total_count + 3
     end
 
@@ -522,8 +556,8 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
       results = guest_conn |> gq_query(@query, variables)
 
-      assert List.first(results["entries"]) |> Map.get("id") == to_string(comment.id)
-      assert List.last(results["entries"]) |> Map.get("id") == to_string(comment3.id)
+      assert List.first(results["entries"]) |> Map.get("innerId") == to_string(comment.inner_id)
+      assert List.last(results["entries"]) |> Map.get("innerId") == to_string(comment3.inner_id)
     end
 
     test "the comments can be loaded in desc order in timeline-mode",
@@ -552,8 +586,8 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
       results = guest_conn |> gq_query(@query, variables)
 
-      assert List.first(results["entries"]) |> Map.get("id") == to_string(comment3.id)
-      assert List.last(results["entries"]) |> Map.get("id") == to_string(comment.id)
+      assert List.first(results["entries"]) |> Map.get("innerId") == to_string(comment3.inner_id)
+      assert List.last(results["entries"]) |> Map.get("innerId") == to_string(comment.inner_id)
     end
 
     test "the comments can be loaded in desc order in replies-mode",
@@ -588,8 +622,8 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
       results = guest_conn |> gq_query(@query, variables)
 
-      assert List.first(results["entries"]) |> Map.get("id") == to_string(comment3.id)
-      assert List.last(results["entries"]) |> Map.get("id") == to_string(comment.id)
+      assert List.first(results["entries"]) |> Map.get("innerId") == to_string(comment3.inner_id)
+      assert List.last(results["entries"]) |> Map.get("innerId") == to_string(comment.inner_id)
     end
 
     test "guest user can get paged comment with upvotes_count",
@@ -670,13 +704,13 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       results = guest_conn |> gq_query(@query, variables)
 
       the_author_comment =
-        Enum.find(results["entries"], &(&1["id"] == to_string(author_comment.id)))
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(author_comment.inner_id)))
 
       assert the_author_comment["isArticleAuthor"]
       assert the_author_comment |> get_in(["meta", "isArticleAuthorUpvoted"])
 
       the_random_comment =
-        Enum.find(results["entries"], &(&1["id"] == to_string(random_comment.id)))
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(random_comment.inner_id)))
 
       #
       assert not the_random_comment["isArticleAuthor"]
@@ -719,7 +753,8 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       results = guest_conn |> gq_query(@query, variables)
 
       comment_emotion =
-        Enum.find(results["entries"], &(&1["id"] == to_string(comment.id))) |> Map.get("emotions")
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(comment.inner_id)))
+        |> Map.get("emotions")
 
       assert is_nil(emotion_entry(comment_emotion, :popcorn))
 
@@ -735,7 +770,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       assert user2.login in latest_downvote_users_logins
 
       comment2_emotion =
-        Enum.find(results["entries"], &(&1["id"] == to_string(comment2.id)))
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(comment2.inner_id)))
         |> Map.get("emotions")
 
       beer_emotion = emotion_entry(comment2_emotion, :beer)
@@ -781,7 +816,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
       results = user_conn |> gq_query(@query, variables)
 
-      assert Enum.find(results["entries"], &(&1["id"] == to_string(comment.id)))
+      assert Enum.find(results["entries"], &(&1["innerId"] == to_string(comment.inner_id)))
              |> Map.get("emotions")
              |> emotion_entry(:downvote)
              |> Map.get("viewerHasReacted")
@@ -817,7 +852,8 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
       results = user_conn |> gq_query(@query, variables)
 
-      upvoted_comment = Enum.find(results["entries"], &(&1["id"] == to_string(random_comment.id)))
+      upvoted_comment =
+        Enum.find(results["entries"], &(&1["innerId"] == to_string(random_comment.inner_id)))
 
       assert upvoted_comment["viewerHasUpvoted"]
     end
@@ -825,7 +861,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
   describe "paged participants" do
     @query """
-      query($article: ArticleRefInput!, $filter: PagiFilter!) {
+      query($article: ArticlePathInput!, $filter: PagiFilter!) {
         pagedCommentsParticipants(article: $article, filter: $filter) {
           entries {
             id
@@ -872,10 +908,10 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
 
   describe "paged replies" do
     @query """
-      query($id: ID!, $filter: CommentsFilter!) {
-        pagedCommentReplies(id: $id, filter: $filter) {
+      query($comment: CommentPathInput!, $filter: CommentsFilter!) {
+        pagedCommentReplies(comment: $comment, filter: $filter) {
           entries {
-            id
+            innerId
             bodyHtml
             author {
               id
@@ -925,11 +961,18 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       {:ok, author_reply_comment} =
         CMS.Comments.reply_comment(parent_comment.id, mock_comment("author reply"), author_user)
 
-      variables = %{id: parent_comment.id, filter: %{page: 1, size: page_size}}
+      variables = %{
+        comment: comment_path(community, post, :post, parent_comment),
+        filter: %{page: 1, size: page_size}
+      }
+
       results = guest_conn |> gq_query(@query, variables)
 
       author_reply_comment =
-        Enum.find(results["entries"], &(&1["id"] == to_string(author_reply_comment.id)))
+        Enum.find(
+          results["entries"],
+          &(&1["innerId"] == to_string(author_reply_comment.inner_id))
+        )
 
       assert author_reply_comment["isArticleAuthor"]
       assert results["entries"] |> length == total_count + 1

@@ -24,7 +24,8 @@ defmodule GroupherServer.CMS.Articles.Draft do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Articles.Document
-  alias CMS.Model.{Doc, Author, Community}
+  alias CMS.Model.{ArticleDocument, Doc, Author, Community}
+  alias Ecto.Multi
   alias Helper.{ArticlePayload, ContentPipeline, ORM, T, Transaction}
   alias Helper.Validator.Slug
   import Helper.Utils, only: [get_config: 2]
@@ -378,11 +379,28 @@ defmodule GroupherServer.CMS.Articles.Draft do
            stage: CMS.Const.stage(:public)
          ) do
       {:ok, public_doc} ->
-        with {:ok, public_doc} <- ORM.update(public_doc, publish_content_attrs(draft)),
-             {:ok, _document} <- Document.update_doc(public_doc, document_attrs_from_doc(draft)),
-             {:ok, _draft} <- ORM.delete(draft) do
-          {:ok, public_doc}
-        end
+        Multi.new()
+        |> Multi.run(:draft_document, fn _, _ ->
+          ORM.find_by(ArticleDocument, article_id: draft.id, thread: :doc)
+        end)
+        |> Multi.run(:update_public_doc, fn _, _ ->
+          ORM.update(public_doc, publish_content_attrs(draft))
+        end)
+        |> Multi.run(:update_public_document, fn _,
+                                                 %{
+                                                   draft_document: draft_document,
+                                                   update_public_doc: public_doc
+                                                 } ->
+          Document.update_doc(public_doc, document_attrs_from_draft(draft, draft_document))
+        end)
+        |> Multi.run(:delete_draft, fn _, _ ->
+          ORM.delete(draft)
+        end)
+        |> Multi.run(:remove_draft_document, fn _, _ ->
+          Document.remove(:doc, draft.id)
+        end)
+        |> Repo.transaction()
+        |> publish_result()
 
       {:error, _} ->
         ORM.update(draft, %{stage: CMS.Const.stage(:public)})
@@ -401,7 +419,10 @@ defmodule GroupherServer.CMS.Articles.Draft do
     }
   end
 
-  defp document_attrs_from_doc(%Doc{} = doc) do
-    %{article_payload: doc, title: doc.title}
+  defp document_attrs_from_draft(%Doc{} = draft, %ArticleDocument{} = draft_document) do
+    %{article_payload: draft_document, title: draft.title}
   end
+
+  defp publish_result({:ok, %{update_public_doc: public_doc}}), do: {:ok, public_doc}
+  defp publish_result({:error, _, reason, _}), do: {:error, reason}
 end

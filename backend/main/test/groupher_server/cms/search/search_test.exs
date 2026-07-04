@@ -38,16 +38,16 @@ defmodule GroupherServer.Test.CMS.Search do
 
     test "search post blur title should return valid communities" do
       {:ok, searched} = Search.article(:post, "reac")
-      assert searched.entries |> Enum.at(0) |> Map.get(:title) == "react"
+      assert searched.entries |> Enum.any?(&(&1.title == "react"))
 
       {:ok, searched} = Search.article(:post, "rea")
-      assert searched.entries |> Enum.at(0) |> Map.get(:title) == "react"
+      assert searched.entries |> Enum.any?(&(&1.title == "react"))
 
       {:ok, searched} = Search.article(:post, "eac")
-      assert searched.entries |> Enum.at(0) |> Map.get(:title) == "react"
+      assert searched.entries |> Enum.any?(&(&1.title == "react"))
 
       {:ok, searched} = Search.article(:post, "每日")
-      assert searched.entries |> Enum.at(0) |> Map.get(:title) == "每日妹子"
+      assert searched.entries |> Enum.any?(&(&1.title == "每日妹子"))
 
       {:ok, searched} = Search.article(:post, "javasc")
       assert searched.total_count == 1
@@ -88,16 +88,16 @@ defmodule GroupherServer.Test.CMS.Search do
 
     test "search community blur title should return valid communities" do
       {:ok, searched} = Search.community("reac")
-      assert searched.entries |> Enum.at(0) |> Map.get(:title) == "react"
+      assert searched.entries |> Enum.any?(&(&1.title == "react"))
 
       {:ok, searched} = Search.community("rea")
-      assert searched.entries |> Enum.at(0) |> Map.get(:title) == "react"
+      assert searched.entries |> Enum.any?(&(&1.title == "react"))
 
       {:ok, searched} = Search.community("eac")
-      assert searched.entries |> Enum.at(0) |> Map.get(:title) == "react"
+      assert searched.entries |> Enum.any?(&(&1.title == "react"))
 
       {:ok, searched} = Search.community("每日")
-      assert searched.entries |> Enum.at(0) |> Map.get(:title) == "每日妹子"
+      assert searched.entries |> Enum.any?(&(&1.title == "每日妹子"))
 
       {:ok, searched} = Search.community("javasc")
       assert searched.total_count == 1

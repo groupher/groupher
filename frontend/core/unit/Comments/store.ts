@@ -131,14 +131,15 @@
 //       // self.mentionList = uniq(concat(mentionList, self.participators))
 //     },
 //     updateOneComment(comment: TComment, fields = {}): void {
-//       const { id, replyToId } = comment
+//       const { innerId, replyToComment } = comment
+//       const replyToCommentId = replyToComment?.innerId
 //       const { entries } = self.pagedCommentsData
 
-//       if (self.mode === MODE.REPLIES && replyToId) {
-//         const parentIndex = findIndex(propEq(replyToId, 'id'), entries)
+//       if (self.mode === MODE.REPLIES && replyToCommentId) {
+//         const parentIndex = findIndex(propEq(replyToCommentId, 'innerId'), entries)
 //         if (parentIndex < 0) return
 //         const parentComment = entries[parentIndex]
-//         const replyIndex = findIndex(propEq(id, 'id'), parentComment.replies)
+//         const replyIndex = findIndex(propEq(innerId, 'innerId'), parentComment.replies)
 //         if (replyIndex < 0) return
 //         const replyComment = parentComment.replies[replyIndex]
 //         // @ts-expect-error
@@ -150,7 +151,7 @@
 //         }
 //       } else {
 //         // timeline & replies parent comment
-//         const index = findIndex(propEq(id, 'id'), entries)
+//         const index = findIndex(propEq(innerId, 'innerId'), entries)
 
 //         if (index < 0) return
 //         const comment = entries[index]
@@ -163,15 +164,16 @@
 //     },
 
 //     upvoteEmotion(comment: TComment, emotion: TEmotion): void {
-//       const { id, replyToId } = comment
+//       const { innerId, replyToComment } = comment
+//       const replyToCommentId = replyToComment?.innerId
 //       const slf = self as TStore
 //       const { entries } = slf.pagedCommentsData
 
-//       if (self.mode === MODE.REPLIES && replyToId) {
-//         const parentIndex = findIndex(propEq(replyToId, 'id'), entries)
+//       if (self.mode === MODE.REPLIES && replyToCommentId) {
+//         const parentIndex = findIndex(propEq(replyToCommentId, 'innerId'), entries)
 //         if (parentIndex < 0) return
 //         const parentComment = entries[parentIndex]
-//         const replyIndex = findIndex(propEq(id, 'id'), parentComment.replies)
+//         const replyIndex = findIndex(propEq(innerId, 'innerId'), parentComment.replies)
 //         if (replyIndex < 0) return
 //         const replyComment = parentComment.replies[replyIndex]
 //         self.pagedComments.entries[parentIndex].replies[replyIndex].emotions = {

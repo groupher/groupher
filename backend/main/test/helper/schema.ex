@@ -5,7 +5,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def q(:article, thread, extra) do
     """
-    query($article: ArticleRefInput!) {
+    query($article: ArticlePathInput!) {
       #{thread}(article: $article) {
         title
         innerId
@@ -59,7 +59,6 @@ defmodule GroupherServer.Test.Helper.Schema do
             html
           }
           communities {
-            id
             slug
           }
           communityTags {
@@ -119,13 +118,13 @@ defmodule GroupherServer.Test.Helper.Schema do
     query($login: String!, $thread: Thread, $filter: PagiFilter!) {
       pagedPublishedComments(login: $login, thread: $thread, filter: $filter) {
         entries {
-          id
+          innerId
           bodyHtml
           author {
             id
           }
           article {
-            id
+            innerId
             title
             thread
             author {
@@ -148,7 +147,7 @@ defmodule GroupherServer.Test.Helper.Schema do
     query($title: String!, $category: String) {
       searchCommunities(title: $title, category: $category) {
         entries {
-          id
+          slug
           title
         }
         totalCount
@@ -159,7 +158,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def q(:upvoted_users) do
     """
-    query($article: ArticleRefInput!, $filter: PagiFilter!) {
+    query($article: ArticlePathInput!, $filter: PagiFilter!) {
       upvotedUsers(article: $article, filter: $filter) {
         entries {
           login
@@ -177,7 +176,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def q(:collected_users) do
     """
-    query($article: ArticleRefInput!, $filter: PagiFilter!) {
+    query($article: ArticlePathInput!, $filter: PagiFilter!) {
       collectedUsers(article: $article, filter: $filter) {
         entries {
           login
@@ -195,9 +194,9 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def q(:one_comment_emotions) do
     """
-    query($id: ID!) {
-      oneComment(id: $id) {
-        id
+    query($comment: CommentPathInput!) {
+      oneComment(comment: $comment) {
+        innerId
         emotions {
           type
           count
@@ -268,7 +267,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:pin_article, thread) do
     """
-    mutation($article: ArticleRefInput!){
+    mutation($article: ArticlePathInput!){
       pin#{t(thread)}(article: $article) {
         innerId
         isPinned
@@ -279,7 +278,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:undo_pin_article, thread) do
     """
-    mutation($article: ArticleRefInput!){
+    mutation($article: ArticlePathInput!){
       undoPin#{t(thread)}(article: $article) {
         innerId
         isPinned
@@ -290,7 +289,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:emotion_article, thread) do
     """
-    mutation($article: ArticleRefInput!, $emotion: ArticleEmotion!) {
+    mutation($article: ArticlePathInput!, $emotion: ArticleEmotion!) {
       emotionTo#{t(thread)}(article: $article, emotion: $emotion) {
         innerId
         emotions {
@@ -309,7 +308,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:undo_emotion_article, thread) do
     """
-    mutation($article: ArticleRefInput!, $emotion: ArticleEmotion!) {
+    mutation($article: ArticlePathInput!, $emotion: ArticleEmotion!) {
       undoEmotionTo#{t(thread)}(article: $article, emotion: $emotion) {
         innerId
         emotions {
@@ -349,7 +348,7 @@ defmodule GroupherServer.Test.Helper.Schema do
           html
         }
         community {
-          id
+          slug
         }
       }
     }
@@ -358,7 +357,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:mark_delete_article, thread) do
     """
-    mutation($article: ArticleRefInput!){
+    mutation($article: ArticlePathInput!){
       markDelete#{t(thread)}(article: $article) {
         innerId
         markDelete
@@ -369,7 +368,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:undo_mark_delete_article, thread) do
     """
-    mutation($article: ArticleRefInput!){
+    mutation($article: ArticlePathInput!){
       undoMarkDelete#{t(thread)}(article: $article) {
         innerId
         markDelete
@@ -380,8 +379,8 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:batch_mark_delete_article, thread) do
     """
-    mutation($community: String!, $ids: [ID]!){
-      batchMarkDelete#{t(thread)}s(community: $community, ids: $ids) {
+    mutation($community: String!, $innerIds: [Int!]!){
+      batchMarkDelete#{t(thread)}s(community: $community, innerIds: $innerIds) {
         done
       }
     }
@@ -390,8 +389,8 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:batch_undo_mark_delete_article, thread) do
     """
-    mutation($community: String!, $ids: [ID]!){
-      batchUndoMarkDelete#{t(thread)}s(community: $community, ids: $ids) {
+    mutation($community: String!, $innerIds: [Int!]!){
+      batchUndoMarkDelete#{t(thread)}s(community: $community, innerIds: $innerIds) {
         done
       }
     }
@@ -400,7 +399,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:delete_article, thread) do
     """
-    mutation($article: ArticleRefInput!){
+    mutation($article: ArticlePathInput!){
       delete#{t(thread)}(article: $article) {
         innerId
       }
@@ -410,7 +409,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:update_article, thread) do
     """
-    mutation($article: ArticleRefInput!, $title: String, $body: String, $copyRight: String, $communityTags: [ID]){
+    mutation($article: ArticlePathInput!, $title: String, $body: String, $copyRight: String, $communityTags: [ID]){
       update#{t(thread)}(article: $article, title: $title, body: $body, copyRight: $copyRight, communityTags: $communityTags) {
         innerId
         title
@@ -435,7 +434,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:upvote_article, thread) do
     """
-    mutation($article: ArticleRefInput!) {
+    mutation($article: ArticlePathInput!) {
       upvote#{t(thread)}(article: $article) {
         innerId
         meta {
@@ -451,7 +450,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:undo_upvote_article, thread) do
     """
-    mutation($article: ArticleRefInput!) {
+    mutation($article: ArticlePathInput!) {
       undoUpvote#{t(thread)}(article: $article) {
         innerId
         meta {
@@ -466,7 +465,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:sink_article, thread) do
     """
-    mutation($article: ArticleRefInput!){
+    mutation($article: ArticlePathInput!){
       sink#{t(thread)}(article: $article) {
         innerId
       }
@@ -476,7 +475,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:undo_sink_article, thread) do
     """
-    mutation($article: ArticleRefInput!){
+    mutation($article: ArticlePathInput!){
       undoSink#{t(thread)}(article: $article) {
         innerId
       }
@@ -486,7 +485,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:lock_comment, thread) do
     """
-    mutation($article: ArticleRefInput!) {
+    mutation($article: ArticlePathInput!) {
       lock#{t(thread)}Comment(article: $article) {
         innerId
         title
@@ -497,7 +496,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:unlock_comment, thread) do
     """
-    mutation($article: ArticleRefInput!){
+    mutation($article: ArticlePathInput!){
       undoLock#{t(thread)}Comment(article: $article) {
         innerId
       }
@@ -507,7 +506,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:report_article, thread) do
     """
-    mutation($article: ArticleRefInput!, $reason: String!, $attr: String) {
+    mutation($article: ArticlePathInput!, $reason: String!, $attr: String) {
       report#{t(thread)}(article: $article, reason: $reason, attr: $attr) {
         innerId
         title
@@ -518,7 +517,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:undo_report_article, thread) do
     """
-    mutation($article: ArticleRefInput!) {
+    mutation($article: ArticlePathInput!) {
       undoReport#{t(thread)}(article: $article) {
         innerId
         title
@@ -616,7 +615,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:set_community_tag) do
     """
-    mutation($article: ArticleRefInput!, $communityTagId: ID!) {
+    mutation($article: ArticlePathInput!, $communityTagId: ID!) {
       setCommunityTag(article: $article, communityTagId: $communityTagId) {
         innerId
       }
@@ -626,7 +625,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:unset_community_tag) do
     """
-    mutation($article: ArticleRefInput!, $communityTagId: ID!) {
+    mutation($article: ArticlePathInput!, $communityTagId: ID!) {
       unsetCommunityTag(article: $article, communityTagId: $communityTagId) {
         innerId
         title
@@ -637,7 +636,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:mirror_article) do
     """
-    mutation($article: ArticleRefInput!, $targetCommunity: String!, $communityTags: [ID]) {
+    mutation($article: ArticlePathInput!, $targetCommunity: String!, $communityTags: [ID]) {
         mirrorArticle(article: $article, targetCommunity: $targetCommunity, communityTags: $communityTags) {
           innerId
         }
@@ -647,7 +646,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:unmirror_article) do
     """
-    mutation($article: ArticleRefInput!, $targetCommunity: String!) {
+    mutation($article: ArticlePathInput!, $targetCommunity: String!) {
       unmirrorArticle(article: $article, targetCommunity: $targetCommunity) {
         innerId
       }
@@ -657,7 +656,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:mirror_to_home) do
     """
-    mutation($article: ArticleRefInput!, $communityTags: [ID]) {
+    mutation($article: ArticlePathInput!, $communityTags: [ID]) {
       mirrorToHome(article: $article, communityTags: $communityTags) {
         innerId
       }
@@ -667,7 +666,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:move_article) do
     """
-    mutation($article: ArticleRefInput!, $targetCommunity: String!, $communityTags: [ID]) {
+    mutation($article: ArticlePathInput!, $targetCommunity: String!, $communityTags: [ID]) {
       moveArticle(article: $article, targetCommunity: $targetCommunity, communityTags: $communityTags) {
         innerId
       }
@@ -677,7 +676,7 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:move_to_blackhole) do
     """
-    mutation($article: ArticleRefInput!, $communityTags: [ID]) {
+    mutation($article: ArticlePathInput!, $communityTags: [ID]) {
       moveToBlackhole(article: $article, communityTags: $communityTags) {
         innerId
       }
@@ -687,9 +686,9 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:create_comment) do
     """
-    mutation($community: String!, $thread: Thread!, $id: ID!, $body: String!) {
-      createComment(community: $community, thread: $thread, id: $id, body: $body) {
-        id
+    mutation($article: ArticlePathInput!, $body: String!) {
+      createComment(article: $article, body: $body) {
+        innerId
         bodyHtml
       }
     }
@@ -698,9 +697,9 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:update_comment) do
     """
-    mutation($id: ID!, $body: String!) {
-      updateComment(id: $id, body: $body) {
-        id
+    mutation($comment: CommentPathInput!, $body: String!) {
+      updateComment(comment: $comment, body: $body) {
+        innerId
         bodyHtml
       }
     }
@@ -709,9 +708,9 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:delete_comment) do
     """
-    mutation($id: ID!) {
-      deleteComment(id: $id) {
-        id
+    mutation($comment: CommentPathInput!) {
+      deleteComment(comment: $comment) {
+        innerId
         isDeleted
       }
     }
@@ -720,9 +719,9 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:reply_comment) do
     """
-    mutation($id: ID!, $body: String!) {
-      replyComment(id: $id, body: $body) {
-        id
+    mutation($comment: CommentPathInput!, $body: String!) {
+      replyComment(comment: $comment, body: $body) {
+        innerId
         bodyHtml
       }
     }
@@ -731,9 +730,9 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:upvote_comment) do
     """
-    mutation($id: ID!) {
-      upvoteComment(id: $id) {
-        id
+    mutation($comment: CommentPathInput!) {
+      upvoteComment(comment: $comment) {
+        innerId
         upvotesCount
         viewerHasUpvoted
       }
@@ -743,9 +742,9 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:undo_upvote_comment) do
     """
-    mutation($id: ID!) {
-      undoUpvoteComment(id: $id) {
-        id
+    mutation($comment: CommentPathInput!) {
+      undoUpvoteComment(comment: $comment) {
+        innerId
         upvotesCount
         viewerHasUpvoted
       }
@@ -753,11 +752,39 @@ defmodule GroupherServer.Test.Helper.Schema do
     """
   end
 
+  def m(:report_comment) do
+    """
+    mutation($comment: CommentPathInput!, $reason: String!, $attr: String) {
+      reportComment(comment: $comment, reason: $reason, attr: $attr) {
+        innerId
+        viewerHasReported
+        meta {
+          reportedCount
+        }
+      }
+    }
+    """
+  end
+
+  def m(:undo_report_comment) do
+    """
+    mutation($comment: CommentPathInput!) {
+      undoReportComment(comment: $comment) {
+        innerId
+        viewerHasReported
+        meta {
+          reportedCount
+        }
+      }
+    }
+    """
+  end
+
   def m(:pin_comment) do
     """
-    mutation($id: ID!){
-      pinComment(id: $id) {
-        id
+    mutation($comment: CommentPathInput!){
+      pinComment(comment: $comment) {
+        innerId
         isPinned
       }
     }
@@ -766,9 +793,9 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:undo_pin_comment) do
     """
-    mutation($id: ID!){
-      undoPinComment(id: $id) {
-        id
+    mutation($comment: CommentPathInput!){
+      undoPinComment(comment: $comment) {
+        innerId
         isPinned
       }
     }
@@ -777,9 +804,9 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:emotion_to_comment) do
     """
-    mutation($id: ID!, $emotion: CommentEmotion!) {
-      emotionToComment(id: $id, emotion: $emotion) {
-        id
+    mutation($comment: CommentPathInput!, $emotion: CommentEmotion!) {
+      emotionToComment(comment: $comment, emotion: $emotion) {
+        innerId
         emotions {
           type
           count
@@ -796,9 +823,9 @@ defmodule GroupherServer.Test.Helper.Schema do
 
   def m(:undo_emotion_to_comment) do
     """
-    mutation($id: ID!, $emotion: CommentEmotion!) {
-      undoEmotionToComment(id: $id, emotion: $emotion) {
-        id
+    mutation($comment: CommentPathInput!, $emotion: CommentEmotion!) {
+      undoEmotionToComment(comment: $comment, emotion: $emotion) {
+        innerId
         emotions {
           type
           count

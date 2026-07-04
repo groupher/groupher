@@ -10,22 +10,24 @@ defmodule GroupherServer.CMS.Comments.Write do
 
   import GroupherServer.CMS.Artiment.Matcher
 
-  alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.Accounts.Model.User
 
-  alias CMS.FrontDesk
+  alias CMS.{CanCan, FrontDesk}
 
-  alias Accounts.Model.User
-  alias CMS.Comments.States
-  alias CMS.Comments.Helper, as: CommentHelper
+  alias CMS.Comments.{Numbering, Participants, Replies, States}
   alias CMS.Events
   alias CMS.Artiment.Enums
-  alias CMS.Model.{Comment, Community, PinnedComment, Post}
+  alias CMS.Model.{Comment, CommentReply, Community, Embeds, PinnedComment, Post}
 
   alias Helper.{ContentPipeline, Datetime, Multi, Later, ORM, T}
 
   @delete_hint Comment.delete_hint()
 
   @archive_threshold get_config(:article, :archive_threshold)
+  @max_parent_replies_count Comment.max_parent_replies_count()
+  @default_emotions Embeds.CommentEmotion.default_emotions()
+  @default_comment_meta Embeds.CommentMeta.default_meta()
 
   @article_cat Enums.cat_values() |> Enum.into(%{}, &{&1, &1})
   @article_status Enums.status_values() |> Enum.into(%{}, &{&1, &1})
@@ -38,10 +40,10 @@ defmodule GroupherServer.CMS.Comments.Write do
            FrontDesk.article(community_slug, thread, article_id,
              preload: [[author: :user], :community]
            ),
-         true <- CommentHelper.can_comment?(article, user) do
+         {:ok, _} <- CanCan.allow_comment(article, user) do
       Multi.new()
       |> Multi.run(:create_comment, fn _, _ ->
-        CommentHelper.do_create_comment(body, info.foreign_key, article, user)
+        insert_comment(body, thread, info.foreign_key, article, user)
       end)
       |> Multi.run(:update_comments_count, fn _, %{create_comment: comment} ->
         {:ok, article} = FrontDesk.article_of(comment)
@@ -51,7 +53,7 @@ defmodule GroupherServer.CMS.Comments.Write do
         set_question_flag_ifneed(article, comment)
       end)
       |> Multi.run(:add_participator, fn _, _ ->
-        CommentHelper.add_participant_to_article(article, user)
+        Participants.add_to_article(article, user)
       end)
       |> Multi.run(:update_article_active_timestamp, fn _, %{create_comment: comment} ->
         case comment.author_id == article.author.user.id do
@@ -71,7 +73,68 @@ defmodule GroupherServer.CMS.Comments.Write do
       |> Repo.transaction()
       |> result()
     else
-      false -> raise_error(:article_comments_locked, "this article is forbid comment")
+      {:error, :article_comments_locked} ->
+        raise_error(:article_comments_locked, "this article is forbid comment")
+    end
+  end
+
+  @spec reply(T.id(), String.t(), User.t()) :: T.domain_res(Comment.t())
+  def reply(comment_id, body, %User{} = user) do
+    with {:ok, target_comment} <- FrontDesk.get_by(Comment, %{id: comment_id, is_deleted: false}),
+         replying_comment <- Repo.preload(target_comment, reply_to_comment: :author),
+         {:ok, thread} <- FrontDesk.thread_of(replying_comment),
+         {:ok, article} <- FrontDesk.article_of(replying_comment, preload: [author: :user]),
+         {:ok, _} <- CanCan.allow_comment(article, user),
+         {:ok, info} <- match(thread),
+         parent_comment <- Replies.root_comment(replying_comment) do
+      Multi.new()
+      |> Multi.run(:create_reply_comment, fn _, _ ->
+        insert_comment(body, thread, info.foreign_key, article, user, replying_comment)
+      end)
+      |> Multi.run(:update_comments_count, fn _, %{create_reply_comment: replied_comment} ->
+        {:ok, article} = FrontDesk.article_of(replied_comment)
+        ORM.inc(article, :comments_count)
+      end)
+      |> Multi.run(:create_comment_reply, fn _, %{create_reply_comment: replied_comment} ->
+        CommentReply
+        |> ORM.create(%{comment_id: replied_comment.id, reply_to_comment_id: replying_comment.id})
+      end)
+      |> Multi.run(:add_participator, fn _, _ ->
+        Participants.add_to_article(article, user)
+      end)
+      |> Multi.run(:set_meta_flag, fn _, %{create_reply_comment: replied_comment} ->
+        update_reply_to_others_state(parent_comment, replying_comment, replied_comment)
+      end)
+      |> Multi.run(:add_reply_to_comment, fn _, %{create_reply_comment: replied_comment} ->
+        replied_comment
+        |> Repo.preload(:reply_to_comment)
+        |> Ecto.Changeset.change()
+        |> Ecto.Changeset.put_assoc(:reply_to_comment, replying_comment)
+        |> Repo.update()
+      end)
+      |> Multi.run(:add_replies_ifneed, fn _, %{add_reply_to_comment: replied_comment} ->
+        add_replies_ifneed(parent_comment, replied_comment)
+      end)
+      |> Multi.run(:inc_replies_count, fn _, %{add_reply_to_comment: replied_comment} ->
+        with {:ok, _parent_comment} <- ORM.inc(parent_comment, :replies_count) do
+          {:ok, replied_comment}
+        end
+      end)
+      |> Multi.run(:after_events, fn _, %{add_reply_to_comment: replied_comment} ->
+        Later.run(
+          {Events, :emit, [:notify_reply, %{reply_comment: replied_comment, from_user: user}]}
+        )
+
+        Later.run({Events, :emit, [:sync_mentions, %{artiment: replied_comment}]})
+      end)
+      |> Repo.transaction()
+      |> result()
+    else
+      {:error, :article_comments_locked} ->
+        raise_error(:article_comments_locked, "this article is forbid comment")
+
+      {:error, error} ->
+        {:error, error}
     end
   end
 
@@ -121,7 +184,7 @@ defmodule GroupherServer.CMS.Comments.Write do
 
   @spec delete(Comment.t()) :: T.domain_res(Comment.t())
   def delete(%{is_archived: true}),
-    do: raise_error(:archived, "article is archived, can not be edit or delete")
+    do: raise_error(:archived, "comment is archived, can not be edit or delete")
 
   def delete(%Comment{} = comment) do
     Multi.new()
@@ -158,9 +221,10 @@ defmodule GroupherServer.CMS.Comments.Write do
   defp do_mark_comment_solution(post, %Comment{} = comment, %User{} = user, is_solution) do
     case user.id == post.author.user.id do
       true ->
-        batch_update_solution_flag(post, false)
-
         Multi.new()
+        |> Multi.run(:clear_solution_flags, fn _, _ ->
+          batch_update_solution_flag(post, false)
+        end)
         |> Multi.run(:pin_comment, fn _, _ ->
           if is_solution do
             States.pin(comment.id)
@@ -259,7 +323,76 @@ defmodule GroupherServer.CMS.Comments.Write do
     end
   end
 
+  defp insert_comment(
+         body,
+         thread,
+         foreign_key,
+         article,
+         %User{id: user_id},
+         reply_to_comment \\ nil
+       ) do
+    with {:ok, payload} <- ContentPipeline.parse(%{body: body}),
+         {:ok, inner_id} <- Numbering.next_inner_id(article, foreign_key),
+         {:ok, floor} <- Numbering.next_floor(article, foreign_key) do
+      attrs = %{
+        author_id: user_id,
+        body: payload.json,
+        body_html: payload.html,
+        emotions: @default_emotions,
+        inner_id: inner_id,
+        floor: floor,
+        is_article_author: user_id == article.author.user.id,
+        thread: thread,
+        meta: @default_comment_meta,
+        root_comment_id: root_comment_id(reply_to_comment)
+      }
+
+      Comment |> ORM.create(Map.put(attrs, foreign_key, article.id))
+    end
+  end
+
+  defp root_comment_id(nil), do: nil
+  defp root_comment_id(%{root_comment_id: root_id}) when not is_nil(root_id), do: root_id
+  defp root_comment_id(%{id: reply_to_comment_id}), do: reply_to_comment_id
+
+  defp add_replies_ifneed(
+         %Comment{replies: replies} = parent_comment,
+         %Comment{} = replied_comment
+       )
+       when length(replies) < @max_parent_replies_count do
+    new_replies =
+      replies
+      |> List.insert_at(length(replies), replied_comment)
+      |> Enum.slice(0, @max_parent_replies_count)
+
+    ORM.update_embed(parent_comment, :replies, new_replies)
+  end
+
+  defp add_replies_ifneed(%Comment{} = parent_comment, _) do
+    {:ok, parent_comment}
+  end
+
+  defp update_reply_to_others_state(parent_comment, replying_comment, replied_comment) do
+    replying_comment = replying_comment |> Repo.preload(:author)
+    parent_comment = parent_comment |> Repo.preload(:author)
+    is_reply_to_others = parent_comment.author.id !== replying_comment.author.id
+
+    case is_reply_to_others do
+      true ->
+        new_meta =
+          replied_comment.meta
+          |> Map.from_struct()
+          |> Map.merge(%{is_reply_to_others: is_reply_to_others})
+
+        ORM.update(replied_comment, %{meta: new_meta})
+
+      false ->
+        {:ok, :pass}
+    end
+  end
+
   defp result({:ok, %{set_question_flag_ifneed: result}}), do: {:ok, result}
+  defp result({:ok, %{inc_replies_count: result}}), do: {:ok, result}
   defp result({:ok, %{delete_comment: result}}), do: {:ok, result}
   defp result({:ok, %{mark_solution: result}}), do: {:ok, result}
   defp result({:ok, %{sync_embed_replies: result}}), do: {:ok, result}

@@ -23,8 +23,9 @@ defmodule GroupherServer.Test.Accounts.ReactedContents do
 
       assert articles |> is_valid_pagination?(:raw)
       assert post.id == article_post |> Map.get(:id)
+      assert post.inner_id == article_post |> Map.get(:inner_id)
 
-      assert [:author, :id, :thread, :title, :upvotes_count] |> Enum.sort() ==
+      assert [:author, :id, :inner_id, :thread, :title, :upvotes_count] |> Enum.sort() ==
                article_post |> Map.keys() |> Enum.sort()
     end
 

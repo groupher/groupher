@@ -46,11 +46,11 @@ const RepliesList: FC<TProps> = ({
       )}
       {entries.map((comment) => {
         return (
-          <div key={comment.id} style={REPLY_VISIBILITY_STYLE}>
+          <div key={comment.innerId} style={REPLY_VISIBILITY_STYLE}>
             <Comment
               apiMode={apiMode}
               data={comment}
-              isFolded={foldedIdSet.has(comment.id)}
+              isFolded={foldedIdSet.has(comment.innerId)}
               showInnerRef
               isReply
             />

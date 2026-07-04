@@ -133,6 +133,6 @@ defmodule GroupherServer.CMS.Helper.EmotionToggle do
   end
 
   defp user_id_match?(user, user_id) do
-    Map.get(user, :user_id) == user_id || Map.get(user, "user_id") == user_id
+    Map.get(user, :user_id) == user_id
   end
 end

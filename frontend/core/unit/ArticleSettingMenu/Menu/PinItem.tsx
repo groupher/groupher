@@ -25,13 +25,13 @@ export default function PinItem() {
   }, [article.isPinned])
 
   const handlePin = useCallback(() => {
-    const articleRef = {
+    const articlePath = {
       innerId: article.innerId,
       community: article.communitySlug,
       thread: article.meta.thread,
     }
 
-    const action = !pin ? pinPost({ article: articleRef }) : undoPinPost({ article: articleRef })
+    const action = !pin ? pinPost({ article: articlePath }) : undoPinPost({ article: articlePath })
 
     action.then((result) => {
       if (result.error) {

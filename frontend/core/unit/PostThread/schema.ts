@@ -20,9 +20,9 @@ const getPagedArticlesSchema = (thread) => {
 const getArticleFreshSchema = () => {
   // TODO: commentParticipants
   return gql`
-    query post($article: ArticleRefInput!, $userHasLogin: Boolean!) {
+    query post($article: ArticlePathInput!, $userHasLogin: Boolean!) {
       post(article: $article) {
-        id
+        innerId
         views
         upvotesCount
         commentsCount

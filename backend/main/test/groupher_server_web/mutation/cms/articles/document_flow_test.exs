@@ -59,7 +59,11 @@ defmodule GroupherServer.Test.Mutation.Articles.DocumentFlow do
         assert is_map(created["document"]["markdownToc"])
 
         update_vars = %{
-          article: %{inner_id: created["innerId"], community: community.slug},
+          article: %{
+            inner_id: created["innerId"],
+            community: community.slug,
+            thread: unquote(thread |> to_string() |> String.upcase())
+          },
           title: "#{unquote(thread)}-updated-#{unique}",
           body: @plate_body_updated
         }
@@ -69,7 +73,14 @@ defmodule GroupherServer.Test.Mutation.Articles.DocumentFlow do
         assert updated["document"]["json"] == @plate_body_updated
         assert updated["title"] == update_vars.title
 
-        query_vars = %{article: %{inner_id: created["innerId"], community: community.slug}}
+        query_vars = %{
+          article: %{
+            inner_id: created["innerId"],
+            community: community.slug,
+            thread: unquote(thread |> to_string() |> String.upcase())
+          }
+        }
+
         queried = user_conn |> gq_query(article_query(unquote(query_field)), query_vars)
 
         assert queried["document"]["json"] == @plate_body_updated
@@ -99,7 +110,7 @@ defmodule GroupherServer.Test.Mutation.Articles.DocumentFlow do
 
   defp update_mutation(operation) do
     """
-    mutation($article: ArticleRefInput!, $title: String, $body: String) {
+    mutation($article: ArticlePathInput!, $title: String, $body: String) {
       #{operation}(article: $article, title: $title, body: $body) {
         innerId
         title
@@ -118,7 +129,7 @@ defmodule GroupherServer.Test.Mutation.Articles.DocumentFlow do
 
   defp article_query(field_name) do
     """
-    query($article: ArticleRefInput!) {
+    query($article: ArticlePathInput!) {
       #{field_name}(article: $article) {
         innerId
         title

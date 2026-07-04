@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   @threads get_config(:article, :threads)
 
   @export_author_keys [:id, :login, :nickname, :avatar]
-  @export_article_keys [:id, :title, :digest, :upvotes_count, :views]
+  @export_article_keys [:id, :inner_id, :title, :digest, :upvotes_count, :views]
   @export_report_keys [
     :id,
     :deal_with,
@@ -148,7 +148,7 @@ defmodule GroupherServer.CMS.AbuseReports.List do
   end
 
   defp extract_article_comment_info(%AbuseReport{} = report) do
-    keys = [:id, :upvotes_count, :body_html]
+    keys = [:id, :inner_id, :floor, :upvotes_count, :body_html]
     author = Map.take(report.comment.author, @export_author_keys)
 
     comment = Map.take(report.comment, keys)

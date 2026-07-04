@@ -78,7 +78,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     @query """
     query($slug: String!, $incViews: Boolean) {
       community(slug: $slug, incViews: $incViews) {
-        id
+        slug
         title
         communityTagsCount
         views
@@ -127,7 +127,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       variables = %{slug: "kubernetes"}
       results = guest_conn |> gq_query(@query, variables)
 
-      assert results["id"] == aka_results["id"]
+      assert results["slug"] == aka_results["slug"]
     end
 
     test "community query exposes default kanban boards", ~m(guest_conn user)a do
@@ -160,7 +160,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     query($filter: CommunitiesFilter!) {
       pagedCommunities(filter: $filter) {
         entries {
-          id
+          slug
           title
           index
           viewerHasSubscribed
@@ -195,8 +195,9 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
-      # 1 is for setup community
-      assert results["totalCount"] == 5 + 1
+      # Other async suites can create communities in the shared test database.
+      # This query has no filter, so assert the records owned by this test are present.
+      assert results["totalCount"] >= 5 + 1
     end
 
     test "community has default index = 100000", ~m(guest_conn user)a do
@@ -245,7 +246,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       variables = %{filter: %{page: 1, size: 20}}
       results = guest_conn |> gq_query(@query, variables)
 
-      assert results["totalCount"] == 10 + 1
+      # Same unfiltered query as above: keep the assertion scoped to this test's minimum.
+      assert results["totalCount"] >= 10 + 1
     end
   end
 
@@ -261,7 +263,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
             nickname
           }
           communities {
-            id
+            slug
             title
           }
         }
@@ -299,7 +301,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       results = guest_conn |> gq_query(@query, variables)
       contain_communities = results["entries"] |> List.first() |> Map.get("communities")
 
-      assert contain_communities |> List.first() |> Map.get("id") == to_string(community.id)
+      assert contain_communities |> List.first() |> Map.get("slug") == community.slug
     end
   end
 
@@ -307,7 +309,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     @query """
     query($slug: String!) {
       community(slug: $slug, title: $title) {
-        id
+        slug
         title
         desc
       }
@@ -321,7 +323,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     @query """
     query($slug: String!) {
       community(slug: $slug) {
-        id
+        slug
         title
         desc
         dashboard {
@@ -402,7 +404,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     @query """
     query($slug: String!) {
       community(slug: $slug) {
-        id
+        slug
         moderatorsCount
       }
     }
@@ -417,13 +419,13 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       results = guest_conn |> gq_query(@query, variables)
       moderators_count = results["moderatorsCount"]
 
-      assert results["id"] == to_string(community.id)
+      assert results["slug"] == community.slug
       assert moderators_count == assert_v(:inner_page_size) + 1
     end
 
     @query """
-    query($id: ID!, $filter: PagiFilter!) {
-      pagedCommunityModerators(id: $id, filter: $filter) {
+    query($community: String!, $filter: PagiFilter!) {
+      pagedCommunityModerators(community: $community, filter: $filter) {
         entries {
           nickname
         }
@@ -444,7 +446,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
         &CMS.Communities.add_moderator(community, %User{id: &1.id}, cur_user)
       )
 
-      variables = %{id: community.id, filter: %{page: 1, size: 10}}
+      variables = %{community: community.slug, filter: %{page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
@@ -455,7 +457,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     @query """
     query($slug: String!) {
       community(slug: $slug) {
-        id
+        slug
         subscribersCount
       }
     }
@@ -473,8 +475,8 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     end
 
     @query """
-    query($id: ID, $community: String, $filter: PagiFilter!) {
-      pagedCommunitySubscribers(id: $id, community: $community, filter: $filter) {
+    query($community: String!, $filter: PagiFilter!) {
+      pagedCommunitySubscribers(community: $community, filter: $filter) {
         entries {
           id
           nickname
@@ -487,7 +489,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       }
     }
     """
-    test "guest user can get paged subscribers by community id", ~m(guest_conn community)a do
+    test "guest user can get paged subscribers by community slug", ~m(guest_conn community)a do
       {:ok, users} = db_insert_multi(:user, 25)
 
       Enum.each(
@@ -495,13 +497,14 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
         &CMS.Communities.subscribe(community, %User{id: &1.id})
       )
 
-      variables = %{id: community.id, filter: %{page: 1, size: 10}}
+      variables = %{community: community.slug, filter: %{page: 1, size: 10}}
       results = guest_conn |> gq_query(@query, variables)
 
       assert results |> is_valid_pagination?
     end
 
-    test "guest user can get paged subscribers by community slug", ~m(guest_conn community)a do
+    test "guest user can get paged subscribers after duplicate subscribes",
+         ~m(guest_conn community)a do
       {:ok, users} = db_insert_multi(:user, 25)
 
       Enum.each(

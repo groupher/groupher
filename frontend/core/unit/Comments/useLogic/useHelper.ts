@@ -24,14 +24,15 @@ export default function useHelper(): TRet {
   const comments = commentsStore
 
   const updateOneComment = (comment: TComment, fields = {}): void => {
-    const { id, replyToId } = comment
+    const { innerId, replyToComment } = comment
+    const replyToCommentId = replyToComment?.innerId
     const { entries } = comments.pagedComments
 
-    if (comments.mode === MODE.REPLIES && replyToId) {
-      const parentIndex = findIndex(propEq(replyToId, 'id'), entries)
+    if (comments.mode === MODE.REPLIES && replyToCommentId) {
+      const parentIndex = findIndex(propEq(replyToCommentId, 'innerId'), entries)
       if (parentIndex < 0) return
       const parentComment = entries[parentIndex]
-      const replyIndex = findIndex(propEq(id, 'id'), parentComment.replies)
+      const replyIndex = findIndex(propEq(innerId, 'innerId'), parentComment.replies)
       if (replyIndex < 0) return
       const replyComment = parentComment.replies[replyIndex]
       // @ts-expect-error
@@ -43,7 +44,7 @@ export default function useHelper(): TRet {
       // }
     } else {
       // timeline & replies parent comment
-      const index = findIndex(propEq(id, 'id'), entries)
+      const index = findIndex(propEq(innerId, 'innerId'), entries)
 
       if (index < 0) return
       const comment = entries[index]
@@ -56,21 +57,22 @@ export default function useHelper(): TRet {
   }
 
   const upvoteEmotion = (comment: TComment, emotions: TEmotion[]): void => {
-    const { id, replyToId } = comment
+    const { innerId, replyToComment } = comment
+    const replyToCommentId = replyToComment?.innerId
     const { entries } = comments.pagedComments
     const nextComments = [...entries]
 
-    if (comments.mode === MODE.REPLIES && replyToId) {
-      const parentIndex = findIndex(propEq(replyToId, 'id'), entries)
+    if (comments.mode === MODE.REPLIES && replyToCommentId) {
+      const parentIndex = findIndex(propEq(replyToCommentId, 'innerId'), entries)
       if (parentIndex < 0) return
       const parentComment = entries[parentIndex]
-      const replyIndex = findIndex(propEq(id, 'id'), parentComment.replies)
+      const replyIndex = findIndex(propEq(innerId, 'innerId'), parentComment.replies)
       if (replyIndex < 0) return
       const nextReplies = [...(parentComment.replies || [])]
       nextReplies[replyIndex] = { ...nextReplies[replyIndex], emotions }
       nextComments[parentIndex] = { ...parentComment, replies: nextReplies }
     } else {
-      const index = findIndex(propEq(id, 'id'), entries)
+      const index = findIndex(propEq(innerId, 'innerId'), entries)
       if (index < 0) return
       nextComments[index] = { ...nextComments[index], emotions }
     }
@@ -87,11 +89,11 @@ export default function useHelper(): TRet {
     const { entries } = comments.pagedComments
 
     if (comments.mode === MODE.REPLIES && parentId) {
-      const parentIndex = findIndex(propEq(parentId, 'id'), entries)
+      const parentIndex = findIndex(propEq(parentId, 'innerId'), entries)
 
       if (parentIndex < 0) return
       const curReplies = entries[parentIndex].replies || []
-      const uniqReplies = uniqBy(prop('id'), [...curReplies, ...replies]) as TComment[]
+      const uniqReplies = uniqBy(prop('innerId'), [...curReplies, ...replies]) as TComment[]
 
       const entriesPatch = entries.map((item, index) =>
         index === parentIndex ? { ...item, replies: uniqReplies } : item,
@@ -125,7 +127,7 @@ export default function useHelper(): TRet {
       case EDIT_MODE.UPDATE: {
         commentsStore.commit({
           showUpdateEditor: false,
-          updateId: null,
+          updateInnerId: null,
           updateBody: '{}',
           publishDone: false,
         })
