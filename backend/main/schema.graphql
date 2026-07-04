@@ -103,6 +103,9 @@ type RootQueryType {
   "community asset storage usage"
   communityAssetUsage(community: String!): CommunityAssetUsage
 
+  "paged article references for one community asset"
+  communityAssetRefs(community: String!, assetId: ID!, filter: PagiFilter): PagedArticleDocumentAssetRefs
+
   "Get all passport rules available to the current user."
   allPassportRules: AllRules
 
@@ -1101,7 +1104,6 @@ type CommunityAsset {
   deletedAt: DateTime
   community: Community
   uploader: User
-  articleRefs: [ArticleDocumentAssetRef]
   insertedAt: DateTime
   updatedAt: DateTime
 }
@@ -1935,6 +1937,14 @@ type PagedMentions {
 
 type PagedCommunityAssets {
   entries: [CommunityAsset]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type PagedArticleDocumentAssetRefs {
+  entries: [ArticleDocumentAssetRef]
   totalCount: Int
   pageSize: Int
   totalPages: Int

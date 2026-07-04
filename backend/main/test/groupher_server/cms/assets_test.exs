@@ -201,7 +201,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert hd(refs).source in ["sync-a.png", "sync-b.png"]
     end
 
-    test "caps refs returned for one asset", ~m(community post user)a do
+    test "paginates refs for one asset", ~m(community post user)a do
       {:ok, asset} = CMS.Assets.register(community, image_asset_attrs("many-refs.png", 70), user)
 
       asset_refs =
@@ -217,9 +217,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
       assert length(refs) == 105
 
-      {:ok, capped_refs} = CMS.Assets.refs(asset)
+      {:ok, paged_refs} = CMS.Assets.refs(community, asset.id, %{page: 1, size: 20})
 
-      assert length(capped_refs) == 100
+      assert length(paged_refs.entries) == 20
+      assert paged_refs.total_count == 105
+      assert paged_refs.page_number == 1
     end
 
     test "does not delete assets that are still referenced", ~m(community post user)a do

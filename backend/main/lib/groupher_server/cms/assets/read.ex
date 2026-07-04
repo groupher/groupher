@@ -14,7 +14,6 @@ defmodule GroupherServer.CMS.Assets.Read do
 
   @default_page 1
   @default_size 20
-  @refs_limit 100
 
   @spec page(Community.t(), map() | nil) :: T.domain_res(T.paged_data())
   def page(%Community{id: community_id}, filter) do
@@ -45,14 +44,17 @@ defmodule GroupherServer.CMS.Assets.Read do
     {:ok, normalize_usage_result(result)}
   end
 
-  @spec refs(CommunityAsset.t()) :: T.domain_res(list(ArticleDocumentAssetRef.t()))
-  def refs(%CommunityAsset{id: asset_id}) do
-    ArticleDocumentAssetRef
-    |> where([ref], ref.asset_id == ^asset_id)
-    |> order_by([ref], desc: ref.inserted_at, desc: ref.id)
-    |> limit(^@refs_limit)
-    |> Repo.all()
-    |> then(&{:ok, &1})
+  @spec refs(Community.t(), T.id(), map() | nil) :: T.domain_res(T.paged_data())
+  def refs(%Community{id: community_id}, asset_id, filter) do
+    %{page: page, size: size} = normalize_filter(filter)
+
+    with {:ok, %CommunityAsset{id: asset_id}} <- find_active_asset(community_id, asset_id) do
+      ArticleDocumentAssetRef
+      |> where([ref], ref.community_id == ^community_id and ref.asset_id == ^asset_id)
+      |> order_by([ref], desc: ref.inserted_at, desc: ref.id)
+      |> ORM.paginator(page: page, size: size)
+      |> then(&{:ok, &1})
+    end
   end
 
   defp normalize_filter(nil), do: %{page: @default_page, size: @default_size}
@@ -71,4 +73,17 @@ defmodule GroupherServer.CMS.Assets.Read do
   end
 
   defp normalize_usage_result(result), do: result
+
+  defp find_active_asset(community_id, asset_id) do
+    CommunityAsset
+    |> where([asset], asset.id == ^asset_id)
+    |> where([asset], asset.community_id == ^community_id)
+    |> where([asset], is_nil(asset.deleted_at))
+    |> where([asset], asset.status == :active)
+    |> Repo.one()
+    |> case do
+      nil -> {:error, {:not_exist, "asset not found"}}
+      asset -> {:ok, asset}
+    end
+  end
 end

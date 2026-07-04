@@ -34,6 +34,14 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Assets.page(community, Map.get(args, :filter))
   end
 
+  def community_asset_refs(
+        _root,
+        %{community: %Community{} = community, asset_id: asset_id} = args,
+        _info
+      ) do
+    CMS.Assets.refs(community, asset_id, Map.get(args, :filter))
+  end
+
   def community_asset_usage(_root, %{community: %Community{} = community}, _info) do
     CMS.Assets.usage(community)
   end

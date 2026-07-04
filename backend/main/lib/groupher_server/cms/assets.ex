@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.Assets do
   """
 
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.Model.{Community, CommunityAsset}
+  alias GroupherServer.CMS.Model.Community
   alias Helper.T
 
   alias __MODULE__.{Read, Write}
@@ -28,8 +28,9 @@ defmodule GroupherServer.CMS.Assets do
   @spec usage(Community.t()) :: T.domain_res(map())
   def usage(%Community{} = community), do: Read.usage(community)
 
-  @spec refs(CommunityAsset.t()) :: T.domain_res(list())
-  def refs(%CommunityAsset{} = asset), do: Read.refs(asset)
+  @spec refs(Community.t(), T.id(), map() | nil) :: T.domain_res(T.paged_data())
+  def refs(%Community{} = community, asset_id, filter \\ nil),
+    do: Read.refs(community, asset_id, filter)
 
   @spec register(Community.t(), map(), User.t() | nil) :: T.domain_res(CommunityAsset.t())
   def register(%Community{} = community, attrs, user \\ nil) do

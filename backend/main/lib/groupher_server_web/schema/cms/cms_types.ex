@@ -346,10 +346,6 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:community, :community, resolve: dataloader(CMS, :community))
     field(:uploader, :user, resolve: dataloader(CMS, :uploader))
 
-    field(:article_refs, list_of(:article_document_asset_ref),
-      resolve: fn asset, _, _ -> CMS.Assets.refs(asset) end
-    )
-
     timestamp_fields()
   end
 
@@ -926,6 +922,11 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :paged_community_assets do
     field(:entries, list_of(:community_asset))
+    pagination_fields()
+  end
+
+  object :paged_article_document_asset_refs do
+    field(:entries, list_of(:article_document_asset_ref))
     pagination_fields()
   end
 
