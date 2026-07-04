@@ -2,6 +2,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
   @moduledoc false
   use GroupherServerWeb.ConnCase, async: false
   @moduletag timeout: 300_000
+  @moduletag :later
   @default_threads [:post, :changelog, :kanban, :doc, :about]
 
   import Ecto.Query, warn: false
@@ -17,7 +18,6 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
   require CMS.Const
 
   describe "[full community seeds]" do
-    @tag :skip_ci
     test "seeds full community data including about dashboard" do
       allowed_cats = [nil | Enums.cat_values()]
       allowed_states = [nil, :backlog, :todo, :wip, :done, :resolved, :reject]
