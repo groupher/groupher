@@ -5,7 +5,7 @@ fe.install:
 
 # landing
 fe.dev.landing:
-	yarn run dev:landing
+	PORT=3002 NEXT_PUBLIC_SITE_URL=http://localhost:3002 yarn run dev:landing
 
 fe.build.landing:
 	yarn run build:prod:landing
@@ -22,7 +22,7 @@ inspire: fe.dev.inspire
 
 # main
 fe.dev.main:
-	yarn run dev:main
+	PORT=3000 NEXT_PUBLIC_SITE_URL=http://localhost:3000 yarn run dev:main
 
 fe.build.main:
 	yarn run build:prod:main
@@ -32,7 +32,7 @@ fe.serve.main:
 
 # dashboard
 fe.dev.dashboard:
-	yarn run dev:dashboard
+	PORT=3001 NEXT_PUBLIC_SITE_URL=http://localhost:3001/dashboard yarn run dev:dashboard
 
 fe.build.dashboard:
 	yarn run build:prod:dashboard
