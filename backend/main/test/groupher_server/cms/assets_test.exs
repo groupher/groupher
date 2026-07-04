@@ -158,6 +158,35 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert article_refs(:post, post.id) == []
     end
 
+    test "rejects cover usages in body asset refs without changing cover refs",
+         ~m(community post user)a do
+      cover_asset = image_asset_attrs("body-usage-cover.png", 100)
+
+      assert {:ok, %{body: [], cover: [cover_ref]}} =
+               CMS.Assets.sync_article_refs(community, post, %{
+                 cur_user: user,
+                 cover_asset: cover_asset
+               })
+
+      for usage <- [:cover, "cover_dark"] do
+        assert {:error, {:custom, "asset usage is invalid"}} =
+                 CMS.Assets.sync_article_refs(community, post, %{
+                   cur_user: user,
+                   asset_refs: [
+                     %{
+                       asset: image_asset_attrs("invalid-body-#{usage}.png", 40),
+                       usage: usage
+                     }
+                   ]
+                 })
+
+        assert [%ArticleDocumentAssetRef{id: ref_id, usage: :cover}] =
+                 article_refs(:post, post.id)
+
+        assert ref_id == cover_ref.id
+      end
+    end
+
     test "serializes concurrent ref syncs for the same document", ~m(community post user)a do
       parent = self()
 

@@ -199,7 +199,7 @@ defmodule GroupherServer.CMS.Assets.Write do
         inputs = get_attr(attrs, :asset_refs) || []
 
         with {:ok, usages} <- replace_usages_for_inputs(inputs) do
-          replace_refs(document, usages, inputs, base, user)
+          replace_refs(document, usages, inputs, base, user, &normalize_body_usage/1)
         end
     end
   end
@@ -208,7 +208,7 @@ defmodule GroupherServer.CMS.Assets.Write do
     attrs
     |> cover_ref_specs()
     |> Enum.reduce_while({:ok, []}, fn {usage, inputs}, {:ok, acc} ->
-      case replace_refs(document, [usage], inputs, base, user) do
+      case replace_refs(document, [usage], inputs, base, user, &normalize_usage/1) do
         {:ok, refs} -> {:cont, {:ok, acc ++ refs}}
         {:error, _} = error -> {:halt, error}
       end
@@ -251,7 +251,14 @@ defmodule GroupherServer.CMS.Assets.Write do
     end
   end
 
-  defp replace_refs(%ArticleDocument{id: document_id}, usages, inputs, base, user) do
+  defp replace_refs(
+         %ArticleDocument{id: document_id},
+         usages,
+         inputs,
+         base,
+         user,
+         normalize_usage_fun
+       ) do
     ArticleDocumentAssetRef
     |> where([ref], ref.article_document_id == ^document_id and ref.usage in ^usages)
     |> Repo.delete_all()
@@ -259,7 +266,7 @@ defmodule GroupherServer.CMS.Assets.Write do
     inputs
     |> Enum.with_index()
     |> Enum.reduce_while({:ok, []}, fn {input, index}, {:ok, acc} ->
-      case create_ref(input, index, base, user) do
+      case create_ref(input, index, base, user, normalize_usage_fun) do
         {:ok, ref} -> {:cont, {:ok, acc ++ [ref]}}
         {:error, _} = error -> {:halt, error}
       end
@@ -271,7 +278,7 @@ defmodule GroupherServer.CMS.Assets.Write do
   defp replace_usages_for_inputs(inputs) do
     inputs
     |> Enum.reduce_while({:ok, MapSet.new(@body_usages)}, fn input, {:ok, usage_set} ->
-      case normalize_usage(get_attr(input, :usage)) do
+      case normalize_body_usage(get_attr(input, :usage)) do
         {:ok, usage} -> {:cont, {:ok, MapSet.put(usage_set, usage)}}
         {:error, _} = error -> {:halt, error}
       end
@@ -282,8 +289,9 @@ defmodule GroupherServer.CMS.Assets.Write do
     end
   end
 
-  defp create_ref(input, index, %{community_id: community_id} = base, user) when is_map(input) do
-    with {:ok, usage} <- normalize_usage(get_attr(input, :usage)),
+  defp create_ref(input, index, %{community_id: community_id} = base, user, normalize_usage_fun)
+       when is_map(input) do
+    with {:ok, usage} <- normalize_usage_fun.(get_attr(input, :usage)),
          {:ok, asset} <- resolve_asset(community_id, input, user) do
       attrs =
         base
@@ -303,7 +311,7 @@ defmodule GroupherServer.CMS.Assets.Write do
     end
   end
 
-  defp create_ref(_, _, _, _), do: {:error, {:custom, "asset ref is invalid"}}
+  defp create_ref(_, _, _, _, _), do: {:error, {:custom, "asset ref is invalid"}}
 
   defp resolve_asset(community_id, input, user) do
     asset_id = get_attr(input, :asset_id)
@@ -461,6 +469,16 @@ defmodule GroupherServer.CMS.Assets.Write do
   end
 
   defp normalize_usage(_), do: {:error, {:custom, "asset usage is invalid"}}
+
+  defp normalize_body_usage(usage) do
+    with {:ok, usage} <- normalize_usage(usage),
+         true <- usage in @body_usages do
+      {:ok, usage}
+    else
+      false -> {:error, {:custom, "asset usage is invalid"}}
+      {:error, _} = error -> error
+    end
+  end
 
   defp has_attr?(map, key) when is_map(map),
     do: Map.has_key?(map, key) or Map.has_key?(map, Atom.to_string(key))
