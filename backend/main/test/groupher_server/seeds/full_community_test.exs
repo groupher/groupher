@@ -14,6 +14,8 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
 
   alias CMS.Model.{Changelog, Comment, Community, Doc, Post}
 
+  require CMS.Const
+
   describe "[full community seeds]" do
     @tag :skip_ci
     test "seeds full community data including about dashboard" do
@@ -35,7 +37,10 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
         from(p in Changelog, where: p.community_id == ^community.id) |> count()
 
       doc_count =
-        from(p in Doc, where: p.community_id == ^community.id) |> count()
+        from(p in Doc,
+          where: p.community_id == ^community.id and p.stage == ^CMS.Const.stage(:public)
+        )
+        |> count()
 
       assert post_count == 23
       assert changelog_count == 23

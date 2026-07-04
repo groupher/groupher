@@ -12,7 +12,12 @@ defmodule GroupherServer.Repo.Migrations.UnifyArticleDocuments do
 
   def up do
     Enum.each(@sources, &backfill_source/1)
+    delete_unscoped_article_documents()
     dedupe_article_documents()
+
+    alter table(:article_documents, prefix: @prefix) do
+      modify(:article_id, :id, null: false)
+    end
 
     create_if_not_exists(
       unique_index(:article_documents, [:thread, :article_id],
@@ -29,6 +34,10 @@ defmodule GroupherServer.Repo.Migrations.UnifyArticleDocuments do
         name: :article_documents_thread_article_id_index
       )
     )
+
+    alter table(:article_documents, prefix: @prefix) do
+      modify(:article_id, :id, null: true)
+    end
   end
 
   defp backfill_source({thread, article_table, document_table, article_fk}) do
@@ -103,6 +112,13 @@ defmodule GroupherServer.Repo.Migrations.UnifyArticleDocuments do
       WHERE ranked.row_number > 1
     ) AS duplicate
     WHERE article_document.id = duplicate.id;
+    """)
+  end
+
+  defp delete_unscoped_article_documents do
+    execute("""
+    DELETE FROM #{@prefix}.article_documents
+    WHERE article_id IS NULL;
     """)
   end
 end

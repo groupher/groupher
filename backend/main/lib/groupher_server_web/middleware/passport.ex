@@ -227,9 +227,17 @@ defmodule GroupherServerWeb.Middleware.Passport do
     end
   end
 
-  defp infer_owner?(%{context: %{cur_user: cur_user}, arguments: %{id: id}})
+  defp infer_owner?(%{
+         context: %{cur_user: cur_user},
+         arguments: %{comment: %{__struct__: _} = comment}
+       })
        when not is_nil(cur_user) do
-    case apply(FrontDesk, :comment, [id]) do
+    comment.author.id == cur_user.id
+  end
+
+  defp infer_owner?(%{context: %{cur_user: cur_user}, arguments: %{comment: comment_path}})
+       when not is_nil(cur_user) and is_map(comment_path) do
+    case apply(FrontDesk, :comment, [comment_path]) do
       {:ok, comment} -> comment.author.id == cur_user.id
       _ -> false
     end

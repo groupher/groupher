@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.Query.Accounts.Publish.Posts do
           acc ++ [comment]
         end)
 
-      random_comment_id = pub_comments |> Enum.random() |> Map.get(:floor) |> to_string
+      random_comment_id = pub_comments |> Enum.random() |> Map.get(:inner_id) |> to_string
 
       # variables = %{login: user.login, thread: "POST", filter: %{page: 1, size: 20}}
       variables = %{login: user.login, filter: %{page: 1, size: 20}}

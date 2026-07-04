@@ -276,7 +276,7 @@ defmodule GroupherServer.Test.Helper.ORM do
 
       {:ok, ret} = ORM.update_meta(post, %{last_active_at: nil})
 
-      assert ret.meta.last_active_at == post.updated_at
+      assert ret.meta.last_active_at == post.inserted_at
     end
 
     test "update meta should preserve concurrent updates on different paths",

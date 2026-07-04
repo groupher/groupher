@@ -468,11 +468,16 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # #######################
   # article actions
   # #######################
-  def pin_article(_root, ~m(article)a, _info),
-    do: CMS.Articles.pin(article.community, article)
+  def pin_article(_root, ~m(article article_path)a, _info) do
+    with {:ok, community} <- article_path_community(article_path) do
+      CMS.Articles.pin(community, article)
+    end
+  end
 
-  def undo_pin_article(_root, ~m(article)a, _info) do
-    CMS.Articles.undo_pin(article.community, article)
+  def undo_pin_article(_root, ~m(article article_path)a, _info) do
+    with {:ok, community} <- article_path_community(article_path) do
+      CMS.Articles.undo_pin(community, article)
+    end
   end
 
   def mark_delete_article(_root, ~m(article)a, _info) do
@@ -727,8 +732,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def unsubscribe_community(_root, ~m(community)a, %{context: %{cur_user: cur_user}}) do
-    with {:ok, _} <- CMS.Communities.unsubscribe(community, cur_user) do
-      {:ok, community}
+    with {:ok, unsubscribed_community} <- CMS.Communities.unsubscribe(community, cur_user) do
+      {:ok, unsubscribed_community}
     end
   end
 
@@ -982,4 +987,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   # ##############################################
   def community_tags_count(root, _, _),
     do: CMS.Communities.count(%Community{id: root.id}, :community_tags)
+
+  defp article_path_community(%{community: %Community{} = community}), do: {:ok, community}
+
+  defp article_path_community(%{community: community}) when is_binary(community) do
+    CMS.FrontDesk.community(community)
+  end
+
+  defp article_path_community(_), do: {:error, "invalid article input"}
 end
