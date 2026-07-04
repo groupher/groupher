@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Articles.Write do
   alias CMS.Articles.{Document, States}
   alias CMS.Communities.TagStats
   alias CMS.Model.{Author, Community, Embeds}
-  alias CMS.{Communities, Covers, Events, FrontDesk}
+  alias CMS.{Assets, Communities, Covers, Events, FrontDesk}
   alias Helper.{Constant, ContentPipeline, Multi, Later, ORM, T, Transaction}
 
   @default_emotions Embeds.ArticleEmotion.default_emotions()
@@ -43,6 +43,9 @@ defmodule GroupherServer.CMS.Articles.Write do
         end)
         |> Multi.run(:upsert_cover, fn _, %{create_article: article} ->
           Covers.upsert_article_cover(article, attrs)
+        end)
+        |> Multi.run(:sync_asset_refs, fn _, %{upsert_cover: article} ->
+          Assets.sync_article_refs(community, article, attrs)
         end)
         |> Multi.run(:mirror_article, fn _, %{upsert_cover: article} ->
           States.mirror(community, article)
@@ -119,6 +122,9 @@ defmodule GroupherServer.CMS.Articles.Write do
       end)
       |> Multi.run(:upsert_cover, fn _, %{update_article: update_article} ->
         Covers.upsert_article_cover(update_article, attrs)
+      end)
+      |> Multi.run(:sync_asset_refs, fn _, %{upsert_cover: article} ->
+        Assets.sync_article_refs(article, attrs)
       end)
       |> Multi.run(:set_community_tags, fn _, %{upsert_cover: article} ->
         Communities.overwrite_tags(
@@ -247,8 +253,10 @@ defmodule GroupherServer.CMS.Articles.Write do
       Accounts.Publish.update_states(article.author.user, thread)
     end)
     |> Multi.run(:delete_document, fn _, _ ->
-      Document.remove(thread, article.id)
-      {:ok, :pass}
+      with {:ok, _} <- Assets.purge_article_refs(thread, article.id) do
+        Document.remove(thread, article.id)
+        {:ok, :pass}
+      end
     end)
     |> Multi.run(:delete_cover, fn _, _ ->
       Covers.delete_cover_edit_info(article.cover_edit_info_id)
@@ -426,6 +434,8 @@ defmodule GroupherServer.CMS.Articles.Write do
   defp result({:error, :mirror_article, _result, _steps}) do
     {:error, {:create_fails, "set community"}}
   end
+
+  defp result({:error, :sync_asset_refs, result, _steps}), do: {:error, result}
 
   defp result({:error, :set_community_flag, _result, _steps}) do
     {:error, {:create_fails, "set community flag"}}

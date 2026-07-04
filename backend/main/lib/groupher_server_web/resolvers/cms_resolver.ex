@@ -30,6 +30,32 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Communities.paged(filter)
   end
 
+  def paged_community_assets(_root, %{community: %Community{} = community} = args, _info) do
+    CMS.Assets.page(community, Map.get(args, :filter))
+  end
+
+  def community_asset_refs(
+        _root,
+        %{community: %Community{} = community, asset_id: asset_id} = args,
+        _info
+      ) do
+    CMS.Assets.refs(community, asset_id, Map.get(args, :filter))
+  end
+
+  def community_asset_usage(_root, %{community: %Community{} = community}, _info) do
+    CMS.Assets.usage(community)
+  end
+
+  def register_community_asset(_root, %{community: %Community{} = community, asset: asset}, %{
+        context: %{cur_user: user}
+      }) do
+    CMS.Assets.register(community, asset, user)
+  end
+
+  def delete_community_asset(_root, %{community: %Community{} = community, id: id}, _info) do
+    CMS.Assets.delete(community, id)
+  end
+
   def create_community(_root, args, %{context: %{cur_user: user}}) do
     CMS.Communities.create(args, user)
   end
@@ -454,7 +480,11 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def create_article(_root, ~m(community thread)a = args, %{context: %{cur_user: user}}) do
-    CMS.Articles.create(community, thread, args, user)
+    CMS.Articles.create(community, thread, Map.put(args, :cur_user, user), user)
+  end
+
+  def update_article(_root, %{article: article} = args, %{context: %{cur_user: user}}) do
+    CMS.Articles.update(article, Map.put(args, :cur_user, user))
   end
 
   def update_article(_root, %{article: article} = args, _info) do

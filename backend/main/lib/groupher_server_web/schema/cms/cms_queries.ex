@@ -88,6 +88,41 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.community/3)
     end
 
+    @desc "paged assets owned by a community"
+    field :paged_community_assets, :paged_community_assets do
+      arg(:community, non_null(:string))
+      arg(:filter, :pagi_filter)
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "community.update")
+      middleware(M.FrontDesk, :community)
+      middleware(M.PageSizeProof)
+      resolve(&R.CMS.paged_community_assets/3)
+    end
+
+    @desc "community asset storage usage"
+    field :community_asset_usage, :community_asset_usage do
+      arg(:community, non_null(:string))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "community.update")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.community_asset_usage/3)
+    end
+
+    @desc "paged article references for one community asset"
+    field :community_asset_refs, :paged_article_document_asset_refs do
+      arg(:community, non_null(:string))
+      arg(:asset_id, non_null(:id))
+      arg(:filter, :pagi_filter)
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "community.update")
+      middleware(M.FrontDesk, :community)
+      middleware(M.PageSizeProof)
+      resolve(&R.CMS.community_asset_refs/3)
+    end
+
     @desc "Get all passport rules available to the current user."
     field :all_passport_rules, :all_rules do
       middleware(M.Authorize, :login)

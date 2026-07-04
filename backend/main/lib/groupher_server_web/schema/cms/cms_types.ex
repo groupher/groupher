@@ -60,6 +60,26 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     value(:dashboard)
   end
 
+  enum :community_asset_type do
+    value(:image)
+    value(:video)
+    value(:audio)
+    value(:file)
+  end
+
+  enum :community_asset_status do
+    value(:active)
+    value(:deleted)
+  end
+
+  enum :article_document_asset_usage do
+    value(:inline)
+    value(:cover)
+    value(:cover_dark)
+    value(:attachment)
+    value(:embed)
+  end
+
   enum :marker_type do
     value(:icon)
     value(:emoji)
@@ -307,6 +327,78 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:id, :id)
   end
 
+  object :community_asset do
+    field(:id, :id)
+    field(:asset_type, :community_asset_type)
+    field(:status, :community_asset_status)
+    field(:title, :string)
+    field(:filename, :string)
+    field(:mime_type, :string)
+    field(:url, :string)
+    field(:storage, :string)
+    field(:storage_key, :string)
+    field(:content_hash, :string)
+    field(:size_bytes, :big_int)
+    field(:width, :integer)
+    field(:height, :integer)
+    field(:meta, :json)
+    field(:deleted_at, :datetime)
+    field(:community, :community, resolve: dataloader(CMS, :community))
+    field(:uploader, :user, resolve: dataloader(CMS, :uploader))
+
+    timestamp_fields()
+  end
+
+  object :article_document_asset_ref do
+    field(:id, :id)
+    field(:thread, :thread)
+    field(:article_id, :id)
+    field(:usage, :article_document_asset_usage)
+    field(:block_id, :string)
+    field(:block_type, :string)
+    field(:position, :integer)
+    field(:title, :string)
+    field(:alt, :string)
+    field(:source, :string)
+    field(:meta, :json)
+    field(:asset, :community_asset, resolve: dataloader(CMS, :asset))
+
+    timestamp_fields()
+  end
+
+  object :community_asset_usage do
+    field(:asset_count, :integer)
+    field(:storage_bytes, :big_int)
+  end
+
+  input_object :community_asset_input do
+    field(:asset_type, :community_asset_type)
+    field(:title, :string)
+    field(:filename, :string)
+    field(:mime_type, :string)
+    field(:url, non_null(:string))
+    field(:storage, :string)
+    field(:storage_key, :string)
+    field(:content_hash, :string)
+    field(:size_bytes, non_null(:big_int))
+    field(:width, :integer)
+    field(:height, :integer)
+    field(:meta, :json)
+  end
+
+  input_object :article_document_asset_ref_input do
+    field(:asset_id, :id)
+    field(:asset, :community_asset_input)
+    field(:usage, :article_document_asset_usage)
+    field(:block_id, :string)
+    field(:block_type, :string)
+    field(:position, :integer)
+    field(:title, :string)
+    field(:alt, :string)
+    field(:source, :string)
+    field(:meta, :json)
+  end
+
   object :article_document do
     field(:json, :string)
     field(:markdown, :string)
@@ -314,6 +406,10 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:html, :string)
     field(:xml, :string)
     field(:rss, :string)
+
+    field(:asset_refs, list_of(:article_document_asset_ref),
+      resolve: dataloader(CMS, :asset_refs)
+    )
   end
 
   object :article_snapshot do
@@ -821,6 +917,16 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :paged_mentions do
     field(:entries, list_of(:artiment_mention))
+    pagination_fields()
+  end
+
+  object :paged_community_assets do
+    field(:entries, list_of(:community_asset))
+    pagination_fields()
+  end
+
+  object :paged_article_document_asset_refs do
+    field(:entries, list_of(:article_document_asset_ref))
     pagination_fields()
   end
 
