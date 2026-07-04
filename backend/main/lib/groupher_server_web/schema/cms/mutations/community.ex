@@ -50,6 +50,30 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       resolve(&R.CMS.delete_community/3)
     end
 
+    @desc "register an uploaded asset into the community asset library"
+    field :register_community_asset, :community_asset do
+      arg(:community, non_null(:string))
+      arg(:asset, non_null(:community_asset_input))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "community.update")
+      middleware(M.FrontDesk, :community)
+
+      resolve(&R.CMS.register_community_asset/3)
+    end
+
+    @desc "delete an unreferenced community asset from the asset library"
+    field :delete_community_asset, :community_asset do
+      arg(:community, non_null(:string))
+      arg(:id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "community.update")
+      middleware(M.FrontDesk, :community)
+
+      resolve(&R.CMS.delete_community_asset/3)
+    end
+
     @desc "apply to create a community"
     field :apply_community, :community do
       arg(:title, non_null(:string))

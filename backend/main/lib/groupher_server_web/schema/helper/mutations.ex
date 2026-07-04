@@ -45,6 +45,16 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
       arg(:cover_url, :string)
       arg(:cover_url_dark, :string)
       arg(:cover_edit_info, :cover_edit_info_input)
+      arg(:cover_asset_id, :id)
+      arg(:cover_asset, :community_asset_input)
+      arg(:cover_asset_dark_id, :id)
+      arg(:cover_asset_dark, :community_asset_input)
+    end
+  end
+
+  defmacro article_asset_args do
+    quote do
+      arg(:asset_refs, list_of(:article_document_asset_ref_input))
     end
   end
 

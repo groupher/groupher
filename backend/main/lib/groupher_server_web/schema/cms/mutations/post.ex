@@ -17,6 +17,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
       arg(:thread, :thread, default_value: :post)
       arg(:community_tags, list_of(:id))
       article_cover_args()
+      article_asset_args()
 
       middleware(M.Authorize, :login)
       middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
@@ -35,6 +36,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
       arg(:link_addr, :string)
       arg(:community_tags, list_of(:id))
       article_cover_args()
+      article_asset_args()
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "post.update", thread: :post)

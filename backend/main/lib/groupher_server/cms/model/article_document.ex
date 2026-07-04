@@ -11,6 +11,7 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
   import Helper.Utils, only: [get_config: 2]
 
   alias GroupherServer.CMS.Artiment.Threads
+  alias GroupherServer.CMS.Model.ArticleDocumentAssetRef
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -38,6 +39,8 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
     field(:digest, :string)
     field(:content_hash, :string)
     field(:schema_version, :integer, default: 1)
+
+    has_many(:asset_refs, ArticleDocumentAssetRef)
 
     timestamps(type: :utc_datetime)
   end

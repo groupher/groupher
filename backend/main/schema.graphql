@@ -97,6 +97,12 @@ type RootQueryType {
   "spec community info"
   community(slug: String!, incViews: Boolean): Community
 
+  "paged assets owned by a community"
+  pagedCommunityAssets(community: String!, filter: PagiFilter): PagedCommunityAssets
+
+  "community asset storage usage"
+  communityAssetUsage(community: String!): CommunityAssetUsage
+
   "Get all passport rules available to the current user."
   allPassportRules: AllRules
 
@@ -255,6 +261,12 @@ type RootMutationType {
   "delete a global community"
   deleteCommunity(community: String!): Community
 
+  "register an uploaded asset into the community asset library"
+  registerCommunityAsset(community: String!, asset: CommunityAssetInput!): CommunityAsset
+
+  "delete an unreferenced community asset from the asset library"
+  deleteCommunityAsset(community: String!, id: ID!): CommunityAsset
+
   "apply to create a community"
   applyCommunity(
     title: String!, desc: String!, slug: String!, logo: String!, locale: String, applyMsg: String, applyCategory: String
@@ -353,12 +365,12 @@ type RootMutationType {
 
   "create a post"
   createPost(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Post
 
   "update a cms\/post"
   updatePost(
-    article: ArticlePathInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
+    article: ArticlePathInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Post
 
   "set cat for a post"
@@ -420,12 +432,12 @@ type RootMutationType {
 
   "create a blog"
   createBlog(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Blog
 
   "update a cms\/blog"
   updateBlog(
-    article: ArticlePathInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
+    article: ArticlePathInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Blog
 
   "upvote to blog"
@@ -481,12 +493,12 @@ type RootMutationType {
 
   "create a changelog"
   createChangelog(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Changelog
 
   "update a cms\/changelog"
   updateChangelog(
-    article: ArticlePathInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
+    article: ArticlePathInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Changelog
 
   "upvote to changelog"
@@ -542,12 +554,12 @@ type RootMutationType {
 
   "create a doc"
   createDoc(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Doc
 
   "update a cms\/doc"
   updateDoc(
-    article: ArticlePathInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput
+    article: ArticlePathInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Doc
 
   "upvote to doc"
@@ -813,6 +825,26 @@ enum DocCoverView {
   DASHBOARD
 }
 
+enum CommunityAssetType {
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
+}
+
+enum CommunityAssetStatus {
+  ACTIVE
+  DELETED
+}
+
+enum ArticleDocumentAssetUsage {
+  INLINE
+  COVER
+  COVER_DARK
+  ATTACHMENT
+  EMBED
+}
+
 enum MarkerType {
   ICON
   EMOJI
@@ -1051,6 +1083,79 @@ type CommonComment {
   article: CommonArticle
 }
 
+type CommunityAsset {
+  id: ID
+  assetType: CommunityAssetType
+  status: CommunityAssetStatus
+  title: String
+  filename: String
+  mimeType: String
+  url: String
+  storage: String
+  storageKey: String
+  contentHash: String
+  sizeBytes: BigInt
+  width: Int
+  height: Int
+  meta: Json
+  deletedAt: DateTime
+  community: Community
+  uploader: User
+  articleRefs: [ArticleDocumentAssetRef]
+  insertedAt: DateTime
+  updatedAt: DateTime
+}
+
+type ArticleDocumentAssetRef {
+  id: ID
+  thread: Thread
+  articleId: ID
+  usage: ArticleDocumentAssetUsage
+  blockId: String
+  blockType: String
+  position: Int
+  title: String
+  alt: String
+  source: String
+  meta: Json
+  asset: CommunityAsset
+  insertedAt: DateTime
+  updatedAt: DateTime
+}
+
+type CommunityAssetUsage {
+  assetCount: Int
+  storageBytes: BigInt
+}
+
+input CommunityAssetInput {
+  assetType: CommunityAssetType
+  title: String
+  filename: String
+  mimeType: String
+  url: String!
+  storage: String
+  storageKey: String
+  contentHash: String
+  sizeBytes: BigInt!
+  width: Int
+  height: Int
+  meta: Json
+}
+
+input ArticleDocumentAssetRefInput {
+  assetId: ID
+  asset: CommunityAssetInput
+  usage: ArticleDocumentAssetUsage
+  blockId: String
+  blockType: String
+  position: Int
+  title: String
+  alt: String
+  source: String
+  meta: Json
+}
+
 type ArticleDocument {
   json: String
   markdown: String
@@ -1058,6 +1163,7 @@ type ArticleDocument {
   html: String
   xml: String
   rss: String
+  assetRefs: [ArticleDocumentAssetRef]
 }
 
 type ArticleSnapshot {
@@ -1821,6 +1927,14 @@ type PagedReports {
 
 type PagedMentions {
   entries: [ArtimentMention]
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type PagedCommunityAssets {
+  entries: [CommunityAsset]
   totalCount: Int
   pageSize: Int
   totalPages: Int
@@ -2750,6 +2864,13 @@ character sequences. The Json type is most often used to represent a free-form
 human-readable json string.
 """
 scalar Json
+
+"""
+The `BigInt` scalar represents integer values outside GraphQL Int's safe
+transport range. Responses are serialized as strings to avoid precision loss
+in JavaScript clients.
+"""
+scalar BigInt
 
 type Done {
   done: Boolean

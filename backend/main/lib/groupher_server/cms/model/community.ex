@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.Model.Community do
     CommunityDashboard,
     CommunityModerator,
     CommunitySubscriber,
+    CommunityAsset,
     CommunityTagGroup,
     Embeds
   }
@@ -60,6 +61,7 @@ defmodule GroupherServer.CMS.Model.Community do
 
     has_one(:dashboard, CommunityDashboard)
     has_many(:tag_groups, CommunityTagGroup)
+    has_many(:assets, CommunityAsset)
 
     field(:articles_count, :integer, default: 0)
     field(:moderators_count, :integer, default: 0)
