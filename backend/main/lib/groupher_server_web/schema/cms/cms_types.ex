@@ -347,7 +347,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:uploader, :user, resolve: dataloader(CMS, :uploader))
 
     field(:article_refs, list_of(:article_document_asset_ref),
-      resolve: dataloader(CMS, :article_refs)
+      resolve: fn asset, _, _ -> CMS.Assets.refs(asset) end
     )
 
     timestamp_fields()

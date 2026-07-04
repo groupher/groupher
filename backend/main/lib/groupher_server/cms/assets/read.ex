@@ -14,6 +14,7 @@ defmodule GroupherServer.CMS.Assets.Read do
 
   @default_page 1
   @default_size 20
+  @refs_limit 100
 
   @spec page(Community.t(), map() | nil) :: T.domain_res(T.paged_data())
   def page(%Community{id: community_id}, filter) do
@@ -49,6 +50,7 @@ defmodule GroupherServer.CMS.Assets.Read do
     ArticleDocumentAssetRef
     |> where([ref], ref.asset_id == ^asset_id)
     |> order_by([ref], desc: ref.inserted_at, desc: ref.id)
+    |> limit(^@refs_limit)
     |> Repo.all()
     |> then(&{:ok, &1})
   end

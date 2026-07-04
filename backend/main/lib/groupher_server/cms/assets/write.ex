@@ -46,16 +46,20 @@ defmodule GroupherServer.CMS.Assets.Write do
 
   @spec delete(Community.t(), T.id()) :: T.domain_res(CommunityAsset.t())
   def delete(%Community{id: community_id}, asset_id) do
-    with {:ok, asset} <- find_active_asset(community_id, asset_id),
-         false <- referenced?(asset) do
-      ORM.update(asset, %{
-        status: :deleted,
-        deleted_at: DateTime.utc_now() |> DateTime.truncate(:second)
-      })
-    else
-      true -> {:error, {:custom, "asset is still referenced"}}
-      {:error, _} = error -> error
-    end
+    Repo.transaction(fn ->
+      with {:ok, asset} <- find_active_asset_for_update(community_id, asset_id),
+           false <- referenced?(asset),
+           {:ok, asset} <-
+             ORM.update(asset, %{
+               status: :deleted,
+               deleted_at: DateTime.utc_now(:second)
+             }) do
+        asset
+      else
+        true -> Repo.rollback({:custom, "asset is still referenced"})
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
   end
 
   @spec sync_article_refs(Community.t(), T.article(), map()) :: T.domain_res(term())
@@ -87,7 +91,7 @@ defmodule GroupherServer.CMS.Assets.Write do
       true ->
         Repo.transaction(fn ->
           with {:ok, thread} <- FrontDesk.thread_of(article),
-               {:ok, document} <- find_article_document(thread, article.id),
+               {:ok, document} <- find_article_document_for_update(thread, article.id),
                base <- base_ref_attrs(community_id, document, thread, article.id),
                user <- get_attr(attrs, :cur_user),
                {:ok, body_refs} <- sync_body_refs(document, base, attrs, user),
@@ -231,28 +235,39 @@ defmodule GroupherServer.CMS.Assets.Write do
     asset_attrs = get_attr(input, :asset)
 
     cond do
+      not is_nil(asset_id) and is_map(asset_attrs) ->
+        {:error, {:custom, "asset_id and asset are mutually exclusive"}}
+
       not is_nil(asset_id) ->
-        find_active_asset(community_id, asset_id)
+        find_active_asset_for_update(community_id, asset_id)
 
       is_map(asset_attrs) ->
-        register(%Community{id: community_id}, asset_attrs, user)
+        with {:ok, asset} <- register(%Community{id: community_id}, asset_attrs, user) do
+          find_active_asset_for_update(community_id, asset.id)
+        end
 
       true ->
         {:error, {:custom, "asset is required"}}
     end
   end
 
-  defp find_active_asset(community_id, asset_id) do
-    CommunityAsset
-    |> where([asset], asset.id == ^asset_id)
-    |> where([asset], asset.community_id == ^community_id)
-    |> where([asset], is_nil(asset.deleted_at))
-    |> where([asset], asset.status == :active)
+  defp find_active_asset_for_update(community_id, asset_id) do
+    community_id
+    |> active_asset_query(asset_id)
+    |> lock("FOR UPDATE")
     |> Repo.one()
     |> case do
       nil -> {:error, {:not_exist, "asset not found"}}
       asset -> {:ok, asset}
     end
+  end
+
+  defp active_asset_query(community_id, asset_id) do
+    CommunityAsset
+    |> where([asset], asset.id == ^asset_id)
+    |> where([asset], asset.community_id == ^community_id)
+    |> where([asset], is_nil(asset.deleted_at))
+    |> where([asset], asset.status == :active)
   end
 
   defp upsert_active_asset(attrs) do
@@ -324,8 +339,15 @@ defmodule GroupherServer.CMS.Assets.Write do
     |> Repo.exists?()
   end
 
-  defp find_article_document(thread, article_id) do
-    ORM.find_by(ArticleDocument, thread: thread, article_id: article_id)
+  defp find_article_document_for_update(thread, article_id) do
+    ArticleDocument
+    |> where([document], document.thread == ^thread and document.article_id == ^article_id)
+    |> lock("FOR UPDATE")
+    |> Repo.one()
+    |> case do
+      nil -> {:error, {:not_exist, "article document not found"}}
+      document -> {:ok, document}
+    end
   end
 
   defp base_ref_attrs(community_id, %ArticleDocument{id: document_id}, thread, article_id) do

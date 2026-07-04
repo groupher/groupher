@@ -141,6 +141,87 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert usage.storage_bytes == 300
     end
 
+    test "rejects refs with both asset_id and inline asset", ~m(community post user)a do
+      {:ok, asset} = CMS.Assets.register(community, image_asset_attrs("existing.png", 50), user)
+
+      assert {:error, {:custom, "asset_id and asset are mutually exclusive"}} =
+               CMS.Assets.sync_article_refs(community, post, %{
+                 cur_user: user,
+                 asset_refs: [
+                   %{
+                     asset_id: asset.id,
+                     asset: image_asset_attrs("ignored.png", 60)
+                   }
+                 ]
+               })
+
+      assert article_refs(:post, post.id) == []
+    end
+
+    test "serializes concurrent ref syncs for the same document", ~m(community post user)a do
+      parent = self()
+
+      tasks =
+        ["sync-a.png", "sync-b.png"]
+        |> Enum.with_index()
+        |> Enum.map(fn {filename, index} ->
+          Task.async(fn ->
+            send(parent, {:task_ready, self()})
+
+            receive do
+              :go ->
+                CMS.Assets.sync_article_refs(community, post, %{
+                  cur_user: user,
+                  asset_refs: [
+                    %{
+                      asset: image_asset_attrs(filename, 20 + index),
+                      source: filename
+                    }
+                  ]
+                })
+            end
+          end)
+        end)
+
+      ready_pids =
+        for _ <- tasks do
+          assert_receive {:task_ready, pid}
+          pid
+        end
+
+      Enum.each(ready_pids, &send(&1, :go))
+
+      Enum.each(tasks, fn task ->
+        assert {:ok, %{body: [_], cover: []}} = Task.await(task, 5_000)
+      end)
+
+      refs = article_refs(:post, post.id)
+
+      assert length(refs) == 1
+      assert hd(refs).source in ["sync-a.png", "sync-b.png"]
+    end
+
+    test "caps refs returned for one asset", ~m(community post user)a do
+      {:ok, asset} = CMS.Assets.register(community, image_asset_attrs("many-refs.png", 70), user)
+
+      asset_refs =
+        Enum.map(1..105, fn position ->
+          %{asset_id: asset.id, position: position}
+        end)
+
+      assert {:ok, %{body: refs, cover: []}} =
+               CMS.Assets.sync_article_refs(community, post, %{
+                 cur_user: user,
+                 asset_refs: asset_refs
+               })
+
+      assert length(refs) == 105
+
+      {:ok, capped_refs} = CMS.Assets.refs(asset)
+
+      assert length(capped_refs) == 100
+    end
+
     test "does not delete assets that are still referenced", ~m(community post user)a do
       asset_attrs = image_asset_attrs("referenced.png", 80)
 
