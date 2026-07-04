@@ -530,18 +530,28 @@ defmodule GroupherServer.CMS.DocTree.Write do
 
   defp subtree_nodes(_community, %DocTreeNode{} = node), do: [node]
 
-  defp normalize_title_slug(args) do
-    title = Map.get(args, :title)
-    slug = Map.get(args, :slug)
-
-    args = if is_binary(title), do: Map.put(args, :title, String.trim(title)), else: args
-
-    cond do
-      is_binary(slug) -> Map.put(args, :slug, String.trim(slug))
-      is_binary(title) -> Map.put(args, :slug, Slug.normalize(title))
-      true -> args
-    end
+  # Explicit slugs are user input and win over title-derived slugs; title is
+  # still trimmed when both are present.
+  defp normalize_title_slug(%{slug: slug} = args) when is_binary(slug) do
+    args
+    |> trim_title()
+    |> Map.put(:slug, String.trim(slug))
   end
+
+  defp normalize_title_slug(%{title: title} = args) when is_binary(title) do
+    title = String.trim(title)
+
+    args
+    |> Map.put(:title, title)
+    |> Map.put(:slug, Slug.normalize(title))
+  end
+
+  defp normalize_title_slug(args), do: args
+
+  defp trim_title(%{title: title} = args) when is_binary(title),
+    do: Map.put(args, :title, String.trim(title))
+
+  defp trim_title(args), do: args
 
   defp ensure_doc_draft(
          %Community{} = community,
@@ -615,12 +625,11 @@ defmodule GroupherServer.CMS.DocTree.Write do
     end
   end
 
-  defp ensure_index(attrs, %Community{} = community, group_id) do
-    case Map.get(attrs, :index) do
-      nil -> Map.put(attrs, :index, next_index(community, group_id, Map.get(attrs, :type)))
-      _ -> attrs
-    end
-  end
+  defp ensure_index(%{index: index} = attrs, %Community{}, _group_id) when not is_nil(index),
+    do: attrs
+
+  defp ensure_index(attrs, %Community{} = community, group_id),
+    do: Map.put(attrs, :index, next_index(community, group_id, Map.get(attrs, :type)))
 
   defp next_index(%Community{} = community, group_id, type) do
     DocTreeNode

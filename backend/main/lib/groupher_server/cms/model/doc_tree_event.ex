@@ -12,6 +12,20 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
 
   This keeps new docs page creation out of the Tree SavingBar while still
   recording the tree-side effect as a domain event.
+
+      doc_tree_events
+      +-------------------+----------------------------------------------+
+      | payload           | Review/revert data. Keep the full domain diff |
+      | inverse_payload   | needed by UI labels, releases, and undo.      |
+      +-------------------+----------------------------------------------+
+      | node_id           | Query selector copied from payload.           |
+      | node_type         | Query selector copied from payload.           |
+      | doc_id            | Affected page doc_id, when the event has one. |
+      +-------------------+----------------------------------------------+
+
+  Keep selectors duplicated as columns only when SQL filters need them. Do not
+  remove `payload` or move event-specific before/after values into columns
+  unless they become real query dimensions.
   """
   alias __MODULE__
 
@@ -31,7 +45,7 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
   @timestamps_opts [type: :utc_datetime]
 
   @required_fields ~w(community_id seq event_type payload inverse_payload status owner)a
-  @optional_fields ~w(author_id snapshot_id reverted_by_event_id doc_id)a
+  @optional_fields ~w(author_id snapshot_id reverted_by_event_id doc_id node_id node_type)a
 
   @type t :: %DocTreeEvent{}
   schema "doc_tree_events" do
@@ -40,6 +54,8 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
     belongs_to(:snapshot, DocTreeSnapshot)
     belongs_to(:reverted_by_event, DocTreeEvent)
     field(:doc_id, Ecto.UUID)
+    field(:node_id, :string)
+    field(:node_type, Ecto.Enum, values: CMS.Const.tree_node_type_values())
 
     field(:seq, :integer)
     field(:event_type, :string)

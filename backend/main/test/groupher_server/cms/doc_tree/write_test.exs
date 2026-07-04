@@ -229,7 +229,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
                tree.pins
 
       assert tree.tree_state.staged_event_count == 1
-      assert [%{event_type: "node.create"}] = tree.staged_events
+      assert [%{event_type: "pin.add"}] = tree.staged_events
     end
 
     test "page nodes can not be updated to remove doc draft reference" do
@@ -446,13 +446,12 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
   defp doc_owned_create_event(community, node_id) do
     doc_owner = CMS.Const.tree_event_owner(:doc)
     node_create = CMS.Const.tree_event(:node_create)
-    node_id_path = [CMS.Const.doc_tree_json_key(:node), CMS.Const.doc_tree_json_key(:id)]
 
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
     |> where([e], e.owner == ^doc_owner)
     |> where([e], e.event_type == ^node_create)
-    |> where([e], fragment("? #>> ?", e.payload, ^node_id_path) == ^node_id)
+    |> where([e], e.node_id == ^node_id)
     |> Repo.one()
   end
 
@@ -463,13 +462,12 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
   defp tree_create_event(community, node_id) do
     tree_owner = CMS.Const.tree_event_owner(:tree)
     node_create = CMS.Const.tree_event(:node_create)
-    node_id_path = [CMS.Const.doc_tree_json_key(:node), CMS.Const.doc_tree_json_key(:id)]
 
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
     |> where([e], e.owner == ^tree_owner)
     |> where([e], e.event_type == ^node_create)
-    |> where([e], fragment("? #>> ?", e.payload, ^node_id_path) == ^node_id)
+    |> where([e], e.node_id == ^node_id)
     |> Repo.one()
     |> case do
       %DocTreeEvent{} = event -> {:ok, event}
@@ -481,14 +479,13 @@ defmodule GroupherServer.Test.CMS.DocTree.Write do
     tree_owner = CMS.Const.tree_event_owner(:tree)
     staged = CMS.Const.tree_event_status(:staged)
     node_delete = CMS.Const.tree_event(:node_delete)
-    node_id_path = [CMS.Const.doc_tree_json_key(:node), CMS.Const.doc_tree_json_key(:id)]
 
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
     |> where([e], e.owner == ^tree_owner)
     |> where([e], e.status == ^staged)
     |> where([e], e.event_type == ^node_delete)
-    |> where([e], fragment("? #>> ?", e.payload, ^node_id_path) == ^node_id)
+    |> where([e], e.node_id == ^node_id)
     |> Repo.exists?()
   end
 end
