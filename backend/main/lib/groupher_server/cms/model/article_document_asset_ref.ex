@@ -57,7 +57,27 @@ defmodule GroupherServer.CMS.Model.ArticleDocumentAssetRef do
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
+  @doc """
+  Builds a changeset for one article-document asset ref.
+
+  The changeset validates the article/document/asset foreign keys, the ref usage
+  enum, optional block metadata, and the uniqueness constraints used for cover
+  refs and block-level refs.
+
+  ## Examples
+
+      ArticleDocumentAssetRef.changeset(%ArticleDocumentAssetRef{}, %{
+        community_id: community.id,
+        article_document_id: document.id,
+        asset_id: asset.id,
+        thread: :post,
+        article_id: post.id,
+        usage: :inline,
+        block_id: "image-1"
+      })
+      #=> %Ecto.Changeset{valid?: true}
+
+  """
   def changeset(%ArticleDocumentAssetRef{} = ref, attrs) do
     ref
     |> cast(attrs, @optional_fields ++ @required_fields)
@@ -79,8 +99,28 @@ defmodule GroupherServer.CMS.Model.ArticleDocumentAssetRef do
     )
   end
 
-  @doc false
+  @doc """
+  Builds an update changeset for an existing article-document asset ref.
+
+  It reuses `changeset/2` so update paths keep the same validation and
+  constraint behavior as creation.
+
+  ## Examples
+
+      ArticleDocumentAssetRef.update_changeset(ref, %{alt: "Hero image"})
+      #=> %Ecto.Changeset{}
+
+  """
   def update_changeset(%ArticleDocumentAssetRef{} = ref, attrs), do: changeset(ref, attrs)
 
+  @doc """
+  Returns the supported usage values for article-document asset refs.
+
+  ## Examples
+
+      ArticleDocumentAssetRef.usage_values()
+      #=> [:inline, :cover, :cover_dark, :attachment, :embed]
+
+  """
   def usage_values, do: @usage_values
 end

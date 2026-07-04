@@ -15,26 +15,46 @@ defmodule GroupherServer.CMS.Assets.Read do
   @default_page 1
   @default_size 20
 
+  @doc """
+  Returns a page of active assets for a community.
+
+  This read-side function is the implementation behind `CMS.Assets.page/2`.
+  It applies the shared active-asset predicate and orders newest assets first.
+
+  ## Examples
+
+      Read.page(community, %{page: 1, size: 20})
+      #=> {:ok, %{entries: assets, total_count: total_count}}
+
+  """
   @spec page(Community.t(), map() | nil) :: T.domain_res(T.paged_data())
   def page(%Community{id: community_id}, filter) do
     %{page: page, size: size} = normalize_filter(filter)
 
-    CommunityAsset
-    |> where([asset], asset.community_id == ^community_id)
-    |> where([asset], is_nil(asset.deleted_at))
-    |> where([asset], asset.status == :active)
+    community_id
+    |> CommunityAsset.active_query()
     |> order_by([asset], desc: asset.inserted_at, desc: asset.id)
     |> ORM.paginator(page: page, size: size)
     |> then(&{:ok, &1})
   end
 
+  @doc """
+  Returns active asset counts and storage bytes for one community.
+
+  Usage is computed from `community_assets`, not from refs, so the same uploaded
+  object is counted once regardless of how many articles reference it.
+
+  ## Examples
+
+      Read.usage(community)
+      #=> {:ok, %{asset_count: 2, storage_bytes: 4096}}
+
+  """
   @spec usage(Community.t()) :: T.domain_res(map())
   def usage(%Community{id: community_id}) do
     result =
-      CommunityAsset
-      |> where([asset], asset.community_id == ^community_id)
-      |> where([asset], is_nil(asset.deleted_at))
-      |> where([asset], asset.status == :active)
+      community_id
+      |> CommunityAsset.active_query()
       |> select([asset], %{
         asset_count: count(asset.id),
         storage_bytes: coalesce(sum(asset.size_bytes), 0)
@@ -44,6 +64,18 @@ defmodule GroupherServer.CMS.Assets.Read do
     {:ok, normalize_usage_result(result)}
   end
 
+  @doc """
+  Returns a page of article document refs for one active asset.
+
+  The asset lookup is scoped to the supplied community before refs are loaded,
+  which prevents cross-community ref discovery.
+
+  ## Examples
+
+      Read.refs(community, asset.id, %{page: 1, size: 10})
+      #=> {:ok, %{entries: refs, page_number: 1}}
+
+  """
   @spec refs(Community.t(), T.id(), map() | nil) :: T.domain_res(T.paged_data())
   def refs(%Community{id: community_id}, asset_id, filter) do
     %{page: page, size: size} = normalize_filter(filter)
@@ -75,11 +107,8 @@ defmodule GroupherServer.CMS.Assets.Read do
   defp normalize_usage_result(result), do: result
 
   defp find_active_asset(community_id, asset_id) do
-    CommunityAsset
-    |> where([asset], asset.id == ^asset_id)
-    |> where([asset], asset.community_id == ^community_id)
-    |> where([asset], is_nil(asset.deleted_at))
-    |> where([asset], asset.status == :active)
+    community_id
+    |> CommunityAsset.active_query(asset_id)
     |> Repo.one()
     |> case do
       nil -> {:error, {:not_exist, "asset not found"}}

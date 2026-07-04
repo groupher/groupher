@@ -221,7 +221,20 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
       assert length(paged_refs.entries) == 20
       assert paged_refs.total_count == 105
+      assert paged_refs.total_pages == 6
       assert paged_refs.page_number == 1
+
+      {:ok, second_page_refs} = CMS.Assets.refs(community, asset.id, %{page: 2, size: 20})
+
+      assert length(second_page_refs.entries) == 20
+      assert second_page_refs.total_count == 105
+      assert second_page_refs.total_pages == 6
+      assert second_page_refs.page_number == 2
+
+      first_page_ids = paged_refs.entries |> Enum.map(& &1.id) |> MapSet.new()
+      second_page_ids = second_page_refs.entries |> Enum.map(& &1.id) |> MapSet.new()
+
+      assert MapSet.disjoint?(first_page_ids, second_page_ids)
     end
 
     test "does not delete assets that are still referenced", ~m(community post user)a do

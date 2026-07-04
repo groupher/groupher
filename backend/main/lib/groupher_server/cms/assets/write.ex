@@ -32,6 +32,22 @@ defmodule GroupherServer.CMS.Assets.Write do
   @asset_storage_conflict_target {:unsafe_fragment,
                                   "(community_id, storage, storage_key) WHERE storage_key IS NOT NULL AND deleted_at IS NULL"}
 
+  @doc """
+  Creates or updates an active community asset row for uploaded metadata.
+
+  Active rows are deduplicated by URL hash, or by storage identity when both
+  `storage` and `storage_key` are present. The optional user is stored as the
+  uploader when available.
+
+  ## Examples
+
+      Write.register(community, %{url: url, size_bytes: 2048}, user)
+      #=> {:ok, %CommunityAsset{}}
+
+      Write.register(community, %{storage: "s3", storage_key: key, url: url, size_bytes: 2048})
+      #=> {:ok, %CommunityAsset{}}
+
+  """
   @spec register(Community.t(), map(), User.t() | nil) :: T.domain_res(CommunityAsset.t())
   def register(%Community{id: community_id}, attrs, user \\ nil) when is_map(attrs) do
     attrs =
@@ -44,6 +60,22 @@ defmodule GroupherServer.CMS.Assets.Write do
     upsert_active_asset(attrs)
   end
 
+  @doc """
+  Soft-deletes one active community asset when it has no refs.
+
+  The asset row is selected `FOR UPDATE` before the ref check. If any
+  `article_document_asset_refs` row still points to the asset, deletion is
+  rejected.
+
+  ## Examples
+
+      Write.delete(community, asset.id)
+      #=> {:ok, %CommunityAsset{status: :deleted}}
+
+      Write.delete(community, referenced_asset.id)
+      #=> {:error, {:custom, "asset is still referenced"}}
+
+  """
   @spec delete(Community.t(), T.id()) :: T.domain_res(CommunityAsset.t())
   def delete(%Community{id: community_id}, asset_id) do
     Repo.transaction(fn ->
@@ -62,11 +94,42 @@ defmodule GroupherServer.CMS.Assets.Write do
     end)
   end
 
+  @doc """
+  Synchronizes refs for an article using an explicit community boundary.
+
+  The article document row is locked while body and cover refs are replaced, so
+  concurrent syncs for the same article cannot interleave delete/insert steps.
+
+  ## Examples
+
+      Write.sync_article_refs(community, post, %{
+        asset_refs: [%{asset_id: asset.id, block_id: "image-1"}],
+        cover_asset_id: cover_asset.id,
+        cur_user: user
+      })
+      #=> {:ok, %{body: body_refs, cover: cover_refs}}
+
+  """
   @spec sync_article_refs(Community.t(), T.article(), map()) :: T.domain_res(term())
   def sync_article_refs(%Community{id: community_id}, article, attrs) do
     do_sync_article_refs(community_id, article, attrs)
   end
 
+  @doc """
+  Synchronizes refs for an article using `article.community_id`.
+
+  This variant keeps article create/update flows concise. If the article is not
+  associated with a community, the sync is a no-op.
+
+  ## Examples
+
+      Write.sync_article_refs(post, %{asset_refs: [%{asset_id: asset.id}]})
+      #=> {:ok, %{body: body_refs, cover: cover_refs}}
+
+      Write.sync_article_refs(%{post | community_id: nil}, %{asset_refs: []})
+      #=> {:ok, :pass}
+
+  """
   @spec sync_article_refs(T.article(), map()) :: T.domain_res(term())
   def sync_article_refs(article, attrs) do
     case Map.get(article, :community_id) do
@@ -75,6 +138,18 @@ defmodule GroupherServer.CMS.Assets.Write do
     end
   end
 
+  @doc """
+  Removes all article-document asset refs for an article.
+
+  The community asset rows remain intact; only usage projections are deleted.
+  This is used by article deletion cleanup.
+
+  ## Examples
+
+      Write.purge_article_refs(:post, post.id)
+      #=> {:ok, {deleted_count, nil}}
+
+  """
   @spec purge_article_refs(atom(), T.id()) :: T.domain_res(term())
   def purge_article_refs(thread, article_id) do
     ArticleDocumentAssetRef
@@ -253,21 +328,13 @@ defmodule GroupherServer.CMS.Assets.Write do
 
   defp find_active_asset_for_update(community_id, asset_id) do
     community_id
-    |> active_asset_query(asset_id)
+    |> CommunityAsset.active_query(asset_id)
     |> lock("FOR UPDATE")
     |> Repo.one()
     |> case do
       nil -> {:error, {:not_exist, "asset not found"}}
       asset -> {:ok, asset}
     end
-  end
-
-  defp active_asset_query(community_id, asset_id) do
-    CommunityAsset
-    |> where([asset], asset.id == ^asset_id)
-    |> where([asset], asset.community_id == ^community_id)
-    |> where([asset], is_nil(asset.deleted_at))
-    |> where([asset], asset.status == :active)
   end
 
   defp upsert_active_asset(attrs) do

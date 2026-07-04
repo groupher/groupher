@@ -24,6 +24,7 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
   use Accessible
 
   import Ecto.Changeset
+  import Ecto.Query, warn: false
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
@@ -75,7 +76,22 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
+  @doc """
+  Builds a changeset for creating or updating a community asset.
+
+  The changeset computes `url_hash`, validates storage metadata, and attaches
+  the DB constraints used by the asset deduplication flow.
+
+  ## Examples
+
+      CommunityAsset.changeset(%CommunityAsset{}, %{
+        community_id: community.id,
+        url: "https://cdn.example/hero.png",
+        size_bytes: 2048
+      })
+      #=> %Ecto.Changeset{valid?: true}
+
+  """
   def changeset(%CommunityAsset{} = asset, attrs) do
     asset
     |> cast(attrs, @optional_fields ++ @required_fields)
@@ -101,10 +117,77 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
     )
   end
 
-  @doc false
+  @doc """
+  Builds an update changeset for an existing community asset.
+
+  It intentionally reuses `changeset/2` so create/update paths share the same
+  URL hash calculation and validation rules.
+
+  ## Examples
+
+      CommunityAsset.update_changeset(asset, %{title: "Updated title"})
+      #=> %Ecto.Changeset{}
+
+  """
   def update_changeset(%CommunityAsset{} = asset, attrs), do: changeset(asset, attrs)
 
+  @doc """
+  Builds the base query for active assets in a community.
+
+  Active assets are rows that still belong to the community catalog and count
+  toward storage usage. Soft-deleted rows are excluded.
+
+  ## Examples
+
+      CommunityAsset.active_query(community.id)
+      #=> #Ecto.Query<from a0 in CommunityAsset, ...>
+
+  """
+  def active_query(community_id) do
+    __MODULE__
+    |> where([asset], asset.community_id == ^community_id)
+    |> where([asset], is_nil(asset.deleted_at))
+    |> where([asset], asset.status == :active)
+  end
+
+  @doc """
+  Builds the active-asset query for one asset inside a community.
+
+  Use this when callers need the shared active predicate plus an asset identity
+  filter. Callers can add ordering, locking, selecting, or pagination on top.
+
+  ## Examples
+
+      CommunityAsset.active_query(community.id, asset.id)
+      #=> #Ecto.Query<from a0 in CommunityAsset, ...>
+
+  """
+  def active_query(community_id, asset_id) do
+    community_id
+    |> active_query()
+    |> where([asset], asset.id == ^asset_id)
+  end
+
+  @doc """
+  Returns the supported community asset type values.
+
+  ## Examples
+
+      CommunityAsset.asset_types()
+      #=> [:image, :video, :audio, :file]
+
+  """
   def asset_types, do: @asset_types
+
+  @doc """
+  Returns the supported lifecycle status values.
+
+  ## Examples
+
+      CommunityAsset.statuses()
+      #=> [:active, :deleted]
+
+  """
   def statuses, do: @statuses
 
   defp put_url_hash(changeset) do

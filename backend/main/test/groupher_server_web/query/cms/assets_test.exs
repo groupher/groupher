@@ -55,10 +55,15 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
 
       assert result |> is_valid_pagination?
       assert result["totalCount"] == 25
+      assert result["totalPages"] == 3
       assert result["pageSize"] == 10
       assert result["pageNumber"] == 1
       assert length(result["entries"]) == 10
-      assert result["entries"] |> hd() |> Map.get("source") == "query-refs.png"
+
+      first_entry = hd(result["entries"])
+      assert first_entry["articleId"] == to_string(post.id)
+      assert first_entry["usage"] == "INLINE"
+      assert first_entry["source"] == "query-refs.png"
     end
   end
 
