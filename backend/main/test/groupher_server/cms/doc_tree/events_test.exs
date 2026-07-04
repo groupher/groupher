@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
   use GroupherServer.TestMate
 
   alias GroupherServer.CMS
-  alias CMS.Model.DocTreeEvent
+  alias CMS.Model.{DocTreeEvent, DocTreeNode}
 
   require CMS.Const
 
@@ -13,6 +13,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
   @type_key CMS.Const.doc_tree_json_key(:type)
   @doc_id_key CMS.Const.doc_tree_json_key(:doc_id)
   @page_type to_string(CMS.Const.tree_node_type(:page))
+  @group_type to_string(CMS.Const.tree_node_type(:group))
+  @node_id_key "nodeId"
+  @node_type_key "nodeType"
 
   describe "[doc tree events]" do
     setup do
@@ -33,10 +36,17 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
                  user.id
                )
 
-      assert first.seq < second.seq
+      assert second.seq == first.seq + 1
       assert first.status == CMS.Const.tree_event_status(:staged)
       assert first.owner == CMS.Const.tree_event_owner(:tree)
       assert first.event_type == CMS.Const.tree_event(:node_create)
+      assert first.node_id == "page-1"
+      assert first.node_type == CMS.Const.tree_node_type(:page)
+      assert first.doc_id
+    end
+
+    test "records no staged events from an empty list", ~m(user community)a do
+      assert CMS.DocTree.Events.record_staged_many(community, [], user.id) == {:ok, []}
     end
 
     test "publishes only selected staged tree events", ~m(user community)a do
@@ -84,6 +94,65 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
       assert doc_event.status == CMS.Const.tree_event_status(:discarded)
       assert legacy_event.status == CMS.Const.tree_event_status(:discarded)
     end
+
+    test "records selector columns from staged payload", ~m(user community)a do
+      doc_id = Ecto.UUID.generate()
+
+      assert {:ok, event} = record_node_create(community, "page-1", user, doc_id)
+
+      assert event.node_id == "page-1"
+      assert event.node_type == CMS.Const.tree_node_type(:page)
+      assert event.doc_id == doc_id
+    end
+
+    test "records selector columns from flat node payloads", ~m(user community)a do
+      doc_id = Ecto.UUID.generate()
+
+      assert {:ok, group_event} =
+               CMS.DocTree.Events.record_staged(
+                 community,
+                 CMS.Const.tree_event(:node_move),
+                 %{
+                   @node_id_key => "group-1",
+                   @node_type_key => @group_type,
+                   "title" => "Group"
+                 },
+                 %{},
+                 user.id
+               )
+
+      assert {:ok, page_event} =
+               CMS.DocTree.Events.record_staged(
+                 community,
+                 CMS.Const.tree_event(:node_move),
+                 %{
+                   @node_id_key => "page-1",
+                   @node_type_key => @page_type,
+                   @doc_id_key => doc_id,
+                   "title" => "Page"
+                 },
+                 %{},
+                 user.id
+               )
+
+      assert group_event.node_id == "group-1"
+      assert group_event.node_type == CMS.Const.tree_node_type(:group)
+      assert is_nil(group_event.doc_id)
+
+      assert page_event.node_id == "page-1"
+      assert page_event.node_type == CMS.Const.tree_node_type(:page)
+      assert page_event.doc_id == doc_id
+    end
+
+    test "builds pin-specific event types" do
+      before_pin = pin_node(title: "GitHub")
+      after_pin = pin_node(title: "Groupher")
+
+      assert %{type: "pin.add"} = CMS.DocTree.Events.create_event(before_pin)
+      assert %{type: "pin.remove"} = CMS.DocTree.Events.delete_event(before_pin)
+      assert %{type: "pin.reorder"} = CMS.DocTree.Events.move_event(before_pin, nil, 0, nil, 1)
+      assert [%{type: "pin.update"}] = CMS.DocTree.Events.update_events(before_pin, after_pin)
+    end
   end
 
   defp record_node_create(community, node_id, user, doc_id \\ Ecto.UUID.generate()) do
@@ -115,6 +184,21 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
         "title" => "Page"
       }
     }
+  end
+
+  defp pin_node(attrs) do
+    attrs =
+      Enum.into(attrs, %{
+        node_id: "pin-1",
+        stage: CMS.Const.stage(:draft),
+        type: CMS.Const.tree_node_type(:pin),
+        title: "Pin",
+        href: "https://example.com",
+        group_id: nil,
+        index: 0
+      })
+
+    struct(DocTreeNode, attrs)
   end
 
   defp empty_docs_community(user) do

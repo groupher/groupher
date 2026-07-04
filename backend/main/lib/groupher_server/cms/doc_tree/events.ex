@@ -36,7 +36,8 @@ defmodule GroupherServer.CMS.DocTree.Events do
   @doc_tree_json_key_type CMS.Const.doc_tree_json_key(:type)
   @doc_tree_json_key_doc_id CMS.Const.doc_tree_json_key(:doc_id)
   @tree_node_type_group CMS.Const.tree_node_type(:group)
-  @tree_node_type_page_key to_string(CMS.Const.tree_node_type(:page))
+  @tree_node_type_page CMS.Const.tree_node_type(:page)
+  @tree_node_type_pin CMS.Const.tree_node_type(:pin)
 
   @doc """
   Records one staged Tree event.
@@ -59,17 +60,41 @@ defmodule GroupherServer.CMS.DocTree.Events do
         author_id \\ nil,
         opts \\ []
       ) do
-    ORM.create(DocTreeEvent, %{
-      community_id: community.id,
-      seq: next_seq(community),
-      event_type: event_type,
-      payload: payload,
-      inverse_payload: inverse_payload,
-      status: CMS.Const.tree_event_status(:staged),
-      owner: Keyword.get(opts, :owner, :tree),
-      doc_id: Keyword.get(opts, :doc_id),
-      author_id: author_id
-    })
+    Repo.transaction(fn ->
+      with {:ok, _community} <- ORM.lock_community(community),
+           {:ok, event} <-
+             insert_staged_event(
+               community,
+               event_type,
+               payload,
+               inverse_payload,
+               author_id,
+               opts,
+               next_seq(community)
+             ) do
+        event
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+    |> transaction_result()
+  end
+
+  defp insert_staged_event(community, event_type, payload, inverse_payload, author_id, opts, seq) do
+    attrs =
+      %{
+        community_id: community.id,
+        seq: seq,
+        event_type: event_type,
+        payload: payload,
+        inverse_payload: inverse_payload,
+        status: CMS.Const.tree_event_status(:staged),
+        owner: Keyword.get(opts, :owner, :tree),
+        author_id: author_id
+      }
+      |> Map.merge(event_selectors(payload, opts))
+
+    ORM.create(DocTreeEvent, attrs)
   end
 
   @doc """
@@ -82,24 +107,47 @@ defmodule GroupherServer.CMS.DocTree.Events do
   """
   @spec record_staged_many(Community.t(), list(map()), integer() | nil) ::
           T.domain_res(list(DocTreeEvent.t()))
-  def record_staged_many(%Community{} = community, events, author_id \\ nil) do
-    events
-    |> Enum.reduce_while({:ok, []}, fn %{type: type, payload: payload, inverse: inverse} = attrs,
-                                       {:ok, acc} ->
-      opts =
-        attrs
-        |> Map.take([:owner, :doc_id])
-        |> Enum.into([])
+  def record_staged_many(community, events, author_id \\ nil)
 
-      case record_staged(community, type, payload, inverse, author_id, opts) do
-        {:ok, event} -> {:cont, {:ok, [event | acc]}}
-        error -> {:halt, error}
+  def record_staged_many(%Community{}, [], _author_id), do: {:ok, []}
+
+  def record_staged_many(%Community{} = community, events, author_id) do
+    Repo.transaction(fn ->
+      with {:ok, _community} <- ORM.lock_community(community) do
+        next_seq = next_seq(community)
+
+        events
+        |> Enum.with_index()
+        |> Enum.reduce_while({:ok, []}, fn {%{type: type, payload: payload, inverse: inverse} =
+                                              attrs, index},
+                                           {:ok, acc} ->
+          opts =
+            attrs
+            |> Map.take([:owner, :doc_id])
+            |> Enum.into([])
+
+          case insert_staged_event(
+                 community,
+                 type,
+                 payload,
+                 inverse,
+                 author_id,
+                 opts,
+                 next_seq + index
+               ) do
+            {:ok, event} -> {:cont, {:ok, [event | acc]}}
+            error -> {:halt, error}
+          end
+        end)
+        |> case do
+          {:ok, events} -> Enum.reverse(events)
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      else
+        {:error, reason} -> Repo.rollback(reason)
       end
     end)
-    |> case do
-      {:ok, events} -> {:ok, Enum.reverse(events)}
-      error -> error
-    end
+    |> transaction_result()
   end
 
   @doc """
@@ -160,7 +208,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
     node_payload = node_payload(node)
 
     %{
-      type: CMS.Const.tree_event(:node_create),
+      type: node_event_type(node, :create),
       payload: %{@doc_tree_json_key_node => node_payload},
       inverse: %{"nodeId" => node_payload[@doc_tree_json_key_id]}
     }
@@ -179,7 +227,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
       |> Enum.map(&node_payload/1)
 
     %{
-      type: CMS.Const.tree_event(:node_delete),
+      type: node_event_type(node, :delete),
       payload: %{@doc_tree_json_key_node => node_payload},
       inverse: %{@doc_tree_json_key_node => node_payload, "children" => children_payload}
     }
@@ -204,9 +252,11 @@ defmodule GroupherServer.CMS.DocTree.Events do
         after_index
       ) do
     %{
-      type: CMS.Const.tree_event(:node_move),
+      type: node_event_type(node, :move),
       payload: %{
         "nodeId" => node.node_id,
+        "nodeType" => to_string(node.type),
+        "docId" => node.doc_id,
         "title" => node.title,
         "beforeGroupId" => before_group_id,
         "afterGroupId" => after_group_id,
@@ -257,14 +307,14 @@ defmodule GroupherServer.CMS.DocTree.Events do
   @spec mark_tree_events_published(Community.t(), DocTreeSnapshot.t(), list(T.id())) ::
           non_neg_integer()
   def mark_tree_events_published(%Community{} = community, %DocTreeSnapshot{} = snapshot, ids) do
-    ids = Enum.map(ids, &to_string/1)
+    ids = Enum.flat_map(ids, &event_id/1)
 
     {count, _} =
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
       |> where([e], e.status == CMS.Const.tree_event_status(:staged))
       |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
-      |> where([e], fragment("?::text", e.id) in ^ids)
+      |> where([e], e.id in ^ids)
       |> Repo.update_all(
         set: [
           status: CMS.Const.tree_event_status(:published),
@@ -275,6 +325,17 @@ defmodule GroupherServer.CMS.DocTree.Events do
 
     count
   end
+
+  defp event_id(id) when is_integer(id), do: [id]
+
+  defp event_id(id) when is_binary(id) do
+    case Integer.parse(id) do
+      {id, ""} -> [id]
+      _ -> []
+    end
+  end
+
+  defp event_id(_), do: []
 
   @doc """
   Marks doc-bound events for one article draft as published.
@@ -303,22 +364,14 @@ defmodule GroupherServer.CMS.DocTree.Events do
         ]
       )
 
-    {legacy_count, _} =
+    {tree_page_create_count, _} =
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
       |> where([e], e.status == CMS.Const.tree_event_status(:staged))
       |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
       |> where([e], e.event_type == CMS.Const.tree_event(:node_create))
-      |> where(
-        [e],
-        fragment("? #>> ?", e.payload, ^[@doc_tree_json_key_node, @doc_tree_json_key_type]) ==
-          ^@tree_node_type_page_key
-      )
-      |> where(
-        [e],
-        fragment("? #>> ?", e.payload, ^[@doc_tree_json_key_node, @doc_tree_json_key_doc_id]) ==
-          ^doc_id
-      )
+      |> where([e], e.node_type == ^@tree_node_type_page)
+      |> where([e], e.doc_id == ^doc_id)
       |> Repo.update_all(
         set: [
           status: CMS.Const.tree_event_status(:published),
@@ -326,7 +379,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
         ]
       )
 
-    count + legacy_count
+    count + tree_page_create_count
   end
 
   @doc """
@@ -345,10 +398,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
       |> where([e], e.status == CMS.Const.tree_event_status(:staged))
       |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
       |> where([e], e.event_type == CMS.Const.tree_event(:node_create))
-      |> where(
-        [e],
-        fragment("? #>> ?", e.payload, ^[@doc_tree_json_key_node, @doc_tree_json_key_id]) in ^node_ids
-      )
+      |> where([e], e.node_id in ^node_ids)
       |> Repo.update_all(
         set: [
           status: CMS.Const.tree_event_status(:published),
@@ -382,21 +432,14 @@ defmodule GroupherServer.CMS.DocTree.Events do
         ]
       )
 
-    {legacy_count, _} =
+    {tree_page_create_count, _} =
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
       |> where([e], e.status == CMS.Const.tree_event_status(:staged))
       |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
       |> where([e], e.event_type == CMS.Const.tree_event(:node_create))
-      |> where(
-        [e],
-        fragment("? #>> ?", e.payload, ^[@doc_tree_json_key_node, @doc_tree_json_key_type]) ==
-          ^@tree_node_type_page_key
-      )
-      |> where(
-        [e],
-        fragment("? #>> ?", e.payload, ^[@doc_tree_json_key_node, @doc_tree_json_key_doc_id]) in ^doc_ids
-      )
+      |> where([e], e.node_type == ^@tree_node_type_page)
+      |> where([e], e.doc_id in ^doc_ids)
       |> Repo.update_all(
         set: [
           status: CMS.Const.tree_event_status(:discarded),
@@ -404,7 +447,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
         ]
       )
 
-    count + legacy_count
+    count + tree_page_create_count
   end
 
   @doc """
@@ -423,7 +466,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
       |> where([e], e.status == CMS.Const.tree_event_status(:staged))
       |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
       |> where([e], e.event_type == CMS.Const.tree_event(:node_create))
-      |> where([e], fragment("?->'node'->>'id'", e.payload) in ^node_ids)
+      |> where([e], e.node_id in ^node_ids)
       |> Repo.update_all(
         set: [
           status: CMS.Const.tree_event_status(:discarded),
@@ -473,49 +516,100 @@ defmodule GroupherServer.CMS.DocTree.Events do
     end
   end
 
-  defp field_update_event(before, after_node, :title, before_value, after_value) do
-    type =
-      if before.type == @tree_node_type_group,
-        do: CMS.Const.tree_event(:group_rename),
-        else: CMS.Const.tree_event(:node_rename)
+  defp field_update_event(
+         %DocTreeNode{type: @tree_node_type_group} = before,
+         after_node,
+         :title,
+         before_value,
+         after_value
+       ) do
+    field_update_event(
+      before,
+      after_node,
+      "title",
+      CMS.Const.tree_event(:group_rename),
+      before_value,
+      after_value
+    )
+  end
 
-    %{
-      type: type,
-      payload: base_field_payload(before, "title", before_value, after_value),
-      inverse: inverse_field_payload(after_node, "title", before_value)
-    }
+  defp field_update_event(before, after_node, :title, before_value, after_value) do
+    field_update_event(
+      before,
+      after_node,
+      "title",
+      update_event_type(before, CMS.Const.tree_event(:node_rename)),
+      before_value,
+      after_value
+    )
   end
 
   defp field_update_event(before, after_node, :marker, before_value, after_value) do
-    %{
-      type: CMS.Const.tree_event(:node_marker_update),
-      payload: base_field_payload(before, "marker", before_value, after_value),
-      inverse: inverse_field_payload(after_node, "marker", before_value)
-    }
+    field_update_event(
+      before,
+      after_node,
+      "marker",
+      update_event_type(before, CMS.Const.tree_event(:node_marker_update)),
+      before_value,
+      after_value
+    )
   end
 
   defp field_update_event(before, after_node, :href, before_value, after_value) do
-    %{
-      type: CMS.Const.tree_event(:link_href_update),
-      payload: base_field_payload(before, "href", before_value, after_value),
-      inverse: inverse_field_payload(after_node, "href", before_value)
-    }
+    field_update_event(
+      before,
+      after_node,
+      "href",
+      update_event_type(before, CMS.Const.tree_event(:link_href_update)),
+      before_value,
+      after_value
+    )
   end
 
   defp field_update_event(before, after_node, field, before_value, after_value) do
     field_name = Atom.to_string(field)
 
+    field_update_event(
+      before,
+      after_node,
+      field_name,
+      update_event_type(before, CMS.Const.tree_event(:node_update)),
+      before_value,
+      after_value
+    )
+  end
+
+  defp field_update_event(before, after_node, field, type, before_value, after_value) do
     %{
-      type: CMS.Const.tree_event(:node_update),
-      payload: base_field_payload(before, field_name, before_value, after_value),
-      inverse: inverse_field_payload(after_node, field_name, before_value)
+      type: type,
+      payload: base_field_payload(before, field, before_value, after_value),
+      inverse: inverse_field_payload(after_node, field, before_value)
     }
   end
+
+  defp node_event_type(%DocTreeNode{type: @tree_node_type_pin}, :create),
+    do: CMS.Const.tree_event(:pin_add)
+
+  defp node_event_type(%DocTreeNode{type: @tree_node_type_pin}, :delete),
+    do: CMS.Const.tree_event(:pin_remove)
+
+  defp node_event_type(%DocTreeNode{type: @tree_node_type_pin}, :move),
+    do: CMS.Const.tree_event(:pin_reorder)
+
+  defp node_event_type(%DocTreeNode{}, :create), do: CMS.Const.tree_event(:node_create)
+  defp node_event_type(%DocTreeNode{}, :delete), do: CMS.Const.tree_event(:node_delete)
+  defp node_event_type(%DocTreeNode{}, :move), do: CMS.Const.tree_event(:node_move)
+
+  defp update_event_type(%DocTreeNode{type: @tree_node_type_pin}, _fallback),
+    do: CMS.Const.tree_event(:pin_update)
+
+  defp update_event_type(%DocTreeNode{}, fallback), do: fallback
 
   defp base_field_payload(node, field, before_value, after_value) do
     %{
       "nodeId" => node.node_id,
       "nodeType" => to_string(node.type),
+      "docId" => node.doc_id,
       "title" => node.title,
       "field" => field,
       "before" => before_value,
@@ -538,6 +632,54 @@ defmodule GroupherServer.CMS.DocTree.Events do
       "index" => node.index
     })
   end
+
+  # Event payloads have two stable shapes:
+  # - create/delete keep the full node snapshot under "node";
+  # - move/update keep only flat selector fields plus the field diff.
+  # Keep selector extraction explicit so SQL-facing columns do not depend on
+  # ad-hoc JSON traversal rules.
+  defp event_selectors(%{@doc_tree_json_key_node => node}, opts) when is_map(node) do
+    selector_attrs(
+      Map.get(node, @doc_tree_json_key_id),
+      Map.get(node, @doc_tree_json_key_type),
+      Keyword.get(opts, :doc_id) || Map.get(node, @doc_tree_json_key_doc_id)
+    )
+  end
+
+  defp event_selectors(%{"nodeId" => node_id} = payload, opts) do
+    selector_attrs(
+      node_id,
+      Map.get(payload, "nodeType"),
+      Keyword.get(opts, :doc_id) || Map.get(payload, "docId")
+    )
+  end
+
+  defp event_selectors(payload, opts) when is_map(payload) do
+    selector_attrs(nil, nil, Keyword.get(opts, :doc_id) || Map.get(payload, "docId"))
+  end
+
+  defp selector_attrs(node_id, node_type, doc_id) do
+    %{
+      doc_id: doc_id,
+      node_id: node_id,
+      node_type: normalize_node_type(node_type)
+    }
+    |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+    |> Map.new()
+  end
+
+  defp normalize_node_type(type) when is_atom(type) do
+    if type in CMS.Const.tree_node_type_values(), do: type, else: nil
+  end
+
+  defp normalize_node_type(type) when is_binary(type) do
+    Enum.find(CMS.Const.tree_node_type_values(), &(to_string(&1) == type))
+  end
+
+  defp normalize_node_type(_), do: nil
+
+  defp transaction_result({:ok, result}), do: {:ok, result}
+  defp transaction_result({:error, reason}), do: {:error, reason}
 
   defp next_seq(%Community{} = community) do
     DocTreeEvent

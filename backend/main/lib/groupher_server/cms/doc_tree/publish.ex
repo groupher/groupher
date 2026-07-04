@@ -47,8 +47,6 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   alias Helper.{ORM, T, Transaction}
 
-  @doc_tree_json_key_node CMS.Const.doc_tree_json_key(:node)
-  @doc_tree_json_key_id CMS.Const.doc_tree_json_key(:id)
   @doc_tree_json_key_type CMS.Const.doc_tree_json_key(:type)
   @doc_tree_json_key_doc_id CMS.Const.doc_tree_json_key(:doc_id)
   @tree_node_type_group CMS.Const.tree_node_type(:group)
@@ -270,33 +268,52 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   end
 
   defp selected_ids(args, key, items) do
-    case Map.get(args, key) || Map.get(args, Atom.to_string(key)) do
-      nil ->
-        {:ok, items |> Enum.filter(& &1.selectable) |> Enum.map(& &1.id)}
-
-      ids when is_list(ids) ->
-        by_id = Map.new(items, &{&1.id, &1})
-
-        ids
-        |> Enum.map(&to_string/1)
-        |> Enum.reduce_while({:ok, []}, fn id, {:ok, acc} ->
-          case Map.get(by_id, id) do
-            nil ->
-              {:halt, {:error, {:custom, "Selected publish item no longer exists."}}}
-
-            %{selectable: false, disabled_reason: reason} ->
-              {:halt, {:error, {:custom, reason || "Selected publish item is not available."}}}
-
-            _item ->
-              {:cont, {:ok, [id | acc]}}
-          end
-        end)
-        |> case do
-          {:ok, selected} -> {:ok, Enum.reverse(selected)}
-          error -> error
-        end
-    end
+    args
+    |> selected_value(key)
+    |> selected_ids_from(items)
   end
+
+  defp selected_value(args, key), do: Map.get(args, key) || Map.get(args, Atom.to_string(key))
+
+  defp selected_ids_from(nil, items),
+    do: {:ok, items |> Enum.filter(& &1.selectable) |> Enum.map(& &1.id)}
+
+  defp selected_ids_from(ids, items) when is_list(ids) do
+    by_id = Map.new(items, &{&1.id, &1})
+
+    # Explicit checklist selections must fail loudly when the client submits a
+    # stale or disabled id; silent filtering would publish a different set.
+    ids
+    |> Enum.map(&to_string/1)
+    |> map_while_ok(&selected_id(&1, by_id))
+  end
+
+  defp selected_ids_from(_ids, _items),
+    do: {:error, {:custom, "Selected publish item ids must be a list."}}
+
+  defp selected_id(id, by_id), do: selectable_id(id, Map.get(by_id, id))
+
+  defp selectable_id(_id, nil),
+    do: {:error, {:custom, "Selected publish item no longer exists."}}
+
+  defp selectable_id(_id, %{selectable: false, disabled_reason: reason}),
+    do: {:error, {:custom, reason || "Selected publish item is not available."}}
+
+  defp selectable_id(id, _item), do: {:ok, id}
+
+  defp map_while_ok(enumerable, fun) do
+    enumerable
+    |> Enum.reduce_while({:ok, []}, fn item, {:ok, acc} ->
+      case fun.(item) do
+        {:ok, value} -> {:cont, {:ok, [value | acc]}}
+        error -> {:halt, error}
+      end
+    end)
+    |> reverse_ok()
+  end
+
+  defp reverse_ok({:ok, items}), do: {:ok, Enum.reverse(items)}
+  defp reverse_ok(error), do: error
 
   defp publish_mode(%{total_count: 0}, [], []), do: {:ok, :noop}
   defp publish_mode(_scope, [], []), do: {:error, {:custom, "No publish changes selected."}}
@@ -337,8 +354,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
        ) do
     items = Map.new(scope_items, &{&1.id, &1})
 
-    doc_ids
-    |> Enum.reduce_while({:ok, []}, fn id, {:ok, acc} ->
+    map_while_ok(doc_ids, fn id ->
       with %{doc_id: _doc_id} = item <- Map.get(items, id),
            {:ok, snapshot} <-
              publish_doc_draft(
@@ -347,16 +363,12 @@ defmodule GroupherServer.CMS.DocTree.Publish do
                user,
                sync_cover?
              ) do
-        {:cont, {:ok, [%{snapshot: snapshot, scope_item: item} | acc]}}
+        {:ok, %{snapshot: snapshot, scope_item: item}}
       else
-        nil -> {:halt, {:error, {:custom, "Selected docs publish item no longer exists."}}}
-        error -> {:halt, error}
+        nil -> {:error, {:custom, "Selected docs publish item no longer exists."}}
+        error -> error
       end
     end)
-    |> case do
-      {:ok, entries} -> {:ok, Enum.reverse(entries)}
-      error -> error
-    end
   end
 
   defp include_doc_shell_tree_ids(%Community{} = community, args, [], tree_ids) do
@@ -401,7 +413,9 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp preapply_tree_delete_events(%Community{} = community, events) do
     events
-    |> Enum.filter(&(&1.event_type == CMS.Const.tree_event(:node_delete)))
+    |> Enum.filter(
+      &(&1.event_type in [CMS.Const.tree_event(:node_delete), CMS.Const.tree_event(:pin_remove)])
+    )
     |> apply_tree_events_to_public(community)
   end
 
@@ -422,10 +436,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   defp selected_tree_events(_community, []), do: []
 
   defp selected_tree_events(%Community{} = community, tree_ids) do
-    ids =
-      tree_ids
-      |> Enum.map(&String.replace_prefix(&1, "tree:", ""))
-      |> Enum.map(&String.to_integer/1)
+    ids = Enum.flat_map(tree_ids, &tree_event_id/1)
 
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
@@ -436,10 +447,26 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     |> Repo.all()
   end
 
+  # GraphQL checklist ids are public strings ("tree:<db id>"), while some tests
+  # and internal paths still pass plain integer/string ids. Normalize both here
+  # so bad input falls through to the normal "no longer exists" selection error.
+  defp tree_event_id("tree:" <> id), do: tree_event_id(id)
+  defp tree_event_id(id) when is_integer(id), do: [id]
+
+  defp tree_event_id(id) when is_binary(id) do
+    case Integer.parse(id) do
+      {id, ""} -> [id]
+      _ -> []
+    end
+  end
+
+  defp tree_event_id(_id), do: []
+
   defp apply_tree_event_to_public(
          %Community{} = community,
-         %DocTreeEvent{event_type: CMS.Const.tree_event(:node_create)} = event
-       ) do
+         %DocTreeEvent{event_type: type} = event
+       )
+       when type in [CMS.Const.tree_event(:node_create), CMS.Const.tree_event(:pin_add)] do
     node = event.payload["node"] || %{}
 
     with {:ok, attrs} <- public_attrs_from_event_node(community, node) do
@@ -449,8 +476,9 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp apply_tree_event_to_public(
          %Community{} = community,
-         %DocTreeEvent{event_type: CMS.Const.tree_event(:node_delete)} = event
-       ) do
+         %DocTreeEvent{event_type: type} = event
+       )
+       when type in [CMS.Const.tree_event(:node_delete), CMS.Const.tree_event(:pin_remove)] do
     node = event.payload["node"] || %{}
 
     delete_public_node_by_node_id(community, node["id"])
@@ -458,8 +486,9 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp apply_tree_event_to_public(
          %Community{} = community,
-         %DocTreeEvent{event_type: CMS.Const.tree_event(:node_move)} = event
-       ) do
+         %DocTreeEvent{event_type: type} = event
+       )
+       when type in [CMS.Const.tree_event(:node_move), CMS.Const.tree_event(:pin_reorder)] do
     payload = event.payload
 
     update_public_node_by_node_id(community, payload["nodeId"], %{
@@ -469,6 +498,10 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   end
 
   defp apply_tree_event_to_public(%Community{} = community, %DocTreeEvent{} = event) do
+    apply_tree_event_to_public_fallback(community, event)
+  end
+
+  defp apply_tree_event_to_public_fallback(%Community{} = community, %DocTreeEvent{} = event) do
     payload = event.payload
 
     with {:ok, field} <- field_atom(payload["field"]) do
@@ -752,12 +785,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          %Community{} = community,
          %DocTreeEvent{
            event_type: CMS.Const.tree_event(:node_delete),
-           payload: %{
-             @doc_tree_json_key_node => %{
-               @doc_tree_json_key_type => @tree_node_type_group_key,
-               @doc_tree_json_key_id => id
-             }
-           }
+           node_type: @tree_node_type_group,
+           node_id: id
          } = event
        ) do
     community
@@ -772,9 +801,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          %Community{} = community,
          %DocTreeEvent{
            event_type: CMS.Const.tree_event(:node_delete),
-           payload: %{
-             @doc_tree_json_key_node => %{@doc_tree_json_key_type => @tree_node_type_page_key}
-           }
+           node_type: @tree_node_type_page
          } = event
        ) do
     event
@@ -825,24 +852,16 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   end
 
   defp create_release_tree_events(%PublishRelease{} = release, tree_events) do
-    tree_events
-    |> Enum.reduce_while({:ok, []}, fn event, {:ok, acc} ->
-      case ORM.create(PublishReleaseTreeEvent, %{
-             release_id: release.id,
-             doc_tree_event_id: event.id,
-             event_type: event.event_type,
-             label: tree_event_label(event),
-             payload: event.payload,
-             inverse_payload: event.inverse_payload
-           }) do
-        {:ok, row} -> {:cont, {:ok, [row | acc]}}
-        error -> {:halt, error}
-      end
+    map_while_ok(tree_events, fn event ->
+      ORM.create(PublishReleaseTreeEvent, %{
+        release_id: release.id,
+        doc_tree_event_id: event.id,
+        event_type: event.event_type,
+        label: tree_event_label(event),
+        payload: event.payload,
+        inverse_payload: event.inverse_payload
+      })
     end)
-    |> case do
-      {:ok, rows} -> {:ok, Enum.reverse(rows)}
-      error -> error
-    end
   end
 
   defp public_page_by_doc_id(community_id, doc_id) do
@@ -875,28 +894,12 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   end
 
   defp article_node_ids_from_tree_event(%DocTreeEvent{
-         event_type: CMS.Const.tree_event(:node_create),
-         payload: %{
-           @doc_tree_json_key_node => %{
-             @doc_tree_json_key_type => @tree_node_type_page_key,
-             @doc_tree_json_key_id => id
-           }
-         }
-       }),
+         node_type: @tree_node_type_page,
+         node_id: id
+       })
+       when not is_nil(id),
        do: [id]
 
-  defp article_node_ids_from_tree_event(%DocTreeEvent{
-         event_type: CMS.Const.tree_event(:node_delete),
-         payload: %{
-           @doc_tree_json_key_node => %{
-             @doc_tree_json_key_type => @tree_node_type_page_key,
-             @doc_tree_json_key_id => id
-           }
-         }
-       }),
-       do: [id]
-
-  defp article_node_ids_from_tree_event(%DocTreeEvent{payload: %{"nodeId" => id}}), do: [id]
   defp article_node_ids_from_tree_event(_event), do: []
 
   defp actions_from_tree_events(tree_events, node_id) do
@@ -1003,26 +1006,20 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp page_create_event_doc_id(%DocTreeEvent{
          event_type: CMS.Const.tree_event(:node_create),
-         payload: %{
-           @doc_tree_json_key_node => %{
-             @doc_tree_json_key_type => @tree_node_type_page_key,
-             @doc_tree_json_key_doc_id => doc_id
-           }
-         }
-       }),
+         node_type: @tree_node_type_page,
+         doc_id: doc_id
+       })
+       when not is_nil(doc_id),
        do: doc_id
 
   defp page_create_event_doc_id(_event), do: nil
 
   defp group_create_event_id(%DocTreeEvent{
          event_type: CMS.Const.tree_event(:node_create),
-         payload: %{
-           @doc_tree_json_key_node => %{
-             @doc_tree_json_key_type => @tree_node_type_group_key,
-             @doc_tree_json_key_id => group_id
-           }
-         }
-       }),
+         node_type: @tree_node_type_group,
+         node_id: group_id
+       })
+       when not is_nil(group_id),
        do: group_id
 
   defp group_create_event_id(_event), do: nil
@@ -1061,16 +1058,13 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          %Community{} = community,
          %DocTreeEvent{
            event_type: CMS.Const.tree_event(:node_create),
-           payload: %{
-             @doc_tree_json_key_node =>
-               %{@doc_tree_json_key_type => @tree_node_type_page_key} =
-                 node
-           }
+           node_type: @tree_node_type_page,
+           doc_id: doc_id
          }
        ) do
     with {:ok, %Doc{community_id: _cid}} <-
            ORM.find_by(Doc,
-             doc_id: node[@doc_tree_json_key_doc_id],
+             doc_id: doc_id,
              stage: CMS.Const.stage(:draft),
              community_id: community.id
            ) do
@@ -1093,14 +1087,17 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     |> Repo.one()
   end
 
-  defp tree_event_action(%DocTreeEvent{event_type: CMS.Const.tree_event(:node_create)}),
-    do: "created"
+  defp tree_event_action(%DocTreeEvent{event_type: type})
+       when type in [CMS.Const.tree_event(:node_create), CMS.Const.tree_event(:pin_add)],
+       do: "created"
 
-  defp tree_event_action(%DocTreeEvent{event_type: CMS.Const.tree_event(:node_delete)}),
-    do: "deleted"
+  defp tree_event_action(%DocTreeEvent{event_type: type})
+       when type in [CMS.Const.tree_event(:node_delete), CMS.Const.tree_event(:pin_remove)],
+       do: "deleted"
 
-  defp tree_event_action(%DocTreeEvent{event_type: CMS.Const.tree_event(:node_move)}),
-    do: "moved"
+  defp tree_event_action(%DocTreeEvent{event_type: type})
+       when type in [CMS.Const.tree_event(:node_move), CMS.Const.tree_event(:pin_reorder)],
+       do: "moved"
 
   defp tree_event_action(%DocTreeEvent{event_type: type})
        when type in [
@@ -1112,21 +1109,24 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   defp tree_event_action(%DocTreeEvent{}), do: "modified"
 
   defp tree_event_label(%DocTreeEvent{
-         event_type: CMS.Const.tree_event(:node_create),
+         event_type: type,
          payload: %{"node" => node}
-       }),
+       })
+       when type in [CMS.Const.tree_event(:node_create), CMS.Const.tree_event(:pin_add)],
        do: "Added #{node["title"] || node["id"]}"
 
   defp tree_event_label(%DocTreeEvent{
-         event_type: CMS.Const.tree_event(:node_delete),
+         event_type: type,
          payload: %{"node" => node}
-       }),
+       })
+       when type in [CMS.Const.tree_event(:node_delete), CMS.Const.tree_event(:pin_remove)],
        do: "Deleted #{node["title"] || node["id"]}"
 
   defp tree_event_label(%DocTreeEvent{
-         event_type: CMS.Const.tree_event(:node_move),
+         event_type: type,
          payload: payload
-       }),
+       })
+       when type in [CMS.Const.tree_event(:node_move), CMS.Const.tree_event(:pin_reorder)],
        do: "Moved #{payload["title"] || payload["nodeId"]}"
 
   defp tree_event_label(%DocTreeEvent{event_type: type, payload: payload})
