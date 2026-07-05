@@ -43,7 +43,7 @@ defmodule GroupherServerWeb.Resolvers.Accounts do
         do: Map.merge(profile, %{social: args.social}),
         else: profile
 
-    Accounts.Profiles.update_profile(%User{id: cur_user.id}, profile)
+    Accounts.Profiles.update_profile(cur_user, profile)
   end
 
   def signin_oauth(_root, %{provider: provider}, _info) do

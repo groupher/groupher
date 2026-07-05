@@ -4,20 +4,27 @@ defmodule GroupherServer.Accounts.Publish.Articles do
   import Helper.Utils, only: [plural: 1]
 
   alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.FrontDesk, as: RootFrontDesk
 
-  alias Accounts.FrontDesk
   alias Accounts.Model.User
   alias Helper.ORM
 
-  def paged(%User{id: user_id}, thread, filter) do
-    with {:ok, user} <- FrontDesk.user(user_id) do
-      CMS.Articles.paged_published(thread, filter, user)
-    end
+  def paged(%User{} = user, thread, filter) do
+    CMS.Articles.paged_published(thread, filter, user)
   end
 
   def update_states(%User{} = user, thread) do
     with {:ok, published_count} <- CMS.Articles.count_published(thread, user) do
-      ORM.update_meta(user, %{:"published_#{plural(thread)}_count" => published_count})
+      user
+      |> ORM.update_meta(%{:"published_#{plural(thread)}_count" => published_count})
+      |> revalidate_user(user.login)
     end
   end
+
+  defp revalidate_user({:ok, _result} = response, login) when is_binary(login) do
+    RootFrontDesk.revalidate().user(login)
+    response
+  end
+
+  defp revalidate_user(response, _login), do: response
 end

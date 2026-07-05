@@ -22,7 +22,6 @@ defmodule GroupherServer.Test.Mutation.Account.Basic do
         profile: $profile,
         social: $social,
       ) {
-        id
         avatar
         nickname
         social {

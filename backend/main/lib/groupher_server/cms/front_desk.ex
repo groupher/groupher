@@ -7,6 +7,7 @@ defmodule GroupherServer.CMS.FrontDesk do
   import ShortMaps
 
   alias GroupherServer.{Accounts, CMS, Repo}
+  alias GroupherServer.FrontDesk, as: RootFrontDesk
 
   alias Accounts.Model.User
   alias CMS.Artiment.Threads
@@ -40,6 +41,12 @@ defmodule GroupherServer.CMS.FrontDesk do
       {:error, _} = error -> error
     end
   end
+
+  @spec live_user(String.t(), keyword()) :: {:ok, User.t()} | {:error, any()}
+  def live_user(login, opts \\ []) when is_binary(login), do: RootFrontDesk.live_user(login, opts)
+
+  @spec revalidate_user(String.t()) :: {:ok, User.t()} | {:error, any()}
+  def revalidate_user(login) when is_binary(login), do: RootFrontDesk.revalidate().user(login)
 
   @spec comment(map()) :: T.domain_res(Comment.t())
   def comment(%{} = comment_path), do: comment(comment_path, [])

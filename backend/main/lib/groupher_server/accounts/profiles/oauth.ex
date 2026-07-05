@@ -6,6 +6,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
   import Helper.Utils, only: [keys_to_atoms: 1]
 
   alias GroupherServer.{Accounts, Messaging, Repo}
+  alias GroupherServer.FrontDesk, as: RootFrontDesk
 
   alias Accounts.FrontDesk
   alias Accounts.Model.{Achievement, OauthProvider, Social, User}
@@ -14,10 +15,11 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
   def link_oauth(login, provider) do
     provider = normalize_oauth_provider(provider)
 
-    with {:ok, user} <- FrontDesk.user(login, fill_meta: false),
+    with {:ok, user} <- FrontDesk.live_user(login, fill_meta: false),
          {:ok, :pass} <- assert_oauth_provider_not_linked(provider, user),
          create_profile(user, provider),
          update_profile_social(user, provider) do
+      RootFrontDesk.revalidate().user(user.login)
       gen_token(user)
     end
   end
@@ -25,7 +27,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
   def unlink_oauth(login, provider) do
     provider = normalize_oauth_provider(provider)
 
-    with {:ok, user} <- FrontDesk.user(login, fill_meta: false),
+    with {:ok, user} <- FrontDesk.live_user(login, fill_meta: false),
          {:ok, oauth_provider} <- find_user_oauth_provider(user, provider) do
       {:ok, provider_count} =
         from(o in OauthProvider, where: o.user_id == ^user.id)
@@ -36,7 +38,9 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
           {:error, [message: "can not delete last oauth provider", code: ecode(:oauth_unlink)]}
 
         _ ->
-          oauth_provider |> ORM.delete()
+          oauth_provider
+          |> ORM.delete()
+          |> revalidate_user(user.login)
       end
     end
   end
@@ -46,8 +50,7 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
 
     case find_oauth_provider(provider) do
       {:ok, oauth_provider} ->
-        {:ok, user} = FrontDesk.user(oauth_provider.user_id, fill_meta: false)
-        gen_token(user)
+        gen_token(oauth_provider.user)
 
       {:error, _} ->
         register_oauth_user(provider)
@@ -66,9 +69,8 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
 
   defp find_oauth_provider(provider) do
     OauthProvider
-    |> ORM.find_by(
-      provider: provider.provider,
-      provider_id: provider.provider_id
+    |> ORM.find_by([provider: provider.provider, provider_id: provider.provider_id],
+      preload: :user
     )
   end
 
@@ -160,9 +162,12 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
   end
 
   defp register_oauth_result({:ok, %{create_user: create_user}}) do
-    {:ok, user} = FrontDesk.user(create_user.id, preload: :oauth_providers, fill_meta: false)
+    {:ok, user} =
+      FrontDesk.live_user(create_user.login, preload: :oauth_providers, fill_meta: false)
 
     with {:ok, result} <- gen_token(user) do
+      RootFrontDesk.revalidate().user(user.login)
+
       Messaging.notify(:welcome_new_register, %{
         user_id: user.id,
         login: user.login,
@@ -192,4 +197,11 @@ defmodule GroupherServer.Accounts.Profiles.Oauth do
 
   defp register_oauth_result({:error, :update_profile_social, _result, _steps}),
     do: {:error, "Accounts update_profile_social error"}
+
+  defp revalidate_user({:ok, _result} = response, login) do
+    RootFrontDesk.revalidate().user(login)
+    response
+  end
+
+  defp revalidate_user(response, _login), do: response
 end

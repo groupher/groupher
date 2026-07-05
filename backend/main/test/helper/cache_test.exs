@@ -35,6 +35,14 @@ defmodule GroupherServer.Test.Helper.Cache do
       assert {:error, nil} = Cache.get(@pool, :data)
     end
 
+    test "cache can delete one key" do
+      assert {:ok, true} = Cache.put(@pool, :data, "value")
+      assert {:ok, "value"} = Cache.get(@pool, :data)
+
+      assert {:ok, _} = Cache.delete(@pool, :data)
+      assert {:error, nil} = Cache.get(@pool, :data)
+    end
+
     test "cache expire should work" do
       assert {:ok, true} = Cache.put(@pool, :data, "value", expire_sec: 1)
       assert {:ok, "value"} = Cache.get(@pool, :data)

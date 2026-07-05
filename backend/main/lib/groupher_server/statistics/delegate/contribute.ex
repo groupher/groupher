@@ -7,7 +7,7 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
   import Helper.Utils
   import ShortMaps
 
-  alias GroupherServer.{Accounts, CMS, Repo, Statistics}
+  alias GroupherServer.{Accounts, CMS, FrontDesk, Repo, Statistics}
 
   alias Accounts.Model.User
   alias CMS.Model.Community
@@ -34,7 +34,10 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
       end)
       |> Multi.run(:update_community_field, fn _, _ ->
         {:ok, contributes} = list_contributes_digest(user)
-        ORM.update_embed(user, :contributes, contributes)
+
+        user
+        |> ORM.update_embed(:contributes, contributes)
+        |> revalidate_user(user.login)
       end)
       |> Repo.transaction()
       |> result()
@@ -198,4 +201,11 @@ defmodule GroupherServer.Statistics.Delegate.Contribute do
 
   defp result({:ok, %{make_contribute: result}}), do: {:ok, result}
   defp result({:error, _, result, _steps}), do: {:error, result}
+
+  defp revalidate_user({:ok, _result} = response, login) when is_binary(login) do
+    FrontDesk.revalidate().user(login)
+    response
+  end
+
+  defp revalidate_user(response, _login), do: response
 end

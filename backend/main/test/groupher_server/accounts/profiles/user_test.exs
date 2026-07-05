@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.Accounts.Profiles.User do
         email: "new@qq.com"
       }
 
-      {:ok, updated} = Accounts.Profiles.update_profile(%User{id: user.id}, attrs)
+      {:ok, updated} = Accounts.Profiles.update_profile(user, attrs)
 
       assert updated.bio == attrs.bio
       assert updated.nickname == attrs.nickname
@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.Accounts.Profiles.User do
         }
       }
 
-      {:ok, updated} = Accounts.Profiles.update_profile(%User{id: user.id}, attrs)
+      {:ok, updated} = Accounts.Profiles.update_profile(user, attrs)
 
       assert updated.location == "new name"
 
