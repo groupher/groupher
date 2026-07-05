@@ -1,10 +1,12 @@
 defmodule GroupherServer.CMS.ArtimentMentions.Parser do
   @moduledoc false
 
+  import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
   import Helper.Utils, only: [get_config: 2]
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.Accounts.Model.User
   alias CMS.{Artiment.Threads, FrontDesk}
   alias CMS.Model.Comment
 
@@ -33,6 +35,7 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
       block_id = node_block_id(node)
       collect_mentions_from_node(node, block_id, [index])
     end)
+    |> resolve_internal_mentions()
     |> Enum.uniq()
   end
 
@@ -75,22 +78,14 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
   defp parse_inline_mention(node, block_id, path) do
     with {:ok, type} <- inline_mention_type(node),
-         {:ok, mentioned} <- load_internal_mention(type, inline_mention_value(node)) do
-      %{
-        mentioned_scope: :internal,
-        mentioned_type: mentioned.type,
-        mentioned_id: mentioned.id,
-        mentioned_url: mentioned.url,
+         value when not is_nil(value) <- inline_mention_value(type, node) do
+      internal_mention_candidate(type, value, %{
         mention_case: :inline_mention,
-        artiment: mentioned.artiment,
-        occurrence: %{
-          mention_case: :inline_mention,
-          block_id: block_id,
-          path: path,
-          display: inline_mention_display(node),
-          normalized_from: "inline_mention"
-        }
-      }
+        block_id: block_id,
+        path: path,
+        display: inline_mention_display(node),
+        normalized_from: "inline_mention"
+      })
     else
       _ -> nil
     end
@@ -111,17 +106,26 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
   defp inline_mention_type(_), do: {:error, :invalid_mention_type}
 
-  defp inline_mention_value(%{"target_id" => id}), do: id
-  defp inline_mention_value(%{"mentioned_id" => id}), do: id
+  defp inline_mention_value(:user, %{"value" => value}) when is_binary(value) do
+    case String.split(value, ":", parts: 2) do
+      [_type, login] -> login
+      [login] -> login
+    end
+  end
 
-  defp inline_mention_value(%{"value" => value}) when is_binary(value) do
+  defp inline_mention_value(:user, _), do: nil
+
+  defp inline_mention_value(_type, %{"target_id" => id}), do: id
+  defp inline_mention_value(_type, %{"mentioned_id" => id}), do: id
+
+  defp inline_mention_value(_type, %{"value" => value}) when is_binary(value) do
     case String.split(value, ":", parts: 2) do
       [_type, id] -> id
       [login] -> login
     end
   end
 
-  defp inline_mention_value(_), do: nil
+  defp inline_mention_value(_, _), do: nil
 
   defp inline_mention_display(%{"children" => children}) when is_list(children) do
     children
@@ -142,29 +146,26 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
   defp parse_link_mention(url, block_id, path) do
     url
-    |> normalize_url()
+    |> classify_url()
     |> do_parse_link_mention(url, block_id, path)
     |> List.wrap()
     |> Enum.reject(&is_nil/1)
   end
 
-  defp do_parse_link_mention({:ok, %{scope: :internal} = mentioned}, raw_url, block_id, path) do
-    %{
-      mentioned_scope: :internal,
-      mentioned_type: mentioned.type,
-      mentioned_id: mentioned.id,
-      mentioned_url: mentioned.url,
+  defp do_parse_link_mention(
+         {:ok, %{scope: :internal, type: type, value: value}},
+         raw_url,
+         block_id,
+         path
+       ) do
+    internal_mention_candidate(type, value, %{
       mention_case: :inline_mention,
-      artiment: mentioned.artiment,
-      occurrence: %{
-        mention_case: :inline_mention,
-        block_id: block_id,
-        path: path,
-        raw_url: raw_url,
-        display: Map.get(mentioned.snapshot, :title, raw_url),
-        normalized_from: "link"
-      }
-    }
+      block_id: block_id,
+      path: path,
+      raw_url: raw_url,
+      display: raw_url,
+      normalized_from: "link"
+    })
   end
 
   defp do_parse_link_mention(
@@ -191,87 +192,266 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
 
   defp do_parse_link_mention(_, _, _, _), do: nil
 
-  defp normalize_url(url) do
+  defp classify_url(url) do
     case site_article_link?(url) do
-      true -> load_internal_mention_from_url(url)
+      true -> internal_mention_from_url(url)
       false -> {:ok, %{scope: :external, url: url, hash: hash_url(url)}}
     end
   end
 
-  defp load_internal_mention_from_url(url) do
+  defp internal_mention_from_url(url) do
     case link_for_comment?(url) do
-      true -> load_comment_from_url(url)
-      false -> load_article_from_url(url)
+      true -> comment_mention_from_url(url)
+      false -> article_mention_from_url(url)
     end
   end
 
-  defp load_comment_from_url(url) do
+  defp comment_mention_from_url(url) do
     %{query: query} = URI.parse(url)
 
     try do
       comment_id = URI.decode_query(query || "") |> Map.get("comment_id")
 
-      with {:ok, comment} <- FrontDesk.get(Comment, comment_id),
-           {:ok, article} <- FrontDesk.article_of(comment),
-           {:ok, thread} <- FrontDesk.thread_of(article) do
-        {:ok,
-         %{
-           scope: :internal,
-           type: :comment,
-           id: comment.id,
-           url: "#{article_url(thread, article.id)}?comment_id=#{comment.id}",
-           snapshot: %{title: article.title},
-           artiment: comment
-         }}
+      case comment_id do
+        nil -> {:error, :invalid_comment_link}
+        comment_id -> {:ok, %{scope: :internal, type: :comment, value: comment_id}}
       end
     rescue
       _ -> {:error, :invalid_comment_link}
     end
   end
 
-  defp load_article_from_url(url) do
+  defp article_mention_from_url(url) do
     %{path: path} = URI.parse(url)
     path_list = String.split(path || "", "/")
     article_id = Enum.at(path_list, 2)
 
     with {:ok, thread} <- parse_thread_slug(Enum.at(path_list, 1)),
-         {:ok, info} <- match(thread),
-         {:ok, article} <- FrontDesk.get(info.model, article_id) do
-      {:ok,
-       %{
-         scope: :internal,
-         type: thread,
-         id: article.id,
-         url: article_url(thread, article.id),
-         snapshot: %{title: article.title},
-         artiment: article
-       }}
+         article_id when not is_nil(article_id) <- article_id do
+      {:ok, %{scope: :internal, type: thread, value: article_id}}
     end
   end
 
-  defp load_internal_mention(:user, value) when is_binary(value) do
-    with {:ok, user} <- Accounts.FrontDesk.user(value, fill_meta: false) do
-      {:ok, %{type: :user, id: user.id, url: "#{@site_host}/u/#{user.login}", artiment: user}}
+  defp internal_mention_candidate(type, value, occurrence) do
+    %{
+      internal_mention_candidate?: true,
+      type: type,
+      value: value,
+      occurrence: occurrence
+    }
+  end
+
+  defp resolve_internal_mentions(mentions) do
+    cache = internal_mention_cache(mentions)
+
+    mentions
+    |> Enum.flat_map(fn
+      %{internal_mention_candidate?: true} = candidate ->
+        candidate
+        |> resolve_internal_mention(cache)
+        |> List.wrap()
+        |> Enum.reject(&is_nil/1)
+
+      mention ->
+        [mention]
+    end)
+  end
+
+  defp internal_mention_cache(mentions) do
+    candidates = Enum.filter(mentions, &Map.get(&1, :internal_mention_candidate?))
+
+    %{
+      users_by_login: load_users_by_login(candidates),
+      articles_by_thread: load_articles_by_thread(candidates),
+      comments: load_comments(candidates)
+    }
+  end
+
+  defp resolve_internal_mention(
+         %{type: :user, value: login} = candidate,
+         %{users_by_login: users_by_login}
+       )
+       when is_binary(login) do
+    resolve_user(candidate, Map.get(users_by_login, login))
+  end
+
+  defp resolve_internal_mention(%{type: :user}, _), do: nil
+
+  defp resolve_internal_mention(%{type: :comment, value: value} = candidate, cache) do
+    with id when not is_nil(id) <- cast_id(value),
+         %{comment: comment, article: article, thread: thread} <- Map.get(cache.comments, id) do
+      candidate
+      |> resolved_internal_mention(%{
+        type: :comment,
+        id: comment.id,
+        url: "#{article_url(thread, article.id)}?comment_id=#{comment.id}",
+        snapshot: %{title: article.title},
+        artiment: comment
+      })
+    else
+      _ -> nil
     end
   end
 
-  defp load_internal_mention(:user, value) when is_integer(value) do
-    with {:ok, user} <- Accounts.FrontDesk.user(value, fill_meta: false) do
-      {:ok, %{type: :user, id: user.id, url: "#{@site_host}/u/#{user.login}", artiment: user}}
+  defp resolve_internal_mention(%{type: type, value: value} = candidate, cache)
+       when type in @threads do
+    with id when not is_nil(id) <- cast_id(value),
+         articles <- Map.get(cache.articles_by_thread, type, %{}),
+         article when not is_nil(article) <- Map.get(articles, id) do
+      candidate
+      |> resolved_internal_mention(%{
+        type: type,
+        id: article.id,
+        url: article_url(type, article.id),
+        snapshot: %{title: article.title},
+        artiment: article
+      })
+    else
+      _ -> nil
     end
   end
 
-  defp load_internal_mention(:comment, value),
-    do: load_comment_from_url("#{@site_host}/post/0?comment_id=#{value}")
+  defp resolve_internal_mention(_, _), do: nil
 
-  defp load_internal_mention(type, value) when type in @threads do
-    with {:ok, info} <- match(type),
-         {:ok, article} <- FrontDesk.get(info.model, value) do
-      {:ok, %{type: type, id: article.id, url: article_url(type, article.id), artiment: article}}
+  defp resolved_internal_mention(candidate, mentioned) do
+    occurrence =
+      case Map.get(candidate.occurrence, :normalized_from) do
+        "link" ->
+          Map.put(
+            candidate.occurrence,
+            :display,
+            get_in(mentioned, [:snapshot, :title]) || Map.get(candidate.occurrence, :raw_url, "")
+          )
+
+        _ ->
+          candidate.occurrence
+      end
+
+    %{
+      mentioned_scope: :internal,
+      mentioned_type: mentioned.type,
+      mentioned_id: mentioned.id,
+      mentioned_url: mentioned.url,
+      mention_case: :inline_mention,
+      artiment: mentioned.artiment,
+      occurrence: occurrence
+    }
+  end
+
+  defp resolve_user(candidate, %User{} = user) do
+    candidate
+    |> resolved_internal_mention(%{
+      type: :user,
+      id: user.id,
+      url: "#{@site_host}/u/#{user.login}",
+      artiment: user
+    })
+  end
+
+  defp resolve_user(_, _), do: nil
+
+  defp load_users_by_login(candidates) do
+    logins =
+      candidates
+      |> Enum.filter(&(&1.type == :user and is_binary(&1.value)))
+      |> Enum.map(& &1.value)
+      |> Enum.uniq()
+
+    case logins do
+      [] ->
+        %{}
+
+      logins ->
+        User
+        |> where([u], u.login in ^logins)
+        |> Repo.all()
+        |> Map.new(&{&1.login, &1})
     end
   end
 
-  defp load_internal_mention(_, _), do: {:error, :invalid_internal_mention}
+  defp load_articles_by_thread(candidates) do
+    @threads
+    |> Map.new(fn thread ->
+      ids =
+        candidates
+        |> Enum.filter(&(&1.type == thread))
+        |> Enum.map(&cast_id(&1.value))
+        |> Enum.reject(&is_nil/1)
+        |> Enum.uniq()
+
+      {thread, load_articles(thread, ids)}
+    end)
+  end
+
+  defp load_articles(_thread, []), do: %{}
+
+  defp load_articles(thread, ids) do
+    with {:ok, info} <- match(thread) do
+      info.model
+      |> where([a], a.id in ^ids)
+      |> Repo.all()
+      |> Map.new(&{&1.id, &1})
+    else
+      _ -> %{}
+    end
+  end
+
+  defp load_comments(candidates) do
+    ids =
+      candidates
+      |> Enum.filter(&(&1.type == :comment))
+      |> Enum.map(&cast_id(&1.value))
+      |> Enum.reject(&is_nil/1)
+      |> Enum.uniq()
+
+    comments =
+      case ids do
+        [] ->
+          []
+
+        ids ->
+          Comment
+          |> where([c], c.id in ^ids)
+          |> Repo.all()
+      end
+
+    articles_by_thread =
+      comments
+      |> comment_article_ids_by_thread()
+      |> Map.new(fn {thread, ids} -> {thread, load_articles(thread, Enum.uniq(ids))} end)
+
+    comments
+    |> Enum.reduce(%{}, fn comment, acc ->
+      with {:ok, thread} <- FrontDesk.thread_of(comment),
+           {:ok, info} <- match(thread),
+           article_id when not is_nil(article_id) <- Map.get(comment, info.foreign_key),
+           articles <- Map.get(articles_by_thread, thread, %{}),
+           article when not is_nil(article) <- Map.get(articles, article_id) do
+        Map.put(acc, comment.id, %{comment: comment, article: article, thread: thread})
+      else
+        _ -> acc
+      end
+    end)
+  end
+
+  defp comment_article_ids_by_thread(comments) do
+    Enum.reduce(comments, %{}, fn comment, acc ->
+      with {:ok, thread} <- FrontDesk.thread_of(comment),
+           {:ok, info} <- match(thread),
+           article_id when not is_nil(article_id) <- Map.get(comment, info.foreign_key) do
+        Map.update(acc, thread, [article_id], &[article_id | &1])
+      else
+        _ -> acc
+      end
+    end)
+  end
+
+  defp cast_id(value) do
+    case Ecto.Type.cast(:id, value) do
+      {:ok, id} -> id
+      :error -> nil
+    end
+  end
 
   defp extract_links_from_text(text) do
     hrefs =

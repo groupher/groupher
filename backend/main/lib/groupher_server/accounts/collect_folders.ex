@@ -7,17 +7,19 @@ defmodule GroupherServer.Accounts.CollectFolders do
 
   alias __MODULE__.{Articles, List, Write}
 
-  @spec paged(T.id(), map()) :: T.domain_res(T.paged_data())
-  def paged(user_id, filter), do: List.page(user_id, filter)
+  @spec paged(User.t(), map()) :: T.domain_res(T.paged_data())
+  def paged(%User{id: user_id}, filter), do: List.page(user_id, filter)
 
-  @spec paged(T.id(), map(), User.t()) :: T.domain_res(T.paged_data())
-  def paged(user_id, filter, %User{} = cur_user), do: List.page(user_id, filter, cur_user)
+  @spec paged(User.t(), map(), User.t()) :: T.domain_res(T.paged_data())
+  def paged(%User{id: user_id}, filter, %User{} = cur_user),
+    do: List.page(user_id, filter, cur_user)
 
   @spec paged_articles(T.id(), map()) :: T.domain_res(T.paged_data())
   def paged_articles(folder_id, filter), do: Articles.paged(folder_id, filter)
 
   @spec paged_articles(T.id(), map(), User.t()) :: T.domain_res(T.paged_data())
-  def paged_articles(folder_id, filter, %User{} = cur_user), do: Articles.paged(folder_id, filter, cur_user)
+  def paged_articles(folder_id, filter, %User{} = cur_user),
+    do: Articles.paged(folder_id, filter, cur_user)
 
   @spec create(map(), User.t()) :: T.domain_res(term())
   def create(attrs, %User{} = user), do: Write.create(attrs, user)

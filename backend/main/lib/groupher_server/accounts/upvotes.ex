@@ -7,6 +7,7 @@ defmodule GroupherServer.Accounts.Upvotes do
   import Helper.Utils, only: [done: 1, get_config: 2]
   import ShortMaps
 
+  alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
 
   alias CMS.Model.ArticleUpvote
@@ -14,15 +15,15 @@ defmodule GroupherServer.Accounts.Upvotes do
 
   @threads get_config(:article, :threads)
 
-  def paged_articles(user_id, %{thread: thread} = filter) when is_atom(thread) do
+  def paged_articles(%User{id: user_id}, %{thread: thread} = filter) when is_atom(thread) do
     where_query = dynamic([a], a.user_id == ^user_id and a.thread == ^thread)
 
     load_articles(where_query, filter)
   end
 
-  def paged_articles(_user_id, %{thread: _thread}), do: {:error, {:custom, "invalid thread"}}
+  def paged_articles(%User{}, %{thread: _thread}), do: {:error, {:custom, "invalid thread"}}
 
-  def paged_articles(user_id, filter) do
+  def paged_articles(%User{id: user_id}, filter) do
     where_query = dynamic([a], a.user_id == ^user_id)
     load_articles(where_query, filter)
   end

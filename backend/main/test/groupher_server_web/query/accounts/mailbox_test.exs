@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.Query.Accounts.Mailbox do
     @query """
     query($login: String!) {
       user(login: $login) {
-        id
+        login
         mailbox {
           isEmpty
           unreadTotalCount

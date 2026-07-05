@@ -29,7 +29,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
         id
         title
         author {
-          id
+          login
           nickname
           avatar
         }
@@ -199,7 +199,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
         desc
         locale
         author {
-          id
+          login
         }
       }
     }

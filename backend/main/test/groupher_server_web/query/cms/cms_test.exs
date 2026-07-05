@@ -259,7 +259,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
           id
           title
           author {
-            id
+            login
             nickname
           }
           communities {
@@ -285,7 +285,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       author = results["entries"] |> List.first() |> Map.get("author")
 
       assert results |> is_valid_pagination?
-      assert author["id"] == to_string(user.id)
+      assert author["login"] == user.login
     end
 
     test "paged categories containes communities info", ~m(guest_conn user community)a do
@@ -478,7 +478,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
     query($community: String!, $filter: PagiFilter!) {
       pagedCommunitySubscribers(community: $community, filter: $filter) {
         entries {
-          id
+          login
           nickname
           avatar
         }

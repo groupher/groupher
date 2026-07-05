@@ -35,10 +35,14 @@ const joinPath = (...parts: string[]) =>
     .join('/')
 
 const pickBestChild = (relative: string, children: TDsbCrumbNode[]): TDsbCrumbNode | null => {
-  const candidates = children.filter((c) => relative.startsWith(`/${c.seg}`))
-  if (!candidates.length) return null
-  candidates.sort((a, b) => b.seg.length - a.seg.length)
-  return candidates[0]
+  let best: TDsbCrumbNode | null = null
+
+  for (const child of children) {
+    if (!relative.startsWith(`/${child.seg}`)) continue
+    if (!best || child.seg.length > best.seg.length) best = child
+  }
+
+  return best
 }
 
 const buildActiveChain = (relative: string, root: TDsbCrumbNode): TDsbCrumbNode[] => {

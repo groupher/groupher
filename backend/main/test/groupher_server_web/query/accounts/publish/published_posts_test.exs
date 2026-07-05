@@ -52,7 +52,7 @@ defmodule GroupherServer.Test.Query.Accounts.Publish.Posts do
       assert entries |> Enum.all?(&(not is_nil(&1["article"]["author"])))
 
       assert entries |> Enum.all?(&(&1["article"]["innerId"] == to_string(post.inner_id)))
-      assert entries |> Enum.all?(&(&1["author"]["id"] == to_string(user.id)))
+      assert entries |> Enum.all?(&(&1["author"]["login"] == user.login))
       assert entries |> Enum.any?(&(&1["innerId"] == random_comment_id))
     end
   end

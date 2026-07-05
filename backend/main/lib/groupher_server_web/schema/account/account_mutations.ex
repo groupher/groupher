@@ -50,6 +50,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       arg(:login, non_null(:string))
 
       middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :user)
       resolve(&R.Accounts.follow/3)
     end
 
@@ -58,6 +59,7 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
       arg(:login, non_null(:string))
 
       middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :user)
       resolve(&R.Accounts.undo_follow/3)
     end
 

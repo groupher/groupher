@@ -21,7 +21,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
     @query """
     query($login: String!) {
       user(login: $login) {
-        id
+        login
         achievement {
           reputation
           articlesUpvotesCount
@@ -89,7 +89,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
     @query """
     query($login: String!) {
       user(login: $login) {
-        id
+        login
         followersCount
         followingsCount
         achievement {
@@ -141,7 +141,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
     @query """
     query($login: String!) {
       user(login: $login) {
-        id
+        login
         achievement {
           reputation
           articlesCollectsCount

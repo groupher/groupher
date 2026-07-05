@@ -42,7 +42,11 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   def call(resolution, :comment), do: fetch_comment(resolution)
 
-  def call(resolution, :user), do: fetch_user(resolution)
+  def call(resolution, {:user, opts}), do: fetch_user(resolution, List.wrap(opts))
+
+  def call(resolution, :user), do: fetch_user(resolution, [])
+
+  def call(resolution, :users), do: fetch_users(resolution)
 
   def call(resolution, _), do: resolution
 
@@ -125,7 +129,27 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
 
   defp comment_owner?(_, _), do: false
 
-  defp fetch_user(%{arguments: %{login: login} = arguments} = resolution) do
+  defp fetch_user(%{arguments: %{user: %User{}}} = resolution, _opts), do: resolution
+
+  defp fetch_user(%{arguments: %{login: login}} = resolution, _opts) when is_binary(login) do
+    do_fetch_user(resolution, login)
+  end
+
+  defp fetch_user(%{arguments: %{login: nil}} = resolution, opts) do
+    maybe_skip_optional_user(resolution, opts)
+  end
+
+  defp fetch_user(%{arguments: %{user: login}} = resolution, _opts) when is_binary(login) do
+    do_fetch_user(resolution, login)
+  end
+
+  defp fetch_user(%{arguments: %{user: nil}} = resolution, opts) do
+    maybe_skip_optional_user(resolution, opts)
+  end
+
+  defp fetch_user(resolution, opts), do: maybe_skip_optional_user(resolution, opts)
+
+  defp do_fetch_user(%{arguments: arguments} = resolution, login) do
     case FrontDesk.user(login) do
       {:ok, user} ->
         %{resolution | arguments: Map.put(arguments, :user, user)}
@@ -135,13 +159,47 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
     end
   end
 
-  defp fetch_user(%{arguments: %{user: user} = arguments} = resolution) do
-    case FrontDesk.user(user) do
-      {:ok, user} ->
-        %{resolution | arguments: Map.put(arguments, :user, user)}
+  defp maybe_skip_optional_user(resolution, opts) do
+    if Keyword.get(opts, :optional, false) do
+      resolution
+    else
+      resolution |> handle_absinthe_error("user not found", ecode(:not_exist))
+    end
+  end
+
+  defp fetch_users(%{arguments: %{users: users} = arguments} = resolution) when is_list(users) do
+    case load_users(users) do
+      {:ok, users} ->
+        %{resolution | arguments: Map.put(arguments, :users, users)}
 
       {:error, err_msg} ->
         resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
     end
   end
+
+  defp fetch_users(resolution),
+    do: resolution |> handle_absinthe_error("users not found", ecode(:not_exist))
+
+  defp load_users(users) do
+    users =
+      users
+      |> Enum.uniq()
+      |> Enum.reduce_while({:ok, []}, fn user_or_login, {:ok, users} ->
+        case load_user(user_or_login) do
+          {:ok, user} -> {:cont, {:ok, [user | users]}}
+          {:error, err_msg} -> {:halt, {:error, err_msg}}
+        end
+      end)
+
+    case users do
+      {:ok, users} -> {:ok, Enum.reverse(users)}
+      {:error, err_msg} -> {:error, err_msg}
+    end
+  end
+
+  defp load_user(%User{} = user), do: {:ok, user}
+
+  defp load_user(login) when is_binary(login), do: FrontDesk.user(login)
+
+  defp load_user(_), do: {:error, "user not found"}
 end

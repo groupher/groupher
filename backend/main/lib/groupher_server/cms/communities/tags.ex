@@ -333,19 +333,21 @@ defmodule GroupherServer.CMS.Communities.Tags do
   @spec reindex_in_group(Community.t(), atom(), T.id(), list()) :: {:ok, atom()} | {:error, any()}
   def reindex_in_group(%Community{} = community, thread, group_id, indexed_tags) do
     with {:ok, group_tags} <- find_group_tags(community, thread, group_id) do
-      group_tags
-      |> Enum.each(fn tag ->
-        target =
-          Enum.find(indexed_tags, fn t ->
-            to_string(t.id) === to_string(tag.id)
-          end)
+      indexed_tags_by_id = indexed_by_id(indexed_tags)
 
-        tag
-        |> Ecto.Changeset.change(%{index: target.index})
-        |> Repo.update()
+      Repo.transaction(fn ->
+        group_tags
+        |> Enum.each(fn tag ->
+          target = Map.fetch!(indexed_tags_by_id, to_string(tag.id))
+
+          tag
+          |> Ecto.Changeset.change(%{index: target.index})
+          |> Repo.update!()
+        end)
+
+        :pass
       end)
-
-      {:ok, :pass}
+      |> result()
     end
   end
 
@@ -363,6 +365,8 @@ defmodule GroupherServer.CMS.Communities.Tags do
     ids = Enum.map(indexed_tags, & &1.id)
 
     with {:ok, indexed_tags} <- validate_indexed_tags_groups(community, thread, indexed_tags) do
+      indexed_tags_by_id = indexed_by_id(indexed_tags)
+
       Repo.transaction(fn ->
         CommunityTag
         |> where([t], t.community_id == ^community.id)
@@ -370,10 +374,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
         |> where([t], t.id in ^ids)
         |> Repo.all()
         |> Enum.each(fn tag ->
-          target =
-            Enum.find(indexed_tags, fn t ->
-              to_string(t.id) === to_string(tag.id)
-            end)
+          target = Map.fetch!(indexed_tags_by_id, to_string(tag.id))
 
           tag
           |> Ecto.Changeset.change(%{group_id: target.group_id, index: target.index})
@@ -399,6 +400,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
           {:ok, atom()} | {:error, any()}
   def reindex_groups(%Community{} = community, thread, indexed_groups) do
     ids = Enum.map(indexed_groups, & &1.id)
+    indexed_groups_by_id = indexed_by_id(indexed_groups)
 
     Repo.transaction(fn ->
       CommunityTagGroup
@@ -407,10 +409,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
       |> where([g], g.id in ^ids)
       |> Repo.all()
       |> Enum.each(fn group ->
-        target =
-          Enum.find(indexed_groups, fn g ->
-            to_string(g.id) === to_string(group.id)
-          end)
+        target = Map.fetch!(indexed_groups_by_id, to_string(group.id))
 
         group
         |> Ecto.Changeset.change(%{index: target.index})
@@ -481,7 +480,8 @@ defmodule GroupherServer.CMS.Communities.Tags do
         {:ok, attrs}
 
       group_id ->
-        with {:ok, _group} <- find_group_in_thread(%Community{id: tag.community_id}, tag.thread, group_id) do
+        with {:ok, _group} <-
+               find_group_in_thread(%Community{id: tag.community_id}, tag.thread, group_id) do
           {:ok, attrs}
         end
     end
@@ -513,6 +513,8 @@ defmodule GroupherServer.CMS.Communities.Tags do
       raise_error(:invalid_domain_tag, "tag group not in same community & thread")
     end
   end
+
+  defp indexed_by_id(items), do: Map.new(items, &{to_string(&1.id), &1})
 
   defp cast_id!(id) do
     case Ecto.Type.cast(:id, id) do

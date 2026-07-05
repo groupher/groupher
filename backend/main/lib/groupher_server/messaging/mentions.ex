@@ -30,7 +30,7 @@ defmodule GroupherServer.Messaging.Mentions do
       end
     end)
     |> Multi.run(:update_user_mailbox_status, fn _, %{batch_insert_mentions: mentions} ->
-      Enum.each(mentions, &Accounts.Mailbox.update_status(&1.to_user_id)) |> done
+      mentions |> Enum.map(& &1.to_user_id) |> Accounts.Mailbox.update_status_many()
     end)
     |> Repo.transaction()
     |> result()
@@ -54,7 +54,7 @@ defmodule GroupherServer.Messaging.Mentions do
       end
     end)
     |> Multi.run(:update_user_mailbox_status, fn _, %{batch_insert_mentions: mentions} ->
-      Enum.each(mentions, &Accounts.Mailbox.update_status(&1.to_user_id)) |> done
+      mentions |> Enum.map(& &1.to_user_id) |> Accounts.Mailbox.update_status_many()
     end)
     |> Repo.transaction()
     |> result()

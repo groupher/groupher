@@ -163,6 +163,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "moderator.set")
       middleware(M.FrontDesk, :community)
+      middleware(M.FrontDesk, :users)
 
       resolve(&R.CMS.add_moderators/3)
     end
@@ -174,6 +175,8 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "moderator.unset")
+      middleware(M.FrontDesk, :community)
+      middleware(M.FrontDesk, :user)
 
       resolve(&R.CMS.remove_moderator/3)
     end
@@ -186,6 +189,8 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "moderator.update")
+      middleware(M.FrontDesk, :community)
+      middleware(M.FrontDesk, :user)
 
       resolve(&R.CMS.update_moderator_passport/3)
     end

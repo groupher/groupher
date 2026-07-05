@@ -16,7 +16,6 @@ describe('stores/account', () => {
     expect(store.accountInfo.isModerator).toBe(false)
 
     const complexUser: TUser = {
-      id: 'u_1',
       login: 'edge_user',
       nickname: '',
       bio: '',
@@ -32,12 +31,12 @@ describe('stores/account', () => {
 
     expect(store.loading).toBe(false)
     expect(store.isLogin).toBe(true)
-    expect(store.user?.id).toBe('u_1')
+    expect(store.user?.login).toBe('edge_user')
     expect(store.userSubscribedCommunities).toEqual([])
 
     // views
     expect(store.accountInfo.isLogin).toBe(true)
-    expect(store.accountInfo.id).toBe('u_1')
+    expect(store.accountInfo.login).toBe('edge_user')
     expect(store.accountInfo.isValidSession).toBe(false)
     // NOTE: current implementation always returns false in the view.
     expect(store.accountInfo.isModerator).toBe(false)

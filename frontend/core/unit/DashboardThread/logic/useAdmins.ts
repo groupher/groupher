@@ -23,6 +23,14 @@ export default function useAdmins(): TRet {
   const { query, mutate } = useGraphQLClient()
   const { moderators: originalModerators, activeModerator } = dsb$
 
+  const moderatorLoginSet = useMemo(() => {
+    return new Set(
+      originalModerators.flatMap((moderator) =>
+        moderator.user?.login ? [moderator.user.login] : [],
+      ),
+    )
+  }, [originalModerators])
+
   const moderators = useMemo(() => {
     return sortByKey(
       originalModerators.filter((moderator) => moderator.user?.login),
@@ -34,9 +42,9 @@ export default function useAdmins(): TRet {
   const isModerator = useCallback(
     (user: TUser | null): boolean => {
       if (!user?.login) return false
-      return originalModerators.some((moderator) => moderator.user?.login === user.login)
+      return moderatorLoginSet.has(user.login)
     },
-    [originalModerators],
+    [moderatorLoginSet],
   )
 
   const searchUsers = useCallback(
@@ -50,15 +58,15 @@ export default function useAdmins(): TRet {
       )
 
       return data.searchUsers.entries.filter(
-        (user) => user.login && !originalModerators.some((item) => item.user?.login === user.login),
+        (user) => user.login && !moderatorLoginSet.has(user.login),
       )
     },
-    [originalModerators, query],
+    [moderatorLoginSet, query],
   )
 
   const addAdmins = useCallback(
     async (users: TUser[]): Promise<void> => {
-      const validUsers = users.filter((user) => user.login && !isModerator(user))
+      const validUsers = users.filter((user) => user.login && !moderatorLoginSet.has(user.login))
       if (!community$.slug || !validUsers.length) return
 
       const data = await mutate<
@@ -103,7 +111,7 @@ export default function useAdmins(): TRet {
         console.error('## revalidate community cache error: ', error)
       }
     },
-    [community$, dsb$, isModerator, mutate, originalModerators],
+    [community$, dsb$, moderatorLoginSet, mutate, originalModerators],
   )
 
   return {

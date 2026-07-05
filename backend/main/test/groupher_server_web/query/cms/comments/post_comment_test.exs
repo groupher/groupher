@@ -169,7 +169,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
             innerId
             bodyHtml
             author {
-              id
+              login
               nickname
             }
             isPinned
@@ -198,7 +198,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
               floor
               isArticleAuthor
               author {
-                id
+                login
                 login
               }
             }
@@ -215,7 +215,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
               }
               repliesCount
               author {
-                id
+                login
                 login
               }
             }
@@ -376,8 +376,8 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       assert replied_comment_1 |> get_in(["replyToComment", "innerId"]) ==
                to_string(parent_comment.inner_id)
 
-      assert replied_comment_1 |> get_in(["replyToComment", "author", "id"]) ==
-               to_string(parent_comment.author_id)
+      assert replied_comment_1 |> get_in(["replyToComment", "author", "login"]) ==
+               user.login
 
       replied_comment_2 =
         Enum.find(results["entries"], &(&1["innerId"] == to_string(replied_comment_2.inner_id)))
@@ -385,8 +385,8 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       assert replied_comment_2 |> get_in(["replyToComment", "innerId"]) ==
                to_string(parent_comment.inner_id)
 
-      assert replied_comment_2 |> get_in(["replyToComment", "author", "id"]) ==
-               to_string(parent_comment.author_id)
+      assert replied_comment_2 |> get_in(["replyToComment", "author", "login"]) ==
+               user.login
     end
 
     test "guest user can get paged comment for post", ~m(guest_conn community post user)a do
@@ -864,7 +864,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       query($article: ArticlePathInput!, $filter: PagiFilter!) {
         pagedCommentsParticipants(article: $article, filter: $filter) {
           entries {
-            id
+            login
             nickname
           }
           totalPages
@@ -914,7 +914,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
             innerId
             bodyHtml
             author {
-              id
+              login
               nickname
             }
             upvotesCount

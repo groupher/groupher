@@ -232,8 +232,15 @@ defmodule GroupherServer.Test.AssertHelper do
 
   defp log_debug_info(res, _), do: res
 
-  @doc "check id is exist in list of Map<id: xxx> structure"
+  @doc "check identity is exist in list of maps"
   @spec exist_in?(map(), [map()]) :: boolean
+  def exist_in?(%{login: login}, list) when is_list(list) do
+    list
+    |> Enum.any?(fn item ->
+      login == Map.get(item, :login, Map.get(item, "login"))
+    end)
+  end
+
   # Comments expose database id internally, but GraphQL payloads expose inner_id as innerId.
   def exist_in?(%{id: id} = target, list) when is_list(list) do
     inner_id = Map.get(target, :inner_id)

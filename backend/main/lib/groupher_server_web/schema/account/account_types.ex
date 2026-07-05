@@ -34,7 +34,6 @@ defmodule GroupherServerWeb.Schema.Account.Types do
   object :user do
     meta(:cache, max_age: 30)
     field(:meta, :user_meta)
-    field(:id, :id)
     field(:nickname, :string)
     field(:login, :string)
     field(:avatar, :string)

@@ -10,7 +10,7 @@ type RootQueryType {
   "get cur user"
   me: User
 
-  "get user by id"
+  "get user by login"
   user(login: String!): User
 
   "check the cur token is valid or not"
@@ -251,9 +251,6 @@ type RootMutationType {
 
   "mark all unread message as read"
   markReadAll(type: MailboxType): Done
-
-  "Record a contribution event for the specified user."
-  makeContribute(userId: ID!): UserContribute
 
   "create a global community"
   createCommunity(title: String!, desc: String!, slug: String!, logo: String!, locale: String): Community
@@ -2587,11 +2584,6 @@ enum DsbRssFeedType {
   FULL
 }
 
-type UserContribute {
-  count: Int
-  date: Date
-}
-
 type OnlineStatusInfo {
   realtimeVisitors: Int
 }
@@ -2623,8 +2615,6 @@ type UserMeta {
 
 type User {
   meta: UserMeta
-
-  id: ID
 
   nickname: String
 

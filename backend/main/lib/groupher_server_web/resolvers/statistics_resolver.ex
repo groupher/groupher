@@ -2,20 +2,14 @@ defmodule GroupherServerWeb.Resolvers.Statistics do
   @moduledoc """
   resolvers for Statistics
   """
-  alias GroupherServer.{Accounts, CMS, Statistics}
+  alias GroupherServer.{CMS, Statistics}
 
-  alias Accounts.Model.User
   alias CMS.Model.Community
-  alias Statistics
 
   # tmp for test
 
   def list_contributes_digest(%Community{id: id}, _args, _info) do
     Statistics.list_contributes_digest(%Community{id: id})
-  end
-
-  def make_contribute(_root, %{user_id: user_id}, _info) do
-    Statistics.make_contribute(%User{id: user_id})
   end
 
   def list_cities_geo_info(_root, _args, _info) do

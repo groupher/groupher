@@ -46,7 +46,6 @@ type TPassport = {
 }
 
 export type TUser = TSimpleUser & {
-  id?: string
   // TODO: figure it out
   extraId?: string
   // editableCommunities?: TPagedCommunities

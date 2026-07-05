@@ -35,4 +35,12 @@ defmodule GroupherServer.Accounts.Mailbox do
       user |> ORM.update_embed(:mailbox, mailbox)
     end
   end
+
+  def update_status_many(user_ids) when is_list(user_ids) do
+    user_ids
+    |> Enum.reject(&is_nil/1)
+    |> Enum.uniq()
+    |> Enum.each(&update_status/1)
+    |> done()
+  end
 end

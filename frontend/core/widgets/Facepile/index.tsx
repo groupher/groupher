@@ -16,14 +16,7 @@ type TDisplayUser = {
 
 const getUserKey = (user: TUser): string | null => {
   return (
-    user.login ||
-    user.id ||
-    user.extraId ||
-    user.email ||
-    user.avatar ||
-    user.nickname ||
-    user.name ||
-    null
+    user.login || user.extraId || user.email || user.avatar || user.nickname || user.name || null
   )
 }
 
