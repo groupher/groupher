@@ -21,7 +21,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
       resolve(&R.Accounts.me/3)
     end
 
-    @desc "get user by id"
+    @desc "get user by login"
     field :user, :user do
       arg(:login, non_null(:string))
       middleware(M.FrontDesk, :user)
@@ -40,6 +40,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
       arg(:filter, non_null(:pagi_filter))
 
       middleware(M.PageSizeProof)
+      middleware(M.FrontDesk, {:user, optional: true})
       resolve(&R.Accounts.subscribed_communities/3)
     end
 
@@ -67,6 +68,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
       arg(:filter, non_null(:pagi_filter))
 
       middleware(M.PageSizeProof)
+      middleware(M.FrontDesk, :user)
       resolve(&R.Accounts.paged_followers/3)
     end
 
@@ -76,6 +78,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
       arg(:filter, non_null(:pagi_filter))
 
       middleware(M.PageSizeProof)
+      middleware(M.FrontDesk, :user)
       resolve(&R.Accounts.paged_followings/3)
     end
 
@@ -84,6 +87,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
       arg(:login, non_null(:string))
       arg(:filter, :upvoted_articles_filter)
 
+      middleware(M.FrontDesk, :user)
       resolve(&R.Accounts.paged_upvoted_articles/3)
     end
 
@@ -93,6 +97,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
       arg(:filter, non_null(:collect_folders_filter))
 
       middleware(M.PageSizeProof)
+      middleware(M.FrontDesk, :user)
       resolve(&R.Accounts.paged_collect_folders/3)
     end
 
@@ -111,6 +116,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
       arg(:filter, non_null(:pagi_filter))
 
       middleware(M.PageSizeProof)
+      middleware(M.FrontDesk, {:user, optional: true})
       resolve(&R.Accounts.moderatorable_communities/3)
     end
 
@@ -135,6 +141,7 @@ defmodule GroupherServerWeb.Schema.Account.Queries do
       arg(:thread, :thread, default_value: :post)
 
       middleware(M.PageSizeProof)
+      middleware(M.FrontDesk, :user)
       resolve(&R.Accounts.paged_published_comments/3)
     end
 

@@ -34,11 +34,20 @@ const joinPath = (...parts: string[]) =>
     .map((p) => p.replace(/^\/+|\/+$/g, ''))
     .join('/')
 
+const matchSeg = (relative: string, seg: string): boolean => {
+  const prefix = `/${seg}`
+  return relative === prefix || relative.startsWith(`${prefix}/`)
+}
+
 const pickBestChild = (relative: string, children: TDsbCrumbNode[]): TDsbCrumbNode | null => {
-  const candidates = children.filter((c) => relative.startsWith(`/${c.seg}`))
-  if (!candidates.length) return null
-  candidates.sort((a, b) => b.seg.length - a.seg.length)
-  return candidates[0]
+  let best: TDsbCrumbNode | null = null
+
+  for (const child of children) {
+    if (!matchSeg(relative, child.seg)) continue
+    if (!best || child.seg.length > best.seg.length) best = child
+  }
+
+  return best
 }
 
 const buildActiveChain = (relative: string, root: TDsbCrumbNode): TDsbCrumbNode[] => {
@@ -69,7 +78,7 @@ export default function useDsbCrumbItems(root: TDsbCrumbNode): TBreadcrumbItem[]
     const fromDashboard = pathname.slice(idx) // /dashboard/xxx
     const relative = fromDashboard.slice(`/${DSB_SEG}`.length) || '/' // /third-part/xxx
 
-    if (!relative.startsWith(`/${root.seg}`)) return []
+    if (!matchSeg(relative, root.seg)) return []
 
     // cover page defaults to the first child
     const isOnRoot = relative === `/${root.seg}` || relative === `/${root.seg}/`

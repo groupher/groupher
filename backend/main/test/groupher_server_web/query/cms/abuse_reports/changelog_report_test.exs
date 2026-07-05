@@ -26,7 +26,6 @@ defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
             title
           }
           operateUser {
-            id
             login
           }
           comment {

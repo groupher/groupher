@@ -16,20 +16,13 @@ defmodule GroupherServer.Accounts.FrontDesk do
     end
   end
 
-  @spec user(integer() | String.t(), keyword()) :: {:ok, User.t()} | {:error, any()}
-  def user(target, opts \\ [])
+  @spec user(String.t(), keyword()) :: {:ok, User.t()} | {:error, any()}
+  def user(login, opts \\ []) when is_binary(login), do: live_user(login, opts)
 
-  def user(id, opts) when is_integer(id) do
-    preload = Keyword.get(opts, :preload)
-
-    with {:ok, user} <- fetch_user_by_id(id, preload) do
-      maybe_fill_meta(user, opts)
-    end
-  end
-
-  def user(login, opts) when is_binary(login) do
+  @spec live_user(String.t(), keyword()) :: {:ok, User.t()} | {:error, any()}
+  def live_user(login, opts \\ []) when is_binary(login) do
     with {:ok, user_id} <- userid(login) do
-      case user(user_id, opts) do
+      case fetch_user_by_id(user_id, opts) do
         {:ok, user} -> {:ok, user}
         {:error, _} -> reload_user_by_login(login, opts)
       end
@@ -43,12 +36,20 @@ defmodule GroupherServer.Accounts.FrontDesk do
     end
   end
 
-  defp fetch_user_by_id(id, nil), do: ORM.find(User, id)
-  defp fetch_user_by_id(id, preload), do: ORM.find(User, id, preload: preload)
+  defp fetch_user_by_id(id, opts) do
+    preload = Keyword.get(opts, :preload)
+
+    with {:ok, user} <- do_fetch_user_by_id(id, preload) do
+      maybe_fill_meta(user, opts)
+    end
+  end
+
+  defp do_fetch_user_by_id(id, nil), do: ORM.find(User, id)
+  defp do_fetch_user_by_id(id, preload), do: ORM.find(User, id, preload: preload)
 
   defp reload_user_by_login(login, opts) do
     with {:ok, user_id} <- cache_userid(login) do
-      user(user_id, opts)
+      fetch_user_by_id(user_id, opts)
     end
   end
 

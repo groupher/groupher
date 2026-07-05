@@ -715,16 +715,22 @@ defmodule GroupherServer.CMS.DocTree.Write do
   end
 
   defp normalize_sibling_indexes(%Community{} = community, group_id) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    ranked =
+      DocTreeNode
+      |> where([n], n.community_id == ^community.id)
+      |> where([n], n.stage == CMS.Const.stage(:draft))
+      |> where_sibling_scope(group_id, nil)
+      |> select([n], %{
+        id: n.id,
+        normalized_index: fragment("row_number() over (order by ?, ?) - 1", n.index, n.id)
+      })
+
     DocTreeNode
-    |> where([n], n.community_id == ^community.id)
-    |> where([n], n.stage == CMS.Const.stage(:draft))
-    |> where_sibling_scope(group_id, nil)
-    |> order_by([n], asc: n.index, asc: n.id)
-    |> Repo.all()
-    |> Enum.with_index()
-    |> Enum.each(fn {node, index} ->
-      node |> Ecto.Changeset.change(%{index: index}) |> Repo.update!()
-    end)
+    |> join(:inner, [n], r in subquery(ranked), on: n.id == r.id)
+    |> update([_n, r], set: [index: r.normalized_index, updated_at: ^now])
+    |> Repo.update_all([])
 
     :ok
   end

@@ -37,12 +37,15 @@ defmodule GroupherServer.CMS.Comments.Moderation do
       ORM.update_meta(comment, legal_state)
     end)
     |> Multi.run(:update_author_meta, fn _, _ ->
+      comment = Repo.preload(comment, :author)
       illegal_comments = Map.get(audit_state, :illegal_comments, [])
 
-      with {:ok, user} <- GroupherServer.FrontDesk.user(comment.author_id) do
+      with {:ok, user} <- FrontDesk.live_user(comment.author.login) do
         illegal_comments = user.meta.illegal_comments ++ illegal_comments
 
-        ORM.update_meta(user, %{has_illegal_comments: true, illegal_comments: illegal_comments})
+        user
+        |> ORM.update_meta(%{has_illegal_comments: true, illegal_comments: illegal_comments})
+        |> revalidate_user(user.login)
       end
     end)
     |> Repo.transaction()
@@ -67,16 +70,19 @@ defmodule GroupherServer.CMS.Comments.Moderation do
       ORM.update_meta(comment, legal_state)
     end)
     |> Multi.run(:update_author_meta, fn _, _ ->
+      comment = Repo.preload(comment, :author)
       illegal_comments = Map.get(audit_state, :illegal_comments, [])
 
-      with {:ok, user} <- GroupherServer.FrontDesk.user(comment.author_id) do
+      with {:ok, user} <- FrontDesk.live_user(comment.author.login) do
         illegal_comments = user.meta.illegal_comments -- illegal_comments
         has_illegal_comments = not Enum.empty?(illegal_comments)
 
-        ORM.update_meta(user, %{
+        user
+        |> ORM.update_meta(%{
           has_illegal_comments: has_illegal_comments,
           illegal_comments: illegal_comments
         })
+        |> revalidate_user(user.login)
       end
     end)
     |> Repo.transaction()
@@ -102,4 +108,11 @@ defmodule GroupherServer.CMS.Comments.Moderation do
   defp result({:ok, %{update_pending_state: result}}), do: {:ok, result}
   defp result({:ok, %{update_comment_meta: result}}), do: {:ok, result}
   defp result({:error, _, result, _steps}), do: {:error, result}
+
+  defp revalidate_user({:ok, _result} = response, login) do
+    FrontDesk.revalidate_user(login)
+    response
+  end
+
+  defp revalidate_user(response, _login), do: response
 end

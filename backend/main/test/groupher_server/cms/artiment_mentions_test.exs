@@ -67,8 +67,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         plate_body([
           block("block-a", [
             mention(%{
-              "target_type" => "USER",
-              "target_id" => mentioned_user.id,
+              "value" => mentioned_user.login,
               "children" => [%{"text" => mentioned_user.login}]
             })
           ])
@@ -192,8 +191,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
           block("block-a", [
             text(~s(<a href="#{@site_host}/post/self">self placeholder</a>)),
             mention(%{
-              "target_type" => "USER",
-              "target_id" => user.id,
+              "value" => user.login,
               "children" => [%{"text" => user.login}]
             })
           ])

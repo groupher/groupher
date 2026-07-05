@@ -1,7 +1,7 @@
 defmodule GroupherServer.Accounts.Profiles.UserRead do
   @moduledoc false
 
-  alias GroupherServer.{Accounts, Repo, Statistics}
+  alias GroupherServer.{Accounts, FrontDesk, Repo, Statistics}
 
   alias Accounts.Model.{Embeds, Social, User}
   alias Helper.ORM
@@ -36,12 +36,15 @@ defmodule GroupherServer.Accounts.Profiles.UserRead do
   end
 
   def update_profile(%User{} = user, attrs \\ %{}) do
-    changeset = user |> Ecto.Changeset.change(attrs)
+    user_attrs = Map.drop(attrs, [:social])
+    changeset = user |> Ecto.Changeset.change(user_attrs)
 
     changeset
     |> update_social_ifneed(user, attrs)
-    |> User.update_changeset(attrs)
+    |> User.update_changeset(user_attrs)
     |> Repo.update()
+    |> revalidate_user()
+    |> maybe_preload_social(attrs)
   end
 
   defp assign_meta_ifneed(%User{meta: nil} = user) do
@@ -52,11 +55,13 @@ defmodule GroupherServer.Accounts.Profiles.UserRead do
     {:ok, user}
   end
 
-  defp update_social_ifneed(changeset, %User{} = user, %{social: attrs}) do
+  defp update_social_ifneed(changeset, %User{} = user, %{social: attrs}) when is_map(attrs) do
+    attrs = Map.put(attrs, :user_id, user.id)
+
     case ORM.find_by(Social, user_id: user.id) do
       {:ok, _} ->
         ORM.update_by(Social, [user_id: user.id], attrs)
-        Ecto.Changeset.put_change(changeset, :social, nil)
+        changeset
 
       {:error, _} ->
         ORM.create(Social, attrs)
@@ -68,6 +73,22 @@ defmodule GroupherServer.Accounts.Profiles.UserRead do
 
   defp assign_default_contributes(%User{} = user) do
     {:ok, contributes} = Statistics.list_contributes_digest(%User{id: user.id})
-    ORM.update_embed(user, :contributes, contributes)
+
+    user
+    |> ORM.update_embed(:contributes, contributes)
+    |> revalidate_user()
   end
+
+  defp revalidate_user({:ok, %User{login: login}} = response) when is_binary(login) do
+    FrontDesk.revalidate().user(login)
+    response
+  end
+
+  defp revalidate_user(response), do: response
+
+  defp maybe_preload_social({:ok, %User{} = user}, %{social: _}) do
+    {:ok, Repo.preload(user, :social, force: true)}
+  end
+
+  defp maybe_preload_social(response, _attrs), do: response
 end

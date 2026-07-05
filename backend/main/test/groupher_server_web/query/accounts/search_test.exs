@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.Query.Accounts.Search do
     query($name: String!) {
       searchUsers(name: $name) {
         entries {
-          id
+          login
           nickname
         }
         totalCount

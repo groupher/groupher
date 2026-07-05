@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     @query """
     query {
       me {
-        id
+        login
         nickname
         avatar
         bio
@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     """
     test "login user can get own profile", ~m(user_conn user)a do
       results = user_conn |> gq_query(@query, %{})
-      assert results["id"] == to_string(user.id)
+      assert results["login"] == user.login
 
       assert results["nickname"] == user.nickname
       assert results["bio"] == user.bio
@@ -53,7 +53,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     @query """
     query($login: String!) {
       user(login: $login) {
-        id
+        login
         nickname
         bio
         meta {
@@ -82,13 +82,13 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       }
     }
     """
-    test "guest user can get specific user's info by user's id", ~m(guest_conn user)a do
+    test "guest user can get specific user's info by user's login", ~m(guest_conn user)a do
       variables = %{login: user.login}
       results = guest_conn |> gq_query(@query, variables)
 
       assert not is_nil(results["meta"])
 
-      assert results["id"] == to_string(user.id)
+      assert results["login"] == user.login
       assert results["nickname"] == user.nickname
       assert results["social"]["github"] == nil
       assert results["social"]["douban"] == nil
@@ -118,7 +118,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
     test "login user can get it's own profile", ~m(user_conn user)a do
       results = user_conn |> gq_query(@query, %{login: user.login})
-      assert results["id"] == to_string(user.id)
+      assert results["login"] == user.login
     end
 
     test "user's views +1 after visit", ~m(guest_conn user)a do
@@ -168,7 +168,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
     query($filter: PagedUsersFilter!) {
       pagedUsers(filter: $filter) {
         entries {
-          id
+          login
           nickname
           bio
           viewerHasFollowed
@@ -202,10 +202,10 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
       entries = results["entries"]
 
-      user3 = Enum.find(entries, &(&1["id"] == to_string(user3.id)))
+      user3 = Enum.find(entries, &(&1["login"] == user3.login))
       assert user3["viewerBeenFollowed"]
 
-      user2 = Enum.find(entries, &(&1["id"] == to_string(user2.id)))
+      user2 = Enum.find(entries, &(&1["login"] == user2.login))
       assert user2["viewerHasFollowed"]
     end
   end
@@ -301,7 +301,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       sessionState {
         isValid
         user {
-          id
+          login
         }
       }
     }
@@ -317,7 +317,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       results = user_conn |> gq_query(@query)
 
       assert results["isValid"] == true
-      assert results["user"] |> Map.get("id") == to_string(user.id)
+      assert results["user"] |> Map.get("login") == user.login
     end
 
     test "user with invalid token get false sessionState" do

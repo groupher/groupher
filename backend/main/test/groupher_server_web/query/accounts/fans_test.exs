@@ -16,7 +16,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
     query($login: String!, $filter: PagiFilter!) {
       pagedFollowers(login: $login, filter: $filter) {
         entries {
-          id
+          login
           viewerBeenFollowed
           viewerHasFollowed
         }
@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
     query($login: String!, $filter: PagiFilter!) {
       pagedFollowings(login: $login, filter: $filter) {
         entries {
-          id
+          login
           viewerHasFollowed
         }
         totalCount
@@ -102,13 +102,13 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       results = guest_conn |> gq_query(@query, variables)
 
       assert results |> Map.get("totalCount") == 1
-      assert results["entries"] |> Enum.any?(&(&1["id"] == to_string(user2.id)))
+      assert results["entries"] |> Enum.any?(&(&1["login"] == user2.login))
     end
 
     @query """
     query($login: String!) {
       user(login: $login) {
-        id
+        login
         followersCount
       }
     }
@@ -130,7 +130,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
     @query """
     query($login: String!) {
       user(login: $login) {
-        id
+        login
         followingsCount
       }
     }
@@ -155,7 +155,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
     @query """
     query($login: String!) {
       user(login: $login) {
-        id
+        login
         viewerHasFollowed
       }
     }
@@ -177,7 +177,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
     @query """
     query($login: String!) {
       user(login: $login) {
-        id
+        login
         viewerBeenFollowed
       }
     }

@@ -76,35 +76,4 @@ defmodule GroupherServer.Test.Mutation.Statistics do
       assert contributes.count == 1
     end
   end
-
-  describe "[statistics mutation user_contribute] " do
-    @query """
-    mutation($userId: ID!) {
-      makeContribute(userId: $userId) {
-        date
-        count
-      }
-    }
-    """
-    test "for guest user makeContribute should add record to user_contribute table",
-         ~m(guest_conn user)a do
-      variables = %{userId: user.id}
-      assert {:error, _} = ORM.find_by(UserContribute, user_id: user.id)
-      results = guest_conn |> gq_mutation(@query, variables)
-      assert {:ok, _} = ORM.find_by(UserContribute, user_id: user.id)
-
-      assert ["count", "date"] == results |> Map.keys()
-      assert results["date"] == Datetime.today() |> Date.to_iso8601()
-      assert results["count"] == 1
-    end
-
-    test "makeContribute to same user should update contribute count", ~m(guest_conn user)a do
-      variables = %{userId: user.id}
-      guest_conn |> gq_mutation(@query, variables)
-      results = guest_conn |> gq_mutation(@query, variables)
-      assert ["count", "date"] == results |> Map.keys()
-      assert results["date"] == Datetime.today() |> Date.to_iso8601()
-      assert results["count"] == 2
-    end
-  end
 end

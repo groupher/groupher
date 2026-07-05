@@ -22,6 +22,7 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
           arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
 
           middleware(M.PageSizeProof)
+          middleware(M.FrontDesk, :user)
           resolve(&R.Accounts.paged_published_articles/3)
         end
       end

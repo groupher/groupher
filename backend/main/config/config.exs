@@ -155,6 +155,11 @@ config :groupher_server, :cache,
       size: 10_000,
       seconds: 10_080 * 60
     },
+    frontdesk_user: %{
+      name: :frontdesk_user,
+      size: 10_000,
+      seconds: 60 * 60
+    },
     online_status: %{
       name: :online_status,
       size: 30,

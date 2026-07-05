@@ -61,6 +61,18 @@ const buildGroups = (
 const normalizeGroupIndexes = (groups: TGroupListItem[]): TGroupListItem[] =>
   groups.map((group, index) => ({ ...group, index }))
 
+const buildTagGroupIdMap = (groups: readonly TGroupListItem[]): Map<string, string> => {
+  const tagGroupIdMap = new Map<string, string>()
+
+  for (const group of groups) {
+    for (const tag of group.tags) {
+      tagGroupIdMap.set(tag.id, group.id)
+    }
+  }
+
+  return tagGroupIdMap
+}
+
 // Reorders real groups in the local drag draft. Draft groups are blocked here
 // because they do not yet exist in the backend and cannot be committed as part
 // of group ordering.
@@ -95,8 +107,11 @@ const moveTagInGroups = (
   groups: TGroupListItem[],
   tagId: string,
   target: TTagDragTarget,
+  sourceGroupId?: string,
 ): TGroupListItem[] => {
-  const sourceGroup = groups.find((group) => group.tags.some((tag) => tag.id === tagId))
+  const sourceGroup = sourceGroupId
+    ? groups.find((group) => group.id === sourceGroupId)
+    : groups.find((group) => group.tags.some((tag) => tag.id === tagId))
   const targetGroup = groups.find((group) => group.id === target.groupId)
 
   if (!sourceGroup || !targetGroup || targetGroup.draft || target.tagId === tagId) return groups
@@ -202,17 +217,21 @@ export default function useTagDragDraft({
   const [groups, setGroups] = useState<TGroupListItem[]>(sourceGroups)
   const latestGroupsRef = useRef(groups)
   const baselineGroupsRef = useRef(groups)
+  const tagGroupIdRef = useRef(buildTagGroupIdMap(groups))
   const activeIdRef = useRef<string | null>(null)
   const draggingRef = useRef(false)
   const commitFrameRef = useRef<number | null>(null)
 
   useEffect(() => {
     latestGroupsRef.current = groups
+    tagGroupIdRef.current = buildTagGroupIdMap(groups)
   }, [groups])
 
   useEffect(() => {
     if (draggingRef.current) return
     baselineGroupsRef.current = sourceGroups
+    latestGroupsRef.current = sourceGroups
+    tagGroupIdRef.current = buildTagGroupIdMap(sourceGroups)
     setGroups(sourceGroups)
   }, [sourceGroups])
 
@@ -239,14 +258,15 @@ export default function useTagDragDraft({
     if (!activeId || !target?.groupId) return
 
     const currentGroups = latestGroupsRef.current
-    const sourceGroup = currentGroups.find((group) => group.tags.some((tag) => tag.id === activeId))
+    const sourceGroupId = tagGroupIdRef.current.get(activeId)
 
-    if (!sourceGroup || sourceGroup.id === target.groupId) return
+    if (!sourceGroupId) return
 
-    const nextGroups = moveTagInGroups(currentGroups, activeId, target)
+    const nextGroups = moveTagInGroups(currentGroups, activeId, target, sourceGroupId)
     if (nextGroups === currentGroups || isSamePlacement(currentGroups, nextGroups)) return
 
     latestGroupsRef.current = nextGroups
+    tagGroupIdRef.current = buildTagGroupIdMap(nextGroups)
     setGroups(nextGroups)
   }, [])
 
@@ -269,14 +289,18 @@ export default function useTagDragDraft({
     (target?: TTagDragTarget | null): void => {
       const activeId = activeIdRef.current
       const currentGroups = latestGroupsRef.current
+      const sourceGroupId = activeId ? tagGroupIdRef.current.get(activeId) : undefined
       const nextGroups =
-        activeId && target ? moveTagInGroups(currentGroups, activeId, target) : currentGroups
+        activeId && target
+          ? moveTagInGroups(currentGroups, activeId, target, sourceGroupId)
+          : currentGroups
 
       activeIdRef.current = null
       draggingRef.current = false
 
       if (!isSamePlacement(currentGroups, nextGroups)) {
         latestGroupsRef.current = nextGroups
+        tagGroupIdRef.current = buildTagGroupIdMap(nextGroups)
         setGroups(nextGroups)
       }
 
@@ -297,6 +321,7 @@ export default function useTagDragDraft({
 
       if (!isSamePlacement(currentGroups, nextGroups)) {
         latestGroupsRef.current = nextGroups
+        tagGroupIdRef.current = buildTagGroupIdMap(nextGroups)
         setGroups(nextGroups)
       }
 
@@ -309,6 +334,7 @@ export default function useTagDragDraft({
     activeIdRef.current = null
     draggingRef.current = false
     latestGroupsRef.current = baselineGroupsRef.current
+    tagGroupIdRef.current = buildTagGroupIdMap(baselineGroupsRef.current)
     setGroups(baselineGroupsRef.current)
   }, [])
 

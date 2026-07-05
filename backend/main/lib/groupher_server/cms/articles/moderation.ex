@@ -13,7 +13,6 @@ defmodule GroupherServer.CMS.Articles.Moderation do
 
   alias CMS.Communities.TagStats
   alias CMS.FrontDesk
-  alias GroupherServer.FrontDesk, as: UserFrontDesk
   alias Helper.{Multi, Constant, ORM, QueryBuilder, T}
 
   @audit_legal Constant.CMS.pending(:legal)
@@ -62,13 +61,15 @@ defmodule GroupherServer.CMS.Articles.Moderation do
       ORM.update_meta(article, legal_state)
     end)
     |> Multi.run(:update_author_meta, fn _, _ ->
-      article = Repo.preload(article, :author)
+      article = Repo.preload(article, author: :user)
       illegal_articles = Map.get(audit_state, :illegal_articles, [])
 
-      with {:ok, user} <- UserFrontDesk.user(article.author.user_id) do
+      with {:ok, user} <- FrontDesk.live_user(article.author.user.login) do
         illegal_articles = user.meta.illegal_articles ++ illegal_articles
 
-        ORM.update_meta(user, %{has_illegal_articles: true, illegal_articles: illegal_articles})
+        user
+        |> ORM.update_meta(%{has_illegal_articles: true, illegal_articles: illegal_articles})
+        |> revalidate_user(user.login)
       end
     end)
     |> Repo.transaction()
@@ -100,17 +101,19 @@ defmodule GroupherServer.CMS.Articles.Moderation do
       ORM.update_meta(article, legal_state)
     end)
     |> Multi.run(:update_author_meta, fn _, _ ->
-      article = Repo.preload(article, :author)
+      article = Repo.preload(article, author: :user)
       illegal_articles = Map.get(audit_state, :illegal_articles, [])
 
-      with {:ok, user} <- UserFrontDesk.user(article.author.user_id) do
+      with {:ok, user} <- FrontDesk.live_user(article.author.user.login) do
         illegal_articles = user.meta.illegal_articles -- illegal_articles
         has_illegal_articles = not Enum.empty?(illegal_articles)
 
-        ORM.update_meta(user, %{
+        user
+        |> ORM.update_meta(%{
           has_illegal_articles: has_illegal_articles,
           illegal_articles: illegal_articles
         })
+        |> revalidate_user(user.login)
       end
     end)
     |> Repo.transaction()
@@ -119,6 +122,13 @@ defmodule GroupherServer.CMS.Articles.Moderation do
 
   defp result({:ok, %{update_article_meta: result}}), do: {:ok, result}
   defp result({:error, _, result, _steps}), do: {:error, result}
+
+  defp revalidate_user({:ok, _result} = response, login) do
+    FrontDesk.revalidate_user(login)
+    response
+  end
+
+  defp revalidate_user(response, _login), do: response
 
   defp update_tag_stats(article, action) do
     article = Repo.preload(article, :community_tags)

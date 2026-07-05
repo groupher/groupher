@@ -23,7 +23,6 @@ defmodule GroupherServer.Test.Query.AbuseReports.AccountReport do
           id
           dealWith
           operateUser {
-            id
             login
           }
           comment {

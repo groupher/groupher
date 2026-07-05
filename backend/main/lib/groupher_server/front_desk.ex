@@ -7,16 +7,16 @@ defmodule GroupherServer.FrontDesk do
   # TODO: bring cache in
   """
   alias GroupherServer.{Accounts, CMS}
+  alias __MODULE__.Cache
 
   def community(slug) when is_binary(slug), do: CMS.FrontDesk.community(slug)
 
-  def user(id) when is_integer(id) do
-    Accounts.FrontDesk.user(id)
-  end
+  def user(login) when is_binary(login), do: Cache.user(login)
 
-  def user(login) do
-    Accounts.FrontDesk.user(login)
-  end
+  def live_user(login, opts \\ []) when is_binary(login),
+    do: Accounts.FrontDesk.live_user(login, opts)
+
+  def revalidate, do: __MODULE__.Revalidate
 
   def comment(comment_path) when is_map(comment_path), do: CMS.FrontDesk.comment(comment_path)
 

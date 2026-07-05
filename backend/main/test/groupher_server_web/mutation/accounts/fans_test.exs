@@ -16,7 +16,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
     @query """
     mutation($login: String!) {
       follow(login: $login) {
-        id
+        login
         viewerHasFollowed
       }
     }
@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
       variables = %{login: user2.login}
       followed = user_conn |> gq_mutation(@query, variables)
 
-      assert followed["id"] == to_string(user2.id)
+      assert followed["login"] == user2.login
       assert followed["viewerHasFollowed"] == false
     end
 
@@ -36,7 +36,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
 
       variables = %{login: user2.login}
       followed = user_conn |> gq_mutation(@query, variables)
-      assert followed["id"] == to_string(user2.id)
+      assert followed["login"] == user2.login
 
       assert user_conn |> mutation_error?(@query, variables, ecode(:already_did))
     end
@@ -61,7 +61,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
     @query """
     mutation($login: String!) {
       undoFollow(login: $login) {
-        id
+        login
       }
     }
     """
@@ -75,7 +75,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
       variables = %{login: user2.login}
       result = user_conn |> gq_mutation(@query, variables)
 
-      assert result["id"] == to_string(user2.id)
+      assert result["login"] == user2.login
 
       {:ok, found} = User |> ORM.find(user2.id, preload: :followers)
       assert found |> Map.get(:followers) |> length == 0

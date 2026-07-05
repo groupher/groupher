@@ -94,6 +94,8 @@ defmodule Helper.Cache do
     Cachex.expire(pool, key, :timer.minutes(expire_min))
   end
 
+  def delete(pool, key), do: Cachex.del(pool, key)
+
   @doc """
   clear all the cache
   ## Example

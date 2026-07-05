@@ -21,7 +21,6 @@ defmodule GroupherServerWeb.Schema do
   # statistics
   import_types(Statistics.Types)
   import_types(Statistics.Queries)
-  import_types(Statistics.Mutations)
 
   # cms
   import_types(CMS.Types)
@@ -44,8 +43,6 @@ defmodule GroupherServerWeb.Schema do
   mutation do
     # account
     import_fields(:account_mutations)
-    # statistics
-    import_fields(:statistics_mutations)
     # cms
     import_fields(:cms_mutation_community)
     import_fields(:cms_operation_mutations)

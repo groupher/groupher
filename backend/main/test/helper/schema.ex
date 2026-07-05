@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.Helper.Schema do
           illegalWords
         }
         commentsParticipants {
-          id
+          login
           nickname
         }
         commentsParticipantsCount
@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.Helper.Schema do
             }
           }
           author {
-            id
+            login
             nickname
             avatar
           }
@@ -85,7 +85,7 @@ defmodule GroupherServer.Test.Helper.Schema do
           innerId
           title
           author {
-            id
+            login
           }
           #{extra}
         }
@@ -121,7 +121,7 @@ defmodule GroupherServer.Test.Helper.Schema do
           innerId
           bodyHtml
           author {
-            id
+            login
           }
           article {
             innerId
@@ -421,7 +421,7 @@ defmodule GroupherServer.Test.Helper.Schema do
           isEdited
         }
         commentsParticipants {
-          id
+          login
           nickname
         }
         communityTags {

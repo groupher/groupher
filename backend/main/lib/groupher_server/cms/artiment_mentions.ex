@@ -198,16 +198,31 @@ defmodule GroupherServer.CMS.ArtimentMentions do
   end
 
   defp merge_occurrences(mentions) do
-    Enum.reduce(mentions, [], fn mention, acc ->
-      case Enum.find_index(acc, &(merge_key(&1) == merge_key(mention))) do
-        nil ->
-          acc ++ [mention]
+    {keys, mentions_by_key} =
+      Enum.reduce(mentions, {[], %{}}, fn mention, {keys, mentions_by_key} ->
+        key = merge_key(mention)
+        mention = Map.update!(mention, :occurrences, &Enum.reverse/1)
 
-        index ->
-          List.update_at(acc, index, fn existing ->
-            Map.update!(existing, :occurrences, &(&1 ++ mention.occurrences))
-          end)
-      end
+        case Map.fetch(mentions_by_key, key) do
+          :error ->
+            {[key | keys], Map.put(mentions_by_key, key, mention)}
+
+          {:ok, existing} ->
+            merged =
+              Map.update!(existing, :occurrences, fn occurrences ->
+                mention.occurrences ++ occurrences
+              end)
+
+            {keys, Map.put(mentions_by_key, key, merged)}
+        end
+      end)
+
+    keys
+    |> Enum.reverse()
+    |> Enum.map(fn key ->
+      mentions_by_key
+      |> Map.fetch!(key)
+      |> Map.update!(:occurrences, &Enum.reverse/1)
     end)
   end
 

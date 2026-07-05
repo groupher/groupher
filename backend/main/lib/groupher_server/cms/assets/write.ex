@@ -209,10 +209,14 @@ defmodule GroupherServer.CMS.Assets.Write do
     |> cover_ref_specs()
     |> Enum.reduce_while({:ok, []}, fn {usage, inputs}, {:ok, acc} ->
       case replace_refs(document, [usage], inputs, base, user, &normalize_usage/1) do
-        {:ok, refs} -> {:cont, {:ok, acc ++ refs}}
+        {:ok, refs} -> {:cont, {:ok, [refs | acc]}}
         {:error, _} = error -> {:halt, error}
       end
     end)
+    |> case do
+      {:ok, refs} -> {:ok, refs |> Enum.reverse() |> List.flatten()}
+      error -> error
+    end
   end
 
   defp cover_ref_specs(attrs) do

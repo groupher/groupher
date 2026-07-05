@@ -4,7 +4,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   import ShortMaps
   import Ecto.Query, warn: false
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Accounts, CMS, FrontDesk}
 
   alias Accounts.Model.User
   alias CMS.Helper.{ArticlePath, EmotionFormatter}
@@ -626,43 +626,17 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   end
 
   def add_moderators(_root, ~m(community users)a, %{context: %{cur_user: cur_user}}) do
-    with {:ok, target_users} <- resolve_users(users) do
-      CMS.Communities.add_moderators(community, target_users, cur_user)
-    end
+    CMS.Communities.add_moderators(community, users, cur_user)
   end
 
   def remove_moderator(_root, ~m(community user)a, %{context: %{cur_user: cur_user}}) do
-    with {:ok, target_user} <- ORM.find_user(user) do
-      CMS.Communities.remove_moderator(community, %User{id: target_user.id}, cur_user)
-    end
-  end
-
-  defp resolve_users(logins) when is_list(logins) do
-    logins
-    |> Enum.uniq()
-    |> Enum.reduce_while({:ok, []}, fn login, {:ok, users} ->
-      case ORM.find_user(login) do
-        {:ok, user} -> {:cont, {:ok, [user | users]}}
-        {:error, reason} -> {:halt, {:error, reason}}
-      end
-    end)
-    |> case do
-      {:ok, users} -> {:ok, Enum.reverse(users)}
-      {:error, reason} -> {:error, reason}
-    end
+    CMS.Communities.remove_moderator(community, user, cur_user)
   end
 
   def update_moderator_passport(_root, ~m(community user rules)a, %{
         context: %{cur_user: cur_user}
       }) do
-    with {:ok, target_user} <- ORM.find_user(user) do
-      CMS.Communities.update_moderator_passport(
-        community,
-        rules,
-        %User{id: target_user.id},
-        cur_user
-      )
-    end
+    CMS.Communities.update_moderator_passport(community, rules, user, cur_user)
   end
 
   def paged_community_moderators(_root, ~m(community filter)a, _info) do
@@ -953,7 +927,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
           end
 
         :user_login ->
-          with {:ok, user} <- ORM.find_user(value) do
+          with {:ok, user} <- FrontDesk.user(value) do
             {:ok, {:user, user.id}}
           end
       end

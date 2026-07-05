@@ -452,8 +452,8 @@ defmodule GroupherServerWeb.CoreComponents do
   ## Examples
 
       <.table id="users" rows={@users}>
-        <:col :let={user} label="id"><%= user.id %></:col>
-        <:col :let={user} label="username"><%= user.username %></:col>
+        <:col :let={user} label="login"><%= user.login %></:col>
+        <:col :let={user} label="nickname"><%= user.nickname %></:col>
       </.table>
   """
   attr(:id, :string, required: true)

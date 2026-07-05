@@ -4,6 +4,7 @@ defmodule GroupherServer.Accounts.Fans.Actions do
   import Helper.ErrorCode
 
   alias GroupherServer.{Accounts, Repo}
+  alias GroupherServer.FrontDesk, as: RootFrontDesk
   alias Accounts.{Events, FrontDesk}
   alias Accounts.Model.{User, UserFollower, UserFollowing}
   alias Helper.{Multi, Later, ORM, T}
@@ -11,8 +12,8 @@ defmodule GroupherServer.Accounts.Fans.Actions do
   @spec follow(User.t(), User.t()) :: {:ok, User.t()} | T.gq_error()
   def follow(%User{} = user, %User{} = follower) do
     with true <- to_string(user.id) !== to_string(follower.id),
-         {:ok, user} <- FrontDesk.user(user.id),
-         {:ok, target_user} <- FrontDesk.user(follower.id) do
+         {:ok, user} <- FrontDesk.live_user(user.login),
+         {:ok, target_user} <- FrontDesk.live_user(follower.login) do
       Multi.new()
       |> Multi.insert(
         :create_follower,
@@ -36,6 +37,7 @@ defmodule GroupherServer.Accounts.Fans.Actions do
       end)
       |> Repo.transaction()
       |> result()
+      |> revalidate_users([user.login, target_user.login])
     else
       false -> {:error, [message: "can't follow yourself", code: ecode(:self_conflict)]}
       {:error, reason} -> {:error, [message: reason, code: ecode(:not_exist)]}
@@ -45,8 +47,8 @@ defmodule GroupherServer.Accounts.Fans.Actions do
   @spec undo_follow(User.t(), User.t()) :: {:ok, User.t()} | T.gq_error()
   def undo_follow(%User{} = user, %User{} = follower) do
     with true <- to_string(user.id) !== to_string(follower.id),
-         {:ok, user} <- FrontDesk.user(user.id),
-         {:ok, target_user} <- FrontDesk.user(follower.id) do
+         {:ok, user} <- FrontDesk.live_user(user.login),
+         {:ok, target_user} <- FrontDesk.live_user(follower.login) do
       Multi.new()
       |> Multi.run(:delete_follower, fn _, _ ->
         ORM.findby_delete!(UserFollower, %{user_id: target_user.id, follower_id: user.id})
@@ -65,6 +67,7 @@ defmodule GroupherServer.Accounts.Fans.Actions do
       end)
       |> Repo.transaction()
       |> result()
+      |> revalidate_users([user.login, target_user.login])
     else
       false -> {:error, [message: "can't undo follow yourself", code: ecode(:self_conflict)]}
       {:error, reason} -> {:error, [message: reason, code: ecode(:not_exist)]}
@@ -141,4 +144,11 @@ defmodule GroupherServer.Accounts.Fans.Actions do
   defp result({:error, :add_achievement, _result, _steps}) do
     {:error, [message: "follow acieve fails", code: ecode(:react_fails)]}
   end
+
+  defp revalidate_users({:ok, _result} = response, logins) do
+    RootFrontDesk.revalidate().users(logins)
+    response
+  end
+
+  defp revalidate_users(response, _logins), do: response
 end
