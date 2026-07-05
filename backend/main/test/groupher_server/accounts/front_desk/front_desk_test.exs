@@ -64,6 +64,17 @@ defmodule GroupherServer.Test.Accounts.FrontDesk do
       assert {:ok, cached_user} = FrontDesk.user(user.login)
       assert cached_user.nickname == "new nickname"
     end
+
+    test "user revalidates when cached value is not a user" do
+      {:ok, user} = db_insert(:user)
+      {:ok, true} = Cache.put(@user_cache_pool, user_scope(user.login), %{login: user.login})
+
+      assert {:ok, cached_user} = FrontDesk.user(user.login)
+      assert cached_user.id == user.id
+
+      assert {:ok, cached_user} = Cache.get(@user_cache_pool, user_scope(user.login))
+      assert cached_user.id == user.id
+    end
   end
 
   defp user_scope(login), do: "user:#{login}"

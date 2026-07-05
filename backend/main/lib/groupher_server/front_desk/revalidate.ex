@@ -8,13 +8,9 @@ defmodule GroupherServer.FrontDesk.Revalidate do
 
   @spec user(String.t()) :: {:ok, any()} | {:error, any()}
   def user(login) when is_binary(login) do
-    with {:ok, user} <- FrontDesk.live_user(login),
-         {:ok, _} <- Cache.put_user(user) do
+    with {:ok, user} <- FrontDesk.live_user(login) do
+      _ = Cache.put_user(user)
       {:ok, user}
-    else
-      {:error, _reason} = error ->
-        Cache.delete_user(login)
-        error
     end
   end
 

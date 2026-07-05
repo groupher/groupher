@@ -55,7 +55,7 @@ defmodule GroupherServer.Accounts.Profiles.UserRead do
     {:ok, user}
   end
 
-  defp update_social_ifneed(changeset, %User{} = user, %{social: attrs}) do
+  defp update_social_ifneed(changeset, %User{} = user, %{social: attrs}) when is_map(attrs) do
     attrs = Map.put(attrs, :user_id, user.id)
 
     case ORM.find_by(Social, user_id: user.id) do

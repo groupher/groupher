@@ -260,7 +260,7 @@ export default function useTagDragDraft({
     const currentGroups = latestGroupsRef.current
     const sourceGroupId = tagGroupIdRef.current.get(activeId)
 
-    if (!sourceGroupId || sourceGroupId === target.groupId) return
+    if (!sourceGroupId) return
 
     const nextGroups = moveTagInGroups(currentGroups, activeId, target, sourceGroupId)
     if (nextGroups === currentGroups || isSamePlacement(currentGroups, nextGroups)) return

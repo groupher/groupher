@@ -42,8 +42,12 @@ defmodule GroupherServer.Accounts.Mailbox do
     user_ids
     |> Enum.reject(&is_nil/1)
     |> Enum.uniq()
-    |> Enum.each(&update_status/1)
-    |> done()
+    |> Enum.reduce_while(done(:pass), fn user_id, _acc ->
+      case update_status(user_id) do
+        {:ok, _} -> {:cont, done(:pass)}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
   end
 
   defp revalidate_user({:ok, %User{login: login}} = response) when is_binary(login) do

@@ -51,5 +51,14 @@ defmodule GroupherServer.Test.Accounts.Profiles.User do
       assert updated.social.company == attrs.social.company
       assert updated.social.blog == attrs.social.blog
     end
+
+    test "skip social update when social attrs is nil" do
+      {:ok, user} = db_insert(:user)
+
+      {:ok, updated} =
+        Accounts.Profiles.update_profile(user, %{nickname: "new nickname", social: nil})
+
+      assert updated.nickname == "new nickname"
+    end
   end
 end

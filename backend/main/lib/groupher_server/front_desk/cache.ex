@@ -13,7 +13,7 @@ defmodule GroupherServer.FrontDesk.Cache do
   def user(login) when is_binary(login) do
     case Cache.get(@pool, user_scope(login)) do
       {:ok, %User{} = user} -> {:ok, user}
-      {:error, _} -> FrontDesk.revalidate().user(login)
+      _ -> FrontDesk.revalidate().user(login)
     end
   end
 

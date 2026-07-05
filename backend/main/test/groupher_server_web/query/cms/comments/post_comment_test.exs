@@ -199,7 +199,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
               isArticleAuthor
               author {
                 login
-                login
+                nickname
               }
             }
             viewerHasUpvoted
@@ -216,7 +216,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
               repliesCount
               author {
                 login
-                login
+                nickname
               }
             }
             repliesCount

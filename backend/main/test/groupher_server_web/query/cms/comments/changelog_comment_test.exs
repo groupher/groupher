@@ -192,7 +192,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
               isArticleAuthor
               author {
                 login
-                login
+                nickname
               }
             }
             viewerHasUpvoted
@@ -209,7 +209,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
               repliesCount
               author {
                 login
-                login
+                nickname
               }
             }
             repliesCount

@@ -14,6 +14,10 @@ defmodule GroupherServer.Test.Query.Accounts.Mailbox do
   end
 
   describe "[accounts mailbox status]" do
+    test "update_status_many returns error when any user update fails" do
+      assert {:error, {:not_exist, _}} = Accounts.Mailbox.update_status_many([-1])
+    end
+
     @query """
     query($login: String!) {
       user(login: $login) {
