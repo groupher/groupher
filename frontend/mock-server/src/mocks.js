@@ -95,12 +95,14 @@ const makeWallpaperTheme = (overrides = {}) => ({
 })
 
 const makeUser = (overrides = {}) => {
+  const safeOverrides = { ...overrides }
+  delete safeOverrides.id
+
   return {
-    id: overrides.id ?? 'u_e2e',
     login: overrides.login ?? 'e2e',
     nickname: overrides.nickname ?? 'E2E User',
     avatar: overrides.avatar ?? 'https://static.groupher.com/icons/cmd/alien_user3.svg',
-    ...overrides,
+    ...safeOverrides,
   }
 }
 
@@ -277,7 +279,7 @@ const makePost = (idx, communitySlug = 'home') => {
     commentsCount: 1,
     communitySlug,
     community: makeCommunity(communitySlug),
-    author: makeUser({ id: `u_${idx}`, login: `user_${idx}`, nickname: `User ${idx}` }),
+    author: makeUser({ login: `user_${idx}`, nickname: `User ${idx}` }),
     insertedAt: nowISO(),
     updatedAt: nowISO(),
     activeAt: nowISO(),
