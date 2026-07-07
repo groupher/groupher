@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.Category do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for community categories.
+
+  Categories group communities at the discovery/navigation layer and are joined
+  to communities through `CommunityCategory`.
+  """
   alias __MODULE__
 
   use Ecto.Schema

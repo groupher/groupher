@@ -1,5 +1,10 @@
 defmodule GroupherServer.Support.Factory.Articles do
-  @moduledoc false
+  @moduledoc """
+  Test factory helpers for CMS article schemas.
+
+  Factories centralize valid article/thread attributes so tests do not duplicate
+  schema defaults.
+  """
 
   alias GroupherServer.Support.FakeData
   alias Helper.Datetime

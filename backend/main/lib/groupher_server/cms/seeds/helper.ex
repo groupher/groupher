@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Seeds.Helper do
-  @moduledoc false
+  @moduledoc """
+  Shared utility helpers for CMS seed modules.
+
+  Seed modules use this for reusable lookup, randomization, and fixture helpers
+  while keeping runtime helpers separate.
+  """
 
   import ShortMaps
 

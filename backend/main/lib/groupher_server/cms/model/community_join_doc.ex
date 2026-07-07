@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.CommunityJoinDoc do
-  @moduledoc false
+  @moduledoc """
+  Join schema linking communities to published docs.
+
+  Docs have their own identity and publish workflow; this relation anchors the
+  published doc into a community surface.
+  """
   alias __MODULE__
 
   use Ecto.Schema

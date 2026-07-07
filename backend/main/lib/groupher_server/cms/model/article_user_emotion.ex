@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.ArticleUserEmotion do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for per-user article emotion reactions.
+
+  Emotion rows are separate from upvotes so lightweight reaction state can be
+  toggled without changing ranking/vote semantics.
+  """
 
   use Ecto.Schema
 

@@ -1,5 +1,17 @@
 defmodule GroupherServer.Accounts.Profiles.Oauth do
-  @moduledoc false
+  @moduledoc """
+  OAuth sign-in and account-linking workflow.
+
+      provider payload
+          |
+          +--> find existing provider -> token
+          +--> register user/provider -> token
+          +--> link/unlink provider for existing user
+
+  The workflow keeps provider records, achievement bootstrap, social profile
+  hints, tokens, mailbox bootstrap, and user revalidation in one account domain
+  boundary.
+  """
 
   import Ecto.Query, warn: false
   import Helper.ErrorCode

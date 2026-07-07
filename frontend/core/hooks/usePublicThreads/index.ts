@@ -7,6 +7,13 @@ import type { TCommunityThread, TNameAlias } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 
+/**
+ * Computes the public thread list after dashboard configuration is applied.
+ *
+ * The community owns raw available threads; dashboard config controls enabled
+ * state, name aliases, and whether About should be hidden from the main nav
+ * because it is folded into the header More tab.
+ */
 export default function usePublicThreads(): TCommunityThread[] {
   const dsb$ = useDashboard()
   const { slug, threads } = useCommunity()

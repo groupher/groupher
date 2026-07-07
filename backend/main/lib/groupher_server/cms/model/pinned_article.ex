@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.PinnedArticle do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for pinned article records.
+
+  The row marks a concrete artiment thread item as pinned without moving or
+  duplicating the source article.
+  """
   alias __MODULE__
 
   use Ecto.Schema

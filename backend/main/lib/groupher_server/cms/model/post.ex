@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.Post do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for post artiments.
+
+  Posts are the default discussion thread and share the CMS article workflow:
+  author, community join, tags, reactions, comments, and publish state.
+  """
 
   alias __MODULE__
 

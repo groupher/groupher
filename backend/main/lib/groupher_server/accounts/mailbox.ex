@@ -1,5 +1,21 @@
 defmodule GroupherServer.Accounts.Mailbox do
-  @moduledoc false
+  @moduledoc """
+  Account-facing mailbox facade and unread counter synchronizer.
+
+  Read operations delegate to `GroupherServer.Messaging`; status updates fold
+  unread counts from mentions and notifications back into the user's embedded
+  mailbox state.
+
+      Messaging row changes
+          |
+          v
+      Mailbox.update_status/1
+          |
+          +--> count unread mentions
+          +--> count unread notifications
+          +--> update User.mailbox
+          +--> revalidate user page
+  """
 
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]

@@ -1,5 +1,10 @@
 defmodule GroupherServerWeb.Schema.Account.Metrics do
-  @moduledoc false
+  @moduledoc """
+  Absinthe field groups for account metrics.
+
+  These definitions keep metric field names and middleware close to the account
+  schema layer while resolver behavior remains in account/statistics modules.
+  """
 
   use Absinthe.Schema.Notation
   import GroupherServerWeb.Schema.Helper.Fields

@@ -1,5 +1,10 @@
 defmodule GroupherServer.Accounts.Profiles.List do
-  @moduledoc false
+  @moduledoc """
+  Profile list queries for users and subscribed communities.
+
+  The module keeps profile-page pagination, default community suggestions, and
+  subscribed-community reads under the account namespace.
+  """
 
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1, get_config: 2]

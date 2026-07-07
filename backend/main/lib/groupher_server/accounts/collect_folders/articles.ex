@@ -1,5 +1,11 @@
 defmodule GroupherServer.Accounts.CollectFolders.Articles do
-  @moduledoc false
+  @moduledoc """
+  Paginates articles stored inside a collect folder.
+
+  The folder owns embedded collect refs; this module preloads the concrete
+  thread records, applies privacy checks, and extracts a mixed article page for
+  the GraphQL layer.
+  """
 
   import Helper.ErrorCode
   import Helper.Utils, only: [done: 1, get_config: 2]

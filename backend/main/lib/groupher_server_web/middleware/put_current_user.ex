@@ -3,7 +3,17 @@
 # see https://hexdocs.pm/absinthe/Absinthe.Middleware.html#content
 # ---
 defmodule GroupherServerWeb.Middleware.PutCurrentUser do
-  @moduledoc false
+  @moduledoc """
+  Copies the authenticated viewer from Absinthe context into field arguments.
+
+      context.cur_user
+          |
+          v
+      resolution.arguments.cur_user
+
+  Use this middleware when downstream resolver code expects the viewer in the
+  argument map instead of reading from the Absinthe context directly.
+  """
   @behaviour Absinthe.Middleware
 
   def call(%{context: %{cur_user: cur_user}} = resolution, _) do

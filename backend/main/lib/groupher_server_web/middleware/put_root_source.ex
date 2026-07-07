@@ -3,7 +3,14 @@
 # see https://hexdocs.pm/absinthe/Absinthe.Middleware.html#content
 # ---
 defmodule GroupherServerWeb.Middleware.PutRootSource do
-  @moduledoc false
+  @moduledoc """
+  Copies a parent resolver source id into child-field arguments.
+
+  This middleware is used by nested GraphQL fields that need the parent object's
+  id while still calling a resolver that reads from `resolution.arguments`.
+  Preserve the current argument name unless the consuming resolver contract is
+  migrated at the same time.
+  """
   @behaviour Absinthe.Middleware
 
   # def call(%{source: %{id: id}} = resolution, _) do

@@ -1,7 +1,12 @@
 defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Link do
   @type t :: %__MODULE__{}
 
-  @moduledoc false
+  @moduledoc """
+  Embedded schema for one dashboard navigation link or group.
+
+  A `:link` item requires a URL and no children; a `:group` item owns child
+  links and should not carry its own URL.
+  """
   use Ecto.Schema
   use Accessible
 

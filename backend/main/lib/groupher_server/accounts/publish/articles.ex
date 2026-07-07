@@ -1,5 +1,11 @@
 defmodule GroupherServer.Accounts.Publish.Articles do
-  @moduledoc false
+  @moduledoc """
+  Account-side view and counters for a user's published articles.
+
+  The CMS article domain owns publication queries. This module adapts those
+  queries for profile pages and keeps the user's published-count meta in sync
+  after write paths change article state.
+  """
 
   import Helper.Utils, only: [plural: 1]
 

@@ -1,5 +1,22 @@
 defmodule GroupherServer.Messaging.Notifications do
-  @moduledoc false
+  @moduledoc """
+  Stores grouped activity notifications for a user's inbox.
+
+  Unlike direct mentions, notifications can merge repeated activity into an
+  existing row for a configured period. Revoking activity removes one actor from
+  a grouped notification or deletes the row when no actors remain.
+
+      activity event
+          |
+          v
+      validate action + target user
+          |
+          v
+      create / merge / revoke notification
+          |
+          v
+      refresh mailbox status
+  """
 
   import Ecto.Query, warn: false
 

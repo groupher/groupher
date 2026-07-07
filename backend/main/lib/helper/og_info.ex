@@ -1,5 +1,19 @@
 defmodule Helper.OgInfo do
-  @moduledoc false
+  @moduledoc """
+  Fetches and normalizes Open Graph metadata for external URLs.
+
+  The helper validates URLs before network access, follows the site-favicon
+  adapter for page/favicon loading, and returns the compact metadata shape used
+  by link previews.
+
+      input URL
+          |
+          v
+      UrlSafety.validate_http_url/1
+          |
+          v
+      SiteFavicon adapter -> OpenGraph.parse/1 -> favicon merge
+  """
   import Helper.Utils, only: [done: 1]
 
   alias Helper.UrlSafety

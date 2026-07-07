@@ -1,5 +1,10 @@
 defmodule GroupherServer.Accounts.Achievements.Membership do
-  @moduledoc false
+  @moduledoc """
+  Updates membership flags on the user achievement record.
+
+  A global lock per user prevents concurrent plan changes from racing the
+  achievement row creation/upsert path.
+  """
 
   import ShortMaps
 

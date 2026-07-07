@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Seeds.Articles do
-  @moduledoc false
+  @moduledoc """
+  Seed helpers for inserting sample CMS articles.
+
+  These helpers support development/demo data setup and should not be used by
+  runtime write paths.
+  """
 
   import GroupherServer.Support.Factory
   import Helper.Utils, only: [get_config: 2]

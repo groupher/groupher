@@ -1,5 +1,10 @@
 defmodule GroupherServer.Accounts.Search.User do
-  @moduledoc false
+  @moduledoc """
+  Lightweight user search by nickname or login.
+
+  This is intentionally bounded for mention pickers and small search surfaces,
+  not a full text-search pipeline.
+  """
 
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]

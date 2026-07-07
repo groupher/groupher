@@ -1,5 +1,10 @@
 defmodule GroupherServer.Accounts.Fans.List do
-  @moduledoc false
+  @moduledoc """
+  Paginates follower and following lists for profile pages.
+
+  Viewer-aware variants enrich each user row with follow-state booleans so the
+  frontend can render follow buttons without extra round trips.
+  """
 
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]

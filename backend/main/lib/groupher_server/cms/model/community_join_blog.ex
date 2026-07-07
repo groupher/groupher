@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.CommunityJoinBlog do
-  @moduledoc false
+  @moduledoc """
+  Join schema linking communities to blog artiments.
+
+  Thread-specific join tables keep community membership/query constraints clear
+  while each artiment type keeps its own content table.
+  """
   alias __MODULE__
 
   use Ecto.Schema

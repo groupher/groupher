@@ -1,7 +1,13 @@
 defmodule GroupherServer.CMS.Model.CommunityDashboard do
   @type t :: %__MODULE__{}
 
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for persisted community dashboard configuration.
+
+  The dashboard row stores editable presentation sections such as base info,
+  wallpaper, SEO, layout, enabled threads, links, social links, and docs FAQ.
+  Domain write helpers normalize section payloads before updating this schema.
+  """
   alias __MODULE__
 
   use Ecto.Schema

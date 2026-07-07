@@ -64,6 +64,13 @@ const buildActiveChain = (relative: string, root: TDsbCrumbNode): TDsbCrumbNode[
   return chain
 }
 
+/**
+ * Resolves dashboard breadcrumbs from route segments and a declared crumb tree.
+ *
+ * Route matching (`seg`) and navigation target (`toSeg`) are intentionally
+ * separate so product labels can keep stable breadcrumbs while individual pages
+ * move under different dashboard URLs.
+ */
 export default function useDsbCrumbItems(root: TDsbCrumbNode): TBreadcrumbItem[] {
   const pathname = usePathname()
   const { slug } = useCommunity()

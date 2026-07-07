@@ -1,5 +1,10 @@
 defmodule GroupherServer.Accounts.Model.Social do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for optional profile social links.
+
+  Social links are separate from the core user row so profile edits can update
+  external handles without bloating authentication/account identity fields.
+  """
   alias __MODULE__
 
   use Ecto.Schema

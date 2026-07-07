@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.CommunityJoinPost do
-  @moduledoc false
+  @moduledoc """
+  Join schema linking communities to post artiments.
+
+  The join keeps post membership explicit for community feeds, tag stats, and
+  moderation queries.
+  """
   alias __MODULE__
 
   use Ecto.Schema

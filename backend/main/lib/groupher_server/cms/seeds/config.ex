@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Seeds.Config do
-  @moduledoc false
+  @moduledoc """
+  Static configuration used by CMS seed flows.
+
+  Keep seed-only constants here so demo data choices do not leak into runtime
+  CMS defaults.
+  """
 
   @tag_threads [:post, :changelog, :kanban, :doc, :about]
   @content_threads [:post, :changelog, :doc]

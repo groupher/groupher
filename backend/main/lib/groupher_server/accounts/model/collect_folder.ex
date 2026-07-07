@@ -1,5 +1,10 @@
 defmodule GroupherServer.Accounts.Model.CollectFolder do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for user-owned collect folders.
+
+  The folder stores embedded article collect refs plus denormalized meta so the
+  account collection UI can page folders and mixed-thread contents efficiently.
+  """
   alias __MODULE__
 
   use Ecto.Schema

@@ -1,5 +1,10 @@
 defmodule GroupherServer.Support.Factory.Oauth do
-  @moduledoc false
+  @moduledoc """
+  Test factory helpers for OAuth provider payloads.
+
+  Use these fixtures when account/OAuth tests need realistic provider identity
+  maps without hitting external services.
+  """
 
   alias GroupherServer.Support.FakeData
 

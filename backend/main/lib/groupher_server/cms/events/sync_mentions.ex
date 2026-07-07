@@ -1,5 +1,19 @@
 defmodule GroupherServer.CMS.Events.SyncMentions do
-  @moduledoc false
+  @moduledoc """
+  Event handler that refreshes mention facts after content changes.
+
+      CMS event bus
+          |
+          v
+      %Event{type: :sync_mentions, payload: %{artiment: ...}}
+          |
+          v
+      CMS.ArtimentMentions.sync/1
+
+  The event payload carries the article or comment that changed. The handler is
+  intentionally thin so parsing, persistence, and notification decisions remain
+  owned by the mention domain modules.
+  """
 
   alias GroupherServer.CMS
   alias CMS.Events.Event

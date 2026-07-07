@@ -1,5 +1,10 @@
 defmodule GroupherServer.Accounts.Model.UserFollower do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for reverse follow relationships.
+
+  A row means `follower_id` follows `user_id`. It is maintained together with
+  `UserFollowing` so reads can be efficient in both directions.
+  """
   alias __MODULE__
 
   use Ecto.Schema

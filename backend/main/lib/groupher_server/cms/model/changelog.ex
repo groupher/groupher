@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.Changelog do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for changelog artiments.
+
+  Changelogs use the shared article publishing and reaction machinery while
+  representing release/update content in a dedicated table.
+  """
   alias __MODULE__
 
   use Ecto.Schema

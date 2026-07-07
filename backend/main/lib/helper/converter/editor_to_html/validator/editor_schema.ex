@@ -1,5 +1,10 @@
 defmodule Helper.Converter.EditorToHTML.Validator.EditorSchema do
-  @moduledoc false
+  @moduledoc """
+  Schema definitions for legacy Editor.js blocks accepted by the HTML converter.
+
+  Keep this module as data-only validation metadata. Conversion logic belongs in
+  the editor-to-HTML fragments.
+  """
 
   # header
   @valid_header_level [1, 2, 3]

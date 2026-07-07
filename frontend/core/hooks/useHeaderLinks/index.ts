@@ -12,6 +12,12 @@ type THeaderLinks = {
   getCustomLinks: () => readonly TResolvedHeaderLinkItem[]
 }
 
+/**
+ * Reads dashboard header config and exposes the resolved navigation contract.
+ *
+ * Consumers get both the raw persisted links and a lazy resolver so render paths
+ * can decide when to include synthetic More-tab entries.
+ */
 export default function useHeaderLinks(): THeaderLinks {
   const { headerLayout, headerLinks } = useDashboard()
   const { slug: community } = useCommunity()

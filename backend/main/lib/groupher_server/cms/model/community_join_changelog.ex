@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.CommunityJoinChangelog do
-  @moduledoc false
+  @moduledoc """
+  Join schema linking communities to changelog artiments.
+
+  It lets changelog content stay in its own table while community feeds can query
+  membership and ordering through a dedicated relation.
+  """
   alias __MODULE__
 
   use Ecto.Schema

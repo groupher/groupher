@@ -3,7 +3,13 @@
 # see https://hexdocs.pm/absinthe/Absinthe.Middleware.html#content
 # ---
 defmodule GroupherServerWeb.Middleware.ConvertToInt do
-  @moduledoc false
+  @moduledoc """
+  Normalizes aggregate-list resolver results into a single integer value.
+
+  SQL aggregate paths sometimes surface as `[value]` or `[]` through Absinthe.
+  This middleware unwraps the one-value case and treats an empty aggregate result
+  as zero.
+  """
   @behaviour Absinthe.Middleware
   # google: must appear in the GROUP BY clause or be used in an aggregate function
 

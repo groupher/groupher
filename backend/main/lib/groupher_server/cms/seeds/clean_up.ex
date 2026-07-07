@@ -1,5 +1,9 @@
 defmodule GroupherServer.CMS.Seeds.CleanUp do
-  @moduledoc false
+  @moduledoc """
+  Cleanup helpers for seed data reset.
+
+  Use this only from seed/setup flows where destructive cleanup is expected.
+  """
 
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]

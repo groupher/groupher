@@ -24,6 +24,14 @@ const clarifyVariables = <TVars extends AnyVariables>(variables?: TVars): TVars 
   return clarify((variables ?? {}) as TClarifyInput) as TVars
 }
 
+/**
+ * Imperative GraphQL client wrapper for event handlers and store actions.
+ *
+ * urql cache objects often contain `__typename`, but mutation inputs cannot
+ * send that field back to Absinthe. The wrapper recursively strips it from
+ * variables, unwraps urql promises, and throws GraphQL/network errors so callers
+ * can use ordinary try/catch flows.
+ */
 export default function useGraphQL() {
   const client = useClient()
 

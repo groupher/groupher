@@ -5,7 +5,12 @@ defmodule Helper.Converter.HtmlSanitizer do
   see; http://katafrakt.me/2016/09/03/custom-rules-in-htmlsanitizeex/
   """
   defmodule Scrubber do
-    @moduledoc false
+    @moduledoc """
+    HtmlSanitizeEx scrubber policy for editor-rendered HTML.
+
+    The policy allows the tags and attributes produced by the article converter
+    while stripping comments, CDATA, unsafe URI schemes, and unsupported markup.
+    """
 
     require HtmlSanitizeEx.Scrubber.Meta
     alias HtmlSanitizeEx.Scrubber.Meta

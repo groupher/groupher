@@ -31,6 +31,12 @@ type TCustomHeaderLinkType = typeof DASHBOARD_LINK_TYPE.LINK | typeof DASHBOARD_
 
 type TMoreTabLinkItem = Extract<TResolvedHeaderLinkItem, { usage: typeof MORE_TAB.USAGE }>
 
+/**
+ * Type guard for the resolved synthetic More tab.
+ *
+ * The More tab is a render-time group produced by `resolveHeaderLinks`; it is
+ * never persisted back to dashboard headerLinks.
+ */
 export const isMoreTabGroup = (item: TResolvedHeaderLinkItem): item is TMoreTabLinkItem =>
   item.type === DASHBOARD_LINK_TYPE.GROUP && 'usage' in item && item.usage === MORE_TAB.USAGE
 
@@ -132,6 +138,13 @@ const asMoreTabLink = (id: string, title: string, url: string): TLinkChild => ({
 export const shouldFoldAboutToMore = (links: readonly TLinkItem[]): boolean =>
   hasCustomHeaderItems(links)
 
+/**
+ * Builds the navigation-ready header links for a community.
+ *
+ * Dashboard stores only user-authored links. This resolver removes fixed About /
+ * Dashboard duplicates, folds those fixed entries into a synthetic More group
+ * when custom links exist, and adds the Dashboard link only for moderators.
+ */
 export const resolveHeaderLinks = (
   links: readonly TLinkItem[],
   community: string,

@@ -1,5 +1,10 @@
 defmodule GroupherServer.Statistics.Model.PublishThrottle do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for publish-rate throttle records.
+
+  These rows let middleware/domain code track publishing frequency per actor and
+  apply rate limits without coupling that state to article tables.
+  """
   alias __MODULE__
 
   use Ecto.Schema

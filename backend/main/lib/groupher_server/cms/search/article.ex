@@ -1,5 +1,11 @@
 defmodule GroupherServer.CMS.Search.Article do
-  @moduledoc false
+  @moduledoc """
+  Lightweight title search for CMS article threads.
+
+  The search entrypoint receives a public thread atom, resolves it through the
+  artiment matcher, and runs the same bounded paginator for posts, blogs,
+  changelogs, or docs.
+  """
 
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]

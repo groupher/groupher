@@ -1,5 +1,10 @@
 defmodule GroupherServer.Logs.UserActivity do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for user activity log entries.
+
+  The log records which content source a user interacted with so audit and
+  activity surfaces can be built without joining every source table.
+  """
   # alias __MODULE__
 
   use Ecto.Schema

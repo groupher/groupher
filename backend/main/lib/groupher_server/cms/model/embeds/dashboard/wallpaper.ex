@@ -30,7 +30,13 @@ defmodule GroupherServer.CMS.Model.Embeds.Dashboard.Wallpaper do
   end
 
   defmodule BgConfig do
-    @moduledoc false
+    @moduledoc """
+    Embedded schema for one theme branch of dashboard wallpaper config.
+
+    The fields are generated from dashboard GraphQL field metadata and validated
+    through `BgConfigValidator` so frontend wallpaper controls and backend
+    storage share the same accepted shape.
+    """
 
     use Ecto.Schema
     use Accessible

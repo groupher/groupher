@@ -1,5 +1,23 @@
 defmodule GroupherServerWeb.Resolvers.CMS do
-  @moduledoc false
+  @moduledoc """
+  Absinthe resolver boundary for CMS-facing queries and mutations.
+
+  This module keeps GraphQL concerns at the edge: it unpacks typed arguments,
+  reads authenticated viewer context when present, and delegates domain work to
+  `GroupherServer.CMS` modules. It should not own persistence rules.
+
+      GraphQL field
+          |
+          v
+      Resolvers.CMS
+          |
+          +--> CMS.Communities / CMS.Articles / CMS.DocTree
+          +--> CMS.DocCover / CMS.Dashboard / CMS.Comments
+
+  The resolver layer is also where public API terms such as article/comment
+  paths are translated into backend calls. Keep internal database ids and public
+  path contracts separate here.
+  """
 
   import ShortMaps
   import Ecto.Query, warn: false

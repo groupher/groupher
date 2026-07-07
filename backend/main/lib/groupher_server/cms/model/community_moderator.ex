@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.CommunityModerator do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for community moderator membership.
+
+  Moderator rows grant community-level permissions and back account surfaces that
+  list where a user can moderate.
+  """
   alias __MODULE__
 
   use Ecto.Schema

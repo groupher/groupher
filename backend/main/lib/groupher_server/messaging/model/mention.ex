@@ -1,5 +1,11 @@
 defmodule GroupherServer.Messaging.Model.Mention do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for direct mention inbox rows.
+
+  Mention rows are delivery records for users who were mentioned in a piece of
+  content. They are separate from CMS mention facts, which describe the content
+  graph regardless of mailbox delivery.
+  """
   alias __MODULE__
 
   use Ecto.Schema

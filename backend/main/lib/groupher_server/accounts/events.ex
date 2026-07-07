@@ -1,5 +1,10 @@
 defmodule GroupherServer.Accounts.Events do
-  @moduledoc false
+  @moduledoc """
+  Small account-domain event dispatcher.
+
+  Account write paths emit semantic events such as follow/undo-follow here, then
+  notification handlers decide what downstream messages should be created.
+  """
 
   @type event_result :: {:ok, map()} | {:error, any()}
 

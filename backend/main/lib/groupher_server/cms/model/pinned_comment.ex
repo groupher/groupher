@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.PinnedComment do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for pinned comments.
+
+  Pin records keep presentation ordering separate from the comment's own content
+  and reply state.
+  """
   alias __MODULE__
 
   use Ecto.Schema

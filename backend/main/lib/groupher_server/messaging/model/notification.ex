@@ -1,5 +1,10 @@
 defmodule GroupherServer.Messaging.Model.Notification do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for grouped activity notifications.
+
+  Notifications collect one or more actors around a target action so inbox UI can
+  show compact activity rows instead of one row per repeated action.
+  """
   alias __MODULE__
 
   use Ecto.Schema

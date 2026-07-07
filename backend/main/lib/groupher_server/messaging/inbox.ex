@@ -1,5 +1,18 @@
 defmodule GroupherServer.Messaging.Inbox do
-  @moduledoc false
+  @moduledoc """
+  Facade for mailbox message operations across message types.
+
+  Account code calls this module with a message type, then the facade delegates
+  to the concrete mention or notification store.
+
+      Accounts.Mailbox
+          |
+          v
+      Messaging.Inbox
+          |
+          +--> Mentions
+          +--> Notifications
+  """
 
   alias GroupherServer.Messaging.{Mentions, Notifications}
 

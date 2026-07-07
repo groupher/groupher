@@ -53,6 +53,12 @@ const extractWords = (body: string): string => {
   return pureText
 }
 
+/**
+ * Counts editor body text using CJK characters plus latin word tokens.
+ *
+ * The editor payload can contain HTML, so text is sanitized before counting to
+ * keep formatting tags out of article length metrics.
+ */
 export const countWords = (body: string): number => {
   const str = extractWords(body)
   if (str.length === 0) return 0

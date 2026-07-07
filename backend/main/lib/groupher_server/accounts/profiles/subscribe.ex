@@ -1,5 +1,10 @@
 defmodule GroupherServer.Accounts.Profiles.Subscribe do
-  @moduledoc false
+  @moduledoc """
+  Synchronizes a user's subscribed-community counters and id cache.
+
+  Subscription writes update join rows elsewhere. This helper rebuilds the
+  denormalized profile fields used by viewer state and community navigation.
+  """
 
   import Ecto.Query, warn: false
 

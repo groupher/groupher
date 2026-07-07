@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.CommunityCategory do
-  @moduledoc false
+  @moduledoc """
+  Join schema linking communities to discovery categories.
+
+  The relation supports category-filtered community listing without embedding
+  category state into the community row.
+  """
   alias __MODULE__
 
   use Ecto.Schema

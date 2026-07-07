@@ -1,5 +1,10 @@
 defmodule GroupherServer.Support.FakeData do
-  @moduledoc false
+  @moduledoc """
+  Test/support fake data helpers.
+
+  These functions provide deterministic sample payloads for factories, tests,
+  and local support code outside production flows.
+  """
 
   @first_names ~w(Ada Alan Grace Linus Yukihiro Jose Sophie Alex Morgan Taylor)
   @companies ~w(Orbit Labs CoderPlanets Byte Garden Graph Studio Kernel Works)

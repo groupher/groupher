@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Seeds.Threads do
-  @moduledoc false
+  @moduledoc """
+  Seed helpers for enabling community threads.
+
+  The returned thread lists define which product surfaces each seeded community
+  exposes in local/demo data.
+  """
 
   def get(:home), do: []
 

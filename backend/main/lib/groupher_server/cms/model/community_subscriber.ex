@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.CommunitySubscriber do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for community subscriptions.
+
+  Subscription rows connect users to communities and are the source for
+  denormalized subscriber ids/counts on user and community meta.
+  """
   alias __MODULE__
 
   use Ecto.Schema

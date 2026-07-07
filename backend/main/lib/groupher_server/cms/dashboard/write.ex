@@ -1,5 +1,25 @@
 defmodule GroupherServer.CMS.Dashboard.Write do
-  @moduledoc false
+  @moduledoc """
+  Mutation layer for persisted community dashboard sections.
+
+  Dashboard updates arrive as GraphQL section payloads and are normalized before
+  replacing the matching section on `CommunityDashboard`. Base-info writes are a
+  special case because they must keep the community row and dashboard embed in
+  sync inside one transaction.
+
+      CMS resolver
+          |
+          v
+      Dashboard.Write.update/2
+          |
+          +--> ensure CommunityDashboard exists
+          +--> SectionPayload.prepare/3
+          +--> ORM.replace_dsb_section/3
+
+  Use this module for write orchestration only. Section-specific validation and
+  merge rules should stay in `SectionPayload`, `LinkValidator`, or focused
+  section helpers.
+  """
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.CMS.Dashboard.{BaseInfo, SectionPayload}

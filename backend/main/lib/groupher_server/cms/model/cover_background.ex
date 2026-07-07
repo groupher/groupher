@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.CoverBackground do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for reusable cover background assets.
+
+  Cover editing stores background choices by id so article/doc cover payloads can
+  reuse curated background definitions instead of duplicating image metadata.
+  """
 
   alias __MODULE__
 

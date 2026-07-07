@@ -1,5 +1,10 @@
 defmodule GroupherServer.Accounts.Model.OauthProvider do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for external OAuth identities linked to a user.
+
+  Each row binds one provider/provider-id pair to one account and stores the raw
+  provider profile needed for future account recovery or sync behavior.
+  """
   alias __MODULE__
 
   use Ecto.Schema
