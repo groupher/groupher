@@ -1,5 +1,15 @@
 defmodule GroupherServerWeb.Router do
-  @moduledoc false
+  @moduledoc """
+  Phoenix router for server-rendered health, OG, and GraphQL tooling endpoints.
+
+      /
+      /health
+      /api/og-info
+      /graphiql
+
+  Frontend application routes are owned by the Next.js apps; this router keeps
+  only backend HTTP surfaces that Phoenix serves directly.
+  """
 
   use GroupherServerWeb, :router
 

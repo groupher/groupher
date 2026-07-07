@@ -1,5 +1,24 @@
 defmodule GroupherServer.Messaging.Mentions do
-  @moduledoc false
+  @moduledoc """
+  Stores direct mention messages shown in a user's inbox.
+
+  Mention rows are viewer-facing mailbox items, separate from the CMS mention
+  fact graph. Sending mentions replaces the previous rows for the same content
+  and author, inserts the current recipients, then refreshes affected mailbox
+  counters.
+
+      CMS content save
+          |
+          v
+      mention recipients
+          |
+          v
+      Messaging.Mentions.send/3
+          |
+          +--> delete old rows for this content/author
+          +--> insert current recipient rows
+          +--> Accounts.Mailbox.update_status_many/1
+  """
 
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]

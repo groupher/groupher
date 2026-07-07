@@ -1,5 +1,11 @@
 defmodule GroupherServer.CMS.Model.ArtimentMention do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for CMS mention graph facts.
+
+  A row records one mentioner artiment, one mentioned internal/external target,
+  and occurrence details. Messaging delivery consumes these facts but does not
+  own this schema.
+  """
 
   alias __MODULE__
 

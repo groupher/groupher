@@ -1,3 +1,9 @@
+/**
+ * Shared fetch options for browser-to-GraphQL requests.
+ *
+ * Cookies must be included because the web app and API can run on different
+ * hosts in production and on different localhost ports during development.
+ */
 export const FETCH_OPTIONS = (): RequestInit => ({
   // make sure cookie is included
   // since groupher.com and api.groupher.com is different domain
@@ -10,6 +16,12 @@ export const FETCH_OPTIONS = (): RequestInit => ({
 })
 
 // None of these options have to be added, these are the default values.
+/**
+ * Network-only retry policy for urql exchanges.
+ *
+ * GraphQL validation/business errors should be returned to callers unchanged;
+ * only transient network failures are retried.
+ */
 export const RETRY_OPTIONS = {
   initialDelayMs: 1000,
   maxDelayMs: 15000,
@@ -27,6 +39,12 @@ const normalizeGQLQuery = (query: string): string => {
   return normalized
 }
 
+/**
+ * Extracts an operation name or first field name from a GraphQL document string.
+ *
+ * This powers logging/telemetry for both named operations and anonymous queries
+ * generated from colocated schema snippets.
+ */
 export const extractQueryName = (schema: string): string | null => {
   const normalized = normalizeGQLQuery(schema)
 

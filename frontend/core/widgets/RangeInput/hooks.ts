@@ -25,6 +25,13 @@ const getStepPrecision = (step: number): number => {
   return stepText.split('.')[1]?.length || 0
 }
 
+/**
+ * Interaction model for the custom range input.
+ *
+ * The visible indicator sits above a transparent native range input. This hook
+ * mirrors pointer interactions from the indicator into numeric values so the UI
+ * gets custom hover/drag behavior without losing native keyboard/input support.
+ */
 export default function useRangeInputLogic({
   value,
   min,

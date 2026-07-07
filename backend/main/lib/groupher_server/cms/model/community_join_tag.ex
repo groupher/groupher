@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.CommunityJoinTag do
-  @moduledoc false
+  @moduledoc """
+  Join schema linking artiments to community tags.
+
+  The relation stores tag assignments by thread/source item so tag filtering does
+  not need to mutate the source article row.
+  """
   alias __MODULE__
 
   use Ecto.Schema

@@ -1,5 +1,10 @@
 defmodule GroupherServer.Accounts.Model.Embeds.UserMeta.Macro do
-  @moduledoc false
+  @moduledoc """
+  Macro helpers for thread-specific fields in `UserMeta`.
+
+  Thread lists are config-driven, so the embed generates published-count fields
+  instead of hard-coding post/blog/changelog/doc field definitions.
+  """
 
   import Helper.Utils, only: [get_config: 2, plural: 1]
 

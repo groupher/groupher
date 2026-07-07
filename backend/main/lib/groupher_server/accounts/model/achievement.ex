@@ -1,5 +1,10 @@
 defmodule GroupherServer.Accounts.Model.Achievement do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for user achievement and reputation counters.
+
+  Account achievement services update this row when social or content actions
+  change the user's reputation, membership, or contribution-derived badges.
+  """
   alias __MODULE__
 
   use Ecto.Schema

@@ -17,6 +17,13 @@ type TRefreshPayload = {
   page?: number
 }
 
+/**
+ * Synchronizes the post list with URL filters and refresh events.
+ *
+ * The request sequence guard prevents stale responses from older filter changes
+ * from overwriting newer list state. The initial server-hydrated list is left in
+ * place until the first real filter or refresh event.
+ */
 export default function useFetchPagedPosts() {
   const searchParams = useSearchParams()
   const { slug } = useCommunity()

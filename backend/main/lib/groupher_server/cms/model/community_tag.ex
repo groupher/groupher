@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.CommunityTag do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for tags configured inside a community.
+
+  Tags are community-scoped presentation/filter entities. Assignments to content
+  are stored through `CommunityJoinTag`.
+  """
   alias __MODULE__
 
   use Ecto.Schema

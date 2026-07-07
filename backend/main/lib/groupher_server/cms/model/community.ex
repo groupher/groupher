@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.Community do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for communities.
+
+  A community is the main CMS container for threads, dashboard settings, tags,
+  subscribers, moderators, and public navigation identity.
+  """
   alias __MODULE__
 
   use Ecto.Schema

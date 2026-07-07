@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.CoverEditInfo do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for reusable article/doc cover editing state.
+
+  The row stores canvas dimensions plus light/dark cover configs so authored
+  cover layouts can be reconstructed in the dashboard editor.
+  """
 
   alias __MODULE__
 
@@ -43,7 +48,12 @@ defmodule GroupherServer.CMS.Model.CoverEditInfo do
   def update_changeset(%CoverEditInfo{} = info, attrs), do: changeset(info, attrs)
 
   defmodule CoverConfig do
-    @moduledoc false
+    @moduledoc """
+    Embedded schema for one theme branch of cover editor configuration.
+
+    It stores the selected background and ordered image layers used by the cover
+    renderer.
+    """
 
     use Ecto.Schema
     use Accessible

@@ -1,5 +1,11 @@
 defmodule GroupherServer.Accounts.Profiles.UserRead do
-  @moduledoc false
+  @moduledoc """
+  Read/update boundary for profile detail pages.
+
+  Reading a user increments views, fills lazy profile meta/contribution embeds
+  when needed, and can add viewer follow-state fields. Profile updates also keep
+  the optional social record and user page cache in sync.
+  """
 
   alias GroupherServer.{Accounts, FrontDesk, Repo, Statistics}
 

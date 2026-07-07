@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.CommunityTagStat do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for per-tag article counters in a community.
+
+  These rows cache tag usage by thread/source so tag bars and dashboards avoid
+  recounting joins on each request.
+  """
 
   use Ecto.Schema
   use Accessible

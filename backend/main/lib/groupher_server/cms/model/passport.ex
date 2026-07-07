@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.Passport do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for community passport/rule configuration.
+
+  A passport belongs to the editing user and stores the rules that gate or
+  describe community access.
+  """
   alias __MODULE__
 
   use Ecto.Schema

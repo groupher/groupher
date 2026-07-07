@@ -1,5 +1,23 @@
 defmodule GroupherServer.CMS.Dashboard.SectionPayload do
-  @moduledoc false
+  @moduledoc """
+  Normalizes dashboard section payloads before persistence.
+
+  The dashboard stores a mix of replace-style list sections and sparse
+  `embeds_one` sections. This module prepares the final payload so validation
+  and persistence see the same data.
+
+      incoming args
+          |
+          +--> replace section: keep final list payload
+          |
+          +--> embed section: merge current embed + sparse patch
+                              |
+                              v
+                           embed changeset
+
+  Keep shape-specific rules here instead of leaking them into resolvers or the
+  `CommunityDashboard` schema.
+  """
 
   import Helper.Utils, only: [strip_struct: 1, deep_merge: 2]
 

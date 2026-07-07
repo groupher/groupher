@@ -1,5 +1,11 @@
 defmodule GroupherServer.Application do
-  @moduledoc false
+  @moduledoc """
+  OTP application entrypoint for the Groupher backend.
+
+  It assembles runtime workers for Phoenix, Repo, PubSub, DNS clustering,
+  Rihanna jobs, and Cachex pools. Seed environments skip DNS, endpoint,
+  Cachex, and Rihanna workers; test environments only skip Rihanna-backed jobs.
+  """
   use Application
   import Helper.Utils, only: [get_config: 2]
 

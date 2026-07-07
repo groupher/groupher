@@ -1,5 +1,10 @@
 defmodule GroupherServer.Statistics.Model.UserContribute do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for daily user contribution counters.
+
+  Statistics jobs and middleware aggregate user activity into these date-bucketed
+  rows for profile contribution charts.
+  """
   alias __MODULE__
 
   use Ecto.Schema

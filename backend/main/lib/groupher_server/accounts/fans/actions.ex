@@ -1,5 +1,18 @@
 defmodule GroupherServer.Accounts.Fans.Actions do
-  @moduledoc false
+  @moduledoc """
+  Follow/unfollow write orchestration for account relationships.
+
+      follow user
+          |
+          +--> UserFollower row
+          +--> UserFollowing row
+          +--> user meta/count updates
+          +--> achievement update
+          +--> async account event
+
+  The transaction keeps both relationship directions and denormalized counters
+  aligned before user pages are revalidated.
+  """
 
   import Helper.ErrorCode
 

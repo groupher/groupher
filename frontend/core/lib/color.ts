@@ -70,6 +70,9 @@ const getDarkPageBgTintRatio = (intensity: number): number => {
   return 0.08 + strength * 0.24
 }
 
+/**
+ * Sanitizes the custom page-background hue used by theme preset controls.
+ */
 export const normalizePageBgHue = (value?: number | null): number => {
   if (typeof value !== 'number' || Number.isNaN(value)) {
     return PAGE_CUSTOM_HUE_DEFAULT
@@ -78,6 +81,9 @@ export const normalizePageBgHue = (value?: number | null): number => {
   return clamp(value, 0, 360)
 }
 
+/**
+ * Sanitizes the custom page-background tint strength.
+ */
 export const normalizePageBgIntensity = (value?: number | null): number => {
   if (typeof value !== 'number' || Number.isNaN(value)) {
     return PAGE_CUSTOM_INTENSITY_DEFAULT
@@ -102,6 +108,12 @@ export const mapToPresetColorHex = (
   theme: keyof typeof RAINBOW_COLOR_HEX,
 ): string => RAINBOW_COLOR_HEX[theme][color] ?? RAINBOW_COLOR_HEX[theme][COLOR.BLACK]
 
+/**
+ * Computes the final custom page background color for a theme.
+ *
+ * The hue is mixed into a light or dark base instead of being used directly, so
+ * the page remains readable while still reflecting the selected color.
+ */
 export const getPageBgCustomColor = (
   theme: string,
   hue?: number | null,
@@ -120,6 +132,9 @@ export const getPageBgCustomColor = (
   return rgbToHex(...mixed)
 }
 
+/**
+ * Picks a stable fallback avatar color from the first username letter.
+ */
 export const getLetterColor = (username: string): TColorName => {
   const firstLetter = username[0].toLowerCase()
 

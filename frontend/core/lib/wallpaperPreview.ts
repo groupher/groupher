@@ -8,6 +8,12 @@ export type TWallpaperPreviewDetail = {
 
 type TWallpaperPreviewEvent = CustomEvent<TWallpaperPreviewDetail>
 
+/**
+ * Emits an ephemeral wallpaper preview outside the persisted wallpaper store.
+ *
+ * This keeps hover/drag previews cheap and reversible while the final selected
+ * value is still committed through the wallpaper store.
+ */
 export const emitWallpaperPreview = (state: TWallpaperThemeState | null): void => {
   if (typeof window === 'undefined') return
 
@@ -18,6 +24,9 @@ export const emitWallpaperPreview = (state: TWallpaperThemeState | null): void =
   )
 }
 
+/**
+ * Subscribes to transient wallpaper preview changes and returns a cleanup.
+ */
 export const subscribeWallpaperPreview = (
   listener: (state: TWallpaperThemeState | null) => void,
 ): (() => void) => {

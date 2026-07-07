@@ -17,6 +17,12 @@ type TRes = {
   pagedParams: ReturnType<typeof getPagedArticlesParams>
 }
 
+/**
+ * Reads and updates the current community post-list state.
+ *
+ * The hook keeps URL-derived filters next to the articleList store data so list
+ * pages, tag bars, and refresh actions all talk through the same paging shape.
+ */
 export default function usePagedPosts(): TRes {
   const articleList$ = useArticleList()
   const { slug } = useCommunity()

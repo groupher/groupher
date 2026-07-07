@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.Blog do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for blog artiments.
+
+  Blog shares the article workflow shape with other artiment threads while
+  keeping its own table, constraints, meta embed, and community joins.
+  """
   alias __MODULE__
 
   use Ecto.Schema

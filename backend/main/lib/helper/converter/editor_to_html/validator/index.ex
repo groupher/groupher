@@ -1,5 +1,11 @@
 defmodule Helper.Converter.EditorToHTML.Validator do
-  @moduledoc false
+  @moduledoc """
+  Validates legacy Editor.js payloads before HTML conversion.
+
+  The validator checks the top-level editor shape, then validates each supported
+  block against `EditorSchema`. It returns converter-friendly errors instead of
+  leaking raw changeset/schema failures.
+  """
 
   alias Helper.{Converter, Validator}
 

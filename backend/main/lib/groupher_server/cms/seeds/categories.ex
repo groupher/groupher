@@ -1,5 +1,9 @@
 defmodule GroupherServer.CMS.Seeds.Categories do
-  @moduledoc false
+  @moduledoc """
+  Seed helpers for community category fixtures.
+
+  Category seed data gives local/dev communities predictable discovery grouping.
+  """
   @doc """
   default categories seeds for general community
   """

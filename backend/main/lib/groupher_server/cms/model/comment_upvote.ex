@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.CommentUpvote do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for comment upvote rows.
+
+  Comment upvotes are tracked separately from article upvotes because they affect
+  comment-level viewer state and counters.
+  """
   alias __MODULE__
 
   use Ecto.Schema

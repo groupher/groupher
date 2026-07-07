@@ -1,5 +1,11 @@
 defmodule GroupherServer.Accounts.Fans.ViewerState do
-  @moduledoc false
+  @moduledoc """
+  Adds viewer relationship state to paged user results.
+
+  The base list query returns users only. This helper derives
+  `viewer_has_followed` and `viewer_been_followed` from the current viewer meta
+  so GraphQL fields can stay flat.
+  """
 
   alias GroupherServer.Accounts.Model.User
 

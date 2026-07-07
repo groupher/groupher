@@ -1,5 +1,10 @@
 defmodule GroupherServerWeb.Schema.Statistics.Types do
-  @moduledoc false
+  @moduledoc """
+  Absinthe object types for statistics and contribution summaries.
+
+  The statistics domain owns the calculations; this module describes the public
+  GraphQL shape used by frontend dashboards and profile surfaces.
+  """
   use Absinthe.Schema.Notation
 
   # import GroupherServerWeb.Schema.Helper.Fields

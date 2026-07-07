@@ -1,5 +1,10 @@
 defmodule GroupherServer.Accounts.Achievements.Reputation do
-  @moduledoc false
+  @moduledoc """
+  Maintains reputation counters derived from social/content actions.
+
+  Follow, upvote, and collect events adjust both the source counter and the
+  weighted reputation total under a per-user lock.
+  """
 
   import Helper.Utils, only: [get_config: 2]
   import ShortMaps

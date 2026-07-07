@@ -15,6 +15,9 @@ import {
   values,
 } from 'ramda'
 
+/**
+ * Shared nil-or-empty predicate used by legacy form validation chains.
+ */
 export const nilOrEmpty = either(isNil, isEmpty)
 
 const hasValue: (v: string) => boolean = compose(not, nilOrEmpty)
@@ -27,6 +30,13 @@ export type TSlugValidation = {
   reason?: 'empty' | 'format'
 }
 
+/**
+ * Validates public slugs before they cross the GraphQL/backend boundary.
+ *
+ * The accepted shape is lowercase words separated by single dashes. Returning a
+ * reason lets form UIs distinguish empty input from invalid formatting without
+ * duplicating the regex.
+ */
 export const validateSlug = (value?: string | null): TSlugValidation => {
   const next = isString(value) ? trim(value) : ''
 
@@ -43,6 +53,9 @@ export const validateSlug = (value?: string | null): TSlugValidation => {
 
 export const isValidSlug = (value?: string | null): boolean => validateSlug(value).valid
 
+/**
+ * Runtime object guard used by older validation and merge helpers.
+ */
 export const isObject = (value: unknown): boolean => {
   const type = typeof value
   return value != null && (type === 'object' || type === 'function')

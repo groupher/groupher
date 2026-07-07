@@ -1,5 +1,10 @@
 defmodule GroupherServer.Statistics.Model.CommunityContribute do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for daily community contribution counters.
+
+  Community dashboards use these date-bucketed rows to render activity trends
+  without scanning article/comment history on every request.
+  """
   alias __MODULE__
 
   use Ecto.Schema

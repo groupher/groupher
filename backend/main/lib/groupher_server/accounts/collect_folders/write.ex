@@ -1,5 +1,16 @@
 defmodule GroupherServer.Accounts.CollectFolders.Write do
-  @moduledoc false
+  @moduledoc """
+  Mutations for collect folders and their article membership.
+
+  Folder membership is coordinated with the article collect relation so the
+  account folder, article collect row, and denormalized folder meta stay aligned.
+
+      add/remove article
+          |
+          +--> CMS.Articles collect state
+          +--> CollectFolder.collects embed
+          +--> per-thread counts in folder meta
+  """
 
   import GroupherServer.CMS.FrontDesk, only: [thread_of: 1]
   import GroupherServer.CMS.Artiment.Matcher

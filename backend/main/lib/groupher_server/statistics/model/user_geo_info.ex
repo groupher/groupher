@@ -1,5 +1,9 @@
 defmodule GroupherServer.Statistics.Model.UserGeoInfo do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for user geo metadata used by statistics surfaces.
+
+  Keep this as derived analytics state, not account identity state.
+  """
   alias __MODULE__
 
   use Ecto.Schema

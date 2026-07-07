@@ -4,7 +4,13 @@
 # ---
 
 defmodule GroupherServerWeb.Middleware.ViewerDidConvert do
-  @moduledoc false
+  @moduledoc """
+  Converts viewer-state lookup results into GraphQL booleans.
+
+  Several viewer state resolvers return a list from an existence query. This
+  middleware turns nil/empty results into `false` and a single matched row into
+  `true` for public schema fields.
+  """
   @behaviour Absinthe.Middleware
 
   def call(%{value: nil} = resolution, _) do

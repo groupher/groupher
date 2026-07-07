@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Seeds.Comments do
-  @moduledoc false
+  @moduledoc """
+  Seed helpers for sample comments and replies.
+
+  The module creates development comment data that exercises article detail and
+  conversation UI paths.
+  """
 
   import GroupherServer.Support.Factory
   import Helper.Utils, only: [get_config: 2]

@@ -1,5 +1,19 @@
 defmodule GroupherServer.CMS.Dashboard.ThemePresets do
-  @moduledoc false
+  @moduledoc """
+  Handles dashboard theme preset selection and custom preset persistence.
+
+  Custom themes are stored as a composed preset in the layout section, with the
+  read-only base preset plus the user overwrite. Selecting a preset updates only
+  layout state; saving a custom preset composes the durable custom payload first.
+
+      save custom
+          |
+          v
+      current layout + base preset + incoming overwrite
+          |
+          v
+      layout.custom_theme_preset
+  """
 
   alias GroupherServer.CMS.Dashboard.{ThemePreset, Write}
   alias GroupherServer.CMS.Model.{Community, CommunityDashboard, Embeds}

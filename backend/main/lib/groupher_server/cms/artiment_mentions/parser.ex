@@ -1,5 +1,24 @@
 defmodule GroupherServer.CMS.ArtimentMentions.Parser do
-  @moduledoc false
+  @moduledoc """
+  Extracts mention candidates from the canonical Plate AST.
+
+  The parser walks blocks and inline children, preserves the block/path location
+  for each occurrence, and normalizes both editor mention nodes and pasted links
+  into the same downstream shape.
+
+      Plate AST
+          |
+          v
+      inline mention nodes + text/link URLs
+          |
+          v
+      internal candidates  ----> resolved article/comment/user structs
+      external URLs        ----> url + hash facts
+
+  This module only parses and resolves mention targets. It does not delete,
+  insert, notify, or update mailbox state; those side effects belong to the
+  mention sync and messaging layers.
+  """
 
   import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher

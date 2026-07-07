@@ -1,5 +1,10 @@
 defmodule GroupherServer.Accounts.Achievements.Moderatorable do
-  @moduledoc false
+  @moduledoc """
+  Lists communities where a user has moderator capability.
+
+  This backs account achievement/profile surfaces that need to show moderation
+  reach without exposing the join rows directly.
+  """
 
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]

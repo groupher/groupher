@@ -1,5 +1,11 @@
 defmodule GroupherServer.Accounts.Model.User do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for Groupher accounts.
+
+  The user row owns identity/profile basics and embeds denormalized account state
+  such as mailbox, meta, achievements, and contribution summaries. Domain
+  modules should update those derived embeds through account helpers.
+  """
   alias __MODULE__
 
   use Ecto.Schema

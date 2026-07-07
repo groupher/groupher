@@ -1,7 +1,11 @@
 defmodule GroupherServer.CMS.Model.Embeds.Dashboard.LinkChild do
   @type t :: %__MODULE__{}
 
-  @moduledoc false
+  @moduledoc """
+  Embedded schema for child links inside dashboard link groups.
+
+  Child links are the flat leaf nodes rendered in header/footer dropdowns.
+  """
   use Ecto.Schema
   use Accessible
 

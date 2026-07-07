@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.ArticleCollect do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for article collect/bookmark rows.
+
+  Each row binds a user to one concrete artiment thread item. Account collect
+  folders may embed references to these rows for grouped collection views.
+  """
   alias __MODULE__
 
   use Ecto.Schema

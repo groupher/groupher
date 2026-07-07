@@ -3,7 +3,20 @@
 # see https://hexdocs.pm/absinthe/Absinthe.Middleware.html#content
 # ---
 defmodule GroupherServerWeb.Middleware.Statistics.MakeContribute do
-  @moduledoc false
+  @moduledoc """
+  Refreshes contribution aggregates after a successful GraphQL field resolves.
+
+      resolver result
+          |
+          v
+      MakeContribute
+          |
+          +--> Statistics.make_contribute(user)
+          +--> Statistics.make_contribute(community)
+
+  The middleware is side-effect only and leaves the Absinthe resolution value
+  unchanged.
+  """
 
   @behaviour Absinthe.Middleware
   # google: must appear in the GROUP BY clause or be used in an aggregate function

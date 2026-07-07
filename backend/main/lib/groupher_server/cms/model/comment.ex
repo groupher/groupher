@@ -1,5 +1,11 @@
 defmodule GroupherServer.CMS.Model.Comment do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for comments across article threads.
+
+  Comment rows carry source-thread foreign keys, author data, floor/reply state,
+  and moderation/reaction embeds. Keep public comment identity separate from
+  internal database ids when exposing this schema through GraphQL.
+  """
   alias __MODULE__
 
   use Ecto.Schema

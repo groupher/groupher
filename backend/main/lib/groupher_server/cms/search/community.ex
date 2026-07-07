@@ -1,5 +1,11 @@
 defmodule GroupherServer.CMS.Search.Community do
-  @moduledoc false
+  @moduledoc """
+  Lightweight community search used by public and viewer-aware surfaces.
+
+  Anonymous searches return matching communities by title, slug, or aka. Viewer
+  searches enrich each entry with subscription state without changing the base
+  pagination contract.
+  """
 
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]

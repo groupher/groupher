@@ -1,6 +1,11 @@
 defmodule GroupherServer.CMS.Model.Embeds.CommunityMeta.Macro do
 
-  @moduledoc false
+  @moduledoc """
+  Macro helpers for config-driven fields in `CommunityMeta`.
+
+  Thread counts and inner-id indexes are generated from article thread config so
+  new thread types do not require hand-editing this embed.
+  """
 
   import Helper.Utils, only: [get_config: 2, plural: 1]
 

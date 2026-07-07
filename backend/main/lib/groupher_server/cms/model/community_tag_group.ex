@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.CommunityTagGroup do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for grouping community tags.
+
+  Tag groups organize tag presentation per thread without changing the tag's
+  identity or content assignments.
+  """
   alias __MODULE__
 
   use Ecto.Schema

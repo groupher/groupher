@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Seeds.FullCommunity do
-  @moduledoc false
+  @moduledoc """
+  End-to-end seed flow for a full demo community.
+
+  It coordinates community, category, thread, article, and comment seeds for
+  local environments that need realistic content.
+  """
 
   import Ecto.Query, warn: false
 

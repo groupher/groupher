@@ -1,5 +1,11 @@
 defmodule GroupherServer.CMS.Model.AbuseReport do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for user-submitted abuse reports.
+
+  Report records connect a reporter, source content, and moderation case payload
+  so audit/review workflows can process unsafe content independently of the
+  source article or comment table.
+  """
   alias __MODULE__
 
   use Ecto.Schema

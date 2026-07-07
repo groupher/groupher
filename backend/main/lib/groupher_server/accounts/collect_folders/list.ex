@@ -1,5 +1,11 @@
 defmodule GroupherServer.Accounts.CollectFolders.List do
-  @moduledoc false
+  @moduledoc """
+  Paginates collect folders with viewer-aware privacy rules.
+
+  Anonymous or non-owner reads only see public folders. Owner reads include
+  private folders and can still apply thread filters through the folder meta
+  flags.
+  """
 
   import Ecto.Query, warn: false
   import Helper.Utils, only: [done: 1]

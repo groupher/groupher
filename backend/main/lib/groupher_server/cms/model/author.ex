@@ -1,5 +1,10 @@
 defmodule GroupherServer.CMS.Model.Author do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for article author snapshots.
+
+  The author row links CMS content to the account user while preserving CMS-side
+  author metadata used by article queries and GraphQL responses.
+  """
   alias __MODULE__
 
   use Ecto.Schema

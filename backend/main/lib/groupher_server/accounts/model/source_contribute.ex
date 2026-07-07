@@ -1,5 +1,10 @@
 defmodule GroupherServer.Accounts.Model.SourceContribute do
-  @moduledoc false
+  @moduledoc """
+  Ecto schema for source-specific account contribution records.
+
+  These rows let account/statistics code attribute contribution activity back to
+  the originating content source.
+  """
   alias __MODULE__
 
   use Ecto.Schema
