@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.Doc do
 
   require CMS.Const
 
-  alias CMS.Model.Embeds
+  alias CMS.Model.{DocsBranch, Embeds}
   alias Helper.Constant.DBPrefix
   alias Helper.HTML
 
@@ -25,13 +25,15 @@ defmodule GroupherServer.CMS.Model.Doc do
 
   @required_fields ~w(title digest)a
   @article_cast_fields general_article_cast_fields()
-  @optional_fields ~w(subtitle updated_at inserted_at active_at archived_at inner_id
+  @optional_fields ~w(branch_id subtitle updated_at inserted_at active_at archived_at inner_id
                       doc_id slug stage template_key content_hash json schema_version author_id)a ++
                      @article_cast_fields
   @max_subtitle_length 240
 
   @type t :: %Doc{}
   schema "docs" do
+    belongs_to(:branch, DocsBranch)
+
     field(:doc_id, Ecto.UUID)
     field(:slug, :string)
     field(:stage, Ecto.Enum, values: CMS.Const.stage_values(), default: CMS.Const.stage(:public))
@@ -71,6 +73,7 @@ defmodule GroupherServer.CMS.Model.Doc do
     |> validate_length(:link_addr, min: 5, max: 400)
     |> HTML.safe_string(:subtitle)
     |> HTML.safe_string(:body)
+    |> foreign_key_constraint(:branch_id)
     |> unique_constraint(:doc_id, name: :docs_community_stage_doc_id_index)
   end
 end

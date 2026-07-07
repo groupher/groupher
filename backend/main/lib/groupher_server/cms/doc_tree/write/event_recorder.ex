@@ -33,26 +33,32 @@ defmodule GroupherServer.CMS.DocTree.Write.EventRecorder do
 
   require CMS.Const
 
-  def record_tree_events(%Community{} = community, args, events) do
-    with {:ok, events} <- Events.record_staged_many(community, events, Map.get(args, :actor_id)) do
+  def record_tree_events(%Community{} = community, branch, args, events) do
+    with {:ok, events} <-
+           Events.record_staged_many(community, events, Map.get(args, :actor_id),
+             branch_id: branch.id
+           ) do
       {:ok, Enum.count(events, &(&1.owner == CMS.Const.tree_event_owner(:tree)))}
     end
   end
 
   def record_delete_or_discard_tree_events(
         %Community{} = community,
+        branch,
         args,
         %DocTreeNode{} = node,
         subtree
       ) do
     subtree_node_ids = Enum.map(subtree, & &1.node_id)
-    discarded = Events.discard_tree_create_staged(community, subtree_node_ids)
+
+    discarded =
+      Events.discard_tree_create_staged(community, subtree_node_ids, branch_id: branch.id)
 
     # The returned delta adjusts the tree staged counter: public subtrees add a
     # delete event, while draft-only creates are only discarded.
-    if public_nodes_exist?(community, subtree_node_ids) do
+    if public_nodes_exist?(community, branch, subtree_node_ids) do
       with {:ok, event_count} <-
-             record_tree_events(community, args, [Events.delete_event(node, subtree)]) do
+             record_tree_events(community, branch, args, [Events.delete_event(node, subtree)]) do
         {:ok, event_count - discarded}
       end
     else
@@ -66,13 +72,14 @@ defmodule GroupherServer.CMS.DocTree.Write.EventRecorder do
     |> Map.merge(%{owner: CMS.Const.tree_event_owner(:doc), doc_id: node.doc_id})
   end
 
-  defp public_nodes_exist?(_community, []), do: false
+  defp public_nodes_exist?(_community, _branch, []), do: false
 
-  defp public_nodes_exist?(%Community{} = community, node_ids) do
+  defp public_nodes_exist?(%Community{} = community, branch, node_ids) do
     node_ids = Enum.map(node_ids, &to_string/1)
 
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
+    |> where([n], n.branch_id == ^branch.id)
     |> where([n], n.stage == CMS.Const.stage(:public))
     |> where([n], n.node_id in ^node_ids)
     |> Repo.exists?()

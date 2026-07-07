@@ -90,6 +90,16 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
+  def doc_tree_trash_items(_root, %{community: %Community{} = community}, _info) do
+    CMS.DocTree.trash_items(community)
+  end
+
+  def doc_tree_trash_items(_root, %{community: community}, _info) do
+    with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
+      CMS.DocTree.trash_items(community)
+    end
+  end
+
   def doc_cover(_root, %{community: %Community{} = community} = args, _info) do
     CMS.DocCover.read(community, doc_cover_view(args))
   end
@@ -334,6 +344,14 @@ defmodule GroupherServerWeb.Resolvers.CMS do
 
   def delete_doc_tree_node(_root, %{community: community, id: id} = args, _info) do
     CMS.DocTree.delete_node(
+      community,
+      id,
+      %{base_revision: args[:base_revision]} |> with_doc_tree_actor(args)
+    )
+  end
+
+  def restore_doc_tree_trash_item(_root, %{community: community, id: id} = args, _info) do
+    CMS.DocTree.restore_trash_item(
       community,
       id,
       %{base_revision: args[:base_revision]} |> with_doc_tree_actor(args)

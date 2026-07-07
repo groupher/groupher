@@ -139,6 +139,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:latest_snapshot_id, :id)
     field(:latest_release_id, :id)
     field(:latest_release_number, :integer)
+    field(:latest_version_slug, :string)
     field(:revision, :integer)
   end
 
@@ -177,16 +178,35 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:tree_changes, non_null(list_of(non_null(:doc_publish_checklist_item))))
   end
 
+  object :doc_publish_scope do
+    field(:total_count, non_null(:integer))
+  end
+
   object :publish_release do
     field(:id, non_null(:id))
     field(:release_number, non_null(:integer))
+    field(:version_slug, non_null(:string))
     field(:published_at, non_null(:datetime))
+  end
+
+  object :doc_tree_trash_item do
+    field(:id, non_null(:id))
+    field(:node_id, non_null(:id))
+    field(:doc_id, :id)
+    field(:type, :string)
+    field(:title, :string)
+    field(:slug, :string)
+    field(:deleted_from_group_id, :id)
+    field(:deleted_from_index, :integer)
+    field(:deleted_at, :datetime)
+    field(:restored_at, :datetime)
   end
 
   object :doc_publish_changes_payload do
     field(:done, non_null(:boolean))
     field(:release, :publish_release)
     field(:checklist, non_null(:doc_publish_checklist))
+    field(:scope, non_null(:doc_publish_scope))
   end
 
   input_object :doc_publish_changes_input do

@@ -82,6 +82,9 @@ type RootQueryType {
   "dashboard docs unified publish checklist"
   docPublishChecklist(community: String!): DocPublishChecklist
 
+  "dashboard docs trash items"
+  docTreeTrashItems(community: String!): [DocTreeTrashItem]
+
   "public community docs cover"
   docCover(community: String!, view: DocCoverView): DocCover
 
@@ -751,6 +754,9 @@ type RootMutationType {
   "delete a docs tree node"
   deleteDocTreeNode(community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
 
+  "restore a docs tree item from product trash"
+  restoreDocTreeTrashItem(community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
+
   "duplicate a docs tree node"
   duplicateDocTreeNode(community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
 
@@ -904,6 +910,7 @@ type DocTreeState {
   latestSnapshotId: ID
   latestReleaseId: ID
   latestReleaseNumber: Int
+  latestVersionSlug: String
   revision: Int
 }
 
@@ -942,16 +949,35 @@ type DocPublishChecklist {
   treeChanges: [DocPublishChecklistItem!]!
 }
 
+type DocPublishScope {
+  totalCount: Int!
+}
+
 type PublishRelease {
   id: ID!
   releaseNumber: Int!
+  versionSlug: String!
   publishedAt: DateTime!
+}
+
+type DocTreeTrashItem {
+  id: ID!
+  nodeId: ID!
+  docId: ID
+  type: String
+  title: String
+  slug: String
+  deletedFromGroupId: ID
+  deletedFromIndex: Int
+  deletedAt: DateTime
+  restoredAt: DateTime
 }
 
 type DocPublishChangesPayload {
   done: Boolean!
   release: PublishRelease
   checklist: DocPublishChecklist!
+  scope: DocPublishScope!
 }
 
 input DocPublishChangesInput {

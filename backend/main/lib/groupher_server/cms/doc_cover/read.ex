@@ -12,7 +12,7 @@ defmodule GroupherServer.CMS.DocCover.Read do
   module returns the grouped projection expected by the frontend renderer.
 
       view: :public
-          href -> /:community/doc/:slug
+          page href -> /:community/doc/:inner_id/:slug
 
       view: :dashboard
           href -> /:community/dashboard/doc/editor?docId=:doc_id
@@ -30,6 +30,7 @@ defmodule GroupherServer.CMS.DocCover.Read do
 
   alias CMS.Model.{
     Community,
+    Doc,
     DocCoverGroup,
     DocCoverItem,
     DocCoverPinnedItem,
@@ -81,6 +82,7 @@ defmodule GroupherServer.CMS.DocCover.Read do
 
     pinned_items = Enum.reject(pinned_items, &hidden_node?/1)
 
+    public_docs_by_doc_id = public_docs_by_doc_id(community, groups, items, pinned_items)
     draft_nodes_by_public_row = draft_nodes_by_public_row(community, groups, items, pinned_items)
 
     {:ok,
@@ -90,6 +92,7 @@ defmodule GroupherServer.CMS.DocCover.Read do
            cover_group_map(
              community,
              view,
+             public_docs_by_doc_id,
              draft_nodes_by_public_row,
              group,
              Map.get(items_by_group, group.id, [])
@@ -97,7 +100,9 @@ defmodule GroupherServer.CMS.DocCover.Read do
          end),
        pinned_items:
          pinned_items
-         |> Enum.map(&pinned_item_map(community, view, draft_nodes_by_public_row, &1))
+         |> Enum.map(
+           &pinned_item_map(community, view, public_docs_by_doc_id, draft_nodes_by_public_row, &1)
+         )
          |> Enum.filter(&displayable_item?/1)
      }}
   end
@@ -105,12 +110,19 @@ defmodule GroupherServer.CMS.DocCover.Read do
   defp cover_group_map(
          %Community{} = community,
          view,
+         public_docs_by_doc_id,
          draft_nodes_by_public_row,
          %DocCoverGroup{} = group,
          items
        ) do
     group_node =
-      node_map(community, view, group.group, Map.get(draft_nodes_by_public_row, group.group_id))
+      node_map(
+        community,
+        view,
+        public_docs_by_doc_id,
+        group.group,
+        Map.get(draft_nodes_by_public_row, group.group_id)
+      )
 
     %{
       id: group.id,
@@ -121,7 +133,9 @@ defmodule GroupherServer.CMS.DocCover.Read do
       group: group_node,
       items:
         items
-        |> Enum.map(&cover_item_map(community, view, draft_nodes_by_public_row, &1))
+        |> Enum.map(
+          &cover_item_map(community, view, public_docs_by_doc_id, draft_nodes_by_public_row, &1)
+        )
         |> Enum.filter(&displayable_item?/1)
     }
   end
@@ -129,10 +143,18 @@ defmodule GroupherServer.CMS.DocCover.Read do
   defp cover_item_map(
          %Community{} = community,
          view,
+         public_docs_by_doc_id,
          draft_nodes_by_public_row,
          %DocCoverItem{} = item
        ) do
-    node = node_map(community, view, item.node, Map.get(draft_nodes_by_public_row, item.node_id))
+    node =
+      node_map(
+        community,
+        view,
+        public_docs_by_doc_id,
+        item.node,
+        Map.get(draft_nodes_by_public_row, item.node_id)
+      )
 
     %{
       id: item.id,
@@ -156,10 +178,18 @@ defmodule GroupherServer.CMS.DocCover.Read do
   defp pinned_item_map(
          %Community{} = community,
          view,
+         public_docs_by_doc_id,
          draft_nodes_by_public_row,
          %DocCoverPinnedItem{} = item
        ) do
-    node = node_map(community, view, item.node, Map.get(draft_nodes_by_public_row, item.node_id))
+    node =
+      node_map(
+        community,
+        view,
+        public_docs_by_doc_id,
+        item.node,
+        Map.get(draft_nodes_by_public_row, item.node_id)
+      )
 
     %{
       id: item.id,
@@ -179,7 +209,13 @@ defmodule GroupherServer.CMS.DocCover.Read do
     }
   end
 
-  defp node_map(%Community{} = community, view, %DocTreeNode{} = node, draft_node) do
+  defp node_map(
+         %Community{} = community,
+         view,
+         public_docs_by_doc_id,
+         %DocTreeNode{} = node,
+         draft_node
+       ) do
     %{
       id: node.node_id,
       group_id: node.group_id,
@@ -188,7 +224,14 @@ defmodule GroupherServer.CMS.DocCover.Read do
       title: node.title,
       slug: node.slug,
       index: node.index,
-      href: node_href(community, view, node, draft_node),
+      href:
+        node_href(
+          community,
+          view,
+          node,
+          Map.get(public_docs_by_doc_id, node.doc_id),
+          draft_node
+        ),
       marker: node.marker,
       badge: node.badge,
       hidden: node.hidden,
@@ -196,16 +239,25 @@ defmodule GroupherServer.CMS.DocCover.Read do
     }
   end
 
-  defp node_href(_community, :public, %DocTreeNode{href: href}, _draft_node)
+  defp node_href(
+         %Community{slug: community},
+         :public,
+         %DocTreeNode{type: :page},
+         %Doc{
+           inner_id: inner_id,
+           slug: slug
+         },
+         _draft_node
+       )
+       when not is_nil(inner_id) and is_binary(slug) and slug != "" do
+    "/#{community}/doc/#{inner_id}/#{slug}"
+  end
+
+  defp node_href(_community, :public, %DocTreeNode{href: href}, _public_doc, _draft_node)
        when is_binary(href) and href != "",
        do: href
 
-  defp node_href(%Community{slug: community}, :public, %DocTreeNode{slug: slug}, _draft_node)
-       when is_binary(slug) and slug != "" do
-    "/#{community}/doc/#{slug}"
-  end
-
-  defp node_href(%Community{slug: community}, :dashboard, _node, %DocTreeNode{
+  defp node_href(%Community{slug: community}, :dashboard, _node, _public_doc, %DocTreeNode{
          doc_id: doc_id
        })
        when not is_nil(doc_id) do
@@ -214,13 +266,34 @@ defmodule GroupherServer.CMS.DocCover.Read do
     "/#{community}/dashboard/doc/editor?#{query}"
   end
 
-  defp node_href(_community, _view, _node, _draft_node), do: nil
+  defp node_href(_community, _view, _node, _public_doc, _draft_node), do: nil
 
   defp hidden_node?(%{node: %{hidden: true}}), do: true
   defp hidden_node?(_item), do: false
 
   defp displayable_item?(%{href: href}) when is_binary(href) and href != "", do: true
   defp displayable_item?(_item), do: false
+
+  defp public_docs_by_doc_id(%Community{} = community, groups, items, pinned_items) do
+    doc_ids =
+      [
+        Enum.map(groups, & &1.group),
+        Enum.map(items, & &1.node),
+        Enum.map(pinned_items, & &1.node)
+      ]
+      |> Enum.concat()
+      |> Enum.reject(&is_nil/1)
+      |> Enum.map(& &1.doc_id)
+      |> Enum.reject(&is_nil/1)
+      |> Enum.uniq()
+
+    Doc
+    |> where([d], d.community_id == ^community.id)
+    |> where([d], d.stage == CMS.Const.stage(:public))
+    |> where([d], d.doc_id in ^doc_ids)
+    |> Repo.all()
+    |> Map.new(&{&1.doc_id, &1})
+  end
 
   defp draft_nodes_by_public_row(%Community{} = community, groups, items, pinned_items) do
     public_nodes =

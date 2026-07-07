@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
   alias GroupherServer.CMS
   alias CMS.Marker
-  alias CMS.Model.{Community}
+  alias CMS.Model.{Community, DocsBranch}
   alias Helper.Constant.DBPrefix
   alias Helper.Validator.Slug
 
@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
 
-  @required_fields ~w(community_id node_id stage type index)a
+  @required_fields ~w(community_id branch_id node_id stage type index)a
   @optional_fields ~w(
     group_id doc_id title slug href marker badge
     hidden template_key ui_config
@@ -45,6 +45,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
   schema "doc_tree_nodes" do
     belongs_to(:community, Community)
+    belongs_to(:branch, DocsBranch)
 
     field(:doc_id, Ecto.UUID)
     field(:node_id, :string)
@@ -82,6 +83,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     |> validate_required(@required_fields)
     |> validate_common()
     |> foreign_key_constraint(:community_id)
+    |> foreign_key_constraint(:branch_id)
     |> unique_constraint(:node_id, name: :doc_tree_nodes_stage_node_id_index)
     |> unique_constraint(:template_key, name: :doc_tree_nodes_community_stage_template_key_index)
     |> unique_constraint(:slug, name: :doc_tree_nodes_root_slug_index)
@@ -103,6 +105,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> Marker.normalize_changeset(:marker)
     |> validate_common()
+    |> foreign_key_constraint(:branch_id)
     |> unique_constraint(:node_id, name: :doc_tree_nodes_stage_node_id_index)
     |> unique_constraint(:template_key, name: :doc_tree_nodes_community_stage_template_key_index)
     |> unique_constraint(:slug, name: :doc_tree_nodes_root_slug_index)

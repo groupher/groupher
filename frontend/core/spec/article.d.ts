@@ -94,6 +94,7 @@ export type TChangelog = TBaseArticle & {
 
 export type TDoc = TBaseArticle & {
   digest?: string
+  subtitle?: string
 }
 
 export type TTechStack = {

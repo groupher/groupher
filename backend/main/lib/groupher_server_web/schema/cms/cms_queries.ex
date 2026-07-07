@@ -36,6 +36,15 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.doc_publish_checklist/3)
     end
 
+    @desc "dashboard docs trash items"
+    field :doc_tree_trash_items, list_of(:doc_tree_trash_item) do
+      arg(:community, non_null(:string))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.doc_tree_trash_items/3)
+    end
+
     @desc "public community docs cover"
     field :doc_cover, :doc_cover do
       arg(:community, non_null(:string))

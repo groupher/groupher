@@ -1,10 +1,11 @@
-import type { TChangelog, TMetric, TPost, TTag, TThread } from '~/spec'
+import type { TChangelog, TDoc, TMetric, TPost, TTag, TThread } from '~/spec'
 
 export type TInit = {
   metric?: TMetric
   thread?: TThread | null
   post?: TPost
   changelog?: TChangelog
+  doc?: TDoc
 
   tags?: TTag[]
 
@@ -13,6 +14,6 @@ export type TInit = {
 }
 
 export type TStore = TInit & {
-  article: TPost | TChangelog | null
+  article: TPost | TChangelog | TDoc | null
   commit: (patch: Partial<TStore>) => void
 }

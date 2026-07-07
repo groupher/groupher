@@ -26,9 +26,10 @@ defmodule GroupherServer.CMS.DocTree.Write.Node do
   def put_new_node_id(attrs), do: Map.put_new(attrs, :node_id, new_node_id())
   def new_node_id, do: Ecto.UUID.generate()
 
-  def find(%Community{} = community, node_id) do
+  def find(%Community{} = community, branch, node_id) do
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
+    |> where([n], n.branch_id == ^branch.id)
     |> where([n], n.stage == CMS.Const.stage(:draft))
     |> where([n], n.node_id == ^to_string(node_id))
     |> Repo.one()
@@ -38,8 +39,8 @@ defmodule GroupherServer.CMS.DocTree.Write.Node do
     end
   end
 
-  def group_parent(%Community{} = community, group_id) do
-    with {:ok, parent} <- find(community, group_id),
+  def group_parent(%Community{} = community, branch, group_id) do
+    with {:ok, parent} <- find(community, branch, group_id),
          true <- parent.type == :group do
       {:ok, parent}
     else
@@ -48,20 +49,21 @@ defmodule GroupherServer.CMS.DocTree.Write.Node do
     end
   end
 
-  def validate_target_group(_community, %{type: :group}, nil), do: {:ok, nil}
+  def validate_target_group(_community, _branch, %{type: :group}, nil), do: {:ok, nil}
 
-  def validate_target_group(_community, %{type: :group}, _),
+  def validate_target_group(_community, _branch, %{type: :group}, _),
     do: {:error, {:custom, "group nodes must be root nodes"}}
 
-  def validate_target_group(_community, %{type: :pin}, nil), do: {:ok, nil}
+  def validate_target_group(_community, _branch, %{type: :pin}, nil), do: {:ok, nil}
 
-  def validate_target_group(_community, %{type: :pin}, _),
+  def validate_target_group(_community, _branch, %{type: :pin}, _),
     do: {:error, {:custom, "pin nodes can only move inside top pins"}}
 
-  def validate_target_group(_community, %{type: type}, "pin") when type in [:page, :link],
-    do: {:error, {:custom, "docs can not be dragged into top pins"}}
+  def validate_target_group(_community, _branch, %{type: type}, "pin")
+      when type in [:page, :link],
+      do: {:error, {:custom, "docs can not be dragged into top pins"}}
 
-  def validate_target_group(community, _node, group_id) do
-    with {:ok, parent} <- group_parent(community, group_id), do: {:ok, parent.node_id}
+  def validate_target_group(community, branch, _node, group_id) do
+    with {:ok, parent} <- group_parent(community, branch, group_id), do: {:ok, parent.node_id}
   end
 end

@@ -34,32 +34,39 @@ defmodule GroupherServer.CMS.DocTree.Write.DraftDoc do
 
   require CMS.Const
 
-  def update(%Community{} = community, doc_id, args, %User{} = user) do
-    with {:ok, _site_state} <- Read.ensure_site_state(community),
-         {:ok, draft} <- Draft.update_or_create_from_public(community, doc_id, args, user),
-         {:ok, _state} <- Revision.bump_site_draft(community) do
+  def update(%Community{} = community, branch, doc_id, args, %User{} = user) do
+    with {:ok, site_state} <- Read.ensure_site_state(community, branch_id: branch.id),
+         {:ok, draft} <-
+           Draft.update_or_create_from_public(
+             community,
+             doc_id,
+             Map.put(args, :branch_id, branch.id),
+             user
+           ),
+         {:ok, _state} <- Revision.bump_site_draft(community, site_state) do
       {:ok, draft}
     end
   end
 
-  def ensure(%Community{} = community, %{doc_id: doc_id} = args, _user)
+  def ensure(%Community{} = community, branch, %{doc_id: doc_id} = args, _user)
       when not is_nil(doc_id) do
-    with :ok <- validate(community, doc_id), do: {:ok, args}
+    with :ok <- validate(community, branch, doc_id), do: {:ok, args}
   end
 
-  def ensure(_community, args, nil), do: {:ok, args}
+  def ensure(_community, _branch, args, nil), do: {:ok, args}
 
-  def ensure(%Community{} = community, args, %User{} = user) do
-    with {:ok, draft} <- create_default_doc_draft(community, args, user) do
+  def ensure(%Community{} = community, branch, args, %User{} = user) do
+    with {:ok, draft} <- create_default_doc_draft(community, branch, args, user) do
       {:ok, Map.put(args, :doc_id, draft.doc_id)}
     end
   end
 
-  def validate(_community, nil), do: :ok
+  def validate(_community, _branch, nil), do: :ok
 
-  def validate(%Community{} = community, doc_id) do
+  def validate(%Community{} = community, branch, doc_id) do
     Doc
     |> where([d], d.community_id == ^community.id)
+    |> where([d], d.branch_id == ^branch.id)
     |> where([d], d.stage == CMS.Const.stage(:draft))
     |> where([d], d.doc_id == ^doc_id)
     |> Repo.exists?()
@@ -69,14 +76,14 @@ defmodule GroupherServer.CMS.DocTree.Write.DraftDoc do
     end
   end
 
-  defp create_default_doc_draft(%Community{} = community, args, %User{} = user) do
+  defp create_default_doc_draft(%Community{} = community, branch, args, %User{} = user) do
     title = Map.get(args, :title, "Untitled")
     slug = Map.get(args, :slug) || normalize_doc_slug(title)
 
     Draft.create(
       community,
       :doc,
-      %{title: title, slug: slug, body: default_page_body(title)},
+      %{branch_id: branch.id, title: title, slug: slug, body: default_page_body(title)},
       user
     )
   end

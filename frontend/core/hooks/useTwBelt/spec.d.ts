@@ -42,6 +42,7 @@ export type TTextKey = 'title' | 'digest' | 'hint' | 'link' | 'black'
 export type TBgKey =
   | 'divider'
   | 'hoverBg'
+  | 'badge'
   | 'dot'
   | 'digest'
   | 'card'

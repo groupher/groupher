@@ -4,6 +4,7 @@ export const doc = `
   query doc($article: ArticlePathInput!, $userHasLogin: Boolean!) {
     doc(article: $article) {
       ${F.article}
+      subtitle
       ${F.articleDetail}
     }
   }

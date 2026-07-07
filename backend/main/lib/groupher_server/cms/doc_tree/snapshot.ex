@@ -17,6 +17,7 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.DocTree.Branch
   alias CMS.Model.{Community, DocTreeNode}
 
   require CMS.Const
@@ -36,8 +37,9 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
       iex> Snapshot.draft_json(community)
       %{"version" => 1, "groups" => groups}
   """
-  @spec draft_json(Community.t()) :: map()
-  def draft_json(%Community{} = community), do: stage_json(community, CMS.Const.stage(:draft))
+  @spec draft_json(Community.t(), keyword() | map()) :: map()
+  def draft_json(%Community{} = community, opts \\ []),
+    do: stage_json(community, opts, CMS.Const.stage(:draft))
 
   @doc """
   Returns canonical public-tree JSON for one community.
@@ -47,9 +49,9 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
       iex> Snapshot.published_json(community)
       %{"version" => 1}
   """
-  @spec published_json(Community.t()) :: map()
-  def published_json(%Community{} = community),
-    do: stage_json(community, CMS.Const.stage(:public))
+  @spec published_json(Community.t(), keyword() | map()) :: map()
+  def published_json(%Community{} = community, opts \\ []),
+    do: stage_json(community, opts, CMS.Const.stage(:public))
 
   @doc """
   Returns canonical JSON from a pre-filtered node list.
@@ -105,13 +107,16 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
     |> Map.new()
   end
 
-  defp stage_json(%Community{} = community, stage) do
-    DocTreeNode
-    |> where([n], n.community_id == ^community.id)
-    |> where([n], n.stage == ^stage)
-    |> order_by([n], asc: n.index, asc: n.id)
-    |> Repo.all()
-    |> tree_json()
+  defp stage_json(%Community{} = community, opts, stage) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
+      DocTreeNode
+      |> where([n], n.community_id == ^community.id)
+      |> where([n], n.branch_id == ^branch.id)
+      |> where([n], n.stage == ^stage)
+      |> order_by([n], asc: n.index, asc: n.id)
+      |> Repo.all()
+      |> tree_json()
+    end
   end
 
   defp tree_json(nodes) do

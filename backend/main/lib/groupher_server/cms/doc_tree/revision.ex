@@ -50,9 +50,16 @@ defmodule GroupherServer.CMS.DocTree.Revision do
 
   @spec bump_site_draft(Community.t()) :: T.domain_res(DocsSiteState.t())
   def bump_site_draft(%Community{} = community) do
+    with {:ok, state} <- CMS.DocTree.Read.ensure_draft_state(community) do
+      bump_site_draft(community, state)
+    end
+  end
+
+  @spec bump_site_draft(Community.t(), DocsSiteState.t()) :: T.domain_res(DocsSiteState.t())
+  def bump_site_draft(%Community{} = community, %DocsSiteState{} = state) do
     Multi.new()
     |> Multi.run(:site_state, fn _, _ ->
-      ORM.find_by(DocsSiteState, community_id: community.id)
+      ensure_current_state(community, state)
     end)
     |> Multi.run(:updated_site_state, fn _, %{site_state: site_state} ->
       ORM.inc(site_state, :site_draft_version)
@@ -81,7 +88,11 @@ defmodule GroupherServer.CMS.DocTree.Revision do
   end
 
   defp ensure_current_state(%Community{} = community, %DocsSiteState{} = state) do
-    ORM.find_by(DocsSiteState, id: state.id, community_id: community.id)
+    ORM.find_by(DocsSiteState,
+      id: state.id,
+      community_id: community.id,
+      branch_id: state.branch_id
+    )
   end
 
   defp result({:ok, %{updated_site_state: state}}), do: {:ok, state}

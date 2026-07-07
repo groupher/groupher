@@ -24,7 +24,8 @@ defmodule GroupherServer.CMS.Articles.Draft do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Articles.Document
-  alias CMS.Model.{ArticleDocument, Doc, Author, Community}
+  alias CMS.DocTree.Branch
+  alias CMS.Model.{ArticleDocument, Doc, Author, Community, Embeds}
   alias Ecto.Multi
   alias Helper.{ArticlePayload, ContentPipeline, ORM, T, Transaction}
   alias Helper.Validator.Slug
@@ -33,6 +34,8 @@ defmodule GroupherServer.CMS.Articles.Draft do
   require CMS.Const
 
   @digest_length get_config(:article, :digest_length)
+  @default_article_meta Embeds.ArticleMeta.default_meta()
+  @default_emotions Embeds.ArticleEmotion.default_emotions()
 
   @doc """
   Reads one draft with its community scope.
@@ -42,10 +45,17 @@ defmodule GroupherServer.CMS.Articles.Draft do
       iex> Draft.read(community, draft.doc_id)
       {:ok, %Doc{}}
   """
-  @spec read(Community.t(), String.t()) :: T.domain_res(Doc.t())
-  def read(%Community{} = community, doc_id) do
-    Doc
-    |> ORM.find_by(doc_id: doc_id, community_id: community.id, stage: CMS.Const.stage(:draft))
+  @spec read(Community.t(), String.t(), keyword() | map()) :: T.domain_res(Doc.t())
+  def read(%Community{} = community, doc_id, opts \\ []) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
+      Doc
+      |> ORM.find_by(
+        doc_id: doc_id,
+        community_id: community.id,
+        branch_id: branch.id,
+        stage: CMS.Const.stage(:draft)
+      )
+    end
   end
 
   @doc """
@@ -56,11 +66,11 @@ defmodule GroupherServer.CMS.Articles.Draft do
   prefer draft content but fall back to public content instead of treating a
   missing draft as an editor failure.
   """
-  @spec read_editor(Community.t(), String.t()) :: T.domain_res(Doc.t())
-  def read_editor(%Community{} = community, doc_id) do
-    case read(community, doc_id) do
+  @spec read_editor(Community.t(), String.t(), keyword() | map()) :: T.domain_res(Doc.t())
+  def read_editor(%Community{} = community, doc_id, opts \\ []) do
+    case read(community, doc_id, opts) do
       {:ok, draft} -> {:ok, draft}
-      {:error, _} -> read_public(community, doc_id)
+      {:error, _} -> read_public(community, doc_id, opts)
     end
   end
 
@@ -95,8 +105,11 @@ defmodule GroupherServer.CMS.Articles.Draft do
   @spec create_with_author(Community.t(), T.thread(), map(), Author.t()) ::
           T.domain_res(Doc.t())
   def create_with_author(%Community{} = community, thread, attrs, %Author{} = author) do
-    with {:ok, payload} <- parse_body(attrs),
+    with {:ok, branch} <- Branch.resolve(community, attrs),
+         {:ok, payload} <- parse_body(attrs),
          {:ok, draft_attrs} <- build_attrs(community, thread, attrs, payload, author) do
+      draft_attrs = Map.put(draft_attrs, :branch_id, branch.id)
+
       Repo.transaction(fn ->
         with {:ok, draft} <- ORM.create(Doc, draft_attrs),
              {:ok, _} <- Document.create_doc(draft, %{article_payload: payload}) do
@@ -122,7 +135,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
   """
   @spec update(Community.t(), String.t(), map()) :: T.domain_res(Doc.t())
   def update(%Community{} = community, doc_id, attrs) do
-    Transaction.lock_global(lock_key(community, doc_id), fn ->
+    Transaction.lock_global(lock_key(community, doc_id, attrs), fn ->
       update_unlocked(community, doc_id, attrs)
     end)
   end
@@ -142,8 +155,8 @@ defmodule GroupherServer.CMS.Articles.Draft do
         attrs,
         %User{} = user
       ) do
-    Transaction.lock_global(lock_key(community, doc_id), fn ->
-      with {:ok, _draft} <- ensure_from_public_unlocked(community, doc_id, user) do
+    Transaction.lock_global(lock_key(community, doc_id, attrs), fn ->
+      with {:ok, _draft} <- ensure_from_public_unlocked(community, doc_id, attrs, user) do
         update_unlocked(community, doc_id, attrs)
       end
     end)
@@ -164,7 +177,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
   """
   @spec update_unlocked(Community.t(), String.t(), map()) :: T.domain_res(Doc.t())
   def update_unlocked(%Community{} = community, doc_id, attrs) do
-    with {:ok, draft} <- read(community, doc_id),
+    with {:ok, draft} <- read(community, doc_id, attrs),
          {:ok, payload} <- maybe_parse_body(attrs),
          {:ok, draft_attrs} <- update_attrs(draft, attrs, payload),
          {:ok, draft} <- maybe_update_draft(draft, draft_attrs),
@@ -185,10 +198,10 @@ defmodule GroupherServer.CMS.Articles.Draft do
       iex> Draft.publish(community, draft.doc_id, user)
       {:ok, %Doc{stage: CMS.Const.stage(:public)}}
   """
-  @spec publish(Community.t(), String.t(), User.t()) :: T.domain_res(Doc.t())
-  def publish(%Community{} = community, doc_id, %User{} = user) do
-    Transaction.lock_global(lock_key(community, doc_id), fn ->
-      publish_unlocked(community, doc_id, user)
+  @spec publish(Community.t(), String.t(), User.t(), keyword() | map()) :: T.domain_res(Doc.t())
+  def publish(%Community{} = community, doc_id, %User{} = user, opts \\ []) do
+    Transaction.lock_global(lock_key(community, doc_id, opts), fn ->
+      publish_unlocked(community, doc_id, user, opts)
     end)
   end
 
@@ -202,9 +215,10 @@ defmodule GroupherServer.CMS.Articles.Draft do
       ...> end)
       {:ok, %Doc{stage: CMS.Const.stage(:public)}}
   """
-  @spec publish_unlocked(Community.t(), String.t(), User.t()) :: T.domain_res(Doc.t())
-  def publish_unlocked(%Community{} = community, doc_id, %User{} = _user) do
-    with {:ok, draft} <- read(community, doc_id),
+  @spec publish_unlocked(Community.t(), String.t(), User.t(), keyword() | map()) ::
+          T.domain_res(Doc.t())
+  def publish_unlocked(%Community{} = community, doc_id, %User{} = _user, opts \\ []) do
+    with {:ok, draft} <- read(community, doc_id, opts),
          :ok <- validate_slug(draft.slug),
          {:ok, public_doc} <- do_publish(community, draft) do
       {:ok, public_doc}
@@ -219,8 +233,16 @@ defmodule GroupherServer.CMS.Articles.Draft do
       iex> Draft.lock_key(community, "abc-123")
       "doc_draft:1:abc-123"
   """
-  @spec lock_key(Community.t(), String.t()) :: String.t()
-  def lock_key(%Community{} = community, doc_id), do: "doc_draft:#{community.id}:#{doc_id}"
+  @spec lock_key(Community.t(), String.t(), keyword() | map()) :: String.t()
+  def lock_key(%Community{} = community, doc_id, opts \\ []) do
+    branch_key =
+      case Branch.branch_id(community, opts) do
+        {:ok, id} -> id
+        {:error, _} -> Branch.main_slug()
+      end
+
+    "doc_draft:#{community.id}:#{branch_key}:#{doc_id}"
+  end
 
   defp parse_body(%{body: body}) when is_binary(body), do: ContentPipeline.parse(%{body: body})
   defp parse_body(_attrs), do: {:error, {:custom, "article version body is required"}}
@@ -344,19 +366,31 @@ defmodule GroupherServer.CMS.Articles.Draft do
     if Slug.valid?(slug), do: :ok, else: {:error, {:custom, "article version slug is invalid"}}
   end
 
-  defp read_public(%Community{} = community, doc_id) do
-    Doc
-    |> ORM.find_by(doc_id: doc_id, community_id: community.id, stage: CMS.Const.stage(:public))
+  defp read_public(%Community{} = community, doc_id, opts) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
+      Doc
+      |> ORM.find_by(
+        doc_id: doc_id,
+        community_id: community.id,
+        branch_id: branch.id,
+        stage: CMS.Const.stage(:public)
+      )
+    end
   end
 
-  defp ensure_from_public_unlocked(%Community{} = community, doc_id, %User{} = user) do
-    case read(community, doc_id) do
+  defp ensure_from_public_unlocked(%Community{} = community, doc_id, opts, %User{} = user) do
+    case read(community, doc_id, opts) do
       {:ok, draft} ->
         {:ok, draft}
 
       {:error, _} ->
-        with {:ok, public_doc} <- read_public(community, doc_id) do
-          create(community, :doc, draft_attrs_from_public(public_doc), user)
+        with {:ok, public_doc} <- read_public(community, doc_id, opts) do
+          create(
+            community,
+            :doc,
+            Map.put(draft_attrs_from_public(public_doc), :branch_id, public_doc.branch_id),
+            user
+          )
         end
     end
   end
@@ -376,6 +410,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
     case ORM.find_by(Doc,
            doc_id: draft.doc_id,
            community_id: community.id,
+           branch_id: draft.branch_id,
            stage: CMS.Const.stage(:public)
          ) do
       {:ok, public_doc} ->
@@ -403,8 +438,37 @@ defmodule GroupherServer.CMS.Articles.Draft do
         |> publish_result()
 
       {:error, _} ->
-        ORM.update(draft, %{stage: CMS.Const.stage(:public)})
+        publish_first_public_doc(community, draft)
     end
+  end
+
+  defp publish_first_public_doc(%Community{} = community, %Doc{} = draft) do
+    Transaction.lock_row(community, fn community ->
+      with {:ok, community} <- ORM.fill_meta(community),
+           {:ok, public_doc} <-
+             draft
+             |> Doc.changeset(first_public_doc_attrs(community, draft))
+             |> Ecto.Changeset.put_change(:emotions, @default_emotions)
+             |> Ecto.Changeset.put_embed(
+               :meta,
+               Map.merge(@default_article_meta, %{thread: :doc})
+             )
+             |> Repo.update(),
+           {:ok, _community} <- CMS.Communities.update_inner_id(community, :doc, public_doc) do
+        {:ok, public_doc}
+      end
+    end)
+  end
+
+  defp first_public_doc_attrs(%Community{} = community, %Doc{} = draft) do
+    next_inner_id = (community.meta.docs_inner_id_index || 0) + 1
+
+    %{
+      active_at: draft.inserted_at || DateTime.truncate(DateTime.utc_now(), :second),
+      community_slug: community.slug,
+      inner_id: next_inner_id,
+      stage: CMS.Const.stage(:public)
+    }
   end
 
   defp publish_content_attrs(%Doc{} = draft) do

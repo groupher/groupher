@@ -15,6 +15,7 @@
 
   /* utils */
   --color-hoverBg: #efefef78;
+  --color-badge: #efefef78;
   --color-card: #fff;
   --color-cardAlpha: #ffffffc4;
   --color-sandBox: #f9f9f9;
@@ -196,6 +197,7 @@
 
     /* utils */
     --color-hoverBg: #50505059;
+    --color-badge: #50505059;
     --color-card: #252525;
     --color-cardAlpha: #1f2020c7; /*#111111b5;*/
     --color-sandBox: #31303059;
@@ -367,5 +369,6 @@
     --color-title: oklch(27.8% 0.033 256.848); /* gray.800 */
     --color-digest: oklch(55.1% 0.027 264.364); /* gray.500 */
     --color-hoverBg: #efefef78;
+    --color-badge: #efefef78;
   }
 }

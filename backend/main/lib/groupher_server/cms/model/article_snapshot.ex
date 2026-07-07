@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.Model.ArticleSnapshot do
   alias GroupherServer.CMS
   alias CMS.Artiment.Threads
 
-  alias CMS.Model.{Author, Community}
+  alias CMS.Model.{Author, Community, DocsBranch}
 
   alias Helper.Constant.DBPrefix
 
@@ -33,13 +33,14 @@ defmodule GroupherServer.CMS.Model.ArticleSnapshot do
 
   @max_subtitle_length 240
   @required_fields ~w(community_id thread stage title document_json content_hash snapshot_number)a
-  @optional_fields ~w(doc_id author_id slug subtitle digest schema_version)a
+  @optional_fields ~w(branch_id doc_id author_id slug subtitle digest schema_version)a
 
   @type snapshot_stage :: :draft | :public
   @type t :: %ArticleSnapshot{}
 
   schema "article_snapshots" do
     belongs_to(:community, Community)
+    belongs_to(:branch, DocsBranch)
     belongs_to(:author, Author)
 
     field(:doc_id, Ecto.UUID)
@@ -68,6 +69,7 @@ defmodule GroupherServer.CMS.Model.ArticleSnapshot do
     |> validate_length(:subtitle, max: @max_subtitle_length)
     |> validate_target()
     |> foreign_key_constraint(:community_id)
+    |> foreign_key_constraint(:branch_id)
     |> foreign_key_constraint(:author_id)
     |> check_constraint(:doc_id, name: :article_snapshots_target_check)
     |> check_constraint(:stage, name: :article_snapshots_stage_check)
@@ -77,11 +79,15 @@ defmodule GroupherServer.CMS.Model.ArticleSnapshot do
   def update_changeset(%ArticleSnapshot{} = snapshot, attrs), do: changeset(snapshot, attrs)
 
   defp validate_target(changeset) do
-    case {get_field(changeset, :stage), get_field(changeset, :doc_id)} do
-      {stage, doc_id} when stage in CMS.Const.stage_values() and not is_nil(doc_id) ->
+    case {get_field(changeset, :stage), get_field(changeset, :doc_id),
+          get_field(changeset, :thread)} do
+      {stage, doc_id, :doc} when stage in CMS.Const.stage_values() and not is_nil(doc_id) ->
+        validate_required(changeset, [:branch_id])
+
+      {stage, doc_id, _thread} when stage in CMS.Const.stage_values() and not is_nil(doc_id) ->
         changeset
 
-      {stage, nil} when stage in CMS.Const.stage_values() ->
+      {stage, nil, _thread} when stage in CMS.Const.stage_values() ->
         add_error(changeset, :doc_id, "#{stage} snapshots require doc_id")
 
       _ ->

@@ -40,6 +40,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     Selection
   }
 
+  alias CMS.DocTree.Branch
+
   require CMS.Const
 
   alias CMS.Model.{
@@ -71,9 +73,10 @@ defmodule GroupherServer.CMS.DocTree.Publish do
       iex> Publish.checklist(community).total_count
       3
   """
-  @spec checklist(Community.t()) :: map()
-  def checklist(%Community{} = community) do
-    Checklist.build(community)
+  @spec checklist(Community.t(), keyword() | map()) :: map()
+  def checklist(%Community{} = community, opts \\ []) do
+    {:ok, branch} = Branch.resolve(community, opts)
+    Checklist.build(community, branch)
   end
 
   @doc """
@@ -93,61 +96,66 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   def publish_changes(%Community{} = community, args, %User{} = user, opts \\ []) do
     sync_cover? = Keyword.get(opts, :sync_cover, true)
 
-    Transaction.lock_global("doc_tree:#{community.id}", fn ->
-      Repo.transaction(fn ->
-        current_checklist = checklist(community)
+    with {:ok, branch} <- Branch.resolve(community, args) do
+      Transaction.lock_global("doc_tree:#{community.id}:#{branch.id}", fn ->
+        Repo.transaction(fn ->
+          current_checklist = checklist(community, branch_id: branch.id)
 
-        with {:ok, selection} <- Selection.from_input(args, current_checklist),
-             tree_checklist_item_ids <-
-               include_doc_shell_tree_checklist_item_ids(
-                 community,
-                 args,
-                 selection.doc_checklist_item_ids,
-                 selection.tree_checklist_item_ids
-               ),
-             selection <-
-               Selection.put_tree_checklist_item_ids(selection, tree_checklist_item_ids),
-             {:ok, publish_flow} <- Selection.flow(current_checklist, selection) do
-          case publish_flow do
-            @publish_flow_noop ->
-              %{done: true, release: nil, checklist: current_checklist}
+          with {:ok, selection} <- Selection.from_input(args, current_checklist),
+               tree_checklist_item_ids <-
+                 include_doc_shell_tree_checklist_item_ids(
+                   community,
+                   branch,
+                   args,
+                   selection.doc_checklist_item_ids,
+                   selection.tree_checklist_item_ids
+                 ),
+               selection <-
+                 Selection.put_tree_checklist_item_ids(selection, tree_checklist_item_ids),
+               {:ok, publish_flow} <- Selection.flow(current_checklist, selection) do
+            case publish_flow do
+              @publish_flow_noop ->
+                publish_payload(true, nil, current_checklist)
 
-            @publish_flow_restore ->
-              case restore_selected_changes(
-                     community,
-                     selection.restore_tree_checklist_item_ids,
-                     user
-                   ) do
-                {:ok, result} -> result
-                {:error, reason} -> Repo.rollback(reason)
-                reason -> Repo.rollback(reason)
-              end
+              @publish_flow_restore ->
+                case restore_selected_changes(
+                       community,
+                       branch,
+                       selection.restore_tree_checklist_item_ids,
+                       user
+                     ) do
+                  {:ok, result} -> result
+                  {:error, reason} -> Repo.rollback(reason)
+                  reason -> Repo.rollback(reason)
+                end
 
-            @publish_flow_publish ->
-              case publish_selected_changes(
-                     community,
-                     current_checklist,
-                     selection.doc_checklist_item_ids,
-                     selection.tree_checklist_item_ids,
-                     selection.restore_tree_checklist_item_ids,
-                     user,
-                     sync_cover?
-                   ) do
-                {:ok, result} -> result
-                {:error, reason} -> Repo.rollback(reason)
-                reason -> Repo.rollback(reason)
-              end
+              @publish_flow_publish ->
+                case publish_selected_changes(
+                       community,
+                       branch,
+                       current_checklist,
+                       selection.doc_checklist_item_ids,
+                       selection.tree_checklist_item_ids,
+                       selection.restore_tree_checklist_item_ids,
+                       user,
+                       sync_cover?
+                     ) do
+                  {:ok, result} -> result
+                  {:error, reason} -> Repo.rollback(reason)
+                  reason -> Repo.rollback(reason)
+                end
+            end
+          else
+            {:error, reason} -> Repo.rollback(reason)
+            reason -> Repo.rollback(reason)
           end
-        else
-          {:error, reason} -> Repo.rollback(reason)
-          reason -> Repo.rollback(reason)
+        end)
+        |> case do
+          {:ok, result} -> {:ok, result}
+          {:error, reason} -> {:error, reason}
         end
       end)
-      |> case do
-        {:ok, result} -> {:ok, result}
-        {:error, reason} -> {:error, reason}
-      end
-    end)
+    end
   end
 
   @doc """
@@ -165,9 +173,12 @@ defmodule GroupherServer.CMS.DocTree.Publish do
       iex> Publish.move_doc_to_draft(community, draft_node.node_id, user)
       {:ok, %Doc{stage: CMS.Const.stage(:draft), doc_id: "a1b2c3d4-..."}}
   """
-  @spec move_doc_to_draft(Community.t(), T.id(), User.t()) :: T.domain_res(Doc.t())
-  def move_doc_to_draft(%Community{} = community, node_id, %User{} = user) do
-    DocPublisher.move_doc_to_draft(community, node_id, user)
+  @spec move_doc_to_draft(Community.t(), T.id(), User.t(), keyword() | map()) ::
+          T.domain_res(Doc.t())
+  def move_doc_to_draft(%Community{} = community, node_id, %User{} = user, opts \\ []) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
+      DocPublisher.move_doc_to_draft(community, branch, node_id, user)
+    end
   end
 
   @doc """
@@ -187,26 +198,31 @@ defmodule GroupherServer.CMS.DocTree.Publish do
       iex> Publish.public_node_for_draft(community, draft.node_id)
       {:ok, %DocTreeNode{stage: CMS.Const.stage(:public)}}
   """
-  @spec public_node_for_draft(Community.t(), T.id()) :: T.domain_res(DocTreeNode.t())
-  def public_node_for_draft(%Community{} = community, node_id) do
-    DocPublisher.public_node_for_draft(community, node_id)
+  @spec public_node_for_draft(Community.t(), T.id(), keyword() | map()) ::
+          T.domain_res(DocTreeNode.t())
+  def public_node_for_draft(%Community{} = community, node_id, opts \\ []) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
+      DocPublisher.public_node_for_draft(community, branch, node_id)
+    end
   end
 
   defp restore_selected_changes(
          %Community{} = community,
+         branch,
          restore_tree_checklist_item_ids,
          %User{} = user
        ) do
     with {:ok, _events} <-
-           restore_tree_checklist_items(community, restore_tree_checklist_item_ids, user),
-         next_checklist <- checklist(community),
-         {:ok, _state} <- Release.mark_site_draft_clean(community, next_checklist) do
-      {:ok, %{done: true, release: nil, checklist: next_checklist}}
+           restore_tree_checklist_items(community, branch, restore_tree_checklist_item_ids, user),
+         next_checklist <- checklist(community, branch_id: branch.id),
+         {:ok, _state} <- Release.mark_site_draft_clean(community, branch, next_checklist) do
+      {:ok, publish_payload(true, nil, next_checklist)}
     end
   end
 
   defp publish_selected_changes(
          %Community{} = community,
+         branch,
          current_checklist,
          doc_checklist_item_ids,
          tree_checklist_item_ids,
@@ -215,33 +231,47 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          sync_cover?
        ) do
     with {:ok, _restored_events} <-
-           restore_tree_checklist_items(community, restore_tree_checklist_item_ids, user),
-         {:ok, tree_result} <- prepare_tree_checklist_items(community, tree_checklist_item_ids),
+           restore_tree_checklist_items(community, branch, restore_tree_checklist_item_ids, user),
+         {:ok, tree_result} <-
+           prepare_tree_checklist_items(community, branch, tree_checklist_item_ids),
          :ok <-
            reject_doc_tree_delete_overlaps(
              current_checklist.doc_changes,
              doc_checklist_item_ids,
              tree_result.events
            ),
-         :ok <- PublicProjection.preapply_tree_delete_events(community, tree_result.events),
+         :ok <-
+           PublicProjection.preapply_tree_delete_events(community, branch, tree_result.events),
          {:ok, doc_revisions} <-
            publish_doc_checklist_items(
              community,
+             branch,
              current_checklist.doc_changes,
              doc_checklist_item_ids,
              user,
              sync_cover?
            ),
-         :ok <- PublicProjection.apply_tree_events(community, tree_result.events),
-         {:ok, release} <- Release.create(community, user, doc_revisions, tree_result),
-         next_checklist <- checklist(community),
-         {:ok, _state} <- Release.mark_site_release_published(community, user, next_checklist) do
-      {:ok, %{done: true, release: release, checklist: next_checklist}}
+         :ok <- PublicProjection.apply_tree_events(community, branch, tree_result.events),
+         {:ok, release} <- Release.create(community, branch, user, doc_revisions, tree_result),
+         next_checklist <- checklist(community, branch_id: branch.id),
+         {:ok, _state} <-
+           Release.mark_site_release_published(community, branch, user, next_checklist) do
+      {:ok, publish_payload(true, release, next_checklist)}
     end
+  end
+
+  defp publish_payload(done, release, checklist) do
+    %{
+      done: done,
+      release: release,
+      checklist: checklist,
+      scope: %{total_count: checklist.total_count}
+    }
   end
 
   defp publish_doc_checklist_items(
          %Community{} = community,
+         branch,
          checklist_items,
          doc_checklist_item_ids,
          %User{} = user,
@@ -254,6 +284,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
            {:ok, snapshot} <-
              DocPublisher.publish_doc_draft(
                community,
+               branch,
                item,
                user,
                sync_cover?
@@ -268,13 +299,14 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp include_doc_shell_tree_checklist_item_ids(
          %Community{} = community,
+         branch,
          args,
          [],
          tree_checklist_item_ids
        ) do
     if tree_selection_omitted?(args) do
       community
-      |> doc_shell_tree_checklist_item_ids()
+      |> doc_shell_tree_checklist_item_ids(branch)
       |> Enum.concat(tree_checklist_item_ids)
       |> Enum.uniq()
     else
@@ -284,6 +316,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp include_doc_shell_tree_checklist_item_ids(
          _community,
+         _branch,
          _args,
          _doc_checklist_item_ids,
          tree_checklist_item_ids
@@ -294,17 +327,17 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     Selection.tree_selection_omitted?(args)
   end
 
-  defp doc_shell_tree_checklist_item_ids(%Community{} = community) do
-    Checklist.doc_shell_tree_checklist_item_ids(community)
+  defp doc_shell_tree_checklist_item_ids(%Community{} = community, branch) do
+    Checklist.doc_shell_tree_checklist_item_ids(community, branch)
   end
 
-  defp prepare_tree_checklist_items(%Community{} = community, tree_checklist_item_ids) do
-    events = selected_tree_events(community, tree_checklist_item_ids)
+  defp prepare_tree_checklist_items(%Community{} = community, branch, tree_checklist_item_ids) do
+    events = selected_tree_events(community, branch, tree_checklist_item_ids)
 
     if length(events) != length(tree_checklist_item_ids) do
       {:error, {:custom, "Selected tree publish item no longer exists."}}
     else
-      article_snapshots = Release.article_snapshots_before_tree_events(community, events)
+      article_snapshots = Release.article_snapshots_before_tree_events(community, branch, events)
 
       {:ok, %{events: events, article_snapshots: article_snapshots}}
     end
@@ -367,29 +400,31 @@ defmodule GroupherServer.CMS.DocTree.Publish do
 
   defp delete_event_nodes(_event), do: []
 
-  defp restore_tree_checklist_items(_community, [], _user), do: {:ok, []}
+  defp restore_tree_checklist_items(_community, _branch, [], _user), do: {:ok, []}
 
   defp restore_tree_checklist_items(
          %Community{} = community,
+         branch,
          restore_tree_checklist_item_ids,
          %User{} = user
        ) do
-    events = selected_tree_events(community, restore_tree_checklist_item_ids)
+    events = selected_tree_events(community, branch, restore_tree_checklist_item_ids)
 
     if length(events) != length(restore_tree_checklist_item_ids) do
       {:error, {:custom, "Selected tree restore item no longer exists."}}
     else
-      Restore.restore_tree_events(community, events, user)
+      Restore.restore_tree_events(community, branch, events, user)
     end
   end
 
-  defp selected_tree_events(_community, []), do: []
+  defp selected_tree_events(_community, _branch, []), do: []
 
-  defp selected_tree_events(%Community{} = community, tree_checklist_item_ids) do
+  defp selected_tree_events(%Community{} = community, branch, tree_checklist_item_ids) do
     event_ids = Enum.flat_map(tree_checklist_item_ids, &tree_event_id/1)
 
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
+    |> where([e], e.branch_id == ^branch.id)
     |> where([e], e.status == CMS.Const.tree_event_status(:staged))
     |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
     |> where([e], e.id in ^event_ids)

@@ -7,7 +7,7 @@
 
 /* background */
 @source inline(
-  'bg-{pageBg,link,dot,digest,divider,hoverBg,sandBox,htmlBg,card,cardAlpha,popover-bg,menuHoverBg,menuInvertBg,alphaBg,button-redBg,button-toggle,button-fg,drawer-mask,modal-mask,modal-bg}'
+  'bg-{pageBg,link,dot,digest,divider,hoverBg,badge,sandBox,htmlBg,card,cardAlpha,popover-bg,menuHoverBg,menuInvertBg,alphaBg,button-redBg,button-toggle,button-fg,drawer-mask,modal-mask,modal-bg}'
 );
 
 /* rainbow */

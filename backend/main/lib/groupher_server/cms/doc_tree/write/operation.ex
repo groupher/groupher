@@ -24,30 +24,32 @@ defmodule GroupherServer.CMS.DocTree.Write.Operation do
   """
 
   alias GroupherServer.CMS
-  alias CMS.DocTree.{Read, Revision}
+  alias CMS.DocTree.{Branch, Read, Revision}
   alias CMS.Model.{Community, DocsSiteState, DocTreeNode}
   alias Helper.Transaction
 
   def run(%Community{} = community, args, fun) do
-    Transaction.lock_global("doc_tree:#{community.id}", fn ->
-      with {:ok, _site_state} <- Read.ensure_site_state(community),
-           {:ok, state} <- Read.ensure_draft_state(community),
-           :ok <- revision_check(state, Map.get(args, :base_revision)) do
-        fun.(state)
-      else
-        {:conflict, state} ->
-          {:ok,
-           %{
-             revision: state.tree_lock_version,
-             tree_state: Read.tree_state(community, state),
-             conflict: true,
-             affected_nodes: []
-           }}
+    with {:ok, branch} <- Branch.resolve(community, args) do
+      Transaction.lock_global("doc_tree:#{community.id}:#{branch.id}", fn ->
+        with {:ok, _site_state} <- Read.ensure_site_state(community, branch_id: branch.id),
+             {:ok, state} <- Read.ensure_draft_state(community, branch_id: branch.id),
+             :ok <- revision_check(state, Map.get(args, :base_revision)) do
+          fun.(branch, state)
+        else
+          {:conflict, state} ->
+            {:ok,
+             %{
+               revision: state.tree_lock_version,
+               tree_state: Read.tree_state(community, state),
+               conflict: true,
+               affected_nodes: []
+             }}
 
-        error ->
-          error
-      end
-    end)
+          error ->
+            error
+        end
+      end)
+    end
   end
 
   def bump_revision(%Community{} = community, %DocsSiteState{} = state, event_count),

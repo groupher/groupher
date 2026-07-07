@@ -24,7 +24,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.DocTree.Snapshot
+  alias CMS.DocTree.{Branch, Snapshot}
   alias CMS.Model.{Community, DocTreeEvent, DocTreeNode, DocTreeSnapshot}
   alias Helper.{ORM, T}
 
@@ -61,16 +61,18 @@ defmodule GroupherServer.CMS.DocTree.Events do
         opts \\ []
       ) do
     Repo.transaction(fn ->
-      with {:ok, _community} <- ORM.lock_community(community),
+      with {:ok, branch} <- Branch.resolve(community, opts),
+           {:ok, _community} <- ORM.lock_community(community),
            {:ok, event} <-
              insert_staged_event(
                community,
+               branch,
                event_type,
                payload,
                inverse_payload,
                author_id,
                opts,
-               next_seq(community)
+               next_seq(community, branch)
              ) do
         event
       else
@@ -80,10 +82,20 @@ defmodule GroupherServer.CMS.DocTree.Events do
     |> transaction_result()
   end
 
-  defp insert_staged_event(community, event_type, payload, inverse_payload, author_id, opts, seq) do
+  defp insert_staged_event(
+         community,
+         branch,
+         event_type,
+         payload,
+         inverse_payload,
+         author_id,
+         opts,
+         seq
+       ) do
     attrs =
       %{
         community_id: community.id,
+        branch_id: branch.id,
         seq: seq,
         event_type: event_type,
         payload: payload,
@@ -105,16 +117,17 @@ defmodule GroupherServer.CMS.DocTree.Events do
       iex> Events.record_staged_many(community, [%{type: "node.rename", payload: %{}, inverse: %{}}])
       {:ok, [%DocTreeEvent{owner: CMS.Const.tree_event_owner(:tree)}]}
   """
-  @spec record_staged_many(Community.t(), list(map()), integer() | nil) ::
+  @spec record_staged_many(Community.t(), list(map()), integer() | nil, keyword()) ::
           T.domain_res(list(DocTreeEvent.t()))
-  def record_staged_many(community, events, author_id \\ nil)
+  def record_staged_many(community, events, author_id \\ nil, opts \\ [])
 
-  def record_staged_many(%Community{}, [], _author_id), do: {:ok, []}
+  def record_staged_many(%Community{}, [], _author_id, _opts), do: {:ok, []}
 
-  def record_staged_many(%Community{} = community, events, author_id) do
+  def record_staged_many(%Community{} = community, events, author_id, opts) do
     Repo.transaction(fn ->
-      with {:ok, _community} <- ORM.lock_community(community) do
-        next_seq = next_seq(community)
+      with {:ok, branch} <- Branch.resolve(community, opts),
+           {:ok, _community} <- ORM.lock_community(community) do
+        next_seq = next_seq(community, branch)
 
         events
         |> Enum.with_index()
@@ -125,9 +138,11 @@ defmodule GroupherServer.CMS.DocTree.Events do
             attrs
             |> Map.take([:owner, :doc_id])
             |> Enum.into([])
+            |> Keyword.merge(branch_id: branch.id)
 
           case insert_staged_event(
                  community,
+                 branch,
                  type,
                  payload,
                  inverse,
@@ -156,9 +171,11 @@ defmodule GroupherServer.CMS.DocTree.Events do
   @spec staged_events(Community.t(), keyword()) :: list(DocTreeEvent.t())
   def staged_events(%Community{} = community, opts \\ []) do
     owner = Keyword.get(opts, :owner)
+    {:ok, branch} = Branch.resolve(community, opts)
 
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
+    |> where([e], e.branch_id == ^branch.id)
     |> where([e], e.status == CMS.Const.tree_event_status(:staged))
     |> maybe_filter_owner(owner)
     |> order_by([e], asc: e.seq, asc: e.id)
@@ -173,10 +190,13 @@ defmodule GroupherServer.CMS.DocTree.Events do
       iex> Events.staged_tree_event_count(community)
       2
   """
-  @spec staged_tree_event_count(Community.t()) :: non_neg_integer()
-  def staged_tree_event_count(%Community{} = community) do
+  @spec staged_tree_event_count(Community.t(), keyword()) :: non_neg_integer()
+  def staged_tree_event_count(%Community{} = community, opts \\ []) do
+    {:ok, branch} = Branch.resolve(community, opts)
+
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
+    |> where([e], e.branch_id == ^branch.id)
     |> where([e], e.status == CMS.Const.tree_event_status(:staged))
     |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
     |> Repo.aggregate(:count, :id)
@@ -279,6 +299,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
     {count, _} =
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
+      |> where([e], e.branch_id == ^snapshot.branch_id)
       |> where([e], e.status == CMS.Const.tree_event_status(:staged))
       |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
       |> Repo.update_all(
@@ -312,6 +333,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
     {count, _} =
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
+      |> where([e], e.branch_id == ^snapshot.branch_id)
       |> where([e], e.status == CMS.Const.tree_event_status(:staged))
       |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
       |> where([e], e.id in ^ids)
@@ -349,11 +371,14 @@ defmodule GroupherServer.CMS.DocTree.Events do
       iex> Events.mark_doc_bound_published(community, draft.doc_id)
       1
   """
-  @spec mark_doc_bound_published(Community.t(), String.t()) :: non_neg_integer()
-  def mark_doc_bound_published(%Community{} = community, doc_id) do
+  @spec mark_doc_bound_published(Community.t(), String.t(), keyword()) :: non_neg_integer()
+  def mark_doc_bound_published(%Community{} = community, doc_id, opts \\ []) do
+    {:ok, branch} = Branch.resolve(community, opts)
+
     {count, _} =
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
+      |> where([e], e.branch_id == ^branch.id)
       |> where([e], e.status == CMS.Const.tree_event_status(:staged))
       |> where([e], e.owner == CMS.Const.tree_event_owner(:doc))
       |> where([e], e.doc_id == ^doc_id)
@@ -367,6 +392,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
     {tree_page_create_count, _} =
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
+      |> where([e], e.branch_id == ^branch.id)
       |> where([e], e.status == CMS.Const.tree_event_status(:staged))
       |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
       |> where([e], e.event_type == CMS.Const.tree_event(:node_create))
@@ -386,15 +412,20 @@ defmodule GroupherServer.CMS.DocTree.Events do
   Marks staged Tree-owned create events for nodes that were published as part of
   doc publishing, such as auto-created parent groups.
   """
-  @spec mark_tree_create_published(Community.t(), list(String.t())) :: non_neg_integer()
-  def mark_tree_create_published(_community, []), do: 0
+  @spec mark_tree_create_published(Community.t(), list(String.t()), keyword()) ::
+          non_neg_integer()
+  def mark_tree_create_published(community, node_ids, opts \\ [])
 
-  def mark_tree_create_published(%Community{} = community, node_ids) do
+  def mark_tree_create_published(_community, [], _opts), do: 0
+
+  def mark_tree_create_published(%Community{} = community, node_ids, opts) do
+    {:ok, branch} = Branch.resolve(community, opts)
     node_ids = Enum.map(node_ids, &to_string/1)
 
     {count, _} =
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
+      |> where([e], e.branch_id == ^branch.id)
       |> where([e], e.status == CMS.Const.tree_event_status(:staged))
       |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
       |> where([e], e.event_type == CMS.Const.tree_event(:node_create))
@@ -413,15 +444,19 @@ defmodule GroupherServer.CMS.DocTree.Events do
   Discards staged doc-bound events for docs that were removed from the draft
   tree before they were published.
   """
-  @spec discard_doc_bound_staged(Community.t(), list(String.t())) :: non_neg_integer()
-  def discard_doc_bound_staged(_community, []), do: 0
+  @spec discard_doc_bound_staged(Community.t(), list(String.t()), keyword()) :: non_neg_integer()
+  def discard_doc_bound_staged(community, doc_ids, opts \\ [])
 
-  def discard_doc_bound_staged(%Community{} = community, doc_ids) do
+  def discard_doc_bound_staged(_community, [], _opts), do: 0
+
+  def discard_doc_bound_staged(%Community{} = community, doc_ids, opts) do
+    {:ok, branch} = Branch.resolve(community, opts)
     doc_ids = Enum.map(doc_ids, &to_string/1)
 
     {count, _} =
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
+      |> where([e], e.branch_id == ^branch.id)
       |> where([e], e.status == CMS.Const.tree_event_status(:staged))
       |> where([e], e.owner == CMS.Const.tree_event_owner(:doc))
       |> where([e], e.doc_id in ^doc_ids)
@@ -435,6 +470,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
     {tree_page_create_count, _} =
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
+      |> where([e], e.branch_id == ^branch.id)
       |> where([e], e.status == CMS.Const.tree_event_status(:staged))
       |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
       |> where([e], e.event_type == CMS.Const.tree_event(:node_create))
@@ -454,15 +490,20 @@ defmodule GroupherServer.CMS.DocTree.Events do
   Discards staged Tree-owned create events for draft-only nodes that were removed
   before ever being published.
   """
-  @spec discard_tree_create_staged(Community.t(), list(String.t())) :: non_neg_integer()
-  def discard_tree_create_staged(_community, []), do: 0
+  @spec discard_tree_create_staged(Community.t(), list(String.t()), keyword()) ::
+          non_neg_integer()
+  def discard_tree_create_staged(community, node_ids, opts \\ [])
 
-  def discard_tree_create_staged(%Community{} = community, node_ids) do
+  def discard_tree_create_staged(_community, [], _opts), do: 0
+
+  def discard_tree_create_staged(%Community{} = community, node_ids, opts) do
+    {:ok, branch} = Branch.resolve(community, opts)
     node_ids = Enum.map(node_ids, &to_string/1)
 
     {count, _} =
       DocTreeEvent
       |> where([e], e.community_id == ^community.id)
+      |> where([e], e.branch_id == ^branch.id)
       |> where([e], e.status == CMS.Const.tree_event_status(:staged))
       |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
       |> where([e], e.event_type == CMS.Const.tree_event(:node_create))
@@ -494,12 +535,21 @@ defmodule GroupherServer.CMS.DocTree.Events do
   @spec publish_snapshot(Community.t(), integer() | nil, String.t() | nil, keyword()) ::
           T.domain_res(DocTreeSnapshot.t())
   def publish_snapshot(%Community{} = community, author_id \\ nil, message \\ nil, opts \\ []) do
-    tree_json = Keyword.get(opts, :tree_json) || Snapshot.draft_json(community)
+    with {:ok, branch} <- Branch.resolve(community, opts) do
+      do_publish_snapshot(community, branch, author_id, message, opts)
+    end
+  end
+
+  defp do_publish_snapshot(%Community{} = community, branch, author_id, message, opts) do
+    tree_json =
+      Keyword.get(opts, :tree_json) || Snapshot.draft_json(community, branch_id: branch.id)
+
     event_ids = Keyword.get(opts, :event_ids)
 
     with {:ok, snapshot} <-
            ORM.create(DocTreeSnapshot, %{
              community_id: community.id,
+             branch_id: branch.id,
              tree_json: tree_json,
              tree_hash: Snapshot.hash(tree_json),
              author_id: author_id,
@@ -681,9 +731,10 @@ defmodule GroupherServer.CMS.DocTree.Events do
   defp transaction_result({:ok, result}), do: {:ok, result}
   defp transaction_result({:error, reason}), do: {:error, reason}
 
-  defp next_seq(%Community{} = community) do
+  defp next_seq(%Community{} = community, branch) do
     DocTreeEvent
     |> where([e], e.community_id == ^community.id)
+    |> where([e], e.branch_id == ^branch.id)
     |> select([e], max(e.seq))
     |> Repo.one()
     |> case do

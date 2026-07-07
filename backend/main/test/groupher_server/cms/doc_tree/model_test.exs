@@ -69,6 +69,7 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
       changeset =
         DocTreeNode.changeset(%DocTreeNode{}, %{
           community_id: 1,
+          branch_id: 1,
           node_id: "pin-1",
           stage: :draft,
           type: :pin,
@@ -101,6 +102,7 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
       changeset =
         DocTreeTrashItem.changeset(%DocTreeTrashItem{}, %{
           community_id: 1,
+          branch_id: 1,
           node_id: "page-1",
           doc_id: Ecto.UUID.generate(),
           node_snapshot: %{"id" => "page-1"},

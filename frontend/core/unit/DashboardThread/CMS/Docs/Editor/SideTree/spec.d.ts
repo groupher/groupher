@@ -155,6 +155,23 @@ export type TDocTreeMutationPayload = {
 
 export type TDocTreeMutationData = Record<string, TDocTreeMutationPayload | null | undefined>
 
+export type TDocTreeTrashItem = {
+  id: string
+  nodeId: string
+  docId?: string | null
+  type?: string | null
+  title?: string | null
+  slug?: string | null
+  deletedFromGroupId?: string | null
+  deletedFromIndex?: number | null
+  deletedAt?: string | null
+  restoredAt?: string | null
+}
+
+export type TDocTreeTrashData = {
+  docTreeTrashItems?: TDocTreeTrashItem[] | null
+}
+
 export type TDocTreeInitialData = {
   revision: number
   treeState?: TDocTreeState | null

@@ -150,6 +150,18 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       resolve(&R.CMS.delete_doc_tree_node/3)
     end
 
+    @desc "restore a docs tree item from product trash"
+    field :restore_doc_tree_trash_item, :doc_tree_mutation_payload do
+      arg(:community, non_null(:string))
+      arg(:id, non_null(:id))
+      arg(:base_revision, non_null(:integer))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
+      resolve(&R.CMS.restore_doc_tree_trash_item/3)
+    end
+
     @desc "duplicate a docs tree node"
     field :duplicate_doc_tree_node, :doc_tree_mutation_payload do
       arg(:community, non_null(:string))

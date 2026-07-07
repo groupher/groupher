@@ -526,6 +526,23 @@ const docPublishChecklist = gql`
   }
 `
 
+const docTreeTrashItems = gql`
+  query docTreeTrashItems($community: String!) {
+    docTreeTrashItems(community: $community) {
+      id
+      nodeId
+      docId
+      type
+      title
+      slug
+      deletedFromGroupId
+      deletedFromIndex
+      deletedAt
+      restoredAt
+    }
+  }
+`
+
 const docDraft = gql`
   query docDraft($community: String!, $id: ID!) {
     docDraft(community: $community, id: $id) {
@@ -798,6 +815,14 @@ const restoreDocDraftSnapshot = gql`
 const deleteDocTreeNode = gql`
   mutation ($community: String!, $id: ID!, $baseRevision: Int!) {
     deleteDocTreeNode(community: $community, id: $id, baseRevision: $baseRevision) {
+      ${docTreeMutationPayload}
+    }
+  }
+`
+
+const restoreDocTreeTrashItem = gql`
+  mutation ($community: String!, $id: ID!, $baseRevision: Int!) {
+    restoreDocTreeTrashItem(community: $community, id: $id, baseRevision: $baseRevision) {
       ${docTreeMutationPayload}
     }
   }
@@ -1076,6 +1101,7 @@ const schema = {
   updateDashboardDocFaq,
   docTree,
   docPublishChecklist,
+  docTreeTrashItems,
   docDraft,
   docDraftSnapshots,
   createDocTreeGroup,
@@ -1090,6 +1116,7 @@ const schema = {
   moveDocTreeGroupToDraft,
   restoreDocDraftSnapshot,
   deleteDocTreeNode,
+  restoreDocTreeTrashItem,
   duplicateDocTreeNode,
   moveDocTreeNode,
   addDocCoverGroup,
