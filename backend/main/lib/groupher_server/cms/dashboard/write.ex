@@ -5,7 +5,8 @@ defmodule GroupherServer.CMS.Dashboard.Write do
   Dashboard updates arrive as GraphQL section payloads and are normalized before
   replacing the matching section on `CommunityDashboard`. Base-info writes are a
   special case because they must keep the community row and dashboard embed in
-  sync inside one transaction.
+  sync. Dashboard creation is ensured before the write; `sync_base_info` and
+  `ORM.replace_dsb_section` then run inside one transaction.
 
       CMS resolver
           |

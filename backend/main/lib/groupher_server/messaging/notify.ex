@@ -2,9 +2,9 @@ defmodule GroupherServer.Messaging.Notify do
   @moduledoc """
   Placeholder dispatch boundary for future async notification delivery.
 
-  Today the function validates the event shape and returns `:pass`. Keeping the
-  boundary explicit lets callers depend on a stable notification dispatch API
-  while delivery channels are added later.
+  Today the function validates the event shape and returns `{:ok, :pass}`.
+  Keeping the boundary explicit lets callers depend on a stable notification
+  dispatch API while delivery channels are added later.
   """
 
   @spec dispatch(atom(), map()) :: {:ok, :pass} | {:error, term()}
