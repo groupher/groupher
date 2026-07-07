@@ -7,8 +7,9 @@ import { SAVE_ACTION_LABEL_KEY } from '../constant'
 import ActionGroup from './ActionGroup'
 import { PUBLISH_MODE } from './constant'
 import PublishDrawer from './Drawer'
+import { getPublishPlanAction } from './helper'
 import usePublishActions from './usePublishActions'
-import usePublishScope from './usePublishScope'
+import usePublishChecklist from './usePublishChecklist'
 
 const Publish: FC = () => {
   const { t } = useTrans()
@@ -16,39 +17,49 @@ const Publish: FC = () => {
   const [drawerVisible, setDrawerVisible] = useState(false)
   const {
     hasSelectedChanges,
-    publishScope,
-    reloadPublishScope,
+    publishPlan,
+    publishChecklist,
+    publishCountLabel,
+    reloadPublishChecklist,
     selectedDocIds,
     selectedInput,
     selectedTreeIds,
     setSelectedDocIds,
     setSelectedTreeIds,
-  } = usePublishScope()
+  } = usePublishChecklist()
   const selectedPublishDisabled =
     publishView.isPublishing || publishView.isSaving || !hasSelectedChanges
 
   const publishLabel = publishView.isPublishing
     ? t(SAVE_ACTION_LABEL_KEY.PUBLISHING)
     : t(SAVE_ACTION_LABEL_KEY.PUBLISH)
+  const publishPlanAction = getPublishPlanAction(publishPlan)
+  const selectedPublishLabel = publishView.isPublishing
+    ? t(SAVE_ACTION_LABEL_KEY.PUBLISHING)
+    : publishPlanAction === 'restore'
+      ? t(SAVE_ACTION_LABEL_KEY.RESTORE)
+      : publishPlanAction === 'apply'
+        ? t(SAVE_ACTION_LABEL_KEY.APPLY_CHANGES)
+        : t(SAVE_ACTION_LABEL_KEY.PUBLISH)
 
   const closeDrawer = useCallback(() => setDrawerVisible(false), [])
 
   const { publishDraft } = usePublishActions({
-    reloadPublishScope,
+    reloadPublishChecklist,
     selectedInput,
     selectedPublishDisabled,
     onPublished: closeDrawer,
   })
   const openOptions = useCallback(() => {
-    reloadPublishScope()
+    reloadPublishChecklist()
     setDrawerVisible(true)
-  }, [reloadPublishScope])
+  }, [reloadPublishChecklist])
 
   return (
     <>
       <ActionGroup
         publishLabel={publishLabel}
-        publishCount={publishView.publishCount}
+        publishCountLabel={publishCountLabel}
         showActions={publishView.showActions}
         publishDisabled={publishView.publishDisabled}
         optionsDisabled={publishView.optionsDisabled}
@@ -59,9 +70,10 @@ const Publish: FC = () => {
       {publishView.showActions && (
         <PublishDrawer
           show={drawerVisible}
-          publishScope={publishScope}
-          publishLabel={publishLabel}
-          publishCount={publishView.publishCount}
+          publishPlan={publishPlan}
+          publishChecklist={publishChecklist}
+          publishLabel={selectedPublishLabel}
+          publishCountLabel={publishCountLabel}
           selectedDocIds={selectedDocIds}
           selectedTreeIds={selectedTreeIds}
           selectedPublishDisabled={selectedPublishDisabled}

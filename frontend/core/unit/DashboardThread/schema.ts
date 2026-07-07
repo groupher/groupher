@@ -503,7 +503,7 @@ const docTree = gql`
   }
 `
 
-const docPublishScopeItemFields = `
+const docPublishChecklistItemFields = `
   id
   title
   action
@@ -512,15 +512,15 @@ const docPublishScopeItemFields = `
   disabledReason
 `
 
-const docPublishScope = gql`
-  query docPublishScope($community: String!) {
-    docPublishScope(community: $community) {
+const docPublishChecklist = gql`
+  query docPublishChecklist($community: String!) {
+    docPublishChecklist(community: $community) {
       totalCount
       docChanges {
-        ${docPublishScopeItemFields}
+        ${docPublishChecklistItemFields}
       }
       treeChanges {
-        ${docPublishScopeItemFields}
+        ${docPublishChecklistItemFields}
       }
     }
   }
@@ -725,13 +725,13 @@ const publishDocChanges = gql`
         releaseNumber
         publishedAt
       }
-      scope {
+      checklist {
         totalCount
         docChanges {
-          ${docPublishScopeItemFields}
+          ${docPublishChecklistItemFields}
         }
         treeChanges {
-          ${docPublishScopeItemFields}
+          ${docPublishChecklistItemFields}
         }
       }
     }
@@ -1075,7 +1075,7 @@ const schema = {
   pagedChangelogs,
   updateDashboardDocFaq,
   docTree,
-  docPublishScope,
+  docPublishChecklist,
   docDraft,
   docDraftSnapshots,
   createDocTreeGroup,

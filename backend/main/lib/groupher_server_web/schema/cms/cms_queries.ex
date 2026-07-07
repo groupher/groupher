@@ -27,13 +27,13 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.doc_tree/3)
     end
 
-    @desc "dashboard docs unified publish scope"
-    field :doc_publish_scope, :doc_publish_scope do
+    @desc "dashboard docs unified publish checklist"
+    field :doc_publish_checklist, :doc_publish_checklist do
       arg(:community, non_null(:string))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.doc_publish_scope/3)
+      resolve(&R.CMS.doc_publish_checklist/3)
     end
 
     @desc "public community docs cover"

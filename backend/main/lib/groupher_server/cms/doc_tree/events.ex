@@ -297,7 +297,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
 
   Unified publish can publish a subset of the pending checklist. In that path we
   must not archive every staged Tree event, otherwise unchecked items disappear
-  from the next `publishScope`.
+  from the next `publishChecklist`.
 
   ## Examples
 

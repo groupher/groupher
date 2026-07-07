@@ -79,8 +79,8 @@ type RootQueryType {
   "community docs side tree"
   docTree(community: String!): DocTree
 
-  "dashboard docs unified publish scope"
-  docPublishScope(community: String!): DocPublishScope
+  "dashboard docs unified publish checklist"
+  docPublishChecklist(community: String!): DocPublishChecklist
 
   "public community docs cover"
   docCover(community: String!, view: DocCoverView): DocCover
@@ -927,7 +927,7 @@ type DocTree {
   groups: [DocTreeNode]
 }
 
-type DocPublishScopeItem {
+type DocPublishChecklistItem {
   id: ID!
   title: String!
   action: String!
@@ -936,10 +936,10 @@ type DocPublishScopeItem {
   disabledReason: String
 }
 
-type DocPublishScope {
+type DocPublishChecklist {
   totalCount: Int!
-  docChanges: [DocPublishScopeItem!]!
-  treeChanges: [DocPublishScopeItem!]!
+  docChanges: [DocPublishChecklistItem!]!
+  treeChanges: [DocPublishChecklistItem!]!
 }
 
 type PublishRelease {
@@ -951,12 +951,13 @@ type PublishRelease {
 type DocPublishChangesPayload {
   done: Boolean!
   release: PublishRelease
-  scope: DocPublishScope!
+  checklist: DocPublishChecklist!
 }
 
 input DocPublishChangesInput {
   docChangeIds: [ID]
   treeChangeIds: [ID]
+  restoreTreeChangeIds: [ID]
 }
 
 type DocCover {

@@ -4,17 +4,17 @@ import useTrans from '~/hooks/useTrans'
 
 import { SAVE_ACTION_LABEL_KEY } from '../constant'
 import { toggleId } from './helper'
-import useSalon from './salon/scope_section'
-import type { TPublishScopeItem } from './spec'
+import useSalon from './salon/checklist_section'
+import type { TPublishChecklistItem } from './spec'
 
 type TProps = {
   title: string
-  items: TPublishScopeItem[]
+  items: TPublishChecklistItem[]
   selectedIds: string[]
   onSelectedIdsChange: (ids: string[]) => void
 }
 
-const ScopeSection: FC<TProps> = ({ title, items, selectedIds, onSelectedIdsChange }) => {
+const ChecklistSection: FC<TProps> = ({ title, items, selectedIds, onSelectedIdsChange }) => {
   const s = useSalon()
   const { t } = useTrans()
 
@@ -55,4 +55,4 @@ const ScopeSection: FC<TProps> = ({ title, items, selectedIds, onSelectedIdsChan
   )
 }
 
-export default ScopeSection
+export default ChecklistSection

@@ -6,7 +6,7 @@ import useTrans from '~/hooks/useTrans'
 import useCommunity from '~/stores/community/hooks'
 import { toast } from '~/widgets/Toaster'
 
-import { reloadDocPublishScope } from '../helper'
+import { reloadDocPublishChecklist } from '../helper'
 import { formatMutationError } from './helper'
 import type { TDocTreeMutationData, TDocTreeMutationPayload, TDocTreeState } from './spec'
 
@@ -52,7 +52,7 @@ export default function useSideTreePersistence({
         if (payload) {
           revisionRef.current = payload.revision
           setTreeState(payload.treeState ?? null)
-          reloadDocPublishScope()
+          reloadDocPublishChecklist()
         }
 
         return payload

@@ -41,11 +41,11 @@ defmodule GroupherServer.CMS.DocTree do
 
   ## Examples
 
-      iex> DocTree.publish_scope(community).total_count
+      iex> DocTree.publish_checklist(community).total_count
       2
   """
-  @spec publish_scope(Community.t()) :: map()
-  def publish_scope(%Community{} = community), do: Publish.scope(community)
+  @spec publish_checklist(Community.t()) :: map()
+  def publish_checklist(%Community{} = community), do: Publish.checklist(community)
 
   @doc """
   Publishes selected docs changes and creates one release checkpoint.

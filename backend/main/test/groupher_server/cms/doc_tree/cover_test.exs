@@ -3,6 +3,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
   use GroupherServer.TestMate
 
+  require CMS.Const
+
   describe "[doc cover sync]" do
     setup do
       {:ok, user} = db_insert(:user)
@@ -41,9 +43,12 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       assert [%{group: %{title: "Guides"}, items: [%{node: %{title: "Install"}}]}] = cover.groups
       assert cover.pinned_items == []
 
+      {:ok, public_doc} = published_doc(community, page_payload.node.doc_id)
+      assert public_doc.inner_id == 1
+
       [cover_group] = cover.groups
       [cover_item] = cover_group.items
-      assert cover_item.node.href == "/#{community.slug}/doc/install"
+      assert cover_item.node.href == "/#{community.slug}/doc/#{public_doc.inner_id}/install"
 
       [group] = tree.groups
       [page] = group.children
@@ -125,7 +130,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       assert Enum.all?(group.children, & &1.publish_state.published)
       assert Enum.all?(group.children, & &1.publish_state.in_cover)
 
-      assert CMS.DocTree.publish_scope(community).doc_changes == []
+      assert CMS.DocTree.publish_checklist(community).doc_changes == []
 
       assert second_page_payload.node.title == "Advanced"
     end
@@ -187,7 +192,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       assert Enum.all?(group.children, &(&1.publish_state.published_before == true))
     end
 
-    test "tree node changes are staged at Tree scope instead of page publish scope",
+    test "tree node changes are staged as tree events instead of page publish checklist",
          ~m(user community page_payload)a do
       {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
       {:ok, tree} = CMS.DocTree.read(community)
@@ -214,7 +219,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       assert tree.tree_state.staged_event_count > 0
       assert Enum.any?(tree.staged_events, &(&1.event_type == "node.rename"))
 
-      assert CMS.DocTree.publish_scope(community).doc_changes == []
+      assert CMS.DocTree.publish_checklist(community).doc_changes == []
     end
 
     test "publishes staged Tree changes into a Tree snapshot release",
@@ -468,6 +473,14 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
   defp publish_all_changes(community, user, opts \\ []) do
     CMS.DocTree.publish_changes(community, %{}, user, opts)
+  end
+
+  defp published_doc(community, doc_id) do
+    ORM.find_by(CMS.Model.Doc,
+      community_id: community.id,
+      stage: CMS.Const.stage(:public),
+      doc_id: doc_id
+    )
   end
 
   defp publish_tree_changes(community, user) do

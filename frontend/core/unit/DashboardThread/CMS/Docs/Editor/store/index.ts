@@ -31,9 +31,9 @@ const EMPTY_DOC_DRAFT_INFO: TDocDraftInfo = {
 
 const DEFAULT_PUBLISH_RUNTIME: TDocPublishRuntime = {
   isPublishing: false,
-  scopeLoaded: false,
+  checklistLoaded: false,
   publishCount: 0,
-  hasSelectableScopeItems: false,
+  hasSelectableChecklistItems: false,
 }
 
 const hasTreeChanges = (sideTree: TSideTreeController): boolean => {
@@ -60,41 +60,42 @@ const buildPublishView = (
     activeNode?.type === SIDE_TREE_NODE_TYPE.PAGE && activeNode.docId ? activeNode : null
   const treeChanges = hasTreeChanges(sideTree)
   const nodeChanges = hasNodeChanges(sideTree)
-  const hasScopeItems = runtime.publishCount > 0
-  const scopeSaysClean = runtime.scopeLoaded && !hasScopeItems
+  const hasChecklistItems = runtime.publishCount > 0
+  const checklistSaysClean = runtime.checklistLoaded && !hasChecklistItems
   const isDirty = saveStatus === 'dirty'
   const isSaving = saveStatus === 'saving'
-  const hasPublishedScope =
-    runtime.scopeLoaded &&
-    runtime.hasSelectableScopeItems &&
-    (treeChanges || nodeChanges || hasScopeItems)
+  const hasPublishedChecklist =
+    runtime.checklistLoaded &&
+    runtime.hasSelectableChecklistItems &&
+    (treeChanges || nodeChanges || hasChecklistItems)
   const activePageNeedsPublish = needsPublishAttention(activePage?.publishState)
   const showActions =
-    hasPublishedScope || activePageNeedsPublish || isDirty || isSaving || runtime.isPublishing
+    hasPublishedChecklist || activePageNeedsPublish || isDirty || isSaving || runtime.isPublishing
 
   // Keep command availability separate from visibility:
   // - publishing keeps the button visible but blocks duplicate publish mutations.
-  // - saving keeps publish disabled until the backend has a durable draft/scope.
-  // - a freshly loaded empty publish scope means the server sees nothing to publish;
+  // - saving keeps publish disabled until the backend has a durable draft/checklist.
+  // - a freshly loaded empty publish checklist means the server sees nothing to publish;
   //   this wins over stale SideTree node state until the tree reload catches up.
-  // - if there are no selectable scope items, no tree/node changes, and no dirty editor,
+  // - if there are no selectable checklist items, no tree/node changes, and no dirty editor,
   //   there is nothing actionable even if the shell is still mounted for animation.
   const publishDisabled =
     runtime.isPublishing ||
     isSaving ||
     isDirty ||
-    !hasPublishedScope ||
-    (!runtime.hasSelectableScopeItems &&
-      (scopeSaysClean || (!treeChanges && !nodeChanges)) &&
+    !hasPublishedChecklist ||
+    (!runtime.hasSelectableChecklistItems &&
+      (checklistSaysClean || (!treeChanges && !nodeChanges)) &&
       !isDirty)
 
-  const optionsDisabled = runtime.isPublishing || isSaving || !runtime.scopeLoaded || !hasScopeItems
+  const optionsDisabled =
+    runtime.isPublishing || isSaving || !runtime.checklistLoaded || !hasChecklistItems
 
   return {
     activeNodeId: activeNode?.id ?? null,
     activeDocId: activePage?.docId ?? null,
     hasTreeChanges: treeChanges,
-    hasScopeItems,
+    hasChecklistItems,
     isDirty,
     isSaving,
     isPublishing: runtime.isPublishing,
@@ -102,7 +103,7 @@ const buildPublishView = (
     publishDisabled,
     optionsDisabled,
     publishCount: runtime.publishCount,
-    scopeStatus: !runtime.scopeLoaded ? 'checking' : hasScopeItems ? 'pending' : 'none',
+    checklistStatus: !runtime.checklistLoaded ? 'checking' : hasChecklistItems ? 'pending' : 'none',
   }
 }
 

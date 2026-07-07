@@ -225,8 +225,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Articles.restore_doc_draft_snapshot(community, doc_id, snapshot_id)
   end
 
-  def doc_publish_scope(_root, %{community: community}, _info) do
-    {:ok, CMS.DocTree.publish_scope(community)}
+  def doc_publish_checklist(_root, %{community: community}, _info) do
+    {:ok, CMS.DocTree.publish_checklist(community)}
   end
 
   def publish_doc_changes(

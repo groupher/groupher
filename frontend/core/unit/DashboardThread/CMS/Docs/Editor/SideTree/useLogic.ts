@@ -10,7 +10,7 @@ import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
 import { toast } from '~/widgets/Toaster'
 
-import { reloadDocPublishScope } from '../helper'
+import { reloadDocPublishChecklist } from '../helper'
 import {
   DEFAULT_LINK_MARKER,
   SIDE_TREE_NODE_MENU_ACTION,
@@ -631,7 +631,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
           } satisfies TDocTreeNodePublishState
 
           patchChild(childId, { publishState })
-          reloadDocPublishScope()
+          reloadDocPublishChecklist()
           send(DSB_DOC_EVENT.DRAFT_PATCH, {
             docId:
               payload?.docId ?? (current?.type === SIDE_TREE_NODE_TYPE.PAGE ? current.docId : null),

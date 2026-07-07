@@ -7,7 +7,7 @@ import useSalon, { cn } from './salon/action_group'
 
 type TProps = {
   publishLabel: string
-  publishCount: number
+  publishCountLabel: string | null
   showActions: boolean
   publishDisabled: boolean
   optionsDisabled: boolean
@@ -17,7 +17,7 @@ type TProps = {
 
 const ActionGroup: FC<TProps> = ({
   publishLabel,
-  publishCount,
+  publishCountLabel,
   showActions,
   publishDisabled,
   optionsDisabled,
@@ -33,7 +33,7 @@ const ActionGroup: FC<TProps> = ({
     <div className={cn(s.motion, showActions ? s.visible : s.hidden)} aria-hidden={!showActions}>
       <div
         className={cn(s.group, disabled && s.disabled)}
-        title={t(SAVE_ACTION_LABEL_KEY.PUBLISH_SCOPE)}
+        title={t(SAVE_ACTION_LABEL_KEY.PUBLISH_CHECKLIST)}
       >
         <button
           type='button'
@@ -55,7 +55,7 @@ const ActionGroup: FC<TProps> = ({
           onClick={onOpenOptions}
         >
           <div className={s.divider} />
-          {publishCount > 0 && <span className={s.publishCount}>{publishCount}</span>}
+          {publishCountLabel && <span className={s.publishCount}>{publishCountLabel}</span>}
         </button>
       </div>
     </div>

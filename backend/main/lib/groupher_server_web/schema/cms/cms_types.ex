@@ -162,7 +162,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:groups, list_of(:doc_tree_node))
   end
 
-  object :doc_publish_scope_item do
+  object :doc_publish_checklist_item do
     field(:id, non_null(:id))
     field(:title, non_null(:string))
     field(:action, non_null(:string))
@@ -171,10 +171,10 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:disabled_reason, :string)
   end
 
-  object :doc_publish_scope do
+  object :doc_publish_checklist do
     field(:total_count, non_null(:integer))
-    field(:doc_changes, non_null(list_of(non_null(:doc_publish_scope_item))))
-    field(:tree_changes, non_null(list_of(non_null(:doc_publish_scope_item))))
+    field(:doc_changes, non_null(list_of(non_null(:doc_publish_checklist_item))))
+    field(:tree_changes, non_null(list_of(non_null(:doc_publish_checklist_item))))
   end
 
   object :publish_release do
@@ -186,12 +186,13 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :doc_publish_changes_payload do
     field(:done, non_null(:boolean))
     field(:release, :publish_release)
-    field(:scope, non_null(:doc_publish_scope))
+    field(:checklist, non_null(:doc_publish_checklist))
   end
 
   input_object :doc_publish_changes_input do
     field(:doc_change_ids, list_of(:id))
     field(:tree_change_ids, list_of(:id))
+    field(:restore_tree_change_ids, list_of(:id))
   end
 
   object :doc_cover do

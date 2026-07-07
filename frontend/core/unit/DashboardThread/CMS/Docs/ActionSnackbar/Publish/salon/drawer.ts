@@ -13,7 +13,8 @@ export default function useSalon() {
     closeIcon: cn('size-3.5', fill('digest'), hover('icon')),
     body: 'min-h-0 flex-1 overflow-y-auto px-5 py-4',
     menu: cn('column w-full gap-3', fg('digest')),
-    footer: cn('row-center justify-end shrink-0 border-t px-5 py-4', br('divider')),
+    footer: cn('column shrink-0 gap-3 border-t px-5 py-4', br('divider')),
+    footerActions: 'row-center justify-end',
     publishButton: cn(
       'row-center h-8 px-4 rounded-lg button-reset text-sm bold-sm whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed',
       primary('bg'),
