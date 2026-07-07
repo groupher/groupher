@@ -29,6 +29,8 @@ defmodule GroupherServer.FrontDesk do
   def article(community, thread, inner_id) when is_binary(community) do
     preload = [[author: :user], :community]
 
-    CMS.FrontDesk.article(community, thread, inner_id, preload: preload)
+    with {:ok, community} <- community(community) do
+      CMS.FrontDesk.article(community, thread, inner_id, preload: preload)
+    end
   end
 end

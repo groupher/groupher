@@ -25,13 +25,13 @@ defmodule GroupherServer.CMS.Articles do
   }
 
   # Read
-  @spec read(String.t(), T.thread(), T.id()) :: T.domain_res(T.article())
-  def read(community_slug, thread, inner_id),
-    do: Read.read(community_slug, thread, inner_id)
+  @spec read(Community.t(), T.thread(), T.id()) :: T.domain_res(T.article())
+  def read(%Community{} = community, thread, inner_id),
+    do: Read.read(community, thread, inner_id)
 
-  @spec read(String.t(), T.thread(), T.id(), User.t()) :: T.domain_res(T.article())
-  def read(community_slug, thread, inner_id, %User{} = user) do
-    Read.read(community_slug, thread, inner_id, user)
+  @spec read(Community.t(), T.thread(), T.id(), User.t()) :: T.domain_res(T.article())
+  def read(%Community{} = community, thread, inner_id, %User{} = user) do
+    Read.read(community, thread, inner_id, user)
   end
 
   # List

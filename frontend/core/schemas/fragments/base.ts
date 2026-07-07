@@ -107,7 +107,6 @@ export const author = `
 `
 export const article = `
   innerId
-  communitySlug
   isPinned
   title
   insertedAt

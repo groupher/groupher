@@ -74,6 +74,7 @@ defmodule GroupherServer.CMS.FrontDesk do
 
     with {:ok, %{community: community, thread: thread, inner_id: article_inner_id}} <-
            ArticlePath.parse(article_path),
+         {:ok, community} <- community(community),
          {:ok, inner_id} <- parse_comment_inner_id(inner_id),
          {:ok, article} <- article(community, thread, article_inner_id),
          {:ok, info} <- match(thread),
@@ -386,22 +387,19 @@ defmodule GroupherServer.CMS.FrontDesk do
   @spec article(ArticlePath.t(), keyword()) :: {:ok, struct()} | {:error, map()}
   def article(%{} = article_path, opts \\ []) do
     with {:ok, %{community: community, thread: thread, inner_id: inner_id}} <-
-           ArticlePath.parse(article_path) do
+           ArticlePath.parse(article_path),
+         {:ok, community} <- community(community) do
       article(community, thread, inner_id, opts)
     end
   end
 
-  @spec article(Community.t() | String.t(), atom(), integer() | String.t(), keyword()) ::
+  @spec article(Community.t(), atom(), integer() | String.t(), keyword()) ::
           {:ok, struct()} | {:error, map()}
-  def article(community_or_slug, thread, inner_id, opts \\ [])
+  def article(community, thread, inner_id, opts \\ [])
 
-  def article(%Community{} = community, thread, inner_id, opts) do
-    article(community.slug, thread, inner_id, opts)
-  end
-
-  def article(community_slug, thread, inner_id, opts) do
+  def article(%Community{id: community_id}, thread, inner_id, opts) do
     preload = Keyword.get(opts, :preload, [])
-    query = %{community_slug: community_slug, inner_id: inner_id}
+    query = %{community_id: community_id, inner_id: inner_id}
 
     with {:ok, info} <- match(thread),
          {:ok, article} <- ORM.find_by(info.model, query, preload: preload),

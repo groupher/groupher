@@ -465,7 +465,6 @@ defmodule GroupherServer.CMS.Articles.Draft do
 
     %{
       active_at: draft.inserted_at || DateTime.truncate(DateTime.utc_now(), :second),
-      community_slug: community.slug,
       inner_id: next_inner_id,
       stage: CMS.Const.stage(:public)
     }

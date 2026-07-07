@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
     variables = %{
-      article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"}
+      article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}
     }
 
     results = guest_conn |> gq_query(@query, variables)
@@ -107,7 +107,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         CMS.Comments.create_comment(community, thread, doc.inner_id, mock_comment(), user)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"}
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}
       }
 
       results = guest_conn |> gq_query(Schema.q(:article, :doc), variables)
@@ -131,7 +131,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         CMS.Comments.create_comment(community, thread, doc.inner_id, mock_comment(), user2)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"}
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}
       }
 
       results = guest_conn |> gq_query(Schema.q(:article, :doc), variables)
@@ -241,7 +241,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
         filter: %{page: 1, size: page_size}
       }
 
@@ -294,7 +294,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         CMS.Comments.reply_comment(random_comment.id, mock_comment(), user2)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
         mode: "TIMELINE",
         filter: %{page: 1, size: page_size}
       }
@@ -346,7 +346,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         CMS.Comments.reply_comment(parent_comment.id, mock_comment(), user2)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
         filter: %{page: 1, size: 10},
         mode: "TIMELINE"
       }
@@ -385,7 +385,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       end)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
         filter: %{page: 1, size: 10}
       }
 
@@ -420,7 +420,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       {:ok, pinned_comment2} = CMS.Comments.pin_comment(comment.id)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
         filter: %{page: 1, size: 10}
       }
 
@@ -450,7 +450,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       end)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
         filter: %{page: 1, size: page_size}
       }
 
@@ -479,7 +479,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         CMS.Comments.create_comment(community, thread, doc.inner_id, mock_comment(), user)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
         filter: %{page: 1, size: page_size},
         mode: "TIMELINE"
       }
@@ -509,7 +509,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         CMS.Comments.create_comment(community, thread, doc.inner_id, mock_comment(), user)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
         filter: %{page: 1, size: page_size, sort: "DESC_INSERTED"},
         mode: "TIMELINE"
       }
@@ -546,7 +546,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       {:ok, _reply_comment} = CMS.Comments.reply_comment(comment3.id, mock_comment(), user2)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
         filter: %{page: 1, size: page_size, sort: "DESC_INSERTED"}
       }
 
@@ -584,7 +584,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       {:ok, _} = CMS.Comments.upvote_comment(upvote_comment2.id, user2)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
         filter: %{page: 1, size: page_size}
       }
 
@@ -633,7 +633,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       {:ok, _} = CMS.Comments.upvote_comment(author_comment.id, author_user)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
         filter: %{page: 1, size: page_size}
       }
 
@@ -681,7 +681,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       {:ok, _} = CMS.Comments.emotion_to_comment(comment2.id, :beer, user2)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
         filter: %{page: 1, size: page_size}
       }
 
@@ -745,7 +745,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       {:ok, _} = CMS.Comments.emotion_to_comment(comment2.id, :downvote, user2)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
         filter: %{page: 1, size: page_size}
       }
 
@@ -781,7 +781,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
       {:ok, _} = CMS.Comments.upvote_comment(random_comment.id, user)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"},
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
         filter: %{page: 1, size: page_size}
       }
 
@@ -836,7 +836,7 @@ defmodule GroupherServer.Test.Query.Comments.DocComment do
         CMS.Comments.create_comment(community, :doc, doc.inner_id, mock_comment(), user)
 
       variables = %{
-        article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: thread},
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: thread},
         filter: %{page: 1, size: page_size}
       }
 

@@ -74,6 +74,11 @@ defmodule GroupherServer.CMS.Comments do
   def paged_comments_participants(thread, article_id, filters),
     do: List.paged_comments_participants(thread, article_id, filters)
 
+  @spec create_comment(T.thread(), T.article(), String.t(), User.t()) :: T.domain_res(Comment.t())
+  def create_comment(thread, article, body, %User{} = user) do
+    Write.create(thread, article, body, user)
+  end
+
   @spec create_comment(Community.t(), T.thread(), T.id(), String.t(), User.t()) ::
           T.domain_res(Comment.t())
   def create_comment(%Community{} = community, thread, article_id, body, %User{} = user) do

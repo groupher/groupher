@@ -1224,7 +1224,6 @@ type Post implements Article {
   communityTags: [CommunityTag]
   author: User
   community: Community
-  communitySlug: String
   communities: [Community]
   meta: ArticleMeta
   upvotesCount: Int
@@ -1263,7 +1262,6 @@ type Changelog implements Article {
   communityTags: [CommunityTag]
   author: User
   community: Community
-  communitySlug: String
   communities: [Community]
   meta: ArticleMeta
   upvotesCount: Int
@@ -1300,7 +1298,6 @@ type Doc implements Article {
   communityTags: [CommunityTag]
   author: User
   community: Community
-  communitySlug: String
   communities: [Community]
   meta: ArticleMeta
   upvotesCount: Int
@@ -1338,7 +1335,6 @@ type Blog implements Article {
   communityTags: [CommunityTag]
   author: User
   community: Community
-  communitySlug: String
   communities: [Community]
   meta: ArticleMeta
   upvotesCount: Int

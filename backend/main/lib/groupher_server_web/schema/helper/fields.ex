@@ -37,7 +37,6 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:community_tags, list_of(:community_tag), resolve: dataloader(CMS, :community_tags))
       field(:author, :user, resolve: dataloader(CMS, :author))
       field(:community, :community, resolve: dataloader(CMS, :community))
-      field(:community_slug, :string)
       field(:communities, list_of(:community), resolve: dataloader(CMS, :communities))
 
       field(:meta, :article_meta)

@@ -19,7 +19,8 @@ defmodule GroupherServer.CMS.Articles.Write do
   alias Accounts.Model.User
   alias CMS.Articles.{Document, States}
   alias CMS.Communities.TagStats
-  alias CMS.Model.{Author, Community, Embeds}
+  alias CMS.DocTree.Branch
+  alias CMS.Model.{Author, Community, Doc, Embeds}
   alias CMS.{Assets, Communities, Covers, Events, FrontDesk}
   alias Helper.{Constant, ContentPipeline, Multi, Later, ORM, T, Transaction}
 
@@ -274,8 +275,9 @@ defmodule GroupherServer.CMS.Articles.Write do
     threads_name = model |> module_to_atom |> plural
 
     with {:ok, community} <- ORM.fill_meta(community),
+         {:ok, branch} <- maybe_resolve_branch(model, community, attrs),
          {:ok, attrs} <- attrs |> ensure_body_from_payload() |> add_digest_attrs() do
-      %{id: community_id, meta: community_meta, slug: community_slug} = community
+      %{id: community_id, meta: community_meta} = community
       inner_id = community_meta |> Map.get(:"#{threads_name}_inner_id_index")
 
       meta = @default_article_meta |> Map.merge(%{thread: module_to_atom(model)})
@@ -285,11 +287,19 @@ defmodule GroupherServer.CMS.Articles.Write do
       |> Ecto.Changeset.put_change(:emotions, @default_emotions)
       |> Ecto.Changeset.put_change(:author_id, author_id)
       |> Ecto.Changeset.put_change(:community_id, community_id)
-      |> Ecto.Changeset.put_change(:community_slug, community_slug)
+      |> maybe_put_branch(model, branch)
       |> Ecto.Changeset.put_embed(:meta, meta)
       |> Repo.insert()
     end
   end
+
+  defp maybe_resolve_branch(Doc, %Community{} = community, attrs), do: Branch.resolve(community, attrs)
+  defp maybe_resolve_branch(_model, _community, _attrs), do: {:ok, nil}
+
+  defp maybe_put_branch(changeset, Doc, %{id: branch_id}),
+    do: Ecto.Changeset.put_change(changeset, :branch_id, branch_id)
+
+  defp maybe_put_branch(changeset, _model, _branch), do: changeset
 
   defp do_update_article(article, attrs) do
     with {:ok, attrs} <- attrs |> ensure_body_from_payload() |> add_digest_attrs() do
@@ -340,7 +350,8 @@ defmodule GroupherServer.CMS.Articles.Write do
     with {:ok, info} <- match(thread) do
       batch_query =
         info.model
-        |> where([article], article.community_slug == ^community)
+        |> join(:inner, [article], c in assoc(article, :community))
+        |> where([_article, c], c.slug == ^community)
         |> where([article], article.inner_id in ^inner_id_list)
 
       Multi.new()

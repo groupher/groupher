@@ -11,6 +11,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Comment do
       arg(:body, non_null(:string))
 
       middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, {:article, preload: [[author: :user], :community]})
       resolve(&R.CMS.create_comment/3)
       middleware(M.Statistics.MakeContribute, for: :user)
     end

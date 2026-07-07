@@ -462,11 +462,15 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   defp do_read_article(%{community: community, thread: thread, inner_id: inner_id}, %{
          context: %{cur_user: user}
        }) do
-    CMS.Articles.read(community, thread, inner_id, user)
+    with {:ok, community} <- FrontDesk.community(community) do
+      CMS.Articles.read(community, thread, inner_id, user)
+    end
   end
 
   defp do_read_article(%{community: community, thread: thread, inner_id: inner_id}, _info) do
-    CMS.Articles.read(community, thread, inner_id)
+    with {:ok, community} <- FrontDesk.community(community) do
+      CMS.Articles.read(community, thread, inner_id)
+    end
   end
 
   def set_post_cat(_root, %{article: article, cat: cat}, _info) do
@@ -834,11 +838,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Comments.paged_comments_participants(thread, article.id, filter)
   end
 
-  def create_comment(_root, %{article: article_path, body: body}, %{context: %{cur_user: user}}) do
-    with {:ok, %{community: community, thread: thread, inner_id: inner_id}} <-
-           ArticlePath.parse(article_path) do
-      CMS.Comments.create_comment(%Community{slug: community}, thread, inner_id, body, user)
-    end
+  def create_comment(_root, %{article: article, article_path: %{thread: thread}, body: body}, %{
+        context: %{cur_user: user}
+      }) do
+    CMS.Comments.create_comment(thread, article, body, user)
   end
 
   def update_comment(_root, ~m(body comment)a, _info) do

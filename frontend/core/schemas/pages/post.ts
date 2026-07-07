@@ -63,7 +63,9 @@ export const groupedKanbanPosts = `
           cat
           status
           title
-          communitySlug
+          community {
+            slug
+          }
           meta {
             thread
           }
@@ -80,7 +82,9 @@ export const groupedKanbanPosts = `
           cat
           status
           title
-          communitySlug
+          community {
+            slug
+          }
           meta {
             thread
           }
@@ -97,7 +101,9 @@ export const groupedKanbanPosts = `
           cat
           status
           title
-          communitySlug
+          community {
+            slug
+          }
           meta {
             thread
           }
@@ -114,7 +120,9 @@ export const groupedKanbanPosts = `
           cat
           status
           title
-          communitySlug
+          community {
+            slug
+          }
           meta {
             thread
           }
@@ -131,7 +139,9 @@ export const groupedKanbanPosts = `
           cat
           status
           title
-          communitySlug
+          community {
+            slug
+          }
           meta {
             thread
           }
