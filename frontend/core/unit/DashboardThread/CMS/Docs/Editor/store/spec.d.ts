@@ -8,6 +8,7 @@ import type { TDocTreeNodePublishState, TSideTreeController } from '../SideTree/
 
 export type TDocSaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
 export type TDocPublishChecklistStatus = 'checking' | 'pending' | 'none'
+export type TDocActionSnackbarMode = 'hidden' | 'article' | 'tree'
 
 export type TDocPublishRuntime = {
   isPublishing: boolean
@@ -19,6 +20,7 @@ export type TDocPublishRuntime = {
 export type TDocPublishView = {
   activeNodeId: string | null
   activeDocId: string | null
+  surfaceMode: TDocActionSnackbarMode
   hasTreeChanges: boolean
   hasChecklistItems: boolean
   isDirty: boolean

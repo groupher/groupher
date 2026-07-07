@@ -36,7 +36,7 @@ const DEFAULT_PUBLISH_RUNTIME: TDocPublishRuntime = {
   hasSelectableChecklistItems: false,
 }
 
-const hasTreeChanges = (sideTree: TSideTreeController): boolean => {
+export const hasTreeChanges = (sideTree: TSideTreeController): boolean => {
   return (
     sideTree.treeState?.hasUnpublishedChanges === true ||
     (sideTree.treeState?.stagedEventCount ?? 0) > 0 ||
@@ -50,7 +50,7 @@ const hasNodeChanges = (sideTree: TSideTreeController): boolean => {
   )
 }
 
-const buildPublishView = (
+export const buildPublishView = (
   sideTree: TSideTreeController,
   saveStatus: TDocSaveStatus,
   runtime: TDocPublishRuntime,
@@ -69,8 +69,18 @@ const buildPublishView = (
     runtime.hasSelectableChecklistItems &&
     (treeChanges || nodeChanges || hasChecklistItems)
   const activePageNeedsPublish = needsPublishAttention(activePage?.publishState)
+  const surfaceMode = activePage
+    ? 'article'
+    : treeChanges || nodeChanges || hasChecklistItems || runtime.isPublishing
+      ? 'tree'
+      : 'hidden'
   const showActions =
-    hasPublishedChecklist || activePageNeedsPublish || isDirty || isSaving || runtime.isPublishing
+    treeChanges ||
+    hasPublishedChecklist ||
+    activePageNeedsPublish ||
+    isDirty ||
+    isSaving ||
+    runtime.isPublishing
 
   // Keep command availability separate from visibility:
   // - publishing keeps the button visible but blocks duplicate publish mutations.
@@ -94,6 +104,7 @@ const buildPublishView = (
   return {
     activeNodeId: activeNode?.id ?? null,
     activeDocId: activePage?.docId ?? null,
+    surfaceMode,
     hasTreeChanges: treeChanges,
     hasChecklistItems,
     isDirty,

@@ -138,6 +138,44 @@ export const formatPublishCountLabel = (
   return selectedCount === totalCount ? String(totalCount) : `${selectedCount}/${totalCount}`
 }
 
+type TTreeChangeSummaryArgs = {
+  checklist: TPublishChecklist | null
+  fallbackCount: number
+  checkingLabel: string
+  noChangesLabel: string
+  detectedLabel: string
+  changePendingLabel: string
+  changesPendingLabel: string
+}
+
+export const formatTreeChangeSummary = ({
+  checklist,
+  fallbackCount,
+  checkingLabel,
+  noChangesLabel,
+  detectedLabel,
+  changePendingLabel,
+  changesPendingLabel,
+}: TTreeChangeSummaryArgs): string => {
+  if (!checklist) return checkingLabel
+
+  const treeChanges = checklist.treeChanges
+  const totalCount = checklist.totalCount || fallbackCount
+  const singleTreeChange =
+    treeChanges.length === 1 && checklist.docChanges.length === 0 ? treeChanges[0] : null
+
+  if (singleTreeChange?.action === 'deleted') {
+    return `${detectedLabel} ${singleTreeChange.title}`
+  }
+
+  const count = Math.max(totalCount, treeChanges.length, checklist.docChanges.length)
+
+  if (count <= 0) return noChangesLabel
+  if (count === 1) return `1 ${changePendingLabel}`
+
+  return `${count} ${changesPendingLabel}`
+}
+
 /**
  * Toggle one publish-checklist item id while keeping the checked ids as opaque API ids.
  *

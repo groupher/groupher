@@ -9,9 +9,14 @@ import { PUBLISH_MODE } from './constant'
 import PublishDrawer from './Drawer'
 import { getPublishPlanAction } from './helper'
 import usePublishActions from './usePublishActions'
-import usePublishChecklist from './usePublishChecklist'
+import type { TPublishChecklistController } from './usePublishChecklist'
 
-const Publish: FC = () => {
+type TProps = {
+  variant?: 'article' | 'tree'
+  checklist: TPublishChecklistController
+}
+
+const Publish: FC<TProps> = ({ variant = 'article', checklist }) => {
   const { t } = useTrans()
   const { publishView } = useDocsEditor()
   const [drawerVisible, setDrawerVisible] = useState(false)
@@ -26,7 +31,7 @@ const Publish: FC = () => {
     selectedTreeIds,
     setSelectedDocIds,
     setSelectedTreeIds,
-  } = usePublishChecklist()
+  } = checklist
   const selectedPublishDisabled =
     publishView.isPublishing || publishView.isSaving || !hasSelectedChanges
 
@@ -58,7 +63,9 @@ const Publish: FC = () => {
   return (
     <>
       <ActionGroup
+        variant={variant}
         publishLabel={publishLabel}
+        reviewLabel={t(SAVE_ACTION_LABEL_KEY.REVIEW_CHANGES)}
         publishCountLabel={publishCountLabel}
         showActions={publishView.showActions}
         publishDisabled={publishView.publishDisabled}

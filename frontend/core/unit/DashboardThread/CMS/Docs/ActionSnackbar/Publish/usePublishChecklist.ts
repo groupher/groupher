@@ -128,3 +128,5 @@ export default function usePublishChecklist() {
     setSelectedTreeIds,
   }
 }
+
+export type TPublishChecklistController = ReturnType<typeof usePublishChecklist>

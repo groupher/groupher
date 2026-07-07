@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   formatPublishCountLabel,
+  formatTreeChangeSummary,
   getDefaultSelectedIds,
   getPublishInputAction,
   getPublishPlan,
@@ -112,5 +113,52 @@ describe('publish checklist helper', () => {
     expect(formatPublishCountLabel(1, 4)).toBe('1/4')
     expect(formatPublishCountLabel(0, 4)).toBeNull()
     expect(formatPublishCountLabel(1, 0)).toBeNull()
+  })
+
+  it('formats tree-only snackbar summaries', () => {
+    const labels = {
+      checkingLabel: 'Checking changes',
+      noChangesLabel: 'No changes',
+      detectedLabel: 'Detected:',
+      changePendingLabel: 'doc structure change pending',
+      changesPendingLabel: 'doc structure changes pending',
+    }
+
+    expect(
+      formatTreeChangeSummary({
+        checklist: null,
+        fallbackCount: 0,
+        ...labels,
+      }),
+    ).toBe('Checking changes')
+    expect(
+      formatTreeChangeSummary({
+        checklist: {
+          totalCount: 0,
+          docChanges: [],
+          treeChanges: [],
+        },
+        fallbackCount: 0,
+        ...labels,
+      }),
+    ).toBe('No changes')
+    expect(
+      formatTreeChangeSummary({
+        checklist: {
+          totalCount: 1,
+          docChanges: [],
+          treeChanges: [publishChecklist.treeChanges[0]],
+        },
+        fallbackCount: 0,
+        ...labels,
+      }),
+    ).toBe('Detected: Group 1')
+    expect(
+      formatTreeChangeSummary({
+        checklist: publishChecklist,
+        fallbackCount: 0,
+        ...labels,
+      }),
+    ).toBe('5 doc structure changes pending')
   })
 })

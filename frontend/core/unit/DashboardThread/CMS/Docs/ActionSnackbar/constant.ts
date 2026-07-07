@@ -30,6 +30,7 @@ export const SAVE_ACTION_LABEL_KEY = {
   PUBLISH: 'dsb.doc.save.publish',
   RESTORE: 'dsb.doc.save.restore',
   APPLY_CHANGES: 'dsb.doc.save.apply_changes',
+  REVIEW_CHANGES: 'dsb.doc.save.review_changes',
   PUBLISH_CURRENT: 'dsb.doc.save.publish_current',
   PUBLISH_OPTIONS: 'dsb.doc.save.publish_options',
   PUBLISH_OPTIONS_CLOSE: 'dsb.doc.save.publish_options_close',
@@ -52,6 +53,10 @@ export const SAVE_ACTION_LABEL_KEY = {
   PUBLISH_WILL_PUBLISH: 'dsb.doc.save.publish_will_publish',
   PUBLISH_WILL_RESTORE: 'dsb.doc.save.publish_will_restore',
   PUBLISH_KEPT_DRAFT: 'dsb.doc.save.publish_kept_draft',
+  TREE_CHANGE_CHECKING: 'dsb.doc.save.tree_change_checking',
+  TREE_CHANGE_DETECTED: 'dsb.doc.save.tree_change_detected',
+  TREE_CHANGE_PENDING: 'dsb.doc.save.tree_change_pending',
+  TREE_CHANGES_PENDING: 'dsb.doc.save.tree_changes_pending',
 } as const satisfies Record<string, TTransKey>
 
 export const SAVE_STATUS_LABEL = {
