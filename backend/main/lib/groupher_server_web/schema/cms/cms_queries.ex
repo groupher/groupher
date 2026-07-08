@@ -27,6 +27,14 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.doc_tree/3)
     end
 
+    @desc "public community docs side tree"
+    field :doc_public_tree, :doc_public_tree do
+      arg(:community, non_null(:string))
+
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.doc_public_tree/3)
+    end
+
     @desc "dashboard docs unified publish checklist"
     field :doc_publish_checklist, :doc_publish_checklist do
       arg(:community, non_null(:string))

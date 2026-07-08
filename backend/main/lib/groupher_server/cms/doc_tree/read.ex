@@ -78,6 +78,23 @@ defmodule GroupherServer.CMS.DocTree.Read do
   end
 
   @doc """
+  Reads the published docs tree used by the public docs site.
+
+  The public projection omits editor-only state such as draft revisions,
+  staged events, and publish status. Page hrefs are resolved from the
+  published docs article row so drafts cannot leak into the public reader.
+  """
+  @spec read_public(Community.t(), keyword() | map()) :: T.domain_res(map())
+  def read_public(%Community{} = community, opts \\ []) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
+      nodes = tree_nodes_for_branch(community, branch, CMS.Const.stage(:public))
+      docs_by_doc_id = public_docs_by_doc_id(community, branch, nodes)
+
+      {:ok, %{groups: build_public_groups(community, nodes, docs_by_doc_id)}}
+    end
+  end
+
+  @doc """
   Returns the Tree-level draft/publish state for footer UI.
 
   ## Examples
@@ -172,6 +189,86 @@ defmodule GroupherServer.CMS.DocTree.Read do
     |> order_by([n], asc: n.index, asc: n.id)
     |> Repo.all()
   end
+
+  defp public_docs_by_doc_id(%Community{} = community, branch, nodes) do
+    doc_ids =
+      nodes
+      |> Enum.map(& &1.doc_id)
+      |> Enum.reject(&is_nil/1)
+      |> Enum.uniq()
+
+    Doc
+    |> where([d], d.community_id == ^community.id)
+    |> where([d], d.branch_id == ^branch.id)
+    |> where([d], d.stage == ^CMS.Const.stage(:public))
+    |> where([d], d.doc_id in ^doc_ids)
+    |> Repo.all()
+    |> Map.new(&{&1.doc_id, &1})
+  end
+
+  defp build_public_groups(%Community{} = community, nodes, docs_by_doc_id) do
+    children_by_group =
+      nodes
+      |> Enum.filter(&(&1.group_id && &1.type in [:page, :link]))
+      |> Enum.reject(&hidden_node?/1)
+      |> Enum.map(&public_child_map(community, &1, docs_by_doc_id))
+      |> Enum.reject(&is_nil/1)
+      |> Enum.group_by(& &1.group_id)
+
+    nodes
+    |> Enum.filter(&(&1.type == :group and &1.node_id != "pin"))
+    |> Enum.reject(&hidden_node?/1)
+    |> Enum.map(fn group ->
+      group
+      |> public_node_base()
+      |> Map.put(:children, Map.get(children_by_group, group.node_id, []))
+    end)
+  end
+
+  defp public_child_map(
+         %Community{} = community,
+         %DocTreeNode{type: :page} = node,
+         docs_by_doc_id
+       ) do
+    case Map.get(docs_by_doc_id, node.doc_id) do
+      %Doc{inner_id: inner_id, slug: slug}
+      when not is_nil(inner_id) and is_binary(slug) and slug != "" ->
+        node
+        |> public_node_base()
+        |> Map.put(:href, "/#{community.slug}/doc/#{inner_id}/#{slug}")
+
+      _ ->
+        nil
+    end
+  end
+
+  defp public_child_map(_community, %DocTreeNode{type: :link, href: href} = node, _docs_by_doc_id)
+       when is_binary(href) and href != "" do
+    node
+    |> public_node_base()
+    |> Map.put(:href, href)
+  end
+
+  defp public_child_map(_community, _node, _docs_by_doc_id), do: nil
+
+  defp public_node_base(%DocTreeNode{} = node) do
+    %{
+      id: node.node_id,
+      group_id: node.group_id,
+      doc_id: node.doc_id,
+      type: node.type,
+      title: node.title,
+      slug: node.slug,
+      index: node.index,
+      href: nil,
+      marker: node.marker,
+      badge: node.badge,
+      children: []
+    }
+  end
+
+  defp hidden_node?(%DocTreeNode{hidden: true}), do: true
+  defp hidden_node?(_node), do: false
 
   @doc """
   Builds normal groups from a flat node list.

@@ -163,6 +163,24 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:groups, list_of(:doc_tree_node))
   end
 
+  object :doc_public_tree_node do
+    field(:id, :id)
+    field(:group_id, :id)
+    field(:doc_id, :id)
+    field(:type, :doc_tree_node_type)
+    field(:title, :string)
+    field(:slug, :string)
+    field(:index, :integer)
+    field(:href, :string)
+    field(:marker, :marker)
+    field(:badge, :string)
+    field(:children, list_of(:doc_public_tree_node))
+  end
+
+  object :doc_public_tree do
+    field(:groups, list_of(:doc_public_tree_node))
+  end
+
   object :doc_publish_checklist_item do
     field(:id, non_null(:id))
     field(:title, non_null(:string))

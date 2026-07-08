@@ -79,6 +79,9 @@ type RootQueryType {
   "community docs side tree"
   docTree(community: String!): DocTree
 
+  "public community docs side tree"
+  docPublicTree(community: String!): DocPublicTree
+
   "dashboard docs unified publish checklist"
   docPublishChecklist(community: String!): DocPublishChecklist
 
@@ -932,6 +935,24 @@ type DocTree {
   stagedEvents: [DocTreeEvent]
   pins: [DocTreeNode]
   groups: [DocTreeNode]
+}
+
+type DocPublicTreeNode {
+  id: ID
+  groupId: ID
+  docId: ID
+  type: DocTreeNodeType
+  title: String
+  slug: String
+  index: Int
+  href: String
+  marker: Marker
+  badge: String
+  children: [DocPublicTreeNode]
+}
+
+type DocPublicTree {
+  groups: [DocPublicTreeNode]
 }
 
 type DocPublishChecklistItem {

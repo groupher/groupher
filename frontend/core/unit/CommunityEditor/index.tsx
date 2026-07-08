@@ -22,10 +22,12 @@ export default function CommunityEditor() {
 
   return (
     <div className={s.wrapper}>
-      <Header />
-      <div className={s.main}>
-        <Banner />
-        <Content />
+      <div className={s.inner}>
+        <Header />
+        <div className={s.main}>
+          <Banner />
+          <Content />
+        </div>
       </div>
     </div>
   )

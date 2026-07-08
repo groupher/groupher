@@ -1,13 +1,19 @@
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TContainerMetric } from '~/hooks/useTwBelt/spec'
 
-export default function useSalon() {
+type TProps = {
+  containerMetric: TContainerMetric | null
+}
+
+export default function useSalon({ containerMetric }: TProps) {
   const { cn, container } = useTwBelt()
 
   return {
-    wrapper: cn(
-      'column-align-both min-h-14 mt-20 pt-14 pb-8 footer-inner-shadow',
-      'breakout-container',
+    wrapper: 'w-full min-h-14 mt-20 pt-14 pb-8 footer-inner-shadow',
+    inner: cn(
+      'column-align-both w-full',
       container(),
+      containerMetric && container(containerMetric),
     ),
   }
 }

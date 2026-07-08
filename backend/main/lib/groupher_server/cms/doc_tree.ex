@@ -37,6 +37,12 @@ defmodule GroupherServer.CMS.DocTree do
   def read(%Community{} = community, opts \\ []), do: Read.read(community, opts)
 
   @doc """
+  Reads the published docs tree for public docs pages.
+  """
+  @spec read_public(Community.t(), keyword() | map()) :: T.domain_res(map())
+  def read_public(%Community{} = community, opts \\ []), do: Read.read_public(community, opts)
+
+  @doc """
   Reads one draft docs page by stable doc id or node id.
   """
   @spec read_draft(Community.t(), T.id(), keyword() | map()) :: T.domain_res(map())

@@ -90,6 +90,16 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
+  def doc_public_tree(_root, %{community: %Community{} = community}, _info) do
+    CMS.DocTree.read_public(community)
+  end
+
+  def doc_public_tree(_root, %{community: community}, _info) do
+    with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
+      CMS.DocTree.read_public(community)
+    end
+  end
+
   def doc_tree_trash_items(_root, %{community: %Community{} = community}, _info) do
     CMS.DocTree.trash_items(community)
   end

@@ -2,7 +2,7 @@ import { follow, setTag, undoFollow, unsetTag } from './action'
 import { changelog, pagedChangelogs } from './changelog'
 import { pagedComments } from './comment'
 import { community, pagedCommunities, subscribedCommunities } from './community'
-import { doc, pagedDocs } from './doc'
+import { doc, docPublicTree, pagedDocs } from './doc'
 import { mentions } from './mail'
 import { communityTagGroups, communityTagStats, pagedCategories, themePresets } from './misc'
 import { groupedKanbanPosts, pagedPosts, pagedPublishedPosts, post } from './post'
@@ -30,6 +30,7 @@ const P = {
   // doc
   pagedDocs,
   doc,
+  docPublicTree,
   // user
   me,
   user,

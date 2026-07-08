@@ -1,11 +1,16 @@
 import useTheme from '~/hooks/useTheme'
 import useTopbar from '~/hooks/useTopbar'
 import useTwBelt from '~/hooks/useTwBelt'
+import type { TContainerMetric } from '~/hooks/useTwBelt/spec'
 import { pickWallpaperThemeState } from '~/stores/wallpaper/helper'
 import useWallpaperDomain from '~/stores/wallpaper/hooks'
 
-export default function useSalon() {
-  const { cn, bg, rainbow, container, vividDark, page } = useTwBelt()
+type TProps = {
+  containerMetric: TContainerMetric | null
+}
+
+export default function useSalon({ containerMetric }: TProps) {
+  const { cn, bg, rainbow, container, containerWrapper, vividDark, page } = useTwBelt()
 
   const { topbarBg } = useTopbar()
   const { isDarkTheme } = useTheme()
@@ -14,7 +19,7 @@ export default function useSalon() {
 
   return {
     wrapper: cn(
-      container(),
+      containerWrapper(),
       'column relative isolate s-full min-h-fit',
       // NOTICE: this class will cause children's position fixed fail,
       'transition-transform transition-shadow backdrop-blur-2xl',
@@ -28,7 +33,12 @@ export default function useSalon() {
     // slider performance because the wrapper owns the full page and blur styles.
     background: 'pointer-events-none abs-full z-0',
     scrollWrapper: 'absolute w-full',
-    body: 'column-align-both relative z-10 w-full',
+    body: 'relative z-10 w-full',
+    inner: cn(
+      'column-align-both w-full',
+      container(),
+      containerMetric && container(containerMetric),
+    ),
     footer: 'relative z-10 w-full',
   }
 }

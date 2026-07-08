@@ -9,6 +9,8 @@ import { P } from '~/schemas'
 import type {
   TCommunityInfo,
   TDoc,
+  TDocPublicTree,
+  TDocPublicTreeQuery,
   TLocale,
   TPagedArticlesParams,
   TPagedChangelogs,
@@ -327,6 +329,27 @@ export const getDoc = async (community: string, id: string): Promise<TDoc | null
   }
 
   return data.doc
+}
+
+export const getDocPublicTree = async (community: string): Promise<TDocPublicTree | null> => {
+  'use cache'
+  cacheLife('minutes')
+
+  const response = await gqFetch(P.docPublicTree, {
+    community,
+  })
+
+  const { data, errors } = (await response.json()) as {
+    data?: TDocPublicTreeQuery
+    errors?: unknown
+  }
+
+  if (errors || !data?.docPublicTree) {
+    console.log('## error details doc public tree', errors)
+    return null
+  }
+
+  return data.docPublicTree
 }
 
 export const getPagedComments = async (
