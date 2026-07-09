@@ -1,10 +1,13 @@
 import useMobileDetect from '@groupher/use-mobile-detect-hook'
 import type { FC, ReactNode } from 'react'
+import { useState } from 'react'
 import { Group as PanelGroup, Panel } from 'react-resizable-panels'
 
 import type { TDocPublicTree } from '~/spec'
+import ArticleToc from '~/widgets/ArticleToc'
 
 import Tree from '../Tree'
+import { DOC_ARTICLE_TOC_ACTIVE_ID, DOC_ARTICLE_TOC_ITEMS } from './constant'
 import useSalon from './salon'
 
 type TProps = {
@@ -13,6 +16,7 @@ type TProps = {
 }
 
 const Shell: FC<TProps> = ({ children, tree }) => {
+  const [activeTocId, setActiveTocId] = useState<string | null>(DOC_ARTICLE_TOC_ACTIVE_ID)
   const s = useSalon()
   const { isMobile } = useMobileDetect()
   const hasTree = tree.groups.length > 0
@@ -32,6 +36,15 @@ const Shell: FC<TProps> = ({ children, tree }) => {
 
   return (
     <div className={s.wrapper}>
+      <div className={s.articleToc}>
+        <div className={s.articleTocSticky}>
+          <ArticleToc
+            items={DOC_ARTICLE_TOC_ITEMS}
+            activeId={activeTocId}
+            onSelect={(item) => setActiveTocId(item.id)}
+          />
+        </div>
+      </div>
       <PanelGroup
         className={s.panelGroup}
         orientation='horizontal'
