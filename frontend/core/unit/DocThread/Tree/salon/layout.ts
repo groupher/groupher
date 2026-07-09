@@ -1,0 +1,2 @@
+export const DOC_PUBLIC_TREE_STICKY_TOP = '5rem'
+export const DOC_PUBLIC_TREE_STICKY_HEIGHT = `calc(100dvh - ${DOC_PUBLIC_TREE_STICKY_TOP})`

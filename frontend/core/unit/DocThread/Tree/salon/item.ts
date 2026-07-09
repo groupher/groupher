@@ -12,7 +12,7 @@ export default function useSalon({ active }: TProps) {
   return {
     wrapper: 'relative',
     link: cn(
-      'group/docs-public-tree-row row-center h-7 w-full gap-x-2 rounded-md px-1 text-left trans-all-200',
+      'group row-center h-7 w-full gap-x-2 rounded-md px-1 text-left trans-all-200',
       active && 'bold-sm',
       active && bg('hoverBg'),
       !active && hover('box'),
@@ -21,7 +21,7 @@ export default function useSalon({ active }: TProps) {
     fallbackIcon: cn('size-3.5', active ? primary('fill') : fill('digest')),
     title: cn(
       'min-w-0 max-w-full flex-1 truncate text-sm leading-5',
-      active ? primary('fg') : cn(fg('digest'), `group-hover/docs-public-tree-row:${fg('title')}`),
+      active ? primary('fg') : cn(fg('digest'), `group-hover:${fg('title')}`),
     ),
     badge: cn(
       'ml-2 shrink-0 rounded px-1 py-px text-xs leading-none',
