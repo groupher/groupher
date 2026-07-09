@@ -23,6 +23,7 @@ type TProps = {
   fgColor?: TFgColor
   placeholder?: string
   value?: string | null
+  rows?: number
   prefixIcon?: string | null
   prefixActive?: boolean
   suffixIcon?: string | null

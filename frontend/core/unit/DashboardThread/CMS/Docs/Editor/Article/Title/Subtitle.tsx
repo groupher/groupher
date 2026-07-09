@@ -25,6 +25,7 @@ const Subtitle: FC<TProps> = ({ value, disabled = false, onChange }) => {
       fgColor='digest'
       className={s.wrapper}
       value={value}
+      rows={1}
       disabled={disabled}
       placeholder={t('dsb.cms.docs.editor.subtitle_placeholder')}
       disableEnter

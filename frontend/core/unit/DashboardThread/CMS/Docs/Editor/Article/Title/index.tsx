@@ -94,6 +94,7 @@ const Title: FC<TProps> = ({ docId = null, value, disabled = false, publishState
         fgColor='title'
         className={s.input}
         value={value}
+        rows={1}
         disabled={disabled}
         placeholder='Title'
         disableEnter
