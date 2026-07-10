@@ -12,22 +12,22 @@ import { needsPublishAttention } from '../../Editor/SideTree/helper'
 import useDocsEditor from '../../Editor/store/hooks'
 import { SAVE_ACTION_LABEL_KEY } from '../constant'
 import { PUBLISH_MODE, type TPublishMode } from './constant'
-import { hasSelectableScopeItems } from './helper'
+import { getPublishInputAction, hasSelectableChecklistItems } from './helper'
 import type { TPublishChangesData, TPublishSelectedInput } from './spec'
 
-const docIdFromScopeItemId = (id: string): string | null => {
+const docIdFromChecklistItemId = (id: string): string | null => {
   return id.startsWith('doc:') ? id.slice(4) : null
 }
 
 type TArgs = {
-  reloadPublishScope: () => void
+  reloadPublishChecklist: () => void
   selectedInput: () => TPublishSelectedInput | undefined
   selectedPublishDisabled: boolean
   onPublished: () => void
 }
 
 export default function usePublishActions({
-  reloadPublishScope,
+  reloadPublishChecklist,
   selectedInput,
   selectedPublishDisabled,
   onPublished,
@@ -55,12 +55,14 @@ export default function usePublishActions({
       try {
         if (publishView.isDirty) await saveDocDraft()
         const input = mode === PUBLISH_MODE.SELECTED ? selectedInput() : undefined
+        const publishAction =
+          mode === PUBLISH_MODE.SELECTED && input ? getPublishInputAction(input) : 'publish'
         const currentDocId = docDraftInfo.id
         const currentDocNeedsPublish =
           publishView.isDirty || needsPublishAttention(docDraftInfo.publishState)
         const publishedDocIds =
           mode === PUBLISH_MODE.SELECTED
-            ? (input?.docChangeIds.map(docIdFromScopeItemId).filter(Boolean) as string[])
+            ? (input?.docChangeIds.map(docIdFromChecklistItemId).filter(Boolean) as string[])
             : currentDocId && currentDocNeedsPublish
               ? [currentDocId]
               : []
@@ -70,17 +72,17 @@ export default function usePublishActions({
           input,
           mode: 'WITH_COVER_SYNC',
         })
-        const nextScope = data?.publishDocChanges?.scope ?? null
+        const nextChecklist = data?.publishDocChanges?.checklist ?? null
 
-        if (nextScope) {
+        if (nextChecklist) {
           setPublishRuntime?.({
-            scopeLoaded: true,
-            publishCount: nextScope.totalCount,
-            hasSelectableScopeItems: hasSelectableScopeItems(nextScope),
+            checklistLoaded: true,
+            publishCount: nextChecklist.totalCount,
+            hasSelectableChecklistItems: hasSelectableChecklistItems(nextChecklist),
           })
         }
         // Publish may consume the draft row. Keep the current editor document in
-        // place and refresh tree/scope state instead of forcing a draft-only reload.
+        // place and refresh tree/checklist state instead of forcing a draft-only reload.
         if (currentDocPublished) {
           setDocDraftSession?.({
             docDraftInfo: {
@@ -103,9 +105,16 @@ export default function usePublishActions({
         if (publishedDocIds.length > 0) {
           send(DSB_DOC_EVENT.PUBLISH_SUCCESS, { docIds: publishedDocIds })
         }
-        toast(t(SAVE_ACTION_LABEL_KEY.PUBLISHED))
+        const successLabel =
+          publishAction === 'restore'
+            ? SAVE_ACTION_LABEL_KEY.RESTORED
+            : publishAction === 'apply'
+              ? SAVE_ACTION_LABEL_KEY.APPLIED_CHANGES
+              : SAVE_ACTION_LABEL_KEY.PUBLISHED
+
+        toast(t(successLabel))
         reloadSideTree?.()
-        reloadPublishScope()
+        reloadPublishChecklist()
         onPublished()
       } catch (err) {
         const message = err instanceof Error ? err.message : t(SAVE_ACTION_LABEL_KEY.PUBLISH_FAILED)
@@ -121,7 +130,7 @@ export default function usePublishActions({
       onPublished,
       publishView.isDirty,
       publishView.publishDisabled,
-      reloadPublishScope,
+      reloadPublishChecklist,
       reloadSideTree,
       saveDocDraft,
       selectedInput,

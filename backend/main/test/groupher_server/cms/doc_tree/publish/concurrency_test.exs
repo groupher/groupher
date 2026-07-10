@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.CMS.DocTree.PublishConcurrency do
+defmodule GroupherServer.Test.CMS.DocTree.Publish.Concurrency do
   @moduledoc false
 
   use GroupherServer.TestMate, async: false
@@ -32,7 +32,7 @@ defmodule GroupherServer.Test.CMS.DocTree.PublishConcurrency do
     end
 
     test "serializes concurrent publish_changes for the same docs site", ~m(user community)a do
-      assert CMS.DocTree.publish_scope(community).total_count == 1
+      assert CMS.DocTree.publish_checklist(community).total_count == 1
 
       results =
         1..2
@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.CMS.DocTree.PublishConcurrency do
       assert Enum.count(releases, &match?(%CMS.Model.PublishRelease{}, &1)) == 1
       assert Enum.count(releases, &is_nil/1) == 1
       assert release_count(community) == 1
-      assert CMS.DocTree.publish_scope(community).total_count == 0
+      assert CMS.DocTree.publish_checklist(community).total_count == 0
     end
   end
 

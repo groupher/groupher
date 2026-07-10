@@ -22,9 +22,9 @@ describe('queryWhitelistProxy', () => {
     )
   })
 
-  it('keeps docs editor selected workspace query param for SSR', () => {
+  it('keeps docs editor selected doc query param for SSR', () => {
     const response = queryWhitelistProxy(
-      request('http://localhost/home/dashboard/doc/editor?workspaceId=11'),
+      request('http://localhost/home/dashboard/doc/editor?docId=11'),
     )
 
     expect(response.headers.get('x-middleware-rewrite')).toBeNull()

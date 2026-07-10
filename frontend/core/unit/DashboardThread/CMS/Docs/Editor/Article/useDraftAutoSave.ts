@@ -6,7 +6,7 @@ import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
 import { toast } from '~/widgets/Toaster'
 
-import { reloadDocPublishScope } from '../helper'
+import { reloadDocPublishChecklist } from '../helper'
 import type { TSideTreeChild } from '../SideTree/spec'
 import useDocsEditor from '../store/hooks'
 import { DOC_AUTO_SAVE_DELAY } from './constant'
@@ -101,7 +101,7 @@ export default function useDraftAutoSave(
         savedDraft,
         startedDraft,
       })
-      reloadDocPublishScope()
+      reloadDocPublishChecklist()
     } catch (err) {
       if (latestDocIdRef.current !== requestDocId) return
 

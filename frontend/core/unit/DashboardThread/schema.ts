@@ -503,7 +503,7 @@ const docTree = gql`
   }
 `
 
-const docPublishScopeItemFields = `
+const docPublishChecklistItemFields = `
   id
   title
   action
@@ -512,16 +512,33 @@ const docPublishScopeItemFields = `
   disabledReason
 `
 
-const docPublishScope = gql`
-  query docPublishScope($community: String!) {
-    docPublishScope(community: $community) {
+const docPublishChecklist = gql`
+  query docPublishChecklist($community: String!) {
+    docPublishChecklist(community: $community) {
       totalCount
       docChanges {
-        ${docPublishScopeItemFields}
+        ${docPublishChecklistItemFields}
       }
       treeChanges {
-        ${docPublishScopeItemFields}
+        ${docPublishChecklistItemFields}
       }
+    }
+  }
+`
+
+const docTreeTrashItems = gql`
+  query docTreeTrashItems($community: String!) {
+    docTreeTrashItems(community: $community) {
+      id
+      nodeId
+      docId
+      type
+      title
+      slug
+      deletedFromGroupId
+      deletedFromIndex
+      deletedAt
+      restoredAt
     }
   }
 `
@@ -725,13 +742,13 @@ const publishDocChanges = gql`
         releaseNumber
         publishedAt
       }
-      scope {
+      checklist {
         totalCount
         docChanges {
-          ${docPublishScopeItemFields}
+          ${docPublishChecklistItemFields}
         }
         treeChanges {
-          ${docPublishScopeItemFields}
+          ${docPublishChecklistItemFields}
         }
       }
     }
@@ -798,6 +815,14 @@ const restoreDocDraftSnapshot = gql`
 const deleteDocTreeNode = gql`
   mutation ($community: String!, $id: ID!, $baseRevision: Int!) {
     deleteDocTreeNode(community: $community, id: $id, baseRevision: $baseRevision) {
+      ${docTreeMutationPayload}
+    }
+  }
+`
+
+const restoreDocTreeTrashItem = gql`
+  mutation ($community: String!, $id: ID!, $baseRevision: Int!) {
+    restoreDocTreeTrashItem(community: $community, id: $id, baseRevision: $baseRevision) {
       ${docTreeMutationPayload}
     }
   }
@@ -1075,7 +1100,8 @@ const schema = {
   pagedChangelogs,
   updateDashboardDocFaq,
   docTree,
-  docPublishScope,
+  docPublishChecklist,
+  docTreeTrashItems,
   docDraft,
   docDraftSnapshots,
   createDocTreeGroup,
@@ -1090,6 +1116,7 @@ const schema = {
   moveDocTreeGroupToDraft,
   restoreDocDraftSnapshot,
   deleteDocTreeNode,
+  restoreDocTreeTrashItem,
   duplicateDocTreeNode,
   moveDocTreeNode,
   addDocCoverGroup,

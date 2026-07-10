@@ -9,8 +9,10 @@ export default function useSalon() {
     motion:
       'shrink-0 overflow-hidden transition-[max-width,opacity,transform,margin] duration-200 ease-out',
     visible: 'ml-1 max-w-44 opacity-100 translate-x-0',
+    treeVisible: 'ml-1 max-w-80 opacity-100 translate-x-0',
     hidden: 'ml-0 max-w-0 opacity-0 -translate-x-1 pointer-events-none',
     group: 'row-center shrink-0 transition-opacity duration-150',
+    treeGroup: 'row-center shrink-0 gap-2',
     interactive: 'hover:brightness-110 active:brightness-95',
     disabled: 'opacity-60',
     publishButton: cn(
@@ -21,6 +23,17 @@ export default function useSalon() {
     publishCount: 'text-xs opacity-60',
     optionsButton: cn(
       'align-both h-7 w-fit px-2 rounded-r-lg rounded-l-none button-reset disabled:cursor-not-allowed',
+      primary('bg'),
+      fg('button.fg'),
+    ),
+    reviewButton: cn(
+      'row-center h-7 gap-1.5 px-2.5 rounded-lg button-reset text-xs bold-sm whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed',
+      fg('digest'),
+      'bg-white/10 hover:bg-white/15 dark:bg-white/10 dark:hover:bg-white/15',
+    ),
+    reviewCount: cn('text-xs opacity-70', fg('digest')),
+    treePublishButton: cn(
+      'row-center h-7 px-3 rounded-lg button-reset text-xs bold-sm whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed',
       primary('bg'),
       fg('button.fg'),
     ),

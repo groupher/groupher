@@ -32,10 +32,10 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   @spec set(T.id(), atom(), User.t()) :: T.domain_res(Comment.t())
   def set(comment_id, emotion, %User{} = user) do
     with {:ok, comment} <- FrontDesk.comment(comment_id) do
-      with {:ok, article} <- FrontDesk.article_of(comment),
+      with {:ok, article} <- FrontDesk.article_of(comment, preload: :community),
            {:ok, _thread_key} <-
              CanCan.allow_emotion(
-               article.community_slug,
+               article.community.slug,
                :comment,
                comment.thread,
                emotion
@@ -69,10 +69,10 @@ defmodule GroupherServer.CMS.Comments.Emotion do
   @spec undo(T.id(), atom(), User.t()) :: T.domain_res(Comment.t())
   def undo(comment_id, emotion, %User{} = user) do
     with {:ok, comment} <- FrontDesk.comment(comment_id) do
-      with {:ok, article} <- FrontDesk.article_of(comment),
+      with {:ok, article} <- FrontDesk.article_of(comment, preload: :community),
            {:ok, _thread_key} <-
              CanCan.allow_emotion(
-               article.community_slug,
+               article.community.slug,
                :comment,
                comment.thread,
                emotion

@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.{Community, DocTreeSnapshot}
+  alias CMS.Model.{Community, DocsBranch, DocTreeSnapshot}
   alias Helper.Constant.DBPrefix
 
   require CMS.Const
@@ -44,12 +44,13 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
 
-  @required_fields ~w(community_id seq event_type payload inverse_payload status owner)a
+  @required_fields ~w(community_id branch_id seq event_type payload inverse_payload status owner)a
   @optional_fields ~w(author_id snapshot_id reverted_by_event_id doc_id node_id node_type)a
 
   @type t :: %DocTreeEvent{}
   schema "doc_tree_events" do
     belongs_to(:community, Community)
+    belongs_to(:branch, DocsBranch)
     belongs_to(:author, User)
     belongs_to(:snapshot, DocTreeSnapshot)
     belongs_to(:reverted_by_event, DocTreeEvent)
@@ -83,7 +84,9 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
     |> validate_number(:seq, greater_than: 0)
     |> validate_inclusion(:event_type, CMS.Const.tree_event_enum_values())
     |> validate_doc_owner_binding()
+    |> validate_branch_community()
     |> foreign_key_constraint(:community_id)
+    |> foreign_key_constraint(:branch_id)
     |> foreign_key_constraint(:author_id)
     |> foreign_key_constraint(:snapshot_id)
     |> foreign_key_constraint(:reverted_by_event_id)
@@ -104,5 +107,17 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
       CMS.Const.tree_event_owner(:doc) -> validate_required(changeset, [:doc_id])
       _ -> changeset
     end
+  end
+
+  defp validate_branch_community(changeset) do
+    prepare_changes(changeset, fn changeset ->
+      community_id = get_field(changeset, :community_id)
+      branch_id = get_field(changeset, :branch_id)
+
+      case changeset.repo.get_by(DocsBranch, id: branch_id, community_id: community_id) do
+        %DocsBranch{} -> changeset
+        nil -> add_error(changeset, :branch_id, "does not belong to the community")
+      end
+    end)
   end
 end

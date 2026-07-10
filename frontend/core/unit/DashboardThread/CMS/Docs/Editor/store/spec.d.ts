@@ -7,20 +7,22 @@ import type { TDocEditorMode } from '../constant'
 import type { TDocTreeNodePublishState, TSideTreeController } from '../SideTree/spec'
 
 export type TDocSaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
-export type TDocPublishScopeStatus = 'checking' | 'pending' | 'none'
+export type TDocPublishChecklistStatus = 'checking' | 'pending' | 'none'
+export type TDocActionSnackbarMode = 'hidden' | 'article' | 'tree'
 
 export type TDocPublishRuntime = {
   isPublishing: boolean
-  scopeLoaded: boolean
+  checklistLoaded: boolean
   publishCount: number
-  hasSelectableScopeItems: boolean
+  hasSelectableChecklistItems: boolean
 }
 
 export type TDocPublishView = {
   activeNodeId: string | null
   activeDocId: string | null
+  surfaceMode: TDocActionSnackbarMode
   hasTreeChanges: boolean
-  hasScopeItems: boolean
+  hasChecklistItems: boolean
   isDirty: boolean
   isSaving: boolean
   isPublishing: boolean
@@ -28,7 +30,7 @@ export type TDocPublishView = {
   publishDisabled: boolean
   optionsDisabled: boolean
   publishCount: number
-  scopeStatus: TDocPublishScopeStatus
+  checklistStatus: TDocPublishChecklistStatus
 }
 
 export type TDocDraftAuthor = {

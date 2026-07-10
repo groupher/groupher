@@ -31,6 +31,7 @@ export type TSelectableOptions = {
   size?: TSelectableSize
 }
 export type TCutWWidth = `w-${number}` | `w-[${number}px]`
+export type TContainerMetric = 'article' | 'community-doc'
 
 /**
  * Channel keys:
@@ -42,6 +43,7 @@ export type TTextKey = 'title' | 'digest' | 'hint' | 'link' | 'black'
 export type TBgKey =
   | 'divider'
   | 'hoverBg'
+  | 'badge'
   | 'dot'
   | 'digest'
   | 'card'
@@ -73,7 +75,8 @@ export type TFillKey = 'title' | 'digest' | 'link' | 'highlight'
 export type TRet = {
   cn: (...inputs: ClassValue[]) => string
   cnMerge: (...inputs: ClassValue[]) => string
-  container: () => string
+  container: (metricOverride?: TContainerMetric) => string
+  containerWrapper: (metricOverride?: TContainerMetric) => string
 
   fg: (key: TTextKey | `${string}.${string}`) => string
   bg: (key: TBgKey) => string

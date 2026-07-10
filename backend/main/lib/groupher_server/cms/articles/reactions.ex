@@ -22,9 +22,11 @@ defmodule GroupherServer.CMS.Articles.Reactions do
   def emotion(article, emotion, %User{} = user) do
     {:ok, info} = match(article)
 
+    article = Repo.preload(article, :community)
+
     with {:ok, thread} <- FrontDesk.thread_of(article),
          {:ok, _thread_key} <-
-           CanCan.allow_emotion(article.community_slug, :article, thread, emotion) do
+           CanCan.allow_emotion(article.community.slug, :article, thread, emotion) do
       Transaction.lock_row(article, fn article ->
         target =
           %{received_user_id: article.author.user_id, user_id: user.id}
@@ -47,9 +49,11 @@ defmodule GroupherServer.CMS.Articles.Reactions do
   def undo_emotion(article, emotion, %User{} = user) do
     {:ok, info} = match(article)
 
+    article = Repo.preload(article, :community)
+
     with {:ok, thread} <- FrontDesk.thread_of(article),
          {:ok, _thread_key} <-
-           CanCan.allow_emotion(article.community_slug, :article, thread, emotion) do
+           CanCan.allow_emotion(article.community.slug, :article, thread, emotion) do
       Transaction.lock_row(article, fn article ->
         target =
           %{received_user_id: article.author.user_id, user_id: user.id}

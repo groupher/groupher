@@ -12,6 +12,7 @@ export default function ArticleStore(init: TInit = {}): TStore {
 
     post: init.post || null,
     changelog: init.changelog || null,
+    doc: init.doc || null,
 
     tags: [],
 
@@ -26,6 +27,8 @@ export default function ArticleStore(init: TInit = {}): TStore {
           return this.post
         case THREAD.CHANGELOG:
           return this.changelog
+        case THREAD.DOC:
+          return this.doc
         default:
           return null
       }

@@ -59,7 +59,6 @@ type TBaseArticle = {
   author?: TAccount
   upvotesCount?: number
   community?: TCommunity
-  communitySlug?: string
   communities?: readonly TCommunity[]
   commentsParticipants?: readonly TUser[]
   commentsParticipantsCount?: number
@@ -94,6 +93,7 @@ export type TChangelog = TBaseArticle & {
 
 export type TDoc = TBaseArticle & {
   digest?: string
+  subtitle?: string
 }
 
 export type TTechStack = {

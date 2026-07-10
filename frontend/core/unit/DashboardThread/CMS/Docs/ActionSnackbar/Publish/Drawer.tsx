@@ -7,15 +7,17 @@ import SettingSVG from '~/icons/Setting'
 import BaseDrawer from '~/widgets/Drawer'
 
 import { SAVE_ACTION_LABEL_KEY } from '../constant'
+import ChecklistSection from './ChecklistSection'
+import PublishPlan from './PublishPlan'
 import useSalon from './salon/drawer'
-import ScopeSection from './ScopeSection'
-import type { TPublishScope } from './spec'
+import type { TPublishPlan, TPublishChecklist } from './spec'
 
 type TProps = {
   show: boolean
-  publishScope: TPublishScope | null
+  publishPlan: TPublishPlan
+  publishChecklist: TPublishChecklist | null
   publishLabel: string
-  publishCount: number
+  publishCountLabel: string | null
   selectedDocIds: string[]
   selectedTreeIds: string[]
   selectedPublishDisabled: boolean
@@ -27,9 +29,10 @@ type TProps = {
 
 const PublishDrawer: FC<TProps> = ({
   show,
-  publishScope,
+  publishPlan,
+  publishChecklist,
   publishLabel,
-  publishCount,
+  publishCountLabel,
   selectedDocIds,
   selectedTreeIds,
   selectedPublishDisabled,
@@ -61,18 +64,18 @@ const PublishDrawer: FC<TProps> = ({
 
         <div className={s.body}>
           <div className={s.menu}>
-            {(publishScope?.docChanges.length ?? 0) > 0 && (
-              <ScopeSection
+            {(publishChecklist?.docChanges.length ?? 0) > 0 && (
+              <ChecklistSection
                 title={t(SAVE_ACTION_LABEL_KEY.PUBLISH_DOC_CHANGES)}
-                items={publishScope?.docChanges ?? []}
+                items={publishChecklist?.docChanges ?? []}
                 selectedIds={selectedDocIds}
                 onSelectedIdsChange={onSelectedDocIdsChange}
               />
             )}
-            {(publishScope?.treeChanges.length ?? 0) > 0 && (
-              <ScopeSection
+            {(publishChecklist?.treeChanges.length ?? 0) > 0 && (
+              <ChecklistSection
                 title={t(SAVE_ACTION_LABEL_KEY.PUBLISH_TREE_CHANGES)}
-                items={publishScope?.treeChanges ?? []}
+                items={publishChecklist?.treeChanges ?? []}
                 selectedIds={selectedTreeIds}
                 onSelectedIdsChange={onSelectedTreeIdsChange}
               />
@@ -81,15 +84,18 @@ const PublishDrawer: FC<TProps> = ({
         </div>
 
         <div className={s.footer}>
-          <button
-            type='button'
-            className={s.publishButton}
-            disabled={selectedPublishDisabled}
-            onClick={onPublishSelected}
-          >
-            {publishLabel}
-            {publishCount > 0 && <span className={s.publishCount}>{publishCount}</span>}
-          </button>
+          <PublishPlan plan={publishPlan} />
+          <div className={s.footerActions}>
+            <button
+              type='button'
+              className={s.publishButton}
+              disabled={selectedPublishDisabled}
+              onClick={onPublishSelected}
+            >
+              {publishLabel}
+              {publishCountLabel && <span className={s.publishCount}>{publishCountLabel}</span>}
+            </button>
+          </div>
         </div>
       </div>
     </BaseDrawer>

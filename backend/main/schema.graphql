@@ -79,8 +79,14 @@ type RootQueryType {
   "community docs side tree"
   docTree(community: String!): DocTree
 
-  "dashboard docs unified publish scope"
-  docPublishScope(community: String!): DocPublishScope
+  "public community docs side tree"
+  docPublicTree(community: String!): DocPublicTree
+
+  "dashboard docs unified publish checklist"
+  docPublishChecklist(community: String!): DocPublishChecklist
+
+  "dashboard docs trash items"
+  docTreeTrashItems(community: String!): [DocTreeTrashItem]
 
   "public community docs cover"
   docCover(community: String!, view: DocCoverView): DocCover
@@ -751,6 +757,9 @@ type RootMutationType {
   "delete a docs tree node"
   deleteDocTreeNode(community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
 
+  "restore a docs tree item from product trash"
+  restoreDocTreeTrashItem(community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
+
   "duplicate a docs tree node"
   duplicateDocTreeNode(community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
 
@@ -904,6 +913,7 @@ type DocTreeState {
   latestSnapshotId: ID
   latestReleaseId: ID
   latestReleaseNumber: Int
+  latestVersionSlug: String
   revision: Int
 }
 
@@ -927,7 +937,25 @@ type DocTree {
   groups: [DocTreeNode]
 }
 
-type DocPublishScopeItem {
+type DocPublicTreeNode {
+  id: ID
+  groupId: ID
+  docId: ID
+  type: DocTreeNodeType
+  title: String
+  slug: String
+  index: Int
+  href: String
+  marker: Marker
+  badge: String
+  children: [DocPublicTreeNode]
+}
+
+type DocPublicTree {
+  groups: [DocPublicTreeNode]
+}
+
+type DocPublishChecklistItem {
   id: ID!
   title: String!
   action: String!
@@ -936,27 +964,47 @@ type DocPublishScopeItem {
   disabledReason: String
 }
 
+type DocPublishChecklist {
+  totalCount: Int!
+  docChanges: [DocPublishChecklistItem!]!
+  treeChanges: [DocPublishChecklistItem!]!
+}
+
 type DocPublishScope {
   totalCount: Int!
-  docChanges: [DocPublishScopeItem!]!
-  treeChanges: [DocPublishScopeItem!]!
 }
 
 type PublishRelease {
   id: ID!
   releaseNumber: Int!
+  versionSlug: String!
   publishedAt: DateTime!
+}
+
+type DocTreeTrashItem {
+  id: ID!
+  nodeId: ID!
+  docId: ID
+  type: String
+  title: String
+  slug: String
+  deletedFromGroupId: ID
+  deletedFromIndex: Int
+  deletedAt: DateTime
+  restoredAt: DateTime
 }
 
 type DocPublishChangesPayload {
   done: Boolean!
   release: PublishRelease
+  checklist: DocPublishChecklist!
   scope: DocPublishScope!
 }
 
 input DocPublishChangesInput {
   docChangeIds: [ID]
   treeChangeIds: [ID]
+  restoreTreeChangeIds: [ID]
 }
 
 type DocCover {
@@ -1197,7 +1245,6 @@ type Post implements Article {
   communityTags: [CommunityTag]
   author: User
   community: Community
-  communitySlug: String
   communities: [Community]
   meta: ArticleMeta
   upvotesCount: Int
@@ -1236,7 +1283,6 @@ type Changelog implements Article {
   communityTags: [CommunityTag]
   author: User
   community: Community
-  communitySlug: String
   communities: [Community]
   meta: ArticleMeta
   upvotesCount: Int
@@ -1273,7 +1319,6 @@ type Doc implements Article {
   communityTags: [CommunityTag]
   author: User
   community: Community
-  communitySlug: String
   communities: [Community]
   meta: ArticleMeta
   upvotesCount: Int
@@ -1311,7 +1356,6 @@ type Blog implements Article {
   communityTags: [CommunityTag]
   author: User
   community: Community
-  communitySlug: String
   communities: [Community]
   meta: ArticleMeta
   upvotesCount: Int

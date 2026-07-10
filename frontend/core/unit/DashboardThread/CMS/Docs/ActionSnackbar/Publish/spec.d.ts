@@ -1,4 +1,4 @@
-export type TPublishScopeItem = {
+export type TPublishChecklistItem = {
   id: string
   title: string
   action: string
@@ -7,19 +7,28 @@ export type TPublishScopeItem = {
   disabledReason?: string | null
 }
 
-export type TPublishScope = {
+export type TPublishChecklist = {
   totalCount: number
-  docChanges: TPublishScopeItem[]
-  treeChanges: TPublishScopeItem[]
+  docChanges: TPublishChecklistItem[]
+  treeChanges: TPublishChecklistItem[]
 }
+
+export type TPublishPlan = {
+  publishItems: TPublishChecklistItem[]
+  restoreItems: TPublishChecklistItem[]
+  keptDraftItems: TPublishChecklistItem[]
+}
+
+export type TPublishPlanAction = 'publish' | 'restore' | 'apply' | 'noop'
 
 export type TPublishChangesData = {
   publishDocChanges?: {
-    scope?: TPublishScope | null
+    checklist?: TPublishChecklist | null
   } | null
 }
 
 export type TPublishSelectedInput = {
   docChangeIds: string[]
   treeChangeIds: string[]
+  restoreTreeChangeIds: string[]
 }

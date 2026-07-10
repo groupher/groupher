@@ -25,22 +25,22 @@ defmodule GroupherServer.CMS.Articles.Read do
   @audit_illegal Constant.CMS.pending(:illegal)
   @audit_failed Constant.CMS.pending(:audit_failed)
 
-  @spec read(String.t(), T.thread(), T.id()) :: T.domain_res(T.article())
-  def read(community_slug, thread, inner_id) when thread in @threads do
-    with {:ok, _thread} <- CanCan.allow_thread(community_slug, thread),
-         {:ok, article} <- if_article_legal(community_slug, thread, inner_id) do
-      do_read_article(article, community_slug, thread)
+  @spec read(Community.t(), T.thread(), T.id()) :: T.domain_res(T.article())
+  def read(%Community{} = community, thread, inner_id) when thread in @threads do
+    with {:ok, _thread} <- CanCan.allow_thread(community.slug, thread),
+         {:ok, article} <- if_article_legal(community, thread, inner_id) do
+      do_read_article(article, community, thread)
     end
   end
 
-  @spec read(String.t(), T.thread(), T.id(), User.t()) :: T.domain_res(T.article())
-  def read(community_slug, thread, inner_id, %User{id: user_id} = user)
+  @spec read(Community.t(), T.thread(), T.id(), User.t()) :: T.domain_res(T.article())
+  def read(%Community{} = community, thread, inner_id, %User{id: user_id} = user)
       when thread in @threads do
-    with {:ok, _thread} <- CanCan.allow_thread(community_slug, thread),
-         {:ok, article} <- if_article_legal(community_slug, thread, inner_id, user) do
+    with {:ok, _thread} <- CanCan.allow_thread(community.slug, thread),
+         {:ok, article} <- if_article_legal(community, thread, inner_id, user) do
       Multi.new()
       |> Multi.run(:normal_read, fn _, _ ->
-        do_read_article(article, community_slug, thread)
+        do_read_article(article, community, thread)
       end)
       |> Multi.run(:add_viewed_user, fn _, %{normal_read: article} ->
         update_viewed_user_list(article, user_id)
@@ -64,7 +64,7 @@ defmodule GroupherServer.CMS.Articles.Read do
     end
   end
 
-  defp do_read_article(article, community_slug, thread) do
+  defp do_read_article(article, %Community{} = community, thread) do
     Multi.new()
     |> Multi.run(:inc_views, fn _, _ ->
       ORM.inc(article, :views)
@@ -73,16 +73,14 @@ defmodule GroupherServer.CMS.Articles.Read do
       article |> Repo.preload(:document) |> done()
     end)
     |> Multi.run(:add_pinned_flag, fn _, %{load_html: article} ->
-      with {:ok, community} <- ORM.find_by(Community, %{slug: community_slug}) do
-        pin_query = Map.merge(%{community_id: community.id}, %{"#{thread}_id": article.id})
+      pin_query = Map.merge(%{community_id: community.id}, %{"#{thread}_id": article.id})
 
-        case ORM.find_by(PinnedArticle, pin_query) do
-          {:ok, _} ->
-            {:ok, %{article | is_pinned: true}}
+      case ORM.find_by(PinnedArticle, pin_query) do
+        {:ok, _} ->
+          {:ok, %{article | is_pinned: true}}
 
-          {:error, _} ->
-            {:ok, article}
-        end
+        {:error, _} ->
+          {:ok, article}
       end
     end)
     |> Multi.run(:update_article_meta, fn _, %{add_pinned_flag: article} ->
@@ -92,9 +90,9 @@ defmodule GroupherServer.CMS.Articles.Read do
     |> result()
   end
 
-  defp if_article_legal(community_slug, thread, inner_id, user)
+  defp if_article_legal(%Community{id: community_id}, thread, inner_id, user)
        when thread in @threads do
-    clauses = %{community_slug: community_slug, inner_id: inner_id}
+    clauses = %{community_id: community_id, inner_id: inner_id}
 
     with {:ok, info} <- match(thread),
          {:ok, article} <- ORM.find_by(info.model, clauses, preload: :author) do
@@ -102,9 +100,9 @@ defmodule GroupherServer.CMS.Articles.Read do
     end
   end
 
-  defp if_article_legal(community_slug, thread, inner_id)
+  defp if_article_legal(%Community{id: community_id}, thread, inner_id)
        when thread in @threads do
-    clauses = %{community_slug: community_slug, inner_id: inner_id}
+    clauses = %{community_id: community_id, inner_id: inner_id}
 
     with {:ok, info} <- match(thread),
          {:ok, article} <- ORM.find_by(info.model, clauses) do

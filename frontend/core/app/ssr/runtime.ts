@@ -8,6 +8,9 @@ import { loadLocaleFile } from '~/i18n'
 import { P } from '~/schemas'
 import type {
   TCommunityInfo,
+  TDoc,
+  TDocPublicTree,
+  TDocPublicTreeQuery,
   TLocale,
   TPagedArticlesParams,
   TPagedChangelogs,
@@ -303,6 +306,50 @@ export const getChangelog = async (community: string, id: string): Promise<TPost
   }
 
   return data.changelog
+}
+
+export const getDoc = async (community: string, id: string): Promise<TDoc | null> => {
+  'use cache'
+  cacheLife('minutes')
+
+  const response = await gqFetch(P.doc, {
+    article: {
+      innerId: id,
+      community,
+      thread: THREAD.DOC,
+    },
+    userHasLogin: false,
+  })
+
+  const { data, errors } = await response.json()
+
+  if (errors) {
+    console.log('## error details', errors)
+    return null
+  }
+
+  return data.doc
+}
+
+export const getDocPublicTree = async (community: string): Promise<TDocPublicTree | null> => {
+  'use cache'
+  cacheLife('minutes')
+
+  const response = await gqFetch(P.docPublicTree, {
+    community,
+  })
+
+  const { data, errors } = (await response.json()) as {
+    data?: TDocPublicTreeQuery
+    errors?: unknown
+  }
+
+  if (errors || !data?.docPublicTree) {
+    console.log('## error details doc public tree', errors)
+    return null
+  }
+
+  return data.docPublicTree
 }
 
 export const getPagedComments = async (

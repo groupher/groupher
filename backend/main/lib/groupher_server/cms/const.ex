@@ -7,6 +7,9 @@ defmodule GroupherServer.CMS.Const do
 
   enum(stage, do: [draft: :draft, public: :public])
 
+  enum(docs_branch_kind, do: [main: :main, preview: :preview])
+  enum(docs_branch_status, do: [active: :active, archived: :archived])
+
   enum tree_node_type do
     [
       group: :group,
@@ -37,6 +40,18 @@ defmodule GroupherServer.CMS.Const do
       doc_id: "docId"
     ]
   end
+
+  enum(doc_tree_trash_snapshot_key, do: [draft_doc: "draftDoc"])
+
+  enum doc_publish_input_key do
+    [
+      doc_change_ids: :doc_change_ids,
+      tree_change_ids: :tree_change_ids,
+      restore_tree_change_ids: :restore_tree_change_ids
+    ]
+  end
+
+  enum(doc_publish_flow, do: [noop: :noop, publish: :publish, restore: :restore])
 
   enum tree_event do
     [

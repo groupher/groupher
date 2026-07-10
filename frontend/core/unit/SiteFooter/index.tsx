@@ -8,6 +8,7 @@
 
 import { FOOTER_LAYOUT } from '~/const/layout'
 import useFooterLinks from '~/hooks/useFooterLinks'
+import type { TContainerMetric } from '~/hooks/useTwBelt/spec'
 import useCommunity from '~/stores/community/hooks'
 
 import GroupLayout from './GroupLayout'
@@ -15,8 +16,12 @@ import OnelineLayout from './OnelineLayout'
 import PowerbyInfo from './PowerbyInfo'
 import useSalon from './salon'
 
-export default function Footer() {
-  const s = useSalon()
+type TProps = {
+  containerMetric?: TContainerMetric | null
+}
+
+export default function Footer({ containerMetric = null }: TProps) {
+  const s = useSalon({ containerMetric })
 
   const { slug } = useCommunity()
   const { layout } = useFooterLinks()
@@ -25,8 +30,10 @@ export default function Footer() {
 
   return (
     <footer className={s.wrapper}>
-      {layout === FOOTER_LAYOUT.GROUP ? <GroupLayout /> : <OnelineLayout />}
-      <PowerbyInfo />
+      <div className={s.inner}>
+        {layout === FOOTER_LAYOUT.GROUP ? <GroupLayout /> : <OnelineLayout />}
+        <PowerbyInfo />
+      </div>
     </footer>
   )
 }

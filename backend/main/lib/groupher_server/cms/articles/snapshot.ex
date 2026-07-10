@@ -30,6 +30,7 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Articles.{Draft, Write}
+  alias CMS.DocTree.Branch
   alias CMS.Model.{Doc, ArticleSnapshot, Author, Community, PublishReleaseArticle}
   alias Helper.{ORM, T, Transaction}
 
@@ -53,13 +54,15 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
   @spec list_doc_draft(Community.t(), String.t(), keyword()) ::
           T.domain_res([ArticleSnapshot.t()])
   def list_doc_draft(%Community{} = community, doc_id, opts \\ []) do
-    community
-    |> doc_snapshots_query(doc_id)
-    |> maybe_filter_stage(Keyword.get(opts, :stage))
-    |> order_by([r], desc: r.snapshot_number, desc: r.id)
-    |> limit(^Keyword.get(opts, :limit, @default_limit))
-    |> Repo.all()
-    |> then(&{:ok, &1})
+    with {:ok, branch} <- Branch.resolve(community, opts) do
+      community
+      |> doc_snapshots_query(branch, doc_id)
+      |> maybe_filter_stage(Keyword.get(opts, :stage))
+      |> order_by([r], desc: r.snapshot_number, desc: r.id)
+      |> limit(^Keyword.get(opts, :limit, @default_limit))
+      |> Repo.all()
+      |> then(&{:ok, &1})
+    end
   end
 
   @doc """
@@ -70,16 +73,18 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
       iex> Snapshot.get_doc_draft_snapshot(community, doc.doc_id, snapshot.id)
       {:ok, %ArticleSnapshot{}}
   """
-  @spec get_doc_draft_snapshot(Community.t(), String.t(), T.id()) ::
+  @spec get_doc_draft_snapshot(Community.t(), String.t(), T.id(), keyword() | map()) ::
           T.domain_res(ArticleSnapshot.t())
-  def get_doc_draft_snapshot(%Community{} = community, doc_id, snapshot_id) do
-    community
-    |> doc_snapshots_query(doc_id)
-    |> where([r], r.id == ^snapshot_id)
-    |> Repo.one()
-    |> case do
-      %ArticleSnapshot{} = snapshot -> {:ok, snapshot}
-      nil -> {:error, {:not_exist, "article snapshot #{snapshot_id}"}}
+  def get_doc_draft_snapshot(%Community{} = community, doc_id, snapshot_id, opts \\ []) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
+      community
+      |> doc_snapshots_query(branch, doc_id)
+      |> where([r], r.id == ^snapshot_id)
+      |> Repo.one()
+      |> case do
+        %ArticleSnapshot{} = snapshot -> {:ok, snapshot}
+        nil -> {:error, {:not_exist, "article snapshot #{snapshot_id}"}}
+      end
     end
   end
 
@@ -103,11 +108,11 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
         user \\ nil,
         opts \\ []
       ) do
-    Transaction.lock_global(Draft.lock_key(community, doc_id), fn ->
+    Transaction.lock_global(Draft.lock_key(community, doc_id, opts), fn ->
       stage = Keyword.get(opts, :stage, CMS.Const.stage(:draft))
       force? = Keyword.get(opts, :force, false)
 
-      with {:ok, draft} <- read_doc_draft(community, doc_id),
+      with {:ok, draft} <- read_doc_draft(community, doc_id, opts),
            {:ok, attrs} <- snapshot_attrs_from_doc(draft, stage, user) do
         attrs
         |> put_next_snapshot_number()
@@ -151,13 +156,13 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
       iex> Snapshot.publish_doc_draft(community, doc.doc_id, user)
       {:ok, %ArticleSnapshot{stage: CMS.Const.stage(:public)}}
   """
-  @spec publish_doc_draft(Community.t(), String.t(), User.t()) ::
+  @spec publish_doc_draft(Community.t(), String.t(), User.t(), keyword() | map()) ::
           T.domain_res(ArticleSnapshot.t())
-  def publish_doc_draft(%Community{} = community, doc_id, %User{} = user) do
-    Transaction.lock_global(Draft.lock_key(community, doc_id), fn ->
-      with {:ok, doc} <- Draft.publish_unlocked(community, doc_id, user),
+  def publish_doc_draft(%Community{} = community, doc_id, %User{} = user, opts \\ []) do
+    Transaction.lock_global(Draft.lock_key(community, doc_id, opts), fn ->
+      with {:ok, doc} <- Draft.publish_unlocked(community, doc_id, user, opts),
            {:ok, snapshot} <- checkpoint_published(doc, user),
-           {:ok, _} <- clear_doc_draft_checkpoints(community, doc_id) do
+           {:ok, _} <- clear_doc_draft_checkpoints(community, doc_id, opts) do
         {:ok, snapshot}
       end
     end)
@@ -175,19 +180,20 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
       iex> Snapshot.restore_doc_draft(community, doc.doc_id, snapshot.id, user)
       {:ok, %Doc{}}
   """
-  @spec restore_doc_draft(Community.t(), String.t(), T.id(), User.t() | nil) ::
+  @spec restore_doc_draft(Community.t(), String.t(), T.id(), User.t() | nil, keyword() | map()) ::
           T.domain_res(Doc.t())
   def restore_doc_draft(
         %Community{} = community,
         doc_id,
         snapshot_id,
-        user \\ nil
+        user \\ nil,
+        opts \\ []
       ) do
-    Transaction.lock_global(Draft.lock_key(community, doc_id), fn ->
+    Transaction.lock_global(Draft.lock_key(community, doc_id, opts), fn ->
       with {:ok, snapshot} <-
-             get_doc_draft_snapshot(community, doc_id, snapshot_id),
-           {:ok, draft} <- restore_snapshot_into_draft(community, doc_id, snapshot, user),
-           {:ok, _} <- trim_snapshots_after_restore(community, doc_id, snapshot) do
+             get_doc_draft_snapshot(community, doc_id, snapshot_id, opts),
+           {:ok, draft} <- restore_snapshot_into_draft(community, doc_id, snapshot, user, opts),
+           {:ok, _} <- trim_snapshots_after_restore(community, doc_id, snapshot, opts) do
         {:ok, draft}
       end
     end)
@@ -201,13 +207,17 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
       iex> Snapshot.clear_doc_draft_checkpoints(community, doc.doc_id)
       {:ok, {3, nil}}
   """
-  @spec clear_doc_draft_checkpoints(Community.t(), String.t()) :: T.domain_res(term())
-  def clear_doc_draft_checkpoints(%Community{} = community, doc_id) do
-    ArticleSnapshot
-    |> where([r], r.community_id == ^community.id)
-    |> where([r], r.doc_id == ^doc_id)
-    |> where([r], r.stage == CMS.Const.stage(:draft))
-    |> ORM.delete_all(:if_exist)
+  @spec clear_doc_draft_checkpoints(Community.t(), String.t(), keyword() | map()) ::
+          T.domain_res(term())
+  def clear_doc_draft_checkpoints(%Community{} = community, doc_id, opts \\ []) do
+    with {:ok, branch} <- Branch.resolve(community, opts) do
+      ArticleSnapshot
+      |> where([r], r.community_id == ^community.id)
+      |> where([r], r.branch_id == ^branch.id)
+      |> where([r], r.doc_id == ^doc_id)
+      |> where([r], r.stage == CMS.Const.stage(:draft))
+      |> ORM.delete_all(:if_exist)
+    end
   end
 
   @doc """
@@ -219,13 +229,22 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
       iex> Snapshot.trim_published_snapshots_after_restore(community, snapshot)
       {:ok, {2, nil}}
   """
-  @spec trim_published_snapshots_after_restore(Community.t(), ArticleSnapshot.t()) ::
+  @spec trim_published_snapshots_after_restore(
+          Community.t(),
+          ArticleSnapshot.t(),
+          keyword() | map()
+        ) ::
           T.domain_res(term())
+  def trim_published_snapshots_after_restore(community, snapshot, opts \\ [])
+
   def trim_published_snapshots_after_restore(
         %Community{} = community,
-        %ArticleSnapshot{stage: CMS.Const.stage(:public), doc_id: doc_id} = snapshot
+        %ArticleSnapshot{stage: CMS.Const.stage(:public), doc_id: doc_id} = snapshot,
+        opts
       )
       when not is_nil(doc_id) do
+    {:ok, branch} = Branch.resolve(community, opts)
+
     release_snapshot_ids =
       PublishReleaseArticle
       |> where([p], p.doc_id == ^doc_id)
@@ -233,6 +252,7 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
 
     ArticleSnapshot
     |> where([r], r.community_id == ^community.id)
+    |> where([r], r.branch_id == ^branch.id)
     |> where([r], r.thread == ^snapshot.thread)
     |> where([r], r.stage == CMS.Const.stage(:public))
     |> where([r], r.doc_id == ^doc_id)
@@ -241,15 +261,16 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
     |> ORM.delete_all(:if_exist)
   end
 
-  def trim_published_snapshots_after_restore(_community, _snapshot), do: {:ok, {0, nil}}
+  def trim_published_snapshots_after_restore(_community, _snapshot, _opts), do: {:ok, {0, nil}}
 
-  defp read_doc_draft(%Community{} = community, doc_id) do
-    Draft.read(community, doc_id)
+  defp read_doc_draft(%Community{} = community, doc_id, opts) do
+    Draft.read(community, doc_id, opts)
   end
 
-  defp doc_snapshots_query(%Community{} = community, doc_id) do
+  defp doc_snapshots_query(%Community{} = community, branch, doc_id) do
     ArticleSnapshot
     |> where([r], r.community_id == ^community.id)
+    |> where([r], r.branch_id == ^branch.id)
     |> where([r], r.thread == ^:doc)
     |> where([r], r.doc_id == ^doc_id)
   end
@@ -277,6 +298,7 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
   defp next_snapshot_number(%{} = attrs) do
     ArticleSnapshot
     |> where([r], r.community_id == ^attrs.community_id)
+    |> maybe_match_branch(attrs)
     |> where([r], r.thread == ^attrs.thread)
     |> where([r], r.stage == ^attrs.stage)
     |> match_snapshot_target(attrs)
@@ -294,12 +316,19 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
 
   defp match_snapshot_target(query, _attrs), do: query
 
+  defp maybe_match_branch(query, %{branch_id: branch_id}) when not is_nil(branch_id) do
+    where(query, [r], r.branch_id == ^branch_id)
+  end
+
+  defp maybe_match_branch(query, _attrs), do: query
+
   defp latest_snapshot(
          %{community_id: community_id, thread: thread} = attrs,
          stage
        ) do
     ArticleSnapshot
     |> where([r], r.community_id == ^community_id)
+    |> maybe_match_branch(attrs)
     |> where([r], r.thread == ^thread)
     |> where([r], r.stage == ^stage)
     |> match_snapshot_target(attrs)
@@ -311,10 +340,14 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
   defp trim_snapshots_after_restore(
          %Community{} = community,
          doc_id,
-         %ArticleSnapshot{stage: CMS.Const.stage(:draft), doc_id: doc_id} = snapshot
+         %ArticleSnapshot{stage: CMS.Const.stage(:draft), doc_id: doc_id} = snapshot,
+         opts
        ) do
+    {:ok, branch} = Branch.resolve(community, opts)
+
     ArticleSnapshot
     |> where([r], r.community_id == ^community.id)
+    |> where([r], r.branch_id == ^branch.id)
     |> where([r], r.thread == ^snapshot.thread)
     |> where([r], r.doc_id == ^doc_id)
     |> where([r], r.stage == CMS.Const.stage(:draft))
@@ -325,10 +358,11 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
   defp trim_snapshots_after_restore(
          %Community{} = community,
          doc_id,
-         %ArticleSnapshot{stage: CMS.Const.stage(:public)} = snapshot
+         %ArticleSnapshot{stage: CMS.Const.stage(:public)} = snapshot,
+         opts
        ) do
-    with {:ok, _} <- trim_published_snapshots_after_restore(community, snapshot) do
-      clear_doc_draft_checkpoints(community, doc_id)
+    with {:ok, _} <- trim_published_snapshots_after_restore(community, snapshot, opts) do
+      clear_doc_draft_checkpoints(community, doc_id, opts)
     end
   end
 
@@ -337,6 +371,7 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
       {:ok,
        %{
          community_id: doc.community_id,
+         branch_id: doc.branch_id,
          thread: :doc,
          stage: stage,
          doc_id: doc.doc_id,
@@ -358,10 +393,15 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
     with {:ok, %Author{id: id}} <- Write.ensure_author_exists(user), do: {:ok, id}
   end
 
-  defp restore_snapshot_into_draft(%Community{} = community, doc_id, snapshot, user) do
-    case Draft.read(community, doc_id) do
+  defp restore_snapshot_into_draft(%Community{} = community, doc_id, snapshot, user, opts) do
+    case Draft.read(community, doc_id, opts) do
       {:ok, current_draft} ->
-        Draft.update_unlocked(community, doc_id, restore_attrs(snapshot, current_draft))
+        attrs =
+          snapshot
+          |> restore_attrs(current_draft)
+          |> Map.put(:branch_id, current_draft.branch_id)
+
+        Draft.update_unlocked(community, doc_id, attrs)
 
       {:error, _} ->
         restore_snapshot_into_missing_draft(community, doc_id, snapshot, user)
@@ -390,6 +430,7 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
       snapshot
       |> restore_attrs(%Doc{slug: snapshot.slug})
       |> Map.put(:doc_id, doc_id)
+      |> Map.put(:branch_id, snapshot.branch_id)
 
     Draft.create(community, :doc, attrs, user)
   end

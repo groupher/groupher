@@ -27,7 +27,7 @@ export default function PinItem() {
   const handlePin = useCallback(() => {
     const articlePath = {
       innerId: article.innerId,
-      community: article.communitySlug,
+      community: article.community?.slug,
       thread: article.meta.thread,
     }
 

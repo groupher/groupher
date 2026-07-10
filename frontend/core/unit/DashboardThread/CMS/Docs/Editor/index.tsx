@@ -13,6 +13,7 @@ import { DOC_EDITOR_SNACKBAR_STICKY_TOP } from './salon/layout'
 import SideTree from './SideTree'
 import type { TDocTreeInitialData } from './SideTree/spec'
 import useSideTreeLogic from './SideTree/useLogic'
+import { hasTreeChanges } from './store'
 import DocsEditorStoreProvider from './store/provider'
 
 export type TDocsEditorInitialData = {
@@ -29,6 +30,7 @@ const Editor: FC<TProps> = ({ initialData }) => {
   const s = useSalon({ submenuCollapsed })
   const sideTree = useSideTreeLogic(initialData?.docTree ?? undefined)
   const hasTree = sideTree.groups.length > 0
+  const showActionSnackbar = sideTree.activeId !== null || hasTreeChanges(sideTree)
 
   return (
     <DocsEditorStoreProvider initData={{ sideTree, article: initialData?.docDraft ?? null }}>
@@ -61,7 +63,7 @@ const Editor: FC<TProps> = ({ initialData }) => {
             <Panel id='docs-editor-space' className={s.fillPanel} minSize={0}>
               <Article sideTree={sideTree} />
 
-              {sideTree.activeId && (
+              {showActionSnackbar && (
                 <div className={s.snackbarRail} style={{ top: DOC_EDITOR_SNACKBAR_STICKY_TOP }}>
                   <ActionSnackbar />
                 </div>

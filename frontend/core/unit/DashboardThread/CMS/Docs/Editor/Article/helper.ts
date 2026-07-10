@@ -7,6 +7,7 @@ import { EMPTY_EDITOR_VALUE } from './constant'
 import type {
   TDocDraftDTO,
   TDocDraftSession,
+  TDocDraftSource,
   TEditorDraft,
   TEditorDraftMeta,
   TEditorDraftStorePatchInput,
@@ -120,6 +121,9 @@ export const composeSavedDraft = (draft: TEditorDraft): TSavedDraft => ({
 export const composeEmptySavedDraft = (): TSavedDraft =>
   composeSavedDraft(composeEmptyEditorDraft())
 
+export const resolveDraftSource = (draft?: Pick<TDocDraftDTO, 'stage'> | null): TDocDraftSource =>
+  draft?.stage === DOC_STAGE.DRAFT ? 'draft' : 'public'
+
 export const composeEditorDraftMeta = (
   source?: Partial<TEditorDraftMeta> | null,
 ): TEditorDraftMeta => ({
@@ -216,7 +220,10 @@ export const composeDraftEditorStorePatch = ({
  * Normalize a fetched draft and its active tree page into editor session state.
  *
  * @example
- * resolveDraftSession({ docId: 'doc_1', title: 'Intro' }, { docId: 'doc_1', title: 'Fallback' })
+ * composeLoadedDraftSession(
+ *   { docId: 'doc_1', title: 'Intro' },
+ *   { docId: 'doc_1', title: 'Fallback' },
+ * )
  * // => { title: 'Intro', slug: '', body: EMPTY_EDITOR_VALUE, ... }
  */
 export const composeLoadedDraftSession = (
@@ -242,10 +249,9 @@ export const composeLoadedDraftSession = (
       publishState: activePage?.publishState || null,
       ...countEditorText(body),
     },
+    source: resolveDraftSource(draft),
     slug: draft?.slug || '',
     subtitle,
     title,
   }
 }
-
-export const resolveDraftSession = composeLoadedDraftSession

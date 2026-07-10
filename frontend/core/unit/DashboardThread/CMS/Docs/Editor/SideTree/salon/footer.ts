@@ -4,8 +4,7 @@ export default function useSalon() {
   const { sexyBorder } = useTwBelt()
 
   return {
-    wrapper:
-      'sticky bottom-0 z-10 column min-h-12 w-full shrink-0 bg-base/95 text-sm text-digest backdrop-blur-sm',
+    wrapper: 'z-10 column min-h-12 w-full shrink-0 bg-base/95 text-sm text-digest backdrop-blur-sm',
     divider: sexyBorder(35),
     content: 'row-center min-h-12 w-full px-1.5 py-2',
     grow: 'grow',

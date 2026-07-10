@@ -12,7 +12,7 @@ const ALLOWED_PARAMS = [
   'cat',
   'status',
   'order',
-  'workspaceId',
+  'docId',
   SEARCH_PARAM.COMMUNITY,
 ]
 

@@ -229,11 +229,11 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
     end
   end
 
-  defp article_ids(%Community{id: community_id, slug: community_slug}) do
+  defp article_ids(%Community{id: community_id}) do
     post_ids =
       Repo.all(
         from(p in Post,
-          where: p.community_id == ^community_id or p.community_slug == ^community_slug,
+          where: p.community_id == ^community_id,
           select: p.id
         )
       )
@@ -241,7 +241,7 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
     changelog_ids =
       Repo.all(
         from(c in Changelog,
-          where: c.community_id == ^community_id or c.community_slug == ^community_slug,
+          where: c.community_id == ^community_id,
           select: c.id
         )
       )
@@ -249,7 +249,7 @@ defmodule GroupherServer.CMS.Seeds.FullCommunity do
     doc_ids =
       Repo.all(
         from(d in Doc,
-          where: d.community_id == ^community_id or d.community_slug == ^community_slug,
+          where: d.community_id == ^community_id,
           select: d.id
         )
       )

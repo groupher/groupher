@@ -64,6 +64,8 @@ defmodule GroupherServerWeb.Endpoint do
     log: [rejected: :debug],
     origins: [
       "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:3002",
       ~r{^https://(.*\.?)groupher\.com$}
     ],
     # origins: "*",

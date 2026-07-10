@@ -15,11 +15,15 @@ defmodule GroupherServer.Support.Factory do
 
   alias CMS.Model.{
     Author,
+    Blog,
     Category,
+    Changelog,
     Comment,
     Community,
     CommunityTag,
-    CommunityTagGroup
+    CommunityTagGroup,
+    Doc,
+    Post
   }
 
   alias Helper.ORM
@@ -156,6 +160,10 @@ defmodule GroupherServer.Support.Factory do
 
   def mock_attrs(thread, attrs), do: mock_meta(thread) |> Map.merge(attrs)
 
+  def article_community(%{community_id: community_id}) do
+    GroupherServer.Repo.get!(Community, community_id)
+  end
+
   # NOTICE: avoid Recursive problem
   # this line of code will cause SERIOUS Recursive problem
   defp mock(:comment), do: Comment |> struct(mock_meta(:comment))
@@ -188,6 +196,8 @@ defmodule GroupherServer.Support.Factory do
     try do
       factory_name
       |> mock(attributes)
+      |> maybe_put_default_article_community()
+      |> maybe_put_default_doc_branch()
       |> maybe_put_default_tag_group()
       |> GroupherServer.Repo.insert()
     rescue
@@ -212,6 +222,31 @@ defmodule GroupherServer.Support.Factory do
   end
 
   defp maybe_put_default_tag_group(record), do: record
+
+  defp maybe_put_default_article_community(%{__struct__: model} = article)
+       when model in [Post, Blog, Changelog, Doc] do
+    community =
+      case article.community_id do
+        nil ->
+          {:ok, community} = db_insert(:community)
+          community
+
+        community_id ->
+          GroupherServer.Repo.get!(Community, community_id)
+      end
+
+    %{article | community_id: community.id, community: community}
+  end
+
+  defp maybe_put_default_article_community(record), do: record
+
+  defp maybe_put_default_doc_branch(%Doc{branch_id: nil} = doc) do
+    {:ok, branch} = CMS.DocTree.Branch.resolve(doc.community)
+
+    %{doc | branch_id: branch.id}
+  end
+
+  defp maybe_put_default_doc_branch(record), do: record
 
   defp put_default_tag_group(%CommunityTag{} = tag, community_id, thread) do
     title = tag.group || "Ungrouped"

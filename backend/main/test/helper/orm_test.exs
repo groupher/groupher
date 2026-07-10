@@ -98,12 +98,12 @@ defmodule GroupherServer.Test.Helper.ORM do
 
   describe "[find article]" do
     test "should find by default args", ~m(community post)a do
-      {:ok, article} = CMS.FrontDesk.article(community.slug, :post, post.inner_id)
+      {:ok, article} = CMS.FrontDesk.article(community, :post, post.inner_id)
 
       assert article.title == post.title
       assert article.id == post.id
       assert article.inner_id == post.inner_id
-      assert article.community_slug == community.slug
+      assert article.community_id == community.id
 
       assert match?(%Ecto.Association.NotLoaded{}, article.community)
       assert match?(%Ecto.Association.NotLoaded{}, article.author)
@@ -120,25 +120,25 @@ defmodule GroupherServer.Test.Helper.ORM do
       assert article.title == post.title
       assert article.id == post.id
       assert article.inner_id == post.inner_id
-      assert article.community_slug == community.slug
+      assert article.community_id == community.id
     end
 
     test "should find by preload", ~m(community post)a do
       {:ok, article} =
-        CMS.FrontDesk.article(community.slug, :post, post.inner_id,
+        CMS.FrontDesk.article(community, :post, post.inner_id,
           preload: [[author: :user], :community]
         )
 
       assert article.id == post.id
       assert article.inner_id == post.inner_id
-      assert article.community_slug == community.slug
+      assert article.community_id == community.id
 
       assert not match?(%Ecto.Association.NotLoaded{}, article.community)
       assert article.community.title == community.title
     end
 
     test "should have error code if not found", ~m(community)a do
-      {:error, reason} = CMS.FrontDesk.article(community.slug, :post, 3845)
+      {:error, reason} = CMS.FrontDesk.article(community, :post, 3845)
 
       assert error_code(reason) == ecode(:article_not_found)
     end

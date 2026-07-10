@@ -77,6 +77,7 @@ const SideTree: FC<TProps> = ({ controller }) => {
     edit,
     handleChildAction,
     updateChildStyle,
+    reload,
     reorderGroups,
   } = controller
   const deferredSearchQuery = useDeferredValue(searchQuery)
@@ -171,7 +172,7 @@ const SideTree: FC<TProps> = ({ controller }) => {
           </div>
         )}
       </SideTreeDndContext>
-      <Footer />
+      <Footer baseRevision={controller.treeState?.revision ?? null} onRestored={reload} />
     </aside>
   )
 }

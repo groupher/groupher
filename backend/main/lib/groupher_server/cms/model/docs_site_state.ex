@@ -31,18 +31,19 @@ defmodule GroupherServer.CMS.Model.DocsSiteState do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.{Community, DocTreeSnapshot}
+  alias CMS.Model.{Community, DocsBranch, DocTreeSnapshot}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
 
-  @required_fields ~w(community_id)a
+  @required_fields ~w(community_id branch_id)a
   @optional_fields ~w(tree_lock_version site_draft_version published_version base_snapshot_id staged_event_count last_published_at last_published_by_id)a
 
   @type t :: %DocsSiteState{}
   schema "docs_site_states" do
     belongs_to(:community, Community)
+    belongs_to(:branch, DocsBranch)
     belongs_to(:base_snapshot, DocTreeSnapshot)
     belongs_to(:last_published_by, User)
 
@@ -60,9 +61,10 @@ defmodule GroupherServer.CMS.Model.DocsSiteState do
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:community_id)
+    |> foreign_key_constraint(:branch_id)
     |> foreign_key_constraint(:base_snapshot_id)
     |> foreign_key_constraint(:last_published_by_id)
-    |> unique_constraint(:community_id)
+    |> unique_constraint(:branch_id, name: :docs_site_states_branch_id_index)
   end
 
   def update_changeset(%DocsSiteState{} = state, attrs) do

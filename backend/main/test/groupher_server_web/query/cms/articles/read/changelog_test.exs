@@ -19,7 +19,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
     variables = %{
       article: %{
         inner_id: changelog.inner_id,
-        community: changelog.community_slug,
+        community: community.slug,
         thread: "CHANGELOG"
       }
     }
@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
     results = user_conn |> gq_query(Schema.q(:article, :changelog), variables)
 
     assert results["innerId"] == to_string(changelog.inner_id)
-    assert results["communitySlug"] == changelog.community_slug
+    assert get_in(results, ["community", "slug"]) == community.slug
 
     assert is_valid_kv?(results, "title", :string)
 
@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
     variables = %{
       article: %{
         inner_id: changelog.inner_id,
-        community: changelog.community_slug,
+        community: community.slug,
         thread: "CHANGELOG"
       }
     }
@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
     variables = %{
       article: %{
         inner_id: changelog.inner_id,
-        community: changelog.community_slug,
+        community: community.slug,
         thread: "CHANGELOG"
       }
     }
@@ -105,7 +105,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
     variables = %{
       article: %{
         inner_id: changelog.inner_id,
-        community: changelog.community_slug,
+        community: community.slug,
         thread: "CHANGELOG"
       }
     }

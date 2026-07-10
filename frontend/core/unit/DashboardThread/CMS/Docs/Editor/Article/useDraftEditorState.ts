@@ -14,6 +14,7 @@ import {
   composeEmptyEditorDraft,
   composeEmptySavedDraft,
   composeSavedDraft,
+  resolveDraftSource,
   isDraftDirty,
   countEditorText,
 } from './helper'
@@ -22,6 +23,7 @@ import type {
   TDraftSaveStatus,
   TDocDraftDTO,
   TDocDraftSession,
+  TDocDraftSource,
   TEditorDraft,
   TEditorDraftMeta,
   TSavedDraft,
@@ -44,6 +46,7 @@ export type TDraftEditorState = {
   loadStatus: TDraftLoadStatus
   meta: TEditorDraftMeta
   savedDraft: TSavedDraft
+  draftSource: TDocDraftSource
   saveStatus: TDraftSaveStatus
   applyDraftPatch: (patch: Partial<TEditorDraftMeta>) => void
   applyLoaded: (session: TDocDraftSession) => void
@@ -84,6 +87,9 @@ export default function useDraftEditorState(sideTree: TSideTreeController): TDra
   )
   const [draft, setDraft] = useState<TEditorDraft>(initialDraft)
   const [savedDraft, setSavedDraft] = useState<TSavedDraft>(() => composeSavedDraft(initialDraft))
+  const [draftSource, setDraftSource] = useState<TDocDraftSource>(() =>
+    resolveDraftSource(docsEditor$.docDraftInfo),
+  )
   const [meta, setMeta] = useState<TEditorDraftMeta>(() =>
     composeEditorDraftMeta(docsEditor$.docDraftInfo),
   )
@@ -109,6 +115,7 @@ export default function useDraftEditorState(sideTree: TSideTreeController): TDra
 
     setDraft(emptyDraft)
     setSavedDraft(emptySavedDraft)
+    setDraftSource('public')
     setMeta(composeEditorDraftMeta())
     setLoadStatus({ error: null, loadedDocId: null, loading: false })
     setSaveStatus({ error: null, lastSavedAt: null, saving: false })
@@ -119,6 +126,7 @@ export default function useDraftEditorState(sideTree: TSideTreeController): TDra
 
     setDraft(nextDraft)
     setSavedDraft(composeSavedDraft(nextDraft))
+    setDraftSource(session.source)
     setMeta(composeEditorDraftMeta(session.info))
     setLoadStatus({ error: null, loadedDocId: nextDraft.docId || null, loading: false })
     setSaveStatus({ error: null, lastSavedAt: null, saving: false })
@@ -134,6 +142,7 @@ export default function useDraftEditorState(sideTree: TSideTreeController): TDra
       const nextSavedDraft = composeSavedDraft(requestDraft)
 
       setSavedDraft(nextSavedDraft)
+      setDraftSource('draft')
       setMeta(nextMeta)
       setDraft((current) => {
         const title = current.title === startedDraft.title ? requestDraft.title : current.title
@@ -232,6 +241,7 @@ export default function useDraftEditorState(sideTree: TSideTreeController): TDra
     loadStatus,
     meta,
     savedDraft,
+    draftSource,
     saveStatus,
     applyDraftPatch,
     applyLoaded,

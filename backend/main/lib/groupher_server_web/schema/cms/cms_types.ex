@@ -139,6 +139,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:latest_snapshot_id, :id)
     field(:latest_release_id, :id)
     field(:latest_release_number, :integer)
+    field(:latest_version_slug, :string)
     field(:revision, :integer)
   end
 
@@ -162,7 +163,25 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:groups, list_of(:doc_tree_node))
   end
 
-  object :doc_publish_scope_item do
+  object :doc_public_tree_node do
+    field(:id, :id)
+    field(:group_id, :id)
+    field(:doc_id, :id)
+    field(:type, :doc_tree_node_type)
+    field(:title, :string)
+    field(:slug, :string)
+    field(:index, :integer)
+    field(:href, :string)
+    field(:marker, :marker)
+    field(:badge, :string)
+    field(:children, list_of(:doc_public_tree_node))
+  end
+
+  object :doc_public_tree do
+    field(:groups, list_of(:doc_public_tree_node))
+  end
+
+  object :doc_publish_checklist_item do
     field(:id, non_null(:id))
     field(:title, non_null(:string))
     field(:action, non_null(:string))
@@ -171,27 +190,47 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:disabled_reason, :string)
   end
 
+  object :doc_publish_checklist do
+    field(:total_count, non_null(:integer))
+    field(:doc_changes, non_null(list_of(non_null(:doc_publish_checklist_item))))
+    field(:tree_changes, non_null(list_of(non_null(:doc_publish_checklist_item))))
+  end
+
   object :doc_publish_scope do
     field(:total_count, non_null(:integer))
-    field(:doc_changes, non_null(list_of(non_null(:doc_publish_scope_item))))
-    field(:tree_changes, non_null(list_of(non_null(:doc_publish_scope_item))))
   end
 
   object :publish_release do
     field(:id, non_null(:id))
     field(:release_number, non_null(:integer))
+    field(:version_slug, non_null(:string))
     field(:published_at, non_null(:datetime))
+  end
+
+  object :doc_tree_trash_item do
+    field(:id, non_null(:id))
+    field(:node_id, non_null(:id))
+    field(:doc_id, :id)
+    field(:type, :string)
+    field(:title, :string)
+    field(:slug, :string)
+    field(:deleted_from_group_id, :id)
+    field(:deleted_from_index, :integer)
+    field(:deleted_at, :datetime)
+    field(:restored_at, :datetime)
   end
 
   object :doc_publish_changes_payload do
     field(:done, non_null(:boolean))
     field(:release, :publish_release)
+    field(:checklist, non_null(:doc_publish_checklist))
     field(:scope, non_null(:doc_publish_scope))
   end
 
   input_object :doc_publish_changes_input do
     field(:doc_change_ids, list_of(:id))
     field(:tree_change_ids, list_of(:id))
+    field(:restore_tree_change_ids, list_of(:id))
   end
 
   object :doc_cover do

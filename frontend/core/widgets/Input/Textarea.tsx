@@ -20,6 +20,7 @@ type TProps = {
   className?: string
   fgColor?: TFgColor
   value?: string | null
+  rows?: number
   focusOnMount: boolean
   disableEnter: boolean
   onChange?: (e) => void
@@ -30,6 +31,7 @@ const Textarea: FC<TProps> = ({
   testid = 'textarea',
   className = '',
   fgColor = 'default',
+  rows,
   focusOnMount,
   disableEnter,
   ...restProps
@@ -56,6 +58,7 @@ const Textarea: FC<TProps> = ({
       data-testid={testid}
       onChange={handleOnChange}
       onKeyDown={handleKeydown}
+      rows={rows}
       minRows={1}
       ref={textareaRef}
       spellCheck='false'

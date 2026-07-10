@@ -20,6 +20,7 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
       Enum.reduce(1..@total_count, [], fn _, acc ->
         {:ok, value} =
           CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
+
         acc ++ [value]
       end)
 
@@ -35,7 +36,11 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
   describe "[pending changelogs flags]" do
     test "pending changelog can not be read", ~m(changelog_m)a do
       {:ok, _} =
-        CMS.Articles.read(changelog_m.community_slug, :changelog, changelog_m.inner_id)
+        CMS.Articles.read(
+          article_community(changelog_m),
+          :changelog,
+          changelog_m.inner_id
+        )
 
       {:ok, _} =
         CMS.Articles.set_illegal(:changelog, changelog_m.id, %{
@@ -48,7 +53,11 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
       assert changelog_m.pending == @audit_illegal
 
       {:error, reason} =
-        CMS.Articles.read(changelog_m.community_slug, :changelog, changelog_m.inner_id)
+        CMS.Articles.read(
+          article_community(changelog_m),
+          :changelog,
+          changelog_m.inner_id
+        )
 
       assert reason |> is_error?(:pending)
     end
@@ -58,7 +67,11 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       {:ok, _} =
-        CMS.Articles.read(changelog.community_slug, :changelog, changelog.inner_id)
+        CMS.Articles.read(
+          article_community(changelog),
+          :changelog,
+          changelog.inner_id
+        )
 
       {:ok, _} =
         CMS.Articles.set_illegal(:changelog, changelog.id, %{
@@ -68,21 +81,35 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
         })
 
       {:ok, changelog_read} =
-        CMS.Articles.read(changelog.community_slug, :changelog, changelog.inner_id, user)
+        CMS.Articles.read(
+          article_community(changelog),
+          :changelog,
+          changelog.inner_id,
+          user
+        )
 
       assert changelog_read.id == changelog.id
 
       {:ok, user2} = db_insert(:user)
 
       {:error, reason} =
-        CMS.Articles.read(changelog.community_slug, :changelog, changelog.inner_id, user2)
+        CMS.Articles.read(
+          article_community(changelog),
+          :changelog,
+          changelog.inner_id,
+          user2
+        )
 
       assert reason |> is_error?(:pending)
     end
 
     test "pending changelog can set/unset pending", ~m(changelog_m)a do
       {:ok, _} =
-        CMS.Articles.read(changelog_m.community_slug, :changelog, changelog_m.inner_id)
+        CMS.Articles.read(
+          article_community(changelog_m),
+          :changelog,
+          changelog_m.inner_id
+        )
 
       {:ok, _} =
         CMS.Articles.set_illegal(:changelog, changelog_m.id, %{
@@ -100,12 +127,20 @@ defmodule GroupherServer.Test.CMS.ChangelogPendingFlag do
       assert changelog_m.pending == @audit_legal
 
       {:ok, _} =
-        CMS.Articles.read(changelog_m.community_slug, :changelog, changelog_m.inner_id)
+        CMS.Articles.read(
+          article_community(changelog_m),
+          :changelog,
+          changelog_m.inner_id
+        )
     end
 
     test "pending changelog's meta should have info", ~m(changelog_m)a do
       {:ok, _} =
-        CMS.Articles.read(changelog_m.community_slug, :changelog, changelog_m.inner_id)
+        CMS.Articles.read(
+          article_community(changelog_m),
+          :changelog,
+          changelog_m.inner_id
+        )
 
       {:ok, _} =
         CMS.Articles.set_illegal(:changelog, changelog_m.id, %{

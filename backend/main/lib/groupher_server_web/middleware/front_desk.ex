@@ -63,7 +63,7 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   defp fetch_article(%{arguments: arguments} = resolution, opts) do
     case ArticlePath.parse_arguments(arguments, opts) do
       {:ok, arguments} ->
-        do_fetch_article(%{resolution | arguments: arguments})
+        do_fetch_article(%{resolution | arguments: arguments}, opts)
 
       {:error, :invalid_article_path} ->
         resolution |> handle_absinthe_error("invalid article input", ecode(:custom))
@@ -74,9 +74,12 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
          %{
            arguments: %{article_path: article_path} = arguments
          } =
-           resolution
+           resolution,
+         opts
        ) do
-    case FrontDesk.article(article_path, preload: [author: :user]) do
+    preload = Keyword.get(opts, :preload, author: :user)
+
+    case FrontDesk.article(article_path, preload: preload) do
       {:ok, article} ->
         updated_arguments =
           arguments

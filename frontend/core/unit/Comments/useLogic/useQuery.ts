@@ -47,7 +47,7 @@ export default function useQuery(): TRet {
   const stateRequestRef = useRef(0)
   const repliesRequestRef = useRef(0)
 
-  const articlePath = `${article.community?.slug || article.communitySlug || ''}:${article.meta.thread}:${article.innerId}`
+  const articlePath = `${article.community?.slug || ''}:${article.meta.thread}:${article.innerId}`
   const latestArticlePathRef = useRef(articlePath)
 
   useEffect(() => {
@@ -79,7 +79,7 @@ export default function useQuery(): TRet {
 
   const buildArticlePath = () => ({
     innerId: article.innerId,
-    community: article.community?.slug || article.communitySlug,
+    community: article.community?.slug,
     thread: article.meta.thread,
   })
 

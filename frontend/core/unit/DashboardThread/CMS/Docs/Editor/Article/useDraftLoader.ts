@@ -5,6 +5,7 @@ import useEvent from '~/hooks/useEvent'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
+import { FETCH_OPTIONS } from '~/utils/graphql'
 
 import useDocsEditor from '../store/hooks'
 import { composeLoadedDraftSession } from './helper'
@@ -53,7 +54,7 @@ export default function useDraftLoader(draftState: TDraftEditorState): void {
     query<{ docDraft?: TDocDraftDTO }>(
       S.docDraft,
       { community, id: activePage.docId },
-      { fetchOptions: { signal: abortController.signal } },
+      { fetchOptions: { ...FETCH_OPTIONS(), signal: abortController.signal } },
     )
       .then((data) => {
         if (loadIdRef.current !== loadId) return

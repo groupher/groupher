@@ -17,13 +17,13 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
     {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
     variables = %{
-      article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"}
+      article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}
     }
 
     results = user_conn |> gq_query(Schema.q(:article, :doc), variables)
 
     assert results["innerId"] == to_string(doc.inner_id)
-    assert results["communitySlug"] == doc.community_slug
+    assert get_in(results, ["community", "slug"]) == community.slug
 
     assert is_valid_kv?(results, "title", :string)
 
@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
     {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
     variables = %{
-      article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"}
+      article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}
     }
 
     results = guest_conn |> gq_query(Schema.q(:article, :doc), variables)
@@ -53,7 +53,7 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
     {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
     variables = %{
-      article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"}
+      article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}
     }
 
     results = user_conn |> gq_query(Schema.q(:article, :doc), variables)
@@ -91,7 +91,7 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
       })
 
     variables = %{
-      article: %{inner_id: doc.inner_id, community: doc.community_slug, thread: "DOC"}
+      article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}
     }
 
     assert guest_conn

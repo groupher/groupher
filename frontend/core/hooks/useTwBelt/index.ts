@@ -18,6 +18,7 @@ import type {
   TBgKey,
   TBorderKey,
   TColorPrefix,
+  TContainerMetric,
   TCutWWidth,
   TDimLevel,
   TFillKey,
@@ -40,6 +41,10 @@ export default function useTwBelt(): TRet {
 
   const metricLower = metric.toLowerCase()
   const containerClass = `container-${metricLower}`
+  const container = (metricOverride?: TContainerMetric): string =>
+    metricOverride ? `container-${metricOverride}` : containerClass
+  const containerWrapper = (metricOverride?: TContainerMetric): string =>
+    `${container(metricOverride)}-wrapper`
 
   const pageClass = 'page-custom'
 
@@ -319,7 +324,8 @@ export default function useTwBelt(): TRet {
       cn,
       cnMerge,
 
-      container: () => containerClass,
+      container,
+      containerWrapper,
 
       fg,
       bg,

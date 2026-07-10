@@ -28,7 +28,7 @@ defmodule GroupherServer.CMS.Model.Post do
 
   @optional_fields ~w(
     copy_right solution_digest updated_at inserted_at active_at archived_at
-    cat status inner_id community_slug
+    cat status inner_id
   )a ++ @article_cast_fields
 
   @type t :: %Post{}

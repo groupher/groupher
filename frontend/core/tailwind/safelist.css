@@ -1,5 +1,8 @@
 /* container  */
-@source inline('container-{landing,community,article,dashboard}');
+@source inline('container-{landing,community,community-doc,dashboard}');
+@source inline('container-{landing,community,article,dashboard}-wrapper');
+@source inline('container-{apply_community,community_sidebar}');
+@source inline('container-{apply_community,community_sidebar}-wrapper');
 @source inline('text-{title,digest,hint,link}');
 
 /* fill for icons */
@@ -7,7 +10,7 @@
 
 /* background */
 @source inline(
-  'bg-{pageBg,link,dot,digest,divider,hoverBg,sandBox,htmlBg,card,cardAlpha,popover-bg,menuHoverBg,menuInvertBg,alphaBg,button-redBg,button-toggle,button-fg,drawer-mask,modal-mask,modal-bg}'
+  'bg-{pageBg,link,dot,digest,divider,hoverBg,badge,sandBox,htmlBg,card,cardAlpha,popover-bg,menuHoverBg,menuInvertBg,alphaBg,button-redBg,button-toggle,button-fg,drawer-mask,modal-mask,modal-bg}'
 );
 
 /* rainbow */

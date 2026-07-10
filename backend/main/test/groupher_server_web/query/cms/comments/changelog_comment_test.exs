@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
     variables = %{
       article: %{
         inner_id: changelog.inner_id,
-        community: changelog.community_slug,
+        community: community.slug,
         thread: "CHANGELOG"
       }
     }
@@ -112,7 +112,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       variables = %{
         article: %{
           inner_id: changelog.inner_id,
-          community: changelog.community_slug,
+          community: community.slug,
           thread: "CHANGELOG"
         }
       }
@@ -140,7 +140,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       variables = %{
         article: %{
           inner_id: changelog.inner_id,
-          community: changelog.community_slug,
+          community: community.slug,
           thread: "CHANGELOG"
         }
       }
@@ -254,7 +254,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       variables = %{
         article: %{
           inner_id: changelog.inner_id,
-          community: changelog.community_slug,
+          community: community.slug,
           thread: "CHANGELOG"
         },
         filter: %{page: 1, size: page_size}
@@ -311,7 +311,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       variables = %{
         article: %{
           inner_id: changelog.inner_id,
-          community: changelog.community_slug,
+          community: community.slug,
           thread: "CHANGELOG"
         },
         mode: "TIMELINE",
@@ -367,7 +367,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       variables = %{
         article: %{
           inner_id: changelog.inner_id,
-          community: changelog.community_slug,
+          community: community.slug,
           thread: "CHANGELOG"
         },
         filter: %{page: 1, size: 10},
@@ -410,7 +410,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       variables = %{
         article: %{
           inner_id: changelog.inner_id,
-          community: changelog.community_slug,
+          community: community.slug,
           thread: "CHANGELOG"
         },
         filter: %{page: 1, size: 10}
@@ -449,7 +449,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       variables = %{
         article: %{
           inner_id: changelog.inner_id,
-          community: changelog.community_slug,
+          community: community.slug,
           thread: "CHANGELOG"
         },
         filter: %{page: 1, size: 10}
@@ -483,7 +483,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       variables = %{
         article: %{
           inner_id: changelog.inner_id,
-          community: changelog.community_slug,
+          community: community.slug,
           thread: "CHANGELOG"
         },
         filter: %{page: 1, size: page_size}
@@ -516,7 +516,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       variables = %{
         article: %{
           inner_id: changelog.inner_id,
-          community: changelog.community_slug,
+          community: community.slug,
           thread: "CHANGELOG"
         },
         filter: %{page: 1, size: page_size},
@@ -550,7 +550,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       variables = %{
         article: %{
           inner_id: changelog.inner_id,
-          community: changelog.community_slug,
+          community: community.slug,
           thread: "CHANGELOG"
         },
         filter: %{page: 1, size: page_size, sort: "DESC_INSERTED"},
@@ -591,7 +591,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       variables = %{
         article: %{
           inner_id: changelog.inner_id,
-          community: changelog.community_slug,
+          community: community.slug,
           thread: "CHANGELOG"
         },
         filter: %{page: 1, size: page_size, sort: "DESC_INSERTED"}
@@ -633,7 +633,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       variables = %{
         article: %{
           inner_id: changelog.inner_id,
-          community: changelog.community_slug,
+          community: community.slug,
           thread: "CHANGELOG"
         },
         filter: %{page: 1, size: page_size}
@@ -686,7 +686,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       variables = %{
         article: %{
           inner_id: changelog.inner_id,
-          community: changelog.community_slug,
+          community: community.slug,
           thread: "CHANGELOG"
         },
         filter: %{page: 1, size: page_size}
@@ -738,7 +738,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       variables = %{
         article: %{
           inner_id: changelog.inner_id,
-          community: changelog.community_slug,
+          community: community.slug,
           thread: "CHANGELOG"
         },
         filter: %{page: 1, size: page_size}
@@ -806,7 +806,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       variables = %{
         article: %{
           inner_id: changelog.inner_id,
-          community: changelog.community_slug,
+          community: community.slug,
           thread: "CHANGELOG"
         },
         filter: %{page: 1, size: page_size}
@@ -846,7 +846,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       variables = %{
         article: %{
           inner_id: changelog.inner_id,
-          community: changelog.community_slug,
+          community: community.slug,
           thread: "CHANGELOG"
         },
         filter: %{page: 1, size: page_size}
@@ -917,7 +917,7 @@ defmodule GroupherServer.Test.Query.Comments.ChangelogComment do
       variables = %{
         article: %{
           inner_id: changelog.inner_id,
-          community: changelog.community_slug,
+          community: community.slug,
           thread: thread
         },
         filter: %{page: 1, size: page_size}

@@ -1,0 +1,281 @@
+defmodule GroupherServer.CMS.DocTree.Publish.Restore do
+  @moduledoc """
+  Restores staged tree-delete items back into the draft tree.
+
+      staged delete event
+          |
+          v
+      inverse_payload["node"] + children
+          |
+          +--> doc_tree_nodes(stage=draft)
+          +--> optional draft doc snapshot from doc_tree_trash_items
+          |
+          v
+      mark delete event discarded
+          |
+          v
+      mark trash rows restored and decrement staged_event_count
+
+  Only delete-style tree events are valid restore targets. Normal publish still
+  handles create, update, and move events through `PublicProjection`.
+  """
+
+  import Ecto.Query, warn: false
+
+  alias GroupherServer.{CMS, Repo}
+  alias GroupherServer.Accounts.Model.User
+  alias CMS.DocTree.TrashSnapshot
+  alias CMS.DocTree.Publish.Result
+  alias CMS.DocTree.Revision
+
+  alias CMS.Model.{
+    Community,
+    Doc,
+    DocTreeEvent,
+    DocTreeNode,
+    DocTreeRestoreAudit,
+    DocTreeTrashItem,
+    DocsSiteState
+  }
+
+  alias Helper.ORM
+
+  require CMS.Const
+
+  @doc_tree_json_key_type CMS.Const.doc_tree_json_key(:type)
+  @doc_tree_json_key_doc_id CMS.Const.doc_tree_json_key(:doc_id)
+  @tree_node_type_group CMS.Const.tree_node_type(:group)
+  @tree_node_type_page CMS.Const.tree_node_type(:page)
+  @tree_node_type_link CMS.Const.tree_node_type(:link)
+  @tree_node_type_pin CMS.Const.tree_node_type(:pin)
+  @tree_node_type_group_key to_string(@tree_node_type_group)
+  @tree_node_type_page_key to_string(@tree_node_type_page)
+  @tree_node_type_link_key to_string(@tree_node_type_link)
+  @tree_node_type_pin_key to_string(@tree_node_type_pin)
+
+  @event_node_types %{
+    @tree_node_type_group_key => @tree_node_type_group,
+    @tree_node_type_page_key => @tree_node_type_page,
+    @tree_node_type_link_key => @tree_node_type_link,
+    @tree_node_type_pin_key => @tree_node_type_pin
+  }
+
+  @doc """
+  Restores selected staged delete events before publish.
+
+  This is the publish-checklist restore path. Product Trash drawer restore uses
+  `DocTree.Trash`, but both paths rebuild missing page drafts through
+  `TrashSnapshot`.
+  """
+  def restore_tree_events(%Community{} = community, branch, events, %User{} = user) do
+    with :ok <- ensure_delete_restore_events(events),
+         {:ok, restore_entries} <- restore_tree_delete_events(community, branch, events),
+         {:ok, _audit} <- create_restore_audit(community, branch, user, restore_entries),
+         {:ok, _state} <- mark_tree_restore_revision(community, branch, length(restore_entries)) do
+      restored_events = Enum.map(restore_entries, & &1.event)
+
+      {:ok, restored_events}
+    end
+  end
+
+  defp ensure_delete_restore_events(events) do
+    events
+    |> Enum.reduce_while(:ok, fn event, :ok ->
+      if delete_restore_event?(event) do
+        {:cont, :ok}
+      else
+        {:halt, {:error, {:custom, "Only deleted tree publish items can be restored."}}}
+      end
+    end)
+  end
+
+  defp delete_restore_event?(%DocTreeEvent{event_type: type}),
+    do: type in [CMS.Const.tree_event(:node_delete), CMS.Const.tree_event(:pin_remove)]
+
+  defp restore_tree_delete_events(%Community{} = community, branch, events) do
+    Result.map_while_ok(events, &restore_tree_delete_event(community, branch, &1))
+  end
+
+  defp restore_tree_delete_event(%Community{} = community, branch, %DocTreeEvent{} = event) do
+    with {:ok, nodes} <- restore_nodes_from_delete_event(event),
+         {:ok, _draft_nodes} <- restore_draft_nodes(community, branch, nodes),
+         :ok <- mark_delete_event_discarded(event),
+         :ok <- mark_trash_items_restored(community, branch, nodes) do
+      {:ok, %{event: event, nodes: nodes}}
+    end
+  end
+
+  defp restore_nodes_from_delete_event(%DocTreeEvent{
+         inverse_payload: %{"node" => node} = inverse
+       })
+       when is_map(node) do
+    children =
+      inverse
+      |> Map.get("children", [])
+      |> Enum.filter(&is_map/1)
+
+    {:ok, [node | children]}
+  end
+
+  defp restore_nodes_from_delete_event(_event),
+    do: {:error, {:custom, "Deleted tree item can not be restored."}}
+
+  defp restore_draft_nodes(%Community{} = community, branch, nodes) do
+    Result.map_while_ok(nodes, &restore_draft_node(community, branch, &1))
+  end
+
+  defp restore_draft_node(%Community{} = community, branch, node) do
+    with {:ok, attrs} <- draft_attrs_from_event_node(community, branch, node),
+         nil <- draft_node_by_node_id(community, branch, attrs.node_id),
+         {:ok, restored_node} <- ORM.create(DocTreeNode, attrs),
+         :ok <- restore_doc_draft_from_trash(community, branch, attrs) do
+      {:ok, restored_node}
+    else
+      %DocTreeNode{} -> {:error, {:custom, "Deleted tree item has already been restored."}}
+      error -> error
+    end
+  end
+
+  defp draft_attrs_from_event_node(%Community{} = community, branch, node) do
+    with {:ok, type} <- node_type_atom(node[@doc_tree_json_key_type]) do
+      {:ok,
+       %{
+         community_id: community.id,
+         branch_id: branch.id,
+         node_id: node["id"],
+         stage: CMS.Const.stage(:draft),
+         type: type,
+         group_id: node["groupId"],
+         doc_id: node[@doc_tree_json_key_doc_id],
+         title: node["title"],
+         slug: node["slug"],
+         index: node["index"] || 0,
+         href: node["href"],
+         marker: node["marker"],
+         badge: node["badge"],
+         hidden: Map.get(node, "hidden", false),
+         ui_config: Map.get(node, "uiConfig", %{})
+       }}
+    end
+  end
+
+  defp draft_node_by_node_id(%Community{} = community, branch, node_id) do
+    DocTreeNode
+    |> where([n], n.community_id == ^community.id)
+    |> where([n], n.branch_id == ^branch.id)
+    |> where([n], n.stage == CMS.Const.stage(:draft))
+    |> where([n], n.node_id == ^to_string(node_id))
+    |> Repo.one()
+  end
+
+  defp restore_doc_draft_from_trash(%Community{} = community, branch, %{
+         type: @tree_node_type_page,
+         doc_id: doc_id,
+         node_id: node_id
+       })
+       when not is_nil(doc_id) do
+    case draft_doc_by_doc_id(community, branch, doc_id) do
+      %Doc{} ->
+        :ok
+
+      nil ->
+        with {:ok, draft_snapshot} <-
+               TrashSnapshot.draft_snapshot_from_trash(community, branch, node_id),
+             :ok <- TrashSnapshot.restore_doc_draft(community, branch, draft_snapshot) do
+          :ok
+        else
+          {:error, :not_found} -> :ok
+          error -> error
+        end
+    end
+  end
+
+  defp restore_doc_draft_from_trash(_community, _branch, _attrs), do: :ok
+
+  defp draft_doc_by_doc_id(%Community{} = community, branch, doc_id) do
+    Doc
+    |> where([d], d.community_id == ^community.id)
+    |> where([d], d.branch_id == ^branch.id)
+    |> where([d], d.stage == CMS.Const.stage(:draft))
+    |> where([d], d.doc_id == ^doc_id)
+    |> Repo.one()
+  end
+
+  defp mark_delete_event_discarded(%DocTreeEvent{} = event) do
+    case ORM.update(event, %{status: CMS.Const.tree_event_status(:discarded)}) do
+      {:ok, _event} -> :ok
+      error -> error
+    end
+  end
+
+  defp mark_trash_items_restored(%Community{} = community, branch, nodes) do
+    node_ids =
+      nodes
+      |> Enum.map(& &1["id"])
+      |> Enum.reject(&is_nil/1)
+      |> Enum.map(&to_string/1)
+
+    now = DateTime.utc_now(:second)
+
+    DocTreeTrashItem
+    |> where([item], item.community_id == ^community.id)
+    |> where([item], item.branch_id == ^branch.id)
+    |> where([item], item.node_id in ^node_ids)
+    |> where([item], is_nil(item.restored_at))
+    |> Repo.update_all(set: [restored_at: now, updated_at: now])
+
+    :ok
+  end
+
+  defp create_restore_audit(%Community{} = community, branch, %User{} = user, restore_entries) do
+    nodes = Enum.flat_map(restore_entries, & &1.nodes)
+
+    ORM.create(DocTreeRestoreAudit, %{
+      community_id: community.id,
+      branch_id: branch.id,
+      actor_id: user.id,
+      restored_event_ids: Enum.map(restore_entries, & &1.event.id),
+      restored_node_ids: restored_node_ids(nodes),
+      restored_at: DateTime.utc_now(:second),
+      payload: %{
+        "items" =>
+          Enum.flat_map(restore_entries, fn %{event: event, nodes: nodes} ->
+            Enum.map(nodes, &audit_item(event, &1))
+          end)
+      }
+    })
+  end
+
+  defp restored_node_ids(nodes) do
+    nodes
+    |> Enum.map(& &1["id"])
+    |> Enum.reject(&is_nil/1)
+    |> Enum.map(&to_string/1)
+  end
+
+  defp audit_item(%DocTreeEvent{} = event, node) do
+    %{
+      "eventId" => event.id,
+      "nodeId" => node["id"],
+      "type" => node[@doc_tree_json_key_type],
+      "title" => node["title"],
+      "slug" => node["slug"],
+      "docId" => node[@doc_tree_json_key_doc_id],
+      "groupId" => node["groupId"]
+    }
+  end
+
+  defp mark_tree_restore_revision(%Community{} = community, branch, restore_count) do
+    with {:ok, state} <-
+           ORM.find_by(DocsSiteState, community_id: community.id, branch_id: branch.id) do
+      Revision.apply_tree_restore(community, state, restore_count)
+    end
+  end
+
+  defp node_type_atom(type) do
+    case Map.fetch(@event_node_types, type) do
+      {:ok, atom} -> {:ok, atom}
+      :error -> {:error, {:custom, "Unsupported docs tree node type: #{type}"}}
+    end
+  end
+end

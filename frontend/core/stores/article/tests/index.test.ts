@@ -1,6 +1,6 @@
 import METRIC from '~/const/metric'
 import { THREAD } from '~/const/thread'
-import type { TChangelog, TPost, TTag } from '~/spec'
+import type { TChangelog, TDoc, TPost, TTag } from '~/spec'
 
 import setupStore from '..'
 
@@ -22,6 +22,11 @@ describe('stores/article', () => {
       innerId: '200',
       title: 'Changelog title',
     }
+    const doc: TDoc = {
+      id: 'd1',
+      innerId: '300',
+      title: 'Doc title',
+    }
 
     const tags: TTag[] = [{ id: 't1', title: 'Edge', color: 'red' }]
 
@@ -29,6 +34,7 @@ describe('stores/article', () => {
       thread: THREAD.POST,
       post,
       changelog,
+      doc,
       tags,
       isArticleLayout: true,
       isFAQArticleLayout: false,
@@ -38,6 +44,9 @@ describe('stores/article', () => {
 
     store.commit({ thread: THREAD.CHANGELOG })
     expect(store.article?.id).toBe('c1')
+
+    store.commit({ thread: THREAD.DOC })
+    expect(store.article?.id).toBe('d1')
 
     store.commit({ thread: null })
     expect(store.article).toBeNull()

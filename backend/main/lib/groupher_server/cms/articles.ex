@@ -25,13 +25,13 @@ defmodule GroupherServer.CMS.Articles do
   }
 
   # Read
-  @spec read(String.t(), T.thread(), T.id()) :: T.domain_res(T.article())
-  def read(community_slug, thread, inner_id),
-    do: Read.read(community_slug, thread, inner_id)
+  @spec read(Community.t(), T.thread(), T.id()) :: T.domain_res(T.article())
+  def read(%Community{} = community, thread, inner_id),
+    do: Read.read(community, thread, inner_id)
 
-  @spec read(String.t(), T.thread(), T.id(), User.t()) :: T.domain_res(T.article())
-  def read(community_slug, thread, inner_id, %User{} = user) do
-    Read.read(community_slug, thread, inner_id, user)
+  @spec read(Community.t(), T.thread(), T.id(), User.t()) :: T.domain_res(T.article())
+  def read(%Community{} = community, thread, inner_id, %User{} = user) do
+    Read.read(community, thread, inner_id, user)
   end
 
   # List
@@ -69,16 +69,16 @@ defmodule GroupherServer.CMS.Articles do
 
   # Snapshot
 
-  @spec read_doc_draft(Community.t(), String.t()) ::
+  @spec read_doc_draft(Community.t(), String.t(), keyword() | map()) ::
           T.domain_res(CMS.Model.Doc.t())
-  def read_doc_draft(%Community{} = community, doc_id) do
-    Draft.read(community, doc_id)
+  def read_doc_draft(%Community{} = community, doc_id, opts \\ []) do
+    Draft.read(community, doc_id, opts)
   end
 
-  @spec read_doc_editor(Community.t(), String.t()) ::
+  @spec read_doc_editor(Community.t(), String.t(), keyword() | map()) ::
           T.domain_res(CMS.Model.Doc.t())
-  def read_doc_editor(%Community{} = community, doc_id) do
-    Draft.read_editor(community, doc_id)
+  def read_doc_editor(%Community{} = community, doc_id, opts \\ []) do
+    Draft.read_editor(community, doc_id, opts)
   end
 
   @spec list_doc_draft_snapshots(Community.t(), String.t(), keyword()) ::
@@ -87,10 +87,10 @@ defmodule GroupherServer.CMS.Articles do
     Snapshot.list_doc_draft(community, doc_id, opts)
   end
 
-  @spec get_doc_draft_snapshot(Community.t(), String.t(), T.id()) ::
+  @spec get_doc_draft_snapshot(Community.t(), String.t(), T.id(), keyword() | map()) ::
           T.domain_res(CMS.Model.ArticleSnapshot.t())
-  def get_doc_draft_snapshot(%Community{} = community, doc_id, snapshot_id) do
-    Snapshot.get_doc_draft_snapshot(community, doc_id, snapshot_id)
+  def get_doc_draft_snapshot(%Community{} = community, doc_id, snapshot_id, opts \\ []) do
+    Snapshot.get_doc_draft_snapshot(community, doc_id, snapshot_id, opts)
   end
 
   @spec checkpoint_doc_draft_snapshot(Community.t(), String.t(), User.t() | nil, keyword()) ::
@@ -104,21 +104,28 @@ defmodule GroupherServer.CMS.Articles do
     Snapshot.checkpoint_doc_draft(community, doc_id, user, opts)
   end
 
-  @spec restore_doc_draft_snapshot(Community.t(), String.t(), T.id(), User.t() | nil) ::
+  @spec restore_doc_draft_snapshot(
+          Community.t(),
+          String.t(),
+          T.id(),
+          User.t() | nil,
+          keyword() | map()
+        ) ::
           T.domain_res(CMS.Model.Doc.t())
   def restore_doc_draft_snapshot(
         %Community{} = community,
         doc_id,
         snapshot_id,
-        user \\ nil
+        user \\ nil,
+        opts \\ []
       ) do
-    Snapshot.restore_doc_draft(community, doc_id, snapshot_id, user)
+    Snapshot.restore_doc_draft(community, doc_id, snapshot_id, user, opts)
   end
 
-  @spec publish_doc_draft(Community.t(), String.t(), User.t()) ::
+  @spec publish_doc_draft(Community.t(), String.t(), User.t(), keyword() | map()) ::
           T.domain_res(CMS.Model.ArticleSnapshot.t())
-  def publish_doc_draft(%Community{} = community, doc_id, %User{} = user) do
-    Snapshot.publish_doc_draft(community, doc_id, user)
+  def publish_doc_draft(%Community{} = community, doc_id, %User{} = user, opts \\ []) do
+    Snapshot.publish_doc_draft(community, doc_id, user, opts)
   end
 
   # Lifecycle

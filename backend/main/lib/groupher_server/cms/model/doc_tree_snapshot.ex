@@ -23,18 +23,19 @@ defmodule GroupherServer.CMS.Model.DocTreeSnapshot do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.Community
+  alias CMS.Model.{Community, DocsBranch}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
 
-  @required_fields ~w(community_id tree_json tree_hash published_at)a
+  @required_fields ~w(community_id branch_id tree_json tree_hash published_at)a
   @optional_fields ~w(author_id message)a
 
   @type t :: %DocTreeSnapshot{}
   schema "doc_tree_snapshots" do
     belongs_to(:community, Community)
+    belongs_to(:branch, DocsBranch)
     belongs_to(:author, User)
 
     field(:tree_json, :map)
@@ -51,6 +52,7 @@ defmodule GroupherServer.CMS.Model.DocTreeSnapshot do
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> foreign_key_constraint(:community_id)
+    |> foreign_key_constraint(:branch_id)
     |> foreign_key_constraint(:author_id)
   end
 

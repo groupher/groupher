@@ -4,11 +4,13 @@
  *
  */
 
+import { usePathname } from 'next/navigation'
 import type { FC, ReactNode } from 'react'
 
 import usePageBg from '~/hooks/usePageBg'
 import useTopbar from '~/hooks/useTopbar'
 import useTrans from '~/hooks/useTrans'
+import type { TContainerMetric } from '~/hooks/useTwBelt/spec'
 // import Broadcast from '~/widgets/Broadcast'
 import Footer from '~/unit/SiteFooter'
 // import DashboardAlert from './D
@@ -21,7 +23,10 @@ type TProps = {
 }
 
 const Main: FC<TProps> = ({ children }) => {
-  const s = useSalon()
+  const pathname = usePathname()
+  const isDocArticleRoute = /^\/[^/]+\/doc\/[^/]+\/[^/]+(?:\/)?$/.test(pathname || '')
+  const containerMetric: TContainerMetric | null = isDocArticleRoute ? 'community-doc' : null
+  const s = useSalon({ containerMetric })
 
   /**
    * this is tricky, when client-side changed locale, we force render hte entire app here
@@ -51,9 +56,11 @@ const Main: FC<TProps> = ({ children }) => {
       {hasTopbar && <div className={s.topBar} />}
       {/* <Broadcast /> */}
       <GlowBackground />
-      <div className={s.body}>{children}</div>
+      <div className={s.body}>
+        <div className={s.inner}>{children}</div>
+      </div>
       <div className={s.footer}>
-        <Footer />
+        <Footer containerMetric={containerMetric} />
       </div>
     </main>
   )

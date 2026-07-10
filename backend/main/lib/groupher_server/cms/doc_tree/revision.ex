@@ -14,8 +14,11 @@ defmodule GroupherServer.CMS.DocTree.Revision do
       docs_site_states.site_draft_version
           - site-level counter used to compare with published_version
 
-  Tree mutations bump the tree lock and site draft version. Doc content
-  mutations only bump the site draft version through `bump_site_draft/1`.
+  Tree editor mutations bump the tree lock and site draft version. Restoring a
+  staged delete is an internal publish-drawer operation: it changes the draft
+  tree and site dirty state, but it should not invalidate an editor
+  `baseRevision`. Doc content mutations only bump the site draft version through
+  `bump_site_draft/1`.
   """
 
   alias Ecto.Multi
@@ -47,9 +50,16 @@ defmodule GroupherServer.CMS.DocTree.Revision do
 
   @spec bump_site_draft(Community.t()) :: T.domain_res(DocsSiteState.t())
   def bump_site_draft(%Community{} = community) do
+    with {:ok, state} <- CMS.DocTree.Read.ensure_draft_state(community) do
+      bump_site_draft(community, state)
+    end
+  end
+
+  @spec bump_site_draft(Community.t(), DocsSiteState.t()) :: T.domain_res(DocsSiteState.t())
+  def bump_site_draft(%Community{} = community, %DocsSiteState{} = state) do
     Multi.new()
     |> Multi.run(:site_state, fn _, _ ->
-      ORM.find_by(DocsSiteState, community_id: community.id)
+      ensure_current_state(community, state)
     end)
     |> Multi.run(:updated_site_state, fn _, %{site_state: site_state} ->
       ORM.inc(site_state, :site_draft_version)
@@ -58,8 +68,31 @@ defmodule GroupherServer.CMS.DocTree.Revision do
     |> result()
   end
 
+  @spec apply_tree_restore(Community.t(), DocsSiteState.t(), non_neg_integer()) ::
+          T.domain_res(DocsSiteState.t())
+  def apply_tree_restore(%Community{} = community, %DocsSiteState{} = state, restore_count) do
+    Multi.new()
+    |> Multi.run(:site_state, fn _, _ ->
+      ensure_current_state(community, state)
+    end)
+    |> Multi.run(:updated_site_state, fn _, %{site_state: state} ->
+      state
+      |> Ecto.Changeset.change(%{
+        site_draft_version: state.site_draft_version + 1,
+        staged_event_count: max(state.staged_event_count - restore_count, 0)
+      })
+      |> Repo.update()
+    end)
+    |> Repo.transaction()
+    |> result()
+  end
+
   defp ensure_current_state(%Community{} = community, %DocsSiteState{} = state) do
-    ORM.find_by(DocsSiteState, id: state.id, community_id: community.id)
+    ORM.find_by(DocsSiteState,
+      id: state.id,
+      community_id: community.id,
+      branch_id: state.branch_id
+    )
   end
 
   defp result({:ok, %{updated_site_state: state}}), do: {:ok, state}

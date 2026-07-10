@@ -34,13 +34,28 @@ defmodule GroupherServer.CMS.Comments.Write do
 
   @spec create(Community.t(), T.thread(), T.id(), String.t(), User.t()) ::
           T.domain_res(Comment.t())
-  def create(%Community{slug: community_slug}, thread, article_id, body, %User{} = user) do
+  def create(%Community{} = community, thread, article_id, body, %User{} = user) do
     with {:ok, info} <- match(thread),
          {:ok, article} <-
-           FrontDesk.article(community_slug, thread, article_id,
+           FrontDesk.article(community, thread, article_id,
              preload: [[author: :user], :community]
            ),
-         {:ok, _} <- CanCan.allow_comment(article, user) do
+         {:ok, comment} <- do_create(thread, article, body, user, info) do
+      {:ok, comment}
+    end
+  end
+
+  @spec create(T.thread(), T.article(), String.t(), User.t()) :: T.domain_res(Comment.t())
+  def create(thread, article, body, %User{} = user) do
+    with {:ok, info} <- match(thread) do
+      do_create(thread, article, body, user, info)
+    end
+  end
+
+  defp do_create(thread, article, body, %User{} = user, info) do
+    article = Repo.preload(article, [[author: :user], :community])
+
+    with {:ok, _} <- CanCan.allow_comment(article, user) do
       Multi.new()
       |> Multi.run(:create_comment, fn _, _ ->
         insert_comment(body, thread, info.foreign_key, article, user)

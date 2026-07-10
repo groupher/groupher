@@ -68,7 +68,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
          ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
-      assert changelog.community_slug == community.slug
+      assert changelog.community_id == community.id
       assert changelog.community_id == community.id
     end
 
@@ -84,7 +84,11 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       {:ok, changelog2} =
-        CMS.Articles.read(changelog.community_slug, :changelog, changelog.inner_id)
+        CMS.Articles.read(
+          article_community(changelog),
+          :changelog,
+          changelog.inner_id
+        )
 
       assert changelog.id == changelog2.id
     end
@@ -94,7 +98,12 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       {:ok, changelog2} =
-        CMS.Articles.read(changelog.community_slug, :changelog, changelog.inner_id, user)
+        CMS.Articles.read(
+          article_community(changelog),
+          :changelog,
+          changelog.inner_id,
+          user
+        )
 
       assert changelog.id == changelog2.id
 
@@ -108,7 +117,12 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
 
       # same user duplicate case
       {:ok, _} =
-        CMS.Articles.read(changelog.community_slug, :changelog, changelog.inner_id, user)
+        CMS.Articles.read(
+          article_community(changelog),
+          :changelog,
+          changelog.inner_id,
+          user
+        )
 
       {:ok, created} = ORM.find(Changelog, changelog.id)
 
@@ -116,7 +130,12 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       assert user.id in created.meta.viewed_user_ids
 
       {:ok, _} =
-        CMS.Articles.read(changelog.community_slug, :changelog, changelog.inner_id, user2)
+        CMS.Articles.read(
+          article_community(changelog),
+          :changelog,
+          changelog.inner_id,
+          user2
+        )
 
       {:ok, created} = ORM.find(Changelog, changelog.id)
 
@@ -130,21 +149,35 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       {:ok, changelog} =
-        CMS.Articles.read(changelog.community_slug, :changelog, changelog.inner_id, user)
+        CMS.Articles.read(
+          article_community(changelog),
+          :changelog,
+          changelog.inner_id,
+          user
+        )
 
       assert not changelog.viewer_has_collected
       assert not changelog.viewer_has_upvoted
       assert not changelog.viewer_has_reported
 
       {:ok, changelog} =
-        CMS.Articles.read(changelog.community_slug, :changelog, changelog.inner_id)
+        CMS.Articles.read(
+          article_community(changelog),
+          :changelog,
+          changelog.inner_id
+        )
 
       assert not changelog.viewer_has_collected
       assert not changelog.viewer_has_upvoted
       assert not changelog.viewer_has_reported
 
       {:ok, changelog} =
-        CMS.Articles.read(changelog.community_slug, :changelog, changelog.inner_id, user2)
+        CMS.Articles.read(
+          article_community(changelog),
+          :changelog,
+          changelog.inner_id,
+          user2
+        )
 
       assert not changelog.viewer_has_collected
       assert not changelog.viewer_has_upvoted
@@ -156,7 +189,12 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, _} = CMS.AbuseReports.article(changelog, "reason", "attr_info", user)
 
       {:ok, changelog} =
-        CMS.Articles.read(changelog.community_slug, :changelog, changelog.inner_id, user)
+        CMS.Articles.read(
+          article_community(changelog),
+          :changelog,
+          changelog.inner_id,
+          user
+        )
 
       assert changelog.viewer_has_collected
       assert changelog.viewer_has_upvoted
@@ -185,12 +223,12 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
           title: "last year",
           inserted_at: @last_year,
           inner_id: changelog.inner_id + 1,
-          community_slug: changelog.community_slug
+          community_id: changelog.community_id
         })
 
       {:ok, changelog_last_year} =
         CMS.Articles.read(
-          changelog_last_year.community_slug,
+          article_community(changelog_last_year),
           :changelog,
           changelog_last_year.inner_id
         )
@@ -199,7 +237,7 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
 
       {:ok, changelog_last_year} =
         CMS.Articles.read(
-          changelog_last_year.community_slug,
+          article_community(changelog_last_year),
           :changelog,
           changelog_last_year.inner_id,
           user
@@ -286,12 +324,21 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       {:ok, changelog} =
-        CMS.Articles.read(changelog.community_slug, :changelog, changelog.inner_id)
+        CMS.Articles.read(
+          article_community(changelog),
+          :changelog,
+          changelog.inner_id
+        )
 
       assert not is_nil(changelog.document.html)
 
       {:ok, changelog} =
-        CMS.Articles.read(changelog.community_slug, :changelog, changelog.inner_id, user)
+        CMS.Articles.read(
+          article_community(changelog),
+          :changelog,
+          changelog.inner_id,
+          user
+        )
 
       assert not is_nil(changelog.document.html)
 

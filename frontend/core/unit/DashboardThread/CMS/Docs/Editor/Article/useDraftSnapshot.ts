@@ -17,8 +17,10 @@ export default function useDraftSnapshot(draftState: TDraftEditorState): void {
   const { t } = useTrans()
   const { slug: community } = useCommunity()
   const { mutate } = useGraphQLClient()
-  const { activePage, editable, invalid, loadStatus, savedDraft, saveStatus } = draftState
+  const { activePage, draftSource, editable, invalid, loadStatus, savedDraft, saveStatus } =
+    draftState
   const latestDocIdRef = useRef(savedDraft.docId || activePage?.docId || '')
+  const [retryAt, setRetryAt] = useState(0)
   const [snapshotStatus, setSnapshotStatus] = useState<TDraftSnapshotStatus>({
     creating: false,
     lastCreatedSignature: draftState.savedDraft.revisionSignature,
@@ -27,6 +29,10 @@ export default function useDraftSnapshot(draftState: TDraftEditorState): void {
   useEffect(() => {
     latestDocIdRef.current = savedDraft.docId || activePage?.docId || ''
   }, [activePage?.docId, savedDraft.docId])
+
+  useEffect(() => {
+    setRetryAt(0)
+  }, [activePage?.docId, savedDraft.revisionSignature])
 
   useEffect(() => {
     if (saveStatus.lastSavedAt !== null) return
@@ -40,6 +46,7 @@ export default function useDraftSnapshot(draftState: TDraftEditorState): void {
   useEffect(() => {
     if (
       !activePage?.docId ||
+      draftSource !== 'draft' ||
       !editable ||
       invalid ||
       loadStatus.loading ||
@@ -52,10 +59,9 @@ export default function useDraftSnapshot(draftState: TDraftEditorState): void {
     }
 
     const elapsed = saveStatus.lastSavedAt ? Date.now() - saveStatus.lastSavedAt : 0
-    const delay = Math.max(DOC_DRAFT_REVISION_CHECKPOINT_DELAY - elapsed, 0)
+    const delay = Math.max(DOC_DRAFT_REVISION_CHECKPOINT_DELAY - elapsed, retryAt - Date.now(), 0)
     const signature = savedDraft.revisionSignature
     const docId = savedDraft.docId || activePage.docId
-
     const timer = window.setTimeout(() => {
       if (latestDocIdRef.current !== docId) return
 
@@ -66,6 +72,7 @@ export default function useDraftSnapshot(draftState: TDraftEditorState): void {
           if (latestDocIdRef.current !== docId) return
 
           setSnapshotStatus({ creating: false, lastCreatedSignature: signature })
+          setRetryAt(0)
           send(DSB_DOC_EVENT.REVISION_RELOAD)
         })
         .catch((err) => {
@@ -73,6 +80,7 @@ export default function useDraftSnapshot(draftState: TDraftEditorState): void {
 
           const message =
             err instanceof Error ? err.message : t(REVISION_LABEL_KEY.CHECKPOINT_FAILED)
+          setRetryAt(Date.now() + DOC_DRAFT_REVISION_CHECKPOINT_DELAY)
           setSnapshotStatus((current) => ({ ...current, creating: false }))
           toast(message, 'error')
         })
@@ -82,12 +90,14 @@ export default function useDraftSnapshot(draftState: TDraftEditorState): void {
   }, [
     activePage?.docId,
     community,
+    draftSource,
     editable,
     invalid,
     loadStatus.loading,
     mutate,
     savedDraft.docId,
     savedDraft.revisionSignature,
+    retryAt,
     saveStatus.lastSavedAt,
     saveStatus.saving,
     snapshotStatus.creating,

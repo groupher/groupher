@@ -4,10 +4,20 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
   use GroupherServer.DataCase, async: true
 
   alias GroupherServer.CMS.Model.{
+    Doc,
     DocTreeNode,
     DocTreeTrashItem,
     PublishRequest
   }
+
+  describe "Doc changeset" do
+    test "requires branch scope" do
+      changeset = Doc.changeset(%Doc{}, %{title: "Install", digest: "Install guide"})
+
+      refute changeset.valid?
+      assert "can't be blank" in errors_on(changeset).branch_id
+    end
+  end
 
   describe "DocTreeNode changeset" do
     test "rejects invalid slug format" do
@@ -69,6 +79,7 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
       changeset =
         DocTreeNode.changeset(%DocTreeNode{}, %{
           community_id: 1,
+          branch_id: 1,
           node_id: "pin-1",
           stage: :draft,
           type: :pin,
@@ -101,6 +112,7 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
       changeset =
         DocTreeTrashItem.changeset(%DocTreeTrashItem{}, %{
           community_id: 1,
+          branch_id: 1,
           node_id: "page-1",
           doc_id: Ecto.UUID.generate(),
           node_snapshot: %{"id" => "page-1"},

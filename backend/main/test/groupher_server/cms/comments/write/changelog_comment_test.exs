@@ -127,7 +127,7 @@ defmodule GroupherServer.Test.CMS.Comments.ChangelogComment do
         )
 
       {:ok, changelog} =
-        CMS.FrontDesk.article(community.slug, :changelog, changelog.inner_id, preload: :comments)
+        CMS.FrontDesk.article(community, :changelog, changelog.inner_id, preload: :comments)
 
       assert exist_in?(changelog_comment_1, changelog.comments)
       assert exist_in?(changelog_comment_2, changelog.comments)

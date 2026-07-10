@@ -1,32 +1,21 @@
-/* *
- * DocThread
- */
+'use client'
 
-import DocCovers from '~/unit/DocCovers'
-import FaqList from '~/unit/FaqList'
+import type { TDocPublicTree } from '~/spec'
+import useArticle from '~/stores/article/hooks'
 
-import ArticleLayout from './ArticleLayout'
-import useSalon from './salon'
-import useLogic from './useLogic'
+import ArticleEntry from './ArticleEntry'
+import Home from './Home'
 
-export default function DocThread() {
-  const s = useSalon()
-  const { isArticleLayout, layout, faqLayout, docFaq, docCoversData } = useLogic()
-  // return <ArticleLayout />
+type TProps = {
+  initialTree?: TDocPublicTree | null
+}
+
+export default function DocThread({ initialTree }: TProps) {
+  const { isArticleLayout } = useArticle()
 
   if (isArticleLayout) {
-    return <ArticleLayout />
+    return <ArticleEntry initialTree={initialTree} />
   }
 
-  return (
-    <div className={s.wrapper}>
-      <DocCovers layout={layout} data={docCoversData} />
-
-      <div className={s.divider} />
-
-      <div className={s.faqs}>
-        <FaqList layout={faqLayout} docFaq={docFaq} />
-      </div>
-    </div>
-  )
+  return <Home />
 }

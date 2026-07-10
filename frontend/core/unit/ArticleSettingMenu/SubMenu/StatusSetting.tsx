@@ -44,7 +44,7 @@ const StatusSetting: FC<TProps> = ({ onBack }) => {
     const params = {
       article: {
         innerId: article.innerId,
-        community: article.communitySlug,
+        community: article.community?.slug,
         thread: article.meta.thread,
       },
       status,

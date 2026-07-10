@@ -108,6 +108,26 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
+  def doc_public_tree(_root, %{community: %Community{} = community}, _info) do
+    CMS.DocTree.read_public(community)
+  end
+
+  def doc_public_tree(_root, %{community: community}, _info) do
+    with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
+      CMS.DocTree.read_public(community)
+    end
+  end
+
+  def doc_tree_trash_items(_root, %{community: %Community{} = community}, _info) do
+    CMS.DocTree.trash_items(community)
+  end
+
+  def doc_tree_trash_items(_root, %{community: community}, _info) do
+    with {:ok, community} <- CMS.Communities.read(community, inc_views: false) do
+      CMS.DocTree.trash_items(community)
+    end
+  end
+
   def doc_cover(_root, %{community: %Community{} = community} = args, _info) do
     CMS.DocCover.read(community, doc_cover_view(args))
   end
@@ -243,8 +263,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Articles.restore_doc_draft_snapshot(community, doc_id, snapshot_id)
   end
 
-  def doc_publish_scope(_root, %{community: community}, _info) do
-    {:ok, CMS.DocTree.publish_scope(community)}
+  def doc_publish_checklist(_root, %{community: community}, _info) do
+    {:ok, CMS.DocTree.publish_checklist(community)}
   end
 
   def publish_doc_changes(
@@ -358,6 +378,14 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     )
   end
 
+  def restore_doc_tree_trash_item(_root, %{community: community, id: id} = args, _info) do
+    CMS.DocTree.restore_trash_item(
+      community,
+      id,
+      %{base_revision: args[:base_revision]} |> with_doc_tree_actor(args)
+    )
+  end
+
   def duplicate_doc_tree_node(_root, %{community: community, id: id} = args, _info) do
     CMS.DocTree.duplicate_node(
       community,
@@ -462,11 +490,15 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   defp do_read_article(%{community: community, thread: thread, inner_id: inner_id}, %{
          context: %{cur_user: user}
        }) do
-    CMS.Articles.read(community, thread, inner_id, user)
+    with {:ok, community} <- FrontDesk.community(community) do
+      CMS.Articles.read(community, thread, inner_id, user)
+    end
   end
 
   defp do_read_article(%{community: community, thread: thread, inner_id: inner_id}, _info) do
-    CMS.Articles.read(community, thread, inner_id)
+    with {:ok, community} <- FrontDesk.community(community) do
+      CMS.Articles.read(community, thread, inner_id)
+    end
   end
 
   def set_post_cat(_root, %{article: article, cat: cat}, _info) do
@@ -834,11 +866,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Comments.paged_comments_participants(thread, article.id, filter)
   end
 
-  def create_comment(_root, %{article: article_path, body: body}, %{context: %{cur_user: user}}) do
-    with {:ok, %{community: community, thread: thread, inner_id: inner_id}} <-
-           ArticlePath.parse(article_path) do
-      CMS.Comments.create_comment(%Community{slug: community}, thread, inner_id, body, user)
-    end
+  def create_comment(_root, %{article: article, article_path: %{thread: thread}, body: body}, %{
+        context: %{cur_user: user}
+      }) do
+    CMS.Comments.create_comment(thread, article, body, user)
   end
 
   def update_comment(_root, ~m(body comment)a, _info) do

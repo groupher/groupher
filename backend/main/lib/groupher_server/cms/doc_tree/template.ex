@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.Articles.Draft
-  alias CMS.DocTree.{Read, Revision}
+  alias CMS.DocTree.{Branch, Read, Revision}
 
   require CMS.Const
 
@@ -66,10 +66,12 @@ defmodule GroupherServer.CMS.DocTree.Template do
   @spec ensure_demo_template(Community.t(), User.t()) :: T.domain_res(map())
   def ensure_demo_template(%Community{} = community, %User{} = user) do
     lock_template(community, fn ->
-      if draft_tree_empty?(community) do
-        do_create_demo_template(community, user)
-      else
-        Read.read(community)
+      with {:ok, branch} <- Branch.resolve(community) do
+        if draft_tree_empty?(community, branch) do
+          do_create_demo_template(community, branch, user)
+        else
+          Read.read(community, branch)
+        end
       end
     end)
   end
@@ -77,8 +79,9 @@ defmodule GroupherServer.CMS.DocTree.Template do
   @spec reset_demo_template(Community.t(), User.t()) :: T.domain_res(map())
   def reset_demo_template(%Community{} = community, %User{} = user) do
     lock_template(community, fn ->
-      with {:ok, _} <- do_delete_demo_template(community) do
-        do_create_demo_template(community, user)
+      with {:ok, branch} <- Branch.resolve(community),
+           {:ok, _} <- do_delete_demo_template(community, branch) do
+        do_create_demo_template(community, branch, user)
       end
     end)
   end
@@ -86,24 +89,28 @@ defmodule GroupherServer.CMS.DocTree.Template do
   @spec create_demo_template(Community.t(), User.t()) :: T.domain_res(map())
   def create_demo_template(%Community{} = community, %User{} = user) do
     lock_template(community, fn ->
-      do_create_demo_template(community, user)
+      with {:ok, branch} <- Branch.resolve(community) do
+        do_create_demo_template(community, branch, user)
+      end
     end)
   end
 
   @spec delete_demo_template(Community.t()) :: T.domain_res(map())
   def delete_demo_template(%Community{} = community) do
     lock_template(community, fn ->
-      do_delete_demo_template(community)
+      with {:ok, branch} <- Branch.resolve(community) do
+        do_delete_demo_template(community, branch)
+      end
     end)
   end
 
-  defp do_create_demo_template(%Community{} = community, %User{} = user) do
-    with {:ok, _site_state} <- Read.ensure_site_state(community),
-         {:ok, state} <- Read.ensure_draft_state(community),
+  defp do_create_demo_template(%Community{} = community, branch, %User{} = user) do
+    with {:ok, _site_state} <- Read.ensure_site_state(community, branch),
+         {:ok, state} <- Read.ensure_draft_state(community, branch),
          {:ok, author} <- ensure_author_exists(user) do
       Enum.with_index(@template)
       |> Enum.reduce_while({:ok, []}, fn {group, index}, {:ok, acc} ->
-        case create_group(community, group, index, author) do
+        case create_group(community, branch, group, index, author) do
           {:ok, _group} = result -> {:cont, {:ok, [result | acc]}}
           {:error, _} = error -> {:halt, error}
         end
@@ -111,7 +118,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
       |> case do
         {:ok, _} ->
           with {:ok, _state} <- Revision.bump_tree_draft(community, state),
-               {:ok, tree} <- Read.read(community) do
+               {:ok, tree} <- Read.read(community, branch) do
             {:ok, tree}
           end
 
@@ -121,31 +128,34 @@ defmodule GroupherServer.CMS.DocTree.Template do
     end
   end
 
-  defp do_delete_demo_template(%Community{} = community) do
-    with {:ok, _site_state} <- Read.ensure_site_state(community),
-         {:ok, state} <- Read.ensure_draft_state(community) do
+  defp do_delete_demo_template(%Community{} = community, branch) do
+    with {:ok, _site_state} <- Read.ensure_site_state(community, branch),
+         {:ok, state} <- Read.ensure_draft_state(community, branch) do
       template_keys = template_keys()
 
       DocTreeNode
       |> where([n], n.community_id == ^community.id)
+      |> where([n], n.branch_id == ^branch.id)
       |> where([n], n.template_key in ^template_keys)
       |> Repo.delete_all()
 
       Doc
       |> where([d], d.community_id == ^community.id)
+      |> where([d], d.branch_id == ^branch.id)
       |> where([d], d.template_key in ^template_keys)
       |> Repo.delete_all()
 
       with {:ok, _state} <- Revision.bump_tree_draft(community, state),
-           {:ok, tree} <- Read.read(community) do
+           {:ok, tree} <- Read.read(community, branch) do
         {:ok, tree}
       end
     end
   end
 
-  defp create_group(%Community{} = community, group, index, %Author{} = author) do
+  defp create_group(%Community{} = community, branch, group, index, %Author{} = author) do
     attrs = %{
       community_id: community.id,
+      branch_id: branch.id,
       node_id: template_node_id("group:#{group.key}"),
       stage: CMS.Const.stage(:draft),
       type: :group,
@@ -157,13 +167,14 @@ defmodule GroupherServer.CMS.DocTree.Template do
     }
 
     with {:ok, node} <- ORM.create(DocTreeNode, attrs),
-         {:ok, _pages} <- create_pages(community, node, group.key, group.pages, author) do
+         {:ok, _pages} <- create_pages(community, branch, node, group.key, group.pages, author) do
       {:ok, node}
     end
   end
 
   defp create_pages(
          %Community{} = community,
+         branch,
          %DocTreeNode{} = group,
          group_key,
          pages,
@@ -172,7 +183,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
     pages
     |> Enum.with_index()
     |> Enum.reduce_while({:ok, []}, fn {page, index}, {:ok, acc} ->
-      case create_page(community, group, group_key, page, index, author) do
+      case create_page(community, branch, group, group_key, page, index, author) do
         {:ok, node} -> {:cont, {:ok, [node | acc]}}
         {:error, _} = error -> {:halt, error}
       end
@@ -181,15 +192,17 @@ defmodule GroupherServer.CMS.DocTree.Template do
 
   defp create_page(
          %Community{} = community,
+         branch,
          %DocTreeNode{} = group,
          group_key,
          page,
          index,
          %Author{} = author
        ) do
-    with {:ok, draft} <- create_doc_draft(community, page, author) do
+    with {:ok, draft} <- create_doc_draft(community, branch, page, author) do
       attrs = %{
         community_id: community.id,
+        branch_id: branch.id,
         node_id: template_node_id("page:#{group_key}:#{page.key}"),
         stage: CMS.Const.stage(:draft),
         group_id: group.node_id,
@@ -205,11 +218,12 @@ defmodule GroupherServer.CMS.DocTree.Template do
     end
   end
 
-  defp create_doc_draft(%Community{} = community, page, %Author{} = author) do
+  defp create_doc_draft(%Community{} = community, branch, page, %Author{} = author) do
     Draft.create_with_author(
       community,
       :doc,
       %{
+        branch_id: branch.id,
         title: page.title,
         slug: page.slug,
         body: page_content(page),
@@ -238,9 +252,10 @@ defmodule GroupherServer.CMS.DocTree.Template do
     |> Jason.encode!()
   end
 
-  defp draft_tree_empty?(%Community{} = community) do
+  defp draft_tree_empty?(%Community{} = community, branch) do
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
+    |> where([n], n.branch_id == ^branch.id)
     |> where([n], n.stage == CMS.Const.stage(:draft))
     |> Repo.exists?()
     |> Kernel.not()

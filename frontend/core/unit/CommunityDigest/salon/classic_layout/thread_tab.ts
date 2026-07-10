@@ -27,7 +27,7 @@ export default function useSalon({ ...spacing }: TProps) {
     title: cn(
       'row-center text-sm no-underline h-8 px-3.5 rounded pointer transition-colors',
       `hover:${bg('hoverBg')}`,
-      `hover:${fg('title')}`,
+      `hover:${primary('fg')}`,
       fg('digest'),
     ),
     titleActive: cn(
