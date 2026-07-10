@@ -17,7 +17,7 @@ type TProps = {
 }
 
 const Main: FC<TProps> = ({ children }) => {
-  const s = useSalon()
+  const s = useSalon({ containerMetric: null })
   const { locale } = useTrans()
   const { hasTopbar } = useTopbar()
 

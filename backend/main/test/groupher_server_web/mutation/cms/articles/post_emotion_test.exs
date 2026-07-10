@@ -79,7 +79,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
       article2 = user2_conn |> gq_mutation(Schema.m(:emotion_article, :post), variables_heart)
       assert emotion_entry(article2["emotions"], :beer)["count"] == 1
 
-      {:ok, current_post} = CMS.FrontDesk.article(community.slug, :post, post.inner_id)
+      {:ok, current_post} = CMS.FrontDesk.article(community, :post, post.inner_id)
       assert current_post.emotions.beer_count == 1
       assert current_post.emotions.heart_count == 1
     end

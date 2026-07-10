@@ -17,13 +17,13 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
     {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
     variables = %{
-      article: %{inner_id: blog.inner_id, community: blog.community_slug, thread: "BLOG"}
+      article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
     }
 
     results = user_conn |> gq_query(Schema.q(:article, :blog), variables)
 
     assert results["innerId"] == to_string(blog.inner_id)
-    assert results["communitySlug"] == blog.community_slug
+    assert get_in(results, ["community", "slug"]) == community.slug
 
     assert is_valid_kv?(results, "title", :string)
 
@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
     {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
     variables = %{
-      article: %{inner_id: blog.inner_id, community: blog.community_slug, thread: "BLOG"}
+      article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
     }
 
     results = guest_conn |> gq_query(Schema.q(:article, :blog), variables)
@@ -53,7 +53,7 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
     {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
     variables = %{
-      article: %{inner_id: blog.inner_id, community: blog.community_slug, thread: "BLOG"}
+      article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
     }
 
     results = user_conn |> gq_query(Schema.q(:article, :blog), variables)
@@ -91,7 +91,7 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
       })
 
     variables = %{
-      article: %{inner_id: blog.inner_id, community: blog.community_slug, thread: "BLOG"}
+      article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
     }
 
     assert guest_conn

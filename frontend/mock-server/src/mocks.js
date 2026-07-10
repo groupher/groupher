@@ -269,7 +269,7 @@ const makeCommunity = (slug = 'home') => {
 
 const HOME_COMMUNITY = makeCommunity('home')
 
-const makePost = (idx, communitySlug = 'home') => {
+const makePost = (idx, community = 'home') => {
   return {
     innerId: `p_${idx}`,
     title: `Mock Post #${idx}`,
@@ -277,8 +277,7 @@ const makePost = (idx, communitySlug = 'home') => {
     views: 123,
     upvotesCount: 4,
     commentsCount: 1,
-    communitySlug,
-    community: makeCommunity(communitySlug),
+    community: makeCommunity(community),
     author: makeUser({ login: `user_${idx}`, nickname: `User ${idx}` }),
     insertedAt: nowISO(),
     updatedAt: nowISO(),

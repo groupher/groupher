@@ -9,6 +9,9 @@ defmodule GroupherServer.Test.Helper.Schema do
       #{thread}(article: $article) {
         title
         innerId
+        community {
+          slug
+        }
         meta {
           isEdited
           isLegal
