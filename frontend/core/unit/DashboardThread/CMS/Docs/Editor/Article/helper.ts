@@ -1,4 +1,5 @@
 import type { TRichEditorValue } from '@groupher/rich-editor'
+import { equals } from 'ramda'
 
 import { DOC_STAGE } from '~/const/dsb/docs'
 
@@ -111,6 +112,7 @@ export const composeEmptyEditorDraft = (): TEditorDraft =>
   })
 
 export const composeSavedDraft = (draft: TEditorDraft): TSavedDraft => ({
+  bodyValue: draft.bodyValue,
   bodyJson: draft.bodyJson,
   docId: draft.docId,
   revisionSignature: draftSignature(draft),
@@ -140,7 +142,9 @@ export const isDraftDirty = (draft: TEditorDraft, savedDraft: TSavedDraft): bool
   return (
     draft.title !== savedDraft.title ||
     draft.subtitle !== savedDraft.subtitle ||
-    draft.bodyJson !== savedDraft.bodyJson
+    // Rich editors may reorder object keys while preserving the same AST.
+    // Compare structure so serialization details cannot create a false draft.
+    !equals(draft.bodyValue, savedDraft.bodyValue)
   )
 }
 
@@ -209,7 +213,7 @@ export const composeDraftEditorStorePatch = ({
   savedDraft,
   saveStatus,
 }: TEditorDraftStorePatchInput) => ({
-  baselineValue: parseEditorValue(savedDraft.bodyJson),
+  baselineValue: savedDraft.bodyValue,
   bodyValue: draft.bodyValue,
   docDraftInfo: composeDocDraftInfo({ bodyStats, draft, meta, publishState }),
   saveError,

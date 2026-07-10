@@ -40,6 +40,7 @@ export type TSavedDraft = {
   docId: string
   title: string
   subtitle: string
+  bodyValue: TRichEditorValue
   bodyJson: string
   revisionSignature: string
 }
