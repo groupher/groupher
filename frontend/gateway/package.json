@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "ci": "cross-env NODE_ENV=ci next dev",
     "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
     "build": "cross-env NODE_ENV=production next build --turbopack",
@@ -13,6 +13,14 @@
     "format": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json app proxy.ts proxy.test.ts utils.ts utils.test.ts next.config.js jsconfig.json tsconfig.json vercel.json",
     "format:check": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json --check app proxy.ts proxy.test.ts utils.ts utils.test.ts next.config.js jsconfig.json tsconfig.json vercel.json",
     "clean": "shjs ./utils/scripts/clean.js"
+  },
+  "dependencies": {
+    "next": "16.3.0-preview.5",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0"
   },
   "lint-staged": {
     "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
