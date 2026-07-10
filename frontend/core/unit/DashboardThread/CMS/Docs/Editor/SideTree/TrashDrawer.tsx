@@ -28,12 +28,15 @@ type TProps = {
 const formatDeletedAt = (value?: string | null): string => {
   if (!value) return ''
 
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+
   return new Intl.DateTimeFormat(undefined, {
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(new Date(value))
+  }).format(date)
 }
 
 const itemTypeLabel = (type?: string | null): string => {
@@ -116,7 +119,9 @@ const TrashDrawer: FC<TProps> = ({
                     <div className={s.itemTitle}>{item.title || item.nodeId}</div>
                     <div className={s.itemMeta}>
                       {itemTypeLabel(item.type)}
-                      {item.deletedAt ? ` - ${formatDeletedAt(item.deletedAt)}` : ''}
+                      {formatDeletedAt(item.deletedAt)
+                        ? ` - ${formatDeletedAt(item.deletedAt)}`
+                        : ''}
                     </div>
                   </div>
                   <button

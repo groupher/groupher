@@ -73,10 +73,11 @@ defmodule GroupherServer.CMS.DocTree.Publish do
       iex> Publish.checklist(community).total_count
       3
   """
-  @spec checklist(Community.t(), keyword() | map()) :: map()
+  @spec checklist(Community.t(), keyword() | map()) :: map() | {:error, term()}
   def checklist(%Community{} = community, opts \\ []) do
-    {:ok, branch} = Branch.resolve(community, opts)
-    Checklist.build(community, branch)
+    with {:ok, branch} <- Branch.resolve(community, opts) do
+      Checklist.build(community, branch)
+    end
   end
 
   @doc """

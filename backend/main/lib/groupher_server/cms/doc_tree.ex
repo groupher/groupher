@@ -57,7 +57,7 @@ defmodule GroupherServer.CMS.DocTree do
       iex> DocTree.publish_checklist(community).total_count
       2
   """
-  @spec publish_checklist(Community.t(), keyword() | map()) :: map()
+  @spec publish_checklist(Community.t(), keyword() | map()) :: map() | {:error, term()}
   def publish_checklist(%Community{} = community, opts \\ []),
     do: Publish.checklist(community, opts)
 

@@ -16,7 +16,7 @@ export default function Header() {
 
   if (!doc) return <h1 className={s.error}>Doc not found</h1>
 
-  const community = doc.communitySlug || doc.community?.slug || ''
+  const community = doc.community?.slug || ''
   const backUrl = community ? `/${community}/${THREAD_PATH.DOC}` : `/${THREAD_PATH.DOC}`
 
   return (

@@ -34,7 +34,7 @@ export default function Digest() {
 
   const { innerId, author, title } = changelog
 
-  const backUrl = `/${changelog.communitySlug}/${THREAD_PATH.CHANGELOG}`
+  const backUrl = `/${changelog.community?.slug}/${THREAD_PATH.CHANGELOG}`
 
   return (
     <div className={s.wrapper}>

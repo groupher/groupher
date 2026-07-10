@@ -255,7 +255,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
              Trash.trash_subtree(community, branch, subtree, Map.get(args, :actor_id)),
            :ok <- Trash.delete_subtree_doc_drafts(community, branch, subtree),
            :ok <- Trash.delete_subtree(subtree),
-           :ok <- Index.normalize_sibling_indexes(community, branch, group_id),
+           :ok <- Index.normalize_sibling_indexes(community, branch, group_id, node.type),
            {:ok, event_delta} <-
              EventRecorder.record_delete_or_discard_tree_events(
                community,
@@ -270,7 +270,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
            community,
            state,
            nil,
-           Index.affected_nodes(community, branch, group_id)
+           Index.affected_nodes(community, branch, group_id, node.type)
          )}
       end
     end)
@@ -315,11 +315,12 @@ defmodule GroupherServer.CMS.DocTree.Write do
                  community,
                  branch,
                  node.group_id,
+                 node.type,
                  node.index + 1,
                  node.node_id
                ),
              {:ok, duplicated} <- ORM.create(DocTreeNode, attrs),
-             :ok <- Index.normalize_sibling_indexes(community, branch, node.group_id),
+             :ok <- Index.normalize_sibling_indexes(community, branch, node.group_id, node.type),
              {:ok, event_count} <-
                EventRecorder.record_tree_events(community, branch, args, [
                  Events.create_event(duplicated)
@@ -330,7 +331,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
              community,
              state,
              duplicated,
-             Index.affected_nodes(community, branch, node.group_id)
+             Index.affected_nodes(community, branch, node.group_id, node.type)
            )}
         end
       else
@@ -362,10 +363,17 @@ defmodule GroupherServer.CMS.DocTree.Write do
            old_group_id <- node.group_id,
            old_index <- node.index,
            :ok <-
-             Index.shift_sibling_indexes(community, branch, group_id, target_index, node.node_id),
+             Index.shift_sibling_indexes(
+               community,
+               branch,
+               group_id,
+               node.type,
+               target_index,
+               node.node_id
+             ),
            {:ok, node} <- ORM.update(node, %{group_id: group_id, index: target_index}),
-           :ok <- Index.normalize_sibling_indexes(community, branch, old_group_id),
-           :ok <- Index.normalize_sibling_indexes(community, branch, group_id),
+           :ok <- Index.normalize_sibling_indexes(community, branch, old_group_id, node.type),
+           :ok <- Index.normalize_sibling_indexes(community, branch, group_id, node.type),
            {:ok, node} <- Node.find(community, branch, node.node_id),
            {:ok, event_count} <-
              EventRecorder.record_tree_events(community, branch, args, [
@@ -375,7 +383,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
         affected =
           [old_group_id, group_id]
           |> Enum.uniq()
-          |> Enum.flat_map(&Index.affected_nodes(community, branch, &1))
+          |> Enum.flat_map(&Index.affected_nodes(community, branch, &1, node.type))
 
         {:ok, Operation.payload(community, state, node, affected)}
       end

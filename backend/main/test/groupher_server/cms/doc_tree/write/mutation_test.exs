@@ -426,6 +426,45 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
       assert [%{event_type: "pin.add"}] = tree.staged_events
     end
 
+    test "reordering top groups does not change top pin indexes" do
+      {:ok, user} = db_insert(:user)
+      {:ok, community} = empty_docs_community(user)
+      {:ok, state} = ORM.find_by(DocsSiteState, community_id: community.id)
+
+      {:ok, first_group} =
+        CMS.DocTree.create_group(community, %{
+          title: "Guides",
+          slug: "guides",
+          base_revision: state.tree_lock_version
+        })
+
+      {:ok, pin} =
+        CMS.DocTree.create_pin(community, %{
+          title: "GitHub",
+          slug: "github",
+          href: "https://github.com/groupher/groupher",
+          base_revision: first_group.revision
+        })
+
+      {:ok, second_group} =
+        CMS.DocTree.create_group(community, %{
+          title: "API",
+          slug: "api",
+          base_revision: pin.revision
+        })
+
+      {:ok, _moved} =
+        CMS.DocTree.move_node(community, second_group.node.id, %{
+          target_index: 0,
+          base_revision: second_group.revision
+        })
+
+      {:ok, tree} = CMS.DocTree.read(community)
+
+      assert Enum.map(tree.groups, &{&1.title, &1.index}) == [{"API", 0}, {"Guides", 1}]
+      assert [%{title: "GitHub", index: 0}] = tree.pins
+    end
+
     test "page nodes can not be updated to remove doc draft reference" do
       {:ok, user} = db_insert(:user)
       {:ok, community} = empty_docs_community(user)

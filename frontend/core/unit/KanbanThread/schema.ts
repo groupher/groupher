@@ -11,7 +11,7 @@ const groupedKanbanPosts = gql`
           cat
           status
           title
-          communitySlug
+          community { slug }
           meta {
             thread
           }
@@ -28,7 +28,7 @@ const groupedKanbanPosts = gql`
           cat
           status
           title
-          communitySlug
+          community { slug }
           meta {
             thread
           }
@@ -45,7 +45,7 @@ const groupedKanbanPosts = gql`
           cat
           status
           title
-          communitySlug
+          community { slug }
           meta {
             thread
           }
@@ -62,7 +62,7 @@ const groupedKanbanPosts = gql`
           cat
           status
           title
-          communitySlug
+          community { slug }
           meta {
             thread
           }
@@ -79,7 +79,7 @@ const groupedKanbanPosts = gql`
           cat
           status
           title
-          communitySlug
+          community { slug }
           meta {
             thread
           }

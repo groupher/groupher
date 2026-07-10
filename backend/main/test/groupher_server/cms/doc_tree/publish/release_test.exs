@@ -51,6 +51,10 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert doc_change.selectable
     end
 
+    test "returns a domain error for an unknown branch", ~m(community)a do
+      assert {:error, _reason} = CMS.DocTree.publish_checklist(community, branch_id: -1)
+    end
+
     test "hides doc-bound page create tree events and archives them with doc publish",
          ~m(user community group_payload page_payload)a do
       {:ok, legacy_event} =
@@ -322,7 +326,6 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
                  community,
                  %{
                    doc_change_ids: [],
-                   tree_change_ids: [],
                    restore_tree_change_ids: [delete_change.id]
                  },
                  user

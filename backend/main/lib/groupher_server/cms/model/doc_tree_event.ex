@@ -84,6 +84,7 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
     |> validate_number(:seq, greater_than: 0)
     |> validate_inclusion(:event_type, CMS.Const.tree_event_enum_values())
     |> validate_doc_owner_binding()
+    |> validate_branch_community()
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:branch_id)
     |> foreign_key_constraint(:author_id)
@@ -106,5 +107,17 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
       CMS.Const.tree_event_owner(:doc) -> validate_required(changeset, [:doc_id])
       _ -> changeset
     end
+  end
+
+  defp validate_branch_community(changeset) do
+    prepare_changes(changeset, fn changeset ->
+      community_id = get_field(changeset, :community_id)
+      branch_id = get_field(changeset, :branch_id)
+
+      case changeset.repo.get_by(DocsBranch, id: branch_id, community_id: community_id) do
+        %DocsBranch{} -> changeset
+        nil -> add_error(changeset, :branch_id, "does not belong to the community")
+      end
+    end)
   end
 end

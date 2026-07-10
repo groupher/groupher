@@ -23,9 +23,9 @@ defmodule GroupherServer.CMS.Model.Doc do
 
   @timestamps_opts [type: :utc_datetime]
 
-  @required_fields ~w(title digest)a
+  @required_fields ~w(branch_id title digest)a
   @article_cast_fields general_article_cast_fields()
-  @optional_fields ~w(branch_id subtitle updated_at inserted_at active_at archived_at inner_id
+  @optional_fields ~w(subtitle updated_at inserted_at active_at archived_at inner_id
                       doc_id slug stage template_key content_hash json schema_version author_id)a ++
                      @article_cast_fields
   @max_subtitle_length 240

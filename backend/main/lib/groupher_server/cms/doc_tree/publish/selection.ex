@@ -44,11 +44,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Selection do
              current_checklist.doc_changes
            ),
          {:ok, tree_checklist_item_ids} <-
-           selected_checklist_item_ids(
-             args,
-             @publish_input_key_tree_changes,
-             current_checklist.tree_changes
-           ),
+           selected_tree_checklist_item_ids(args, current_checklist.tree_changes),
          {:ok, restore_tree_checklist_item_ids} <-
            selected_restore_tree_checklist_item_ids(args, current_checklist.tree_changes),
          :ok <-
@@ -85,14 +81,26 @@ defmodule GroupherServer.CMS.DocTree.Publish.Selection do
   end
 
   def tree_selection_omitted?(args) do
-    key = @publish_input_key_tree_changes
-    not (Map.has_key?(args, key) or Map.has_key?(args, Atom.to_string(key)))
+    Enum.all?(
+      [@publish_input_key_tree_changes, @publish_input_key_restore_tree_changes],
+      fn key -> not (Map.has_key?(args, key) or Map.has_key?(args, Atom.to_string(key))) end
+    )
   end
 
   defp selected_checklist_item_ids(args, key, items) do
     args
     |> selected_value(key)
     |> checklist_item_ids_from(items)
+  end
+
+  defp selected_tree_checklist_item_ids(args, items) do
+    tree_value = selected_value(args, @publish_input_key_tree_changes)
+    restore_value = selected_value(args, @publish_input_key_restore_tree_changes)
+
+    case {tree_value, restore_value} do
+      {nil, restore_ids} when is_list(restore_ids) -> {:ok, []}
+      _ -> checklist_item_ids_from(tree_value, items)
+    end
   end
 
   defp selected_value(args, key), do: Map.get(args, key) || Map.get(args, Atom.to_string(key))

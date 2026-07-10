@@ -89,9 +89,11 @@ defmodule GroupherServer.CMS.DocTree.Trash do
            {:ok, state} <- Operation.bump_revision(community, state, length(events)) do
         affected =
           nodes
-          |> Enum.map(& &1.group_id)
+          |> Enum.map(&{&1.group_id, &1.type})
           |> Enum.uniq()
-          |> Enum.flat_map(&Index.affected_nodes(community, branch, &1))
+          |> Enum.flat_map(fn {group_id, type} ->
+            Index.affected_nodes(community, branch, group_id, type)
+          end)
 
         {:ok, Operation.payload(community, state, List.first(nodes), affected)}
       end
@@ -179,7 +181,15 @@ defmodule GroupherServer.CMS.DocTree.Trash do
   defp restore_node(%Community{} = community, branch, %DocTreeTrashItem{} = item) do
     with nil <- draft_node_by_node_id(community, branch, item.node_id),
          {:ok, attrs} <- draft_attrs_from_trash_item(community, branch, item),
-         :ok <- Index.shift_sibling_indexes(community, branch, attrs.group_id, attrs.index, nil),
+         :ok <-
+           Index.shift_sibling_indexes(
+             community,
+             branch,
+             attrs.group_id,
+             attrs.type,
+             attrs.index,
+             nil
+           ),
          {:ok, node} <- ORM.create(DocTreeNode, attrs),
          :ok <- restore_doc_draft_from_trash(community, branch, item) do
       {:ok, node}

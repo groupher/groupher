@@ -34,7 +34,7 @@ export default function Digest() {
 
   const { innerId, author, title } = post
 
-  const backUrl = `/${post.communitySlug}/${THREAD_PATH.POST}`
+  const backUrl = `/${post.community?.slug}/${THREAD_PATH.POST}`
 
   return (
     <div className={s.wrapper}>

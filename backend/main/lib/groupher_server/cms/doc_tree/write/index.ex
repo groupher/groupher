@@ -33,13 +33,13 @@ defmodule GroupherServer.CMS.DocTree.Write.Index do
   def ensure_index(attrs, %Community{} = community, branch, group_id),
     do: Map.put(attrs, :index, next_index(community, branch, group_id, Map.get(attrs, :type)))
 
-  def shift_sibling_indexes(community, branch, group_id, from_index, exclude_node_id) do
+  def shift_sibling_indexes(community, branch, group_id, type, from_index, exclude_node_id) do
     query =
       DocTreeNode
       |> where([n], n.community_id == ^community.id)
       |> where([n], n.branch_id == ^branch.id)
       |> where([n], n.stage == CMS.Const.stage(:draft))
-      |> where_sibling_scope(group_id, nil)
+      |> where_sibling_scope(group_id, type)
       |> where([n], n.index >= ^from_index)
 
     query =
@@ -51,7 +51,7 @@ defmodule GroupherServer.CMS.DocTree.Write.Index do
     :ok
   end
 
-  def normalize_sibling_indexes(%Community{} = community, branch, group_id) do
+  def normalize_sibling_indexes(%Community{} = community, branch, group_id, type) do
     now = DateTime.utc_now(:second)
 
     ranked =
@@ -59,7 +59,7 @@ defmodule GroupherServer.CMS.DocTree.Write.Index do
       |> where([n], n.community_id == ^community.id)
       |> where([n], n.branch_id == ^branch.id)
       |> where([n], n.stage == CMS.Const.stage(:draft))
-      |> where_sibling_scope(group_id, nil)
+      |> where_sibling_scope(group_id, type)
       |> select([n], %{
         id: n.id,
         normalized_index: fragment("row_number() over (order by ?, ?) - 1", n.index, n.id)
@@ -73,12 +73,12 @@ defmodule GroupherServer.CMS.DocTree.Write.Index do
     :ok
   end
 
-  def affected_nodes(%Community{} = community, branch, group_id) do
+  def affected_nodes(%Community{} = community, branch, group_id, type) do
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
     |> where([n], n.branch_id == ^branch.id)
     |> where([n], n.stage == CMS.Const.stage(:draft))
-    |> where_sibling_scope(group_id, nil)
+    |> where_sibling_scope(group_id, type)
     |> order_by([n], asc: n.index, asc: n.id)
     |> Repo.all()
   end
