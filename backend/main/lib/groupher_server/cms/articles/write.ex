@@ -279,6 +279,7 @@ defmodule GroupherServer.CMS.Articles.Write do
          {:ok, attrs} <- attrs |> ensure_body_from_payload() |> add_digest_attrs() do
       %{id: community_id, meta: community_meta} = community
       inner_id = community_meta |> Map.get(:"#{threads_name}_inner_id_index")
+      attrs = maybe_put_branch(attrs, model, branch)
 
       meta = @default_article_meta |> Map.merge(%{thread: module_to_atom(model)})
 
@@ -287,19 +288,19 @@ defmodule GroupherServer.CMS.Articles.Write do
       |> Ecto.Changeset.put_change(:emotions, @default_emotions)
       |> Ecto.Changeset.put_change(:author_id, author_id)
       |> Ecto.Changeset.put_change(:community_id, community_id)
-      |> maybe_put_branch(model, branch)
       |> Ecto.Changeset.put_embed(:meta, meta)
       |> Repo.insert()
     end
   end
 
-  defp maybe_resolve_branch(Doc, %Community{} = community, attrs), do: Branch.resolve(community, attrs)
+  defp maybe_resolve_branch(Doc, %Community{} = community, attrs),
+    do: Branch.resolve(community, attrs)
+
   defp maybe_resolve_branch(_model, _community, _attrs), do: {:ok, nil}
 
-  defp maybe_put_branch(changeset, Doc, %{id: branch_id}),
-    do: Ecto.Changeset.put_change(changeset, :branch_id, branch_id)
+  defp maybe_put_branch(attrs, Doc, %{id: branch_id}), do: Map.put(attrs, :branch_id, branch_id)
 
-  defp maybe_put_branch(changeset, _model, _branch), do: changeset
+  defp maybe_put_branch(attrs, _model, _branch), do: attrs
 
   defp do_update_article(article, attrs) do
     with {:ok, attrs} <- attrs |> ensure_body_from_payload() |> add_digest_attrs() do
