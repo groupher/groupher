@@ -43,7 +43,8 @@ export default function useTwBelt(): TRet {
   const containerClass = `container-${metricLower}`
   const container = (metricOverride?: TContainerMetric): string =>
     metricOverride ? `container-${metricOverride}` : containerClass
-  const containerWrapper = (): string => `${containerClass}-wrapper`
+  const containerWrapper = (metricOverride?: TContainerMetric): string =>
+    `${container(metricOverride)}-wrapper`
 
   const pageClass = 'page-custom'
 

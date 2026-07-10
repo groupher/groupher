@@ -1,5 +1,5 @@
 /* container  */
-@source inline('container-{landing,community,community-doc,article,dashboard}');
+@source inline('container-{landing,community,community-doc,dashboard}');
 @source inline('container-{landing,community,article,dashboard}-wrapper');
 @source inline('container-{apply_community,community_sidebar}');
 @source inline('container-{apply_community,community_sidebar}-wrapper');

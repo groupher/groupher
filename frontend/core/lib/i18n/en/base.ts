@@ -44,6 +44,7 @@ export default {
   'groupher.feedback': 'feedback',
   dashboard: 'Dashboard',
   more: 'more',
+  'dsb.header.fixed_links.more': 'More',
   'tags.fold.expand': 'More..',
   'tags.fold.collapse': 'show less',
   'tags.all': 'All tags',

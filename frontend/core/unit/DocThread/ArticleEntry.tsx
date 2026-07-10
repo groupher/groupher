@@ -13,7 +13,7 @@ export default function ArticleEntry({ initialTree }: TProps) {
 
   return (
     <Shell tree={tree}>
-      <Article />
+      <Article tree={tree} />
     </Shell>
   )
 }

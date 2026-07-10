@@ -17,8 +17,10 @@ export default function useDraftSnapshot(draftState: TDraftEditorState): void {
   const { t } = useTrans()
   const { slug: community } = useCommunity()
   const { mutate } = useGraphQLClient()
-  const { activePage, editable, invalid, loadStatus, savedDraft, saveStatus } = draftState
+  const { activePage, draftSource, editable, invalid, loadStatus, savedDraft, saveStatus } =
+    draftState
   const latestDocIdRef = useRef(savedDraft.docId || activePage?.docId || '')
+  const failedSnapshotKeyRef = useRef<string | null>(null)
   const [snapshotStatus, setSnapshotStatus] = useState<TDraftSnapshotStatus>({
     creating: false,
     lastCreatedSignature: draftState.savedDraft.revisionSignature,
@@ -27,6 +29,10 @@ export default function useDraftSnapshot(draftState: TDraftEditorState): void {
   useEffect(() => {
     latestDocIdRef.current = savedDraft.docId || activePage?.docId || ''
   }, [activePage?.docId, savedDraft.docId])
+
+  useEffect(() => {
+    failedSnapshotKeyRef.current = null
+  }, [activePage?.docId, savedDraft.revisionSignature])
 
   useEffect(() => {
     if (saveStatus.lastSavedAt !== null) return
@@ -40,6 +46,7 @@ export default function useDraftSnapshot(draftState: TDraftEditorState): void {
   useEffect(() => {
     if (
       !activePage?.docId ||
+      draftSource !== 'draft' ||
       !editable ||
       invalid ||
       loadStatus.loading ||
@@ -55,6 +62,9 @@ export default function useDraftSnapshot(draftState: TDraftEditorState): void {
     const delay = Math.max(DOC_DRAFT_REVISION_CHECKPOINT_DELAY - elapsed, 0)
     const signature = savedDraft.revisionSignature
     const docId = savedDraft.docId || activePage.docId
+    const snapshotKey = `${docId}:${signature}`
+
+    if (failedSnapshotKeyRef.current === snapshotKey) return
 
     const timer = window.setTimeout(() => {
       if (latestDocIdRef.current !== docId) return
@@ -73,6 +83,7 @@ export default function useDraftSnapshot(draftState: TDraftEditorState): void {
 
           const message =
             err instanceof Error ? err.message : t(REVISION_LABEL_KEY.CHECKPOINT_FAILED)
+          failedSnapshotKeyRef.current = snapshotKey
           setSnapshotStatus((current) => ({ ...current, creating: false }))
           toast(message, 'error')
         })
@@ -82,6 +93,7 @@ export default function useDraftSnapshot(draftState: TDraftEditorState): void {
   }, [
     activePage?.docId,
     community,
+    draftSource,
     editable,
     invalid,
     loadStatus.loading,

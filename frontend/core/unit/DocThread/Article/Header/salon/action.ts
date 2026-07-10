@@ -7,7 +7,7 @@ export default function useSalon() {
 
   return {
     actionBtn: cn('row-center min-w-20 gap-1 pl-1 py-1 text-sm', hover('bg')),
-    actionIcon: cn('size-3.5', hover('icon')),
+    actionIcon: cn('size-3.5 opacity-50', hover('icon')),
     actionText: hover('fg'),
     actionArrow: cn('size-2.5 -ml-0.5 -rotate-90 group-smoky-0', hover('icon')),
     menuPanel: cn('w-80 rounded-lg border p-2', menu('bg'), br('divider'), shadow('md')),

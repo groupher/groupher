@@ -44,6 +44,8 @@ export type TSavedDraft = {
   revisionSignature: string
 }
 
+export type TDocDraftSource = 'draft' | 'public'
+
 export type TEditorDraftMeta = {
   stage?: TDocStage | null
   insertedAt: string | null
@@ -82,6 +84,7 @@ export type TDocDraftSession = {
   body: TRichEditorValue
   bodyJson: string
   info: TDocDraftInfo
+  source: TDocDraftSource
   slug: string
   subtitle: string
   title: string

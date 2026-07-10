@@ -31,7 +31,7 @@ export type TSelectableOptions = {
   size?: TSelectableSize
 }
 export type TCutWWidth = `w-${number}` | `w-[${number}px]`
-export type TContainerMetric = 'community-doc'
+export type TContainerMetric = 'article' | 'community-doc'
 
 /**
  * Channel keys:
@@ -76,7 +76,7 @@ export type TRet = {
   cn: (...inputs: ClassValue[]) => string
   cnMerge: (...inputs: ClassValue[]) => string
   container: (metricOverride?: TContainerMetric) => string
-  containerWrapper: () => string
+  containerWrapper: (metricOverride?: TContainerMetric) => string
 
   fg: (key: TTextKey | `${string}.${string}`) => string
   bg: (key: TBgKey) => string

@@ -984,7 +984,6 @@ export default {
   'dsb.menu.doc.backup': 'Backup',
   'dsb.menu.doc.import_export': 'Import/Export',
   'dsb.header.fixed_links.title': 'Fixed links:',
-  'dsb.header.fixed_links.more': 'More',
   'dsb.header.fixed_links.about': 'About',
   'dsb.third_part.ga.title': 'Google Analytics',
   'dsb.third_part.ga.desc': 'Pageviews, traffic sources, user paths, and events.',

@@ -960,7 +960,6 @@ export default {
   'dsb.menu.doc.import_export': '导入导出',
   'dsb.demo.exit': '退出演示',
   'dsb.header.fixed_links.title': '固定链接:',
-  'dsb.header.fixed_links.more': '更多',
   'dsb.header.fixed_links.about': '关于',
   'dsb.third_part.ga.title': 'Google Analytics',
   'dsb.third_part.ga.desc': '页面访问量、来源渠道、用户路径、事件与转化数据。',
