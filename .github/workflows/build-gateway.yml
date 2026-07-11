@@ -33,6 +33,14 @@ jobs:
           corepack enable
           yarn install --immutable
 
+      - name: Restore Turbopack build cache
+        uses: actions/cache@v4
+        with:
+          path: frontend/gateway/.next/cache
+          key: ${{ runner.os }}-next-gateway-${{ hashFiles('yarn.lock', 'frontend/gateway/**') }}
+          restore-keys: |
+            ${{ runner.os }}-next-gateway-
+
       - name: Run Gateway Tests
         run: make fe.test.gateway
 

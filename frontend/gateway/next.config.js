@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  optimizeFonts: false,
+  experimental: {
+    turbopackFileSystemCacheForBuild: true,
+  },
   images: {
     disableStaticImages: true,
   },
