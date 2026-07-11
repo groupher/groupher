@@ -17,7 +17,8 @@ const GroupInputer: FC<TGroupInputerProps> = ({ value, onChange, onConfirm, onCa
       onCancel={onCancel}
       disabled={value.trim() === ''}
       isTouched
-      minimal
+      density='compact'
+      view='inline'
     >
       <div className={s.wrapper}>
         <Input

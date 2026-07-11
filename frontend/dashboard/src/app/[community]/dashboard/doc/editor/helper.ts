@@ -131,9 +131,8 @@ export const getDocEditorInitialData = async (
     const docTree = treeData?.docTree ?? null
     // The editor route must have a concrete doc id. If the URL is empty or stale,
     // pick the first page so SSR can hydrate matching tree + document data.
-    const activePage = docTree
-      ? findPageByDocId(docTree.groups, docId) || findFirstPage(docTree.groups)
-      : null
+    const groups = docTree?.tabs.flatMap((tab) => tab.groups || []) ?? []
+    const activePage = docTree ? findPageByDocId(groups, docId) || findFirstPage(groups) : null
     const activeDocId = activePage?.docId ?? null
 
     if (!docTree || !activeDocId) return { docTree, docDraft: null, activeDocId: null }

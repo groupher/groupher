@@ -1,5 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
+import { DSB_DOC } from '../../constant'
+
 export { cn } from '~/css'
 
 export default function useSalon() {
@@ -7,9 +9,9 @@ export default function useSalon() {
 
   return {
     wrapper: cn('column w-full', fg('digest')),
-    header: 'row-center justify-between mb-4',
+    header: cn('row-center justify-between', DSB_DOC.HEADER_ROW),
     collapseToggle: cn(
-      'align-both size-6 rounded-md border border-transparent trans-all-100 pointer -mt-0.5',
+      'align-both size-6 rounded-md border border-transparent trans-all-100 pointer',
       'smoky-65',
       hover('bg'),
     ),

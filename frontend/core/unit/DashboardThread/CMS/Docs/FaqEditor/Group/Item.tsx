@@ -106,7 +106,8 @@ export default function Item({
               <SavingBar
                 field={FIELD.DOC_FAQ}
                 isTouched={isDocFaqTouched}
-                minimal
+                density='compact'
+                view='bottom'
                 top={2}
                 bottom={2}
                 onCancel={clearSaveZone}

@@ -47,6 +47,7 @@ export const cloneDemoGroups = (): TSideTreeGroup[] =>
  */
 export const createSideTreeGroup = (untitledTitle: string): TSideTreeGroup => ({
   id: makeSideTreeId(SIDE_TREE_ID_PREFIX.GROUP),
+  tabId: '',
   type: SIDE_TREE_NODE_TYPE.GROUP,
   title: untitledTitle,
   expanded: true,

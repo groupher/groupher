@@ -1,10 +1,14 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
+import { DSB_DOC } from '../../constant'
+
 export default function useSalon({ ...spacing }) {
   const { cn, fg, bg, margin } = useTwBelt()
 
   return {
     wrapper: cn('column w-full', margin(spacing)),
+    breadcrumbRow: cn('row-between w-full', DSB_DOC.HEADER_ROW),
+    breadcrumbs: 'row-center',
     header: 'row-between w-full',
     title: cn('text-2xl w-auto', fg('title')),
     desc: cn('text-sm mt-2.5 mb-2', fg('digest')),

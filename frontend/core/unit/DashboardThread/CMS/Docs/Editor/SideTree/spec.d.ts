@@ -54,6 +54,7 @@ type TSideTreePublishable = {
 
 export type TSideTreeGroup = {
   id: string
+  tabId?: string
   type: typeof SIDE_TREE_NODE_TYPE.GROUP
   title: string
   slug?: string
@@ -103,6 +104,8 @@ export type TSideTreeNodeMenuAction =
   (typeof SIDE_TREE_NODE_MENU_ACTION)[keyof typeof SIDE_TREE_NODE_MENU_ACTION]
 
 export type TSideTreeController = {
+  tabs: TSideTreeTab[]
+  activeTabId: string | null
   groups: TSideTreeGroup[]
   treeState: TDocTreeState | null
   stagedEvents: TDocTreeEvent[]
@@ -110,6 +113,11 @@ export type TSideTreeController = {
   editingTarget: TEditingTarget
   coverWarning: string | null
   activate: (id: string) => void
+  addTab: () => void
+  activateTab: (id: string) => void
+  deleteTab: (tabId: string) => void
+  renameTab: (tabId: string, title: string) => void
+  reorderTabs: (tabs: readonly TSideTreeTab[], movedTabId: string) => void
   addGroup: () => void
   addChild: (groupId: string, action: TSideTreeChildMenuAction) => void
   clearCoverWarning: () => void
@@ -130,9 +138,19 @@ export type TSideTreeController = {
 
 export type TDocTreeNodeDTO = {
   id: string
+  tabId?: string | null
   groupId?: string | null
   docId?: string | null
-  type: TSideTreeGroup['type'] | TSideTreeChild['type'] | 'pin' | 'GROUP' | 'PAGE' | 'LINK' | 'PIN'
+  type:
+    | TSideTreeGroup['type']
+    | TSideTreeChild['type']
+    | 'tab'
+    | 'pin'
+    | 'TAB'
+    | 'GROUP'
+    | 'PAGE'
+    | 'LINK'
+    | 'PIN'
   title?: string | null
   slug?: string | null
   index?: number | null
@@ -143,6 +161,16 @@ export type TDocTreeNodeDTO = {
   uiConfig?: Record<string, unknown> | null
   publishState?: TDocTreeNodePublishState | null
   children?: TDocTreeNodeDTO[] | null
+  pins?: TDocTreeNodeDTO[] | null
+  groups?: TDocTreeNodeDTO[] | null
+}
+
+export type TSideTreeTab = {
+  id: string
+  title: string
+  slug?: string
+  pins: TDocTreeNodeDTO[]
+  groups: TSideTreeGroup[]
 }
 
 export type TDocTreeMutationPayload = {
@@ -176,6 +204,5 @@ export type TDocTreeInitialData = {
   revision: number
   treeState?: TDocTreeState | null
   stagedEvents?: TDocTreeEvent[] | null
-  pins?: TDocTreeNodeDTO[] | null
-  groups: TDocTreeNodeDTO[]
+  tabs: TDocTreeNodeDTO[]
 }

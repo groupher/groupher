@@ -63,7 +63,7 @@ const Tabs: FC<TViewProps> = ({
             className={cn(s.tabItem, index === activeIndex && s.activeTabItem)}
             onClick={() => handleItemClick(item, index)}
           >
-            {isString(item) ? item : item.title}
+            {isString(item) ? item : (item.label ?? item.title)}
           </button>
         ))}
       </div>

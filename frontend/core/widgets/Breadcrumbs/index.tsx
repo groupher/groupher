@@ -26,22 +26,27 @@ const BreadCrumb: FC<Props> = ({ items, separator = '/', ...spacing }) => {
           const clickable = !isLast && item.path
 
           return (
-            <li key={item?.key || item.path} className={cn(s.li, isFirst && s.hoverShift)}>
-              {clickable ? (
-                <Link href={item.path} className={cn(s.item, s.itemHover)}>
-                  {t(item.title)}
-                </Link>
-              ) : (
-                <span aria-current={isLast ? 'page' : undefined} className={cn(s.item, s.curPath)}>
-                  {t(item.title)}
-                </span>
-              )}
+            <li key={item?.key || item.path} className={s.li}>
+              <span className={cn(s.itemGroup, isFirst && s.hoverShift)}>
+                {clickable ? (
+                  <Link href={item.path} className={cn(s.item, s.itemHover)}>
+                    {t(item.title)}
+                  </Link>
+                ) : (
+                  <span
+                    aria-current={isLast ? 'page' : undefined}
+                    className={cn(s.item, s.curPath)}
+                  >
+                    {t(item.title)}
+                  </span>
+                )}
 
-              {!isLast && (
-                <span aria-hidden className={s.divider}>
-                  {separator}
-                </span>
-              )}
+                {!isLast && (
+                  <span aria-hidden className={s.divider}>
+                    {separator}
+                  </span>
+                )}
+              </span>
             </li>
           )
         })}

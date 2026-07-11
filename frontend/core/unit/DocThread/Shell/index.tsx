@@ -1,10 +1,12 @@
 import useMobileDetect from '@groupher/use-mobile-detect-hook'
+import { usePathname } from 'next/navigation'
 import type { FC, KeyboardEvent, PointerEvent, ReactNode } from 'react'
-import { useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { TDocPublicTree } from '~/spec'
 import ArticleToc from '~/widgets/ArticleToc'
 
+import Tabs from '../Tabs'
 import Tree from '../Tree'
 import { DOC_PUBLIC_TREE_LABEL, DOC_PUBLIC_TREE_WIDTH } from '../Tree/constant'
 import { DOC_PUBLIC_TREE_STICKY_HEIGHT, DOC_PUBLIC_TREE_STICKY_TOP } from '../Tree/salon/layout'
@@ -24,16 +26,23 @@ type TResizeState = {
 }
 
 const Shell: FC<TProps> = ({ children, tree }) => {
+  const pathname = usePathname()
   const [treeOpen, setTreeOpen] = useState(true)
   const [treeWidth, setTreeWidth] = useState<number>(DOC_PUBLIC_TREE_WIDTH.default)
   const [activeTocId, setActiveTocId] = useState<string | null>(DOC_ARTICLE_TOC_ACTIVE_ID)
+  const [activeTabId, setActiveTabId] = useState<string | null>(tree.tabs[0]?.id ?? null)
   const resizeStateRef = useRef<TResizeState>({
     startWidth: DOC_PUBLIC_TREE_WIDTH.default,
     startX: 0,
   })
   const s = useSalon({ treeOpen })
   const { isMobile } = useMobileDetect()
-  const hasTree = tree.groups.length > 0
+  const activeTab = useMemo(
+    () => tree.tabs.find((tab) => tab.id === activeTabId) ?? tree.tabs[0] ?? null,
+    [activeTabId, tree.tabs],
+  )
+  const groups = activeTab?.groups ?? []
+  const hasTree = groups.length > 0
   const sideRailStyle = {
     height: DOC_PUBLIC_TREE_STICKY_HEIGHT,
     top: DOC_PUBLIC_TREE_STICKY_TOP,
@@ -41,6 +50,13 @@ const Shell: FC<TProps> = ({ children, tree }) => {
   const sidePanelStyle = {
     width: treeWidth,
   }
+
+  useEffect(() => {
+    const matchingTab = tree.tabs.find((tab) =>
+      tab.groups.some((group) => group.children?.some((child) => child.href === pathname)),
+    )
+    if (matchingTab) setActiveTabId(matchingTab.id)
+  }, [pathname, tree.tabs])
 
   const handleResizePointerDown = (event: PointerEvent<HTMLDivElement>): void => {
     if (!treeOpen) return
@@ -88,7 +104,7 @@ const Shell: FC<TProps> = ({ children, tree }) => {
       <div className={s.mobileWrapper}>
         {hasTree && (
           <div className={s.mobileTree}>
-            <Tree groups={tree.groups} compact />
+            <Tree groups={groups} compact />
           </div>
         )}
         <main className={s.mobileContent}>{children}</main>
@@ -98,6 +114,7 @@ const Shell: FC<TProps> = ({ children, tree }) => {
 
   return (
     <div className={s.wrapper}>
+      <Tabs activeTabId={activeTab?.id ?? null} tabs={tree.tabs} onSelect={setActiveTabId} />
       <div className={s.articleToc}>
         <div className={s.articleTocSticky}>
           <ArticleToc
@@ -112,11 +129,11 @@ const Shell: FC<TProps> = ({ children, tree }) => {
           <aside className={s.sideRail} style={sideRailStyle}>
             {treeOpen ? (
               <div className={s.sidePanel} style={sidePanelStyle}>
-                <Tree groups={tree.groups} onToggleTree={() => setTreeOpen(false)} />
+                <Tree groups={groups} onToggleTree={() => setTreeOpen(false)} />
               </div>
             ) : (
               <div className={s.collapsedPanel}>
-                <TreeToc groups={tree.groups} onOpenTree={() => setTreeOpen(true)} />
+                <TreeToc groups={groups} onOpenTree={() => setTreeOpen(true)} />
               </div>
             )}
             {treeOpen && (

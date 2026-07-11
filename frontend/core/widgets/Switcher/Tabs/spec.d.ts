@@ -7,6 +7,7 @@ export type TTabItem =
   | {
       id?: string
       title?: string
+      label?: ReactNode
       slug?: string
       href?: string
       alias?: string
@@ -15,6 +16,7 @@ export type TTabItem =
     }
 
 export type TSlipBarPos = 'top' | 'bottom'
+export type TTabsVariant = 'default' | 'docs'
 
 export type TTabsView = TView | 'auto'
 
@@ -33,6 +35,7 @@ export type TProps = {
   topSpace?: number
   bottomSpace?: number
   noAnimation?: boolean
+  variant?: TTabsVariant
   view?: TTabsView
 } & TSpace
 
@@ -49,6 +52,7 @@ export type TTabItemProps = {
   slipBarPos?: TSlipBarPos
   topSpace?: number | string
   bottomSpace?: number | string
+  variant?: TTabsVariant
   setItemWidth?: (index: number, width: number) => void
   onClick?: TTabItemClick
 }

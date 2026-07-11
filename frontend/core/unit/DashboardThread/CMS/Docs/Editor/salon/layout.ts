@@ -1,9 +1,7 @@
-import { DASHBOARD_SIDE_MENU_STICKY_OFFSET } from '../../../../constant'
+import { DASHBOARD_SIDE_MENU_STICKY_OFFSET, DSB_DOC } from '../../../../constant'
 
-// Shared visual rhythm for the docs editor top action row.
-// The -mt-0.5 compensates for the dashboard sub-route item padding so the
-// submenu item, tree toolbar, and article action line align visually.
-export const DOC_EDITOR_TOP_ROW = 'h-7 -mt-0.5 mb-2'
+// The side tree and article actions share the dashboard docs body anchor.
+export const DOC_EDITOR_TOP_ROW = `${DSB_DOC.BODY_START_ROW} mb-2`
 
 export const DOC_EDITOR_TOP_ROW_CONTROL = 'h-6'
 

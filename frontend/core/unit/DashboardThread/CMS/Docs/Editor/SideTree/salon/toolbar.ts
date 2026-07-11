@@ -6,7 +6,7 @@ export default function useSalon() {
   const { cn, fg, hover, bg, br } = useTwBelt()
 
   return {
-    wrapper: cn('group/tree-toolbar row-center gap-1 pr-3', DOC_EDITOR_TOP_ROW),
+    wrapper: cn('row-center gap-1 pr-3', DOC_EDITOR_TOP_ROW),
     search: cn(
       'row-center flex-1 min-w-0 pl-0.5 pointer',
       DOC_EDITOR_TOP_ROW_CONTROL,
@@ -28,12 +28,6 @@ export default function useSalon() {
     closeIcon: cn('size-3 opacity-80'),
     actions: cn('row-center gap-0 shrink-0'),
     actionButton: cn('button-reset row-center justify-center size-5 rounded', hover('box')),
-    moreButton: cn(
-      'button-reset row-center justify-center h-5 w-0 rounded overflow-hidden smoky-65',
-      'opacity-0 pointer-events-none transition-all duration-150',
-      'group-hover/tree-toolbar:w-3 group-hover/tree-toolbar:opacity-100 group-hover/tree-toolbar:pointer-events-auto',
-      hover('box'),
-    ),
     actionIcon: cn('size-3.5 smoky-65', hover('fg')),
   }
 }

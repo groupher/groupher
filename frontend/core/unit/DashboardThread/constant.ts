@@ -10,6 +10,19 @@ export { SEO_KEYS } from '~/const/seo'
 export const DSB_DEMO_KEY = 'DSB_DEMO'
 export const DASHBOARD_SIDE_MENU_STICKY_OFFSET = 36
 
+// Shared vertical anchors for the dashboard docs workspace. Keep these values
+// semantic so the submenu, tabs, and editor body move as one layout.
+export const DSB_DOC = {
+  HEADER_ROW: 'h-10',
+  BODY_START_ROW: 'h-8',
+  HEADER_TO_BODY_GAP: 'mb-4',
+  TABS_ROW: 'min-h-12',
+  TABS_EXPANDED_OFFSET: '-mt-2',
+  TABS_COLLAPSED_OFFSET: '-mt-7',
+  TABS_COLLAPSED_TO_BODY_GAP: 'mb-6',
+  COLLAPSED_MENU_OFFSET: '-translate-y-1',
+} as const
+
 export const DSB_MENU_ICON = {
   BASIC: 'basic',
   CMS: 'cms',

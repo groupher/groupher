@@ -18,6 +18,8 @@ import {
 import useSalon, { cn } from './salon'
 
 type TActionIcon = ComponentType<SVGProps<SVGSVGElement>>
+type TSavingBarDensity = 'default' | 'compact'
+type TSavingBarView = 'bottom' | 'inline'
 
 type TProps = {
   field?: TDsbFieldKey | null
@@ -26,11 +28,14 @@ type TProps = {
   children?: ReactNode
   loading?: boolean
   isTouched?: boolean
+  density?: TSavingBarDensity
+  view?: TSavingBarView
+  /** @deprecated Use density='compact' instead. */
   minimal?: boolean
   disabled?: boolean
   cancelText?: string
   saveText?: string
-  cancelIcon?: TActionIcon
+  cancelIcon?: TActionIcon | null
   saveIcon?: TActionIcon
   width?: string
   wrapperClassName?: string
@@ -45,11 +50,13 @@ const SavingBar: FC<TProps> = ({
   children = null,
   isTouched = false,
   loading,
+  density,
+  view,
   minimal = false,
   disabled = false,
   cancelText,
   saveText,
-  cancelIcon: CancelIcon = RevertSVG,
+  cancelIcon,
   saveIcon: SaveIcon = SaveSVG,
   onCancel = console.log,
   onConfirm = console.log,
@@ -57,7 +64,9 @@ const SavingBar: FC<TProps> = ({
   wrapperClassName,
   ...spacing
 }) => {
-  const s = useSalon({ minimal, width, ...spacing })
+  const resolvedView = view ?? (children === null ? 'bottom' : 'inline')
+  const resolvedDensity = density ?? (minimal ? 'compact' : 'default')
+  const s = useSalon({ density: resolvedDensity, width, ...spacing })
   const dsb$ = useDashboard()
   const { rollbackEdit, onSave } = useHelper()
   const { t } = useTrans()
@@ -65,6 +74,7 @@ const SavingBar: FC<TProps> = ({
   const resolvedCancelText = cancelText ?? t('dsb.saving_bar.cancel')
   const resolvedSaveText = saveText ?? t('dsb.saving_bar.save')
   const resolvedLoading = loading ?? dsb$.saving
+  const CancelIcon = cancelIcon === undefined && resolvedView === 'bottom' ? RevertSVG : cancelIcon
   const cancel = (): void => {
     onCancel?.()
     if (field) {
@@ -90,7 +100,7 @@ const SavingBar: FC<TProps> = ({
         ariaLabel={resolvedCancelText}
         onClick={cancel}
       >
-        <CancelIcon className={s.cancelIcon} />
+        {CancelIcon && <CancelIcon className={s.cancelIcon} />}
         <span className={s.cancelLabel}>{resolvedCancelText}</span>
       </Button>
       <Button
@@ -153,11 +163,11 @@ const SavingBar: FC<TProps> = ({
             >
               <div className={s.container}>
                 <div className={cn(s.wrapper, 'pl-2.5', 'saving-bar-right-linear')}>
-                  <div className='row-center'>
+                  <div className={s.message}>
                     <SaveSVG className={s.infoIcon} />
                     <div className={s.hintText}>
-                      {resolvedPrefix}
-                      {hint && <div className={s.hint}>{hint}</div>}?
+                      <span>{resolvedPrefix}</span>
+                      {hint && <span className={s.hint}>{hint}</span>}
                     </div>
                   </div>
                   <div className='grow' />

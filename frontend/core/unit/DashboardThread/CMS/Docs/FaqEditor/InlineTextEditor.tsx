@@ -82,7 +82,8 @@ export default function InlineTextEditor({
       <SavingBar
         field={FIELD.DOC_FAQ}
         isTouched
-        minimal
+        density='compact'
+        view='inline'
         disabled={!isTouched}
         width={s.savingWidth}
         top={1}

@@ -5,7 +5,7 @@ import useCommunity from '~/stores/community/hooks'
 import S from './schema'
 
 const EMPTY_TREE: TDocPublicTree = {
-  groups: [],
+  tabs: [],
 }
 
 export default function usePublicTree(initialTree?: TDocPublicTree | null): TDocPublicTree {

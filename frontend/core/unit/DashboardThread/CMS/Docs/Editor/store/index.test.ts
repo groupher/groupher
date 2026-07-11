@@ -18,6 +18,8 @@ const runtime = (patch: Partial<TDocPublishRuntime> = {}): TDocPublishRuntime =>
 })
 
 const sideTree = (patch: Partial<TSideTreeController> = {}): TSideTreeController => ({
+  tabs: [],
+  activeTabId: null,
   groups: [],
   treeState: null,
   stagedEvents: [],
@@ -25,6 +27,11 @@ const sideTree = (patch: Partial<TSideTreeController> = {}): TSideTreeController
   editingTarget: null,
   coverWarning: null,
   activate: noop,
+  activateTab: noop,
+  addTab: noop,
+  deleteTab: noop,
+  renameTab: noop,
+  reorderTabs: noop,
   addGroup: noop,
   addChild: noop,
   clearCoverWarning: noop,
