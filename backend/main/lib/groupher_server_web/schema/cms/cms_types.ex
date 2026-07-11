@@ -34,6 +34,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   enum :doc_tree_node_type do
+    value(:tab)
     value(:group)
     value(:page)
     value(:link)
@@ -103,6 +104,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :doc_tree_node do
     field(:id, :id)
+    field(:tab_id, :id)
     field(:group_id, :id)
     field(:doc_id, :id)
     field(:type, :doc_tree_node_type)
@@ -116,6 +118,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:ui_config, :json)
     field(:publish_state, :doc_tree_node_publish_state)
     field(:children, list_of(:doc_tree_node))
+    field(:pins, list_of(:doc_tree_node))
+    field(:groups, list_of(:doc_tree_node))
   end
 
   object :doc_tree_node_publish_state do
@@ -159,12 +163,12 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:revision, :integer)
     field(:tree_state, :doc_tree_state)
     field(:staged_events, list_of(:doc_tree_event))
-    field(:pins, list_of(:doc_tree_node))
-    field(:groups, list_of(:doc_tree_node))
+    field(:tabs, list_of(:doc_tree_node))
   end
 
   object :doc_public_tree_node do
     field(:id, :id)
+    field(:tab_id, :id)
     field(:group_id, :id)
     field(:doc_id, :id)
     field(:type, :doc_tree_node_type)
@@ -175,10 +179,12 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:marker, :marker)
     field(:badge, :string)
     field(:children, list_of(:doc_public_tree_node))
+    field(:pins, list_of(:doc_public_tree_node))
+    field(:groups, list_of(:doc_public_tree_node))
   end
 
   object :doc_public_tree do
-    field(:groups, list_of(:doc_public_tree_node))
+    field(:tabs, list_of(:doc_public_tree_node))
   end
 
   object :doc_publish_checklist_item do
@@ -307,6 +313,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   input_object :doc_tree_node_input do
+    field(:tab_id, :id)
     field(:group_id, :id)
     field(:title, :string)
     field(:slug, :string)

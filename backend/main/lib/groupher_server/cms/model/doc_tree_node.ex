@@ -6,13 +6,14 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
       doc_tree_nodes(stage=draft)          doc_tree_nodes(stage=public)
       --------------------------- publish  ----------------------------
-      group node_id=group_1                 group node_id=group_1
-        page group_id=group_1                 page group_id=group_1
-      pin node_id=github                    pin node_id=github
+      tab node_id=introduction              tab node_id=introduction
+        group tab_id=introduction             group tab_id=introduction
+          page group_id=group_1                 page group_id=group_1
+        pin tab_id=introduction               pin tab_id=introduction
 
   `id` is a physical database row id. Callers should use `node_id` for tree
-  identity and `group_id` for parent group membership. Pins are independent
-  top-level link nodes, not soft links to page/link nodes.
+  identity, `tab_id` for Group/Pin ownership, and `group_id` for Page/Link
+  ownership. Pins are independent copied link nodes, not shared references.
   """
 
   alias __MODULE__
@@ -35,11 +36,11 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
   @required_fields ~w(community_id branch_id node_id stage type index)a
   @optional_fields ~w(
-    group_id doc_id title slug href marker badge
+    tab_id group_id doc_id title slug href marker badge
     hidden template_key ui_config
   )a
 
-  @type node_type :: :group | :page | :link | :pin
+  @type node_type :: :tab | :group | :page | :link | :pin
   @type stage :: :draft | :public
   @type t :: %DocTreeNode{}
 
@@ -51,6 +52,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     field(:node_id, :string)
     field(:stage, Ecto.Enum, values: CMS.Const.stage_values())
     field(:type, Ecto.Enum, values: CMS.Const.tree_node_type_values())
+    field(:tab_id, :string)
     field(:group_id, :string)
     field(:title, :string)
     field(:slug, :string)
@@ -90,6 +92,8 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     |> unique_constraint(:title, name: :doc_tree_nodes_root_title_index)
     |> unique_constraint(:slug, name: :doc_tree_nodes_sibling_slug_index)
     |> unique_constraint(:title, name: :doc_tree_nodes_sibling_title_index)
+    |> unique_constraint(:slug, name: :doc_tree_nodes_tab_sibling_slug_index)
+    |> unique_constraint(:title, name: :doc_tree_nodes_tab_sibling_title_index)
   end
 
   @doc """
@@ -112,6 +116,8 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     |> unique_constraint(:title, name: :doc_tree_nodes_root_title_index)
     |> unique_constraint(:slug, name: :doc_tree_nodes_sibling_slug_index)
     |> unique_constraint(:title, name: :doc_tree_nodes_sibling_title_index)
+    |> unique_constraint(:slug, name: :doc_tree_nodes_tab_sibling_slug_index)
+    |> unique_constraint(:title, name: :doc_tree_nodes_tab_sibling_title_index)
   end
 
   defp validate_common(changeset) do
@@ -123,36 +129,33 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
     changeset
     |> validate_length(:node_id, min: 1, max: 80)
+    |> validate_length(:tab_id, min: 1, max: 80)
     |> validate_length(:group_id, min: 1, max: 80)
     |> validate_length(:title, min: 1, max: 100)
     |> validate_length(:slug, min: 1, max: 120)
     |> validate_length(:href, max: 400)
     |> Slug.validate_changeset(:slug)
     |> validate_title_slug_ref(type)
-    |> validate_group_ref(type, group_id)
+    |> validate_parent_refs(type, get_field(changeset, :tab_id), group_id)
     |> validate_article_ref(type, doc_id)
     |> validate_link_href(type, href)
   end
 
-  defp validate_title_slug_ref(changeset, type) when type in [:group, :page, :link, :pin],
+  defp validate_title_slug_ref(changeset, type) when type in [:tab, :group, :page, :link, :pin],
     do: validate_required(changeset, [:title, :slug])
 
   defp validate_title_slug_ref(changeset, _type), do: changeset
 
-  defp validate_group_ref(changeset, :group, nil), do: changeset
+  defp validate_parent_refs(changeset, :tab, nil, nil), do: changeset
+  defp validate_parent_refs(changeset, :group, tab_id, nil) when not is_nil(tab_id), do: changeset
+  defp validate_parent_refs(changeset, :pin, tab_id, nil) when not is_nil(tab_id), do: changeset
 
-  defp validate_group_ref(changeset, :group, _group_id),
-    do: add_error(changeset, :group_id, "group nodes must be root nodes")
+  defp validate_parent_refs(changeset, type, nil, group_id)
+       when type in [:page, :link] and not is_nil(group_id),
+       do: changeset
 
-  defp validate_group_ref(changeset, :pin, nil), do: changeset
-
-  defp validate_group_ref(changeset, :pin, _group_id),
-    do: add_error(changeset, :group_id, "pin nodes must be top-level nodes")
-
-  defp validate_group_ref(changeset, type, nil) when type in [:page, :link],
-    do: add_error(changeset, :group_id, "#{type} nodes must belong to a group")
-
-  defp validate_group_ref(changeset, _type, _group_id), do: changeset
+  defp validate_parent_refs(changeset, _type, _tab_id, _group_id),
+    do: add_error(changeset, :type, "node has an invalid docs tree parent")
 
   defp validate_article_ref(changeset, :page, nil),
     do: add_error(changeset, :doc_id, "page nodes require doc_id")
@@ -161,7 +164,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     do: changeset
 
   defp validate_article_ref(changeset, type, doc_id)
-       when type in [:group, :link, :pin] do
+       when type in [:tab, :group, :link, :pin] do
     if is_nil(doc_id) do
       changeset
     else
@@ -183,7 +186,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
   defp validate_link_href(changeset, type, _href) when type in [:link, :pin],
     do: add_error(changeset, :href, "#{type} nodes require href")
 
-  defp validate_link_href(changeset, type, href) when type in [:group, :page] do
+  defp validate_link_href(changeset, type, href) when type in [:tab, :group, :page] do
     if is_nil(href) or (is_binary(href) and String.trim(href) == "") do
       changeset
     else

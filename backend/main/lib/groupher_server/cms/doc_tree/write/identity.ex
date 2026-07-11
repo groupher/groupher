@@ -96,7 +96,7 @@ defmodule GroupherServer.CMS.DocTree.Write.Identity do
            pending_deleted_value_exists?(
              community,
              branch,
-             node.group_id,
+             node.tab_id || node.group_id,
              node.type,
              field,
              Map.get(attrs, field)
@@ -204,21 +204,29 @@ defmodule GroupherServer.CMS.DocTree.Write.Identity do
 
   defp nodes_from_delete_inverse(_inverse), do: []
 
-  defp pending_deleted_node_in_scope?(node, nil, nil), do: is_nil(node["groupId"])
+  defp pending_deleted_node_in_scope?(node, nil, nil),
+    do: is_nil(node["tabId"]) and is_nil(node["groupId"])
 
   defp pending_deleted_node_in_scope?(node, nil, type),
-    do: is_nil(node["groupId"]) and node["type"] == to_string(type)
+    do: is_nil(node["tabId"]) and is_nil(node["groupId"]) and node["type"] == to_string(type)
 
-  defp pending_deleted_node_in_scope?(node, group_id, _type), do: node["groupId"] == group_id
+  defp pending_deleted_node_in_scope?(node, parent_id, type) when type in [:group, :pin],
+    do: node["tabId"] == parent_id and node["type"] == to_string(type)
 
-  defp where_group(query, nil), do: where(query, [n], is_nil(n.group_id))
-  defp where_group(query, group_id), do: where(query, [n], n.group_id == ^group_id)
+  defp pending_deleted_node_in_scope?(node, parent_id, _type), do: node["groupId"] == parent_id
 
-  defp where_sibling_scope(query, nil, nil), do: where_group(query, nil)
+  defp where_sibling_scope(query, nil, :tab),
+    do: query |> where([n], is_nil(n.tab_id) and is_nil(n.group_id)) |> where([n], n.type == :tab)
 
-  defp where_sibling_scope(query, nil, type) do
-    query |> where_group(nil) |> where([n], n.type == ^type)
-  end
+  defp where_sibling_scope(query, tab_id, type) when type in [:group, :pin],
+    do: query |> where([n], n.tab_id == ^tab_id) |> where([n], n.type == ^type)
 
-  defp where_sibling_scope(query, group_id, _type), do: where_group(query, group_id)
+  defp where_sibling_scope(query, group_id, type) when type in [:page, :link],
+    do: query |> where([n], n.group_id == ^group_id) |> where([n], n.type in [:page, :link])
+
+  defp where_sibling_scope(query, group_id, nil) when not is_nil(group_id),
+    do: where(query, [n], n.group_id == ^group_id)
+
+  defp where_sibling_scope(query, nil, nil),
+    do: where(query, [n], is_nil(n.tab_id) and is_nil(n.group_id))
 end

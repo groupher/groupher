@@ -97,14 +97,15 @@ defmodule GroupherServer.CMS.DocTree.Write.Index do
     end
   end
 
-  defp where_group(query, nil), do: where(query, [n], is_nil(n.group_id))
-  defp where_group(query, group_id), do: where(query, [n], n.group_id == ^group_id)
+  defp where_sibling_scope(query, nil, :tab),
+    do: query |> where([n], is_nil(n.tab_id) and is_nil(n.group_id)) |> where([n], n.type == :tab)
 
-  defp where_sibling_scope(query, nil, nil), do: where_group(query, nil)
+  defp where_sibling_scope(query, tab_id, type) when type in [:group, :pin],
+    do: query |> where([n], n.tab_id == ^tab_id) |> where([n], n.type == ^type)
 
-  defp where_sibling_scope(query, nil, type) do
-    query |> where_group(nil) |> where([n], n.type == ^type)
-  end
+  defp where_sibling_scope(query, group_id, type) when type in [:page, :link],
+    do: query |> where([n], n.group_id == ^group_id) |> where([n], n.type in [:page, :link])
 
-  defp where_sibling_scope(query, group_id, _type), do: where_group(query, group_id)
+  defp where_sibling_scope(query, nil, nil),
+    do: where(query, [n], is_nil(n.tab_id) and is_nil(n.group_id))
 end

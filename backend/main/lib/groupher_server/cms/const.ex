@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.Const do
 
   enum tree_node_type do
     [
+      tab: :tab,
       group: :group,
       page: :page,
       link: :link,

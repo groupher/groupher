@@ -177,6 +177,13 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
+  def create_doc_tree_tab(_root, %{community: community, input: input} = args, _info) do
+    CMS.DocTree.create_tab(
+      community,
+      input |> Map.put(:base_revision, args[:base_revision]) |> with_doc_tree_actor(args)
+    )
+  end
+
   def create_doc_tree_group(_root, %{community: community, input: input} = args, _info) do
     CMS.DocTree.create_group(
       community,
@@ -400,6 +407,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
       id,
       %{
         base_revision: args[:base_revision],
+        target_tab_id: args[:target_tab_id],
         target_group_id: args[:target_group_id],
         target_index: args.target_index
       }

@@ -31,6 +31,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
 
   require CMS.Const
 
+  @tree_node_type_tab CMS.Const.tree_node_type(:tab)
   @tree_node_type_group CMS.Const.tree_node_type(:group)
   @tree_node_type_page CMS.Const.tree_node_type(:page)
 
@@ -56,7 +57,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
 
     events
     |> Enum.filter(fn event ->
-      not is_nil(group_create_event_id(event)) and MapSet.member?(doc_bound_event_ids, event.id)
+      not is_nil(shell_create_event_id(event)) and MapSet.member?(doc_bound_event_ids, event.id)
     end)
     |> Enum.map(&"tree:#{&1.id}")
   end
@@ -202,7 +203,26 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
       end)
       |> MapSet.new(& &1.id)
 
-    MapSet.union(page_event_ids, group_event_ids)
+    tab_ids =
+      DocTreeNode
+      |> where([n], n.community_id == ^community.id)
+      |> where([n], n.branch_id == ^branch.id)
+      |> where([n], n.stage == CMS.Const.stage(:draft))
+      |> where([n], n.type == @tree_node_type_group)
+      |> where([n], n.node_id in ^MapSet.to_list(doc_bound_group_ids))
+      |> select([n], n.tab_id)
+      |> Repo.all()
+      |> MapSet.new()
+
+    tab_event_ids =
+      events
+      |> Enum.filter(fn event ->
+        tab_id = tab_create_event_id(event)
+        not is_nil(tab_id) and MapSet.member?(tab_ids, tab_id)
+      end)
+      |> MapSet.new(& &1.id)
+
+    page_event_ids |> MapSet.union(group_event_ids) |> MapSet.union(tab_event_ids)
   end
 
   defp page_create_event_doc_id(%DocTreeEvent{
@@ -224,6 +244,18 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
        do: group_id
 
   defp group_create_event_id(_event), do: nil
+
+  defp tab_create_event_id(%DocTreeEvent{
+         event_type: CMS.Const.tree_event(:node_create),
+         node_type: @tree_node_type_tab,
+         node_id: tab_id
+       }),
+       do: tab_id
+
+  defp tab_create_event_id(_event), do: nil
+
+  defp shell_create_event_id(event),
+    do: group_create_event_id(event) || tab_create_event_id(event)
 
   defp draft_doc_ids(%Community{} = community, branch) do
     Doc

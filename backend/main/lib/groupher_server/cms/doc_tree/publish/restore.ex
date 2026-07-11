@@ -44,6 +44,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
 
   @doc_tree_json_key_type CMS.Const.doc_tree_json_key(:type)
   @doc_tree_json_key_doc_id CMS.Const.doc_tree_json_key(:doc_id)
+  @tree_node_type_tab CMS.Const.tree_node_type(:tab)
   @tree_node_type_group CMS.Const.tree_node_type(:group)
   @tree_node_type_page CMS.Const.tree_node_type(:page)
   @tree_node_type_link CMS.Const.tree_node_type(:link)
@@ -52,8 +53,10 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
   @tree_node_type_page_key to_string(@tree_node_type_page)
   @tree_node_type_link_key to_string(@tree_node_type_link)
   @tree_node_type_pin_key to_string(@tree_node_type_pin)
+  @tree_node_type_tab_key to_string(@tree_node_type_tab)
 
   @event_node_types %{
+    @tree_node_type_tab_key => @tree_node_type_tab,
     @tree_node_type_group_key => @tree_node_type_group,
     @tree_node_type_page_key => @tree_node_type_page,
     @tree_node_type_link_key => @tree_node_type_link,
@@ -145,6 +148,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
          node_id: node["id"],
          stage: CMS.Const.stage(:draft),
          type: type,
+         tab_id: node["tabId"],
          group_id: node["groupId"],
          doc_id: node[@doc_tree_json_key_doc_id],
          title: node["title"],
@@ -258,6 +262,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
       "eventId" => event.id,
       "nodeId" => node["id"],
       "type" => node[@doc_tree_json_key_type],
+      "tabId" => node["tabId"],
       "title" => node["title"],
       "slug" => node["slug"],
       "docId" => node[@doc_tree_json_key_doc_id],

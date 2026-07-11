@@ -66,8 +66,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
               ),
               &event_to_map/1
             ),
-          pins: pins(nodes, context),
-          groups: build_groups(nodes, context)
+          tabs: build_tabs(nodes, context)
         }
       end)
       |> case do
@@ -90,7 +89,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
       nodes = tree_nodes_for_branch(community, branch, CMS.Const.stage(:public))
       docs_by_doc_id = public_docs_by_doc_id(community, branch, nodes)
 
-      {:ok, %{groups: build_public_groups(community, nodes, docs_by_doc_id)}}
+      {:ok, %{tabs: build_public_tabs(community, nodes, docs_by_doc_id)}}
     end
   end
 
@@ -225,6 +224,42 @@ defmodule GroupherServer.CMS.DocTree.Read do
     end)
   end
 
+  defp build_public_tabs(%Community{} = community, nodes, docs_by_doc_id) do
+    groups = build_public_groups(community, nodes, docs_by_doc_id)
+    groups_by_tab = Enum.group_by(groups, & &1.tab_id)
+
+    pins_by_tab =
+      nodes
+      |> Enum.filter(&(&1.type == :pin and not hidden_node?(&1)))
+      |> Enum.map(fn pin -> pin |> public_node_base() |> Map.put(:href, pin.href) end)
+      |> Enum.group_by(& &1.tab_id)
+
+    nodes
+    |> Enum.filter(&(&1.type == :tab))
+    |> Enum.reject(&hidden_node?/1)
+    |> Enum.map(fn tab ->
+      tab
+      |> public_node_base()
+      |> Map.put(:pins, Map.get(pins_by_tab, tab.node_id, []))
+      |> Map.put(:groups, Map.get(groups_by_tab, tab.node_id, []))
+    end)
+  end
+
+  defp build_tabs(nodes, context) do
+    groups = build_groups(nodes, context)
+    groups_by_tab = Enum.group_by(groups, & &1.tab_id)
+    pins_by_tab = nodes |> pins(context) |> Enum.group_by(& &1.tab_id)
+
+    nodes
+    |> Enum.filter(&(&1.type == :tab))
+    |> Enum.map(fn tab ->
+      tab
+      |> to_map(context)
+      |> Map.put(:pins, Map.get(pins_by_tab, tab.node_id, []))
+      |> Map.put(:groups, Map.get(groups_by_tab, tab.node_id, []))
+    end)
+  end
+
   defp public_child_map(
          %Community{} = community,
          %DocTreeNode{type: :page} = node,
@@ -254,6 +289,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
   defp public_node_base(%DocTreeNode{} = node) do
     %{
       id: node.node_id,
+      tab_id: node.tab_id,
       group_id: node.group_id,
       doc_id: node.doc_id,
       type: node.type,
@@ -311,6 +347,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
 
     %{
       id: node.node_id,
+      tab_id: node.tab_id,
       group_id: node.group_id,
       doc_id: node.doc_id,
       type: node.type,

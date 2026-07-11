@@ -43,8 +43,11 @@ defmodule GroupherServer.CMS.DocTree.Trash do
 
   require CMS.Const
 
+  @tree_node_type_tab CMS.Const.tree_node_type(:tab)
   @tree_node_type_group CMS.Const.tree_node_type(:group)
   @tree_node_type_pin CMS.Const.tree_node_type(:pin)
+  @tree_node_type_tab_key to_string(@tree_node_type_tab)
+  @tree_node_type_group_key to_string(@tree_node_type_group)
 
   @doc """
   Lists visible, unrestored product Trash items for the resolved docs branch.
@@ -101,13 +104,20 @@ defmodule GroupherServer.CMS.DocTree.Trash do
   end
 
   defp visible_items(items) do
+    trashed_tab_ids =
+      items
+      |> Enum.filter(&(snapshot_type(&1) == to_string(@tree_node_type_tab)))
+      |> MapSet.new(& &1.node_id)
+
     trashed_group_ids =
       items
       |> Enum.filter(&(snapshot_type(&1) == to_string(@tree_node_type_group)))
       |> MapSet.new(& &1.node_id)
 
     Enum.reject(items, fn item ->
-      item.deleted_from_group_id && MapSet.member?(trashed_group_ids, item.deleted_from_group_id)
+      (item.node_snapshot["tabId"] && MapSet.member?(trashed_tab_ids, item.node_snapshot["tabId"])) or
+        (item.deleted_from_group_id &&
+           MapSet.member?(trashed_group_ids, item.deleted_from_group_id))
     end)
   end
 
@@ -146,13 +156,35 @@ defmodule GroupherServer.CMS.DocTree.Trash do
 
   defp restore_items(%Community{} = community, branch, %DocTreeTrashItem{} = root_item) do
     items =
-      if snapshot_type(root_item) == to_string(@tree_node_type_group) do
-        child_items(community, branch, root_item.node_id)
-      else
-        []
+      case snapshot_type(root_item) do
+        @tree_node_type_tab_key ->
+          tab_items = tab_items(community, branch, root_item.node_id)
+
+          group_ids =
+            tab_items
+            |> Enum.filter(&(snapshot_type(&1) == to_string(@tree_node_type_group)))
+            |> Enum.map(& &1.node_id)
+
+          tab_items ++ Enum.flat_map(group_ids, &child_items(community, branch, &1))
+
+        @tree_node_type_group_key ->
+          child_items(community, branch, root_item.node_id)
+
+        _ ->
+          []
       end
 
     {:ok, [root_item | items]}
+  end
+
+  defp tab_items(%Community{} = community, branch, tab_node_id) do
+    DocTreeTrashItem
+    |> where([item], item.community_id == ^community.id)
+    |> where([item], item.branch_id == ^branch.id)
+    |> where([item], is_nil(item.restored_at))
+    |> order_by([item], asc: item.deleted_from_index, asc: item.id)
+    |> Repo.all()
+    |> Enum.filter(&(&1.node_snapshot["tabId"] == tab_node_id))
   end
 
   defp child_items(%Community{} = community, branch, group_node_id) do
@@ -185,7 +217,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
            Index.shift_sibling_indexes(
              community,
              branch,
-             attrs.group_id,
+             attrs.tab_id || attrs.group_id,
              attrs.type,
              attrs.index,
              nil
@@ -220,6 +252,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
          node_id: snapshot["id"] || item.node_id,
          stage: CMS.Const.stage(:draft),
          type: type,
+         tab_id: snapshot["tabId"],
          group_id: item.deleted_from_group_id || snapshot["groupId"],
          doc_id: item.doc_id || snapshot["docId"],
          title: snapshot["title"],
@@ -234,9 +267,15 @@ defmodule GroupherServer.CMS.DocTree.Trash do
     end
   end
 
-  defp validate_parent(_community, _branch, _item, type)
-       when type in [@tree_node_type_group, @tree_node_type_pin],
-       do: :ok
+  defp validate_parent(_community, _branch, _item, @tree_node_type_tab), do: :ok
+
+  defp validate_parent(%Community{} = community, branch, %DocTreeTrashItem{} = item, type)
+       when type in [@tree_node_type_group, @tree_node_type_pin] do
+    case draft_node_by_node_id(community, branch, item.node_snapshot["tabId"]) do
+      %DocTreeNode{type: @tree_node_type_tab} -> :ok
+      _ -> {:error, {:custom, "Restore the parent tab before restoring this item."}}
+    end
+  end
 
   defp validate_parent(%Community{} = community, branch, %DocTreeTrashItem{} = item, _type) do
     parent_id = item.deleted_from_group_id || item.node_snapshot["groupId"]

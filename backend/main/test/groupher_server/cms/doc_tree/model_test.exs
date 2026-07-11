@@ -83,6 +83,7 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
           node_id: "pin-1",
           stage: :draft,
           type: :pin,
+          tab_id: "tab-1",
           title: "GitHub",
           slug: "github",
           href: "https://github.com/groupher/groupher",

@@ -22,7 +22,8 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
 
   require CMS.Const
 
-  @tree_version 1
+  @tree_version 2
+  @tree_node_type_tab CMS.Const.tree_node_type(:tab)
   @tree_node_type_group CMS.Const.tree_node_type(:group)
   @tree_node_type_page CMS.Const.tree_node_type(:page)
   @tree_node_type_link CMS.Const.tree_node_type(:link)
@@ -125,24 +126,38 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
       |> Enum.filter(&(&1.group_id && &1.type in [@tree_node_type_page, @tree_node_type_link]))
       |> Enum.group_by(& &1.group_id)
 
-    pins =
-      nodes
-      |> Enum.filter(&(&1.type == @tree_node_type_pin))
-      |> Enum.map(&node_json/1)
-
     groups =
       nodes
       |> Enum.filter(&(&1.type == @tree_node_type_group and &1.node_id != @pin_node_id))
       |> Enum.map(fn group ->
         group
         |> node_json()
+        |> Map.put("tabId", group.tab_id)
         |> Map.put(
           "children",
           Enum.map(Map.get(children_by_group, group.node_id, []), &node_json/1)
         )
       end)
 
-    %{"version" => @tree_version, "pins" => pins, "groups" => groups}
+    groups_by_tab = Enum.group_by(groups, & &1["tabId"])
+
+    pins_by_tab =
+      nodes
+      |> Enum.filter(&(&1.type == @tree_node_type_pin))
+      |> Enum.map(fn pin -> pin |> node_json() |> Map.put("tabId", pin.tab_id) end)
+      |> Enum.group_by(& &1["tabId"])
+
+    tabs =
+      nodes
+      |> Enum.filter(&(&1.type == @tree_node_type_tab))
+      |> Enum.map(fn tab ->
+        tab
+        |> node_json()
+        |> Map.put("pins", Map.get(pins_by_tab, tab.node_id, []))
+        |> Map.put("groups", Map.get(groups_by_tab, tab.node_id, []))
+      end)
+
+    %{"version" => @tree_version, "tabs" => tabs}
   end
 
   defp article_ref_id(%DocTreeNode{stage: CMS.Const.stage(:draft)} = node),

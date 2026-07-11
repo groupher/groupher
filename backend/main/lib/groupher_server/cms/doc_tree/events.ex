@@ -266,11 +266,18 @@ defmodule GroupherServer.CMS.DocTree.Events do
           map()
   def move_event(
         %DocTreeNode{} = node,
-        before_group_id,
+        before_parent_id,
         before_index,
-        after_group_id,
+        after_parent_id,
         after_index
       ) do
+    {before_parent_key, after_parent_key, inverse_parent_key} =
+      if node.type in [:group, :pin] do
+        {"beforeTabId", "afterTabId", "targetTabId"}
+      else
+        {"beforeGroupId", "afterGroupId", "targetGroupId"}
+      end
+
     %{
       type: node_event_type(node, :move),
       payload: %{
@@ -278,14 +285,14 @@ defmodule GroupherServer.CMS.DocTree.Events do
         "nodeType" => to_string(node.type),
         "docId" => node.doc_id,
         "title" => node.title,
-        "beforeGroupId" => before_group_id,
-        "afterGroupId" => after_group_id,
+        before_parent_key => before_parent_id,
+        after_parent_key => after_parent_id,
         "beforeIndex" => before_index,
         "afterIndex" => after_index
       },
       inverse: %{
         "nodeId" => node.node_id,
-        "targetGroupId" => before_group_id,
+        inverse_parent_key => before_parent_id,
         "targetIndex" => before_index
       }
     }
@@ -678,6 +685,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
   defp node_payload(%DocTreeNode{} = node) do
     Snapshot.node_json(node)
     |> Map.merge(%{
+      "tabId" => node.tab_id,
       "groupId" => node.group_id,
       "index" => node.index
     })

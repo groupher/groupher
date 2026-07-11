@@ -26,6 +26,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
 
   @doc_tree_json_key_type CMS.Const.doc_tree_json_key(:type)
   @doc_tree_json_key_doc_id CMS.Const.doc_tree_json_key(:doc_id)
+  @tree_node_type_tab CMS.Const.tree_node_type(:tab)
   @tree_node_type_group CMS.Const.tree_node_type(:group)
   @tree_node_type_page CMS.Const.tree_node_type(:page)
   @tree_node_type_link CMS.Const.tree_node_type(:link)
@@ -34,6 +35,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
   @tree_node_type_page_key to_string(@tree_node_type_page)
   @tree_node_type_link_key to_string(@tree_node_type_link)
   @tree_node_type_pin_key to_string(@tree_node_type_pin)
+  @tree_node_type_tab_key to_string(@tree_node_type_tab)
 
   @event_public_fields %{
     "title" => :title,
@@ -47,6 +49,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
   }
 
   @event_node_types %{
+    @tree_node_type_tab_key => @tree_node_type_tab,
     @tree_node_type_group_key => @tree_node_type_group,
     @tree_node_type_page_key => @tree_node_type_page,
     @tree_node_type_link_key => @tree_node_type_link,
@@ -92,7 +95,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
        when type in [CMS.Const.tree_event(:node_create), CMS.Const.tree_event(:pin_add)] do
     node = event.payload["node"] || %{}
 
-    with {:ok, attrs} <- public_attrs_from_event_node(community, branch, node) do
+    with :ok <- ensure_public_tab_parent(community, branch, node),
+         {:ok, attrs} <- public_attrs_from_event_node(community, branch, node) do
       upsert_public_node_attrs(community, branch, node["id"], attrs)
     end
   end
@@ -116,10 +120,19 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
        when type in [CMS.Const.tree_event(:node_move), CMS.Const.tree_event(:pin_reorder)] do
     payload = event.payload
 
-    update_public_node_by_node_id(community, branch, payload["nodeId"], %{
-      group_id: payload["afterGroupId"],
-      index: payload["afterIndex"]
-    })
+    parent_patch =
+      if payload["nodeType"] in [@tree_node_type_group_key, @tree_node_type_pin_key] do
+        %{tab_id: payload["afterTabId"], group_id: nil}
+      else
+        %{tab_id: nil, group_id: payload["afterGroupId"]}
+      end
+
+    update_public_node_by_node_id(
+      community,
+      branch,
+      payload["nodeId"],
+      Map.put(parent_patch, :index, payload["afterIndex"])
+    )
   end
 
   defp apply_tree_event(%Community{} = community, branch, %DocTreeEvent{} = event) do
@@ -135,6 +148,51 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
       })
     end
   end
+
+  defp ensure_public_tab_parent(%Community{} = community, branch, %{
+         "type" => type,
+         "tabId" => tab_id
+       })
+       when type in [@tree_node_type_group_key, @tree_node_type_pin_key] and not is_nil(tab_id) do
+    case public_node_by_node_id(community, branch, tab_id) do
+      %DocTreeNode{} ->
+        :ok
+
+      nil ->
+        case DocTreeNode
+             |> where([n], n.community_id == ^community.id)
+             |> where([n], n.branch_id == ^branch.id)
+             |> where([n], n.stage == CMS.Const.stage(:draft))
+             |> where([n], n.type == @tree_node_type_tab)
+             |> where([n], n.node_id == ^tab_id)
+             |> Repo.one() do
+          %DocTreeNode{} = tab ->
+            tab
+            |> Map.take([
+              :community_id,
+              :branch_id,
+              :node_id,
+              :type,
+              :title,
+              :slug,
+              :index,
+              :hidden,
+              :ui_config
+            ])
+            |> Map.put(:stage, CMS.Const.stage(:public))
+            |> then(&ORM.create(DocTreeNode, &1))
+            |> case do
+              {:ok, _} -> :ok
+              error -> error
+            end
+
+          nil ->
+            {:error, {:custom, "Publish the parent tab first."}}
+        end
+    end
+  end
+
+  defp ensure_public_tab_parent(_community, _branch, _node), do: :ok
 
   defp public_attrs_from_event_node(
          %Community{} = community,
@@ -156,6 +214,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
          node_id: node["id"],
          stage: CMS.Const.stage(:public),
          type: @tree_node_type_page,
+         tab_id: nil,
          group_id: node["groupId"],
          doc_id: doc_id,
          title: node["title"],
@@ -182,6 +241,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
          node_id: node["id"],
          stage: CMS.Const.stage(:public),
          type: type,
+         tab_id: node["tabId"],
          group_id: node["groupId"],
          doc_id: nil,
          title: node["title"],
@@ -205,8 +265,16 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
 
   defp update_public_node_by_node_id(%Community{} = community, branch, node_id, attrs) do
     case public_node_by_node_id(community, branch, node_id) do
-      %DocTreeNode{} = node -> ORM.update(node, attrs)
-      nil -> {:ok, :missing}
+      %DocTreeNode{type: @tree_node_type_tab} = node ->
+        with :ok <- delete_public_tab_children(community, branch, node.node_id) do
+          ORM.delete(node)
+        end
+
+      %DocTreeNode{} = node ->
+        ORM.update(node, attrs)
+
+      nil ->
+        {:ok, :missing}
     end
   end
 
@@ -220,12 +288,41 @@ defmodule GroupherServer.CMS.DocTree.Publish.PublicProjection do
       %DocTreeNode{} = node ->
         ORM.delete(node)
 
+      nil when node_type == @tree_node_type_tab_key ->
+        delete_public_tab_children(community, branch, node_id)
+
       nil when node_type == @tree_node_type_group_key ->
         delete_public_group_children(community, branch, node_id)
 
       nil ->
         {:ok, :missing}
     end
+  end
+
+  defp delete_public_tab_children(%Community{} = community, branch, tab_id) do
+    nodes =
+      DocTreeNode
+      |> where([n], n.community_id == ^community.id)
+      |> where([n], n.branch_id == ^branch.id)
+      |> where([n], n.stage == CMS.Const.stage(:public))
+      |> where([n], n.tab_id == ^tab_id)
+      |> Repo.all()
+
+    Enum.reduce_while(nodes, :ok, fn
+      %DocTreeNode{type: @tree_node_type_group} = group, :ok ->
+        with :ok <- delete_public_group_children(community, branch, group.node_id),
+             {:ok, _} <- ORM.delete(group) do
+          {:cont, :ok}
+        else
+          error -> {:halt, error}
+        end
+
+      node, :ok ->
+        case ORM.delete(node) do
+          {:ok, _} -> {:cont, :ok}
+          error -> {:halt, error}
+        end
+    end)
   end
 
   defp delete_public_group_children(%Community{} = community, branch, group_id) do
