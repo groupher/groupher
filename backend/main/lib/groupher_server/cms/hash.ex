@@ -26,6 +26,30 @@ defmodule GroupherServer.CMS.Hash do
   end
 
   @doc """
+  Hashes the complete canonical version state stored by `ArticleSnapshot`.
+
+  Identity, branch, stage, counters, reactions, and other runtime fields are
+  intentionally excluded. Product-specific version fields arrive through
+  `data`, while the editor source is represented by `document_json`.
+  """
+  @spec article_version_hash(struct(), String.t(), map()) :: String.t()
+  def article_version_hash(article, document_json, data)
+      when is_struct(article) and is_binary(document_json) and is_map(data) do
+    version = %{
+      title: Map.get(article, :title),
+      digest: Map.get(article, :digest),
+      slug: Map.get(article, :slug),
+      subtitle: Map.get(article, :subtitle),
+      document_json: document_json,
+      data: data
+    }
+
+    @article_snapshot_content_algorithm
+    |> :crypto.hash(:erlang.term_to_binary(version))
+    |> Base.encode16(case: :lower)
+  end
+
+  @doc """
   Returns a stable hash for asset URL uniqueness inside a community.
 
   Community assets store this hash rather than depending on the raw URL for the

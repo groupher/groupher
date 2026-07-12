@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.PostReport do
         reason: "reason"
       }
 
-      article = user_conn |> gq_mutation(Schema.m(:report_article, :post), variables)
+      article = user_conn |> gq_mutation(S.Article.m(:report_article, :post), variables)
 
       assert article["innerId"] == to_string(post.inner_id)
     end
@@ -31,7 +31,7 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.PostReport do
         reason: "reason"
       }
 
-      article = user_conn |> gq_mutation(Schema.m(:report_article, :post), variables)
+      article = user_conn |> gq_mutation(S.Article.m(:report_article, :post), variables)
 
       assert article["innerId"] == to_string(post.inner_id)
 
@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.PostReport do
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
       }
 
-      article = user_conn |> gq_mutation(Schema.m(:undo_report_article, :post), variables)
+      article = user_conn |> gq_mutation(S.Article.m(:undo_report_article, :post), variables)
       assert article["innerId"] == to_string(post.inner_id)
     end
   end

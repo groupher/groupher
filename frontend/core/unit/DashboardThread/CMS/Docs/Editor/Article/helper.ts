@@ -1,6 +1,7 @@
 import type { TRichEditorValue } from '@groupher/rich-editor'
+import { equals } from 'ramda'
 
-import { DOC_STAGE } from '~/const/dsb/docs'
+import { ARTICLE_STAGE } from '~/const/article'
 
 import type { TSideTreePage } from '../SideTree/spec'
 import { EMPTY_EDITOR_VALUE } from './constant'
@@ -111,6 +112,7 @@ export const composeEmptyEditorDraft = (): TEditorDraft =>
   })
 
 export const composeSavedDraft = (draft: TEditorDraft): TSavedDraft => ({
+  bodyValue: draft.bodyValue,
   bodyJson: draft.bodyJson,
   docId: draft.docId,
   revisionSignature: draftSignature(draft),
@@ -122,7 +124,7 @@ export const composeEmptySavedDraft = (): TSavedDraft =>
   composeSavedDraft(composeEmptyEditorDraft())
 
 export const resolveDraftSource = (draft?: Pick<TDocDraftDTO, 'stage'> | null): TDocDraftSource =>
-  draft?.stage === DOC_STAGE.DRAFT ? 'draft' : 'public'
+  draft?.stage === ARTICLE_STAGE.DRAFT ? 'draft' : 'public'
 
 export const composeEditorDraftMeta = (
   source?: Partial<TEditorDraftMeta> | null,
@@ -140,7 +142,9 @@ export const isDraftDirty = (draft: TEditorDraft, savedDraft: TSavedDraft): bool
   return (
     draft.title !== savedDraft.title ||
     draft.subtitle !== savedDraft.subtitle ||
-    draft.bodyJson !== savedDraft.bodyJson
+    // Rich editors may reorder object keys while preserving the same AST.
+    // Compare structure so serialization details cannot create a false draft.
+    !equals(draft.bodyValue, savedDraft.bodyValue)
   )
 }
 
@@ -156,7 +160,7 @@ export const composeDraftPublishState = (publishState: TSideTreePage['publishSta
   ...(publishState ?? {}),
   hasDraft: true,
   published: publishState?.published ?? false,
-  status: DOC_STAGE.DRAFT,
+  status: ARTICLE_STAGE.DRAFT,
 })
 
 export const composeEditorDraftFromSession = (session: TDocDraftSession): TEditorDraft =>
@@ -209,7 +213,7 @@ export const composeDraftEditorStorePatch = ({
   savedDraft,
   saveStatus,
 }: TEditorDraftStorePatchInput) => ({
-  baselineValue: parseEditorValue(savedDraft.bodyJson),
+  baselineValue: savedDraft.bodyValue,
   bodyValue: draft.bodyValue,
   docDraftInfo: composeDocDraftInfo({ bodyStats, draft, meta, publishState }),
   saveError,

@@ -29,13 +29,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
   end
 
   describe "apply community" do
-    @check_community_pending_query """
-    query {
-      hasPendingCommunityApply {
-        exist
-      }
-    }
-    """
+    @check_community_pending_query S.Community.q(:has_pending_community_apply)
     test "can check if user has pending apply", ~m(user)a do
       user_conn = simu_conn(:user, user)
 
@@ -52,13 +46,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       assert check_state["exist"]
     end
 
-    @check_community_exist_query """
-    query($slug: String!) {
-      isCommunityExist(slug: $slug) {
-        exist
-      }
-    }
-    """
+    @check_community_exist_query S.Community.q(:is_community_exist)
     test "can check if a community is exist", ~m(user)a do
       rule_conn = simu_conn(:user, cms: %{"community.create" => true})
 
@@ -75,21 +63,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
   end
 
   describe "[cms communities]" do
-    @query """
-    query($slug: String!, $incViews: Boolean) {
-      community(slug: $slug, incViews: $incViews) {
-        slug
-        title
-        communityTagsCount
-        views
-        dashboard {
-          layout {
-            kanbanBoards
-          }
-        }
-      }
-    }
-    """
+    @query S.Community.q(:community)
     test "views should work", ~m(guest_conn user)a do
       community = create_community!(user)
 
@@ -156,27 +130,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       assert results["communityTagsCount"] == 2
     end
 
-    @query """
-    query($filter: CommunitiesFilter!) {
-      pagedCommunities(filter: $filter) {
-        entries {
-          slug
-          title
-          index
-          viewerHasSubscribed
-          categories {
-            id
-            title
-            slug
-          }
-        }
-        totalCount
-        totalPages
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @query S.Community.q(:paged_communities)
     test "user can get viewer has subscribed state", ~m(user)a do
       communities = create_communities!(5, user)
       {:ok, _record} = CMS.Communities.subscribe(communities |> List.first(), user)
@@ -252,28 +206,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
   end
 
   describe "[cms query categories]" do
-    @query """
-    query($filter: PagiFilter!) {
-      pagedCategories(filter: $filter) {
-        entries {
-          id
-          title
-          author {
-            login
-            nickname
-          }
-          communities {
-            slug
-            title
-          }
-        }
-        totalCount
-        totalPages
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @query S.Community.q(:paged_categories)
     test "guest user can get paged categories", ~m(guest_conn user)a do
       variables = %{filter: %{page: 1, size: 10}}
       valid_attrs = mock_attrs(:category)
@@ -306,53 +239,13 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
   end
 
   describe "[cms query community]" do
-    @query """
-    query($slug: String!) {
-      community(slug: $slug, title: $title) {
-        slug
-        title
-        desc
-      }
-    }
-    """
+    @query S.Community.q(:community_2)
     test "guest user can get community info without args fails", ~m(guest_conn)a do
       variables = %{}
       assert guest_conn |> query_error?(@query, variables)
     end
 
-    @query """
-    query($slug: String!) {
-      community(slug: $slug) {
-        slug
-        title
-        desc
-        dashboard {
-          seo {
-            ogTitle
-            ogDescription
-          }
-          layout {
-            postLayout
-            kanbanBgColors
-            topbarEnabled
-          }
-          baseInfo {
-            favicon
-          }
-
-          rss {
-            rssFeedType
-            rssFeedCount
-          }
-
-          nameAlias {
-            slug
-            name
-          }
-        }
-      }
-    }
-    """
+    @query S.Community.q(:community_3)
     test "user can get community info without args fails", ~m(guest_conn user)a do
       community_attrs = mock_attrs(:community)
 
@@ -401,14 +294,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
   end
 
   describe "[cms community moderators]" do
-    @query """
-    query($slug: String!) {
-      community(slug: $slug) {
-        slug
-        moderatorsCount
-      }
-    }
-    """
+    @query S.Community.q(:community_4)
     test "guest can get moderators count of a community", ~m(guest_conn community user)a do
       {:ok, users} = db_insert_multi(:user, assert_v(:inner_page_size))
       cur_user = user
@@ -423,19 +309,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       assert moderators_count == assert_v(:inner_page_size) + 1
     end
 
-    @query """
-    query($community: String!, $filter: PagiFilter!) {
-      pagedCommunityModerators(community: $community, filter: $filter) {
-        entries {
-          nickname
-        }
-        totalCount
-        totalPages
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @query S.Moderation.q(:paged_community_moderators)
     test "guest user can get paged moderators", ~m(guest_conn user community)a do
       {:ok, users} = db_insert_multi(:user, 25)
 
@@ -454,14 +328,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
   end
 
   describe "[cms community subscribe]" do
-    @query """
-    query($slug: String!) {
-      community(slug: $slug) {
-        slug
-        subscribersCount
-      }
-    }
-    """
+    @query S.Community.q(:community_5)
     test "guest can get subscribers count of a community", ~m(guest_conn community)a do
       {:ok, users} = db_insert_multi(:user, assert_v(:inner_page_size))
 
@@ -474,21 +341,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       assert subscribers_count == assert_v(:inner_page_size)
     end
 
-    @query """
-    query($community: String!, $filter: PagiFilter!) {
-      pagedCommunitySubscribers(community: $community, filter: $filter) {
-        entries {
-          login
-          nickname
-          avatar
-        }
-        totalCount
-        totalPages
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @query S.Community.q(:paged_community_subscribers)
     test "guest user can get paged subscribers by community slug", ~m(guest_conn community)a do
       {:ok, users} = db_insert_multi(:user, 25)
 
@@ -518,16 +371,7 @@ defmodule GroupherServer.Test.Query.CMS.Basic do
       assert results |> is_valid_pagination?
     end
 
-    @query """
-    query($url: String!) {
-      openGraphInfo(url: $url) {
-        title
-        favicon
-        url
-        siteName
-      }
-    }
-    """
+    @query S.Community.q(:open_graph_info)
     @tag :skip_ci
     test "can get open-graph info by url", ~m(user)a do
       user_conn = simu_conn(:user, user)

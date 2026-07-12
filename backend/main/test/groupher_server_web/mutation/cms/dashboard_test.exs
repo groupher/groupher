@@ -16,17 +16,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
   end
 
   describe "[mutation cms community]" do
-    @update_info_query """
-    mutation($community: String!, $homepage: String, $locale: String, $title: String, $slug: String, $desc: String, $introduction: String, $logo: String, $favicon: String, $city: String, $techstack: String) {
-      updateDashboardBaseInfo(community: $community, homepage: $homepage, locale: $locale, title: $title, slug: $slug, desc: $desc, introduction: $introduction, logo: $logo, favicon: $favicon, city: $city, techstack: $techstack) {
-        baseInfo {
-          title
-          locale
-          introduction
-        }
-      }
-    }
-    """
+    @update_info_query S.Dsb.m(:update_dashboard_base_info)
     test "update community dashboard base info", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
@@ -75,15 +65,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.base_info.techstack == "Javascript,Elixir"
     end
 
-    @update_seo_query """
-    mutation($community: String!, $ogTitle: String, $ogDescription: String, $seoEnable: Boolean) {
-      updateDashboardSeo(community: $community, ogTitle: $ogTitle, ogDescription: $ogDescription, seoEnable: $seoEnable) {
-        seo {
-          seoEnable
-        }
-      }
-    }
-    """
+    @update_seo_query S.Dsb.m(:update_dashboard_seo)
     test "update community dashboard seo info", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
       variables = %{community: community.slug, ogTitle: "new title", seoEnable: false}
@@ -98,38 +80,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.seo.seo_enable == false
     end
 
-    @update_wallpaper_query """
-    mutation (
-      $community: String!
-      $wallpaper: DsbWallpaperInput!
-      ) {
-      updateDashboardWallpaper(
-        community: $community
-        wallpaper: $wallpaper
-      ) {
-        wallpaper {
-          light {
-            type
-            source
-            gradient
-            pattern
-            contentShadow
-            effect
-            texture
-          }
-          dark {
-            type
-            source
-            gradient
-            pattern
-            contentShadow
-            effect
-            texture
-          }
-        }
-      }
-    }
-    """
+    @update_wallpaper_query S.Dsb.m(:update_dashboard_wallpaper)
     test "update community dashboard wallpaper", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
@@ -299,16 +250,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.wallpaper.light.texture["intensity"] == 68
     end
 
-    @update_enable_query """
-    mutation($community: String!, $post: Boolean, $changelog: Boolean) {
-      updateDashboardEnable(community: $community, post: $post, changelog: $changelog) {
-        enable {
-          post
-          changelog
-        }
-      }
-    }
-    """
+    @update_enable_query S.Dsb.m(:update_dashboard_enable)
     test "update community dashboard enable info", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
       variables = %{community: community.slug, post: false, changelog: true}
@@ -321,22 +263,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.enable.changelog == true
     end
 
-    @update_thread_emotions_query """
-    mutation($community: String!, $post: [EmotionType!], $postComment: [EmotionType!], $docComment: [EmotionType!]) {
-      updateDashboardThreadEmotions(
-        community: $community
-        post: $post
-        postComment: $postComment
-        docComment: $docComment
-      ) {
-        threadEmotions {
-          post
-          postComment
-          docComment
-        }
-      }
-    }
-    """
+    @update_thread_emotions_query S.Dsb.m(:update_dashboard_thread_emotions)
     test "update community dashboard thread emotion info", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
@@ -355,23 +282,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.thread_emotions.doc_comment == [:downvote, :confused]
     end
 
-    @update_layout_query """
-    mutation($community: String!, $postLayout: DsbPostLayout, $kanbanLayout: DsbKanbanLayout, $kanbanCardLayout: DsbKanbanCardLayout, $footerLayout: DsbFooterLayout, $topbarEnabled: Boolean, $broadcastEnable: Boolean, $kanbanBgColors: [RainbowColor], $kanbanBoards: [KanbanBoard], $tagLayout: DsbTagLayout, $inlineTagLayout: DsbInlineTagLayout, $brandLayout: DsbBrandLayout, $communityLayout: DsbCommunityLayout, $navActiveLayout: DsbNavActiveLayout, $overlayDark: Boolean) {
-      updateDashboardLayout(community: $community, postLayout: $postLayout, kanbanLayout: $kanbanLayout, kanbanCardLayout: $kanbanCardLayout, footerLayout: $footerLayout, topbarEnabled: $topbarEnabled, broadcastEnable: $broadcastEnable, kanbanBgColors: $kanbanBgColors, kanbanBoards: $kanbanBoards, tagLayout: $tagLayout, inlineTagLayout: $inlineTagLayout, brandLayout: $brandLayout, communityLayout: $communityLayout, navActiveLayout: $navActiveLayout, overlayDark: $overlayDark) {
-        layout {
-          kanbanBoards
-          footerLayout
-          topbarEnabled
-          tagLayout
-          inlineTagLayout
-          brandLayout
-          communityLayout
-          navActiveLayout
-          overlayDark
-        }
-      }
-    }
-    """
+    @update_layout_query S.Dsb.m(:update_dashboard_layout)
     test "update community dashboard layout info", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
@@ -473,16 +384,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert mutation_error?(rule_conn, @update_layout_query, variables)
     end
 
-    @update_seo_query """
-    mutation($community: String!, $rssFeedType: DsbRssFeedType, $rssFeedCount: Int) {
-      updateDashboardRss(community: $community, rssFeedType: $rssFeedType, rssFeedCount: $rssFeedCount) {
-        rss {
-          rssFeedType
-          rssFeedCount
-        }
-      }
-    }
-    """
+    @update_seo_query S.Dsb.m(:update_dashboard_rss)
     test "update community dashboard rss info", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
@@ -501,18 +403,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.rss.rss_feed_count == 22
     end
 
-    @update_alias_query """
-    mutation($community: String!, $nameAlias: [DsbAliasMap]) {
-      updateDashboardNameAlias(community: $community, nameAlias: $nameAlias) {
-        nameAlias {
-          slug
-          name
-          original
-          group
-        }
-      }
-    }
-    """
+    @update_alias_query S.Dsb.m(:update_dashboard_name_alias)
     test "update community dashboard name alias info", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
@@ -540,23 +431,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found_alias.group == "group"
     end
 
-    @update_header_links_query """
-    mutation($community: String!, $headerLinks: [DsbLinkMap]) {
-      updateDashboardHeaderLinks(community: $community, headerLinks: $headerLinks) {
-        headerLinks {
-          id
-          type
-          title
-          url
-          links {
-            id
-            title
-            url
-          }
-        }
-      }
-    }
-    """
+    @update_header_links_query S.Dsb.m(:update_dashboard_header_links)
     test "update community dashboard header links info", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
@@ -603,22 +478,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert group.links |> List.first() |> Map.get(:url) == "child-link"
     end
 
-    @update_footer_links_query """
-    mutation($community: String!, $footerLinks: [DsbLinkMap]) {
-      updateDashboardFooterLinks(community: $community, footerLinks: $footerLinks) {
-        footerLinks {
-          id
-          type
-          title
-          links {
-            id
-            title
-            url
-          }
-        }
-      }
-    }
-    """
+    @update_footer_links_query S.Dsb.m(:update_dashboard_footer_links)
     test "update community dashboard footer links info", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
@@ -677,24 +537,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.footer_links |> length() == 1
     end
 
-    @update_footer_oneline_links_query """
-    mutation($community: String!, $footerOnelineLinks: [DsbLinkChildMap]) {
-      updateDashboardFooterOnelineLinks(
-        community: $community,
-        footerOnelineLinks: $footerOnelineLinks
-      ) {
-        footerOnelineLinks {
-          id
-          title
-          url
-        }
-        footerLinks {
-          id
-          title
-        }
-      }
-    }
-    """
+    @update_footer_oneline_links_query S.Dsb.m(:update_dashboard_footer_oneline_links)
     test "update community dashboard footer oneline links independently", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
@@ -731,16 +574,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert found.dashboard.footer_links |> List.first() |> Map.get(:title) == "grouped"
     end
 
-    @update_social_links_query """
-    mutation($community: String!, $socialLinks: [DsbSocialLinkMap]) {
-      updateDashboardSocialLinks(community: $community, socialLinks: $socialLinks) {
-        socialLinks {
-          type
-          link
-        }
-      }
-    }
-    """
+    @update_social_links_query S.Dsb.m(:update_dashboard_social_links)
     test "update community dashboard social links info", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
@@ -766,16 +600,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert link.link == "link"
     end
 
-    @update_media_reports_query """
-    mutation($community: String!, $mediaReports: [DsbMediaReportMap]) {
-      updateDashboardMediaReports(community: $community, mediaReports: $mediaReports) {
-        mediaReports {
-          title
-          url
-        }
-      }
-    }
-    """
+    @update_media_reports_query S.Dsb.m(:update_dashboard_media_reports)
     test "update community dashboard media reports info", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
@@ -802,34 +627,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
       assert link.url == "url"
     end
 
-    @update_doc_faq_query """
-    mutation($community: String!, $docFaq: DsbDocFaqInput!) {
-      updateDashboardDocFaq(community: $community, docFaq: $docFaq) {
-        docFaq {
-          title
-          desc
-          groupedView
-          groupItems {
-            id
-            title
-            index
-            items {
-              id
-              title
-              detail
-              index
-            }
-          }
-          flatItems {
-            id
-            title
-            detail
-            index
-          }
-        }
-      }
-    }
-    """
+    @update_doc_faq_query S.Dsb.m(:update_dashboard_doc_faq)
     test "update community dashboard docs FAQ info", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 

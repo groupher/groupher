@@ -19,24 +19,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.BlogTagCRUD do
   end
 
   describe "[mutation cms tag]" do
-    @create_tag_query """
-    mutation($thread: Thread!, $title: String!, $slug: String!, $color: RainbowColor!, $groupId: ID!, $community: String!, $extra: [String] ) {
-      createCommunityTag(thread: $thread, title: $title, slug: $slug, color: $color, groupId: $groupId, community: $community, extra: $extra) {
-        id
-        title
-        color
-        thread
-        group
-        groupId
-        extra
-        community {
-          slug
-          logo
-          title
-        }
-      }
-    }
-    """
+    @create_tag_query S.CommunityTag.m(:create_community_tag)
     test "create tag with valid attrs, has default BLOG thread and default blogs",
          ~m(community)a do
       {:ok, group} = CMS.Communities.create_tag_group(community, :blog, %{title: "awesome"})
@@ -109,23 +92,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.BlogTagCRUD do
       assert rule_conn |> mutation_error?(@create_tag_query, variables, ecode(:passport))
     end
 
-    @update_tag_query """
-    mutation($id: ID!, $color: RainbowColor, $title: String, $slug: String, $community: String!, $thread: Thread, $extra: [String], $marker: MarkerInput) {
-      updateCommunityTag(id: $id, color: $color, title: $title, slug: $slug, community: $community, thread: $thread, extra: $extra, marker: $marker) {
-        id
-        title
-        color
-        extra
-        marker {
-          type
-          provider
-          name
-          src
-          unified
-        }
-      }
-    }
-    """
+    @update_tag_query S.CommunityTag.m(:update_community_tag)
     test "auth user can update a tag", ~m(community_tag_attrs community user)a do
       {:ok, community_tag} =
         CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)
@@ -159,13 +126,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.BlogTagCRUD do
              }
     end
 
-    @delete_tag_query """
-    mutation($id: ID!, $community: String!, $thread: Thread){
-      deleteCommunityTag(id: $id, community: $community, thread: $thread) {
-        id
-      }
-    }
-    """
+    @delete_tag_query S.CommunityTag.m(:delete_community_tag)
     test "auth user can delete tag", ~m(community_tag_attrs community user)a do
       {:ok, community_tag} =
         CMS.Communities.create_tag(community, :blog, community_tag_attrs, user)

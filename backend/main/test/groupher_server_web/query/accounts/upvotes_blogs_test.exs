@@ -15,18 +15,7 @@ defmodule GroupherServer.Test.Query.Accounts.UpvotesBlogs do
   end
 
   describe "[accounts upvotes blogs]" do
-    @query """
-    query($login: String!, $filter: UpvotedArticlesFilter!) {
-      pagedUpvotedArticles(login: $login, filter: $filter) {
-        entries {
-          innerId
-          title
-          thread
-        }
-        totalCount
-      }
-    }
-    """
+    @query S.Social.q(:paged_upvoted_articles)
     test "both login and un-login user can get one's paged upvoted blogs",
          ~m(user_conn guest_conn blogs)a do
       {:ok, user} = db_insert(:user)

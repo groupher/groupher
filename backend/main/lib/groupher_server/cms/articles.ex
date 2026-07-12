@@ -1,6 +1,23 @@
 defmodule GroupherServer.CMS.Articles do
   @moduledoc """
-  CMS articles facade.
+  Public CMS facade for product Articles and the shared version lifecycle.
+
+      Post / Blog / Changelog / Doc
+                    |
+                    v
+      article_hash_id + ArticleBranch
+                    |
+          +---------+----------+
+          |                    |
+          v                    v
+      mutable Draft       immutable Snapshot
+          |                    |
+          +--> Publish         +--> Diff / Restore / TimeMachine
+          |
+          +--> Preview fork/promote
+
+  Docs-specific Tree and `DocPublishRelease` composition stays outside this
+  facade; Docs wrappers translate product `doc_id` language only at the edge.
   """
 
   alias Helper.T
@@ -16,6 +33,8 @@ defmodule GroupherServer.CMS.Articles do
     Draft,
     List,
     Moderation,
+    Preview,
+    Publish,
     Reactions,
     Read,
     Snapshot,
@@ -59,73 +78,171 @@ defmodule GroupherServer.CMS.Articles do
 
   # Write
 
+  @doc "Creates and immediately publishes an Article through the shared lifecycle."
   @spec create(Community.t(), T.thread(), map(), User.t()) :: T.domain_res(T.article())
   def create(%Community{} = community, thread, attrs, %User{} = user) do
-    Write.create(community, thread, attrs, user)
+    Publish.create(community, thread, attrs, user)
   end
 
   @spec update(T.article(), map()) :: T.domain_res(T.article())
-  def update(article, attrs), do: Write.update(article, attrs)
+  def update(article, attrs), do: Publish.update(article, attrs)
 
-  # Snapshot
+  @doc "Updates and immediately republishes an Article through the shared lifecycle."
+  @spec update(T.article(), map(), User.t()) :: T.domain_res(T.article())
+  def update(article, attrs, %User{} = user), do: Publish.update(article, attrs, user)
 
-  @spec read_doc_draft(Community.t(), String.t(), keyword() | map()) ::
-          T.domain_res(CMS.Model.Doc.t())
-  def read_doc_draft(%Community{} = community, doc_id, opts \\ []) do
-    Draft.read(community, doc_id, opts)
+  # Shared Draft / Snapshot lifecycle
+
+  @doc "Creates a branch-local draft for any Article thread."
+  @spec create_draft(Community.t(), T.thread(), map(), User.t()) :: T.domain_res(T.article())
+  def create_draft(%Community{} = community, thread, attrs, %User{} = user) do
+    Draft.create(community, thread, attrs, user)
   end
 
-  @spec read_doc_editor(Community.t(), String.t(), keyword() | map()) ::
-          T.domain_res(CMS.Model.Doc.t())
-  def read_doc_editor(%Community{} = community, doc_id, opts \\ []) do
-    Draft.read_editor(community, doc_id, opts)
+  @doc "Reads a branch-local draft for any Article thread."
+  @spec read_draft(Community.t(), T.thread(), Ecto.UUID.t(), keyword() | map()) ::
+          T.domain_res(T.article())
+  def read_draft(%Community{} = community, thread, article_hash_id, opts \\ []) do
+    Draft.read(community, thread, article_hash_id, opts)
   end
 
-  @spec list_doc_draft_snapshots(Community.t(), String.t(), keyword()) ::
+  @doc "Reads the official main/public Article head by stable logical identity."
+  @spec read_public(Community.t(), T.thread(), Ecto.UUID.t(), keyword() | map()) ::
+          T.domain_res(T.article())
+  def read_public(%Community{} = community, thread, article_hash_id, opts \\ []) do
+    Draft.read_public(community, thread, article_hash_id, opts)
+  end
+
+  @doc "Reads the editor head, with main-draft to main-public fallback."
+  @spec read_editor(Community.t(), T.thread(), Ecto.UUID.t(), keyword() | map()) ::
+          T.domain_res(T.article())
+  def read_editor(%Community{} = community, thread, article_hash_id, opts \\ []) do
+    Draft.read_editor(community, thread, article_hash_id, opts)
+  end
+
+  @doc "Creates the editable Draft from main/public when needed, then applies an update."
+  @spec update_draft(Community.t(), T.thread(), Ecto.UUID.t(), map(), User.t()) ::
+          T.domain_res(T.article())
+  def update_draft(community, thread, article_hash_id, attrs, %User{} = user) do
+    Draft.update_or_create_from_public(community, thread, article_hash_id, attrs, user)
+  end
+
+  @doc "Lists one Article's branch-local immutable revision history."
+  @spec list_snapshots(Community.t(), T.thread(), Ecto.UUID.t(), keyword() | map()) ::
           T.domain_res([CMS.Model.ArticleSnapshot.t()])
-  def list_doc_draft_snapshots(%Community{} = community, doc_id, opts \\ []) do
-    Snapshot.list_doc_draft(community, doc_id, opts)
+  def list_snapshots(%Community{} = community, thread, article_hash_id, opts \\ []) do
+    Snapshot.list(community, thread, article_hash_id, opts)
   end
 
-  @spec get_doc_draft_snapshot(Community.t(), String.t(), T.id(), keyword() | map()) ::
-          T.domain_res(CMS.Model.ArticleSnapshot.t())
-  def get_doc_draft_snapshot(%Community{} = community, doc_id, snapshot_id, opts \\ []) do
-    Snapshot.get_doc_draft_snapshot(community, doc_id, snapshot_id, opts)
-  end
-
-  @spec checkpoint_doc_draft_snapshot(Community.t(), String.t(), User.t() | nil, keyword()) ::
-          T.domain_res(CMS.Model.ArticleSnapshot.t())
-  def checkpoint_doc_draft_snapshot(
-        %Community{} = community,
-        doc_id,
-        user \\ nil,
-        opts \\ []
-      ) do
-    Snapshot.checkpoint_doc_draft(community, doc_id, user, opts)
-  end
-
-  @spec restore_doc_draft_snapshot(
+  @doc "Fetches one immutable Article Snapshot."
+  @spec get_snapshot(
           Community.t(),
-          String.t(),
-          T.id(),
-          User.t() | nil,
+          T.thread(),
+          Ecto.UUID.t(),
+          Ecto.UUID.t(),
           keyword() | map()
         ) ::
-          T.domain_res(CMS.Model.Doc.t())
-  def restore_doc_draft_snapshot(
+          T.domain_res(CMS.Model.ArticleSnapshot.t())
+  def get_snapshot(
         %Community{} = community,
-        doc_id,
-        snapshot_id,
+        thread,
+        article_hash_id,
+        snapshot_hash_id,
+        opts \\ []
+      ) do
+    Snapshot.get(community, thread, article_hash_id, snapshot_hash_id, opts)
+  end
+
+  @doc "Creates a deduplicated checkpoint of one Article draft."
+  @spec checkpoint_draft(
+          Community.t(),
+          T.thread(),
+          Ecto.UUID.t(),
+          User.t() | nil,
+          keyword() | map()
+        ) :: T.domain_res(CMS.Model.ArticleSnapshot.t())
+  def checkpoint_draft(community, thread, article_hash_id, user \\ nil, opts \\ []) do
+    Snapshot.checkpoint(community, thread, article_hash_id, user, opts)
+  end
+
+  @doc "Restores one Snapshot into a target branch draft without deleting history."
+  @spec restore_snapshot(
+          Community.t(),
+          T.thread(),
+          Ecto.UUID.t(),
+          Ecto.UUID.t(),
+          User.t() | nil,
+          keyword() | map()
+        ) :: T.domain_res(T.article())
+  def restore_snapshot(
+        community,
+        thread,
+        article_hash_id,
+        snapshot_hash_id,
         user \\ nil,
         opts \\ []
       ) do
-    Snapshot.restore_doc_draft(community, doc_id, snapshot_id, user, opts)
+    Snapshot.restore(community, thread, article_hash_id, snapshot_hash_id, user, opts)
   end
 
-  @spec publish_doc_draft(Community.t(), String.t(), User.t(), keyword() | map()) ::
-          T.domain_res(CMS.Model.ArticleSnapshot.t())
-  def publish_doc_draft(%Community{} = community, doc_id, %User{} = user, opts \\ []) do
-    Snapshot.publish_doc_draft(community, doc_id, user, opts)
+  @doc "Publishes one main Draft and returns its public Article and immutable Snapshot."
+  @spec publish_draft(Community.t(), T.thread(), Ecto.UUID.t(), User.t(), keyword() | map()) ::
+          T.domain_res(%{
+            article: T.article(),
+            snapshot: CMS.Model.ArticleSnapshot.t()
+          })
+  def publish_draft(community, thread, article_hash_id, %User{} = user, opts \\ []) do
+    Publish.publish(community, thread, article_hash_id, user, opts)
+  end
+
+  @doc "Computes an ephemeral Diff between two immutable Article Snapshots."
+  def diff_snapshots(left, right), do: __MODULE__.Diff.compare(left, right)
+
+  @doc "Computes an ephemeral Diff from a current Article row to a Snapshot."
+  def diff_current(article, snapshot), do: __MODULE__.Diff.compare_current(article, snapshot)
+
+  @doc "Forks one main/public Article into a new isolated Preview branch."
+  def fork_preview(community, thread, article_hash_id, attrs, %User{} = user) do
+    Preview.fork(community, thread, article_hash_id, attrs, user)
+  end
+
+  @doc "Promotes one Preview draft into main/draft without publishing it."
+  def promote_preview(community, thread, article_hash_id, preview_ref, %User{} = user) do
+    Preview.promote(community, thread, article_hash_id, preview_ref, user)
+  end
+
+  # Docs product language stays at the facade boundary.
+
+  @doc "Reads a Docs editor head by product-level `doc_id`."
+  def read_doc_editor(community, doc_id, opts \\ []) do
+    read_editor(community, :doc, doc_id, opts)
+  end
+
+  @doc "Lists Docs revisions by product-level `doc_id`."
+  def list_doc_draft_snapshots(community, doc_id, opts \\ []) do
+    list_snapshots(community, :doc, doc_id, opts)
+  end
+
+  @doc "Fetches one Docs revision by product-level `doc_id`."
+  def get_doc_draft_snapshot(community, doc_id, snapshot_id, opts \\ []) do
+    get_snapshot(community, :doc, doc_id, snapshot_id, opts)
+  end
+
+  @doc "Creates a Docs draft checkpoint by product-level `doc_id`."
+  def checkpoint_doc_draft_snapshot(community, doc_id, user \\ nil, opts \\ []) do
+    checkpoint_draft(community, :doc, doc_id, user, opts)
+  end
+
+  @doc "Restores a Docs revision into the target Docs draft."
+  def restore_doc_draft_snapshot(community, doc_id, snapshot_id, user \\ nil, opts \\ []) do
+    restore_snapshot(community, :doc, doc_id, snapshot_id, user, opts)
+  end
+
+  @doc "Publishes one Docs draft by product-level `doc_id`."
+  def publish_doc_draft(community, doc_id, %User{} = user, opts \\ []) do
+    with {:ok, %{snapshot: snapshot}} <- publish_draft(community, :doc, doc_id, user, opts) do
+      {:ok, snapshot}
+    end
   end
 
   # Lifecycle

@@ -13,6 +13,7 @@ const docPublicTreeMarkerFields = gql`
 const docPublicTreeNodeFields = gql`
   fragment docPublicTreeNodeFields on DocPublicTreeNode {
     id
+    tabId
     groupId
     docId
     type
@@ -30,10 +31,16 @@ const docPublicTreeNodeFields = gql`
 const docPublicTree = gql`
   query docPublicTree($community: String!) {
     docPublicTree(community: $community) {
-      groups {
+      tabs {
         ...docPublicTreeNodeFields
-        children {
+        pins {
           ...docPublicTreeNodeFields
+        }
+        groups {
+          ...docPublicTreeNodeFields
+          children {
+            ...docPublicTreeNodeFields
+          }
         }
       }
     }

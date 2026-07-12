@@ -31,7 +31,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
         targetCommunity: community2.slug
       }
 
-      rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
+      rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
       {:ok, found} = ORM.find(Post, post.id, preload: :communities)
 
       assoc_communities = found.communities |> Enum.map(& &1.id)
@@ -48,13 +48,13 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
-             |> mutation_error?(Schema.m(:mirror_article), variables, ecode(:passport))
+             |> mutation_error?(S.Article.m(:mirror_article), variables, ecode(:passport))
 
       assert guest_conn
-             |> mutation_error?(Schema.m(:mirror_article), variables, ecode(:account_login))
+             |> mutation_error?(S.Article.m(:mirror_article), variables, ecode(:account_login))
 
       assert rule_conn
-             |> mutation_error?(Schema.m(:mirror_article), variables, ecode(:passport))
+             |> mutation_error?(S.Article.m(:mirror_article), variables, ecode(:passport))
     end
 
     test "auth user can mirror multi post to other communities",
@@ -67,14 +67,14 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
         targetCommunity: community2.slug
       }
 
-      rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
+      rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
 
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
         targetCommunity: community3.slug
       }
 
-      rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
+      rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
 
       {:ok, found} = ORM.find(Post, post.id, preload: :communities)
 
@@ -98,14 +98,14 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
         targetCommunity: community2.slug
       }
 
-      rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
+      rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
 
       variables2 = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
         targetCommunity: community3.slug
       }
 
-      rule_conn |> gq_mutation(Schema.m(:mirror_article), variables2)
+      rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables2)
 
       {:ok, found} = ORM.find(Post, post.id, preload: :communities)
 
@@ -116,7 +116,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       passport_rules = %{"post.community.unmirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      rule_conn |> gq_mutation(Schema.m(:unmirror_article), variables)
+      rule_conn |> gq_mutation(S.Article.m(:unmirror_article), variables)
       {:ok, found} = ORM.find(Post, post.id, preload: :communities)
       assoc_communities = found.communities |> Enum.map(& &1.id)
       assert community2.id not in assoc_communities
@@ -133,7 +133,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       passport_rules = %{"homemirror" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      rule_conn |> gq_mutation(Schema.m(:mirror_to_home), variables)
+      rule_conn |> gq_mutation(S.Article.m(:mirror_to_home), variables)
 
       {:ok, post} = ORM.find(Post, post.id, preload: [:communities, :community_tags])
 
@@ -148,7 +148,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       passport_rules = %{"blackeye" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      rule_conn |> gq_mutation(Schema.m(:move_to_blackhole), variables)
+      rule_conn |> gq_mutation(S.Article.m(:move_to_blackhole), variables)
       {:ok, post} = ORM.find(Post, post.id, preload: [:community, :communities, :community_tags])
       assert post.community.id == blackhole.id
     end
@@ -162,7 +162,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
         targetCommunity: community2.slug
       }
 
-      rule_conn |> gq_mutation(Schema.m(:mirror_article), variables)
+      rule_conn |> gq_mutation(S.Article.m(:mirror_article), variables)
       {:ok, found} = ORM.find(Post, post.id, preload: [:community, :communities])
       assoc_communities = found.communities |> Enum.map(& &1.id)
       assert community.id in assoc_communities
@@ -182,7 +182,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
         communityTags: [article_tag.id]
       }
 
-      rule_conn |> gq_mutation(Schema.m(:move_article), variables)
+      rule_conn |> gq_mutation(S.Article.m(:move_article), variables)
 
       {:ok, found} = ORM.find(Post, post.id, preload: [:community, :communities, :community_tags])
 
@@ -209,7 +209,7 @@ defmodule GroupherServer.Test.Mutation.ArticleCommunity.Post do
       }
 
       assert rule_conn
-             |> mutation_error?(Schema.m(:mirror_article), variables)
+             |> mutation_error?(S.Article.m(:mirror_article), variables)
     end
   end
 end

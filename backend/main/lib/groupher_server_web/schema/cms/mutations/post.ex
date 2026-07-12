@@ -14,7 +14,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
       arg(:link_addr, :string)
       arg(:copy_right, :string)
       arg(:community, non_null(:string))
-      arg(:thread, :thread, default_value: :post)
       arg(:community_tags, list_of(:id))
       article_cover_args()
       article_asset_args()
@@ -22,8 +21,24 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
       middleware(M.Authorize, :login)
       middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.create_article/3)
+      resolve(&R.CMS.create_post/3)
       middleware(M.Statistics.MakeContribute, for: [:user, :community])
+    end
+
+    @desc "save a new post as a draft"
+    field :create_post_draft, :article_draft do
+      arg(:title, non_null(:string))
+      arg(:body, non_null(:string))
+      arg(:link_addr, :string)
+      arg(:copy_right, :string)
+      arg(:community, non_null(:string))
+      arg(:community_tags, list_of(:id))
+      article_cover_args()
+      article_asset_args()
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.create_post_draft/3)
     end
 
     @desc "update a cms/post"
@@ -43,6 +58,40 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
       middleware(M.FrontDesk, {:article, thread: :post})
 
       resolve(&R.CMS.update_article/3)
+    end
+
+    @desc "save changes to a post draft without publishing"
+    field :update_post_draft, :article_draft do
+      arg(:community, non_null(:string))
+      arg(:id, non_null(:id))
+      arg(:title, :string)
+      arg(:body, :string)
+      arg(:digest, :string)
+      arg(:copy_right, :string)
+      arg(:link_addr, :string)
+      arg(:community_tags, list_of(:id))
+      article_cover_args()
+      article_asset_args()
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      middleware(M.FrontDesk, {:article_editor, thread: :post})
+      middleware(M.Passport, action: "post.draft.update")
+      resolve(&R.CMS.update_post_draft/3)
+    end
+
+    @desc "publish an existing post draft"
+    field :publish_post_draft, :post do
+      arg(:community, non_null(:string))
+      arg(:id, non_null(:id))
+
+      middleware(M.Authorize, :login)
+      middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
+      middleware(M.FrontDesk, :community)
+      middleware(M.FrontDesk, {:article_editor, thread: :post})
+      middleware(M.Passport, action: "post.draft.publish")
+      resolve(&R.CMS.publish_post_draft/3)
+      middleware(M.Statistics.MakeContribute, for: [:user, :community])
     end
 
     @desc "set cat for a post"

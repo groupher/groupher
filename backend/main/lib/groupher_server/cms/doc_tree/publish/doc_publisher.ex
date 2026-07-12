@@ -29,6 +29,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
 
   require CMS.Const
 
+  @tree_node_type_tab CMS.Const.tree_node_type(:tab)
   @tree_node_type_group CMS.Const.tree_node_type(:group)
   @tree_node_type_page CMS.Const.tree_node_type(:page)
 
@@ -41,8 +42,10 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
       ) do
     with {:ok, page} <- find_publish_page(community, branch, doc_id, page_node_id),
          {:ok, group} <- find_publish_group(community, branch, page.group_id, page.stage),
+         {:ok, tab} <- find_publish_tab(community, branch, group.tab_id, group.stage),
          {:ok, snapshot} <-
            CMS.Articles.publish_doc_draft(community, doc_id, user, branch_id: branch.id),
+         {:ok, _public_tab} <- upsert_public_node(community, branch, tab),
          {:ok, public_group} <- upsert_public_node(community, branch, group),
          {:ok, public_page} <-
            upsert_public_node(
@@ -50,11 +53,15 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
              branch,
              page,
              public_group.node_id,
-             snapshot.doc_id
+             snapshot.article_hash_id
            ),
          {:ok, _sync} <- maybe_sync_cover(community, public_group, public_page, sync_cover?) do
       Events.mark_doc_bound_published(community, doc_id, branch_id: branch.id)
-      Events.mark_tree_create_published(community, [group.node_id], branch_id: branch.id)
+
+      Events.mark_tree_create_published(community, [tab.node_id, group.node_id],
+        branch_id: branch.id
+      )
+
       {:ok, snapshot}
     end
   end
@@ -68,12 +75,12 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
            ORM.find_by(Doc,
              community_id: community.id,
              branch_id: branch.id,
-             doc_id: draft_node.doc_id,
+             article_hash_id: draft_node.doc_id,
              stage: CMS.Const.stage(:public)
            ),
          {:ok, document} <-
            ORM.find_by(ArticleDocument, article_id: public_doc.id, thread: :doc) do
-      case Draft.read(community, public_doc.doc_id, branch_id: branch.id) do
+      case Draft.read(community, :doc, public_doc.article_hash_id, branch_id: branch.id) do
         {:ok, draft} ->
           {:ok, draft}
 
@@ -83,7 +90,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
             :doc,
             %{
               branch_id: branch.id,
-              doc_id: public_doc.doc_id,
+              article_hash_id: public_doc.article_hash_id,
               title: public_doc.title,
               slug: public_doc.slug,
               body: document.json
@@ -171,6 +178,20 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
     end
   end
 
+  defp find_publish_tab(%Community{} = community, branch, tab_id, stage) do
+    DocTreeNode
+    |> where([n], n.community_id == ^community.id)
+    |> where([n], n.branch_id == ^branch.id)
+    |> where([n], n.stage == ^stage)
+    |> where([n], n.type == @tree_node_type_tab)
+    |> where([n], n.node_id == ^to_string(tab_id))
+    |> Repo.one()
+    |> case do
+      %DocTreeNode{} = node -> {:ok, node}
+      nil -> {:error, {:custom, "docs page tab does not exist"}}
+    end
+  end
+
   defp upsert_public_node(
          %Community{} = community,
          branch,
@@ -205,6 +226,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
       :branch_id,
       :node_id,
       :type,
+      :tab_id,
       :title,
       :slug,
       :index,

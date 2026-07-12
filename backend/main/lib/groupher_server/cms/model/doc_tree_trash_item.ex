@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.Model.DocTreeTrashItem do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.{Community, DocsBranch}
+  alias CMS.Model.{Community, ArticleBranch}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Model.DocTreeTrashItem do
 
   schema "doc_tree_trash_items" do
     belongs_to(:community, Community)
-    belongs_to(:branch, DocsBranch)
+    belongs_to(:branch, ArticleBranch)
     field(:doc_id, Ecto.UUID)
     belongs_to(:deleted_by, User)
 

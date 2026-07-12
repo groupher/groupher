@@ -109,7 +109,8 @@ const LinkEditor: FC<TLinkEditorProps> = ({
                 top={2}
                 bottom={2}
                 isTouched
-                minimal
+                density='compact'
+                view='bottom'
               />
             ) : (
               <CancelButton onClick={cancelLinkEditing} top={2} />

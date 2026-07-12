@@ -29,6 +29,14 @@ jobs:
           corepack enable
           yarn install --immutable
 
+      - name: Restore Turbopack build cache
+        uses: actions/cache@v4
+        with:
+          path: frontend/dashboard/.next/cache
+          key: ${{ runner.os }}-next-dashboard-${{ hashFiles('yarn.lock', 'frontend/core/**', 'frontend/dashboard/**') }}
+          restore-keys: |
+            ${{ runner.os }}-next-dashboard-
+
       - name: Start mock GraphQL
         run: |
           yarn mock:server &

@@ -17,13 +17,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.Mailbox do
   end
 
   describe "[mark_read/all]" do
-    @query """
-    mutation($type: MailboxType, $ids: [ID]) {
-      markRead(ids: $ids, type: $type) {
-        done
-      }
-    }
-    """
+    @query S.Mailbox.m(:mark_read)
     test "can mark read a mention", ~m(user_conn user user2)a do
       {:ok, _} = mock_mention_for(user, user2)
 
@@ -47,19 +41,15 @@ defmodule GroupherServer.Test.Mutation.Accounts.Mailbox do
       variables = %{ids: [notify.id], type: "NOTIFICATION"}
       user_conn |> gq_mutation(@query, variables)
 
-      {:ok, notifications} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10, read: true})
+      {:ok, notifications} =
+        Messaging.paged_messages(:notification, user, %{page: 1, size: 10, read: true})
+
       notify = notifications.entries |> List.first()
 
       assert notify.read
     end
 
-    @query """
-    mutation($type: MailboxType) {
-      markReadAll(type: $type) {
-        done
-      }
-    }
-    """
+    @query S.Mailbox.m(:mark_read_all)
     test "can mark read all mentions", ~m(user_conn user user2 user3)a do
       {:ok, _} = mock_mention_for(user, user2)
       {:ok, _} = mock_mention_for(user, user3)
@@ -83,7 +73,9 @@ defmodule GroupherServer.Test.Mutation.Accounts.Mailbox do
       variables = %{type: "NOTIFICATION"}
       user_conn |> gq_mutation(@query, variables)
 
-      {:ok, notifications} = Messaging.paged_messages(:notification, user, %{page: 1, size: 10, read: true})
+      {:ok, notifications} =
+        Messaging.paged_messages(:notification, user, %{page: 1, size: 10, read: true})
+
       assert notifications.total_count == 1
     end
   end

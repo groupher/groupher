@@ -1,6 +1,6 @@
 import type { TRichEditorValue } from '@groupher/rich-editor'
 
-import type { TDocStage } from '~/const/dsb/docs'
+import type { TArticleStage } from '~/const/article'
 
 import type { TDocTreeNodePublishState } from '../SideTree/spec'
 import type { TDocDraftInfo } from '../store/spec'
@@ -11,7 +11,7 @@ export type TDocDraftDTO = {
   title?: string | null
   subtitle?: string | null
   slug?: string | null
-  stage?: TDocStage | null
+  stage?: TArticleStage | null
   digest?: string | null
   insertedAt?: string | null
   updatedAt?: string | null
@@ -40,6 +40,7 @@ export type TSavedDraft = {
   docId: string
   title: string
   subtitle: string
+  bodyValue: TRichEditorValue
   bodyJson: string
   revisionSignature: string
 }
@@ -47,7 +48,7 @@ export type TSavedDraft = {
 export type TDocDraftSource = 'draft' | 'public'
 
 export type TEditorDraftMeta = {
-  stage?: TDocStage | null
+  stage?: TArticleStage | null
   insertedAt: string | null
   updatedAt: string | null
   author: TDocDraftInfo['author']

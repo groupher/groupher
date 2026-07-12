@@ -12,6 +12,7 @@ type TProps = {
   hideTitle?: boolean
   withDivider?: boolean
   crumbItems?: TBreadcrumbItem[]
+  breadcrumbAddon?: ReactNode
   addon?: ReactNode
   testid?: string
 } & TSpace
@@ -24,16 +25,29 @@ const Portal: FC<TProps> = ({
   hideTitle = false,
   withDivider = true,
   crumbItems = DEFAULT_CRUMB_ITEMS,
+  breadcrumbAddon = null,
   addon = null,
   testid = '',
   ...spacing
 }) => {
   const s = useSalon({ ...spacing })
   const { submenuCollapsed } = useDashboardStore()
+  const showBreadcrumbs = !submenuCollapsed && crumbItems.length > 0
 
   return (
     <div className={s.wrapper}>
-      {!submenuCollapsed && crumbItems?.length ? <Breadcrumbs items={crumbItems} /> : null}
+      {(showBreadcrumbs || breadcrumbAddon) && (
+        <div className={s.breadcrumbRow}>
+          {showBreadcrumbs ? (
+            <div className={s.breadcrumbs}>
+              <Breadcrumbs items={crumbItems} bottom={0} />
+            </div>
+          ) : (
+            <span />
+          )}
+          {breadcrumbAddon}
+        </div>
+      )}
 
       {!hideTitle && (
         <div className={s.header}>

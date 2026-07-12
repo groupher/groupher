@@ -4,12 +4,11 @@ import useTrans from '~/hooks/useTrans'
 import DatabaseArrowUpSVG from '~/icons/DatabaseArrowUp'
 import FolderPlusSVG from '~/icons/FolderPlus'
 import InfoSVG from '~/icons/Info'
-import TabsAddSVG from '~/icons/TabsAdd'
 import type { TTransKey } from '~/spec'
 
 import useSalon from './salon/workspace_actions'
 
-type TActionKey = 'status' | 'addTab' | 'addGroup' | 'importContent'
+type TActionKey = 'status' | 'addGroup' | 'importContent'
 
 type TAction = {
   key: TActionKey
@@ -31,11 +30,6 @@ const ACTIONS: TAction[] = [
     key: 'importContent',
     labelKey: 'dsb.doc.empty_action.import_content',
     Icon: DatabaseArrowUpSVG,
-  },
-  {
-    key: 'addTab',
-    labelKey: 'dsb.doc.empty_action.add_tab',
-    Icon: TabsAddSVG,
   },
   {
     key: 'status',

@@ -22,7 +22,7 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.DocReport do
 
       article =
         user_conn
-        |> gq_mutation(Schema.m(:report_article, :doc), variables)
+        |> gq_mutation(S.Article.m(:report_article, :doc), variables)
 
       assert article["innerId"] == to_string(doc.inner_id)
     end
@@ -33,13 +33,13 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.DocReport do
         reason: "reason"
       }
 
-      article = user_conn |> gq_mutation(Schema.m(:report_article, :doc), variables)
+      article = user_conn |> gq_mutation(S.Article.m(:report_article, :doc), variables)
 
       assert article["innerId"] == to_string(doc.inner_id)
 
       variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}}
 
-      article = user_conn |> gq_mutation(Schema.m(:undo_report_article, :doc), variables)
+      article = user_conn |> gq_mutation(S.Article.m(:undo_report_article, :doc), variables)
       assert article["innerId"] == to_string(doc.inner_id)
     end
   end

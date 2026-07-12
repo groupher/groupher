@@ -1,5 +1,7 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
+import { DSB_DOC } from '../../constant'
+
 type TProps = {
   collapsed: boolean
 }
@@ -15,6 +17,6 @@ export default function useSalon({ collapsed }: TProps) {
     ),
     menuStack: 'grid w-full overflow-visible',
     menuLayer: 'w-full col-start-1 row-start-1 overflow-visible',
-    collapsedRail: '-translate-x-20 translate-y-1.5',
+    collapsedRail: cn('-translate-x-20', DSB_DOC.COLLAPSED_MENU_OFFSET),
   }
 }

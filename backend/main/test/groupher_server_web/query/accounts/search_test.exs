@@ -16,17 +16,7 @@ defmodule GroupherServer.Test.Query.Accounts.Search do
   end
 
   describe "[cms search post query]" do
-    @query """
-    query($name: String!) {
-      searchUsers(name: $name) {
-        entries {
-          login
-          nickname
-        }
-        totalCount
-      }
-    }
-    """
+    @query S.Account.q(:search_users)
     test "search user by full nickname should valid paged communities", ~m(guest_conn)a do
       variables = %{name: "react"}
       results = guest_conn |> gq_query(@query, variables)

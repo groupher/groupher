@@ -436,6 +436,7 @@ const updateDashboardDocFaq = gql`
 
 const docTreeNodeFields = `
   id
+  tabId
   groupId
   docId
   type
@@ -490,13 +491,12 @@ const docTree = gql`
         status
         insertedAt
       }
-      pins {
+      tabs {
         ${docTreeNodeFields}
-      }
-      groups {
-        ${docTreeNodeFields}
-        children {
+        pins { ${docTreeNodeFields} }
+        groups {
           ${docTreeNodeFields}
+          children { ${docTreeNodeFields} }
         }
       }
     }
@@ -578,14 +578,15 @@ const docDraftSnapshots = gql`
       id
       thread
       stage
-      docId
+      action
+      articleHashId
       title
       slug
       subtitle
       digest
       documentJson
       contentHash
-      snapshotNumber
+      revisionNumber
       schemaVersion
       insertedAt
       author {
@@ -614,6 +615,14 @@ const docTreeMutationPayload = `
   }
   affectedNodes {
     ${docTreeNodeFields}
+  }
+`
+
+const createDocTreeTab = gql`
+  mutation ($community: String!, $baseRevision: Int!, $input: DocTreeNodeInput!) {
+    createDocTreeTab(community: $community, baseRevision: $baseRevision, input: $input) {
+      ${docTreeMutationPayload}
+    }
   }
 `
 
@@ -710,14 +719,15 @@ const checkpointDocDraftSnapshot = gql`
       id
       thread
       stage
-      docId
+      action
+      articleHashId
       title
       slug
       subtitle
       documentJson
       digest
       contentHash
-      snapshotNumber
+      revisionNumber
       schemaVersion
       insertedAt
       author {
@@ -841,6 +851,7 @@ const moveDocTreeNode = gql`
     $community: String!
     $id: ID!
     $baseRevision: Int!
+    $targetTabId: ID
     $targetGroupId: ID
     $targetIndex: Int
   ) {
@@ -848,6 +859,7 @@ const moveDocTreeNode = gql`
       community: $community
       id: $id
       baseRevision: $baseRevision
+      targetTabId: $targetTabId
       targetGroupId: $targetGroupId
       targetIndex: $targetIndex
     ) {
@@ -1105,6 +1117,7 @@ const schema = {
   docDraft,
   docDraftSnapshots,
   createDocTreeGroup,
+  createDocTreeTab,
   createDocTreePage,
   createDocTreeLink,
   createDocTreePin,

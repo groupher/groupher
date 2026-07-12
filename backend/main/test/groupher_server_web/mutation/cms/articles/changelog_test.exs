@@ -21,7 +21,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       body = mock_rich_text("create changelog by plate")
 
       variables = changelog_attr |> Map.merge(%{community: community.slug, body: body})
-      result = user_conn |> gq_mutation(Schema.m(:create_article, :changelog), variables)
+      result = user_conn |> gq_mutation(S.Article.m(:create_article, :changelog), variables)
 
       assert result["community"]["slug"] == community.slug
       assert result["linkAddr"] == "https://helloworld"
@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
         changelog_attr
         |> Map.merge(%{community: community.slug, communityTags: [community_tag.id]})
 
-      created = user_conn |> gq_mutation(Schema.m(:create_article, :changelog), variables)
+      created = user_conn |> gq_mutation(S.Article.m(:create_article, :changelog), variables)
 
       {:ok, changelog} =
         CMS.FrontDesk.article(community, :changelog, created["innerId"], preload: :community_tags)
@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       changelog_attr = mock_attrs(:changelog, %{body: mock_xss_string()})
       variables = changelog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
-      result = user_conn |> gq_mutation(Schema.m(:create_article, :changelog), variables)
+      result = user_conn |> gq_mutation(S.Article.m(:create_article, :changelog), variables)
 
       {:ok, changelog} =
         CMS.FrontDesk.article(community, :changelog, result["innerId"], preload: :document)
@@ -72,7 +72,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       changelog_attr = mock_attrs(:changelog, %{body: mock_xss_string(:safe)})
       variables = changelog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
-      result = user_conn |> gq_mutation(Schema.m(:create_article, :changelog), variables)
+      result = user_conn |> gq_mutation(S.Article.m(:create_article, :changelog), variables)
 
       {:ok, changelog} =
         CMS.FrontDesk.article(community, :changelog, result["innerId"], preload: :document)
@@ -89,7 +89,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       changelog_attr = mock_attrs(:changelog)
       variables = changelog_attr |> Map.merge(%{community: community.slug}) |> Map.delete(:title)
 
-      assert user_conn |> mutation_error?(Schema.m(:create_article, :changelog), variables)
+      assert user_conn |> mutation_error?(S.Article.m(:create_article, :changelog), variables)
     end
 
     test "delete a changelog by changelog's owner", ~m(owner_conn community changelog)a do
@@ -97,7 +97,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
         article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
       }
 
-      result = owner_conn |> gq_mutation(Schema.m(:delete_article, :changelog), variables)
+      result = owner_conn |> gq_mutation(S.Article.m(:delete_article, :changelog), variables)
 
       assert result["innerId"] == to_string(changelog.inner_id)
       assert {:error, _} = CMS.FrontDesk.article(community, :changelog, result["innerId"])
@@ -114,7 +114,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
         article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
       }
 
-      result = rule_conn |> gq_mutation(Schema.m(:delete_article, :changelog), variables)
+      result = rule_conn |> gq_mutation(S.Article.m(:delete_article, :changelog), variables)
 
       assert result["innerId"] == to_string(changelog.inner_id)
       assert {:error, _} = CMS.FrontDesk.article(community, :changelog, result["innerId"])
@@ -127,7 +127,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:delete_article, :changelog),
+               S.Article.m(:delete_article, :changelog),
                variables,
                ecode(:account_login)
              )
@@ -143,7 +143,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
         article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}
       }
 
-      result = rule_conn |> gq_mutation(Schema.m(:delete_article, :changelog), variables)
+      result = rule_conn |> gq_mutation(S.Article.m(:delete_article, :changelog), variables)
 
       assert result["innerId"] == to_string(changelog.inner_id)
     end
@@ -154,7 +154,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       }
 
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
-      schema = Schema.m(:delete_article, :changelog)
+      schema = S.Article.m(:delete_article, :changelog)
 
       assert user_conn |> mutation_error?(schema, variables, ecode(:passport))
       assert guest_conn |> mutation_error?(schema, variables, ecode(:account_login))
@@ -172,7 +172,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:update_article, :changelog),
+               S.Article.m(:update_article, :changelog),
                variables,
                ecode(:account_login)
              )
@@ -198,7 +198,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
         communityTags: [community_tag.id]
       }
 
-      result = owner_conn |> gq_mutation(Schema.m(:update_article, :changelog), variables)
+      result = owner_conn |> gq_mutation(S.Article.m(:update_article, :changelog), variables)
       assert result["title"] == variables.title
 
       assert result["communityTags"] |> List.first() |> get_in(["id"]) ==
@@ -244,7 +244,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
         communityTags: [community_tag.id, community_tag2.id]
       }
 
-      result = owner_conn |> gq_mutation(Schema.m(:update_article, :changelog), variables)
+      result = owner_conn |> gq_mutation(S.Article.m(:update_article, :changelog), variables)
 
       assert result["communityTags"] |> length == 2
 
@@ -259,7 +259,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
         communityTags: [community_tag2.id, community_tag3.id]
       }
 
-      result = owner_conn |> gq_mutation(Schema.m(:update_article, :changelog), variables)
+      result = owner_conn |> gq_mutation(S.Article.m(:update_article, :changelog), variables)
 
       assert result["communityTags"] |> length == 2
 
@@ -281,7 +281,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       }
 
       updated_changelog =
-        owner_conn |> gq_mutation(Schema.m(:update_article, :changelog), variables)
+        owner_conn |> gq_mutation(S.Article.m(:update_article, :changelog), variables)
 
       assert true == updated_changelog["meta"]["isEdited"]
     end
@@ -302,7 +302,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
       }
 
       updated_changelog =
-        rule_conn |> gq_mutation(Schema.m(:update_article, :changelog), variables)
+        rule_conn |> gq_mutation(S.Article.m(:update_article, :changelog), variables)
 
       assert updated_changelog["innerId"] == to_string(changelog.inner_id)
     end
@@ -320,21 +320,21 @@ defmodule GroupherServer.Test.Mutation.Articles.Changelog do
 
       assert user_conn
              |> mutation_error?(
-               Schema.m(:update_article, :changelog),
+               S.Article.m(:update_article, :changelog),
                variables,
                ecode(:passport)
              )
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:update_article, :changelog),
+               S.Article.m(:update_article, :changelog),
                variables,
                ecode(:account_login)
              )
 
       assert rule_conn
              |> mutation_error?(
-               Schema.m(:update_article, :changelog),
+               S.Article.m(:update_article, :changelog),
                variables,
                ecode(:passport)
              )

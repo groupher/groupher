@@ -12,6 +12,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Snapshot do
   @id_key CMS.Const.doc_tree_json_key(:id)
   @type_key CMS.Const.doc_tree_json_key(:type)
   @group_type CMS.Const.tree_node_type(:group)
+  @tab_type CMS.Const.tree_node_type(:tab)
   @page_type CMS.Const.tree_node_type(:page)
   @pin_type CMS.Const.tree_node_type(:pin)
 
@@ -35,10 +36,19 @@ defmodule GroupherServer.Test.CMS.DocTree.Snapshot do
     end
 
     test "builds canonical tree json from flat nodes" do
+      tab = %DocTreeNode{
+        stage: CMS.Const.stage(:draft),
+        type: @tab_type,
+        node_id: "tab-1",
+        title: "Introduction",
+        index: 0
+      }
+
       group = %DocTreeNode{
         stage: CMS.Const.stage(:draft),
         type: @group_type,
         node_id: "group-1",
+        tab_id: "tab-1",
         title: "Guides",
         index: 0
       }
@@ -56,17 +66,23 @@ defmodule GroupherServer.Test.CMS.DocTree.Snapshot do
         stage: CMS.Const.stage(:draft),
         type: @pin_type,
         node_id: to_string(@pin_type),
+        tab_id: "tab-1",
         title: "Pinned",
         index: 0
       }
 
       assert %{
-               "version" => 1,
-               "pins" => [%{@id_key => "pin"}],
-               "groups" => [
-                 %{@id_key => "group-1", "children" => [%{@id_key => "page-1"}]}
+               "version" => 2,
+               "tabs" => [
+                 %{
+                   @id_key => "tab-1",
+                   "pins" => [%{@id_key => "pin"}],
+                   "groups" => [
+                     %{@id_key => "group-1", "children" => [%{@id_key => "page-1"}]}
+                   ]
+                 }
                ]
-             } = CMS.DocTree.Snapshot.from_nodes([page, pin, group])
+             } = CMS.DocTree.Snapshot.from_nodes([page, pin, group, tab])
     end
   end
 end

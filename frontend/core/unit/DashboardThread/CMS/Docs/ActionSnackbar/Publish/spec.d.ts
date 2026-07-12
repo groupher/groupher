@@ -21,9 +21,16 @@ export type TPublishPlan = {
 
 export type TPublishPlanAction = 'publish' | 'restore' | 'apply' | 'noop'
 
+export type TDocPublishRelease = {
+  id: string
+  releaseNumber: number
+  publishedAt: string
+}
+
 export type TPublishChangesData = {
   publishDocChanges?: {
     checklist?: TPublishChecklist | null
+    release?: TDocPublishRelease | null
   } | null
 }
 

@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.DocTree.Events
+  alias CMS.DocTree.{Events, Read}
 
   alias CMS.DocTree.Write.{
     DraftDoc,
@@ -44,6 +44,59 @@ defmodule GroupherServer.CMS.DocTree.Write do
 
   @type payload :: map()
 
+  @doc "Creates a top-level docs tab."
+  @spec create_tab(Community.t(), map()) :: T.domain_res(payload())
+  def create_tab(%Community{} = community, args) do
+    Operation.run(community, args, fn branch, state ->
+      with {:ok, default_tab, default_events} <- ensure_group_tab(community, branch, nil) do
+        attrs =
+          args
+          |> Map.delete(:index)
+          |> Map.merge(%{
+            type: :tab,
+            community_id: community.id,
+            branch_id: branch.id,
+            stage: CMS.Const.stage(:draft),
+            tab_id: nil,
+            group_id: nil
+          })
+          |> Node.put_new_node_id()
+          |> Identity.normalize_title_slug()
+          |> Identity.unique_create_identity(community, branch, nil)
+          |> Index.ensure_index(community, branch, nil)
+
+        with {:ok, node} <- ORM.create(DocTreeNode, attrs),
+             group_attrs <-
+               %{
+                 type: :group,
+                 community_id: community.id,
+                 branch_id: branch.id,
+                 stage: CMS.Const.stage(:draft),
+                 tab_id: node.node_id,
+                 group_id: nil,
+                 title: "Untitled",
+                 slug: "untitled",
+                 index: 0
+               }
+               |> Node.put_new_node_id()
+               |> Identity.unique_create_identity(community, branch, node.node_id),
+             {:ok, group} <- ORM.create(DocTreeNode, group_attrs),
+             {:ok, event_count} <-
+               EventRecorder.record_tree_events(
+                 community,
+                 branch,
+                 args,
+                 default_events ++ [Events.create_event(node), Events.create_event(group)]
+               ),
+             {:ok, state} <- Operation.bump_revision(community, state, event_count) do
+          affected = if default_events == [], do: [group], else: [default_tab, group]
+
+          {:ok, Operation.payload(community, state, node, affected)}
+        end
+      end
+    end)
+  end
+
   @doc """
   Creates a normal group in the draft tree.
 
@@ -55,25 +108,33 @@ defmodule GroupherServer.CMS.DocTree.Write do
   @spec create_group(Community.t(), map()) :: T.domain_res(payload())
   def create_group(%Community{} = community, args) do
     Operation.run(community, args, fn branch, state ->
-      attrs =
-        args
-        |> Map.merge(%{
-          type: :group,
-          community_id: community.id,
-          branch_id: branch.id,
-          stage: CMS.Const.stage(:draft),
-          group_id: nil
-        })
-        |> Node.put_new_node_id()
-        |> Identity.normalize_title_slug()
-        |> Identity.unique_create_identity(community, branch, nil)
-        |> Index.ensure_index(community, branch, nil)
+      with {:ok, tab, tab_events} <- ensure_group_tab(community, branch, Map.get(args, :tab_id)) do
+        attrs =
+          args
+          |> Map.merge(%{
+            type: :group,
+            community_id: community.id,
+            branch_id: branch.id,
+            stage: CMS.Const.stage(:draft),
+            tab_id: tab.node_id,
+            group_id: nil
+          })
+          |> Node.put_new_node_id()
+          |> Identity.normalize_title_slug()
+          |> Identity.unique_create_identity(community, branch, tab.node_id)
+          |> Index.ensure_index(community, branch, tab.node_id)
 
-      with {:ok, node} <- ORM.create(DocTreeNode, attrs),
-           {:ok, event_count} <-
-             EventRecorder.record_tree_events(community, branch, args, [Events.create_event(node)]),
-           {:ok, state} <- Operation.bump_revision(community, state, event_count) do
-        {:ok, Operation.payload(community, state, node)}
+        with {:ok, node} <- ORM.create(DocTreeNode, attrs),
+             {:ok, event_count} <-
+               EventRecorder.record_tree_events(
+                 community,
+                 branch,
+                 args,
+                 tab_events ++ [Events.create_event(node)]
+               ),
+             {:ok, state} <- Operation.bump_revision(community, state, event_count) do
+          {:ok, Operation.payload(community, state, node)}
+        end
       end
     end)
   end
@@ -171,25 +232,33 @@ defmodule GroupherServer.CMS.DocTree.Write do
   @spec create_pin(Community.t(), map()) :: T.domain_res(payload())
   def create_pin(%Community{} = community, args) do
     Operation.run(community, args, fn branch, state ->
-      attrs =
-        args
-        |> Map.merge(%{
-          type: :pin,
-          community_id: community.id,
-          branch_id: branch.id,
-          stage: CMS.Const.stage(:draft),
-          group_id: nil
-        })
-        |> Node.put_new_node_id()
-        |> Identity.normalize_title_slug()
-        |> Identity.unique_create_identity(community, branch, nil)
-        |> Index.ensure_index(community, branch, nil)
+      with {:ok, tab, tab_events} <- ensure_group_tab(community, branch, Map.get(args, :tab_id)) do
+        attrs =
+          args
+          |> Map.merge(%{
+            type: :pin,
+            community_id: community.id,
+            branch_id: branch.id,
+            stage: CMS.Const.stage(:draft),
+            tab_id: tab.node_id,
+            group_id: nil
+          })
+          |> Node.put_new_node_id()
+          |> Identity.normalize_title_slug()
+          |> Identity.unique_create_identity(community, branch, tab.node_id)
+          |> Index.ensure_index(community, branch, tab.node_id)
 
-      with {:ok, node} <- ORM.create(DocTreeNode, attrs),
-           {:ok, event_count} <-
-             EventRecorder.record_tree_events(community, branch, args, [Events.create_event(node)]),
-           {:ok, state} <- Operation.bump_revision(community, state, event_count) do
-        {:ok, Operation.payload(community, state, node)}
+        with {:ok, node} <- ORM.create(DocTreeNode, attrs),
+             {:ok, event_count} <-
+               EventRecorder.record_tree_events(
+                 community,
+                 branch,
+                 args,
+                 tab_events ++ [Events.create_event(node)]
+               ),
+             {:ok, state} <- Operation.bump_revision(community, state, event_count) do
+          {:ok, Operation.payload(community, state, node)}
+        end
       end
     end)
   end
@@ -228,7 +297,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
   """
   @spec update_draft(Community.t(), String.t(), map(), User.t()) :: T.domain_res(Doc.t())
   def update_draft(%Community{} = community, doc_id, args, %User{} = user) do
-    with {:ok, branch} <- CMS.DocTree.Branch.resolve(community, args) do
+    with {:ok, branch} <- CMS.Articles.Branch.resolve(community, :doc, args) do
       DraftDoc.update(community, branch, doc_id, args, user)
     end
   end
@@ -249,13 +318,14 @@ defmodule GroupherServer.CMS.DocTree.Write do
   def delete_node(%Community{} = community, node_id, args) do
     Operation.run(community, args, fn branch, state ->
       with {:ok, node} <- Node.find(community, branch, node_id),
-           group_id <- node.group_id,
+           :ok <- validate_delete_node(community, branch, node),
+           parent_id <- node.tab_id || node.group_id,
            subtree <- Trash.subtree_nodes(community, branch, node),
            {:ok, _trash_items} <-
              Trash.trash_subtree(community, branch, subtree, Map.get(args, :actor_id)),
            :ok <- Trash.delete_subtree_doc_drafts(community, branch, subtree),
            :ok <- Trash.delete_subtree(subtree),
-           :ok <- Index.normalize_sibling_indexes(community, branch, group_id, node.type),
+           :ok <- Index.normalize_sibling_indexes(community, branch, parent_id, node.type),
            {:ok, event_delta} <-
              EventRecorder.record_delete_or_discard_tree_events(
                community,
@@ -270,7 +340,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
            community,
            state,
            nil,
-           Index.affected_nodes(community, branch, group_id, node.type)
+           Index.affected_nodes(community, branch, parent_id, node.type)
          )}
       end
     end)
@@ -355,33 +425,43 @@ defmodule GroupherServer.CMS.DocTree.Write do
   @spec move_node(Community.t(), T.id(), map()) :: T.domain_res(payload())
   def move_node(%Community{} = community, node_id, args) do
     Operation.run(community, args, fn branch, state ->
+      target_tab_id = Map.get(args, :target_tab_id) || Map.get(args, :tab_id)
       target_group_id = Map.get(args, :target_group_id) || Map.get(args, :group_id)
       target_index = Map.get(args, :target_index, 0)
 
       with {:ok, node} <- Node.find(community, branch, node_id),
-           {:ok, group_id} <- Node.validate_target_group(community, branch, node, target_group_id),
-           old_group_id <- node.group_id,
+           {:ok, {tab_id, group_id}} <-
+             Node.validate_target(
+               community,
+               branch,
+               node,
+               target_tab_id || node.tab_id,
+               target_group_id
+             ),
+           old_parent_id <- node.tab_id || node.group_id,
+           parent_id <- tab_id || group_id,
            old_index <- node.index,
            :ok <-
              Index.shift_sibling_indexes(
                community,
                branch,
-               group_id,
+               parent_id,
                node.type,
                target_index,
                node.node_id
              ),
-           {:ok, node} <- ORM.update(node, %{group_id: group_id, index: target_index}),
-           :ok <- Index.normalize_sibling_indexes(community, branch, old_group_id, node.type),
-           :ok <- Index.normalize_sibling_indexes(community, branch, group_id, node.type),
+           {:ok, node} <-
+             ORM.update(node, %{tab_id: tab_id, group_id: group_id, index: target_index}),
+           :ok <- Index.normalize_sibling_indexes(community, branch, old_parent_id, node.type),
+           :ok <- Index.normalize_sibling_indexes(community, branch, parent_id, node.type),
            {:ok, node} <- Node.find(community, branch, node.node_id),
            {:ok, event_count} <-
              EventRecorder.record_tree_events(community, branch, args, [
-               Events.move_event(node, old_group_id, old_index, group_id, node.index)
+               Events.move_event(node, old_parent_id, old_index, parent_id, node.index)
              ]),
            {:ok, state} <- Operation.bump_revision(community, state, event_count) do
         affected =
-          [old_group_id, group_id]
+          [old_parent_id, parent_id]
           |> Enum.uniq()
           |> Enum.flat_map(&Index.affected_nodes(community, branch, &1, node.type))
 
@@ -389,4 +469,50 @@ defmodule GroupherServer.CMS.DocTree.Write do
       end
     end)
   end
+
+  defp ensure_group_tab(%Community{} = community, branch, tab_id) when not is_nil(tab_id) do
+    with {:ok, tab} <- Node.tab_parent(community, branch, tab_id), do: {:ok, tab, []}
+  end
+
+  defp ensure_group_tab(%Community{} = community, branch, nil) do
+    case Node.first_tab(community, branch) do
+      %DocTreeNode{} = tab ->
+        {:ok, tab, []}
+
+      nil ->
+        attrs = %{
+          type: :tab,
+          community_id: community.id,
+          branch_id: branch.id,
+          stage: CMS.Const.stage(:draft),
+          tab_id: nil,
+          group_id: nil,
+          title: "Introduction",
+          slug: "introduction",
+          index: 0,
+          node_id: Node.new_node_id()
+        }
+
+        with {:ok, tab} <- ORM.create(DocTreeNode, attrs),
+             do: {:ok, tab, [Events.create_event(tab)]}
+    end
+  end
+
+  defp validate_delete_node(%Community{} = community, branch, %DocTreeNode{type: :tab}) do
+    case Node.first_tab(community, branch) do
+      nil ->
+        {:error, {:custom, "docs tree must keep one tab"}}
+
+      _ ->
+        tab_count =
+          Read.tree_nodes!(community, [branch_id: branch.id], CMS.Const.stage(:draft))
+          |> Enum.count(&(&1.type == :tab))
+
+        if tab_count > 1,
+          do: :ok,
+          else: {:error, {:custom, "the last docs tab can not be deleted"}}
+    end
+  end
+
+  defp validate_delete_node(_community, _branch, _node), do: :ok
 end

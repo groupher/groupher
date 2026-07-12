@@ -1,6 +1,5 @@
 'use client'
 
-import useMobileDetect from '@groupher/use-mobile-detect-hook'
 import { findIndex, isEmpty } from 'ramda'
 import type { FC, MouseEvent } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -47,10 +46,10 @@ const Tabs: FC<TViewProps> = ({
   topSpace = 0.5,
   bottomSpace = 0.5,
   noAnimation = false,
+  variant = 'default',
   ...spacing
 }) => {
-  const s = useSalon({ noAnimation, slipHeight, slipBarPos, ...spacing })
-  const { isMobile } = useMobileDetect()
+  const s = useSalon({ noAnimation, slipHeight, slipBarPos, variant, ...spacing })
 
   const defaultActiveTabIndex = getDefaultActiveTabIndex(items, activeKey)
   const hasActiveItem = items.some((it) => getItemKey(it) === activeKey)
@@ -58,6 +57,7 @@ const Tabs: FC<TViewProps> = ({
   const [active, setActive] = useState(defaultActiveTabIndex)
   const [slipWidth, setSlipWidth] = useState(0)
   const [tabWidths, setTabWidths] = useState<number[]>([])
+  const [tabOffsets, setTabOffsets] = useState<number[]>([])
   const [isInitialRender, setIsInitialRender] = useState(true)
 
   const navRef = useRef<HTMLElement | null>(null)
@@ -72,10 +72,16 @@ const Tabs: FC<TViewProps> = ({
     if (!navEl) return
 
     const widths = Array.from(navEl.children).map((node) => (node as HTMLElement).offsetWidth ?? 0)
+    const offsets = Array.from(navEl.children).map((node) => (node as HTMLElement).offsetLeft ?? 0)
     setTabWidths((prev) =>
       prev.length === widths.length && prev.every((width, index) => width === widths[index])
         ? prev
         : widths,
+    )
+    setTabOffsets((prev) =>
+      prev.length === offsets.length && prev.every((offset, index) => offset === offsets[index])
+        ? prev
+        : offsets,
     )
 
     const activeNode = navEl.children[activeIndexRef.current] as HTMLElement | undefined
@@ -142,9 +148,7 @@ const Tabs: FC<TViewProps> = ({
     [onChange, items],
   )
 
-  const translateX = `${
-    tabWidths.slice(0, active).reduce((a, b) => a + b, 0) + s.getSlipMargin(size, isMobile) * active
-  }px`
+  const translateX = `${tabOffsets[active] ?? 0}px`
 
   return (
     <div data-testid='tabs' className={s.wrapper}>
@@ -159,6 +163,7 @@ const Tabs: FC<TViewProps> = ({
             slipBarPos={slipBarPos}
             topSpace={topSpace}
             bottomSpace={bottomSpace}
+            variant={variant}
             setItemWidth={handleNaviItemWidth}
             onClick={handleItemClick}
           />

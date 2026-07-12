@@ -22,7 +22,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
       passport_rules = %{"god" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> gq_mutation(Schema.m(:mark_delete_article, :post), variables)
+      updated = rule_conn |> gq_mutation(S.Article.m(:mark_delete_article, :post), variables)
 
       assert updated["innerId"] == to_string(post.inner_id)
       assert updated["markDelete"] == true
@@ -33,7 +33,7 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{article: article_path(community, post, :post)}
-      deleted = rule_conn |> gq_mutation(Schema.m(:delete_article, :post), variables)
+      deleted = rule_conn |> gq_mutation(S.Article.m(:delete_article, :post), variables)
 
       assert deleted["innerId"] == to_string(post.inner_id)
       assert {:error, _} = CMS.FrontDesk.article(community, :post, deleted["innerId"])

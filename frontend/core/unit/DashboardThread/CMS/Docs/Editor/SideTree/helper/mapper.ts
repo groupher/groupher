@@ -60,6 +60,7 @@ export const mapNode = (node: TDocTreeNodeDTO): TSideTreeChild => {
  */
 export const mapGroup = (node: TDocTreeNodeDTO): TSideTreeGroup => ({
   id: node.id,
+  tabId: node.tabId || '',
   type: SIDE_TREE_NODE_TYPE.GROUP,
   title: node.title || '',
   slug: node.slug || undefined,

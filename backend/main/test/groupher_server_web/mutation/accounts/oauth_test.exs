@@ -24,16 +24,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
   end
 
   describe "[oauth signin]" do
-    @query """
-    mutation($provider: OauthProviderInput!, $oauthTrustCode: String!) {
-      signinOauth(provider: $provider, oauthTrustCode: $oauthTrustCode) {
-        token
-        user {
-          login
-        }
-      }
-    }
-    """
+    @query S.OAuth.m(:signin_oauth)
     test "can signin oauth with github", ~m(guest_conn)a do
       variables = %{
         provider: gql_oauth_provider(@valid_github_profile),
@@ -81,16 +72,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       assert guest_conn |> mutation_error?(@query, variables, ecode(:oauth_trust_code))
     end
 
-    @query """
-    mutation($provider: OauthProviderInput!, $oauthTrustCode: String!) {
-      linkOauth(provider: $provider, oauthTrustCode: $oauthTrustCode) {
-        token
-        user {
-          login
-        }
-      }
-    }
-    """
+    @query S.OAuth.m(:link_oauth)
     test "can link oauth with twitter", ~m(user_conn user)a do
       variables = %{
         provider: gql_oauth_provider(@valid_twitter_profile),
@@ -131,13 +113,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
 
     ##
 
-    @query """
-    mutation($provider: OauthProviderInput!, $oauthTrustCode: String!) {
-      unlinkOauth(provider: $provider, oauthTrustCode: $oauthTrustCode) {
-        login
-      }
-    }
-    """
+    @query S.OAuth.m(:unlink_oauth)
     test "can unlink oauth with provider", ~m(user_conn user)a do
       github_provider = @valid_github_profile |> Map.put(:login, user.login)
       twitter_provider = @valid_twitter_profile |> Map.put(:login, user.login)

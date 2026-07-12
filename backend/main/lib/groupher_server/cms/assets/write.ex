@@ -138,6 +138,64 @@ defmodule GroupherServer.CMS.Assets.Write do
     end
   end
 
+  @doc "Copies the complete asset-ref projection from one Article version to another."
+  @spec copy_article_refs(T.article(), T.article()) :: T.domain_res(term())
+  def copy_article_refs(source, target) do
+    with {:ok, source_thread} <- FrontDesk.thread_of(source),
+         {:ok, target_thread} <- FrontDesk.thread_of(target),
+         true <- source_thread == target_thread,
+         {:ok, source_document} <-
+           ORM.find_by(ArticleDocument, article_id: source.id, thread: source_thread),
+         {:ok, target_document} <-
+           ORM.find_by(ArticleDocument, article_id: target.id, thread: target_thread) do
+      Repo.transaction(fn ->
+        ArticleDocumentAssetRef
+        |> where([ref], ref.article_document_id == ^target_document.id)
+        |> Repo.delete_all()
+
+        source_refs =
+          ArticleDocumentAssetRef
+          |> where([ref], ref.article_document_id == ^source_document.id)
+          |> Repo.all()
+
+        Enum.reduce_while(source_refs, {:ok, []}, fn source_ref, {:ok, copied} ->
+          attrs =
+            source_ref
+            |> Map.from_struct()
+            |> Map.take([
+              :asset_id,
+              :usage,
+              :block_id,
+              :block_type,
+              :position,
+              :title,
+              :alt,
+              :source,
+              :meta
+            ])
+            |> Map.merge(%{
+              community_id: target.community_id,
+              article_document_id: target_document.id,
+              article_id: target.id,
+              thread: target_thread
+            })
+
+          case ORM.create(ArticleDocumentAssetRef, attrs) do
+            {:ok, ref} -> {:cont, {:ok, [ref | copied]}}
+            {:error, reason} -> {:halt, {:error, reason}}
+          end
+        end)
+        |> case do
+          {:ok, copied} -> Enum.reverse(copied)
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+    else
+      false -> {:error, {:custom, "Article asset refs can only copy within one thread"}}
+      error -> error
+    end
+  end
+
   @doc """
   Removes all article-document asset refs for an article.
 

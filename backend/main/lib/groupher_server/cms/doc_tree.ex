@@ -21,8 +21,9 @@ defmodule GroupherServer.CMS.DocTree do
               v
       Public docs site
 
-  Pins are independent top-level link nodes with `type=pin`. They are published
-  and diffed with the Tree, but they do not point at existing page/link nodes.
+  Tabs are the tree roots. Groups and independent pin links belong to a tab;
+  pages and links belong to a group. Every node is published and diffed through
+  the same staged Tree workflow.
   """
 
   alias GroupherServer.Accounts.Model.User
@@ -118,6 +119,12 @@ defmodule GroupherServer.CMS.DocTree do
   def reset_demo_template(%Community{} = community, %User{} = user) do
     Template.reset_demo_template(community, user)
   end
+
+  @doc """
+  Creates a draft tab node.
+  """
+  @spec create_tab(Community.t(), map()) :: T.domain_res(map())
+  def create_tab(%Community{} = community, args), do: Write.create_tab(community, args)
 
   @doc """
   Creates a draft group node.

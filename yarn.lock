@@ -490,7 +490,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/types@npm:^7.26.0, @babel/types@npm:^7.27.1, @babel/types@npm:^7.28.5":
+"@babel/types@npm:^7.27.1, @babel/types@npm:^7.28.5":
   version: 7.28.5
   resolution: "@babel/types@npm:7.28.5"
   dependencies:
@@ -1470,7 +1470,6 @@ __metadata:
     "@vitejs/plugin-react": "npm:^6.0.1"
     accept-language-parser: "npm:^1.5.0"
     autoprefixer: "npm:^10.5.0"
-    babel-plugin-react-compiler: "npm:^0.0.0-experimental-938cd9a-20240601"
     baseline-browser-mapping: "npm:^2.9.0"
     chalk: "npm:^2.4.1"
     class-variance-authority: "npm:^0.7.1"
@@ -6202,15 +6201,6 @@ __metadata:
     cosmiconfig: "npm:^7.0.0"
     resolve: "npm:^1.19.0"
   checksum: 10c0/c6dfb15de96f67871d95bd2e8c58b0c81edc08b9b087dc16755e7157f357dc1090a8dc60ebab955e92587a9101f02eba07e730adc253a1e4cf593ca3ebd3839c
-  languageName: node
-  linkType: hard
-
-"babel-plugin-react-compiler@npm:^0.0.0-experimental-938cd9a-20240601":
-  version: 0.0.0-experimental-fe727a3-20250909
-  resolution: "babel-plugin-react-compiler@npm:0.0.0-experimental-fe727a3-20250909"
-  dependencies:
-    "@babel/types": "npm:^7.26.0"
-  checksum: 10c0/55c1bcefea53073604a754b7ab1fdef52a935b2cda09d1c425417dcd8602fc826bee26a741a89f50081ea7e8fff4bf42813ff97b10e8cf87b95e3eaea01ea843
   languageName: node
   linkType: hard
 

@@ -18,8 +18,8 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
       }
 
-      _created = user_conn |> gq_mutation(Schema.m(:upvote_article, :post), variables)
-      created = user2_conn |> gq_mutation(Schema.m(:upvote_article, :post), variables)
+      _created = user_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
+      created = user2_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
       assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
 
       assert created["innerId"] == to_string(post.inner_id)
@@ -31,8 +31,8 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
       }
 
-      _created = user_conn |> gq_mutation(Schema.m(:upvote_article, :post), variables)
-      created = user2_conn |> gq_mutation(Schema.m(:upvote_article, :post), variables)
+      _created = user_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
+      created = user2_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
 
       assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
 
@@ -47,7 +47,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:upvote_article, :post),
+               S.Article.m(:upvote_article, :post),
                variables,
                ecode(:account_login)
              )
@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
       }
 
-      updated = user_conn |> gq_mutation(Schema.m(:undo_upvote_article, :post), variables)
+      updated = user_conn |> gq_mutation(S.Article.m(:undo_upvote_article, :post), variables)
 
       assert not user_exist_in?(user, get_in(updated, ["meta", "latestUpvotedUsers"]))
       assert updated["innerId"] == to_string(post.inner_id)
@@ -72,13 +72,13 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
       }
 
-      created = user_conn |> gq_mutation(Schema.m(:upvote_article, :post), variables)
+      created = user_conn |> gq_mutation(S.Article.m(:upvote_article, :post), variables)
       assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
       assert created["upvotesCount"] == 1
 
       assert user_conn
              |> mutation_error?(
-               Schema.m(:upvote_article, :post),
+               S.Article.m(:upvote_article, :post),
                variables,
                ecode(:already_upvoted)
              )
@@ -93,7 +93,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
       }
 
-      result = user_conn |> gq_mutation(Schema.m(:undo_upvote_article, :post), variables)
+      result = user_conn |> gq_mutation(S.Article.m(:undo_upvote_article, :post), variables)
 
       assert result["innerId"] == to_string(post.inner_id)
     end
@@ -105,7 +105,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.PostUpvote do
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:undo_upvote_article, :post),
+               S.Article.m(:undo_upvote_article, :post),
                variables,
                ecode(:account_login)
              )

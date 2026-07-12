@@ -12,21 +12,7 @@ defmodule GroupherServer.Test.Query.CMS.CommunityMeta do
   end
 
   describe "[community meta]" do
-    @query """
-    query($slug: String!) {
-      community(slug: $slug) {
-        slug
-        title
-        articlesCount
-        meta {
-          postsCount
-          changelogsCount
-          docsCount
-          blogsCount
-        }
-      }
-    }
-    """
+    @query S.Community.q(:community_6)
     test "community have valid [thread]s_count in meta info",
          ~m(guest_conn community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)

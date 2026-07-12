@@ -26,6 +26,7 @@ const TabItem: FC<TTabItemProps> = ({
   slipBarPos = 'bottom',
   topSpace = 0.5,
   bottomSpace = 0.5,
+  variant = 'default',
   activeKey,
   item,
   index,
@@ -37,7 +38,7 @@ const TabItem: FC<TTabItemProps> = ({
   const href = getItemHref(item)
   const active = key === activeKey
 
-  const s = useSalon({ slipBarPos, topSpace, bottomSpace })
+  const s = useSalon({ slipBarPos, topSpace, bottomSpace, variant })
 
   const { t } = useTrans()
   const linkRef = useRef<HTMLAnchorElement | null>(null)
@@ -93,7 +94,9 @@ const TabItem: FC<TTabItemProps> = ({
       {!isString(item) && item.icon && (
         <TabIcon item={item} clickableRef={clickableRef} active={active} />
       )}
-      <div ref={active ? activeRef : null}>{isString(item) ? item : t(item.title as never)}</div>
+      <div ref={active ? activeRef : null}>
+        {isString(item) ? item : (item.label ?? t(item.title as never))}
+      </div>
     </span>
   )
 

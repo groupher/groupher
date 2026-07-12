@@ -121,6 +121,30 @@ defmodule GroupherServer.CMS.DocTree.Write.Trash do
     children ++ [group]
   end
 
+  def subtree_nodes(%Community{} = community, branch, %DocTreeNode{type: :tab} = tab) do
+    descendants =
+      DocTreeNode
+      |> where([n], n.community_id == ^community.id)
+      |> where([n], n.branch_id == ^branch.id)
+      |> where([n], n.stage == CMS.Const.stage(:draft))
+      |> where([n], n.tab_id == ^tab.node_id)
+      |> order_by([n], desc: n.index, desc: n.id)
+      |> Repo.all()
+
+    group_ids = descendants |> Enum.filter(&(&1.type == :group)) |> Enum.map(& &1.node_id)
+
+    children =
+      DocTreeNode
+      |> where([n], n.community_id == ^community.id)
+      |> where([n], n.branch_id == ^branch.id)
+      |> where([n], n.stage == CMS.Const.stage(:draft))
+      |> where([n], n.group_id in ^group_ids)
+      |> order_by([n], desc: n.index, desc: n.id)
+      |> Repo.all()
+
+    children ++ descendants ++ [tab]
+  end
+
   def subtree_nodes(_community, _branch, %DocTreeNode{} = node), do: [node]
 
   defp trash_attrs(%Community{} = community, branch, %DocTreeNode{} = node, actor_id) do
@@ -130,7 +154,11 @@ defmodule GroupherServer.CMS.DocTree.Write.Trash do
       node_id: node.node_id,
       doc_id: node.doc_id,
       node_snapshot:
-        node |> Read.to_map() |> maybe_put_draft_doc_snapshot(community, branch, node),
+        node
+        |> Read.to_map()
+        |> Map.put("tabId", node.tab_id)
+        |> Map.put("groupId", node.group_id)
+        |> maybe_put_draft_doc_snapshot(community, branch, node),
       deleted_from_group_id: node.group_id,
       deleted_from_index: node.index,
       deleted_at: DateTime.utc_now(:second),

@@ -6,27 +6,23 @@ import FilePlusSVG from '~/icons/FilePlus'
 import FolderPlusSVG from '~/icons/FolderPlus'
 import MagnifyingGlassSVG from '~/icons/MagnifyingGlass'
 import MapPinPlusSVG from '~/icons/MapPinPlus'
-import MoreSVG from '~/icons/menu/MoreL'
 import Input from '~/widgets/Input'
 
 import useSalon from '../salon/toolbar'
 
 type TToolbarAction = {
-  key: 'top' | 'group' | 'doc' | 'more'
+  key: 'top' | 'group' | 'doc'
   label:
     | 'dsb.cms.docs.side_tree.action.top'
     | 'dsb.cms.docs.side_tree.action.group'
     | 'dsb.cms.docs.side_tree.action.doc'
-    | 'dsb.cms.docs.side_tree.action.more'
   Icon: ComponentType<SVGProps<SVGSVGElement>>
-  compact?: boolean
 }
 
 const ACTIONS: TToolbarAction[] = [
   { key: 'top', label: 'dsb.cms.docs.side_tree.action.top', Icon: MapPinPlusSVG },
   { key: 'group', label: 'dsb.cms.docs.side_tree.action.group', Icon: FolderPlusSVG },
   { key: 'doc', label: 'dsb.cms.docs.side_tree.action.doc', Icon: FilePlusSVG },
-  { key: 'more', label: 'dsb.cms.docs.side_tree.action.more', Icon: MoreSVG, compact: true },
 ]
 
 type TProps = {
@@ -92,17 +88,15 @@ const Toolbar: FC<TProps> = ({
 
       {!searching && (
         <div className={s.actions}>
-          {ACTIONS.map(({ key, label, Icon, compact }) => {
+          {ACTIONS.map(({ key, label, Icon }) => {
             const actionText = t(label)
-            const buttonLabel = compact
-              ? t('dsb.cms.docs.side_tree.action.more_tree')
-              : `${t('dsb.cms.docs.side_tree.action.add_prefix')} ${actionText}`
+            const buttonLabel = `${t('dsb.cms.docs.side_tree.action.add_prefix')} ${actionText}`
 
             return (
               <button
                 key={label}
                 type='button'
-                className={compact ? s.moreButton : s.actionButton}
+                className={s.actionButton}
                 aria-label={buttonLabel}
                 title={buttonLabel}
                 onClick={key === 'group' ? onAddGroup : undefined}

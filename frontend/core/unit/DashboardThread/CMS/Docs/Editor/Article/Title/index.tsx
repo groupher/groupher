@@ -30,6 +30,7 @@ const Title: FC<TProps> = ({ docId = null, value, disabled = false, publishState
     draft ? TITLE_STAGE_VIEW.DRAFT : null,
   )
   const stageViewRef = useRef<TTitleStageView | null>(stageView)
+  const docIdRef = useRef(docId)
   const hideTimerRef = useRef<number | null>(null)
 
   useEffect(() => {
@@ -53,21 +54,25 @@ const Title: FC<TProps> = ({ docId = null, value, disabled = false, publishState
   }, [clearHideTimer])
 
   useEffect(() => {
+    // A doc switch is navigation, not a publish transition. Reset directly so
+    // the previous doc's Draft state cannot animate as Published on the next doc.
+    if (docIdRef.current !== docId) {
+      docIdRef.current = docId
+      clearHideTimer()
+      setStageView(draft ? TITLE_STAGE_VIEW.DRAFT : null)
+      return
+    }
+
     if (draft) {
       clearHideTimer()
       setStageView(TITLE_STAGE_VIEW.DRAFT)
       return
     }
 
-    if (stageViewRef.current === TITLE_STAGE_VIEW.DRAFT) {
-      showPublished()
-      return
-    }
-
     if (stageViewRef.current !== TITLE_STAGE_VIEW.PUBLISHED) {
       setStageView(null)
     }
-  }, [clearHideTimer, draft, showPublished])
+  }, [clearHideTimer, docId, draft])
 
   useEffect(() => {
     return () => clearHideTimer()

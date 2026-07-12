@@ -17,19 +17,7 @@ defmodule GroupherServer.Test.Query.Statistics do
     {:ok, ~m(guest_conn user)a}
   end
 
-  @query """
-  query {
-    citiesGeoInfo {
-      entries {
-        city
-        value
-        long
-        lant
-      }
-      totalCount
-    }
-  }
-  """
+  @query S.Statistics.q(:cities_geo_info)
   describe "[statistics geo info]" do
     test "should get cities geo infos", ~m(guest_conn)a do
       result = guest_conn |> gq_query(@query)
@@ -49,28 +37,13 @@ defmodule GroupherServer.Test.Query.Statistics do
   end
 
   describe "[statistics basic status]" do
-    @query """
-    query {
-      onlineStatus {
-        realtimeVisitors
-      }
-    }
-    """
+    @query S.Statistics.q(:online_status)
     test "every body can get online status", ~m(guest_conn)a do
       result = guest_conn |> gq_query(@query)
       assert result["realtimeVisitors"] |> is_number
     end
 
-    @query """
-    query {
-      countStatus {
-        communitiesCount
-        postsCount
-        categoriesCount
-        communityTagsCount
-      }
-    }
-    """
+    @query S.Statistics.q(:count_status)
     test "god manager should get count status" do
       passport_rules = %{"god" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)

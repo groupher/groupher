@@ -16,17 +16,19 @@ defmodule GroupherServer.Test.CMS.DocTree.Template do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
       {:ok, tree} = CMS.DocTree.read(community)
 
-      assert Enum.map(tree.groups, & &1.title) == ["Getting started", "Core Features"]
+      assert Enum.map(tree.tabs, & &1.title) == ["Introduction"]
+      groups = tree.tabs |> hd() |> Map.fetch!(:groups)
+      assert Enum.map(groups, & &1.title) == ["Getting started", "Core Features"]
 
-      assert tree.groups
+      assert groups
              |> Enum.flat_map(& &1.children)
-             |> Enum.map(& &1.title) == ["Introduction", "Quick start", "Forum", "Changelog"]
+             |> Enum.map(& &1.title) == ["Welcome", "Quick start", "Forum", "Changelog"]
 
-      assert tree.groups
+      assert groups
              |> Enum.flat_map(& &1.children)
              |> Enum.all?(& &1.doc_id)
 
-      assert stage_count(DocTreeNode, community.id, :draft) == 6
+      assert stage_count(DocTreeNode, community.id, :draft) == 7
       assert stage_count(Doc, community.id, :draft) == 4
 
       assert stage_count(DocTreeNode, community.id, :public) == 0
@@ -40,13 +42,13 @@ defmodule GroupherServer.Test.CMS.DocTree.Template do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, tree} = CMS.DocTree.delete_demo_template(community)
-      assert tree.groups == []
+      assert tree.tabs == []
       assert stage_count(DocTreeNode, community.id, :draft) == 0
       assert stage_count(Doc, community.id, :draft) == 0
 
       {:ok, tree} = CMS.DocTree.reset_demo_template(community, user)
-      assert Enum.map(tree.groups, & &1.title) == ["Getting started", "Core Features"]
-      assert stage_count(DocTreeNode, community.id, :draft) == 6
+      assert Enum.map(tree.tabs, & &1.title) == ["Introduction"]
+      assert stage_count(DocTreeNode, community.id, :draft) == 7
       assert stage_count(Doc, community.id, :draft) == 4
     end
   end

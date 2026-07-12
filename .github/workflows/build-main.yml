@@ -29,6 +29,14 @@ jobs:
           corepack enable
           yarn install --immutable
 
+      - name: Restore Turbopack build cache
+        uses: actions/cache@v4
+        with:
+          path: frontend/main/.next/cache
+          key: ${{ runner.os }}-next-main-${{ hashFiles('yarn.lock', 'frontend/core/**', 'frontend/main/**') }}
+          restore-keys: |
+            ${{ runner.os }}-next-main-
+
       # ... (其他步骤，例如 Biome lint)
 
       - name: Build Project

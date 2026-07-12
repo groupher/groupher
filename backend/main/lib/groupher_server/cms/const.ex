@@ -7,11 +7,22 @@ defmodule GroupherServer.CMS.Const do
 
   enum(stage, do: [draft: :draft, public: :public])
 
-  enum(docs_branch_kind, do: [main: :main, preview: :preview])
-  enum(docs_branch_status, do: [active: :active, archived: :archived])
+  enum(article_branch_type, do: [main: :main, preview: :preview])
+  enum(article_branch_status, do: [active: :active, archived: :archived])
+
+  enum article_snapshot_action do
+    [
+      checkpoint: :checkpoint,
+      publish: :publish,
+      fork: :fork,
+      promote: :promote,
+      restore: :restore
+    ]
+  end
 
   enum tree_node_type do
     [
+      tab: :tab,
       group: :group,
       page: :page,
       link: :link,

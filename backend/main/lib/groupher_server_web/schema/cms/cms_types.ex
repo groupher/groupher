@@ -34,6 +34,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   enum :doc_tree_node_type do
+    value(:tab)
     value(:group)
     value(:page)
     value(:link)
@@ -43,6 +44,31 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   enum :article_snapshot_stage do
     value(:draft)
     value(:public)
+  end
+
+  enum :article_branch_type do
+    value(:main)
+    value(:preview)
+  end
+
+  enum :article_branch_status do
+    value(:active)
+    value(:archived)
+  end
+
+  enum :article_snapshot_action do
+    value(:checkpoint)
+    value(:publish)
+    value(:fork)
+    value(:promote)
+    value(:restore)
+  end
+
+  object :article_branch do
+    field(:slug, non_null(:string))
+    field(:title, non_null(:string))
+    field(:type, non_null(:article_branch_type))
+    field(:status, non_null(:article_branch_status))
   end
 
   enum :doc_publish_mode do
@@ -103,6 +129,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :doc_tree_node do
     field(:id, :id)
+    field(:tab_id, :id)
     field(:group_id, :id)
     field(:doc_id, :id)
     field(:type, :doc_tree_node_type)
@@ -116,6 +143,8 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:ui_config, :json)
     field(:publish_state, :doc_tree_node_publish_state)
     field(:children, list_of(:doc_tree_node))
+    field(:pins, list_of(:doc_tree_node))
+    field(:groups, list_of(:doc_tree_node))
   end
 
   object :doc_tree_node_publish_state do
@@ -159,12 +188,12 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:revision, :integer)
     field(:tree_state, :doc_tree_state)
     field(:staged_events, list_of(:doc_tree_event))
-    field(:pins, list_of(:doc_tree_node))
-    field(:groups, list_of(:doc_tree_node))
+    field(:tabs, list_of(:doc_tree_node))
   end
 
   object :doc_public_tree_node do
     field(:id, :id)
+    field(:tab_id, :id)
     field(:group_id, :id)
     field(:doc_id, :id)
     field(:type, :doc_tree_node_type)
@@ -175,10 +204,12 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:marker, :marker)
     field(:badge, :string)
     field(:children, list_of(:doc_public_tree_node))
+    field(:pins, list_of(:doc_public_tree_node))
+    field(:groups, list_of(:doc_public_tree_node))
   end
 
   object :doc_public_tree do
-    field(:groups, list_of(:doc_public_tree_node))
+    field(:tabs, list_of(:doc_public_tree_node))
   end
 
   object :doc_publish_checklist_item do
@@ -200,7 +231,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:total_count, non_null(:integer))
   end
 
-  object :publish_release do
+  object :doc_publish_release do
     field(:id, non_null(:id))
     field(:release_number, non_null(:integer))
     field(:version_slug, non_null(:string))
@@ -222,7 +253,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :doc_publish_changes_payload do
     field(:done, non_null(:boolean))
-    field(:release, :publish_release)
+    field(:release, :doc_publish_release)
     field(:checklist, non_null(:doc_publish_checklist))
     field(:scope, non_null(:doc_publish_scope))
   end
@@ -281,7 +312,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :doc_draft do
     field(:id, :id)
-    field(:doc_id, :id)
+    field(:doc_id, :id, resolve: fn draft, _, _ -> {:ok, draft.article_hash_id} end)
     field(:title, :string)
     field(:subtitle, :string)
     field(:slug, :string)
@@ -290,6 +321,18 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:author, :user, resolve: dataloader(CMS, :author))
     timestamp_fields()
     field(:document, :article_document, resolve: fn draft, _, _ -> {:ok, draft} end)
+  end
+
+  object :article_draft do
+    field(:id, non_null(:id), resolve: fn draft, _, _ -> {:ok, draft.article_hash_id} end)
+    field(:thread, non_null(:thread), resolve: fn draft, _, _ -> {:ok, draft.meta.thread} end)
+    field(:stage, non_null(:article_snapshot_stage))
+    field(:title, non_null(:string))
+    field(:digest, :string)
+    field(:slug, :string)
+    field(:subtitle, :string)
+    field(:document, :article_document, resolve: fn draft, _, _ -> {:ok, draft} end)
+    timestamp_fields()
   end
 
   object :doc_tree_mutation_payload do
@@ -307,6 +350,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   input_object :doc_tree_node_input do
+    field(:tab_id, :id)
     field(:group_id, :id)
     field(:title, :string)
     field(:slug, :string)
@@ -452,18 +496,21 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object :article_snapshot do
-    field(:id, :id)
+    field(:id, :id, resolve: fn snapshot, _, _ -> {:ok, snapshot.hash_id} end)
     field(:thread, :thread)
     field(:stage, :article_snapshot_stage)
-    field(:doc_id, :string)
+    field(:action, :article_snapshot_action)
+    field(:article_hash_id, :string)
     field(:title, :string)
     field(:slug, :string)
     field(:subtitle, :string)
     field(:digest, :string)
     field(:document_json, :string)
     field(:content_hash, :string)
-    field(:snapshot_number, :integer)
+    field(:revision_number, :integer)
     field(:schema_version, :integer)
+    field(:data, :json)
+    field(:message, :string)
     field(:author, :user, resolve: dataloader(CMS, :author))
     timestamp_fields()
   end

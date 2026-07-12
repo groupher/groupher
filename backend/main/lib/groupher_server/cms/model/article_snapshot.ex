@@ -1,15 +1,18 @@
 defmodule GroupherServer.CMS.Model.ArticleSnapshot do
   @moduledoc """
-  Stored version checkpoint for article-like content.
+  Immutable revision checkpoint for every Article thread.
 
-  This schema is intentionally scoped to Groupher article threads: posts, docs,
-  changelogs, and blogs. Comments are not part of this model.
+      current Article row
+              |
+              | checkpoint / publish / fork / promote / restore
+              v
+      ArticleSnapshot(revision_number=N)
+              |
+              +--> Diff reads any two Snapshots
+              +--> Restore copies versioned state into a new/current Draft
 
-  A row stores a full document snapshot rather than a patch. Draft and public
-  snapshots share the same `doc_id`, which points at the stable docs identity.
-
-  `stage` describes which version produced the snapshot. Review state belongs
-  to `publish_requests`; it is not a content stage.
+  Snapshots are append-only full checkpoints, never patches. `revision_number`
+  is one branch-local timeline shared by draft and public events.
   """
 
   alias __MODULE__
@@ -21,9 +24,7 @@ defmodule GroupherServer.CMS.Model.ArticleSnapshot do
 
   alias GroupherServer.CMS
   alias CMS.Artiment.Threads
-
-  alias CMS.Model.{Author, Community, DocsBranch}
-
+  alias CMS.Model.{ArticleBranch, Author, Community}
   alias Helper.Constant.DBPrefix
 
   require CMS.Const
@@ -32,66 +33,100 @@ defmodule GroupherServer.CMS.Model.ArticleSnapshot do
   @timestamps_opts [type: :utc_datetime]
 
   @max_subtitle_length 240
-  @required_fields ~w(community_id thread stage title document_json content_hash snapshot_number)a
-  @optional_fields ~w(branch_id doc_id author_id slug subtitle digest schema_version)a
+  @required_fields ~w(community_id branch_id article_hash_id thread stage action title document_json content_hash revision_number)a
+  @optional_fields ~w(parent_snapshot_id source_snapshot_id author_id slug subtitle digest data schema_version message)a
 
   @type snapshot_stage :: :draft | :public
   @type t :: %ArticleSnapshot{}
 
   schema "article_snapshots" do
     belongs_to(:community, Community)
-    belongs_to(:branch, DocsBranch)
+    belongs_to(:branch, ArticleBranch)
+    belongs_to(:parent_snapshot, ArticleSnapshot)
+    belongs_to(:source_snapshot, ArticleSnapshot)
     belongs_to(:author, Author)
 
-    field(:doc_id, Ecto.UUID)
+    field(:hash_id, Ecto.UUID, autogenerate: true)
+    field(:article_hash_id, Ecto.UUID)
     field(:thread, Ecto.Enum, values: Threads.article_enums())
     field(:stage, Ecto.Enum, values: CMS.Const.stage_values())
+    field(:action, Ecto.Enum, values: CMS.Const.article_snapshot_action_values())
     field(:title, :string)
     field(:slug, :string)
     field(:subtitle, :string)
     field(:digest, :string)
     field(:document_json, :string)
+    field(:data, :map, default: %{})
     field(:content_hash, :string)
-    field(:snapshot_number, :integer)
+    field(:revision_number, :integer)
     field(:schema_version, :integer, default: 1)
+    field(:message, :string)
 
     timestamps(type: :utc_datetime)
   end
 
+  @doc "Returns the allowed draft/public origin stages for revision checkpoints."
+  @spec stages() :: [atom()]
   def stages, do: CMS.Const.stage_enum_values()
 
+  @doc "Returns the allowed lifecycle actions recorded by a Snapshot."
+  @spec actions() :: [atom()]
+  def actions, do: CMS.Const.article_snapshot_action_enum_values()
+
+  @doc """
+  Builds an immutable Article Snapshot changeset.
+
+  The referenced Branch must match the Community and thread. Preview branches
+  may record only draft Snapshots; official public Snapshots belong to main.
+  """
+  @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(%ArticleSnapshot{} = snapshot, attrs) do
     snapshot
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
+    |> validate_inclusion(:thread, Threads.article_enums())
     |> validate_inclusion(:stage, CMS.Const.stage_enum_values())
+    |> validate_inclusion(:action, CMS.Const.article_snapshot_action_enum_values())
+    |> validate_number(:revision_number, greater_than: 0)
     |> validate_length(:title, min: 1, max: 100)
     |> validate_length(:subtitle, max: @max_subtitle_length)
-    |> validate_target()
+    |> validate_branch_scope()
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:branch_id)
+    |> foreign_key_constraint(:parent_snapshot_id)
+    |> foreign_key_constraint(:source_snapshot_id)
     |> foreign_key_constraint(:author_id)
-    |> check_constraint(:doc_id, name: :article_snapshots_target_check)
+    |> check_constraint(:article_hash_id, name: :article_snapshots_target_check)
     |> check_constraint(:stage, name: :article_snapshots_stage_check)
     |> check_constraint(:thread, name: :article_snapshots_thread_check)
+    |> check_constraint(:action, name: :article_snapshots_action_check)
+    |> unique_constraint(:revision_number, name: :article_snapshots_revision_index)
+    |> unique_constraint(:hash_id)
   end
 
-  def update_changeset(%ArticleSnapshot{} = snapshot, attrs), do: changeset(snapshot, attrs)
+  defp validate_branch_scope(changeset) do
+    prepare_changes(changeset, fn changeset ->
+      branch_id = get_field(changeset, :branch_id)
+      community_id = get_field(changeset, :community_id)
+      thread = get_field(changeset, :thread)
 
-  defp validate_target(changeset) do
-    case {get_field(changeset, :stage), get_field(changeset, :doc_id),
-          get_field(changeset, :thread)} do
-      {stage, doc_id, :doc} when stage in CMS.Const.stage_values() and not is_nil(doc_id) ->
-        validate_required(changeset, [:branch_id])
+      case changeset.repo.get_by(ArticleBranch,
+             id: branch_id,
+             community_id: community_id,
+             thread: thread
+           ) do
+        %ArticleBranch{type: type} -> validate_preview_stage(changeset, type)
+        nil -> add_error(changeset, :branch_id, "does not belong to the Article scope")
+      end
+    end)
+  end
 
-      {stage, doc_id, _thread} when stage in CMS.Const.stage_values() and not is_nil(doc_id) ->
-        changeset
-
-      {stage, nil, _thread} when stage in CMS.Const.stage_values() ->
-        add_error(changeset, :doc_id, "#{stage} snapshots require doc_id")
-
-      _ ->
-        add_error(changeset, :stage, "invalid snapshot target")
+  defp validate_preview_stage(changeset, type) do
+    if type == CMS.Const.article_branch_type(:preview) and
+         get_field(changeset, :stage) == CMS.Const.stage(:public) do
+      add_error(changeset, :stage, "preview branches can not contain public Snapshots")
+    else
+      changeset
     end
   end
 end

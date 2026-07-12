@@ -17,12 +17,13 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.DocTree.Branch
+  alias CMS.Articles.Branch
   alias CMS.Model.{Community, DocTreeNode}
 
   require CMS.Const
 
-  @tree_version 1
+  @tree_version 2
+  @tree_node_type_tab CMS.Const.tree_node_type(:tab)
   @tree_node_type_group CMS.Const.tree_node_type(:group)
   @tree_node_type_page CMS.Const.tree_node_type(:page)
   @tree_node_type_link CMS.Const.tree_node_type(:link)
@@ -35,7 +36,7 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   ## Examples
 
       iex> Snapshot.draft_json(community)
-      %{"version" => 1, "groups" => groups}
+      %{"version" => 2, "tabs" => tabs}
   """
   @spec draft_json(Community.t(), keyword() | map()) :: map()
   def draft_json(%Community{} = community, opts \\ []),
@@ -47,7 +48,7 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   ## Examples
 
       iex> Snapshot.published_json(community)
-      %{"version" => 1}
+      %{"version" => 2, "tabs" => tabs}
   """
   @spec published_json(Community.t(), keyword() | map()) :: map()
   def published_json(%Community{} = community, opts \\ []),
@@ -62,7 +63,7 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   ## Examples
 
       iex> Snapshot.from_nodes(nodes)["version"]
-      1
+      2
   """
   @spec from_nodes(list(DocTreeNode.t())) :: map()
   def from_nodes(nodes) when is_list(nodes), do: tree_json(nodes)
@@ -108,7 +109,7 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   end
 
   defp stage_json(%Community{} = community, opts, stage) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
+    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
       DocTreeNode
       |> where([n], n.community_id == ^community.id)
       |> where([n], n.branch_id == ^branch.id)
@@ -125,24 +126,38 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
       |> Enum.filter(&(&1.group_id && &1.type in [@tree_node_type_page, @tree_node_type_link]))
       |> Enum.group_by(& &1.group_id)
 
-    pins =
-      nodes
-      |> Enum.filter(&(&1.type == @tree_node_type_pin))
-      |> Enum.map(&node_json/1)
-
     groups =
       nodes
       |> Enum.filter(&(&1.type == @tree_node_type_group and &1.node_id != @pin_node_id))
       |> Enum.map(fn group ->
         group
         |> node_json()
+        |> Map.put("tabId", group.tab_id)
         |> Map.put(
           "children",
           Enum.map(Map.get(children_by_group, group.node_id, []), &node_json/1)
         )
       end)
 
-    %{"version" => @tree_version, "pins" => pins, "groups" => groups}
+    groups_by_tab = Enum.group_by(groups, & &1["tabId"])
+
+    pins_by_tab =
+      nodes
+      |> Enum.filter(&(&1.type == @tree_node_type_pin))
+      |> Enum.map(fn pin -> pin |> node_json() |> Map.put("tabId", pin.tab_id) end)
+      |> Enum.group_by(& &1["tabId"])
+
+    tabs =
+      nodes
+      |> Enum.filter(&(&1.type == @tree_node_type_tab))
+      |> Enum.map(fn tab ->
+        tab
+        |> node_json()
+        |> Map.put("pins", Map.get(pins_by_tab, tab.node_id, []))
+        |> Map.put("groups", Map.get(groups_by_tab, tab.node_id, []))
+      end)
+
+    %{"version" => @tree_version, "tabs" => tabs}
   end
 
   defp article_ref_id(%DocTreeNode{stage: CMS.Const.stage(:draft)} = node),

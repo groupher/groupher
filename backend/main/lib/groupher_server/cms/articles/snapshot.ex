@@ -1,285 +1,211 @@
 defmodule GroupherServer.CMS.Articles.Snapshot do
   @moduledoc """
-  Version history service for Groupher doc content.
+  Stores the append-only revision timeline shared by every Article thread.
 
-  This module owns the common draft/public snapshot chain for article
-  threads. It intentionally stays article-scoped: comments are frontend-only for
-  now and should not share this table or service.
+      branch draft/public head
+                |
+                | checkpoint / publish / fork / promote / restore
+                v
+      ArticleSnapshot(revision_number=N)
+                |
+                +--> Diff compares immutable states
+                +--> Restore copies state into a new/current Draft
 
-      Doc(thread=post/doc/changelog/blog)
-          |
-          | checkpoint_doc_draft/4
-          v
-      ArticleSnapshot(stage=draft, doc_id=doc.doc_id)
-          |
-          | publish_doc_draft/3
-          v
-      Doc(stage=public)
-          |
-          +--> ArticleSnapshot(stage=public, doc_id=doc.doc_id)
-          +--> clear ArticleSnapshot(stage=draft, doc_id=doc.doc_id)
-
-  Restore keeps the product model linear instead of git-like. Restoring a draft
-  checkpoint deletes later draft checkpoints. Restoring a public snapshot hides
-  later public snapshots from the doc history when possible, but preserves
-  any immutable snapshot already referenced by a docs publish release.
+  Autosave updates the mutable Draft row and does not create a Snapshot. Normal
+  checkpoints deduplicate by canonical version hash; explicit lifecycle events
+  remain auditable.
   """
 
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Articles.{Draft, Write}
-  alias CMS.DocTree.Branch
-  alias CMS.Model.{Doc, ArticleSnapshot, Author, Community, PublishReleaseArticle}
-  alias Helper.{ORM, T, Transaction}
+  alias CMS.Articles.{Branch, Draft, Lock, VersionedRelations, Write}
+  alias CMS.Model.{ArticleDocument, ArticleSnapshot, Author, Community}
+  alias Helper.{ORM, T}
 
   require CMS.Const
 
   @default_limit 30
+  @common_snapshot_fields [:title, :digest, :slug, :subtitle]
 
-  @doc """
-  Lists snapshot history visible from one staged doc version.
+  @type version_state :: %{
+          content_hash: String.t(),
+          title: String.t(),
+          digest: String.t() | nil,
+          slug: String.t() | nil,
+          subtitle: String.t() | nil,
+          document_json: String.t(),
+          data: map()
+        }
 
-  Draft and public snapshots are matched by `doc_id`.
-
-  ## Examples
-
-      iex> Snapshot.list_doc_draft(community, doc.doc_id, stage: CMS.Const.stage(:draft))
-      {:ok, [%ArticleSnapshot{stage: CMS.Const.stage(:draft)}]}
-
-      iex> Snapshot.list_doc_draft(community, doc.doc_id, stage: CMS.Const.stage(:public), limit: 5)
-      {:ok, [%ArticleSnapshot{stage: CMS.Const.stage(:public)}]}
-  """
-  @spec list_doc_draft(Community.t(), String.t(), keyword()) ::
+  @doc "Lists one Article's branch-local immutable revision timeline."
+  @spec list(Community.t(), T.thread(), Ecto.UUID.t(), keyword() | map()) ::
           T.domain_res([ArticleSnapshot.t()])
-  def list_doc_draft(%Community{} = community, doc_id, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
-      community
-      |> doc_snapshots_query(branch, doc_id)
-      |> maybe_filter_stage(Keyword.get(opts, :stage))
-      |> order_by([r], desc: r.snapshot_number, desc: r.id)
-      |> limit(^Keyword.get(opts, :limit, @default_limit))
+  def list(%Community{} = community, thread, article_hash_id, opts) do
+    with {:ok, branch} <- Branch.resolve(community, thread, opts) do
+      ArticleSnapshot
+      |> where([snapshot], snapshot.community_id == ^community.id)
+      |> where([snapshot], snapshot.thread == ^thread)
+      |> where([snapshot], snapshot.branch_id == ^branch.id)
+      |> where([snapshot], snapshot.article_hash_id == ^article_hash_id)
+      |> maybe_filter_stage(option(opts, :stage))
+      |> order_by([snapshot], desc: snapshot.revision_number, desc: snapshot.id)
+      |> limit(^option(opts, :limit, @default_limit))
       |> Repo.all()
       |> then(&{:ok, &1})
     end
   end
 
-  @doc """
-  Fetches one snapshot that belongs to the staged draft chain.
-
-  ## Examples
-
-      iex> Snapshot.get_doc_draft_snapshot(community, doc.doc_id, snapshot.id)
-      {:ok, %ArticleSnapshot{}}
-  """
-  @spec get_doc_draft_snapshot(Community.t(), String.t(), T.id(), keyword() | map()) ::
+  @doc "Fetches one Snapshot in an Article's branch-local revision timeline."
+  @spec get(Community.t(), T.thread(), Ecto.UUID.t(), Ecto.UUID.t(), keyword() | map()) ::
           T.domain_res(ArticleSnapshot.t())
-  def get_doc_draft_snapshot(%Community{} = community, doc_id, snapshot_id, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
-      community
-      |> doc_snapshots_query(branch, doc_id)
-      |> where([r], r.id == ^snapshot_id)
+  def get(%Community{} = community, thread, article_hash_id, snapshot_hash_id, opts) do
+    with {:ok, branch} <- Branch.resolve(community, thread, opts) do
+      ArticleSnapshot
+      |> where([snapshot], snapshot.hash_id == ^snapshot_hash_id)
+      |> where([snapshot], snapshot.community_id == ^community.id)
+      |> where([snapshot], snapshot.thread == ^thread)
+      |> where([snapshot], snapshot.branch_id == ^branch.id)
+      |> where([snapshot], snapshot.article_hash_id == ^article_hash_id)
       |> Repo.one()
       |> case do
         %ArticleSnapshot{} = snapshot -> {:ok, snapshot}
-        nil -> {:error, {:not_exist, "article snapshot #{snapshot_id}"}}
+        nil -> {:error, {:not_exist, "Article Snapshot #{snapshot_hash_id}"}}
       end
     end
   end
 
-  @doc """
-  Creates a draft checkpoint from the current staged content.
-
-  Unchanged draft checkpoints are skipped by comparing the latest checkpoint's
-  `content_hash`. Pass `force: true` only for explicit product events that must
-  be materialized.
-
-  ## Examples
-
-      iex> Snapshot.checkpoint_doc_draft(community, doc.doc_id, user)
-      {:ok, %ArticleSnapshot{stage: CMS.Const.stage(:draft), doc_id: doc.doc_id}}
-  """
-  @spec checkpoint_doc_draft(Community.t(), String.t(), User.t() | nil, keyword()) ::
+  @doc "Creates or reuses a deduplicated checkpoint of the current Draft."
+  @spec checkpoint(Community.t(), T.thread(), Ecto.UUID.t(), User.t() | nil, keyword() | map()) ::
           T.domain_res(ArticleSnapshot.t())
-  def checkpoint_doc_draft(
-        %Community{} = community,
-        doc_id,
-        user \\ nil,
-        opts \\ []
-      ) do
-    Transaction.lock_global(Draft.lock_key(community, doc_id, opts), fn ->
-      stage = Keyword.get(opts, :stage, CMS.Const.stage(:draft))
-      force? = Keyword.get(opts, :force, false)
-
-      with {:ok, draft} <- read_doc_draft(community, doc_id, opts),
-           {:ok, attrs} <- snapshot_attrs_from_doc(draft, stage, user) do
-        attrs
-        |> put_next_snapshot_number()
-        |> maybe_create_draft_snapshot(force?)
+  def checkpoint(%Community{} = community, thread, article_hash_id, user, opts) do
+    Lock.run(community, thread, article_hash_id, fn ->
+      with {:ok, draft} <- Draft.read(community, thread, article_hash_id, opts) do
+        checkpoint_article(draft, CMS.Const.article_snapshot_action(:checkpoint), user, opts)
       end
     end)
   end
 
-  @doc """
-  Saves a published doc snapshot.
-
-  Published snapshots are not deduplicated. A publish is a product event, so two
-  publishes with equal content should still produce two public snapshot rows.
-
-  ## Examples
-
-      iex> Snapshot.checkpoint_published(doc, user)
-      {:ok, %ArticleSnapshot{stage: CMS.Const.stage(:public), thread: :doc}}
-  """
-  @spec checkpoint_published(Doc.t(), User.t() | nil, keyword()) ::
+  @doc "Creates an immutable Snapshot from a current Article row."
+  @spec checkpoint_article(T.article(), atom(), User.t() | nil, keyword() | map()) ::
           T.domain_res(ArticleSnapshot.t())
-  def checkpoint_published(%Doc{} = doc, user \\ nil, opts \\ []) do
-    stage = Keyword.get(opts, :stage, CMS.Const.stage(:public))
+  def checkpoint_article(article, action, user, opts \\ []) do
+    with {:ok, thread} <- CMS.FrontDesk.thread_of(article),
+         {:ok, document} <-
+           ORM.find_by(ArticleDocument, article_id: article.id, thread: thread),
+         {:ok, author_id} <- author_id(user, article),
+         {:ok, attrs} <- snapshot_attrs(article, document, thread, action, author_id, opts) do
+      maybe_create_snapshot(attrs, action)
+    end
+  end
 
-    with {:ok, attrs} <- snapshot_attrs_from_doc(doc, stage, user) do
-      attrs
-      |> put_next_snapshot_number()
-      |> then(&ORM.create(ArticleSnapshot, &1))
+  @doc "Builds the current comparable Article state without creating a Snapshot row."
+  @spec current_state(T.article()) :: T.domain_res(version_state())
+  def current_state(article) do
+    with {:ok, thread} <- CMS.FrontDesk.thread_of(article),
+         {:ok, document} <-
+           ORM.find_by(ArticleDocument, article_id: article.id, thread: thread) do
+      {:ok, version_state(article, document)}
     end
   end
 
   @doc """
-  Publishes a staged draft and records the public snapshot.
+  Restores one historical Snapshot into the target branch Draft.
 
-  The draft is published through `CMS.Articles.Draft.publish/3`. After the
-  public snapshot is recorded, draft checkpoints are deleted because they no
-  longer represent unpublished work.
-
-  ## Examples
-
-      iex> Snapshot.publish_doc_draft(community, doc.doc_id, user)
-      {:ok, %ArticleSnapshot{stage: CMS.Const.stage(:public)}}
+  Restore is append-only: later history remains, and the restored Draft receives
+  a new `restore` Snapshot referencing the selected source.
   """
-  @spec publish_doc_draft(Community.t(), String.t(), User.t(), keyword() | map()) ::
-          T.domain_res(ArticleSnapshot.t())
-  def publish_doc_draft(%Community{} = community, doc_id, %User{} = user, opts \\ []) do
-    Transaction.lock_global(Draft.lock_key(community, doc_id, opts), fn ->
-      with {:ok, doc} <- Draft.publish_unlocked(community, doc_id, user, opts),
-           {:ok, snapshot} <- checkpoint_published(doc, user),
-           {:ok, _} <- clear_doc_draft_checkpoints(community, doc_id, opts) do
-        {:ok, snapshot}
-      end
-    end)
-  end
-
-  @doc """
-  Restores a snapshot into the staged draft.
-
-  Draft restore trims later draft checkpoints. Published restore trims later
-  public snapshots for that doc and clears staged checkpoints, keeping
-  both tabs in a single linear timeline.
-
-  ## Examples
-
-      iex> Snapshot.restore_doc_draft(community, doc.doc_id, snapshot.id, user)
-      {:ok, %Doc{}}
-  """
-  @spec restore_doc_draft(Community.t(), String.t(), T.id(), User.t() | nil, keyword() | map()) ::
-          T.domain_res(Doc.t())
-  def restore_doc_draft(
+  @spec restore(
+          Community.t(),
+          T.thread(),
+          Ecto.UUID.t(),
+          Ecto.UUID.t(),
+          User.t() | nil,
+          keyword() | map()
+        ) :: T.domain_res(T.article())
+  def restore(
         %Community{} = community,
-        doc_id,
-        snapshot_id,
-        user \\ nil,
-        opts \\ []
+        thread,
+        article_hash_id,
+        snapshot_hash_id,
+        user,
+        opts
       ) do
-    Transaction.lock_global(Draft.lock_key(community, doc_id, opts), fn ->
-      with {:ok, snapshot} <-
-             get_doc_draft_snapshot(community, doc_id, snapshot_id, opts),
-           {:ok, draft} <- restore_snapshot_into_draft(community, doc_id, snapshot, user, opts),
-           {:ok, _} <- trim_snapshots_after_restore(community, doc_id, snapshot, opts) do
+    Lock.run(community, thread, article_hash_id, fn ->
+      with {:ok, source_snapshot} <-
+             get(community, thread, article_hash_id, snapshot_hash_id, opts),
+           {:ok, draft} <- restore_into_draft(community, thread, source_snapshot, user, opts),
+           {:ok, _restore_snapshot} <-
+             checkpoint_article(
+               draft,
+               CMS.Const.article_snapshot_action(:restore),
+               user,
+               source_snapshot_id: source_snapshot.id
+             ) do
         {:ok, draft}
       end
     end)
   end
 
-  @doc """
-  Deletes temporary draft checkpoints for one staged draft.
+  defp snapshot_attrs(article, document, thread, action, author_id, opts) do
+    branch_id = article.branch_id
+    article_hash_id = article.article_hash_id
+    version_data = version_data(article)
+    canonical_hash = CMS.Hash.article_version_hash(article, document.json, version_data)
+    parent_snapshot = latest_snapshot(thread, branch_id, article_hash_id)
 
-  ## Examples
-
-      iex> Snapshot.clear_doc_draft_checkpoints(community, doc.doc_id)
-      {:ok, {3, nil}}
-  """
-  @spec clear_doc_draft_checkpoints(Community.t(), String.t(), keyword() | map()) ::
-          T.domain_res(term())
-  def clear_doc_draft_checkpoints(%Community{} = community, doc_id, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
-      ArticleSnapshot
-      |> where([r], r.community_id == ^community.id)
-      |> where([r], r.branch_id == ^branch.id)
-      |> where([r], r.doc_id == ^doc_id)
-      |> where([r], r.stage == CMS.Const.stage(:draft))
-      |> ORM.delete_all(:if_exist)
-    end
+    {:ok,
+     %{
+       community_id: article.community_id,
+       branch_id: branch_id,
+       article_hash_id: article_hash_id,
+       thread: thread,
+       stage: article.stage,
+       action: action,
+       parent_snapshot_id: parent_snapshot && parent_snapshot.id,
+       source_snapshot_id: option(opts, :source_snapshot_id),
+       author_id: author_id,
+       title: article.title,
+       slug: Map.get(article, :slug),
+       subtitle: Map.get(article, :subtitle),
+       digest: article.digest,
+       document_json: document.json,
+       data: version_data,
+       content_hash: canonical_hash,
+       revision_number: next_revision_number(thread, branch_id, article_hash_id),
+       schema_version: document.schema_version || Map.get(article, :schema_version) || 1,
+       message: option(opts, :message)
+     }}
   end
 
-  @doc """
-  Deletes later public snapshots for the same doc unless a docs
-  release already references them.
+  defp version_state(article, document) do
+    data = version_data(article)
 
-  ## Examples
-
-      iex> Snapshot.trim_published_snapshots_after_restore(community, snapshot)
-      {:ok, {2, nil}}
-  """
-  @spec trim_published_snapshots_after_restore(
-          Community.t(),
-          ArticleSnapshot.t(),
-          keyword() | map()
-        ) ::
-          T.domain_res(term())
-  def trim_published_snapshots_after_restore(community, snapshot, opts \\ [])
-
-  def trim_published_snapshots_after_restore(
-        %Community{} = community,
-        %ArticleSnapshot{stage: CMS.Const.stage(:public), doc_id: doc_id} = snapshot,
-        opts
-      )
-      when not is_nil(doc_id) do
-    {:ok, branch} = Branch.resolve(community, opts)
-
-    release_snapshot_ids =
-      PublishReleaseArticle
-      |> where([p], p.doc_id == ^doc_id)
-      |> select([p], p.snapshot_id)
-
-    ArticleSnapshot
-    |> where([r], r.community_id == ^community.id)
-    |> where([r], r.branch_id == ^branch.id)
-    |> where([r], r.thread == ^snapshot.thread)
-    |> where([r], r.stage == CMS.Const.stage(:public))
-    |> where([r], r.doc_id == ^doc_id)
-    |> where([r], r.snapshot_number > ^snapshot.snapshot_number)
-    |> where([r], r.id not in subquery(release_snapshot_ids))
-    |> ORM.delete_all(:if_exist)
+    %{
+      content_hash: CMS.Hash.article_version_hash(article, document.json, data),
+      title: article.title,
+      digest: article.digest,
+      slug: Map.get(article, :slug),
+      subtitle: Map.get(article, :subtitle),
+      document_json: document.json,
+      data: data
+    }
   end
 
-  def trim_published_snapshots_after_restore(_community, _snapshot, _opts), do: {:ok, {0, nil}}
+  defp version_data(article) do
+    scalar_data =
+      article
+      |> Map.from_struct()
+      |> Map.take(article.__struct__.version_fields())
+      |> Map.drop(@common_snapshot_fields)
 
-  defp read_doc_draft(%Community{} = community, doc_id, opts) do
-    Draft.read(community, doc_id, opts)
+    Map.merge(scalar_data, VersionedRelations.snapshot_data(article))
   end
 
-  defp doc_snapshots_query(%Community{} = community, branch, doc_id) do
-    ArticleSnapshot
-    |> where([r], r.community_id == ^community.id)
-    |> where([r], r.branch_id == ^branch.id)
-    |> where([r], r.thread == ^:doc)
-    |> where([r], r.doc_id == ^doc_id)
-  end
-
-  defp maybe_filter_stage(query, nil), do: query
-  defp maybe_filter_stage(query, stage), do: where(query, [r], r.stage == ^stage)
-
-  defp maybe_create_draft_snapshot(%{stage: CMS.Const.stage(:draft)} = attrs, false) do
-    case latest_snapshot(attrs, CMS.Const.stage(:draft)) do
+  defp maybe_create_snapshot(attrs, action)
+       when action == CMS.Const.article_snapshot_action(:checkpoint) do
+    case latest_snapshot(attrs.thread, attrs.branch_id, attrs.article_hash_id) do
       %ArticleSnapshot{content_hash: content_hash} = snapshot
       when content_hash == attrs.content_hash ->
         {:ok, snapshot}
@@ -289,157 +215,98 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
     end
   end
 
-  defp maybe_create_draft_snapshot(attrs, _force?), do: ORM.create(ArticleSnapshot, attrs)
+  defp maybe_create_snapshot(attrs, _action), do: ORM.create(ArticleSnapshot, attrs)
 
-  defp put_next_snapshot_number(%{} = attrs) do
-    Map.put(attrs, :snapshot_number, next_snapshot_number(attrs))
-  end
-
-  defp next_snapshot_number(%{} = attrs) do
+  defp latest_snapshot(thread, branch_id, article_hash_id) do
     ArticleSnapshot
-    |> where([r], r.community_id == ^attrs.community_id)
-    |> maybe_match_branch(attrs)
-    |> where([r], r.thread == ^attrs.thread)
-    |> where([r], r.stage == ^attrs.stage)
-    |> match_snapshot_target(attrs)
-    |> select([r], max(r.snapshot_number))
-    |> Repo.one()
-    |> case do
-      nil -> 1
-      number -> number + 1
-    end
-  end
-
-  defp match_snapshot_target(query, %{doc_id: doc_id}) when not is_nil(doc_id) do
-    where(query, [r], r.doc_id == ^doc_id)
-  end
-
-  defp match_snapshot_target(query, _attrs), do: query
-
-  defp maybe_match_branch(query, %{branch_id: branch_id}) when not is_nil(branch_id) do
-    where(query, [r], r.branch_id == ^branch_id)
-  end
-
-  defp maybe_match_branch(query, _attrs), do: query
-
-  defp latest_snapshot(
-         %{community_id: community_id, thread: thread} = attrs,
-         stage
-       ) do
-    ArticleSnapshot
-    |> where([r], r.community_id == ^community_id)
-    |> maybe_match_branch(attrs)
-    |> where([r], r.thread == ^thread)
-    |> where([r], r.stage == ^stage)
-    |> match_snapshot_target(attrs)
-    |> order_by([r], desc: r.snapshot_number, desc: r.id)
+    |> where([snapshot], snapshot.thread == ^thread)
+    |> where([snapshot], snapshot.branch_id == ^branch_id)
+    |> where([snapshot], snapshot.article_hash_id == ^article_hash_id)
+    |> order_by([snapshot], desc: snapshot.revision_number, desc: snapshot.id)
     |> limit(1)
     |> Repo.one()
   end
 
-  defp trim_snapshots_after_restore(
-         %Community{} = community,
-         doc_id,
-         %ArticleSnapshot{stage: CMS.Const.stage(:draft), doc_id: doc_id} = snapshot,
-         opts
-       ) do
-    {:ok, branch} = Branch.resolve(community, opts)
-
-    ArticleSnapshot
-    |> where([r], r.community_id == ^community.id)
-    |> where([r], r.branch_id == ^branch.id)
-    |> where([r], r.thread == ^snapshot.thread)
-    |> where([r], r.doc_id == ^doc_id)
-    |> where([r], r.stage == CMS.Const.stage(:draft))
-    |> where([r], r.snapshot_number > ^snapshot.snapshot_number)
-    |> ORM.delete_all(:if_exist)
-  end
-
-  defp trim_snapshots_after_restore(
-         %Community{} = community,
-         doc_id,
-         %ArticleSnapshot{stage: CMS.Const.stage(:public)} = snapshot,
-         opts
-       ) do
-    with {:ok, _} <- trim_published_snapshots_after_restore(community, snapshot, opts) do
-      clear_doc_draft_checkpoints(community, doc_id, opts)
+  defp next_revision_number(thread, branch_id, article_hash_id) do
+    case latest_snapshot(thread, branch_id, article_hash_id) do
+      nil -> 1
+      snapshot -> snapshot.revision_number + 1
     end
   end
 
-  defp snapshot_attrs_from_doc(%Doc{} = doc, stage, user) do
-    with {:ok, author_id} <- author_id(user) do
-      {:ok,
-       %{
-         community_id: doc.community_id,
-         branch_id: doc.branch_id,
-         thread: :doc,
-         stage: stage,
-         doc_id: doc.doc_id,
-         author_id: author_id || doc.author_id,
-         title: doc.title,
-         slug: doc.slug,
-         subtitle: doc.subtitle,
-         digest: doc.digest,
-         document_json: doc.json,
-         content_hash: CMS.Hash.article_snapshot_content_hash(doc.content_hash, doc.subtitle),
-         schema_version: doc.schema_version || 1
-       }}
+  defp restore_into_draft(community, thread, snapshot, user, opts) do
+    case Draft.read(community, thread, snapshot.article_hash_id, opts) do
+      {:ok, _draft} ->
+        with {:ok, draft} <-
+               Draft.update_unlocked(
+                 community,
+                 thread,
+                 snapshot.article_hash_id,
+                 restore_attrs(snapshot, opts)
+               ) do
+          VersionedRelations.restore(draft, snapshot.data)
+        end
+
+      {:error, _} ->
+        create_restored_draft(community, thread, snapshot, user, opts)
     end
   end
 
-  defp author_id(nil), do: {:ok, nil}
+  defp create_restored_draft(_community, _thread, _snapshot, nil, _opts) do
+    {:error, {:custom, "Article Snapshot restore requires a user to create a Draft"}}
+  end
 
-  defp author_id(%User{} = user) do
+  defp create_restored_draft(community, thread, snapshot, %User{} = user, opts) do
+    with {:ok, branch} <- Branch.resolve(community, thread, opts) do
+      snapshot
+      |> restore_attrs(branch_id: branch.id)
+      |> Map.drop([:cover_url, :cover_url_dark])
+      |> Map.put(:article_hash_id, snapshot.article_hash_id)
+      |> then(&Draft.create(community, thread, &1, user))
+      |> case do
+        {:ok, draft} -> VersionedRelations.restore(draft, snapshot.data)
+        error -> error
+      end
+    end
+  end
+
+  defp restore_attrs(snapshot, opts) do
+    snapshot.data
+    |> atomize_keys()
+    |> Map.drop([:cover_url, :cover_url_dark])
+    |> Map.merge(%{
+      title: snapshot.title,
+      digest: snapshot.digest,
+      body: snapshot.document_json
+    })
+    |> maybe_put(:slug, snapshot.slug)
+    |> maybe_put(:subtitle, snapshot.subtitle)
+    |> maybe_put(:branch_id, option(opts, :branch_id))
+  end
+
+  defp atomize_keys(map) when is_map(map) do
+    Map.new(map, fn
+      {key, value} when is_binary(key) -> {String.to_existing_atom(key), value}
+      pair -> pair
+    end)
+  end
+
+  defp maybe_put(map, _key, nil), do: map
+  defp maybe_put(map, key, value), do: Map.put(map, key, value)
+
+  defp author_id(nil, article), do: {:ok, article.author_id}
+
+  defp author_id(%User{} = user, _article) do
     with {:ok, %Author{id: id}} <- Write.ensure_author_exists(user), do: {:ok, id}
   end
 
-  defp restore_snapshot_into_draft(%Community{} = community, doc_id, snapshot, user, opts) do
-    case Draft.read(community, doc_id, opts) do
-      {:ok, current_draft} ->
-        attrs =
-          snapshot
-          |> restore_attrs(current_draft)
-          |> Map.put(:branch_id, current_draft.branch_id)
+  defp maybe_filter_stage(query, nil), do: query
+  defp maybe_filter_stage(query, stage), do: where(query, [snapshot], snapshot.stage == ^stage)
 
-        Draft.update_unlocked(community, doc_id, attrs)
+  defp option(opts, key, default \\ nil)
+  defp option(opts, key, default) when is_list(opts), do: Keyword.get(opts, key, default)
 
-      {:error, _} ->
-        restore_snapshot_into_missing_draft(community, doc_id, snapshot, user)
-    end
+  defp option(opts, key, default) when is_map(opts) do
+    Map.get(opts, key) || Map.get(opts, Atom.to_string(key)) || default
   end
-
-  defp restore_snapshot_into_missing_draft(
-         %Community{} = community,
-         doc_id,
-         %ArticleSnapshot{} = snapshot,
-         %User{} = user
-       ),
-       do: create_restored_draft(community, doc_id, snapshot, user)
-
-  defp restore_snapshot_into_missing_draft(_community, _doc_id, _snapshot, _user) do
-    {:error, {:custom, "doc draft restore requires user"}}
-  end
-
-  defp create_restored_draft(
-         %Community{} = community,
-         doc_id,
-         %ArticleSnapshot{} = snapshot,
-         %User{} = user
-       ) do
-    attrs =
-      snapshot
-      |> restore_attrs(%Doc{slug: snapshot.slug})
-      |> Map.put(:doc_id, doc_id)
-      |> Map.put(:branch_id, snapshot.branch_id)
-
-    Draft.create(community, :doc, attrs, user)
-  end
-
-  defp restore_attrs(%ArticleSnapshot{} = snapshot, %Doc{} = draft) do
-    %{title: snapshot.title, subtitle: snapshot.subtitle, body: snapshot.document_json}
-    |> maybe_put_slug(snapshot.slug || draft.slug)
-  end
-
-  defp maybe_put_slug(attrs, slug) when is_binary(slug), do: Map.put(attrs, :slug, slug)
-  defp maybe_put_slug(attrs, _slug), do: attrs
 end

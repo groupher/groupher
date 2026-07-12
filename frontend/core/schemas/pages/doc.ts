@@ -2,6 +2,7 @@ import F from '../fragments'
 
 const docPublicTreeNode = `
   id
+  tabId
   groupId
   docId
   type
@@ -31,10 +32,12 @@ export const doc = `
 export const docPublicTree = `
   query docPublicTree($community: String!) {
     docPublicTree(community: $community) {
-      groups {
+      tabs {
         ${docPublicTreeNode}
-        children {
+        pins { ${docPublicTreeNode} }
+        groups {
           ${docPublicTreeNode}
+          children { ${docPublicTreeNode} }
         }
       }
     }

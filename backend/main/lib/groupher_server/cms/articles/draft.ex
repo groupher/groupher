@@ -1,56 +1,47 @@
 defmodule GroupherServer.CMS.Articles.Draft do
   @moduledoc """
-  Universal doc draft/snapshot workflow.
+  Owns the mutable draft head for every Article thread.
 
-  This module owns the staged content lifecycle for every thread. Docs
-  tree code may reference a draft, but it does not own the draft content.
+                              official public traffic
+                                        |
+                                        v
+                                  main/public
+                                   ^         |
+                          publish |         | start editing
+                                   |         v
+                                  main/draft
 
-      create/update
-          |
-          v
-      Doc(stage=draft)
-          |
-          +-- checkpoint --> ArticleSnapshot(stage=draft)
-          |
-          +-- publish ----> Doc(stage=public)
-                          -> ArticleSnapshot(stage=public)
-                          -> clear draft checkpoints
+      preview/draft -------- promote -------> main/draft
 
-  Public functions keep examples because callers from docs, posts, and
-  changelogs are expected to share this module rather than reimplementing the
-  same staged/published state machine.
+      ArticleSnapshot ------- restore ------> target branch draft
+
+  Arrows copy versioned fields. Public rows never move back to draft, Preview
+  branches never contain public rows, and runtime state remains anchored to the
+  main/public physical row.
   """
+
+  import Ecto.Changeset, only: [put_change: 3, put_embed: 3]
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.Articles.Document
-  alias CMS.DocTree.Branch
-  alias CMS.Model.{ArticleDocument, Doc, Author, Community, Embeds}
-  alias Ecto.Multi
-  alias Helper.{ArticlePayload, ContentPipeline, ORM, T, Transaction}
-  alias Helper.Validator.Slug
-  import Helper.Utils, only: [get_config: 2]
+  alias CMS.Articles.{Branch, Document, Lock, VersionedRelations, Write}
+  alias CMS.Assets
+  alias CMS.Model.{ArticleBranch, ArticleDocument, Author, Community, Embeds}
+  alias Helper.{ContentPipeline, ORM, T}
 
   require CMS.Const
 
-  @digest_length get_config(:article, :digest_length)
   @default_article_meta Embeds.ArticleMeta.default_meta()
   @default_emotions Embeds.ArticleEmotion.default_emotions()
 
-  @doc """
-  Reads one draft with its community scope.
-
-  ## Examples
-
-      iex> Draft.read(community, draft.doc_id)
-      {:ok, %Doc{}}
-  """
-  @spec read(Community.t(), String.t(), keyword() | map()) :: T.domain_res(Doc.t())
-  def read(%Community{} = community, doc_id, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
-      Doc
-      |> ORM.find_by(
-        doc_id: doc_id,
+  @doc "Reads one branch-local Article draft by stable logical identity."
+  @spec read(Community.t(), T.thread(), Ecto.UUID.t(), ArticleBranch.t() | map() | keyword()) ::
+          T.domain_res(T.article())
+  def read(%Community{} = community, thread, article_hash_id, branch_ref) do
+    with {:ok, branch} <- Branch.resolve(community, thread, branch_ref),
+         {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(thread) do
+      ORM.find_by(model,
+        article_hash_id: article_hash_id,
         community_id: community.id,
         branch_id: branch.id,
         stage: CMS.Const.stage(:draft)
@@ -58,61 +49,79 @@ defmodule GroupherServer.CMS.Articles.Draft do
     end
   end
 
-  @doc """
-  Reads the document currently shown in the dashboard editor.
-
-  The editor can be opened after a successful publish, when the draft row has
-  already been promoted to or merged into the public row. Loading must therefore
-  prefer draft content but fall back to public content instead of treating a
-  missing draft as an editor failure.
-  """
-  @spec read_editor(Community.t(), String.t(), keyword() | map()) :: T.domain_res(Doc.t())
-  def read_editor(%Community{} = community, doc_id, opts \\ []) do
-    case read(community, doc_id, opts) do
-      {:ok, draft} -> {:ok, draft}
-      {:error, _} -> read_public(community, doc_id, opts)
+  @doc "Reads the official main/public row by stable logical identity."
+  @spec read_public(
+          Community.t(),
+          T.thread(),
+          Ecto.UUID.t(),
+          ArticleBranch.t() | map() | keyword()
+        ) ::
+          T.domain_res(T.article())
+  def read_public(%Community{} = community, thread, article_hash_id, branch_ref) do
+    with {:ok, branch} <- Branch.resolve(community, thread, branch_ref),
+         true <- Branch.main?(branch),
+         {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(thread) do
+      ORM.find_by(model,
+        article_hash_id: article_hash_id,
+        community_id: community.id,
+        branch_id: branch.id,
+        stage: CMS.Const.stage(:public)
+      )
+    else
+      false -> {:error, {:custom, "preview branches do not contain public Articles"}}
+      error -> error
     end
   end
 
   @doc """
-  Creates a new draft from raw editor body.
+  Reads the content shown by an editor.
 
-  ## Examples
-
-      iex> Draft.create(community, :post, %{title: "Hello", slug: "hello", body: "[...]"}, user)
-      {:ok, %Doc{thread: :post}}
+  Main prefers draft and falls back to public after publish. Preview reads its
+  explicit draft only and never falls back to a public Preview row.
   """
-  @spec create(Community.t(), T.thread(), map(), User.t()) ::
-          T.domain_res(Doc.t())
+  @spec read_editor(
+          Community.t(),
+          T.thread(),
+          Ecto.UUID.t(),
+          ArticleBranch.t() | map() | keyword()
+        ) ::
+          T.domain_res(T.article())
+  def read_editor(%Community{} = community, thread, article_hash_id, branch_ref) do
+    with {:ok, branch} <- Branch.resolve(community, thread, branch_ref) do
+      case read(community, thread, article_hash_id, branch) do
+        {:ok, draft} ->
+          {:ok, draft}
+
+        {:error, _} when branch.type == CMS.Const.article_branch_type(:main) ->
+          read_public(community, thread, article_hash_id, branch)
+
+        error ->
+          error
+      end
+    end
+  end
+
+  @doc "Creates a new Article draft and its derived ArticleDocument."
+  @spec create(Community.t(), T.thread(), map(), User.t()) :: T.domain_res(T.article())
   def create(%Community{} = community, thread, attrs, %User{} = user) do
-    with {:ok, %Author{} = author} <- CMS.Articles.Write.ensure_author_exists(user) do
+    with {:ok, %Author{} = author} <- Write.ensure_author_exists(user) do
       create_with_author(community, thread, attrs, author)
     end
   end
 
-  @doc """
-  Creates a draft when the caller already resolved the CMS author.
-
-  Template/bootstrap code often creates several drafts for the same user. Passing
-  the resolved author avoids repeatedly doing user-to-author lookup while still
-  going through the same article payload path as `create/4`.
-
-  ## Examples
-
-      iex> Draft.create_with_author(community, :doc, attrs, author)
-      {:ok, %Doc{author_id: author.id}}
-  """
+  @doc "Creates a new Article draft when the CMS Author is already resolved."
   @spec create_with_author(Community.t(), T.thread(), map(), Author.t()) ::
-          T.domain_res(Doc.t())
+          T.domain_res(T.article())
   def create_with_author(%Community{} = community, thread, attrs, %Author{} = author) do
-    with {:ok, branch} <- Branch.resolve(community, attrs),
-         {:ok, payload} <- parse_body(attrs),
-         {:ok, draft_attrs} <- build_attrs(community, thread, attrs, payload, author) do
-      draft_attrs = Map.put(draft_attrs, :branch_id, branch.id)
-
+    with {:ok, branch} <- Branch.resolve(community, thread, attrs),
+         {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(thread),
+         {:ok, article_payload} <- parse_body(attrs),
+         {:ok, draft_attrs} <- build_attrs(community, branch, attrs, article_payload, author) do
       Repo.transaction(fn ->
-        with {:ok, draft} <- ORM.create(Doc, draft_attrs),
-             {:ok, _} <- Document.create_doc(draft, %{article_payload: payload}) do
+        with {:ok, draft} <- create_draft_row(model, thread, draft_attrs),
+             {:ok, draft} <- VersionedRelations.apply_input(draft, attrs),
+             {:ok, _document} <- Document.create(draft, %{article_payload: article_payload}),
+             {:ok, _asset_refs} <- Assets.sync_article_refs(community, draft, attrs) do
           draft
         else
           {:error, reason} -> Repo.rollback(reason)
@@ -122,370 +131,217 @@ defmodule GroupherServer.CMS.Articles.Draft do
     end
   end
 
-  @doc """
-  Updates staged content and derived document fields.
-
-  The body is parsed through `ContentPipeline` so `json`, `html`, `rss`, digest,
-  and `content_hash` stay in sync.
-
-  ## Examples
-
-      iex> Draft.update(community, draft.doc_id, %{title: "Next", slug: "next", body: "[...]"})
-      {:ok, %Doc{title: "Next"}}
-  """
-  @spec update(Community.t(), String.t(), map()) :: T.domain_res(Doc.t())
-  def update(%Community{} = community, doc_id, attrs) do
-    Transaction.lock_global(lock_key(community, doc_id, attrs), fn ->
-      update_unlocked(community, doc_id, attrs)
+  @doc "Updates an existing Article draft under its lifecycle lock."
+  @spec update(Community.t(), T.thread(), Ecto.UUID.t(), map()) :: T.domain_res(T.article())
+  def update(%Community{} = community, thread, article_hash_id, attrs) do
+    Lock.run(community, thread, article_hash_id, fn ->
+      update_unlocked(community, thread, article_hash_id, attrs)
     end)
   end
 
   @doc """
-  Updates the editable draft, creating it from the public row when needed.
+  Ensures an editable draft exists, then applies the requested update.
 
-  This supports the editor flow where a public doc becomes draft-backed on the
-  first real edit. The caller passes the current editor payload; after the draft
-  row is ensured, the same attrs are saved into that draft.
+  Main copies its public row. Preview copies the selected source branch's public
+  Snapshot/current row into a Preview draft without copying runtime state.
   """
-  @spec update_or_create_from_public(Community.t(), String.t(), map(), User.t()) ::
-          T.domain_res(Doc.t())
+  @spec update_or_create_from_public(
+          Community.t(),
+          T.thread(),
+          Ecto.UUID.t(),
+          map(),
+          User.t()
+        ) :: T.domain_res(T.article())
   def update_or_create_from_public(
         %Community{} = community,
-        doc_id,
+        thread,
+        article_hash_id,
         attrs,
         %User{} = user
       ) do
-    Transaction.lock_global(lock_key(community, doc_id, attrs), fn ->
-      with {:ok, _draft} <- ensure_from_public_unlocked(community, doc_id, attrs, user) do
-        update_unlocked(community, doc_id, attrs)
+    Lock.run(community, thread, article_hash_id, fn ->
+      with {:ok, _draft} <-
+             ensure_from_public_unlocked(community, thread, article_hash_id, attrs, user) do
+        update_unlocked(community, thread, article_hash_id, attrs)
       end
     end)
   end
 
-  @doc """
-  Updates a draft when the caller already holds `lock_key/2`.
-
-  Use this only inside higher-level workflows that must update the draft and its
-  snapshots under one critical section.
-
-  ## Examples
-
-      iex> Transaction.lock_global(Draft.lock_key(community, draft.doc_id), fn ->
-      ...>   Draft.update_unlocked(community, draft.doc_id, attrs)
-      ...> end)
-      {:ok, %Doc{}}
-  """
-  @spec update_unlocked(Community.t(), String.t(), map()) :: T.domain_res(Doc.t())
-  def update_unlocked(%Community{} = community, doc_id, attrs) do
-    with {:ok, draft} <- read(community, doc_id, attrs),
-         {:ok, payload} <- maybe_parse_body(attrs),
-         {:ok, draft_attrs} <- update_attrs(draft, attrs, payload),
-         {:ok, draft} <- maybe_update_draft(draft, draft_attrs),
-         {:ok, _} <- maybe_update_document(draft, payload) do
+  @doc "Updates a draft while the caller owns the lifecycle lock and transaction."
+  @spec update_unlocked(Community.t(), T.thread(), Ecto.UUID.t(), map()) ::
+          T.domain_res(T.article())
+  def update_unlocked(%Community{} = community, thread, article_hash_id, attrs) do
+    with {:ok, draft} <- read(community, thread, article_hash_id, attrs),
+         {:ok, article_payload} <- maybe_parse_body(attrs),
+         {:ok, next_attrs} <- update_attrs(draft, attrs, article_payload),
+         {:ok, draft} <- maybe_update_draft(draft, next_attrs),
+         {:ok, draft} <- VersionedRelations.apply_input(draft, attrs),
+         {:ok, _document} <- maybe_update_document(draft, article_payload),
+         {:ok, _asset_refs} <- Assets.sync_article_refs(draft, attrs) do
       {:ok, draft}
     end
   end
 
-  @doc """
-  Publishes a draft into a public Doc.
+  @doc "Ensures a branch-local Draft exists while the caller owns the Article lock."
+  @spec ensure_from_public_unlocked(
+          Community.t(),
+          T.thread(),
+          Ecto.UUID.t(),
+          map() | keyword(),
+          User.t()
+        ) :: T.domain_res(T.article())
+  def ensure_from_public_unlocked(
+        %Community{} = community,
+        thread,
+        article_hash_id,
+        branch_ref,
+        %User{} = user
+      ) do
+    with {:ok, branch} <- Branch.resolve(community, thread, branch_ref) do
+      case read(community, thread, article_hash_id, branch) do
+        {:ok, draft} ->
+          {:ok, draft}
 
-  First-time publish updates the draft stage to `:public`. When a public Doc
-  already exists with the same `doc_id`, the public row is updated from the
-  draft content and the draft row is removed.
-
-  ## Examples
-
-      iex> Draft.publish(community, draft.doc_id, user)
-      {:ok, %Doc{stage: CMS.Const.stage(:public)}}
-  """
-  @spec publish(Community.t(), String.t(), User.t(), keyword() | map()) :: T.domain_res(Doc.t())
-  def publish(%Community{} = community, doc_id, %User{} = user, opts \\ []) do
-    Transaction.lock_global(lock_key(community, doc_id, opts), fn ->
-      publish_unlocked(community, doc_id, user, opts)
-    end)
-  end
-
-  @doc """
-  Publishes a draft when the caller already holds `lock_key/2`.
-
-  ## Examples
-
-      iex> Transaction.lock_global(Draft.lock_key(community, draft.doc_id), fn ->
-      ...>   Draft.publish_unlocked(community, draft.doc_id, user)
-      ...> end)
-      {:ok, %Doc{stage: CMS.Const.stage(:public)}}
-  """
-  @spec publish_unlocked(Community.t(), String.t(), User.t(), keyword() | map()) ::
-          T.domain_res(Doc.t())
-  def publish_unlocked(%Community{} = community, doc_id, %User{} = _user, opts \\ []) do
-    with {:ok, draft} <- read(community, doc_id, opts),
-         :ok <- validate_slug(draft.slug),
-         {:ok, public_doc} <- do_publish(community, draft) do
-      {:ok, public_doc}
+        {:error, _} ->
+          create_from_source_public(community, thread, article_hash_id, branch, user)
+      end
     end
   end
 
-  @doc """
-  Advisory lock key shared by autosave, publish, checkpoint, and restore.
+  defp create_draft_row(model, thread, attrs) do
+    meta = Map.merge(@default_article_meta, %{thread: thread})
 
-  ## Examples
-
-      iex> Draft.lock_key(community, "abc-123")
-      "doc_draft:1:abc-123"
-  """
-  @spec lock_key(Community.t(), String.t(), keyword() | map()) :: String.t()
-  def lock_key(%Community{} = community, doc_id, opts \\ []) do
-    branch_key =
-      case Branch.branch_id(community, opts) do
-        {:ok, id} -> id
-        {:error, _} -> Branch.main_slug()
-      end
-
-    "doc_draft:#{community.id}:#{branch_key}:#{doc_id}"
+    struct(model)
+    |> model.changeset(attrs)
+    |> put_change(:author_id, attrs.author_id)
+    |> put_change(:emotions, @default_emotions)
+    |> put_embed(:meta, meta)
+    |> Repo.insert()
   end
 
-  defp parse_body(%{body: body}) when is_binary(body), do: ContentPipeline.parse(%{body: body})
-  defp parse_body(_attrs), do: {:error, {:custom, "article version body is required"}}
+  defp build_attrs(%Community{} = community, branch, attrs, article_payload, %Author{} = author) do
+    digest = article_digest(attrs, article_payload.digest)
 
-  defp maybe_parse_body(%{body: body}) when is_binary(body),
-    do: ContentPipeline.parse(%{body: body})
-
-  defp maybe_parse_body(_attrs), do: {:ok, nil}
-
-  defp build_attrs(%Community{} = community, _thread, attrs, payload, %Author{} = author) do
     attrs =
-      payload
-      |> ArticlePayload.pick_valid_fields()
+      attrs
+      |> Map.drop([:body, :article_payload, :branch, :branch_slug])
       |> Map.merge(%{
+        article_hash_id: Map.get(attrs, :article_hash_id) || Ecto.UUID.generate(),
+        branch_id: branch.id,
         community_id: community.id,
-        stage: CMS.Const.stage(:draft),
         author_id: author.id,
-        doc_id: Map.get(attrs, :doc_id) || Ecto.UUID.generate(),
+        stage: CMS.Const.stage(:draft),
         title: Map.get(attrs, :title),
-        subtitle: normalize_subtitle(Map.get(attrs, :subtitle)),
-        slug: Map.get(attrs, :slug),
-        digest: resolve_digest(Map.get(attrs, :subtitle), fallback_digest(nil, payload)),
-        template_key: Map.get(attrs, :template_key)
+        digest: digest,
+        content_hash: article_payload.content_hash,
+        schema_version: article_payload.schema_version
       })
+      |> maybe_put_doc_json(article_payload, branch.thread == :doc)
 
     {:ok, attrs}
   end
 
-  defp update_attrs(draft, %{title: _title} = attrs, payload) do
-    if is_binary(Map.get(attrs, :slug)) do
-      do_update_attrs(draft, attrs, payload)
-    else
-      {:error, {:custom, "article version slug is required"}}
-    end
+  defp update_attrs(draft, attrs, article_payload) do
+    version_fields = draft.__struct__.version_fields()
+
+    attrs =
+      attrs
+      |> Map.take(version_fields)
+      |> maybe_put_article_payload(article_payload, Map.has_key?(draft, :json))
+      |> maybe_put_digest(attrs, article_payload, draft)
+
+    {:ok, attrs}
   end
 
-  defp update_attrs(draft, attrs, payload), do: do_update_attrs(draft, attrs, payload)
+  defp maybe_put_article_payload(attrs, nil, _stores_json?), do: attrs
 
-  defp do_update_attrs(%Doc{} = draft, attrs, payload) do
-    subtitle = next_subtitle(draft, attrs)
-    fallback_digest = fallback_digest(draft, payload)
-
+  defp maybe_put_article_payload(attrs, article_payload, stores_json?) do
     attrs
-    |> Map.take([:title, :slug, :subtitle])
-    |> normalize_subtitle_attr()
-    |> maybe_put_payload(payload)
-    |> maybe_put_digest(attrs, payload, subtitle, fallback_digest)
-    |> then(&{:ok, &1})
+    |> Map.put(:content_hash, article_payload.content_hash)
+    |> Map.put(:schema_version, article_payload.schema_version)
+    |> maybe_put_doc_json(article_payload, stores_json?)
   end
 
-  defp maybe_put_payload(attrs, nil), do: attrs
+  defp maybe_put_doc_json(attrs, %{json: json}, true), do: Map.put(attrs, :json, json)
+  defp maybe_put_doc_json(attrs, _article_payload, false), do: attrs
 
-  defp maybe_put_payload(attrs, payload) do
-    Map.merge(attrs, ArticlePayload.pick_valid_fields(payload))
-  end
-
-  defp next_subtitle(%Doc{} = draft, attrs) do
-    if Map.has_key?(attrs, :subtitle), do: Map.get(attrs, :subtitle), else: draft.subtitle
-  end
-
-  defp normalize_subtitle_attr(attrs) do
-    if Map.has_key?(attrs, :subtitle) do
-      Map.put(attrs, :subtitle, normalize_subtitle(Map.get(attrs, :subtitle)))
+  defp maybe_put_digest(attrs, input_attrs, article_payload, draft) do
+    if article_payload || Map.has_key?(input_attrs, :digest) ||
+         Map.has_key?(input_attrs, :subtitle) do
+      fallback = (article_payload && article_payload.digest) || draft.digest
+      Map.put(attrs, :digest, article_digest(input_attrs, fallback))
     else
       attrs
     end
   end
 
-  defp normalize_subtitle(value) when is_binary(value) do
-    value
-    |> String.trim()
-    |> case do
-      "" -> nil
-      subtitle -> subtitle
-    end
+  defp normalize_digest(value, _fallback) when is_binary(value) and value != "", do: value
+  defp normalize_digest(_value, fallback), do: fallback
+
+  defp article_digest(%{digest: digest}, fallback), do: normalize_digest(digest, fallback)
+
+  defp article_digest(%{subtitle: subtitle}, fallback) do
+    normalize_digest(subtitle, fallback)
   end
 
-  defp normalize_subtitle(_), do: nil
-
-  defp maybe_put_digest(attrs, input_attrs, payload, subtitle, fallback_digest) do
-    if payload || Map.has_key?(input_attrs, :subtitle) do
-      Map.put(attrs, :digest, resolve_digest(subtitle, fallback_digest))
-    else
-      attrs
-    end
-  end
-
-  defp resolve_digest(subtitle, fallback_digest) do
-    case normalize_subtitle(subtitle) do
-      nil -> fallback_digest
-      subtitle -> String.slice(subtitle, 0, 400)
-    end
-  end
-
-  defp fallback_digest(_draft, %{plain_text: plain_text}) when is_binary(plain_text),
-    do: first_sentence_digest(plain_text)
-
-  defp fallback_digest(%Doc{digest: digest}, _payload) when is_binary(digest),
-    do: digest
-
-  defp fallback_digest(_draft, _payload), do: nil
-
-  defp first_sentence_digest(plain_text) do
-    text = String.trim(plain_text)
-
-    case Regex.run(~r/^.*?[.!?。！？]/u, text) do
-      [sentence] -> String.slice(sentence, 0, @digest_length)
-      _ -> String.slice(text, 0, @digest_length)
-    end
-  end
+  defp article_digest(_attrs, fallback), do: fallback
 
   defp maybe_update_draft(draft, attrs) when map_size(attrs) == 0, do: {:ok, draft}
   defp maybe_update_draft(draft, attrs), do: ORM.update(draft, attrs)
 
   defp maybe_update_document(_draft, nil), do: {:ok, nil}
 
-  defp maybe_update_document(draft, payload),
-    do: Document.update_doc(draft, %{article_payload: payload})
-
-  defp validate_slug(slug) do
-    if Slug.valid?(slug), do: :ok, else: {:error, {:custom, "article version slug is invalid"}}
+  defp maybe_update_document(draft, article_payload) do
+    Document.update(draft, %{article_payload: article_payload})
   end
 
-  defp read_public(%Community{} = community, doc_id, opts) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
-      Doc
-      |> ORM.find_by(
-        doc_id: doc_id,
-        community_id: community.id,
-        branch_id: branch.id,
-        stage: CMS.Const.stage(:public)
-      )
-    end
+  defp parse_body(%{body: body}) when is_binary(body), do: ContentPipeline.parse(%{body: body})
+  defp parse_body(_attrs), do: {:error, {:custom, "Article draft body is required"}}
+
+  defp maybe_parse_body(%{body: body}) when is_binary(body) do
+    ContentPipeline.parse(%{body: body})
   end
 
-  defp ensure_from_public_unlocked(%Community{} = community, doc_id, opts, %User{} = user) do
-    case read(community, doc_id, opts) do
-      {:ok, draft} ->
+  defp maybe_parse_body(_attrs), do: {:ok, nil}
+
+  defp create_from_source_public(community, thread, article_hash_id, branch, user) do
+    with {:ok, source_branch} <- source_branch(community, thread, branch),
+         {:ok, public_article} <- read_public(community, thread, article_hash_id, source_branch),
+         {:ok, document} <-
+           ORM.find_by(ArticleDocument, article_id: public_article.id, thread: thread) do
+      attrs =
+        public_article
+        |> version_attrs()
+        |> Map.drop([:cover_url, :cover_url_dark])
+        |> Map.merge(%{
+          article_hash_id: article_hash_id,
+          branch_id: branch.id,
+          body: document.json
+        })
+
+      with {:ok, draft} <- create(community, thread, attrs, user),
+           {:ok, draft} <- VersionedRelations.copy_to_draft(public_article, draft),
+           {:ok, _asset_refs} <- Assets.copy_article_refs(public_article, draft) do
         {:ok, draft}
-
-      {:error, _} ->
-        with {:ok, public_doc} <- read_public(community, doc_id, opts) do
-          create(
-            community,
-            :doc,
-            Map.put(draft_attrs_from_public(public_doc), :branch_id, public_doc.branch_id),
-            user
-          )
-        end
-    end
-  end
-
-  defp draft_attrs_from_public(%Doc{} = public_doc) do
-    %{
-      doc_id: public_doc.doc_id,
-      title: public_doc.title,
-      subtitle: public_doc.subtitle,
-      slug: public_doc.slug,
-      body: public_doc.json,
-      template_key: Map.get(public_doc, :template_key)
-    }
-  end
-
-  defp do_publish(%Community{} = community, %Doc{stage: CMS.Const.stage(:draft)} = draft) do
-    case ORM.find_by(Doc,
-           doc_id: draft.doc_id,
-           community_id: community.id,
-           branch_id: draft.branch_id,
-           stage: CMS.Const.stage(:public)
-         ) do
-      {:ok, public_doc} ->
-        Multi.new()
-        |> Multi.run(:draft_document, fn _, _ ->
-          ORM.find_by(ArticleDocument, article_id: draft.id, thread: :doc)
-        end)
-        |> Multi.run(:update_public_doc, fn _, _ ->
-          ORM.update(public_doc, publish_content_attrs(draft))
-        end)
-        |> Multi.run(:update_public_document, fn _,
-                                                 %{
-                                                   draft_document: draft_document,
-                                                   update_public_doc: public_doc
-                                                 } ->
-          Document.update_doc(public_doc, document_attrs_from_draft(draft, draft_document))
-        end)
-        |> Multi.run(:delete_draft, fn _, _ ->
-          ORM.delete(draft)
-        end)
-        |> Multi.run(:remove_draft_document, fn _, _ ->
-          Document.remove(:doc, draft.id)
-        end)
-        |> Repo.transaction()
-        |> publish_result()
-
-      {:error, _} ->
-        publish_first_public_doc(community, draft)
-    end
-  end
-
-  defp publish_first_public_doc(%Community{} = community, %Doc{} = draft) do
-    Transaction.lock_row(community, fn community ->
-      with {:ok, community} <- ORM.fill_meta(community),
-           {:ok, public_doc} <-
-             draft
-             |> Doc.changeset(first_public_doc_attrs(community, draft))
-             |> Ecto.Changeset.put_change(:emotions, @default_emotions)
-             |> Ecto.Changeset.put_embed(
-               :meta,
-               Map.merge(@default_article_meta, %{thread: :doc})
-             )
-             |> Repo.update(),
-           {:ok, _community} <- CMS.Communities.update_inner_id(community, :doc, public_doc) do
-        {:ok, public_doc}
       end
-    end)
+    end
   end
 
-  defp first_public_doc_attrs(%Community{} = community, %Doc{} = draft) do
-    next_inner_id = (community.meta.docs_inner_id_index || 0) + 1
+  defp source_branch(_community, _thread, %ArticleBranch{type: type} = branch)
+       when type == CMS.Const.article_branch_type(:main),
+       do: {:ok, branch}
 
-    %{
-      active_at: draft.inserted_at || DateTime.truncate(DateTime.utc_now(), :second),
-      inner_id: next_inner_id,
-      stage: CMS.Const.stage(:public)
-    }
+  defp source_branch(community, thread, %ArticleBranch{source_branch_id: source_branch_id})
+       when not is_nil(source_branch_id),
+       do: Branch.resolve(community, thread, source_branch_id)
+
+  defp source_branch(community, thread, _branch) do
+    Branch.resolve(community, thread, Branch.main_slug())
   end
 
-  defp publish_content_attrs(%Doc{} = draft) do
-    %{
-      title: draft.title,
-      subtitle: draft.subtitle,
-      slug: draft.slug,
-      digest: draft.digest,
-      json: draft.json,
-      content_hash: draft.content_hash,
-      schema_version: draft.schema_version
-    }
+  defp version_attrs(article) do
+    article
+    |> Map.from_struct()
+    |> Map.take(article.__struct__.version_fields())
   end
-
-  defp document_attrs_from_draft(%Doc{} = draft, %ArticleDocument{} = draft_document) do
-    %{article_payload: draft_document, title: draft.title}
-  end
-
-  defp publish_result({:ok, %{update_public_doc: public_doc}}), do: {:ok, public_doc}
-  defp publish_result({:error, _, reason, _}), do: {:error, reason}
 end

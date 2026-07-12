@@ -16,6 +16,7 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
       Enum.reduce(1..@total_count, [], fn _, acc ->
         {:ok, value} =
           CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
+
         acc ++ [value]
       end)
 
@@ -32,7 +33,7 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
     test "pending changelog should not see in paged query",
          ~m(guest_conn community changelog_m)a do
       variables = %{filter: %{community: community.slug}}
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       assert results["totalCount"] == @total_count
 
@@ -46,7 +47,7 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
       {:ok, changelog_m} = CMS.FrontDesk.article(community, :changelog, changelog_m.inner_id)
       assert changelog_m.pending == @audit_illegal
 
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       assert results["totalCount"] == @total_count - 1
     end
   end
@@ -56,7 +57,7 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
          ~m(guest_conn community changelog_m)a do
       variables = %{filter: %{community: community.slug}}
 
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       assert results |> is_valid_pagination?
       assert results["pageSize"] == @page_size
@@ -64,7 +65,7 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
 
       {:ok, _} = CMS.Articles.pin(community, changelog_m)
 
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       entries_first = results["entries"] |> List.first()
 
       assert results["totalCount"] == @total_count
@@ -74,13 +75,13 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
 
     test "pinned changelogs should not appear when page > 1", ~m(guest_conn community)a do
       variables = %{filter: %{page: 2, size: 20}}
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       assert results |> is_valid_pagination?
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
       {:ok, changelog} = CMS.FrontDesk.article(community, :changelog, random_id)
       {:ok, _} = CMS.Articles.pin(community, changelog)
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       assert results["entries"] |> Enum.any?(&(&1["id"] !== random_id))
     end
@@ -88,13 +89,13 @@ defmodule GroupherServer.Test.Query.Flags.ChangelogsFlags do
     test "if have trashed changelogs, the mark deleted changelogs should not appears in result",
          ~m(guest_conn community)a do
       variables = %{filter: %{community: community.slug}}
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
       {:ok, random_changelog} = CMS.FrontDesk.article(community, :changelog, random_id)
       {:ok, _} = CMS.Articles.mark_delete(random_changelog)
 
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       assert results["entries"] |> Enum.any?(&(&1["innerId"] !== random_id))
       assert results["totalCount"] == @total_count - 1

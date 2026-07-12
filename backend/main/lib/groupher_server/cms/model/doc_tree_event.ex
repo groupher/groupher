@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.{Community, DocsBranch, DocTreeSnapshot}
+  alias CMS.Model.{Community, ArticleBranch, DocTreeSnapshot}
   alias Helper.Constant.DBPrefix
 
   require CMS.Const
@@ -50,7 +50,7 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
   @type t :: %DocTreeEvent{}
   schema "doc_tree_events" do
     belongs_to(:community, Community)
-    belongs_to(:branch, DocsBranch)
+    belongs_to(:branch, ArticleBranch)
     belongs_to(:author, User)
     belongs_to(:snapshot, DocTreeSnapshot)
     belongs_to(:reverted_by_event, DocTreeEvent)
@@ -76,7 +76,7 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
+  @doc "Builds a staged Docs Tree event changeset."
   def changeset(%DocTreeEvent{} = event, attrs) do
     event
     |> cast(attrs, @required_fields ++ @optional_fields)
@@ -93,7 +93,7 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
     |> unique_constraint(:seq, name: :doc_tree_events_community_seq_index)
   end
 
-  @doc false
+  @doc "Builds a changeset for event publication, discard, or revert metadata."
   def update_changeset(%DocTreeEvent{} = event, attrs) do
     event
     |> cast(attrs, @optional_fields ++ [:status, :owner])
@@ -114,8 +114,8 @@ defmodule GroupherServer.CMS.Model.DocTreeEvent do
       community_id = get_field(changeset, :community_id)
       branch_id = get_field(changeset, :branch_id)
 
-      case changeset.repo.get_by(DocsBranch, id: branch_id, community_id: community_id) do
-        %DocsBranch{} -> changeset
+      case changeset.repo.get_by(ArticleBranch, id: branch_id, community_id: community_id) do
+        %ArticleBranch{} -> changeset
         nil -> add_error(changeset, :branch_id, "does not belong to the community")
       end
     end)

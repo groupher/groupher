@@ -3,47 +3,9 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
 
   use GroupherServer.TestMate
 
-  @query """
-  query($community: String!) {
-    docTree(community: $community) {
-      revision
-      treeState {
-        hasUnpublishedChanges
-        stagedEventCount
-      }
-      stagedEvents {
-        eventType
-      }
-      groups {
-        id
-      }
-      pins {
-        id
-        type
-        title
-        href
-      }
-    }
-  }
-  """
+  @query S.DocTree.q(:doc_tree)
 
-  @public_query """
-  query($community: String!) {
-    docPublicTree(community: $community) {
-      groups {
-        id
-        title
-        children {
-          id
-          docId
-          type
-          title
-          href
-        }
-      }
-    }
-  }
-  """
+  @public_query S.DocTree.q(:doc_public_tree)
 
   setup do
     guest_conn = simu_conn(:guest)
@@ -83,10 +45,9 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
 
     assert result["revision"] == group_payload.revision
     assert result["treeState"]["hasUnpublishedChanges"] == true
-    assert result["treeState"]["stagedEventCount"] == 1
-    assert [%{"eventType" => "node.create"}] = result["stagedEvents"]
-    assert length(result["groups"]) == 1
-    assert result["pins"] == []
+    assert result["treeState"]["stagedEventCount"] == 2
+    assert Enum.all?(result["stagedEvents"], &(&1["eventType"] == "node.create"))
+    assert [%{"pins" => [], "groups" => [_]}] = result["tabs"]
   end
 
   test "guest can query doc_public_tree without seeing drafts", %{
@@ -95,7 +56,7 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
   } do
     result = guest_conn |> gq_query(@public_query, %{community: community.slug})
 
-    assert result["groups"] == []
+    assert result["tabs"] == []
   end
 
   test "guest can query published doc_public_tree", %{
@@ -127,19 +88,23 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
 
     assert [
              %{
-               "id" => ^group_node_id,
-               "title" => "Guides",
-               "children" => [
+               "groups" => [
                  %{
-                   "id" => ^page_node_id,
-                   "docId" => ^page_doc_id,
-                   "type" => "PAGE",
-                   "title" => "Install",
-                   "href" => ^expected_href
+                   "id" => ^group_node_id,
+                   "title" => "Guides",
+                   "children" => [
+                     %{
+                       "id" => ^page_node_id,
+                       "docId" => ^page_doc_id,
+                       "type" => "PAGE",
+                       "title" => "Install",
+                       "href" => ^expected_href
+                     }
+                   ]
                  }
                ]
              }
-           ] = result["groups"]
+           ] = result["tabs"]
   end
 
   defp empty_docs_community(user) do

@@ -144,6 +144,10 @@ defmodule GroupherServer.CMS.Assets do
   @spec sync_article_refs(T.article(), map()) :: T.domain_res(term())
   def sync_article_refs(article, attrs), do: Write.sync_article_refs(article, attrs)
 
+  @doc "Copies all derived document asset refs between two versions of one Article."
+  @spec copy_article_refs(T.article(), T.article()) :: T.domain_res(term())
+  def copy_article_refs(source, target), do: Write.copy_article_refs(source, target)
+
   @doc """
   Deletes all persisted asset refs for one article.
 

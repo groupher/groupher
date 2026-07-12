@@ -290,9 +290,9 @@ defmodule GroupherServer.CMS.DocCover.Read do
     Doc
     |> where([d], d.community_id == ^community.id)
     |> where([d], d.stage == CMS.Const.stage(:public))
-    |> where([d], d.doc_id in ^doc_ids)
+    |> where([d], d.article_hash_id in ^doc_ids)
     |> Repo.all()
-    |> Map.new(&{&1.doc_id, &1})
+    |> Map.new(&{&1.article_hash_id, &1})
   end
 
   defp draft_nodes_by_public_row(%Community{} = community, groups, items, pinned_items) do

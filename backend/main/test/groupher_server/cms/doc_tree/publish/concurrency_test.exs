@@ -46,7 +46,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Concurrency do
       releases =
         Enum.map(results, fn {:ok, %{release: release}} -> release end)
 
-      assert Enum.count(releases, &match?(%CMS.Model.PublishRelease{}, &1)) == 1
+      assert Enum.count(releases, &match?(%CMS.Model.DocPublishRelease{}, &1)) == 1
       assert Enum.count(releases, &is_nil/1) == 1
       assert release_count(community) == 1
       assert CMS.DocTree.publish_checklist(community).total_count == 0
@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Concurrency do
   end
 
   defp release_count(community) do
-    CMS.Model.PublishRelease
+    CMS.Model.DocPublishRelease
     |> where([r], r.community_id == ^community.id)
     |> Repo.aggregate(:count, :id)
   end

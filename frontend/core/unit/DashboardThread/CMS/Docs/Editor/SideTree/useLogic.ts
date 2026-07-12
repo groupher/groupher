@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { DOC_STAGE, DSB_DOC_EVENT, type TDocStage } from '~/const/dsb/docs'
+import { ARTICLE_STAGE, type TArticleStage } from '~/const/article'
+import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useQuery from '~/hooks/useQuery'
 import useTrans from '~/hooks/useTrans'
@@ -64,6 +65,7 @@ import type {
   TSideTreeGroup,
   TSideTreeLinkInput,
   TSideTreeNodeMenuAction,
+  TSideTreeTab,
 } from './spec'
 import useDocEditorUrl from './useDocEditorUrl'
 import useSideTreePersistence, { type TSideTreeMutationSchema } from './usePersistence'
@@ -71,13 +73,24 @@ import useSideTreePersistence, { type TSideTreeMutationSchema } from './usePersi
 type TMoveDocToDraftData = {
   moveDocToDraft?: {
     docId?: string | null
-    stage?: TDocStage | null
+    stage?: TArticleStage | null
     publishState?: TDocTreeNodePublishState | null
   } | null
 }
 
 const hasDraftNode = (groups: readonly TSideTreeGroup[]): boolean =>
   groups.some((group) => isDraftId(group.id) || group.children.some((child) => isDraftId(child.id)))
+
+const mapTab = (node: TDocTreeNodeDTO): TSideTreeTab => ({
+  id: node.id,
+  title: node.title || '',
+  slug: node.slug || undefined,
+  pins: node.pins || [],
+  groups: (node.groups || []).map(mapGroup),
+})
+
+const findTabByDocId = (tabs: readonly TSideTreeTab[], docId: string | null): TSideTreeTab | null =>
+  tabs.find((tab) => resolveActiveIdFromUrl(tab.groups, docId) !== null) ?? null
 
 export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeController {
   const { t } = useTrans()
@@ -89,10 +102,14 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       revision: number
       treeState?: TDocTreeState | null
       stagedEvents?: TDocTreeEvent[] | null
-      groups: TDocTreeNodeDTO[]
+      tabs: TDocTreeNodeDTO[]
     }
   }>(S.docTree, { community })
-  const initialGroups = useMemo(() => initialData?.groups.map(mapGroup) ?? [], [initialData])
+  const initialTabs = useMemo(() => initialData?.tabs.map(mapTab) ?? [], [initialData])
+  const initialActiveTab = findTabByDocId(initialTabs, currentDocId) ?? initialTabs[0] ?? null
+  const [tabs, setTabs] = useState<TSideTreeTab[]>(initialTabs)
+  const [activeTabId, setActiveTabId] = useState<string | null>(initialActiveTab?.id ?? null)
+  const initialGroups = initialActiveTab?.groups ?? []
   const [groups, setGroups] = useState<TSideTreeGroup[]>(initialGroups)
   const [treeState, setTreeState] = useState<TDocTreeState | null>(initialData?.treeState ?? null)
   const [stagedEvents, setStagedEvents] = useState<TDocTreeEvent[]>(initialData?.stagedEvents ?? [])
@@ -145,11 +162,17 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     return groupsRef.current
   }
 
-  const commitGroups = useCallback((nextGroups: TSideTreeGroup[]): TSideTreeGroup[] => {
-    groupsRef.current = nextGroups
-    setGroups(nextGroups)
-    return nextGroups
-  }, [])
+  const commitGroups = useCallback(
+    (nextGroups: TSideTreeGroup[]): TSideTreeGroup[] => {
+      groupsRef.current = nextGroups
+      setGroups(nextGroups)
+      setTabs((currentTabs) =>
+        currentTabs.map((tab) => (tab.id === activeTabId ? { ...tab, groups: nextGroups } : tab)),
+      )
+      return nextGroups
+    },
+    [activeTabId],
+  )
 
   function updateGroups(
     updater: (currentGroups: TSideTreeGroup[]) => TSideTreeGroup[],
@@ -171,7 +194,15 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
     if (hasDraftNode(groupsRef.current)) return
 
-    const nextGroups = data.docTree.groups.map(mapGroup)
+    const nextTabs = data.docTree.tabs.map(mapTab)
+    const nextActiveTab =
+      findTabByDocId(nextTabs, currentDocIdRef.current) ??
+      nextTabs.find((tab) => tab.id === activeTabId) ??
+      nextTabs[0] ??
+      null
+    const nextGroups = nextActiveTab?.groups ?? []
+    setTabs(nextTabs)
+    setActiveTabId(nextActiveTab?.id ?? null)
     commitGroups(nextGroups)
     syncActiveIdFromUrl(nextGroups)
   }, [commitGroups, data, syncActiveIdFromUrl])
@@ -246,7 +277,9 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
    * addGroup()
    */
   function addGroup(): void {
+    if (!activeTabId) return
     const group = createSideTreeGroup(t(UNTITLED_TITLE_I18N_KEY))
+    group.tabId = activeTabId
     updateGroups((currentGroups) => [...currentGroups, group])
     setEditingTarget({ type: SIDE_TREE_NODE_TYPE.GROUP, groupId: group.id })
   }
@@ -323,6 +356,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
           title,
           slug,
           index,
+          tabId: activeTabId,
         },
       }),
       (data) => data?.createDocTreeGroup,
@@ -624,7 +658,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
           const publishState = {
             ...(current?.publishState ?? {}),
             ...(payload?.publishState ?? {}),
-            status: DOC_STAGE.DRAFT,
+            status: ARTICLE_STAGE.DRAFT,
             published: true,
             publishedBefore: true,
             hasDraft: true,
@@ -635,7 +669,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
           send(DSB_DOC_EVENT.DRAFT_PATCH, {
             docId:
               payload?.docId ?? (current?.type === SIDE_TREE_NODE_TYPE.PAGE ? current.docId : null),
-            stage: payload?.stage ?? DOC_STAGE.DRAFT,
+            stage: payload?.stage ?? ARTICLE_STAGE.DRAFT,
           })
           toast(t('dsb.cms.docs.side_tree.publish.draft_moved'))
         })
@@ -674,7 +708,118 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     selectPage(child)
   }
 
+  function activateTab(id: string): void {
+    const tab = tabs.find((item) => item.id === id)
+    if (!tab) return
+
+    setActiveTabId(id)
+    groupsRef.current = tab.groups
+    setGroups(tab.groups)
+    selectPage(findFirstPage(tab.groups))
+  }
+
+  function renameTab(tabId: string, title: string): void {
+    const nextTitle = title.trim()
+    const currentTab = tabs.find((tab) => tab.id === tabId)
+    if (!nextTitle || !currentTab || currentTab.title === nextTitle) return
+
+    setTabs((current) =>
+      current.map((tab) => (tab.id === tabId ? { ...tab, title: nextTitle } : tab)),
+    )
+
+    persistTitleMutation(
+      nextTitle,
+      S.updateDocTreeNode,
+      (slug) => ({ id: tabId, patch: { title: nextTitle, slug } }),
+      (data) => data?.updateDocTreeNode,
+      (node) => {
+        setTabs((current) =>
+          current.map((tab) =>
+            tab.id === tabId
+              ? {
+                  ...tab,
+                  title: node.title || nextTitle,
+                  slug: node.slug || undefined,
+                }
+              : tab,
+          ),
+        )
+      },
+      'rename tab',
+    )
+  }
+
+  function deleteTab(tabId: string): void {
+    if (tabs.length <= 1) return
+
+    const removedIndex = tabs.findIndex((tab) => tab.id === tabId)
+    if (removedIndex === -1) return
+
+    const nextTabs = tabs.filter((tab) => tab.id !== tabId)
+    setTabs(nextTabs)
+
+    if (activeTabId === tabId) {
+      const nextActiveTab = nextTabs[Math.min(removedIndex, nextTabs.length - 1)] || null
+      setActiveTabId(nextActiveTab?.id ?? null)
+      groupsRef.current = nextActiveTab?.groups ?? []
+      setGroups(nextActiveTab?.groups ?? [])
+      setEditingTarget(null)
+      selectPage(findFirstPage(nextActiveTab?.groups ?? []))
+    }
+
+    persist(S.deleteDocTreeNode, { id: tabId }, (data) => data?.deleteDocTreeNode)
+  }
+
+  function reorderTabs(nextTabs: readonly TSideTreeTab[], movedTabId: string): void {
+    const currentIndex = tabs.findIndex((tab) => tab.id === movedTabId)
+    const targetIndex = nextTabs.findIndex((tab) => tab.id === movedTabId)
+    if (currentIndex === -1 || targetIndex === -1 || currentIndex === targetIndex) return
+
+    setTabs([...nextTabs])
+    persist(S.moveDocTreeNode, { id: movedTabId, targetIndex }, (data) => data?.moveDocTreeNode)
+  }
+
+  function addTab(): void {
+    const title = t(UNTITLED_TITLE_I18N_KEY)
+
+    slugify(title)
+      .then((slug) =>
+        persist(
+          S.createDocTreeTab,
+          { input: { title, slug, index: tabs.length } },
+          (data) => data?.createDocTreeTab,
+        ),
+      )
+      .then((payload) => {
+        if (!payload?.node || payload.conflict) return
+        const affectedNodes = payload.affectedNodes || []
+        const createdTabs = affectedNodes
+          .filter((node) => String(node.type).toLowerCase() === 'tab')
+          .map((node) => mapTab({ ...node, groups: [], pins: [] }))
+        const tab = mapTab({
+          ...payload.node,
+          groups: affectedNodes.filter((node) => String(node.type).toLowerCase() === 'group'),
+          pins: [],
+        })
+        setTabs((current) => [
+          ...current,
+          ...createdTabs.filter((created) => !current.some((item) => item.id === created.id)),
+          tab,
+        ])
+        setActiveTabId(tab.id)
+        groupsRef.current = tab.groups
+        setGroups(tab.groups)
+        selectPage(null)
+      })
+      .catch((err) => {
+        console.error('## doc tree create tab error: ', err)
+        reload()
+      })
+  }
+
   return {
+    tabs,
+    activeTabId,
     groups,
     treeState,
     stagedEvents,
@@ -682,6 +827,11 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     editingTarget,
     coverWarning,
     activate,
+    activateTab,
+    addTab,
+    deleteTab,
+    renameTab,
+    reorderTabs,
     addGroup,
     addChild,
     clearCoverWarning: () => setCoverWarning(null),

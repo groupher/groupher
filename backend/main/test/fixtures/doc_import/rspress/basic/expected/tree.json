@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "framework": "rspress",
+    "root": "docs",
+    "configPaths": ["rspress.config.ts"]
+  },
+  "navigation": [
+    {
+      "kind": "scope",
+      "sourceId": "sidebar:/guide/",
+      "title": "Guide",
+      "routePrefix": "/guide/",
+      "children": [
+        {
+          "kind": "section",
+          "sourceId": "sidebar:/guide/:basics",
+          "title": "Basics",
+          "children": [
+            {
+              "kind": "page",
+              "sourceId": "docs/guide/quick-start.md",
+              "sourcePath": "docs/guide/quick-start.md",
+              "title": "Quick Start",
+              "route": "/guide/quick-start"
+            },
+            {
+              "kind": "link",
+              "sourceId": "external:https://api.example.com",
+              "title": "External API",
+              "href": "https://api.example.com"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -5,6 +5,18 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
   use Helper.GqlSchemaSuite
 
   object :cms_doc_tree_mutations do
+    @desc "create a docs tree tab"
+    field :create_doc_tree_tab, :doc_tree_mutation_payload do
+      arg(:community, non_null(:string))
+      arg(:base_revision, non_null(:integer))
+      arg(:input, non_null(:doc_tree_node_input))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      middleware(M.PutCurrentUser)
+      resolve(&R.CMS.create_doc_tree_tab/3)
+    end
+
     @desc "create a docs tree group"
     field :create_doc_tree_group, :doc_tree_mutation_payload do
       arg(:community, non_null(:string))
@@ -179,6 +191,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:base_revision, non_null(:integer))
+      arg(:target_tab_id, :id)
       arg(:target_group_id, :id)
       arg(:target_index, :integer)
 

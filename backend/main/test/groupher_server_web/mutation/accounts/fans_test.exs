@@ -13,14 +13,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
   end
 
   describe "[Accounts follower]" do
-    @query """
-    mutation($login: String!) {
-      follow(login: $login) {
-        login
-        viewerHasFollowed
-      }
-    }
-    """
+    @query S.Social.m(:follow)
     test "login user can follow other user", ~m(user_conn)a do
       {:ok, user2} = db_insert(:user)
 
@@ -58,13 +51,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.Fans do
       assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
     end
 
-    @query """
-    mutation($login: String!) {
-      undoFollow(login: $login) {
-        login
-      }
-    }
-    """
+    @query S.Social.m(:undo_follow)
     test "login user can undo follow other user", ~m(user_conn user)a do
       {:ok, user2} = db_insert(:user)
       {:ok, _} = user |> Accounts.Fans.follow(user2)

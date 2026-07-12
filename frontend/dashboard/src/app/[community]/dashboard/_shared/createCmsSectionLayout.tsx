@@ -13,6 +13,7 @@ import AdminList from '~/unit/DashboardThread/AdminList'
 import Portal from '~/unit/DashboardThread/Portal'
 
 type TCmsSectionLayoutConfig = {
+  breadcrumbAddon?: ReactNode
   crumbTitle: TTransKey
   desc?: TTransKey
   path: string
@@ -20,12 +21,14 @@ type TCmsSectionLayoutConfig = {
   showAdmins?: boolean
   hideTitle?: boolean
   title: TTransKey
+  withBodyGap?: boolean
   withDivider?: boolean
 }
 
 const SECTION_BODY_GAP = 'mt-5'
 
 export default function createCmsSectionLayout({
+  breadcrumbAddon,
   crumbTitle,
   desc,
   path,
@@ -33,6 +36,7 @@ export default function createCmsSectionLayout({
   showAdmins = false,
   hideTitle = false,
   title,
+  withBodyGap = true,
   withDivider = false,
 }: TCmsSectionLayoutConfig) {
   const crumbConfig = {
@@ -48,8 +52,13 @@ export default function createCmsSectionLayout({
     const { submenuCollapsed } = useDashboardStore()
     const adminList = showAdmins ? mockUsers(4) : null
     const hasBreadcrumbs = !submenuCollapsed && crumbItems.length > 0
-    const hasPortalContent = hasBreadcrumbs || !hideTitle || !!desc || withDivider
-    const sectionBodyClass = cn('w-full', hasPortalContent && !withDivider && SECTION_BODY_GAP)
+    const visibleBreadcrumbAddon = hasBreadcrumbs ? breadcrumbAddon : undefined
+    const hasPortalContent =
+      hasBreadcrumbs || !!visibleBreadcrumbAddon || !hideTitle || !!desc || withDivider
+    const sectionBodyClass = cn(
+      'w-full',
+      withBodyGap && hasPortalContent && !withDivider && SECTION_BODY_GAP,
+    )
 
     return (
       <>
@@ -59,6 +68,7 @@ export default function createCmsSectionLayout({
             desc={desc ? t(desc) : undefined}
             hideTitle={hideTitle}
             crumbItems={crumbItems}
+            breadcrumbAddon={visibleBreadcrumbAddon}
             addon={adminList ? <AdminList userList={adminList} /> : undefined}
             withDivider={withDivider}
           />

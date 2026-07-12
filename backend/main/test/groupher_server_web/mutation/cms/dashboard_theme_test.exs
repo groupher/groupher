@@ -15,21 +15,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
   end
 
   describe "[mutation cms dashboard theme]" do
-    @save_custom_theme_preset_query """
-    mutation($community: String!, $themePreset: DsbThemePreset!, $themePresetBase: DsbThemePreset!, $themeOverwrite: Json) {
-      saveCustomThemePreset(community: $community, themePreset: $themePreset, themePresetBase: $themePresetBase, themeOverwrite: $themeOverwrite) {
-        layout {
-            themePreset
-            themePresetBase
-            themeTokens
-            themePresets {
-              value
-              tokens
-            }
-        }
-      }
-    }
-    """
+    @save_custom_theme_preset_query S.Dsb.m(:save_custom_theme_preset)
     test "save custom theme preset stores fork base and overwrite", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})
 
@@ -361,21 +347,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
       assert found.dashboard.layout.custom_theme_preset["overwrite"] == %{}
     end
 
-    @select_theme_preset_query """
-    mutation($community: String!, $themePreset: DsbThemePreset!) {
-      selectThemePreset(community: $community, themePreset: $themePreset) {
-        layout {
-            themePreset
-            themePresetBase
-            themeTokens
-            themePresets {
-              value
-              tokens
-            }
-        }
-      }
-    }
-    """
+    @select_theme_preset_query S.Dsb.m(:select_theme_preset)
     test "select theme preset stores a read-only preset without custom overwrite",
          ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{community.slug => %{"community.update" => true}})

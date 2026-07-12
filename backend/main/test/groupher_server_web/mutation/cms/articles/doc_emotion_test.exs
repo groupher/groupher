@@ -24,7 +24,7 @@ defmodule GroupherServer.Test.Mutation.Articles.DocEmotion do
         emotion: "BEER"
       }
 
-      article = user_conn |> gq_mutation(Schema.m(:emotion_article, :doc), variables)
+      article = user_conn |> gq_mutation(S.Article.m(:emotion_article, :doc), variables)
 
       assert emotion_entry(article["emotions"], :beer)["count"] == 1
       assert emotion_entry(article["emotions"], :beer)["viewerHasReacted"]
@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.Mutation.Articles.DocEmotion do
         emotion: "BEER"
       }
 
-      article = owner_conn |> gq_mutation(Schema.m(:undo_emotion_article, :doc), variables)
+      article = owner_conn |> gq_mutation(S.Article.m(:undo_emotion_article, :doc), variables)
 
       assert is_nil(emotion_entry(article["emotions"], :beer))
     end

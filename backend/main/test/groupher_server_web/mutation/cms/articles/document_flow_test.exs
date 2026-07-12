@@ -33,7 +33,6 @@ defmodule GroupherServer.Test.Mutation.Articles.DocumentFlow do
 
   @threads [
     {:post, "createPost", "updatePost", "post"},
-    {:doc, "createDoc", "updateDoc", "doc"},
     {:changelog, "createChangelog", "updateChangelog", "changelog"},
     {:blog, "createBlog", "updateBlog", "blog"}
   ]
@@ -49,7 +48,8 @@ defmodule GroupherServer.Test.Mutation.Articles.DocumentFlow do
           community: community.slug
         }
 
-        created = user_conn |> gq_mutation(create_mutation(unquote(create_op)), create_vars)
+        created =
+          user_conn |> gq_mutation(S.Article.m(:create_document, unquote(create_op)), create_vars)
 
         assert created["document"]["json"] == @plate_body
         assert is_binary(created["document"]["html"])
@@ -68,7 +68,8 @@ defmodule GroupherServer.Test.Mutation.Articles.DocumentFlow do
           body: @plate_body_updated
         }
 
-        updated = user_conn |> gq_mutation(update_mutation(unquote(update_op)), update_vars)
+        updated =
+          user_conn |> gq_mutation(S.Article.m(:update_document, unquote(update_op)), update_vars)
 
         assert updated["document"]["json"] == @plate_body_updated
         assert updated["title"] == update_vars.title
@@ -81,68 +82,12 @@ defmodule GroupherServer.Test.Mutation.Articles.DocumentFlow do
           }
         }
 
-        queried = user_conn |> gq_query(article_query(unquote(query_field)), query_vars)
+        queried =
+          user_conn |> gq_query(S.Article.q(:document, unquote(query_field), nil), query_vars)
 
         assert queried["document"]["json"] == @plate_body_updated
         assert is_binary(queried["document"]["html"])
       end
     end
-  end
-
-  defp create_mutation(operation) do
-    """
-    mutation($title: String!, $body: String!, $community: String!) {
-      #{operation}(title: $title, body: $body, community: $community) {
-        innerId
-        title
-        document {
-          json
-          markdown
-          markdownToc
-          html
-          xml
-          rss
-        }
-      }
-    }
-    """
-  end
-
-  defp update_mutation(operation) do
-    """
-    mutation($article: ArticlePathInput!, $title: String, $body: String) {
-      #{operation}(article: $article, title: $title, body: $body) {
-        innerId
-        title
-        document {
-          json
-          markdown
-          markdownToc
-          html
-          xml
-          rss
-        }
-      }
-    }
-    """
-  end
-
-  defp article_query(field_name) do
-    """
-    query($article: ArticlePathInput!) {
-      #{field_name}(article: $article) {
-        innerId
-        title
-        document {
-          json
-          markdown
-          markdownToc
-          html
-          xml
-          rss
-        }
-      }
-    }
-    """
   end
 end

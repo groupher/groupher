@@ -16,60 +16,11 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
   end
 
   describe "[query artiment mentions]" do
-    @mentions_query """
-    query($source: MentionSourceInput!, $filter: PagiFilter!) {
-      mentions(source: $source, filter: $filter) {
-        entries {
-          mentionerType
-          mentionerId
-          mentionerCommunityId
-          mentionedScope
-          mentionedType
-          mentionedId
-          mentionedCommunityId
-          mentionedUrl
-          mentionCase
-          occurrences
-        }
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @mentions_query S.Mention.q(:mentions)
 
-    @mentioned_by_query """
-    query($target: MentionTargetInput!, $filter: PagiFilter!) {
-      mentionedBy(target: $target, filter: $filter) {
-        entries {
-          mentionerType
-          mentionerId
-          mentionerCommunityId
-          mentionedType
-          mentionedId
-          mentionedCommunityId
-          mentionCase
-        }
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @mentioned_by_query S.Mention.q(:mentioned_by)
 
-    @mentions_without_filter_query """
-    query($source: MentionSourceInput!) {
-      mentions(source: $source) {
-        entries {
-          mentionerType
-          mentionerId
-          mentionedType
-          mentionedId
-        }
-        totalCount
-      }
-    }
-    """
+    @mentions_without_filter_query S.Mention.q(:mentions_2)
 
     test "can query mentions and mentionedBy", ~m(guest_conn community post_attrs blog user)a do
       body =

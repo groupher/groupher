@@ -18,21 +18,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
     {:ok, ~m(user_conn guest_conn community post user user2)a}
   end
 
-  @query """
-  query($article: ArticlePathInput!) {
-    commentsState(article: $article) {
-      totalCount
-      isViewerJoined
-      participantsCount
-
-      participants {
-        login
-        nickname
-        avatar
-      }
-    }
-  }
-  """
+  @query S.Comment.q(:comments_state)
 
   test "can get basic comments state", ~m(guest_conn user_conn community post user)a do
     {:ok, _} =
@@ -53,23 +39,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
     assert results["isViewerJoined"]
   end
 
-  @query """
-  query($comment: CommentPathInput!) {
-    oneComment(comment: $comment) {
-      innerId
-      floor
-      body
-      isArchived
-      archivedAt
-      viewerHasUpvoted
-      emotions {
-        type
-        count
-        viewerHasReacted
-      }
-    }
-  }
-  """
+  @query S.Comment.q(:one_comment_2)
 
   test "can get one comment by ref", ~m(guest_conn community post user)a do
     thread = :post
@@ -128,7 +98,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
       }
 
-      results = guest_conn |> gq_query(Schema.q(:article, :post), variables)
+      results = guest_conn |> gq_query(S.Article.q(:article, :post), variables)
 
       assert not results["isArchived"]
     end
@@ -152,7 +122,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
       }
 
-      results = guest_conn |> gq_query(Schema.q(:article, :post), variables)
+      results = guest_conn |> gq_query(S.Article.q(:article, :post), variables)
 
       comments_participants = results["commentsParticipants"]
       comments_participants_count = results["commentsParticipantsCount"]
@@ -162,72 +132,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
       assert comments_participants_count == 2
     end
 
-    @query """
-      query($article: ArticlePathInput!, $mode: CommentsMode, $filter: CommentsFilter!) {
-        pagedComments(article: $article, mode: $mode, filter: $filter) {
-          entries {
-            innerId
-            bodyHtml
-            author {
-              login
-              nickname
-            }
-            isPinned
-            floor
-            upvotesCount
-
-            emotions {
-              type
-              count
-              latestUsers {
-                login
-                nickname
-              }
-              viewerHasReacted
-            }
-            isArticleAuthor
-            meta {
-              isArticleAuthorUpvoted
-              isLegal
-              illegalReason
-              illegalWords
-            }
-            replyToComment {
-              innerId
-              bodyHtml
-              floor
-              isArticleAuthor
-              author {
-                login
-                nickname
-              }
-            }
-            viewerHasUpvoted
-            replies {
-              innerId
-              bodyHtml
-              replyToComment {
-                innerId
-                author {
-                  login
-                  nickname
-                }
-              }
-              repliesCount
-              author {
-                login
-                nickname
-              }
-            }
-            repliesCount
-          }
-          totalPages
-          totalCount
-          pageSize
-          pageNumber
-        }
-    }
-    """
+    @query S.Comment.q(:paged_comments)
     test "list comments with default replies-mode", ~m(guest_conn community post user user2)a do
       total_count = 3
       page_size = 20
@@ -860,20 +765,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
   end
 
   describe "paged participants" do
-    @query """
-      query($article: ArticlePathInput!, $filter: PagiFilter!) {
-        pagedCommentsParticipants(article: $article, filter: $filter) {
-          entries {
-            login
-            nickname
-          }
-          totalPages
-          totalCount
-          pageSize
-          pageNumber
-        }
-    }
-    """
+    @query S.Comment.q(:paged_comments_participants)
     test "guest user can get paged participants", ~m(guest_conn community post user)a do
       total_count = 30
       page_size = 10
@@ -907,40 +799,7 @@ defmodule GroupherServer.Test.Query.Comments.PostComment do
   end
 
   describe "paged replies" do
-    @query """
-      query($comment: CommentPathInput!, $filter: CommentsFilter!) {
-        pagedCommentReplies(comment: $comment, filter: $filter) {
-          entries {
-            innerId
-            bodyHtml
-            author {
-              login
-              nickname
-            }
-            upvotesCount
-            emotions {
-              type
-              count
-              latestUsers {
-                login
-                nickname
-              }
-              viewerHasReacted
-            }
-            isArticleAuthor
-            meta {
-              isArticleAuthorUpvoted
-            }
-            repliesCount
-            viewerHasUpvoted
-          }
-          totalPages
-          totalCount
-          pageSize
-          pageNumber
-        }
-    }
-    """
+    @query S.Comment.q(:paged_comment_replies)
     test "guest user can get paged replies", ~m(guest_conn community post user user2)a do
       total_count = 2
       page_size = 10

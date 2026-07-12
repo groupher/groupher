@@ -31,6 +31,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
 
   require CMS.Const
 
+  @tree_node_type_tab CMS.Const.tree_node_type(:tab)
   @tree_node_type_group CMS.Const.tree_node_type(:group)
   @tree_node_type_page CMS.Const.tree_node_type(:page)
 
@@ -56,7 +57,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
 
     events
     |> Enum.filter(fn event ->
-      not is_nil(group_create_event_id(event)) and MapSet.member?(doc_bound_event_ids, event.id)
+      not is_nil(shell_create_event_id(event)) and MapSet.member?(doc_bound_event_ids, event.id)
     end)
     |> Enum.map(&"tree:#{&1.id}")
   end
@@ -123,20 +124,20 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
       |> order_by([d], asc: d.inserted_at, asc: d.id)
       |> Repo.all()
 
-    drafts_by_doc_id = Map.new(drafts, &{&1.doc_id, &1})
+    drafts_by_doc_id = Map.new(drafts, &{&1.article_hash_id, &1})
     pages = publish_pages_for_drafts(community, branch, Map.keys(drafts_by_doc_id))
     pages_by_doc_id = Map.new(pages, &{&1.doc_id, &1})
 
     Enum.map(drafts, fn draft ->
-      page = Map.get(pages_by_doc_id, draft.doc_id)
+      page = Map.get(pages_by_doc_id, draft.article_hash_id)
       public = public_article_snapshot(community, branch, draft)
       action = if public, do: "modified", else: "created"
       selectable = not is_nil(page)
       disabled_reason = unless selectable, do: "Doc draft is not attached to a tree page."
 
       %{
-        id: "doc:#{draft.doc_id}",
-        doc_id: draft.doc_id,
+        id: "doc:#{draft.article_hash_id}",
+        doc_id: draft.article_hash_id,
         page_node_id: page && page.node_id,
         title: draft.title,
         action: action,
@@ -202,7 +203,26 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
       end)
       |> MapSet.new(& &1.id)
 
-    MapSet.union(page_event_ids, group_event_ids)
+    tab_ids =
+      DocTreeNode
+      |> where([n], n.community_id == ^community.id)
+      |> where([n], n.branch_id == ^branch.id)
+      |> where([n], n.stage == CMS.Const.stage(:draft))
+      |> where([n], n.type == @tree_node_type_group)
+      |> where([n], n.node_id in ^MapSet.to_list(doc_bound_group_ids))
+      |> select([n], n.tab_id)
+      |> Repo.all()
+      |> MapSet.new()
+
+    tab_event_ids =
+      events
+      |> Enum.filter(fn event ->
+        tab_id = tab_create_event_id(event)
+        not is_nil(tab_id) and MapSet.member?(tab_ids, tab_id)
+      end)
+      |> MapSet.new(& &1.id)
+
+    page_event_ids |> MapSet.union(group_event_ids) |> MapSet.union(tab_event_ids)
   end
 
   defp page_create_event_doc_id(%DocTreeEvent{
@@ -225,12 +245,24 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
 
   defp group_create_event_id(_event), do: nil
 
+  defp tab_create_event_id(%DocTreeEvent{
+         event_type: CMS.Const.tree_event(:node_create),
+         node_type: @tree_node_type_tab,
+         node_id: tab_id
+       }),
+       do: tab_id
+
+  defp tab_create_event_id(_event), do: nil
+
+  defp shell_create_event_id(event),
+    do: group_create_event_id(event) || tab_create_event_id(event)
+
   defp draft_doc_ids(%Community{} = community, branch) do
     Doc
     |> where([d], d.community_id == ^community.id)
     |> where([d], d.branch_id == ^branch.id)
     |> where([d], d.stage == CMS.Const.stage(:draft))
-    |> select([d], d.doc_id)
+    |> select([d], d.article_hash_id)
     |> Repo.all()
     |> MapSet.new()
   end
@@ -279,21 +311,23 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
     Doc
     |> where([doc], doc.community_id == ^community.id)
     |> where([doc], doc.branch_id == ^branch.id)
-    |> where([doc], doc.doc_id == ^doc_id)
+    |> where([doc], doc.article_hash_id == ^doc_id)
     |> where([doc], doc.stage in [CMS.Const.stage(:draft), CMS.Const.stage(:public)])
     |> order_by([doc], asc: doc.stage)
     |> limit(1)
     |> Repo.one()
   end
 
-  defp public_article_snapshot(%Community{} = community, branch, %Doc{doc_id: doc_id}) do
+  defp public_article_snapshot(%Community{} = community, branch, %Doc{
+         article_hash_id: article_hash_id
+       }) do
     ArticleSnapshot
     |> where([s], s.community_id == ^community.id)
     |> where([s], s.branch_id == ^branch.id)
     |> where([s], s.stage == CMS.Const.stage(:public))
     |> where([s], s.thread == :doc)
-    |> where([s], s.doc_id == ^doc_id)
-    |> order_by([s], desc: s.snapshot_number, desc: s.id)
+    |> where([s], s.article_hash_id == ^article_hash_id)
+    |> order_by([s], desc: s.revision_number, desc: s.id)
     |> limit(1)
     |> Repo.one()
   end

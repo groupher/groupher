@@ -26,9 +26,12 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogSetTag do
       passport_rules = %{community.title => %{"changelog.community_tag.set" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}, communityTagId: community_tag.id}
+      variables = %{
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        communityTagId: community_tag.id
+      }
 
-      rule_conn |> gq_mutation(Schema.m(:set_community_tag), variables)
+      rule_conn |> gq_mutation(S.Article.m(:set_community_tag), variables)
       {:ok, found} = ORM.find(Changelog, changelog.id, preload: :community_tags)
 
       assoc_tags = found.community_tags |> Enum.map(& &1.id)
@@ -49,9 +52,12 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.ChangelogSetTag do
       passport_rules = %{community.title => %{"changelog.community_tag.unset" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}, communityTagId: community_tag.id}
+      variables = %{
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        communityTagId: community_tag.id
+      }
 
-      rule_conn |> gq_mutation(Schema.m(:unset_community_tag), variables)
+      rule_conn |> gq_mutation(S.Article.m(:unset_community_tag), variables)
 
       {:ok, changelog} = ORM.find(Changelog, changelog.id, preload: :community_tags)
       assoc_tags = changelog.community_tags |> Enum.map(& &1.id)

@@ -1,6 +1,7 @@
 import { useEffect, useState, type FC } from 'react'
 
-import { DOC_STAGE, DSB_DOC_EVENT, type TDocPublishSuccessPayload } from '~/const/dsb/docs'
+import { ARTICLE_STAGE } from '~/const/article'
+import { DSB_DOC_EVENT, type TDocPublishSuccessPayload } from '~/const/dsb/docs'
 import useEvent from '~/hooks/useEvent'
 
 import { DOC_EDITOR_MODE } from '../constant'
@@ -54,7 +55,7 @@ const Article: FC<TProps> = ({ sideTree }) => {
           hasDraft: false,
           hasUnpublishedChanges: false,
           published: true,
-          status: DOC_STAGE.PUBLIC,
+          status: ARTICLE_STAGE.PUBLIC,
         },
       })
     },
