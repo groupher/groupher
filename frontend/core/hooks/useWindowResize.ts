@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useEffectEvent, useState } from 'react'
 
 type TSize = {
   width?: number
@@ -24,6 +24,9 @@ const useWindowResize = (cb?: (size: TSize) => void): TSize => {
   }, [isClient])
 
   const [windowSize, setWindowSize] = useState(getSize)
+  const notifyResize = useEffectEvent((size: TSize): void => {
+    cb?.(size)
+  })
 
   useEffect(() => {
     if (!isClient) {
@@ -31,13 +34,14 @@ const useWindowResize = (cb?: (size: TSize) => void): TSize => {
     }
 
     const handleResize = () => {
-      setWindowSize(getSize())
-      cb?.(getSize())
+      const size = getSize()
+      setWindowSize(size)
+      notifyResize(size)
     }
 
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [cb, getSize, isClient]) // Empty array ensures that effect is only run on mount and unmount
+  }, [getSize, isClient])
 
   return windowSize
 }

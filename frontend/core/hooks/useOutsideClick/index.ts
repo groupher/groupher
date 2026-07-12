@@ -1,4 +1,4 @@
-import { type RefObject, useEffect, useRef } from 'react'
+import { type RefObject, useEffect, useEffectEvent, useMemo } from 'react'
 
 type OutsideEvent = MouseEvent | TouchEvent
 
@@ -25,16 +25,18 @@ const useOutsideClick = (
   refs: MaybeRef | MaybeRef[],
   onOutside?: (e: OutsideEvent) => void,
 ): void => {
-  const refsArray = Array.isArray(refs) ? refs : [refs]
-  const handlerRef = useRef(onOutside)
-  handlerRef.current = onOutside
+  const refsArray = useMemo(() => (Array.isArray(refs) ? refs : [refs]), [refs])
+  const enabled = Boolean(onOutside)
+  const handleOutside = useEffectEvent((event: OutsideEvent): void => {
+    onOutside?.(event)
+  })
 
   useEffect(() => {
-    if (!handlerRef.current) return
+    if (!enabled) return
 
     const handler = (e: OutsideEvent) => {
       if (!isEventInside(e, refsArray)) {
-        handlerRef.current?.(e)
+        handleOutside(e)
       }
     }
 
@@ -45,7 +47,7 @@ const useOutsideClick = (
       document.removeEventListener('click', handler, true)
       document.removeEventListener('touchstart', handler, true)
     }
-  }, [refsArray])
+  }, [enabled, refsArray])
 }
 
 export default useOutsideClick
