@@ -14,34 +14,7 @@ defmodule GroupherServer.Test.Query.CMS.CommunityTagGroups do
   end
 
   describe "[cms query community tag groups]" do
-    @query """
-    query($community: String!, $thread: Thread) {
-      communityTagGroups(community: $community, thread: $thread) {
-        id
-        title
-        index
-        tags {
-          id
-          title
-          slug
-          color
-          thread
-          group
-          groupId
-          index
-          community {
-            slug
-            title
-            logo
-          }
-          stats {
-            contentsCount
-            todayContentsCount
-          }
-        }
-      }
-    }
-    """
+    @query S.Community.q(:community_tag_groups)
 
     test "guest user can get tag groups ordered by group index",
          ~m(guest_conn community tag_attrs user)a do

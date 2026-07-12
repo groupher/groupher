@@ -22,7 +22,9 @@ defmodule GroupherServer.Test.Query.Accounts.Publish.Changelogs do
       {:ok, changelog2} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       variables = %{login: user.login, filter: %{page: 1, size: 20}}
-      results = guest_conn |> gq_query(Schema.q(:paged_published_articles, :changelog), variables)
+
+      results =
+        guest_conn |> gq_query(S.Article.q(:paged_published_articles, :changelog), variables)
 
       assert results["entries"] |> Enum.any?(&(&1["innerId"] == to_string(changelog.inner_id)))
       assert results["entries"] |> Enum.any?(&(&1["innerId"] == to_string(changelog2.inner_id)))
@@ -49,7 +51,7 @@ defmodule GroupherServer.Test.Query.Accounts.Publish.Changelogs do
       random_comment_id = pub_comments |> Enum.random() |> Map.get(:inner_id) |> to_string
 
       variables = %{login: user.login, thread: "CHANGELOG", filter: %{page: 1, size: 20}}
-      results = guest_conn |> gq_query(Schema.q(:paged_published_comments), variables)
+      results = guest_conn |> gq_query(S.Comment.q(:paged_published_comments), variables)
 
       entries = results["entries"]
       assert results |> is_valid_pagination?

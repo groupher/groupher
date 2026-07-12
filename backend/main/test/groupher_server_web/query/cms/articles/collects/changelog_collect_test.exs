@@ -20,10 +20,13 @@ defmodule GroupherServer.Test.Query.Collects.ChangelogCollect do
       {:ok, _} = CMS.Articles.collect(changelog, user)
       {:ok, _} = CMS.Articles.collect(changelog, user2)
 
-      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}, filter: %{page: 1, size: 20}}
+      variables = %{
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        filter: %{page: 1, size: 20}
+      }
 
       results =
-        guest_conn |> gq_query(Schema.q(:collected_users), variables)
+        guest_conn |> gq_query(S.Article.q(:collected_users), variables)
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 2

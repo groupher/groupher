@@ -20,13 +20,7 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostReindexTag do
   end
 
   describe "[mutation post tag]" do
-    @query """
-    mutation($community: String!, $thread: Thread, $groupId: ID!, $tags: [ReindexTagInput]) {
-      reindexTagsInGroup(community: $community, thread: $thread, groupId: $groupId, tags: $tags) {
-        done
-      }
-    }
-    """
+    @query S.CommunityTag.m(:reindex_tags_in_group)
     test "auth user can reindex tags in given group", ~m(community community_tag_attrs user)a do
       {:ok, group} = CMS.Communities.create_tag_group(community, :post, %{title: "group1"})
       attrs = Map.merge(community_tag_attrs, %{group_id: group.id})
@@ -82,13 +76,7 @@ defmodule GroupherServer.Test.Mutation.CommunityTags.PostReindexTag do
       assert community_tag4_after.index === 4
     end
 
-    @across_groups_query """
-    mutation($community: String!, $thread: Thread, $tags: [ReindexCommunityTagInput]) {
-      reindexCommunityTags(community: $community, thread: $thread, tags: $tags) {
-        done
-      }
-    }
-    """
+    @across_groups_query S.CommunityTag.m(:reindex_community_tags)
     test "auth user can reindex tags across groups", ~m(community community_tag_attrs user)a do
       {:ok, resources} = CMS.Communities.create_tag_group(community, :post, %{title: "Resources"})
       {:ok, general} = CMS.Communities.create_tag_group(community, :post, %{title: "General"})

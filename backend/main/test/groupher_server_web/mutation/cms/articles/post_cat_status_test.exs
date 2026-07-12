@@ -14,20 +14,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatStatus do
   end
 
   describe "[post cat & status]" do
-    @set_cat_query """
-    mutation(
-      $article: ArticlePathInput!
-      $cat: ArticleCatEnum!
-    ) {
-      setPostCat(
-        article: $article
-        cat: $cat
-      ) {
-        innerId
-        cat
-      }
-    }
-    """
+    @set_cat_query S.Article.m(:set_post_cat)
     test "can set cat for a existing post", ~m(user_conn community post)a do
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
@@ -48,20 +35,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostCatStatus do
       assert user_conn |> mutation_error?(@set_cat_query, variables)
     end
 
-    @set_status_query """
-    mutation(
-      $article: ArticlePathInput!
-      $status: ArticleStatusEnum!
-    ) {
-      setPostStatus(
-        article: $article
-        status: $status
-      ) {
-        innerId
-        status
-      }
-    }
-    """
+    @set_status_query S.Article.m(:set_post_status)
     test "can set status for a existing post", ~m(user_conn community post)a do
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},

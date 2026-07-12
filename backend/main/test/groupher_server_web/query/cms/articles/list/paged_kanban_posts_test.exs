@@ -15,79 +15,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
   end
 
   describe "[query paged_posts filter pagination]" do
-    @query """
-    query($community: String!) {
-      groupedKanbanPosts(community: $community) {
-        backlog {
-          entries {
-            innerId
-            cat
-            status
-            title
-          }
-          totalPages
-          totalCount
-          pageSize
-          pageNumber
-        }
-
-        todo {
-          entries {
-            innerId
-            cat
-            status
-            title
-          }
-          totalPages
-          totalCount
-          pageSize
-          pageNumber
-        }
-
-        wip {
-          entries {
-            innerId
-            cat
-            status
-            title
-          }
-          totalPages
-          totalCount
-          pageSize
-          pageNumber
-        }
-
-        done {
-          entries {
-            innerId
-            cat
-            status
-            title
-          }
-          totalPages
-          totalCount
-          pageSize
-          pageNumber
-        }
-
-        rejected {
-          entries {
-            innerId
-            cat
-            status
-            title
-          }
-          totalPages
-          totalCount
-          pageSize
-          pageNumber
-        }
-      }
-    }
-    """
+    @query S.Article.q(:grouped_kanban_posts)
     test "should get grouped paged posts", ~m(guest_conn user community post_attrs)a do
       {:ok, _} =
-        CMS.Dashboard.update(community, :layout, %{
+        CMS.Dsb.update(community, :layout, %{
           kanban_boards: [:backlog, :todo, :wip, :done, :rejected]
         })
 
@@ -135,7 +66,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
     test "disabled grouped kanban boards resolve to empty paginations",
          ~m(guest_conn user community post_attrs)a do
       {:ok, _} =
-        CMS.Dashboard.update(community, :layout, %{
+        CMS.Dsb.update(community, :layout, %{
           kanban_boards: [:todo, :wip, :done]
         })
 
@@ -164,22 +95,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
       assert results["rejected"]["totalCount"] == 0
     end
 
-    @query """
-    query($community: String!, $filter: PagedKanbanPostsFilter!) {
-      pagedKanbanPosts(community: $community, filter: $filter) {
-        entries {
-          innerId
-          cat
-          status
-          title
-        }
-        totalPages
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @query S.Article.q(:paged_kanban_posts)
     test "can get paged kanban posts", ~m(guest_conn user community post_attrs)a do
       {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
       {:ok, _} = CMS.Articles.set_cat(post, @article_cat.idea)

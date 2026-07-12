@@ -26,7 +26,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated =
-        rule_conn |> gq_mutation(Schema.m(:mark_delete_article, :changelog), variables)
+        rule_conn |> gq_mutation(S.Article.m(:mark_delete_article, :changelog), variables)
 
       assert updated["innerId"] == to_string(changelog.inner_id)
       assert updated["markDelete"] == true
@@ -47,7 +47,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       passport_rules = %{community.slug => %{"changelog.mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      rule_conn |> gq_mutation(Schema.m(:mark_delete_article, :changelog), variables)
+      rule_conn |> gq_mutation(S.Article.m(:mark_delete_article, :changelog), variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.changelogs_count == 0
@@ -61,7 +61,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
 
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      schema = Schema.m(:mark_delete_article, :changelog)
+      schema = S.Article.m(:mark_delete_article, :changelog)
 
       assert user_conn |> mutation_error?(schema, variables, ecode(:passport))
       assert guest_conn |> mutation_error?(schema, variables, ecode(:account_login))
@@ -79,7 +79,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated =
-        rule_conn |> gq_mutation(Schema.m(:undo_mark_delete_article, :changelog), variables)
+        rule_conn |> gq_mutation(S.Article.m(:undo_mark_delete_article, :changelog), variables)
 
       assert updated["innerId"] == to_string(changelog.inner_id)
       assert updated["markDelete"] == false
@@ -102,7 +102,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
 
       passport_rules = %{community.slug => %{"changelog.undo_mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
-      rule_conn |> gq_mutation(Schema.m(:undo_mark_delete_article, :changelog), variables)
+      rule_conn |> gq_mutation(S.Article.m(:undo_mark_delete_article, :changelog), variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.changelogs_count == 1
@@ -116,7 +116,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
 
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      schema = Schema.m(:undo_mark_delete_article, :changelog)
+      schema = S.Article.m(:undo_mark_delete_article, :changelog)
 
       assert user_conn |> mutation_error?(schema, variables, ecode(:passport))
       assert guest_conn |> mutation_error?(schema, variables, ecode(:account_login))
@@ -134,7 +134,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated =
-        rule_conn |> gq_mutation(Schema.m(:batch_mark_delete_article, :changelog), variables)
+        rule_conn |> gq_mutation(S.Article.m(:batch_mark_delete_article, :changelog), variables)
 
       assert updated["done"] == true
 
@@ -163,7 +163,8 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated =
-        rule_conn |> gq_mutation(Schema.m(:batch_undo_mark_delete_article, :changelog), variables)
+        rule_conn
+        |> gq_mutation(S.Article.m(:batch_undo_mark_delete_article, :changelog), variables)
 
       assert updated["done"] == true
 
@@ -184,7 +185,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       passport_rules = %{community.slug => %{"changelog.pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> gq_mutation(Schema.m(:pin_article, :changelog), variables)
+      updated = rule_conn |> gq_mutation(S.Article.m(:pin_article, :changelog), variables)
 
       assert updated["innerId"] == to_string(changelog.inner_id)
     end
@@ -197,17 +198,25 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
-             |> mutation_error?(Schema.m(:pin_article, :changelog), variables, ecode(:passport))
+             |> mutation_error?(
+               S.Article.m(:pin_article, :changelog),
+               variables,
+               ecode(:passport)
+             )
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:pin_article, :changelog),
+               S.Article.m(:pin_article, :changelog),
                variables,
                ecode(:account_login)
              )
 
       assert rule_conn
-             |> mutation_error?(Schema.m(:pin_article, :changelog), variables, ecode(:passport))
+             |> mutation_error?(
+               S.Article.m(:pin_article, :changelog),
+               variables,
+               ecode(:passport)
+             )
     end
 
     test "auth user can undo pin changelog", ~m(community changelog)a do
@@ -219,7 +228,7 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       CMS.Articles.pin(community, changelog)
-      updated = rule_conn |> gq_mutation(Schema.m(:undo_pin_article, :changelog), variables)
+      updated = rule_conn |> gq_mutation(S.Article.m(:undo_pin_article, :changelog), variables)
 
       assert updated["innerId"] == to_string(changelog.inner_id)
     end
@@ -233,21 +242,21 @@ defmodule GroupherServer.Test.Mutation.Flags.ChangelogFlag do
 
       assert user_conn
              |> mutation_error?(
-               Schema.m(:undo_pin_article, :changelog),
+               S.Article.m(:undo_pin_article, :changelog),
                variables,
                ecode(:passport)
              )
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:undo_pin_article, :changelog),
+               S.Article.m(:undo_pin_article, :changelog),
                variables,
                ecode(:account_login)
              )
 
       assert rule_conn
              |> mutation_error?(
-               Schema.m(:undo_pin_article, :changelog),
+               S.Article.m(:undo_pin_article, :changelog),
                variables,
                ecode(:passport)
              )

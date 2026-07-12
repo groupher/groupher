@@ -23,19 +23,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
   end
 
   describe "mutation cms category" do
-    @create_category_query """
-    mutation($community: String!, $title: String!, $slug: String!) {
-      createCategory(community: $community, title: $title, slug: $slug) {
-        id
-        title
-        author {
-          login
-          nickname
-          avatar
-        }
-      }
-    }
-    """
+    @create_category_query S.Category.m(:create_category)
     test "auth user can create category", ~m(user community)a do
       variables = mock_attrs(:category, %{user_id: user.id, community: community.slug})
       rule_conn = simu_conn(:user, cms: %{"category.create" => true})
@@ -45,13 +33,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert created["title"] == variables.title
     end
 
-    @delete_category_query """
-    mutation($community: String!, $id: ID!) {
-      deleteCategory(community: $community, id: $id) {
-        id
-      }
-    }
-    """
+    @delete_category_query S.Category.m(:delete_category)
     test "auth user can delete category", ~m(community)a do
       {:ok, category} = db_insert(:category)
       {:ok, _} = CMS.Communities.set_category(community, category)
@@ -63,14 +45,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert deleted["id"] == to_string(category.id)
     end
 
-    @update_category_query """
-    mutation($community: String!, $id: ID!, $title: String!) {
-      updateCategory(community: $community, id: $id, title: $title) {
-        id
-        title
-      }
-    }
-    """
+    @update_category_query S.Category.m(:update_category)
     test "auth user can update  category", ~m(category community)a do
       {:ok, _} = CMS.Communities.set_category(community, category)
       rule_conn = simu_conn(:user, cms: %{"category.update" => true})
@@ -104,19 +79,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert rule_conn |> mutation_error?(@update_category_query, variables, ecode(:passport))
     end
 
-    @set_category_query """
-    mutation($categoryId: ID! $community: String!) {
-      setCategory(categoryId: $categoryId, community: $community) {
-        slug
-        title
-
-        categories {
-          id
-          title
-        }
-      }
-    }
-    """
+    @set_category_query S.Category.m(:set_category)
     test "auth user can set a category to a community" do
       {:ok, community} = mock_community()
       {:ok, category} = db_insert(:category)
@@ -136,14 +99,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert community.id in assoc_communities
     end
 
-    @unset_category_query """
-    mutation($categoryId: ID! $community: String!) {
-      unsetCategory(categoryId: $categoryId, community: $community) {
-        slug
-        title
-      }
-    }
-    """
+    @unset_category_query S.Category.m(:unset_category)
     test "auth user can unset a category to a community" do
       {:ok, community} = mock_community()
       {:ok, category} = db_insert(:category)
@@ -191,19 +147,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
   end
 
   describe "[mutation cms community]" do
-    @create_community_query """
-    mutation($title: String!, $desc: String!, $logo: String!, $slug: String!, $locale: String) {
-      createCommunity(title: $title, desc: $desc, logo: $logo, slug: $slug, locale: $locale) {
-        slug
-        title
-        desc
-        locale
-        author {
-          login
-        }
-      }
-    }
-    """
+    @create_community_query S.Community.m(:create_community)
     test "create community with valid attrs" do
       rule_conn = simu_conn(:user, cms: %{"community.create" => true})
       variables = mock_attrs(:community, %{locale: "zh"})
@@ -243,15 +187,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert is_nil(last)
     end
 
-    @update_community_query """
-    mutation($community: String!, $title: String, $desc: String, $logo: String) {
-      updateCommunity(community: $community, title: $title, desc: $desc, logo: $logo) {
-        slug
-        title
-        desc
-      }
-    }
-    """
+    @update_community_query S.Community.m(:update_community)
     test "update community with valid attrs", ~m(community)a do
       rule_conn = simu_conn(:user, cms: %{"community.update" => true})
       variables = %{community: community.slug, title: "new title"}
@@ -302,13 +238,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
              |> mutation_error?(@create_community_query, variables, ecode(:changeset))
     end
 
-    @delete_community_query """
-    mutation($community: String!){
-      deleteCommunity(community: $community) {
-        slug
-      }
-    }
-    """
+    @delete_community_query S.Community.m(:delete_community)
     test "auth user can delete community", ~m(community)a do
       variables = %{community: community.slug}
       rule_conn = simu_conn(:user, cms: %{"community.delete" => true})
@@ -340,14 +270,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
   end
 
   describe "[mutation cms moderators]" do
-    @all_rules_query """
-    query {
-      allPassportRules {
-        root
-        moderator
-      }
-    }
-    """
+    @all_rules_query S.Moderation.q(:all_passport_rules)
     test "can get all passport rules", ~m(user)a do
       rule_conn = simu_conn(:user, user)
       result = rule_conn |> gq_query(@all_rules_query)
@@ -359,13 +282,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert is_map(Jason.decode!(result["moderator"]))
     end
 
-    @set_moderator_query """
-    mutation($community: String!, $user: String!){
-      addModerator(community: $community, user: $user) {
-        slug
-      }
-    }
-    """
+    @set_moderator_query S.Moderation.m(:add_moderator)
     test "auth user can add moderator to community", ~m(user user2 community)a do
       passport_rules = %{community.slug => %{"moderator.set" => true}}
       rule_conn = simu_conn(:user, user, cms: passport_rules)
@@ -377,19 +294,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert result["slug"] == community.slug
     end
 
-    @set_moderators_query """
-    mutation($community: String!, $users: [String!]!){
-      addModerators(community: $community, users: $users) {
-        slug
-        moderators {
-          isRoot
-          user {
-            login
-          }
-        }
-      }
-    }
-    """
+    @set_moderators_query S.Moderation.m(:add_moderators)
     test "auth user can add moderators to community", ~m(user user2 community)a do
       {:ok, user3} = db_insert(:user)
 
@@ -418,13 +323,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert Enum.any?(result["moderators"], &(&1["user"]["login"] == user3.login))
     end
 
-    @unset_moderator_query """
-    mutation($community: String!, $user: String!){
-      removeModerator(community: $community, user: $user) {
-        slug
-      }
-    }
-    """
+    @unset_moderator_query S.Moderation.m(:remove_moderator)
     test "auth user can unset moderator AND passport from community", ~m(user community user2)a do
       cur_user = user
       {:ok, _} = CMS.Communities.add_moderator(community, user2, cur_user)
@@ -445,21 +344,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
                CommunityModerator |> ORM.find_by(user_id: user2.id, community_id: community.id)
     end
 
-    @update_moderator_query """
-    mutation($community: String!, $user: String!, $rules: Json!){
-      updateModeratorPassport(community: $community, user: $user, rules: $rules) {
-        slug
-        moderators {
-          isRoot
-          passportItemCount
-          user {
-            login
-            nickname
-          }
-        }
-      }
-    }
-    """
+    @update_moderator_query S.Moderation.m(:update_moderator_passport)
     @tag :skip_ci
     test "auth user can update moderator to community", ~m(user user2 community)a do
       cur_user = user
@@ -546,13 +431,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
   end
 
   describe "[mutation cms subscribes]" do
-    @subscribe_query """
-    mutation($community: String!){
-      subscribeCommunity(community: $community) {
-        slug
-      }
-    }
-    """
+    @subscribe_query S.Community.m(:subscribe_community)
     test "login user can subscribe community", ~m(user community)a do
       login_conn = simu_conn(:user, user)
 
@@ -586,13 +465,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert guest_conn |> mutation_error?(@subscribe_query, variables, ecode(:account_login))
     end
 
-    @unsubscribe_query """
-    mutation($community: String!){
-      unsubscribeCommunity(community: $community) {
-        slug
-      }
-    }
-    """
+    @unsubscribe_query S.Community.m(:unsubscribe_community)
     test "login user can unsubscribe community", ~m(user community)a do
       {:ok, cur_subscribers} =
         CMS.Communities.members(:subscribers, community, %{page: 1, size: 10})
@@ -648,27 +521,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
   end
 
   describe "mutation cms community apply" do
-    @apply_community_query """
-    mutation($title: String!, $desc: String!, $logo: String!, $slug: String!, $applyMsg: String, $applyCategory: String, $locale: String) {
-      applyCommunity(title: $title, desc: $desc, logo: $logo, slug: $slug, applyMsg: $applyMsg, applyCategory: $applyCategory, locale: $locale) {
-        locale
-        moderators {
-          isRoot
-          user {
-            login
-            avatar
-            nickname
-          }
-        }
-        pending
-        slug
-        meta {
-          applyMsg
-          applyCategory
-        }
-      }
-    }
-    """
+    @apply_community_query S.Community.m(:apply_community)
     test "apply a community should have default root user", ~m(user_conn)a do
       variables = mock_attrs(:community, %{locale: "it"})
       created = user_conn |> gq_mutation(@apply_community_query, variables)
@@ -682,14 +535,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert created["locale"] == "it"
     end
 
-    @approve_community_query """
-    mutation($community: String!) {
-      approveCommunityApply(community: $community) {
-        slug
-        pending
-      }
-    }
-    """
+    @approve_community_query S.Community.m(:approve_community_apply)
     test "can approve a community apply2", ~m(user_conn)a do
       variables = mock_attrs(:community)
       created = user_conn |> gq_mutation(@apply_community_query, variables)
@@ -703,14 +549,7 @@ defmodule GroupherServer.Test.Mutation.CMS.CRUD do
       assert found.pending == @community_normal
     end
 
-    @deny_community_query """
-    mutation($community: String!) {
-      denyCommunityApply(community: $community) {
-        slug
-        pending
-      }
-    }
-    """
+    @deny_community_query S.Community.m(:deny_community_apply)
     test "can deny a community apply", ~m(user_conn)a do
       variables = mock_attrs(:community)
       created = user_conn |> gq_mutation(@apply_community_query, variables)

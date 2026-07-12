@@ -24,7 +24,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
       }
     }
 
-    results = user_conn |> gq_query(Schema.q(:article, :changelog), variables)
+    results = user_conn |> gq_query(S.Article.q(:article, :changelog), variables)
 
     assert results["innerId"] == to_string(changelog.inner_id)
     assert get_in(results, ["community", "slug"]) == community.slug
@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
       }
     }
 
-    results = guest_conn |> gq_query(Schema.q(:article, :changelog), variables)
+    results = guest_conn |> gq_query(S.Article.q(:article, :changelog), variables)
 
     assert results["innerId"] == to_string(changelog.inner_id)
     assert is_valid_kv?(results, "title", :string)
@@ -68,13 +68,13 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
       }
     }
 
-    results = user_conn |> gq_query(Schema.q(:article, :changelog), variables)
+    results = user_conn |> gq_query(S.Article.q(:article, :changelog), variables)
 
     assert results |> get_in(["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == []
     assert results |> get_in(["meta", "illegalWords"]) == []
 
-    results = guest_conn |> gq_query(Schema.q(:article, :changelog), variables)
+    results = guest_conn |> gq_query(S.Article.q(:article, :changelog), variables)
     assert results |> get_in(["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == []
     assert results |> get_in(["meta", "illegalWords"]) == []
@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
         illegal_words: ["some-word"]
       })
 
-    results = user_conn |> gq_query(Schema.q(:article, :changelog), variables)
+    results = user_conn |> gq_query(S.Article.q(:article, :changelog), variables)
 
     assert not get_in(results, ["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == ["some-reason"]
@@ -98,7 +98,7 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
     {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
     {:ok, _} =
-      CMS.Dashboard.update(community, :enable, %{
+      CMS.Dsb.update(community, :enable, %{
         changelog: false
       })
 
@@ -111,6 +111,10 @@ defmodule GroupherServer.Test.Query.Articles.Changelog do
     }
 
     assert guest_conn
-           |> query_error?(Schema.q(:article, :changelog), variables, ecode(:thread_not_visible))
+           |> query_error?(
+             S.Article.q(:article, :changelog),
+             variables,
+             ecode(:thread_not_visible)
+           )
   end
 end

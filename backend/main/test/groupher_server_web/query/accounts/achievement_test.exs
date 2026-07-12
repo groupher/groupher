@@ -18,22 +18,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
   end
 
   describe "[account get achievements]" do
-    @query """
-    query($login: String!) {
-      user(login: $login) {
-        login
-        achievement {
-          reputation
-          articlesUpvotesCount
-          articlesCollectsCount
-          sourceContribute {
-            web
-            server
-          }
-        }
-      }
-    }
-    """
+    @query S.Account.q(:user_2)
     test "empty user should get empty achievement", ~m(guest_conn user)a do
       variables = %{login: user.login}
 
@@ -43,21 +28,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
   end
 
   describe "[account editable-communities]" do
-    @query """
-    query($login: String, $filter: PagiFilter!) {
-      moderatorableCommunities(login: $login, filter: $filter) {
-        entries {
-          logo
-          title
-          slug
-        }
-        totalPages
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @query S.Account.q(:moderatorable_communities)
     test "can get user's empty editable communities list", ~m(guest_conn user)a do
       variables = %{login: user.login, filter: %{page: 1, size: 20}}
       results = guest_conn |> gq_query(@query, variables)
@@ -86,18 +57,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
   end
 
   describe "[account follow achieveMent]" do
-    @query """
-    query($login: String!) {
-      user(login: $login) {
-        login
-        followersCount
-        followingsCount
-        achievement {
-          reputation
-        }
-      }
-    }
-    """
+    @query S.Account.q(:user_3)
     test "inc user's achievement after user got followed", ~m(guest_conn user)a do
       {:ok, user2} = db_insert(:user)
       {:ok, user3} = db_insert(:user)
@@ -138,17 +98,7 @@ defmodule GroupherServer.Test.Query.Account.Achievement do
   describe "[account collect achieveMent]" do
     alias GroupherServer.CMS
 
-    @query """
-    query($login: String!) {
-      user(login: $login) {
-        login
-        achievement {
-          reputation
-          articlesCollectsCount
-        }
-      }
-    }
-    """
+    @query S.Account.q(:user_4)
     test "inc user's achievement after user's post got collected", ~m(guest_conn user)a do
       {:ok, post} = db_insert(:post)
       {:ok, _article_collect} = CMS.Articles.collect(post, user)

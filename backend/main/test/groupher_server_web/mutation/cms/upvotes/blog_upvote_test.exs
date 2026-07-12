@@ -17,7 +17,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.BlogUpvote do
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
       }
 
-      created = user_conn |> gq_mutation(Schema.m(:upvote_article, :blog), variables)
+      created = user_conn |> gq_mutation(S.Article.m(:upvote_article, :blog), variables)
 
       assert user_exist_in?(user, get_in(created, ["meta", "latestUpvotedUsers"]))
       assert created["innerId"] == to_string(blog.inner_id)
@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.BlogUpvote do
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:upvote_article, :blog),
+               S.Article.m(:upvote_article, :blog),
                variables,
                ecode(:account_login)
              )
@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.BlogUpvote do
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
       }
 
-      updated = user_conn |> gq_mutation(Schema.m(:undo_upvote_article, :blog), variables)
+      updated = user_conn |> gq_mutation(S.Article.m(:undo_upvote_article, :blog), variables)
 
       assert not user_exist_in?(user, get_in(updated, ["meta", "latestUpvotedUsers"]))
       assert updated["innerId"] == to_string(blog.inner_id)
@@ -56,7 +56,7 @@ defmodule GroupherServer.Test.Mutation.Upvotes.BlogUpvote do
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:undo_upvote_article, :blog),
+               S.Article.m(:undo_upvote_article, :blog),
                variables,
                ecode(:account_login)
              )

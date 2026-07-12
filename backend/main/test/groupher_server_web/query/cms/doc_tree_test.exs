@@ -3,41 +3,9 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
 
   use GroupherServer.TestMate
 
-  @query """
-  query($community: String!) {
-    docTree(community: $community) {
-      revision
-      treeState {
-        hasUnpublishedChanges
-        stagedEventCount
-      }
-      stagedEvents {
-        eventType
-      }
-      tabs {
-        id
-        pins { id type title href }
-        groups { id }
-      }
-    }
-  }
-  """
+  @query S.DocTree.q(:doc_tree)
 
-  @public_query """
-  query($community: String!) {
-    docPublicTree(community: $community) {
-      tabs {
-        id
-        title
-        groups {
-          id
-          title
-          children { id docId type title href }
-        }
-      }
-    }
-  }
-  """
+  @public_query S.DocTree.q(:doc_public_tree)
 
   setup do
     guest_conn = simu_conn(:guest)

@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       queried =
         user_conn
-        |> gq_query(Schema.q(:doc_draft), %{community: community.slug, id: doc_id})
+        |> gq_query(S.Doc.q(:draft), %{community: community.slug, id: doc_id})
 
       assert queried["docId"] == to_string(doc_id)
       assert queried["title"] == "Install"
@@ -67,7 +67,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       updated =
         user_conn
-        |> gq_mutation(Schema.m(:update_doc_draft), %{
+        |> gq_mutation(S.Doc.m(:update_draft), %{
           community: community.slug,
           id: doc_id,
           title: "测试一下中文",
@@ -88,7 +88,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       doc_id = page_payload.node.doc_id
 
       assert user_conn
-             |> mutation_error?(Schema.m(:update_doc_draft), %{
+             |> mutation_error?(S.Doc.m(:update_draft), %{
                community: community.slug,
                id: doc_id,
                title: "Needs Slug"
@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       updated =
         user_conn
-        |> gq_mutation(Schema.m(:update_doc_draft), %{
+        |> gq_mutation(S.Doc.m(:update_draft), %{
           community: community.slug,
           id: doc_id,
           title: "Invalid Slug",
@@ -118,7 +118,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       first_draft =
         user_conn
-        |> gq_mutation(Schema.m(:update_doc_draft), %{
+        |> gq_mutation(S.Doc.m(:update_draft), %{
           community: community.slug,
           id: doc_id,
           title: "Versioned Draft",
@@ -129,15 +129,15 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       first_revision =
         user_conn
-        |> gq_mutation(Schema.m(:checkpoint_doc_draft_snapshot), %{
+        |> gq_mutation(S.Doc.m(:checkpoint_snapshot), %{
           community: community.slug,
           id: doc_id
         })
 
       assert first_revision["stage"] == "DRAFT"
       assert first_revision["thread"] == "DOC"
-      assert first_revision["docId"] == to_string(doc_id)
-      assert first_revision["snapshotNumber"] == 1
+      assert first_revision["articleHashId"] == to_string(doc_id)
+      assert first_revision["revisionNumber"] == 1
       assert first_revision["title"] == first_draft["title"]
       assert first_revision["subtitle"] == "First subtitle"
       assert first_revision["digest"] == "First subtitle"
@@ -146,7 +146,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       unchanged_revision =
         user_conn
-        |> gq_mutation(Schema.m(:checkpoint_doc_draft_snapshot), %{
+        |> gq_mutation(S.Doc.m(:checkpoint_snapshot), %{
           community: community.slug,
           id: doc_id
         })
@@ -154,7 +154,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       assert unchanged_revision["id"] == first_revision["id"]
 
       user_conn
-      |> gq_mutation(Schema.m(:update_doc_draft), %{
+      |> gq_mutation(S.Doc.m(:update_draft), %{
         community: community.slug,
         id: doc_id,
         title: "Versioned Draft",
@@ -165,18 +165,18 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       subtitle_revision =
         user_conn
-        |> gq_mutation(Schema.m(:checkpoint_doc_draft_snapshot), %{
+        |> gq_mutation(S.Doc.m(:checkpoint_snapshot), %{
           community: community.slug,
           id: doc_id
         })
 
       assert subtitle_revision["id"] != first_revision["id"]
-      assert subtitle_revision["snapshotNumber"] == 2
+      assert subtitle_revision["revisionNumber"] == 2
       assert subtitle_revision["subtitle"] == "Second subtitle"
       assert subtitle_revision["documentJson"] == @plate_body_with_node_ids
 
       user_conn
-      |> gq_mutation(Schema.m(:update_doc_draft), %{
+      |> gq_mutation(S.Doc.m(:update_draft), %{
         community: community.slug,
         id: doc_id,
         title: "Versioned Draft",
@@ -187,7 +187,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       id_only_revision =
         user_conn
-        |> gq_mutation(Schema.m(:checkpoint_doc_draft_snapshot), %{
+        |> gq_mutation(S.Doc.m(:checkpoint_snapshot), %{
           community: community.slug,
           id: doc_id
         })
@@ -195,7 +195,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       assert id_only_revision["id"] == subtitle_revision["id"]
 
       user_conn
-      |> gq_mutation(Schema.m(:update_doc_draft), %{
+      |> gq_mutation(S.Doc.m(:update_draft), %{
         community: community.slug,
         id: doc_id,
         title: "Versioned Draft",
@@ -206,18 +206,18 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       second_revision =
         user_conn
-        |> gq_mutation(Schema.m(:checkpoint_doc_draft_snapshot), %{
+        |> gq_mutation(S.Doc.m(:checkpoint_snapshot), %{
           community: community.slug,
           id: doc_id
         })
 
       assert second_revision["id"] != first_revision["id"]
-      assert second_revision["snapshotNumber"] == 3
+      assert second_revision["revisionNumber"] == 3
       assert second_revision["documentJson"] == @plate_body_updated
 
       revisions =
         user_conn
-        |> gq_query(Schema.q(:doc_draft_snapshots), %{
+        |> gq_query(S.Doc.q(:draft_snapshots), %{
           community: community.slug,
           id: doc_id,
           stage: "DRAFT"
@@ -231,7 +231,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       restored =
         user_conn
-        |> gq_mutation(Schema.m(:restore_doc_draft_snapshot), %{
+        |> gq_mutation(S.Doc.m(:restore_snapshot), %{
           community: community.slug,
           id: doc_id,
           snapshotId: first_revision["id"]
@@ -242,9 +242,14 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       all_revisions =
         user_conn
-        |> gq_query(Schema.q(:doc_draft_snapshots), %{community: community.slug, id: doc_id})
+        |> gq_query(S.Doc.q(:draft_snapshots), %{community: community.slug, id: doc_id})
 
-      assert Enum.map(all_revisions, & &1["id"]) == [first_revision["id"]]
+      assert Enum.map(all_revisions, & &1["action"]) == [
+               "RESTORE",
+               "CHECKPOINT",
+               "CHECKPOINT",
+               "CHECKPOINT"
+             ]
     end
 
     test "can publish doc draft revisions and restore published history linearly",
@@ -252,7 +257,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       doc_id = page_payload.node.doc_id
 
       user_conn
-      |> gq_mutation(Schema.m(:update_doc_draft), %{
+      |> gq_mutation(S.Doc.m(:update_draft), %{
         community: community.slug,
         id: doc_id,
         title: "Published Draft",
@@ -263,21 +268,21 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       site_draft_version =
         user_conn
-        |> gq_mutation(Schema.m(:checkpoint_doc_draft_snapshot), %{
+        |> gq_mutation(S.Doc.m(:checkpoint_snapshot), %{
           community: community.slug,
           id: doc_id
         })
 
       assert %{"done" => true, "release" => %{"id" => _}} =
                user_conn
-               |> gq_mutation(Schema.m(:publish_doc_changes), %{
+               |> gq_mutation(S.Doc.m(:publish_changes), %{
                  community: community.slug,
                  input: %{docChangeIds: ["doc:#{doc_id}"], treeChangeIds: []}
                })
 
       [first_published] =
         user_conn
-        |> gq_query(Schema.q(:doc_draft_snapshots), %{
+        |> gq_query(S.Doc.q(:draft_snapshots), %{
           community: community.slug,
           id: doc_id,
           stage: "PUBLIC"
@@ -285,24 +290,24 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       assert first_published["stage"] == "PUBLIC"
       assert first_published["thread"] == "DOC"
-      assert first_published["docId"] == to_string(doc_id)
-      assert first_published["snapshotNumber"] == 1
+      assert first_published["articleHashId"] == to_string(doc_id)
+      assert first_published["revisionNumber"] == 2
       assert first_published["subtitle"] == "Published subtitle"
       assert first_published["digest"] == "Published subtitle"
       assert first_published["documentJson"] == @plate_body
 
       site_draft_versions_after_publish =
         user_conn
-        |> gq_query(Schema.q(:doc_draft_snapshots), %{
+        |> gq_query(S.Doc.q(:draft_snapshots), %{
           community: community.slug,
           id: doc_id,
           stage: "DRAFT"
         })
 
-      assert site_draft_versions_after_publish == []
+      assert Enum.map(site_draft_versions_after_publish, & &1["action"]) == ["CHECKPOINT"]
 
       user_conn
-      |> gq_mutation(Schema.m(:update_doc_draft), %{
+      |> gq_mutation(S.Doc.m(:update_draft), %{
         community: community.slug,
         id: doc_id,
         title: "Published Draft",
@@ -313,7 +318,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       later_site_draft_version =
         user_conn
-        |> gq_mutation(Schema.m(:checkpoint_doc_draft_snapshot), %{
+        |> gq_mutation(S.Doc.m(:checkpoint_snapshot), %{
           community: community.slug,
           id: doc_id
         })
@@ -321,7 +326,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       {:ok, draft_before_second_publish} =
         ORM.find_by(CMS.Model.Doc,
           community_id: community.id,
-          doc_id: doc_id,
+          article_hash_id: doc_id,
           stage: :draft
         )
 
@@ -333,28 +338,28 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       assert %{"done" => true, "release" => %{"id" => _}} =
                user_conn
-               |> gq_mutation(Schema.m(:publish_doc_changes), %{
+               |> gq_mutation(S.Doc.m(:publish_changes), %{
                  community: community.slug,
                  input: %{docChangeIds: ["doc:#{doc_id}"], treeChangeIds: []}
                })
 
       [second_published, _first_published_again] =
         user_conn
-        |> gq_query(Schema.q(:doc_draft_snapshots), %{
+        |> gq_query(S.Doc.q(:draft_snapshots), %{
           community: community.slug,
           id: doc_id,
           stage: "PUBLIC"
         })
 
-      assert second_published["docId"] == first_published["docId"]
-      assert second_published["snapshotNumber"] == 2
+      assert second_published["articleHashId"] == first_published["articleHashId"]
+      assert second_published["revisionNumber"] == 4
       assert second_published["subtitle"] == "Published subtitle updated"
       assert second_published["documentJson"] == @plate_body_updated
 
       {:ok, public_doc} =
         ORM.find_by(CMS.Model.Doc,
           community_id: community.id,
-          doc_id: doc_id,
+          article_hash_id: doc_id,
           stage: :public
         )
 
@@ -377,7 +382,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       published_versions =
         user_conn
-        |> gq_query(Schema.q(:doc_draft_snapshots), %{
+        |> gq_query(S.Doc.q(:draft_snapshots), %{
           community: community.slug,
           id: doc_id,
           stage: "PUBLIC"
@@ -389,7 +394,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
              ]
 
       user_conn
-      |> gq_mutation(Schema.m(:restore_doc_draft_snapshot), %{
+      |> gq_mutation(S.Doc.m(:restore_snapshot), %{
         community: community.slug,
         id: doc_id,
         snapshotId: first_published["id"]
@@ -397,7 +402,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       published_after_restore =
         user_conn
-        |> gq_query(Schema.q(:doc_draft_snapshots), %{
+        |> gq_query(S.Doc.q(:draft_snapshots), %{
           community: community.slug,
           id: doc_id,
           stage: "PUBLIC"
@@ -405,7 +410,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
       draft_after_restore =
         user_conn
-        |> gq_query(Schema.q(:doc_draft_snapshots), %{
+        |> gq_query(S.Doc.q(:draft_snapshots), %{
           community: community.slug,
           id: doc_id,
           stage: "DRAFT"
@@ -416,9 +421,14 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
                first_published["id"]
              ]
 
-      assert draft_after_restore == []
-      refute Enum.any?(draft_after_restore, &(&1["id"] == site_draft_version["id"]))
-      refute Enum.any?(draft_after_restore, &(&1["id"] == later_site_draft_version["id"]))
+      assert Enum.map(draft_after_restore, & &1["action"]) == [
+               "RESTORE",
+               "CHECKPOINT",
+               "CHECKPOINT"
+             ]
+
+      assert Enum.any?(draft_after_restore, &(&1["id"] == site_draft_version["id"]))
+      assert Enum.any?(draft_after_restore, &(&1["id"] == later_site_draft_version["id"]))
     end
 
     test "rejects invalid persisted draft slug on publish",
@@ -426,7 +436,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       doc_id = page_payload.node.doc_id
 
       user_conn
-      |> gq_mutation(Schema.m(:update_doc_draft), %{
+      |> gq_mutation(S.Doc.m(:update_draft), %{
         community: community.slug,
         id: doc_id,
         title: "Publish Guard",
@@ -434,11 +444,13 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
         body: @plate_body
       })
 
-      from(d in CMS.Model.Doc, where: d.doc_id == ^doc_id and d.stage == :draft)
+      from(d in CMS.Model.Doc,
+        where: d.article_hash_id == ^doc_id and d.stage == :draft
+      )
       |> Repo.update_all(set: [slug: "invalid_slug"])
 
       assert user_conn
-             |> mutation_error?(Schema.m(:publish_doc_changes), %{
+             |> mutation_error?(S.Doc.m(:publish_changes), %{
                community: community.slug,
                input: %{docChangeIds: ["doc:#{doc_id}"], treeChangeIds: []}
              })

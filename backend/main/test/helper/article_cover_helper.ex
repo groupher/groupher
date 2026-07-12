@@ -190,7 +190,7 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
 
           owner_conn
           |> gq_mutation(
-            GroupherServer.Test.Helper.Schema.m(:delete_article, @thread),
+            GroupherServer.Test.Helper.Schema.Article.m(:delete_article, @thread),
             delete_variables
           )
 
@@ -325,90 +325,15 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
   end
 
   def cover_create_schema(thread) do
-    thread_name = thread |> to_string() |> String.capitalize()
-
-    """
-    mutation(
-      $title: String!
-      $body: String!
-      $community: String!
-      $coverUrl: String
-      $coverUrlDark: String
-      $coverEditInfo: CoverEditInfoInput
-    ) {
-      create#{thread_name}(
-        title: $title
-        body: $body
-        community: $community
-        coverUrl: $coverUrl
-        coverUrlDark: $coverUrlDark
-        coverEditInfo: $coverEditInfo
-      ) {
-        innerId
-        coverUrl
-        coverUrlDark
-        coverEditInfo {
-          id
-          canvasWidth
-          canvasHeight
-          light {
-            background {
-              id
-              type
-            }
-            images
-          }
-          dark {
-            background {
-              id
-              type
-            }
-            images
-          }
-        }
-      }
-    }
-    """
+    GroupherServer.Test.Helper.Schema.Article.m(:create_cover, thread)
   end
 
   def cover_update_schema(thread) do
-    thread_name = thread |> to_string() |> String.capitalize()
-
-    """
-    mutation(
-      $article: ArticlePathInput!
-      $coverUrl: String
-      $coverUrlDark: String
-      $coverEditInfo: CoverEditInfoInput
-    ) {
-      update#{thread_name}(
-        article: $article
-        coverUrl: $coverUrl
-        coverUrlDark: $coverUrlDark
-        coverEditInfo: $coverEditInfo
-      ) {
-        innerId
-        coverUrl
-        coverUrlDark
-        coverEditInfo {
-          id
-          canvasWidth
-          canvasHeight
-          light {
-            background {
-              id
-              type
-            }
-            images
-          }
-        }
-      }
-    }
-    """
+    GroupherServer.Test.Helper.Schema.Article.m(:update_cover, thread)
   end
 
   def cover_read_schema(thread) do
-    GroupherServer.Test.Helper.Schema.q(:article, thread, """
+    GroupherServer.Test.Helper.Schema.Article.q(:article, thread, """
     coverUrl
     coverUrlDark
     coverEditInfo {

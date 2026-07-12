@@ -14,42 +14,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.DocReport do
 
   describe "[query paged_docs filter pagination]" do
     # id
-    @query """
-    query($filter: ReportFilter!) {
-      pagedAbuseReports(filter: $filter) {
-        entries {
-          id
-          dealWith
-          article {
-            innerId
-            thread
-            title
-          }
-          operateUser {
-            login
-          }
-          comment {
-            innerId
-            bodyHtml
-            author {
-              login
-            }
-          }
-          reportCases {
-            reason
-            attr
-            user {
-              login
-            }
-          }
-        }
-        totalPages
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @query S.Moderation.q(:paged_abuse_reports)
     test "should get pagination info", ~m(guest_conn community doc_attrs user user2)a do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
       {:ok, doc2} = CMS.Articles.create(community, :doc, doc_attrs, user)

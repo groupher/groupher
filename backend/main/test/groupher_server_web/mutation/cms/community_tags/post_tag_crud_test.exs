@@ -19,24 +19,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
   end
 
   describe "[mutation cms tag]" do
-    @create_tag_query """
-    mutation($thread: Thread!, $title: String!, $slug: String!, $color: RainbowColor!, $groupId: ID!, $community: String!, $extra: [String] ) {
-      createCommunityTag(thread: $thread, title: $title, slug: $slug, color: $color, groupId: $groupId, community: $community, extra: $extra) {
-        id
-        title
-        color
-        thread
-        group
-        groupId
-        extra
-        community {
-          slug
-          logo
-          title
-        }
-      }
-    }
-    """
+    @create_tag_query S.CommunityTag.m(:create_community_tag)
     test "create tag with valid attrs, has default POST thread and default posts",
          ~m(community)a do
       {:ok, group} = CMS.Communities.create_tag_group(community, :post, %{title: "awesome"})
@@ -110,26 +93,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
       assert rule_conn |> mutation_error?(@create_tag_query, variables, ecode(:passport))
     end
 
-    @update_tag_query """
-    mutation($id: ID!, $color: RainbowColor, $title: String, $desc: String, $slug: String, $community: String!, $extra: [String], $marker: MarkerInput, $groupId: ID) {
-      updateCommunityTag(id: $id, color: $color, title: $title, desc: $desc, slug: $slug, community: $community, extra: $extra, marker: $marker, groupId: $groupId) {
-        id
-        title
-        desc
-        color
-        group
-        groupId
-        extra
-        marker {
-          type
-          provider
-          name
-          src
-          unified
-        }
-      }
-    }
-    """
+    @update_tag_query S.CommunityTag.m(:update_community_tag_2)
     test "auth user can update a tag", ~m(community_tag_attrs community user)a do
       {:ok, community_tag} =
         CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
@@ -213,13 +177,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
              |> mutation_error?(@update_tag_query, variables, ecode(:invalid_domain_tag))
     end
 
-    @delete_tag_query """
-    mutation($id: ID!, $community: String!){
-      deleteCommunityTag(id: $id, community: $community) {
-        id
-      }
-    }
-    """
+    @delete_tag_query S.CommunityTag.m(:delete_community_tag_2)
     test "auth user can delete tag", ~m(community_tag_attrs community user)a do
       {:ok, community_tag} =
         CMS.Communities.create_tag(community, :post, community_tag_attrs, user)
@@ -252,13 +210,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
       assert rule_conn |> mutation_error?(@delete_tag_query, variables, ecode(:passport))
     end
 
-    @update_group_query """
-    mutation($id: ID!, $community: String!, $title: String!, $thread: Thread) {
-      updateCommunityTagGroup(id: $id, community: $community, title: $title, thread: $thread) {
-        id
-      }
-    }
-    """
+    @update_group_query S.CommunityTag.m(:update_community_tag_group)
     test "auth user cannot update a group in another community", ~m(community user)a do
       {:ok, other_community} = mock_community(user)
 
@@ -279,13 +231,7 @@ defmodule GroupherServer.Test.Mutation.CMS.ArticleCommunityTags.PostTagCRUD do
              |> mutation_error?(@update_group_query, variables, ecode(:invalid_domain_tag))
     end
 
-    @delete_group_query """
-    mutation($id: ID!, $community: String!, $thread: Thread) {
-      deleteCommunityTagGroup(id: $id, community: $community, thread: $thread) {
-        id
-      }
-    }
-    """
+    @delete_group_query S.CommunityTag.m(:delete_community_tag_group)
     test "auth user cannot delete a group in another community", ~m(community user)a do
       {:ok, other_community} = mock_community(user)
 

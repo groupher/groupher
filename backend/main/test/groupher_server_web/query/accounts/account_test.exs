@@ -27,16 +27,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
   end
 
   describe "[account basic]" do
-    @query """
-    query {
-      me {
-        login
-        nickname
-        avatar
-        bio
-      }
-    }
-    """
+    @query S.Account.q(:me)
     test "login user can get own profile", ~m(user_conn user)a do
       results = user_conn |> gq_query(@query, %{})
       assert results["login"] == user.login
@@ -50,38 +41,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       assert guest_conn |> query_error?(@query, %{}, ecode(:account_login))
     end
 
-    @query """
-    query($login: String!) {
-      user(login: $login) {
-        login
-        nickname
-        bio
-        meta {
-          publishedPostsCount
-          publishedBlogsCount
-        }
-        views
-        passport
-        passportString
-        subscribedCommunitiesCount
-        followersCount
-        followingsCount
-        contributes {
-          records {
-            count
-            date
-          }
-          startDate
-          endDate
-          totalCount
-        }
-        social {
-          github
-          douban
-        }
-      }
-    }
-    """
+    @query S.Account.q(:user)
     test "guest user can get specific user's info by user's login", ~m(guest_conn user)a do
       variables = %{login: user.login}
       results = guest_conn |> gq_query(@query, variables)
@@ -164,23 +124,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       assert Jason.decode!(results["passportString"]) == %{"global" => %{}}
     end
 
-    @query """
-    query($filter: PagedUsersFilter!) {
-      pagedUsers(filter: $filter) {
-        entries {
-          login
-          nickname
-          bio
-          viewerHasFollowed
-          viewerBeenFollowed
-        }
-        totalPages
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @query S.Account.q(:paged_users)
     test "guest user can get paged users", ~m(guest_conn)a do
       variables = %{filter: %{page: 1, size: 10}}
 
@@ -211,13 +155,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
   end
 
   describe "[account passport] test" do
-    @query """
-    query {
-      allPassportRulesString {
-        cms
-      }
-    }
-    """
+    @query S.Moderation.q(:all_passport_rules_string)
     test "can get all cms rules with valid structure", ~m(user)a do
       user_conn = simu_conn(:user, user)
       variables = %{}
@@ -231,20 +169,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
   end
 
   describe "[account subscrube]" do
-    @query """
-    query($filter: PagiFilter!) {
-      subscribedCommunities(filter: $filter) {
-        entries {
-          title
-          slug
-        }
-        totalCount
-        totalPages
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @query S.Account.q(:subscribed_communities)
     test "guest user can get paged default subscribed communities", ~m(guest_conn)a do
       {:ok, user} = db_insert(:user)
       _ = create_communities!(25, user)
@@ -269,19 +194,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
       assert results["entries"] |> Enum.any?(&(&1["slug"] == "home"))
     end
 
-    @query """
-    query($login: String, $filter: PagiFilter!) {
-      subscribedCommunities(login: $login, filter: $filter) {
-        entries {
-          title
-        }
-        totalCount
-        totalPages
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @query S.Account.q(:subscribed_communities_2)
     test "guest user can get paged default subscribed communities with empty args",
          ~m(guest_conn)a do
       {:ok, user} = db_insert(:user)
@@ -296,16 +209,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
   end
 
   describe "[account session state]" do
-    @query """
-    query {
-      sessionState {
-        isValid
-        user {
-          login
-        }
-      }
-    }
-    """
+    @query S.Account.q(:session_state)
     test "guest user should get false sessionState", ~m(guest_conn)a do
       results = guest_conn |> gq_query(@query)
       assert results["isValid"] == false

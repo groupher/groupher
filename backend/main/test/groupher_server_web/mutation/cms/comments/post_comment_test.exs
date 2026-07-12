@@ -21,7 +21,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
     test "write article comment to a exist post", ~m(community post user_conn)a do
       variables = %{article: article_path(community, post, :post), body: mock_comment()}
 
-      result = user_conn |> gq_mutation(Schema.m(:create_comment), variables)
+      result = user_conn |> gq_mutation(S.Comment.m(:create_comment), variables)
 
       assert result["bodyHtml"] |> String.contains?(~s(<p))
       assert result["bodyHtml"] |> String.contains?(~s(comment))
@@ -36,7 +36,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
         body: mock_comment("reply comment")
       }
 
-      result = user_conn |> gq_mutation(Schema.m(:reply_comment), variables)
+      result = user_conn |> gq_mutation(S.Comment.m(:reply_comment), variables)
 
       assert result["bodyHtml"] |> String.contains?(~s(<p))
       assert result["bodyHtml"] |> String.contains?(~s(reply comment))
@@ -52,12 +52,13 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
         body: mock_comment("updated comment")
       }
 
-      assert user_conn |> mutation_error?(Schema.m(:update_comment), variables, ecode(:passport))
+      assert user_conn
+             |> mutation_error?(S.Comment.m(:update_comment), variables, ecode(:passport))
 
       assert guest_conn
-             |> mutation_error?(Schema.m(:update_comment), variables, ecode(:account_login))
+             |> mutation_error?(S.Comment.m(:update_comment), variables, ecode(:account_login))
 
-      result = owner_conn |> gq_mutation(Schema.m(:update_comment), variables)
+      result = owner_conn |> gq_mutation(S.Comment.m(:update_comment), variables)
 
       assert result["bodyHtml"] |> String.contains?(~s(<p))
       assert result["bodyHtml"] |> String.contains?(~s(updated comment))
@@ -70,12 +71,13 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       variables = %{comment: comment_path(community, post, :post, comment)}
 
-      assert user_conn |> mutation_error?(Schema.m(:delete_comment), variables, ecode(:passport))
+      assert user_conn
+             |> mutation_error?(S.Comment.m(:delete_comment), variables, ecode(:passport))
 
       assert guest_conn
-             |> mutation_error?(Schema.m(:delete_comment), variables, ecode(:account_login))
+             |> mutation_error?(S.Comment.m(:delete_comment), variables, ecode(:account_login))
 
-      deleted = owner_conn |> gq_mutation(Schema.m(:delete_comment), variables)
+      deleted = owner_conn |> gq_mutation(S.Comment.m(:delete_comment), variables)
 
       assert deleted["innerId"] == to_string(comment.inner_id)
       assert deleted["isDeleted"]
@@ -91,9 +93,9 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       variables = %{comment: comment_path(community, post, :post, comment)}
 
       assert guest_conn
-             |> mutation_error?(Schema.m(:upvote_comment), variables, ecode(:account_login))
+             |> mutation_error?(S.Comment.m(:upvote_comment), variables, ecode(:account_login))
 
-      result = user_conn |> gq_mutation(Schema.m(:upvote_comment), variables)
+      result = user_conn |> gq_mutation(S.Comment.m(:upvote_comment), variables)
 
       assert result["innerId"] == to_string(comment.inner_id)
       assert result["upvotesCount"] == 1
@@ -106,12 +108,16 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       variables = %{comment: comment_path(community, post, :post, comment)}
-      user_conn |> gq_mutation(Schema.m(:upvote_comment), variables)
+      user_conn |> gq_mutation(S.Comment.m(:upvote_comment), variables)
 
       assert guest_conn
-             |> mutation_error?(Schema.m(:undo_upvote_comment), variables, ecode(:account_login))
+             |> mutation_error?(
+               S.Comment.m(:undo_upvote_comment),
+               variables,
+               ecode(:account_login)
+             )
 
-      result = user_conn |> gq_mutation(Schema.m(:undo_upvote_comment), variables)
+      result = user_conn |> gq_mutation(S.Comment.m(:undo_upvote_comment), variables)
 
       assert result["upvotesCount"] == 0
       assert not result["viewerHasUpvoted"]
@@ -131,9 +137,9 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       }
 
       assert guest_conn
-             |> mutation_error?(Schema.m(:report_comment), variables, ecode(:account_login))
+             |> mutation_error?(S.Comment.m(:report_comment), variables, ecode(:account_login))
 
-      result = user_conn |> gq_mutation(Schema.m(:report_comment), variables)
+      result = user_conn |> gq_mutation(S.Comment.m(:report_comment), variables)
 
       assert result["innerId"] == to_string(comment.inner_id)
       assert result["viewerHasReported"]
@@ -151,18 +157,18 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
         attr: "attr"
       }
 
-      user_conn |> gq_mutation(Schema.m(:report_comment), variables)
+      user_conn |> gq_mutation(S.Comment.m(:report_comment), variables)
 
       undo_variables = %{comment: comment_path(community, post, :post, comment)}
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:undo_report_comment),
+               S.Comment.m(:undo_report_comment),
                undo_variables,
                ecode(:account_login)
              )
 
-      result = user_conn |> gq_mutation(Schema.m(:undo_report_comment), undo_variables)
+      result = user_conn |> gq_mutation(S.Comment.m(:undo_report_comment), undo_variables)
 
       assert result["innerId"] == to_string(comment.inner_id)
       assert not result["viewerHasReported"]
@@ -176,7 +182,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       variables = %{comment: comment_path(community, post, :post, comment), emotion: "BEER"}
-      comment = user_conn |> gq_mutation(Schema.m(:emotion_to_comment), variables)
+      comment = user_conn |> gq_mutation(S.Comment.m(:emotion_to_comment), variables)
 
       assert emotion_entry(comment["emotions"], :beer)["count"] == 1
       assert emotion_entry(comment["emotions"], :beer)["viewerHasReacted"]
@@ -194,13 +200,13 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
         emotion: "HEART"
       }
 
-      comment = user_conn |> gq_mutation(Schema.m(:emotion_to_comment), beer_variables)
+      comment = user_conn |> gq_mutation(S.Comment.m(:emotion_to_comment), beer_variables)
       assert length(comment["emotions"]) == 1
       assert emotion_entry(comment["emotions"], :beer)["count"] == 1
       assert is_nil(emotion_entry(comment["emotions"], :heart))
       assert is_nil(emotion_entry(comment["emotions"], :popcorn))
 
-      comment = user_conn |> gq_mutation(Schema.m(:emotion_to_comment), heart_variables)
+      comment = user_conn |> gq_mutation(S.Comment.m(:emotion_to_comment), heart_variables)
       assert length(comment["emotions"]) == 2
       assert emotion_entry(comment["emotions"], :beer)["count"] == 1
       assert emotion_entry(comment["emotions"], :heart)["count"] == 1
@@ -214,7 +220,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       {:ok, _} = CMS.Comments.emotion_to_comment(comment.id, :beer, user)
 
       variables = %{comment: comment_path(community, post, :post, comment), emotion: "BEER"}
-      comment = owner_conn |> gq_mutation(Schema.m(:undo_emotion_to_comment), variables)
+      comment = owner_conn |> gq_mutation(S.Comment.m(:undo_emotion_to_comment), variables)
 
       assert is_nil(emotion_entry(comment["emotions"], :beer))
     end
@@ -226,21 +232,21 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       _comment =
         user_conn
-        |> gq_mutation(Schema.m(:emotion_to_comment), %{
+        |> gq_mutation(S.Comment.m(:emotion_to_comment), %{
           comment: comment_path(community, post, :post, comment),
           emotion: "BEER"
         })
 
       _comment =
         user_conn
-        |> gq_mutation(Schema.m(:emotion_to_comment), %{
+        |> gq_mutation(S.Comment.m(:emotion_to_comment), %{
           comment: comment_path(community, post, :post, comment),
           emotion: "HEART"
         })
 
       result =
         user_conn
-        |> gq_query(Schema.q(:one_comment_emotions), %{
+        |> gq_query(S.Comment.q(:one_comment_emotions), %{
           comment: comment_path(community, post, :post, comment)
         })
 
@@ -252,14 +258,14 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       _result =
         user_conn
-        |> gq_mutation(Schema.m(:undo_emotion_to_comment), %{
+        |> gq_mutation(S.Comment.m(:undo_emotion_to_comment), %{
           comment: comment_path(community, post, :post, comment),
           emotion: "HEART"
         })
 
       result =
         user_conn
-        |> gq_query(Schema.q(:one_comment_emotions), %{
+        |> gq_query(S.Comment.q(:one_comment_emotions), %{
           comment: comment_path(community, post, :post, comment)
         })
 
@@ -274,7 +280,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :thread_emotions, %{
+        CMS.Dsb.update(community, :thread_emotions, %{
           post_comment: [:heart]
         })
 
@@ -282,7 +288,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       assert user_conn
              |> mutation_error?(
-               Schema.m(:emotion_to_comment),
+               S.Comment.m(:emotion_to_comment),
                variables,
                ecode(:emotion_not_allowed)
              )
@@ -298,7 +304,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       passport_rules = %{community.slug => %{"post.lock_comment" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      result = rule_conn |> gq_mutation(Schema.m(:lock_comment, :post), variables)
+      result = rule_conn |> gq_mutation(S.Article.m(:lock_comment, :post), variables)
 
       assert result["innerId"] == to_string(post.inner_id)
 
@@ -313,7 +319,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:lock_comment, :post),
+               S.Article.m(:lock_comment, :post),
                variables,
                ecode(:account_login)
              )
@@ -331,7 +337,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       passport_rules = %{community.slug => %{"post.undo_lock_comment" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      result = rule_conn |> gq_mutation(Schema.m(:unlock_comment, :post), variables)
+      result = rule_conn |> gq_mutation(S.Article.m(:unlock_comment, :post), variables)
 
       assert result["innerId"] == to_string(post.inner_id)
 
@@ -346,7 +352,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:unlock_comment, :post),
+               S.Article.m(:unlock_comment, :post),
                variables,
                ecode(:account_login)
              )
@@ -359,7 +365,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       variables = %{comment: comment_path(community, post, :post, comment)}
-      result = owner_conn |> gq_mutation(Schema.m(:pin_comment), variables)
+      result = owner_conn |> gq_mutation(S.Comment.m(:pin_comment), variables)
 
       assert result["innerId"] == to_string(comment.inner_id)
       assert result["isPinned"]
@@ -372,7 +378,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       variables = %{comment: comment_path(community, post, :post, comment)}
 
       assert guest_conn
-             |> mutation_error?(Schema.m(:pin_comment), variables, ecode(:account_login))
+             |> mutation_error?(S.Comment.m(:pin_comment), variables, ecode(:account_login))
     end
 
     test "can undo pin a post's comment", ~m(owner_conn community post user)a do
@@ -382,7 +388,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       {:ok, _} = CMS.Comments.pin_comment(comment.id)
 
       variables = %{comment: comment_path(community, post, :post, comment)}
-      result = owner_conn |> gq_mutation(Schema.m(:undo_pin_comment), variables)
+      result = owner_conn |> gq_mutation(S.Comment.m(:undo_pin_comment), variables)
 
       assert result["innerId"] == to_string(comment.inner_id)
       assert not result["isPinned"]
@@ -396,7 +402,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
       variables = %{comment: comment_path(community, post, :post, comment)}
 
       assert guest_conn
-             |> mutation_error?(Schema.m(:undo_pin_comment), variables, ecode(:account_login))
+             |> mutation_error?(S.Comment.m(:undo_pin_comment), variables, ecode(:account_login))
     end
   end
 end

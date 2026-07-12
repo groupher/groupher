@@ -12,18 +12,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
   end
 
   describe "[account followers]" do
-    @query """
-    query($login: String!, $filter: PagiFilter!) {
-      pagedFollowers(login: $login, filter: $filter) {
-        entries {
-          login
-          viewerBeenFollowed
-          viewerHasFollowed
-        }
-        totalCount
-      }
-    }
-    """
+    @query S.Social.q(:paged_followers)
     test "login user can get basic paged followers info", ~m(user)a do
       variables = %{login: user.login, filter: %{page: 1, size: 20}}
 
@@ -59,17 +48,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       assert user |> exist_in?(entries)
     end
 
-    @query """
-    query($login: String!, $filter: PagiFilter!) {
-      pagedFollowings(login: $login, filter: $filter) {
-        entries {
-          login
-          viewerHasFollowed
-        }
-        totalCount
-      }
-    }
-    """
+    @query S.Social.q(:paged_followings)
     test "login user can get it's own paged followings", ~m(user_conn user)a do
       variables = %{login: user.login, filter: %{page: 1, size: 20}}
 
@@ -105,14 +84,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       assert results["entries"] |> Enum.any?(&(&1["login"] == user2.login))
     end
 
-    @query """
-    query($login: String!) {
-      user(login: $login) {
-        login
-        followersCount
-      }
-    }
-    """
+    @query S.Social.q(:user)
     test "can get user's followersCount", ~m(user_conn user)a do
       total_count = 15
       {:ok, users} = db_insert_multi(:user, total_count)
@@ -127,14 +99,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       assert results |> Map.get("followersCount") == total_count
     end
 
-    @query """
-    query($login: String!) {
-      user(login: $login) {
-        login
-        followingsCount
-      }
-    }
-    """
+    @query S.Social.q(:user_2)
     test "can get user's followingsCount", ~m(user_conn user)a do
       total_count = 15
       {:ok, users} = db_insert_multi(:user, total_count)
@@ -152,14 +117,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       assert results |> Map.get("followingsCount") == total_count
     end
 
-    @query """
-    query($login: String!) {
-      user(login: $login) {
-        login
-        viewerHasFollowed
-      }
-    }
-    """
+    @query S.Social.q(:user_3)
     test "login user can check if 'i' has followed this user", ~m(user_conn user)a do
       {:ok, user2} = db_insert(:user)
 
@@ -174,14 +132,7 @@ defmodule GroupherServer.Test.Query.Account.Fans do
       assert results |> Map.get("viewerHasFollowed") == true
     end
 
-    @query """
-    query($login: String!) {
-      user(login: $login) {
-        login
-        viewerBeenFollowed
-      }
-    }
-    """
+    @query S.Social.q(:user_4)
     test "login user can check if 'i' was been followed", ~m(user)a do
       {:ok, user2} = db_insert(:user)
       user_conn = simu_conn(:user, user2)

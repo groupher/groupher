@@ -25,7 +25,7 @@ defmodule GroupherServer.TestMate do
 
       alias GroupherServer.{Accounts, CMS, Repo}
       alias CMS.Model.{Author, Blog, Changelog, Comment, Community, Doc, Embeds, Post}
-      alias GroupherServer.Test.Helper.Schema
+      alias GroupherServer.Test.Helper.Schema, as: S
       alias Helper.{Constant, Datetime, ORM}
 
       alias Accounts.Model.User

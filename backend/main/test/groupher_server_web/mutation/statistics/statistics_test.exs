@@ -25,7 +25,7 @@ defmodule GroupherServer.Test.Mutation.Statistics do
         community: community.slug
       }
 
-      user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
+      user_conn |> gq_mutation(S.Article.m(:create_article, :post), variables)
 
       {:ok, contributes} = ORM.find_by(UserContribute, user_id: user2.id)
       assert contributes.count == 1
@@ -39,7 +39,7 @@ defmodule GroupherServer.Test.Mutation.Statistics do
         community: community.slug
       }
 
-      user_conn |> gq_mutation(Schema.m(:create_article, :post), variables)
+      user_conn |> gq_mutation(S.Article.m(:create_article, :post), variables)
 
       {:ok, contributes} = ORM.find_by(CommunityContribute, community_id: community.id)
       assert contributes.count == 1
@@ -49,20 +49,13 @@ defmodule GroupherServer.Test.Mutation.Statistics do
       blog_attr = mock_attrs(:blog)
       variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
-      user_conn |> gq_mutation(Schema.m(:create_article, :blog), variables)
+      user_conn |> gq_mutation(S.Article.m(:create_article, :blog), variables)
 
       {:ok, contributes} = ORM.find_by(UserContribute, user_id: user2.id)
       assert contributes.count == 1
     end
 
-    @write_comment_query """
-    mutation($article: ArticlePathInput!, $body: String!) {
-      createComment(article: $article, body: $body) {
-        innerId
-        bodyHtml
-      }
-    }
-    """
+    @write_comment_query S.Comment.m(:create_comment_2)
     test "user should have contribute list after create a comment",
          ~m(user_conn community post user2)a do
       variables = %{

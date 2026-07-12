@@ -16,16 +16,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
   end
 
   describe "[Accounts CollectFolder CRUD]" do
-    @query """
-    mutation($title: String!, $desc: String, $private: Boolean) {
-      createCollectFolder(title: $title, desc: $desc, private: $private) {
-        id
-        title
-        private
-        lastUpdated
-      }
-    }
-    """
+    @query S.Collect.m(:create_collect_folder)
     test "login user can create collect folder", ~m(user_conn)a do
       variables = %{title: "test folder", desc: "cool folder"}
       created = user_conn |> gq_mutation(@query, variables)
@@ -49,22 +40,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
     end
 
-    @query """
-    mutation($id: ID!, $title: String, $desc: String, $private: Boolean) {
-      updateCollectFolder(
-        id: $id
-        title: $title
-        desc: $desc
-        private: $private
-      ) {
-        id
-        title
-        desc
-        private
-        lastUpdated
-      }
-    }
-    """
+    @query S.Collect.m(:update_collect_folder)
     test "login user can update own collect folder", ~m(user_conn user)a do
       args = %{title: "folder_title", private: false}
       {:ok, folder} = Accounts.CollectFolders.create(args, user)
@@ -78,13 +54,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       assert updated["lastUpdated"] != nil
     end
 
-    @query """
-    mutation($id: ID!) {
-      deleteCollectFolder(id: $id) {
-        id
-      }
-    }
-    """
+    @query S.Collect.m(:delete_collect_folder)
     test "login user can delete own collect folder", ~m(user_conn user)a do
       args = %{title: "folder_title", private: false}
       {:ok, folder} = Accounts.CollectFolders.create(args, user)
@@ -96,23 +66,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
   end
 
   describe "[Accounts CollectFolder add/remove]" do
-    @query """
-    mutation($article: ArticlePathInput!, $folderId: ID!) {
-      addToCollect(article: $article, folderId: $folderId) {
-        id
-        title
-        totalCount
-        lastUpdated
-
-        meta {
-          hasPost
-          hasBlog
-          postCount
-          blogCount
-        }
-      }
-    }
-    """
+    @query S.Collect.m(:add_to_collect)
     @meta %{
       "hasPost" => false,
       "hasBlog" => false,
@@ -169,23 +123,7 @@ defmodule GroupherServer.Test.Mutation.Accounts.CollectFolder do
       assert folder_in_article_collect.meta.blog_count == 1
     end
 
-    @query """
-    mutation($article: ArticlePathInput!, $folderId: ID!) {
-      removeFromCollect(article: $article, folderId: $folderId) {
-        id
-        title
-        totalCount
-        lastUpdated
-
-        meta {
-          hasPost
-          hasBlog
-          postCount
-          blogCount
-        }
-      }
-    }
-    """
+    @query S.Collect.m(:remove_from_collect)
     test "user can remove a post from collect folder", ~m(user user_conn community post)a do
       args = %{title: "folder_title", private: false}
       {:ok, folder} = Accounts.CollectFolders.create(args, user)

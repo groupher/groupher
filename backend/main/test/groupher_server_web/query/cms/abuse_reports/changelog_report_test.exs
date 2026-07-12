@@ -14,42 +14,7 @@ defmodule GroupherServer.Test.Query.AbuseReports.ChangelogReport do
 
   describe "[query paged_changelogs filter pagination]" do
     # id
-    @query """
-    query($filter: ReportFilter!) {
-      pagedAbuseReports(filter: $filter) {
-        entries {
-          id
-          dealWith
-          article {
-            innerId
-            thread
-            title
-          }
-          operateUser {
-            login
-          }
-          comment {
-            innerId
-            bodyHtml
-            author {
-              login
-            }
-          }
-          reportCases {
-            reason
-            attr
-            user {
-              login
-            }
-          }
-        }
-        totalPages
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @query S.Moderation.q(:paged_abuse_reports)
     test "should get pagination info", ~m(guest_conn community changelog_attrs user user2)a do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
       {:ok, changelog2} = CMS.Articles.create(community, :changelog, changelog_attrs, user)

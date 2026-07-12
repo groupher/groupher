@@ -21,7 +21,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       body = mock_rich_text("create blog by plate")
 
       variables = blog_attr |> Map.merge(%{community: community.slug, body: body})
-      result = user_conn |> gq_mutation(Schema.m(:create_article, :blog), variables)
+      result = user_conn |> gq_mutation(S.Article.m(:create_article, :blog), variables)
 
       assert result["community"]["slug"] == community.slug
       assert result["linkAddr"] == "https://helloworld"
@@ -40,7 +40,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       variables =
         blog_attr |> Map.merge(%{community: community.slug, communityTags: [community_tag.id]})
 
-      created = user_conn |> gq_mutation(Schema.m(:create_article, :blog), variables)
+      created = user_conn |> gq_mutation(S.Article.m(:create_article, :blog), variables)
 
       {:ok, blog} =
         CMS.FrontDesk.article(community, :blog, created["innerId"], preload: :community_tags)
@@ -52,7 +52,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       blog_attr = mock_attrs(:blog, %{body: mock_xss_string()})
       variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
-      result = user_conn |> gq_mutation(Schema.m(:create_article, :blog), variables)
+      result = user_conn |> gq_mutation(S.Article.m(:create_article, :blog), variables)
 
       {:ok, blog} =
         CMS.FrontDesk.article(community, :blog, result["innerId"], preload: :document)
@@ -66,7 +66,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       blog_attr = mock_attrs(:blog, %{body: mock_xss_string(:safe)})
       variables = blog_attr |> Map.merge(%{community: community.slug}) |> camelize_map_key
 
-      result = user_conn |> gq_mutation(Schema.m(:create_article, :blog), variables)
+      result = user_conn |> gq_mutation(S.Article.m(:create_article, :blog), variables)
 
       {:ok, blog} =
         CMS.FrontDesk.article(community, :blog, result["innerId"], preload: :document)
@@ -83,7 +83,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       blog_attr = mock_attrs(:blog)
       variables = blog_attr |> Map.merge(%{community: community.slug}) |> Map.delete(:title)
 
-      assert user_conn |> mutation_error?(Schema.m(:create_article, :blog), variables)
+      assert user_conn |> mutation_error?(S.Article.m(:create_article, :blog), variables)
     end
 
     test "delete a blog by blog's owner", ~m(owner_conn community blog)a do
@@ -91,7 +91,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
       }
 
-      result = owner_conn |> gq_mutation(Schema.m(:delete_article, :blog), variables)
+      result = owner_conn |> gq_mutation(S.Article.m(:delete_article, :blog), variables)
 
       assert result["innerId"] == to_string(blog.inner_id)
       assert {:error, _} = CMS.FrontDesk.article(community, :blog, result["innerId"])
@@ -108,7 +108,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
       }
 
-      result = rule_conn |> gq_mutation(Schema.m(:delete_article, :blog), variables)
+      result = rule_conn |> gq_mutation(S.Article.m(:delete_article, :blog), variables)
 
       assert result["innerId"] == to_string(blog.inner_id)
       assert {:error, _} = CMS.FrontDesk.article(community, :blog, result["innerId"])
@@ -121,7 +121,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:delete_article, :blog),
+               S.Article.m(:delete_article, :blog),
                variables,
                ecode(:account_login)
              )
@@ -137,7 +137,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
         article: %{inner_id: blog.inner_id, community: community.slug, thread: "BLOG"}
       }
 
-      result = rule_conn |> gq_mutation(Schema.m(:delete_article, :blog), variables)
+      result = rule_conn |> gq_mutation(S.Article.m(:delete_article, :blog), variables)
 
       assert result["innerId"] == to_string(blog.inner_id)
     end
@@ -148,7 +148,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       }
 
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
-      schema = Schema.m(:delete_article, :blog)
+      schema = S.Article.m(:delete_article, :blog)
 
       assert user_conn |> mutation_error?(schema, variables, ecode(:passport))
       assert guest_conn |> mutation_error?(schema, variables, ecode(:account_login))
@@ -166,7 +166,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:update_article, :blog),
+               S.Article.m(:update_article, :blog),
                variables,
                ecode(:account_login)
              )
@@ -187,7 +187,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
         communityTags: [community_tag.id]
       }
 
-      result = owner_conn |> gq_mutation(Schema.m(:update_article, :blog), variables)
+      result = owner_conn |> gq_mutation(S.Article.m(:update_article, :blog), variables)
       assert result["title"] == variables.title
 
       assert result["communityTags"] |> List.first() |> get_in(["id"]) ==
@@ -218,7 +218,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
         communityTags: [community_tag.id, community_tag2.id]
       }
 
-      result = owner_conn |> gq_mutation(Schema.m(:update_article, :blog), variables)
+      result = owner_conn |> gq_mutation(S.Article.m(:update_article, :blog), variables)
 
       assert result["communityTags"] |> length == 2
 
@@ -233,7 +233,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
         communityTags: [community_tag2.id, community_tag3.id]
       }
 
-      result = owner_conn |> gq_mutation(Schema.m(:update_article, :blog), variables)
+      result = owner_conn |> gq_mutation(S.Article.m(:update_article, :blog), variables)
 
       assert result["communityTags"] |> length == 2
 
@@ -255,7 +255,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       }
 
       updated_blog =
-        owner_conn |> gq_mutation(Schema.m(:update_article, :blog), variables)
+        owner_conn |> gq_mutation(S.Article.m(:update_article, :blog), variables)
 
       assert true == updated_blog["meta"]["isEdited"]
     end
@@ -276,7 +276,7 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
       }
 
       updated_blog =
-        rule_conn |> gq_mutation(Schema.m(:update_article, :blog), variables)
+        rule_conn |> gq_mutation(S.Article.m(:update_article, :blog), variables)
 
       assert updated_blog["innerId"] == to_string(blog.inner_id)
     end
@@ -294,21 +294,21 @@ defmodule GroupherServer.Test.Mutation.Articles.Blog do
 
       assert user_conn
              |> mutation_error?(
-               Schema.m(:update_article, :blog),
+               S.Article.m(:update_article, :blog),
                variables,
                ecode(:passport)
              )
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:update_article, :blog),
+               S.Article.m(:update_article, :blog),
                variables,
                ecode(:account_login)
              )
 
       assert rule_conn
              |> mutation_error?(
-               Schema.m(:update_article, :blog),
+               S.Article.m(:update_article, :blog),
                variables,
                ecode(:passport)
              )

@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
   describe "[query paged_changelogs filter pagination]" do
     test "should get pagination info", ~m(guest_conn)a do
       variables = %{filter: %{page: 1, size: 10}}
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       assert results |> is_valid_pagination?
       assert results["pageSize"] == 10
@@ -63,7 +63,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       changelog_attrs = mock_attrs(:changelog, %{community_id: community.id})
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       first_changelog = results["entries"] |> List.first()
       assert first_changelog["innerId"] > changelog.inner_id
     end
@@ -76,7 +76,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       {:ok, _} = CMS.Articles.upvote(changelog_last_week, user2)
       {:ok, _} = CMS.Articles.upvote(changelog_last_week, user3)
 
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       first_changelog = results["entries"] |> List.first()
 
       assert first_changelog["upvotesCount"] === 3
@@ -96,7 +96,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       {:ok, _} =
         CMS.Comments.create_comment(community, :changelog, changelog_id, mock_comment(), user3)
 
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       first_changelog = results["entries"] |> List.first()
       assert first_changelog["commentsCount"] === 3
     end
@@ -131,7 +131,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
           user3
         )
 
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       first_changelog = results["entries"] |> List.first()
       last_changelog = results["entries"] |> List.last()
       assert first_changelog["views"] > last_changelog["views"]
@@ -143,7 +143,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       {:ok, _} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
 
       variables = %{filter: %{page: 1, size: 10}}
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       changelog = results["entries"] |> List.first()
 
@@ -162,10 +162,10 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       {:ok, _} = CMS.Communities.set_tag(changelog, community_tag.id)
 
       variables = %{filter: %{page: 1, size: 10, community_tag: community_tag.slug}}
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       variables = %{filter: %{page: 1, size: 10, community_tags: [community_tag.slug]}}
-      results2 = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results2 = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       assert results == results2
 
       changelog = results["entries"] |> List.first()
@@ -180,7 +180,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       {:ok, _} = CMS.Articles.create(community, :changelog, changelog_attrs2, user)
 
       variables = %{filter: %{page: 1, size: 10, community: community.slug}}
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       changelog = results["entries"] |> List.first()
       assert results["totalCount"] == 4
@@ -190,7 +190,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
     test "returns cancan error when community changelog thread is disabled",
          ~m(guest_conn community)a do
       {:ok, _} =
-        CMS.Dashboard.update(community, :enable, %{
+        CMS.Dsb.update(community, :enable, %{
           changelog: false
         })
 
@@ -198,7 +198,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
       assert guest_conn
              |> query_error?(
-               Schema.q(:paged_articles, :changelog),
+               S.Article.q(:paged_articles, :changelog),
                variables,
                ecode(:thread_not_visible)
              )
@@ -209,7 +209,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
       assert guest_conn
              |> query_error?(
-               Schema.q(:paged_articles, :changelog),
+               S.Article.q(:paged_articles, :changelog),
                variables,
                ecode(:pagination)
              )
@@ -221,14 +221,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
       assert guest_conn
              |> query_error?(
-               Schema.q(:paged_articles, :changelog),
+               S.Article.q(:paged_articles, :changelog),
                variables_0,
                ecode(:pagination)
              )
 
       assert guest_conn
              |> query_error?(
-               Schema.q(:paged_articles, :changelog),
+               S.Article.q(:paged_articles, :changelog),
                variables_neg_1,
                ecode(:pagination)
              )
@@ -236,7 +236,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
     test "pagination should have default page and size arg", ~m(guest_conn)a do
       variables = %{filter: %{}}
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       assert results |> is_valid_pagination?
       assert results["pageSize"] == @page_size
       assert results["totalCount"] >= @total_count
@@ -249,7 +249,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
 
       variables = %{filter: %{community: community.slug}}
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       assert length(results["entries"]) == 3
       assert results["entries"] |> Enum.any?(&(&1["innerId"] == to_string(changelog.inner_id)))
@@ -259,7 +259,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       {:ok, _} = CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
 
       variables = %{filter: %{community: community.slug}}
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       changelog = results["entries"] |> List.first()
 
       assert changelog["inserted_at"] == changelog["active_at"]
@@ -267,7 +267,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
     test "filter sort should have default :desc_active", ~m(guest_conn)a do
       variables = %{filter: %{}}
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       active_timestamps = results["entries"] |> Enum.map(& &1["activeAt"])
 
       {:ok, first_inserted_time, 0} = active_timestamps |> List.first() |> DateTime.from_iso8601()
@@ -280,7 +280,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       most_views_changelog = Changelog |> order_by(desc: :views) |> limit(1) |> Repo.one()
       variables = %{filter: %{sort: "MOST_VIEWS"}}
 
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       find_changelog = results |> Map.get("entries") |> hd
 
       # assert find_changelog["id"] == most_views_changelog |> Map.get(:id) |> to_string
@@ -297,7 +297,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       {:ok, _} = CMS.Articles.create(community, :changelog, mock_attrs(:changelog), user)
 
       variables = %{filter: %{community: community.slug}}
-      results = user_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = user_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       assert results["totalCount"] == 5
 
       the_changelog =
@@ -320,7 +320,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
       {:ok, _} = CMS.Articles.collect(changelog, user)
       {:ok, _} = CMS.AbuseReports.article(changelog, "reason", "attr_info", user)
 
-      results = user_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = user_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       the_changelog =
         Enum.find(results["entries"], &(&1["innerId"] == to_string(changelog.inner_id)))
@@ -341,7 +341,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
   describe "[query paged_changelogs filter when]" do
     test "THIS_YEAR option should work", ~m(guest_conn changelog_last_year)a do
       variables = %{filter: %{when: "THIS_YEAR"}}
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       assert results["entries"]
              |> Enum.any?(&(&1["innerId"] != to_string(changelog_last_year.inner_id)))
@@ -349,7 +349,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
     test "TODAY option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "TODAY"}}
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       expect_count = @total_count - @last_year_count - @last_month_count - @last_week_count
 
@@ -358,14 +358,14 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
 
     test "THIS_WEEK option should work", ~m(guest_conn)a do
       variables = %{filter: %{when: "THIS_WEEK"}}
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       assert results |> Map.get("totalCount") >= @today_count
     end
 
     test "THIS_MONTH option should work", ~m(guest_conn changelog_last_month)a do
       variables = %{filter: %{when: "THIS_MONTH"}}
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       assert results["entries"] |> Enum.any?(&(&1["innerId"] != changelog_last_month.inner_id))
     end
@@ -375,7 +375,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
     test "latest commented changelog should appear on top",
          ~m(guest_conn community changelog_last_week user2)a do
       variables = %{filter: %{page: 1, size: 20}}
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       entries = results["entries"]
       first_changelog = entries |> List.first()
       assert first_changelog["innerId"] !== to_string(changelog_last_week.inner_id)
@@ -391,7 +391,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
           user2
         )
 
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
 
       entries = results["entries"]
       first_changelog = entries |> List.first()
@@ -412,7 +412,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
           user2
         )
 
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       entries = results["entries"]
       first_changelog = entries |> List.first()
 
@@ -433,7 +433,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedChangelogs do
           changelog.author.user
         )
 
-      results = guest_conn |> gq_query(Schema.q(:paged_articles, :changelog), variables)
+      results = guest_conn |> gq_query(S.Article.q(:paged_articles, :changelog), variables)
       entries = results["entries"]
       first_changelog = entries |> List.first()
 

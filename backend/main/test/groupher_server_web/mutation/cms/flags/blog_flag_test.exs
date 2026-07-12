@@ -26,7 +26,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated =
-        rule_conn |> gq_mutation(Schema.m(:mark_delete_article, :blog), variables)
+        rule_conn |> gq_mutation(S.Article.m(:mark_delete_article, :blog), variables)
 
       assert updated["innerId"] == to_string(blog.inner_id)
       assert updated["markDelete"] == true
@@ -47,7 +47,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       passport_rules = %{community.slug => %{"blog.mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      rule_conn |> gq_mutation(Schema.m(:mark_delete_article, :blog), variables)
+      rule_conn |> gq_mutation(S.Article.m(:mark_delete_article, :blog), variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.blogs_count == 0
@@ -61,7 +61,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
 
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      schema = Schema.m(:mark_delete_article, :blog)
+      schema = S.Article.m(:mark_delete_article, :blog)
 
       assert user_conn |> mutation_error?(schema, variables, ecode(:passport))
       assert guest_conn |> mutation_error?(schema, variables, ecode(:account_login))
@@ -79,7 +79,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated =
-        rule_conn |> gq_mutation(Schema.m(:undo_mark_delete_article, :blog), variables)
+        rule_conn |> gq_mutation(S.Article.m(:undo_mark_delete_article, :blog), variables)
 
       assert updated["innerId"] == to_string(blog.inner_id)
       assert updated["markDelete"] == false
@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
 
       passport_rules = %{community.slug => %{"blog.undo_mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
-      rule_conn |> gq_mutation(Schema.m(:undo_mark_delete_article, :blog), variables)
+      rule_conn |> gq_mutation(S.Article.m(:undo_mark_delete_article, :blog), variables)
 
       {:ok, community} = ORM.find(Community, community.id)
       assert community.meta.blogs_count == 1
@@ -115,7 +115,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
 
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
-      schema = Schema.m(:undo_mark_delete_article, :blog)
+      schema = S.Article.m(:undo_mark_delete_article, :blog)
 
       assert user_conn |> mutation_error?(schema, variables, ecode(:passport))
       assert guest_conn |> mutation_error?(schema, variables, ecode(:account_login))
@@ -132,7 +132,9 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       passport_rules = %{community.slug => %{"blog.mark_delete" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> gq_mutation(Schema.m(:batch_mark_delete_article, :blog), variables)
+      updated =
+        rule_conn |> gq_mutation(S.Article.m(:batch_mark_delete_article, :blog), variables)
+
       assert updated["done"] == true
 
       {:ok, blog} = ORM.find(Blog, blog.id)
@@ -160,7 +162,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       updated =
-        rule_conn |> gq_mutation(Schema.m(:batch_undo_mark_delete_article, :blog), variables)
+        rule_conn |> gq_mutation(S.Article.m(:batch_undo_mark_delete_article, :blog), variables)
 
       assert updated["done"] == true
 
@@ -181,7 +183,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       passport_rules = %{community.slug => %{"blog.pin" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> gq_mutation(Schema.m(:pin_article, :blog), variables)
+      updated = rule_conn |> gq_mutation(S.Article.m(:pin_article, :blog), variables)
 
       assert updated["innerId"] == to_string(blog.inner_id)
     end
@@ -194,17 +196,17 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
 
       assert user_conn
-             |> mutation_error?(Schema.m(:pin_article, :blog), variables, ecode(:passport))
+             |> mutation_error?(S.Article.m(:pin_article, :blog), variables, ecode(:passport))
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:pin_article, :blog),
+               S.Article.m(:pin_article, :blog),
                variables,
                ecode(:account_login)
              )
 
       assert rule_conn
-             |> mutation_error?(Schema.m(:pin_article, :blog), variables, ecode(:passport))
+             |> mutation_error?(S.Article.m(:pin_article, :blog), variables, ecode(:passport))
     end
 
     test "auth user can undo pin blog", ~m(community blog)a do
@@ -216,7 +218,7 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       CMS.Articles.pin(community, blog)
-      updated = rule_conn |> gq_mutation(Schema.m(:undo_pin_article, :blog), variables)
+      updated = rule_conn |> gq_mutation(S.Article.m(:undo_pin_article, :blog), variables)
 
       assert updated["innerId"] == to_string(blog.inner_id)
     end
@@ -230,21 +232,21 @@ defmodule GroupherServer.Test.Mutation.Flags.BlogFlag do
 
       assert user_conn
              |> mutation_error?(
-               Schema.m(:undo_pin_article, :blog),
+               S.Article.m(:undo_pin_article, :blog),
                variables,
                ecode(:passport)
              )
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:undo_pin_article, :blog),
+               S.Article.m(:undo_pin_article, :blog),
                variables,
                ecode(:account_login)
              )
 
       assert rule_conn
              |> mutation_error?(
-               Schema.m(:undo_pin_article, :blog),
+               S.Article.m(:undo_pin_article, :blog),
                variables,
                ecode(:passport)
              )

@@ -18,19 +18,7 @@ defmodule GroupherServer.Test.Query.Accounts.Mailbox do
       assert {:error, {:not_exist, _}} = Accounts.Mailbox.update_status_many([-1])
     end
 
-    @query """
-    query($login: String!) {
-      user(login: $login) {
-        login
-        mailbox {
-          isEmpty
-          unreadTotalCount
-          unreadMentionsCount
-          unreadNotificationsCount
-        }
-      }
-    }
-    """
+    @query S.Mailbox.q(:user)
     test "auth user can get it's own default mailbox status", ~m(user_conn user)a do
       results = user_conn |> gq_query(@query, %{login: user.login})
       mailbox = results["mailbox"]
@@ -69,29 +57,7 @@ defmodule GroupherServer.Test.Query.Accounts.Mailbox do
   end
 
   describe "[paged messages]" do
-    @query """
-    query($filter: MailboxMentionsFilter!) {
-      pagedMentions(filter: $filter) {
-        entries {
-          id
-          thread
-          articleId
-          title
-          commentId
-          read
-          blockLinker
-          user {
-            login
-            nickname
-          }
-        }
-        totalPages
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @query S.Mailbox.q(:paged_mentions)
     test "can get paged mentions", ~m(user_conn user user2)a do
       mock_mention_for(user, user2)
 
@@ -109,29 +75,7 @@ defmodule GroupherServer.Test.Query.Accounts.Mailbox do
       assert results["totalCount"] == 0
     end
 
-    @query """
-    query($filter: MailboxNotificationsFilter!) {
-      pagedNotifications(filter: $filter) {
-        entries {
-          id
-          action
-          thread
-          articleId
-          title
-          commentId
-          read
-          fromUsers {
-            login
-            nickname
-          }
-        }
-        totalPages
-        totalCount
-        pageSize
-        pageNumber
-      }
-    }
-    """
+    @query S.Mailbox.q(:paged_notifications)
     test "can get paged notifications", ~m(user_conn user user2)a do
       mock_notification_for(user, user2)
 

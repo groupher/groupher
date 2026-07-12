@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.ChangelogReport do
         reason: "reason"
       }
 
-      article = user_conn |> gq_mutation(Schema.m(:report_article, :changelog), variables)
+      article = user_conn |> gq_mutation(S.Article.m(:report_article, :changelog), variables)
       assert article["innerId"] == to_string(changelog.inner_id)
     end
 
@@ -30,7 +30,7 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.ChangelogReport do
         reason: "reason"
       }
 
-      article = user_conn |> gq_mutation(Schema.m(:report_article, :changelog), variables)
+      article = user_conn |> gq_mutation(S.Article.m(:report_article, :changelog), variables)
       assert article["innerId"] == to_string(changelog.inner_id)
 
       variables = %{
@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.Mutation.AbuseReports.ChangelogReport do
       }
 
       article =
-        user_conn |> gq_mutation(Schema.m(:undo_report_article, :changelog), variables)
+        user_conn |> gq_mutation(S.Article.m(:undo_report_article, :changelog), variables)
 
       assert article["innerId"] == to_string(changelog.inner_id)
     end

@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
       passport_rules = %{community.slug => %{"blog.sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      result = rule_conn |> gq_mutation(Schema.m(:sink_article, :blog), variables)
+      result = rule_conn |> gq_mutation(S.Article.m(:sink_article, :blog), variables)
       assert result["innerId"] == to_string(blog.inner_id)
 
       {:ok, blog} = ORM.find(Blog, blog.id)
@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:sink_article, :blog),
+               S.Article.m(:sink_article, :blog),
                variables,
                ecode(:account_login)
              )
@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
 
       {:ok, _} = CMS.Articles.sink(blog)
 
-      updated = rule_conn |> gq_mutation(Schema.m(:undo_sink_article, :blog), variables)
+      updated = rule_conn |> gq_mutation(S.Article.m(:undo_sink_article, :blog), variables)
 
       assert updated["innerId"] == to_string(blog.inner_id)
 
@@ -66,7 +66,7 @@ defmodule GroupherServer.Test.Mutation.Sink.BlogSink do
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:undo_sink_article, :blog),
+               S.Article.m(:undo_sink_article, :blog),
                variables,
                ecode(:account_login)
              )

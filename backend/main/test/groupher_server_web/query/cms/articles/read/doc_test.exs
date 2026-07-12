@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
       article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}
     }
 
-    results = user_conn |> gq_query(Schema.q(:article, :doc), variables)
+    results = user_conn |> gq_query(S.Article.q(:article, :doc), variables)
 
     assert results["innerId"] == to_string(doc.inner_id)
     assert get_in(results, ["community", "slug"]) == community.slug
@@ -43,7 +43,7 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
       article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}
     }
 
-    results = guest_conn |> gq_query(Schema.q(:article, :doc), variables)
+    results = guest_conn |> gq_query(S.Article.q(:article, :doc), variables)
 
     assert results["innerId"] == to_string(doc.inner_id)
     assert is_valid_kv?(results, "title", :string)
@@ -56,13 +56,13 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
       article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}
     }
 
-    results = user_conn |> gq_query(Schema.q(:article, :doc), variables)
+    results = user_conn |> gq_query(S.Article.q(:article, :doc), variables)
 
     assert results |> get_in(["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == []
     assert results |> get_in(["meta", "illegalWords"]) == []
 
-    results = guest_conn |> gq_query(Schema.q(:article, :doc), variables)
+    results = guest_conn |> gq_query(S.Article.q(:article, :doc), variables)
     assert results |> get_in(["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == []
     assert results |> get_in(["meta", "illegalWords"]) == []
@@ -74,7 +74,7 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
         illegal_words: ["some-word"]
       })
 
-    results = user_conn |> gq_query(Schema.q(:article, :doc), variables)
+    results = user_conn |> gq_query(S.Article.q(:article, :doc), variables)
 
     assert not get_in(results, ["meta", "isLegal"])
     assert results |> get_in(["meta", "illegalReason"]) == ["some-reason"]
@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
     {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
     {:ok, _} =
-      CMS.Dashboard.update(community, :enable, %{
+      CMS.Dsb.update(community, :enable, %{
         doc: false
       })
 
@@ -95,6 +95,6 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
     }
 
     assert guest_conn
-           |> query_error?(Schema.q(:article, :doc), variables, ecode(:thread_not_visible))
+           |> query_error?(S.Article.q(:article, :doc), variables, ecode(:thread_not_visible))
   end
 end

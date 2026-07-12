@@ -13,27 +13,7 @@ defmodule GroupherServer.Test.Mutation.Account.Basic do
   end
 
   describe "[account update]" do
-    @update_query """
-    mutation(
-      $profile: UserProfileInput!,
-      $social: SocialInput,
-    ) {
-      updateProfile(
-        profile: $profile,
-        social: $social,
-      ) {
-        avatar
-        nickname
-        social {
-          zhihu
-          github
-          blog
-          twitter
-          company
-        }
-      }
-    }
-    """
+    @update_query S.Account.m(:update_profile)
     test "user can update it's own profile", ~m(user)a do
       owned_conn = simu_conn(:user, user)
 

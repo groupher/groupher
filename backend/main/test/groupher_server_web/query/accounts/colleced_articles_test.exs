@@ -20,21 +20,7 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
     {:ok, ~m(guest_conn user_conn user posts)a}
   end
 
-  @query """
-  query($login: String!, $filter: CollectFoldersFilter!) {
-    pagedCollectFolders(login: $login, filter: $filter) {
-      entries {
-        id
-        title
-        private
-      }
-      totalPages
-      totalCount
-      pageSize
-      pageNumber
-    }
-  }
-  """
+  @query S.Collect.q(:paged_collect_folders)
 
   test "other user can get other user's paged collect folders", ~m(user_conn guest_conn)a do
     {:ok, user} = db_insert(:user)
@@ -66,20 +52,7 @@ defmodule GroupherServer.Test.Query.Accounts.CollectedArticles do
     assert results2["totalCount"] == 1
   end
 
-  @query """
-  query($folderId: ID!, $filter: CollectedArticlesFilter!) {
-      pagedCollectedArticles(folderId: $folderId, filter: $filter) {
-        entries {
-          innerId
-          title
-        }
-      totalPages
-      totalCount
-      pageSize
-      pageNumber
-    }
-  }
-  """
+  @query S.Collect.q(:paged_collected_articles)
   test "can get paged articles inside a collect-folder", ~m(user_conn guest_conn user posts)a do
     {:ok, folder} = Accounts.CollectFolders.create(%{title: "test folder"}, user)
 

@@ -3,22 +3,7 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
 
   use GroupherServer.TestMate, async: false
 
-  @asset_refs_query """
-  query($community: String!, $assetId: ID!, $filter: PagiFilter) {
-    communityAssetRefs(community: $community, assetId: $assetId, filter: $filter) {
-      entries {
-        id
-        articleId
-        usage
-        source
-      }
-      totalCount
-      totalPages
-      pageSize
-      pageNumber
-    }
-  }
-  """
+  @asset_refs_query S.Asset.q(:community_asset_refs)
 
   setup do
     {community, post, _attrs, user} = mock_article(:post)

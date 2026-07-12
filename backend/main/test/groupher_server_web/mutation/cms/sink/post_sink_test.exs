@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
       passport_rules = %{community.slug => %{"post.sink" => true}}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      result = rule_conn |> gq_mutation(Schema.m(:sink_article, :post), variables)
+      result = rule_conn |> gq_mutation(S.Article.m(:sink_article, :post), variables)
       assert result["innerId"] == to_string(post.inner_id)
 
       {:ok, post} = ORM.find(Post, post.id)
@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:sink_article, :post),
+               S.Article.m(:sink_article, :post),
                variables,
                ecode(:account_login)
              )
@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
 
       {:ok, _} = CMS.Articles.sink(post)
 
-      updated = rule_conn |> gq_mutation(Schema.m(:undo_sink_article, :post), variables)
+      updated = rule_conn |> gq_mutation(S.Article.m(:undo_sink_article, :post), variables)
       assert updated["innerId"] == to_string(post.inner_id)
 
       {:ok, post} = ORM.find(Post, post.id)
@@ -65,7 +65,7 @@ defmodule GroupherServer.Test.Mutation.Sink.PostSink do
 
       assert guest_conn
              |> mutation_error?(
-               Schema.m(:undo_sink_article, :post),
+               S.Article.m(:undo_sink_article, :post),
                variables,
                ecode(:account_login)
              )

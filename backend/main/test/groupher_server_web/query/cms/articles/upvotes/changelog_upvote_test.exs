@@ -18,9 +18,12 @@ defmodule GroupherServer.Test.Query.Upvotes.ChangelogUpvote do
       {:ok, _} = CMS.Articles.upvote(changelog, user)
       {:ok, _} = CMS.Articles.upvote(changelog, user2)
 
-      variables = %{article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"}, filter: %{page: 1, size: 20}}
+      variables = %{
+        article: %{inner_id: changelog.inner_id, community: community.slug, thread: "CHANGELOG"},
+        filter: %{page: 1, size: 20}
+      }
 
-      results = guest_conn |> gq_query(Schema.q(:upvoted_users), variables)
+      results = guest_conn |> gq_query(S.Article.q(:upvoted_users), variables)
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 2

@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
         emotion: "BEER"
       }
 
-      article = user_conn |> gq_mutation(Schema.m(:emotion_article, :post), variables)
+      article = user_conn |> gq_mutation(S.Article.m(:emotion_article, :post), variables)
 
       assert emotion_entry(article["emotions"], :beer)["count"] == 1
       assert emotion_entry(article["emotions"], :beer)["viewerHasReacted"]
@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
         emotion: "BEER"
       }
 
-      article = owner_conn |> gq_mutation(Schema.m(:undo_emotion_article, :post), variables)
+      article = owner_conn |> gq_mutation(S.Article.m(:undo_emotion_article, :post), variables)
 
       assert is_nil(emotion_entry(article["emotions"], :beer))
     end
@@ -52,11 +52,11 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
         emotion: "BEER"
       }
 
-      article = user_conn |> gq_mutation(Schema.m(:emotion_article, :post), variables)
+      article = user_conn |> gq_mutation(S.Article.m(:emotion_article, :post), variables)
       assert emotion_entry(article["emotions"], :beer)["count"] == 1
       assert emotion_entry(article["emotions"], :beer)["viewerHasReacted"]
 
-      article2 = user_conn |> gq_mutation(Schema.m(:emotion_article, :post), variables)
+      article2 = user_conn |> gq_mutation(S.Article.m(:emotion_article, :post), variables)
       assert emotion_entry(article2["emotions"], :beer)["count"] == 1
       assert emotion_entry(article2["emotions"], :beer)["viewerHasReacted"]
     end
@@ -68,7 +68,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
         emotion: "BEER"
       }
 
-      article = user_conn |> gq_mutation(Schema.m(:emotion_article, :post), variables_beer)
+      article = user_conn |> gq_mutation(S.Article.m(:emotion_article, :post), variables_beer)
       assert emotion_entry(article["emotions"], :beer)["count"] == 1
 
       variables_heart = %{
@@ -76,7 +76,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
         emotion: "HEART"
       }
 
-      article2 = user2_conn |> gq_mutation(Schema.m(:emotion_article, :post), variables_heart)
+      article2 = user2_conn |> gq_mutation(S.Article.m(:emotion_article, :post), variables_heart)
       assert emotion_entry(article2["emotions"], :beer)["count"] == 1
 
       {:ok, current_post} = CMS.FrontDesk.article(community, :post, post.inner_id)
@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
     test "article emotion is rejected when disabled by dashboard thread settings",
          ~m(community post user_conn)a do
       {:ok, _} =
-        CMS.Dashboard.update(community, :thread_emotions, %{
+        CMS.Dsb.update(community, :thread_emotions, %{
           post: [:heart]
         })
 
@@ -112,7 +112,7 @@ defmodule GroupherServer.Test.Mutation.Articles.PostEmotion do
 
       assert user_conn
              |> mutation_error?(
-               Schema.m(:emotion_article, :post),
+               S.Article.m(:emotion_article, :post),
                variables,
                ecode(:emotion_not_allowed)
              )

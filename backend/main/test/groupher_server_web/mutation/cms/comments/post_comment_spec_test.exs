@@ -14,15 +14,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
   end
 
   describe "[post only: article comment solution]" do
-    @query """
-    mutation($comment: CommentPathInput!) {
-      markCommentSolution(comment: $comment) {
-        innerId
-        isForQuestion
-        isSolution
-      }
-    }
-    """
+    @query S.Comment.m(:mark_comment_solution)
     test "questioner can mark a post comment as solution", ~m(community post)a do
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user
@@ -53,15 +45,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostCommentSpec do
       assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
     end
 
-    @query """
-    mutation($comment: CommentPathInput!) {
-      undoMarkCommentSolution(comment: $comment) {
-        innerId
-        isForQuestion
-        isSolution
-      }
-    }
-    """
+    @query S.Comment.m(:undo_mark_comment_solution)
     test "questioner can undo mark a post comment as solution", ~m(community post)a do
       {:ok, post} = ORM.find(Post, post.id, preload: [author: :user])
       post_author = post.author.user

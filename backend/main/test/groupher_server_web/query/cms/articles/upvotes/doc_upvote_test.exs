@@ -18,9 +18,12 @@ defmodule GroupherServer.Test.Query.Upvotes.DocUpvote do
       {:ok, _} = CMS.Articles.upvote(doc, user)
       {:ok, _} = CMS.Articles.upvote(doc, user2)
 
-      variables = %{article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"}, filter: %{page: 1, size: 20}}
+      variables = %{
+        article: %{inner_id: doc.inner_id, community: community.slug, thread: "DOC"},
+        filter: %{page: 1, size: 20}
+      }
 
-      results = guest_conn |> gq_query(Schema.q(:upvoted_users), variables)
+      results = guest_conn |> gq_query(S.Article.q(:upvoted_users), variables)
 
       assert results |> is_valid_pagination?
       assert results["totalCount"] == 2
