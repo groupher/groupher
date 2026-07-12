@@ -1,0 +1,11 @@
+[project]
+name = "groupher-document-converter"
+version = "0.1.0"
+description = "Document-to-Markdown conversion service for Groupher"
+requires-python = ">=3.12"
+dependencies = [
+  "fastapi>=0.117,<1",
+]
+
+[tool.vercel]
+entrypoint = "app:app"
