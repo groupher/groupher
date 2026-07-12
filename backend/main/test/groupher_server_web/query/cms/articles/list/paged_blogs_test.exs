@@ -185,7 +185,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedBlogs do
     test "returns cancan error when community blog thread is disabled",
          ~m(guest_conn community)a do
       {:ok, _} =
-        CMS.Dsb.update(community, :enable, %{
+        CMS.Dashboard.update(community, :enable, %{
           blog: false
         })
 

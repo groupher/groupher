@@ -10,7 +10,7 @@ defmodule GroupherServer.Test.Seeds.FullCommunityTest do
   alias GroupherServer.CMS
   alias GroupherServer.CMS.Artiment.Enums
   alias GroupherServer.Repo
-  alias GroupherServer.CMS.Dsb.Fields, as: Dashboard
+  alias GroupherServer.CMS.Dashboard.Fields, as: Dashboard
   alias Helper.ORM
 
   alias CMS.Model.{Changelog, Comment, Community, Doc, Post}

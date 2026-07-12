@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.Mutation.CMS.Dsb do
+defmodule GroupherServer.Test.Mutation.CMS.Dashboard do
   @moduledoc false
 
   use GroupherServer.TestMate

@@ -1,9 +1,9 @@
-defmodule GroupherServer.Test.CMS.Dsb.ThemePresetTest do
+defmodule GroupherServer.Test.CMS.Dashboard.ThemePresetTest do
   @moduledoc false
 
   use ExUnit.Case, async: true
 
-  alias GroupherServer.CMS.Dsb.ThemePreset
+  alias GroupherServer.CMS.Dashboard.ThemePreset
   alias GroupherServer.CMS.Model.Embeds.Dashboard.Layout
 
   test "default theme preset state is seeded in layout default" do

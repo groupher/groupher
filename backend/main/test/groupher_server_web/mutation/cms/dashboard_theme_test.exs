@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.Mutation.CMS.DsbTheme do
+defmodule GroupherServer.Test.Mutation.CMS.DashboardTheme do
   @moduledoc false
 
   use GroupherServer.TestMate

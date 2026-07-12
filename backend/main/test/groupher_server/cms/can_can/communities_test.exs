@@ -24,7 +24,7 @@ defmodule GroupherServer.Test.CMS.CanCan.Communities do
 
     test "reads community dashboard override for comment thread emotions", ~m(community)a do
       {:ok, _} =
-        CMS.Dsb.update(community, :thread_emotions, %{
+        CMS.Dashboard.update(community, :thread_emotions, %{
           post_comment: [:heart]
         })
 
@@ -37,7 +37,7 @@ defmodule GroupherServer.Test.CMS.CanCan.Communities do
 
     test "reads community dashboard override for article thread emotions", ~m(community)a do
       {:ok, _} =
-        CMS.Dsb.update(community, :thread_emotions, %{
+        CMS.Dashboard.update(community, :thread_emotions, %{
           post: [:heart]
         })
 
@@ -66,7 +66,7 @@ defmodule GroupherServer.Test.CMS.CanCan.Communities do
                CanCan.allow_emotion(community.slug, :comment, :post, :upvote)
 
       {:ok, _} =
-        CMS.Dsb.update(community, :thread_emotions, %{
+        CMS.Dashboard.update(community, :thread_emotions, %{
           post_comment: [:heart]
         })
 
@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.CMS.CanCan.Communities do
 
     test "allow_thread returns cancan error key when disabled", ~m(community)a do
       {:ok, _} =
-        CMS.Dsb.update(community, :enable, %{
+        CMS.Dashboard.update(community, :enable, %{
           post: false
         })
 

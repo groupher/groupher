@@ -280,7 +280,7 @@ defmodule GroupherServer.Test.Mutation.Comments.PostComment do
         CMS.Comments.create_comment(community, :post, post.inner_id, mock_comment(), user)
 
       {:ok, _} =
-        CMS.Dsb.update(community, :thread_emotions, %{
+        CMS.Dashboard.update(community, :thread_emotions, %{
           post_comment: [:heart]
         })
 

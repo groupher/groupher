@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.Query.Articles.Blog do
     {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
 
     {:ok, _} =
-      CMS.Dsb.update(community, :enable, %{
+      CMS.Dashboard.update(community, :enable, %{
         blog: false
       })
 

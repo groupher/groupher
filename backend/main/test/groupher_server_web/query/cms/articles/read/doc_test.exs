@@ -86,7 +86,7 @@ defmodule GroupherServer.Test.Query.Articles.Doc do
     {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
 
     {:ok, _} =
-      CMS.Dsb.update(community, :enable, %{
+      CMS.Dashboard.update(community, :enable, %{
         doc: false
       })
 

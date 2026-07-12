@@ -18,7 +18,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
     @query S.Article.q(:grouped_kanban_posts)
     test "should get grouped paged posts", ~m(guest_conn user community post_attrs)a do
       {:ok, _} =
-        CMS.Dsb.update(community, :layout, %{
+        CMS.Dashboard.update(community, :layout, %{
           kanban_boards: [:backlog, :todo, :wip, :done, :rejected]
         })
 
@@ -66,7 +66,7 @@ defmodule GroupherServer.Test.Query.PagedArticles.PagedKanbanPosts do
     test "disabled grouped kanban boards resolve to empty paginations",
          ~m(guest_conn user community post_attrs)a do
       {:ok, _} =
-        CMS.Dsb.update(community, :layout, %{
+        CMS.Dashboard.update(community, :layout, %{
           kanban_boards: [:todo, :wip, :done]
         })
 
