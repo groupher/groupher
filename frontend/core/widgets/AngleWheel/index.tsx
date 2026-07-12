@@ -3,6 +3,7 @@ import {
   type MouseEvent,
   useCallback,
   useEffect,
+  useEffectEvent,
   useRef,
   useState,
 } from 'react'
@@ -85,16 +86,24 @@ export default function AngleWheel({ value, label = 'Angle', onChange, onCommit 
     onCommit?.()
   }
 
+  const handleDragMove = useEffectEvent((clientX: number, clientY: number): void => {
+    updateAngle(clientX, clientY)
+  })
+
+  const handleDragEnd = useEffectEvent((clientX: number, clientY: number): void => {
+    updateAngle(clientX, clientY)
+    setDragging(false)
+    onCommit?.()
+  })
+
   useEffect(() => {
     if (!dragging) return
 
     const handleMouseMove = (event: globalThis.MouseEvent): void => {
-      updateAngle(event.clientX, event.clientY)
+      handleDragMove(event.clientX, event.clientY)
     }
     const handleMouseUp = (event: globalThis.MouseEvent): void => {
-      updateAngle(event.clientX, event.clientY)
-      setDragging(false)
-      onCommit?.()
+      handleDragEnd(event.clientX, event.clientY)
     }
 
     window.addEventListener('mousemove', handleMouseMove)
@@ -104,7 +113,7 @@ export default function AngleWheel({ value, label = 'Angle', onChange, onCommit 
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [dragging, onCommit, updateAngle])
+  }, [dragging])
 
   return (
     <div
