@@ -25,7 +25,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
   alias GroupherServer.CMS
   alias CMS.Marker
-  alias CMS.Model.{Community, DocsBranch}
+  alias CMS.Model.{Community, ArticleBranch}
   alias Helper.Constant.DBPrefix
   alias Helper.Validator.Slug
 
@@ -46,7 +46,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
   schema "doc_tree_nodes" do
     belongs_to(:community, Community)
-    belongs_to(:branch, DocsBranch)
+    belongs_to(:branch, ArticleBranch)
 
     field(:doc_id, Ecto.UUID)
     field(:node_id, :string)

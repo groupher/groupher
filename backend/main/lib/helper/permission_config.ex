@@ -183,6 +183,8 @@ defmodule Helper.PermissionConfig do
         grant_by_thread: "community_tag.update"
       },
       "post.update" => %{scope: :context, context: :cms, grant: "post.edit", owner_fallback: true},
+      "post.draft.update" => %{owner_fallback: true},
+      "post.draft.publish" => %{owner_fallback: true},
       "post.set_category" => %{
         scope: :context,
         context: :cms,
@@ -197,12 +199,16 @@ defmodule Helper.PermissionConfig do
       },
       "doc.update" => %{scope: :context, context: :cms, grant: "doc.edit", owner_fallback: true},
       "blog.update" => %{scope: :context, context: :cms, grant: "blog.edit", owner_fallback: true},
+      "blog.draft.update" => %{owner_fallback: true},
+      "blog.draft.publish" => %{owner_fallback: true},
       "changelog.update" => %{
         scope: :context,
         context: :cms,
         grant: "changelog.edit",
         owner_fallback: true
       },
+      "changelog.draft.update" => %{owner_fallback: true},
+      "changelog.draft.publish" => %{owner_fallback: true},
       "comment.update" => %{owner_fallback: true},
       "comment.delete" => %{owner_fallback: true},
       "comment.pin" => %{owner_fallback: true},

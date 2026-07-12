@@ -29,7 +29,8 @@ defmodule GroupherServer.CMS.DocTree.Template do
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
   alias CMS.Articles.Draft
-  alias CMS.DocTree.{Branch, Read, Revision}
+  alias CMS.Articles.Branch
+  alias CMS.DocTree.{Read, Revision}
 
   require CMS.Const
 
@@ -66,7 +67,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
   @spec ensure_demo_template(Community.t(), User.t()) :: T.domain_res(map())
   def ensure_demo_template(%Community{} = community, %User{} = user) do
     lock_template(community, fn ->
-      with {:ok, branch} <- Branch.resolve(community) do
+      with {:ok, branch} <- Branch.resolve(community, :doc) do
         if draft_tree_empty?(community, branch) do
           do_create_demo_template(community, branch, user)
         else
@@ -79,7 +80,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
   @spec reset_demo_template(Community.t(), User.t()) :: T.domain_res(map())
   def reset_demo_template(%Community{} = community, %User{} = user) do
     lock_template(community, fn ->
-      with {:ok, branch} <- Branch.resolve(community),
+      with {:ok, branch} <- Branch.resolve(community, :doc),
            {:ok, _} <- do_delete_demo_template(community, branch) do
         do_create_demo_template(community, branch, user)
       end
@@ -89,7 +90,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
   @spec create_demo_template(Community.t(), User.t()) :: T.domain_res(map())
   def create_demo_template(%Community{} = community, %User{} = user) do
     lock_template(community, fn ->
-      with {:ok, branch} <- Branch.resolve(community) do
+      with {:ok, branch} <- Branch.resolve(community, :doc) do
         do_create_demo_template(community, branch, user)
       end
     end)
@@ -98,7 +99,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
   @spec delete_demo_template(Community.t()) :: T.domain_res(map())
   def delete_demo_template(%Community{} = community) do
     lock_template(community, fn ->
-      with {:ok, branch} <- Branch.resolve(community) do
+      with {:ok, branch} <- Branch.resolve(community, :doc) do
         do_delete_demo_template(community, branch)
       end
     end)
@@ -229,7 +230,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
         node_id: template_node_id("page:#{group_key}:#{page.key}"),
         stage: CMS.Const.stage(:draft),
         group_id: group.node_id,
-        doc_id: draft.doc_id,
+        doc_id: draft.article_hash_id,
         type: :page,
         title: page.title,
         slug: page.slug,

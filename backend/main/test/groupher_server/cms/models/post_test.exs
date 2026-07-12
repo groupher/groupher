@@ -3,7 +3,12 @@ defmodule GroupherServer.Test.CMS.Models.PostTest do
 
   alias GroupherServer.CMS.Model.Post
 
-  @valid_attrs %{title: "valid title", digest: "valid digest"}
+  @valid_attrs %{
+    branch_id: 1,
+    article_hash_id: "00000000-0000-0000-0000-000000000001",
+    title: "valid title",
+    digest: "valid digest"
+  }
 
   describe "changeset/2 enum attrs" do
     test "accepts atom enum attrs" do

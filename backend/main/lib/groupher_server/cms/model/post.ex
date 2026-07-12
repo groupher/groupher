@@ -20,11 +20,13 @@ defmodule GroupherServer.CMS.Model.Post do
   alias CMS.Model.Embeds
   alias Helper.Constant.DBPrefix
 
+  require CMS.Const
+
   @schema_prefix DBPrefix.cms()
   @timestamps_opts [type: :utc_datetime]
 
-  @required_fields ~w(title digest)a
-  @article_cast_fields general_article_cast_fields()
+  @required_fields ~w(branch_id article_hash_id title digest)a
+  @article_cast_fields general_article_cast_fields() ++ article_version_cast_fields()
 
   @optional_fields ~w(
     copy_right solution_digest updated_at inserted_at active_at archived_at
@@ -34,6 +36,7 @@ defmodule GroupherServer.CMS.Model.Post do
   @type t :: %Post{}
 
   schema "posts" do
+    article_version_fields()
     field(:copy_right, :string)
 
     # DB stores string, Ecto exposes atoms
@@ -47,7 +50,13 @@ defmodule GroupherServer.CMS.Model.Post do
     general_article_fields(:post)
   end
 
-  @doc false
+  @doc "Returns the Post fields copied by Draft, Publish, Snapshot, and Restore."
+  @spec version_fields() :: [atom()]
+  def version_fields do
+    ~w(title digest link_addr copy_right cat status solution_digest cover_url cover_url_dark)a
+  end
+
+  @doc "Builds a Post changeset for creation."
   def changeset(%Post{} = post, attrs) do
     post
     |> cast(attrs, @optional_fields ++ @required_fields)
@@ -58,7 +67,7 @@ defmodule GroupherServer.CMS.Model.Post do
     |> geneal_changeset()
   end
 
-  @doc false
+  @doc "Builds a Post changeset for mutable field updates."
   def update_changeset(%Post{} = post, attrs) do
     post
     |> cast(attrs, @optional_fields ++ @required_fields)
@@ -72,6 +81,9 @@ defmodule GroupherServer.CMS.Model.Post do
     |> validate_length(:title, min: 3, max: 100)
     |> cast_embed(:emotions, with: &Embeds.ArticleEmotion.changeset/2)
     |> validate_length(:link_addr, min: 5, max: 400)
+    |> validate_article_version_scope(:post)
+    |> foreign_key_constraint(:branch_id)
+    |> unique_constraint(:article_hash_id, name: :posts_branch_article_hash_stage_index)
   end
 
   # Absinthe enum inputs reach CMS as atoms. Do not accept raw string enum

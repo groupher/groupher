@@ -50,13 +50,13 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       [cover_item] = cover_group.items
       assert cover_item.node.href == "/#{community.slug}/doc/#{public_doc.inner_id}/install"
 
-      [group] = tree.groups
+      [group] = groups(tree)
       [page] = group.children
 
       assert group.publish_state.in_cover == true
       assert page.publish_state.status == :public
       assert page.publish_state.published == true
-      assert page.publish_state.public_doc_id == revision.doc_id
+      assert page.publish_state.public_doc_id == revision.article_hash_id
       assert page.publish_state.last_published_at
       assert page.publish_state.in_cover == true
       assert page.publish_state.hidden_from_cover == false
@@ -94,7 +94,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       assert cover.groups == []
       assert cover.pinned_items == []
 
-      [group] = tree.groups
+      [group] = groups(tree)
       [page] = group.children
 
       assert group.publish_state.published == true
@@ -126,7 +126,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       assert [%{items: [%{node: %{title: "Install"}}, %{node: %{title: "Advanced"}}]}] =
                cover.groups
 
-      [group] = tree.groups
+      [group] = groups(tree)
       assert Enum.all?(group.children, & &1.publish_state.published)
       assert Enum.all?(group.children, & &1.publish_state.in_cover)
 
@@ -154,7 +154,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       assert [%{group: %{title: "Guides"}, items: [%{node: %{title: "Install"}}]}] =
                cover.groups
 
-      [group] = tree.groups
+      [group] = groups(tree)
       [page, link] = group.children
 
       assert group.publish_state.status == :public
@@ -186,7 +186,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
       assert [%{items: [%{node: %{title: "Install"}}]}] = cover.groups
 
-      [group] = tree.groups
+      [group] = groups(tree)
       assert group.publish_state.status == :public
       assert Enum.all?(group.children, &(&1.publish_state.status == :public))
       assert Enum.all?(group.children, &(&1.publish_state.published_before == true))
@@ -196,7 +196,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
          ~m(user community page_payload)a do
       {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
       {:ok, tree} = CMS.DocTree.read(community)
-      [group] = tree.groups
+      [group] = groups(tree)
       [page] = group.children
 
       assert page.publish_state.status == :public
@@ -210,7 +210,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
         })
 
       {:ok, tree} = CMS.DocTree.read(community)
-      [group] = tree.groups
+      [group] = groups(tree)
       [page] = group.children
 
       assert page.publish_state.status == :public
@@ -239,7 +239,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       tree_snapshot = release.tree_snapshot
 
       {:ok, tree} = CMS.DocTree.read(community)
-      [group] = tree.groups
+      [group] = groups(tree)
       [page] = group.children
 
       refute tree.tree_state.has_unpublished_changes
@@ -279,16 +279,16 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
                  title: "GitHub",
                  href: "https://github.com/groupher/groupher"
                }
-             ] = tree.pins
+             ] = pins(tree)
 
       assert {:ok, %{done: true, release: release}} = publish_tree_changes(community, user)
       tree_snapshot = release.tree_snapshot
 
       {:ok, tree} = CMS.DocTree.read(community)
-      [group] = tree.groups
+      [group] = groups(tree)
       [page] = group.children
 
-      assert [%{id: ^pin_id, type: :pin, title: "GitHub"}] = tree.pins
+      assert [%{id: ^pin_id, type: :pin, title: "GitHub"}] = pins(tree)
       assert page.publish_state.public_node_id
 
       {:ok, published_pin} =
@@ -309,7 +309,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
                  "href" => "https://github.com/groupher/groupher",
                  "uiConfig" => %{"variant" => "compact"}
                }
-             ] = tree_snapshot.tree_json["pins"]
+             ] = tree_snapshot.tree_json["tabs"] |> hd() |> Map.fetch!("pins")
     end
 
     test "Tree publish skips doc-owned draft-only pages",
@@ -318,7 +318,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       tree_snapshot = release.tree_snapshot
 
       {:ok, tree} = CMS.DocTree.read(community)
-      [group] = tree.groups
+      [group] = groups(tree)
       [page] = group.children
 
       refute tree.tree_state.has_unpublished_changes
@@ -327,7 +327,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       assert page.publish_state.published == false
       assert page_payload.node.title == "Install"
 
-      assert [%{"children" => []}] = tree_snapshot.tree_json["groups"]
+      assert [%{"children" => []}] =
+               tree_snapshot.tree_json["tabs"] |> hd() |> Map.fetch!("groups")
     end
 
     test "Tree publish removes public nodes deleted from the draft tree",
@@ -335,7 +336,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
       {:ok, _tree_publish} = publish_tree_changes(community, user)
       {:ok, tree} = CMS.DocTree.read(community)
-      [group] = tree.groups
+      [group] = groups(tree)
       [page] = group.children
 
       assert page.publish_state.status == :public
@@ -346,7 +347,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
                })
 
       {:ok, tree} = CMS.DocTree.read(community)
-      [group] = tree.groups
+      [group] = groups(tree)
       assert group.children == []
       assert tree.tree_state.has_unpublished_changes
 
@@ -355,7 +356,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       {:ok, tree} = CMS.DocTree.read(community)
       {:ok, cover} = CMS.DocCover.read(community)
 
-      [group] = tree.groups
+      [group] = groups(tree)
       assert group.children == []
       refute tree.tree_state.has_unpublished_changes
       assert [%{items: []}] = cover.groups
@@ -365,7 +366,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
          ~m(user community page_payload)a do
       {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
       {:ok, tree} = CMS.DocTree.read(community)
-      [group] = tree.groups
+      [group] = groups(tree)
       [page] = group.children
       public_node_id = page.publish_state.public_node_id
 
@@ -380,7 +381,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
       assert [%{items: [%{node: %{title: "Install"}}]}] = cover.groups
 
-      [group] = tree.groups
+      [group] = groups(tree)
       [page] = group.children
 
       assert page.publish_state.status == :public
@@ -404,8 +405,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
       {:ok, cover} = CMS.DocCover.read(community)
       {:ok, tree} = CMS.DocTree.read(community)
-      [_group] = tree.groups
-      page = tree.groups |> hd() |> Map.fetch!(:children) |> hd()
+      [_group] = groups(tree)
+      page = groups(tree) |> hd() |> Map.fetch!(:children) |> hd()
 
       assert page.publish_state.status == :public
       assert page.publish_state.public_node_id == public_node_id
@@ -443,8 +444,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
       assert [%{items: []}] = cover.groups
 
-      [_group] = tree.groups
-      page = tree.groups |> hd() |> Map.fetch!(:children) |> hd()
+      [_group] = groups(tree)
+      page = groups(tree) |> hd() |> Map.fetch!(:children) |> hd()
 
       assert page.publish_state.in_cover == true
       assert page.publish_state.hidden_from_cover == true
@@ -479,7 +480,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
     ORM.find_by(CMS.Model.Doc,
       community_id: community.id,
       stage: CMS.Const.stage(:public),
-      doc_id: doc_id
+      article_hash_id: doc_id
     )
   end
 
@@ -489,4 +490,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       {:ok, %{result | release: Repo.preload(release, :tree_snapshot)}}
     end
   end
+
+  defp groups(%{tabs: [tab | _]}), do: tab.groups
+  defp pins(%{tabs: [tab | _]}), do: tab.pins
 end

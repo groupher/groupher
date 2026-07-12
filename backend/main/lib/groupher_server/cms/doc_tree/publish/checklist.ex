@@ -124,20 +124,20 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
       |> order_by([d], asc: d.inserted_at, asc: d.id)
       |> Repo.all()
 
-    drafts_by_doc_id = Map.new(drafts, &{&1.doc_id, &1})
+    drafts_by_doc_id = Map.new(drafts, &{&1.article_hash_id, &1})
     pages = publish_pages_for_drafts(community, branch, Map.keys(drafts_by_doc_id))
     pages_by_doc_id = Map.new(pages, &{&1.doc_id, &1})
 
     Enum.map(drafts, fn draft ->
-      page = Map.get(pages_by_doc_id, draft.doc_id)
+      page = Map.get(pages_by_doc_id, draft.article_hash_id)
       public = public_article_snapshot(community, branch, draft)
       action = if public, do: "modified", else: "created"
       selectable = not is_nil(page)
       disabled_reason = unless selectable, do: "Doc draft is not attached to a tree page."
 
       %{
-        id: "doc:#{draft.doc_id}",
-        doc_id: draft.doc_id,
+        id: "doc:#{draft.article_hash_id}",
+        doc_id: draft.article_hash_id,
         page_node_id: page && page.node_id,
         title: draft.title,
         action: action,
@@ -262,7 +262,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
     |> where([d], d.community_id == ^community.id)
     |> where([d], d.branch_id == ^branch.id)
     |> where([d], d.stage == CMS.Const.stage(:draft))
-    |> select([d], d.doc_id)
+    |> select([d], d.article_hash_id)
     |> Repo.all()
     |> MapSet.new()
   end
@@ -311,21 +311,23 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
     Doc
     |> where([doc], doc.community_id == ^community.id)
     |> where([doc], doc.branch_id == ^branch.id)
-    |> where([doc], doc.doc_id == ^doc_id)
+    |> where([doc], doc.article_hash_id == ^doc_id)
     |> where([doc], doc.stage in [CMS.Const.stage(:draft), CMS.Const.stage(:public)])
     |> order_by([doc], asc: doc.stage)
     |> limit(1)
     |> Repo.one()
   end
 
-  defp public_article_snapshot(%Community{} = community, branch, %Doc{doc_id: doc_id}) do
+  defp public_article_snapshot(%Community{} = community, branch, %Doc{
+         article_hash_id: article_hash_id
+       }) do
     ArticleSnapshot
     |> where([s], s.community_id == ^community.id)
     |> where([s], s.branch_id == ^branch.id)
     |> where([s], s.stage == CMS.Const.stage(:public))
     |> where([s], s.thread == :doc)
-    |> where([s], s.doc_id == ^doc_id)
-    |> order_by([s], desc: s.snapshot_number, desc: s.id)
+    |> where([s], s.article_hash_id == ^article_hash_id)
+    |> order_by([s], desc: s.revision_number, desc: s.id)
     |> limit(1)
     |> Repo.one()
   end

@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Model.PublishReleaseArticle do
+defmodule GroupherServer.CMS.Model.DocPublishReleaseArticle do
   @moduledoc """
   Article snapshot membership for one docs release.
 
@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.Model.PublishReleaseArticle do
   later publish, while the snapshot remains the frozen content used by release
   diff and rollback.
 
-      publish_release_articles
+      doc_publish_release_articles
       ├─ doc_id      # stable docs identity
       ├─ snapshot_id # immutable content snapshot
       ├─ node_id/group/index # tree position in this release view
@@ -15,7 +15,7 @@ defmodule GroupherServer.CMS.Model.PublishReleaseArticle do
 
   ## Example
 
-      %PublishReleaseArticle{
+      %DocPublishReleaseArticle{
         doc_id: "7a8f6e3c-1b61-4fc3-bd7b-8f89cf34d522",
         snapshot_id: 98,
         actions: ["modified", "moved"]
@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.Model.PublishReleaseArticle do
   import Ecto.Changeset
 
   alias GroupherServer.CMS
-  alias CMS.Model.{ArticleSnapshot, PublishRelease}
+  alias CMS.Model.{ArticleSnapshot, DocPublishRelease}
   alias Helper.Constant.DBPrefix
 
   require CMS.Const
@@ -41,9 +41,9 @@ defmodule GroupherServer.CMS.Model.PublishReleaseArticle do
   @required_fields ~w(release_id doc_id snapshot_id title actions)a
   @optional_fields ~w(node_id group_node_id index)a
 
-  @type t :: %PublishReleaseArticle{}
-  schema "publish_release_articles" do
-    belongs_to(:release, PublishRelease)
+  @type t :: %DocPublishReleaseArticle{}
+  schema "doc_publish_release_articles" do
+    belongs_to(:release, DocPublishRelease)
     belongs_to(:snapshot, ArticleSnapshot)
 
     field(:doc_id, Ecto.UUID)
@@ -56,8 +56,8 @@ defmodule GroupherServer.CMS.Model.PublishReleaseArticle do
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
-  def changeset(%PublishReleaseArticle{} = row, attrs) do
+  @doc "Builds the Article Snapshot membership row for a Docs release."
+  def changeset(%DocPublishReleaseArticle{} = row, attrs) do
     row
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)

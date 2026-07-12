@@ -4,7 +4,7 @@ defmodule GroupherServer.Test.CMS.Models.Embeds.Dashboard.LayoutTest do
   use ExUnit.Case, async: true
 
   alias GroupherServer.CMS.Model.Embeds.Dashboard.Layout
-  alias GroupherServer.CMS.Dashboard.Fields, as: Dashboard
+  alias GroupherServer.CMS.Dsb.Fields, as: Dashboard
 
   test "default xx_layout values are seeded in layout default" do
     assert Layout.default() == Dashboard.layout_default()

@@ -11,10 +11,10 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   import Helper.Utils, only: [handle_absinthe_error: 3]
   import Helper.ErrorCode
 
-  alias GroupherServer.FrontDesk
+  alias GroupherServer.{CMS, FrontDesk, Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Helper.ArticlePath
-  alias GroupherServer.CMS.Model.Comment
+  alias GroupherServer.CMS.Model.{Comment, Community}
 
   def call(%{errors: errors} = resolution, _) when length(errors) > 0 do
     resolution
@@ -39,6 +39,10 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
   def call(resolution, {:article, opts}), do: fetch_article(resolution, List.wrap(opts))
 
   def call(resolution, :article), do: fetch_article(resolution, [])
+
+  def call(resolution, {:article_editor, opts}) do
+    fetch_article_editor(resolution, List.wrap(opts))
+  end
 
   def call(resolution, :comment), do: fetch_comment(resolution)
 
@@ -87,6 +91,29 @@ defmodule GroupherServerWeb.Middleware.FrontDesk do
           |> maybe_put_article_passport_is_owner(article, resolution)
 
         %{resolution | arguments: updated_arguments}
+
+      {:error, err_msg} ->
+        resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))
+    end
+  end
+
+  defp fetch_article_editor(
+         %{
+           arguments: %{community: %Community{} = community, id: article_hash_id} = arguments
+         } = resolution,
+         opts
+       ) do
+    with {:ok, thread} <- Keyword.fetch(opts, :thread),
+         {:ok, article} <- CMS.Articles.read_editor(community, thread, article_hash_id) do
+      article = Repo.preload(article, author: :user)
+
+      updated_arguments =
+        maybe_put_article_passport_is_owner(arguments, article, resolution)
+
+      %{resolution | arguments: updated_arguments}
+    else
+      :error ->
+        resolution |> handle_absinthe_error("article editor thread is required", ecode(:custom))
 
       {:error, err_msg} ->
         resolution |> handle_absinthe_error(err_msg, ecode(:not_exist))

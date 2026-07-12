@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.Model.DocsSiteState do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.{Community, DocsBranch, DocTreeSnapshot}
+  alias CMS.Model.{Community, ArticleBranch, DocTreeSnapshot}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.Model.DocsSiteState do
   @type t :: %DocsSiteState{}
   schema "docs_site_states" do
     belongs_to(:community, Community)
-    belongs_to(:branch, DocsBranch)
+    belongs_to(:branch, ArticleBranch)
     belongs_to(:base_snapshot, DocTreeSnapshot)
     belongs_to(:last_published_by, User)
 

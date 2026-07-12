@@ -13,29 +13,39 @@ defmodule GroupherServer.CMS.Model.Changelog do
   import Ecto.Changeset
   import GroupherServer.CMS.Helper.Macros
 
-  alias GroupherServer.CMS.Model.Embeds
+  alias GroupherServer.CMS
+  alias CMS.Model.Embeds
 
   alias Helper.Constant.DBPrefix
   alias Helper.HTML
+
+  require CMS.Const
 
   @schema_prefix DBPrefix.cms()
 
   @timestamps_opts [type: :utc_datetime]
 
-  @required_fields ~w(title digest)a
-  @article_cast_fields general_article_cast_fields()
+  @required_fields ~w(branch_id article_hash_id title digest)a
+  @article_cast_fields general_article_cast_fields() ++ article_version_cast_fields()
   @optional_fields ~w(updated_at inserted_at active_at archived_at inner_id)a ++
                      @article_cast_fields
 
   @type t :: %Changelog{}
   schema "changelogs" do
+    article_version_fields()
     # association: community_tags
     article_tags_field(:changelog)
     article_communities_field(:changelog)
     general_article_fields(:changelog)
   end
 
-  @doc false
+  @doc "Returns the Changelog fields copied by Draft, Publish, Snapshot, and Restore."
+  @spec version_fields() :: [atom()]
+  def version_fields do
+    ~w(title digest link_addr cover_url cover_url_dark)a
+  end
+
+  @doc "Builds a Changelog changeset for creation."
   def changeset(%Changelog{} = changelog, attrs) do
     changelog
     |> cast(attrs, @optional_fields ++ @required_fields)
@@ -44,7 +54,7 @@ defmodule GroupherServer.CMS.Model.Changelog do
     |> geneal_changeset
   end
 
-  @doc false
+  @doc "Builds a Changelog changeset for mutable field updates."
   def update_changeset(%Changelog{} = changelog, attrs) do
     changelog
     |> cast(attrs, @optional_fields ++ @required_fields)
@@ -57,5 +67,8 @@ defmodule GroupherServer.CMS.Model.Changelog do
     |> cast_embed(:emotions, with: &Embeds.ArticleEmotion.changeset/2)
     |> validate_length(:link_addr, min: 5, max: 400)
     |> HTML.safe_string(:body)
+    |> validate_article_version_scope(:changelog)
+    |> foreign_key_constraint(:branch_id)
+    |> unique_constraint(:article_hash_id, name: :changelogs_branch_article_hash_stage_index)
   end
 end

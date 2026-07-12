@@ -153,12 +153,12 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert state.published_version == state.site_draft_version
       assert state.last_published_by_id == user.id
 
-      {:ok, release} = ORM.find(CMS.Model.PublishRelease, release.id)
+      {:ok, release} = ORM.find(CMS.Model.DocPublishRelease, release.id)
       release = Repo.preload(release, [:articles, :tree_events, :tree_snapshot])
 
-      assert release.tree_snapshot.tree_json["version"] == 1
+      assert release.tree_snapshot.tree_json["version"] == 2
 
-      assert [%CMS.Model.PublishReleaseArticle{actions: ["created"], title: "Install"}] =
+      assert [%CMS.Model.DocPublishReleaseArticle{actions: ["created"], title: "Install"}] =
                release.articles
 
       assert [] = release.tree_events
@@ -307,7 +307,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       {:ok, _release} = CMS.DocTree.publish_changes(community, %{}, user)
       release_count_before = release_count(community)
       {:ok, tree} = CMS.DocTree.read(community)
-      [group] = tree.groups
+      [group] = groups(tree)
 
       {:ok, _delete_payload} =
         CMS.DocTree.delete_node(community, group.id, %{
@@ -335,7 +335,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert release_count(community) == release_count_before
 
       {:ok, tree} = CMS.DocTree.read(community)
-      assert [%{id: group_id, children: [%{id: page_id}]}] = tree.groups
+      assert [%{id: group_id, children: [%{id: page_id}]}] = groups(tree)
       assert group_id == group_payload.node.id
       assert page_id == page_payload.node.id
 
@@ -392,7 +392,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
         )
 
       {:ok, tree} = CMS.DocTree.read(community)
-      [group] = tree.groups
+      [group] = groups(tree)
 
       {:ok, _delete_payload} =
         CMS.DocTree.delete_node(community, group.id, %{
@@ -404,7 +404,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
                ORM.find_by(CMS.Model.Doc,
                  community_id: community.id,
                  stage: CMS.Const.stage(:draft),
-                 doc_id: page_payload.node.doc_id
+                 article_hash_id: page_payload.node.doc_id
                )
 
       [delete_change] = CMS.DocTree.publish_checklist(community).tree_changes
@@ -427,7 +427,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
         ORM.find_by(CMS.Model.Doc,
           community_id: community.id,
           stage: CMS.Const.stage(:draft),
-          doc_id: page_payload.node.doc_id
+          article_hash_id: page_payload.node.doc_id
         )
 
       assert draft.title == "Install Draft"
@@ -597,11 +597,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
 
       assert {:ok, %{release: release}} = CMS.DocTree.publish_changes(community, %{}, user)
 
-      {:ok, release} = ORM.find(CMS.Model.PublishRelease, release.id)
+      {:ok, release} = ORM.find(CMS.Model.DocPublishRelease, release.id)
       release = Repo.preload(release, :articles)
 
       assert [
-               %CMS.Model.PublishReleaseArticle{
+               %CMS.Model.DocPublishReleaseArticle{
                  actions: actions,
                  group_node_id: group_node_id,
                  node_id: node_id
@@ -617,7 +617,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
          ~m(user community page_payload)a do
       {:ok, _release} = CMS.DocTree.publish_changes(community, %{}, user)
       {:ok, tree} = CMS.DocTree.read(community)
-      [group] = tree.groups
+      [group] = groups(tree)
       [page] = group.children
 
       assert page.publish_state.status == CMS.Const.stage(:public)
@@ -630,11 +630,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       assert {:ok, %{release: release}} =
                CMS.DocTree.publish_changes(community, %{doc_change_ids: []}, user)
 
-      {:ok, release} = ORM.find(CMS.Model.PublishRelease, release.id)
+      {:ok, release} = ORM.find(CMS.Model.DocPublishRelease, release.id)
       release = Repo.preload(release, :articles)
 
       assert [
-               %CMS.Model.PublishReleaseArticle{
+               %CMS.Model.DocPublishReleaseArticle{
                  actions: ["deleted"],
                  node_id: node_id,
                  group_node_id: group_node_id,
@@ -711,7 +711,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
              )
 
       {:ok, tree} = CMS.DocTree.read(community)
-      [group] = tree.groups
+      [group] = groups(tree)
 
       assert {:ok, _delete_payload} =
                CMS.DocTree.delete_node(community, group.id, %{
@@ -722,7 +722,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
                ORM.find_by(CMS.Model.Doc,
                  community_id: community.id,
                  stage: CMS.Const.stage(:draft),
-                 doc_id: page_payload.node.doc_id
+                 article_hash_id: page_payload.node.doc_id
                )
 
       refute Enum.any?(
@@ -804,7 +804,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
   end
 
   defp release_count(community) do
-    CMS.Model.PublishRelease
+    CMS.Model.DocPublishRelease
     |> where([r], r.community_id == ^community.id)
     |> Repo.aggregate(:count, :id)
   end
@@ -821,4 +821,6 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       nil -> {:error, {:custom, "Tree create event not found."}}
     end
   end
+
+  defp groups(%{tabs: [tab | _]}), do: tab.groups
 end

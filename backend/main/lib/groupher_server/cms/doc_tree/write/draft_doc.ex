@@ -35,10 +35,12 @@ defmodule GroupherServer.CMS.DocTree.Write.DraftDoc do
   require CMS.Const
 
   def update(%Community{} = community, branch, doc_id, args, %User{} = user) do
-    with {:ok, site_state} <- Read.ensure_site_state(community, branch_id: branch.id),
+    with :ok <- validate_update_attrs(args),
+         {:ok, site_state} <- Read.ensure_site_state(community, branch_id: branch.id),
          {:ok, draft} <-
            Draft.update_or_create_from_public(
              community,
+             :doc,
              doc_id,
              Map.put(args, :branch_id, branch.id),
              user
@@ -57,7 +59,7 @@ defmodule GroupherServer.CMS.DocTree.Write.DraftDoc do
 
   def ensure(%Community{} = community, branch, args, %User{} = user) do
     with {:ok, draft} <- create_default_doc_draft(community, branch, args, user) do
-      {:ok, Map.put(args, :doc_id, draft.doc_id)}
+      {:ok, Map.put(args, :doc_id, draft.article_hash_id)}
     end
   end
 
@@ -68,7 +70,7 @@ defmodule GroupherServer.CMS.DocTree.Write.DraftDoc do
     |> where([d], d.community_id == ^community.id)
     |> where([d], d.branch_id == ^branch.id)
     |> where([d], d.stage == CMS.Const.stage(:draft))
-    |> where([d], d.doc_id == ^doc_id)
+    |> where([d], d.article_hash_id == ^doc_id)
     |> Repo.exists?()
     |> case do
       true -> :ok
@@ -102,4 +104,12 @@ defmodule GroupherServer.CMS.DocTree.Write.DraftDoc do
       normalized -> normalized
     end
   end
+
+  defp validate_update_attrs(%{title: _title} = attrs) do
+    if Map.has_key?(attrs, :slug),
+      do: :ok,
+      else: {:error, {:custom, "slug is required when updating a Doc title"}}
+  end
+
+  defp validate_update_attrs(_attrs), do: :ok
 end

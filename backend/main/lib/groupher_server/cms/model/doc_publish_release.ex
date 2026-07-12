@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.Model.PublishRelease do
+defmodule GroupherServer.CMS.Model.DocPublishRelease do
   @moduledoc """
   Site-level docs publish checkpoint.
 
@@ -7,13 +7,13 @@ defmodule GroupherServer.CMS.Model.PublishRelease do
       └─ article changes  -> runtime docs + ArticleDocument
              |
              v
-      publish_changes/3 creates one PublishRelease
+      publish_changes/3 creates one DocPublishRelease
              |
              ├─ tree_snapshot_id           # complete tree_json lives there
-             ├─ publish_release_articles     # article snapshots in this release
-             └─ publish_release_tree_events  # tree events included in this release
+             ├─ doc_publish_release_articles     # article snapshots in this release
+             └─ doc_publish_release_tree_events  # tree events included in this release
 
-  `PublishRelease` is the cross-domain anchor that the separate tree and article
+  `DocPublishRelease` is the cross-domain anchor that the separate tree and article
   snapshot lines intentionally do not provide. A release answers "what did the
   public docs site look like after this publish?" without duplicating article
   JSON or tree JSON in this table.
@@ -31,10 +31,10 @@ defmodule GroupherServer.CMS.Model.PublishRelease do
 
   alias CMS.Model.{
     Community,
-    DocsBranch,
+    ArticleBranch,
     DocTreeSnapshot,
-    PublishReleaseArticle,
-    PublishReleaseTreeEvent
+    DocPublishReleaseArticle,
+    DocPublishReleaseTreeEvent
   }
 
   alias Helper.Constant.DBPrefix
@@ -45,14 +45,14 @@ defmodule GroupherServer.CMS.Model.PublishRelease do
   @required_fields ~w(community_id branch_id release_number version_slug tree_snapshot_id published_at)a
   @optional_fields ~w(author_id)a
 
-  @type t :: %PublishRelease{}
-  schema "publish_releases" do
+  @type t :: %DocPublishRelease{}
+  schema "doc_publish_releases" do
     belongs_to(:community, Community)
-    belongs_to(:branch, DocsBranch)
+    belongs_to(:branch, ArticleBranch)
     belongs_to(:tree_snapshot, DocTreeSnapshot)
     belongs_to(:author, User)
-    has_many(:articles, PublishReleaseArticle, foreign_key: :release_id)
-    has_many(:tree_events, PublishReleaseTreeEvent, foreign_key: :release_id)
+    has_many(:articles, DocPublishReleaseArticle, foreign_key: :release_id)
+    has_many(:tree_events, DocPublishReleaseTreeEvent, foreign_key: :release_id)
 
     field(:release_number, :integer)
     field(:version_slug, :string)
@@ -61,8 +61,8 @@ defmodule GroupherServer.CMS.Model.PublishRelease do
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
-  def changeset(%PublishRelease{} = release, attrs) do
+  @doc "Builds a Docs-only publish release changeset."
+  def changeset(%DocPublishRelease{} = release, attrs) do
     release
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
@@ -72,7 +72,7 @@ defmodule GroupherServer.CMS.Model.PublishRelease do
     |> foreign_key_constraint(:branch_id)
     |> foreign_key_constraint(:tree_snapshot_id)
     |> foreign_key_constraint(:author_id)
-    |> unique_constraint(:release_number, name: :publish_releases_branch_number_index)
-    |> unique_constraint(:version_slug, name: :publish_releases_branch_version_slug_index)
+    |> unique_constraint(:release_number, name: :doc_publish_releases_branch_number_index)
+    |> unique_constraint(:version_slug, name: :doc_publish_releases_branch_version_slug_index)
   end
 end

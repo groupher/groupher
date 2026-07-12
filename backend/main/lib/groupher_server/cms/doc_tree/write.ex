@@ -297,7 +297,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
   """
   @spec update_draft(Community.t(), String.t(), map(), User.t()) :: T.domain_res(Doc.t())
   def update_draft(%Community{} = community, doc_id, args, %User{} = user) do
-    with {:ok, branch} <- CMS.DocTree.Branch.resolve(community, args) do
+    with {:ok, branch} <- CMS.Articles.Branch.resolve(community, :doc, args) do
       DraftDoc.update(community, branch, doc_id, args, user)
     end
   end

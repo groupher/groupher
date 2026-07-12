@@ -12,6 +12,7 @@ defmodule GroupherServer.CMS.Articles.Document do
 
   @type document_result :: {:ok, map()} | {:error, map()}
 
+  @doc "Creates the derived ArticleDocument from README, body, or parsed content input."
   @spec create(map(), map()) :: document_result()
   def create(article, %{readme: readme} = attrs) do
     with {:ok, payload} <- ContentPipeline.from_readme(readme) do

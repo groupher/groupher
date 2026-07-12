@@ -17,7 +17,7 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.DocTree.Branch
+  alias CMS.Articles.Branch
   alias CMS.Model.{Community, DocTreeNode}
 
   require CMS.Const
@@ -36,7 +36,7 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   ## Examples
 
       iex> Snapshot.draft_json(community)
-      %{"version" => 1, "groups" => groups}
+      %{"version" => 2, "tabs" => tabs}
   """
   @spec draft_json(Community.t(), keyword() | map()) :: map()
   def draft_json(%Community{} = community, opts \\ []),
@@ -48,7 +48,7 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   ## Examples
 
       iex> Snapshot.published_json(community)
-      %{"version" => 1}
+      %{"version" => 2, "tabs" => tabs}
   """
   @spec published_json(Community.t(), keyword() | map()) :: map()
   def published_json(%Community{} = community, opts \\ []),
@@ -63,7 +63,7 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   ## Examples
 
       iex> Snapshot.from_nodes(nodes)["version"]
-      1
+      2
   """
   @spec from_nodes(list(DocTreeNode.t())) :: map()
   def from_nodes(nodes) when is_list(nodes), do: tree_json(nodes)
@@ -109,7 +109,7 @@ defmodule GroupherServer.CMS.DocTree.Snapshot do
   end
 
   defp stage_json(%Community{} = community, opts, stage) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
+    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
       DocTreeNode
       |> where([n], n.community_id == ^community.id)
       |> where([n], n.branch_id == ^branch.id)

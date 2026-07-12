@@ -29,6 +29,8 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   alias CMS.Model.{Author, Category, Community, CoverEditInfo}
   alias Helper.{OgInfo, ORM}
 
+  require CMS.Const
+
   # #######################
   # community ..
   # #######################
@@ -299,14 +301,14 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     with {:ok, draft} <- CMS.DocTree.move_doc_to_draft(community, id, user) do
       {:ok,
        %{
-         doc_id: draft.doc_id,
+         doc_id: draft.article_hash_id,
          stage: draft.stage,
          publish_state: %{
-           status: :draft,
+           status: CMS.Const.stage(:draft),
            published: true,
            published_before: true,
            has_draft: true,
-           public_doc_id: draft.doc_id,
+           public_doc_id: draft.article_hash_id,
            has_unpublished_changes: false
          }
        }}
@@ -537,12 +539,103 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.AbuseReports.paged_reports(filter)
   end
 
-  def create_article(_root, ~m(community thread)a = args, %{context: %{cur_user: user}}) do
+  @doc "Creates and immediately publishes a Post through the Post product boundary."
+  def create_post(root, args, info), do: create_article(root, Map.put(args, :thread, :post), info)
+
+  @doc "Creates and immediately publishes a Blog through the Blog product boundary."
+  def create_blog(root, args, info), do: create_article(root, Map.put(args, :thread, :blog), info)
+
+  @doc "Creates and immediately publishes a Changelog through its product boundary."
+  def create_changelog(root, args, info) do
+    create_article(root, Map.put(args, :thread, :changelog), info)
+  end
+
+  @doc "Creates a Post Draft without running official publish effects."
+  def create_post_draft(root, args, info) do
+    create_article_draft(root, Map.put(args, :thread, :post), info)
+  end
+
+  @doc "Creates a Blog Draft without running official publish effects."
+  def create_blog_draft(root, args, info) do
+    create_article_draft(root, Map.put(args, :thread, :blog), info)
+  end
+
+  @doc "Creates a Changelog Draft without running official publish effects."
+  def create_changelog_draft(root, args, info) do
+    create_article_draft(root, Map.put(args, :thread, :changelog), info)
+  end
+
+  @doc "Updates a Post Draft while keeping the current public Post unchanged."
+  def update_post_draft(root, args, info) do
+    update_article_draft(root, Map.put(args, :thread, :post), info)
+  end
+
+  @doc "Updates a Blog Draft while keeping the current public Blog unchanged."
+  def update_blog_draft(root, args, info) do
+    update_article_draft(root, Map.put(args, :thread, :blog), info)
+  end
+
+  @doc "Updates a Changelog Draft while keeping its current public version unchanged."
+  def update_changelog_draft(root, args, info) do
+    update_article_draft(root, Map.put(args, :thread, :changelog), info)
+  end
+
+  @doc "Publishes a Post Draft through the canonical Article Publish lifecycle."
+  def publish_post_draft(root, args, info) do
+    publish_article_draft(root, Map.put(args, :thread, :post), info)
+  end
+
+  @doc "Publishes a Blog Draft through the canonical Article Publish lifecycle."
+  def publish_blog_draft(root, args, info) do
+    publish_article_draft(root, Map.put(args, :thread, :blog), info)
+  end
+
+  @doc "Publishes a Changelog Draft through the canonical Article Publish lifecycle."
+  def publish_changelog_draft(root, args, info) do
+    publish_article_draft(root, Map.put(args, :thread, :changelog), info)
+  end
+
+  defp create_article(_root, ~m(community thread)a = args, %{context: %{cur_user: user}}) do
     CMS.Articles.create(community, thread, Map.put(args, :cur_user, user), user)
   end
 
+  defp create_article_draft(
+         _root,
+         ~m(community thread)a = args,
+         %{context: %{cur_user: user}}
+       ) do
+    CMS.Articles.create_draft(community, thread, Map.put(args, :cur_user, user), user)
+  end
+
+  defp update_article_draft(
+         _root,
+         %{community: community, thread: thread, id: article_hash_id} = args,
+         %{context: %{cur_user: user}}
+       ) do
+    CMS.Articles.update_draft(
+      community,
+      thread,
+      article_hash_id,
+      args
+      |> Map.drop([:community, :thread, :id, :passport_is_owner])
+      |> Map.put(:cur_user, user),
+      user
+    )
+  end
+
+  defp publish_article_draft(
+         _root,
+         %{community: community, thread: thread, id: article_hash_id},
+         %{context: %{cur_user: user}}
+       ) do
+    with {:ok, %{article: public_article}} <-
+           CMS.Articles.publish_draft(community, thread, article_hash_id, user) do
+      {:ok, public_article}
+    end
+  end
+
   def update_article(_root, %{article: article} = args, %{context: %{cur_user: user}}) do
-    CMS.Articles.update(article, Map.put(args, :cur_user, user))
+    CMS.Articles.update(article, Map.put(args, :cur_user, user), user)
   end
 
   def update_article(_root, %{article: article} = args, _info) do

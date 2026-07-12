@@ -110,7 +110,7 @@ defmodule GroupherServer.CMS.DocTree.TrashSnapshot do
 
   def restore_doc_draft(_community, _branch, _snapshot), do: :ok
 
-  @doc false
+  @doc "Deletes the ArticleDocument rows owned by the supplied draft Docs."
   @spec delete_article_documents([Doc.t()]) :: :ok
   def delete_article_documents([]), do: :ok
 
@@ -125,7 +125,7 @@ defmodule GroupherServer.CMS.DocTree.TrashSnapshot do
     :ok
   end
 
-  @doc false
+  @doc "Returns draft Docs for the supplied product-level doc ids."
   @spec draft_docs_by_doc_ids(Community.t(), any(), [Ecto.UUID.t()]) :: [Doc.t()]
   def draft_docs_by_doc_ids(_community, _branch, []), do: []
 
@@ -134,7 +134,7 @@ defmodule GroupherServer.CMS.DocTree.TrashSnapshot do
     |> where([doc], doc.community_id == ^community.id)
     |> where([doc], doc.branch_id == ^branch.id)
     |> where([doc], doc.stage == CMS.Const.stage(:draft))
-    |> where([doc], doc.doc_id in ^doc_ids)
+    |> where([doc], doc.article_hash_id in ^doc_ids)
     |> Repo.all()
   end
 
@@ -143,7 +143,7 @@ defmodule GroupherServer.CMS.DocTree.TrashSnapshot do
     |> where([doc], doc.community_id == ^community.id)
     |> where([doc], doc.branch_id == ^branch.id)
     |> where([doc], doc.stage == CMS.Const.stage(:draft))
-    |> where([doc], doc.doc_id == ^doc_id)
+    |> where([doc], doc.article_hash_id == ^doc_id)
     |> Repo.one()
   end
 
@@ -156,7 +156,7 @@ defmodule GroupherServer.CMS.DocTree.TrashSnapshot do
 
   defp doc_snapshot(%Doc{} = draft) do
     %{
-      "docId" => draft.doc_id,
+      "docId" => draft.article_hash_id,
       "title" => draft.title,
       "subtitle" => draft.subtitle,
       "slug" => draft.slug,
@@ -194,7 +194,7 @@ defmodule GroupherServer.CMS.DocTree.TrashSnapshot do
       community_id: community.id,
       branch_id: branch.id,
       stage: CMS.Const.stage(:draft),
-      doc_id: snapshot["docId"],
+      article_hash_id: snapshot["docId"],
       title: snapshot["title"],
       subtitle: snapshot["subtitle"],
       slug: snapshot["slug"],

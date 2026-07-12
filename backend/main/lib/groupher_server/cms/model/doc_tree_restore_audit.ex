@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Model.DocTreeRestoreAudit do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.{Community, DocsBranch}
+  alias CMS.Model.{Community, ArticleBranch}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -29,7 +29,7 @@ defmodule GroupherServer.CMS.Model.DocTreeRestoreAudit do
 
   schema "doc_tree_restore_audits" do
     belongs_to(:community, Community)
-    belongs_to(:branch, DocsBranch)
+    belongs_to(:branch, ArticleBranch)
     belongs_to(:actor, User)
 
     field(:restored_event_ids, {:array, :integer}, default: [])
@@ -40,7 +40,7 @@ defmodule GroupherServer.CMS.Model.DocTreeRestoreAudit do
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
+  @doc "Builds an immutable Docs Tree restore audit changeset."
   def changeset(%DocTreeRestoreAudit{} = audit, attrs) do
     audit
     |> cast(attrs, @required_fields ++ @optional_fields)

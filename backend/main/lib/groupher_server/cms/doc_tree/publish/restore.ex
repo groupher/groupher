@@ -201,7 +201,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
     |> where([d], d.community_id == ^community.id)
     |> where([d], d.branch_id == ^branch.id)
     |> where([d], d.stage == CMS.Const.stage(:draft))
-    |> where([d], d.doc_id == ^doc_id)
+    |> where([d], d.article_hash_id == ^doc_id)
     |> Repo.one()
   end
 

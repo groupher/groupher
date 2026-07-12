@@ -1,4 +1,4 @@
-defmodule GroupherServer.CMS.DocTree.Publish.Release do
+defmodule GroupherServer.CMS.DocPublishRelease do
   @moduledoc """
   Persists release history for one unified docs publish.
 
@@ -8,10 +8,10 @@ defmodule GroupherServer.CMS.DocTree.Publish.Release do
       doc_tree_snapshots
           |
           v
-      publish_releases
+      doc_publish_releases
           |
-          +--> publish_release_articles
-          +--> publish_release_tree_events
+          +--> doc_publish_release_articles
+          +--> doc_publish_release_tree_events
           |
           v
       docs_site_states base/published markers
@@ -34,9 +34,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Release do
     DocTreeEvent,
     DocTreeNode,
     DocsSiteState,
-    PublishRelease,
-    PublishReleaseArticle,
-    PublishReleaseTreeEvent
+    DocPublishRelease,
+    DocPublishReleaseArticle,
+    DocPublishReleaseTreeEvent
   }
 
   alias Helper.ORM
@@ -46,6 +46,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Release do
   @tree_node_type_group CMS.Const.tree_node_type(:group)
   @tree_node_type_page CMS.Const.tree_node_type(:page)
 
+  @doc "Creates the Docs-only release that binds published Article and Tree snapshots."
   def create(
         %Community{} = community,
         branch,
@@ -65,7 +66,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Release do
            ),
          {:ok, _state} <- mark_tree_release_published(community, branch, tree_snapshot),
          {:ok, release} <-
-           ORM.create(PublishRelease, %{
+           ORM.create(DocPublishRelease, %{
              community_id: community.id,
              branch_id: branch.id,
              release_number: release_number,
@@ -81,6 +82,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Release do
     end
   end
 
+  @doc "Updates the Docs site publication markers after a release completes."
   def mark_site_release_published(
         %Community{} = community,
         branch,
@@ -105,6 +107,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Release do
     end
   end
 
+  @doc "Marks the Docs site draft version clean when the next checklist is empty."
   def mark_site_draft_clean(%Community{} = community, branch, %{total_count: 0}) do
     with {:ok, state} <-
            ORM.find_by(DocsSiteState, community_id: community.id, branch_id: branch.id) do
@@ -112,9 +115,11 @@ defmodule GroupherServer.CMS.DocTree.Publish.Release do
     end
   end
 
-  def mark_site_draft_clean(%Community{} = community, branch, _next_checklist),
-    do: ORM.find_by(DocsSiteState, community_id: community.id, branch_id: branch.id)
+  def mark_site_draft_clean(%Community{} = community, branch, _next_checklist) do
+    ORM.find_by(DocsSiteState, community_id: community.id, branch_id: branch.id)
+  end
 
+  @doc "Captures Article Snapshot membership needed before destructive Tree events run."
   def article_snapshots_before_tree_events(%Community{} = community, branch, tree_events) do
     tree_events
     |> Enum.flat_map(&release_article_snapshots_before_tree_event(community, branch, &1))
@@ -134,7 +139,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Release do
   end
 
   defp create_release_articles(
-         %PublishRelease{} = release,
+         %DocPublishRelease{} = release,
          doc_entries,
          tree_events,
          article_snapshots
@@ -147,7 +152,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Release do
     |> Enum.reject(&is_nil/1)
     |> merge_release_article_attrs()
     |> Enum.reduce_while({:ok, []}, fn attrs, {:ok, acc} ->
-      case ORM.create(PublishReleaseArticle, attrs) do
+      case ORM.create(DocPublishReleaseArticle, attrs) do
         {:ok, row} -> {:cont, {:ok, [row | acc]}}
         error -> {:halt, error}
       end
@@ -158,15 +163,16 @@ defmodule GroupherServer.CMS.DocTree.Publish.Release do
     end
   end
 
-  defp release_article_attrs_from_doc(%PublishRelease{} = release, %{
+  defp release_article_attrs_from_doc(%DocPublishRelease{} = release, %{
          snapshot: %ArticleSnapshot{} = snapshot,
          checklist_item: checklist_item
        }) do
-    node = public_page_by_doc_id(release.community_id, release.branch_id, snapshot.doc_id)
+    node =
+      public_page_by_doc_id(release.community_id, release.branch_id, snapshot.article_hash_id)
 
     %{
       release_id: release.id,
-      doc_id: snapshot.doc_id,
+      doc_id: snapshot.article_hash_id,
       snapshot_id: snapshot.id,
       node_id: node && node.node_id,
       group_node_id: node && node.group_id,
@@ -177,7 +183,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Release do
   end
 
   defp release_article_attrs_from_tree_events(
-         %PublishRelease{} = release,
+         %DocPublishRelease{} = release,
          tree_events,
          article_snapshots
        ) do
@@ -291,9 +297,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Release do
     end)
   end
 
-  defp create_release_tree_events(%PublishRelease{} = release, tree_events) do
+  defp create_release_tree_events(%DocPublishRelease{} = release, tree_events) do
     Result.map_while_ok(tree_events, fn event ->
-      ORM.create(PublishReleaseTreeEvent, %{
+      ORM.create(DocPublishReleaseTreeEvent, %{
         release_id: release.id,
         doc_tree_event_id: event.id,
         event_type: event.event_type,
@@ -330,8 +336,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Release do
     |> where([r], r.branch_id == ^branch_id)
     |> where([r], r.stage == CMS.Const.stage(:public))
     |> where([r], r.thread == :doc)
-    |> where([r], r.doc_id == ^doc_id)
-    |> order_by([r], desc: r.snapshot_number, desc: r.id)
+    |> where([r], r.article_hash_id == ^doc_id)
+    |> order_by([r], desc: r.revision_number, desc: r.id)
     |> limit(1)
     |> Repo.one()
   end
@@ -353,7 +359,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Release do
   end
 
   defp next_release_number(%Community{} = community, branch) do
-    PublishRelease
+    DocPublishRelease
     |> where([r], r.community_id == ^community.id)
     |> where([r], r.branch_id == ^branch.id)
     |> select([r], max(r.release_number))

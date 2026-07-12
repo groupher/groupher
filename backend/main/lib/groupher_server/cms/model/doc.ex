@@ -1,7 +1,8 @@
 defmodule GroupherServer.CMS.Model.Doc do
   @moduledoc """
-  Docs content anchor. One row per doc (draft or public). draft and published
-  rows that represent the same doc share the same doc_id UUID.
+  Docs content anchor. One row per Doc draft or public head. Rows representing
+  the same logical Article share `article_hash_id`; Tree code maps that identity
+  to its product-level `doc_id` at the Docs boundary.
   """
   alias __MODULE__
 
@@ -15,7 +16,7 @@ defmodule GroupherServer.CMS.Model.Doc do
 
   require CMS.Const
 
-  alias CMS.Model.{DocsBranch, Embeds}
+  alias CMS.Model.Embeds
   alias Helper.Constant.DBPrefix
   alias Helper.HTML
 
@@ -23,24 +24,19 @@ defmodule GroupherServer.CMS.Model.Doc do
 
   @timestamps_opts [type: :utc_datetime]
 
-  @required_fields ~w(branch_id title digest)a
-  @article_cast_fields general_article_cast_fields()
+  @required_fields ~w(branch_id article_hash_id title digest)a
+  @article_cast_fields general_article_cast_fields() ++ article_version_cast_fields()
   @optional_fields ~w(subtitle updated_at inserted_at active_at archived_at inner_id
-                      doc_id slug stage template_key content_hash json schema_version author_id)a ++
+                      slug template_key json author_id)a ++
                      @article_cast_fields
   @max_subtitle_length 240
 
   @type t :: %Doc{}
   schema "docs" do
-    belongs_to(:branch, DocsBranch)
-
-    field(:doc_id, Ecto.UUID)
+    article_version_fields()
     field(:slug, :string)
-    field(:stage, Ecto.Enum, values: CMS.Const.stage_values(), default: CMS.Const.stage(:public))
     field(:template_key, :string)
-    field(:content_hash, :string)
     field(:json, :string)
-    field(:schema_version, :integer, default: 1)
 
     # association: community_tags
     article_tags_field(:doc)
@@ -49,7 +45,13 @@ defmodule GroupherServer.CMS.Model.Doc do
     field(:subtitle, :string)
   end
 
-  @doc false
+  @doc "Returns the Doc fields copied by Draft, Publish, Snapshot, and Restore."
+  @spec version_fields() :: [atom()]
+  def version_fields do
+    ~w(title subtitle slug digest link_addr template_key json cover_url cover_url_dark)a
+  end
+
+  @doc "Builds a Doc changeset for creation."
   def changeset(%Doc{} = doc, attrs) do
     doc
     |> cast(attrs, @optional_fields ++ @required_fields)
@@ -58,7 +60,7 @@ defmodule GroupherServer.CMS.Model.Doc do
     |> geneal_changeset
   end
 
-  @doc false
+  @doc "Builds a Doc changeset for mutable field updates."
   def update_changeset(%Doc{} = doc, attrs) do
     doc
     |> cast(attrs, @optional_fields ++ @required_fields)
@@ -73,7 +75,8 @@ defmodule GroupherServer.CMS.Model.Doc do
     |> validate_length(:link_addr, min: 5, max: 400)
     |> HTML.safe_string(:subtitle)
     |> HTML.safe_string(:body)
+    |> validate_article_version_scope(:doc)
     |> foreign_key_constraint(:branch_id)
-    |> unique_constraint(:doc_id, name: :docs_community_stage_doc_id_index)
+    |> unique_constraint(:article_hash_id, name: :docs_branch_article_hash_stage_index)
   end
 end

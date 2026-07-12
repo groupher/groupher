@@ -3,11 +3,15 @@ defmodule GroupherServer.CMS.Helper.Macros do
   macros for define article related fields in CMS models
   """
   import Helper.Utils, only: [get_config: 2]
+  import Ecto.Changeset, only: [add_error: 3, get_field: 2, prepare_changes: 2]
 
   alias GroupherServer.CMS
 
+  require CMS.Const
+
   alias CMS.Model.{
     ArticleCollect,
+    ArticleBranch,
     ArticleUpvote,
     Author,
     Comment,
@@ -182,6 +186,71 @@ defmodule GroupherServer.CMS.Helper.Macros do
       :active_at,
       :pending
     ]
+  end
+
+  @doc """
+  Returns the shared persistence fields owned by the Article version lifecycle.
+
+  Product schemas append these fields to their changeset cast lists instead of
+  repeating identity, branch, stage, and derived-document fields.
+  """
+  @spec article_version_cast_fields() :: [atom()]
+  def article_version_cast_fields do
+    [:article_hash_id, :branch_id, :stage, :content_hash, :schema_version]
+  end
+
+  @doc """
+  Adds the shared logical identity and current branch/stage coordinate.
+
+      article_hash_id + branch_id + stage
+                     |
+                     +--> exactly one current row per stage in a branch
+  """
+  defmacro article_version_fields do
+    quote do
+      field(:article_hash_id, Ecto.UUID)
+      belongs_to(:branch, ArticleBranch)
+
+      field(:stage, Ecto.Enum,
+        values: CMS.Const.stage_values(),
+        default: CMS.Const.stage(:public)
+      )
+
+      field(:content_hash, :string)
+      field(:schema_version, :integer, default: 1)
+    end
+  end
+
+  @doc """
+  Validates the shared Article branch/stage invariant for a product changeset.
+
+  The Branch must match the Article's Community and thread. Preview branches
+  are draft-only; only main may own a public runtime row.
+  """
+  @spec validate_article_version_scope(Ecto.Changeset.t(), atom()) :: Ecto.Changeset.t()
+  def validate_article_version_scope(changeset, thread) do
+    prepare_changes(changeset, fn changeset ->
+      branch_id = get_field(changeset, :branch_id)
+      community_id = get_field(changeset, :community_id)
+
+      case changeset.repo.get_by(ArticleBranch,
+             id: branch_id,
+             community_id: community_id,
+             thread: thread
+           ) do
+        %ArticleBranch{type: type} -> validate_preview_article(changeset, type)
+        nil -> add_error(changeset, :branch_id, "does not belong to the Article scope")
+      end
+    end)
+  end
+
+  defp validate_preview_article(changeset, type) do
+    if type == CMS.Const.article_branch_type(:preview) and
+         get_field(changeset, :stage) == CMS.Const.stage(:public) do
+      add_error(changeset, :stage, "preview branches can not contain public Articles")
+    else
+      changeset
+    end
   end
 
   @doc """

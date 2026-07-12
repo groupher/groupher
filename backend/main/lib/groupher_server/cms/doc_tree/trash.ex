@@ -28,7 +28,8 @@ defmodule GroupherServer.CMS.DocTree.Trash do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.DocTree.{Branch, Events, Read, TrashSnapshot}
+  alias CMS.Articles.Branch
+  alias CMS.DocTree.{Events, Read, TrashSnapshot}
   alias CMS.DocTree.Write.{Index, Operation}
 
   alias CMS.Model.{
@@ -57,7 +58,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
   """
   @spec list(Community.t(), keyword() | map()) :: T.domain_res(list(map()))
   def list(%Community{} = community, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
+    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
       items =
         DocTreeTrashItem
         |> where([item], item.community_id == ^community.id)
@@ -115,8 +116,9 @@ defmodule GroupherServer.CMS.DocTree.Trash do
       |> MapSet.new(& &1.node_id)
 
     Enum.reject(items, fn item ->
-      (item.node_snapshot["tabId"] && MapSet.member?(trashed_tab_ids, item.node_snapshot["tabId"])) or
-        (item.deleted_from_group_id &&
+      (not is_nil(item.node_snapshot["tabId"]) and
+         MapSet.member?(trashed_tab_ids, item.node_snapshot["tabId"])) or
+        (not is_nil(item.deleted_from_group_id) and
            MapSet.member?(trashed_group_ids, item.deleted_from_group_id))
     end)
   end
@@ -314,7 +316,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
     |> where([doc], doc.community_id == ^community.id)
     |> where([doc], doc.branch_id == ^branch.id)
     |> where([doc], doc.stage == CMS.Const.stage(:draft))
-    |> where([doc], doc.doc_id == ^doc_id)
+    |> where([doc], doc.article_hash_id == ^doc_id)
     |> Repo.one()
   end
 

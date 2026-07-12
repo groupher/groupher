@@ -15,10 +15,10 @@ defmodule GroupherServer.CMS.DocTree.Publish do
                  |
                  ├─ docs + ArticleDocument
                  ├─ doc_tree_nodes(stage=public)
-                 └─ publish_releases
+                 └─ doc_publish_releases
                       ├─ tree_snapshot_id -> doc_tree_snapshots
-                      ├─ publish_release_articles
-                      └─ publish_release_tree_events
+                      ├─ doc_publish_release_articles
+                      └─ doc_publish_release_tree_events
 
   Tree and article are still separate domains internally, but the public product
   surface exposes one publish action. The release row is the snapshot anchor that
@@ -34,13 +34,13 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     Checklist,
     DocPublisher,
     PublicProjection,
-    Release,
     Restore,
     Result,
     Selection
   }
 
-  alias CMS.DocTree.Branch
+  alias CMS.Articles.Branch
+  alias CMS.DocPublishRelease
 
   require CMS.Const
 
@@ -75,7 +75,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   """
   @spec checklist(Community.t(), keyword() | map()) :: map() | {:error, term()}
   def checklist(%Community{} = community, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
+    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
       Checklist.build(community, branch)
     end
   end
@@ -91,13 +91,13 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   ## Examples
 
       iex> Publish.publish_changes(community, %{doc_change_ids: ["doc:12"]}, user)
-      {:ok, %{done: true, release: %PublishRelease{}}}
+      {:ok, %{done: true, release: %CMS.Model.DocPublishRelease{}}}
   """
   @spec publish_changes(Community.t(), map(), User.t(), keyword()) :: T.domain_res(map())
   def publish_changes(%Community{} = community, args, %User{} = user, opts \\ []) do
     sync_cover? = Keyword.get(opts, :sync_cover, true)
 
-    with {:ok, branch} <- Branch.resolve(community, args) do
+    with {:ok, branch} <- Branch.resolve(community, :doc, args) do
       Transaction.lock_global("doc_tree:#{community.id}:#{branch.id}", fn ->
         Repo.transaction(fn ->
           current_checklist = checklist(community, branch_id: branch.id)
@@ -172,12 +172,12 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   ## Examples
 
       iex> Publish.move_doc_to_draft(community, draft_node.node_id, user)
-      {:ok, %Doc{stage: CMS.Const.stage(:draft), doc_id: "a1b2c3d4-..."}}
+      {:ok, %Doc{stage: CMS.Const.stage(:draft), article_hash_id: "a1b2c3d4-..."}}
   """
   @spec move_doc_to_draft(Community.t(), T.id(), User.t(), keyword() | map()) ::
           T.domain_res(Doc.t())
   def move_doc_to_draft(%Community{} = community, node_id, %User{} = user, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
+    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
       DocPublisher.move_doc_to_draft(community, branch, node_id, user)
     end
   end
@@ -202,7 +202,7 @@ defmodule GroupherServer.CMS.DocTree.Publish do
   @spec public_node_for_draft(Community.t(), T.id(), keyword() | map()) ::
           T.domain_res(DocTreeNode.t())
   def public_node_for_draft(%Community{} = community, node_id, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
+    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
       DocPublisher.public_node_for_draft(community, branch, node_id)
     end
   end
@@ -216,7 +216,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     with {:ok, _events} <-
            restore_tree_checklist_items(community, branch, restore_tree_checklist_item_ids, user),
          next_checklist <- checklist(community, branch_id: branch.id),
-         {:ok, _state} <- Release.mark_site_draft_clean(community, branch, next_checklist) do
+         {:ok, _state} <-
+           DocPublishRelease.mark_site_draft_clean(community, branch, next_checklist) do
       {:ok, publish_payload(true, nil, next_checklist)}
     end
   end
@@ -253,10 +254,16 @@ defmodule GroupherServer.CMS.DocTree.Publish do
              sync_cover?
            ),
          :ok <- PublicProjection.apply_tree_events(community, branch, tree_result.events),
-         {:ok, release} <- Release.create(community, branch, user, doc_revisions, tree_result),
+         {:ok, release} <-
+           DocPublishRelease.create(community, branch, user, doc_revisions, tree_result),
          next_checklist <- checklist(community, branch_id: branch.id),
          {:ok, _state} <-
-           Release.mark_site_release_published(community, branch, user, next_checklist) do
+           DocPublishRelease.mark_site_release_published(
+             community,
+             branch,
+             user,
+             next_checklist
+           ) do
       {:ok, publish_payload(true, release, next_checklist)}
     end
   end
@@ -338,7 +345,8 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     if length(events) != length(tree_checklist_item_ids) do
       {:error, {:custom, "Selected tree publish item no longer exists."}}
     else
-      article_snapshots = Release.article_snapshots_before_tree_events(community, branch, events)
+      article_snapshots =
+        DocPublishRelease.article_snapshots_before_tree_events(community, branch, events)
 
       {:ok, %{events: events, article_snapshots: article_snapshots}}
     end

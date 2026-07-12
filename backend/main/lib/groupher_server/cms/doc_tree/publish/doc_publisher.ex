@@ -53,7 +53,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
              branch,
              page,
              public_group.node_id,
-             snapshot.doc_id
+             snapshot.article_hash_id
            ),
          {:ok, _sync} <- maybe_sync_cover(community, public_group, public_page, sync_cover?) do
       Events.mark_doc_bound_published(community, doc_id, branch_id: branch.id)
@@ -75,12 +75,12 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
            ORM.find_by(Doc,
              community_id: community.id,
              branch_id: branch.id,
-             doc_id: draft_node.doc_id,
+             article_hash_id: draft_node.doc_id,
              stage: CMS.Const.stage(:public)
            ),
          {:ok, document} <-
            ORM.find_by(ArticleDocument, article_id: public_doc.id, thread: :doc) do
-      case Draft.read(community, public_doc.doc_id, branch_id: branch.id) do
+      case Draft.read(community, :doc, public_doc.article_hash_id, branch_id: branch.id) do
         {:ok, draft} ->
           {:ok, draft}
 
@@ -90,7 +90,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
             :doc,
             %{
               branch_id: branch.id,
-              doc_id: public_doc.doc_id,
+              article_hash_id: public_doc.article_hash_id,
               title: public_doc.title,
               slug: public_doc.slug,
               body: document.json

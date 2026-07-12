@@ -58,7 +58,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
       assert doc_draft.slug == "install"
       assert doc_draft.json =~ "Start writing your docs draft here."
 
-      assert stage_count(DocTreeNode, community.id, :draft) == 2
+      assert stage_count(DocTreeNode, community.id, :draft) == 3
       assert stage_count(Doc, community.id, :draft) == 1
       assert stage_count(DocTreeNode, community.id, :public) == 0
       assert stage_count(Doc, community.id, :public) == 0
@@ -67,12 +67,16 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
       {:ok, site_state} = ORM.find_by(DocsSiteState, community_id: community.id)
 
       assert tree_state.tree_lock_version == before_tree_state.tree_lock_version + 2
-      assert tree_state.staged_event_count == 1
+      assert tree_state.staged_event_count == 2
       assert site_state.site_draft_version == before_site_state.site_draft_version + 2
       assert site_state.published_version == 0
 
       {:ok, tree} = CMS.DocTree.read(community)
-      assert [%{owner: "tree", event_type: "node.create"}] = tree.staged_events
+
+      assert [
+               %{owner: "tree", event_type: "node.create"},
+               %{owner: "tree", event_type: "node.create"}
+             ] = tree.staged_events
 
       doc_id = page_payload.node.doc_id
 
@@ -386,7 +390,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
              |> where([n], n.community_id == ^community.id)
              |> where([n], n.stage == :draft)
              |> select([n], n.title)
-             |> Repo.all() == ["One"]
+             |> Repo.all()
+             |> Enum.sort() == ["Introduction", "One"]
     end
 
     test "missing base_revision is rejected" do
@@ -420,10 +425,10 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
       {:ok, tree} = CMS.DocTree.read(community)
 
       assert [%{type: :pin, title: "GitHub", href: "https://github.com/groupher/groupher"}] =
-               tree.pins
+               pins(tree)
 
-      assert tree.tree_state.staged_event_count == 1
-      assert [%{event_type: "pin.add"}] = tree.staged_events
+      assert tree.tree_state.staged_event_count == 2
+      assert Enum.map(tree.staged_events, & &1.event_type) == ["node.create", "pin.add"]
     end
 
     test "reordering top groups does not change top pin indexes" do
@@ -461,8 +466,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, tree} = CMS.DocTree.read(community)
 
-      assert Enum.map(tree.groups, &{&1.title, &1.index}) == [{"API", 0}, {"Guides", 1}]
-      assert [%{title: "GitHub", index: 0}] = tree.pins
+      assert Enum.map(groups(tree), &{&1.title, &1.index}) == [{"API", 0}, {"Guides", 1}]
+      assert [%{title: "GitHub", index: 0}] = pins(tree)
     end
 
     test "page nodes can not be updated to remove doc draft reference" do
@@ -799,7 +804,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
       {:ok, tree} = CMS.DocTree.read(community)
-      [group] = tree.groups
+      [group] = groups(tree)
 
       {:ok, link_payload} =
         CMS.DocTree.create_link(community, %{
@@ -870,7 +875,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
   end
 
   defp draft_doc(community, doc_id) do
-    ORM.find_by(Doc, community_id: community.id, doc_id: doc_id, stage: CMS.Const.stage(:draft))
+    ORM.find_by(Doc,
+      community_id: community.id,
+      article_hash_id: doc_id,
+      stage: CMS.Const.stage(:draft)
+    )
   end
 
   defp article_document_exists?(article_id) do
@@ -925,4 +934,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
     |> where([e], e.node_id == ^node_id)
     |> Repo.exists?()
   end
+
+  defp groups(%{tabs: [tab | _]}), do: tab.groups
+  defp pins(%{tabs: [tab | _]}), do: tab.pins
 end

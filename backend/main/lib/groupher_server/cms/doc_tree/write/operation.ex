@@ -24,12 +24,13 @@ defmodule GroupherServer.CMS.DocTree.Write.Operation do
   """
 
   alias GroupherServer.CMS
-  alias CMS.DocTree.{Branch, Read, Revision}
+  alias CMS.Articles.Branch
+  alias CMS.DocTree.{Read, Revision}
   alias CMS.Model.{Community, DocsSiteState, DocTreeNode}
   alias Helper.Transaction
 
   def run(%Community{} = community, args, fun) do
-    with {:ok, branch} <- Branch.resolve(community, args) do
+    with {:ok, branch} <- Branch.resolve(community, :doc, args) do
       Transaction.lock_global("doc_tree:#{community.id}:#{branch.id}", fn ->
         with {:ok, _site_state} <- Read.ensure_site_state(community, branch_id: branch.id),
              {:ok, state} <- Read.ensure_draft_state(community, branch_id: branch.id),

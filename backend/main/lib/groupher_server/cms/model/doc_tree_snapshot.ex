@@ -1,17 +1,17 @@
 defmodule GroupherServer.CMS.Model.DocTreeSnapshot do
   @moduledoc """
-  Immutable docs tree snapshot captured by a PublishRelease.
+  Immutable docs tree snapshot captured by a DocPublishRelease.
 
   A release always records one tree snapshot, even when the release only changed
-  article content. This keeps PublishRelease and DocTreeSnapshot 1:1 and makes
+  article content. This keeps DocPublishRelease and DocTreeSnapshot 1:1 and makes
   rollback read a complete tree state without reconstructing from events.
 
-      PublishRelease(release_number=N)
+      DocPublishRelease(release_number=N)
           |
           v
       DocTreeSnapshot(tree_json/tree_hash)
 
-  The snapshot does not have its own number. Use PublishRelease.release_number
+  The snapshot does not have its own number. Use DocPublishRelease.release_number
   when UI needs a human release sequence.
   """
   alias __MODULE__
@@ -23,7 +23,7 @@ defmodule GroupherServer.CMS.Model.DocTreeSnapshot do
 
   alias GroupherServer.{Accounts, CMS}
   alias Accounts.Model.User
-  alias CMS.Model.{Community, DocsBranch}
+  alias CMS.Model.{Community, ArticleBranch}
   alias Helper.Constant.DBPrefix
 
   @schema_prefix DBPrefix.cms()
@@ -35,7 +35,7 @@ defmodule GroupherServer.CMS.Model.DocTreeSnapshot do
   @type t :: %DocTreeSnapshot{}
   schema "doc_tree_snapshots" do
     belongs_to(:community, Community)
-    belongs_to(:branch, DocsBranch)
+    belongs_to(:branch, ArticleBranch)
     belongs_to(:author, User)
 
     field(:tree_json, :map)
@@ -46,7 +46,7 @@ defmodule GroupherServer.CMS.Model.DocTreeSnapshot do
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
+  @doc "Builds a Docs Tree Snapshot changeset."
   def changeset(%DocTreeSnapshot{} = snapshot, attrs) do
     snapshot
     |> cast(attrs, @required_fields ++ @optional_fields)
@@ -56,7 +56,7 @@ defmodule GroupherServer.CMS.Model.DocTreeSnapshot do
     |> foreign_key_constraint(:author_id)
   end
 
-  @doc false
+  @doc "Builds a metadata-only update changeset for a Docs Tree Snapshot."
   def update_changeset(%DocTreeSnapshot{} = snapshot, attrs) do
     snapshot
     |> cast(attrs, @optional_fields)

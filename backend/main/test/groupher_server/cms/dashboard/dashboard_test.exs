@@ -1,4 +1,4 @@
-defmodule GroupherServer.Test.CMS.Dashboard do
+defmodule GroupherServer.Test.CMS.Dsb do
   @moduledoc false
 
   use GroupherServer.TestMate
@@ -43,14 +43,14 @@ defmodule GroupherServer.Test.CMS.Dashboard do
          ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
-      assert {:error, :invalid_dsb_section} = CMS.Dashboard.update(community, %{})
+      assert {:error, :invalid_dsb_section} = CMS.Dsb.update(community, %{})
     end
 
     test "can update base info in community dashboard", ~m(community_attrs user)a do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :base_info, %{
+        CMS.Dsb.update(community, :base_info, %{
           homepage: "https://groupher.com",
           slug: "groupher"
         })
@@ -65,7 +65,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :base_info, %{
+        CMS.Dsb.update(community, :base_info, %{
           title: "new title",
           slug: "new-slug"
         })
@@ -81,7 +81,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, before_update} = ORM.find(Community, community.id, preload: :dashboard)
 
       assert {:error, %Ecto.Changeset{}} =
-               CMS.Dashboard.update(community, :base_info, %{
+               CMS.Dsb.update(community, :base_info, %{
                  title: "new title",
                  slug: "new slug"
                })
@@ -100,7 +100,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       asset_path = "ugc/_tmp/2023-10-14/73l5_groupher.png"
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :base_info, %{
+        CMS.Dsb.update(community, :base_info, %{
           logo: asset_path,
           favicon: asset_path
         })
@@ -116,7 +116,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
     #   {:ok, community} = CMS.Communities.create(community_attrs, user)
 
     #   {:ok, _} =
-    #     CMS.Dashboard.update(community, :base_info, %{
+    #     CMS.Dsb.update(community, :base_info, %{
     #       logo: "ugc/2023-10-14/73l5_groupher.png",
     #       favicon: "ugc/2023-10-14/73l5_groupher.png"
     #     })
@@ -131,7 +131,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :seo, %{
+        CMS.Dsb.update(community, :seo, %{
           og_title: "groupher",
           og_description: "forum sass provider"
         })
@@ -146,7 +146,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :wallpaper, %{
+        CMS.Dsb.update(community, :wallpaper, %{
           light: %{
             type: "gradient",
             source: "orange",
@@ -239,7 +239,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :wallpaper, %{
+        CMS.Dsb.update(community, :wallpaper, %{
           light: %{texture: %{"type" => "dots", "intensity" => 55, "params" => %{}}}
         })
 
@@ -262,7 +262,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
         |> Repo.update()
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :wallpaper, %{
+        CMS.Dsb.update(community, :wallpaper, %{
           light: %{texture: %{"type" => "dots", "intensity" => 42, "params" => %{}}}
         })
 
@@ -277,7 +277,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :wallpaper, %{
+        CMS.Dsb.update(community, :wallpaper, %{
           light: %{texture: %{"type" => "oil", "intensity" => 68, "params" => %{}}}
         })
 
@@ -291,7 +291,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :wallpaper, %{
+        CMS.Dsb.update(community, :wallpaper, %{
           light: %{texture: %{"type" => "tile", "intensity" => 72, "params" => %{}}}
         })
 
@@ -305,7 +305,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :layout, %{
+        CMS.Dsb.update(community, :layout, %{
           post_layout: "cover",
           changelog_layout: "simple",
           topbar_enabled: true
@@ -322,7 +322,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       assert {:error, %Ecto.Changeset{} = changeset} =
-               CMS.Dashboard.update(community, :layout, %{
+               CMS.Dsb.update(community, :layout, %{
                  kanban_boards: [:todo, :invalid_board]
                })
 
@@ -334,7 +334,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       assert {:error, %Ecto.Changeset{} = changeset} =
-               CMS.Dashboard.update(community, :layout, %{
+               CMS.Dsb.update(community, :layout, %{
                  kanban_boards: [:todo, :todo, :done]
                })
 
@@ -346,7 +346,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       assert {:error, %Ecto.Changeset{} = changeset} =
-               CMS.Dashboard.update(community, :layout, %{
+               CMS.Dsb.update(community, :layout, %{
                  kanban_boards: nil
                })
 
@@ -358,7 +358,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       assert {:error, %Ecto.Changeset{} = changeset} =
-               CMS.Dashboard.update(community, :layout, %{
+               CMS.Dsb.update(community, :layout, %{
                  kanban_boards: []
                })
 
@@ -371,7 +371,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       assert {:error, %Ecto.Changeset{} = changeset} =
-               CMS.Dashboard.update(community, :thread_emotions, %{
+               CMS.Dsb.update(community, :thread_emotions, %{
                  post: [:beer, :invalid_emotion]
                })
 
@@ -382,7 +382,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :rss, %{
+        CMS.Dsb.update(community, :rss, %{
           rss_feed_type: "full",
           rss_feed_count: 25
         })
@@ -398,12 +398,12 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :rss, %{
+        CMS.Dsb.update(community, :rss, %{
           rss_feed_type: "full"
         })
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :rss, %{
+        CMS.Dsb.update(community, :rss, %{
           rss_feed_count: 25
         })
 
@@ -417,7 +417,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :name_alias, [
+        CMS.Dsb.update(community, :name_alias, [
           %{
             slug: "slug",
             name: "name",
@@ -441,7 +441,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :name_alias, [
+        CMS.Dsb.update(community, :name_alias, [
           %{
             slug: "slug",
             name: "name",
@@ -467,7 +467,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert second.slug == "raw2"
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :name_alias, [
+        CMS.Dsb.update(community, :name_alias, [
           %{
             slug: "raw3",
             name: "name3",
@@ -487,7 +487,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :header_links, [
+        CMS.Dsb.update(community, :header_links, [
           %{
             id: "link-1",
             type: :link,
@@ -521,7 +521,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :header_links, [
+        CMS.Dsb.update(community, :header_links, [
           %{
             id: "link-1",
             type: :link,
@@ -549,7 +549,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert second.url == "link2"
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :header_links, [
+        CMS.Dsb.update(community, :header_links, [
           %{
             id: "link-3",
             type: :link,
@@ -569,7 +569,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :footer_links, [
+        CMS.Dsb.update(community, :footer_links, [
           %{
             id: "group-1",
             type: :group,
@@ -590,13 +590,13 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       assert {:error, {:custom, "invalid dashboard links"}} =
-               CMS.Dashboard.update(community, :header_links, %{id: "not-list"})
+               CMS.Dsb.update(community, :header_links, %{id: "not-list"})
 
       assert {:error, {:custom, "invalid dashboard links"}} =
-               CMS.Dashboard.update(community, :footer_links, %{id: "not-list"})
+               CMS.Dsb.update(community, :footer_links, %{id: "not-list"})
 
       assert {:error, {:custom, "invalid dashboard links"}} =
-               CMS.Dashboard.update(community, :footer_oneline_links, %{id: "not-list"})
+               CMS.Dsb.update(community, :footer_oneline_links, %{id: "not-list"})
     end
 
     test "should overwrite all footer links in community dashboard every time",
@@ -604,7 +604,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :footer_links, [
+        CMS.Dsb.update(community, :footer_links, [
           %{
             id: "group-1",
             type: :group,
@@ -630,7 +630,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert second.title == "title2"
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :footer_links, [
+        CMS.Dsb.update(community, :footer_links, [
           %{
             id: "group-3",
             type: :group,
@@ -651,7 +651,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :media_reports, [
+        CMS.Dsb.update(community, :media_reports, [
           %{
             title: "report title",
             favicon: "https://favicon.com",
@@ -675,7 +675,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :media_reports, [
+        CMS.Dsb.update(community, :media_reports, [
           %{
             title: "report title",
             favicon: "https://favicon.com",
@@ -691,7 +691,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert first.title == "report title"
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :media_reports, [
+        CMS.Dsb.update(community, :media_reports, [
           %{
             title: "report title 2",
             favicon: "https://favicon.com",
@@ -718,7 +718,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :doc_faq, %{
+        CMS.Dsb.update(community, :doc_faq, %{
           title: "FAQ",
           desc: "Common docs questions",
           grouped_view: true,
@@ -757,7 +757,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :doc_faq, %{
+        CMS.Dsb.update(community, :doc_faq, %{
           title: "FAQ",
           desc: "Common docs questions",
           grouped_view: true,
@@ -773,7 +773,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert find_community.dashboard.doc_faq.group_items |> length == 2
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :doc_faq, %{
+        CMS.Dsb.update(community, :doc_faq, %{
           title: "FAQ",
           desc: "Flat FAQ",
           grouped_view: false,
@@ -803,7 +803,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :social_links, [
+        CMS.Dsb.update(community, :social_links, [
           %{
             type: "twitter",
             link: "https://link.com"
@@ -823,7 +823,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       {:ok, community} = CMS.Communities.create(community_attrs, user)
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :social_links, [
+        CMS.Dsb.update(community, :social_links, [
           %{
             type: "twitter",
             link: "https://link.com"
@@ -845,7 +845,7 @@ defmodule GroupherServer.Test.CMS.Dashboard do
       assert second.type == "zhihu"
 
       {:ok, _} =
-        CMS.Dashboard.update(community, :social_links, [
+        CMS.Dsb.update(community, :social_links, [
           %{
             type: "wechat",
             link: "https://wechat.com"

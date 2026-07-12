@@ -28,6 +28,8 @@ defmodule GroupherServer.Support.Factory do
 
   alias Helper.ORM
 
+  require CMS.Const
+
   @default_article_meta GroupherServer.CMS.Model.Embeds.ArticleMeta.default_meta()
   @default_emotions GroupherServer.CMS.Model.Embeds.CommentEmotion.default_emotions()
   @retryable_constraints ["users_login_index"]
@@ -197,7 +199,7 @@ defmodule GroupherServer.Support.Factory do
       factory_name
       |> mock(attributes)
       |> maybe_put_default_article_community()
-      |> maybe_put_default_doc_branch()
+      |> maybe_put_default_article_branch()
       |> maybe_put_default_tag_group()
       |> GroupherServer.Repo.insert()
     rescue
@@ -240,13 +242,20 @@ defmodule GroupherServer.Support.Factory do
 
   defp maybe_put_default_article_community(record), do: record
 
-  defp maybe_put_default_doc_branch(%Doc{branch_id: nil} = doc) do
-    {:ok, branch} = CMS.DocTree.Branch.resolve(doc.community)
+  defp maybe_put_default_article_branch(%{__struct__: model, branch_id: nil} = article)
+       when model in [Post, Blog, Changelog, Doc] do
+    {:ok, %{thread: thread}} = match(article)
+    {:ok, branch} = CMS.Articles.Branch.resolve(article.community, thread)
 
-    %{doc | branch_id: branch.id}
+    %{
+      article
+      | article_hash_id: article.article_hash_id || Ecto.UUID.generate(),
+        branch_id: branch.id,
+        stage: article.stage || CMS.Const.stage(:public)
+    }
   end
 
-  defp maybe_put_default_doc_branch(record), do: record
+  defp maybe_put_default_article_branch(record), do: record
 
   defp put_default_tag_group(%CommunityTag{} = tag, community_id, thread) do
     title = tag.group || "Ungrouped"

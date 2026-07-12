@@ -17,7 +17,8 @@ defmodule GroupherServer.CMS.DocTree.Read do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.DocTree.{Branch, ChangeDetection, Events}
+  alias CMS.Articles.Branch
+  alias CMS.DocTree.{ChangeDetection, Events}
 
   require CMS.Const
 
@@ -31,7 +32,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
     DocsSiteState,
     DocTreeEvent,
     DocTreeNode,
-    PublishRelease
+    DocPublishRelease
   }
 
   alias Helper.{ORM, T, Transaction}
@@ -46,7 +47,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
   """
   @spec read(Community.t(), keyword() | map()) :: T.domain_res(map())
   def read(%Community{} = community, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, opts),
+    with {:ok, branch} <- Branch.resolve(community, :doc, opts),
          {:ok, _state} <- ensure_site_state(community, branch) do
       Repo.transaction(fn ->
         {:ok, state} =
@@ -85,7 +86,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
   """
   @spec read_public(Community.t(), keyword() | map()) :: T.domain_res(map())
   def read_public(%Community{} = community, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
+    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
       nodes = tree_nodes_for_branch(community, branch, CMS.Const.stage(:public))
       docs_by_doc_id = public_docs_by_doc_id(community, branch, nodes)
 
@@ -129,7 +130,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
   """
   @spec read_draft(Community.t(), String.t(), keyword() | map()) :: T.domain_res(Doc.t())
   def read_draft(%Community{} = community, doc_id, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
+    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
       Doc
       |> ORM.find_by(
         doc_id: doc_id,
@@ -154,7 +155,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
 
   @spec ensure_site_state(Community.t(), keyword() | map()) :: T.domain_res(DocsSiteState.t())
   def ensure_site_state(%Community{} = community, opts \\ []) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
+    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
       Transaction.lock_global("docs_site:init:#{community.id}:#{branch.id}", fn ->
         case ORM.find_by(DocsSiteState, community_id: community.id, branch_id: branch.id) do
           {:ok, state} ->
@@ -168,7 +169,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
   end
 
   def tree_nodes(%Community{} = community, opts, stage) do
-    with {:ok, branch} <- Branch.resolve(community, opts) do
+    with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
       {:ok, tree_nodes_for_branch(community, branch, stage)}
     end
   end
@@ -200,9 +201,9 @@ defmodule GroupherServer.CMS.DocTree.Read do
     |> where([d], d.community_id == ^community.id)
     |> where([d], d.branch_id == ^branch.id)
     |> where([d], d.stage == ^CMS.Const.stage(:public))
-    |> where([d], d.doc_id in ^doc_ids)
+    |> where([d], d.article_hash_id in ^doc_ids)
     |> Repo.all()
-    |> Map.new(&{&1.doc_id, &1})
+    |> Map.new(&{&1.article_hash_id, &1})
   end
 
   defp build_public_groups(%Community{} = community, nodes, docs_by_doc_id) do
@@ -395,10 +396,10 @@ defmodule GroupherServer.CMS.DocTree.Read do
       Doc
       |> where([v], v.community_id == ^community.id)
       |> where([v], v.branch_id == ^branch.id)
-      |> where([v], v.doc_id in ^doc_ids)
+      |> where([v], v.article_hash_id in ^doc_ids)
       |> where([v], v.stage == CMS.Const.stage(:draft))
       |> Repo.all()
-      |> Map.new(&{&1.doc_id, &1})
+      |> Map.new(&{&1.article_hash_id, &1})
 
     public_versions =
       ArticleSnapshot
@@ -406,11 +407,11 @@ defmodule GroupherServer.CMS.DocTree.Read do
       |> where([s], s.branch_id == ^branch.id)
       |> where([s], s.stage == CMS.Const.stage(:public))
       |> where([s], s.thread == :doc)
-      |> where([s], s.doc_id in ^doc_ids)
-      |> order_by([s], desc: s.snapshot_number, desc: s.id)
+      |> where([s], s.article_hash_id in ^doc_ids)
+      |> order_by([s], desc: s.revision_number, desc: s.id)
       |> Repo.all()
-      |> Enum.uniq_by(& &1.doc_id)
-      |> Map.new(&{&1.doc_id, &1})
+      |> Enum.uniq_by(& &1.article_hash_id)
+      |> Map.new(&{&1.article_hash_id, &1})
 
     public_row_ids =
       public_nodes
@@ -487,7 +488,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
     do: ChangeDetection.draft_content_changed?(draft, public)
 
   defp latest_release(%Community{} = community, branch_id) do
-    PublishRelease
+    DocPublishRelease
     |> where([r], r.community_id == ^community.id)
     |> where([r], r.branch_id == ^branch_id)
     |> order_by([r], desc: r.release_number, desc: r.id)
