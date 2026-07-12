@@ -578,14 +578,15 @@ const docDraftSnapshots = gql`
       id
       thread
       stage
-      docId
+      action
+      articleHashId
       title
       slug
       subtitle
       digest
       documentJson
       contentHash
-      snapshotNumber
+      revisionNumber
       schemaVersion
       insertedAt
       author {
@@ -718,14 +719,15 @@ const checkpointDocDraftSnapshot = gql`
       id
       thread
       stage
-      docId
+      action
+      articleHashId
       title
       slug
       subtitle
       documentJson
       digest
       contentHash
-      snapshotNumber
+      revisionNumber
       schemaVersion
       insertedAt
       author {

@@ -12,6 +12,7 @@ const value = (...texts: string[]): TRichEditorValue =>
   })) as TRichEditorValue
 
 const snapshot = (id: string, documentValue: TRichEditorValue): TArticleSnapshot => ({
+  action: 'CHECKPOINT',
   id,
   contentHash: id,
   documentJson: JSON.stringify(documentValue),

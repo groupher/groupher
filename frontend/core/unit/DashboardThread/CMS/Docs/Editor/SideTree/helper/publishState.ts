@@ -1,10 +1,10 @@
-import { DOC_STAGE } from '~/const/dsb/docs'
+import { ARTICLE_STAGE } from '~/const/article'
 
 import type { TDocTreeNodePublishState } from '../spec'
 
 export const DOC_PUBLISH_STATUS = {
-  DRAFT: DOC_STAGE.DRAFT,
-  PUBLIC: DOC_STAGE.PUBLIC,
+  DRAFT: ARTICLE_STAGE.DRAFT,
+  PUBLIC: ARTICLE_STAGE.PUBLIC,
 } as const
 
 type TDocPublishStatus = (typeof DOC_PUBLISH_STATUS)[keyof typeof DOC_PUBLISH_STATUS]

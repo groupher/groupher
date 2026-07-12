@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 
-import { DOC_STAGE, DSB_DOC_EVENT, type TDocDraftPatchPayload } from '~/const/dsb/docs'
+import { ARTICLE_STAGE } from '~/const/article'
+import { DSB_DOC_EVENT, type TDocDraftPatchPayload } from '~/const/dsb/docs'
 import useEvent from '~/hooks/useEvent'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useCommunity from '~/stores/community/hooks'
@@ -91,7 +92,7 @@ export default function useDraftLoader(draftState: TDraftEditorState): void {
       if (!detail) return
       if (!activePage?.docId || detail?.docId !== activePage.docId) return
 
-      applyDraftPatch({ stage: detail.stage ?? DOC_STAGE.DRAFT })
+      applyDraftPatch({ stage: detail.stage ?? ARTICLE_STAGE.DRAFT })
     },
     [activePage?.docId, applyDraftPatch],
   )

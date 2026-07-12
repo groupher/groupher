@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { DOC_STAGE } from '~/const/dsb/docs'
+import { ARTICLE_STAGE } from '~/const/article'
 
 import { SIDE_TREE_NODE_TYPE } from '../SideTree/constant'
 import type { TSideTreePage } from '../SideTree/spec'
@@ -12,7 +12,7 @@ const activePage: TSideTreePage = {
   title: 'Intro',
   docId: 'doc-1',
   publishState: {
-    status: DOC_STAGE.PUBLIC,
+    status: ARTICLE_STAGE.PUBLIC,
     published: true,
   },
 }
@@ -24,13 +24,13 @@ describe('docs editor article helper', () => {
         id: 'article-1',
         docId: 'doc-1',
         title: 'Published intro',
-        stage: DOC_STAGE.PUBLIC,
+        stage: ARTICLE_STAGE.PUBLIC,
       },
       activePage,
     )
 
     expect(session.source).toBe('public')
-    expect(resolveDraftSource({ stage: DOC_STAGE.PUBLIC })).toBe('public')
+    expect(resolveDraftSource({ stage: ARTICLE_STAGE.PUBLIC })).toBe('public')
   })
 
   it('marks loaded draft content as draft source', () => {
@@ -39,12 +39,12 @@ describe('docs editor article helper', () => {
         id: 'article-2',
         docId: 'doc-1',
         title: 'Draft intro',
-        stage: DOC_STAGE.DRAFT,
+        stage: ARTICLE_STAGE.DRAFT,
       },
       activePage,
     )
 
     expect(session.source).toBe('draft')
-    expect(resolveDraftSource({ stage: DOC_STAGE.DRAFT })).toBe('draft')
+    expect(resolveDraftSource({ stage: ARTICLE_STAGE.DRAFT })).toBe('draft')
   })
 })

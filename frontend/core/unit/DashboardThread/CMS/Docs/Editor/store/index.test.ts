@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { DOC_STAGE } from '~/const/dsb/docs'
+import { ARTICLE_STAGE } from '~/const/article'
 
 import { buildPublishView } from '.'
 import { SIDE_TREE_NODE_TYPE } from '../SideTree/constant'
@@ -85,7 +85,7 @@ describe('docs editor publish view', () => {
                 title: 'Intro',
                 docId: 'doc-1',
                 publishState: {
-                  status: DOC_STAGE.PUBLIC,
+                  status: ARTICLE_STAGE.PUBLIC,
                   published: true,
                 },
               },

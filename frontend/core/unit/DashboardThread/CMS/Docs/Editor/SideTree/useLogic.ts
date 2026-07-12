@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { DOC_STAGE, DSB_DOC_EVENT, type TDocStage } from '~/const/dsb/docs'
+import { ARTICLE_STAGE, type TArticleStage } from '~/const/article'
+import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useQuery from '~/hooks/useQuery'
 import useTrans from '~/hooks/useTrans'
@@ -72,7 +73,7 @@ import useSideTreePersistence, { type TSideTreeMutationSchema } from './usePersi
 type TMoveDocToDraftData = {
   moveDocToDraft?: {
     docId?: string | null
-    stage?: TDocStage | null
+    stage?: TArticleStage | null
     publishState?: TDocTreeNodePublishState | null
   } | null
 }
@@ -657,7 +658,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
           const publishState = {
             ...(current?.publishState ?? {}),
             ...(payload?.publishState ?? {}),
-            status: DOC_STAGE.DRAFT,
+            status: ARTICLE_STAGE.DRAFT,
             published: true,
             publishedBefore: true,
             hasDraft: true,
@@ -668,7 +669,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
           send(DSB_DOC_EVENT.DRAFT_PATCH, {
             docId:
               payload?.docId ?? (current?.type === SIDE_TREE_NODE_TYPE.PAGE ? current.docId : null),
-            stage: payload?.stage ?? DOC_STAGE.DRAFT,
+            stage: payload?.stage ?? ARTICLE_STAGE.DRAFT,
           })
           toast(t('dsb.cms.docs.side_tree.publish.draft_moved'))
         })

@@ -1,7 +1,7 @@
 import type { TRichEditorValue } from '@groupher/rich-editor'
 import { equals } from 'ramda'
 
-import { DOC_STAGE } from '~/const/dsb/docs'
+import { ARTICLE_STAGE } from '~/const/article'
 
 import type { TSideTreePage } from '../SideTree/spec'
 import { EMPTY_EDITOR_VALUE } from './constant'
@@ -124,7 +124,7 @@ export const composeEmptySavedDraft = (): TSavedDraft =>
   composeSavedDraft(composeEmptyEditorDraft())
 
 export const resolveDraftSource = (draft?: Pick<TDocDraftDTO, 'stage'> | null): TDocDraftSource =>
-  draft?.stage === DOC_STAGE.DRAFT ? 'draft' : 'public'
+  draft?.stage === ARTICLE_STAGE.DRAFT ? 'draft' : 'public'
 
 export const composeEditorDraftMeta = (
   source?: Partial<TEditorDraftMeta> | null,
@@ -160,7 +160,7 @@ export const composeDraftPublishState = (publishState: TSideTreePage['publishSta
   ...(publishState ?? {}),
   hasDraft: true,
   published: publishState?.published ?? false,
-  status: DOC_STAGE.DRAFT,
+  status: ARTICLE_STAGE.DRAFT,
 })
 
 export const composeEditorDraftFromSession = (session: TDocDraftSession): TEditorDraft =>

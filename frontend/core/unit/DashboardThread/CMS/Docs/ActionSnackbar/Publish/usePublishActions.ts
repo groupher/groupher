@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 
-import { DOC_STAGE, DSB_DOC_EVENT } from '~/const/dsb/docs'
+import { ARTICLE_STAGE } from '~/const/article'
+import { DSB_DOC_EVENT } from '~/const/dsb/docs'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useTrans from '~/hooks/useTrans'
 import { send } from '~/lib/signal'
@@ -87,14 +88,14 @@ export default function usePublishActions({
           setDocDraftSession?.({
             docDraftInfo: {
               ...docDraftInfo,
-              stage: DOC_STAGE.PUBLIC,
+              stage: ARTICLE_STAGE.PUBLIC,
               publishState: docDraftInfo.publishState
                 ? {
                     ...docDraftInfo.publishState,
                     hasDraft: false,
                     hasUnpublishedChanges: false,
                     published: true,
-                    status: DOC_STAGE.PUBLIC,
+                    status: ARTICLE_STAGE.PUBLIC,
                   }
                 : null,
             },
