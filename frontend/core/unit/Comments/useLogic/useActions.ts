@@ -2,7 +2,7 @@ import { equals, isEmpty, reject } from 'ramda'
 import { useContext } from 'react'
 
 import type { TComment, TID } from '~/spec'
-import { StoreContext as CommentsStoreContext } from '~/stores/comments/provider'
+import { StoreContext as CommentsStoreContext } from '~/stores/comments/context'
 import type { TStore as TCommentsStore } from '~/stores/comments/spec'
 import persist from '~/utils/persist'
 

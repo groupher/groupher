@@ -11,8 +11,9 @@ import { DEV_LOGOS } from '../constant/dev_logo'
 import type { TDevLogo } from '../constant/dev_logo'
 import type { TDevLogoOption, TIconListOption, TIconOption, TIconSelect } from '../spec'
 import VirtualList from '../VirtualList'
-import IconListItem, { isSelectedIconOption } from './IconListItem'
+import IconListItem from './IconListItem'
 import useSalon from './salon'
+import { isDevLogoOption, isSelectedIconOption } from './selection'
 
 type TProps = {
   providerTab: TPickerProvider
@@ -28,9 +29,6 @@ const toDevLogoOption = (name: TDevLogo): TDevLogoOption => ({
   kind: 'dev',
   name,
 })
-
-export const isDevLogoOption = (item: TIconListOption): item is TDevLogoOption =>
-  item.kind === 'dev'
 
 const IconList: FC<TProps> = ({ providerTab, query, selectedValue, color, onSelect }) => {
   const s = useSalon()

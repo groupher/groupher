@@ -4,7 +4,7 @@
  *
  */
 
-import { type FC, useState } from 'react'
+import { type FC, useRef, useState } from 'react'
 
 import SettingSVG from '~/icons/Setting'
 import type { TSpace } from '~/spec'
@@ -24,11 +24,11 @@ const ArticleSettingMenu: FC<TProps> = ({
   const s = useSalon({ ...spacing })
 
   const [visible, setVisible] = useState(false)
-  const [subMenuOpen, setSubMenuOpen] = useState(false)
+  const subMenuOpenRef = useRef(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
   const doClose = () => {
-    setSubMenuOpen(false)
+    subMenuOpenRef.current = false
     setVisible(false)
     setMenuOpen(false)
   }
@@ -47,7 +47,9 @@ const ArticleSettingMenu: FC<TProps> = ({
     <div className={s.wrapper}>
       <Tooltip
         visible={visible}
-        content={<Menu onSubMenuToggle={(t) => setSubMenuOpen(t)} onClose={doClose} />}
+        content={
+          <Menu onSubMenuToggle={(open) => (subMenuOpenRef.current = open)} onClose={doClose} />
+        }
         placement='bottom-end'
         hideOnClick={false}
         offset={[0, 10]}
@@ -56,7 +58,7 @@ const ArticleSettingMenu: FC<TProps> = ({
           setVisible(true)
         }}
         onHide={() => {
-          if (subMenuOpen) return
+          if (subMenuOpenRef.current) return
           doClose()
         }}
         noPadding

@@ -9,7 +9,7 @@ import type { TUser } from '~/spec'
 
 import { me } from '../../schemas/pages/user'
 import createStoreHook from '../createStoreHook'
-import { StoreContext } from './provider'
+import { StoreContext } from './context'
 
 const useBaseStore = createStoreHook(StoreContext)
 

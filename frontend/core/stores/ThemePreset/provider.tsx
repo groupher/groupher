@@ -1,13 +1,6 @@
 'use client'
 
-import {
-  type CSSProperties,
-  createContext,
-  type ReactNode,
-  useEffect,
-  useMemo,
-  useRef,
-} from 'react'
+import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef } from 'react'
 import { useSnapshot } from 'valtio'
 
 import useTheme from '~/hooks/useTheme'
@@ -16,6 +9,7 @@ import type { TResolvedThemePreset } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
 import setupStore from '.'
+import { StoreContext } from './context'
 import type { TInit, TStore } from './spec'
 
 type TProps = {
@@ -36,9 +30,6 @@ const PRESET_CSS_VAR_KEYS = [
   '--color-card',
   '--color-divider',
 ] as const
-
-export const StoreContext = createContext<TStore | null>(null)
-StoreContext.displayName = 'ThemePreset'
 
 type TScopeProps = {
   children: ReactNode

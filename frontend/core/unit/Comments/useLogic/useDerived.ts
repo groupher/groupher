@@ -4,7 +4,7 @@ import { useSnapshot } from 'valtio'
 
 import useViewingArticle from '~/hooks/useViewingArticle'
 import type { TCommentsState } from '~/spec'
-import { StoreContext as CommentsStoreContext } from '~/stores/comments/provider'
+import { StoreContext as CommentsStoreContext } from '~/stores/comments/context'
 import type { TStore as TCommentsStore } from '~/stores/comments/spec'
 
 import { API_MODE } from '../constant'

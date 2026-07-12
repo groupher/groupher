@@ -7,12 +7,22 @@ type TProps = {
 
 export default function Stack({ colors }: TProps) {
   const s = useSalon()
+  const colorOccurrences = new Map<string, number>()
 
   return (
     <div className={s.wrapper}>
-      {colors.map((color, index) => (
-        <span key={`${color}-${index}`} className={s.item} style={{ backgroundColor: color }} />
-      ))}
+      {colors.map((color) => {
+        const occurrence = (colorOccurrences.get(color) ?? 0) + 1
+        colorOccurrences.set(color, occurrence)
+
+        return (
+          <span
+            key={`${color}-${occurrence}`}
+            className={s.item}
+            style={{ backgroundColor: color }}
+          />
+        )
+      })}
     </div>
   )
 }

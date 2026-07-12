@@ -20,6 +20,7 @@ const FeedbackTags: FC<TProps> = ({ score }) => {
   const tags = useMemo(() => getFeedbackTagsByScore(score), [score])
   const [selectedTags, setSelectedTags] = useState<TTransKey[]>([])
   const [note, setNote] = useState('')
+  const selectedTagSet = useMemo(() => new Set(selectedTags), [selectedTags])
   const hasSelectedTag = selectedTags.length > 0
 
   useEffect(() => {
@@ -44,7 +45,7 @@ const FeedbackTags: FC<TProps> = ({ score }) => {
           <TagLabel
             key={tag}
             label={t(tag)}
-            active={selectedTags.includes(tag)}
+            active={selectedTagSet.has(tag)}
             onClick={() => handleTagClick(tag)}
           />
         ))}

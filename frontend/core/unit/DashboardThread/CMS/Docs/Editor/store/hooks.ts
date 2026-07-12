@@ -2,9 +2,9 @@
 
 import createStoreHook from '~/stores/createStoreHook'
 
-import { StoreContext } from './provider'
+import { StoreContext } from './context'
 
-export default createStoreHook(StoreContext, [
+const useDocsEditor = createStoreHook(StoreContext, [
   'addGroup',
   'attachSideTree',
   'attachSaveDocDraft',
@@ -15,3 +15,5 @@ export default createStoreHook(StoreContext, [
   'setPublishRuntime',
   'setDocDraftSession',
 ])
+
+export default useDocsEditor

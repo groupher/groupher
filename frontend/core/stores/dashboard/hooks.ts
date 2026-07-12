@@ -1,9 +1,9 @@
 'use client'
 
 import createStoreHook from '../createStoreHook'
-import { StoreContext } from './provider'
+import { StoreContext } from './context'
 
-export default createStoreHook(StoreContext, [
+const useDashboard = createStoreHook(StoreContext, [
   'commit',
   'editField',
   'editFields',
@@ -14,3 +14,5 @@ export default createStoreHook(StoreContext, [
   'isTouched',
   'anyTouched',
 ])
+
+export default useDashboard

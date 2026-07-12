@@ -5,7 +5,7 @@ import { scrollIntoEle } from '~/dom'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import type { TComment, TEmotion, TEmotionType, TID } from '~/spec'
-import { StoreContext as CommentsStoreContext } from '~/stores/comments/provider'
+import { StoreContext as CommentsStoreContext } from '~/stores/comments/context'
 import type { TStore as TCommentsStore } from '~/stores/comments/spec'
 import uid from '~/utils/uid'
 

@@ -19,6 +19,7 @@ export default function Boards() {
   const { cn, fg, fill, rainbow } = useTwBelt()
   const { kanbanBoards, isKanbanBoardsTouched: isTouched, edit } = useKanban()
   const activeBoards = kanbanBoards.length > 0 ? kanbanBoards : INIT_KANBAN_BOARDS
+  const activeBoardSet = new Set(activeBoards)
 
   const boards = [
     { value: KANBAN_BOARD.BACKLOG, title: t('article.status.backlog') },
@@ -30,10 +31,11 @@ export default function Boards() {
   const boardOrder = boards.map(({ value }) => value)
 
   const handleToggle = (board: TKanbanBoard) => {
-    const toggledBoards = activeBoards.includes(board)
+    const toggledBoards = activeBoardSet.has(board)
       ? activeBoards.filter((item) => item !== board)
       : [...activeBoards, board]
-    const nextBoards = boardOrder.filter((item) => toggledBoards.includes(item))
+    const toggledBoardSet = new Set(toggledBoards)
+    const nextBoards = boardOrder.filter((item) => toggledBoardSet.has(item))
 
     edit(nextBoards, FIELD.KANBAN_BOARDS)
   }
@@ -51,28 +53,22 @@ export default function Boards() {
             key={value}
             type='button'
             className={s.block}
-            aria-pressed={activeBoards.includes(value)}
+            aria-pressed={activeBoardSet.has(value)}
             onClick={() => handleToggle(value)}
           >
             <div
               className={cn(
                 s.box,
-                activeBoards.includes(value) ? rainbow(primaryColor, 'bg') : 'bg-transparent',
+                activeBoardSet.has(value) ? rainbow(primaryColor, 'bg') : 'bg-transparent',
                 rainbow(primaryColor, 'border'),
               )}
             >
               <CheckedSVG
-                className={cn(
-                  'size-3.5',
-                  activeBoards.includes(value) ? fill('button.fg') : 'hidden',
-                )}
+                className={cn('size-3.5', activeBoardSet.has(value) ? fill('button.fg') : 'hidden')}
               />
             </div>
             <span
-              className={cn(
-                'size-sm ml-2',
-                activeBoards.includes(value) ? fg('title') : fg('digest'),
-              )}
+              className={cn('size-sm ml-2', activeBoardSet.has(value) ? fg('title') : fg('digest'))}
             >
               {title}
             </span>

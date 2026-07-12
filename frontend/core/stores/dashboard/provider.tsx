@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, type ReactNode, useEffect, useMemo, useRef } from 'react'
+import { type ReactNode, useEffect, useMemo, useRef } from 'react'
 import { subscribe } from 'valtio'
 
 import useDsbDemoMode from '~/hooks/useDsbDemoMode'
@@ -13,15 +13,13 @@ import {
 } from '~/utils/dsb-demo'
 
 import setupStore from '.'
+import { StoreContext } from './context'
 import type { TInit, TStore } from './spec'
 
 type TProps = {
   children: ReactNode
   initData: TInit
 }
-
-export const StoreContext = createContext<TStore | null>(null)
-StoreContext.displayName = 'Dashboard'
 
 export default function Provider({ children, initData }: TProps) {
   const storeRef = useRef<TStore | null>(null)
