@@ -1,0 +1,12 @@
+[
+  {
+    "type": "dir-section-header",
+    "name": "start",
+    "label": "gettingStarted"
+  },
+  {
+    "type": "section-header",
+    "label": "More"
+  },
+  "advanced"
+]

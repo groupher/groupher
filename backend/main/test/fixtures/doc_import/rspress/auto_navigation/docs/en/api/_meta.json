@@ -1,0 +1,6 @@
+[
+  { "type": "section-header", "label": "Overview" },
+  { "type": "file", "name": "index", "label": "API Overview" },
+  { "type": "section-header", "label": "Config" },
+  { "type": "dir", "name": "config", "label": "config" }
+]
