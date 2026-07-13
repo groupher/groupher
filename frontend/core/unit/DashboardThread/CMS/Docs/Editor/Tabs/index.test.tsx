@@ -147,16 +147,22 @@ const makeController = (
 })
 
 describe('docs editor tabs', () => {
-  it('hides the tabs row and settings when there is only one tab', () => {
+  it('hides the tabs row and settings when there are no tabs', () => {
+    render(<Tabs controller={makeController([])} showTabs={false} submenuCollapsed={false} />)
+
+    expect(screen.queryByRole('button', { name: 'Manage tabs' })).not.toBeInTheDocument()
+  })
+
+  it('shows the tabs row and settings when there is one tab', () => {
     render(
       <Tabs
         controller={makeController([makeTab('intro', 'Introduction')])}
-        showTabs={false}
+        showTabs
         submenuCollapsed={false}
       />,
     )
 
-    expect(screen.queryByRole('button', { name: 'Manage tabs' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Manage tabs' })).toBeInTheDocument()
   })
 
   it('keeps tab switching read-only and moves management into the drawer', () => {

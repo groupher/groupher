@@ -8,6 +8,7 @@ import useEvent from '~/hooks/useEvent'
 import useDashboardStore from '~/stores/dashboard/hooks'
 
 import ActionSnackbar from '../ActionSnackbar'
+import AddTabPortal from './AddTabPortal'
 import Article from './Article'
 import type { TDocDraftInitialData } from './Article/spec'
 import useSalon from './salon'
@@ -31,7 +32,7 @@ type TProps = {
 const Editor: FC<TProps> = ({ initialData }) => {
   const { submenuCollapsed } = useDashboardStore()
   const sideTree = useSideTreeLogic(initialData?.docTree ?? undefined)
-  const showTabs = sideTree.tabs.length >= 2
+  const showTabs = sideTree.tabs.length > 0
   const s = useSalon({ showTabs, submenuCollapsed })
   const hasTree = sideTree.groups.length > 0
   const showActionSnackbar = sideTree.activeId !== null || hasTreeChanges(sideTree)
@@ -40,6 +41,7 @@ const Editor: FC<TProps> = ({ initialData }) => {
 
   return (
     <DocsEditorStoreProvider initData={{ sideTree, article: initialData?.docDraft ?? null }}>
+      <AddTabPortal show={!showTabs} />
       <div className={s.wrapper}>
         <Tabs controller={sideTree} showTabs={showTabs} submenuCollapsed={submenuCollapsed} />
         <div className={s.surface}>
