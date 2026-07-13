@@ -69,6 +69,7 @@ export default function useCoverImagePreview(): TCoverImageDraftContext {
   const [draftContextState, setDraftContextState] =
     useState<TCoverImagePreviewState>(committedState)
   const pendingPreviewStateRef = useRef<TCoverImagePreviewState | null>(null)
+  const pendingContextSyncRef = useRef(false)
   const imagePatchOnChangeRef = useRef(imagePatchOnChange)
   const imagesOnChangeRef = useRef(imagesOnChange)
   const previewFrameRef = useRef<number | null>(null)
@@ -82,26 +83,44 @@ export default function useCoverImagePreview(): TCoverImageDraftContext {
     imagesOnChangeRef.current = imagesOnChange
   }, [imagePatchOnChange, imagesOnChange])
 
-  const publishPreviewState = useCallback((state: TCoverImagePreviewState): void => {
-    pendingPreviewStateRef.current = state
-    if (previewFrameRef.current !== null) return
+  /**
+   * Publishes the latest preview once per animation frame. Pointer-driven image patches use CSS
+   * variables for realtime painting and remain in previewStateRef for subsequent patch merges, so
+   * they must not re-render every ImageDraftContext consumer on every frame. Structural changes
+   * such as activating/raising an image explicitly request a context sync.
+   *
+   * If a structural update and pointer patch land in the same frame, the sticky sync flag ensures
+   * the context receives the newest coalesced state instead of the earlier structural snapshot.
+   */
+  const publishPreviewState = useCallback(
+    (state: TCoverImagePreviewState, syncContext: boolean): void => {
+      pendingPreviewStateRef.current = state
+      pendingContextSyncRef.current ||= syncContext
+      if (previewFrameRef.current !== null) return
 
-    previewFrameRef.current = window.requestAnimationFrame(() => {
-      previewFrameRef.current = null
-      const pendingState = pendingPreviewStateRef.current
+      previewFrameRef.current = window.requestAnimationFrame(() => {
+        previewFrameRef.current = null
+        const pendingState = pendingPreviewStateRef.current
+        const shouldSyncContext = pendingContextSyncRef.current
+        pendingContextSyncRef.current = false
 
-      if (pendingState) {
-        setDraftContextState((current) => (equals(current, pendingState) ? current : pendingState))
-      }
+        if (pendingState && shouldSyncContext) {
+          setDraftContextState((current) =>
+            equals(current, pendingState) ? current : pendingState,
+          )
+        }
 
-      emitCoverImagePreview(pendingState)
-    })
-  }, [])
+        emitCoverImagePreview(pendingState)
+      })
+    },
+    [],
+  )
 
   const clearPreviewState = useCallback((): void => {
     isPreviewingRef.current = false
     previewStateRef.current = committedStateRef.current
     pendingPreviewStateRef.current = null
+    pendingContextSyncRef.current = false
 
     if (previewFrameRef.current !== null) {
       window.cancelAnimationFrame(previewFrameRef.current)
@@ -122,12 +141,12 @@ export default function useCoverImagePreview(): TCoverImageDraftContext {
   }, [])
 
   const setPreviewState = useCallback(
-    (nextState: TCoverImagePreviewState): void => {
+    (nextState: TCoverImagePreviewState, syncContext = false): void => {
       if (equals(previewStateRef.current, nextState)) return
 
       isPreviewingRef.current = true
       previewStateRef.current = nextState
-      publishPreviewState(nextState)
+      publishPreviewState(nextState, syncContext)
     },
     [publishPreviewState],
   )
@@ -214,7 +233,8 @@ export default function useCoverImagePreview(): TCoverImageDraftContext {
         activeImageWhich: which,
       }
 
-      setPreviewState(nextState)
+      // Active slot and z-index are structural UI state, so consumers need this update immediately.
+      setPreviewState(nextState, true)
 
       if (
         committedStateRef.current.activeImageWhich !== which ||
