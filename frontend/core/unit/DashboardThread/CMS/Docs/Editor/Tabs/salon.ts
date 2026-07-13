@@ -1,27 +1,23 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 import { DSB_DOC } from '../../../../constant'
+import { getDocEditorLayout } from '../salon/layout'
 
 export { cn } from '~/css'
 
 type TProps = {
+  showTabs: boolean
   submenuCollapsed: boolean
 }
 
-export default function useSalon({ submenuCollapsed }: TProps) {
+export default function useSalon({ showTabs, submenuCollapsed }: TProps) {
   const { br, cn, fg, hover } = useTwBelt()
+  const { tabsOffset } = getDocEditorLayout({ showTabs, submenuCollapsed })
 
   return {
-    wrapper: cn(
-      'row-between w-full border-b',
-      DSB_DOC.TABS_ROW,
-      submenuCollapsed
-        ? cn(DSB_DOC.TABS_COLLAPSED_OFFSET, DSB_DOC.TABS_COLLAPSED_TO_BODY_GAP)
-        : cn(DSB_DOC.TABS_EXPANDED_OFFSET, DSB_DOC.HEADER_TO_BODY_GAP),
-      br('divider'),
-    ),
+    wrapper: cn('row-between w-full border-b', DSB_DOC.TABS.ROW, tabsOffset, br('divider')),
     tabsViewport: 'row-center min-w-0 flex-1 overflow-x-auto',
-    settingsButton: cn('plain-button align-both mr-3 size-10 shrink-0', fg('digest')),
+    settingsButton: cn('plain-button row-center size-10 shrink-0 justify-end', fg('digest')),
     settingsIconBox: cn(
       'align-both size-7 rounded-md transition-colors duration-150',
       hover('box'),

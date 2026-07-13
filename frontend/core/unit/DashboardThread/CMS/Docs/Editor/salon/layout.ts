@@ -1,9 +1,18 @@
 import { DASHBOARD_SIDE_MENU_STICKY_OFFSET, DSB_DOC } from '../../../../constant'
 
-// The side tree and article actions share the dashboard docs body anchor.
-export const DOC_EDITOR_TOP_ROW = `${DSB_DOC.BODY_START_ROW} mb-2`
+type TDocEditorLayoutState = {
+  showTabs: boolean
+  submenuCollapsed: boolean
+}
 
+export const getDocEditorLayout = ({ showTabs, submenuCollapsed }: TDocEditorLayoutState) =>
+  DSB_DOC.EDITOR_LAYOUT[showTabs ? 'withTabs' : 'withoutTabs'][
+    submenuCollapsed ? 'collapsed' : 'expanded'
+  ]
+
+// The side tree and article actions share the dashboard docs body anchor.
 export const DOC_EDITOR_TOP_ROW_CONTROL = 'h-6'
+export const DOC_EDITOR_TOP_ROW = `${DOC_EDITOR_TOP_ROW_CONTROL} mb-2`
 
 // Keep room for the sticky snackbar and document footer controls near the
 // viewport bottom without letting them cover the editable content.

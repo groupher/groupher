@@ -10,14 +10,14 @@ import SettingsDrawer from './SettingsDrawer'
 
 type TProps = {
   controller: TSideTreeController
+  showTabs: boolean
   submenuCollapsed: boolean
 }
 
-const Tabs: FC<TProps> = ({ controller, submenuCollapsed }) => {
-  const s = useSalon({ submenuCollapsed })
+const Tabs: FC<TProps> = ({ controller, showTabs, submenuCollapsed }) => {
+  const s = useSalon({ showTabs, submenuCollapsed })
   const { t } = useTrans()
   const [showSettings, setShowSettings] = useState(false)
-  const showTabs = controller.tabs.length >= 2
   const settingsVisible = showTabs && showSettings
   const items = useMemo(
     () => controller.tabs.map((tab) => ({ slug: tab.id, label: tab.title })),

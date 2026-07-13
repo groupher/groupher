@@ -10,16 +10,48 @@ export { SEO_KEYS } from '~/const/seo'
 export const DSB_DEMO_KEY = 'DSB_DEMO'
 export const DASHBOARD_SIDE_MENU_STICKY_OFFSET = 36
 
+const DSB_DOC_SIDE_MENU = {
+  EXPANDED_BODY_TOP: 'mt-2',
+  COLLAPSED_TOGGLE_TOP: 'mt-7',
+  COLLAPSED_BODY_TOP: 'mt-15',
+} as const
+
+const DSB_DOC_TABS = {
+  ROW: 'min-h-12',
+  EXPANDED_TOP: '-mt-2',
+  COLLAPSED_TOP: '-mt-7',
+  EXPANDED_TO_BODY_GAP: 'mt-7',
+  COLLAPSED_TO_BODY_GAP: 'mt-8',
+} as const
+
 // Shared vertical anchors for the dashboard docs workspace. Keep these values
 // semantic so the submenu, tabs, and editor body move as one layout.
 export const DSB_DOC = {
   HEADER_ROW: 'h-10',
-  BODY_START_ROW: 'h-8',
-  HEADER_TO_BODY_GAP: 'mb-4',
-  TABS_ROW: 'min-h-12',
-  TABS_EXPANDED_OFFSET: '-mt-2',
-  TABS_COLLAPSED_OFFSET: '-mt-7',
-  TABS_COLLAPSED_TO_BODY_GAP: 'mb-6',
+  SIDE_MENU: DSB_DOC_SIDE_MENU,
+  TABS: DSB_DOC_TABS,
+  EDITOR_LAYOUT: {
+    withoutTabs: {
+      expanded: {
+        tabsOffset: null,
+        bodyTopGap: DSB_DOC_SIDE_MENU.EXPANDED_BODY_TOP,
+      },
+      collapsed: {
+        tabsOffset: null,
+        bodyTopGap: DSB_DOC_SIDE_MENU.COLLAPSED_BODY_TOP,
+      },
+    },
+    withTabs: {
+      expanded: {
+        tabsOffset: DSB_DOC_TABS.EXPANDED_TOP,
+        bodyTopGap: DSB_DOC_TABS.EXPANDED_TO_BODY_GAP,
+      },
+      collapsed: {
+        tabsOffset: DSB_DOC_TABS.COLLAPSED_TOP,
+        bodyTopGap: DSB_DOC_TABS.COLLAPSED_TO_BODY_GAP,
+      },
+    },
+  },
   COLLAPSED_MENU_OFFSET: '-translate-y-1',
 } as const
 

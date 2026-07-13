@@ -21,7 +21,7 @@ export default function useSalon() {
     ),
     toggleItem: cn(
       'align-both relative size-8 rounded-md border border-transparent pointer trans-all-200',
-      DSB_DOC.HEADER_TO_BODY_GAP,
+      DSB_DOC.SIDE_MENU.COLLAPSED_TOGGLE_TOP,
       fg('digest'),
       hover('bg'),
     ),
