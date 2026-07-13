@@ -34,7 +34,8 @@ const Editor: FC<TProps> = ({ initialData }) => {
   const sideTree = useSideTreeLogic(initialData?.docTree ?? undefined)
   const showTabs = sideTree.tabs.length > 0
   const s = useSalon({ showTabs, submenuCollapsed })
-  const hasTree = sideTree.groups.length > 0
+  const showSideTree = sideTree.activeTabId !== null
+  const sideTreeViewportLayoutKey = `${showTabs}:${submenuCollapsed}`
   const showActionSnackbar = sideTree.activeId !== null || hasTreeChanges(sideTree)
 
   useEvent(DSB_DOC_EVENT.ADD_TAB, sideTree.addTab, [sideTree.addTab])
@@ -50,7 +51,7 @@ const Editor: FC<TProps> = ({ initialData }) => {
             orientation='horizontal'
             resizeTargetMinimumSize={{ fine: 12, coarse: 28 }}
           >
-            {hasTree && (
+            {showSideTree && (
               <Panel
                 id='docs-side-tree'
                 className={s.sidePanel}
@@ -59,11 +60,11 @@ const Editor: FC<TProps> = ({ initialData }) => {
                 maxSize={210}
                 groupResizeBehavior='preserve-pixel-size'
               >
-                <SideTree controller={sideTree} />
+                <SideTree controller={sideTree} viewportLayoutKey={sideTreeViewportLayoutKey} />
               </Panel>
             )}
 
-            {hasTree && (
+            {showSideTree && (
               <Separator id='docs-side-tree-resizer' className={s.resizeHandle}>
                 <div className={s.resizeLine} />
               </Separator>

@@ -24,5 +24,4 @@ export const DOC_EDITOR_SNACKBAR_STICKY_TOP = 'calc(100dvh - 5rem)'
 
 // Match DashboardThread/SideMenu's Sticky offset so the docs tree aligns with
 // the route submenu header while keeping long outlines locally scrollable.
-export const DOC_EDITOR_SIDE_TREE_STICKY_TOP = `${DASHBOARD_SIDE_MENU_STICKY_OFFSET}px`
-export const DOC_EDITOR_SIDE_TREE_STICKY_HEIGHT = `calc(100dvh - ${DASHBOARD_SIDE_MENU_STICKY_OFFSET}px)`
+export const DOC_EDITOR_SIDE_TREE_STICKY_TOP = DASHBOARD_SIDE_MENU_STICKY_OFFSET

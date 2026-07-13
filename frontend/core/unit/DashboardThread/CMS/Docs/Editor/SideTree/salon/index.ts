@@ -8,7 +8,7 @@ export default function useSalon() {
   return {
     wrapper: 'sticky column h-full max-h-full min-h-0 pr-2 overflow-visible',
     groupList: cn(
-      'column min-h-0 flex-1 gap-y-4 -ml-7 w-[calc(100%+2.625rem)] overflow-x-hidden overflow-y-auto overscroll-contain pl-7 pr-6',
+      'column min-h-0 flex-1 gap-y-4 -ml-7 w-[calc(100%+2.625rem)] overflow-x-hidden overflow-y-auto overscroll-y-auto pl-7 pr-6',
       scrollbar('thin'),
     ),
     empty: 'px-1 pt-2 text-xs text-digest',

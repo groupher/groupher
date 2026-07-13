@@ -6,10 +6,7 @@ import { type FC, useDeferredValue, useMemo, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 
-import {
-  DOC_EDITOR_SIDE_TREE_STICKY_HEIGHT,
-  DOC_EDITOR_SIDE_TREE_STICKY_TOP,
-} from '../salon/layout'
+import { DOC_EDITOR_SIDE_TREE_STICKY_TOP } from '../salon/layout'
 import { SIDE_TREE_NODE_TYPE } from './constant'
 import CoverWarningModal from './CoverWarningModal'
 import SideTreeDndContext from './Dnd/SideTreeDndContext'
@@ -18,6 +15,7 @@ import Group from './Group'
 import useSalon from './salon'
 import type { TSideTreeController, TSideTreeGroup } from './spec'
 import Toolbar from './Toolbar'
+import useStickyViewportHeight from './useStickyViewportHeight'
 
 const GROUP_LAYOUT_TRANSITION = {
   duration: 180,
@@ -26,6 +24,7 @@ const GROUP_LAYOUT_TRANSITION = {
 
 type TProps = {
   controller: TSideTreeController
+  viewportLayoutKey: string
 }
 
 const normalizeSearchQuery = (query: string): string => query.trim().toLowerCase()
@@ -51,9 +50,13 @@ const filterGroupsByDocTitle = (
   })
 }
 
-const SideTree: FC<TProps> = ({ controller }) => {
+const SideTree: FC<TProps> = ({ controller, viewportLayoutKey }) => {
   const s = useSalon()
   const { t } = useTrans()
+  const stickyViewportRef = useStickyViewportHeight(
+    DOC_EDITOR_SIDE_TREE_STICKY_TOP,
+    viewportLayoutKey,
+  )
   const [groupListRef] = useAutoAnimate(GROUP_LAYOUT_TRANSITION)
   const [searching, setSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -100,10 +103,10 @@ const SideTree: FC<TProps> = ({ controller }) => {
 
   return (
     <aside
+      ref={stickyViewportRef}
       className={s.wrapper}
       style={{
         top: DOC_EDITOR_SIDE_TREE_STICKY_TOP,
-        height: DOC_EDITOR_SIDE_TREE_STICKY_HEIGHT,
       }}
     >
       <CoverWarningModal message={coverWarning} onClose={clearCoverWarning} />
