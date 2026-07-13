@@ -31,6 +31,7 @@ import type {
   TSelectablePart,
   TShadowType,
   TTextKey,
+  TUnderlineOptions,
 } from './spec'
 
 export default function useTwBelt(): TRet {
@@ -110,6 +111,12 @@ export default function useTwBelt(): TRet {
   }
 
   const linkable = () => STATIC_CLS.linkable
+  const underline = ({ always = false, groupHoverClass = 'group-hover' }: TUnderlineOptions = {}) =>
+    cn(
+      STATIC_CLS.underlineBase,
+      always ? 'underline' : 'no-underline hover:underline',
+      !always && groupHoverClass === 'group-hover' && STATIC_CLS.underlineGroupHover,
+    )
 
   const hoverBr = () => cn(STATIC_CLS.hoverBrBase, br('divider'), `hover:${primary('borderSoft')}`)
 
@@ -341,6 +348,7 @@ export default function useTwBelt(): TRet {
       linker,
 
       linkable,
+      underline,
       hoverLink,
       hoverLinkIcon,
 

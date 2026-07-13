@@ -6,6 +6,8 @@ import type { TColorPrefix } from './spec'
 
 export const STATIC_CLS = {
   linkable: 'no-underline pointer hover:underline',
+  underlineBase: 'underline-offset-2 decoration-1 decoration-dashed decoration-current',
+  underlineGroupHover: 'group-hover:underline',
 
   divider: 'w-full h-px',
   vDivider: 'w-px h-3 ml-1.5 mr-1.5',
