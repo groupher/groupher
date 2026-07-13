@@ -10,7 +10,8 @@ import { FAQ_EDITOR_COPY, FAQ_ITEM_MENU_ACTION, FAQ_SAVE_ZONE } from '../constan
 import InlineTextEditor from '../InlineTextEditor'
 import useSalon, { cn } from '../salon/group/item'
 import type { TFaqEditorItem, TFaqSaveZone } from '../spec'
-import ActionMenu, { ITEM_MENU_ITEMS } from './ActionMenu'
+import ActionMenu from './ActionMenu'
+import { ITEM_MENU_ITEMS } from './menuItems'
 
 type TProps = {
   groupId: string

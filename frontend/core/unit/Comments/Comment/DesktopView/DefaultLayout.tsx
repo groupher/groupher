@@ -44,6 +44,7 @@ const DefaultLayout: FC<TProps> = ({ data, isReply = false, showInnerRef = false
             <button
               type='button'
               className={s.indentLine}
+              aria-label={t('comment.collapse_replies')}
               onClick={() => foldComment(data.innerId)}
             />
           )}

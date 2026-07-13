@@ -1,6 +1,7 @@
 import type { FC } from 'react'
 
 import { roundUpNumber } from '~/fmt'
+import useTrans from '~/hooks/useTrans'
 import ArrowSVG from '~/icons/ArrowSimple'
 import type { TPagi, TSpace } from '~/spec'
 
@@ -18,6 +19,7 @@ const RealPagi: FC<TProps> = ({
   ...spacing
 }) => {
   const s = useSalon({ ...spacing })
+  const { t } = useTrans()
 
   const leftDisabled = pageNumber === 1
   const rightDisabled = pageNumber >= roundUpNumber(totalCount / pageSize)
@@ -28,6 +30,7 @@ const RealPagi: FC<TProps> = ({
         <button
           type='button'
           className={s.arrowBlock}
+          aria-label={t('common.previous_page')}
           disabled={leftDisabled}
           onClick={() => onChange(pageNumber - 1)}
         >
@@ -41,6 +44,7 @@ const RealPagi: FC<TProps> = ({
             min={1}
             max={999}
             value={pageNumber}
+            aria-label={t('common.page_number')}
             onChange={(e) => onChange(Number(e.target.value))}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
@@ -55,6 +59,7 @@ const RealPagi: FC<TProps> = ({
         <button
           type='button'
           className={s.arrowBlock}
+          aria-label={t('common.next_page')}
           disabled={rightDisabled}
           onClick={() => onChange(pageNumber + 1)}
         >

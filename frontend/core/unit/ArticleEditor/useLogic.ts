@@ -6,13 +6,13 @@ import { ARTICLE_CAT } from '~/const/gtd'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import type { TArticleCat, TCommunity, TEditMode, TGroupedTags, TSubmitState, TTag } from '~/spec'
 import useCommunity from '~/stores/community/hooks'
+import { isWordsCountValid } from '~/widgets/WordsCounter/helper'
 
 import S from './schema'
 import type { TEditData, TStore } from './spec'
 
 type TRet = {
   onCancel: () => void
-  setWordsCountState: () => void
   onPublish: () => void
   getEditData: () => TEditData
   getGroupedTags: () => TGroupedTags
@@ -61,10 +61,10 @@ const store = proxy<TStore>({
   },
 
   get isReady(): boolean {
-    const { title, wordsCountReady } = store
+    const { title, body } = store
     const titleReady = title.length > 0
 
-    return wordsCountReady && titleReady
+    return isWordsCountValid(body, 40, 2000) && titleReady
   },
 
   get submitState(): TSubmitState {
@@ -99,10 +99,6 @@ export default function useLogic(): TRet {
   const onCancel = (): void => {
     console.log('## onCancel')
   }
-  const setWordsCountState = (): void => {
-    console.log('## setWordsCountState')
-  }
-
   const getGroupedTags = useCallback((): TGroupedTags => {
     // return root.tagsBar.groupedTags
     return {}
@@ -170,7 +166,6 @@ export default function useLogic(): TRet {
     ...pick(keys(snap), snap),
     onPublish,
     onCancel,
-    setWordsCountState,
     getEditData,
     getGroupedTags,
 

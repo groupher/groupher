@@ -5,7 +5,7 @@
  */
 
 import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
-import { type FC, type ReactNode, useEffect, useMemo, useState } from 'react'
+import { type FC, type ReactNode, useMemo, useState } from 'react'
 
 import { COLOR, getDefaultCustomColor } from '~/const/colors'
 import useTheme from '~/hooks/useTheme'
@@ -60,17 +60,10 @@ const ColorSelector: FC<TProps> = ({
   const [customExpanded, setCustomExpanded] = useState(false)
   const isCustomSelected = allowCustomColor && isCustomActiveColor(activeColor)
 
-  useEffect(() => {
-    if (!isCustomSelected) {
-      setCustomExpanded(false)
-    }
-  }, [isCustomSelected])
-
   const mode = useMemo(() => {
-    if (!allowCustomColor) return 'preset'
+    if (!allowCustomColor || !isCustomSelected) return 'preset'
     if (customExpanded) return 'custom-expanded'
-    if (isCustomSelected) return 'custom-collapsed'
-    return 'preset'
+    return 'custom-collapsed'
   }, [allowCustomColor, customExpanded, isCustomSelected])
 
   const showCustomPicker = mode === 'custom-expanded'

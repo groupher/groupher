@@ -31,6 +31,7 @@ export default function BgRenderer({
   textureScale = 1,
 }: TProps) {
   const s = useSalon()
+  // Transition state: prop changes are synchronized by the effect below, with optional crossfade/preload.
   const [activeSpec, setActiveSpec] = useState<TBgRenderSpec>(renderSpec)
   const [exitingSpec, setExitingSpec] = useState<TBgRenderSpec | null>(null)
   const committedSpecRef = useRef(renderSpec)

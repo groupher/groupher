@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useEffectEvent } from 'react'
 
 import { EDITABLE_KEY_TARGET_TAGS, IMAGE_DELETE_KEYS } from './constant'
 import { useImageDraftContext } from './imageDraftContext'
@@ -20,26 +20,30 @@ const isEditableTarget = (target: EventTarget | null): boolean => {
 export default function KeyboardDeleteHandler({ enabled, onDelete }: TProps) {
   const { activeImage, activeImageWhich, clearImageDraft } = useImageDraftContext()
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (!enabled || !activeImage) return
-      if (!IMAGE_DELETE_KEYS.some((key) => key === event.key)) return
-      if (event.repeat) return
-      if (event.metaKey || event.ctrlKey || event.altKey) return
-      if (isEditableTarget(event.target)) return
+  const handleKeyDown = useEffectEvent((event: KeyboardEvent): void => {
+    if (!enabled || !activeImage) return
+    if (!IMAGE_DELETE_KEYS.some((key) => key === event.key)) return
+    if (event.repeat) return
+    if (event.metaKey || event.ctrlKey || event.altKey) return
+    if (isEditableTarget(event.target)) return
 
-      event.preventDefault()
-      event.stopPropagation()
-      clearImageDraft()
-      onDelete(activeImageWhich)
+    event.preventDefault()
+    event.stopPropagation()
+    clearImageDraft()
+    onDelete(activeImageWhich)
+  })
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      handleKeyDown(event)
     }
 
-    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('keydown', onKeyDown)
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('keydown', onKeyDown)
     }
-  }, [activeImage, activeImageWhich, clearImageDraft, enabled, onDelete])
+  }, [])
 
   return null
 }

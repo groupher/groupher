@@ -1,4 +1,4 @@
-import { type FC, lazy, Suspense, useCallback } from 'react'
+import { type FC, lazy, Suspense } from 'react'
 
 import { isString } from '~/validator'
 
@@ -7,15 +7,12 @@ import type { TTabItem } from './spec'
 
 type TProps = {
   item: TTabItem
-  clickableRef: {
-    current: HTMLElement
-  }
   active: boolean
 }
 
 const LocalIcon = lazy(() => import('./LocalIcon'))
 
-const TabIcon: FC<TProps> = ({ item, clickableRef, active }) => {
+const TabIcon: FC<TProps> = ({ item, active }) => {
   const s = useSalon()
   const icon = isString(item) ? undefined : item.icon
 
@@ -25,19 +22,7 @@ const TabIcon: FC<TProps> = ({ item, clickableRef, active }) => {
     </Suspense>
   )
 
-  const activateParentTab = useCallback(
-    (e) => {
-      e.stopPropagation()
-      clickableRef.current.click()
-    },
-    [clickableRef],
-  )
-
-  return (
-    <span className={s.wrapper} onClick={activateParentTab}>
-      {IconCmp}
-    </span>
-  )
+  return <span className={s.wrapper}>{IconCmp}</span>
 }
 
 export default TabIcon

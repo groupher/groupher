@@ -29,10 +29,6 @@ export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POS
   const enterFrameRef = useRef<number | null>(null)
   const didCloseRef = useRef(false)
 
-  // close action needs to be stable for timers / transitionend
-  const onCloseRef = useRef<() => void>(() => {})
-  onCloseRef.current = onClose
-
   const { lockPageOnce, unlockPageOnce } = usePageLock()
   const { rightOffset, fromContentEdge } = useDrawerOffset()
   const s = useSalon({ visible, closing, type, rightOffset, fromContentEdge })
@@ -158,10 +154,8 @@ export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POS
         aria-label='drawer mask'
         className={cn(s.overlay, ANCHOR.GLOBAL_BLUR_CLASS)}
         style={s.overlayStyle}
-        onClick={() => {
-          // State drawer close is caller controlled
-          onCloseRef.current?.()
-        }}
+        // State drawer close is caller controlled
+        onClick={onClose}
       />
     </Portal>
   )

@@ -6,7 +6,6 @@
 
 import { type FC, lazy, type ReactNode, Suspense } from 'react'
 
-import Mushroom from '~/widgets/Mushroom'
 import Toaster from '~/widgets/Toaster'
 
 import DemoModeSnackbarGate from './DemoModeSnackbarGate'
@@ -46,7 +45,6 @@ const GlobalLayout: FC<TProps> = ({ children, mainBlock }) => {
   return (
     <>
       <LocaleSync />
-      <Mushroom />
       <Suspense fallback={null}>
         <Addon />
       </Suspense>

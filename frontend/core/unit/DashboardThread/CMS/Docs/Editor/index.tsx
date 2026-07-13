@@ -30,8 +30,9 @@ type TProps = {
 
 const Editor: FC<TProps> = ({ initialData }) => {
   const { submenuCollapsed } = useDashboardStore()
-  const s = useSalon({ submenuCollapsed })
   const sideTree = useSideTreeLogic(initialData?.docTree ?? undefined)
+  const showTabs = sideTree.tabs.length >= 2
+  const s = useSalon({ showTabs, submenuCollapsed })
   const hasTree = sideTree.groups.length > 0
   const showActionSnackbar = sideTree.activeId !== null || hasTreeChanges(sideTree)
 
@@ -40,7 +41,7 @@ const Editor: FC<TProps> = ({ initialData }) => {
   return (
     <DocsEditorStoreProvider initData={{ sideTree, article: initialData?.docDraft ?? null }}>
       <div className={s.wrapper}>
-        <Tabs controller={sideTree} submenuCollapsed={submenuCollapsed} />
+        <Tabs controller={sideTree} showTabs={showTabs} submenuCollapsed={submenuCollapsed} />
         <div className={s.surface}>
           <PanelGroup
             className={s.panelGroup}

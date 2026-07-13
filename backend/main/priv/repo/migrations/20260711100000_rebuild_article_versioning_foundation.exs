@@ -17,6 +17,8 @@ defmodule GroupherServer.Repo.Migrations.RebuildArticleVersioningFoundation do
   @threads ~w(post blog changelog doc)
 
   def up do
+    execute("CREATE EXTENSION IF NOT EXISTS pgcrypto;")
+
     rename(table(:docs_branches, prefix: @prefix), to: table(:article_branches, prefix: @prefix))
 
     rename(

@@ -7,13 +7,15 @@
  */
 
 import { type FC, memo, useId } from 'react'
-import ReactSelect, { components } from 'react-select'
+import ReactSelect from 'react-select'
 import CreatableReactSelect from 'react-select/creatable'
 
 import { camelize } from '~/fmt'
 import usePrimaryColor from '~/hooks/usePrimaryColor'
 import type { TSelectOption, TSpace } from '~/spec'
 
+import CustomOption from './CustomOption'
+import CustomSingleValue from './CustomSingleValue'
 import useSalon, { cnMerge } from './salon'
 
 type TProps = {
@@ -31,37 +33,6 @@ type TProps = {
   onChange?: (option: TSelectOption | TSelectOption[]) => void
   onCreateOption?: (newopt: string) => void
 } & TSpace
-
-const CustomOption = (props) => {
-  const s = useSalon({ ...(props.selectProps?.spacing ?? {}) })
-  const { label, icon } = props.data
-  const Icon = icon || null
-  const isActive = props.isSelected || props.isFocused
-
-  return (
-    <components.Option {...props}>
-      <div className={s.optionRow}>
-        {icon && <Icon className={s.icon} />}
-        <span className={cnMerge(s.optionTitle, isActive && s.optionTitleActive)}>{label}</span>
-      </div>
-    </components.Option>
-  )
-}
-
-const CustomSingleValue = (props) => {
-  const s = useSalon({ ...(props.selectProps?.spacing ?? {}) })
-  const { label, icon } = props.data
-  const Icon = icon || null
-
-  return (
-    <components.SingleValue {...props}>
-      <div className={s.optionRow}>
-        {icon && <Icon className={s.valueIcon} />}
-        <span>{label}</span>
-      </div>
-    </components.SingleValue>
-  )
-}
 
 const Select: FC<TProps> = ({
   testid: _testid = 'widget-select',

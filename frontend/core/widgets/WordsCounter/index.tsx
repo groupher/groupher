@@ -1,4 +1,4 @@
-import { type FC, memo, useEffect } from 'react'
+import { type FC, memo } from 'react'
 
 import type { TSpace } from '~/spec'
 
@@ -9,19 +9,13 @@ type TProps = {
   body: string
   max?: number
   min?: number
-  onChange?: (isValid: boolean) => void
 } & TSpace
 
-const WordsCounter: FC<TProps> = ({ body, max = 2000, min = 10, onChange, ...spacing }) => {
+const WordsCounter: FC<TProps> = ({ body, max = 2000, min = 10, ...spacing }) => {
   const s = useSalon({ ...spacing })
 
   const currentCount = countWords(body)
   const invalid = currentCount < min || currentCount > max
-
-  useEffect(() => {
-    const isValid = currentCount >= min && currentCount <= max
-    onChange?.(isValid)
-  }, [currentCount, onChange, min, max])
 
   return (
     <div className={s.wrapper}>

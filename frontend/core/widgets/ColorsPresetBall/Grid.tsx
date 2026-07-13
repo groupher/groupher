@@ -10,6 +10,7 @@ type TProps = {
 
 export default function Grid({ colors }: TProps) {
   const s = useSalon()
+  const colorOccurrences = new Map<string, number>()
   const style: CSSProperties = {
     gridTemplateColumns: `repeat(${getGridColumns(colors.length)}, minmax(0, 1fr))`,
     gridTemplateRows: `repeat(${getGridRows(colors.length)}, minmax(0, 1fr))`,
@@ -17,9 +18,18 @@ export default function Grid({ colors }: TProps) {
 
   return (
     <div className={s.wrapper} style={style}>
-      {colors.map((color, index) => (
-        <span key={`${color}-${index}`} className={s.item} style={{ backgroundColor: color }} />
-      ))}
+      {colors.map((color) => {
+        const occurrence = (colorOccurrences.get(color) ?? 0) + 1
+        colorOccurrences.set(color, occurrence)
+
+        return (
+          <span
+            key={`${color}-${occurrence}`}
+            className={s.item}
+            style={{ backgroundColor: color }}
+          />
+        )
+      })}
     </div>
   )
 }

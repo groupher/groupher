@@ -29,6 +29,7 @@ const CENTER_DOT_RADIUS = 8
 const CENTER_CHECK_SIZE = 10
 const HANDLE_RADIUS = 4
 const HANDLE_ARC_SPAN = 48
+const CENTER_POINT = { x: VIEWBOX.centerX, y: VIEWBOX.centerY }
 
 const getDistance = (point: TPoint, center: TPoint): number => {
   const dx = point.x - center.x
@@ -82,13 +83,12 @@ const getHandleArcPath = (angle: number, radius: number): string => {
 export default function HighlightControl({ borderHighlight, which }: TProps) {
   const s = useSalon()
   const { flushImageDraft, scheduleImagePatch } = useImageDraftContext()
-  const centerPoint = { x: VIEWBOX.centerX, y: VIEWBOX.centerY }
   const handlePoint = getHandlePoint(borderHighlight)
   const handleArcPath = getHandleArcPath(
     borderHighlight.angle,
-    getDistance(handlePoint, centerPoint),
+    getDistance(handlePoint, CENTER_POINT),
   )
-  const stickLine = getTrimmedLine(centerPoint, handlePoint, CENTER_DOT_RADIUS, HANDLE_RADIUS)
+  const stickLine = getTrimmedLine(CENTER_POINT, handlePoint, CENTER_DOT_RADIUS, HANDLE_RADIUS)
 
   const updateFromPointer = (event: PointerEvent<HTMLButtonElement>): void => {
     const rect = event.currentTarget.getBoundingClientRect()
@@ -109,7 +109,7 @@ export default function HighlightControl({ borderHighlight, which }: TProps) {
   const handlePointerDown = (event: PointerEvent<HTMLButtonElement>): void => {
     const rect = event.currentTarget.getBoundingClientRect()
     const point = getPointFromPointer(event.clientX, event.clientY, rect)
-    const isCenterPress = getDistance(point, centerPoint) <= CENTER_TOGGLE_RADIUS
+    const isCenterPress = getDistance(point, CENTER_POINT) <= CENTER_TOGGLE_RADIUS
 
     event.preventDefault()
     event.currentTarget.focus()
@@ -174,11 +174,10 @@ export default function HighlightControl({ borderHighlight, which }: TProps) {
     <button
       type='button'
       className={cn(s.control, borderHighlight.enabled && s.controlActive)}
-      aria-label={CONTROL_LABEL.EDIT}
-      aria-pressed={borderHighlight.enabled}
-      aria-valuetext={`${Math.round(borderHighlight.angle)}deg ${Math.round(
+      aria-label={`${CONTROL_LABEL.EDIT}: ${Math.round(borderHighlight.angle)}deg, ${Math.round(
         borderHighlight.length * 100,
       )}%`}
+      aria-pressed={borderHighlight.enabled}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -207,15 +206,15 @@ export default function HighlightControl({ borderHighlight, which }: TProps) {
         )}
         <circle
           className={cn(s.center, borderHighlight.enabled && s.centerActive)}
-          cx={centerPoint.x}
-          cy={centerPoint.y}
+          cx={CENTER_POINT.x}
+          cy={CENTER_POINT.y}
           r={CENTER_DOT_RADIUS}
         />
         {borderHighlight.enabled && (
           <CheckSVG
             className={s.centerCheck}
-            x={centerPoint.x - CENTER_CHECK_SIZE / 2}
-            y={centerPoint.y - CENTER_CHECK_SIZE / 2}
+            x={CENTER_POINT.x - CENTER_CHECK_SIZE / 2}
+            y={CENTER_POINT.y - CENTER_CHECK_SIZE / 2}
             width={CENTER_CHECK_SIZE}
             height={CENTER_CHECK_SIZE}
           />

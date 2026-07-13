@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import { createKeyboardClick } from '~/lib/a11y'
+import useTrans from '~/hooks/useTrans'
 
 import useSalon, { cn } from './salon/scale_selector'
 
@@ -13,7 +13,14 @@ const STEP = {
 
 export default function ScaleSelector() {
   const s = useSalon()
+  const { t } = useTrans()
   const [step, setStep] = useState(STEP.X)
+  const options = [
+    { value: STEP.S, label: t('dsb.community.scale.independent') },
+    { value: STEP.X, label: t('dsb.community.scale.small') },
+    { value: STEP.M, label: t('dsb.community.scale.medium') },
+    { value: STEP.L, label: t('dsb.community.scale.large') },
+  ]
 
   return (
     <div className={s.wrapper}>
@@ -25,80 +32,39 @@ export default function ScaleSelector() {
           </div>
         </div>
 
-        <div
-          className={s.markDot}
-          role='button'
-          tabIndex={0}
-          onClick={() => setStep(STEP.S)}
-          onKeyDown={createKeyboardClick(() => setStep(STEP.S))}
-        >
-          <div className={s.markInner} />
-        </div>
-        <div
-          className={s.markDot}
-          role='button'
-          tabIndex={0}
-          onClick={() => setStep(STEP.X)}
-          onKeyDown={createKeyboardClick(() => setStep(STEP.X))}
-        >
-          <div className={s.markInner} />
-        </div>
-        <div
-          className={s.markDot}
-          role='button'
-          tabIndex={0}
-          onClick={() => setStep(STEP.M)}
-          onKeyDown={createKeyboardClick(() => setStep(STEP.M))}
-        >
-          <div className={s.markInner} />
-        </div>
-        <div
-          className={s.markDot}
-          role='button'
-          tabIndex={0}
-          onClick={() => setStep(STEP.L)}
-          onKeyDown={createKeyboardClick(() => setStep(STEP.L))}
-        >
-          <div className={s.markInner} />
-        </div>
+        {options.map((option) => (
+          <button
+            key={option.value}
+            type='button'
+            className={cn(s.markDot, 'plain-button')}
+            aria-label={option.label}
+            aria-pressed={step === option.value}
+            onClick={() => setStep(option.value)}
+          >
+            <span className={s.markInner} />
+          </button>
+        ))}
       </div>
       <div className={s.footer}>
-        <div
-          className={cn(s.noteBtn, '-ml-5', step === STEP.S && s.noteBtnActive)}
-          role='button'
-          tabIndex={0}
-          onClick={() => setStep(STEP.S)}
-          onKeyDown={createKeyboardClick(() => setStep(STEP.S))}
-        >
-          独立开发者
-        </div>
-        <div
-          className={cn(s.noteBtn, '-ml-4', step === STEP.X && s.noteBtnActive)}
-          role='button'
-          tabIndex={0}
-          onClick={() => setStep(STEP.X)}
-          onKeyDown={createKeyboardClick(() => setStep(STEP.X))}
-        >
-          2-20
-        </div>
-        <div
-          className={cn(s.noteBtn, '-ml-1', step === STEP.M && s.noteBtnActive)}
-          role='button'
-          tabIndex={0}
-          onClick={() => setStep(STEP.M)}
-          onKeyDown={createKeyboardClick(() => setStep(STEP.M))}
-        >
-          20-100
-        </div>
-        <div
-          className={cn(s.noteBtn, '-ml-1 mr-0.5', step === STEP.L && s.noteBtnActive)}
-          role='button'
-          tabIndex={0}
-          onClick={() => setStep(STEP.L)}
-          onKeyDown={createKeyboardClick(() => setStep(STEP.L))}
-        >
-          100+
-        </div>
+        {options.map((option, index) => (
+          <button
+            key={option.value}
+            type='button'
+            className={cn(
+              s.noteBtn,
+              'plain-button',
+              index === 0 && '-ml-5',
+              index === 1 && '-ml-4',
+              index === 2 && '-ml-1',
+              index === 3 && '-ml-1 mr-0.5',
+              step === option.value && s.noteBtnActive,
+            )}
+            aria-pressed={step === option.value}
+            onClick={() => setStep(option.value)}
+          >
+            {option.label}
+          </button>
+        ))}
       </div>
     </div>
   )

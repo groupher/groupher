@@ -17,6 +17,7 @@ type TProps = {
 const ChecklistSection: FC<TProps> = ({ title, items, selectedIds, onSelectedIdsChange }) => {
   const s = useSalon()
   const { t } = useTrans()
+  const selectedIdSet = new Set(selectedIds)
 
   return (
     <section className={s.section}>
@@ -28,7 +29,7 @@ const ChecklistSection: FC<TProps> = ({ title, items, selectedIds, onSelectedIds
         <div className={s.empty}>{t(SAVE_ACTION_LABEL_KEY.PUBLISH_NO_CHANGES)}</div>
       ) : (
         items.map((item) => {
-          const checked = item.selectable && selectedIds.includes(item.id)
+          const checked = item.selectable && selectedIdSet.has(item.id)
           const description = item.selectable ? item.action : (item.disabledReason ?? item.action)
 
           return (

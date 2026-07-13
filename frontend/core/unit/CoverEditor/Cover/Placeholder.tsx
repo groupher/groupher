@@ -12,14 +12,14 @@ type TProps = {
   onUpload: () => void
 }
 
+const handleDragOver = (event: DragEvent<HTMLButtonElement>): void => {
+  event.preventDefault()
+}
+
 export default function Placeholder({ onDropFile, onUpload }: TProps) {
   const s = useSalon()
   const { t } = useTrans()
   const [dragging, setDragging] = useState(false)
-
-  const handleDragOver = (event: DragEvent<HTMLButtonElement>): void => {
-    event.preventDefault()
-  }
 
   const handleDragEnter = (event: DragEvent<HTMLButtonElement>): void => {
     event.preventDefault()

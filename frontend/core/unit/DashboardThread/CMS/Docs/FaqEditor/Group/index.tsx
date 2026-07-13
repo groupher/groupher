@@ -11,8 +11,9 @@ import SortableFaqItem from '../Dnd/SortableFaqItem'
 import InlineTextEditor from '../InlineTextEditor'
 import useSalon, { cn } from '../salon/group'
 import type { TFaqDragTarget, TFaqEditorGroup, TFaqSaveZone } from '../spec'
-import ActionMenu, { GROUP_MENU_ITEMS } from './ActionMenu'
+import ActionMenu from './ActionMenu'
 import Item from './Item'
+import { GROUP_MENU_ITEMS } from './menuItems'
 
 type TProps = {
   saveZone: TFaqSaveZone

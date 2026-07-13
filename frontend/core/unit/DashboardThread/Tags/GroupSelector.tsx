@@ -6,7 +6,7 @@ import Button from '~/widgets/Buttons/Button'
 import useTags from '../logic/useTags'
 import useSalon, { cn } from './salon/group_selector'
 
-export default memo(() => {
+const GroupSelector = () => {
   const s = useSalon()
   const { t } = useTrans()
   const { activeTagGroup, edit, tagGroups } = useTags()
@@ -44,4 +44,6 @@ export default memo(() => {
       </div>
     </div>
   )
-})
+}
+
+export default memo(GroupSelector)

@@ -1,4 +1,4 @@
-import { type FC, type ReactNode, useEffect, useRef, useState } from 'react'
+import { type FC, type ReactNode, useEffect, useEffectEvent, useRef, useState } from 'react'
 
 type TRender = ReactNode | ((visible: boolean) => ReactNode)
 
@@ -23,23 +23,23 @@ const LazyLoad: FC<TProps> = ({
   const [intersected, setIntersected] = useState(false)
   const didNotify = useRef(false)
   const visible = visibleByDefault || intersected
+  const notifyVisible = useEffectEvent((): void => {
+    if (didNotify.current) return
+
+    didNotify.current = true
+    onVisible?.()
+  })
 
   useEffect(() => {
-    if (visibleByDefault && !didNotify.current) {
-      didNotify.current = true
-      onVisible?.()
-    }
-  }, [visibleByDefault, onVisible])
+    if (visibleByDefault) notifyVisible()
+  }, [visibleByDefault])
 
   useEffect(() => {
     if (visibleByDefault) return
     if (!ref.current) return
     if (!('IntersectionObserver' in window)) {
       setIntersected(true)
-      if (!didNotify.current) {
-        didNotify.current = true
-        onVisible?.()
-      }
+      notifyVisible()
       return
     }
 
@@ -47,10 +47,7 @@ const LazyLoad: FC<TProps> = ({
       ([entry]) => {
         if (entry.isIntersecting) {
           setIntersected(true)
-          if (!didNotify.current) {
-            didNotify.current = true
-            onVisible?.()
-          }
+          notifyVisible()
           observer.disconnect()
         }
       },
@@ -64,7 +61,7 @@ const LazyLoad: FC<TProps> = ({
     return () => {
       observer.disconnect()
     }
-  }, [onVisible, threshold, visibleByDefault])
+  }, [threshold, visibleByDefault])
 
   return (
     <div ref={ref} className={className}>

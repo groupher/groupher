@@ -36,14 +36,14 @@ const OSSUploader: FC<TProps> = ({
 
   const [uniqueId, setUniqueId] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [ossClient, setOSSClient] = useState(null)
+  const ossClientRef = useRef<ReturnType<typeof initOSSClient> | null>(null)
 
   const labelRef = useRef(null)
 
   const handleScriptLoad = useCallback(() => {
     const ossClient = initOSSClient()
 
-    setOSSClient(ossClient)
+    ossClientRef.current = ossClient
     setUniqueId(uid.gen())
   }, [])
 
@@ -83,7 +83,7 @@ const OSSUploader: FC<TProps> = ({
           type='file'
           name={`file-${uniqueId}`}
           accept={fileType}
-          onChange={(e) => handleUploadFile(ossClient, e, filePrefix, callbacks)}
+          onChange={(e) => handleUploadFile(ossClientRef.current, e, filePrefix, callbacks)}
         />
         <label
           ref={labelRef}

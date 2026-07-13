@@ -7,7 +7,7 @@ import { plural } from '~/fmt'
 import useViewingArticle from '~/hooks/useViewingArticle'
 import useViewingThread from '~/hooks/useViewingThread'
 import type { TArticle } from '~/spec'
-import { StoreContext } from '~/stores/articleList/provider'
+import { StoreContext } from '~/stores/articleList/context'
 
 type TRes = {
   previous: TArticle | null

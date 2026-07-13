@@ -15,6 +15,7 @@ type TProps = {
 }
 
 const COLLAPSED_OPTION_COUNT = 7
+const ALL_OPTIONS = ['', ...TOP_GLOW_KEYS]
 
 export default function TextureBalls({
   selectedTokens,
@@ -29,17 +30,16 @@ export default function TextureBalls({
   const glowType = selectedTokens[theme].glowType
   const otherTheme = theme === 'dark' ? 'light' : 'dark'
   const otherGlowType = selectedTokens[otherTheme].glowType
-  const allOptions = ['', ...TOP_GLOW_KEYS]
   const activeHidden =
-    !!glowType && allOptions.slice(COLLAPSED_OPTION_COUNT).includes(glowType as string)
+    !!glowType && ALL_OPTIONS.slice(COLLAPSED_OPTION_COUNT).includes(glowType as string)
 
   const visibleOptions = expanded
-    ? allOptions
+    ? ALL_OPTIONS
     : activeHidden
-      ? [...allOptions.slice(0, COLLAPSED_OPTION_COUNT - 1), glowType as string]
-      : allOptions.slice(0, COLLAPSED_OPTION_COUNT)
+      ? [...ALL_OPTIONS.slice(0, COLLAPSED_OPTION_COUNT - 1), glowType as string]
+      : ALL_OPTIONS.slice(0, COLLAPSED_OPTION_COUNT)
 
-  const hiddenCount = allOptions.length - visibleOptions.length
+  const hiddenCount = ALL_OPTIONS.length - visibleOptions.length
 
   const commitGlowType = (effect: string) => {
     const overwrite: TThemePresetOverwrite = { [theme]: { glowType: effect } }

@@ -34,6 +34,10 @@ type TProps = {
   which: TCoverImageWhich
 }
 
+const OPACITY_SLIDER_STYLE: TSliderStyle = {
+  '--thumb-color': getBorderHighlightColor({ hue: 0, saturation: 0, lightness: 55, opacity: 1 }),
+}
+
 export default function ColorControl({ borderHighlight, variant = 'swatch', which }: TProps) {
   const s = useSalon()
   const { borderHighlightOnChange } = useLogic()
@@ -62,14 +66,6 @@ export default function ColorControl({ borderHighlight, variant = 'swatch', whic
   const parsedOpacityColor = parseColor(opacityColor)
   const sliderStyle: TSliderStyle = {
     '--thumb-color': isRainbow ? opaqueRainbowColor : opaqueColor,
-  }
-  const opacitySliderStyle: TSliderStyle = {
-    '--thumb-color': getBorderHighlightColor({
-      hue: 0,
-      saturation: 0,
-      lightness: 55,
-      opacity: 1,
-    }),
   }
   const swatchStyle = isRainbow ? getRainbowStyle(rainbowHue) : getSwatchStyle(color)
   const optionValue = isRainbow
@@ -237,7 +233,7 @@ export default function ColorControl({ borderHighlight, variant = 'swatch', whic
                 value={parsedOpacityColor}
                 colorSpace='hsl'
                 channel='alpha'
-                style={opacitySliderStyle}
+                style={OPACITY_SLIDER_STYLE}
                 onChange={(nextColor) => {
                   borderHighlightOnChange(which, {
                     enabled: true,

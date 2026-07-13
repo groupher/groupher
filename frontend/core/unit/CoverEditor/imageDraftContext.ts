@@ -8,16 +8,19 @@ type TImagePatchOptions = {
 
 export type TCoverImageDraftPatch = Partial<Record<TCoverImageWhich, TCoverImageConfig | null>>
 
+/** Schedules a transient image patch that is flushed when the active interaction finishes. */
+export type TScheduleImagePatch = (
+  which: TCoverImageWhich,
+  patch: TCoverImagePatch,
+  options?: TImagePatchOptions,
+) => void
+
 export type TCoverImageDraftContext = {
   images: TCoverImages
   activeImageWhich: TCoverImageWhich
   activeImage: TCoverImageConfig | null
   activateImageDraft: (which: TCoverImageWhich) => void
-  scheduleImagePatch: (
-    which: TCoverImageWhich,
-    patch: TCoverImagePatch,
-    options?: TImagePatchOptions,
-  ) => void
+  scheduleImagePatch: TScheduleImagePatch
   commitImagePatch: (
     which: TCoverImageWhich,
     patch: TCoverImagePatch,

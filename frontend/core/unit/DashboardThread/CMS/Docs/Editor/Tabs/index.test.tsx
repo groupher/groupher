@@ -151,6 +151,7 @@ describe('docs editor tabs', () => {
     render(
       <Tabs
         controller={makeController([makeTab('intro', 'Introduction')])}
+        showTabs={false}
         submenuCollapsed={false}
       />,
     )
@@ -164,7 +165,7 @@ describe('docs editor tabs', () => {
       activateTab,
     })
 
-    render(<Tabs controller={controller} submenuCollapsed={false} />)
+    render(<Tabs controller={controller} showTabs submenuCollapsed={false} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'API' }))
     expect(activateTab).toHaveBeenCalledWith('api')
@@ -188,7 +189,7 @@ describe('docs editor tabs', () => {
       renameTab,
     })
 
-    render(<Tabs controller={controller} submenuCollapsed={false} />)
+    render(<Tabs controller={controller} showTabs submenuCollapsed={false} />)
     fireEvent.click(screen.getByRole('button', { name: 'Manage tabs' }))
     const drawer = screen.getByRole('complementary', { name: 'Tab settings drawer' })
 

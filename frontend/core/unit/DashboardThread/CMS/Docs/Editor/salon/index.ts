@@ -1,20 +1,24 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
+import { getDocEditorLayout } from './layout'
+
 export { cn } from '~/css'
 
 type TProps = {
+  showTabs: boolean
   submenuCollapsed: boolean
 }
 
-export default function useSalon({ submenuCollapsed }: TProps) {
+export default function useSalon({ showTabs, submenuCollapsed }: TProps) {
   const { cn, sexyVBorder } = useTwBelt()
   // The article gutter intentionally grows when the dashboard submenu collapses;
   // the collapsed icon rail is narrower, so the document needs more breathing room.
   const articleGutter = submenuCollapsed ? 'pl-20' : 'pl-10'
+  const { bodyTopGap } = getDocEditorLayout({ showTabs, submenuCollapsed })
 
   return {
     wrapper: 'relative w-full min-w-0 overflow-visible!',
-    surface: 'grid min-h-screen w-full min-w-0 overflow-visible!',
+    surface: cn('grid min-h-screen w-full min-w-0 overflow-visible!', bodyTopGap),
     panelGroup: 'col-start-1 row-start-1 w-full min-w-0 min-h-96 overflow-visible!',
     snackbarRail:
       'pointer-events-none sticky col-start-1 row-start-1 z-30 flex h-12 w-full items-center justify-center',

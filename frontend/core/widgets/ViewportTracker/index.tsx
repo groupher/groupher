@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useEffectEvent, useRef } from 'react'
 
 type TProps = {
   onEnter: () => void
@@ -14,6 +14,12 @@ export default function ViewportTracker({
   rootMargin = '0px',
 }: TProps) {
   const ref = useRef(null)
+  const notifyEnter = useEffectEvent((): void => {
+    onEnter()
+  })
+  const notifyLeave = useEffectEvent((): void => {
+    onLeave?.()
+  })
 
   useEffect(() => {
     const currentRef = ref.current
@@ -23,10 +29,10 @@ export default function ViewportTracker({
       ([entry]) => {
         if (entry.isIntersecting && !isInView) {
           isInView = true
-          onEnter()
+          notifyEnter()
         } else if (!entry.isIntersecting && isInView) {
           isInView = false
-          onLeave?.()
+          notifyLeave()
         }
       },
       {
@@ -44,7 +50,7 @@ export default function ViewportTracker({
         observer.unobserve(currentRef)
       }
     }
-  }, [onEnter, onLeave, threshold, rootMargin])
+  }, [threshold, rootMargin])
 
   return <div ref={ref} />
 }

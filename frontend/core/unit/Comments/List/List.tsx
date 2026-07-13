@@ -1,5 +1,6 @@
 import type { CSSProperties, FC } from 'react'
 
+import useTrans from '~/hooks/useTrans'
 import type { TComment, TID } from '~/spec'
 
 import Comment from '../Comment'
@@ -26,6 +27,7 @@ const COMMENT_VISIBILITY_STYLE: CSSProperties = {
 
 const List: FC<TProps> = ({ mode, repliesLoadingByParentId, apiMode, entries, foldedIdSet }) => {
   const s = useSalon()
+  const { t } = useTrans()
   const { foldComment } = useActions()
 
   return (
@@ -61,6 +63,7 @@ const List: FC<TProps> = ({ mode, repliesLoadingByParentId, apiMode, entries, fo
             <button
               type='button'
               className={s.indentLine}
+              aria-label={t('comment.collapse_replies')}
               onClick={() => foldComment(comment.innerId)}
             />
           </div>

@@ -25,18 +25,20 @@ type TProps = {
   onRestored: () => void
 }
 
+const DELETED_AT_FORMATTER = new Intl.DateTimeFormat(undefined, {
+  month: 'short',
+  day: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+})
+
 const formatDeletedAt = (value?: string | null): string => {
   if (!value) return ''
 
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
 
-  return new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date)
+  return DELETED_AT_FORMATTER.format(date)
 }
 
 const itemTypeLabel = (type?: string | null): string => {

@@ -65,6 +65,19 @@ type TProps = {
   onSettingTag: (tag: TTag) => void
 }
 
+const getOverRect = (over: Over): DOMRect | typeof over.rect => {
+  const getRect = over.data.current?.getRect
+  const rect = typeof getRect === 'function' ? getRect() : null
+
+  return rect || over.rect
+}
+
+const getOverListRect = (over: Over): DOMRect | null => {
+  const getListRect = over.data.current?.getListRect
+
+  return typeof getListRect === 'function' ? getListRect() : null
+}
+
 export default function TagList({
   draftGroups,
   onRemoveDraft,
@@ -173,19 +186,6 @@ export default function TagList({
       currentThread,
       onCommit: commitTagSorting,
     })
-
-  const getOverRect = (over: Over): DOMRect | typeof over.rect => {
-    const getRect = over.data.current?.getRect
-    const rect = typeof getRect === 'function' ? getRect() : null
-
-    return rect || over.rect
-  }
-
-  const getOverListRect = (over: Over): DOMRect | null => {
-    const getListRect = over.data.current?.getListRect
-
-    return typeof getListRect === 'function' ? getListRect() : null
-  }
 
   const getDragTarget = ({ active, over }: DragOverEvent | DragEndEvent) => {
     if (!over) return

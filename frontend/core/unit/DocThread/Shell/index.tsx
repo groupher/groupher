@@ -25,6 +25,11 @@ type TResizeState = {
   startX: number
 }
 
+const SIDE_RAIL_STYLE = {
+  height: DOC_PUBLIC_TREE_STICKY_HEIGHT,
+  top: DOC_PUBLIC_TREE_STICKY_TOP,
+}
+
 const Shell: FC<TProps> = ({ children, tree }) => {
   const pathname = usePathname()
   const [treeOpen, setTreeOpen] = useState(true)
@@ -43,10 +48,6 @@ const Shell: FC<TProps> = ({ children, tree }) => {
   )
   const groups = activeTab?.groups ?? []
   const hasTree = groups.length > 0
-  const sideRailStyle = {
-    height: DOC_PUBLIC_TREE_STICKY_HEIGHT,
-    top: DOC_PUBLIC_TREE_STICKY_TOP,
-  }
   const sidePanelStyle = {
     width: treeWidth,
   }
@@ -126,7 +127,7 @@ const Shell: FC<TProps> = ({ children, tree }) => {
       </div>
       <div className={s.layout}>
         {hasTree && (
-          <aside className={s.sideRail} style={sideRailStyle}>
+          <aside className={s.sideRail} style={SIDE_RAIL_STYLE}>
             {treeOpen ? (
               <div className={s.sidePanel} style={sidePanelStyle}>
                 <Tree groups={groups} onToggleTree={() => setTreeOpen(false)} />

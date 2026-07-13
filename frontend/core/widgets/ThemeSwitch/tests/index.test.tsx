@@ -4,7 +4,7 @@ import { renderToString } from 'react-dom/server'
 import THEME, { THEME_MODE } from '~/const/theme'
 import { makeStoreWrapper } from '~/hooks/__test__/makeStoreWrapper'
 import setupThemeStore from '~/stores/theme'
-import { StoreContext } from '~/stores/theme/provider'
+import { StoreContext } from '~/stores/theme/context'
 import ThemeSwitch from '~/widgets/ThemeSwitch'
 
 describe('<ThemeSwitch />', () => {

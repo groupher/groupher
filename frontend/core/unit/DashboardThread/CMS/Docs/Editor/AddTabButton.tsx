@@ -15,13 +15,13 @@ const AddTabButton = ({ placement = 'breadcrumb', onClick }: TProps) => {
   const className =
     placement === 'drawer'
       ? 'row-center min-h-10 w-full justify-start px-2 hover:bg-transparent'
-      : 'align-both min-h-10 hover:bg-transparent'
+      : 'row-center min-h-10 justify-end hover:bg-transparent'
 
   return (
     <Button
       ghost
       noBorder
-      space={placement === 'drawer' ? 0 : null}
+      space={0}
       ariaLabel={label}
       className={className}
       onClick={onClick ?? (() => send(DSB_DOC_EVENT.ADD_TAB))}

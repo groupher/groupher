@@ -32,7 +32,6 @@ const TabItem: FC<TTabItemProps> = ({
   index,
   size: _size, // 保留参数，样式系统可能用到
   onClick,
-  setItemWidth,
 }) => {
   const key = getItemKey(item)
   const href = getItemHref(item)
@@ -41,25 +40,7 @@ const TabItem: FC<TTabItemProps> = ({
   const s = useSalon({ slipBarPos, topSpace, bottomSpace, variant })
 
   const { t } = useTrans()
-  const linkRef = useRef<HTMLAnchorElement | null>(null)
-  const buttonRef = useRef<HTMLButtonElement | null>(null)
-  const clickableRef = useRef<HTMLSpanElement | null>(null)
   const activeRef = useRef<HTMLDivElement | null>(null)
-
-  // set each tab item width for calc
-  useEffect(() => {
-    const width = linkRef.current?.offsetWidth ?? buttonRef.current?.offsetWidth ?? 0
-    setItemWidth?.(index, width)
-  }, [setItemWidth, index])
-
-  /**
-   * 非 href：维持原行为（点 wrapper 等价于点 label）
-   * href：交给 Link 自己处理导航，不要模拟 click/不要 preventDefault
-   */
-  const handleWrapperClick = useCallback(() => {
-    if (href) return
-    clickableRef.current?.click()
-  }, [href])
 
   const handleLabelClick = useCallback(
     (e: MouseEvent<HTMLElement>) => {
@@ -85,15 +66,8 @@ const TabItem: FC<TTabItemProps> = ({
   }, [activeKey, wrapMode, key])
 
   const Label = (
-    <span
-      ref={clickableRef}
-      data-tab-label='true'
-      className={cn(s.label, active && s.labelActive)}
-      onClick={handleLabelClick}
-    >
-      {!isString(item) && item.icon && (
-        <TabIcon item={item} clickableRef={clickableRef} active={active} />
-      )}
+    <span data-tab-label='true' className={cn(s.label, active && s.labelActive)}>
+      {!isString(item) && item.icon && <TabIcon item={item} active={active} />}
       <div ref={active ? activeRef : null}>
         {isString(item) ? item : (item.label ?? t(item.title as never))}
       </div>
@@ -102,14 +76,14 @@ const TabItem: FC<TTabItemProps> = ({
 
   if (href) {
     return (
-      <Link href={href} className={s.wrapper} ref={linkRef}>
+      <Link href={href} className={s.wrapper} data-tab-item='true' onClick={handleLabelClick}>
         {Label}
       </Link>
     )
   }
 
   return (
-    <button type='button' className={s.wrapper} ref={buttonRef} onClick={handleWrapperClick}>
+    <button type='button' className={s.wrapper} data-tab-item='true' onClick={handleLabelClick}>
       {Label}
     </button>
   )

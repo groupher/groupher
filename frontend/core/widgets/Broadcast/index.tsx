@@ -19,14 +19,13 @@ type TProps = {
 
 const DETAIL_TEXT =
   'Groupher.com, 为中小产品团队提供社区反馈服务，如果你对此有兴趣，欢迎加 v(mydearxym) 详聊。'
+const showDetail = () => toast(DETAIL_TEXT)
 
 const Broadcast: FC<TProps> = ({ testid: _testid = 'banner-notify' }) => {
   const s = useSalon()
   const { t } = useTrans()
 
   const { broadcastBg: bg, broadcastLayout: layout, broadcastEnable: enabled } = useBroadcast()
-
-  const showDetail = () => toast(DETAIL_TEXT)
 
   if (!enabled) return null
 

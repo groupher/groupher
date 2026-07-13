@@ -2,7 +2,7 @@ import { findIndex, prop, propEq, uniqBy } from 'ramda'
 import { useContext } from 'react'
 
 import type { TComment, TEmotion, TID } from '~/spec'
-import { StoreContext as CommentsStoreContext } from '~/stores/comments/provider'
+import { StoreContext as CommentsStoreContext } from '~/stores/comments/context'
 import type { TStore as TCommentsStore } from '~/stores/comments/spec'
 
 import { EDIT_MODE, MODE } from '../constant'

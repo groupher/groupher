@@ -4,8 +4,9 @@
  *
  */
 
-import { type FC, useState } from 'react'
+import { type FC, useRef, useState } from 'react'
 
+import useTrans from '~/hooks/useTrans'
 import SettingSVG from '~/icons/Setting'
 import type { TSpace } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
@@ -22,13 +23,14 @@ const ArticleSettingMenu: FC<TProps> = ({
   ...spacing
 }) => {
   const s = useSalon({ ...spacing })
+  const { t } = useTrans()
 
   const [visible, setVisible] = useState(false)
-  const [subMenuOpen, setSubMenuOpen] = useState(false)
+  const subMenuOpenRef = useRef(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
   const doClose = () => {
-    setSubMenuOpen(false)
+    subMenuOpenRef.current = false
     setVisible(false)
     setMenuOpen(false)
   }
@@ -47,7 +49,9 @@ const ArticleSettingMenu: FC<TProps> = ({
     <div className={s.wrapper}>
       <Tooltip
         visible={visible}
-        content={<Menu onSubMenuToggle={(t) => setSubMenuOpen(t)} onClose={doClose} />}
+        content={
+          <Menu onSubMenuToggle={(open) => (subMenuOpenRef.current = open)} onClose={doClose} />
+        }
         placement='bottom-end'
         hideOnClick={false}
         offset={[0, 10]}
@@ -56,14 +60,20 @@ const ArticleSettingMenu: FC<TProps> = ({
           setVisible(true)
         }}
         onHide={() => {
-          if (subMenuOpen) return
+          if (subMenuOpenRef.current) return
           doClose()
         }}
         noPadding
       >
-        <div className={cn(s.settingBox, menuOpen && s.settingBoxActive)} onClick={handleToggle}>
+        <button
+          type='button'
+          className={cn(s.settingBox, menuOpen && s.settingBoxActive)}
+          aria-label={t('article.settings')}
+          aria-expanded={menuOpen}
+          onClick={handleToggle}
+        >
           <SettingSVG className={s.settingIcon} />
-        </div>
+        </button>
       </Tooltip>
     </div>
   )

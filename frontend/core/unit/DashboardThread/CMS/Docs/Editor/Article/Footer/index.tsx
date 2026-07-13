@@ -50,7 +50,7 @@ const Footer: FC = () => {
               transition={{ duration: 0.18, ease: 'easeInOut' }}
               className={s.feedbackTagsMotion}
             >
-              <FeedbackTags score={feedbackScore} />
+              <FeedbackTags key={feedbackScore} score={feedbackScore} />
             </m.div>
           )}
         </AnimatePresence>
