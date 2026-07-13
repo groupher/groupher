@@ -1,13 +1,18 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
-export default function useSalon({ stacked = false } = {}) {
+type TProps = {
+  stacked?: boolean
+  roomy?: boolean
+}
+
+export default function useSalon({ stacked = false, roomy = false }: TProps = {}) {
   const { cn, bg, fg, fill } = useTwBelt()
 
   return {
     wrapper: cn('w-fit ', stacked && 'whitespace-nowrap row-center mr-1.5'),
     divider: cn('h-5 w-px mr-2', bg('divider')),
     title: cn('text-xs ml-0.5', fg('title')),
-    inner: 'align-both size-7',
+    inner: roomy ? 'align-both size-10' : 'align-both size-7',
     dot: cn(
       'align-both relative size-6 rounded-full pointer trans-all-100 hover:-mt-0.5',
       stacked && 'scale-80',

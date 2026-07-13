@@ -80,7 +80,9 @@ const TagSettingEditor: FC<TProps> = ({ mode = CHANGE_MODE.UPDATE, initialGroup 
             <MarkerPicker
               compact
               value={editingMarker}
-              color={markerIsEmoji ? undefined : (editingTag.color as TColorName) || COLOR.BLACK}
+              activeColor={
+                markerIsEmoji ? undefined : (editingTag.color as TColorName) || COLOR.BLACK
+              }
               iconSize={4}
               triggerClassName='size-full'
               onChange={(marker) => edit(marker, 'marker')}

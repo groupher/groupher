@@ -111,12 +111,45 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     value(:emoji)
   end
 
+  object :marker_theme_appearance do
+    field(:color, :string, resolve: &resolve_marker_field(:color, &1, &2, &3))
+    field(:bg, :string, resolve: &resolve_marker_field(:bg, &1, &2, &3))
+  end
+
+  object :marker_appearance do
+    field(
+      :light,
+      non_null(:marker_theme_appearance),
+      resolve: &resolve_marker_field(:light, &1, &2, &3)
+    )
+
+    field(
+      :dark,
+      non_null(:marker_theme_appearance),
+      resolve: &resolve_marker_field(:dark, &1, &2, &3)
+    )
+  end
+
   object :marker do
     field(:type, non_null(:marker_type), resolve: &resolve_marker_field(:type, &1, &2, &3))
     field(:provider, :string, resolve: &resolve_marker_field(:provider, &1, &2, &3))
     field(:name, :string, resolve: &resolve_marker_field(:name, &1, &2, &3))
     field(:src, :string, resolve: &resolve_marker_field(:src, &1, &2, &3))
     field(:unified, :string, resolve: &resolve_marker_field(:unified, &1, &2, &3))
+
+    field(:appearance, :marker_appearance,
+      resolve: &resolve_marker_field(:appearance, &1, &2, &3)
+    )
+  end
+
+  input_object :marker_theme_appearance_input do
+    field(:color, :string)
+    field(:bg, :string)
+  end
+
+  input_object :marker_appearance_input do
+    field(:light, non_null(:marker_theme_appearance_input))
+    field(:dark, non_null(:marker_theme_appearance_input))
   end
 
   input_object :marker_input do
@@ -125,6 +158,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:name, :string)
     field(:src, :string)
     field(:unified, :string)
+    field(:appearance, :marker_appearance_input)
   end
 
   object :doc_tree_node do

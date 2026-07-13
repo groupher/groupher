@@ -3,7 +3,7 @@
 import { type FC, useMemo } from 'react'
 
 import useTrans from '~/hooks/useTrans'
-import type { TColorName, TMarkerValue } from '~/spec'
+import type { TMarkerValue } from '~/spec'
 import { ICONS, PROVIDERS } from '~/widgets/IconHub/icons'
 import type { TIconName, TPickerProvider } from '~/widgets/IconHub/icons'
 
@@ -19,7 +19,8 @@ type TProps = {
   providerTab: TPickerProvider
   query: string
   selectedValue: TMarkerValue
-  color?: TColorName
+  activeColor?: string
+  activeBg?: string
   onSelect: TIconSelect
 }
 
@@ -30,7 +31,14 @@ const toDevLogoOption = (name: TDevLogo): TDevLogoOption => ({
   name,
 })
 
-const IconList: FC<TProps> = ({ providerTab, query, selectedValue, color, onSelect }) => {
+const IconList: FC<TProps> = ({
+  providerTab,
+  query,
+  selectedValue,
+  activeColor,
+  activeBg,
+  onSelect,
+}) => {
   const s = useSalon()
   const { t } = useTrans()
 
@@ -85,7 +93,9 @@ const IconList: FC<TProps> = ({ providerTab, query, selectedValue, color, onSele
       getItemKey={(item) =>
         isDevLogoOption(item) ? `dev-${item.name}` : `${item.provider}-${item.name}`
       }
-      ItemContent={(props) => <IconListItem {...props} color={color} />}
+      ItemContent={(props) => (
+        <IconListItem {...props} activeColor={activeColor} activeBg={activeBg} />
+      )}
     />
   )
 }

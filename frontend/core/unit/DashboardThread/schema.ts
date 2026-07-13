@@ -450,6 +450,16 @@ const docTreeNodeFields = `
     name
     src
     unified
+    appearance {
+      light {
+        color
+        bg
+      }
+      dark {
+        color
+        bg
+      }
+    }
   }
   badge
   hidden

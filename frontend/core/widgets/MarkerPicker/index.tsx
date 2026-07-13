@@ -4,15 +4,18 @@ import { LazyMotion, domAnimation, m } from 'motion/react'
 import { type FC, useState } from 'react'
 
 import { MARKER } from '~/const/marker'
+import useTheme from '~/hooks/useTheme'
 import type { TMarkerValue } from '~/spec'
 import { getIconFilePath } from '~/widgets/IconHub/sprite'
 import MarkerRender from '~/widgets/MarkerRender'
-import { Tabs } from '~/widgets/Switcher'
 import Tooltip from '~/widgets/Tooltip'
 
-import { DEFAULT_ICON_NAME, DEFAULT_PROVIDER, TAB, TAB_ITEMS } from './constant'
+import AppearancePanel from './AppearancePanel'
+import { DEFAULT_ICON_NAME, DEFAULT_PROVIDER, TAB } from './constant'
 import EmojiTab from './EmojiTab'
+import { getAppearanceTriggerStyle, resolveActiveAppearance } from './helper'
 import IconTab from './IconTab'
+import PickerHeader from './PickerHeader'
 import useSalon from './salon'
 import type { TMarkerPickerProps, TTab } from './spec'
 
@@ -27,16 +30,22 @@ const MarkerPicker: FC<TMarkerPickerProps> = ({
   compact = false,
   active = false,
   value,
-  color,
+  activeColor,
+  activeBg,
+  appearance = false,
   triggerClassName,
   iconSize,
   onChange = () => undefined,
 }) => {
-  const s = useSalon({ compact, active, color })
+  const s = useSalon({ compact })
+  const { theme } = useTheme()
 
   const [tab, setTab] = useState<TTab>(TAB.ICON)
   const [direction, setDirection] = useState(1)
   const [panelOpen, setPanelOpen] = useState(false)
+  const [appearanceOpen, setAppearanceOpen] = useState(false)
+  const [appearanceDraft, setAppearanceDraft] = useState<TMarkerValue | null>(null)
+  const [appearanceDirty, setAppearanceDirty] = useState(false)
   const [mountedTabs, setMountedTabs] = useState<Record<TTab, boolean>>({
     [TAB.ICON]: true,
     [TAB.EMOJI]: false,
@@ -48,14 +57,49 @@ const MarkerPicker: FC<TMarkerPickerProps> = ({
     src: getIconFilePath(DEFAULT_PROVIDER, DEFAULT_ICON_NAME),
   })
 
-  const selectedValue = value ?? innerValue
+  const selectedValue = appearanceDraft ?? value ?? innerValue
+  const appearanceTriggerStyle = getAppearanceTriggerStyle(selectedValue, theme)
+  const resolvedActiveAppearance = resolveActiveAppearance({
+    value: selectedValue,
+    theme,
+    activeColor,
+    activeBg,
+  })
 
   const handleStyleChange = (nextValue: TMarkerValue) => {
     setInnerValue(nextValue)
     onChange(nextValue)
   }
 
+  const commitAppearance = () => {
+    if (appearanceDraft && appearanceDirty) handleStyleChange(appearanceDraft)
+    setAppearanceDraft(null)
+    setAppearanceDirty(false)
+  }
+
+  const handleAppearanceChange = (nextValue: TMarkerValue) => {
+    setAppearanceDraft(nextValue)
+    setAppearanceDirty(true)
+  }
+
+  const handleAppearanceToggle = () => {
+    if (appearanceOpen) {
+      commitAppearance()
+      setAppearanceOpen(false)
+      return
+    }
+
+    setAppearanceDraft(value ?? innerValue)
+    setAppearanceDirty(false)
+    setAppearanceOpen(true)
+  }
+
   const handleTabChange = (key: TTab) => {
+    if (appearanceOpen) {
+      commitAppearance()
+      setAppearanceOpen(false)
+    }
+
     if (key === tab) return
 
     setDirection(TAB_ORDER.indexOf(key) > TAB_ORDER.indexOf(tab) ? 1 : -1)
@@ -63,7 +107,15 @@ const MarkerPicker: FC<TMarkerPickerProps> = ({
     setMountedTabs((prev) => (prev[key] ? prev : { ...prev, [key]: true }))
   }
 
+  const handlePanelHide = () => {
+    commitAppearance()
+    setAppearanceOpen(false)
+    setPanelOpen(false)
+  }
+
   const hiddenX = direction > 0 ? 14 : -14
+  const iconTabActive = !appearanceOpen && tab === TAB.ICON
+  const emojiTabActive = !appearanceOpen && tab === TAB.EMOJI
 
   return (
     <div className={s.wrapper} data-testid={testid}>
@@ -76,15 +128,17 @@ const MarkerPicker: FC<TMarkerPickerProps> = ({
         noPadding
         portalToBody
         onShow={() => setPanelOpen(true)}
-        onHide={() => setPanelOpen(false)}
+        onHide={handlePanelHide}
         content={
           <div className={s.panel}>
-            <Tabs
-              items={TAB_ITEMS}
-              activeKey={tab}
-              onChange={(key) => handleTabChange(key as TTab)}
-              left={1.5}
-              bottom={1.5}
+            <PickerHeader
+              tab={tab}
+              appearance={appearance}
+              appearanceOpen={appearanceOpen}
+              appearanceColor={appearanceTriggerStyle.color}
+              appearanceBg={appearanceTriggerStyle.bg}
+              onTabChange={handleTabChange}
+              onAppearanceToggle={handleAppearanceToggle}
             />
 
             <LazyMotion features={domAnimation}>
@@ -92,21 +146,22 @@ const MarkerPicker: FC<TMarkerPickerProps> = ({
                 {mountedTabs[TAB.ICON] && (
                   <m.div
                     initial={false}
-                    inert={tab !== TAB.ICON}
+                    inert={!iconTabActive}
                     animate={{
-                      opacity: tab === TAB.ICON ? 1 : 0,
-                      x: tab === TAB.ICON ? 0 : hiddenX,
-                      scale: tab === TAB.ICON ? 1 : 0.985,
-                      pointerEvents: tab === TAB.ICON ? 'auto' : 'none',
+                      opacity: iconTabActive ? 1 : 0,
+                      x: iconTabActive ? 0 : hiddenX,
+                      scale: iconTabActive ? 1 : 0.985,
+                      pointerEvents: iconTabActive ? 'auto' : 'none',
                     }}
                     transition={TAB_TRANSITION}
-                    aria-hidden={tab !== TAB.ICON}
-                    className={`${s.tabPanel} ${tab === TAB.ICON ? s.tabPanelActive : s.tabPanelInactive}`}
+                    aria-hidden={!iconTabActive}
+                    className={`${s.tabPanel} ${iconTabActive ? s.tabPanelActive : s.tabPanelInactive}`}
                   >
                     <IconTab
-                      panelOpen={panelOpen && tab === TAB.ICON}
+                      panelOpen={panelOpen && iconTabActive}
                       selectedValue={selectedValue}
-                      color={color}
+                      activeColor={resolvedActiveAppearance.color}
+                      activeBg={resolvedActiveAppearance.bg}
                       onChange={handleStyleChange}
                     />
                   </m.div>
@@ -115,18 +170,39 @@ const MarkerPicker: FC<TMarkerPickerProps> = ({
                 {mountedTabs[TAB.EMOJI] && (
                   <m.div
                     initial={{ opacity: 0, x: hiddenX, scale: 0.985 }}
-                    inert={tab !== TAB.EMOJI}
+                    inert={!emojiTabActive}
                     animate={{
-                      opacity: tab === TAB.EMOJI ? 1 : 0,
-                      x: tab === TAB.EMOJI ? 0 : hiddenX,
-                      scale: tab === TAB.EMOJI ? 1 : 0.985,
-                      pointerEvents: tab === TAB.EMOJI ? 'auto' : 'none',
+                      opacity: emojiTabActive ? 1 : 0,
+                      x: emojiTabActive ? 0 : hiddenX,
+                      scale: emojiTabActive ? 1 : 0.985,
+                      pointerEvents: emojiTabActive ? 'auto' : 'none',
                     }}
                     transition={TAB_TRANSITION}
-                    aria-hidden={tab !== TAB.EMOJI}
-                    className={`${s.tabPanel} ${tab === TAB.EMOJI ? s.tabPanelActive : s.tabPanelInactive}`}
+                    aria-hidden={!emojiTabActive}
+                    className={`${s.tabPanel} ${emojiTabActive ? s.tabPanelActive : s.tabPanelInactive}`}
                   >
-                    <EmojiTab open={panelOpen && tab === TAB.EMOJI} onChange={handleStyleChange} />
+                    <EmojiTab
+                      open={panelOpen && emojiTabActive}
+                      selectedValue={selectedValue}
+                      onChange={handleStyleChange}
+                    />
+                  </m.div>
+                )}
+
+                {appearance && (
+                  <m.div
+                    initial={false}
+                    inert={!appearanceOpen}
+                    animate={{
+                      opacity: appearanceOpen ? 1 : 0,
+                      scale: appearanceOpen ? 1 : 0.985,
+                      pointerEvents: appearanceOpen ? 'auto' : 'none',
+                    }}
+                    transition={TAB_TRANSITION}
+                    aria-hidden={!appearanceOpen}
+                    className={`${s.tabPanel} ${appearanceOpen ? s.tabPanelActive : s.tabPanelInactive}`}
+                  >
+                    <AppearancePanel value={selectedValue} onChange={handleAppearanceChange} />
                   </m.div>
                 )}
               </div>
@@ -141,8 +217,10 @@ const MarkerPicker: FC<TMarkerPickerProps> = ({
           <MarkerRender
             value={selectedValue}
             size={iconSize ?? (compact ? 3.5 : 4.5)}
-            color={color}
+            colorOverride={resolvedActiveAppearance.color}
+            bgOverride={resolvedActiveAppearance.bg}
             tone={active ? 'primary' : 'digest'}
+            className={s.markerPreview}
           />
         </button>
       </Tooltip>

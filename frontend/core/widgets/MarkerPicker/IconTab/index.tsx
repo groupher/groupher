@@ -15,7 +15,13 @@ import IconList from './IconList'
 import useSalon from './salon'
 import SearchBar from './SearchBar'
 
-const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, color, onChange }) => {
+const IconTab: FC<TIconTabProps> = ({
+  panelOpen,
+  selectedValue,
+  activeColor,
+  activeBg,
+  onChange,
+}) => {
   const s = useSalon()
   const [providerTab, setProviderTab] = useState<TPickerTabProvider>('all')
   const [query, setQuery] = useState('')
@@ -31,6 +37,7 @@ const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, color, onChange 
       provider,
       name: name as TIconName,
       src: getIconFilePath(provider, name),
+      appearance: selectedValue.appearance,
     })
   }
 
@@ -40,6 +47,7 @@ const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, color, onChange 
       provider: 'dev',
       name,
       src: getDevLogoFilePath(name),
+      appearance: selectedValue.appearance,
     })
   }
 
@@ -48,7 +56,12 @@ const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, color, onChange 
       <SearchBar value={query} onChange={setQuery} />
       <div className={s.listWrapper}>
         {panelOpen && providerTab === 'dev' && (
-          <DevTab query={query} selectedValue={selectedValue} onSelect={handleDevSelect} />
+          <DevTab
+            query={query}
+            selectedValue={selectedValue}
+            activeBg={activeBg}
+            onSelect={handleDevSelect}
+          />
         )}
 
         {panelOpen && providerTab !== 'dev' && (
@@ -56,7 +69,8 @@ const IconTab: FC<TIconTabProps> = ({ panelOpen, selectedValue, color, onChange 
             providerTab={providerTab}
             query={query}
             selectedValue={selectedValue}
-            color={color}
+            activeColor={activeColor}
+            activeBg={activeBg}
             onSelect={handleSelect}
           />
         )}

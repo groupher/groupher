@@ -1,16 +1,15 @@
 import { cnMerge } from '~/css'
-import useTwBelt from '~/hooks/useTwBelt'
-import type { TColorName } from '~/spec'
 
 type TProps = {
-  color?: TColorName
   className?: string
 }
 
-export default function useSalon({ color, className }: TProps) {
-  const { rainbow } = useTwBelt()
-
+export default function useSalon({ className }: TProps) {
   return {
-    color: cnMerge('inline-block circle', color && rainbow(color, 'bg'), className),
+    wrapper: cnMerge(
+      'inline-flex size-full items-center justify-center rounded leading-none',
+      className,
+    ),
+    emoji: 'object-contain',
   }
 }

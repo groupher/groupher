@@ -16,6 +16,16 @@ const docPublicTreeNode = `
     name
     src
     unified
+    appearance {
+      light {
+        color
+        bg
+      }
+      dark {
+        color
+        bg
+      }
+    }
   }
   badge
 `

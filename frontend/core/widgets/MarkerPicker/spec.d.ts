@@ -8,13 +8,17 @@ import type { TDevLogo } from '~/widgets/MarkerPicker/constant/dev_logo'
 import type { TAB_ITEMS } from './constant'
 
 export type TTab = (typeof TAB_ITEMS)[number]['slug']
+export type TActiveAppearanceValue = TColorName | string
 
 export type TMarkerPickerProps = {
   testid?: string
   value?: TMarkerValue | null
   compact?: boolean
   active?: boolean
-  color?: TColorName
+  // Context overrides (for example Tag Editor); Marker appearance remains the fallback.
+  activeColor?: TActiveAppearanceValue
+  activeBg?: TActiveAppearanceValue
+  appearance?: boolean
   triggerClassName?: string
   iconSize?: number
   onChange?: (value: TMarkerValue) => void
@@ -50,7 +54,8 @@ export type TVirtualListProps<T> = {
 export type TIconTabProps = {
   panelOpen: boolean
   selectedValue: TMarkerValue
-  color?: TColorName
+  activeColor?: string
+  activeBg?: string
   onChange: (value: TMarkerValue) => void
 }
 

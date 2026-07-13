@@ -12,7 +12,11 @@ defmodule GroupherServer.CMS.Marker do
           optional(:provider) => String.t(),
           optional(:name) => String.t(),
           optional(:src) => String.t(),
-          optional(:unified) => String.t()
+          optional(:unified) => String.t(),
+          optional(:appearance) => %{
+            required(:light) => map(),
+            required(:dark) => map()
+          }
         }
 
   @spec normalize_changeset(Ecto.Changeset.t(), atom()) :: Ecto.Changeset.t()
@@ -58,8 +62,10 @@ defmodule GroupherServer.CMS.Marker do
     with {:ok, provider} <- required_string(marker, :provider),
          :ok <- validate_provider(provider),
          {:ok, name} <- required_string(marker, :name),
-         {:ok, src} <- required_string(marker, :src) do
-      {:ok, %{type: :icon, provider: provider, name: name, src: src}}
+         {:ok, src} <- required_string(marker, :src),
+         {:ok, appearance} <- normalize_appearance(raw_field(marker, :appearance), :icon) do
+      normalized = %{type: :icon, provider: provider, name: name, src: src}
+      {:ok, maybe_put(normalized, :appearance, appearance)}
     end
   end
 
@@ -67,9 +73,39 @@ defmodule GroupherServer.CMS.Marker do
   defp validate_provider(_provider), do: {:error, "marker provider is invalid"}
 
   defp normalize_emoji(marker) do
-    with {:ok, unified} <- required_string(marker, :unified) do
-      {:ok, %{type: :emoji, unified: unified}}
+    with {:ok, unified} <- required_string(marker, :unified),
+         {:ok, appearance} <- normalize_appearance(raw_field(marker, :appearance), :emoji) do
+      normalized = %{type: :emoji, unified: unified}
+      {:ok, maybe_put(normalized, :appearance, appearance)}
     end
+  end
+
+  defp normalize_appearance(nil, _marker_type), do: {:ok, nil}
+
+  defp normalize_appearance(%{} = appearance, marker_type) do
+    with {:ok, light} <- normalize_theme(raw_field(appearance, :light), marker_type, :light),
+         {:ok, dark} <- normalize_theme(raw_field(appearance, :dark), marker_type, :dark) do
+      {:ok, %{light: light, dark: dark}}
+    end
+  end
+
+  defp normalize_appearance(_, _marker_type), do: {:error, "marker appearance is invalid"}
+
+  defp normalize_theme(%{} = appearance, :icon, _theme) do
+    with {:ok, color} <- optional_hex(appearance, :color),
+         {:ok, bg} <- optional_hex(appearance, :bg) do
+      {:ok, %{} |> maybe_put(:color, color) |> maybe_put(:bg, bg)}
+    end
+  end
+
+  defp normalize_theme(%{} = appearance, :emoji, _theme) do
+    with {:ok, bg} <- optional_hex(appearance, :bg) do
+      {:ok, maybe_put(%{}, :bg, bg)}
+    end
+  end
+
+  defp normalize_theme(_, _marker_type, theme) do
+    {:error, "marker appearance #{theme} is required"}
   end
 
   defp marker_type(marker) do
@@ -102,4 +138,26 @@ defmodule GroupherServer.CMS.Marker do
         {:error, "marker #{field} is required"}
     end
   end
+
+  defp optional_hex(marker, field) do
+    case field(marker, field) do
+      nil ->
+        {:ok, nil}
+
+      value when is_binary(value) ->
+        value = String.trim(value)
+
+        if Regex.match?(~r/^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/, value) do
+          {:ok, String.downcase(value)}
+        else
+          {:error, "marker appearance #{field} is invalid"}
+        end
+
+      _ ->
+        {:error, "marker appearance #{field} is invalid"}
+    end
+  end
+
+  defp maybe_put(map, _key, nil), do: map
+  defp maybe_put(map, key, value), do: Map.put(map, key, value)
 end

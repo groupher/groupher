@@ -1,6 +1,6 @@
 'use client'
 
-import type { FC } from 'react'
+import type { CSSProperties, FC } from 'react'
 
 import FileTextSVG from '~/icons/FileText'
 import type { TMarkerIconValue } from '~/spec'
@@ -13,10 +13,12 @@ type TProps = {
   size: number
   iconColorClass: string
   strokeIconClass: string
+  color?: string
 }
 
-const IconNode: FC<TProps> = ({ value, size, iconColorClass, strokeIconClass }) => {
+const IconNode: FC<TProps> = ({ value, size, iconColorClass, strokeIconClass, color }) => {
   const pixelSize = size * 4
+  const colorStyle: CSSProperties | undefined = color ? { color } : undefined
 
   if (value.provider === 'dev') {
     return (
@@ -32,7 +34,14 @@ const IconNode: FC<TProps> = ({ value, size, iconColorClass, strokeIconClass }) 
   }
 
   if (value.name === 'file-text') {
-    return <FileTextSVG width={pixelSize} height={pixelSize} className={strokeIconClass} />
+    return (
+      <FileTextSVG
+        width={pixelSize}
+        height={pixelSize}
+        className={strokeIconClass}
+        style={colorStyle}
+      />
+    )
   }
 
   return (
@@ -42,6 +51,7 @@ const IconNode: FC<TProps> = ({ value, size, iconColorClass, strokeIconClass }) 
       mode='mask'
       size={size}
       className={iconColorClass}
+      style={color ? { backgroundColor: color } : undefined}
     />
   )
 }

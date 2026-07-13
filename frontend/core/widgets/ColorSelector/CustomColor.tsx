@@ -16,6 +16,8 @@ type TProps = {
   selected?: boolean
   expanded?: boolean
   stacked?: boolean
+  roomy?: boolean
+  checkColor?: string
   onClick?: () => void
 }
 
@@ -24,9 +26,11 @@ const CustomColor = ({
   selected = false,
   expanded = false,
   stacked = false,
+  roomy = false,
+  checkColor,
   onClick = () => undefined,
 }: TProps) => {
-  const s = useSalon({ stacked })
+  const s = useSalon({ stacked, roomy })
   const { t } = useTrans()
 
   return (
@@ -48,7 +52,7 @@ const CustomColor = ({
         <div className={s.dot}>
           <div className={s.dotRing} />
           <div className={s.dotInner} style={{ backgroundColor: color }}>
-            {selected && <HookSVG className={s.checkIcon} />}
+            {selected && <HookSVG className={s.checkIcon} style={{ fill: checkColor }} />}
           </div>
         </div>
       </m.button>

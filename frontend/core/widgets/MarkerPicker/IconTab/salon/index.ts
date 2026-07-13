@@ -35,7 +35,7 @@ export default function useSalon() {
       'align-both group flex h-10 min-w-0 rounded border border-transparent p-0.5 appearance-none transition-all duration-150',
       hover('box'),
     ),
-    cellActive: primary('border'),
+    cellActive: '',
     // Provider sprite icons read color from currentColor.
     iconColor: fg('digest'),
     iconColorActive: primary('fg'),

@@ -23,15 +23,16 @@ import useSalon from './salon/custom_color_picker'
 type TProps = {
   color: string
   onChange: (color: string) => void
+  showThemeSwitch?: boolean
 }
 
-const ColorSelectorPicker: FC<TProps> = ({ color, onChange }) => {
+const ColorSelectorPicker: FC<TProps> = ({ color, onChange, showThemeSwitch = true }) => {
   const s = useSalon()
   const thumbColor = parseColor(color).toString('hex')
 
   return (
     <div className={s.wrapper}>
-      <ThemeSwitchPreview top={4} bottom={3} />
+      {showThemeSwitch && <ThemeSwitchPreview top={4} bottom={3} />}
 
       <AriaColorPicker
         aria-label='Custom color picker'
