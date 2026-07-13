@@ -53,6 +53,5 @@ export type TTabItemProps = {
   topSpace?: number | string
   bottomSpace?: number | string
   variant?: TTabsVariant
-  setItemWidth?: (index: number, width: number) => void
   onClick?: TTabItemClick
 }

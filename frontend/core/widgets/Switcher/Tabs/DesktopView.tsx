@@ -1,8 +1,8 @@
 'use client'
 
 import { findIndex, isEmpty } from 'ramda'
-import type { FC, MouseEvent } from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import type { FC } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 
 import SIZE from '~/const/size'
 import { isString } from '~/validator'
@@ -36,6 +36,21 @@ const getTabLabelWidth = (node?: Element): number => {
   return labelEl?.offsetWidth ?? node.offsetWidth
 }
 
+type TTabMetrics = {
+  widths: number[]
+  offsets: number[]
+  activeLabelWidth: number
+}
+
+const INITIAL_METRICS: TTabMetrics = {
+  widths: [],
+  offsets: [],
+  activeLabelWidth: 0,
+}
+
+const sameNumbers = (left: number[], right: number[]): boolean =>
+  left.length === right.length && left.every((value, index) => value === right[index])
+
 const Tabs: FC<TViewProps> = ({
   size = SIZE.MEDIUM,
   onChange = () => {},
@@ -54,67 +69,42 @@ const Tabs: FC<TViewProps> = ({
   const defaultActiveTabIndex = getDefaultActiveTabIndex(items, activeKey)
   const hasActiveItem = items.some((it) => getItemKey(it) === activeKey)
 
-  const [active, setActive] = useState(defaultActiveTabIndex)
-  const [slipWidth, setSlipWidth] = useState(0)
-  const [tabWidths, setTabWidths] = useState<number[]>([])
-  const [tabOffsets, setTabOffsets] = useState<number[]>([])
-  const [isInitialRender, setIsInitialRender] = useState(true)
+  const [metrics, setMetrics] = useState<TTabMetrics>(INITIAL_METRICS)
+  const [hasMeasured, setHasMeasured] = useState(false)
 
   const navRef = useRef<HTMLElement | null>(null)
-  const activeIndexRef = useRef(defaultActiveTabIndex)
 
-  useEffect(() => {
-    activeIndexRef.current = active
-  }, [active])
-
-  const measureTabs = useCallback(() => {
+  const measureTabs = useCallback((activeIndex: number) => {
     const navEl = navRef.current
     if (!navEl) return
 
-    const widths = Array.from(navEl.children).map((node) => (node as HTMLElement).offsetWidth ?? 0)
-    const offsets = Array.from(navEl.children).map((node) => (node as HTMLElement).offsetLeft ?? 0)
-    setTabWidths((prev) =>
-      prev.length === widths.length && prev.every((width, index) => width === widths[index])
-        ? prev
-        : widths,
-    )
-    setTabOffsets((prev) =>
-      prev.length === offsets.length && prev.every((offset, index) => offset === offsets[index])
-        ? prev
-        : offsets,
-    )
+    const tabNodes = Array.from(navEl.querySelectorAll<HTMLElement>(':scope > [data-tab-item]'))
+    const widths = tabNodes.map((node) => node.offsetWidth)
+    const offsets = tabNodes.map((node) => node.offsetLeft)
+    const activeLabelWidth = getTabLabelWidth(tabNodes[activeIndex])
 
-    const activeNode = navEl.children[activeIndexRef.current] as HTMLElement | undefined
-    const activeWidth = getTabLabelWidth(activeNode)
-
-    if (activeWidth > 0) {
-      setSlipWidth(activeWidth)
-    }
+    setMetrics((prev) =>
+      sameNumbers(prev.widths, widths) &&
+      sameNumbers(prev.offsets, offsets) &&
+      prev.activeLabelWidth === activeLabelWidth
+        ? prev
+        : { widths, offsets, activeLabelWidth },
+    )
   }, [])
 
-  useEffect(() => {
-    activeIndexRef.current = defaultActiveTabIndex
-    setActive(defaultActiveTabIndex)
-    measureTabs()
-
-    const timerId = window.setTimeout(() => setIsInitialRender(false), 500)
-    return () => window.clearTimeout(timerId)
-  }, [defaultActiveTabIndex, measureTabs])
-
-  useEffect(() => {
+  useLayoutEffect(() => {
     const navEl = navRef.current
     if (!navEl) return
 
-    const rafId = window.requestAnimationFrame(() => {
-      measureTabs()
-    })
+    measureTabs(defaultActiveTabIndex)
+    const rafId = window.requestAnimationFrame(() => setHasMeasured(true))
 
     const observer = new ResizeObserver(() => {
-      measureTabs()
+      measureTabs(defaultActiveTabIndex)
     })
 
     observer.observe(navEl)
-    for (const node of navEl.children) {
+    for (const node of navEl.querySelectorAll(':scope > [data-tab-item]')) {
       observer.observe(node)
     }
 
@@ -122,33 +112,20 @@ const Tabs: FC<TViewProps> = ({
       window.cancelAnimationFrame(rafId)
       observer.disconnect()
     }
-  }, [items, measureTabs])
-
-  const handleNaviItemWidth = useCallback((index: number, width: number) => {
-    setTabWidths((prev) => {
-      if (prev[index] === width) return prev
-      const next = [...prev]
-      next[index] = width
-      return next
-    })
-  }, [])
+  }, [defaultActiveTabIndex, items, measureTabs])
 
   const handleItemClick = useCallback(
-    (index: number, e: MouseEvent<HTMLElement>) => {
+    (index: number) => {
       const item = items[index]
       if (!item) return
 
       const key = getItemKey(item)
-      const width = (e.currentTarget as HTMLElement).offsetWidth
-
-      setSlipWidth(width)
-      setActive(index)
       onChange(key, item, index)
     },
     [onChange, items],
   )
 
-  const translateX = `${tabOffsets[active] ?? 0}px`
+  const translateX = `${metrics.offsets[defaultActiveTabIndex] ?? 0}px`
 
   return (
     <div data-testid='tabs' className={s.wrapper}>
@@ -164,7 +141,6 @@ const Tabs: FC<TViewProps> = ({
             topSpace={topSpace}
             bottomSpace={bottomSpace}
             variant={variant}
-            setItemWidth={handleNaviItemWidth}
             onClick={handleItemClick}
           />
         ))}
@@ -174,15 +150,15 @@ const Tabs: FC<TViewProps> = ({
             className={s.slipBar}
             style={{
               transform: `translate3d(${translateX}, 0, 0)`,
-              width: `${tabWidths[active] ?? 0}px`,
-              transition: isInitialRender ? 'none' : undefined,
+              width: `${metrics.widths[defaultActiveTabIndex] ?? 0}px`,
+              transition: hasMeasured ? undefined : 'none',
             }}
           >
             <span
               className={s.realBar}
               style={{
-                width: `${slipWidth}px`,
-                transition: isInitialRender ? 'none' : undefined,
+                width: `${metrics.activeLabelWidth}px`,
+                transition: hasMeasured ? undefined : 'none',
               }}
             />
           </span>
