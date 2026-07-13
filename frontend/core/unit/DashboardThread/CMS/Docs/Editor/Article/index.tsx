@@ -1,4 +1,4 @@
-import { useEffect, useState, type FC } from 'react'
+import { useState, type FC } from 'react'
 
 import { ARTICLE_STAGE } from '~/const/article'
 import { DSB_DOC_EVENT, type TDocPublishSuccessPayload } from '~/const/dsb/docs'
@@ -37,12 +37,9 @@ const Article: FC<TProps> = ({ sideTree }) => {
     subtitle,
     title,
   } = useLogic(sideTree)
-  const [coverVisible, setCoverVisible] = useState(false)
+  const [coverDocId, setCoverDocId] = useState<string | null>(null)
+  const coverVisible = coverDocId !== null && coverDocId === activePage?.docId
   const disabled = loading || !editable || mode === DOC_EDITOR_MODE.PREVIEW
-
-  useEffect(() => {
-    setCoverVisible(false)
-  }, [activePage?.docId])
 
   useEvent<TDocPublishSuccessPayload>(
     DSB_DOC_EVENT.PUBLISH_SUCCESS,
@@ -76,7 +73,7 @@ const Article: FC<TProps> = ({ sideTree }) => {
       <TitleActions
         coverVisible={coverVisible}
         disabled={disabled}
-        onAddCover={() => setCoverVisible(true)}
+        onAddCover={() => setCoverDocId(activePage.docId)}
       />
       <Title
         value={title}

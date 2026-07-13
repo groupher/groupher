@@ -20,6 +20,6 @@
     "build": "echo 'skip build'"
   },
   "lint-staged": {
-    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.app.json"
+    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.app.json ./global.d.ts"
   }
 }

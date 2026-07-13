@@ -1,7 +1,6 @@
 import { find } from 'ramda'
 import type { FC } from 'react'
 
-import { createKeyboardClick } from '~/lib/a11y'
 import type { TSelectOption } from '~/spec'
 
 import useSalon, { cn } from './salon/block_selector'
@@ -21,16 +20,15 @@ const BlockSelector: FC<TProps> = ({ options, rounded = false, activeValue, onCh
   return (
     <div className={s.wrapper}>
       {options.map((option) => (
-        <div
+        <button
           key={option.value}
+          type='button'
           className={cn(s.block, activeOption?.value === option.value && s.blockActive)}
-          role='button'
-          tabIndex={0}
+          aria-pressed={activeOption?.value === option.value}
           onClick={() => onChange(option.value)}
-          onKeyDown={createKeyboardClick(() => onChange(option.value))}
         >
           {option.label}
-        </div>
+        </button>
       ))}
     </div>
   )

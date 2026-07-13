@@ -21,6 +21,10 @@ type TProps = {
   onCommit?: () => void
 }
 
+const handleResetMouseDown = (event: MouseEvent<HTMLButtonElement>): void => {
+  event.stopPropagation()
+}
+
 export default function AngleWheel({ value, label = 'Angle', onChange, onCommit }: TProps) {
   const panelRef = useRef<HTMLDivElement | null>(null)
   const [angle, setAngle] = useState(() => normalizeSignedAngle(value))
@@ -74,10 +78,6 @@ export default function AngleWheel({ value, label = 'Angle', onChange, onCommit 
 
   const handleClick = (event: MouseEvent<HTMLDivElement>): void => {
     updateAngle(event.clientX, event.clientY)
-  }
-
-  const handleResetMouseDown = (event: MouseEvent<HTMLButtonElement>): void => {
-    event.stopPropagation()
   }
 
   const handleResetClick = (event: MouseEvent<HTMLButtonElement>): void => {

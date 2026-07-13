@@ -6,6 +6,7 @@
 
 import { type FC, memo } from 'react'
 
+import useTrans from '~/hooks/useTrans'
 import type { TSpace } from '~/spec'
 
 import useSalon from './salon'
@@ -36,6 +37,7 @@ const RangeSlider: FC<TProps> = ({
   ...spacing
 }) => {
   const s = useSalon({ width, ...spacing })
+  const { t } = useTrans()
 
   return (
     <div className={s.wrapper} data-testid={testid}>
@@ -46,6 +48,7 @@ const RangeSlider: FC<TProps> = ({
       <input
         className={s.range}
         value={value}
+        aria-label={t('common.adjust_value')}
         type='range'
         min={min}
         max={max}

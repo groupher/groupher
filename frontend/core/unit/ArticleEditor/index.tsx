@@ -23,6 +23,8 @@ type TProps = {
   metric?: TMetric
 }
 
+const TEXTS = { holder: { title: '// 帖子标题' } }
+
 const ArticleEditor: FC<TProps> = ({ metric: _metric = METRIC.ARTICLE_EDITOR }) => {
   const s = useSalon()
 
@@ -55,11 +57,6 @@ const ArticleEditor: FC<TProps> = ({ metric: _metric = METRIC.ARTICLE_EDITOR }) 
   // const { title, body } = editData
   const { title } = editData
 
-  const texts = {
-    holder: {
-      title: '// 帖子标题',
-    },
-  }
   return (
     <div className={s.wrapper}>
       <div className={s.inner}>
@@ -67,7 +64,7 @@ const ArticleEditor: FC<TProps> = ({ metric: _metric = METRIC.ARTICLE_EDITOR }) 
         {isArchived && <ArchiveAlert date={archivedAt} top={3} bottom={4} left={5} />}
 
         <ArticleCover />
-        <TitleInput title={title} placeholder={texts.holder.title} />
+        <TitleInput title={title} placeholder={TEXTS.holder.title} />
         <div className={s.funcRow}>
           <ConditionSelector
             mode={CONDITION_MODE.CAT}

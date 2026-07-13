@@ -20,7 +20,7 @@ const ActionButton: FC<TProps> = ({ action }) => {
   return (
     <button type='button' className={s.wrapper} aria-label={text} title={text}>
       <Icon className={s.icon} />
-      {count && <span className={s.count}>{count}</span>}
+      {count !== null && <span className={s.count}>{count}</span>}
     </button>
   )
 }

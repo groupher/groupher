@@ -6,6 +6,7 @@
 
 import { type FC, useRef, useState } from 'react'
 
+import useTrans from '~/hooks/useTrans'
 import SettingSVG from '~/icons/Setting'
 import type { TSpace } from '~/spec'
 import Tooltip from '~/widgets/Tooltip'
@@ -22,6 +23,7 @@ const ArticleSettingMenu: FC<TProps> = ({
   ...spacing
 }) => {
   const s = useSalon({ ...spacing })
+  const { t } = useTrans()
 
   const [visible, setVisible] = useState(false)
   const subMenuOpenRef = useRef(false)
@@ -63,9 +65,15 @@ const ArticleSettingMenu: FC<TProps> = ({
         }}
         noPadding
       >
-        <div className={cn(s.settingBox, menuOpen && s.settingBoxActive)} onClick={handleToggle}>
+        <button
+          type='button'
+          className={cn(s.settingBox, menuOpen && s.settingBoxActive)}
+          aria-label={t('article.settings')}
+          aria-expanded={menuOpen}
+          onClick={handleToggle}
+        >
           <SettingSVG className={s.settingIcon} />
-        </div>
+        </button>
       </Tooltip>
     </div>
   )

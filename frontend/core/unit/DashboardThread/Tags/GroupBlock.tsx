@@ -14,12 +14,12 @@ import PlusSVG from '~/icons/Plus'
 import type { TColorName, TTag, TThread } from '~/spec'
 import Button from '~/widgets/Buttons/Button'
 import YesOrNoButtons from '~/widgets/Buttons/YesOrNoButtons'
-import ColorSelector from '~/widgets/ColorSelector'
 import Input from '~/widgets/Input'
 import { toast } from '~/widgets/Toaster'
 import Tooltip from '~/widgets/Tooltip'
 
 import useTags from '../logic/useTags'
+import FirstTagEditor from './FirstTagEditor'
 import GroupActionMenu from './GroupActionMenu'
 import useSalon, { cn } from './salon/group_block'
 import SortableTagItem from './SortableTagItem'
@@ -299,41 +299,20 @@ const GroupBlock: FC<TProps> = ({
           listRef={listRef}
         >
           {creatingFirstTag && (
-            <div className={s.firstTagEdit}>
-              <ColorSelector
-                activeColor={newTagColor}
-                onChange={(color) => setNewTagColor(color)}
-                placement='bottom-start'
-                offset={[-8, 0]}
-              >
-                <div className={s.dotSelector}>
-                  <div className={cn(s.dot, s.rainbow(newTagColor, 'bg'))} />
-                </div>
-              </ColorSelector>
-              <Input
-                className={s.tagInput}
-                width='w-48'
-                value={newTagTitle}
-                placeholder={t('dsb.tags.tag.new')}
-                focusOnMount
-                onChange={(e) => setNewTagTitle(e.target.value)}
-                onEnter={() => void commitFirstTag()}
-              />
-              <div className='grow' />
-              <YesOrNoButtons
-                cancelText={t('dsb.saving_bar.cancel')}
-                saveText={t('dsb.saving_bar.save')}
-                loading={creatingTag}
-                disabled={!canCreateFirstTag}
-                space={!creatingTag ? 1.5 : 0}
-                onCancel={() => {
-                  setCreatingFirstTag(false)
-                  setNewTagTitle('')
-                  setNewTagColor(COLOR.BLACK)
-                }}
-                onConfirm={() => void commitFirstTag()}
-              />
-            </div>
+            <FirstTagEditor
+              color={newTagColor}
+              title={newTagTitle}
+              loading={creatingTag}
+              canSave={canCreateFirstTag}
+              onColorChange={setNewTagColor}
+              onTitleChange={setNewTagTitle}
+              onCancel={() => {
+                setCreatingFirstTag(false)
+                setNewTagTitle('')
+                setNewTagColor(COLOR.BLACK)
+              }}
+              onConfirm={() => void commitFirstTag()}
+            />
           )}
 
           {sortedTags.map((tag, index) => (

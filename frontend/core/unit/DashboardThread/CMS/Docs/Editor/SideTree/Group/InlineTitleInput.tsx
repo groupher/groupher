@@ -32,6 +32,7 @@ const InlineTitleInput: FC<TProps> = ({ value, onCancel, onConfirm }) => {
       type='text'
       className={s.input}
       value={draft}
+      aria-label={t('dsb.cms.docs.tree.rename_input')}
       spellCheck={false}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={confirm}

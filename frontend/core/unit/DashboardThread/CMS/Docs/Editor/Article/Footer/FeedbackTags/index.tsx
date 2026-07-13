@@ -1,5 +1,5 @@
 import { AnimatePresence, m } from 'motion/react'
-import { type ChangeEvent, type FC, useEffect, useMemo, useState } from 'react'
+import { type ChangeEvent, type FC, useMemo, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import type { TTransKey } from '~/spec'
@@ -22,11 +22,6 @@ const FeedbackTags: FC<TProps> = ({ score }) => {
   const [note, setNote] = useState('')
   const selectedTagSet = useMemo(() => new Set(selectedTags), [selectedTags])
   const hasSelectedTag = selectedTags.length > 0
-
-  useEffect(() => {
-    setSelectedTags([])
-    setNote('')
-  }, [tags])
 
   const handleTagClick = (tag: TTransKey) => {
     setSelectedTags((selected) => toggleFeedbackTag(selected, tag))

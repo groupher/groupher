@@ -35,6 +35,18 @@ const renderCategoryIcon = (icon: ReactNode) => (
   </span>
 )
 
+const CATEGORY_ICONS = {
+  [Categories.SUGGESTED]: renderCategoryIcon(<WatchSVG />),
+  [Categories.SMILEYS_PEOPLE]: renderCategoryIcon(<EmojiSmileSVG />),
+  [Categories.ANIMALS_NATURE]: renderCategoryIcon(<SeedSVG />),
+  [Categories.FOOD_DRINK]: renderCategoryIcon(<CoffeeDuoSVG />),
+  [Categories.TRAVEL_PLACES]: renderCategoryIcon(<PlaneSVG />),
+  [Categories.ACTIVITIES]: renderCategoryIcon(<GameSVG />),
+  [Categories.OBJECTS]: renderCategoryIcon(<PuzzleSVG />),
+  [Categories.SYMBOLS]: renderCategoryIcon(<HashTagSVG />),
+  [Categories.FLAGS]: renderCategoryIcon(<FlagSVG />),
+}
+
 const EmojiTab: FC<TProps> = ({ open, onChange }) => {
   const s = useSalon()
   const overlayDark = useOverlayDark()
@@ -43,17 +55,6 @@ const EmojiTab: FC<TProps> = ({ open, onChange }) => {
   const primaryColorKey = camelize(primaryColor)
   const primary = `var(--color-rainbow-${primaryColorKey})`
   const pickerTheme = overlayDark || isDarkTheme ? Theme.DARK : Theme.LIGHT
-  const categoryIcons = {
-    [Categories.SUGGESTED]: renderCategoryIcon(<WatchSVG />),
-    [Categories.SMILEYS_PEOPLE]: renderCategoryIcon(<EmojiSmileSVG />),
-    [Categories.ANIMALS_NATURE]: renderCategoryIcon(<SeedSVG />),
-    [Categories.FOOD_DRINK]: renderCategoryIcon(<CoffeeDuoSVG />),
-    [Categories.TRAVEL_PLACES]: renderCategoryIcon(<PlaneSVG />),
-    [Categories.ACTIVITIES]: renderCategoryIcon(<GameSVG />),
-    [Categories.OBJECTS]: renderCategoryIcon(<PuzzleSVG />),
-    [Categories.SYMBOLS]: renderCategoryIcon(<HashTagSVG />),
-    [Categories.FLAGS]: renderCategoryIcon(<FlagSVG />),
-  }
   const pickerStyle = {
     '--emoji-picker-primary-color': primary,
     '--epr-highlight-color': primary,
@@ -106,7 +107,7 @@ const EmojiTab: FC<TProps> = ({ open, onChange }) => {
         lazyLoadEmojis
         autoFocusSearch={false}
         previewConfig={{ showPreview: true }}
-        categoryIcons={categoryIcons}
+        categoryIcons={CATEGORY_ICONS}
         width='100%'
         height={320}
         style={pickerStyle}

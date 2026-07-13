@@ -16,14 +16,14 @@ type TProps = {
 
 const Footer: FC<TProps> = ({ mode, editData, submitState }) => {
   const s = useSalon()
-  const { onPublish, onCancel, setWordsCountState } = useLogic()
+  const { onPublish, onCancel } = useLogic()
 
   const { body } = editData
 
   return (
     <div className={s.wrapper}>
       <div className={s.publishFooter}>
-        <WordsCounter body={body} bottom={3} onChange={setWordsCountState} min={40} />
+        <WordsCounter body={body} bottom={3} min={40} />
         <div className='grow' />
         <SubmitButton
           submitState={submitState}

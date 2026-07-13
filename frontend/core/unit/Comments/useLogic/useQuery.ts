@@ -8,6 +8,7 @@ import type { TComment, TEmotion, TEmotionType, TID } from '~/spec'
 import { StoreContext as CommentsStoreContext } from '~/stores/comments/context'
 import type { TStore as TCommentsStore } from '~/stores/comments/spec'
 import uid from '~/utils/uid'
+import { isWordsCountValid } from '~/widgets/WordsCounter/helper'
 
 import { API_MODE, EDIT_MODE } from '../constant'
 import S from '../schema'
@@ -293,7 +294,7 @@ export default function useQuery(): TRet {
   }
 
   const updateComment = (): void => {
-    if (!commentsStore.wordsCountReady) return
+    if (!isWordsCountValid(commentsStore.updateBody, 10, 1000)) return
     if (!commentsStore.updateInnerId) return
 
     const params = {

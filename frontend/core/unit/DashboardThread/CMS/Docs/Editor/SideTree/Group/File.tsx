@@ -54,8 +54,10 @@ const File: FC<TProps> = ({
     editingTarget?.type === SIDE_TREE_NODE_TYPE.PAGE && editingTarget.childId === item.id
   const showPublishDot = needsPublishAttention(item.publishState)
   const publicDoc = isPublicDoc(item.publishState)
-  const activate = (): void => onActivate(item.id)
-  const stopRowActivate = (event: MouseEvent<HTMLDivElement>): void => event.stopPropagation()
+  const activate = (event?: MouseEvent<HTMLDivElement>): void => {
+    if ((event?.target as HTMLElement | null)?.closest('button, a, input')) return
+    onActivate(item.id)
+  }
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     if (editing) return
 
@@ -76,7 +78,7 @@ const File: FC<TProps> = ({
       onClick={editing ? undefined : activate}
       onKeyDown={handleKeyDown}
     >
-      <div className={s.pickerSlot} onClick={stopRowActivate}>
+      <div className={s.pickerSlot}>
         <MarkerPicker
           compact
           active={active}
@@ -104,7 +106,7 @@ const File: FC<TProps> = ({
         </div>
       )}
       {item.badge && <div className={s.badge}>{item.badge}</div>}
-      <div className={s.meta} onClick={stopRowActivate}>
+      <div className={s.meta}>
         {showPublishDot && (
           <div className={s.publishDotSlot}>
             <span className={s.unpublishedDot} aria-hidden='true' />

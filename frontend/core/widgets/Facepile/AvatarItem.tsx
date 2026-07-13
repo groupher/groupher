@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { type FC, useState } from 'react'
 
+import SIZE from '~/const/size'
 import type { TUser } from '~/spec'
 import UserCard from '~/widgets/Cards/UserCard'
 import ImgFallback from '~/widgets/ImgFallback'
@@ -48,6 +49,7 @@ const AvatarItem: FC<TProps> = ({
           src={avatarSrc}
           alt={label}
           fill
+          sizes={size === SIZE.SMALL ? '20px' : '24px'}
           unoptimized
           loading={noLazyLoad ? 'eager' : 'lazy'}
           draggable={false}
