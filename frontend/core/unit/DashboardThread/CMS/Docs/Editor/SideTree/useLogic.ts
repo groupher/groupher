@@ -22,6 +22,7 @@ import {
   appendChildToGroup,
   createSideTreeChild,
   createSideTreeGroup,
+  createSideTreePin,
   duplicateChildInGroup,
   findChild,
   findChildEditingTarget,
@@ -33,15 +34,16 @@ import {
   getDocIdFromPage,
   getDefaultLinkTitle,
   isActiveRemovedByTarget,
-  isDraftId,
+  isLocalId,
   isLinkHref,
   mapGroup,
   mapNode,
+  mapPin,
   patchChildInGroups,
   patchGroupInGroups,
   patchNode,
   removeChildFromGroup,
-  removeDraftTarget,
+  removeLocalTarget,
   removeGroupFromGroups,
   replaceChildId,
   replaceGroupId,
@@ -58,6 +60,7 @@ import type {
   TDocTreeNodeDTO,
   TDocTreeNodePublishState,
   TDocTreeState,
+  TDocTreeTrashData,
   TEditingTarget,
   TSideTreeChild,
   TSideTreeChildMenuAction,
@@ -65,6 +68,7 @@ import type {
   TSideTreeGroup,
   TSideTreeLinkInput,
   TSideTreeNodeMenuAction,
+  TSideTreePin,
   TSideTreeTab,
 } from './spec'
 import useDocEditorUrl from './useDocEditorUrl'
@@ -78,14 +82,19 @@ type TMoveDocToDraftData = {
   } | null
 }
 
-const hasDraftNode = (groups: readonly TSideTreeGroup[]): boolean =>
-  groups.some((group) => isDraftId(group.id) || group.children.some((child) => isDraftId(child.id)))
+type TLocalCreateState = {
+  deleteRequested: boolean
+}
+
+const hasLocalNode = (groups: readonly TSideTreeGroup[], pins: readonly TSideTreePin[]): boolean =>
+  pins.some((pin) => isLocalId(pin.id)) ||
+  groups.some((group) => isLocalId(group.id) || group.children.some((child) => isLocalId(child.id)))
 
 const mapTab = (node: TDocTreeNodeDTO): TSideTreeTab => ({
   id: node.id,
   title: node.title || '',
   slug: node.slug || undefined,
-  pins: node.pins || [],
+  pins: (node.pins || []).map(mapPin),
   groups: (node.groups || []).map(mapGroup),
 })
 
@@ -105,17 +114,29 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       tabs: TDocTreeNodeDTO[]
     }
   }>(S.docTree, { community })
+  const {
+    data: trashData,
+    loading: trashLoading,
+    reload: reloadTrash,
+  } = useQuery<TDocTreeTrashData>(S.docTreeTrashItems, { community })
+  const trashItems = trashData?.docTreeTrashItems ?? []
   const initialTabs = useMemo(() => initialData?.tabs.map(mapTab) ?? [], [initialData])
   const initialActiveTab = findTabByDocId(initialTabs, currentDocId) ?? initialTabs[0] ?? null
   const [tabs, setTabs] = useState<TSideTreeTab[]>(initialTabs)
   const [activeTabId, setActiveTabId] = useState<string | null>(initialActiveTab?.id ?? null)
+  const initialPins = initialActiveTab?.pins ?? []
   const initialGroups = initialActiveTab?.groups ?? []
+  const [pins, setPins] = useState<TSideTreePin[]>(initialPins)
   const [groups, setGroups] = useState<TSideTreeGroup[]>(initialGroups)
   const [treeState, setTreeState] = useState<TDocTreeState | null>(initialData?.treeState ?? null)
   const [stagedEvents, setStagedEvents] = useState<TDocTreeEvent[]>(initialData?.stagedEvents ?? [])
+  const pinsRef = useRef<TSideTreePin[]>(initialPins)
   const groupsRef = useRef<TSideTreeGroup[]>(initialGroups)
   const currentDocIdRef = useRef<string | null>(currentDocId)
   const revisionRef = useRef<number | null>(initialData?.revision ?? null)
+  // Tracks only frontend-local ids while their backend draft create mutation is pending.
+  // Backend draft nodes already have real ids, never enter this map, and remain Trash-restorable.
+  const localCreateStateRef = useRef(new Map<string, TLocalCreateState>())
   const [activeId, setActiveId] = useState<string | null>(
     () =>
       resolveActiveIdFromUrl(initialGroups, currentDocId) ??
@@ -130,6 +151,15 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     setCoverWarning,
     reload,
   })
+
+  function persistDelete(nodeId: string): void {
+    persist(S.deleteDocTreeNode, { id: nodeId }, (data) => data?.deleteDocTreeNode).then(
+      (payload) => {
+        if (!payload || payload.conflict) return
+        reloadTrash()
+      },
+    )
+  }
 
   const syncActiveIdFromUrl = useCallback((sourceGroups: readonly TSideTreeGroup[]): void => {
     const docId = currentDocIdRef.current
@@ -162,6 +192,22 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     return groupsRef.current
   }
 
+  function readPins(): TSideTreePin[] {
+    return pinsRef.current
+  }
+
+  const commitPins = useCallback(
+    (nextPins: TSideTreePin[]): TSideTreePin[] => {
+      pinsRef.current = nextPins
+      setPins(nextPins)
+      setTabs((currentTabs) =>
+        currentTabs.map((tab) => (tab.id === activeTabId ? { ...tab, pins: nextPins } : tab)),
+      )
+      return nextPins
+    },
+    [activeTabId],
+  )
+
   const commitGroups = useCallback(
     (nextGroups: TSideTreeGroup[]): TSideTreeGroup[] => {
       groupsRef.current = nextGroups
@@ -180,6 +226,10 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     return commitGroups(updater(readGroups()))
   }
 
+  function updatePins(updater: (currentPins: TSideTreePin[]) => TSideTreePin[]): TSideTreePin[] {
+    return commitPins(updater(readPins()))
+  }
+
   useEffect(() => {
     currentDocIdRef.current = currentDocId
   }, [currentDocId])
@@ -192,7 +242,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     setTreeState(data.docTree.treeState ?? null)
     setStagedEvents(data.docTree.stagedEvents ?? [])
 
-    if (hasDraftNode(groupsRef.current)) return
+    if (hasLocalNode(groupsRef.current, pinsRef.current)) return
 
     const nextTabs = data.docTree.tabs.map(mapTab)
     const nextActiveTab =
@@ -201,8 +251,11 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       nextTabs[0] ??
       null
     const nextGroups = nextActiveTab?.groups ?? []
+    const nextPins = nextActiveTab?.pins ?? []
     setTabs(nextTabs)
     setActiveTabId(nextActiveTab?.id ?? null)
+    pinsRef.current = nextPins
+    setPins(nextPins)
     commitGroups(nextGroups)
     syncActiveIdFromUrl(nextGroups)
   }, [commitGroups, data, syncActiveIdFromUrl])
@@ -218,6 +271,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     pickPayload: (data: TDocTreeMutationData) => TDocTreeMutationPayload | null | undefined,
     onSuccess: (node: TDocTreeNodeDTO) => void,
     errorLabel: string,
+    onSettled?: () => void,
   ): void {
     slugify(title)
       .then((slug) => persist(schema, variables(slug), pickPayload))
@@ -229,6 +283,44 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
         console.error(`## doc tree ${errorLabel} error: `, err)
         reload()
       })
+      .finally(onSettled)
+  }
+
+  function persistLocalNode(
+    localId: string,
+    title: string,
+    schema: TSideTreeMutationSchema,
+    variables: (slug: string) => Record<string, unknown>,
+    pickPayload: (data: TDocTreeMutationData) => TDocTreeMutationPayload | null | undefined,
+    onCreated: (node: TDocTreeNodeDTO) => void,
+    errorLabel: string,
+  ): void {
+    if (localCreateStateRef.current.has(localId)) return
+
+    const createState: TLocalCreateState = { deleteRequested: false }
+    localCreateStateRef.current.set(localId, createState)
+
+    persistTitleMutation(
+      title,
+      schema,
+      variables,
+      pickPayload,
+      (node) => {
+        if (createState.deleteRequested) {
+          persistDelete(node.id)
+          return
+        }
+
+        onCreated(node)
+      },
+      errorLabel,
+      () => localCreateStateRef.current.delete(localId),
+    )
+  }
+
+  function requestLocalDelete(localId: string): void {
+    const createState = localCreateStateRef.current.get(localId)
+    if (createState) createState.deleteRequested = true
   }
 
   const reorderGroups = useCallback(
@@ -241,7 +333,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       commitGroups(localGroups)
 
       if (!moved) return
-      if (isDraftId(moved.id) || (moved.targetGroupId && isDraftId(moved.targetGroupId))) return
+      if (isLocalId(moved.id) || (moved.targetGroupId && isLocalId(moved.targetGroupId))) return
 
       persist(
         S.moveDocTreeNode,
@@ -268,6 +360,16 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
   function updateChildTitle(groupId: string, childId: string, title: string): void {
     updateGroups((currentGroups) => updateChildTitleInGroup(currentGroups, groupId, childId, title))
+  }
+
+  function addPin(): void {
+    if (!activeTabId) return
+    if (editingTarget?.type === SIDE_TREE_NODE_TYPE.PIN && isLocalId(editingTarget.pinId)) return
+
+    cancelEdit()
+    const pin = createSideTreePin(t(UNTITLED_TITLE_I18N_KEY))
+    updatePins((currentPins) => [...currentPins, pin])
+    setEditingTarget({ type: SIDE_TREE_NODE_TYPE.PIN, pinId: pin.id })
   }
 
   /**
@@ -298,7 +400,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   }
 
   /**
-   * Delete a group and all of its local demo children.
+   * Delete a group and all of its children.
    *
    * @example
    * deleteGroup('group-getting-started')
@@ -307,7 +409,8 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     const currentGroups = readGroups()
     const group = currentGroups.find((item) => item.id === groupId)
     const activeInGroup = group?.children.some((child) => child.id === activeId) ?? false
-    const editingInGroup = editingTarget?.groupId === groupId
+    const editingInGroup =
+      !!editingTarget && 'groupId' in editingTarget && editingTarget.groupId === groupId
     const nextGroups = commitGroups(removeGroupFromGroups(currentGroups, groupId))
 
     if (activeInGroup) {
@@ -315,9 +418,12 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     }
     if (editingInGroup) setEditingTarget(null)
 
-    if (isDraftId(groupId)) return
+    if (isLocalId(groupId)) {
+      requestLocalDelete(groupId)
+      return
+    }
 
-    persist(S.deleteDocTreeNode, { id: groupId }, (data) => data?.deleteDocTreeNode)
+    persistDelete(groupId)
   }
 
   /**
@@ -344,11 +450,12 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     )
   }
 
-  function createDraftGroup(groupId: string, title: string): void {
+  function persistLocalGroup(groupId: string, title: string): void {
     const index = findGroupIndex(readGroups(), groupId)
     if (index === -1) return
 
-    persistTitleMutation(
+    persistLocalNode(
+      groupId,
       title,
       S.createDocTreeGroup,
       (slug) => ({
@@ -393,7 +500,100 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     )
   }
 
-  function createDraftChild(groupId: string, childId: string, title: string): void {
+  function persistLocalPin(pinId: string, input: TSideTreeLinkInput): void {
+    const pin = readPins().find((item) => item.id === pinId)
+    const index = readPins().findIndex((item) => item.id === pinId)
+    if (!pin || index === -1 || !activeTabId) return
+
+    persistLocalNode(
+      pinId,
+      input.title,
+      S.createDocTreePin,
+      (slug) => ({
+        input: {
+          tabId: activeTabId,
+          title: input.title,
+          slug,
+          href: input.href,
+          index,
+          marker: pin.marker,
+        },
+      }),
+      (data) => data?.createDocTreePin,
+      (node) => {
+        updatePins((currentPins) =>
+          currentPins.map((item) => (item.id === pinId ? mapPin(node) : item)),
+        )
+      },
+      'create pin',
+    )
+  }
+
+  function updateRemotePin(pinId: string, input: TSideTreeLinkInput): void {
+    persistTitleMutation(
+      input.title,
+      S.updateDocTreeNode,
+      (slug) => ({ id: pinId, patch: { href: input.href, title: input.title, slug } }),
+      (data) => data?.updateDocTreeNode,
+      (node) => {
+        updatePins((currentPins) =>
+          currentPins.map((item) => (item.id === pinId ? mapPin(node) : item)),
+        )
+      },
+      'update pin',
+    )
+  }
+
+  function savePin(pinId: string, input: TSideTreeLinkInput): void {
+    const href = input.href.trim()
+    if (!isLinkHref(href)) {
+      toast(t('dsb.cms.docs.side_tree.link.invalid_href'), 'error')
+      return
+    }
+
+    const title = input.title.trim() || getDefaultLinkTitle(href) || t(UNTITLED_TITLE_I18N_KEY)
+    updatePins((currentPins) =>
+      currentPins.map((pin) => (pin.id === pinId ? { ...pin, href, title } : pin)),
+    )
+    setEditingTarget(null)
+
+    if (isLocalId(pinId)) {
+      persistLocalPin(pinId, { href, title })
+      return
+    }
+
+    updateRemotePin(pinId, { href, title })
+  }
+
+  function deletePin(pinId: string): void {
+    updatePins((currentPins) => currentPins.filter((pin) => pin.id !== pinId))
+    if (editingTarget?.type === SIDE_TREE_NODE_TYPE.PIN && editingTarget.pinId === pinId) {
+      setEditingTarget(null)
+    }
+
+    if (isLocalId(pinId)) {
+      requestLocalDelete(pinId)
+      return
+    }
+
+    persistDelete(pinId)
+  }
+
+  function updatePinStyle(pinId: string, marker: TSideTreePin['marker']): void {
+    updatePins((currentPins) =>
+      currentPins.map((pin) => (pin.id === pinId ? { ...pin, marker } : pin)),
+    )
+
+    if (isLocalId(pinId)) return
+
+    persist(
+      S.updateDocTreeNode,
+      { id: pinId, patch: { marker } },
+      (data) => data?.updateDocTreeNode,
+    )
+  }
+
+  function persistLocalChild(groupId: string, childId: string, title: string): void {
     const currentGroups = readGroups()
     const group = currentGroups.find((item) => item.id === groupId)
     const child = group?.children.find((item) => item.id === childId)
@@ -403,7 +603,8 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     const schema =
       child.type === SIDE_TREE_NODE_TYPE.LINK ? S.createDocTreeLink : S.createDocTreePage
 
-    persistTitleMutation(
+    persistLocalNode(
+      childId,
       title,
       schema,
       (slug) => ({
@@ -437,8 +638,8 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     updateGroup(groupId, { title })
     setEditingTarget(null)
 
-    if (isDraftId(groupId)) {
-      createDraftGroup(groupId, title)
+    if (isLocalId(groupId)) {
+      persistLocalGroup(groupId, title)
       return
     }
 
@@ -452,7 +653,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
    * renameChild('group-getting-started', 'page-welcome', 'Welcome')
    */
   function renameChild(groupId: string, childId: string, title: string): void {
-    if (isDraftId(groupId)) {
+    if (isLocalId(groupId)) {
       // Keep the inline editor open so a child title cannot appear saved before its parent group exists.
       toast(t('dsb.cms.docs.side_tree.error.confirm_group_first'), 'error')
       return
@@ -461,7 +662,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     const currentChild = findChild(readGroups(), childId)
 
     if (
-      isDraftId(childId) &&
+      isLocalId(childId) &&
       currentChild?.type === SIDE_TREE_NODE_TYPE.PAGE &&
       isLinkHref(title)
     ) {
@@ -482,8 +683,8 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     updateChildTitle(groupId, childId, title)
     setEditingTarget(null)
 
-    if (isDraftId(childId)) {
-      createDraftChild(groupId, childId, title)
+    if (isLocalId(childId)) {
+      persistLocalChild(groupId, childId, title)
       return
     }
 
@@ -491,7 +692,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   }
 
   function renameLink(groupId: string, childId: string, input: TSideTreeLinkInput): void {
-    if (isDraftId(groupId)) {
+    if (isLocalId(groupId)) {
       toast(t('dsb.cms.docs.side_tree.error.confirm_group_first'), 'error')
       return
     }
@@ -507,8 +708,8 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     updateGroups((currentGroups) => patchChildInGroups(currentGroups, childId, { href, title }))
     setEditingTarget(null)
 
-    if (isDraftId(childId)) {
-      createDraftChild(groupId, childId, title)
+    if (isLocalId(childId)) {
+      persistLocalChild(groupId, childId, title)
       return
     }
 
@@ -522,9 +723,17 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
    * cancelEdit()
    */
   function cancelEdit(): void {
+    if (editingTarget?.type === SIDE_TREE_NODE_TYPE.PIN) {
+      if (isLocalId(editingTarget.pinId)) {
+        updatePins((currentPins) => currentPins.filter((pin) => pin.id !== editingTarget.pinId))
+      }
+      setEditingTarget(null)
+      return
+    }
+
     if (editingTarget) {
       const currentGroups = readGroups()
-      const nextGroups = removeDraftTarget(currentGroups, editingTarget)
+      const nextGroups = removeLocalTarget(currentGroups, editingTarget)
 
       if (nextGroups) {
         commitGroups(nextGroups)
@@ -553,7 +762,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
       updateChildMarkerInGroup(currentGroups, groupId, childId, marker),
     )
 
-    if (isDraftId(childId)) return
+    if (isLocalId(childId)) return
 
     persist(
       S.updateDocTreeNode,
@@ -583,16 +792,19 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     }
     if (
       editingTarget &&
-      editingTarget.type !== SIDE_TREE_NODE_TYPE.GROUP &&
+      'childId' in editingTarget &&
       editingTarget.groupId === groupId &&
       editingTarget.childId === childId
     ) {
       setEditingTarget(null)
     }
 
-    if (isDraftId(childId)) return
+    if (isLocalId(childId)) {
+      requestLocalDelete(childId)
+      return
+    }
 
-    persist(S.deleteDocTreeNode, { id: childId }, (data) => data?.deleteDocTreeNode)
+    persistDelete(childId)
   }
 
   function duplicateChild(groupId: string, childId: string): void {
@@ -607,7 +819,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
     commitGroups(nextGroups)
 
-    if (isDraftId(childId)) return
+    if (isLocalId(childId)) return
 
     persist(S.duplicateDocTreeNode, { id: childId }, (data) => data?.duplicateDocTreeNode)
       .then((payload) => {
@@ -713,6 +925,8 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     if (!tab) return
 
     setActiveTabId(id)
+    pinsRef.current = tab.pins
+    setPins(tab.pins)
     groupsRef.current = tab.groups
     setGroups(tab.groups)
     selectPage(findFirstPage(tab.groups))
@@ -761,13 +975,15 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     if (activeTabId === tabId) {
       const nextActiveTab = nextTabs[Math.min(removedIndex, nextTabs.length - 1)] || null
       setActiveTabId(nextActiveTab?.id ?? null)
+      pinsRef.current = nextActiveTab?.pins ?? []
+      setPins(nextActiveTab?.pins ?? [])
       groupsRef.current = nextActiveTab?.groups ?? []
       setGroups(nextActiveTab?.groups ?? [])
       setEditingTarget(null)
       selectPage(findFirstPage(nextActiveTab?.groups ?? []))
     }
 
-    persist(S.deleteDocTreeNode, { id: tabId }, (data) => data?.deleteDocTreeNode)
+    persistDelete(tabId)
   }
 
   function reorderTabs(nextTabs: readonly TSideTreeTab[], movedTabId: string): void {
@@ -807,6 +1023,8 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
           tab,
         ])
         setActiveTabId(tab.id)
+        pinsRef.current = tab.pins
+        setPins(tab.pins)
         groupsRef.current = tab.groups
         setGroups(tab.groups)
         selectPage(null)
@@ -820,14 +1038,18 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   return {
     tabs,
     activeTabId,
+    pins,
     groups,
     treeState,
     stagedEvents,
+    trashItems,
+    trashLoading,
     activeId,
     editingTarget,
     coverWarning,
     activate,
     activateTab,
+    addPin,
     addTab,
     deleteTab,
     renameTab,
@@ -841,12 +1063,16 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     renameGroup,
     renameChild,
     renameLink,
+    savePin,
+    deletePin,
     cancelEdit,
     edit: setEditingTarget,
     handleChildAction,
     updateChildStyle,
+    updatePinStyle,
     patchChild,
     reload,
+    reloadTrash,
     reorderGroups,
   }
 }

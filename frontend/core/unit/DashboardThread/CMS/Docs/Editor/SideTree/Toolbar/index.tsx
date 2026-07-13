@@ -11,16 +11,16 @@ import Input from '~/widgets/Input'
 import useSalon from '../salon/toolbar'
 
 type TToolbarAction = {
-  key: 'top' | 'group' | 'doc'
+  key: 'pin' | 'group' | 'doc'
   label:
-    | 'dsb.cms.docs.side_tree.action.top'
+    | 'dsb.cms.docs.side_tree.action.pin'
     | 'dsb.cms.docs.side_tree.action.group'
     | 'dsb.cms.docs.side_tree.action.doc'
   Icon: ComponentType<SVGProps<SVGSVGElement>>
 }
 
 const ACTIONS: TToolbarAction[] = [
-  { key: 'top', label: 'dsb.cms.docs.side_tree.action.top', Icon: MapPinPlusSVG },
+  { key: 'pin', label: 'dsb.cms.docs.side_tree.action.pin', Icon: MapPinPlusSVG },
   { key: 'group', label: 'dsb.cms.docs.side_tree.action.group', Icon: FolderPlusSVG },
   { key: 'doc', label: 'dsb.cms.docs.side_tree.action.doc', Icon: FilePlusSVG },
 ]
@@ -30,6 +30,7 @@ type TProps = {
   searching: boolean
   onChangeQuery: (query: string) => void
   onCloseSearch: () => void
+  onAddPin: () => void
   onAddGroup: () => void
   onOpenSearch: () => void
 }
@@ -39,6 +40,7 @@ const Toolbar: FC<TProps> = ({
   searching,
   onChangeQuery,
   onCloseSearch,
+  onAddPin,
   onAddGroup,
   onOpenSearch,
 }) => {
@@ -99,7 +101,7 @@ const Toolbar: FC<TProps> = ({
                 className={s.actionButton}
                 aria-label={buttonLabel}
                 title={buttonLabel}
-                onClick={key === 'group' ? onAddGroup : undefined}
+                onClick={key === 'pin' ? onAddPin : key === 'group' ? onAddGroup : undefined}
               >
                 <Icon className={s.actionIcon} />
               </button>

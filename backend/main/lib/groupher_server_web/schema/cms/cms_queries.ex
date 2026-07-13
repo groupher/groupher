@@ -49,7 +49,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:community, non_null(:string))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "community.update")
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.doc_tree_trash_items/3)
     end

@@ -12,6 +12,7 @@ import CoverWarningModal from './CoverWarningModal'
 import SideTreeDndContext from './Dnd/SideTreeDndContext'
 import Footer from './Footer'
 import Group from './Group'
+import PinList from './PinList'
 import useSalon from './salon'
 import type { TSideTreeController, TSideTreeGroup } from './spec'
 import Toolbar from './Toolbar'
@@ -63,10 +64,12 @@ const SideTree: FC<TProps> = ({ controller, viewportLayoutKey }) => {
 
   const {
     groups,
+    pins,
     activeId,
     editingTarget,
     coverWarning,
     activate,
+    addPin,
     addGroup,
     addChild,
     clearCoverWarning,
@@ -76,10 +79,13 @@ const SideTree: FC<TProps> = ({ controller, viewportLayoutKey }) => {
     renameGroup,
     renameChild,
     renameLink,
+    savePin,
+    deletePin,
     cancelEdit,
     edit,
     handleChildAction,
     updateChildStyle,
+    updatePinStyle,
     reload,
     reorderGroups,
   } = controller
@@ -115,6 +121,7 @@ const SideTree: FC<TProps> = ({ controller, viewportLayoutKey }) => {
         searching={searching}
         onChangeQuery={setSearchQuery}
         onCloseSearch={closeSearch}
+        onAddPin={addPin}
         onAddGroup={addGroup}
         onOpenSearch={openSearch}
       />
@@ -128,6 +135,15 @@ const SideTree: FC<TProps> = ({ controller, viewportLayoutKey }) => {
           targetDragPosition,
         }) => (
           <div ref={groupListRef} className={s.groupList}>
+            <PinList
+              pins={pins}
+              editingTarget={editingTarget}
+              onCancelEdit={cancelEdit}
+              onDelete={deletePin}
+              onEdit={edit}
+              onSave={savePin}
+              onStyleChange={updatePinStyle}
+            />
             {searchActive && columns.length === 0 ? (
               <div className={s.empty}>{t('dsb.cms.docs.side_tree.search_empty')}</div>
             ) : (
@@ -175,7 +191,13 @@ const SideTree: FC<TProps> = ({ controller, viewportLayoutKey }) => {
           </div>
         )}
       </SideTreeDndContext>
-      <Footer baseRevision={controller.treeState?.revision ?? null} onRestored={reload} />
+      <Footer
+        baseRevision={controller.treeState?.revision ?? null}
+        trashItems={controller.trashItems}
+        trashLoading={controller.trashLoading}
+        onReloadTrash={controller.reloadTrash}
+        onRestored={reload}
+      />
     </aside>
   )
 }

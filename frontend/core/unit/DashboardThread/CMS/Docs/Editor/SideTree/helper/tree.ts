@@ -3,34 +3,52 @@ import type { TEditingTarget, TSideTreeChild, TSideTreeGroup } from '../spec'
 import { duplicateSideTreeChild } from './factory'
 
 /**
- * Check whether a node id belongs to a local optimistic draft.
+ * Check whether a node id belongs only to the local optimistic tree.
+ *
+ * A local id is temporary frontend identity while a backend create mutation is
+ * pending. It is unrelated to the backend `draft` stage, whose nodes have real
+ * ids and can be deleted into Trash.
  *
  * @example
- * if (isDraftId(child.id)) return
+ * if (isLocalId(child.id)) return
  */
-export const isDraftId = (id: string): boolean =>
-  id.startsWith(`${SIDE_TREE_NODE_TYPE.GROUP}-`) ||
-  id.startsWith(`${SIDE_TREE_NODE_TYPE.PAGE}-`) ||
-  id.startsWith(`${SIDE_TREE_NODE_TYPE.LINK}-`)
+const LOCAL_NODE_TYPES = new Set<string>([
+  SIDE_TREE_NODE_TYPE.PIN,
+  SIDE_TREE_NODE_TYPE.GROUP,
+  SIDE_TREE_NODE_TYPE.PAGE,
+  SIDE_TREE_NODE_TYPE.LINK,
+])
+
+export const isLocalId = (id: string): boolean => {
+  const [scope, type, timestamp, sequence, ...rest] = id.split('-')
+
+  return (
+    rest.length === 0 &&
+    scope === 'local' &&
+    LOCAL_NODE_TYPES.has(type) &&
+    /^\d+$/.test(timestamp) &&
+    /^\d+$/.test(sequence)
+  )
+}
 
 /**
- * Remove an unsaved draft node when inline editing is cancelled.
+ * Remove a local optimistic node when inline editing is explicitly cancelled.
  *
  * @example
- * const nextGroups = removeDraftTarget(groups, editingTarget)
+ * const nextGroups = removeLocalTarget(groups, editingTarget)
  * if (nextGroups) commitGroups(nextGroups)
  */
-export const removeDraftTarget = (
+export const removeLocalTarget = (
   groups: readonly TSideTreeGroup[],
   target: TEditingTarget,
 ): TSideTreeGroup[] | null => {
   if (!target) return null
 
-  if (target.type === SIDE_TREE_NODE_TYPE.GROUP && isDraftId(target.groupId)) {
+  if (target.type === SIDE_TREE_NODE_TYPE.GROUP && isLocalId(target.groupId)) {
     return groups.filter((group) => group.id !== target.groupId)
   }
 
-  if ('childId' in target && isDraftId(target.childId)) {
+  if ('childId' in target && isLocalId(target.childId)) {
     return groups.map((group) =>
       group.id === target.groupId
         ? { ...group, children: group.children.filter((child) => child.id !== target.childId) }
@@ -54,6 +72,8 @@ export const isActiveRemovedByTarget = (
 ): boolean => {
   if (!target || !activeId) return false
 
+  if (target.type === SIDE_TREE_NODE_TYPE.PIN) return false
+
   if ('childId' in target) return activeId === target.childId
 
   const group = groups.find((item) => item.id === target.groupId)
@@ -61,10 +81,10 @@ export const isActiveRemovedByTarget = (
 }
 
 /**
- * Replace a local draft group with the backend-created group.
+ * Replace a local optimistic group with the backend-created draft group.
  *
  * @example
- * const nextGroups = replaceGroupId(groups, draftId, remoteGroup)
+ * const nextGroups = replaceGroupId(groups, localId, remoteGroup)
  */
 export const replaceGroupId = (
   groups: readonly TSideTreeGroup[],
@@ -73,10 +93,10 @@ export const replaceGroupId = (
 ): TSideTreeGroup[] => groups.map((group) => (group.id === localId ? remote : group))
 
 /**
- * Replace a local draft child with the backend-created page or link.
+ * Replace a local optimistic child with the backend-created draft page or link.
  *
  * @example
- * const nextGroups = replaceChildId(groups, groupId, draftId, remoteChild)
+ * const nextGroups = replaceChildId(groups, groupId, localId, remoteChild)
  */
 export const replaceChildId = (
   groups: readonly TSideTreeGroup[],

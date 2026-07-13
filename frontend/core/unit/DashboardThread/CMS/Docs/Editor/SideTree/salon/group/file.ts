@@ -13,7 +13,7 @@ export default function useSalon({
 
   return {
     wrapper: cn(
-      'group/docs-tree-row row-center h-7 gap-x-2 rounded-md px-1 pointer',
+      'group row-center h-7 gap-x-2 rounded-md px-1 pointer',
       active && 'bold-sm',
       active && bg('hoverBg'),
       hover('box'),
@@ -34,15 +34,15 @@ export default function useSalon({
     meta: 'row-center ml-auto h-5 shrink-0',
     publishDotSlot: cn(
       'align-both w-4 shrink-0 overflow-hidden opacity-100',
-      'group-hover/docs-tree-row:w-0 group-hover/docs-tree-row:opacity-0',
-      'group-focus-within/docs-tree-row:w-0 group-focus-within/docs-tree-row:opacity-0',
+      'group-hover:w-0 group-hover:opacity-0',
+      'group-focus-within:w-0 group-focus-within:opacity-0',
       actionVisible && 'w-0 opacity-0',
     ),
     unpublishedDot: cn('block size-1.5 shrink-0 rounded-full', primary('bg')),
     actions: cn(
       'row-center w-0 overflow-hidden opacity-0',
-      'group-hover/docs-tree-row:w-4 group-hover/docs-tree-row:opacity-100',
-      'group-focus-within/docs-tree-row:w-4 group-focus-within/docs-tree-row:opacity-100',
+      'group-hover:w-4 group-hover:opacity-100',
+      'group-focus-within:w-4 group-focus-within:opacity-100',
       actionVisible && 'w-4 opacity-100',
     ),
     moreIcon: cn('size-3.5 pointer', fill('digest')),

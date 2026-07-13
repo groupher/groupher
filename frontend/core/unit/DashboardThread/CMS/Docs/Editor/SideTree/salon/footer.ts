@@ -1,16 +1,21 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {
-  const { sexyBorder } = useTwBelt()
+  const { bg, cn, hover, sexyBorder } = useTwBelt()
 
   return {
     wrapper: 'z-10 column min-h-12 w-full shrink-0 bg-base/95 text-sm text-digest backdrop-blur-sm',
     divider: sexyBorder(35),
-    content: 'row-center min-h-12 w-full px-1.5 py-2',
+    content: 'row-center min-h-12 w-full px-1.5 py-1',
     grow: 'grow',
-    iconButton: 'row-center h-8 min-w-8 gap-x-1 rounded-sm px-1.5 hover:bg-hover transition-colors',
-    iconOnlyButton: 'grid place-items-center size-8 rounded-sm hover:bg-hover transition-colors',
+    iconButton: 'align-both h-6 min-w-10',
+    iconButtonSurface: cn('row-center h-full rounded-sm px-1.5', hover('bg')),
+    iconOnlyButton: cn('grid size-10 place-items-center rounded-sm', hover('bg')),
     icon: 'size-4 opacity-80',
-    count: 'text-xs leading-none text-digest',
+    trashIcon: cn('size-3.5', hover('icon')),
+    count: cn(
+      'grid h-5 min-w-4 place-items-center rounded-md px-1.5 text-xs leading-none text-digest tabular-nums',
+      bg('badge'),
+    ),
   }
 }

@@ -1,5 +1,5 @@
 import { SIDE_TREE_NODE_TYPE } from '../constant'
-import type { TDocTreeNodeDTO, TSideTreeChild, TSideTreeGroup } from '../spec'
+import type { TDocTreeNodeDTO, TSideTreeChild, TSideTreeGroup, TSideTreePin } from '../spec'
 import { isLinkHref } from './url'
 
 const normalizeNodeType = (type: TDocTreeNodeDTO['type'] | string | null | undefined): string =>
@@ -50,6 +50,17 @@ export const mapNode = (node: TDocTreeNodeDTO): TSideTreeChild => {
     publishState: node.publishState || undefined,
   }
 }
+
+export const mapPin = (node: TDocTreeNodeDTO): TSideTreePin => ({
+  id: node.id,
+  type: SIDE_TREE_NODE_TYPE.PIN,
+  title: node.title || '',
+  slug: node.slug || undefined,
+  href: node.href || '',
+  marker: node.marker || undefined,
+  hidden: node.hidden || undefined,
+  publishState: node.publishState || undefined,
+})
 
 /**
  * Convert a backend group node and its children into a local SideTree group.
