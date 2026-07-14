@@ -35,6 +35,7 @@ import ThirdPartyIcon from '~/icons/dsb/ThirdParty'
 import ThreadsIcon from '~/icons/dsb/Threads'
 import TrendIcon from '~/icons/dsb/Trend'
 import WidgetsIcon from '~/icons/dsb/Widgets'
+import TrashIcon from '~/icons/Trash'
 
 export const DSB_MENU_ICONS = {
   overview: OverviewIcon,
@@ -72,6 +73,7 @@ export const DSB_MENU_ICONS = {
   backup: BackupIcon,
   content: ContentIcon,
   behavior: BehaviorIcon,
+  trash: TrashIcon,
   sidebar: SidebarIcon,
 } as const
 
