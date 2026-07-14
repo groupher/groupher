@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
+    useTypeScriptCli: true,
     turbopackFileSystemCacheForBuild: true,
   },
   images: {
