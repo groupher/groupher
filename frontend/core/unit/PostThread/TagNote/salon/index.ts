@@ -13,6 +13,6 @@ export default function useSalon({ ...spacing }: TProps) {
     title: cn('text-lg ml-0.5', fg('title')),
     stats: 'row-center text-sm gap-x-1.5 mr-2',
     statLabel: cn('text-xs', fg('digest')),
-    statNum: cn('font-medium', primary('fg')),
+    statNum: cn('pretty-num font-medium', primary('fg')),
   }
 }

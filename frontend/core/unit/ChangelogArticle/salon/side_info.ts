@@ -9,7 +9,7 @@ export default function useSalon() {
     divider: sexyBorder(),
     label: cn('row text-sm mb-3', fg('title')),
     value: cn('text-sm mb-1.5', fg('digest')),
-    count: cn('text-xs ml-0.5', fg('digest')),
+    count: cn('pretty-num ml-0.5 text-xs', fg('digest')),
     userList: 'row wrap gap-2.5',
     user: 'row-center',
     avatar: cn('size-5', avatar()),

@@ -19,7 +19,7 @@ export default function useSalon() {
     majorTick: cn('stroke-current stroke-[1px] opacity-45', fg('digest')),
     guideArc: cn('fill-none stroke-current stroke-[1px]', primary('fg')),
     center: cn(
-      'align-both abs-full m-0 plain-button text-xs leading-none tabular-nums pointer outline-none',
+      'align-both abs-full m-0 plain-button pretty-num text-xs leading-none pointer outline-none',
       fg('digest'),
     ),
     negativeSign: 'mb-px text-[10px] leading-none opacity-60',

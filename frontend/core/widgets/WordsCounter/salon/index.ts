@@ -14,9 +14,9 @@ export default function useSalon({ ...spacing }: TProps) {
     hint: cn('text-xs opacity-80', fg('digest')),
     main: 'row items-end mx-1',
     //
-    curNum: cn('text-sm', fg('title')),
+    curNum: cn('pretty-num text-sm', fg('title')),
     invalid: rainbow(COLOR.RED, 'fg'),
     slash: cn('text-xs ml-1.5 mb-px', fg('digest')),
-    total: cn('text-xs', fg('digest')),
+    total: cn('pretty-num text-xs', fg('digest')),
   }
 }

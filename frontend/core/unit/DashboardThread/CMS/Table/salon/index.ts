@@ -2,6 +2,14 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn, cnMerge } from '~/css'
 
+const NUMERIC_COLUMN_IDS = new Set([
+  'articlesCount',
+  'commentsCount',
+  'subscribersCount',
+  'upvotesCount',
+  'views',
+])
+
 export default function useSalon({ loading }: { loading: boolean }) {
   const { cn, bg, fg, fill, br, hover } = useTwBelt()
 
@@ -94,9 +102,8 @@ export default function useSalon({ loading }: { loading: boolean }) {
         cn(
           'w-full overflow-hidden',
           colId === 'status' && 'whitespace-nowrap',
-          (colId === 'upvotesCount' || colId === 'views' || colId === 'commentsCount') &&
-            'text-center whitespace-nowrap',
-          colId === 'dates' && 'text-right whitespace-nowrap',
+          NUMERIC_COLUMN_IDS.has(colId) && 'pretty-num text-center whitespace-nowrap',
+          colId === 'dates' && 'pretty-num text-right whitespace-nowrap',
           colId === 'author' && 'text-right whitespace-nowrap',
         ),
       titleCell: 'flex w-full items-start gap-3 overflow-hidden',

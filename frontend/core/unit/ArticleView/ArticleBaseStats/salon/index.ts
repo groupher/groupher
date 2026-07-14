@@ -12,7 +12,7 @@ export default function useSalon({ ...spacing }: TProps) {
     commentBox: cn('align-both size-3.5', hover('bg')),
     commentIcon: cn('size-3', hover('icon')),
     divider: 'mr-2.5',
-    count: cn('text-base ml-0.5', fg('digest')),
-    commentCount: cn('ml-2 text-base ml-0.5', hover('fg')),
+    count: cn('pretty-num ml-0.5 text-base', fg('digest')),
+    commentCount: cn('pretty-num ml-0.5 ml-2 text-base', hover('fg')),
   }
 }

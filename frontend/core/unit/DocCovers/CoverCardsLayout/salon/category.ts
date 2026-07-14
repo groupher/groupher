@@ -21,6 +21,6 @@ export default function useSalon() {
     articleTitle: cnMerge(base.pageTextLink, fg('title'), 'text-base bold-sm mt-4'),
     desc: cn('text-sm leading-5 mt-1', fg('digest')),
     footer: 'row-between',
-    count: cn('text-sm', fg('hint')),
+    count: cn('pretty-num text-sm', fg('hint')),
   }
 }

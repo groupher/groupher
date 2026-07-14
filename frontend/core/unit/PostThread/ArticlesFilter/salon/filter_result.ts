@@ -1,10 +1,10 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {
-  const { fg } = useTwBelt()
+  const { cn, fg } = useTwBelt()
 
   return {
     wrapper: 'row-center',
-    text: fg('digest'),
+    text: cn('pretty-num', fg('digest')),
   }
 }

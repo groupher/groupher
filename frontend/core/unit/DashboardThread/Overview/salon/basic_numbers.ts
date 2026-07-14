@@ -9,6 +9,6 @@ export default function useSalon() {
     right: 'row wrap w-80 gap-y-5',
     section: 'w-32 h-20',
     hint: cn('row-center text-xs', fg('hint')),
-    num: cn('text-2xl bold-sm mt-1', fg('title')),
+    num: cn('pretty-num mt-1 text-2xl bold-sm', fg('title')),
   }
 }

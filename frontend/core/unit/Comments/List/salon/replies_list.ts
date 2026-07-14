@@ -6,7 +6,7 @@ export default function useSalon() {
   return {
     wrapper: 'ml-2.5',
     countHint: cn('row-center text-xs ml-4 mt-2.5', fg('digest')),
-    countNum: cn('bold-sm mr-1', fg('digest')),
+    countNum: cn('pretty-num mr-1 bold-sm', fg('digest')),
     slashSign: 'text-xs bold mr-2',
   }
 }

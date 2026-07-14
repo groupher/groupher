@@ -15,7 +15,7 @@ export default function useSalon({ width }) {
     icon: cn('size-3.5 group-smoky-80', fill('digest')),
     iconActive: primary('fill'),
     input: cn(
-      'outline-none tabular-nums box-border m-0 list-none relative inline-block w-full bg-none border appearance-none',
+      'outline-none pretty-num box-border m-0 list-none relative inline-block w-full bg-none border appearance-none',
       'px-2.5 py-1 h-9 rounded-md text-sm text-left leading-normal caret-inherit',
       'placeholder:italic placeholder:opacity-65 placeholder:text-xs',
       'trans-all-200',

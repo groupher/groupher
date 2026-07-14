@@ -14,7 +14,7 @@ export default function Members() {
   return (
     <div className={s.wrapper}>
       <div className={s.title}>
-        {t('article.footer.members.upvotes')} ({upvotesCount})
+        {t('article.footer.members.upvotes')} <span className='pretty-num'>({upvotesCount})</span>
       </div>
       <UserList users={meta.latestUpvotedUsers} />
       <div className='mb-5' />

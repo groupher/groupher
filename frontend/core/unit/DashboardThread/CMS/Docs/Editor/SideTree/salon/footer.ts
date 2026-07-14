@@ -17,7 +17,7 @@ export default function useSalon() {
     trashText: cn(text, '@max-doc-tree-min:hidden'),
     assetsText: cn(text, '@max-doc-tree-footer:hidden'),
     count: cn(
-      'grid h-5 min-w-4 place-items-center rounded-md px-1.5 text-xs leading-none text-digest tabular-nums',
+      'pretty-num grid h-5 min-w-4 place-items-center rounded-md px-1.5 text-xs leading-none text-digest',
       bg('badge'),
     ),
   }

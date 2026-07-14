@@ -29,7 +29,7 @@ export default function useSalon() {
     linkIcon: cn('size-5 -ml-1 mr-1', fill('digest')),
     joiners: 'row mb-5.5 mt-4 gap-x-2',
     publish: cn('w-full -ml-1', badgeInView ? 'block' : 'hidden', isHeroLayout && 'hidden'),
-    moreNum: cn('font ml-1 pointer', fg('digest'), `hover:${fg('title')}`),
+    moreNum: cn('pretty-num font ml-1 pointer', fg('digest'), `hover:${fg('title')}`),
     joinAvatar: cn('size-6', avatar()),
     tagsBar: cn('mt-6 -ml-1 w-full', isHeroLayout && 'mt-1'),
     unibarWrapper: cn(

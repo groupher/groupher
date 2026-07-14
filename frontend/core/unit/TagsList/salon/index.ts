@@ -12,6 +12,6 @@ export default function useSalon({ ...spacing }: TProps) {
     foldWrapper: cn('row-center wrap relative gap-x-1.5', margin(spacing)),
     // tag: 'row-center debug',
     // title: cn('text-xs keep-all mr-px', fg('digest')),
-    more: cn('text-xs italic opacity-80', fg('digest')),
+    more: cn('pretty-num text-xs italic opacity-80', fg('digest')),
   }
 }

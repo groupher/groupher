@@ -14,6 +14,6 @@ export default function useSalon({ isHighLight, ...spacing }: TProps) {
     wrapper: cn('row-center', isHighLight ? fg('digest') : fg('hint'), margin(spacing)),
     highLight: 'bg-clip-text bold-sm count-highlight',
     viewIcon: cn('size-3 mr-1', isHighLight ? fill('highlight') : fill('digest')),
-    count: 'text-sm',
+    count: 'pretty-num text-sm',
   }
 }
