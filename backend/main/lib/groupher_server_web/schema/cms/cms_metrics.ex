@@ -215,6 +215,17 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     field(:sort, :sort_enum)
   end
 
+  input_object :trash_filter do
+    pagination_args()
+    field(:thread, :thread)
+  end
+
+  input_object :audit_log_filter do
+    pagination_args()
+    field(:action, :string)
+    field(:resource_type, :string)
+  end
+
   @desc "article_filter doc"
   input_object :article_filter do
     @desc "limit of records (default 20), if first > 30, only return 30 at most"

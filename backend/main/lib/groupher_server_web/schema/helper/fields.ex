@@ -26,7 +26,6 @@ defmodule GroupherServerWeb.Schema.Helper.Fields do
       field(:digest, :string)
       field(:views, :integer)
       field(:is_pinned, :boolean)
-      field(:mark_delete, :boolean)
       field(:cover_url, :string)
       field(:cover_url_dark, :string)
 

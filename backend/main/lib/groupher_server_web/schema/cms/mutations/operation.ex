@@ -8,6 +8,52 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Operation do
   use Helper.GqlSchemaSuite
 
   object :cms_operation_mutations do
+    @desc "Move one logical Article into Trash"
+    field :trash_article, :trashed_article do
+      arg(:article, non_null(:article_path_input))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "article.trash")
+      middleware(M.FrontDesk, :article)
+      resolve(&R.CMS.trash_article/3)
+    end
+
+    @desc "Restore one logical Article from Trash"
+    field :restore_trashed_article, :article do
+      arg(:id, non_null(:id))
+      arg(:community, non_null(:string))
+      arg(:thread, non_null(:thread))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "article.restore")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.restore_trashed_article/3)
+    end
+
+    @desc "Permanently delete one standalone Article aggregate from Trash"
+    field :permanently_delete_trashed_article, :done_state do
+      arg(:id, non_null(:id))
+      arg(:community, non_null(:string))
+      arg(:thread, non_null(:thread))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "article.permanent_delete")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.permanently_delete_trashed_article/3)
+    end
+
+    @desc "Permanently delete one complete Trash action"
+    field :permanently_delete_trash_action, :done_state do
+      arg(:id, non_null(:id))
+      arg(:community, non_null(:string))
+      arg(:thread, non_null(:thread))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "article.permanent_delete")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.permanently_delete_trash_action/3)
+    end
+
     @desc "set category to a community"
     field :set_category, :community do
       arg(:community, non_null(:string))

@@ -16,27 +16,35 @@ defmodule GroupherServer.Test.Mutation.CMS.Manager do
   end
 
   describe "root mutation" do
-    test "god can markDelete a post", ~m(community post)a do
+    test "god can move a post into Trash", ~m(community post)a do
       variables = %{article: article_path(community, post, :post)}
 
       passport_rules = %{"god" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
-      updated = rule_conn |> gq_mutation(S.Article.m(:mark_delete_article, :post), variables)
+      trashed = rule_conn |> gq_mutation(S.Article.m(:trash_article), variables)
 
-      assert updated["innerId"] == to_string(post.inner_id)
-      assert updated["markDelete"] == true
+      assert trashed["article"]["innerId"] == to_string(post.inner_id)
+      assert {:error, _} = CMS.Articles.read(community, :post, post.inner_id)
     end
 
-    test "god can delete a post", ~m(community post)a do
+    test "god can permanently delete a trashed post", ~m(community post)a do
       passport_rules = %{"god" => true}
       rule_conn = simu_conn(:user, cms: passport_rules)
 
       variables = %{article: article_path(community, post, :post)}
-      deleted = rule_conn |> gq_mutation(S.Article.m(:delete_article, :post), variables)
+      trashed = rule_conn |> gq_mutation(S.Article.m(:trash_article), variables)
 
-      assert deleted["innerId"] == to_string(post.inner_id)
-      assert {:error, _} = CMS.FrontDesk.article(community, :post, deleted["innerId"])
+      deleted =
+        rule_conn
+        |> gq_mutation(S.Article.m(:permanently_delete_trashed_article), %{
+          id: trashed["id"],
+          community: community.slug,
+          thread: "POST"
+        })
+
+      assert deleted["done"]
+      refute Repo.get(CMS.Model.Post, post.id)
     end
   end
 end

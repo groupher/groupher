@@ -97,8 +97,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
     article_react_mutations(:blog, [
       :upvote,
       :pin,
-      :mark_delete,
-      :delete,
       :emotion,
       :report,
       :sink,

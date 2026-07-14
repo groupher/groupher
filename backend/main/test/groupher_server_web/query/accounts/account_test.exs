@@ -101,7 +101,7 @@ defmodule GroupherServer.Test.Query.Account.Basic do
 
     @valid_rules %{
       "global" => %{},
-      "javascript" => %{"cms" => %{"post.delete" => true, "post.edit" => true}}
+      "javascript" => %{"cms" => %{"post.trash" => true, "post.edit" => true}}
     }
 
     test "login user can get own passport and passport_string", ~m(user)a do

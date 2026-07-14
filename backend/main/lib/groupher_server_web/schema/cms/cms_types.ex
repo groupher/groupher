@@ -33,6 +33,54 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:done, :boolean)
   end
 
+  object :trashed_article do
+    field(:id, non_null(:id), resolve: fn item, _, _ -> {:ok, item.hash_id} end)
+    field(:thread, non_null(:thread))
+    field(:article_ref, non_null(:id), resolve: fn item, _, _ -> {:ok, item.article_hash_id} end)
+    field(:article, :article)
+    field(:deleted_by, :user, resolve: dataloader(CMS, :deleted_by))
+    field(:deleted_at, non_null(:datetime))
+    field(:mentioned_by_count, non_null(:integer))
+
+    field(:scheduled_permanent_deletion_at, non_null(:datetime),
+      resolve: fn item, _, _ -> {:ok, item.trash_action.scheduled_permanent_deletion_at} end
+    )
+
+    field :mentioned_by, :paged_mentions do
+      arg(:filter, :pagi_filter)
+      resolve(&GroupherServerWeb.Resolvers.CMS.trashed_article_mentioned_by/3)
+    end
+
+    field :mentions, :paged_mentions do
+      arg(:filter, :pagi_filter)
+      resolve(&GroupherServerWeb.Resolvers.CMS.trashed_article_mentions/3)
+    end
+  end
+
+  object :paged_trashed_articles do
+    field(:entries, non_null(list_of(non_null(:trashed_article))))
+    pagination_fields()
+  end
+
+  object :audit_log do
+    field(:id, non_null(:id), resolve: fn log, _, _ -> {:ok, log.hash_id} end)
+    field(:actor_type, non_null(:string))
+    field(:actor_snapshot, non_null(:json))
+    field(:action, non_null(:string))
+    field(:resource_type, non_null(:string))
+    field(:resource_ref, non_null(:string))
+    field(:resource_snapshot, non_null(:json))
+    field(:operation_ref, :id)
+    field(:source, non_null(:string))
+    field(:metadata, non_null(:json))
+    field(:occurred_at, non_null(:datetime))
+  end
+
+  object :paged_audit_logs do
+    field(:entries, non_null(list_of(non_null(:audit_log))))
+    pagination_fields()
+  end
+
   enum :doc_tree_node_type do
     value(:tab)
     value(:group)

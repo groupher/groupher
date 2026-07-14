@@ -82,73 +82,6 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       assert user_conn |> mutation_error?(S.Article.m(:create_article, :post), variables)
     end
 
-    test "delete a post by post's owner", ~m(owner_conn community post)a do
-      variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
-      }
-
-      result = owner_conn |> gq_mutation(S.Article.m(:delete_article, :post), variables)
-
-      assert result["innerId"] == to_string(post.inner_id)
-      assert {:error, _} = CMS.FrontDesk.article(community, :post, result["innerId"])
-    end
-
-    test "can delete a post by auth user", ~m(community post)a do
-      post = post |> Repo.preload(:communities)
-      belongs_community_slug = post.communities |> List.first() |> Map.get(:slug)
-      rule_conn = simu_conn(:user, cms: %{belongs_community_slug => %{"post.delete" => true}})
-
-      variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
-      }
-
-      result = rule_conn |> gq_mutation(S.Article.m(:delete_article, :post), variables)
-
-      assert result["innerId"] == to_string(post.inner_id)
-      assert {:error, _} = CMS.FrontDesk.article(community, :post, result["innerId"])
-    end
-
-    test "delete a post without login user fails", ~m(guest_conn community post)a do
-      variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
-      }
-
-      assert guest_conn
-             |> mutation_error?(
-               S.Article.m(:delete_article, :post),
-               variables,
-               ecode(:account_login)
-             )
-    end
-
-    test "login user with auth passport delete a post", ~m(community post)a do
-      post = post |> Repo.preload(:communities)
-      post_community_slug = post.communities |> List.first() |> Map.get(:slug)
-      passport_rules = %{post_community_slug => %{"post.delete" => true}}
-      rule_conn = simu_conn(:user, cms: passport_rules)
-
-      variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
-      }
-
-      result = rule_conn |> gq_mutation(S.Article.m(:delete_article, :post), variables)
-
-      assert result["innerId"] == to_string(post.inner_id)
-    end
-
-    test "unauth user delete post fails", ~m(user_conn guest_conn community post)a do
-      variables = %{
-        article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"}
-      }
-
-      rule_conn = simu_conn(:user, cms: %{"what.ever" => true})
-      schema = S.Article.m(:delete_article, :post)
-
-      assert user_conn |> mutation_error?(schema, variables, ecode(:passport))
-      assert guest_conn |> mutation_error?(schema, variables, ecode(:account_login))
-      assert rule_conn |> mutation_error?(schema, variables, ecode(:passport))
-    end
-
     test "update a post without login user fails", ~m(guest_conn community post)a do
       unique_num = System.unique_integer([:positive, :monotonic])
 
@@ -324,22 +257,5 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       refute found.title == "cross-community-update-#{unique_num}"
     end
 
-    test "user with A community rule cannot delete B community post", ~m(user)a do
-      {:ok, community_a} = mock_community(user)
-      {:ok, community_b} = mock_community(user)
-      {:ok, post_b} = CMS.Articles.create(community_b, :post, mock_attrs(:post), user)
-
-      passport_rules = %{community_a.slug => %{"post.delete" => true}}
-      rule_conn = simu_conn(:user, cms: passport_rules)
-
-      variables = %{
-        article: %{inner_id: post_b.inner_id, community: community_b.slug, thread: "POST"}
-      }
-
-      assert rule_conn
-             |> mutation_error?(S.Article.m(:delete_article, :post), variables, ecode(:passport))
-
-      assert {:ok, _} = CMS.FrontDesk.article(community_b, :post, post_b.inner_id)
-    end
   end
 end

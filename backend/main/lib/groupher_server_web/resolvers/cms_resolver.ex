@@ -642,13 +642,83 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Articles.update(article, args)
   end
 
-  def delete_article(_root, %{article: article}, _info) do
-    CMS.Articles.delete(article)
-  end
-
   # #######################
   # article actions
   # #######################
+  def trash_article(_root, %{article: article}, %{context: %{cur_user: user}}) do
+    with {:ok, item} <- CMS.Articles.trash(article, user) do
+      CMS.Articles.get_trashed(item.hash_id)
+    end
+  end
+
+  def restore_trashed_article(
+        _root,
+        %{id: id, community: %Community{} = community, thread: thread},
+        %{context: %{cur_user: user}}
+      ) do
+    with {:ok, item} <- CMS.Articles.get_trashed(id),
+         :ok <- verify_trash_scope(item, community, thread) do
+      CMS.Articles.restore_trashed(item, user)
+    end
+  end
+
+  def permanently_delete_trashed_article(
+        _root,
+        %{id: id, community: %Community{} = community, thread: thread},
+        %{context: %{cur_user: user}}
+      ) do
+    with {:ok, item} <- CMS.Articles.get_trashed(id),
+         :ok <- verify_trash_scope(item, community, thread) do
+      CMS.Articles.permanently_delete_trashed(item, user)
+    end
+  end
+
+  def permanently_delete_trash_action(
+        _root,
+        %{id: id, community: %Community{} = community, thread: thread},
+        %{context: %{cur_user: user}}
+      ) do
+    with {:ok, action} <- CMS.Trash.get_action(id),
+         true <- action.community_id == community.id,
+         {:ok, ^thread} <- CMS.Trash.action_thread(action) do
+      CMS.Trash.permanently_delete_action(action, user)
+    else
+      _ -> {:error, {:not_exist, "TrashAction"}}
+    end
+  end
+
+  def trashed_articles(
+        _root,
+        %{community: %Community{} = community, thread: thread} = args,
+        _info
+      ) do
+    filter = (Map.get(args, :filter) || %{}) |> Map.put(:thread, thread)
+    CMS.Articles.list_trashed(community, filter)
+  end
+
+  def trashed_article(
+        _root,
+        %{id: id, community: %Community{} = community, thread: thread},
+        _info
+      ) do
+    with {:ok, item} <- CMS.Articles.get_trashed(id),
+         :ok <- verify_trash_scope(item, community, thread) do
+      {:ok, item}
+    end
+  end
+
+  def cms_audit_logs(_root, %{community: %Community{} = community} = args, _info) do
+    CMS.Audit.list(community, Map.get(args, :filter) || %{})
+  end
+
+  def trashed_article_mentioned_by(item, args, _info) do
+    CMS.ArtimentMentions.mentioned_by(item.thread, item.article.id, Map.get(args, :filter))
+  end
+
+  def trashed_article_mentions(item, args, _info) do
+    CMS.ArtimentMentions.mentions(item.thread, item.article.id, Map.get(args, :filter))
+  end
+
   def pin_article(_root, ~m(article article_path)a, _info) do
     with {:ok, community} <- article_path_community(article_path) do
       CMS.Articles.pin(community, article)
@@ -661,20 +731,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
-  def mark_delete_article(_root, ~m(article)a, _info) do
-    CMS.Articles.mark_delete(article)
-  end
-
-  def batch_mark_delete_articles(_root, ~m(community thread inner_ids)a, _info) do
-    CMS.Articles.batch_mark_delete(community, thread, inner_ids)
-  end
-
-  def batch_undo_mark_delete_articles(_root, ~m(community thread inner_ids)a, _info) do
-    CMS.Articles.batch_undo_mark_delete(community, thread, inner_ids)
-  end
-
-  def undo_mark_delete_article(_root, ~m(article)a, _info) do
-    CMS.Articles.undo_mark_delete(article)
+  defp verify_trash_scope(item, %Community{} = community, thread) do
+    if item.community_id == community.id and item.thread == thread do
+      :ok
+    else
+      {:error, {:not_exist, "TrashedArticle"}}
+    end
   end
 
   def report_article(_root, ~m(article reason attr)a, %{context: %{cur_user: user}}) do

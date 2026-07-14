@@ -73,6 +73,15 @@ type RootQueryType {
   "basic site info in total counts format"
   countStatus: CountStatusInfo
 
+  "Current Article Trash memberships"
+  trashedArticles(community: String!, thread: Thread!, filter: TrashFilter): PagedTrashedArticles
+
+  "One current Article Trash membership"
+  trashedArticle(id: ID!, community: String!, thread: Thread!): TrashedArticle
+
+  "Append-only CMS audit log"
+  cmsAuditLogs(community: String!, filter: AuditLogFilter): PagedAuditLogs
+
   "dashboard theme preset registry"
   themePresets: [DsbThemePresetOption!]!
 
@@ -318,6 +327,18 @@ type RootMutationType {
   "delete a tag by thread"
   deleteCommunityTag(id: ID!, community: String!, thread: Thread): CommunityTag
 
+  "Move one logical Article into Trash"
+  trashArticle(article: ArticlePathInput!): TrashedArticle
+
+  "Restore one logical Article from Trash"
+  restoreTrashedArticle(id: ID!, community: String!, thread: Thread!): Article
+
+  "Permanently delete one standalone Article aggregate from Trash"
+  permanentlyDeleteTrashedArticle(id: ID!, community: String!, thread: Thread!): DoneState
+
+  "Permanently delete one complete Trash action"
+  permanentlyDeleteTrashAction(id: ID!, community: String!, thread: Thread!): DoneState
+
   "set category to a community"
   setCategory(community: String!, categoryId: ID!): Community
 
@@ -362,13 +383,26 @@ type RootMutationType {
 
   "create a post"
   createPost(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Post
+
+  "save a new post as a draft"
+  createPostDraft(
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+  ): ArticleDraft
 
   "update a cms\/post"
   updatePost(
     article: ArticlePathInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Post
+
+  "save changes to a post draft without publishing"
+  updatePostDraft(
+    community: String!, id: ID!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+  ): ArticleDraft
+
+  "publish an existing post draft"
+  publishPostDraft(community: String!, id: ID!): Post
 
   "set cat for a post"
   setPostCat(article: ArticlePathInput!, cat: ArticleCatEnum!): Post
@@ -387,21 +421,6 @@ type RootMutationType {
 
   "undo pin to post"
   undoPinPost(article: ArticlePathInput!): Post
-
-  "mark delete a post type article, aka soft-delete"
-  markDeletePost(article: ArticlePathInput!): Post
-
-  "undo mark delete a post type article"
-  undoMarkDeletePost(article: ArticlePathInput!): Post
-
-  "batch mark delete posts type article, aka soft-delete"
-  batchMarkDeletePosts(community: String!, innerIds: [Int!]!, thread: PostThread): DoneState
-
-  "batch undo mark delete posts type article, aka soft-delete"
-  batchUndoMarkDeletePosts(community: String!, innerIds: [Int!]!, thread: PostThread): DoneState
-
-  "permanently delete a post"
-  deletePost(article: ArticlePathInput!): Post
 
   "emotion to post"
   emotionToPost(article: ArticlePathInput!, emotion: ArticleEmotion!): Post
@@ -429,13 +448,26 @@ type RootMutationType {
 
   "create a blog"
   createBlog(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Blog
+
+  "save a new blog as a draft"
+  createBlogDraft(
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+  ): ArticleDraft
 
   "update a cms\/blog"
   updateBlog(
     article: ArticlePathInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Blog
+
+  "save changes to a blog draft without publishing"
+  updateBlogDraft(
+    community: String!, id: ID!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+  ): ArticleDraft
+
+  "publish an existing blog draft"
+  publishBlogDraft(community: String!, id: ID!): Blog
 
   "upvote to blog"
   upvoteBlog(article: ArticlePathInput!): Article
@@ -448,21 +480,6 @@ type RootMutationType {
 
   "undo pin to blog"
   undoPinBlog(article: ArticlePathInput!): Blog
-
-  "mark delete a blog type article, aka soft-delete"
-  markDeleteBlog(article: ArticlePathInput!): Blog
-
-  "undo mark delete a blog type article"
-  undoMarkDeleteBlog(article: ArticlePathInput!): Blog
-
-  "batch mark delete blogs type article, aka soft-delete"
-  batchMarkDeleteBlogs(community: String!, innerIds: [Int!]!, thread: BlogThread): DoneState
-
-  "batch undo mark delete blogs type article, aka soft-delete"
-  batchUndoMarkDeleteBlogs(community: String!, innerIds: [Int!]!, thread: BlogThread): DoneState
-
-  "permanently delete a blog"
-  deleteBlog(article: ArticlePathInput!): Blog
 
   "emotion to blog"
   emotionToBlog(article: ArticlePathInput!, emotion: ArticleEmotion!): Blog
@@ -490,13 +507,26 @@ type RootMutationType {
 
   "create a changelog"
   createChangelog(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Changelog
+
+  "save a new changelog as a draft"
+  createChangelogDraft(
+    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+  ): ArticleDraft
 
   "update a cms\/changelog"
   updateChangelog(
     article: ArticlePathInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
   ): Changelog
+
+  "save changes to a changelog draft without publishing"
+  updateChangelogDraft(
+    community: String!, id: ID!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
+  ): ArticleDraft
+
+  "publish an existing changelog draft"
+  publishChangelogDraft(community: String!, id: ID!): Changelog
 
   "upvote to changelog"
   upvoteChangelog(article: ArticlePathInput!): Article
@@ -509,21 +539,6 @@ type RootMutationType {
 
   "undo pin to changelog"
   undoPinChangelog(article: ArticlePathInput!): Changelog
-
-  "mark delete a changelog type article, aka soft-delete"
-  markDeleteChangelog(article: ArticlePathInput!): Changelog
-
-  "undo mark delete a changelog type article"
-  undoMarkDeleteChangelog(article: ArticlePathInput!): Changelog
-
-  "batch mark delete changelogs type article, aka soft-delete"
-  batchMarkDeleteChangelogs(community: String!, innerIds: [Int!]!, thread: ChangelogThread): DoneState
-
-  "batch undo mark delete changelogs type article, aka soft-delete"
-  batchUndoMarkDeleteChangelogs(community: String!, innerIds: [Int!]!, thread: ChangelogThread): DoneState
-
-  "permanently delete a changelog"
-  deleteChangelog(article: ArticlePathInput!): Changelog
 
   "emotion to changelog"
   emotionToChangelog(article: ArticlePathInput!, emotion: ArticleEmotion!): Changelog
@@ -549,16 +564,6 @@ type RootMutationType {
   "undo lock to a changelog"
   undoLockChangelogComment(article: ArticlePathInput!): Article
 
-  "create a doc"
-  createDoc(
-    title: String!, body: String!, linkAddr: String, copyRight: String, community: String!, thread: Thread, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
-  ): Doc
-
-  "update a cms\/doc"
-  updateDoc(
-    article: ArticlePathInput!, title: String, body: String, digest: String, copyRight: String, linkAddr: String, communityTags: [ID], coverUrl: String, coverUrlDark: String, coverEditInfo: CoverEditInfoInput, coverAssetId: ID, coverAsset: CommunityAssetInput, coverAssetDarkId: ID, coverAssetDark: CommunityAssetInput, assetRefs: [ArticleDocumentAssetRefInput]
-  ): Doc
-
   "upvote to doc"
   upvoteDoc(article: ArticlePathInput!): Article
 
@@ -570,21 +575,6 @@ type RootMutationType {
 
   "undo pin to doc"
   undoPinDoc(article: ArticlePathInput!): Doc
-
-  "mark delete a doc type article, aka soft-delete"
-  markDeleteDoc(article: ArticlePathInput!): Doc
-
-  "undo mark delete a doc type article"
-  undoMarkDeleteDoc(article: ArticlePathInput!): Doc
-
-  "batch mark delete docs type article, aka soft-delete"
-  batchMarkDeleteDocs(community: String!, innerIds: [Int!]!, thread: DocThread): DoneState
-
-  "batch undo mark delete docs type article, aka soft-delete"
-  batchUndoMarkDeleteDocs(community: String!, innerIds: [Int!]!, thread: DocThread): DoneState
-
-  "permanently delete a doc"
-  deleteDoc(article: ArticlePathInput!): Doc
 
   "emotion to doc"
   emotionToDoc(article: ArticlePathInput!, emotion: ArticleEmotion!): Doc
@@ -712,6 +702,9 @@ type RootMutationType {
   "update docs FAQ in dashboard"
   updateDashboardDocFaq(community: String!, dsbSection: DsbSection, docFaq: DsbDocFaqInput!): Dsb
 
+  "create a docs tree tab"
+  createDocTreeTab(community: String!, baseRevision: Int!, input: DocTreeNodeInput!): DocTreeMutationPayload
+
   "create a docs tree group"
   createDocTreeGroup(community: String!, baseRevision: Int!, input: DocTreeNodeInput!): DocTreeMutationPayload
 
@@ -755,7 +748,7 @@ type RootMutationType {
   duplicateDocTreeNode(community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
 
   "move a docs tree node"
-  moveDocTreeNode(community: String!, id: ID!, baseRevision: Int!, targetGroupId: ID, targetIndex: Int): DocTreeMutationPayload
+  moveDocTreeNode(community: String!, id: ID!, baseRevision: Int!, targetTabId: ID, targetGroupId: ID, targetIndex: Int): DocTreeMutationPayload
 
   "add a published docs side-tree group to cover"
   addDocCoverGroup(community: String!, groupId: ID!): DocCoverGroup
@@ -798,7 +791,51 @@ type DoneState {
   done: Boolean
 }
 
+type TrashedArticle {
+  id: ID!
+  thread: Thread!
+  articleRef: ID!
+  article: Article
+  deletedBy: User
+  deletedAt: DateTime!
+  mentionedByCount: Int!
+  scheduledPermanentDeletionAt: DateTime!
+  mentionedBy(filter: PagiFilter): PagedMentions
+  mentions(filter: PagiFilter): PagedMentions
+}
+
+type PagedTrashedArticles {
+  entries: [TrashedArticle!]!
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
+type AuditLog {
+  id: ID!
+  actorType: String!
+  actorSnapshot: Json!
+  action: String!
+  resourceType: String!
+  resourceRef: String!
+  resourceSnapshot: Json!
+  operationRef: ID
+  source: String!
+  metadata: Json!
+  occurredAt: DateTime!
+}
+
+type PagedAuditLogs {
+  entries: [AuditLog!]!
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
 enum DocTreeNodeType {
+  TAB
   GROUP
   PAGE
   LINK
@@ -808,6 +845,14 @@ enum DocTreeNodeType {
 enum ArticleSnapshotStage {
   DRAFT
   PUBLIC
+}
+
+enum ArticleSnapshotAction {
+  CHECKPOINT
+  PUBLISH
+  FORK
+  PROMOTE
+  RESTORE
 }
 
 enum DocPublishMode {
@@ -850,12 +895,33 @@ enum MarkerType {
   EMOJI
 }
 
+type MarkerThemeAppearance {
+  color: String
+  bg: String
+}
+
+type MarkerAppearance {
+  light: MarkerThemeAppearance!
+  dark: MarkerThemeAppearance!
+}
+
 type Marker {
   type: MarkerType!
   provider: String
   name: String
   src: String
   unified: String
+  appearance: MarkerAppearance
+}
+
+input MarkerThemeAppearanceInput {
+  color: String
+  bg: String
+}
+
+input MarkerAppearanceInput {
+  light: MarkerThemeAppearanceInput!
+  dark: MarkerThemeAppearanceInput!
 }
 
 input MarkerInput {
@@ -864,10 +930,12 @@ input MarkerInput {
   name: String
   src: String
   unified: String
+  appearance: MarkerAppearanceInput
 }
 
 type DocTreeNode {
   id: ID
+  tabId: ID
   groupId: ID
   docId: ID
   type: DocTreeNodeType
@@ -881,6 +949,8 @@ type DocTreeNode {
   uiConfig: Json
   publishState: DocTreeNodePublishState
   children: [DocTreeNode]
+  pins: [DocTreeNode]
+  groups: [DocTreeNode]
 }
 
 type DocTreeNodePublishState {
@@ -924,12 +994,12 @@ type DocTree {
   revision: Int
   treeState: DocTreeState
   stagedEvents: [DocTreeEvent]
-  pins: [DocTreeNode]
-  groups: [DocTreeNode]
+  tabs: [DocTreeNode]
 }
 
 type DocPublicTreeNode {
   id: ID
+  tabId: ID
   groupId: ID
   docId: ID
   type: DocTreeNodeType
@@ -940,10 +1010,12 @@ type DocPublicTreeNode {
   marker: Marker
   badge: String
   children: [DocPublicTreeNode]
+  pins: [DocPublicTreeNode]
+  groups: [DocPublicTreeNode]
 }
 
 type DocPublicTree {
-  groups: [DocPublicTreeNode]
+  tabs: [DocPublicTreeNode]
 }
 
 type DocPublishChecklistItem {
@@ -965,7 +1037,7 @@ type DocPublishScope {
   totalCount: Int!
 }
 
-type PublishRelease {
+type DocPublishRelease {
   id: ID!
   releaseNumber: Int!
   versionSlug: String!
@@ -987,7 +1059,7 @@ type DocTreeTrashItem {
 
 type DocPublishChangesPayload {
   done: Boolean!
-  release: PublishRelease
+  release: DocPublishRelease
   checklist: DocPublishChecklist!
   scope: DocPublishScope!
 }
@@ -1058,6 +1130,19 @@ type DocDraft {
   document: ArticleDocument
 }
 
+type ArticleDraft {
+  id: ID!
+  thread: Thread!
+  stage: ArticleSnapshotStage!
+  title: String!
+  digest: String
+  slug: String
+  subtitle: String
+  document: ArticleDocument
+  insertedAt: DateTime
+  updatedAt: DateTime
+}
+
 type DocTreeMutationPayload {
   revision: Int
   treeState: DocTreeState
@@ -1073,6 +1158,7 @@ type MoveDocToDraftPayload {
 }
 
 input DocTreeNodeInput {
+  tabId: ID
   groupId: ID
   title: String
   slug: String
@@ -1208,15 +1294,18 @@ type ArticleSnapshot {
   id: ID
   thread: Thread
   stage: ArticleSnapshotStage
-  docId: String
+  action: ArticleSnapshotAction
+  articleHashId: String
   title: String
   slug: String
   subtitle: String
   digest: String
   documentJson: String
   contentHash: String
-  snapshotNumber: Int
+  revisionNumber: Int
   schemaVersion: Int
+  data: Json
+  message: String
   author: User
   insertedAt: DateTime
   updatedAt: DateTime
@@ -1229,7 +1318,6 @@ type Post implements Article {
   digest: String
   views: Int
   isPinned: Boolean
-  markDelete: Boolean
   coverUrl: String
   coverUrlDark: String
   coverEditInfo: CoverEditInfo
@@ -1267,7 +1355,6 @@ type Changelog implements Article {
   digest: String
   views: Int
   isPinned: Boolean
-  markDelete: Boolean
   coverUrl: String
   coverUrlDark: String
   coverEditInfo: CoverEditInfo
@@ -1303,7 +1390,6 @@ type Doc implements Article {
   digest: String
   views: Int
   isPinned: Boolean
-  markDelete: Boolean
   coverUrl: String
   coverUrlDark: String
   coverEditInfo: CoverEditInfo
@@ -1340,7 +1426,6 @@ type Blog implements Article {
   digest: String
   views: Int
   isPinned: Boolean
-  markDelete: Boolean
   coverUrl: String
   coverUrlDark: String
   coverEditInfo: CoverEditInfo
@@ -2379,6 +2464,19 @@ input PagiFilter {
   size: Int
 
   sort: SortEnum
+}
+
+input TrashFilter {
+  page: Int
+  size: Int
+  thread: Thread
+}
+
+input AuditLogFilter {
+  page: Int
+  size: Int
+  action: String
+  resourceType: String
 }
 
 "posts_filter doc"

@@ -10,8 +10,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Doc do
     article_react_mutations(:doc, [
       :upvote,
       :pin,
-      :mark_delete,
-      :delete,
       :emotion,
       :report,
       :sink,

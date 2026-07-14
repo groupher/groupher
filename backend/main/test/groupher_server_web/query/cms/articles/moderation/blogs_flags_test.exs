@@ -84,18 +84,19 @@ defmodule GroupherServer.Test.Query.Flags.BlogsFlags do
       assert results["entries"] |> Enum.any?(&(&1["id"] !== random_id))
     end
 
-    test "if have trashed blogs, the mark deleted blogs should not appears in result",
+    test "trashed blogs do not appear in results, including pinned injection",
          ~m(guest_conn community)a do
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
       {:ok, random_blog} = CMS.FrontDesk.article(community, :blog, random_id)
-      {:ok, _} = CMS.Articles.mark_delete(random_blog)
+      {:ok, _} = CMS.Articles.pin(community, random_blog)
+      {:ok, _} = CMS.Articles.trash(random_blog, nil)
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :blog), variables)
 
-      assert results["entries"] |> Enum.any?(&(&1["innerId"] !== random_id))
+      refute results["entries"] |> Enum.any?(&(&1["innerId"] == random_id))
       assert results["totalCount"] == @total_count - 1
     end
   end

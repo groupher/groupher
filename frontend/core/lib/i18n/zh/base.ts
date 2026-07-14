@@ -69,7 +69,7 @@ export default {
   'community.add_moderator': '添加社区管理员',
   'post.community_tag.create': '创建帖子标签',
   'post.community_tag.edit': '编辑帖子标签',
-  'post.mark_delete': '删除帖子',
+  'post.trash': '将帖子移入回收站',
   'community.editor.your.community': '你的社区',
   IDEA: '想法',
   BUG: '问题上报',
