@@ -2,7 +2,13 @@ import useTwBelt from '~/hooks/useTwBelt'
 
 export { cn } from '~/css'
 
-export default function useSalon({ actionVisible }: { actionVisible: boolean }) {
+export default function useSalon({
+  actionVisible,
+  coverStatusVisible,
+}: {
+  actionVisible: boolean
+  coverStatusVisible: boolean
+}) {
   const { cn, fg, fill, hover, primary } = useTwBelt()
 
   const icon = cn('size-3.5 pointer', fill('digest'))
@@ -24,7 +30,12 @@ export default function useSalon({ actionVisible }: { actionVisible: boolean }) 
     arrowIcon: cn('size-3 ml-1.5 shrink-0 -rotate-90 trans-all-100', fill('digest')),
     arrowCollapsed: 'rotate-180',
     title: cn('truncate text-sm pointer smoky-65', `hover:${fg('title')}`),
-    actionSlot: 'row-center relative ml-auto h-5 w-10 shrink-0 justify-end',
+    actionSlot: cn(
+      'row-center relative ml-auto h-5 shrink-0 justify-end overflow-hidden',
+      coverStatusVisible ? 'w-4' : 'w-0',
+      'group-hover/docs-tree-head:w-10 group-focus-within/docs-tree-head:w-10',
+      actionVisible && 'w-10',
+    ),
     coverStatus: cn(
       'align-both absolute right-0 top-1/2 size-4 -translate-y-1/2 pointer-events-none opacity-100',
       'group-hover/docs-tree-head:opacity-0',

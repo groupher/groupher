@@ -4,4 +4,7 @@
   --breakpoint-lg: 1024px;
   --breakpoint-xl: 1280px;
   --breakpoint-2xl: 1680px; /* 1536px; */
+
+  --container-doc-tree-min: 8.5rem;
+  --container-doc-tree-footer: 11.5rem;
 }

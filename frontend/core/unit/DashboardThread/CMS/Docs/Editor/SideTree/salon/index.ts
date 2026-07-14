@@ -6,7 +6,7 @@ export default function useSalon() {
   const { cn, scrollbar } = useTwBelt()
 
   return {
-    wrapper: 'sticky column h-full max-h-full min-h-0 pr-2 overflow-visible',
+    wrapper: 'sticky @container column h-full max-h-full min-h-0 pr-2 overflow-visible',
     groupList: cn(
       'column min-h-0 flex-1 gap-y-4 -ml-7 w-[calc(100%+2.625rem)] overflow-x-hidden overflow-y-auto overscroll-y-auto pl-7 pr-6',
       scrollbar('thin'),

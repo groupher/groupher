@@ -708,6 +708,8 @@ export default {
   'dsb.cms.docs.side_tree.search_placeholder': '搜索',
   'dsb.cms.docs.side_tree.search_clear': '清空目录搜索',
   'dsb.cms.docs.side_tree.search_empty': '没有匹配的文档',
+  'dsb.cms.docs.side_tree.footer.trash': '回收站',
+  'dsb.cms.docs.side_tree.footer.assets': '素材',
   'dsb.cms.docs.side_tree.action.top': '顶部',
   'dsb.cms.docs.side_tree.action.pin': '置顶链接',
   'dsb.cms.docs.side_tree.action.group': '分组',

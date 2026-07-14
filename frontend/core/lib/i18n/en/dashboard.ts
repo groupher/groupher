@@ -731,6 +731,8 @@ export default {
   'dsb.cms.docs.side_tree.search_placeholder': 'Search',
   'dsb.cms.docs.side_tree.search_clear': 'Clear docs tree search',
   'dsb.cms.docs.side_tree.search_empty': 'No matching docs',
+  'dsb.cms.docs.side_tree.footer.trash': 'Trash',
+  'dsb.cms.docs.side_tree.footer.assets': 'Assets',
   'dsb.cms.docs.side_tree.action.top': 'Top',
   'dsb.cms.docs.side_tree.action.pin': 'Pin',
   'dsb.cms.docs.side_tree.action.group': 'Group',
