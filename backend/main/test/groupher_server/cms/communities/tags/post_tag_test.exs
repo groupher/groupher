@@ -327,7 +327,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       assert stat.today_contents_count == 1
     end
 
-    test "mark delete and undo mark delete keeps stats in sync",
+    test "Trash and restore keep stats in sync",
          ~m(community post article_tag_attrs user)a do
       {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
       {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
@@ -335,33 +335,32 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 1
 
-      {:ok, _} = CMS.Articles.mark_delete(post)
+      {:ok, trash_item} = CMS.Articles.trash(post, user)
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 0
       assert stat.today_contents_count == 0
 
-      {:ok, post} = ORM.find(Post, post.id, preload: :community_tags)
-      {:ok, _} = CMS.Articles.undo_mark_delete(post)
+      {:ok, _} = CMS.Articles.restore_trashed(trash_item, user)
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 1
       assert stat.today_contents_count == 1
     end
 
-    test "repeated mark delete does not decrement stats twice",
+    test "repeated Trash does not decrement stats twice",
          ~m(community post article_tag_attrs user)a do
       {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
       {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
 
-      {:ok, _} = CMS.Articles.mark_delete(post)
+      {:ok, _} = CMS.Articles.trash(post, user)
       {:ok, post} = ORM.find(Post, post.id, preload: :community_tags)
-      {:ok, _} = CMS.Articles.mark_delete(post)
+      {:ok, _} = CMS.Articles.trash(post, user)
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 0
       assert stat.today_contents_count == 0
     end
 
-    test "mark delete does not decrement stats for already illegal post",
+    test "Trash does not decrement stats for an already illegal post",
          ~m(community post article_tag_attrs user)a do
       {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
       {:ok, post} = CMS.Communities.set_tag(post, article_tag.id)
@@ -377,7 +376,7 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       assert stat.contents_count == 0
 
       {:ok, post} = ORM.find(Post, post.id, preload: :community_tags)
-      {:ok, _} = CMS.Articles.mark_delete(post)
+      {:ok, _} = CMS.Articles.trash(post, user)
 
       {:ok, stat} = CMS.Communities.tag_stats(article_tag)
       assert stat.contents_count == 0

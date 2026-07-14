@@ -171,8 +171,10 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
                    Helper.ORM.find(GroupherServer.CMS.Model.CoverEditInfo, cover_edit_info_id)
         end
 
-        test unquote("delete #{thread_name} removes cover edit info but keeps background") do
-          {community, article, _, _user} = mock_article(@thread)
+        test unquote(
+               "Trash preserves #{thread_name} cover; permanent deletion removes edit info but keeps background"
+             ) do
+          {community, article, _, user} = mock_article(@thread)
           owner_conn = simu_conn(:owner, article)
 
           variables = %{
@@ -188,10 +190,33 @@ defmodule GroupherServer.Test.ArticleCoverHelper do
 
           delete_variables = %{article: article_path(community, article, @thread)}
 
-          owner_conn
+          trashed =
+            owner_conn
+            |> gq_mutation(
+              GroupherServer.Test.Helper.Schema.Article.m(:trash_article),
+              delete_variables
+            )
+
+          assert {:ok, _} =
+                   Helper.ORM.find(GroupherServer.CMS.Model.CoverEditInfo, cover_edit_info_id)
+
+          permanent_conn =
+            simu_conn(:user, user,
+              cms: %{
+                community.slug => %{
+                  "#{@thread}.permanent_delete" => true
+                }
+              }
+            )
+
+          permanent_conn
           |> gq_mutation(
-            GroupherServer.Test.Helper.Schema.Article.m(:delete_article, @thread),
-            delete_variables
+            GroupherServer.Test.Helper.Schema.Article.m(:permanently_delete_trashed_article),
+            %{
+              id: trashed["id"],
+              community: community.slug,
+              thread: @thread |> to_string() |> String.upcase()
+            }
           )
 
           assert {:error, _} =

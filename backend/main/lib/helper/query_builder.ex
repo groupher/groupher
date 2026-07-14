@@ -195,9 +195,6 @@ defmodule Helper.QueryBuilder do
       {:status, status}, queryable ->
         queryable |> trans_article_status(status)
 
-      {:mark_delete, bool}, queryable ->
-        queryable |> where([p], p.mark_delete == ^bool)
-
       {:pending, :legal}, queryable ->
         queryable |> where([p], p.pending != ^@audit_illegal)
 

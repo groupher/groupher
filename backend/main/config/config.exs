@@ -184,6 +184,7 @@ config :groupher_server, Helper.Scheduler,
     # Every midnight
     {"@daily", {Helper.Scheduler, :clear_all_cache, []}},
     {"@daily", {Helper.Scheduler, :archive_artiments, []}},
+    {"17 * * * *", {Helper.Scheduler, :purge_expired_trash, []}},
     # Every 59 minutes
     {"*/59 * * * *", {Helper.Scheduler, :articles_audition, []}},
     # Every 29 minutes

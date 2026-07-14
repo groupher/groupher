@@ -56,7 +56,23 @@ defmodule GroupherServer.Test.CMS.DocArchive do
 
       archived_doc = archived_docs |> List.first()
 
-      {:error, reason} = CMS.Articles.mark_delete(archived_doc)
+      community = Repo.get!(Community, archived_doc.community_id)
+
+      {:ok, action} =
+        CMS.Articles.Trash.create_action(community, nil, %{
+          root_type: "doc_tree_page",
+          root_ref: "archive-test"
+        })
+
+      {:error, reason} =
+        CMS.Articles.Trash.attach(
+          action,
+          community,
+          :doc,
+          archived_doc.article_hash_id,
+          nil
+        )
+
       assert reason |> is_error?(:archived)
     end
   end

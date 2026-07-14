@@ -21,13 +21,13 @@ defmodule GroupherServer.CMS.Articles.List do
   alias CMS.Dashboard.KanbanBoards
   alias CMS.FrontDesk
   alias CMS.Artiment.Enums
-  alias CMS.Model.{Community, Embeds, PinnedArticle, Post}
+  alias CMS.Model.{Community, Embeds, PinnedArticle, Post, TrashedArticle}
   alias Helper.{ORM, QueryBuilder, T}
 
   require CMS.Const
 
   @article_status Enums.status_values() |> Enum.into(%{}, &{&1, &1})
-  @published_flags %{mark_delete: false, pending: :legal}
+  @published_flags %{pending: :legal}
   @kanban_rejected_statuses [
     @article_status.reject,
     @article_status.reject_dup,
@@ -39,11 +39,12 @@ defmodule GroupherServer.CMS.Articles.List do
   @spec page(atom(), map()) :: T.domain_res(term())
   def page(thread, filter) do
     %{page: page, size: size} = filter
-    flags = %{mark_delete: false, pending: :legal}
+    flags = %{pending: :legal}
 
     with {:ok, _thread} <- CanCan.allow_thread(Map.get(filter, :community), thread),
          {:ok, info} <- match(thread) do
       info.model
+      |> CMS.Articles.active_scope(thread)
       |> QueryBuilder.domain_query(filter)
       |> QueryBuilder.filter_pack(Map.merge(filter, flags))
       |> ORM.paginator(~m(page size)a)
@@ -128,14 +129,10 @@ defmodule GroupherServer.CMS.Articles.List do
         |> done()
 
       _ ->
-        flags = %{
-          mark_delete: false,
-          pending: :legal,
-          community_id: community.id,
-          status: nil
-        }
+        flags = %{pending: :legal, community_id: community.id, status: nil}
 
         Post
+        |> CMS.Articles.active_scope(:post)
         |> QueryBuilder.filter_pack(Map.merge(filter, flags))
         |> where([p], p.status in ^valid_statuses)
         |> ORM.paginator(~m(page size)a)
@@ -146,14 +143,10 @@ defmodule GroupherServer.CMS.Articles.List do
   def paged_kanban(%Community{} = community, filter) do
     %{page: page, size: size, status: status} = filter
 
-    flags = %{
-      mark_delete: false,
-      pending: :legal,
-      community_id: community.id,
-      status: status
-    }
+    flags = %{pending: :legal, community_id: community.id, status: status}
 
     Post
+    |> CMS.Articles.active_scope(:post)
     |> QueryBuilder.filter_pack(Map.merge(filter, flags))
     |> ORM.paginator(~m(page size)a)
     |> done()
@@ -165,6 +158,7 @@ defmodule GroupherServer.CMS.Articles.List do
 
     with {:ok, info} <- match(thread) do
       info.model
+      |> CMS.Articles.active_scope(thread)
       |> join(:inner, [article], author in assoc(article, :author))
       |> where([article, author], author.user_id == ^user.id)
       |> filter_published_stage(thread)
@@ -181,6 +175,7 @@ defmodule GroupherServer.CMS.Articles.List do
   def count_published(thread, %User{} = user) do
     with {:ok, info} <- match(thread) do
       info.model
+      |> CMS.Articles.active_scope(thread)
       |> join(:inner, [article], author in assoc(article, :author))
       |> where([article, author], author.user_id == ^user.id)
       |> filter_published_stage(thread)
@@ -209,8 +204,13 @@ defmodule GroupherServer.CMS.Articles.List do
            PinnedArticle
            |> join(:inner, [p], c in assoc(p, :community))
            |> join(:inner, [p], article in assoc(p, ^thread))
-           |> where([p, c, article], c.slug == ^community)
-           |> select([p, c, article], article)
+           |> join(:left, [p, c, article], trashed in TrashedArticle,
+             on:
+               trashed.thread == ^thread and
+                 trashed.article_hash_id == article.article_hash_id
+           )
+           |> where([p, c, article, trashed], c.slug == ^community and is_nil(trashed.id))
+           |> select([p, c, article, trashed], article)
            |> ORM.find_all(%{page: 1, size: 10}) do
       concat_articles(pinned_articles, articles)
     else

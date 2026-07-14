@@ -1,6 +1,45 @@
 defmodule GroupherServer.Test.Helper.Schema.Article do
   @moduledoc "GraphQL documents used by article tests."
 
+  def m(:trash_article) do
+    """
+    mutation($article: ArticlePathInput!) {
+      trashArticle(article: $article) {
+        id
+        thread
+        articleRef
+        article {
+          innerId
+          title
+        }
+        deletedAt
+        scheduledPermanentDeletionAt
+      }
+    }
+    """
+  end
+
+  def m(:restore_trashed_article) do
+    """
+    mutation($id: ID!, $community: String!, $thread: Thread!) {
+      restoreTrashedArticle(id: $id, community: $community, thread: $thread) {
+        innerId
+        title
+      }
+    }
+    """
+  end
+
+  def m(:permanently_delete_trashed_article) do
+    """
+    mutation($id: ID!, $community: String!, $thread: Thread!) {
+      permanentlyDeleteTrashedArticle(id: $id, community: $community, thread: $thread) {
+        done
+      }
+    }
+    """
+  end
+
   def m(:set_post_cat) do
     """
     mutation(
@@ -184,16 +223,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
   end
 
-  def m(:batch_undo_mark_delete_article, thread) do
-    """
-    mutation($community: String!, $innerIds: [Int!]!){
-      batchUndoMarkDelete#{t(thread)}s(community: $community, innerIds: $innerIds) {
-        done
-      }
-    }
-    """
-  end
-
   def m(:pin_article, thread) do
     """
     mutation($article: ArticlePathInput!){
@@ -316,48 +345,6 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
       publish#{t(thread)}Draft(community: $community, id: $id) {
         innerId
         title
-      }
-    }
-    """
-  end
-
-  def m(:mark_delete_article, thread) do
-    """
-    mutation($article: ArticlePathInput!){
-      markDelete#{t(thread)}(article: $article) {
-        innerId
-        markDelete
-      }
-    }
-    """
-  end
-
-  def m(:undo_mark_delete_article, thread) do
-    """
-    mutation($article: ArticlePathInput!){
-      undoMarkDelete#{t(thread)}(article: $article) {
-        innerId
-        markDelete
-      }
-    }
-    """
-  end
-
-  def m(:batch_mark_delete_article, thread) do
-    """
-    mutation($community: String!, $innerIds: [Int!]!){
-      batchMarkDelete#{t(thread)}s(community: $community, innerIds: $innerIds) {
-        done
-      }
-    }
-    """
-  end
-
-  def m(:delete_article, thread) do
-    """
-    mutation($article: ArticlePathInput!){
-      delete#{t(thread)}(article: $article) {
-        innerId
       }
     }
     """
@@ -520,6 +507,52 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
             images
           }
         }
+      }
+    }
+    """
+  end
+
+  def q(:trashed_articles) do
+    """
+    query($community: String!, $thread: Thread!, $filter: TrashFilter) {
+      trashedArticles(community: $community, thread: $thread, filter: $filter) {
+        entries {
+          id
+          thread
+          articleRef
+          mentionedByCount
+          article {
+            innerId
+            title
+          }
+          mentionedBy(filter: {page: 1, size: 20}) {
+            totalCount
+          }
+          mentions(filter: {page: 1, size: 20}) {
+            totalCount
+          }
+        }
+        totalCount
+      }
+    }
+    """
+  end
+
+  def q(:cms_audit_logs) do
+    """
+    query($community: String!, $filter: AuditLogFilter) {
+      cmsAuditLogs(community: $community, filter: $filter) {
+        entries {
+          id
+          actorType
+          action
+          resourceType
+          resourceRef
+          source
+          operationRef
+          occurredAt
+        }
+        totalCount
       }
     }
     """

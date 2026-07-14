@@ -265,50 +265,6 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
     end
   end
 
-  describe "[cms doc batch delete]" do
-    test "can batch delete docs with inner_ids", ~m(user community doc_attrs)a do
-      {:ok, doc1} = CMS.Articles.create(community, :doc, doc_attrs, user)
-      {:ok, doc2} = CMS.Articles.create(community, :doc, doc_attrs, user)
-      {:ok, doc3} = CMS.Articles.create(community, :doc, doc_attrs, user)
-
-      CMS.Articles.batch_mark_delete(community.slug, :doc, [
-        doc1.inner_id,
-        doc2.inner_id
-      ])
-
-      {:ok, doc1} = ORM.find(Doc, doc1.id)
-      {:ok, doc2} = ORM.find(Doc, doc2.id)
-      {:ok, doc3} = ORM.find(Doc, doc3.id)
-
-      assert doc1.mark_delete == true
-      assert doc2.mark_delete == true
-      assert doc3.mark_delete == false
-    end
-
-    test "can undo batch delete docs with inner_ids", ~m(user community doc_attrs)a do
-      {:ok, doc1} = CMS.Articles.create(community, :doc, doc_attrs, user)
-      {:ok, doc2} = CMS.Articles.create(community, :doc, doc_attrs, user)
-      {:ok, doc3} = CMS.Articles.create(community, :doc, doc_attrs, user)
-
-      CMS.Articles.batch_mark_delete(community.slug, :doc, [
-        doc1.inner_id,
-        doc2.inner_id
-      ])
-
-      CMS.Articles.batch_undo_mark_delete(community.slug, :doc, [
-        doc1.inner_id,
-        doc2.inner_id
-      ])
-
-      {:ok, doc1} = ORM.find(Doc, doc1.id)
-      {:ok, doc2} = ORM.find(Doc, doc2.id)
-      {:ok, _doc3} = ORM.find(Doc, doc3.id)
-
-      assert doc1.mark_delete == false
-      assert doc2.mark_delete == false
-    end
-  end
-
   describe "[cms doc document]" do
     test "will create related document after create", ~m(user community doc_attrs)a do
       {:ok, doc} = CMS.Articles.create(community, :doc, doc_attrs, user)
@@ -339,7 +295,16 @@ defmodule GroupherServer.Test.CMS.Articles.Doc do
 
       {:ok, _} = ORM.find_by(ArticleDocument, %{article_id: doc.id, thread: :doc})
 
-      {:ok, _} = CMS.Articles.delete(doc)
+      {:ok, action} =
+        CMS.Articles.Trash.create_action(community, user, %{
+          root_type: "doc_tree_page",
+          root_ref: "document-delete-test"
+        })
+
+      {:ok, trash_item} =
+        CMS.Articles.Trash.attach(action, community, :doc, doc.article_hash_id, user)
+
+      {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(trash_item, user)
 
       {:error, _} = ORM.find(Doc, doc.id)
       {:error, _} = ORM.find_by(ArticleDocument, %{article_id: doc.id, thread: :doc})

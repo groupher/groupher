@@ -21,6 +21,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
   """
 
   import Ecto.Changeset, only: [put_change: 3, put_embed: 3]
+  import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
@@ -40,12 +41,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
   def read(%Community{} = community, thread, article_hash_id, branch_ref) do
     with {:ok, branch} <- Branch.resolve(community, thread, branch_ref),
          {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(thread) do
-      ORM.find_by(model,
-        article_hash_id: article_hash_id,
-        community_id: community.id,
-        branch_id: branch.id,
-        stage: CMS.Const.stage(:draft)
-      )
+      find_active(model, community, thread, article_hash_id, branch, CMS.Const.stage(:draft))
     end
   end
 
@@ -61,12 +57,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
     with {:ok, branch} <- Branch.resolve(community, thread, branch_ref),
          true <- Branch.main?(branch),
          {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(thread) do
-      ORM.find_by(model,
-        article_hash_id: article_hash_id,
-        community_id: community.id,
-        branch_id: branch.id,
-        stage: CMS.Const.stage(:public)
-      )
+      find_active(model, community, thread, article_hash_id, branch, CMS.Const.stage(:public))
     else
       false -> {:error, {:custom, "preview branches do not contain public Articles"}}
       error -> error
@@ -217,6 +208,20 @@ defmodule GroupherServer.CMS.Articles.Draft do
     |> put_change(:emotions, @default_emotions)
     |> put_embed(:meta, meta)
     |> Repo.insert()
+  end
+
+  defp find_active(model, community, thread, article_hash_id, branch, stage) do
+    model
+    |> CMS.Articles.active_scope(thread)
+    |> where([article], article.article_hash_id == ^article_hash_id)
+    |> where([article], article.community_id == ^community.id)
+    |> where([article], article.branch_id == ^branch.id)
+    |> where([article], article.stage == ^stage)
+    |> Repo.one()
+    |> case do
+      nil -> {:error, {:not_exist, model}}
+      article -> {:ok, article}
+    end
   end
 
   defp build_attrs(%Community{} = community, branch, attrs, article_payload, %Author{} = author) do

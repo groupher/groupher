@@ -275,50 +275,6 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
     end
   end
 
-  describe "[cms changelog batch delete]" do
-    test "can batch delete changelogs with inner_ids", ~m(user community changelog_attrs)a do
-      {:ok, changelog1} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
-      {:ok, changelog2} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
-      {:ok, changelog3} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
-
-      CMS.Articles.batch_mark_delete(community.slug, :changelog, [
-        changelog1.inner_id,
-        changelog2.inner_id
-      ])
-
-      {:ok, changelog1} = ORM.find(Changelog, changelog1.id)
-      {:ok, changelog2} = ORM.find(Changelog, changelog2.id)
-      {:ok, changelog3} = ORM.find(Changelog, changelog3.id)
-
-      assert changelog1.mark_delete == true
-      assert changelog2.mark_delete == true
-      assert changelog3.mark_delete == false
-    end
-
-    test "can undo batch delete changelogs with inner_ids", ~m(user community changelog_attrs)a do
-      {:ok, changelog1} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
-      {:ok, changelog2} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
-      {:ok, changelog3} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
-
-      CMS.Articles.batch_mark_delete(community.slug, :changelog, [
-        changelog1.inner_id,
-        changelog2.inner_id
-      ])
-
-      CMS.Articles.batch_undo_mark_delete(community.slug, :changelog, [
-        changelog1.inner_id,
-        changelog2.inner_id
-      ])
-
-      {:ok, changelog1} = ORM.find(Changelog, changelog1.id)
-      {:ok, changelog2} = ORM.find(Changelog, changelog2.id)
-      {:ok, _changelog3} = ORM.find(Changelog, changelog3.id)
-
-      assert changelog1.mark_delete == false
-      assert changelog2.mark_delete == false
-    end
-  end
-
   describe "[cms changelog document]" do
     test "will create related document after create", ~m(user community changelog_attrs)a do
       {:ok, changelog} = CMS.Articles.create(community, :changelog, changelog_attrs, user)
@@ -355,7 +311,8 @@ defmodule GroupherServer.Test.CMS.Articles.Changelog do
       {:ok, _article_doc} =
         ORM.find_by(ArticleDocument, %{article_id: changelog.id, thread: :changelog})
 
-      {:ok, _} = CMS.Articles.delete(changelog)
+      {:ok, trash_item} = CMS.Articles.trash(changelog, user)
+      {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(trash_item, user)
 
       {:error, _} = ORM.find(Changelog, changelog.id)
       {:error, _} = ORM.find_by(ArticleDocument, %{article_id: changelog.id, thread: :changelog})

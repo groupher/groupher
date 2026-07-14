@@ -292,7 +292,10 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
       assert [_] = article_refs(:post, post.id)
 
-      assert {:ok, _} = CMS.Articles.delete(post)
+      assert {:ok, trash_item} = CMS.Articles.trash(post, user)
+
+      assert {:ok, %{done: true}} =
+               CMS.Articles.permanently_delete_trashed(trash_item, user)
 
       assert article_refs(:post, post.id) == []
       assert {:ok, %CommunityAsset{}} = ORM.find(CommunityAsset, ref.asset_id)

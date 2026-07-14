@@ -264,50 +264,6 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
     end
   end
 
-  describe "[cms blog batch delete]" do
-    test "can batch delete blogs with inner_ids", ~m(user community blog_attrs)a do
-      {:ok, blog1} = CMS.Articles.create(community, :blog, blog_attrs, user)
-      {:ok, blog2} = CMS.Articles.create(community, :blog, blog_attrs, user)
-      {:ok, blog3} = CMS.Articles.create(community, :blog, blog_attrs, user)
-
-      CMS.Articles.batch_mark_delete(community.slug, :blog, [
-        blog1.inner_id,
-        blog2.inner_id
-      ])
-
-      {:ok, blog1} = ORM.find(Blog, blog1.id)
-      {:ok, blog2} = ORM.find(Blog, blog2.id)
-      {:ok, blog3} = ORM.find(Blog, blog3.id)
-
-      assert blog1.mark_delete == true
-      assert blog2.mark_delete == true
-      assert blog3.mark_delete == false
-    end
-
-    test "can undo batch delete blogs with inner_ids", ~m(user community blog_attrs)a do
-      {:ok, blog1} = CMS.Articles.create(community, :blog, blog_attrs, user)
-      {:ok, blog2} = CMS.Articles.create(community, :blog, blog_attrs, user)
-      {:ok, blog3} = CMS.Articles.create(community, :blog, blog_attrs, user)
-
-      CMS.Articles.batch_mark_delete(community.slug, :blog, [
-        blog1.inner_id,
-        blog2.inner_id
-      ])
-
-      CMS.Articles.batch_undo_mark_delete(community.slug, :blog, [
-        blog1.inner_id,
-        blog2.inner_id
-      ])
-
-      {:ok, blog1} = ORM.find(Blog, blog1.id)
-      {:ok, blog2} = ORM.find(Blog, blog2.id)
-      {:ok, _blog3} = ORM.find(Blog, blog3.id)
-
-      assert blog1.mark_delete == false
-      assert blog2.mark_delete == false
-    end
-  end
-
   describe "[cms blog document]" do
     test "will create related document after create", ~m(user community blog_attrs)a do
       {:ok, blog} = CMS.Articles.create(community, :blog, blog_attrs, user)
@@ -338,7 +294,8 @@ defmodule GroupherServer.Test.CMS.Articles.Blog do
 
       {:ok, _article_doc} = ORM.find_by(ArticleDocument, %{article_id: blog.id, thread: :blog})
 
-      {:ok, _} = CMS.Articles.delete(blog)
+      {:ok, trash_item} = CMS.Articles.trash(blog, user)
+      {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(trash_item, user)
 
       {:error, _} = ORM.find(Blog, blog.id)
       {:error, _} = ORM.find_by(ArticleDocument, %{article_id: blog.id, thread: :blog})

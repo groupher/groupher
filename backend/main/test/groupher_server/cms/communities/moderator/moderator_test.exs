@@ -49,7 +49,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
           "cms" => %{
             "post.edit" => true,
             "post.pin" => true,
-            "post.delete" => true
+            "post.trash" => true
           }
         }
       }
@@ -68,7 +68,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
           "cms" => %{
             "post.edit" => true,
             "post.pin" => false,
-            "post.delete" => true
+            "post.trash" => true
           }
         }
       }
@@ -90,7 +90,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
         "global" => %{},
         "#{community.slug}" => %{
           "cms" => %{
-            "post.delete" => false,
+            "post.trash" => false,
             "post.edit" => true
           }
         }
@@ -115,7 +115,7 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
         "global" => %{},
         "#{other_community.slug}" => %{
           "cms" => %{
-            "post.delete" => false
+            "post.trash" => false
           }
         }
       }
@@ -137,12 +137,12 @@ defmodule GroupherServer.Test.CMS.Communities.Moderator do
         "global" => %{},
         "#{community.slug}" => %{
           "cms" => %{
-            "post.delete" => false
+            "post.trash" => false
           }
         },
         "#{other_community.slug}" => %{
           "cms" => %{
-            "post.delete" => false
+            "post.trash" => false
           }
         }
       }

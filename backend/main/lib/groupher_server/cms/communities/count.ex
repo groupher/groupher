@@ -78,10 +78,12 @@ defmodule GroupherServer.CMS.Communities.Count do
   @spec update(Community.t(), atom()) :: T.domain_res(Community.t())
   def update(%Community{} = community, thread) do
     with {:ok, info} <- match(thread) do
+      active_articles = CMS.Articles.active_scope(info.model, thread)
+
       {:ok, thread_article_count} =
-        from(a in info.model,
+        from(a in active_articles,
           join: c in assoc(a, :communities),
-          where: a.mark_delete == false and c.id == ^community.id
+          where: c.id == ^community.id
         )
         |> ORM.count(prefix: Constant.DBPrefix.cms())
 

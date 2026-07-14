@@ -23,10 +23,11 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   @spec paged_audit_failed(atom(), map()) :: T.domain_res(term())
   def paged_audit_failed(thread, filter) do
     %{page: page, size: size} = filter
-    flags = %{mark_delete: false, pending: :audit_failed}
+    flags = %{pending: :audit_failed}
 
     with {:ok, info} <- match(thread) do
       info.model
+      |> CMS.Articles.active_scope(thread)
       |> QueryBuilder.filter_pack(Map.merge(filter, flags))
       |> ORM.paginator(~m(page size)a)
       |> done()
@@ -165,6 +166,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   defp sync_search(result, _action), do: result
 
   defp counted_in_tag_stats?(article) do
-    Map.get(article, :mark_delete) == false and Map.get(article, :pending) != @audit_illegal
+    not CMS.Articles.Trash.trashed_article?(article) and
+      Map.get(article, :pending) != @audit_illegal
   end
 end

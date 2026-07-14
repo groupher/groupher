@@ -312,7 +312,8 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       {:ok, result} = ArtimentMentions.mentioned_by(:blog, blog.id, %{page: 1, size: 10})
       assert result.total_count == 1
 
-      {:ok, _} = CMS.Articles.delete(post)
+      {:ok, trash_item} = CMS.Articles.trash(post, user)
+      {:ok, %{done: true}} = CMS.Articles.permanently_delete_trashed(trash_item, user)
 
       {:ok, result} = ArtimentMentions.mentioned_by(:blog, blog.id, %{page: 1, size: 10})
       assert result.total_count == 0
