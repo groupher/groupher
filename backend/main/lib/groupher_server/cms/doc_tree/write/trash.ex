@@ -1,52 +1,163 @@
 defmodule GroupherServer.CMS.DocTree.Write.Trash do
   @moduledoc """
-  Moves deleted draft tree nodes into docs trash snapshots.
+  Docs-specific orchestration for moving a Tree subtree into the shared Trash.
 
-      delete_node
-          |
-          v
-      subtree_nodes (computed once by caller)
-          |
-          +--> doc_tree_trash_items with node snapshot
-          +--> optional draft doc + ArticleDocument snapshot
-          +--> delete unreferenced draft docs
-          +--> delete draft tree rows
-          |
-          v
-      restore/publish can still explain or recover the deletion
-
-  A duplicated page may share one draft doc with another node. This module only
-  deletes draft docs that are no longer referenced by any remaining draft page.
+  The Tree owns placement snapshots for both draft and public stages. Article
+  content remains in the normal Doc aggregate and is hidden by a
+  `TrashedArticle` membership; no content is copied into Tree snapshots.
   """
 
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.DocTree.{Events, Read, TrashSnapshot}
-
-  alias CMS.Model.{
-    Community,
-    Doc,
-    DocTreeNode,
-    DocTreeTrashItem
-  }
-
+  alias GroupherServer.Accounts.Model.User
+  alias CMS.Articles.{Lock, Trash}
+  alias CMS.DocTree.Events
+  alias CMS.Model.{Community, DocTreeNode, TrashedDocTreeNode}
+  alias CMS.SearchArtiments.Indexer
   alias Helper.ORM
 
   require CMS.Const
 
-  @trash_snapshot_key_draft_doc CMS.Const.doc_tree_trash_snapshot_key(:draft_doc)
+  @doc "Moves the draft root and its corresponding draft/public subtrees into one Trash action."
+  def trash_subtree(
+        %Community{} = community,
+        branch,
+        %DocTreeNode{} = draft_root,
+        %User{} = actor
+      ) do
+    draft_nodes = subtree_nodes(community, branch, draft_root, CMS.Const.stage(:draft))
+    public_nodes = public_subtree_nodes(community, branch, draft_root.node_id)
 
-  @doc """
-  Writes trash rows for the already-loaded deleted subtree nodes.
-  """
-  def trash_subtree(%Community{} = community, branch, nodes, actor_id) when is_list(nodes) do
-    nodes
-    |> Enum.reduce_while({:ok, []}, fn node, {:ok, acc} ->
-      attrs = trash_attrs(community, branch, node, actor_id)
+    doc_ids =
+      draft_nodes
+      |> Enum.filter(&(&1.type == :page))
+      |> Enum.map(& &1.doc_id)
+      |> Enum.reject(&is_nil/1)
+      |> Enum.uniq()
 
-      case ORM.create(DocTreeTrashItem, attrs) do
-        {:ok, item} -> {:cont, {:ok, [item | acc]}}
+    Lock.run_many(community, :doc, doc_ids, fn ->
+      with {:ok, action} <-
+             Trash.create_action(community, actor, %{
+               root_type: "doc_tree_#{draft_root.type}",
+               root_ref: draft_root.node_id
+             }),
+           {:ok, trash_nodes} <-
+             persist_nodes(action, community, branch, draft_nodes, public_nodes, actor),
+           {:ok, _memberships} <- attach_docs(action, community, doc_ids, actor),
+           discarded_tree_events <-
+             Events.discard_staged_for_trash(
+               community,
+               Enum.map(draft_nodes, & &1.node_id),
+               doc_ids,
+               branch_id: branch.id
+             ),
+           :ok <- delete_nodes(draft_nodes ++ public_nodes),
+           {:ok, _audit} <-
+             CMS.Audit.record("doc_tree.trashed", %{
+               community_id: community.id,
+               actor: actor,
+               resource_type: "doc_tree_#{draft_root.type}",
+               resource_ref: draft_root.node_id,
+               resource_snapshot: %{
+                 title: draft_root.title,
+                 type: draft_root.type,
+                 node_count: length(trash_nodes),
+                 doc_count: length(doc_ids)
+               },
+               operation_ref: action.hash_id,
+               source: "api",
+               metadata: %{}
+             }) do
+        Enum.each(doc_ids, &Indexer.enqueue_delete(:doc, &1))
+
+        {:ok,
+         %{
+           action: action,
+           draft_nodes: draft_nodes,
+           public_nodes: public_nodes,
+           discarded_tree_events: discarded_tree_events
+         }}
+      end
+    end)
+  end
+
+  @doc "Loads a structural subtree in one materialized Tree stage."
+  def subtree_nodes(
+        %Community{} = community,
+        branch,
+        %DocTreeNode{type: :group} = group,
+        stage
+      ) do
+    children =
+      base_nodes(community, branch, stage)
+      |> where([node], node.group_id == ^group.node_id)
+      |> order_by([node], desc: node.index, desc: node.id)
+      |> Repo.all()
+
+    children ++ [group]
+  end
+
+  def subtree_nodes(
+        %Community{} = community,
+        branch,
+        %DocTreeNode{type: :tab} = tab,
+        stage
+      ) do
+    descendants =
+      base_nodes(community, branch, stage)
+      |> where([node], node.tab_id == ^tab.node_id)
+      |> order_by([node], desc: node.index, desc: node.id)
+      |> Repo.all()
+
+    group_ids =
+      descendants |> Enum.filter(&(&1.type == :group)) |> Enum.map(& &1.node_id)
+
+    children =
+      base_nodes(community, branch, stage)
+      |> where([node], node.group_id in ^group_ids)
+      |> order_by([node], desc: node.index, desc: node.id)
+      |> Repo.all()
+
+    children ++ descendants ++ [tab]
+  end
+
+  def subtree_nodes(_community, _branch, %DocTreeNode{} = node, _stage), do: [node]
+
+  defp public_subtree_nodes(%Community{} = community, branch, node_id) do
+    case find_node(community, branch, node_id, CMS.Const.stage(:public)) do
+      nil -> []
+      public_root -> subtree_nodes(community, branch, public_root, CMS.Const.stage(:public))
+    end
+  end
+
+  defp persist_nodes(action, community, branch, draft_nodes, public_nodes, actor) do
+    drafts = Map.new(draft_nodes, &{&1.node_id, &1})
+    publics = Map.new(public_nodes, &{&1.node_id, &1})
+
+    (Map.keys(drafts) ++ Map.keys(publics))
+    |> Enum.uniq()
+    |> Enum.sort()
+    |> Enum.reduce_while({:ok, []}, fn node_id, {:ok, items} ->
+      draft = Map.get(drafts, node_id)
+      public = Map.get(publics, node_id)
+      node = draft || public
+
+      attrs = %{
+        trash_action_id: action.id,
+        community_id: community.id,
+        branch_id: branch.id,
+        node_id: node_id,
+        doc_id: node.doc_id,
+        type: node.type,
+        draft_snapshot: snapshot(draft),
+        public_snapshot: snapshot(public),
+        deleted_by_id: actor.id,
+        deleted_at: action.deleted_at
+      }
+
+      case ORM.create(TrashedDocTreeNode, attrs) do
+        {:ok, item} -> {:cont, {:ok, [item | items]}}
         error -> {:halt, error}
       end
     end)
@@ -56,152 +167,70 @@ defmodule GroupherServer.CMS.DocTree.Write.Trash do
     end
   end
 
-  @doc """
-  Physically removes the already-loaded draft tree nodes.
-  """
-  def delete_subtree(nodes) when is_list(nodes) do
-    nodes
-    |> Enum.reduce_while(:ok, fn node, :ok ->
-      case ORM.delete(node) do
-        {:ok, _node} -> {:cont, :ok}
+  defp attach_docs(action, community, doc_ids, actor) do
+    Enum.reduce_while(doc_ids, {:ok, []}, fn doc_id, {:ok, items} ->
+      case Trash.attach(action, community, :doc, doc_id, actor,
+             source: "api",
+             audit: false,
+             metadata: %{trash_root_type: action.root_type, trash_root_ref: action.root_ref}
+           ) do
+        {:ok, item} -> {:cont, {:ok, [item | items]}}
         error -> {:halt, error}
       end
     end)
+    |> case do
+      {:ok, items} -> {:ok, Enum.reverse(items)}
+      error -> error
+    end
   end
 
-  @doc """
-  Deletes draft docs that are no longer referenced after subtree removal.
+  defp delete_nodes(nodes) do
+    ids = nodes |> Enum.map(& &1.id) |> Enum.uniq()
 
-  Shared draft docs survive when a duplicated page outside the deleted subtree
-  still references the same stable `doc_id`.
-  """
-  def delete_subtree_doc_drafts(%Community{} = community, branch, nodes) when is_list(nodes) do
-    subtree_node_ids = Enum.map(nodes, & &1.node_id)
-
-    doc_ids =
-      nodes
-      |> subtree_doc_ids()
-      |> unreferenced_doc_ids(community, branch, subtree_node_ids)
-
-    case doc_ids do
+    case ids do
       [] ->
         :ok
 
-      doc_ids ->
-        drafts = TrashSnapshot.draft_docs_by_doc_ids(community, branch, doc_ids)
-        draft_ids = Enum.map(drafts, & &1.id)
+      ids ->
+        {count, _} = DocTreeNode |> where([node], node.id in ^ids) |> Repo.delete_all()
 
-        :ok = TrashSnapshot.delete_article_documents(drafts)
-
-        Doc
-        |> where([d], d.community_id == ^community.id)
-        |> where([d], d.branch_id == ^branch.id)
-        |> where([d], d.stage == CMS.Const.stage(:draft))
-        |> where([d], d.id in ^draft_ids)
-        |> Repo.delete_all()
-
-        Events.discard_doc_bound_staged(community, doc_ids, branch_id: branch.id)
-        :ok
+        if count == length(ids),
+          do: :ok,
+          else: {:error, {:custom, "Docs Tree changed during Trash"}}
     end
   end
 
-  @doc """
-  Loads the draft node subtree that should be deleted as one operation.
-  """
-  def subtree_nodes(%Community{} = community, branch, %DocTreeNode{type: :group} = group) do
-    children =
-      DocTreeNode
-      |> where([n], n.community_id == ^community.id)
-      |> where([n], n.branch_id == ^branch.id)
-      |> where([n], n.stage == CMS.Const.stage(:draft))
-      |> where([n], n.group_id == ^group.node_id)
-      |> order_by([n], desc: n.index, desc: n.id)
-      |> Repo.all()
-
-    children ++ [group]
+  defp base_nodes(%Community{} = community, branch, stage) do
+    DocTreeNode
+    |> where([node], node.community_id == ^community.id)
+    |> where([node], node.branch_id == ^branch.id)
+    |> where([node], node.stage == ^stage)
   end
 
-  def subtree_nodes(%Community{} = community, branch, %DocTreeNode{type: :tab} = tab) do
-    descendants =
-      DocTreeNode
-      |> where([n], n.community_id == ^community.id)
-      |> where([n], n.branch_id == ^branch.id)
-      |> where([n], n.stage == CMS.Const.stage(:draft))
-      |> where([n], n.tab_id == ^tab.node_id)
-      |> order_by([n], desc: n.index, desc: n.id)
-      |> Repo.all()
-
-    group_ids = descendants |> Enum.filter(&(&1.type == :group)) |> Enum.map(& &1.node_id)
-
-    children =
-      DocTreeNode
-      |> where([n], n.community_id == ^community.id)
-      |> where([n], n.branch_id == ^branch.id)
-      |> where([n], n.stage == CMS.Const.stage(:draft))
-      |> where([n], n.group_id in ^group_ids)
-      |> order_by([n], desc: n.index, desc: n.id)
-      |> Repo.all()
-
-    children ++ descendants ++ [tab]
+  defp find_node(%Community{} = community, branch, node_id, stage) do
+    base_nodes(community, branch, stage)
+    |> where([node], node.node_id == ^to_string(node_id))
+    |> Repo.one()
   end
 
-  def subtree_nodes(_community, _branch, %DocTreeNode{} = node), do: [node]
+  defp snapshot(nil), do: nil
 
-  defp trash_attrs(%Community{} = community, branch, %DocTreeNode{} = node, actor_id) do
+  defp snapshot(%DocTreeNode{} = node) do
     %{
-      community_id: community.id,
-      branch_id: branch.id,
-      node_id: node.node_id,
-      doc_id: node.doc_id,
-      node_snapshot:
-        node
-        |> Read.to_map()
-        |> Map.put("tabId", node.tab_id)
-        |> Map.put("groupId", node.group_id)
-        |> maybe_put_draft_doc_snapshot(community, branch, node),
-      deleted_from_group_id: node.group_id,
-      deleted_from_index: node.index,
-      deleted_at: DateTime.utc_now(:second),
-      deleted_by_id: actor_id
+      "nodeId" => node.node_id,
+      "type" => to_string(node.type),
+      "tabId" => node.tab_id,
+      "groupId" => node.group_id,
+      "docId" => node.doc_id,
+      "title" => node.title,
+      "slug" => node.slug,
+      "index" => node.index,
+      "href" => node.href,
+      "marker" => node.marker,
+      "badge" => node.badge,
+      "hidden" => node.hidden,
+      "templateKey" => node.template_key,
+      "uiConfig" => node.ui_config || %{}
     }
-  end
-
-  defp maybe_put_draft_doc_snapshot(snapshot, %Community{} = community, branch, %DocTreeNode{
-         type: :page,
-         doc_id: doc_id
-       })
-       when not is_nil(doc_id) do
-    case TrashSnapshot.draft_doc_snapshot(community, branch, doc_id) do
-      nil -> snapshot
-      draft_snapshot -> Map.put(snapshot, @trash_snapshot_key_draft_doc, draft_snapshot)
-    end
-  end
-
-  defp maybe_put_draft_doc_snapshot(snapshot, _community, _branch, _node), do: snapshot
-
-  defp subtree_doc_ids(nodes) do
-    nodes
-    |> Enum.filter(&(&1.type == :page))
-    |> Enum.map(& &1.doc_id)
-    |> Enum.reject(&is_nil/1)
-    |> Enum.uniq()
-  end
-
-  defp unreferenced_doc_ids([], _community, _branch, _subtree_node_ids), do: []
-
-  defp unreferenced_doc_ids(doc_ids, %Community{} = community, branch, subtree_node_ids) do
-    referenced_doc_ids =
-      DocTreeNode
-      |> where([n], n.community_id == ^community.id)
-      |> where([n], n.branch_id == ^branch.id)
-      |> where([n], n.stage == CMS.Const.stage(:draft))
-      |> where([n], n.type == :page)
-      |> where([n], n.doc_id in ^doc_ids)
-      |> where([n], n.node_id not in ^subtree_node_ids)
-      |> select([n], n.doc_id)
-      |> Repo.all()
-      |> MapSet.new()
-
-    Enum.reject(doc_ids, &MapSet.member?(referenced_doc_ids, &1))
   end
 end

@@ -27,7 +27,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Tabs do
 
       {:ok, _} =
         CMS.DocTree.delete_node(community, tree.tabs |> hd() |> Map.fetch!(:id), %{
-          base_revision: payload.revision
+          base_revision: payload.revision,
+          actor_id: user.id
         })
 
       {:ok, tree} = CMS.DocTree.read(community)
@@ -35,7 +36,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Tabs do
 
       assert {:error, {:custom, "the last docs tab can not be deleted"}} =
                CMS.DocTree.delete_node(community, tree.tabs |> hd() |> Map.fetch!(:id), %{
-                 base_revision: tree.revision
+                 base_revision: tree.revision,
+                 actor_id: user.id
                })
     end
 

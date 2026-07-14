@@ -8,13 +8,13 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
       inverse_payload["node"] + children
           |
           +--> doc_tree_nodes(stage=draft)
-          +--> optional draft doc snapshot from doc_tree_trash_items
+          +--> retained Doc Article aggregate
           |
           v
       mark delete event discarded
           |
           v
-      mark trash rows restored and decrement staged_event_count
+      decrement staged_event_count + append CMS Audit
 
   Only delete-style tree events are valid restore targets. Normal publish still
   handles create, update, and move events through `PublicProjection`.
@@ -24,17 +24,13 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
-  alias CMS.DocTree.TrashSnapshot
   alias CMS.DocTree.Publish.Result
   alias CMS.DocTree.Revision
 
   alias CMS.Model.{
     Community,
-    Doc,
     DocTreeEvent,
     DocTreeNode,
-    DocTreeRestoreAudit,
-    DocTreeTrashItem,
     DocsSiteState
   }
 
@@ -66,9 +62,8 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
   @doc """
   Restores selected staged delete events before publish.
 
-  This is the publish-checklist restore path. Product Trash drawer restore uses
-  `DocTree.Trash`, but both paths rebuild missing page drafts through
-  `TrashSnapshot`.
+  This legacy publish-checklist path only restores inverse Tree events. Current
+  product Trash actions are restored through `DocTree.Trash`.
   """
   def restore_tree_events(%Community{} = community, branch, events, %User{} = user) do
     with :ok <- ensure_delete_restore_events(events),
@@ -102,8 +97,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
   defp restore_tree_delete_event(%Community{} = community, branch, %DocTreeEvent{} = event) do
     with {:ok, nodes} <- restore_nodes_from_delete_event(event),
          {:ok, _draft_nodes} <- restore_draft_nodes(community, branch, nodes),
-         :ok <- mark_delete_event_discarded(event),
-         :ok <- mark_trash_items_restored(community, branch, nodes) do
+         :ok <- mark_restored_delete_event_discarded(event) do
       {:ok, %{event: event, nodes: nodes}}
     end
   end
@@ -130,8 +124,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
   defp restore_draft_node(%Community{} = community, branch, node) do
     with {:ok, attrs} <- draft_attrs_from_event_node(community, branch, node),
          nil <- draft_node_by_node_id(community, branch, attrs.node_id),
-         {:ok, restored_node} <- ORM.create(DocTreeNode, attrs),
-         :ok <- restore_doc_draft_from_trash(community, branch, attrs) do
+         {:ok, restored_node} <- ORM.create(DocTreeNode, attrs) do
       {:ok, restored_node}
     else
       %DocTreeNode{} -> {:error, {:custom, "Deleted tree item has already been restored."}}
@@ -172,81 +165,32 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
     |> Repo.one()
   end
 
-  defp restore_doc_draft_from_trash(%Community{} = community, branch, %{
-         type: @tree_node_type_page,
-         doc_id: doc_id,
-         node_id: node_id
-       })
-       when not is_nil(doc_id) do
-    case draft_doc_by_doc_id(community, branch, doc_id) do
-      %Doc{} ->
-        :ok
-
-      nil ->
-        with {:ok, draft_snapshot} <-
-               TrashSnapshot.draft_snapshot_from_trash(community, branch, node_id),
-             :ok <- TrashSnapshot.restore_doc_draft(community, branch, draft_snapshot) do
-          :ok
-        else
-          {:error, :not_found} -> :ok
-          error -> error
-        end
-    end
-  end
-
-  defp restore_doc_draft_from_trash(_community, _branch, _attrs), do: :ok
-
-  defp draft_doc_by_doc_id(%Community{} = community, branch, doc_id) do
-    Doc
-    |> where([d], d.community_id == ^community.id)
-    |> where([d], d.branch_id == ^branch.id)
-    |> where([d], d.stage == CMS.Const.stage(:draft))
-    |> where([d], d.article_hash_id == ^doc_id)
-    |> Repo.one()
-  end
-
-  defp mark_delete_event_discarded(%DocTreeEvent{} = event) do
+  defp mark_restored_delete_event_discarded(%DocTreeEvent{} = event) do
     case ORM.update(event, %{status: CMS.Const.tree_event_status(:discarded)}) do
       {:ok, _event} -> :ok
       error -> error
     end
   end
 
-  defp mark_trash_items_restored(%Community{} = community, branch, nodes) do
-    node_ids =
-      nodes
-      |> Enum.map(& &1["id"])
-      |> Enum.reject(&is_nil/1)
-      |> Enum.map(&to_string/1)
-
-    now = DateTime.utc_now(:second)
-
-    DocTreeTrashItem
-    |> where([item], item.community_id == ^community.id)
-    |> where([item], item.branch_id == ^branch.id)
-    |> where([item], item.node_id in ^node_ids)
-    |> where([item], is_nil(item.restored_at))
-    |> Repo.update_all(set: [restored_at: now, updated_at: now])
-
-    :ok
-  end
-
   defp create_restore_audit(%Community{} = community, branch, %User{} = user, restore_entries) do
     nodes = Enum.flat_map(restore_entries, & &1.nodes)
 
-    ORM.create(DocTreeRestoreAudit, %{
+    CMS.Audit.record("doc_tree.restored", %{
       community_id: community.id,
-      branch_id: branch.id,
-      actor_id: user.id,
-      restored_event_ids: Enum.map(restore_entries, & &1.event.id),
-      restored_node_ids: restored_node_ids(nodes),
-      restored_at: DateTime.utc_now(:second),
-      payload: %{
-        "items" =>
+      actor: user,
+      resource_type: "doc_tree_event",
+      resource_ref: restore_entries |> List.first() |> then(& &1.event.id) |> to_string(),
+      resource_snapshot: %{
+        branch_id: branch.id,
+        restored_event_ids: Enum.map(restore_entries, & &1.event.id),
+        restored_node_ids: restored_node_ids(nodes),
+        items:
           Enum.flat_map(restore_entries, fn %{event: event, nodes: nodes} ->
             Enum.map(nodes, &audit_item(event, &1))
           end)
-      }
+      },
+      source: "api",
+      metadata: %{legacy_publish_restore: true}
     })
   end
 
