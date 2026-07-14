@@ -175,17 +175,8 @@ type RootQueryType {
   "paged kanban posts by status"
   pagedKanbanPosts(community: String!, filter: PagedKanbanPostsFilter!): PagedPosts
 
-  "get post by id"
-  searchPosts(title: String!, thread: PostThread): PagedPosts
-
-  "get blog by id"
-  searchBlogs(title: String!, thread: BlogThread): PagedBlogs
-
-  "get changelog by id"
-  searchChangelogs(title: String!, thread: ChangelogThread): PagedChangelogs
-
-  "get doc by id"
-  searchDocs(title: String!, thread: DocThread): PagedDocs
+  "Search Article and Comment content through the unified Artiment index"
+  searchArtiments(query: SearchArtimentsQueryInput!): PagedSearchArtiments!
 
   "get paged upvoted users of an article"
   upvotedUsers(article: ArticlePathInput!, filter: PagiFilter!): PagedUsers
@@ -2032,6 +2023,81 @@ type PagedArticles {
   pageNumber: Int
 }
 
+type SearchArticleLocator {
+  community: String!
+  thread: Thread!
+  innerId: ID!
+}
+
+type SearchCommentLocator {
+  article: SearchArticleLocator!
+  innerId: ID!
+  rootInnerId: ID
+}
+
+type ArticleSearchArtiment {
+  ref: ID!
+  type: SearchArtimentType!
+  communityRef: String!
+  thread: Thread!
+  articleRef: ID!
+  title: String!
+  digest: String
+  locator: SearchArticleLocator!
+  authorRef: String
+  locale: String
+  upvotesCount: Int!
+  commentsCount: Int!
+  publishedAt: DateTime
+  insertedAt: DateTime!
+  updatedAt: DateTime!
+  contentHash: String!
+  schemaVersion: Int!
+}
+
+type CommentSearchArtiment {
+  ref: ID!
+  type: SearchArtimentType!
+  communityRef: String!
+  thread: Thread!
+  articleRef: ID!
+  digest: String
+  locator: SearchCommentLocator!
+  authorRef: String
+  locale: String
+  upvotesCount: Int!
+  repliesCount: Int!
+  insertedAt: DateTime!
+  updatedAt: DateTime!
+  contentHash: String!
+  schemaVersion: Int!
+}
+
+union SearchArtiment = ArticleSearchArtiment | CommentSearchArtiment
+
+enum SearchHighlightField {
+  TITLE
+  PLAIN_TEXT
+}
+
+type SearchHighlight {
+  field: SearchHighlightField!
+  fragments: [String!]!
+}
+
+type SearchArtimentHit {
+  artiment: SearchArtiment!
+  highlights: [SearchHighlight!]!
+}
+
+type PagedSearchArtiments {
+  entries: [SearchArtimentHit!]!
+  totalCount: Int
+  pageSize: Int
+  totalPages: Int
+  pageNumber: Int
+}
+
 "article meta info"
 type ArticleMeta {
   thread: Thread
@@ -2135,6 +2201,37 @@ enum Thread {
   ABOUT
   DASHBOARD
   USER
+}
+
+enum SearchArtimentType {
+  ARTICLE
+  COMMENT
+}
+
+enum SearchArtimentSort {
+  RELEVANCE
+}
+
+input SearchArtimentsScopeInput {
+  communityRef: String
+  articleRef: String
+}
+
+input SearchArtimentsFiltersInput {
+  types: [SearchArtimentType!]
+  threads: [Thread!]
+  authorRefs: [String!]
+  locales: [String!]
+}
+
+input SearchArtimentsQueryInput {
+  text: String!
+  scope: SearchArtimentsScopeInput
+  filters: SearchArtimentsFiltersInput
+  sort: SearchArtimentSort
+  page: Int
+  size: Int
+  highlight: Boolean
 }
 
 enum MentionType {

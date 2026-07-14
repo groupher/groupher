@@ -29,21 +29,6 @@ defmodule GroupherServerWeb.Schema.Helper.Queries do
     end)
   end
 
-  defmacro article_search_queries do
-    @threads
-    |> Enum.map(fn thread ->
-      quote do
-        @desc unquote("get #{thread} by id")
-        field unquote(:"search_#{plural(thread)}"), unquote(:"paged_#{plural(thread)}") do
-          arg(:title, non_null(:string))
-          arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
-
-          resolve(&R.CMS.search_articles/3)
-        end
-      end
-    end)
-  end
-
   @doc """
   query generator for threads, like:
 

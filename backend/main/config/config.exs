@@ -143,6 +143,17 @@ config :groupher_server, :cloud_assets,
 config :groupher_server, :site_favicon_adapter, Helper.SiteFavicon
 config :groupher_server, :open_graph_adapter, OpenGraph
 
+config :groupher_server, :search_artiments,
+  platform: GroupherServer.CMS.SearchArtiments.Platforms.Algolia,
+  queue: GroupherServer.CMS.SearchArtiments.Queues.Rihanna,
+  algolia: [
+    application_id: nil,
+    search_api_key: nil,
+    admin_api_key: nil,
+    index_name: "groupher_artiments_v1",
+    max_plain_text_bytes: 7_000
+  ]
+
 config :groupher_server, :cache,
   pool: %{
     common: %{

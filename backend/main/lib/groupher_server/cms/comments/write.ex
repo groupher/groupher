@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.Comments.Write do
   alias CMS.Events
   alias CMS.Artiment.Enums
   alias CMS.Model.{Comment, CommentReply, Community, Embeds, PinnedComment, Post}
+  alias CMS.SearchArtiments.Indexer
 
   alias Helper.{ContentPipeline, Datetime, Multi, Later, ORM, T}
 
@@ -87,6 +88,7 @@ defmodule GroupherServer.CMS.Comments.Write do
       end)
       |> Repo.transaction()
       |> result()
+      |> sync_article_metrics(article)
     else
       {:error, :article_comments_locked} ->
         raise_error(:article_comments_locked, "this article is forbid comment")
@@ -144,6 +146,7 @@ defmodule GroupherServer.CMS.Comments.Write do
       end)
       |> Repo.transaction()
       |> result()
+      |> sync_article_metrics(article)
     else
       {:error, :article_comments_locked} ->
         raise_error(:article_comments_locked, "this article is forbid comment")
@@ -202,19 +205,21 @@ defmodule GroupherServer.CMS.Comments.Write do
     do: raise_error(:archived, "comment is archived, can not be edit or delete")
 
   def delete(%Comment{} = comment) do
-    Multi.new()
-    |> Multi.run(:update_comments_count, fn _, _ ->
-      {:ok, article} = FrontDesk.article_of(comment)
-      ORM.dec(article, :comments_count)
-    end)
-    |> Multi.run(:remove_pined_comment, fn _, _ ->
-      ORM.findby_delete(PinnedComment, %{comment_id: comment.id})
-    end)
-    |> Multi.run(:delete_comment, fn _, _ ->
-      ORM.update(comment, %{body_html: @delete_hint, is_deleted: true})
-    end)
-    |> Repo.transaction()
-    |> result()
+    with {:ok, article} <- FrontDesk.article_of(comment) do
+      Multi.new()
+      |> Multi.run(:update_comments_count, fn _, _ ->
+        ORM.dec(article, :comments_count)
+      end)
+      |> Multi.run(:remove_pined_comment, fn _, _ ->
+        ORM.findby_delete(PinnedComment, %{comment_id: comment.id})
+      end)
+      |> Multi.run(:delete_comment, fn _, _ ->
+        ORM.update(comment, %{body_html: @delete_hint, is_deleted: true})
+      end)
+      |> Repo.transaction()
+      |> result()
+      |> sync_article_metrics(article)
+    end
   end
 
   @spec mark_solution(T.id(), User.t()) :: T.domain_res(Comment.t())
@@ -405,6 +410,13 @@ defmodule GroupherServer.CMS.Comments.Write do
         {:ok, :pass}
     end
   end
+
+  defp sync_article_metrics({:ok, _value} = result, article) do
+    _ = Indexer.enqueue_metrics(article)
+    result
+  end
+
+  defp sync_article_metrics(result, _article), do: result
 
   defp result({:ok, %{set_question_flag_ifneed: result}}), do: {:ok, result}
   defp result({:ok, %{inc_replies_count: result}}), do: {:ok, result}

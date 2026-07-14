@@ -1132,9 +1132,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Search.community(title)
   end
 
-  def search_articles(_root, %{thread: thread, title: title}, _info) do
-    CMS.Search.article(thread, title)
-  end
+  def search_artiments(_root, %{query: query}, _info), do: CMS.SearchArtiments.search(query)
 
   # ##############################################
   # counts just for managers to use in admin site ..

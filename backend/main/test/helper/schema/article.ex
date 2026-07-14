@@ -771,16 +771,36 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
   end
 
-  def q(:search_articles, thread, extra) do
+  def q(:search_artiments, _thread, extra) do
     """
-    query($title: String!) {
-      search#{t(thread)}s(title: $title) {
+    query($query: SearchArtimentsQueryInput!) {
+      searchArtiments(query: $query) {
         entries {
-          innerId
-          title
-          #{extra}
+          artiment {
+            ... on ArticleSearchArtiment {
+              ref
+              type
+              title
+              communityRef
+              thread
+              articleRef
+              locator {
+                community
+                thread
+                innerId
+              }
+              #{extra}
+            }
+          }
+          highlights {
+            field
+            fragments
+          }
         }
         totalCount
+        totalPages
+        pageSize
+        pageNumber
       }
     }
     """

@@ -317,7 +317,12 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.paged_kanban_posts/3)
     end
 
-    article_search_queries()
+    @desc "Search Article and Comment content through the unified Artiment index"
+    field :search_artiments, non_null(:paged_search_artiments) do
+      arg(:query, non_null(:search_artiments_query_input))
+
+      resolve(&R.CMS.search_artiments/3)
+    end
 
     article_reacted_users_query(:upvote, &R.CMS.upvoted_users/3)
     article_reacted_users_query(:collect, &R.CMS.collected_users/3)

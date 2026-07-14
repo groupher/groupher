@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
 
   alias CMS.Communities.TagStats
   alias CMS.FrontDesk
+  alias CMS.SearchArtiments.Indexer
   alias Helper.{Multi, Constant, ORM, QueryBuilder, T}
 
   @audit_legal Constant.CMS.pending(:legal)
@@ -74,6 +75,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
     end)
     |> Repo.transaction()
     |> result()
+    |> sync_search(:delete)
   end
 
   @spec unset_illegal(atom(), T.id(), map()) :: T.domain_res(term())
@@ -118,6 +120,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
     end)
     |> Repo.transaction()
     |> result()
+    |> sync_search(:upsert)
   end
 
   defp result({:ok, %{update_article_meta: result}}), do: {:ok, result}
@@ -148,6 +151,18 @@ defmodule GroupherServer.CMS.Articles.Moderation do
       _ -> {:ok, :pass}
     end
   end
+
+  defp sync_search({:ok, article} = result, :delete) do
+    Indexer.enqueue_delete(article)
+    result
+  end
+
+  defp sync_search({:ok, article} = result, :upsert) do
+    Indexer.enqueue_upsert(article)
+    result
+  end
+
+  defp sync_search(result, _action), do: result
 
   defp counted_in_tag_stats?(article) do
     Map.get(article, :mark_delete) == false and Map.get(article, :pending) != @audit_illegal
