@@ -132,12 +132,16 @@ defmodule GroupherServer.CMS.DocTree.Read do
   def read_draft(%Community{} = community, doc_id, opts \\ []) do
     with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
       Doc
-      |> ORM.find_by(
-        doc_id: doc_id,
-        community_id: community.id,
-        branch_id: branch.id,
-        stage: CMS.Const.stage(:draft)
-      )
+      |> CMS.Articles.active_scope(:doc)
+      |> where([doc], doc.article_hash_id == ^doc_id)
+      |> where([doc], doc.community_id == ^community.id)
+      |> where([doc], doc.branch_id == ^branch.id)
+      |> where([doc], doc.stage == CMS.Const.stage(:draft))
+      |> Repo.one()
+      |> case do
+        %Doc{} = doc -> {:ok, doc}
+        nil -> {:error, {:not_exist, "Doc draft"}}
+      end
     end
   end
 
@@ -198,6 +202,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
       |> Enum.uniq()
 
     Doc
+    |> CMS.Articles.active_scope(:doc)
     |> where([d], d.community_id == ^community.id)
     |> where([d], d.branch_id == ^branch.id)
     |> where([d], d.stage == ^CMS.Const.stage(:public))
@@ -394,6 +399,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
 
     draft_versions =
       Doc
+      |> CMS.Articles.active_scope(:doc)
       |> where([v], v.community_id == ^community.id)
       |> where([v], v.branch_id == ^branch.id)
       |> where([v], v.article_hash_id in ^doc_ids)

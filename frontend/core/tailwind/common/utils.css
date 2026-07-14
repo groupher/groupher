@@ -67,6 +67,10 @@
     @apply text-base;
   }
 
+  .pretty-num {
+    @apply tabular-nums;
+  }
+
   .bold-none {
     @apply font-normal;
   }

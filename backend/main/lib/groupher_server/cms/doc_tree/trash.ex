@@ -1,208 +1,273 @@
 defmodule GroupherServer.CMS.DocTree.Trash do
   @moduledoc """
-  Product trash workflow for docs tree items.
+  Product Trash drawer for Docs Tree actions.
 
-  Staged-delete restore remains part of the publish checklist. This module is
-  for the product Trash drawer: it lists persisted trash snapshots and restores
-  them back into the draft tree as new staged create events.
-
-      Trash drawer
-          |
-          +--> list visible doc_tree_trash_items
-          |       |
-          |       v
-          |   hide children whose parent group is also trashed
-          |
-          +--> restore one root item
-                  |
-                  v
-              rebuild draft nodes from snapshots
-                  |
-                  v
-              rebuild missing draft doc via TrashSnapshot
-                  |
-                  v
-              record staged create events + restore audit
+  One list item represents one user action, even when a deleted Tab/Group owns
+  many Tree nodes and Doc Articles. Restore replays draft/public placement
+  snapshots and removes all Article memberships atomically.
   """
 
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Articles.Branch
-  alias CMS.DocTree.{Events, Read, TrashSnapshot}
-  alias CMS.DocTree.Write.{Index, Operation}
+  alias GroupherServer.Accounts.Model.User
+  alias CMS.Articles.{Branch, Lock}
+  alias CMS.Articles.Trash, as: ArticleTrash
+  alias CMS.DocTree.Events
+  alias CMS.DocTree.Write.{EventRecorder, Index, Operation}
 
   alias CMS.Model.{
     Community,
-    Doc,
     DocTreeNode,
-    DocTreeRestoreAudit,
-    DocTreeTrashItem
+    TrashAction,
+    TrashedArticle,
+    TrashedDocTreeNode
   }
 
-  alias Helper.{ORM, T}
+  alias CMS.SearchArtiments.Indexer
+  alias Helper.{ORM, T, Transaction}
 
   require CMS.Const
 
-  @tree_node_type_tab CMS.Const.tree_node_type(:tab)
-  @tree_node_type_group CMS.Const.tree_node_type(:group)
-  @tree_node_type_pin CMS.Const.tree_node_type(:pin)
-  @tree_node_type_tab_key to_string(@tree_node_type_tab)
-  @tree_node_type_group_key to_string(@tree_node_type_group)
-
-  @doc """
-  Lists visible, unrestored product Trash items for the resolved docs branch.
-
-  Children of a trashed group are stored for restore, but hidden from the list
-  so users restore the group as the root action.
-  """
+  @doc "Lists current Docs Trash actions for one branch."
   @spec list(Community.t(), keyword() | map()) :: T.domain_res(list(map()))
   def list(%Community{} = community, opts \\ []) do
     with {:ok, branch} <- Branch.resolve(community, :doc, opts) do
-      items =
-        DocTreeTrashItem
-        |> where([item], item.community_id == ^community.id)
-        |> where([item], item.branch_id == ^branch.id)
-        |> where([item], is_nil(item.restored_at))
-        |> order_by([item], desc: item.deleted_at, desc: item.id)
+      actions =
+        TrashAction
+        |> join(:inner, [action], node in TrashedDocTreeNode,
+          on: node.trash_action_id == action.id
+        )
+        |> where([action, node], action.community_id == ^community.id)
+        |> where([_action, node], node.branch_id == ^branch.id)
+        |> where([action, _node], like(action.root_type, "doc_tree_%"))
+        |> distinct([action, _node], action.id)
+        |> order_by([action, _node], desc: action.deleted_at, desc: action.id)
+        |> preload([action, _node], [:actor, :trashed_doc_tree_nodes])
         |> Repo.all()
 
-      {:ok, Enum.map(visible_items(items), &to_map/1)}
+      {:ok, Enum.map(actions, &to_map/1)}
     end
   end
 
-  @doc """
-  Restores one product Trash item into the draft tree and records staged creates.
-  """
+  @doc "Restores one complete Docs Trash action."
   @spec restore(Community.t(), T.id(), map()) :: T.domain_res(map())
-  def restore(%Community{} = community, item_id, args) do
+  def restore(%Community{} = community, action_ref, args) do
     Operation.run(community, args, fn branch, state ->
-      with {:ok, root_item} <- find_item(community, branch, item_id),
-           {:ok, items} <- restore_items(community, branch, root_item),
-           {:ok, nodes} <- restore_nodes(community, branch, items),
-           {:ok, events} <-
-             Events.record_staged_many(
-               community,
-               Enum.map(nodes, &Events.create_event/1),
-               Map.get(args, :actor_id),
-               branch_id: branch.id
-             ),
-           :ok <- mark_items_restored(items),
-           {:ok, _audit} <-
-             create_restore_audit(community, branch, args, root_item, events, nodes),
-           {:ok, state} <- Operation.bump_revision(community, state, length(events)) do
+      with {:ok, actor} <- load_actor(args),
+           {:ok, action} <- find_action(community, branch, action_ref),
+           items <- action_nodes(action, branch),
+           doc_ids <- action_doc_ids(action),
+           {:ok, result} <-
+             Lock.run_many(community, :doc, doc_ids, fn ->
+               restore_action(community, branch, action, items, actor)
+             end),
+           {:ok, state} <- Operation.bump_revision(community, state, result.tree_event_count) do
+        Enum.each(result.articles, &Indexer.enqueue_upsert/1)
+
+        root =
+          Enum.find(result.draft_nodes, &(&1.node_id == action.root_ref)) ||
+            Enum.find(result.public_nodes, &(&1.node_id == action.root_ref))
+
         affected =
-          nodes
-          |> Enum.map(&{&1.group_id, &1.type})
+          result.draft_nodes
+          |> Enum.map(&{&1.tab_id || &1.group_id, &1.type})
           |> Enum.uniq()
-          |> Enum.flat_map(fn {group_id, type} ->
-            Index.affected_nodes(community, branch, group_id, type)
+          |> Enum.flat_map(fn {parent_id, type} ->
+            Index.affected_nodes(community, branch, parent_id, type)
           end)
 
-        {:ok, Operation.payload(community, state, List.first(nodes), affected)}
+        {:ok, Operation.payload(community, state, root, affected)}
+      else
+        error -> error
       end
     end)
   end
 
-  defp visible_items(items) do
-    trashed_tab_ids =
-      items
-      |> Enum.filter(&(snapshot_type(&1) == to_string(@tree_node_type_tab)))
-      |> MapSet.new(& &1.node_id)
+  @doc "Permanently deletes one complete Docs Trash action."
+  @spec permanently_delete_action(TrashAction.t(), User.t() | nil, keyword()) ::
+          T.domain_res(map())
+  def permanently_delete_action(%TrashAction{} = action, actor, opts \\ []) do
+    with %Community{} = community <- Repo.get(Community, action.community_id),
+         %TrashedDocTreeNode{} = root_item <-
+           TrashedDocTreeNode
+           |> where([item], item.trash_action_id == ^action.id)
+           |> order_by([item], asc: item.id)
+           |> limit(1)
+           |> Repo.one() do
+      Transaction.lock_global("doc_tree:#{community.id}:#{root_item.branch_id}", fn ->
+        case TrashAction
+             |> where([current], current.id == ^action.id)
+             |> lock("FOR UPDATE")
+             |> Repo.one() do
+          nil ->
+            {:ok, %{done: true}}
 
-    trashed_group_ids =
-      items
-      |> Enum.filter(&(snapshot_type(&1) == to_string(@tree_node_type_group)))
-      |> MapSet.new(& &1.node_id)
+          current ->
+            doc_ids = action_doc_ids(current)
 
-    Enum.reject(items, fn item ->
-      (not is_nil(item.node_snapshot["tabId"]) and
-         MapSet.member?(trashed_tab_ids, item.node_snapshot["tabId"])) or
-        (not is_nil(item.deleted_from_group_id) and
-           MapSet.member?(trashed_group_ids, item.deleted_from_group_id))
-    end)
-  end
-
-  defp to_map(%DocTreeTrashItem{} = item) do
-    snapshot = item.node_snapshot || %{}
-
-    %{
-      id: item.id,
-      node_id: item.node_id,
-      doc_id: item.doc_id,
-      type: snapshot_type(item),
-      title: snapshot["title"] || item.node_id,
-      slug: snapshot["slug"],
-      deleted_from_group_id: item.deleted_from_group_id,
-      deleted_from_index: item.deleted_from_index,
-      deleted_at: item.deleted_at,
-      restored_at: item.restored_at
-    }
-  end
-
-  defp snapshot_type(%DocTreeTrashItem{node_snapshot: %{"type" => type}}), do: type
-  defp snapshot_type(_item), do: nil
-
-  defp find_item(%Community{} = community, branch, item_id) do
-    DocTreeTrashItem
-    |> where([item], item.community_id == ^community.id)
-    |> where([item], item.branch_id == ^branch.id)
-    |> where([item], item.id == ^item_id)
-    |> where([item], is_nil(item.restored_at))
-    |> Repo.one()
-    |> case do
-      %DocTreeTrashItem{} = item -> {:ok, item}
-      nil -> {:error, {:custom, "Trash item not found."}}
+            Lock.run_many(community, :doc, doc_ids, fn ->
+              with {:ok, :done} <-
+                     ArticleTrash.permanently_delete_action_articles(
+                       current,
+                       community,
+                       actor,
+                       source: Keyword.get(opts, :source, "api"),
+                       audit: false,
+                       metadata: %{
+                         trash_root_type: current.root_type,
+                         trash_root_ref: current.root_ref
+                       }
+                     ),
+                   :ok <- delete_tree_memberships(current.id),
+                   {:ok, _audit} <-
+                     CMS.Audit.record("doc_tree.permanently_deleted", %{
+                       community_id: community.id,
+                       actor: actor,
+                       resource_type: current.root_type,
+                       resource_ref: current.root_ref,
+                       resource_snapshot: %{doc_count: length(doc_ids)},
+                       operation_ref: current.hash_id,
+                       source: Keyword.get(opts, :source, "api"),
+                       metadata: %{}
+                     }),
+                   :ok <- ArticleTrash.delete_empty_action(current.id) do
+                {:ok, %{done: true}}
+              end
+            end)
+        end
+      end)
+    else
+      nil -> {:ok, %{done: true}}
+      _ -> {:error, {:custom, "Trash action is not a Docs Tree action"}}
     end
   end
 
-  defp restore_items(%Community{} = community, branch, %DocTreeTrashItem{} = root_item) do
-    items =
-      case snapshot_type(root_item) do
-        @tree_node_type_tab_key ->
-          tab_items = tab_items(community, branch, root_item.node_id)
-
-          group_ids =
-            tab_items
-            |> Enum.filter(&(snapshot_type(&1) == to_string(@tree_node_type_group)))
-            |> Enum.map(& &1.node_id)
-
-          tab_items ++ Enum.flat_map(group_ids, &child_items(community, branch, &1))
-
-        @tree_node_type_group_key ->
-          child_items(community, branch, root_item.node_id)
-
-        _ ->
-          []
-      end
-
-    {:ok, [root_item | items]}
+  defp restore_action(community, branch, action, items, actor) do
+    with :ok <- ensure_restore_slots_available(community, branch, items),
+         {:ok, draft_nodes} <- restore_stage_nodes(community, branch, items, :draft),
+         {:ok, public_nodes} <- restore_stage_nodes(community, branch, items, :public),
+         {:ok, articles} <-
+           ArticleTrash.restore_action_articles(action, community, actor,
+             source: "api",
+             audit: false,
+             metadata: %{trash_root_type: action.root_type, trash_root_ref: action.root_ref}
+           ),
+         {:ok, events} <-
+           record_restore_events(community, branch, items, draft_nodes, public_nodes, actor),
+         :ok <- delete_tree_memberships(action.id),
+         {:ok, _audit} <-
+           CMS.Audit.record("doc_tree.restored", %{
+             community_id: community.id,
+             actor: actor,
+             resource_type: action.root_type,
+             resource_ref: action.root_ref,
+             resource_snapshot: %{
+               node_count: length(items),
+               doc_count: length(articles)
+             },
+             operation_ref: action.hash_id,
+             source: "api",
+             metadata: %{}
+           }),
+         :ok <- ArticleTrash.delete_empty_action(action.id) do
+      {:ok,
+       %{
+         articles: articles,
+         draft_nodes: draft_nodes,
+         public_nodes: public_nodes,
+         tree_event_count: Enum.count(events, &(&1.owner == CMS.Const.tree_event_owner(:tree)))
+       }}
+    end
   end
 
-  defp tab_items(%Community{} = community, branch, tab_node_id) do
-    DocTreeTrashItem
-    |> where([item], item.community_id == ^community.id)
+  defp find_action(%Community{} = community, branch, action_ref) do
+    TrashAction
+    |> from(as: :action)
+    |> where([action], action.community_id == ^community.id)
+    |> where([action], action.hash_id == ^action_ref)
+    |> where([action], like(action.root_type, "doc_tree_%"))
+    |> where(
+      [action],
+      exists(
+        from(item in TrashedDocTreeNode,
+          where: item.trash_action_id == parent_as(:action).id,
+          where: item.branch_id == ^branch.id,
+          select: 1
+        )
+      )
+    )
+    |> lock("FOR UPDATE")
+    |> Repo.one()
+    |> case do
+      %TrashAction{} = action -> {:ok, action}
+      nil -> {:error, {:not_exist, "Docs Trash action"}}
+    end
+  end
+
+  defp action_nodes(%TrashAction{} = action, branch) do
+    TrashedDocTreeNode
+    |> where([item], item.trash_action_id == ^action.id)
     |> where([item], item.branch_id == ^branch.id)
-    |> where([item], is_nil(item.restored_at))
-    |> order_by([item], asc: item.deleted_from_index, asc: item.id)
-    |> Repo.all()
-    |> Enum.filter(&(&1.node_snapshot["tabId"] == tab_node_id))
-  end
-
-  defp child_items(%Community{} = community, branch, group_node_id) do
-    DocTreeTrashItem
-    |> where([item], item.community_id == ^community.id)
-    |> where([item], item.branch_id == ^branch.id)
-    |> where([item], item.deleted_from_group_id == ^group_node_id)
-    |> where([item], is_nil(item.restored_at))
-    |> order_by([item], asc: item.deleted_from_index, asc: item.id)
+    |> order_by([item], asc: item.id)
+    |> lock("FOR UPDATE")
     |> Repo.all()
   end
 
-  defp restore_nodes(%Community{} = community, branch, items) do
-    Enum.reduce_while(items, {:ok, []}, fn item, {:ok, acc} ->
-      case restore_node(community, branch, item) do
-        {:ok, node} -> {:cont, {:ok, [node | acc]}}
+  defp action_doc_ids(%TrashAction{} = action) do
+    TrashedArticle
+    |> where([item], item.trash_action_id == ^action.id and item.thread == :doc)
+    |> select([item], item.article_hash_id)
+    |> Repo.all()
+  end
+
+  defp load_actor(args) do
+    case Map.get(args, :actor_id) do
+      nil ->
+        {:error, {:custom, "Docs Trash restore requires an authenticated actor"}}
+
+      actor_id ->
+        case Repo.get(User, actor_id) do
+          %User{} = actor -> {:ok, actor}
+          nil -> {:error, {:custom, "Docs Trash restore requires an authenticated actor"}}
+        end
+    end
+  end
+
+  defp ensure_restore_slots_available(community, branch, items) do
+    conflicts? =
+      Enum.any?([:draft, :public], fn stage ->
+        node_ids =
+          items
+          |> Enum.filter(&(not is_nil(snapshot(&1, stage))))
+          |> Enum.map(& &1.node_id)
+
+        node_ids != [] and
+          DocTreeNode
+          |> where([node], node.community_id == ^community.id)
+          |> where([node], node.branch_id == ^branch.id)
+          |> where([node], node.stage == ^stage)
+          |> where([node], node.node_id in ^node_ids)
+          |> Repo.exists?()
+      end)
+
+    if conflicts?,
+      do: {:error, {:custom, "A Docs Tree node with the same identity already exists"}},
+      else: :ok
+  end
+
+  defp restore_stage_nodes(community, branch, items, stage) do
+    items
+    |> Enum.filter(&(not is_nil(snapshot(&1, stage))))
+    |> Enum.sort_by(fn item ->
+      data = snapshot(item, stage)
+      {type_rank(item.type), data["index"] || 0, item.node_id}
+    end)
+    |> Enum.reduce_while({:ok, []}, fn item, {:ok, nodes} ->
+      attrs = snapshot_attrs(community, branch, item, stage)
+
+      case ORM.create(DocTreeNode, attrs) do
+        {:ok, node} -> {:cont, {:ok, [node | nodes]}}
         error -> {:halt, error}
       end
     end)
@@ -212,154 +277,104 @@ defmodule GroupherServer.CMS.DocTree.Trash do
     end
   end
 
-  defp restore_node(%Community{} = community, branch, %DocTreeTrashItem{} = item) do
-    with nil <- draft_node_by_node_id(community, branch, item.node_id),
-         {:ok, attrs} <- draft_attrs_from_trash_item(community, branch, item),
-         :ok <-
-           Index.shift_sibling_indexes(
-             community,
-             branch,
-             attrs.tab_id || attrs.group_id,
-             attrs.type,
-             attrs.index,
-             nil
-           ),
-         {:ok, node} <- ORM.create(DocTreeNode, attrs),
-         :ok <- restore_doc_draft_from_trash(community, branch, item) do
-      {:ok, node}
+  defp record_restore_events(community, branch, items, draft_nodes, public_nodes, actor) do
+    drafts = Map.new(draft_nodes, &{&1.node_id, &1})
+    publics = Map.new(public_nodes, &{&1.node_id, &1})
+
+    events =
+      Enum.flat_map(items, fn item ->
+        draft = Map.get(drafts, item.node_id)
+        public = Map.get(publics, item.node_id)
+        restore_events(draft, public)
+      end)
+
+    Events.record_staged_many(community, events, actor.id, branch_id: branch.id)
+  end
+
+  defp restore_events(nil, _public), do: []
+
+  defp restore_events(%DocTreeNode{} = draft, nil) do
+    event = Events.create_event(draft)
+
+    if draft.type == :page do
+      [EventRecorder.doc_owned_create_event(draft)]
     else
-      %DocTreeNode{} -> {:error, {:custom, "Trash item has already been restored."}}
-      error -> error
+      [event]
     end
   end
 
-  defp draft_node_by_node_id(%Community{} = community, branch, node_id) do
-    DocTreeNode
-    |> where([node], node.community_id == ^community.id)
-    |> where([node], node.branch_id == ^branch.id)
-    |> where([node], node.stage == CMS.Const.stage(:draft))
-    |> where([node], node.node_id == ^to_string(node_id))
-    |> Repo.one()
+  defp restore_events(%DocTreeNode{} = draft, %DocTreeNode{} = public) do
+    field_events = Events.update_events(public, draft)
+
+    placement_events =
+      if parent_id(public) != parent_id(draft) or public.index != draft.index do
+        [Events.move_event(draft, parent_id(public), public.index, parent_id(draft), draft.index)]
+      else
+        []
+      end
+
+    field_events ++ placement_events
   end
 
-  defp draft_attrs_from_trash_item(%Community{} = community, branch, %DocTreeTrashItem{} = item) do
-    snapshot = item.node_snapshot || %{}
-
-    with {:ok, type} <- node_type_atom(snapshot["type"]),
-         :ok <- validate_parent(community, branch, item, type) do
-      {:ok,
-       %{
-         community_id: community.id,
-         branch_id: branch.id,
-         node_id: snapshot["id"] || item.node_id,
-         stage: CMS.Const.stage(:draft),
-         type: type,
-         tab_id: snapshot["tabId"],
-         group_id: item.deleted_from_group_id || snapshot["groupId"],
-         doc_id: item.doc_id || snapshot["docId"],
-         title: snapshot["title"],
-         slug: snapshot["slug"],
-         index: item.deleted_from_index || snapshot["index"] || 0,
-         href: snapshot["href"],
-         marker: snapshot["marker"],
-         badge: snapshot["badge"],
-         hidden: Map.get(snapshot, "hidden", false),
-         ui_config: Map.get(snapshot, "uiConfig", %{})
-       }}
-    end
-  end
-
-  defp validate_parent(_community, _branch, _item, @tree_node_type_tab), do: :ok
-
-  defp validate_parent(%Community{} = community, branch, %DocTreeTrashItem{} = item, type)
-       when type in [@tree_node_type_group, @tree_node_type_pin] do
-    case draft_node_by_node_id(community, branch, item.node_snapshot["tabId"]) do
-      %DocTreeNode{type: @tree_node_type_tab} -> :ok
-      _ -> {:error, {:custom, "Restore the parent tab before restoring this item."}}
-    end
-  end
-
-  defp validate_parent(%Community{} = community, branch, %DocTreeTrashItem{} = item, _type) do
-    parent_id = item.deleted_from_group_id || item.node_snapshot["groupId"]
-
-    case draft_node_by_node_id(community, branch, parent_id) do
-      %DocTreeNode{type: @tree_node_type_group} -> :ok
-      _ -> {:error, {:custom, "Restore the parent group before restoring this item."}}
-    end
-  end
-
-  defp restore_doc_draft_from_trash(
-         %Community{} = community,
-         branch,
-         %DocTreeTrashItem{doc_id: doc_id, node_snapshot: snapshot}
-       )
-       when not is_nil(doc_id) do
-    case draft_doc_by_doc_id(community, branch, doc_id) do
-      %Doc{} ->
-        :ok
-
-      nil ->
-        case TrashSnapshot.fetch_draft_doc_snapshot(snapshot) do
-          {:ok, draft_snapshot} ->
-            TrashSnapshot.restore_doc_draft(community, branch, draft_snapshot)
-
-          {:error, :not_found} ->
-            :ok
-        end
-    end
-  end
-
-  defp restore_doc_draft_from_trash(_community, _branch, _item), do: :ok
-
-  defp draft_doc_by_doc_id(%Community{} = community, branch, doc_id) do
-    Doc
-    |> where([doc], doc.community_id == ^community.id)
-    |> where([doc], doc.branch_id == ^branch.id)
-    |> where([doc], doc.stage == CMS.Const.stage(:draft))
-    |> where([doc], doc.article_hash_id == ^doc_id)
-    |> Repo.one()
-  end
-
-  defp mark_items_restored(items) do
-    ids = Enum.map(items, & &1.id)
-    now = DateTime.utc_now(:second)
-
-    DocTreeTrashItem
-    |> where([item], item.id in ^ids)
-    |> Repo.update_all(set: [restored_at: now, updated_at: now])
+  defp delete_tree_memberships(action_id) do
+    TrashedDocTreeNode
+    |> where([item], item.trash_action_id == ^action_id)
+    |> Repo.delete_all()
 
     :ok
   end
 
-  defp create_restore_audit(
-         %Community{} = community,
-         branch,
-         args,
-         %DocTreeTrashItem{} = root_item,
-         events,
-         nodes
-       ) do
-    ORM.create(DocTreeRestoreAudit, %{
+  defp snapshot(item, :draft), do: item.draft_snapshot
+  defp snapshot(item, :public), do: item.public_snapshot
+
+  defp snapshot_attrs(community, branch, item, stage) do
+    data = snapshot(item, stage)
+
+    %{
       community_id: community.id,
       branch_id: branch.id,
-      actor_id: Map.get(args, :actor_id),
-      restored_event_ids: Enum.map(events, & &1.id),
-      restored_node_ids: Enum.map(nodes, & &1.node_id),
-      restored_at: DateTime.utc_now(:second),
-      payload: %{
-        "trashItemId" => root_item.id,
-        "items" => Enum.map(nodes, &Read.to_map/1)
-      }
-    })
+      node_id: data["nodeId"] || item.node_id,
+      stage: stage,
+      type: item.type,
+      tab_id: data["tabId"],
+      group_id: data["groupId"],
+      doc_id: data["docId"] || item.doc_id,
+      title: data["title"],
+      slug: data["slug"],
+      index: data["index"] || 0,
+      href: data["href"],
+      marker: data["marker"],
+      badge: data["badge"],
+      hidden: Map.get(data, "hidden", false),
+      template_key: data["templateKey"],
+      ui_config: data["uiConfig"] || %{}
+    }
   end
 
-  defp node_type_atom(type) when is_binary(type) do
-    Enum.find(CMS.Const.tree_node_type_values(), &(to_string(&1) == type))
-    |> case do
-      nil -> {:error, {:custom, "Unsupported docs tree node type: #{type}"}}
-      atom -> {:ok, atom}
-    end
+  defp to_map(%TrashAction{} = action) do
+    root =
+      Enum.find(action.trashed_doc_tree_nodes, &(&1.node_id == action.root_ref)) ||
+        List.first(action.trashed_doc_tree_nodes)
+
+    data = root.draft_snapshot || root.public_snapshot || %{}
+
+    %{
+      id: action.hash_id,
+      node_id: root.node_id,
+      doc_id: root.doc_id,
+      type: to_string(root.type),
+      title: data["title"] || root.node_id,
+      slug: data["slug"],
+      deleted_from_group_id: data["groupId"] || data["tabId"],
+      deleted_from_index: data["index"],
+      deleted_at: action.deleted_at,
+      restored_at: nil
+    }
   end
 
-  defp node_type_atom(_type), do: {:error, {:custom, "Trash item has invalid node type."}}
+  defp parent_id(%DocTreeNode{} = node), do: node.tab_id || node.group_id
+
+  defp type_rank(:tab), do: 0
+  defp type_rank(:group), do: 1
+  defp type_rank(_type), do: 2
 end

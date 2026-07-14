@@ -11,34 +11,32 @@ import type { TDevLogoOption, TIconListOption } from '../spec'
 type TProps = {
   item: TIconListOption
   iconClassName: string
+  color?: string
 }
 
 const isDevLogoOption = (item: TIconListOption): item is TDevLogoOption => item.kind === 'dev'
 
-const IconNode: FC<TProps> = ({ item, iconClassName }) => {
+const IconNode: FC<TProps> = ({ item, iconClassName, color }) => {
   if (isDevLogoOption(item)) {
     return (
-      <span>
-        <img
-          src={getDevLogoSrc(getDevLogoFilePath(item.name))}
-          alt=''
-          draggable={false}
-          className='size-5 object-contain'
-        />
-      </span>
+      <img
+        src={getDevLogoSrc(getDevLogoFilePath(item.name))}
+        alt=''
+        draggable={false}
+        className='block size-5 object-contain'
+      />
     )
   }
 
   return (
-    <span>
-      <IconHub
-        provider={item.provider}
-        icon={item.name as TIconName}
-        mode='sprite'
-        size={4.5}
-        className={iconClassName}
-      />
-    </span>
+    <IconHub
+      provider={item.provider}
+      icon={item.name as TIconName}
+      mode='sprite'
+      size={4.5}
+      className={iconClassName}
+      style={color ? { color } : undefined}
+    />
   )
 }
 

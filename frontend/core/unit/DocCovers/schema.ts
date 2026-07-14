@@ -7,6 +7,16 @@ const markerFields = gql`
     name
     src
     unified
+    appearance {
+      light {
+        color
+        bg
+      }
+      dark {
+        color
+        bg
+      }
+    }
   }
 `
 

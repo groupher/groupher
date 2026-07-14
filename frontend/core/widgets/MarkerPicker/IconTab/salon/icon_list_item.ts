@@ -1,17 +1,24 @@
 import useTwBelt from '~/hooks/useTwBelt'
-import type { TColorName } from '~/spec'
 
 type TProps = {
   active: boolean
-  color?: TColorName
+  hasActiveColor: boolean
 }
 
-export default function useSalon({ active, color }: TProps) {
-  const { cn, fg, primary, rainbow } = useTwBelt()
-  const colorClass = color ? rainbow(color, 'fg') : primary('fg')
+export default function useSalon({ active, hasActiveColor }: TProps) {
+  const { cn, fg, primary } = useTwBelt()
+  const primaryColor = primary('fg')
 
   return {
+    marker: 'align-both size-7 shrink-0 rounded leading-none',
     // Provider sprite icons read color from currentColor.
-    icon: active ? colorClass : cn(fg('digest'), `group-hover:${colorClass}`),
+    icon: active
+      ? primaryColor
+      : cn(
+          fg('digest'),
+          hasActiveColor
+            ? 'group-hover:text-[var(--marker-active-color)]'
+            : `group-hover:${primaryColor}`,
+        ),
   }
 }

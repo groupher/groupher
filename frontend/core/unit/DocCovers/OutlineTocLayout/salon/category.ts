@@ -16,6 +16,6 @@ export default function useSalon() {
     articleTitle: cnMerge(base.tocText, 'text-base ml-3'),
     item: base.tocItem,
     line: base.tocLine,
-    itemIndex: cn('text-sm tabular-nums', base.tocIndex),
+    itemIndex: cn('text-sm pretty-num', base.tocIndex),
   }
 }

@@ -3,6 +3,8 @@ defmodule GroupherServer.Test.Query.CMS.Search do
 
   use GroupherServer.TestMate
 
+  alias GroupherServer.CMS.SearchArtiments.Artiment
+
   defp create_community!(user, attrs) do
     community_attrs = mock_attrs(:community, attrs)
     {:ok, community} = CMS.Communities.create(community_attrs, user)
@@ -18,34 +20,38 @@ defmodule GroupherServer.Test.Query.CMS.Search do
     _community = create_community!(user, %{title: "javascript"})
     _community = create_community!(user, %{title: "java"})
 
-    {:ok, _community} = db_insert(:post, %{title: "react"})
-    {:ok, _community} = db_insert(:post, %{title: "php"})
-    {:ok, _community} = db_insert(:post, %{title: "每日妹子"})
-    {:ok, _community} = db_insert(:post, %{title: "javascript"})
-    {:ok, _community} = db_insert(:post, %{title: "java"})
+    Helper.TestFakes.SearchArtiments.reset()
+
+    Enum.with_index(["react", "php", "每日妹子", "javascript", "java"], 1)
+    |> Enum.each(fn {title, inner_id} ->
+      :ok = Helper.TestFakes.SearchArtiments.upsert([search_article(title, inner_id)])
+    end)
+
+    on_exit(&Helper.TestFakes.SearchArtiments.reset/0)
 
     {:ok, ~m(guest_conn user)a}
   end
 
-  describe "[cms search post query]" do
-    test "search post by full title should valid paged communities", ~m(guest_conn)a do
-      variables = %{title: "react"}
-      results = guest_conn |> gq_query(S.Article.q(:search_articles, :post), variables)
+  describe "[cms search artiments query]" do
+    test "search Article by full text returns unified hits", ~m(guest_conn)a do
+      variables = %{query: %{text: "react"}}
+      results = guest_conn |> gq_query(S.Article.q(:search_artiments, :post), variables)
 
       assert results["totalCount"] == 1
-      assert results["entries"] |> Enum.any?(&(&1["title"] == "react"))
+      assert results["entries"] |> Enum.any?(&(&1["artiment"]["title"] == "react"))
+      assert hd(results["entries"])["artiment"]["type"] == "ARTICLE"
 
-      variables = %{title: "java"}
-      results = guest_conn |> gq_query(S.Article.q(:search_articles, :post), variables)
+      variables = %{query: %{text: "java", filters: %{threads: ["POST"]}}}
+      results = guest_conn |> gq_query(S.Article.q(:search_artiments, :post), variables)
 
       assert results["totalCount"] == 2
-      assert results["entries"] |> Enum.any?(&(&1["title"] == "java"))
-      assert results["entries"] |> Enum.any?(&(&1["title"] == "javascript"))
+      assert results["entries"] |> Enum.any?(&(&1["artiment"]["title"] == "java"))
+      assert results["entries"] |> Enum.any?(&(&1["artiment"]["title"] == "javascript"))
     end
 
-    test "search non-exist post should get empty pagi data", ~m(guest_conn)a do
-      variables = %{title: "non-exist"}
-      results = guest_conn |> gq_query(S.Article.q(:search_articles, :post), variables)
+    test "search non-existent content returns empty pagination", ~m(guest_conn)a do
+      variables = %{query: %{text: "non-exist"}}
+      results = guest_conn |> gq_query(S.Article.q(:search_artiments, :post), variables)
 
       assert results["totalCount"] == 0
       assert results["entries"] == []
@@ -88,5 +94,28 @@ defmodule GroupherServer.Test.Query.CMS.Search do
       assert results["totalCount"] == 0
       assert results["entries"] == []
     end
+  end
+
+  defp search_article(title, inner_id) do
+    now = DateTime.utc_now(:second)
+    article_hash_id = Ecto.UUID.generate()
+    ref = Artiment.article_ref(:post, article_hash_id)
+
+    %Artiment{
+      ref: ref,
+      type: :article,
+      community_ref: "home",
+      thread: :post,
+      article_ref: ref,
+      title: title,
+      plain_text: "#{title} body",
+      locator: %{community: "home", thread: :post, inner_id: to_string(inner_id)},
+      upvotes_count: 0,
+      comments_count: 0,
+      inserted_at: now,
+      updated_at: now,
+      content_hash: "hash-#{inner_id}",
+      schema_version: 1
+    }
   end
 end

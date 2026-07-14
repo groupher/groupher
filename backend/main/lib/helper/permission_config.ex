@@ -11,8 +11,9 @@ defmodule Helper.PermissionConfig do
     "undo_pin",
     "sink",
     "undo_sink",
-    "mark_delete",
-    "undo_mark_delete",
+    "trash",
+    "restore",
+    "permanent_delete",
     "lock_comment",
     "undo_lock_comment"
   ]
@@ -78,9 +79,9 @@ defmodule Helper.PermissionConfig do
   def cms_grants do
     threaded_grants([
       "edit",
-      "mark_delete",
-      "undo_mark_delete",
-      "delete",
+      "trash",
+      "restore",
+      "permanent_delete",
       "pin",
       "undo_pin",
       "sink",
@@ -137,6 +138,28 @@ defmodule Helper.PermissionConfig do
       "article.mirror" => %{scope: :global, grant_by_thread: "community.mirror"},
       "article.unmirror" => %{scope: :global, grant_by_thread: "community.unmirror"},
       "article.move" => %{scope: :global, grant_by_thread: "community.move"},
+      "article.trash" => %{
+        scope: :context,
+        context: :cms,
+        grant_by_thread: "trash",
+        owner_fallback: true
+      },
+      "article.trash.read" => %{
+        scope: :context,
+        context: :cms,
+        grant_by_thread: "trash"
+      },
+      "article.restore" => %{
+        scope: :context,
+        context: :cms,
+        grant_by_thread: "restore"
+      },
+      "article.permanent_delete" => %{
+        scope: :context,
+        context: :cms,
+        grant_by_thread: "permanent_delete"
+      },
+      "audit.read" => %{scope: :context, context: :cms, grant: "community.update"},
       "category.create" => %{scope: :global, grant: "category.create"},
       "category.update" => %{scope: :global, grant: "category.update"},
       "category.delete" => %{scope: :global, grant: "category.delete"},
@@ -277,12 +300,7 @@ defmodule Helper.PermissionConfig do
   defp generated_thread_action_requirements do
     threads()
     |> Enum.reduce(%{}, fn thread, acc ->
-      acc
-      |> Map.merge(direct_thread_requirements(thread, @article_ops))
-      |> Map.put(
-        "#{thread}.delete",
-        context_requirement("#{thread}.delete", owner_fallback: true)
-      )
+      Map.merge(acc, direct_thread_requirements(thread, @article_ops))
     end)
   end
 

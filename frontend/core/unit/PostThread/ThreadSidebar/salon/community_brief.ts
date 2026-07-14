@@ -12,6 +12,6 @@ export default function useSalon() {
     title: cn('text-sm bold-sm', fg('title')),
     row: 'row-center mt-1',
     label: cn('text-sm opacity-80', fg('digest')),
-    count: cn('text-sm bold ml-1.5', fg('digest')),
+    count: cn('pretty-num ml-1.5 text-sm bold', fg('digest')),
   }
 }

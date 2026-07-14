@@ -6,7 +6,7 @@ export default function useSalon() {
   return {
     section: 'column gap-1.5',
     heading: cn('row-center gap-1 px-2 pb-1 text-xs bold-sm', fg('title')),
-    count: cn('text-xs', fg('digest')),
+    count: cn('pretty-num text-xs', fg('digest')),
     empty: cn('px-2 py-1 text-xs', fg('digest')),
     item: cn(
       'grid grid-cols-[18px_minmax(0,1fr)] gap-2 w-full rounded-md px-2 py-2 text-left cursor-pointer',

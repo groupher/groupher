@@ -11,7 +11,7 @@ export default function useSalon({ count, active, ...spacing }: TProps) {
 
   return {
     wrapper: cn(
-      'text-sm',
+      'pretty-num text-sm',
       fg('digest'),
       active && primary('fg'),
       count > 0 && 'bold-sm',

@@ -84,18 +84,19 @@ defmodule GroupherServer.Test.Query.Flags.PostsFlags do
       assert results["entries"] |> Enum.any?(&(&1["id"] !== random_id))
     end
 
-    test "if have trashed posts, the mark deleted posts should not appears in result",
+    test "trashed posts do not appear in results, including pinned injection",
          ~m(guest_conn community)a do
       variables = %{filter: %{community: community.slug}}
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
 
       random_id = results["entries"] |> Enum.shuffle() |> List.first() |> Map.get("innerId")
       {:ok, random_post} = CMS.FrontDesk.article(community, :post, random_id)
-      {:ok, _} = CMS.Articles.mark_delete(random_post)
+      {:ok, _} = CMS.Articles.pin(community, random_post)
+      {:ok, _} = CMS.Articles.trash(random_post, nil)
 
       results = guest_conn |> gq_query(S.Article.q(:paged_articles, :post), variables)
 
-      assert results["entries"] |> Enum.any?(&(&1["innerId"] !== random_id))
+      refute results["entries"] |> Enum.any?(&(&1["innerId"] == random_id))
       assert results["totalCount"] == @total_count - 1
     end
   end

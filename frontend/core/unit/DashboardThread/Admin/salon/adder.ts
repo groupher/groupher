@@ -15,7 +15,7 @@ export default function useSalon() {
     ),
     searchField: 'min-w-0 grow',
     input: cn(
-      'outline-none tabular-nums box-border m-0 list-none relative inline-block w-full bg-transparent border-0 appearance-none',
+      'outline-none pretty-num box-border m-0 list-none relative inline-block w-full bg-transparent border-0 appearance-none',
       'px-4 py-1 h-9 rounded-md text-sm text-left leading-normal caret-inherit',
       'placeholder:italic placeholder:opacity-65 placeholder:text-sm',
       fg('digest'),

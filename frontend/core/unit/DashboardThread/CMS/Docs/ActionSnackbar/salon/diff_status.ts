@@ -15,7 +15,7 @@ export default function useSalon() {
     buttonActive: cn(fg('title'), bg('hoverBg')),
     icon: cn('size-4.5', fill('digest'), hover('icon')),
     iconActive: fill('title'),
-    additions: cn('ml-0.5', rainbow(COLOR.GREEN, 'fg')),
-    deletions: rainbow(COLOR.RED, 'fg'),
+    additions: cn('pretty-num ml-0.5', rainbow(COLOR.GREEN, 'fg')),
+    deletions: cn('pretty-num', rainbow(COLOR.RED, 'fg')),
   }
 }

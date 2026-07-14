@@ -242,7 +242,6 @@ defmodule Helper.ORM do
       iex> ORM.find_all(Post, %{community: "elixir"})
       {:ok, [%Post{}, ...]}
   """
-  # TODO: find article not mark_delete by default
   def find_all(queryable, %{page: page, size: size} = filter) do
     queryable
     |> QueryBuilder.filter_pack(filter)
@@ -343,7 +342,7 @@ defmodule Helper.ORM do
 
   ## Examples
 
-      iex> ORM.delete_all(from(p in Post, where: p.mark_delete == true), :if_exist)
+      iex> ORM.delete_all(from(p in Post, where: p.pending == :illegal), :if_exist)
       {:ok, {count, _}}
   """
   def delete_all(queryable, :if_exist) do

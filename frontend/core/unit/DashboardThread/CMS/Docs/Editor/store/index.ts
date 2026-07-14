@@ -40,6 +40,7 @@ export const hasTreeChanges = (sideTree: TSideTreeController): boolean => {
   return (
     sideTree.treeState?.hasUnpublishedChanges === true ||
     (sideTree.treeState?.stagedEventCount ?? 0) > 0 ||
+    sideTree.pins.some((pin) => needsPublishAttention(pin.publishState)) ||
     sideTree.groups.some((group) => needsPublishAttention(group.publishState))
   )
 }

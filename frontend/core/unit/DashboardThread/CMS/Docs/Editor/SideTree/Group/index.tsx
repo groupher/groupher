@@ -83,9 +83,9 @@ const Group: FC<TProps> = ({
   const [menuOpen, setMenuOpen] = useState(false)
   const [childrenListRef] = useAutoAnimate(CHILD_LAYOUT_TRANSITION)
   const { t } = useTrans()
-  const s = useSalon({ actionVisible: menuOpen })
   const collapsed = group.expanded === false
   const groupInCover = group.publishState?.inCover === true
+  const s = useSalon({ actionVisible: menuOpen, coverStatusVisible: !groupInCover })
   const addDocLabel = t('dsb.cms.docs.side_tree.tooltip.new_doc')
   const editing =
     editingTarget?.type === SIDE_TREE_NODE_TYPE.GROUP && editingTarget.groupId === group.id
@@ -151,16 +151,16 @@ const Group: FC<TProps> = ({
                 <ArrowSVG className={cn(s.arrowIcon, collapsed && s.arrowCollapsed)} />
               </button>
             )}
-            <div className={s.actionSlot}>
-              {!searching && !editing && !groupInCover && (
-                <div
-                  className={s.coverStatus}
-                  aria-label={t('dsb.cms.docs.side_tree.hidden_from_cover')}
-                >
-                  <CalendarSlashSVG className={s.coverStatusIcon} />
-                </div>
-              )}
-              {!searching && !editing && (
+            {!searching && !editing && (
+              <div className={s.actionSlot}>
+                {!groupInCover && (
+                  <div
+                    className={s.coverStatus}
+                    aria-label={t('dsb.cms.docs.side_tree.hidden_from_cover')}
+                  >
+                    <CalendarSlashSVG className={s.coverStatusIcon} />
+                  </div>
+                )}
                 <button
                   type='button'
                   className={s.addButton}
@@ -170,8 +170,6 @@ const Group: FC<TProps> = ({
                 >
                   <PlusSVG className={s.actionIcon} />
                 </button>
-              )}
-              {!searching && (
                 <div className={s.actions}>
                   <GroupMenu
                     inCover={groupInCover}
@@ -180,8 +178,8 @@ const Group: FC<TProps> = ({
                     onSelect={handleGroupMenuSelect}
                   />
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
           <SortableSideTreeGroup
             className={cn(s.children, collapsed && s.collapsed)}

@@ -13,6 +13,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
 
   alias CMS.Communities.TagStats
   alias CMS.FrontDesk
+  alias CMS.SearchArtiments.Indexer
   alias Helper.{Multi, Constant, ORM, QueryBuilder, T}
 
   @audit_legal Constant.CMS.pending(:legal)
@@ -22,10 +23,11 @@ defmodule GroupherServer.CMS.Articles.Moderation do
   @spec paged_audit_failed(atom(), map()) :: T.domain_res(term())
   def paged_audit_failed(thread, filter) do
     %{page: page, size: size} = filter
-    flags = %{mark_delete: false, pending: :audit_failed}
+    flags = %{pending: :audit_failed}
 
     with {:ok, info} <- match(thread) do
       info.model
+      |> CMS.Articles.active_scope(thread)
       |> QueryBuilder.filter_pack(Map.merge(filter, flags))
       |> ORM.paginator(~m(page size)a)
       |> done()
@@ -74,6 +76,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
     end)
     |> Repo.transaction()
     |> result()
+    |> sync_search(:delete)
   end
 
   @spec unset_illegal(atom(), T.id(), map()) :: T.domain_res(term())
@@ -118,6 +121,7 @@ defmodule GroupherServer.CMS.Articles.Moderation do
     end)
     |> Repo.transaction()
     |> result()
+    |> sync_search(:upsert)
   end
 
   defp result({:ok, %{update_article_meta: result}}), do: {:ok, result}
@@ -149,7 +153,20 @@ defmodule GroupherServer.CMS.Articles.Moderation do
     end
   end
 
+  defp sync_search({:ok, article} = result, :delete) do
+    Indexer.enqueue_delete(article)
+    result
+  end
+
+  defp sync_search({:ok, article} = result, :upsert) do
+    Indexer.enqueue_upsert(article)
+    result
+  end
+
+  defp sync_search(result, _action), do: result
+
   defp counted_in_tag_stats?(article) do
-    Map.get(article, :mark_delete) == false and Map.get(article, :pending) != @audit_illegal
+    not CMS.Articles.Trash.trashed_article?(article) and
+      Map.get(article, :pending) != @audit_illegal
   end
 end

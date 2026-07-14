@@ -20,9 +20,9 @@ defmodule GroupherServer.Test.Helper.PermissionRegistryTest do
     templates = [
       "%s.pin",
       "%s.undo_pin",
-      "%s.mark_delete",
-      "%s.undo_mark_delete",
-      "%s.delete",
+      "%s.trash",
+      "%s.restore",
+      "%s.permanent_delete",
       "%s.sink",
       "%s.undo_sink",
       "%s.lock_comment",

@@ -17,12 +17,11 @@ defmodule GroupherServer.Test.Mutation.Articles.DocBoundary do
     assert Map.has_key?(mutation_fields, :publish_doc_changes)
   end
 
-  test "public Docs still support product-level owner deletion", context do
+  test "Docs Article deletion is routed through the Tree lifecycle", context do
     owner_conn = simu_conn(:owner, context.doc)
 
-    result =
-      owner_conn
-      |> gq_mutation(S.Article.m(:delete_article, :doc), %{
+    assert owner_conn
+           |> mutation_error?(S.Article.m(:trash_article), %{
         article: %{
           inner_id: context.doc.inner_id,
           community: context.community.slug,
@@ -30,6 +29,6 @@ defmodule GroupherServer.Test.Mutation.Articles.DocBoundary do
         }
       })
 
-    assert result["innerId"] == to_string(context.doc.inner_id)
+    assert {:ok, _} = CMS.Articles.read(context.community, :doc, context.doc.inner_id)
   end
 end

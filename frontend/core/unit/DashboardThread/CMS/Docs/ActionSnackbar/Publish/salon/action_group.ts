@@ -20,7 +20,7 @@ export default function useSalon() {
       primary('bg'),
       fg('button.fg'),
     ),
-    publishCount: 'text-xs opacity-60',
+    publishCount: 'pretty-num text-xs opacity-60',
     optionsButton: cn(
       'align-both h-7 w-fit px-2 rounded-r-lg rounded-l-none button-reset disabled:cursor-not-allowed',
       primary('bg'),
@@ -31,7 +31,7 @@ export default function useSalon() {
       fg('digest'),
       'bg-white/10 hover:bg-white/15 dark:bg-white/10 dark:hover:bg-white/15',
     ),
-    reviewCount: cn('text-xs opacity-70', fg('digest')),
+    reviewCount: cn('pretty-num text-xs opacity-70', fg('digest')),
     treePublishButton: cn(
       'row-center h-7 px-3 rounded-lg button-reset text-xs bold-sm whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed',
       primary('bg'),

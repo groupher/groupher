@@ -30,6 +30,10 @@ export type TSelectableOptions = {
   isCircle?: boolean
   size?: TSelectableSize
 }
+export type TUnderlineOptions = {
+  always?: boolean
+  groupHoverClass?: 'group-hover'
+}
 export type TCutWWidth = `w-${number}` | `w-[${number}px]`
 export type TContainerMetric = 'article' | 'community-doc'
 
@@ -92,6 +96,7 @@ export type TRet = {
   linker: (prefix?: TLinkColorPrefix) => string
 
   linkable: () => string
+  underline: (options?: TUnderlineOptions) => string
   hoverLink: (textSize?: string) => string
   hoverLinkIcon: (size?: string) => string
 

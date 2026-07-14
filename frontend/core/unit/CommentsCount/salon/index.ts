@@ -11,7 +11,7 @@ export default function useSalon({ ...spacing }: TProps) {
   return {
     wrapper: cn('row-center', margin(spacing)),
     highlightWrapper: 'count-highlight',
-    count: cn('text-sm', fg('digest')),
+    count: cn('pretty-num text-sm', fg('digest')),
     icon: cn('mr-1 mt-px size-2.5 opacity-65', fill('digest')),
     iconHighlight: fill('highlight'),
   }

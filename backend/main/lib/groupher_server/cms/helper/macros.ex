@@ -182,7 +182,6 @@ defmodule GroupherServer.CMS.Helper.Macros do
       :comments_participants_count,
       :upvotes_count,
       :collects_count,
-      :mark_delete,
       :active_at,
       :pending
     ]
@@ -267,9 +266,6 @@ defmodule GroupherServer.CMS.Helper.Macros do
   # for :views
   add(:views, :integer, default: 0)
 
-  # for :mark_delete
-  add(:mark_delete, :boolean, default: false)
-
   # for :meta
   add(:meta, :map)
 
@@ -308,7 +304,6 @@ defmodule GroupherServer.CMS.Helper.Macros do
 
       field(:views, :integer, default: 0)
       field(:is_pinned, :boolean, default: false, virtual: true)
-      field(:mark_delete, :boolean, default: false)
       field(:cover_url, :string)
       field(:cover_url_dark, :string)
 

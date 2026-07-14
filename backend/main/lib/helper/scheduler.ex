@@ -34,6 +34,11 @@ defmodule Helper.Scheduler do
     CMS.Comments.archive_comments()
   end
 
+  @doc "Permanently deletes Trash actions whose retention window has elapsed."
+  def purge_expired_trash do
+    CMS.Trash.purge_due()
+  end
+
   def articles_audition do
     audit_articles(:post)
     audit_articles(:blog)

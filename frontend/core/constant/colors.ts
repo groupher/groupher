@@ -67,3 +67,34 @@ export const RAINBOW_COLOR_HEX = {
     [COLOR.PURPLE]: '#9669b9',
   },
 } as const
+
+export const RAINBOW_SOFT_COLOR_HEX = {
+  [THEME.LIGHT]: {
+    [COLOR.BLACK]: '#f4f4f4',
+    [COLOR.PINK]: '#ffd8ea59',
+    [COLOR.RED]: '#ffebec',
+    [COLOR.ORANGE]: '#fef7e8',
+    [COLOR.YELLOW]: '#fefbe8',
+    [COLOR.BROWN]: '#fff3df',
+    [COLOR.GREEN_LIGHT]: '#e3f3cc4a',
+    [COLOR.GREEN]: '#eefdd89c',
+    [COLOR.CYAN]: '#e1fcff',
+    [COLOR.CYAN_LIGHT]: '#e1fcff94',
+    [COLOR.BLUE]: '#e7edf7',
+    [COLOR.PURPLE]: '#f7d8fd38',
+  },
+  [THEME.DARK]: {
+    [COLOR.BLACK]: '#313131',
+    [COLOR.PINK]: '#73526159',
+    [COLOR.RED]: '#7d3b363d',
+    [COLOR.ORANGE]: '#3f332dba',
+    [COLOR.YELLOW]: '#a9a06a30',
+    [COLOR.BROWN]: '#3a342b',
+    [COLOR.GREEN_LIGHT]: '#69735a4a',
+    [COLOR.GREEN]: '#4248374a',
+    [COLOR.CYAN]: '#2c3738',
+    [COLOR.CYAN_LIGHT]: '#39494b94',
+    [COLOR.BLUE]: '#27324c54',
+    [COLOR.PURPLE]: '#76478147',
+  },
+} as const

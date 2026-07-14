@@ -450,6 +450,16 @@ const docTreeNodeFields = `
     name
     src
     unified
+    appearance {
+      light {
+        color
+        bg
+      }
+      dark {
+        color
+        bg
+      }
+    }
   }
   badge
   hidden
@@ -539,6 +549,64 @@ const docTreeTrashItems = gql`
       deletedFromIndex
       deletedAt
       restoredAt
+    }
+  }
+`
+
+const trashedPosts = gql`
+  query trashedPosts($community: String!, $page: Int!, $size: Int!) {
+    trashedArticles(community: $community, thread: POST, filter: { page: $page, size: $size }) {
+      entries {
+        id
+        thread
+        articleRef
+        deletedAt
+        scheduledPermanentDeletionAt
+        mentionedByCount
+        deletedBy {
+          ${F.author}
+        }
+        article {
+          innerId
+          title
+          views
+          upvotesCount
+          meta {
+            thread
+          }
+          ... on Post {
+            cat
+            status
+            commentsCount
+            insertedAt
+            activeAt
+            author {
+              ${F.author}
+            }
+            communityTags {
+              ${F.tag}
+            }
+          }
+        }
+      }
+      ${F.pagi}
+    }
+  }
+`
+
+const restoreTrashedPost = gql`
+  mutation restoreTrashedPost($community: String!, $id: ID!) {
+    restoreTrashedArticle(community: $community, id: $id, thread: POST) {
+      innerId
+      title
+    }
+  }
+`
+
+const permanentlyDeleteTrashedPost = gql`
+  mutation permanentlyDeleteTrashedPost($community: String!, $id: ID!) {
+    permanentlyDeleteTrashedArticle(community: $community, id: $id, thread: POST) {
+      done
     }
   }
 `
@@ -1114,6 +1182,9 @@ const schema = {
   docTree,
   docPublishChecklist,
   docTreeTrashItems,
+  trashedPosts,
+  restoreTrashedPost,
+  permanentlyDeleteTrashedPost,
   docDraft,
   docDraftSnapshots,
   createDocTreeGroup,

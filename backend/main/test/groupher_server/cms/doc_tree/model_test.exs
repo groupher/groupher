@@ -6,8 +6,8 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
   alias GroupherServer.CMS.Model.{
     Doc,
     DocTreeNode,
-    DocTreeTrashItem,
-    PublishRequest
+    PublishRequest,
+    TrashedDocTreeNode
   }
 
   describe "Doc changeset" do
@@ -108,15 +108,17 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
     end
   end
 
-  describe "DocTreeTrashItem changeset" do
-    test "stores docs-specific tree trash snapshot" do
+  describe "TrashedDocTreeNode changeset" do
+    test "stores stage-specific Tree placement without Article content" do
       changeset =
-        DocTreeTrashItem.changeset(%DocTreeTrashItem{}, %{
+        TrashedDocTreeNode.changeset(%TrashedDocTreeNode{}, %{
+          trash_action_id: 1,
           community_id: 1,
           branch_id: 1,
           node_id: "page-1",
           doc_id: Ecto.UUID.generate(),
-          node_snapshot: %{"id" => "page-1"},
+          type: :page,
+          draft_snapshot: %{"nodeId" => "page-1", "type" => "page"},
           deleted_at: DateTime.utc_now(:second)
         })
 

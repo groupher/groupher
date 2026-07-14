@@ -14,7 +14,7 @@ export default function useSalon() {
     user: 'row-center grow text-sm',
     avatar: cn('size-6 mr-3.5', avatar()),
     nickname: cn('text-sm', fg('title'), cut('w-40')),
-    floorNum: cn('text-xs mt-0.5', fg('hint')),
+    floorNum: cn('pretty-num mt-0.5 text-xs', fg('hint')),
     createDate: cn('row-center text-xs ml-0.5', fg('hint')),
     //
     refToOther: cn('row-center ml-2', fg('digest')),

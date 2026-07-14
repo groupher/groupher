@@ -19,6 +19,7 @@ import SeedSVG from '~/icons/Seed'
 import WatchSVG from '~/icons/Watch'
 import type { TMarkerValue } from '~/spec'
 
+import { toBgAppearance } from '../helper'
 import useSalon from '../salon'
 
 import scrollStyles from '../scroll.module.css'
@@ -26,6 +27,7 @@ import styles from './index.module.css'
 
 type TProps = {
   open: boolean
+  selectedValue: TMarkerValue
   onChange: (value: TMarkerValue) => void
 }
 
@@ -47,7 +49,7 @@ const CATEGORY_ICONS = {
   [Categories.FLAGS]: renderCategoryIcon(<FlagSVG />),
 }
 
-const EmojiTab: FC<TProps> = ({ open, onChange }) => {
+const EmojiTab: FC<TProps> = ({ open, selectedValue, onChange }) => {
   const s = useSalon()
   const overlayDark = useOverlayDark()
   const primaryColor = usePrimaryColor()
@@ -115,6 +117,7 @@ const EmojiTab: FC<TProps> = ({ open, onChange }) => {
           onChange({
             type: MARKER.EMOJI,
             unified: emojiData.unified,
+            appearance: toBgAppearance(selectedValue.appearance),
           })
         }
       />

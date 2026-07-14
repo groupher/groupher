@@ -78,6 +78,7 @@ export const DSB_POST_ROUTE = {
   LAYOUT: 'layout',
   CONTENT: 'content',
   BEHAVIOR: 'behavior',
+  TRASH: 'trash',
 } as const
 
 export const DSB_KANBAN_ROUTE = {

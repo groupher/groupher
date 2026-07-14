@@ -115,14 +115,18 @@ const makeController = (
 ): TSideTreeController => ({
   tabs,
   activeTabId: tabs[0]?.id ?? null,
+  pins: tabs[0]?.pins ?? [],
   groups: [],
   treeState: null,
   stagedEvents: [],
+  trashItems: [],
+  trashLoading: false,
   activeId: null,
   editingTarget: null,
   coverWarning: null,
   activate: noop,
   activateTab: noop,
+  addPin: noop,
   addTab: noop,
   deleteTab: noop,
   renameTab: noop,
@@ -136,27 +140,37 @@ const makeController = (
   renameGroup: noop,
   renameChild: noop,
   renameLink: noop,
+  savePin: noop,
+  deletePin: noop,
   cancelEdit: noop,
   edit: noop,
   handleChildAction: noop,
   updateChildStyle: noop,
+  updatePinStyle: noop,
   patchChild: noop,
   reload: noop,
+  reloadTrash: noop,
   reorderGroups: noop,
   ...patch,
 })
 
 describe('docs editor tabs', () => {
-  it('hides the tabs row and settings when there is only one tab', () => {
+  it('hides the tabs row and settings when there are no tabs', () => {
+    render(<Tabs controller={makeController([])} showTabs={false} submenuCollapsed={false} />)
+
+    expect(screen.queryByRole('button', { name: 'Manage tabs' })).not.toBeInTheDocument()
+  })
+
+  it('shows the tabs row and settings when there is one tab', () => {
     render(
       <Tabs
         controller={makeController([makeTab('intro', 'Introduction')])}
-        showTabs={false}
+        showTabs
         submenuCollapsed={false}
       />,
     )
 
-    expect(screen.queryByRole('button', { name: 'Manage tabs' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Manage tabs' })).toBeInTheDocument()
   })
 
   it('keeps tab switching read-only and moves management into the drawer', () => {

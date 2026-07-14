@@ -16,7 +16,7 @@ export default function useSalon() {
     //
     content: 'p-2 pb-0 rounded-xl w-full',
     label: cn('text-sm bold-sm ml-2.5', fg('title')),
-    count: 'row-center text-xs mt-0.5 ml-2.5 bold-sm',
+    count: 'row-center pretty-num mt-0.5 ml-2.5 text-xs bold-sm',
 
     backlogText: cn('text-xs', rainbow(backlogBg, 'fg')),
     todoText: cn('text-xs', rainbow(todoBg, 'fg')),

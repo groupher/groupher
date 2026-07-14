@@ -16,8 +16,8 @@ export default function useSalon() {
     itemSelected: rainbow(COLOR.ORANGE, 'border'),
     selectButton: 'block w-full min-w-0 button-reset text-left',
     summary: cn('row-center gap-2 text-sm bold-sm', fg('title')),
-    additions: rainbow(COLOR.GREEN, 'fg'),
-    deletions: rainbow(COLOR.RED, 'fg'),
+    additions: cn('pretty-num', rainbow(COLOR.GREEN, 'fg')),
+    deletions: cn('pretty-num', rainbow(COLOR.RED, 'fg')),
     authorLine: cn('mt-1 row-center gap-1.5 text-xs', fg('hint')),
     avatar: 'size-4 shrink-0 rounded-full',
     avatarFallback: cn(

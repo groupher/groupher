@@ -11,7 +11,7 @@ export default function useSalon() {
     hudItems: 'flex items-center flex-wrap gap-x-4 gap-y-2 min-w-0',
     hudItem: 'row-center gap-1.5 min-w-0 whitespace-nowrap',
     hudLabel: cn('text-xs leading-none', fg('digest')),
-    hudValue: cn('text-sm bold-sm leading-none tabular-nums', fg('title')),
+    hudValue: cn('text-sm bold-sm leading-none pretty-num', fg('title')),
     hudSwatchWrap: 'row-center gap-1.5',
     hudPatternIcon: cn('size-5 shrink-0', fg('title')),
     hudAngle: 'row-center gap-1.5',

@@ -20,14 +20,18 @@ const runtime = (patch: Partial<TDocPublishRuntime> = {}): TDocPublishRuntime =>
 const sideTree = (patch: Partial<TSideTreeController> = {}): TSideTreeController => ({
   tabs: [],
   activeTabId: null,
+  pins: [],
   groups: [],
   treeState: null,
   stagedEvents: [],
+  trashItems: [],
+  trashLoading: false,
   activeId: null,
   editingTarget: null,
   coverWarning: null,
   activate: noop,
   activateTab: noop,
+  addPin: noop,
   addTab: noop,
   deleteTab: noop,
   renameTab: noop,
@@ -41,17 +45,45 @@ const sideTree = (patch: Partial<TSideTreeController> = {}): TSideTreeController
   renameGroup: noop,
   renameChild: noop,
   renameLink: noop,
+  savePin: noop,
+  deletePin: noop,
   cancelEdit: noop,
   edit: noop,
   handleChildAction: noop,
   updateChildStyle: noop,
+  updatePinStyle: noop,
   patchChild: noop,
   reload: noop,
+  reloadTrash: noop,
   reorderGroups: noop,
   ...patch,
 })
 
 describe('docs editor publish view', () => {
+  it('keeps tree actions visible for an unpublished pin change', () => {
+    const view = buildPublishView(
+      sideTree({
+        pins: [
+          {
+            id: 'pin-1',
+            type: SIDE_TREE_NODE_TYPE.PIN,
+            title: 'GitHub',
+            href: 'https://github.com/groupher/groupher',
+            publishState: {
+              published: true,
+              hasUnpublishedChanges: true,
+            },
+          },
+        ],
+      }),
+      'idle',
+      runtime(),
+    )
+
+    expect(view.surfaceMode).toBe('tree')
+    expect(view.showActions).toBe(true)
+  })
+
   it('uses tree snackbar mode when the active doc is gone but tree changes remain', () => {
     const view = buildPublishView(
       sideTree({

@@ -526,6 +526,40 @@ defmodule GroupherServer.CMS.DocTree.Events do
     count
   end
 
+  @doc "Discards every staged event owned by nodes/docs moved into product Trash."
+  @spec discard_staged_for_trash(Community.t(), [String.t()], [String.t()], keyword()) ::
+          non_neg_integer()
+  def discard_staged_for_trash(%Community{} = community, node_ids, doc_ids, opts \\ []) do
+    {:ok, branch} = Branch.resolve(community, :doc, opts)
+    node_ids = Enum.map(node_ids, &to_string/1)
+    doc_ids = Enum.map(doc_ids, &to_string/1)
+
+    base =
+      DocTreeEvent
+      |> where([event], event.community_id == ^community.id)
+      |> where([event], event.branch_id == ^branch.id)
+      |> where([event], event.status == CMS.Const.tree_event_status(:staged))
+      |> where(
+        [event],
+        event.node_id in ^node_ids or (not is_nil(event.doc_id) and event.doc_id in ^doc_ids)
+      )
+
+    tree_count =
+      base
+      |> where([event], event.owner == CMS.Const.tree_event_owner(:tree))
+      |> Repo.aggregate(:count, :id)
+
+    base
+    |> Repo.update_all(
+      set: [
+        status: CMS.Const.tree_event_status(:discarded),
+        updated_at: DateTime.utc_now(:second)
+      ]
+    )
+
+    tree_count
+  end
+
   @doc """
   Creates a Tree snapshot from canonical JSON and archives events.
 

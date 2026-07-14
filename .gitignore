@@ -63,6 +63,7 @@ cypress/videos/*
 # =====================
 # TypeScript / build artifacts
 # =====================
+**/next-env.d.ts
 tsconfig.tsbuildinfo
 *.tsbuildinfo
 .VSCodeCounter/

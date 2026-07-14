@@ -145,6 +145,17 @@ if config_env() in [:prod, :seed_prod] do
   config :groupher_server, :plausible, token: System.get_env("PLAUSIBLE_TOKEN")
   config :groupher_server, :audit, token: System.get_env("AUDIT_TOKEN")
 
+  config :groupher_server, :search_artiments,
+    platform: GroupherServer.CMS.SearchArtiments.Platforms.Algolia,
+    queue: GroupherServer.CMS.SearchArtiments.Queues.Rihanna,
+    algolia: [
+      application_id: System.get_env("ALGOLIA_APPLICATION_ID"),
+      search_api_key: System.get_env("ALGOLIA_SEARCH_API_KEY"),
+      admin_api_key: System.get_env("ALGOLIA_ADMIN_API_KEY"),
+      index_name: System.get_env("ALGOLIA_INDEX_NAME", "groupher_artiments_v1"),
+      max_plain_text_bytes: 7_000
+    ]
+
   # config :sentry,
   #   dsn: System.get_env("SENTRY_DSN"),
   #   environment_name: :prod,

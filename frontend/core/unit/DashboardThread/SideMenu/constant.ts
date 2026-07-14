@@ -102,6 +102,12 @@ export const POST_MENU_ITEMS = [
     slug: DSB_POST_ROUTE.BEHAVIOR,
     path: DSB_POST_ROUTE.BEHAVIOR,
   },
+  {
+    icon: 'trash',
+    title: 'dsb.menu.post.trash',
+    slug: DSB_POST_ROUTE.TRASH,
+    path: DSB_POST_ROUTE.TRASH,
+  },
 ] as const
 
 export const KANBAN_MENU_ITEMS = [

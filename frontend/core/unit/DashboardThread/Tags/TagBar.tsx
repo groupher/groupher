@@ -82,7 +82,7 @@ const TagBar: FC<TProps> = ({
               <MarkerPicker
                 compact
                 value={editingMarker}
-                color={markerIsEmoji ? undefined : (editingDraft.color as TColorName)}
+                activeColor={markerIsEmoji ? undefined : (editingDraft.color as TColorName)}
                 iconSize={3.5}
                 onChange={(marker) => setDraftTag((prev) => ({ ...(prev ?? tag), marker }))}
               />

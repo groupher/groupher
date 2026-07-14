@@ -3,6 +3,7 @@ defmodule GroupherServer.CMS.Articles.Read do
   Read helpers for articles.
   """
 
+  import Ecto.Query, warn: false
   import GroupherServer.CMS.Artiment.Matcher
   import Helper.ErrorCode
 
@@ -92,21 +93,30 @@ defmodule GroupherServer.CMS.Articles.Read do
 
   defp if_article_legal(%Community{id: community_id}, thread, inner_id, user)
        when thread in @threads do
-    clauses = %{community_id: community_id, inner_id: inner_id}
-
     with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find_by(info.model, clauses, preload: :author) do
+         {:ok, article} <- find_active(info.model, community_id, thread, inner_id, [:author]) do
       if_article_legal(article, user)
     end
   end
 
   defp if_article_legal(%Community{id: community_id}, thread, inner_id)
        when thread in @threads do
-    clauses = %{community_id: community_id, inner_id: inner_id}
-
     with {:ok, info} <- match(thread),
-         {:ok, article} <- ORM.find_by(info.model, clauses) do
+         {:ok, article} <- find_active(info.model, community_id, thread, inner_id, []) do
       if_article_legal(article)
+    end
+  end
+
+  defp find_active(model, community_id, thread, inner_id, preloads) do
+    model
+    |> CMS.Articles.active_scope(thread)
+    |> where([article], article.community_id == ^community_id)
+    |> where([article], article.inner_id == ^inner_id)
+    |> preload(^preloads)
+    |> Repo.one()
+    |> case do
+      nil -> {:error, {:not_exist, model}}
+      article -> {:ok, article}
     end
   end
 

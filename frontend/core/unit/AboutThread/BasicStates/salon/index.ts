@@ -11,7 +11,7 @@ export default function useSalon() {
     block: 'column items-start w-1/5 pl-5',
     title: cn('text-sm bold', fg('digest')),
     desc: cn('text-xs mt-0.5', fg('hint')),
-    num: cn('text-lg mt-1.5', fg('title')),
+    num: cn('pretty-num mt-1.5 text-lg', fg('title')),
     trendChart: 'w-full mt-1.5 -ml-1',
     //
     iconBox: 'align-both size-7 circle mb-3.5 -ml-0.5',

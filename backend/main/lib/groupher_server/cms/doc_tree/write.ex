@@ -18,8 +18,9 @@ defmodule GroupherServer.CMS.DocTree.Write do
       doc_tree_events(owner=doc, doc_id)  ->  Doc publish
   """
 
-  alias GroupherServer.{Accounts, CMS}
+  alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
+  alias CMS.Articles.{Draft, Lock}
   alias CMS.DocTree.{Events, Read}
 
   alias CMS.DocTree.Write.{
@@ -303,11 +304,10 @@ defmodule GroupherServer.CMS.DocTree.Write do
   end
 
   @doc """
-  Deletes a draft tree node into docs trash.
+  Moves one logical Docs subtree into Trash immediately.
 
-  The trash snapshot is docs-specific because it stores Tree placement together
-  with the staged doc version. Other article threads use their own
-  mark-delete flow.
+  Draft/public Tree placement snapshots are stored together, while every page
+  Doc joins the shared Article Trash without copying its content.
 
   ## Examples
 
@@ -319,21 +319,11 @@ defmodule GroupherServer.CMS.DocTree.Write do
     Operation.run(community, args, fn branch, state ->
       with {:ok, node} <- Node.find(community, branch, node_id),
            :ok <- validate_delete_node(community, branch, node),
+           {:ok, actor} <- load_actor(args, "Docs Trash requires an authenticated actor"),
            parent_id <- node.tab_id || node.group_id,
-           subtree <- Trash.subtree_nodes(community, branch, node),
-           {:ok, _trash_items} <-
-             Trash.trash_subtree(community, branch, subtree, Map.get(args, :actor_id)),
-           :ok <- Trash.delete_subtree_doc_drafts(community, branch, subtree),
-           :ok <- Trash.delete_subtree(subtree),
+           {:ok, trash_result} <- Trash.trash_subtree(community, branch, node, actor),
            :ok <- Index.normalize_sibling_indexes(community, branch, parent_id, node.type),
-           {:ok, event_delta} <-
-             EventRecorder.record_delete_or_discard_tree_events(
-               community,
-               branch,
-               args,
-               node,
-               subtree
-             ),
+           event_delta <- -trash_result.discarded_tree_events,
            {:ok, state} <- Operation.bump_revision(community, state, event_delta) do
         {:ok,
          Operation.payload(
@@ -342,6 +332,8 @@ defmodule GroupherServer.CMS.DocTree.Write do
            nil,
            Index.affected_nodes(community, branch, parent_id, node.type)
          )}
+      else
+        error -> error
       end
     end)
   end
@@ -358,58 +350,123 @@ defmodule GroupherServer.CMS.DocTree.Write do
   def duplicate_node(%Community{} = community, node_id, args) do
     Operation.run(community, args, fn branch, state ->
       with {:ok, node} <- Node.find(community, branch, node_id),
-           false <- node.type in [:group, :pin] do
-        attrs =
-          node
-          |> Map.take([
-            :community_id,
-            :branch_id,
-            :stage,
-            :group_id,
-            :doc_id,
-            :type,
-            :href,
-            :marker,
-            :badge,
-            :hidden
-          ])
-          |> Map.merge(%{
-            node_id: Node.new_node_id(),
-            title: Identity.unique_copy_title(community, branch, node.group_id, node.title),
-            slug: Identity.unique_copy_slug(community, branch, node.group_id, node.slug),
-            index: node.index + 1
-          })
-
-        with :ok <-
-               Index.shift_sibling_indexes(
-                 community,
-                 branch,
-                 node.group_id,
-                 node.type,
-                 node.index + 1,
-                 node.node_id
-               ),
-             {:ok, duplicated} <- ORM.create(DocTreeNode, attrs),
-             :ok <- Index.normalize_sibling_indexes(community, branch, node.group_id, node.type),
-             {:ok, event_count} <-
-               EventRecorder.record_tree_events(community, branch, args, [
-                 Events.create_event(duplicated)
-               ]),
-             {:ok, state} <- Operation.bump_revision(community, state, event_count) do
-          {:ok,
-           Operation.payload(
-             community,
-             state,
-             duplicated,
-             Index.affected_nodes(community, branch, node.group_id, node.type)
-           )}
-        end
+           true <- node.type in [:page, :link],
+           {:ok, duplicated} <- duplicate_node_and_content(community, branch, node, args),
+           :ok <- Index.normalize_sibling_indexes(community, branch, node.group_id, node.type),
+           {:ok, event_count} <-
+             EventRecorder.record_tree_events(community, branch, args, [
+               duplicate_create_event(duplicated)
+             ]),
+           {:ok, state} <- Operation.bump_revision(community, state, event_count) do
+        {:ok,
+         Operation.payload(
+           community,
+           state,
+           duplicated,
+           Index.affected_nodes(community, branch, node.group_id, node.type)
+         )}
       else
-        true -> {:error, {:custom, "group or pin nodes can not be duplicated"}}
+        false -> {:error, {:custom, "only page and link nodes can be duplicated"}}
         error -> error
       end
     end)
   end
+
+  defp duplicate_node_and_content(community, branch, %DocTreeNode{type: :link} = node, args) do
+    duplicate_tree_node(community, branch, node, args, nil)
+  end
+
+  defp duplicate_node_and_content(
+         community,
+         branch,
+         %DocTreeNode{type: :page} = node,
+         args
+       ) do
+    with %User{} = actor <- Repo.get(User, Map.get(args, :actor_id)) do
+      Lock.run(community, :doc, node.doc_id, fn ->
+        with {:ok, source} <- CMS.Articles.read_editor(community, :doc, node.doc_id, branch),
+             source <- Repo.preload(source, :document),
+             %{json: body} when is_binary(body) <- source.document,
+             title <- Identity.unique_copy_title(community, branch, node.group_id, node.title),
+             slug <- Identity.unique_copy_slug(community, branch, node.group_id, node.slug),
+             {:ok, draft} <-
+               Draft.create(
+                 community,
+                 :doc,
+                 %{
+                   branch_id: branch.id,
+                   title: title,
+                   slug: slug,
+                   subtitle: source.subtitle,
+                   body: body
+                 },
+                 actor
+               ),
+             {:ok, _mentions} <- CMS.ArtimentMentions.sync(draft) do
+          duplicate_tree_node(community, branch, node, args, draft.article_hash_id,
+            title: title,
+            slug: slug
+          )
+        else
+          nil -> {:error, {:custom, "Source Doc content is missing"}}
+          error -> error
+        end
+      end)
+    else
+      nil -> {:error, {:custom, "Duplicate Page requires an authenticated actor"}}
+    end
+  end
+
+  defp duplicate_tree_node(community, branch, node, _args, doc_id, overrides \\ []) do
+    title =
+      Keyword.get_lazy(overrides, :title, fn ->
+        Identity.unique_copy_title(community, branch, node.group_id, node.title)
+      end)
+
+    slug =
+      Keyword.get_lazy(overrides, :slug, fn ->
+        Identity.unique_copy_slug(community, branch, node.group_id, node.slug)
+      end)
+
+    attrs =
+      node
+      |> Map.take([
+        :community_id,
+        :branch_id,
+        :stage,
+        :group_id,
+        :type,
+        :href,
+        :marker,
+        :badge,
+        :hidden,
+        :ui_config
+      ])
+      |> Map.merge(%{
+        node_id: Node.new_node_id(),
+        doc_id: doc_id,
+        title: title,
+        slug: slug,
+        index: node.index + 1
+      })
+
+    with :ok <-
+           Index.shift_sibling_indexes(
+             community,
+             branch,
+             node.group_id,
+             node.type,
+             node.index + 1,
+             node.node_id
+           ) do
+      ORM.create(DocTreeNode, attrs)
+    end
+  end
+
+  defp duplicate_create_event(%DocTreeNode{type: :page} = node),
+    do: EventRecorder.doc_owned_create_event(node)
+
+  defp duplicate_create_event(%DocTreeNode{} = node), do: Events.create_event(node)
 
   @doc """
   Moves one node inside an allowed draft tree group.
@@ -515,4 +572,17 @@ defmodule GroupherServer.CMS.DocTree.Write do
   end
 
   defp validate_delete_node(_community, _branch, _node), do: :ok
+
+  defp load_actor(args, error_message) do
+    case Map.get(args, :actor_id) do
+      nil ->
+        {:error, {:custom, error_message}}
+
+      actor_id ->
+        case Repo.get(User, actor_id) do
+          %User{} = actor -> {:ok, actor}
+          nil -> {:error, {:custom, error_message}}
+        end
+    end
+  end
 end

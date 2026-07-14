@@ -106,9 +106,10 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   defp base_rebuild_query(%CommunityTag{thread: thread} = tag) do
     thread
     |> article_schema()
+    |> CMS.Articles.active_scope(thread)
     |> join(:inner, [a], t in assoc(a, :community_tags))
     |> where([_a, t], t.id == ^tag.id)
-    |> where([a, _t], a.mark_delete == false and a.pending != ^@audit_illegal)
+    |> where([a, _t], a.pending != ^@audit_illegal)
   end
 
   defp article_schema(:post), do: Post
@@ -227,7 +228,7 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   end
 
   defp visible?(article) do
-    Map.get(article, :mark_delete) == false and Map.get(article, :pending) != @audit_illegal
+    Map.get(article, :pending) != @audit_illegal
   end
 
   defp same_utc_day?(nil, _today), do: false

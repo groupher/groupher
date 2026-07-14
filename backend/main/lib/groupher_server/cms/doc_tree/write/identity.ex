@@ -8,26 +8,24 @@ defmodule GroupherServer.CMS.DocTree.Write.Identity do
       trim + title-derived slug fallback
           |
           v
-      draft siblings + staged deleted nodes
+      draft siblings + trashed nodes
           |
           +--> create      -> auto-suffix title/slug
           +--> page create -> copy-style suffix when identity is occupied
-          +--> update      -> reject collision with pending restore/delete
+          +--> update      -> reject collision with pending restore
 
-  Pending delete events still reserve identity because they may be restored or
-  published later. This keeps draft creates from silently stealing a title or
-  slug that is still visible in the publish checklist.
+  Current Trash snapshots reserve identity because they may be restored. This
+  keeps draft creates from silently stealing a title or slug that belongs to a
+  recoverable Tree action.
   """
 
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Community, DocTreeEvent, DocTreeNode}
+  alias CMS.Model.{Community, DocTreeNode, TrashedDocTreeNode}
   alias Helper.Validator.Slug
 
   require CMS.Const
-
-  @doc_tree_json_key_node CMS.Const.doc_tree_json_key(:node)
 
   # Explicit slugs are user input and win over title-derived slugs; title is
   # still trimmed when both are present.
@@ -102,8 +100,7 @@ defmodule GroupherServer.CMS.DocTree.Write.Identity do
              Map.get(attrs, field)
            ) do
         {:halt,
-         {:error,
-          {:custom, "A deleted tree item with this title or slug is pending restore or publish."}}}
+         {:error, {:custom, "A trashed tree item with this title or slug is pending restore."}}}
       else
         {:cont, :ok}
       end
@@ -176,33 +173,13 @@ defmodule GroupherServer.CMS.DocTree.Write.Identity do
   end
 
   defp pending_deleted_nodes(%Community{} = community, branch) do
-    delete_event_types = [
-      CMS.Const.tree_event(:node_delete),
-      CMS.Const.tree_event(:pin_remove)
-    ]
-
-    DocTreeEvent
-    |> where([e], e.community_id == ^community.id)
-    |> where([e], e.branch_id == ^branch.id)
-    |> where([e], e.status == CMS.Const.tree_event_status(:staged))
-    |> where([e], e.owner == CMS.Const.tree_event_owner(:tree))
-    |> where([e], e.event_type in ^delete_event_types)
-    |> select([e], e.inverse_payload)
+    TrashedDocTreeNode
+    |> where([item], item.community_id == ^community.id)
+    |> where([item], item.branch_id == ^branch.id)
+    |> where([item], not is_nil(item.draft_snapshot))
+    |> select([item], item.draft_snapshot)
     |> Repo.all()
-    |> Enum.flat_map(&nodes_from_delete_inverse/1)
   end
-
-  defp nodes_from_delete_inverse(%{@doc_tree_json_key_node => node} = inverse)
-       when is_map(node) do
-    children =
-      inverse
-      |> Map.get("children", [])
-      |> Enum.filter(&is_map/1)
-
-    [node | children]
-  end
-
-  defp nodes_from_delete_inverse(_inverse), do: []
 
   defp pending_deleted_node_in_scope?(node, nil, nil),
     do: is_nil(node["tabId"]) and is_nil(node["groupId"])

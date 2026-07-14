@@ -15,7 +15,7 @@ export default function useSalon() {
       'hover:text-neutral-800 dark:hover:text-neutral-100',
     ),
     searchIcon: cn('size-3.5 shrink-0 opacity-70'),
-    searchText: cn('ml-1 text-xs truncate'),
+    searchText: cn('ml-1 truncate text-xs @max-doc-tree-min:hidden'),
     searchField: cn(
       'row-center h-8 min-w-0 flex-1 rounded-md border pl-2 pr-1',
       br('divider'),

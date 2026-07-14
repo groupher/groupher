@@ -48,6 +48,17 @@ config :groupher_server, :oauth,
 config :groupher_server, :site_favicon_adapter, Helper.TestFakes.SiteFavicon
 config :groupher_server, :open_graph_adapter, Helper.TestFakes.OpenGraph
 
+config :groupher_server, :search_artiments,
+  platform: Helper.TestFakes.SearchArtiments,
+  queue: Helper.TestFakes.SearchArtimentsQueue,
+  algolia: [
+    application_id: nil,
+    search_api_key: nil,
+    admin_api_key: nil,
+    index_name: "groupher_artiments_test",
+    max_plain_text_bytes: 7_000
+  ]
+
 config :groupher_server, Helper.Converter.Content, provider: Helper.Converter.Content.Plate
 
 config :groupher_server, :plausible,

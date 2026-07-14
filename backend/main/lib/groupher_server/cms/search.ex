@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.Search do
   alias GroupherServer.Accounts.Model.User
   alias Helper.T
 
-  alias __MODULE__.{Article, Community}
+  alias __MODULE__.Community
 
   @spec community(String.t()) :: T.domain_res(T.paged_data())
   def community(title), do: Community.search(title)
@@ -21,7 +21,4 @@ defmodule GroupherServer.CMS.Search do
   def community(title, category, %User{} = user) when is_binary(category) do
     Community.search(title, category, user)
   end
-
-  @spec article(T.thread(), String.t()) :: T.domain_res(T.paged_data())
-  def article(thread, title) when is_binary(title), do: Article.search(thread, title)
 end

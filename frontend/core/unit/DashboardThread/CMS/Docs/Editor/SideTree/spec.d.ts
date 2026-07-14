@@ -88,10 +88,21 @@ export type TSideTreeLink = {
   hidden?: boolean
 } & TSideTreePublishable
 
+export type TSideTreePin = {
+  id: string
+  type: typeof SIDE_TREE_NODE_TYPE.PIN
+  title: string
+  slug?: string
+  href: string
+  marker?: TMarkerValue
+  hidden?: boolean
+} & TSideTreePublishable
+
 export type TSideTreeChild = TSideTreePage | TSideTreeLink
 export type TSideTreeLinkInput = Pick<TSideTreeLink, 'href' | 'title'>
 
 export type TEditingTarget =
+  | { type: typeof SIDE_TREE_NODE_TYPE.PIN; pinId: string }
   | { type: typeof SIDE_TREE_NODE_TYPE.GROUP; groupId: string }
   | { type: TSideTreeChildType; groupId: string; childId: string }
   | null
@@ -106,15 +117,19 @@ export type TSideTreeNodeMenuAction =
 export type TSideTreeController = {
   tabs: TSideTreeTab[]
   activeTabId: string | null
+  pins: TSideTreePin[]
   groups: TSideTreeGroup[]
   treeState: TDocTreeState | null
   stagedEvents: TDocTreeEvent[]
+  trashItems: TDocTreeTrashItem[]
+  trashLoading: boolean
   activeId: string | null
   editingTarget: TEditingTarget
   coverWarning: string | null
   activate: (id: string) => void
   addTab: () => void
   activateTab: (id: string) => void
+  addPin: () => void
   deleteTab: (tabId: string) => void
   renameTab: (tabId: string, title: string) => void
   reorderTabs: (tabs: readonly TSideTreeTab[], movedTabId: string) => void
@@ -127,12 +142,16 @@ export type TSideTreeController = {
   renameGroup: (groupId: string, title: string) => void
   renameChild: (groupId: string, childId: string, title: string) => void
   renameLink: (groupId: string, childId: string, input: TSideTreeLinkInput) => void
+  savePin: (pinId: string, input: TSideTreeLinkInput) => void
+  deletePin: (pinId: string) => void
   cancelEdit: () => void
   edit: (target: TEditingTarget) => void
   handleChildAction: (groupId: string, childId: string, action: TSideTreeNodeMenuAction) => void
   updateChildStyle: (groupId: string, childId: string, marker: TSideTreeChild['marker']) => void
+  updatePinStyle: (pinId: string, marker: TSideTreePin['marker']) => void
   patchChild: (childId: string, patch: Partial<TSideTreeChild>) => void
   reload: () => void
+  reloadTrash: () => void
   reorderGroups: (groups: readonly TSideTreeGroup[]) => void
 }
 
@@ -169,7 +188,7 @@ export type TSideTreeTab = {
   id: string
   title: string
   slug?: string
-  pins: TDocTreeNodeDTO[]
+  pins: TSideTreePin[]
   groups: TSideTreeGroup[]
 }
 

@@ -1,4 +1,4 @@
-import type { FC } from 'react'
+import { type FC, useState } from 'react'
 
 import TYPE from '~/const/type'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
@@ -59,9 +59,12 @@ const TrashDrawer: FC<TProps> = ({
 }) => {
   const s = useSalon()
   const { mutate } = useGraphQLClient()
+  const [restoringId, setRestoringId] = useState<string | null>(null)
 
   const restoreItem = async (item: TDocTreeTrashItem): Promise<void> => {
-    if (baseRevision === null) return
+    if (baseRevision === null || restoringId !== null) return
+
+    setRestoringId(item.id)
 
     try {
       const data = await mutate<TDocTreeMutationData>(S.restoreDocTreeTrashItem, {
@@ -84,6 +87,8 @@ const TrashDrawer: FC<TProps> = ({
     } catch (err) {
       toast(formatMutationError(err), 'error')
       onReload()
+    } finally {
+      setRestoringId(null)
     }
   }
 
@@ -129,11 +134,12 @@ const TrashDrawer: FC<TProps> = ({
                   <button
                     type='button'
                     className={s.restoreButton}
-                    disabled={baseRevision === null}
+                    disabled={baseRevision === null || restoringId !== null}
+                    aria-busy={restoringId === item.id}
                     onClick={() => restoreItem(item)}
                   >
                     <RotateSVG className={s.restoreIcon} />
-                    <span>Restore</span>
+                    <span>{restoringId === item.id ? 'Restoring' : 'Restore'}</span>
                   </button>
                 </div>
               ))}

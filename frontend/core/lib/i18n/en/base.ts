@@ -69,7 +69,7 @@ export default {
   'community.add_moderator': 'Add community moderator',
   'post.community_tag.create': 'Create post tag',
   'post.community_tag.edit': 'Edit post tag',
-  'post.mark_delete': 'Delete post',
+  'post.trash': 'Move post to Trash',
   'community.editor.your.community': 'your community',
   IDEA: 'IDEA',
   BUG: 'BUG',

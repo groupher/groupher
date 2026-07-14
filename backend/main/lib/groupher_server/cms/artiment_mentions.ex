@@ -54,7 +54,7 @@ defmodule GroupherServer.CMS.ArtimentMentions do
   import ShortMaps
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.{ArtimentMentions.Parser, FrontDesk}
+  alias CMS.{Artiment.Matcher, ArtimentMentions.Parser, FrontDesk}
   alias CMS.Model.{ArtimentMention, Comment}
   alias Helper.{ORM, QueryBuilder, T}
 
@@ -81,8 +81,8 @@ defmodule GroupherServer.CMS.ArtimentMentions do
   def sync(_), do: {:ok, :pass}
 
   @spec purge(Comment.t() | map()) :: T.domain_res(term())
-  def purge(artiment) do
-    {type, id} = mentioner_identity(artiment)
+  def purge(%Comment{} = comment) do
+    {type, id} = mentioner_identity(comment)
 
     from(m in ArtimentMention,
       where:
@@ -90,6 +90,119 @@ defmodule GroupherServer.CMS.ArtimentMentions do
           (m.mentioned_scope == :internal and m.mentioned_type == ^type and m.mentioned_id == ^id)
     )
     |> ORM.delete_all(:if_exist)
+  end
+
+  def purge(article) do
+    with {:ok, _} <- preserve_incoming_deleted(article) do
+      purge_outgoing(article)
+    end
+  end
+
+  @doc "Deletes Mention facts owned by comments that will be cascade-deleted with an Article."
+  @spec purge_article_comments(map()) :: T.domain_res(term())
+  def purge_article_comments(article) do
+    with {:ok, thread} <- FrontDesk.thread_of(article),
+         {:ok, %{foreign_key: foreign_key}} <- Matcher.match(thread) do
+      comment_ids =
+        Comment
+        |> where([comment], comment.thread == ^thread)
+        |> where([comment], field(comment, ^foreign_key) == ^article.id)
+        |> select([comment], comment.id)
+        |> Repo.all()
+
+      case comment_ids do
+        [] ->
+          {:ok, :pass}
+
+        ids ->
+          from(mention in ArtimentMention,
+            where:
+              (mention.mentioner_type == :comment and mention.mentioner_id in ^ids) or
+                (mention.mentioned_scope == :internal and mention.mentioned_type == :comment and
+                   mention.mentioned_id in ^ids)
+          )
+          |> ORM.delete_all(:if_exist)
+      end
+    end
+  end
+
+  @doc "Deletes Mention rows emitted by an Article that is being permanently deleted."
+  @spec purge_outgoing(map()) :: T.domain_res(term())
+  def purge_outgoing(artiment) do
+    {type, id} = mentioner_identity(artiment)
+
+    from(m in ArtimentMention,
+      where: m.mentioner_type == ^type and m.mentioner_id == ^id
+    )
+    |> ORM.delete_all(:if_exist)
+  end
+
+  @doc "Keeps incoming Mention facts and marks their stored target snapshot as permanently deleted."
+  @spec preserve_incoming_deleted(map()) :: T.domain_res(term())
+  def preserve_incoming_deleted(artiment) do
+    mark_target_state(artiment, :permanently_deleted)
+  end
+
+  @doc "Updates the stored target snapshot so Mention UIs can render deletion badges."
+  @spec mark_target_state(map(), :active | :trashed | :permanently_deleted) ::
+          T.domain_res(term())
+  def mark_target_state(artiment, state)
+      when state in [:active, :trashed, :permanently_deleted] do
+    {type, id} = mentioner_identity(artiment)
+    changed_at = DateTime.utc_now(:second) |> DateTime.to_iso8601()
+
+    ArtimentMention
+    |> where(
+      [m],
+      m.mentioned_scope == :internal and m.mentioned_type == ^type and m.mentioned_id == ^id
+    )
+    |> Repo.all()
+    |> Enum.reduce_while({:ok, :pass}, fn mention, {:ok, :pass} ->
+      snapshot =
+        mention.mentioned_snapshot
+        |> Kernel.||(%{})
+        |> put_deletion_snapshot(state, changed_at)
+
+      meta =
+        mention.meta
+        |> Kernel.||(%{})
+        |> put_deletion_meta(state, changed_at)
+
+      case mention
+           |> Ecto.Changeset.change(%{mentioned_snapshot: snapshot, meta: meta})
+           |> Repo.update() do
+        {:ok, _} -> {:cont, {:ok, :pass}}
+        error -> {:halt, error}
+      end
+    end)
+  end
+
+  defp put_deletion_snapshot(snapshot, :active, _changed_at) do
+    Map.drop(snapshot, ["deletionState", "deletedAt"])
+  end
+
+  defp put_deletion_snapshot(snapshot, state, changed_at) do
+    snapshot
+    |> Map.put("deletionState", to_string(state))
+    |> Map.put("deletedAt", changed_at)
+  end
+
+  defp put_deletion_meta(meta, :active, _changed_at) do
+    Map.drop(meta, ["mentionedDeleted", "mentionedTrashed", "mentionedDeletedAt"])
+  end
+
+  defp put_deletion_meta(meta, :trashed, changed_at) do
+    meta
+    |> Map.put("mentionedDeleted", true)
+    |> Map.put("mentionedTrashed", true)
+    |> Map.put("mentionedDeletedAt", changed_at)
+  end
+
+  defp put_deletion_meta(meta, :permanently_deleted, changed_at) do
+    meta
+    |> Map.put("mentionedDeleted", true)
+    |> Map.put("mentionedTrashed", false)
+    |> Map.put("mentionedDeletedAt", changed_at)
   end
 
   @spec mentions(atom(), T.id(), map()) :: T.domain_res(term())

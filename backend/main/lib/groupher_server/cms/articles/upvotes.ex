@@ -10,6 +10,7 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
 
   alias Accounts.Model.User
   alias CMS.Model.ArticleUpvote
+  alias CMS.SearchArtiments.Indexer
   alias CMS.{Events, FrontDesk}
   alias Helper.{Multi, Later, ORM, T, Transaction}
 
@@ -45,6 +46,7 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
       end)
       |> Repo.transaction()
       |> result()
+      |> sync_search_metrics()
     end)
   end
 
@@ -93,6 +95,7 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
       end)
       |> Repo.transaction()
       |> result()
+      |> sync_search_metrics()
     end)
   end
 
@@ -109,4 +112,11 @@ defmodule GroupherServer.CMS.Articles.Upvotes do
   defp result({:ok, %{create_upvote: result}}), do: result |> done()
   defp result({:ok, %{undo_upvote: result}}), do: result |> done()
   defp result({:error, _, result, _steps}), do: {:error, result}
+
+  defp sync_search_metrics({:ok, article} = result) do
+    _ = Indexer.enqueue_metrics(article)
+    result
+  end
+
+  defp sync_search_metrics(result), do: result
 end

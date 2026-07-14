@@ -18,7 +18,7 @@ export default function useSalon({ isFolderOpen }: TProps) {
       zise(3.5),
       fill('digest'),
     ),
-    count: cn('text-sm mr-0.5', fg('digest')),
+    count: cn('pretty-num mr-0.5 text-sm', fg('digest')),
     content: cn('w-full mb-4 -ml-px', isFolderOpen ? 'block' : 'hidden'),
     subToggle: 'row-center mt-1 ml-1.5 pointer',
     subToggleTitle: cn('text-xs ml-2 p-0.5 rounded', fg('digest')),

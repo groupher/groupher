@@ -51,7 +51,7 @@ export default function useSalon() {
     actionBarWrapper: cn('w-full pl-2 py-1.5 rounded-md', bg('hoverBg')),
     actionBarMain: 'row-center w-full -ml-2 pl-2.5 pr-0 h-8',
     actionBarNote: cn('row-center text-xs', fg('digest')),
-    actionBarFocus: cn('text-sm mx-1 -mt-0.5', rainbow(COLOR.RED, 'fg')),
+    actionBarFocus: cn('pretty-num mx-1 -mt-0.5 text-sm', rainbow(COLOR.RED, 'fg')),
     actionBarActionNotes: 'row-center ml-1',
     actionBarDeleteNote: cn('text-xs bold ml-2', rainbow(COLOR.RED, 'fg')),
     actionBarSpacer: 'mr-1',

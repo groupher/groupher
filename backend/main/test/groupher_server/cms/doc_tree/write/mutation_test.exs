@@ -10,13 +10,10 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
   alias GroupherServer.Repo
 
   alias CMS.Model.{
-    ArticleDocument,
     Doc,
     DocsSiteState,
     DocTreeEvent,
-    DocTreeNode,
-    DocTreeRestoreAudit,
-    DocTreeTrashItem
+    DocTreeNode
   }
 
   @plate_body Jason.encode!([
@@ -129,7 +126,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
       assert doc_draft.json =~ "page-3-copy"
     end
 
-    test "pending deleted root group reserves its title and slug" do
+    test "trashed root group reserves its title and slug" do
       {:ok, user} = db_insert(:user)
       {:ok, community} = empty_docs_community(user)
       {:ok, before_tree_state} = ORM.find_by(DocsSiteState, community_id: community.id)
@@ -161,7 +158,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
       assert rebuilt_payload.node.slug == "guides-1"
     end
 
-    test "pending deleted page reserves its sibling title and slug" do
+    test "trashed page reserves its sibling title and slug" do
       {:ok, user} = db_insert(:user)
       {:ok, community} = empty_docs_community(user)
       {:ok, before_tree_state} = ORM.find_by(DocsSiteState, community_id: community.id)
@@ -214,7 +211,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
       assert doc_draft.slug == "install-copy"
     end
 
-    test "pending deleted group name blocks renaming another group into it" do
+    test "trashed group name blocks renaming another group into it" do
       {:ok, user} = db_insert(:user)
       {:ok, community} = empty_docs_community(user)
       {:ok, before_tree_state} = ORM.find_by(DocsSiteState, community_id: community.id)
@@ -243,55 +240,12 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
         })
 
       assert {:error,
-              {:custom,
-               "A deleted tree item with this title or slug is pending restore or publish."}} =
+              {:custom, "A trashed tree item with this title or slug is pending restore."}} =
                CMS.DocTree.update_node(community, api_payload.node.id, %{
                  title: "Guides",
                  slug: "guides",
                  base_revision: delete_payload.revision
                })
-    end
-
-    test "deleting one duplicated page keeps shared draft doc referenced by the other page" do
-      {:ok, user} = db_insert(:user)
-      {:ok, community} = empty_docs_community(user)
-      {:ok, before_tree_state} = ORM.find_by(DocsSiteState, community_id: community.id)
-
-      {:ok, group_payload} =
-        CMS.DocTree.create_group(community, %{
-          title: "Guides",
-          slug: "guides",
-          base_revision: before_tree_state.tree_lock_version
-        })
-
-      {:ok, page_payload} =
-        CMS.DocTree.create_page(
-          community,
-          %{
-            group_id: group_payload.node.id,
-            title: "Install",
-            slug: "install",
-            base_revision: group_payload.revision
-          },
-          user
-        )
-
-      {:ok, duplicate_payload} =
-        CMS.DocTree.duplicate_node(community, page_payload.node.id, %{
-          base_revision: page_payload.revision
-        })
-
-      assert duplicate_payload.node.doc_id == page_payload.node.doc_id
-
-      {:ok, _payload} =
-        CMS.DocTree.delete_node(community, page_payload.node.id, %{
-          base_revision: duplicate_payload.revision,
-          actor_id: user.id
-        })
-
-      refute draft_node_exists?(community, page_payload.node.id)
-      assert draft_node_exists?(community, duplicate_payload.node.id)
-      assert {:ok, %Doc{}} = draft_doc(community, page_payload.node.doc_id)
     end
 
     test "moving a page between groups normalizes indexes and records tree event" do
@@ -564,220 +518,6 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
       assert site_state.published_version == 0
     end
 
-    test "deleting a page writes docs trash snapshot and removes draft node" do
-      {:ok, user} = db_insert(:user)
-      {:ok, community} = empty_docs_community(user)
-      {:ok, before_tree_state} = ORM.find_by(DocsSiteState, community_id: community.id)
-
-      {:ok, group_payload} =
-        CMS.DocTree.create_group(community, %{
-          title: "Guides",
-          slug: "guides",
-          base_revision: before_tree_state.tree_lock_version
-        })
-
-      {:ok, page_payload} =
-        CMS.DocTree.create_page(
-          community,
-          %{
-            group_id: group_payload.node.id,
-            title: "Install",
-            slug: "install",
-            base_revision: group_payload.revision
-          },
-          user
-        )
-
-      {:ok, payload} =
-        CMS.DocTree.delete_node(community, page_payload.node.id, %{
-          base_revision: page_payload.revision,
-          actor_id: user.id
-        })
-
-      assert payload.conflict == false
-      refute draft_node_exists?(community, page_payload.node.id)
-
-      {:ok, trash} =
-        ORM.find_by(DocTreeTrashItem, community_id: community.id, node_id: page_payload.node.id)
-
-      assert trash.doc_id == page_payload.node.doc_id
-      assert trash.node_snapshot["id"] == page_payload.node.id
-      assert trash.deleted_from_group_id == group_payload.node.id
-    end
-
-    test "deleting a page stores draft doc snapshot in trash" do
-      {:ok, user} = db_insert(:user)
-      {:ok, community} = empty_docs_community(user)
-      {:ok, before_tree_state} = ORM.find_by(DocsSiteState, community_id: community.id)
-
-      {:ok, group_payload} =
-        CMS.DocTree.create_group(community, %{
-          title: "Guides",
-          slug: "guides",
-          base_revision: before_tree_state.tree_lock_version
-        })
-
-      {:ok, page_payload} =
-        CMS.DocTree.create_page(
-          community,
-          %{
-            group_id: group_payload.node.id,
-            title: "Install",
-            slug: "install",
-            base_revision: group_payload.revision
-          },
-          user
-        )
-
-      {:ok, _draft} =
-        CMS.DocTree.update_draft(
-          community,
-          page_payload.node.doc_id,
-          %{
-            title: "Updated Install",
-            slug: "updated-install",
-            body: @plate_body
-          },
-          user
-        )
-
-      {:ok, _payload} =
-        CMS.DocTree.delete_node(community, page_payload.node.id, %{
-          base_revision: page_payload.revision,
-          actor_id: user.id
-        })
-
-      {:ok, trash} =
-        ORM.find_by(DocTreeTrashItem, community_id: community.id, node_id: page_payload.node.id)
-
-      draft_snapshot = trash.node_snapshot["draftDoc"]
-
-      assert draft_snapshot["doc"]["title"] == "Updated Install"
-      assert draft_snapshot["doc"]["slug"] == "updated-install"
-      assert draft_snapshot["document"]["json"] == @plate_body
-      assert draft_snapshot["document"]["digest"] =~ "Updated Draft"
-    end
-
-    test "restoring a trashed page recreates draft tree node and doc draft" do
-      {:ok, user} = db_insert(:user)
-      {:ok, community} = empty_docs_community(user)
-      {:ok, before_tree_state} = ORM.find_by(DocsSiteState, community_id: community.id)
-
-      {:ok, group_payload} =
-        CMS.DocTree.create_group(community, %{
-          title: "Guides",
-          slug: "guides",
-          base_revision: before_tree_state.tree_lock_version
-        })
-
-      {:ok, page_payload} =
-        CMS.DocTree.create_page(
-          community,
-          %{
-            group_id: group_payload.node.id,
-            title: "Install",
-            slug: "install",
-            base_revision: group_payload.revision
-          },
-          user
-        )
-
-      {:ok, updated_draft} =
-        CMS.DocTree.update_draft(
-          community,
-          page_payload.node.doc_id,
-          %{
-            title: "Updated Install",
-            slug: "updated-install",
-            body: @plate_body
-          },
-          user
-        )
-
-      assert article_document_exists?(updated_draft.id)
-
-      {:ok, delete_payload} =
-        CMS.DocTree.delete_node(community, page_payload.node.id, %{
-          base_revision: page_payload.revision,
-          actor_id: user.id
-        })
-
-      {:ok, [trash]} = CMS.DocTree.trash_items(community)
-      assert trash.node_id == page_payload.node.id
-      refute draft_node_exists?(community, page_payload.node.id)
-      refute article_document_exists?(updated_draft.id)
-
-      {:ok, restore_payload} =
-        CMS.DocTree.restore_trash_item(community, trash.id, %{
-          base_revision: delete_payload.revision,
-          actor_id: user.id
-        })
-
-      assert restore_payload.node.id == page_payload.node.id
-      assert draft_node_exists?(community, page_payload.node.id)
-      {:ok, restored_doc} = draft_doc(community, page_payload.node.doc_id)
-      assert restored_doc.title == "Updated Install"
-      assert restored_doc.id != updated_draft.id
-
-      {:ok, restored_document} =
-        ORM.find_by(ArticleDocument, article_id: restored_doc.id, thread: :doc)
-
-      assert restored_document.json == @plate_body
-      assert restored_document.digest =~ "Updated Draft"
-
-      {:ok, []} = CMS.DocTree.trash_items(community)
-
-      audits =
-        Repo.all(from(audit in DocTreeRestoreAudit, where: audit.community_id == ^community.id))
-
-      assert Enum.any?(audits, &(page_payload.node.id in &1.restored_node_ids))
-    end
-
-    test "deleting a group hides child trash items from visible trash list" do
-      {:ok, user} = db_insert(:user)
-      {:ok, community} = empty_docs_community(user)
-      {:ok, before_tree_state} = ORM.find_by(DocsSiteState, community_id: community.id)
-
-      {:ok, group_payload} =
-        CMS.DocTree.create_group(community, %{
-          title: "Guides",
-          slug: "guides",
-          base_revision: before_tree_state.tree_lock_version
-        })
-
-      {:ok, page_payload} =
-        CMS.DocTree.create_page(
-          community,
-          %{
-            group_id: group_payload.node.id,
-            title: "Install",
-            slug: "install",
-            base_revision: group_payload.revision
-          },
-          user
-        )
-
-      {:ok, _payload} =
-        CMS.DocTree.delete_node(community, group_payload.node.id, %{
-          base_revision: page_payload.revision,
-          actor_id: user.id
-        })
-
-      all_trash_items =
-        Repo.all(
-          from(item in DocTreeTrashItem,
-            where: item.community_id == ^community.id,
-            order_by: [asc: item.deleted_from_index]
-          )
-        )
-
-      assert Enum.map(all_trash_items, & &1.node_id) |> Enum.sort() ==
-               Enum.sort([group_payload.node.id, page_payload.node.id])
-
-      {:ok, [visible_item]} = CMS.DocTree.trash_items(community)
-      assert visible_item.node_id == group_payload.node.id
-    end
-
     test "deleting mixed public and draft subtree discards stale staged creates" do
       {:ok, user} = db_insert(:user)
       {:ok, community} = empty_docs_community(user)
@@ -826,7 +566,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, link_event} = ORM.find(DocTreeEvent, link_event.id)
       assert link_event.status == CMS.Const.tree_event_status(:discarded)
-      assert tree_delete_event_exists?(community, group.id)
+      refute tree_delete_event_exists?(community, group.id)
     end
   end
 
@@ -844,14 +584,6 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
     |> where([item], item.community_id == ^community_id)
     |> where([item], item.stage == ^stage)
     |> Repo.aggregate(:count, :id)
-  end
-
-  defp draft_node_exists?(community, node_id) do
-    DocTreeNode
-    |> where([n], n.community_id == ^community.id)
-    |> where([n], n.stage == :draft)
-    |> where([n], n.node_id == ^node_id)
-    |> Repo.exists?()
   end
 
   defp draft_node(community, node_id) do
@@ -880,13 +612,6 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
       article_hash_id: doc_id,
       stage: CMS.Const.stage(:draft)
     )
-  end
-
-  defp article_document_exists?(article_id) do
-    ArticleDocument
-    |> where([document], document.thread == :doc)
-    |> where([document], document.article_id == ^article_id)
-    |> Repo.exists?()
   end
 
   defp tree_create_event(community, node_id) do

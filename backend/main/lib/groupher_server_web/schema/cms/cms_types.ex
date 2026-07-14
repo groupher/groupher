@@ -11,7 +11,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   import GroupherServerWeb.Schema.Helper.Fields
   import GroupherServerWeb.Schema.Helper.Objects
 
-  import Ecto.Query, warn: false
+  import Ecto.Query, warn: false, except: [union: 2]
   import Absinthe.Resolution.Helpers, only: [dataloader: 2]
 
   alias GroupherServer.{Accounts, CMS}
@@ -31,6 +31,54 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :done_state do
     @desc "Whether the requested operation completed successfully."
     field(:done, :boolean)
+  end
+
+  object :trashed_article do
+    field(:id, non_null(:id), resolve: fn item, _, _ -> {:ok, item.hash_id} end)
+    field(:thread, non_null(:thread))
+    field(:article_ref, non_null(:id), resolve: fn item, _, _ -> {:ok, item.article_hash_id} end)
+    field(:article, :article)
+    field(:deleted_by, :user, resolve: dataloader(CMS, :deleted_by))
+    field(:deleted_at, non_null(:datetime))
+    field(:mentioned_by_count, non_null(:integer))
+
+    field(:scheduled_permanent_deletion_at, non_null(:datetime),
+      resolve: fn item, _, _ -> {:ok, item.trash_action.scheduled_permanent_deletion_at} end
+    )
+
+    field :mentioned_by, :paged_mentions do
+      arg(:filter, :pagi_filter)
+      resolve(&GroupherServerWeb.Resolvers.CMS.trashed_article_mentioned_by/3)
+    end
+
+    field :mentions, :paged_mentions do
+      arg(:filter, :pagi_filter)
+      resolve(&GroupherServerWeb.Resolvers.CMS.trashed_article_mentions/3)
+    end
+  end
+
+  object :paged_trashed_articles do
+    field(:entries, non_null(list_of(non_null(:trashed_article))))
+    pagination_fields()
+  end
+
+  object :audit_log do
+    field(:id, non_null(:id), resolve: fn log, _, _ -> {:ok, log.hash_id} end)
+    field(:actor_type, non_null(:string))
+    field(:actor_snapshot, non_null(:json))
+    field(:action, non_null(:string))
+    field(:resource_type, non_null(:string))
+    field(:resource_ref, non_null(:string))
+    field(:resource_snapshot, non_null(:json))
+    field(:operation_ref, :id)
+    field(:source, non_null(:string))
+    field(:metadata, non_null(:json))
+    field(:occurred_at, non_null(:datetime))
+  end
+
+  object :paged_audit_logs do
+    field(:entries, non_null(list_of(non_null(:audit_log))))
+    pagination_fields()
   end
 
   enum :doc_tree_node_type do
@@ -111,12 +159,45 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     value(:emoji)
   end
 
+  object :marker_theme_appearance do
+    field(:color, :string, resolve: &resolve_marker_field(:color, &1, &2, &3))
+    field(:bg, :string, resolve: &resolve_marker_field(:bg, &1, &2, &3))
+  end
+
+  object :marker_appearance do
+    field(
+      :light,
+      non_null(:marker_theme_appearance),
+      resolve: &resolve_marker_field(:light, &1, &2, &3)
+    )
+
+    field(
+      :dark,
+      non_null(:marker_theme_appearance),
+      resolve: &resolve_marker_field(:dark, &1, &2, &3)
+    )
+  end
+
   object :marker do
     field(:type, non_null(:marker_type), resolve: &resolve_marker_field(:type, &1, &2, &3))
     field(:provider, :string, resolve: &resolve_marker_field(:provider, &1, &2, &3))
     field(:name, :string, resolve: &resolve_marker_field(:name, &1, &2, &3))
     field(:src, :string, resolve: &resolve_marker_field(:src, &1, &2, &3))
     field(:unified, :string, resolve: &resolve_marker_field(:unified, &1, &2, &3))
+
+    field(:appearance, :marker_appearance,
+      resolve: &resolve_marker_field(:appearance, &1, &2, &3)
+    )
+  end
+
+  input_object :marker_theme_appearance_input do
+    field(:color, :string)
+    field(:bg, :string)
+  end
+
+  input_object :marker_appearance_input do
+    field(:light, non_null(:marker_theme_appearance_input))
+    field(:dark, non_null(:marker_theme_appearance_input))
   end
 
   input_object :marker_input do
@@ -125,6 +206,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:name, :string)
     field(:src, :string)
     field(:unified, :string)
+    field(:appearance, :marker_appearance_input)
   end
 
   object :doc_tree_node do
@@ -1038,6 +1120,85 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :paged_articles do
     field(:entries, list_of(:common_article))
+    pagination_fields()
+  end
+
+  object :search_article_locator do
+    field(:community, non_null(:string))
+    field(:thread, non_null(:thread))
+    field(:inner_id, non_null(:id))
+  end
+
+  object :search_comment_locator do
+    field(:article, non_null(:search_article_locator))
+    field(:inner_id, non_null(:id))
+    field(:root_inner_id, :id)
+  end
+
+  object :article_search_artiment do
+    field(:ref, non_null(:id))
+    field(:type, non_null(:search_artiment_type))
+    field(:community_ref, non_null(:string))
+    field(:thread, non_null(:thread))
+    field(:article_ref, non_null(:id))
+    field(:title, non_null(:string))
+    field(:digest, :string)
+    field(:locator, non_null(:search_article_locator))
+    field(:author_ref, :string)
+    field(:locale, :string)
+    field(:upvotes_count, non_null(:integer))
+    field(:comments_count, non_null(:integer))
+    field(:published_at, :datetime)
+    field(:inserted_at, non_null(:datetime))
+    field(:updated_at, non_null(:datetime))
+    field(:content_hash, non_null(:string))
+    field(:schema_version, non_null(:integer))
+  end
+
+  object :comment_search_artiment do
+    field(:ref, non_null(:id))
+    field(:type, non_null(:search_artiment_type))
+    field(:community_ref, non_null(:string))
+    field(:thread, non_null(:thread))
+    field(:article_ref, non_null(:id))
+    field(:digest, :string)
+    field(:locator, non_null(:search_comment_locator))
+    field(:author_ref, :string)
+    field(:locale, :string)
+    field(:upvotes_count, non_null(:integer))
+    field(:replies_count, non_null(:integer))
+    field(:inserted_at, non_null(:datetime))
+    field(:updated_at, non_null(:datetime))
+    field(:content_hash, non_null(:string))
+    field(:schema_version, non_null(:integer))
+  end
+
+  union :search_artiment do
+    types([:article_search_artiment, :comment_search_artiment])
+
+    resolve_type(fn
+      %{type: :article}, _ -> :article_search_artiment
+      %{type: :comment}, _ -> :comment_search_artiment
+    end)
+  end
+
+  enum :search_highlight_field do
+    value(:title)
+    value(:plain_text)
+  end
+
+  object :search_highlight do
+    field(:field, non_null(:search_highlight_field))
+    field(:fragments, non_null(list_of(non_null(:string))))
+  end
+
+  object :search_artiment_hit do
+    field(:artiment, non_null(:search_artiment))
+    field(:highlights, non_null(list_of(non_null(:search_highlight))))
+  end
+
+  object :paged_search_artiments do
+    field(:entries, non_null(list_of(non_null(:search_artiment_hit))))
     pagination_fields()
   end
 

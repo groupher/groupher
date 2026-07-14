@@ -121,8 +121,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Post do
     article_react_mutations(:post, [
       :upvote,
       :pin,
-      :mark_delete,
-      :delete,
       :emotion,
       :report,
       :sink,

@@ -59,4 +59,15 @@ config :groupher_server, :github_oauth,
   client_id: System.get_env("OAUTH_GITHUB_CLIENT_ID"),
   client_secret: System.get_env("OAUTH_GITHUB_CLIENT_SECRET")
 
+config :groupher_server, :search_artiments,
+  platform: GroupherServer.CMS.SearchArtiments.Platforms.Algolia,
+  queue: GroupherServer.CMS.SearchArtiments.Queues.Rihanna,
+  algolia: [
+    application_id: System.get_env("ALGOLIA_APPLICATION_ID"),
+    search_api_key: System.get_env("ALGOLIA_SEARCH_API_KEY"),
+    admin_api_key: System.get_env("ALGOLIA_ADMIN_API_KEY"),
+    index_name: System.get_env("ALGOLIA_INDEX_NAME", "groupher_artiments_dev"),
+    max_plain_text_bytes: 7_000
+  ]
+
 config :groupher_server, Helper.Converter.Content, provider: Helper.Converter.Content.Plate

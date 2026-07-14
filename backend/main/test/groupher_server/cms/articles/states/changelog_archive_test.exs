@@ -60,7 +60,7 @@ defmodule GroupherServer.Test.CMS.ChangelogArchive do
 
       archived_changelog = archived_changelogs |> List.first()
 
-      {:error, reason} = CMS.Articles.mark_delete(archived_changelog)
+      {:error, reason} = CMS.Articles.trash(archived_changelog, nil)
       assert reason |> is_error?(:archived)
     end
   end

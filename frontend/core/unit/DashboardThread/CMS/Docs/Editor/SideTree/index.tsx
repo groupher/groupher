@@ -6,18 +6,17 @@ import { type FC, useDeferredValue, useMemo, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 
-import {
-  DOC_EDITOR_SIDE_TREE_STICKY_HEIGHT,
-  DOC_EDITOR_SIDE_TREE_STICKY_TOP,
-} from '../salon/layout'
+import { DOC_EDITOR_SIDE_TREE_STICKY_TOP } from '../salon/layout'
 import { SIDE_TREE_NODE_TYPE } from './constant'
 import CoverWarningModal from './CoverWarningModal'
 import SideTreeDndContext from './Dnd/SideTreeDndContext'
 import Footer from './Footer'
 import Group from './Group'
+import PinList from './PinList'
 import useSalon from './salon'
 import type { TSideTreeController, TSideTreeGroup } from './spec'
 import Toolbar from './Toolbar'
+import useStickyViewportHeight from './useStickyViewportHeight'
 
 const GROUP_LAYOUT_TRANSITION = {
   duration: 180,
@@ -26,6 +25,7 @@ const GROUP_LAYOUT_TRANSITION = {
 
 type TProps = {
   controller: TSideTreeController
+  viewportLayoutKey: string
 }
 
 const normalizeSearchQuery = (query: string): string => query.trim().toLowerCase()
@@ -51,19 +51,25 @@ const filterGroupsByDocTitle = (
   })
 }
 
-const SideTree: FC<TProps> = ({ controller }) => {
+const SideTree: FC<TProps> = ({ controller, viewportLayoutKey }) => {
   const s = useSalon()
   const { t } = useTrans()
+  const stickyViewportRef = useStickyViewportHeight(
+    DOC_EDITOR_SIDE_TREE_STICKY_TOP,
+    viewportLayoutKey,
+  )
   const [groupListRef] = useAutoAnimate(GROUP_LAYOUT_TRANSITION)
   const [searching, setSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
 
   const {
     groups,
+    pins,
     activeId,
     editingTarget,
     coverWarning,
     activate,
+    addPin,
     addGroup,
     addChild,
     clearCoverWarning,
@@ -73,10 +79,13 @@ const SideTree: FC<TProps> = ({ controller }) => {
     renameGroup,
     renameChild,
     renameLink,
+    savePin,
+    deletePin,
     cancelEdit,
     edit,
     handleChildAction,
     updateChildStyle,
+    updatePinStyle,
     reload,
     reorderGroups,
   } = controller
@@ -100,10 +109,10 @@ const SideTree: FC<TProps> = ({ controller }) => {
 
   return (
     <aside
+      ref={stickyViewportRef}
       className={s.wrapper}
       style={{
         top: DOC_EDITOR_SIDE_TREE_STICKY_TOP,
-        height: DOC_EDITOR_SIDE_TREE_STICKY_HEIGHT,
       }}
     >
       <CoverWarningModal message={coverWarning} onClose={clearCoverWarning} />
@@ -112,6 +121,7 @@ const SideTree: FC<TProps> = ({ controller }) => {
         searching={searching}
         onChangeQuery={setSearchQuery}
         onCloseSearch={closeSearch}
+        onAddPin={addPin}
         onAddGroup={addGroup}
         onOpenSearch={openSearch}
       />
@@ -125,6 +135,15 @@ const SideTree: FC<TProps> = ({ controller }) => {
           targetDragPosition,
         }) => (
           <div ref={groupListRef} className={s.groupList}>
+            <PinList
+              pins={pins}
+              editingTarget={editingTarget}
+              onCancelEdit={cancelEdit}
+              onDelete={deletePin}
+              onEdit={edit}
+              onSave={savePin}
+              onStyleChange={updatePinStyle}
+            />
             {searchActive && columns.length === 0 ? (
               <div className={s.empty}>{t('dsb.cms.docs.side_tree.search_empty')}</div>
             ) : (
@@ -172,7 +191,13 @@ const SideTree: FC<TProps> = ({ controller }) => {
           </div>
         )}
       </SideTreeDndContext>
-      <Footer baseRevision={controller.treeState?.revision ?? null} onRestored={reload} />
+      <Footer
+        baseRevision={controller.treeState?.revision ?? null}
+        trashItems={controller.trashItems}
+        trashLoading={controller.trashLoading}
+        onReloadTrash={controller.reloadTrash}
+        onRestored={reload}
+      />
     </aside>
   )
 }

@@ -2,8 +2,9 @@
 
 import { AnimatePresence, domAnimation, LazyMotion, m } from 'motion/react'
 import { keys } from 'ramda'
-import { useEffect, useReducer } from 'react'
+import { useEffect, useMemo, useReducer } from 'react'
 
+import { DSB_POST_ROUTE } from '~/const/route'
 import useDsbTab from '~/hooks/useDsbTab'
 import type { TDsbPath } from '~/spec'
 import useDashboardStore from '~/stores/dashboard/hooks'
@@ -15,6 +16,7 @@ import Collapsed from './Collapsed'
 import { SUBMENU_CONFIG, SUBMENU_ROUTE_VIEW } from './constant'
 import { DASHBOARD_MENU_VIEW_EVENT, type TMenuView, type TMenuViewEvent } from './events'
 import Group from './Group'
+import MenuItemCount from './MenuItemCount'
 import useSalon from './salon'
 import SubMenu from './SubMenu'
 
@@ -89,7 +91,7 @@ const sideMenuReducer = (state: TSideMenuState, action: TSideMenuAction): TSideM
 
 export default function SideMenu() {
   const { mainTab } = useDsbTab()
-  const { commit, submenuCollapsed } = useDashboardStore()
+  const { commit, pagedPosts, submenuCollapsed } = useDashboardStore()
   const groupKeys = keys(MENU)
   const resolvedMenuView =
     SUBMENU_ROUTE_VIEW[mainTab as keyof typeof SUBMENU_ROUTE_VIEW] ?? MENU_VIEW.MAIN
@@ -101,6 +103,12 @@ export default function SideMenu() {
   const collapsed = Boolean(submenuConfig && submenuCollapsed)
   const s = useSalon({ collapsed })
   const activeMainTab = (optimisticMainTab ?? mainTab) as TDsbPath
+  const postEndSlots = useMemo(
+    () => ({
+      [DSB_POST_ROUTE.CONTENT]: <MenuItemCount value={pagedPosts.totalCount ?? 0} />,
+    }),
+    [pagedPosts.totalCount],
+  )
 
   useEffect(() => {
     if (menuView === MENU_VIEW.MAIN) commit({ submenuCollapsed: false })
@@ -153,6 +161,7 @@ export default function SideMenu() {
               ) : (
                 <SubMenu
                   activeSlug={optimisticSubTab}
+                  endSlots={menuView === MENU_VIEW.POST ? postEndSlots : undefined}
                   onCollapse={() => commit({ submenuCollapsed: true })}
                   returnTo={returnToByView[menuView] ?? null}
                   {...submenuConfig}

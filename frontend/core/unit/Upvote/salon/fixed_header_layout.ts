@@ -9,6 +9,9 @@ export default function useSalon({ viewerHasUpvoted }: TProps) {
 
   return {
     wrapper: 'row-center',
-    count: cn('bold-sm text-base ml-1.5', viewerHasUpvoted ? primary('fg') : fg('digest')),
+    count: cn(
+      'pretty-num bold-sm ml-1.5 text-base',
+      viewerHasUpvoted ? primary('fg') : fg('digest'),
+    ),
   }
 }

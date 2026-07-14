@@ -39,8 +39,8 @@ defmodule GroupherServer.CMS.Articles do
     Read,
     Snapshot,
     States,
-    Upvotes,
-    Write
+    Trash,
+    Upvotes
   }
 
   # Read
@@ -247,30 +247,40 @@ defmodule GroupherServer.CMS.Articles do
 
   # Lifecycle
 
-  @spec mark_delete(T.article()) :: T.domain_res(T.article())
-  def mark_delete(article), do: Write.mark_delete(article)
+  @doc "Excludes logical Articles that currently belong to Trash."
+  @spec active_scope(Ecto.Queryable.t(), T.thread()) :: Ecto.Query.t()
+  def active_scope(queryable, thread), do: Trash.active_scope(queryable, thread)
 
-  @spec undo_mark_delete(T.article()) :: T.domain_res(T.article())
-  def undo_mark_delete(article), do: Write.undo_mark_delete(article)
+  @doc "Moves one logical Article into Trash without deleting its aggregate."
+  @spec trash(T.article(), User.t() | nil, keyword()) ::
+          T.domain_res(CMS.Model.TrashedArticle.t())
+  def trash(article, actor, opts \\ []), do: Trash.trash(article, actor, opts)
 
-  @spec delete(T.article()) :: T.domain_res(term())
-  def delete(article), do: Write.delete(article)
+  @doc "Restores one logical Article from Trash."
+  @spec restore_trashed(Ecto.UUID.t() | CMS.Model.TrashedArticle.t(), User.t() | nil, keyword()) ::
+          T.domain_res(T.article())
+  def restore_trashed(item_or_ref, actor, opts \\ []), do: Trash.restore(item_or_ref, actor, opts)
 
-  @spec delete(T.article(), String.t()) :: T.domain_res(term())
-  def delete(article, reason), do: Write.delete(article, reason)
+  @doc "Permanently removes one standalone trashed Article aggregate."
+  @spec permanently_delete_trashed(
+          Ecto.UUID.t() | CMS.Model.TrashedArticle.t(),
+          User.t() | nil,
+          keyword()
+        ) :: T.domain_res(map())
+  def permanently_delete_trashed(item_or_ref, actor, opts \\ []) do
+    Trash.permanently_delete(item_or_ref, actor, opts)
+  end
+
+  @doc "Lists current Article Trash memberships for a Community."
+  @spec list_trashed(Community.t(), map()) :: T.domain_res(map())
+  def list_trashed(%Community{} = community, filter \\ %{}), do: Trash.list(community, filter)
+
+  @doc "Gets one current Article Trash membership by public ref."
+  @spec get_trashed(Ecto.UUID.t()) :: T.domain_res(CMS.Model.TrashedArticle.t())
+  def get_trashed(ref), do: Trash.get(ref)
 
   @spec archive(T.thread()) :: T.domain_res(term())
   def archive(thread), do: States.archive(thread)
-
-  @spec batch_mark_delete(String.t(), T.thread(), [T.id()]) :: T.domain_res(term())
-  def batch_mark_delete(community, thread, id_list) do
-    Write.batch_mark_delete(community, thread, id_list)
-  end
-
-  @spec batch_undo_mark_delete(String.t(), T.thread(), [T.id()]) :: T.domain_res(term())
-  def batch_undo_mark_delete(community, thread, id_list) do
-    Write.batch_undo_mark_delete(community, thread, id_list)
-  end
 
   @spec sink(T.article()) :: T.domain_res(T.article())
   def sink(article), do: States.sink(article)

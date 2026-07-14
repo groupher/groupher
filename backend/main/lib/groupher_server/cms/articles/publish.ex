@@ -22,6 +22,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
   alias GroupherServer.Accounts.Model.User
   alias CMS.Articles.{Branch, Document, Draft, Lock, Snapshot, States, VersionedRelations, Write}
   alias CMS.Model.{ArticleDocument, ArticleSnapshot, Author, Community}
+  alias CMS.SearchArtiments.Indexer
   alias CMS.{Assets, Communities, Events}
   alias Ecto.Multi
   alias Helper.{Later, ORM, T, Transaction}
@@ -228,6 +229,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
   end
 
   defp run_after_publish(public_article, first_publish?) do
+    Indexer.enqueue_upsert(public_article)
     Later.run({Events, :emit, [:sync_mentions, %{artiment: public_article}]})
     Later.run({Events, :emit, [:audition, %{artiment: public_article}]})
 

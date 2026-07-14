@@ -17,6 +17,7 @@ type TProps = {
   color?: TColorName
   opacity?: number
   className?: string
+  style?: CSSProperties
 } & TSpace
 
 const IconHub: FC<TProps> = ({
@@ -28,11 +29,13 @@ const IconHub: FC<TProps> = ({
   color,
   opacity,
   className,
+  style: customStyle,
   ...spacing
 }) => {
   const s = useSalon({ ...spacing, color, size, className, mode })
   const style = {
     opacity,
+    ...customStyle,
     ...(mode === 'mask'
       ? {
           WebkitMaskImage: `url(${getIconFilePath(provider, icon)})`,

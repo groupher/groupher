@@ -15,7 +15,7 @@ export default function useSalon({ ...spacing }: TProps) {
     //
     main: 'row-center ml-10 mr-8',
     slash: cn('text-xs mt-px mx-2', fg('digest')),
-    total: cn('text-sm', fg('digest')),
+    total: cn('pretty-num text-sm', fg('digest')),
     //
     bottomMsg: cn(
       'text-base',
@@ -31,7 +31,7 @@ export default function useSalon({ ...spacing }: TProps) {
     arrowDisabled: 'cursor-not-allowed',
     // ref: https://www.w3schools.com/howto/howto_css_hide_arrow_number.asp
     numInputer: cn(
-      'h-7 px-0.5 py-0 outline-none border rounded-lg text-center',
+      'pretty-num h-7 px-0.5 py-0 outline-none border rounded-lg text-center',
       'trans-all-200',
       br('digest'),
       fg('title'),

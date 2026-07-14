@@ -97,8 +97,6 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Changelog do
     article_react_mutations(:changelog, [
       :upvote,
       :pin,
-      :mark_delete,
-      :delete,
       :emotion,
       :report,
       :sink,

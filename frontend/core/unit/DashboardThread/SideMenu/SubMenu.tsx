@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import type { ReactNode } from 'react'
 
 import { DSB_ROUTE } from '~/const/route'
 import useDsbTab from '~/hooks/useDsbTab'
@@ -17,6 +18,7 @@ type TProps = {
   baseRoute: string
   defaultSlug: string
   items: readonly TSubMenuItem[]
+  endSlots?: Readonly<Partial<Record<string, ReactNode>>>
   onCollapse: () => void
   returnTo: string | null
   scope: TSubMenuScope
@@ -26,6 +28,7 @@ export default function SubMenu({
   activeSlug: activeSlugProp,
   baseRoute,
   defaultSlug,
+  endSlots,
   items,
   onCollapse,
   returnTo,
@@ -65,6 +68,7 @@ export default function SubMenu({
         {items.map((item) => {
           const isActive = item.slug === activeSlug
           const path = item.path ? `/${item.path}` : ''
+          const endSlot = endSlots?.[item.slug]
 
           return (
             <Link
@@ -80,6 +84,9 @@ export default function SubMenu({
                 />
               )}
               <span className={s.itemLabel}>{t(item.title)}</span>
+              {endSlot !== undefined && endSlot !== null && (
+                <span className={s.itemEnd}>{endSlot}</span>
+              )}
             </Link>
           )
         })}

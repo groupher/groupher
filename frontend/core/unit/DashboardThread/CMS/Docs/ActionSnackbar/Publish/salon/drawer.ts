@@ -20,6 +20,6 @@ export default function useSalon() {
       primary('bg'),
       fg('button.fg'),
     ),
-    publishCount: 'ml-1 opacity-80',
+    publishCount: 'pretty-num ml-1 opacity-80',
   }
 }

@@ -13,6 +13,43 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
   alias GroupherServer.CMS.Dashboard.ThemePreset
 
   object :cms_queries do
+    @desc "Current Article Trash memberships"
+    field :trashed_articles, :paged_trashed_articles do
+      arg(:community, non_null(:string))
+      arg(:thread, non_null(:thread))
+      arg(:filter, :trash_filter)
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "article.trash.read")
+      middleware(M.FrontDesk, :community)
+      middleware(M.PageSizeProof)
+      resolve(&R.CMS.trashed_articles/3)
+    end
+
+    @desc "One current Article Trash membership"
+    field :trashed_article, :trashed_article do
+      arg(:id, non_null(:id))
+      arg(:community, non_null(:string))
+      arg(:thread, non_null(:thread))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "article.trash.read")
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.trashed_article/3)
+    end
+
+    @desc "Append-only CMS audit log"
+    field :cms_audit_logs, :paged_audit_logs do
+      arg(:community, non_null(:string))
+      arg(:filter, :audit_log_filter)
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "audit.read")
+      middleware(M.FrontDesk, :community)
+      middleware(M.PageSizeProof)
+      resolve(&R.CMS.cms_audit_logs/3)
+    end
+
     @desc "dashboard theme preset registry"
     field :theme_presets, non_null(list_of(non_null(:dsb_theme_preset_option))) do
       resolve(fn _, _, _ -> {:ok, ThemePreset.options()} end)
@@ -49,7 +86,6 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:community, non_null(:string))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "community.update")
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.doc_tree_trash_items/3)
     end
@@ -318,7 +354,12 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.paged_kanban_posts/3)
     end
 
-    article_search_queries()
+    @desc "Search Article and Comment content through the unified Artiment index"
+    field :search_artiments, non_null(:paged_search_artiments) do
+      arg(:query, non_null(:search_artiments_query_input))
+
+      resolve(&R.CMS.search_artiments/3)
+    end
 
     article_reacted_users_query(:upvote, &R.CMS.upvoted_users/3)
     article_reacted_users_query(:collect, &R.CMS.collected_users/3)

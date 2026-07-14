@@ -1,34 +1,40 @@
 import { useCallback, useState, type FC } from 'react'
 
-import useQuery from '~/hooks/useQuery'
+import useTrans from '~/hooks/useTrans'
 import FileImageSVG from '~/icons/FileImage'
-import QuestionSVG from '~/icons/Question'
 import TrashSVG from '~/icons/Trash'
 import useCommunity from '~/stores/community/hooks'
-import S from '~/unit/DashboardThread/schema'
 
 import useSalon from './salon/footer'
-import type { TDocTreeTrashData } from './spec'
+import type { TDocTreeTrashItem } from './spec'
 import TrashDrawer from './TrashDrawer'
 
 type TProps = {
   baseRevision: number | null
+  trashItems: TDocTreeTrashItem[]
+  trashLoading: boolean
+  onReloadTrash: () => void
   onRestored: () => void
 }
 
-const Footer: FC<TProps> = ({ baseRevision, onRestored }) => {
+const Footer: FC<TProps> = ({
+  baseRevision,
+  trashItems,
+  trashLoading,
+  onReloadTrash,
+  onRestored,
+}) => {
   const s = useSalon()
+  const { t } = useTrans()
   const { slug: community } = useCommunity()
   const [trashVisible, setTrashVisible] = useState(false)
-  const { data, loading, reload } = useQuery<TDocTreeTrashData>(S.docTreeTrashItems, {
-    community,
-  })
-  const trashItems = data?.docTreeTrashItems ?? []
   const trashCount = trashItems.length
+  const trashLabel = t('dsb.cms.docs.side_tree.footer.trash')
+  const assetsLabel = t('dsb.cms.docs.side_tree.footer.assets')
   const openTrash = useCallback(() => {
-    reload()
+    onReloadTrash()
     setTrashVisible(true)
-  }, [reload])
+  }, [onReloadTrash])
   const closeTrash = useCallback(() => setTrashVisible(false), [])
 
   return (
@@ -36,28 +42,42 @@ const Footer: FC<TProps> = ({ baseRevision, onRestored }) => {
       <footer className={s.wrapper}>
         <div className={s.divider} />
         <div className={s.content}>
-          <button type='button' className={s.iconButton} aria-label='Trash' onClick={openTrash}>
-            <TrashSVG className={s.icon} />
-            <span className={s.count}>{trashCount}</span>
+          <button
+            type='button'
+            className={s.iconButton}
+            aria-label={trashLabel}
+            title={trashLabel}
+            onClick={openTrash}
+          >
+            <span className={s.iconButtonSurface}>
+              <TrashSVG className={s.trashIcon} />
+              <span className={s.trashText}>{trashLabel}</span>
+              <span className={s.count}>{trashCount}</span>
+            </span>
           </button>
           <div className={s.grow} />
-          <button type='button' className={s.iconButton} aria-label='Assets'>
-            <FileImageSVG className={s.icon} />
-            <span className={s.count}>0</span>
-          </button>
-          <button type='button' className={s.iconOnlyButton} aria-label='Help'>
-            <QuestionSVG className={s.icon} />
+          <button
+            type='button'
+            className={s.iconButton}
+            aria-label={assetsLabel}
+            title={assetsLabel}
+          >
+            <span className={s.iconButtonSurface}>
+              <FileImageSVG className={s.icon} />
+              <span className={s.assetsText}>{assetsLabel}</span>
+              <span className={s.count}>0</span>
+            </span>
           </button>
         </div>
       </footer>
       <TrashDrawer
         show={trashVisible}
         items={trashItems}
-        loading={loading}
+        loading={trashLoading}
         baseRevision={baseRevision}
         community={community}
         onClose={closeTrash}
-        onReload={reload}
+        onReload={onReloadTrash}
         onRestored={onRestored}
       />
     </>

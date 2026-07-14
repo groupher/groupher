@@ -331,7 +331,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
                tree_snapshot.tree_json["tabs"] |> hd() |> Map.fetch!("groups")
     end
 
-    test "Tree publish removes public nodes deleted from the draft tree",
+    test "Trash immediately removes a published Page from draft and public cover",
          ~m(user community page_payload)a do
       {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
       {:ok, _tree_publish} = publish_tree_changes(community, user)
@@ -343,21 +343,15 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
       assert {:ok, _payload} =
                CMS.DocTree.delete_node(community, page_payload.node.id, %{
-                 base_revision: tree.revision
+                 base_revision: tree.revision,
+                 actor_id: user.id
                })
 
       {:ok, tree} = CMS.DocTree.read(community)
       [group] = groups(tree)
       assert group.children == []
-      assert tree.tree_state.has_unpublished_changes
-
-      assert {:ok, %{done: true}} = publish_tree_changes(community, user)
-
-      {:ok, tree} = CMS.DocTree.read(community)
       {:ok, cover} = CMS.DocCover.read(community)
 
-      [group] = groups(tree)
-      assert group.children == []
       refute tree.tree_state.has_unpublished_changes
       assert [%{items: []}] = cover.groups
     end

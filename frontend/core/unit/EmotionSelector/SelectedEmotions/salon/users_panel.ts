@@ -7,6 +7,6 @@ export default function useSalon() {
     wrapper: 'row-center px-1.5 py-0.5 pl-2.5',
     users: 'row-center text-sm',
     username: cn('text-sm mr-1.5', fg('title')),
-    units: cn('mx-1 text-sm', fg('digest')),
+    units: cn('pretty-num mx-1 text-sm', fg('digest')),
   }
 }

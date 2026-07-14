@@ -19,7 +19,7 @@ export default function useSalon(columnsCount = 5) {
     scrollColumn: isCompactBoard ? 'grow basis-0 min-w-0' : 'shrink-0 w-64',
     header: 'row-center py-1.5 w-full pl-0.5',
     label: cn('text-base bold ml-2.5', fg('digest')),
-    subTitle: cn('text-sm ml-1.5', fg('hint')),
+    subTitle: cn('pretty-num ml-1.5 text-sm', fg('hint')),
     //
     backlogIcon: cn('size-3', rainbow(backlogBg, 'fill')),
     todoIcon: cn('size-3', rainbow(todoBg, 'fill')),

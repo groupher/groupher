@@ -12,7 +12,7 @@ defmodule GroupherServer.Test.CMS.Communities.Passport do
   describe "[cms_passports]" do
     @valid_passport_rules %{
       "global" => %{},
-      "javascript" => %{"cms" => %{"post.delete" => true, "post.edit" => true}}
+      "javascript" => %{"cms" => %{"post.trash" => true, "post.edit" => true}}
     }
     @valid_passport_rules2 %{
       "global" => %{},
@@ -32,14 +32,14 @@ defmodule GroupherServer.Test.CMS.Communities.Passport do
       {:ok, passport} = Passport.stamp_passport(@valid_passport_rules, user)
 
       assert passport.user_id == user.id
-      assert passport.rules |> get_in(["javascript", "cms", "post.delete"]) == true
+      assert passport.rules |> get_in(["javascript", "cms", "post.trash"]) == true
       assert passport.rules |> get_in(["javascript", "cms", "post.edit"]) == true
     end
 
     test "false rules will not be delete from current passport", ~m(user)a do
       {:ok, passport} = Passport.stamp_passport(@valid_passport_rules, user)
 
-      assert passport.rules |> get_in(["javascript", "cms", "post.delete"]) == true
+      assert passport.rules |> get_in(["javascript", "cms", "post.trash"]) == true
       assert passport.rules |> get_in(["javascript", "cms", "post.edit"]) == true
 
       valid_passport2 = %{
@@ -50,7 +50,7 @@ defmodule GroupherServer.Test.CMS.Communities.Passport do
       {:ok, updated_passport} = Passport.stamp_passport(valid_passport2, user)
 
       assert updated_passport.user_id == user.id
-      assert updated_passport.rules |> get_in(["javascript", "cms", "post.delete"]) == true
+      assert updated_passport.rules |> get_in(["javascript", "cms", "post.trash"]) == true
       assert updated_passport.rules |> get_in(["javascript", "cms", "post.edit"]) == nil
     end
 
@@ -73,7 +73,7 @@ defmodule GroupherServer.Test.CMS.Communities.Passport do
       {:ok, _} = Passport.stamp_passport(@valid_passport_rules, user)
       {:ok, _} = Passport.stamp_passport(@valid_passport_rules2, user2)
 
-      {:ok, passports} = Passport.paged_passports("javascript", "post.delete")
+      {:ok, passports} = Passport.paged_passports("javascript", "post.trash")
 
       assert length(passports) == 1
       assert passports |> List.first() |> Map.get(:rules) |> Map.equal?(@valid_passport_rules)
@@ -88,11 +88,11 @@ defmodule GroupherServer.Test.CMS.Communities.Passport do
 
     test "can ease a rule in passport", ~m(user)a do
       {:ok, passport} = Passport.stamp_passport(@valid_passport_rules, user)
-      assert passport.rules |> get_in(["javascript", "cms", "post.delete"]) == true
+      assert passport.rules |> get_in(["javascript", "cms", "post.trash"]) == true
 
-      {:ok, passport_after} = Passport.erase_passport(["javascript", "cms", "post.delete"], user)
+      {:ok, passport_after} = Passport.erase_passport(["javascript", "cms", "post.trash"], user)
 
-      assert nil == passport_after.rules |> get_in(["javascript", "cms", "post.delete"])
+      assert nil == passport_after.rules |> get_in(["javascript", "cms", "post.trash"])
     end
 
     test "can ease a rule in passport by community slug", ~m(user)a do
@@ -100,26 +100,26 @@ defmodule GroupherServer.Test.CMS.Communities.Passport do
         "global" => %{},
         "javascript" => %{
           "cms" => %{
-            "post.delete" => true,
+            "post.trash" => true,
             "post.edit" => true
           }
         },
         "elixir" => %{
           "cms" => %{
-            "post.delete" => true,
+            "post.trash" => true,
             "post.edit" => true
           }
         }
       }
 
       {:ok, passport} = Passport.stamp_passport(multi_rules, user)
-      assert passport.rules |> get_in(["javascript", "cms", "post.delete"]) == true
+      assert passport.rules |> get_in(["javascript", "cms", "post.trash"]) == true
 
       {:ok, passport_after} = Passport.erase_passport(["javascript"], user)
 
       assert passport_after.rules == %{
                "global" => %{},
-               "elixir" => %{"cms" => %{"post.delete" => true, "post.edit" => true}}
+               "elixir" => %{"cms" => %{"post.trash" => true, "post.edit" => true}}
              }
     end
 
@@ -127,7 +127,7 @@ defmodule GroupherServer.Test.CMS.Communities.Passport do
       {:ok, _} = Passport.stamp_passport(@valid_passport_rules, user)
 
       {:ok, _} = Passport.erase_passport(["javascript", "cms", "non-exist"], user)
-      {:ok, _} = Passport.erase_passport(["non-exist", "cms", "post.delete"], user)
+      {:ok, _} = Passport.erase_passport(["non-exist", "cms", "post.trash"], user)
 
       assert {:error, :invalid_passport_shape} =
                Passport.erase_passport(["non-exist", "non-exist"], user)

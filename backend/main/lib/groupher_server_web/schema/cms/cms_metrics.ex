@@ -47,6 +47,37 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     enum_values(Threads.values())
   end
 
+  enum :search_artiment_type do
+    value(:article)
+    value(:comment)
+  end
+
+  enum :search_artiment_sort do
+    value(:relevance)
+  end
+
+  input_object :search_artiments_scope_input do
+    field(:community_ref, :string)
+    field(:article_ref, :string)
+  end
+
+  input_object :search_artiments_filters_input do
+    field(:types, list_of(non_null(:search_artiment_type)))
+    field(:threads, list_of(non_null(:thread)))
+    field(:author_refs, list_of(non_null(:string)))
+    field(:locales, list_of(non_null(:string)))
+  end
+
+  input_object :search_artiments_query_input do
+    field(:text, non_null(:string))
+    field(:scope, :search_artiments_scope_input)
+    field(:filters, :search_artiments_filters_input)
+    field(:sort, :search_artiment_sort, default_value: :relevance)
+    field(:page, :integer, default_value: 1)
+    field(:size, :integer, default_value: 20)
+    field(:highlight, :boolean, default_value: true)
+  end
+
   enum :content do
     article_values()
     value(:comment)
@@ -182,6 +213,17 @@ defmodule GroupherServerWeb.Schema.CMS.Metrics do
     @desc "limit of records (default 20), if first > 30, only return 30 at most"
     pagination_args()
     field(:sort, :sort_enum)
+  end
+
+  input_object :trash_filter do
+    pagination_args()
+    field(:thread, :thread)
+  end
+
+  input_object :audit_log_filter do
+    pagination_args()
+    field(:action, :string)
+    field(:resource_type, :string)
   end
 
   @desc "article_filter doc"

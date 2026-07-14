@@ -5,28 +5,12 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
   can not define private macros, see:
   https://github.com/elixir-lang/elixir/issues/3887
 
-  e.g:
-  in schema/cms/mutation/post.ex
-
-  add following:
-    article_react_mutations(:post, [:upvote, :pin, :mark_delete, :delete, :emotion, :report, :sink, :lock_comment])
-
-  it will expand as
-    article_upvote_mutation(:thread)
-    article_pin_mutation(:thread)
-    article_mark_delete_mutation(:thread)
-    article_delete_mutation(:thread)
-    article_emotion_mutation(:thread)
-    article_report_mutation(:thread)
-    article_sink_mutation(:thread)
-    article_lock_comment_mutation(:thread)
-
-  same for the job/repo .. article thread
+  Thread modules use `article_react_mutations/2` to expand their supported
+  reactions. Trash lifecycle mutations are intentionally defined once in the
+  cross-entity CMS operation schema instead of being generated per thread.
   """
   alias GroupherServerWeb.Middleware, as: M
   alias GroupherServerWeb.Resolvers, as: R
-
-  import Helper.Utils, only: [plural: 1]
 
   @doc """
   add basic mutation reactions to article
@@ -130,103 +114,6 @@ defmodule GroupherServerWeb.Schema.Helper.Mutations do
         middleware(M.FrontDesk, {:article, thread: unquote(thread)})
 
         resolve(&R.CMS.undo_pin_article/3)
-      end
-    end
-  end
-
-  @doc """
-  mark delete mutation for article
-
-  include:
-  -----
-  mark_delete_[thread]
-  unto_mark_delete_[thread]
-  """
-  defmacro article_mark_delete_mutation(thread) do
-    quote do
-      @desc unquote("mark delete a #{thread} type article, aka soft-delete")
-      field unquote(:"mark_delete_#{thread}"), unquote(thread) do
-        arg(:article, non_null(:article_path_input))
-
-        middleware(M.Authorize, :login)
-
-        middleware(M.Passport,
-          action: unquote("#{to_string(thread)}.mark_delete"),
-          thread: unquote(thread)
-        )
-
-        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
-
-        resolve(&R.CMS.mark_delete_article/3)
-      end
-
-      @desc unquote("undo mark delete a #{thread} type article")
-      field unquote(:"undo_mark_delete_#{thread}"), unquote(thread) do
-        arg(:article, non_null(:article_path_input))
-
-        middleware(M.Authorize, :login)
-
-        middleware(M.Passport,
-          action: unquote("#{to_string(thread)}.undo_mark_delete"),
-          thread: unquote(thread)
-        )
-
-        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
-
-        resolve(&R.CMS.undo_mark_delete_article/3)
-      end
-
-      @desc unquote("batch mark delete #{plural(thread)} type article, aka soft-delete")
-      field unquote(:"batch_mark_delete_#{plural(thread)}"), :done_state do
-        arg(:community, non_null(:string))
-        arg(:inner_ids, non_null(list_of(non_null(:integer))))
-        arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
-
-        middleware(M.Authorize, :login)
-        middleware(M.Passport, action: unquote("#{to_string(thread)}.mark_delete"))
-
-        resolve(&R.CMS.batch_mark_delete_articles/3)
-      end
-
-      @desc unquote("batch undo mark delete #{plural(thread)} type article, aka soft-delete")
-      field unquote(:"batch_undo_mark_delete_#{plural(thread)}"), :done_state do
-        arg(:community, non_null(:string))
-        arg(:inner_ids, non_null(list_of(non_null(:integer))))
-        arg(:thread, unquote(:"#{thread}_thread"), default_value: unquote(thread))
-
-        middleware(M.Authorize, :login)
-        middleware(M.Passport, action: unquote("#{to_string(thread)}.undo_mark_delete"))
-
-        resolve(&R.CMS.batch_undo_mark_delete_articles/3)
-      end
-    end
-  end
-
-  @doc """
-  delete mutation for article
-
-  include:
-  -----
-  delete_[thread]
-  mark_delete_[thread]
-  """
-  # TODO: if post belongs to multi communities, unset instead delete
-  defmacro article_delete_mutation(thread) do
-    quote do
-      @desc unquote("permanently delete a #{thread}")
-      field unquote(:"delete_#{thread}"), unquote(thread) do
-        arg(:article, non_null(:article_path_input))
-
-        middleware(M.Authorize, :login)
-
-        middleware(M.Passport,
-          action: unquote("#{to_string(thread)}.delete"),
-          thread: unquote(thread)
-        )
-
-        middleware(M.FrontDesk, {:article, thread: unquote(thread)})
-
-        resolve(&R.CMS.delete_article/3)
       end
     end
   end

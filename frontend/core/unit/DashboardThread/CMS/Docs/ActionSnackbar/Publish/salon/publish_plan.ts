@@ -25,7 +25,7 @@ export default function useSalon() {
     section: 'column gap-1.5',
     heading: cn('row-center gap-2 px-1 bold-sm', fg('digest')),
     count: cn(
-      'align-both h-5 min-w-5 shrink-0 rounded-md px-1.5 tabular-nums',
+      'align-both pretty-num h-5 min-w-5 shrink-0 rounded-md px-1.5',
       bg('badge'),
       fg('digest'),
     ),

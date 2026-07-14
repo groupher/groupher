@@ -6,10 +6,14 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
   @query S.DocTree.q(:doc_tree)
 
   @public_query S.DocTree.q(:doc_public_tree)
+  @trash_query S.DocTree.q(:doc_tree_trash_items)
+  @delete_mutation S.DocTree.m(:delete_doc_tree_node)
+  @restore_mutation S.DocTree.m(:restore_doc_tree_trash_item)
 
   setup do
     guest_conn = simu_conn(:guest)
     {:ok, user} = db_insert(:user)
+    {:ok, member} = db_insert(:user)
     {:ok, community} = empty_docs_community(user)
     {:ok, tree_state} = ORM.find_by(CMS.Model.DocsSiteState, community_id: community.id)
 
@@ -21,11 +25,13 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
       })
 
     user_conn = simu_conn(:user, user)
+    member_conn = simu_conn(:user, member)
 
     {:ok,
      %{
        guest_conn: guest_conn,
        user_conn: user_conn,
+       member_conn: member_conn,
        user: user,
        community: community,
        group_payload: group_payload
@@ -48,6 +54,62 @@ defmodule GroupherServer.Test.Query.CMS.DocTree do
     assert result["treeState"]["stagedEventCount"] == 2
     assert Enum.all?(result["stagedEvents"], &(&1["eventType"] == "node.create"))
     assert [%{"pins" => [], "groups" => [_]}] = result["tabs"]
+  end
+
+  test "logged-in user without passport can delete, list, and restore a trash item", %{
+    member_conn: member_conn,
+    user: user,
+    community: community,
+    group_payload: group_payload
+  } do
+    {:ok, page_payload} =
+      CMS.DocTree.create_page(
+        community,
+        %{
+          group_id: group_payload.node.id,
+          title: "Install",
+          slug: "install",
+          base_revision: group_payload.revision
+        },
+        user
+      )
+
+    delete_variables = %{
+      community: community.slug,
+      id: page_payload.node.id,
+      baseRevision: page_payload.revision
+    }
+
+    deleted = member_conn |> gq_mutation(@delete_mutation, delete_variables)
+
+    assert deleted["conflict"] == false
+
+    assert [trash_item] =
+             member_conn |> gq_query(@trash_query, %{community: community.slug})
+
+    assert trash_item["nodeId"] == page_payload.node.id
+    assert trash_item["type"] == "page"
+    assert trash_item["title"] == "Install"
+    assert trash_item["restoredAt"] == nil
+
+    restore_variables = %{
+      community: community.slug,
+      id: trash_item["id"],
+      baseRevision: deleted["revision"]
+    }
+
+    restored = member_conn |> gq_mutation(@restore_mutation, restore_variables)
+
+    assert restored["conflict"] == false
+    assert restored["node"]["id"] == page_payload.node.id
+    assert restored["node"]["type"] == "PAGE"
+    assert restored["node"]["title"] == "Install"
+    assert [] = member_conn |> gq_query(@trash_query, %{community: community.slug})
+  end
+
+  test "doc tree trash requires login", %{guest_conn: guest_conn, community: community} do
+    assert guest_conn
+           |> query_error?(@trash_query, %{community: community.slug}, ecode(:account_login))
   end
 
   test "guest can query doc_public_tree without seeing drafts", %{

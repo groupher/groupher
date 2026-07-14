@@ -39,7 +39,7 @@ export default function useSalon() {
     //
     price: 'row-center	mt-2.5 mb-1 -ml-1',
     priceUnit: cn('text-2xl ml-2 mb-1 mt-1', fg('digest')),
-    priceNum: cn('row items-center text-3xl bold-sm', fg('title')),
+    priceNum: cn('row pretty-num items-center text-3xl bold-sm', fg('title')),
     priceDesc: cn('text-base ml-2 mt-1.5', fg('title')),
     //
     note: cn('text-xs z-10', fg('digest')),
