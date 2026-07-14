@@ -10,6 +10,7 @@ const baseConfig = {
   productionBrowserSourceMaps: false,
   cacheComponents: true,
   experimental: {
+    useTypeScriptCli: true,
     instantInsights: {
       validationLevel: 'manual-warning',
     },
