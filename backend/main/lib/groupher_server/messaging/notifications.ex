@@ -50,7 +50,7 @@ defmodule GroupherServer.Messaging.Notifications do
         end
       end)
       |> Multi.run(:update_user_mailbox_status, fn _, %{upsert_notifications: nofity} ->
-        Accounts.Mailbox.update_status(nofity.user_id)
+        Accounts.Mailbox.update_status_many_in_transaction([nofity.user_id])
       end)
       |> Repo.transaction()
       |> result()
@@ -84,7 +84,9 @@ defmodule GroupherServer.Messaging.Notifications do
           |> done
         end)
         |> Multi.run(:update_user_mailbox_status, fn _, _ ->
-          notifications |> Enum.map(& &1.user_id) |> Accounts.Mailbox.update_status_many()
+          notifications
+          |> Enum.map(& &1.user_id)
+          |> Accounts.Mailbox.update_status_many_in_transaction()
         end)
         |> Repo.transaction()
         |> result()
@@ -109,6 +111,22 @@ defmodule GroupherServer.Messaging.Notifications do
     Notification
     |> where([n], n.user_id == ^user_id and n.read == false)
     |> ORM.count()
+  end
+
+  @doc """
+  Counts unread notifications for multiple users in one grouped database query.
+
+  Returns `{:ok, %{user_id => count}}`; user IDs with zero unread notifications
+  are omitted from the map.
+  """
+  def unread_counts(user_ids) when is_list(user_ids) do
+    Notification
+    |> where([n], n.user_id in ^user_ids and n.read == false)
+    |> group_by([n], n.user_id)
+    |> select([n], {n.user_id, count(n.id)})
+    |> Repo.all()
+    |> Map.new()
+    |> done()
   end
 
   def mark_read(ids, %User{} = user) when is_list(ids) do
@@ -273,7 +291,15 @@ defmodule GroupherServer.Messaging.Notifications do
     |> Enum.filter(&Embeds.User.valid?/1)
   end
 
-  defp result({:ok, %{upsert_notifications: result}}), do: {:ok, result}
-  defp result({:ok, %{revoke_notifications: result}}), do: {:ok, result}
+  defp result({:ok, %{upsert_notifications: result, update_user_mailbox_status: updated_users}}) do
+    Accounts.Mailbox.invalidate_users(updated_users)
+    {:ok, result}
+  end
+
+  defp result({:ok, %{revoke_notifications: result, update_user_mailbox_status: updated_users}}) do
+    Accounts.Mailbox.invalidate_users(updated_users)
+    {:ok, result}
+  end
+
   defp result({:error, _, result, _steps}), do: {:error, result}
 end

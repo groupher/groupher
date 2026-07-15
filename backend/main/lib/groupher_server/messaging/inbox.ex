@@ -22,6 +22,14 @@ defmodule GroupherServer.Messaging.Inbox do
   def unread_count(:mention, user_id), do: Mentions.unread_count(user_id)
   def unread_count(:notification, user_id), do: Notifications.unread_count(user_id)
 
+  @doc """
+  Delegates a grouped unread-count query to the selected inbox store.
+
+  Returns `{:ok, %{user_id => count}}`.
+  """
+  def unread_counts(:mention, user_ids), do: Mentions.unread_counts(user_ids)
+  def unread_counts(:notification, user_ids), do: Notifications.unread_counts(user_ids)
+
   def mark_read(:mention, ids, user), do: Mentions.mark_read(ids, user)
   def mark_read(:notification, ids, user), do: Notifications.mark_read(ids, user)
 
