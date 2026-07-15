@@ -5,6 +5,37 @@ defmodule GroupherServer.CMS.ContentImport.Orchestrator do
   Platform fetch and ThreadAdapter work stay outside this module. Callers move
   the persisted Job through explicit transitions, claim bounded asset batches,
   and commit Mapping checkpoints only after a successful thread apply.
+
+  Job lifecycle and the two side-effect boundaries are:
+
+      planning
+         |
+         +-- no assets -------------------------------> ready
+         |
+         `-- assets --> staging --> ready / failed
+                         ^   |
+                         |   `--> claim lease --> external stager
+                         |                         |
+                         `------ retry <------ complete/fail
+
+      ready --> applying
+                   |
+                   v
+      +------------ one Repo transaction ------------------+
+      | lock Job + Job.Items                               |
+      |        |                                            |
+      |        v                                            |
+      | ThreadAdapter.apply_in_transaction                  |
+      |        |                                            |
+      |        +--> resolve local hashes                    |
+      |        +--> upsert Mapping checkpoints              |
+      |        +--> apply source_deleted resolutions        |
+      |        `--> transition Job to completed             |
+      +-----------------------------------------------------+
+
+  External asset publication is outside the final Repo transaction and therefore
+  uses stable identities plus claim/lease/retry. Thread writes and their database
+  checkpoints are inside the final transaction and roll back together.
   """
 
   import Ecto.Changeset, only: [change: 2]
@@ -178,6 +209,13 @@ defmodule GroupherServer.CMS.ContentImport.Orchestrator do
 
   The Job must already be in `applying`; callers may publish external assets
   before this boundary using stable idempotency keys.
+
+      lock/validate
+           |
+           v
+      thread apply --> local hashes --> Mapping --> source_deleted --> completed
+           |                                                              |
+           `---------------------- same transaction -----------------------'
   """
   @spec apply_job(
           Job.t() | pos_integer(),

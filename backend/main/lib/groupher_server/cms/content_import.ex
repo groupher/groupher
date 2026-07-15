@@ -7,6 +7,55 @@ defmodule GroupherServer.CMS.ContentImport do
   resource work asynchronously. Database writes must enter through
   `ContentImport.Orchestrator.apply_job/7` so thread writes, Mapping checkpoints,
   and Job completion share one transaction.
+
+  The complete runtime pipeline is:
+
+      External source
+            |
+            v
+      PlatformAdapter.fetch                 no Repo writes
+            |
+            v
+         Snapshot ---------------------> Checkpoints.persist_snapshot
+            |                                  |             |
+            |                                  v             v
+            |                             PayloadStore   Snapshot row
+            |
+            +---- Docs only: Thread.Doc.prepare
+            |                    |
+            |                    v
+            |               Preparation ------> Checkpoints.persist_preparation
+            |
+            v
+      ThreadAdapter.plan                  pure projection
+            |
+            v
+          Plan ------------------------> Checkpoints.persist_plan
+            |                                  |             |
+            |                                  v             v
+            |                             PayloadStore   Job.Item/Job.Asset
+            |
+            +---- project_preview ------> Preview        no Repo writes
+            |
+            +---- asset staging --------> Job ready
+            |
+            v
+      Orchestrator.begin_apply
+            |
+            v
+      +---------------- one Repo transaction ----------------+
+      | Orchestrator.apply_job                               |
+      |      |                                                |
+      |      +--> ThreadAdapter.apply_in_transaction          |
+      |      |         +--> thread Draft/Preview writes       |
+      |      |         `--> Docs navigation tree writes       |
+      |      |                                                |
+      |      +--> Mapping upserts / source_deleted actions    |
+      |      `--> Job completed                               |
+      +-------------------------------------------------------+
+
+  Snapshot, Preparation, and Plan payloads live in PayloadStore. Their database
+  rows contain bounded locators and queryable execution state, not full payloads.
   """
 
   alias GroupherServer.CMS.ContentImport.{Diagnostic, Plan, Preview, Snapshot}

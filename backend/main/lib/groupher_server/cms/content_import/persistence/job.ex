@@ -1,5 +1,20 @@
 defmodule GroupherServer.CMS.ContentImport.Persistence.Job do
-  @moduledoc "Persisted import orchestration state and bounded preview summary."
+  @moduledoc """
+  Persisted import orchestration state and bounded preview summary.
+
+      Snapshot row
+           |
+           v
+      planning --> staging --> ready --> applying --> completed
+          |           |          |          |
+          |           |          |          `--> atomic thread/Mapping writes
+          |           |          `--> item resolutions fixed
+          |           `--> leased Job.Asset rows
+          `--> preparation/plan locators + Job.Item rows
+
+  Payload refs point to durable objects; summaries and progress stay bounded in
+  the Job row. Failed Jobs resume only at an explicit recoverable checkpoint.
+  """
 
   use Ecto.Schema
 

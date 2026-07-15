@@ -1,5 +1,22 @@
 defmodule GroupherServer.CMS.ContentImport.Plan do
-  @moduledoc "Typed, side-effect-free projection returned by a ThreadAdapter."
+  @moduledoc """
+  Typed, side-effect-free projection returned by a ThreadAdapter.
+
+      Snapshot + Diff + thread context
+                     |
+                     v
+                   Plan
+              /       |        \
+             v        v         v
+          Items      Assets    thread payload
+             |        |         |
+             +--------+---------+--> Preview projection
+             |
+             `---------------------> persisted Job children / final apply
+
+  A Plan describes intended work; constructing or previewing it performs no
+  database writes. Item and asset identities are unique before persistence.
+  """
 
   alias GroupherServer.CMS.ContentImport.{Diagnostic, Plan}
   alias GroupherServer.CMS.ContentImport.Plan.Payload

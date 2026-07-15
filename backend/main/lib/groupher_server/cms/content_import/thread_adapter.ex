@@ -9,6 +9,23 @@ defmodule GroupherServer.CMS.ContentImport.ThreadAdapter do
   must use the same Repo; network calls, object-store writes, and writes through
   another Repo belong outside this callback and require idempotent compensation
   or an outbox/saga boundary.
+
+      Snapshot + Mapping checkpoints + local hashes
+                         |
+                         v
+                  validate / plan
+                         |
+                         v
+                       Plan
+                      /    \
+                     v      v
+              project_preview  apply_in_transaction
+                     |                 |
+                     v                 v
+                  Preview       ApplyResult + thread writes
+
+  The left branch is pure and safe for repeated UI previews. The right branch is
+  entered only by `Orchestrator.apply_job/7` while its Repo transaction is active.
   """
 
   alias GroupherServer.CMS.ContentImport.{

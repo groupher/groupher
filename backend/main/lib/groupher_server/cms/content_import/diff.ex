@@ -3,6 +3,16 @@ defmodule GroupherServer.CMS.ContentImport.Diff do
   Derives source/local synchronization state from a Snapshot and persisted
   Mapping checkpoints. Diff is intentionally computed rather than stored as a
   second source of truth.
+
+      Snapshot entries -----------+
+                                  |
+      persisted Mappings ---------+--> compare source/local hashes --> Diff
+                                  |                                  |
+      current local hashes -------+                                  +--> Plan actions
+                                                                     `--> source_deleted
+
+  The Diff summary may be checkpointed on a Job for display, but the typed Diff
+  is rebuilt from Snapshot + Mapping whenever planning needs authoritative state.
   """
 
   alias GroupherServer.CMS.ContentImport.{Mapping, Snapshot}

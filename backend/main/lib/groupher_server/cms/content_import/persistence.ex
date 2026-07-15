@@ -1,5 +1,30 @@
 defmodule GroupherServer.CMS.ContentImport.Persistence do
-  @moduledoc "Domain-to-row projections and idempotent ContentImport persistence operations."
+  @moduledoc """
+  Domain-to-row projections and idempotent ContentImport persistence operations.
+
+      Connection
+          |
+          v
+      Snapshot row <---- manifest-hash idempotency
+          |
+          v
+      Job(planning) <--- connection + deterministic idempotency key
+          |
+          +--> preparation locator
+          |
+          `--> plan locator + summary
+                    |
+                    +--> Job.Item  -- insert_all / 500 rows per batch
+                    `--> Job.Asset -- insert_all / 500 rows per batch
+
+      successful apply
+          |
+          `--> Mapping -- upsert by connection + thread + external_ref
+
+  Large Snapshot, Preparation, and Plan payloads are not stored here. This layer
+  persists bounded locators, summaries, administrator decisions, and recoverable
+  asset state. It does not execute thread writes or external asset publication.
+  """
 
   import Ecto.Query, warn: false
 
@@ -13,6 +38,8 @@ defmodule GroupherServer.CMS.ContentImport.Persistence do
   alias GroupherServer.CMS.ContentImport.Persistence.Job.Asset, as: PersistedAsset
   alias GroupherServer.CMS.ContentImport.Persistence.Job.Item, as: PersistedItem
   alias GroupherServer.Repo
+
+  @insert_batch_size 500
 
   @spec create_connection(map()) :: {:ok, Connection.t()} | {:error, Ecto.Changeset.t()}
   def create_connection(attrs) do
@@ -242,30 +269,61 @@ defmodule GroupherServer.CMS.ContentImport.Persistence do
   end
 
   defp materialize_job_children(job, plan, diff) do
-    items =
-      Enum.map(plan.items, fn item ->
-        job.id
-        |> PersistedItem.from_plan_item(item)
-        |> Repo.insert!()
-      end)
+    # Materialize queryable execution rows without turning one Plan into one SQL
+    # round trip per child:
+    #
+    #     Plan.Item + source_deleted Diff.Item --\
+    #                                           +--> validated rows --> insert batches
+    #     Plan.Asset ---------------------------/
+    #
+    # Validation stays changeset-based. We intentionally do not use
+    # `on_conflict: :nothing`: duplicate identities mean the Plan is invalid and
+    # must roll back instead of silently dropping work.
+    item_changesets =
+      Enum.map(plan.items, &PersistedItem.from_plan_item(job.id, &1)) ++
+        Enum.map(deleted_diff_items(diff), &PersistedItem.from_deleted_diff(job.id, &1))
 
-    deleted_items =
-      diff
-      |> deleted_diff_items()
-      |> Enum.map(fn item ->
-        job.id
-        |> PersistedItem.from_deleted_diff(item)
-        |> Repo.insert!()
-      end)
+    asset_changesets = Enum.map(plan.assets, &PersistedAsset.from_plan_asset(job.id, &1))
 
-    assets =
-      Enum.map(plan.assets, fn asset ->
-        job.id
-        |> PersistedAsset.from_plan_asset(asset)
-        |> Repo.insert!()
-      end)
+    items = insert_changesets(PersistedItem, item_changesets, :external_ref)
+    assets = insert_changesets(PersistedAsset, asset_changesets, :asset_key)
 
-    {items ++ deleted_items, assets}
+    {items, assets}
+  end
+
+  defp insert_changesets(_schema, [], _order_field), do: []
+
+  defp insert_changesets(schema, changesets, order_field) do
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
+
+    rows = Enum.map(changesets, &validated_insert_row(&1, now))
+
+    positions =
+      rows |> Enum.with_index() |> Map.new(fn {row, index} -> {row[order_field], index} end)
+
+    schema
+    |> insert_batches(rows)
+    |> Enum.sort_by(&Map.fetch!(positions, Map.fetch!(&1, order_field)))
+  end
+
+  defp insert_batches(schema, rows) do
+    rows
+    |> Enum.chunk_every(@insert_batch_size)
+    |> Enum.flat_map(fn batch ->
+      {count, inserted} = Repo.insert_all(schema, batch, returning: true)
+
+      if count != length(batch), do: Repo.rollback(:job_children_insert_incomplete)
+
+      inserted
+    end)
+  end
+
+  defp validated_insert_row(changeset, now) do
+    Ecto.Changeset.apply_action!(changeset, :insert)
+
+    changeset.changes
+    |> Map.put(:inserted_at, now)
+    |> Map.put(:updated_at, now)
   end
 
   defp maybe_mark_ready(%Job{status: :planning} = job, []) do

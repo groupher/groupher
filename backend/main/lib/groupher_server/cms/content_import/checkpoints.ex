@@ -4,6 +4,25 @@ defmodule GroupherServer.CMS.ContentImport.Checkpoints do
 
   PayloadStore writes happen before the database locator is committed. A store
   implementation should therefore support TTL cleanup for unreferenced refs.
+
+      typed payload                 durable checkpoint
+      -------------                 ------------------
+      Snapshot      -- encode/put --> payload_ref
+          |                              |
+          `------------------------------+--> Snapshot row
+
+      Preparation   -- encode/put --> preparation_ref
+          |                              |
+          `------------------------------+--> Job preparation locator
+
+      Plan          -- encode/put --> plan_ref
+          |                              |
+          +--> Diff                      +--> Job plan locator
+          `------------------------------+--> Job.Item / Job.Asset rows
+
+  The object-store write deliberately happens first. If the later database
+  transaction fails, the unreferenced object is garbage-collected by store TTL;
+  a database row must never point at an object that was not successfully stored.
   """
 
   alias GroupherServer.CMS.ContentImport.{Diagnostic, Diff, Persistence, Plan, Snapshot}

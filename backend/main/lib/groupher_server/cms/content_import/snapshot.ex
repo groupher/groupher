@@ -1,5 +1,23 @@
 defmodule GroupherServer.CMS.ContentImport.Snapshot do
-  @moduledoc "Immutable result of one PlatformAdapter fetch."
+  @moduledoc """
+  Immutable result of one PlatformAdapter fetch.
+
+      source entries
+           |
+           +--> normalized Entry hashes
+           +--> revision / checkpoint
+           +--> adapter diagnostics
+           `--> canonical manifest_hash
+                         |
+                         v
+                      Snapshot
+                       /    \
+                      v      v
+              PayloadStore   Diff / Thread planning
+
+  Snapshot records source facts only. Groupher target IDs first appear in
+  Mapping and Plan, never in PlatformAdapter output.
+  """
 
   alias GroupherServer.CMS.ContentImport.{Canonical, Diagnostic, Entry}
 

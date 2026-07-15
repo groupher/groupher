@@ -5,6 +5,21 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Preparation do
   A Preparation is private to the Doc thread. It prevents callers from pairing
   a Snapshot with an unrelated source tree and gives durable workflows a stable
   parser checkpoint to persist between fetch and planning.
+
+      Snapshot manifest_hash
+               +
+      detected framework
+               +
+      parsed SourceTree
+               |
+               v
+         preparation_hash
+               |
+               v
+          Preparation ------> Doc.plan
+
+  Both manifest and preparation hashes are checked when the durable checkpoint
+  is loaded, so a parsed tree cannot be replayed against a different Snapshot.
   """
 
   alias GroupherServer.CMS.ContentImport.{Canonical, Diagnostic, Snapshot}

@@ -3,6 +3,39 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc do
   Prepares a fetched Snapshot through an isolated Workspace, detects its
   docs-as-code framework, and delegates source-navigation extraction to that
   framework adapter before producing a Snapshot-bound Plan.
+
+  Docs preparation and planning stay outside the database apply transaction:
+
+      Snapshot
+         |
+         v
+      Workspace.materialize
+         |
+         +--> detect framework --> Framework.parse --> SourceTree
+         |                                             |
+         `---------------------------------------------+--> Preparation
+                                                            |
+                                                            v
+      Snapshot + Preparation + Mapping/Diff ----------> Doc Plan
+                                                            |
+                                                            +--> content items
+                                                            +--> assets
+                                                            `--> navigation tree
+
+  The final write path is entered by Orchestrator inside one Repo transaction:
+
+      Doc Plan
+         |
+         +--> resolve/create Preview branch
+         +--> resolve staged asset URLs
+         +--> write selected Article Drafts
+         `--> DocTree.Import.apply
+                    |
+                    v
+               ApplyResult
+
+  Preview branches contain Draft rows only. Conflict decisions and failed-asset
+  policies are resolved before a page is admitted to the navigation projection.
   """
 
   @behaviour GroupherServer.CMS.ContentImport.ThreadAdapter

@@ -1,5 +1,21 @@
 defmodule GroupherServer.CMS.ContentImport.Mapping do
-  @moduledoc "In-memory source-to-thread identity used by planning before persistence exists."
+  @moduledoc """
+  In-memory source-to-thread identity used by planning before persistence exists.
+
+      external_ref <----------> target_ref
+           |                         |
+           +--> imported source hash |
+           `--> imported local hash  |
+                     |               |
+                     +------ Diff ---+
+                                |
+                                v
+                       create / update / conflict /
+                       source_deleted
+
+  Mapping is the synchronization baseline, not import execution state. Job owns
+  execution and administrator decisions; Mapping advances only after apply.
+  """
 
   alias GroupherServer.CMS.ContentImport.{Diagnostic, Entry}
 

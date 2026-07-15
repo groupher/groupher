@@ -19,6 +19,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.DocTest do
 
   alias GroupherServer.CMS.ContentImport.Threads.Doc.Plan, as: DocPlan
   alias GroupherServer.CMS.ContentImport.Threads.Doc.Preparation
+  alias GroupherServer.CMS.DocTree.Import, as: DocTreeImport
   alias GroupherServer.CMS.Model.{ArticleBranch, DocTreeNode}
 
   defmodule GitHubClient do
@@ -311,8 +312,11 @@ defmodule GroupherServer.CMS.ContentImport.Threads.DocTest do
     target_ref = Ecto.UUID.generate()
     plan = apply_plan(target_ref, "Imported title", "Imported body", "docs-import")
 
-    assert {:ok, %ApplyResult{} = result} =
-             apply_in_transaction(plan, actor, community: community)
+    {apply_result, queries} =
+      capture_queries(fn -> apply_in_transaction(plan, actor, community: community) end)
+
+    assert {:ok, %ApplyResult{} = result} = apply_result
+    assert query_count(queries, ~s|INSERT INTO "cms"."doc_tree_nodes"|) == 1
 
     assert [%{status: :created, target_ref: ^target_ref}] = result.items
 
@@ -368,6 +372,82 @@ defmodule GroupherServer.CMS.ContentImport.Threads.DocTest do
                where: branch.community_id == ^community.id and branch.slug == "broken-import"
              )
            )
+  end
+
+  test "batches 100 and 1000 imported tree children by configured batch size" do
+    {:ok, actor} = db_insert(:user)
+    {:ok, community} = db_insert(:community)
+
+    for child_count <- [100, 1000] do
+      {:ok, branch} =
+        CMS.Articles.Branch.create_preview(
+          community,
+          :doc,
+          %{slug: "tree-batch-#{child_count}", title: "Tree batch #{child_count}"},
+          actor
+        )
+
+      tree = link_tree(child_count)
+
+      {{:ok, %{nodes: nodes}}, queries} =
+        capture_queries(fn ->
+          Repo.transaction(fn ->
+            case DocTreeImport.apply(community, branch, tree, %{}) do
+              {:ok, result} -> result
+              {:error, reason} -> Repo.rollback(reason)
+            end
+          end)
+        end)
+
+      assert length(nodes) == child_count + 2
+
+      expected_batches = ceil((child_count + 2) / 500)
+      assert query_count(queries, ~s|INSERT INTO "cms"."doc_tree_nodes"|) == expected_batches
+    end
+  end
+
+  test "keeps the last occurrence when a source node identity is repeated" do
+    {:ok, actor} = db_insert(:user)
+    {:ok, community} = db_insert(:community)
+
+    {:ok, branch} =
+      CMS.Articles.Branch.create_preview(
+        community,
+        :doc,
+        %{slug: "duplicate-source-node", title: "Duplicate source node"},
+        actor
+      )
+
+    tree = duplicate_source_node_tree()
+
+    assert {:ok, %{nodes: nodes}} =
+             Repo.transaction(fn ->
+               case DocTreeImport.apply(community, branch, tree, %{}) do
+                 {:ok, result} -> result
+                 {:error, reason} -> Repo.rollback(reason)
+               end
+             end)
+
+    assert length(nodes) == 5
+
+    link =
+      Repo.get_by!(DocTreeNode,
+        community_id: community.id,
+        branch_id: branch.id,
+        type: :link
+      )
+
+    second_group =
+      Repo.get_by!(DocTreeNode,
+        community_id: community.id,
+        branch_id: branch.id,
+        type: :group,
+        title: "Second"
+      )
+
+    assert link.title == "Repeated last"
+    assert link.href == "https://example.com/last"
+    assert link.group_id == second_group.node_id
   end
 
   test "dry-run accepts pending assets and performs no database writes" do
@@ -616,6 +696,72 @@ defmodule GroupherServer.CMS.ContentImport.Threads.DocTest do
     })
   end
 
+  defp link_tree(child_count) do
+    children =
+      Enum.map(1..child_count, fn index ->
+        %{
+          "type" => "link",
+          "sourceId" => "link:#{index}",
+          "title" => "Link #{index}",
+          "slug" => "link-#{index}",
+          "href" => "https://example.com/#{index}"
+        }
+      end)
+
+    %{
+      "tabs" => [
+        %{
+          "sourceId" => "scope:benchmark",
+          "title" => "Benchmark",
+          "slug" => "benchmark",
+          "pins" => [],
+          "groups" => [
+            %{
+              "sourceId" => "section:benchmark",
+              "title" => "Benchmark",
+              "slug" => "benchmark",
+              "children" => children
+            }
+          ]
+        }
+      ]
+    }
+  end
+
+  defp duplicate_source_node_tree do
+    groups =
+      Enum.map([{"First", "first"}, {"Second", "second"}], fn {title, key} ->
+        suffix = if key == "first", do: "first", else: "last"
+
+        %{
+          "sourceId" => "section:#{key}",
+          "title" => title,
+          "slug" => key,
+          "children" => [
+            %{
+              "type" => "link",
+              "sourceId" => "link:repeated",
+              "title" => "Repeated #{suffix}",
+              "slug" => "repeated-#{suffix}",
+              "href" => "https://example.com/#{suffix}"
+            }
+          ]
+        }
+      end)
+
+    %{
+      "tabs" => [
+        %{
+          "sourceId" => "scope:duplicate",
+          "title" => "Duplicate",
+          "slug" => "duplicate",
+          "pins" => [],
+          "groups" => groups
+        }
+      ]
+    }
+  end
+
   defp apply_in_transaction(plan, actor, opts) do
     Repo.transaction(fn ->
       case Doc.apply_in_transaction(plan, actor, opts) do
@@ -624,4 +770,36 @@ defmodule GroupherServer.CMS.ContentImport.Threads.DocTest do
       end
     end)
   end
+
+  defp capture_queries(fun) do
+    handler_id = {__MODULE__, make_ref()}
+    test_pid = self()
+
+    :ok =
+      :telemetry.attach(
+        handler_id,
+        [:groupher_server, :repo, :query],
+        fn _event, _measurements, metadata, _config ->
+          if self() == test_pid, do: send(test_pid, {handler_id, metadata.query})
+        end,
+        nil
+      )
+
+    try do
+      result = fun.()
+      {result, drain_queries(handler_id, [])}
+    after
+      :telemetry.detach(handler_id)
+    end
+  end
+
+  defp drain_queries(handler_id, queries) do
+    receive do
+      {^handler_id, query} -> drain_queries(handler_id, [query | queries])
+    after
+      0 -> Enum.reverse(queries)
+    end
+  end
+
+  defp query_count(queries, pattern), do: Enum.count(queries, &String.contains?(&1, pattern))
 end

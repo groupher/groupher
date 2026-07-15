@@ -5,6 +5,26 @@ defmodule GroupherServer.CMS.ContentImport.AssetStager.Runner do
   The caller persists each returned asset before claiming another batch. Global
   and per-host admission remain an orchestrator concern; this runner guarantees
   that one Job never creates an unbounded task set.
+
+      pending / failed Plan.Assets
+                   |
+                   v
+            take bounded batch
+                   |
+                   v
+      Task.async_stream(max_concurrency)
+             /       |       \
+            v        v        v
+         stager    stager    stager
+            \        |        /
+             v       v       v
+           ready / failed assets + diagnostics
+                   |
+                   v
+        caller persists results before next batch
+
+  This runner owns bounded concurrency and retry timing only. Job row locking,
+  claim leases, global admission, and durable progress belong to Orchestrator.
   """
 
   alias GroupherServer.CMS.ContentImport.{AssetStager, Diagnostic, Plan}

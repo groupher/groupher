@@ -191,6 +191,82 @@ defmodule GroupherServer.CMS.ContentImport.PersistenceTest do
     assert updated.last_imported_source_hash == String.duplicate("c", 64)
   end
 
+  test "materializes many Job children with one insert per child type" do
+    {:ok, community} = db_insert(:community)
+
+    {:ok, connection} =
+      Persistence.create_connection(%{
+        community_id: community.id,
+        platform: :archive,
+        source_ref: "fixture:bulk",
+        connection_key: "bulk",
+        status: :active
+      })
+
+    entry = Entry.new!(%{external_ref: "docs/0.md", kind: :file, body: "# Bulk"})
+
+    snapshot =
+      Snapshot.new!(%{
+        platform: :archive,
+        source_ref: "fixture:bulk",
+        entries: [entry],
+        fetched_at: ~U[2026-07-14 00:00:00Z]
+      })
+
+    {:ok, persisted_snapshot} =
+      Persistence.persist_snapshot(connection.id, snapshot, "object://snapshot/bulk")
+
+    {:ok, %{job: job}} =
+      Persistence.start_job(%{
+        community_id: community.id,
+        connection_id: connection.id,
+        snapshot_id: persisted_snapshot.id,
+        thread: :doc
+      })
+
+    {:ok, job} =
+      Persistence.attach_preparation(
+        job,
+        snapshot.manifest_hash,
+        preparation_locator("object://preparation/bulk")
+      )
+
+    items =
+      Enum.map(1..25, fn index ->
+        target_ref = "article:#{index}"
+
+        Item.new!(%{
+          external_ref: "docs/#{index}.md",
+          target_ref: target_ref,
+          action: :create,
+          source_hash: String.duplicate(Integer.to_string(rem(index, 10)), 64),
+          payload: item_payload(target_ref)
+        })
+      end)
+
+    assets =
+      Enum.map(1..10, fn index ->
+        Asset.new!(%{
+          asset_key: "asset_#{index}",
+          source: {:remote_url, "https://cdn.example.com/#{index}.png"}
+        })
+      end)
+
+    plan = Plan.new!(%{thread: :doc, items: items, assets: assets, payload: plan_payload()})
+
+    {result, queries} =
+      capture_queries(fn ->
+        Persistence.attach_plan(job, snapshot, plan, "object://plan/bulk")
+      end)
+
+    assert {:ok, %{items: returned_items, assets: returned_assets}} = result
+    assert Enum.map(returned_items, & &1.external_ref) == Enum.map(items, & &1.external_ref)
+    assert Enum.map(returned_assets, & &1.asset_key) == Enum.map(assets, & &1.asset_key)
+
+    assert query_count(queries, ~s|INSERT INTO "cms"."content_import_job_items"|) == 1
+    assert query_count(queries, ~s|INSERT INTO "cms"."content_import_job_assets"|) == 1
+  end
+
   defp plan_with_asset(entry) do
     item =
       Item.new!(%{
@@ -234,4 +310,36 @@ defmodule GroupherServer.CMS.ContentImport.PersistenceTest do
       preparation_version: 1
     }
   end
+
+  defp capture_queries(fun) do
+    handler_id = {__MODULE__, make_ref()}
+    test_pid = self()
+
+    :ok =
+      :telemetry.attach(
+        handler_id,
+        [:groupher_server, :repo, :query],
+        fn _event, _measurements, metadata, _config ->
+          if self() == test_pid, do: send(test_pid, {handler_id, metadata.query})
+        end,
+        nil
+      )
+
+    try do
+      result = fun.()
+      {result, drain_queries(handler_id, [])}
+    after
+      :telemetry.detach(handler_id)
+    end
+  end
+
+  defp drain_queries(handler_id, queries) do
+    receive do
+      {^handler_id, query} -> drain_queries(handler_id, [query | queries])
+    after
+      0 -> Enum.reverse(queries)
+    end
+  end
+
+  defp query_count(queries, pattern), do: Enum.count(queries, &String.contains?(&1, pattern))
 end

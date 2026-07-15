@@ -1,5 +1,31 @@
 defmodule GroupherServer.CMS.ContentImport.Threads.Changelog do
-  @moduledoc "Plans GitHub-style release records and writes them to Changelog Drafts."
+  @moduledoc """
+  Plans GitHub-style release records and writes them to Changelog Drafts.
+
+      record Entries + Mapping/Diff
+                   |
+                   v
+      normalize release content
+                   |
+                   +--> Plan.Item per release
+                   +--> deduplicated Plan.Assets
+                   `--> Changelog Preview
+
+  Final apply is called only inside the Orchestrator transaction:
+
+      Changelog Plan
+            |
+            +--> resolve main Changelog branch
+            +--> resolve staged asset URLs
+            +--> apply item selection/conflict policy
+            `--> create/update Changelog Drafts
+                         |
+                         v
+                    ApplyResult
+
+  External release fetching and asset publication stay outside this adapter;
+  Draft writes roll back with Mapping and Job completion.
+  """
 
   @behaviour GroupherServer.CMS.ContentImport.ThreadAdapter
 
