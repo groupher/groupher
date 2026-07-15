@@ -24,6 +24,23 @@ defmodule GroupherServer.CMS.Communities.TagStats do
   @spec dec(Ecto.Schema.t(), CommunityTag.t() | T.id()) :: T.domain_res(:pass)
   def dec(article, tag), do: do_update(article, tag, -1)
 
+  @spec update_many(Ecto.Schema.t(), [{CommunityTag.t(), -1 | 1}]) :: T.domain_res(:pass)
+  def update_many(_article, []), do: done(:pass)
+
+  def update_many(article, tag_deltas) do
+    trackable_tag_deltas =
+      Enum.filter(tag_deltas, fn {tag, _delta} -> trackable_tag?(tag) end)
+
+    if trackable_tag_deltas == [] do
+      done(:pass)
+    else
+      with {:ok, true} <- valid_article_tag_pairs?(article, trackable_tag_deltas),
+           {:ok, true} <- trackable_article?(article) do
+        upsert_deltas(article, trackable_tag_deltas)
+      end
+    end
+  end
+
   @spec do_update(Ecto.Schema.t(), CommunityTag.t() | T.id(), integer()) :: T.domain_res(:pass)
   defp do_update(article, tag, delta) when delta in [-1, 1] do
     with {:ok, tag} <- ensure_tag(tag),
@@ -185,6 +202,70 @@ defmodule GroupherServer.CMS.Communities.TagStats do
     end
   end
 
+  defp upsert_deltas(article, tag_deltas) do
+    today = Datetime.today()
+    now = Datetime.now(:second)
+    today_multiplier = if same_utc_day?(article.inserted_at, today), do: 1, else: 0
+
+    query = """
+    INSERT INTO cms.community_tag_stats (
+      community_tag_id,
+      community_id,
+      thread,
+      contents_count,
+      today_contents_count,
+      today_stat_date,
+      inserted_at,
+      updated_at
+    )
+    SELECT
+      updates.community_tag_id,
+      updates.community_id,
+      updates.thread,
+      GREATEST(updates.delta, 0),
+      GREATEST(updates.delta * $6, 0),
+      $5,
+      $7,
+      $7
+    FROM UNNEST($1::bigint[], $2::bigint[], $3::text[], $4::integer[])
+      AS updates(community_tag_id, community_id, thread, delta)
+    ON CONFLICT (community_tag_id) DO UPDATE SET
+      contents_count = GREATEST(
+        cms.community_tag_stats.contents_count +
+          CASE WHEN EXCLUDED.contents_count = 0 THEN -1 ELSE 1 END,
+        0
+      ),
+      today_contents_count = CASE
+        WHEN cms.community_tag_stats.today_stat_date = $5
+          THEN GREATEST(
+            cms.community_tag_stats.today_contents_count +
+              CASE WHEN EXCLUDED.contents_count = 0 THEN -$6 ELSE $6 END,
+            0
+          )
+        ELSE EXCLUDED.today_contents_count
+      END,
+      today_stat_date = $5,
+      updated_at = $7
+    """
+
+    tags = Enum.map(tag_deltas, &elem(&1, 0))
+    deltas = Enum.map(tag_deltas, &elem(&1, 1))
+
+    Repo.query(query, [
+      Enum.map(tags, & &1.id),
+      Enum.map(tags, & &1.community_id),
+      Enum.map(tags, &Atom.to_string(&1.thread)),
+      deltas,
+      today,
+      today_multiplier,
+      now
+    ])
+    |> case do
+      {:ok, _} -> done(:pass)
+      error -> error
+    end
+  end
+
   defp normalize_today(%CommunityTagStat{today_stat_date: today} = stat) do
     case today == Datetime.today() do
       true -> done(stat)
@@ -225,6 +306,15 @@ defmodule GroupherServer.CMS.Communities.TagStats do
           {:error, {:invalid_domain_tag, "article and tag not in same community or thread"}}
       end
     end
+  end
+
+  defp valid_article_tag_pairs?(article, tag_deltas) do
+    Enum.reduce_while(tag_deltas, done(true), fn {tag, _delta}, {:ok, true} ->
+      case valid_article_tag_pair?(article, tag) do
+        {:ok, true} -> {:cont, done(true)}
+        error -> {:halt, error}
+      end
+    end)
   end
 
   defp visible?(article) do
