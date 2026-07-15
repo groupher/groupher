@@ -1,4 +1,4 @@
-import { equals, find, includes, reject } from 'ramda'
+import { find, includes, reject } from 'ramda'
 import { useMemo } from 'react'
 
 import { THREAD_PATH } from '~/const/thread'
@@ -9,25 +9,6 @@ import useDashboard from '~/stores/dashboard/hooks'
 import { FIELD } from '../../constant'
 import useTouch from '../useHelper/useTouch'
 
-const tagSortSnapshot = (tagGroups: readonly TTagGroup[] = []) =>
-  tagGroups
-    .flatMap((group) => [
-      {
-        id: group.id,
-        index: group.index ?? null,
-        type: 'group',
-      },
-      ...group.tags
-        .filter((tag) => tag.id)
-        .map((tag) => ({
-          id: tag.id,
-          groupId: group.id,
-          index: tag.index ?? null,
-          type: 'tag',
-        })),
-    ])
-    .sort((a, b) => String(a.id).localeCompare(String(b.id)))
-
 export type TRet = {
   tags: readonly TTag[]
   tagGroups: readonly TTagGroup[]
@@ -35,7 +16,6 @@ export type TRet = {
   threads: TCommunityThread[]
   tagLayoutTouched: boolean
   inlineTagLayoutTouched: boolean
-  tagsIndexTouched: boolean
 }
 
 export default function useDerived(): TRet {
@@ -43,7 +23,7 @@ export default function useDerived(): TRet {
   const community$ = useCommunity()
   const { isChanged } = useTouch()
 
-  const { tagGroups, original, activeTagGroup, nameAlias } = dsb$
+  const { tagGroups, activeTagGroup, nameAlias } = dsb$
 
   const filteredTags = useMemo(() => {
     const activeGroups = activeTagGroup
@@ -75,11 +55,6 @@ export default function useDerived(): TRet {
   const tagLayoutTouched = isChanged(FIELD.TAG_LAYOUT)
   const inlineTagLayoutTouched = isChanged(FIELD.INLINE_TAG_LAYOUT)
 
-  const tagsIndexTouched = useMemo(
-    () => !equals(tagSortSnapshot(tagGroups), tagSortSnapshot(original.tagGroups || [])),
-    [tagGroups, original.tagGroups],
-  )
-
   return {
     tags: filteredTags,
     tagGroups,
@@ -87,6 +62,5 @@ export default function useDerived(): TRet {
     threads,
     tagLayoutTouched,
     inlineTagLayoutTouched,
-    tagsIndexTouched,
   }
 }

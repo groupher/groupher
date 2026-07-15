@@ -1,11 +1,11 @@
 import useTrans from '~/hooks/useTrans'
 
 import { FIELD } from '../constant'
-import useTags from '../logic/useTags'
+import useIndexTouched from '../logic/useTags/useIndexTouched'
 import SavingBar from '../SavingBar'
 
 export default function Footer() {
-  const { tagsIndexTouched: isTouched } = useTags()
+  const isTouched = useIndexTouched()
   const { t } = useTrans()
 
   return (
