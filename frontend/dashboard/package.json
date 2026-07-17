@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo",
+    "dev": "yarn build:revision-worker && next dev --turbo",
+    "build:revision-worker": "yarn --cwd ../.. exec vite build --config frontend/dashboard/vite.worker.config.mts",
     "type-check": "next typegen && ../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
-    "build": "cross-env NODE_ENV=production next build --turbopack",
+    "build": "yarn build:revision-worker && cross-env NODE_ENV=production next build --turbopack",
     "start": "cross-env NODe_ENV=production next start -p 3000",
     "dist": "next build && next export -o \"build\"",
     "info": "next info",

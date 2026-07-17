@@ -1,6 +1,8 @@
+import type { TRichEditorDiffStats } from '@groupher/rich-editor/diff'
 import { type FC, type ReactNode, useState } from 'react'
 
 import useTrans from '~/hooks/useTrans'
+import ArrowSimpleSVG from '~/icons/ArrowSimple'
 import Img from '~/Img'
 import Button from '~/widgets/Buttons/Button'
 
@@ -9,8 +11,7 @@ import {
   formatRelativeRevisionTime,
   getRevisionAuthorInitial,
   getRevisionAuthorName,
-} from './helper'
-import type { TRevisionDiffStats } from './helper'
+} from './display'
 import useSalon, { cn } from './salon/item'
 import type { TArticleSnapshot } from './spec'
 
@@ -19,7 +20,7 @@ type TProps = {
   selected: boolean
   restoreDisabled: boolean
   restoring: boolean
-  stats: TRevisionDiffStats
+  stats: TRichEditorDiffStats
   children?: ReactNode
   onSelect: (revisionId: string) => void
   onRestore: (revisionId: string) => void
@@ -39,29 +40,24 @@ const RevisionItem: FC<TProps> = ({
   const { t } = useTrans()
   const [confirming, setConfirming] = useState(false)
   const selectRevision = (): void => onSelect(revision.id)
-  const hasStats = stats.additions > 0 || stats.deletions > 0
 
   return (
     <article className={cn(s.item, selected && s.itemSelected)}>
-      <div
-        role='button'
-        tabIndex={0}
+      <button
+        type='button'
         className={s.selectButton}
+        aria-expanded={selected}
         onClick={selectRevision}
-        onKeyDown={(event) => {
-          if (event.key !== 'Enter' && event.key !== ' ') return
-          event.preventDefault()
-          selectRevision()
-        }}
       >
-        <div className={s.summary}>
-          <span>{formatRelativeRevisionTime(t, revision.insertedAt)}</span>
-          {hasStats && (
-            <>
-              <span className={s.additions}>+{stats.additions}</span>
-              <span className={s.deletions}>-{stats.deletions}</span>
-            </>
-          )}
+        <div className={s.summaryRow}>
+          <div className={s.summary}>
+            <span>{formatRelativeRevisionTime(t, revision.insertedAt)}</span>
+            <span className={s.additions}>+{stats.additions}</span>
+            <span className={s.deletions}>-{stats.deletions}</span>
+          </div>
+          <span className={cn(s.toggleIcon, selected && s.toggleIconExpanded)} aria-hidden='true'>
+            <ArrowSimpleSVG className={s.toggleIconSvg} />
+          </span>
         </div>
 
         <div className={s.authorLine}>
@@ -74,7 +70,7 @@ const RevisionItem: FC<TProps> = ({
             {t(REVISION_LABEL_KEY.BY)} {getRevisionAuthorName(t, revision.author)}
           </span>
         </div>
-      </div>
+      </button>
 
       {selected && children && (
         <div className={s.diffSlot}>
