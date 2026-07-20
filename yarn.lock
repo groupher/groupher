@@ -1445,14 +1445,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@groupher/rich-editor@npm:0.0.21":
-  version: 0.0.21
-  resolution: "@groupher/rich-editor@npm:0.0.21"
+"@groupher/rich-editor@npm:0.0.34":
+  version: 0.0.34
+  resolution: "@groupher/rich-editor@npm:0.0.34"
   dependencies:
     "@ariakit/react": "npm:^0.4.12"
     "@emoji-mart/data": "npm:^1.2.1"
     "@platejs/basic-nodes": "npm:^53.0.0"
     "@platejs/callout": "npm:^53.0.0"
+    "@platejs/code-block": "npm:^53.0.0"
     "@platejs/combobox": "npm:^53.0.0"
     "@platejs/diff": "npm:^53.0.0"
     "@platejs/emoji": "npm:^53.1.7"
@@ -1463,6 +1464,7 @@ __metadata:
     "@platejs/markdown": "npm:^53.2.2"
     "@platejs/mention": "npm:^53.0.0"
     "@platejs/slash-command": "npm:^53.0.0"
+    "@platejs/table": "npm:^53.0.9"
     "@platejs/toggle": "npm:^53.0.0"
     "@radix-ui/react-dropdown-menu": "npm:^2.1.16"
     "@radix-ui/react-popover": "npm:^1.1.7"
@@ -1474,6 +1476,7 @@ __metadata:
     "@udecode/cn": "npm:^52.3.4"
     class-variance-authority: "npm:^0.7.1"
     clsx: "npm:^2.1.1"
+    lowlight: "npm:^3.3.0"
     lucide-react: "npm:^0.542.0"
     platejs: "npm:^53.2.4"
     remark-gfm: "npm:^4.0.1"
@@ -1483,7 +1486,7 @@ __metadata:
   peerDependencies:
     react: ^18.2.0 || ^19.0.0
     react-dom: ^18.2.0 || ^19.0.0
-  checksum: 10c0/b08aec5cbc17fbc8c0f7131fd05676a6f551a508c69f36aab02f59759a8b190c1872f1ad6d7c70d60a953aeb90bc7b963f4a16567f540e052f74ddf6becc0c19
+  checksum: 10c0/d2ccb43b4752c7c2ab2e487828c5d3ed96aeef5ec374c5a3c3b3aee0c3de37bc91d6ac8f6111eea06f1feb7f627007130f723a886bd97b94e760ef05081b64f4
   languageName: node
   linkType: hard
 
@@ -1502,7 +1505,7 @@ __metadata:
     "@fortawesome/react-fontawesome": "npm:^0.2.0"
     "@graphql-tools/mock": "npm:^9.1.7"
     "@graphql-tools/schema": "npm:^10.0.33"
-    "@groupher/rich-editor": "npm:0.0.21"
+    "@groupher/rich-editor": "npm:0.0.34"
     "@groupher/tooltip": "npm:4.2.7"
     "@groupher/use-mobile-detect-hook": "npm:^2.0.2"
     "@heroicons/react": "npm:^2.2.0"
@@ -2967,6 +2970,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@platejs/code-block@npm:^53.0.0":
+  version: 53.0.0
+  resolution: "@platejs/code-block@npm:53.0.0"
+  dependencies:
+    react-compiler-runtime: "npm:^1.0.0"
+  peerDependencies:
+    platejs: ">=53.0.0"
+    react: ">=18.0.0"
+    react-dom: ">=18.0.0"
+  checksum: 10c0/bf069f73b435cdcdac94b920698c94e4f8e5d4872c43a81c6f2422c71b3f7f7f4206ec5b5165f7c22c07435d836975c864d5ad8e0e80c37b678bcbd86df601c2
+  languageName: node
+  linkType: hard
+
 "@platejs/combobox@npm:53.0.0, @platejs/combobox@npm:^53.0.0":
   version: 53.0.0
   resolution: "@platejs/combobox@npm:53.0.0"
@@ -3151,6 +3167,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@platejs/resizable@npm:^53.0.0":
+  version: 53.0.0
+  resolution: "@platejs/resizable@npm:53.0.0"
+  dependencies:
+    react-compiler-runtime: "npm:^1.0.0"
+  peerDependencies:
+    platejs: ">=53.0.0"
+    react: ">=18.0.0"
+    react-dom: ">=18.0.0"
+  checksum: 10c0/6fbd482ca51bc01a3e1ec4f37a34ff77dc8bf8741871f861ad11e0e349b637357e85341720a048dfaba0d5fbc8763800109f108bfbd6012828b33859d0b8fedd
+  languageName: node
+  linkType: hard
+
 "@platejs/slash-command@npm:^53.0.0":
   version: 53.0.0
   resolution: "@platejs/slash-command@npm:53.0.0"
@@ -3176,6 +3205,21 @@ __metadata:
     slate: "npm:0.124.1"
     slate-dom: "npm:0.124.1"
   checksum: 10c0/5a8bb22c64a9a633c46b84ad1116485ffd5c255e8b06292b58e59f6314de47ad7531d4e9a8544d964c0633c1eecde58683171677bdb16285c639590e2e322b04
+  languageName: node
+  linkType: hard
+
+"@platejs/table@npm:^53.0.9":
+  version: 53.0.9
+  resolution: "@platejs/table@npm:53.0.9"
+  dependencies:
+    "@platejs/resizable": "npm:^53.0.0"
+    lodash: "npm:^4.17.21"
+    react-compiler-runtime: "npm:^1.0.0"
+  peerDependencies:
+    platejs: ">=53.0.7"
+    react: ">=18.0.0"
+    react-dom: ">=18.0.0"
+  checksum: 10c0/9777c5e15a2c0a35fc346eaf45dc2ed1736cdb4bfe09769b96df3aa207d51773433b02e9e28c51c0554fe8f35effb806ff266e7f2f2e9abfb44d99969bc740e6
   languageName: node
   linkType: hard
 
@@ -9228,6 +9272,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"highlight.js@npm:~11.11.0":
+  version: 11.11.1
+  resolution: "highlight.js@npm:11.11.1"
+  checksum: 10c0/40f53ac19dac079891fcefd5bd8a21cf2e8931fd47da5bd1dca73b7e4375c1defed0636fc39120c639b9c44119b7d110f7f0c15aa899557a5a1c8910f3c0144c
+  languageName: node
+  linkType: hard
+
 "hoist-non-react-statics@npm:^3.3.1, hoist-non-react-statics@npm:^3.3.2":
   version: 3.3.2
   resolution: "hoist-non-react-statics@npm:3.3.2"
@@ -10910,6 +10961,17 @@ __metadata:
   bin:
     loose-envify: cli.js
   checksum: 10c0/655d110220983c1a4b9c0c679a2e8016d4b67f6e9c7b5435ff5979ecdb20d0813f4dec0a08674fcbdd4846a3f07edbb50a36811fd37930b94aaa0d9daceb017e
+  languageName: node
+  linkType: hard
+
+"lowlight@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "lowlight@npm:3.3.0"
+  dependencies:
+    "@types/hast": "npm:^3.0.0"
+    devlop: "npm:^1.0.0"
+    highlight.js: "npm:~11.11.0"
+  checksum: 10c0/9b796fa8443b0334ebf18bc57387c9ee31432d8c263cf2089d23e1087c653d708447284e0647bf993cb2cdc810e0b268a28f51ea27b4a624893b97bdd3f025f4
   languageName: node
   linkType: hard
 
