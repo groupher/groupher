@@ -43,10 +43,10 @@ export const STATIC_CLS = {
 export const RAINBOW_ALIAS: Record<TColorPrefix, string> = {
   fg: 'text-rainbow',
   bg: 'bg-rainbow',
-  bgSoft: 'bg-rainbow', // special-cased
+  bgLite: 'bg-rainbow', // special-cased
   fill: 'fill-rainbow',
   border: 'border-rainbow',
-  borderSoft: 'border-rainbow', // special-cased
+  borderLite: 'border-rainbow', // special-cased
   decoration: 'decoration-rainbow',
 } as const
 

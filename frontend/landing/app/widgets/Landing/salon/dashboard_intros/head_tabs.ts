@@ -4,7 +4,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default function useSalon() {
-  const { cn, fg, br, shadow, rainbow, rainbowSoft } = useTwBelt()
+  const { cn, fg, br, shadow, rainbow, rainbowLite } = useTwBelt()
 
   const activeBtn = cn(fg('title'), `hover:${fg('title')}`)
 
@@ -27,12 +27,12 @@ export default function useSalon() {
     brownIconBox: rainbow(COLOR.BROWN, 'bg'),
     yellowIconBox: rainbow(COLOR.YELLOW, 'bg'),
 
-    purpleActive: cn(activeBtn, rainbowSoft(COLOR.PURPLE)),
-    blueActive: cn(activeBtn, rainbowSoft(COLOR.BLUE)),
-    cyanActive: cn(activeBtn, rainbowSoft(COLOR.CYAN)),
-    greenActive: cn(activeBtn, rainbowSoft(COLOR.GREEN)),
-    redActive: cn(activeBtn, rainbowSoft(COLOR.RED)),
-    brownActive: cn(activeBtn, rainbowSoft(COLOR.BROWN)),
-    yellowActive: cn(activeBtn, rainbowSoft(COLOR.YELLOW)),
+    purpleActive: cn(activeBtn, rainbowLite(COLOR.PURPLE)),
+    blueActive: cn(activeBtn, rainbowLite(COLOR.BLUE)),
+    cyanActive: cn(activeBtn, rainbowLite(COLOR.CYAN)),
+    greenActive: cn(activeBtn, rainbowLite(COLOR.GREEN)),
+    redActive: cn(activeBtn, rainbowLite(COLOR.RED)),
+    brownActive: cn(activeBtn, rainbowLite(COLOR.BROWN)),
+    yellowActive: cn(activeBtn, rainbowLite(COLOR.YELLOW)),
   }
 }

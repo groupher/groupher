@@ -35,7 +35,7 @@ export default function useSalon({ className, ...spacing }: TProps) {
       'disabled:cursor-not-allowed disabled:opacity-40',
       `hover:${bg('hoverBg')}`,
       `hover:${fg('title')}`,
-      `focus-visible:ring-2 focus-visible:${primary('borderSoft')}`,
+      `focus-visible:ring-2 focus-visible:${primary('borderLite')}`,
     ),
     listGroup: cn(
       'group/list relative h-6 w-6 shrink-0 overflow-hidden rounded trans-all-200',

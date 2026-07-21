@@ -30,11 +30,11 @@ export default function useSalon() {
     doneIcon: cn('size-3', rainbow(doneBg, 'fill')),
     rejectedIcon: cn('size-3', rainbow(rejectedBg, 'fill')),
     //
-    backlogHead: cn(head, rainbow(backlogBg, 'bgSoft')),
-    todoHead: cn(head, rainbow(todoBg, 'bgSoft')),
-    wipHead: cn(head, rainbow(wipBg, 'bgSoft')),
-    doneHead: cn(head, rainbow(doneBg, 'bgSoft')),
-    rejectedHead: cn(head, rainbow(rejectedBg, 'bgSoft')),
+    backlogHead: cn(head, rainbow(backlogBg, 'bgLite')),
+    todoHead: cn(head, rainbow(todoBg, 'bgLite')),
+    wipHead: cn(head, rainbow(wipBg, 'bgLite')),
+    doneHead: cn(head, rainbow(doneBg, 'bgLite')),
+    rejectedHead: cn(head, rainbow(rejectedBg, 'bgLite')),
     //
     arrowIcon: cn('size-4 pointer -rotate-90', fill('digest')),
   }

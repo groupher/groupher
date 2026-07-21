@@ -11,8 +11,8 @@ export default function useSalon() {
     block: cn(
       'align-both size-8 rounded border border-dashed transition-transform duration-500',
       'opacity-65',
-      rainbow(COLOR.BROWN, 'bgSoft'),
-      rainbow(COLOR.BROWN, 'borderSoft'),
+      rainbow(COLOR.BROWN, 'bgLite'),
+      rainbow(COLOR.BROWN, 'borderLite'),
     ),
     blockSolid: cn('border-none opacity-100', bg('cardAlpha'), shadow('sm')),
     featureIcon: cn('size-4 opacity-80', fill('digest')),

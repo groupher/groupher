@@ -11,7 +11,7 @@ export default function useSalon() {
     highlight: cn(
       'bold-sm italic ml-px mr-px px-0.5',
       rainbow(COLOR.PURPLE, 'fg'),
-      rainbow(COLOR.PURPLE, 'bgSoft'),
+      rainbow(COLOR.PURPLE, 'bgLite'),
     ),
   }
 }

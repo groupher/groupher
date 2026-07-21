@@ -28,7 +28,7 @@ const ArticleBroadcast: FC<TProps> = ({
   const s = useSalon({ ...spacing })
 
   return (
-    <div className={cn(s.wrapper, s.rainbow(color, 'bgSoft'))}>
+    <div className={cn(s.wrapper, s.rainbow(color, 'bgLite'))}>
       {!simple && <div className={s.bgWrapper} style={s.bgStyle} />}
       {!simple && <div className={s.bgWrapper2} style={s.bgStyle2} />}
       {!simple && (

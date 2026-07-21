@@ -7,6 +7,6 @@ export default function useSalon() {
 
   return {
     count: cn(wrapper, 'pretty-num', bg('sandBox'), fg('digest')),
-    empty: cn(wrapper, rainbow(COLOR.RED, 'fg'), rainbow(COLOR.RED, 'bgSoft')),
+    empty: cn(wrapper, rainbow(COLOR.RED, 'fg'), rainbow(COLOR.RED, 'bgLite')),
   }
 }

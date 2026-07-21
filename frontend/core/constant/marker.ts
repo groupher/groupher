@@ -1,7 +1,7 @@
 import type { TMarkerValue } from '~/spec'
 import { getIconFilePath } from '~/widgets/IconHub/sprite'
 
-import { COLOR, RAINBOW_COLOR_HEX, RAINBOW_SOFT_COLOR_HEX } from './colors'
+import { COLOR, RAINBOW_COLOR_HEX, RAINBOW_LITE_COLOR_HEX } from './colors'
 import THEME from './theme'
 
 export const MARKER = {
@@ -28,11 +28,11 @@ export const DEFAULT_PIN_MARKER: TMarkerValue = {
   appearance: {
     [THEME.LIGHT]: {
       color: RAINBOW_COLOR_HEX[THEME.LIGHT][COLOR.BLUE],
-      bg: RAINBOW_SOFT_COLOR_HEX[THEME.LIGHT][COLOR.BLUE],
+      bg: RAINBOW_LITE_COLOR_HEX[THEME.LIGHT][COLOR.BLUE],
     },
     [THEME.DARK]: {
       color: RAINBOW_COLOR_HEX[THEME.DARK][COLOR.BLUE],
-      bg: RAINBOW_SOFT_COLOR_HEX[THEME.DARK][COLOR.BLUE],
+      bg: RAINBOW_LITE_COLOR_HEX[THEME.DARK][COLOR.BLUE],
     },
   },
 }

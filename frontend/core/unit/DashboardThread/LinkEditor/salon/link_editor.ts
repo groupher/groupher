@@ -25,8 +25,8 @@ export default function useSalon() {
     notifyLabel: cn(
       'text-xs border rounded-md px-1 py-px bold-sm ml-1.5 scale-75',
       rainbow(COLOR.RED, 'fg'),
-      rainbow(COLOR.RED, 'borderSoft'),
-      rainbow(COLOR.RED, 'bgSoft'),
+      rainbow(COLOR.RED, 'borderLite'),
+      rainbow(COLOR.RED, 'bgLite'),
     ),
     icon: cn('size-3.5 pointer smoky-90', fill('digest')),
   }

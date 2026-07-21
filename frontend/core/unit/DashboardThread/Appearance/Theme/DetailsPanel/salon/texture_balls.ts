@@ -19,7 +19,7 @@ export default function useSalon() {
     ),
     blockActive: cn(
       'opacity-100 saturate-100',
-      primary('borderSoft'),
+      primary('borderLite'),
       `hover:${primary('border')}`,
       'after:absolute after:-inset-1 after:rounded-full after:border after:border-current after:opacity-25',
       primary('fg'),

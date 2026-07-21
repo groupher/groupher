@@ -8,10 +8,10 @@ export { cn } from '~/css'
 type TProps = {
   color: TColorName | null
   noColor: boolean
-  withSoftBg: boolean
+  withLiteBg: boolean
 } & TSpace
 
-export default function useSalon({ color, noColor, withSoftBg, ...spacing }: TProps) {
+export default function useSalon({ color, noColor, withLiteBg, ...spacing }: TProps) {
   const { isLightTheme } = useTheme()
   const { cn, fg, fill, margin, primary, rainbow } = useTwBelt()
 
@@ -23,11 +23,11 @@ export default function useSalon({ color, noColor, withSoftBg, ...spacing }: TPr
   return {
     wrapper: cn(
       'row-center group pr-1.5 pl-2.5 py-1.5 rounded-lg w-max	trans-all-100',
-      `hover:${rainbow(color || primaryColor, 'bgSoft')}`,
+      `hover:${rainbow(color || primaryColor, 'bgLite')}`,
       !isLightTheme && 'hover:brightness-125',
       !isLightTheme && !color && 'hover:brightness-95',
-      withSoftBg && color && rainbow(color, 'bgSoft'),
-      withSoftBg && !color && rainbow(primaryColor, 'bgSoft'),
+      withLiteBg && color && rainbow(color, 'bgLite'),
+      withLiteBg && !color && rainbow(primaryColor, 'bgLite'),
       margin(spacing),
     ),
     title: cn('text-sm', noColor ? fg('digest') : fgColor, noColor && `group-hover:${fg('title')}`),

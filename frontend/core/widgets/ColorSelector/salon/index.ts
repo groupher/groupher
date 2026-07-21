@@ -12,7 +12,7 @@ export default function useSalon() {
     dot: cn('size-5.5 circle align-both pointer trans-all-100', 'hover:-mt-0.5'),
     dotActive: cn(
       'size-6 align-both border border-transparent',
-      primary('borderSoft'),
+      primary('borderLite'),
       shadow('md'),
     ),
     checkIcon: cn('size-3', fill('button.fg')),

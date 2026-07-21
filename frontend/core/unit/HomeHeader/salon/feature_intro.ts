@@ -4,7 +4,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default function useSalon() {
-  const { cn, fill, hover, bg, fg, menu, rainbow, rainbowSoft, vividDark } = useTwBelt()
+  const { cn, fill, hover, bg, fg, menu, rainbow, rainbowLite, vividDark } = useTwBelt()
 
   const blockBase = 'relative align-both size-12 min-w-12 mr-4 rounded-lg'
   const blockBg = 'absolute top-0 left-0 s-full rounded-lg trans-all-100'
@@ -20,10 +20,10 @@ export default function useSalon() {
     ),
     iconBlock: blockBase,
     blockGrey: cn(blockBg, 'opacity-100 group-hover:opacity-0', bg('sandBox')),
-    blockPurple: cn(blockColor, rainbowSoft(COLOR.PURPLE)),
-    blockBlue: cn(blockColor, rainbowSoft(COLOR.BLUE)),
-    blockRed: cn(blockColor, rainbowSoft(COLOR.RED)),
-    blockCyan: cn(blockColor, rainbowSoft(COLOR.CYAN)),
+    blockPurple: cn(blockColor, rainbowLite(COLOR.PURPLE)),
+    blockBlue: cn(blockColor, rainbowLite(COLOR.BLUE)),
+    blockRed: cn(blockColor, rainbowLite(COLOR.RED)),
+    blockCyan: cn(blockColor, rainbowLite(COLOR.CYAN)),
     head: 'column',
 
     title: cn('text-sm', fg('title'), vividDark()),

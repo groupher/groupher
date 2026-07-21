@@ -7,7 +7,7 @@ import useBase from '../../../../useDsbSalon'
 export { cnMerge } from '~/css'
 
 export default function useSalon() {
-  const { cn, cnMerge, shadow, rainbow, rainbowSoft } = useTwBelt()
+  const { cn, cnMerge, shadow, rainbow, rainbowLite } = useTwBelt()
   const base = useBase()
 
   const { kanbanBgColors } = useKanban()
@@ -20,15 +20,15 @@ export default function useSalon() {
       'column w-full h-7 rounded-md trans-all-200',
       'border border-dashed border-transparent ',
     ),
-    bgTodo: rainbowSoft(BG1),
+    bgTodo: rainbowLite(BG1),
     bgTodoActive: cn(rainbow(BG1, 'border'), shadow('md')),
-    bgWip: rainbowSoft(BG2),
+    bgWip: rainbowLite(BG2),
     bgWipActive: rainbow(BG2, 'border'),
-    bgDone: rainbowSoft(BG3),
+    bgDone: rainbowLite(BG3),
     bgDoneActive: rainbow(BG3, 'border'),
-    bgReview: rainbowSoft(BG4),
+    bgReview: rainbowLite(BG4),
     bgReviewActive: rainbow(BG4, 'border'),
-    bgRejected: rainbowSoft(BG5),
+    bgRejected: rainbowLite(BG5),
     bgRejectedActive: rainbow(BG5, 'border'),
 
     content: 'relative min-h-24',

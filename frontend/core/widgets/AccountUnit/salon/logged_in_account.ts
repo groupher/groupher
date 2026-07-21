@@ -12,7 +12,7 @@ export default function useSalon() {
     userName: cn('text-sm bold-sm', fg('title')),
     loginBy: cn('text-xs opacity-80', fg('digest')),
     menuBar: cn(menu('bar'), 'row justify-between group h-8 w-full px-2.5 py-0.5 gap-y-2'),
-    warningActive: cn(`hover:${fg('rainbow.red')}`, `hover:${bg('rainbow.redSoft')}`),
+    warningActive: cn(`hover:${fg('rainbow.red')}`, `hover:${bg('rainbow.redLite')}`),
     menuTitle: '',
     icon: cn('size-3.5 group-smoky-65', fill('digest')),
     logoutIcon: cn('size-3 group-smoky-65 ml-auto', `group-hover:${fill('rainbow.red')}`),

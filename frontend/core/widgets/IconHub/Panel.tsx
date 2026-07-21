@@ -44,7 +44,7 @@ const Panel: FC<TProps> = ({ selectColor, selectIcon, onColorSelect, onIconSelec
             type='button'
             className={cn(
               s.colorBlock,
-              s.rainbow(color, 'bgSoft'),
+              s.rainbow(color, 'bgLite'),
               selectColor === color && s.rainbow(color, 'border'),
             )}
             aria-label={`${t('icon.select_color')}: ${color}`}

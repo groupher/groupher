@@ -21,7 +21,7 @@ type TProps = {
   bold?: boolean
   color?: TColorName | null
   noColor?: boolean
-  withSoftBg?: boolean
+  withLiteBg?: boolean
   className?: string
 } & TSpace
 
@@ -32,12 +32,12 @@ const ArrowLinker: FC<TProps> = ({
   bold: _bold = false,
   color = null,
   noColor = false,
-  withSoftBg = false,
+  withLiteBg = false,
   className = '',
   children,
   ...spacing
 }) => {
-  const s = useSalon({ color, noColor, withSoftBg, ...spacing })
+  const s = useSalon({ color, noColor, withLiteBg, ...spacing })
 
   return (
     <Link href={href} target={target} className='inline-block'>

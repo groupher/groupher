@@ -25,7 +25,7 @@ export default function useSalon({ active }: TProps) {
     ),
     badge: cn(
       'ml-2 shrink-0 rounded px-1 py-px text-xs leading-none',
-      bg('rainbow.redSoft'),
+      bg('rainbow.redLite'),
       fg('rainbow.red'),
     ),
     externalIcon: cn('ml-1 size-2.5 shrink-0', fill('digest')),

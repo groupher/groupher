@@ -9,7 +9,7 @@ export default function useSalon() {
     wrapper: cn(
       'mt-10 w-44 h-auto mb-6 p-4 rounded-md border',
       bg('cardAlpha'),
-      br('rainbow.cyanSoft'),
+      br('rainbow.cyanLite'),
       shadow('card'),
     ),
     pinnedItem: 'row-center mb-0.5',

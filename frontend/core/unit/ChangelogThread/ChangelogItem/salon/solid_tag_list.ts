@@ -11,7 +11,7 @@ export default function useSalon({ color = COLOR.BLACK }: TProps = {}) {
 
   return {
     wrapper: 'row-center gap-x-2 -ml-0.5',
-    tag: cn('px-2.5 py-0.5 rounded-xl', rainbow(color, 'bgSoft')),
+    tag: cn('px-2.5 py-0.5 rounded-xl', rainbow(color, 'bgLite')),
     name: cn('text-xs font-normal', fg('digest')),
   }
 }

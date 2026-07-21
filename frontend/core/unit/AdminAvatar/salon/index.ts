@@ -13,7 +13,7 @@ export default function useSalon({ ...spacing }: TProps) {
     wrapper: cn('size-12 shrink-0', margin(spacing)),
     innerWrapper: cn(
       'align-both relative p-0.5 border',
-      primary('borderSoft'),
+      primary('borderLite'),
       avatarLayout === AVATAR_LAYOUT.SQUARE ? 'rounded-md' : 'circle',
     ),
     avatar: cn('size-10', avatar()),

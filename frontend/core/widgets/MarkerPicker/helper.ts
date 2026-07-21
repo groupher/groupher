@@ -2,7 +2,7 @@ import {
   COLOR,
   getDefaultCustomColor,
   RAINBOW_COLOR_HEX,
-  RAINBOW_SOFT_COLOR_HEX,
+  RAINBOW_LITE_COLOR_HEX,
 } from '~/const/colors'
 import { MARKER } from '~/const/marker'
 import type {
@@ -74,7 +74,7 @@ export const getPresetHex = (
 ): string =>
   channel === APPEARANCE_CHANNEL.COLOR
     ? RAINBOW_COLOR_HEX[theme][color]
-    : RAINBOW_SOFT_COLOR_HEX[theme][color]
+    : RAINBOW_LITE_COLOR_HEX[theme][color]
 
 export const findAppearancePreset = (
   hex: string | undefined,
@@ -125,7 +125,7 @@ const resolveActiveAppearanceValue = (
   if (!value || value === COLOR.CUSTOM) return undefined
 
   const palette = (
-    channel === APPEARANCE_CHANNEL.COLOR ? RAINBOW_COLOR_HEX[theme] : RAINBOW_SOFT_COLOR_HEX[theme]
+    channel === APPEARANCE_CHANNEL.COLOR ? RAINBOW_COLOR_HEX[theme] : RAINBOW_LITE_COLOR_HEX[theme]
   ) as Partial<Record<TColorName, string>>
 
   return palette[value as TColorName] ?? value
@@ -221,7 +221,7 @@ export const getCustomColorFallback = (
   if (current) return current
 
   if (channel === APPEARANCE_CHANNEL.BG) {
-    return RAINBOW_SOFT_COLOR_HEX[theme][COLOR.BLUE]
+    return RAINBOW_LITE_COLOR_HEX[theme][COLOR.BLUE]
   }
 
   return getDefaultCustomColor(theme)

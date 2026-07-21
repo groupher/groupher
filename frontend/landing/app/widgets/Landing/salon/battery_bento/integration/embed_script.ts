@@ -5,7 +5,7 @@ export default function useSalon() {
   const { cn, fg, fill, rainbow } = useTwBelt()
 
   return {
-    wrapper: cn('row-center absolute bottom-3 h-5 w-11/12 pl-2', rainbow(COLOR.ORANGE, 'bgSoft')),
+    wrapper: cn('row-center absolute bottom-3 h-5 w-11/12 pl-2', rainbow(COLOR.ORANGE, 'bgLite')),
     codes: cn('text-xs scale-90 -ml-1', fg('digest')),
     embed: cn('bold-sm', fg('title')),
     redText: rainbow(COLOR.RED, 'fg'),

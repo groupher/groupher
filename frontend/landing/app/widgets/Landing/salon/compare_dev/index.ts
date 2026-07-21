@@ -6,7 +6,7 @@ export { cn } from '~/css'
 
 export default function useSalon() {
   const { isDarkTheme } = useTheme()
-  const { cn, fg, br, rainbow, rainbowSoft, landingTitle } = useTwBelt()
+  const { cn, fg, br, rainbow, rainbowLite, landingTitle } = useTwBelt()
 
   return {
     wrapper: 'column align-both w-full mt-36',
@@ -24,19 +24,19 @@ export default function useSalon() {
     redDiffBar: 'diff-bar-red absolute left-0 top-0 w-7 h-full z-10 rounded-br-lg',
     ourlabel: cn(
       'row-center absolute right-16 top-0 text-lg px-3 py-1 rounded-b-xl',
-      rainbow(COLOR.GREEN, 'bgSoft'),
+      rainbow(COLOR.GREEN, 'bgLite'),
       rainbow(COLOR.GREEN, 'fg'),
     ),
 
     theirWall: 'relative column-align-both w-full h-auto diff-area-red-stripes',
     theirWallBg: cn(
       'absolute top-0 left-0 s-full',
-      rainbowSoft(COLOR.RED),
+      rainbowLite(COLOR.RED),
       isDarkTheme ? 'opacity-80' : 'opacity-40',
     ),
     theirlabel: cn(
       'row-center absolute right-16 top-0 text-lg px-3 py-1 rounded-b-xl',
-      rainbow(COLOR.RED, 'bgSoft'),
+      rainbow(COLOR.RED, 'bgLite'),
       rainbow(COLOR.RED, 'fg'),
     ),
 

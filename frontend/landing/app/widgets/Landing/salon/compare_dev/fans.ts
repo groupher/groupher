@@ -19,10 +19,10 @@ export default function useSalon() {
     discussIcon: cn('size-5 opacity-65', rainbow(COLOR.GREEN, 'fill')),
     //
     userWrapper: 'align-both absolute circle border-4',
-    borderOrange: rainbow(COLOR.ORANGE, 'borderSoft'),
-    borderGreen: rainbow(COLOR.GREEN, 'borderSoft'),
-    borderBlue: rainbow(COLOR.BLUE, 'borderSoft'),
-    borderPurple: rainbow(COLOR.PURPLE, 'borderSoft'),
+    borderOrange: rainbow(COLOR.ORANGE, 'borderLite'),
+    borderGreen: rainbow(COLOR.GREEN, 'borderLite'),
+    borderBlue: rainbow(COLOR.BLUE, 'borderLite'),
+    borderPurple: rainbow(COLOR.PURPLE, 'borderLite'),
     avatar: 'size-7 circle p-px',
   }
 }

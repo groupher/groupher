@@ -18,7 +18,7 @@ export default function useDsbSalon() {
     ),
     cardActive: cn(
       'opacity-100 saturate-100',
-      primary('borderSoft'),
+      primary('borderLite'),
       `hover:${primary('border')}`,
       shadow('md'),
     ),

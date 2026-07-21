@@ -10,7 +10,7 @@ type TProps = {
 } & TSpace
 
 export default function useSalon({ size, ...spacing }: TProps) {
-  const { cn, rainbowSoft, margin, avatar, rainbow } = useTwBelt()
+  const { cn, rainbowLite, margin, avatar, rainbow } = useTwBelt()
 
   return {
     wrapper: cn(
@@ -20,7 +20,7 @@ export default function useSalon({ size, ...spacing }: TProps) {
     ),
     name: cn('inline-flex items-center justify-center bold leading-none', getFontSize(size)),
 
-    rainbowSoft,
+    rainbowLite,
     rainbow,
   }
 }

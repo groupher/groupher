@@ -9,8 +9,8 @@ export default function useSalon() {
   return {
     wrapper: 'block w-full min-w-full overflow-hidden rounded-md text-xs leading-5',
     row: cn('flex w-full min-w-full basis-full self-stretch gap-0.5 py-0.5', fg('digest')),
-    addedRow: rainbow(COLOR.GREEN, 'bgSoft'),
-    removedRow: rainbow(COLOR.RED, 'bgSoft'),
+    addedRow: rainbow(COLOR.GREEN, 'bgLite'),
+    removedRow: rainbow(COLOR.RED, 'bgLite'),
     addedSegment: 'bg-lime-200/80 bold-sm',
     removedSegment: 'bg-red-200/80 bold-sm',
     marker: cn('w-3 shrink-0 select-none text-center font-mono bold-sm leading-5', fg('hint')),

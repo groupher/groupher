@@ -27,10 +27,10 @@ export default function useSalon(columnsCount = 5) {
     doneIcon: cn('size-3', rainbow(doneBg, 'fill')),
     rejectedIcon: cn('size-3', rainbow(rejectedBg, 'fill')),
     //
-    backlogBody: cn(body, rainbow(backlogBg, 'bgSoft')),
-    todoBody: cn(body, rainbow(todoBg, 'bgSoft')),
-    wipBody: cn(body, rainbow(wipBg, 'bgSoft')),
-    doneBody: cn(body, rainbow(doneBg, 'bgSoft')),
-    rejectedBody: cn(body, rainbow(rejectedBg, 'bgSoft')),
+    backlogBody: cn(body, rainbow(backlogBg, 'bgLite')),
+    todoBody: cn(body, rainbow(todoBg, 'bgLite')),
+    wipBody: cn(body, rainbow(wipBg, 'bgLite')),
+    doneBody: cn(body, rainbow(doneBg, 'bgLite')),
+    rejectedBody: cn(body, rainbow(rejectedBg, 'bgLite')),
   }
 }

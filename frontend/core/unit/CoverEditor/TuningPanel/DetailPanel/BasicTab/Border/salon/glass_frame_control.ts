@@ -12,7 +12,7 @@ export default function useSalon() {
       bg('card'),
       `focus-visible:${primary('border')}`,
     ),
-    controlActive: cn('border-4', primary('borderSoft')),
+    controlActive: cn('border-4', primary('borderLite')),
     verticalLine: cn(
       'absolute top-0 h-full w-0 -translate-x-1/2 border-l pointer-events-none',
       br('divider'),

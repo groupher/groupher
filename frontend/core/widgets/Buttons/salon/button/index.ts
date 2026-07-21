@@ -79,7 +79,7 @@ export default function useButtonSalon({
   const toneBg = () => {
     if (ghost) return bg('transparent')
     if (tone === 'color') return rainbow(color!, 'bg')
-    if (tone === 'red') return rainbow(COLOR.RED, 'bgSoft')
+    if (tone === 'red') return rainbow(COLOR.RED, 'bgLite')
     return primary('bg')
   }
 
@@ -97,21 +97,21 @@ export default function useButtonSalon({
 
   const ghostBorder = () => {
     if (!ghost || noBorder) return ''
-    if (color) return rainbow(color, 'borderSoft')
-    if (red) return rainbow(COLOR.RED, 'borderSoft')
+    if (color) return rainbow(color, 'borderLite')
+    if (red) return rainbow(COLOR.RED, 'borderLite')
     return br('text.hint')
   }
 
   const ghostHoverBg = () => {
     if (!ghost || !interactive) return ''
     if (noBorder) return ''
-    if (color) return `hover:${rainbow(color, 'bgSoft')}`
-    return `hover:${primary('bgSoft')}`
+    if (color) return `hover:${rainbow(color, 'bgLite')}`
+    return `hover:${primary('bgLite')}`
   }
 
-  const softBg = () => {
+  const liteBg = () => {
     if (!soft) return ''
-    if (color) return rainbow(color, 'bgSoft')
+    if (color) return rainbow(color, 'bgLite')
 
     return bg('hoverBg')
   }
@@ -151,7 +151,7 @@ export default function useButtonSalon({
 
       ghostBorder(),
       ghostHoverBg(),
-      softBg(),
+      liteBg(),
     ),
 
     children: cn('align-both relative', width === 'w-full' ? 'w-full' : 'w-auto'),

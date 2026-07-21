@@ -24,7 +24,7 @@ export default function useSalon() {
     //
     authorTag: cn(
       'text-xs scale-90 mb-0.5 px-2 py-px ml-1.5 rounded bold-sm',
-      rainbow(COLOR.BLUE, 'bgSoft'),
+      rainbow(COLOR.BLUE, 'bgLite'),
       rainbow(COLOR.BLUE, 'fg'),
     ),
   }

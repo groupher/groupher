@@ -3,7 +3,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default function useSalon() {
-  const { cn, fg, menu, rainbow, fill, rainbowSoft, sexyBorder, primary } = useTwBelt()
+  const { cn, fg, menu, rainbow, fill, rainbowLite, sexyBorder, primary } = useTwBelt()
 
   return {
     wrapper: 'mr-0.5',
@@ -14,6 +14,6 @@ export default function useSalon() {
     checkIcon: cn('size-4', primary('fill')),
     icon: cn('size-3.5 mr-2', fill('digest')),
     rainbow,
-    rainbowSoft,
+    rainbowLite,
   }
 }

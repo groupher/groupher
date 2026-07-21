@@ -28,7 +28,7 @@ export default function useSalon({
     ),
     badge: cn(
       'ml-2 shrink-0 rounded px-1 py-px text-xs leading-none',
-      bg('rainbow.redSoft'),
+      bg('rainbow.redLite'),
       fg('rainbow.red'),
     ),
     meta: 'row-center ml-auto h-5 shrink-0',

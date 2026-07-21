@@ -19,7 +19,7 @@ export default function useSalon({ stacked }) {
     ),
     dotActive: cn(
       'size-6 align-both border border-transparent',
-      primary('borderSoft'),
+      primary('borderLite'),
       shadow('md'),
     ),
     backIcon: cn('size-4 pointer', fill('digest')),

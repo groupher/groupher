@@ -12,7 +12,7 @@ type TProps = {
 const HighlightTitle: FC<TProps> = ({ className, query, text }) => {
   const { cn, primary } = useTwBelt()
   const trimmedQuery = query.trim()
-  const highlightClassName = cn('rounded px-0.5 text-inherit', primary('bgSoft'))
+  const highlightClassName = cn('rounded px-0.5 text-inherit', primary('bgLite'))
 
   if (!trimmedQuery) return <span className={className}>{text}</span>
 

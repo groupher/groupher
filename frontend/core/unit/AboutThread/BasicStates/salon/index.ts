@@ -15,11 +15,11 @@ export default function useSalon() {
     trendChart: 'w-full mt-1.5 -ml-1',
     //
     iconBox: 'align-both size-7 circle mb-3.5 -ml-0.5',
-    greenBg: rainbow(COLOR.GREEN, 'bgSoft'),
-    blueBg: rainbow(COLOR.BLUE, 'bgSoft'),
-    purpleBg: rainbow(COLOR.PURPLE, 'bgSoft'),
-    orangeBg: rainbow(COLOR.ORANGE, 'bgSoft'),
-    redBg: rainbow(COLOR.RED, 'bgSoft'),
+    greenBg: rainbow(COLOR.GREEN, 'bgLite'),
+    blueBg: rainbow(COLOR.BLUE, 'bgLite'),
+    purpleBg: rainbow(COLOR.PURPLE, 'bgLite'),
+    orangeBg: rainbow(COLOR.ORANGE, 'bgLite'),
+    redBg: rainbow(COLOR.RED, 'bgLite'),
     //
     icon: 'size-3.5',
     greenFill: rainbow(COLOR.GREEN, 'fill'),

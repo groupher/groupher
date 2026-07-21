@@ -6,7 +6,7 @@ import useKanban from '../../../../logic/useKanban'
 export { cn } from '~/css'
 
 export default function useSalon(columnsCount = 5) {
-  const { cn, rainbow, rainbowSoft, shadow } = useTwBelt()
+  const { cn, rainbow, rainbowLite, shadow } = useTwBelt()
   const isCompactBoards = columnsCount <= 3
   const isHintScrollableBoards = columnsCount === 4
   let boardWidth = 'w-52 min-w-52'
@@ -36,15 +36,15 @@ export default function useSalon(columnsCount = 5) {
       boardWidth,
     ),
 
-    boardBacklog: rainbowSoft(BG1),
+    boardBacklog: rainbowLite(BG1),
     backlogActive: cn('-mt-2', rainbow(BG1, 'border'), shadow('lg')),
-    boardTodo: rainbowSoft(BG2),
+    boardTodo: rainbowLite(BG2),
     todoActive: cn('-mt-2', rainbow(BG2, 'border'), shadow('lg')),
-    boardWip: rainbowSoft(BG3),
+    boardWip: rainbowLite(BG3),
     wipActive: cn('-mt-2', rainbow(BG3, 'border'), shadow('lg')),
-    boardDone: rainbowSoft(BG4),
+    boardDone: rainbowLite(BG4),
     doneActive: cn('-mt-2', rainbow(BG4, 'border'), shadow('lg')),
-    boardRejected: rainbowSoft(BG5),
+    boardRejected: rainbowLite(BG5),
     rejectedActive: cn('-mt-2', rainbow(BG5, 'border'), shadow('lg')),
   }
 }

@@ -11,7 +11,7 @@ export default function useSalon() {
     postItemWrapper: cn(
       'absolute -top-2 rounded-t-xl p-1 z-30 border border-dashed',
       bg('card'),
-      rainbow(COLOR.BLUE, 'borderSoft'),
+      rainbow(COLOR.BLUE, 'borderLite'),
     ),
     postItem: cn(
       'align-both w-24 h-8 rounded-t-md text-xs',
@@ -23,7 +23,7 @@ export default function useSalon() {
       'absolute p-1 z-20 align-both w-20 h-8 rounded-t-2xl border border-dashed text-xs',
       fg('digest'),
       bg('card'),
-      rainbow(COLOR.BLUE, 'borderSoft'),
+      rainbow(COLOR.BLUE, 'borderLite'),
     ),
     bottomItem: cn(
       'row-center w-80 absolute left-12 bottom-20 mb-2 py-2 px-3 rounded-b-xl border',
