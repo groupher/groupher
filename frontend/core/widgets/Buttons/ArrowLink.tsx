@@ -8,7 +8,7 @@ import { type FC, memo, type ReactNode } from 'react'
 
 import SIZE from '~/const/size'
 import { cnMerge } from '~/css'
-import ArrowSVG from '~/icons/Arrow'
+import ArrowSVG from '~/icons/ArrowSimple'
 import type { TSize } from '~/spec'
 
 import useSalon from './salon/arrow_link'
