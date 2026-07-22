@@ -348,7 +348,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :doc_cover do
     field(:groups, list_of(:doc_cover_group))
-    field(:pinned_items, list_of(:doc_cover_pinned_item))
+    field(:pinned_docs, non_null(list_of(non_null(:doc_cover_pinned_doc))))
   end
 
   object :doc_cover_group do
@@ -377,19 +377,12 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:node, :doc_tree_node)
   end
 
-  object :doc_cover_pinned_item do
-    field(:id, :id)
-    field(:node_id, :id)
-    field(:index, :integer)
-    field(:ui_config, :json)
-    field(:doc_id, :id)
-    field(:type, :doc_tree_node_type)
-    field(:title, :string)
-    field(:href, :string)
-    field(:marker, :marker)
-    field(:digest, :string)
-    field(:badge, :string)
-    field(:node, :doc_tree_node)
+  object :doc_cover_pinned_doc do
+    field(:node_id, non_null(:id))
+    field(:index, non_null(:integer))
+    field(:appearance, non_null(:json))
+    field(:href, non_null(:string))
+    field(:doc, non_null(:doc))
   end
 
   object :doc_draft do

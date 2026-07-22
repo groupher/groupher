@@ -363,20 +363,28 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.DocCover.update_item_ui_config(community, id, ui_config)
   end
 
-  def pin_doc_cover_item(_root, %{community: community, node_id: node_id} = args, _info) do
-    CMS.DocCover.pin_item(community, node_id, Map.get(args, :ui_config, %{}))
+  def pin_doc_to_cover(_root, %{community: community, node_id: node_id}, _info) do
+    CMS.DocCover.pin_doc(community, node_id)
   end
 
-  def unpin_doc_cover_item(_root, %{community: community, node_id: node_id}, _info) do
-    CMS.DocCover.unpin_item(community, node_id)
+  def unpin_doc_from_cover(_root, %{community: community, node_id: node_id}, _info) do
+    CMS.DocCover.unpin_doc(community, node_id)
   end
 
-  def update_doc_cover_pinned_ui_config(
+  def reorder_doc_cover_pinned_docs(
         _root,
-        %{community: community, node_id: node_id, ui_config: ui_config},
+        %{community: community, node_ids: node_ids},
         _info
       ) do
-    CMS.DocCover.update_pinned_ui_config(community, node_id, ui_config)
+    CMS.DocCover.reorder_pinned_docs(community, node_ids)
+  end
+
+  def update_pinned_doc_appearance(
+        _root,
+        %{community: community, node_id: node_id, appearance: appearance},
+        _info
+      ) do
+    CMS.DocCover.update_pinned_doc_appearance(community, node_id, appearance)
   end
 
   def delete_doc_tree_node(_root, %{community: community, id: id} = args, _info) do
