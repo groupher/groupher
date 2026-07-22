@@ -1,33 +1,238 @@
 # ContentImport 重构与落地计划
 
-> 状态：实施中
+> 状态：2026-07-22 目标重构已完成本地直接切换。本文后半部分保留旧 Snapshot/Plan/PayloadStore 实施记录，仅作为迁移证据，不再是目标架构；生产 Private Blob、固定公开仓库 Browser E2E 与全局分析 admission 仍待部署验收。
 >
-> 范围：统一内容导入基础设施，并把现有 `CMS.DocImport` 合并进最终结构
-> 更新：2026-07-14
+> 范围：按最终 Node/Phoenix 边界整理目录并完成公开 GitHub Repo → Docs 的首个垂直切片。
+>
+> Source of truth：跨来源架构、公共命名、目录目标和 Node/Phoenix 职责以 [`content-import-architecture.md`](./content-import-architecture.md) 为准；Files SDK/staging 以 [`import-file-sdk.md`](./import-file-sdk.md) 为准；产品流程以 [`bulk-import.md`](./bulk-import.md) 为准；共享 Import Content/BodyBag 以 [`article-publish-import-refactor.md`](./article-publish-import-refactor.md) 为准；本轮联调与错误恢复见 [`import-error-handling.md`](./import-error-handling.md)。
+>
+> 更新：2026-07-22
+
+## 零、2026-07-22 目标重构
+
+### 0.1 最终边界
+
+```text
+Next.js Node
+  GitHub Repo Source
+    -> temporary workspace
+    -> Docs Analyzer
+    -> DocsDataset / PreviewStore / Files SDK
+    -> shared Import Content
+    -> bounded BodyBag batches
+
+Phoenix
+  ImportJob
+    -> PostgreSQL staging
+    -> Docs Validator
+    -> Docs Writer transaction
+    -> Docs Draft/Tree + ImportSourceMapping
+```
+
+本轮只实现 GitHub + Docs，不实现 Changelog/Post、Notion/Google/Linear、comments/reactions、导入 user、公共资源上传或通用 plugin registry。
+
+### 0.2 Node 目标目录
+
+```text
+frontend/dashboard/src/
+|-- lib/content-import/
+|   |-- core/contracts/
+|   |-- core/preview-store/
+|   |-- platforms/github/repo/
+|   |-- threads/docs/
+|   `-- transport/phoenix/docsImport.ts
+`-- workflows/content-import/docs/
+    |-- analyzeGitHubRepo.ts
+    `-- applyDocsDataset.ts
+```
+
+- `core/contracts` 首期只落地 `ThreadDataset` header、`DocsDataset`、`ArtifactRef` 和 `TBadSmell`。
+- `platforms/github/repo` 只负责 GitHub client、archive 和 source workspace，不理解 Groupher Docs 写入。
+- `threads/docs` 负责 framework、tree、selection 和 Dataset，不生成第二套 BodyBag。
+- BodyBag 生成直接复用现有 Import Content/document-importer/artiment-publisher。
+- `transport/phoenix/docsImport.ts` 首期同时封装 trusted request 和 create/stage/apply/get operations，不提前拆只有一个消费者的通用 client。
+- 不创建尚未实现的 Platform、Thread、comments、reactions 或 actors 空目录。
+
+### 0.3 Phoenix 目标目录
+
+```text
+backend/main/lib/groupher_server/cms/content_import/
+|-- jobs.ex
+|-- staging.ex
+|-- import_source_mapping.ex
+|-- persistence/
+|   |-- connection.ex
+|   |-- job.ex
+|   |-- job/item.ex
+|   `-- import_source_mapping.ex
+`-- threads/doc/
+    |-- validator.ex
+    `-- writer.ex
+```
+
+目标保留：
+
+- Connection、ImportJob、JobItem/BodyBag staging。
+- Docs target revision/intent 验证。
+- Docs Draft/Tree、ImportSourceMapping 和 Job completion 的同事务写入。
+- 基础 idempotency、状态、进度和错误摘要。
+
+目标文件职责：
+
+- `jobs.ex`：创建 Job、状态迁移、进度和完成/失败摘要；不保存或解析来源正文。
+- `staging.ex`：按 `(job_id, external_ref)` 幂等接收 BodyBag，在 `BodyBag.cast` 后 canonical encode，执行单项 5 MiB、batch count 和 Job 状态校验并保存权威 `body_size_bytes`；不信任客户端 size，也不增加动态单 Job 容量策略。
+- `threads/doc/validator.ex`：Review 阶段根据 SourceTree 与当前目标状态生成 TargetTree/conflicts/targetRevision；创建 Job 和 apply 只验证用户已确认的 intent/revision，不重新分析来源 framework，也不静默重新规划。
+- `threads/doc/writer.ex`：在一个事务内写 Docs Draft/Tree、ImportSourceMapping，并完成 Job。
+- `import_source_mapping.ex`：维护来源项与 Groupher 文档之间的同步基线；冲突的本次处理选择属于 JobItem，不写入长期 Mapping。
+
+目标删除：
+
+- Phoenix PlatformAdapter、GitHub client 和 archive workspace。
+- Snapshot、Preparation、Plan、Checkpoints 和 PayloadStore。
+- Elixir Docs framework/config/Markdown analyzer。
+- 当前未被首期使用的 Changelog、AssetStager、claim/lease/retry 框架。
+- 为复杂恢复准备的多 checkpoint/cursor 状态；失败采用 bounded retry 后 failed + user reset/re-import。
+
+### 0.4 ImportSourceMapping
+
+旧 `Mapping` 目标命名统一改为 `ImportSourceMapping`：
+
+```text
+connection_id
+thread
+external_ref
+thread_ref
+source_revision
+source_version
+source_hash
+groupher_hash
+source_updated_at
+last_checked_at
+last_imported_at
+```
+
+`source_hash` 是上次成功导入的标准化来源 hash；首版格式固定为 `source-md-v1:<sha256>`。`groupher_hash` 是 Phoenix 成功 apply 后根据实际落库字段计算的 Groupher 同步基线；首版格式固定为 `doc-sync-v1:<sha256>`。版本前缀是 hash contract 的一部分，canonicalization 变化时必须 bump，不能静默沿用旧 hash。
+
+`groupher_hash` 的输入是明确、稳定的同步投影，例如正文 `body_hash` 加上由导入链管理的 title/slug 等字段；不能包含数据库 id、`inserted_at`、`updated_at` 或其他每次写入都会变化的字段。后续单篇来源检查比较：
+
+```text
+sourceChanged   = currentSourceHash   != mapping.source_hash
+groupherChanged = currentGroupherHash != mapping.groupher_hash
+```
+
+双方都变更时必须 Review，不能按时间戳直接覆盖。GitHub Repo commit 只固定批量快照；单文件更新使用 blob SHA、规范化 source hash，并把 path latest commit time 作为展示信息。
+
+### 0.5 实施任务（已完成）
+
+1. 冻结 `ThreadDataset/DocsDataset/TBadSmell/ImportSourceMapping`、Preview 对象布局、固定 `attemptRef`、ready binding、versioned hash，以及写死的 `2 MiB Plate input / 4 篇 / 6 MiB request / 5 MiB BodyBag` 容量 contract。
+2. 在现有 `PreviewStore` 后接入 Files SDK：写 immutable attempt-scoped Dataset、write-once `analysis-run.json` 和 attempt-local `ready.json`；不维护 Workflow Session，也不依赖根目录 winner pointer 的 CAS。
+3. 将 Workflow 固定拆为 `analyzeSource` 与 `validateTarget` 两个 Step；target validation/review write 失败只重试后者。若 `analyzeSource` 在最大 archive 下仍超出 Function 边界，再以筛选后的 `SourceWorkspaceRef` 进一步拆分。
+4. 将 Phoenix BodyBag staging 切到 PostgreSQL。Node 只按固定常量和未压缩 UTF-8 bytes 转换/切批；Phoenix canonical encode 后生成权威 `body_size_bytes`。单篇超过 2 MiB Plate input 或 5 MiB BodyBag 时显式跳过并过滤 TargetTree，普通转换错误仍阻止 apply。
+5. 把现有 `docs-import`、`bulk-import` 和 workflows 收敛到目标 Node 目录，不改产品 API；让 Bulk Publisher 直接复用已有 Import Content server function，不重写七类 analyzer，也不新增平行 Markdown/BodyBag 转换入口。
+6. 将 Phoenix create/stage/apply 收缩到 ImportJob、PostgreSQL staging、Doc Validator/Writer 和 ImportSourceMapping。
+7. 验证公开 GitHub Repo → Review → staged BodyBags → atomic Docs Draft/Tree → ImportSourceMapping 的完整链路，以及大 archive 和固定 BodyBag/request 容量边界。
+8. 在新链路覆盖重试、回滚和恢复路径后，直接删除 Phoenix Snapshot/Preparation/Plan/PayloadStore、来源解析、Changelog/AssetStager 首期死路径及相关数据、文件、测试和配置；不做历史迁移、backfill、dual read/write、旧 decoder、fallback 或兼容 accessor。
+9. 验证 temp cleanup、Preview TTL、same-hash batch idempotency、target revision conflict、事务 rollback 和 completed cleanup。
+
+### 0.5.1 旧模块删除清单
+
+这次按直接 cutover 处理旧实现。旧数据没有保留价值，现有 Docs 正文继续保留；旧导入记录、payload 文件和来源关联可以删除，未来需要时由用户重新导入生成。
+
+| 旧模块/路径                                       | 当前作用                                    | 目标替代                                                            | 删除门槛                                                         |
+| ------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `Checkpoints` / `PayloadStore`                    | 当前 Bulk start/get/apply 的 payload bridge | Files SDK `PreviewStore` + PostgreSQL BodyBag staging               | 新链路 E2E、重试和回滚通过后，连同历史 payload 数据/文件直接删除 |
+| `Orchestrator`                                    | 旧 Job lifecycle、plan/apply 编排           | 收敛到 `jobs.ex` + thread `writer.ex`                               | 先迁移仍有效的状态机/事务测试，再删除模块；不保留 wrapper        |
+| `ThreadAdapter` / `Threads.Doc` 旧 plan/apply     | Phoenix 重复规划和旧 typed payload apply    | `threads/doc/validator.ex` + `threads/doc/writer.ex`                | Validator/Writer parity 和 atomic apply 测试通过后删除           |
+| `PlatformAdapter`、GitHub Repo/ZIP `start_github` | Phoenix 来源拉取/解析入口                   | Dashboard Node Source Adapter + Workflow                            | 审计生产调用方为零后直接删除；不提供 fallback                    |
+| `AssetStager`、claim/lease/retry                  | 旧资源下载基础设施，Bulk v1 不使用          | 首版无替代；未来资源导入单独设计                                    | 确认无生产调用方后直接删除                                       |
+| Changelog/Releases 旧导入路径                     | 未接入生产的 deferred 验证路径              | 未来 Changelog slice 复用 `ThreadDataset`/ImportJob/Writer contract | 当前模块和测试直接删除，未来按新架构实现，不保留半成品           |
+
+数据库层同样不做兼容：旧 Snapshot/Preparation/Plan/Job/JobItem/JobAsset/PayloadStore/Preview Session rows 直接清理，只服务它们的 table/column/locator 随代码一起 drop；不写数据搬运 migration。
+
+### 0.5.2 2026-07-22 本地实施结果
+
+目标切换已按“不兼容旧导入数据”的约束直接落地：
+
+1. Dashboard 目录已收敛到 `lib/content-import/{core,platforms,threads,transport}` 与 `workflows/content-import/docs`；七类 framework fixture 归 Node analyzer 测试所有，不再依赖 Elixir analyzer 代码。
+2. `PreviewStore` 已切到 Files SDK，使用不可变 `preview-record.json`、write-once `analysis-run.json`、固定 `attemptRef`、attempt-scoped Dataset/Review 与最后写入的 `ready.json`。local/test 使用 fs adapter，生产使用 private Vercel Blob adapter，生产缺失配置时不回退本地磁盘。
+3. Workflow 已固定为 `analyzeSource` 与 `validateTarget` 两个 durable Step；来源正文从 PreviewStore 有界并行读取，目标验证失败不会重新下载和分析仓库。
+4. 共享 Import Content publisher 已落实 `2 MiB Plate input / 4 篇 / 6 MiB request / 5 MiB canonical BodyBag` 固定边界；只有稳定的 `content_too_large` 可以跳过，普通转换错误使 Job 失败。
+5. Phoenix 已收缩为 `Jobs`、`Staging`、`Doc.Validator`、`Doc.Writer` 与 `ImportSourceMapping`。BodyBag 分行写入 `content_import_job_bodies`，同 hash batch 和 completed apply 可幂等重放；target revision 冲突在事务内回滚且不消费 staging。
+6. 旧 Snapshot/Preparation/Plan/Checkpoints/PayloadStore、Phoenix 来源解析、Changelog/AssetStager 和旧 schema/test 路径已直接删除；新 migration drop 旧表并创建新的 Job/Item/Body/ImportSourceMapping 表，不 backfill、不 dual read/write，`down` 明确不可逆。
+7. 本地验证已覆盖 Files SDK immutable write、七类 analyzer fixtures、publisher/stage 容量、skip allowlist、Job intent binding、atomic apply、Mapping、completed replay 和 revision conflict。
+
+仍未完成：生产 Vercel Private Blob 配置与私有访问 smoke、固定公开仓库 Browser → Node → Phoenix → DB E2E、全局活动分析 admission、主动 sweeper 调度以及部署环境耗时/字节/清理指标。它们属于 release/deployment gate，不恢复旧链路。
+
+### 0.6 历史实现说明
+
+下面“完成状态”以及原一至十章记录的是旧通用 ContentImport 方案及已存在代码。它可以帮助定位待删除/迁移文件，但其中以下结论已经失效：
+
+- Phoenix 保存 Snapshot/Preparation/Plan/PayloadStore。
+- Phoenix PlatformAdapter/ThreadAdapter 是长期公共 contract。
+- GitHub Releases → Changelog 是首期复用验证任务。
+- AssetStager、claim/lease/retry 属于首期保留基础设施。
+- `Mapping/last_imported_local_hash` 是目标命名。
+- Groupher 维护 Preview Session。
+
+发生冲突时必须以前文 0.x 和 `content-import-architecture.md` 为准，不能根据旧 checklist 恢复被删除的双路径。
+
+## 历史实施快照
+
+### 完成状态
+
+| 范围                                                  | 状态                               | Bulk Import v1 使用情况                                                                              | 说明                                                                                                                         |
+| ----------------------------------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Namespace、typed contracts、Snapshot/Preparation/Plan | 已完成                             | 复用共享 contract                                                                                    | 旧 `CMS.DocImport` 已完成无兼容层 cutover                                                                                    |
+| Persistence、Job、Mapping、Diff、checkpoint           | 已完成基础实现                     | 使用 Job/Mapping/atomic apply；新来源 create，同一来源再次全量导入复用 Mapping 并 source-wins update | 逐篇 `source_updated/local_updated/conflict/source_deleted` 属于后续增量 re-sync，不是 Bulk v1 release gate                  |
+| AssetStager、Job.Asset lifecycle                      | 已完成基础实现                     | 不使用                                                                                               | Bulk v1 不复制图片或附件；未来资源导入再激活 downloader/claim/lease/retry                                                    |
+| Docs 正文转换与 apply                                 | 当前 GitHub 路径已接通             | 使用                                                                                                 | Dashboard Node Publisher 生成 BodyBag 后 bounded BodyBag staging + atomic apply；目标 PreviewRecord/DocsDataset 边界仍待迁移 |
+| Changelog 正文转换与 apply                            | Deferred                           | 不使用                                                                                               | GitHub Releases 的 Snapshot/Plan 仍保留，等待 Node publisher 接线                                                            |
+| GraphQL 与 Dashboard 导入流程                         | 当前路径已接通，目标存储边界待迁移 | 已拆分 Preview/Job 边界                                                                              | Review 使用 `previewRef`，确认后才创建 `jobRef`；待改为 immutable PreviewRecord/attempt layout                               |
+| Docs framework analyzer                               | 已切换目标生产入口                 | 七类 adapter 已有基础 fixture golden parity                                                          | GitHub Bulk Import 只进入 Node/TS analyzer；待补复杂变体、固定公开仓库与端到端基线，不重写 adapter                           |
+
+上表记录的是切换前的历史状态，不能用来判断当前目标架构是否完成。当前本地实施结果以前文 0.5.2 为准；复杂 analyzer 变体、固定公开仓库与部署环境端到端验证仍未完成。
+
+本文后续完成项记录 Phoenix ContentImport 基线和历史落地状态。涉及 file-based Docs 来源分析的未来归属时，以上述边界更新和 `bulk-import.md` 为准，不能从旧 checklist 推导出继续维护 Elixir/Node 双 analyzer。
 
 ### 当前实施快照
 
+#### Persistence
+
 - 已完成 ContentImport typed contract、canonical hash、Snapshot manifest、旧 `CMS.DocImport` 无兼容层 cutover。
-- 已完成 Workspace、ZIP、GitHub Repository adapter，以及 ZIP Snapshot → Docs Plan integration。
-- 已完成 Markdown/MDX → Plate/ContentPipeline 正文规范化、未知 component diagnostic、资源占位符和去重后的 pending assets manifest。
-- 已完成领域 `Diff`、`Persistence.*` Ecto schema、基础 migration、Job/Job.Item/Job.Asset 状态约束和有界 staging batch runner。
-- 已完成 Snapshot-bound `Threads.Doc.Preparation`，调用方不再分别传入可能错配的 Snapshot 与 SourceTree。
+- 已完成领域 `Diff`、`Persistence.*` Ecto schema、基础 migration、Job/Job.Item/Job.Asset 状态约束和有界 staging batch runner。Bulk v1 只使用首次导入所需的 `new` Diff 结果，不把 re-sync 高级状态作为产品验收项。
 - 已完成 `PayloadStore` contract、Snapshot/Preparation/Plan versioned codec，以及 `start Job → attach Preparation → attach Plan` 的可恢复 checkpoint 链路；数据库只保存 locator 与 bounded summary。
-- 已完成 `Threads.Doc.apply_in_transaction/3` 的 Preview Branch、Draft/Tree 原子写入、dry-run、逐项决策与显式 asset resolver 边界。
-- 已完成 GitHub Releases → Changelog Draft 手动同步闭环；与 Docs 共用 Markdown normalization、Plan.Asset、Snapshot/Mapping/Diff 和 Draft 生命周期。
 - 已完成 Repo Job transition、`FOR UPDATE SKIP LOCKED` asset claim/lease、过期 lease 重领、cancel/retry，以及 thread write、Mapping、source-deleted resolution、Job completion 的单事务提交。
 - 已完成服务端 canonical idempotency key、逐项选择/resolution 和 plan 前 Job 幂等复用；显式 `run_nonce` 可创建新的人工重跑。
+
+#### Orchestrator 与 Thread Adapter
+
+- 已完成 Snapshot-bound `Threads.Doc.Preparation`，调用方不再分别传入可能错配的 Snapshot 与 SourceTree。
+- 已保留 `Threads.Doc.apply_in_transaction/3` 的 Preview Branch、Draft/Tree 原子写入、dry-run、逐项决策与显式 asset resolver 基础设施；当前 GitHub Bulk Import 在 Node Publisher 完成 BodyBag staging 后进入该路径。
 - 已完成 Doc/Changelog 的 thread-specific `PlanPayload/ItemPayload` 与安全 `PreviewPayload/ItemPreview` 投影；aggregate/item schema 都按 thread 校验，私有 normalized body 不进入 Preview。
-- 标准 focused suite `mix test test/groupher_server/cms/content_import test/groupher_server/cms/content_import_test.exs` 当前为 `112 tests, 0 failures`；测试环境已正常加载基础 migration。
-- 尚未完成真实 credential resolver、安全 downloader/staging storage、全局/单 host admission、GraphQL 与前端。Thread apply 核心事务已完成，但真实 asset publisher/外部对象补偿清理仍待接线。
+- GitHub Releases → Changelog 已完成 Snapshot/Plan/Mapping/Diff 等共享基础设施验证；release 正文转换与 Draft apply 同样 deferred。
+
+#### Platform 与来源分析
+
+- 已完成 Workspace、ZIP、GitHub Repo adapter，以及 ZIP Snapshot → Docs Plan integration。
+- 已删除 Elixir Markdown/MDX → Plate 的 `MarkdownNormalizer`/`ContentNormalizer` 和 Earmark；基础 Plan item 初始正文状态为 `deferred`。当前 GitHub Bulk Import 在用户确认后由 Dashboard Node Publisher 补齐 BodyBag，Changelog 仍保持 deferred。
+
+#### Dashboard / Node 与切换前剩余迁移
+
+- Dashboard 已有 archive downloader、Vercel Workflow、七类 Node framework analyzer 和 BodyBag Publisher；本轮只整理目录与存储边界，不重写已存在的 analyzer。
+- 切换前 `PreviewStore` 使用原生 Local/Vercel Blob 能力并保存可变运行记录；该路径已由 Files SDK 与 immutable `PreviewRecord + analysis-run + attempt-local ready` 布局替代。
+- 切换前 Bulk v1 只做按数量有界的 BodyBag staging；当前已落实每批最多 4 篇、完整 GraphQL request JSON 最多 6 MiB、单篇 canonical BodyBag JSON 最多 5 MiB，并由 Phoenix 生成权威 `body_size_bytes`，不经过 `AssetStager`。
+- ContentImport、BodyBag、Comment/Mention 和 Docs template 的 Phase 4 focused suite 当前为 `136 tests, 0 failures`；测试环境已正常加载基础 migration。
+- 这一节的 Files SDK/immutable Preview、PostgreSQL BodyBag staging 与 Phoenix 简化缺口已经完成；仍未完成的是全局活动分析 admission、生产 Private Blob 和真实公开仓库浏览器联调。
 
 ---
 
-## 一、结论
+## 历史方案：一、结论（已被第零章取代）
 
 导入能力最终统一在 `GroupherServer.CMS.ContentImport` 下，不再为每个 thread 建一套平行的 `DocImport`、`ChangelogImport`、`PostImport`。
 
-外部平台差异和 Groupher thread 差异分两层处理；中间生命周期由持久化 Job 管理：
+下面的图只保留旧通用 ContentImport/Phoenix 基线，适用于理解待删除代码；它不是 GitHub Bulk Import 的目标时序。目标 GitHub 流程在用户 Review 前只有 Workflow + immutable PreviewRecord/DocsDataset，确认后才进入 Phoenix Job。
+
+外部平台差异和 Groupher thread 差异分两层处理；进入正式导入后，中间生命周期由持久化 Job 管理：
 
 ```text
 GitHub / Notion / Sanity / ZIP
@@ -48,30 +253,28 @@ GitHub / Notion / Sanity / ZIP
        ThreadAdapter.plan
               |
               v
- Plan + Job.Item[] + Job.Asset[]
+ Plan + Job.Item[](content=deferred)
               |
               v
-    Orchestrator.apply_job
-              |
-              v
-Doc Preview Branch / Changelog Draft / Post Draft
+      [等待 converter + Node publisher]
 ```
 
 - `PlatformAdapter` 负责连接外部平台、鉴权、分页、限流、获取内容和生成稳定的来源身份。
 - `ThreadAdapter` 负责把通用来源内容规划到 `doc`、`changelog`、`post` 等 Groupher thread，并在 orchestrator 已开启的事务中执行 thread write。
 - `Preparation` 是 Docs 私有的 Snapshot-bound parser checkpoint，不属于 PlatformAdapter 公共 contract；Changelog 等 API 型 thread 可以跳过。
 - `Persistence.Job` 管理可恢复状态与 locator，完整 Snapshot/Preparation/Plan payload 不直接写入 Job JSON。
-- 现有 VitePress、Rspress、Nextra 等代码解析的是 docs framework，不是外部平台，合并后应放在 `ContentImport.Threads.Doc.Frameworks`。
+- 现有 VitePress、Rspress、Nextra 等 Elixir 代码解析的是 docs framework，不是外部平台；它们当前位于 `ContentImport.Threads.Doc.Frameworks` 并被现有路径使用，迁移后由 Node/TS Source Analyzer 取代。
 - 所有导入先进入 Draft 或 Preview Branch；`ContentImport` 不直接发布 public 内容。
 - 首次导入与后续同步共享同一套 `Snapshot`、`Mapping` 和 `Diff`，避免未来为了“检查平台更新”重做数据模型。
+- 基础 Plan 的 `deferred` item 不能直接 apply；当前 GitHub Bulk Import 已通过确认后的 Node Publisher staging 补齐 BodyBag，目标方案继续保留“全部 BodyBag ready 后才 atomic apply”的边界。
 
 ---
 
-## 二、范围与非目标
+## 历史方案：二、范围与非目标
 
 ### 本轮范围
 
-1. 合并现有 `CMS.DocImport`，不重复实现已经完成的 framework parser、导航规划和 fixture。
+1. 合并现有 `CMS.DocImport`，保留已经完成的 framework 语义、导航规划、fixture 和 golden 作为 Node 迁移基线，不在生产长期维护双实现。
 2. 建立通用 `PlatformAdapter`、`ThreadAdapter`、`Entry`、`Snapshot`、`Job`、`Mapping`、`Diff` 边界。
 3. 打通一个完整的 Docs 导入链路。
 4. 打通 GitHub Releases → Changelog Draft，验证同一套基础设施可服务不同 thread。
@@ -87,7 +290,7 @@ Doc Preview Branch / Changelog Draft / Post Draft
 
 ---
 
-## 三、当前实现盘点
+## 历史方案：三、当前实现盘点
 
 ### 3.1 启动前已实现、现已合并保留
 
@@ -116,7 +319,8 @@ Doc Preview Branch / Changelog Draft / Post Draft
   - 不包含 Groupher `node_id` 或 `doc_id`。
 - `NavigationPlanner`
   - `scope` → tab。
-  - scope 直属 page/link → 自动生成 `Overview` group。
+  - scope 直属 page/link → 自动生成用户可见的 `Untitled` group。
+  - 当前内部稳定 `sourceId` 仍保留 `:overview` 后缀以避免破坏既有 identity/mapping；它不是用户可见 Group 标题，后续如需改名必须走 schema/version migration。
   - section → group。
   - 深层 section → 保留 `sourceId` 后展平为同级 group。
 - `Threads.Doc.Plan` + typed `ContentImport.Plan`
@@ -124,8 +328,8 @@ Doc Preview Branch / Changelog Draft / Post Draft
   - 为每个 source page 生成稳定于当前 plan 的随机 Article identity。
   - 将同一 identity 写入 document 与 tree node 的 `docId`。
   - 从传入 Mapping 复用已存在的 target ref；新内容只在 plan 阶段预分配 Article identity。
-  - 正文由 `ContentNormalizer` 生成真实 Plate body 或显式 `failed` 状态。
-  - 图片资源生成稳定占位符和去重后的 pending `Plan.Asset`。
+  - 正文当前生成显式 `deferred` 状态和稳定 diagnostic，不携带私有 normalized body。
+  - 资源发现与最终 asset manifest 等待新的 converter/publisher 方案；当前生成 Plan 不创建待 staging asset。
   - 当前不会写 Draft、public、Snapshot 或 PublishRelease。
 
 #### 已实现的辅助能力
@@ -152,14 +356,13 @@ Doc Preview Branch / Changelog Draft / Post Draft
 - 通用 `ContentImport` facade、`PlatformAdapter`/`ThreadAdapter` contract 与 typed domain structs。
 - Entry canonical hash、Snapshot manifest hash 和 revision 层级语义。
 - ZIP/GitHub Repository fetch、只读 Workspace 和安全/体积限制。
-- Markdown/MDX → Plate/ContentPipeline 正文规范化、asset discovery 与 diagnostic。
 - `Persistence.Connection/Job/Job.Item/Job.Asset/Snapshot/Mapping` schema 与 migration。
-- `Diff` 的 `new/in_sync/source_updated/local_updated/conflict/source_deleted` 派生逻辑。
-- 单 Job 有界 AssetStager batch runner。
+- `Diff` 的 `new/in_sync/source_updated/local_updated/conflict/source_deleted` 派生逻辑；Bulk v1 正常只消费 `new`，其余状态为后续 re-sync 基础设施。
+- 单 Job 有界 AssetStager batch runner；Bulk v1 不下载图片/附件，因此不进入这条 lifecycle。
 - Repo `Orchestrator` 的 Job command、asset claim/lease/retry/cancel 与原子 `apply_job` 闭环。
 - Snapshot/Preparation/Plan codecs、`PayloadStore` contract、`Checkpoints` 和 canonical `IdempotencyKey`。
-- Docs Preview Branch 的原子 apply、稳定 Article identity、资源占位符替换与失败回滚。
-- 通用 `MarkdownNormalizer`，以及 GitHub Releases → Changelog Draft 的 plan/apply、资源解析与重复同步。
+- Docs Preview Branch 的原子 apply、稳定 Article identity、资源替换与失败回滚基础设施；生成 Plan 因正文 `deferred` 不进入 apply。
+- GitHub Releases → Changelog 的 plan、Snapshot/Mapping/Diff 与重复同步基础设施；正文转换和 Draft apply deferred。
 
 ### 3.3 仍未实现
 
@@ -172,6 +375,7 @@ Doc Preview Branch / Changelog Draft / Post Draft
 - Docs import 页面目前仍是占位内容。
 - Docs 编辑器中的 import button 目前没有接入动作。
 - Changelog CMS 尚无平台导入入口。
+- document-converter/Node publisher 尚未接入批量 ContentImport，因此没有可 apply 的 Docs/Changelog 正文计划。
 
 ### 3.4 当前调用范围
 
@@ -179,7 +383,7 @@ Doc Preview Branch / Changelog Draft / Post Draft
 
 ---
 
-## 四、目标模块结构
+## 历史方案：四、旧目标模块结构
 
 ```text
 GroupherServer.CMS.ContentImport
@@ -202,7 +406,6 @@ GroupherServer.CMS.ContentImport
 |   `-- Item
 |-- ApplyResult
 |-- Diagnostic
-|-- MarkdownNormalizer
 |-- Orchestrator
 |-- PlatformAdapter
 |-- ThreadAdapter
@@ -248,7 +451,6 @@ GroupherServer.CMS.ContentImport
     |   |-- SourceTree
     |   |-- NavigationPlanner
     |   |-- Plan
-    |   |-- ContentNormalizer
     |   |-- LinkResolver
     |   |-- DocumentFile
     |   |-- StaticConfig
@@ -393,7 +595,7 @@ backend/main/test/fixtures/content_import
 
 ---
 
-## 五、核心 contract
+## 历史方案：五、旧核心 contract
 
 下面只表达边界；字段在实现 migration/API 前仍可调整。
 
@@ -701,9 +903,17 @@ source_deleted
 
 旧 `sourceMappings` 已升级为通用 `Mapping` contract，并落到 `Persistence.Mapping`；plan 只消费领域 Mapping，不依赖 Ecto schema 或偶然的内存 map 结构。
 
+`last_imported_local_hash` 的生成与比较规则必须由 thread-specific local hash contract 固定，不能由调用方临时选择；如果后续抽成 provider，也只能是该 contract 的实现：
+
+- Docs v1 使用成功持久化的 `BodyBag.body_hash`，即 canonical Plate AST 的语义正文 hash；它不是来源 Markdown hash、Snapshot hash 或 Plan hash。
+- `Orchestrator` 只在 thread apply 成功后取得实际写入结果对应的 local hash，并在同一个事务中更新 Mapping；apply 回滚时不得提前更新该字段。
+- 后续 Diff 必须从当前 Draft/Document 的 BodyBag 使用同一 canonicalization 与 hash version 读取或重算 local hash，再与 Mapping 比较。
+- hash 必须带稳定版本语义。建议保存为 `body-v1:<hex>`，或增加独立 `local_hash_version`；canonical schema 升级时应迁移/重算旧值或把它视为 unknown，不能把算法变化误判为用户修改。
+- Docs v1 的 local hash 只表达正文变化；title、slug、route 和树位置由 Target Planner 与 targetRevision 检测。未来若同步本地 metadata，新增 versioned composite projection hash，不能静默改变现有字段含义。
+
 ---
 
-## 六、现有模块迁移映射
+## 历史方案：六、旧模块迁移映射
 
 | 当前模块                          | 目标模块                                           | 处理方式                                                           |
 | --------------------------------- | -------------------------------------------------- | ------------------------------------------------------------------ |
@@ -725,7 +935,7 @@ source_deleted
 
 ---
 
-## 七、任务拆分
+## 历史方案：七、旧任务拆分
 
 ### Task 0：冻结当前 baseline（已完成能力）
 
@@ -830,43 +1040,24 @@ source_deleted
 
 依赖：Task 2、Task 3B。
 
-状态：核心正文、资源规划与内部相对页面链接重写已完成；完整 fixture/golden 矩阵仍待补。
+状态：正文转换已按 Article Publish/Import 重构决策暂停。旧 Elixir normalizer 已删除；导航和 identity 规划继续工作，但正文明确为 `deferred`。
 
-- [x] 依据 Plan 的 `sourceId` 读取同一 Snapshot Entry 的 Markdown/MDX 正文；不再回读可变 Workspace 文件。
-- [x] 定义正文规范化结果和 `schemaVersion=1`。
-- [x] Markdown 转换进入现有 Plate/editor `ContentPipeline`。
-- [x] 明确 MDX component 支持表。
-- [x] 未支持 component 产生 diagnostic，不静默丢失文本。
-- [x] 保持 Snapshot Entry body 不可变；规范化输出单独保存到 Plan payload。
-- [x] 解析正文资源引用：相对路径和平台附件关联已有 asset Entry，任意远程 URL 生成 plan-local `Plan.Asset`。
-- [x] 为每个资源生成稳定 `asset_key`，Plan 汇总去重后的 `status=:pending` assets manifest，normalized body 只保存 asset-key 占位引用。
-- [x] `Threads.Doc.plan/3` 不调用 downloader、AssetStager 或永久资源服务；远程下载与 staging 统一交给 Task 5 的 orchestrator。
-- [x] 内部相对页面链接按源 Entry 路径解析并重写到导入后的 route，保留 query/anchor；外链、页内 anchor 与无法解析的链接保持原样。
-- [x] 资源路径按来源文件位置解析并拒绝 path traversal；同一资源被多个页面引用时只生成一个 asset work item。
-- [x] 为资源保留所属页面、来源 path 与原始 URL 上下文，使 staging 失败后能生成可定位的独立 diagnostic。
-- [x] 最终 typed `ThreadAdapter` Plan 将导航规划中间态的 `%{"status" => "pending"}` 替换为真实规范化内容或显式失败状态；低层 `Threads.Doc.Plan.build/3` 仍只负责导航与 identity 规划。
-- [ ] 为正文、链接、相对图片、平台 attachment、重复资源、远程资源失败和未知 component 增加 fixture/golden。
-- [x] `Plan.Asset` 单元测试留在 `test/.../content_import/plan/asset_test.exs`；共享 Markdown/资源解析测试提升到镜像的 `content_import/markdown_normalizer_test.exs`，Docs 通过薄 wrapper 复用。
+- [x] 保持 Snapshot Entry body 原样、Preparation 与 Snapshot manifest 绑定、导航/identity 规划稳定。
+- [x] Docs Plan 为每个正文 item 写入 `status=deferred` 和稳定 diagnostic，不输出伪 BodyBag。
+- [x] Changelog Plan 使用同一 deferred 语义。
+- [x] generated Plan 不创建依赖旧 normalized body 的 asset work item。
+- [x] 删除 `CMS.ContentImport.MarkdownNormalizer`、`Threads.Doc.ContentNormalizer`、Earmark 与对应测试。
+- [ ] 将来源 Markdown/MDX 直接接入 Node [`artiment-publisher`](../../frontend/core/lib/artimentPublisher.ts)，生成完整 BodyBag。PDF/Office 等非 Markdown 文件才先经过 `document-converter`；GitHub Docs 不依赖它。Publisher 是 Node 发布边界：校验并 canonicalize Plate AST，生成 JSON、Markdown、安全 HTML、TOC、纯文本、digest、`body_hash` 和 schema version；它不是独立网络服务。
+- [ ] 基于 publisher 输出重新定义图片/附件发现、asset key、最终 URL 替换和 golden fixtures。
+- [ ] Editor 增加 table/code-block 等 persisted plugins 后，再扩展对应 Markdown 支持矩阵。
 
-首版 component/块支持表：
-
-| 来源                                                 | Plate 投影                 | 当前处理                                                                       |
-| ---------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------ |
-| 标题、段落、引用、列表、todo、行内 mark/link、分隔线 | 对应 Plate node/mark       | 支持                                                                           |
-| fenced code                                          | 带 `code` mark 的段落      | 保留内容；当前编辑器没有 code-block plugin                                     |
-| `<Callout>`                                          | `callout`                  | 支持                                                                           |
-| `<details>`                                          | `toggle`                   | 支持                                                                           |
-| Markdown table                                       | 普通文本段落               | 保留文本并产生 `unsupported_markdown_table` warning                            |
-| 其他 MDX/HTML component                              | 普通文本段落               | 保留子文本并产生 `unsupported_mdx_component` warning                           |
-| 图片                                                 | 带 `assetKey` 的 link node | 当前编辑器没有 image plugin；先保留可解析占位符，资源能力接入后再升级渲染 node |
-
-验收：Docs Plan 同时包含导航、可写入 Draft 的规范化正文和去重后的 pending assets manifest；plan 不触发远程下载、staging 或永久写入，也不修改 Snapshot。
+当前验收：Plan 仍可用于导航、Diff、Preview metadata 和恢复检查点；任何 `deferred` 正文都会阻止 apply/dry-run，不修改 Draft、Preview Branch 或 Mapping。
 
 ### Task 5：持久化 Connection、Job、Snapshot、Mapping 与 Diff，并实现 Asset staging
 
 依赖：Task 1。
 
-状态：schema/migration、durable checkpoint contract、Repo 幂等操作、Job item/asset command、Diff 与单 Job bounded runner 已完成；真实 PayloadStore/downloader/storage、安全网络层、worker loop 与保留清理尚未完成。
+状态：schema/migration、durable checkpoint contract、Repo 幂等操作、Job item/asset command、Diff 与单 Job bounded runner 已完成；真实 PayloadStore/downloader/storage、安全网络层、worker loop 与保留清理尚未完成。本 Task 是通用 ContentImport 基础设施，不等于 GitHub Bulk v1 产品范围：Bulk v1 不激活 AssetStager，Diff 除 `new` 外的 re-sync 状态也不属于其 release gate。
 
 - [x] credential 边界确定为专用 `Persistence.Connection` metadata + `credential_locator`；credential 本体仍复用/接入外部 secret storage，不建明文 token 字段。
 - [x] 为 `Persistence.Connection/Job/Job.Item/Job.Asset/Snapshot/Mapping` 增加 Ecto schema 与数据库 migration；Diff 由领域 Snapshot + Mapping + 当前本地 hash 派生，不单独建表，Job 只保存 payload locator 与 plan/diff summary。
@@ -920,48 +1111,50 @@ migration 与 schema 约束：
 - [ ] 补真实 worker process restart 测试。
 - [x] 用 DataCase 验证 apply 完成前或本地 hash 缺失时 Mapping 不写入；测试位于镜像的 `orchestrator_test.exs`。
 
-验收：migration 可 up/down，schema 与索引/约束测试通过；数千资源不会在 `plan/3` 内同步下载或产生无界 task；Snapshot/Preparation/Plan 与 staging 状态具备跨进程恢复所需的 durable contract，真实 worker 自动续跑仍属于 Task 9；同一来源重复导入不会重复创建目标内容；平台内容变化后能够稳定得到 `source_updated/new/source_deleted`；Mapping 只在原子 apply 成功后更新。
+通用基础设施验收：migration 可 up/down，schema 与索引/约束测试通过；数千资源不会在 `plan/3` 内同步下载或产生无界 task；Snapshot/Preparation/Plan 与 staging 状态具备跨进程恢复所需的 durable contract，真实 worker 自动续跑仍属于 Task 9；同一来源重复导入不会重复创建目标内容；平台内容变化后能够稳定得到 `source_updated/new/source_deleted`；Mapping 只在原子 apply 成功后更新。
+
+Bulk v1 只继承其中的 Job、Mapping、幂等和 atomic apply contract。Asset downloader/claim/lease/retry、资源 worker recovery，以及 `source_updated/local_updated/conflict/source_deleted` 的产品接线与端到端验收都延后到资源导入或 re-sync 阶段；已存在的领域实现和单元测试保留，不重复拆除。
 
 ### Task 6：实现 Threads.Doc apply
 
 依赖：Task 4、Task 5。
 
-状态：Preview branch/document/tree、Mapping、source-deleted resolution 和 Job completion 的原子闭环已完成；真实 asset publisher/补偿和 GraphQL command 接线待完成。
+状态：事务与编排基础设施已完成，但生成 Plan 的正文为 `deferred`，因此生产 apply 闭环暂停。手工构造的 ready BodyBag 仅用于验证基础设施，不代表批量导入已可用。
 
 - [x] `Threads.Doc.apply_in_transaction/3` 创建或复用目标 Preview Branch，并拒绝脱离外层 Repo transaction 调用。
 - [x] 已移除 Thread 层 standalone `apply/3`；生产与测试均通过 orchestrator transaction 或显式测试 transaction 调用 callback，不允许 thread implementation 自行开启/回滚嵌套事务。
-- [x] 正文通过现有 `Articles.Draft` create/update；树写入集中在 `CMS.DocTree.Import`，没有在 ThreadAdapter 中散落操作 tree schema。
+- [x] ready BodyBag contract 可通过现有 `Articles.Draft` create/update；树写入集中在 `CMS.DocTree.Import`，没有在 ThreadAdapter 中散落操作 tree schema。
 - [x] documents 与 tree 在同一外层 Repo transaction 中落地。
 - [x] apply 拒绝 `pending/staging` asset；`failed` asset 必须显式选择 `failed_asset_policy=:skip_items`。
-- [x] ready asset 通过显式 `asset_resolver` 得到 public target ref/URL，并在 document 写入前替换 asset-key 占位符。
+- [x] 基础设施支持显式 `asset_resolver`；未来 publisher 必须在最终资源 URL 确定后生成 BodyBag，不再对已生成正文做字符串占位符替换。
 - [ ] 接入真实 CommunityAsset/storage publisher，并为外部对象写入补充失败补偿/清理。
 - [x] `ApplyResult.assets` 返回 resolver 确认的资源 public ref；Thread apply 自身不提前写 Mapping。
 - [x] Document/Tree 使用 plan 预分配的稳定 Article UUID，不使用数据库 row id 作为跨层身份。
 - [x] apply 失败会回滚 Preview branch、之前已写 document 与整棵 tree；已有原子回滚测试。
-- [x] 支持 `dry_run`，pending asset 不阻塞 dry-run 且不会产生数据库写入。
+- [x] ready BodyBag 支持 `dry_run` 且不产生数据库写入；generated deferred content 的 dry-run 与 apply 一样显式拒绝。
 - [x] 支持全量、持久化的逐项 selected/resolution，以及兼容 thread 内部的 conflict policy；正文/资源失败只有显式 skip policy 才能跳过。
 - [x] `Orchestrator.apply_job/7` 只在 `ApplyResult` 成功且 local hash 完整后，同事务 upsert Mapping、执行 unlink/archive resolution 并完成 Job；任何一步失败都会回滚 thread write 与 checkpoint。
 - [x] apply tests 位于镜像目录 `test/.../content_import/threads/doc_test.exs`，覆盖 create/update 幂等、事务回滚、dry-run 和 asset resolver 替换。
 
-验收：一次 apply 只产生 Preview/Draft 状态；public、Snapshot、PublishRelease 不发生变化，必须经过现有 publish 流程才能上线。
+当前验收：生成 Plan 无法 apply；恢复该能力后，一次 apply 仍只能产生 Preview/Draft 状态，不能直接写 public、Snapshot 或 PublishRelease。
 
 ### Task 7：用 GitHub Releases → Changelog 验证跨 thread 复用
 
 依赖：Task 1、Task 5；不依赖 Docs apply，可作为 API-based platform/thread 的并行验证线。
 
-状态：手动同步核心闭环已完成；webhook 属于后续增量触发能力。
+状态：平台读取、Snapshot、Plan、Mapping、Diff 等共享基础设施已完成；release body 转换与 Changelog Draft apply deferred，webhook 同属后续。
 
 - [x] 实现 `Platforms.GitHub.Releases`。
 - [x] release ID 作为稳定 `external_ref`。
 - [x] 映射 tag/name/body/published_at/prerelease/source_url/revision/hash。
 - [x] 支持 include prerelease、draft、limit 等连接配置。
 - [x] 实现 `Threads.Changelog` 的 validate/plan/project_preview/apply_in_transaction。
-- [x] 写入 Changelog Draft，不直接 publish。
-- [x] 重复同步按 Mapping 幂等更新或产生 diff。
+- [ ] 接入 Node publisher 后写入 Changelog Draft，不直接 publish。
+- [x] 重复同步的 Mapping/Diff contract 已覆盖；正文 apply 恢复后再验证端到端幂等更新。
 - [x] deleted/edited release 产生明确 diff，不自动删除本地内容。
 - [ ] 后续增加 GitHub release webhook；第一阶段保留手动 sync。
 
-验收：同一个 ContentImport Job/Mapping/Snapshot/Diff 基础设施可同时服务 Doc 与 Changelog，没有新增 `CMS.ChangelogImport` 平行系统。
+当前验收：同一个 ContentImport Job/Mapping/Snapshot/Diff 基础设施可同时服务 Doc 与 Changelog，没有新增 `CMS.ChangelogImport` 平行系统；两类正文 apply 都等待统一 publisher 接入。
 
 ### Task 8：GraphQL 与 Dashboard 通用导入流程
 
@@ -988,7 +1181,7 @@ migration 与 schema 约束：
 
 依赖：Task 8A 的 API 状态与错误 contract；可在 resolver 实现期间并行评审。
 
-状态：下面是待共同评审的冻结候选；transaction ownership 与 thread-typed Preview 两项约束已决定，整体 spec 评审前不启动 Task 8C 组件实现。
+状态：下面是待共同评审的通用持久化 Import Job spec；transaction ownership 与 thread-typed Preview 两项约束已决定，整体 spec 评审前不启动 Task 8C 组件实现。GitHub Bulk Import 确认前使用带 TTL 的 immutable PreviewRecord，不应把这里的所有内部状态一比一暴露给产品 Stepper。
 
 - [ ] 定义状态：`idle/validating/pending/loading/planning/staging/ready/applying/completed/failed/cancelled`，并明确每个状态允许的操作。
 - [ ] 定义刷新页面后的 Job 恢复、轮询停止条件、cancel/retry 和重复提交防护。
@@ -998,6 +1191,24 @@ migration 与 schema 约束：
 - [x] Preview renderer 输入按 `thread` 使用 discriminated union；renderer 只接收安全 Preview DTO，不接收私有 Plan、Plan summary 或 `map()`，也不通过动态 key 猜测 thread schema。
 - [ ] 定义大型来源的分页/虚拟列表、批量选择、搜索过滤和汇总信息，避免把所有 Entry 一次性渲染。
 - [ ] 形成状态图、页面 wireframe 与组件责任表，评审后再开始 Task 8C。
+
+##### 与 GitHub Bulk Import 的状态分层
+
+两份文档描述的是不同层级，不能合并成一套枚举：
+
+- 本节的 `validating/pending/loading/planning/staging/ready/applying/...` 是通用 ContentImport 执行状态，用于持久化 Job、恢复、诊断和运维。
+- `bulk-import.md` 的 `idle/analyzing_repository/ready_for_review/importing/completed/failed` 是 Dashboard 产品 UI 阶段，用于三步 Stepper 和用户操作。
+- GitHub Bulk Import 在用户确认前只有 Vercel Workflow + immutable PreviewRecord/DocsDataset，尚未创建 Phoenix Job；确认后才进入通用 Job 的 publishing/applying 状态。
+
+映射固定如下：
+
+| 通用执行阶段                                                                     | Bulk Import UI 阶段    | 说明                                                                                              |
+| -------------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------- |
+| 本地输入校验、Workflow `queued/downloading/extracting/analyzing/target_planning` | `analyzing_repository` | Stepper 仍停在第一步，并显示具体进度                                                              |
+| PreviewRecord `ready` / 通用 Job `ready`                                         | `ready_for_review`     | Bulk 首版在这个 UI 阶段尚未创建正式 Job                                                           |
+| `publishing_bodies/applying`                                                     | `importing`            | 用户确认后才进入                                                                                  |
+| `completed/failed/cancelled`                                                     | 对应终态               | `cancelled` 可表现为返回输入页，不必增加第四个 Step                                               |
+| `staging`                                                                        | Bulk v1 不触发         | 通用状态用于资源下载与暂存；Bulk v1 不下载图片等资产。确认后有界发布 BodyBag 不称为 asset staging |
 
 候选状态与操作矩阵：
 
@@ -1117,7 +1328,7 @@ type TPreviewRendererProps<TPreview extends TContentImportPreview> = {
 
 ---
 
-## 八、建议实施顺序
+## 历史方案：八、旧实施顺序
 
 ```text
 Task 0 -> Task 1
@@ -1156,7 +1367,7 @@ Task 7 + Task 8D + Task 8E -> Task 9
 
 ---
 
-## 九、已决与待确认的决策
+## 历史方案：九、旧决策记录
 
 ### D1. Snapshot 正文保存位置
 
@@ -1198,7 +1409,7 @@ Task 7 + Task 8D + Task 8E -> Task 9
 
 ---
 
-## 十、完成定义
+## 历史方案：十、旧完成定义
 
 本轮 ContentImport 重构完成需要同时满足：
 
@@ -1208,16 +1419,18 @@ Task 7 + Task 8D + Task 8E -> Task 9
 - Entry/Snapshot revision 的层级语义已固定；Entry revision 缺失或不同于 Snapshot revision 时不会破坏 diff。
 - Docs framework parse 已收敛为绑定 Snapshot manifest 的 Preparation；调用方不能把 Snapshot 与另一棵 SourceTree/Preparation 错配。
 - Plan/ApplyResult 的 `target_ref` 来源明确；旧 `sourceMappings` 已收敛为领域 Mapping 与持久化 Mapping，不再依赖偶然的内存结构。
-- Snapshot body 保持来源原貌；Plan 有去重的 assets manifest，资源永久写入和最终 URL 替换只发生在 apply，并具有失败回滚或补偿策略。
+- Snapshot body 保持来源原貌；当前 Plan 正文为 `deferred` 且 assets 为空。恢复正文转换后，publisher 输入必须使用最终资源 URL，再生成 BodyBag，并具有失败回滚或补偿策略。
 - `ThreadAdapter.plan/3` 不执行资源下载；Job.Asset + AssetStager 以有界并发完成可恢复 staging，数千资源不会产生无界 task，apply 会拒绝未决资源。
 - Connection、Job、Job.Item、Job.Asset、Snapshot、Mapping 的 schema、migration、索引、唯一约束和 UTC 时间字段全部落地，migration 可 rollback。
 - Snapshot/Preparation/Plan 有 versioned codec 与 durable PayloadStore contract；Job 行只保存 locator、bounded summary、progress 和逐项决策。
-- ZIP/GitHub repository → Docs Preview Branch 可端到端运行。
-- GitHub Releases → Changelog Draft 使用同一套 Job/Mapping/Snapshot/Diff。
+- ZIP/GitHub repository → Docs Snapshot/Preparation/Plan 可端到端运行；Preview Branch 正文写入 deferred。
+- GitHub Releases → Changelog Plan 使用同一套 Job/Mapping/Snapshot/Diff；Changelog Draft 正文写入 deferred。
 - 重复导入幂等，来源更新可检测，冲突不会静默覆盖。
-- thread write、Mapping、source-deleted resolution 与 Job completion 在一个数据库事务内提交；失败不会留下已写内容但未更新同步基线的半完成状态。
+- ready BodyBag contract 下，thread write、Mapping、source-deleted resolution 与 Job completion 可在一个数据库事务内提交；generated Plan 在正文 deferred 时不得进入该事务。
 - Thread apply 只能在 orchestrator 已开启的同 Repo transaction 中执行；没有 standalone/nested transaction 旁路。
 - 所有写入停留在 Draft/Preview，不绕过现有 publish lifecycle。
 - GraphQL 不暴露数据库 id。
 - 私有 Plan payload 不直接暴露给 GraphQL/UI；Preview aggregate/item 按 thread 使用显式类型，新增 thread 必须补齐对应 payload、projection、renderer 与镜像测试。
 - UI/UX 状态与错误模型先于组件实现冻结；Docs 与 Changelog Dashboard 共用通用导入 flow，但测试仍留在各自产品与组件目录。
+
+截至 2026-07-16，namespace、Snapshot/Preparation/Plan、Persistence、Mapping/Diff、Job orchestration 与 Preview projection 基础设施已保留并通过 focused tests；正文 BodyBag 生成、资源发布、生产 apply、GraphQL/前端和真实 worker 尚未完成，因此整份 ContentImport 计划仍是“实施中”，不能标记完成。
