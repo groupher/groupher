@@ -15,13 +15,13 @@ defmodule GroupherServer.CMS.Comments.Write do
 
   alias CMS.{CanCan, FrontDesk}
 
-  alias CMS.Comments.{Numbering, Participants, Replies, States}
+  alias CMS.Comments.{BodyCodec, Numbering, Participants, Replies, States}
   alias CMS.Events
   alias CMS.Artiment.Enums
   alias CMS.Model.{Comment, CommentReply, Community, Embeds, PinnedComment, Post}
   alias CMS.SearchArtiments.Indexer
 
-  alias Helper.{ContentPipeline, Datetime, Multi, Later, ORM, T}
+  alias Helper.{Datetime, Multi, Later, ORM, T}
 
   @delete_hint Comment.delete_hint()
 
@@ -162,7 +162,7 @@ defmodule GroupherServer.CMS.Comments.Write do
 
   def update(%Comment{is_solution: true} = comment, body) do
     with {:ok, post} <- FrontDesk.get(Post, comment.post_id),
-         {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
+         {:ok, payload} <- BodyCodec.parse(body) do
       Multi.new()
       |> Multi.run(:update_parent_post, fn _, _ ->
         ORM.update(post, %{solution_digest: payload.digest})
@@ -183,7 +183,7 @@ defmodule GroupherServer.CMS.Comments.Write do
   end
 
   def update(%Comment{} = comment, body) do
-    with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
+    with {:ok, payload} <- BodyCodec.parse(body) do
       Multi.new()
       |> Multi.run(:update_comment, fn _, _ ->
         ORM.update(comment, %{body: payload.json, body_html: payload.html})
@@ -325,7 +325,7 @@ defmodule GroupherServer.CMS.Comments.Write do
   defp update_post_state_for_solution(post, comment, is_solution) do
     solution_digest =
       if is_solution do
-        case ContentPipeline.parse(%{body: comment.body}) do
+        case BodyCodec.parse(comment.body) do
           {:ok, payload} -> payload.digest
           _ -> comment.body_html
         end
@@ -351,7 +351,7 @@ defmodule GroupherServer.CMS.Comments.Write do
          %User{id: user_id},
          reply_to_comment \\ nil
        ) do
-    with {:ok, payload} <- ContentPipeline.parse(%{body: body}),
+    with {:ok, payload} <- BodyCodec.parse(body),
          {:ok, inner_id} <- Numbering.next_inner_id(article, foreign_key),
          {:ok, floor} <- Numbering.next_floor(article, foreign_key) do
       attrs = %{

@@ -27,8 +27,8 @@ defmodule GroupherServer.CMS.Articles.Diff do
 
   @doc "Returns whether two Snapshots contain exactly the same versioned state."
   @spec equal?(map(), map()) :: boolean()
-  def equal?(%{content_hash: _} = left, %{content_hash: _} = right) do
-    left.content_hash == right.content_hash
+  def equal?(%{version_hash: _} = left, %{version_hash: _} = right) do
+    left.version_hash == right.version_hash
   end
 
   @doc """
@@ -70,7 +70,7 @@ defmodule GroupherServer.CMS.Articles.Diff do
 
   defp snapshot_state(snapshot) do
     %{
-      content_hash: snapshot.content_hash,
+      version_hash: snapshot.version_hash,
       title: snapshot.title,
       digest: snapshot.digest,
       slug: snapshot.slug,

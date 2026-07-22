@@ -18,6 +18,7 @@ defmodule GroupherServer.CMS.Articles.Preview do
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
+  alias CMS.Artiment.BodyBag
   alias CMS.Articles.{Branch, Draft, Lock, Snapshot, VersionedRelations}
   alias CMS.Assets
   alias CMS.Model.{ArticleDocument, ArticleSnapshot, Community}
@@ -250,7 +251,7 @@ defmodule GroupherServer.CMS.Articles.Preview do
       digest: snapshot.digest,
       slug: snapshot.slug,
       subtitle: snapshot.subtitle,
-      body: snapshot.document_json
+      body_bag: snapshot.body_bag
     })
   end
 
@@ -262,7 +263,7 @@ defmodule GroupherServer.CMS.Articles.Preview do
     |> Map.merge(%{
       article_hash_id: article.article_hash_id,
       branch_id: branch.id,
-      body: document.json
+      body_bag: BodyBag.from_document_map(document)
     })
   end
 
@@ -311,7 +312,7 @@ defmodule GroupherServer.CMS.Articles.Preview do
          %ArticleSnapshot{} = base_snapshot <- Repo.get(ArticleSnapshot, source_snapshot_id),
          %ArticleSnapshot{} = current_snapshot <-
            latest_public_snapshot(thread, base_snapshot.branch_id, base_snapshot.article_hash_id),
-         true <- current_snapshot.content_hash == base_snapshot.content_hash do
+         true <- current_snapshot.version_hash == base_snapshot.version_hash do
       :ok
     else
       false -> {:error, {:conflict, "main/public changed after the Preview fork"}}

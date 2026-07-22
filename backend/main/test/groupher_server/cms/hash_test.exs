@@ -7,21 +7,28 @@ defmodule GroupherServer.Test.CMS.Hash do
   alias CMS.Model.{ArticleSnapshot, Doc}
 
   describe "[cms hash]" do
-    test "article snapshot content hash matches doc tree change detection hash" do
-      draft = %Doc{content_hash: "body-hash", subtitle: "Intro"}
+    test "article version hash matches doc tree change detection hash" do
+      draft = %Doc{body_hash: "body-hash", title: "Draft", digest: "Draft", subtitle: "Intro"}
 
       public_snapshot = %ArticleSnapshot{
-        content_hash: CMS.Hash.article_snapshot_content_hash(draft.content_hash, draft.subtitle)
+        version_hash: CMS.Articles.Snapshot.version_hash(draft)
       }
 
       refute CMS.DocTree.ChangeDetection.draft_content_changed?(draft, public_snapshot)
     end
 
-    test "article snapshot content hash includes subtitle" do
-      draft = %Doc{content_hash: "body-hash", subtitle: "Updated intro"}
+    test "article version hash includes subtitle" do
+      draft = %Doc{
+        body_hash: "body-hash",
+        title: "Draft",
+        digest: "Draft",
+        subtitle: "Updated intro"
+      }
+
+      original = %{draft | subtitle: "Intro"}
 
       public_snapshot = %ArticleSnapshot{
-        content_hash: CMS.Hash.article_snapshot_content_hash(draft.content_hash, "Intro")
+        version_hash: CMS.Articles.Snapshot.version_hash(original)
       }
 
       assert CMS.DocTree.ChangeDetection.draft_content_changed?(draft, public_snapshot)

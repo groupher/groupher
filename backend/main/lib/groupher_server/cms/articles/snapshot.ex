@@ -20,6 +20,7 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
+  alias CMS.Artiment.BodyBag
   alias CMS.Articles.{Branch, Draft, Lock, VersionedRelations, Write}
   alias CMS.Model.{ArticleDocument, ArticleSnapshot, Author, Community}
   alias Helper.{ORM, T}
@@ -30,12 +31,13 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
   @common_snapshot_fields [:title, :digest, :slug, :subtitle]
 
   @type version_state :: %{
-          content_hash: String.t(),
+          version_hash: String.t(),
           title: String.t(),
           digest: String.t() | nil,
           slug: String.t() | nil,
           subtitle: String.t() | nil,
           document_json: String.t(),
+          body_bag: map(),
           data: map()
         }
 
@@ -105,8 +107,9 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
   def current_state(article) do
     with {:ok, thread} <- CMS.FrontDesk.thread_of(article),
          {:ok, document} <-
-           ORM.find_by(ArticleDocument, article_id: article.id, thread: thread) do
-      {:ok, version_state(article, document)}
+           ORM.find_by(ArticleDocument, article_id: article.id, thread: thread),
+         {:ok, body_bag} <- BodyBag.from_document(document) do
+      {:ok, version_state(article, document, body_bag)}
     end
   end
 
@@ -152,45 +155,55 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
     branch_id = article.branch_id
     article_hash_id = article.article_hash_id
     version_data = version_data(article)
-    canonical_hash = CMS.Hash.article_version_hash(article, document.json, version_data)
+    version_hash = CMS.Hash.article_version_hash(article, document.body_hash, version_data)
     parent_snapshot = latest_snapshot(thread, branch_id, article_hash_id)
 
-    {:ok,
-     %{
-       community_id: article.community_id,
-       branch_id: branch_id,
-       article_hash_id: article_hash_id,
-       thread: thread,
-       stage: article.stage,
-       action: action,
-       parent_snapshot_id: parent_snapshot && parent_snapshot.id,
-       source_snapshot_id: option(opts, :source_snapshot_id),
-       author_id: author_id,
-       title: article.title,
-       slug: Map.get(article, :slug),
-       subtitle: Map.get(article, :subtitle),
-       digest: article.digest,
-       document_json: document.json,
-       data: version_data,
-       content_hash: canonical_hash,
-       revision_number: next_revision_number(thread, branch_id, article_hash_id),
-       schema_version: document.schema_version || Map.get(article, :schema_version) || 1,
-       message: option(opts, :message)
-     }}
+    with {:ok, body_bag} <- BodyBag.from_document(document) do
+      {:ok,
+       %{
+         community_id: article.community_id,
+         branch_id: branch_id,
+         article_hash_id: article_hash_id,
+         thread: thread,
+         stage: article.stage,
+         action: action,
+         parent_snapshot_id: parent_snapshot && parent_snapshot.id,
+         source_snapshot_id: option(opts, :source_snapshot_id),
+         author_id: author_id,
+         title: article.title,
+         slug: Map.get(article, :slug),
+         subtitle: Map.get(article, :subtitle),
+         digest: article.digest,
+         document_json: document.json,
+         body_bag: BodyBag.to_map(body_bag),
+         data: version_data,
+         version_hash: version_hash,
+         revision_number: next_revision_number(thread, branch_id, article_hash_id),
+         schema_version: document.schema_version || Map.get(article, :schema_version) || 1,
+         message: option(opts, :message)
+       }}
+    end
   end
 
-  defp version_state(article, document) do
+  defp version_state(article, document, body_bag) do
     data = version_data(article)
 
     %{
-      content_hash: CMS.Hash.article_version_hash(article, document.json, data),
+      version_hash: CMS.Hash.article_version_hash(article, document.body_hash, data),
       title: article.title,
       digest: article.digest,
       slug: Map.get(article, :slug),
       subtitle: Map.get(article, :subtitle),
       document_json: document.json,
+      body_bag: BodyBag.to_map(body_bag),
       data: data
     }
+  end
+
+  @doc "Computes the comparable current version hash from a persisted Article row."
+  @spec version_hash(T.article()) :: String.t()
+  def version_hash(article) do
+    CMS.Hash.article_version_hash(article, article.body_hash, version_data(article))
   end
 
   defp version_data(article) do
@@ -198,7 +211,7 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
       article
       |> Map.from_struct()
       |> Map.take(article.__struct__.version_fields())
-      |> Map.drop(@common_snapshot_fields)
+      |> Map.drop(@common_snapshot_fields ++ [:json])
 
     Map.merge(scalar_data, VersionedRelations.snapshot_data(article))
   end
@@ -206,8 +219,8 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
   defp maybe_create_snapshot(attrs, action)
        when action == CMS.Const.article_snapshot_action(:checkpoint) do
     case latest_snapshot(attrs.thread, attrs.branch_id, attrs.article_hash_id) do
-      %ArticleSnapshot{content_hash: content_hash} = snapshot
-      when content_hash == attrs.content_hash ->
+      %ArticleSnapshot{version_hash: version_hash} = snapshot
+      when version_hash == attrs.version_hash ->
         {:ok, snapshot}
 
       _ ->
@@ -277,7 +290,7 @@ defmodule GroupherServer.CMS.Articles.Snapshot do
     |> Map.merge(%{
       title: snapshot.title,
       digest: snapshot.digest,
-      body: snapshot.document_json
+      body_bag: snapshot.body_bag
     })
     |> maybe_put(:slug, snapshot.slug)
     |> maybe_put(:subtitle, snapshot.subtitle)

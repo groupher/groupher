@@ -295,7 +295,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
              CMS.DocTree.update_draft(
                community,
                page.node.doc_id,
-               %{body: body},
+               %{body_bag: mock_body_bag(body)},
                user
              )
 

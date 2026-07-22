@@ -36,7 +36,12 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         ])
 
       {:ok, post} =
-        CMS.Articles.create(community, :post, Map.merge(post_attrs, %{body: body}), user)
+        CMS.Articles.create(
+          community,
+          :post,
+          Map.merge(post_attrs, %{body_bag: mock_body_bag(body)}),
+          user
+        )
 
       {:ok, {2, nil}} = ArtimentMentions.sync(post)
 
@@ -89,7 +94,12 @@ defmodule GroupherServer.Test.Query.CMS.ArtimentMentions do
         ])
 
       {:ok, post} =
-        CMS.Articles.create(community, :post, Map.merge(post_attrs, %{body: body}), user)
+        CMS.Articles.create(
+          community,
+          :post,
+          Map.merge(post_attrs, %{body_bag: mock_body_bag(body)}),
+          user
+        )
 
       {:ok, {1, nil}} = ArtimentMentions.sync(post)
 

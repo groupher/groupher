@@ -28,7 +28,7 @@ defmodule GroupherServer.CMS.DocTree.Write.DraftDoc do
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias CMS.Articles.Draft
-  alias CMS.DocTree.{Read, Revision}
+  alias CMS.DocTree.{Read, Revision, TemplateBodyBags}
   alias CMS.Model.{Community, Doc}
   alias Helper.Validator.Slug
 
@@ -85,17 +85,14 @@ defmodule GroupherServer.CMS.DocTree.Write.DraftDoc do
     Draft.create(
       community,
       :doc,
-      %{branch_id: branch.id, title: title, slug: slug, body: default_page_body(title)},
+      %{
+        branch_id: branch.id,
+        title: title,
+        slug: slug,
+        body_bag: TemplateBodyBags.default()
+      },
       user
     )
-  end
-
-  defp default_page_body(title) do
-    [
-      %{"type" => "h1", "children" => [%{"text" => title}]},
-      %{"type" => "p", "children" => [%{"text" => "Start writing your docs draft here."}]}
-    ]
-    |> Jason.encode!()
   end
 
   defp normalize_doc_slug(slug) do

@@ -30,7 +30,7 @@ defmodule GroupherServer.CMS.DocTree.Template do
   alias Accounts.Model.User
   alias CMS.Articles.Draft
   alias CMS.Articles.Branch
-  alias CMS.DocTree.{Read, Revision}
+  alias CMS.DocTree.{Read, Revision, TemplateBodyBags}
 
   require CMS.Const
 
@@ -250,30 +250,11 @@ defmodule GroupherServer.CMS.DocTree.Template do
         branch_id: branch.id,
         title: page.title,
         slug: page.slug,
-        body: page_content(page),
+        body_bag: TemplateBodyBags.fetch!(page.title),
         template_key: template_key("doc:#{page.key}")
       },
       author
     )
-  end
-
-  defp page_content(page) do
-    [
-      %{
-        "type" => "h1",
-        "children" => [%{"text" => page.title}]
-      },
-      %{
-        "type" => "p",
-        "children" => [
-          %{
-            "text" =>
-              "Use this draft page as a starting point, then publish when your docs are ready."
-          }
-        ]
-      }
-    ]
-    |> Jason.encode!()
   end
 
   defp draft_tree_empty?(%Community{} = community, branch) do

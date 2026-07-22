@@ -166,7 +166,7 @@ defmodule GroupherServer.Test.CMS.Articles.Trash do
         }
       ])
 
-    assert {:ok, mentioner} = CMS.Articles.update(mentioner, %{body: body})
+    assert {:ok, mentioner} = CMS.Articles.update(mentioner, %{body_bag: mock_body_bag(body)})
     assert {:ok, {1, nil}} = CMS.ArtimentMentions.sync(mentioner)
 
     assert {:ok, item} = CMS.Articles.trash(target, user)

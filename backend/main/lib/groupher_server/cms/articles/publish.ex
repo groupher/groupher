@@ -20,12 +20,13 @@ defmodule GroupherServer.CMS.Articles.Publish do
 
   alias GroupherServer.{Accounts, CMS, Repo, Statistics}
   alias GroupherServer.Accounts.Model.User
+  alias CMS.Artiment.BodyBag
   alias CMS.Articles.{Branch, Document, Draft, Lock, Snapshot, States, VersionedRelations, Write}
   alias CMS.Model.{ArticleDocument, ArticleSnapshot, Author, Community}
   alias CMS.SearchArtiments.Indexer
   alias CMS.{Assets, Communities, Events}
   alias Ecto.Multi
-  alias Helper.{Later, ORM, T, Transaction}
+  alias Helper.{ContentThumbnail, Later, ORM, T, Transaction}
   alias Helper.Validator.Slug
 
   import Helper.Utils, only: [plural: 1]
@@ -109,6 +110,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
          :ok <- validate_version(draft),
          {:ok, public_article, first_publish?} <-
            apply_draft(community, thread, branch, draft),
+         {:ok, public_article} <- put_public_thumbnail(public_article, thread),
          {:ok, public_article} <-
            maybe_finalize_first_publish(
              community,
@@ -156,7 +158,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
       version_attrs =
         draft
         |> Map.from_struct()
-        |> Map.take(draft.__struct__.version_fields() ++ [:content_hash, :schema_version])
+        |> Map.take(draft.__struct__.version_fields() ++ [:body_hash, :schema_version])
 
       Multi.new()
       |> Multi.run(:public_relations, fn _, _ ->
@@ -167,7 +169,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
         ORM.update(public_article, version_attrs)
       end)
       |> Multi.run(:public_document, fn _, %{public_article: public_article} ->
-        Document.update(public_article, %{article_payload: draft_document})
+        Document.update(public_article, %{body_bag: BodyBag.from_document_map(draft_document)})
       end)
       |> Multi.run(:public_edit_status, fn _, %{public_article: public_article} ->
         States.update_edit_status(public_article)
@@ -185,6 +187,15 @@ defmodule GroupherServer.CMS.Articles.Publish do
         {:ok, %{public_edit_status: public_article}} -> {:ok, public_article, false}
         {:error, _step, reason, _changes} -> {:error, reason}
       end
+    end
+  end
+
+  defp put_public_thumbnail(public_article, thread) do
+    with {:ok, document} <-
+           ORM.find_by(ArticleDocument, article_id: public_article.id, thread: thread),
+         {:ok, _document} <-
+           ORM.update(document, %{thumbnail: ContentThumbnail.compile_json(document.json)}) do
+      {:ok, public_article}
     end
   end
 

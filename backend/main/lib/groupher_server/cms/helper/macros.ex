@@ -195,7 +195,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
   """
   @spec article_version_cast_fields() :: [atom()]
   def article_version_cast_fields do
-    [:article_hash_id, :branch_id, :stage, :content_hash, :schema_version]
+    [:article_hash_id, :branch_id, :stage, :body_hash, :schema_version]
   end
 
   @doc """
@@ -215,7 +215,7 @@ defmodule GroupherServer.CMS.Helper.Macros do
         default: CMS.Const.stage(:public)
       )
 
-      field(:content_hash, :string)
+      field(:body_hash, :string)
       field(:schema_version, :integer, default: 1)
     end
   end

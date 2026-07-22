@@ -564,13 +564,35 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:meta, :json)
   end
 
+  input_object :artiment_toc_item_input do
+    field(:id, non_null(:string))
+    field(:level, non_null(:integer))
+    field(:title, non_null(:string))
+  end
+
+  input_object :artiment_body_bag_input do
+    field(:json, non_null(:string))
+    field(:markdown, non_null(:string))
+    field(:html, non_null(:string))
+    field(:toc, non_null(list_of(non_null(:artiment_toc_item_input))))
+    field(:plain_text, non_null(:string))
+    field(:digest, non_null(:string))
+    field(:body_hash, non_null(:string))
+    field(:schema_version, non_null(:integer))
+  end
+
   object :article_document do
     field(:json, :string)
     field(:markdown, :string)
     field(:markdown_toc, :json)
+    field(:thumbnail, :json)
     field(:html, :string)
     field(:xml, :string)
     field(:rss, :string)
+    field(:plain_text, :string)
+    field(:digest, :string)
+    field(:body_hash, :string)
+    field(:schema_version, :integer)
 
     field(:asset_refs, list_of(:article_document_asset_ref),
       resolve: dataloader(CMS, :asset_refs)
@@ -588,7 +610,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:subtitle, :string)
     field(:digest, :string)
     field(:document_json, :string)
-    field(:content_hash, :string)
+    field(:version_hash, :string)
     field(:revision_number, :integer)
     field(:schema_version, :integer)
     field(:data, :json)

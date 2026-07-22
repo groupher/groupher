@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
   @min_body_length get_config(:article, :min_length)
 
   @required_fields ~w(thread title article_id json)a
-  @optional_fields ~w(markdown markdown_toc html xml rss plain_text digest content_hash schema_version)a
+  @optional_fields ~w(markdown markdown_toc thumbnail html xml rss plain_text digest body_hash schema_version)a
 
   @type t :: %ArticleDocument{}
   schema "article_documents" do
@@ -32,12 +32,13 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
     field(:json, :string)
     field(:markdown, :string)
     field(:markdown_toc, :map)
+    field(:thumbnail, :map)
     field(:html, :string)
     field(:xml, :string)
     field(:rss, :string)
     field(:plain_text, :string)
     field(:digest, :string)
-    field(:content_hash, :string)
+    field(:body_hash, :string)
     field(:schema_version, :integer, default: 1)
 
     has_many(:asset_refs, ArticleDocumentAssetRef)
@@ -50,7 +51,7 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
     doc
     |> cast(attrs, @optional_fields ++ @required_fields)
     |> validate_required(@required_fields)
-    |> validate_length(:plain_text, min: @min_body_length, max: @max_body_length)
+    |> validate_plain_text_length()
     |> unique_constraint([:thread, :article_id], name: :article_documents_thread_article_id_index)
   end
 
@@ -58,7 +59,17 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
   def update_changeset(%ArticleDocument{} = doc, attrs) do
     doc
     |> cast(attrs, @optional_fields ++ @required_fields)
-    |> validate_length(:plain_text, min: @min_body_length, max: @max_body_length)
+    |> validate_plain_text_length()
     |> unique_constraint([:thread, :article_id], name: :article_documents_thread_article_id_index)
+  end
+
+  defp validate_plain_text_length(changeset) do
+    min_length = if get_field(changeset, :thread) == :doc, do: 1, else: @min_body_length
+
+    changeset
+    |> validate_length(:plain_text, min: min_length, max: @max_body_length)
+    |> validate_change(:plain_text, fn :plain_text, value ->
+      if String.trim(value) == "", do: [plain_text: "can't be blank"], else: []
+    end)
   end
 end

@@ -111,6 +111,8 @@ defmodule GroupherServer.Test.AssertHelper do
   simulate the Graphiql mutate operation
   """
   def gq_mutation(conn, query, variables, flag \\ false) do
+    {conn, variables} = prepare_artiment_request(conn, query, variables)
+
     conn
     |> post("/graphiql", query: query, variables: variables)
     |> json_response(200)
@@ -203,6 +205,8 @@ defmodule GroupherServer.Test.AssertHelper do
   end
 
   defp gq_resp(conn, query, variables) do
+    {conn, variables} = prepare_artiment_request(conn, query, variables)
+
     conn
     |> post("/graphiql", query: query, variables: variables)
     |> json_response(200)
@@ -231,6 +235,38 @@ defmodule GroupherServer.Test.AssertHelper do
   end
 
   defp log_debug_info(res, _), do: res
+
+  # Article GraphQL tests predate the Node publisher. Keep their fixtures useful
+  # by adapting legacy raw Plate variables at the test boundary only; production
+  # GraphQL never exposes or accepts this fallback.
+  defp prepare_artiment_request(conn, query, variables) do
+    if String.contains?(query, "$bodyBag") do
+      case pop_body(variables) do
+        {body, variables} when is_binary(body) ->
+          conn =
+            Plug.Conn.put_req_header(
+              conn,
+              "x-groupher-server-trust",
+              "test-server-trust-secret"
+            )
+
+          body_bag = GroupherServer.Support.Factory.Articles.body_bag(body)
+          {conn, Map.put(variables, :bodyBag, body_bag)}
+
+        {_body, variables} ->
+          {conn, variables}
+      end
+    else
+      {conn, variables}
+    end
+  end
+
+  defp pop_body(variables) do
+    case Map.pop(variables, :body) do
+      {nil, variables} -> Map.pop(variables, "body")
+      result -> result
+    end
+  end
 
   @doc "check identity is exist in list of maps"
   @spec exist_in?(map(), [map()]) :: boolean

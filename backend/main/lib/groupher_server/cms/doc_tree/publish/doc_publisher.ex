@@ -23,6 +23,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
+  alias CMS.Artiment.BodyBag
   alias CMS.DocTree.Events
   alias CMS.Model.{ArticleDocument, Community, Doc, DocTreeNode}
   alias Helper.{ORM, T}
@@ -93,7 +94,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
               article_hash_id: public_doc.article_hash_id,
               title: public_doc.title,
               slug: public_doc.slug,
-              body: document.json
+              body_bag: BodyBag.from_document_map(document)
             },
             user
           )

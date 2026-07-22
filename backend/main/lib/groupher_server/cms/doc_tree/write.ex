@@ -20,6 +20,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
 
   alias GroupherServer.{Accounts, CMS, Repo}
   alias Accounts.Model.User
+  alias CMS.Artiment.BodyBag
   alias CMS.Articles.{Draft, Lock}
   alias CMS.DocTree.{Events, Read}
 
@@ -293,7 +294,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
 
   ## Examples
 
-      iex> Write.update_draft(community, page.doc_id, %{body: json})
+      iex> Write.update_draft(community, page.doc_id, %{body_bag: body_bag})
       {:ok, %Doc{stage: CMS.Const.stage(:draft)}}
   """
   @spec update_draft(Community.t(), String.t(), map(), User.t()) :: T.domain_res(Doc.t())
@@ -386,7 +387,8 @@ defmodule GroupherServer.CMS.DocTree.Write do
       Lock.run(community, :doc, node.doc_id, fn ->
         with {:ok, source} <- CMS.Articles.read_editor(community, :doc, node.doc_id, branch),
              source <- Repo.preload(source, :document),
-             %{json: body} when is_binary(body) <- source.document,
+             %{json: json} = document when is_binary(json) <- source.document,
+             {:ok, body_bag} <- BodyBag.from_document(document),
              title <- Identity.unique_copy_title(community, branch, node.group_id, node.title),
              slug <- Identity.unique_copy_slug(community, branch, node.group_id, node.slug),
              {:ok, draft} <-
@@ -398,7 +400,7 @@ defmodule GroupherServer.CMS.DocTree.Write do
                    title: title,
                    slug: slug,
                    subtitle: source.subtitle,
-                   body: body
+                   body_bag: body_bag
                  },
                  actor
                ),

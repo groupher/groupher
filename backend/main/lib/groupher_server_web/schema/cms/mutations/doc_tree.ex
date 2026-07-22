@@ -85,9 +85,10 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       arg(:title, :string)
       arg(:subtitle, :string)
       arg(:slug, :string)
-      arg(:body, :string)
+      arg(:body_bag, :artiment_body_bag_input)
 
       middleware(M.Authorize, :login)
+      middleware(M.BodyBagTrust)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
       resolve(&R.CMS.update_doc_draft/3)

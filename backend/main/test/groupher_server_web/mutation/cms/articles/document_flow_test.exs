@@ -54,8 +54,8 @@ defmodule GroupherServer.Test.Mutation.Articles.DocumentFlow do
         assert created["document"]["json"] == @plate_body
         assert is_binary(created["document"]["html"])
         assert is_binary(created["document"]["markdown"])
-        assert is_binary(created["document"]["xml"])
-        assert is_binary(created["document"]["rss"])
+        assert created["document"]["xml"] == nil
+        assert created["document"]["rss"] == nil
         assert is_map(created["document"]["markdownToc"])
 
         update_vars = %{

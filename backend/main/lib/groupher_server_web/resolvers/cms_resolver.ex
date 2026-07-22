@@ -239,7 +239,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.DocTree.update_draft(
       community,
       doc_id,
-      Map.take(args, [:title, :subtitle, :slug, :body]),
+      Map.take(args, [:title, :subtitle, :slug, :body_bag]),
       user
     )
   end

@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.Helper.Schema.Doc do
 
   def m(:update_draft) do
     """
-    mutation($community: String!, $id: ID!, $title: String, $subtitle: String, $slug: String, $body: String) {
-      updateDocDraft(community: $community, id: $id, title: $title, subtitle: $subtitle, slug: $slug, body: $body) {
+    mutation($community: String!, $id: ID!, $title: String, $subtitle: String, $slug: String, $bodyBag: ArtimentBodyBagInput) {
+      updateDocDraft(community: $community, id: $id, title: $title, subtitle: $subtitle, slug: $slug, bodyBag: $bodyBag) {
         id
         docId
         title
@@ -45,7 +45,7 @@ defmodule GroupherServer.Test.Helper.Schema.Doc do
         subtitle
         digest
         documentJson
-        contentHash
+        versionHash
         revisionNumber
         author {
           login
@@ -133,7 +133,7 @@ defmodule GroupherServer.Test.Helper.Schema.Doc do
         subtitle
         digest
         documentJson
-        contentHash
+        versionHash
         revisionNumber
         schemaVersion
         insertedAt

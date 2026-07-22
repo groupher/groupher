@@ -12,7 +12,10 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Lock do
       CMS.Articles.create_draft(
         community,
         :post,
-        Map.merge(attrs, %{title: "Lock Base", body: mock_rich_text("lock base")}),
+        Map.merge(attrs, %{
+          title: "Lock Base",
+          body_bag: mock_body_bag(mock_rich_text("lock base"))
+        }),
         user
       )
 
