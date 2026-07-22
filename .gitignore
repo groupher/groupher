@@ -26,6 +26,10 @@ bun.lockb
 npm-debug.log
 yarn-error.log
 
+# Python build and test artifacts
+**/__pycache__/
+*.egg-info/
+
 # =====================
 # Yarn Berry
 # =====================

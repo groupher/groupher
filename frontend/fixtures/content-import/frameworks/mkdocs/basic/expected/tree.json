@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "source": { "framework": "mkdocs", "root": "content", "configPaths": ["mkdocs.yml"] },
+  "navigation": [
+    {
+      "kind": "scope",
+      "sourceId": "nav:docs",
+      "title": "Docs",
+      "routePrefix": "/",
+      "children": [
+        {
+          "kind": "page",
+          "sourceId": "content/index.md",
+          "sourcePath": "content/index.md",
+          "title": "Home",
+          "route": "/index"
+        },
+        {
+          "kind": "section",
+          "sourceId": "nav:guide",
+          "title": "Guide",
+          "children": [
+            {
+              "kind": "page",
+              "sourceId": "content/guide/start.md",
+              "sourcePath": "content/guide/start.md",
+              "title": "Start",
+              "route": "/guide/start"
+            },
+            {
+              "kind": "page",
+              "sourceId": "content/guide/advanced.md",
+              "sourcePath": "content/guide/advanced.md",
+              "title": "Advanced Topics",
+              "route": "/guide/advanced"
+            }
+          ]
+        },
+        {
+          "kind": "page",
+          "sourceId": "content/api/index.md",
+          "sourcePath": "content/api/index.md",
+          "title": "API",
+          "route": "/api"
+        },
+        {
+          "kind": "link",
+          "sourceId": "external:https://example.com/project",
+          "title": "Project",
+          "href": "https://example.com/project"
+        }
+      ]
+    }
+  ]
+}
