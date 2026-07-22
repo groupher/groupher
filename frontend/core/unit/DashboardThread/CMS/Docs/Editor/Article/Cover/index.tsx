@@ -2,7 +2,7 @@ import type { FC } from 'react'
 
 import CoverEditor from '~/unit/CoverEditor'
 
-import useSalon from './salon/cover'
+import useSalon from './salon'
 
 const Cover: FC = () => {
   const s = useSalon()

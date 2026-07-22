@@ -8,9 +8,9 @@ import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
 import { FETCH_OPTIONS } from '~/utils/graphql'
 
-import useDocsEditor from '../store/hooks'
-import { composeLoadedDraftSession } from './helper'
-import type { TDocDraftDTO } from './spec'
+import useDocsEditor from '../../store/hooks'
+import { composeLoadedDraftSession } from '../helper'
+import type { TDocDraftDTO } from '../spec'
 import type { TDraftEditorState } from './useDraftEditorState'
 
 export default function useDraftLoader(draftState: TDraftEditorState): void {

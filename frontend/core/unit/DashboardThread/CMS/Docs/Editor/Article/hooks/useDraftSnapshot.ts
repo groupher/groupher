@@ -8,9 +8,9 @@ import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
 import { toast } from '~/widgets/Toaster'
 
-import { REVISION_LABEL_KEY } from '../../ActionSnackbar/constant'
-import { DOC_DRAFT_REVISION_CHECKPOINT_DELAY } from './constant'
-import type { TDraftSnapshotStatus } from './spec'
+import { REVISION_LABEL_KEY } from '../../../ActionSnackbar/constant'
+import { DOC_DRAFT_REVISION_CHECKPOINT_DELAY } from '../constant'
+import type { TDraftSnapshotStatus } from '../spec'
 import type { TDraftEditorState } from './useDraftEditorState'
 
 export default function useDraftSnapshot(draftState: TDraftEditorState): void {

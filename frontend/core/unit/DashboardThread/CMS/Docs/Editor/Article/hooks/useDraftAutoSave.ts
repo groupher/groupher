@@ -1,22 +1,21 @@
 import { useCallback, useEffect, useRef } from 'react'
 
-import useGraphQLClient from '~/hooks/useGraphQLClient'
+import { saveDocDraft } from '~/lib/artimentPublisher'
 import { slugify } from '~/lib/slug'
 import useCommunity from '~/stores/community/hooks'
-import S from '~/unit/DashboardThread/schema'
 import { toast } from '~/widgets/Toaster'
 
-import { reloadDocPublishChecklist } from '../helper'
-import type { TSideTreeChild } from '../SideTree/spec'
-import useDocsEditor from '../store/hooks'
-import { DOC_AUTO_SAVE_DELAY } from './constant'
+import { reloadDocPublishChecklist } from '../../helper'
+import type { TSideTreeChild } from '../../SideTree/spec'
+import useDocsEditor from '../../store/hooks'
+import { DOC_AUTO_SAVE_DELAY } from '../constant'
 import {
   composeDraftPublishState,
   composeDraftSaveInput,
   composeEditorDraft,
   composeEditorDraftMeta,
-} from './helper'
-import type { TDocDraftDTO } from './spec'
+} from '../helper'
+import type { TDocDraftDTO } from '../spec'
 import type { TDraftEditorState } from './useDraftEditorState'
 
 type TParams = {
@@ -28,8 +27,8 @@ export default function useDraftAutoSave(
   { patchSideTreeChild }: TParams,
 ) {
   const { slug: community } = useCommunity()
-  const { mutate } = useGraphQLClient()
   const { attachSaveDocDraft } = useDocsEditor()
+  const failedAutoSaveDraftRef = useRef<TDraftEditorState['draft'] | null>(null)
   const saveInFlightRef = useRef(false)
   const latestDocIdRef = useRef(draftState.draft.docId)
 
@@ -72,15 +71,15 @@ export default function useDraftAutoSave(
         title: nextTitle,
       })
       const input = composeDraftSaveInput(requestDraft, nextSlug)
-      const data = await mutate<{ updateDocDraft?: TDocDraftDTO }>(S.updateDocDraft, {
-        body: input.body,
+      const savedDraft = await saveDocDraft<TDocDraftDTO>({
+        value: input.value,
         community,
         id: input.id,
         slug: input.slug,
         subtitle: input.subtitle,
         title: input.title,
       })
-      const savedDraft = data?.updateDocDraft
+      failedAutoSaveDraftRef.current = null
       const publishState = composeDraftPublishState(activePage.publishState)
 
       if (latestDocIdRef.current !== requestDocId) return
@@ -105,6 +104,7 @@ export default function useDraftAutoSave(
     } catch (err) {
       if (latestDocIdRef.current !== requestDocId) return
 
+      failedAutoSaveDraftRef.current = startedDraft
       const message = err instanceof Error ? err.message : String(err)
       setSaveError(message)
       toast(message, 'error')
@@ -119,7 +119,6 @@ export default function useDraftAutoSave(
     editable,
     invalid,
     loadStatus.loading,
-    mutate,
     patchSideTreeChild,
     setSaveError,
     setSaving,
@@ -133,6 +132,7 @@ export default function useDraftAutoSave(
 
   useEffect(() => {
     if (!dirty || !editable || invalid || loadStatus.loading || saveStatus.saving) return
+    if (failedAutoSaveDraftRef.current === draft) return
 
     const timer = window.setTimeout(() => {
       save()

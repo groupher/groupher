@@ -3,10 +3,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { slugify } from '~/lib/slug'
 
-import { SIDE_TREE_NODE_TYPE } from '../SideTree/constant'
-import { findChild } from '../SideTree/helper'
-import type { TSideTreeController } from '../SideTree/spec'
-import useDocsEditor from '../store/hooks'
+import { SIDE_TREE_NODE_TYPE } from '../../SideTree/constant'
+import { findChild } from '../../SideTree/helper'
+import type { TSideTreeController, TSideTreePage } from '../../SideTree/spec'
 import {
   composeEditorDraft,
   composeEditorDraftFromSession,
@@ -14,20 +13,21 @@ import {
   composeEmptyEditorDraft,
   composeEmptySavedDraft,
   composeSavedDraft,
-  resolveDraftSource,
+  composeLoadedDraftSession,
   isDraftDirty,
   countEditorText,
-} from './helper'
+} from '../helper'
 import type {
   TDraftLoadStatus,
   TDraftSaveStatus,
+  TDocDraftInitialData,
   TDocDraftDTO,
   TDocDraftSession,
   TDocDraftSource,
   TEditorDraft,
   TEditorDraftMeta,
   TSavedDraft,
-} from './spec'
+} from '../spec'
 
 type TApplySavedParams = {
   meta: TEditorDraftMeta
@@ -37,7 +37,7 @@ type TApplySavedParams = {
 }
 
 export type TDraftEditorState = {
-  activePage: ReturnType<typeof resolveActivePage>
+  activePage: TSideTreePage | null
   bodyStats: ReturnType<typeof countEditorText>
   dirty: boolean
   draft: TEditorDraft
@@ -63,39 +63,42 @@ export type TDraftEditorState = {
   setSaving: () => void
 }
 
-const resolveActivePage = (sideTree: TSideTreeController) => {
+const resolveActivePage = (sideTree: TSideTreeController): TSideTreePage | null => {
   const activeChild = sideTree.activeId ? findChild(sideTree.groups, sideTree.activeId) : null
   return activeChild?.type === SIDE_TREE_NODE_TYPE.PAGE && activeChild.docId ? activeChild : null
 }
 
-export default function useDraftEditorState(sideTree: TSideTreeController): TDraftEditorState {
-  const { live$: docsEditor$ } = useDocsEditor()
-  const initialDraft = useMemo(
-    () =>
-      composeEditorDraft({
-        bodyValue: docsEditor$.bodyValue,
-        docId: docsEditor$.docDraftInfo.id || '',
-        slug: docsEditor$.docDraftInfo.slug,
-        subtitle: docsEditor$.docDraftInfo.subtitle,
-        title: docsEditor$.docDraftInfo.title,
-      }),
-    [],
-  )
+export default function useDraftEditorState(
+  sideTree: TSideTreeController,
+  initialData?: TDocDraftInitialData | null,
+): TDraftEditorState {
   const activePage = useMemo(
     () => resolveActivePage(sideTree),
     [sideTree.activeId, sideTree.groups],
   )
+  const initialSession = useMemo(
+    () =>
+      activePage && initialData && String(initialData.docId) === String(activePage.docId)
+        ? composeLoadedDraftSession(initialData, activePage)
+        : null,
+    [],
+  )
+  const initialDraft = useMemo(
+    () =>
+      initialSession ? composeEditorDraftFromSession(initialSession) : composeEmptyEditorDraft(),
+    [],
+  )
   const [draft, setDraft] = useState<TEditorDraft>(initialDraft)
   const [savedDraft, setSavedDraft] = useState<TSavedDraft>(() => composeSavedDraft(initialDraft))
   const [draftSource, setDraftSource] = useState<TDocDraftSource>(() =>
-    resolveDraftSource(docsEditor$.docDraftInfo),
+    initialSession ? initialSession.source : 'public',
   )
   const [meta, setMeta] = useState<TEditorDraftMeta>(() =>
-    composeEditorDraftMeta(docsEditor$.docDraftInfo),
+    composeEditorDraftMeta(initialSession?.info),
   )
   const [loadStatus, setLoadStatus] = useState<TDraftLoadStatus>({
     error: null,
-    loadedDocId: initialDraft.docId || null,
+    loadedDocId: initialSession ? initialDraft.docId || null : null,
     loading: false,
   })
   const [saveStatus, setSaveStatus] = useState<TDraftSaveStatus>({

@@ -1,12 +1,16 @@
-import type { TSideTreeController } from '../SideTree/spec'
+import type { TSideTreeController } from '../../SideTree/spec'
+import type { TDocDraftInitialData } from '../spec'
 import useDraftAutoSave from './useDraftAutoSave'
 import useDraftEditorState from './useDraftEditorState'
 import useDraftLoader from './useDraftLoader'
 import useDraftSnapshot from './useDraftSnapshot'
 import useDraftStoreSync from './useDraftStoreSync'
 
-export default function useLogic(sideTree: TSideTreeController) {
-  const draftState = useDraftEditorState(sideTree)
+export default function useLogic(
+  sideTree: TSideTreeController,
+  initialData?: TDocDraftInitialData | null,
+) {
+  const draftState = useDraftEditorState(sideTree, initialData)
   const { save } = useDraftAutoSave(draftState, {
     patchSideTreeChild: sideTree.patchChild,
   })

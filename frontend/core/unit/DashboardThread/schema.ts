@@ -653,7 +653,7 @@ const docDraftSnapshots = gql`
       subtitle
       digest
       documentJson
-      contentHash
+      versionHash
       revisionNumber
       schemaVersion
       insertedAt
@@ -746,7 +746,7 @@ const updateDocDraft = gql`
     $title: String
     $subtitle: String
     $slug: String
-    $body: String
+    $bodyBag: ArtimentBodyBagInput
   ) {
     updateDocDraft(
       community: $community
@@ -754,7 +754,7 @@ const updateDocDraft = gql`
       title: $title
       subtitle: $subtitle
       slug: $slug
-      body: $body
+      bodyBag: $bodyBag
     ) {
       id
       docId
@@ -794,7 +794,7 @@ const checkpointDocDraftSnapshot = gql`
       subtitle
       documentJson
       digest
-      contentHash
+      versionHash
       revisionNumber
       schemaVersion
       insertedAt

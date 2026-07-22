@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 
-import useDocsEditor from '../store/hooks'
-import { composeDraftEditorStorePatch, composeEmptyDraftEditorStorePatch } from './helper'
+import useDocsEditor from '../../store/hooks'
+import { composeDraftEditorStorePatch, composeEmptyDraftEditorStorePatch } from '../helper'
 import type { TDraftEditorState } from './useDraftEditorState'
 
 export default function useDraftStoreSync(draftState: TDraftEditorState): void {
