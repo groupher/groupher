@@ -53,7 +53,9 @@ separate Docs-only concept.
 ## 4. Core invariants
 
 1. `article_hash_id` is a random, stable UUID. It is never derived from content.
-2. `content_hash` identifies versioned content and changes when that content changes.
+2. `body_hash` identifies one canonical BodyBag; `version_hash` identifies the
+   complete versioned Article state and changes when any versioned field,
+   relation, or BodyBag content changes.
 3. Public traffic reads only `main` branch + `public` stage.
 4. A preview branch contains draft state only. It never owns a public Article row.
 5. A public row never moves back to draft. Editing public content creates a draft copy.
@@ -260,7 +262,7 @@ html
 xml
 rss
 plain_text
-content_hash
+body_hash
 document asset refs
 ```
 
@@ -420,8 +422,9 @@ ArticleSnapshot
 ├─ title
 ├─ digest
 ├─ document_json
+├─ body_bag
 ├─ data
-├─ content_hash
+├─ version_hash
 ├─ schema_version
 ├─ message
 └─ inserted_at
@@ -446,7 +449,8 @@ separate draft/public numbering.
 
 There is no separate `payload` domain model. Snapshot storage is split into:
 
-- explicit common columns such as title, digest, and document JSON;
+- explicit common columns such as title, digest, document JSON, restorable
+  `body_bag`, and the complete-state `version_hash`;
 - `data`, which stores product-specific versioned fields and restorable
   versioned relations.
 
@@ -502,7 +506,7 @@ Doc release N      <-> Doc release N-1
 
 Comparison order:
 
-1. compare canonical `content_hash`;
+1. compare canonical `version_hash`;
 2. compare ordinary versioned fields;
 3. compare versioned relations;
 4. run editor AST Diff only when document JSON changed.
@@ -524,6 +528,239 @@ It does not require an `article_time_machines` table.
 Current Article rows are normalized into the same transient comparable state as
 Snapshots. Reading a current Diff never inserts a checkpoint or changes history.
 
+### 11.1 Frontend Revision Diff pipeline
+
+The frontend has one editor Diff engine:
+
+```text
+Groupher                              @groupher/rich-editor
+----------------------------------    --------------------------------
+query and order Snapshots             define Plate Diff semantics
+select comparison baselines           compute one complete Diff result
+schedule Worker tasks                 derive stats and hasChanges
+cache results                         produce diffValue
+render Revision product UI            render diffValue
+restore a Snapshot
+```
+
+Groupher must not implement LCS, Myers, LIS, block signatures, inline segments,
+or a second Revision Diff renderer. There is no compatibility path for the old
+Groupher-specific Diff model.
+
+#### Button and history have different comparison semantics
+
+The action button answers one product question:
+
+```text
+"How much has the current document changed since the latest publish?"
+
+latest public Snapshot
+          |
+          | direct comparison
+          v
+     current body
+          |
+          +-- stats -------> button +n/-n
+          `-- hasChanges --> button state
+```
+
+It never adds the stats of intermediate draft Snapshots. Summing adjacent
+history entries does not produce a net Diff:
+
+```text
+published -> r1     +1/-0
+r1        -> r2     +0/-1
+--------------------------------
+summed history      +1/-1    wrong answer for net change
+direct comparison   +0/-0    current equals published
+```
+
+The Revision drawer answers a different question: what changed between two
+adjacent checkpoints?
+
+```text
+current body  <-> latest draft Snapshot       "Now"
+draft r3      <-> draft r2
+draft r2      <-> draft r1
+draft r1      <-> latest public Snapshot
+public p3     <-> public p2
+public p2     <-> public p1
+```
+
+These two semantics remain separate. The button uses one direct publish pair;
+the drawer uses an ordered timeline of adjacent pairs.
+
+#### History is lazy
+
+Entering the editor does not calculate every historical pair:
+
+```text
+Editor mounted
+      |
+      +-- query Snapshot metadata
+      |
+      `-- debounce current body
+             |
+             v
+         calculate only
+         latest public -> current body
+
+Drawer closed
+      |
+      `-- no historical Diff calculation
+```
+
+History work starts only when the user opens the drawer:
+
+```text
+Open Drawer
+      |
+      v
+construct ordered pairs
+      |
+      +-- staged tab pairs
+      `-- published tab pairs
+             |
+             v
+calculate stats needed by the active tab
+```
+
+While the staged tab remains open, only its live `Now` pair follows editor
+input. It shares the same debounce window as the publish pair; immutable
+Snapshot pairs are not restarted on every keystroke:
+
+```text
+bodyValue changed
+      |
+      v
+200 ms debounce
+      |
+      +-- latest public -> current body ------> button
+      |
+      `-- staged tab active?
+              |
+              `-- latest draft -> current body -> "Now"
+
+historical Snapshot pairs
+      `-- unchanged; keep cached results
+```
+
+Selecting an entry requests its complete result:
+
+```text
+Select Revision pair
+      |
+      v
+RevisionDiffClient.getOrCompute(pair)
+      |
+      +-- cache hit --------------------------+
+      |                                       |
+      `-- cache miss                          |
+             |                                |
+             v                                |
+        Worker.compute(before, after)         |
+             |                                |
+             v                                |
+         complete result ---------------------+
+             |
+             v
+       RichEditorDiff(diffValue)
+```
+
+Cache eviction is an optimization detail, never a visible state. A miss always
+recomputes from the pair's `before` and `after` values; it must not render a
+silently empty Diff.
+
+#### Worker and cache boundary
+
+Complete Plate Diff calculation stays off the main thread because large block
+sets and large text replacement can exceed one frame budget.
+
+```text
+Main thread                            Worker
+----------------------------------     -------------------------------
+debounce input                         receive before/after
+allocate request id      postMessage   computeRichEditorDiff
+discard stale response  <-----------   return complete result
+cache result
+update UI
+```
+
+The Worker is stateless. It has one operation:
+
+```text
+compute(before, after)
+      |
+      v
+{
+  stats,
+  hasChanges,
+  diffValue
+}
+```
+
+The main-thread client owns the single bounded result cache. Current-body keys
+replace their previous value; immutable Snapshot pairs use stable version-hash
+keys. A cache miss follows the same compute path, so eviction cannot change
+behavior.
+
+When no draft Snapshot exists, the button and `Now` have the same baseline.
+They use one live-pair key, so in-flight work and the cached complete result are
+shared instead of running the same Plate Diff twice.
+
+Every current-body request has a monotonically increasing id:
+
+```text
+input A ---- request 41 --------------------------x stale
+input B ------- request 42 -------------------x stale
+input C ---------- request 43 ---------------> accepted
+```
+
+Only the latest response may update current button state. Worker scheduling,
+debounce, cache lifetime, and stale-response handling belong to Groupher; they
+do not change the rich-editor Diff contract.
+
+#### Stats are not change detection
+
+`stats` is presentational data. Revision visibility uses `hasChanges`:
+
+```text
+mark change           stats=+0/-0   hasChanges=true
+link attribute change stats=+0/-0   hasChanges=true
+empty block insertion stats=+0/-0   hasChanges=true
+```
+
+The final output routing is:
+
+```text
+computeRichEditorDiff(before, after)
+      |
+      +-- stats --------------------> exact +n/-n display
+      +-- hasChanges ---------------> visibility and empty state
+      `-- diffValue ----------------> RichEditorDiff renderer
+```
+
+#### Temporary Worker build adapter
+
+The current Dashboard Turbopack build copies a `new URL(...worker.ts)` target as
+raw TypeScript instead of producing an executable Worker bundle. Until the
+bundler handles this entry correctly, the Dashboard uses an isolated adapter:
+
+```text
+diff.worker.ts
+      |
+      | temporary Vite build
+      v
+public/worker-revision-diff.js
+      |
+      v
+Dashboard Worker URL
+```
+
+This adapter is build infrastructure only. It must not own Diff behavior or
+cache policy, and should be deleted when the Dashboard bundler can emit the
+Worker directly. The generated JavaScript is not committed.
+
 ## 12. Snapshot growth policy
 
 Autosave updates the mutable Draft row; it does not create a Snapshot every few
@@ -540,7 +777,7 @@ restore
 session/inactivity checkpoint under a bounded policy
 ```
 
-Ordinary checkpoints are deduplicated by canonical `content_hash`. Publish and
+Ordinary checkpoints are deduplicated by canonical `version_hash`. Publish and
 other explicit product events may still create an audit entry when required.
 
 Retention categories:
