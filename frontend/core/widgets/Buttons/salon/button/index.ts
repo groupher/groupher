@@ -95,6 +95,12 @@ export default function useButtonSalon({
     return fg('button.fg')
   }
 
+  const toneHover = () => {
+    if (!interactive || ghost || tone !== 'red') return ''
+
+    return cn(`hover:${rainbow(COLOR.RED, 'bg')}`, `hover:${fg('button.fg')}`)
+  }
+
   const ghostBorder = () => {
     if (!ghost || noBorder) return ''
     if (color) return rainbow(color, 'borderLite')
@@ -148,6 +154,7 @@ export default function useButtonSalon({
 
       toneBg(),
       toneFg(),
+      toneHover(),
 
       ghostBorder(),
       ghostHoverBg(),
