@@ -6,6 +6,7 @@ import Github from 'next-auth/providers/github'
 
 import { GRAPHQL_ENDPOINT } from '~/config'
 import { AUTH_KEY } from '~/const/oauth'
+import { GROUPHER_SERVER_TRUST_HEADER } from '~/const/serverTrust'
 
 // import Google from 'next-auth/providers/google'
 
@@ -13,14 +14,21 @@ const makeClient = () => {
   return createClient({
     url: GRAPHQL_ENDPOINT,
     exchanges: [cacheExchange, fetchExchange],
+    fetchOptions: () => {
+      const serverTrustSecret = process.env.GROUPHER_SERVER_TRUST_SECRET?.trim()
+
+      return serverTrustSecret
+        ? { headers: { [GROUPHER_SERVER_TRUST_HEADER]: serverTrustSecret } }
+        : {}
+    },
   })
 }
 
 const { getClient } = registerUrql(makeClient)
 
 const signinOauthQuery = gql`
-  mutation ($provider: OauthProviderInput!, $oauthTrustCode: String!) {
-    signinOauth(provider: $provider, oauthTrustCode: $oauthTrustCode) {
+  mutation ($provider: OauthProviderInput!) {
+    signinOauth(provider: $provider) {
       token
       user {
         login
@@ -31,8 +39,8 @@ const signinOauthQuery = gql`
   }
 `
 
-const oauthSignin = (params) => {
-  return getClient().mutation(signinOauthQuery, params)
+const oauthSignin = (provider) => {
+  return getClient().mutation(signinOauthQuery, { provider })
 }
 
 const config = {
@@ -54,13 +62,8 @@ const config = {
           raw: JSON.stringify(profile),
         }
 
-        const params = {
-          provider: standProvider,
-          oauthTrustCode: process.env.OAUTH_TRUST_CODE,
-        }
-
         try {
-          const { data, error } = await oauthSignin(params)
+          const { data, error } = await oauthSignin(standProvider)
           if (error) {
             console.error('oauthSignin GraphQL error:', {
               provider: standProvider,
