@@ -14,7 +14,11 @@ import PubSub from './pubsub'
  */
 export const send = (msg: string, data = {}): void => {
   // TODO: check the msg is valid
-  // PubSub.publishSync(msg, data)
+  PubSub.publishSync(msg, data)
+}
+
+/** Publish an in-app event after the current call stack completes. */
+export const sendAsync = (msg: string, data = {}): void => {
   PubSub.publish(msg, data)
 }
 
