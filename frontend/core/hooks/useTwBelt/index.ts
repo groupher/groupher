@@ -184,6 +184,8 @@ export default function useTwBelt(): TRet {
   }
 
   const landingTitle = (): string => cn(STATIC_CLS.landingTitleBase, fg('title'))
+  const panel = (classNames?: string): string =>
+    cnMerge(STATIC_CLS.panelBase, bg('card'), br('divider'), classNames)
 
   const hover = (part: THoverPart): string => {
     switch (part) {
@@ -373,6 +375,7 @@ export default function useTwBelt(): TRet {
       scrollbar,
       cut,
       landingTitle,
+      panel,
 
       hover,
       selectable,

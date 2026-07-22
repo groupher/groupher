@@ -121,6 +121,7 @@ export type TRet = {
 
   cut: (classname?: TCutWWidth) => string
   landingTitle: () => string
+  panel: (classNames?: string) => string
   hover: (part: THoverPart) => string
   selectable: (part: TSelectablePart, options?: TSelectableOptions) => string
 

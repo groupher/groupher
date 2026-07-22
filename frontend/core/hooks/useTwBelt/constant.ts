@@ -29,6 +29,8 @@ export const STATIC_CLS = {
 
   landingTitleBase: 'text-3xl bold-sm opacity-70 dark:opacity-90 text-shadow dark:text-shadow-none',
 
+  panelBase: 'rounded-lg border p-6',
+
   sexyBorderBase: 'h-px w-full border-b',
   sexyVBorderBase: 'h-full w-px border-l',
 
