@@ -1,3 +1,5 @@
+/* oxlint-disable react/button-has-type */
+// The shared type prop is restricted to the three valid native button types below.
 import type { FC, ReactNode } from 'react'
 
 import SIZE from '~/const/size'
@@ -34,6 +36,7 @@ type TProps = {
   disabled?: boolean
   loading?: boolean
   onClick?: () => void
+  type?: 'button' | 'submit' | 'reset'
 } & TSpace
 
 const Button: FC<TProps> = ({
@@ -60,6 +63,7 @@ const Button: FC<TProps> = ({
   disabled = false,
   loading = false,
   onClick,
+  type = 'button',
   ...spacing
 }) => {
   const s = useSalon({
@@ -98,7 +102,7 @@ const Button: FC<TProps> = ({
 
   return (
     <button
-      type='button'
+      type={type}
       className={cnMerge(s.wrapper, className)}
       disabled={disabled}
       aria-label={ariaLabel}

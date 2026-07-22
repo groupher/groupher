@@ -90,6 +90,16 @@
     }
   }
 
+  @keyframes shimmer-text {
+    from {
+      background-position: 200% 0;
+    }
+
+    to {
+      background-position: -200% 0;
+    }
+  }
+
   .animate-loading-grow {
     animation: loading-grow 1s linear infinite;
   }
@@ -104,6 +114,21 @@
 
   .animate-save-status-marquee {
     animation: save-status-marquee 3.2s ease-in-out infinite;
+  }
+
+  .shimmer-text {
+    color: transparent;
+    background: linear-gradient(
+      100deg,
+      var(--color-digest) 35%,
+      var(--color-title) 50%,
+      var(--color-digest) 65%
+    );
+    background-size: 220% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer-text 2.4s ease-in-out infinite;
   }
 
   .overflow-marquee-track {
@@ -143,5 +168,14 @@
   .arrow-button:hover .group-hover-arrow-down,
   .arrow-button-scope:hover .group-hover-arrow-down {
     animation-name: arrow-nudge-down;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .shimmer-text {
+      color: var(--color-title);
+      background: none;
+      -webkit-text-fill-color: currentcolor;
+      animation: none;
+    }
   }
 }

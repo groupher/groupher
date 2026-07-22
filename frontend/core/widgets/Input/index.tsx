@@ -5,7 +5,7 @@
  */
 
 import { pickBy } from 'ramda'
-import { type FC, useCallback } from 'react'
+import { type FC, type HTMLInputTypeAttribute, useCallback } from 'react'
 
 import { cnMerge } from '~/css'
 import useAutoFocus from '~/hooks/useAutoFocus'
@@ -29,6 +29,8 @@ type TProps = {
   suffixIcon?: string | null
   suffixActive?: boolean
   disabled?: boolean
+  required?: boolean
+  type?: HTMLInputTypeAttribute
   autoFocus?: boolean
   focusOnMount?: boolean
   disableEnter?: boolean

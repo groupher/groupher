@@ -4,6 +4,7 @@ import useTwBelt from '~/hooks/useTwBelt'
 import type { TColorName, TSizeSM, TSpace } from '~/spec'
 
 type TProps = {
+  className: string
   disabled: boolean
   checked: boolean
   indeterminate: boolean
@@ -21,6 +22,7 @@ export default function useSalon({
   dimWhenIdle,
   color,
   size,
+  className,
   ...spacing
 }: TProps) {
   const { cn, margin, fg, fill, bg, rainbow } = useTwBelt()
@@ -38,6 +40,7 @@ export default function useSalon({
       dimWhenIdle ? 'opacity-65' : 'opacity-100',
       disabled ? 'cursor-not-allowed' : 'cursor-pointer',
       margin(spacing),
+      className,
     ),
 
     // 让 input 语义存在，但视觉隐藏；仍可聚焦/可读屏/可键盘切换
