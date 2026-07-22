@@ -4,13 +4,14 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.Connection do
 
   Credentials are deliberately represented only by `credential_locator`;
   tokens and private keys are rejected from the public configuration map.
+
+  See `docs/bulk-import/content-import-architecture.md` for the persistence boundary.
   """
 
   use Ecto.Schema
 
   import Ecto.Changeset
 
-  alias GroupherServer.CMS.ContentImport.Status
   alias GroupherServer.CMS.Model.Community
   alias Helper.Constant.DBPrefix
 
@@ -18,6 +19,7 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.Connection do
   @timestamps_opts [type: :utc_datetime]
 
   @platforms ~w(github archive notion sanity)a
+  @statuses ~w(active disabled)a
   @required_fields ~w(community_id platform source_ref connection_key status)a
   @optional_fields ~w(config credential_locator)a
   @sensitive_fragments ~w(token secret password authorization private_key credential)
@@ -31,23 +33,25 @@ defmodule GroupherServer.CMS.ContentImport.Persistence.Connection do
     field(:platform, Ecto.Enum, values: @platforms)
     field(:source_ref, :string)
     field(:connection_key, :string, default: "default")
-    field(:status, Ecto.Enum, values: Status.connection(), default: :active)
+    field(:status, Ecto.Enum, values: @statuses, default: :active)
     field(:config, :map, default: %{})
     field(:credential_locator, :string)
 
     timestamps(type: :utc_datetime)
   end
 
+  @doc "Returns the external source platforms accepted by the persistence contract."
   @spec platforms() :: [atom()]
   def platforms, do: @platforms
 
+  @doc "Builds a credential-safe, community-scoped external source connection changeset."
   @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(%__MODULE__{} = connection, attrs) do
     connection
     |> cast(attrs, @required_fields ++ @optional_fields)
     |> validate_required(@required_fields)
     |> validate_inclusion(:platform, @platforms)
-    |> validate_inclusion(:status, Status.connection())
+    |> validate_inclusion(:status, @statuses)
     |> validate_length(:source_ref, min: 1, max: 1_000)
     |> validate_length(:connection_key, min: 1, max: 120)
     |> validate_length(:credential_locator, max: 500)

@@ -38,7 +38,6 @@ defmodule GroupherServer.CMS.DocTree.Import do
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.ContentImport.Canonical
   alias CMS.DocTree.{Read, Revision}
   alias CMS.Model.{ArticleBranch, Community, DocTreeNode}
 
@@ -52,25 +51,40 @@ defmodule GroupherServer.CMS.DocTree.Import do
           | {:error, term()}
   def apply(%Community{} = community, %ArticleBranch{} = branch, tree, items_by_target)
       when is_map(tree) and is_map(items_by_target) do
-    with {:ok, state} <- Read.ensure_draft_state(community, branch_id: branch.id),
+    with namespace when is_binary(namespace) and namespace != "" <- Map.get(tree, "branchSlug"),
+         {:ok, state} <- Read.ensure_draft_state(community, branch_id: branch.id),
          {:ok, attrs} <-
-           flatten_tabs(community, branch, Map.get(tree, "tabs", []), items_by_target),
+           flatten_tabs(
+             community,
+             branch,
+             namespace,
+             Map.get(tree, "tabs", []),
+             items_by_target
+           ),
+         attrs <- reuse_existing_node_ids(attrs),
          {:ok, nodes} <- upsert_nodes(attrs),
          {:ok, state} <- Revision.bump_tree_draft(community, state) do
       {:ok, %{nodes: nodes, state: state}}
+    else
+      namespace when namespace in [nil, ""] ->
+        {:error, {:custom, "imported Doc tree namespace is required"}}
+
+      error ->
+        error
     end
   end
 
-  defp flatten_tabs(community, branch, tabs, items_by_target) when is_list(tabs) do
+  defp flatten_tabs(community, branch, namespace, tabs, items_by_target) when is_list(tabs) do
     tabs
     |> Enum.with_index()
     |> Enum.reduce_while({:ok, []}, fn {tab, index}, {:ok, attrs} ->
-      tab_id = node_id(:tab, tab["sourceId"])
+      tab_id = node_id(:tab, namespace, tab["sourceId"])
 
       with {:ok, attrs} <-
              flatten_groups(
                community,
                branch,
+               namespace,
                tab_id,
                Map.get(tab, "groups", []),
                items_by_target,
@@ -80,6 +94,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
              flatten_pins(
                community,
                branch,
+               namespace,
                tab_id,
                Map.get(tab, "pins", []),
                attrs
@@ -92,15 +107,15 @@ defmodule GroupherServer.CMS.DocTree.Import do
     |> reverse_attrs()
   end
 
-  defp flatten_tabs(_community, _branch, _tabs, _items_by_target),
+  defp flatten_tabs(_community, _branch, _namespace, _tabs, _items_by_target),
     do: {:error, {:custom, "imported Doc tree tabs are invalid"}}
 
-  defp flatten_groups(community, branch, tab_id, groups, items_by_target, attrs)
+  defp flatten_groups(community, branch, namespace, tab_id, groups, items_by_target, attrs)
        when is_list(groups) do
     groups
     |> Enum.with_index()
     |> Enum.reduce_while({:ok, attrs}, fn {group, index}, {:ok, attrs} ->
-      group_id = node_id(:group, group["sourceId"])
+      group_id = node_id(:group, namespace, group["sourceId"])
 
       group_attrs =
         community
@@ -111,6 +126,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
              flatten_children(
                community,
                branch,
+               namespace,
                group_id,
                Map.get(group, "children", []),
                items_by_target,
@@ -123,10 +139,18 @@ defmodule GroupherServer.CMS.DocTree.Import do
     end)
   end
 
-  defp flatten_groups(_community, _branch, _tab_id, _groups, _items_by_target, _attrs),
-    do: {:error, {:custom, "imported Doc tree groups are invalid"}}
+  defp flatten_groups(
+         _community,
+         _branch,
+         _namespace,
+         _tab_id,
+         _groups,
+         _items_by_target,
+         _attrs
+       ),
+       do: {:error, {:custom, "imported Doc tree groups are invalid"}}
 
-  defp flatten_children(community, branch, group_id, children, items_by_target, attrs)
+  defp flatten_children(community, branch, namespace, group_id, children, items_by_target, attrs)
        when is_list(children) do
     children
     |> Enum.with_index()
@@ -138,7 +162,13 @@ defmodule GroupherServer.CMS.DocTree.Import do
           if Map.has_key?(items_by_target, target_ref) do
             child_attrs =
               community
-              |> base_attrs(branch, child, :page, node_id(:page, child["sourceId"]), index)
+              |> base_attrs(
+                branch,
+                child,
+                :page,
+                node_id(:page, namespace, child["sourceId"]),
+                index
+              )
               |> Map.put(:group_id, group_id)
               |> Map.put(:doc_id, target_ref)
 
@@ -150,7 +180,13 @@ defmodule GroupherServer.CMS.DocTree.Import do
         "link" ->
           child_attrs =
             community
-            |> base_attrs(branch, child, :link, node_id(:link, child["sourceId"]), index)
+            |> base_attrs(
+              branch,
+              child,
+              :link,
+              node_id(:link, namespace, child["sourceId"]),
+              index
+            )
             |> Map.put(:group_id, group_id)
             |> Map.put(:href, child["href"])
 
@@ -162,16 +198,30 @@ defmodule GroupherServer.CMS.DocTree.Import do
     end)
   end
 
-  defp flatten_children(_community, _branch, _group_id, _children, _items_by_target, _attrs),
-    do: {:error, {:custom, "imported Doc tree children are invalid"}}
+  defp flatten_children(
+         _community,
+         _branch,
+         _namespace,
+         _group_id,
+         _children,
+         _items_by_target,
+         _attrs
+       ),
+       do: {:error, {:custom, "imported Doc tree children are invalid"}}
 
-  defp flatten_pins(community, branch, tab_id, pins, attrs) when is_list(pins) do
+  defp flatten_pins(community, branch, namespace, tab_id, pins, attrs) when is_list(pins) do
     pins
     |> Enum.with_index()
     |> Enum.reduce_while({:ok, attrs}, fn {pin, index}, {:ok, attrs} ->
       pin_attrs =
         community
-        |> base_attrs(branch, pin, :pin, node_id(:pin, pin["sourceId"]), index)
+        |> base_attrs(
+          branch,
+          pin,
+          :pin,
+          node_id(:pin, namespace, pin["sourceId"]),
+          index
+        )
         |> Map.put(:tab_id, tab_id)
         |> Map.put(:href, pin["href"])
 
@@ -179,7 +229,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
     end)
   end
 
-  defp flatten_pins(_community, _branch, _tab_id, _pins, _attrs),
+  defp flatten_pins(_community, _branch, _namespace, _tab_id, _pins, _attrs),
     do: {:error, {:custom, "imported Doc tree pins are invalid"}}
 
   defp base_attrs(%Community{} = community, branch, source, type, source_node_id, index) do
@@ -193,6 +243,98 @@ defmodule GroupherServer.CMS.DocTree.Import do
       slug: source["slug"],
       index: index
     }
+  end
+
+  # Import namespaces used to include the source revision. Reuse structural
+  # identities from an earlier imported tree so a repeat import can update it
+  # in place instead of colliding on root/sibling slugs or page doc_id.
+  defp reuse_existing_node_ids([]), do: []
+
+  defp reuse_existing_node_ids([first | _] = attrs) do
+    existing =
+      DocTreeNode
+      |> where(
+        [node],
+        node.community_id == ^first.community_id and node.branch_id == ^first.branch_id and
+          node.stage == ^first.stage and like(node.node_id, "import:%")
+      )
+      |> Repo.all()
+      |> existing_node_indexes()
+
+    attrs
+    |> Enum.map_reduce(%{}, fn attrs, replacements ->
+      original_node_id = attrs.node_id
+
+      attrs =
+        attrs
+        |> replace_parent_id(:tab_id, replacements)
+        |> replace_parent_id(:group_id, replacements)
+
+      node_id = existing_node_id(existing, attrs) || original_node_id
+      {Map.put(attrs, :node_id, node_id), Map.put(replacements, original_node_id, node_id)}
+    end)
+    |> elem(0)
+  end
+
+  defp existing_node_indexes(nodes) do
+    %{
+      by_doc_id: index_by(nodes, & &1.doc_id),
+      by_group_title: index_by(nodes, &{&1.group_id, &1.type, &1.title}),
+      by_group_slug: index_by(nodes, &{&1.group_id, &1.type, &1.slug}),
+      by_node_id: Map.new(nodes, &{&1.node_id, &1.node_id}),
+      by_root_title: index_by(nodes, &{&1.type, &1.title}),
+      by_root_slug: index_by(nodes, &{&1.type, &1.slug}),
+      by_tab_title: index_by(nodes, &{&1.tab_id, &1.type, &1.title}),
+      by_tab_slug: index_by(nodes, &{&1.tab_id, &1.type, &1.slug})
+    }
+  end
+
+  defp index_by(nodes, key_fun) do
+    nodes
+    |> Enum.reject(&(key_fun.(&1) |> empty_index_key?()))
+    |> Map.new(&{key_fun.(&1), &1.node_id})
+  end
+
+  defp empty_index_key?(nil), do: true
+
+  defp empty_index_key?(key) when is_tuple(key),
+    do: key |> Tuple.to_list() |> Enum.any?(&is_nil/1)
+
+  defp empty_index_key?(_key), do: false
+
+  defp replace_parent_id(attrs, field, replacements) do
+    case Map.get(attrs, field) do
+      nil -> attrs
+      parent_id -> Map.put(attrs, field, Map.get(replacements, parent_id, parent_id))
+    end
+  end
+
+  defp existing_node_id(indexes, %{node_id: node_id} = attrs) do
+    indexes.by_node_id[node_id] || existing_structural_node_id(indexes, attrs)
+  end
+
+  defp existing_structural_node_id(indexes, %{type: :tab} = attrs) do
+    indexes.by_root_slug[{:tab, attrs.slug}] || indexes.by_root_title[{:tab, attrs.title}]
+  end
+
+  defp existing_structural_node_id(indexes, %{type: type, tab_id: tab_id} = attrs)
+       when type in [:group, :pin] do
+    indexes.by_tab_slug[{tab_id, type, attrs.slug}] ||
+      indexes.by_tab_title[{tab_id, type, attrs.title}]
+  end
+
+  defp existing_structural_node_id(indexes, %{type: :page, doc_id: doc_id} = attrs) do
+    indexes.by_doc_id[doc_id] || existing_group_child_id(indexes, attrs)
+  end
+
+  defp existing_structural_node_id(indexes, %{type: :link} = attrs),
+    do: existing_group_child_id(indexes, attrs)
+
+  defp existing_structural_node_id(_indexes, _attrs), do: nil
+
+  defp existing_group_child_id(indexes, attrs) do
+    indexes.by_group_slug[{attrs.group_id, attrs.type, attrs.slug}] ||
+      indexes.by_group_title[{attrs.group_id, attrs.type, attrs.title}]
   end
 
   defp upsert_nodes([]), do: {:ok, []}
@@ -258,10 +400,17 @@ defmodule GroupherServer.CMS.DocTree.Import do
     |> Enum.reverse()
   end
 
-  defp node_id(type, source_id) when is_binary(source_id) and source_id != "" do
-    hash = Canonical.sha256(%{type: Atom.to_string(type), source_id: source_id})
+  defp node_id(type, namespace, source_id)
+       when is_binary(namespace) and namespace != "" and is_binary(source_id) and source_id != "" do
+    hash =
+      :sha256
+      |> :crypto.hash(
+        :erlang.term_to_binary({:doc_tree_import_node_v2, type, namespace, source_id})
+      )
+      |> Base.encode16(case: :lower)
+
     "import:#{Atom.to_string(type)}:" <> String.slice(hash, 0, 48)
   end
 
-  defp node_id(type, source_id), do: node_id(type, inspect(source_id))
+  defp node_id(type, namespace, source_id), do: node_id(type, namespace, inspect(source_id))
 end

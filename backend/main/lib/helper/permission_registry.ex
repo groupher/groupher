@@ -60,6 +60,42 @@ defmodule Helper.PermissionRegistry do
 
   def requirement(_), do: {:error, :unknown_action}
 
+  @doc "Checks a registered action against one normalized user passport."
+  @spec allowed?(map() | nil, String.t() | nil, String.t()) ::
+          {:ok, boolean()} | {:error, :unknown_action | :community_required}
+  def allowed?(passport, community, action) when is_binary(action) do
+    with {:ok, requirement} <- requirement(action) do
+      rules = normalize_rules(passport)
+
+      cond do
+        get_in(rules, ["global", "god"]) == true ->
+          {:ok, true}
+
+        requirement.scope == :global ->
+          grant = Map.get(requirement, :grant)
+          {:ok, is_binary(grant) and get_in(rules, ["global", grant]) == true}
+
+        requirement.scope == :context and is_binary(community) and community != "" ->
+          grant = Map.get(requirement, :grant)
+
+          {:ok,
+           get_in(rules, [community, "root"]) == true or
+             (is_binary(grant) and
+                get_in(rules, [community, to_string(requirement.context), grant]) == true)}
+
+        requirement.scope == :context ->
+          {:error, :community_required}
+
+        true ->
+          {:ok, false}
+      end
+    end
+  rescue
+    ArgumentError -> {:ok, false}
+  end
+
+  def allowed?(_, _, _), do: {:error, :unknown_action}
+
   @doc """
   Returns supported moderator titles.
   """

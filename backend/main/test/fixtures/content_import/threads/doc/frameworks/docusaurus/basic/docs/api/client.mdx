@@ -1,6 +1,0 @@
----
-title: Client
-sidebar_position: 2
----
-
-# Client
