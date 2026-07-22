@@ -6,6 +6,8 @@ config :groupher_server, GroupherServerWeb.Endpoint,
   http: [port: 4001],
   server: false
 
+config :groupher_server, :server_trust, secret: "test-server-trust-secret"
+
 # Print only warnings and errors during test
 config :logger, level: :warning
 
@@ -42,9 +44,6 @@ config :groupher_server, GroupherServer.Mailer, adapter: Bamboo.TestAdapter
 config :groupher_server, :audit,
   token: "24.aa6fb4e4018c371e9ed228db5bea3ec0.2592000.1641816180.282335-25148796"
 
-config :groupher_server, :oauth,
-  oauth_trust_code: "fWrFuWs1j+TGcrok7XHkwDLiOVTGOnUR3JWF3cbcu2Tcnbj7TvSS1mMVeekvjgNQ"
-
 config :groupher_server, :site_favicon_adapter, Helper.TestFakes.SiteFavicon
 config :groupher_server, :open_graph_adapter, Helper.TestFakes.OpenGraph
 
@@ -58,8 +57,6 @@ config :groupher_server, :search_artiments,
     index_name: "groupher_artiments_test",
     max_plain_text_bytes: 7_000
   ]
-
-config :groupher_server, Helper.Converter.Content, provider: Helper.Converter.Content.Plate
 
 config :groupher_server, :plausible,
   token: "tDsEjaIBqmfVpkKByebYgrCs1Kl1V3N3prFACyFJq33eeEumg8hAFgm-3ZQamwAq"

@@ -32,11 +32,30 @@ defmodule GroupherServerWeb.Context do
   authorization header is sent.
   """
   def build_context(conn) do
+    context = %{server_trusted: server_trusted?(conn)}
+
     with token when not is_nil(token) <- get_token_from(conn),
          {:ok, cur_user} <- authorize(token) do
-      %{cur_user: cur_user}
+      Map.put(context, :cur_user, cur_user)
     else
-      _ -> %{}
+      _ -> context
+    end
+  end
+
+  defp server_trusted?(conn) do
+    expected =
+      :groupher_server
+      |> Application.get_env(:server_trust, [])
+      |> Keyword.get(:secret)
+
+    case {expected, get_req_header(conn, "x-groupher-server-trust")} do
+      {expected, [provided]}
+      when is_binary(expected) and byte_size(expected) > 0 and
+             byte_size(expected) == byte_size(provided) ->
+        Plug.Crypto.secure_compare(expected, provided)
+
+      _ ->
+        false
     end
   end
 

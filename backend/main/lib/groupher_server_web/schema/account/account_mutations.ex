@@ -17,18 +17,16 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
     @desc "Sign in with an OAuth provider and return token info."
     field :signin_oauth, :token_info do
       arg(:provider, non_null(:oauth_provider_input))
-      arg(:oauth_trust_code, non_null(:string))
 
-      middleware(M.FEOauthCheck)
+      middleware(M.ServerTrust)
       resolve(&R.Accounts.signin_oauth/3)
     end
 
     @desc "Link an OAuth provider to the current account."
     field :link_oauth, :token_info do
       arg(:provider, non_null(:oauth_provider_input))
-      arg(:oauth_trust_code, non_null(:string))
 
-      middleware(M.FEOauthCheck)
+      middleware(M.ServerTrust)
       middleware(M.Authorize, :login)
 
       resolve(&R.Accounts.link_oauth/3)
@@ -37,9 +35,8 @@ defmodule GroupherServerWeb.Schema.Account.Mutations do
     @desc "Unlink an OAuth provider from the current account."
     field :unlink_oauth, :user do
       arg(:provider, non_null(:oauth_provider_input))
-      arg(:oauth_trust_code, non_null(:string))
 
-      middleware(M.FEOauthCheck)
+      middleware(M.ServerTrust)
       middleware(M.Authorize, :login)
 
       resolve(&R.Accounts.unlink_oauth/3)

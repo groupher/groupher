@@ -31,7 +31,4 @@ config :groupher_server, GroupherServer.Repo,
   pool_size: 50,
   queue_target: 5000
 
-config :groupher_server, :oauth,
-  oauth_trust_code: "fWrFuWs1j+TGcrok7XHkwDLiOVTGOnUR3JWF3cbcu2Tcnbj7TvSS1mMVeekvjgNQ"
-
-config :groupher_server, Helper.Converter.Content, provider: Helper.Converter.Content.Plate
+config :groupher_server, :server_trust, secret: "test-server-trust-secret"
