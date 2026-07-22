@@ -2,10 +2,23 @@
 name = "groupher-document-converter"
 version = "0.1.0"
 description = "Document-to-Markdown conversion service for Groupher"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.13"
 dependencies = [
   "fastapi>=0.117,<1",
+  "markitdown[docx,pdf,pptx,xlsx]>=0.1.6,<0.2",
+  "python-multipart>=0.0.20,<1",
 ]
+
+[project.optional-dependencies]
+test = [
+  "httpx>=0.28,<1",
+  "pytest>=8.4,<9",
+  "python-docx>=1.2,<2",
+  "uvicorn>=0.35,<1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.vercel]
 entrypoint = "app:app"
