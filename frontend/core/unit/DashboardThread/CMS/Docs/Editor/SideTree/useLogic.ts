@@ -892,6 +892,35 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     }
 
     if (
+      action === SIDE_TREE_NODE_MENU_ACTION.PIN_TO_COVER ||
+      action === SIDE_TREE_NODE_MENU_ACTION.UNPIN_FROM_COVER
+    ) {
+      const pinning = action === SIDE_TREE_NODE_MENU_ACTION.PIN_TO_COVER
+      mutate(pinning ? S.pinDocToCover : S.unpinDocFromCover, {
+        community,
+        nodeId: childId,
+      })
+        .then(() => {
+          const current = findChild(readGroups(), childId)
+          patchChild(childId, {
+            publishState: {
+              ...(current?.publishState ?? {}),
+              pinnedToCover: pinning,
+            } as TDocTreeNodePublishState,
+          })
+          toast(
+            t(
+              pinning
+                ? 'dsb.cms.docs.side_tree.cover.pinned'
+                : 'dsb.cms.docs.side_tree.cover.unpinned',
+            ),
+          )
+        })
+        .catch((err) => toast(formatMutationError(err), 'error'))
+      return
+    }
+
+    if (
       action === SIDE_TREE_NODE_MENU_ACTION.HIDE_FROM_COVER ||
       action === SIDE_TREE_NODE_MENU_ACTION.SHOW_IN_COVER
     ) {

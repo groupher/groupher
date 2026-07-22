@@ -984,21 +984,28 @@ const reorderDocCoverItems = gql`
   }
 `
 
-const pinDocCoverItem = gql`
-  mutation pinDocCoverItem($community: String!, $nodeId: ID!, $uiConfig: Json) {
-    pinDocCoverItem(community: $community, nodeId: $nodeId, uiConfig: $uiConfig) {
-      id
+const pinDocToCover = gql`
+  mutation pinDocToCover($community: String!, $nodeId: ID!) {
+    pinDocToCover(community: $community, nodeId: $nodeId) {
       nodeId
-      uiConfig
+      index
+      appearance
     }
   }
 `
 
-const unpinDocCoverItem = gql`
-  mutation unpinDocCoverItem($community: String!, $nodeId: ID!) {
-    unpinDocCoverItem(community: $community, nodeId: $nodeId) {
-      id
+const unpinDocFromCover = gql`
+  mutation unpinDocFromCover($community: String!, $nodeId: ID!) {
+    unpinDocFromCover(community: $community, nodeId: $nodeId) {
       nodeId
+    }
+  }
+`
+
+const reorderDocCoverPinnedDocs = gql`
+  mutation reorderDocCoverPinnedDocs($community: String!, $nodeIds: [ID!]!) {
+    reorderDocCoverPinnedDocs(community: $community, nodeIds: $nodeIds) {
+      done
     }
   }
 `
@@ -1021,12 +1028,11 @@ const updateDocCoverItemUiConfig = gql`
   }
 `
 
-const updateDocCoverPinnedUiConfig = gql`
-  mutation updateDocCoverPinnedUiConfig($community: String!, $nodeId: ID!, $uiConfig: Json!) {
-    updateDocCoverPinnedUiConfig(community: $community, nodeId: $nodeId, uiConfig: $uiConfig) {
-      id
+const updatePinnedDocAppearance = gql`
+  mutation updatePinnedDocAppearance($community: String!, $nodeId: ID!, $appearance: Json!) {
+    updatePinnedDocAppearance(community: $community, nodeId: $nodeId, appearance: $appearance) {
       nodeId
-      uiConfig
+      appearance
     }
   }
 `
@@ -1208,11 +1214,12 @@ const schema = {
   setDocCoverItemHidden,
   reorderDocCoverGroups,
   reorderDocCoverItems,
-  pinDocCoverItem,
-  unpinDocCoverItem,
+  pinDocToCover,
+  unpinDocFromCover,
+  reorderDocCoverPinnedDocs,
   updateDocCoverGroupUiConfig,
   updateDocCoverItemUiConfig,
-  updateDocCoverPinnedUiConfig,
+  updatePinnedDocAppearance,
   updateModerators,
   searchUsers,
   addModerator,

@@ -15,6 +15,7 @@ type TProps = {
   type: string
   rightOffset?: string
   fromContentEdge?: boolean
+  wide?: boolean
 }
 
 export default function useSalon({
@@ -23,9 +24,11 @@ export default function useSalon({
   type,
   rightOffset = '0px',
   fromContentEdge = true,
+  wide,
 }: TProps) {
   const { cn, bg, br, page, shadow, scrollbar, zIndex } = useTwBelt()
   const { background } = usePageBg()
+  const wideMode = wide ?? isWideMode(type)
 
   const drawerStyle = useMemo(() => {
     const openTransform = getDesktopTransform(visible, fromContentEdge)
@@ -40,14 +43,14 @@ export default function useSalon({
 
       transition: closing
         ? `opacity ${CLOSE_ANIMATION_MS}ms ease, transform ${CLOSE_ANIMATION_MS}ms ease, filter ${CLOSE_ANIMATION_MS}ms ease`
-        : 'transform 280ms cubic-bezier(0.23, 1, 0.32, 1) 0ms',
+        : 'transform 280ms cubic-bezier(0.23, 1, 0.32, 1), width 280ms cubic-bezier(0.23, 1, 0.32, 1), min-width 280ms cubic-bezier(0.23, 1, 0.32, 1), right 280ms cubic-bezier(0.23, 1, 0.32, 1)',
 
-      right: isWideMode(type) ? rightOffset : pixelAdd(rightOffset, 30),
-      width: getDrawerWidth(type),
-      minWidth: getDrawerMinWidth(type),
+      right: wideMode ? rightOffset : pixelAdd(rightOffset, 30),
+      width: getDrawerWidth(type, wideMode),
+      minWidth: getDrawerMinWidth(type, wideMode),
       maxWidth: '985px',
     }
-  }, [visible, closing, fromContentEdge, type, rightOffset])
+  }, [visible, closing, fromContentEdge, type, rightOffset, wideMode])
 
   return {
     overlay: cn(
@@ -67,18 +70,19 @@ export default function useSalon({
       br('divider'),
       bg('pageBg'),
       page(),
-      !isWideMode(type) && 'rounded-md',
+      !wideMode && 'rounded-md',
       shadow('drawer'),
     ),
 
     drawerContentStyle: {
       backgroundColor: `var(--preview-page-bg, ${background})`,
-      height: isWideMode(type) ? '100vh' : `calc(100vh - ${NARROW_HEIGHT_OFFSET * 2}px)`,
+      height: wideMode ? '100vh' : `calc(100vh - ${NARROW_HEIGHT_OFFSET * 2}px)`,
+      transition: 'height 280ms cubic-bezier(0.23, 1, 0.32, 1)',
     },
 
     drawer: cn(
       'fixed row h-full will-change-transform box-border',
-      isWideMode(type) ? 'top-0' : 'top-5',
+      wideMode ? 'top-0' : 'top-5',
       closing && 'pointer-events-none',
       zIndex('drawer', true),
     ),

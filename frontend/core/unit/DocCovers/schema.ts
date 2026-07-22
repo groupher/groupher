@@ -51,19 +51,20 @@ const docCover = gql`
           ...docCoverItemFields
         }
       }
-      pinnedItems {
-        id
+      pinnedDocs {
         nodeId
-        docId
         index
-        uiConfig
-        type
-        title
+        appearance
         href
-        badge
-        digest
-        marker {
-          ...docCoverMarkerFields
+        doc {
+          title
+          author {
+            avatar
+            nickname
+          }
+          document {
+            thumbnail
+          }
         }
       }
     }

@@ -36,6 +36,8 @@ export const SIDE_TREE_NODE_MENU_ACTION = {
   MOVE_TO_DRAFT: 'move_to_draft',
   SHOW_IN_COVER: 'show_in_cover',
   HIDE_FROM_COVER: 'hide_from_cover',
+  PIN_TO_COVER: 'pin_to_cover',
+  UNPIN_FROM_COVER: 'unpin_from_cover',
   DELETE: 'delete',
 } as const
 

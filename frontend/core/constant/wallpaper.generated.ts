@@ -138,6 +138,10 @@ export const PATTERN_WALLPAPER = {
     image: '/wallpaper/picture/sw-1.webp',
     preview: '/wallpaper/picture-preview/sw-1.webp',
   },
+  travel: {
+    image: '/wallpaper/picture/travel.webp',
+    preview: '/wallpaper/picture-preview/travel.webp',
+  },
 } satisfies Record<string, TWallpaper>
 
 export const WALLPAPER_PATTERN = {

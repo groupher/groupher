@@ -7,6 +7,7 @@ import CalendarSlashSVG from '~/icons/CalendarSlash'
 import CopySVG from '~/icons/Copy'
 import MoreSVG from '~/icons/menu/MoreL'
 import EditSVG from '~/icons/PencilSimple'
+import PinSVG from '~/icons/Pin'
 import DeleteSVG from '~/icons/Trash'
 import OverflowMarqueeText from '~/widgets/OverflowMarqueeText'
 import Tooltip from '~/widgets/Tooltip'
@@ -19,6 +20,7 @@ type TProps = {
   moveToDraftVisible?: boolean
   coverToggleVisible?: boolean
   hiddenFromCover?: boolean
+  pinAction?: 'pin' | 'unpin'
   onSelect: (action: TSideTreeNodeMenuAction) => void
   onOpenChange?: (open: boolean) => void
 }
@@ -27,6 +29,7 @@ const ChildMenu: FC<TProps> = ({
   moveToDraftVisible = false,
   coverToggleVisible = false,
   hiddenFromCover = false,
+  pinAction,
   onSelect,
   onOpenChange,
 }) => {
@@ -108,6 +111,31 @@ const ChildMenu: FC<TProps> = ({
                 <CoverActionIcon className={s.itemIcon} />
               </div>
               <OverflowMarqueeText text={coverActionTitle} className={s.itemTitle} />
+            </button>
+          )}
+          {pinAction && (
+            <button
+              type='button'
+              className={s.item}
+              onClick={() =>
+                onSelect(
+                  pinAction === 'pin'
+                    ? SIDE_TREE_NODE_MENU_ACTION.PIN_TO_COVER
+                    : SIDE_TREE_NODE_MENU_ACTION.UNPIN_FROM_COVER,
+                )
+              }
+            >
+              <div className={s.iconBox}>
+                <PinSVG className={s.itemIcon} />
+              </div>
+              <OverflowMarqueeText
+                text={t(
+                  pinAction === 'pin'
+                    ? 'dsb.cms.docs.side_tree.menu.pin_to_cover'
+                    : 'dsb.cms.docs.side_tree.menu.unpin_from_cover',
+                )}
+                className={s.itemTitle}
+              />
             </button>
           )}
           <button
