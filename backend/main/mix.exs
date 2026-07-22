@@ -106,7 +106,6 @@ defmodule GroupherServer.Mixfile do
       # cron-like scheduler job
       {:quantum, "~> 3.5"},
       {:html_sanitize_ex, "~> 1.4"},
-      {:earmark, "~> 1.4.13"},
       {:accessible, "~> 0.3.0"},
       {:floki, "~> 0.38"},
       {:httpoison, "~> 2.3.0"},
