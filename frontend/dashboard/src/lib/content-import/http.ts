@@ -138,6 +138,40 @@ const assertActivePreview = async (
   }
 }
 
+const dispatchPreviewAnalysis = async (
+  store: PreviewStore,
+  record: TPreviewRecord,
+): Promise<void> => {
+  let workflowRunRef: string | null = null
+
+  try {
+    const run = await start(analyzeGitHubRepo, [
+      {
+        attemptRef: record.attemptRef,
+        community: record.community,
+        previewRef: record.previewRef,
+        repoUrl: record.requestedSource.repoUrl,
+      },
+    ])
+    workflowRunRef = run.runId
+    await store.putAnalysisRun(record.previewRef, {
+      attemptRef: record.attemptRef,
+      createdAt: new Date().toISOString(),
+      previewRef: record.previewRef,
+      schemaVersion: ANALYSIS_RUN_SCHEMA_VERSION,
+      workflowRunRef,
+    })
+  } catch (error) {
+    if (workflowRunRef) {
+      await getRun(workflowRunRef)
+        .cancel()
+        .catch(() => undefined)
+    }
+    await store.delete(record.previewRef)
+    throw error
+  }
+}
+
 /** Creates or resumes an idempotent PreviewRecord and dispatches repository analysis. */
 export const handleCreateDocImportPreview = async (
   request: Request,
@@ -184,16 +218,7 @@ export const handleCreateDocImportPreview = async (
       userRef: options.userRef,
     })
     await store.create(record)
-    const run = await start(analyzeGitHubRepo, [
-      { attemptRef: record.attemptRef, community, previewRef, repoUrl },
-    ])
-    await store.putAnalysisRun(previewRef, {
-      attemptRef: record.attemptRef,
-      createdAt: new Date().toISOString(),
-      previewRef,
-      schemaVersion: ANALYSIS_RUN_SCHEMA_VERSION,
-      workflowRunRef: run.runId,
-    })
+    await dispatchPreviewAnalysis(store, record)
     return json({ ok: true, previewRef, status: 'queued' }, 202)
   } catch (error) {
     return failure(error)

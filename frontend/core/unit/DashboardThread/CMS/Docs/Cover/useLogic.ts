@@ -112,7 +112,11 @@ export default function useLogic(): TRet {
     nodeId: string,
     appearance: TPinnedDocAppearance,
   ): Promise<void> => {
-    await mutate(DashboardSchema.updatePinnedDocAppearance, { community, nodeId, appearance })
+    await mutate(DashboardSchema.updatePinnedDocAppearance, {
+      community,
+      nodeId,
+      appearance: JSON.stringify(appearance),
+    })
     reloadCover()
   }
 
