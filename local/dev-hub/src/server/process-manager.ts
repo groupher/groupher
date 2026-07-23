@@ -15,6 +15,7 @@ const EXTERNAL_POLL_MS = 2_500
 const READINESS_POLL_MS = 500
 const RESTART_PORT_RELEASE_POLL_MS = 50
 const RESTART_PORT_RELEASE_TIMEOUT_MS = 5_000
+const STOP_GRACE_MS = 750
 
 type TRuntimeService = {
   definition: TServiceDefinition
@@ -214,17 +215,12 @@ export class ServiceManager {
     const pid = runtime.pid
     if (!child || !pid) return this.toPublicService(runtime)
 
-    const exited = new Promise<void>((resolve) => {
-      child.once('exit', () => resolve())
-    })
-
     runtime.stopRequested = true
     runtime.status = 'stopping'
     this.emitStatus(runtime)
     this.appendLog(runtime, 'system', '\r\n\u001b[38;5;214mStopping service…\u001b[0m\r\n')
-    killProcessGroup(child, pid, 'SIGKILL')
 
-    await exited
+    await terminateProcessGroup(child, pid)
     return this.toPublicService(runtime)
   }
 
@@ -247,16 +243,14 @@ export class ServiceManager {
     )
     if (running.length === 0) return
 
-    for (const runtime of running) {
-      runtime.stopRequested = true
-      if (runtime.child && runtime.pid) killProcessGroup(runtime.child, runtime.pid, 'SIGTERM')
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 750))
-
-    for (const runtime of running) {
-      if (runtime.child && runtime.pid) killProcessGroup(runtime.child, runtime.pid, 'SIGKILL')
-    }
+    await Promise.all(
+      running.map(async (runtime) => {
+        runtime.stopRequested = true
+        if (runtime.child && runtime.pid) {
+          await terminateProcessGroup(runtime.child, runtime.pid)
+        }
+      }),
+    )
   }
 
   private getRuntime(id: string): TRuntimeService {
@@ -460,5 +454,26 @@ function killProcessGroup(child: ChildProcess, pid: number, signal: NodeJS.Signa
   } catch (error) {
     const code = error instanceof Error && 'code' in error ? error.code : null
     if (code !== 'ESRCH') child.kill(signal)
+  }
+}
+
+async function terminateProcessGroup(child: ChildProcess, pid: number): Promise<void> {
+  if (child.exitCode !== null || child.signalCode !== null) return
+
+  const exited = new Promise<'exited'>((resolve) => {
+    child.once('exit', () => resolve('exited'))
+  })
+  let graceTimer: NodeJS.Timeout | null = null
+  const graceExpired = new Promise<'expired'>((resolve) => {
+    graceTimer = setTimeout(() => resolve('expired'), STOP_GRACE_MS)
+  })
+
+  killProcessGroup(child, pid, 'SIGTERM')
+  const outcome = await Promise.race([exited, graceExpired])
+  if (graceTimer) clearTimeout(graceTimer)
+
+  if (outcome === 'expired') {
+    killProcessGroup(child, pid, 'SIGKILL')
+    await exited
   }
 }

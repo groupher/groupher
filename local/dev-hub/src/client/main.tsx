@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 
 import { App } from './App'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 import './styles.css'
 
@@ -10,6 +11,14 @@ if (!root) throw new Error('Dev Hub root element is missing.')
 
 createRoot(root).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary
+      title='Dev Hub could not be displayed'
+      message='Reload the local dashboard to reconnect to the managed services.'
+      actionLabel='Reload Dev Hub'
+      variant='page'
+      onReset={() => window.location.reload()}
+    >
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 )

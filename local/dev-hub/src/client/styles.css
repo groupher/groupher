@@ -303,6 +303,87 @@ button {
   height: 15px;
 }
 
+.error-state {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border-radius: 18px;
+  color: var(--ink);
+  background: rgb(255 255 255 / 72%);
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 6%),
+    0 16px 38px rgb(0 0 0 / 5%);
+}
+
+.error-state--flow {
+  min-height: clamp(760px, 82vh, 980px);
+  margin-top: 48px;
+}
+
+.error-state--page {
+  width: min(560px, calc(100% - 48px));
+  min-height: auto;
+  margin: 18vh auto 0;
+}
+
+.error-state > svg {
+  width: 20px;
+  height: 20px;
+  color: #a57432;
+}
+
+.error-state-copy {
+  min-width: 0;
+}
+
+.error-state h2,
+.error-state p {
+  margin: 0;
+}
+
+.error-state h2 {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.error-state p {
+  margin-top: 4px;
+  color: var(--ink-muted);
+  font-size: 13px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.error-state button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 11px;
+  color: var(--ink);
+  background: #ffffff;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 8%);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.error-state button:active {
+  scale: 0.96;
+}
+
+.error-state button svg {
+  width: 15px;
+  height: 15px;
+}
+
 .loading-state {
   margin-top: 80px;
   color: var(--ink-muted);
@@ -1089,7 +1170,8 @@ button {
 .open-service:focus-visible,
 .terminal-panel-actions a:focus-visible,
 .terminal-panel-actions button:focus-visible,
-.error-banner button:focus-visible {
+.error-banner button:focus-visible,
+.error-state button:focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: 2px;
 }

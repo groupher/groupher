@@ -7,18 +7,32 @@ import type { TServiceDefinition } from './services.ts'
 const FIXTURE_SERVICE: TServiceDefinition = {
   id: 'stop-fixture',
   name: 'Stop Fixture',
-  description: 'Long-running process used to verify immediate stops.',
+  description: 'Long-running process used to verify graceful stops.',
   group: 'backend',
   monogram: 'SF',
   cwd: process.cwd(),
   command: process.execPath,
-  args: ['-e', 'setInterval(() => {}, 1_000)'],
+  args: [
+    '-e',
+    "process.on('SIGTERM', () => { console.log('SIGTERM received'); setTimeout(() => process.exit(0), 25) }); console.log('READY'); setInterval(() => {}, 1_000)",
+  ],
   metrics: {
     serverCpuPercent: 100,
     serverRssBytes: 1024 ** 3,
     browserBusyPercent: 50,
     browserHeapBytes: 512 * 1024 ** 2,
   },
+}
+
+const STUBBORN_FIXTURE_SERVICE: TServiceDefinition = {
+  ...FIXTURE_SERVICE,
+  id: 'stubborn-stop-fixture',
+  name: 'Stubborn Stop Fixture',
+  description: 'Long-running process used to verify forced-stop fallback.',
+  args: [
+    '-e',
+    "process.on('SIGTERM', () => {}); console.log('READY'); setInterval(() => {}, 1_000)",
+  ],
 }
 
 const PORT_FIXTURE_SERVICE: TServiceDefinition = {
@@ -30,7 +44,7 @@ const PORT_FIXTURE_SERVICE: TServiceDefinition = {
 }
 
 test(
-  'stop terminates a managed process without a grace-period delay',
+  'stop gives a managed process a grace period before it exits',
   { timeout: 2_000 },
   async (t) => {
     const manager = new ServiceManager([FIXTURE_SERVICE])
@@ -38,6 +52,7 @@ test(
 
     const started = await manager.start(FIXTURE_SERVICE.id)
     assert.equal(started.status, 'running')
+    await waitForLog(manager, FIXTURE_SERVICE.id, 'READY')
 
     const stoppedEvent = new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(
@@ -64,8 +79,44 @@ test(
     assert.equal(stopped.status, 'stopped')
     assert.equal(stopped.pid, null)
     await stoppedEvent
+    assert.match(
+      manager
+        .getLogs(FIXTURE_SERVICE.id)
+        .map((log) => log.chunk)
+        .join(''),
+      /SIGTERM received/,
+    )
   },
 )
+
+test(
+  'stop force-kills a managed process after the grace period expires',
+  { timeout: 2_500 },
+  async (t) => {
+    const manager = new ServiceManager([STUBBORN_FIXTURE_SERVICE])
+    t.after(async () => manager.shutdown())
+
+    await manager.start(STUBBORN_FIXTURE_SERVICE.id)
+    await waitForLog(manager, STUBBORN_FIXTURE_SERVICE.id, 'READY')
+    const stopped = await manager.stop(STUBBORN_FIXTURE_SERVICE.id)
+
+    assert.equal(stopped.status, 'stopped')
+    assert.equal(stopped.pid, null)
+  },
+)
+
+async function waitForLog(manager: ServiceManager, serviceId: string, text: string): Promise<void> {
+  const deadline = Date.now() + 1_000
+  while (Date.now() < deadline) {
+    if (
+      manager.getLogs(serviceId).some((log) => log.stream === 'stdout' && log.chunk.includes(text))
+    ) {
+      return
+    }
+    await new Promise((resolve) => setTimeout(resolve, 10))
+  }
+  throw new Error(`Timed out waiting for ${serviceId} to log ${text}.`)
+}
 
 test('restart waits for the managed process to stop before starting a replacement', async (t) => {
   const manager = new ServiceManager([FIXTURE_SERVICE])

@@ -9,6 +9,7 @@ const execFileAsync = promisify(execFile)
 const EMPTY_TREE = '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
 const GIT_MAX_BUFFER = 32 * 1024 * 1024
 const REFRESH_DEBOUNCE_MS = 120
+const RECONCILE_INTERVAL_MS = 5_000
 
 const IGNORED_WORKTREE_PARTS = new Set([
   '.git',
@@ -54,6 +55,7 @@ export class GitMonitor {
   private gitDir = ''
   private revision = 0
   private refreshTimer: NodeJS.Timeout | null = null
+  private reconcileTimer: NodeJS.Timeout | null = null
   private refreshing = false
   private refreshQueued = false
   private closed = false
@@ -65,6 +67,10 @@ export class GitMonitor {
     await this.refreshNow()
     this.watchWorktree()
     this.watchGitDirectory()
+    this.reconcileTimer = setInterval(() => {
+      void this.refreshNow()
+    }, RECONCILE_INTERVAL_MS)
+    this.reconcileTimer.unref()
   }
 
   getSnapshot(): TGitSnapshot {
@@ -98,6 +104,9 @@ export class GitMonitor {
   close(): void {
     this.closed = true
     if (this.refreshTimer) clearTimeout(this.refreshTimer)
+    if (this.reconcileTimer) clearInterval(this.reconcileTimer)
+    this.refreshTimer = null
+    this.reconcileTimer = null
     for (const watcher of this.watchers) watcher.close()
     this.watchers.length = 0
   }

@@ -2,6 +2,7 @@ import type { TGitDiffScope, TPublicService } from '@shared/contracts'
 import { AlertCircle, X } from 'lucide-react'
 import { lazy, startTransition, Suspense, useCallback, useEffect, useState } from 'react'
 
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { GitDiffDrawer } from '@/components/GitDiffDrawer'
 import { MetricsNoticeBar } from '@/components/MetricsNoticeBar'
 import { PageHeader } from '@/components/PageHeader'
@@ -139,19 +140,27 @@ export function App() {
           />
         </>
       ) : (
-        <Suspense fallback={<div className='flow-loading'>Loading the Flow canvas…</div>}>
-          <FlowView
-            services={services}
-            relations={relations}
-            metricsByService={metricsByService}
-            expandedIds={expandedIds}
-            pendingIds={pendingIds}
-            onToggleService={handleToggleService}
-            onRestartService={handleRestartService}
-            onToggleTerminal={toggleTerminal}
-            onOpenMetrics={setMetricsServiceId}
-          />
-        </Suspense>
+        <ErrorBoundary
+          title='The Flow canvas could not be displayed'
+          message='The service controls are still available in the list view.'
+          actionLabel='Back to list'
+          variant='flow'
+          onReset={() => handleViewModeChange('list')}
+        >
+          <Suspense fallback={<div className='flow-loading'>Loading the Flow canvas…</div>}>
+            <FlowView
+              services={services}
+              relations={relations}
+              metricsByService={metricsByService}
+              expandedIds={expandedIds}
+              pendingIds={pendingIds}
+              onToggleService={handleToggleService}
+              onRestartService={handleRestartService}
+              onToggleTerminal={toggleTerminal}
+              onOpenMetrics={setMetricsServiceId}
+            />
+          </Suspense>
+        </ErrorBoundary>
       )}
 
       <footer className='site-footer'>
