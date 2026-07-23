@@ -395,7 +395,7 @@ button {
 
 .flow-loading {
   display: grid;
-  min-height: 520px;
+  height: clamp(760px, 82vh, 980px);
   place-items: center;
   margin-top: 48px;
   border: 1px solid rgb(0 0 0 / 6%);
@@ -407,8 +407,13 @@ button {
 
 .flow-canvas {
   overflow: hidden;
-  height: clamp(640px, 76vh, 900px);
+  height: max(clamp(760px, 82vh, 980px), var(--flow-content-height, 0px));
+  visibility: hidden;
   background: transparent;
+}
+
+.flow-canvas.is-ready {
+  visibility: visible;
 }
 
 .flow-canvas .react-flow__node {
@@ -428,8 +433,17 @@ button {
 .flow-service-handle {
   width: 8px;
   height: 8px;
-  border: 2px solid #676762;
-  background: #ffffff;
+  border: 0;
+}
+
+.flow-service-handle.is-source {
+  width: 6px;
+  height: 6px;
+  background: #b8b8b3;
+}
+
+.flow-service-handle.is-target {
+  opacity: 0;
 }
 
 .react-flow__edge-path.flow-relation-edge {
@@ -1972,6 +1986,18 @@ button {
   font-size: 10px;
 }
 
+.site-footer kbd {
+  display: inline-block;
+  padding: 1px 5px 2px;
+  border: 1px solid rgb(0 0 0 / 9%);
+  border-radius: 4px;
+  color: var(--ink-muted);
+  background: rgb(255 255 255 / 72%);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 10%);
+  font: inherit;
+  line-height: 1.2;
+}
+
 @keyframes spin {
   to {
     rotate: 360deg;
@@ -2044,7 +2070,12 @@ button {
     padding-top: 36px;
   }
 
+  .flow-loading,
   .flow-canvas {
+    height: max(640px, var(--flow-content-height, 0px));
+  }
+
+  .flow-loading {
     height: 640px;
   }
 

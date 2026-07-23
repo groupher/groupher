@@ -156,7 +156,9 @@ export function App() {
 
       <footer className='site-footer'>
         <span>Local only · 127.0.0.1</span>
-        <span>Ctrl+C stops every managed process</span>
+        <span>
+          <kbd>Ctrl+C</kbd> stops every managed process
+        </span>
       </footer>
 
       <GitDiffDrawer

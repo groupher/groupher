@@ -1,12 +1,13 @@
 import '@xyflow/react/dist/style.css'
 import type { TPublicService, TServiceMetricsSnapshot, TServiceRelation } from '@shared/contracts'
-import type { ReactFlowInstance } from '@xyflow/react'
 import { Background, BackgroundVariant, Controls, MarkerType, ReactFlow } from '@xyflow/react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { type CSSProperties, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { layoutServiceFlow } from '@/lib/flow-layout'
 
 import type { TFlowEdge, TFlowLayout, TFlowNode } from './flow-spec'
+import { FlowCanvasSizer } from './FlowCanvasSizer'
+import { FlowInitialViewport } from './FlowInitialViewport'
 import { FlowLaneNote } from './FlowLaneNote'
 import { FlowNavigator } from './FlowNavigator'
 import { FLOW_EDGE_COLOR, FlowRelationEdge } from './FlowRelationEdge'
@@ -33,13 +34,46 @@ const EDGE_TYPES = {
   relation: FlowRelationEdge,
 }
 const EDGE_LANE_GAP = 34
-const FLOW_INITIAL_TOP_INSET = 32
+const FLOW_LAYOUT_CACHE = new Map<string, TFlowLayout>()
+const FLOW_LAYOUT_REQUEST_CACHE = new Map<string, Promise<TFlowLayout>>()
 
 const isCompactService = (service: TPublicService): boolean =>
   service.status === 'stopped' || service.status === 'unavailable'
 
 const isLiveService = (service: TPublicService | undefined): boolean =>
   Boolean(service && ['running', 'external'].includes(service.status))
+
+const getFlowLayoutKey = (
+  services: Pick<TPublicService, 'id' | 'status'>[],
+  relations: TServiceRelation[],
+): string =>
+  JSON.stringify([
+    services.map(({ id, status }) => [id, status]),
+    relations.map(({ id, source, target }) => [id, source, target]),
+  ])
+
+const getFlowLayout = (
+  key: string,
+  services: Pick<TPublicService, 'id' | 'status'>[],
+  relations: TServiceRelation[],
+): Promise<TFlowLayout> => {
+  const pendingLayout = FLOW_LAYOUT_REQUEST_CACHE.get(key)
+  if (pendingLayout) return pendingLayout
+
+  const request = layoutServiceFlow(services, relations).then(
+    (layout) => {
+      FLOW_LAYOUT_CACHE.set(key, layout)
+      FLOW_LAYOUT_REQUEST_CACHE.delete(key)
+      return layout
+    },
+    (error: unknown) => {
+      FLOW_LAYOUT_REQUEST_CACHE.delete(key)
+      throw error
+    },
+  )
+  FLOW_LAYOUT_REQUEST_CACHE.set(key, request)
+  return request
+}
 
 export function FlowView({
   services,
@@ -52,23 +86,37 @@ export function FlowView({
   onToggleTerminal,
   onOpenMetrics,
 }: TProps) {
-  const [layout, setLayout] = useState<TFlowLayout | null>(null)
   const layoutServices = useMemo(
     () => services.map(({ id, status }) => ({ id, status })),
     [services],
   )
+  const layoutKey = useMemo(
+    () => getFlowLayoutKey(layoutServices, relations),
+    [layoutServices, relations],
+  )
+  const [layout, setLayout] = useState<TFlowLayout | null>(
+    () => FLOW_LAYOUT_CACHE.get(layoutKey) || null,
+  )
+  const [canvasContentHeight, setCanvasContentHeight] = useState(0)
+  const [viewportReady, setViewportReady] = useState(false)
 
   useEffect(() => {
+    const cachedLayout = FLOW_LAYOUT_CACHE.get(layoutKey)
+    if (cachedLayout) {
+      setLayout(cachedLayout)
+      return
+    }
+
     let cancelled = false
 
-    void layoutServiceFlow(layoutServices, relations).then((nextLayout) => {
+    void getFlowLayout(layoutKey, layoutServices, relations).then((nextLayout) => {
       if (!cancelled) setLayout(nextLayout)
     })
 
     return () => {
       cancelled = true
     }
-  }, [layoutServices, relations])
+  }, [layoutKey, layoutServices, relations])
 
   const serviceById = useMemo(
     () => new Map(services.map((service) => [service.id, service])),
@@ -170,18 +218,10 @@ export function FlowView({
     [relations],
   )
   const requestPathIds = useMemo(() => coreNodes.map((node) => node.id), [coreNodes])
-  const handleFlowInit = useCallback(
-    (flow: ReactFlowInstance<TFlowNode, TFlowEdge>) => {
-      const bounds = flow.getNodesBounds(requestPathIds)
-      const viewport = flow.getViewport()
-
-      void flow.setViewport({
-        ...viewport,
-        y: FLOW_INITIAL_TOP_INSET - bounds.y * viewport.zoom,
-      })
-    },
-    [requestPathIds],
-  )
+  const handleCanvasHeightChange = useCallback((height: number) => {
+    setCanvasContentHeight(height)
+  }, [])
+  const handleViewportReady = useCallback(() => setViewportReady(true), [])
   const standaloneIds = useMemo(
     () =>
       services
@@ -291,7 +331,11 @@ export function FlowView({
 
   return (
     <section className='flow-view' aria-label='Service request flow'>
-      <div className='flow-canvas'>
+      <div
+        className={`flow-canvas${viewportReady ? ' is-ready' : ''}`}
+        style={{ '--flow-content-height': `${canvasContentHeight}px` } as CSSProperties}
+        aria-busy={!viewportReady}
+      >
         <ReactFlow<TFlowNode, TFlowEdge>
           nodes={nodes}
           edges={edges}
@@ -308,11 +352,13 @@ export function FlowView({
           zoomOnDoubleClick={false}
           minZoom={0.22}
           maxZoom={1.35}
-          fitView
-          fitViewOptions={{ nodes: coreNodes, padding: 0.14, minZoom: 1, maxZoom: 1 }}
-          onInit={handleFlowInit}
           proOptions={{ hideAttribution: true }}
         >
+          <FlowCanvasSizer
+            requestPathIds={requestPathIds}
+            onHeightChange={handleCanvasHeightChange}
+          />
+          <FlowInitialViewport requestPathIds={requestPathIds} onReady={handleViewportReady} />
           <FlowNavigator requestPathIds={requestPathIds} standaloneIds={standaloneIds} />
           <Background
             variant={BackgroundVariant.Dots}

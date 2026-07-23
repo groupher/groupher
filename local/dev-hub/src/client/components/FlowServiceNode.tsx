@@ -13,7 +13,7 @@ export function FlowServiceNode({ data }: TFlowNodeProps) {
         <Handle
           key={relationId}
           id={relationId}
-          className='flow-service-handle'
+          className='flow-service-handle is-target'
           type='target'
           position={Position.Top}
           isConnectable={false}
@@ -34,7 +34,7 @@ export function FlowServiceNode({ data }: TFlowNodeProps) {
         <Handle
           key={relationId}
           id={relationId}
-          className='flow-service-handle'
+          className='flow-service-handle is-source'
           type='source'
           position={Position.Bottom}
           isConnectable={false}
