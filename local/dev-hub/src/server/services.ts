@@ -2,7 +2,12 @@ import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import type { TMetricThresholds, TServiceGroup, TTechnologyStack } from '../shared/contracts.ts'
+import type {
+  TMetricThresholds,
+  TServiceGroup,
+  TServiceRelation,
+  TTechnologyStack,
+} from '../shared/contracts.ts'
 
 export type TServiceDefinition = {
   id: string
@@ -94,6 +99,9 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     env: {
       PORT: '3003',
       NEXT_PUBLIC_SITE_URL: 'http://localhost:3003',
+      LANDING_SITE: 'http://localhost:3002',
+      MAIN_SITE: 'http://localhost:3000',
+      DASHBOARD_SITE: 'http://localhost:3001',
     },
     port: 3003,
     url: 'http://localhost:3003',
@@ -156,5 +164,43 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     cwd: REPO_ROOT,
     unavailableReason: 'This capability has not been split into a standalone service yet.',
     metrics: BACKEND_METRICS,
+  },
+]
+
+export const SERVICE_RELATIONS: TServiceRelation[] = [
+  {
+    id: 'gateway-landing',
+    source: 'gateway',
+    target: 'landing',
+    kind: 'route',
+    label: '/, /pricing, /book-demo',
+  },
+  {
+    id: 'gateway-dashboard',
+    source: 'gateway',
+    target: 'dashboard',
+    kind: 'route',
+    label: '/:community/dashboard/*',
+  },
+  {
+    id: 'gateway-main',
+    source: 'gateway',
+    target: 'main',
+    kind: 'route',
+    label: 'all other routes',
+  },
+  {
+    id: 'main-phoenix',
+    source: 'main',
+    target: 'phoenix',
+    kind: 'api',
+    label: 'GraphQL',
+  },
+  {
+    id: 'dashboard-phoenix',
+    source: 'dashboard',
+    target: 'phoenix',
+    kind: 'api',
+    label: 'GraphQL',
   },
 ]

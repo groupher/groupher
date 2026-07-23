@@ -2,14 +2,21 @@ import type {
   TGitSnapshot,
   TMetricStorageNotice,
   TPublicService,
+  TServiceRelation,
   TServiceMetricsSnapshot,
 } from '@shared/contracts'
 import { useCallback, useEffect, useState } from 'react'
 
-import { connectHub, controlService, fetchSnapshot } from '@/lib/hub-client'
+import {
+  connectHub,
+  controlService,
+  fetchSnapshot,
+  type TServiceControlAction,
+} from '@/lib/hub-client'
 
 type TServiceHub = {
   services: TPublicService[]
+  relations: TServiceRelation[]
   git: TGitSnapshot | null
   metricsByService: Record<string, TServiceMetricsSnapshot>
   metricNotices: TMetricStorageNotice[]
@@ -18,11 +25,13 @@ type TServiceHub = {
   loading: boolean
   error: string | null
   toggleService: (service: TPublicService) => Promise<void>
+  restartService: (service: TPublicService) => Promise<void>
   dismissError: () => void
 }
 
 export function useServiceHub(): TServiceHub {
   const [services, setServices] = useState<TPublicService[]>([])
+  const [relations, setRelations] = useState<TServiceRelation[]>([])
   const [git, setGit] = useState<TGitSnapshot | null>(null)
   const [metricsByService, setMetricsByService] = useState<Record<string, TServiceMetricsSnapshot>>(
     {},
@@ -44,6 +53,7 @@ export function useServiceHub(): TServiceHub {
     const disconnect = connectHub({
       onSnapshot: (snapshot) => {
         setServices(snapshot.services)
+        setRelations(snapshot.relations)
         setGit(snapshot.git)
         setMetricsByService(snapshot.metrics)
         setMetricNotices(snapshot.metricNotices)
@@ -61,6 +71,7 @@ export function useServiceHub(): TServiceHub {
     void fetchSnapshot(controller.signal)
       .then((snapshot) => {
         setServices(snapshot.services)
+        setRelations(snapshot.relations)
         setGit(snapshot.git)
         setMetricsByService(snapshot.metrics)
         setMetricNotices(snapshot.metricNotices)
@@ -78,9 +89,8 @@ export function useServiceHub(): TServiceHub {
     }
   }, [updateService])
 
-  const toggleService = useCallback(
-    async (service: TPublicService) => {
-      const action = ['starting', 'running'].includes(service.status) ? 'stop' : 'start'
+  const runServiceAction = useCallback(
+    async (service: TPublicService, action: TServiceControlAction) => {
       setPendingIds((current) => new Set(current).add(service.id))
       setError(null)
 
@@ -98,9 +108,21 @@ export function useServiceHub(): TServiceHub {
     },
     [updateService],
   )
+  const toggleService = useCallback(
+    (service: TPublicService) => {
+      const action = ['starting', 'running'].includes(service.status) ? 'stop' : 'start'
+      return runServiceAction(service, action)
+    },
+    [runServiceAction],
+  )
+  const restartService = useCallback(
+    (service: TPublicService) => runServiceAction(service, 'restart'),
+    [runServiceAction],
+  )
 
   return {
     services,
+    relations,
     git,
     metricsByService,
     metricNotices,
@@ -109,6 +131,7 @@ export function useServiceHub(): TServiceHub {
     loading,
     error,
     toggleService,
+    restartService,
     dismissError: () => setError(null),
   }
 }

@@ -13,7 +13,8 @@ import type { TServiceDefinition } from './services.ts'
 const MAX_LOG_CHARS = 300_000
 const EXTERNAL_POLL_MS = 2_500
 const READINESS_POLL_MS = 500
-const STOP_GRACE_MS = 5_000
+const RESTART_PORT_RELEASE_POLL_MS = 50
+const RESTART_PORT_RELEASE_TIMEOUT_MS = 5_000
 
 type TRuntimeService = {
   definition: TServiceDefinition
@@ -29,7 +30,6 @@ type TRuntimeService = {
   logChars: number
   logSeq: number
   readinessTimer: NodeJS.Timeout | null
-  forceStopTimer: NodeJS.Timeout | null
 }
 
 type THubSubscriber = (event: THubEvent) => void
@@ -55,7 +55,11 @@ export class ServiceManager {
   private readonly externalPollTimer: NodeJS.Timeout
   private readonly devHubOrigin: string | null
 
-  constructor(definitions: TServiceDefinition[], devHubOrigin: string | null = null) {
+  constructor(
+    definitions: TServiceDefinition[],
+    devHubOrigin: string | null = null,
+    private readonly portProbe: (port: number) => Promise<boolean> = isPortListening,
+  ) {
     this.devHubOrigin = devHubOrigin
     for (const definition of definitions) {
       this.runtimes.set(definition.id, {
@@ -72,7 +76,6 @@ export class ServiceManager {
         logChars: 0,
         logSeq: 0,
         readinessTimer: null,
-        forceStopTimer: null,
       })
     }
 
@@ -113,7 +116,7 @@ export class ServiceManager {
     return () => this.subscribers.delete(subscriber)
   }
 
-  async start(id: string): Promise<TPublicService> {
+  async start(id: string, reason: 'start' | 'restart' = 'start'): Promise<TPublicService> {
     const runtime = this.getRuntime(id)
     const { definition } = runtime
 
@@ -128,7 +131,7 @@ export class ServiceManager {
       return this.toPublicService(runtime)
     }
 
-    if (definition.port && (await isPortListening(definition.port))) {
+    if (definition.port && (await this.portProbe(definition.port))) {
       runtime.status = 'external'
       this.emitStatus(runtime)
       throw new ServiceManagerError(
@@ -142,6 +145,13 @@ export class ServiceManager {
     runtime.startedAt = Date.now()
     runtime.stopRequested = false
 
+    if (reason === 'restart') {
+      this.appendLog(
+        runtime,
+        'system',
+        '\u001b[38;5;75mRestarting service with a fresh process…\u001b[0m\r\n',
+      )
+    }
     this.appendLog(
       runtime,
       'system',
@@ -200,23 +210,33 @@ export class ServiceManager {
       )
     }
 
-    if (!runtime.child || !runtime.pid) return this.toPublicService(runtime)
+    const child = runtime.child
+    const pid = runtime.pid
+    if (!child || !pid) return this.toPublicService(runtime)
+
+    const exited = new Promise<void>((resolve) => {
+      child.once('exit', () => resolve())
+    })
 
     runtime.stopRequested = true
     runtime.status = 'stopping'
     this.emitStatus(runtime)
     this.appendLog(runtime, 'system', '\r\n\u001b[38;5;214mStopping service…\u001b[0m\r\n')
-    killProcessGroup(runtime.child, runtime.pid, 'SIGTERM')
+    killProcessGroup(child, pid, 'SIGKILL')
 
-    runtime.forceStopTimer = setTimeout(() => {
-      if (runtime.child && runtime.pid) {
-        this.appendLog(runtime, 'system', '\u001b[31mForce stopping service…\u001b[0m\r\n')
-        killProcessGroup(runtime.child, runtime.pid, 'SIGKILL')
-      }
-    }, STOP_GRACE_MS)
-    runtime.forceStopTimer.unref()
-
+    await exited
     return this.toPublicService(runtime)
+  }
+
+  async restart(id: string): Promise<TPublicService> {
+    const runtime = this.getRuntime(id)
+    if (runtime.status === 'stopping') {
+      throw new ServiceManagerError(`${runtime.definition.name} is already stopping.`, 409)
+    }
+
+    await this.stop(id)
+    await this.waitForPortRelease(runtime)
+    return this.start(id, 'restart')
   }
 
   async shutdown(): Promise<void> {
@@ -225,6 +245,7 @@ export class ServiceManager {
     const running = Array.from(this.runtimes.values()).filter(
       (runtime) => runtime.child && runtime.pid,
     )
+    if (running.length === 0) return
 
     for (const runtime of running) {
       runtime.stopRequested = true
@@ -302,9 +323,6 @@ export class ServiceManager {
 
   private handleExit(runtime: TRuntimeService, code: number | null, signal: NodeJS.Signals | null) {
     this.clearReadinessTimer(runtime)
-    if (runtime.forceStopTimer) clearTimeout(runtime.forceStopTimer)
-
-    runtime.forceStopTimer = null
     runtime.child = null
     runtime.pid = null
     runtime.endedAt = Date.now()
@@ -340,6 +358,23 @@ export class ServiceManager {
     runtime.readinessTimer = null
   }
 
+  private async waitForPortRelease(runtime: TRuntimeService): Promise<void> {
+    const { port } = runtime.definition
+    if (!port) return
+
+    const deadline = Date.now() + RESTART_PORT_RELEASE_TIMEOUT_MS
+    while (await this.portProbe(port)) {
+      if (Date.now() >= deadline) {
+        throw new ServiceManagerError(
+          `${runtime.definition.name} stopped, but port ${port} did not become available for restart.`,
+          409,
+        )
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, RESTART_PORT_RELEASE_POLL_MS))
+    }
+  }
+
   private async refreshExternalStates(): Promise<void> {
     await Promise.all(
       Array.from(this.runtimes.values(), async (runtime) => {
@@ -352,7 +387,7 @@ export class ServiceManager {
           return
         }
 
-        const nextStatus: TServiceStatus = (await isPortListening(runtime.definition.port))
+        const nextStatus: TServiceStatus = (await this.portProbe(runtime.definition.port))
           ? 'external'
           : 'stopped'
 

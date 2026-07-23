@@ -20,7 +20,7 @@ import { GitMonitor, GitMonitorError } from './git-monitor.ts'
 import { MetricsStore } from './metrics-store.ts'
 import { ServiceManager, ServiceManagerError } from './process-manager.ts'
 import { ProcessMetricsMonitor } from './process-metrics-monitor.ts'
-import { REPO_ROOT, SERVICE_DEFINITIONS } from './services.ts'
+import { REPO_ROOT, SERVICE_DEFINITIONS, SERVICE_RELATIONS } from './services.ts'
 
 const host = '127.0.0.1'
 const port = Number.parseInt(process.env.DEV_HUB_PORT || '4310', 10)
@@ -107,6 +107,7 @@ app.post('/api/browser-metrics', async (context) => {
 app.get('/api/services', (context) => {
   return context.json<THubSnapshot>({
     services: manager.listServices(),
+    relations: SERVICE_RELATIONS,
     git: gitMonitor.getSnapshot(),
     metrics: metricsStore.getSnapshots(),
     metricNotices: metricsStore.getNotices(),
@@ -163,6 +164,14 @@ app.post('/api/services/:id/stop', async (context) => {
   }
 })
 
+app.post('/api/services/:id/restart', async (context) => {
+  try {
+    return context.json({ service: await manager.restart(context.req.param('id')) })
+  } catch (error) {
+    return respondWithError(context, error)
+  }
+})
+
 app.get('/api/events', (context) => {
   return streamSSE(context, async (stream) => {
     let writeQueue = Promise.resolve()
@@ -195,6 +204,7 @@ app.get('/api/events', (context) => {
         event: 'snapshot',
         data: JSON.stringify({
           services: manager.listServices(),
+          relations: SERVICE_RELATIONS,
           git: gitMonitor.getSnapshot(),
           metrics: metricsStore.getSnapshots(),
           metricNotices: metricsStore.getNotices(),

@@ -1,20 +1,28 @@
-import type { TGitDiffScope } from '@shared/contracts'
+import type { TGitDiffScope, TPublicService } from '@shared/contracts'
 import { AlertCircle, X } from 'lucide-react'
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import { lazy, startTransition, Suspense, useCallback, useEffect, useState } from 'react'
 
 import { GitDiffDrawer } from '@/components/GitDiffDrawer'
 import { MetricsNoticeBar } from '@/components/MetricsNoticeBar'
 import { PageHeader } from '@/components/PageHeader'
 import { ServiceSection } from '@/components/ServiceSection'
 import { useServiceHub } from '@/hooks/useServiceHub'
+import type { THubViewMode } from '@/spec'
 
 const MetricsDrawer = lazy(() =>
   import('@/components/MetricsDrawer').then((module) => ({ default: module.MetricsDrawer })),
 )
+const FlowView = lazy(() =>
+  import('@/components/FlowView').then((module) => ({ default: module.FlowView })),
+)
+
+const getInitialViewMode = (): THubViewMode =>
+  new URLSearchParams(window.location.search).get('view') === 'flow' ? 'flow' : 'list'
 
 export function App() {
   const {
     services,
+    relations,
     git,
     metricsByService,
     metricNotices,
@@ -23,11 +31,13 @@ export function App() {
     loading,
     error,
     toggleService,
+    restartService,
     dismissError,
   } = useServiceHub()
   const [expandedIds, setExpandedIds] = useState(() => new Set<string>())
   const [diffScope, setDiffScope] = useState<TGitDiffScope | null>(null)
   const [metricsServiceId, setMetricsServiceId] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<THubViewMode>(getInitialViewMode)
   const metricsService = services.find((service) => service.id === metricsServiceId) || null
 
   useEffect(() => {
@@ -53,9 +63,38 @@ export function App() {
     })
   }, [])
 
+  const handleToggleService = useCallback(
+    (service: TPublicService) => {
+      void toggleService(service)
+    },
+    [toggleService],
+  )
+  const handleRestartService = useCallback(
+    (service: TPublicService) => {
+      void restartService(service)
+    },
+    [restartService],
+  )
+
+  const handleViewModeChange = useCallback((mode: THubViewMode) => {
+    const url = new URL(window.location.href)
+    if (mode === 'flow') url.searchParams.set('view', 'flow')
+    else url.searchParams.delete('view')
+    window.history.replaceState(null, '', url)
+
+    startTransition(() => setViewMode(mode))
+  }, [])
+
   return (
     <main className='app-shell' id='top'>
-      <PageHeader services={services} git={git} connected={connected} onOpenDiff={setDiffScope} />
+      <PageHeader
+        services={services}
+        git={git}
+        connected={connected}
+        viewMode={viewMode}
+        onOpenDiff={setDiffScope}
+        onViewModeChange={handleViewModeChange}
+      />
       <MetricsNoticeBar notices={metricNotices} />
 
       {error ? (
@@ -70,7 +109,7 @@ export function App() {
 
       {loading ? (
         <div className='loading-state'>Reading the local service map…</div>
-      ) : (
+      ) : viewMode === 'list' ? (
         <>
           <ServiceSection
             title='Frontend'
@@ -80,7 +119,8 @@ export function App() {
             metricsByService={metricsByService}
             expandedIds={expandedIds}
             pendingIds={pendingIds}
-            onToggleService={(service) => void toggleService(service)}
+            onToggleService={handleToggleService}
+            onRestartService={handleRestartService}
             onToggleTerminal={toggleTerminal}
             onOpenMetrics={setMetricsServiceId}
           />
@@ -92,11 +132,26 @@ export function App() {
             metricsByService={metricsByService}
             expandedIds={expandedIds}
             pendingIds={pendingIds}
-            onToggleService={(service) => void toggleService(service)}
+            onToggleService={handleToggleService}
+            onRestartService={handleRestartService}
             onToggleTerminal={toggleTerminal}
             onOpenMetrics={setMetricsServiceId}
           />
         </>
+      ) : (
+        <Suspense fallback={<div className='flow-loading'>Loading the Flow canvas…</div>}>
+          <FlowView
+            services={services}
+            relations={relations}
+            metricsByService={metricsByService}
+            expandedIds={expandedIds}
+            pendingIds={pendingIds}
+            onToggleService={handleToggleService}
+            onRestartService={handleRestartService}
+            onToggleTerminal={toggleTerminal}
+            onOpenMetrics={setMetricsServiceId}
+          />
+        </Suspense>
       )}
 
       <footer className='site-footer'>

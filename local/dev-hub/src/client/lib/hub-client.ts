@@ -13,6 +13,7 @@ import type {
 } from '@shared/contracts'
 
 type TLogListener = (log: TServiceLog) => void
+export type TServiceControlAction = 'start' | 'stop' | 'restart'
 type THubConnectionOptions = {
   onSnapshot: (snapshot: THubSnapshot) => void
   onStatus: (service: TPublicService) => void
@@ -64,15 +65,18 @@ export async function fetchMetricHistory(
 
 export async function controlService(
   id: string,
-  action: 'start' | 'stop',
+  action: TServiceControlAction,
 ): Promise<TPublicService> {
   const response = await fetch(`/api/services/${encodeURIComponent(id)}/${action}`, {
     method: 'POST',
   })
-  const payload = (await response.json()) as { service?: TPublicService; error?: string }
+  const payload = (await response.json().catch(() => null)) as {
+    service?: TPublicService
+    error?: string
+  } | null
 
-  if (!response.ok || !payload.service) {
-    throw new Error(payload.error || `Could not ${action} ${id}.`)
+  if (!response.ok || !payload?.service) {
+    throw new Error(payload?.error || `Could not ${action} ${id}.`)
   }
 
   return payload.service

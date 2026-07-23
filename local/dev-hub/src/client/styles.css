@@ -107,9 +107,9 @@ button {
   text-decoration: none;
 }
 
-.git-summary {
+.hub-status-panel {
   display: grid;
-  grid-template-columns: minmax(110px, 1.35fr) repeat(3, minmax(82px, 1fr));
+  grid-template-columns: minmax(110px, 1.35fr) repeat(3, minmax(82px, 1fr)) minmax(142px, 1.25fr);
   align-items: stretch;
   gap: 2px;
   justify-self: center;
@@ -119,7 +119,7 @@ button {
   background: #ffffff;
 }
 
-.git-summary-block {
+.hub-status-block {
   display: flex;
   min-width: 0;
   min-height: 46px;
@@ -136,26 +136,26 @@ button {
   text-align: left;
 }
 
-.git-summary-button {
+.hub-status-button {
   cursor: pointer;
   transition-property: color, background-color, scale;
   transition-duration: 150ms;
   transition-timing-function: ease-out;
 }
 
-.git-summary-button:hover:not(:disabled) {
+.hub-status-button:hover:not(:disabled) {
   background: #ffffff;
 }
 
-.git-summary-button:active:not(:disabled) {
+.hub-status-button:active:not(:disabled) {
   scale: 0.97;
 }
 
-.git-summary-button:disabled {
+.hub-status-button:disabled {
   cursor: default;
 }
 
-.git-summary-label {
+.hub-status-label {
   color: var(--ink-faint);
   font-size: 8px;
   font-weight: 400;
@@ -164,7 +164,7 @@ button {
   text-transform: uppercase;
 }
 
-.git-summary-value {
+.hub-status-value {
   overflow: hidden;
   max-width: 100%;
   margin-top: 2px;
@@ -177,11 +177,11 @@ button {
   white-space: nowrap;
 }
 
-.git-summary-branch {
+.hub-status-branch {
   color: #333330;
 }
 
-.git-summary-diff {
+.hub-status-diff {
   display: inline-flex;
   gap: 7px;
 }
@@ -194,12 +194,10 @@ button {
   color: #d0504d;
 }
 
-.header-summary {
+.hub-status-service-value {
   display: inline-flex;
-  min-height: 40px;
   align-items: center;
-  gap: 8px;
-  justify-self: end;
+  gap: 6px;
   color: var(--ink-muted);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
@@ -213,12 +211,59 @@ button {
   background: #c78b38;
 }
 
-.header-summary.is-connected .connection-dot {
+.connection-dot.is-connected {
   background: #4e9365;
 }
 
 .summary-separator {
   color: #c2c2be;
+}
+
+.view-mode-switch {
+  display: inline-grid;
+  grid-template-columns: repeat(2, 30px);
+  gap: 2px;
+  justify-self: end;
+  padding: 1px;
+  border: 1px solid rgb(0 0 0 / 6%);
+  border-radius: 10px;
+  background: #ececea;
+}
+
+.view-mode-switch button {
+  position: relative;
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ink);
+  background: transparent;
+  cursor: pointer;
+  transition-property: background-color, scale;
+  transition-duration: 160ms;
+  transition-timing-function: ease-out;
+}
+
+.view-mode-switch button:hover {
+  color: var(--ink);
+}
+
+.view-mode-switch button:active {
+  scale: 0.96;
+}
+
+.view-mode-switch button.is-active {
+  color: var(--ink);
+  background: #ffffff;
+}
+
+.view-mode-switch svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.8;
 }
 
 .error-banner {
@@ -273,14 +318,22 @@ button {
 }
 
 .section-header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 390px);
-  align-items: end;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   gap: 48px;
   margin-bottom: 20px;
 }
 
+.section-heading {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 14px;
+}
+
 .section-header h2 {
+  flex: 0 0 auto;
   margin: 0;
   font-size: 20px;
   font-weight: 650;
@@ -293,8 +346,30 @@ button {
   color: var(--ink-muted);
   font-size: 14px;
   line-height: 1.55;
-  text-align: right;
   text-wrap: pretty;
+}
+
+.section-summary {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-muted);
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.section-summary-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #c2c2be;
+}
+
+.section-summary-dot.is-active {
+  background: #4e9365;
 }
 
 .service-rows,
@@ -312,6 +387,188 @@ button {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
+}
+
+.flow-view {
+  padding-top: 48px;
+}
+
+.flow-loading {
+  display: grid;
+  min-height: 520px;
+  place-items: center;
+  margin-top: 48px;
+  border: 1px solid rgb(0 0 0 / 6%);
+  border-radius: 18px;
+  color: var(--ink-muted);
+  background: rgb(255 255 255 / 52%);
+  font-size: 13px;
+}
+
+.flow-canvas {
+  overflow: hidden;
+  height: clamp(640px, 76vh, 900px);
+  background: transparent;
+}
+
+.flow-canvas .react-flow__node {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.flow-canvas .react-flow__node-service {
+  width: 384px;
+}
+
+.flow-service-node {
+  width: 384px;
+}
+
+.flow-service-handle {
+  width: 8px;
+  height: 8px;
+  border: 2px solid #676762;
+  background: #ffffff;
+}
+
+.react-flow__edge-path.flow-relation-edge {
+  stroke: #b8b8b3;
+  stroke-width: 1.6;
+  stroke-dasharray: 5 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition-property: stroke;
+  transition-duration: 180ms;
+  transition-timing-function: ease-out;
+}
+
+.react-flow__edge-path.flow-relation-edge.is-active {
+  stroke: #4c9a67;
+  stroke-dasharray: none;
+}
+
+.flow-edge-label {
+  position: absolute;
+  z-index: 2;
+  padding: 4px 7px;
+  border: 1px solid rgb(0 0 0 / 7%);
+  border-radius: 7px;
+  color: #5d5d58;
+  background: rgb(248 248 247 / 96%);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.flow-canvas .react-flow__node-lane-note {
+  width: 384px;
+}
+
+.flow-lane-note {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 2px 10px;
+  border-bottom: 1px solid rgb(0 0 0 / 9%);
+  color: #5d5d58;
+}
+
+.flow-lane-note span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.flow-lane-note small {
+  color: var(--ink-faint);
+  font-size: 10px;
+}
+
+.flow-canvas .react-flow__controls {
+  overflow: hidden;
+  border: 1px solid rgb(0 0 0 / 7%);
+  border-radius: 12px;
+}
+
+.flow-canvas .react-flow__controls-button {
+  width: 40px;
+  height: 40px;
+  border-bottom-color: rgb(0 0 0 / 7%);
+  color: #666662;
+  background: rgb(255 255 255 / 94%);
+}
+
+.flow-canvas .react-flow__controls-button:hover {
+  color: #30302e;
+  background: #f7f7f5;
+}
+
+.flow-navigator {
+  display: inline-flex;
+  gap: 4px;
+  padding: 1px;
+  border: 1px solid rgb(0 0 0 / 7%);
+  border-radius: 10px;
+  background: rgb(255 255 255 / 92%);
+}
+
+.flow-navigator button {
+  position: relative;
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  color: #666662;
+  background: transparent;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 650;
+  transition-property: color, background-color, scale;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.flow-navigator button::after {
+  position: absolute;
+  inset: -2px;
+  content: '';
+}
+
+.flow-navigator button:hover {
+  color: #30302e;
+  background: #f2f2ef;
+}
+
+.flow-navigator button:active {
+  scale: 0.96;
+}
+
+.flow-navigator span {
+  display: inline-grid;
+  min-width: 16px;
+  height: 16px;
+  place-items: center;
+  border-radius: 999px;
+  color: #666662;
+  background: #e7e7e3;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
+.flow-terminal-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 24px;
 }
 
 .service-card,
@@ -373,6 +630,11 @@ button {
 
 .service-visual.is-compact .service-meta {
   padding-bottom: 0;
+}
+
+.service-preview-reveal,
+.service-actions-reveal {
+  overflow: hidden;
 }
 
 .service-meta {
@@ -797,11 +1059,6 @@ button {
   transition-timing-function: ease-out;
 }
 
-.service-action--terminal:hover:not(:disabled) {
-  color: #2d2d2b;
-  background: #f7f7f5;
-}
-
 .service-action--process:not(.is-active):hover:not(:disabled) {
   color: #34764d;
   background: #eaf7ee;
@@ -823,19 +1080,14 @@ button {
   outline-offset: 2px;
 }
 
-.service-action:active:not(:disabled) {
+.service-action--process:active:not(:disabled),
+.service-terminal-action:active {
   scale: 0.96;
 }
 
 .service-action:disabled {
   color: #a3a39f;
   cursor: not-allowed;
-}
-
-.service-action--terminal.is-active {
-  color: #3f4fbd;
-  background: #eceefa;
-  box-shadow: 0 0 0 1px rgb(89 108 242 / 10%);
 }
 
 .service-action svg {
@@ -884,19 +1136,96 @@ button {
   translate: 0 -1px;
 }
 
-.service-action--terminal .terminal-chevron {
-  width: 16px;
-  height: 16px;
-  margin-left: auto;
-  color: #a2a29d;
-  transition-property: rotate, color;
-  transition-duration: 180ms;
-  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+.service-action--terminal {
+  gap: 0;
+  padding: 3px;
+  cursor: default;
 }
 
-.service-action--terminal.is-active .terminal-chevron {
-  color: #596cf2;
-  rotate: 90deg;
+.service-terminal-action {
+  position: relative;
+  display: inline-grid;
+  width: 34px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  color: #72726e;
+  background: transparent;
+  cursor: pointer;
+  transition-property: color, scale;
+  transition-duration: 160ms;
+  transition-timing-function: ease-out;
+}
+
+.service-terminal-action::before {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: transparent;
+  content: '';
+  transition-property: background-color, box-shadow;
+  transition-duration: 160ms;
+  transition-timing-function: ease-out;
+}
+
+.service-terminal-action svg {
+  position: relative;
+  z-index: 1;
+}
+
+.service-terminal-action:hover {
+  color: #2d2d2b;
+}
+
+.service-terminal-action:hover::before {
+  background: #f1f1ee;
+}
+
+.service-terminal-action.is-active {
+  color: #3f4fbd;
+}
+
+.service-terminal-action.is-active::before {
+  background: #eceefa;
+  box-shadow: 0 0 0 1px rgb(89 108 242 / 10%);
+}
+
+.service-terminal-action[aria-disabled='true'] {
+  color: #aaa9a5;
+  cursor: not-allowed;
+}
+
+.service-terminal-action[aria-disabled='true']:hover::before {
+  background: transparent;
+}
+
+.service-terminal-action--config {
+  margin-left: auto;
+}
+
+.service-terminal-action:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.service-action-tooltip {
+  position: fixed;
+  z-index: 80;
+  padding: 6px 8px;
+  border-radius: 7px;
+  color: #ffffff;
+  background: #373735;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 14%);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  pointer-events: none;
+  translate: -50% 0;
+  white-space: nowrap;
 }
 
 .terminal-panel {
@@ -1619,7 +1948,10 @@ button {
   outline-offset: 2px;
 }
 
-.git-summary-button:focus-visible,
+.hub-status-button:focus-visible,
+.view-mode-switch button:focus-visible,
+.flow-canvas .react-flow__controls-button:focus-visible,
+.flow-navigator button:focus-visible,
 .git-drawer-close:focus-visible,
 .git-drawer-tabs button:focus-visible,
 .git-drawer-stale button:focus-visible,
@@ -1662,7 +1994,7 @@ button {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .git-summary-block {
+  .hub-status-block {
     padding-inline: 8px;
   }
 }
@@ -1677,7 +2009,7 @@ button {
     row-gap: 20px;
   }
 
-  .git-summary {
+  .hub-status-panel {
     width: 100%;
     grid-column: 1 / -1;
     grid-row: 2;
@@ -1685,21 +2017,35 @@ button {
     overflow-x: auto;
   }
 
-  .header-summary {
+  .view-mode-switch {
     justify-self: end;
   }
 
   .section-header {
-    grid-template-columns: 1fr;
-    gap: 14px;
+    align-items: flex-start;
+    gap: 18px;
   }
 
-  .section-header p {
-    text-align: left;
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .section-summary {
+    margin-top: 4px;
   }
 
   .service-grid {
     grid-template-columns: 1fr;
+  }
+
+  .flow-view {
+    padding-top: 36px;
+  }
+
+  .flow-canvas {
+    height: 640px;
   }
 
   .terminal-panel-body {

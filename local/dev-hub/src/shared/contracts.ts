@@ -27,6 +27,16 @@ export type TServiceStatus =
   | 'error'
   | 'unavailable'
 
+export type TServiceRelationKind = 'route' | 'api'
+
+export type TServiceRelation = {
+  id: string
+  source: string
+  target: string
+  kind: TServiceRelationKind
+  label: string
+}
+
 export type TLogStream = 'stdout' | 'stderr' | 'system'
 
 export type TServiceLog = {
@@ -180,6 +190,7 @@ export type THubEvent =
 
 export type THubSnapshot = {
   services: TPublicService[]
+  relations: TServiceRelation[]
   git: TGitSnapshot
   metrics: Record<string, TServiceMetricsSnapshot>
   metricNotices: TMetricStorageNotice[]
