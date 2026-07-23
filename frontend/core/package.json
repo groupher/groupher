@@ -10,7 +10,9 @@
     "./postcss.config": "./postcss.config.js",
     "./oxfmt": "./config/oxfmt.json",
     "./oxlint": "./config/oxlint.json",
-    "./next.config": "./next.config.js"
+    "./next.config": "./next.config.js",
+    "./dev-hub-reporter": "./lib/devHubReporter/index.ts",
+    "./dev-hub-reporter/react": "./widgets/DevHubReporter/index.tsx"
   },
   "scripts": {
     "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.app.json",

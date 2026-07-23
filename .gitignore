@@ -4,6 +4,8 @@
 **/.next/
 build
 frontend/**/out/
+local/**/dist/
+local/**/.data/
 coverage/
 tools/reports
 

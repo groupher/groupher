@@ -1,5 +1,5 @@
 {
-  "name": "@groupher/frontend-inspire-me",
+  "name": "@groupher/local-inspire-me",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -9,8 +9,8 @@
     "start": "cross-env NODE_ENV=production next start -p 3000",
     "info": "next info",
     "lint": "../../node_modules/.bin/oxlint app --threads=1",
-    "format": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json ./app",
-    "format:check": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json --check ./app",
+    "format": "../../node_modules/.bin/oxfmt -c ./oxfmt.json ./app",
+    "format:check": "../../node_modules/.bin/oxfmt -c ./oxfmt.json --check ./app",
     "clean:up": "rm -rf *.tsbuildinfo"
   },
   "dependencies": {
@@ -20,7 +20,10 @@
     "react-dom": "^19.2.5"
   },
   "devDependencies": {
-    "cross-env": "^10.1.0"
+    "@tailwindcss/postcss": "4.3.1",
+    "cross-env": "^10.1.0",
+    "postcss": "^8.5.10",
+    "tailwindcss": "4.3.1"
   },
   "lint-staged": {
     "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"

@@ -1,6 +1,7 @@
+import { DevHubReporter } from '@groupher/frontend-core/dev-hub-reporter/react'
 import type { Metadata } from 'next'
 
-import '../../core/tailwind/global.css'
+import './globals.css'
 
 export const metadata: Metadata = {
   title: 'Inspire Me | Feedback platform ideas',
@@ -20,7 +21,12 @@ export const metadata: Metadata = {
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang='en' suppressHydrationWarning>
-      <body className='text-title bg-white'>{children}</body>
+      <body className='text-title bg-white'>
+        {process.env.NODE_ENV === 'development' ? (
+          <DevHubReporter serviceId='inspire-me' endpoint={process.env.NEXT_PUBLIC_DEV_HUB_URL} />
+        ) : null}
+        {children}
+      </body>
     </html>
   )
 }
