@@ -32,6 +32,15 @@
         overflow: hidden;
       }
 
+      .window-drag-region {
+        position: fixed;
+        z-index: 1;
+        top: 0;
+        right: 0;
+        left: 0;
+        height: 36px;
+      }
+
       main {
         align-items: center;
         display: flex;
@@ -170,6 +179,7 @@
     </style>
   </head>
   <body>
+    <div class="window-drag-region" data-tauri-drag-region="deep" aria-hidden="true"></div>
     <main id="launcher">
       <div class="mark" aria-hidden="true">
         <span>DEV</span>

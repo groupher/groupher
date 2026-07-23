@@ -75,7 +75,16 @@ button {
   width: min(100%, 1440px);
   min-height: 100vh;
   margin: 0 auto;
-  padding: 32px 52px 72px;
+  padding: 44px 52px 72px;
+}
+
+.window-drag-region {
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 36px;
 }
 
 .site-header {

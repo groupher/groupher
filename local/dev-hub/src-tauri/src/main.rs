@@ -15,7 +15,10 @@ use std::{
     time::{Duration, Instant},
 };
 
-use tauri::{Manager, RunEvent, Url, WebviewUrl, WebviewWindow, WebviewWindowBuilder, WindowEvent};
+use tauri::{
+    LogicalPosition, Manager, RunEvent, TitleBarStyle, Url, WebviewUrl, WebviewWindow,
+    WebviewWindowBuilder, WindowEvent,
+};
 
 const HUB_HOST: &str = "127.0.0.1";
 const HUB_PORT: u16 = 4310;
@@ -334,6 +337,9 @@ fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<WebviewWindow> {
 
     let window = WebviewWindowBuilder::new(app, "main", url)
         .title("Groupher Dev Hub")
+        .title_bar_style(TitleBarStyle::Overlay)
+        .hidden_title(true)
+        .traffic_light_position(LogicalPosition::new(16.0, 16.0))
         .inner_size(1280.0, 820.0)
         .min_inner_size(960.0, 640.0)
         .center()

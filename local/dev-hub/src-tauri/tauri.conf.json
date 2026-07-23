@@ -16,11 +16,32 @@
         "minWidth": 960,
         "minHeight": 640,
         "center": true,
-        "visible": true
+        "visible": true,
+        "decorations": true,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "trafficLightPosition": {
+          "x": 16,
+          "y": 16
+        }
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "capabilities": [
+        {
+          "identifier": "main-window-drag",
+          "description": "Allow the local Dev Hub page to provide the native macOS title bar drag region.",
+          "windows": ["main"],
+          "remote": {
+            "urls": ["http://127.0.0.1:4310/*"]
+          },
+          "permissions": [
+            "core:window:allow-start-dragging",
+            "core:window:allow-internal-toggle-maximize"
+          ]
+        }
+      ]
     }
   },
   "bundle": {
