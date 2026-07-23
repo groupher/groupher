@@ -16,6 +16,7 @@ import type {
   THubSnapshot,
   TMetricRange,
 } from '../shared/contracts.ts'
+import { ServiceConfigError, ServiceConfigReader } from './config-reader.ts'
 import { GitMonitor, GitMonitorError } from './git-monitor.ts'
 import { MetricsStore } from './metrics-store.ts'
 import { ServiceManager, ServiceManagerError } from './process-manager.ts'
@@ -52,6 +53,7 @@ const browserOrigins = new Set(
 const serviceIds = new Set(SERVICE_DEFINITIONS.map((definition) => definition.id))
 
 const manager = new ServiceManager(SERVICE_DEFINITIONS, origin)
+const configReader = new ServiceConfigReader(SERVICE_DEFINITIONS)
 const gitMonitor = new GitMonitor(REPO_ROOT)
 const metricsStore = new MetricsStore(metricsRoot, SERVICE_DEFINITIONS)
 await Promise.all([manager.initialize(), gitMonitor.initialize(), metricsStore.initialize()])
@@ -128,6 +130,28 @@ app.get('/api/git/diff', async (context) => {
 app.get('/api/services/:id/logs', (context) => {
   try {
     return context.json({ logs: manager.getLogs(context.req.param('id')) })
+  } catch (error) {
+    return respondWithError(context, error)
+  }
+})
+
+app.get('/api/services/:id/config', async (context) => {
+  try {
+    return context.json(await configReader.getManifest(context.req.param('id')))
+  } catch (error) {
+    return respondWithError(context, error)
+  }
+})
+
+app.get('/api/services/:id/config/:fileId', async (context) => {
+  try {
+    return context.json(
+      await configReader.getContent(
+        context.req.param('id'),
+        context.req.param('fileId'),
+        context.req.query('reveal') === 'true',
+      ),
+    )
   } catch (error) {
     return respondWithError(context, error)
   }
@@ -256,7 +280,11 @@ process.on('SIGTERM', () => void shutdown())
 if (process.platform !== 'win32') process.on('SIGHUP', () => void shutdown())
 
 function respondWithError(context: Context, error: unknown) {
-  if (error instanceof ServiceManagerError || error instanceof GitMonitorError) {
+  if (
+    error instanceof ServiceManagerError ||
+    error instanceof ServiceConfigError ||
+    error instanceof GitMonitorError
+  ) {
     return context.json({ error: error.message }, error.statusCode)
   }
 

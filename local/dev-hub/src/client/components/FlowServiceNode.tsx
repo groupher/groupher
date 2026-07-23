@@ -29,6 +29,7 @@ export function FlowServiceNode({ data }: TFlowNodeProps) {
         onRestartService={data.onRestartService}
         onToggleTerminal={data.onToggleTerminal}
         onOpenMetrics={data.onOpenMetrics}
+        onOpenConfig={data.onOpenConfig}
       />
       {data.outgoingRelationIds.map((relationId, index) => (
         <Handle

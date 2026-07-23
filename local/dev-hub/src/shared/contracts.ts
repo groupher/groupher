@@ -99,6 +99,37 @@ export type TGitDiffPayload = {
   revision: number
 }
 
+export type TServiceConfigKind = 'next-env' | 'elixir-config' | 'python-settings' | 'none'
+
+export type TServiceConfigFileGroup = 'active' | 'other' | 'template'
+
+export type TServiceConfigFile = {
+  id: string
+  name: string
+  path: string
+  group: TServiceConfigFileGroup
+  active: boolean
+  sensitive: boolean
+  sizeBytes: number
+  modifiedAt: number
+}
+
+export type TServiceConfigManifest = {
+  serviceId: string
+  serviceName: string
+  kind: TServiceConfigKind
+  environment: string | null
+  environmentKeys: string[]
+  files: TServiceConfigFile[]
+}
+
+export type TServiceConfigContent = {
+  serviceId: string
+  fileId: string
+  content: string
+  redacted: boolean
+}
+
 export type TServerMetricSnapshot = {
   at: number
   runId: string

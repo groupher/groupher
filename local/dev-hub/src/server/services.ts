@@ -9,6 +9,24 @@ import type {
   TTechnologyStack,
 } from '../shared/contracts.ts'
 
+export type TServiceConfigDefinition =
+  | {
+      kind: 'next-env'
+      root: string
+      environment: 'development'
+    }
+  | {
+      kind: 'elixir-config'
+      root: string
+      environment: string
+    }
+  | {
+      kind: 'python-settings'
+      root: string
+      files: readonly string[]
+      environmentKeys: readonly string[]
+    }
+
 export type TServiceDefinition = {
   id: string
   name: string
@@ -20,6 +38,7 @@ export type TServiceDefinition = {
   command?: string
   args?: string[]
   env?: Record<string, string>
+  config?: TServiceConfigDefinition
   port?: number
   url?: string
   unavailableReason?: string
@@ -52,6 +71,11 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     monogram: 'MN',
     technologies: ['nextjs', 'react', 'typescript', 'tailwindcss'],
     cwd: REPO_ROOT,
+    config: {
+      kind: 'next-env',
+      root: fromRoot('frontend/main'),
+      environment: 'development',
+    },
     command: 'make',
     args: ['fe.dev.main'],
     port: 3000,
@@ -66,6 +90,11 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     monogram: 'DS',
     technologies: ['nextjs', 'react', 'typescript', 'tailwindcss'],
     cwd: REPO_ROOT,
+    config: {
+      kind: 'next-env',
+      root: fromRoot('frontend/dashboard'),
+      environment: 'development',
+    },
     command: 'make',
     args: ['fe.dev.dsb'],
     port: 3001,
@@ -80,6 +109,11 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     monogram: 'LD',
     technologies: ['nextjs', 'react', 'typescript', 'tailwindcss'],
     cwd: REPO_ROOT,
+    config: {
+      kind: 'next-env',
+      root: fromRoot('frontend/landing'),
+      environment: 'development',
+    },
     command: 'make',
     args: ['fe.dev.landing'],
     port: 3002,
@@ -94,6 +128,11 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     monogram: 'GW',
     technologies: ['nextjs', 'react', 'typescript', 'nodejs'],
     cwd: REPO_ROOT,
+    config: {
+      kind: 'next-env',
+      root: fromRoot('frontend/gateway'),
+      environment: 'development',
+    },
     command: 'yarn',
     args: ['run', 'dev:gateway'],
     env: {
@@ -115,6 +154,11 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     monogram: 'IN',
     technologies: ['nextjs', 'react', 'typescript', 'tailwindcss'],
     cwd: REPO_ROOT,
+    config: {
+      kind: 'next-env',
+      root: fromRoot('local/inspire-me'),
+      environment: 'development',
+    },
     command: 'yarn',
     args: ['workspace', '@groupher/local-inspire-me', 'dev', '-p', '3010'],
     port: 3010,
@@ -129,6 +173,11 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     monogram: 'PX',
     technologies: ['phoenix', 'elixir', 'absinthe', 'postgresql'],
     cwd: REPO_ROOT,
+    config: {
+      kind: 'elixir-config',
+      root: fromRoot('backend/main/config'),
+      environment: 'mock',
+    },
     command: 'make',
     args: ['be.start'],
     port: 4001,
@@ -143,6 +192,18 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     monogram: 'CV',
     technologies: ['python', 'fastapi', 'markitdown', 'uvicorn'],
     cwd: fromRoot('services/document-converter'),
+    config: {
+      kind: 'python-settings',
+      root: fromRoot('services/document-converter'),
+      files: ['settings.py'],
+      environmentKeys: [
+        'DOCUMENT_CONVERTER_MAX_BYTES',
+        'DOCUMENT_CONVERTER_MAX_ARCHIVE_BYTES',
+        'DOCUMENT_CONVERTER_MAX_ARCHIVE_ENTRIES',
+        'DOCUMENT_CONVERTER_SPOOL_BYTES',
+        'DOCUMENT_CONVERTER_ALLOWED_ORIGINS',
+      ],
+    },
     command: existsSync(converterExecutable) ? converterExecutable : undefined,
     args: ['app:app', '--reload', '--port', '8000'],
     port: 8000,

@@ -68,3 +68,27 @@ test('the managed gateway routes to local frontend ports', () => {
     },
   )
 })
+
+test('service configuration roots stay scoped to each runtime', () => {
+  const configByService = Object.fromEntries(
+    SERVICE_DEFINITIONS.map((definition) => [
+      definition.id,
+      definition.config
+        ? {
+            kind: definition.config.kind,
+            root: definition.config.root.replaceAll('\\', '/'),
+          }
+        : null,
+    ]),
+  )
+
+  assert.match(configByService.main?.root || '', /frontend\/main$/)
+  assert.match(configByService.dashboard?.root || '', /frontend\/dashboard$/)
+  assert.match(configByService.landing?.root || '', /frontend\/landing$/)
+  assert.match(configByService.gateway?.root || '', /frontend\/gateway$/)
+  assert.match(configByService['inspire-me']?.root || '', /local\/inspire-me$/)
+  assert.equal(configByService.phoenix?.kind, 'elixir-config')
+  assert.match(configByService.phoenix?.root || '', /backend\/main\/config$/)
+  assert.match(configByService['document-converter']?.root || '', /services\/document-converter$/)
+  assert.equal(configByService['comment-importer'], null)
+})

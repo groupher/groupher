@@ -8,6 +8,8 @@ import type {
   TMetricRange,
   TMetricStorageNotice,
   TPublicService,
+  TServiceConfigContent,
+  TServiceConfigManifest,
   TServiceLog,
   TServiceMetricsSnapshot,
 } from '@shared/contracts'
@@ -46,6 +48,42 @@ export async function fetchServiceLogs(id: string, signal?: AbortSignal): Promis
   if (!response.ok) throw new Error(`Could not load logs for ${id}.`)
   const payload = (await response.json()) as { logs: TServiceLog[] }
   return payload.logs
+}
+
+export async function fetchServiceConfig(
+  id: string,
+  signal?: AbortSignal,
+): Promise<TServiceConfigManifest> {
+  const response = await fetch(`/api/services/${encodeURIComponent(id)}/config`, { signal })
+  const payload = (await response.json().catch(() => null)) as
+    | (TServiceConfigManifest & { error?: string })
+    | null
+  if (!response.ok || !payload) {
+    throw new Error(payload?.error || `Could not load configuration for ${id}.`)
+  }
+  return payload
+}
+
+export async function fetchServiceConfigContent(
+  id: string,
+  fileId: string,
+  reveal: boolean,
+  signal?: AbortSignal,
+): Promise<TServiceConfigContent> {
+  const params = new URLSearchParams()
+  if (reveal) params.set('reveal', 'true')
+  const query = params.size > 0 ? `?${params.toString()}` : ''
+  const response = await fetch(
+    `/api/services/${encodeURIComponent(id)}/config/${encodeURIComponent(fileId)}${query}`,
+    { signal },
+  )
+  const payload = (await response.json().catch(() => null)) as
+    | (TServiceConfigContent & { error?: string })
+    | null
+  if (!response.ok || !payload) {
+    throw new Error(payload?.error || `Could not load configuration file for ${id}.`)
+  }
+  return payload
 }
 
 export async function fetchMetricHistory(

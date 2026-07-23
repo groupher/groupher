@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "concurrently --kill-others --names api,ui \"DEV_HUB_API_ONLY=true DEV_HUB_PORT=4311 DEV_HUB_WEB_PORT=4310 DEV_HUB_OPEN_BROWSER=false tsx src/server/index.ts\" \"DEV_HUB_API_PORT=4311 vite --host 127.0.0.1 --port 4310 --strictPort --open\"",
     "hub": "vite build && tsx src/server/index.ts",
+    "desktop": "tauri dev",
+    "desktop:build": "tauri build --bundles app",
+    "desktop:icon": "tauri icon public/favicon.svg",
     "build": "vite build",
     "test": "node --import tsx --test src/server/*.test.ts",
     "type-check": "tsc --noEmit --project ./tsconfig.json",
@@ -35,6 +38,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.3.1",
+    "@tauri-apps/cli": "2.11.4",
     "@types/node": "^24.0.0",
     "@types/react": "19.2.14",
     "@types/react-dom": "19",

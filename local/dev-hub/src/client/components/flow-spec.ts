@@ -12,6 +12,7 @@ export type TFlowServiceNodeData = Record<string, unknown> & {
   onRestartService: (service: TPublicService) => void
   onToggleTerminal: (id: string) => void
   onOpenMetrics: (id: string) => void
+  onOpenConfig: (id: string) => void
 }
 
 export type TFlowServiceNode = Node<TFlowServiceNodeData, 'service'>

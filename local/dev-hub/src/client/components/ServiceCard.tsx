@@ -28,6 +28,7 @@ type TProps = {
   onRestartService: (service: TPublicService) => void
   onToggleTerminal: (id: string) => void
   onOpenMetrics: (id: string) => void
+  onOpenConfig: (id: string) => void
 }
 
 const STATUS_LABEL: Record<TPublicService['status'], string> = {
@@ -65,6 +66,7 @@ export function ServiceCard({
   onRestartService,
   onToggleTerminal,
   onOpenMetrics,
+  onOpenConfig,
 }: TProps) {
   const active = ['starting', 'running', 'stopping'].includes(service.status)
   const stoppable = ['starting', 'running'].includes(service.status)
@@ -219,6 +221,7 @@ export function ServiceCard({
                   <ServiceActionButton
                     type='button'
                     className='service-terminal-action service-terminal-action--config'
+                    onClick={() => onOpenConfig(service.id)}
                     aria-label={`Configure ${service.name}`}
                     tooltip='Configure service'
                   >

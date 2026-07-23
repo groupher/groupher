@@ -1,4 +1,4 @@
-import type { TGitDiffScope, TPublicService } from '@shared/contracts'
+import type { TPublicService } from '@shared/contracts'
 import { AlertCircle, X } from 'lucide-react'
 import { lazy, startTransition, Suspense, useCallback, useEffect, useState } from 'react'
 
@@ -8,8 +8,11 @@ import { MetricsNoticeBar } from '@/components/MetricsNoticeBar'
 import { PageHeader } from '@/components/PageHeader'
 import { ServiceSection } from '@/components/ServiceSection'
 import { useServiceHub } from '@/hooks/useServiceHub'
-import type { THubViewMode } from '@/spec'
+import type { THubDrawer, THubViewMode } from '@/spec'
 
+const ConfigDrawer = lazy(() =>
+  import('@/components/ConfigDrawer').then((module) => ({ default: module.ConfigDrawer })),
+)
 const MetricsDrawer = lazy(() =>
   import('@/components/MetricsDrawer').then((module) => ({ default: module.MetricsDrawer })),
 )
@@ -36,10 +39,17 @@ export function App() {
     dismissError,
   } = useServiceHub()
   const [expandedIds, setExpandedIds] = useState(() => new Set<string>())
-  const [diffScope, setDiffScope] = useState<TGitDiffScope | null>(null)
-  const [metricsServiceId, setMetricsServiceId] = useState<string | null>(null)
+  const [activeDrawer, setActiveDrawer] = useState<THubDrawer>(null)
   const [viewMode, setViewMode] = useState<THubViewMode>(getInitialViewMode)
-  const metricsService = services.find((service) => service.id === metricsServiceId) || null
+  const metricsService =
+    activeDrawer?.kind === 'metrics'
+      ? services.find((service) => service.id === activeDrawer.serviceId) || null
+      : null
+  const configService =
+    activeDrawer?.kind === 'config'
+      ? services.find((service) => service.id === activeDrawer.serviceId) || null
+      : null
+  const diffScope = activeDrawer?.kind === 'git' ? activeDrawer.scope : null
 
   useEffect(() => {
     const compactIds = new Set(
@@ -76,6 +86,15 @@ export function App() {
     },
     [restartService],
   )
+  const openMetrics = useCallback(
+    (serviceId: string) => setActiveDrawer({ kind: 'metrics', serviceId }),
+    [],
+  )
+  const openConfig = useCallback(
+    (serviceId: string) => setActiveDrawer({ kind: 'config', serviceId }),
+    [],
+  )
+  const closeDrawer = useCallback(() => setActiveDrawer(null), [])
 
   const handleViewModeChange = useCallback((mode: THubViewMode) => {
     const url = new URL(window.location.href)
@@ -93,7 +112,7 @@ export function App() {
         git={git}
         connected={connected}
         viewMode={viewMode}
-        onOpenDiff={setDiffScope}
+        onOpenDiff={(scope) => setActiveDrawer({ kind: 'git', scope })}
         onViewModeChange={handleViewModeChange}
       />
       <MetricsNoticeBar notices={metricNotices} />
@@ -123,7 +142,8 @@ export function App() {
             onToggleService={handleToggleService}
             onRestartService={handleRestartService}
             onToggleTerminal={toggleTerminal}
-            onOpenMetrics={setMetricsServiceId}
+            onOpenMetrics={openMetrics}
+            onOpenConfig={openConfig}
           />
           <ServiceSection
             title='Backend'
@@ -136,7 +156,8 @@ export function App() {
             onToggleService={handleToggleService}
             onRestartService={handleRestartService}
             onToggleTerminal={toggleTerminal}
-            onOpenMetrics={setMetricsServiceId}
+            onOpenMetrics={openMetrics}
+            onOpenConfig={openConfig}
           />
         </>
       ) : (
@@ -157,7 +178,8 @@ export function App() {
               onToggleService={handleToggleService}
               onRestartService={handleRestartService}
               onToggleTerminal={toggleTerminal}
-              onOpenMetrics={setMetricsServiceId}
+              onOpenMetrics={openMetrics}
+              onOpenConfig={openConfig}
             />
           </Suspense>
         </ErrorBoundary>
@@ -173,16 +195,21 @@ export function App() {
       <GitDiffDrawer
         scope={diffScope}
         git={git}
-        onScopeChange={setDiffScope}
-        onClose={() => setDiffScope(null)}
+        onScopeChange={(scope) => setActiveDrawer({ kind: 'git', scope })}
+        onClose={closeDrawer}
       />
       {metricsService ? (
         <Suspense fallback={null}>
           <MetricsDrawer
             service={metricsService}
             current={metricsByService[metricsService.id]}
-            onClose={() => setMetricsServiceId(null)}
+            onClose={closeDrawer}
           />
+        </Suspense>
+      ) : null}
+      {configService ? (
+        <Suspense fallback={null}>
+          <ConfigDrawer service={configService} onClose={closeDrawer} />
         </Suspense>
       ) : null}
     </main>

@@ -22,7 +22,13 @@ inspire: fe.dev.inspire
 
 # local development hub
 dev:
+	yarn workspace @groupher/local-dev-hub hub
+
+dev.dev:
 	yarn workspace @groupher/local-dev-hub dev
+
+dev.app:
+	@bash local/dev-hub/scripts/install-app.sh
 
 # main
 fe.dev.main:

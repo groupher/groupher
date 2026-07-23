@@ -1,4 +1,5 @@
 import type { TPublicService, TServiceGroup, TServiceMetricsSnapshot } from '@shared/contracts'
+import { useEffect, useState } from 'react'
 
 import { ServiceCard } from './ServiceCard'
 import { TerminalPanel } from './TerminalPanel'
@@ -15,9 +16,12 @@ type TProps = {
   onRestartService: (service: TPublicService) => void
   onToggleTerminal: (id: string) => void
   onOpenMetrics: (id: string) => void
+  onOpenConfig: (id: string) => void
 }
 
-const SERVICES_PER_ROW = 3
+const WIDE_SERVICES_PER_ROW = 3
+const MEDIUM_SERVICES_PER_ROW = 2
+const NARROW_SERVICES_PER_ROW = 1
 const ACTIVE_SERVICE_STATUSES = new Set<TPublicService['status']>([
   'running',
   'starting',
@@ -26,6 +30,34 @@ const ACTIVE_SERVICE_STATUSES = new Set<TPublicService['status']>([
 
 const isCompactService = (service: TPublicService) =>
   service.status === 'stopped' || service.status === 'unavailable'
+
+const getServicesPerRow = () => {
+  if (typeof window === 'undefined') return WIDE_SERVICES_PER_ROW
+  if (window.matchMedia('(max-width: 760px)').matches) return NARROW_SERVICES_PER_ROW
+  if (window.matchMedia('(max-width: 1100px)').matches) return MEDIUM_SERVICES_PER_ROW
+  return WIDE_SERVICES_PER_ROW
+}
+
+const useServicesPerRow = () => {
+  const [servicesPerRow, setServicesPerRow] = useState(getServicesPerRow)
+
+  useEffect(() => {
+    const mediumViewport = window.matchMedia('(max-width: 1100px)')
+    const narrowViewport = window.matchMedia('(max-width: 760px)')
+    const updateServicesPerRow = () => setServicesPerRow(getServicesPerRow())
+
+    mediumViewport.addEventListener('change', updateServicesPerRow)
+    narrowViewport.addEventListener('change', updateServicesPerRow)
+    updateServicesPerRow()
+
+    return () => {
+      mediumViewport.removeEventListener('change', updateServicesPerRow)
+      narrowViewport.removeEventListener('change', updateServicesPerRow)
+    }
+  }, [])
+
+  return servicesPerRow
+}
 
 export function ServiceSection({
   title,
@@ -39,15 +71,17 @@ export function ServiceSection({
   onRestartService,
   onToggleTerminal,
   onOpenMetrics,
+  onOpenConfig,
 }: TProps) {
+  const servicesPerRow = useServicesPerRow()
   const groupedServices = services.filter((service) => service.group === group)
   const activeCount = groupedServices.filter((service) =>
     ACTIVE_SERVICE_STATUSES.has(service.status),
   ).length
   const rows: TPublicService[][] = []
 
-  for (let index = 0; index < groupedServices.length; index += SERVICES_PER_ROW) {
-    rows.push(groupedServices.slice(index, index + SERVICES_PER_ROW))
+  for (let index = 0; index < groupedServices.length; index += servicesPerRow) {
+    rows.push(groupedServices.slice(index, index + servicesPerRow))
   }
 
   return (
@@ -86,6 +120,7 @@ export function ServiceSection({
                   onRestartService={onRestartService}
                   onToggleTerminal={onToggleTerminal}
                   onOpenMetrics={onOpenMetrics}
+                  onOpenConfig={onOpenConfig}
                 />
               ))}
             </div>
