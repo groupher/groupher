@@ -17,7 +17,7 @@ export default function useSalon() {
     illegalItem: cn(
       'text-xs py-0.5 px-1.5 mr-2.5 -ml-0.5 mb-1.5 rounded',
       fg('title'),
-      rainbow(COLOR.RED, 'borderSoft'),
+      rainbow(COLOR.RED, 'borderLite'),
     ),
   }
 }

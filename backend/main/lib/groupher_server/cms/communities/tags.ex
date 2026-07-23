@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
   alias CMS.Communities.TagStats
   alias CMS.FrontDesk
   alias CMS.Model.{Community, CommunityTag, CommunityTagGroup}
-  alias Helper.{Multi, ORM, QueryBuilder, T}
+  alias Helper.{Datetime, Multi, ORM, QueryBuilder, T}
 
   @doc """
   create a community tag
@@ -159,43 +159,60 @@ defmodule GroupherServer.CMS.Communities.Tags do
     end
   end
 
-  # check if the tag to be set is in same community & thread
-  defp tag_in_same_thread?(tag_ids, %{community_id: community_id, thread: thread}) do
-    casted_tag_ids = Enum.map(tag_ids, &cast_id!/1)
-    tag_ids = Enum.map(casted_tag_ids, &to_string/1)
+  defp do_update_tags_assoc(article, tags, opt) when is_list(tags) do
+    article = Repo.preload(article, :community_tags)
+    old_tags = article.community_tags
 
-    domain_tag_ids =
+    removing_ids = MapSet.new(tags, & &1.id)
+
+    community_tags =
+      case opt do
+        :add -> Enum.uniq_by(old_tags ++ tags, & &1.id)
+        :remove -> Enum.reject(old_tags, &MapSet.member?(removing_ids, &1.id))
+        :overwrite -> tags
+      end
+
+    if same_tag_ids?(old_tags, community_tags) do
+      {:ok, article}
+    else
+      Repo.transaction(fn ->
+        with {:ok, updated_article} <-
+               article
+               |> Ecto.Changeset.change()
+               |> Ecto.Changeset.put_assoc(:community_tags, community_tags)
+               |> Repo.update(),
+             {:ok, :pass} <- sync_tag_stats(updated_article, article, old_tags) do
+          updated_article
+        else
+          {:error, reason} -> Repo.rollback(reason)
+        end
+      end)
+    end
+  end
+
+  defp same_tag_ids?(left, right) do
+    MapSet.new(Enum.map(left, & &1.id)) == MapSet.new(Enum.map(right, & &1.id))
+  end
+
+  defp find_related_tags([], _filter), do: {:ok, []}
+
+  defp find_related_tags(tag_ids, %{community_id: community_id, thread: thread}) do
+    casted_tag_ids = tag_ids |> Enum.map(&cast_id!/1) |> Enum.uniq()
+    positions = casted_tag_ids |> Enum.with_index() |> Map.new()
+
+    tags =
       CommunityTag
       |> where([t], t.community_id == ^community_id)
       |> where([t], t.thread == ^thread)
       |> where([t], t.id in ^casted_tag_ids)
-      |> select([t], t.id)
       |> Repo.all()
-      |> Enum.map(&to_string/1)
+      |> Enum.sort_by(&Map.fetch!(positions, &1.id))
 
-    Enum.sort(Enum.uniq(tag_ids)) === Enum.sort(domain_tag_ids)
-  end
-
-  defp do_overwrite_tags(article, tags) do
-    article = Repo.preload(article, :community_tags)
-    old_tags = article.community_tags
-
-    Repo.transaction(fn ->
-      with {:ok, updated_article} <-
-             article
-             |> Ecto.Changeset.change()
-             |> Ecto.Changeset.put_assoc(:community_tags, tags)
-             |> Repo.update(),
-           {:ok, :pass} <- sync_tag_stats(updated_article, article, old_tags) do
-        updated_article
-      else
-        {:error, reason} -> Repo.rollback(reason)
-      end
-    end)
-  end
-
-  defp find_related_tags(tag_ids) do
-    FrontDesk.community_tags(tag_ids)
+    if length(tags) == length(casted_tag_ids) do
+      {:ok, tags}
+    else
+      raise_error(:invalid_domain_tag, "tag not in same community & thread")
+    end
   end
 
   @doc """
@@ -208,13 +225,8 @@ defmodule GroupherServer.CMS.Communities.Tags do
       }) do
     check_filter = %{community_id: cid, thread: thread}
 
-    if tag_in_same_thread?(tag_ids, check_filter) do
-      with {:ok, article} <- do_overwrite_tags(article, []),
-           {:ok, related_tags} <- find_related_tags(tag_ids) do
-        do_overwrite_tags(article, related_tags)
-      end
-    else
-      raise_error(:invalid_domain_tag, "tag not in same community & thread")
+    with {:ok, related_tags} <- find_related_tags(tag_ids, check_filter) do
+      do_update_tags_assoc(article, related_tags, :overwrite)
     end
   end
 
@@ -225,13 +237,8 @@ defmodule GroupherServer.CMS.Communities.Tags do
       }) do
     check_filter = %{community_id: cid, thread: thread}
 
-    case tag_in_same_thread?(tag_ids, check_filter) do
-      true ->
-        Enum.each(tag_ids, &add(article, &1))
-        {:ok, article}
-
-      false ->
-        raise_error(:invalid_domain_tag, "tag not in same community & thread")
+    with {:ok, related_tags} <- find_related_tags(tag_ids, check_filter) do
+      do_update_tags_assoc(article, related_tags, :add)
     end
   end
 
@@ -243,7 +250,7 @@ defmodule GroupherServer.CMS.Communities.Tags do
   @spec add(Ecto.Schema.t(), T.id()) :: {:ok, Ecto.Schema.t()} | {:error, any()}
   def add(article, tag_id) do
     with {:ok, tag} <- FrontDesk.community_tag(tag_id) do
-      do_update_tags_assoc(article, tag, :add)
+      do_update_tags_assoc(article, [tag], :add)
     end
   end
 
@@ -253,33 +260,8 @@ defmodule GroupherServer.CMS.Communities.Tags do
   @spec remove(Ecto.Schema.t(), T.id()) :: {:ok, Ecto.Schema.t()} | {:error, any()}
   def remove(article, tag_id) do
     with {:ok, tag} <- FrontDesk.community_tag(tag_id) do
-      do_update_tags_assoc(article, tag, :remove)
+      do_update_tags_assoc(article, [tag], :remove)
     end
-  end
-
-  defp do_update_tags_assoc(article, %CommunityTag{} = tag, opt) do
-    article = Repo.preload(article, :community_tags)
-    old_tags = article.community_tags
-
-    community_tags =
-      case opt do
-        :add -> (article.community_tags ++ [tag]) |> Enum.uniq_by(& &1.id)
-        :remove -> article.community_tags -- [tag]
-      end
-
-    article
-    |> Ecto.Changeset.change()
-    |> Ecto.Changeset.put_assoc(:community_tags, community_tags)
-    |> then(fn changeset ->
-      Repo.transaction(fn ->
-        with {:ok, updated_article} <- Repo.update(changeset),
-             {:ok, :pass} <- sync_tag_stats(updated_article, article, old_tags) do
-          updated_article
-        else
-          {:error, reason} -> Repo.rollback(reason)
-        end
-      end)
-    end)
   end
 
   defp sync_tag_stats(updated_article, article, old_tags) do
@@ -291,19 +273,8 @@ defmodule GroupherServer.CMS.Communities.Tags do
     added_tags = Enum.reject(new_tags, &MapSet.member?(old_ids, &1.id))
     removed_tags = Enum.reject(old_tags, &MapSet.member?(new_ids, &1.id))
 
-    with {:ok, :pass} <- update_stats(article, added_tags, :inc),
-         {:ok, :pass} <- update_stats(article, removed_tags, :dec) do
-      {:ok, :pass}
-    end
-  end
-
-  defp update_stats(article, tags, action) do
-    Enum.reduce_while(tags, {:ok, :pass}, fn tag, {:ok, :pass} ->
-      case apply(TagStats, action, [article, tag]) do
-        {:ok, :pass} -> {:cont, {:ok, :pass}}
-        error -> {:halt, error}
-      end
-    end)
+    deltas = Enum.map(added_tags, &{&1, 1}) ++ Enum.map(removed_tags, &{&1, -1})
+    TagStats.update_many(article, deltas)
   end
 
   @doc """
@@ -332,22 +303,12 @@ defmodule GroupherServer.CMS.Communities.Tags do
   """
   @spec reindex_in_group(Community.t(), atom(), T.id(), list()) :: {:ok, atom()} | {:error, any()}
   def reindex_in_group(%Community{} = community, thread, group_id, indexed_tags) do
-    with {:ok, group_tags} <- find_group_tags(community, thread, group_id) do
-      indexed_tags_by_id = indexed_by_id(indexed_tags)
-
-      Repo.transaction(fn ->
-        group_tags
-        |> Enum.each(fn tag ->
-          target = Map.fetch!(indexed_tags_by_id, to_string(tag.id))
-
-          tag
-          |> Ecto.Changeset.change(%{index: target.index})
-          |> Repo.update!()
-        end)
-
-        :pass
+    with {:ok, group_tags} <- find_group_tags(community, thread, group_id),
+         {:ok, indexed_tags} <- normalize_indexed_tags(indexed_tags, false),
+         :ok <- validate_complete_reindex(group_tags, indexed_tags) do
+      run_batch_reindex(fn ->
+        batch_reindex_tags(community, thread, indexed_tags, false)
       end)
-      |> result()
     end
   end
 
@@ -362,28 +323,12 @@ defmodule GroupherServer.CMS.Communities.Tags do
   """
   @spec reindex(Community.t(), atom(), list()) :: {:ok, atom()} | {:error, any()}
   def reindex(%Community{} = community, thread, indexed_tags) do
-    ids = Enum.map(indexed_tags, & &1.id)
-
-    with {:ok, indexed_tags} <- validate_indexed_tags_groups(community, thread, indexed_tags) do
-      indexed_tags_by_id = indexed_by_id(indexed_tags)
-
-      Repo.transaction(fn ->
-        CommunityTag
-        |> where([t], t.community_id == ^community.id)
-        |> where([t], t.thread == ^thread)
-        |> where([t], t.id in ^ids)
-        |> Repo.all()
-        |> Enum.each(fn tag ->
-          target = Map.fetch!(indexed_tags_by_id, to_string(tag.id))
-
-          tag
-          |> Ecto.Changeset.change(%{group_id: target.group_id, index: target.index})
-          |> Repo.update!()
-        end)
-
-        :pass
+    with {:ok, indexed_tags} <- normalize_indexed_tags(indexed_tags, true),
+         :ok <- validate_indexed_tags(community, thread, indexed_tags),
+         :ok <- validate_indexed_tags_groups(community, thread, indexed_tags) do
+      run_batch_reindex(fn ->
+        batch_reindex_tags(community, thread, indexed_tags, true)
       end)
-      |> result()
     end
   end
 
@@ -399,26 +344,10 @@ defmodule GroupherServer.CMS.Communities.Tags do
   @spec reindex_groups(Community.t() | String.t(), atom(), list()) ::
           {:ok, atom()} | {:error, any()}
   def reindex_groups(%Community{} = community, thread, indexed_groups) do
-    ids = Enum.map(indexed_groups, & &1.id)
-    indexed_groups_by_id = indexed_by_id(indexed_groups)
-
-    Repo.transaction(fn ->
-      CommunityTagGroup
-      |> where([g], g.community_id == ^community.id)
-      |> where([g], g.thread == ^thread)
-      |> where([g], g.id in ^ids)
-      |> Repo.all()
-      |> Enum.each(fn group ->
-        target = Map.fetch!(indexed_groups_by_id, to_string(group.id))
-
-        group
-        |> Ecto.Changeset.change(%{index: target.index})
-        |> Repo.update!()
-      end)
-
-      :pass
-    end)
-    |> result()
+    with {:ok, indexed_groups} <- normalize_indexed_tags(indexed_groups, false),
+         :ok <- validate_indexed_groups(community, thread, indexed_groups) do
+      run_batch_reindex(fn -> batch_reindex_groups(community, thread, indexed_groups) end)
+    end
   end
 
   def reindex_groups(community, thread, indexed_groups) do
@@ -487,11 +416,61 @@ defmodule GroupherServer.CMS.Communities.Tags do
     end
   end
 
+  defp normalize_indexed_tags(indexed_tags, include_group?) do
+    normalized =
+      Enum.map(indexed_tags, fn item ->
+        item
+        |> Map.put(:id, cast_id!(item.id))
+        |> Map.put(:index, cast_index!(item.index))
+        |> then(fn item ->
+          if include_group?, do: Map.put(item, :group_id, cast_id!(item.group_id)), else: item
+        end)
+      end)
+
+    ids = Enum.map(normalized, & &1.id)
+
+    if length(ids) == MapSet.size(MapSet.new(ids)) do
+      {:ok, normalized}
+    else
+      raise_error(:invalid_domain_tag, "duplicate ids in reindex payload")
+    end
+  end
+
+  defp validate_complete_reindex(group_tags, indexed_tags) do
+    group_ids = MapSet.new(group_tags, & &1.id)
+    indexed_ids = MapSet.new(indexed_tags, & &1.id)
+
+    if group_ids == indexed_ids do
+      :ok
+    else
+      raise_error(
+        :invalid_domain_tag,
+        "reindex payload must contain exactly the tags in the group"
+      )
+    end
+  end
+
+  defp validate_indexed_tags(%Community{} = community, thread, indexed_tags) do
+    ids = Enum.map(indexed_tags, & &1.id)
+
+    valid_ids =
+      CommunityTag
+      |> where([t], t.community_id == ^community.id)
+      |> where([t], t.thread == ^thread)
+      |> where([t], t.id in ^ids)
+      |> select([t], t.id)
+      |> Repo.all()
+      |> MapSet.new()
+
+    if MapSet.new(ids) == valid_ids do
+      :ok
+    else
+      raise_error(:invalid_domain_tag, "tag not in same community & thread")
+    end
+  end
+
   defp validate_indexed_tags_groups(%Community{} = community, thread, indexed_tags) do
-    group_ids =
-      indexed_tags
-      |> Enum.map(&cast_id!(&1.group_id))
-      |> Enum.uniq()
+    group_ids = indexed_tags |> Enum.map(& &1.group_id) |> Enum.uniq()
 
     valid_group_ids =
       CommunityTagGroup
@@ -502,24 +481,130 @@ defmodule GroupherServer.CMS.Communities.Tags do
       |> Repo.all()
       |> MapSet.new()
 
-    if Enum.all?(group_ids, &MapSet.member?(valid_group_ids, &1)) do
-      indexed_tags =
-        Enum.map(indexed_tags, fn tag ->
-          %{tag | group_id: cast_id!(tag.group_id)}
-        end)
-
-      {:ok, indexed_tags}
+    if MapSet.new(group_ids) == valid_group_ids do
+      :ok
     else
       raise_error(:invalid_domain_tag, "tag group not in same community & thread")
     end
   end
 
-  defp indexed_by_id(items), do: Map.new(items, &{to_string(&1.id), &1})
+  defp validate_indexed_groups(%Community{} = community, thread, indexed_groups) do
+    ids = Enum.map(indexed_groups, & &1.id)
+
+    valid_ids =
+      CommunityTagGroup
+      |> where([g], g.community_id == ^community.id)
+      |> where([g], g.thread == ^thread)
+      |> where([g], g.id in ^ids)
+      |> select([g], g.id)
+      |> Repo.all()
+      |> MapSet.new()
+
+    if MapSet.new(ids) == valid_ids do
+      :ok
+    else
+      raise_error(:invalid_domain_tag, "tag group not in same community & thread")
+    end
+  end
+
+  defp run_batch_reindex(update_fun) do
+    Repo.transaction(fn ->
+      case update_fun.() do
+        {:ok, :pass} -> :pass
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+    |> result()
+  end
+
+  defp batch_reindex_tags(_community, _thread, [], _include_group?), do: {:ok, :pass}
+
+  defp batch_reindex_tags(%Community{} = community, thread, indexed_tags, include_group?) do
+    ids = Enum.map(indexed_tags, & &1.id)
+    indexes = Enum.map(indexed_tags, & &1.index)
+    now = Datetime.now(:second)
+
+    {query, params} =
+      if include_group? do
+        query = """
+        UPDATE cms.community_tags AS tag
+        SET group_id = updates.group_id,
+            "index" = updates.new_index,
+            updated_at = $6
+        FROM UNNEST($1::bigint[], $2::bigint[], $3::integer[])
+          AS updates(id, group_id, new_index)
+        WHERE tag.id = updates.id
+          AND tag.community_id = $4
+          AND tag.thread = $5
+        """
+
+        {query,
+         [
+           ids,
+           Enum.map(indexed_tags, & &1.group_id),
+           indexes,
+           community.id,
+           Atom.to_string(thread),
+           now
+         ]}
+      else
+        query = """
+        UPDATE cms.community_tags AS tag
+        SET "index" = updates.new_index,
+            updated_at = $5
+        FROM UNNEST($1::bigint[], $2::integer[]) AS updates(id, new_index)
+        WHERE tag.id = updates.id
+          AND tag.community_id = $3
+          AND tag.thread = $4
+        """
+
+        {query, [ids, indexes, community.id, Atom.to_string(thread), now]}
+      end
+
+    query
+    |> Repo.query(params)
+    |> expect_updated_rows(length(ids))
+  end
+
+  defp batch_reindex_groups(_community, _thread, []), do: {:ok, :pass}
+
+  defp batch_reindex_groups(%Community{} = community, thread, indexed_groups) do
+    ids = Enum.map(indexed_groups, & &1.id)
+    indexes = Enum.map(indexed_groups, & &1.index)
+
+    query = """
+    UPDATE cms.community_tag_groups AS tag_group
+    SET "index" = updates.new_index,
+        updated_at = $5
+    FROM UNNEST($1::bigint[], $2::integer[]) AS updates(id, new_index)
+    WHERE tag_group.id = updates.id
+      AND tag_group.community_id = $3
+      AND tag_group.thread = $4
+    """
+
+    query
+    |> Repo.query([ids, indexes, community.id, Atom.to_string(thread), Datetime.now(:second)])
+    |> expect_updated_rows(length(ids))
+  end
+
+  defp expect_updated_rows({:ok, %{num_rows: expected}}, expected), do: {:ok, :pass}
+
+  defp expect_updated_rows({:ok, _result}, _expected),
+    do: raise_error(:invalid_domain_tag, "reindex target changed")
+
+  defp expect_updated_rows({:error, reason}, _expected), do: {:error, reason}
 
   defp cast_id!(id) do
     case Ecto.Type.cast(:id, id) do
       {:ok, casted_id} -> casted_id
       :error -> raise_error(:invalid_domain_tag, "invalid tag group id")
+    end
+  end
+
+  defp cast_index!(index) do
+    case Ecto.Type.cast(:integer, index) do
+      {:ok, casted_index} -> casted_index
+      :error -> raise ArgumentError, "invalid tag index"
     end
   end
 

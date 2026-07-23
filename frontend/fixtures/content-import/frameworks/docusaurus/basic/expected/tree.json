@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "framework": "docusaurus",
+    "root": "docs",
+    "configPaths": ["docusaurus.config.ts", "sidebars.ts"]
+  },
+  "navigation": [
+    {
+      "kind": "scope",
+      "sourceId": "sidebar:tutorialSidebar",
+      "title": "Tutorial Sidebar",
+      "routePrefix": "/",
+      "children": [
+        {
+          "kind": "page",
+          "sourceId": "docs/intro.md",
+          "sourcePath": "docs/intro.md",
+          "title": "Introduction",
+          "route": "/welcome"
+        },
+        {
+          "kind": "section",
+          "sourceId": "category:guides",
+          "title": "Guides",
+          "children": [
+            {
+              "kind": "page",
+              "sourceId": "docs/guide/index.md",
+              "sourcePath": "docs/guide/index.md",
+              "title": "Guide Overview",
+              "route": "/guide/index"
+            },
+            {
+              "kind": "page",
+              "sourceId": "docs/guide/start.md",
+              "sourcePath": "docs/guide/start.md",
+              "title": "Start Here",
+              "route": "/guide/start"
+            }
+          ]
+        },
+        {
+          "kind": "link",
+          "sourceId": "external:https://example.com",
+          "title": "Project",
+          "href": "https://example.com"
+        }
+      ]
+    },
+    {
+      "kind": "scope",
+      "sourceId": "sidebar:api",
+      "title": "Api",
+      "routePrefix": "/",
+      "children": [
+        {
+          "kind": "page",
+          "sourceId": "docs/api/overview.md",
+          "sourcePath": "docs/api/overview.md",
+          "title": "Overview",
+          "route": "/api/overview"
+        },
+        {
+          "kind": "page",
+          "sourceId": "docs/api/client.mdx",
+          "sourcePath": "docs/api/client.mdx",
+          "title": "Client",
+          "route": "/api/client"
+        }
+      ]
+    }
+  ]
+}

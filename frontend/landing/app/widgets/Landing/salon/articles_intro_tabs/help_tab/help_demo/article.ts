@@ -16,7 +16,7 @@ export default function useSalon() {
     ),
     underPaper: cn(
       'absolute -top-0.5 -right-2 w-96 h-1/2 -z-10 rotate-3 border rounded-md',
-      br('rainbow.cyanSoft'),
+      br('rainbow.cyanLite'),
       bg('cardAlpha'),
       shadow('card'),
     ),
@@ -24,7 +24,7 @@ export default function useSalon() {
     title: cn('row-center text-base', fg('title')),
     inner: cn(
       'column-center s-full z-10 px-4 py-8 pt-6 border rounded-md',
-      br('rainbow.cyanSoft'),
+      br('rainbow.cyanLite'),
       bg('card'),
     ),
     content: 'column relative w-64',
@@ -53,7 +53,7 @@ export default function useSalon() {
     // comment
     commentDot: cn(
       'align-both absolute right-32 bottom-52 size-3.5 z-50',
-      rainbow(COLOR.CYAN, 'bgSoft'),
+      rainbow(COLOR.CYAN, 'bgLite'),
     ),
     commentSolid: cn('size-2 circle opacity-80', rainbow(COLOR.CYAN, 'bg')),
   }

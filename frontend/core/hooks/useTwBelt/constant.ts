@@ -29,6 +29,8 @@ export const STATIC_CLS = {
 
   landingTitleBase: 'text-3xl bold-sm opacity-70 dark:opacity-90 text-shadow dark:text-shadow-none',
 
+  panelBase: 'rounded-lg border p-6',
+
   sexyBorderBase: 'h-px w-full border-b',
   sexyVBorderBase: 'h-full w-px border-l',
 
@@ -43,10 +45,10 @@ export const STATIC_CLS = {
 export const RAINBOW_ALIAS: Record<TColorPrefix, string> = {
   fg: 'text-rainbow',
   bg: 'bg-rainbow',
-  bgSoft: 'bg-rainbow', // special-cased
+  bgLite: 'bg-rainbow', // special-cased
   fill: 'fill-rainbow',
   border: 'border-rainbow',
-  borderSoft: 'border-rainbow', // special-cased
+  borderLite: 'border-rainbow', // special-cased
   decoration: 'decoration-rainbow',
 } as const
 

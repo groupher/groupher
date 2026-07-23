@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { sortByIndex } from '~/helper'
-import type { TTagGroup, TThread } from '~/spec'
+import type { TTag, TTagGroup, TThread } from '~/spec'
 
 import type { TDraftGroup, TGroupDragTarget, TGroupListItem, TTagDragTarget } from './types'
 
@@ -73,6 +73,9 @@ const buildTagGroupIdMap = (groups: readonly TGroupListItem[]): Map<string, stri
   return tagGroupIdMap
 }
 
+const normalizeTagIndexes = (tags: readonly TTag[]): TTag[] =>
+  tags.map((tag, index) => (tag.index === index ? tag : { ...tag, index }))
+
 // Reorders real groups in the local drag draft. Draft groups are blocked here
 // because they do not yet exist in the backend and cannot be committed as part
 // of group ordering.
@@ -107,23 +110,71 @@ const moveTagInGroups = (
   groups: TGroupListItem[],
   tagId: string,
   target: TTagDragTarget,
-  sourceGroupId?: string,
+  sourceGroupId: string,
 ): TGroupListItem[] => {
-  const sourceGroup = sourceGroupId
-    ? groups.find((group) => group.id === sourceGroupId)
-    : groups.find((group) => group.tags.some((tag) => tag.id === tagId))
-  const targetGroup = groups.find((group) => group.id === target.groupId)
+  let sourceGroupIndex = -1
+  let targetGroupIndex = -1
+
+  for (let index = 0; index < groups.length; index += 1) {
+    const groupId = groups[index].id
+    if (sourceGroupIndex < 0 && groupId === sourceGroupId) sourceGroupIndex = index
+    if (targetGroupIndex < 0 && groupId === target.groupId) targetGroupIndex = index
+    if (sourceGroupIndex >= 0 && targetGroupIndex >= 0) break
+  }
+
+  const sourceGroup = groups[sourceGroupIndex]
+  const targetGroup = groups[targetGroupIndex]
 
   if (!sourceGroup || !targetGroup || targetGroup.draft || target.tagId === tagId) return groups
 
-  const movingTag = sourceGroup.tags.find((tag) => tag.id === tagId)
-  if (!movingTag) return groups
+  const sourceTagIndex = sourceGroup.tags.findIndex((tag) => tag.id === tagId)
+  if (sourceTagIndex < 0) return groups
 
-  const sourceTags = sourceGroup.tags.filter((tag) => tag.id !== tagId)
-  const targetBase =
-    sourceGroup.id === targetGroup.id
-      ? sourceTags
-      : targetGroup.tags.filter((tag) => tag.id !== tagId)
+  const movingTag = sourceGroup.tags[sourceTagIndex]
+
+  if (sourceGroupIndex === targetGroupIndex) {
+    const sourceTagCountAfterRemoval = sourceGroup.tags.length - 1
+    const targetTagIndex = target.tagId
+      ? sourceGroup.tags.findIndex((tag) => tag.id === target.tagId)
+      : sourceGroup.tags.length
+    const targetIndexAfterRemoval =
+      targetTagIndex >= 0
+        ? targetTagIndex - (sourceTagIndex < targetTagIndex ? 1 : 0)
+        : sourceTagCountAfterRemoval
+    const insertIndex = targetIndexAfterRemoval + (target.position === 'after' ? 1 : 0)
+    const boundedTargetIndex = Math.max(0, Math.min(insertIndex, sourceTagCountAfterRemoval))
+
+    // Return before allocating arrays so an adjacent hover remains a true no-op.
+    if (boundedTargetIndex === sourceTagIndex) return groups
+
+    const sourceTags = [
+      ...sourceGroup.tags.slice(0, sourceTagIndex),
+      ...sourceGroup.tags.slice(sourceTagIndex + 1),
+    ]
+    const movedTag = {
+      ...movingTag,
+      groupId: targetGroup.id,
+      index: boundedTargetIndex,
+    }
+    const targetTags = [
+      ...sourceTags.slice(0, boundedTargetIndex),
+      movedTag,
+      ...sourceTags.slice(boundedTargetIndex),
+    ]
+    const nextGroups = [...groups]
+    nextGroups[sourceGroupIndex] = {
+      ...sourceGroup,
+      tags: normalizeTagIndexes(targetTags),
+    }
+
+    return nextGroups
+  }
+
+  const sourceTags = [
+    ...sourceGroup.tags.slice(0, sourceTagIndex),
+    ...sourceGroup.tags.slice(sourceTagIndex + 1),
+  ]
+  const targetBase = targetGroup.tags.filter((tag) => tag.id !== tagId)
 
   const targetTagIndex = target.tagId
     ? targetBase.findIndex((tag) => tag.id === target.tagId)
@@ -131,30 +182,27 @@ const moveTagInGroups = (
   const targetIndex =
     targetTagIndex >= 0 ? targetTagIndex + (target.position === 'after' ? 1 : 0) : targetBase.length
   const boundedTargetIndex = Math.max(0, Math.min(targetIndex, targetBase.length))
-  const movedTag = { ...movingTag, groupId: targetGroup.id }
+  const movedTag = {
+    ...movingTag,
+    groupId: targetGroup.id,
+    index: boundedTargetIndex,
+  }
   const targetTags = [
     ...targetBase.slice(0, boundedTargetIndex),
     movedTag,
     ...targetBase.slice(boundedTargetIndex),
   ]
+  const nextGroups = [...groups]
+  nextGroups[sourceGroupIndex] = {
+    ...sourceGroup,
+    tags: normalizeTagIndexes(sourceTags),
+  }
+  nextGroups[targetGroupIndex] = {
+    ...targetGroup,
+    tags: normalizeTagIndexes(targetTags),
+  }
 
-  return groups.map((group) => {
-    if (group.id === sourceGroup.id && group.id !== targetGroup.id) {
-      return {
-        ...group,
-        tags: sourceTags.map((tag, index) => ({ ...tag, index })),
-      }
-    }
-
-    if (group.id === targetGroup.id) {
-      return {
-        ...group,
-        tags: targetTags.map((tag, index) => ({ ...tag, index })),
-      }
-    }
-
-    return group
-  })
+  return nextGroups
 }
 
 // Converts the drag draft back to the backend-facing tag group shape. Draft
@@ -175,30 +223,37 @@ const flattenGroups = (groups: readonly TGroupListItem[]): TTagGroup[] => {
     }))
 }
 
-// Placement comparison ignores UI-only draft groups and compares only the
-// persisted group/tag identity and indexes. This prevents unnecessary commits
-// when hover updates do not change the final saved order.
+// Placement comparison ignores UI-only draft groups and walks the persisted
+// order directly, avoiding the two fully flattened trees previously allocated
+// before a commit.
 const isSamePlacement = (
   left: readonly TGroupListItem[],
   right: readonly TGroupListItem[],
 ): boolean => {
-  const leftGroups = flattenGroups(left)
-  const rightGroups = flattenGroups(right)
+  let leftIndex = 0
+  let rightIndex = 0
 
-  if (leftGroups.length !== rightGroups.length) return false
+  while (leftIndex < left.length || rightIndex < right.length) {
+    while (left[leftIndex]?.draft) leftIndex += 1
+    while (right[rightIndex]?.draft) rightIndex += 1
 
-  return leftGroups.every((group, groupIndex) => {
-    const otherGroup = rightGroups[groupIndex]
-    if (!otherGroup || group.id !== otherGroup.id || group.index !== otherGroup.index) return false
-    if (group.tags.length !== otherGroup.tags.length) return false
+    const leftGroup = left[leftIndex]
+    const rightGroup = right[rightIndex]
 
-    return group.tags.every((tag, tagIndex) => {
-      const otherTag = otherGroup.tags[tagIndex]
-      return (
-        tag.id === otherTag?.id && tag.groupId === otherTag.groupId && tag.index === otherTag.index
-      )
-    })
-  })
+    if (!leftGroup || !rightGroup) return !leftGroup && !rightGroup
+    if (leftGroup.id !== rightGroup.id || leftGroup.tags.length !== rightGroup.tags.length) {
+      return false
+    }
+
+    for (let tagIndex = 0; tagIndex < leftGroup.tags.length; tagIndex += 1) {
+      if (leftGroup.tags[tagIndex].id !== rightGroup.tags[tagIndex].id) return false
+    }
+
+    leftIndex += 1
+    rightIndex += 1
+  }
+
+  return true
 }
 
 // Keeps a local copy of the tag/group placement while dragging. This mirrors the
@@ -217,15 +272,12 @@ export default function useTagDragDraft({
   const [groups, setGroups] = useState<TGroupListItem[]>(sourceGroups)
   const latestGroupsRef = useRef(groups)
   const baselineGroupsRef = useRef(groups)
-  const tagGroupIdRef = useRef(buildTagGroupIdMap(groups))
+  const tagGroupIdRef = useRef<Map<string, string> | null>(null)
   const activeIdRef = useRef<string | null>(null)
   const draggingRef = useRef(false)
   const commitFrameRef = useRef<number | null>(null)
 
-  useEffect(() => {
-    latestGroupsRef.current = groups
-    tagGroupIdRef.current = buildTagGroupIdMap(groups)
-  }, [groups])
+  if (tagGroupIdRef.current === null) tagGroupIdRef.current = buildTagGroupIdMap(groups)
 
   useEffect(() => {
     if (draggingRef.current) return
@@ -258,15 +310,15 @@ export default function useTagDragDraft({
     if (!activeId || !target?.groupId) return
 
     const currentGroups = latestGroupsRef.current
-    const sourceGroupId = tagGroupIdRef.current.get(activeId)
+    const sourceGroupId = tagGroupIdRef.current?.get(activeId)
 
     if (!sourceGroupId) return
 
     const nextGroups = moveTagInGroups(currentGroups, activeId, target, sourceGroupId)
-    if (nextGroups === currentGroups || isSamePlacement(currentGroups, nextGroups)) return
+    if (nextGroups === currentGroups) return
 
     latestGroupsRef.current = nextGroups
-    tagGroupIdRef.current = buildTagGroupIdMap(nextGroups)
+    if (sourceGroupId !== target.groupId) tagGroupIdRef.current?.set(activeId, target.groupId)
     setGroups(nextGroups)
   }, [])
 
@@ -289,18 +341,20 @@ export default function useTagDragDraft({
     (target?: TTagDragTarget | null): void => {
       const activeId = activeIdRef.current
       const currentGroups = latestGroupsRef.current
-      const sourceGroupId = activeId ? tagGroupIdRef.current.get(activeId) : undefined
+      const sourceGroupId = activeId ? tagGroupIdRef.current?.get(activeId) : undefined
       const nextGroups =
-        activeId && target
+        activeId && target && sourceGroupId
           ? moveTagInGroups(currentGroups, activeId, target, sourceGroupId)
           : currentGroups
 
       activeIdRef.current = null
       draggingRef.current = false
 
-      if (!isSamePlacement(currentGroups, nextGroups)) {
+      if (nextGroups !== currentGroups) {
         latestGroupsRef.current = nextGroups
-        tagGroupIdRef.current = buildTagGroupIdMap(nextGroups)
+        if (activeId && target?.groupId && sourceGroupId !== target.groupId) {
+          tagGroupIdRef.current?.set(activeId, target.groupId)
+        }
         setGroups(nextGroups)
       }
 
@@ -321,7 +375,6 @@ export default function useTagDragDraft({
 
       if (!isSamePlacement(currentGroups, nextGroups)) {
         latestGroupsRef.current = nextGroups
-        tagGroupIdRef.current = buildTagGroupIdMap(nextGroups)
         setGroups(nextGroups)
       }
 

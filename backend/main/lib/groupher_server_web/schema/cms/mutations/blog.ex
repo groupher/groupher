@@ -10,7 +10,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
     @desc "create a blog"
     field :create_blog, :blog do
       arg(:title, non_null(:string))
-      arg(:body, non_null(:string))
+      arg(:body_bag, non_null(:artiment_body_bag_input))
       arg(:link_addr, :string)
       arg(:copy_right, :string)
       arg(:community, non_null(:string))
@@ -19,6 +19,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
       article_asset_args()
 
       middleware(M.Authorize, :login)
+      middleware(M.BodyBagTrust)
       middleware(M.PublishThrottle, interval: 3, hour_limit: 15, day_limit: 30)
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.create_blog/3)
@@ -28,7 +29,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
     @desc "save a new blog as a draft"
     field :create_blog_draft, :article_draft do
       arg(:title, non_null(:string))
-      arg(:body, non_null(:string))
+      arg(:body_bag, non_null(:artiment_body_bag_input))
       arg(:link_addr, :string)
       arg(:copy_right, :string)
       arg(:community, non_null(:string))
@@ -37,6 +38,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
       article_asset_args()
 
       middleware(M.Authorize, :login)
+      middleware(M.BodyBagTrust)
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.create_blog_draft/3)
     end
@@ -45,7 +47,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
     field :update_blog, :blog do
       arg(:article, non_null(:article_path_input))
       arg(:title, :string)
-      arg(:body, :string)
+      arg(:body_bag, :artiment_body_bag_input)
       arg(:digest, :string)
       arg(:copy_right, :string)
       arg(:link_addr, :string)
@@ -54,6 +56,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
       article_asset_args()
 
       middleware(M.Authorize, :login)
+      middleware(M.BodyBagTrust)
       middleware(M.Passport, action: "blog.update", thread: :blog)
       middleware(M.FrontDesk, {:article, thread: :blog})
 
@@ -65,7 +68,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:title, :string)
-      arg(:body, :string)
+      arg(:body_bag, :artiment_body_bag_input)
       arg(:digest, :string)
       arg(:copy_right, :string)
       arg(:link_addr, :string)
@@ -74,6 +77,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Blog do
       article_asset_args()
 
       middleware(M.Authorize, :login)
+      middleware(M.BodyBagTrust)
       middleware(M.FrontDesk, :community)
       middleware(M.FrontDesk, {:article_editor, thread: :blog})
       middleware(M.Passport, action: "blog.draft.update")

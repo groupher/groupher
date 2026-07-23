@@ -123,7 +123,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
       {:ok, doc_draft} = draft_doc(community, duplicate_payload.node.doc_id)
       assert doc_draft.title == "page-3-copy"
       assert doc_draft.slug == "page-3-copy"
-      assert doc_draft.json =~ "page-3-copy"
+      assert doc_draft.json =~ "Start writing your docs draft here."
     end
 
     test "trashed root group reserves its title and slug" do
@@ -490,7 +490,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
           %{
             title: "Updated Install",
             slug: "updated-install",
-            body: @plate_body
+            body_bag: mock_body_bag(@plate_body)
           },
           user
         )

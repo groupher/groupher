@@ -3,8 +3,8 @@ defmodule GroupherServer.Test.Helper.Schema.OAuth do
 
   def m(:signin_oauth) do
     """
-    mutation($provider: OauthProviderInput!, $oauthTrustCode: String!) {
-          signinOauth(provider: $provider, oauthTrustCode: $oauthTrustCode) {
+    mutation($provider: OauthProviderInput!) {
+          signinOauth(provider: $provider) {
             token
             user {
               login
@@ -16,8 +16,8 @@ defmodule GroupherServer.Test.Helper.Schema.OAuth do
 
   def m(:link_oauth) do
     """
-    mutation($provider: OauthProviderInput!, $oauthTrustCode: String!) {
-          linkOauth(provider: $provider, oauthTrustCode: $oauthTrustCode) {
+    mutation($provider: OauthProviderInput!) {
+          linkOauth(provider: $provider) {
             token
             user {
               login
@@ -29,8 +29,8 @@ defmodule GroupherServer.Test.Helper.Schema.OAuth do
 
   def m(:unlink_oauth) do
     """
-    mutation($provider: OauthProviderInput!, $oauthTrustCode: String!) {
-          unlinkOauth(provider: $provider, oauthTrustCode: $oauthTrustCode) {
+    mutation($provider: OauthProviderInput!) {
+          unlinkOauth(provider: $provider) {
             login
           }
         }

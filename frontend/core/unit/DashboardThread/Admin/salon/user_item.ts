@@ -21,7 +21,7 @@ export default function useSalon() {
     pendingSign: cn(
       'text-xs bold-sm px-1.5 ml-2 rounded-md -mt-px border bg-transparent',
       primary('fg'),
-      primary('borderSoft'),
+      primary('borderLite'),
     ),
     arrowIcon: cn('size-3.5 rotate-180 ml-0.5', primary('fill')),
     readonlyPermission: cn('text-sm', primary('fg')),

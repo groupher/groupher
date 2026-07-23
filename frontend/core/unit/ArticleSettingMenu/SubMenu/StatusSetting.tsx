@@ -77,8 +77,8 @@ const StatusSetting: FC<TProps> = ({ onBack }) => {
             key={item.key}
             className={cn(
               s.item,
-              `hover:${s.rainbowSoft(color)}`,
-              active && s.rainbowSoft(color),
+              `hover:${s.rainbowLite(color)}`,
+              active && s.rainbowLite(color),
               index === 4 && 'mt-3.5',
             )}
             onClick={() => {

@@ -85,9 +85,10 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       arg(:title, :string)
       arg(:subtitle, :string)
       arg(:slug, :string)
-      arg(:body, :string)
+      arg(:body_bag, :artiment_body_bag_input)
 
       middleware(M.Authorize, :login)
+      middleware(M.BodyBagTrust)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
       resolve(&R.CMS.update_doc_draft/3)
@@ -276,35 +277,44 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
     end
 
     @desc "pin a published docs page to cover"
-    field :pin_doc_cover_item, :doc_cover_pinned_item do
+    field :pin_doc_to_cover, non_null(:doc_cover_pinned_doc) do
       arg(:community, non_null(:string))
       arg(:node_id, non_null(:id))
-      arg(:ui_config, :json)
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.pin_doc_cover_item/3)
+      resolve(&R.CMS.pin_doc_to_cover/3)
     end
 
     @desc "remove a published docs page from cover pins"
-    field :unpin_doc_cover_item, :doc_cover_pinned_item do
+    field :unpin_doc_from_cover, non_null(:doc_cover_pinned_doc) do
       arg(:community, non_null(:string))
       arg(:node_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.unpin_doc_cover_item/3)
+      resolve(&R.CMS.unpin_doc_from_cover/3)
     end
 
-    @desc "update a pinned docs cover UI config"
-    field :update_doc_cover_pinned_ui_config, :doc_cover_pinned_item do
+    @desc "reorder the complete docs cover pin collection"
+    field :reorder_doc_cover_pinned_docs, non_null(:done_state) do
       arg(:community, non_null(:string))
-      arg(:node_id, non_null(:id))
-      arg(:ui_config, non_null(:json))
+      arg(:node_ids, non_null(list_of(non_null(:id))))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.update_doc_cover_pinned_ui_config/3)
+      resolve(&R.CMS.reorder_doc_cover_pinned_docs/3)
+    end
+
+    @desc "update a pinned docs cover card appearance"
+    field :update_pinned_doc_appearance, non_null(:doc_cover_pinned_doc) do
+      arg(:community, non_null(:string))
+      arg(:node_id, non_null(:id))
+      arg(:appearance, non_null(:json))
+
+      middleware(M.Authorize, :login)
+      middleware(M.FrontDesk, :community)
+      resolve(&R.CMS.update_pinned_doc_appearance/3)
     end
   end
 end

@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Post do
       CMS.Articles.create_draft(
         community,
         :post,
-        Map.merge(attrs, %{title: "Post version one", body: @body_v1}),
+        Map.merge(attrs, %{title: "Post version one", body_bag: mock_body_bag(@body_v1)}),
         user
       )
 
@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Post do
         community,
         :post,
         draft.article_hash_id,
-        %{title: "Post version two", body: @body_v2},
+        %{title: "Post version two", body_bag: mock_body_bag(@body_v2)},
         user
       )
 
@@ -89,7 +89,11 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Post do
         community,
         :post,
         draft.article_hash_id,
-        %{branch_id: forked.branch.id, title: "Post preview promoted", body: @body_preview},
+        %{
+          branch_id: forked.branch.id,
+          title: "Post preview promoted",
+          body_bag: mock_body_bag(@body_preview)
+        },
         user
       )
 
@@ -133,7 +137,7 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Post do
       CMS.Articles.create_draft(
         community,
         :post,
-        Map.merge(attrs, %{title: "Post conflict base", body: @body_v1}),
+        Map.merge(attrs, %{title: "Post conflict base", body_bag: mock_body_bag(@body_v1)}),
         user
       )
 
@@ -154,7 +158,7 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Post do
         community,
         :post,
         draft.article_hash_id,
-        %{title: "Post main changed", body: @body_v2},
+        %{title: "Post main changed", body_bag: mock_body_bag(@body_v2)},
         user
       )
 
@@ -178,7 +182,7 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Post do
       CMS.Articles.create_draft(
         community,
         :post,
-        Map.merge(attrs, %{title: "Post selected history", body: @body_v1}),
+        Map.merge(attrs, %{title: "Post selected history", body_bag: mock_body_bag(@body_v1)}),
         user
       )
 
@@ -190,7 +194,7 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Post do
         community,
         :post,
         draft.article_hash_id,
-        %{title: "Post current head", body: @body_v2},
+        %{title: "Post current head", body_bag: mock_body_bag(@body_v2)},
         user
       )
 

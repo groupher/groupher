@@ -28,7 +28,7 @@ export default function useSalon({
     ),
     badge: cn(
       'ml-2 shrink-0 rounded px-1 py-px text-xs leading-none',
-      bg('rainbow.redSoft'),
+      bg('rainbow.redLite'),
       fg('rainbow.red'),
     ),
     meta: 'row-center ml-auto h-5 shrink-0',
@@ -40,10 +40,10 @@ export default function useSalon({
     ),
     unpublishedDot: cn('block size-1.5 shrink-0 rounded-full', primary('bg')),
     actions: cn(
-      'row-center w-0 overflow-hidden pl-2 opacity-0',
-      'group-hover:w-6 group-hover:opacity-100',
-      'group-focus-within:w-6 group-focus-within:opacity-100',
-      actionVisible && 'w-6 opacity-100',
+      'row-center w-0 overflow-hidden opacity-0',
+      'group-hover:w-6 group-hover:pl-2 group-hover:opacity-100',
+      'group-focus-within:w-6 group-focus-within:pl-2 group-focus-within:opacity-100',
+      actionVisible && 'w-6 pl-2 opacity-100',
     ),
     moreIcon: cn('size-3.5 pointer', fill('digest')),
   }

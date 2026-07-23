@@ -28,7 +28,7 @@ export default function useSalon() {
     //
     levelLabel: cn(
       'text-xs px-2 ml-1.5 py-0.5 rounded-lg bold scale-90',
-      accent('bgSoft'),
+      accent('bgLite'),
       accent('fg'),
     ),
   }

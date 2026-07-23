@@ -44,7 +44,7 @@ export default function useSalon() {
       bg('hoverBg'),
       br('divider'),
     ),
-    pillHighlight: cn('h-36 mb-4 border-dashed', rainbow(COLOR.PURPLE, 'borderSoft')),
+    pillHighlight: cn('h-36 mb-4 border-dashed', rainbow(COLOR.PURPLE, 'borderLite')),
     pillNormal: 'gradient-black',
     pillGadient: 'absolute s-full rotate-180 gradient-purple',
     pillGadient2: 'absolute s-full rotate-180 gradient-orange',

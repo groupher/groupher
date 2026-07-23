@@ -43,9 +43,16 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
           optional(:mentioned_url_hash) => String.t(),
           required(:mention_case) => :inline_mention | :link,
           required(:occurrence) => map(),
-          optional(:artiment) => struct()
+          optional(:artiment) => struct(),
+          optional(:parent_article) => struct()
         }
 
+  @doc """
+  Parses the canonical Plate AST and batch-resolves all internal Mention targets.
+
+  Comment results retain their already-loaded parent Article so downstream
+  snapshot construction stays query-free.
+  """
   @spec parse(list()) :: [parsed_mention()]
   def parse(ast) when is_list(ast) do
     ast
@@ -305,7 +312,8 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
         id: comment.id,
         url: "#{article_url(thread, article.id)}?comment_id=#{comment.id}",
         snapshot: %{title: article.title},
-        artiment: comment
+        artiment: comment,
+        parent_article: article
       })
     else
       _ -> nil
@@ -355,7 +363,13 @@ defmodule GroupherServer.CMS.ArtimentMentions.Parser do
       artiment: mentioned.artiment,
       occurrence: occurrence
     }
+    |> maybe_put_parent_article(mentioned)
   end
+
+  defp maybe_put_parent_article(mention, %{parent_article: article}),
+    do: Map.put(mention, :parent_article, article)
+
+  defp maybe_put_parent_article(mention, _), do: mention
 
   defp resolve_user(candidate, %User{} = user) do
     candidate

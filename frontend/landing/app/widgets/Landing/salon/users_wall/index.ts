@@ -33,13 +33,13 @@ export default function useSalon() {
     p: 'mt-2.5',
     highlight: cn('px-1 bold-sm rounded', fg('digest'), vividDark()),
     // colors
-    blueBg: cn('', rainbow(COLOR.BLUE, 'bgSoft')),
-    greenBg: cn('', rainbow(COLOR.GREEN, 'bgSoft')),
-    purpleBg: cn('', rainbow(COLOR.PURPLE, 'bgSoft')),
-    orangeBg: cn('', rainbow(COLOR.ORANGE, 'bgSoft')),
-    redBg: cn('', rainbow(COLOR.RED, 'bgSoft')),
-    yellowBg: cn('', rainbow(COLOR.YELLOW, 'bgSoft')),
-    brownBg: cn('', rainbow(COLOR.BROWN, 'bgSoft')),
-    cyanBg: cn('', rainbow(COLOR.CYAN, 'bgSoft')),
+    blueBg: cn('', rainbow(COLOR.BLUE, 'bgLite')),
+    greenBg: cn('', rainbow(COLOR.GREEN, 'bgLite')),
+    purpleBg: cn('', rainbow(COLOR.PURPLE, 'bgLite')),
+    orangeBg: cn('', rainbow(COLOR.ORANGE, 'bgLite')),
+    redBg: cn('', rainbow(COLOR.RED, 'bgLite')),
+    yellowBg: cn('', rainbow(COLOR.YELLOW, 'bgLite')),
+    brownBg: cn('', rainbow(COLOR.BROWN, 'bgLite')),
+    cyanBg: cn('', rainbow(COLOR.CYAN, 'bgLite')),
   }
 }

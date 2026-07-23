@@ -11,7 +11,7 @@ export default function useSalon() {
     highlight: cn(
       'bold-sm italic ml-px mr-px px-0.5',
       rainbow(COLOR.BLUE, 'fg'),
-      rainbow(COLOR.BLUE, 'bgSoft'),
+      rainbow(COLOR.BLUE, 'bgLite'),
     ),
     //
     features: 'row wrap ml-20',

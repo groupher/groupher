@@ -5,10 +5,11 @@
  */
 
 import GroupherRichEditor, {
+  type TRichEditorHandle,
   type TRichEditorValue,
   type TRichEditorProps as TGroupherRichEditorProps,
 } from '@groupher/rich-editor'
-import type { FC } from 'react'
+import { forwardRef } from 'react'
 
 import useSalon, { cn } from './salon'
 
@@ -17,7 +18,6 @@ type TProps = {
   data?: string
   type?: 'article' | 'works' | 'job' | 'comment' | 'radar'
   reinitKey?: string
-  value?: TRichEditorValue
   defaultValue?: TRichEditorValue
   onChange?: (value: TRichEditorValue) => void
   locale?: TGroupherRichEditorProps['locale']
@@ -26,19 +26,21 @@ type TProps = {
   fluid?: boolean
 }
 
-const RichEditor: FC<TProps> = ({
-  data: _data,
-  placeholder: _placeholder = "// 正文内容（'Tab' 键插入富文本）",
-  type: _type = 'article',
-  reinitKey: _reinitKey = '',
-  value,
-  defaultValue,
-  onChange,
-  locale = 'zh-CN',
-  mentionOptions,
-  onMentionSearch,
-  fluid = false,
-}) => {
+const RichEditor = forwardRef<TRichEditorHandle, TProps>(function RichEditor(
+  {
+    data: _data,
+    placeholder: _placeholder = "// 正文内容（'Tab' 键插入富文本）",
+    type: _type = 'article',
+    reinitKey: _reinitKey = '',
+    defaultValue,
+    onChange,
+    locale = 'zh-CN',
+    mentionOptions,
+    onMentionSearch,
+    fluid = false,
+  },
+  ref,
+) {
   const s = useSalon({ fluid })
 
   return (
@@ -46,7 +48,7 @@ const RichEditor: FC<TProps> = ({
       <div className={s.inner}>
         <div className={cn(s.editor, 'rich-editor')}>
           <GroupherRichEditor
-            value={value}
+            ref={ref}
             defaultValue={defaultValue}
             locale={locale}
             mentionOptions={mentionOptions}
@@ -57,6 +59,6 @@ const RichEditor: FC<TProps> = ({
       </div>
     </div>
   )
-}
+})
 
 export default RichEditor

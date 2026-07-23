@@ -13,7 +13,7 @@ export default function useSalon({ color }: TProps) {
   return {
     wrapper: 'column-align-both mt-10',
     layouts: 'row-center gap-x-7 gap-y-4 mb-3',
-    card: cn('relative w-24 h-14 rounded-md border', rainbow(color, 'borderSoft')),
+    card: cn('relative w-24 h-14 rounded-md border', rainbow(color, 'borderLite')),
     cardInactive: 'saturate-0 opacity-45',
     title: cn('text-xs', fg('digest')),
     //

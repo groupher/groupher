@@ -25,7 +25,7 @@ export default function useSalon({ subMenuType = null, color = COLOR.BLACK }: TP
     menuItemDanger: cn(
       fg('digest'),
       `hover:${fg('rainbow.red')}`,
-      `hover:${bg('rainbow.redSoft')}`,
+      `hover:${bg('rainbow.redLite')}`,
     ),
     menuTitle: cn(menu('title'), cut('w-24')),
     divider: cn(sexyBorder(), 'my-2.5'),

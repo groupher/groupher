@@ -10,8 +10,8 @@ export default function useSalon() {
     wrapper: cn(
       'column items-start relative mt-4 w-[348px] h-[460px] rounded-md border',
       'pl-10',
-      br('rainbow.redSoft'),
-      // rainbow(COLOR.RED, 'borderSoft'),
+      br('rainbow.redLite'),
+      // rainbow(COLOR.RED, 'borderLite'),
       bg('cardAlpha'),
       shadow('card'),
     ),

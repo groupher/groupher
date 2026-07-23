@@ -21,7 +21,7 @@ export default function useSalon() {
       shadow('sm'),
 
       rainbow(COLOR.RED, 'border'),
-      rainbow(COLOR.RED, 'bgSoft'),
+      rainbow(COLOR.RED, 'bgLite'),
     ),
     //
     title: base.introTitle,

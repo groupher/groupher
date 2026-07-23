@@ -4,7 +4,7 @@ import {
   COLOR,
   getDefaultCustomColor,
   RAINBOW_COLOR_HEX,
-  RAINBOW_SOFT_COLOR_HEX,
+  RAINBOW_LITE_COLOR_HEX,
 } from '~/const/colors'
 import { MARKER } from '~/const/marker'
 import THEME from '~/const/theme'
@@ -66,10 +66,10 @@ describe('MarkerPicker appearance helpers', () => {
 
   it('resolves soft presets independently for light and dark themes', () => {
     expect(getPresetHex(THEME.LIGHT, APPEARANCE_CHANNEL.BG, COLOR.BLUE)).toBe(
-      RAINBOW_SOFT_COLOR_HEX[THEME.LIGHT][COLOR.BLUE],
+      RAINBOW_LITE_COLOR_HEX[THEME.LIGHT][COLOR.BLUE],
     )
     expect(getPresetHex(THEME.DARK, APPEARANCE_CHANNEL.BG, COLOR.BLUE)).toBe(
-      RAINBOW_SOFT_COLOR_HEX[THEME.DARK][COLOR.BLUE],
+      RAINBOW_LITE_COLOR_HEX[THEME.DARK][COLOR.BLUE],
     )
   })
 
@@ -77,7 +77,7 @@ describe('MarkerPicker appearance helpers', () => {
     expect(isCustomAppearanceValue('#123456', THEME.LIGHT, APPEARANCE_CHANNEL.COLOR)).toBe(true)
     expect(
       isCustomAppearanceValue(
-        RAINBOW_SOFT_COLOR_HEX[THEME.LIGHT][COLOR.BLUE],
+        RAINBOW_LITE_COLOR_HEX[THEME.LIGHT][COLOR.BLUE],
         THEME.LIGHT,
         APPEARANCE_CHANNEL.BG,
       ),
@@ -86,7 +86,7 @@ describe('MarkerPicker appearance helpers', () => {
 
   it('resolves the trigger color and background independently', () => {
     const presetColor = RAINBOW_COLOR_HEX[THEME.LIGHT][COLOR.BLUE]
-    const presetBg = RAINBOW_SOFT_COLOR_HEX[THEME.LIGHT][COLOR.PURPLE]
+    const presetBg = RAINBOW_LITE_COLOR_HEX[THEME.LIGHT][COLOR.PURPLE]
 
     expect(
       getAppearanceTriggerStyle(
@@ -102,7 +102,7 @@ describe('MarkerPicker appearance helpers', () => {
     ).toEqual({ color: presetColor, bg: presetBg })
     expect(getAppearanceTriggerStyle(ICON_MARKER, THEME.LIGHT)).toEqual({
       color: getDefaultCustomColor(THEME.LIGHT),
-      bg: RAINBOW_SOFT_COLOR_HEX[THEME.LIGHT][COLOR.BLACK],
+      bg: RAINBOW_LITE_COLOR_HEX[THEME.LIGHT][COLOR.BLACK],
     })
     expect(
       getAppearanceTriggerStyle(
@@ -146,7 +146,7 @@ describe('MarkerPicker appearance helpers', () => {
       }),
     ).toEqual({
       color: RAINBOW_COLOR_HEX[THEME.LIGHT][COLOR.RED],
-      bg: RAINBOW_SOFT_COLOR_HEX[THEME.LIGHT][COLOR.BLUE],
+      bg: RAINBOW_LITE_COLOR_HEX[THEME.LIGHT][COLOR.BLUE],
     })
   })
 

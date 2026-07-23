@@ -28,7 +28,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
     Community,
     DocCoverGroup,
     DocCoverItem,
-    DocCoverPinnedItem,
+    DocCoverPinnedDoc,
     DocsSiteState,
     DocTreeEvent,
     DocTreeNode,
@@ -377,7 +377,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
       public_nodes: %{},
       cover_groups: %{},
       cover_items: %{},
-      pinned_items: MapSet.new()
+      pinned_docs: MapSet.new()
     }
     |> Map.merge(context)
   end
@@ -438,8 +438,8 @@ defmodule GroupherServer.CMS.DocTree.Read do
       |> Repo.all()
       |> Map.new(&{&1.node_id, &1})
 
-    pinned_items =
-      DocCoverPinnedItem
+    pinned_docs =
+      DocCoverPinnedDoc
       |> where([i], i.community_id == ^community.id)
       |> where([i], i.node_id in ^public_row_ids)
       |> Repo.all()
@@ -452,7 +452,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
       public_nodes: public_nodes,
       cover_groups: cover_groups,
       cover_items: cover_items,
-      pinned_items: pinned_items
+      pinned_docs: pinned_docs
     }
   end
 
@@ -486,7 +486,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
       last_published_at: public_node && public_node.updated_at,
       in_cover: not is_nil(cover_group) or not is_nil(cover_item),
       hidden_from_cover: not is_nil(cover_item) and cover_item.hidden,
-      pinned_to_cover: public_row_id && MapSet.member?(context.pinned_items, public_row_id)
+      pinned_to_cover: public_row_id && MapSet.member?(context.pinned_docs, public_row_id)
     }
   end
 

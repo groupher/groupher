@@ -20,7 +20,7 @@ export type TArticleSnapshot = {
   subtitle?: string | null
   digest?: string | null
   documentJson?: string | null
-  contentHash?: string | null
+  versionHash?: string | null
   revisionNumber?: number | null
   schemaVersion?: number | null
   insertedAt?: string | null

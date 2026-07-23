@@ -285,8 +285,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:create_article_draft, thread) do
     """
-    mutation($community: String!, $title: String!, $body: String!) {
-      create#{t(thread)}Draft(community: $community, title: $title, body: $body) {
+    mutation($community: String!, $title: String!, $bodyBag: ArtimentBodyBagInput!) {
+      create#{t(thread)}Draft(community: $community, title: $title, bodyBag: $bodyBag) {
         id
         thread
         stage
@@ -300,14 +300,14 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
     mutation(
       $title: String!
-      $body: String!
+      $bodyBag: ArtimentBodyBagInput!
       $community: String!
       $communityTags: [ID]
       $linkAddr: String
     ) {
       create#{t(thread)}(
         title: $title
-        body: $body
+        bodyBag: $bodyBag
         community: $community
         communityTags: $communityTags
         linkAddr: $linkAddr
@@ -328,8 +328,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:update_article_draft, thread) do
     """
-    mutation($community: String!, $id: ID!, $title: String, $body: String) {
-      update#{t(thread)}Draft(community: $community, id: $id, title: $title, body: $body) {
+    mutation($community: String!, $id: ID!, $title: String, $bodyBag: ArtimentBodyBagInput) {
+      update#{t(thread)}Draft(community: $community, id: $id, title: $title, bodyBag: $bodyBag) {
         id
         thread
         stage
@@ -352,8 +352,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:update_article, thread) do
     """
-    mutation($article: ArticlePathInput!, $title: String, $body: String, $copyRight: String, $communityTags: [ID]){
-      update#{t(thread)}(article: $article, title: $title, body: $body, copyRight: $copyRight, communityTags: $communityTags) {
+    mutation($article: ArticlePathInput!, $title: String, $bodyBag: ArtimentBodyBagInput, $copyRight: String, $communityTags: [ID]){
+      update#{t(thread)}(article: $article, title: $title, bodyBag: $bodyBag, copyRight: $copyRight, communityTags: $communityTags) {
         innerId
         title
         document {
@@ -393,8 +393,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:create_document, operation) do
     """
-    mutation($title: String!, $body: String!, $community: String!) {
-      #{operation}(title: $title, body: $body, community: $community) {
+    mutation($title: String!, $bodyBag: ArtimentBodyBagInput!, $community: String!) {
+      #{operation}(title: $title, bodyBag: $bodyBag, community: $community) {
         innerId
         title
         document {
@@ -412,8 +412,8 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
 
   def m(:update_document, operation) do
     """
-    mutation($article: ArticlePathInput!, $title: String, $body: String) {
-      #{operation}(article: $article, title: $title, body: $body) {
+    mutation($article: ArticlePathInput!, $title: String, $bodyBag: ArtimentBodyBagInput) {
+      #{operation}(article: $article, title: $title, bodyBag: $bodyBag) {
         innerId
         title
         document {
@@ -435,7 +435,7 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     """
     mutation(
       $title: String!
-      $body: String!
+      $bodyBag: ArtimentBodyBagInput!
       $community: String!
       $coverUrl: String
       $coverUrlDark: String
@@ -443,7 +443,7 @@ defmodule GroupherServer.Test.Helper.Schema.Article do
     ) {
       create#{thread_name}(
         title: $title
-        body: $body
+        bodyBag: $bodyBag
         community: $community
         coverUrl: $coverUrl
         coverUrlDark: $coverUrlDark

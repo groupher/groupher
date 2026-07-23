@@ -101,6 +101,7 @@ defmodule Helper.PermissionConfig do
         "moderator.set",
         "moderator.unset",
         "moderator.update",
+        "doc.import",
         "community.update"
       ]
   end
@@ -221,6 +222,7 @@ defmodule Helper.PermissionConfig do
         owner_fallback: true
       },
       "doc.update" => %{scope: :context, context: :cms, grant: "doc.edit", owner_fallback: true},
+      "doc.import" => %{scope: :context, context: :cms, grant: "doc.import"},
       "blog.update" => %{scope: :context, context: :cms, grant: "blog.edit", owner_fallback: true},
       "blog.draft.update" => %{owner_fallback: true},
       "blog.draft.publish" => %{owner_fallback: true},

@@ -11,7 +11,7 @@ export default function useSalon() {
     listCard: cn(
       'relative h-96 p-6 rounded-xl mb-5 border',
       shadow('card'),
-      br('rainbow.purpleSoft'),
+      br('rainbow.purpleLite'),
       bg('cardAlpha'),
     ),
 
@@ -19,7 +19,7 @@ export default function useSalon() {
     detailCard: cn(
       'relative grow w-80 -ml-5 mt-4 p-8 pt-5 z-20 rounded-xl border',
       shadow('card'),
-      br('rainbow.purpleSoft'),
+      br('rainbow.purpleLite'),
       bg('card'),
     ),
     header: 'row-center mb-2.5 scale-90 -ml-5',
@@ -30,8 +30,8 @@ export default function useSalon() {
     upvote: cn(
       'row-center px-1.5 py-px mt-0.5 rounded-md border',
       fg('title'),
-      rainbow(COLOR.PURPLE, 'bgSoft'),
-      rainbow(COLOR.PURPLE, 'borderSoft'),
+      rainbow(COLOR.PURPLE, 'bgLite'),
+      rainbow(COLOR.PURPLE, 'borderLite'),
     ),
     icon: cn('size-3', rainbow(COLOR.PURPLE, 'fill')),
     count: cn('text-sm bold-sm ml-1', rainbow(COLOR.PURPLE, 'fg')),

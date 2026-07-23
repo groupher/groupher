@@ -4,13 +4,13 @@ import useTwBelt from '~/hooks/useTwBelt'
 export { cn } from '~/css'
 
 export default function useSalon() {
-  const { cn, rainbow, rainbowSoft, fg, bg, fill, br } = useTwBelt()
+  const { cn, rainbow, rainbowLite, fg, bg, fill, br } = useTwBelt()
 
   return {
     wrapper: cn(
       'column w-full border rounded-2xl',
-      rainbow(COLOR.RED, 'borderSoft'),
-      rainbowSoft(COLOR.RED),
+      rainbow(COLOR.RED, 'borderLite'),
+      rainbowLite(COLOR.RED),
     ),
     dangerTitle: cn('text-base bold-sm mb-3.5 mt-3.5 ml-4', rainbow(COLOR.RED, 'fg')),
     item: cn('column items-start w-full py-6 px-4 border', br('divider'), bg('card')),

@@ -16,7 +16,7 @@ export default function useSalon() {
       bg('alphaBg'),
       'trans-all-100',
     ),
-    templateActive: cn(primary('borderSoft'), shadow('md')),
+    templateActive: cn(primary('borderLite'), shadow('md')),
     arrowIcon: cn('size-3.5 ml-0.5', primary('fill')),
   }
 }

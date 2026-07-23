@@ -10,7 +10,7 @@ export default function useSalon() {
     wrapper: cn(
       'column gap-y-4 p-4 w-64 h-[500px] rounded-tl-md rounded-tr-md border-b-none',
       bg('card'),
-      rainbow(COLOR.PURPLE, 'borderSoft'),
+      rainbow(COLOR.PURPLE, 'borderLite'),
       shadow('sm'),
     ),
     header: 'row-center mb-1',

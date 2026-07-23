@@ -26,15 +26,11 @@ export const isWideMode = (type: string): boolean => {
   )
 }
 
-export const getDrawerWidth = (type: string): string => {
-  if (type === TYPE.DRAWER.G_EDITOR) return VIEWER_WIDTH
+export const getDrawerWidth = (type: string, wideMode = isWideMode(type)): string =>
+  wideMode ? VIEWER_WIDTH : NORMAL_WIDTH
 
-  return isWideMode(type) ? VIEWER_WIDTH : NORMAL_WIDTH
-}
-
-export const getDrawerMinWidth = (type: string): string => {
-  return isWideMode(type) ? '700px' : '450px'
-}
+export const getDrawerMinWidth = (type: string, wideMode = isWideMode(type)): string =>
+  wideMode ? '700px' : '450px'
 
 export const getDesktopTransform = (visible: boolean, fromContentEdge: boolean): string => {
   /*

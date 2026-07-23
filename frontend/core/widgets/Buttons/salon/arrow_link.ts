@@ -11,21 +11,23 @@ type TProps = {
 }
 
 export default function useSalon({ size, color }: TProps) {
-  const { cn, fg, rainbow, fill } = useTwBelt()
+  const { accent, cn, rainbow, underline } = useTwBelt()
 
   return {
-    wrapper: 'row-center group pointer no-underline',
+    wrapper: cn(
+      'row-center group w-fit pointer no-underline rounded-sm outline-none',
+      'focus-visible:outline-2 focus-visible:outline-offset-2',
+    ),
     text: cn(
-      'group-hover:visible',
-      color ? rainbow(color as TColorName, 'fg') : fg('link'),
+      color ? rainbow(color as TColorName, 'fg') : accent('fg'),
       getTextSize(size),
+      underline({ groupHoverClass: 'group-hover' }),
     ),
     rightIcon: cn(
-      'ml-1.5 rotate-180 opacity-80 invisible trans-all-200',
+      'ml-1.5 rotate-180 opacity-80 shrink-0 transition-transform duration-150 ease-out',
       getIconSize(size),
-      color ? rainbow(color as TColorName, 'fill') : fill('link'),
-      'group-hover:ml-2.5',
-      'group-hover:visible',
+      color ? rainbow(color as TColorName, 'fill') : accent('fill'),
+      'group-hover:translate-x-0.5',
     ),
   }
 }

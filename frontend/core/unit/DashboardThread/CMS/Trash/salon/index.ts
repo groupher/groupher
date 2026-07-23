@@ -36,7 +36,7 @@ export default function useSalon() {
     mentionWarning: cn(
       'mt-4 rounded-lg border px-3 py-2.5 text-sm leading-5 text-pretty',
       br('table.border'),
-      rainbow(COLOR.RED, 'bgSoft'),
+      rainbow(COLOR.RED, 'bgLite'),
       rainbow(COLOR.RED, 'fg'),
     ),
     modalActions: 'row justify-end items-center gap-x-2 mt-6',

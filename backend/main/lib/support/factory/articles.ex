@@ -7,12 +7,14 @@ defmodule GroupherServer.Support.Factory.Articles do
   """
 
   alias GroupherServer.Support.FakeData
+  alias GroupherServer.CMS.Artiment.BodyBag
   alias Helper.Datetime
 
   defmacro __using__(_opts) do
     quote do
       def mock_rich_text(text \\ "text"), do: unquote(__MODULE__).rich_text(text)
       def mock_rich_text(text1, text2), do: unquote(__MODULE__).rich_text(text1, text2)
+      def mock_body_bag(body), do: unquote(__MODULE__).body_bag(body)
 
       defp mock_meta(:post) do
         unquote(__MODULE__).post_base(@default_article_meta, @default_emotions)
@@ -50,6 +52,24 @@ defmodule GroupherServer.Support.Factory.Articles do
         })
       end
     end
+  end
+
+  @doc "Builds a valid test-only BodyBag from existing Plate JSON fixtures."
+  @spec body_bag(String.t()) :: map()
+  def body_bag(body) when is_binary(body) do
+    value = Jason.decode!(body)
+    plain_text = value |> flatten_text() |> String.trim()
+
+    %{
+      json: body,
+      markdown: plain_text,
+      html: "<p>#{escape_html(plain_text)}</p>",
+      toc: [],
+      plainText: plain_text,
+      digest: String.slice(plain_text, 0, 150),
+      bodyHash: body |> then(&:crypto.hash(:sha256, &1)) |> Base.encode16(case: :lower),
+      schemaVersion: BodyBag.schema_version()
+    }
   end
 
   # simulate plate json rich text
@@ -274,6 +294,27 @@ defmodule GroupherServer.Support.Factory.Articles do
         "indent" => 1
       }
     ])
+  end
+
+  defp flatten_text(nodes) when is_list(nodes) do
+    nodes
+    |> Enum.map(&flatten_text/1)
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.join("\n")
+  end
+
+  defp flatten_text(%{"text" => text}) when is_binary(text), do: text
+
+  defp flatten_text(%{"type" => "mention", "value" => value}) when is_binary(value),
+    do: value
+
+  defp flatten_text(%{"children" => children}) when is_list(children), do: flatten_text(children)
+  defp flatten_text(_value), do: ""
+
+  defp escape_html(text) do
+    text
+    |> Plug.HTML.html_escape_to_iodata()
+    |> IO.iodata_to_binary()
   end
 
   # for link tasks

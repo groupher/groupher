@@ -30,7 +30,7 @@ defmodule Helper.Const do
       bill_action: 4013,
       editor_data_parse: 4014,
       community_exist: 4015,
-      oauth_trust_code: 4017,
+      server_trust: 4017,
       oauth_unlink: 4018,
       throttle_interval: 4201,
       throttle_hour: 4202,

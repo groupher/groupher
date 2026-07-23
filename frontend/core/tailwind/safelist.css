@@ -15,9 +15,9 @@
 
 /* rainbow */
 @source inline(
-  '{text,fill,bg,border}-rainbow-{red,redSoft,orange,orangeSoft,brown,brownSoft,yellow,yellowSoft,green,greenSoft,greenLight,greenLightSoft,cyan,cyanSoft,cyanLight,cyanLightSoft,blue,blueSoft,purple,purpleSoft,pink,pinkSoft,custom,customSoft,subCustom,subCustomSoft,black,blackSoft,blackBtn}'
+  '{text,fill,bg,border}-rainbow-{red,redLite,orange,orangeLite,brown,brownLite,yellow,yellowLite,green,greenLite,greenLight,greenLightLite,cyan,cyanLite,cyanLight,cyanLightLite,blue,blueLite,purple,purpleLite,pink,pinkLite,custom,customLite,subCustom,subCustomLite,black,blackLite,blackBtn}'
 );
-@source inline('bg-rainbow-greySoft');
+@source inline('bg-rainbow-greyLite');
 
 @source inline(
   'border-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,custom,subCustom,black}/50'
@@ -50,7 +50,7 @@
 @source inline(
   'hover:text-rainbow-{red,orange,brown,yellow,green,greenLight,cyan,cyanLight,blue,purple,pink,custom,subCustom,black}'
 );
-@source inline('hover:bg-rainbow-{red,redSoft,custom,customSoft,subCustom,subCustomSoft}');
+@source inline('hover:bg-rainbow-{red,redLite,custom,customLite,subCustom,subCustomLite}');
 @source inline('hover:{bg-hoverBg,bg-menuHoverBg,bg-sandBox,bg-card,bg-alphaBg}');
 @source inline('hover:shadow-sm');
 

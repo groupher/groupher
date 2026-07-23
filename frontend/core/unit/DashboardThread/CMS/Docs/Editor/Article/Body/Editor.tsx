@@ -1,5 +1,5 @@
-import type { TRichEditorValue } from '@groupher/rich-editor'
-import type { FC } from 'react'
+import type { TRichEditorHandle, TRichEditorValue } from '@groupher/rich-editor'
+import { forwardRef } from 'react'
 
 import RichEditor from '~/unit/RichEditor'
 
@@ -9,8 +9,11 @@ type TProps = {
   onChange: (value: TRichEditorValue) => void
 }
 
-const Editor: FC<TProps> = ({ value, editorKey = '', onChange }) => {
-  return <RichEditor key={editorKey} fluid defaultValue={value} onChange={onChange} />
-}
+const Editor = forwardRef<TRichEditorHandle, TProps>(function Editor(
+  { value, editorKey = '', onChange },
+  ref,
+) {
+  return <RichEditor key={editorKey} ref={ref} fluid defaultValue={value} onChange={onChange} />
+})
 
 export default Editor

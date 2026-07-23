@@ -15,7 +15,7 @@ export default function useSalon({ color }: TProps) {
   return {
     wrapper: cn(
       'row-center px-1.5 py-0.5 border border-dotted rounded-md',
-      rainbow(COLOR[color], 'borderSoft'),
+      rainbow(COLOR[color], 'borderLite'),
     ),
     text: cn('text-xs ml-1.5', textColor),
     count: cn('text-xs ml-1.5 bold-sm ml-1', textColor),

@@ -71,7 +71,7 @@ const Editor: FC<TProps> = ({ initialData }) => {
             )}
 
             <Panel id='docs-editor-space' className={s.fillPanel} minSize={0}>
-              <Article sideTree={sideTree} />
+              <Article initialData={initialData?.docDraft} sideTree={sideTree} />
 
               {showActionSnackbar && (
                 <div className={s.snackbarRail} style={{ top: DOC_EDITOR_SNACKBAR_STICKY_TOP }}>

@@ -41,7 +41,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
       assert revision.stage == :public
       assert [%{group: %{title: "Guides"}, items: [%{node: %{title: "Install"}}]}] = cover.groups
-      assert cover.pinned_items == []
+      assert cover.pinned_docs == []
 
       {:ok, public_doc} = published_doc(community, page_payload.node.doc_id)
       assert public_doc.inner_id == 1
@@ -92,7 +92,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
       assert revision.stage == :public
       assert cover.groups == []
-      assert cover.pinned_items == []
+      assert cover.pinned_docs == []
 
       [group] = groups(tree)
       [page] = group.children
@@ -102,6 +102,166 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
       assert group.publish_state.in_cover == false
       assert page.publish_state.published == true
       assert page.publish_state.in_cover == false
+    end
+
+    test "pins only clean published docs and keeps the operation idempotent",
+         ~m(user community page_payload)a do
+      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
+
+      {:ok, public_doc} = published_doc(community, page_payload.node.doc_id)
+
+      assert {:ok, %{thumbnail: %{"version" => 1, "blocks" => blocks}} = public_document} =
+               ORM.find_by(CMS.Model.ArticleDocument, article_id: public_doc.id, thread: :doc)
+
+      assert is_list(blocks)
+
+      assert {:ok, pinned_doc} = CMS.DocCover.pin_doc(community, page_payload.node.id)
+      assert {:ok, same_pinned_doc} = CMS.DocCover.pin_doc(community, page_payload.node.id)
+      assert same_pinned_doc.id == pinned_doc.id
+
+      {:ok, cover} = CMS.DocCover.read(community)
+      assert [%{node_id: node_id, doc: %{title: "Install"}}] = cover.pinned_docs
+      assert node_id == page_payload.node.id
+
+      appearance = %{"light" => %{"source" => "light"}, "dark" => %{"source" => "dark"}}
+
+      assert {:ok, updated} =
+               CMS.DocCover.update_pinned_doc_appearance(
+                 community,
+                 page_payload.node.id,
+                 appearance
+               )
+
+      assert updated.appearance == appearance
+
+      assert {:error, {:custom, "Pinned doc appearance must contain Light and Dark maps."}} =
+               CMS.DocCover.update_pinned_doc_appearance(
+                 community,
+                 page_payload.node.id,
+                 %{"light" => "invalid"}
+               )
+
+      assert {:ok, _draft} =
+               CMS.DocTree.move_doc_to_draft(community, page_payload.node.id, user)
+
+      assert {:ok, _draft} =
+               CMS.DocTree.update_draft(
+                 community,
+                 page_payload.node.doc_id,
+                 %{subtitle: "Unpublished change"},
+                 user
+               )
+
+      assert {:ok, unchanged_public_document} =
+               ORM.find_by(CMS.Model.ArticleDocument, article_id: public_doc.id, thread: :doc)
+
+      assert unchanged_public_document.thumbnail == public_document.thumbnail
+
+      assert {:ok, same_pinned_doc} = CMS.DocCover.pin_doc(community, page_payload.node.id)
+      assert same_pinned_doc.id == pinned_doc.id
+      assert {:ok, _removed} = CMS.DocCover.unpin_doc(community, page_payload.node.id)
+
+      assert {:error, {:custom, "Publish the latest doc changes before pinning it to cover."}} =
+               CMS.DocCover.pin_doc(community, page_payload.node.id)
+    end
+
+    test "reorders the complete pinned doc collection transactionally",
+         ~m(user community group_payload page_payload)a do
+      {:ok, second_page} =
+        CMS.DocTree.create_page(
+          community,
+          %{
+            group_id: group_payload.node.id,
+            title: "Advanced",
+            slug: "advanced",
+            base_revision: page_payload.revision
+          },
+          user
+        )
+
+      assert {:ok, %{done: true}} = publish_all_changes(community, user)
+      assert {:ok, _first} = CMS.DocCover.pin_doc(community, page_payload.node.id)
+      assert {:ok, _second} = CMS.DocCover.pin_doc(community, second_page.node.id)
+
+      assert {:ok, %{done: true}} =
+               CMS.DocCover.reorder_pinned_docs(community, [
+                 second_page.node.id,
+                 page_payload.node.id
+               ])
+
+      {:ok, cover} = CMS.DocCover.read(community)
+
+      assert Enum.map(cover.pinned_docs, & &1.node_id) == [
+               second_page.node.id,
+               page_payload.node.id
+             ]
+
+      assert {:error, {:custom, "Pinned doc order contains duplicate nodes."}} =
+               CMS.DocCover.reorder_pinned_docs(community, [
+                 page_payload.node.id,
+                 page_payload.node.id
+               ])
+
+      assert {:error, {:custom, "Pinned doc order must contain the complete current collection."}} =
+               CMS.DocCover.reorder_pinned_docs(community, [page_payload.node.id])
+    end
+
+    test "batch reorders cover groups and their items",
+         ~m(user community group_payload page_payload)a do
+      {:ok, second_page} =
+        CMS.DocTree.create_page(
+          community,
+          %{
+            group_id: group_payload.node.id,
+            title: "Advanced",
+            slug: "advanced",
+            base_revision: page_payload.revision
+          },
+          user
+        )
+
+      {:ok, second_group} =
+        CMS.DocTree.create_group(community, %{
+          title: "Reference",
+          slug: "reference",
+          base_revision: second_page.revision
+        })
+
+      {:ok, _third_page} =
+        CMS.DocTree.create_page(
+          community,
+          %{
+            group_id: second_group.node.id,
+            title: "API",
+            slug: "api",
+            base_revision: second_group.revision
+          },
+          user
+        )
+
+      assert {:ok, %{done: true}} = publish_all_changes(community, user)
+      assert {:ok, cover} = CMS.DocCover.read(community)
+
+      [guides, reference] = cover.groups
+      [install, advanced] = guides.items
+
+      assert {:ok, %{done: true}} =
+               CMS.DocCover.reorder_items(community, guides.id, [advanced.id, install.id])
+
+      assert {:ok, %{done: true}} =
+               CMS.DocCover.reorder_groups(community, [reference.id, guides.id])
+
+      assert {:ok, reordered_cover} = CMS.DocCover.read(community)
+      assert Enum.map(reordered_cover.groups, & &1.title) == ["Reference", "Guides"]
+
+      reordered_guides = Enum.find(reordered_cover.groups, &(&1.id == guides.id))
+      assert Enum.map(reordered_guides.items, & &1.title) == ["Advanced", "Install"]
+
+      assert {:error, {:custom, "Doc cover group order contains duplicate groups."}} =
+               CMS.DocCover.reorder_groups(community, [guides.id, guides.id])
+
+      assert {:error, {:custom, "Doc cover item order contains duplicate items."}} =
+               CMS.DocCover.reorder_items(community, guides.id, [install.id, install.id])
     end
 
     test "publishes every unpublished page with cover sync",

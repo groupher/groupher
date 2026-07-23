@@ -160,6 +160,13 @@ defmodule GroupherServer.Support.Factory do
 
   def mock_attrs(:bill, attrs), do: mock_meta(:bill) |> Map.merge(attrs)
 
+  def mock_attrs(thread, attrs) when thread in [:post, :changelog, :doc, :blog] do
+    thread
+    |> mock_meta()
+    |> Map.merge(attrs)
+    |> with_body_bag()
+  end
+
   def mock_attrs(thread, attrs), do: mock_meta(thread) |> Map.merge(attrs)
 
   def article_community(%{community_id: community_id}) do
@@ -394,7 +401,7 @@ defmodule GroupherServer.Support.Factory do
     {:ok, community} = CMS.Communities.create(community_attrs, user)
 
     attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
-    {:ok, article} = CMS.Articles.create(community, thread, attrs, user)
+    {:ok, article} = CMS.Articles.create(community, thread, with_body_bag(attrs), user)
 
     {community, article, attrs, user}
   end
@@ -413,8 +420,14 @@ defmodule GroupherServer.Support.Factory do
 
   def mock_article(thread, %Community{} = community, %User{} = user) do
     attrs = mock_attrs(thread, %{community_id: community.id, author: %{user: user}})
-    {:ok, article} = CMS.Articles.create(community, thread, attrs, user)
+    {:ok, article} = CMS.Articles.create(community, thread, with_body_bag(attrs), user)
 
     {community, article, attrs, user}
   end
+
+  defp with_body_bag(%{body: body} = attrs) when is_binary(body) do
+    Map.put(attrs, :body_bag, mock_body_bag(body))
+  end
+
+  defp with_body_bag(attrs), do: attrs
 end

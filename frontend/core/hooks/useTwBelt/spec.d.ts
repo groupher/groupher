@@ -4,7 +4,7 @@ import type { ClassValue } from 'clsx'
 
 import type { TColorName, TSpace, TZIndexType } from '~/spec'
 
-export type TColorPrefix = 'fg' | 'bg' | 'bgSoft' | 'fill' | 'border' | 'borderSoft' | 'decoration'
+export type TColorPrefix = 'fg' | 'bg' | 'bgLite' | 'fill' | 'border' | 'borderLite' | 'decoration'
 export type TLinkColorPrefix = 'fg' | 'fill'
 export type TMenuPart =
   | 'bg'
@@ -70,7 +70,7 @@ export type TBgKey =
   | 'transparent'
   | 'snackBar'
   | 'link'
-  | 'rainbow.redSoft'
+  | 'rainbow.redLite'
 
 export type TBorderKey = 'outline' | 'divider' | 'table.border' | 'digest' | 'title'
 
@@ -90,7 +90,7 @@ export type TRet = {
   hoverBr: () => string
 
   rainbow: (color: TColorName, prefix?: TColorPrefix) => string
-  rainbowSoft: (color: TColorName | string) => string
+  rainbowLite: (color: TColorName | string) => string
   primary: (prefix?: TColorPrefix) => string
   accent: (prefix?: TColorPrefix) => string
   linker: (prefix?: TLinkColorPrefix) => string
@@ -121,6 +121,7 @@ export type TRet = {
 
   cut: (classname?: TCutWWidth) => string
   landingTitle: () => string
+  panel: (classNames?: string) => string
   hover: (part: THoverPart) => string
   selectable: (part: TSelectablePart, options?: TSelectableOptions) => string
 

@@ -20,7 +20,7 @@ export default function useSalon() {
     brick: cn(
       'align-both px-2 z-20 border h-8 rounded-md trans-all-100',
       !isLightTheme && 'border-dashed',
-      rainbow(COLOR.GREEN, 'borderSoft'),
+      rainbow(COLOR.GREEN, 'borderLite'),
       shadow('sm'),
       bg('card'),
     ),

@@ -38,6 +38,7 @@ type TProps = {
   behavior?: 'default' | 'confirm' | 'delete-confirm' | 'add'
   forceZIndex?: boolean
   interactive?: boolean
+  accessibleContent?: boolean
   portalToBody?: boolean
   visible?: boolean | null
   onShow?: () => void
@@ -73,6 +74,7 @@ const Tooltip: FC<TProps> = ({
   children,
   noPadding = false,
   interactive = true,
+  accessibleContent = false,
   onHide,
   onShow,
   maxWidth,
@@ -148,7 +150,7 @@ const Tooltip: FC<TProps> = ({
       <div
         role='presentation'
         className={s.content}
-        aria-hidden='true'
+        aria-hidden={!accessibleContent}
         ref={contentRef}
         onClick={() => {
           if (hideOnClick) instanceRef.current?.hide()
@@ -167,7 +169,7 @@ const Tooltip: FC<TProps> = ({
         )}
       </div>
     ),
-    [s.content, hideOnClick, content, active, behavior, onConfirm],
+    [s.content, hideOnClick, accessibleContent, content, active, behavior, onConfirm],
   )
 
   const tippyProps: TTippyReactProps = useMemo(() => {

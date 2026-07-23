@@ -23,7 +23,7 @@ export default function useSalon() {
       shadow('md'),
       rainbow(COLOR.RED, 'fg'),
       `hover:${rainbow(COLOR.RED, 'fg')}`,
-      `hover:${rainbow(COLOR.RED, 'bgSoft')}`,
+      `hover:${rainbow(COLOR.RED, 'bgLite')}`,
     ),
     deleteIcon: cn('size-3 mr-1 opacity-65', rainbow(COLOR.RED, 'fill')),
   }

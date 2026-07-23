@@ -20,28 +20,28 @@ export default function useSalon() {
     avatar: 'align-both size-7 text-xs border bold-sm',
     blue: cn(
       rainbow(COLOR.BLUE, 'fg'),
-      rainbow(COLOR.BLUE, 'bgSoft'),
-      rainbow(COLOR.BLUE, 'borderSoft'),
+      rainbow(COLOR.BLUE, 'bgLite'),
+      rainbow(COLOR.BLUE, 'borderLite'),
     ),
     green: cn(
       rainbow(COLOR.GREEN, 'fg'),
-      rainbow(COLOR.GREEN, 'bgSoft'),
-      rainbow(COLOR.GREEN, 'borderSoft'),
+      rainbow(COLOR.GREEN, 'bgLite'),
+      rainbow(COLOR.GREEN, 'borderLite'),
     ),
     red: cn(
       rainbow(COLOR.RED, 'fg'),
-      rainbow(COLOR.RED, 'bgSoft'),
-      rainbow(COLOR.RED, 'borderSoft'),
+      rainbow(COLOR.RED, 'bgLite'),
+      rainbow(COLOR.RED, 'borderLite'),
     ),
     orange: cn(
       rainbow(COLOR.ORANGE, 'fg'),
-      rainbow(COLOR.ORANGE, 'bgSoft'),
-      rainbow(COLOR.ORANGE, 'borderSoft'),
+      rainbow(COLOR.ORANGE, 'bgLite'),
+      rainbow(COLOR.ORANGE, 'borderLite'),
     ),
     purple: cn(
       rainbow(COLOR.PURPLE, 'fg'),
-      rainbow(COLOR.PURPLE, 'bgSoft'),
-      rainbow(COLOR.PURPLE, 'borderSoft'),
+      rainbow(COLOR.PURPLE, 'bgLite'),
+      rainbow(COLOR.PURPLE, 'borderLite'),
     ),
   }
 }

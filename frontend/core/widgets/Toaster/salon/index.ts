@@ -4,16 +4,16 @@ import useTwBelt from '~/hooks/useTwBelt'
 import type { TToastType } from '../spec'
 
 export default function useSalon() {
-  const { bg, br, cn, fg, rainbow, rainbowSoft, zIndex } = useTwBelt()
+  const { bg, br, cn, fg, rainbow, rainbowLite, zIndex } = useTwBelt()
 
   const iconBox = (type: TToastType): string => {
     switch (type) {
       case 'success':
-        return cn(rainbowSoft(COLOR.GREEN), rainbow(COLOR.GREEN, 'fg'))
+        return cn(rainbowLite(COLOR.GREEN), rainbow(COLOR.GREEN, 'fg'))
       case 'error':
-        return cn(rainbowSoft(COLOR.RED), rainbow(COLOR.RED, 'fg'))
+        return cn(rainbowLite(COLOR.RED), rainbow(COLOR.RED, 'fg'))
       default:
-        return cn(rainbowSoft(COLOR.BLUE), rainbow(COLOR.BLUE, 'fg'))
+        return cn(rainbowLite(COLOR.BLUE), rainbow(COLOR.BLUE, 'fg'))
     }
   }
 

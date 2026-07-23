@@ -25,10 +25,11 @@ defmodule GroupherServer.CMS.Articles.Draft do
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
+  alias CMS.Artiment.BodyBag
   alias CMS.Articles.{Branch, Document, Lock, VersionedRelations, Write}
   alias CMS.Assets
   alias CMS.Model.{ArticleBranch, ArticleDocument, Author, Community, Embeds}
-  alias Helper.{ContentPipeline, ORM, T}
+  alias Helper.{ORM, T}
 
   require CMS.Const
 
@@ -106,12 +107,12 @@ defmodule GroupherServer.CMS.Articles.Draft do
   def create_with_author(%Community{} = community, thread, attrs, %Author{} = author) do
     with {:ok, branch} <- Branch.resolve(community, thread, attrs),
          {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(thread),
-         {:ok, article_payload} <- parse_body(attrs),
-         {:ok, draft_attrs} <- build_attrs(community, branch, attrs, article_payload, author) do
+         {:ok, body_content} <- parse_body(attrs, thread),
+         {:ok, draft_attrs} <- build_attrs(community, branch, attrs, body_content, author) do
       Repo.transaction(fn ->
         with {:ok, draft} <- create_draft_row(model, thread, draft_attrs),
              {:ok, draft} <- VersionedRelations.apply_input(draft, attrs),
-             {:ok, _document} <- Document.create(draft, %{article_payload: article_payload}),
+             {:ok, _document} <- Document.create(draft, document_input(body_content)),
              {:ok, _asset_refs} <- Assets.sync_article_refs(community, draft, attrs) do
           draft
         else
@@ -163,11 +164,11 @@ defmodule GroupherServer.CMS.Articles.Draft do
           T.domain_res(T.article())
   def update_unlocked(%Community{} = community, thread, article_hash_id, attrs) do
     with {:ok, draft} <- read(community, thread, article_hash_id, attrs),
-         {:ok, article_payload} <- maybe_parse_body(attrs),
-         {:ok, next_attrs} <- update_attrs(draft, attrs, article_payload),
+         {:ok, body_content} <- maybe_parse_body(attrs, thread),
+         {:ok, next_attrs} <- update_attrs(draft, attrs, body_content),
          {:ok, draft} <- maybe_update_draft(draft, next_attrs),
          {:ok, draft} <- VersionedRelations.apply_input(draft, attrs),
-         {:ok, _document} <- maybe_update_document(draft, article_payload),
+         {:ok, _document} <- maybe_update_document(draft, body_content),
          {:ok, _asset_refs} <- Assets.sync_article_refs(draft, attrs) do
       {:ok, draft}
     end
@@ -224,12 +225,12 @@ defmodule GroupherServer.CMS.Articles.Draft do
     end
   end
 
-  defp build_attrs(%Community{} = community, branch, attrs, article_payload, %Author{} = author) do
-    digest = article_digest(attrs, article_payload.digest)
+  defp build_attrs(%Community{} = community, branch, attrs, body_content, %Author{} = author) do
+    digest = article_digest(attrs, body_content.digest)
 
     attrs =
       attrs
-      |> Map.drop([:body, :article_payload, :branch, :branch_slug])
+      |> Map.drop([:body_bag, :branch, :branch_slug])
       |> Map.merge(%{
         article_hash_id: Map.get(attrs, :article_hash_id) || Ecto.UUID.generate(),
         branch_id: branch.id,
@@ -238,42 +239,42 @@ defmodule GroupherServer.CMS.Articles.Draft do
         stage: CMS.Const.stage(:draft),
         title: Map.get(attrs, :title),
         digest: digest,
-        content_hash: article_payload.content_hash,
-        schema_version: article_payload.schema_version
+        body_hash: content_body_hash(body_content),
+        schema_version: body_content.schema_version
       })
-      |> maybe_put_doc_json(article_payload, branch.thread == :doc)
+      |> maybe_put_doc_json(body_content, branch.thread == :doc)
 
     {:ok, attrs}
   end
 
-  defp update_attrs(draft, attrs, article_payload) do
+  defp update_attrs(draft, attrs, body_content) do
     version_fields = draft.__struct__.version_fields()
 
     attrs =
       attrs
       |> Map.take(version_fields)
-      |> maybe_put_article_payload(article_payload, Map.has_key?(draft, :json))
-      |> maybe_put_digest(attrs, article_payload, draft)
+      |> maybe_put_body_content(body_content, Map.has_key?(draft, :json))
+      |> maybe_put_digest(attrs, body_content, draft)
 
     {:ok, attrs}
   end
 
-  defp maybe_put_article_payload(attrs, nil, _stores_json?), do: attrs
+  defp maybe_put_body_content(attrs, nil, _stores_json?), do: attrs
 
-  defp maybe_put_article_payload(attrs, article_payload, stores_json?) do
+  defp maybe_put_body_content(attrs, body_content, stores_json?) do
     attrs
-    |> Map.put(:content_hash, article_payload.content_hash)
-    |> Map.put(:schema_version, article_payload.schema_version)
-    |> maybe_put_doc_json(article_payload, stores_json?)
+    |> Map.put(:body_hash, content_body_hash(body_content))
+    |> Map.put(:schema_version, body_content.schema_version)
+    |> maybe_put_doc_json(body_content, stores_json?)
   end
 
   defp maybe_put_doc_json(attrs, %{json: json}, true), do: Map.put(attrs, :json, json)
-  defp maybe_put_doc_json(attrs, _article_payload, false), do: attrs
+  defp maybe_put_doc_json(attrs, _body_bag, false), do: attrs
 
-  defp maybe_put_digest(attrs, input_attrs, article_payload, draft) do
-    if article_payload || Map.has_key?(input_attrs, :digest) ||
+  defp maybe_put_digest(attrs, input_attrs, body_content, draft) do
+    if body_content || Map.has_key?(input_attrs, :digest) ||
          Map.has_key?(input_attrs, :subtitle) do
-      fallback = (article_payload && article_payload.digest) || draft.digest
+      fallback = (body_content && body_content.digest) || draft.digest
       Map.put(attrs, :digest, article_digest(input_attrs, fallback))
     else
       attrs
@@ -296,18 +297,19 @@ defmodule GroupherServer.CMS.Articles.Draft do
 
   defp maybe_update_document(_draft, nil), do: {:ok, nil}
 
-  defp maybe_update_document(draft, article_payload) do
-    Document.update(draft, %{article_payload: article_payload})
+  defp maybe_update_document(draft, body_content) do
+    Document.update(draft, document_input(body_content))
   end
 
-  defp parse_body(%{body: body}) when is_binary(body), do: ContentPipeline.parse(%{body: body})
-  defp parse_body(_attrs), do: {:error, {:custom, "Article draft body is required"}}
+  defp parse_body(%{body_bag: body_bag}, thread), do: BodyBag.cast(body_bag, thread: thread)
 
-  defp maybe_parse_body(%{body: body}) when is_binary(body) do
-    ContentPipeline.parse(%{body: body})
-  end
+  defp parse_body(_attrs, _thread),
+    do: {:error, {:custom, "Article draft BodyBag is required"}}
 
-  defp maybe_parse_body(_attrs), do: {:ok, nil}
+  defp maybe_parse_body(%{body_bag: body_bag}, thread),
+    do: BodyBag.cast(body_bag, thread: thread)
+
+  defp maybe_parse_body(_attrs, _thread), do: {:ok, nil}
 
   defp create_from_source_public(community, thread, article_hash_id, branch, user) do
     with {:ok, source_branch} <- source_branch(community, thread, branch),
@@ -320,11 +322,12 @@ defmodule GroupherServer.CMS.Articles.Draft do
         |> Map.drop([:cover_url, :cover_url_dark])
         |> Map.merge(%{
           article_hash_id: article_hash_id,
-          branch_id: branch.id,
-          body: document.json
+          branch_id: branch.id
         })
 
-      with {:ok, draft} <- create(community, thread, attrs, user),
+      with {:ok, body_bag} <- BodyBag.from_document(document),
+           attrs <- Map.put(attrs, :body_bag, body_bag),
+           {:ok, draft} <- create(community, thread, attrs, user),
            {:ok, draft} <- VersionedRelations.copy_to_draft(public_article, draft),
            {:ok, _asset_refs} <- Assets.copy_article_refs(public_article, draft) do
         {:ok, draft}
@@ -349,4 +352,8 @@ defmodule GroupherServer.CMS.Articles.Draft do
     |> Map.from_struct()
     |> Map.take(article.__struct__.version_fields())
   end
+
+  defp content_body_hash(%BodyBag{body_hash: body_hash}), do: body_hash
+
+  defp document_input(%BodyBag{} = body_bag), do: %{body_bag: body_bag}
 end

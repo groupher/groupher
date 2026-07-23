@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 
+import '@groupher/rich-editor/style.css'
+
 import RootLayoutShell from '~/widgets/RootLayoutShell'
 
 import '~/tailwind/global.css'

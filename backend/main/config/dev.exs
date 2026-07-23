@@ -69,5 +69,3 @@ config :groupher_server, :search_artiments,
     index_name: System.get_env("ALGOLIA_INDEX_NAME", "groupher_artiments_dev"),
     max_plain_text_bytes: 7_000
   ]
-
-config :groupher_server, Helper.Converter.Content, provider: Helper.Converter.Content.Plate

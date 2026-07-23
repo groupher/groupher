@@ -26,7 +26,7 @@ export default function useSalon(spacing: TSpace = {}) {
       'absolute top-1/2 size-4 -translate-y-1/2 rounded-full border-2 border-white bg-white shadow-md outline-none',
       primary('border'),
     ),
-    intensityFill: cn('absolute inset-y-0 left-0 rounded-full', primary('bgSoft')),
+    intensityFill: cn('absolute inset-y-0 left-0 rounded-full', primary('bgLite')),
     output: cn('ml-3 w-11 text-right text-sm', fg('title')),
   }
 }

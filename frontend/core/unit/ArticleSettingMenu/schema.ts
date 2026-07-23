@@ -3,8 +3,8 @@ import { gql } from 'urql'
 import { F } from '~/schemas'
 
 const updatePost = gql`
-  mutation ($article: ArticlePathInput!, $title: String, $body: String, $communityTags: [ID]) {
-    updatePost(article: $article, title: $title, body: $body, communityTags: $communityTags) {
+  mutation ($article: ArticlePathInput!, $title: String, $communityTags: [ID]) {
+    updatePost(article: $article, title: $title, communityTags: $communityTags) {
       innerId
       title
       communityTags {

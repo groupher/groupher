@@ -6,7 +6,7 @@ type TProps = {
 }
 
 export default function useSalon({ viewerHasUpvoted }: TProps) {
-  const { cn, br, bg, fg, rainbowSoft, primary, vividDark } = useTwBelt()
+  const { cn, br, bg, fg, rainbowLite, primary, vividDark } = useTwBelt()
   const color = usePrimaryColor()
 
   return {
@@ -15,7 +15,7 @@ export default function useSalon({ viewerHasUpvoted }: TProps) {
       'align-both w-44 py-2 rounded-xl border',
       br('divider'),
       `hover:${bg('alphaBg2')}`,
-      viewerHasUpvoted && rainbowSoft(color),
+      viewerHasUpvoted && rainbowLite(color),
     ),
     alias: cn('text-sm ml-1.5 mt-px', viewerHasUpvoted ? primary('fg') : fg('digest')),
   }

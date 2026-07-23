@@ -11,7 +11,7 @@ type TProps = {
 export default function useSalon({ bgColor }: TProps) {
   const { cn, br, fg, bg, fill, shadow, rainbow } = useTwBelt()
 
-  const softBg = bgColor ? rainbow(COLOR[bgColor], 'bgSoft') : ''
+  const liteBg = bgColor ? rainbow(COLOR[bgColor], 'bgLite') : ''
   const solidBg = bgColor ? rainbow(COLOR[bgColor], 'bg') : bg('digest')
   const titleColor = bgColor ? rainbow(COLOR[bgColor], 'fg') : fg('digest')
   const fillColor = bgColor ? rainbow(COLOR[bgColor], 'fill') : fill('digest')
@@ -22,7 +22,7 @@ export default function useSalon({ bgColor }: TProps) {
       br('divider'),
       bg('sandBox'),
       shadow('sm'),
-      softBg,
+      liteBg,
     ),
 
     innerCard: cn(
@@ -52,11 +52,11 @@ export default function useSalon({ bgColor }: TProps) {
     discussIcon: cn('size-5 opacity-65', rainbow(COLOR.GREEN, 'fill')),
     //
     userWrapper: 'align-both absolute circle border-4',
-    borderOrange: rainbow(COLOR.ORANGE, 'borderSoft'),
-    borderRed: rainbow(COLOR.RED, 'borderSoft'),
-    borderGreen: rainbow(COLOR.GREEN, 'borderSoft'),
-    borderBlue: rainbow(COLOR.BLUE, 'borderSoft'),
-    borderPurple: rainbow(COLOR.PURPLE, 'borderSoft'),
+    borderOrange: rainbow(COLOR.ORANGE, 'borderLite'),
+    borderRed: rainbow(COLOR.RED, 'borderLite'),
+    borderGreen: rainbow(COLOR.GREEN, 'borderLite'),
+    borderBlue: rainbow(COLOR.BLUE, 'borderLite'),
+    borderPurple: rainbow(COLOR.PURPLE, 'borderLite'),
     avatar: 'size-7 circle p-px',
   }
 }

@@ -5,7 +5,8 @@ defmodule GroupherServer.Messaging do
 
   alias GroupherServer.Messaging.{Inbox, Mentions, Notifications, Notify}
 
-  def send_mention(artiment, mentions, from_user), do: Mentions.send(artiment, mentions, from_user)
+  def send_mention(artiment, mentions, from_user),
+    do: Mentions.send(artiment, mentions, from_user)
 
   def send_notification(attrs, from_user), do: Notifications.send(attrs, from_user)
 
@@ -15,6 +16,14 @@ defmodule GroupherServer.Messaging do
   def paged_notifications(user, filter), do: Notifications.paged(user, filter)
 
   def unread_count(type, user_id), do: Inbox.unread_count(type, user_id)
+
+  @doc """
+  Returns unread counts grouped by user ID for one inbox message type.
+
+  Users without unread rows are omitted; callers that need a complete user set
+  should supply their own zero defaults.
+  """
+  def unread_counts(type, user_ids), do: Inbox.unread_counts(type, user_ids)
   def mark_read(type, ids, user), do: Inbox.mark_read(type, ids, user)
   def mark_read_all(type, user), do: Inbox.mark_read_all(type, user)
   def paged_messages(type, user, filter), do: Inbox.paged_messages(type, user, filter)

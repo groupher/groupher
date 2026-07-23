@@ -20,3 +20,11 @@ export async function proxy(request: NextRequest) {
   ]
   return await applyProxy(proxyFunctions, request)
 }
+
+export const config = {
+  matcher: [
+    {
+      source: '/((?!_next/static|_next/image|favicon.ico|.well-known/workflow/).*)',
+    },
+  ],
+}

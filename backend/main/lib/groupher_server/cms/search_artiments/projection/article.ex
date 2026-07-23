@@ -15,8 +15,8 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
 
     with :ok <- searchable?(article),
          %{slug: community_ref} <- article.community,
-         %{plain_text: plain_text, content_hash: content_hash} = document <- article.document,
-         true <- is_binary(plain_text) and is_binary(content_hash),
+         %{plain_text: plain_text, body_hash: body_hash} = document <- article.document,
+         true <- is_binary(plain_text) and is_binary(body_hash),
          true <- is_binary(article.article_hash_id),
          true <- not is_nil(article.inner_id) do
       ref = Artiment.article_ref(thread, article.article_hash_id)
@@ -43,7 +43,7 @@ defmodule GroupherServer.CMS.SearchArtiments.Projection.Article do
          published_at: article.active_at,
          inserted_at: article.inserted_at,
          updated_at: article.updated_at,
-         content_hash: content_hash,
+         content_hash: body_hash,
          schema_version: document.schema_version || article.schema_version || 1
        }}
     else

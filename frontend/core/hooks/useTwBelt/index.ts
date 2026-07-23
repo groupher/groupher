@@ -64,20 +64,20 @@ export default function useTwBelt(): TRet {
     const prefix$ = RAINBOW_ALIAS[prefix]
     const color$ = camelize(color)
 
-    if (prefix === 'bgSoft') {
-      return `${prefix$}-${color$}Soft`
+    if (prefix === 'bgLite') {
+      return `${prefix$}-${color$}Lite`
     }
 
-    if (prefix === 'borderSoft') {
+    if (prefix === 'borderLite') {
       return `${prefix$}-${color$}/50`
     }
 
     return `${prefix$}-${color$}`
   }
 
-  const rainbowSoft = (color: TColorName | string): string => {
+  const rainbowLite = (color: TColorName | string): string => {
     const color$ = camelize(color)
-    return `bg-rainbow-${color$}Soft`
+    return `bg-rainbow-${color$}Lite`
   }
 
   const resolveCustomRainbowToken = (
@@ -91,11 +91,11 @@ export default function useTwBelt(): TRet {
 
     const prefix$ = RAINBOW_ALIAS[prefix]
 
-    if (prefix === 'bgSoft') {
-      return `${prefix$}-${customKey}Soft`
+    if (prefix === 'bgLite') {
+      return `${prefix$}-${customKey}Lite`
     }
 
-    if (prefix === 'borderSoft') {
+    if (prefix === 'borderLite') {
       return `${prefix$}-${customKey}/50`
     }
 
@@ -118,7 +118,7 @@ export default function useTwBelt(): TRet {
       !always && groupHoverClass === 'group-hover' && STATIC_CLS.underlineGroupHover,
     )
 
-  const hoverBr = () => cn(STATIC_CLS.hoverBrBase, br('divider'), `hover:${primary('borderSoft')}`)
+  const hoverBr = () => cn(STATIC_CLS.hoverBrBase, br('divider'), `hover:${primary('borderLite')}`)
 
   const hoverLink = (textSize = 'text-base') =>
     cn(
@@ -184,6 +184,8 @@ export default function useTwBelt(): TRet {
   }
 
   const landingTitle = (): string => cn(STATIC_CLS.landingTitleBase, fg('title'))
+  const panel = (classNames?: string): string =>
+    cnMerge(STATIC_CLS.panelBase, bg('card'), br('divider'), classNames)
 
   const hover = (part: THoverPart): string => {
     switch (part) {
@@ -191,7 +193,7 @@ export default function useTwBelt(): TRet {
       case 'box':
         return cn(STATIC_CLS.hoverBgBase, `hover:${bg('hoverBg')}`)
       case 'bg-red':
-        return cn(STATIC_CLS.hoverBgBase, `hover:${rainbowSoft(COLOR.RED)}`)
+        return cn(STATIC_CLS.hoverBgBase, `hover:${rainbowLite(COLOR.RED)}`)
       case 'icon':
         return cn(STATIC_CLS.hoverIconBase, fill('digest'), `group-hover:${fill('title')}`)
       case 'fg':
@@ -289,7 +291,7 @@ export default function useTwBelt(): TRet {
         return cn(
           STATIC_CLS.menuBarBase,
           `hover:${fg('rainbow.red')}`,
-          `hover:${bg('rainbow.redSoft')}`,
+          `hover:${bg('rainbow.redLite')}`,
           fg('digest'),
         )
 
@@ -342,7 +344,7 @@ export default function useTwBelt(): TRet {
       hoverBr,
 
       rainbow,
-      rainbowSoft,
+      rainbowLite,
       primary,
       accent,
       linker,
@@ -373,6 +375,7 @@ export default function useTwBelt(): TRet {
       scrollbar,
       cut,
       landingTitle,
+      panel,
 
       hover,
       selectable,

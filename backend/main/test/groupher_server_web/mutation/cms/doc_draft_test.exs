@@ -27,7 +27,15 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
   setup do
     {:ok, user} = db_insert(:user)
     {:ok, community} = empty_docs_community(user)
-    user_conn = simu_conn(:user, user)
+
+    user_conn =
+      :user
+      |> simu_conn(user)
+      |> Plug.Conn.put_req_header(
+        "x-groupher-server-trust",
+        "test-server-trust-secret"
+      )
+
     {:ok, tree_state} = ORM.find_by(CMS.Model.DocsSiteState, community_id: community.id)
 
     {:ok, group_payload} =
@@ -73,7 +81,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
           title: "测试一下中文",
           subtitle: "这是页面副标题",
           slug: "ce-shi-yi-xia-zhong-wen",
-          body: @plate_body
+          bodyBag: body_bag(@plate_body, :base)
         })
 
       assert updated["docId"] == to_string(doc_id)
@@ -95,6 +103,31 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
              })
     end
 
+    test "requires publisher proof for BodyBag but not metadata-only updates",
+         ~m(user_conn community page_payload)a do
+      doc_id = page_payload.node.doc_id
+      direct_user_conn = Plug.Conn.delete_req_header(user_conn, "x-groupher-server-trust")
+
+      assert direct_user_conn
+             |> mutation_error?(S.Doc.m(:update_draft), %{
+               community: community.slug,
+               id: doc_id,
+               bodyBag: body_bag(@plate_body, :base)
+             })
+
+      updated =
+        direct_user_conn
+        |> gq_mutation(S.Doc.m(:update_draft), %{
+          community: community.slug,
+          id: doc_id,
+          title: "Metadata Only",
+          slug: "metadata-only"
+        })
+
+      assert updated["title"] == "Metadata Only"
+      assert updated["slug"] == "metadata-only"
+    end
+
     test "can stage an invalid doc draft slug before publish validation",
          ~m(user_conn community page_payload)a do
       doc_id = page_payload.node.doc_id
@@ -106,7 +139,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
           id: doc_id,
           title: "Invalid Slug",
           slug: "invalid_slug",
-          body: @plate_body
+          bodyBag: body_bag(@plate_body, :base)
         })
 
       assert updated["slug"] == "invalid_slug"
@@ -124,7 +157,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
           title: "Versioned Draft",
           subtitle: "First subtitle",
           slug: "versioned-draft",
-          body: @plate_body
+          bodyBag: body_bag(@plate_body, :base)
         })
 
       first_revision =
@@ -160,7 +193,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
         title: "Versioned Draft",
         subtitle: "Second subtitle",
         slug: "versioned-draft",
-        body: @plate_body_with_node_ids
+        bodyBag: body_bag(@plate_body_with_node_ids, :base)
       })
 
       subtitle_revision =
@@ -182,7 +215,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
         title: "Versioned Draft",
         subtitle: "Second subtitle",
         slug: "versioned-draft",
-        body: @plate_body_with_node_ids
+        bodyBag: body_bag(@plate_body_with_node_ids, :base)
       })
 
       id_only_revision =
@@ -201,7 +234,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
         title: "Versioned Draft",
         subtitle: "Second subtitle",
         slug: "versioned-draft",
-        body: @plate_body_updated
+        bodyBag: body_bag(@plate_body_updated, :updated)
       })
 
       second_revision =
@@ -263,7 +296,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
         title: "Published Draft",
         subtitle: "Published subtitle",
         slug: "published-draft",
-        body: @plate_body
+        bodyBag: body_bag(@plate_body, :base)
       })
 
       site_draft_version =
@@ -313,7 +346,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
         title: "Published Draft",
         subtitle: "Published subtitle updated",
         slug: "published-draft",
-        body: @plate_body_updated
+        bodyBag: body_bag(@plate_body_updated, :updated)
       })
 
       later_site_draft_version =
@@ -369,7 +402,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       assert public_article_document.json == @plate_body_updated
 
       document_payload_fields =
-        ~w(json markdown markdown_toc html xml rss plain_text digest content_hash schema_version)a
+        ~w(json markdown markdown_toc html xml rss plain_text digest body_hash schema_version)a
 
       assert Map.take(public_article_document, document_payload_fields) ==
                Map.take(draft_document_before_second_publish, document_payload_fields)
@@ -441,7 +474,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
         id: doc_id,
         title: "Publish Guard",
         slug: "publish-guard",
-        body: @plate_body
+        bodyBag: body_bag(@plate_body, :base)
       })
 
       from(d in CMS.Model.Doc,
@@ -455,6 +488,25 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
                input: %{docChangeIds: ["doc:#{doc_id}"], treeChangeIds: []}
              })
     end
+  end
+
+  defp body_bag(json, version) do
+    body_hash =
+      case version do
+        :base -> String.duplicate("a", 64)
+        :updated -> String.duplicate("b", 64)
+      end
+
+    %{
+      json: json,
+      markdown: "Saved draft body",
+      html: "<p>Saved draft body</p>",
+      toc: [],
+      plainText: "Saved draft body",
+      digest: "Saved draft body",
+      bodyHash: body_hash,
+      schemaVersion: 1
+    }
   end
 
   defp empty_docs_community(user) do

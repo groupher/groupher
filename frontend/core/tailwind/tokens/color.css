@@ -56,37 +56,37 @@
 
   /* rainbow colors  */
   --color-rainbow-red: #ca5f4d;
-  --color-rainbow-redSoft: #ffebec;
+  --color-rainbow-redLite: #ffebec;
 
   --color-rainbow-orange: orange;
-  --color-rainbow-orangeSoft: #fef7e8;
+  --color-rainbow-orangeLite: #fef7e8;
 
   --color-rainbow-brown: #8d691e;
-  --color-rainbow-brownSoft: #fff3df;
+  --color-rainbow-brownLite: #fff3df;
 
   --color-rainbow-yellow: #c7b96d;
-  --color-rainbow-yellowSoft: #fefbe8;
+  --color-rainbow-yellowLite: #fefbe8;
 
   --color-rainbow-green: #699411;
-  --color-rainbow-greenSoft: #eefdd89c;
+  --color-rainbow-greenLite: #eefdd89c;
 
   --color-rainbow-greenLight: #79d08f;
-  --color-rainbow-greenLightSoft: #e3f3cc4a;
+  --color-rainbow-greenLightLite: #e3f3cc4a;
 
   --color-rainbow-cyan: #24878c;
-  --color-rainbow-cyanSoft: #e1fcff;
+  --color-rainbow-cyanLite: #e1fcff;
 
   --color-rainbow-cyanLight: #00b5cc;
-  --color-rainbow-cyanLightSoft: #e1fcff94;
+  --color-rainbow-cyanLightLite: #e1fcff94;
 
   --color-rainbow-blue: #5073c6;
-  --color-rainbow-blueSoft: #e7edf7;
+  --color-rainbow-blueLite: #e7edf7;
 
   --color-rainbow-purple: #7d519e;
-  --color-rainbow-purpleSoft: #f7d8fd38;
+  --color-rainbow-purpleLite: #f7d8fd38;
 
   --color-rainbow-pink: #b36976;
-  --color-rainbow-pinkSoft: #ffd8ea59;
+  --color-rainbow-pinkLite: #ffd8ea59;
 
   --color-primary-custom: #333333;
   --color-accent-custom: #333333;
@@ -94,19 +94,19 @@
   /*
    * Derived soft tokens for custom theme colors.
    *
-   * Backend only persists the resolved primary/accent colors. Soft variants are
-   * generated in CSS so all primary('bgSoft') / accent('bgSoft') consumers can
+   * Backend only persists the resolved primary/accent colors. Lite variants are
+   * generated in CSS so all primary('bgLite') / accent('bgLite') consumers can
    * reuse the same visual contract without adding persisted fields. Mix against
    * the current card surface instead of transparent so the tint stays stable on
    * page/card/hover backgrounds.
    */
-  --color-rainbow-customSoft: color-mix(
+  --color-rainbow-customLite: color-mix(
     in srgb,
     var(--color-primary-custom) 14%,
     var(--color-card)
   );
   --color-rainbow-subCustom: var(--color-accent-custom);
-  --color-rainbow-subCustomSoft: color-mix(
+  --color-rainbow-subCustomLite: color-mix(
     in srgb,
     var(--color-accent-custom) 14%,
     var(--color-card)
@@ -114,9 +114,9 @@
 
   --color-rainbow-black: #333333;
   --color-rainbow-blackBtn: oklch(27.8% 0.033 256.848); /* gray.800 */
-  --color-rainbow-blackSoft: #f4f4f4;
+  --color-rainbow-blackLite: #f4f4f4;
 
-  --color-rainbow-greySoft: #f0f0f0;
+  --color-rainbow-greyLite: #f0f0f0;
   /* gradient colors */
   --color-pageBg: #fff;
 
@@ -243,50 +243,50 @@
 
     /* rainbow colors */
     --color-rainbow-red: #ad5242;
-    --color-rainbow-redSoft: #7d3b363d;
+    --color-rainbow-redLite: #7d3b363d;
 
     --color-rainbow-orange: #ffa500c7;
-    --color-rainbow-orangeSoft: #3f332dba;
+    --color-rainbow-orangeLite: #3f332dba;
 
     --color-rainbow-brown: #a77c22;
-    --color-rainbow-brownSoft: #3a342b;
+    --color-rainbow-brownLite: #3a342b;
 
     --color-rainbow-yellow: #dac933cf;
-    --color-rainbow-yellowSoft: #a9a06a30;
+    --color-rainbow-yellowLite: #a9a06a30;
 
     --color-rainbow-green: #699411;
-    --color-rainbow-greenSoft: #4248374a;
+    --color-rainbow-greenLite: #4248374a;
 
     --color-rainbow-greenLight: #37b784;
-    --color-rainbow-greenLightSoft: #69735a4a;
+    --color-rainbow-greenLightLite: #69735a4a;
 
     --color-rainbow-cyan: #24878c;
-    --color-rainbow-cyanSoft: #2c3738;
+    --color-rainbow-cyanLite: #2c3738;
 
     --color-rainbow-cyanLight: #00b5cc;
-    --color-rainbow-cyanLightSoft: #39494b94;
+    --color-rainbow-cyanLightLite: #39494b94;
 
     --color-rainbow-blue: #3a7ec7;
-    --color-rainbow-blueSoft: #27324c54;
+    --color-rainbow-blueLite: #27324c54;
 
     --color-rainbow-purple: #9669b9;
-    --color-rainbow-purpleSoft: #76478147;
+    --color-rainbow-purpleLite: #76478147;
 
     --color-rainbow-pink: #b36976;
-    --color-rainbow-pinkSoft: #73526159;
+    --color-rainbow-pinkLite: #73526159;
 
     --color-rainbow-custom: var(--color-primary-custom);
     /*
      * Dark surfaces need a stronger mix to read as a tint instead of a shadow.
      * This remains derived from the resolved custom color and is not persisted.
      */
-    --color-rainbow-customSoft: color-mix(
+    --color-rainbow-customLite: color-mix(
       in srgb,
       var(--color-primary-custom) 22%,
       var(--color-card)
     );
     --color-rainbow-subCustom: var(--color-accent-custom);
-    --color-rainbow-subCustomSoft: color-mix(
+    --color-rainbow-subCustomLite: color-mix(
       in srgb,
       var(--color-accent-custom) 22%,
       var(--color-card)
@@ -294,9 +294,9 @@
 
     --color-rainbow-black: #4e4e4e;
     --color-rainbow-blackBtn: #e6e6e6;
-    --color-rainbow-blackSoft: #313131;
+    --color-rainbow-blackLite: #313131;
 
-    --color-rainbow-greySoft: #545353;
+    --color-rainbow-greyLite: #545353;
     --color-pageBg: #212121;
 
     /* gradient colors */

@@ -32,10 +32,10 @@ export default function useSalon() {
     redBorder: rainbow(COLOR.RED, 'border'),
     cyanBorder: rainbow(COLOR.CYAN, 'border'),
 
-    purpleBg: rainbow(COLOR.PURPLE, 'bgSoft'),
-    blueBg: rainbow(COLOR.BLUE, 'bgSoft'),
-    redBg: rainbow(COLOR.RED, 'bgSoft'),
-    cyanBg: rainbow(COLOR.CYAN, 'bgSoft'),
+    purpleBg: rainbow(COLOR.PURPLE, 'bgLite'),
+    blueBg: rainbow(COLOR.BLUE, 'bgLite'),
+    redBg: rainbow(COLOR.RED, 'bgLite'),
+    cyanBg: rainbow(COLOR.CYAN, 'bgLite'),
 
     purpleFill: rainbow(COLOR.PURPLE, 'fill'),
     blueFill: rainbow(COLOR.BLUE, 'fill'),

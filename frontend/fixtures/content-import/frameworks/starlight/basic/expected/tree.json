@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "framework": "starlight",
+    "root": "src/content/docs",
+    "configPaths": ["astro.config.mjs"]
+  },
+  "navigation": [
+    {
+      "kind": "scope",
+      "sourceId": "sidebar:docs",
+      "title": "Docs",
+      "routePrefix": "/",
+      "children": [
+        {
+          "kind": "page",
+          "sourceId": "src/content/docs/index.mdx",
+          "sourcePath": "src/content/docs/index.mdx",
+          "title": "Home",
+          "route": "/"
+        },
+        {
+          "kind": "section",
+          "sourceId": "directory:guides",
+          "title": "Guides",
+          "children": [
+            {
+              "kind": "page",
+              "sourceId": "src/content/docs/guides/start.md",
+              "sourcePath": "src/content/docs/guides/start.md",
+              "title": "Getting Started",
+              "route": "/guides/start"
+            },
+            {
+              "kind": "page",
+              "sourceId": "src/content/docs/guides/advanced.mdx",
+              "sourcePath": "src/content/docs/guides/advanced.mdx",
+              "title": "Advanced",
+              "route": "/guides/advanced"
+            }
+          ]
+        },
+        {
+          "kind": "section",
+          "sourceId": "sidebar:api",
+          "title": "API",
+          "children": [
+            {
+              "kind": "page",
+              "sourceId": "src/content/docs/api.md",
+              "sourcePath": "src/content/docs/api.md",
+              "title": "Overview",
+              "route": "/api"
+            }
+          ]
+        },
+        {
+          "kind": "link",
+          "sourceId": "external:https://example.com/project",
+          "title": "Project",
+          "href": "https://example.com/project"
+        }
+      ]
+    }
+  ]
+}

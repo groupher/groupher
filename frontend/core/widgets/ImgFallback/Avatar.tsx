@@ -24,7 +24,7 @@ const Avatar: FC<TProps> = ({
   const color = getLetterColor(name)
 
   return (
-    <div data-testid={testid} className={cn(className, s.wrapper, s.rainbowSoft(color))}>
+    <div data-testid={testid} className={cn(className, s.wrapper, s.rainbowLite(color))}>
       <div className={cn(s.name, s.rainbow(color, 'fg'))}>{name.slice(0, sliceCount)}</div>
     </div>
   )

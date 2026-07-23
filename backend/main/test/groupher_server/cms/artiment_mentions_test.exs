@@ -1,7 +1,7 @@
 defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
   @moduledoc false
 
-  use GroupherServer.TestMate
+  use GroupherServer.TestMate, async: false
   import GroupherServer.DataCase, only: [errors_on: 1]
 
   alias CMS.ArtimentMentions
@@ -34,7 +34,12 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         ])
 
       {:ok, post} =
-        CMS.Articles.create(community, :post, Map.merge(post_attrs, %{body: body}), user)
+        CMS.Articles.create(
+          community,
+          :post,
+          Map.merge(post_attrs, %{body_bag: mock_body_bag(body)}),
+          user
+        )
 
       {:ok, {2, nil}} = ArtimentMentions.sync(post)
 
@@ -74,7 +79,12 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         ])
 
       {:ok, post} =
-        CMS.Articles.create(community, :post, Map.merge(post_attrs, %{body: body}), user)
+        CMS.Articles.create(
+          community,
+          :post,
+          Map.merge(post_attrs, %{body_bag: mock_body_bag(body)}),
+          user
+        )
 
       {:ok, {1, nil}} = ArtimentMentions.sync(post)
 
@@ -132,7 +142,12 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         ])
 
       {:ok, post} =
-        CMS.Articles.create(community, :post, Map.merge(post_attrs, %{body: body}), user)
+        CMS.Articles.create(
+          community,
+          :post,
+          Map.merge(post_attrs, %{body_bag: mock_body_bag(body)}),
+          user
+        )
 
       {:ok, {2, nil}} = ArtimentMentions.sync(post)
 
@@ -163,8 +178,10 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
           ])
         ])
 
-      {:ok, blog} = CMS.Articles.update(blog, %{body: blog_body})
-      {:ok, changelog} = CMS.Articles.update(changelog, %{body: changelog_body})
+      {:ok, blog} = CMS.Articles.update(blog, %{body_bag: mock_body_bag(blog_body)})
+
+      {:ok, changelog} =
+        CMS.Articles.update(changelog, %{body_bag: mock_body_bag(changelog_body)})
 
       {:ok, {1, nil}} = ArtimentMentions.sync(blog)
       {:ok, {1, nil}} = ArtimentMentions.sync(changelog)
@@ -197,7 +214,13 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
           ])
         ])
 
-      {:ok, post} = CMS.Articles.create(community, :post, post_attrs, user)
+      {:ok, post} =
+        CMS.Articles.create(
+          community,
+          :post,
+          Map.put(post_attrs, :body_bag, mock_body_bag(post_attrs.body)),
+          user
+        )
 
       self_body =
         body
@@ -208,7 +231,7 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         )
         |> Jason.encode!()
 
-      {:ok, post} = CMS.Articles.update(post, %{body: self_body})
+      {:ok, post} = CMS.Articles.update(post, %{body_bag: mock_body_bag(self_body)})
       {:ok, :pass} = ArtimentMentions.sync(post)
 
       {:ok, result} = ArtimentMentions.mentions(:post, post.id, %{page: 1, size: 10})
@@ -255,6 +278,60 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
       assert mention.mentioned_url == "https://example.com/changed"
     end
 
+    test "keeps Comment parent lookups constant as Comment mentions grow",
+         ~m(community post blog user)a do
+      target_comments =
+        Enum.map(1..3, fn index ->
+          {:ok, comment} =
+            CMS.Comments.create_comment(
+              community,
+              :blog,
+              blog.inner_id,
+              plate_body([block("target-#{index}", [text("target #{index}")])]),
+              user
+            )
+
+          comment
+        end)
+
+      comment_body = fn comments ->
+        links =
+          Enum.map_join(comments, " ", fn comment ->
+            ~s(<a href="#{@site_host}/blog/#{blog.id}?comment_id=#{comment.id}">target</a>)
+          end)
+
+        plate_body([block("comment-links", [text(links)])])
+      end
+
+      {:ok, mentioner} =
+        CMS.Comments.create_comment(
+          community,
+          :post,
+          post.inner_id,
+          comment_body.([List.first(target_comments)]),
+          user
+        )
+
+      # Warm the replace path so both measurements delete and insert existing facts.
+      assert {:ok, {1, nil}} = ArtimentMentions.sync(mentioner)
+
+      {single_result, single_queries} =
+        capture_repo_queries(fn -> ArtimentMentions.sync(mentioner) end)
+
+      {:ok, mentioner} =
+        CMS.Comments.update_comment(mentioner, comment_body.(target_comments))
+
+      {many_result, many_queries} =
+        capture_repo_queries(fn -> ArtimentMentions.sync(mentioner) end)
+
+      assert {:ok, {1, nil}} = single_result
+      assert {:ok, {3, nil}} = many_result
+      assert data_query_count(single_queries) == data_query_count(many_queries)
+
+      assert {:ok, %{total_count: 3}} =
+               ArtimentMentions.mentions(:comment, mentioner.id, %{page: 1, size: 10})
+    end
+
     test "deletes old mentions when the current content has none",
          ~m(community post_attrs blog user)a do
       body =
@@ -263,13 +340,21 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         ])
 
       {:ok, post} =
-        CMS.Articles.create(community, :post, Map.merge(post_attrs, %{body: body}), user)
+        CMS.Articles.create(
+          community,
+          :post,
+          Map.merge(post_attrs, %{body_bag: mock_body_bag(body)}),
+          user
+        )
 
       {:ok, {1, nil}} = ArtimentMentions.sync(post)
 
       {:ok, post} =
         CMS.Articles.update(post, %{
-          body: plate_body([block("block-b", [text("clean content without mentions")])])
+          body_bag:
+            mock_body_bag(
+              plate_body([block("block-b", [text("clean content without mentions")])])
+            )
         })
 
       {:ok, :pass} = ArtimentMentions.sync(post)
@@ -285,7 +370,12 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         ])
 
       {:ok, post} =
-        CMS.Articles.create(community, :post, Map.merge(post_attrs, %{body: body}), user)
+        CMS.Articles.create(
+          community,
+          :post,
+          Map.merge(post_attrs, %{body_bag: mock_body_bag(body)}),
+          user
+        )
 
       {:ok, {1, nil}} = ArtimentMentions.sync(post)
 
@@ -306,7 +396,12 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
         ])
 
       {:ok, post} =
-        CMS.Articles.create(community, :post, Map.merge(post_attrs, %{body: body}), user)
+        CMS.Articles.create(
+          community,
+          :post,
+          Map.merge(post_attrs, %{body_bag: mock_body_bag(body)}),
+          user
+        )
 
       {:ok, {1, nil}} = ArtimentMentions.sync(post)
       {:ok, result} = ArtimentMentions.mentioned_by(:blog, blog.id, %{page: 1, size: 10})
@@ -382,6 +477,168 @@ defmodule GroupherServer.Test.CMS.ArtimentMentionsTest do
                mentioned_community_id: ["must be blank"]
              } = errors_on(external_changeset)
     end
+  end
+
+  describe "mark_target_state/2" do
+    test "updates every lifecycle state with one statement and preserves unrelated JSON",
+         ~m(community post)a do
+      old_updated_at = Datetime.shift(DateTime.utc_now(:second), days: -1)
+      insert_incoming_mentions(community, post, 3, old_updated_at)
+
+      {trashed_result, trashed_queries} =
+        capture_repo_queries(fn -> ArtimentMentions.mark_target_state(post, :trashed) end)
+
+      assert {:ok, :pass} = trashed_result
+      assert mention_update_query_count(trashed_queries) == 1
+
+      trashed_mentions = incoming_mentions(post)
+      assert length(trashed_mentions) == 3
+
+      Enum.each(trashed_mentions, fn mention ->
+        assert mention.mentioned_snapshot["keep"] == "snapshot"
+        assert mention.mentioned_snapshot["deletionState"] == "trashed"
+        assert is_binary(mention.mentioned_snapshot["deletedAt"])
+        assert mention.meta["keep"] == "meta"
+        assert mention.meta["mentionedDeleted"]
+        assert mention.meta["mentionedTrashed"]
+        assert is_binary(mention.meta["mentionedDeletedAt"])
+        assert DateTime.compare(mention.updated_at, old_updated_at) == :gt
+      end)
+
+      {deleted_result, deleted_queries} =
+        capture_repo_queries(fn ->
+          ArtimentMentions.mark_target_state(post, :permanently_deleted)
+        end)
+
+      assert {:ok, :pass} = deleted_result
+      assert mention_update_query_count(deleted_queries) == 1
+
+      Enum.each(incoming_mentions(post), fn mention ->
+        assert mention.mentioned_snapshot["deletionState"] == "permanently_deleted"
+        assert mention.meta["mentionedDeleted"]
+        refute mention.meta["mentionedTrashed"]
+      end)
+
+      {active_result, active_queries} =
+        capture_repo_queries(fn -> ArtimentMentions.mark_target_state(post, :active) end)
+
+      assert {:ok, :pass} = active_result
+      assert mention_update_query_count(active_queries) == 1
+
+      Enum.each(incoming_mentions(post), fn mention ->
+        assert mention.mentioned_snapshot["keep"] == "snapshot"
+        refute Map.has_key?(mention.mentioned_snapshot, "deletionState")
+        refute Map.has_key?(mention.mentioned_snapshot, "deletedAt")
+        assert mention.meta["keep"] == "meta"
+        refute Map.has_key?(mention.meta, "mentionedDeleted")
+        refute Map.has_key?(mention.meta, "mentionedTrashed")
+        refute Map.has_key?(mention.meta, "mentionedDeletedAt")
+      end)
+    end
+
+    test "participates in the caller transaction", ~m(community post)a do
+      old_updated_at = Datetime.shift(DateTime.utc_now(:second), days: -1)
+      insert_incoming_mentions(community, post, 2, old_updated_at)
+
+      assert {:error, :forced_rollback} =
+               Repo.transaction(fn ->
+                 assert {:ok, :pass} =
+                          ArtimentMentions.mark_target_state(post, :permanently_deleted)
+
+                 Repo.rollback(:forced_rollback)
+               end)
+
+      Enum.each(incoming_mentions(post), fn mention ->
+        refute Map.has_key?(mention.mentioned_snapshot, "deletionState")
+        refute Map.has_key?(mention.meta, "mentionedDeleted")
+        assert mention.updated_at == old_updated_at
+      end)
+    end
+  end
+
+  defp insert_incoming_mentions(community, post, count, timestamp) do
+    rows =
+      Enum.map(1..count, fn index ->
+        %{
+          mentioner_type: :blog,
+          mentioner_id: 10_000 + index,
+          mentioner_community_id: community.id,
+          mentioner_url: "#{@site_host}/blog/#{10_000 + index}",
+          mentioned_scope: :internal,
+          mentioned_type: :post,
+          mentioned_id: post.id,
+          mentioned_community_id: community.id,
+          mentioned_url: "#{@site_host}/post/#{post.id}",
+          mention_case: :inline_mention,
+          occurrences: [],
+          mentioner_snapshot: %{},
+          mentioned_snapshot: %{"keep" => "snapshot"},
+          meta: %{"keep" => "meta"},
+          mentioned_at: timestamp,
+          inserted_at: timestamp,
+          updated_at: timestamp
+        }
+      end)
+
+    assert {^count, nil} = Repo.insert_all(ArtimentMention, rows)
+  end
+
+  defp incoming_mentions(post) do
+    ArtimentMention
+    |> where(
+      [mention],
+      mention.mentioned_scope == :internal and mention.mentioned_type == :post and
+        mention.mentioned_id == ^post.id
+    )
+    |> order_by([mention], asc: mention.id)
+    |> Repo.all()
+  end
+
+  defp capture_repo_queries(fun) do
+    ref = make_ref()
+    handler_id = {__MODULE__, ref}
+    event = Repo.config() |> Keyword.fetch!(:telemetry_prefix) |> Kernel.++([:query])
+
+    :ok =
+      :telemetry.attach(
+        handler_id,
+        event,
+        fn _event, _measurements, metadata, {pid, query_ref} ->
+          send(pid, {query_ref, metadata.query})
+        end,
+        {self(), ref}
+      )
+
+    try do
+      result = fun.()
+      {result, drain_queries(ref, [])}
+    after
+      :telemetry.detach(handler_id)
+    end
+  end
+
+  defp drain_queries(ref, queries) do
+    receive do
+      {^ref, query} -> drain_queries(ref, [query | queries])
+    after
+      0 -> Enum.reverse(queries)
+    end
+  end
+
+  defp data_query_count(queries) do
+    Enum.count(queries, fn query ->
+      query
+      |> String.trim_leading()
+      |> String.match?(~r/^(SELECT|INSERT|UPDATE|DELETE)/)
+    end)
+  end
+
+  defp mention_update_query_count(queries) do
+    Enum.count(queries, fn query ->
+      query
+      |> String.trim_leading()
+      |> String.starts_with?(~s(UPDATE "cms"."artiment_mentions"))
+    end)
   end
 
   defp plate_body(blocks), do: Jason.encode!(blocks)

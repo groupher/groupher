@@ -9,7 +9,7 @@ import type { TDocCoversData } from '~/unit/DocCovers/spec'
 
 const EMPTY_DOC_COVERS: TDocCoversData = {
   groups: [],
-  pinnedItems: [],
+  pinnedDocs: [],
 }
 
 type TRet = {

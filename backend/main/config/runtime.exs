@@ -2,6 +2,10 @@ import Config
 
 import Helper.Utils, only: [get_host_from_url: 1]
 
+if secret = System.get_env("GROUPHER_SERVER_TRUST_SECRET") do
+  config :groupher_server, :server_trust, secret: secret
+end
+
 # ## Using releases
 #
 # If you use `mix release`, you need to explicitly enable the server
@@ -165,6 +169,4 @@ if config_env() in [:prod, :seed_prod] do
   #     env: "production"
   #   },
   #   included_environments: [:prod]
-
-  config :groupher_server, :oauth, oauth_trust_code: System.get_env("OAUTH_TRUST_CODE")
 end

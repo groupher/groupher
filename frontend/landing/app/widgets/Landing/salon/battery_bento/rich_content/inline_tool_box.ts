@@ -16,7 +16,7 @@ export default function useSalon() {
     hover: '-top-1.5',
     //
     item: 'align-both size-4',
-    itemActive: cn('rounded-md', rainbow(COLOR.CYAN, 'bgSoft')),
+    itemActive: cn('rounded-md', rainbow(COLOR.CYAN, 'bgLite')),
     icon: cn('size-3.5', fill('digest')),
     iconActive: rainbow(COLOR.CYAN, 'fill'),
   }

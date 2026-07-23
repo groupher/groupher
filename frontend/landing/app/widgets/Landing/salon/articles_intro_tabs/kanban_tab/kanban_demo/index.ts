@@ -9,7 +9,7 @@ export default function useSalon() {
     wrapper: cn(
       'column border w-7/12 h-4/6 mb-7 rounded-lg',
       bg('card'),
-      br('rainbow.blueSoft'),
+      br('rainbow.blueLite'),
       shadow('card'),
     ),
     boards: 'row justify-center items-end w-full gap-x-7',

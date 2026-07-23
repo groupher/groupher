@@ -8,6 +8,7 @@ import Config
 # General application configuration
 config :groupher_server, ecto_repos: [GroupherServer.Repo]
 config :groupher_server, env: config_env()
+config :groupher_server, :server_trust, secret: nil
 
 config :groupher_server, GroupherServer.Repo,
   after_connect: {Postgrex, :query!, ["SET TIME ZONE 'UTC'", []]},

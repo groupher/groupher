@@ -149,7 +149,7 @@ export const isDraftDirty = (draft: TEditorDraft, savedDraft: TSavedDraft): bool
 }
 
 export const composeDraftSaveInput = (draft: TEditorDraft, slug: string) => ({
-  body: draft.bodyJson,
+  value: draft.bodyValue,
   id: draft.docId,
   slug,
   subtitle: draft.subtitle.trim(),

@@ -20,7 +20,7 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Blog do
       CMS.Articles.create_draft(
         community,
         :blog,
-        Map.merge(attrs, %{title: "Blog version one", body: @body_v1}),
+        Map.merge(attrs, %{title: "Blog version one", body_bag: mock_body_bag(@body_v1)}),
         user
       )
 
@@ -35,7 +35,7 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Blog do
         community,
         :blog,
         draft.article_hash_id,
-        %{title: "Blog version two", body: @body_v2},
+        %{title: "Blog version two", body_bag: mock_body_bag(@body_v2)},
         user
       )
 
@@ -89,7 +89,11 @@ defmodule GroupherServer.Test.CMS.Articles.Versioning.Blog do
         community,
         :blog,
         draft.article_hash_id,
-        %{branch_id: forked.branch.id, title: "Blog preview promoted", body: @body_preview},
+        %{
+          branch_id: forked.branch.id,
+          title: "Blog preview promoted",
+          body_bag: mock_body_bag(@body_preview)
+        },
         user
       )
 

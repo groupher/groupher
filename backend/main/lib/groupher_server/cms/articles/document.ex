@@ -6,45 +6,27 @@ defmodule GroupherServer.CMS.Articles.Document do
 
   alias GroupherServer.CMS
 
+  alias CMS.Artiment.BodyBag
   alias CMS.FrontDesk
   alias CMS.Model.{ArticleDocument, Doc}
-  alias Helper.{ArticlePayload, ContentPipeline, ORM, T}
+  alias Helper.{ORM, T}
 
   @type document_result :: {:ok, map()} | {:error, map()}
 
-  @doc "Creates the derived ArticleDocument from README, body, or parsed content input."
+  @doc "Creates an ArticleDocument from a publisher-produced BodyBag."
   @spec create(map(), map()) :: document_result()
-  def create(article, %{readme: readme} = attrs) do
-    with {:ok, payload} <- ContentPipeline.from_readme(readme) do
-      attrs = attrs |> Map.drop([:readme]) |> Map.put(:article_payload, payload)
-      create(article, attrs)
-    end
-  end
-
-  def create(article, %{body: body}) when is_binary(body) do
-    with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
-      create(article, %{article_payload: payload})
-    end
-  end
-
-  def create(article, %{article_payload: payload}) do
+  def create(article, %{body_bag: body_bag}) do
     with {:ok, thread} <- FrontDesk.thread_of(article),
+         {:ok, body_bag} <- BodyBag.cast(body_bag, thread: thread),
          false <- article_document_exists?(article) do
-      attrs = ArticlePayload.pick_valid_fields(payload)
-
-      ArticleDocument
-      |> ORM.create(
-        Map.merge(attrs, %{
-          thread: thread,
-          article_id: article.id,
-          title: article.title
-        })
-      )
+      create_document(article, thread, BodyBag.to_document_attrs(body_bag))
     else
       true -> document_already_exists_error()
       {:error, _} = error -> error
     end
   end
+
+  def create(_article, _attrs), do: body_bag_required_error()
 
   @doc """
   Creates doc documents for a `Doc` struct.
@@ -53,43 +35,42 @@ defmodule GroupherServer.CMS.Articles.Document do
   that already know the thread should prefer this entry point.
   """
   @spec create_doc(Doc.t(), map()) :: document_result()
-  def create_doc(%Doc{} = article, attrs) do
-    with {:ok, payload} <- maybe_parse_payload(attrs),
+  def create_doc(%Doc{} = article, %{body_bag: body_bag}) do
+    with {:ok, body_bag} <- BodyBag.cast(body_bag, thread: :doc),
          false <- article_document_exists?(article) do
-      pick = ArticlePayload.pick_valid_fields(payload)
-
-      ArticleDocument
-      |> ORM.create(
-        Map.merge(pick, %{thread: :doc, article_id: article.id, title: article.title})
-      )
+      create_document(article, :doc, BodyBag.to_document_attrs(body_bag))
     else
       true -> document_already_exists_error()
       {:error, _} = error -> error
     end
   end
 
+  def create_doc(%Doc{}, _attrs), do: body_bag_required_error()
+
   @doc """
   Updates doc documents for a `Doc` struct.
   """
   @spec update_doc(Doc.t(), map()) :: document_result()
-  def update_doc(%Doc{} = article, attrs) do
-    with {:ok, payload} <- maybe_parse_payload(attrs),
+  def update_doc(%Doc{} = article, %{body_bag: body_bag} = attrs) do
+    with {:ok, body_bag} <- BodyBag.cast(body_bag, thread: :doc),
          {:ok, article_doc} <- find_article_document(:doc, article) do
-      pick = ArticlePayload.pick_valid_fields(payload)
-
-      article_doc
-      |> ORM.update(Map.merge(pick, %{title: Map.get(attrs, :title, article_doc.title)}))
+      body_bag
+      |> BodyBag.to_document_attrs()
+      |> Map.put(:title, Map.get(attrs, :title, article_doc.title))
+      |> then(&ORM.update(article_doc, &1))
     end
   end
 
-  defp maybe_parse_payload(%{article_payload: payload}), do: {:ok, payload}
+  def update_doc(%Doc{} = article, %{title: title}) when is_binary(title) do
+    with {:ok, article_doc} <- find_article_document(:doc, article) do
+      ORM.update(article_doc, %{title: title})
+    end
+  end
 
-  defp maybe_parse_payload(%{body: body}) when is_binary(body),
-    do: ContentPipeline.parse(%{body: body})
-
-  defp maybe_parse_payload(_), do: {:error, {:custom, "payload is required"}}
+  def update_doc(%Doc{}, _attrs), do: body_bag_required_error()
 
   defp document_already_exists_error, do: {:error, {:custom, "document already exists"}}
+  defp body_bag_required_error, do: {:error, {:custom, "Article BodyBag is required"}}
 
   defp article_document_exists?(%Doc{} = article) do
     {:ok, count} =
@@ -115,19 +96,14 @@ defmodule GroupherServer.CMS.Articles.Document do
   update article document
   """
   @spec update(map(), map()) :: document_result()
-  def update(article, %{article_payload: payload}) do
+  def update(article, %{body_bag: body_bag}) do
     with {:ok, thread} <- FrontDesk.thread_of(article),
+         {:ok, body_bag} <- BodyBag.cast(body_bag, thread: thread),
          {:ok, article_doc} <- find_article_document(thread, article) do
-      attrs = ArticlePayload.pick_valid_fields(payload)
-
-      article_doc
-      |> ORM.update(Map.merge(attrs, %{title: article.title}))
-    end
-  end
-
-  def update(article, %{body: body}) when is_binary(body) do
-    with {:ok, payload} <- ContentPipeline.parse(%{body: body}) do
-      __MODULE__.update(article, %{article_payload: payload})
+      body_bag
+      |> BodyBag.to_document_attrs()
+      |> Map.put(:title, article.title)
+      |> then(&ORM.update(article_doc, &1))
     end
   end
 
@@ -139,6 +115,17 @@ defmodule GroupherServer.CMS.Articles.Document do
   end
 
   def update(article, _), do: {:ok, article}
+
+  defp create_document(article, thread, attrs) do
+    ArticleDocument
+    |> ORM.create(
+      Map.merge(attrs, %{
+        thread: thread,
+        article_id: article.id,
+        title: article.title
+      })
+    )
+  end
 
   defp find_article_document(thread, article) do
     ORM.find_by(ArticleDocument, %{article_id: article.id, thread: thread})

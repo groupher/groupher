@@ -16,9 +16,16 @@ type TProps = {
   show: boolean
   onClose: () => void
   type?: string
+  wide?: boolean
 }
 
-export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POST_VIEW }: TProps) {
+export default function Drawer({
+  children,
+  show,
+  onClose,
+  type = TYPE.DRAWER.POST_VIEW,
+  wide,
+}: TProps) {
   const contentRef = useRef<HTMLDivElement | null>(null)
   const drawerRef = useRef<HTMLDivElement | null>(null)
 
@@ -31,7 +38,7 @@ export default function Drawer({ children, show, onClose, type = TYPE.DRAWER.POS
 
   const { lockPageOnce, unlockPageOnce } = usePageLock()
   const { rightOffset, fromContentEdge } = useDrawerOffset()
-  const s = useSalon({ visible, closing, type, rightOffset, fromContentEdge })
+  const s = useSalon({ visible, closing, type, rightOffset, fromContentEdge, wide })
 
   const clearCloseTimer = useCallback(() => {
     if (closeTimerRef.current) {

@@ -49,7 +49,9 @@ defmodule GroupherServer.Messaging.Mentions do
       end
     end)
     |> Multi.run(:update_user_mailbox_status, fn _, %{batch_insert_mentions: mentions} ->
-      mentions |> Enum.map(& &1.to_user_id) |> Accounts.Mailbox.update_status_many()
+      mentions
+      |> Enum.map(& &1.to_user_id)
+      |> Accounts.Mailbox.update_status_many_in_transaction()
     end)
     |> Repo.transaction()
     |> result()
@@ -73,7 +75,9 @@ defmodule GroupherServer.Messaging.Mentions do
       end
     end)
     |> Multi.run(:update_user_mailbox_status, fn _, %{batch_insert_mentions: mentions} ->
-      mentions |> Enum.map(& &1.to_user_id) |> Accounts.Mailbox.update_status_many()
+      mentions
+      |> Enum.map(& &1.to_user_id)
+      |> Accounts.Mailbox.update_status_many_in_transaction()
     end)
     |> Repo.transaction()
     |> result()
@@ -118,6 +122,22 @@ defmodule GroupherServer.Messaging.Mentions do
     Mention
     |> where([m], m.to_user_id == ^user_id and m.read == false)
     |> ORM.count()
+  end
+
+  @doc """
+  Counts unread mentions for multiple users in one grouped database query.
+
+  Returns `{:ok, %{user_id => count}}`; user IDs with zero unread mentions are
+  omitted from the map.
+  """
+  def unread_counts(user_ids) when is_list(user_ids) do
+    Mention
+    |> where([m], m.to_user_id in ^user_ids and m.read == false)
+    |> group_by([m], m.to_user_id)
+    |> select([m], {m.to_user_id, count(m.id)})
+    |> Repo.all()
+    |> Map.new()
+    |> done()
   end
 
   def mark_read(ids, %User{} = user) when is_list(ids) do
@@ -175,6 +195,10 @@ defmodule GroupherServer.Messaging.Mentions do
     |> Map.put(:user, user)
   end
 
-  defp result({:ok, %{batch_insert_mentions: _result}}), do: {:ok, :pass}
+  defp result({:ok, %{batch_insert_mentions: _result, update_user_mailbox_status: updated_users}}) do
+    Accounts.Mailbox.invalidate_users(updated_users)
+    {:ok, :pass}
+  end
+
   defp result({:error, _, result, _steps}), do: {:error, result}
 end

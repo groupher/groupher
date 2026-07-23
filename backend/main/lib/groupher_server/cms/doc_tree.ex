@@ -16,7 +16,7 @@ defmodule GroupherServer.CMS.DocTree do
       doc_tree_nodes(stage=public) --->  docs  --->  article_documents
               |
               v
-      doc_cover_groups/items/pinned_items
+      doc_cover_groups/items/pinned_docs
               |
               v
       Public docs site

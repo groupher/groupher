@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.DocCover do
                  |
                  | resolve same node_id at stage=public
                  v
-      doc_cover_groups/items/pinned_items
+      doc_cover_groups/items/pinned_docs
                  |
                  v
       published doc_tree_nodes(type=page)
@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.DocCover do
   """
 
   alias GroupherServer.CMS.DocCover.{Read, Sync, Write}
-  alias GroupherServer.CMS.Model.{Community, DocCoverGroup, DocCoverItem, DocCoverPinnedItem}
+  alias GroupherServer.CMS.Model.{Community, DocCoverGroup, DocCoverItem, DocCoverPinnedDoc}
   alias GroupherServer.CMS.Model.DocTreeNode
   alias Helper.T
 
@@ -90,25 +90,30 @@ defmodule GroupherServer.CMS.DocCover do
   @doc """
   Pins one published page by draft page id.
   """
-  @spec pin_item(Community.t(), T.id(), map()) :: T.domain_res(DocCoverPinnedItem.t())
-  def pin_item(%Community{} = community, draft_node_id, ui_config \\ %{}) do
-    Write.pin_item(community, draft_node_id, ui_config)
+  @spec pin_doc(Community.t(), T.id()) :: T.domain_res(DocCoverPinnedDoc.t())
+  def pin_doc(%Community{} = community, draft_node_id) do
+    Write.pin_doc(community, draft_node_id)
   end
 
   @doc """
   Removes one pinned cover item by draft page id.
   """
-  @spec unpin_item(Community.t(), T.id()) :: T.domain_res(DocCoverPinnedItem.t())
-  def unpin_item(%Community{} = community, draft_node_id),
-    do: Write.unpin_item(community, draft_node_id)
+  @spec unpin_doc(Community.t(), T.id()) :: T.domain_res(DocCoverPinnedDoc.t())
+  def unpin_doc(%Community{} = community, draft_node_id),
+    do: Write.unpin_doc(community, draft_node_id)
 
   @doc """
-  Updates the UI config for one pinned cover item by draft page id.
+  Reorders the complete pinned-doc collection by public node identifier.
   """
-  @spec update_pinned_ui_config(Community.t(), T.id(), map()) ::
-          T.domain_res(DocCoverPinnedItem.t())
-  def update_pinned_ui_config(%Community{} = community, draft_node_id, ui_config) do
-    Write.update_pinned_ui_config(community, draft_node_id, ui_config)
+  @spec reorder_pinned_docs(Community.t(), list(T.id())) :: T.domain_res(map())
+  def reorder_pinned_docs(%Community{} = community, node_ids),
+    do: Write.reorder_pinned_docs(community, node_ids)
+
+  @doc "Updates the Light/Dark appearance for one pinned card."
+  @spec update_pinned_doc_appearance(Community.t(), T.id(), map()) ::
+          T.domain_res(DocCoverPinnedDoc.t())
+  def update_pinned_doc_appearance(%Community{} = community, draft_node_id, appearance) do
+    Write.update_pinned_doc_appearance(community, draft_node_id, appearance)
   end
 
   @doc """

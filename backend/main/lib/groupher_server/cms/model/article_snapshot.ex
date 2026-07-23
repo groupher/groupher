@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.Model.ArticleSnapshot do
   @timestamps_opts [type: :utc_datetime]
 
   @max_subtitle_length 240
-  @required_fields ~w(community_id branch_id article_hash_id thread stage action title document_json content_hash revision_number)a
+  @required_fields ~w(community_id branch_id article_hash_id thread stage action title document_json body_bag version_hash revision_number)a
   @optional_fields ~w(parent_snapshot_id source_snapshot_id author_id slug subtitle digest data schema_version message)a
 
   @type snapshot_stage :: :draft | :public
@@ -56,8 +56,9 @@ defmodule GroupherServer.CMS.Model.ArticleSnapshot do
     field(:subtitle, :string)
     field(:digest, :string)
     field(:document_json, :string)
+    field(:body_bag, :map)
     field(:data, :map, default: %{})
-    field(:content_hash, :string)
+    field(:version_hash, :string)
     field(:revision_number, :integer)
     field(:schema_version, :integer, default: 1)
     field(:message, :string)

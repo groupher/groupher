@@ -31,6 +31,6 @@ describe('useNavActiveLayoutSalon', () => {
     )
 
     expect(result.current.item).toContain('bg-rainbow')
-    expect(result.current.item).toContain('Soft')
+    expect(result.current.item).toContain('Lite')
   })
 })

@@ -68,7 +68,7 @@ export const RAINBOW_COLOR_HEX = {
   },
 } as const
 
-export const RAINBOW_SOFT_COLOR_HEX = {
+export const RAINBOW_LITE_COLOR_HEX = {
   [THEME.LIGHT]: {
     [COLOR.BLACK]: '#f4f4f4',
     [COLOR.PINK]: '#ffd8ea59',

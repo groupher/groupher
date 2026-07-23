@@ -54,6 +54,9 @@ const File: FC<TProps> = ({
     editingTarget?.type === SIDE_TREE_NODE_TYPE.PAGE && editingTarget.childId === item.id
   const showPublishDot = needsPublishAttention(item.publishState)
   const publicDoc = isPublicDoc(item.publishState)
+  const pinnedToCover = item.publishState?.pinnedToCover === true
+  const canPinToCover =
+    item.publishState?.published === true && item.publishState?.hasUnpublishedChanges !== true
   const activate = (event?: MouseEvent<HTMLDivElement>): void => {
     if ((event?.target as HTMLElement | null)?.closest('button, a, input')) return
     onActivate(item.id)
@@ -118,6 +121,7 @@ const File: FC<TProps> = ({
               moveToDraftVisible={publicDoc}
               coverToggleVisible={groupInCover && publicDoc}
               hiddenFromCover={item.publishState?.hiddenFromCover === true}
+              pinAction={pinnedToCover ? 'unpin' : canPinToCover ? 'pin' : undefined}
               onOpenChange={setMenuOpen}
               onSelect={(action) => {
                 if (action === SIDE_TREE_NODE_MENU_ACTION.RENAME) {

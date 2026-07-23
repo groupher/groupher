@@ -6,16 +6,16 @@ import type { TColorName, TInlineTagLayout } from '~/spec'
 type TProps = { color: TColorName } & { layout?: TInlineTagLayout | null }
 
 export default function useInlineTagSalon({ color, layout }: TProps) {
-  const { cn, br, fg, rainbow, rainbowSoft } = useTwBelt()
+  const { cn, br, fg, rainbow, rainbowLite } = useTwBelt()
   const { inlineTagLayout } = useLayout()
 
   const TAG_LAYOUTS = {
     [INLINE_TAG_LAYOUT.MORANDI]: {
-      wrapper: cn('row-center rounded-sm px-1', rainbowSoft(color)),
+      wrapper: cn('row-center rounded-sm px-1', rainbowLite(color)),
       title: cn('text-xs keep-all mr-px', fg('title')),
     },
     [INLINE_TAG_LAYOUT.SOFT]: {
-      wrapper: cn('row-center rounded-sm px-1', rainbowSoft(color)),
+      wrapper: cn('row-center rounded-sm px-1', rainbowLite(color)),
       title: cn('text-xs keep-all mr-px bold-sm', rainbow(color, 'fg')),
     },
     [INLINE_TAG_LAYOUT.SOLID]: {

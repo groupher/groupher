@@ -348,7 +348,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :doc_cover do
     field(:groups, list_of(:doc_cover_group))
-    field(:pinned_items, list_of(:doc_cover_pinned_item))
+    field(:pinned_docs, non_null(list_of(non_null(:doc_cover_pinned_doc))))
   end
 
   object :doc_cover_group do
@@ -377,19 +377,12 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:node, :doc_tree_node)
   end
 
-  object :doc_cover_pinned_item do
-    field(:id, :id)
-    field(:node_id, :id)
-    field(:index, :integer)
-    field(:ui_config, :json)
-    field(:doc_id, :id)
-    field(:type, :doc_tree_node_type)
-    field(:title, :string)
-    field(:href, :string)
-    field(:marker, :marker)
-    field(:digest, :string)
-    field(:badge, :string)
-    field(:node, :doc_tree_node)
+  object :doc_cover_pinned_doc do
+    field(:node_id, non_null(:id))
+    field(:index, non_null(:integer))
+    field(:appearance, non_null(:json))
+    field(:href, non_null(:string))
+    field(:doc, non_null(:doc))
   end
 
   object :doc_draft do
@@ -564,13 +557,35 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:meta, :json)
   end
 
+  input_object :artiment_toc_item_input do
+    field(:id, non_null(:string))
+    field(:level, non_null(:integer))
+    field(:title, non_null(:string))
+  end
+
+  input_object :artiment_body_bag_input do
+    field(:json, non_null(:string))
+    field(:markdown, non_null(:string))
+    field(:html, non_null(:string))
+    field(:toc, non_null(list_of(non_null(:artiment_toc_item_input))))
+    field(:plain_text, non_null(:string))
+    field(:digest, non_null(:string))
+    field(:body_hash, non_null(:string))
+    field(:schema_version, non_null(:integer))
+  end
+
   object :article_document do
     field(:json, :string)
     field(:markdown, :string)
     field(:markdown_toc, :json)
+    field(:thumbnail, :json)
     field(:html, :string)
     field(:xml, :string)
     field(:rss, :string)
+    field(:plain_text, :string)
+    field(:digest, :string)
+    field(:body_hash, :string)
+    field(:schema_version, :integer)
 
     field(:asset_refs, list_of(:article_document_asset_ref),
       resolve: dataloader(CMS, :asset_refs)
@@ -588,7 +603,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:subtitle, :string)
     field(:digest, :string)
     field(:document_json, :string)
-    field(:content_hash, :string)
+    field(:version_hash, :string)
     field(:revision_number, :integer)
     field(:schema_version, :integer)
     field(:data, :json)

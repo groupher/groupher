@@ -35,7 +35,7 @@ export const getNavActiveLayoutStyles = ({
     icon: primary('fill'),
   },
   [NAV_ACTIVE_LAYOUT.SOFT_BG]: {
-    item: cn(primary('fg'), primary('bgSoft'), 'bold-sm'),
+    item: cn(primary('fg'), primary('bgLite'), 'bold-sm'),
     text: cn(primary('fg'), 'bold-sm'),
     icon: primary('fill'),
   },

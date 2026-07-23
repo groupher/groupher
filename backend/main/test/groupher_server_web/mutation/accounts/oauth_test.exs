@@ -8,7 +8,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
 
   alias Accounts.Model.OauthProvider
 
-  @oauth_trust_code get_config(:oauth, :oauth_trust_code)
+  @server_trust_secret "test-server-trust-secret"
 
   @valid_github_profile mock_attrs(:oauth_profile, %{provider: "github"})
   @valid_twitter_profile mock_attrs(:oauth_profile, %{provider: "twitter"})
@@ -17,19 +17,18 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
   setup do
     {:ok, user} = db_insert(:user)
 
-    user_conn = simu_conn(:user, user)
-    guest_conn = simu_conn(:guest)
+    user_conn = :user |> simu_conn(user) |> with_server_trust()
+    guest_conn = :guest |> simu_conn() |> with_server_trust()
+    untrusted_user_conn = simu_conn(:user, user)
+    untrusted_guest_conn = simu_conn(:guest)
 
-    {:ok, ~m(user_conn guest_conn user)a}
+    {:ok, ~m(user_conn guest_conn untrusted_user_conn untrusted_guest_conn user)a}
   end
 
   describe "[oauth signin]" do
     @query S.OAuth.m(:signin_oauth)
     test "can signin oauth with github", ~m(guest_conn)a do
-      variables = %{
-        provider: gql_oauth_provider(@valid_github_profile),
-        oauthTrustCode: @oauth_trust_code
-      }
+      variables = %{provider: gql_oauth_provider(@valid_github_profile)}
 
       ret = guest_conn |> gq_mutation(@query, variables)
 
@@ -45,10 +44,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
     end
 
     test "can signin oauth with google", ~m(guest_conn)a do
-      variables = %{
-        provider: gql_oauth_provider(@valid_google_profile),
-        oauthTrustCode: @oauth_trust_code
-      }
+      variables = %{provider: gql_oauth_provider(@valid_google_profile)}
 
       ret = guest_conn |> gq_mutation(@query, variables)
 
@@ -63,21 +59,15 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       assert oauth_provider.raw["sub"] == @valid_google_profile.provider_id
     end
 
-    test "can not signin oauth with un-trust code", ~m(guest_conn)a do
-      variables = %{
-        provider: gql_oauth_provider(@valid_github_profile),
-        oauthTrustCode: "whatever"
-      }
+    test "can not signin oauth without server trust", ~m(untrusted_guest_conn)a do
+      variables = %{provider: gql_oauth_provider(@valid_github_profile)}
 
-      assert guest_conn |> mutation_error?(@query, variables, ecode(:oauth_trust_code))
+      assert untrusted_guest_conn |> mutation_error?(@query, variables, ecode(:server_trust))
     end
 
     @query S.OAuth.m(:link_oauth)
     test "can link oauth with twitter", ~m(user_conn user)a do
-      variables = %{
-        provider: gql_oauth_provider(@valid_twitter_profile),
-        oauthTrustCode: @oauth_trust_code
-      }
+      variables = %{provider: gql_oauth_provider(@valid_twitter_profile)}
 
       ret = user_conn |> gq_mutation(@query, variables)
 
@@ -94,21 +84,22 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
     end
 
     test "can not link oauth with twitter with unlogged", ~m(guest_conn)a do
-      variables = %{
-        provider: gql_oauth_provider(@valid_twitter_profile),
-        oauthTrustCode: @oauth_trust_code
-      }
+      variables = %{provider: gql_oauth_provider(@valid_twitter_profile)}
 
       assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
     end
 
-    test "can not link oauth with un-trust code", ~m(user_conn)a do
-      variables = %{
-        provider: gql_oauth_provider(@valid_twitter_profile),
-        oauthTrustCode: "whatever"
-      }
+    test "can not link oauth with invalid server trust", ~m(untrusted_user_conn)a do
+      variables = %{provider: gql_oauth_provider(@valid_twitter_profile)}
 
-      assert user_conn |> mutation_error?(@query, variables, ecode(:oauth_trust_code))
+      invalid_trust_conn =
+        Plug.Conn.put_req_header(
+          untrusted_user_conn,
+          "x-groupher-server-trust",
+          "invalid-server-trust-secret"
+        )
+
+      assert invalid_trust_conn |> mutation_error?(@query, variables, ecode(:server_trust))
     end
 
     ##
@@ -121,10 +112,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       {:ok, _} = Accounts.Profiles.link_oauth(user.login, github_provider)
       {:ok, _} = Accounts.Profiles.link_oauth(user.login, twitter_provider)
 
-      variables = %{
-        provider: gql_oauth_provider(@valid_twitter_profile),
-        oauthTrustCode: @oauth_trust_code
-      }
+      variables = %{provider: gql_oauth_provider(@valid_twitter_profile)}
 
       ret = user_conn |> gq_mutation(@query, variables)
 
@@ -138,10 +126,7 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       {:ok, _} = Accounts.Profiles.link_oauth(user.login, github_provider)
       {:ok, _} = Accounts.Profiles.link_oauth(user.login, twitter_provider)
 
-      variables = %{
-        provider: gql_oauth_provider(@valid_twitter_profile),
-        oauthTrustCode: @oauth_trust_code
-      }
+      variables = %{provider: gql_oauth_provider(@valid_twitter_profile)}
 
       assert guest_conn |> mutation_error?(@query, variables, ecode(:account_login))
     end
@@ -155,5 +140,9 @@ defmodule GroupherServer.Test.Mutation.Account.Oauth do
       end
 
     map_key_stringify(profile)
+  end
+
+  defp with_server_trust(conn) do
+    Plug.Conn.put_req_header(conn, "x-groupher-server-trust", @server_trust_secret)
   end
 end

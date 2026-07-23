@@ -6,7 +6,7 @@ import { F } from '~/schemas'
 const createPost = gql`
   mutation (
     $title: String!
-    $body: String!
+    $bodyBag: ArtimentBodyBagInput!
     $community: String!
     $communityTags: [ID]
     $linkAddr: String
@@ -14,7 +14,7 @@ const createPost = gql`
   ) {
     createPost(
       title: $title
-      body: $body
+      bodyBag: $bodyBag
       community: $community
       communityTags: $communityTags
       linkAddr: $linkAddr
@@ -32,7 +32,7 @@ const updatePost = gql`
   mutation (
     $article: ArticlePathInput!
     $title: String
-    $body: String
+    $bodyBag: ArtimentBodyBagInput
     $linkAddr: String
     $copyRight: String
     $communityTags: [ID]
@@ -40,7 +40,7 @@ const updatePost = gql`
     updatePost(
       article: $article
       title: $title
-      body: $body
+      bodyBag: $bodyBag
       linkAddr: $linkAddr
       copyRight: $copyRight
       communityTags: $communityTags

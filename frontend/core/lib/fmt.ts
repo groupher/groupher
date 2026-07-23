@@ -51,6 +51,23 @@ export const prettyNum = (num: number, digits = 1): string => {
   return `${(num / si[i].value).toFixed(digits).replace(rx, '$1') + si[i].symbol}+`
 }
 
+const FILE_SIZE_UNITS = ['B', 'KB', 'MB', 'GB', 'TB'] as const
+
+/** Format a byte count with the nearest binary size unit for compact UI labels. */
+export const fmtFileSize = (sizeBytes: number): string => {
+  let value = Number.isFinite(sizeBytes) ? Math.max(0, sizeBytes) : 0
+  let unitIndex = 0
+
+  while (value >= 1024 && unitIndex < FILE_SIZE_UNITS.length - 1) {
+    value /= 1024
+    unitIndex += 1
+  }
+
+  const formatted =
+    unitIndex === 0 ? Math.round(value).toString() : Number(value.toFixed(1)).toString()
+  return `${formatted} ${FILE_SIZE_UNITS[unitIndex]}`
+}
+
 /**
  *  title case a string
  */

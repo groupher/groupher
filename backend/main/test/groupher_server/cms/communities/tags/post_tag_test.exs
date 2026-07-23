@@ -71,6 +71,111 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
 
       assert article_tag5_after.index === 0
     end
+
+    test "can batch reindex tags across groups", ~m(community article_tag_attrs user)a do
+      {:ok, group1} = CMS.Communities.create_tag_group(community, :post, %{title: "group1"})
+      {:ok, group2} = CMS.Communities.create_tag_group(community, :post, %{title: "group2"})
+
+      attrs = Map.put(article_tag_attrs, :group_id, group1.id)
+      {:ok, tag1} = CMS.Communities.create_tag(community, :post, attrs, user)
+
+      {:ok, tag2} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          unique_community_tag_attrs(attrs, "2"),
+          user
+        )
+
+      assert {:ok, :pass} =
+               CMS.Communities.reindex_tags(community, :post, [
+                 %{id: tag1.id, group_id: group2.id, index: 3},
+                 %{id: tag2.id, group_id: group2.id, index: 4}
+               ])
+
+      {:ok, tag1} = ORM.find(CommunityTag, tag1.id)
+      {:ok, tag2} = ORM.find(CommunityTag, tag2.id)
+
+      assert tag1.group_id == group2.id
+      assert tag1.index == 3
+      assert tag2.group_id == group2.id
+      assert tag2.index == 4
+    end
+
+    test "rejects incomplete group reindex without changing any tag",
+         ~m(community article_tag_attrs user)a do
+      {:ok, group} = CMS.Communities.create_tag_group(community, :post, %{title: "group"})
+      attrs = Map.put(article_tag_attrs, :group_id, group.id)
+      {:ok, tag1} = CMS.Communities.create_tag(community, :post, attrs, user)
+
+      {:ok, tag2} =
+        CMS.Communities.create_tag(
+          community,
+          :post,
+          unique_community_tag_attrs(attrs, "2"),
+          user
+        )
+
+      assert {:error, {:invalid_domain_tag, _}} =
+               CMS.Communities.reindex_tags(community, :post, group.id, [
+                 %{id: tag1.id, index: 9}
+               ])
+
+      {:ok, tag1} = ORM.find(CommunityTag, tag1.id)
+      {:ok, tag2} = ORM.find(CommunityTag, tag2.id)
+
+      assert tag1.index == 0
+      assert tag2.index == 0
+    end
+
+    test "rejects duplicate and foreign tag ids before batch reindex",
+         ~m(community article_tag_attrs user)a do
+      {:ok, group} = CMS.Communities.create_tag_group(community, :post, %{title: "group"})
+      attrs = Map.put(article_tag_attrs, :group_id, group.id)
+      {:ok, tag} = CMS.Communities.create_tag(community, :post, attrs, user)
+
+      assert {:error, {:invalid_domain_tag, _}} =
+               CMS.Communities.reindex_tags(community, :post, [
+                 %{id: tag.id, group_id: group.id, index: 1},
+                 %{id: tag.id, group_id: group.id, index: 2}
+               ])
+
+      {:ok, other_community} = mock_community()
+
+      {:ok, other_group} =
+        CMS.Communities.create_tag_group(other_community, :post, %{title: "other-group"})
+
+      other_attrs = Map.put(unique_community_tag_attrs(attrs, "other"), :group_id, other_group.id)
+      {:ok, other_tag} = CMS.Communities.create_tag(other_community, :post, other_attrs, user)
+
+      assert {:error, {:invalid_domain_tag, _}} =
+               CMS.Communities.reindex_tags(community, :post, [
+                 %{id: other_tag.id, group_id: group.id, index: 8}
+               ])
+
+      {:ok, tag} = ORM.find(CommunityTag, tag.id)
+      {:ok, other_tag} = ORM.find(CommunityTag, other_tag.id)
+
+      assert tag.index == 0
+      assert other_tag.index == 0
+    end
+
+    test "can batch reindex tag groups", ~m(community)a do
+      {:ok, group1} = CMS.Communities.create_tag_group(community, :post, %{title: "group1"})
+      {:ok, group2} = CMS.Communities.create_tag_group(community, :post, %{title: "group2"})
+
+      assert {:ok, :pass} =
+               CMS.Communities.reindex_tag_groups(community, :post, [
+                 %{id: group1.id, index: 6},
+                 %{id: group2.id, index: 5}
+               ])
+
+      {:ok, group1} = ORM.find(CMS.Model.CommunityTagGroup, group1.id)
+      {:ok, group2} = ORM.find(CMS.Model.CommunityTagGroup, group2.id)
+
+      assert group1.index == 6
+      assert group2.index == 5
+    end
   end
 
   describe "[post tag CRUD]" do
@@ -207,6 +312,23 @@ defmodule GroupherServer.Test.CMS.Communities.Tags.PostTagTest do
       assert stat2.today_contents_count == 1
       assert stat3.contents_count == 1
       assert stat3.today_contents_count == 1
+    end
+
+    test "deduplicates tag ids in one set operation",
+         ~m(community user post_attrs article_tag_attrs)a do
+      {:ok, article_tag} = CMS.Communities.create_tag(community, :post, article_tag_attrs, user)
+
+      post_with_tags =
+        Map.put(post_attrs, :community_tags, [article_tag.id, article_tag.id, article_tag.id])
+
+      {:ok, created} = CMS.Articles.create(community, :post, post_with_tags, user)
+      {:ok, post} = ORM.find(Post, created.id, preload: :community_tags)
+
+      assert Enum.map(post.community_tags, & &1.id) == [article_tag.id]
+
+      {:ok, stat} = CMS.Communities.tag_stats(article_tag)
+      assert stat.contents_count == 1
+      assert stat.today_contents_count == 1
     end
 
     test "update post community tags keeps stats in sync",

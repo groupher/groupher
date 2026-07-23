@@ -15,6 +15,7 @@ import type { TColorName, TSizeSM, TSpace } from '~/spec'
 import useSalon from './salon'
 
 type TProps = {
+  className?: string
   children?: ReactNode | null
   checked?: boolean
   indeterminate?: boolean
@@ -30,6 +31,7 @@ type TProps = {
 } & TSpace
 
 const Checker: FC<TProps> = ({
+  className = '',
   checked = false,
   indeterminate = false,
   onChange,
@@ -51,6 +53,7 @@ const Checker: FC<TProps> = ({
     dimWhenIdle,
     color,
     size,
+    className,
     ...spacing,
   })
 

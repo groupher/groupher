@@ -6,4 +6,6 @@ export default createDocLayout({
   path: 'import',
   title: 'dsb.doc.import',
   crumbTitle: 'dsb.crumb.doc.import',
+  hideTitle: true,
+  withBodyGap: false,
 })

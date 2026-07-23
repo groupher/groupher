@@ -42,7 +42,7 @@ export default function useSalon({ compact = false }: { compact?: boolean } = {}
       compact
         ? 'column-align-both w-8 h-9 border rounded-lg text-[10px]'
         : 'column-align-both w-10 h-11 border rounded-lg text-xs',
-      primary('borderSoft'),
+      primary('borderLite'),
       primary('fg'),
     ),
 

@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.DocCover.Read do
              |
              +---- doc_cover_items -----> doc_tree_nodes(type=page)
 
-      doc_cover_pinned_items ------------> doc_tree_nodes(type=page)
+      doc_cover_pinned_docs -------------> doc_tree_nodes(type=page)
 
   The database stores cover rows and published tree references separately. This
   module returns the grouped projection expected by the frontend renderer.
@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.DocCover.Read do
     Doc,
     DocCoverGroup,
     DocCoverItem,
-    DocCoverPinnedItem,
+    DocCoverPinnedDoc,
     DocTreeNode
   }
 
@@ -45,7 +45,7 @@ defmodule GroupherServer.CMS.DocCover.Read do
   def view_values, do: CMS.Const.cover_view_enum_values()
 
   @doc """
-  Reads visible cover groups, items, and pinned items for one community.
+  Reads visible cover groups, items, and pinned docs for one community.
   """
   @spec read(Community.t(), view()) :: T.domain_res(map())
   def read(%Community{} = community, view \\ CMS.Const.cover_view(:public))
@@ -68,8 +68,8 @@ defmodule GroupherServer.CMS.DocCover.Read do
       |> preload(:node)
       |> Repo.all()
 
-    pinned_items =
-      DocCoverPinnedItem
+    pinned_docs =
+      DocCoverPinnedDoc
       |> where([i], i.community_id == ^community.id)
       |> order_by([i], asc: i.index, asc: i.id)
       |> preload(:node)
@@ -80,10 +80,10 @@ defmodule GroupherServer.CMS.DocCover.Read do
       |> Enum.reject(&hidden_node?/1)
       |> Enum.group_by(& &1.cover_group_id)
 
-    pinned_items = Enum.reject(pinned_items, &hidden_node?/1)
+    pinned_docs = Enum.reject(pinned_docs, &hidden_node?/1)
 
-    public_docs_by_doc_id = public_docs_by_doc_id(community, groups, items, pinned_items)
-    draft_nodes_by_public_row = draft_nodes_by_public_row(community, groups, items, pinned_items)
+    public_docs_by_doc_id = public_docs_by_doc_id(community, groups, items, pinned_docs)
+    draft_nodes_by_public_row = draft_nodes_by_public_row(community, groups, items, pinned_docs)
 
     {:ok,
      %{
@@ -98,12 +98,11 @@ defmodule GroupherServer.CMS.DocCover.Read do
              Map.get(items_by_group, group.id, [])
            )
          end),
-       pinned_items:
-         pinned_items
+       pinned_docs:
+         pinned_docs
          |> Enum.map(
-           &pinned_item_map(community, view, public_docs_by_doc_id, draft_nodes_by_public_row, &1)
+           &pinned_doc_map(community, view, public_docs_by_doc_id, draft_nodes_by_public_row, &1)
          )
-         |> Enum.filter(&displayable_item?/1)
      }}
   end
 
@@ -175,37 +174,28 @@ defmodule GroupherServer.CMS.DocCover.Read do
     }
   end
 
-  defp pinned_item_map(
+  defp pinned_doc_map(
          %Community{} = community,
          view,
          public_docs_by_doc_id,
          draft_nodes_by_public_row,
-         %DocCoverPinnedItem{} = item
+         %DocCoverPinnedDoc{} = pinned_doc
        ) do
     node =
       node_map(
         community,
         view,
         public_docs_by_doc_id,
-        item.node,
-        Map.get(draft_nodes_by_public_row, item.node_id)
+        pinned_doc.node,
+        Map.get(draft_nodes_by_public_row, pinned_doc.node_id)
       )
 
     %{
-      id: item.id,
-      node_id: item.node_id,
-      index: item.index,
-      ui_config: item.ui_config || %{},
-      # Pinned cover items use the same display fields as grouped items, plus
-      # their cover-local visual configuration.
-      type: node.type,
-      doc_id: node.doc_id,
-      title: node.title,
+      node_id: node.id,
+      index: pinned_doc.index,
+      appearance: pinned_doc.appearance || %{"light" => %{}, "dark" => %{}},
       href: node.href,
-      marker: node.marker,
-      digest: nil,
-      badge: node.badge,
-      node: node
+      doc: Map.fetch!(public_docs_by_doc_id, node.doc_id)
     }
   end
 
@@ -274,12 +264,12 @@ defmodule GroupherServer.CMS.DocCover.Read do
   defp displayable_item?(%{href: href}) when is_binary(href) and href != "", do: true
   defp displayable_item?(_item), do: false
 
-  defp public_docs_by_doc_id(%Community{} = community, groups, items, pinned_items) do
+  defp public_docs_by_doc_id(%Community{} = community, groups, items, pinned_docs) do
     doc_ids =
       [
         Enum.map(groups, & &1.group),
         Enum.map(items, & &1.node),
-        Enum.map(pinned_items, & &1.node)
+        Enum.map(pinned_docs, & &1.node)
       ]
       |> Enum.concat()
       |> Enum.reject(&is_nil/1)
@@ -295,12 +285,12 @@ defmodule GroupherServer.CMS.DocCover.Read do
     |> Map.new(&{&1.article_hash_id, &1})
   end
 
-  defp draft_nodes_by_public_row(%Community{} = community, groups, items, pinned_items) do
+  defp draft_nodes_by_public_row(%Community{} = community, groups, items, pinned_docs) do
     public_nodes =
       [
         Enum.map(groups, & &1.group),
         Enum.map(items, & &1.node),
-        Enum.map(pinned_items, & &1.node)
+        Enum.map(pinned_docs, & &1.node)
       ]
       |> Enum.concat()
       |> Enum.reject(&is_nil/1)
