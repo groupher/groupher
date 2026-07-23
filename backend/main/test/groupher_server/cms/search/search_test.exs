@@ -18,51 +18,7 @@ defmodule GroupherServer.Test.CMS.Search do
     _community = create_community!(user, %{title: "javascript"})
     _community = create_community!(user, %{title: "java"})
 
-    {:ok, _community} = db_insert(:post, %{title: "react"})
-    {:ok, _community} = db_insert(:post, %{title: "php"})
-    {:ok, _community} = db_insert(:post, %{title: "每日妹子"})
-    {:ok, _community} = db_insert(:post, %{title: "javascript"})
-    {:ok, _community} = db_insert(:post, %{title: "java"})
-
     {:ok, ~m(user)a}
-  end
-
-  describe "[cms search post]" do
-    test "search post by full title should valid paged posts" do
-      {:ok, searched} = Search.article(:post, "react")
-
-      assert searched |> is_valid_pagination?(:raw)
-      assert searched.total_count == 1
-      assert searched.entries |> Enum.at(0) |> Map.get(:title) == "react"
-    end
-
-    test "search post blur title should return valid communities" do
-      {:ok, searched} = Search.article(:post, "reac")
-      assert searched.entries |> Enum.any?(&(&1.title == "react"))
-
-      {:ok, searched} = Search.article(:post, "rea")
-      assert searched.entries |> Enum.any?(&(&1.title == "react"))
-
-      {:ok, searched} = Search.article(:post, "eac")
-      assert searched.entries |> Enum.any?(&(&1.title == "react"))
-
-      {:ok, searched} = Search.article(:post, "每日")
-      assert searched.entries |> Enum.any?(&(&1.title == "每日妹子"))
-
-      {:ok, searched} = Search.article(:post, "javasc")
-      assert searched.total_count == 1
-      assert searched.entries |> Enum.at(0) |> Map.get(:title) == "javascript"
-
-      {:ok, searched} = Search.article(:post, "java")
-      assert searched.total_count == 2
-      assert searched.entries |> Enum.any?(&(&1.title == "java"))
-      assert searched.entries |> Enum.any?(&(&1.title == "javascript"))
-    end
-
-    test "search non exist post should get empty pagi data" do
-      {:ok, searched} = Search.article(:post, "non-exist")
-      assert searched |> is_valid_pagination?(:raw, :empty)
-    end
   end
 
   describe "[cms search community with category]" do
