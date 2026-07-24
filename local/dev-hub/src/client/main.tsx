@@ -9,6 +9,10 @@ import './styles.css'
 const root = document.getElementById('root')
 if (!root) throw new Error('Dev Hub root element is missing.')
 
+if ('__TAURI_INTERNALS__' in window) {
+  document.documentElement.classList.add('desktop-shell')
+}
+
 createRoot(root).render(
   <StrictMode>
     <ErrorBoundary

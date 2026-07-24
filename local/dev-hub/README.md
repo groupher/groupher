@@ -22,11 +22,11 @@ Dev Hub 把这些知识固化为服务定义，并提供一个只监听 `127.0.0
 
 在仓库根目录运行：
 
-| 命令           | 用途                  | 运行内容                                                                                     |
-| -------------- | --------------------- | -------------------------------------------------------------------------------------------- |
-| `make dev.dev` | 开发 Dev Hub 本身     | 启动 Vite HMR 页面（`4310`）和独立 API（`4311`），修改 React、CSS 或 Node 代码时使用         |
-| `make dev`     | 运行构建后的 Web 版本 | 先执行 Vite production build，再由 Hono 在 `127.0.0.1:4310` 提供静态页面和 API               |
-| `make dev.app` | 构建并安装 macOS 应用 | 安装项目依赖、构建并签名 Tauri `.app`、替换 `/Applications/Groupher Dev Hub.app`、注册并启动 |
+| 命令           | 用途                  | 运行内容                                                                                            |
+| -------------- | --------------------- | --------------------------------------------------------------------------------------------------- |
+| `make dev.dev` | 开发 Dev Hub 本身     | 启动 Vite HMR 页面（`4310`）和独立 API（`4311`），修改 React、CSS 或 Node 代码时使用                |
+| `make dev`     | 运行构建后的 Web 版本 | 先执行 Vite production build，再由 Hono 在 `127.0.0.1:4310` 提供静态页面和 API                      |
+| `make dev.app` | 构建并安装 macOS 应用 | 安装项目依赖、构建 production 页面和 Tauri `.app`、替换 `/Applications/Groupher Dev Hub.app` 并启动 |
 
 ### 推荐的日常开发流程
 
@@ -63,7 +63,7 @@ make dev.app
 1. 检查 macOS、Xcode Command Line Tools 和 Node.js。
 2. 在缺少 Rust 时下载官方 `rustup-init`，校验 SHA-256 后安装 stable toolchain。
 3. 使用 `yarn install --immutable` 安装 monorepo 依赖。
-4. 构建并 ad-hoc 签名 `Groupher Dev Hub.app`。
+4. 构建 production 页面，再构建并 ad-hoc 签名 `Groupher Dev Hub.app`。
 5. 关闭已安装的旧版本，并安全替换 `/Applications` 中 bundle id 匹配的应用。
 6. 刷新 Launch Services，然后启动新版本。
 
@@ -87,9 +87,9 @@ make dev.app
 flowchart LR
   App["Groupher Dev Hub.app<br/>Tauri + Rust"] --> Health{"4310 健康吗？"}
   Health -- "是" --> UI["React UI"]
-  Health -- "否" --> Make["make dev"]
-  Make --> Build["Vite production build"]
-  Build --> Server["Hono server<br/>127.0.0.1:4310"]
+  Health -- "否" --> Start["启动 Hono server"]
+  Start --> Dist["复用 make dev.app 生成的 dist"]
+  Dist --> Server["Hono server<br/>127.0.0.1:4310"]
   Server --> UI
 
   UI <-- "REST + SSE" --> Server
@@ -100,7 +100,7 @@ flowchart LR
   Server --> Metrics["MetricsStore + ProcessMetricsMonitor"]
 ```
 
-桌面应用本身保持很薄：它负责单实例、窗口生命周期、仓库定位、健康检查和 `make dev` 子进程。真正的服务编排逻辑仍在 Node 端，因此 Web 版本和 `.app` 使用同一套能力。
+桌面应用本身保持很薄：它负责单实例、窗口生命周期、仓库定位、健康检查和 production Hub 子进程。`make dev.app` 在安装时生成 `dist`；以后冷启动 `.app` 只启动 Hono 服务并复用该产物，不会再次执行 Vite build。真正的服务编排逻辑仍在 Node 端，因此 Web 版本和 `.app` 使用同一套能力。
 
 关闭红色窗口按钮只会隐藏窗口，受管服务继续运行；从应用菜单使用 Quit 或按 `Cmd+Q` 退出时，Tauri 会终止自己启动的 Dev Hub 进程组，Dev Hub 随后清理它管理的各个服务。
 

@@ -106,7 +106,7 @@ export function App() {
   }, [])
 
   return (
-    <main className='app-shell' id='top'>
+    <main className='app-shell window-frame' id='top'>
       <div className='window-drag-region' data-tauri-drag-region='deep' aria-hidden='true' />
       <PageHeader
         services={services}

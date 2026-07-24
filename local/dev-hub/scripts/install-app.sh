@@ -112,6 +112,9 @@ cd "$REPO_ROOT"
 echo 'Installing JavaScript dependencies…'
 run_yarn install --immutable
 
+echo 'Building the production Dev Hub…'
+run_yarn workspace @groupher/local-dev-hub build
+
 echo 'Building the signed Dev Hub application…'
 run_yarn workspace @groupher/local-dev-hub desktop:build -- \
   --config 'source.crates-io.replace-with="rsproxy-sparse"' \

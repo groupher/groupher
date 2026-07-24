@@ -46,6 +46,8 @@
   --ink-faint: #a6a6a1;
   --blue: #596cf2;
   --terminal: #191a1b;
+  --page-background:
+    radial-gradient(circle at 8% 0%, rgb(89 108 242 / 2%), transparent 27rem), #f8f8f7;
   --surface-shadow:
     0 0 0 1px rgb(0 0 0 / 5%), 0 1px 2px -1px rgb(0 0 0 / 5%), 0 8px 24px -16px rgb(0 0 0 / 16%);
   scroll-behavior: smooth;
@@ -59,7 +61,44 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: radial-gradient(circle at 8% 0%, rgb(89 108 242 / 2%), transparent 27rem), #f8f8f7;
+  background: var(--page-background);
+}
+
+.desktop-shell,
+.desktop-shell body,
+.desktop-shell #root {
+  height: 100%;
+}
+
+html.desktop-shell,
+html.desktop-shell body,
+html.desktop-shell #root {
+  background: transparent;
+}
+
+html.desktop-shell body {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.desktop-shell #root {
+  padding: 0;
+}
+
+.desktop-shell .window-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  contain: paint;
+  overflow: auto;
+  border-radius: 12px;
+  background: var(--page-background);
+  box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 12%);
+}
+
+html.desktop-shell.window-fills-screen .window-frame {
+  border-radius: 0;
+  box-shadow: none;
 }
 
 button,
@@ -79,12 +118,21 @@ button {
 }
 
 .window-drag-region {
+  display: none;
+}
+
+.desktop-shell .window-drag-region {
+  display: block;
   position: fixed;
   z-index: 1;
   top: 0;
   right: 0;
   left: 0;
   height: 36px;
+}
+
+.desktop-shell .app-shell {
+  min-height: 100%;
 }
 
 .site-header {

@@ -7,6 +7,7 @@
     "frontendDist": "bootstrap"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
         "label": "main",
@@ -18,6 +19,8 @@
         "center": true,
         "visible": true,
         "decorations": true,
+        "transparent": true,
+        "shadow": false,
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
         "trafficLightPosition": {
