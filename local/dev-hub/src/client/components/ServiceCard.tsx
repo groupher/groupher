@@ -12,6 +12,7 @@ import {
 import { AnimatePresence, motion, MotionConfig } from 'motion/react'
 
 import { Badge, type BadgeProps } from '@/components/reui/badge'
+import { openExternalUrl } from '@/lib/open-external-url'
 
 import { ServiceActionButton } from './ServiceActionButton'
 import { ServiceMetricsStrip } from './ServiceMetricsStrip'
@@ -106,6 +107,10 @@ export function ServiceCard({
                       target='_blank'
                       rel='noreferrer'
                       aria-label={`Open ${service.name}`}
+                      onClick={(event) => {
+                        event.preventDefault()
+                        openExternalUrl(event.currentTarget.href)
+                      }}
                     >
                       <ExternalLink aria-hidden='true' />
                     </a>

@@ -1815,6 +1815,7 @@ __metadata:
     "@pierre/diffs": "npm:^1.2.12"
     "@tailwindcss/vite": "npm:4.3.1"
     "@tauri-apps/cli": "npm:2.11.4"
+    "@tauri-apps/plugin-opener": "npm:^2.5.4"
     "@types/node": "npm:^24.0.0"
     "@types/react": "npm:19.2.14"
     "@types/react-dom": "npm:19"
@@ -5902,6 +5903,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tauri-apps/api@npm:^2.11.0":
+  version: 2.11.1
+  resolution: "@tauri-apps/api@npm:2.11.1"
+  checksum: 10c0/78a08a64ee7eab9d34bd4ba1bdc3a2440c7e9cc5737b3f1d77bd80fa38b0cb5e9601efe04da40c947c5da2ca38dc702bec21b4ae96b18ee5f3e82980d1f0b325
+  languageName: node
+  linkType: hard
+
 "@tauri-apps/cli-darwin-arm64@npm:2.11.4":
   version: 2.11.4
   resolution: "@tauri-apps/cli-darwin-arm64@npm:2.11.4"
@@ -6020,6 +6028,15 @@ __metadata:
   bin:
     tauri: tauri.js
   checksum: 10c0/9080859d46aeaf1a58943120ad72d760e040f56c3771fba7ce51bf6a96e608c41f2229329e107a9f20d3f7a9c74d5e2ee1889d89929b6b460b0c59de7e963cb7
+  languageName: node
+  linkType: hard
+
+"@tauri-apps/plugin-opener@npm:^2.5.4":
+  version: 2.5.4
+  resolution: "@tauri-apps/plugin-opener@npm:2.5.4"
+  dependencies:
+    "@tauri-apps/api": "npm:^2.11.0"
+  checksum: 10c0/9d5b8893680e776d4ae91f2be8ba9a49c56a3163307b4ad10ff71ffdaf67d07f7a7d4335c465cf32f499582d4589a04d9a66064de117e761b2588254b5202d53
   languageName: node
   linkType: hard
 
