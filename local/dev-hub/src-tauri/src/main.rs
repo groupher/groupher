@@ -16,8 +16,8 @@ use std::{
 };
 
 use tauri::{
-    LogicalPosition, Manager, PhysicalPosition, PhysicalSize, RunEvent, TitleBarStyle, Url,
-    WebviewUrl, WebviewWindow, WebviewWindowBuilder, WindowEvent,
+    LogicalPosition, Manager, RunEvent, TitleBarStyle, Url, WebviewUrl, WebviewWindow,
+    WebviewWindowBuilder, WindowEvent,
 };
 
 const HUB_HOST: &str = "127.0.0.1";
@@ -29,16 +29,6 @@ const MAIN_WIDTH: f64 = 1280.0;
 const MAIN_HEIGHT: f64 = 820.0;
 const MAIN_MIN_WIDTH: f64 = 960.0;
 const MAIN_MIN_HEIGHT: f64 = 640.0;
-const SHADOW_LEFT: f64 = 32.0;
-const SHADOW_TOP: f64 = 32.0;
-const SHADOW_RIGHT: f64 = 32.0;
-const SHADOW_BOTTOM: f64 = 52.0;
-
-#[derive(Debug, PartialEq)]
-struct ShadowBounds {
-    position: PhysicalPosition<i32>,
-    size: PhysicalSize<u32>,
-}
 
 #[derive(Default)]
 struct LauncherState {
@@ -53,39 +43,14 @@ fn main() {
         }))
         .setup(|app| {
             app.manage(LauncherState::default());
-
-            if app.get_webview_window("main").is_some() {
-                ensure_shadow_window(app.handle())?;
-            }
             start_hub_ensure(app.handle().clone());
             Ok(())
         })
         .on_window_event(|window, event| {
             if window.label() == "main" {
-                match event {
-                    WindowEvent::CloseRequested { api, .. } => {
-                        api.prevent_close();
-                        let _ = window.hide();
-                        hide_shadow_window(window.app_handle());
-                    }
-                    WindowEvent::Resized(_) | WindowEvent::ScaleFactorChanged { .. } => {
-                        if let Some(main_window) = window.app_handle().get_webview_window("main") {
-                            if let Err(error) = sync_shadow_window(&main_window) {
-                                eprintln!("failed to sync the Dev Hub shadow window: {error}");
-                            }
-                        }
-                    }
-                    WindowEvent::Focused(focused) => {
-                        if let Some(main_window) = window.app_handle().get_webview_window("main") {
-                            if let Err(error) = sync_shadow_window(&main_window) {
-                                eprintln!("failed to sync the Dev Hub shadow window: {error}");
-                            }
-                            if !focused {
-                                reconcile_shadow_after_state_transition(main_window);
-                            }
-                        }
-                    }
-                    _ => {}
+                if let WindowEvent::CloseRequested { api, .. } = event {
+                    api.prevent_close();
+                    let _ = window.hide();
                 }
             }
         })
@@ -365,9 +330,6 @@ fn show_main_window(app: &tauri::AppHandle) {
         },
     };
 
-    if let Err(error) = ensure_shadow_window(app) {
-        eprintln!("failed to prepare the Dev Hub shadow window: {error}");
-    }
     show_window(&window);
 }
 
@@ -381,8 +343,8 @@ fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<WebviewWindow> {
 
     let window = WebviewWindowBuilder::new(app, "main", url)
         .title("Groupher Dev Hub")
-        .transparent(true)
-        .shadow(false)
+        .transparent(false)
+        .shadow(true)
         .title_bar_style(TitleBarStyle::Overlay)
         .hidden_title(true)
         .traffic_light_position(LogicalPosition::new(16.0, 16.0))
@@ -401,148 +363,7 @@ fn create_main_window(app: &tauri::AppHandle) -> tauri::Result<WebviewWindow> {
 fn show_window(window: &WebviewWindow) {
     let _ = window.unminimize();
     let _ = window.show();
-    if let Err(error) = sync_shadow_window(window) {
-        eprintln!("failed to show the Dev Hub shadow window: {error}");
-    }
     let _ = window.set_focus();
-}
-
-fn ensure_shadow_window(app: &tauri::AppHandle) -> tauri::Result<WebviewWindow> {
-    let shadow_window = match app.get_webview_window("shadow") {
-        Some(window) => window,
-        None => WebviewWindowBuilder::new(app, "shadow", WebviewUrl::App("shadow.html".into()))
-            .title("Groupher Dev Hub Shadow")
-            .inner_size(
-                MAIN_WIDTH + SHADOW_LEFT + SHADOW_RIGHT,
-                MAIN_HEIGHT + SHADOW_TOP + SHADOW_BOTTOM,
-            )
-            .decorations(false)
-            .transparent(true)
-            .shadow(false)
-            .resizable(false)
-            .maximizable(false)
-            .minimizable(false)
-            .closable(false)
-            .focusable(false)
-            .skip_taskbar(true)
-            .visible(false)
-            .build()?,
-    };
-
-    shadow_window.set_ignore_cursor_events(true)?;
-    Ok(shadow_window)
-}
-
-#[cfg(target_os = "macos")]
-fn attach_shadow_window(
-    main_window: &WebviewWindow,
-    shadow_window: &WebviewWindow,
-) -> tauri::Result<()> {
-    use objc2_app_kit::{NSWindow, NSWindowOrderingMode};
-
-    let dispatcher = main_window.clone();
-    let main_window = main_window.clone();
-    let shadow_window = shadow_window.clone();
-
-    dispatcher.run_on_main_thread(move || {
-        let attach = || -> tauri::Result<()> {
-            let main_pointer = main_window.ns_window()?;
-            let shadow_pointer = shadow_window.ns_window()?;
-            let main_ns_window = unsafe { &*main_pointer.cast::<NSWindow>() };
-            let shadow_ns_window = unsafe { &*shadow_pointer.cast::<NSWindow>() };
-
-            if shadow_ns_window
-                .parentWindow()
-                .is_some_and(|parent| std::ptr::eq(parent.as_ref(), main_ns_window))
-            {
-                return Ok(());
-            }
-
-            unsafe {
-                main_ns_window
-                    .addChildWindow_ordered(shadow_ns_window, NSWindowOrderingMode::Below);
-            }
-            Ok(())
-        };
-
-        if let Err(error) = attach() {
-            eprintln!("failed to attach the Dev Hub shadow window: {error}");
-        }
-    })
-}
-
-#[cfg(not(target_os = "macos"))]
-fn attach_shadow_window(
-    _main_window: &WebviewWindow,
-    _shadow_window: &WebviewWindow,
-) -> tauri::Result<()> {
-    Ok(())
-}
-
-fn sync_shadow_window(main_window: &WebviewWindow) -> tauri::Result<()> {
-    let Some(shadow_window) = main_window.app_handle().get_webview_window("shadow") else {
-        return Ok(());
-    };
-    let fills_screen = main_window.is_maximized()? || main_window.is_fullscreen()?;
-    let _ = main_window.eval(format!(
-        "document.documentElement.classList.toggle('window-fills-screen', {fills_screen})"
-    ));
-
-    if !main_window.is_visible()? || main_window.is_minimized()? || fills_screen {
-        shadow_window.hide()?;
-        return Ok(());
-    }
-
-    let bounds = shadow_bounds(
-        main_window.outer_position()?,
-        main_window.outer_size()?,
-        main_window.scale_factor()?,
-    );
-    shadow_window.set_position(bounds.position)?;
-    shadow_window.set_size(bounds.size)?;
-    shadow_window.show()?;
-    attach_shadow_window(main_window, &shadow_window)?;
-    Ok(())
-}
-
-fn hide_shadow_window(app: &tauri::AppHandle) {
-    if let Some(shadow_window) = app.get_webview_window("shadow") {
-        let _ = shadow_window.hide();
-    }
-}
-
-fn reconcile_shadow_after_state_transition(main_window: WebviewWindow) {
-    thread::spawn(move || {
-        thread::sleep(Duration::from_millis(100));
-        if let Err(error) = sync_shadow_window(&main_window) {
-            eprintln!("failed to reconcile the Dev Hub shadow window: {error}");
-        }
-    });
-}
-
-fn shadow_bounds(
-    main_position: PhysicalPosition<i32>,
-    main_size: PhysicalSize<u32>,
-    scale_factor: f64,
-) -> ShadowBounds {
-    let left = (SHADOW_LEFT * scale_factor).round() as i32;
-    let top = (SHADOW_TOP * scale_factor).round() as i32;
-    let right = (SHADOW_RIGHT * scale_factor).round() as u32;
-    let bottom = (SHADOW_BOTTOM * scale_factor).round() as u32;
-
-    ShadowBounds {
-        position: PhysicalPosition::new(main_position.x - left, main_position.y - top),
-        size: PhysicalSize::new(
-            main_size
-                .width
-                .saturating_add(left as u32)
-                .saturating_add(right),
-            main_size
-                .height
-                .saturating_add(top as u32)
-                .saturating_add(bottom),
-        ),
-    }
 }
 
 fn set_launcher_status(app: &tauri::AppHandle, message: &str) {
@@ -566,8 +387,7 @@ fn eval_launcher(app: &tauri::AppHandle, method: &str, message: &str) {
 
 #[cfg(test)]
 mod tests {
-    use super::{is_hub_health_response, shadow_bounds, ShadowBounds};
-    use tauri::{PhysicalPosition, PhysicalSize};
+    use super::is_hub_health_response;
 
     #[test]
     fn accepts_a_dev_hub_snapshot() {
@@ -590,22 +410,5 @@ mod tests {
             b"HTTP/1.1 503 Service Unavailable\r\n\r\n{\"services\":[],\"relations\":[]}";
 
         assert!(!is_hub_health_response(response));
-    }
-
-    #[test]
-    fn expands_the_shadow_around_the_visible_window_at_retina_scale() {
-        let bounds = shadow_bounds(
-            PhysicalPosition::new(400, 240),
-            PhysicalSize::new(2560, 1640),
-            2.0,
-        );
-
-        assert_eq!(
-            bounds,
-            ShadowBounds {
-                position: PhysicalPosition::new(336, 176),
-                size: PhysicalSize::new(2688, 1808),
-            }
-        );
     }
 }

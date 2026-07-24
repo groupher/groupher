@@ -70,12 +70,6 @@ body {
   height: 100%;
 }
 
-html.desktop-shell,
-html.desktop-shell body,
-html.desktop-shell #root {
-  background: transparent;
-}
-
 html.desktop-shell body {
   min-height: 0;
   overflow: hidden;
@@ -91,14 +85,7 @@ html.desktop-shell body {
   height: 100%;
   contain: paint;
   overflow: auto;
-  border-radius: 12px;
   background: var(--page-background);
-  box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 12%);
-}
-
-html.desktop-shell.window-fills-screen .window-frame {
-  border-radius: 0;
-  box-shadow: none;
 }
 
 button,
