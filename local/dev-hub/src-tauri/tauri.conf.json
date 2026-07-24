@@ -21,6 +21,7 @@
         "decorations": true,
         "transparent": false,
         "shadow": true,
+        "theme": "Light",
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
         "trafficLightPosition": {
