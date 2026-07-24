@@ -16,9 +16,19 @@ fe.serve.landing:
 # inspire-me
 fe.dev.inspire:
 	(sleep 2 && open http://localhost:3010/canny) &
-	yarn workspace @groupher/frontend-inspire-me dev -p 3010
+	yarn workspace @groupher/local-inspire-me dev -p 3010
 
 inspire: fe.dev.inspire
+
+# local development hub
+dev:
+	yarn workspace @groupher/local-dev-hub hub
+
+dev.dev:
+	yarn workspace @groupher/local-dev-hub dev
+
+dev.app:
+	@bash local/dev-hub/scripts/install-app.sh
 
 # main
 fe.dev.main:

@@ -1,3 +1,4 @@
+import { DevHubReporter } from '@groupher/frontend-core/dev-hub-reporter/react'
 import type { Metadata } from 'next'
 
 import '@groupher/rich-editor/style.css'
@@ -12,5 +13,12 @@ export const metadata: Metadata = {
 }
 
 export default function Layout({ children }) {
-  return <RootLayoutShell>{children}</RootLayoutShell>
+  return (
+    <RootLayoutShell>
+      {process.env.NODE_ENV === 'development' ? (
+        <DevHubReporter serviceId='main' endpoint={process.env.NEXT_PUBLIC_DEV_HUB_URL} />
+      ) : null}
+      {children}
+    </RootLayoutShell>
+  )
 }

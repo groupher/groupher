@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="data:," />
+    <title>Starting Groupher Dev Hub</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+        font-synthesis: none;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #f2f1ee;
+        color: #242424;
+      }
+
+      .window-frame {
+        align-items: center;
+        background:
+          radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.92), transparent 38%),
+          #f2f1ee;
+        contain: paint;
+        display: flex;
+        height: 100%;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .window-drag-region {
+        position: fixed;
+        z-index: 1;
+        top: 0;
+        right: 0;
+        left: 0;
+        height: 36px;
+      }
+
+      main {
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+        max-width: 420px;
+        padding: 40px;
+        text-align: center;
+      }
+
+      .mark {
+        align-items: center;
+        background: #272727;
+        border-radius: 20px;
+        box-shadow:
+          0 0 0 1px rgba(0, 0, 0, 0.08),
+          0 8px 24px rgba(0, 0, 0, 0.1);
+        color: #f8f8f5;
+        display: flex;
+        flex-direction: column;
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 13px;
+        font-weight: 700;
+        height: 72px;
+        justify-content: center;
+        letter-spacing: 1.6px;
+        line-height: 17px;
+        margin-bottom: 28px;
+        width: 72px;
+      }
+
+      h1 {
+        font-size: 20px;
+        font-weight: 650;
+        letter-spacing: -0.02em;
+        line-height: 1.25;
+        margin: 0;
+        text-wrap: balance;
+      }
+
+      #status {
+        color: rgba(36, 36, 36, 0.58);
+        font-size: 13px;
+        line-height: 1.55;
+        margin: 9px 0 0;
+        min-height: 20px;
+        text-wrap: pretty;
+      }
+
+      .progress {
+        background: rgba(36, 36, 36, 0.08);
+        border-radius: 999px;
+        height: 3px;
+        margin-top: 26px;
+        overflow: hidden;
+        width: 148px;
+      }
+
+      .progress::after {
+        animation: progress 1.25s ease-in-out infinite;
+        background: #4f8f74;
+        border-radius: inherit;
+        content: "";
+        display: block;
+        height: 100%;
+        transform: translateX(-100%);
+        width: 52%;
+      }
+
+      .error .progress {
+        display: none;
+      }
+
+      .error .mark {
+        background: #9b4b45;
+      }
+
+      .error #status {
+        color: rgba(101, 39, 35, 0.78);
+        max-width: 380px;
+        user-select: text;
+      }
+
+      @keyframes progress {
+        0% {
+          transform: translateX(-100%);
+        }
+        55% {
+          transform: translateX(94%);
+        }
+        100% {
+          transform: translateX(194%);
+        }
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #1d1d1c;
+        }
+
+        .window-frame {
+          background:
+            radial-gradient(circle at 50% 18%, rgba(66, 66, 64, 0.55), transparent 38%),
+            #1d1d1c;
+        }
+
+        body {
+          color: #f3f3ef;
+        }
+
+        .mark {
+          background: #f1f1ed;
+          box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+          color: #272727;
+        }
+
+        #status {
+          color: rgba(243, 243, 239, 0.55);
+        }
+
+        .progress {
+          background: rgba(255, 255, 255, 0.09);
+        }
+
+        .progress::after {
+          background: #72b596;
+        }
+
+        .error .mark {
+          background: #d68a82;
+          color: #2d1715;
+        }
+
+        .error #status {
+          color: rgba(244, 173, 165, 0.85);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .progress::after {
+          animation-duration: 2.5s;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="window-frame">
+      <div class="window-drag-region" data-tauri-drag-region="deep" aria-hidden="true"></div>
+      <main id="launcher">
+        <div class="mark" aria-hidden="true">
+          <span>DEV</span>
+          <span>HUB</span>
+        </div>
+        <h1>Starting Groupher Dev Hub</h1>
+        <p id="status" role="status" aria-live="polite">Checking the local service…</p>
+        <div class="progress" aria-hidden="true"></div>
+      </main>
+    </div>
+
+    <script>
+      const launcher = document.querySelector("#launcher")
+      const status = document.querySelector("#status")
+
+      window.__DEV_HUB_LAUNCHER__ = {
+        setStatus(message) {
+          status.textContent = message
+        },
+        fail(message) {
+          launcher.classList.add("error")
+          document.title = "Groupher Dev Hub could not start"
+          status.textContent = message
+        },
+      }
+    </script>
+  </body>
+</html>

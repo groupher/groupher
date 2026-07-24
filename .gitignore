@@ -4,6 +4,11 @@
 **/.next/
 build
 frontend/**/out/
+local/**/dist/
+local/**/.data/
+**/target/
+**/*.app/
+local/dev-hub/src-tauri/gen/schemas/
 coverage/
 tools/reports
 

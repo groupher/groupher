@@ -1,3 +1,4 @@
+import { DevHubReporter } from '@groupher/frontend-core/dev-hub-reporter/react'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata } from 'next'
@@ -38,6 +39,9 @@ export default async function Layout({ children }: { children: React.ReactNode }
 
   return (
     <RootLayoutShell>
+      {process.env.NODE_ENV === 'development' ? (
+        <DevHubReporter serviceId='landing' endpoint={process.env.NEXT_PUBLIC_DEV_HUB_URL} />
+      ) : null}
       <MainProvider
         initData={LANDING_INIT_DATA}
         noAccount

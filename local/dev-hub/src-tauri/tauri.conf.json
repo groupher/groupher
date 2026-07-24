@@ -1,0 +1,59 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Groupher Dev Hub",
+  "version": "0.1.0",
+  "identifier": "com.groupher.devhub",
+  "build": {
+    "frontendDist": "bootstrap"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Groupher Dev Hub",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 960,
+        "minHeight": 640,
+        "center": true,
+        "visible": true,
+        "decorations": true,
+        "transparent": false,
+        "shadow": true,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "trafficLightPosition": {
+          "x": 16,
+          "y": 16
+        }
+      }
+    ],
+    "security": {
+      "csp": null,
+      "capabilities": [
+        {
+          "identifier": "main-window-drag",
+          "description": "Allow the local Dev Hub page to provide the native macOS title bar drag region.",
+          "windows": ["main"],
+          "remote": {
+            "urls": ["http://127.0.0.1:4310/*"]
+          },
+          "permissions": [
+            "core:window:allow-start-dragging",
+            "core:window:allow-internal-toggle-maximize"
+          ]
+        }
+      ]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app"],
+    "icon": ["icons/icon.icns"],
+    "macOS": {
+      "minimumSystemVersion": "12.0",
+      "signingIdentity": "-"
+    }
+  }
+}
