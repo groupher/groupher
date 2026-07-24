@@ -1,0 +1,85 @@
+# Apply
+
+> 运行形态：独立 Next.js 前端
+>
+> UI：独立于 Dashboard
+>
+> 当前状态：规划中；后端继续使用 Phoenix
+
+## 定位
+
+`Apply` 承载社区申请、创建和首次初始化流程。它是本组子应用中唯一拆出业务 UI 的
+应用，原因是这段流程只出现在用户生命周期的早期；社区创建完成后，用户通常长期
+使用 Main 和 Dashboard。
+
+独立部署可以避免把申请流程的页面、表单、预览和相关依赖放进 Dashboard 的常用
+bundle。
+
+## 提供的页面和流程
+
+- 未登录用户的登录或注册引导。
+- 社区类型、名称、slug/domain 和基础信息填写。
+- 创建资格、名称和域名可用性检查。
+- 申请状态、审核状态和失败恢复。
+- 创建完成后的首次引导及跳转。
+
+具体业务字段和审批模型继续由 Phoenix 的现有 Context 定义，`Apply` 不建立独立
+业务后端。
+
+## URL 与部署
+
+推荐继续使用主站路径：
+
+```text
+https://groupher.com/apply
+```
+
+Gateway 将该路径 rewrite 到独立部署。相比 `apply.groupher.com`，同站路径更容易
+保持现有 cookie、OAuth callback 和登录态语义，也不会让用户感知内部部署边界。
+
+独立应用必须正确处理 `/apply` base path 下的静态资源、客户端导航和回调地址。
+
+## 基本流程
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant A as Apply
+  participant P as Phoenix
+  participant G as Gateway
+
+  U->>G: 访问 /apply
+  G->>A: rewrite 到独立前端
+  A->>P: 查询登录态、资格和待处理申请
+  P-->>A: 当前申请状态
+  U->>A: 填写并确认社区信息
+  A->>P: 提交申请或创建请求
+  P->>P: 权限校验和领域事务
+  P-->>A: pending、approved 或 created
+  A-->>U: 展示状态或跳转 Main/Dashboard
+```
+
+## 边界
+
+`Apply` 负责：
+
+- 申请和首次创建的页面、交互、表单状态和恢复体验。
+- 与 Phoenix API 的前端集成。
+- 创建成功后的跨应用导航。
+
+Phoenix 负责：
+
+- 用户身份、创建资格和限额。
+- 申请记录、审核、社区创建和初始化事务。
+- slug/domain 冲突校验。
+- 审计和通知。
+
+`Apply` 不直接连接数据库，不复制社区创建逻辑，也不演变成通用
+“Provisioning Service”。
+
+## 关键约束
+
+- 登录态和 CSRF 策略必须与 Main/Dashboard 保持一致。
+- Gateway rewrite 后，用户可见 URL 不应跳到部署平台域名。
+- 重复提交必须使用幂等键，刷新页面可以恢复 pending 状态。
+- 创建成功后应尽快卸载申请流程代码并跳转到长期使用的应用。
