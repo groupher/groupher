@@ -4,7 +4,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import type { TDocPublicTreeGroup, TDocPublicTreeNavigationNode } from '~/spec'
 
 import Group from './Group'
-import { filterTreeNodes, normalizeNodeType } from './helper'
+import { collectGroupIds, filterTreeNodes, normalizeNodeType } from './helper'
 import Item from './Item'
 import useSalon from './salon'
 import Toolbar from './Toolbar'
@@ -22,10 +22,7 @@ const Tree: FC<TProps> = ({ compact = false, nodes, onToggleTree }) => {
   const [collapsedGroupIds, setCollapsedGroupIds] = useState<ReadonlySet<string>>(() => new Set())
   const deferredQuery = useDeferredValue(query)
   const activeSearch = searching && deferredQuery.trim().length > 0
-  const groupIds = useMemo(
-    () => nodes.filter((node) => normalizeNodeType(node.type) === 'group').map((node) => node.id),
-    [nodes],
-  )
+  const groupIds = useMemo(() => collectGroupIds(nodes), [nodes])
   const visibleNodes = useMemo(() => filterTreeNodes(nodes, deferredQuery), [nodes, deferredQuery])
   const groupsCollapsed =
     groupIds.length > 0 && groupIds.every((groupId) => collapsedGroupIds.has(groupId))
@@ -83,7 +80,7 @@ const Tree: FC<TProps> = ({ compact = false, nodes, onToggleTree }) => {
               normalizeNodeType(node.type) === 'group' ? (
                 <Group
                   key={node.id}
-                  collapsed={collapsedGroupIds.has(node.id)}
+                  collapsedGroupIds={collapsedGroupIds}
                   forceOpen={activeSearch}
                   group={node as TDocPublicTreeGroup}
                   onToggle={handleToggleGroup}

@@ -7,13 +7,14 @@ import Item from './Item'
 import useSalon from './salon/group'
 
 type TProps = {
-  collapsed: boolean
+  collapsedGroupIds: ReadonlySet<string>
   group: TDocPublicTreeGroup
   forceOpen?: boolean
   onToggle: (groupId: string) => void
 }
 
-const Group: FC<TProps> = ({ collapsed, group, forceOpen = false, onToggle }) => {
+const Group: FC<TProps> = ({ collapsedGroupIds, group, forceOpen = false, onToggle }) => {
+  const collapsed = collapsedGroupIds.has(group.id)
   const displayOpen = forceOpen || !collapsed
   const s = useSalon({ open: displayOpen })
 
@@ -36,7 +37,7 @@ const Group: FC<TProps> = ({ collapsed, group, forceOpen = false, onToggle }) =>
           String(item.type).toLowerCase() === 'group' ? (
             <Group
               key={item.id}
-              collapsed={collapsed}
+              collapsedGroupIds={collapsedGroupIds}
               forceOpen={forceOpen}
               group={item as TDocPublicTreeGroup}
               onToggle={onToggle}

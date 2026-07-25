@@ -8,6 +8,21 @@ import type {
 
 export const normalizeNodeType = (type?: string | null): string => (type || '').toLowerCase()
 
+export const collectGroupIds = (
+  nodes: readonly TDocPublicTreeNavigationNode[],
+): readonly string[] => {
+  const groupIds: string[] = []
+
+  for (const node of nodes) {
+    if (normalizeNodeType(node.type) !== 'group') continue
+
+    const group = node as TDocPublicTreeGroup
+    groupIds.push(group.id, ...collectGroupIds(group.pages ?? []))
+  }
+
+  return groupIds
+}
+
 export const isLinkNode = (item: TDocPublicTreeItem): boolean =>
   normalizeNodeType(item.type) === 'link'
 

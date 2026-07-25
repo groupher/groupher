@@ -24,6 +24,8 @@ defmodule GroupherServer.CMS.DocTree.Write.Node do
 
   require CMS.Const
 
+  @max_depth CMS.Const.doc_tree_max_depth()
+
   @doc "Adds a stable logical node id when create attributes do not already provide one."
   def put_new_node_id(attrs), do: Map.put_new(attrs, :node_id, new_node_id())
 
@@ -47,7 +49,8 @@ defmodule GroupherServer.CMS.DocTree.Write.Node do
   @doc "Resolves a legal Group parent, which may be a Tab or another Group."
   def navigation_parent(%Community{} = community, branch, parent_node_id) do
     with {:ok, parent} <- find(community, branch, parent_node_id),
-         true <- parent.type in [:tab, :group] do
+         true <- parent.type in [:tab, :group],
+         :ok <- validate_new_child_depth(community, branch, parent) do
       {:ok, parent}
     else
       false -> {:error, {:custom, "navigation parent must be a tab or group"}}
@@ -58,7 +61,8 @@ defmodule GroupherServer.CMS.DocTree.Write.Node do
   @doc "Resolves the required Group parent for a Page or Link."
   def group_parent(%Community{} = community, branch, parent_node_id) do
     with {:ok, parent} <- find(community, branch, parent_node_id),
-         true <- parent.type == :group do
+         true <- parent.type == :group,
+         :ok <- validate_new_child_depth(community, branch, parent) do
       {:ok, parent}
     else
       false -> {:error, {:custom, "page and link parents must be a group"}}
@@ -103,7 +107,8 @@ defmodule GroupherServer.CMS.DocTree.Write.Node do
 
   def validate_target(community, branch, %{type: :group} = node, parent_node_id) do
     with {:ok, parent} <- navigation_parent(community, branch, parent_node_id),
-         :ok <- reject_cycle(community, branch, node, parent) do
+         :ok <- reject_cycle(community, branch, node, parent),
+         :ok <- validate_moved_subtree_depth(community, branch, node, parent) do
       {:ok, parent.node_id}
     end
   end
@@ -126,6 +131,86 @@ defmodule GroupherServer.CMS.DocTree.Write.Node do
     if descendant?(community, branch, node.node_id, parent.node_id),
       do: {:error, {:custom, "a group can not move below one of its descendants"}},
       else: :ok
+  end
+
+  defp validate_new_child_depth(community, branch, parent) do
+    placements = draft_placements(community, branch)
+
+    with {:ok, parent_depth} <- node_depth(placements, parent.node_id) do
+      validate_max_depth(parent_depth + 1)
+    end
+  end
+
+  defp validate_moved_subtree_depth(community, branch, node, parent) do
+    placements = draft_placements(community, branch)
+
+    children_by_parent =
+      Enum.group_by(placements, fn {_node_id, parent_node_id} -> parent_node_id end)
+
+    with {:ok, parent_depth} <- node_depth(placements, parent.node_id),
+         {:ok, subtree_height} <-
+           subtree_height(children_by_parent, node.node_id, MapSet.new()) do
+      validate_max_depth(parent_depth + 1 + subtree_height)
+    end
+  end
+
+  defp validate_max_depth(depth) when depth <= @max_depth, do: :ok
+
+  defp validate_max_depth(_depth),
+    do: {:error, {:custom, "Docs Tree exceeds maximum depth of #{@max_depth}"}}
+
+  defp node_depth(placements, node_id) do
+    placements
+    |> Map.new()
+    |> walk_ancestor_depth(node_id, 0, MapSet.new())
+  end
+
+  defp walk_ancestor_depth(parents, current, depth, seen) do
+    cond do
+      MapSet.member?(seen, current) ->
+        {:error, {:custom, "Docs Tree contains a parent cycle"}}
+
+      true ->
+        case Map.fetch(parents, current) do
+          {:ok, nil} ->
+            {:ok, depth}
+
+          {:ok, parent_node_id} ->
+            walk_ancestor_depth(
+              parents,
+              parent_node_id,
+              depth + 1,
+              MapSet.put(seen, current)
+            )
+
+          :error ->
+            {:error, {:custom, "Docs Tree parent chain is incomplete"}}
+        end
+    end
+  end
+
+  defp subtree_height(children_by_parent, node_id, seen) do
+    if MapSet.member?(seen, node_id) do
+      {:error, {:custom, "Docs Tree contains a parent cycle"}}
+    else
+      children_by_parent
+      |> Map.get(node_id, [])
+      |> Enum.reduce_while({:ok, 0}, fn {child_node_id, _parent_node_id}, {:ok, height} ->
+        case subtree_height(children_by_parent, child_node_id, MapSet.put(seen, node_id)) do
+          {:ok, child_height} -> {:cont, {:ok, max(height, child_height + 1)}}
+          error -> {:halt, error}
+        end
+      end)
+    end
+  end
+
+  defp draft_placements(community, branch) do
+    DocTreeNode
+    |> where([n], n.community_id == ^community.id)
+    |> where([n], n.branch_id == ^branch.id)
+    |> where([n], n.stage == CMS.Const.stage(:draft))
+    |> select([n], {n.node_id, n.parent_node_id})
+    |> Repo.all()
   end
 
   defp descendant?(community, branch, ancestor_node_id, candidate_node_id) do

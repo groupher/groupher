@@ -22,12 +22,12 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.CMS.Articles.Branch
   alias GroupherServer.CMS.ContentImport.Persistence.{Connection, ImportSourceMapping}
   alias GroupherServer.CMS.Model.{ArticleBranch, Community, DocsSiteState}
 
-  @max_depth 32
+  @max_depth CMS.Const.doc_tree_max_depth()
   @max_nodes 6_000
 
   @doc "Validates SourceTree and returns a read-only TargetTree, counts, conflicts, and revision."
@@ -346,7 +346,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
 
       if is_map(tab) and is_list(groups) and valid_text?(tab["sourceId"]) and
            Enum.all?(groups, &(&1["type"] == "group")) do
-        case validate_target_children(groups, branch_slug, mapping_refs, ids) do
+        case validate_target_children(groups, branch_slug, mapping_refs, ids, 1) do
           {:ok, ids} -> {:cont, {:ok, ids}}
           error -> {:halt, error}
         end
@@ -363,7 +363,11 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
   defp validate_target_tree(_, _, _),
     do: {:error, {:custom, "confirmed TargetTree does not match source intent"}}
 
-  defp validate_target_children(pages, branch_slug, mapping_refs, ids) do
+  defp validate_target_children(_pages, _branch_slug, _mapping_refs, _ids, depth)
+       when depth > @max_depth,
+       do: {:error, {:custom, "confirmed TargetTree exceeds depth #{@max_depth}"}}
+
+  defp validate_target_children(pages, branch_slug, mapping_refs, ids, depth) do
     Enum.reduce_while(pages, {:ok, ids}, fn child, {:ok, current} ->
       if not is_map(child) do
         {:halt, {:error, {:custom, "confirmed TargetTree contains an invalid child"}}}
@@ -382,7 +386,8 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
                    child["pages"],
                    branch_slug,
                    mapping_refs,
-                   MapSet.put(current, source_id)
+                   MapSet.put(current, source_id),
+                   depth + 1
                  ) do
               {:ok, next} -> {:cont, {:ok, next}}
               error -> {:halt, error}

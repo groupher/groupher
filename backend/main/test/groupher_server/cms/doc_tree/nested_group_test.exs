@@ -125,5 +125,60 @@ defmodule GroupherServer.Test.CMS.DocTree.NestedGroup do
                  stage: CMS.Const.stage(:draft)
                )
     end
+
+    test "accepts depth 32 and rejects deeper creates and subtree moves", context do
+      ~m(community tab advanced page)a = context
+      max_depth = CMS.Const.doc_tree_max_depth()
+
+      {deepest_node_id, revision, nodes_by_depth} =
+        Enum.reduce(3..max_depth, {advanced.node.id, page.revision, %{}}, fn depth,
+                                                                             {parent_node_id,
+                                                                              revision, nodes} ->
+          assert {:ok, created} =
+                   CMS.DocTree.create_node(community, %{
+                     type: :group,
+                     parent_node_id: parent_node_id,
+                     title: "Depth #{depth}",
+                     base_revision: revision
+                   })
+
+          {created.node.id, created.revision, Map.put(nodes, depth, created.node.id)}
+        end)
+
+      assert {:error, {:custom, create_message}} =
+               CMS.DocTree.create_node(community, %{
+                 type: :group,
+                 parent_node_id: deepest_node_id,
+                 title: "Too deep",
+                 base_revision: revision
+               })
+
+      assert create_message =~ "maximum depth of #{max_depth}"
+
+      assert {:ok, movable} =
+               CMS.DocTree.create_node(community, %{
+                 type: :group,
+                 parent_node_id: tab.node.id,
+                 title: "Movable",
+                 base_revision: revision
+               })
+
+      assert {:ok, movable_child} =
+               CMS.DocTree.create_node(community, %{
+                 type: :group,
+                 parent_node_id: movable.node.id,
+                 title: "Movable child",
+                 base_revision: movable.revision
+               })
+
+      assert {:error, {:custom, move_message}} =
+               CMS.DocTree.move_node(community, movable.node.id, %{
+                 target_parent_node_id: Map.fetch!(nodes_by_depth, max_depth - 1),
+                 target_index: 0,
+                 base_revision: movable_child.revision
+               })
+
+      assert move_message =~ "maximum depth of #{max_depth}"
+    end
   end
 end

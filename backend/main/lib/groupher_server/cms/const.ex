@@ -43,6 +43,10 @@ defmodule GroupherServer.CMS.Const do
 
   enum(tree_event_owner, do: [tree: :tree, doc: :doc])
 
+  @doc "Maximum depth of a Docs Tree node, counting a root Tab as depth zero."
+  @spec doc_tree_max_depth() :: pos_integer()
+  def doc_tree_max_depth, do: 32
+
   enum doc_tree_json_key do
     [
       node: "node",

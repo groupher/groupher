@@ -1,5 +1,7 @@
 import { gql } from 'urql'
 
+import { DOC_TREE_MAX_DEPTH } from '~/const/dsb/docs'
+
 const docPublicTreeMarkerFields = gql`
   fragment docPublicTreeMarkerFields on Marker {
     type
@@ -50,7 +52,7 @@ const docPublicTree = gql`
           ...docPublicTreeNodeFields
         }
         groups {
-          ${docPublicTreeNodeSelection(12)}
+          ${docPublicTreeNodeSelection(DOC_TREE_MAX_DEPTH)}
         }
       }
     }

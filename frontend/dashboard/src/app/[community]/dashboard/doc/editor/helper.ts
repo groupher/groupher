@@ -117,6 +117,10 @@ export const findPageByDocId = (
   return null
 }
 
+/** Resolve the Tab-owned Group roots used by all recursive editor traversal. */
+export const getDocTreeGroups = (tabs: readonly TDocTreeNodeDTO[]): readonly TDocTreeNodeDTO[] =>
+  tabs.flatMap((tab) => tab.groups ?? [])
+
 /**
  * Fetch the docs editor SSR payload for the selected docId.
  *
@@ -133,7 +137,7 @@ export const getDocEditorInitialData = async (
     const docTree = treeData?.docTree ?? null
     // The editor route must have a concrete doc id. If the URL is empty or stale,
     // pick the first page so SSR can hydrate matching tree + document data.
-    const nodes = docTree?.tabs.flatMap((tab) => tab.pages || []) ?? []
+    const nodes = getDocTreeGroups(docTree?.tabs ?? [])
     const activePage = docTree ? findPageByDocId(nodes, docId) || findFirstPage(nodes) : null
     const activeDocId = activePage?.docId ?? null
 

@@ -1,3 +1,5 @@
+import { DOC_TREE_MAX_DEPTH } from '~/const/dsb/docs'
+
 import F from '../fragments'
 
 const docPublicTreeNode = `
@@ -49,7 +51,7 @@ export const docPublicTree = `
         ${docPublicTreeNode}
         pins { ${docPublicTreeNode} }
         groups {
-          ${docPublicTreeNodeSelection(12)}
+          ${docPublicTreeNodeSelection(DOC_TREE_MAX_DEPTH)}
         }
       }
     }

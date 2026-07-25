@@ -1,5 +1,6 @@
 import { gql } from 'urql'
 
+import { DOC_TREE_MAX_DEPTH } from '~/const/dsb/docs'
 import { F, P } from '~/schemas'
 
 const { pagedPosts, pagedChangelogs } = P
@@ -506,7 +507,7 @@ const docTree = gql`
       tabs {
         ${docTreeNodeFields}
         pins { ${docTreeNodeFields} }
-        groups { ${docTreeNodeSelection(12)} }
+        groups { ${docTreeNodeSelection(DOC_TREE_MAX_DEPTH)} }
       }
     }
   }
