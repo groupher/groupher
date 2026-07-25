@@ -10,7 +10,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
       PlanPayload.tree + successfully admitted items_by_target
                               |
                               v
-      tabs -> groups -> pages/links + pins
+      tabs -> recursive Groups (Group/Page/Link pages) + pins
                               |
                               v
               flatten in source order        O(N)
@@ -44,7 +44,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
   require CMS.Const
 
   @insert_batch_size 500
-  @managed_fields ~w(tab_id group_id doc_id type title slug index href updated_at)a
+  @managed_fields ~w(parent_node_id doc_id type title index href updated_at)a
 
   @spec apply(Community.t(), ArticleBranch.t(), map(), map()) ::
           {:ok, %{nodes: [DocTreeNode.t()], state: CMS.Model.DocsSiteState.t()}}
@@ -81,7 +81,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
       tab_id = node_id(:tab, namespace, tab["sourceId"])
 
       with {:ok, attrs} <-
-             flatten_groups(
+             flatten_children(
                community,
                branch,
                namespace,
@@ -110,52 +110,41 @@ defmodule GroupherServer.CMS.DocTree.Import do
   defp flatten_tabs(_community, _branch, _namespace, _tabs, _items_by_target),
     do: {:error, {:custom, "imported Doc tree tabs are invalid"}}
 
-  defp flatten_groups(community, branch, namespace, tab_id, groups, items_by_target, attrs)
-       when is_list(groups) do
-    groups
-    |> Enum.with_index()
-    |> Enum.reduce_while({:ok, attrs}, fn {group, index}, {:ok, attrs} ->
-      group_id = node_id(:group, namespace, group["sourceId"])
-
-      group_attrs =
-        community
-        |> base_attrs(branch, group, :group, group_id, index)
-        |> Map.put(:tab_id, tab_id)
-
-      with {:ok, attrs} <-
-             flatten_children(
-               community,
-               branch,
-               namespace,
-               group_id,
-               Map.get(group, "children", []),
-               items_by_target,
-               [group_attrs | attrs]
-             ) do
-        {:cont, {:ok, attrs}}
-      else
-        {:error, _} = error -> {:halt, error}
-      end
-    end)
-  end
-
-  defp flatten_groups(
-         _community,
-         _branch,
-         _namespace,
-         _tab_id,
-         _groups,
-         _items_by_target,
-         _attrs
-       ),
-       do: {:error, {:custom, "imported Doc tree groups are invalid"}}
-
-  defp flatten_children(community, branch, namespace, group_id, children, items_by_target, attrs)
-       when is_list(children) do
-    children
+  defp flatten_children(
+         community,
+         branch,
+         namespace,
+         parent_node_id,
+         pages,
+         items_by_target,
+         attrs
+       )
+       when is_list(pages) do
+    pages
     |> Enum.with_index()
     |> Enum.reduce_while({:ok, attrs}, fn {child, index}, {:ok, attrs} ->
       case child["type"] do
+        "group" ->
+          group_node_id = node_id(:group, namespace, child["sourceId"])
+
+          group_attrs =
+            community
+            |> base_attrs(branch, child, :group, group_node_id, index)
+            |> Map.put(:parent_node_id, parent_node_id)
+
+          case flatten_children(
+                 community,
+                 branch,
+                 namespace,
+                 group_node_id,
+                 Map.get(child, "pages", []),
+                 items_by_target,
+                 [group_attrs | attrs]
+               ) do
+            {:ok, next_attrs} -> {:cont, {:ok, next_attrs}}
+            error -> {:halt, error}
+          end
+
         "page" ->
           target_ref = child["docId"]
 
@@ -169,7 +158,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
                 node_id(:page, namespace, child["sourceId"]),
                 index
               )
-              |> Map.put(:group_id, group_id)
+              |> Map.put(:parent_node_id, parent_node_id)
               |> Map.put(:doc_id, target_ref)
 
             {:cont, {:ok, [child_attrs | attrs]}}
@@ -187,7 +176,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
               node_id(:link, namespace, child["sourceId"]),
               index
             )
-            |> Map.put(:group_id, group_id)
+            |> Map.put(:parent_node_id, parent_node_id)
             |> Map.put(:href, child["href"])
 
           {:cont, {:ok, [child_attrs | attrs]}}
@@ -202,12 +191,12 @@ defmodule GroupherServer.CMS.DocTree.Import do
          _community,
          _branch,
          _namespace,
-         _group_id,
+         _parent_node_id,
          _children,
          _items_by_target,
          _attrs
        ),
-       do: {:error, {:custom, "imported Doc tree children are invalid"}}
+       do: {:error, {:custom, "imported Doc tree pages are invalid"}}
 
   defp flatten_pins(community, branch, namespace, tab_id, pins, attrs) when is_list(pins) do
     pins
@@ -222,7 +211,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
           node_id(:pin, namespace, pin["sourceId"]),
           index
         )
-        |> Map.put(:tab_id, tab_id)
+        |> Map.put(:parent_node_id, tab_id)
         |> Map.put(:href, pin["href"])
 
       {:cont, {:ok, [pin_attrs | attrs]}}
@@ -240,7 +229,6 @@ defmodule GroupherServer.CMS.DocTree.Import do
       stage: CMS.Const.stage(:draft),
       type: type,
       title: source["title"],
-      slug: source["slug"],
       index: index
     }
   end
@@ -267,8 +255,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
 
       attrs =
         attrs
-        |> replace_parent_id(:tab_id, replacements)
-        |> replace_parent_id(:group_id, replacements)
+        |> replace_parent_id(:parent_node_id, replacements)
 
       node_id = existing_node_id(existing, attrs) || original_node_id
       {Map.put(attrs, :node_id, node_id), Map.put(replacements, original_node_id, node_id)}
@@ -279,13 +266,9 @@ defmodule GroupherServer.CMS.DocTree.Import do
   defp existing_node_indexes(nodes) do
     %{
       by_doc_id: index_by(nodes, & &1.doc_id),
-      by_group_title: index_by(nodes, &{&1.group_id, &1.type, &1.title}),
-      by_group_slug: index_by(nodes, &{&1.group_id, &1.type, &1.slug}),
+      by_parent_title: index_by(nodes, &{&1.parent_node_id, &1.type, &1.title}),
       by_node_id: Map.new(nodes, &{&1.node_id, &1.node_id}),
-      by_root_title: index_by(nodes, &{&1.type, &1.title}),
-      by_root_slug: index_by(nodes, &{&1.type, &1.slug}),
-      by_tab_title: index_by(nodes, &{&1.tab_id, &1.type, &1.title}),
-      by_tab_slug: index_by(nodes, &{&1.tab_id, &1.type, &1.slug})
+      by_root_title: index_by(nodes, &{&1.type, &1.title})
     }
   end
 
@@ -314,28 +297,21 @@ defmodule GroupherServer.CMS.DocTree.Import do
   end
 
   defp existing_structural_node_id(indexes, %{type: :tab} = attrs) do
-    indexes.by_root_slug[{:tab, attrs.slug}] || indexes.by_root_title[{:tab, attrs.title}]
-  end
-
-  defp existing_structural_node_id(indexes, %{type: type, tab_id: tab_id} = attrs)
-       when type in [:group, :pin] do
-    indexes.by_tab_slug[{tab_id, type, attrs.slug}] ||
-      indexes.by_tab_title[{tab_id, type, attrs.title}]
+    indexes.by_root_title[{:tab, attrs.title}]
   end
 
   defp existing_structural_node_id(indexes, %{type: :page, doc_id: doc_id} = attrs) do
-    indexes.by_doc_id[doc_id] || existing_group_child_id(indexes, attrs)
+    indexes.by_doc_id[doc_id] || existing_child_id(indexes, attrs)
   end
 
-  defp existing_structural_node_id(indexes, %{type: :link} = attrs),
-    do: existing_group_child_id(indexes, attrs)
+  defp existing_structural_node_id(indexes, %{type: type} = attrs)
+       when type in [:group, :link, :pin],
+       do: existing_child_id(indexes, attrs)
 
   defp existing_structural_node_id(_indexes, _attrs), do: nil
 
-  defp existing_group_child_id(indexes, attrs) do
-    indexes.by_group_slug[{attrs.group_id, attrs.type, attrs.slug}] ||
-      indexes.by_group_title[{attrs.group_id, attrs.type, attrs.title}]
-  end
+  defp existing_child_id(indexes, attrs),
+    do: indexes.by_parent_title[{attrs.parent_node_id, attrs.type, attrs.title}]
 
   defp upsert_nodes([]), do: {:ok, []}
 
@@ -372,7 +348,7 @@ defmodule GroupherServer.CMS.DocTree.Import do
 
   defp validated_rows(attrs, now) do
     Enum.reduce_while(attrs, {:ok, []}, fn attrs, {:ok, rows} ->
-      attrs = Map.merge(%{tab_id: nil, group_id: nil, doc_id: nil, href: nil}, attrs)
+      attrs = Map.merge(%{parent_node_id: nil, doc_id: nil, href: nil}, attrs)
       changeset = DocTreeNode.changeset(%DocTreeNode{}, attrs)
 
       case Ecto.Changeset.apply_action(changeset, :insert) do

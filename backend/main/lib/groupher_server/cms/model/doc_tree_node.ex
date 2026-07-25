@@ -7,13 +7,15 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
       doc_tree_nodes(stage=draft)          doc_tree_nodes(stage=public)
       --------------------------- publish  ----------------------------
       tab node_id=introduction              tab node_id=introduction
-        group tab_id=introduction             group tab_id=introduction
-          page group_id=group_1                 page group_id=group_1
-        pin tab_id=introduction               pin tab_id=introduction
+        group parent_node_id=introduction     group parent_node_id=introduction
+          page parent_node_id=group_1           page parent_node_id=group_1
+        pin parent_node_id=introduction       pin parent_node_id=introduction
 
-  `id` is a physical database row id. Callers should use `node_id` for tree
-  identity, `tab_id` for Group/Pin ownership, and `group_id` for Page/Link
-  ownership. Pins are independent copied link nodes, not shared references.
+  `id` is the physical database row id. `node_id` is the stable logical tree
+  identity shared by Draft/Public. `parent_node_id` is the immediate parent's
+  logical `node_id` in the same Community, Branch, and Stage, never its physical
+  `id`. Only root Tabs have a nil parent. Pins use the same field but remain in
+  the Tab's independent pin lane.
   """
 
   alias __MODULE__
@@ -27,7 +29,6 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
   alias CMS.Marker
   alias CMS.Model.{Community, ArticleBranch}
   alias Helper.Constant.DBPrefix
-  alias Helper.Validator.Slug
 
   require CMS.Const
 
@@ -36,8 +37,7 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
 
   @required_fields ~w(community_id branch_id node_id stage type index)a
   @optional_fields ~w(
-    tab_id group_id doc_id title slug href marker badge
-    hidden template_key ui_config
+    parent_node_id doc_id title href marker badge hidden
   )a
 
   @type node_type :: :tab | :group | :page | :link | :pin
@@ -52,17 +52,13 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     field(:node_id, :string)
     field(:stage, Ecto.Enum, values: CMS.Const.stage_values())
     field(:type, Ecto.Enum, values: CMS.Const.tree_node_type_values())
-    field(:tab_id, :string)
-    field(:group_id, :string)
+    field(:parent_node_id, :string)
     field(:title, :string)
-    field(:slug, :string)
     field(:index, :integer, default: 0)
     field(:href, :string)
     field(:marker, :map)
     field(:badge, :string)
     field(:hidden, :boolean, default: false)
-    field(:template_key, :string)
-    field(:ui_config, :map, default: %{})
 
     timestamps(type: :utc_datetime)
   end
@@ -88,13 +84,12 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     |> foreign_key_constraint(:branch_id)
     |> unique_constraint(:node_id, name: :doc_tree_nodes_stage_node_id_index)
     |> unique_constraint(:doc_id, name: :doc_tree_nodes_stage_doc_id_index)
-    |> unique_constraint(:template_key, name: :doc_tree_nodes_community_stage_template_key_index)
-    |> unique_constraint(:slug, name: :doc_tree_nodes_root_slug_index)
-    |> unique_constraint(:title, name: :doc_tree_nodes_root_title_index)
-    |> unique_constraint(:slug, name: :doc_tree_nodes_sibling_slug_index)
-    |> unique_constraint(:title, name: :doc_tree_nodes_sibling_title_index)
-    |> unique_constraint(:slug, name: :doc_tree_nodes_tab_sibling_slug_index)
-    |> unique_constraint(:title, name: :doc_tree_nodes_tab_sibling_title_index)
+    |> unique_constraint(:title, name: :doc_tree_nodes_root_tab_title_index)
+    |> unique_constraint(:title, name: :doc_tree_nodes_navigation_sibling_title_index)
+    |> unique_constraint(:index, name: :doc_tree_nodes_navigation_sibling_index)
+    |> unique_constraint(:index, name: :doc_tree_nodes_root_tab_index)
+    |> unique_constraint(:index, name: :doc_tree_nodes_pin_sibling_index)
+    |> check_constraint(:type, name: :doc_tree_nodes_shape_check)
   end
 
   @doc """
@@ -113,51 +108,44 @@ defmodule GroupherServer.CMS.Model.DocTreeNode do
     |> foreign_key_constraint(:branch_id)
     |> unique_constraint(:node_id, name: :doc_tree_nodes_stage_node_id_index)
     |> unique_constraint(:doc_id, name: :doc_tree_nodes_stage_doc_id_index)
-    |> unique_constraint(:template_key, name: :doc_tree_nodes_community_stage_template_key_index)
-    |> unique_constraint(:slug, name: :doc_tree_nodes_root_slug_index)
-    |> unique_constraint(:title, name: :doc_tree_nodes_root_title_index)
-    |> unique_constraint(:slug, name: :doc_tree_nodes_sibling_slug_index)
-    |> unique_constraint(:title, name: :doc_tree_nodes_sibling_title_index)
-    |> unique_constraint(:slug, name: :doc_tree_nodes_tab_sibling_slug_index)
-    |> unique_constraint(:title, name: :doc_tree_nodes_tab_sibling_title_index)
+    |> unique_constraint(:title, name: :doc_tree_nodes_root_tab_title_index)
+    |> unique_constraint(:title, name: :doc_tree_nodes_navigation_sibling_title_index)
+    |> unique_constraint(:index, name: :doc_tree_nodes_navigation_sibling_index)
+    |> unique_constraint(:index, name: :doc_tree_nodes_root_tab_index)
+    |> unique_constraint(:index, name: :doc_tree_nodes_pin_sibling_index)
+    |> check_constraint(:type, name: :doc_tree_nodes_shape_check)
   end
 
   defp validate_common(changeset) do
     type = get_field(changeset, :type)
     _stage = get_field(changeset, :stage)
-    group_id = get_field(changeset, :group_id)
     doc_id = get_field(changeset, :doc_id)
     href = get_field(changeset, :href)
 
     changeset
     |> validate_length(:node_id, min: 1, max: 80)
-    |> validate_length(:tab_id, min: 1, max: 80)
-    |> validate_length(:group_id, min: 1, max: 80)
+    |> validate_length(:parent_node_id, min: 1, max: 80)
     |> validate_length(:title, min: 1, max: 100)
-    |> validate_length(:slug, min: 1, max: 120)
     |> validate_length(:href, max: 400)
-    |> Slug.validate_changeset(:slug)
-    |> validate_title_slug_ref(type)
-    |> validate_parent_refs(type, get_field(changeset, :tab_id), group_id)
+    |> validate_title(type)
+    |> validate_parent_ref(type, get_field(changeset, :parent_node_id))
     |> validate_article_ref(type, doc_id)
     |> validate_link_href(type, href)
   end
 
-  defp validate_title_slug_ref(changeset, type) when type in [:tab, :group, :page, :link, :pin],
-    do: validate_required(changeset, [:title, :slug])
+  defp validate_title(changeset, type) when type in [:tab, :group, :page, :link, :pin],
+    do: validate_required(changeset, [:title])
 
-  defp validate_title_slug_ref(changeset, _type), do: changeset
+  defp validate_title(changeset, _type), do: changeset
 
-  defp validate_parent_refs(changeset, :tab, nil, nil), do: changeset
-  defp validate_parent_refs(changeset, :group, tab_id, nil) when not is_nil(tab_id), do: changeset
-  defp validate_parent_refs(changeset, :pin, tab_id, nil) when not is_nil(tab_id), do: changeset
+  defp validate_parent_ref(changeset, :tab, nil), do: changeset
 
-  defp validate_parent_refs(changeset, type, nil, group_id)
-       when type in [:page, :link] and not is_nil(group_id),
+  defp validate_parent_ref(changeset, type, parent_node_id)
+       when type in [:group, :page, :link, :pin] and not is_nil(parent_node_id),
        do: changeset
 
-  defp validate_parent_refs(changeset, _type, _tab_id, _group_id),
-    do: add_error(changeset, :type, "node has an invalid docs tree parent")
+  defp validate_parent_ref(changeset, _type, _parent_node_id),
+    do: add_error(changeset, :parent_node_id, "node has an invalid docs tree parent")
 
   defp validate_article_ref(changeset, :page, nil),
     do: add_error(changeset, :doc_id, "page nodes require doc_id")

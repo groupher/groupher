@@ -1,5 +1,8 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
+import { SIDE_TREE_CLASS } from '..'
+import { SIDE_TREE_SPACING } from '../constant'
+
 export { cn } from '~/css'
 
 export default function useSalon({
@@ -13,12 +16,13 @@ export default function useSalon({
 
   return {
     wrapper: cn(
-      'group row-center h-7 rounded-md px-1 pointer',
+      SIDE_TREE_CLASS.leaf.row,
+      'pointer',
       active && 'bold-sm',
       active && bg('hoverBg'),
       hover('box'),
     ),
-    pickerSlot: 'align-both mr-2 size-5 shrink-0',
+    pickerSlot: cn(SIDE_TREE_CLASS.leaf.markerSlot, SIDE_TREE_SPACING.ITEM_MARKER_GAP),
     markerReadonly: 'pointer-events-none',
     titleCluster: 'row-center min-w-0 flex-1 gap-1 leading-5',
     titleButton: cn(

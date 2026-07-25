@@ -351,16 +351,24 @@ defmodule GroupherServer.CMS.ContentImport.Jobs do
 
   defp counts(target_tree) do
     tabs = Map.get(target_tree, "tabs", [])
-    groups = Enum.flat_map(tabs, &Map.get(&1, "groups", []))
-    children = Enum.flat_map(groups, &Map.get(&1, "children", []))
+    nodes = Enum.flat_map(tabs, &collect_target_nodes(Map.get(&1, "groups", [])))
 
     %{
       "assets" => 0,
-      "groups" => length(groups),
-      "links" => Enum.count(children, &(&1["type"] == "link")),
-      "pages" => Enum.count(children, &(&1["type"] == "page")),
+      "groups" => Enum.count(nodes, &(&1["type"] == "group")),
+      "links" => Enum.count(nodes, &(&1["type"] == "link")),
+      "pages" => Enum.count(nodes, &(&1["type"] == "page")),
       "tabs" => length(tabs)
     }
+  end
+
+  defp collect_target_nodes(pages) do
+    Enum.flat_map(pages, fn child ->
+      [
+        child
+        | if(child["type"] == "group", do: collect_target_nodes(child["pages"]), else: [])
+      ]
+    end)
   end
 
   defp value(map, key), do: Map.get(map, key, Map.get(map, String.to_atom(key)))

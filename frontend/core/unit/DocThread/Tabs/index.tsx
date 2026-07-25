@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { FC } from 'react'
 
-import type { TDocPublicTreeTab } from '~/spec'
+import type { TDocPublicTreeGroup, TDocPublicTreeNavigationNode, TDocPublicTreeTab } from '~/spec'
 
 import useSalon, { cn } from './salon'
 
@@ -11,13 +11,19 @@ type TProps = {
   onSelect: (id: string) => void
 }
 
-const firstHref = (tab: TDocPublicTreeTab): string | null => {
-  for (const group of tab.groups) {
-    const href = group.children?.find((child) => child.href)?.href
-    if (href) return href
+const firstNodeHref = (nodes: readonly TDocPublicTreeNavigationNode[]): string | null => {
+  for (const node of nodes) {
+    if (node.href) return node.href
+    if (String(node.type).toLowerCase() === 'group') {
+      const href = firstNodeHref((node as TDocPublicTreeGroup).pages ?? [])
+      if (href) return href
+    }
   }
+  return null
+}
 
-  return tab.pins.find((pin) => pin.href)?.href ?? null
+const firstHref = (tab: TDocPublicTreeTab): string | null => {
+  return firstNodeHref(tab.groups) ?? tab.pins.find((pin) => pin.href)?.href ?? null
 }
 
 const Tabs: FC<TProps> = ({ activeTabId, tabs, onSelect }) => {

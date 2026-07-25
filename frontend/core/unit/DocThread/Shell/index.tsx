@@ -3,7 +3,7 @@ import { usePathname } from 'next/navigation'
 import type { FC, KeyboardEvent, PointerEvent, ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import type { TDocPublicTree } from '~/spec'
+import type { TDocPublicTree, TDocPublicTreeGroup, TDocPublicTreeNavigationNode } from '~/spec'
 import ArticleToc from '~/widgets/ArticleToc'
 
 import Tabs from '../Tabs'
@@ -30,6 +30,20 @@ const SIDE_RAIL_STYLE = {
   top: DOC_PUBLIC_TREE_STICKY_TOP,
 }
 
+const containsHref = (nodes: readonly TDocPublicTreeNavigationNode[], href: string): boolean =>
+  nodes.some((node) => {
+    if (node.href === href) return true
+    if (String(node.type).toLowerCase() !== 'group') return false
+    return containsHref((node as TDocPublicTreeGroup).pages ?? [], href)
+  })
+
+const collectGroups = (nodes: readonly TDocPublicTreeNavigationNode[]): TDocPublicTreeGroup[] =>
+  nodes.flatMap((node) =>
+    String(node.type).toLowerCase() === 'group'
+      ? [node as TDocPublicTreeGroup, ...collectGroups((node as TDocPublicTreeGroup).pages ?? [])]
+      : [],
+  )
+
 const Shell: FC<TProps> = ({ children, tree }) => {
   const pathname = usePathname()
   const [treeOpen, setTreeOpen] = useState(true)
@@ -46,16 +60,15 @@ const Shell: FC<TProps> = ({ children, tree }) => {
     () => tree.tabs.find((tab) => tab.id === activeTabId) ?? tree.tabs[0] ?? null,
     [activeTabId, tree.tabs],
   )
-  const groups = activeTab?.groups ?? []
-  const hasTree = groups.length > 0
+  const nodes = activeTab?.groups ?? []
+  const groups = collectGroups(nodes)
+  const hasTree = nodes.length > 0
   const sidePanelStyle = {
     width: treeWidth,
   }
 
   useEffect(() => {
-    const matchingTab = tree.tabs.find((tab) =>
-      tab.groups.some((group) => group.children?.some((child) => child.href === pathname)),
-    )
+    const matchingTab = tree.tabs.find((tab) => containsHref(tab.groups, pathname))
     if (matchingTab) setActiveTabId(matchingTab.id)
   }, [pathname, tree.tabs])
 
@@ -105,7 +118,7 @@ const Shell: FC<TProps> = ({ children, tree }) => {
       <div className={s.mobileWrapper}>
         {hasTree && (
           <div className={s.mobileTree}>
-            <Tree groups={groups} compact />
+            <Tree nodes={nodes} compact />
           </div>
         )}
         <main className={s.mobileContent}>{children}</main>
@@ -130,7 +143,7 @@ const Shell: FC<TProps> = ({ children, tree }) => {
           <aside className={s.sideRail} style={SIDE_RAIL_STYLE}>
             {treeOpen ? (
               <div className={s.sidePanel} style={sidePanelStyle}>
-                <Tree groups={groups} onToggleTree={() => setTreeOpen(false)} />
+                <Tree nodes={nodes} onToggleTree={() => setTreeOpen(false)} />
               </div>
             ) : (
               <div className={s.collapsedPanel}>

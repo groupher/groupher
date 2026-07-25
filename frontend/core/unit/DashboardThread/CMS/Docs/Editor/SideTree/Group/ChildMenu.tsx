@@ -2,8 +2,6 @@ import type { FC } from 'react'
 
 import useTrans from '~/hooks/useTrans'
 import ArchivedSVG from '~/icons/Archived'
-import CalendarPlusSVG from '~/icons/CalendarPlus'
-import CalendarSlashSVG from '~/icons/CalendarSlash'
 import CopySVG from '~/icons/Copy'
 import MoreSVG from '~/icons/menu/MoreL'
 import EditSVG from '~/icons/PencilSimple'
@@ -18,8 +16,6 @@ import type { TSideTreeNodeMenuAction } from '../spec'
 
 type TProps = {
   moveToDraftVisible?: boolean
-  coverToggleVisible?: boolean
-  hiddenFromCover?: boolean
   pinAction?: 'pin' | 'unpin'
   onSelect: (action: TSideTreeNodeMenuAction) => void
   onOpenChange?: (open: boolean) => void
@@ -27,20 +23,12 @@ type TProps = {
 
 const ChildMenu: FC<TProps> = ({
   moveToDraftVisible = false,
-  coverToggleVisible = false,
-  hiddenFromCover = false,
   pinAction,
   onSelect,
   onOpenChange,
 }) => {
   const s = useSalon()
   const { t } = useTrans()
-  const coverActionTitle = t(
-    hiddenFromCover
-      ? 'dsb.cms.docs.side_tree.menu.show_in_cover'
-      : 'dsb.cms.docs.side_tree.menu.hide_from_cover',
-  )
-  const CoverActionIcon = hiddenFromCover ? CalendarPlusSVG : CalendarSlashSVG
 
   return (
     <Tooltip
@@ -93,24 +81,6 @@ const ChildMenu: FC<TProps> = ({
                 text={t('dsb.cms.docs.side_tree.menu.move_to_draft')}
                 className={s.itemTitle}
               />
-            </button>
-          )}
-          {coverToggleVisible && (
-            <button
-              type='button'
-              className={s.item}
-              onClick={() =>
-                onSelect(
-                  hiddenFromCover
-                    ? SIDE_TREE_NODE_MENU_ACTION.SHOW_IN_COVER
-                    : SIDE_TREE_NODE_MENU_ACTION.HIDE_FROM_COVER,
-                )
-              }
-            >
-              <div className={s.iconBox}>
-                <CoverActionIcon className={s.itemIcon} />
-              </div>
-              <OverflowMarqueeText text={coverActionTitle} className={s.itemTitle} />
             </button>
           )}
           {pinAction && (

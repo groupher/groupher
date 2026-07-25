@@ -33,12 +33,12 @@ defmodule GroupherServer.CMS.Helper.EmotionFormatter do
   @all_emotions (@article_emotions ++ @comment_emotions) |> Enum.uniq()
 
   @spec format(map() | nil, :article | :comment | nil) :: [map()]
-  def format(%{emotions: emotions}, kind), do: format(emotions, kind)
+  def format(%{emotions: emotions}, article_type), do: format(emotions, article_type)
   def format(nil, _kind), do: []
-  def format(%_{} = emotions, kind), do: format(Map.from_struct(emotions), kind)
+  def format(%_{} = emotions, article_type), do: format(Map.from_struct(emotions), article_type)
 
-  def format(emotions, kind) when is_map(emotions) do
-    supported_emotions(kind)
+  def format(emotions, article_type) when is_map(emotions) do
+    supported_emotions(article_type)
     |> Enum.reduce([], fn emotion, acc ->
       count = Map.get(emotions, :"#{emotion}_count", 0) || 0
 

@@ -16,20 +16,30 @@ defmodule GroupherServer.CMS.DocTree do
       doc_tree_nodes(stage=public) --->  docs  --->  article_documents
               |
               v
-      doc_cover_groups/items/pinned_docs
+      doc_cover_cards/items/pinned_docs
               |
               v
       Public docs site
 
-  Tabs are the tree roots. Groups and independent pin links belong to a tab;
-  pages and links belong to a group. Every node is published and diffed through
-  the same staged Tree workflow.
+  Tabs are roots. Groups can recursively own Groups, Pages, and Links. Pages and
+  Links can also live directly under a Tab. Pins belong to a Tab but use their
+  own display lane. Every node uses the same staged Tree workflow.
   """
 
   alias GroupherServer.Accounts.Model.User
-  alias GroupherServer.CMS.DocTree.{Publish, Read, Template, Trash, Write}
+  alias GroupherServer.CMS.DocTree.{Publish, Read, Trash, Write}
   alias GroupherServer.CMS.Model.{Community, Doc}
   alias Helper.T
+
+  @doc """
+  Initializes the branch-scoped Docs state without creating navigation or content.
+
+  Community creation calls this so a new Docs site has an empty, writable tree.
+  Product templates are deliberately outside this lifecycle.
+  """
+  @spec initialize(Community.t(), keyword() | map()) :: T.domain_res(map())
+  def initialize(%Community{} = community, opts \\ []),
+    do: Read.ensure_site_state(community, opts)
 
   @doc """
   Reads the branch-scoped docs tree for editor/sidebar rendering.
@@ -49,6 +59,19 @@ defmodule GroupherServer.CMS.DocTree do
   @spec read_draft(Community.t(), T.id(), keyword() | map()) :: T.domain_res(map())
   def read_draft(%Community{} = community, id, opts \\ []),
     do: Read.read_draft(community, id, opts)
+
+  @doc "Creates one recursive navigation node using its declared node type."
+  @spec create_node(Community.t(), map(), User.t() | nil) :: T.domain_res(map())
+  def create_node(%Community{} = community, %{type: type} = args, user \\ nil) do
+    case type do
+      :tab -> Write.create_tab(community, args)
+      :group -> Write.create_group(community, args)
+      :page -> Write.create_page(community, args, user)
+      :link -> Write.create_link(community, args)
+      :pin -> Write.create_pin(community, args)
+      _ -> {:error, {:custom, "unsupported docs tree node type"}}
+    end
+  end
 
   @doc """
   Builds the unified docs publish checklist.
@@ -84,41 +107,12 @@ defmodule GroupherServer.CMS.DocTree do
     do: Publish.move_doc_to_draft(community, id, user, opts)
 
   @doc """
-  Moves one docs group and all published page/link children back to draft visibility.
+  Creates missing article drafts for every published Page in one Tab/Group subtree.
   """
-  @spec move_group_to_draft(Community.t(), T.id()) :: T.domain_res(map())
-  def move_group_to_draft(%Community{} = community, id),
-    do: Publish.move_group_to_draft(community, id)
-
-  @doc """
-  Ensures the community has the default docs demo template.
-  """
-  @spec ensure_demo_template(Community.t(), User.t()) :: T.domain_res(map())
-  def ensure_demo_template(%Community{} = community, %User{} = user) do
-    Template.ensure_demo_template(community, user)
-  end
-
-  @doc """
-  Creates the default docs demo template in the draft tree.
-  """
-  @spec create_demo_template(Community.t(), User.t()) :: T.domain_res(map())
-  def create_demo_template(%Community{} = community, %User{} = user) do
-    Template.create_demo_template(community, user)
-  end
-
-  @doc """
-  Deletes the default docs demo template from the draft tree.
-  """
-  @spec delete_demo_template(Community.t()) :: T.domain_res(map())
-  def delete_demo_template(%Community{} = community), do: Template.delete_demo_template(community)
-
-  @doc """
-  Recreates the default docs demo template from scratch.
-  """
-  @spec reset_demo_template(Community.t(), User.t()) :: T.domain_res(map())
-  def reset_demo_template(%Community{} = community, %User{} = user) do
-    Template.reset_demo_template(community, user)
-  end
+  @spec move_subtree_to_draft(Community.t(), T.id(), User.t(), keyword() | map()) ::
+          T.domain_res(map())
+  def move_subtree_to_draft(%Community{} = community, id, %User{} = user, opts \\ []),
+    do: Publish.move_subtree_to_draft(community, id, user, opts)
 
   @doc """
   Creates a draft tab node.
@@ -172,14 +166,14 @@ defmodule GroupherServer.CMS.DocTree do
   def delete_node(%Community{} = community, id, args), do: Write.delete_node(community, id, args)
 
   @doc """
-  Duplicates a page or link node in the draft tree.
+  Duplicates a Group subtree, Page, or Link in the draft tree.
   """
   @spec duplicate_node(Community.t(), T.id(), map()) :: T.domain_res(map())
   def duplicate_node(%Community{} = community, id, args),
     do: Write.duplicate_node(community, id, args)
 
   @doc """
-  Moves a draft tree node to a new group/index.
+  Moves a draft tree node to a new parent/index.
   """
   @spec move_node(Community.t(), T.id(), map()) :: T.domain_res(map())
   def move_node(%Community{} = community, id, args), do: Write.move_node(community, id, args)

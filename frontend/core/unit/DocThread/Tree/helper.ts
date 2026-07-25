@@ -1,7 +1,27 @@
 import { DEFAULT_GROUP_MARKER, DEFAULT_LINK_MARKER, DEFAULT_PAGE_MARKER } from '~/const/marker'
-import type { TDocPublicTreeGroup, TDocPublicTreeItem, TMarkerValue } from '~/spec'
+import type {
+  TDocPublicTreeGroup,
+  TDocPublicTreeItem,
+  TDocPublicTreeNavigationNode,
+  TMarkerValue,
+} from '~/spec'
 
 export const normalizeNodeType = (type?: string | null): string => (type || '').toLowerCase()
+
+export const collectGroupIds = (
+  nodes: readonly TDocPublicTreeNavigationNode[],
+): readonly string[] => {
+  const groupIds: string[] = []
+
+  for (const node of nodes) {
+    if (normalizeNodeType(node.type) !== 'group') continue
+
+    const group = node as TDocPublicTreeGroup
+    groupIds.push(group.id, ...collectGroupIds(group.pages ?? []))
+  }
+
+  return groupIds
+}
 
 export const isLinkNode = (item: TDocPublicTreeItem): boolean =>
   normalizeNodeType(item.type) === 'link'
@@ -35,29 +55,31 @@ export const getNodeMarker = (item: TDocPublicTreeItem): TMarkerValue => {
   return DEFAULT_PAGE_MARKER
 }
 
-export const filterTreeGroups = (
-  groups: readonly TDocPublicTreeGroup[],
+export const filterTreeNodes = (
+  nodes: readonly TDocPublicTreeNavigationNode[],
   query: string,
-): readonly TDocPublicTreeGroup[] => {
+): readonly TDocPublicTreeNavigationNode[] => {
   const normalizedQuery = query.trim().toLowerCase()
-  if (!normalizedQuery) return groups
+  if (!normalizedQuery) return nodes
 
-  const filteredGroups: TDocPublicTreeGroup[] = []
+  const filteredNodes: TDocPublicTreeNavigationNode[] = []
 
-  groups.forEach((group) => {
-    const groupMatched = (group.title || '').toLowerCase().includes(normalizedQuery)
-    const children = group.children ?? []
-    const matchedChildren = children.filter((child) =>
-      (child.title || '').toLowerCase().includes(normalizedQuery),
+  nodes.forEach((node) => {
+    const matched = (node.title || '').toLowerCase().includes(normalizedQuery)
+    const group = normalizeNodeType(node.type) === 'group' ? (node as TDocPublicTreeGroup) : null
+    const matchedChildren = group ? filterTreeNodes(group.pages ?? [], query) : []
+
+    if (!matched && matchedChildren.length === 0) return
+
+    filteredNodes.push(
+      group
+        ? {
+            ...group,
+            pages: matched ? group.pages : matchedChildren,
+          }
+        : node,
     )
-
-    if (!groupMatched && matchedChildren.length === 0) return
-
-    filteredGroups.push({
-      ...group,
-      children: groupMatched ? children : matchedChildren,
-    })
   })
 
-  return filteredGroups
+  return filteredNodes
 }

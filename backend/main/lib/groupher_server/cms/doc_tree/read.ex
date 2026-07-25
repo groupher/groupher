@@ -26,7 +26,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
     ArticleSnapshot,
     Doc,
     Community,
-    DocCoverGroup,
+    DocCoverCard,
     DocCoverItem,
     DocCoverPinnedDoc,
     DocsSiteState,
@@ -211,50 +211,53 @@ defmodule GroupherServer.CMS.DocTree.Read do
     |> Map.new(&{&1.article_hash_id, &1})
   end
 
-  defp build_public_groups(%Community{} = community, nodes, docs_by_doc_id) do
-    children_by_group =
-      nodes
-      |> Enum.filter(&(&1.group_id && &1.type in [:page, :link]))
-      |> Enum.reject(&hidden_node?/1)
-      |> Enum.map(&public_child_map(community, &1, docs_by_doc_id))
-      |> Enum.reject(&is_nil/1)
-      |> Enum.group_by(& &1.group_id)
-
-    nodes
-    |> Enum.filter(&(&1.type == :group and &1.node_id != "pin"))
-    |> Enum.reject(&hidden_node?/1)
-    |> Enum.map(fn group ->
-      group
-      |> public_node_base()
-      |> Map.put(:children, Map.get(children_by_group, group.node_id, []))
-    end)
-  end
-
   defp build_public_tabs(%Community{} = community, nodes, docs_by_doc_id) do
-    groups = build_public_groups(community, nodes, docs_by_doc_id)
-    groups_by_tab = Enum.group_by(groups, & &1.tab_id)
+    navigation_by_parent =
+      nodes
+      |> Enum.filter(&(&1.type in [:group, :page, :link]))
+      |> Enum.group_by(& &1.parent_node_id)
 
     pins_by_tab =
       nodes
       |> Enum.filter(&(&1.type == :pin and not hidden_node?(&1)))
       |> Enum.map(fn pin -> pin |> public_node_base() |> Map.put(:href, pin.href) end)
-      |> Enum.group_by(& &1.tab_id)
+      |> Enum.group_by(& &1.parent_node_id)
 
     nodes
     |> Enum.filter(&(&1.type == :tab))
     |> Enum.reject(&hidden_node?/1)
-    |> Enum.map(fn tab ->
-      tab
-      |> public_node_base()
-      |> Map.put(:pins, Map.get(pins_by_tab, tab.node_id, []))
-      |> Map.put(:groups, Map.get(groups_by_tab, tab.node_id, []))
+    |> Enum.flat_map(fn tab ->
+      groups =
+        build_public_children(
+          community,
+          tab.node_id,
+          navigation_by_parent,
+          docs_by_doc_id,
+          MapSet.new()
+        )
+
+      pins = Map.get(pins_by_tab, tab.node_id, [])
+
+      if groups == [] and pins == [] do
+        []
+      else
+        [
+          tab
+          |> public_node_base()
+          |> Map.put(:pins, pins)
+          |> Map.put(:groups, groups)
+        ]
+      end
     end)
   end
 
   defp build_tabs(nodes, context) do
-    groups = build_groups(nodes, context)
-    groups_by_tab = Enum.group_by(groups, & &1.tab_id)
-    pins_by_tab = nodes |> pins(context) |> Enum.group_by(& &1.tab_id)
+    navigation_by_parent =
+      nodes
+      |> Enum.filter(&(&1.type in [:group, :page, :link]))
+      |> Enum.group_by(& &1.parent_node_id)
+
+    pins_by_tab = nodes |> pins(context) |> Enum.group_by(& &1.parent_node_id)
 
     nodes
     |> Enum.filter(&(&1.type == :tab))
@@ -262,8 +265,74 @@ defmodule GroupherServer.CMS.DocTree.Read do
       tab
       |> to_map(context)
       |> Map.put(:pins, Map.get(pins_by_tab, tab.node_id, []))
-      |> Map.put(:groups, Map.get(groups_by_tab, tab.node_id, []))
+      |> Map.put(
+        :groups,
+        build_children(tab.node_id, navigation_by_parent, context, MapSet.new())
+      )
     end)
+  end
+
+  defp build_children(parent_node_id, children_by_parent, context, ancestors) do
+    if MapSet.member?(ancestors, parent_node_id) do
+      []
+    else
+      ancestors = MapSet.put(ancestors, parent_node_id)
+
+      children_by_parent
+      |> Map.get(parent_node_id, [])
+      |> Enum.sort_by(&{&1.index, &1.id})
+      |> Enum.map(fn node ->
+        node
+        |> to_map(context)
+        |> Map.put(
+          :pages,
+          if(node.type == :group,
+            do: build_children(node.node_id, children_by_parent, context, ancestors),
+            else: []
+          )
+        )
+      end)
+    end
+  end
+
+  defp build_public_children(
+         community,
+         parent_node_id,
+         children_by_parent,
+         docs_by_doc_id,
+         ancestors
+       ) do
+    if MapSet.member?(ancestors, parent_node_id) do
+      []
+    else
+      ancestors = MapSet.put(ancestors, parent_node_id)
+
+      children_by_parent
+      |> Map.get(parent_node_id, [])
+      |> Enum.sort_by(&{&1.index, &1.id})
+      |> Enum.reject(&hidden_node?/1)
+      |> Enum.flat_map(fn
+        %DocTreeNode{type: :group} = group ->
+          pages =
+            build_public_children(
+              community,
+              group.node_id,
+              children_by_parent,
+              docs_by_doc_id,
+              ancestors
+            )
+
+          if pages == [],
+            do: [],
+            else: [group |> public_node_base() |> Map.put(:pages, pages)]
+
+        node ->
+          case public_child_map(community, node, docs_by_doc_id) do
+            nil -> []
+            child -> [child]
+          end
+      end)
+    end
   end
 
   defp public_child_map(
@@ -295,46 +364,37 @@ defmodule GroupherServer.CMS.DocTree.Read do
   defp public_node_base(%DocTreeNode{} = node) do
     %{
       id: node.node_id,
-      tab_id: node.tab_id,
-      group_id: node.group_id,
+      parent_node_id: node.parent_node_id,
       doc_id: node.doc_id,
       type: node.type,
       title: node.title,
-      slug: node.slug,
       index: node.index,
       href: nil,
       marker: node.marker,
       badge: node.badge,
-      children: []
+      pages: []
     }
   end
 
   defp hidden_node?(%DocTreeNode{hidden: true}), do: true
   defp hidden_node?(_node), do: false
 
-  @doc """
-  Builds normal groups from a flat node list.
-
-  ## Examples
-
-      iex> Read.build_groups(nodes)
-      [%{type: :group, children: [_]}]
-  """
+  @doc "Builds every recursive Group subtree from a flat node list."
   @spec build_groups(list(DocTreeNode.t()), map()) :: list(map())
   def build_groups(nodes, context \\ %{}) do
-    children_by_group =
+    children_by_parent =
       nodes
-      |> Enum.filter(&(&1.group_id && &1.type in [:page, :link]))
-      |> Enum.group_by(& &1.group_id)
+      |> Enum.filter(&(&1.type in [:group, :page, :link]))
+      |> Enum.group_by(& &1.parent_node_id)
 
     nodes
-    |> Enum.filter(&(&1.type == :group and &1.node_id != "pin"))
+    |> Enum.filter(&(&1.type == :group))
     |> Enum.map(fn group ->
       group
       |> to_map(context)
       |> Map.put(
-        :children,
-        Enum.map(Map.get(children_by_group, group.node_id, []), &to_map(&1, context))
+        :pages,
+        build_children(group.node_id, children_by_parent, context, MapSet.new())
       )
     end)
   end
@@ -353,20 +413,17 @@ defmodule GroupherServer.CMS.DocTree.Read do
 
     %{
       id: node.node_id,
-      tab_id: node.tab_id,
-      group_id: node.group_id,
+      parent_node_id: node.parent_node_id,
       doc_id: node.doc_id,
       type: node.type,
       title: node.title,
-      slug: node.slug,
       index: node.index,
       href: node.href,
       marker: node.marker,
       badge: node.badge,
       hidden: node.hidden,
-      ui_config: node.ui_config,
       publish_state: publish_state(node, context),
-      children: []
+      pages: []
     }
   end
 
@@ -375,7 +432,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
       draft_versions: %{},
       public_versions: %{},
       public_nodes: %{},
-      cover_groups: %{},
+      cover_cards: %{},
       cover_items: %{},
       pinned_docs: MapSet.new()
     }
@@ -424,12 +481,12 @@ defmodule GroupherServer.CMS.DocTree.Read do
       |> Map.values()
       |> Enum.map(& &1.id)
 
-    cover_groups =
-      DocCoverGroup
-      |> where([g], g.community_id == ^community.id)
-      |> where([g], g.group_id in ^public_row_ids)
+    cover_cards =
+      DocCoverCard
+      |> where([card], card.community_id == ^community.id)
+      |> where([card], card.group_node_id in ^public_row_ids)
       |> Repo.all()
-      |> Map.new(&{&1.group_id, &1})
+      |> Map.new(&{&1.group_node_id, &1})
 
     cover_items =
       DocCoverItem
@@ -450,7 +507,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
       draft_versions: draft_versions,
       public_versions: public_versions,
       public_nodes: public_nodes,
-      cover_groups: cover_groups,
+      cover_cards: cover_cards,
       cover_items: cover_items,
       pinned_docs: pinned_docs
     }
@@ -472,7 +529,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
       draft_version && Map.get(context.public_versions, node.doc_id)
 
     public_row_id = public_node && public_node.id
-    cover_group = public_row_id && Map.get(context.cover_groups, public_row_id)
+    cover_card = public_row_id && Map.get(context.cover_cards, public_row_id)
     cover_item = public_row_id && Map.get(context.cover_items, public_row_id)
 
     %{
@@ -484,7 +541,7 @@ defmodule GroupherServer.CMS.DocTree.Read do
       public_doc_id: public_node && public_node.doc_id,
       has_unpublished_changes: article_changed?(draft_version, public_version),
       last_published_at: public_node && public_node.updated_at,
-      in_cover: not is_nil(cover_group) or not is_nil(cover_item),
+      in_cover: not is_nil(cover_card) or not is_nil(cover_item),
       hidden_from_cover: not is_nil(cover_item) and cover_item.hidden,
       pinned_to_cover: public_row_id && MapSet.member?(context.pinned_docs, public_row_id)
     }

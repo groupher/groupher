@@ -70,7 +70,7 @@ export const analyzeStarlight = async (workspace: TSourceWorkspace): Promise<TSo
 
   return {
     navigation: [scopeNode('sidebar:docs', 'Docs', '/', children)],
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: { configPaths: [configPath], framework: 'starlight', root },
   }
 }

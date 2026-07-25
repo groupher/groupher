@@ -54,7 +54,7 @@ const withDataset = (
       schemaVersion: 2,
       tree: {
         navigation: [],
-        schemaVersion: 1,
+        schemaVersion: 2,
         source: { configPaths: [], framework, root: 'docs' },
       },
     })),

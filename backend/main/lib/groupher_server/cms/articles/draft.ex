@@ -226,7 +226,12 @@ defmodule GroupherServer.CMS.Articles.Draft do
   end
 
   defp build_attrs(%Community{} = community, branch, attrs, body_content, %Author{} = author) do
-    digest = article_digest(attrs, body_content.digest)
+    # A canonical empty Doc has no content digest yet. Article rows still require
+    # a non-empty list/search digest, so use the title until content is written.
+    digest =
+      attrs
+      |> article_digest(body_content.digest)
+      |> normalize_digest(Map.get(attrs, :title))
 
     attrs =
       attrs

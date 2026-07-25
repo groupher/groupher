@@ -14,7 +14,7 @@ type TProps = {
   color?: string
 }
 
-const isDevLogoOption = (item: TIconListOption): item is TDevLogoOption => item.kind === 'dev'
+const isDevLogoOption = (item: TIconListOption): item is TDevLogoOption => item.type === 'dev'
 
 const IconNode: FC<TProps> = ({ item, iconClassName, color }) => {
   if (isDevLogoOption(item)) {

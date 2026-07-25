@@ -31,7 +31,7 @@ export const analyzeRspress = async (workspace: TSourceWorkspace): Promise<TSour
 
   return {
     navigation: directoryTree(root, await loadDocuments(workspace, root)),
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: { configPaths: [configPath], framework: 'rspress', root },
   }
 }

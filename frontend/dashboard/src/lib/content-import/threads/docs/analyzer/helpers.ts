@@ -36,7 +36,7 @@ export const pageNode = (
 ): TSourcePage => ({
   ...(document.frontmatter.draft === true ? { draft: true } : {}),
   ...options,
-  kind: 'page',
+  type: 'page',
   route: document.route,
   sizeBytes: document.sizeBytes,
   sourceId: document.sourcePath,
@@ -47,7 +47,7 @@ export const pageNode = (
 /** Builds a canonical external navigation link. */
 export const linkNode = (title: string, href: string): TSourceLink => ({
   href,
-  kind: 'link',
+  type: 'link',
   sourceId: `external:${href}`,
   title,
 })
@@ -56,16 +56,16 @@ export const linkNode = (title: string, href: string): TSourceLink => ({
 export const sectionNode = (
   sourceId: string,
   title: string,
-  children: TSourceNode[],
-): TSourceSection => ({ children, kind: 'section', sourceId, title })
+  pages: TSourceNode[],
+): TSourceSection => ({ pages, type: 'section', sourceId, title })
 
 /** Builds a top-level source navigation scope and route prefix. */
 export const scopeNode = (
   sourceId: string,
   title: string,
   routePrefix: string,
-  children: TSourceNode[],
-): TSourceScope => ({ children, kind: 'scope', routePrefix, sourceId, title })
+  pages: TSourceNode[],
+): TSourceScope => ({ pages, type: 'scope', routePrefix, sourceId, title })
 
 /** Produces fallback navigation when a framework has no explicit sidebar configuration. */
 export const directoryTree = (

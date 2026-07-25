@@ -24,7 +24,6 @@ describe('docs side tree pins', () => {
       id: 'pin-github',
       type: 'PIN',
       title: 'GitHub',
-      slug: 'github',
       href: 'https://github.com/groupher/groupher',
       publishState: {
         published: true,
@@ -36,7 +35,6 @@ describe('docs side tree pins', () => {
       id: 'pin-github',
       type: SIDE_TREE_NODE_TYPE.PIN,
       title: 'GitHub',
-      slug: 'github',
       href: 'https://github.com/groupher/groupher',
       marker: undefined,
       hidden: undefined,

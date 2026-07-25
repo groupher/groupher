@@ -15,10 +15,8 @@ export default function useSalon() {
     body: 'min-h-0 flex-1 overflow-y-auto px-4 py-3',
     empty: 'grid h-32 place-items-center text-sm text-digest',
     list: 'column gap-y-2',
-    item: cn(
-      'row-center min-h-14 gap-x-3 rounded-sm border border-divider bg-base px-3 py-2',
-      hover('bg'),
-    ),
+    item: cn('column min-h-14 rounded-sm border border-divider bg-base px-3 py-2', hover('bg')),
+    itemRow: 'row-center gap-x-3',
     itemIconWrap: 'grid size-8 shrink-0 place-items-center rounded-sm bg-hover text-digest',
     itemIcon: 'size-4',
     itemMain: 'min-w-0 flex-1',
@@ -27,5 +25,13 @@ export default function useSalon() {
     restoreButton:
       'row-center h-10 min-w-20 shrink-0 justify-center gap-x-1.5 rounded-sm pl-2 pr-2.5 text-xs text-title transition-colors hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50',
     restoreIcon: 'size-3.5',
+    restoreTarget: 'column mt-2 gap-y-2 border-t border-divider pt-2',
+    restoreTargetLabel: 'text-xs text-digest',
+    restoreTargetEmpty: 'text-xs text-digest',
+    restoreTargetControls: 'row-center gap-x-2',
+    restoreTargetSelect:
+      'h-9 min-w-0 flex-1 rounded-sm border border-divider bg-base px-2 text-xs text-title outline-none focus:border-theme',
+    restoreTargetButton:
+      'h-9 shrink-0 rounded-sm bg-theme px-3 text-xs text-white disabled:cursor-not-allowed disabled:opacity-50',
   }
 }

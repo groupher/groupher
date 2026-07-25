@@ -2,6 +2,7 @@ import type { TPublicService } from '@shared/contracts'
 import { ExternalLink, Keyboard, X } from 'lucide-react'
 
 import { Badge } from '@/components/reui/badge'
+import { openExternalUrl } from '@/lib/open-external-url'
 
 import { TerminalSurface } from './TerminalSurface'
 
@@ -43,6 +44,10 @@ export function TerminalPanel({ service, onClose }: TProps) {
               target='_blank'
               rel='noreferrer'
               aria-label={`Open ${service.name}`}
+              onClick={(event) => {
+                event.preventDefault()
+                openExternalUrl(event.currentTarget.href)
+              }}
             >
               <ExternalLink aria-hidden='true' />
             </a>

@@ -6,11 +6,12 @@ import TrashSVG from '~/icons/Trash'
 import useCommunity from '~/stores/community/hooks'
 
 import useSalon from './salon/footer'
-import type { TDocTreeTrashItem } from './spec'
+import type { TDocTreeTrashItem, TSideTreeTab } from './spec'
 import TrashDrawer from './TrashDrawer'
 
 type TProps = {
   baseRevision: number | null
+  tabs: TSideTreeTab[]
   trashItems: TDocTreeTrashItem[]
   trashLoading: boolean
   onReloadTrash: () => void
@@ -19,6 +20,7 @@ type TProps = {
 
 const Footer: FC<TProps> = ({
   baseRevision,
+  tabs,
   trashItems,
   trashLoading,
   onReloadTrash,
@@ -73,6 +75,7 @@ const Footer: FC<TProps> = ({
       <TrashDrawer
         show={trashVisible}
         items={trashItems}
+        tabs={tabs}
         loading={trashLoading}
         baseRevision={baseRevision}
         community={community}

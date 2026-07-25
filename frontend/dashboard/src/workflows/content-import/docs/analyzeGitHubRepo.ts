@@ -120,7 +120,7 @@ const analyzeSourceStep = async (input: TAnalyzeGitHubRepoInput): Promise<void> 
       datasetRef,
       schemaVersion: 1,
       source: {
-        kind: 'repo',
+        type: 'repo',
         platform: 'github',
         revision: repo.commit,
         scopeRef: sourceInfo.repo,

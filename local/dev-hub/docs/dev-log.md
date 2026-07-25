@@ -1,7 +1,7 @@
 # Groupher Dev Hub 工程日志
 
-> 最后更新：2026-07-24
-> 当前状态：macOS 桌面版采用单个不透明 Tauri 窗口，并使用 AppKit 原生阴影。
+> 最后更新：2026-07-25
+> 当前状态：macOS 桌面版采用单个不透明 Tauri 窗口、AppKit 原生阴影，并固定使用 Light appearance。
 
 ## 背景
 
@@ -271,6 +271,7 @@ shadow  1344 × 904
 ├── decorations: true
 ├── transparent: false
 ├── shadow: true
+├── theme: Light
 ├── titleBarStyle: Overlay
 ├── hiddenTitle: true
 └── Web 内容覆盖标题栏区域
@@ -296,6 +297,32 @@ shadow  1344 × 904
 - 无双窗口移动残影；
 - 更少的原生同步代码；
 - 更稳定的未来 macOS 兼容性。
+
+### 7. Dark Mode 下原生阴影过重
+
+单窗口方案稳定后，又发现同一个安装版在系统 Light Mode 下阴影正常，但切换到 Dark Mode 后阴影明显加深。
+
+这里仍然不是页面 CSS 阴影。Dev Hub 页面目前始终使用浅色界面，但窗口没有声明 `theme` 时会跟随系统 appearance：
+
+```text
+系统 Light Mode：浅色页面 + NSAppearanceNameAqua
+系统 Dark Mode： 浅色页面 + NSAppearanceNameDarkAqua
+```
+
+第二种组合让浅色页面被 Dark Aqua 的原生窗口边缘和阴影包围，视觉对比明显加重。AppKit 公开 API 仍然只有 `hasShadow` 开关；`invalidateShadow()` 只能重新计算阴影形状，不能调整 opacity、blur 或 offset。
+
+Tauri 的窗口 `theme` 在 macOS 上是应用级设置。当前 tao 实现会把 `Light` 映射到 `NSAppearanceNameAqua`，因此最终在窗口配置中增加：
+
+```json
+{
+  "shadow": true,
+  "theme": "Light"
+}
+```
+
+重新运行 `make dev.app` 后，在系统 Dark Mode 下验证有效：窗口继续使用 AppKit 原生阴影，但不再切换到明显更重的 Dark Aqua 阴影。
+
+这个处理符合当前产品状态，因为 Dev Hub 尚未提供暗色页面。未来如果正式支持 Dark UI，应移除固定的 Light theme，让页面和原生窗口一起跟随系统 appearance，再分别验证两种模式。
 
 ## 阴影方案对比
 
@@ -358,9 +385,11 @@ Dev Hub 默认运行 production build。只有 `make dev.dev` 才启动带 HMR �
 4. 不要把 AppKit `hasShadow` 当作可调阴影 API；
 5. `invalidateShadow()` 只用于刷新阴影形状，不用于调节强度；
 6. 保持 `decorations: true + titleBarStyle: Overlay`，继续使用原生交通灯和窗口行为；
-7. 修改窗口结构后至少验证：
+7. 在 Dev Hub 只有浅色页面期间保持 `theme: Light`，避免系统 Dark Mode 改变原生窗口阴影；
+8. 修改窗口结构后至少验证：
    - 初次打开；
    - 隐藏后重新唤起；
+   - 系统 Light Mode 和 Dark Mode；
    - resize；
    - 最大化和恢复；
    - 恢复后拖动；

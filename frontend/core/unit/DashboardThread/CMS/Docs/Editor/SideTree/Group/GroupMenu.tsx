@@ -15,13 +15,20 @@ import useSalon from '../salon/group/group_menu'
 import type { TSideTreeGroupMenuAction } from '../spec'
 
 type TProps = {
+  coveredByAncestor?: boolean
   inCover?: boolean
   open?: boolean
   onSelect: (action: TSideTreeGroupMenuAction) => void
   onOpenChange?: (open: boolean) => void
 }
 
-const GroupMenu: FC<TProps> = ({ inCover = false, open = false, onSelect, onOpenChange }) => {
+const GroupMenu: FC<TProps> = ({
+  coveredByAncestor = false,
+  inCover = false,
+  open = false,
+  onSelect,
+  onOpenChange,
+}) => {
   const s = useSalon({ active: open })
   const { t } = useTrans()
   const coverActionTitle = t(
@@ -43,6 +50,19 @@ const GroupMenu: FC<TProps> = ({ inCover = false, open = false, onSelect, onOpen
       onHide={() => onOpenChange?.(false)}
       content={
         <div className={s.menu}>
+          <button
+            type='button'
+            className={s.item}
+            onClick={() => onSelect(SIDE_TREE_GROUP_MENU_ACTION.GROUP)}
+          >
+            <div className={s.iconBox}>
+              <PlusSVG className={s.itemIcon} />
+            </div>
+            <OverflowMarqueeText
+              text={t('dsb.cms.docs.side_tree.menu.new_group')}
+              className={s.itemTitle}
+            />
+          </button>
           <button
             type='button'
             className={s.item}
@@ -69,22 +89,24 @@ const GroupMenu: FC<TProps> = ({ inCover = false, open = false, onSelect, onOpen
               className={s.itemTitle}
             />
           </button>
-          <button
-            type='button'
-            className={s.item}
-            onClick={() =>
-              onSelect(
-                inCover
-                  ? SIDE_TREE_GROUP_MENU_ACTION.REMOVE_FROM_COVER
-                  : SIDE_TREE_GROUP_MENU_ACTION.ADD_TO_COVER,
-              )
-            }
-          >
-            <div className={s.iconBox}>
-              <CoverActionIcon className={s.itemIcon} />
-            </div>
-            <OverflowMarqueeText text={coverActionTitle} className={s.itemTitle} />
-          </button>
+          {!coveredByAncestor && (
+            <button
+              type='button'
+              className={s.item}
+              onClick={() =>
+                onSelect(
+                  inCover
+                    ? SIDE_TREE_GROUP_MENU_ACTION.REMOVE_FROM_COVER
+                    : SIDE_TREE_GROUP_MENU_ACTION.ADD_TO_COVER,
+                )
+              }
+            >
+              <div className={s.iconBox}>
+                <CoverActionIcon className={s.itemIcon} />
+              </div>
+              <OverflowMarqueeText text={coverActionTitle} className={s.itemTitle} />
+            </button>
+          )}
           <button
             type='button'
             className={s.itemDanger}

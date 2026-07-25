@@ -5,7 +5,7 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
       staged delete event
           |
           v
-      inverse_payload["node"] + children
+      inverse_payload["node"] + pages
           |
           +--> doc_tree_nodes(stage=draft)
           +--> retained Doc Article aggregate
@@ -106,12 +106,12 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
          inverse_payload: %{"node" => node} = inverse
        })
        when is_map(node) do
-    children =
+    pages =
       inverse
-      |> Map.get("children", [])
+      |> Map.get("pages", [])
       |> Enum.filter(&is_map/1)
 
-    {:ok, [node | children]}
+    {:ok, [node | pages]}
   end
 
   defp restore_nodes_from_delete_event(_event),
@@ -141,17 +141,14 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
          node_id: node["id"],
          stage: CMS.Const.stage(:draft),
          type: type,
-         tab_id: node["tabId"],
-         group_id: node["groupId"],
+         parent_node_id: node["parentNodeId"],
          doc_id: node[@doc_tree_json_key_doc_id],
          title: node["title"],
-         slug: node["slug"],
          index: node["index"] || 0,
          href: node["href"],
          marker: node["marker"],
          badge: node["badge"],
-         hidden: Map.get(node, "hidden", false),
-         ui_config: Map.get(node, "uiConfig", %{})
+         hidden: Map.get(node, "hidden", false)
        }}
     end
   end
@@ -206,11 +203,9 @@ defmodule GroupherServer.CMS.DocTree.Publish.Restore do
       "eventId" => event.id,
       "nodeId" => node["id"],
       "type" => node[@doc_tree_json_key_type],
-      "tabId" => node["tabId"],
+      "parentNodeId" => node["parentNodeId"],
       "title" => node["title"],
-      "slug" => node["slug"],
-      "docId" => node[@doc_tree_json_key_doc_id],
-      "groupId" => node["groupId"]
+      "docId" => node[@doc_tree_json_key_doc_id]
     }
   end
 

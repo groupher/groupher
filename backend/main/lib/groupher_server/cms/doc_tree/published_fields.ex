@@ -7,7 +7,7 @@ defmodule GroupherServer.CMS.DocTree.PublishedFields do
   leak into the published tree snapshot.
   """
 
-  @node_fields ~w(type title slug index href marker badge hidden ui_config)a
+  @node_fields ~w(type parent_node_id title index href marker badge hidden)a
 
   def node_fields, do: @node_fields
 end

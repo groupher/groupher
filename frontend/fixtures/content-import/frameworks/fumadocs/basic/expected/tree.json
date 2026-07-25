@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "source": {
     "framework": "fumadocs",
     "root": "content/docs",
@@ -7,37 +7,37 @@
   },
   "navigation": [
     {
-      "kind": "scope",
+      "type": "scope",
       "sourceId": "meta:docs",
       "title": "Fixture Docs",
       "routePrefix": "/",
-      "children": [
+      "pages": [
         {
-          "kind": "page",
+          "type": "page",
           "sourceId": "content/docs/index.mdx",
           "sourcePath": "content/docs/index.mdx",
           "title": "Welcome",
           "route": "/index"
         },
         {
-          "kind": "section",
+          "type": "section",
           "sourceId": "separator:guides",
           "title": "Guides",
-          "children": [
+          "pages": [
             {
-              "kind": "section",
+              "type": "section",
               "sourceId": "directory:guide",
               "title": "Guide",
-              "children": [
+              "pages": [
                 {
-                  "kind": "page",
+                  "type": "page",
                   "sourceId": "content/docs/guide/start.mdx",
                   "sourcePath": "content/docs/guide/start.mdx",
                   "title": "Getting Started",
                   "route": "/guide/start"
                 },
                 {
-                  "kind": "page",
+                  "type": "page",
                   "sourceId": "content/docs/guide/advanced.mdx",
                   "sourcePath": "content/docs/guide/advanced.mdx",
                   "title": "Advanced",
@@ -46,13 +46,13 @@
               ]
             },
             {
-              "kind": "link",
+              "type": "link",
               "sourceId": "external:https://example.com",
               "title": "Project",
               "href": "https://example.com"
             },
             {
-              "kind": "page",
+              "type": "page",
               "sourceId": "content/docs/changelog.md",
               "sourcePath": "content/docs/changelog.md",
               "title": "Changelog",

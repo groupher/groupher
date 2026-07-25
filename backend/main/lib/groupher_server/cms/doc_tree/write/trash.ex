@@ -83,46 +83,30 @@ defmodule GroupherServer.CMS.DocTree.Write.Trash do
   end
 
   @doc "Loads a structural subtree in one materialized Tree stage."
-  def subtree_nodes(
-        %Community{} = community,
-        branch,
-        %DocTreeNode{type: :group} = group,
-        stage
-      ) do
-    children =
+  def subtree_nodes(%Community{} = community, branch, %DocTreeNode{} = root, stage) do
+    nodes =
       base_nodes(community, branch, stage)
-      |> where([node], node.group_id == ^group.node_id)
       |> order_by([node], desc: node.index, desc: node.id)
       |> Repo.all()
 
-    children ++ [group]
+    children_by_parent = Enum.group_by(nodes, & &1.parent_node_id)
+    collect_subtree(root, children_by_parent, MapSet.new())
   end
 
-  def subtree_nodes(
-        %Community{} = community,
-        branch,
-        %DocTreeNode{type: :tab} = tab,
-        stage
-      ) do
-    descendants =
-      base_nodes(community, branch, stage)
-      |> where([node], node.tab_id == ^tab.node_id)
-      |> order_by([node], desc: node.index, desc: node.id)
-      |> Repo.all()
+  defp collect_subtree(%DocTreeNode{} = node, children_by_parent, seen) do
+    if MapSet.member?(seen, node.node_id) do
+      []
+    else
+      seen = MapSet.put(seen, node.node_id)
 
-    group_ids =
-      descendants |> Enum.filter(&(&1.type == :group)) |> Enum.map(& &1.node_id)
+      descendants =
+        children_by_parent
+        |> Map.get(node.node_id, [])
+        |> Enum.flat_map(&collect_subtree(&1, children_by_parent, seen))
 
-    children =
-      base_nodes(community, branch, stage)
-      |> where([node], node.group_id in ^group_ids)
-      |> order_by([node], desc: node.index, desc: node.id)
-      |> Repo.all()
-
-    children ++ descendants ++ [tab]
+      descendants ++ [node]
+    end
   end
-
-  def subtree_nodes(_community, _branch, %DocTreeNode{} = node, _stage), do: [node]
 
   defp public_subtree_nodes(%Community{} = community, branch, node_id) do
     case find_node(community, branch, node_id, CMS.Const.stage(:public)) do
@@ -219,18 +203,14 @@ defmodule GroupherServer.CMS.DocTree.Write.Trash do
     %{
       "nodeId" => node.node_id,
       "type" => to_string(node.type),
-      "tabId" => node.tab_id,
-      "groupId" => node.group_id,
+      "parentNodeId" => node.parent_node_id,
       "docId" => node.doc_id,
       "title" => node.title,
-      "slug" => node.slug,
       "index" => node.index,
       "href" => node.href,
       "marker" => node.marker,
       "badge" => node.badge,
-      "hidden" => node.hidden,
-      "templateKey" => node.template_key,
-      "uiConfig" => node.ui_config || %{}
+      "hidden" => node.hidden
     }
   end
 end

@@ -82,12 +82,13 @@ export const fetchDashboardGraphQL = async <TData>(
  * Resolve the first page node in the docs side tree.
  *
  * @example
- * findFirstPage([{ children: [{ type: 'page', docId: 'doc_1' }] }])
+ * findFirstPage([{ pages: [{ type: 'page', docId: 'doc_1' }] }])
  * // => { type: 'page', docId: 'doc_1' }
  */
-export const findFirstPage = (groups: readonly TDocTreeNodeDTO[]): TDocTreeNodeDTO | null => {
-  for (const group of groups) {
-    const page = group.children?.find(isPageNode)
+export const findFirstPage = (nodes: readonly TDocTreeNodeDTO[]): TDocTreeNodeDTO | null => {
+  for (const node of nodes) {
+    if (isPageNode(node)) return node
+    const page = findFirstPage(node.pages ?? [])
     if (page) return page
   }
 
@@ -98,22 +99,27 @@ export const findFirstPage = (groups: readonly TDocTreeNodeDTO[]): TDocTreeNodeD
  * Resolve a page node by its doc id.
  *
  * @example
- * findPageByDocId([{ children: [{ type: 'page', docId: 'doc_1' }] }], 'doc_1')
+ * findPageByDocId([{ pages: [{ type: 'page', docId: 'doc_1' }] }], 'doc_1')
  * // => { type: 'page', docId: 'doc_1' }
  */
 export const findPageByDocId = (
-  groups: readonly TDocTreeNodeDTO[],
+  nodes: readonly TDocTreeNodeDTO[],
   docId: string | null,
 ): TDocTreeNodeDTO | null => {
   if (!docId) return null
 
-  for (const group of groups) {
-    const page = group.children?.find((child) => isPageNode(child) && String(child.docId) === docId)
+  for (const node of nodes) {
+    if (isPageNode(node) && String(node.docId) === docId) return node
+    const page = findPageByDocId(node.pages ?? [], docId)
     if (page) return page
   }
 
   return null
 }
+
+/** Resolve the Tab-owned Group roots used by all recursive editor traversal. */
+export const getDocTreeGroups = (tabs: readonly TDocTreeNodeDTO[]): readonly TDocTreeNodeDTO[] =>
+  tabs.flatMap((tab) => tab.groups ?? [])
 
 /**
  * Fetch the docs editor SSR payload for the selected docId.
@@ -131,8 +137,8 @@ export const getDocEditorInitialData = async (
     const docTree = treeData?.docTree ?? null
     // The editor route must have a concrete doc id. If the URL is empty or stale,
     // pick the first page so SSR can hydrate matching tree + document data.
-    const groups = docTree?.tabs.flatMap((tab) => tab.groups || []) ?? []
-    const activePage = docTree ? findPageByDocId(groups, docId) || findFirstPage(groups) : null
+    const nodes = getDocTreeGroups(docTree?.tabs ?? [])
+    const activePage = docTree ? findPageByDocId(nodes, docId) || findFirstPage(nodes) : null
     const activeDocId = activePage?.docId ?? null
 
     if (!docTree || !activeDocId) return { docTree, docDraft: null, activeDocId: null }

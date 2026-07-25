@@ -711,20 +711,17 @@ type RootMutationType {
   "update docs FAQ in dashboard"
   updateDashboardDocFaq(community: String!, dsbSection: DsbSection, docFaq: DsbDocFaqInput!): Dsb
 
-  "create a docs tree tab"
-  createDocTreeTab(community: String!, baseRevision: Int!, input: DocTreeNodeInput!): DocTreeMutationPayload
+  "create one recursive docs navigation node"
+  createDocTreeNode(
+    community: String!
 
-  "create a docs tree group"
-  createDocTreeGroup(community: String!, baseRevision: Int!, input: DocTreeNodeInput!): DocTreeMutationPayload
+    baseRevision: Int!
 
-  "create a docs tree page"
-  createDocTreePage(community: String!, baseRevision: Int!, input: DocTreeNodeInput!): DocTreeMutationPayload
+    "Immediate parent logical node id; null only for a root Tab."
+    parentNodeId: ID
 
-  "create a docs tree quick link"
-  createDocTreeLink(community: String!, baseRevision: Int!, input: DocTreeNodeInput!): DocTreeMutationPayload
-
-  "create a docs tree top pin link"
-  createDocTreePin(community: String!, baseRevision: Int!, input: DocTreeNodeInput!): DocTreeMutationPayload
+    input: DocTreeNodeInput!
+  ): DocTreeMutationPayload
 
   "update a docs tree node"
   updateDocTreeNode(community: String!, id: ID!, baseRevision: Int!, patch: DocTreeNodePatchInput!): DocTreeMutationPayload
@@ -743,8 +740,8 @@ type RootMutationType {
   "move one published docs page back to draft visibility"
   moveDocToDraft(community: String!, id: ID!): MoveDocToDraftPayload
 
-  "move one docs side-tree group and its children back to draft visibility"
-  moveDocTreeGroupToDraft(community: String!, groupId: ID!): DoneState
+  "create missing article drafts for every published Page in one navigation subtree"
+  moveDocTreeSubtreeToDraft(community: String!, nodeId: ID!): DoneState
 
   "restore a docs draft from an article revision"
   restoreDocDraftSnapshot(community: String!, id: ID!, snapshotId: ID!): DocDraft
@@ -753,34 +750,47 @@ type RootMutationType {
   deleteDocTreeNode(community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
 
   "restore a docs tree item from product trash"
-  restoreDocTreeTrashItem(community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
+  restoreDocTreeTrashItem(
+    community: String!
+
+    id: ID!
+
+    baseRevision: Int!
+
+    "Replacement parent logical node id when the original parent no longer exists."
+    targetParentNodeId: ID
+
+    targetIndex: Int
+  ): DocTreeMutationPayload
 
   "duplicate a docs tree node"
   duplicateDocTreeNode(community: String!, id: ID!, baseRevision: Int!): DocTreeMutationPayload
 
   "move a docs tree node"
-  moveDocTreeNode(community: String!, id: ID!, baseRevision: Int!, targetTabId: ID, targetGroupId: ID, targetIndex: Int): DocTreeMutationPayload
+  moveDocTreeNode(
+    community: String!
 
-  "add a published docs side-tree group to cover"
-  addDocCoverGroup(community: String!, groupId: ID!): DocCoverGroup
+    id: ID!
 
-  "remove a docs side-tree group from cover"
-  removeDocCoverGroup(community: String!, groupId: ID!): DocCoverGroup
+    baseRevision: Int!
 
-  "toggle a docs page visibility in its cover group"
-  setDocCoverItemHidden(community: String!, nodeId: ID!, hidden: Boolean!): DocCoverItem
+    "Target parent logical node id; null only when moving a root Tab."
+    targetParentNodeId: ID
 
-  "reorder docs cover groups"
-  reorderDocCoverGroups(community: String!, ids: [ID!]!): DoneState
+    targetIndex: Int
+  ): DocTreeMutationPayload
 
-  "reorder docs cover items inside a cover group"
-  reorderDocCoverItems(community: String!, coverGroupId: ID!, ids: [ID!]!): DoneState
+  "add a published Group as a Cover Card"
+  addDocCoverCard(community: String!, groupNodeId: ID!): DocCoverCard
 
-  "update docs cover group UI config"
-  updateDocCoverGroupUiConfig(community: String!, id: ID!, uiConfig: Json!): DocCoverGroup
+  "remove a docs Cover Card"
+  removeDocCoverCard(community: String!, groupNodeId: ID!): DocCoverCard
 
-  "update docs cover item UI config"
-  updateDocCoverItemUiConfig(community: String!, id: ID!, uiConfig: Json!): DocCoverItem
+  "reorder docs Cover Cards"
+  reorderDocCoverCards(community: String!, ids: [ID!]!): DoneState
+
+  "update docs Cover Card appearance"
+  updateDocCoverCardAppearance(community: String!, id: ID!, appearance: Json!): DocCoverCard
 
   "pin a published docs page to cover"
   pinDocToCover(community: String!, nodeId: ID!): DocCoverPinnedDoc!
@@ -1118,23 +1128,42 @@ input MarkerInput {
 }
 
 type DocTreeNode {
+  """
+  Stable logical node identity (`doc_tree_nodes.node_id`). The physical
+  database row id is intentionally not exposed by the Tree API.
+  """
   id: ID
-  tabId: ID
-  groupId: ID
+
+  """
+  Immediate parent logical node id in the same Community, Branch, and Stage.
+  This references another row's `node_id`, which is exposed as GraphQL `id`;
+  it never references the physical database row id. Null only for root Tabs.
+  """
+  parentNodeId: ID
+
   docId: ID
+
   type: DocTreeNodeType
+
   title: String
-  slug: String
+
   index: Int
+
   href: String
+
   marker: Marker
+
   badge: String
+
   hidden: Boolean
-  uiConfig: Json
+
   publishState: DocTreeNodePublishState
-  children: [DocTreeNode]
-  pins: [DocTreeNode]
+
   groups: [DocTreeNode]
+
+  pages: [DocTreeNode]
+
+  pins: [DocTreeNode]
 }
 
 type DocTreeNodePublishState {
@@ -1182,20 +1211,31 @@ type DocTree {
 }
 
 type DocPublicTreeNode {
+  "Stable logical `node_id`; the physical database row id is not exposed."
   id: ID
-  tabId: ID
-  groupId: ID
+
+  "Direct parent's logical `node_id`; null only for root Tabs."
+  parentNodeId: ID
+
   docId: ID
+
   type: DocTreeNodeType
+
   title: String
-  slug: String
+
   index: Int
+
   href: String
+
   marker: Marker
+
   badge: String
-  children: [DocPublicTreeNode]
-  pins: [DocPublicTreeNode]
+
   groups: [DocPublicTreeNode]
+
+  pages: [DocPublicTreeNode]
+
+  pins: [DocPublicTreeNode]
 }
 
 type DocPublicTree {
@@ -1234,8 +1274,7 @@ type DocTreeTrashItem {
   docId: ID
   type: String
   title: String
-  slug: String
-  deletedFromGroupId: ID
+  deletedFromParentNodeId: ID
   deletedFromIndex: Int
   deletedAt: DateTime
   restoredAt: DateTime
@@ -1255,34 +1294,30 @@ input DocPublishChangesInput {
 }
 
 type DocCover {
-  groups: [DocCoverGroup]
+  cards: [DocCoverCard!]!
   pinnedDocs: [DocCoverPinnedDoc!]!
 }
 
-type DocCoverGroup {
-  id: ID
-  groupId: ID
-  index: Int
-  uiConfig: Json
-  title: String
-  group: DocTreeNode
-  items: [DocCoverItem]
+type DocCoverCard {
+  id: ID!
+  groupNodeId: ID!
+  index: Int!
+  appearance: Json!
+  title: String!
+  items: [DocCoverCardItem!]!
 }
 
-type DocCoverItem {
-  id: ID
-  nodeId: ID
-  index: Int
-  hidden: Boolean
-  uiConfig: Json
+type DocCoverCardItem {
+  id: ID!
+  nodeId: ID!
+  index: Int!
   docId: ID
-  type: DocTreeNodeType
-  title: String
-  href: String
+  type: DocTreeNodeType!
+  title: String!
+  href: String!
   marker: Marker
-  digest: String
   badge: String
-  node: DocTreeNode
+  leafCount: Int
 }
 
 type DocCoverPinnedDoc {
@@ -1335,26 +1370,22 @@ type MoveDocToDraftPayload {
 }
 
 input DocTreeNodeInput {
-  tabId: ID
-  groupId: ID
-  title: String
-  slug: String
+  type: DocTreeNodeType!
+  title: String!
+  docId: ID
   index: Int
   href: String
   marker: MarkerInput
   badge: String
   hidden: Boolean
-  uiConfig: Json
 }
 
 input DocTreeNodePatchInput {
   title: String
-  slug: String
   href: String
   marker: MarkerInput
   badge: String
   hidden: Boolean
-  uiConfig: Json
 }
 
 type DsbThemePresetOption {

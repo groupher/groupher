@@ -61,7 +61,7 @@ export function useStickyColumns<TData>(table: Table<TData>, options?: TStickyOp
       }
     }
 
-    const mk = (kind: 'header' | 'body', colId: string): TStickyProps => {
+    const mk = (rowType: 'header' | 'body', colId: string): TStickyProps => {
       const width = widthMap.get(colId) ?? 0
       const pinned = sideMap.get(colId) ?? false
 
@@ -70,9 +70,9 @@ export function useStickyColumns<TData>(table: Table<TData>, options?: TStickyOp
       if (!pinned) return { className: '', pinned, style }
 
       style.position = 'sticky'
-      style.zIndex = kind === 'header' ? 2 : 1
+      style.zIndex = rowType === 'header' ? 2 : 1
       const classParts: string[] = [bg('pageBg')]
-      if (kind === 'header') classParts.push(zIndex('tableStickyColumn'))
+      if (rowType === 'header') classParts.push(zIndex('tableStickyColumn'))
 
       if (pinned === 'left') {
         style.left = leftOffset.get(colId) ?? 0

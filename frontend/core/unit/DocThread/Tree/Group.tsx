@@ -7,17 +7,18 @@ import Item from './Item'
 import useSalon from './salon/group'
 
 type TProps = {
-  collapsed: boolean
+  collapsedGroupIds: ReadonlySet<string>
   group: TDocPublicTreeGroup
   forceOpen?: boolean
   onToggle: (groupId: string) => void
 }
 
-const Group: FC<TProps> = ({ collapsed, group, forceOpen = false, onToggle }) => {
+const Group: FC<TProps> = ({ collapsedGroupIds, group, forceOpen = false, onToggle }) => {
+  const collapsed = collapsedGroupIds.has(group.id)
   const displayOpen = forceOpen || !collapsed
   const s = useSalon({ open: displayOpen })
 
-  const children = group.children ?? []
+  const pages = group.pages ?? []
 
   return (
     <section className={s.wrapper}>
@@ -32,9 +33,19 @@ const Group: FC<TProps> = ({ collapsed, group, forceOpen = false, onToggle }) =>
       </button>
 
       <div className={s.children}>
-        {children.map((item) => (
-          <Item key={item.id} item={item} />
-        ))}
+        {pages.map((item) =>
+          String(item.type).toLowerCase() === 'group' ? (
+            <Group
+              key={item.id}
+              collapsedGroupIds={collapsedGroupIds}
+              forceOpen={forceOpen}
+              group={item as TDocPublicTreeGroup}
+              onToggle={onToggle}
+            />
+          ) : (
+            <Item key={item.id} item={item} />
+          ),
+        )}
       </div>
     </section>
   )

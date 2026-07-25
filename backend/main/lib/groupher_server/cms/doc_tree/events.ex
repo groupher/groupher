@@ -31,7 +31,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
 
   require CMS.Const
 
-  @tree_fields ~w(title slug marker badge hidden href ui_config)a
+  @tree_fields ~w(title marker badge hidden href)a
   @doc_tree_json_key_node CMS.Const.doc_tree_json_key(:node)
   @doc_tree_json_key_id CMS.Const.doc_tree_json_key(:id)
   @doc_tree_json_key_type CMS.Const.doc_tree_json_key(:type)
@@ -250,7 +250,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
     %{
       type: node_event_type(node, :delete),
       payload: %{@doc_tree_json_key_node => node_payload},
-      inverse: %{@doc_tree_json_key_node => node_payload, "children" => children_payload}
+      inverse: %{@doc_tree_json_key_node => node_payload, "pages" => children_payload}
     }
   end
 
@@ -272,13 +272,6 @@ defmodule GroupherServer.CMS.DocTree.Events do
         after_parent_id,
         after_index
       ) do
-    {before_parent_key, after_parent_key, inverse_parent_key} =
-      if node.type in [:group, :pin] do
-        {"beforeTabId", "afterTabId", "targetTabId"}
-      else
-        {"beforeGroupId", "afterGroupId", "targetGroupId"}
-      end
-
     %{
       type: node_event_type(node, :move),
       payload: %{
@@ -286,14 +279,14 @@ defmodule GroupherServer.CMS.DocTree.Events do
         "nodeType" => to_string(node.type),
         "docId" => node.doc_id,
         "title" => node.title,
-        before_parent_key => before_parent_id,
-        after_parent_key => after_parent_id,
+        "beforeParentNodeId" => before_parent_id,
+        "afterParentNodeId" => after_parent_id,
         "beforeIndex" => before_index,
         "afterIndex" => after_index
       },
       inverse: %{
         "nodeId" => node.node_id,
-        inverse_parent_key => before_parent_id,
+        "targetParentNodeId" => before_parent_id,
         "targetIndex" => before_index
       }
     }
@@ -720,8 +713,7 @@ defmodule GroupherServer.CMS.DocTree.Events do
   defp node_payload(%DocTreeNode{} = node) do
     Snapshot.node_json(node)
     |> Map.merge(%{
-      "tabId" => node.tab_id,
-      "groupId" => node.group_id,
+      "parentNodeId" => node.parent_node_id,
       "index" => node.index
     })
   end

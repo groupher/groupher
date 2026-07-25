@@ -21,6 +21,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
 
     {:ok, group} =
       CMS.DocTree.create_group(community, %{
+        parent_node_id: root_doc_tab_node_id(community),
         title: "Guides",
         slug: "guides",
         base_revision: state.tree_lock_version
@@ -30,7 +31,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
       CMS.DocTree.create_page(
         community,
         %{
-          group_id: group.node.id,
+          parent_node_id: group.node.id,
           title: "Install",
           slug: "install",
           base_revision: group.revision
@@ -84,6 +85,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
 
     {:ok, group} =
       CMS.DocTree.create_group(community, %{
+        parent_node_id: root_doc_tab_node_id(community),
         title: "Drafts",
         slug: "drafts",
         base_revision: state.tree_lock_version
@@ -93,7 +95,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
       CMS.DocTree.create_page(
         community,
         %{
-          group_id: group.node.id,
+          parent_node_id: group.node.id,
           title: "Unpublished",
           slug: "unpublished",
           base_revision: group.revision
@@ -130,6 +132,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
 
     {:ok, group} =
       CMS.DocTree.create_group(community, %{
+        parent_node_id: root_doc_tab_node_id(community),
         title: "Guides",
         slug: "guides",
         base_revision: state.tree_lock_version
@@ -139,7 +142,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
       CMS.DocTree.create_page(
         community,
         %{
-          group_id: group.node.id,
+          parent_node_id: group.node.id,
           title: "Install",
           slug: "install",
           base_revision: group.revision
@@ -151,7 +154,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
       CMS.DocTree.create_page(
         community,
         %{
-          group_id: group.node.id,
+          parent_node_id: group.node.id,
           title: "Configure",
           slug: "configure",
           base_revision: first.revision
@@ -206,6 +209,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
 
     {:ok, group} =
       CMS.DocTree.create_group(community, %{
+        parent_node_id: root_doc_tab_node_id(community),
         title: "Links",
         slug: "links",
         base_revision: state.tree_lock_version
@@ -213,7 +217,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
 
     {:ok, link} =
       CMS.DocTree.create_link(community, %{
-        group_id: group.node.id,
+        parent_node_id: group.node.id,
         title: "Reference",
         slug: "reference",
         href: "https://example.com/reference",
@@ -260,6 +264,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
 
     {:ok, group} =
       CMS.DocTree.create_group(community, %{
+        parent_node_id: root_doc_tab_node_id(community),
         title: "Guides",
         slug: "guides",
         base_revision: state.tree_lock_version
@@ -269,7 +274,7 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
       CMS.DocTree.create_page(
         community,
         %{
-          group_id: group.node.id,
+          parent_node_id: group.node.id,
           title: "Install",
           slug: "install",
           base_revision: group.revision
@@ -331,14 +336,66 @@ defmodule GroupherServer.Test.CMS.DocTree.TrashAction do
            )
   end
 
-  defp empty_docs_community(user) do
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
+  test "restore requires and accepts a replacement parent when the original parent is gone" do
+    {:ok, user} = db_insert(:user)
+    {:ok, community} = empty_docs_community(user)
+    {:ok, state} = ORM.find_by(DocsSiteState, community_id: community.id)
 
-    with {:ok, %Community{} = community} <- CMS.Communities.create(community_attrs, user),
-         {:ok, _} <- CMS.DocTree.delete_demo_template(community) do
-      {:ok, community}
-    end
+    {:ok, original_parent} =
+      CMS.DocTree.create_group(community, %{
+        parent_node_id: root_doc_tab_node_id(community),
+        title: "Original",
+        base_revision: state.tree_lock_version
+      })
+
+    {:ok, child} =
+      CMS.DocTree.create_group(community, %{
+        parent_node_id: original_parent.node.id,
+        title: "Nested",
+        base_revision: original_parent.revision
+      })
+
+    {:ok, target_parent} =
+      CMS.DocTree.create_group(community, %{
+        parent_node_id: root_doc_tab_node_id(community),
+        title: "Target",
+        base_revision: child.revision
+      })
+
+    {:ok, child_deleted} =
+      CMS.DocTree.delete_node(community, child.node.id, %{
+        base_revision: target_parent.revision,
+        actor_id: user.id
+      })
+
+    {:ok, [child_trash_item]} = CMS.DocTree.trash_items(community)
+
+    {:ok, parent_deleted} =
+      CMS.DocTree.delete_node(community, original_parent.node.id, %{
+        base_revision: child_deleted.revision,
+        actor_id: user.id
+      })
+
+    assert {:error,
+            {:custom,
+             "The original Docs Tree parent no longer exists; select a new parent before restoring."}} =
+             CMS.DocTree.restore_trash_item(community, child_trash_item.id, %{
+               base_revision: parent_deleted.revision,
+               actor_id: user.id
+             })
+
+    assert {:ok, restored} =
+             CMS.DocTree.restore_trash_item(community, child_trash_item.id, %{
+               base_revision: parent_deleted.revision,
+               actor_id: user.id,
+               target_parent_node_id: target_parent.node.id,
+               target_index: 0
+             })
+
+    assert restored.node.parent_node_id == target_parent.node.id
   end
+
+  defp empty_docs_community(user), do: create_empty_docs_community(user)
 
   defp tree_node_exists?(community, node_id, stage) do
     DocTreeNode

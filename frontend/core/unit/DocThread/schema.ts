@@ -1,5 +1,7 @@
 import { gql } from 'urql'
 
+import { DOC_TREE_MAX_DEPTH } from '~/const/dsb/docs'
+
 const docPublicTreeMarkerFields = gql`
   fragment docPublicTreeMarkerFields on Marker {
     type
@@ -23,12 +25,10 @@ const docPublicTreeMarkerFields = gql`
 const docPublicTreeNodeFields = gql`
   fragment docPublicTreeNodeFields on DocPublicTreeNode {
     id
-    tabId
-    groupId
+    parentNodeId
     docId
     type
     title
-    slug
     index
     href
     marker {
@@ -36,6 +36,11 @@ const docPublicTreeNodeFields = gql`
     }
     badge
   }
+`
+
+const docPublicTreeNodeSelection = (depth: number): string => `
+  ...docPublicTreeNodeFields
+  ${depth > 0 ? `pages { ${docPublicTreeNodeSelection(depth - 1)} }` : ''}
 `
 
 const docPublicTree = gql`
@@ -47,10 +52,7 @@ const docPublicTree = gql`
           ...docPublicTreeNodeFields
         }
         groups {
-          ...docPublicTreeNodeFields
-          children {
-            ...docPublicTreeNodeFields
-          }
+          ${docPublicTreeNodeSelection(DOC_TREE_MAX_DEPTH)}
         }
       }
     }

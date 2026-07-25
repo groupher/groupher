@@ -22,7 +22,7 @@ describe('decodeSourceTree', () => {
     expect(() =>
       decodeSourceTree({
         navigation: [],
-        schemaVersion: 2,
+        schemaVersion: 1,
         source: { configPaths: [], framework: 'vitepress', root: 'docs' },
       }),
     ).toThrow('sourceTree.schemaVersion')
@@ -34,21 +34,21 @@ describe('decodeSourceTree', () => {
         {
           navigation: [
             {
-              children: [
+              pages: [
                 {
-                  kind: 'page',
+                  type: 'page',
                   route: '/start',
                   sourceId: 'docs/start.md',
                   sourcePath: 'docs/start.md',
                   title: 'Start',
                 },
               ],
-              kind: 'scope',
+              type: 'scope',
               sourceId: 'docs',
               title: 'Docs',
             },
           ],
-          schemaVersion: 1,
+          schemaVersion: 2,
           source: { configPaths: [], framework: 'vitepress', root: 'docs' },
         },
         { maxNodes: 1 },

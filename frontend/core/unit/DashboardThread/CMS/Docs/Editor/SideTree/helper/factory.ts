@@ -39,12 +39,12 @@ export const makeLocalSideTreeId = (prefix: string): string => {
  *
  * @example
  * const groups = cloneDemoGroups()
- * groups[0].children !== DEMO_SIDE_TREE_GROUPS[0].children
+ * groups[0].pages !== DEMO_SIDE_TREE_GROUPS[0].pages
  */
 export const cloneDemoGroups = (): TSideTreeGroup[] =>
   DEMO_SIDE_TREE_GROUPS.map((group) => ({
     ...group,
-    children: group.children.map((child) => ({ ...child })),
+    pages: group.pages.map((child) => ({ ...child })),
   }))
 
 /**
@@ -56,11 +56,11 @@ export const cloneDemoGroups = (): TSideTreeGroup[] =>
  */
 export const createSideTreeGroup = (untitledTitle: string): TSideTreeGroup => ({
   id: makeLocalSideTreeId(SIDE_TREE_ID_PREFIX.GROUP),
-  tabId: '',
+  parentNodeId: '',
   type: SIDE_TREE_NODE_TYPE.GROUP,
   title: untitledTitle,
   expanded: true,
-  children: [],
+  pages: [],
 })
 
 export const createSideTreePin = (untitledTitle: string): TSideTreePin => ({

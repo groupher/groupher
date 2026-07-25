@@ -5,10 +5,10 @@ import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 import { DOC_COVER_VIEW } from '~/unit/DocCovers/constant'
 import S from '~/unit/DocCovers/schema'
-import type { TDocCoversData } from '~/unit/DocCovers/spec'
+import type { TDocCovers } from '~/unit/DocCovers/spec'
 
-const EMPTY_DOC_COVERS: TDocCoversData = {
-  groups: [],
+const EMPTY_DOC_COVERS: TDocCovers = {
+  cards: [],
   pinnedDocs: [],
 }
 
@@ -21,14 +21,14 @@ type TRet = {
   gotoFAQDetailLayout: () => void
   back2Layout: () => void
   docFaq: TDocFaq
-  docCoversData: TDocCoversData
+  docCoversData: TDocCovers
 }
 
 export default function useLogic(): TRet {
   const dashboard = useDashboard()
   const article$ = useArticle()
   const { slug: community } = useCommunity()
-  const { data } = useQuery<{ docCover?: TDocCoversData }>(S.docCover, {
+  const { data } = useQuery<{ docCover?: TDocCovers }>(S.docCover, {
     community,
     view: DOC_COVER_VIEW.PUBLIC,
   })

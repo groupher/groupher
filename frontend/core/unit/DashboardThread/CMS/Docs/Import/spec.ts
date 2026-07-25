@@ -3,7 +3,7 @@ import type { PHASE } from './constant'
 
 export type TImportPhase = (typeof PHASE)[keyof typeof PHASE]
 
-export type TImportTreeChild = {
+export type TImportTreeLeaf = {
   sourceId: string
   sourcePath?: string
   title: string
@@ -11,10 +11,13 @@ export type TImportTreeChild = {
 }
 
 export type TImportTreeGroup = {
-  children: TImportTreeChild[]
+  pages: TImportTreeNode[]
   sourceId: string
   title: string
+  type: 'group'
 }
+
+export type TImportTreeNode = TImportTreeGroup | TImportTreeLeaf
 
 export type TImportTreeTab = {
   groups: TImportTreeGroup[]
@@ -23,9 +26,9 @@ export type TImportTreeTab = {
 }
 
 export type TImportSourceNode = {
-  children?: TImportSourceNode[]
+  pages?: TImportSourceNode[]
   draft?: boolean
-  kind: 'link' | 'page' | 'scope' | 'section'
+  type: 'link' | 'page' | 'scope' | 'section'
   navigationStatus?: 'unlisted'
   sizeBytes?: number
   sourceId: string

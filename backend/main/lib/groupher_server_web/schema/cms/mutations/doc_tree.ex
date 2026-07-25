@@ -5,64 +5,18 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
   use Helper.GqlSchemaSuite
 
   object :cms_doc_tree_mutations do
-    @desc "create a docs tree tab"
-    field :create_doc_tree_tab, :doc_tree_mutation_payload do
+    @desc "create one recursive docs navigation node"
+    field :create_doc_tree_node, :doc_tree_mutation_payload do
       arg(:community, non_null(:string))
       arg(:base_revision, non_null(:integer))
+      @desc "Immediate parent logical node id; null only for a root Tab."
+      arg(:parent_node_id, :id)
       arg(:input, non_null(:doc_tree_node_input))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.create_doc_tree_tab/3)
-    end
-
-    @desc "create a docs tree group"
-    field :create_doc_tree_group, :doc_tree_mutation_payload do
-      arg(:community, non_null(:string))
-      arg(:base_revision, non_null(:integer))
-      arg(:input, non_null(:doc_tree_node_input))
-
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      middleware(M.PutCurrentUser)
-      resolve(&R.CMS.create_doc_tree_group/3)
-    end
-
-    @desc "create a docs tree page"
-    field :create_doc_tree_page, :doc_tree_mutation_payload do
-      arg(:community, non_null(:string))
-      arg(:base_revision, non_null(:integer))
-      arg(:input, non_null(:doc_tree_node_input))
-
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      middleware(M.PutCurrentUser)
-      resolve(&R.CMS.create_doc_tree_page/3)
-    end
-
-    @desc "create a docs tree quick link"
-    field :create_doc_tree_link, :doc_tree_mutation_payload do
-      arg(:community, non_null(:string))
-      arg(:base_revision, non_null(:integer))
-      arg(:input, non_null(:doc_tree_node_input))
-
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      middleware(M.PutCurrentUser)
-      resolve(&R.CMS.create_doc_tree_link/3)
-    end
-
-    @desc "create a docs tree top pin link"
-    field :create_doc_tree_pin, :doc_tree_mutation_payload do
-      arg(:community, non_null(:string))
-      arg(:base_revision, non_null(:integer))
-      arg(:input, non_null(:doc_tree_node_input))
-
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      middleware(M.PutCurrentUser)
-      resolve(&R.CMS.create_doc_tree_pin/3)
+      resolve(&R.CMS.create_doc_tree_node/3)
     end
 
     @desc "update a docs tree node"
@@ -128,15 +82,15 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       resolve(&R.CMS.move_doc_to_draft/3)
     end
 
-    @desc "move one docs side-tree group and its children back to draft visibility"
-    field :move_doc_tree_group_to_draft, :done_state do
+    @desc "create missing article drafts for every published Page in one navigation subtree"
+    field :move_doc_tree_subtree_to_draft, :done_state do
       arg(:community, non_null(:string))
-      arg(:group_id, non_null(:id))
+      arg(:node_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
       middleware(M.PutCurrentUser)
-      resolve(&R.CMS.move_doc_tree_group_to_draft/3)
+      resolve(&R.CMS.move_doc_tree_subtree_to_draft/3)
     end
 
     @desc "restore a docs draft from an article revision"
@@ -168,6 +122,9 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:base_revision, non_null(:integer))
+      @desc "Replacement parent logical node id when the original parent no longer exists."
+      arg(:target_parent_node_id, :id)
+      arg(:target_index, :integer)
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
@@ -192,8 +149,8 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
       arg(:base_revision, non_null(:integer))
-      arg(:target_tab_id, :id)
-      arg(:target_group_id, :id)
+      @desc "Target parent logical node id; null only when moving a root Tab."
+      arg(:target_parent_node_id, :id)
       arg(:target_index, :integer)
 
       middleware(M.Authorize, :login)
@@ -202,78 +159,45 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.DocTree do
       resolve(&R.CMS.move_doc_tree_node/3)
     end
 
-    @desc "add a published docs side-tree group to cover"
-    field :add_doc_cover_group, :doc_cover_group do
+    @desc "add a published Group as a Cover Card"
+    field :add_doc_cover_card, :doc_cover_card do
       arg(:community, non_null(:string))
-      arg(:group_id, non_null(:id))
+      arg(:group_node_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.add_doc_cover_group/3)
+      resolve(&R.CMS.add_doc_cover_card/3)
     end
 
-    @desc "remove a docs side-tree group from cover"
-    field :remove_doc_cover_group, :doc_cover_group do
+    @desc "remove a docs Cover Card"
+    field :remove_doc_cover_card, :doc_cover_card do
       arg(:community, non_null(:string))
-      arg(:group_id, non_null(:id))
+      arg(:group_node_id, non_null(:id))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.remove_doc_cover_group/3)
+      resolve(&R.CMS.remove_doc_cover_card/3)
     end
 
-    @desc "toggle a docs page visibility in its cover group"
-    field :set_doc_cover_item_hidden, :doc_cover_item do
-      arg(:community, non_null(:string))
-      arg(:node_id, non_null(:id))
-      arg(:hidden, non_null(:boolean))
-
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.set_doc_cover_item_hidden/3)
-    end
-
-    @desc "reorder docs cover groups"
-    field :reorder_doc_cover_groups, :done_state do
+    @desc "reorder docs Cover Cards"
+    field :reorder_doc_cover_cards, :done_state do
       arg(:community, non_null(:string))
       arg(:ids, non_null(list_of(non_null(:id))))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.reorder_doc_cover_groups/3)
+      resolve(&R.CMS.reorder_doc_cover_cards/3)
     end
 
-    @desc "reorder docs cover items inside a cover group"
-    field :reorder_doc_cover_items, :done_state do
-      arg(:community, non_null(:string))
-      arg(:cover_group_id, non_null(:id))
-      arg(:ids, non_null(list_of(non_null(:id))))
-
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.reorder_doc_cover_items/3)
-    end
-
-    @desc "update docs cover group UI config"
-    field :update_doc_cover_group_ui_config, :doc_cover_group do
+    @desc "update docs Cover Card appearance"
+    field :update_doc_cover_card_appearance, :doc_cover_card do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
-      arg(:ui_config, non_null(:json))
+      arg(:appearance, non_null(:json))
 
       middleware(M.Authorize, :login)
       middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.update_doc_cover_group_ui_config/3)
-    end
-
-    @desc "update docs cover item UI config"
-    field :update_doc_cover_item_ui_config, :doc_cover_item do
-      arg(:community, non_null(:string))
-      arg(:id, non_null(:id))
-      arg(:ui_config, non_null(:json))
-
-      middleware(M.Authorize, :login)
-      middleware(M.FrontDesk, :community)
-      resolve(&R.CMS.update_doc_cover_item_ui_config/3)
+      resolve(&R.CMS.update_doc_cover_card_appearance/3)
     end
 
     @desc "pin a published docs page to cover"

@@ -13,16 +13,16 @@ export default function DocCovers({
   layout,
   data,
   editable = false,
-  onEditGroup,
+  onEditCard,
   onAddPinnedDoc,
   onEditPinnedDoc,
   onUnpinDoc,
   onReorderPinnedDocs,
 }: TDocCoversProps) {
   const props = {
-    groups: data.groups,
+    cards: data.cards,
     editable,
-    onEditGroup,
+    onEditCard,
   }
 
   let content = <StackCardsLayout {...props} />

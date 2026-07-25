@@ -210,23 +210,31 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object :doc_tree_node do
+    @desc """
+    Stable logical node identity (`doc_tree_nodes.node_id`). The physical
+    database row id is intentionally not exposed by the Tree API.
+    """
     field(:id, :id)
-    field(:tab_id, :id)
-    field(:group_id, :id)
+
+    @desc """
+    Immediate parent logical node id in the same Community, Branch, and Stage.
+    This references another row's `node_id`, which is exposed as GraphQL `id`;
+    it never references the physical database row id. Null only for root Tabs.
+    """
+    field(:parent_node_id, :id)
+
     field(:doc_id, :id)
     field(:type, :doc_tree_node_type)
     field(:title, :string)
-    field(:slug, :string)
     field(:index, :integer)
     field(:href, :string)
     field(:marker, :marker)
     field(:badge, :string)
     field(:hidden, :boolean)
-    field(:ui_config, :json)
     field(:publish_state, :doc_tree_node_publish_state)
-    field(:children, list_of(:doc_tree_node))
-    field(:pins, list_of(:doc_tree_node))
     field(:groups, list_of(:doc_tree_node))
+    field(:pages, list_of(:doc_tree_node))
+    field(:pins, list_of(:doc_tree_node))
   end
 
   object :doc_tree_node_publish_state do
@@ -274,20 +282,21 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object :doc_public_tree_node do
+    @desc "Stable logical `node_id`; the physical database row id is not exposed."
     field(:id, :id)
-    field(:tab_id, :id)
-    field(:group_id, :id)
+
+    @desc "Direct parent's logical `node_id`; null only for root Tabs."
+    field(:parent_node_id, :id)
     field(:doc_id, :id)
     field(:type, :doc_tree_node_type)
     field(:title, :string)
-    field(:slug, :string)
     field(:index, :integer)
     field(:href, :string)
     field(:marker, :marker)
     field(:badge, :string)
-    field(:children, list_of(:doc_public_tree_node))
-    field(:pins, list_of(:doc_public_tree_node))
     field(:groups, list_of(:doc_public_tree_node))
+    field(:pages, list_of(:doc_public_tree_node))
+    field(:pins, list_of(:doc_public_tree_node))
   end
 
   object :doc_public_tree do
@@ -326,8 +335,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:doc_id, :id)
     field(:type, :string)
     field(:title, :string)
-    field(:slug, :string)
-    field(:deleted_from_group_id, :id)
+    field(:deleted_from_parent_node_id, :id)
     field(:deleted_from_index, :integer)
     field(:deleted_at, :datetime)
     field(:restored_at, :datetime)
@@ -347,34 +355,30 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   object :doc_cover do
-    field(:groups, list_of(:doc_cover_group))
+    field(:cards, non_null(list_of(non_null(:doc_cover_card))))
     field(:pinned_docs, non_null(list_of(non_null(:doc_cover_pinned_doc))))
   end
 
-  object :doc_cover_group do
-    field(:id, :id)
-    field(:group_id, :id)
-    field(:index, :integer)
-    field(:ui_config, :json)
-    field(:title, :string)
-    field(:group, :doc_tree_node)
-    field(:items, list_of(:doc_cover_item))
+  object :doc_cover_card do
+    field(:id, non_null(:id))
+    field(:group_node_id, non_null(:id))
+    field(:index, non_null(:integer))
+    field(:appearance, non_null(:json))
+    field(:title, non_null(:string))
+    field(:items, non_null(list_of(non_null(:doc_cover_card_item))))
   end
 
-  object :doc_cover_item do
-    field(:id, :id)
-    field(:node_id, :id)
-    field(:index, :integer)
-    field(:hidden, :boolean)
-    field(:ui_config, :json)
+  object :doc_cover_card_item do
+    field(:id, non_null(:id))
+    field(:node_id, non_null(:id))
+    field(:index, non_null(:integer))
     field(:doc_id, :id)
-    field(:type, :doc_tree_node_type)
-    field(:title, :string)
-    field(:href, :string)
+    field(:type, non_null(:doc_tree_node_type))
+    field(:title, non_null(:string))
+    field(:href, non_null(:string))
     field(:marker, :marker)
-    field(:digest, :string)
     field(:badge, :string)
-    field(:node, :doc_tree_node)
+    field(:leaf_count, :integer)
   end
 
   object :doc_cover_pinned_doc do
@@ -425,26 +429,22 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   input_object :doc_tree_node_input do
-    field(:tab_id, :id)
-    field(:group_id, :id)
-    field(:title, :string)
-    field(:slug, :string)
+    field(:type, non_null(:doc_tree_node_type))
+    field(:title, non_null(:string))
+    field(:doc_id, :id)
     field(:index, :integer)
     field(:href, :string)
     field(:marker, :marker_input)
     field(:badge, :string)
     field(:hidden, :boolean)
-    field(:ui_config, :json)
   end
 
   input_object :doc_tree_node_patch_input do
     field(:title, :string)
-    field(:slug, :string)
     field(:href, :string)
     field(:marker, :marker_input)
     field(:badge, :string)
     field(:hidden, :boolean)
-    field(:ui_config, :json)
   end
 
   object :dsb_theme_preset_option do

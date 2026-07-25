@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { TPinnedDocAppearance } from '~/unit/DocCovers/spec'
+import type { TDocCoverPinnedDocAppearance } from '~/unit/DocCovers/spec'
 
 import DashboardSchema from '../../../schema'
 import useLogic from './useLogic'
@@ -31,7 +31,7 @@ describe('docs cover appearance', () => {
   })
 
   it('serializes appearance for the Json scalar mutation variable', async () => {
-    const appearance: TPinnedDocAppearance = { dark: {}, light: {} }
+    const appearance: TDocCoverPinnedDocAppearance = { dark: {}, light: {} }
     const { result } = renderHook(() => useLogic())
 
     await act(() => result.current.updateAppearance('node-1', appearance))

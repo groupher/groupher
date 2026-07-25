@@ -1,33 +1,31 @@
 import type { FC } from 'react'
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 
-import type { TDocPublicTreeGroup } from '~/spec'
+import type { TDocPublicTreeGroup, TDocPublicTreeNavigationNode } from '~/spec'
 
 import Group from './Group'
-import { filterTreeGroups } from './helper'
+import { collectGroupIds, filterTreeNodes, normalizeNodeType } from './helper'
+import Item from './Item'
 import useSalon from './salon'
 import Toolbar from './Toolbar'
 
 type TProps = {
   compact?: boolean
-  groups: readonly TDocPublicTreeGroup[]
+  nodes: readonly TDocPublicTreeNavigationNode[]
   onToggleTree?: () => void
 }
 
-const Tree: FC<TProps> = ({ compact = false, groups, onToggleTree }) => {
+const Tree: FC<TProps> = ({ compact = false, nodes, onToggleTree }) => {
   const s = useSalon({ compact })
   const [searching, setSearching] = useState(false)
   const [query, setQuery] = useState('')
   const [collapsedGroupIds, setCollapsedGroupIds] = useState<ReadonlySet<string>>(() => new Set())
   const deferredQuery = useDeferredValue(query)
   const activeSearch = searching && deferredQuery.trim().length > 0
-  const groupIds = useMemo(() => groups.map((group) => group.id), [groups])
-  const visibleGroups = useMemo(
-    () => filterTreeGroups(groups, deferredQuery),
-    [groups, deferredQuery],
-  )
+  const groupIds = useMemo(() => collectGroupIds(nodes), [nodes])
+  const visibleNodes = useMemo(() => filterTreeNodes(nodes, deferredQuery), [nodes, deferredQuery])
   const groupsCollapsed =
-    groups.length > 0 && groupIds.every((groupId) => collapsedGroupIds.has(groupId))
+    groupIds.length > 0 && groupIds.every((groupId) => collapsedGroupIds.has(groupId))
 
   useEffect(() => {
     setCollapsedGroupIds((prev) => {
@@ -37,7 +35,7 @@ const Tree: FC<TProps> = ({ compact = false, groups, onToggleTree }) => {
     })
   }, [groupIds])
 
-  if (groups.length === 0) return null
+  if (nodes.length === 0) return null
 
   const handleCloseSearch = (): void => {
     setSearching(false)
@@ -77,16 +75,20 @@ const Tree: FC<TProps> = ({ compact = false, groups, onToggleTree }) => {
         />
 
         <div className={s.groupList}>
-          {visibleGroups.length > 0 ? (
-            visibleGroups.map((group) => (
-              <Group
-                key={group.id}
-                collapsed={collapsedGroupIds.has(group.id)}
-                forceOpen={activeSearch}
-                group={group}
-                onToggle={handleToggleGroup}
-              />
-            ))
+          {visibleNodes.length > 0 ? (
+            visibleNodes.map((node) =>
+              normalizeNodeType(node.type) === 'group' ? (
+                <Group
+                  key={node.id}
+                  collapsedGroupIds={collapsedGroupIds}
+                  forceOpen={activeSearch}
+                  group={node as TDocPublicTreeGroup}
+                  onToggle={handleToggleGroup}
+                />
+              ) : (
+                <Item key={node.id} item={node} />
+              ),
+            )
           ) : (
             <div className={s.empty}>No matching docs</div>
           )}

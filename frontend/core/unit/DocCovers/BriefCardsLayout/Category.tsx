@@ -5,34 +5,34 @@ import MarkerRender from '~/widgets/MarkerRender'
 
 import { DEFAULT_LINK_MARKER, DEFAULT_PAGE_MARKER, DOC_COVER_NODE_TYPE } from '../constant'
 import GroupSettingButton from '../GroupSettingButton'
-import type { TDocCoverGroup, TDocCoverItem } from '../spec'
+import type { TDocCoverCard, TDocCoverCardItem } from '../spec'
 import useSalon from './salon/category'
 
 type TProps = {
-  group: TDocCoverGroup
+  section: TDocCoverCard
   editable?: boolean
-  onEditGroup?: (group: TDocCoverGroup) => void
+  onEditCard?: (section: TDocCoverCard) => void
 }
 
-const getFallbackMarker = (type: TDocCoverItem['type']) =>
+const getFallbackMarker = (type: TDocCoverCardItem['type']) =>
   String(type).toLowerCase() === DOC_COVER_NODE_TYPE.LINK
     ? DEFAULT_LINK_MARKER
     : DEFAULT_PAGE_MARKER
 
-const Category: FC<TProps> = ({ group, editable = false, onEditGroup }) => {
+const Category: FC<TProps> = ({ section, editable = false, onEditCard }) => {
   const s = useSalon()
-  const { items } = group
+  const { items } = section
 
   return (
     <section>
       <div className={s.groupHeader}>
-        <h3 className={s.title}>{group.title}</h3>
+        <h3 className={s.title}>{section.title}</h3>
         {editable && (
           <GroupSettingButton
-            group={group}
+            section={section}
             className={s.groupSettingButton}
             iconClassName={s.groupSettingIcon}
-            onEditGroup={onEditGroup}
+            onEditCard={onEditCard}
           />
         )}
       </div>
@@ -49,14 +49,10 @@ const Category: FC<TProps> = ({ group, editable = false, onEditGroup }) => {
               />
             </span>
 
-            <div className='column'>
-              <Link href={item.href} className={s.itemTitle}>
-                {item.title}
-              </Link>
-              {(item.uiConfig?.digest || item.digest) && (
-                <div className={s.itemDesc}>{item.uiConfig?.digest || item.digest}</div>
-              )}
-            </div>
+            <Link href={item.href} className={s.itemTitle}>
+              {item.title}
+              {item.type === 'group' ? ` (${item.leafCount})` : ''}
+            </Link>
           </div>
         ))}
       </div>

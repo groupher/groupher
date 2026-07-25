@@ -22,7 +22,7 @@ vi.mock('./IconNode', () => ({
 }))
 
 const ICON: TIconListOption = {
-  kind: 'icon',
+  type: 'icon',
   provider: 'lucide',
   name: 'calendar',
 }

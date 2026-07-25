@@ -11,7 +11,7 @@ import SortableDndContext from '../../LinkEditor/Dnd/SortableDndContext'
 import GroupInputer from '../../LinkEditor/GroupInputer'
 import useSalon from '../salon/editors'
 import {
-  HEADER_COLUMN_KIND,
+  HEADER_COLUMN_TYPE,
   HEADER_DND_CONTEXT_ID,
   HEADER_DND_TYPE,
   DND_ANNOUNCEMENTS,
@@ -95,7 +95,7 @@ const Editor: FC<TProps> = ({ links, makeId, onChange }) => {
           <div className={s.linkGroup}>
             <SortableContext
               items={columns.flatMap((column) =>
-                column.kind === HEADER_COLUMN_KIND.MORE
+                column.type === HEADER_COLUMN_TYPE.MORE
                   ? []
                   : [`header-sortable-column:${column.id}`],
               )}

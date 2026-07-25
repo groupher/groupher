@@ -2,20 +2,20 @@ import type { FC, MouseEvent } from 'react'
 
 import SlidersHorizontalSVG from '~/icons/SlidersHorizontal'
 
-import type { TDocCoverGroup } from './spec'
+import type { TDocCoverCard } from './spec'
 
 type TProps = {
-  group: TDocCoverGroup
+  section: TDocCoverCard
   className: string
   iconClassName: string
-  onEditGroup?: (group: TDocCoverGroup) => void
+  onEditCard?: (section: TDocCoverCard) => void
 }
 
-const GroupSettingButton: FC<TProps> = ({ group, className, iconClassName, onEditGroup }) => {
+const GroupSettingButton: FC<TProps> = ({ section, className, iconClassName, onEditCard }) => {
   const handleClick = (event: MouseEvent<HTMLButtonElement>): void => {
     event.preventDefault()
     event.stopPropagation()
-    onEditGroup?.(group)
+    onEditCard?.(section)
   }
 
   return (

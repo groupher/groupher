@@ -36,7 +36,7 @@ export type TPreviewRecord = {
   idempotencyKey: string
   previewRef: string
   requestedSource: {
-    kind: 'repo'
+    type: 'repo'
     platform: 'github'
     repoUrl: string
   }
@@ -161,7 +161,7 @@ export const decodePreviewRecord = (value: unknown): TPreviewRecord => {
     !requiredDate(record.expiresAt) ||
     !source ||
     source.platform !== 'github' ||
-    source.kind !== 'repo' ||
+    source.type !== 'repo' ||
     typeof source.repoUrl !== 'string' ||
     !source.repoUrl
   ) {
@@ -270,7 +270,7 @@ export const createPreviewRecord = (
   expiresAt: new Date(now.getTime() + PREVIEW_TTL_MS).toISOString(),
   idempotencyKey: input.idempotencyKey,
   previewRef: input.previewRef,
-  requestedSource: { kind: 'repo', platform: 'github', repoUrl: input.repoUrl },
+  requestedSource: { type: 'repo', platform: 'github', repoUrl: input.repoUrl },
   schemaVersion: PREVIEW_RECORD_SCHEMA_VERSION,
   userRef: input.userRef,
 })

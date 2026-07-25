@@ -20,34 +20,34 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
   end
 
   describe "DocTreeNode changeset" do
-    test "rejects invalid slug format" do
+    test "non-root nodes require a logical parent_node_id" do
       changeset =
         DocTreeNode.changeset(%DocTreeNode{}, %{
           community_id: 1,
+          branch_id: 1,
           node_id: "node-1",
           stage: :draft,
-          group_id: "group-1",
           doc_id: Ecto.UUID.generate(),
           type: :page,
           title: "Install",
-          slug: "install_page",
           index: 0
         })
 
       refute changeset.valid?
-      assert "only lowercase letters, numbers and hyphen are allowed" in errors_on(changeset).slug
+
+      assert "node has an invalid docs tree parent" in errors_on(changeset).parent_node_id
     end
 
     test "page nodes require doc_id" do
       changeset =
         DocTreeNode.changeset(%DocTreeNode{}, %{
           community_id: 1,
+          branch_id: 1,
           node_id: "node-1",
           stage: :draft,
-          group_id: "group-1",
+          parent_node_id: "group-1",
           type: :page,
           title: "Install",
-          slug: "install",
           index: 0
         })
 
@@ -60,13 +60,13 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
       changeset =
         DocTreeNode.changeset(%DocTreeNode{}, %{
           community_id: 1,
+          branch_id: 1,
           node_id: "node-1",
           stage: :draft,
-          group_id: "group-1",
+          parent_node_id: "group-1",
           doc_id: Ecto.UUID.generate(),
           type: :link,
           title: "Docs",
-          slug: "docs",
           index: 0,
           href: "https://example.com"
         })
@@ -75,7 +75,7 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
       assert "link nodes can not reference articles" in errors_on(changeset).doc_id
     end
 
-    test "pin nodes are independent top-level links" do
+    test "pin nodes point to the owning Tab's logical node_id" do
       changeset =
         DocTreeNode.changeset(%DocTreeNode{}, %{
           community_id: 1,
@@ -83,12 +83,10 @@ defmodule GroupherServer.Test.CMS.DocTree.ModelTest do
           node_id: "pin-1",
           stage: :draft,
           type: :pin,
-          tab_id: "tab-1",
+          parent_node_id: "tab-1",
           title: "GitHub",
-          slug: "github",
           href: "https://github.com/groupher/groupher",
-          index: 0,
-          ui_config: %{"variant" => "compact"}
+          index: 0
         })
 
       assert changeset.valid?

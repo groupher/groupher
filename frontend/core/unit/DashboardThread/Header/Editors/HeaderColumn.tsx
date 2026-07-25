@@ -11,7 +11,7 @@ import GroupDragHandle from '../../LinkEditor/GroupDragHandle'
 import GroupHead from '../../LinkEditor/GroupHead'
 import LinksHint from '../../LinkEditor/LinksHint'
 import useSalon from '../salon/editors'
-import { HEADER_COLUMN_KIND, HEADER_DND_TYPE } from './constants'
+import { HEADER_COLUMN_TYPE, HEADER_DND_TYPE } from './constants'
 import HeaderSortableGroup from './HeaderSortableGroup'
 import { toLinkItem } from './model'
 import SortableHeaderLinkItem from './SortableHeaderLinkItem'
@@ -43,11 +43,11 @@ const HeaderColumn: FC<TProps> = ({ column, editor, isCollapsed, isCrossGroupTar
     updateEditingGroup,
   } = editor
 
-  const isSingleLink = column.kind === HEADER_COLUMN_KIND.LINK
-  const isMore = column.kind === HEADER_COLUMN_KIND.MORE
+  const isSingleLink = column.type === HEADER_COLUMN_TYPE.LINK
+  const isMore = column.type === HEADER_COLUMN_TYPE.MORE
   const title = isMore ? t(MORE_TAB.TITLE_KEY) : column.title
   const isCollapsible =
-    column.kind === HEADER_COLUMN_KIND.GROUP || column.kind === HEADER_COLUMN_KIND.MORE
+    column.type === HEADER_COLUMN_TYPE.GROUP || column.type === HEADER_COLUMN_TYPE.MORE
   const isEmptyGroup = !isSingleLink && column.links.length === 0 && column.fixedLinks.length === 0
   const sortableIds = column.links.map((link) => link.id)
   const visibleLinks = [
@@ -94,7 +94,7 @@ const HeaderColumn: FC<TProps> = ({ column, editor, isCollapsed, isCrossGroupTar
             }
             collapsed={isCollapsed}
             onToggle={isCollapsible ? () => toggleGroup(column.id) : undefined}
-            onEdit={column.kind === HEADER_COLUMN_KIND.GROUP ? triggerGroupUpdate : undefined}
+            onEdit={column.type === HEADER_COLUMN_TYPE.GROUP ? triggerGroupUpdate : undefined}
             onDelete={!isMore ? () => deleteGroup(column.sourceIndex) : undefined}
             editingGroup={editingGroup}
             editingGroupIndex={editingGroupIndex}

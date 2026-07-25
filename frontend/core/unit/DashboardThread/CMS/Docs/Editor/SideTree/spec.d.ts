@@ -54,21 +54,23 @@ type TSideTreePublishable = {
 
 export type TSideTreeGroup = {
   id: string
-  tabId?: string
+  /**
+   * Logical id of the direct parent Tree node. This is not the row's physical
+   * `id`; it points to the parent's stable `nodeId`.
+   */
+  parentNodeId: string
   type: typeof SIDE_TREE_NODE_TYPE.GROUP
   title: string
-  slug?: string
   marker?: TMarkerValue
   hidden?: boolean
   expanded?: boolean
-  children: readonly TSideTreeChild[]
+  pages: readonly TSideTreeNavigationNode[]
 } & TSideTreePublishable
 
 export type TSideTreePage = {
   id: string
   type: typeof SIDE_TREE_NODE_TYPE.PAGE
   title?: string
-  slug?: string
   docId?: string | null
   path?: string
   href?: string
@@ -81,7 +83,6 @@ export type TSideTreeLink = {
   id: string
   type: typeof SIDE_TREE_NODE_TYPE.LINK
   title: string
-  slug?: string
   href: string
   marker?: TMarkerValue
   badge?: string
@@ -92,13 +93,13 @@ export type TSideTreePin = {
   id: string
   type: typeof SIDE_TREE_NODE_TYPE.PIN
   title: string
-  slug?: string
   href: string
   marker?: TMarkerValue
   hidden?: boolean
 } & TSideTreePublishable
 
 export type TSideTreeChild = TSideTreePage | TSideTreeLink
+export type TSideTreeNavigationNode = TSideTreeGroup | TSideTreeChild
 export type TSideTreeLinkInput = Pick<TSideTreeLink, 'href' | 'title'>
 
 export type TEditingTarget =
@@ -134,6 +135,7 @@ export type TSideTreeController = {
   renameTab: (tabId: string, title: string) => void
   reorderTabs: (tabs: readonly TSideTreeTab[], movedTabId: string) => void
   addGroup: () => void
+  addNestedGroup: (parentGroupId: string) => void
   addChild: (groupId: string, action: TSideTreeChildMenuAction) => void
   clearCoverWarning: () => void
   deleteGroup: (groupId: string) => void
@@ -152,13 +154,17 @@ export type TSideTreeController = {
   patchChild: (childId: string, patch: Partial<TSideTreeChild>) => void
   reload: () => void
   reloadTrash: () => void
-  reorderGroups: (groups: readonly TSideTreeGroup[]) => void
+  reorderGroups: (groups: readonly TSideTreeGroup[], activeNodeId: string) => void
 }
 
 export type TDocTreeNodeDTO = {
+  /**
+   * Stable logical `node_id` exposed by GraphQL. The physical database row
+   * `id` is intentionally not exposed to frontend Tree code.
+   */
   id: string
-  tabId?: string | null
-  groupId?: string | null
+  /** Direct parent's logical `node_id`, never the parent's physical row `id`. */
+  parentNodeId?: string | null
   docId?: string | null
   type:
     | TSideTreeGroup['type']
@@ -171,24 +177,22 @@ export type TDocTreeNodeDTO = {
     | 'LINK'
     | 'PIN'
   title?: string | null
-  slug?: string | null
   index?: number | null
   href?: string | null
   marker?: TSideTreeChild['marker'] | null
   badge?: string | null
   hidden?: boolean | null
-  uiConfig?: Record<string, unknown> | null
   publishState?: TDocTreeNodePublishState | null
-  children?: TDocTreeNodeDTO[] | null
-  pins?: TDocTreeNodeDTO[] | null
   groups?: TDocTreeNodeDTO[] | null
+  pages?: TDocTreeNodeDTO[] | null
+  pins?: TDocTreeNodeDTO[] | null
 }
 
 export type TSideTreeTab = {
   id: string
   title: string
-  slug?: string
   pins: TSideTreePin[]
+  /** Direct child Groups below this Tab. */
   groups: TSideTreeGroup[]
 }
 
@@ -208,8 +212,7 @@ export type TDocTreeTrashItem = {
   docId?: string | null
   type?: string | null
   title?: string | null
-  slug?: string | null
-  deletedFromGroupId?: string | null
+  deletedFromParentNodeId?: string | null
   deletedFromIndex?: number | null
   deletedAt?: string | null
   restoredAt?: string | null

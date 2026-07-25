@@ -27,7 +27,7 @@ defmodule GroupherServer.CMS.Model.Doc do
   @required_fields ~w(branch_id article_hash_id title digest)a
   @article_cast_fields general_article_cast_fields() ++ article_version_cast_fields()
   @optional_fields ~w(subtitle updated_at inserted_at active_at archived_at inner_id
-                      slug template_key json author_id)a ++
+                      slug json author_id)a ++
                      @article_cast_fields
   @max_subtitle_length 240
 
@@ -35,7 +35,6 @@ defmodule GroupherServer.CMS.Model.Doc do
   schema "docs" do
     article_version_fields()
     field(:slug, :string)
-    field(:template_key, :string)
     field(:json, :string)
 
     # association: community_tags
@@ -48,7 +47,7 @@ defmodule GroupherServer.CMS.Model.Doc do
   @doc "Returns the Doc fields copied by Draft, Publish, Snapshot, and Restore."
   @spec version_fields() :: [atom()]
   def version_fields do
-    ~w(title subtitle slug digest link_addr template_key json cover_url cover_url_dark)a
+    ~w(title subtitle slug digest link_addr json cover_url cover_url_dark)a
   end
 
   @doc "Builds a Doc changeset for creation."

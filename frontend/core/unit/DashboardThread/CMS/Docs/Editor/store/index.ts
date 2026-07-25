@@ -47,7 +47,7 @@ export const hasTreeChanges = (sideTree: TSideTreeController): boolean => {
 
 const hasNodeChanges = (sideTree: TSideTreeController): boolean => {
   return sideTree.groups.some((group) =>
-    group.children.some((child) => needsPublishAttention(child.publishState)),
+    group.pages.some((child) => needsPublishAttention(child.publishState)),
   )
 }
 

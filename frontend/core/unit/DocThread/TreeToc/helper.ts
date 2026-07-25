@@ -6,21 +6,40 @@ export const flattenTreeTocItems = (
   groups: readonly TDocPublicTreeGroup[],
 ): readonly TTreeTocItem[] =>
   groups.flatMap((group) =>
-    (group.children ?? []).map((item) => ({
-      ...item,
-      groupId: group.id,
-      groupTitle: group.title || 'Untitled',
-    })),
+    (group.pages ?? []).flatMap((item) =>
+      String(item.type).toLowerCase() === 'group'
+        ? flattenTreeTocItems([item as TDocPublicTreeGroup])
+        : [
+            {
+              ...item,
+              groupId: group.id,
+              groupTitle: group.title || 'Untitled',
+            },
+          ],
+    ),
   )
 
 export const groupTreeTocItems = (
   groups: readonly TDocPublicTreeGroup[],
 ): readonly [TDocPublicTreeGroup, readonly TTreeTocItem[]][] =>
-  groups.map((group) => [
-    group,
-    (group.children ?? []).map((item) => ({
-      ...item,
-      groupId: group.id,
-      groupTitle: group.title || 'Untitled',
-    })),
+  groups.flatMap((group) => [
+    [
+      group,
+      (group.pages ?? []).flatMap((item) =>
+        String(item.type).toLowerCase() === 'group'
+          ? []
+          : [
+              {
+                ...item,
+                groupId: group.id,
+                groupTitle: group.title || 'Untitled',
+              },
+            ],
+      ),
+    ],
+    ...groupTreeTocItems(
+      (group.pages ?? []).filter(
+        (item) => String(item.type).toLowerCase() === 'group',
+      ) as TDocPublicTreeGroup[],
+    ),
   ])

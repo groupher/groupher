@@ -13,13 +13,16 @@ export type TDocPublicTreeNodeType =
   | 'link'
 
 export type TDocPublicTreeItem = {
+  /**
+   * Stable logical `node_id` exposed by GraphQL. The physical database row
+   * `id` is intentionally not exposed to public navigation code.
+   */
   id: string
-  tabId?: string | null
-  groupId?: string | null
+  /** Direct parent's logical `node_id`, not the parent's physical row `id`. */
+  parentNodeId?: string | null
   docId?: string | null
   type: TDocPublicTreeNodeType
   title?: string | null
-  slug?: string | null
   index?: number | null
   href?: string | null
   marker?: TMarkerValue | null
@@ -27,8 +30,10 @@ export type TDocPublicTreeItem = {
 }
 
 export type TDocPublicTreeGroup = TDocPublicTreeItem & {
-  children?: readonly TDocPublicTreeItem[] | null
+  pages?: readonly TDocPublicTreeNavigationNode[] | null
 }
+
+export type TDocPublicTreeNavigationNode = TDocPublicTreeGroup | TDocPublicTreeItem
 
 export type TDocPublicTreeTab = TDocPublicTreeItem & {
   pins: readonly TDocPublicTreeItem[]

@@ -2,7 +2,7 @@ import { MeasuringStrategy, type Announcements } from '@dnd-kit/core'
 
 import { MORE_TAB } from '~/hooks/useHeaderLinks/constant'
 
-export const HEADER_COLUMN_KIND = {
+export const HEADER_COLUMN_TYPE = {
   LINK: 'link',
   GROUP: 'group',
   MORE: 'more',

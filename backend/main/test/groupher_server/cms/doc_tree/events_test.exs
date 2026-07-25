@@ -194,19 +194,12 @@ defmodule GroupherServer.Test.CMS.DocTree.Events do
         type: CMS.Const.tree_node_type(:pin),
         title: "Pin",
         href: "https://example.com",
-        group_id: nil,
+        parent_node_id: nil,
         index: 0
       })
 
     struct(DocTreeNode, attrs)
   end
 
-  defp empty_docs_community(user) do
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
-
-    with {:ok, community} <- CMS.Communities.create(community_attrs, user),
-         {:ok, _} <- CMS.DocTree.delete_demo_template(community) do
-      {:ok, community}
-    end
-  end
+  defp empty_docs_community(user), do: create_empty_docs_community(user)
 end

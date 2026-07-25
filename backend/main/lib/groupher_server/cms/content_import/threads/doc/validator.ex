@@ -22,12 +22,12 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.CMS.Articles.Branch
   alias GroupherServer.CMS.ContentImport.Persistence.{Connection, ImportSourceMapping}
   alias GroupherServer.CMS.Model.{ArticleBranch, Community, DocsSiteState}
 
-  @max_depth 32
+  @max_depth CMS.Const.doc_tree_max_depth()
   @max_nodes 6_000
 
   @doc "Validates SourceTree and returns a read-only TargetTree, counts, conflicts, and revision."
@@ -93,34 +93,10 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
       target_tree
       |> Map.get("tabs", [])
       |> Enum.flat_map(fn tab ->
-        groups = Map.get(tab, "groups", [])
+        {groups, ready?} =
+          filter_target_children(Map.get(tab, "groups", []), ready_external_refs)
 
-        ready_in_tab? =
-          Enum.any?(groups, fn group ->
-            Enum.any?(Map.get(group, "children", []), fn child ->
-              child["type"] == "page" and MapSet.member?(ready_external_refs, child["sourceId"])
-            end)
-          end)
-
-        if ready_in_tab? do
-          groups =
-            groups
-            |> Enum.map(fn group ->
-              children =
-                Enum.filter(Map.get(group, "children", []), fn child ->
-                  child["type"] == "link" or
-                    (child["type"] == "page" and
-                       MapSet.member?(ready_external_refs, child["sourceId"]))
-                end)
-
-              Map.put(group, "children", children)
-            end)
-            |> Enum.reject(&(Map.get(&1, "children", []) == []))
-
-          if groups == [], do: [], else: [Map.put(tab, "groups", groups)]
-        else
-          []
-        end
+        if ready?, do: [Map.put(tab, "groups", groups)], else: []
       end)
 
     Map.put(target_tree, "tabs", tabs)
@@ -129,13 +105,48 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
   @doc "Indexes confirmed page targets by sourceId for Job item creation."
   @spec page_targets(map()) :: map()
   def page_targets(target_tree) do
-    for tab <- Map.get(target_tree, "tabs", []),
-        group <- Map.get(tab, "groups", []),
-        child <- Map.get(group, "children", []),
-        child["type"] == "page",
-        into: %{} do
-      {child["sourceId"], child}
-    end
+    target_tree
+    |> Map.get("tabs", [])
+    |> Enum.flat_map(&collect_target_pages(Map.get(&1, "groups", [])))
+    |> Map.new(&{&1["sourceId"], &1})
+  end
+
+  defp filter_target_children(pages, ready_external_refs) do
+    pages
+    |> Enum.reduce({[], false}, fn child, {kept, ready?} ->
+      case child["type"] do
+        "page" ->
+          if MapSet.member?(ready_external_refs, child["sourceId"]),
+            do: {[child | kept], true},
+            else: {kept, ready?}
+
+        "link" ->
+          {[child | kept], ready?}
+
+        "group" ->
+          {nested, nested_ready?} =
+            filter_target_children(Map.get(child, "pages", []), ready_external_refs)
+
+          if nested_ready?,
+            do: {[Map.put(child, "pages", nested) | kept], true},
+            else: {kept, ready?}
+
+        _ ->
+          {kept, ready?}
+      end
+    end)
+    |> then(fn {pages, ready?} ->
+      pages = Enum.reverse(pages)
+      if ready?, do: {pages, true}, else: {[], false}
+    end)
+  end
+
+  defp collect_target_pages(pages) do
+    Enum.flat_map(pages, fn
+      %{"type" => "page"} = page -> [page]
+      %{"type" => "group", "pages" => nested} -> collect_target_pages(nested)
+      _ -> []
+    end)
   end
 
   defp normalize_source_info(source_info) when is_map(source_info) do
@@ -162,7 +173,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
   defp normalize_source_info(_), do: {:error, {:custom, "invalid sourceInfo contract"}}
 
   defp validate_source_tree(%{
-         "schemaVersion" => 1,
+         "schemaVersion" => 2,
          "source" => source,
          "navigation" => navigation
        })
@@ -200,9 +211,9 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
         true ->
           next = %{count: count, ids: MapSet.put(current.ids, node["sourceId"])}
 
-          case node["kind"] do
-            kind when kind in ["scope", "section"] ->
-              case validate_source_nodes(node["children"], depth + 1, next) do
+          case node["type"] do
+            type when type in ["scope", "section"] ->
+              case validate_source_nodes(node["pages"], depth + 1, next) do
                 {:ok, state} -> {:cont, {:ok, state}}
                 error -> {:halt, error}
               end
@@ -218,14 +229,14 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
                 else: {:halt, {:error, {:custom, "SourceTree link is invalid"}}}
 
             _ ->
-              {:halt, {:error, {:custom, "SourceTree node kind is invalid"}}}
+              {:halt, {:error, {:custom, "SourceTree node type is invalid"}}}
           end
       end
     end)
   end
 
   defp validate_source_nodes(_nodes, _depth, _state),
-    do: {:error, {:custom, "SourceTree children must be a list"}}
+    do: {:error, {:custom, "SourceTree pages must be a list"}}
 
   defp validate_source_match(info, %{"source" => source}) do
     if info["framework"] == source["framework"] and
@@ -243,79 +254,64 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
          mapping_refs
        ) do
     scopes =
-      if Enum.all?(navigation, &(&1["kind"] == "scope")) do
+      if Enum.all?(navigation, &(&1["type"] == "scope")) do
         navigation
       else
         [
           %{
-            "kind" => "scope",
+            "type" => "scope",
             "sourceId" => "inferred:default",
             "title" => "Introduction",
-            "children" => navigation
+            "pages" => navigation
           }
         ]
       end
 
     %{
       "branchSlug" => branch_slug,
-      "schemaVersion" => 1,
+      "schemaVersion" => 2,
       "source" => source,
       "tabs" => Enum.map(scopes, &plan_scope(&1, branch_slug, mapping_refs))
     }
   end
 
   defp plan_scope(scope, branch_slug, mapping_refs) do
-    direct = Enum.filter(scope["children"], &(&1["kind"] in ["page", "link"]))
-    sections = Enum.filter(scope["children"], &(&1["kind"] == "section"))
+    direct = Enum.filter(scope["pages"], &(&1["type"] in ["page", "link"]))
+    sections = Enum.filter(scope["pages"], &(&1["type"] == "section"))
 
     %{
       "sourceId" => scope["sourceId"],
       "title" => scope["title"],
-      "slug" => slug(scope["title"]),
       "groups" =>
-        maybe_default_group(scope, direct, branch_slug, mapping_refs) ++
-          plan_sections(sections, branch_slug, mapping_refs),
+        maybe_overview_group(scope, direct, branch_slug, mapping_refs) ++
+          Enum.map(sections, &plan_node(&1, branch_slug, mapping_refs)),
       "pins" => []
     }
   end
 
-  defp maybe_default_group(_scope, [], _branch_slug, _mapping_refs), do: []
+  defp maybe_overview_group(_scope, [], _branch_slug, _mapping_refs), do: []
 
-  defp maybe_default_group(scope, children, branch_slug, mapping_refs) do
+  defp maybe_overview_group(scope, pages, branch_slug, mapping_refs) do
     [
       %{
+        "type" => "group",
         "sourceId" => "planned:#{scope["sourceId"]}:overview",
-        "title" => "Untitled",
-        "slug" => "untitled",
-        "children" => Enum.map(children, &plan_leaf(&1, branch_slug, mapping_refs))
+        "title" => "Overview",
+        "pages" => Enum.map(pages, &plan_node(&1, branch_slug, mapping_refs))
       }
     ]
   end
 
-  defp plan_sections(sections, branch_slug, mapping_refs) do
-    Enum.flat_map(sections, fn section ->
-      leaves = Enum.filter(section["children"], &(&1["kind"] in ["page", "link"]))
-      nested = Enum.filter(section["children"], &(&1["kind"] == "section"))
-
-      current =
-        if leaves == [] do
-          []
-        else
-          [
-            %{
-              "sourceId" => section["sourceId"],
-              "title" => section["title"],
-              "slug" => slug(section["title"]),
-              "children" => Enum.map(leaves, &plan_leaf(&1, branch_slug, mapping_refs))
-            }
-          ]
-        end
-
-      current ++ plan_sections(nested, branch_slug, mapping_refs)
-    end)
+  defp plan_node(%{"type" => "section"} = node, branch_slug, mapping_refs) do
+    %{
+      "type" => "group",
+      "sourceId" => node["sourceId"],
+      "title" => node["title"],
+      "pages" => Enum.map(node["pages"], &plan_node(&1, branch_slug, mapping_refs))
+    }
   end
 
-  defp plan_leaf(%{"kind" => "page"} = node, branch_slug, mapping_refs) do
+  defp plan_node(%{"type" => "page"} = node, branch_slug, mapping_refs) do
     %{
       "type" => "page",
       "sourceId" => node["sourceId"],
@@ -328,7 +324,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
     }
   end
 
-  defp plan_leaf(%{"kind" => "link"} = node, _branch_slug, _mapping_refs) do
+  defp plan_node(%{"type" => "link"} = node, _branch_slug, _mapping_refs) do
     %{
       "type" => "link",
       "sourceId" => node["sourceId"],
@@ -339,15 +335,18 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
   end
 
   defp validate_target_tree(
-         %{"branchSlug" => branch_slug, "schemaVersion" => 1, "tabs" => tabs},
+         %{"branchSlug" => branch_slug, "schemaVersion" => 2, "tabs" => tabs},
          branch_slug,
          mapping_refs
        )
        when is_list(tabs) do
     tabs
     |> Enum.reduce_while({:ok, MapSet.new()}, fn tab, {:ok, ids} ->
-      if is_map(tab) and is_list(tab["groups"]) and valid_text?(tab["sourceId"]) do
-        case validate_target_groups(tab["groups"], branch_slug, mapping_refs, ids) do
+      groups = tab["groups"]
+
+      if is_map(tab) and is_list(groups) and valid_text?(tab["sourceId"]) and
+           Enum.all?(groups, &(&1["type"] == "group")) do
+        case validate_target_children(groups, branch_slug, mapping_refs, ids, 1) do
           {:ok, ids} -> {:cont, {:ok, ids}}
           error -> {:halt, error}
         end
@@ -364,21 +363,12 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
   defp validate_target_tree(_, _, _),
     do: {:error, {:custom, "confirmed TargetTree does not match source intent"}}
 
-  defp validate_target_groups(groups, branch_slug, mapping_refs, ids) do
-    Enum.reduce_while(groups, {:ok, ids}, fn group, {:ok, current} ->
-      if is_map(group) and is_list(group["children"]) and valid_text?(group["sourceId"]) do
-        case validate_target_children(group["children"], branch_slug, mapping_refs, current) do
-          {:ok, ids} -> {:cont, {:ok, ids}}
-          error -> {:halt, error}
-        end
-      else
-        {:halt, {:error, {:custom, "confirmed TargetTree contains an invalid group"}}}
-      end
-    end)
-  end
+  defp validate_target_children(_pages, _branch_slug, _mapping_refs, _ids, depth)
+       when depth > @max_depth,
+       do: {:error, {:custom, "confirmed TargetTree exceeds depth #{@max_depth}"}}
 
-  defp validate_target_children(children, branch_slug, mapping_refs, ids) do
-    Enum.reduce_while(children, {:ok, ids}, fn child, {:ok, current} ->
+  defp validate_target_children(pages, branch_slug, mapping_refs, ids, depth) do
+    Enum.reduce_while(pages, {:ok, ids}, fn child, {:ok, current} ->
       if not is_map(child) do
         {:halt, {:error, {:custom, "confirmed TargetTree contains an invalid child"}}}
       else
@@ -390,6 +380,18 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
 
           MapSet.member?(current, source_id) ->
             {:halt, {:error, {:custom, "confirmed TargetTree contains a duplicate sourceId"}}}
+
+          child["type"] == "group" and is_list(child["pages"]) ->
+            case validate_target_children(
+                   child["pages"],
+                   branch_slug,
+                   mapping_refs,
+                   MapSet.put(current, source_id),
+                   depth + 1
+                 ) do
+              {:ok, next} -> {:cont, {:ok, next}}
+              error -> {:halt, error}
+            end
 
           child["type"] == "page" and
               child["docId"] ==
@@ -454,16 +456,24 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Validator do
 
   defp counts(target_tree) do
     tabs = target_tree["tabs"]
-    groups = Enum.flat_map(tabs, & &1["groups"])
-    children = Enum.flat_map(groups, & &1["children"])
+    nodes = Enum.flat_map(tabs, &collect_target_nodes(Map.get(&1, "groups", [])))
 
     %{
       assets: 0,
-      groups: length(groups),
-      links: Enum.count(children, &(&1["type"] == "link")),
-      pages: Enum.count(children, &(&1["type"] == "page")),
+      groups: Enum.count(nodes, &(&1["type"] == "group")),
+      links: Enum.count(nodes, &(&1["type"] == "link")),
+      pages: Enum.count(nodes, &(&1["type"] == "page")),
       tabs: length(tabs)
     }
+  end
+
+  defp collect_target_nodes(pages) do
+    Enum.flat_map(pages, fn child ->
+      [
+        child
+        | if(child["type"] == "group", do: collect_target_nodes(child["pages"]), else: [])
+      ]
+    end)
   end
 
   defp target_ref(branch_slug, source_id) do

@@ -175,7 +175,7 @@ defmodule GroupherServer.CMS.DocPublishRelease do
       doc_id: snapshot.article_hash_id,
       snapshot_id: snapshot.id,
       node_id: node && node.node_id,
-      group_node_id: node && node.group_id,
+      group_node_id: node && node.parent_node_id,
       index: node && node.index,
       title: snapshot.title,
       actions: [checklist_item.action]
@@ -206,7 +206,7 @@ defmodule GroupherServer.CMS.DocPublishRelease do
             doc_id: doc_id,
             snapshot_id: snapshot.id,
             node_id: node.node_id,
-            group_node_id: node.group_id,
+            group_node_id: node.parent_node_id,
             index: node.index,
             title: snapshot.title,
             actions: actions_from_tree_events(tree_events, node.node_id)
@@ -229,7 +229,7 @@ defmodule GroupherServer.CMS.DocPublishRelease do
          } = event
        ) do
     community
-    |> PublicProjection.public_group_children(branch, id)
+    |> PublicProjection.public_descendants(branch, id)
     |> Enum.filter(&(&1.type == @tree_node_type_page))
     |> Enum.map(
       &release_article_attrs_from_public_node(community.id, branch.id, &1, [
@@ -272,7 +272,7 @@ defmodule GroupherServer.CMS.DocPublishRelease do
         doc_id: doc_id,
         snapshot_id: snapshot.id,
         node_id: node.node_id,
-        group_node_id: node.group_id,
+        group_node_id: node.parent_node_id,
         index: node.index,
         title: snapshot.title,
         actions: actions

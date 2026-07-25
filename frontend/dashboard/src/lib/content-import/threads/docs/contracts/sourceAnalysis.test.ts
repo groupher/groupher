@@ -18,7 +18,7 @@ const analysis = {
   schemaVersion: SOURCE_ANALYSIS_SCHEMA_VERSION,
   tree: {
     navigation: [],
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: { configPaths: [], framework: 'vitepress', root: 'docs' },
   },
 }

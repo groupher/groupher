@@ -37,6 +37,7 @@ const sideTree = (patch: Partial<TSideTreeController> = {}): TSideTreeController
   renameTab: noop,
   reorderTabs: noop,
   addGroup: noop,
+  addNestedGroup: noop,
   addChild: noop,
   clearCoverWarning: noop,
   deleteGroup: noop,
@@ -108,9 +109,10 @@ describe('docs editor publish view', () => {
         groups: [
           {
             id: 'group-1',
+            parentNodeId: 'tab-1',
             type: SIDE_TREE_NODE_TYPE.GROUP,
             title: 'Guide',
-            children: [
+            pages: [
               {
                 id: 'node-1',
                 type: SIDE_TREE_NODE_TYPE.PAGE,

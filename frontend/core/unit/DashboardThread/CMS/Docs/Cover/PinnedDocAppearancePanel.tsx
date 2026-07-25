@@ -8,17 +8,17 @@ import {
 } from '~/const/wallpaper'
 import type { TBgConfig } from '~/lib/bg'
 import { GRADIENT_RENDERER, WALLPAPER_TEXTURE } from '~/lib/wallpaperMesh'
-import type { TDocCoverPinnedDoc, TPinnedDocAppearance } from '~/unit/DocCovers/spec'
+import type { TDocCoverPinnedDoc, TDocCoverPinnedDocAppearance } from '~/unit/DocCovers/spec'
 import Input from '~/widgets/Input'
 import ThemeSwitch from '~/widgets/ThemeSwitch'
 
 type TProps = {
   doc: TDocCoverPinnedDoc
   saving?: boolean
-  onSave: (appearance: TPinnedDocAppearance) => void
+  onSave: (appearance: TDocCoverPinnedDocAppearance) => void
 }
 
-type TAppearanceTheme = keyof TPinnedDocAppearance
+type TAppearanceTheme = keyof TDocCoverPinnedDocAppearance
 
 const BASE_BG: TBgConfig = {
   customWallpaper: null,
@@ -67,7 +67,7 @@ const imageBg = (url: string): TBgConfig => ({
 
 export default function PinnedDocAppearancePanel({ doc, saving = false, onSave }: TProps) {
   const [theme, setTheme] = useState<TAppearanceTheme>('light')
-  const [appearance, setAppearance] = useState<TPinnedDocAppearance>(() => doc.appearance)
+  const [appearance, setAppearance] = useState<TDocCoverPinnedDocAppearance>(() => doc.appearance)
   const [imageUrl, setImageUrl] = useState('')
   const current = useMemo(() => appearance[theme], [appearance, theme])
   const updateTheme = (config: TBgConfig): void => {

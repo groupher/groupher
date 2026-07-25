@@ -21,17 +21,16 @@ const markerFields = gql`
 `
 
 const coverItemFields = gql`
-  fragment docCoverItemFields on DocCoverItem {
+  fragment docCoverItemFields on DocCoverCardItem {
     id
     nodeId
     docId
     index
-    uiConfig
     type
     title
     href
     badge
-    digest
+    leafCount
     marker {
       ...docCoverMarkerFields
     }
@@ -41,11 +40,11 @@ const coverItemFields = gql`
 const docCover = gql`
   query ($community: String!, $view: DocCoverView = PUBLIC) {
     docCover(community: $community, view: $view) {
-      groups {
+      cards {
         id
-        groupId
+        groupNodeId
         index
-        uiConfig
+        appearance
         title
         items {
           ...docCoverItemFields

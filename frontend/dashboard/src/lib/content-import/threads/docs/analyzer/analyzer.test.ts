@@ -96,32 +96,32 @@ describe('Docs framework analyzer', () => {
 
     expect(analysis.tree.navigation).toHaveLength(1)
     expect(analysis.tree.navigation[0]).toMatchObject({
-      children: [
+      pages: [
         {
-          children: [{ route: '/markdown-examples', title: 'Markdown Examples', kind: 'page' }],
+          pages: [{ route: '/markdown-examples', title: 'Markdown Examples', type: 'page' }],
           title: 'Examples',
-          kind: 'section',
+          type: 'section',
         },
         {
-          children: [
-            { navigationStatus: 'unlisted', route: '/', title: 'Home', kind: 'page' },
+          pages: [
+            { navigationStatus: 'unlisted', route: '/', title: 'Home', type: 'page' },
             {
               draft: true,
               navigationStatus: 'unlisted',
               route: '/api',
               title: 'API',
-              kind: 'page',
+              type: 'page',
             },
           ],
           title: 'Other pages',
-          kind: 'section',
+          type: 'section',
         },
       ],
       routePrefix: '/',
       title: 'Example Docs',
-      kind: 'scope',
+      type: 'scope',
     })
-    expect(JSON.stringify(analysis.tree.navigation).match(/"kind":"page"/g)).toHaveLength(3)
+    expect(JSON.stringify(analysis.tree.navigation).match(/"type":"page"/g)).toHaveLength(3)
     expect(JSON.stringify(analysis.tree.navigation)).toContain('"sizeBytes":')
   })
 

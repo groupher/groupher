@@ -5,23 +5,23 @@ import Category from './Category'
 import useSalon from './salon'
 
 export default function OutlineColumnsLayout({
-  groups,
+  cards,
   editable,
-  onEditGroup,
+  onEditCard,
 }: TDocCoverLayoutProps) {
   const s = useSalon()
 
   return (
     <div className={s.wrapper}>
       <div className={s.cols}>
-        {groups.map((group, categoryIndex) => (
+        {cards.map((section, categoryIndex) => (
           <Category
-            key={group.id}
+            key={section.id}
             categoryIndex={categoryIndex + 1}
             color={COLOR.BLUE}
-            group={group}
+            section={section}
             editable={editable}
-            onEditGroup={onEditGroup}
+            onEditCard={onEditCard}
           />
         ))}
       </div>

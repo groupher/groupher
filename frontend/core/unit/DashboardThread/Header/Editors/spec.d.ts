@@ -1,12 +1,12 @@
 import type { TConstValues, TLinkChild } from '~/spec'
 
-import type { HEADER_COLUMN_KIND } from './constants'
+import type { HEADER_COLUMN_TYPE } from './constants'
 
-export type THeaderColumnKind = TConstValues<typeof HEADER_COLUMN_KIND>
+export type THeaderColumnType = TConstValues<typeof HEADER_COLUMN_TYPE>
 
 export type THeaderColumn = {
   id: string
-  kind: THeaderColumnKind
+  type: THeaderColumnType
   title: string
   sourceIndex: number
   links: TLinkChild[]

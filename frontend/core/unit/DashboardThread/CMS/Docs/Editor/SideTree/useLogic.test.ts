@@ -4,7 +4,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import S from '~/unit/DashboardThread/schema'
 
 import { SIDE_TREE_CHILD_MENU_ACTION, SIDE_TREE_NODE_MENU_ACTION } from './constant'
-import type { TDocTreeInitialData, TDocTreeMutationPayload, TDocTreeNodeDTO } from './spec'
+import type {
+  TDocTreeInitialData,
+  TDocTreeMutationPayload,
+  TDocTreeNodeDTO,
+  TSideTreeGroup,
+} from './spec'
 import useLogic from './useLogic'
 
 const mocks = vi.hoisted(() => ({
@@ -42,7 +47,6 @@ vi.mock('~/hooks/useTrans', () => ({
 }))
 
 vi.mock('~/lib/signal', () => ({ send: vi.fn() }))
-vi.mock('~/lib/slug', () => ({ slugify: async () => 'slug' }))
 vi.mock('~/stores/community/hooks', () => ({ default: () => ({ slug: 'home' }) }))
 vi.mock('~/widgets/Toaster', () => ({ toast: vi.fn() }))
 vi.mock('../helper', () => ({ reloadDocPublishChecklist: vi.fn() }))
@@ -69,10 +73,10 @@ const initialData: TDocTreeInitialData = {
       groups: [
         {
           id: 'group-remote',
-          tabId: 'tab-remote',
+          parentNodeId: 'tab-remote',
           type: 'GROUP',
           title: 'Guides',
-          children: [],
+          pages: [],
         },
       ],
     },
@@ -121,14 +125,18 @@ describe('docs SideTree local create deletion', () => {
     const { result } = renderHook(() => useLogic(initialData))
 
     act(() => result.current.addGroup())
-    const localId = result.current.groups.at(-1)?.id
+    const localId = result.current.groups[0]?.id
     expect(localId).toMatch(/^local-group-/)
 
     act(() => result.current.renameGroup(localId!, 'New group'))
+    expect(result.current.groups.map((group) => group.id)).toEqual(['group-remote', localId])
     await waitFor(() =>
       expect(mocks.persist).toHaveBeenCalledWith(
-        S.createDocTreeGroup,
-        expect.any(Object),
+        S.createDocTreeNode,
+        {
+          input: { index: 1, title: 'New group', type: 'GROUP' },
+          parentNodeId: 'tab-remote',
+        },
         expect.any(Function),
       ),
     )
@@ -136,10 +144,10 @@ describe('docs SideTree local create deletion', () => {
     act(() => result.current.deleteGroup(localId!))
     await resolveCreateAndExpectDelete({
       id: 'group-created',
-      tabId: 'tab-remote',
+      parentNodeId: 'tab-remote',
       type: 'GROUP',
       title: 'New group',
-      children: [],
+      pages: [],
     })
 
     expect(result.current.groups.some((group) => group.id === 'group-created')).toBe(false)
@@ -149,14 +157,23 @@ describe('docs SideTree local create deletion', () => {
     const { result } = renderHook(() => useLogic(initialData))
 
     act(() => result.current.addChild('group-remote', SIDE_TREE_CHILD_MENU_ACTION.PAGE))
-    const localId = result.current.groups[0].children[0]?.id
+    const localId = result.current.groups[0].pages[0]?.id
     expect(localId).toMatch(/^local-page-/)
 
     act(() => result.current.renameChild('group-remote', localId!, 'New page'))
     await waitFor(() =>
       expect(mocks.persist).toHaveBeenCalledWith(
-        S.createDocTreePage,
-        expect.any(Object),
+        S.createDocTreeNode,
+        {
+          input: {
+            href: undefined,
+            index: 0,
+            marker: expect.any(Object),
+            title: 'New page',
+            type: 'PAGE',
+          },
+          parentNodeId: 'group-remote',
+        },
         expect.any(Function),
       ),
     )
@@ -166,20 +183,203 @@ describe('docs SideTree local create deletion', () => {
     )
     await resolveCreateAndExpectDelete({
       id: 'page-created',
-      groupId: 'group-remote',
+      parentNodeId: 'group-remote',
       docId: 'doc-created',
       type: 'PAGE',
       title: 'New page',
     })
 
-    expect(result.current.groups[0].children).toHaveLength(0)
+    expect(result.current.groups[0].pages).toHaveLength(0)
+  })
+
+  it('moves a confirmed nested Group to the end of its Group lane', () => {
+    const data: TDocTreeInitialData = {
+      ...initialData,
+      tabs: [
+        {
+          ...initialData.tabs[0],
+          groups: [
+            {
+              ...initialData.tabs[0].groups![0],
+              pages: [
+                {
+                  id: 'nested-remote',
+                  parentNodeId: 'group-remote',
+                  type: 'GROUP',
+                  title: 'Nested',
+                  pages: [],
+                },
+                {
+                  id: 'page-remote',
+                  parentNodeId: 'group-remote',
+                  docId: 'doc-remote',
+                  type: 'PAGE',
+                  title: 'Existing page',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+    const { result } = renderHook(() => useLogic(data))
+
+    act(() => result.current.addNestedGroup('group-remote'))
+    const localId = result.current.groups[0].pages[0]?.id
+    expect(result.current.groups[0].pages.map((node) => node.id)).toEqual([
+      localId,
+      'nested-remote',
+      'page-remote',
+    ])
+
+    act(() => result.current.renameGroup(localId!, 'New nested group'))
+
+    expect(result.current.groups[0].pages.map((node) => node.id)).toEqual([
+      'nested-remote',
+      localId,
+      'page-remote',
+    ])
+    expect(mocks.persist).toHaveBeenCalledWith(
+      S.createDocTreeNode,
+      expect.objectContaining({
+        input: expect.objectContaining({ index: 1, type: 'GROUP' }),
+        parentNodeId: 'group-remote',
+      }),
+      expect.any(Function),
+    )
+  })
+
+  it('creates Groups first and moves a confirmed Page to the end of the leaf lane', () => {
+    const data: TDocTreeInitialData = {
+      ...initialData,
+      tabs: [
+        {
+          ...initialData.tabs[0],
+          groups: [
+            {
+              ...initialData.tabs[0].groups![0],
+              pages: [
+                {
+                  id: 'nested-remote',
+                  parentNodeId: 'group-remote',
+                  type: 'GROUP',
+                  title: 'Nested',
+                  pages: [],
+                },
+                {
+                  id: 'page-remote',
+                  parentNodeId: 'group-remote',
+                  docId: 'doc-remote',
+                  type: 'PAGE',
+                  title: 'Existing page',
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+    const { result } = renderHook(() => useLogic(data))
+
+    act(() => result.current.addChild('group-remote', SIDE_TREE_CHILD_MENU_ACTION.PAGE))
+    const localId = result.current.groups[0].pages[1]?.id
+    expect(result.current.groups[0].pages.map((node) => node.id)).toEqual([
+      'nested-remote',
+      localId,
+      'page-remote',
+    ])
+
+    act(() => result.current.renameChild('group-remote', localId!, 'New page'))
+
+    expect(result.current.groups[0].pages.map((node) => node.id)).toEqual([
+      'nested-remote',
+      'page-remote',
+      localId,
+    ])
+    expect(mocks.persist).toHaveBeenCalledWith(
+      S.createDocTreeNode,
+      expect.objectContaining({
+        input: expect.objectContaining({ index: 2, type: 'PAGE' }),
+        parentNodeId: 'group-remote',
+      }),
+      expect.any(Function),
+    )
+  })
+
+  it('persists and activates a Page created inside a nested Group', async () => {
+    const data: TDocTreeInitialData = {
+      ...initialData,
+      tabs: [
+        {
+          ...initialData.tabs[0],
+          groups: [
+            {
+              ...initialData.tabs[0].groups![0],
+              pages: [
+                {
+                  id: 'nested-remote',
+                  parentNodeId: 'group-remote',
+                  type: 'GROUP',
+                  title: 'Nested',
+                  pages: [],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
+    const { result } = renderHook(() => useLogic(data))
+
+    act(() => result.current.addChild('nested-remote', SIDE_TREE_CHILD_MENU_ACTION.PAGE))
+    const nestedGroup = result.current.groups[0].pages[0] as TSideTreeGroup
+    const localId = nestedGroup.pages[0]?.id
+    expect(localId).toMatch(/^local-page-/)
+
+    act(() => result.current.renameChild('nested-remote', localId!, 'Nested page'))
+
+    await waitFor(() =>
+      expect(mocks.persist).toHaveBeenCalledWith(
+        S.createDocTreeNode,
+        {
+          input: {
+            href: undefined,
+            index: 0,
+            marker: expect.any(Object),
+            title: 'Nested page',
+            type: 'PAGE',
+          },
+          parentNodeId: 'nested-remote',
+        },
+        expect.any(Function),
+      ),
+    )
+
+    await act(async () => {
+      mocks.createResolver?.({
+        revision: 2,
+        node: {
+          id: 'nested-page-created',
+          parentNodeId: 'nested-remote',
+          docId: 'nested-doc-created',
+          type: 'PAGE',
+          title: 'Nested page',
+        },
+      })
+      await Promise.resolve()
+    })
+
+    await waitFor(() => {
+      expect(result.current.activeId).toBe('nested-page-created')
+      expect(mocks.syncDocIdToUrl).toHaveBeenLastCalledWith('nested-doc-created')
+    })
   })
 
   it('deletes the backend draft link when its local row is removed during create', async () => {
     const { result } = renderHook(() => useLogic(initialData))
 
     act(() => result.current.addChild('group-remote', SIDE_TREE_CHILD_MENU_ACTION.LINK))
-    const localId = result.current.groups[0].children[0]?.id
+    const localId = result.current.groups[0].pages[0]?.id
     expect(localId).toMatch(/^local-link-/)
 
     act(() =>
@@ -190,8 +390,17 @@ describe('docs SideTree local create deletion', () => {
     )
     await waitFor(() =>
       expect(mocks.persist).toHaveBeenCalledWith(
-        S.createDocTreeLink,
-        expect.any(Object),
+        S.createDocTreeNode,
+        {
+          input: {
+            href: 'https://example.com',
+            index: 0,
+            marker: expect.any(Object),
+            title: 'New link',
+            type: 'LINK',
+          },
+          parentNodeId: 'group-remote',
+        },
         expect.any(Function),
       ),
     )
@@ -201,13 +410,13 @@ describe('docs SideTree local create deletion', () => {
     )
     await resolveCreateAndExpectDelete({
       id: 'link-created',
-      groupId: 'group-remote',
+      parentNodeId: 'group-remote',
       type: 'LINK',
       title: 'New link',
       href: 'https://example.com',
     })
 
-    expect(result.current.groups[0].children).toHaveLength(0)
+    expect(result.current.groups[0].pages).toHaveLength(0)
   })
 
   it('deletes the backend draft pin when its local row is removed during create', async () => {
@@ -225,8 +434,17 @@ describe('docs SideTree local create deletion', () => {
     )
     await waitFor(() =>
       expect(mocks.persist).toHaveBeenCalledWith(
-        S.createDocTreePin,
-        expect.any(Object),
+        S.createDocTreeNode,
+        {
+          input: {
+            href: 'https://example.com',
+            index: 0,
+            marker: expect.any(Object),
+            title: 'New pin',
+            type: 'PIN',
+          },
+          parentNodeId: 'tab-remote',
+        },
         expect.any(Function),
       ),
     )
@@ -234,12 +452,26 @@ describe('docs SideTree local create deletion', () => {
     act(() => result.current.deletePin(localId!))
     await resolveCreateAndExpectDelete({
       id: 'pin-created',
-      tabId: 'tab-remote',
+      parentNodeId: 'tab-remote',
       type: 'PIN',
       title: 'New pin',
       href: 'https://example.com',
     })
 
     expect(result.current.pins).toHaveLength(0)
+  })
+
+  it('serializes a new tab with the GraphQL enum wire value', async () => {
+    const { result } = renderHook(() => useLogic(initialData))
+
+    act(() => result.current.addTab())
+
+    await waitFor(() =>
+      expect(mocks.persist).toHaveBeenCalledWith(
+        S.createDocTreeNode,
+        { input: { index: 1, title: 'Untitled', type: 'TAB' } },
+        expect.any(Function),
+      ),
+    )
   })
 })
