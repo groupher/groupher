@@ -19,9 +19,9 @@ Groupher 的 Phoenix 后端继续保持模块化大单体，现有 Context 仍�
 - 允许 Node、Python 和 vendor application 使用各自最合适的运行时。
 - 把第三方平台故障限制在对应执行边界内。
 
-除 `Apply` 外，业务 UI 仍然留在 Dashboard。逻辑迁出 Dashboard 并不必然缩小
-浏览器端 bundle；它主要移走服务端依赖、构建负担和部署耦合。`Apply` 是唯一通过
-独立前端部署实现真正 UI bundle 隔离的子应用。
+除 `Apply` 和系统级的 `Auth` 外，业务 UI 仍然留在 Dashboard。逻辑迁出
+Dashboard 并不必然缩小浏览器端 bundle；它主要移走服务端依赖、构建负担和部署
+耦合。`Apply` 隔离低频的社区创建流程，`Auth` 统一所有前端应用的登录和会话入口。
 
 ## 总体原则
 
@@ -39,8 +39,8 @@ Phoenix Context 继续负责：
 
 ### Dashboard 保持产品 UI
 
-除 `Apply` 外，导入、资源管理、AI、风控、分析和集成配置页面都留在 Dashboard。
-`Integrations` 只是 Dashboard 中的功能分组，不是服务端子应用。
+除 `Apply` 和 `Auth` 外，导入、资源管理、AI、风控、分析和集成配置页面都留在
+Dashboard。`Integrations` 只是 Dashboard 中的功能分组，不是服务端子应用。
 
 ### 子应用拥有执行逻辑
 
@@ -74,7 +74,16 @@ Delegation token 只解决授权结果的可信传递，不复制领域数据。
 canonical 内容、配额或最新业务状态时，仍然通过 Phoenix internal API 获取；最终
 敏感写操作也继续由 Phoenix 校验并执行事务。
 
+Browser Session 由 [`auth`](./auth.md) 建立，用来表达用户已经登录；delegation
+token 由 Phoenix 针对具体服务和操作签发。两者不能混用。
+
 具体 token 格式、签名算法、密钥分发和轮换机制留到实现阶段决定。
+
+## 本地开发
+
+子应用的本地域名、HTTPS、Gateway 入口和端口映射约定见
+[`Portless 本地子应用域名`](./portless.md)。Portless 只负责本地寻址和生产域名
+形态模拟，不替代 Dev Hub 的进程管理，也不改变各子应用的部署边界。
 
 ## 子应用清单
 
@@ -84,6 +93,7 @@ canonical 内容、配额或最新业务状态时，仍然通过 Phoenix interna
 | [`document-converter`](./document-converter.md) | Python/FastAPI            | 无独立 UI              | 单文件到 Markdown 的格式转换       | 已有独立服务                     |
 | [`assets-hub`](./assets-hub.md)                 | Node/Hono                 | Dashboard              | 上传、校验、媒体处理和多存储执行层 | 规划中                           |
 | [`apply`](./apply.md)                           | 独立 Next.js 前端         | 独立 UI                | 社区申请与创建流程                 | 规划中                           |
+| [`auth`](./auth.md)                             | Next.js/Auth.js           | 独立系统 UI            | OAuth、登录和统一会话入口          | Main/Dashboard 当前为函数级复用  |
 | [`content-press`](./content-press.md)           | Node/Hono                 | Dashboard 配置         | 单向、静态、官方内容输出           | 规划中                           |
 | [`posthouse`](./posthouse.md)                   | Node/Hono                 | Dashboard Integrations | Webhook、IM 和邮件的收发中心       | 规划中                           |
 | [`ai`](./ai.md)                                 | Node/Hono                 | Dashboard、Docs 和 IM  | AI 能力编排和 provider 适配        | 规划中                           |
@@ -97,6 +107,7 @@ flowchart LR
   User["用户与社区访客"]
   Dashboard["Dashboard"]
   Apply["Apply"]
+  Auth["Auth"]
   Gateway["Gateway"]
   Phoenix["Phoenix modular monolith"]
   Apps["Node 子应用"]
@@ -107,12 +118,14 @@ flowchart LR
   User --> Gateway
   Gateway --> Dashboard
   Gateway --> Apply
+  Gateway --> Auth
   Gateway --> Phoenix
   Gateway --> Apps
 
   Dashboard --> Phoenix
   Dashboard --> Apps
   Apply --> Phoenix
+  Auth <--> Phoenix
 
   Phoenix <--> Apps
   Apps --> Converter
@@ -143,7 +156,8 @@ flowchart LR
 4. 建立 `posthouse`，从 outbound webhook 和 Phoenix Outbox 开始。
 5. 建立 `risk-center` 的最小查询接口和 Phoenix `Blackhole` 规则快照。
 6. 建立统一的 `ai` 应用，再按实际运行差异决定是否细拆。
-7. 按产品需求推进 `content-press`、独立 `Apply` 和 Umami 部署。
+7. 在独立 `Apply` 前建立统一的 `auth` 边界；按产品需求推进 `content-press` 和
+   Umami 部署。
 
 实施顺序不是调用依赖顺序。每个子应用都应以可独立部署、可回滚且不改变 Phoenix
 领域边界的最小切片开始。
