@@ -2,183 +2,250 @@ defmodule GroupherServer.CMS.DocCover.Read do
   @moduledoc """
   Read projection for the public docs cover.
 
-      doc_cover_groups -----> doc_tree_nodes(type=group)
-             |
-             +---- doc_cover_items -----> doc_tree_nodes(type=page)
+  A persisted Cover row selects one published Group. Card items are derived
+  from that Group's direct public navigation entries:
 
-      doc_cover_pinned_docs -------------> doc_tree_nodes(type=page)
+      Page  -> page item
+      Link  -> link item
+      Group -> group item with recursive leaf_count and first-leaf href
 
-  The database stores cover rows and published tree references separately. This
-  module returns the grouped projection expected by the frontend renderer.
-
-      view: :public
-          page href -> /:community/doc/:inner_id/:slug
-
-      view: :dashboard
-          href -> /:community/dashboard/doc/editor?docId=:doc_id
-
-  `view` is intentionally about href generation only. Visibility filtering still
-  uses public tree rows, so dashboard preview and public docs look at the same
-  cover rows unless a future editor projection adds an explicit stage.
+  Nested descendants are never flattened into the parent Card.
   """
 
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
+  alias CMS.Model.{Community, Doc, DocCoverPinnedDoc, DocCoverCard, DocTreeNode}
+  alias Helper.T
 
   require CMS.Const
-
-  alias CMS.Model.{
-    Community,
-    Doc,
-    DocCoverGroup,
-    DocCoverItem,
-    DocCoverPinnedDoc,
-    DocTreeNode
-  }
-
-  alias Helper.T
 
   @type view :: :public | :dashboard
 
   @doc "Allowed cover read views."
   def view_values, do: CMS.Const.cover_view_enum_values()
 
-  @doc """
-  Reads visible cover groups, items, and pinned docs for one community.
-  """
+  @doc "Reads Group Cards and pinned docs for one community."
   @spec read(Community.t(), view()) :: T.domain_res(map())
   def read(%Community{} = community, view \\ CMS.Const.cover_view(:public))
       when view in CMS.Const.cover_view_values() do
-    groups =
-      DocCoverGroup
-      |> where([g], g.community_id == ^community.id)
-      |> order_by([g], asc: g.index, asc: g.id)
-      |> preload(:group)
+    cards =
+      DocCoverCard
+      |> where([card], card.community_id == ^community.id)
+      |> order_by([card], asc: card.index, asc: card.id)
+      |> preload(:group_node)
       |> Repo.all()
-
-    group_ids = Enum.map(groups, & &1.id)
-
-    items =
-      DocCoverItem
-      |> where([i], i.community_id == ^community.id)
-      |> where([i], i.cover_group_id in ^group_ids)
-      |> where([i], i.hidden == false)
-      |> order_by([i], asc: i.index, asc: i.id)
-      |> preload(:node)
-      |> Repo.all()
+      |> Enum.filter(&match?(%{group_node: %DocTreeNode{type: :group}}, &1))
 
     pinned_docs =
       DocCoverPinnedDoc
-      |> where([i], i.community_id == ^community.id)
-      |> order_by([i], asc: i.index, asc: i.id)
+      |> where([pin], pin.community_id == ^community.id)
+      |> order_by([pin], asc: pin.index, asc: pin.id)
       |> preload(:node)
       |> Repo.all()
-
-    items_by_group =
-      items
       |> Enum.reject(&hidden_node?/1)
-      |> Enum.group_by(& &1.cover_group_id)
 
-    pinned_docs = Enum.reject(pinned_docs, &hidden_node?/1)
+    nodes =
+      DocTreeNode
+      |> where([node], node.community_id == ^community.id)
+      |> where([node], node.stage == CMS.Const.stage(:public))
+      |> order_by([node], asc: node.index, asc: node.id)
+      |> Repo.all()
 
-    public_docs_by_doc_id = public_docs_by_doc_id(community, groups, items, pinned_docs)
-    draft_nodes_by_public_row = draft_nodes_by_public_row(community, groups, items, pinned_docs)
+    children_by_parent = Enum.group_by(nodes, & &1.parent_node_id)
+    page_nodes = Enum.filter(nodes, &(&1.type == :page))
+    public_docs_by_doc_id = public_docs_by_doc_id(community, page_nodes, pinned_docs)
+    draft_nodes_by_node_id = draft_nodes_by_node_id(community, nodes)
 
     {:ok,
      %{
-       groups:
-         Enum.map(groups, fn group ->
-           cover_group_map(
+       cards:
+         Enum.map(cards, fn card ->
+           group = card.group_node
+
+           %{
+             id: card.id,
+             group_node_id: group.node_id,
+             index: card.index,
+             appearance: card.appearance || %{},
+             title: group.title,
+             items:
+               children_by_parent
+               |> Map.get(group.node_id, [])
+               |> Enum.map(
+                 &card_item(
+                   community,
+                   view,
+                   public_docs_by_doc_id,
+                   draft_nodes_by_node_id,
+                   children_by_parent,
+                   &1
+                 )
+               )
+               |> Enum.reject(&is_nil/1)
+           }
+         end),
+       pinned_docs:
+         Enum.map(
+           pinned_docs,
+           &pinned_doc_map(
              community,
              view,
              public_docs_by_doc_id,
-             draft_nodes_by_public_row,
-             group,
-             Map.get(items_by_group, group.id, [])
+             draft_nodes_by_node_id,
+             &1
            )
-         end),
-       pinned_docs:
-         pinned_docs
-         |> Enum.map(
-           &pinned_doc_map(community, view, public_docs_by_doc_id, draft_nodes_by_public_row, &1)
          )
      }}
   end
 
-  defp cover_group_map(
-         %Community{} = community,
+  defp card_item(
+         _community,
+         _view,
+         _public_docs_by_doc_id,
+         _draft_nodes_by_node_id,
+         _children_by_parent,
+         %DocTreeNode{hidden: true}
+       ),
+       do: nil
+
+  defp card_item(
+         community,
          view,
          public_docs_by_doc_id,
-         draft_nodes_by_public_row,
-         %DocCoverGroup{} = group,
-         items
-       ) do
-    group_node =
-      node_map(
-        community,
-        view,
-        public_docs_by_doc_id,
-        group.group,
-        Map.get(draft_nodes_by_public_row, group.group_id)
-      )
+         draft_nodes_by_node_id,
+         _children_by_parent,
+         %DocTreeNode{type: type} = node
+       )
+       when type in [:page, :link] do
+    item = node_map(community, view, public_docs_by_doc_id, draft_nodes_by_node_id, node)
 
-    %{
-      id: group.id,
-      group_id: group.group_id,
-      index: group.index,
-      ui_config: group.ui_config || %{},
-      title: group_node.title,
-      group: group_node,
-      items:
-        items
-        |> Enum.map(
-          &cover_item_map(community, view, public_docs_by_doc_id, draft_nodes_by_public_row, &1)
-        )
-        |> Enum.filter(&displayable_item?/1)
-    }
+    if displayable_item?(item), do: item, else: nil
   end
 
-  defp cover_item_map(
-         %Community{} = community,
+  defp card_item(
+         community,
          view,
          public_docs_by_doc_id,
-         draft_nodes_by_public_row,
-         %DocCoverItem{} = item
+         draft_nodes_by_node_id,
+         children_by_parent,
+         %DocTreeNode{type: :group} = group
        ) do
-    node =
-      node_map(
+    leaves =
+      visible_leaves(
         community,
         view,
         public_docs_by_doc_id,
-        item.node,
-        Map.get(draft_nodes_by_public_row, item.node_id)
+        draft_nodes_by_node_id,
+        children_by_parent,
+        group.node_id,
+        MapSet.new()
       )
 
+    case leaves do
+      [] ->
+        nil
+
+      [first | _] ->
+        %{
+          id: group.node_id,
+          node_id: group.node_id,
+          type: :group,
+          title: group.title,
+          index: group.index,
+          href: first.href,
+          marker: group.marker,
+          badge: group.badge,
+          leaf_count: length(leaves)
+        }
+    end
+  end
+
+  defp card_item(_community, _view, _docs, _drafts, _children, _node), do: nil
+
+  defp visible_leaves(
+         community,
+         view,
+         public_docs_by_doc_id,
+         draft_nodes_by_node_id,
+         children_by_parent,
+         parent_node_id,
+         seen
+       ) do
+    if MapSet.member?(seen, parent_node_id) do
+      []
+    else
+      seen = MapSet.put(seen, parent_node_id)
+
+      children_by_parent
+      |> Map.get(parent_node_id, [])
+      |> Enum.flat_map(fn
+        %DocTreeNode{hidden: true} ->
+          []
+
+        %DocTreeNode{type: :group} = group ->
+          visible_leaves(
+            community,
+            view,
+            public_docs_by_doc_id,
+            draft_nodes_by_node_id,
+            children_by_parent,
+            group.node_id,
+            seen
+          )
+
+        %DocTreeNode{type: type} = node when type in [:page, :link] ->
+          node
+          |> node_map(community, view, public_docs_by_doc_id, draft_nodes_by_node_id)
+          |> then(fn item -> if displayable_item?(item), do: [item], else: [] end)
+
+        _node ->
+          []
+      end)
+    end
+  end
+
+  defp node_map(
+         %DocTreeNode{} = node,
+         %Community{} = community,
+         view,
+         public_docs_by_doc_id,
+         draft_nodes_by_node_id
+       ),
+       do: node_map(community, view, public_docs_by_doc_id, draft_nodes_by_node_id, node)
+
+  defp node_map(
+         %Community{} = community,
+         view,
+         public_docs_by_doc_id,
+         draft_nodes_by_node_id,
+         %DocTreeNode{} = node
+       ) do
     %{
-      id: item.id,
-      node_id: item.node_id,
-      index: item.index,
-      hidden: item.hidden,
-      # The docCover query is a front-end display model. Keep the node relation for
-      # compatibility, but expose the fields layouts render directly.
-      ui_config: item.ui_config || %{},
-      type: node.type,
+      id: node.node_id,
+      node_id: node.node_id,
       doc_id: node.doc_id,
+      type: node.type,
       title: node.title,
-      href: node.href,
+      index: node.index,
+      href:
+        node_href(
+          community,
+          view,
+          node,
+          Map.get(public_docs_by_doc_id, node.doc_id),
+          Map.get(draft_nodes_by_node_id, node.node_id)
+        ),
       marker: node.marker,
-      digest: nil,
-      badge: node.badge,
-      node: node
+      badge: node.badge
     }
   end
 
   defp pinned_doc_map(
-         %Community{} = community,
+         community,
          view,
          public_docs_by_doc_id,
-         draft_nodes_by_public_row,
+         draft_nodes_by_node_id,
          %DocCoverPinnedDoc{} = pinned_doc
        ) do
     node =
@@ -186,8 +253,8 @@ defmodule GroupherServer.CMS.DocCover.Read do
         community,
         view,
         public_docs_by_doc_id,
-        pinned_doc.node,
-        Map.get(draft_nodes_by_public_row, pinned_doc.node_id)
+        draft_nodes_by_node_id,
+        pinned_doc.node
       )
 
     %{
@@ -199,64 +266,32 @@ defmodule GroupherServer.CMS.DocCover.Read do
     }
   end
 
-  defp node_map(
-         %Community{} = community,
-         view,
-         public_docs_by_doc_id,
-         %DocTreeNode{} = node,
-         draft_node
-       ) do
-    %{
-      id: node.node_id,
-      group_id: node.group_id,
-      doc_id: node.doc_id,
-      type: node.type,
-      title: node.title,
-      slug: node.slug,
-      index: node.index,
-      href:
-        node_href(
-          community,
-          view,
-          node,
-          Map.get(public_docs_by_doc_id, node.doc_id),
-          draft_node
-        ),
-      marker: node.marker,
-      badge: node.badge,
-      hidden: node.hidden,
-      children: []
-    }
-  end
-
   defp node_href(
          %Community{slug: community},
          :public,
          %DocTreeNode{type: :page},
-         %Doc{
-           inner_id: inner_id,
-           slug: slug
-         },
+         %Doc{inner_id: inner_id, slug: slug},
          _draft_node
        )
-       when not is_nil(inner_id) and is_binary(slug) and slug != "" do
-    "/#{community}/doc/#{inner_id}/#{slug}"
-  end
+       when not is_nil(inner_id) and is_binary(slug) and slug != "",
+       do: "/#{community}/doc/#{inner_id}/#{slug}"
 
-  defp node_href(_community, :public, %DocTreeNode{href: href}, _public_doc, _draft_node)
+  defp node_href(_community, :public, %DocTreeNode{type: :link, href: href}, _doc, _draft)
        when is_binary(href) and href != "",
        do: href
 
-  defp node_href(%Community{slug: community}, :dashboard, _node, _public_doc, %DocTreeNode{
+  defp node_href(%Community{slug: community}, :dashboard, %DocTreeNode{type: :page}, _doc, %{
          doc_id: doc_id
        })
        when not is_nil(doc_id) do
-    query = URI.encode_query(%{docId: doc_id})
-
-    "/#{community}/dashboard/doc/editor?#{query}"
+    "/#{community}/dashboard/doc/editor?#{URI.encode_query(%{docId: doc_id})}"
   end
 
-  defp node_href(_community, _view, _node, _public_doc, _draft_node), do: nil
+  defp node_href(_community, :dashboard, %DocTreeNode{type: :link, href: href}, _doc, _draft)
+       when is_binary(href) and href != "",
+       do: href
+
+  defp node_href(_community, _view, _node, _doc, _draft), do: nil
 
   defp hidden_node?(%{node: %{hidden: true}}), do: true
   defp hidden_node?(_item), do: false
@@ -264,49 +299,29 @@ defmodule GroupherServer.CMS.DocCover.Read do
   defp displayable_item?(%{href: href}) when is_binary(href) and href != "", do: true
   defp displayable_item?(_item), do: false
 
-  defp public_docs_by_doc_id(%Community{} = community, groups, items, pinned_docs) do
+  defp public_docs_by_doc_id(%Community{} = community, page_nodes, pinned_docs) do
     doc_ids =
-      [
-        Enum.map(groups, & &1.group),
-        Enum.map(items, & &1.node),
-        Enum.map(pinned_docs, & &1.node)
-      ]
+      [Enum.map(page_nodes, & &1.doc_id), Enum.map(pinned_docs, & &1.node.doc_id)]
       |> Enum.concat()
-      |> Enum.reject(&is_nil/1)
-      |> Enum.map(& &1.doc_id)
       |> Enum.reject(&is_nil/1)
       |> Enum.uniq()
 
     Doc
-    |> where([d], d.community_id == ^community.id)
-    |> where([d], d.stage == CMS.Const.stage(:public))
-    |> where([d], d.article_hash_id in ^doc_ids)
+    |> where([doc], doc.community_id == ^community.id)
+    |> where([doc], doc.stage == CMS.Const.stage(:public))
+    |> where([doc], doc.article_hash_id in ^doc_ids)
     |> Repo.all()
     |> Map.new(&{&1.article_hash_id, &1})
   end
 
-  defp draft_nodes_by_public_row(%Community{} = community, groups, items, pinned_docs) do
-    public_nodes =
-      [
-        Enum.map(groups, & &1.group),
-        Enum.map(items, & &1.node),
-        Enum.map(pinned_docs, & &1.node)
-      ]
-      |> Enum.concat()
-      |> Enum.reject(&is_nil/1)
+  defp draft_nodes_by_node_id(%Community{} = community, public_nodes) do
+    node_ids = Enum.map(public_nodes, & &1.node_id)
 
-    node_ids = public_nodes |> Enum.map(& &1.node_id) |> Enum.uniq()
-
-    draft_nodes =
-      DocTreeNode
-      |> where([n], n.community_id == ^community.id)
-      |> where([n], n.stage == CMS.Const.stage(:draft))
-      |> where([n], n.node_id in ^node_ids)
-      |> Repo.all()
-      |> Map.new(&{&1.node_id, &1})
-
-    public_nodes
-    |> Enum.map(fn node -> {node.id, Map.get(draft_nodes, node.node_id)} end)
-    |> Map.new()
+    DocTreeNode
+    |> where([node], node.community_id == ^community.id)
+    |> where([node], node.stage == CMS.Const.stage(:draft))
+    |> where([node], node.node_id in ^node_ids)
+    |> Repo.all()
+    |> Map.new(&{&1.node_id, &1})
   end
 end

@@ -15,11 +15,11 @@ import {
   string,
 } from './decoder'
 
-export const SOURCE_TREE_SCHEMA_VERSION = 1 as const
+export const SOURCE_TREE_SCHEMA_VERSION = 2 as const
 
 export type TSourcePage = {
   draft?: boolean
-  kind: 'page'
+  type: 'page'
   navigationStatus?: 'unlisted'
   route: string
   sizeBytes?: number
@@ -30,21 +30,21 @@ export type TSourcePage = {
 
 export type TSourceLink = {
   href: string
-  kind: 'link'
+  type: 'link'
   sourceId: string
   title: string
 }
 
 export type TSourceSection = {
-  children: TSourceNode[]
-  kind: 'section'
+  pages: TSourceNode[]
+  type: 'section'
   sourceId: string
   title: string
 }
 
 export type TSourceScope = {
-  children: TSourceNode[]
-  kind: 'scope'
+  pages: TSourceNode[]
+  type: 'scope'
   routePrefix?: string
   sourceId: string
   title: string
@@ -78,17 +78,17 @@ const decodeNode = (
   if (state.count > state.maxNodes) throw new ContractError(path, `exceeds ${state.maxNodes} nodes`)
 
   const input = record(value, path)
-  const kind = string(input.kind, `${path}.kind`, 16)
+  const type = string(input.type, `${path}.type`, 16)
   const common = {
     sourceId: string(input.sourceId, `${path}.sourceId`, 1_024),
     title: string(input.title, `${path}.title`, 512),
   }
 
-  if (kind === 'page') {
+  if (type === 'page') {
     return {
       ...common,
       draft: optionalBoolean(input.draft, `${path}.draft`),
-      kind,
+      type,
       navigationStatus:
         input.navigationStatus == null
           ? undefined
@@ -99,25 +99,25 @@ const decodeNode = (
       sourcePath: string(input.sourcePath, `${path}.sourcePath`, 1_024),
     }
   }
-  if (kind === 'link') {
-    return { ...common, href: string(input.href, `${path}.href`, 2_048), kind }
+  if (type === 'link') {
+    return { ...common, href: string(input.href, `${path}.href`, 2_048), type }
   }
-  if (kind !== 'scope' && kind !== 'section') {
-    throw new ContractError(`${path}.kind`, 'expected scope, section, page, or link')
+  if (type !== 'scope' && type !== 'section') {
+    throw new ContractError(`${path}.type`, 'expected scope, section, page, or link')
   }
 
-  const children = array(input.children, `${path}.children`).map((child, index) =>
-    decodeNode(child, `${path}.children[${index}]`, depth + 1, state),
+  const pages = array(input.pages, `${path}.pages`).map((child, index) =>
+    decodeNode(child, `${path}.pages[${index}]`, depth + 1, state),
   )
 
-  return kind === 'scope'
+  return type === 'scope'
     ? {
         ...common,
-        children,
-        kind,
+        pages,
+        type,
         routePrefix: optionalString(input.routePrefix, `${path}.routePrefix`, 1_024),
       }
-    : { ...common, children, kind }
+    : { ...common, pages, type }
 }
 
 /** Decodes SourceTree while enforcing total-node, depth, and text-size limits. */

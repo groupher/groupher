@@ -42,24 +42,22 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
         sync_cover?
       ) do
     with {:ok, page} <- find_publish_page(community, branch, doc_id, page_node_id),
-         {:ok, group} <- find_publish_group(community, branch, page.group_id, page.stage),
-         {:ok, tab} <- find_publish_tab(community, branch, group.tab_id, group.stage),
+         {:ok, ancestors} <- ancestor_chain(community, branch, page),
          {:ok, snapshot} <-
            CMS.Articles.publish_doc_draft(community, doc_id, user, branch_id: branch.id),
-         {:ok, _public_tab} <- upsert_public_node(community, branch, tab),
-         {:ok, public_group} <- upsert_public_node(community, branch, group),
+         {:ok, public_ancestors} <- upsert_public_ancestors(community, branch, ancestors),
          {:ok, public_page} <-
-           upsert_public_node(
+           upsert_public_node(community, branch, page, snapshot.article_hash_id),
+         {:ok, _sync} <-
+           maybe_sync_cover(
              community,
-             branch,
-             page,
-             public_group.node_id,
-             snapshot.article_hash_id
-           ),
-         {:ok, _sync} <- maybe_sync_cover(community, public_group, public_page, sync_cover?) do
+             List.last(public_ancestors),
+             public_page,
+             sync_cover?
+           ) do
       Events.mark_doc_bound_published(community, doc_id, branch_id: branch.id)
 
-      Events.mark_tree_create_published(community, [tab.node_id, group.node_id],
+      Events.mark_tree_create_published(community, Enum.map(ancestors, & &1.node_id),
         branch_id: branch.id
       )
 
@@ -165,39 +163,53 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
     |> Repo.one()
   end
 
-  defp find_publish_group(%Community{} = community, branch, group_id, stage) do
-    DocTreeNode
-    |> where([n], n.community_id == ^community.id)
-    |> where([n], n.branch_id == ^branch.id)
-    |> where([n], n.stage == ^stage)
-    |> where([n], n.type == @tree_node_type_group)
-    |> where([n], n.node_id == ^to_string(group_id))
-    |> Repo.one()
-    |> case do
-      %DocTreeNode{} = node -> {:ok, node}
-      nil -> {:error, {:custom, "docs page group does not exist"}}
+  defp ancestor_chain(%Community{} = community, branch, %DocTreeNode{} = page) do
+    nodes =
+      DocTreeNode
+      |> where([n], n.community_id == ^community.id)
+      |> where([n], n.branch_id == ^branch.id)
+      |> where([n], n.stage == ^page.stage)
+      |> where([n], n.type in [@tree_node_type_tab, @tree_node_type_group])
+      |> Repo.all()
+      |> Map.new(&{&1.node_id, &1})
+
+    collect_ancestors(nodes, page.parent_node_id, [], MapSet.new())
+  end
+
+  defp collect_ancestors(_nodes, nil, ancestors, _seen),
+    do: {:ok, ancestors}
+
+  defp collect_ancestors(nodes, node_id, ancestors, seen) do
+    cond do
+      MapSet.member?(seen, node_id) ->
+        {:error, {:custom, "docs navigation contains a cycle"}}
+
+      parent = Map.get(nodes, node_id) ->
+        collect_ancestors(
+          nodes,
+          parent.parent_node_id,
+          [parent | ancestors],
+          MapSet.put(seen, node_id)
+        )
+
+      true ->
+        {:error, {:custom, "docs page ancestor does not exist"}}
     end
   end
 
-  defp find_publish_tab(%Community{} = community, branch, tab_id, stage) do
-    DocTreeNode
-    |> where([n], n.community_id == ^community.id)
-    |> where([n], n.branch_id == ^branch.id)
-    |> where([n], n.stage == ^stage)
-    |> where([n], n.type == @tree_node_type_tab)
-    |> where([n], n.node_id == ^to_string(tab_id))
-    |> Repo.one()
-    |> case do
-      %DocTreeNode{} = node -> {:ok, node}
-      nil -> {:error, {:custom, "docs page tab does not exist"}}
-    end
+  defp upsert_public_ancestors(community, branch, ancestors) do
+    Enum.reduce_while(ancestors, {:ok, []}, fn ancestor, {:ok, published} ->
+      case upsert_public_node(community, branch, ancestor) do
+        {:ok, node} -> {:cont, {:ok, published ++ [node]}}
+        error -> {:halt, error}
+      end
+    end)
   end
 
   defp upsert_public_node(
          %Community{} = community,
          branch,
          %DocTreeNode{} = draft_node,
-         group_id \\ nil,
          doc_id \\ nil,
          public_nodes \\ nil
        ) do
@@ -211,120 +223,39 @@ defmodule GroupherServer.CMS.DocTree.Publish.DocPublisher do
         |> Repo.all()
         |> Map.new(&{&1.node_id, &1})
 
-    attrs = public_attrs(draft_node, group_id, doc_id)
+    attrs = public_attrs(draft_node, doc_id)
 
-    case Map.get(public_nodes, draft_node.node_id) ||
-           public_node_by_unique_attrs(community, branch, attrs) do
+    case Map.get(public_nodes, draft_node.node_id) do
       %DocTreeNode{} = public_node -> ORM.update(public_node, attrs)
       nil -> ORM.create(DocTreeNode, attrs)
     end
   end
 
-  defp public_attrs(%DocTreeNode{} = draft_node, group_id, doc_id) do
+  defp public_attrs(%DocTreeNode{} = draft_node, doc_id) do
     draft_node
     |> Map.take([
       :community_id,
       :branch_id,
       :node_id,
       :type,
-      :tab_id,
+      :parent_node_id,
       :title,
-      :slug,
       :index,
       :href,
       :marker,
       :badge,
-      :hidden,
-      :ui_config
+      :hidden
     ])
-    |> Map.merge(%{stage: CMS.Const.stage(:public), group_id: group_id, doc_id: doc_id})
-  end
-
-  defp public_node_by_unique_attrs(
-         %Community{} = community,
-         branch,
-         %{type: @tree_node_type_group, group_id: nil} = attrs
-       ) do
-    public_root_group_by_slug(community, branch, Map.get(attrs, :slug)) ||
-      public_root_group_by_title(community, branch, Map.get(attrs, :title))
-  end
-
-  defp public_node_by_unique_attrs(
-         %Community{} = community,
-         branch,
-         %{group_id: group_id} = attrs
-       )
-       when not is_nil(group_id) do
-    public_child_by_slug(community, branch, group_id, Map.get(attrs, :slug)) ||
-      public_child_by_title(community, branch, group_id, Map.get(attrs, :title))
-  end
-
-  defp public_node_by_unique_attrs(_community, _branch, _attrs), do: nil
-
-  defp public_root_group_by_slug(_community, _branch, slug) when is_nil(slug) or slug == "",
-    do: nil
-
-  defp public_root_group_by_slug(%Community{} = community, branch, slug) do
-    DocTreeNode
-    |> where([n], n.community_id == ^community.id)
-    |> where([n], n.branch_id == ^branch.id)
-    |> where([n], n.stage == CMS.Const.stage(:public))
-    |> where([n], n.type == @tree_node_type_group)
-    |> where([n], is_nil(n.group_id))
-    |> where([n], n.slug == ^slug)
-    |> order_by([n], desc: n.updated_at, desc: n.id)
-    |> limit(1)
-    |> Repo.one()
-  end
-
-  defp public_root_group_by_title(_community, _branch, title) when is_nil(title) or title == "",
-    do: nil
-
-  defp public_root_group_by_title(%Community{} = community, branch, title) do
-    DocTreeNode
-    |> where([n], n.community_id == ^community.id)
-    |> where([n], n.branch_id == ^branch.id)
-    |> where([n], n.stage == CMS.Const.stage(:public))
-    |> where([n], n.type == @tree_node_type_group)
-    |> where([n], is_nil(n.group_id))
-    |> where([n], n.title == ^title)
-    |> order_by([n], desc: n.updated_at, desc: n.id)
-    |> limit(1)
-    |> Repo.one()
-  end
-
-  defp public_child_by_slug(_community, _branch, _group_id, slug) when is_nil(slug) or slug == "",
-    do: nil
-
-  defp public_child_by_slug(%Community{} = community, branch, group_id, slug) do
-    DocTreeNode
-    |> where([n], n.community_id == ^community.id)
-    |> where([n], n.branch_id == ^branch.id)
-    |> where([n], n.stage == CMS.Const.stage(:public))
-    |> where([n], n.group_id == ^group_id)
-    |> where([n], n.slug == ^slug)
-    |> order_by([n], desc: n.updated_at, desc: n.id)
-    |> limit(1)
-    |> Repo.one()
-  end
-
-  defp public_child_by_title(_community, _branch, _group_id, title)
-       when is_nil(title) or title == "",
-       do: nil
-
-  defp public_child_by_title(%Community{} = community, branch, group_id, title) do
-    DocTreeNode
-    |> where([n], n.community_id == ^community.id)
-    |> where([n], n.branch_id == ^branch.id)
-    |> where([n], n.stage == CMS.Const.stage(:public))
-    |> where([n], n.group_id == ^group_id)
-    |> where([n], n.title == ^title)
-    |> order_by([n], desc: n.updated_at, desc: n.id)
-    |> limit(1)
-    |> Repo.one()
+    |> Map.merge(%{
+      stage: CMS.Const.stage(:public),
+      doc_id: doc_id || draft_node.doc_id
+    })
   end
 
   defp maybe_sync_cover(_community, _published_group, _published_page, false),
+    do: {:ok, :skipped}
+
+  defp maybe_sync_cover(_community, nil, _published_page, true),
     do: {:ok, :skipped}
 
   defp maybe_sync_cover(

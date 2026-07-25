@@ -44,7 +44,7 @@ defmodule Helper.Cache do
 
   # @doc """
   # cache config for user.login -> user.id, used in accounts resolver
-  # user.id is a linearly increasing integer, kind sensitive, so use user.login instead
+  # user.id is a linearly increasing integer and somewhat sensitive, so use user.login instead
   # """
   # def config(:user_login) do
   #   [

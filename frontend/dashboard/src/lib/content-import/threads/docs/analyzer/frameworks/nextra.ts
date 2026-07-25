@@ -85,7 +85,7 @@ export const analyzeNextra = async (workspace: TSourceWorkspace): Promise<TSourc
       : await directoryItems(directory, workspace, documents)
     if (
       document &&
-      !children.some((child) => child.kind === 'page' && child.sourceId === document.sourcePath)
+      !children.some((child) => child.type === 'page' && child.sourceId === document.sourcePath)
     ) {
       children.unshift(pageNode(document, title))
     }
@@ -96,7 +96,7 @@ export const analyzeNextra = async (workspace: TSourceWorkspace): Promise<TSourc
 
   return {
     navigation,
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: { configPaths: [rootMeta], framework: 'nextra', root },
   }
 }

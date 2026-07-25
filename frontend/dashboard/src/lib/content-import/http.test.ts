@@ -61,7 +61,7 @@ const expiredRecord: TPreviewRecord = {
   idempotencyKey: 'request-1',
   previewRef: 'prv_01JXYZ123',
   requestedSource: {
-    kind: 'repo',
+    type: 'repo',
     platform: 'github',
     repoUrl: 'https://github.com/acme/docs',
   },

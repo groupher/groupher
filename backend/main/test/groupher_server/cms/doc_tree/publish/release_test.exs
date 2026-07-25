@@ -12,6 +12,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
 
       {:ok, group_payload} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "Guides",
           slug: "guides",
           base_revision: tree_state.tree_lock_version
@@ -21,7 +22,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
         CMS.DocTree.create_page(
           community,
           %{
-            group_id: group_payload.node.id,
+            parent_node_id: group_payload.node.id,
             title: "Install",
             slug: "install",
             base_revision: group_payload.revision
@@ -61,8 +62,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
               CMS.Const.doc_tree_json_key(:id) => page_payload.node.id,
               CMS.Const.doc_tree_json_key(:type) => to_string(CMS.Const.tree_node_type(:page)),
               "title" => page_payload.node.title,
-              "slug" => page_payload.node.slug,
-              "groupId" => group_payload.node.id,
+              "parentNodeId" => group_payload.node.id,
               CMS.Const.doc_tree_json_key(:doc_id) => page_payload.node.doc_id,
               "index" => page_payload.node.index
             }
@@ -97,8 +97,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
               CMS.Const.doc_tree_json_key(:id) => page_payload.node.id,
               CMS.Const.doc_tree_json_key(:type) => to_string(CMS.Const.tree_node_type(:page)),
               "title" => page_payload.node.title,
-              "slug" => page_payload.node.slug,
-              "groupId" => group_payload.node.id,
+              "parentNodeId" => group_payload.node.id,
               CMS.Const.doc_tree_json_key(:doc_id) => page_payload.node.doc_id,
               "index" => page_payload.node.index
             }
@@ -151,7 +150,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       {:ok, release} = ORM.find(CMS.Model.DocPublishRelease, release.id)
       release = Repo.preload(release, [:articles, :tree_events, :tree_snapshot])
 
-      assert release.tree_snapshot.tree_json["version"] == 2
+      assert release.tree_snapshot.tree_json["version"] == 3
 
       assert [%CMS.Model.DocPublishReleaseArticle{actions: ["created"], title: "Install"}] =
                release.articles
@@ -192,7 +191,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
         CMS.DocTree.create_page(
           community,
           %{
-            group_id: group_payload.node.id,
+            parent_node_id: group_payload.node.id,
             title: "Usage",
             slug: "usage",
             base_revision: page_payload.revision
@@ -225,10 +224,11 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
       end
     end
 
-    test "publishes pages with the same slug in different groups",
+    test "keeps canonical Doc slugs unique across navigation groups",
          ~m(user community page_payload)a do
       {:ok, second_group_payload} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "API",
           slug: "api",
           base_revision: page_payload.revision
@@ -238,7 +238,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
         CMS.DocTree.create_page(
           community,
           %{
-            group_id: second_group_payload.node.id,
+            parent_node_id: second_group_payload.node.id,
             title: "Install",
             slug: "install",
             base_revision: second_group_payload.revision
@@ -246,7 +246,22 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
           user
         )
 
-      assert page_payload.node.slug == second_page_payload.node.slug
+      {:ok, first_doc} =
+        ORM.find_by(CMS.Model.Doc,
+          community_id: community.id,
+          stage: :draft,
+          article_hash_id: page_payload.node.doc_id
+        )
+
+      {:ok, second_doc} =
+        ORM.find_by(CMS.Model.Doc,
+          community_id: community.id,
+          stage: :draft,
+          article_hash_id: second_page_payload.node.doc_id
+        )
+
+      assert first_doc.slug == "install"
+      assert second_doc.slug == "install-copy"
       refute page_payload.node.doc_id == second_page_payload.node.doc_id
 
       assert {:ok, %{done: true, checklist: next_checklist}} =
@@ -268,7 +283,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
 
       {:ok, move_payload} =
         CMS.DocTree.move_node(community, page_payload.node.id, %{
-          target_group_id: page_payload.node.group_id,
+          target_parent_node_id: page_payload.node.parent_node_id,
           target_index: 0,
           base_revision: rename_payload.revision
         })
@@ -334,6 +349,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
 
       {:ok, group_payload_2} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "API",
           slug: "api",
           base_revision: tree.revision
@@ -351,7 +367,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
 
       {:ok, _move_payload} =
         CMS.DocTree.move_node(community, page_payload.node.id, %{
-          target_group_id: group_payload_2.node.id,
+          target_parent_node_id: group_payload_2.node.id,
           target_index: 0,
           base_revision: group_payload_2.revision
         })
@@ -375,14 +391,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Publish.Release do
     end
   end
 
-  defp empty_docs_community(user) do
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
-
-    with {:ok, community} <- CMS.Communities.create(community_attrs, user),
-         {:ok, _} <- CMS.DocTree.delete_demo_template(community) do
-      {:ok, community}
-    end
-  end
+  defp empty_docs_community(user), do: create_empty_docs_community(user)
 
   defp release_count(community) do
     CMS.Model.DocPublishRelease

@@ -1,6 +1,37 @@
 import { SIDE_TREE_NODE_TYPE } from '../constant'
-import type { TEditingTarget, TSideTreeChild, TSideTreeGroup } from '../spec'
+import type {
+  TEditingTarget,
+  TSideTreeChild,
+  TSideTreeGroup,
+  TSideTreeNavigationNode,
+} from '../spec'
 import { duplicateSideTreeChild } from './factory'
+
+const isGroup = (node: TSideTreeGroup['pages'][number]): node is TSideTreeGroup =>
+  node.type === SIDE_TREE_NODE_TYPE.GROUP
+
+const mapGroups = (
+  groups: readonly TSideTreeGroup[],
+  mapper: (group: TSideTreeGroup) => TSideTreeGroup,
+): TSideTreeGroup[] =>
+  groups.map((group) =>
+    mapper({
+      ...group,
+      pages: group.pages.map((child) => (isGroup(child) ? mapGroups([child], mapper)[0] : child)),
+    }),
+  )
+
+export const findGroup = (
+  groups: readonly TSideTreeGroup[],
+  groupId: string,
+): TSideTreeGroup | null => {
+  for (const group of groups) {
+    if (group.id === groupId) return group
+    const nested = findGroup(group.pages.filter(isGroup), groupId)
+    if (nested) return nested
+  }
+  return null
+}
 
 /**
  * Check whether a node id belongs only to the local optimistic tree.
@@ -45,13 +76,16 @@ export const removeLocalTarget = (
   if (!target) return null
 
   if (target.type === SIDE_TREE_NODE_TYPE.GROUP && isLocalId(target.groupId)) {
-    return groups.filter((group) => group.id !== target.groupId)
+    return mapGroups(groups, (group) => ({
+      ...group,
+      pages: group.pages.filter((child) => child.id !== target.groupId),
+    })).filter((group) => group.id !== target.groupId)
   }
 
   if ('childId' in target && isLocalId(target.childId)) {
-    return groups.map((group) =>
+    return mapGroups(groups, (group) =>
       group.id === target.groupId
-        ? { ...group, children: group.children.filter((child) => child.id !== target.childId) }
+        ? { ...group, pages: group.pages.filter((child) => child.id !== target.childId) }
         : group,
     )
   }
@@ -76,8 +110,8 @@ export const isActiveRemovedByTarget = (
 
   if ('childId' in target) return activeId === target.childId
 
-  const group = groups.find((item) => item.id === target.groupId)
-  return group?.children.some((child) => child.id === activeId) ?? false
+  const group = findGroup(groups, target.groupId)
+  return group ? findChild([group], activeId) !== null : false
 }
 
 /**
@@ -90,7 +124,11 @@ export const replaceGroupId = (
   groups: readonly TSideTreeGroup[],
   localId: string,
   remote: TSideTreeGroup,
-): TSideTreeGroup[] => groups.map((group) => (group.id === localId ? remote : group))
+): TSideTreeGroup[] =>
+  mapGroups(groups, (group) => ({
+    ...group,
+    pages: group.pages.map((child) => (child.id === localId ? remote : child)),
+  })).map((group) => (group.id === localId ? remote : group))
 
 /**
  * Replace a local optimistic child with the backend-created draft page or link.
@@ -104,11 +142,11 @@ export const replaceChildId = (
   localId: string,
   remote: TSideTreeChild,
 ): TSideTreeGroup[] =>
-  groups.map((group) =>
+  mapGroups(groups, (group) =>
     group.id === groupId
       ? {
           ...group,
-          children: group.children.map((child) => (child.id === localId ? remote : child)),
+          pages: group.pages.map((child) => (child.id === localId ? remote : child)),
         }
       : group,
   )
@@ -125,19 +163,17 @@ export const updateChildTitleInGroup = (
   childId: string,
   title: string,
 ): TSideTreeGroup[] =>
-  groups.map((group) =>
+  mapGroups(groups, (group) =>
     group.id === groupId
       ? {
           ...group,
-          children: group.children.map((child) =>
-            child.id === childId ? { ...child, title } : child,
-          ),
+          pages: group.pages.map((child) => (child.id === childId ? { ...child, title } : child)),
         }
       : group,
   )
 
 /**
- * Patch one group while preserving its current children.
+ * Patch one group while preserving its current pages.
  *
  * @example
  * const nextGroups = patchGroupInGroups(groups, groupId, { title: 'Guides' })
@@ -147,27 +183,95 @@ export const patchGroupInGroups = (
   groupId: string,
   patch: Partial<TSideTreeGroup>,
 ): TSideTreeGroup[] =>
-  groups.map((group) => (group.id === groupId ? { ...group, ...patch } : group))
+  mapGroups(groups, (group) => (group.id === groupId ? { ...group, ...patch } : group))
 
 /**
- * Append a new child to a group and expand that group.
+ * Insert a local node at the start of its canonical Group or leaf lane.
  *
  * @example
  * const nextGroups = appendChildToGroup(groups, groupId, child)
  */
-export const appendChildToGroup = (
+export const insertLocalNodeInGroup = (
   groups: readonly TSideTreeGroup[],
   groupId: string,
-  child: TSideTreeChild,
+  child: TSideTreeNavigationNode,
 ): TSideTreeGroup[] =>
-  groups.map((group) =>
+  mapGroups(groups, (group) =>
     group.id === groupId
-      ? { ...group, expanded: true, children: [...group.children, child] }
+      ? {
+          ...group,
+          expanded: true,
+          pages: isGroup(child)
+            ? [child, ...group.pages]
+            : [
+                ...group.pages.filter(isGroup),
+                child,
+                ...group.pages.filter((page) => !isGroup(page)),
+              ],
+        }
       : group,
   )
 
 /**
- * Remove one group and all of its children.
+ * Move a confirmed local Page/Link to the end of its leaf lane.
+ *
+ * The inline input starts at the top of the leaf lane; confirmation is the
+ * transition into the persisted order.
+ */
+export const moveChildToLeafEnd = (
+  groups: readonly TSideTreeGroup[],
+  groupId: string,
+  childId: string,
+): TSideTreeGroup[] =>
+  mapGroups(groups, (group) => {
+    if (group.id !== groupId) return group
+
+    const child = group.pages.find((page) => page.id === childId)
+    if (!child || isGroup(child)) return group
+
+    return {
+      ...group,
+      pages: [
+        ...group.pages.filter(isGroup),
+        ...group.pages.filter((page) => !isGroup(page) && page.id !== childId),
+        child,
+      ],
+    }
+  })
+
+/**
+ * Move a confirmed local Group to the end of its Group lane.
+ *
+ * The inline input starts at the top of the Group lane; confirmation is the
+ * transition into the persisted order. Page/Link leaves remain below Groups.
+ */
+export const moveGroupToGroupLaneEnd = (
+  groups: readonly TSideTreeGroup[],
+  groupId: string,
+): TSideTreeGroup[] => {
+  const rootGroup = groups.find((group) => group.id === groupId)
+
+  if (rootGroup) {
+    return [...groups.filter((group) => group.id !== groupId), rootGroup]
+  }
+
+  return mapGroups(groups, (group) => {
+    const nestedGroup = group.pages.find((page) => page.id === groupId && isGroup(page))
+    if (!nestedGroup || !isGroup(nestedGroup)) return group
+
+    return {
+      ...group,
+      pages: [
+        ...group.pages.filter((page) => isGroup(page) && page.id !== groupId),
+        nestedGroup,
+        ...group.pages.filter((page) => !isGroup(page)),
+      ],
+    }
+  })
+}
+
+/**
+ * Remove one group and all of its pages.
  *
  * @example
  * const nextGroups = removeGroupFromGroups(groups, groupId)
@@ -175,7 +279,11 @@ export const appendChildToGroup = (
 export const removeGroupFromGroups = (
   groups: readonly TSideTreeGroup[],
   groupId: string,
-): TSideTreeGroup[] => groups.filter((group) => group.id !== groupId)
+): TSideTreeGroup[] =>
+  mapGroups(groups, (group) => ({
+    ...group,
+    pages: group.pages.filter((child) => child.id !== groupId),
+  })).filter((group) => group.id !== groupId)
 
 /**
  * Toggle one group in local UI state.
@@ -188,7 +296,7 @@ export const toggleGroupExpandedInGroups = (
   groupId: string,
 ): { groups: TSideTreeGroup[] } => {
   return {
-    groups: groups.map((group) =>
+    groups: mapGroups(groups, (group) =>
       group.id === groupId ? { ...group, expanded: group.expanded === false } : group,
     ),
   }
@@ -205,11 +313,11 @@ export const removeChildFromGroup = (
   groupId: string,
   childId: string,
 ): TSideTreeGroup[] =>
-  groups.map((group) =>
+  mapGroups(groups, (group) =>
     group.id === groupId
       ? {
           ...group,
-          children: group.children.filter((child) => child.id !== childId),
+          pages: group.pages.filter((child) => child.id !== childId),
         }
       : group,
   )
@@ -226,13 +334,11 @@ export const updateChildMarkerInGroup = (
   childId: string,
   marker: TSideTreeChild['marker'],
 ): TSideTreeGroup[] =>
-  groups.map((group) =>
+  mapGroups(groups, (group) =>
     group.id === groupId
       ? {
           ...group,
-          children: group.children.map((child) =>
-            child.id === childId ? { ...child, marker } : child,
-          ),
+          pages: group.pages.map((child) => (child.id === childId ? { ...child, marker } : child)),
         }
       : group,
   )
@@ -248,9 +354,9 @@ export const patchChildInGroups = (
   childId: string,
   patch: Partial<TSideTreeChild>,
 ): TSideTreeGroup[] =>
-  groups.map((group) => ({
+  mapGroups(groups, (group) => ({
     ...group,
-    children: group.children.map((child) =>
+    pages: group.pages.map((child) =>
       child.id === childId ? ({ ...child, ...patch } as TSideTreeChild) : child,
     ),
   }))
@@ -268,19 +374,19 @@ export const duplicateChildInGroup = (
   untitledTitle: string,
 ): { groups: TSideTreeGroup[]; duplicatedId: string | null } => {
   let duplicatedId: string | null = null
-  const nextGroups = groups.map((group) => {
+  const nextGroups = mapGroups(groups, (group) => {
     if (group.id !== groupId) return group
 
-    const childIndex = group.children.findIndex((child) => child.id === childId)
-    const child = group.children[childIndex]
-    if (childIndex === -1 || !child) return group
+    const childIndex = group.pages.findIndex((child) => child.id === childId)
+    const child = group.pages[childIndex]
+    if (childIndex === -1 || !child || isGroup(child)) return group
 
     const duplicated = duplicateSideTreeChild(child, untitledTitle)
     duplicatedId = duplicated.id
-    const children = [...group.children]
-    children.splice(childIndex + 1, 0, duplicated)
+    const pages = [...group.pages]
+    pages.splice(childIndex + 1, 0, duplicated)
 
-    return { ...group, children }
+    return { ...group, pages }
   })
 
   return { groups: nextGroups, duplicatedId }
@@ -293,7 +399,11 @@ export const duplicateChildInGroup = (
  * const index = findGroupIndex(groups, groupId)
  */
 export const findGroupIndex = (groups: readonly TSideTreeGroup[], groupId: string): number =>
-  groups.findIndex((group) => group.id === groupId)
+  findGroup(groups, groupId)?.parentNodeId
+    ? (findGroup(groups, findGroup(groups, groupId)?.parentNodeId || '')?.pages.findIndex(
+        (child) => child.id === groupId,
+      ) ?? groups.findIndex((group) => group.id === groupId))
+    : groups.findIndex((group) => group.id === groupId)
 
 /**
  * Find a child index inside its parent group.
@@ -306,9 +416,9 @@ export const findChildIndex = (
   groupId: string,
   childId: string,
 ): number => {
-  const group = groups.find((item) => item.id === groupId)
+  const group = findGroup(groups, groupId)
   if (!group) return -1
-  return group.children.findIndex((child) => child.id === childId)
+  return group.pages.findIndex((child) => child.id === childId)
 }
 
 /**
@@ -319,8 +429,10 @@ export const findChildIndex = (
  */
 export const findFirstPage = (groups: readonly TSideTreeGroup[]): TSideTreeChild | null => {
   for (const group of groups) {
-    const child = group.children.find((item) => item.type === SIDE_TREE_NODE_TYPE.PAGE)
-    if (child) return child
+    const child = group.pages.find((item) => item.type === SIDE_TREE_NODE_TYPE.PAGE)
+    if (child && !isGroup(child)) return child
+    const nested = findFirstPage(group.pages.filter(isGroup))
+    if (nested) return nested
   }
 
   return null
@@ -337,8 +449,10 @@ export const findChild = (
   childId: string,
 ): TSideTreeChild | null => {
   for (const group of groups) {
-    const child = group.children.find((item) => item.id === childId)
-    if (child) return child
+    const child = group.pages.find((item) => item.id === childId)
+    if (child && !isGroup(child)) return child
+    const nested = findChild(group.pages.filter(isGroup), childId)
+    if (nested) return nested
   }
 
   return null
@@ -356,10 +470,10 @@ export const findChildEditingTarget = (
   groupId: string,
   childId: string,
 ): TEditingTarget => {
-  const group = groups.find((item) => item.id === groupId)
-  const child = group?.children.find((item) => item.id === childId)
+  const group = findGroup(groups, groupId)
+  const child = group?.pages.find((item) => item.id === childId)
 
-  return child ? { type: child.type, groupId, childId } : null
+  return child && !isGroup(child) ? { type: child.type, groupId, childId } : null
 }
 
 /**
@@ -375,10 +489,12 @@ export const findPageByDocId = (
   if (!docId) return null
 
   for (const group of groups) {
-    const child = group.children.find(
+    const child = group.pages.find(
       (item) => item.type === SIDE_TREE_NODE_TYPE.PAGE && item.docId === docId,
     )
-    if (child) return child
+    if (child && child.type !== SIDE_TREE_NODE_TYPE.GROUP) return child
+    const nested = findPageByDocId(group.pages.filter(isGroup), docId)
+    if (nested) return nested
   }
 
   return null
@@ -400,36 +516,21 @@ export const resolveActiveIdFromUrl = (
   return null
 }
 
-/**
- * Detect the moved node and target position between two ordered trees.
- *
- * @example
- * const moved = findMovedNode(previousGroups, nextGroups)
- * if (moved) persistMove(moved)
- */
-export const findMovedNode = (
-  prevGroups: readonly TSideTreeGroup[],
-  nextGroups: readonly TSideTreeGroup[],
-): { id: string; targetGroupId: string | null; targetIndex: number } | null => {
-  const prevPositions = new Map<string, { groupId: string | null; index: number }>()
-
-  for (const [index, group] of prevGroups.entries()) {
-    prevPositions.set(group.id, { groupId: null, index })
-    for (const [childIndex, child] of group.children.entries()) {
-      prevPositions.set(child.id, { groupId: group.id, index: childIndex })
-    }
-  }
-
-  for (const [index, group] of nextGroups.entries()) {
-    const prev = prevPositions.get(group.id)
-    if (prev && (prev.groupId !== null || prev.index !== index)) {
-      return { id: group.id, targetGroupId: null, targetIndex: index }
+/** Resolves the authoritative parent and index for one explicit DnD active node. */
+export const findNodePosition = (
+  groups: readonly TSideTreeGroup[],
+  nodeId: string,
+): { parentNodeId: string | null; index: number } | null => {
+  for (const [index, group] of groups.entries()) {
+    if (group.id === nodeId) {
+      return { parentNodeId: group.parentNodeId || null, index }
     }
 
-    for (const [childIndex, child] of group.children.entries()) {
-      const prevChild = prevPositions.get(child.id)
-      if (prevChild && (prevChild.groupId !== group.id || prevChild.index !== childIndex)) {
-        return { id: child.id, targetGroupId: group.id, targetIndex: childIndex }
+    for (const [pageIndex, page] of group.pages.entries()) {
+      if (page.id === nodeId) return { parentNodeId: group.id, index: pageIndex }
+      if (isGroup(page)) {
+        const nested = findNodePosition([page], nodeId)
+        if (nested) return nested
       }
     }
   }

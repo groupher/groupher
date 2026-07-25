@@ -241,15 +241,14 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
 
   defp build_result(job, items, tree, ready_items) do
     tabs = tree["tabs"] || []
-    groups = Enum.flat_map(tabs, &(&1["groups"] || []))
-    children = Enum.flat_map(groups, &(&1["children"] || []))
+    nodes = Enum.flat_map(tabs, &collect_target_nodes(&1["groups"] || []))
     first_item = List.first(ready_items)
 
     %{
       "counts" => %{
         "assets" => 0,
-        "groups" => length(groups),
-        "links" => Enum.count(children, &(&1["type"] == "link")),
+        "groups" => Enum.count(nodes, &(&1["type"] == "group")),
+        "links" => Enum.count(nodes, &(&1["type"] == "link")),
         "pages" => length(ready_items),
         "tabs" => length(tabs)
       },
@@ -266,6 +265,15 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
       "sourceRevision" => job.source_info["commit"],
       "tree" => tree
     }
+  end
+
+  defp collect_target_nodes(pages) do
+    Enum.flat_map(pages, fn child ->
+      [
+        child
+        | if(child["type"] == "group", do: collect_target_nodes(child["pages"]), else: [])
+      ]
+    end)
   end
 
   defp failure_result(item) do

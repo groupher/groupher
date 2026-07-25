@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "source": {
     "framework": "docusaurus",
     "root": "docs",
@@ -7,32 +7,32 @@
   },
   "navigation": [
     {
-      "kind": "scope",
+      "type": "scope",
       "sourceId": "sidebar:tutorialSidebar",
       "title": "Tutorial Sidebar",
       "routePrefix": "/",
-      "children": [
+      "pages": [
         {
-          "kind": "page",
+          "type": "page",
           "sourceId": "docs/intro.md",
           "sourcePath": "docs/intro.md",
           "title": "Introduction",
           "route": "/welcome"
         },
         {
-          "kind": "section",
+          "type": "section",
           "sourceId": "category:guides",
           "title": "Guides",
-          "children": [
+          "pages": [
             {
-              "kind": "page",
+              "type": "page",
               "sourceId": "docs/guide/index.md",
               "sourcePath": "docs/guide/index.md",
               "title": "Guide Overview",
               "route": "/guide/index"
             },
             {
-              "kind": "page",
+              "type": "page",
               "sourceId": "docs/guide/start.md",
               "sourcePath": "docs/guide/start.md",
               "title": "Start Here",
@@ -41,7 +41,7 @@
           ]
         },
         {
-          "kind": "link",
+          "type": "link",
           "sourceId": "external:https://example.com",
           "title": "Project",
           "href": "https://example.com"
@@ -49,20 +49,20 @@
       ]
     },
     {
-      "kind": "scope",
+      "type": "scope",
       "sourceId": "sidebar:api",
       "title": "Api",
       "routePrefix": "/",
-      "children": [
+      "pages": [
         {
-          "kind": "page",
+          "type": "page",
           "sourceId": "docs/api/overview.md",
           "sourcePath": "docs/api/overview.md",
           "title": "Overview",
           "route": "/api/overview"
         },
         {
-          "kind": "page",
+          "type": "page",
           "sourceId": "docs/api/client.mdx",
           "sourcePath": "docs/api/client.mdx",
           "title": "Client",

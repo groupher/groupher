@@ -155,7 +155,7 @@ const normalizeExplicitStops = (colorCount: number, stops?: number[]): number[] 
   stops?.length === colorCount ? stops.map((stop) => clamp(stop, 0, 100)) : null
 
 /**
- * Spread is one user-facing control, but each gradient kind maps it to a
+ * Spread is one user-facing control, but each gradient type maps it to a
  * different render shape. Linear gradients compress or expand the transition
  * band around the center line, while radial gradients control how far the
  * palette travels outward from the focal point.

@@ -18,7 +18,6 @@ import InlineTitleInput from './InlineTitleInput'
 
 type TProps = {
   groupId: string
-  groupInCover?: boolean
   item: TSideTreePage
   active: boolean
   editingTarget: TEditingTarget
@@ -34,7 +33,6 @@ type TProps = {
 
 const File: FC<TProps> = ({
   groupId,
-  groupInCover = false,
   item,
   active,
   editingTarget,
@@ -119,8 +117,6 @@ const File: FC<TProps> = ({
           <div className={s.actions}>
             <ChildMenu
               moveToDraftVisible={publicDoc}
-              coverToggleVisible={groupInCover && publicDoc}
-              hiddenFromCover={item.publishState?.hiddenFromCover === true}
               pinAction={pinnedToCover ? 'unpin' : canPinToCover ? 'pin' : undefined}
               onOpenChange={setMenuOpen}
               onSelect={(action) => {

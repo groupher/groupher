@@ -25,13 +25,13 @@ export type TMarkerPickerProps = {
 }
 
 export type TIconOption = {
-  kind: 'icon'
+  type: 'icon'
   provider: TIconProvider
   name: string
 }
 
 export type TDevLogoOption = {
-  kind: 'dev'
+  type: 'dev'
   name: TDevLogo
 }
 

@@ -16,7 +16,7 @@ defmodule GroupherServer.Test.Helper.Schema.DocTree do
           tabs {
             id
             pins { id type title href }
-            groups { id }
+            groups { id type parentNodeId }
           }
         }
       }
@@ -32,8 +32,9 @@ defmodule GroupherServer.Test.Helper.Schema.DocTree do
             title
             groups {
               id
+              type
               title
-              children { id docId type title href }
+              pages { id docId type title href }
             }
           }
         }

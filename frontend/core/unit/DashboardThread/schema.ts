@@ -436,12 +436,10 @@ const updateDashboardDocFaq = gql`
 
 const docTreeNodeFields = `
   id
-  tabId
-  groupId
+  parentNodeId
   docId
   type
   title
-  slug
   index
   href
   marker {
@@ -463,7 +461,6 @@ const docTreeNodeFields = `
   }
   badge
   hidden
-  uiConfig
   publishState {
       status
       published
@@ -477,6 +474,11 @@ const docTreeNodeFields = `
     hiddenFromCover
     pinnedToCover
   }
+`
+
+const docTreeNodeSelection = (depth: number): string => `
+  ${docTreeNodeFields}
+  ${depth > 0 ? `pages { ${docTreeNodeSelection(depth - 1)} }` : ''}
 `
 
 const docTree = gql`
@@ -504,10 +506,7 @@ const docTree = gql`
       tabs {
         ${docTreeNodeFields}
         pins { ${docTreeNodeFields} }
-        groups {
-          ${docTreeNodeFields}
-          children { ${docTreeNodeFields} }
-        }
+        groups { ${docTreeNodeSelection(12)} }
       }
     }
   }
@@ -544,8 +543,7 @@ const docTreeTrashItems = gql`
       docId
       type
       title
-      slug
-      deletedFromGroupId
+      deletedFromParentNodeId
       deletedFromIndex
       deletedAt
       restoredAt
@@ -686,41 +684,19 @@ const docTreeMutationPayload = `
   }
 `
 
-const createDocTreeTab = gql`
-  mutation ($community: String!, $baseRevision: Int!, $input: DocTreeNodeInput!) {
-    createDocTreeTab(community: $community, baseRevision: $baseRevision, input: $input) {
-      ${docTreeMutationPayload}
-    }
-  }
-`
-
-const createDocTreeGroup = gql`
-  mutation ($community: String!, $baseRevision: Int!, $input: DocTreeNodeInput!) {
-    createDocTreeGroup(community: $community, baseRevision: $baseRevision, input: $input) {
-      ${docTreeMutationPayload}
-    }
-  }
-`
-
-const createDocTreePage = gql`
-  mutation ($community: String!, $baseRevision: Int!, $input: DocTreeNodeInput!) {
-    createDocTreePage(community: $community, baseRevision: $baseRevision, input: $input) {
-      ${docTreeMutationPayload}
-    }
-  }
-`
-
-const createDocTreeLink = gql`
-  mutation ($community: String!, $baseRevision: Int!, $input: DocTreeNodeInput!) {
-    createDocTreeLink(community: $community, baseRevision: $baseRevision, input: $input) {
-      ${docTreeMutationPayload}
-    }
-  }
-`
-
-const createDocTreePin = gql`
-  mutation ($community: String!, $baseRevision: Int!, $input: DocTreeNodeInput!) {
-    createDocTreePin(community: $community, baseRevision: $baseRevision, input: $input) {
+const createDocTreeNode = gql`
+  mutation (
+    $community: String!
+    $baseRevision: Int!
+    $parentNodeId: ID
+    $input: DocTreeNodeInput!
+  ) {
+    createDocTreeNode(
+      community: $community
+      baseRevision: $baseRevision
+      parentNodeId: $parentNodeId
+      input: $input
+    ) {
       ${docTreeMutationPayload}
     }
   }
@@ -855,9 +831,9 @@ const moveDocToDraft = gql`
   }
 `
 
-const moveDocTreeGroupToDraft = gql`
-  mutation moveDocTreeGroupToDraft($community: String!, $groupId: ID!) {
-    moveDocTreeGroupToDraft(community: $community, groupId: $groupId) {
+const moveDocTreeSubtreeToDraft = gql`
+  mutation moveDocTreeSubtreeToDraft($community: String!, $nodeId: ID!) {
+    moveDocTreeSubtreeToDraft(community: $community, nodeId: $nodeId) {
       done
     }
   }
@@ -899,8 +875,20 @@ const deleteDocTreeNode = gql`
 `
 
 const restoreDocTreeTrashItem = gql`
-  mutation ($community: String!, $id: ID!, $baseRevision: Int!) {
-    restoreDocTreeTrashItem(community: $community, id: $id, baseRevision: $baseRevision) {
+  mutation (
+    $community: String!
+    $id: ID!
+    $baseRevision: Int!
+    $targetParentNodeId: ID
+    $targetIndex: Int
+  ) {
+    restoreDocTreeTrashItem(
+      community: $community
+      id: $id
+      baseRevision: $baseRevision
+      targetParentNodeId: $targetParentNodeId
+      targetIndex: $targetIndex
+    ) {
       ${docTreeMutationPayload}
     }
   }
@@ -919,16 +907,14 @@ const moveDocTreeNode = gql`
     $community: String!
     $id: ID!
     $baseRevision: Int!
-    $targetTabId: ID
-    $targetGroupId: ID
+    $targetParentNodeId: ID
     $targetIndex: Int
   ) {
     moveDocTreeNode(
       community: $community
       id: $id
       baseRevision: $baseRevision
-      targetTabId: $targetTabId
-      targetGroupId: $targetGroupId
+      targetParentNodeId: $targetParentNodeId
       targetIndex: $targetIndex
     ) {
       ${docTreeMutationPayload}
@@ -936,49 +922,29 @@ const moveDocTreeNode = gql`
   }
 `
 
-const addDocCoverGroup = gql`
-  mutation addDocCoverGroup($community: String!, $groupId: ID!) {
-    addDocCoverGroup(community: $community, groupId: $groupId) {
+const addDocCoverCard = gql`
+  mutation addDocCoverCard($community: String!, $groupNodeId: ID!) {
+    addDocCoverCard(community: $community, groupNodeId: $groupNodeId) {
       id
-      groupId
       index
-      uiConfig
+      appearance
     }
   }
 `
 
-const removeDocCoverGroup = gql`
-  mutation removeDocCoverGroup($community: String!, $groupId: ID!) {
-    removeDocCoverGroup(community: $community, groupId: $groupId) {
+const removeDocCoverCard = gql`
+  mutation removeDocCoverCard($community: String!, $groupNodeId: ID!) {
+    removeDocCoverCard(community: $community, groupNodeId: $groupNodeId) {
       id
-      groupId
       index
-      uiConfig
+      appearance
     }
   }
 `
 
-const setDocCoverItemHidden = gql`
-  mutation setDocCoverItemHidden($community: String!, $nodeId: ID!, $hidden: Boolean!) {
-    setDocCoverItemHidden(community: $community, nodeId: $nodeId, hidden: $hidden) {
-      id
-      nodeId
-      hidden
-    }
-  }
-`
-
-const reorderDocCoverGroups = gql`
-  mutation reorderDocCoverGroups($community: String!, $ids: [ID!]!) {
-    reorderDocCoverGroups(community: $community, ids: $ids) {
-      done
-    }
-  }
-`
-
-const reorderDocCoverItems = gql`
-  mutation reorderDocCoverItems($community: String!, $coverGroupId: ID!, $ids: [ID!]!) {
-    reorderDocCoverItems(community: $community, coverGroupId: $coverGroupId, ids: $ids) {
+const reorderDocCoverCards = gql`
+  mutation reorderDocCoverCards($community: String!, $ids: [ID!]!) {
+    reorderDocCoverCards(community: $community, ids: $ids) {
       done
     }
   }
@@ -1010,20 +976,11 @@ const reorderDocCoverPinnedDocs = gql`
   }
 `
 
-const updateDocCoverGroupUiConfig = gql`
-  mutation updateDocCoverGroupUiConfig($community: String!, $id: ID!, $uiConfig: Json!) {
-    updateDocCoverGroupUiConfig(community: $community, id: $id, uiConfig: $uiConfig) {
+const updateDocCoverCardAppearance = gql`
+  mutation updateDocCoverCardAppearance($community: String!, $id: ID!, $appearance: Json!) {
+    updateDocCoverCardAppearance(community: $community, id: $id, appearance: $appearance) {
       id
-      uiConfig
-    }
-  }
-`
-
-const updateDocCoverItemUiConfig = gql`
-  mutation updateDocCoverItemUiConfig($community: String!, $id: ID!, $uiConfig: Json!) {
-    updateDocCoverItemUiConfig(community: $community, id: $id, uiConfig: $uiConfig) {
-      id
-      uiConfig
+      appearance
     }
   }
 `
@@ -1193,32 +1150,25 @@ const schema = {
   permanentlyDeleteTrashedPost,
   docDraft,
   docDraftSnapshots,
-  createDocTreeGroup,
-  createDocTreeTab,
-  createDocTreePage,
-  createDocTreeLink,
-  createDocTreePin,
+  createDocTreeNode,
   updateDocTreeNode,
   updateDocDraft,
   checkpointDocDraftSnapshot,
   publishDocChanges,
   moveDocToDraft,
-  moveDocTreeGroupToDraft,
+  moveDocTreeSubtreeToDraft,
   restoreDocDraftSnapshot,
   deleteDocTreeNode,
   restoreDocTreeTrashItem,
   duplicateDocTreeNode,
   moveDocTreeNode,
-  addDocCoverGroup,
-  removeDocCoverGroup,
-  setDocCoverItemHidden,
-  reorderDocCoverGroups,
-  reorderDocCoverItems,
+  addDocCoverCard,
+  removeDocCoverCard,
+  reorderDocCoverCards,
   pinDocToCover,
   unpinDocFromCover,
   reorderDocCoverPinnedDocs,
-  updateDocCoverGroupUiConfig,
-  updateDocCoverItemUiConfig,
+  updateDocCoverCardAppearance,
   updatePinnedDocAppearance,
   updateModerators,
   searchUsers,

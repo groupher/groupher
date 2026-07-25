@@ -5,646 +5,187 @@ defmodule GroupherServer.Test.CMS.DocTree.Cover do
 
   require CMS.Const
 
-  describe "[doc cover sync]" do
-    setup do
-      {:ok, user} = db_insert(:user)
-      {:ok, community} = empty_docs_community(user)
-      {:ok, tree_state} = ORM.find_by(CMS.Model.DocsSiteState, community_id: community.id)
-
-      {:ok, group_payload} =
-        CMS.DocTree.create_group(community, %{
-          title: "Guides",
-          slug: "guides",
-          base_revision: tree_state.tree_lock_version
-        })
-
-      {:ok, page_payload} =
-        CMS.DocTree.create_page(
-          community,
-          %{
-            group_id: group_payload.node.id,
-            title: "Install",
-            slug: "install",
-            base_revision: group_payload.revision
-          },
-          user
-        )
-
-      {:ok, ~m(user community group_payload page_payload)a}
-    end
-
-    test "default publish syncs the group and page into the cover",
-         ~m(user community page_payload)a do
-      {:ok, revision} = publish_doc_change(community, page_payload.node.doc_id, user)
-      {:ok, cover} = CMS.DocCover.read(community)
-      {:ok, tree} = CMS.DocTree.read(community)
-
-      assert revision.stage == :public
-      assert [%{group: %{title: "Guides"}, items: [%{node: %{title: "Install"}}]}] = cover.groups
-      assert cover.pinned_docs == []
-
-      {:ok, public_doc} = published_doc(community, page_payload.node.doc_id)
-      assert public_doc.inner_id == 1
-
-      [cover_group] = cover.groups
-      [cover_item] = cover_group.items
-      assert cover_item.node.href == "/#{community.slug}/doc/#{public_doc.inner_id}/install"
-
-      [group] = groups(tree)
-      [page] = group.children
-
-      assert group.publish_state.in_cover == true
-      assert page.publish_state.status == :public
-      assert page.publish_state.published == true
-      assert page.publish_state.public_doc_id == revision.article_hash_id
-      assert page.publish_state.last_published_at
-      assert page.publish_state.in_cover == true
-      assert page.publish_state.hidden_from_cover == false
-
-      {:ok, page_event} =
-        ORM.find_by(CMS.Model.DocTreeEvent,
-          community_id: community.id,
-          owner: :doc,
-          doc_id: page_payload.node.doc_id
-        )
-
-      assert page_event.status == :published
-    end
-
-    test "dashboard cover view returns editor hrefs with draft doc ids",
-         ~m(user community page_payload)a do
-      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
-      {:ok, cover} = CMS.DocCover.read(community, :dashboard)
-
-      assert [%{items: [%{node: %{href: href}}]}] = cover.groups
-
-      assert href ==
-               "/#{community.slug}/dashboard/doc/editor?docId=#{page_payload.node.doc_id}"
-    end
-
-    test "doc-only publish creates published mapping without cover rows",
-         ~m(user community page_payload)a do
-      {:ok, revision} =
-        publish_doc_change(community, page_payload.node.doc_id, user, sync_cover: false)
-
-      {:ok, cover} = CMS.DocCover.read(community)
-      {:ok, tree} = CMS.DocTree.read(community)
-
-      assert revision.stage == :public
-      assert cover.groups == []
-      assert cover.pinned_docs == []
-
-      [group] = groups(tree)
-      [page] = group.children
-
-      assert group.publish_state.published == true
-      assert page.publish_state.status == :public
-      assert group.publish_state.in_cover == false
-      assert page.publish_state.published == true
-      assert page.publish_state.in_cover == false
-    end
-
-    test "pins only clean published docs and keeps the operation idempotent",
-         ~m(user community page_payload)a do
-      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
-
-      {:ok, public_doc} = published_doc(community, page_payload.node.doc_id)
-
-      assert {:ok, %{thumbnail: %{"version" => 1, "blocks" => blocks}} = public_document} =
-               ORM.find_by(CMS.Model.ArticleDocument, article_id: public_doc.id, thread: :doc)
-
-      assert is_list(blocks)
-
-      assert {:ok, pinned_doc} = CMS.DocCover.pin_doc(community, page_payload.node.id)
-      assert {:ok, same_pinned_doc} = CMS.DocCover.pin_doc(community, page_payload.node.id)
-      assert same_pinned_doc.id == pinned_doc.id
-
-      {:ok, cover} = CMS.DocCover.read(community)
-      assert [%{node_id: node_id, doc: %{title: "Install"}}] = cover.pinned_docs
-      assert node_id == page_payload.node.id
-
-      appearance = %{"light" => %{"source" => "light"}, "dark" => %{"source" => "dark"}}
-
-      assert {:ok, updated} =
-               CMS.DocCover.update_pinned_doc_appearance(
-                 community,
-                 page_payload.node.id,
-                 appearance
-               )
-
-      assert updated.appearance == appearance
-
-      assert {:error, {:custom, "Pinned doc appearance must contain Light and Dark maps."}} =
-               CMS.DocCover.update_pinned_doc_appearance(
-                 community,
-                 page_payload.node.id,
-                 %{"light" => "invalid"}
-               )
-
-      assert {:ok, _draft} =
-               CMS.DocTree.move_doc_to_draft(community, page_payload.node.id, user)
-
-      assert {:ok, _draft} =
-               CMS.DocTree.update_draft(
-                 community,
-                 page_payload.node.doc_id,
-                 %{subtitle: "Unpublished change"},
-                 user
-               )
-
-      assert {:ok, unchanged_public_document} =
-               ORM.find_by(CMS.Model.ArticleDocument, article_id: public_doc.id, thread: :doc)
-
-      assert unchanged_public_document.thumbnail == public_document.thumbnail
-
-      assert {:ok, same_pinned_doc} = CMS.DocCover.pin_doc(community, page_payload.node.id)
-      assert same_pinned_doc.id == pinned_doc.id
-      assert {:ok, _removed} = CMS.DocCover.unpin_doc(community, page_payload.node.id)
-
-      assert {:error, {:custom, "Publish the latest doc changes before pinning it to cover."}} =
-               CMS.DocCover.pin_doc(community, page_payload.node.id)
-    end
-
-    test "reorders the complete pinned doc collection transactionally",
-         ~m(user community group_payload page_payload)a do
-      {:ok, second_page} =
-        CMS.DocTree.create_page(
-          community,
-          %{
-            group_id: group_payload.node.id,
-            title: "Advanced",
-            slug: "advanced",
-            base_revision: page_payload.revision
-          },
-          user
-        )
-
-      assert {:ok, %{done: true}} = publish_all_changes(community, user)
-      assert {:ok, _first} = CMS.DocCover.pin_doc(community, page_payload.node.id)
-      assert {:ok, _second} = CMS.DocCover.pin_doc(community, second_page.node.id)
-
-      assert {:ok, %{done: true}} =
-               CMS.DocCover.reorder_pinned_docs(community, [
-                 second_page.node.id,
-                 page_payload.node.id
-               ])
-
-      {:ok, cover} = CMS.DocCover.read(community)
-
-      assert Enum.map(cover.pinned_docs, & &1.node_id) == [
-               second_page.node.id,
-               page_payload.node.id
-             ]
-
-      assert {:error, {:custom, "Pinned doc order contains duplicate nodes."}} =
-               CMS.DocCover.reorder_pinned_docs(community, [
-                 page_payload.node.id,
-                 page_payload.node.id
-               ])
-
-      assert {:error, {:custom, "Pinned doc order must contain the complete current collection."}} =
-               CMS.DocCover.reorder_pinned_docs(community, [page_payload.node.id])
-    end
-
-    test "batch reorders cover groups and their items",
-         ~m(user community group_payload page_payload)a do
-      {:ok, second_page} =
-        CMS.DocTree.create_page(
-          community,
-          %{
-            group_id: group_payload.node.id,
-            title: "Advanced",
-            slug: "advanced",
-            base_revision: page_payload.revision
-          },
-          user
-        )
-
-      {:ok, second_group} =
-        CMS.DocTree.create_group(community, %{
-          title: "Reference",
-          slug: "reference",
-          base_revision: second_page.revision
-        })
-
-      {:ok, _third_page} =
-        CMS.DocTree.create_page(
-          community,
-          %{
-            group_id: second_group.node.id,
-            title: "API",
-            slug: "api",
-            base_revision: second_group.revision
-          },
-          user
-        )
-
-      assert {:ok, %{done: true}} = publish_all_changes(community, user)
-      assert {:ok, cover} = CMS.DocCover.read(community)
-
-      [guides, reference] = cover.groups
-      [install, advanced] = guides.items
-
-      assert {:ok, %{done: true}} =
-               CMS.DocCover.reorder_items(community, guides.id, [advanced.id, install.id])
-
-      assert {:ok, %{done: true}} =
-               CMS.DocCover.reorder_groups(community, [reference.id, guides.id])
-
-      assert {:ok, reordered_cover} = CMS.DocCover.read(community)
-      assert Enum.map(reordered_cover.groups, & &1.title) == ["Reference", "Guides"]
-
-      reordered_guides = Enum.find(reordered_cover.groups, &(&1.id == guides.id))
-      assert Enum.map(reordered_guides.items, & &1.title) == ["Advanced", "Install"]
-
-      assert {:error, {:custom, "Doc cover group order contains duplicate groups."}} =
-               CMS.DocCover.reorder_groups(community, [guides.id, guides.id])
-
-      assert {:error, {:custom, "Doc cover item order contains duplicate items."}} =
-               CMS.DocCover.reorder_items(community, guides.id, [install.id, install.id])
-    end
-
-    test "publishes every unpublished page with cover sync",
-         ~m(user community group_payload page_payload)a do
-      {:ok, second_page_payload} =
-        CMS.DocTree.create_page(
-          community,
-          %{
-            group_id: group_payload.node.id,
-            title: "Advanced",
-            slug: "advanced",
-            base_revision: page_payload.revision
-          },
-          user
-        )
-
-      assert {:ok, %{done: true}} = publish_all_changes(community, user)
-
-      {:ok, cover} = CMS.DocCover.read(community)
-      {:ok, tree} = CMS.DocTree.read(community)
-
-      assert [%{items: [%{node: %{title: "Install"}}, %{node: %{title: "Advanced"}}]}] =
-               cover.groups
-
-      [group] = groups(tree)
-      assert Enum.all?(group.children, & &1.publish_state.published)
-      assert Enum.all?(group.children, & &1.publish_state.in_cover)
-
-      assert CMS.DocTree.publish_checklist(community).doc_changes == []
-
-      assert second_page_payload.node.title == "Advanced"
-    end
-
-    test "publishes a group with page and link children while syncing only pages to cover",
-         ~m(user community group_payload page_payload)a do
-      {:ok, link_payload} =
-        CMS.DocTree.create_link(community, %{
-          group_id: group_payload.node.id,
-          title: "External",
-          slug: "external",
-          href: "https://example.com",
-          base_revision: page_payload.revision
-        })
-
-      assert {:ok, %{done: true}} = publish_all_changes(community, user)
-
-      {:ok, cover} = CMS.DocCover.read(community)
-      {:ok, tree} = CMS.DocTree.read(community)
-
-      assert [%{group: %{title: "Guides"}, items: [%{node: %{title: "Install"}}]}] =
-               cover.groups
-
-      [group] = groups(tree)
-      [page, link] = group.children
-
-      assert group.publish_state.status == :public
-      assert page.publish_state.status == :public
-      assert link.publish_state.status == :public
-      assert page.publish_state.in_cover == true
-      refute link.publish_state.in_cover
-      assert link_payload.node.title == "External"
-    end
-
-    test "move group to draft returns an explicit unsupported operation error",
-         ~m(user community group_payload page_payload)a do
-      {:ok, _link_payload} =
-        CMS.DocTree.create_link(community, %{
-          group_id: group_payload.node.id,
-          title: "External",
-          slug: "external",
-          href: "https://example.com",
-          base_revision: page_payload.revision
-        })
-
-      assert {:ok, %{done: true}} = publish_all_changes(community, user)
-
-      assert {:error, {:custom, "Group draft state is managed by unpublished tree events."}} =
-               CMS.DocTree.move_group_to_draft(community, group_payload.node.id)
-
-      {:ok, cover} = CMS.DocCover.read(community)
-      {:ok, tree} = CMS.DocTree.read(community)
-
-      assert [%{items: [%{node: %{title: "Install"}}]}] = cover.groups
-
-      [group] = groups(tree)
-      assert group.publish_state.status == :public
-      assert Enum.all?(group.children, &(&1.publish_state.status == :public))
-      assert Enum.all?(group.children, &(&1.publish_state.published_before == true))
-    end
-
-    test "tree node changes are staged as tree events instead of page publish checklist",
-         ~m(user community page_payload)a do
-      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
-      {:ok, tree} = CMS.DocTree.read(community)
-      [group] = groups(tree)
-      [page] = group.children
-
-      assert page.publish_state.status == :public
-      refute page.publish_state.has_unpublished_changes
-
-      {:ok, _payload} =
-        CMS.DocTree.update_node(community, page_payload.node.id, %{
-          title: "Install v2",
-          slug: "install-v2",
-          base_revision: page_payload.revision
-        })
-
-      {:ok, tree} = CMS.DocTree.read(community)
-      [group] = groups(tree)
-      [page] = group.children
-
-      assert page.publish_state.status == :public
-      refute page.publish_state.has_unpublished_changes
-      assert tree.tree_state.has_unpublished_changes
-      assert tree.tree_state.staged_event_count > 0
-      assert Enum.any?(tree.staged_events, &(&1.event_type == "node.rename"))
-
-      assert CMS.DocTree.publish_checklist(community).doc_changes == []
-    end
-
-    test "publishes staged Tree changes into a Tree snapshot release",
-         ~m(user community page_payload)a do
-      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
-
-      {:ok, payload} =
-        CMS.DocTree.update_node(community, page_payload.node.id, %{
-          title: "Install v2",
-          slug: "install-v2",
-          base_revision: page_payload.revision
-        })
-
-      assert payload.tree_state.has_unpublished_changes
-
-      assert {:ok, %{done: true, release: release}} = publish_tree_changes(community, user)
-      tree_snapshot = release.tree_snapshot
-
-      {:ok, tree} = CMS.DocTree.read(community)
-      [group] = groups(tree)
-      [page] = group.children
-
-      refute tree.tree_state.has_unpublished_changes
-      assert tree.tree_state.base_snapshot_id == tree_snapshot.id
-      assert tree.tree_state.latest_snapshot_id == tree_snapshot.id
-      assert tree.tree_state.latest_release_number == release.release_number
-      assert tree.staged_events == []
-      assert page.title == "Install v2"
-      assert page.publish_state.status == :public
-      refute page.publish_state.has_unpublished_changes
-    end
-
-    test "Tree publish copies independent pin link nodes through the normal node tables",
-         ~m(user community page_payload)a do
-      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
-
-      {:ok, tree} = CMS.DocTree.read(community)
-
-      {:ok, pin_payload} =
-        CMS.DocTree.create_pin(community, %{
-          title: "GitHub",
-          slug: "github",
-          href: "https://github.com/groupher/groupher",
-          base_revision: tree.revision,
-          ui_config: %{"variant" => "compact"}
-        })
-
-      pin_id = pin_payload.node.id
-      pin_json_id = pin_payload.node.id
-
-      {:ok, tree} = CMS.DocTree.read(community)
-
-      assert [
-               %{
-                 id: ^pin_id,
-                 type: :pin,
-                 title: "GitHub",
-                 href: "https://github.com/groupher/groupher"
-               }
-             ] = pins(tree)
-
-      assert {:ok, %{done: true, release: release}} = publish_tree_changes(community, user)
-      tree_snapshot = release.tree_snapshot
-
-      {:ok, tree} = CMS.DocTree.read(community)
-      [group] = groups(tree)
-      [page] = group.children
-
-      assert [%{id: ^pin_id, type: :pin, title: "GitHub"}] = pins(tree)
-      assert page.publish_state.public_node_id
-
-      {:ok, published_pin} =
-        ORM.find_by(CMS.Model.DocTreeNode,
-          community_id: community.id,
-          stage: :public,
-          type: :pin
-        )
-
-      assert published_pin.href == "https://github.com/groupher/groupher"
-      assert published_pin.ui_config == %{"variant" => "compact"}
-
-      assert [
-               %{
-                 "id" => ^pin_json_id,
-                 "type" => "pin",
-                 "title" => "GitHub",
-                 "href" => "https://github.com/groupher/groupher",
-                 "uiConfig" => %{"variant" => "compact"}
-               }
-             ] = tree_snapshot.tree_json["tabs"] |> hd() |> Map.fetch!("pins")
-    end
-
-    test "Tree publish skips doc-owned draft-only pages",
-         ~m(user community page_payload)a do
-      assert {:ok, %{done: true, release: release}} = publish_tree_changes(community, user)
-      tree_snapshot = release.tree_snapshot
-
-      {:ok, tree} = CMS.DocTree.read(community)
-      [group] = groups(tree)
-      [page] = group.children
-
-      refute tree.tree_state.has_unpublished_changes
-      assert tree.staged_events == []
-      assert page.publish_state.status == :draft
-      assert page.publish_state.published == false
-      assert page_payload.node.title == "Install"
-
-      assert [%{"children" => []}] =
-               tree_snapshot.tree_json["tabs"] |> hd() |> Map.fetch!("groups")
-    end
-
-    test "Trash immediately removes a published Page from draft and public cover",
-         ~m(user community page_payload)a do
-      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
-      {:ok, _tree_publish} = publish_tree_changes(community, user)
-      {:ok, tree} = CMS.DocTree.read(community)
-      [group] = groups(tree)
-      [page] = group.children
-
-      assert page.publish_state.status == :public
-
-      assert {:ok, _payload} =
-               CMS.DocTree.delete_node(community, page_payload.node.id, %{
-                 base_revision: tree.revision,
-                 actor_id: user.id
-               })
-
-      {:ok, tree} = CMS.DocTree.read(community)
-      [group] = groups(tree)
-      assert group.children == []
-      {:ok, cover} = CMS.DocCover.read(community)
-
-      refute tree.tree_state.has_unpublished_changes
-      assert [%{items: []}] = cover.groups
-    end
-
-    test "move doc to draft creates a draft copy while public cover stays intact",
-         ~m(user community page_payload)a do
-      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
-      {:ok, tree} = CMS.DocTree.read(community)
-      [group] = groups(tree)
-      [page] = group.children
-      public_node_id = page.publish_state.public_node_id
-
-      assert page.publish_state.status == :public
-      assert page.publish_state.in_cover == true
-
-      assert {:ok, %{stage: :draft}} =
-               CMS.DocTree.move_doc_to_draft(community, page_payload.node.id, user)
-
-      {:ok, cover} = CMS.DocCover.read(community)
-      {:ok, tree} = CMS.DocTree.read(community)
-
-      assert [%{items: [%{node: %{title: "Install"}}]}] = cover.groups
-
-      [group] = groups(tree)
-      [page] = group.children
-
-      assert page.publish_state.status == :public
-      assert page.publish_state.published == true
-      assert page.publish_state.published_before == true
-      assert page.publish_state.public_node_id == public_node_id
-      assert page.publish_state.in_cover == true
-
-      {:ok, _draft} =
-        CMS.DocTree.update_draft(
-          community,
-          page_payload.node.doc_id,
-          %{
-            subtitle: "Later update"
-          },
-          user
-        )
-
-      {:ok, _revision} =
-        publish_doc_change(community, page_payload.node.doc_id, user, sync_cover: false)
-
-      {:ok, cover} = CMS.DocCover.read(community)
-      {:ok, tree} = CMS.DocTree.read(community)
-      [_group] = groups(tree)
-      page = groups(tree) |> hd() |> Map.fetch!(:children) |> hd()
-
-      assert page.publish_state.status == :public
-      assert page.publish_state.public_node_id == public_node_id
-      assert [%{items: [%{node: %{title: "Install"}}]}] = cover.groups
-    end
-
-    test "adding an unpublished group to cover returns a product warning",
-         ~m(community group_payload)a do
-      assert {:error, {:custom, "Publish it before adding it to cover."}} =
-               CMS.DocCover.add_group(community, group_payload.node.id)
-
-      {:ok, cover} = CMS.DocCover.read(community)
-      assert cover.groups == []
-    end
-
-    test "hide from cover survives later publish sync", ~m(user community page_payload)a do
-      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
-      {:ok, item} = CMS.DocCover.set_item_hidden(community, page_payload.node.id, true)
-
-      assert item.hidden == true
-
-      {:ok, _draft} =
-        CMS.DocTree.update_draft(
-          community,
-          page_payload.node.doc_id,
-          %{
-            subtitle: "Later update"
-          },
-          user
-        )
-
-      {:ok, _revision} = publish_doc_change(community, page_payload.node.doc_id, user)
-      {:ok, cover} = CMS.DocCover.read(community)
-      {:ok, tree} = CMS.DocTree.read(community)
-
-      assert [%{items: []}] = cover.groups
-
-      [_group] = groups(tree)
-      page = groups(tree) |> hd() |> Map.fetch!(:children) |> hd()
-
-      assert page.publish_state.in_cover == true
-      assert page.publish_state.hidden_from_cover == true
-    end
+  setup do
+    {:ok, user} = db_insert(:user)
+    {:ok, community} = empty_docs_community(user)
+    {:ok, tree_state} = ORM.find_by(CMS.Model.DocsSiteState, community_id: community.id)
+
+    {:ok, group} =
+      CMS.DocTree.create_group(community, %{
+        parent_node_id: root_doc_tab_node_id(community),
+        title: "Guides",
+        base_revision: tree_state.tree_lock_version
+      })
+
+    {:ok, page} =
+      CMS.DocTree.create_page(
+        community,
+        %{
+          parent_node_id: group.node.id,
+          title: "Install",
+          slug: "install",
+          base_revision: group.revision
+        },
+        user
+      )
+
+    {:ok, ~m(user community group page)a}
   end
 
-  defp empty_docs_community(user) do
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
-
-    with {:ok, community} <- CMS.Communities.create(community_attrs, user),
-         {:ok, _} <- CMS.DocTree.delete_demo_template(community) do
-      {:ok, community}
-    end
+  test "publishing navigation does not implicitly create a Cover Card",
+       ~m(user community)a do
+    assert {:ok, %{done: true}} = publish_all_changes(community, user)
+    assert {:ok, %{cards: [], pinned_docs: []}} = CMS.DocCover.read(community)
   end
 
-  defp publish_doc_change(community, doc_id, user, opts \\ []) do
-    input = %{doc_change_ids: ["doc:#{doc_id}"], tree_change_ids: []}
+  test "a Group Card projects direct Page, Link, and nested Group items",
+       ~m(user community group page)a do
+    {:ok, link} =
+      CMS.DocTree.create_link(community, %{
+        parent_node_id: group.node.id,
+        title: "GitHub",
+        href: "https://github.com/groupher",
+        base_revision: page.revision
+      })
 
-    with {:ok, %{release: release}} <- CMS.DocTree.publish_changes(community, input, user, opts) do
-      release = Repo.preload(release, :articles)
-      [article] = release.articles
+    {:ok, nested_group} =
+      CMS.DocTree.create_group(community, %{
+        parent_node_id: group.node.id,
+        title: "Advanced",
+        base_revision: link.revision
+      })
 
-      ORM.find(CMS.Model.ArticleSnapshot, article.snapshot_id)
-    end
+    {:ok, nested_page} =
+      CMS.DocTree.create_page(
+        community,
+        %{
+          parent_node_id: nested_group.node.id,
+          title: "Performance",
+          slug: "performance",
+          base_revision: nested_group.revision
+        },
+        user
+      )
+
+    {:ok, deep_group} =
+      CMS.DocTree.create_group(community, %{
+        parent_node_id: nested_group.node.id,
+        title: "Runtime",
+        base_revision: nested_page.revision
+      })
+
+    {:ok, _deep_link} =
+      CMS.DocTree.create_link(community, %{
+        parent_node_id: deep_group.node.id,
+        title: "Runtime API",
+        href: "https://example.com/runtime",
+        base_revision: deep_group.revision
+      })
+
+    assert {:ok, %{done: true}} = publish_all_changes(community, user)
+    assert {:ok, _card} = CMS.DocCover.add_card(community, group.node.id)
+    assert {:ok, %{cards: [card]}} = CMS.DocCover.read(community)
+
+    assert card.group_node_id == group.node.id
+    assert card.title == "Guides"
+
+    assert [
+             %{
+               type: :group,
+               title: "Advanced",
+               leaf_count: 2,
+               href: nested_href
+             },
+             %{type: :page, title: "Install", href: page_href},
+             %{type: :link, title: "GitHub", href: "https://github.com/groupher"}
+           ] = card.items
+
+    assert page_href =~ "/install"
+    assert nested_href == "https://example.com/runtime"
   end
 
-  defp publish_all_changes(community, user, opts \\ []) do
-    CMS.DocTree.publish_changes(community, %{}, user, opts)
+  test "adding a parent Card atomically replaces selected descendant Cards",
+       ~m(user community group page)a do
+    {:ok, nested_group} =
+      CMS.DocTree.create_group(community, %{
+        parent_node_id: group.node.id,
+        title: "Advanced",
+        base_revision: page.revision
+      })
+
+    {:ok, _nested_page} =
+      CMS.DocTree.create_page(
+        community,
+        %{
+          parent_node_id: nested_group.node.id,
+          title: "Performance",
+          slug: "performance",
+          base_revision: nested_group.revision
+        },
+        user
+      )
+
+    assert {:ok, %{done: true}} = publish_all_changes(community, user)
+    assert {:ok, descendant_card} = CMS.DocCover.add_card(community, nested_group.node.id)
+    assert descendant_card.index == 0
+
+    assert {:ok, parent_card} = CMS.DocCover.add_card(community, group.node.id)
+    assert parent_card.index == 0
+
+    assert {:ok, %{cards: [%{group_node_id: group_node_id}]}} = CMS.DocCover.read(community)
+    assert group_node_id == group.node.id
   end
 
-  defp published_doc(community, doc_id) do
-    ORM.find_by(CMS.Model.Doc,
-      community_id: community.id,
-      stage: CMS.Const.stage(:public),
-      article_hash_id: doc_id
-    )
+  test "an existing ancestor Card blocks adding a descendant Card",
+       ~m(user community group page)a do
+    {:ok, nested_group} =
+      CMS.DocTree.create_group(community, %{
+        parent_node_id: group.node.id,
+        title: "Advanced",
+        base_revision: page.revision
+      })
+
+    {:ok, _nested_page} =
+      CMS.DocTree.create_page(
+        community,
+        %{
+          parent_node_id: nested_group.node.id,
+          title: "Performance",
+          slug: "performance",
+          base_revision: nested_group.revision
+        },
+        user
+      )
+
+    assert {:ok, %{done: true}} = publish_all_changes(community, user)
+    assert {:ok, _parent_card} = CMS.DocCover.add_card(community, group.node.id)
+
+    assert {:error, {:custom, message}} =
+             CMS.DocCover.add_card(community, nested_group.node.id)
+
+    assert message =~ "ancestor Cover Card"
   end
 
-  defp publish_tree_changes(community, user) do
-    with {:ok, %{release: release} = result} <-
-           CMS.DocTree.publish_changes(community, %{doc_change_ids: []}, user) do
-      {:ok, %{result | release: Repo.preload(release, :tree_snapshot)}}
-    end
+  test "Cover Card sources must be published Groups", ~m(user community page)a do
+    assert {:ok, %{done: true}} = publish_all_changes(community, user)
+
+    assert {:error, {:custom, "A Cover Card must reference a published Group."}} =
+             CMS.DocCover.add_card(community, page.node.id)
   end
 
-  defp groups(%{tabs: [tab | _]}), do: tab.groups
-  defp pins(%{tabs: [tab | _]}), do: tab.pins
+  test "pinned docs remain independent from Group Card ancestry", ~m(user community page)a do
+    assert {:ok, %{done: true}} = publish_all_changes(community, user)
+    assert {:ok, _pin} = CMS.DocCover.pin_doc(community, page.node.id)
+
+    assert {:ok, %{cards: [], pinned_docs: [%{node_id: node_id, doc: %{title: "Install"}}]}} =
+             CMS.DocCover.read(community)
+
+    assert node_id == page.node.id
+  end
+
+  defp publish_all_changes(community, user) do
+    CMS.DocTree.publish_changes(community, %{}, user)
+  end
+
+  defp empty_docs_community(user), do: create_empty_docs_community(user)
 end

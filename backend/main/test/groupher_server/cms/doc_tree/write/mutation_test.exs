@@ -30,6 +30,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, group_payload} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "Guides",
           slug: "guides",
           base_revision: before_tree_state.tree_lock_version
@@ -39,7 +40,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
         CMS.DocTree.create_page(
           community,
           %{
-            group_id: group_payload.node.id,
+            parent_node_id: group_payload.node.id,
             title: "Install",
             slug: "install",
             base_revision: group_payload.revision
@@ -53,7 +54,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
       {:ok, doc_draft} = draft_doc(community, page_payload.node.doc_id)
       assert doc_draft.title == "Install"
       assert doc_draft.slug == "install"
-      assert doc_draft.json =~ "Start writing your docs draft here."
+      assert doc_draft.json == ~s([{"children":[{"text":""}],"type":"p"}])
 
       assert stage_count(DocTreeNode, community.id, :draft) == 3
       assert stage_count(Doc, community.id, :draft) == 1
@@ -64,16 +65,13 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
       {:ok, site_state} = ORM.find_by(DocsSiteState, community_id: community.id)
 
       assert tree_state.tree_lock_version == before_tree_state.tree_lock_version + 2
-      assert tree_state.staged_event_count == 2
+      assert tree_state.staged_event_count == 1
       assert site_state.site_draft_version == before_site_state.site_draft_version + 2
       assert site_state.published_version == 0
 
       {:ok, tree} = CMS.DocTree.read(community)
 
-      assert [
-               %{owner: "tree", event_type: "node.create"},
-               %{owner: "tree", event_type: "node.create"}
-             ] = tree.staged_events
+      assert [%{owner: "tree", event_type: "node.create"}] = tree.staged_events
 
       doc_id = page_payload.node.doc_id
 
@@ -88,6 +86,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, group_payload} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "Guides",
           slug: "guides",
           base_revision: before_tree_state.tree_lock_version
@@ -97,7 +96,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
         CMS.DocTree.create_page(
           community,
           %{
-            group_id: group_payload.node.id,
+            parent_node_id: group_payload.node.id,
             title: "page-3",
             slug: "page-3",
             base_revision: group_payload.revision
@@ -109,7 +108,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
         CMS.DocTree.create_page(
           community,
           %{
-            group_id: group_payload.node.id,
+            parent_node_id: group_payload.node.id,
             title: "page-3",
             slug: "page-3",
             base_revision: first_payload.revision
@@ -118,21 +117,21 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
         )
 
       assert duplicate_payload.node.title == "page-3-copy"
-      assert duplicate_payload.node.slug == "page-3-copy"
 
       {:ok, doc_draft} = draft_doc(community, duplicate_payload.node.doc_id)
       assert doc_draft.title == "page-3-copy"
       assert doc_draft.slug == "page-3-copy"
-      assert doc_draft.json =~ "Start writing your docs draft here."
+      assert doc_draft.json == ~s([{"children":[{"text":""}],"type":"p"}])
     end
 
-    test "trashed root group reserves its title and slug" do
+    test "trashed root group reserves its navigation title" do
       {:ok, user} = db_insert(:user)
       {:ok, community} = empty_docs_community(user)
       {:ok, before_tree_state} = ORM.find_by(DocsSiteState, community_id: community.id)
 
       {:ok, group_payload} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "Guides",
           slug: "guides",
           base_revision: before_tree_state.tree_lock_version
@@ -149,22 +148,23 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, rebuilt_payload} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "Guides",
           slug: "guides",
           base_revision: delete_payload.revision
         })
 
       assert rebuilt_payload.node.title == "Guides 1"
-      assert rebuilt_payload.node.slug == "guides-1"
     end
 
-    test "trashed page reserves its sibling title and slug" do
+    test "trashed page reserves its sibling title and Doc slug" do
       {:ok, user} = db_insert(:user)
       {:ok, community} = empty_docs_community(user)
       {:ok, before_tree_state} = ORM.find_by(DocsSiteState, community_id: community.id)
 
       {:ok, group_payload} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "Guides",
           slug: "guides",
           base_revision: before_tree_state.tree_lock_version
@@ -174,7 +174,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
         CMS.DocTree.create_page(
           community,
           %{
-            group_id: group_payload.node.id,
+            parent_node_id: group_payload.node.id,
             title: "Install",
             slug: "install",
             base_revision: group_payload.revision
@@ -195,7 +195,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
         CMS.DocTree.create_page(
           community,
           %{
-            group_id: group_payload.node.id,
+            parent_node_id: group_payload.node.id,
             title: "Install",
             slug: "install",
             base_revision: delete_payload.revision
@@ -204,11 +204,10 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
         )
 
       assert rebuilt_page_payload.node.title == "Install-copy"
-      assert rebuilt_page_payload.node.slug == "install-copy"
 
       {:ok, doc_draft} = draft_doc(community, rebuilt_page_payload.node.doc_id)
       assert doc_draft.title == "Install-copy"
-      assert doc_draft.slug == "install-copy"
+      assert doc_draft.slug == "install"
     end
 
     test "trashed group name blocks renaming another group into it" do
@@ -218,6 +217,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, guides_payload} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "Guides",
           slug: "guides",
           base_revision: before_tree_state.tree_lock_version
@@ -225,6 +225,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, api_payload} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "API",
           slug: "api",
           base_revision: guides_payload.revision
@@ -239,8 +240,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
           actor_id: user.id
         })
 
-      assert {:error,
-              {:custom, "A trashed tree item with this title or slug is pending restore."}} =
+      assert {:error, {:custom, "A trashed tree item with this title is pending restore."}} =
                CMS.DocTree.update_node(community, api_payload.node.id, %{
                  title: "Guides",
                  slug: "guides",
@@ -255,6 +255,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, guides_payload} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "Guides",
           slug: "guides",
           base_revision: before_tree_state.tree_lock_version
@@ -262,6 +263,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, api_payload} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "API",
           slug: "api",
           base_revision: guides_payload.revision
@@ -271,7 +273,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
         CMS.DocTree.create_page(
           community,
           %{
-            group_id: guides_payload.node.id,
+            parent_node_id: guides_payload.node.id,
             title: "Install",
             slug: "install",
             base_revision: api_payload.revision
@@ -283,7 +285,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
         CMS.DocTree.create_page(
           community,
           %{
-            group_id: guides_payload.node.id,
+            parent_node_id: guides_payload.node.id,
             title: "Upgrade",
             slug: "upgrade",
             base_revision: install_payload.revision
@@ -293,7 +295,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, move_payload} =
         CMS.DocTree.move_node(community, upgrade_payload.node.id, %{
-          target_group_id: api_payload.node.id,
+          target_parent_node_id: api_payload.node.id,
           target_index: 0,
           base_revision: upgrade_payload.revision
         })
@@ -301,9 +303,9 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
       {:ok, install_node} = draft_node(community, install_payload.node.id)
       {:ok, upgrade_node} = draft_node(community, upgrade_payload.node.id)
 
-      assert install_node.group_id == guides_payload.node.id
+      assert install_node.parent_node_id == guides_payload.node.id
       assert install_node.index == 0
-      assert upgrade_node.group_id == api_payload.node.id
+      assert upgrade_node.parent_node_id == api_payload.node.id
       assert upgrade_node.index == 0
 
       assert move_payload.affected_nodes |> Enum.map(& &1.id) |> Enum.sort() ==
@@ -311,10 +313,67 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, event} = tree_move_event(community, upgrade_payload.node.id)
 
-      assert event.payload["beforeGroupId"] == guides_payload.node.id
-      assert event.payload["afterGroupId"] == api_payload.node.id
+      assert event.payload["beforeParentNodeId"] == guides_payload.node.id
+      assert event.payload["afterParentNodeId"] == api_payload.node.id
       assert event.payload["beforeIndex"] == 1
       assert event.payload["afterIndex"] == 0
+    end
+
+    test "keeps nested groups before page and link siblings" do
+      {:ok, user} = db_insert(:user)
+      {:ok, community} = empty_docs_community(user)
+      {:ok, state} = ORM.find_by(DocsSiteState, community_id: community.id)
+
+      {:ok, parent} =
+        CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
+          title: "Guides",
+          base_revision: state.tree_lock_version
+        })
+
+      {:ok, page} =
+        CMS.DocTree.create_page(
+          community,
+          %{
+            parent_node_id: parent.node.id,
+            title: "Install",
+            base_revision: parent.revision
+          },
+          user
+        )
+
+      {:ok, link} =
+        CMS.DocTree.create_link(community, %{
+          parent_node_id: parent.node.id,
+          title: "API",
+          href: "https://example.com",
+          base_revision: page.revision
+        })
+
+      {:ok, nested} =
+        CMS.DocTree.create_group(community, %{
+          parent_node_id: parent.node.id,
+          title: "Advanced",
+          index: 0,
+          base_revision: link.revision
+        })
+
+      siblings =
+        DocTreeNode
+        |> where([n], n.community_id == ^community.id)
+        |> where([n], n.stage == :draft)
+        |> where([n], n.parent_node_id == ^parent.node.id)
+        |> order_by([n], asc: n.index)
+        |> select([n], {n.type, n.title, n.index})
+        |> Repo.all()
+
+      assert siblings == [
+               {:group, "Advanced", 0},
+               {:page, "Install", 1},
+               {:link, "API", 2}
+             ]
+
+      assert nested.node.index == 0
     end
 
     test "stale base_revision returns conflict and does not mutate draft tree" do
@@ -324,6 +383,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, first_payload} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "One",
           slug: "one",
           base_revision: tree_state.tree_lock_version
@@ -331,6 +391,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, conflict_payload} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "Two",
           slug: "two",
           base_revision: tree_state.tree_lock_version
@@ -354,6 +415,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       assert {:error, {:custom, "base_revision is required"}} =
                CMS.DocTree.create_group(community, %{
+                 parent_node_id: root_doc_tab_node_id(community),
                  title: "One",
                  slug: "one"
                })
@@ -366,6 +428,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, pin_payload} =
         CMS.DocTree.create_pin(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "GitHub",
           slug: "github",
           href: "https://github.com/groupher/groupher",
@@ -373,7 +436,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
         })
 
       assert pin_payload.node.type == :pin
-      assert pin_payload.node.group_id == nil
+      assert pin_payload.node.parent_node_id == root_doc_tab_node_id(community)
       assert pin_payload.node.href == "https://github.com/groupher/groupher"
 
       {:ok, tree} = CMS.DocTree.read(community)
@@ -381,8 +444,8 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
       assert [%{type: :pin, title: "GitHub", href: "https://github.com/groupher/groupher"}] =
                pins(tree)
 
-      assert tree.tree_state.staged_event_count == 2
-      assert Enum.map(tree.staged_events, & &1.event_type) == ["node.create", "pin.add"]
+      assert tree.tree_state.staged_event_count == 1
+      assert Enum.map(tree.staged_events, & &1.event_type) == ["pin.add"]
     end
 
     test "reordering top groups does not change top pin indexes" do
@@ -392,6 +455,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, first_group} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "Guides",
           slug: "guides",
           base_revision: state.tree_lock_version
@@ -399,6 +463,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, pin} =
         CMS.DocTree.create_pin(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "GitHub",
           slug: "github",
           href: "https://github.com/groupher/groupher",
@@ -407,6 +472,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, second_group} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "API",
           slug: "api",
           base_revision: pin.revision
@@ -414,6 +480,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, _moved} =
         CMS.DocTree.move_node(community, second_group.node.id, %{
+          target_parent_node_id: root_doc_tab_node_id(community),
           target_index: 0,
           base_revision: second_group.revision
         })
@@ -431,6 +498,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, group_payload} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "Guides",
           slug: "guides",
           base_revision: before_tree_state.tree_lock_version
@@ -440,7 +508,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
         CMS.DocTree.create_page(
           community,
           %{
-            group_id: group_payload.node.id,
+            parent_node_id: group_payload.node.id,
             title: "Install",
             slug: "install",
             base_revision: group_payload.revision
@@ -466,6 +534,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, group_payload} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "Guides",
           slug: "guides",
           base_revision: before_tree_state.tree_lock_version
@@ -475,7 +544,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
         CMS.DocTree.create_page(
           community,
           %{
-            group_id: group_payload.node.id,
+            parent_node_id: group_payload.node.id,
             title: "Install",
             slug: "install",
             base_revision: group_payload.revision
@@ -508,7 +577,6 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
         )
 
       assert page_node.title == "Install"
-      assert page_node.slug == "install"
 
       {:ok, tree_state} = ORM.find_by(DocsSiteState, community_id: community.id)
       {:ok, site_state} = ORM.find_by(DocsSiteState, community_id: community.id)
@@ -525,6 +593,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, group_payload} =
         CMS.DocTree.create_group(community, %{
+          parent_node_id: root_doc_tab_node_id(community),
           title: "Guides",
           slug: "guides",
           base_revision: before_tree_state.tree_lock_version
@@ -534,7 +603,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
         CMS.DocTree.create_page(
           community,
           %{
-            group_id: group_payload.node.id,
+            parent_node_id: group_payload.node.id,
             title: "Install",
             slug: "install",
             base_revision: group_payload.revision
@@ -548,7 +617,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
 
       {:ok, link_payload} =
         CMS.DocTree.create_link(community, %{
-          group_id: group.id,
+          parent_node_id: group.id,
           title: "Draft Link",
           slug: "draft-link",
           href: "https://example.com",
@@ -570,14 +639,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Write.Mutation do
     end
   end
 
-  defp empty_docs_community(user) do
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
-
-    with {:ok, community} <- CMS.Communities.create(community_attrs, user),
-         {:ok, _} <- CMS.DocTree.delete_demo_template(community) do
-      {:ok, community}
-    end
-  end
+  defp empty_docs_community(user), do: create_empty_docs_community(user)
 
   defp stage_count(schema, community_id, stage) do
     schema

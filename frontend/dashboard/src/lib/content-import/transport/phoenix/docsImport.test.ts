@@ -17,7 +17,7 @@ import {
 
 const tree = {
   navigation: [],
-  schemaVersion: 1 as const,
+  schemaVersion: 2 as const,
   source: { configPaths: [], framework: 'vitepress', root: 'docs' },
 }
 

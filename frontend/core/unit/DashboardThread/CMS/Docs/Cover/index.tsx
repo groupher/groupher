@@ -2,7 +2,7 @@ import { type FC, useEffect, useState } from 'react'
 
 import TYPE from '~/const/type'
 import DocCovers from '~/unit/DocCovers'
-import type { TDocCoverGroup, TDocCoverPinnedDoc } from '~/unit/DocCovers/spec'
+import type { TDocCoverCard, TDocCoverPinnedDoc } from '~/unit/DocCovers/spec'
 import Drawer from '~/widgets/Drawer'
 import { toast } from '~/widgets/Toaster'
 
@@ -14,7 +14,7 @@ import useLogic from './useLogic'
 const Cover: FC = () => {
   const { community, layout, data, docs, pinDoc, unpinDoc, reorderPinnedDocs, updateAppearance } =
     useLogic()
-  const [editingGroup, setEditingGroup] = useState<TDocCoverGroup | null>(null)
+  const [editingGroup, setEditingGroup] = useState<TDocCoverCard | null>(null)
   const [editingPinnedDoc, setEditingPinnedDoc] = useState<TDocCoverPinnedDoc | null>(null)
   const [addDrawerVisible, setAddDrawerVisible] = useState(false)
   const [busyNodeId, setBusyNodeId] = useState<string | null>(null)
@@ -61,7 +61,7 @@ const Cover: FC = () => {
         layout={layout}
         data={{ ...data, pinnedDocs }}
         editable
-        onEditGroup={setEditingGroup}
+        onEditCard={setEditingGroup}
         onAddPinnedDoc={() => setAddDrawerVisible(true)}
         onEditPinnedDoc={setEditingPinnedDoc}
         onUnpinDoc={removePinnedDoc}
@@ -75,7 +75,7 @@ const Cover: FC = () => {
       >
         {editingGroup && (
           <GroupSettingPanel
-            group={editingGroup}
+            section={editingGroup}
             layout={layout}
             community={community}
             onDone={setEditingGroup}

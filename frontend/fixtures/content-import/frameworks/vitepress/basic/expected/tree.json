@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "source": {
     "framework": "vitepress",
     "root": "docs",
@@ -7,32 +7,32 @@
   },
   "navigation": [
     {
-      "kind": "scope",
+      "type": "scope",
       "sourceId": "sidebar:/guide/",
       "title": "Guide",
       "routePrefix": "/guide/",
-      "children": [
+      "pages": [
         {
-          "kind": "section",
+          "type": "section",
           "sourceId": "sidebar:/guide/:getting-started",
           "title": "Getting Started",
-          "children": [
+          "pages": [
             {
-              "kind": "page",
+              "type": "page",
               "sourceId": "docs/guide/index.md",
               "sourcePath": "docs/guide/index.md",
               "title": "Introduction",
               "route": "/guide/"
             },
             {
-              "kind": "page",
+              "type": "page",
               "sourceId": "docs/guide/installation.md",
               "sourcePath": "docs/guide/installation.md",
               "title": "Installation",
               "route": "/guide/installation"
             },
             {
-              "kind": "link",
+              "type": "link",
               "sourceId": "external:https://example.com",
               "title": "Project Site",
               "href": "https://example.com"
@@ -42,18 +42,18 @@
       ]
     },
     {
-      "kind": "scope",
+      "type": "scope",
       "sourceId": "sidebar:/reference/",
       "title": "Reference",
       "routePrefix": "/reference/",
-      "children": [
+      "pages": [
         {
-          "kind": "section",
+          "type": "section",
           "sourceId": "sidebar:/reference/:reference",
           "title": "Reference",
-          "children": [
+          "pages": [
             {
-              "kind": "page",
+              "type": "page",
               "sourceId": "docs/reference/configuration.md",
               "sourcePath": "docs/reference/configuration.md",
               "title": "Configuration",

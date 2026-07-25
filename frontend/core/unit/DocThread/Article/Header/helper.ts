@@ -1,4 +1,9 @@
-import type { TDoc, TDocPublicTreeGroup, TDocPublicTreeItem } from '~/spec'
+import type {
+  TDoc,
+  TDocPublicTreeGroup,
+  TDocPublicTreeItem,
+  TDocPublicTreeNavigationNode,
+} from '~/spec'
 
 const normalizePath = (path?: string | null): string => {
   if (!path) return ''
@@ -15,15 +20,17 @@ const itemMatchesDoc = (item: TDocPublicTreeItem, doc: TDoc, pathname?: string |
 }
 
 export const findCurrentGroup = (
-  groups: readonly TDocPublicTreeGroup[],
+  nodes: readonly TDocPublicTreeNavigationNode[],
   doc: TDoc,
   pathname?: string | null,
 ): TDocPublicTreeGroup | null => {
-  for (const group of groups) {
-    if (itemMatchesDoc(group, doc, pathname)) return group
-
-    const children = group.children ?? []
-    if (children.some((item) => itemMatchesDoc(item, doc, pathname))) return group
+  for (const node of nodes) {
+    if (String(node.type).toLowerCase() !== 'group') continue
+    const group = node as TDocPublicTreeGroup
+    const pages = group.pages ?? []
+    if (pages.some((item) => itemMatchesDoc(item, doc, pathname))) return group
+    const nested = findCurrentGroup(pages, doc, pathname)
+    if (nested) return nested
   }
 
   return null

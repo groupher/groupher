@@ -91,8 +91,8 @@ export const analyzeFumadocs = async (workspace: TSourceWorkspace): Promise<TSou
     const childDirectory = `${root}/${rawEntry}`
     const child = await directorySection(childDirectory, workspace, documents)
     if (child) {
-      for (const nested of child.kind === 'section' ? child.children : []) {
-        if (nested.kind === 'page') usedPaths.add(nested.sourcePath)
+      for (const nested of child.type === 'section' ? child.pages : []) {
+        if (nested.type === 'page') usedPaths.add(nested.sourcePath)
       }
       append(child)
     }
@@ -119,7 +119,7 @@ export const analyzeFumadocs = async (workspace: TSourceWorkspace): Promise<TSou
     navigation: [
       scopeNode('meta:docs', String(meta?.title || 'Documentation'), '/', directChildren),
     ],
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: { configPaths, framework: 'fumadocs', root },
   }
 }

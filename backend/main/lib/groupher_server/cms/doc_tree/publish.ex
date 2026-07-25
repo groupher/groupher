@@ -181,12 +181,33 @@ defmodule GroupherServer.CMS.DocTree.Publish do
     end
   end
 
-  @doc """
-  Deprecated by the stage model; tree draft/public state is owned by tree events.
-  """
-  @spec move_group_to_draft(Community.t(), T.id()) :: T.domain_res(map())
-  def move_group_to_draft(_community, _group_id),
-    do: {:error, {:custom, "Group draft state is managed by unpublished tree events."}}
+  @doc "Creates missing article drafts for every published Page in one Tab/Group subtree."
+  @spec move_subtree_to_draft(Community.t(), T.id(), User.t(), keyword() | map()) ::
+          T.domain_res(map())
+  def move_subtree_to_draft(
+        %Community{} = community,
+        node_id,
+        %User{} = user,
+        opts \\ []
+      ) do
+    with {:ok, branch} <- Branch.resolve(community, :doc, opts),
+         {:ok, root} <- DocPublisher.public_node_for_draft(community, branch, node_id),
+         true <- root.type in [:tab, :group],
+         pages <-
+           community
+           |> PublicProjection.public_descendants(branch, root.node_id)
+           |> Enum.filter(&(&1.type == :page)),
+         {:ok, drafts} <-
+           Result.map_while_ok(
+             pages,
+             &DocPublisher.move_doc_to_draft(community, branch, &1.node_id, user)
+           ) do
+      {:ok, %{done: true, affected_count: length(drafts)}}
+    else
+      false -> {:error, {:custom, "Draft subtree root must be a Tab or Group."}}
+      error -> error
+    end
+  end
 
   @doc """
   Resolves the public-stage node for a stable draft `node_id`.
@@ -398,12 +419,12 @@ defmodule GroupherServer.CMS.DocTree.Publish do
          inverse_payload: %{"node" => node} = inverse
        })
        when type in @tree_delete_event_types and is_map(node) do
-    children =
+    pages =
       inverse
-      |> Map.get("children", [])
+      |> Map.get("pages", [])
       |> Enum.filter(&is_map/1)
 
-    [node | children]
+    [node | pages]
   end
 
   defp delete_event_nodes(_event), do: []

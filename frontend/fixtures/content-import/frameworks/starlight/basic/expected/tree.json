@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "source": {
     "framework": "starlight",
     "root": "src/content/docs",
@@ -7,32 +7,32 @@
   },
   "navigation": [
     {
-      "kind": "scope",
+      "type": "scope",
       "sourceId": "sidebar:docs",
       "title": "Docs",
       "routePrefix": "/",
-      "children": [
+      "pages": [
         {
-          "kind": "page",
+          "type": "page",
           "sourceId": "src/content/docs/index.mdx",
           "sourcePath": "src/content/docs/index.mdx",
           "title": "Home",
           "route": "/"
         },
         {
-          "kind": "section",
+          "type": "section",
           "sourceId": "directory:guides",
           "title": "Guides",
-          "children": [
+          "pages": [
             {
-              "kind": "page",
+              "type": "page",
               "sourceId": "src/content/docs/guides/start.md",
               "sourcePath": "src/content/docs/guides/start.md",
               "title": "Getting Started",
               "route": "/guides/start"
             },
             {
-              "kind": "page",
+              "type": "page",
               "sourceId": "src/content/docs/guides/advanced.mdx",
               "sourcePath": "src/content/docs/guides/advanced.mdx",
               "title": "Advanced",
@@ -41,12 +41,12 @@
           ]
         },
         {
-          "kind": "section",
+          "type": "section",
           "sourceId": "sidebar:api",
           "title": "API",
-          "children": [
+          "pages": [
             {
-              "kind": "page",
+              "type": "page",
               "sourceId": "src/content/docs/api.md",
               "sourcePath": "src/content/docs/api.md",
               "title": "Overview",
@@ -55,7 +55,7 @@
           ]
         },
         {
-          "kind": "link",
+          "type": "link",
           "sourceId": "external:https://example.com/project",
           "title": "Project",
           "href": "https://example.com/project"

@@ -11,7 +11,7 @@ defmodule GroupherServer.CMS.DocCover.Write do
       doc_tree_nodes(stage=public, same node_id)
                 |
                 v
-      doc_cover_groups/items/pinned_docs
+      doc_cover_cards/items/pinned_docs
 
   Public cover rows never reference draft nodes. If a draft node has not been
   published yet, writes fail with a product-facing warning error.
@@ -25,7 +25,7 @@ defmodule GroupherServer.CMS.DocCover.Write do
 
   alias CMS.Model.{
     Community,
-    DocCoverGroup,
+    DocCoverCard,
     DocCoverItem,
     ArticleSnapshot,
     Doc,
@@ -35,83 +35,109 @@ defmodule GroupherServer.CMS.DocCover.Write do
 
   alias Helper.{ORM, T}
 
-  @tree_node_type_group CMS.Const.tree_node_type(:group)
   @tree_node_type_page CMS.Const.tree_node_type(:page)
 
   @doc """
-  Adds one published side-tree group to the cover and seeds its published pages.
+  Adds one published Group as a Cover Card.
+
+  Existing ancestor Cards reject the operation. Existing descendant Cards are
+  replaced atomically and the new parent Card takes their earliest position.
   """
-  @spec add_group(Community.t(), T.id()) :: T.domain_res(DocCoverGroup.t())
-  def add_group(%Community{} = community, draft_group_id) do
-    with {:ok, published_group} <- resolve_published_group(community, draft_group_id),
-         {:ok, pages} <- published_pages_for_draft_group(community, draft_group_id),
-         :ok <- ensure_has_pages(pages),
-         {:ok, cover_group} <- CMS.DocCover.Sync.ensure_cover_group(community, published_group),
-         {:ok, _items} <- seed_items(community, cover_group, pages) do
-      {:ok, cover_group}
+  @spec add_card(Community.t(), T.id()) :: T.domain_res(map())
+  def add_card(%Community{} = community, draft_group_node_id) do
+    Repo.transaction(fn ->
+      with {:ok, published_group} <- resolve_published_group(community, draft_group_node_id),
+           {:ok, leaves} <- published_leaves_for_group(community, draft_group_node_id),
+           :ok <- ensure_has_leaves(leaves),
+           {:ok, replacement_index} <-
+             replace_descendant_cards(community, published_group),
+           {:ok, cover_card} <-
+             CMS.DocCover.Sync.ensure_cover_card(community, published_group),
+           :ok <- place_cover_card(community, cover_card, replacement_index) do
+        card_result(cover_card, published_group, replacement_index)
+      else
+        {:error, reason} -> Repo.rollback(reason)
+      end
+    end)
+    |> case do
+      {:ok, cover_card} -> {:ok, cover_card}
+      {:error, reason} -> {:error, reason}
     end
   end
 
   @doc """
-  Removes one cover group by draft group id.
+  Removes one cover card by draft source node id.
   """
-  @spec remove_group(Community.t(), T.id()) :: T.domain_res(DocCoverGroup.t())
-  def remove_group(%Community{} = community, draft_group_id) do
-    with {:ok, published_group} <- resolve_published_group(community, draft_group_id),
-         {:ok, cover_group} <-
-           ORM.find_by(DocCoverGroup, community_id: community.id, group_id: published_group.id) do
-      ORM.delete(cover_group)
+  @spec remove_card(Community.t(), T.id()) :: T.domain_res(map())
+  def remove_card(%Community{} = community, draft_group_node_id) do
+    with {:ok, published_source} <-
+           resolve_published_group(community, draft_group_node_id),
+         {:ok, cover_card} <-
+           ORM.find_by(
+             DocCoverCard,
+             community_id: community.id,
+             group_node_id: published_source.id
+           ),
+         {:ok, _deleted} <- ORM.delete(cover_card) do
+      {:ok, card_result(cover_card, published_source)}
     end
+  end
+
+  defp card_result(%DocCoverCard{} = card, published_group, index \\ nil) do
+    %{
+      id: card.id,
+      group_node_id: published_group.node_id,
+      index: index || card.index,
+      title: published_group.title,
+      appearance: card.appearance || %{}
+    }
   end
 
   @doc """
   Updates cover-local visibility for one published page.
   """
   @spec set_item_hidden(Community.t(), T.id(), boolean()) :: T.domain_res(DocCoverItem.t())
-  def set_item_hidden(%Community{} = community, draft_node_id, hidden) when is_boolean(hidden) do
-    with {:ok, page} <- resolve_published_page(community, draft_node_id),
-         {:ok, cover_group} <-
-           ORM.find_by(DocCoverGroup,
-             community_id: community.id,
-             group_id: public_group_row_id(community, page.group_id)
-           ),
-         {:ok, item} <- ensure_cover_item(community, cover_group, page) do
+  def set_item_hidden(%Community{} = community, cover_item_id, hidden) when is_boolean(hidden) do
+    with {:ok, item} <-
+           ORM.find_by(DocCoverItem, id: cover_item_id, community_id: community.id) do
       ORM.update(item, %{hidden: hidden})
     end
   end
 
   @doc """
-  Updates cover-local UI config for one cover group.
+  Updates cover-local appearance for one cover card.
   """
-  @spec update_group_ui_config(Community.t(), T.id(), map()) :: T.domain_res(DocCoverGroup.t())
-  def update_group_ui_config(%Community{} = community, cover_group_id, ui_config)
-      when is_map(ui_config) do
+  @spec update_card_appearance(Community.t(), T.id(), map()) ::
+          T.domain_res(DocCoverCard.t())
+  def update_card_appearance(%Community{} = community, cover_card_id, appearance)
+      when is_map(appearance) do
     with {:ok, group} <-
-           ORM.find_by(DocCoverGroup, id: cover_group_id, community_id: community.id) do
-      ORM.update(group, %{ui_config: ui_config})
+           ORM.find_by(DocCoverCard, id: cover_card_id, community_id: community.id) do
+      ORM.update(group, %{appearance: appearance})
     end
   end
 
   @doc """
-  Updates cover-local UI config for one cover item.
+  Updates cover-local appearance for one cover item.
   """
-  @spec update_item_ui_config(Community.t(), T.id(), map()) :: T.domain_res(DocCoverItem.t())
-  def update_item_ui_config(%Community{} = community, cover_item_id, ui_config)
-      when is_map(ui_config) do
+  @spec update_item_appearance(Community.t(), T.id(), map()) ::
+          T.domain_res(DocCoverItem.t())
+  def update_item_appearance(%Community{} = community, cover_item_id, appearance)
+      when is_map(appearance) do
     with {:ok, item} <- ORM.find_by(DocCoverItem, id: cover_item_id, community_id: community.id) do
-      ORM.update(item, %{ui_config: ui_config})
+      ORM.update(item, %{appearance: appearance})
     end
   end
 
   @doc """
-  Reorders cover groups by cover group ids.
+  Reorders cover cards by cover card ids.
   """
-  @spec reorder_groups(Community.t(), list(T.id())) :: T.domain_res(map())
-  def reorder_groups(%Community{} = community, ids) when is_list(ids) do
+  @spec reorder_cards(Community.t(), list(T.id())) :: T.domain_res(map())
+  def reorder_cards(%Community{} = community, ids) when is_list(ids) do
     transact_done(fn ->
-      with :ok <- validate_unique_ids(ids, "Doc cover group order contains duplicate groups."),
-           groups_by_id <- cover_groups_by_id(community, ids),
-           {:ok, groups} <- ordered_cover_groups(groups_by_id, community, ids),
+      with :ok <- validate_unique_ids(ids, "Doc cover card order contains duplicate cards."),
+           groups_by_id <- cover_cards_by_id(community, ids),
+           {:ok, groups} <- ordered_cover_cards(groups_by_id, community, ids),
            :ok <- batch_reindex_groups(community, groups) do
         {:ok, :pass}
       end
@@ -119,17 +145,17 @@ defmodule GroupherServer.CMS.DocCover.Write do
   end
 
   @doc """
-  Reorders cover items inside one cover group by cover item ids.
+  Reorders cover items inside one cover card by cover item ids.
   """
   @spec reorder_items(Community.t(), T.id(), list(T.id())) :: T.domain_res(map())
-  def reorder_items(%Community{} = community, cover_group_id, ids) when is_list(ids) do
+  def reorder_items(%Community{} = community, cover_card_id, ids) when is_list(ids) do
     transact_done(fn ->
-      with {:ok, cover_group} <-
-             ORM.find_by(DocCoverGroup, id: cover_group_id, community_id: community.id),
+      with {:ok, cover_card} <-
+             ORM.find_by(DocCoverCard, id: cover_card_id, community_id: community.id),
            :ok <- validate_unique_ids(ids, "Doc cover item order contains duplicate items."),
-           items_by_id <- cover_items_by_id(community, cover_group, ids),
-           {:ok, items} <- ordered_cover_items(items_by_id, community, cover_group, ids),
-           :ok <- batch_reindex_items(community, cover_group, items) do
+           items_by_id <- cover_items_by_id(community, cover_card, ids),
+           {:ok, items} <- ordered_cover_items(items_by_id, community, cover_card, ids),
+           :ok <- batch_reindex_items(community, cover_card, items) do
         {:ok, :pass}
       end
     end)
@@ -265,11 +291,13 @@ defmodule GroupherServer.CMS.DocCover.Write do
     end
   end
 
-  defp resolve_published_group(%Community{} = community, draft_group_id) do
-    with {:ok, published} <- resolve_published_node(community, draft_group_id),
-         :ok <-
-           expect_type(published, @tree_node_type_group, "This group has not been published yet.") do
+  defp resolve_published_group(%Community{} = community, draft_node_id) do
+    with {:ok, published} <- resolve_published_node(community, draft_node_id),
+         true <- published.type == :group do
       {:ok, published}
+    else
+      false -> {:error, {:custom, "A Cover Card must reference a published Group."}}
+      error -> error
     end
   end
 
@@ -291,43 +319,133 @@ defmodule GroupherServer.CMS.DocCover.Write do
   defp expect_type(%DocTreeNode{type: type}, type, _message), do: :ok
   defp expect_type(_node, _type, message), do: {:error, {:custom, message}}
 
-  defp published_pages_for_draft_group(%Community{} = community, draft_group_id) do
-    draft_node_ids =
+  defp published_leaves_for_group(%Community{} = community, draft_group_node_id) do
+    draft_nodes =
       DocTreeNode
       |> where([n], n.community_id == ^community.id)
       |> where([n], n.stage == CMS.Const.stage(:draft))
-      |> where([n], n.group_id == ^to_string(draft_group_id))
-      |> where([n], n.type == @tree_node_type_page)
       |> order_by([n], asc: n.index, asc: n.id)
-      |> select([n], n.node_id)
       |> Repo.all()
 
-    pages_by_node_id =
+    children_by_parent = Enum.group_by(draft_nodes, & &1.parent_node_id)
+
+    draft_node_ids =
+      children_by_parent
+      |> descendant_nodes(to_string(draft_group_node_id), MapSet.new())
+      |> Enum.filter(&(&1.type in [:page, :link]))
+      |> Enum.map(& &1.node_id)
+
+    leaves_by_node_id =
       DocTreeNode
       |> where([n], n.community_id == ^community.id)
       |> where([n], n.stage == CMS.Const.stage(:public))
-      |> where([n], n.type == @tree_node_type_page)
+      |> where([n], n.type in [:page, :link])
       |> where([n], n.node_id in ^draft_node_ids)
       |> Repo.all()
       |> Map.new(&{&1.node_id, &1})
 
-    pages =
+    leaves =
       Enum.flat_map(draft_node_ids, fn node_id ->
-        pages_by_node_id
+        leaves_by_node_id
         |> Map.get(node_id)
         |> List.wrap()
       end)
 
-    {:ok, pages}
+    {:ok, leaves}
   end
 
-  defp ensure_has_pages([]),
+  defp descendant_nodes(children_by_parent, parent_node_id, seen) do
+    if MapSet.member?(seen, parent_node_id) do
+      []
+    else
+      seen = MapSet.put(seen, parent_node_id)
+
+      children_by_parent
+      |> Map.get(parent_node_id, [])
+      |> Enum.flat_map(fn child ->
+        [child | descendant_nodes(children_by_parent, child.node_id, seen)]
+      end)
+    end
+  end
+
+  defp replace_descendant_cards(%Community{} = community, %DocTreeNode{} = group_node) do
+    existing_cards =
+      DocCoverCard
+      |> where([card], card.community_id == ^community.id)
+      |> preload(:group_node)
+      |> Repo.all()
+
+    nodes =
+      DocTreeNode
+      |> where([node], node.community_id == ^community.id)
+      |> where([node], node.branch_id == ^group_node.branch_id)
+      |> where([node], node.stage == CMS.Const.stage(:public))
+      |> Repo.all()
+
+    parents = Map.new(nodes, &{&1.node_id, &1.parent_node_id})
+
+    source_ancestors =
+      parents
+      |> ancestor_ids(group_node.node_id, MapSet.new())
+      |> MapSet.delete(group_node.node_id)
+
+    ancestor_card =
+      Enum.find(existing_cards, fn card ->
+        MapSet.member?(source_ancestors, card.group_node.node_id)
+      end)
+
+    if ancestor_card do
+      {:error, {:custom, "This Group is already represented by an ancestor Cover Card."}}
+    else
+      descendants =
+        Enum.filter(existing_cards, fn card ->
+          card.group_node.node_id != group_node.node_id and
+            MapSet.member?(
+              ancestor_ids(parents, card.group_node.node_id, MapSet.new()),
+              group_node.node_id
+            )
+        end)
+
+      replacement_index =
+        descendants
+        |> Enum.map(& &1.index)
+        |> Enum.min(fn -> nil end)
+
+      Enum.each(descendants, &Repo.delete!/1)
+      {:ok, replacement_index}
+    end
+  end
+
+  defp ancestor_ids(_parents, nil, acc), do: acc
+
+  defp ancestor_ids(parents, node_id, acc) do
+    if MapSet.member?(acc, node_id),
+      do: acc,
+      else: ancestor_ids(parents, Map.get(parents, node_id), MapSet.put(acc, node_id))
+  end
+
+  defp ensure_has_leaves([]),
     do: {:error, {:custom, "Publish a doc before adding this group to cover."}}
 
-  defp ensure_has_pages(_pages), do: :ok
+  defp ensure_has_leaves(_leaves), do: :ok
 
-  defp cover_groups_by_id(%Community{} = community, ids) do
-    DocCoverGroup
+  defp place_cover_card(_community, _cover_card, nil), do: :ok
+
+  defp place_cover_card(%Community{} = community, cover_card, replacement_index) do
+    cards =
+      DocCoverCard
+      |> where([card], card.community_id == ^community.id)
+      |> order_by([card], asc: card.index, asc: card.id)
+      |> Repo.all()
+      |> Enum.reject(&(&1.id == cover_card.id))
+
+    insert_index = max(0, min(replacement_index, length(cards)))
+    {before, after_cards} = Enum.split(cards, insert_index)
+    batch_reindex_groups(community, before ++ [cover_card] ++ after_cards)
+  end
+
+  defp cover_cards_by_id(%Community{} = community, ids) do
+    DocCoverCard
     |> where([g], g.community_id == ^community.id)
     |> where([g], g.id in ^ids)
     |> lock("FOR UPDATE")
@@ -335,10 +453,10 @@ defmodule GroupherServer.CMS.DocCover.Write do
     |> Map.new(&{to_string(&1.id), &1})
   end
 
-  defp ordered_cover_groups(groups_by_id, %Community{} = community, ids) do
+  defp ordered_cover_cards(groups_by_id, %Community{} = community, ids) do
     ids
     |> Enum.reduce_while({:ok, []}, fn id, {:ok, acc} ->
-      case cover_group_by_id(groups_by_id, community, id) do
+      case cover_card_by_id(groups_by_id, community, id) do
         {:ok, group} -> {:cont, {:ok, [group | acc]}}
         error -> {:halt, error}
       end
@@ -346,24 +464,24 @@ defmodule GroupherServer.CMS.DocCover.Write do
     |> reverse_result()
   end
 
-  defp cover_group_by_id(groups_by_id, %Community{} = community, id) do
+  defp cover_card_by_id(groups_by_id, %Community{} = community, id) do
     case Map.fetch(groups_by_id, to_string(id)) do
       {:ok, group} -> {:ok, group}
-      :error -> ORM.find_by(DocCoverGroup, id: id, community_id: community.id)
+      :error -> ORM.find_by(DocCoverCard, id: id, community_id: community.id)
     end
   end
 
-  defp cover_items_by_id(%Community{} = community, %DocCoverGroup{} = cover_group, ids) do
+  defp cover_items_by_id(%Community{} = community, %DocCoverCard{} = cover_card, ids) do
     DocCoverItem
     |> where([i], i.community_id == ^community.id)
-    |> where([i], i.cover_group_id == ^cover_group.id)
+    |> where([i], i.cover_card_id == ^cover_card.id)
     |> where([i], i.id in ^ids)
     |> lock("FOR UPDATE")
     |> Repo.all()
     |> Map.new(&{to_string(&1.id), &1})
   end
 
-  defp ordered_cover_items(items_by_id, %Community{} = community, %DocCoverGroup{} = group, ids) do
+  defp ordered_cover_items(items_by_id, %Community{} = community, %DocCoverCard{} = group, ids) do
     ids
     |> Enum.reduce_while({:ok, []}, fn id, {:ok, acc} ->
       case cover_item_by_id(items_by_id, community, group, id) do
@@ -374,7 +492,12 @@ defmodule GroupherServer.CMS.DocCover.Write do
     |> reverse_result()
   end
 
-  defp cover_item_by_id(items_by_id, %Community{} = community, %DocCoverGroup{} = cover_group, id) do
+  defp cover_item_by_id(
+         items_by_id,
+         %Community{} = community,
+         %DocCoverCard{} = cover_card,
+         id
+       ) do
     case Map.fetch(items_by_id, to_string(id)) do
       {:ok, item} ->
         {:ok, item}
@@ -383,34 +506,9 @@ defmodule GroupherServer.CMS.DocCover.Write do
         ORM.find_by(DocCoverItem,
           id: id,
           community_id: community.id,
-          cover_group_id: cover_group.id
+          cover_card_id: cover_card.id
         )
     end
-  end
-
-  defp public_group_row_id(%Community{} = community, group_node_id) do
-    case CMS.DocTree.Publish.public_node_for_draft(community, group_node_id) do
-      {:ok, group} -> group.id
-      _ -> nil
-    end
-  end
-
-  defp seed_items(%Community{} = community, %DocCoverGroup{} = cover_group, pages) do
-    pages
-    |> Enum.reduce_while({:ok, []}, fn page, {:ok, acc} ->
-      case ensure_cover_item(community, cover_group, page) do
-        {:ok, item} -> {:cont, {:ok, [item | acc]}}
-        error -> {:halt, error}
-      end
-    end)
-  end
-
-  defp ensure_cover_item(
-         %Community{} = community,
-         %DocCoverGroup{} = cover_group,
-         %DocTreeNode{type: @tree_node_type_page} = page
-       ) do
-    CMS.DocCover.Sync.ensure_cover_item(community, cover_group, page)
   end
 
   # GraphQL IDs may arrive as integers or strings. Normalize them before checking
@@ -429,20 +527,20 @@ defmodule GroupherServer.CMS.DocCover.Write do
     {ids, indexes} = reindex_columns(groups)
 
     """
-    UPDATE cms.doc_cover_groups AS cover_group
+    UPDATE cms.doc_cover_cards AS cover_card
     SET "index" = updates.new_index,
         updated_at = $4
     FROM UNNEST($1::bigint[], $2::integer[]) AS updates(id, new_index)
-    WHERE cover_group.id = updates.id
-      AND cover_group.community_id = $3
+    WHERE cover_card.id = updates.id
+      AND cover_card.community_id = $3
     """
     |> Repo.query([ids, indexes, community.id, DateTime.utc_now(:second)])
-    |> expect_reindexed_rows(length(ids), "Doc cover group order targets changed.")
+    |> expect_reindexed_rows(length(ids), "Doc cover card order targets changed.")
   end
 
   defp batch_reindex_items(
          %Community{} = community,
-         %DocCoverGroup{} = cover_group,
+         %DocCoverCard{} = cover_card,
          items
        ) do
     {ids, indexes} = reindex_columns(items)
@@ -454,9 +552,9 @@ defmodule GroupherServer.CMS.DocCover.Write do
     FROM UNNEST($1::bigint[], $2::integer[]) AS updates(id, new_index)
     WHERE cover_item.id = updates.id
       AND cover_item.community_id = $3
-      AND cover_item.cover_group_id = $4
+      AND cover_item.cover_card_id = $4
     """
-    |> Repo.query([ids, indexes, community.id, cover_group.id, DateTime.utc_now(:second)])
+    |> Repo.query([ids, indexes, community.id, cover_card.id, DateTime.utc_now(:second)])
     |> expect_reindexed_rows(length(ids), "Doc cover item order targets changed.")
   end
 

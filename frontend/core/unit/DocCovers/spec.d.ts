@@ -14,7 +14,7 @@ export type TThumbnailBlock =
   | { type: 'table'; rows: number; columns: number }
   | { type: 'code'; lines: readonly string[] }
 
-export type TPinnedDocAppearance = {
+export type TDocCoverPinnedDocAppearance = {
   light: Partial<TBgConfig>
   dark: Partial<TBgConfig>
 }
@@ -22,7 +22,7 @@ export type TPinnedDocAppearance = {
 export type TDocCoverPinnedDoc = {
   nodeId: string
   index: number
-  appearance: TPinnedDocAppearance
+  appearance: TDocCoverPinnedDocAppearance
   href: string
   doc: {
     title: string
@@ -31,57 +31,60 @@ export type TDocCoverPinnedDoc = {
   }
 }
 
-export type TDocCoverNodeType = 'page' | 'link' | 'PAGE' | 'LINK'
-
-export type TDocCoverGroupUiConfig = {
+export type TDocCoverCardAppearance = {
   layout?: TDocCoverLayout | null
   marker?: TMarkerValue | null
-  desc?: string | null
 }
 
-export type TDocCoverItemUiConfig = {
-  digest?: string | null
-}
-
-export type TDocCoverItem = {
+type TDocCoverCardItemBase<TType extends 'group' | 'page' | 'link'> = {
   id: string
   nodeId: string
-  docId?: string | null
-  type: TDocCoverNodeType
+  type: TType
   title: string
-  digest?: string | null
   href: string
   index: number
   marker?: TMarkerValue | null
   badge?: string | null
-  uiConfig?: TDocCoverItemUiConfig | null
 }
 
-export type TDocCoverGroup = {
+export type TDocCoverPageItem = TDocCoverCardItemBase<'page'> & {
+  docId: string
+}
+
+export type TDocCoverLinkItem = TDocCoverCardItemBase<'link'>
+
+export type TDocCoverGroupItem = TDocCoverCardItemBase<'group'> & {
+  /** Number of accessible Public Page and Link leaves in this Group subtree. */
+  leafCount: number
+}
+
+export type TDocCoverCardItem = TDocCoverPageItem | TDocCoverLinkItem | TDocCoverGroupItem
+
+export type TDocCoverCard = {
   id: string
-  groupId: string
+  groupNodeId: string
   index: number
   title: string
-  uiConfig?: TDocCoverGroupUiConfig | null
-  items: readonly TDocCoverItem[]
+  appearance: TDocCoverCardAppearance
+  items: readonly TDocCoverCardItem[]
 }
 
-export type TDocCoversData = {
-  groups: readonly TDocCoverGroup[]
+export type TDocCovers = {
+  cards: readonly TDocCoverCard[]
   pinnedDocs: readonly TDocCoverPinnedDoc[]
 }
 
 export type TDocCoverLayoutProps = {
-  groups: readonly TDocCoverGroup[]
+  cards: readonly TDocCoverCard[]
   editable?: boolean
-  onEditGroup?: (group: TDocCoverGroup) => void
+  onEditCard?: (card: TDocCoverCard) => void
 }
 
 export type TDocCoversProps = {
   layout: TDocCoverLayout
-  data: TDocCoversData
+  data: TDocCovers
   editable?: boolean
-  onEditGroup?: (group: TDocCoverGroup) => void
+  onEditCard?: (card: TDocCoverCard) => void
   onAddPinnedDoc?: () => void
   onEditPinnedDoc?: (doc: TDocCoverPinnedDoc) => void
   onUnpinDoc?: (doc: TDocCoverPinnedDoc) => void

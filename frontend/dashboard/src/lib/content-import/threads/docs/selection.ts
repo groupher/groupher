@@ -20,13 +20,13 @@ const selectedPagePaths = (
   const selected = new Map<string, string>()
   const knownPageIds = new Set<string>()
   const visit = (node: TSourceNode): void => {
-    if (node.kind === 'page') {
+    if (node.type === 'page') {
       knownPageIds.add(node.sourceId)
       if (requestedIds.has(node.sourceId)) selected.set(node.sourceId, node.sourcePath)
       return
     }
-    if (node.kind === 'scope' || node.kind === 'section') {
-      for (const child of node.children) visit(child)
+    if (node.type === 'scope' || node.type === 'section') {
+      for (const child of node.pages) visit(child)
     }
   }
 
@@ -43,22 +43,22 @@ const selectedPagePaths = (
 }
 
 const containsSelectedPage = (node: TSourceNode, selectedIds: Set<string>): boolean => {
-  if (node.kind === 'page') return selectedIds.has(node.sourceId)
-  if (node.kind === 'link') return false
-  return node.children.some((child) => containsSelectedPage(child, selectedIds))
+  if (node.type === 'page') return selectedIds.has(node.sourceId)
+  if (node.type === 'link') return false
+  return node.pages.some((child) => containsSelectedPage(child, selectedIds))
 }
 
 const pruneNode = (node: TSourceNode, selectedIds: Set<string>): TSourceNode | null => {
-  if (node.kind === 'page') return selectedIds.has(node.sourceId) ? node : null
-  if (node.kind === 'link') return node
+  if (node.type === 'page') return selectedIds.has(node.sourceId) ? node : null
+  if (node.type === 'link') return node
   if (!containsSelectedPage(node, selectedIds)) return null
 
-  const children = node.children.flatMap((child): TSourceNode[] => {
-    if (child.kind === 'link') return [child]
+  const pages = node.pages.flatMap((child): TSourceNode[] => {
+    if (child.type === 'link') return [child]
     const selected = pruneNode(child, selectedIds)
     return selected ? [selected] : []
   })
-  return { ...node, children }
+  return { ...node, pages }
 }
 
 /** Returns the selected documents and their structurally valid SourceTree projection. */
@@ -87,7 +87,7 @@ export const selectSourceAnalysis = (
   }
 
   const navigation = analysis.tree.navigation.flatMap((node): TSourceNode[] => {
-    if (node.kind === 'link') return []
+    if (node.type === 'link') return []
     const selected = pruneNode(node, requestedIds)
     return selected ? [selected] : []
   })

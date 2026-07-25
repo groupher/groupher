@@ -1,10 +1,10 @@
 import { composeBgRenderSpec, type TBgConfig, type TBgRenderSpec } from '~/lib/bg'
 import { INITIAL_WALLPAPER_THEME_STATE } from '~/stores/wallpaper/constant'
 
-import type { TPinnedDocAppearance } from '../spec'
+import type { TDocCoverPinnedDocAppearance } from '../spec'
 
 export const pinnedDocBackground = (
-  appearance: TPinnedDocAppearance | null | undefined,
+  appearance: TDocCoverPinnedDocAppearance | null | undefined,
   dark: boolean,
 ): TBgRenderSpec | null => {
   const partial = dark ? appearance?.dark : appearance?.light

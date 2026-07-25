@@ -40,6 +40,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
 
     {:ok, group_payload} =
       CMS.DocTree.create_group(community, %{
+        parent_node_id: root_doc_tab_node_id(community),
         title: "Guides",
         slug: "guides",
         base_revision: tree_state.tree_lock_version
@@ -49,7 +50,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       CMS.DocTree.create_page(
         community,
         %{
-          group_id: group_payload.node.id,
+          parent_node_id: group_payload.node.id,
           title: "Install",
           slug: "install",
           base_revision: group_payload.revision
@@ -71,7 +72,7 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
       assert queried["docId"] == to_string(doc_id)
       assert queried["title"] == "Install"
       assert queried["subtitle"] == nil
-      assert queried["document"]["json"] =~ "Start writing your docs draft here."
+      assert queried["document"]["json"] == ~s([{"children":[{"text":""}],"type":"p"}])
 
       updated =
         user_conn
@@ -509,12 +510,5 @@ defmodule GroupherServer.Test.Mutation.CMS.DocDraft do
     }
   end
 
-  defp empty_docs_community(user) do
-    community_attrs = mock_attrs(:community) |> Map.merge(%{user: user})
-
-    with {:ok, community} <- CMS.Communities.create(community_attrs, user),
-         {:ok, _} <- CMS.DocTree.delete_demo_template(community) do
-      {:ok, community}
-    end
-  end
+  defp empty_docs_community(user), do: create_empty_docs_community(user)
 end

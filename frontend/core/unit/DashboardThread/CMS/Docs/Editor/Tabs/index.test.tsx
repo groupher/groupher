@@ -104,7 +104,6 @@ const noop = (): void => undefined
 const makeTab = (id: string, title: string): TSideTreeTab => ({
   id,
   title,
-  slug: title.toLowerCase(),
   groups: [],
   pins: [],
 })
@@ -132,6 +131,7 @@ const makeController = (
   renameTab: noop,
   reorderTabs: noop,
   addGroup: noop,
+  addNestedGroup: noop,
   addChild: noop,
   clearCoverWarning: noop,
   deleteGroup: noop,

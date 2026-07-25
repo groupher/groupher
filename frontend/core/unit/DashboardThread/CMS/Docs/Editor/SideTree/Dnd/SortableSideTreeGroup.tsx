@@ -1,43 +1,66 @@
-import { type ReactNode, type RefCallback, memo } from 'react'
+import { useDroppable } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { type ReactNode, type RefCallback, memo, useCallback } from 'react'
 
-import SortableGroup from '../../../../../LinkEditor/Dnd/SortableGroup'
+import { cn } from '~/css'
+import useTwBelt from '~/hooks/useTwBelt'
+
 import { SIDE_TREE_DND_TYPE } from './constant'
+import type { TSideTreeDndLane } from './spec'
 
 type TProps = {
   children: ReactNode
   className: string
-  columnId: string
+  depth: number
   disabled?: boolean
-  ids: string[]
   externalListRef?: RefCallback<HTMLDivElement>
-}
-
-const SIDE_TREE_GROUP_DND_TYPE = {
-  link: SIDE_TREE_DND_TYPE.CHILD,
-  column: SIDE_TREE_DND_TYPE.GROUP,
+  ids: string[]
+  lane: TSideTreeDndLane
+  parentNodeId: string
+  targetInside?: boolean
 }
 
 const SortableSideTreeGroup = memo(function SortableSideTreeGroup({
   children,
   className,
-  columnId,
+  depth,
   disabled = false,
   externalListRef,
   ids,
+  lane,
+  parentNodeId,
+  targetInside = false,
 }: TProps) {
+  const { primary } = useTwBelt()
+  const { setNodeRef } = useDroppable({
+    id: `docs-side-tree-container:${parentNodeId}`,
+    disabled,
+    data: {
+      type: SIDE_TREE_DND_TYPE.CONTAINER,
+      parentNodeId,
+      lane,
+      index: ids.length,
+      depth,
+    },
+  })
+  const setRefs = useCallback(
+    (node: HTMLDivElement | null): void => {
+      setNodeRef(node)
+      externalListRef?.(node)
+    },
+    [externalListRef, setNodeRef],
+  )
+
   return (
-    <SortableGroup
-      className={className}
-      columnId={columnId}
-      disabled={disabled}
-      dndType={SIDE_TREE_GROUP_DND_TYPE}
-      idPrefix='docs-side-tree-group'
-      ids={ids}
-      externalListRef={externalListRef}
-      overClassName=''
-    >
-      {children}
-    </SortableGroup>
+    <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+      <div
+        ref={setRefs}
+        className={cn(className, targetInside && primary('border'))}
+        data-doc-tree-parent={parentNodeId}
+      >
+        {children}
+      </div>
+    </SortableContext>
   )
 })
 

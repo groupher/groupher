@@ -5,30 +5,30 @@ import useTrans from '~/hooks/useTrans'
 import { mockImage } from '~/mock'
 
 import GroupSettingButton from '../GroupSettingButton'
-import type { TDocCoverGroup } from '../spec'
+import type { TDocCoverCard } from '../spec'
 import useSalon from './salon/category'
 
 type TProps = {
-  group: TDocCoverGroup
+  section: TDocCoverCard
   editable?: boolean
-  onEditGroup?: (group: TDocCoverGroup) => void
+  onEditCard?: (section: TDocCoverCard) => void
 }
 
-const Category: FC<TProps> = ({ group, editable = false, onEditGroup }) => {
+const Category: FC<TProps> = ({ section, editable = false, onEditCard }) => {
   const s = useSalon()
   const { t } = useTrans()
-  const { items } = group
+  const { items } = section
 
   return (
     <section className={s.section}>
       <div className={s.groupHeader}>
-        <h3 className={s.title}>{group.title}</h3>
+        <h3 className={s.title}>{section.title}</h3>
         {editable && (
           <GroupSettingButton
-            group={group}
+            section={section}
             className={s.groupSettingButton}
             iconClassName={s.groupSettingIcon}
-            onEditGroup={onEditGroup}
+            onEditCard={onEditCard}
           />
         )}
       </div>
@@ -39,14 +39,14 @@ const Category: FC<TProps> = ({ group, editable = false, onEditGroup }) => {
             <div
               className={s.cover}
               style={{
-                backgroundImage: `url(${mockImage(`${group.title}-${item.nodeId}-${index}`)})`,
+                backgroundImage: `url(${mockImage(`${section.title}-${item.nodeId}-${index}`)})`,
               }}
             />
 
             <div className={s.content}>
               <div className={s.articleTitle}>{item.title}</div>
               <div className={s.desc}>
-                {item.uiConfig?.digest || item.digest || t('doc.thread.no_desc')}
+                {item.type === 'group' ? `${item.leafCount} items` : t('doc.thread.no_desc')}
               </div>
             </div>
           </Link>

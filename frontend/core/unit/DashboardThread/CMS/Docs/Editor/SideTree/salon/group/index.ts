@@ -1,13 +1,20 @@
 import useTwBelt from '~/hooks/useTwBelt'
 
+import { SIDE_TREE_CLASS } from '..'
+import { SIDE_TREE_SPACING } from '../constant'
+
 export { cn } from '~/css'
 
 export default function useSalon({
   actionVisible,
   coverStatusVisible,
+  nestedWithinGroup,
+  topLevel,
 }: {
   actionVisible: boolean
   coverStatusVisible: boolean
+  nestedWithinGroup: boolean
+  topLevel: boolean
 }) {
   const { cn, fg, fill, hover, primary } = useTwBelt()
 
@@ -15,12 +22,25 @@ export default function useSalon({
   const fgIcon = cn('size-3 pointer', fg('digest'))
 
   return {
-    wrapper: 'column group/docs-tree-group border-b border-transparent -mt-0.5',
-    wrapperCollapsed: '-mb-2',
+    wrapper: cn(
+      SIDE_TREE_CLASS.group.wrapper,
+      topLevel && SIDE_TREE_SPACING.TOP_LEVEL_GROUP_MARGIN_TOP,
+      nestedWithinGroup && SIDE_TREE_SPACING.NESTED_GROUP_LEVEL_MARGIN_LEFT,
+    ),
+    wrapperCollapsed: topLevel ? SIDE_TREE_SPACING.TOP_LEVEL_GROUP_COLLAPSED_MARGIN_BOTTOM : '',
     wrapperTarget: primary('border'),
-    head: 'group/docs-tree-head @container row-center relative h-7 -ml-7 w-[calc(100%+1.75rem)] pl-8 pr-1',
+    head: cn(
+      SIDE_TREE_CLASS.group.header,
+      topLevel
+        ? cn(
+            SIDE_TREE_CLASS.group.topLevelHeaderWidth,
+            SIDE_TREE_SPACING.TOP_LEVEL_GROUP_HEADER_GUTTER,
+          )
+        : cn(SIDE_TREE_CLASS.group.nestedHeaderWidth, SIDE_TREE_SPACING.NESTED_GROUP_HEADER_INDENT),
+    ),
     dragHandle: cn(
-      'align-both absolute left-1 top-1/2 z-10 size-5 -translate-y-1/2 cursor-grab plain-button opacity-0 trans-all-100',
+      SIDE_TREE_CLASS.dragHandle.base,
+      topLevel ? SIDE_TREE_CLASS.dragHandle.topLevel : SIDE_TREE_CLASS.dragHandle.nested,
       'group-hover/docs-tree-head:opacity-100 focus-visible:opacity-100 active:cursor-grabbing',
       actionVisible && 'opacity-100',
       fill('digest'),
@@ -42,7 +62,7 @@ export default function useSalon({
       'group-focus-within/docs-tree-head:opacity-0',
       actionVisible && 'opacity-0',
     ),
-    coverStatusIcon: cn(icon, 'opacity-50'),
+    coverStatusIcon: cn('size-3.5 opacity-50', fg('digest')),
     addButton: cn(
       'align-both size-5 plain-button opacity-0 trans-all-100',
       'group-hover/docs-tree-head:opacity-100',
@@ -65,7 +85,13 @@ export default function useSalon({
     ),
     actionIcon: cn(icon, hover('icon')),
     publishIcon: cn(fgIcon, hover('fg')),
-    children: 'column gap-y-1.5 mt-2 min-h-3 border-b border-transparent',
+    children: cn(
+      SIDE_TREE_CLASS.group.children,
+      SIDE_TREE_SPACING.NODE_GAP,
+      topLevel
+        ? SIDE_TREE_SPACING.TOP_LEVEL_GROUP_CONTENT_GAP
+        : SIDE_TREE_SPACING.NESTED_GROUP_CONTENT_GAP,
+    ),
     collapsed: 'hidden',
   }
 }

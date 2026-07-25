@@ -2,12 +2,10 @@ import F from '../fragments'
 
 const docPublicTreeNode = `
   id
-  tabId
-  groupId
+  parentNodeId
   docId
   type
   title
-  slug
   index
   href
   marker {
@@ -30,6 +28,11 @@ const docPublicTreeNode = `
   badge
 `
 
+const docPublicTreeNodeSelection = (depth: number): string => `
+  ${docPublicTreeNode}
+  ${depth > 0 ? `pages { ${docPublicTreeNodeSelection(depth - 1)} }` : ''}
+`
+
 export const doc = `
   query doc($article: ArticlePathInput!, $userHasLogin: Boolean!) {
     doc(article: $article) {
@@ -46,8 +49,7 @@ export const docPublicTree = `
         ${docPublicTreeNode}
         pins { ${docPublicTreeNode} }
         groups {
-          ${docPublicTreeNode}
-          children { ${docPublicTreeNode} }
+          ${docPublicTreeNodeSelection(12)}
         }
       }
     }

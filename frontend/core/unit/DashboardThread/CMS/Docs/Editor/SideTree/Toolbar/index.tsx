@@ -92,7 +92,10 @@ const Toolbar: FC<TProps> = ({
         <div className={s.actions}>
           {ACTIONS.map(({ key, label, Icon }) => {
             const actionText = t(label)
-            const buttonLabel = `${t('dsb.cms.docs.side_tree.action.add_prefix')} ${actionText}`
+            const buttonLabel =
+              key === 'pin'
+                ? `${t('dsb.cms.docs.side_tree.action.add_prefix')} ${actionText}`
+                : actionText
 
             return (
               <button

@@ -89,7 +89,7 @@ export const analyzeDocusaurus = async (workspace: TSourceWorkspace): Promise<TS
     navigation: Object.entries(sidebar ?? {}).map(([scopeId, value]) =>
       scopeNode(`sidebar:${scopeId}`, titleize(scopeId), '/', items(value, scopeId, documents)),
     ),
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: { configPaths, framework: 'docusaurus', root: 'docs' },
   }
 }

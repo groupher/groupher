@@ -39,6 +39,17 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
   @max_digest_length 500
   @min_plain_text_length get_config(:article, :min_length)
   @max_plain_text_length get_config(:article, :max_length)
+  @empty_doc_attrs %{
+    json: ~S([{"children":[{"text":""}],"type":"p"}]),
+    markdown: "\u200B\n",
+    html:
+      "<div class=\"slate-editor\"><div class=\"slate-p m-0 px-0 py-1\"><span><span><span>\uFEFF</span></span></span></div></div>",
+    toc: [],
+    plain_text: "",
+    digest: "",
+    body_hash: "b57d3e9ff51a3f143580177c53e096767fa8cd8047d0cb3b8c59722e9e714f79",
+    schema_version: @schema_version
+  }
 
   @fields ~w(json markdown html toc plain_text digest body_hash schema_version)a
   @string_fields ~w(json markdown html plain_text digest body_hash)a
@@ -74,6 +85,16 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
   @spec schema_version() :: pos_integer()
   def schema_version, do: @schema_version
 
+  @doc """
+  Returns the canonical empty Docs BodyBag produced by the Node publisher.
+
+  This is the neutral initial editor document, not a product template. Keep the
+  derived fields and hash aligned with `publishArtiment([{type: "p", children:
+  [%{text: ""}]}])` whenever the rich-editor schema changes.
+  """
+  @spec empty_doc() :: map()
+  def empty_doc, do: @empty_doc_attrs
+
   @doc "Casts and validates one GraphQL/JSON BodyBag payload."
   @spec cast(t() | map(), keyword()) :: {:ok, t()} | {:error, Ecto.Changeset.t()}
   def cast(attrs, options \\ [])
@@ -83,18 +104,19 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
   def cast(attrs, options) when is_map(attrs) do
     attrs = normalize_attrs(attrs)
     min_plain_text_length = min_plain_text_length(options)
+    required_string_fields = required_string_fields(options)
 
     %__MODULE__{}
-    |> Ecto.Changeset.cast(attrs, @fields)
+    |> cast_fields(attrs, options)
     |> require_input_keys(attrs)
-    |> validate_required(@string_fields ++ [:schema_version])
+    |> validate_required(required_string_fields ++ [:schema_version])
     |> validate_inclusion(:schema_version, @supported_schema_versions)
     |> validate_format(:body_hash, ~r/\A[0-9a-f]{64}\z/)
     |> validate_length(:plain_text,
       min: min_plain_text_length,
       max: @max_plain_text_length
     )
-    |> validate_change(:plain_text, &validate_non_empty_plain_text/2)
+    |> validate_change(:plain_text, &validate_plain_text(&1, &2, options))
     |> validate_length(:digest, max: @max_digest_length)
     |> validate_length(:toc, max: @max_toc_items)
     |> validate_change(:json, &validate_json/2)
@@ -221,12 +243,30 @@ defmodule GroupherServer.CMS.Artiment.BodyBag do
 
   defp validate_derived_size(_field, _value), do: []
 
-  defp validate_non_empty_plain_text(:plain_text, value) do
+  defp validate_plain_text(:plain_text, "", options) do
+    if Keyword.get(options, :thread) == :doc, do: [], else: [plain_text: "can't be blank"]
+  end
+
+  defp validate_plain_text(:plain_text, value, _options) do
     if String.trim(value) == "", do: [plain_text: "can't be blank"], else: []
   end
 
   defp min_plain_text_length(options) do
-    if Keyword.get(options, :thread) == :doc, do: 1, else: @min_plain_text_length
+    if Keyword.get(options, :thread) == :doc, do: 0, else: @min_plain_text_length
+  end
+
+  defp required_string_fields(options) do
+    if Keyword.get(options, :thread) == :doc,
+      do: @string_fields -- [:plain_text, :digest],
+      else: @string_fields
+  end
+
+  # Ecto normally treats empty strings as absent input. An empty Docs document
+  # is a valid publisher result, so preserve its exact plain_text/digest values.
+  defp cast_fields(body_bag, attrs, options) do
+    if Keyword.get(options, :thread) == :doc,
+      do: Ecto.Changeset.cast(body_bag, attrs, @fields, empty_values: []),
+      else: Ecto.Changeset.cast(body_bag, attrs, @fields)
   end
 
   defp validate_total_size(changeset) do

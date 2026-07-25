@@ -4,34 +4,34 @@ import type { FC } from 'react'
 import type { TColorName } from '~/spec'
 
 import GroupSettingButton from '../GroupSettingButton'
-import type { TDocCoverGroup } from '../spec'
+import type { TDocCoverCard } from '../spec'
 import useSalon from './salon/category'
 
 type TProps = {
   categoryIndex: number
   color: TColorName
-  group: TDocCoverGroup
+  section: TDocCoverCard
   editable?: boolean
-  onEditGroup?: (group: TDocCoverGroup) => void
+  onEditCard?: (section: TDocCoverCard) => void
 }
 
-const Category: FC<TProps> = ({ categoryIndex, group, editable = false, onEditGroup }) => {
+const Category: FC<TProps> = ({ categoryIndex, section, editable = false, onEditCard }) => {
   const s = useSalon()
-  const { items } = group
+  const { items } = section
 
   return (
     <section className={s.wrapper}>
       <div className={s.groupHeader}>
         <h3 className={s.title}>
           <span className={s.titleIndex}>{`${categoryIndex}.0`}</span>
-          <span>{group.title}</span>
+          <span>{section.title}</span>
         </h3>
         {editable && (
           <GroupSettingButton
-            group={group}
+            section={section}
             className={s.groupSettingButton}
             iconClassName={s.groupSettingIcon}
-            onEditGroup={onEditGroup}
+            onEditCard={onEditCard}
           />
         )}
       </div>

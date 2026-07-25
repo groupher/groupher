@@ -1,20 +1,23 @@
 'use client'
 
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useAutoAnimate } from '@formkit/auto-animate/react'
 import { type FC, useDeferredValue, useMemo, useState } from 'react'
 
+import { cn } from '~/css'
 import useTrans from '~/hooks/useTrans'
 
 import { DOC_EDITOR_SIDE_TREE_STICKY_TOP } from '../salon/layout'
 import { SIDE_TREE_NODE_TYPE } from './constant'
 import CoverWarningModal from './CoverWarningModal'
+import { SIDE_TREE_DND_LANE } from './Dnd/constant'
 import SideTreeDndContext from './Dnd/SideTreeDndContext'
+import SortableSideTreeGroup from './Dnd/SortableSideTreeGroup'
 import Footer from './Footer'
 import Group from './Group'
 import PinList from './PinList'
-import useSalon from './salon'
-import type { TSideTreeController, TSideTreeGroup } from './spec'
+import useSalon, { SIDE_TREE_CLASS } from './salon'
+import { SIDE_TREE_SPACING } from './salon/constant'
+import type { TSideTreeController, TSideTreeGroup, TSideTreeNavigationNode } from './spec'
 import Toolbar from './Toolbar'
 import useStickyViewportHeight from './useStickyViewportHeight'
 
@@ -39,15 +42,28 @@ const filterGroupsByDocTitle = (
   if (!normalizedQuery) return [...groups]
 
   return groups.flatMap((group) => {
-    const children = group.children.filter(
-      (child) =>
-        (child.type === SIDE_TREE_NODE_TYPE.PAGE || child.type === SIDE_TREE_NODE_TYPE.LINK) &&
-        (child.title || '').toLowerCase().includes(normalizedQuery),
+    const matchingNestedGroups = filterGroupsByDocTitle(
+      group.pages.filter(
+        (child): child is TSideTreeGroup => child.type === SIDE_TREE_NODE_TYPE.GROUP,
+      ),
+      normalizedQuery,
     )
+    const nestedById = new Map(matchingNestedGroups.map((child) => [child.id, child]))
+    const pages: TSideTreeNavigationNode[] = []
 
-    if (children.length === 0) return []
+    for (const child of group.pages) {
+      if (child.type === SIDE_TREE_NODE_TYPE.GROUP) {
+        const nested = nestedById.get(child.id)
+        if (nested) pages.push(nested)
+        continue
+      }
 
-    return [{ ...group, expanded: true, children }]
+      if ((child.title || '').toLowerCase().includes(normalizedQuery)) pages.push(child)
+    }
+
+    if (pages.length === 0) return []
+
+    return [{ ...group, expanded: true, pages }]
   })
 }
 
@@ -64,6 +80,7 @@ const SideTree: FC<TProps> = ({ controller, viewportLayoutKey }) => {
 
   const {
     groups,
+    activeTabId,
     pins,
     activeId,
     editingTarget,
@@ -126,15 +143,13 @@ const SideTree: FC<TProps> = ({ controller, viewportLayoutKey }) => {
         onOpenSearch={openSearch}
       />
 
-      <SideTreeDndContext groups={visibleGroups} onCommit={reorderGroups}>
-        {({
-          activeDragColumnId,
-          columns,
-          targetDragColumnId,
-          targetDragItemId,
-          targetDragPosition,
-        }) => (
-          <div ref={groupListRef} className={s.groupList}>
+      <SideTreeDndContext
+        groups={visibleGroups}
+        rootParentNodeId={activeTabId || ''}
+        onCommit={reorderGroups}
+      >
+        {({ columns, target }) => (
+          <div className={s.groupList}>
             <PinList
               pins={pins}
               editingTarget={editingTarget}
@@ -147,52 +162,56 @@ const SideTree: FC<TProps> = ({ controller, viewportLayoutKey }) => {
             {searchActive && columns.length === 0 ? (
               <div className={s.empty}>{t('dsb.cms.docs.side_tree.search_empty')}</div>
             ) : (
-              <SortableContext
-                items={columns.map((group) => `docs-side-tree-sortable-group:${group.id}`)}
-                strategy={verticalListSortingStrategy}
+              <SortableSideTreeGroup
+                className={cn(
+                  SIDE_TREE_CLASS.topLevelGroupList,
+                  SIDE_TREE_SPACING.TOP_LEVEL_GROUP_GAP,
+                )}
+                depth={0}
+                disabled={searching || !activeTabId}
+                externalListRef={groupListRef}
+                ids={columns.map((group) => group.id)}
+                lane={SIDE_TREE_DND_LANE.GROUPS}
+                parentNodeId={activeTabId || ''}
+                targetInside={
+                  target?.intent === 'inside' && target.parentNodeId === (activeTabId || '')
+                }
               >
-                {columns.map((group) => {
-                  const showGroupTargetLine =
-                    !searching &&
-                    !!activeDragColumnId &&
-                    !!targetDragColumnId &&
-                    targetDragColumnId === group.id &&
-                    activeDragColumnId !== group.id &&
-                    !targetDragItemId
-
-                  return (
-                    <Group
-                      key={group.id}
-                      group={group}
-                      activeId={activeId}
-                      editingTarget={editingTarget}
-                      searchQuery={deferredSearchQuery}
-                      searching={searching}
-                      showTargetLine={showGroupTargetLine}
-                      targetDragItemId={searching ? null : targetDragItemId}
-                      targetDragPosition={searching ? null : targetDragPosition}
-                      onActivate={activate}
-                      onToggle={toggleGroup}
-                      onAddChild={addChild}
-                      onCoverGroupAction={toggleCoverGroup}
-                      onDeleteGroup={deleteGroup}
-                      onRenameGroup={renameGroup}
-                      onRenameChild={renameChild}
-                      onRenameLink={renameLink}
-                      onCancelEdit={cancelEdit}
-                      onEdit={edit}
-                      onChildAction={handleChildAction}
-                      onChildStyleChange={updateChildStyle}
-                    />
-                  )
-                })}
-              </SortableContext>
+                {columns.map((group, groupIndex) => (
+                  <Group
+                    key={group.id}
+                    group={group}
+                    coveredByAncestor={false}
+                    activeId={activeId}
+                    depth={0}
+                    editingTarget={editingTarget}
+                    index={groupIndex}
+                    searchQuery={deferredSearchQuery}
+                    searching={searching}
+                    target={searching ? null : target}
+                    onActivate={activate}
+                    onToggle={toggleGroup}
+                    onAddNestedGroup={controller.addNestedGroup}
+                    onAddChild={addChild}
+                    onCoverGroupAction={toggleCoverGroup}
+                    onDeleteGroup={deleteGroup}
+                    onRenameGroup={renameGroup}
+                    onRenameChild={renameChild}
+                    onRenameLink={renameLink}
+                    onCancelEdit={cancelEdit}
+                    onEdit={edit}
+                    onChildAction={handleChildAction}
+                    onChildStyleChange={updateChildStyle}
+                  />
+                ))}
+              </SortableSideTreeGroup>
             )}
           </div>
         )}
       </SideTreeDndContext>
       <Footer
         baseRevision={controller.treeState?.revision ?? null}
+        tabs={controller.tabs}
         trashItems={controller.trashItems}
         trashLoading={controller.trashLoading}
         onReloadTrash={controller.reloadTrash}

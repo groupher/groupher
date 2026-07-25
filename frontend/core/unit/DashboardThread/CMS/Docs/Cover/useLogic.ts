@@ -9,27 +9,28 @@ import { DOC_COVER_VIEW } from '~/unit/DocCovers/constant'
 import S from '~/unit/DocCovers/schema'
 import type {
   TDocCoverPinnedDoc,
-  TDocCoversData,
-  TPinnedDocAppearance,
+  TDocCovers,
+  TDocCoverPinnedDocAppearance,
 } from '~/unit/DocCovers/spec'
 
 import DashboardSchema from '../../../schema'
-import type { TSideTreeTab } from '../Editor/SideTree/spec'
+import { SIDE_TREE_NODE_TYPE } from '../Editor/SideTree/constant'
+import type { TSideTreeGroup, TSideTreePage, TSideTreeTab } from '../Editor/SideTree/spec'
 
-const EMPTY_DOC_COVERS: TDocCoversData = {
-  groups: [],
+const EMPTY_DOC_COVERS: TDocCovers = {
+  cards: [],
   pinnedDocs: [],
 }
 
 type TRet = {
   community: string
   layout: TDocCoverLayout
-  data: TDocCoversData
+  data: TDocCovers
   docs: readonly TCoverDocOption[]
   pinDoc: (nodeId: string) => Promise<void>
   unpinDoc: (nodeId: string) => Promise<void>
   reorderPinnedDocs: (docs: readonly TDocCoverPinnedDoc[]) => Promise<void>
-  updateAppearance: (nodeId: string, appearance: TPinnedDocAppearance) => Promise<void>
+  updateAppearance: (nodeId: string, appearance: TDocCoverPinnedDocAppearance) => Promise<void>
 }
 
 export type TCoverDocOption = {
@@ -41,6 +42,22 @@ export type TCoverDocOption = {
   reason?: 'Not published' | 'Unpublished changes'
 }
 
+const collectPages = (
+  groups: readonly TSideTreeGroup[],
+  ancestors: readonly string[],
+): Array<{ page: TSideTreePage; path: string }> =>
+  groups.flatMap((group) => {
+    const path = [...ancestors, group.title].filter(Boolean)
+
+    return group.pages.flatMap((child) =>
+      child.type === SIDE_TREE_NODE_TYPE.GROUP
+        ? collectPages([child], path)
+        : child.type === SIDE_TREE_NODE_TYPE.PAGE
+          ? [{ page: child, path: path.join(' / ') }]
+          : [],
+    )
+  })
+
 /**
  * Dashboard cover consumes the display-ready docCover query directly.
  */
@@ -48,7 +65,7 @@ export default function useLogic(): TRet {
   const { slug: community } = useCommunity()
   const dashboard = useDashboard()
   const { mutate } = useGraphQLClient()
-  const { data, reload: reloadCover } = useQuery<{ docCover?: TDocCoversData }>(S.docCover, {
+  const { data, reload: reloadCover } = useQuery<{ docCover?: TDocCovers }>(S.docCover, {
     community,
     view: DOC_COVER_VIEW.DASHBOARD,
   })
@@ -60,27 +77,23 @@ export default function useLogic(): TRet {
   const docs = useMemo<TCoverDocOption[]>(
     () =>
       (treeData?.docTree?.tabs ?? []).flatMap((tab) =>
-        tab.groups.flatMap((group) =>
-          group.children
-            .filter((doc) => doc.type === 'page')
-            .map((doc) => {
-              const published = doc.publishState?.published === true
-              const changed = doc.publishState?.hasUnpublishedChanges === true
+        collectPages(tab.groups, [tab.title]).map(({ page: doc, path }) => {
+          const published = doc.publishState?.published === true
+          const changed = doc.publishState?.hasUnpublishedChanges === true
 
-              return {
-                nodeId: doc.id,
-                title: doc.title || 'Untitled',
-                path: [tab.title, group.title].filter(Boolean).join(' / '),
-                pinned: doc.publishState?.pinnedToCover === true,
-                disabled: !published || changed,
-                reason: !published
-                  ? ('Not published' as const)
-                  : changed
-                    ? ('Unpublished changes' as const)
-                    : undefined,
-              }
-            }),
-        ),
+          return {
+            nodeId: doc.id,
+            title: doc.title || 'Untitled',
+            path,
+            pinned: doc.publishState?.pinnedToCover === true,
+            disabled: !published || changed,
+            reason: !published
+              ? ('Not published' as const)
+              : changed
+                ? ('Unpublished changes' as const)
+                : undefined,
+          }
+        }),
       ),
     [treeData],
   )
@@ -110,7 +123,7 @@ export default function useLogic(): TRet {
 
   const updateAppearance = async (
     nodeId: string,
-    appearance: TPinnedDocAppearance,
+    appearance: TDocCoverPinnedDocAppearance,
   ): Promise<void> => {
     await mutate(DashboardSchema.updatePinnedDocAppearance, {
       community,

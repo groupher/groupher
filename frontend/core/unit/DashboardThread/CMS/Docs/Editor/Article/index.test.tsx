@@ -9,13 +9,13 @@ import type { TSideTreeController, TSideTreeGroup } from '../SideTree/spec'
 const mocks = vi.hoisted(() => ({
   useLogic: vi.fn((sideTree: TSideTreeController) => {
     const activeChild = sideTree.groups
-      .flatMap((group) => group.children)
+      .flatMap((group) => group.pages)
       .find((child) => child.id === sideTree.activeId)
     const activePage = activeChild?.type === SIDE_TREE_NODE_TYPE.PAGE ? activeChild : null
 
     return {
       activePage: activePage ?? null,
-      bodyValue: [{ type: 'p', children: [{ text: activePage?.title ?? '' }] }],
+      bodyValue: [{ type: 'p', pages: [{ text: activePage?.title ?? '' }] }],
       editable: !!activePage,
       editorDocId: activePage?.docId ?? '',
       error: null,
@@ -61,8 +61,9 @@ const groups: TSideTreeGroup[] = [
   {
     id: 'group',
     type: SIDE_TREE_NODE_TYPE.GROUP,
+    parentNodeId: 'tab-demo',
     title: 'Group',
-    children: [
+    pages: [
       { id: 'page-a', type: SIDE_TREE_NODE_TYPE.PAGE, docId: 'doc-a', title: 'A' },
       { id: 'page-b', type: SIDE_TREE_NODE_TYPE.PAGE, docId: 'doc-b', title: 'B' },
     ],

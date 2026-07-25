@@ -27,7 +27,6 @@ export const mapNode = (node: TDocTreeNodeDTO): TSideTreeChild => {
       id: node.id,
       type: SIDE_TREE_NODE_TYPE.LINK,
       title: node.title || '',
-      slug: node.slug || undefined,
       href: node.href || '',
       marker: node.marker || undefined,
       badge: node.badge || undefined,
@@ -40,9 +39,7 @@ export const mapNode = (node: TDocTreeNodeDTO): TSideTreeChild => {
     id: node.id,
     type: SIDE_TREE_NODE_TYPE.PAGE,
     title: node.title || undefined,
-    slug: node.slug || undefined,
     docId: node.docId || undefined,
-    path: node.slug || undefined,
     href: undefined,
     marker: node.marker || undefined,
     badge: node.badge || undefined,
@@ -55,7 +52,6 @@ export const mapPin = (node: TDocTreeNodeDTO): TSideTreePin => ({
   id: node.id,
   type: SIDE_TREE_NODE_TYPE.PIN,
   title: node.title || '',
-  slug: node.slug || undefined,
   href: node.href || '',
   marker: node.marker || undefined,
   hidden: node.hidden || undefined,
@@ -63,23 +59,32 @@ export const mapPin = (node: TDocTreeNodeDTO): TSideTreePin => ({
 })
 
 /**
- * Convert a backend group node and its children into a local SideTree group.
+ * Convert a backend group node and its pages into a local SideTree group.
  *
  * @example
  * const group = mapGroup(node)
- * group.children.every(Boolean)
+ * group.pages.every(Boolean)
  */
-export const mapGroup = (node: TDocTreeNodeDTO): TSideTreeGroup => ({
-  id: node.id,
-  tabId: node.tabId || '',
-  type: SIDE_TREE_NODE_TYPE.GROUP,
-  title: node.title || '',
-  slug: node.slug || undefined,
-  marker: node.marker || undefined,
-  hidden: node.hidden || undefined,
-  publishState: node.publishState || undefined,
-  children: (node.children || []).map(mapNode),
-})
+export const mapGroup = (node: TDocTreeNodeDTO): TSideTreeGroup => {
+  const pages = node.pages || []
+  const groups = pages
+    .filter((child) => normalizeNodeType(child.type) === SIDE_TREE_NODE_TYPE.GROUP)
+    .map(mapGroup)
+  const leaves = pages
+    .filter((child) => normalizeNodeType(child.type) !== SIDE_TREE_NODE_TYPE.GROUP)
+    .map(mapNode)
+
+  return {
+    id: node.id,
+    parentNodeId: node.parentNodeId || '',
+    type: SIDE_TREE_NODE_TYPE.GROUP,
+    title: node.title || '',
+    marker: node.marker || undefined,
+    hidden: node.hidden || undefined,
+    publishState: node.publishState || undefined,
+    pages: [...groups, ...leaves],
+  }
+}
 
 /**
  * Replace a single remote node inside the current local SideTree groups.
@@ -93,13 +98,28 @@ export const patchNode = (
   node: TDocTreeNodeDTO,
 ): TSideTreeGroup[] => {
   if (normalizeNodeType(node.type) === SIDE_TREE_NODE_TYPE.GROUP) {
-    return groups.map((group) => (group.id === node.id ? { ...group, ...mapGroup(node) } : group))
+    return groups.map((group) => {
+      if (group.id === node.id) return { ...group, ...mapGroup(node) }
+
+      return {
+        ...group,
+        pages: group.pages.map((child) =>
+          child.type === SIDE_TREE_NODE_TYPE.GROUP ? patchNode([child], node)[0] : child,
+        ),
+      }
+    })
   }
 
   const child = mapNode(node)
 
   return groups.map((group) => ({
     ...group,
-    children: group.children.map((item) => (item.id === child.id ? child : item)),
+    pages: group.pages.map((item) =>
+      item.type === SIDE_TREE_NODE_TYPE.GROUP
+        ? patchNode([item], node)[0]
+        : item.id === child.id
+          ? child
+          : item,
+    ),
   }))
 }

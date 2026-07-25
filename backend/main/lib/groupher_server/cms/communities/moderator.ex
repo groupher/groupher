@@ -193,7 +193,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
     insert_and_stamp(multi, community, target_user, :root)
   end
 
-  defp insert_and_stamp(multi, %Community{} = community, %User{} = target_user, kind) do
+  defp insert_and_stamp(multi, %Community{} = community, %User{} = target_user, passport_type) do
     insert_name = {:insert_moderator, target_user.id}
 
     multi
@@ -212,7 +212,7 @@ defmodule GroupherServer.CMS.Communities.Moderator do
     |> Multi.run({:stamp_passport, target_user.id}, fn _, changes ->
       community_moderator = Map.fetch!(changes, insert_name)
 
-      with {:ok, rules} <- default_passport(kind, community.slug),
+      with {:ok, rules} <- default_passport(passport_type, community.slug),
            {:ok, _} <- Passport.stamp_passport(rules, target_user) do
         update_passport_item_count(community_moderator, community, target_user, rules)
       end

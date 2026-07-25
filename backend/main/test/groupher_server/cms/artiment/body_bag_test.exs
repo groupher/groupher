@@ -52,7 +52,12 @@ defmodule GroupherServer.CMS.Artiment.BodyBagTest do
     assert "is invalid" in errors_on(changeset).schema_version
   end
 
-  test "allows non-empty short Docs bodies without weakening other article threads" do
+  test "allows canonical empty and non-empty short Docs bodies without weakening other threads" do
+    assert {:ok, empty} = BodyBag.cast(BodyBag.empty_doc(), thread: :doc)
+    assert empty.plain_text == ""
+    assert empty.digest == ""
+    assert {:error, _changeset} = BodyBag.cast(BodyBag.empty_doc())
+
     attrs = %{valid_attrs() | plain_text: "Go", digest: "Go"}
 
     assert {:ok, body_bag} = BodyBag.cast(attrs, thread: :doc)

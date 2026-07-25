@@ -57,6 +57,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
       with {:ok, actor} <- load_actor(args),
            {:ok, action} <- find_action(community, branch, action_ref),
            items <- action_nodes(action, branch),
+           {:ok, items} <- prepare_restore_items(community, branch, action, items, args),
            doc_ids <- action_doc_ids(action),
            {:ok, result} <-
              Lock.run_many(community, :doc, doc_ids, fn ->
@@ -71,7 +72,7 @@ defmodule GroupherServer.CMS.DocTree.Trash do
 
         affected =
           result.draft_nodes
-          |> Enum.map(&{&1.tab_id || &1.group_id, &1.type})
+          |> Enum.map(&{&1.parent_node_id, &1.type})
           |> Enum.uniq()
           |> Enum.flat_map(fn {parent_id, type} ->
             Index.affected_nodes(community, branch, parent_id, type)
@@ -144,7 +145,8 @@ defmodule GroupherServer.CMS.DocTree.Trash do
   end
 
   defp restore_action(community, branch, action, items, actor) do
-    with :ok <- ensure_restore_slots_available(community, branch, items),
+    with :ok <- shift_root_restore_slots(community, branch, action, items),
+         :ok <- ensure_restore_slots_available(community, branch, items),
          {:ok, draft_nodes} <- restore_stage_nodes(community, branch, items, :draft),
          {:ok, public_nodes} <- restore_stage_nodes(community, branch, items, :public),
          {:ok, articles} <-
@@ -233,6 +235,198 @@ defmodule GroupherServer.CMS.DocTree.Trash do
         end
     end
   end
+
+  defp prepare_restore_items(community, branch, action, items, args) do
+    root = Enum.find(items, &(&1.node_id == action.root_ref))
+    target_parent_node_id = Map.get(args, :target_parent_node_id)
+    target_index = Map.get(args, :target_index)
+
+    if root do
+      [:draft, :public]
+      |> Enum.reduce_while({:ok, root}, fn stage, {:ok, item} ->
+        case relocate_root_snapshot(
+               community,
+               branch,
+               items,
+               item,
+               stage,
+               target_parent_node_id,
+               target_index
+             ) do
+          {:ok, next_item} -> {:cont, {:ok, next_item}}
+          error -> {:halt, error}
+        end
+      end)
+      |> case do
+        {:ok, relocated_root} ->
+          {:ok,
+           Enum.map(items, fn item ->
+             if item.id == relocated_root.id, do: relocated_root, else: item
+           end)}
+
+        error ->
+          error
+      end
+    else
+      {:error, {:custom, "Docs Trash root node is missing"}}
+    end
+  end
+
+  defp relocate_root_snapshot(
+         community,
+         branch,
+         items,
+         item,
+         stage,
+         target_parent_node_id,
+         target_index
+       ) do
+    data = snapshot(item, stage)
+
+    if is_nil(data) do
+      {:ok, item}
+    else
+      original_parent_node_id = data["parentNodeId"]
+
+      cond do
+        item.type == :tab ->
+          {:ok, item}
+
+        not is_nil(target_parent_node_id) ->
+          with :ok <-
+                 validate_restore_parent(
+                   community,
+                   branch,
+                   stage,
+                   item.type,
+                   target_parent_node_id
+                 ) do
+            {:ok,
+             put_snapshot(
+               item,
+               stage,
+               data
+               |> Map.put("parentNodeId", to_string(target_parent_node_id))
+               |> maybe_put_restore_index(target_index)
+             )}
+          end
+
+        restore_parent_available?(
+          community,
+          branch,
+          items,
+          stage,
+          original_parent_node_id
+        ) ->
+          {:ok, item}
+
+        true ->
+          {:error,
+           {:custom,
+            "The original Docs Tree parent no longer exists; select a new parent before restoring."}}
+      end
+    end
+  end
+
+  defp restore_parent_available?(_community, _branch, _items, _stage, nil), do: false
+
+  defp restore_parent_available?(community, branch, items, stage, parent_node_id) do
+    Enum.any?(items, fn item ->
+      item.node_id == parent_node_id and not is_nil(snapshot(item, stage))
+    end) ||
+      DocTreeNode
+      |> where([node], node.community_id == ^community.id)
+      |> where([node], node.branch_id == ^branch.id)
+      |> where([node], node.stage == ^stage and node.node_id == ^parent_node_id)
+      |> Repo.exists?()
+  end
+
+  defp validate_restore_parent(community, branch, stage, type, parent_node_id) do
+    parent =
+      DocTreeNode
+      |> where([node], node.community_id == ^community.id)
+      |> where([node], node.branch_id == ^branch.id)
+      |> where([node], node.stage == ^stage and node.node_id == ^to_string(parent_node_id))
+      |> Repo.one()
+
+    case {type, parent} do
+      {:pin, %DocTreeNode{type: :tab}} ->
+        :ok
+
+      {:group, %DocTreeNode{type: parent_type}} when parent_type in [:tab, :group] ->
+        :ok
+
+      {child_type, %DocTreeNode{type: :group}} when child_type in [:page, :link] ->
+        :ok
+
+      {_type, nil} ->
+        {:error, {:custom, "The selected restore parent does not exist in every restored stage."}}
+
+      _ ->
+        {:error, {:custom, "The selected node can not parent this Docs Tree item."}}
+    end
+  end
+
+  defp maybe_put_restore_index(data, index) when is_integer(index) and index >= 0,
+    do: Map.put(data, "index", index)
+
+  defp maybe_put_restore_index(data, _index), do: data
+
+  defp put_snapshot(item, :draft, data), do: %{item | draft_snapshot: data}
+  defp put_snapshot(item, :public, data), do: %{item | public_snapshot: data}
+
+  defp shift_root_restore_slots(community, branch, action, items) do
+    root = Enum.find(items, &(&1.node_id == action.root_ref))
+
+    Enum.each([:draft, :public], fn stage ->
+      if root && snapshot(root, stage) do
+        data = snapshot(root, stage)
+
+        shift_restore_slot(
+          community,
+          branch,
+          stage,
+          data["parentNodeId"],
+          root.type,
+          data["index"] || 0
+        )
+      end
+    end)
+
+    :ok
+  end
+
+  defp shift_restore_slot(community, branch, stage, parent_node_id, type, from_index) do
+    scope =
+      DocTreeNode
+      |> where([node], node.community_id == ^community.id)
+      |> where([node], node.branch_id == ^branch.id and node.stage == ^stage)
+      |> where([node], node.index >= ^from_index)
+      |> where_restore_scope(parent_node_id, type)
+
+    Repo.update_all(scope, inc: [index: 100_000])
+
+    scope
+    |> where([node], node.index >= ^(from_index + 100_000))
+    |> Repo.update_all(inc: [index: -99_999])
+
+    :ok
+  end
+
+  defp where_restore_scope(query, nil, :tab),
+    do: query |> where([node], is_nil(node.parent_node_id)) |> where([node], node.type == :tab)
+
+  defp where_restore_scope(query, parent_node_id, :pin),
+    do:
+      query
+      |> where([node], node.parent_node_id == ^parent_node_id)
+      |> where([node], node.type == :pin)
+
+  defp where_restore_scope(query, parent_node_id, _type),
+    do:
+      query
+      |> where([node], node.parent_node_id == ^parent_node_id)
+      |> where([node], node.type in [:group, :page, :link])
 
   defp ensure_restore_slots_available(community, branch, items) do
     conflicts? =
@@ -336,18 +530,14 @@ defmodule GroupherServer.CMS.DocTree.Trash do
       node_id: data["nodeId"] || item.node_id,
       stage: stage,
       type: item.type,
-      tab_id: data["tabId"],
-      group_id: data["groupId"],
+      parent_node_id: data["parentNodeId"],
       doc_id: data["docId"] || item.doc_id,
       title: data["title"],
-      slug: data["slug"],
       index: data["index"] || 0,
       href: data["href"],
       marker: data["marker"],
       badge: data["badge"],
-      hidden: Map.get(data, "hidden", false),
-      template_key: data["templateKey"],
-      ui_config: data["uiConfig"] || %{}
+      hidden: Map.get(data, "hidden", false)
     }
   end
 
@@ -364,15 +554,14 @@ defmodule GroupherServer.CMS.DocTree.Trash do
       doc_id: root.doc_id,
       type: to_string(root.type),
       title: data["title"] || root.node_id,
-      slug: data["slug"],
-      deleted_from_group_id: data["groupId"] || data["tabId"],
+      deleted_from_parent_node_id: data["parentNodeId"],
       deleted_from_index: data["index"],
       deleted_at: action.deleted_at,
       restored_at: nil
     }
   end
 
-  defp parent_id(%DocTreeNode{} = node), do: node.tab_id || node.group_id
+  defp parent_id(%DocTreeNode{} = node), do: node.parent_node_id
 
   defp type_rank(:tab), do: 0
   defp type_rank(:group), do: 1

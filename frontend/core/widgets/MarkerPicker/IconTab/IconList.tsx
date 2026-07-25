@@ -27,7 +27,7 @@ type TProps = {
 const normalizeQuery = (value: string): string => value.trim().toLowerCase().replaceAll(/\s+/g, '-')
 
 const toDevLogoOption = (name: TDevLogo): TDevLogoOption => ({
-  kind: 'dev',
+  type: 'dev',
   name,
 })
 
@@ -48,7 +48,7 @@ const IconList: FC<TProps> = ({
         ? [
             ...PROVIDERS.flatMap((provider) =>
               ICONS[provider].map<TIconOption>((name) => ({
-                kind: 'icon' as const,
+                type: 'icon' as const,
                 provider,
                 name,
               })),
@@ -56,7 +56,7 @@ const IconList: FC<TProps> = ({
             ...DEV_LOGOS.map(toDevLogoOption),
           ]
         : ICONS[providerTab].map<TIconOption>((name) => ({
-            kind: 'icon' as const,
+            type: 'icon' as const,
             provider: providerTab,
             name,
           }))

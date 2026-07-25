@@ -16,12 +16,22 @@ export const SIDE_TREE_NODE_TYPE = {
   LINK: 'link',
 } as const
 
+/** Absinthe enum values used only at the GraphQL transport boundary. */
+export const DOC_TREE_NODE_TYPE_WIRE = {
+  TAB: 'TAB',
+  PIN: 'PIN',
+  GROUP: 'GROUP',
+  PAGE: 'PAGE',
+  LINK: 'LINK',
+} as const
+
 export const SIDE_TREE_CHILD_MENU_ACTION = {
   PAGE: SIDE_TREE_NODE_TYPE.PAGE,
   LINK: SIDE_TREE_NODE_TYPE.LINK,
 } as const
 
 export const SIDE_TREE_GROUP_MENU_ACTION = {
+  GROUP: SIDE_TREE_NODE_TYPE.GROUP,
   PAGE: SIDE_TREE_NODE_TYPE.PAGE,
   LINK: SIDE_TREE_NODE_TYPE.LINK,
   ADD_TO_COVER: 'add_to_cover',
@@ -34,8 +44,6 @@ export const SIDE_TREE_NODE_MENU_ACTION = {
   RENAME: 'rename',
   DUPLICATE: 'duplicate',
   MOVE_TO_DRAFT: 'move_to_draft',
-  SHOW_IN_COVER: 'show_in_cover',
-  HIDE_FROM_COVER: 'hide_from_cover',
   PIN_TO_COVER: 'pin_to_cover',
   UNPIN_FROM_COVER: 'unpin_from_cover',
   DELETE: 'delete',
@@ -56,10 +64,11 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
   {
     id: 'group-getting-started',
     type: SIDE_TREE_NODE_TYPE.GROUP,
+    parentNodeId: 'tab-demo',
     title: 'Getting started',
     marker: DEFAULT_GROUP_MARKER,
     expanded: true,
-    children: [
+    pages: [
       {
         id: 'page-welcome',
         type: SIDE_TREE_NODE_TYPE.PAGE,
@@ -84,10 +93,11 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
   {
     id: 'group-foundations',
     type: SIDE_TREE_NODE_TYPE.GROUP,
+    parentNodeId: 'tab-demo',
     title: 'Foundations',
     marker: DEFAULT_GROUP_MARKER,
     expanded: true,
-    children: [
+    pages: [
       {
         id: 'page-content-model',
         type: SIDE_TREE_NODE_TYPE.PAGE,
@@ -120,10 +130,11 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
   {
     id: 'group-writing',
     type: SIDE_TREE_NODE_TYPE.GROUP,
+    parentNodeId: 'tab-demo',
     title: 'Writing',
     marker: DEFAULT_GROUP_MARKER,
     expanded: true,
-    children: [
+    pages: [
       {
         id: 'page-editor-basics',
         type: SIDE_TREE_NODE_TYPE.PAGE,
@@ -165,10 +176,11 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
   {
     id: 'group-customization',
     type: SIDE_TREE_NODE_TYPE.GROUP,
+    parentNodeId: 'tab-demo',
     title: 'Customization',
     marker: DEFAULT_GROUP_MARKER,
     expanded: true,
-    children: [
+    pages: [
       {
         id: 'page-theme',
         type: SIDE_TREE_NODE_TYPE.PAGE,
@@ -202,10 +214,11 @@ export const DEMO_SIDE_TREE_GROUPS: readonly TSideTreeGroup[] = [
   {
     id: 'group-deployment',
     type: SIDE_TREE_NODE_TYPE.GROUP,
+    parentNodeId: 'tab-demo',
     title: 'Deployment',
     marker: DEFAULT_GROUP_MARKER,
     expanded: true,
-    children: [
+    pages: [
       {
         id: 'page-checklist',
         type: SIDE_TREE_NODE_TYPE.PAGE,

@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "source": {
     "framework": "nextra",
     "root": "content",
@@ -7,32 +7,32 @@
   },
   "navigation": [
     {
-      "kind": "scope",
+      "type": "scope",
       "sourceId": "directory:content/guide",
       "title": "Guide",
       "routePrefix": "/guide/",
-      "children": [
+      "pages": [
         {
-          "kind": "page",
+          "type": "page",
           "sourceId": "content/guide/index.mdx",
           "sourcePath": "content/guide/index.mdx",
           "title": "Introduction",
           "route": "/guide"
         },
         {
-          "kind": "page",
+          "type": "page",
           "sourceId": "content/guide/installation.md",
           "sourcePath": "content/guide/installation.md",
           "title": "Installation",
           "route": "/guide/installation"
         },
         {
-          "kind": "section",
+          "type": "section",
           "sourceId": "directory:content/guide/advanced",
           "title": "Advanced",
-          "children": [
+          "pages": [
             {
-              "kind": "page",
+              "type": "page",
               "sourceId": "content/guide/advanced/performance.mdx",
               "sourcePath": "content/guide/advanced/performance.mdx",
               "title": "Performance",
@@ -43,13 +43,13 @@
       ]
     },
     {
-      "kind": "scope",
+      "type": "scope",
       "sourceId": "directory:content/reference",
       "title": "Reference",
       "routePrefix": "/reference/",
-      "children": [
+      "pages": [
         {
-          "kind": "page",
+          "type": "page",
           "sourceId": "content/reference/api.md",
           "sourcePath": "content/reference/api.md",
           "title": "API",

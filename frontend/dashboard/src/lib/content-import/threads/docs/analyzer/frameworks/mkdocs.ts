@@ -52,7 +52,7 @@ export const analyzeMkDocs = async (workspace: TSourceWorkspace): Promise<TSourc
           'Docs',
           '/',
           navItems(config.nav, root, documents, 'nav:docs').map((item) =>
-            item.kind === 'page' && item.sourcePath === `${root}/index.md`
+            item.type === 'page' && item.sourcePath === `${root}/index.md`
               ? { ...item, route: '/index' }
               : item,
           ),
@@ -62,7 +62,7 @@ export const analyzeMkDocs = async (workspace: TSourceWorkspace): Promise<TSourc
 
   return {
     navigation,
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: { configPaths: [configPath], framework: 'mkdocs', root },
   }
 }

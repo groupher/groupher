@@ -22,7 +22,7 @@ const preview = {
   targetTree: { tabs: [] },
   tree: {
     navigation: [],
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: {
       configPaths: ['docs/.vitepress/config.ts'],
       framework: 'vitepress',
@@ -49,7 +49,7 @@ describe('decodeDocImportPreview', () => {
   it('bounds SourceTree work when decoding a stored preview artifact', () => {
     const navigation = Array.from({ length: 6_001 }, (_, index) => ({
       href: `https://example.com/${index}`,
-      kind: 'link',
+      type: 'link',
       sourceId: `link-${index}`,
       title: `Link ${index}`,
     }))

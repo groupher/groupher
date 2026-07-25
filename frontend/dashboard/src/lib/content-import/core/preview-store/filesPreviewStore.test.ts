@@ -35,7 +35,7 @@ const analysis: TSourceAnalysis = {
   schemaVersion: SOURCE_ANALYSIS_SCHEMA_VERSION,
   tree: {
     navigation: [],
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: { configPaths: [], framework: 'vitepress', root: 'docs' },
   },
 }
@@ -100,7 +100,7 @@ describe('FilesPreviewStore', () => {
       datasetRef: 'dset_123',
       schemaVersion: 1,
       source: {
-        kind: 'repo',
+        type: 'repo',
         platform: 'github',
         revision: 'a'.repeat(40),
         scopeRef: 'acme/docs',

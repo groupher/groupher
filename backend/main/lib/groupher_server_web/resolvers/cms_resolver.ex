@@ -179,43 +179,18 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
-  def create_doc_tree_tab(_root, %{community: community, input: input} = args, _info) do
-    CMS.DocTree.create_tab(
-      community,
-      input |> Map.put(:base_revision, args[:base_revision]) |> with_doc_tree_actor(args)
-    )
-  end
-
-  def create_doc_tree_group(_root, %{community: community, input: input} = args, _info) do
-    CMS.DocTree.create_group(
-      community,
-      input |> Map.put(:base_revision, args[:base_revision]) |> with_doc_tree_actor(args)
-    )
-  end
-
-  def create_doc_tree_page(
+  def create_doc_tree_node(
         _root,
         %{community: community, input: input} = args,
         %{context: %{cur_user: user}}
       ) do
-    CMS.DocTree.create_page(
+    CMS.DocTree.create_node(
       community,
-      input |> Map.put(:base_revision, args[:base_revision]) |> with_doc_tree_actor(args),
+      input
+      |> Map.put(:parent_node_id, args[:parent_node_id])
+      |> Map.put(:base_revision, args[:base_revision])
+      |> with_doc_tree_actor(args),
       user
-    )
-  end
-
-  def create_doc_tree_link(_root, %{community: community, input: input} = args, _info) do
-    CMS.DocTree.create_link(
-      community,
-      input |> Map.put(:base_revision, args[:base_revision]) |> with_doc_tree_actor(args)
-    )
-  end
-
-  def create_doc_tree_pin(_root, %{community: community, input: input} = args, _info) do
-    CMS.DocTree.create_pin(
-      community,
-      input |> Map.put(:base_revision, args[:base_revision]) |> with_doc_tree_actor(args)
     )
   end
 
@@ -315,52 +290,40 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     end
   end
 
-  def move_doc_tree_group_to_draft(_root, %{community: community, group_id: group_id}, _info) do
-    CMS.DocTree.move_group_to_draft(community, group_id)
-  end
-
-  def add_doc_cover_group(_root, %{community: community, group_id: group_id}, _info) do
-    CMS.DocCover.add_group(community, group_id)
-  end
-
-  def remove_doc_cover_group(_root, %{community: community, group_id: group_id}, _info) do
-    CMS.DocCover.remove_group(community, group_id)
-  end
-
-  def set_doc_cover_item_hidden(
+  def move_doc_tree_subtree_to_draft(
         _root,
-        %{community: community, node_id: node_id, hidden: hidden},
+        %{community: community, node_id: node_id, cur_user: user},
         _info
       ) do
-    CMS.DocCover.set_item_hidden(community, node_id, hidden)
+    CMS.DocTree.move_subtree_to_draft(community, node_id, user)
   end
 
-  def reorder_doc_cover_groups(_root, %{community: community, ids: ids}, _info) do
-    CMS.DocCover.reorder_groups(community, ids)
-  end
-
-  def reorder_doc_cover_items(
+  def add_doc_cover_card(
         _root,
-        %{community: community, cover_group_id: cover_group_id, ids: ids},
+        %{community: community, group_node_id: group_node_id},
         _info
       ) do
-    CMS.DocCover.reorder_items(community, cover_group_id, ids)
+    CMS.DocCover.add_card(community, group_node_id)
   end
 
-  def update_doc_cover_group_ui_config(
+  def remove_doc_cover_card(
         _root,
-        %{community: community, id: id, ui_config: ui_config},
+        %{community: community, group_node_id: group_node_id},
         _info
       ) do
-    CMS.DocCover.update_group_ui_config(community, id, ui_config)
+    CMS.DocCover.remove_card(community, group_node_id)
   end
 
-  def update_doc_cover_item_ui_config(
+  def reorder_doc_cover_cards(_root, %{community: community, ids: ids}, _info) do
+    CMS.DocCover.reorder_cards(community, ids)
+  end
+
+  def update_doc_cover_card_appearance(
         _root,
-        %{community: community, id: id, ui_config: ui_config},
+        %{community: community, id: id, appearance: appearance},
         _info
       ) do
-    CMS.DocCover.update_item_ui_config(community, id, ui_config)
+    CMS.DocCover.update_card_appearance(community, id, appearance)
   end
 
   def pin_doc_to_cover(_root, %{community: community, node_id: node_id}, _info) do
@@ -399,7 +362,12 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.DocTree.restore_trash_item(
       community,
       id,
-      %{base_revision: args[:base_revision]} |> with_doc_tree_actor(args)
+      %{
+        base_revision: args[:base_revision],
+        target_parent_node_id: args[:target_parent_node_id],
+        target_index: args[:target_index]
+      }
+      |> with_doc_tree_actor(args)
     )
   end
 
@@ -417,8 +385,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
       id,
       %{
         base_revision: args[:base_revision],
-        target_tab_id: args[:target_tab_id],
-        target_group_id: args[:target_group_id],
+        target_parent_node_id: args[:target_parent_node_id],
         target_index: args.target_index
       }
       |> with_doc_tree_actor(args)

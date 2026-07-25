@@ -13,7 +13,7 @@ type TProps<TColumn extends TLinkDndColumnBase, TLink, TTarget extends TLinkDndT
   moveColumn?: (columns: readonly TColumn[], columnId: string, targetColumnId: string) => TColumn[]
   previewDrag?: boolean
   sameLinks: (left: readonly TOutput[], right: readonly TOutput[]) => boolean
-  onCommit: (links: readonly TOutput[]) => void
+  onCommit: (links: readonly TOutput[], activeId: string) => void
 }
 
 type TRet<TColumn extends TLinkDndColumnBase, TLink, TTarget extends TLinkDndTarget> = {
@@ -96,7 +96,7 @@ export default function useSortableDraft<
   // group/column dragging use the same commit path so touched-state and save-bar
   // behavior stays consistent.
   const commitColumns = useCallback(
-    (nextColumns: TColumn[]): void => {
+    (nextColumns: TColumn[], activeId: string): void => {
       const currentColumns = latestColumnsRef.current
 
       if (!sameLinks(flattenColumns(currentColumns), flattenColumns(nextColumns))) {
@@ -110,7 +110,7 @@ export default function useSortableDraft<
 
       if (commitFrameRef.current) cancelAnimationFrame(commitFrameRef.current)
       commitFrameRef.current = requestAnimationFrame(() => {
-        onCommit(nextLinks)
+        onCommit(nextLinks, activeId)
         commitFrameRef.current = null
       })
     },
@@ -144,10 +144,11 @@ export default function useSortableDraft<
       const nextColumns =
         activeId && target ? moveLinkInColumns(currentColumns, activeId, target) : currentColumns
 
+      if (!activeId) return
       activeIdRef.current = null
       draggingRef.current = false
 
-      commitColumns(nextColumns)
+      commitColumns(nextColumns, activeId)
     },
     [commitColumns, moveLinkInColumns],
   )
@@ -161,10 +162,11 @@ export default function useSortableDraft<
           ? moveColumn(currentColumns, activeId, targetColumnId)
           : currentColumns
 
+      if (!activeId) return
       activeIdRef.current = null
       draggingRef.current = false
 
-      commitColumns(nextColumns)
+      commitColumns(nextColumns, activeId)
     },
     [commitColumns, moveColumn],
   )

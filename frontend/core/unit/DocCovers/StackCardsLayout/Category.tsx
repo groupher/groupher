@@ -6,20 +6,20 @@ import ArrowButton from '~/widgets/Buttons/ArrowButton'
 import Facepile from '~/widgets/Facepile'
 
 import GroupSettingButton from '../GroupSettingButton'
-import type { TDocCoverGroup } from '../spec'
+import type { TDocCoverCard } from '../spec'
 import useSalon from './salon/category'
 
 const FOLD_LIMIT = 5
 
 type TProps = {
-  group: TDocCoverGroup
+  section: TDocCoverCard
   editable?: boolean
-  onEditGroup?: (group: TDocCoverGroup) => void
+  onEditCard?: (section: TDocCoverCard) => void
 }
 
-const Category: FC<TProps> = ({ group, editable = false, onEditGroup }) => {
+const Category: FC<TProps> = ({ section, editable = false, onEditCard }) => {
   const s = useSalon()
-  const { items } = group
+  const { items } = section
 
   const [sliceCount, setSliceCount] = useState(FOLD_LIMIT)
   const isFolded = sliceCount <= FOLD_LIMIT
@@ -37,17 +37,16 @@ const Category: FC<TProps> = ({ group, editable = false, onEditGroup }) => {
           </div>
 
           <div className={s.groupHeader}>
-            <h3 className={s.title}>{group.title}</h3>
+            <h3 className={s.title}>{section.title}</h3>
             {editable && (
               <GroupSettingButton
-                group={group}
+                section={section}
                 className={s.groupSettingButton}
                 iconClassName={s.groupSettingIcon}
-                onEditGroup={onEditGroup}
+                onEditCard={onEditCard}
               />
             )}
           </div>
-          {group.uiConfig?.desc && <div className={s.desc}>{group.uiConfig.desc}</div>}
         </div>
 
         <div className={s.items}>

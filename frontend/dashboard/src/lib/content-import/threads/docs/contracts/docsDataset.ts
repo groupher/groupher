@@ -51,7 +51,7 @@ export const decodeDocsDataset = (value: unknown): TDocsDataset => {
     reactionsRef: optionalString(input.reactionsRef, 'docsDataset.reactionsRef'),
     schemaVersion: literal(input.schemaVersion, 1, 'docsDataset.schemaVersion'),
     source: {
-      kind: literal(source.kind, 'repo', 'docsDataset.source.kind'),
+      type: literal(source.type, 'repo', 'docsDataset.source.type'),
       platform: literal(source.platform, 'github', 'docsDataset.source.platform'),
       revision: string(source.revision, 'docsDataset.source.revision', 128),
       scopeRef: string(source.scopeRef, 'docsDataset.source.scopeRef', 512),

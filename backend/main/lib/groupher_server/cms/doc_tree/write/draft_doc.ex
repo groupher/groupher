@@ -27,8 +27,9 @@ defmodule GroupherServer.CMS.DocTree.Write.DraftDoc do
 
   alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
+  alias CMS.Artiment.BodyBag
   alias CMS.Articles.Draft
-  alias CMS.DocTree.{Read, Revision, TemplateBodyBags}
+  alias CMS.DocTree.{Read, Revision}
   alias CMS.Model.{Community, Doc}
   alias Helper.Validator.Slug
 
@@ -89,7 +90,7 @@ defmodule GroupherServer.CMS.DocTree.Write.DraftDoc do
         branch_id: branch.id,
         title: title,
         slug: slug,
-        body_bag: TemplateBodyBags.default()
+        body_bag: BodyBag.empty_doc()
       },
       user
     )

@@ -49,7 +49,7 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
   @doc false
   def changeset(%ArticleDocument{} = doc, attrs) do
     doc
-    |> cast(attrs, @optional_fields ++ @required_fields)
+    |> cast(attrs, @optional_fields ++ @required_fields, empty_values: [])
     |> validate_required(@required_fields)
     |> validate_plain_text_length()
     |> unique_constraint([:thread, :article_id], name: :article_documents_thread_article_id_index)
@@ -58,18 +58,20 @@ defmodule GroupherServer.CMS.Model.ArticleDocument do
   @doc false
   def update_changeset(%ArticleDocument{} = doc, attrs) do
     doc
-    |> cast(attrs, @optional_fields ++ @required_fields)
+    |> cast(attrs, @optional_fields ++ @required_fields, empty_values: [])
     |> validate_plain_text_length()
     |> unique_constraint([:thread, :article_id], name: :article_documents_thread_article_id_index)
   end
 
   defp validate_plain_text_length(changeset) do
-    min_length = if get_field(changeset, :thread) == :doc, do: 1, else: @min_body_length
-
-    changeset
-    |> validate_length(:plain_text, min: min_length, max: @max_body_length)
-    |> validate_change(:plain_text, fn :plain_text, value ->
-      if String.trim(value) == "", do: [plain_text: "can't be blank"], else: []
-    end)
+    if get_field(changeset, :thread) == :doc do
+      validate_length(changeset, :plain_text, max: @max_body_length)
+    else
+      changeset
+      |> validate_length(:plain_text, min: @min_body_length, max: @max_body_length)
+      |> validate_change(:plain_text, fn :plain_text, value ->
+        if String.trim(value) == "", do: [plain_text: "can't be blank"], else: []
+      end)
+    end
   end
 end

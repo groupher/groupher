@@ -6,7 +6,6 @@ import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useQuery from '~/hooks/useQuery'
 import useTrans from '~/hooks/useTrans'
 import { send } from '~/lib/signal'
-import { slugify } from '~/lib/slug'
 import useCommunity from '~/stores/community/hooks'
 import S from '~/unit/DashboardThread/schema'
 import { toast } from '~/widgets/Toaster'
@@ -14,12 +13,12 @@ import { toast } from '~/widgets/Toaster'
 import { reloadDocPublishChecklist } from '../helper'
 import {
   DEFAULT_LINK_MARKER,
+  DOC_TREE_NODE_TYPE_WIRE,
   SIDE_TREE_NODE_MENU_ACTION,
   SIDE_TREE_NODE_TYPE,
   UNTITLED_TITLE_I18N_KEY,
 } from './constant'
 import {
-  appendChildToGroup,
   createSideTreeChild,
   createSideTreeGroup,
   createSideTreePin,
@@ -28,17 +27,21 @@ import {
   findChildEditingTarget,
   findChildIndex,
   findFirstPage,
+  findGroup,
   findGroupIndex,
-  findMovedNode,
+  findNodePosition,
   formatMutationError,
   getDocIdFromPage,
   getDefaultLinkTitle,
   isActiveRemovedByTarget,
   isLocalId,
   isLinkHref,
+  insertLocalNodeInGroup,
   mapGroup,
   mapNode,
   mapPin,
+  moveChildToLeafEnd,
+  moveGroupToGroupLaneEnd,
   patchChildInGroups,
   patchGroupInGroups,
   patchNode,
@@ -88,12 +91,21 @@ type TLocalCreateState = {
 
 const hasLocalNode = (groups: readonly TSideTreeGroup[], pins: readonly TSideTreePin[]): boolean =>
   pins.some((pin) => isLocalId(pin.id)) ||
-  groups.some((group) => isLocalId(group.id) || group.children.some((child) => isLocalId(child.id)))
+  groups.some(
+    (group) =>
+      isLocalId(group.id) ||
+      group.pages.some((child) => isLocalId(child.id)) ||
+      hasLocalNode(
+        group.pages.filter(
+          (child): child is TSideTreeGroup => child.type === SIDE_TREE_NODE_TYPE.GROUP,
+        ),
+        [],
+      ),
+  )
 
 const mapTab = (node: TDocTreeNodeDTO): TSideTreeTab => ({
   id: node.id,
   title: node.title || '',
-  slug: node.slug || undefined,
   pins: (node.pins || []).map(mapPin),
   groups: (node.groups || []).map(mapGroup),
 })
@@ -267,14 +279,13 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   function persistTitleMutation(
     title: string,
     schema: TSideTreeMutationSchema,
-    variables: (slug: string) => Record<string, unknown>,
+    variables: () => Record<string, unknown>,
     pickPayload: (data: TDocTreeMutationData) => TDocTreeMutationPayload | null | undefined,
     onSuccess: (node: TDocTreeNodeDTO) => void,
     errorLabel: string,
     onSettled?: () => void,
   ): void {
-    slugify(title)
-      .then((slug) => persist(schema, variables(slug), pickPayload))
+    Promise.resolve(persist(schema, variables(), pickPayload))
       .then((payload) => {
         if (!payload?.node || payload.conflict) return
         onSuccess(payload.node)
@@ -290,7 +301,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     localId: string,
     title: string,
     schema: TSideTreeMutationSchema,
-    variables: (slug: string) => Record<string, unknown>,
+    variables: () => Record<string, unknown>,
     pickPayload: (data: TDocTreeMutationData) => TDocTreeMutationPayload | null | undefined,
     onCreated: (node: TDocTreeNodeDTO) => void,
     errorLabel: string,
@@ -324,23 +335,22 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   }
 
   const reorderGroups = useCallback(
-    (nextGroups: readonly TSideTreeGroup[]): void => {
-      const prevGroups = groupsRef.current
-      const moved = findMovedNode(prevGroups, nextGroups)
+    (nextGroups: readonly TSideTreeGroup[], activeNodeId: string): void => {
       const localGroups = [...nextGroups]
 
       // DnD commits should use the same ref/state write path as normal tree mutations.
       commitGroups(localGroups)
 
+      const moved = findNodePosition(localGroups, activeNodeId)
       if (!moved) return
-      if (isLocalId(moved.id) || (moved.targetGroupId && isLocalId(moved.targetGroupId))) return
+      if (isLocalId(activeNodeId) || (moved.parentNodeId && isLocalId(moved.parentNodeId))) return
 
       persist(
         S.moveDocTreeNode,
         {
-          id: moved.id,
-          targetGroupId: moved.targetGroupId,
-          targetIndex: moved.targetIndex,
+          id: activeNodeId,
+          targetParentNodeId: moved.parentNodeId,
+          targetIndex: moved.index,
         },
         (data) => data?.moveDocTreeNode,
       )
@@ -381,8 +391,15 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   function addGroup(): void {
     if (!activeTabId) return
     const group = createSideTreeGroup(t(UNTITLED_TITLE_I18N_KEY))
-    group.tabId = activeTabId
-    updateGroups((currentGroups) => [...currentGroups, group])
+    group.parentNodeId = activeTabId
+    updateGroups((currentGroups) => [group, ...currentGroups])
+    setEditingTarget({ type: SIDE_TREE_NODE_TYPE.GROUP, groupId: group.id })
+  }
+
+  function addNestedGroup(parentGroupId: string): void {
+    const group = createSideTreeGroup(t(UNTITLED_TITLE_I18N_KEY))
+    group.parentNodeId = parentGroupId
+    updateGroups((currentGroups) => insertLocalNodeInGroup(currentGroups, parentGroupId, group))
     setEditingTarget({ type: SIDE_TREE_NODE_TYPE.GROUP, groupId: group.id })
   }
 
@@ -395,20 +412,20 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   function addChild(groupId: string, action: TSideTreeChildMenuAction): void {
     const child = createSideTreeChild(action, t(UNTITLED_TITLE_I18N_KEY))
 
-    updateGroups((currentGroups) => appendChildToGroup(currentGroups, groupId, child))
+    updateGroups((currentGroups) => insertLocalNodeInGroup(currentGroups, groupId, child))
     setEditingTarget({ type: child.type, groupId, childId: child.id })
   }
 
   /**
-   * Delete a group and all of its children.
+   * Delete a group and all of its pages.
    *
    * @example
    * deleteGroup('group-getting-started')
    */
   function deleteGroup(groupId: string): void {
     const currentGroups = readGroups()
-    const group = currentGroups.find((item) => item.id === groupId)
-    const activeInGroup = group?.children.some((child) => child.id === activeId) ?? false
+    const group = findGroup(currentGroups, groupId)
+    const activeInGroup = group?.pages.some((child) => child.id === activeId) ?? false
     const editingInGroup =
       !!editingTarget && 'groupId' in editingTarget && editingTarget.groupId === groupId
     const nextGroups = commitGroups(removeGroupFromGroups(currentGroups, groupId))
@@ -438,35 +455,36 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   }
 
   function toggleCoverGroup(groupId: string, inCover: boolean): void {
-    persistCoverAction(inCover ? S.removeDocCoverGroup : S.addDocCoverGroup, { groupId }).then(
-      (ok) => {
-        if (!ok) return
-        toast(
-          inCover
-            ? t('dsb.cms.docs.side_tree.cover.removed')
-            : t('dsb.cms.docs.side_tree.cover.added'),
-        )
-      },
-    )
+    persistCoverAction(inCover ? S.removeDocCoverCard : S.addDocCoverCard, {
+      groupNodeId: groupId,
+    }).then((ok) => {
+      if (!ok) return
+      toast(
+        inCover
+          ? t('dsb.cms.docs.side_tree.cover.removed')
+          : t('dsb.cms.docs.side_tree.cover.added'),
+      )
+    })
   }
 
   function persistLocalGroup(groupId: string, title: string): void {
+    const group = findGroup(readGroups(), groupId)
     const index = findGroupIndex(readGroups(), groupId)
-    if (index === -1) return
+    if (!group || index === -1) return
 
     persistLocalNode(
       groupId,
       title,
-      S.createDocTreeGroup,
-      (slug) => ({
+      S.createDocTreeNode,
+      () => ({
+        parentNodeId: group.parentNodeId,
         input: {
+          type: DOC_TREE_NODE_TYPE_WIRE.GROUP,
           title,
-          slug,
           index,
-          tabId: activeTabId,
         },
       }),
-      (data) => data?.createDocTreeGroup,
+      (data) => data?.createDocTreeNode,
       (node) => {
         updateGroups((currentGroups) => replaceGroupId(currentGroups, groupId, mapGroup(node)))
       },
@@ -478,7 +496,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     persistTitleMutation(
       title,
       S.updateDocTreeNode,
-      (slug) => ({ id: nodeId, patch: { title, slug } }),
+      () => ({ id: nodeId, patch: { title } }),
       (data) => data?.updateDocTreeNode,
       (node) => {
         updateGroups((currentGroups) => patchNode(currentGroups, node))
@@ -491,7 +509,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     persistTitleMutation(
       input.title,
       S.updateDocTreeNode,
-      (slug) => ({ id: nodeId, patch: { href: input.href, title: input.title, slug } }),
+      () => ({ id: nodeId, patch: { href: input.href, title: input.title } }),
       (data) => data?.updateDocTreeNode,
       (node) => {
         updateGroups((currentGroups) => patchNode(currentGroups, node))
@@ -508,18 +526,18 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     persistLocalNode(
       pinId,
       input.title,
-      S.createDocTreePin,
-      (slug) => ({
+      S.createDocTreeNode,
+      () => ({
+        parentNodeId: activeTabId,
         input: {
-          tabId: activeTabId,
+          type: DOC_TREE_NODE_TYPE_WIRE.PIN,
           title: input.title,
-          slug,
           href: input.href,
           index,
           marker: pin.marker,
         },
       }),
-      (data) => data?.createDocTreePin,
+      (data) => data?.createDocTreeNode,
       (node) => {
         updatePins((currentPins) =>
           currentPins.map((item) => (item.id === pinId ? mapPin(node) : item)),
@@ -533,7 +551,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     persistTitleMutation(
       input.title,
       S.updateDocTreeNode,
-      (slug) => ({ id: pinId, patch: { href: input.href, title: input.title, slug } }),
+      () => ({ id: pinId, patch: { href: input.href, title: input.title } }),
       (data) => data?.updateDocTreeNode,
       (node) => {
         updatePins((currentPins) =>
@@ -595,30 +613,29 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
 
   function persistLocalChild(groupId: string, childId: string, title: string): void {
     const currentGroups = readGroups()
-    const group = currentGroups.find((item) => item.id === groupId)
-    const child = group?.children.find((item) => item.id === childId)
+    const group = findGroup(currentGroups, groupId)
+    const child = group?.pages.find((item) => item.id === childId)
     const index = findChildIndex(currentGroups, groupId, childId)
     if (!child || index === -1) return
-
-    const schema =
-      child.type === SIDE_TREE_NODE_TYPE.LINK ? S.createDocTreeLink : S.createDocTreePage
 
     persistLocalNode(
       childId,
       title,
-      schema,
-      (slug) => ({
+      S.createDocTreeNode,
+      () => ({
+        parentNodeId: groupId,
         input: {
-          groupId: groupId,
+          type:
+            child.type === SIDE_TREE_NODE_TYPE.PAGE
+              ? DOC_TREE_NODE_TYPE_WIRE.PAGE
+              : DOC_TREE_NODE_TYPE_WIRE.LINK,
           title,
-          slug,
           index,
           href: child.type === SIDE_TREE_NODE_TYPE.LINK ? child.href : undefined,
           marker: child.marker,
         },
       }),
-      (data) =>
-        child.type === SIDE_TREE_NODE_TYPE.LINK ? data?.createDocTreeLink : data?.createDocTreePage,
+      (data) => data?.createDocTreeNode,
       (node) => {
         const remote = mapNode(node)
         updateGroups((currentGroups) => replaceChildId(currentGroups, groupId, childId, remote))
@@ -635,14 +652,17 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
    * renameGroup('group-getting-started', 'Getting started')
    */
   function renameGroup(groupId: string, title: string): void {
-    updateGroup(groupId, { title })
     setEditingTarget(null)
 
     if (isLocalId(groupId)) {
+      updateGroups((currentGroups) =>
+        moveGroupToGroupLaneEnd(patchGroupInGroups(currentGroups, groupId, { title }), groupId),
+      )
       persistLocalGroup(groupId, title)
       return
     }
 
+    updateGroup(groupId, { title })
     updateRemoteTitle(groupId, title, 'rename group')
   }
 
@@ -684,6 +704,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     setEditingTarget(null)
 
     if (isLocalId(childId)) {
+      updateGroups((currentGroups) => moveChildToLeafEnd(currentGroups, groupId, childId))
       persistLocalChild(groupId, childId, title)
       return
     }
@@ -709,6 +730,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     setEditingTarget(null)
 
     if (isLocalId(childId)) {
+      updateGroups((currentGroups) => moveChildToLeafEnd(currentGroups, groupId, childId))
       persistLocalChild(groupId, childId, title)
       return
     }
@@ -919,23 +941,6 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
         .catch((err) => toast(formatMutationError(err), 'error'))
       return
     }
-
-    if (
-      action === SIDE_TREE_NODE_MENU_ACTION.HIDE_FROM_COVER ||
-      action === SIDE_TREE_NODE_MENU_ACTION.SHOW_IN_COVER
-    ) {
-      persistCoverAction(S.setDocCoverItemHidden, {
-        nodeId: childId,
-        hidden: action === SIDE_TREE_NODE_MENU_ACTION.HIDE_FROM_COVER,
-      }).then((ok) => {
-        if (!ok) return
-        toast(
-          action === SIDE_TREE_NODE_MENU_ACTION.HIDE_FROM_COVER
-            ? t('dsb.cms.docs.side_tree.cover.hidden')
-            : t('dsb.cms.docs.side_tree.cover.shown'),
-        )
-      })
-    }
   }
 
   function activate(id: string): void {
@@ -973,7 +978,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     persistTitleMutation(
       nextTitle,
       S.updateDocTreeNode,
-      (slug) => ({ id: tabId, patch: { title: nextTitle, slug } }),
+      () => ({ id: tabId, patch: { title: nextTitle } }),
       (data) => data?.updateDocTreeNode,
       (node) => {
         setTabs((current) =>
@@ -982,7 +987,6 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
               ? {
                   ...tab,
                   title: node.title || nextTitle,
-                  slug: node.slug || undefined,
                 }
               : tab,
           ),
@@ -993,8 +997,6 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   }
 
   function deleteTab(tabId: string): void {
-    if (tabs.length <= 1) return
-
     const removedIndex = tabs.findIndex((tab) => tab.id === tabId)
     if (removedIndex === -1) return
 
@@ -1027,14 +1029,11 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
   function addTab(): void {
     const title = t(UNTITLED_TITLE_I18N_KEY)
 
-    slugify(title)
-      .then((slug) =>
-        persist(
-          S.createDocTreeTab,
-          { input: { title, slug, index: tabs.length } },
-          (data) => data?.createDocTreeTab,
-        ),
-      )
+    persist(
+      S.createDocTreeNode,
+      { input: { type: DOC_TREE_NODE_TYPE_WIRE.TAB, title, index: tabs.length } },
+      (data) => data?.createDocTreeNode,
+    )
       .then((payload) => {
         if (!payload?.node || payload.conflict) return
         const affectedNodes = payload.affectedNodes || []
@@ -1084,6 +1083,7 @@ export default function useLogic(initialData?: TDocTreeInitialData): TSideTreeCo
     renameTab,
     reorderTabs,
     addGroup,
+    addNestedGroup,
     addChild,
     clearCoverWarning: () => setCoverWarning(null),
     deleteGroup,

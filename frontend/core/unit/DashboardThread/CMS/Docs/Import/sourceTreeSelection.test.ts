@@ -6,16 +6,16 @@ describe('docs import source tree selection', () => {
   it('derives navigation and draft metadata for page selection defaults', () => {
     const metadata = pageMetaFromSourceTree([
       {
-        children: [
-          { kind: 'page', sizeBytes: 1536, sourceId: 'docs/listed.md' },
+        pages: [
+          { type: 'page', sizeBytes: 1536, sourceId: 'docs/listed.md' },
           {
             draft: true,
-            kind: 'page',
+            type: 'page',
             navigationStatus: 'unlisted',
             sourceId: 'docs/draft.md',
           },
         ],
-        kind: 'scope',
+        type: 'scope',
         sourceId: 'docs',
       },
     ])
@@ -38,13 +38,19 @@ describe('docs import source tree selection', () => {
         {
           groups: [
             {
-              children: [
+              pages: [
                 { sourceId: 'docs/a.md', title: 'A', type: 'page' },
                 { sourceId: 'external', title: 'External', type: 'link' },
-                { sourceId: 'docs/a.md', title: 'A again', type: 'page' },
+                {
+                  pages: [{ sourceId: 'docs/a.md', title: 'A again', type: 'page' }],
+                  sourceId: 'advanced',
+                  title: 'Advanced',
+                  type: 'group',
+                },
               ],
               sourceId: 'guides',
               title: 'Guides',
+              type: 'group',
             },
           ],
           sourceId: 'docs',

@@ -2,29 +2,29 @@ import Link from 'next/link'
 import type { FC } from 'react'
 
 import GroupSettingButton from '../GroupSettingButton'
-import type { TDocCoverGroup } from '../spec'
+import type { TDocCoverCard } from '../spec'
 import useSalon from './salon/category'
 
 type TProps = {
-  group: TDocCoverGroup
+  section: TDocCoverCard
   editable?: boolean
-  onEditGroup?: (group: TDocCoverGroup) => void
+  onEditCard?: (section: TDocCoverCard) => void
 }
 
-const Category: FC<TProps> = ({ group, editable = false, onEditGroup }) => {
+const Category: FC<TProps> = ({ section, editable = false, onEditCard }) => {
   const s = useSalon()
-  const { items } = group
+  const { items } = section
 
   return (
     <section className={s.wrapper}>
       <div className={s.groupHeader}>
-        <div className={s.title}>{group.title}</div>
+        <div className={s.title}>{section.title}</div>
         {editable && (
           <GroupSettingButton
-            group={group}
+            section={section}
             className={s.groupSettingButton}
             iconClassName={s.groupSettingIcon}
-            onEditGroup={onEditGroup}
+            onEditCard={onEditCard}
           />
         )}
       </div>

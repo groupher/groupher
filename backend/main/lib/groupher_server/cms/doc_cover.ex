@@ -6,7 +6,7 @@ defmodule GroupherServer.CMS.DocCover do
                  |
                  | resolve same node_id at stage=public
                  v
-      doc_cover_groups/items/pinned_docs
+      doc_cover_cards/items/pinned_docs
                  |
                  v
       published doc_tree_nodes(type=page)
@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.DocCover do
   """
 
   alias GroupherServer.CMS.DocCover.{Read, Sync, Write}
-  alias GroupherServer.CMS.Model.{Community, DocCoverGroup, DocCoverItem, DocCoverPinnedDoc}
+  alias GroupherServer.CMS.Model.{Community, DocCoverPinnedDoc, DocCoverCard}
   alias GroupherServer.CMS.Model.DocTreeNode
   alias Helper.T
 
@@ -36,55 +36,32 @@ defmodule GroupherServer.CMS.DocCover do
   def read(%Community{} = community, view \\ :public), do: Read.read(community, view)
 
   @doc """
-  Adds one published side-tree group to the cover by draft group id.
+  Adds one published Group as a Cover Card by draft node id.
   """
-  @spec add_group(Community.t(), T.id()) :: T.domain_res(DocCoverGroup.t())
-  def add_group(%Community{} = community, draft_group_id),
-    do: Write.add_group(community, draft_group_id)
+  @spec add_card(Community.t(), T.id()) :: T.domain_res(map())
+  def add_card(%Community{} = community, draft_group_node_id),
+    do: Write.add_card(community, draft_group_node_id)
 
   @doc """
-  Removes one cover group by draft group id.
+  Removes one Cover Card by draft Group node id.
   """
-  @spec remove_group(Community.t(), T.id()) :: T.domain_res(DocCoverGroup.t())
-  def remove_group(%Community{} = community, draft_group_id),
-    do: Write.remove_group(community, draft_group_id)
+  @spec remove_card(Community.t(), T.id()) :: T.domain_res(map())
+  def remove_card(%Community{} = community, draft_group_node_id),
+    do: Write.remove_card(community, draft_group_node_id)
 
   @doc """
-  Sets the cover-local hidden flag for one published page by draft page id.
+  Reorders Cover Cards by Card ids.
   """
-  @spec set_item_hidden(Community.t(), T.id(), boolean()) :: T.domain_res(DocCoverItem.t())
-  def set_item_hidden(%Community{} = community, draft_node_id, hidden) do
-    Write.set_item_hidden(community, draft_node_id, hidden)
-  end
+  @spec reorder_cards(Community.t(), list(T.id())) :: T.domain_res(map())
+  def reorder_cards(%Community{} = community, ids), do: Write.reorder_cards(community, ids)
 
   @doc """
-  Reorders cover groups by cover group ids.
+  Updates appearance for one Cover Card.
   """
-  @spec reorder_groups(Community.t(), list(T.id())) :: T.domain_res(map())
-  def reorder_groups(%Community{} = community, ids), do: Write.reorder_groups(community, ids)
-
-  @doc """
-  Reorders cover items inside one cover group by cover item ids.
-  """
-  @spec reorder_items(Community.t(), T.id(), list(T.id())) :: T.domain_res(map())
-  def reorder_items(%Community{} = community, cover_group_id, ids) do
-    Write.reorder_items(community, cover_group_id, ids)
-  end
-
-  @doc """
-  Updates UI config for one cover group.
-  """
-  @spec update_group_ui_config(Community.t(), T.id(), map()) :: T.domain_res(DocCoverGroup.t())
-  def update_group_ui_config(%Community{} = community, cover_group_id, ui_config) do
-    Write.update_group_ui_config(community, cover_group_id, ui_config)
-  end
-
-  @doc """
-  Updates UI config for one cover item.
-  """
-  @spec update_item_ui_config(Community.t(), T.id(), map()) :: T.domain_res(DocCoverItem.t())
-  def update_item_ui_config(%Community{} = community, cover_item_id, ui_config) do
-    Write.update_item_ui_config(community, cover_item_id, ui_config)
+  @spec update_card_appearance(Community.t(), T.id(), map()) ::
+          T.domain_res(DocCoverCard.t())
+  def update_card_appearance(%Community{} = community, cover_card_id, appearance) do
+    Write.update_card_appearance(community, cover_card_id, appearance)
   end
 
   @doc """

@@ -15,8 +15,8 @@ const Group: FC<TProps> = ({ doc, tree }) => {
   const pathname = usePathname()
   const s = useSalon()
 
-  const groups = tree.tabs.flatMap((tab) => tab.groups)
-  const currentGroup: TDocPublicTreeGroup | null = findCurrentGroup(groups, doc, pathname)
+  const nodes = tree.tabs.flatMap((tab) => tab.groups)
+  const currentGroup: TDocPublicTreeGroup | null = findCurrentGroup(nodes, doc, pathname)
 
   return <div className={s.title}>{currentGroup?.title || 'Untitled'}</div>
 }

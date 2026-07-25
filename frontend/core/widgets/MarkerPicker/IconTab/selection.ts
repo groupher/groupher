@@ -4,7 +4,7 @@ import type { TMarkerValue } from '~/spec'
 import type { TDevLogoOption, TIconListOption, TIconOption } from '../spec'
 
 export const isDevLogoOption = (item: TIconListOption): item is TDevLogoOption =>
-  item.kind === 'dev'
+  item.type === 'dev'
 
 export const isSelectedIcon = (selectedValue: TMarkerValue, item: TIconOption): boolean =>
   selectedValue.type === MARKER.ICON &&

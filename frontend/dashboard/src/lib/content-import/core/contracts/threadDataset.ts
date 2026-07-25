@@ -13,7 +13,7 @@ export type TThreadDatasetHeader = {
   datasetRef: string
   schemaVersion: typeof THREAD_DATASET_SCHEMA_VERSION
   source: {
-    kind: 'repo'
+    type: 'repo'
     platform: 'github'
     revision: string
     scopeRef: string

@@ -187,42 +187,47 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
       end)
       |> MapSet.new(& &1.id)
 
-    group_ids =
-      events
-      |> Enum.map(&group_create_event_id/1)
-      |> Enum.reject(&is_nil/1)
+    ancestor_node_ids = draft_ancestor_ids_with_draft_docs(community, branch, draft_doc_ids)
 
-    doc_bound_group_ids =
-      draft_group_ids_with_draft_docs(community, branch, group_ids, draft_doc_ids)
-
-    group_event_ids =
+    shell_event_ids =
       events
       |> Enum.filter(fn event ->
-        group_id = group_create_event_id(event)
-        not is_nil(group_id) and MapSet.member?(doc_bound_group_ids, group_id)
+        node_id = shell_create_event_id(event)
+        not is_nil(node_id) and MapSet.member?(ancestor_node_ids, node_id)
       end)
       |> MapSet.new(& &1.id)
 
-    tab_ids =
+    MapSet.union(page_event_ids, shell_event_ids)
+  end
+
+  defp draft_ancestor_ids_with_draft_docs(
+         %Community{} = community,
+         branch,
+         draft_doc_ids
+       ) do
+    nodes =
       DocTreeNode
       |> where([n], n.community_id == ^community.id)
       |> where([n], n.branch_id == ^branch.id)
       |> where([n], n.stage == CMS.Const.stage(:draft))
-      |> where([n], n.type == @tree_node_type_group)
-      |> where([n], n.node_id in ^MapSet.to_list(doc_bound_group_ids))
-      |> select([n], n.tab_id)
       |> Repo.all()
-      |> MapSet.new()
 
-    tab_event_ids =
-      events
-      |> Enum.filter(fn event ->
-        tab_id = tab_create_event_id(event)
-        not is_nil(tab_id) and MapSet.member?(tab_ids, tab_id)
-      end)
-      |> MapSet.new(& &1.id)
+    parents = Map.new(nodes, &{&1.node_id, &1.parent_node_id})
 
-    page_event_ids |> MapSet.union(group_event_ids) |> MapSet.union(tab_event_ids)
+    nodes
+    |> Enum.filter(&(&1.type == @tree_node_type_page))
+    |> Enum.filter(&MapSet.member?(draft_doc_ids, &1.doc_id))
+    |> Enum.reduce(MapSet.new(), fn page, acc ->
+      collect_ancestor_ids(parents, page.parent_node_id, acc)
+    end)
+  end
+
+  defp collect_ancestor_ids(_parents, nil, acc), do: acc
+
+  defp collect_ancestor_ids(parents, node_id, acc) do
+    if MapSet.member?(acc, node_id),
+      do: acc,
+      else: collect_ancestor_ids(parents, Map.get(parents, node_id), MapSet.put(acc, node_id))
   end
 
   defp page_create_event_doc_id(%DocTreeEvent{
@@ -238,19 +243,19 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
   defp group_create_event_id(%DocTreeEvent{
          event_type: CMS.Const.tree_event(:node_create),
          node_type: @tree_node_type_group,
-         node_id: group_id
+         node_id: group_node_id
        })
-       when not is_nil(group_id),
-       do: group_id
+       when not is_nil(group_node_id),
+       do: group_node_id
 
   defp group_create_event_id(_event), do: nil
 
   defp tab_create_event_id(%DocTreeEvent{
          event_type: CMS.Const.tree_event(:node_create),
          node_type: @tree_node_type_tab,
-         node_id: tab_id
+         node_id: tab_node_id
        }),
-       do: tab_id
+       do: tab_node_id
 
   defp tab_create_event_id(_event), do: nil
 
@@ -265,28 +270,6 @@ defmodule GroupherServer.CMS.DocTree.Publish.Checklist do
     |> select([d], d.article_hash_id)
     |> Repo.all()
     |> MapSet.new()
-  end
-
-  defp draft_group_ids_with_draft_docs(_community, _branch, [], _draft_doc_ids), do: MapSet.new()
-
-  defp draft_group_ids_with_draft_docs(%Community{} = community, branch, group_ids, draft_doc_ids) do
-    if MapSet.size(draft_doc_ids) == 0 do
-      MapSet.new()
-    else
-      group_ids = Enum.uniq(group_ids)
-      draft_doc_ids = MapSet.to_list(draft_doc_ids)
-
-      DocTreeNode
-      |> where([n], n.community_id == ^community.id)
-      |> where([n], n.branch_id == ^branch.id)
-      |> where([n], n.stage == CMS.Const.stage(:draft))
-      |> where([n], n.type == @tree_node_type_page)
-      |> where([n], n.group_id in ^group_ids)
-      |> where([n], n.doc_id in ^draft_doc_ids)
-      |> select([n], n.group_id)
-      |> Repo.all()
-      |> MapSet.new()
-    end
   end
 
   defp tree_event_select_state(

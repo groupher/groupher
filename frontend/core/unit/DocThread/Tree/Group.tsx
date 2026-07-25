@@ -17,7 +17,7 @@ const Group: FC<TProps> = ({ collapsed, group, forceOpen = false, onToggle }) =>
   const displayOpen = forceOpen || !collapsed
   const s = useSalon({ open: displayOpen })
 
-  const children = group.children ?? []
+  const pages = group.pages ?? []
 
   return (
     <section className={s.wrapper}>
@@ -32,9 +32,19 @@ const Group: FC<TProps> = ({ collapsed, group, forceOpen = false, onToggle }) =>
       </button>
 
       <div className={s.children}>
-        {children.map((item) => (
-          <Item key={item.id} item={item} />
-        ))}
+        {pages.map((item) =>
+          String(item.type).toLowerCase() === 'group' ? (
+            <Group
+              key={item.id}
+              collapsed={collapsed}
+              forceOpen={forceOpen}
+              group={item as TDocPublicTreeGroup}
+              onToggle={onToggle}
+            />
+          ) : (
+            <Item key={item.id} item={item} />
+          ),
+        )}
       </div>
     </section>
   )

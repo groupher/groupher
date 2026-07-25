@@ -4,19 +4,19 @@ import type { TDocCoverLayoutProps } from '../spec'
 import Category from './Category'
 import useSalon from './salon'
 
-export default function TileCardsLayout({ groups, editable, onEditGroup }: TDocCoverLayoutProps) {
+export default function TileCardsLayout({ cards, editable, onEditCard }: TDocCoverLayoutProps) {
   const s = useSalon()
 
   return (
     <div className={s.wrapper}>
       <div className={s.cats}>
-        {groups.map((group) => (
+        {cards.map((section) => (
           <Category
-            key={group.id}
-            group={group}
+            key={section.id}
+            section={section}
             color={COLOR.BLUE}
             editable={editable}
-            onEditGroup={onEditGroup}
+            onEditCard={onEditCard}
           />
         ))}
       </div>

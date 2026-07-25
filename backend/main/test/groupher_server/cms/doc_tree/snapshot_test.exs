@@ -48,7 +48,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Snapshot do
         stage: CMS.Const.stage(:draft),
         type: @group_type,
         node_id: "group-1",
-        tab_id: "tab-1",
+        parent_node_id: "tab-1",
         title: "Guides",
         index: 0
       }
@@ -57,7 +57,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Snapshot do
         stage: CMS.Const.stage(:draft),
         type: @page_type,
         node_id: "page-1",
-        group_id: "group-1",
+        parent_node_id: "group-1",
         title: "Install",
         index: 0
       }
@@ -66,19 +66,19 @@ defmodule GroupherServer.Test.CMS.DocTree.Snapshot do
         stage: CMS.Const.stage(:draft),
         type: @pin_type,
         node_id: to_string(@pin_type),
-        tab_id: "tab-1",
+        parent_node_id: "tab-1",
         title: "Pinned",
         index: 0
       }
 
       assert %{
-               "version" => 2,
+               "version" => 3,
                "tabs" => [
                  %{
                    @id_key => "tab-1",
                    "pins" => [%{@id_key => "pin"}],
                    "groups" => [
-                     %{@id_key => "group-1", "children" => [%{@id_key => "page-1"}]}
+                     %{@id_key => "group-1", "pages" => [%{@id_key => "page-1"}]}
                    ]
                  }
                ]

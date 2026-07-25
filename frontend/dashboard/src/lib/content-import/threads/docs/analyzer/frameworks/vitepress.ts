@@ -45,9 +45,9 @@ const sidebarItems = (
 const referencedSourcePaths = (nodes: TSourceNode[]): Set<string> => {
   const paths = new Set<string>()
   const visit = (node: TSourceNode): void => {
-    if (node.kind === 'page') paths.add(node.sourcePath)
-    if (node.kind === 'scope' || node.kind === 'section') {
-      for (const child of node.children) visit(child)
+    if (node.type === 'page') paths.add(node.sourcePath)
+    if (node.type === 'scope' || node.type === 'section') {
+      for (const child of node.pages) visit(child)
     }
   }
 
@@ -125,8 +125,8 @@ export const analyzeVitePress = async (workspace: TSourceWorkspace): Promise<TSo
   if (unlistedPages.length > 0) {
     const unlistedSection = sectionNode('sidebar:unlisted', 'Other pages', unlistedPages)
     const firstScope = navigation[0]
-    if (firstScope?.kind === 'scope') {
-      navigation[0] = { ...firstScope, children: [...firstScope.children, unlistedSection] }
+    if (firstScope?.type === 'scope') {
+      navigation[0] = { ...firstScope, pages: [...firstScope.pages, unlistedSection] }
     } else {
       navigation.push(scopeNode('sidebar:docs', 'Docs', '/', [unlistedSection]))
     }
@@ -134,7 +134,7 @@ export const analyzeVitePress = async (workspace: TSourceWorkspace): Promise<TSo
 
   return {
     navigation,
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: { configPaths, framework: 'vitepress', root },
   }
 }

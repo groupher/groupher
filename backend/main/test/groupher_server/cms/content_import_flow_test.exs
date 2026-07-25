@@ -94,11 +94,10 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              )
 
     assert {:ok, tree} = DocTree.read(community)
+    [tab] = tree.tabs
+    [group] = tab.groups
 
-    assert tree.tabs
-           |> Enum.flat_map(& &1.groups)
-           |> Enum.flat_map(& &1.children)
-           |> Enum.any?(&(&1.doc_id == completed.first_imported_doc_ref))
+    assert Enum.any?(group.pages, &(&1.doc_id == completed.first_imported_doc_ref))
 
     assert {:ok, replayed} = Writer.apply(community, job.job_ref)
     assert replayed == completed
@@ -120,6 +119,69 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert {:ok, completed} = Writer.apply(community, job.job_ref)
     assert completed.status == :completed
     assert completed.counts.pages == 1
+  end
+
+  test "preserves recursive source sections as nested TargetTree groups" do
+    {:ok, community} = db_insert(:community)
+
+    nested_source_tree = %{
+      "navigation" => [
+        %{
+          "type" => "scope",
+          "sourceId" => "guide",
+          "title" => "Guide",
+          "pages" => [
+            %{
+              "type" => "section",
+              "sourceId" => "guides",
+              "title" => "Guides",
+              "pages" => [
+                %{
+                  "type" => "section",
+                  "sourceId" => "advanced",
+                  "title" => "Advanced",
+                  "pages" => [
+                    %{
+                      "type" => "page",
+                      "route" => "/configuration",
+                      "sourceId" => "docs/configuration.md",
+                      "sourcePath" => "docs/configuration.md",
+                      "title" => "Configuration"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "schemaVersion" => 2,
+      "source" => %{"configPaths" => [], "framework" => "vitepress", "root" => "docs"}
+    }
+
+    assert {:ok, preview} = Validator.preview(community, source_info(), nested_source_tree)
+
+    assert %{
+             "schemaVersion" => 2,
+             "tabs" => [
+               %{
+                 "groups" => [
+                   %{
+                     "type" => "group",
+                     "pages" => [
+                       %{
+                         "type" => "group",
+                         "pages" => [%{"type" => "page"}]
+                       }
+                     ]
+                   }
+                 ]
+               }
+             ]
+           } = preview.target_tree
+
+    assert preview.counts.groups == 2
+    assert preview.counts.pages == 1
   end
 
   test "reuses the source mapping and overwrites the existing Draft on repeat import" do
@@ -144,11 +206,11 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     )
 
     Repo.update_all(from(node in DocTreeNode, where: node.id == ^group.id),
-      set: [node_id: "import:group:legacy", tab_id: "import:tab:legacy"]
+      set: [node_id: "import:group:legacy", parent_node_id: "import:tab:legacy"]
     )
 
     Repo.update_all(from(node in DocTreeNode, where: node.id == ^page.id),
-      set: [node_id: "import:page:legacy", group_id: "import:group:legacy"]
+      set: [node_id: "import:page:legacy", parent_node_id: "import:group:legacy"]
     )
 
     documents = [document("docs/start.md", "/start", "b")]
@@ -162,7 +224,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              Access.at(0),
              "groups",
              Access.at(0),
-             "children",
+             "pages",
              Access.at(0),
              "docId"
            ]) == first_doc_ref
@@ -233,7 +295,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              Access.at(0),
              "groups",
              Access.at(0),
-             "children",
+             "pages",
              Access.at(0),
              "docId"
            ]) == first_doc_ref
@@ -292,7 +354,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              Jobs.fail(community, job.job_ref, "late_failure", "must not revive the Job")
   end
 
-  test "records one invalid document and imports the valid documents from the same batch" do
+  test "accepts an intentionally empty canonical Docs body beside a non-empty document" do
     documents = [
       document("docs/start.md", "/start"),
       document("docs/empty.md", "/empty", "b")
@@ -313,9 +375,9 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert staged.status == :ready
 
     assert staged.progress["bodies"] == %{
-             "failed" => 1,
+             "failed" => 0,
              "pending" => 0,
-             "ready" => 1,
+             "ready" => 2,
              "skipped" => 0,
              "total" => 2
            }
@@ -329,26 +391,17 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              %{
                "label" => "docs/empty.md",
                "ref" => "docs/empty.md",
-               "state" => "failed"
+               "state" => "completed"
              }
            ]
 
-    assert [
-             %{
-               "code" => "invalid_body_bag",
-               "externalRef" => "docs/empty.md",
-               "message" => message,
-               "stage" => "validation"
-             }
-           ] = staged.failed_items
-
-    assert message =~ "plain_text"
+    assert staged.failed_items == []
 
     assert {:ok, completed} = Writer.apply(community, job.job_ref)
     assert completed.status == :completed
-    assert completed.counts.pages == 1
+    assert completed.counts.pages == 2
     assert completed.failed_items == staged.failed_items
-    assert Repo.aggregate(ImportSourceMapping, :count) == 1
+    assert Repo.aggregate(ImportSourceMapping, :count) == 2
   end
 
   test "persists a converter failure without rejecting valid documents in the batch" do
@@ -481,7 +534,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
              }
            ]
 
-    assert get_in(completed.tree, ["tabs", Access.at(0), "groups", Access.at(0), "children"])
+    assert get_in(completed.tree, ["tabs", Access.at(0), "groups", Access.at(0), "pages"])
            |> Enum.map(& &1["sourceId"]) == ["docs/start.md"]
 
     assert Repo.aggregate(ImportSourceMapping, :count) == 1
@@ -614,7 +667,7 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     pages =
       Enum.map(documents, fn document ->
         %{
-          "kind" => "page",
+          "type" => "page",
           "route" => document["route"],
           "sourceId" => document["source_ref"],
           "sourcePath" => document["source_path"],
@@ -625,13 +678,13 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     %{
       "navigation" => [
         %{
-          "children" => pages,
-          "kind" => "scope",
+          "pages" => pages,
+          "type" => "scope",
           "sourceId" => "guide",
           "title" => "Guide"
         }
       ],
-      "schemaVersion" => 1,
+      "schemaVersion" => 2,
       "source" => %{"configPaths" => [], "framework" => "vitepress", "root" => "docs"}
     }
   end

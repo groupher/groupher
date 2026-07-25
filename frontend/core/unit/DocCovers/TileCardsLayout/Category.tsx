@@ -6,38 +6,38 @@ import MarkerRender from '~/widgets/MarkerRender'
 
 import { DEFAULT_GROUP_MARKER } from '../constant'
 import GroupSettingButton from '../GroupSettingButton'
-import type { TDocCoverGroup } from '../spec'
+import type { TDocCoverCard } from '../spec'
 import useSalon from './salon/category'
 
 type TProps = {
-  group: TDocCoverGroup
+  section: TDocCoverCard
   color: TColorName
   editable?: boolean
-  onEditGroup?: (group: TDocCoverGroup) => void
+  onEditCard?: (section: TDocCoverCard) => void
 }
 
-const Category: FC<TProps> = ({ group, editable = false, onEditGroup }) => {
+const Category: FC<TProps> = ({ section, editable = false, onEditCard }) => {
   const s = useSalon()
-  const { items } = group
+  const { items } = section
 
   return (
     <section className={s.wrapper}>
       <div className={s.iconBox}>
         <MarkerRender
-          value={group.uiConfig?.marker ?? DEFAULT_GROUP_MARKER}
+          value={section.appearance?.marker ?? DEFAULT_GROUP_MARKER}
           size={6}
           color='BLACK'
         />
       </div>
 
       <div className={s.groupHeader}>
-        <h3 className={s.title}>{group.title}</h3>
+        <h3 className={s.title}>{section.title}</h3>
         {editable && (
           <GroupSettingButton
-            group={group}
+            section={section}
             className={s.groupSettingButton}
             iconClassName={s.groupSettingIcon}
-            onEditGroup={onEditGroup}
+            onEditCard={onEditCard}
           />
         )}
       </div>

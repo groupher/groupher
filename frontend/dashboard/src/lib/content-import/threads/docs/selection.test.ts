@@ -27,18 +27,18 @@ const analysis: TSourceAnalysis = {
   tree: {
     navigation: [
       {
-        children: [
+        pages: [
           {
-            children: [
+            pages: [
               {
-                kind: 'page',
+                type: 'page',
                 route: '/a',
                 sourceId: 'docs/a.md',
                 sourcePath: 'docs/a.md',
                 title: 'A',
               },
               {
-                kind: 'page',
+                type: 'page',
                 route: '/b',
                 sourceId: 'docs/b.md',
                 sourcePath: 'docs/b.md',
@@ -46,36 +46,36 @@ const analysis: TSourceAnalysis = {
               },
               {
                 href: 'https://example.com',
-                kind: 'link',
+                type: 'link',
                 sourceId: 'external',
                 title: 'External',
               },
             ],
-            kind: 'section',
+            type: 'section',
             sourceId: 'section:guides',
             title: 'Guides',
           },
           {
-            children: [
+            pages: [
               {
                 href: 'https://empty.example',
-                kind: 'link',
+                type: 'link',
                 sourceId: 'empty-link',
                 title: 'Empty',
               },
             ],
-            kind: 'section',
+            type: 'section',
             sourceId: 'section:links',
             title: 'Links only',
           },
         ],
-        kind: 'scope',
+        type: 'scope',
         routePrefix: '/',
         sourceId: 'scope:docs',
         title: 'Docs',
       },
     ],
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: { configPaths: [], framework: 'vitepress', root: 'docs' },
   },
 }

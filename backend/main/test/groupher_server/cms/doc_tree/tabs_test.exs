@@ -6,7 +6,7 @@ defmodule GroupherServer.Test.CMS.DocTree.Tabs do
   alias CMS.Model.DocsSiteState
 
   describe "[doc tree tabs]" do
-    test "creates an independent tab with its initial group and keeps one tab" do
+    test "creates an empty independent tab and allows deleting the last tab" do
       {:ok, user} = db_insert(:user)
       {:ok, community} = create_community(user)
       {:ok, state} = ORM.find_by(DocsSiteState, community_id: community.id)
@@ -14,61 +14,40 @@ defmodule GroupherServer.Test.CMS.DocTree.Tabs do
       {:ok, payload} =
         CMS.DocTree.create_tab(community, %{
           title: "API",
-          slug: "api",
           base_revision: state.tree_lock_version
         })
 
       assert payload.node.type == :tab
-      assert [%{type: :group, title: "Untitled", tab_id: tab_id}] = payload.affected_nodes
-      assert tab_id == payload.node.id
-
-      {:ok, tree} = CMS.DocTree.read(community)
-      assert Enum.map(tree.tabs, & &1.title) == ["Introduction", "API"]
-
-      {:ok, _} =
-        CMS.DocTree.delete_node(community, tree.tabs |> hd() |> Map.fetch!(:id), %{
-          base_revision: payload.revision,
-          actor_id: user.id
-        })
+      assert payload.affected_nodes == []
 
       {:ok, tree} = CMS.DocTree.read(community)
       assert [%{title: "API"}] = tree.tabs
 
-      assert {:error, {:custom, "the last docs tab can not be deleted"}} =
+      assert {:ok, _payload} =
                CMS.DocTree.delete_node(community, tree.tabs |> hd() |> Map.fetch!(:id), %{
                  base_revision: tree.revision,
                  actor_id: user.id
                })
+
+      assert {:ok, %{tabs: []}} = CMS.DocTree.read(community)
     end
 
-    test "published empty tab remains visible on the public tree" do
+    test "tree publish omits an empty tab until it owns publishable navigation" do
       {:ok, user} = db_insert(:user)
       {:ok, community} = create_community(user)
-      {:ok, _} = CMS.DocTree.delete_demo_template(community)
       {:ok, state} = ORM.find_by(DocsSiteState, community_id: community.id)
 
       {:ok, payload} =
         CMS.DocTree.create_tab(community, %{
           title: "API",
-          slug: "api",
           base_revision: state.tree_lock_version
         })
 
-      assert [
-               %{type: :tab, title: "Introduction", index: 0},
-               %{type: :group, title: "Untitled"}
-             ] = payload.affected_nodes
+      assert payload.affected_nodes == []
 
       assert {:ok, %{done: true}} = CMS.DocTree.publish_changes(community, %{}, user)
 
-      assert {:ok,
-              %{
-                tabs: [
-                  %{title: "Introduction", groups: []},
-                  %{title: "API", groups: [%{title: "Untitled"}]}
-                ]
-              }} =
-               CMS.DocTree.read_public(community)
+      assert {:ok, %{tabs: []}} = CMS.DocTree.read_public(community)
     end
 
     test "renames and reorders tabs through the generic tree mutations" do
@@ -76,17 +55,21 @@ defmodule GroupherServer.Test.CMS.DocTree.Tabs do
       {:ok, community} = create_community(user)
       {:ok, state} = ORM.find_by(DocsSiteState, community_id: community.id)
 
+      {:ok, first} =
+        CMS.DocTree.create_tab(community, %{
+          title: "Introduction",
+          base_revision: state.tree_lock_version
+        })
+
       {:ok, created} =
         CMS.DocTree.create_tab(community, %{
           title: "API",
-          slug: "api",
-          base_revision: state.tree_lock_version
+          base_revision: first.revision
         })
 
       {:ok, renamed} =
         CMS.DocTree.update_node(community, created.node.id, %{
           title: "Guides",
-          slug: "guides",
           base_revision: created.revision
         })
 

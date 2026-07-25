@@ -55,6 +55,48 @@ defmodule GroupherServer.TestMate do
       def comment_path(%Community{} = community, article, thread, %Comment{} = comment) do
         %{article: article_path(community, article, thread), inner_id: comment.inner_id}
       end
+
+      @doc """
+      Creates a community plus one explicit root Tab for Docs Tree tests.
+
+      The fixture is inserted directly so it does not consume a Tree revision.
+      `DocTreeNode.id` remains the physical row id, while `node_id` is the stable
+      logical identity used by GraphQL and `parent_node_id`.
+      """
+      def create_empty_docs_community(user) do
+        attrs = mock_attrs(:community) |> Map.put(:user, user)
+
+        with {:ok, community} <- CMS.Communities.create(attrs, user),
+             {:ok, state} <-
+               ORM.find_by(CMS.Model.DocsSiteState, community_id: community.id),
+             {:ok, _tab} <-
+               ORM.create(CMS.Model.DocTreeNode, %{
+                 community_id: community.id,
+                 branch_id: state.branch_id,
+                 stage: :draft,
+                 node_id: Ecto.UUID.generate(),
+                 type: :tab,
+                 title: "Introduction",
+                 index: 0
+               }) do
+          {:ok, community}
+        end
+      end
+
+      @doc """
+      Returns the root Tab's logical `node_id`, never its physical row `id`.
+
+      Child Tree rows store this value in `parent_node_id`.
+      """
+      def root_doc_tab_node_id(%Community{} = community) do
+        CMS.Model.DocTreeNode
+        |> where([node], node.community_id == ^community.id)
+        |> where([node], node.stage == :draft and node.type == :tab)
+        |> order_by([node], asc: node.index, asc: node.id)
+        |> select([node], node.node_id)
+        |> limit(1)
+        |> Repo.one!()
+      end
     end
   end
 end

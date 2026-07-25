@@ -1,6 +1,6 @@
 defmodule GroupherServer.CMS.DocTree.Write.Identity do
   @moduledoc """
-  Normalizes and protects title/slug identity inside sibling scopes.
+  Normalizes Doc slugs and protects navigation titles inside sibling scopes.
 
       input title/slug
           |
@@ -10,19 +10,19 @@ defmodule GroupherServer.CMS.DocTree.Write.Identity do
           v
       draft siblings + trashed nodes
           |
-          +--> create      -> auto-suffix title/slug
+          +--> create      -> auto-suffix title
           +--> page create -> copy-style suffix when identity is occupied
           +--> update      -> reject collision with pending restore
 
-  Current Trash snapshots reserve identity because they may be restored. This
-  keeps draft creates from silently stealing a title or slug that belongs to a
-  recoverable Tree action.
+  Tree nodes do not own slugs. Current Trash snapshots reserve navigation
+  titles because they may be restored; Page slug uniqueness is handled against
+  the Doc records.
   """
 
   import Ecto.Query, warn: false
 
   alias GroupherServer.{CMS, Repo}
-  alias CMS.Model.{Community, DocTreeNode, TrashedDocTreeNode}
+  alias CMS.Model.{Community, Doc, DocTreeNode, TrashedDocTreeNode}
   alias Helper.Validator.Slug
 
   require CMS.Const
@@ -45,42 +45,51 @@ defmodule GroupherServer.CMS.DocTree.Write.Identity do
 
   def normalize_title_slug(args), do: args
 
-  def unique_create_identity(attrs, %Community{} = community, branch, group_id) do
+  def unique_create_identity(attrs, %Community{} = community, branch, parent_node_id) do
     title = Map.get(attrs, :title)
-    slug = Map.get(attrs, :slug)
     type = Map.get(attrs, :type)
 
-    attrs
-    |> Map.put(:title, unique_value(community, branch, group_id, type, :title, title, " "))
-    |> Map.put(:slug, unique_value(community, branch, group_id, type, :slug, slug, "-"))
+    Map.put(
+      attrs,
+      :title,
+      unique_value(community, branch, parent_node_id, type, :title, title, " ")
+    )
   end
 
-  def unique_create_page_identity(attrs, %Community{} = community, branch, group_id) do
+  def unique_create_page_identity(attrs, %Community{} = community, branch, parent_node_id) do
     title = Map.get(attrs, :title)
     slug = Map.get(attrs, :slug)
     type = Map.get(attrs, :type)
 
-    if sibling_value_exists?(community, branch, group_id, type, :title, title) or
-         sibling_value_exists?(community, branch, group_id, type, :slug, slug) do
+    if sibling_value_exists?(community, branch, parent_node_id, type, :title, title) do
       attrs
       |> Map.put(
         :title,
-        unique_value(community, branch, group_id, type, :title, "#{title}-copy", "-")
+        unique_value(community, branch, parent_node_id, type, :title, "#{title}-copy", "-")
       )
-      |> Map.put(
-        :slug,
-        unique_value(community, branch, group_id, type, :slug, "#{slug}-copy", "-")
-      )
+      |> Map.put(:slug, unique_doc_slug(community, branch, slug))
     else
-      attrs
+      Map.put(attrs, :slug, unique_doc_slug(community, branch, slug))
     end
   end
 
-  def unique_copy_title(community, branch, group_id, title),
-    do: unique_value(community, branch, group_id, nil, :title, "#{title} copy", " ")
+  def unique_copy_title(community, branch, parent_node_id, title),
+    do: unique_value(community, branch, parent_node_id, nil, :title, "#{title} copy", " ")
 
-  def unique_copy_slug(community, branch, group_id, slug),
-    do: unique_value(community, branch, group_id, nil, :slug, "#{slug}-copy", "-")
+  def unique_doc_slug(%Community{} = community, branch, slug) do
+    existing =
+      Doc
+      |> where([d], d.community_id == ^community.id)
+      |> where([d], d.branch_id == ^branch.id)
+      |> where([d], d.stage == CMS.Const.stage(:draft))
+      |> select([d], d.slug)
+      |> Repo.all()
+      |> MapSet.new()
+
+    if MapSet.member?(existing, slug),
+      do: unique_from_set(existing, "#{slug}-copy", "-"),
+      else: slug
+  end
 
   def validate_pending_deleted_identity(
         %Community{} = community,
@@ -88,19 +97,18 @@ defmodule GroupherServer.CMS.DocTree.Write.Identity do
         %DocTreeNode{} = node,
         attrs
       ) do
-    [:title, :slug]
+    [:title]
     |> Enum.reduce_while(:ok, fn field, :ok ->
       if Map.has_key?(attrs, field) and Map.get(attrs, field) != Map.get(node, field) and
            pending_deleted_value_exists?(
              community,
              branch,
-             node.tab_id || node.group_id,
+             node.parent_node_id,
              node.type,
              field,
              Map.get(attrs, field)
            ) do
-        {:halt,
-         {:error, {:custom, "A trashed tree item with this title or slug is pending restore."}}}
+        {:halt, {:error, {:custom, "A trashed tree item with this title is pending restore."}}}
       else
         {:cont, :ok}
       end
@@ -114,24 +122,24 @@ defmodule GroupherServer.CMS.DocTree.Write.Identity do
 
   defp sibling_value_exists?(_community, _branch, _group_id, _type, _field, nil), do: false
 
-  defp sibling_value_exists?(community, branch, group_id, type, field, value) do
-    draft_sibling_value_exists?(community, branch, group_id, type, field, value) ||
-      pending_deleted_value_exists?(community, branch, group_id, type, field, value)
+  defp sibling_value_exists?(community, branch, parent_node_id, type, field, value) do
+    draft_sibling_value_exists?(community, branch, parent_node_id, type, field, value) ||
+      pending_deleted_value_exists?(community, branch, parent_node_id, type, field, value)
   end
 
   defp unique_value(_community, _branch, _group_id, _type, _field, nil, _separator), do: nil
 
-  defp unique_value(community, branch, group_id, type, field, base, separator) do
+  defp unique_value(community, branch, parent_node_id, type, field, base, separator) do
     existing =
       DocTreeNode
       |> where([n], n.community_id == ^community.id)
       |> where([n], n.branch_id == ^branch.id)
       |> where([n], n.stage == CMS.Const.stage(:draft))
-      |> where_sibling_scope(group_id, type)
+      |> where_sibling_scope(parent_node_id, type)
       |> select([n], field(n, ^field))
       |> Repo.all()
       |> MapSet.new()
-      |> MapSet.union(pending_deleted_values(community, branch, group_id, type, field))
+      |> MapSet.union(pending_deleted_values(community, branch, parent_node_id, type, field))
 
     Stream.iterate(0, &(&1 + 1))
     |> Enum.find_value(fn
@@ -144,12 +152,12 @@ defmodule GroupherServer.CMS.DocTree.Write.Identity do
     end)
   end
 
-  defp draft_sibling_value_exists?(community, branch, group_id, type, field, value) do
+  defp draft_sibling_value_exists?(community, branch, parent_node_id, type, field, value) do
     DocTreeNode
     |> where([n], n.community_id == ^community.id)
     |> where([n], n.branch_id == ^branch.id)
     |> where([n], n.stage == CMS.Const.stage(:draft))
-    |> where_sibling_scope(group_id, type)
+    |> where_sibling_scope(parent_node_id, type)
     |> where([n], field(n, ^field) == ^value)
     |> Repo.exists?()
   end
@@ -157,16 +165,16 @@ defmodule GroupherServer.CMS.DocTree.Write.Identity do
   defp pending_deleted_value_exists?(_community, _branch, _group_id, _type, _field, nil),
     do: false
 
-  defp pending_deleted_value_exists?(community, branch, group_id, type, field, value) do
+  defp pending_deleted_value_exists?(community, branch, parent_node_id, type, field, value) do
     community
-    |> pending_deleted_values(branch, group_id, type, field)
+    |> pending_deleted_values(branch, parent_node_id, type, field)
     |> MapSet.member?(value)
   end
 
-  defp pending_deleted_values(%Community{} = community, branch, group_id, type, field) do
+  defp pending_deleted_values(%Community{} = community, branch, parent_node_id, type, field) do
     community
     |> pending_deleted_nodes(branch)
-    |> Enum.filter(&pending_deleted_node_in_scope?(&1, group_id, type))
+    |> Enum.filter(&pending_deleted_node_in_scope?(&1, parent_node_id, type))
     |> Enum.map(&Map.get(&1, Atom.to_string(field)))
     |> Enum.reject(&is_nil/1)
     |> MapSet.new()
@@ -182,28 +190,41 @@ defmodule GroupherServer.CMS.DocTree.Write.Identity do
   end
 
   defp pending_deleted_node_in_scope?(node, nil, nil),
-    do: is_nil(node["tabId"]) and is_nil(node["groupId"])
+    do: is_nil(node["parentNodeId"])
 
   defp pending_deleted_node_in_scope?(node, nil, type),
-    do: is_nil(node["tabId"]) and is_nil(node["groupId"]) and node["type"] == to_string(type)
+    do: is_nil(node["parentNodeId"]) and node["type"] == to_string(type)
 
-  defp pending_deleted_node_in_scope?(node, parent_id, type) when type in [:group, :pin],
-    do: node["tabId"] == parent_id and node["type"] == to_string(type)
+  defp pending_deleted_node_in_scope?(node, parent_id, :pin),
+    do: node["parentNodeId"] == parent_id and node["type"] == "pin"
 
-  defp pending_deleted_node_in_scope?(node, parent_id, _type), do: node["groupId"] == parent_id
+  defp pending_deleted_node_in_scope?(node, parent_id, _type),
+    do: node["parentNodeId"] == parent_id and node["type"] != "pin"
 
   defp where_sibling_scope(query, nil, :tab),
-    do: query |> where([n], is_nil(n.tab_id) and is_nil(n.group_id)) |> where([n], n.type == :tab)
+    do: query |> where([n], is_nil(n.parent_node_id)) |> where([n], n.type == :tab)
 
-  defp where_sibling_scope(query, tab_id, type) when type in [:group, :pin],
-    do: query |> where([n], n.tab_id == ^tab_id) |> where([n], n.type == ^type)
+  defp where_sibling_scope(query, parent_node_id, :pin),
+    do:
+      query
+      |> where([n], n.parent_node_id == ^parent_node_id)
+      |> where([n], n.type == :pin)
 
-  defp where_sibling_scope(query, group_id, type) when type in [:page, :link],
-    do: query |> where([n], n.group_id == ^group_id) |> where([n], n.type in [:page, :link])
+  defp where_sibling_scope(query, parent_node_id, _type),
+    do:
+      query
+      |> where([n], n.parent_node_id == ^parent_node_id)
+      |> where([n], n.type in [:group, :page, :link])
 
-  defp where_sibling_scope(query, group_id, nil) when not is_nil(group_id),
-    do: where(query, [n], n.group_id == ^group_id)
+  defp unique_from_set(existing, base, separator) do
+    Stream.iterate(0, &(&1 + 1))
+    |> Enum.find_value(fn
+      0 ->
+        if MapSet.member?(existing, base), do: nil, else: base
 
-  defp where_sibling_scope(query, nil, nil),
-    do: where(query, [n], is_nil(n.tab_id) and is_nil(n.group_id))
+      index ->
+        value = "#{base}#{separator}#{index}"
+        if MapSet.member?(existing, value), do: nil, else: value
+    end)
+  end
 end

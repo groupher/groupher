@@ -10,7 +10,7 @@ import {
 import type { TLinkChild, TLinkItem } from '~/spec'
 
 import { toDraftLink } from '../../LinkEditor/model'
-import { HEADER_COLUMN_KIND, MORE_TAB_FIXED_LINK_IDS } from './constants'
+import { HEADER_COLUMN_TYPE, MORE_TAB_FIXED_LINK_IDS } from './constants'
 import type { THeaderColumn, THeaderDragTarget } from './spec'
 
 export const toLinkItem = toDraftLink
@@ -19,8 +19,8 @@ export const toLinkItem = toDraftLink
 // group, a special single-link group, or the fixed More group. The persisted
 // shape is still the original TLinkItem list.
 const placeMoreLast = (columns: readonly THeaderColumn[]): THeaderColumn[] => {
-  const moreColumns = columns.filter((column) => column.kind === HEADER_COLUMN_KIND.MORE)
-  const regularColumns = columns.filter((column) => column.kind !== HEADER_COLUMN_KIND.MORE)
+  const moreColumns = columns.filter((column) => column.type === HEADER_COLUMN_TYPE.MORE)
+  const regularColumns = columns.filter((column) => column.type !== HEADER_COLUMN_TYPE.MORE)
 
   // This is a view-only placement rule. Keep sourceIndex tied to the persisted
   // array so group edit/delete actions still target the original item.
@@ -38,7 +38,7 @@ export const buildHeaderColumns = (
     if (item.type === DASHBOARD_LINK_TYPE.LINK) {
       return {
         id: item.id,
-        kind: HEADER_COLUMN_KIND.LINK,
+        type: HEADER_COLUMN_TYPE.LINK,
         title: item.title,
         sourceIndex,
         links: [{ id: item.id, title: item.title, url: item.url }],
@@ -50,7 +50,7 @@ export const buildHeaderColumns = (
 
     return {
       id: isMore ? MORE_TAB.CUSTOM_ID : item.id,
-      kind: isMore ? HEADER_COLUMN_KIND.MORE : HEADER_COLUMN_KIND.GROUP,
+      type: isMore ? HEADER_COLUMN_TYPE.MORE : HEADER_COLUMN_TYPE.GROUP,
       title: isMore ? MORE_TAB.TITLE_KEY : item.title,
       sourceIndex,
       links: [...item.links],
@@ -64,7 +64,7 @@ export const buildHeaderColumns = (
 
   if (fixedMoreTabLinks.length === 0) return placeMoreLast(columns)
 
-  const moreColumn = columns.find((column) => column.kind === HEADER_COLUMN_KIND.MORE)
+  const moreColumn = columns.find((column) => column.type === HEADER_COLUMN_TYPE.MORE)
   if (moreColumn) {
     return placeMoreLast(
       columns.map((column) =>
@@ -79,7 +79,7 @@ export const buildHeaderColumns = (
     ...columns,
     {
       id: MORE_TAB.CUSTOM_ID,
-      kind: HEADER_COLUMN_KIND.MORE,
+      type: HEADER_COLUMN_TYPE.MORE,
       title: MORE_TAB.TITLE_KEY,
       sourceIndex: links.length,
       links: [],
@@ -93,20 +93,20 @@ export const buildHeaderColumns = (
 // the source single-link column. Fixed More links are never persisted.
 export const flattenHeaderColumns = (columns: readonly THeaderColumn[]): TLinkItem[] => {
   return columns.flatMap((column): TLinkItem[] => {
-    if (column.kind === HEADER_COLUMN_KIND.LINK) {
+    if (column.type === HEADER_COLUMN_TYPE.LINK) {
       const link = column.links[0]
       if (!link) return []
 
       return [{ id: link.id, type: DASHBOARD_LINK_TYPE.LINK, title: link.title, url: link.url }]
     }
 
-    if (column.kind === HEADER_COLUMN_KIND.MORE && column.links.length === 0) return []
+    if (column.type === HEADER_COLUMN_TYPE.MORE && column.links.length === 0) return []
 
     return [
       {
-        id: column.kind === HEADER_COLUMN_KIND.MORE ? MORE_TAB.CUSTOM_ID : column.id,
+        id: column.type === HEADER_COLUMN_TYPE.MORE ? MORE_TAB.CUSTOM_ID : column.id,
         type: DASHBOARD_LINK_TYPE.GROUP,
-        title: column.kind === HEADER_COLUMN_KIND.MORE ? MORE_TAB.TITLE_KEY : column.title,
+        title: column.type === HEADER_COLUMN_TYPE.MORE ? MORE_TAB.TITLE_KEY : column.title,
         links: column.links,
       },
     ]
@@ -121,7 +121,7 @@ function normalizeColumnIndexes(columns: readonly THeaderColumn[]): THeaderColum
 }
 
 const isSortableColumn = (column: THeaderColumn): boolean =>
-  column.kind === HEADER_COLUMN_KIND.LINK || column.kind === HEADER_COLUMN_KIND.GROUP
+  column.type === HEADER_COLUMN_TYPE.LINK || column.type === HEADER_COLUMN_TYPE.GROUP
 
 // Link sorting is only allowed into group/More columns. Single-link columns are
 // sortable as whole columns, but they do not accept child links.
@@ -150,7 +150,7 @@ export const moveHeaderLinkInColumns = (
   const source = findColumnWithLink(columns, itemId)
   const targetColumn = columns.find((column) => column.id === target.columnId)
 
-  if (!source || !targetColumn || targetColumn.kind === HEADER_COLUMN_KIND.LINK) return [...columns]
+  if (!source || !targetColumn || targetColumn.type === HEADER_COLUMN_TYPE.LINK) return [...columns]
 
   const sourceColumn = source.column
   const sourceLinks = sourceColumn.links.filter((link) => link.id !== itemId)
@@ -173,7 +173,7 @@ export const moveHeaderLinkInColumns = (
 
   return columns.flatMap((column): THeaderColumn[] => {
     if (column.id === sourceColumn.id && column.id !== targetColumn.id) {
-      if (column.kind === HEADER_COLUMN_KIND.LINK) return []
+      if (column.type === HEADER_COLUMN_TYPE.LINK) return []
       return [{ ...column, links: sourceLinks }]
     }
 
