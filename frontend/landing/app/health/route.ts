@@ -1,6 +1,6 @@
 const SERVICE_ID = 'landing'
 
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-static'
 
 export const GET = (): Response =>
   Response.json({

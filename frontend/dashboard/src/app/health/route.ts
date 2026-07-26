@@ -1,7 +1,5 @@
 const SERVICE_ID = 'dashboard'
 
-export const dynamic = 'force-dynamic'
-
 export const GET = (): Response =>
   Response.json({
     schemaVersion: 'health.v1',
