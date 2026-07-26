@@ -28,7 +28,15 @@ def test_health(client: TestClient) -> None:
     response = client.get("/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    body = response.json()
+    assert body["schemaVersion"] == "health.v1"
+    assert body["status"] == "ok"
+    assert body["service"] == "document-converter"
+    assert isinstance(body["version"], str)
+    assert isinstance(body["environment"], str)
+    assert isinstance(body["timestamp"], str)
+    assert isinstance(body["uptimeMs"], int)
+    assert body["checks"] == []
 
 
 @pytest.mark.parametrize(

@@ -1,8 +1,7 @@
-import { getToken } from 'next-auth/jwt'
 import { revalidateTag } from 'next/cache'
 
+import { getPhoenixToken } from '~/app/phoenix-token'
 import { CACHE_TAG } from '~/const/cache'
-import { AUTH_KEY } from '~/const/oauth'
 
 type TPayload = {
   community?: string
@@ -21,13 +20,7 @@ export const POST = async (req: Request) => {
     })
   }
 
-  const token = await getToken({
-    req,
-    secret: process.env.NEXTAUTH_SECRET,
-    raw: false,
-  })
-
-  if (!token?.[AUTH_KEY.TOKEN]) {
+  if (!getPhoenixToken(req)) {
     return new Response(JSON.stringify({ ok: false, error: 'unauthorized' }), {
       status: 401,
       headers: {

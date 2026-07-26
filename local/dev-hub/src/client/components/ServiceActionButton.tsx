@@ -1,10 +1,11 @@
 import { AnimatePresence, motion } from 'motion/react'
-import type { ButtonHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 type TProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  tooltip: string
+  tooltip: ReactNode
+  tooltipClassName?: string
 }
 
 type TPosition = {
@@ -15,6 +16,7 @@ type TPosition = {
 export function ServiceActionButton({
   children,
   tooltip,
+  tooltipClassName,
   onBlur,
   onClick,
   onFocus,
@@ -23,19 +25,31 @@ export function ServiceActionButton({
   ...buttonProps
 }: TProps) {
   const buttonRef = useRef<HTMLButtonElement>(null)
+  const tooltipRef = useRef<HTMLDivElement>(null)
   const openTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const tooltipId = useId()
   const [open, setOpen] = useState(false)
   const [position, setPosition] = useState<TPosition | null>(null)
 
   const closeTooltip = () => {
     if (openTimerRef.current) clearTimeout(openTimerRef.current)
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
     openTimerRef.current = null
+    closeTimerRef.current = null
     setOpen(false)
+  }
+
+  const scheduleCloseTooltip = () => {
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
+    closeTimerRef.current = setTimeout(() => {
+      closeTooltip()
+    }, 120)
   }
 
   const openTooltip = (delay: number) => {
     if (openTimerRef.current) clearTimeout(openTimerRef.current)
+    if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
     openTimerRef.current = setTimeout(() => {
       const rect = buttonRef.current?.getBoundingClientRect()
       if (!rect) return
@@ -52,6 +66,7 @@ export function ServiceActionButton({
   useEffect(
     () => () => {
       if (openTimerRef.current) clearTimeout(openTimerRef.current)
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
     },
     [],
   )
@@ -63,6 +78,8 @@ export function ServiceActionButton({
         {...buttonProps}
         aria-describedby={open ? tooltipId : buttonProps['aria-describedby']}
         onBlur={(event) => {
+          if (tooltipRef.current?.contains(event.relatedTarget as Node | null)) return
+
           closeTooltip()
           onBlur?.(event)
         }}
@@ -79,7 +96,7 @@ export function ServiceActionButton({
           onMouseEnter?.(event)
         }}
         onMouseLeave={(event) => {
-          closeTooltip()
+          scheduleCloseTooltip()
           onMouseLeave?.(event)
         }}
       >
@@ -90,10 +107,27 @@ export function ServiceActionButton({
             <AnimatePresence initial={false}>
               {open && position ? (
                 <motion.div
+                  ref={tooltipRef}
                   id={tooltipId}
-                  className='service-action-tooltip'
+                  className={`service-action-tooltip ${tooltipClassName ?? ''}`}
                   role='tooltip'
                   style={position}
+                  onBlur={(event) => {
+                    const nextTarget = event.relatedTarget as Node | null
+                    if (
+                      tooltipRef.current?.contains(nextTarget) ||
+                      buttonRef.current?.contains(nextTarget)
+                    ) {
+                      return
+                    }
+
+                    closeTooltip()
+                  }}
+                  onMouseEnter={() => {
+                    if (closeTimerRef.current) clearTimeout(closeTimerRef.current)
+                    closeTimerRef.current = null
+                  }}
+                  onMouseLeave={scheduleCloseTooltip}
                   initial={{ opacity: 0, scale: 0.98, y: -2 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.98, y: -1 }}

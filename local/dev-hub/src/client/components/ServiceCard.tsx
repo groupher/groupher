@@ -1,9 +1,9 @@
-import type { TPublicService, TServiceMetricsSnapshot } from '@shared/contracts'
+import type { TPublicService, TServiceMetricsSnapshot, TServiceStartMode } from '@shared/contracts'
 import {
   BrushCleaning,
-  Circle,
   ExternalLink,
   FileBraces,
+  GitBranch,
   LoaderCircle,
   Play,
   RotateCw,
@@ -15,8 +15,10 @@ import { Badge, type BadgeProps } from '@/components/reui/badge'
 import { openExternalUrl } from '@/lib/open-external-url'
 
 import { ServiceActionButton } from './ServiceActionButton'
+import { ServiceAddress } from './ServiceAddress'
 import { ServiceMetricsStrip } from './ServiceMetricsStrip'
 import { ServiceStackMark } from './ServiceStackMark'
+import { ServiceStartMenu } from './ServiceStartMenu'
 import { TerminalSurface } from './TerminalSurface'
 import { Uptime } from './Uptime'
 
@@ -24,12 +26,18 @@ type TProps = {
   service: TPublicService
   metrics?: TServiceMetricsSnapshot
   expanded: boolean
+  compact?: boolean
   pending: boolean
+  hasRequiredDependencyIssue: boolean
+  hasStartedRequiredDependencies: boolean
+  hasOptionalDependencyIssue: boolean
   onToggleService: (service: TPublicService) => void
+  onStartService: (service: TPublicService, mode: TServiceStartMode | 'default') => void
   onRestartService: (service: TPublicService) => void
   onToggleTerminal: (id: string) => void
   onOpenMetrics: (id: string) => void
   onOpenConfig: (id: string) => void
+  onOpenDependencies: (id: string) => void
 }
 
 const STATUS_LABEL: Record<TPublicService['status'], string> = {
@@ -62,21 +70,40 @@ export function ServiceCard({
   service,
   metrics,
   expanded,
+  compact: compactOverride = false,
   pending,
+  hasRequiredDependencyIssue,
+  hasStartedRequiredDependencies,
+  hasOptionalDependencyIssue,
   onToggleService,
+  onStartService,
   onRestartService,
   onToggleTerminal,
   onOpenMetrics,
   onOpenConfig,
+  onOpenDependencies,
 }: TProps) {
-  const active = ['starting', 'running', 'stopping'].includes(service.status)
+  const displayStatus =
+    pending && (service.status === 'stopped' || service.status === 'unavailable')
+      ? 'starting'
+      : service.status
+  const active = pending || ['starting', 'running', 'stopping'].includes(service.status)
   const stoppable = ['starting', 'running'].includes(service.status)
   const disabled =
     pending || service.status === 'stopping' || !service.canStart || service.status === 'external'
   const restartDisabled =
     pending || service.status === 'stopping' || !service.canStart || service.status === 'external'
-  const emptyText = service.unavailableReason || `${service.name} is ${service.status}.`
-  const compact = service.status === 'stopped' || service.status === 'unavailable'
+  const emptyText =
+    pending && (service.status === 'stopped' || service.status === 'unavailable')
+      ? `${service.name} is starting.`
+      : service.unavailableReason || `${service.name} is ${service.status}.`
+  const compact =
+    compactOverride ||
+    (!pending && (service.status === 'stopped' || service.status === 'unavailable'))
+  const dependenciesCount =
+    service.startPolicy.requiredDependencies.length +
+    service.startPolicy.optionalDependencies.length
+  const hasDependencies = dependenciesCount > 0
   const actionLabel =
     service.status === 'stopping'
       ? 'Stopping'
@@ -85,6 +112,7 @@ export function ServiceCard({
         : service.status === 'external'
           ? 'External'
           : 'Start'
+  const openUrl = service.portlessAppUrl || service.appUrl || service.portlessUrl || service.url
 
   return (
     <MotionConfig reducedMotion='user'>
@@ -100,10 +128,10 @@ export function ServiceCard({
               <span className='service-copy'>
                 <span className='service-title-row'>
                   <span className='service-name'>{service.name}</span>
-                  {service.url && service.status === 'running' ? (
+                  {openUrl && service.status === 'running' ? (
                     <a
                       className='open-service'
-                      href={service.url}
+                      href={openUrl}
                       target='_blank'
                       rel='noreferrer'
                       aria-label={`Open ${service.name}`}
@@ -123,33 +151,43 @@ export function ServiceCard({
               {!compact || !service.canStart ? (
                 <Badge
                   className='service-status-badge'
-                  variant={STATUS_VARIANT[service.status]}
+                  variant={STATUS_VARIANT[displayStatus]}
                   radius='full'
                   size='lg'
                 >
-                  <span className={`status-dot status-dot--${service.status}`} />
-                  {STATUS_LABEL[service.status]}
+                  <span className={`status-dot status-dot--${displayStatus}`} />
+                  {STATUS_LABEL[displayStatus]}
                 </Badge>
               ) : null}
               {compact && service.canStart ? (
-                <button
-                  type='button'
-                  className='service-inline-start'
-                  disabled={disabled}
-                  onClick={() => onToggleService(service)}
-                  aria-label={`${pending ? 'Starting' : 'Start'} ${service.name}`}
-                >
-                  {pending ? (
-                    <LoaderCircle className='spin' aria-hidden='true' />
+                <span className='service-inline-start-wrap'>
+                  {hasDependencies ? (
+                    <ServiceStartMenu
+                      service={service}
+                      disabled={disabled}
+                      variant='inline'
+                      pending={pending}
+                      onStart={onStartService}
+                    />
                   ) : (
-                    <Play className='play-icon' aria-hidden='true' />
+                    <button
+                      type='button'
+                      className='service-inline-start'
+                      disabled={disabled}
+                      onClick={() => onStartService(service, 'default')}
+                      aria-label={`${pending ? 'Starting' : 'Start'} ${service.name}`}
+                    >
+                      {pending ? (
+                        <LoaderCircle className='spin' aria-hidden='true' />
+                      ) : (
+                        <Play className='play-icon' aria-hidden='true' />
+                      )}
+                      <span>Start</span>
+                    </button>
                   )}
-                  <span>Start</span>
-                </button>
+                </span>
               ) : null}
-              {service.port && service.status === 'running' ? (
-                <span className='service-port'>:{service.port}</span>
-              ) : null}
+              {service.status === 'running' ? <ServiceAddress service={service} /> : null}
             </div>
           </header>
 
@@ -232,27 +270,70 @@ export function ServiceCard({
                   >
                     <FileBraces aria-hidden='true' />
                   </ServiceActionButton>
+                  {hasDependencies ? (
+                    <ServiceActionButton
+                      type='button'
+                      className={`service-terminal-action ${
+                        hasRequiredDependencyIssue ? 'has-required-dependency-issue' : ''
+                      } ${
+                        hasStartedRequiredDependencies ? 'has-started-required-dependencies' : ''
+                      } ${hasOptionalDependencyIssue ? 'has-optional-dependency-issue' : ''}`}
+                      onClick={() => onOpenDependencies(service.id)}
+                      aria-label={`View ${service.name} dependencies`}
+                      tooltip='Dependencies'
+                    >
+                      <GitBranch aria-hidden='true' />
+                    </ServiceActionButton>
+                  ) : null}
                 </div>
 
-                <button
-                  type='button'
+                <div
                   className={`service-action service-action--process ${active ? 'is-active' : ''}`}
-                  disabled={disabled}
-                  onClick={() => onToggleService(service)}
-                  aria-label={`${actionLabel} ${service.name}`}
                 >
-                  <span className='action-leading-icon' aria-hidden='true'>
+                  <ServiceActionButton
+                    type='button'
+                    className='service-process-action service-process-action--danger'
+                    disabled={disabled}
+                    onClick={() =>
+                      stoppable ? onToggleService(service) : onStartService(service, 'default')
+                    }
+                    aria-label={`${actionLabel} ${service.name}`}
+                    tooltip={actionLabel}
+                  >
                     {pending || service.status === 'starting' || service.status === 'stopping' ? (
-                      <LoaderCircle className='spin' />
+                      <LoaderCircle className='spin' aria-hidden='true' />
                     ) : stoppable ? (
-                      <Circle className='stop-icon' />
+                      <span className='service-stop-mark' aria-hidden='true'>
+                        <span />
+                      </span>
                     ) : (
-                      <Play className='play-icon' />
+                      <Play className='play-icon' aria-hidden='true' />
                     )}
-                  </span>
-                  <span>{actionLabel}</span>
+                  </ServiceActionButton>
+                  {!stoppable && hasDependencies ? (
+                    <ServiceStartMenu
+                      service={service}
+                      disabled={disabled}
+                      variant='icon'
+                      onStart={onStartService}
+                    />
+                  ) : null}
+                  <ServiceActionButton
+                    type='button'
+                    className='service-process-action service-process-action--danger'
+                    disabled={restartDisabled}
+                    onClick={restartDisabled ? undefined : () => onRestartService(service)}
+                    aria-label={`Restart ${service.name}`}
+                    tooltip='Restart service'
+                  >
+                    {pending ? (
+                      <LoaderCircle className='spin' aria-hidden='true' />
+                    ) : (
+                      <RotateCw aria-hidden='true' />
+                    )}
+                  </ServiceActionButton>
                   {service.startedAt && active ? <Uptime startedAt={service.startedAt} /> : null}
-                </button>
+                </div>
               </footer>
             </motion.div>
           ) : null}

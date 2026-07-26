@@ -3,9 +3,7 @@
  *
  * @see docs/bulk-import/article-publish-import-refactor.md
  */
-import { getToken } from 'next-auth/jwt'
-
-import { AUTH_KEY } from '~/const/oauth'
+import { getPhoenixToken } from '~/app/phoenix-token'
 
 import { handleDocumentImportRequest } from '../../../../lib/document-importer/http'
 
@@ -23,13 +21,7 @@ const unauthorizedResponse = (): Response =>
 
 /** Authenticates the user before delegating to the bounded document import handler. */
 export const POST = async (request: Request): Promise<Response> => {
-  const token = await getToken({
-    req: request,
-    secret: process.env.NEXTAUTH_SECRET,
-    raw: false,
-  })
-
-  if (!token?.[AUTH_KEY.TOKEN]) return unauthorizedResponse()
+  if (!getPhoenixToken(request)) return unauthorizedResponse()
 
   return handleDocumentImportRequest(request)
 }

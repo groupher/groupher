@@ -4,21 +4,57 @@ import ELK from 'elkjs/lib/elk-api.js'
 import ElkWorker from 'elkjs/lib/elk-worker.min.js?worker'
 
 import type { TFlowLayout } from '@/components/flow-spec'
+import { shouldUseCoreServiceLayout } from '@/lib/core-flow-topology'
+import {
+  FLOW_COMPACT_NODE_HEIGHT,
+  FLOW_EXPANDED_NODE_HEIGHT,
+  FLOW_NODE_WIDTH,
+  FLOW_STANDALONE_GAP,
+  FLOW_STANDALONE_OFFSET,
+  FLOW_STANDALONE_TOP,
+} from '@/lib/flow-metrics'
 
 const elk = new ELK({
   workerFactory: () => new ElkWorker(),
 })
-const NODE_WIDTH = 384
-const COMPACT_NODE_HEIGHT = 94
-const EXPANDED_NODE_HEIGHT = 351
-const STANDALONE_GAP = 34
-const STANDALONE_OFFSET = 112
-const STANDALONE_TOP = 58
+const USER_NODE_TOP = 0
+const CORE_TOP_ROW_Y = 118
+const CORE_TOP_TO_APP_GAP = 136
+const CORE_APP_TO_BACKEND_GAP = 96
+const CORE_COLUMN_X = {
+  left: 24,
+  center: 432,
+  right: 888,
+} as const
 
 const getNodeHeight = (service: Pick<TPublicService, 'status'>): number =>
   service.status === 'stopped' || service.status === 'unavailable'
-    ? COMPACT_NODE_HEIGHT
-    : EXPANDED_NODE_HEIGHT
+    ? FLOW_COMPACT_NODE_HEIGHT
+    : FLOW_EXPANDED_NODE_HEIGHT
+
+const getCoreServicePositions = (
+  services: Pick<TPublicService, 'id' | 'status'>[],
+): Partial<Record<string, { x: number; y: number }>> => {
+  const heightById = new Map(services.map((service) => [service.id, getNodeHeight(service)]))
+  const topRowHeight = Math.max(heightById.get('gateway') || 0, heightById.get('auth') || 0)
+  const appRowHeight = Math.max(
+    heightById.get('landing') || 0,
+    heightById.get('main') || 0,
+    heightById.get('dashboard') || 0,
+  )
+  const appRowY = CORE_TOP_ROW_Y + topRowHeight + CORE_TOP_TO_APP_GAP
+  const backendRowY = appRowY + appRowHeight + CORE_APP_TO_BACKEND_GAP
+
+  return {
+    users: { x: CORE_COLUMN_X.center, y: USER_NODE_TOP },
+    gateway: { x: CORE_COLUMN_X.center, y: CORE_TOP_ROW_Y },
+    auth: { x: CORE_COLUMN_X.right, y: CORE_TOP_ROW_Y },
+    landing: { x: CORE_COLUMN_X.left, y: appRowY },
+    main: { x: CORE_COLUMN_X.center, y: appRowY },
+    dashboard: { x: CORE_COLUMN_X.right, y: appRowY },
+    phoenix: { x: CORE_COLUMN_X.center, y: backendRowY },
+  }
+}
 
 export async function layoutServiceFlow(
   services: Pick<TPublicService, 'id' | 'status'>[],
@@ -48,7 +84,7 @@ export async function layoutServiceFlow(
     },
     children: connectedServices.map((service) => ({
       id: service.id,
-      width: NODE_WIDTH,
+      width: FLOW_NODE_WIDTH,
       height: getNodeHeight(service),
     })),
     edges: graphRelations.map((relation) => ({
@@ -88,10 +124,18 @@ export async function layoutServiceFlow(
     if (targetPositions.length !== directTargetIds.size) continue
 
     const left = Math.min(...targetPositions.map((position) => position.x))
-    const right = Math.max(...targetPositions.map((position) => position.x + NODE_WIDTH))
+    const right = Math.max(...targetPositions.map((position) => position.x + FLOW_NODE_WIDTH))
     positions[sourceId] = {
       ...positions[sourceId],
-      x: left + (right - left - NODE_WIDTH) / 2,
+      x: left + (right - left - FLOW_NODE_WIDTH) / 2,
+    }
+  }
+
+  if (shouldUseCoreServiceLayout(connectedServices, graphRelations)) {
+    const corePositions = getCoreServicePositions(connectedServices)
+    for (const service of connectedServices) {
+      const position = corePositions[service.id]
+      if (position) positions[service.id] = position
     }
   }
 
@@ -99,15 +143,15 @@ export async function layoutServiceFlow(
     return { positions, laneNotePosition: null }
   }
 
-  const graphWidth = graph.width || NODE_WIDTH
-  let standaloneY = STANDALONE_TOP
+  const graphWidth = graph.width || FLOW_NODE_WIDTH
+  let standaloneY = FLOW_STANDALONE_TOP
   for (const service of standaloneServices) {
-    positions[service.id] = { x: graphWidth + STANDALONE_OFFSET, y: standaloneY }
-    standaloneY += getNodeHeight(service) + STANDALONE_GAP
+    positions[service.id] = { x: graphWidth + FLOW_STANDALONE_OFFSET, y: standaloneY }
+    standaloneY += getNodeHeight(service) + FLOW_STANDALONE_GAP
   }
 
   return {
     positions,
-    laneNotePosition: { x: graphWidth + STANDALONE_OFFSET, y: 0 },
+    laneNotePosition: { x: graphWidth + FLOW_STANDALONE_OFFSET, y: 0 },
   }
 }

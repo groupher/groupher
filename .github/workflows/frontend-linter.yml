@@ -29,7 +29,9 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       targets: ${{ steps.matrix.outputs.targets }}
+      react_doctor_targets: ${{ steps.matrix.outputs.react_doctor_targets }}
       has_targets: ${{ steps.matrix.outputs.has_targets }}
+      has_react_doctor_targets: ${{ steps.matrix.outputs.has_react_doctor_targets }}
 
     steps:
       - uses: actions/checkout@v4
@@ -65,21 +67,27 @@ jobs:
           SHARED_CHANGED: ${{ steps.filter.outputs.shared }}
         run: |
           targets=()
+          react_doctor_targets=()
+
+          add_target() {
+            targets+=("$1")
+            react_doctor_targets+=("$1")
+          }
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$MAIN_CHANGED" = "true" ]; then
-            targets+=('{"target":"main","workspace":"@groupher/frontend-main"}')
+            add_target '{"target":"main","workspace":"@groupher/frontend-main"}'
           fi
 
           if [ "$SHARED_CHANGED" = "true" ]; then
-            targets+=('{"target":"core","workspace":"@groupher/frontend-core"}')
+            add_target '{"target":"core","workspace":"@groupher/frontend-core"}'
           fi
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$DASHBOARD_CHANGED" = "true" ]; then
-            targets+=('{"target":"dashboard","workspace":"@groupher/frontend-dashboard"}')
+            add_target '{"target":"dashboard","workspace":"@groupher/frontend-dashboard"}'
           fi
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$LANDING_CHANGED" = "true" ]; then
-            targets+=('{"target":"landing","workspace":"@groupher/frontend-landing"}')
+            add_target '{"target":"landing","workspace":"@groupher/frontend-landing"}'
           fi
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$GATEWAY_CHANGED" = "true" ]; then
@@ -93,6 +101,15 @@ jobs:
             joined=$(printf '%s\n' "${targets[@]}" | paste -sd, -)
             echo "targets={\"include\":[${joined}]}" >> "$GITHUB_OUTPUT"
             echo 'has_targets=true' >> "$GITHUB_OUTPUT"
+          fi
+
+          if [ ${#react_doctor_targets[@]} -eq 0 ]; then
+            echo 'react_doctor_targets={"include":[]}' >> "$GITHUB_OUTPUT"
+            echo 'has_react_doctor_targets=false' >> "$GITHUB_OUTPUT"
+          else
+            react_doctor_joined=$(printf '%s\n' "${react_doctor_targets[@]}" | paste -sd, -)
+            echo "react_doctor_targets={\"include\":[${react_doctor_joined}]}" >> "$GITHUB_OUTPUT"
+            echo 'has_react_doctor_targets=true' >> "$GITHUB_OUTPUT"
           fi
 
   oxlint:
@@ -153,10 +170,10 @@ jobs:
     name: react-doctor (${{ matrix.target }})
     needs: changes
     runs-on: ubuntu-latest
-    if: needs.changes.outputs.has_targets == 'true'
+    if: needs.changes.outputs.has_react_doctor_targets == 'true'
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.changes.outputs.targets) }}
+      matrix: ${{ fromJson(needs.changes.outputs.react_doctor_targets) }}
 
     steps:
       - uses: actions/checkout@v4
@@ -242,7 +259,7 @@ jobs:
       - changes
       - react-doctor
     runs-on: ubuntu-latest
-    if: ${{ always() && github.event_name == 'pull_request' && needs.changes.outputs.has_targets == 'true' }}
+    if: ${{ always() && github.event_name == 'pull_request' && needs.changes.outputs.has_react_doctor_targets == 'true' }}
 
     steps:
       - name: Download React Doctor reports

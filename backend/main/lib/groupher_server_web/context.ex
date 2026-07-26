@@ -25,11 +25,8 @@ defmodule GroupherServerWeb.Context do
   end
 
   @doc """
-  Return the current user context based on the authorization header.
-
-  Important: Note that at the current time this is just a stub, always
-  returning the first user (marked as an admin), provided any
-  authorization header is sent.
+  Return the current user context from the Groupher auth cookie or an
+  external API bearer token.
   """
   def build_context(conn) do
     context = %{server_trusted: server_trusted?(conn)}
@@ -60,10 +57,10 @@ defmodule GroupherServerWeb.Context do
   end
 
   # --------------------------------------------------
-  # fetch token from cookie by default，then fallback to Authorization header
-  # the key auth.token need to algn with frontend at frontend/core/constant/oauth AUTH_KEY.TOKEN
+  # Fetch the browser token from the canonical Groupher cookie, then fall back
+  # to the Authorization header used by external API clients.
   # --------------------------------------------------
-  defp get_token_from(%Plug.Conn{cookies: %{"auth.token" => token}}), do: token
+  defp get_token_from(%Plug.Conn{cookies: %{"groupher-auth.token" => token}}), do: token
 
   defp get_token_from(%Plug.Conn{} = conn) do
     case get_req_header(conn, "authorization") do

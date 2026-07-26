@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "health.v1",
+  "status": "ok",
+  "service": "main",
+  "version": "dev",
+  "environment": "development",
+  "timestamp": "2026-07-26T00:00:00Z",
+  "uptimeMs": 12345,
+  "checks": []
+}

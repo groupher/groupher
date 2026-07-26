@@ -1,4 +1,9 @@
-import type { TPublicService, TServiceGroup, TServiceMetricsSnapshot } from '@shared/contracts'
+import type {
+  TPublicService,
+  TServiceGroup,
+  TServiceMetricsSnapshot,
+  TServiceStartMode,
+} from '@shared/contracts'
 import { useEffect, useState } from 'react'
 
 import { ServiceCard } from './ServiceCard'
@@ -13,10 +18,12 @@ type TProps = {
   expandedIds: Set<string>
   pendingIds: Set<string>
   onToggleService: (service: TPublicService) => void
+  onStartService: (service: TPublicService, mode: TServiceStartMode | 'default') => void
   onRestartService: (service: TPublicService) => void
   onToggleTerminal: (id: string) => void
   onOpenMetrics: (id: string) => void
   onOpenConfig: (id: string) => void
+  onOpenDependencies: (id: string) => void
 }
 
 const WIDE_SERVICES_PER_ROW = 3
@@ -27,6 +34,7 @@ const ACTIVE_SERVICE_STATUSES = new Set<TPublicService['status']>([
   'starting',
   'external',
 ])
+const STARTED_DEPENDENCY_STATUSES = new Set<TPublicService['status']>(['running', 'external'])
 
 const isCompactService = (service: TPublicService) =>
   service.status === 'stopped' || service.status === 'unavailable'
@@ -68,13 +76,16 @@ export function ServiceSection({
   expandedIds,
   pendingIds,
   onToggleService,
+  onStartService,
   onRestartService,
   onToggleTerminal,
   onOpenMetrics,
   onOpenConfig,
+  onOpenDependencies,
 }: TProps) {
   const servicesPerRow = useServicesPerRow()
   const groupedServices = services.filter((service) => service.group === group)
+  const serviceById = new Map(services.map((service) => [service.id, service]))
   const activeCount = groupedServices.filter((service) =>
     ACTIVE_SERVICE_STATUSES.has(service.status),
   ).length
@@ -109,20 +120,43 @@ export function ServiceSection({
         {rows.map((row) => (
           <div className='service-row' key={row.map((service) => service.id).join('-')}>
             <div className='service-grid'>
-              {row.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  service={service}
-                  metrics={metricsByService[service.id]}
-                  expanded={!isCompactService(service) && expandedIds.has(service.id)}
-                  pending={pendingIds.has(service.id)}
-                  onToggleService={onToggleService}
-                  onRestartService={onRestartService}
-                  onToggleTerminal={onToggleTerminal}
-                  onOpenMetrics={onOpenMetrics}
-                  onOpenConfig={onOpenConfig}
-                />
-              ))}
+              {row.map((service) =>
+                (() => {
+                  const requiredDependencies = service.startPolicy.requiredDependencies
+                  const hasRequiredDependencyIssue = requiredDependencies.some((dependencyId) => {
+                    const dependency = serviceById.get(dependencyId)
+                    return !dependency || !STARTED_DEPENDENCY_STATUSES.has(dependency.status)
+                  })
+                  const hasOptionalDependencyIssue =
+                    !hasRequiredDependencyIssue &&
+                    service.startPolicy.optionalDependencies.some((dependencyId) => {
+                      const dependency = serviceById.get(dependencyId)
+                      return !dependency || !STARTED_DEPENDENCY_STATUSES.has(dependency.status)
+                    })
+
+                  return (
+                    <ServiceCard
+                      key={service.id}
+                      service={service}
+                      metrics={metricsByService[service.id]}
+                      expanded={!isCompactService(service) && expandedIds.has(service.id)}
+                      pending={pendingIds.has(service.id)}
+                      hasRequiredDependencyIssue={hasRequiredDependencyIssue}
+                      hasStartedRequiredDependencies={
+                        requiredDependencies.length > 0 && !hasRequiredDependencyIssue
+                      }
+                      hasOptionalDependencyIssue={hasOptionalDependencyIssue}
+                      onToggleService={onToggleService}
+                      onStartService={onStartService}
+                      onRestartService={onRestartService}
+                      onToggleTerminal={onToggleTerminal}
+                      onOpenMetrics={onOpenMetrics}
+                      onOpenConfig={onOpenConfig}
+                      onOpenDependencies={onOpenDependencies}
+                    />
+                  )
+                })(),
+              )}
             </div>
 
             {row

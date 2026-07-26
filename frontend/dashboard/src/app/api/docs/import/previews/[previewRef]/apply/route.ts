@@ -7,9 +7,7 @@
  */
 import { createHash } from 'node:crypto'
 
-import { getToken } from 'next-auth/jwt'
-
-import { AUTH_KEY } from '~/const/oauth'
+import { getPhoenixToken } from '~/app/phoenix-token'
 
 import { handleApplyDocImportPreview } from '../../../../../../../lib/content-import/http'
 
@@ -18,17 +16,15 @@ export const POST = async (
   request: Request,
   context: { params: Promise<{ previewRef: string }> },
 ): Promise<Response> => {
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET, raw: false })
-  const backendToken = token?.[AUTH_KEY.TOKEN]
+  const backendToken = getPhoenixToken(request)
   if (!backendToken) return Response.json({ ok: false }, { status: 401 })
   const serverTrustSecret = process.env.GROUPHER_SERVER_TRUST_SECRET?.trim()
   const previewSecret = process.env.NEXTAUTH_SECRET?.trim()
   if (!serverTrustSecret || !previewSecret) return Response.json({ ok: false }, { status: 500 })
-  const userRef =
-    token.sub || createHash('sha256').update(String(backendToken)).digest('base64url').slice(0, 32)
+  const userRef = createHash('sha256').update(backendToken).digest('base64url').slice(0, 32)
   const { previewRef } = await context.params
   return handleApplyDocImportPreview(request, previewRef, {
-    backendToken: String(backendToken),
+    backendToken,
     previewSecret,
     serverTrustSecret,
     userRef,

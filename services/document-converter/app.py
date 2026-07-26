@@ -7,6 +7,9 @@ See docs/bulk-import/article-publish-import-refactor.md for the service boundary
 
 from __future__ import annotations
 
+import os
+import time
+
 from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -21,6 +24,8 @@ from contracts import (
 )
 from conversion import Converter, convert_upload
 from settings import Settings
+
+STARTED_AT = time.monotonic()
 
 
 def _validate_origin(request: Request, settings: Settings) -> None:
@@ -79,9 +84,18 @@ def create_app(
         return JSONResponse(status_code=422, content=payload.model_dump())
 
     @app.get("/health")
-    async def health() -> dict[str, str]:
+    async def health() -> dict[str, object]:
         """Return the stateless service health marker."""
-        return {"status": "ok"}
+        return {
+            "schemaVersion": "health.v1",
+            "status": "ok",
+            "service": "document-converter",
+            "version": os.getenv("VERCEL_GIT_COMMIT_SHA") or "dev",
+            "environment": os.getenv("ENVIRONMENT") or os.getenv("VERCEL_ENV") or "development",
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "uptimeMs": round((time.monotonic() - STARTED_AT) * 1000),
+            "checks": [],
+        }
 
     @app.post(
         "/convert",

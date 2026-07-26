@@ -43,6 +43,32 @@ const PORT_FIXTURE_SERVICE: TServiceDefinition = {
   port: 65_534,
 }
 
+const CHAIN_DEPENDENCY_SERVICE: TServiceDefinition = {
+  ...FIXTURE_SERVICE,
+  id: 'chain-dependency',
+  name: 'Chain Dependency',
+  description: 'Required service used to verify start chains.',
+}
+
+const OPTIONAL_DEPENDENCY_SERVICE: TServiceDefinition = {
+  ...FIXTURE_SERVICE,
+  id: 'optional-dependency',
+  name: 'Optional Dependency',
+  description: 'Optional service used to verify related starts.',
+}
+
+const CHAIN_TARGET_SERVICE: TServiceDefinition = {
+  ...FIXTURE_SERVICE,
+  id: 'chain-target',
+  name: 'Chain Target',
+  description: 'Service with a configured start chain.',
+  startPolicy: {
+    defaultMode: 'chain',
+    requiredDependencies: [CHAIN_DEPENDENCY_SERVICE.id],
+    optionalDependencies: [OPTIONAL_DEPENDENCY_SERVICE.id],
+  },
+}
+
 test(
   'stop gives a managed process a grace period before it exits',
   { timeout: 2_000 },
@@ -159,4 +185,57 @@ test('restart waits for the managed port to be released before starting a replac
   assert.equal(restarted.status, 'starting')
   assert.notEqual(restarted.pid, started.pid)
   assert.equal(portChecks, 5)
+})
+
+test('default start mode starts required dependencies before the target service', async (t) => {
+  const manager = new ServiceManager([
+    CHAIN_DEPENDENCY_SERVICE,
+    OPTIONAL_DEPENDENCY_SERVICE,
+    CHAIN_TARGET_SERVICE,
+  ])
+  t.after(async () => manager.shutdown())
+
+  const statuses: string[] = []
+  manager.subscribe((event) => {
+    if (event.type === 'status') statuses.push(`${event.service.id}:${event.service.status}`)
+  })
+
+  const services = await manager.startWithMode(CHAIN_TARGET_SERVICE.id)
+
+  assert.deepEqual(
+    services.map((service) => service.id),
+    [CHAIN_DEPENDENCY_SERVICE.id, CHAIN_TARGET_SERVICE.id],
+  )
+  assert.deepEqual(statuses, [
+    `${CHAIN_DEPENDENCY_SERVICE.id}:running`,
+    `${CHAIN_TARGET_SERVICE.id}:running`,
+  ])
+})
+
+test('self start mode skips configured dependencies', async (t) => {
+  const manager = new ServiceManager([CHAIN_DEPENDENCY_SERVICE, CHAIN_TARGET_SERVICE])
+  t.after(async () => manager.shutdown())
+
+  const services = await manager.startWithMode(CHAIN_TARGET_SERVICE.id, 'self')
+
+  assert.deepEqual(
+    services.map((service) => service.id),
+    [CHAIN_TARGET_SERVICE.id],
+  )
+})
+
+test('related start mode includes optional dependencies', async (t) => {
+  const manager = new ServiceManager([
+    CHAIN_DEPENDENCY_SERVICE,
+    OPTIONAL_DEPENDENCY_SERVICE,
+    CHAIN_TARGET_SERVICE,
+  ])
+  t.after(async () => manager.shutdown())
+
+  const services = await manager.startWithMode(CHAIN_TARGET_SERVICE.id, 'related')
+
+  assert.deepEqual(
+    services.map((service) => service.id),
+    [CHAIN_DEPENDENCY_SERVICE.id, OPTIONAL_DEPENDENCY_SERVICE.id, CHAIN_TARGET_SERVICE.id],
+  )
 })

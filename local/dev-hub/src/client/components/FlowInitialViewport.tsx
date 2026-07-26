@@ -9,6 +9,7 @@ type TProps = {
 }
 
 const INITIAL_ZOOM = 1
+const FLOW_INITIAL_SIDE_INSET = 56
 export const FLOW_INITIAL_TOP_INSET = 32
 
 export function FlowInitialViewport({ requestPathIds, onReady }: TProps) {
@@ -30,12 +31,16 @@ export function FlowInitialViewport({ requestPathIds, onReady }: TProps) {
     if (!requestPathNodesInitialized || viewportWidth === 0 || initializedRef.current) return
 
     const bounds = getNodesBounds(requestPathIds)
+    const zoom = Math.min(
+      INITIAL_ZOOM,
+      (viewportWidth - FLOW_INITIAL_SIDE_INSET * 2) / Math.max(bounds.width, 1),
+    )
     initializedRef.current = true
 
     void setViewport({
-      x: viewportWidth / 2 - (bounds.x + bounds.width / 2) * INITIAL_ZOOM,
-      y: FLOW_INITIAL_TOP_INSET - bounds.y * INITIAL_ZOOM,
-      zoom: INITIAL_ZOOM,
+      x: viewportWidth / 2 - (bounds.x + bounds.width / 2) * zoom,
+      y: FLOW_INITIAL_TOP_INSET - bounds.y * zoom,
+      zoom,
     }).then(() => onReady())
   }, [
     getNodesBounds,

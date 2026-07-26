@@ -66,6 +66,7 @@ defmodule GroupherServerWeb.Endpoint do
       "http://localhost:3000",
       "http://localhost:3001",
       "http://localhost:3002",
+      ~r{^https://([a-z0-9-]+\.)?groupher\.localhost$},
       ~r{^https://(.*\.?)groupher\.com$}
     ],
     # origins: "*",

@@ -1740,6 +1740,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@groupher/frontend-auth@workspace:frontend/auth":
+  version: 0.0.0-use.local
+  resolution: "@groupher/frontend-auth@workspace:frontend/auth"
+  dependencies:
+    "@auth/core": "npm:0.41.0"
+    "@groupher/frontend-core": "npm:1.0.0"
+    "@hono/node-server": "npm:^2.0.11"
+    "@types/node": "npm:^24.0.0"
+    cross-env: "npm:^10.1.0"
+    dotenv: "npm:^17.4.2"
+    esbuild: "npm:^0.28.1"
+    hono: "npm:^4.12.31"
+    rimraf: "npm:^6.1.3"
+    tsx: "npm:^4.23.1"
+  languageName: unknown
+  linkType: soft
+
 "@groupher/frontend-core@npm:1.0.0, @groupher/frontend-core@workspace:frontend/core":
   version: 0.0.0-use.local
   resolution: "@groupher/frontend-core@workspace:frontend/core"
@@ -1774,10 +1791,15 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@groupher/frontend-gateway@workspace:frontend/gateway"
   dependencies:
+    "@groupher/frontend-core": "npm:1.0.0"
+    "@hono/node-server": "npm:^2.0.11"
+    "@types/node": "npm:^24.0.0"
     cross-env: "npm:^10.1.0"
-    next: "npm:16.3.0-preview.6"
-    react: "npm:^19.2.5"
-    react-dom: "npm:^19.2.5"
+    dotenv: "npm:^17.4.2"
+    esbuild: "npm:^0.28.1"
+    hono: "npm:^4.12.31"
+    rimraf: "npm:^6.1.3"
+    tsx: "npm:^4.23.1"
   languageName: unknown
   linkType: soft
 
@@ -1994,6 +2016,7 @@ __metadata:
     oxlint: "npm:1.62.0"
     pinyin-pro: "npm:^3.28.1"
     platejs: "npm:^53.2.4"
+    portless: "npm:0.15.4"
     postcss: "npm:^8.5.10"
     promise-timeout: "npm:^1.3.0"
     prop-types: "npm:^15.5.10"
@@ -10212,7 +10235,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^17.3.1":
+"dotenv@npm:^17.3.1, dotenv@npm:^17.4.2":
   version: 17.4.2
   resolution: "dotenv@npm:17.4.2"
   checksum: 10c0/164f8e77a646c8446867d5b588d26ea6005c8ea7c5eb41cf926f6113d23f2191355f6e0cfd95ea9bab98394a5b0a3f1e51a8399711b666fe55cc7b0bd745f942
@@ -16878,6 +16901,16 @@ __metadata:
     stylefire: "npm:^7.0.1"
     tslib: "npm:^1.10.0"
   checksum: 10c0/ac31196068eb356667182be9c3f022e0cf69cda90bf6acc0de65c5c24329829f718a8b8c7d1592c9aee2da176ca9d390b2c9b63ca6aff71609e69342bc17f0c7
+  languageName: node
+  linkType: hard
+
+"portless@npm:0.15.4":
+  version: 0.15.4
+  resolution: "portless@npm:0.15.4"
+  bin:
+    portless: dist/cli.js
+  checksum: 10c0/417ebcf276b3a87339425b98430cd5002c6e3061e49acf3426d0da73c0e8f55d6ba09987fa7da65c0821ba32a3ffb6fda2414b4888228387aa62804c0dce554d
+  conditions: (os=darwin | os=linux | os=win32)
   languageName: node
   linkType: hard
 

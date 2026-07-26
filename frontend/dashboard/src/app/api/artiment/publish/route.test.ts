@@ -1,12 +1,11 @@
-import { getToken } from 'next-auth/jwt'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { AUTH_KEY } from '~/const/oauth'
+import { getPhoenixToken } from '~/app/phoenix-token'
 
 import { handleArtimentPublishRequest } from '../../../../lib/artiment-publisher/http'
 import { POST } from './route'
 
-vi.mock('next-auth/jwt', () => ({ getToken: vi.fn() }))
+vi.mock('~/app/phoenix-token', () => ({ getPhoenixToken: vi.fn() }))
 vi.mock('../../../../lib/artiment-publisher/http', () => ({
   handleArtimentPublishRequest: vi.fn(async () =>
     Response.json({
@@ -17,7 +16,7 @@ vi.mock('../../../../lib/artiment-publisher/http', () => ({
   ),
 }))
 
-const mockedGetToken = vi.mocked(getToken)
+const mockedGetPhoenixToken = vi.mocked(getPhoenixToken)
 const mockedHandleRequest = vi.mocked(handleArtimentPublishRequest)
 
 const request = () =>
@@ -39,7 +38,7 @@ const request = () =>
 
 describe('/api/artiment/publish', () => {
   beforeEach(() => {
-    mockedGetToken.mockReset()
+    mockedGetPhoenixToken.mockReset()
     mockedHandleRequest.mockClear()
     process.env.GROUPHER_SERVER_TRUST_SECRET = 'server-trust-secret'
   })
@@ -49,7 +48,7 @@ describe('/api/artiment/publish', () => {
   })
 
   it('requires an authenticated Groupher session', async () => {
-    mockedGetToken.mockResolvedValue(null)
+    mockedGetPhoenixToken.mockReturnValue(null)
 
     const response = await POST(request())
     const payload = await response.json()
@@ -62,7 +61,7 @@ describe('/api/artiment/publish', () => {
   })
 
   it('publishes for an authenticated Groupher session', async () => {
-    mockedGetToken.mockResolvedValue({ [AUTH_KEY.TOKEN]: 'backend-token' })
+    mockedGetPhoenixToken.mockReturnValue('backend-token')
 
     const response = await POST(request())
     const payload = await response.json()
@@ -83,7 +82,7 @@ describe('/api/artiment/publish', () => {
   })
 
   it('requires the Groupher server trust secret', async () => {
-    mockedGetToken.mockResolvedValue({ [AUTH_KEY.TOKEN]: 'backend-token' })
+    mockedGetPhoenixToken.mockReturnValue('backend-token')
     delete process.env.GROUPHER_SERVER_TRUST_SECRET
 
     const response = await POST(request())

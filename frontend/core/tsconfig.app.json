@@ -21,8 +21,6 @@
       "~/app/*": ["../core/app/*"],
       "~/hooks": ["../core/hooks"],
       "~/hooks/*": ["../core/hooks/*"],
-      "~/auth": ["../core/app/auth"],
-      "~/auth/*": ["../core/app/auth/*"],
       "~/config": ["../core/config"],
       "~/config/*": ["../core/config/*"],
       "~/unit": ["../core/unit"],

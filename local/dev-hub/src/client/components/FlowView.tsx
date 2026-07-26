@@ -1,9 +1,15 @@
 import '@xyflow/react/dist/style.css'
-import type { TPublicService, TServiceMetricsSnapshot, TServiceRelation } from '@shared/contracts'
-import { Background, BackgroundVariant, Controls, MarkerType, ReactFlow } from '@xyflow/react'
+import type {
+  TPublicService,
+  TServiceMetricsSnapshot,
+  TServiceRelation,
+  TServiceStartMode,
+} from '@shared/contracts'
+import { Background, BackgroundVariant, MarkerType, ReactFlow } from '@xyflow/react'
 import { type CSSProperties, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { layoutServiceFlow } from '@/lib/flow-layout'
+import { FLOW_NODE_WIDTH, FLOW_USERS_TO_GATEWAY_OFFSET } from '@/lib/flow-metrics'
 
 import type { TFlowEdge, TFlowLayout, TFlowNode } from './flow-spec'
 import { FlowCanvasSizer } from './FlowCanvasSizer'
@@ -12,6 +18,7 @@ import { FlowLaneNote } from './FlowLaneNote'
 import { FlowNavigator } from './FlowNavigator'
 import { FLOW_EDGE_COLOR, FlowRelationEdge } from './FlowRelationEdge'
 import { FlowServiceNode } from './FlowServiceNode'
+import { FlowUsersNode } from './FlowUsersNode'
 import { TerminalPanel } from './TerminalPanel'
 
 type TProps = {
@@ -21,20 +28,24 @@ type TProps = {
   expandedIds: Set<string>
   pendingIds: Set<string>
   onToggleService: (service: TPublicService) => void
+  onStartService: (service: TPublicService, mode: TServiceStartMode | 'default') => void
   onRestartService: (service: TPublicService) => void
   onToggleTerminal: (id: string) => void
   onOpenMetrics: (id: string) => void
   onOpenConfig: (id: string) => void
+  onOpenDependencies: (id: string) => void
 }
 
 const NODE_TYPES = {
   service: FlowServiceNode,
   'lane-note': FlowLaneNote,
+  users: FlowUsersNode,
 }
 const EDGE_TYPES = {
   relation: FlowRelationEdge,
 }
 const EDGE_LANE_GAP = 34
+const USERS_GATEWAY_RELATION_ID = 'users-gateway'
 const FLOW_LAYOUT_CACHE = new Map<string, TFlowLayout>()
 const FLOW_LAYOUT_REQUEST_CACHE = new Map<string, Promise<TFlowLayout>>()
 
@@ -43,6 +54,7 @@ const isCompactService = (service: TPublicService): boolean =>
 
 const isLiveService = (service: TPublicService | undefined): boolean =>
   Boolean(service && ['running', 'external'].includes(service.status))
+const STARTED_DEPENDENCY_STATUSES = new Set<TPublicService['status']>(['running', 'external'])
 
 const getFlowLayoutKey = (
   services: Pick<TPublicService, 'id' | 'status'>[],
@@ -83,10 +95,12 @@ export function FlowView({
   expandedIds,
   pendingIds,
   onToggleService,
+  onStartService,
   onRestartService,
   onToggleTerminal,
   onOpenMetrics,
   onOpenConfig,
+  onOpenDependencies,
 }: TProps) {
   const layoutServices = useMemo(
     () => services.map(({ id, status }) => ({ id, status })),
@@ -219,7 +233,13 @@ export function FlowView({
       ),
     [relations],
   )
-  const requestPathIds = useMemo(() => coreNodes.map((node) => node.id), [coreNodes])
+  const requestPathIds = useMemo(
+    () =>
+      services.some((service) => service.id === 'gateway')
+        ? [USERS_GATEWAY_RELATION_ID, ...coreNodes.map((node) => node.id)]
+        : coreNodes.map((node) => node.id),
+    [coreNodes, services],
+  )
   const handleCanvasHeightChange = useCallback((height: number) => {
     setCanvasContentHeight(height)
   }, [])
@@ -239,29 +259,79 @@ export function FlowView({
   const nodes = useMemo<TFlowNode[]>(() => {
     if (!layout) return []
 
-    const serviceNodes: TFlowNode[] = services.map((service) => ({
-      id: service.id,
-      type: 'service',
-      position: layout.positions[service.id] || { x: 0, y: 0 },
-      style: { width: 384, pointerEvents: 'all' },
-      draggable: false,
-      selectable: false,
-      focusable: false,
-      ariaLabel: `${service.name} service`,
-      data: {
-        service,
-        metrics: metricsByService[service.id],
-        expanded: !isCompactService(service) && expandedIds.has(service.id),
-        pending: pendingIds.has(service.id),
-        incomingRelationIds: relationIdsByService.incoming.get(service.id) || [],
-        outgoingRelationIds: relationIdsByService.outgoing.get(service.id) || [],
-        onToggleService,
-        onRestartService,
-        onToggleTerminal,
-        onOpenMetrics,
-        onOpenConfig,
-      },
-    }))
+    const serviceNodes: TFlowNode[] = []
+
+    if (layout.positions.gateway) {
+      serviceNodes.push({
+        id: USERS_GATEWAY_RELATION_ID,
+        type: 'users',
+        position: {
+          x: layout.positions.gateway.x,
+          y: Math.max(0, layout.positions.gateway.y - FLOW_USERS_TO_GATEWAY_OFFSET),
+        },
+        style: { width: FLOW_NODE_WIDTH, pointerEvents: 'all' },
+        draggable: false,
+        selectable: false,
+        focusable: false,
+        ariaLabel: 'Users',
+        data: {
+          outgoingRelationId: USERS_GATEWAY_RELATION_ID,
+        },
+      })
+    }
+
+    const flowServiceNodes: TFlowNode[] = services.map((service) => {
+      const requiredDependencies = service.startPolicy.requiredDependencies
+      const hasRequiredDependencyIssue = requiredDependencies.some((dependencyId) => {
+        const dependency = serviceById.get(dependencyId)
+        return !dependency || !STARTED_DEPENDENCY_STATUSES.has(dependency.status)
+      })
+      const hasOptionalDependencyIssue =
+        !hasRequiredDependencyIssue &&
+        service.startPolicy.optionalDependencies.some((dependencyId) => {
+          const dependency = serviceById.get(dependencyId)
+          return !dependency || !STARTED_DEPENDENCY_STATUSES.has(dependency.status)
+        })
+
+      return {
+        id: service.id,
+        type: 'service',
+        position: layout.positions[service.id] || { x: 0, y: 0 },
+        style: { width: FLOW_NODE_WIDTH, pointerEvents: 'all' },
+        draggable: false,
+        selectable: false,
+        focusable: false,
+        ariaLabel: `${service.name} service`,
+        data: {
+          service,
+          metrics: metricsByService[service.id],
+          expanded: !isCompactService(service) && expandedIds.has(service.id),
+          compact: false,
+          pending: pendingIds.has(service.id),
+          hasRequiredDependencyIssue,
+          hasStartedRequiredDependencies:
+            requiredDependencies.length > 0 && !hasRequiredDependencyIssue,
+          hasOptionalDependencyIssue,
+          incomingRelationIds:
+            service.id === 'gateway'
+              ? [
+                  USERS_GATEWAY_RELATION_ID,
+                  ...(relationIdsByService.incoming.get(service.id) || []),
+                ]
+              : relationIdsByService.incoming.get(service.id) || [],
+          outgoingRelationIds: relationIdsByService.outgoing.get(service.id) || [],
+          onToggleService,
+          onStartService,
+          onRestartService,
+          onToggleTerminal,
+          onOpenMetrics,
+          onOpenConfig,
+          onOpenDependencies,
+        },
+      }
+    })
+
+    serviceNodes.push(...flowServiceNodes)
 
     if (layout.laneNotePosition) {
       serviceNodes.push({
@@ -284,46 +354,85 @@ export function FlowView({
     layout,
     metricsByService,
     onOpenConfig,
+    onOpenDependencies,
     onOpenMetrics,
     onRestartService,
+    onStartService,
     onToggleService,
     onToggleTerminal,
     pendingIds,
     relationIdsByService,
+    serviceById,
     services,
   ])
 
-  const edges = useMemo<TFlowEdge[]>(
-    () =>
-      relations.flatMap((relation) => {
-        const source = serviceById.get(relation.source)
-        const target = serviceById.get(relation.target)
-        if (!source || !target) return []
+  const edges = useMemo<TFlowEdge[]>(() => {
+    const relationEdges = relations.flatMap((relation): TFlowEdge[] => {
+      const source = serviceById.get(relation.source)
+      const target = serviceById.get(relation.target)
+      if (!source || !target) return []
 
-        const live = isLiveService(source) && isLiveService(target)
-        const color = live ? FLOW_EDGE_COLOR.active : FLOW_EDGE_COLOR.inactive
+      const live = isLiveService(source) && isLiveService(target)
+      const color = live ? FLOW_EDGE_COLOR.active : FLOW_EDGE_COLOR.inactive
 
-        return [
-          {
-            id: relation.id,
-            source: relation.source,
-            target: relation.target,
-            sourceHandle: relation.id,
-            targetHandle: relation.id,
-            type: 'relation',
-            label: relation.label,
-            data: { live, laneOffset: laneOffsetByRelation.get(relation.id) || 0 },
-            markerEnd: {
-              type: MarkerType.ArrowClosed,
-              width: 16,
-              height: 16,
-              color,
-            },
+      return [
+        {
+          id: relation.id,
+          source: relation.source,
+          target: relation.target,
+          sourceHandle: relation.id,
+          targetHandle: relation.id,
+          type: 'relation',
+          label: relation.label,
+          data: {
+            live,
+            laneOffset: laneOffsetByRelation.get(relation.id) || 0,
+            relationId: relation.id,
+            sourceId: relation.source,
+            targetId: relation.target,
           },
-        ]
-      }),
-    [laneOffsetByRelation, relations, serviceById],
-  )
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 16,
+            height: 16,
+            color,
+          },
+        },
+      ]
+    })
+
+    const gateway = serviceById.get('gateway')
+    if (!gateway) return relationEdges
+
+    const live = isLiveService(gateway)
+    const color = live ? FLOW_EDGE_COLOR.active : FLOW_EDGE_COLOR.inactive
+
+    return [
+      {
+        id: USERS_GATEWAY_RELATION_ID,
+        source: USERS_GATEWAY_RELATION_ID,
+        target: 'gateway',
+        sourceHandle: USERS_GATEWAY_RELATION_ID,
+        targetHandle: USERS_GATEWAY_RELATION_ID,
+        type: 'relation',
+        label: 'users',
+        data: {
+          live,
+          laneOffset: 0,
+          relationId: USERS_GATEWAY_RELATION_ID,
+          sourceId: USERS_GATEWAY_RELATION_ID,
+          targetId: 'gateway',
+        },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          width: 16,
+          height: 16,
+          color,
+        },
+      },
+      ...relationEdges,
+    ]
+  }, [laneOffsetByRelation, relations, serviceById])
 
   const expandedServices = services.filter(
     (service) => !isCompactService(service) && expandedIds.has(service.id),
@@ -370,7 +479,6 @@ export function FlowView({
             size={1}
             color='rgba(92, 92, 88, 0.2)'
           />
-          <Controls showInteractive={false} />
         </ReactFlow>
       </div>
 

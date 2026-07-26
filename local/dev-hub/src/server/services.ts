@@ -6,10 +6,16 @@ import type {
   TMetricThresholds,
   TServiceGroup,
   TServiceRelation,
+  TServiceStartPolicy,
   TTechnologyStack,
 } from '../shared/contracts.ts'
 
 export type TServiceConfigDefinition =
+  | {
+      kind: 'env-files'
+      root: string
+      environment: 'development'
+    }
   | {
       kind: 'next-env'
       root: string
@@ -41,8 +47,13 @@ export type TServiceDefinition = {
   config?: TServiceConfigDefinition
   port?: number
   url?: string
+  appUrl?: string
+  portlessName?: string
+  portlessUrl?: string
+  portlessAppUrl?: string
   unavailableReason?: string
   metrics: TMetricThresholds
+  startPolicy?: Partial<TServiceStartPolicy>
 }
 
 export const REPO_ROOT = fileURLToPath(new URL('../../../../', import.meta.url))
@@ -62,43 +73,70 @@ const BACKEND_METRICS: TMetricThresholds = {
   browserHeapBytes: 512 * MB,
 }
 
+const APP_CHAIN_POLICY = {
+  defaultMode: 'chain',
+  requiredDependencies: ['gateway', 'auth', 'phoenix'],
+  optionalDependencies: ['document-converter'],
+} satisfies TServiceStartPolicy
+
 export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
   {
-    id: 'main',
-    name: 'Main',
-    description: 'Community-facing application',
+    id: 'gateway',
+    name: 'Gateway',
+    description: 'Routing and edge application',
     group: 'frontend',
-    monogram: 'MN',
-    technologies: ['nextjs', 'react', 'typescript', 'tailwindcss'],
+    monogram: 'GW',
+    technologies: ['hono', 'nodejs', 'typescript', 'routing'],
     cwd: REPO_ROOT,
     config: {
-      kind: 'next-env',
-      root: fromRoot('frontend/main'),
+      kind: 'env-files',
+      root: fromRoot('frontend/gateway'),
       environment: 'development',
     },
-    command: 'make',
-    args: ['fe.dev.main'],
-    port: 3000,
-    url: 'http://localhost:3000',
+    command: 'yarn',
+    args: ['run', 'dev:gateway'],
+    env: {
+      PORT: '3003',
+      NEXT_PUBLIC_SITE_URL: 'https://groupher.localhost',
+      LANDING_SITE: 'http://127.0.0.1:3002',
+      MAIN_SITE: 'http://127.0.0.1:3000',
+      DASHBOARD_SITE: 'http://127.0.0.1:3001',
+      AUTH_SITE: 'http://127.0.0.1:3004',
+      API_SITE: 'http://127.0.0.1:4001',
+    },
+    port: 3003,
+    url: 'http://127.0.0.1:3003/health',
+    appUrl: 'http://127.0.0.1:3003/',
+    portlessName: 'groupher',
+    portlessUrl: 'https://groupher.localhost/health',
+    portlessAppUrl: 'https://groupher.localhost/',
     metrics: FRONTEND_METRICS,
   },
   {
-    id: 'dashboard',
-    name: 'Dashboard',
-    description: 'Community administration workspace',
+    id: 'auth',
+    name: 'Auth',
+    description: 'OAuth and browser session boundary',
     group: 'frontend',
-    monogram: 'DS',
-    technologies: ['nextjs', 'react', 'typescript', 'tailwindcss'],
+    monogram: 'AU',
+    technologies: ['hono', 'authjs', 'typescript', 'oauth'],
     cwd: REPO_ROOT,
     config: {
-      kind: 'next-env',
-      root: fromRoot('frontend/dashboard'),
+      kind: 'env-files',
+      root: fromRoot('frontend/auth'),
       environment: 'development',
     },
     command: 'make',
-    args: ['fe.dev.dsb'],
-    port: 3001,
-    url: 'http://localhost:3001/home/dashboard',
+    args: ['fe.dev.auth'],
+    env: {
+      PORT: '3004',
+      AUTH_URL: 'https://groupher.localhost',
+      PHOENIX_GRAPHQL_ENDPOINT: 'http://127.0.0.1:4001/graphiql',
+      AUTH_COOKIE_DOMAIN: '.groupher.localhost',
+    },
+    port: 3004,
+    url: 'http://127.0.0.1:3004/health',
+    portlessName: 'auth',
+    portlessUrl: 'https://auth.groupher.localhost/health',
     metrics: FRONTEND_METRICS,
   },
   {
@@ -117,34 +155,60 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     command: 'make',
     args: ['fe.dev.landing'],
     port: 3002,
-    url: 'http://localhost:3002',
+    url: 'http://127.0.0.1:3002/health',
+    appUrl: 'http://127.0.0.1:3002/',
+    portlessName: 'landing',
+    portlessUrl: 'https://landing.groupher.localhost/health',
+    portlessAppUrl: 'https://landing.groupher.localhost/',
     metrics: FRONTEND_METRICS,
   },
   {
-    id: 'gateway',
-    name: 'Gateway',
-    description: 'Routing and edge application',
+    id: 'main',
+    name: 'Main',
+    description: 'Community-facing application',
     group: 'frontend',
-    monogram: 'GW',
-    technologies: ['nextjs', 'react', 'typescript', 'nodejs'],
+    monogram: 'MN',
+    technologies: ['nextjs', 'react', 'typescript', 'tailwindcss'],
     cwd: REPO_ROOT,
     config: {
       kind: 'next-env',
-      root: fromRoot('frontend/gateway'),
+      root: fromRoot('frontend/main'),
       environment: 'development',
     },
-    command: 'yarn',
-    args: ['run', 'dev:gateway'],
-    env: {
-      PORT: '3003',
-      NEXT_PUBLIC_SITE_URL: 'http://localhost:3003',
-      LANDING_SITE: 'http://localhost:3002',
-      MAIN_SITE: 'http://localhost:3000',
-      DASHBOARD_SITE: 'http://localhost:3001',
-    },
-    port: 3003,
-    url: 'http://localhost:3003',
+    command: 'make',
+    args: ['fe.dev.main'],
+    port: 3000,
+    url: 'http://127.0.0.1:3000/health',
+    appUrl: 'http://127.0.0.1:3000/home',
+    portlessName: 'main',
+    portlessUrl: 'https://main.groupher.localhost/health',
+    portlessAppUrl: 'https://main.groupher.localhost/home',
     metrics: FRONTEND_METRICS,
+    startPolicy: APP_CHAIN_POLICY,
+  },
+  {
+    id: 'dashboard',
+    name: 'Dashboard',
+    description: 'Community administration workspace',
+    group: 'frontend',
+    monogram: 'DS',
+    technologies: ['nextjs', 'react', 'typescript', 'tailwindcss'],
+    cwd: REPO_ROOT,
+    config: {
+      kind: 'next-env',
+      root: fromRoot('frontend/dashboard'),
+      environment: 'development',
+    },
+    command: 'make',
+    args: ['fe.dev.dsb'],
+    port: 3001,
+    url: 'http://127.0.0.1:3001/health',
+    appUrl: 'http://127.0.0.1:3001/home/dashboard',
+    portlessName: 'dashboard',
+    portlessUrl: 'https://dashboard.groupher.localhost/health',
+    portlessAppUrl: 'https://dashboard.groupher.localhost/home/dashboard',
+    metrics: FRONTEND_METRICS,
+    startPolicy: APP_CHAIN_POLICY,
   },
   {
     id: 'inspire-me',
@@ -162,7 +226,11 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     command: 'yarn',
     args: ['workspace', '@groupher/local-inspire-me', 'dev', '-p', '3010'],
     port: 3010,
-    url: 'http://localhost:3010/canny',
+    url: 'http://127.0.0.1:3010/health',
+    appUrl: 'http://127.0.0.1:3010/',
+    portlessName: 'inspire-me',
+    portlessUrl: 'https://inspire-me.groupher.localhost/health',
+    portlessAppUrl: 'https://inspire-me.groupher.localhost/',
     metrics: FRONTEND_METRICS,
   },
   {
@@ -181,7 +249,9 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     command: 'make',
     args: ['be.start'],
     port: 4001,
-    url: 'http://localhost:4001/graphiql',
+    url: 'http://127.0.0.1:4001/health',
+    portlessName: 'api',
+    portlessUrl: 'https://api.groupher.localhost/health',
     metrics: BACKEND_METRICS,
   },
   {
@@ -207,7 +277,9 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     command: existsSync(converterExecutable) ? converterExecutable : undefined,
     args: ['app:app', '--reload', '--port', '8000'],
     port: 8000,
-    url: 'http://localhost:8000/health',
+    url: 'http://127.0.0.1:8000/health',
+    portlessName: 'converter',
+    portlessUrl: 'https://converter.groupher.localhost/health',
     unavailableReason: existsSync(converterExecutable)
       ? undefined
       : 'Python 3.12 environment is not installed at services/document-converter/.venv.',
@@ -230,6 +302,13 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
 
 export const SERVICE_RELATIONS: TServiceRelation[] = [
   {
+    id: 'gateway-auth',
+    source: 'gateway',
+    target: 'auth',
+    kind: 'route',
+    label: '/api/auth/*',
+  },
+  {
     id: 'gateway-landing',
     source: 'gateway',
     target: 'landing',
@@ -237,10 +316,17 @@ export const SERVICE_RELATIONS: TServiceRelation[] = [
     label: '/, /pricing, /book-demo',
   },
   {
-    id: 'gateway-dashboard',
-    source: 'gateway',
+    id: 'auth-main',
+    source: 'auth',
+    target: 'main',
+    kind: 'auth',
+    label: 'signed-in session',
+  },
+  {
+    id: 'auth-dashboard',
+    source: 'auth',
     target: 'dashboard',
-    kind: 'route',
+    kind: 'auth',
     label: '/:community/dashboard/*',
   },
   {

@@ -5,6 +5,7 @@
 build
 frontend/**/out/
 local/**/dist/
+frontend/auth/dist/
 local/**/.data/
 **/target/
 **/*.app/

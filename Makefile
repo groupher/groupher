@@ -32,7 +32,7 @@ dev.app:
 
 # main
 fe.dev.main:
-	PORT=3000 NEXT_PUBLIC_SITE_URL=http://localhost:3000 yarn run dev:main
+	PORT=3000 NEXT_PUBLIC_SITE_URL=https://groupher.localhost yarn run dev:main
 
 fe.build.main:
 	yarn run build:prod:main
@@ -42,7 +42,7 @@ fe.serve.main:
 
 # dashboard
 fe.dev.dashboard:
-	PORT=3001 NEXT_PUBLIC_SITE_URL=http://localhost:3001/dashboard yarn run dev:dashboard
+	PORT=3001 NEXT_PUBLIC_SITE_URL=https://groupher.localhost yarn run dev:dashboard
 
 fe.build.dashboard:
 	yarn run build:prod:dashboard
@@ -79,6 +79,13 @@ fe.build.dsb: fe.build.dashboard
 fe.serve.dsb: fe.serve.dashboard
 fe.test.dsb: fe.test.dashboard
 fe.e2e.dsb: fe.e2e.dashboard
+
+# auth
+fe.dev.auth:
+	PORT=3004 AUTH_URL=https://groupher.localhost yarn run dev:auth
+
+fe.build.auth:
+	yarn run build:prod:auth
 
 # backend
 # mix ecto.setup

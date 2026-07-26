@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://groupher.com/contracts/services/health/schemas/v1.schema.json",
+  "title": "Groupher Health Response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "status",
+    "service",
+    "version",
+    "environment",
+    "timestamp",
+    "uptimeMs",
+    "checks"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "health.v1"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["ok", "limited", "down"]
+    },
+    "service": {
+      "type": "string",
+      "enum": [
+        "gateway",
+        "auth",
+        "landing",
+        "main",
+        "dashboard",
+        "inspire-me",
+        "phoenix",
+        "document-converter"
+      ]
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "environment": {
+      "type": "string",
+      "minLength": 1
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "uptimeMs": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/check"
+      }
+    }
+  },
+  "$defs": {
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "status"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ok", "limited", "down"]
+        },
+        "latencyMs": {
+          "type": "number",
+          "minimum": 0
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

@@ -93,7 +93,7 @@ token 由 Phoenix 针对具体服务和操作签发。两者不能混用。
 | [`document-converter`](./document-converter.md) | Python/FastAPI            | 无独立 UI              | 单文件到 Markdown 的格式转换       | 已有独立服务                     |
 | [`assets-hub`](./assets-hub.md)                 | Node/Hono                 | Dashboard              | 上传、校验、媒体处理和多存储执行层 | 规划中                           |
 | [`apply`](./apply.md)                           | 独立 Next.js 前端         | 独立 UI                | 社区申请与创建流程                 | 规划中                           |
-| [`auth`](./auth.md)                             | Next.js/Auth.js           | 独立系统 UI            | OAuth、登录和统一会话入口          | Main/Dashboard 当前为函数级复用  |
+| [`auth`](./auth.md)                             | Node/Hono + Auth.js       | 独立系统 UI            | OAuth、登录和统一会话入口          | 已建立独立应用并由 Gateway 接入  |
 | [`content-press`](./content-press.md)           | Node/Hono                 | Dashboard 配置         | 单向、静态、官方内容输出           | 规划中                           |
 | [`posthouse`](./posthouse.md)                   | Node/Hono                 | Dashboard Integrations | Webhook、IM 和邮件的收发中心       | 规划中                           |
 | [`ai`](./ai.md)                                 | Node/Hono                 | Dashboard、Docs 和 IM  | AI 能力编排和 provider 适配        | 规划中                           |

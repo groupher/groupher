@@ -2,16 +2,20 @@ export type TServiceGroup = 'frontend' | 'backend'
 
 export type TTechnology =
   | 'absinthe'
+  | 'authjs'
   | 'elixir'
   | 'fastapi'
   | 'graphql'
+  | 'hono'
   | 'markitdown'
   | 'nextjs'
   | 'nodejs'
+  | 'oauth'
   | 'phoenix'
   | 'postgresql'
   | 'python'
   | 'react'
+  | 'routing'
   | 'tailwindcss'
   | 'typescript'
   | 'uvicorn'
@@ -27,7 +31,15 @@ export type TServiceStatus =
   | 'error'
   | 'unavailable'
 
-export type TServiceRelationKind = 'route' | 'api'
+export type TServiceStartMode = 'self' | 'chain' | 'related'
+
+export type TServiceStartPolicy = {
+  defaultMode: TServiceStartMode
+  requiredDependencies: string[]
+  optionalDependencies: string[]
+}
+
+export type TServiceRelationKind = 'route' | 'api' | 'auth'
 
 export type TServiceRelation = {
   id: string
@@ -63,6 +75,10 @@ export type TPublicService = {
   technologies: TTechnologyStack | null
   port: number | null
   url: string | null
+  appUrl: string | null
+  portlessName: string | null
+  portlessUrl: string | null
+  portlessAppUrl: string | null
   status: TServiceStatus
   pid: number | null
   startedAt: number | null
@@ -71,6 +87,7 @@ export type TPublicService = {
   canStart: boolean
   unavailableReason: string | null
   metricThresholds: TMetricThresholds
+  startPolicy: TServiceStartPolicy
 }
 
 export type TGitDiffScope = 'all' | 'staged' | 'unstaged'
@@ -99,7 +116,12 @@ export type TGitDiffPayload = {
   revision: number
 }
 
-export type TServiceConfigKind = 'next-env' | 'elixir-config' | 'python-settings' | 'none'
+export type TServiceConfigKind =
+  | 'env-files'
+  | 'next-env'
+  | 'elixir-config'
+  | 'python-settings'
+  | 'none'
 
 export type TServiceConfigFileGroup = 'active' | 'other' | 'template'
 
