@@ -34,7 +34,11 @@ export function DependencySection({ title, empty, services }: TProps) {
                 <strong>{service.name}</strong>
                 <span>{service.description}</span>
               </span>
-              <span className='dependency-status-label'>{STATUS_LABEL[service.status]}</span>
+              <span
+                className={`dependency-status-label dependency-status-label--${service.status}`}
+              >
+                {STATUS_LABEL[service.status]}
+              </span>
             </li>
           ))}
         </ul>

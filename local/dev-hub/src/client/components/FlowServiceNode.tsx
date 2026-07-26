@@ -83,6 +83,9 @@ export function FlowServiceNode({ data }: TFlowNodeProps) {
         expanded={data.expanded}
         compact={data.compact}
         pending={data.pending}
+        hasRequiredDependencyIssue={data.hasRequiredDependencyIssue}
+        hasStartedRequiredDependencies={data.hasStartedRequiredDependencies}
+        hasOptionalDependencyIssue={data.hasOptionalDependencyIssue}
         onToggleService={data.onToggleService}
         onStartService={data.onStartService}
         onRestartService={data.onRestartService}

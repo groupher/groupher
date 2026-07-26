@@ -54,6 +54,7 @@ const isCompactService = (service: TPublicService): boolean =>
 
 const isLiveService = (service: TPublicService | undefined): boolean =>
   Boolean(service && ['running', 'external'].includes(service.status))
+const STARTED_DEPENDENCY_STATUSES = new Set<TPublicService['status']>(['running', 'external'])
 
 const getFlowLayoutKey = (
   services: Pick<TPublicService, 'id' | 'status'>[],
@@ -279,35 +280,56 @@ export function FlowView({
       })
     }
 
-    const flowServiceNodes: TFlowNode[] = services.map((service) => ({
-      id: service.id,
-      type: 'service',
-      position: layout.positions[service.id] || { x: 0, y: 0 },
-      style: { width: FLOW_NODE_WIDTH, pointerEvents: 'all' },
-      draggable: false,
-      selectable: false,
-      focusable: false,
-      ariaLabel: `${service.name} service`,
-      data: {
-        service,
-        metrics: metricsByService[service.id],
-        expanded: !isCompactService(service) && expandedIds.has(service.id),
-        compact: false,
-        pending: pendingIds.has(service.id),
-        incomingRelationIds:
-          service.id === 'gateway'
-            ? [USERS_GATEWAY_RELATION_ID, ...(relationIdsByService.incoming.get(service.id) || [])]
-            : relationIdsByService.incoming.get(service.id) || [],
-        outgoingRelationIds: relationIdsByService.outgoing.get(service.id) || [],
-        onToggleService,
-        onStartService,
-        onRestartService,
-        onToggleTerminal,
-        onOpenMetrics,
-        onOpenConfig,
-        onOpenDependencies,
-      },
-    }))
+    const flowServiceNodes: TFlowNode[] = services.map((service) => {
+      const requiredDependencies = service.startPolicy.requiredDependencies
+      const hasRequiredDependencyIssue = requiredDependencies.some((dependencyId) => {
+        const dependency = serviceById.get(dependencyId)
+        return !dependency || !STARTED_DEPENDENCY_STATUSES.has(dependency.status)
+      })
+      const hasOptionalDependencyIssue =
+        !hasRequiredDependencyIssue &&
+        service.startPolicy.optionalDependencies.some((dependencyId) => {
+          const dependency = serviceById.get(dependencyId)
+          return !dependency || !STARTED_DEPENDENCY_STATUSES.has(dependency.status)
+        })
+
+      return {
+        id: service.id,
+        type: 'service',
+        position: layout.positions[service.id] || { x: 0, y: 0 },
+        style: { width: FLOW_NODE_WIDTH, pointerEvents: 'all' },
+        draggable: false,
+        selectable: false,
+        focusable: false,
+        ariaLabel: `${service.name} service`,
+        data: {
+          service,
+          metrics: metricsByService[service.id],
+          expanded: !isCompactService(service) && expandedIds.has(service.id),
+          compact: false,
+          pending: pendingIds.has(service.id),
+          hasRequiredDependencyIssue,
+          hasStartedRequiredDependencies:
+            requiredDependencies.length > 0 && !hasRequiredDependencyIssue,
+          hasOptionalDependencyIssue,
+          incomingRelationIds:
+            service.id === 'gateway'
+              ? [
+                  USERS_GATEWAY_RELATION_ID,
+                  ...(relationIdsByService.incoming.get(service.id) || []),
+                ]
+              : relationIdsByService.incoming.get(service.id) || [],
+          outgoingRelationIds: relationIdsByService.outgoing.get(service.id) || [],
+          onToggleService,
+          onStartService,
+          onRestartService,
+          onToggleTerminal,
+          onOpenMetrics,
+          onOpenConfig,
+          onOpenDependencies,
+        },
+      }
+    })
 
     serviceNodes.push(...flowServiceNodes)
 
@@ -340,6 +362,7 @@ export function FlowView({
     onToggleTerminal,
     pendingIds,
     relationIdsByService,
+    serviceById,
     services,
   ])
 

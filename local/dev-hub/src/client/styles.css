@@ -1666,6 +1666,57 @@ button {
   box-shadow: 0 0 0 1px rgb(89 108 242 / 10%);
 }
 
+.service-terminal-action.has-required-dependency-issue {
+  color: var(--color-destructive-foreground);
+}
+
+.service-terminal-action.has-required-dependency-issue::before {
+  background: #fff0ee;
+  box-shadow: 0 0 0 1px rgb(210 77 77 / 10%);
+}
+
+.service-terminal-action.has-required-dependency-issue:hover {
+  color: var(--color-destructive-foreground);
+}
+
+.service-terminal-action.has-required-dependency-issue:hover::before {
+  background: #ffe8e4;
+  box-shadow: 0 0 0 1px rgb(210 77 77 / 14%);
+}
+
+.service-terminal-action.has-started-required-dependencies {
+  color: var(--color-success-foreground);
+}
+
+.service-terminal-action.has-started-required-dependencies::before {
+  background: #edf8f0;
+  box-shadow: 0 0 0 1px rgb(76 154 103 / 10%);
+}
+
+.service-terminal-action.has-started-required-dependencies:hover {
+  color: var(--color-success-foreground);
+}
+
+.service-terminal-action.has-started-required-dependencies:hover::before {
+  background: #e1f2e6;
+  box-shadow: 0 0 0 1px rgb(76 154 103 / 14%);
+}
+
+.service-terminal-action.has-optional-dependency-issue::after {
+  position: absolute;
+  right: 3px;
+  bottom: 4px;
+  z-index: 2;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--color-warning);
+  box-shadow:
+    0 0 0 2px #ffffff,
+    0 0 0 3px rgb(199 139 56 / 18%);
+  content: '';
+}
+
 .service-terminal-action[aria-disabled='true'] {
   color: #aaa9a5;
   cursor: not-allowed;
@@ -2458,17 +2509,18 @@ button {
 
 .dependency-status-dot--running,
 .dependency-status-dot--external {
-  background: #4c9a67;
+  background: var(--color-success);
 }
 
-.dependency-status-dot--starting {
-  background: #c78b38;
+.dependency-status-dot--starting,
+.dependency-status-dot--stopping {
+  background: var(--color-warning);
 }
 
-.dependency-status-dot--stopping,
 .dependency-status-dot--stopped,
-.dependency-status-dot--error {
-  background: #d24d4d;
+.dependency-status-dot--error,
+.dependency-status-dot--unavailable {
+  background: var(--color-destructive);
 }
 
 .dependency-copy {
@@ -2499,6 +2551,22 @@ button {
   color: var(--ink-muted);
   font-size: 12px;
   font-weight: 650;
+}
+
+.dependency-status-label--running,
+.dependency-status-label--external {
+  color: var(--color-success-foreground);
+}
+
+.dependency-status-label--starting,
+.dependency-status-label--stopping {
+  color: var(--color-warning-foreground);
+}
+
+.dependency-status-label--stopped,
+.dependency-status-label--error,
+.dependency-status-label--unavailable {
+  color: var(--color-destructive-foreground);
 }
 
 .dependency-empty {

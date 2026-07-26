@@ -28,6 +28,9 @@ type TProps = {
   expanded: boolean
   compact?: boolean
   pending: boolean
+  hasRequiredDependencyIssue: boolean
+  hasStartedRequiredDependencies: boolean
+  hasOptionalDependencyIssue: boolean
   onToggleService: (service: TPublicService) => void
   onStartService: (service: TPublicService, mode: TServiceStartMode | 'default') => void
   onRestartService: (service: TPublicService) => void
@@ -69,6 +72,9 @@ export function ServiceCard({
   expanded,
   compact: compactOverride = false,
   pending,
+  hasRequiredDependencyIssue,
+  hasStartedRequiredDependencies,
+  hasOptionalDependencyIssue,
   onToggleService,
   onStartService,
   onRestartService,
@@ -267,7 +273,11 @@ export function ServiceCard({
                   {hasDependencies ? (
                     <ServiceActionButton
                       type='button'
-                      className='service-terminal-action'
+                      className={`service-terminal-action ${
+                        hasRequiredDependencyIssue ? 'has-required-dependency-issue' : ''
+                      } ${
+                        hasStartedRequiredDependencies ? 'has-started-required-dependencies' : ''
+                      } ${hasOptionalDependencyIssue ? 'has-optional-dependency-issue' : ''}`}
                       onClick={() => onOpenDependencies(service.id)}
                       aria-label={`View ${service.name} dependencies`}
                       tooltip='Dependencies'

@@ -7,6 +7,9 @@ export type TFlowServiceNodeData = Record<string, unknown> & {
   expanded: boolean
   compact: boolean
   pending: boolean
+  hasRequiredDependencyIssue: boolean
+  hasStartedRequiredDependencies: boolean
+  hasOptionalDependencyIssue: boolean
   incomingRelationIds: string[]
   outgoingRelationIds: string[]
   onToggleService: (service: TPublicService) => void

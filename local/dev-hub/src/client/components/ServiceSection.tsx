@@ -34,6 +34,7 @@ const ACTIVE_SERVICE_STATUSES = new Set<TPublicService['status']>([
   'starting',
   'external',
 ])
+const STARTED_DEPENDENCY_STATUSES = new Set<TPublicService['status']>(['running', 'external'])
 
 const isCompactService = (service: TPublicService) =>
   service.status === 'stopped' || service.status === 'unavailable'
@@ -84,6 +85,7 @@ export function ServiceSection({
 }: TProps) {
   const servicesPerRow = useServicesPerRow()
   const groupedServices = services.filter((service) => service.group === group)
+  const serviceById = new Map(services.map((service) => [service.id, service]))
   const activeCount = groupedServices.filter((service) =>
     ACTIVE_SERVICE_STATUSES.has(service.status),
   ).length
@@ -118,22 +120,43 @@ export function ServiceSection({
         {rows.map((row) => (
           <div className='service-row' key={row.map((service) => service.id).join('-')}>
             <div className='service-grid'>
-              {row.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  service={service}
-                  metrics={metricsByService[service.id]}
-                  expanded={!isCompactService(service) && expandedIds.has(service.id)}
-                  pending={pendingIds.has(service.id)}
-                  onToggleService={onToggleService}
-                  onStartService={onStartService}
-                  onRestartService={onRestartService}
-                  onToggleTerminal={onToggleTerminal}
-                  onOpenMetrics={onOpenMetrics}
-                  onOpenConfig={onOpenConfig}
-                  onOpenDependencies={onOpenDependencies}
-                />
-              ))}
+              {row.map((service) =>
+                (() => {
+                  const requiredDependencies = service.startPolicy.requiredDependencies
+                  const hasRequiredDependencyIssue = requiredDependencies.some((dependencyId) => {
+                    const dependency = serviceById.get(dependencyId)
+                    return !dependency || !STARTED_DEPENDENCY_STATUSES.has(dependency.status)
+                  })
+                  const hasOptionalDependencyIssue =
+                    !hasRequiredDependencyIssue &&
+                    service.startPolicy.optionalDependencies.some((dependencyId) => {
+                      const dependency = serviceById.get(dependencyId)
+                      return !dependency || !STARTED_DEPENDENCY_STATUSES.has(dependency.status)
+                    })
+
+                  return (
+                    <ServiceCard
+                      key={service.id}
+                      service={service}
+                      metrics={metricsByService[service.id]}
+                      expanded={!isCompactService(service) && expandedIds.has(service.id)}
+                      pending={pendingIds.has(service.id)}
+                      hasRequiredDependencyIssue={hasRequiredDependencyIssue}
+                      hasStartedRequiredDependencies={
+                        requiredDependencies.length > 0 && !hasRequiredDependencyIssue
+                      }
+                      hasOptionalDependencyIssue={hasOptionalDependencyIssue}
+                      onToggleService={onToggleService}
+                      onStartService={onStartService}
+                      onRestartService={onRestartService}
+                      onToggleTerminal={onToggleTerminal}
+                      onOpenMetrics={onOpenMetrics}
+                      onOpenConfig={onOpenConfig}
+                      onOpenDependencies={onOpenDependencies}
+                    />
+                  )
+                })(),
+              )}
             </div>
 
             {row
