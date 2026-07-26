@@ -19,6 +19,10 @@ test('frontend and Phoenix stacks match their runtime boundaries', () => {
     assert.deepEqual(service?.technologies, ['nextjs', 'react', 'typescript', 'tailwindcss'])
   }
 
+  const gateway = SERVICE_DEFINITIONS.find((definition) => definition.id === 'gateway')
+  assert.deepEqual(gateway?.technologies, ['hono', 'nodejs', 'typescript', 'routing'])
+  assert.equal(gateway?.config?.kind, 'env-files')
+
   const auth = SERVICE_DEFINITIONS.find((definition) => definition.id === 'auth')
   assert.deepEqual(auth?.technologies, ['hono', 'authjs', 'typescript', 'oauth'])
   assert.equal(auth?.config?.kind, 'env-files')
@@ -139,6 +143,11 @@ test('managed services expose stable Portless names and keep the API under the c
   const main = SERVICE_DEFINITIONS.find((definition) => definition.id === 'main')
   assert.equal(main?.portlessName, 'main')
   assert.equal(main?.portlessUrl, 'https://main.groupher.localhost/health')
+  assert.equal(main?.portlessAppUrl, 'https://main.groupher.localhost/home')
+
+  const dashboard = SERVICE_DEFINITIONS.find((definition) => definition.id === 'dashboard')
+  assert.equal(dashboard?.portlessUrl, 'https://dashboard.groupher.localhost/health')
+  assert.equal(dashboard?.portlessAppUrl, 'https://dashboard.groupher.localhost/home/dashboard')
 
   for (const id of ['auth', 'landing', 'dashboard', 'inspire-me', 'document-converter']) {
     const service = SERVICE_DEFINITIONS.find((definition) => definition.id === id)

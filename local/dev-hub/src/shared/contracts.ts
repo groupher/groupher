@@ -15,6 +15,7 @@ export type TTechnology =
   | 'postgresql'
   | 'python'
   | 'react'
+  | 'routing'
   | 'tailwindcss'
   | 'typescript'
   | 'uvicorn'
@@ -74,8 +75,10 @@ export type TPublicService = {
   technologies: TTechnologyStack | null
   port: number | null
   url: string | null
+  appUrl: string | null
   portlessName: string | null
   portlessUrl: string | null
+  portlessAppUrl: string | null
   status: TServiceStatus
   pid: number | null
   startedAt: number | null

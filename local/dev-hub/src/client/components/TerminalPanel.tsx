@@ -13,6 +13,7 @@ type TProps = {
 
 export function TerminalPanel({ service, onClose }: TProps) {
   const emptyText = service.unavailableReason || `No output from ${service.name} yet.`
+  const openUrl = service.portlessAppUrl || service.appUrl || service.portlessUrl || service.url
 
   return (
     <section
@@ -38,9 +39,9 @@ export function TerminalPanel({ service, onClose }: TProps) {
             <Keyboard aria-hidden='true' />
             Ctrl+C in make dev stops all Hub-managed services
           </span>
-          {service.url && ['running', 'external'].includes(service.status) ? (
+          {openUrl && ['running', 'external'].includes(service.status) ? (
             <a
-              href={service.url}
+              href={openUrl}
               target='_blank'
               rel='noreferrer'
               aria-label={`Open ${service.name}`}

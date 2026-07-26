@@ -47,8 +47,10 @@ export type TServiceDefinition = {
   config?: TServiceConfigDefinition
   port?: number
   url?: string
+  appUrl?: string
   portlessName?: string
   portlessUrl?: string
+  portlessAppUrl?: string
   unavailableReason?: string
   metrics: TMetricThresholds
   startPolicy?: Partial<TServiceStartPolicy>
@@ -84,10 +86,10 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     description: 'Routing and edge application',
     group: 'frontend',
     monogram: 'GW',
-    technologies: ['nextjs', 'react', 'typescript', 'nodejs'],
+    technologies: ['hono', 'nodejs', 'typescript', 'routing'],
     cwd: REPO_ROOT,
     config: {
-      kind: 'next-env',
+      kind: 'env-files',
       root: fromRoot('frontend/gateway'),
       environment: 'development',
     },
@@ -104,8 +106,10 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     },
     port: 3003,
     url: 'http://127.0.0.1:3003/health',
+    appUrl: 'http://127.0.0.1:3003/',
     portlessName: 'groupher',
     portlessUrl: 'https://groupher.localhost/health',
+    portlessAppUrl: 'https://groupher.localhost/',
     metrics: FRONTEND_METRICS,
   },
   {
@@ -152,8 +156,10 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     args: ['fe.dev.landing'],
     port: 3002,
     url: 'http://127.0.0.1:3002/health',
+    appUrl: 'http://127.0.0.1:3002/',
     portlessName: 'landing',
     portlessUrl: 'https://landing.groupher.localhost/health',
+    portlessAppUrl: 'https://landing.groupher.localhost/',
     metrics: FRONTEND_METRICS,
   },
   {
@@ -173,8 +179,10 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     args: ['fe.dev.main'],
     port: 3000,
     url: 'http://127.0.0.1:3000/health',
+    appUrl: 'http://127.0.0.1:3000/home',
     portlessName: 'main',
     portlessUrl: 'https://main.groupher.localhost/health',
+    portlessAppUrl: 'https://main.groupher.localhost/home',
     metrics: FRONTEND_METRICS,
     startPolicy: APP_CHAIN_POLICY,
   },
@@ -195,8 +203,10 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     args: ['fe.dev.dsb'],
     port: 3001,
     url: 'http://127.0.0.1:3001/health',
+    appUrl: 'http://127.0.0.1:3001/home/dashboard',
     portlessName: 'dashboard',
     portlessUrl: 'https://dashboard.groupher.localhost/health',
+    portlessAppUrl: 'https://dashboard.groupher.localhost/home/dashboard',
     metrics: FRONTEND_METRICS,
     startPolicy: APP_CHAIN_POLICY,
   },
@@ -217,8 +227,10 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     args: ['workspace', '@groupher/local-inspire-me', 'dev', '-p', '3010'],
     port: 3010,
     url: 'http://127.0.0.1:3010/health',
+    appUrl: 'http://127.0.0.1:3010/',
     portlessName: 'inspire-me',
     portlessUrl: 'https://inspire-me.groupher.localhost/health',
+    portlessAppUrl: 'https://inspire-me.groupher.localhost/',
     metrics: FRONTEND_METRICS,
   },
   {

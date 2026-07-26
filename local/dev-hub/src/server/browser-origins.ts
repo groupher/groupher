@@ -2,7 +2,9 @@ type TBrowserService = {
   group: string
   id: string
   port?: number
+  appUrl?: string
   portlessUrl?: string
+  portlessAppUrl?: string
 }
 
 export const buildBrowserOriginsByService = (
@@ -21,6 +23,12 @@ export const buildBrowserOriginsByService = (
 
         if (service.portlessUrl) {
           origins.add(new URL(service.portlessUrl).origin)
+        }
+        if (service.appUrl) {
+          origins.add(new URL(service.appUrl).origin)
+        }
+        if (service.portlessAppUrl) {
+          origins.add(new URL(service.portlessAppUrl).origin)
         }
 
         return [service.id, origins] as const

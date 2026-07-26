@@ -106,6 +106,7 @@ export function ServiceCard({
         : service.status === 'external'
           ? 'External'
           : 'Start'
+  const openUrl = service.portlessAppUrl || service.appUrl || service.portlessUrl || service.url
 
   return (
     <MotionConfig reducedMotion='user'>
@@ -121,10 +122,10 @@ export function ServiceCard({
               <span className='service-copy'>
                 <span className='service-title-row'>
                   <span className='service-name'>{service.name}</span>
-                  {(service.portlessUrl || service.url) && service.status === 'running' ? (
+                  {openUrl && service.status === 'running' ? (
                     <a
                       className='open-service'
-                      href={service.portlessUrl || service.url || undefined}
+                      href={openUrl}
                       target='_blank'
                       rel='noreferrer'
                       aria-label={`Open ${service.name}`}
