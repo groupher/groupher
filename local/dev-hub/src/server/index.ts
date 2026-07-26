@@ -16,6 +16,11 @@ import type {
   THubSnapshot,
   TMetricRange,
 } from '../shared/contracts.ts'
+import {
+  buildBrowserOriginsByService,
+  collectBrowserOrigins,
+  isBrowserMetricOriginAllowed,
+} from './browser-origins.ts'
 import { ServiceConfigError, ServiceConfigReader } from './config-reader.ts'
 import { GitMonitor, GitMonitorError } from './git-monitor.ts'
 import { MetricsStore } from './metrics-store.ts'
@@ -39,17 +44,8 @@ const hubOrigins = new Set([
   `http://localhost:${port}`,
   `http://localhost:${webPort}`,
 ])
-const browserOriginsByService = new Map(
-  SERVICE_DEFINITIONS.filter(
-    (definition) => definition.group === 'frontend' && definition.port,
-  ).map((definition) => [
-    definition.id,
-    new Set([`http://localhost:${definition.port}`, `http://127.0.0.1:${definition.port}`]),
-  ]),
-)
-const browserOrigins = new Set(
-  Array.from(browserOriginsByService.values()).flatMap((origins) => Array.from(origins)),
-)
+const browserOriginsByService = buildBrowserOriginsByService(SERVICE_DEFINITIONS)
+const browserOrigins = collectBrowserOrigins(browserOriginsByService)
 const serviceIds = new Set(SERVICE_DEFINITIONS.map((definition) => definition.id))
 
 const manager = new ServiceManager(SERVICE_DEFINITIONS, origin)
@@ -91,8 +87,14 @@ app.post('/api/browser-metrics', async (context) => {
 
   try {
     const report = parseBrowserMetricReport(await context.req.json())
-    const serviceOrigins = browserOriginsByService.get(report.serviceId)
-    if (!serviceOrigins?.has(requestOrigin) || new URL(report.url).origin !== requestOrigin) {
+    if (
+      !isBrowserMetricOriginAllowed({
+        originsByService: browserOriginsByService,
+        serviceId: report.serviceId,
+        requestOrigin,
+        reportUrl: report.url,
+      })
+    ) {
       return context.json({ error: 'Browser metric origin does not match the service.' }, 403)
     }
 

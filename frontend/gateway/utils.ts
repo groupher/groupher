@@ -8,7 +8,20 @@ export const SITE = {
   LANDING: process.env.LANDING_SITE || `https://${APP.LANDING}.groupher.com`,
   MAIN: process.env.MAIN_SITE || `https://${APP.MAIN}.groupher.com`,
   DASHBOARD: process.env.DASHBOARD_SITE || `https://${APP.DASHBOARD}.groupher.com`,
+  AUTH: process.env.AUTH_SITE || 'https://auth.groupher.com',
+  API:
+    process.env.API_SITE ||
+    (process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:4001' : 'https://api.groupher.com'),
 }
+
+export const isAuthRoute = (pathname: string): boolean => pathname.startsWith('/api/auth/')
+export const isGraphqlRoute = (pathname: string): boolean => pathname === '/api/graphql'
+
+const isAppHost = (host: string, app: string): boolean => host.startsWith(`${app}.`)
+
+export const isMainHost = (host: string): boolean => isAppHost(host, APP.MAIN)
+
+export const isLandingHost = (host: string): boolean => isAppHost(host, APP.LANDING)
 
 /**
  * Get the static asset path signature for a given site URL
@@ -54,7 +67,7 @@ export const isDashboardStaticRoute = (pathname: string): boolean => {
  * - isDashboardRoute('/organizations/settings/dashboard', 'www.example.com') => false
  */
 export const isDashboardRoute = (pathname: string, host: string): boolean => {
-  if (host.startsWith(`${APP.DASHBOARD}.`)) {
+  if (isAppHost(host, APP.DASHBOARD)) {
     return true
   }
 
@@ -76,7 +89,7 @@ export const isDashboardRoute = (pathname: string, host: string): boolean => {
  *   => new URL('/cps?page=1', 'https://dashboard.groupher.com')
  */
 export const getDashboardUrl = (pathname: string, host: string, search: string): URL => {
-  if (host.startsWith(`${APP.DASHBOARD}.`)) {
+  if (isAppHost(host, APP.DASHBOARD)) {
     // If it's already a dashboard subdomain, just rewrite to DASHBOARD_SITE
     return new URL(pathname + search, SITE.DASHBOARD)
   }

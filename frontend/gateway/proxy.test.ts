@@ -16,8 +16,24 @@ import { SITE } from './utils'
 const rewriteMock = vi.mocked(NextResponse.rewrite)
 type TProxyRequest = Parameters<typeof proxy>[0]
 
-const makeRequest = (pathname: string, host: string, search = '') => {
+const makeRequest = (
+  pathname: string,
+  host: string,
+  search = '',
+  forwardedHost?: string,
+  backendToken?: string,
+) => {
+  const headers = new Headers()
+  if (forwardedHost) headers.set('x-forwarded-host', forwardedHost)
+  headers.set('content-type', 'application/json')
+  headers.set('authorization', 'Bearer browser-supplied-token')
+
   return {
+    headers,
+    cookies: {
+      get: (name: string) =>
+        name === 'groupher-auth.token' && backendToken ? { value: backendToken } : undefined,
+    },
     nextUrl: {
       pathname,
       host,
@@ -37,6 +53,73 @@ describe('gateway/proxy', () => {
 
   beforeEach(() => {
     rewriteMock.mockClear()
+  })
+
+  it('rewrites auth routes to the auth application before product routes', () => {
+    proxy(
+      makeRequest(
+        '/api/auth/callback/github',
+        'www.groupher.com',
+        '?code=abc&state=xyz',
+      ) as unknown as TProxyRequest,
+    )
+    const rewritten = getRewrittenUrl()
+    expect(rewritten.origin).toBe(new URL(SITE.AUTH).origin)
+    expect(rewritten.pathname).toBe('/api/auth/callback/github')
+    expect(rewritten.search).toBe('?code=abc&state=xyz')
+  })
+
+  it('rewrites auth routes from the Dashboard subdomain to Auth', () => {
+    proxy(
+      makeRequest(
+        '/api/auth/signin/github',
+        'dashboard.groupher.localhost',
+        '?callbackUrl=%2Fhome%2Fdashboard',
+      ) as unknown as TProxyRequest,
+    )
+    const rewritten = getRewrittenUrl()
+    expect(rewritten.origin).toBe(new URL(SITE.AUTH).origin)
+    expect(rewritten.pathname).toBe('/api/auth/signin/github')
+  })
+
+  it('rewrites the same-origin browser GraphQL route to Phoenix before product routes', () => {
+    proxy(
+      makeRequest(
+        '/api/graphql',
+        'dashboard.groupher.localhost',
+        '?query=%7Bme%7Blogin%7D%7D',
+        undefined,
+        'phoenix-token',
+      ) as unknown as TProxyRequest,
+    )
+    const rewritten = getRewrittenUrl()
+    expect(rewritten.origin).toBe(new URL(SITE.API).origin)
+    expect(rewritten.pathname).toBe('/graphiql')
+    expect(rewritten.search).toBe('?query=%7Bme%7Blogin%7D%7D')
+
+    const options = rewriteMock.mock.calls[0]?.[1]
+    const headers = options?.request?.headers as Headers
+    expect(headers.has('authorization')).toBe(false)
+    expect(headers.get('content-type')).toBe('application/json')
+    expect(headers.get('cookie')).toBe('groupher-auth.token=phoenix-token')
+  })
+
+  it('does not forward browser-supplied authorization without a Groupher auth cookie', () => {
+    proxy(makeRequest('/api/graphql', 'dashboard.groupher.localhost') as unknown as TProxyRequest)
+
+    const options = rewriteMock.mock.calls[0]?.[1]
+    const headers = options?.request?.headers as Headers
+    expect(headers.has('authorization')).toBe(false)
+    expect(headers.has('cookie')).toBe(false)
+  })
+
+  it('routes explicit Main and Landing subdomains before canonical path rules', () => {
+    proxy(makeRequest('/', 'main.groupher.localhost') as unknown as TProxyRequest)
+    expect(getRewrittenUrl().origin).toBe(new URL(SITE.MAIN).origin)
+
+    rewriteMock.mockClear()
+    proxy(makeRequest('/unknown', 'landing.groupher.localhost') as unknown as TProxyRequest)
+    expect(getRewrittenUrl().origin).toBe(new URL(SITE.LANDING).origin)
   })
 
   it('rewrites dashboard route to dashboard site and trims /dashboard suffix', () => {
@@ -73,6 +156,20 @@ describe('gateway/proxy', () => {
     expect(rewritten.origin).toBe(new URL(SITE.DASHBOARD).origin)
     expect(rewritten.pathname).toBe('/cps/appearance/kanban')
     expect(rewritten.search).toBe('?tab=preview')
+  })
+
+  it('uses the original Portless host instead of the Gateway listener host', () => {
+    proxy(
+      makeRequest(
+        '/home/dashboard',
+        '127.0.0.1:3003',
+        '',
+        'dashboard.groupher.localhost',
+      ) as unknown as TProxyRequest,
+    )
+    const rewritten = getRewrittenUrl()
+    expect(rewritten.origin).toBe(new URL(SITE.DASHBOARD).origin)
+    expect(rewritten.pathname).toBe('/home/dashboard')
   })
 
   it('rewrites dashboard static route to dashboard site', () => {

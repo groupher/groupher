@@ -4,7 +4,7 @@
 >
 > UI：独立的系统级登录 UI
 >
-> 当前状态：Main 和 Dashboard 复用同一套函数，但分别部署 Auth handler
+> 当前状态：独立 Auth.js 应用已建立，Main 和 Dashboard 统一经 Gateway 使用
 
 ## 定位
 
@@ -21,18 +21,17 @@ callback 和登录流程同样属于这个边界。
 
 ## 当前状态
 
-当前 Main 和 Dashboard 各自提供：
+迁移前 Main 和 Dashboard 各自提供：
 
 ```text
 /api/auth/[...nextauth]
 /api/auth/logout
-/oauth
 ```
 
-两个应用共享 `frontend/core/app/auth` 中的 Auth.js handler，但运行时仍各自初始化
-provider、处理 callback、读取 secret 和同步 Phoenix token。这属于代码级复用，
-不是统一认证服务。独立 `Apply` 出现后会形成第三个认证入口，因此适合收敛成一个
-部署。
+现在 OAuth provider、callback、logout 和 Phoenix identity exchange 已迁至
+`frontend/auth`。Main 和 Dashboard 不再挂载 Auth handler，但继续使用相同的
+`NEXTAUTH_SECRET` 本地验证 Browser Session；这避免业务请求为了读取登录态回访
+Auth。
 
 ## 提供的服务
 
@@ -104,6 +103,37 @@ https://groupher.com/api/auth/*
 Gateway 把这些路径 rewrite 到独立 `auth` 部署。OAuth provider 只配置一组 canonical
 callback，不感知 Main、Dashboard 和 Apply 的实际部署地址。
 
+本地开发沿用同一边界。`main.groupher.localhost`、
+`dashboard.groupher.localhost` 和 `landing.groupher.localhost` 都先进入 Gateway，
+由 Gateway 把 `/api/auth/*` 转发到 Auth。Auth.js 的 Session、CSRF、callback、
+state 和 PKCE Cookie 统一设置在 `.groupher.localhost`，因此从任意产品子域发起的
+OAuth 流程都能回到 canonical callback：
+
+```text
+https://groupher.localhost/api/auth/callback/github
+```
+
+发起登录时必须把当前产品 URL（包括子域名）作为完整 `callbackUrl` 传给 Auth。
+Auth 完成 canonical callback 后，只允许跳回 `groupher.localhost` 及其受控子域，
+从而既保留 `dashboard.groupher.localhost` 等原始入口，也避免开放重定向。
+
+统一 Session 使用 Groupher 专属 Cookie 名称
+`__Secure-groupher-auth.session-token`。Main、Dashboard 和 Auth 共享同一份 Cookie
+contract，并在解码时显式指定该名称，避免迁移前各应用遗留的
+`__Secure-authjs.session-token` 与新 Session 发生同名、不同 Domain 的冲突。
+
+浏览器 GraphQL 请求统一访问当前产品域下的 `/api/graphql`。Gateway 仅把 HttpOnly
+`groupher-auth.token` Cookie 以同名 Cookie 转发给 Phoenix，不解析 token、不重命名，
+也不转换成 `Authorization` header。这样登录态不依赖浏览器跨子域 Cookie、CORS
+或第三方 Cookie 策略；
+`api.groupher.localhost` 只作为 GraphiQL、诊断和服务间调用入口。
+
+Main 和 Dashboard 把 JWT payload 内的 Phoenix `auth.token` 同步为专属 HttpOnly
+Cookie `groupher-auth.token`。其中 JWT payload 字段只是 Auth.js Session 的内部数据；
+浏览器、Gateway 与 Phoenix 之间只有 `groupher-auth.token` 这一种 Cookie 名称。
+Phoenix 不兼容旧 `auth.token` Cookie，`Authorization: Bearer` 仅作为外部 API、
+CLI 和 agent 调用的后备认证方式。
+
 ## Session 与 Delegation Token
 
 Browser Session 表达“用户已经完成登录”，用于 Main、Dashboard 和 Apply 的登录态。
@@ -127,9 +157,9 @@ Phoenix 面向具体下游服务签发。
 
 首期继续使用现有 Auth.js 实现，只移动运行边界：
 
-1. 建立独立 `auth` Next.js 应用并复用现有 handler。
-2. Gateway 将统一登录、callback 和 logout 路径转发到 `auth`。
-3. Main 和 Dashboard 删除各自的 Auth route，只保留 Session 消费能力。
+1. 独立 `frontend/auth` Next.js/Auth.js 应用负责统一 handler。
+2. Gateway 将登录、callback 和 logout 路径转发到 `auth`。
+3. Main 和 Dashboard 只保留 Session 消费能力。
 4. `Apply` 从开始就使用统一入口。
 
 认证框架、Session 格式和密钥轮换方式等实现选择留到迁移阶段决定。

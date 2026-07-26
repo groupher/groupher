@@ -22,7 +22,7 @@ export const signIn = (
     callbackUrl?: string
   },
 ) => {
-  const callbackUrl = options?.callbackUrl ?? `${window.location.pathname}${window.location.search}`
+  const callbackUrl = options?.callbackUrl ?? window.location.href
 
   return authSignIn(provider, {
     callbackUrl,

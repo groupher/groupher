@@ -2,13 +2,43 @@ import { describe, expect, it } from 'vitest'
 
 import {
   getDashboardUrl,
+  isAuthRoute,
   isDashboardRoute,
   isDashboardStaticRoute,
+  isGraphqlRoute,
+  isLandingHost,
   isLandingStaticRoute,
+  isMainHost,
   SITE,
 } from './utils'
 
 describe('gateway/utils', () => {
+  describe('isAuthRoute', () => {
+    it('only matches the Auth.js route namespace', () => {
+      expect(isAuthRoute('/api/auth/signin/github')).toBe(true)
+      expect(isAuthRoute('/api/auth/callback/github')).toBe(true)
+      expect(isAuthRoute('/api/articles')).toBe(false)
+      expect(isAuthRoute('/auth/profile')).toBe(false)
+    })
+  })
+
+  describe('isGraphqlRoute', () => {
+    it('only matches the Gateway browser GraphQL endpoint', () => {
+      expect(isGraphqlRoute('/api/graphql')).toBe(true)
+      expect(isGraphqlRoute('/api/graphql/')).toBe(false)
+      expect(isGraphqlRoute('/graphiql')).toBe(false)
+    })
+  })
+
+  describe('app hosts', () => {
+    it('recognizes explicit Main and Landing subdomains', () => {
+      expect(isMainHost('main.groupher.localhost')).toBe(true)
+      expect(isMainHost('dashboard.groupher.localhost')).toBe(false)
+      expect(isLandingHost('landing.groupher.localhost')).toBe(true)
+      expect(isLandingHost('groupher.localhost')).toBe(false)
+    })
+  })
+
   describe('isDashboardRoute', () => {
     it('returns true for dashboard subdomain', () => {
       expect(isDashboardRoute('/cps', 'dashboard.groupher.com')).toBe(true)

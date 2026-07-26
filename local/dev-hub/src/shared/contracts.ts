@@ -2,12 +2,14 @@ export type TServiceGroup = 'frontend' | 'backend'
 
 export type TTechnology =
   | 'absinthe'
+  | 'authjs'
   | 'elixir'
   | 'fastapi'
   | 'graphql'
   | 'markitdown'
   | 'nextjs'
   | 'nodejs'
+  | 'oauth'
   | 'phoenix'
   | 'postgresql'
   | 'python'
@@ -63,6 +65,8 @@ export type TPublicService = {
   technologies: TTechnologyStack | null
   port: number | null
   url: string | null
+  portlessName: string | null
+  portlessUrl: string | null
   status: TServiceStatus
   pid: number | null
   startedAt: number | null

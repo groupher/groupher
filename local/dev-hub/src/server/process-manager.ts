@@ -416,6 +416,8 @@ export class ServiceManager {
       technologies: definition.technologies ?? null,
       port: definition.port ?? null,
       url: definition.url ?? null,
+      portlessName: definition.portlessName ?? null,
+      portlessUrl: definition.portlessUrl ?? null,
       status: runtime.status,
       pid: runtime.pid,
       startedAt: runtime.startedAt,

@@ -4,7 +4,7 @@
 >
 > 适用范围：Gateway、前端应用、Phoenix 和独立执行子应用
 >
-> 当前状态：方向约定，尚未接入
+> 当前状态：固定端口 alias 已接入，动态端口尚未启用
 
 ## 背景
 
@@ -75,6 +75,13 @@ Portless 解决的是本地寻址问题；Gateway 解决的是产品路由问题
 用户不应从 Main、Dashboard 或 Auth 的直接调试域名进入完整产品流程。登录、退出和
 跨应用导航统一从 `https://groupher.localhost` 进入，由 Gateway 模拟线上路由。
 
+浏览器会访问的 Groupher 前端和 API 统一挂在 `*.groupher.localhost` 下，例如
+`main.groupher.localhost`、`dashboard.groupher.localhost` 和
+`api.groupher.localhost`。产品页面的 GraphQL 请求使用同源 `/api/graphql`，由
+Gateway 把 `groupher-auth.token` HttpOnly Cookie 以同名 Cookie 转发给 Phoenix；
+`api.groupher.localhost` 保留给 GraphiQL、诊断和服务间调用。这样不需要依赖浏览器
+对本地跨子域 Cookie 的具体策略。
+
 ## 本地拓扑
 
 ```mermaid
@@ -88,13 +95,10 @@ flowchart LR
   Phoenix["Phoenix<br/>:4001"]
   Apps["其他子应用<br/>Dev Hub 管理的端口"]
 
-  Browser -->|"groupher.localhost"| Portless
+  Browser -->|"groupher.localhost<br/>main.groupher.localhost<br/>dashboard.groupher.localhost<br/>landing.groupher.localhost"| Portless
   Browser -->|"api.groupher.localhost"| Portless
   Portless --> Gateway
   Portless --> Phoenix
-  Portless -. "直接调试域名" .-> Main
-  Portless -. "直接调试域名" .-> Dashboard
-  Portless -. "直接调试域名" .-> Landing
   Portless -. "直接调试域名" .-> Apps
 
   Gateway --> Main
@@ -111,9 +115,11 @@ flowchart LR
 
 ```bash
 portless alias groupher 3003
-portless alias main.groupher 3000
-portless alias dashboard.groupher 3001
-portless alias landing.groupher 3002
+portless alias main.groupher 3003
+portless alias dashboard.groupher 3003
+portless alias landing.groupher 3003
+portless alias auth.groupher 3004
+portless alias inspire-me.groupher 3010
 portless alias api.groupher 4001
 portless alias converter.groupher 8000
 ```
@@ -121,6 +127,11 @@ portless alias converter.groupher 8000
 `alias` 只要求目标端口上存在服务，不关心服务使用 Next.js、Phoenix、Hono、
 Uvicorn 还是其他运行时。因此当前 Phoenix mock 环境固定使用 `4001`、Document
 Converter 固定使用 `8000`，也可以直接接入，不需要先修改启动命令。
+
+Main、Dashboard 和 Landing 的浏览器域名都指向 Gateway，而不是直接指向各自的
+listener。Gateway 根据 host 和 pathname 将页面转发到对应应用，并优先把
+`/api/auth/*` 转发到 Auth。这样从任意产品子域发起登录时都不会绕过统一认证入口。
+各应用的 `3000`、`3001`、`3002` 仍由 Dev Hub 用于进程管理和内部转发。
 
 未来如果希望多个 worktree 同时启动同一个应用，可以再让 Dev Hub 通过
 `portless run` 启动进程。Portless 会向子进程注入动态 `PORT`，并为 linked
@@ -219,18 +230,22 @@ portless clean
 - Dev Hub 的健康检查可以继续访问实际端口；人类可见链接使用 Portless URL。
 - 用户流程必须经过 Gateway，直接子应用域名只用于隔离调试。
 - 浏览器 API、CORS、Cookie 和 OAuth callback 必须作为同一套本地域名方案验证。
+- Dev Hub 的浏览器指标 CORS 白名单从各服务的 `portlessUrl` 自动生成，并同时保留
+  `localhost:<port>` 与 `127.0.0.1:<port>`，避免新增或改名子应用时遗漏来源。
 - 静态 `alias` 解决可读性，不解决固定端口的 worktree 并行冲突。
 - 是否进一步采用动态端口，应根据多 worktree 并行开发的实际需求决定。
 
 ## 接入方向
 
-首期只建立命名和映射，不改变 Dev Hub 的进程模型：
+首期已经建立命名和映射，没有改变 Dev Hub 的进程模型：
 
-1. 安装并信任 Portless 本地 CA。
-2. 为 Gateway、Main、Dashboard、Landing、Phoenix 和 Converter 建立固定 alias。
-3. 将浏览器可见的 GraphQL endpoint 改为 HTTPS API 域名。
+1. 使用仓库锁定的 Portless 版本，执行 `yarn portless:setup` 安装并信任本地 CA。
+2. 使用 `yarn portless:sync` 为 Gateway、Main、Dashboard、Landing、Auth、Phoenix
+   和 Converter 重建固定 alias。
+3. 将浏览器 GraphQL endpoint 改为同源 `/api/graphql`，由 Gateway 转发到 Phoenix。
 4. 补充 Phoenix 本地 CORS 和 Auth Session 所需的域名配置。
-5. 在 Dev Hub 中展示 Portless URL，同时保留真实端口用于诊断。
+5. Dev Hub 以 Portless 名称标识服务，在地址提示中同时保留 Portless URL 和真实
+   listener 地址。
 6. 新子应用创建时直接分配稳定名称，不再把端口当作对外身份。
 
 只有当多 worktree 并行运行成为常态时，再评估由 Dev Hub 通过 `portless run`

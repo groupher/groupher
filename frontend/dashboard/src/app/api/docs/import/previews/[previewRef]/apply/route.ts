@@ -7,8 +7,7 @@
  */
 import { createHash } from 'node:crypto'
 
-import { getToken } from 'next-auth/jwt'
-
+import { getAuthToken } from '~/app/auth-token'
 import { AUTH_KEY } from '~/const/oauth'
 
 import { handleApplyDocImportPreview } from '../../../../../../../lib/content-import/http'
@@ -18,7 +17,7 @@ export const POST = async (
   request: Request,
   context: { params: Promise<{ previewRef: string }> },
 ): Promise<Response> => {
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET, raw: false })
+  const token = await getAuthToken(request)
   const backendToken = token?.[AUTH_KEY.TOKEN]
   if (!backendToken) return Response.json({ ok: false }, { status: 401 })
   const serverTrustSecret = process.env.GROUPHER_SERVER_TRUST_SECRET?.trim()

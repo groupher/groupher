@@ -5,8 +5,6 @@
     "paths": {
       "~/app": ["./app"],
       "~/app/*": ["./app/*"],
-      "~/auth": ["./app/auth"],
-      "~/auth/*": ["./app/auth/*"],
       "~/unit": ["./unit"],
       "~/unit/*": ["./unit/*"],
       "~/widgets": ["./widgets"],

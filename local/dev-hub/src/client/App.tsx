@@ -106,73 +106,38 @@ export function App() {
   }, [])
 
   return (
-    <main className='app-shell window-frame' id='top'>
+    <div className='window-frame'>
       <div className='window-drag-region' data-tauri-drag-region='deep' aria-hidden='true' />
-      <PageHeader
-        services={services}
-        git={git}
-        connected={connected}
-        viewMode={viewMode}
-        onOpenDiff={(scope) => setActiveDrawer({ kind: 'git', scope })}
-        onViewModeChange={handleViewModeChange}
-      />
-      <MetricsNoticeBar notices={metricNotices} />
+      <main className='app-shell' id='top'>
+        <PageHeader
+          services={services}
+          git={git}
+          connected={connected}
+          viewMode={viewMode}
+          onOpenDiff={(scope) => setActiveDrawer({ kind: 'git', scope })}
+          onViewModeChange={handleViewModeChange}
+        />
+        <MetricsNoticeBar notices={metricNotices} />
 
-      {error ? (
-        <div className='error-banner' role='alert'>
-          <AlertCircle aria-hidden='true' />
-          <span>{error}</span>
-          <button type='button' onClick={dismissError} aria-label='Dismiss error'>
-            <X aria-hidden='true' />
-          </button>
-        </div>
-      ) : null}
+        {error ? (
+          <div className='error-banner' role='alert'>
+            <AlertCircle aria-hidden='true' />
+            <span>{error}</span>
+            <button type='button' onClick={dismissError} aria-label='Dismiss error'>
+              <X aria-hidden='true' />
+            </button>
+          </div>
+        ) : null}
 
-      {loading ? (
-        <div className='loading-state'>Reading the local service map…</div>
-      ) : viewMode === 'list' ? (
-        <>
-          <ServiceSection
-            title='Frontend'
-            description='The public, dashboard, and local research applications.'
-            group='frontend'
-            services={services}
-            metricsByService={metricsByService}
-            expandedIds={expandedIds}
-            pendingIds={pendingIds}
-            onToggleService={handleToggleService}
-            onRestartService={handleRestartService}
-            onToggleTerminal={toggleTerminal}
-            onOpenMetrics={openMetrics}
-            onOpenConfig={openConfig}
-          />
-          <ServiceSection
-            title='Backend'
-            description='APIs, converters, and workers behind the product.'
-            group='backend'
-            services={services}
-            metricsByService={metricsByService}
-            expandedIds={expandedIds}
-            pendingIds={pendingIds}
-            onToggleService={handleToggleService}
-            onRestartService={handleRestartService}
-            onToggleTerminal={toggleTerminal}
-            onOpenMetrics={openMetrics}
-            onOpenConfig={openConfig}
-          />
-        </>
-      ) : (
-        <ErrorBoundary
-          title='The Flow canvas could not be displayed'
-          message='The service controls are still available in the list view.'
-          actionLabel='Back to list'
-          variant='flow'
-          onReset={() => handleViewModeChange('list')}
-        >
-          <Suspense fallback={<div className='flow-loading'>Loading the Flow canvas…</div>}>
-            <FlowView
+        {loading ? (
+          <div className='loading-state'>Reading the local service map…</div>
+        ) : viewMode === 'list' ? (
+          <>
+            <ServiceSection
+              title='Frontend'
+              description='The public, dashboard, and local research applications.'
+              group='frontend'
               services={services}
-              relations={relations}
               metricsByService={metricsByService}
               expandedIds={expandedIds}
               pendingIds={pendingIds}
@@ -182,37 +147,74 @@ export function App() {
               onOpenMetrics={openMetrics}
               onOpenConfig={openConfig}
             />
+            <ServiceSection
+              title='Backend'
+              description='APIs, converters, and workers behind the product.'
+              group='backend'
+              services={services}
+              metricsByService={metricsByService}
+              expandedIds={expandedIds}
+              pendingIds={pendingIds}
+              onToggleService={handleToggleService}
+              onRestartService={handleRestartService}
+              onToggleTerminal={toggleTerminal}
+              onOpenMetrics={openMetrics}
+              onOpenConfig={openConfig}
+            />
+          </>
+        ) : (
+          <ErrorBoundary
+            title='The Flow canvas could not be displayed'
+            message='The service controls are still available in the list view.'
+            actionLabel='Back to list'
+            variant='flow'
+            onReset={() => handleViewModeChange('list')}
+          >
+            <Suspense fallback={<div className='flow-loading'>Loading the Flow canvas…</div>}>
+              <FlowView
+                services={services}
+                relations={relations}
+                metricsByService={metricsByService}
+                expandedIds={expandedIds}
+                pendingIds={pendingIds}
+                onToggleService={handleToggleService}
+                onRestartService={handleRestartService}
+                onToggleTerminal={toggleTerminal}
+                onOpenMetrics={openMetrics}
+                onOpenConfig={openConfig}
+              />
+            </Suspense>
+          </ErrorBoundary>
+        )}
+
+        <footer className='site-footer'>
+          <span>Local only · 127.0.0.1</span>
+          <span>
+            <kbd>Ctrl+C</kbd> stops every managed process
+          </span>
+        </footer>
+
+        <GitDiffDrawer
+          scope={diffScope}
+          git={git}
+          onScopeChange={(scope) => setActiveDrawer({ kind: 'git', scope })}
+          onClose={closeDrawer}
+        />
+        {metricsService ? (
+          <Suspense fallback={null}>
+            <MetricsDrawer
+              service={metricsService}
+              current={metricsByService[metricsService.id]}
+              onClose={closeDrawer}
+            />
           </Suspense>
-        </ErrorBoundary>
-      )}
-
-      <footer className='site-footer'>
-        <span>Local only · 127.0.0.1</span>
-        <span>
-          <kbd>Ctrl+C</kbd> stops every managed process
-        </span>
-      </footer>
-
-      <GitDiffDrawer
-        scope={diffScope}
-        git={git}
-        onScopeChange={(scope) => setActiveDrawer({ kind: 'git', scope })}
-        onClose={closeDrawer}
-      />
-      {metricsService ? (
-        <Suspense fallback={null}>
-          <MetricsDrawer
-            service={metricsService}
-            current={metricsByService[metricsService.id]}
-            onClose={closeDrawer}
-          />
-        </Suspense>
-      ) : null}
-      {configService ? (
-        <Suspense fallback={null}>
-          <ConfigDrawer service={configService} onClose={closeDrawer} />
-        </Suspense>
-      ) : null}
-    </main>
+        ) : null}
+        {configService ? (
+          <Suspense fallback={null}>
+            <ConfigDrawer service={configService} onClose={closeDrawer} />
+          </Suspense>
+        ) : null}
+      </main>
+    </div>
   )
 }

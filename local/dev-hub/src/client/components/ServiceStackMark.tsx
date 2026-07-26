@@ -1,11 +1,12 @@
 import type { TTechnology, TTechnologyStack } from '@shared/contracts'
-import { Server } from 'lucide-react'
+import { Server, ShieldCheck } from 'lucide-react'
 import {
   siElixir,
   siFastapi,
   siGraphql,
   siNextdotjs,
   siNodedotjs,
+  siOpenid,
   siPhoenixframework,
   siReact,
   siTailwindcss,
@@ -54,7 +55,7 @@ const fromSimpleIcon = (icon: { title: string; path: string; hex: string }): TIc
   color: `#${icon.hex}`,
 })
 
-const TECHNOLOGY_ICONS: Record<Exclude<TTechnology, 'uvicorn'>, TIconDefinition> = {
+const TECHNOLOGY_ICONS: Record<Exclude<TTechnology, 'authjs' | 'uvicorn'>, TIconDefinition> = {
   absinthe: {
     title: 'Absinthe',
     path: ABSINTHE_PATHS.join(' '),
@@ -84,6 +85,10 @@ const TECHNOLOGY_ICONS: Record<Exclude<TTechnology, 'uvicorn'>, TIconDefinition>
     underlayPath: CIRCLE_UNDERLAY_PATH,
   },
   nodejs: fromSimpleIcon(siNodedotjs),
+  oauth: {
+    ...fromSimpleIcon(siOpenid),
+    title: 'OAuth',
+  },
   phoenix: fromSimpleIcon(siPhoenixframework),
   postgresql: {
     title: 'PostgreSQL',
@@ -111,6 +116,10 @@ const UVICORN_ICON = {
   title: 'Uvicorn',
   color: 'var(--service-monogram-foreground)',
 }
+const AUTHJS_ICON = {
+  title: 'Auth.js',
+  color: 'var(--service-monogram-foreground)',
+}
 
 export function ServiceStackMark({ name, monogram, technologies }: TProps) {
   if (!technologies) {
@@ -125,14 +134,23 @@ export function ServiceStackMark({ name, monogram, technologies }: TProps) {
 
   const stackLabel = technologies
     .map((technology) =>
-      technology === 'uvicorn' ? UVICORN_ICON.title : TECHNOLOGY_ICONS[technology].title,
+      technology === 'authjs'
+        ? AUTHJS_ICON.title
+        : technology === 'uvicorn'
+          ? UVICORN_ICON.title
+          : TECHNOLOGY_ICONS[technology].title,
     )
     .join(', ')
 
   return (
     <span className='service-stack-mark' role='img' aria-label={`${name} stack: ${stackLabel}`}>
       {technologies.map((technology) => {
-        const icon = technology === 'uvicorn' ? UVICORN_ICON : TECHNOLOGY_ICONS[technology]
+        const icon =
+          technology === 'authjs'
+            ? AUTHJS_ICON
+            : technology === 'uvicorn'
+              ? UVICORN_ICON
+              : TECHNOLOGY_ICONS[technology]
 
         return (
           <span
@@ -143,7 +161,9 @@ export function ServiceStackMark({ name, monogram, technologies }: TProps) {
             style={{ color: icon.color }}
             aria-hidden='true'
           >
-            {technology === 'uvicorn' ? (
+            {technology === 'authjs' ? (
+              <ShieldCheck />
+            ) : technology === 'uvicorn' ? (
               <Server />
             ) : technology === 'absinthe' ? (
               <svg viewBox={TECHNOLOGY_ICONS.absinthe.viewBox}>

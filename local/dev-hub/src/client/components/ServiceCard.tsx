@@ -1,7 +1,6 @@
 import type { TPublicService, TServiceMetricsSnapshot } from '@shared/contracts'
 import {
   BrushCleaning,
-  Circle,
   ExternalLink,
   FileBraces,
   LoaderCircle,
@@ -15,6 +14,7 @@ import { Badge, type BadgeProps } from '@/components/reui/badge'
 import { openExternalUrl } from '@/lib/open-external-url'
 
 import { ServiceActionButton } from './ServiceActionButton'
+import { ServiceAddress } from './ServiceAddress'
 import { ServiceMetricsStrip } from './ServiceMetricsStrip'
 import { ServiceStackMark } from './ServiceStackMark'
 import { TerminalSurface } from './TerminalSurface'
@@ -100,10 +100,10 @@ export function ServiceCard({
               <span className='service-copy'>
                 <span className='service-title-row'>
                   <span className='service-name'>{service.name}</span>
-                  {service.url && service.status === 'running' ? (
+                  {(service.portlessUrl || service.url) && service.status === 'running' ? (
                     <a
                       className='open-service'
-                      href={service.url}
+                      href={service.portlessUrl || service.url || undefined}
                       target='_blank'
                       rel='noreferrer'
                       aria-label={`Open ${service.name}`}
@@ -147,9 +147,7 @@ export function ServiceCard({
                   <span>Start</span>
                 </button>
               ) : null}
-              {service.port && service.status === 'running' ? (
-                <span className='service-port'>:{service.port}</span>
-              ) : null}
+              {service.status === 'running' ? <ServiceAddress service={service} /> : null}
             </div>
           </header>
 
@@ -234,25 +232,43 @@ export function ServiceCard({
                   </ServiceActionButton>
                 </div>
 
-                <button
-                  type='button'
+                <div
                   className={`service-action service-action--process ${active ? 'is-active' : ''}`}
-                  disabled={disabled}
-                  onClick={() => onToggleService(service)}
-                  aria-label={`${actionLabel} ${service.name}`}
                 >
-                  <span className='action-leading-icon' aria-hidden='true'>
+                  <ServiceActionButton
+                    type='button'
+                    className='service-process-action service-process-action--danger'
+                    disabled={disabled}
+                    onClick={() => onToggleService(service)}
+                    aria-label={`${actionLabel} ${service.name}`}
+                    tooltip={actionLabel}
+                  >
                     {pending || service.status === 'starting' || service.status === 'stopping' ? (
-                      <LoaderCircle className='spin' />
+                      <LoaderCircle className='spin' aria-hidden='true' />
                     ) : stoppable ? (
-                      <Circle className='stop-icon' />
+                      <span className='service-stop-mark' aria-hidden='true'>
+                        <span />
+                      </span>
                     ) : (
-                      <Play className='play-icon' />
+                      <Play className='play-icon' aria-hidden='true' />
                     )}
-                  </span>
-                  <span>{actionLabel}</span>
+                  </ServiceActionButton>
+                  <ServiceActionButton
+                    type='button'
+                    className='service-process-action service-process-action--danger'
+                    disabled={restartDisabled}
+                    onClick={restartDisabled ? undefined : () => onRestartService(service)}
+                    aria-label={`Restart ${service.name}`}
+                    tooltip='Restart service'
+                  >
+                    {pending ? (
+                      <LoaderCircle className='spin' aria-hidden='true' />
+                    ) : (
+                      <RotateCw aria-hidden='true' />
+                    )}
+                  </ServiceActionButton>
                   {service.startedAt && active ? <Uptime startedAt={service.startedAt} /> : null}
-                </button>
+                </div>
               </footer>
             </motion.div>
           ) : null}

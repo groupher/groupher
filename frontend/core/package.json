@@ -11,6 +11,7 @@
     "./oxfmt": "./config/oxfmt.json",
     "./oxlint": "./config/oxlint.json",
     "./next.config": "./next.config.js",
+    "./auth-contract": "./constant/auth-contract.ts",
     "./dev-hub-reporter": "./lib/devHubReporter/index.ts",
     "./dev-hub-reporter/react": "./widgets/DevHubReporter/index.tsx"
   },

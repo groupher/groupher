@@ -1,0 +1,28 @@
+{
+  "name": "@groupher/frontend-auth",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "type-check": "next typegen && ../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
+    "build": "cross-env NODE_ENV=production next build --turbopack",
+    "start": "cross-env NODE_ENV=production next start",
+    "lint": "../../node_modules/.bin/oxlint . --threads=1",
+    "format": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json app *.ts next.config.js tsconfig.json",
+    "format:check": "../../node_modules/.bin/oxfmt -c ../core/config/oxfmt.json --check app *.ts next.config.js tsconfig.json",
+    "clean": "rimraf .next"
+  },
+  "dependencies": {
+    "@groupher/frontend-core": "1.0.0",
+    "next": "16.3.0-preview.6",
+    "next-auth": "5.0.0-beta.30",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
+  },
+  "devDependencies": {
+    "cross-env": "^10.1.0"
+  },
+  "lint-staged": {
+    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
+  }
+}

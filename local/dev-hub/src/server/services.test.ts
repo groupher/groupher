@@ -19,8 +19,20 @@ test('frontend and Phoenix stacks match their runtime boundaries', () => {
     assert.deepEqual(service?.technologies, ['nextjs', 'react', 'typescript', 'tailwindcss'])
   }
 
+  const auth = SERVICE_DEFINITIONS.find((definition) => definition.id === 'auth')
+  assert.deepEqual(auth?.technologies, ['nextjs', 'authjs', 'typescript', 'oauth'])
+
   const phoenix = SERVICE_DEFINITIONS.find((definition) => definition.id === 'phoenix')
   assert.deepEqual(phoenix?.technologies, ['phoenix', 'elixir', 'absinthe', 'postgresql'])
+})
+
+test('frontend services keep the intended list order', () => {
+  assert.deepEqual(
+    SERVICE_DEFINITIONS.filter((definition) => definition.group === 'frontend').map(
+      (definition) => definition.id,
+    ),
+    ['gateway', 'auth', 'landing', 'main', 'dashboard', 'inspire-me'],
+  )
 })
 
 test('the not-yet-split comment importer keeps its monogram fallback', () => {
@@ -43,6 +55,7 @@ test('the request flow documents gateway routing and GraphQL dependencies', () =
   assert.deepEqual(
     SERVICE_RELATIONS.map(({ source, target, label }) => ({ source, target, label })),
     [
+      { source: 'gateway', target: 'auth', label: '/api/auth/*' },
       { source: 'gateway', target: 'landing', label: '/, /pricing, /book-demo' },
       { source: 'gateway', target: 'dashboard', label: '/:community/dashboard/*' },
       { source: 'gateway', target: 'main', label: 'all other routes' },
@@ -60,11 +73,13 @@ test('the managed gateway routes to local frontend ports', () => {
       LANDING_SITE: gateway?.env?.LANDING_SITE,
       MAIN_SITE: gateway?.env?.MAIN_SITE,
       DASHBOARD_SITE: gateway?.env?.DASHBOARD_SITE,
+      AUTH_SITE: gateway?.env?.AUTH_SITE,
     },
     {
-      LANDING_SITE: 'http://localhost:3002',
-      MAIN_SITE: 'http://localhost:3000',
-      DASHBOARD_SITE: 'http://localhost:3001',
+      LANDING_SITE: 'http://127.0.0.1:3002',
+      MAIN_SITE: 'http://127.0.0.1:3000',
+      DASHBOARD_SITE: 'http://127.0.0.1:3001',
+      AUTH_SITE: 'http://127.0.0.1:3004',
     },
   )
 })
@@ -86,9 +101,36 @@ test('service configuration roots stay scoped to each runtime', () => {
   assert.match(configByService.dashboard?.root || '', /frontend\/dashboard$/)
   assert.match(configByService.landing?.root || '', /frontend\/landing$/)
   assert.match(configByService.gateway?.root || '', /frontend\/gateway$/)
+  assert.match(configByService.auth?.root || '', /frontend\/auth$/)
   assert.match(configByService['inspire-me']?.root || '', /local\/inspire-me$/)
   assert.equal(configByService.phoenix?.kind, 'elixir-config')
   assert.match(configByService.phoenix?.root || '', /backend\/main\/config$/)
   assert.match(configByService['document-converter']?.root || '', /services\/document-converter$/)
   assert.equal(configByService['comment-importer'], null)
+})
+
+test('managed services expose stable Portless names and keep the API under the cookie parent', () => {
+  const namedServices = SERVICE_DEFINITIONS.filter((definition) => definition.port !== undefined)
+
+  for (const service of namedServices) {
+    assert.ok(service.portlessName, `${service.name} Portless name`)
+    assert.equal(new URL(service.portlessUrl || '').hostname.endsWith('.localhost'), true)
+  }
+
+  const main = SERVICE_DEFINITIONS.find((definition) => definition.id === 'main')
+  assert.equal(main?.portlessName, 'main')
+  assert.equal(main?.portlessUrl, 'https://main.groupher.localhost')
+
+  for (const id of ['auth', 'landing', 'dashboard', 'inspire-me', 'document-converter']) {
+    const service = SERVICE_DEFINITIONS.find((definition) => definition.id === id)
+    assert.equal(
+      new URL(service?.portlessUrl || '').hostname.endsWith('.groupher.localhost'),
+      true,
+      id,
+    )
+  }
+
+  const phoenix = SERVICE_DEFINITIONS.find((definition) => definition.id === 'phoenix')
+  assert.equal(phoenix?.portlessName, 'api')
+  assert.equal(phoenix?.portlessUrl, 'https://api.groupher.localhost/graphiql')
 })

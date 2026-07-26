@@ -1,6 +1,6 @@
-import { getToken } from 'next-auth/jwt'
 import { revalidateTag } from 'next/cache'
 
+import { getAuthToken } from '~/app/auth-token'
 import { CACHE_TAG } from '~/const/cache'
 import { AUTH_KEY } from '~/const/oauth'
 
@@ -21,11 +21,7 @@ export const POST = async (req: Request) => {
     })
   }
 
-  const token = await getToken({
-    req,
-    secret: process.env.NEXTAUTH_SECRET,
-    raw: false,
-  })
+  const token = await getAuthToken(req)
 
   if (!token?.[AUTH_KEY.TOKEN]) {
     return new Response(JSON.stringify({ ok: false, error: 'unauthorized' }), {

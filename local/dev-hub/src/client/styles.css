@@ -84,7 +84,7 @@ html.desktop-shell body {
   width: 100%;
   height: 100%;
   contain: paint;
-  overflow: auto;
+  overflow: hidden;
   background: var(--page-background);
 }
 
@@ -111,7 +111,7 @@ button {
 .desktop-shell .window-drag-region {
   display: block;
   position: fixed;
-  z-index: 1;
+  z-index: 100;
   top: 0;
   right: 0;
   left: 0;
@@ -119,7 +119,9 @@ button {
 }
 
 .desktop-shell .app-shell {
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
 }
 
 .site-header {
@@ -599,7 +601,7 @@ button {
   font-size: 10px;
   font-weight: 600;
   line-height: 1.2;
-  pointer-events: none;
+  pointer-events: auto;
   white-space: nowrap;
 }
 
@@ -766,6 +768,16 @@ button {
   .terminal-panel,
   .metrics-drawer-popup,
   .config-drawer-popup
+)[data-service-id='auth'] {
+  --service-monogram-background: oklch(47% 0.14 61.9);
+  --service-monogram-foreground: #fff0d4;
+}
+
+:is(
+  .service-card,
+  .terminal-panel,
+  .metrics-drawer-popup,
+  .config-drawer-popup
 )[data-service-id='inspire-me'] {
   --service-monogram-background: #654e61;
   --service-monogram-foreground: #f0e8ee;
@@ -896,6 +908,22 @@ button {
   height: 17px;
 }
 
+.service-stack-cell[data-technology='authjs'] svg,
+.service-stack-cell[data-technology='uvicorn'] svg {
+  fill: none;
+  stroke-width: 1.8;
+}
+
+.service-stack-cell[data-technology='authjs'] svg {
+  width: 16px;
+  height: 16px;
+}
+
+.service-stack-cell[data-technology='oauth'] svg {
+  width: 17px;
+  height: 17px;
+}
+
 .service-stack-cell[data-technology='postgresql'] img {
   width: 17px;
   height: 17px;
@@ -913,8 +941,6 @@ button {
 .service-stack-cell[data-technology='uvicorn'] svg {
   width: 16px;
   height: 16px;
-  fill: none;
-  stroke-width: 1.8;
 }
 
 .service-stack-mark.is-monogram {
@@ -1028,15 +1054,69 @@ button {
   stroke-width: 1.8;
 }
 
-.service-port {
-  color: var(--terminal);
-  font-family: 'SFMono-Regular', Consolas, monospace;
+.service-address {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 2px;
   margin-top: 1px;
-  margin-right: 4px;
-  font-size: 14px;
+  color: var(--terminal);
+}
+
+.service-address-name {
+  max-width: 150px;
+  overflow: hidden;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 13px;
   font-weight: 650;
-  font-variant-numeric: tabular-nums;
   line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.service-address-help {
+  position: relative;
+  display: inline-grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ink-faint);
+  background: transparent;
+  cursor: help;
+  transition-property: color, background-color, scale;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.service-address-help::after {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  content: '';
+}
+
+.service-address-help:hover,
+.service-address-help:focus-visible {
+  color: var(--ink);
+  background: rgb(0 0 0 / 5%);
+}
+
+.service-address-help:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.service-address-help:active {
+  scale: 0.96;
+}
+
+.service-address-help svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.8;
 }
 
 .status-dot {
@@ -1239,18 +1319,6 @@ button {
   transition-timing-function: ease-out;
 }
 
-.service-action--process:not(.is-active):hover:not(:disabled) {
-  color: #34764d;
-  background: #eaf7ee;
-  box-shadow: 0 0 0 1px rgb(76 154 103 / 10%);
-}
-
-.service-action--process.is-active:hover:not(:disabled) {
-  color: #aa3535;
-  background: #fff0ee;
-  box-shadow: 0 0 0 1px rgb(210 77 77 / 10%);
-}
-
 .service-action:focus-visible,
 .open-service:focus-visible,
 .terminal-panel-actions a:focus-visible,
@@ -1261,7 +1329,7 @@ button {
   outline-offset: 2px;
 }
 
-.service-action--process:active:not(:disabled),
+.service-process-action:active:not(:disabled),
 .service-terminal-action:active {
   scale: 0.96;
 }
@@ -1278,25 +1346,14 @@ button {
   stroke-width: 1.7;
 }
 
-.action-leading-icon {
-  display: inline-grid;
-  width: 18px;
-  height: 18px;
-  place-items: center;
-}
-
 .play-icon {
   translate: 1px 0;
-}
-
-.stop-icon {
-  color: #d24d4d;
-  fill: currentcolor;
 }
 
 .uptime {
   display: inline-flex;
   min-width: 82px;
+  min-height: 40px;
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
@@ -1323,7 +1380,14 @@ button {
   cursor: default;
 }
 
-.service-terminal-action {
+.service-action--process {
+  gap: 0;
+  padding: 3px 10px 3px 3px;
+  cursor: default;
+}
+
+.service-terminal-action,
+.service-process-action {
   position: relative;
   display: inline-grid;
   width: 34px;
@@ -1341,7 +1405,8 @@ button {
   transition-timing-function: ease-out;
 }
 
-.service-terminal-action::before {
+.service-terminal-action::before,
+.service-process-action::before {
   position: absolute;
   width: 30px;
   height: 30px;
@@ -1353,7 +1418,8 @@ button {
   transition-timing-function: ease-out;
 }
 
-.service-terminal-action svg {
+.service-terminal-action svg,
+.service-process-action svg {
   position: relative;
   z-index: 1;
 }
@@ -1364,6 +1430,15 @@ button {
 
 .service-terminal-action:hover::before {
   background: #f1f1ee;
+}
+
+.service-process-action:hover {
+  color: #aa3535;
+}
+
+.service-process-action:hover::before {
+  background: #fff0ee;
+  box-shadow: 0 0 0 1px rgb(210 77 77 / 10%);
 }
 
 .service-terminal-action.is-active {
@@ -1380,15 +1455,41 @@ button {
   cursor: not-allowed;
 }
 
-.service-terminal-action[aria-disabled='true']:hover::before {
+.service-terminal-action[aria-disabled='true']:hover::before,
+.service-process-action:disabled:hover::before {
   background: transparent;
+  box-shadow: none;
 }
 
 .service-terminal-action--config {
   margin-left: auto;
 }
 
-.service-terminal-action:focus-visible {
+.service-process-action:disabled {
+  color: #aaa9a5;
+  cursor: not-allowed;
+}
+
+.service-stop-mark {
+  position: relative;
+  z-index: 1;
+  display: inline-grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border: 2px solid #d24d4d;
+  border-radius: 999px;
+}
+
+.service-stop-mark span {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: #d24d4d;
+}
+
+.service-terminal-action:focus-visible,
+.service-process-action:focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: 1px;
 }
@@ -1407,6 +1508,105 @@ button {
   pointer-events: none;
   translate: -50% 0;
   white-space: nowrap;
+}
+
+.service-action-tooltip.service-address-tooltip {
+  width: max-content;
+  max-width: min(620px, calc(100vw - 32px));
+  padding: 7px 8px;
+  border-radius: 9px;
+  font-weight: 500;
+  line-height: 1.25;
+  pointer-events: auto;
+  white-space: normal;
+}
+
+.service-action-tooltip.service-address-tooltip::before {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  left: 0;
+  height: 12px;
+  content: '';
+}
+
+.service-address-details,
+.service-address-details > span {
+  display: grid;
+}
+
+.service-address-details {
+  gap: 2px;
+}
+
+.service-address-detail-row {
+  grid-template-columns: 62px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 8px;
+}
+
+.service-address-label {
+  color: rgb(255 255 255 / 56%);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.service-address-value {
+  min-width: 0;
+  color: #ffffff;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  padding-block: 3px;
+  word-break: break-word;
+}
+
+.service-address-copy {
+  position: relative;
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  color: rgb(255 255 255 / 68%);
+  background: transparent;
+  cursor: pointer;
+  transition-property: color, background-color, scale;
+  transition-duration: 140ms;
+  transition-timing-function: ease-out;
+}
+
+.service-address-copy::after {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  content: '';
+}
+
+.service-address-copy:hover,
+.service-address-copy:focus-visible {
+  color: #ffffff;
+  background: rgb(255 255 255 / 10%);
+}
+
+.service-address-copy:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 48%);
+  outline-offset: 1px;
+}
+
+.service-address-copy:active {
+  scale: 0.96;
+}
+
+.service-address-copy svg {
+  width: 12px;
+  height: 12px;
+  stroke-width: 1.9;
 }
 
 .terminal-panel {
