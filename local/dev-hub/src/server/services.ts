@@ -11,6 +11,11 @@ import type {
 
 export type TServiceConfigDefinition =
   | {
+      kind: 'env-files'
+      root: string
+      environment: 'development'
+    }
+  | {
       kind: 'next-env'
       root: string
       environment: 'development'
@@ -101,10 +106,10 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     description: 'OAuth and browser session boundary',
     group: 'frontend',
     monogram: 'AU',
-    technologies: ['nextjs', 'authjs', 'typescript', 'oauth'],
+    technologies: ['hono', 'authjs', 'typescript', 'oauth'],
     cwd: REPO_ROOT,
     config: {
-      kind: 'next-env',
+      kind: 'env-files',
       root: fromRoot('frontend/auth'),
       environment: 'development',
     },

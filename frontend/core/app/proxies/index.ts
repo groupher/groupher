@@ -1,4 +1,3 @@
-export { authCookieProxy } from './auth-cookie'
 export { avoidScanProxy } from './avoid-scan'
 export { applyProxy } from './helper'
 export { oopsProxy } from './oops'

@@ -1,7 +1,7 @@
-import { signIn as authSignIn } from 'next-auth/react'
+import { signIn as authSignIn, signOut as authSignOut } from 'next-auth/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { signIn } from './oauth'
+import { signIn, signOut } from './oauth'
 
 vi.mock('next-auth/react', () => ({
   signIn: vi.fn(),
@@ -25,5 +25,21 @@ describe('signIn', () => {
     expect(authSignIn).toHaveBeenCalledWith('github', {
       callbackUrl: 'https://dashboard.groupher.localhost/home/dashboard',
     })
+  })
+})
+
+describe('signOut', () => {
+  afterEach(() => {
+    vi.clearAllMocks()
+    vi.unstubAllGlobals()
+  })
+
+  it('clears Auth.js and Phoenix cookies independently', async () => {
+    vi.mocked(authSignOut).mockRejectedValueOnce(new Error('Auth.js unavailable'))
+    const fetchMock = vi.fn(async () => Response.json({ ok: true }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(signOut()).rejects.toThrow('Auth.js unavailable')
+    expect(fetchMock).toHaveBeenCalledWith('/api/auth/logout', { method: 'POST' })
   })
 })

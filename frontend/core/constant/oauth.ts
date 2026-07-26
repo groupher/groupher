@@ -1,7 +1,3 @@
-export const AUTH_KEY = {
-  TOKEN: 'auth.token',
-} as const
-
 export const SOCIAL = {
   GITHUB: 'github',
   // GOOGLE: 'google'

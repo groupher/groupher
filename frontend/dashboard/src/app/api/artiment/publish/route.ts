@@ -3,8 +3,7 @@
  *
  * @see docs/bulk-import/article-publish-import-refactor.md
  */
-import { getAuthToken } from '~/app/auth-token'
-import { AUTH_KEY } from '~/const/oauth'
+import { getPhoenixToken } from '~/app/phoenix-token'
 
 import { handleArtimentPublishRequest } from '../../../../lib/artiment-publisher/http'
 
@@ -22,9 +21,9 @@ const unauthorizedResponse = (): Response =>
 
 /** Supplies user authorization and server trust to the allowlisted publish handler. */
 export const POST = async (request: Request): Promise<Response> => {
-  const token = await getAuthToken(request)
+  const phoenixToken = getPhoenixToken(request)
 
-  if (!token?.[AUTH_KEY.TOKEN]) return unauthorizedResponse()
+  if (!phoenixToken) return unauthorizedResponse()
 
   const serverTrustSecret = process.env.GROUPHER_SERVER_TRUST_SECRET?.trim()
   if (!serverTrustSecret) {
@@ -41,7 +40,7 @@ export const POST = async (request: Request): Promise<Response> => {
   }
 
   return handleArtimentPublishRequest(request, {
-    backendToken: String(token[AUTH_KEY.TOKEN]),
+    backendToken: phoenixToken,
     serverTrustSecret,
   })
 }

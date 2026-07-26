@@ -1,20 +1,19 @@
 import { File } from 'node:buffer'
 
-import { getToken } from 'next-auth/jwt'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { AUTH_KEY } from '~/const/oauth'
+import { getPhoenixToken } from '~/app/phoenix-token'
 
 import { POST } from './route'
 
 const mocks = vi.hoisted(() => ({ importDocumentationUrl: vi.fn() }))
 
-vi.mock('next-auth/jwt', () => ({ getToken: vi.fn() }))
+vi.mock('~/app/phoenix-token', () => ({ getPhoenixToken: vi.fn() }))
 vi.mock('../../../../lib/document-importer/platform', () => ({
   importDocumentationUrl: mocks.importDocumentationUrl,
 }))
 
-const mockedGetToken = vi.mocked(getToken)
+const mockedGetPhoenixToken = vi.mocked(getPhoenixToken)
 
 const request = (filename = 'guide.html') => {
   const file = new File(['<h1>Guide</h1>'], filename, { type: 'text/html' })
@@ -46,7 +45,7 @@ const documentationRequest = (url = 'https://docs.example.com/guide') =>
 
 describe('/api/artiment/import', () => {
   beforeEach(() => {
-    mockedGetToken.mockReset()
+    mockedGetPhoenixToken.mockReset()
     mocks.importDocumentationUrl.mockReset()
     vi.stubEnv('DOCUMENT_CONVERTER_URL', 'https://converter.example.test')
     vi.stubGlobal(
@@ -63,7 +62,7 @@ describe('/api/artiment/import', () => {
   })
 
   it('requires an authenticated Groupher session', async () => {
-    mockedGetToken.mockResolvedValue(null)
+    mockedGetPhoenixToken.mockReturnValue(null)
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
 
@@ -74,7 +73,7 @@ describe('/api/artiment/import', () => {
   })
 
   it('converts the upload and initializes a Plate value through MarkdownKit', async () => {
-    mockedGetToken.mockResolvedValue({ [AUTH_KEY.TOKEN]: 'backend-token' })
+    mockedGetPhoenixToken.mockReturnValue('backend-token')
     const fetchMock = vi.fn().mockResolvedValue(converterResponse('# Guide\n\nHello **world**'))
     vi.stubGlobal('fetch', fetchMock)
 
@@ -102,7 +101,7 @@ describe('/api/artiment/import', () => {
   })
 
   it('does not silently drop table nodes before editor support lands', async () => {
-    mockedGetToken.mockResolvedValue({ [AUTH_KEY.TOKEN]: 'backend-token' })
+    mockedGetPhoenixToken.mockReturnValue('backend-token')
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(converterResponse('| A | B |\n| --- | --- |\n| 1 | 2 |')),
@@ -124,7 +123,7 @@ describe('/api/artiment/import', () => {
   })
 
   it('imports a public documentation URL through the Markdown flow', async () => {
-    mockedGetToken.mockResolvedValue({ [AUTH_KEY.TOKEN]: 'backend-token' })
+    mockedGetPhoenixToken.mockReturnValue('backend-token')
     mocks.importDocumentationUrl.mockResolvedValue({
       diagnostics: [],
       markdown: '# Guide',
@@ -148,7 +147,7 @@ describe('/api/artiment/import', () => {
   })
 
   it('rejects unsupported files before calling the converter', async () => {
-    mockedGetToken.mockResolvedValue({ [AUTH_KEY.TOKEN]: 'backend-token' })
+    mockedGetPhoenixToken.mockReturnValue('backend-token')
     const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
 

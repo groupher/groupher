@@ -10,8 +10,14 @@ export const signOut = async (onComplete?: () => void) => {
   // while NextAuth and backend cookies are being revoked.
   logout()
 
-  await authSignOut({ redirect: false })
-  await fetch(LOGOUT_ENDPOINT, { method: 'POST' })
+  const results = await Promise.allSettled([
+    authSignOut({ redirect: false }),
+    fetch(LOGOUT_ENDPOINT, { method: 'POST' }),
+  ])
+  const failed = results.find(
+    (result): result is PromiseRejectedResult => result.status === 'rejected',
+  )
+  if (failed) throw failed.reason
 
   onComplete?.()
 }

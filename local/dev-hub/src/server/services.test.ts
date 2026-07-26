@@ -20,7 +20,8 @@ test('frontend and Phoenix stacks match their runtime boundaries', () => {
   }
 
   const auth = SERVICE_DEFINITIONS.find((definition) => definition.id === 'auth')
-  assert.deepEqual(auth?.technologies, ['nextjs', 'authjs', 'typescript', 'oauth'])
+  assert.deepEqual(auth?.technologies, ['hono', 'authjs', 'typescript', 'oauth'])
+  assert.equal(auth?.config?.kind, 'env-files')
 
   const phoenix = SERVICE_DEFINITIONS.find((definition) => definition.id === 'phoenix')
   assert.deepEqual(phoenix?.technologies, ['phoenix', 'elixir', 'absinthe', 'postgresql'])

@@ -3,8 +3,7 @@
  *
  * @see docs/bulk-import/article-publish-import-refactor.md
  */
-import { getAuthToken } from '~/app/auth-token'
-import { AUTH_KEY } from '~/const/oauth'
+import { getPhoenixToken } from '~/app/phoenix-token'
 
 import { handleDocumentImportRequest } from '../../../../lib/document-importer/http'
 
@@ -22,9 +21,7 @@ const unauthorizedResponse = (): Response =>
 
 /** Authenticates the user before delegating to the bounded document import handler. */
 export const POST = async (request: Request): Promise<Response> => {
-  const token = await getAuthToken(request)
-
-  if (!token?.[AUTH_KEY.TOKEN]) return unauthorizedResponse()
+  if (!getPhoenixToken(request)) return unauthorizedResponse()
 
   return handleDocumentImportRequest(request)
 }

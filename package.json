@@ -32,7 +32,7 @@
     "info:dashboard": "yarn workspace @groupher/frontend-dashboard next info",
     "clean:dashboard": "yarn workspace @groupher/frontend-dashboard exec rimraf .next",
     "clean:gateway": "yarn workspace @groupher/frontend-gateway exec rimraf .next",
-    "clean:auth": "yarn workspace @groupher/frontend-auth exec rimraf .next",
+    "clean:auth": "yarn workspace @groupher/frontend-auth clean",
     "clean:landing": "yarn workspace @groupher/frontend-landing exec rimraf .next",
     "clean:inspire-me": "yarn workspace @groupher/local-inspire-me exec rimraf .next",
     "predev:main": "yarn clean:main",

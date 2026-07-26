@@ -1,12 +1,12 @@
+import type { AuthConfig } from '@auth/core'
 import { getAuthCookieNames } from '@groupher/frontend-core/auth-contract'
-import type { NextAuthConfig } from 'next-auth'
 
 type TOptions = {
   domain?: string
   secure: boolean
 }
 
-export const buildSharedAuthCookies = ({ domain, secure }: TOptions): NextAuthConfig['cookies'] => {
+export const buildSharedAuthCookies = ({ domain, secure }: TOptions): AuthConfig['cookies'] => {
   if (!domain) return undefined
 
   const names = getAuthCookieNames(secure)

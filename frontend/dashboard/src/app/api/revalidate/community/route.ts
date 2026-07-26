@@ -1,8 +1,7 @@
 import { revalidateTag } from 'next/cache'
 
-import { getAuthToken } from '~/app/auth-token'
+import { getPhoenixToken } from '~/app/phoenix-token'
 import { CACHE_TAG } from '~/const/cache'
-import { AUTH_KEY } from '~/const/oauth'
 
 type TPayload = {
   community?: string
@@ -21,9 +20,7 @@ export const POST = async (req: Request) => {
     })
   }
 
-  const token = await getAuthToken(req)
-
-  if (!token?.[AUTH_KEY.TOKEN]) {
+  if (!getPhoenixToken(req)) {
     return new Response(JSON.stringify({ ok: false, error: 'unauthorized' }), {
       status: 401,
       headers: {

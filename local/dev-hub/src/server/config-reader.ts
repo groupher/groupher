@@ -164,14 +164,14 @@ async function listConfigNames(config: TServiceConfigDefinition, root: string): 
     .filter((entry) => entry.isFile())
     .map((entry) => entry.name)
     .filter((name) =>
-      config.kind === 'next-env'
+      config.kind === 'next-env' || config.kind === 'env-files'
         ? name === '.env' || name.startsWith('.env.')
         : name.endsWith('.exs'),
     )
 }
 
 function classifyConfigFile(config: TServiceConfigDefinition, name: string): TConfigClassification {
-  if (config.kind === 'next-env') {
+  if (config.kind === 'next-env' || config.kind === 'env-files') {
     const activeOrder = [
       `.env.${config.environment}.local`,
       '.env.local',
@@ -209,7 +209,7 @@ function classifyConfigFile(config: TServiceConfigDefinition, name: string): TCo
 
 function redactContent(content: string, kind: TServiceConfigKind): string {
   const lines = content.split(/\r?\n/)
-  if (kind === 'next-env') {
+  if (kind === 'next-env' || kind === 'env-files') {
     return lines
       .map((line) =>
         line.replace(/^(\s*(?:export\s+)?[A-Za-z_][A-Za-z0-9_]*\s*=\s*).*$/, `$1${REDACTED_VALUE}`),

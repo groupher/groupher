@@ -19,6 +19,7 @@ type TProps = {
 }
 
 const KIND_LABEL: Record<TServiceConfigKind, string> = {
+  'env-files': 'Environment files',
   'next-env': 'Next.js environment',
   'elixir-config': 'Elixir configuration',
   'python-settings': 'Python settings',

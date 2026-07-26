@@ -6,6 +6,7 @@ export type TTechnology =
   | 'elixir'
   | 'fastapi'
   | 'graphql'
+  | 'hono'
   | 'markitdown'
   | 'nextjs'
   | 'nodejs'
@@ -103,7 +104,12 @@ export type TGitDiffPayload = {
   revision: number
 }
 
-export type TServiceConfigKind = 'next-env' | 'elixir-config' | 'python-settings' | 'none'
+export type TServiceConfigKind =
+  | 'env-files'
+  | 'next-env'
+  | 'elixir-config'
+  | 'python-settings'
+  | 'none'
 
 export type TServiceConfigFileGroup = 'active' | 'other' | 'template'
 
