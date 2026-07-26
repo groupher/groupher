@@ -1,10 +1,9 @@
 import type { TTechnology, TTechnologyStack } from '@shared/contracts'
-import { Server, ShieldCheck } from 'lucide-react'
+import { Server } from 'lucide-react'
 import {
   siElixir,
   siFastapi,
   siGraphql,
-  siHono,
   siNextdotjs,
   siNodedotjs,
   siOpenid,
@@ -14,6 +13,8 @@ import {
   siTypescript,
 } from 'simple-icons'
 
+import authjsLogoUrl from '../assets/authjs-logo.webp'
+import honoLogoUrl from '../assets/hono-logo.svg'
 import postgresqlLogoUrl from '../assets/postgresql-logo.svg'
 import pythonLogoUrl from '../assets/python-logo.svg'
 
@@ -81,7 +82,13 @@ const TECHNOLOGY_ICONS: Record<Exclude<TTechnology, 'authjs' | 'uvicorn'>, TIcon
     viewBox: '0 0 208 128',
     color: '#ffffff',
   },
-  hono: fromSimpleIcon(siHono),
+  hono: {
+    title: 'Hono',
+    path: '',
+    viewBox: '0 0 76 98',
+    color: '#ff4b1f',
+    assetUrl: honoLogoUrl,
+  },
   nextjs: {
     ...fromSimpleIcon(siNextdotjs),
     underlayPath: CIRCLE_UNDERLAY_PATH,
@@ -121,6 +128,7 @@ const UVICORN_ICON = {
 const AUTHJS_ICON = {
   title: 'Auth.js',
   color: 'var(--service-monogram-foreground)',
+  assetUrl: authjsLogoUrl,
 }
 
 export function ServiceStackMark({ name, monogram, technologies }: TProps) {
@@ -164,7 +172,7 @@ export function ServiceStackMark({ name, monogram, technologies }: TProps) {
             aria-hidden='true'
           >
             {technology === 'authjs' ? (
-              <ShieldCheck />
+              <img src={AUTHJS_ICON.assetUrl} alt='' />
             ) : technology === 'uvicorn' ? (
               <Server />
             ) : technology === 'absinthe' ? (

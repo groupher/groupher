@@ -903,20 +903,24 @@ button {
   object-fit: contain;
 }
 
+.service-stack-cell[data-technology='hono'] img {
+  width: 13px;
+  height: 17px;
+}
+
 .service-stack-cell[data-technology='absinthe'] svg {
   width: 17px;
   height: 17px;
 }
 
-.service-stack-cell[data-technology='authjs'] svg,
 .service-stack-cell[data-technology='uvicorn'] svg {
   fill: none;
   stroke-width: 1.8;
 }
 
-.service-stack-cell[data-technology='authjs'] svg {
-  width: 16px;
-  height: 16px;
+.service-stack-cell[data-technology='authjs'] img {
+  width: 15px;
+  height: 17px;
 }
 
 .service-stack-cell[data-technology='oauth'] svg {
