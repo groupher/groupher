@@ -30,7 +30,15 @@ export type TServiceStatus =
   | 'error'
   | 'unavailable'
 
-export type TServiceRelationKind = 'route' | 'api'
+export type TServiceStartMode = 'self' | 'chain' | 'related'
+
+export type TServiceStartPolicy = {
+  defaultMode: TServiceStartMode
+  requiredDependencies: string[]
+  optionalDependencies: string[]
+}
+
+export type TServiceRelationKind = 'route' | 'api' | 'auth'
 
 export type TServiceRelation = {
   id: string
@@ -76,6 +84,7 @@ export type TPublicService = {
   canStart: boolean
   unavailableReason: string | null
   metricThresholds: TMetricThresholds
+  startPolicy: TServiceStartPolicy
 }
 
 export type TGitDiffScope = 'all' | 'staged' | 'unstaged'

@@ -1,4 +1,9 @@
-import type { TPublicService, TServiceGroup, TServiceMetricsSnapshot } from '@shared/contracts'
+import type {
+  TPublicService,
+  TServiceGroup,
+  TServiceMetricsSnapshot,
+  TServiceStartMode,
+} from '@shared/contracts'
 import { useEffect, useState } from 'react'
 
 import { ServiceCard } from './ServiceCard'
@@ -13,10 +18,12 @@ type TProps = {
   expandedIds: Set<string>
   pendingIds: Set<string>
   onToggleService: (service: TPublicService) => void
+  onStartService: (service: TPublicService, mode: TServiceStartMode | 'default') => void
   onRestartService: (service: TPublicService) => void
   onToggleTerminal: (id: string) => void
   onOpenMetrics: (id: string) => void
   onOpenConfig: (id: string) => void
+  onOpenDependencies: (id: string) => void
 }
 
 const WIDE_SERVICES_PER_ROW = 3
@@ -68,10 +75,12 @@ export function ServiceSection({
   expandedIds,
   pendingIds,
   onToggleService,
+  onStartService,
   onRestartService,
   onToggleTerminal,
   onOpenMetrics,
   onOpenConfig,
+  onOpenDependencies,
 }: TProps) {
   const servicesPerRow = useServicesPerRow()
   const groupedServices = services.filter((service) => service.group === group)
@@ -117,10 +126,12 @@ export function ServiceSection({
                   expanded={!isCompactService(service) && expandedIds.has(service.id)}
                   pending={pendingIds.has(service.id)}
                   onToggleService={onToggleService}
+                  onStartService={onStartService}
                   onRestartService={onRestartService}
                   onToggleTerminal={onToggleTerminal}
                   onOpenMetrics={onOpenMetrics}
                   onOpenConfig={onOpenConfig}
+                  onOpenDependencies={onOpenDependencies}
                 />
               ))}
             </div>

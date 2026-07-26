@@ -119,6 +119,47 @@ flowchart LR
 
 服务及关系的来源是 [`src/server/services.ts`](./src/server/services.ts)。新的服务应在这里声明工作目录、命令、端口、配置来源、技术栈和指标阈值；服务之间的路由或 API 依赖也在同一文件维护。
 
+## Start Chain
+
+Dev Hub 的启动行为由服务配置驱动，不从 Flow 里的路由/API 关系自动推断。Flow 关系描述运行时流量方向，例如 Gateway 会路由到 Main 和 Dashboard；启动依赖描述“为了调试这个服务，哪些服务必须先可用”。
+
+每个服务可以声明 `startPolicy`：
+
+```ts
+startPolicy: {
+  defaultMode: 'self' | 'chain' | 'related'
+  requiredDependencies: string[]
+  optionalDependencies: string[]
+}
+```
+
+启动模式含义：
+
+- `self`：只启动当前服务。
+- `chain`：启动强依赖，再启动当前服务。
+- `related`：启动强依赖、弱依赖和当前服务。
+
+没有声明 `startPolicy` 的服务默认等价于：
+
+```ts
+{
+  defaultMode: 'self',
+  requiredDependencies: [],
+  optionalDependencies: [],
+}
+```
+
+当前 `main` 和 `dashboard` 默认使用 `chain`，强依赖是 `gateway`、`auth` 和 `phoenix`，弱依赖是 `document-converter`。因此点击主 `Start` 会启动默认链路，菜单里显示 `Start chain (default)`；需要隔离调试时，可以从小三角菜单选择 `Start only this service`；需要把 converter 一起拉起时，选择 `Start all related`。
+
+`landing`、`gateway`、`inspire-me` 和当前后端服务没有声明强弱依赖时，只显示普通 `Start`，不显示小三角，也不显示依赖 Drawer 入口。
+
+有依赖的服务在 Card Footer 会显示依赖图标。点击后打开 Drawer，按 `Required` 和 `Optional` 展示依赖列表。列表中的状态点来自当前 service status：
+
+- 绿色：`running` 或 `external`。
+- 黄色：`starting`。
+- 红色：`stopped`、`stopping` 或 `error`。
+- 灰色：`unavailable`。
+
 ## 技术栈
 
 ### Desktop

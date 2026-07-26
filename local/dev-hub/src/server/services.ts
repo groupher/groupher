@@ -6,6 +6,7 @@ import type {
   TMetricThresholds,
   TServiceGroup,
   TServiceRelation,
+  TServiceStartPolicy,
   TTechnologyStack,
 } from '../shared/contracts.ts'
 
@@ -50,6 +51,7 @@ export type TServiceDefinition = {
   portlessUrl?: string
   unavailableReason?: string
   metrics: TMetricThresholds
+  startPolicy?: Partial<TServiceStartPolicy>
 }
 
 export const REPO_ROOT = fileURLToPath(new URL('../../../../', import.meta.url))
@@ -68,6 +70,12 @@ const BACKEND_METRICS: TMetricThresholds = {
   browserBusyPercent: 50,
   browserHeapBytes: 512 * MB,
 }
+
+const APP_CHAIN_POLICY = {
+  defaultMode: 'chain',
+  requiredDependencies: ['gateway', 'auth', 'phoenix'],
+  optionalDependencies: ['document-converter'],
+} satisfies TServiceStartPolicy
 
 export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
   {
@@ -168,6 +176,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     portlessName: 'main',
     portlessUrl: 'https://main.groupher.localhost/health',
     metrics: FRONTEND_METRICS,
+    startPolicy: APP_CHAIN_POLICY,
   },
   {
     id: 'dashboard',
@@ -189,6 +198,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     portlessName: 'dashboard',
     portlessUrl: 'https://dashboard.groupher.localhost/health',
     metrics: FRONTEND_METRICS,
+    startPolicy: APP_CHAIN_POLICY,
   },
   {
     id: 'inspire-me',
@@ -294,10 +304,17 @@ export const SERVICE_RELATIONS: TServiceRelation[] = [
     label: '/, /pricing, /book-demo',
   },
   {
-    id: 'gateway-dashboard',
-    source: 'gateway',
+    id: 'auth-main',
+    source: 'auth',
+    target: 'main',
+    kind: 'auth',
+    label: 'signed-in session',
+  },
+  {
+    id: 'auth-dashboard',
+    source: 'auth',
     target: 'dashboard',
-    kind: 'route',
+    kind: 'auth',
     label: '/:community/dashboard/*',
   },
   {

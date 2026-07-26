@@ -58,12 +58,30 @@ test('the request flow documents gateway routing and GraphQL dependencies', () =
     [
       { source: 'gateway', target: 'auth', label: '/api/auth/*' },
       { source: 'gateway', target: 'landing', label: '/, /pricing, /book-demo' },
-      { source: 'gateway', target: 'dashboard', label: '/:community/dashboard/*' },
+      { source: 'auth', target: 'main', label: 'signed-in session' },
+      { source: 'auth', target: 'dashboard', label: '/:community/dashboard/*' },
       { source: 'gateway', target: 'main', label: 'all other routes' },
       { source: 'main', target: 'phoenix', label: 'GraphQL' },
       { source: 'dashboard', target: 'phoenix', label: 'GraphQL' },
     ],
   )
+})
+
+test('only main and dashboard default to a configured start chain', () => {
+  const startPolicies = Object.fromEntries(
+    SERVICE_DEFINITIONS.map((definition) => [definition.id, definition.startPolicy]),
+  )
+
+  assert.deepEqual(startPolicies.main, {
+    defaultMode: 'chain',
+    requiredDependencies: ['gateway', 'auth', 'phoenix'],
+    optionalDependencies: ['document-converter'],
+  })
+  assert.deepEqual(startPolicies.dashboard, startPolicies.main)
+
+  for (const id of ['gateway', 'auth', 'landing', 'inspire-me', 'phoenix', 'document-converter']) {
+    assert.equal(startPolicies[id], undefined, id)
+  }
 })
 
 test('the managed gateway routes to local frontend ports', () => {

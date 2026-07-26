@@ -15,6 +15,7 @@ import type {
   THubEvent,
   THubSnapshot,
   TMetricRange,
+  TServiceStartMode,
 } from '../shared/contracts.ts'
 import {
   buildBrowserOriginsByService,
@@ -176,7 +177,9 @@ app.get('/api/services/:id/metrics', async (context) => {
 
 app.post('/api/services/:id/start', async (context) => {
   try {
-    return context.json({ service: await manager.start(context.req.param('id')) })
+    const mode = await readStartMode(context)
+    const services = await manager.startWithMode(context.req.param('id'), mode)
+    return context.json({ service: services[services.length - 1], services })
   } catch (error) {
     return respondWithError(context, error)
   }
@@ -300,6 +303,20 @@ function isGitDiffScope(value: string | undefined): value is TGitDiffScope {
 
 function isMetricRange(value: string | undefined): value is TMetricRange {
   return value === '15m' || value === '1h' || value === '6h' || value === '24h'
+}
+
+async function readStartMode(context: Context): Promise<TServiceStartMode | 'default'> {
+  if (context.req.header('content-type')?.includes('application/json')) {
+    const payload = (await context.req.json().catch(() => null)) as { mode?: unknown } | null
+    if (isStartMode(payload?.mode)) return payload.mode
+  }
+
+  const queryMode = context.req.query('mode')
+  return isStartMode(queryMode) ? queryMode : 'default'
+}
+
+function isStartMode(value: unknown): value is TServiceStartMode {
+  return value === 'self' || value === 'chain' || value === 'related'
 }
 
 function parseBrowserMetricReport(value: unknown): TBrowserMetricReport {

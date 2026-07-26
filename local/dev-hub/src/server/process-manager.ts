@@ -6,6 +6,8 @@ import type {
   TLogStream,
   TPublicService,
   TServiceLog,
+  TServiceStartMode,
+  TServiceStartPolicy,
   TServiceStatus,
 } from '../shared/contracts.ts'
 import type { TServiceDefinition } from './services.ts'
@@ -15,7 +17,14 @@ const EXTERNAL_POLL_MS = 2_500
 const READINESS_POLL_MS = 500
 const RESTART_PORT_RELEASE_POLL_MS = 50
 const RESTART_PORT_RELEASE_TIMEOUT_MS = 5_000
+const START_DEPENDENCY_READY_POLL_MS = 500
+const START_DEPENDENCY_READY_TIMEOUT_MS = 45_000
 const STOP_GRACE_MS = 750
+const SELF_START_POLICY: TServiceStartPolicy = {
+  defaultMode: 'self',
+  requiredDependencies: [],
+  optionalDependencies: [],
+}
 
 type TRuntimeService = {
   definition: TServiceDefinition
@@ -201,6 +210,55 @@ export class ServiceManager {
     return this.toPublicService(runtime)
   }
 
+  async startWithMode(
+    id: string,
+    mode: TServiceStartMode | 'default' = 'default',
+  ): Promise<TPublicService[]> {
+    const plan = this.resolveStartPlan(id, mode)
+    const touched = new Set<string>()
+
+    for (const serviceId of plan) {
+      const runtime = this.getRuntime(serviceId)
+
+      if (await this.isRuntimeReady(runtime)) {
+        touched.add(serviceId)
+        continue
+      }
+
+      if (!runtime.definition.command) {
+        const target = this.getRuntime(id)
+        const policy = normalizeStartPolicy(target.definition.startPolicy)
+        const optional = policy.optionalDependencies.includes(serviceId)
+        if (optional && mode === 'related') continue
+
+        throw new ServiceManagerError(
+          runtime.definition.unavailableReason || `${runtime.definition.name} is not startable.`,
+          409,
+        )
+      }
+
+      try {
+        await this.start(serviceId)
+      } catch (error) {
+        if (
+          error instanceof ServiceManagerError &&
+          runtime.status === 'external' &&
+          (await this.isRuntimeReady(runtime))
+        ) {
+          touched.add(serviceId)
+          continue
+        }
+
+        throw error
+      }
+
+      touched.add(serviceId)
+      if (serviceId !== id) await this.waitForRuntimeReady(runtime)
+    }
+
+    return Array.from(touched, (serviceId) => this.toPublicService(this.getRuntime(serviceId)))
+  }
+
   async stop(id: string): Promise<TPublicService> {
     const runtime = this.getRuntime(id)
 
@@ -257,6 +315,41 @@ export class ServiceManager {
     const runtime = this.runtimes.get(id)
     if (!runtime) throw new ServiceManagerError(`Unknown service: ${id}`, 404)
     return runtime
+  }
+
+  private resolveStartPlan(id: string, mode: TServiceStartMode | 'default'): string[] {
+    const target = this.getRuntime(id)
+    const policy = normalizeStartPolicy(target.definition.startPolicy)
+    const resolvedMode = mode === 'default' ? policy.defaultMode : mode
+    const plan: string[] = []
+    const visited = new Set<string>()
+    const visiting = new Set<string>()
+
+    const visit = (serviceId: string, includeOptional: boolean) => {
+      if (visited.has(serviceId)) return
+      if (visiting.has(serviceId)) {
+        throw new ServiceManagerError(`Start dependencies contain a cycle at ${serviceId}.`, 409)
+      }
+
+      const runtime = this.getRuntime(serviceId)
+      const currentPolicy = normalizeStartPolicy(runtime.definition.startPolicy)
+      visiting.add(serviceId)
+
+      for (const dependencyId of currentPolicy.requiredDependencies)
+        visit(dependencyId, includeOptional)
+      if (includeOptional) {
+        for (const dependencyId of currentPolicy.optionalDependencies)
+          visit(dependencyId, includeOptional)
+      }
+
+      visiting.delete(serviceId)
+      visited.add(serviceId)
+      plan.push(serviceId)
+    }
+
+    if (resolvedMode === 'self') return [id]
+    visit(id, resolvedMode === 'related')
+    return plan
   }
 
   private resetRun(runtime: TRuntimeService): void {
@@ -369,6 +462,30 @@ export class ServiceManager {
     }
   }
 
+  private async waitForRuntimeReady(runtime: TRuntimeService): Promise<void> {
+    const deadline = Date.now() + START_DEPENDENCY_READY_TIMEOUT_MS
+
+    while (!(await this.isRuntimeReady(runtime))) {
+      if (Date.now() >= deadline) {
+        throw new ServiceManagerError(
+          `${runtime.definition.name} started, but did not become healthy before starting dependents.`,
+          409,
+        )
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, START_DEPENDENCY_READY_POLL_MS))
+    }
+  }
+
+  private async isRuntimeReady(runtime: TRuntimeService): Promise<boolean> {
+    if (!['running', 'external'].includes(runtime.status)) return false
+
+    const { port, url, id } = runtime.definition
+    if (url) return isHealthReady(url, id)
+    if (port) return this.portProbe(port)
+    return true
+  }
+
   private async refreshExternalStates(): Promise<void> {
     await Promise.all(
       Array.from(this.runtimes.values(), async (runtime) => {
@@ -426,7 +543,41 @@ export class ServiceManager {
       canStart: Boolean(definition.command),
       unavailableReason: definition.unavailableReason ?? null,
       metricThresholds: definition.metrics,
+      startPolicy: normalizeStartPolicy(definition.startPolicy),
     }
+  }
+}
+
+function normalizeStartPolicy(policy: TServiceDefinition['startPolicy']): TServiceStartPolicy {
+  return {
+    defaultMode: policy?.defaultMode ?? SELF_START_POLICY.defaultMode,
+    requiredDependencies: [
+      ...(policy?.requiredDependencies ?? SELF_START_POLICY.requiredDependencies),
+    ],
+    optionalDependencies: [
+      ...(policy?.optionalDependencies ?? SELF_START_POLICY.optionalDependencies),
+    ],
+  }
+}
+
+async function isHealthReady(url: string, serviceId: string): Promise<boolean> {
+  try {
+    const response = await fetch(url, { signal: AbortSignal.timeout(1_000) })
+    if (!response.ok) return false
+
+    const payload = (await response.json().catch(() => null)) as {
+      schemaVersion?: unknown
+      status?: unknown
+      service?: unknown
+    } | null
+
+    return (
+      payload?.schemaVersion === 'health.v1' &&
+      payload.service === serviceId &&
+      (payload.status === 'ok' || payload.status === 'limited')
+    )
+  } catch {
+    return false
   }
 }
 

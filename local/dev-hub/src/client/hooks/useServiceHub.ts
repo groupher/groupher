@@ -4,6 +4,7 @@ import type {
   TPublicService,
   TServiceRelation,
   TServiceMetricsSnapshot,
+  TServiceStartMode,
 } from '@shared/contracts'
 import { useCallback, useEffect, useState } from 'react'
 
@@ -24,7 +25,8 @@ type TServiceHub = {
   connected: boolean
   loading: boolean
   error: string | null
-  toggleService: (service: TPublicService) => Promise<void>
+  toggleService: (service: TPublicService, mode?: TServiceStartMode | 'default') => Promise<void>
+  startService: (service: TPublicService, mode?: TServiceStartMode | 'default') => Promise<void>
   restartService: (service: TPublicService) => Promise<void>
   dismissError: () => void
 }
@@ -46,6 +48,15 @@ export function useServiceHub(): TServiceHub {
     setServices((current) =>
       current.map((service) => (service.id === nextService.id ? nextService : service)),
     )
+  }, [])
+
+  const updateServices = useCallback((nextServices: TPublicService[]) => {
+    if (nextServices.length === 0) return
+
+    setServices((current) => {
+      const nextById = new Map(nextServices.map((service) => [service.id, service]))
+      return current.map((service) => nextById.get(service.id) || service)
+    })
   }, [])
 
   useEffect(() => {
@@ -90,28 +101,44 @@ export function useServiceHub(): TServiceHub {
   }, [updateService])
 
   const runServiceAction = useCallback(
-    async (service: TPublicService, action: TServiceControlAction) => {
-      setPendingIds((current) => new Set(current).add(service.id))
+    async (
+      service: TPublicService,
+      action: TServiceControlAction,
+      mode?: TServiceStartMode | 'default',
+    ) => {
+      const actionIds =
+        action === 'start' ? getStartActionIds(service, mode || 'default') : [service.id]
+      setPendingIds((current) => {
+        const next = new Set(current)
+        for (const id of actionIds) next.add(id)
+        return next
+      })
       setError(null)
 
       try {
-        updateService(await controlService(service.id, action))
+        const nextServices = await controlService(service.id, action, mode)
+        updateServices(nextServices)
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : `Could not ${action} ${service.name}.`)
       } finally {
         setPendingIds((current) => {
           const next = new Set(current)
-          next.delete(service.id)
+          for (const id of actionIds) next.delete(id)
           return next
         })
       }
     },
-    [updateService],
+    [updateServices],
+  )
+  const startService = useCallback(
+    (service: TPublicService, mode: TServiceStartMode | 'default' = 'default') =>
+      runServiceAction(service, 'start', mode),
+    [runServiceAction],
   )
   const toggleService = useCallback(
-    (service: TPublicService) => {
+    (service: TPublicService, mode?: TServiceStartMode | 'default') => {
       const action = ['starting', 'running'].includes(service.status) ? 'stop' : 'start'
-      return runServiceAction(service, action)
+      return runServiceAction(service, action, action === 'start' ? mode : undefined)
     },
     [runServiceAction],
   )
@@ -131,7 +158,17 @@ export function useServiceHub(): TServiceHub {
     loading,
     error,
     toggleService,
+    startService,
     restartService,
     dismissError: () => setError(null),
   }
+}
+
+function getStartActionIds(service: TPublicService, mode: TServiceStartMode | 'default'): string[] {
+  const resolvedMode = mode === 'default' ? service.startPolicy.defaultMode : mode
+  if (resolvedMode === 'self') return [service.id]
+
+  const ids = [...service.startPolicy.requiredDependencies, service.id]
+  if (resolvedMode === 'related') ids.push(...service.startPolicy.optionalDependencies)
+  return Array.from(new Set(ids))
 }

@@ -6,4 +6,5 @@ export type THubDrawer =
   | { kind: 'git'; scope: TGitDiffScope }
   | { kind: 'metrics'; serviceId: string }
   | { kind: 'config'; serviceId: string }
+  | { kind: 'dependencies'; serviceId: string }
   | null

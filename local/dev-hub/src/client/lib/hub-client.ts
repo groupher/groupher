@@ -12,6 +12,7 @@ import type {
   TServiceConfigManifest,
   TServiceLog,
   TServiceMetricsSnapshot,
+  TServiceStartMode,
 } from '@shared/contracts'
 
 type TLogListener = (log: TServiceLog) => void
@@ -104,12 +105,20 @@ export async function fetchMetricHistory(
 export async function controlService(
   id: string,
   action: TServiceControlAction,
-): Promise<TPublicService> {
+  mode?: TServiceStartMode | 'default',
+): Promise<TPublicService[]> {
   const response = await fetch(`/api/services/${encodeURIComponent(id)}/${action}`, {
     method: 'POST',
+    ...(action === 'start' && mode
+      ? {
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode }),
+        }
+      : {}),
   })
   const payload = (await response.json().catch(() => null)) as {
     service?: TPublicService
+    services?: TPublicService[]
     error?: string
   } | null
 
@@ -117,7 +126,7 @@ export async function controlService(
     throw new Error(payload?.error || `Could not ${action} ${id}.`)
   }
 
-  return payload.service
+  return payload.services || [payload.service]
 }
 
 export function connectHub(options: THubConnectionOptions): () => void {

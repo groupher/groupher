@@ -1,0 +1,7 @@
+export const FLOW_NODE_WIDTH = 384
+export const FLOW_COMPACT_NODE_HEIGHT = 94
+export const FLOW_EXPANDED_NODE_HEIGHT = 351
+export const FLOW_STANDALONE_GAP = 34
+export const FLOW_STANDALONE_OFFSET = 112
+export const FLOW_STANDALONE_TOP = 58
+export const FLOW_USERS_TO_GATEWAY_OFFSET = 118

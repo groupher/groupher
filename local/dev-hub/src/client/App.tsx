@@ -1,4 +1,4 @@
-import type { TPublicService } from '@shared/contracts'
+import type { TPublicService, TServiceStartMode } from '@shared/contracts'
 import { AlertCircle, X } from 'lucide-react'
 import { lazy, startTransition, Suspense, useCallback, useEffect, useState } from 'react'
 
@@ -15,6 +15,11 @@ const ConfigDrawer = lazy(() =>
 )
 const MetricsDrawer = lazy(() =>
   import('@/components/MetricsDrawer').then((module) => ({ default: module.MetricsDrawer })),
+)
+const DependencyDrawer = lazy(() =>
+  import('@/components/DependencyDrawer').then((module) => ({
+    default: module.DependencyDrawer,
+  })),
 )
 const FlowView = lazy(() =>
   import('@/components/FlowView').then((module) => ({ default: module.FlowView })),
@@ -35,6 +40,7 @@ export function App() {
     loading,
     error,
     toggleService,
+    startService,
     restartService,
     dismissError,
   } = useServiceHub()
@@ -47,6 +53,10 @@ export function App() {
       : null
   const configService =
     activeDrawer?.kind === 'config'
+      ? services.find((service) => service.id === activeDrawer.serviceId) || null
+      : null
+  const dependencyService =
+    activeDrawer?.kind === 'dependencies'
       ? services.find((service) => service.id === activeDrawer.serviceId) || null
       : null
   const diffScope = activeDrawer?.kind === 'git' ? activeDrawer.scope : null
@@ -86,12 +96,22 @@ export function App() {
     },
     [restartService],
   )
+  const handleStartService = useCallback(
+    (service: TPublicService, mode: TServiceStartMode | 'default') => {
+      void startService(service, mode)
+    },
+    [startService],
+  )
   const openMetrics = useCallback(
     (serviceId: string) => setActiveDrawer({ kind: 'metrics', serviceId }),
     [],
   )
   const openConfig = useCallback(
     (serviceId: string) => setActiveDrawer({ kind: 'config', serviceId }),
+    [],
+  )
+  const openDependencies = useCallback(
+    (serviceId: string) => setActiveDrawer({ kind: 'dependencies', serviceId }),
     [],
   )
   const closeDrawer = useCallback(() => setActiveDrawer(null), [])
@@ -142,10 +162,12 @@ export function App() {
               expandedIds={expandedIds}
               pendingIds={pendingIds}
               onToggleService={handleToggleService}
+              onStartService={handleStartService}
               onRestartService={handleRestartService}
               onToggleTerminal={toggleTerminal}
               onOpenMetrics={openMetrics}
               onOpenConfig={openConfig}
+              onOpenDependencies={openDependencies}
             />
             <ServiceSection
               title='Backend'
@@ -156,10 +178,12 @@ export function App() {
               expandedIds={expandedIds}
               pendingIds={pendingIds}
               onToggleService={handleToggleService}
+              onStartService={handleStartService}
               onRestartService={handleRestartService}
               onToggleTerminal={toggleTerminal}
               onOpenMetrics={openMetrics}
               onOpenConfig={openConfig}
+              onOpenDependencies={openDependencies}
             />
           </>
         ) : (
@@ -178,10 +202,12 @@ export function App() {
                 expandedIds={expandedIds}
                 pendingIds={pendingIds}
                 onToggleService={handleToggleService}
+                onStartService={handleStartService}
                 onRestartService={handleRestartService}
                 onToggleTerminal={toggleTerminal}
                 onOpenMetrics={openMetrics}
                 onOpenConfig={openConfig}
+                onOpenDependencies={openDependencies}
               />
             </Suspense>
           </ErrorBoundary>
@@ -212,6 +238,15 @@ export function App() {
         {configService ? (
           <Suspense fallback={null}>
             <ConfigDrawer service={configService} onClose={closeDrawer} />
+          </Suspense>
+        ) : null}
+        {dependencyService ? (
+          <Suspense fallback={null}>
+            <DependencyDrawer
+              service={dependencyService}
+              services={services}
+              onClose={closeDrawer}
+            />
           </Suspense>
         ) : null}
       </main>

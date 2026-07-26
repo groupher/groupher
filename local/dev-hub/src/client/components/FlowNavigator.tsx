@@ -1,4 +1,5 @@
 import { Panel, useReactFlow } from '@xyflow/react'
+import { Maximize2, Minus, Plus } from 'lucide-react'
 
 import type { TFlowEdge, TFlowNode } from './flow-spec'
 
@@ -8,7 +9,7 @@ type TProps = {
 }
 
 export function FlowNavigator({ requestPathIds, standaloneIds }: TProps) {
-  const { fitView } = useReactFlow<TFlowNode, TFlowEdge>()
+  const { fitView, zoomIn, zoomOut } = useReactFlow<TFlowNode, TFlowEdge>()
 
   const focusNodes = (ids: string[]) => {
     void fitView({
@@ -20,16 +21,44 @@ export function FlowNavigator({ requestPathIds, standaloneIds }: TProps) {
   }
 
   return (
-    <Panel className='flow-navigator' position='top-right'>
-      <button type='button' onClick={() => focusNodes(requestPathIds)}>
-        Request path
-      </button>
-      {standaloneIds.length > 0 ? (
-        <button type='button' onClick={() => focusNodes(standaloneIds)}>
-          Standalone
-          <span>{standaloneIds.length}</span>
+    <Panel className='flow-toolbar' position='top-right'>
+      <div className='flow-zoom-controls' aria-label='Flow zoom controls'>
+        <button
+          type='button'
+          aria-label='Zoom in'
+          title='Zoom in'
+          onClick={() => zoomIn({ duration: 180 })}
+        >
+          <Plus aria-hidden='true' />
         </button>
-      ) : null}
+        <button
+          type='button'
+          aria-label='Zoom out'
+          title='Zoom out'
+          onClick={() => zoomOut({ duration: 180 })}
+        >
+          <Minus aria-hidden='true' />
+        </button>
+        <button
+          type='button'
+          aria-label='Fit view'
+          title='Fit view'
+          onClick={() => focusNodes(requestPathIds)}
+        >
+          <Maximize2 aria-hidden='true' />
+        </button>
+      </div>
+      <div className='flow-navigator'>
+        <button type='button' onClick={() => focusNodes(requestPathIds)}>
+          Request path
+        </button>
+        {standaloneIds.length > 0 ? (
+          <button type='button' onClick={() => focusNodes(standaloneIds)}>
+            Standalone
+            <span>{standaloneIds.length}</span>
+          </button>
+        ) : null}
+      </div>
     </Panel>
   )
 }
