@@ -38,6 +38,7 @@ export const createApp = ({ fetcher }: TOptions = {}) => {
       method: context.req.method,
       host: url.host,
       forwardedHost: context.req.header('x-forwarded-host'),
+      referer: context.req.header('referer'),
     })
 
     return proxyRequest(context.req.raw, target, { fetcher })

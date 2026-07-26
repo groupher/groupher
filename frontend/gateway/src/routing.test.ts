@@ -123,6 +123,7 @@ describe('gateway/routing', () => {
       search = '',
       forwardedHost?: string,
       method = 'GET',
+      referer?: string,
     ) =>
       resolveGatewayTarget({
         pathname,
@@ -130,6 +131,7 @@ describe('gateway/routing', () => {
         host,
         forwardedHost,
         method,
+        referer,
       })
 
     it('routes auth before product routes', () => {
@@ -202,6 +204,34 @@ describe('gateway/routing', () => {
       expect(resolve('/landing/_next/static/chunks/app.js', 'www.groupher.com').targetKind).toBe(
         'landing',
       )
+    })
+
+    it('routes unprefixed development chunks by the dashboard referer', () => {
+      const target = resolve(
+        '/_next/static/chunks/app.js',
+        'groupher.localhost',
+        '',
+        undefined,
+        'GET',
+        'https://groupher.localhost/home/dashboard/appearance',
+      )
+
+      expect(target.targetKind).toBe('dashboard')
+      expect(target.targetUrl.pathname).toBe('/_next/static/chunks/app.js')
+    })
+
+    it('routes unprefixed development chunks by the landing referer', () => {
+      const target = resolve(
+        '/_next/static/chunks/app.js',
+        'groupher.localhost',
+        '',
+        undefined,
+        'GET',
+        'https://groupher.localhost/pricing',
+      )
+
+      expect(target.targetKind).toBe('landing')
+      expect(target.targetUrl.pathname).toBe('/_next/static/chunks/app.js')
     })
 
     it('routes landing static page paths to landing', () => {

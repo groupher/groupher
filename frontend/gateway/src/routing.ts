@@ -19,6 +19,7 @@ type TResolveGatewayTargetInput = {
   method?: string
   host: string
   forwardedHost?: string | null
+  referer?: string | null
 }
 
 const APP = {
@@ -41,6 +42,7 @@ export const SITE = {
 
 export const isAuthRoute = (pathname: string): boolean => pathname.startsWith('/api/auth/')
 export const isGraphqlRoute = (pathname: string): boolean => pathname === '/api/graphql'
+const isNextStaticRoute = (pathname: string): boolean => pathname.startsWith('/_next/static/')
 
 const isAppHost = (host: string, app: string): boolean => host.startsWith(`${app}.`)
 
@@ -88,6 +90,16 @@ export const getDashboardUrl = (pathname: string, host: string, search = ''): UR
 const firstForwardedHost = (forwardedHost?: string | null): string | null =>
   forwardedHost?.split(',')[0]?.trim() || null
 
+const getRefererUrl = (referer?: string | null): URL | null => {
+  if (!referer) return null
+
+  try {
+    return new URL(referer)
+  } catch {
+    return null
+  }
+}
+
 const shouldForwardBody = (method = 'GET'): boolean =>
   !['GET', 'HEAD'].includes(method.toUpperCase())
 
@@ -111,9 +123,11 @@ export const resolveGatewayTarget = ({
   method,
   host,
   forwardedHost,
+  referer,
 }: TResolveGatewayTargetInput): TGatewayTarget => {
   const routingHost = firstForwardedHost(forwardedHost) || host
   const fullPath = pathname + search
+  const refererUrl = getRefererUrl(referer)
 
   if (isAuthRoute(pathname)) {
     return target('auth', new URL(fullPath, SITE.AUTH), method)
@@ -134,6 +148,16 @@ export const resolveGatewayTarget = ({
 
   if (isLandingHost(routingHost)) {
     return target('landing', new URL(fullPath, SITE.LANDING), method)
+  }
+
+  if (isNextStaticRoute(pathname) && refererUrl) {
+    if (isDashboardRoute(refererUrl.pathname, refererUrl.host)) {
+      return target('dashboard', new URL(fullPath, SITE.DASHBOARD), method)
+    }
+
+    if (STATIC_PATHS.includes(refererUrl.pathname) || isLandingHost(refererUrl.host)) {
+      return target('landing', new URL(fullPath, SITE.LANDING), method)
+    }
   }
 
   if (isDashboardRoute(pathname, routingHost)) {
