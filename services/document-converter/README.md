@@ -6,7 +6,20 @@ GraphQL, and Plate Editor state.
 
 ## API
 
-`GET /health` returns `{ "status": "ok" }`.
+`GET /health` returns the shared `health.v1` contract:
+
+```json
+{
+  "schemaVersion": "health.v1",
+  "status": "ok",
+  "service": "document-converter",
+  "version": "dev",
+  "environment": "development",
+  "timestamp": "2026-07-26T00:00:00Z",
+  "uptimeMs": 12345,
+  "checks": []
+}
+```
 
 `POST /convert` accepts one `multipart/form-data` field named `file`. Supported
 extensions are PDF, DOCX, PPTX, XLSX, HTML, and HTM. The response shape is:

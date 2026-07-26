@@ -120,7 +120,7 @@ test('managed services expose stable Portless names and keep the API under the c
 
   const main = SERVICE_DEFINITIONS.find((definition) => definition.id === 'main')
   assert.equal(main?.portlessName, 'main')
-  assert.equal(main?.portlessUrl, 'https://main.groupher.localhost')
+  assert.equal(main?.portlessUrl, 'https://main.groupher.localhost/health')
 
   for (const id of ['auth', 'landing', 'dashboard', 'inspire-me', 'document-converter']) {
     const service = SERVICE_DEFINITIONS.find((definition) => definition.id === id)
@@ -133,5 +133,5 @@ test('managed services expose stable Portless names and keep the API under the c
 
   const phoenix = SERVICE_DEFINITIONS.find((definition) => definition.id === 'phoenix')
   assert.equal(phoenix?.portlessName, 'api')
-  assert.equal(phoenix?.portlessUrl, 'https://api.groupher.localhost/graphiql')
+  assert.equal(phoenix?.portlessUrl, 'https://api.groupher.localhost/health')
 })

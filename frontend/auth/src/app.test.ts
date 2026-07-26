@@ -7,7 +7,16 @@ describe('Auth Hono application', () => {
     const response = await createApp().request('/health')
 
     expect(response.status).toBe(200)
-    await expect(response.json()).resolves.toEqual({ ok: true, service: 'auth' })
+    await expect(response.json()).resolves.toMatchObject({
+      schemaVersion: 'health.v1',
+      status: 'ok',
+      service: 'auth',
+      version: expect.any(String),
+      environment: expect.any(String),
+      timestamp: expect.any(String),
+      uptimeMs: expect.any(Number),
+      checks: [],
+    })
   })
 
   it('forwards Auth.js protocol requests to the core handler', async () => {
