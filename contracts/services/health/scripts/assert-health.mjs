@@ -58,8 +58,8 @@ const assertHealth = (payload, expectedService) => {
   assertString(payload.environment, 'environment')
   assertTimestamp(payload.timestamp)
 
-  if (typeof payload.uptimeMs !== 'number' || !Number.isFinite(payload.uptimeMs) || payload.uptimeMs < 0) {
-    fail('uptimeMs must be a non-negative number')
+  if (!Number.isInteger(payload.uptimeMs) || payload.uptimeMs < 0) {
+    fail('uptimeMs must be a non-negative integer')
   }
 
   if (!Array.isArray(payload.checks)) fail('checks must be an array')

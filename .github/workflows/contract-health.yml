@@ -1,0 +1,43 @@
+name: Contract health
+
+on:
+  pull_request:
+    paths:
+      - 'contracts/services/health/**'
+      - 'docs/contract/**'
+      - 'docs/sub-apps/health.md'
+      - 'package.json'
+      - 'yarn.lock'
+  push:
+    paths:
+      - 'contracts/services/health/**'
+      - 'docs/contract/**'
+      - 'docs/sub-apps/health.md'
+      - 'package.json'
+      - 'yarn.lock'
+
+permissions:
+  contents: read
+
+jobs:
+  contract-health:
+    name: Validate health contract
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: yarn
+          cache-dependency-path: yarn.lock
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install deps
+        run: yarn install --immutable
+
+      - name: Validate health contract
+        run: yarn contract:health

@@ -4,7 +4,7 @@
 >
 > UI：无独立 UI
 >
-> 当前状态：v1 contract 已开始落地
+> 当前状态：v1 contract 已落地，CI 已接入
 
 ## 定位
 
@@ -117,6 +117,10 @@ GET /health/startup
 `checks` 只放短、快、可解释的依赖状态。不要在健康检查里执行重业务流程，例如真实
 OAuth 登录、完整 GraphQL 查询、文档转换、远程批量同步或高成本数据库扫描。
 
+`health.v1` 使用严格 schema。top-level response 和 `checks` item 都只允许 schema
+中定义的字段。新增字段时必须同步更新 schema、fixtures、validators 和各服务测试；
+不兼容语义变化应新增 `health.v2`。
+
 ## 指标边界
 
 `/health` 适合回答“这个服务现在是否能被使用”。它不适合承载长期指标、趋势图和
@@ -141,8 +145,8 @@ validate 或 conformance check 应在这些位置运行：
 
 - 开发时：改某个服务的 `/health` 后，跑本服务测试；必要时用
   `contracts/services/health/scripts/assert-health.mjs` 检查本地 URL。
-- CI：跑 schema/fixtures 自测和各服务测试；需要端到端保证时再启动服务检查真实
-  `/health`。
+- CI：跑 `yarn contract:health` 做 schema/fixtures 自测，再跑各服务测试；需要端到端
+  保证时再启动服务检查真实 `/health`。
 - Dev Hub：定期请求 `/health`，宽松校验格式，不符合时显示 protocol mismatch。
 - 部署平台：只做轻量可达性判断，主要看 `200` 或 `503`。
 
@@ -155,6 +159,8 @@ validate 或 conformance check 应在这些位置运行：
 - `auth`、`phoenix` 和 `document-converter` 暴露 `GET /health` 并返回统一 JSON。
 - Dev Hub 服务清单使用各服务的 `/health` 作为基础可达性 URL。
 - E2E mock GraphQL server 仍有自己的 `GET /health`，用于 Playwright 等待 mock server。
+  它不是 Dev Hub managed service，也不参与 `health.v1`；这个 endpoint 只保证 HTTP
+  `200` readiness。
 
 后续可以继续把更严格的 schema conformance test 接入各语言测试和 CI。
 

@@ -6,8 +6,6 @@ type TOptions = {
   authHandler?: (request: Request) => Promise<Response>
 }
 
-const startedAt = Date.now()
-
 const buildHealthResponse = () => ({
   schemaVersion: 'health.v1',
   status: 'ok',
@@ -15,7 +13,7 @@ const buildHealthResponse = () => ({
   version: process.env.VERCEL_GIT_COMMIT_SHA || process.env.npm_package_version || 'dev',
   environment: process.env.NODE_ENV || 'development',
   timestamp: new Date().toISOString(),
-  uptimeMs: Date.now() - startedAt,
+  uptimeMs: Math.round(process.uptime() * 1000),
   checks: [],
 })
 

@@ -1,6 +1,6 @@
 # Contracts
 
-> 当前状态：规划中
+> 当前状态：v1 已落地，CI 已接入
 >
 > 文档位置：`docs/contract/`
 >
@@ -141,11 +141,14 @@ schema / fixtures / docs
 
 ## 演进规则
 
+`health.v1` 使用严格 schema。字段变化必须先更新
+`contracts/services/health/schemas/v1.schema.json`、fixtures 和 validators，再让各
+服务对齐。
+
 `health.v1` 内允许：
 
-- 新增 optional 字段。
-- 新增 optional check。
-- 放宽非核心字段展示方式。
+- 新增 optional check，但必须同步更新 schema、fixtures 和 validators。
+- 放宽非核心字段展示方式，但不能影响 required 字段和状态语义。
 
 `health.v1` 内不允许：
 
