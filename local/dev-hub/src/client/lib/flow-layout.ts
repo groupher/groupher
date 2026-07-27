@@ -27,6 +27,7 @@ const CORE_COLUMN_X = {
   right: 888,
   farRight: 1296,
 } as const
+const CORE_DETACHED_SERVICE_IDS = new Set(['inspire-me'])
 
 const getNodeHeight = (service: Pick<TPublicService, 'status'>): number =>
   service.status === 'stopped' || service.status === 'unavailable'
@@ -71,7 +72,9 @@ export async function layoutServiceFlow(
     graphRelations.flatMap((relation) => [relation.source, relation.target]),
   )
   const connectedServices = services.filter((service) => connectedIds.has(service.id))
-  const standaloneServices = services.filter((service) => !connectedIds.has(service.id))
+  const standaloneServices = services.filter(
+    (service) => !connectedIds.has(service.id) && !CORE_DETACHED_SERVICE_IDS.has(service.id),
+  )
 
   const graphDefinition: ElkNode = {
     id: 'service-flow',
@@ -139,6 +142,10 @@ export async function layoutServiceFlow(
     for (const service of connectedServices) {
       const position = corePositions[service.id]
       if (position) positions[service.id] = position
+    }
+
+    if (serviceIds.has('inspire-me')) {
+      positions['inspire-me'] = { x: CORE_COLUMN_X.farRight, y: CORE_TOP_ROW_Y }
     }
   }
 

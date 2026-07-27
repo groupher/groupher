@@ -244,18 +244,6 @@ export function FlowView({
     setCanvasContentHeight(height)
   }, [])
   const handleViewportReady = useCallback(() => setViewportReady(true), [])
-  const standaloneIds = useMemo(
-    () =>
-      services
-        .filter(
-          (service) =>
-            !relationIdsByService.incoming.has(service.id) &&
-            !relationIdsByService.outgoing.has(service.id),
-        )
-        .map((service) => service.id),
-    [relationIdsByService, services],
-  )
-
   const nodes = useMemo<TFlowNode[]>(() => {
     if (!layout) return []
 
@@ -472,7 +460,7 @@ export function FlowView({
             onHeightChange={handleCanvasHeightChange}
           />
           <FlowInitialViewport requestPathIds={requestPathIds} onReady={handleViewportReady} />
-          <FlowNavigator requestPathIds={requestPathIds} standaloneIds={standaloneIds} />
+          <FlowNavigator requestPathIds={requestPathIds} />
           <Background
             variant={BackgroundVariant.Dots}
             gap={22}

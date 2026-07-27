@@ -69,6 +69,54 @@ const CHAIN_TARGET_SERVICE: TServiceDefinition = {
   },
 }
 
+const PARALLEL_DEPENDENCY_A: TServiceDefinition = {
+  ...FIXTURE_SERVICE,
+  id: 'parallel-dependency-a',
+  name: 'Parallel Dependency A',
+  description: 'First required dependency used to verify parallel starts.',
+  port: 65_501,
+}
+
+const PARALLEL_DEPENDENCY_B: TServiceDefinition = {
+  ...FIXTURE_SERVICE,
+  id: 'parallel-dependency-b',
+  name: 'Parallel Dependency B',
+  description: 'Second required dependency used to verify parallel starts.',
+  port: 65_502,
+}
+
+const PARALLEL_TARGET_SERVICE: TServiceDefinition = {
+  ...FIXTURE_SERVICE,
+  id: 'parallel-target',
+  name: 'Parallel Target',
+  description: 'Service with multiple required dependencies.',
+  startPolicy: {
+    defaultMode: 'chain',
+    requiredDependencies: [PARALLEL_DEPENDENCY_A.id, PARALLEL_DEPENDENCY_B.id],
+    optionalDependencies: [],
+  },
+}
+
+const SLOW_OPTIONAL_DEPENDENCY: TServiceDefinition = {
+  ...FIXTURE_SERVICE,
+  id: 'slow-optional-dependency',
+  name: 'Slow Optional Dependency',
+  description: 'Optional dependency that may keep warming after the target starts.',
+  port: 65_503,
+}
+
+const OPTIONAL_TARGET_SERVICE: TServiceDefinition = {
+  ...FIXTURE_SERVICE,
+  id: 'optional-target',
+  name: 'Optional Target',
+  description: 'Service used to verify optional dependency startup behavior.',
+  startPolicy: {
+    defaultMode: 'related',
+    requiredDependencies: [],
+    optionalDependencies: [SLOW_OPTIONAL_DEPENDENCY.id],
+  },
+}
+
 test(
   'stop gives a managed process a grace period before it exits',
   { timeout: 2_000 },
@@ -212,6 +260,39 @@ test('default start mode starts required dependencies before the target service'
   ])
 })
 
+test('required dependencies in the same layer start in parallel', async (t) => {
+  const readyPorts = new Set<number>()
+  const portProbe = async (port: number) => readyPorts.has(port)
+  const manager = new ServiceManager(
+    [PARALLEL_DEPENDENCY_A, PARALLEL_DEPENDENCY_B, PARALLEL_TARGET_SERVICE],
+    null,
+    portProbe,
+  )
+  t.after(async () => manager.shutdown())
+
+  const statuses: string[] = []
+  manager.subscribe((event) => {
+    if (event.type === 'status') statuses.push(`${event.service.id}:${event.service.status}`)
+  })
+
+  const started = manager.startWithMode(PARALLEL_TARGET_SERVICE.id)
+  await waitForStatuses(statuses, [
+    `${PARALLEL_DEPENDENCY_A.id}:starting`,
+    `${PARALLEL_DEPENDENCY_B.id}:starting`,
+  ])
+
+  assert.equal(statuses.includes(`${PARALLEL_TARGET_SERVICE.id}:running`), false)
+
+  readyPorts.add(PARALLEL_DEPENDENCY_A.port || 0)
+  readyPorts.add(PARALLEL_DEPENDENCY_B.port || 0)
+
+  const services = await started
+  assert.deepEqual(
+    services.map((service) => service.id),
+    [PARALLEL_DEPENDENCY_A.id, PARALLEL_DEPENDENCY_B.id, PARALLEL_TARGET_SERVICE.id],
+  )
+})
+
 test('self start mode skips configured dependencies', async (t) => {
   const manager = new ServiceManager([CHAIN_DEPENDENCY_SERVICE, CHAIN_TARGET_SERVICE])
   t.after(async () => manager.shutdown())
@@ -239,3 +320,31 @@ test('related start mode includes optional dependencies', async (t) => {
     [CHAIN_DEPENDENCY_SERVICE.id, OPTIONAL_DEPENDENCY_SERVICE.id, CHAIN_TARGET_SERVICE.id],
   )
 })
+
+test('related start mode does not wait for optional dependencies to become ready', async (t) => {
+  const manager = new ServiceManager(
+    [SLOW_OPTIONAL_DEPENDENCY, OPTIONAL_TARGET_SERVICE],
+    null,
+    async () => false,
+  )
+  t.after(async () => manager.shutdown())
+
+  const services = await manager.startWithMode(OPTIONAL_TARGET_SERVICE.id, 'related')
+
+  assert.deepEqual(
+    services.map((service) => [service.id, service.status]),
+    [
+      [SLOW_OPTIONAL_DEPENDENCY.id, 'starting'],
+      [OPTIONAL_TARGET_SERVICE.id, 'running'],
+    ],
+  )
+})
+
+async function waitForStatuses(statuses: string[], expected: string[]): Promise<void> {
+  const deadline = Date.now() + 1_000
+  while (Date.now() < deadline) {
+    if (expected.every((status) => statuses.includes(status))) return
+    await new Promise((resolve) => setTimeout(resolve, 10))
+  }
+  throw new Error(`Timed out waiting for statuses: ${expected.join(', ')}.`)
+}

@@ -9,8 +9,8 @@ type TProps = {
 }
 
 const INITIAL_ZOOM = 1
-const FLOW_INITIAL_SIDE_INSET = 56
-export const FLOW_INITIAL_TOP_INSET = 32
+const INITIAL_FOCUS_NODE_ID = 'gateway'
+export const FLOW_INITIAL_TOP_INSET = 96
 
 export function FlowInitialViewport({ requestPathIds, onReady }: TProps) {
   const initializedRef = useRef(false)
@@ -28,19 +28,20 @@ export function FlowInitialViewport({ requestPathIds, onReady }: TProps) {
   const { getNodesBounds, setViewport } = useReactFlow<TFlowNode, TFlowEdge>()
 
   useLayoutEffect(() => {
-    if (!requestPathNodesInitialized || viewportWidth === 0 || initializedRef.current) return
+    if (!requestPathNodesInitialized || viewportWidth === 0 || initializedRef.current) {
+      return
+    }
 
-    const bounds = getNodesBounds(requestPathIds)
-    const zoom = Math.min(
-      INITIAL_ZOOM,
-      (viewportWidth - FLOW_INITIAL_SIDE_INSET * 2) / Math.max(bounds.width, 1),
-    )
+    const focusIds = requestPathIds.includes(INITIAL_FOCUS_NODE_ID)
+      ? [INITIAL_FOCUS_NODE_ID]
+      : requestPathIds
+    const bounds = getNodesBounds(focusIds)
     initializedRef.current = true
 
     void setViewport({
-      x: viewportWidth / 2 - (bounds.x + bounds.width / 2) * zoom,
-      y: FLOW_INITIAL_TOP_INSET - bounds.y * zoom,
-      zoom,
+      x: viewportWidth / 2 - (bounds.x + bounds.width / 2) * INITIAL_ZOOM,
+      y: FLOW_INITIAL_TOP_INSET - bounds.y * INITIAL_ZOOM,
+      zoom: INITIAL_ZOOM,
     }).then(() => onReady())
   }, [
     getNodesBounds,

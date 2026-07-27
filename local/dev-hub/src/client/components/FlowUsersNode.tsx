@@ -4,13 +4,17 @@ import { UserRound } from 'lucide-react'
 import type { TFlowUsersNode } from './flow-spec'
 
 const USER_COUNT = 4
+const CURRENT_USER_INDEX = 2
 
 export function FlowUsersNode({ data }: NodeProps<TFlowUsersNode>) {
   return (
     <div className='flow-users-node nodrag nopan nowheel' aria-label='Users accessing Groupher'>
       <div className='flow-users-group' aria-hidden='true'>
         {Array.from({ length: USER_COUNT }, (_, index) => (
-          <span key={index} className='flow-user-avatar'>
+          <span
+            key={index}
+            className={`flow-user-avatar${index === CURRENT_USER_INDEX ? ' is-current' : ''}`}
+          >
             <UserRound />
           </span>
         ))}

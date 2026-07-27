@@ -112,7 +112,15 @@ export function ServiceCard({
         : service.status === 'external'
           ? 'External'
           : 'Start'
-  const openUrl = service.portlessAppUrl || service.appUrl || service.portlessUrl || service.url
+  const browserUrl = metrics?.browser?.url
+  const openUrl =
+    browserUrl ||
+    service.portlessAppUrl ||
+    service.appUrl ||
+    service.portlessUrl ||
+    service.url ||
+    undefined
+  const showOpenLink = Boolean(openUrl) && (service.status === 'running' || Boolean(browserUrl))
 
   return (
     <MotionConfig reducedMotion='user'>
@@ -128,7 +136,7 @@ export function ServiceCard({
               <span className='service-copy'>
                 <span className='service-title-row'>
                   <span className='service-name'>{service.name}</span>
-                  {openUrl && service.status === 'running' ? (
+                  {showOpenLink ? (
                     <a
                       className='open-service'
                       href={openUrl}
