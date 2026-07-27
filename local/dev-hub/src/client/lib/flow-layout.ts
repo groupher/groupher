@@ -25,6 +25,7 @@ const CORE_COLUMN_X = {
   left: 24,
   center: 432,
   right: 888,
+  farRight: 1296,
 } as const
 
 const getNodeHeight = (service: Pick<TPublicService, 'status'>): number =>
@@ -53,6 +54,8 @@ const getCoreServicePositions = (
     main: { x: CORE_COLUMN_X.center, y: appRowY },
     dashboard: { x: CORE_COLUMN_X.right, y: appRowY },
     phoenix: { x: CORE_COLUMN_X.center, y: backendRowY },
+    'content-import': { x: CORE_COLUMN_X.right, y: backendRowY },
+    'document-converter': { x: CORE_COLUMN_X.farRight, y: backendRowY },
   }
 }
 

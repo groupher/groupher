@@ -1,0 +1,26 @@
+{
+  "name": "@groupher/contracts",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./auth": "./src/auth.ts",
+    "./headers": "./src/headers.ts",
+    "./health": "./src/health.ts"
+  },
+  "scripts": {
+    "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
+    "lint": "../../node_modules/.bin/oxlint src --threads=1",
+    "test": "../../node_modules/.bin/vitest --config vitest.config.mts run",
+    "format": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json src *.json *.md *.mts",
+    "format:check": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json --check src *.json *.md *.mts",
+    "build": "echo 'skip build'"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "vitest": "^4.1.5"
+  },
+  "lint-staged": {
+    "**/*.ts": "tsc-files --noEmit --project ./tsconfig.json"
+  }
+}

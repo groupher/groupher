@@ -848,9 +848,9 @@ button {
   .terminal-panel,
   .metrics-drawer-popup,
   .config-drawer-popup
-)[data-service-id='document-converter'] {
-  --service-monogram-background: #435f70;
-  --service-monogram-foreground: #e5edf1;
+)[data-service-id='content-import'] {
+  --service-monogram-background: #47473a;
+  --service-monogram-foreground: #efefe9;
 }
 
 :is(
@@ -858,9 +858,9 @@ button {
   .terminal-panel,
   .metrics-drawer-popup,
   .config-drawer-popup
-)[data-service-id='comment-importer'] {
-  --service-monogram-background: #3f6262;
-  --service-monogram-foreground: #e4f0ef;
+)[data-service-id='document-converter'] {
+  --service-monogram-background: #435f70;
+  --service-monogram-foreground: #e5edf1;
 }
 
 .service-visual {

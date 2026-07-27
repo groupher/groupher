@@ -24,7 +24,9 @@ export const CORE_SERVICE_IDS = [
   'landing',
   'main',
   'dashboard',
+  'content-import',
   'phoenix',
+  'document-converter',
 ] as const
 
 export const CORE_RELATION_SPECS = {
@@ -59,6 +61,23 @@ export const CORE_RELATION_SPECS = {
     target: { side: 'top', style: { left: '72%' } },
     route: 'safe-lane',
   },
+  'dashboard-content-import': {
+    source: { side: 'bottom', style: { left: '50%' } },
+    target: { side: 'top', style: { left: '50%' } },
+  },
+  'content-import-phoenix': {
+    source: { side: 'left', style: { top: '50%' } },
+    target: { side: 'right', style: { top: '50%' } },
+  },
+  'content-import-document-converter': {
+    source: { side: 'right', style: { top: '50%' } },
+    target: { side: 'left', style: { top: '50%' } },
+  },
+  'dashboard-document-converter': {
+    source: { side: 'bottom', style: { left: '72%' } },
+    target: { side: 'top', style: { left: '50%' } },
+    route: 'safe-lane',
+  },
 } as const satisfies Record<string, TCoreRelationSpec>
 
 export const CORE_REQUIRED_RELATION_IDS = [
@@ -69,6 +88,10 @@ export const CORE_REQUIRED_RELATION_IDS = [
   'auth-dashboard',
   'main-phoenix',
   'dashboard-phoenix',
+  'dashboard-content-import',
+  'content-import-phoenix',
+  'content-import-document-converter',
+  'dashboard-document-converter',
 ] as const
 
 export const getCoreRelationSpec = (relationId: string): TCoreRelationSpec | undefined =>

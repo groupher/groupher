@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
-import { GROUPHER_AUTH_TOKEN_COOKIE } from '~/constant/auth-contract'
+import { GROUPHER_AUTH_TOKEN_COOKIE } from '@groupher/contracts/auth'
 
 type TJwtHeader = {
   alg?: unknown

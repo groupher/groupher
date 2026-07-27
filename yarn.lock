@@ -1740,12 +1740,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@groupher/frontend-auth@workspace:frontend/auth":
+"@groupher/backend-auth@workspace:backend/auth":
   version: 0.0.0-use.local
-  resolution: "@groupher/frontend-auth@workspace:frontend/auth"
+  resolution: "@groupher/backend-auth@workspace:backend/auth"
   dependencies:
     "@auth/core": "npm:0.41.0"
-    "@groupher/frontend-core": "npm:1.0.0"
+    "@groupher/contracts": "npm:1.0.0"
+    "@groupher/service": "npm:1.0.0"
     "@hono/node-server": "npm:^2.0.11"
     "@types/node": "npm:^24.0.0"
     cross-env: "npm:^10.1.0"
@@ -1757,9 +1758,70 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@groupher/backend-content-import@workspace:backend/content-import":
+  version: 0.0.0-use.local
+  resolution: "@groupher/backend-content-import@workspace:backend/content-import"
+  dependencies:
+    "@babel/parser": "npm:7.29.0"
+    "@groupher/contracts": "npm:1.0.0"
+    "@groupher/rich-editor": "npm:0.0.35"
+    "@groupher/service": "npm:1.0.0"
+    "@hono/node-server": "npm:^2.0.11"
+    "@types/node": "npm:^24.0.0"
+    "@types/sanitize-html": "npm:^2.16.1"
+    cross-env: "npm:^10.1.0"
+    dotenv: "npm:^17.4.2"
+    esbuild: "npm:^0.28.1"
+    files-sdk: "npm:2.2.0"
+    hono: "npm:^4.12.31"
+    mdast-util-from-markdown: "npm:2.0.3"
+    mdast-util-mdx: "npm:3.0.0"
+    mdast-util-to-string: "npm:4.0.0"
+    micromark-extension-mdxjs: "npm:3.0.0"
+    react: "npm:^19.2.5"
+    react-dom: "npm:^19.2.5"
+    rimraf: "npm:^6.1.3"
+    sanitize-html: "npm:^2.17.3"
+    tar-stream: "npm:3.2.0"
+    tsx: "npm:^4.23.1"
+    undici: "npm:^7.25.0"
+    vitest: "npm:^4.1.5"
+    workflow: "npm:4.6.0"
+    yaml: "npm:2.8.2"
+  languageName: unknown
+  linkType: soft
+
+"@groupher/backend-gateway@workspace:backend/gateway":
+  version: 0.0.0-use.local
+  resolution: "@groupher/backend-gateway@workspace:backend/gateway"
+  dependencies:
+    "@groupher/contracts": "npm:1.0.0"
+    "@groupher/service": "npm:1.0.0"
+    "@hono/node-server": "npm:^2.0.11"
+    "@types/node": "npm:^24.0.0"
+    cross-env: "npm:^10.1.0"
+    dotenv: "npm:^17.4.2"
+    esbuild: "npm:^0.28.1"
+    hono: "npm:^4.12.31"
+    rimraf: "npm:^6.1.3"
+    tsx: "npm:^4.23.1"
+  languageName: unknown
+  linkType: soft
+
+"@groupher/contracts@npm:1.0.0, @groupher/contracts@workspace:packages/contracts":
+  version: 0.0.0-use.local
+  resolution: "@groupher/contracts@workspace:packages/contracts"
+  dependencies:
+    "@types/node": "npm:^24.0.0"
+    vitest: "npm:^4.1.5"
+  languageName: unknown
+  linkType: soft
+
 "@groupher/frontend-core@npm:1.0.0, @groupher/frontend-core@workspace:frontend/core":
   version: 0.0.0-use.local
   resolution: "@groupher/frontend-core@workspace:frontend/core"
+  dependencies:
+    "@groupher/contracts": "npm:1.0.0"
   languageName: unknown
   linkType: soft
 
@@ -1784,22 +1846,6 @@ __metadata:
     undici: "npm:^7.25.0"
     workflow: "npm:4.6.0"
     yaml: "npm:2.8.2"
-  languageName: unknown
-  linkType: soft
-
-"@groupher/frontend-gateway@workspace:frontend/gateway":
-  version: 0.0.0-use.local
-  resolution: "@groupher/frontend-gateway@workspace:frontend/gateway"
-  dependencies:
-    "@groupher/frontend-core": "npm:1.0.0"
-    "@hono/node-server": "npm:^2.0.11"
-    "@types/node": "npm:^24.0.0"
-    cross-env: "npm:^10.1.0"
-    dotenv: "npm:^17.4.2"
-    esbuild: "npm:^0.28.1"
-    hono: "npm:^4.12.31"
-    rimraf: "npm:^6.1.3"
-    tsx: "npm:^4.23.1"
   languageName: unknown
   linkType: soft
 
@@ -2063,6 +2109,15 @@ __metadata:
     vite: "npm:^8.0.10"
     vite-tsconfig-paths: "npm:^6.1.1"
     vitest: "npm:^4.1.5"
+  languageName: unknown
+  linkType: soft
+
+"@groupher/service@npm:1.0.0, @groupher/service@workspace:packages/service":
+  version: 0.0.0-use.local
+  resolution: "@groupher/service@workspace:packages/service"
+  dependencies:
+    "@groupher/contracts": "npm:1.0.0"
+    "@types/node": "npm:^24.0.0"
   languageName: unknown
   linkType: soft
 

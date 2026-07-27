@@ -4,7 +4,7 @@
 >
 > 范围：单文档导入、Article 正文发布链路、Elixir 内容转换清理
 >
-> Source of truth：本文负责共享 Import Content、Rich Editor codec、artiment-publisher 和 BodyBag。批量/多来源编排以 [`content-import-architecture.md`](./content-import-architecture.md) 为准；GitHub Docs 产品流程以 [`bulk-import.md`](./bulk-import.md) 为准；Files SDK/staging 以 [`import-file-sdk.md`](./import-file-sdk.md) 为准；实施清单以 [`content-import-refactor-plan.md`](./content-import-refactor-plan.md) 为准；联调错误和恢复边界见 [`import-error-handling.md`](./import-error-handling.md)。
+> Source of truth：本文负责共享 Import Content、Rich Editor codec、artiment-publisher 和 BodyBag。批量/多来源编排以 [`content-import-architecture.md`](./backend-content-import-architecture.md) 为准；GitHub Docs 产品流程以 [`bulk-import.md`](./bulk-import.md) 为准；Files SDK/staging 以 [`import-file-sdk.md`](./import-file-sdk.md) 为准；实施清单以 [`content-import-refactor-plan.md`](./backend-content-import-refactor-plan.md) 为准；联调错误和恢复边界见 [`import-error-handling.md`](./import-error-handling.md)。
 >
 > 更新：2026-07-22（补充 Content Import 复用边界）
 
@@ -77,7 +77,7 @@ Article Draft / ArticleDocument / Snapshot / Publish
 
 开始实现时确认到的仓库状态：
 
-- `services/document-converter` 已有 FastAPI/Vercel 骨架，但 `/convert` 仍是空响应。
+- `backend/document-converter` 已有 FastAPI/Vercel 骨架，但 `/convert` 仍是空响应。
 - `@groupher/rich-editor@0.0.19` 已导出带 types 的 Node-safe `./node` entrypoint，包含校验、
   canonicalization、Markdown/HTML serializer、TOC 和 plain text extractor。
 - 根 workspace 仍同时存在旧 Plate 49 和 Plate 53；`artiment-publisher` 不直接导入根 Plate，
@@ -98,7 +98,7 @@ Article Draft / ArticleDocument / Snapshot / Publish
 
 ### 2.1 本轮范围
 
-1. 完善独立的 `services/document-converter` 子项目。
+1. 完善独立的 `backend/document-converter` 子项目。
 2. 在本地用真实文档验证 MarkItDown 转换质量。
 3. 把 `document-converter` 独立部署到 Vercel Python Runtime。
 4. 在 DSB 内建立 `artiment-publisher` 的 Node-only 实现和 Route Handler。
@@ -229,7 +229,7 @@ ContentPipeline.parse
 物理位置：
 
 ```text
-services/document-converter/
+backend/document-converter/
 ├── app.py
 ├── contracts.py
 ├── conversion.py
@@ -241,7 +241,7 @@ services/document-converter/
 └── fixtures/
 ```
 
-部署形态：独立 Vercel Python 项目，Root Directory 指向 `services/document-converter`。
+部署形态：独立 Vercel Python 项目，Root Directory 指向 `backend/document-converter`。
 
 职责：
 
@@ -622,7 +622,7 @@ TArtimentBodyBag -> ContentImport apply / GraphQL
 
 GitHub Docs Bulk Import 直接复用上述 Node codec/publisher：Node 从 `DocsDataset` 读取 selected Markdown/MDX，对每个 item 调用同一个 Import Content server function，再把 BodyBag 有界分批发送给 Phoenix。不能在 `threads/docs` 或 Bulk workflow 下新增第二套 Markdown/BodyBag converter，也不应通过 HTTP 调用 Dashboard 自己的 `/api/artiment/import`。
 
-Content Import 的 Phoenix Snapshot/Preparation/Plan/PayloadStore 不再是目标基础设施；最新边界见 [`content-import-architecture.md`](./content-import-architecture.md) 和 [`content-import-refactor-plan.md`](./content-import-refactor-plan.md) 第零章。
+Content Import 的 Phoenix Snapshot/Preparation/Plan/PayloadStore 不再是目标基础设施；最新边界见 [`content-import-architecture.md`](./backend-content-import-architecture.md) 和 [`content-import-refactor-plan.md`](./backend-content-import-refactor-plan.md) 第零章。
 
 ### 8.4 Comment 与 Mention
 
@@ -814,7 +814,7 @@ MarkItDown 重点是提取结构化文本，不是高保真排版还原。复杂
 
 ### ContentImport 冲突
 
-`docs/bulk-import/content-import-refactor-plan.md` 已同步改为：保留导入基础设施，移除 Elixir `MarkdownNormalizer`，正文生成与 apply 明确 `deferred`。恢复批量导入时直接接入 converter/publisher，不恢复双实现。
+`docs/bulk-import/backend-content-import-refactor-plan.md` 已同步改为：保留导入基础设施，移除 Elixir `MarkdownNormalizer`，正文生成与 apply 明确 `deferred`。恢复批量导入时直接接入 converter/publisher，不恢复双实现。
 
 ---
 

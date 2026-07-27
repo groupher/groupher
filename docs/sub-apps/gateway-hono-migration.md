@@ -4,7 +4,7 @@
 >
 > UI：无独立 UI
 >
-> 当前状态：Hono 迁移已开始，核心 routing/proxy/app 结构已落到 `frontend/gateway/src`
+> 当前状态：Hono 迁移已开始，核心 routing/proxy/app 结构已落到 `backend/gateway/src`
 
 本文是 [`docs/gateway.md`](../gateway.md) 的 Hono 落地方案。Gateway 的首期实现
 直接在 Hono/Node 范围内解决，不为 NGINX、Envoy、Worker、API Gateway 等短期不会
@@ -12,7 +12,7 @@
 
 ## 目标
 
-`frontend/gateway` 当前只是一个全局入口和路由分发层，但运行在完整 Next.js
+`backend/gateway` 当前只是一个全局入口和路由分发层，但运行在完整 Next.js
 runtime 上。目标是把它一次性迁移为独立 Hono gateway，保留现有用户可见 URL 和
 分流规则，移除 Next.js 依赖、`.next` 构建产物和 `NextResponse.rewrite` 运行时。
 
@@ -22,9 +22,9 @@ adapter。切换前可以使用 preview 或临时域名做验收；正式切换�
 
 ## 当前 Gateway 职责
 
-迁移前入口位于 `frontend/gateway/proxy.ts`，辅助规则位于
-`frontend/gateway/utils.ts`。迁移后的入口位于 `frontend/gateway/src/app.ts`，纯路由决策
-位于 `frontend/gateway/src/routing.ts`，代理执行位于 `frontend/gateway/src/proxy.ts`。
+迁移前入口位于 `backend/gateway/proxy.ts`，辅助规则位于
+`backend/gateway/utils.ts`。迁移后的入口位于 `backend/gateway/src/app.ts`，纯路由决策
+位于 `backend/gateway/src/routing.ts`，代理执行位于 `backend/gateway/src/proxy.ts`。
 
 | 输入                          | 当前行为                                                  | 目标 Hono 行为                                     |
 | ----------------------------- | --------------------------------------------------------- | -------------------------------------------------- |
@@ -45,7 +45,7 @@ GraphQL 入口还有一个安全边界：浏览器请求当前域 `/api/graphql`
 
 `groupher-auth.token` 必须来自共享 auth contract，即
 `frontend/core/constant/auth-contract.ts` 的 `GROUPHER_AUTH_TOKEN_COOKIE`。迁移时可以像
-`frontend/auth` 一样让 gateway workspace 依赖 `@groupher/frontend-core`；如果后续需要
+`backend/auth` 一样让 gateway workspace 依赖 `@groupher/frontend-core`；如果后续需要
 减小依赖面，再把 auth contract 提到更小的共享包。首期不要在 gateway 内复制 cookie
 字符串。
 
@@ -60,7 +60,7 @@ Gateway 没有页面、RSC、image pipeline、metadata、Next data fetching 或 
 - upstream response 透传。
 - `/health`、`robots.txt`、`sitemap.xml`、`manifest.json` 等低成本静态响应。
 
-这些能力都可以用 Hono 和标准 `Request` / `Response` 表达。仓库里的 `frontend/auth`
+这些能力都可以用 Hono 和标准 `Request` / `Response` 表达。仓库里的 `backend/auth`
 已经使用 `src/app.ts`、`src/server.ts`、`index.ts` 的 Hono 结构，Gateway 应该复用同
 一种子应用运行模型。
 
@@ -131,7 +131,7 @@ Node server 的 `upgrade` 事件，并按同一套 routing 规则把 socket 反�
   不依赖 `Host` 做产品路由；如果未来某个 WebSocket upstream 依赖 `Host` 而不是
   `x-forwarded-host` 判断外部域名，需要为该 upstream 明确增加策略测试。
 - `src/env.ts` 的 cwd fallback 和 `src/static.ts` 的 `PUBLIC_ROOT` fallback 一致，都是为
-  `yarn run dev:gateway` 从 monorepo root 启动、以及从 `frontend/gateway` 目录直接启动
+  `yarn run dev:gateway` 从 monorepo root 启动、以及从 `backend/gateway` 目录直接启动
   两种方式服务。`src/server.ts` 通过 `import './env'` 提供唯一显式入口，`dev` 和
   `start` 都依赖这个入口加载环境变量。
 - `src/static.ts` 返回 `ArrayBuffer` 时使用 `byteOffset/byteLength` 做 slice。这个处理是
@@ -140,10 +140,10 @@ Node server 的 `upgrade` 事件，并按同一套 routing 规则把 socket 反�
 
 ## 目标代码结构
 
-建议保留 workspace 名称 `@groupher/frontend-gateway`，但移除 Next 运行时。
+建议保留 workspace 名称 `@groupher/backend-gateway`，但移除 Next 运行时。
 
 ```text
-frontend/gateway/
+backend/gateway/
   index.ts
   package.json
   tsconfig.json
@@ -234,12 +234,12 @@ export type GatewayTargetKind = 'main' | 'dashboard' | 'landing' | 'auth' | 'pho
 
 ### 3. 替换 workspace runtime
 
-更新 `frontend/gateway/package.json`：
+更新 `backend/gateway/package.json`：
 
 - 移除 `next`、`react`、`react-dom`。
 - 增加 `hono`、`@hono/node-server`、`tsx`、`esbuild`、`rimraf`。
 - `dev` 使用 `tsx watch src/server.ts`。
-- `build` 使用和 `frontend/auth` 类似的 esbuild Node bundle。
+- `build` 使用和 `backend/auth` 类似的 esbuild Node bundle。
 - `type-check` 使用普通 `tsc --noEmit`。
 
 更新 `tsconfig.json`，不再继承 Next typegen 和 `.next/types`。
@@ -254,11 +254,11 @@ export type GatewayTargetKind = 'main' | 'dashboard' | 'landing' | 'auth' | 'pho
 
 ### 4. 调整部署入口
 
-当前 `frontend/gateway/vercel.json` 使用 `@vercel/next`。迁移后应改为 Hono/Vercel
+当前 `backend/gateway/vercel.json` 使用 `@vercel/next`。迁移后应改为 Hono/Vercel
 默认入口模型，保留独立 gateway 项目，不修改 root-level 多项目部署脚本语义。
 
 Root 级 `frontend/scripts/vercel.build.sh` 仍然按
-`yarn workspace @groupher/frontend-gateway build` 触发，因此 Gateway 的 `build`
+`yarn workspace @groupher/backend-gateway build` 触发，因此 Gateway 的 `build`
 脚本必须继续存在，即使 Vercel Hono 部署本身可以零配置。
 
 ### 5. 验证
@@ -266,9 +266,9 @@ Root 级 `frontend/scripts/vercel.build.sh` 仍然按
 单元测试：
 
 ```bash
-yarn workspace @groupher/frontend-gateway test
-yarn workspace @groupher/frontend-gateway type-check
-yarn workspace @groupher/frontend-gateway build
+yarn workspace @groupher/backend-gateway test
+yarn workspace @groupher/backend-gateway type-check
+yarn workspace @groupher/backend-gateway build
 ```
 
 本地 smoke：
@@ -304,7 +304,7 @@ GET /manifest.json
 
 ### 6. 切换
 
-评审通过后直接替换 `frontend/gateway` 实现。正式部署前使用 preview 或临时域名验证。
+评审通过后直接替换 `backend/gateway` 实现。正式部署前使用 preview 或临时域名验证。
 生产切换不保留旧 Next gateway 的兼容代码；如果失败，回滚部署版本，而不是在运行时
 双分支。
 
@@ -320,7 +320,7 @@ GET /manifest.json
 | 静态资源缓存 header 变化 | chunk 缓存或 CDN 行为变化                    | 对比 `_next/static` 响应 header                           |
 | Vercel 项目识别变化      | gateway 部署失败                             | 单独验证 gateway project，不改 root 多项目脚本            |
 | dev WebSocket host 语义  | HMR 或未来 socket upstream 路由错误          | `Host` 指向 upstream，保留原始 `x-forwarded-host` 并测试  |
-| cwd 不同导致资源缺失     | env 或 public 文件加载失败                   | env/static 统一兼容 root 和 `frontend/gateway` cwd        |
+| cwd 不同导致资源缺失     | env 或 public 文件加载失败                   | env/static 统一兼容 root 和 `backend/gateway` cwd         |
 | Buffer 底层范围泄漏      | public 文件响应包含多余字节                  | `readPublicFile()` 使用 `byteOffset/byteLength` slice     |
 
 ## 不做的事

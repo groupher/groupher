@@ -1,6 +1,7 @@
 type TBrowserService = {
   group: string
   id: string
+  browserMetrics?: boolean
   port?: number
   appUrl?: string
   portlessUrl?: string
@@ -12,7 +13,7 @@ export const buildBrowserOriginsByService = (
 ): Map<string, Set<string>> => {
   return new Map(
     services
-      .filter((service) => service.group === 'frontend')
+      .filter((service) => service.group === 'frontend' || service.browserMetrics === true)
       .map((service) => {
         const origins = new Set<string>()
 

@@ -29,7 +29,7 @@ callback 和登录流程同样属于这个边界。
 ```
 
 现在 OAuth provider、callback、logout 和 Phoenix identity exchange 已迁至
-`frontend/auth`。Main 和 Dashboard 不再挂载 Auth handler，也不再解码 Auth.js
+`backend/auth`。Main 和 Dashboard 不再挂载 Auth handler，也不再解码 Auth.js
 Session；它们只被动携带 Auth 写入的 `groupher-auth.token`。
 
 ## 提供的服务
@@ -154,7 +154,7 @@ Phoenix 面向具体下游服务签发。
 
 Auth 使用 Hono 承载标准 Web Request/Response，并直接调用 `@auth/core`：
 
-1. 独立 `frontend/auth` Hono/Auth.js 应用负责统一 handler。
+1. 独立 `backend/auth` Hono/Auth.js 应用负责统一 handler。
 2. Gateway 将登录、callback 和 logout 路径转发到 `auth`。
 3. Auth 在 callback 完成后同时写入 Auth.js Session 和 `groupher-auth.token`。
 4. Main 和 Dashboard 不消费 Auth.js Session，只读取或携带 Phoenix token Cookie。
@@ -165,7 +165,7 @@ Hono 只负责 HTTP 路由和运行时适配；OAuth provider、state、PKCE、S
 
 ## 代码与运行入口
 
-`frontend/auth` 不包含 React 或 Next.js 运行时：
+`backend/auth` 不包含 React 或 Next.js 运行时：
 
 | 文件            | 职责                                                        |
 | --------------- | ----------------------------------------------------------- |
@@ -217,9 +217,9 @@ development 默认值。
 ## 本地验证
 
 ```bash
-yarn workspace @groupher/frontend-auth type-check
-yarn workspace @groupher/frontend-auth test
-yarn workspace @groupher/frontend-auth build
+yarn workspace @groupher/backend-auth type-check
+yarn workspace @groupher/backend-auth test
+yarn workspace @groupher/backend-auth build
 ```
 
 实际测试仍通过仓库统一的 Vitest 配置执行。运行中的最小检查为：

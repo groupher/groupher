@@ -106,16 +106,15 @@ flowchart LR
 
 ## 当前服务图
 
-| 服务             | 默认端口 | 角色                    | 主要技术                                 |
-| ---------------- | -------: | ----------------------- | ---------------------------------------- |
-| Main             |   `3000` | 社区前台                | Next.js、React、TypeScript、Tailwind CSS |
-| Dashboard        |   `3001` | 社区管理后台            | Next.js、React、TypeScript、Tailwind CSS |
-| Landing          |   `3002` | 官网与营销页面          | Next.js、React、TypeScript、Tailwind CSS |
-| Gateway          |   `3003` | 本地域名与路由入口      | Next.js、React、TypeScript、Node.js      |
-| Inspire Me       |   `3010` | 本地反馈研究库          | Next.js、React、TypeScript、Tailwind CSS |
-| Phoenix          |   `4001` | mock 模式 GraphQL API   | Phoenix、Elixir、Absinthe、PostgreSQL    |
-| Converter        |   `8000` | 文档转 Markdown 服务    | Python、FastAPI、MarkItDown、Uvicorn     |
-| Comment Importer |        — | 计划中的独立导入 worker | 尚未拆分                                 |
+| 服务       | 默认端口 | 角色                  | 主要技术                                 |
+| ---------- | -------: | --------------------- | ---------------------------------------- |
+| Main       |   `3000` | 社区前台              | Next.js、React、TypeScript、Tailwind CSS |
+| Dashboard  |   `3001` | 社区管理后台          | Next.js、React、TypeScript、Tailwind CSS |
+| Landing    |   `3002` | 官网与营销页面        | Next.js、React、TypeScript、Tailwind CSS |
+| Gateway    |   `3003` | 本地域名与路由入口    | Next.js、React、TypeScript、Node.js      |
+| Inspire Me |   `3010` | 本地反馈研究库        | Next.js、React、TypeScript、Tailwind CSS |
+| Phoenix    |   `4001` | mock 模式 GraphQL API | Phoenix、Elixir、Absinthe、PostgreSQL    |
+| Converter  |   `8000` | 文档转 Markdown 服务  | Python、FastAPI、MarkItDown、Uvicorn     |
 
 服务及关系的来源是 [`src/server/services.ts`](./src/server/services.ts)。新的服务应在这里声明工作目录、命令、端口、配置来源、技术栈和指标阈值；服务之间的路由或 API 依赖也在同一文件维护。
 
@@ -150,6 +149,14 @@ startPolicy: {
 ```
 
 当前 `main` 和 `dashboard` 默认使用 `chain`，强依赖是 `gateway`、`auth` 和 `phoenix`，弱依赖是 `document-converter`。因此点击主 `Start` 会启动默认链路，菜单里显示 `Start chain (default)`；需要隔离调试时，可以从小三角菜单选择 `Start only this service`；需要把 converter 一起拉起时，选择 `Start all related`。
+
+Converter 依赖 `backend/document-converter/.venv` 中的 Python 3.12 环境。首次使用前在仓库根目录运行：
+
+```sh
+make be.document-converter.install
+```
+
+安装完成后，Dev Hub 会通过 `make be.document-converter.start` 启动它，并使用 `http://127.0.0.1:8000/health` / `https://converter.groupher.localhost/health` 做健康检查。
 
 `landing`、`gateway`、`inspire-me` 和当前后端服务没有声明强弱依赖时，只显示普通 `Start`，不显示小三角，也不显示依赖 Drawer 入口。
 

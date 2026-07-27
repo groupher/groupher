@@ -1,0 +1,35 @@
+{
+  "name": "@groupher/backend-gateway",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "ci": "cross-env NODE_ENV=ci tsx src/server.ts",
+    "test": "../../node_modules/.bin/vitest --root ../.. --config frontend/core/vitest.config.mts run backend/gateway",
+    "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
+    "build": "rimraf dist && esbuild src/server.ts --bundle --platform=node --format=esm --external:@hono/node-server --external:dotenv --external:hono --external:'hono/*' --outfile=dist/server.js && cp -R public dist/public",
+    "start": "cross-env NODE_ENV=production node dist/server.js",
+    "lint": "../../node_modules/.bin/oxlint . --threads=1",
+    "format": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json src index.ts *.json",
+    "format:check": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json --check src index.ts *.json",
+    "clean": "rimraf dist .next"
+  },
+  "dependencies": {
+    "@groupher/contracts": "1.0.0",
+    "@groupher/service": "1.0.0",
+    "@hono/node-server": "^2.0.11",
+    "dotenv": "^17.4.2",
+    "hono": "^4.12.31"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "cross-env": "^10.1.0",
+    "esbuild": "^0.28.1",
+    "rimraf": "^6.1.3",
+    "tsx": "^4.23.1"
+  },
+  "lint-staged": {
+    "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.json"
+  }
+}
