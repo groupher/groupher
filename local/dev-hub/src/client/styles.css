@@ -155,9 +155,9 @@ button {
 
 .hub-status-panel {
   display: grid;
-  grid-template-columns: minmax(110px, 1.35fr) repeat(3, minmax(82px, 1fr)) minmax(142px, 1.25fr);
+  grid-template-columns: minmax(170px, max-content) max-content max-content max-content;
   align-items: stretch;
-  gap: 2px;
+  column-gap: 18px;
   justify-self: center;
   padding: 3px;
   border: 1px solid rgb(0 0 0 / 6%);
@@ -166,14 +166,14 @@ button {
 }
 
 .hub-status-block {
-  display: flex;
+  display: grid;
   min-width: 0;
   min-height: 46px;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 3px;
-  padding: 6px 11px;
+  grid-template-rows: 18px 18px;
+  align-content: center;
+  align-items: center;
+  gap: 1px;
+  padding: 6px 8px;
   border: 0;
   border-radius: 10px;
   color: var(--ink);
@@ -202,29 +202,62 @@ button {
 }
 
 .hub-status-label {
+  align-self: center;
   color: var(--ink-faint);
   font-size: 8px;
   font-weight: 400;
   letter-spacing: 0.1em;
-  line-height: 1;
+  line-height: 10px;
   text-transform: uppercase;
 }
 
 .hub-status-value {
   overflow: hidden;
   max-width: 100%;
-  margin-top: 2px;
+  align-self: center;
+  margin-top: 0;
   color: #53534f;
   font-family: 'SFMono-Regular', Consolas, monospace;
   font-size: 15px;
   font-variant-numeric: tabular-nums;
-  line-height: 1.25;
+  line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .hub-status-branch {
   color: #333330;
+}
+
+.hub-status-git {
+  gap: 0;
+}
+
+.hub-status-git-branch {
+  display: inline-flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+  color: #333330;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  line-height: 18px;
+}
+
+.hub-status-git-branch > svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  color: #8d8d88;
+  transform: translateY(-1px);
+}
+
+.hub-status-git-branch > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .hub-status-diff {
@@ -245,9 +278,87 @@ button {
   align-items: center;
   gap: 6px;
   color: var(--ink-muted);
-  font-size: 12px;
+  font-size: 16px;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.hub-status-infra {
+  min-width: 0;
+  grid-template-rows: 18px 18px;
+  padding-right: 8px;
+}
+
+.hub-status-infra-value {
+  display: grid;
+  width: 100%;
+  grid-row: 1 / span 2;
+  grid-template-rows: 18px 18px;
+  align-self: center;
+  overflow: visible;
+}
+
+.infra-summary-list {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(3, max-content);
+  grid-template-rows: 18px 18px;
+  align-items: center;
+  column-gap: 22px;
+  overflow: visible;
+}
+
+.infra-summary-icon {
+  display: inline-grid;
+  height: 18px;
+  align-items: center;
+  justify-items: start;
+}
+
+.infra-summary-copy {
+  display: inline-flex;
+  min-width: 0;
+  height: 18px;
+  align-items: center;
+  gap: 5px;
+  grid-row: 2;
+  overflow: visible;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+.infra-summary-name {
+  overflow: hidden;
+  color: #5a5a56;
+  font-size: 15px;
+  line-height: 18px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.infra-summary-count {
+  display: inline-grid;
+  min-width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 999px;
+  color: #686864;
+  background: #eeeeeb;
+  font-size: 12px;
+  line-height: 1;
+  margin-top: -2px;
+}
+
+.infra-platform-mark {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  align-self: center;
+}
+
+.infra-platform-mark--cloudflare {
+  width: 16px;
+  height: 16px;
 }
 
 .connection-dot {
@@ -2342,6 +2453,221 @@ button {
   transform: translateX(100%);
 }
 
+.infra-drawer-backdrop {
+  position: fixed;
+  z-index: 70;
+  inset: 0;
+  background: rgb(27 27 25 / 28%);
+  backdrop-filter: blur(2px);
+  opacity: 1;
+  transition: opacity 180ms ease-out;
+}
+
+.infra-drawer-backdrop[data-starting-style],
+.infra-drawer-backdrop[data-ending-style] {
+  opacity: 0;
+}
+
+.infra-drawer-viewport {
+  position: fixed;
+  z-index: 71;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.infra-drawer-popup {
+  display: grid;
+  width: min(520px, 92vw);
+  height: 100%;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  color: var(--ink);
+  background: #fbfbfa;
+  box-shadow: -18px 0 55px -30px rgb(0 0 0 / 42%);
+  transform: translateX(0);
+  transition: transform 220ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.infra-drawer-popup[data-starting-style],
+.infra-drawer-popup[data-ending-style] {
+  transform: translateX(100%);
+}
+
+.infra-drawer-header {
+  display: flex;
+  min-height: 78px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 15px 18px 14px 22px;
+  border-bottom: 1px solid #e5e5e1;
+}
+
+.infra-drawer-title-group {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.infra-drawer-title-group > svg {
+  width: 20px;
+  height: 20px;
+  color: #72726e;
+}
+
+.infra-drawer-title-group > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.infra-drawer-kicker {
+  color: var(--ink-faint);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.infra-drawer-title-group h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.infra-drawer-close {
+  display: inline-grid;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  color: var(--ink-muted);
+  background: transparent;
+  cursor: pointer;
+  transition-property: color, background-color, scale;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.infra-drawer-close:hover {
+  color: var(--ink);
+  background: var(--surface-soft);
+}
+
+.infra-drawer-close:active {
+  scale: 0.96;
+}
+
+.infra-drawer-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.infra-drawer-content {
+  display: grid;
+  align-content: start;
+  gap: 18px;
+  overflow: auto;
+  padding: 20px 22px 28px;
+}
+
+.infra-platform-section {
+  display: grid;
+  gap: 10px;
+}
+
+.infra-platform-section header {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+}
+
+.infra-platform-section header .infra-platform-mark {
+  width: 16px;
+  height: 16px;
+}
+
+.infra-platform-section h3 {
+  margin: 0;
+  color: #3f3f3b;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.infra-platform-section header span {
+  color: var(--ink-faint);
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.infra-link-list {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.infra-link-list a {
+  display: grid;
+  min-height: 58px;
+  grid-template-columns: minmax(0, 1fr) 16px;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  color: inherit;
+  background: #ffffff;
+  box-shadow: var(--surface-shadow);
+  text-decoration: none;
+  transition-property: background-color, scale;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.infra-link-list a:hover {
+  background: var(--surface-soft);
+}
+
+.infra-link-list a:active {
+  scale: 0.98;
+}
+
+.infra-link-list a > span,
+.infra-link-list a > small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.infra-link-list a > span {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.infra-link-list a > small {
+  grid-column: 1;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.infra-link-list a > svg {
+  width: 15px;
+  height: 15px;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  color: #a1a19c;
+}
+
 .dependency-drawer-header {
   display: flex;
   min-height: 78px;
@@ -3297,7 +3623,9 @@ button {
 .metrics-drawer-tabs button:focus-visible,
 .metrics-page-select select:focus-visible,
 .metrics-drawer-state button:focus-visible,
-.dependency-drawer-close:focus-visible {
+.dependency-drawer-close:focus-visible,
+.infra-drawer-close:focus-visible,
+.infra-link-list a:focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: 2px;
 }
