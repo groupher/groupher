@@ -174,8 +174,8 @@ Hono 只负责 HTTP 路由和运行时适配；OAuth provider、state、PKCE、S
 | `src/server.ts` | Dev Hub 和独立 Node 部署使用的 HTTP server                  |
 | `index.ts`      | Vercel Hono 部署的标准默认导出                              |
 
-Main 和 Dashboard 仍可使用 `next-auth/react` 的 `signIn`、`signOut` 作为浏览器协议
-客户端，但不再运行 NextAuth handler，也不再读取或解密 Auth.js Session。
+Main 和 Dashboard 只调用 `frontend/core/lib/oauth.ts` 暴露的 Groupher Auth 客户端；
+客户端不依赖 `next-auth/react`，也不读取或解密 Auth.js Session。
 
 `@auth/core` 当前是 Auth.js 面向 framework adapter 的底层接口，因此所有直接调用都
 限制在 `src/auth.ts`。版本使用精确锁定，未来升级只需要验证这一层的标准
@@ -194,8 +194,8 @@ Main 和 Dashboard 仍可使用 `next-auth/react` 的 `signIn`、`signOut` 作�
 
 Auth 只有在 `@auth/core` 的 callback response 确实签发 Session Cookie 后，才追加
 `groupher-auth.token`，避免出现只有 Phoenix Cookie、没有 Auth.js Session 的半登录
-状态。登出时浏览器会分别请求 Auth.js signout 和 `/api/auth/logout`；两项清理并行
-执行，其中一项失败不会阻止另一项。
+状态。登出时浏览器只请求 `/api/auth/logout`，由 Auth 子应用统一清理 Auth.js Cookie
+和 Phoenix Cookie。
 
 ## 环境变量
 

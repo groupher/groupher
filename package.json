@@ -141,7 +141,6 @@
     "motion": "^12.38.0",
     "nanoid": "^5.1.9",
     "next": "16.3.0-preview.6",
-    "next-auth": "5.0.0-beta.30",
     "next-compose-plugins": "^2.2.0",
     "overlayscrollbars": "^2.9.1",
     "overlayscrollbars-react": "^0.5.6",

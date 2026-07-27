@@ -2,6 +2,7 @@ import { Auth, type AuthConfig, setEnvDefaults } from '@auth/core'
 import GitHub from '@auth/core/providers/github'
 import {
   GROUPHER_AUTH_TOKEN_COOKIE,
+  getAuthCookieNames,
   getAuthSessionCookieName,
 } from '@groupher/frontend-core/auth-contract'
 import { serialize } from 'hono/utils/cookie'
@@ -154,6 +155,49 @@ export const buildPhoenixTokenCookie = (token: string, maxAge = SESSION_MAX_AGE)
     sameSite: 'lax',
     secure: useSecureCookies,
   })
+
+const buildExpiredCookie = (name: string): string =>
+  serialize(name, '', {
+    domain: process.env.AUTH_COOKIE_DOMAIN?.trim(),
+    httpOnly: true,
+    maxAge: 0,
+    path: '/',
+    sameSite: 'lax',
+    secure: useSecureCookies,
+  })
+
+const getRequestCookieNames = (request: Request): string[] => {
+  const cookie = request.headers.get('cookie')
+  if (!cookie) return []
+
+  return cookie
+    .split(';')
+    .map((part) => part.trim().split('=')[0])
+    .filter((name): name is string => Boolean(name))
+}
+
+export const buildAuthCookieClearingHeaders = (request: Request): string[] => {
+  const authCookies = getAuthCookieNames(useSecureCookies)
+  const authCookieNames = Object.values(authCookies)
+  const chunkableCookieNames = new Set([
+    getAuthSessionCookieName(useSecureCookies),
+    authCookies.csrfToken,
+  ])
+  const requestCookieNames = getRequestCookieNames(request)
+  const cookiesToClear = new Set([
+    GROUPHER_AUTH_TOKEN_COOKIE,
+    ...authCookieNames,
+    ...requestCookieNames.filter((name) =>
+      authCookieNames.some(
+        (authCookieName) =>
+          name === authCookieName ||
+          (chunkableCookieNames.has(authCookieName) && name.startsWith(`${authCookieName}.`)),
+      ),
+    ),
+  ])
+
+  return [...cookiesToClear].map(buildExpiredCookie)
+}
 
 export const toCanonicalAuthRequest = (request: Request): Request => {
   const authUrl = process.env.AUTH_URL?.trim()

@@ -31,12 +31,26 @@ describe('Auth Hono application', () => {
     expect(forwardedRequest && new URL(forwardedRequest.url).pathname).toBe('/api/auth/providers')
   })
 
-  it('clears the Phoenix token cookie through the custom logout endpoint', async () => {
-    const response = await createApp().request('/api/auth/logout', { method: 'POST' })
+  it('clears Phoenix and Auth cookies through the custom logout endpoint', async () => {
+    const response = await createApp().request('/api/auth/logout', {
+      method: 'POST',
+      headers: {
+        cookie: [
+          'groupher-auth.token=phoenix-token',
+          '__Secure-groupher-auth.session-token.0=session-a',
+          '__Secure-groupher-auth.session-token.1=session-b',
+          '__Secure-groupher-auth.csrf-token=csrf',
+        ].join('; '),
+      },
+    })
     const cookie = response.headers.get('set-cookie') || ''
 
     expect(response.headers.get('cache-control')).toBe('no-store')
     expect(cookie).toContain('groupher-auth.token=')
+    expect(cookie).toContain('__Secure-groupher-auth.session-token=')
+    expect(cookie).toContain('__Secure-groupher-auth.session-token.0=')
+    expect(cookie).toContain('__Secure-groupher-auth.session-token.1=')
+    expect(cookie).toContain('__Secure-groupher-auth.csrf-token=')
     expect(cookie).toContain('Max-Age=0')
   })
 })

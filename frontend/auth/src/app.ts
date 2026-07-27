@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 
-import { buildPhoenixTokenCookie, handleAuthRequest } from './auth'
+import { buildAuthCookieClearingHeaders, handleAuthRequest } from './auth'
 
 type TOptions = {
   authHandler?: (request: Request) => Promise<Response>
@@ -24,7 +24,9 @@ export const createApp = ({ authHandler = handleAuthRequest }: TOptions = {}) =>
 
   app.post('/api/auth/logout', (context) => {
     context.header('Cache-Control', 'no-store')
-    context.header('Set-Cookie', buildPhoenixTokenCookie('', 0), { append: true })
+    for (const cookie of buildAuthCookieClearingHeaders(context.req.raw)) {
+      context.header('Set-Cookie', cookie, { append: true })
+    }
     return context.json({ ok: true })
   })
 
