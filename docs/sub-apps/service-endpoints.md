@@ -17,6 +17,7 @@
 | 变量                                                                       | 含义                                           | 示例                                  |
 | -------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------------------- |
 | `CONTENT_IMPORT_APP_ENDPOINT`                                              | Dashboard 调用 content-import 的服务根地址     | `https://content-import.groupher.com` |
+| `NEXT_PUBLIC_ASSETS_HUB_ENDPOINT`                                          | Dashboard 浏览器调用 assets-hub 的服务根地址   | `https://assets-hub.groupher.com`     |
 | `DOCUMENT_CONVERTER_APP_ENDPOINT`                                          | 调用 document-converter 的服务根地址           | `https://converter.groupher.com`      |
 | `PHOENIX_GRAPHQL_ENDPOINT`                                                 | 子应用调用 Phoenix GraphQL 的内部地址          | `https://api.groupher.com/graphiql`   |
 | `NEXT_PUBLIC_GRAPHQL_ENDPOINT`                                             | 浏览器 GraphQL 地址，通常应为 Gateway 同源路径 | `/api/graphql`                        |
@@ -43,6 +44,7 @@ listener endpoint；是否改走 Portless 域名取决于各运行时是否统�
 
 ```text
 CONTENT_IMPORT_APP_ENDPOINT=https://content-import.groupher.com
+NEXT_PUBLIC_ASSETS_HUB_ENDPOINT=https://assets-hub.groupher.com
 DOCUMENT_CONVERTER_APP_ENDPOINT=https://converter.groupher.com
 PHOENIX_GRAPHQL_ENDPOINT=https://api.groupher.com/graphiql
 ```

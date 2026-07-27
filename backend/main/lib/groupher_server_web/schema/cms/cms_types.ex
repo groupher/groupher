@@ -18,7 +18,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   alias CMS.Marker
   alias CMS.Dashboard.ThemePreset
   alias CMS.Model.{Community, CoverBackground}
-  alias Helper.ORM
+  alias Helper.{ORM, PermissionRegistry}
   alias GroupherServerWeb.Schema
 
   import_types(Schema.CMS.Metrics)
@@ -487,6 +487,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
 
   object :community_asset do
     field(:id, :id)
+    field(:public_ref, :string)
     field(:asset_type, :community_asset_type)
     field(:status, :community_asset_status)
     field(:title, :string)
@@ -539,6 +540,42 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:storage_key, :string)
     field(:content_hash, :string)
     field(:size_bytes, non_null(:big_int))
+    field(:width, :integer)
+    field(:height, :integer)
+    field(:meta, :json)
+  end
+
+  object :community_asset_upload_intent do
+    field(:upload_ref, non_null(:string))
+    field(:asset_public_ref, non_null(:string))
+    field(:object_key, non_null(:string))
+    field(:capability, non_null(:string))
+    field(:expires_at, non_null(:datetime))
+    field(:max_size_bytes, non_null(:big_int))
+    field(:allowed_mime_types, non_null(list_of(non_null(:string))))
+  end
+
+  input_object :community_asset_upload_file_input do
+    field(:filename, non_null(:string))
+    field(:mime_type, non_null(:string))
+    field(:size_bytes, non_null(:big_int))
+    field(:checksum_sha256, :string)
+    field(:asset_type, :community_asset_type)
+  end
+
+  input_object :community_asset_upload_completion_input do
+    field(:idempotency_key, non_null(:string))
+    field(:community_id, non_null(:id))
+    field(:uploader_id, :id)
+    field(:asset_public_ref, non_null(:string))
+    field(:url, non_null(:string))
+    field(:storage, non_null(:string))
+    field(:storage_key, non_null(:string))
+    field(:content_hash, non_null(:string))
+    field(:size_bytes, non_null(:big_int))
+    field(:filename, :string)
+    field(:mime_type, :string)
+    field(:asset_type, :community_asset_type)
     field(:width, :integer)
     field(:height, :integer)
     field(:meta, :json)
@@ -865,17 +902,24 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :community_moderator do
     field(:is_root, :boolean) do
       resolve(fn moderator, _, _ ->
-        with {:ok, community} <- ORM.find(Community, moderator.community_id),
-             {:ok, passport} <-
-               CMS.Communities.get_passport(%Accounts.Model.User{id: moderator.user_id}) do
-          {:ok, get_in(passport, [community.slug, "root"]) == true}
+        with {:ok, {passport, community_slug}} <- moderator_passport_context(moderator) do
+          {:ok, moderator_root?(passport, community_slug)}
         else
           _ -> {:ok, false}
         end
       end)
     end
 
-    field(:passport_item_count, :integer)
+    field(:passport_item_count, :integer) do
+      resolve(fn moderator, _, _ ->
+        with {:ok, {passport, community_slug}} <- moderator_passport_context(moderator) do
+          {:ok, moderator_passport_item_count(passport, community_slug)}
+        else
+          _ -> {:ok, fallback_moderator_passport_item_count(moderator)}
+        end
+      end)
+    end
+
     field(:user, :common_user)
   end
 
@@ -1253,4 +1297,56 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     # key so light/dark cover backgrounds still batch through the CMS loader.
     %{batch: {CoverBackground, args}, item: Map.get(config, field)}
   end
+
+  defp moderator_passport_context(moderator) do
+    with {:ok, community_slug} <- moderator_community_slug(moderator),
+         {:ok, user_id} <- moderator_user_id(moderator),
+         {:ok, passport} <- CMS.Communities.get_passport(%Accounts.Model.User{id: user_id}) do
+      {:ok, {passport, community_slug}}
+    end
+  end
+
+  defp moderator_community_slug(%{community: %Community{slug: slug}}) when is_binary(slug),
+    do: {:ok, slug}
+
+  defp moderator_community_slug(%{community_id: community_id}) when not is_nil(community_id) do
+    with {:ok, community} <- ORM.find(Community, community_id) do
+      {:ok, community.slug}
+    end
+  end
+
+  defp moderator_community_slug(_), do: {:error, :community_not_found}
+
+  defp moderator_user_id(%{user_id: user_id}) when not is_nil(user_id), do: {:ok, user_id}
+
+  defp moderator_user_id(%{user: %Accounts.Model.User{id: user_id}}) when not is_nil(user_id),
+    do: {:ok, user_id}
+
+  defp moderator_user_id(_), do: {:error, :user_not_found}
+
+  defp moderator_root?(passport, community_slug) do
+    get_in(passport, [community_slug, "root"]) == true
+  end
+
+  defp moderator_passport_item_count(passport, community_slug) do
+    if moderator_root?(passport, community_slug) do
+      PermissionRegistry.root_passport_item_count()
+    else
+      passport
+      |> get_in([community_slug, "cms"])
+      |> count_enabled_rules()
+    end
+  end
+
+  defp fallback_moderator_passport_item_count(moderator) do
+    count = moderator.passport_item_count || 0
+
+    if count >= PermissionRegistry.root_passport_item_count(), do: 0, else: count
+  end
+
+  defp count_enabled_rules(rules) when is_map(rules) do
+    Enum.count(rules, fn {_rule, enabled} -> enabled == true end)
+  end
+
+  defp count_enabled_rules(_), do: 0
 end

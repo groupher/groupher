@@ -1012,6 +1012,14 @@ const updateModerators = gql`
   }
 `
 
+const userPassport = gql`
+  query ($login: String!) {
+    user(login: $login) {
+      passportString
+    }
+  }
+`
+
 const searchUsers = gql`
   query ($name: String!) {
     searchUsers(name: $name) {
@@ -1121,6 +1129,45 @@ const openGraphInfo = gql`
   }
 `
 
+const createCommunityAssetUploadIntent = gql`
+  mutation ($community: String!, $file: CommunityAssetUploadFileInput!) {
+    createCommunityAssetUploadIntent(community: $community, file: $file) {
+      uploadRef
+      assetPublicRef
+      objectKey
+      capability
+      expiresAt
+      maxSizeBytes
+      allowedMimeTypes
+    }
+  }
+`
+
+const pagedCommunityAssets = gql`
+  query ($community: String!, $filter: PagiFilter) {
+    pagedCommunityAssets(community: $community, filter: $filter) {
+      entries {
+        id
+        publicRef
+        filename
+        mimeType
+        sizeBytes
+        storage
+        storageKey
+        contentHash
+        width
+        height
+        url
+        insertedAt
+      }
+      pageNumber
+      pageSize
+      totalCount
+      totalPages
+    }
+  }
+`
+
 const schema = {
   communityBaseInfo,
   communitySocialLinks,
@@ -1172,11 +1219,14 @@ const schema = {
   updateDocCoverCardAppearance,
   updatePinnedDocAppearance,
   updateModerators,
+  userPassport,
   searchUsers,
   addModerator,
   addModerators,
   communityOverview,
   openGraphInfo,
+  createCommunityAssetUploadIntent,
+  pagedCommunityAssets,
   updateDashboardHeaderLinks,
   updateDashboardFooterLinks,
   updateDashboardFooterOnelineLinks,

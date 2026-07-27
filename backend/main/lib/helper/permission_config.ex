@@ -101,6 +101,7 @@ defmodule Helper.PermissionConfig do
         "moderator.set",
         "moderator.unset",
         "moderator.update",
+        "asset.upload",
         "doc.import",
         "community.update"
       ]
@@ -174,6 +175,7 @@ defmodule Helper.PermissionConfig do
       "moderator.set" => %{scope: :context, context: :cms, grant: "moderator.set"},
       "moderator.unset" => %{scope: :context, context: :cms, grant: "moderator.unset"},
       "moderator.update" => %{scope: :context, context: :cms, grant: "moderator.update"},
+      "asset.upload" => %{scope: :context, context: :cms, grant: "asset.upload"},
       "dashboard.theme.update" => %{scope: :context, context: :cms, grant: "community.update"},
       "dashboard.rss.update" => %{scope: :context, context: :cms, grant: "community.update"},
       "community_tag.create" => %{

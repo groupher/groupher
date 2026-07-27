@@ -1,4 +1,5 @@
 export const LOCAL_SERVICE_ENDPOINTS = {
+  assetsHub: 'http://127.0.0.1:8002',
   auth: 'http://127.0.0.1:3004',
   contentImport: 'http://127.0.0.1:8001',
   dashboard: 'http://127.0.0.1:3001',

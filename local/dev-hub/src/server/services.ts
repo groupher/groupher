@@ -83,7 +83,7 @@ const APP_CHAIN_POLICY = {
 
 const DASHBOARD_CHAIN_POLICY = {
   ...APP_CHAIN_POLICY,
-  optionalDependencies: ['content-import', 'document-converter'],
+  optionalDependencies: ['assets-hub', 'content-import', 'document-converter'],
 } satisfies TServiceStartPolicy
 
 export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
@@ -211,6 +211,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     command: 'make',
     args: ['fe.dev.dsb'],
     env: {
+      NEXT_PUBLIC_ASSETS_HUB_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.assetsHub,
       CONTENT_IMPORT_APP_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.contentImport,
     },
     port: 3001,
@@ -290,6 +291,32 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     url: 'http://127.0.0.1:8001/health',
     portlessName: 'content-import',
     portlessUrl: 'https://content-import.groupher.localhost/health',
+    metrics: BACKEND_METRICS,
+  },
+  {
+    id: 'assets-hub',
+    name: 'Assets Hub',
+    description: 'S3-compatible asset upload service',
+    group: 'backend',
+    monogram: 'AH',
+    technologies: ['hono', 'nodejs', 'typescript', 'graphql'],
+    cwd: REPO_ROOT,
+    config: {
+      kind: 'env-files',
+      root: fromRoot('backend/assets-hub'),
+      environment: 'development',
+    },
+    command: 'yarn',
+    args: ['dev:assets-hub'],
+    env: {
+      ASSETS_HUB_CORS_ORIGIN:
+        'http://localhost:3003,http://dashboard.groupher.localhost,https://dashboard.groupher.localhost',
+      PORT: '8002',
+    },
+    port: 8002,
+    url: 'http://127.0.0.1:8002/health',
+    portlessName: 'assets-hub',
+    portlessUrl: 'https://assets-hub.groupher.localhost/health',
     metrics: BACKEND_METRICS,
   },
   {
@@ -384,6 +411,13 @@ export const SERVICE_RELATIONS: TServiceRelation[] = [
     target: 'content-import',
     kind: 'api',
     label: '/api/docs/import/*',
+  },
+  {
+    id: 'dashboard-assets-hub',
+    source: 'dashboard',
+    target: 'assets-hub',
+    kind: 'api',
+    label: 'asset upload flow',
   },
   {
     id: 'content-import-phoenix',

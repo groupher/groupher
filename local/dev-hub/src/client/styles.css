@@ -819,6 +819,16 @@ button {
   .terminal-panel,
   .metrics-drawer-popup,
   .config-drawer-popup
+)[data-service-id='assets-hub'] {
+  --service-monogram-background: oklch(44.3% 0.11 240.79);
+  --service-monogram-foreground: #eaf7ff;
+}
+
+:is(
+  .service-card,
+  .terminal-panel,
+  .metrics-drawer-popup,
+  .config-drawer-popup
 )[data-service-id='document-converter'] {
   --service-monogram-background: #435f70;
   --service-monogram-foreground: #e5edf1;

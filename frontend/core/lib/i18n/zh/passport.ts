@@ -53,6 +53,7 @@ export default {
   'passport.rule.moderator.set': '添加管理员',
   'passport.rule.moderator.unset': '移除管理员',
   'passport.rule.moderator.update': '更新管理员',
+  'passport.rule.asset.upload': '上传资产',
   'passport.rule.edit': '编辑',
   'passport.rule.pin': '置顶',
   'passport.rule.undo_pin': '取消置顶',

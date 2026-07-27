@@ -426,12 +426,20 @@ defmodule GroupherServer.CMS.Assets.Write do
       |> Map.put(:updated_at, DateTime.utc_now(:second))
       |> Enum.to_list()
 
-    Repo.insert(changeset,
+    opts = [
       on_conflict: [set: set_fields],
       conflict_target: conflict_target(identity),
-      mode: :savepoint,
       returning: true
-    )
+    ]
+
+    opts =
+      if Repo.in_transaction?() do
+        Keyword.put(opts, :mode, :savepoint)
+      else
+        opts
+      end
+
+    Repo.insert(changeset, opts)
   end
 
   defp retry_active_asset_upsert(attrs, changeset) do

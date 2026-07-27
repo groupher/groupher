@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Assets do
   alias GroupherServer.CMS.Model.{Community, CommunityAsset}
   alias Helper.T
 
-  alias __MODULE__.{Read, Write}
+  alias __MODULE__.{Read, Upload, Write}
 
   @doc """
   Lists active assets owned by a community.
@@ -86,6 +86,16 @@ defmodule GroupherServer.CMS.Assets do
   def register(%Community{} = community, attrs, user \\ nil) do
     Write.register(community, attrs, user)
   end
+
+  @doc "Creates a short-lived upload capability for assets-hub."
+  @spec create_upload_intent(Community.t(), map(), User.t()) :: T.domain_res(map())
+  def create_upload_intent(%Community{} = community, file, %User{} = user) do
+    Upload.create_intent(community, file, user)
+  end
+
+  @doc "Records a verified assets-hub upload completion."
+  @spec complete_upload(map()) :: T.domain_res(CommunityAsset.t())
+  def complete_upload(input), do: Upload.complete(input)
 
   @doc """
   Soft-deletes an unreferenced community asset.

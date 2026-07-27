@@ -4,11 +4,12 @@ import { useMemo, useState } from 'react'
 import EVENT from '~/const/event'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import { closeDrawer, send } from '~/signal'
-import type { TUser } from '~/spec'
+import type { TModerator, TUser } from '~/spec'
 import useAccount from '~/stores/account/hooks'
 import useCommunity from '~/stores/community/hooks'
 import useDashboard from '~/stores/dashboard/hooks'
 import { revalidateCommunityCache } from '~/utils/revalidateCommunityCache'
+import { toast } from '~/widgets/Toaster'
 
 import { PASSPORT_SCOPE } from './constant'
 import S from './schema'
@@ -54,6 +55,8 @@ const enabledRuleKeys = (rules: Record<string, boolean>): string[] => {
   return keys
 }
 
+const enabledRuleCount = (rules: Record<string, boolean>): number => enabledRuleKeys(rules).length
+
 const ruleMapFrom = (rules: unknown): Record<string, boolean> =>
   typeof rules === 'object' && rules !== null ? (rules as Record<string, boolean>) : {}
 
@@ -77,6 +80,58 @@ const hasCommunityRoot = (user: TUser | null, community: string): boolean => {
 
   return isCommunityRootPassport(user.passport, community)
 }
+
+const mergeModerator = (
+  moderators: readonly TModerator[],
+  login: string,
+  patch: Partial<TModerator>,
+): TModerator[] =>
+  moderators.map((moderator) =>
+    moderator.user?.login === login ? { ...moderator, ...patch } : moderator,
+  )
+
+const mergeHydratedModerator = (
+  moderators: readonly TModerator[],
+  activeModerator: TUser,
+  patch: Partial<TModerator>,
+): TModerator[] => {
+  const merged = mergeModerator(moderators, activeModerator.login, patch)
+  if (merged.some((moderator) => moderator.user?.login === activeModerator.login)) return merged
+
+  return [
+    ...merged,
+    {
+      passportItemCount: 0,
+      user: activeModerator,
+      ...patch,
+    },
+  ]
+}
+
+const mergeModeratorSnapshots = (
+  remoteModerators: readonly TModerator[],
+  existingModerators: readonly TModerator[],
+): TModerator[] =>
+  remoteModerators.flatMap((moderator) => {
+    const login = moderator.user?.login
+    if (!login) return []
+
+    const existing = find((item) => item.user?.login === login, existingModerators)
+    return [
+      {
+        ...moderator,
+        rules: existing?.rules,
+        globalRules: existing?.globalRules,
+      },
+    ]
+  })
+
+const hasHydratedRules = (
+  moderator: TModerator | null | undefined,
+): moderator is TModerator & {
+  rules: Record<string, boolean>
+  globalRules: Record<string, boolean>
+} => moderator?.rules !== undefined && moderator.globalRules !== undefined
 
 type TRet = {
   activeModerator: TUser | null
@@ -107,8 +162,13 @@ export default function useLogic(): TRet {
   const { activeModerator, allRootRules, allModeratorRules } = dsb$
   const [selectedGlobalRules, setSelectedGlobalRules] = useState<string[]>([])
   const [selectedRules, setSelectedRules] = useState<string[]>([])
-  const [activeModeratorHasRootPassport, setActiveModeratorHasRootPassport] = useState(false)
   const [loading, setLoading] = useState(true)
+
+  const activeModeratorStoreItem = useMemo(() => {
+    if (!activeModerator?.login) return null
+
+    return find((moderator) => moderator.user?.login === activeModerator.login, dsb$.moderators)
+  }, [activeModerator, dsb$.moderators])
 
   const toggleCheck = (
     rule: string,
@@ -126,9 +186,8 @@ export default function useLogic(): TRet {
     }
   }
 
-  const loadUserPassport = (): void => {
+  const loadUserPassport = async (): Promise<void> => {
     if (!activeModerator) {
-      setActiveModeratorHasRootPassport(false)
       setLoading(false)
       return
     }
@@ -136,51 +195,50 @@ export default function useLogic(): TRet {
     setLoading(true)
     setSelectedRules([])
     setSelectedGlobalRules([])
-    setActiveModeratorHasRootPassport(false)
-    query(S.userPassport, { login: activeModerator.login })
-      .then((res) => {
-        const { passportString = '{}', social = null } = res?.user ?? {}
-        const passportJson = safeParsePassport(passportString)
-        const globalRules = ruleMapFrom(passportJson.global)
-        const communityPassport = communityPassportFrom(passportJson, community$.slug)
-        const communityRules = ruleMapFrom(communityPassport.cms)
-        const hasRootPassport = isCommunityRootPassport(passportJson, community$.slug)
 
-        if (hasRootPassport) {
-          const moderators = dsb$.moderators.map((moderator) =>
-            moderator.user?.login === activeModerator.login
-              ? { ...moderator, isRoot: true }
-              : moderator,
-          )
-
-          dsb$.commit({ activeModerator: { ...activeModerator, social }, moderators })
-          community$.commit({ moderators })
-        } else {
-          dsb$.commit({ activeModerator: { ...activeModerator, social } })
-        }
-
-        setSelectedGlobalRules(enabledRuleKeys(globalRules))
-        setSelectedRules(enabledRuleKeys(communityRules))
-        setActiveModeratorHasRootPassport(hasRootPassport)
-      })
-      .catch((error) => {
-        console.error('## load user passport error: ', error)
-        setSelectedGlobalRules([])
-        setSelectedRules([])
-        setActiveModeratorHasRootPassport(false)
-        dsb$.commit({ activeModerator: { ...activeModerator, social: null } })
-      })
-      .finally(() => {
-        setLoading(false)
-      })
-  }
-
-  const loadAllPassportRules = (): void => {
-    if (allModeratorRules !== '{}') {
-      loadUserPassport()
+    if (hasHydratedRules(activeModeratorStoreItem)) {
+      setSelectedGlobalRules(enabledRuleKeys(activeModeratorStoreItem.globalRules))
+      setSelectedRules(enabledRuleKeys(activeModeratorStoreItem.rules))
+      setLoading(false)
       return
     }
 
+    try {
+      const res = await query(S.userPassport, { login: activeModerator.login })
+      const { passportString = '{}', social = null } = res?.user ?? {}
+      const passportJson = safeParsePassport(passportString)
+      const globalRules = ruleMapFrom(passportJson.global)
+      const communityPassport = communityPassportFrom(passportJson, community$.slug)
+      const communityRules = ruleMapFrom(communityPassport.cms)
+      const hasRootPassport = isCommunityRootPassport(passportJson, community$.slug)
+      const nextModeratorPatch = {
+        isRoot: hasRootPassport,
+        passportItemCount: enabledRuleCount(communityRules),
+        rules: communityRules,
+        globalRules,
+      }
+      const moderators = mergeHydratedModerator(
+        dsb$.moderators,
+        { ...activeModerator, social },
+        nextModeratorPatch,
+      )
+
+      dsb$.commit({ activeModerator: { ...activeModerator, social }, moderators })
+      community$.commit({ moderators })
+
+      setSelectedGlobalRules(enabledRuleKeys(globalRules))
+      setSelectedRules(enabledRuleKeys(communityRules))
+    } catch (error) {
+      console.error('## load user passport error: ', error)
+      setSelectedGlobalRules([])
+      setSelectedRules([])
+      dsb$.commit({ activeModerator: { ...activeModerator, social: null } })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadAllPassportRules = (): void => {
     setLoading(true)
     query(S.allPassportRules)
       .then((res) => {
@@ -192,7 +250,7 @@ export default function useLogic(): TRet {
           allModeratorRules: normalizeRules(community),
         })
 
-        loadUserPassport()
+        void loadUserPassport()
       })
       .catch((error) => {
         console.error('## load passport rules error: ', error)
@@ -235,20 +293,34 @@ export default function useLogic(): TRet {
       community,
       user: activeModerator.login,
       rules: JSON.stringify(rules),
-    }).then(async (res) => {
-      const moderators = (res.updateModeratorPassport?.moderators ?? []).filter(
-        (moderator) => moderator.user?.login,
-      )
-
-      dsb$.commit({ moderators })
-      community$.commit({ moderators })
-      try {
-        await revalidateCommunityCache(community)
-      } catch (error) {
-        console.error('## revalidate community cache error: ', error)
-      }
-      closeDrawer()
     })
+      .then(async (res) => {
+        const remoteModerators = (res.updateModeratorPassport?.moderators ?? []).filter(
+          (moderator): moderator is TModerator => Boolean(moderator.user?.login),
+        )
+        const savedModeratorPatch = {
+          passportItemCount: enabledRuleCount(innerRules),
+          rules: innerRules,
+          globalRules,
+        }
+        const moderators = mergeModerator(
+          mergeModeratorSnapshots(remoteModerators, dsb$.moderators),
+          activeModerator.login,
+          savedModeratorPatch,
+        )
+
+        dsb$.commit({ moderators })
+        community$.commit({ moderators })
+        try {
+          await revalidateCommunityCache(community)
+        } catch (error) {
+          console.error('## revalidate community cache error: ', error)
+        }
+        closeDrawer()
+      })
+      .catch((error) => {
+        toast(error instanceof Error ? error.message : String(error), 'error')
+      })
   }
 
   const deleteModerator = (): void => {
@@ -275,9 +347,8 @@ export default function useLogic(): TRet {
   }
 
   const isActiveModeratorRoot = useMemo(() => {
-    const curRoot = find((moderator) => moderator.isRoot, community$.moderators)
-    return activeModeratorHasRootPassport || curRoot?.user?.login === activeModerator?.login
-  }, [activeModerator, activeModeratorHasRootPassport, community$.moderators])
+    return activeModeratorStoreItem?.isRoot === true
+  }, [activeModeratorStoreItem])
 
   const isCurUserModeratorRoot = useMemo(() => {
     if (hasGlobalGod(account$.user)) return true

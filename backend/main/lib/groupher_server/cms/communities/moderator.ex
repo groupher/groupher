@@ -121,8 +121,14 @@ defmodule GroupherServer.CMS.Communities.Moderator do
       {:error, :one_community_only} ->
         {:error, {:one_community_only, "can only passport once community a time"}}
 
-      _ ->
-        {:error, {:custom, "update passport error"}}
+      {:error, {reason, message}} when is_atom(reason) and is_binary(message) ->
+        {:error, {reason, message}}
+
+      {:error, reason} ->
+        {:error, {:custom, "update passport error: #{inspect(reason)}"}}
+
+      reason ->
+        {:error, {:custom, "update passport error: #{inspect(reason)}"}}
     end
   end
 

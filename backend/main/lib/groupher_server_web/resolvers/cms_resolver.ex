@@ -72,6 +72,18 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Assets.register(community, asset, user)
   end
 
+  def create_community_asset_upload_intent(
+        _root,
+        %{community: %Community{} = community, file: file},
+        %{context: %{cur_user: user}}
+      ) do
+    CMS.Assets.create_upload_intent(community, file, user)
+  end
+
+  def complete_community_asset_upload(_root, %{input: input}, _info) do
+    CMS.Assets.complete_upload(input)
+  end
+
   def delete_community_asset(_root, %{community: %Community{} = community, id: id}, _info) do
     CMS.Assets.delete(community, id)
   end

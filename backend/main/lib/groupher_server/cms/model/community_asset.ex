@@ -41,7 +41,7 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
   @required_fields ~w(community_id url size_bytes)a
   @optional_fields ~w(
     uploader_id asset_type status title filename mime_type url_hash storage storage_key
-    content_hash width height meta deleted_at
+    public_ref content_hash width height meta deleted_at
   )a
 
   @type asset_type :: :image | :video | :audio | :file
@@ -63,6 +63,7 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
     field(:url_hash, :string)
     field(:storage, :string)
     field(:storage_key, :string)
+    field(:public_ref, :string)
     field(:content_hash, :string)
 
     field(:size_bytes, :integer, default: 0)
@@ -106,6 +107,7 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
     |> validate_length(:mime_type, max: 120)
     |> validate_length(:storage, max: 80)
     |> validate_length(:storage_key, max: 500)
+    |> validate_length(:public_ref, max: 80)
     |> validate_length(:content_hash, max: 160)
     |> foreign_key_constraint(:community_id)
     |> foreign_key_constraint(:uploader_id)
@@ -115,6 +117,7 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
     |> unique_constraint([:community_id, :storage, :storage_key],
       name: :community_assets_community_storage_key_index
     )
+    |> unique_constraint(:public_ref, name: :community_assets_public_ref_index)
   end
 
   @doc """
