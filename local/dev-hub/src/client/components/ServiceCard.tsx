@@ -1,7 +1,6 @@
 import type { TPublicService, TServiceMetricsSnapshot, TServiceStartMode } from '@shared/contracts'
 import {
   BrushCleaning,
-  ExternalLink,
   FileBraces,
   GitBranch,
   LoaderCircle,
@@ -11,7 +10,7 @@ import {
 } from 'lucide-react'
 import { AnimatePresence, motion, MotionConfig } from 'motion/react'
 
-import { Badge, type BadgeProps } from '@/components/reui/badge'
+import { SERVICE_DEPLOYMENT_TARGETS } from '@/lib/infra-links'
 import { openExternalUrl } from '@/lib/open-external-url'
 
 import { ServiceActionButton } from './ServiceActionButton'
@@ -48,16 +47,6 @@ const STATUS_LABEL: Record<TPublicService['status'], string> = {
   external: 'External',
   error: 'Exited',
   unavailable: 'Planned',
-}
-
-const STATUS_VARIANT: Record<TPublicService['status'], BadgeProps['variant']> = {
-  stopped: 'outline',
-  starting: 'info-light',
-  running: 'success-light',
-  stopping: 'warning-light',
-  external: 'warning-light',
-  error: 'destructive-light',
-  unavailable: 'secondary',
 }
 
 const CARD_SPRING = {
@@ -120,52 +109,67 @@ export function ServiceCard({
     service.portlessUrl ||
     service.url ||
     undefined
-  const showOpenLink = Boolean(openUrl) && (service.status === 'running' || Boolean(browserUrl))
+  const showAddress = service.status === 'running' || Boolean(browserUrl)
+  const deploymentTarget = SERVICE_DEPLOYMENT_TARGETS[service.id]
 
   return (
     <MotionConfig reducedMotion='user'>
       <article className='service-card' data-service-id={service.id}>
         <div className={`service-visual ${compact ? 'is-compact' : ''}`}>
           <header className='service-meta'>
-            <div className='service-identity'>
-              <ServiceStackMark
-                name={service.name}
-                monogram={service.monogram}
-                technologies={service.technologies}
-              />
-              <span className='service-copy'>
-                <span className='service-title-row'>
-                  <span className='service-name'>{service.name}</span>
-                  {showOpenLink ? (
-                    <a
-                      className='open-service'
-                      href={openUrl}
-                      target='_blank'
-                      rel='noreferrer'
-                      aria-label={`Open ${service.name}`}
-                      onClick={(event) => {
-                        event.preventDefault()
-                        openExternalUrl(event.currentTarget.href)
-                      }}
+            <ServiceStackMark
+              name={service.name}
+              monogram={service.monogram}
+              technologies={service.technologies}
+            />
+            <span className='service-copy'>
+              <span className='service-title-row'>
+                <span className='service-name'>{service.name}</span>
+                {deploymentTarget ? (
+                  <a
+                    className={`service-deployment-link service-deployment-link--${deploymentTarget.platformId}`}
+                    href={deploymentTarget.url}
+                    target='_blank'
+                    rel='noreferrer'
+                    aria-label={`Open ${service.name} deployment on ${deploymentTarget.platformName}`}
+                    title={deploymentTarget.platformName}
+                    onClick={(event) => {
+                      event.preventDefault()
+                      openExternalUrl(event.currentTarget.href)
+                    }}
+                  >
+                    <svg
+                      className={`service-deployment-mark service-deployment-mark--${deploymentTarget.platformId}`}
+                      viewBox={deploymentTarget.icon.viewBox}
+                      aria-hidden='true'
                     >
-                      <ExternalLink aria-hidden='true' />
-                    </a>
-                  ) : null}
-                </span>
-                <span className='service-description'>{service.description}</span>
+                      <path d={deploymentTarget.icon.path} fill={deploymentTarget.icon.color} />
+                    </svg>
+                  </a>
+                ) : null}
               </span>
-            </div>
-            <div className={`service-status-group ${compact ? 'is-compact' : ''}`}>
+              <span className='service-description'>{service.description}</span>
+            </span>
+            <div
+              className={`service-status-group ${showAddress ? 'has-address' : ''} ${
+                compact ? 'is-compact' : ''
+              }`}
+            >
               {!compact || !service.canStart ? (
-                <Badge
-                  className='service-status-badge'
-                  variant={STATUS_VARIANT[displayStatus]}
-                  radius='full'
-                  size='lg'
+                <span
+                  className={`service-status-label service-status-label--${displayStatus}`}
+                  aria-label={`${service.name} is ${STATUS_LABEL[displayStatus]}`}
                 >
-                  <span className={`status-dot status-dot--${displayStatus}`} />
+                  <span className={`status-dot status-dot--${displayStatus}`} aria-hidden='true'>
+                    {displayStatus === 'running' ? (
+                      <>
+                        <span className='status-dot-ping' />
+                        <span className='status-dot-core' />
+                      </>
+                    ) : null}
+                  </span>
                   {STATUS_LABEL[displayStatus]}
-                </Badge>
+                </span>
               ) : null}
               {compact && service.canStart ? (
                 <span className='service-inline-start-wrap'>
@@ -195,7 +199,7 @@ export function ServiceCard({
                   )}
                 </span>
               ) : null}
-              {service.status === 'running' ? <ServiceAddress service={service} /> : null}
+              {showAddress ? <ServiceAddress service={service} openUrl={openUrl} /> : null}
             </div>
           </header>
 

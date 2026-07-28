@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 
 type TProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   tooltip: ReactNode
+  tooltipAlign?: 'center' | 'end'
   tooltipClassName?: string
 }
 
@@ -16,6 +17,7 @@ type TPosition = {
 export function ServiceActionButton({
   children,
   tooltip,
+  tooltipAlign = 'center',
   tooltipClassName,
   onBlur,
   onClick,
@@ -55,7 +57,7 @@ export function ServiceActionButton({
       if (!rect) return
 
       setPosition({
-        left: rect.left + rect.width / 2,
+        left: tooltipAlign === 'end' ? rect.right : rect.left + rect.width / 2,
         top: rect.bottom + 8,
       })
       setOpen(true)
@@ -109,7 +111,9 @@ export function ServiceActionButton({
                 <motion.div
                   ref={tooltipRef}
                   id={tooltipId}
-                  className={`service-action-tooltip ${tooltipClassName ?? ''}`}
+                  className={`service-action-tooltip ${
+                    tooltipAlign === 'end' ? 'is-end-aligned' : ''
+                  } ${tooltipClassName ?? ''}`}
                   role='tooltip'
                   style={position}
                   onBlur={(event) => {

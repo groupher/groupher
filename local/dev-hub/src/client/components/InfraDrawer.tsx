@@ -1,7 +1,8 @@
 import { Dialog } from '@base-ui/react/dialog'
 import { ExternalLink, Network, X } from 'lucide-react'
+import { useState } from 'react'
 
-import { INFRA_PLATFORMS } from '@/lib/infra-links'
+import { INFRA_LINK_GROUPS, type TInfraLinkGroupId } from '@/lib/infra-links'
 import { openInfraUrl } from '@/lib/open-infra-url'
 
 import { InfraPlatformMark } from './InfraPlatformMark'
@@ -11,6 +12,10 @@ type TProps = {
 }
 
 export function InfraDrawer({ onClose }: TProps) {
+  const [activeGroupId, setActiveGroupId] = useState<TInfraLinkGroupId>('major')
+  const activeGroup =
+    INFRA_LINK_GROUPS.find((group) => group.id === activeGroupId) || INFRA_LINK_GROUPS[0]
+
   return (
     <Dialog.Root open onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
@@ -31,25 +36,48 @@ export function InfraDrawer({ onClose }: TProps) {
             </header>
 
             <div className='infra-drawer-content'>
-              {INFRA_PLATFORMS.map((platform) => (
+              <div className='infra-drawer-tabs' role='tablist' aria-label='Infra link groups'>
+                {INFRA_LINK_GROUPS.map((group) => (
+                  <button
+                    type='button'
+                    role='tab'
+                    key={group.id}
+                    className={`infra-drawer-tab ${activeGroupId === group.id ? 'is-active' : ''}`}
+                    aria-selected={activeGroupId === group.id}
+                    onClick={() => setActiveGroupId(group.id)}
+                  >
+                    {group.label}
+                  </button>
+                ))}
+              </div>
+
+              {activeGroup.platforms.map((platform) => (
                 <section className='infra-platform-section' key={platform.id}>
                   <header>
                     <InfraPlatformMark platform={platform} />
                     <h3>{platform.name}</h3>
                     <span>{platform.links.length}</span>
                   </header>
-                  <ul className='infra-link-list'>
+                  <ul className='infra-link-grid'>
                     {platform.links.map((link) => (
                       <li key={link.url}>
                         <a
+                          className='infra-link-card'
                           href={link.url}
                           onClick={(event) => {
                             event.preventDefault()
                             openInfraUrl(link.url)
                           }}
                         >
-                          <span>{link.label}</span>
-                          <small>{link.url}</small>
+                          <span className='infra-link-card-copy'>
+                            <span className='infra-link-card-title'>{link.label}</span>
+                            <span className='infra-link-card-url-wrap'>
+                              <small className='infra-link-card-url'>{link.url}</small>
+                              <span className='infra-link-card-tooltip' role='tooltip'>
+                                {link.url}
+                              </span>
+                            </span>
+                          </span>
                           <ExternalLink aria-hidden='true' />
                         </a>
                       </li>

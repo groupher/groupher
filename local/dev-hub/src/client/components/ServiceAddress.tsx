@@ -1,16 +1,19 @@
 import type { TPublicService } from '@shared/contracts'
-import { Check, CircleHelp, Copy } from 'lucide-react'
+import { Check, Copy, ExternalLink } from 'lucide-react'
 import { useState } from 'react'
+
+import { openExternalUrl } from '@/lib/open-external-url'
 
 import { ServiceActionButton } from './ServiceActionButton'
 
 type TProps = {
   service: TPublicService
+  openUrl?: string
 }
 
 type TCopyTarget = 'portless-app' | 'listener-app' | 'portless-health' | 'listener-health'
 
-export function ServiceAddress({ service }: TProps) {
+export function ServiceAddress({ service, openUrl }: TProps) {
   const [copied, setCopied] = useState<TCopyTarget | null>(null)
 
   if (!service.portlessName || !service.portlessUrl || !service.url) return null
@@ -26,11 +29,11 @@ export function ServiceAddress({ service }: TProps) {
 
   return (
     <span className='service-address'>
-      <span className='service-address-name'>{service.portlessName}</span>
       <ServiceActionButton
         type='button'
-        className='service-address-help'
+        className='service-address-name'
         aria-label={`Show ${service.name} address details`}
+        tooltipAlign='end'
         tooltipClassName='service-address-tooltip'
         tooltip={
           <span className='service-address-details'>
@@ -105,8 +108,23 @@ export function ServiceAddress({ service }: TProps) {
           </span>
         }
       >
-        <CircleHelp aria-hidden='true' />
+        <span>{service.portlessName}</span>
       </ServiceActionButton>
+      {openUrl ? (
+        <a
+          className='service-address-open'
+          href={openUrl}
+          target='_blank'
+          rel='noreferrer'
+          aria-label={`Open ${service.name} local address`}
+          onClick={(event) => {
+            event.preventDefault()
+            openExternalUrl(event.currentTarget.href)
+          }}
+        >
+          <ExternalLink aria-hidden='true' />
+        </a>
+      ) : null}
     </span>
   )
 }
