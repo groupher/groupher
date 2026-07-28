@@ -14,6 +14,7 @@ import { resolveDocumentTitle, type TDocumentTitleSource } from '../documentTitl
 
 const MARKDOWN = /\.mdx?$/i
 const YAML_FRONTMATTER = /^(?:\uFEFF)?---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/
+const DOCUMENT_READ_CONCURRENCY = 8
 
 export type TDocumentMetadata = {
   body: string
@@ -85,20 +86,52 @@ export const parseDocument = (
   }
 }
 
+const mapWithConcurrency = async <TInput, TOutput>(
+  inputs: readonly TInput[],
+  concurrency: number,
+  mapper: (input: TInput) => Promise<TOutput>,
+): Promise<TOutput[]> => {
+  const results = new Array<TOutput>(inputs.length)
+  let nextIndex = 0
+  const workerCount = Math.min(Math.max(concurrency, 1), inputs.length)
+
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      for (;;) {
+        const index = nextIndex
+        nextIndex += 1
+        if (index >= inputs.length) return
+        results[index] = await mapper(inputs[index])
+      }
+    }),
+  )
+
+  return results
+}
+
 /** Loads and parses all Markdown/MDX documents below the framework content root. */
 export const loadDocuments = async (
   workspace: TSourceWorkspace,
   root: string,
 ): Promise<Map<string, TDocumentMetadata>> => {
   const documents = new Map<string, TDocumentMetadata>()
-  for (const file of workspace.files.filter(
+  const files = workspace.files.filter(
     (file) => (!root || file.path.startsWith(`${root}/`)) && MARKDOWN.test(file.path),
-  )) {
-    documents.set(
-      file.path,
-      parseDocument(file.path, await workspace.readText(file.path), root, file.sizeBytes),
-    )
+  )
+  const entries = await mapWithConcurrency(
+    files,
+    DOCUMENT_READ_CONCURRENCY,
+    async (file) =>
+      [
+        file.path,
+        parseDocument(file.path, await workspace.readText(file.path), root, file.sizeBytes),
+      ] as const,
+  )
+
+  for (const [path, document] of entries) {
+    documents.set(path, document)
   }
+
   return documents
 }
 

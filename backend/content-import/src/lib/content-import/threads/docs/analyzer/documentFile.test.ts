@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { parseDocument } from './documentFile'
+import { loadDocuments, parseDocument } from './documentFile'
 
 const parse = (sourcePath: string, source: string) =>
   parseDocument(sourcePath, source, 'docs', Buffer.byteLength(source, 'utf8'))
@@ -105,5 +105,41 @@ describe('parseDocument title normalization', () => {
       title: 'MDX title',
       titleSource: 'metadata',
     })
+  })
+})
+
+describe('loadDocuments', () => {
+  it('reads documents concurrently while preserving manifest order', async () => {
+    let activeReads = 0
+    let maxActiveReads = 0
+    const bodies = new Map([
+      ['docs/b.md', '# Beta\n\nBody'],
+      ['docs/a.md', '# Alpha\n\nBody'],
+      ['docs/c.mdx', '# Gamma\n\nBody'],
+    ])
+    const workspace = {
+      files: Array.from(bodies, ([path, body]) => ({
+        path,
+        sizeBytes: Buffer.byteLength(body, 'utf8'),
+      })),
+      revision: 'test',
+      readText: async (path: string) => {
+        activeReads += 1
+        maxActiveReads = Math.max(maxActiveReads, activeReads)
+        await new Promise((resolve) => setTimeout(resolve, path === 'docs/b.md' ? 15 : 5))
+        activeReads -= 1
+        return bodies.get(path) || ''
+      },
+    }
+
+    const documents = await loadDocuments(workspace, 'docs')
+
+    expect([...documents.keys()]).toEqual(['docs/b.md', 'docs/a.md', 'docs/c.mdx'])
+    expect([...documents.values()].map((document) => document.title)).toEqual([
+      'Beta',
+      'Alpha',
+      'Gamma',
+    ])
+    expect(maxActiveReads).toBeGreaterThan(1)
   })
 })
