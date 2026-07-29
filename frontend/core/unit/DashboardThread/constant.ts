@@ -186,6 +186,11 @@ export const MENU: TDsbMenu = {
     initFold: false,
     children: [
       {
+        icon: 'content',
+        title: 'dsb.menu.assets',
+        slug: DSB_ROUTE.ASSETS,
+      },
+      {
         icon: 'communities',
         title: 'dsb.menu.communities',
         slug: DSB_ROUTE.COMMUNITIES,

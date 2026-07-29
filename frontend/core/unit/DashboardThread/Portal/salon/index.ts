@@ -7,7 +7,7 @@ export default function useSalon({ ...spacing }) {
 
   return {
     wrapper: cn('column w-full', margin(spacing)),
-    breadcrumbRow: cn('row-between w-full', DSB_DOC.HEADER_ROW),
+    breadcrumbRow: cn('flex flex-row items-start justify-between w-full', DSB_DOC.HEADER_ROW),
     breadcrumbs: 'row-center',
     header: 'row-between w-full',
     title: cn('text-2xl w-auto', fg('title')),

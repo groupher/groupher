@@ -1149,6 +1149,8 @@ const pagedCommunityAssets = gql`
       entries {
         id
         publicRef
+        assetType
+        status
         filename
         mimeType
         sizeBytes
@@ -1158,12 +1160,52 @@ const pagedCommunityAssets = gql`
         width
         height
         url
+        uploader {
+          login
+          nickname
+        }
+        deletedAt
         insertedAt
       }
       pageNumber
       pageSize
       totalCount
       totalPages
+    }
+  }
+`
+
+const communityAssetRefs = gql`
+  query ($community: String!, $assetId: ID!, $filter: PagiFilter) {
+    communityAssetRefs(community: $community, assetId: $assetId, filter: $filter) {
+      entries {
+        id
+        thread
+        articleId
+        usage
+        blockId
+        blockType
+        position
+        title
+        alt
+        source
+        insertedAt
+      }
+      pageNumber
+      pageSize
+      totalCount
+      totalPages
+    }
+  }
+`
+
+const deleteCommunityAsset = gql`
+  mutation ($community: String!, $id: ID!) {
+    deleteCommunityAsset(community: $community, id: $id) {
+      id
+      publicRef
+      status
+      deletedAt
     }
   }
 `
@@ -1227,6 +1269,8 @@ const schema = {
   openGraphInfo,
   createCommunityAssetUploadIntent,
   pagedCommunityAssets,
+  communityAssetRefs,
+  deleteCommunityAsset,
   updateDashboardHeaderLinks,
   updateDashboardFooterLinks,
   updateDashboardFooterOnelineLinks,

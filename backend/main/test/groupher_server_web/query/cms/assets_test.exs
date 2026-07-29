@@ -9,19 +9,19 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
 
   setup do
     {community, post, _attrs, user} = mock_article(:post)
-    rule_conn = simu_conn(:user, user, cms: %{"community.update" => true})
+    asset_conn = simu_conn(:user, user, cms: %{community.slug => %{"asset.upload" => true}})
 
     server_conn =
       :guest
       |> simu_conn()
       |> Plug.Conn.put_req_header("x-groupher-server-trust", @server_trust_secret)
 
-    {:ok, ~m(community post rule_conn server_conn user)a}
+    {:ok, ~m(asset_conn community post server_conn user)a}
   end
 
   describe "[cms assets]" do
-    test "authorized user can page article refs for one asset",
-         ~m(community post rule_conn user)a do
+    test "asset upload passport can page article refs for one asset",
+         ~m(asset_conn community post user)a do
       {:ok, asset} = CMS.Assets.register(community, image_asset_attrs("query-refs.png", 70), user)
 
       asset_refs =
@@ -38,7 +38,7 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
       assert length(refs) == 25
 
       result =
-        rule_conn
+        asset_conn
         |> gq_query(@asset_refs_query, %{
           community: community.slug,
           assetId: asset.id,

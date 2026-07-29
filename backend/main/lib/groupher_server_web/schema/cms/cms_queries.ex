@@ -159,7 +159,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:community, non_null(:string))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "community.update")
+      middleware(M.Passport, action: "asset.upload")
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.community_asset_usage/3)
     end
@@ -171,7 +171,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:filter, :pagi_filter)
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "community.update")
+      middleware(M.Passport, action: "asset.upload")
       middleware(M.FrontDesk, :community)
       middleware(M.PageSizeProof)
       resolve(&R.CMS.community_asset_refs/3)

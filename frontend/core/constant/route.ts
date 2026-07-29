@@ -25,6 +25,7 @@ export const DSB_ROUTE = {
   LOG: 'log',
   // --
   // contents
+  ASSETS: 'assets',
   TAGS: 'tags',
   POST: 'post',
   KANBAN: 'kanban',

@@ -1,7 +1,6 @@
 import useTrans from '~/hooks/useTrans'
 
 import Portal from '../Portal'
-import AssetsHubDemo from './AssetsHubDemo'
 import BasicNumbers from './BasicNumbers'
 import useSalon from './salon'
 
@@ -18,7 +17,6 @@ export default function Overview() {
       />
       <section className={s.section}>
         <BasicNumbers />
-        <AssetsHubDemo />
         {/* <SectionLabel title="基本信息" /> */}
       </section>
     </div>
