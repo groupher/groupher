@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react'
 
-import { ASSETS_HUB_ENDPOINT } from '~/config'
+import { ASSETS_HUB_ENDPOINT, ASSETS_HUB_READ_ENDPOINT } from '~/config'
 import useGraphQLClient from '~/hooks/useGraphQLClient'
 import useQuery from '~/hooks/useQuery'
 import useCommunity from '~/stores/community/hooks'
@@ -247,6 +247,19 @@ export default function AssetsHubDemo() {
 
   const assets = data?.pagedCommunityAssets?.entries ?? []
 
+  const openPublicReadPreview = (asset: TAsset) => {
+    if (!asset.publicRef) {
+      toast('Asset public ref is missing', 'error')
+      return
+    }
+
+    window.open(
+      `${ASSETS_HUB_READ_ENDPOINT}/a/${asset.publicRef}/original`,
+      '_blank',
+      'noopener,noreferrer',
+    )
+  }
+
   return (
     <section className={s.wrapper}>
       <div className={s.header}>
@@ -297,17 +310,29 @@ export default function AssetsHubDemo() {
       <div className={s.list}>
         {error && <div className={s.empty}>{error.message}</div>}
         {!error && assets.length === 0 && <div className={s.empty}>No assets yet</div>}
-        {assets.map((asset) => (
-          <div className={s.item} key={asset.id}>
-            <div className={s.itemMain}>
-              <div className={s.fileName}>{asset.filename || asset.publicRef}</div>
-              <div className={s.meta}>
-                {asset.mimeType || 'unknown'} · {formatSize(asset.sizeBytes)}
+        {assets.map((asset) => {
+          return (
+            <div className={s.item} key={asset.id}>
+              <div className={s.itemMain}>
+                {asset.publicRef ? (
+                  <button
+                    type='button'
+                    className={s.fileNameLink}
+                    onClick={() => openPublicReadPreview(asset)}
+                  >
+                    {asset.filename || asset.publicRef}
+                  </button>
+                ) : (
+                  <div className={s.fileName}>{asset.filename || asset.publicRef}</div>
+                )}
+                <div className={s.meta}>
+                  {asset.mimeType || 'unknown'} · {formatSize(asset.sizeBytes)}
+                </div>
               </div>
+              <div className={s.itemSub}>{asset.publicRef}</div>
             </div>
-            <div className={s.itemSub}>{asset.publicRef}</div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </section>
   )

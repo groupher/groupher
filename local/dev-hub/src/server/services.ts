@@ -52,6 +52,16 @@ export type TServiceDefinition = {
   portlessName?: string
   portlessUrl?: string
   portlessAppUrl?: string
+  endpoints?: Array<{
+    id: string
+    label: string
+    port?: number
+    url?: string
+    appUrl?: string
+    portlessName?: string
+    portlessUrl?: string
+    portlessAppUrl?: string
+  }>
   unavailableReason?: string
   metrics: TMetricThresholds
   browserMetrics?: boolean
@@ -211,7 +221,8 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     command: 'make',
     args: ['fe.dev.dsb'],
     env: {
-      NEXT_PUBLIC_ASSETS_HUB_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.assetsHub,
+      NEXT_PUBLIC_ASSETS_HUB_ENDPOINT: 'https://assets-hub.groupher.localhost',
+      NEXT_PUBLIC_ASSETS_HUB_READ_ENDPOINT: 'https://assets.groupher.localhost',
       CONTENT_IMPORT_APP_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.contentImport,
     },
     port: 3001,
@@ -296,7 +307,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
   {
     id: 'assets-hub',
     name: 'Assets Hub',
-    description: 'S3-compatible asset upload service',
+    description: 'S3-compatible asset upload and public read service',
     group: 'backend',
     monogram: 'AH',
     technologies: ['hono', 'nodejs', 'typescript', 'graphql'],
@@ -317,6 +328,27 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     url: 'http://127.0.0.1:8002/health',
     portlessName: 'assets-hub',
     portlessUrl: 'https://assets-hub.groupher.localhost/health',
+    endpoints: [
+      {
+        id: 'upload-api',
+        label: 'Upload API',
+        port: 8002,
+        url: 'http://127.0.0.1:8002/health',
+        portlessName: 'assets-hub',
+        portlessUrl: 'https://assets-hub.groupher.localhost/health',
+        portlessAppUrl: 'https://assets-hub.groupher.localhost/',
+      },
+      {
+        id: 'read-worker',
+        label: 'Read Worker',
+        port: 8787,
+        url: 'http://127.0.0.1:8787/health',
+        appUrl: 'http://127.0.0.1:8787/',
+        portlessName: 'assets',
+        portlessUrl: 'https://assets.groupher.localhost/health',
+        portlessAppUrl: 'https://assets.groupher.localhost/',
+      },
+    ],
     metrics: BACKEND_METRICS,
   },
   {
@@ -418,6 +450,20 @@ export const SERVICE_RELATIONS: TServiceRelation[] = [
     target: 'assets-hub',
     kind: 'api',
     label: 'asset upload flow',
+  },
+  {
+    id: 'assets-hub-phoenix',
+    source: 'assets-hub',
+    target: 'phoenix',
+    kind: 'api',
+    label: 'trusted GraphQL',
+  },
+  {
+    id: 'phoenix-assets-hub',
+    source: 'phoenix',
+    target: 'assets-hub',
+    kind: 'api',
+    label: 'asset callbacks',
   },
   {
     id: 'content-import-phoenix',

@@ -19,12 +19,23 @@ defmodule GroupherServer.CMS.Assets.Upload do
   @spec create_intent(Community.t(), map(), User.t()) :: T.domain_res(map())
   def create_intent(%Community{} = community, file, %User{} = user) when is_map(file) do
     with {:ok, attrs} <- validate_file(file) do
-      upload_ref = "upl_" <> Utils.uid(18)
-      asset_public_ref = "ast_" <> Utils.uid(18)
-      object_key = "communities/#{community.slug}/assets/#{asset_public_ref}/original"
+      issued_at = DateTime.utc_now(:second)
+      upload_ref = "upload_" <> Utils.uid(18)
+      asset_uid = Utils.uid(18)
+      asset_public_ref = "asset_" <> asset_uid
+      object_key = original_object_key(community.slug, issued_at, asset_uid)
       canonical_url = "#{public_endpoint()}/a/#{asset_public_ref}/original"
-      expires_at = DateTime.utc_now(:second) |> DateTime.add(@capability_ttl_seconds, :second)
+      expires_at = DateTime.add(issued_at, @capability_ttl_seconds, :second)
 
+      # Capability payload is the signed handoff from Phoenix to assets-hub.
+      # Example values:
+      #   uploadRef: upload_abc, assetPublicRef: asset_abc
+      #   objectKey: communities/groupher/assets/2026_07/29_abc/original
+      #   canonicalUrl: https://assets.groupher.com/a/asset_abc/original
+      #
+      # Phoenix derives these fields from the authenticated community/user plus
+      # validated file metadata. assets-hub later verifies this exact payload
+      # before issuing the R2 PUT URL or finalizing the upload.
       payload = %{
         "purpose" => "asset.upload",
         "uploadRef" => upload_ref,
@@ -117,7 +128,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
 
   defp validate_completion(attrs) do
     cond do
-      not is_binary(attrs.public_ref) or not String.starts_with?(attrs.public_ref, "ast_") ->
+      not is_binary(attrs.public_ref) or not String.starts_with?(attrs.public_ref, "asset_") ->
         {:error, {:custom, "asset_public_ref is invalid"}}
 
       not is_binary(attrs.content_hash) or not String.starts_with?(attrs.content_hash, "sha256:") ->
@@ -149,6 +160,17 @@ defmodule GroupherServer.CMS.Assets.Upload do
   defp public_endpoint do
     System.get_env("ASSETS_PUBLIC_ENDPOINT") || "https://assets.groupher.com"
   end
+
+  defp original_object_key(community_slug, %DateTime{} = issued_at, asset_uid) do
+    %{day: day, month: month, year: year} = DateTime.to_date(issued_at)
+    month_path = "#{year}_#{pad2(month)}"
+    dated_name = "#{pad2(day)}_#{asset_uid}"
+
+    "communities/#{community_slug}/assets/#{month_path}/#{dated_name}/original"
+  end
+
+  defp pad2(value) when is_integer(value),
+    do: value |> Integer.to_string() |> String.pad_leading(2, "0")
 
   defp asset_type_from_mime("image/" <> _), do: :image
   defp asset_type_from_mime(_), do: :file

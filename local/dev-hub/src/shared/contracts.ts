@@ -39,6 +39,17 @@ export type TServiceStartPolicy = {
   optionalDependencies: string[]
 }
 
+export type TServiceEndpoint = {
+  id: string
+  label: string
+  port: number | null
+  url: string | null
+  appUrl: string | null
+  portlessName: string | null
+  portlessUrl: string | null
+  portlessAppUrl: string | null
+}
+
 export type TServiceRelationKind = 'route' | 'api' | 'auth'
 
 export type TServiceRelation = {
@@ -79,6 +90,7 @@ export type TPublicService = {
   portlessName: string | null
   portlessUrl: string | null
   portlessAppUrl: string | null
+  endpoints: TServiceEndpoint[]
   status: TServiceStatus
   pid: number | null
   startedAt: number | null

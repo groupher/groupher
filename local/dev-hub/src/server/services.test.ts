@@ -42,7 +42,7 @@ test('backend services keep the intended list order', () => {
     SERVICE_DEFINITIONS.filter((definition) => definition.group === 'backend').map(
       (definition) => definition.id,
     ),
-    ['gateway', 'auth', 'phoenix', 'content-import', 'document-converter'],
+    ['gateway', 'auth', 'phoenix', 'content-import', 'assets-hub', 'document-converter'],
   )
 })
 
@@ -67,6 +67,9 @@ test('the request flow documents gateway routing and GraphQL dependencies', () =
       { source: 'main', target: 'phoenix', label: 'GraphQL' },
       { source: 'dashboard', target: 'phoenix', label: 'GraphQL' },
       { source: 'dashboard', target: 'content-import', label: '/api/docs/import/*' },
+      { source: 'dashboard', target: 'assets-hub', label: 'asset upload flow' },
+      { source: 'assets-hub', target: 'phoenix', label: 'trusted GraphQL' },
+      { source: 'phoenix', target: 'assets-hub', label: 'asset callbacks' },
       { source: 'content-import', target: 'phoenix', label: 'trusted GraphQL' },
       { source: 'content-import', target: 'document-converter', label: 'file conversion' },
       {
@@ -91,7 +94,7 @@ test('only main and dashboard default to a configured start chain', () => {
   assert.deepEqual(startPolicies.dashboard, {
     defaultMode: 'chain',
     requiredDependencies: ['gateway', 'auth', 'phoenix'],
-    optionalDependencies: ['content-import', 'document-converter'],
+    optionalDependencies: ['assets-hub', 'content-import', 'document-converter'],
   })
 
   for (const id of [
@@ -100,6 +103,7 @@ test('only main and dashboard default to a configured start chain', () => {
     'landing',
     'inspire-me',
     'phoenix',
+    'assets-hub',
     'content-import',
     'document-converter',
   ]) {
@@ -180,6 +184,14 @@ test('dashboard bulk import routes through the standalone content import service
   const dashboard = SERVICE_DEFINITIONS.find((definition) => definition.id === 'dashboard')
   const contentImport = SERVICE_DEFINITIONS.find((definition) => definition.id === 'content-import')
 
+  assert.equal(
+    dashboard?.env?.NEXT_PUBLIC_ASSETS_HUB_ENDPOINT,
+    'https://assets-hub.groupher.localhost',
+  )
+  assert.equal(
+    dashboard?.env?.NEXT_PUBLIC_ASSETS_HUB_READ_ENDPOINT,
+    'https://assets.groupher.localhost',
+  )
   assert.equal(dashboard?.env?.CONTENT_IMPORT_APP_ENDPOINT, LOCAL_SERVICE_ENDPOINTS.contentImport)
   assert.equal(
     contentImport?.env?.PHOENIX_GRAPHQL_ENDPOINT,
@@ -207,6 +219,27 @@ test('managed services expose stable Portless names and keep the API under the c
   const dashboard = SERVICE_DEFINITIONS.find((definition) => definition.id === 'dashboard')
   assert.equal(dashboard?.portlessUrl, 'https://dashboard.groupher.localhost/health')
   assert.equal(dashboard?.portlessAppUrl, 'https://dashboard.groupher.localhost/home/dashboard')
+
+  const assetsHub = SERVICE_DEFINITIONS.find((definition) => definition.id === 'assets-hub')
+  assert.deepEqual(
+    assetsHub?.endpoints?.map((endpoint) => ({
+      id: endpoint.id,
+      port: endpoint.port,
+      portlessUrl: endpoint.portlessUrl,
+    })),
+    [
+      {
+        id: 'upload-api',
+        port: 8002,
+        portlessUrl: 'https://assets-hub.groupher.localhost/health',
+      },
+      {
+        id: 'read-worker',
+        port: 8787,
+        portlessUrl: 'https://assets.groupher.localhost/health',
+      },
+    ],
+  )
 
   for (const id of [
     'auth',

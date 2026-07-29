@@ -66,6 +66,14 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Assets.usage(community)
   end
 
+  def community_asset_origin_info(_root, %{public_ref: public_ref}, _info) do
+    case CMS.Assets.origin_info(public_ref) do
+      {:ok, asset} -> {:ok, asset}
+      {:error, {:not_exist, _}} -> {:ok, nil}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   def register_community_asset(_root, %{community: %Community{} = community, asset: asset}, %{
         context: %{cur_user: user}
       }) do

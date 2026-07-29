@@ -177,6 +177,14 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       resolve(&R.CMS.community_asset_refs/3)
     end
 
+    @desc "server-trusted public-read origin metadata for one community asset"
+    field :community_asset_origin_info, :community_asset_origin_info do
+      arg(:public_ref, non_null(:string))
+
+      middleware(M.ServerTrust)
+      resolve(&R.CMS.community_asset_origin_info/3)
+    end
+
     @desc "Get all passport rules available to the current user."
     field :all_passport_rules, :all_rules do
       middleware(M.Authorize, :login)

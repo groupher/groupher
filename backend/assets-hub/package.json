@@ -1,10 +1,16 @@
 {
-  "name": "@groupher/backend-assets-hub",
+  "name": "@groupher/assets-hub",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
+    "dev": "yarn dev:upload-api",
+    "dev:local": "tsx scripts/dev-local.ts",
+    "dev:upload-api": "tsx watch src/server.ts",
+    "dev:read-worker": "npm exec --yes wrangler -- dev --config wrangler.jsonc",
+    "dev:worker": "yarn dev:read-worker",
+    "deploy:worker": "npm exec --yes wrangler -- deploy --config wrangler.jsonc",
+    "deploy:worker:dry-run": "npm exec --yes wrangler -- deploy --dry-run --config wrangler.jsonc",
     "smoke:r2": "tsx scripts/r2-smoke.ts",
     "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
     "build": "rimraf dist && esbuild src/server.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server.js",

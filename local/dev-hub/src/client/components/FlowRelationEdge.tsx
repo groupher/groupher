@@ -99,6 +99,7 @@ export function FlowRelationEdge({
 }: EdgeProps<TFlowEdge>) {
   const active = Boolean(data?.live)
   const relationId = data?.relationId || id
+  const relationSpec = getCoreRelationSpec(relationId)
   const [path, labelX, labelY] = getPathForEdge(
     relationId,
     sourceX,
@@ -107,6 +108,8 @@ export function FlowRelationEdge({
     targetY,
     data?.laneOffset || 0,
   )
+  const labelOffsetX = relationSpec?.labelOffset?.x || 0
+  const labelOffsetY = relationSpec?.labelOffset?.y || 0
 
   return (
     <>
@@ -121,7 +124,9 @@ export function FlowRelationEdge({
           <div
             className='flow-edge-label nodrag nopan'
             style={{
-              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY - LABEL_OFFSET_Y}px)`,
+              transform: `translate(-50%, -50%) translate(${labelX + labelOffsetX}px, ${
+                labelY - LABEL_OFFSET_Y + labelOffsetY
+              }px)`,
             }}
           >
             {label}

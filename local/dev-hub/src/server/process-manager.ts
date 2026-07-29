@@ -141,11 +141,12 @@ export class ServiceManager {
       return this.toPublicService(runtime)
     }
 
-    if (definition.port && (await this.portProbe(definition.port))) {
+    const occupiedPorts = await getListeningDefinitionPorts(definition, this.portProbe)
+    if (occupiedPorts.length > 0) {
       runtime.status = 'external'
       this.emitStatus(runtime)
       throw new ServiceManagerError(
-        `Port ${definition.port} is already owned by an unmanaged process.`,
+        `Ports ${occupiedPorts.join(', ')} are already owned by unmanaged processes.`,
         409,
       )
     }
@@ -542,14 +543,14 @@ export class ServiceManager {
   }
 
   private async waitForPortRelease(runtime: TRuntimeService): Promise<void> {
-    const { port } = runtime.definition
-    if (!port) return
+    const ports = getDefinitionPorts(runtime.definition)
+    if (ports.length === 0) return
 
     const deadline = Date.now() + RESTART_PORT_RELEASE_TIMEOUT_MS
-    while (await this.portProbe(port)) {
+    while (await anyPortListening(ports, this.portProbe)) {
       if (Date.now() >= deadline) {
         throw new ServiceManagerError(
-          `${runtime.definition.name} stopped, but port ${port} did not become available for restart.`,
+          `${runtime.definition.name} stopped, but ports ${ports.join(', ')} did not become available for restart.`,
           409,
         )
       }
@@ -591,7 +592,10 @@ export class ServiceManager {
           return
         }
 
-        const nextStatus: TServiceStatus = (await this.portProbe(runtime.definition.port))
+        const nextStatus: TServiceStatus = (await isDefinitionReady(
+          runtime.definition,
+          this.portProbe,
+        ))
           ? 'external'
           : 'stopped'
 
@@ -630,6 +634,16 @@ export class ServiceManager {
       portlessName: definition.portlessName ?? null,
       portlessUrl: definition.portlessUrl ?? null,
       portlessAppUrl: definition.portlessAppUrl ?? null,
+      endpoints: (definition.endpoints ?? []).map((endpoint) => ({
+        id: endpoint.id,
+        label: endpoint.label,
+        port: endpoint.port ?? null,
+        url: endpoint.url ?? null,
+        appUrl: endpoint.appUrl ?? null,
+        portlessName: endpoint.portlessName ?? null,
+        portlessUrl: endpoint.portlessUrl ?? null,
+        portlessAppUrl: endpoint.portlessAppUrl ?? null,
+      })),
       status: runtime.status,
       pid: runtime.pid,
       startedAt: runtime.startedAt,
@@ -680,10 +694,55 @@ async function isDefinitionReady(
   definition: TServiceDefinition,
   portProbe: (port: number) => Promise<boolean>,
 ): Promise<boolean> {
+  if (definition.endpoints?.length) {
+    return (
+      await Promise.all(
+        definition.endpoints.map((endpoint) => isEndpointReady(endpoint, definition.id, portProbe)),
+      )
+    ).every(Boolean)
+  }
+
   const { port, url, id } = definition
   if (url) return isHealthReady(url, id)
   if (port) return portProbe(port)
   return true
+}
+
+async function isEndpointReady(
+  endpoint: NonNullable<TServiceDefinition['endpoints']>[number],
+  serviceId: string,
+  portProbe: (port: number) => Promise<boolean>,
+): Promise<boolean> {
+  if (endpoint.url) return isHealthReady(endpoint.url, serviceId)
+  if (endpoint.port) return portProbe(endpoint.port)
+  return true
+}
+
+function getDefinitionPorts(definition: TServiceDefinition): number[] {
+  const ports = [
+    definition.port,
+    ...(definition.endpoints ?? []).map((endpoint) => endpoint.port),
+  ].filter((port): port is number => typeof port === 'number')
+
+  return [...new Set(ports)]
+}
+
+async function anyPortListening(
+  ports: readonly number[],
+  portProbe: (port: number) => Promise<boolean>,
+): Promise<boolean> {
+  return (await Promise.all(ports.map((port) => portProbe(port)))).some(Boolean)
+}
+
+async function getListeningDefinitionPorts(
+  definition: TServiceDefinition,
+  portProbe: (port: number) => Promise<boolean>,
+): Promise<number[]> {
+  const ports = getDefinitionPorts(definition)
+  const checks = await Promise.all(
+    ports.map(async (port) => [port, await portProbe(port)] as const),
+  )
+  return checks.filter(([, listening]) => listening).map(([port]) => port)
 }
 
 function isPortListening(port: number): Promise<boolean> {

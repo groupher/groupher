@@ -1992,9 +1992,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@groupher/backend-assets-hub@workspace:backend/assets-hub":
+"@groupher/assets-hub@workspace:backend/assets-hub":
   version: 0.0.0-use.local
-  resolution: "@groupher/backend-assets-hub@workspace:backend/assets-hub"
+  resolution: "@groupher/assets-hub@workspace:backend/assets-hub"
   dependencies:
     "@aws-sdk/client-s3": "npm:^3.1095.0"
     "@aws-sdk/s3-request-presigner": "npm:^3.1095.0"

@@ -1,0 +1,24 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "assets-hub",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-07-28",
+  "workers_dev": true,
+  "vars": {
+    "ASSETS_PUBLIC_ENDPOINT": "https://assets.groupher.com",
+    "PHOENIX_GRAPHQL_ENDPOINT": "https://api.groupher.com/graphiql"
+  },
+  "secrets": {
+    "required": ["GROUPHER_SERVER_TRUST_SECRET"]
+  },
+  "r2_buckets": [
+    {
+      "binding": "ASSETS_BUCKET",
+      "bucket_name": "groupher-assets-dev",
+      "remote": true
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

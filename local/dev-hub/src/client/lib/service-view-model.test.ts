@@ -22,6 +22,7 @@ const service = (
   portlessName: null,
   portlessUrl: null,
   portlessAppUrl: null,
+  endpoints: [],
   status,
   pid: null,
   startedAt: null,

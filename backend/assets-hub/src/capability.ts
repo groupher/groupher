@@ -1,21 +1,37 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 
 export type TUploadCapability = {
+  /** Server-side MIME allowlist copied from Phoenix policy, for example ["image/png"]. */
   allowedMimeTypes: string[]
+  /** Stable public asset id used in URLs, for example "asset_xxx". */
   assetPublicRef: string
+  /** Public original URL that Phoenix will persist after finalize. */
   canonicalUrl: string
+  /** Optional browser-computed SHA-256 digest in base64, checked against R2 metadata when present. */
   checksumSha256?: string | null
+  /** Phoenix community id that scopes the final DB write. */
   communityId: number
+  /** Community slug used to derive the R2 key prefix, for example "groupher". */
   communitySlug: string
+  /** File category inferred from the declared MIME type. */
   declaredAssetType: 'audio' | 'file' | 'image' | 'video'
+  /** Browser-supplied filename validated by Phoenix before signing. */
   declaredFilename: string
+  /** Browser-supplied MIME type validated by Phoenix and rechecked against R2 HeadObject. */
   declaredMimeType: string
+  /** Browser-supplied byte size validated by Phoenix and rechecked against R2 HeadObject. */
   declaredSizeBytes: number
+  /** ISO timestamp after which assets-hub rejects the capability. */
   expiresAt: string
+  /** Phoenix policy cap for this upload intent. */
   maxSizeBytes: number
+  /** R2 object key for the original, for example "communities/groupher/assets/2026_07/29_xxx/original". */
   objectKey: string
+  /** Capability purpose guard so the token cannot be reused for another action. */
   purpose: 'asset.upload'
+  /** Short-lived upload transaction id, for example "upload_xxx". */
   uploadRef: string
+  /** Optional uploader id persisted by Phoenix after assets-hub verifies the object. */
   uploaderId?: number | null
 }
 

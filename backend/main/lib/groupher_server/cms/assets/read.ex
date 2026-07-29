@@ -89,6 +89,38 @@ defmodule GroupherServer.CMS.Assets.Read do
     end
   end
 
+  @doc """
+  Returns public-read origin metadata for one active asset public ref.
+
+  This is the Phoenix source-of-truth lookup used by assets-hub before it reads
+  any provider object. It intentionally exposes only lifecycle and storage
+  routing fields needed by the public origin.
+
+  ## Examples
+
+      Read.origin_info("asset_xxx")
+      #=> {:ok, %CommunityAsset{public_ref: "asset_xxx", status: :active}}
+
+  """
+  @spec origin_info(String.t()) :: T.domain_res(CommunityAsset.t())
+  def origin_info(public_ref) when is_binary(public_ref) do
+    public_ref = String.trim(public_ref)
+
+    CommunityAsset
+    |> where([asset], asset.public_ref == ^public_ref)
+    |> where([asset], not is_nil(asset.storage))
+    |> where([asset], not is_nil(asset.storage_key))
+    |> where([asset], is_nil(asset.deleted_at))
+    |> where([asset], asset.status == :active)
+    |> Repo.one()
+    |> case do
+      nil -> {:error, {:not_exist, "asset not found"}}
+      asset -> {:ok, asset}
+    end
+  end
+
+  def origin_info(_), do: {:error, {:not_exist, "asset not found"}}
+
   defp normalize_filter(nil), do: %{page: @default_page, size: @default_size}
 
   defp normalize_filter(filter) do

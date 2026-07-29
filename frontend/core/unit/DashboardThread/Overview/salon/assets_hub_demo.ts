@@ -20,6 +20,7 @@ export default function useSalon() {
     item: cn('row-between w-full px-4 py-3 border rounded', br('divider'), bg('card')),
     itemMain: 'column min-w-0',
     fileName: cn('text-sm truncate max-w-96', fg('title')),
+    fileNameLink: cn('text-sm truncate max-w-96 underline-hover text-left', fg('title')),
     meta: cn('text-xs mt-1', fg('hint')),
     itemSub: cn('text-xs ml-4 shrink-0', fg('digest')),
   }

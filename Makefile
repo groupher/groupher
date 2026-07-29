@@ -104,6 +104,10 @@ be.content-import.build:
 be.content-import.test:
 	yarn workspace @groupher/backend-content-import test
 
+# assets hub
+fe.assets-hub.deploy:
+	yarn workspace @groupher/assets-hub deploy:worker
+
 # document converter
 be.document-converter.install:
 	yarn run document-converter:install

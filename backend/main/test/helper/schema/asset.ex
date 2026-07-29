@@ -19,4 +19,24 @@ defmodule GroupherServer.Test.Helper.Schema.Asset do
       }
     """
   end
+
+  def q(:community_asset_origin_info) do
+    """
+    query($publicRef: String!) {
+        communityAssetOriginInfo(publicRef: $publicRef) {
+          publicRef
+          status
+          deletedAt
+          filename
+          storage
+          storageKey
+          mimeType
+          sizeBytes
+          width
+          height
+          meta
+        }
+      }
+    """
+  end
 end

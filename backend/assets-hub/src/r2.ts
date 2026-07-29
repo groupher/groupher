@@ -96,6 +96,26 @@ export const createPresignedPutUrl = async ({
   )
 }
 
+export const createPresignedGetUrl = async ({
+  expiresInSeconds = 300,
+  key,
+}: {
+  expiresInSeconds?: number
+  key: string
+}): Promise<string> => {
+  const config = getR2Config()
+  const client = createR2Client(config)
+
+  return getSignedUrl(
+    client,
+    new GetObjectCommand({
+      Bucket: config.bucket,
+      Key: key,
+    }),
+    { expiresIn: expiresInSeconds },
+  )
+}
+
 export const headR2Object = async (key: string) => {
   const config = getR2Config()
   const client = createR2Client(config)

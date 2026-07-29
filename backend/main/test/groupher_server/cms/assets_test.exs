@@ -266,6 +266,73 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert MapSet.disjoint?(first_page_ids, second_page_ids)
     end
 
+    test "creates upload intent with readable refs and dated storage key", ~m(community user)a do
+      {:ok, intent} =
+        CMS.Assets.create_upload_intent(
+          community,
+          image_asset_attrs("upload-intent.png", 80),
+          user
+        )
+
+      assert intent.upload_ref =~ ~r/^upload_[A-Za-z0-9]{18}$/
+      assert intent.asset_public_ref =~ ~r/^asset_[A-Za-z0-9]{18}$/
+
+      asset_uid = String.replace_prefix(intent.asset_public_ref, "asset_", "")
+
+      assert intent.object_key =~
+               ~r/^communities\/#{community.slug}\/assets\/\d{4}_\d{2}\/\d{2}_#{asset_uid}\/original$/
+
+      assert intent.capability |> String.split(".") |> length() == 2
+      [encoded_payload, _signature] = String.split(intent.capability, ".")
+      assert {:ok, payload_json} = Base.url_decode64(encoded_payload, padding: false)
+      payload = Jason.decode!(payload_json)
+
+      assert payload["uploadRef"] == intent.upload_ref
+      assert payload["assetPublicRef"] == intent.asset_public_ref
+      assert payload["objectKey"] == intent.object_key
+      assert payload["canonicalUrl"] =~ "/a/#{intent.asset_public_ref}/original"
+      assert payload["declaredFilename"] == "upload-intent.png"
+      assert payload["declaredMimeType"] == "image/png"
+      assert payload["declaredSizeBytes"] == 80
+    end
+
+    test "returns origin info only for active public refs", ~m(community user)a do
+      attrs =
+        "origin.png"
+        |> image_asset_attrs(120)
+        |> Map.merge(%{
+          asset_type: :image,
+          content_hash: "sha256:origin",
+          meta: %{variants: ["original", "thumbnail", "card"]},
+          public_ref: "asset_origin_active",
+          storage: "r2",
+          storage_key: "communities/groupher/assets/2026_07/29_origin_active/original"
+        })
+
+      {:ok, asset} = CMS.Assets.register(community, attrs, user)
+
+      assert {:ok, origin_info} = CMS.Assets.origin_info(asset.public_ref)
+      assert origin_info.public_ref == "asset_origin_active"
+      assert origin_info.storage == "r2"
+
+      assert origin_info.storage_key ==
+               "communities/groupher/assets/2026_07/29_origin_active/original"
+
+      assert origin_info.mime_type == "image/png"
+      assert origin_info.size_bytes == 120
+      assert origin_info.width == 1200
+      assert origin_info.height == 630
+
+      {:ok, deleted_asset} = CMS.Assets.delete(community, asset.id)
+      assert deleted_asset.status == :deleted
+
+      assert {:error, {:not_exist, "asset not found"}} =
+               CMS.Assets.origin_info(asset.public_ref)
+
+      assert {:error, {:not_exist, "asset not found"}} =
+               CMS.Assets.origin_info("asset_missing")
+    end
+
     test "does not delete assets that are still referenced", ~m(community post user)a do
       asset_attrs = image_asset_attrs("referenced.png", 80)
 

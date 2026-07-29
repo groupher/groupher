@@ -55,6 +55,10 @@ yarn-error.log
 **/.env.*.local
 .env
 .env.*
+.dev.vars
+**/.dev.vars
+.wrangler/
+**/.wrangler/
 !.env.development
 !**/.env.development
 !.env.example

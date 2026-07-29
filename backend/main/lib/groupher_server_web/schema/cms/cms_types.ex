@@ -530,6 +530,20 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:storage_bytes, :big_int)
   end
 
+  object :community_asset_origin_info do
+    field(:public_ref, non_null(:string))
+    field(:status, non_null(:community_asset_status))
+    field(:deleted_at, :datetime)
+    field(:filename, :string)
+    field(:storage, :string)
+    field(:storage_key, :string)
+    field(:mime_type, :string)
+    field(:size_bytes, :big_int)
+    field(:width, :integer)
+    field(:height, :integer)
+    field(:meta, :json)
+  end
+
   input_object :community_asset_input do
     field(:asset_type, :community_asset_type)
     field(:title, :string)

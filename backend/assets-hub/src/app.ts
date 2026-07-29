@@ -7,7 +7,13 @@ import { cors } from 'hono/cors'
 
 import { verifyCapability, type TUploadCapability } from './capability'
 import { completePhoenixUpload } from './phoenix'
-import { createPresignedPutUrl, getR2ObjectBytes, headR2Object, smokeR2 } from './r2'
+import {
+  createPresignedGetUrl,
+  createPresignedPutUrl,
+  getR2ObjectBytes,
+  headR2Object,
+  smokeR2,
+} from './r2'
 
 type TOptions = {
   environment?: Record<string, string | undefined>
@@ -129,6 +135,15 @@ export const createApp = ({ environment = process.env }: TOptions = {}) => {
 
   app.use(
     '/uploads/*',
+    cors({
+      allowHeaders: ['content-type'],
+      allowMethods: ['POST', 'OPTIONS'],
+      origin: corsOrigin(environment),
+    }),
+  )
+
+  app.use(
+    '/dev/*',
     cors({
       allowHeaders: ['content-type'],
       allowMethods: ['POST', 'OPTIONS'],
@@ -328,6 +343,50 @@ export const createApp = ({ environment = process.env }: TOptions = {}) => {
     try {
       const uploadUrl = await createPresignedPutUrl({ contentType, key })
       return json({ ok: true, uploadUrl })
+    } catch (error) {
+      return json(
+        {
+          error: {
+            code: 'presign_failed',
+            message: error instanceof Error ? error.message : 'Presign failed.',
+          },
+          ok: false,
+        },
+        500,
+      )
+    }
+  })
+
+  app.post('/dev/presign', async (context) => {
+    if (environment.NODE_ENV === 'production') {
+      return json(
+        {
+          error: { code: 'not_found', message: 'Not found.' },
+          ok: false,
+        },
+        404,
+      )
+    }
+
+    const input = await context.req.json().catch(() => null)
+    const key = typeof input?.key === 'string' ? input.key.trim() : ''
+
+    if (!key) {
+      return json(
+        {
+          error: {
+            code: 'invalid_input',
+            message: 'key is required.',
+          },
+          ok: false,
+        },
+        400,
+      )
+    }
+
+    try {
+      const url = await createPresignedGetUrl({ key })
+      return json({ ok: true, url })
     } catch (error) {
       return json(
         {

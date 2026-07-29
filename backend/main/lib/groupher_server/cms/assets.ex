@@ -70,6 +70,15 @@ defmodule GroupherServer.CMS.Assets do
     do: Read.refs(community, asset_id, filter)
 
   @doc """
+  Returns the active public-read origin metadata for one asset public ref.
+
+  This read is restricted at the GraphQL layer by server trust. It does not
+  return uploader, database ids, permissions, or other dashboard-only details.
+  """
+  @spec origin_info(String.t()) :: T.domain_res(CommunityAsset.t())
+  def origin_info(public_ref), do: Read.origin_info(public_ref)
+
+  @doc """
   Registers an uploaded object as a community asset.
 
   The write path deduplicates active assets by URL hash, or by storage identity

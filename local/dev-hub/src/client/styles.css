@@ -1967,6 +1967,19 @@ button {
   gap: 2px;
 }
 
+.service-address-endpoint {
+  gap: 2px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgb(255 255 255 / 12%);
+}
+
+.service-address-endpoint-title {
+  color: rgb(255 255 255 / 72%);
+  font-size: 10px;
+  font-weight: 750;
+}
+
 .service-address-detail-row {
   grid-template-columns: 62px minmax(0, 1fr) 24px;
   align-items: center;
