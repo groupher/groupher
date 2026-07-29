@@ -60,6 +60,7 @@ yarn-error.log
 .wrangler/
 **/.wrangler/
 output/
+backend/assets-hub/src/worker-configuration.d.ts
 !.env.development
 !**/.env.development
 !.env.example
