@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-import { getFeedbackPlatforms } from './lib/feedback'
+import { getFeedbackPlatform, getFeedbackPlatforms } from './lib/feedback'
 import { clampPage } from './lib/pagination'
 import { FeedbackPage, POSTS_PER_PAGE } from './widgets/FeedbackPage'
 
@@ -12,7 +12,11 @@ export const metadata: Metadata = {
 
 export default async function Page({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   const [{ page }, platforms] = await Promise.all([searchParams, getFeedbackPlatforms()])
-  const selected = platforms[0]
+  const selectedSummary = platforms[0]
+
+  if (!selectedSummary) notFound()
+
+  const selected = await getFeedbackPlatform(selectedSummary.id)
 
   if (!selected) notFound()
 

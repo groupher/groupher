@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-module.exports = {
+const nextConfig = {
   reactStrictMode: true,
   cacheComponents: false,
   experimental: {
@@ -13,3 +13,5 @@ module.exports = {
     browserToTerminal: true,
   },
 }
+
+export default nextConfig

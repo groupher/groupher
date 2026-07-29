@@ -2,12 +2,12 @@ import Image from 'next/image'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 
-import type { FeedbackPlatform, FeedbackPost } from '../lib/feedback'
+import type { FeedbackPlatform, FeedbackPlatformSummary, FeedbackPost } from '../lib/feedback'
 
 export const POSTS_PER_PAGE = 500
 
 type TProps = {
-  platforms: FeedbackPlatform[]
+  platforms: FeedbackPlatformSummary[]
   selected: FeedbackPlatform
   currentPage: number
   totalPages: number
@@ -29,10 +29,13 @@ export function FeedbackPage({
     <main className='mx-auto grid min-h-screen w-full max-w-[1080px] grid-cols-[210px_minmax(0,780px)] gap-[58px] bg-white px-7 py-[74px] max-md:grid-cols-1 max-md:gap-8 max-md:px-5 max-md:py-8'>
       <aside className='sticky top-13 flex h-[calc(100vh-104px)] flex-col text-[#a2a2a2] max-md:static max-md:h-auto'>
         <Link
-          className="w-max -rotate-[5deg] font-['Comic_Sans_MS','Marker_Felt',cursive] text-[25px] leading-none font-bold text-[#ef4247] italic no-underline"
+          className='flex h-16 w-40 items-center justify-center rounded-2xl bg-neutral-800 p-1.5 text-white no-underline shadow-lg transition-transform active:scale-[0.96]'
           href='/'
+          aria-label='Inspire Me home'
         >
-          Inspiration
+          <span className='flex size-full items-center justify-center rounded-xl border-2 border-white/90 font-mono text-xs leading-none font-semibold tracking-widest'>
+            INSPIRE ME
+          </span>
         </Link>
 
         <nav

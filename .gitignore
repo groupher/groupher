@@ -59,6 +59,7 @@ yarn-error.log
 **/.dev.vars
 .wrangler/
 **/.wrangler/
+output/
 !.env.development
 !**/.env.development
 !.env.example
