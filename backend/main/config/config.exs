@@ -172,6 +172,11 @@ config :groupher_server, :cache,
       size: 10_000,
       seconds: 60 * 60
     },
+    snapshot: %{
+      name: :snapshot,
+      size: 50_000,
+      seconds: 5 * 60
+    },
     online_status: %{
       name: :online_status,
       size: 30,
