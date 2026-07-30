@@ -3,14 +3,16 @@ name: Frontend typecheck
 on:
   pull_request:
     paths:
-      - 'frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+      - 'frontend/{main,dashboard,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+      - 'backend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
       - 'frontend/**/tsconfig*.json'
       - 'frontend/**/package.json'
       - 'package.json'
       - 'yarn.lock'
   push:
     paths:
-      - 'frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+      - 'frontend/{main,dashboard,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+      - 'backend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
       - 'frontend/**/tsconfig*.json'
       - 'frontend/**/package.json'
       - 'package.json'
@@ -53,9 +55,9 @@ jobs:
               - 'frontend/landing/tsconfig*.json'
               - 'frontend/landing/package.json'
             gateway:
-              - 'frontend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
-              - 'frontend/gateway/tsconfig*.json'
-              - 'frontend/gateway/package.json'
+              - 'backend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc}'
+              - 'backend/gateway/tsconfig*.json'
+              - 'backend/gateway/package.json'
 
       - name: Build matrix
         id: matrix
@@ -85,7 +87,7 @@ jobs:
           fi
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$GATEWAY_CHANGED" = "true" ]; then
-            targets+=('{"target":"gateway","workspace":"@groupher/frontend-gateway"}')
+            targets+=('{"target":"gateway","workspace":"@groupher/backend-gateway"}')
           fi
 
           if [ ${#targets[@]} -eq 0 ]; then

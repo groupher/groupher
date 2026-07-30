@@ -3,7 +3,8 @@ name: Frontend linter
 on:
   pull_request:
     paths:
-      - 'frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+      - 'frontend/{main,dashboard,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+      - 'backend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
       - 'frontend/**/.oxlintrc.json'
       - 'frontend/core/config/oxfmt.json'
       - 'frontend/core/config/oxlint.json'
@@ -12,7 +13,8 @@ on:
       - 'yarn.lock'
   push:
     paths:
-      - 'frontend/{main,dashboard,landing,gateway,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+      - 'frontend/{main,dashboard,landing,core}/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+      - 'backend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
       - 'frontend/**/.oxlintrc.json'
       - 'frontend/core/config/oxfmt.json'
       - 'frontend/core/config/oxlint.json'
@@ -47,7 +49,7 @@ jobs:
             landing:
               - 'frontend/landing/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             gateway:
-              - 'frontend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
+              - 'backend/gateway/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
             shared:
               - 'frontend/core/**/*.{ts,tsx,js,jsx,mjs,cjs,json,jsonc,css}'
               - 'frontend/**/.oxlintrc.json'
@@ -91,7 +93,7 @@ jobs:
           fi
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$GATEWAY_CHANGED" = "true" ]; then
-            targets+=('{"target":"gateway","workspace":"@groupher/frontend-gateway"}')
+            targets+=('{"target":"gateway","workspace":"@groupher/backend-gateway"}')
           fi
 
           if [ ${#targets[@]} -eq 0 ]; then
