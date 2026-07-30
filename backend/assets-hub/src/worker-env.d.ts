@@ -8,10 +8,24 @@ type R2ObjectBody = {
 }
 
 type R2Bucket = {
+  delete(key: string): Promise<void>
   get(key: string): Promise<R2ObjectBody | null>
 }
 
+type Queue<Body = unknown> = {
+  send(body: Body): Promise<void>
+}
+
+type Message<Body = unknown> = {
+  body: Body
+}
+
+type MessageBatch<Body = unknown> = {
+  messages: Message<Body>[]
+}
+
 interface Env {
+  ASSET_DELETE_QUEUE: Queue
   ASSETS_BUCKET: R2Bucket
   ASSETS_PUBLIC_ENDPOINT?: string
   GROUPHER_SERVER_TRUST_SECRET?: string

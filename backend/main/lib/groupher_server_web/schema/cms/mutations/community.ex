@@ -89,7 +89,7 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       arg(:id, non_null(:id))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "community.update")
+      middleware(M.Passport, action: "asset.upload")
       middleware(M.FrontDesk, :community)
 
       resolve(&R.CMS.delete_community_asset/3)

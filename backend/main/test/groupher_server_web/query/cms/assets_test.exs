@@ -22,7 +22,8 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
   describe "[cms assets]" do
     test "asset upload passport can page article refs for one asset",
          ~m(asset_conn community post user)a do
-      {:ok, asset} = CMS.Assets.register(community, image_asset_attrs("query-refs.png", 70), user)
+      {:ok, asset} =
+        CMS.Assets.register_to_community(community, image_asset_attrs("query-refs.png", 70), user)
 
       asset_refs =
         Enum.map(1..25, fn position ->
@@ -30,10 +31,12 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
         end)
 
       assert {:ok, %{body: refs, cover: []}} =
-               CMS.Assets.sync_article_refs(community, post, %{
-                 cur_user: user,
-                 asset_refs: asset_refs
-               })
+               CMS.Assets.link_refs(
+                 post,
+                 %{
+                   cur_user: user,
+                   asset_refs: asset_refs
+                 }, community: community)
 
       assert length(refs) == 25
 
@@ -60,7 +63,7 @@ defmodule GroupherServer.Test.Query.CMS.Assets do
 
     test "server-trusted query can read asset origin info", ~m(community server_conn user)a do
       {:ok, asset} =
-        CMS.Assets.register(
+        CMS.Assets.register_to_community(
           community,
           image_asset_attrs("origin-query.png", 128)
           |> Map.merge(%{

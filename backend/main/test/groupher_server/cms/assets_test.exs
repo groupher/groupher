@@ -16,7 +16,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
     test "registers community assets and counts active storage once", ~m(community user)a do
       attrs = image_asset_attrs("hero.png", 120)
 
-      {:ok, asset} = CMS.Assets.register(community, attrs, user)
+      {:ok, asset} = CMS.Assets.register_to_community(community, attrs, user)
 
       assert asset.asset_type == :image
       assert asset.uploader_id == user.id
@@ -27,7 +27,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert usage.storage_bytes == 120
 
       {:ok, same_asset} =
-        CMS.Assets.register(
+        CMS.Assets.register_to_community(
           community,
           Map.merge(attrs, %{size_bytes: 256, title: "updated"}),
           user
@@ -51,7 +51,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
             send(parent, {:task_ready, self()})
 
             receive do
-              :go -> CMS.Assets.register(community, attrs, user)
+              :go -> CMS.Assets.register_to_community(community, attrs, user)
             end
           end)
         end
@@ -83,10 +83,10 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         |> image_asset_attrs(64)
         |> Map.merge(%{storage: "s3", storage_key: "community/assets/signed.png"})
 
-      {:ok, asset} = CMS.Assets.register(community, attrs, user)
+      {:ok, asset} = CMS.Assets.register_to_community(community, attrs, user)
 
       {:ok, same_asset} =
-        CMS.Assets.register(
+        CMS.Assets.register_to_community(
           community,
           Map.merge(attrs, %{url: "https://assets.groupher.test/signed-b.png", size_bytes: 96}),
           user
@@ -101,24 +101,26 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert usage.storage_bytes == 96
     end
 
-    test "syncs article document refs without changing storage ownership",
+    test "links article document refs without changing storage ownership",
          ~m(community post user)a do
       body_asset = image_asset_attrs("body.png", 100)
       cover_asset = image_asset_attrs("cover.png", 200)
 
       assert {:ok, %{body: [_], cover: [_]}} =
-               CMS.Assets.sync_article_refs(community, post, %{
-                 cur_user: user,
-                 asset_refs: [
-                   %{
-                     asset: body_asset,
-                     block_id: "block-image-1",
-                     block_type: "image",
-                     alt: "body image"
-                   }
-                 ],
-                 cover_asset: cover_asset
-               })
+               CMS.Assets.link_refs(
+                 post,
+                 %{
+                   cur_user: user,
+                   asset_refs: [
+                     %{
+                       asset: body_asset,
+                       block_id: "block-image-1",
+                       block_type: "image",
+                       alt: "body image"
+                     }
+                   ],
+                   cover_asset: cover_asset
+                 }, community: community)
 
       refs = article_refs(:post, post.id)
       assert refs |> Enum.map(& &1.usage) |> Enum.sort() == [:cover, :inline]
@@ -129,10 +131,12 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert usage.storage_bytes == 300
 
       assert {:ok, %{body: [], cover: []}} =
-               CMS.Assets.sync_article_refs(community, post, %{
-                 asset_refs: [],
-                 cover_edit_info: nil
-               })
+               CMS.Assets.link_refs(
+                 post,
+                 %{
+                   asset_refs: [],
+                   cover_edit_info: nil
+                 }, community: community)
 
       assert article_refs(:post, post.id) == []
 
@@ -141,19 +145,72 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert usage.storage_bytes == 300
     end
 
+    test "linking refs replaces removed assets and keeps retained assets",
+         ~m(community post user)a do
+      {:ok, asset_a} =
+        CMS.Assets.register_to_community(community, image_asset_attrs("replace-a.png", 10), user)
+
+      {:ok, asset_b} =
+        CMS.Assets.register_to_community(community, image_asset_attrs("replace-b.png", 20), user)
+
+      {:ok, asset_c} =
+        CMS.Assets.register_to_community(community, image_asset_attrs("replace-c.png", 30), user)
+
+      assert {:ok, %{body: refs, cover: []}} =
+               CMS.Assets.link_refs(
+                 post,
+                 %{
+                   cur_user: user,
+                   asset_refs: [
+                     %{asset_id: asset_a.id, block_id: "asset-a"},
+                     %{asset_id: asset_b.id, block_id: "asset-b"}
+                   ]
+                 }, community: community)
+
+      assert refs |> Enum.map(& &1.asset_id) |> Enum.sort() == [asset_a.id, asset_b.id]
+      assert asset_ref_count(asset_a.id) == 1
+      assert asset_ref_count(asset_b.id) == 1
+      assert asset_ref_count(asset_c.id) == 0
+
+      assert {:ok, %{body: refs, cover: []}} =
+               CMS.Assets.link_refs(
+                 post,
+                 %{
+                   cur_user: user,
+                   asset_refs: [
+                     %{asset_id: asset_b.id, block_id: "asset-b"},
+                     %{asset_id: asset_c.id, block_id: "asset-c"}
+                   ]
+                 }, community: community)
+
+      assert refs |> Enum.map(& &1.asset_id) |> Enum.sort() == [asset_b.id, asset_c.id]
+
+      assert article_refs(:post, post.id) |> Enum.map(& &1.asset_id) |> Enum.sort() == [
+               asset_b.id,
+               asset_c.id
+             ]
+
+      assert asset_ref_count(asset_a.id) == 0
+      assert asset_ref_count(asset_b.id) == 1
+      assert asset_ref_count(asset_c.id) == 1
+    end
+
     test "rejects refs with both asset_id and inline asset", ~m(community post user)a do
-      {:ok, asset} = CMS.Assets.register(community, image_asset_attrs("existing.png", 50), user)
+      {:ok, asset} =
+        CMS.Assets.register_to_community(community, image_asset_attrs("existing.png", 50), user)
 
       assert {:error, {:custom, "asset_id and asset are mutually exclusive"}} =
-               CMS.Assets.sync_article_refs(community, post, %{
-                 cur_user: user,
-                 asset_refs: [
-                   %{
-                     asset_id: asset.id,
-                     asset: image_asset_attrs("ignored.png", 60)
-                   }
-                 ]
-               })
+               CMS.Assets.link_refs(
+                 post,
+                 %{
+                   cur_user: user,
+                   asset_refs: [
+                     %{
+                       asset_id: asset.id,
+                       asset: image_asset_attrs("ignored.png", 60)
+                     }
+                   ]
+                 }, community: community)
 
       assert article_refs(:post, post.id) == []
     end
@@ -163,22 +220,26 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       cover_asset = image_asset_attrs("body-usage-cover.png", 100)
 
       assert {:ok, %{body: [], cover: [cover_ref]}} =
-               CMS.Assets.sync_article_refs(community, post, %{
-                 cur_user: user,
-                 cover_asset: cover_asset
-               })
+               CMS.Assets.link_refs(
+                 post,
+                 %{
+                   cur_user: user,
+                   cover_asset: cover_asset
+                 }, community: community)
 
       for usage <- [:cover, "cover_dark"] do
         assert {:error, {:custom, "asset usage is invalid"}} =
-                 CMS.Assets.sync_article_refs(community, post, %{
-                   cur_user: user,
-                   asset_refs: [
-                     %{
-                       asset: image_asset_attrs("invalid-body-#{usage}.png", 40),
-                       usage: usage
-                     }
-                   ]
-                 })
+                 CMS.Assets.link_refs(
+                   post,
+                   %{
+                     cur_user: user,
+                     asset_refs: [
+                       %{
+                         asset: image_asset_attrs("invalid-body-#{usage}.png", 40),
+                         usage: usage
+                       }
+                     ]
+                   }, community: community)
 
         assert [%ArticleDocumentAssetRef{id: ref_id, usage: :cover}] =
                  article_refs(:post, post.id)
@@ -187,7 +248,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       end
     end
 
-    test "serializes concurrent ref syncs for the same document", ~m(community post user)a do
+    test "serializes concurrent ref linking for the same document", ~m(community post user)a do
       parent = self()
 
       tasks =
@@ -199,15 +260,17 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
 
             receive do
               :go ->
-                CMS.Assets.sync_article_refs(community, post, %{
-                  cur_user: user,
-                  asset_refs: [
-                    %{
-                      asset: image_asset_attrs(filename, 20 + index),
-                      source: filename
-                    }
-                  ]
-                })
+                CMS.Assets.link_refs(
+                  post,
+                  %{
+                    cur_user: user,
+                    asset_refs: [
+                      %{
+                        asset: image_asset_attrs(filename, 20 + index),
+                        source: filename
+                      }
+                    ]
+                  }, community: community)
             end
           end)
         end)
@@ -231,7 +294,8 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
     end
 
     test "paginates refs for one asset", ~m(community post user)a do
-      {:ok, asset} = CMS.Assets.register(community, image_asset_attrs("many-refs.png", 70), user)
+      {:ok, asset} =
+        CMS.Assets.register_to_community(community, image_asset_attrs("many-refs.png", 70), user)
 
       asset_refs =
         Enum.map(1..105, fn position ->
@@ -239,10 +303,12 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
         end)
 
       assert {:ok, %{body: refs, cover: []}} =
-               CMS.Assets.sync_article_refs(community, post, %{
-                 cur_user: user,
-                 asset_refs: asset_refs
-               })
+               CMS.Assets.link_refs(
+                 post,
+                 %{
+                   cur_user: user,
+                   asset_refs: asset_refs
+                 }, community: community)
 
       assert length(refs) == 105
 
@@ -309,7 +375,7 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           storage_key: "communities/groupher/assets/2026_07/29_origin_active/original"
         })
 
-      {:ok, asset} = CMS.Assets.register(community, attrs, user)
+      {:ok, asset} = CMS.Assets.register_to_community(community, attrs, user)
 
       assert {:ok, origin_info} = CMS.Assets.origin_info(asset.public_ref)
       assert origin_info.public_ref == "asset_origin_active"
@@ -337,10 +403,12 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       asset_attrs = image_asset_attrs("referenced.png", 80)
 
       {:ok, %{body: [ref]}} =
-        CMS.Assets.sync_article_refs(community, post, %{
-          cur_user: user,
-          asset_refs: [%{asset: asset_attrs, block_id: "referenced"}]
-        })
+        CMS.Assets.link_refs(
+          post,
+          %{
+            cur_user: user,
+            asset_refs: [%{asset: asset_attrs, block_id: "referenced"}]
+          }, community: community)
 
       assert {:error, {:custom, "asset is still referenced"}} =
                CMS.Assets.delete(community, ref.asset_id)
@@ -348,24 +416,80 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert {:ok, %CommunityAsset{}} = ORM.find(CommunityAsset, ref.asset_id)
     end
 
-    test "deleting an article purges document asset refs", ~m(community post user)a do
+    test "soft-deleting an article keeps document asset refs", ~m(community post user)a do
+      asset_attrs = image_asset_attrs("soft-delete-keeps-refs.png", 90)
+
+      {:ok, %{body: [ref]}} =
+        CMS.Assets.link_refs(
+          post,
+          %{
+            cur_user: user,
+            asset_refs: [%{asset: asset_attrs, block_id: "soft-delete-keeps-refs"}]
+          }, community: community)
+
+      assert asset_ref_count(ref.asset_id) == 1
+
+      assert {:ok, _trash_item} = CMS.Articles.trash(post, user)
+
+      assert asset_ref_count(ref.asset_id) == 1
+      assert [_] = article_refs(:post, post.id)
+    end
+
+    test "permanently deleting an article cleans up document asset refs",
+         ~m(community post user)a do
       asset_attrs = image_asset_attrs("delete-cleanup.png", 90)
 
       {:ok, %{body: [ref]}} =
-        CMS.Assets.sync_article_refs(community, post, %{
-          cur_user: user,
-          asset_refs: [%{asset: asset_attrs, block_id: "delete-cleanup"}]
-        })
+        CMS.Assets.link_refs(
+          post,
+          %{
+            cur_user: user,
+            asset_refs: [%{asset: asset_attrs, block_id: "delete-cleanup"}]
+          }, community: community)
 
       assert [_] = article_refs(:post, post.id)
 
       assert {:ok, trash_item} = CMS.Articles.trash(post, user)
+      assert asset_ref_count(ref.asset_id) == 1
 
-      assert {:ok, %{done: true}} =
-               CMS.Articles.permanently_delete_trashed(trash_item, user)
+      assert {:ok, %{done: true}} = CMS.Articles.permanently_delete(trash_item, user)
 
       assert article_refs(:post, post.id) == []
+      assert asset_ref_count(ref.asset_id) == 0
       assert {:ok, %CommunityAsset{}} = ORM.find(CommunityAsset, ref.asset_id)
+    end
+
+    test "permanently deleting one article keeps shared asset refs from other articles",
+         ~m(community post user)a do
+      {_community, other_post, _attrs, _user} = mock_article(:post, community, user)
+
+      {:ok, asset} =
+        CMS.Assets.register_to_community(community, image_asset_attrs("shared.png", 90), user)
+
+      assert {:ok, %{body: [_]}} =
+               CMS.Assets.link_refs(
+                 post,
+                 %{
+                   cur_user: user,
+                   asset_refs: [%{asset_id: asset.id, block_id: "shared-one"}]
+                 }, community: community)
+
+      assert {:ok, %{body: [_]}} =
+               CMS.Assets.link_refs(
+                 other_post,
+                 %{
+                   cur_user: user,
+                   asset_refs: [%{asset_id: asset.id, block_id: "shared-two"}]
+                 }, community: community)
+
+      assert asset_ref_count(asset.id) == 2
+
+      assert {:ok, trash_item} = CMS.Articles.trash(post, user)
+      assert {:ok, %{done: true}} = CMS.Articles.permanently_delete(trash_item, user)
+
+      assert asset_ref_count(asset.id) == 1
+      assert article_refs(:post, post.id) == []
+      assert [_] = article_refs(:post, other_post.id)
     end
   end
 
@@ -385,5 +509,11 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
     |> where([ref], ref.thread == ^thread and ref.article_id == ^article_id)
     |> order_by([ref], asc: ref.usage)
     |> Repo.all()
+  end
+
+  defp asset_ref_count(asset_id) do
+    ArticleDocumentAssetRef
+    |> where([ref], ref.asset_id == ^asset_id)
+    |> Repo.aggregate(:count, :id)
   end
 end

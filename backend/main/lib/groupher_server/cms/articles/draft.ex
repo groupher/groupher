@@ -113,7 +113,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
         with {:ok, draft} <- create_draft_row(model, thread, draft_attrs),
              {:ok, draft} <- VersionedRelations.apply_input(draft, attrs),
              {:ok, _document} <- Document.create(draft, document_input(body_content)),
-             {:ok, _asset_refs} <- Assets.sync_article_refs(community, draft, attrs) do
+             {:ok, _asset_refs} <- Assets.link_refs(draft, attrs, community: community) do
           draft
         else
           {:error, reason} -> Repo.rollback(reason)
@@ -169,7 +169,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
          {:ok, draft} <- maybe_update_draft(draft, next_attrs),
          {:ok, draft} <- VersionedRelations.apply_input(draft, attrs),
          {:ok, _document} <- maybe_update_document(draft, body_content),
-         {:ok, _asset_refs} <- Assets.sync_article_refs(draft, attrs) do
+         {:ok, _asset_refs} <- Assets.link_refs(draft, attrs) do
       {:ok, draft}
     end
   end
@@ -334,7 +334,7 @@ defmodule GroupherServer.CMS.Articles.Draft do
            attrs <- Map.put(attrs, :body_bag, body_bag),
            {:ok, draft} <- create(community, thread, attrs, user),
            {:ok, draft} <- VersionedRelations.copy_to_draft(public_article, draft),
-           {:ok, _asset_refs} <- Assets.copy_article_refs(public_article, draft) do
+           {:ok, _asset_refs} <- Assets.copy_refs(public_article, draft) do
         {:ok, draft}
       end
     end

@@ -7,6 +7,8 @@ export default function useSalon({ selected }: { selected: boolean }) {
     actions:
       'absolute right-1 top-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100',
     content: 'column gap-1 p-2',
+    deleteAction:
+      'ml-2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100',
     meta: cn('text-xs leading-4', fg('hint')),
     title: cn('truncate text-left text-sm bold-sm underline-hover', fg('title')),
     wrapper: cn(

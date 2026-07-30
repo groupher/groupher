@@ -8,11 +8,14 @@ export default function useSalon({ selected }: { selected: boolean }) {
   return {
     actions:
       'absolute right-1 top-1/2 -translate-y-1/2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100',
+    deleteAction:
+      'ml-2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100',
     main: 'column min-w-0 flex-1 justify-center',
-    meta: cn('mt-0.5 truncate text-xs leading-4', fg('hint')),
+    meta: cn('row-center mt-0.5 min-w-0 text-xs leading-4', fg('hint')),
     sideMeta: cn('hidden shrink-0 items-center gap-10 pr-1 text-xs leading-4 md:flex', fg('hint')),
     size: 'w-20 text-right pretty-num',
     title: cn('max-w-full truncate text-left text-sm bold-sm underline-hover', fg('title')),
+    uploader: 'truncate',
     uploadedAt: 'w-28 text-right',
     wrapper: cn(
       assetLinearHover(selected),

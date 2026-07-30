@@ -505,7 +505,7 @@ defmodule GroupherServer.CMS.Articles.Trash do
     Enum.reduce_while(physical_articles, :ok, fn article, :ok ->
       with {:ok, _} <- CMS.ArtimentMentions.purge_article_comments(article),
            {:ok, _} <- CMS.ArtimentMentions.purge(article),
-           {:ok, _} <- CMS.Assets.purge_article_refs(thread, article.id),
+           {:ok, _} <- CMS.Assets.cleanup_refs(thread, article.id),
            _ <- Document.remove(thread, article.id),
            {:ok, _} <- CMS.Covers.delete_cover_edit_info(article.cover_edit_info_id),
            {:ok, _} <- Repo.delete(article) do

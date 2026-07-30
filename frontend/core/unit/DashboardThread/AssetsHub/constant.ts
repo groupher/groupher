@@ -50,6 +50,7 @@ export const ASSETS_HUB_LABEL = {
   DELETE: 'Delete',
   DELETE_BLOCKED: 'Referenced',
   DELETE_CONFIRMING: 'Confirm delete',
+  DELETE_DELETING: 'Deleting',
   EMPTY: 'No assets yet',
   FILE_INPUT: 'Upload asset',
   FILTER: 'Filter assets',

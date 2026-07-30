@@ -1,7 +1,5 @@
 'use client'
 
-import IconHub from '~/widgets/IconHub'
-
 import { ASSETS_HUB_LABEL } from './constant'
 import useSalon from './salon/delete_action'
 
@@ -35,11 +33,7 @@ export default function DeleteAction({
       aria-label={label}
       disabled={disabled || referenced || deleting}
     >
-      <IconHub
-        provider='lucide'
-        icon={referenced ? 'ban' : confirming ? 'alert-triangle' : 'trash'}
-        size={3.25}
-      />
+      {deleting ? ASSETS_HUB_LABEL.DELETE_DELETING : label}
     </button>
   )
 }

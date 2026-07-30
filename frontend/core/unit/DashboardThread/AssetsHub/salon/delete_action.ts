@@ -8,14 +8,14 @@ export default function useSalon({
   confirming: boolean
   referenced: boolean
 }) {
-  const { cn, fg, bg, rainbow } = useTwBelt()
+  const { cn, fg, rainbow } = useTwBelt()
 
   return {
     button: cn(
-      'align-both size-8 rounded-sm transition-colors disabled:opacity-35 disabled:cursor-not-allowed',
+      'h-5 pointer px-1 text-xs bold-sm transition-opacity disabled:cursor-not-allowed',
       referenced ? fg('hint') : rainbow(COLOR.RED, 'fg'),
-      confirming && rainbow(COLOR.RED, 'bgLite'),
-      referenced ? bg('hoverBg') : `hover:${rainbow(COLOR.RED, 'bgLite')}`,
+      confirming && rainbow(COLOR.RED, 'fg'),
+      referenced && 'opacity-45',
     ),
   }
 }

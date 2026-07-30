@@ -81,7 +81,7 @@ defmodule GroupherServerWeb.Resolvers.CMS do
   def register_community_asset(_root, %{community: %Community{} = community, asset: asset}, %{
         context: %{cur_user: user}
       }) do
-    CMS.Assets.register(community, asset, user)
+    CMS.Assets.register_to_community(community, asset, user)
   end
 
   def create_community_asset_upload_intent(

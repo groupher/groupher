@@ -1,5 +1,6 @@
 'use client'
 
+import DeleteAction from '../../DeleteAction'
 import {
   assetLabel,
   assetUploaderName,
@@ -35,7 +36,18 @@ export default function Item({
         <button type='button' className={s.title} onClick={() => onSelect(asset.id)}>
           {assetLabel(asset)}
         </button>
-        <div className={s.meta}>{assetUploaderName(asset)}</div>
+        <div className={s.meta}>
+          <span className={s.uploader}>{assetUploaderName(asset)}</span>
+          <span className={s.deleteAction}>
+            <DeleteAction
+              confirming={confirming}
+              deleting={deleting}
+              disabled={deleteDisabled}
+              referenced={referenced}
+              onDelete={() => void onDelete(asset)}
+            />
+          </span>
+        </div>
       </div>
 
       <div className={s.sideMeta}>
@@ -44,16 +56,7 @@ export default function Item({
       </div>
 
       <div className={s.actions}>
-        <ItemActions
-          asset={asset}
-          confirming={confirming}
-          deleting={deleting}
-          deleteDisabled={deleteDisabled}
-          referenced={referenced}
-          onCopy={onCopy}
-          onDelete={onDelete}
-          onOpen={onOpen}
-        />
+        <ItemActions asset={asset} onCopy={onCopy} onOpen={onOpen} />
       </div>
     </div>
   )

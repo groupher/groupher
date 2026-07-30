@@ -1,6 +1,7 @@
 'use client'
 
 import { ASSETS_HUB_LABEL } from '../../constant'
+import DeleteAction from '../../DeleteAction'
 import { assetLabel, formatAssetDate, formatAssetSize, isAssetReferenced } from '../../helper'
 import AssetThumb from '../AssetThumb'
 import ItemActions from '../ItemActions'
@@ -33,19 +34,19 @@ export default function Item({
         <div className={s.meta}>
           {asset.mimeType || ASSETS_HUB_LABEL.UNKNOWN} · {formatAssetSize(asset.sizeBytes)} ·{' '}
           {formatAssetDate(asset.insertedAt)}
+          <span className={s.deleteAction}>
+            <DeleteAction
+              confirming={confirming}
+              deleting={deleting}
+              disabled={deleteDisabled}
+              referenced={referenced}
+              onDelete={() => void onDelete(asset)}
+            />
+          </span>
         </div>
       </div>
       <div className={s.actions}>
-        <ItemActions
-          asset={asset}
-          confirming={confirming}
-          deleting={deleting}
-          deleteDisabled={deleteDisabled}
-          referenced={referenced}
-          onCopy={onCopy}
-          onDelete={onDelete}
-          onOpen={onOpen}
-        />
+        <ItemActions asset={asset} onCopy={onCopy} onOpen={onOpen} />
       </div>
     </div>
   )

@@ -316,12 +316,6 @@ export default function useAssetsHub(): TAssetsHubLogic {
         return
       }
 
-      if (confirmingDeleteId !== asset.id) {
-        setConfirmingDeleteId(asset.id)
-        toast(ASSETS_HUB_MESSAGE.DELETE_CONFIRM)
-        return
-      }
-
       setDeletingAssetId(asset.id)
 
       try {
@@ -342,7 +336,7 @@ export default function useAssetsHub(): TAssetsHubLogic {
         setDeletingAssetId(null)
       }
     },
-    [community, confirmingDeleteId, loadReferences, mutate, reload, reloadStats, selectedAssetId],
+    [community, loadReferences, mutate, reload, reloadStats, selectedAssetId],
   )
 
   const selectAsset = useCallback((assetId: string): void => {

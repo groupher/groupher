@@ -100,7 +100,7 @@ defmodule GroupherServer.CMS.Articles.Preview do
                user
              ),
            {:ok, main_draft} <- VersionedRelations.copy_to_draft(preview_draft, main_draft),
-           {:ok, _asset_refs} <- Assets.copy_article_refs(preview_draft, main_draft),
+           {:ok, _asset_refs} <- Assets.copy_refs(preview_draft, main_draft),
            {:ok, snapshot} <-
              Snapshot.checkpoint_article(
                main_draft,
@@ -204,7 +204,7 @@ defmodule GroupherServer.CMS.Articles.Preview do
              user
            ),
          {:ok, draft} <- VersionedRelations.copy_to_draft(public_article, draft),
-         {:ok, _asset_refs} <- Assets.copy_article_refs(public_article, draft),
+         {:ok, _asset_refs} <- Assets.copy_refs(public_article, draft),
          {:ok, source_snapshot} <-
            ensure_public_snapshot(public_article, thread, source_branch, user) do
       {:ok, draft, source_snapshot}

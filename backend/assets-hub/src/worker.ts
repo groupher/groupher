@@ -1,3 +1,5 @@
+import { GROUPHER_SERVER_TRUST_HEADER } from '@groupher/contracts/headers'
+
 import {
   fetchCommunityAssetOriginInfo,
   PhoenixGraphQLError,
@@ -5,6 +7,14 @@ import {
 } from './phoenix'
 
 type TAssetVariant = 'original' | 'thumbnail' | 'card'
+
+type TAssetDeleteMessage = {
+  assetId: number | string | null
+  assetPublicRef: string | null
+  communityId: number | string | null
+  storage: 'r2'
+  storageKey: string
+}
 
 const assetVariants = new Set<TAssetVariant>(['original', 'thumbnail', 'card'])
 const originalCacheControl = 'public, max-age=3600'
@@ -29,6 +39,32 @@ const errorResponse = (
   status: number,
   headers: Record<string, string> = {},
 ) => json({ error: { code, message }, ok: false }, { headers, status })
+
+const parseJsonBody = async (request: Request) => request.json().catch(() => null)
+
+const serverTrustSecret = (env: Env) => env.GROUPHER_SERVER_TRUST_SECRET?.trim()
+
+const isTrustedInternalRequest = (request: Request, env: Env) => {
+  const secret = serverTrustSecret(env)
+  if (!secret) return false
+
+  return request.headers.get(GROUPHER_SERVER_TRUST_HEADER) === secret
+}
+
+const normalizeDeleteMessage = (input: unknown): TAssetDeleteMessage | null => {
+  const body = input as Partial<TAssetDeleteMessage> | null
+  const storageKey = typeof body?.storageKey === 'string' ? body.storageKey.trim() : ''
+
+  if (body?.storage !== 'r2' || !storageKey) return null
+
+  return {
+    assetId: body.assetId ?? null,
+    assetPublicRef: body.assetPublicRef ?? null,
+    communityId: body.communityId ?? null,
+    storage: 'r2',
+    storageKey,
+  }
+}
 
 const parseAssetPath = (pathname: string) => {
   const match = pathname.match(/^\/a\/([^/]+)\/([^/]+)$/)
@@ -161,6 +197,57 @@ const serveAsset = async (request: Request, env: Env) => {
   return serveOriginalByStorageKey(env, originInfo, request.method)
 }
 
+const enqueueAssetDelete = async (request: Request, env: Env) => {
+  if (request.method !== 'POST') {
+    return errorResponse('method_not_allowed', 'Method not allowed.', 405, {
+      allow: 'POST',
+    })
+  }
+
+  if (!isTrustedInternalRequest(request, env)) {
+    return errorResponse('server_trust_required', 'Server trust is required.', 401)
+  }
+
+  const message = normalizeDeleteMessage(await parseJsonBody(request))
+  if (!message) {
+    return errorResponse('invalid_asset_delete_request', 'Asset delete request is invalid.', 400)
+  }
+
+  await env.ASSET_DELETE_QUEUE.send(message)
+
+  console.info('[assets-hub] asset_delete_enqueued', {
+    assetId: message.assetId,
+    assetPublicRef: message.assetPublicRef,
+    communityId: message.communityId,
+    storageKey: message.storageKey,
+  })
+
+  return json({ ok: true, result: { enqueued: true } })
+}
+
+const deleteAssetObject = async (env: Env, message: TAssetDeleteMessage) => {
+  await env.ASSETS_BUCKET.delete(message.storageKey)
+
+  console.info('[assets-hub] asset_object_deleted', {
+    assetId: message.assetId,
+    assetPublicRef: message.assetPublicRef,
+    communityId: message.communityId,
+    storageKey: message.storageKey,
+  })
+}
+
+const consumeAssetDeletes = async (batch: MessageBatch<unknown>, env: Env) => {
+  for (const message of batch.messages) {
+    const body = normalizeDeleteMessage(message.body)
+    if (!body) {
+      console.warn('[assets-hub] asset_delete_message_invalid', { body: message.body })
+      continue
+    }
+
+    await deleteAssetObject(env, body)
+  }
+}
+
 export default {
   fetch(request: Request, env: Env) {
     const url = new URL(request.url)
@@ -174,6 +261,8 @@ export default {
         target: 'cloudflare-worker',
       })
     }
+
+    if (url.pathname === '/internal/assets/delete') return enqueueAssetDelete(request, env)
 
     if (url.pathname.startsWith('/a/') && request.method === 'OPTIONS') {
       return new Response(null, {
@@ -196,5 +285,9 @@ export default {
     if (url.pathname.startsWith('/a/')) return serveAsset(request, env)
 
     return errorResponse('not_found', 'Not found.', 404)
+  },
+
+  queue(batch: MessageBatch<unknown>, env: Env) {
+    return consumeAssetDeletes(batch, env)
   },
 }

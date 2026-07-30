@@ -18,6 +18,22 @@
       "remote": true
     }
   ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "ASSET_DELETE_QUEUE",
+        "queue": "groupher-asset-delete-dev"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "groupher-asset-delete-dev",
+        "max_batch_size": 10,
+        "max_batch_timeout": 5,
+        "max_retries": 5
+      }
+    ]
+  },
   "observability": {
     "enabled": true
   }

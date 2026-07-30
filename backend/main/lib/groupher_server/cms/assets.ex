@@ -20,7 +20,7 @@ defmodule GroupherServer.CMS.Assets do
   alias GroupherServer.CMS.Model.{Community, CommunityAsset}
   alias Helper.T
 
-  alias __MODULE__.{Read, Upload, Write}
+  alias __MODULE__.{Deletion, Read, Upload, Write}
 
   @doc """
   Lists active assets owned by a community.
@@ -88,7 +88,7 @@ defmodule GroupherServer.CMS.Assets do
   def origin_info(public_ref), do: Read.origin_info(public_ref)
 
   @doc """
-  Registers an uploaded object as a community asset.
+  Registers an uploaded object into a community asset library.
 
   The write path deduplicates active assets by URL hash, or by storage identity
   when `storage` and `storage_key` are present. Existing active rows are updated
@@ -96,13 +96,20 @@ defmodule GroupherServer.CMS.Assets do
 
   ## Examples
 
-      CMS.Assets.register(community, %{url: url, size_bytes: 1024}, user)
+      CMS.Assets.register_to_community(community, %{url: url, size_bytes: 1024}, user)
       #=> {:ok, %CommunityAsset{}}
 
   """
+  @spec register_to_community(Community.t(), map(), User.t() | nil) ::
+          T.domain_res(CommunityAsset.t())
+  def register_to_community(%Community{} = community, attrs, user \\ nil) do
+    Write.register(community, attrs, user)
+  end
+
+  @doc "Deprecated alias for register_to_community/3."
   @spec register(Community.t(), map(), User.t() | nil) :: T.domain_res(CommunityAsset.t())
   def register(%Community{} = community, attrs, user \\ nil) do
-    Write.register(community, attrs, user)
+    register_to_community(community, attrs, user)
   end
 
   @doc "Creates a short-lived upload capability for assets-hub."
@@ -131,63 +138,77 @@ defmodule GroupherServer.CMS.Assets do
 
   """
   @spec delete(Community.t(), T.id()) :: T.domain_res(CommunityAsset.t())
-  def delete(%Community{} = community, asset_id), do: Write.delete(community, asset_id)
-
-  @doc """
-  Replaces article document refs using an explicit community.
-
-  Use this when the caller already resolved the community boundary, such as the
-  GraphQL article mutation path. The article document row is locked while refs
-  are replaced.
-
-  ## Examples
-
-      CMS.Assets.sync_article_refs(community, post, %{
-        asset_refs: [%{asset_id: asset.id, block_id: "hero"}],
-        cur_user: user
-      })
-      #=> {:ok, %{body: body_refs, cover: cover_refs}}
-
-  """
-  @spec sync_article_refs(Community.t(), T.article(), map()) :: T.domain_res(term())
-  def sync_article_refs(%Community{} = community, article, attrs) do
-    Write.sync_article_refs(community, article, attrs)
+  def delete(%Community{} = community, asset_id) do
+    with {:ok, asset} <- Write.delete(community, asset_id) do
+      Deletion.enqueue(asset)
+      {:ok, asset}
+    end
   end
 
   @doc """
-  Replaces article document refs using `article.community_id`.
+  Links an article to the assets used by its current saved content.
 
-  This variant is used from article flows where the article already carries its
-  community foreign key. If the article has no community, the sync is skipped.
+  The article document row is locked while the article's ref set is updated to
+  match the saved body and cover inputs. Pass `community: community` when the
+  caller already resolved the community boundary, such as the GraphQL article
+  mutation path.
 
   ## Examples
 
-      CMS.Assets.sync_article_refs(post, %{asset_refs: [%{asset_id: asset.id}]})
+      CMS.Assets.link_refs(post, %{
+        asset_refs: [%{asset_id: asset.id, block_id: "hero"}],
+        cur_user: user
+      }, community: community)
       #=> {:ok, %{body: body_refs, cover: cover_refs}}
 
-      CMS.Assets.sync_article_refs(article_without_community, %{})
+      CMS.Assets.link_refs(post, %{asset_refs: [%{asset_id: asset.id}]})
+      #=> {:ok, %{body: body_refs, cover: cover_refs}}
+
+      CMS.Assets.link_refs(article_without_community, %{})
       #=> {:ok, :pass}
 
   """
+  @spec link_refs(T.article(), map(), Keyword.t()) :: T.domain_res(term())
+  def link_refs(article, attrs, opts \\ []) do
+    case Keyword.get(opts, :community) do
+      %Community{} = community -> Write.sync_article_refs(community, article, attrs)
+      nil -> Write.sync_article_refs(article, attrs)
+    end
+  end
+
+  @doc "Deprecated alias for link_refs/3."
+  @spec sync_article_refs(Community.t(), T.article(), map()) :: T.domain_res(term())
+  def sync_article_refs(%Community{} = community, article, attrs),
+    do: link_refs(article, attrs, community: community)
+
+  @doc "Deprecated alias for link_refs/2."
   @spec sync_article_refs(T.article(), map()) :: T.domain_res(term())
-  def sync_article_refs(article, attrs), do: Write.sync_article_refs(article, attrs)
+  def sync_article_refs(article, attrs), do: link_refs(article, attrs)
 
   @doc "Copies all derived document asset refs between two versions of one Article."
+  @spec copy_refs(T.article(), T.article()) :: T.domain_res(term())
+  def copy_refs(source, target), do: Write.copy_article_refs(source, target)
+
+  @doc "Deprecated alias for copy_refs/2."
   @spec copy_article_refs(T.article(), T.article()) :: T.domain_res(term())
-  def copy_article_refs(source, target), do: Write.copy_article_refs(source, target)
+  def copy_article_refs(source, target), do: copy_refs(source, target)
 
   @doc """
-  Deletes all persisted asset refs for one article.
+  Cleans up all persisted asset refs for one permanently deleted article.
 
   This is called from article deletion so the resource library keeps ownership
   data in `community_assets` while removing stale document usage rows.
 
   ## Examples
 
-      CMS.Assets.purge_article_refs(:post, post.id)
+      CMS.Assets.cleanup_refs(:post, post.id)
       #=> {:ok, {deleted_count, nil}}
 
   """
+  @spec cleanup_refs(atom(), T.id()) :: T.domain_res(term())
+  def cleanup_refs(thread, article_id), do: Write.purge_article_refs(thread, article_id)
+
+  @doc "Deprecated alias for cleanup_refs/2."
   @spec purge_article_refs(atom(), T.id()) :: T.domain_res(term())
-  def purge_article_refs(thread, article_id), do: Write.purge_article_refs(thread, article_id)
+  def purge_article_refs(thread, article_id), do: cleanup_refs(thread, article_id)
 end
