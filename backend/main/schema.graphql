@@ -113,7 +113,10 @@ type RootQueryType {
   community(slug: String!, incViews: Boolean): Community
 
   "paged assets owned by a community"
-  pagedCommunityAssets(community: String!, filter: PagiFilter): PagedCommunityAssets
+  pagedCommunityAssets(community: String!, filter: CommunityAssetFilter): PagedCommunityAssets
+
+  "community asset filter stats and storage quota"
+  communityAssetStats(community: String!, filter: CommunityAssetFilter): CommunityAssetStats
 
   "community asset storage usage"
   communityAssetUsage(community: String!): CommunityAssetUsage
@@ -1428,6 +1431,7 @@ type CommonComment {
 type CommunityAsset {
   id: ID
   publicRef: String
+  thread: Thread
   assetType: CommunityAssetType
   status: CommunityAssetStatus
   title: String
@@ -1470,6 +1474,31 @@ type CommunityAssetUsage {
   storageBytes: BigInt
 }
 
+type CommunityAssetThreadStat {
+  thread: Thread!
+  count: Int!
+}
+
+type CommunityAssetSubtypeStat {
+  key: String!
+  label: String!
+  count: Int!
+}
+
+type CommunityAssetTypeStat {
+  assetType: CommunityAssetType!
+  count: Int!
+  subtypes: [CommunityAssetSubtypeStat!]!
+}
+
+type CommunityAssetStats {
+  totalCount: Int!
+  storageBytes: BigInt!
+  storageLimitBytes: BigInt!
+  byThread: [CommunityAssetThreadStat!]!
+  byAssetType: [CommunityAssetTypeStat!]!
+}
+
 type CommunityAssetOriginInfo {
   publicRef: String!
   status: CommunityAssetStatus!
@@ -1485,6 +1514,7 @@ type CommunityAssetOriginInfo {
 }
 
 input CommunityAssetInput {
+  thread: Thread
   assetType: CommunityAssetType
   title: String
   filename: String
@@ -1514,7 +1544,17 @@ input CommunityAssetUploadFileInput {
   mimeType: String!
   sizeBytes: BigInt!
   checksumSha256: String
+  thread: Thread
   assetType: CommunityAssetType
+}
+
+input CommunityAssetFilter {
+  page: Int
+  size: Int
+  query: String
+  thread: Thread
+  assetType: CommunityAssetType
+  subtypes: [String!]
 }
 
 input CommunityAssetUploadCompletionInput {
@@ -1529,6 +1569,7 @@ input CommunityAssetUploadCompletionInput {
   sizeBytes: BigInt!
   filename: String
   mimeType: String
+  thread: Thread
   assetType: CommunityAssetType
   width: Int
   height: Int
