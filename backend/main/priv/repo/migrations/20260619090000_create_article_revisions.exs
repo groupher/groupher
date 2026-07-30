@@ -4,6 +4,31 @@ defmodule GroupherServer.Repo.Migrations.CreateArticleSnapshots do
   @prefix "cms"
 
   def change do
+    create_if_not_exists table(:article_drafts, prefix: @prefix) do
+      add(:community_id, references(:communities, prefix: @prefix, on_delete: :delete_all),
+        null: false
+      )
+
+      add(:thread, :string, null: false)
+      add(:article_id, :bigint)
+      add(:author_id, references(:authors, prefix: @prefix, on_delete: :nilify_all))
+      add(:title, :string, null: false)
+      add(:slug, :string)
+      add(:digest, :string, null: false)
+      add(:template_key, :string)
+      add(:json, :text, null: false)
+      add(:markdown, :text)
+      add(:markdown_toc, :map)
+      add(:html, :text)
+      add(:xml, :text)
+      add(:rss, :text)
+      add(:plain_text, :text)
+      add(:content_hash, :string)
+      add(:schema_version, :integer, null: false, default: 1)
+
+      timestamps()
+    end
+
     create table(:article_snapshots, prefix: @prefix) do
       add(:community_id, references(:communities, prefix: @prefix, on_delete: :delete_all),
         null: false

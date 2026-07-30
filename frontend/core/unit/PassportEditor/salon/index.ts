@@ -2,7 +2,7 @@ import { COLOR } from '~/const/colors'
 import useTwBelt from '~/hooks/useTwBelt'
 
 export default function useSalon() {
-  const { bg, cn, fg, br, primary, rainbow, vividDark } = useTwBelt()
+  const { cn, fg, br, primary, rainbow, vividDark } = useTwBelt()
 
   return {
     wrapper: 'px-8 pt-6',
@@ -14,7 +14,7 @@ export default function useSalon() {
     login: cn('text-xs ml-2', fg('hint')),
     bio: cn('mt-2 text-sm leading-6', fg('digest')),
     loading: 'row-center py-16',
-    footer: cn('sticky mt-6 bottom-0 z-10 align-both w-full px-6 py-4 gap-x-3', bg('card')),
+    footer: 'sticky mt-6 bottom-0 z-10 align-both w-full px-6 py-4 gap-x-3',
     rootSign: cn(
       'inline-flex text-xs bold-sm px-1.5 ml-2 rounded-md border',
       fg('button.fg'),

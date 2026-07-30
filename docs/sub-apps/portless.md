@@ -65,7 +65,8 @@ Portless 解决的是本地寻址问题；Gateway 解决的是产品路由问题
 | Auth               | `https://auth.groupher.localhost`           | 直接调试，用户入口仍走 Gateway |
 | Apply              | `https://apply.groupher.localhost`          | 直接调试，用户入口仍走 Gateway |
 | Content Import     | `https://content-import.groupher.localhost` | 服务调试                       |
-| Assets Hub         | `https://assets.groupher.localhost`         | 服务调试                       |
+| Assets Hub Upload  | `https://assets-hub.groupher.localhost`     | 上传服务调试                   |
+| Assets Hub Read    | `https://assets.groupher.localhost`         | public read Worker 调试        |
 | Content Press      | `https://press.groupher.localhost`          | 服务调试                       |
 | Posthouse          | `https://posthouse.groupher.localhost`      | 服务调试                       |
 | AI                 | `https://ai.groupher.localhost`             | 服务调试                       |

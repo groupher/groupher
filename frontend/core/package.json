@@ -11,7 +11,6 @@
     "./oxfmt": "./config/oxfmt.json",
     "./oxlint": "./config/oxlint.json",
     "./next.config": "./next.config.js",
-    "./auth-contract": "./constant/auth-contract.ts",
     "./dev-hub-reporter": "./lib/devHubReporter/index.ts",
     "./dev-hub-reporter/react": "./widgets/DevHubReporter/index.tsx"
   },
@@ -21,6 +20,9 @@
     "format": "../../node_modules/.bin/oxfmt -c ./config/oxfmt.json .",
     "format:check": "../../node_modules/.bin/oxfmt -c ./config/oxfmt.json --check .",
     "build": "echo 'skip build'"
+  },
+  "dependencies": {
+    "@groupher/contracts": "1.0.0"
   },
   "lint-staged": {
     "**/*.ts?(x)": "tsc-files --noEmit --project ./tsconfig.app.json ./global.d.ts"

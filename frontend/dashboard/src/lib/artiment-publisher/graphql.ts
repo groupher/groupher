@@ -1,5 +1,6 @@
+import { GROUPHER_SERVER_TRUST_HEADER } from '@groupher/contracts/headers'
+
 import { GRAPHQL_ENDPOINT } from '~/config'
-import { GROUPHER_SERVER_TRUST_HEADER } from '~/const/serverTrust'
 
 import { ArtimentPublisherError } from './error'
 import type { TArtimentBodyBag } from './types'

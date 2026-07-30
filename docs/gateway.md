@@ -24,7 +24,7 @@ adapter。
 
 ## 当前职责
 
-当前 `frontend/gateway` 承担这些职责：
+当前 `backend/gateway` 承担这些职责：
 
 - `/api/auth/*` 进入独立 Auth 应用。
 - `/api/graphql` 进入 Phoenix `/graphiql`，并执行浏览器 header/cookie 清洗。
@@ -195,7 +195,7 @@ adapter。
 
 ## 推荐路径
 
-从 Next gateway 迁到 Hono/Node 是合理的，因为仓库已经有 `frontend/auth` 的 Hono
+从 Next gateway 迁到 Hono/Node 是合理的，因为仓库已经有 `backend/auth` 的 Hono
 运行模型，且当前 Gateway 没有页面能力需求。
 
 实现时直接在 Hono 范围内解决，结构保持简单：

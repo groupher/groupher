@@ -175,7 +175,7 @@ defmodule GroupherServer.CMS.Articles.Publish do
         States.update_edit_status(public_article)
       end)
       |> Multi.run(:public_asset_refs, fn _, %{public_article: public_article} ->
-        Assets.copy_article_refs(draft, public_article)
+        Assets.copy_refs(draft, public_article)
       end)
       |> Multi.run(:remove_draft, fn _, _ -> ORM.delete(draft) end)
       |> Multi.run(:remove_draft_document, fn _, _ -> Document.remove(thread, draft.id) end)

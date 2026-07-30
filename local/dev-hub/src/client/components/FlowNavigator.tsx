@@ -5,10 +5,9 @@ import type { TFlowEdge, TFlowNode } from './flow-spec'
 
 type TProps = {
   requestPathIds: string[]
-  standaloneIds: string[]
 }
 
-export function FlowNavigator({ requestPathIds, standaloneIds }: TProps) {
+export function FlowNavigator({ requestPathIds }: TProps) {
   const { fitView, zoomIn, zoomOut } = useReactFlow<TFlowNode, TFlowEdge>()
 
   const focusNodes = (ids: string[]) => {
@@ -47,17 +46,6 @@ export function FlowNavigator({ requestPathIds, standaloneIds }: TProps) {
         >
           <Maximize2 aria-hidden='true' />
         </button>
-      </div>
-      <div className='flow-navigator'>
-        <button type='button' onClick={() => focusNodes(requestPathIds)}>
-          Request path
-        </button>
-        {standaloneIds.length > 0 ? (
-          <button type='button' onClick={() => focusNodes(standaloneIds)}>
-            Standalone
-            <span>{standaloneIds.length}</span>
-          </button>
-        ) : null}
       </div>
     </Panel>
   )

@@ -141,11 +141,12 @@ export class ServiceManager {
       return this.toPublicService(runtime)
     }
 
-    if (definition.port && (await this.portProbe(definition.port))) {
+    const occupiedPorts = await getListeningDefinitionPorts(definition, this.portProbe)
+    if (occupiedPorts.length > 0) {
       runtime.status = 'external'
       this.emitStatus(runtime)
       throw new ServiceManagerError(
-        `Port ${definition.port} is already owned by an unmanaged process.`,
+        `Ports ${occupiedPorts.join(', ')} are already owned by unmanaged processes.`,
         409,
       )
     }
@@ -214,49 +215,33 @@ export class ServiceManager {
     id: string,
     mode: TServiceStartMode | 'default' = 'default',
   ): Promise<TPublicService[]> {
-    const plan = this.resolveStartPlan(id, mode)
+    const resolvedMode = this.resolveStartMode(id, mode)
+    const requiredIds = resolvedMode === 'self' ? [] : this.resolveRequiredStartPlan(id)
+    const optionalIds =
+      resolvedMode === 'related' ? this.resolveOptionalStartPlan(id, requiredIds) : []
     const touched = new Set<string>()
 
-    for (const serviceId of plan) {
-      const runtime = this.getRuntime(serviceId)
+    await this.startServiceLayers(requiredIds, touched, {
+      optional: false,
+      waitForReady: true,
+      includeOptionalDependencies: false,
+    })
 
-      if (await this.isRuntimeReady(runtime)) {
-        touched.add(serviceId)
-        continue
-      }
+    const optionalStart = this.startServiceLayers(optionalIds, touched, {
+      optional: true,
+      waitForReady: false,
+      includeOptionalDependencies: true,
+    })
 
-      if (!runtime.definition.command) {
-        const target = this.getRuntime(id)
-        const policy = normalizeStartPolicy(target.definition.startPolicy)
-        const optional = policy.optionalDependencies.includes(serviceId)
-        if (optional && mode === 'related') continue
+    await this.startPlannedService(id, touched, { optional: false, waitForReady: false })
+    await optionalStart
 
-        throw new ServiceManagerError(
-          runtime.definition.unavailableReason || `${runtime.definition.name} is not startable.`,
-          409,
-        )
-      }
-
-      try {
-        await this.start(serviceId)
-      } catch (error) {
-        if (
-          error instanceof ServiceManagerError &&
-          runtime.status === 'external' &&
-          (await this.isRuntimeReady(runtime))
-        ) {
-          touched.add(serviceId)
-          continue
-        }
-
-        throw error
-      }
-
-      touched.add(serviceId)
-      if (serviceId !== id) await this.waitForRuntimeReady(runtime)
-    }
-
-    return Array.from(touched, (serviceId) => this.toPublicService(this.getRuntime(serviceId)))
+    const returnOrder = [...requiredIds, ...optionalIds, id]
+    return returnOrder
+      .filter(
+        (serviceId, index) => returnOrder.indexOf(serviceId) === index && touched.has(serviceId),
+      )
+      .map((serviceId) => this.toPublicService(this.getRuntime(serviceId)))
   }
 
   async stop(id: string): Promise<TPublicService> {
@@ -352,6 +337,118 @@ export class ServiceManager {
     return plan
   }
 
+  private resolveStartMode(id: string, mode: TServiceStartMode | 'default'): TServiceStartMode {
+    if (mode !== 'default') return mode
+    return normalizeStartPolicy(this.getRuntime(id).definition.startPolicy).defaultMode
+  }
+
+  private resolveRequiredStartPlan(id: string): string[] {
+    return this.resolveStartPlan(id, 'chain').filter((serviceId) => serviceId !== id)
+  }
+
+  private resolveOptionalStartPlan(id: string, requiredIds: string[]): string[] {
+    const policy = normalizeStartPolicy(this.getRuntime(id).definition.startPolicy)
+    const required = new Set(requiredIds)
+    const optionalIds: string[] = []
+
+    for (const optionalId of policy.optionalDependencies) {
+      for (const serviceId of this.resolveStartPlan(optionalId, 'related')) {
+        if (serviceId === id || required.has(serviceId) || optionalIds.includes(serviceId)) continue
+        optionalIds.push(serviceId)
+      }
+    }
+
+    return optionalIds
+  }
+
+  private async startServiceLayers(
+    serviceIds: string[],
+    touched: Set<string>,
+    options: {
+      optional: boolean
+      waitForReady: boolean
+      includeOptionalDependencies: boolean
+    },
+  ): Promise<void> {
+    const layers = this.buildStartLayers(serviceIds, options.includeOptionalDependencies)
+
+    for (const layer of layers) {
+      await Promise.all(
+        layer.map((serviceId) =>
+          this.startPlannedService(serviceId, touched, {
+            optional: options.optional,
+            waitForReady: options.waitForReady,
+          }),
+        ),
+      )
+    }
+  }
+
+  private buildStartLayers(serviceIds: string[], includeOptionalDependencies: boolean): string[][] {
+    const remaining = new Set(serviceIds)
+    const layers: string[][] = []
+
+    while (remaining.size > 0) {
+      const layer = Array.from(remaining).filter((serviceId) => {
+        const policy = normalizeStartPolicy(this.getRuntime(serviceId).definition.startPolicy)
+        const dependencies = [
+          ...policy.requiredDependencies,
+          ...(includeOptionalDependencies ? policy.optionalDependencies : []),
+        ]
+        return dependencies.every((dependencyId) => !remaining.has(dependencyId))
+      })
+
+      if (layer.length === 0) {
+        throw new ServiceManagerError('Start dependencies contain a cycle.', 409)
+      }
+
+      layers.push(layer)
+      for (const serviceId of layer) remaining.delete(serviceId)
+    }
+
+    return layers
+  }
+
+  private async startPlannedService(
+    serviceId: string,
+    touched: Set<string>,
+    options: { optional: boolean; waitForReady: boolean },
+  ): Promise<void> {
+    const runtime = this.getRuntime(serviceId)
+
+    if (await this.isRuntimeReady(runtime)) {
+      touched.add(serviceId)
+      return
+    }
+
+    if (!runtime.definition.command) {
+      if (options.optional) return
+
+      throw new ServiceManagerError(
+        runtime.definition.unavailableReason || `${runtime.definition.name} is not startable.`,
+        409,
+      )
+    }
+
+    try {
+      await this.start(serviceId)
+    } catch (error) {
+      if (
+        error instanceof ServiceManagerError &&
+        runtime.status === 'external' &&
+        (await this.isRuntimeReady(runtime))
+      ) {
+        touched.add(serviceId)
+        return
+      }
+
+      throw error
+    }
+
+    touched.add(serviceId)
+    if (options.waitForReady) await this.waitForRuntimeReady(runtime)
+  }
+
   private resetRun(runtime: TRuntimeService): void {
     runtime.logs = []
     runtime.logChars = 0
@@ -396,7 +493,7 @@ export class ServiceManager {
       checking = true
 
       try {
-        if (runtime.definition.port && (await isPortListening(runtime.definition.port))) {
+        if (await isDefinitionReady(runtime.definition, this.portProbe)) {
           runtime.status = 'running'
           this.clearReadinessTimer(runtime)
           this.emitStatus(runtime)
@@ -446,14 +543,14 @@ export class ServiceManager {
   }
 
   private async waitForPortRelease(runtime: TRuntimeService): Promise<void> {
-    const { port } = runtime.definition
-    if (!port) return
+    const ports = getDefinitionPorts(runtime.definition)
+    if (ports.length === 0) return
 
     const deadline = Date.now() + RESTART_PORT_RELEASE_TIMEOUT_MS
-    while (await this.portProbe(port)) {
+    while (await anyPortListening(ports, this.portProbe)) {
       if (Date.now() >= deadline) {
         throw new ServiceManagerError(
-          `${runtime.definition.name} stopped, but port ${port} did not become available for restart.`,
+          `${runtime.definition.name} stopped, but ports ${ports.join(', ')} did not become available for restart.`,
           409,
         )
       }
@@ -480,10 +577,7 @@ export class ServiceManager {
   private async isRuntimeReady(runtime: TRuntimeService): Promise<boolean> {
     if (!['running', 'external'].includes(runtime.status)) return false
 
-    const { port, url, id } = runtime.definition
-    if (url) return isHealthReady(url, id)
-    if (port) return this.portProbe(port)
-    return true
+    return isDefinitionReady(runtime.definition, this.portProbe)
   }
 
   private async refreshExternalStates(): Promise<void> {
@@ -498,7 +592,10 @@ export class ServiceManager {
           return
         }
 
-        const nextStatus: TServiceStatus = (await this.portProbe(runtime.definition.port))
+        const nextStatus: TServiceStatus = (await isDefinitionReady(
+          runtime.definition,
+          this.portProbe,
+        ))
           ? 'external'
           : 'stopped'
 
@@ -537,6 +634,16 @@ export class ServiceManager {
       portlessName: definition.portlessName ?? null,
       portlessUrl: definition.portlessUrl ?? null,
       portlessAppUrl: definition.portlessAppUrl ?? null,
+      endpoints: (definition.endpoints ?? []).map((endpoint) => ({
+        id: endpoint.id,
+        label: endpoint.label,
+        port: endpoint.port ?? null,
+        url: endpoint.url ?? null,
+        appUrl: endpoint.appUrl ?? null,
+        portlessName: endpoint.portlessName ?? null,
+        portlessUrl: endpoint.portlessUrl ?? null,
+        portlessAppUrl: endpoint.portlessAppUrl ?? null,
+      })),
       status: runtime.status,
       pid: runtime.pid,
       startedAt: runtime.startedAt,
@@ -581,6 +688,61 @@ async function isHealthReady(url: string, serviceId: string): Promise<boolean> {
   } catch {
     return false
   }
+}
+
+async function isDefinitionReady(
+  definition: TServiceDefinition,
+  portProbe: (port: number) => Promise<boolean>,
+): Promise<boolean> {
+  if (definition.endpoints?.length) {
+    return (
+      await Promise.all(
+        definition.endpoints.map((endpoint) => isEndpointReady(endpoint, definition.id, portProbe)),
+      )
+    ).every(Boolean)
+  }
+
+  const { port, url, id } = definition
+  if (url) return isHealthReady(url, id)
+  if (port) return portProbe(port)
+  return true
+}
+
+async function isEndpointReady(
+  endpoint: NonNullable<TServiceDefinition['endpoints']>[number],
+  serviceId: string,
+  portProbe: (port: number) => Promise<boolean>,
+): Promise<boolean> {
+  if (endpoint.url) return isHealthReady(endpoint.url, serviceId)
+  if (endpoint.port) return portProbe(endpoint.port)
+  return true
+}
+
+function getDefinitionPorts(definition: TServiceDefinition): number[] {
+  const ports = [
+    definition.port,
+    ...(definition.endpoints ?? []).map((endpoint) => endpoint.port),
+  ].filter((port): port is number => typeof port === 'number')
+
+  return [...new Set(ports)]
+}
+
+async function anyPortListening(
+  ports: readonly number[],
+  portProbe: (port: number) => Promise<boolean>,
+): Promise<boolean> {
+  return (await Promise.all(ports.map((port) => portProbe(port)))).some(Boolean)
+}
+
+async function getListeningDefinitionPorts(
+  definition: TServiceDefinition,
+  portProbe: (port: number) => Promise<boolean>,
+): Promise<number[]> {
+  const ports = getDefinitionPorts(definition)
+  const checks = await Promise.all(
+    ports.map(async (port) => [port, await portProbe(port)] as const),
+  )
+  return checks.filter(([, listening]) => listening).map(([port]) => port)
 }
 
 function isPortListening(port: number): Promise<boolean> {

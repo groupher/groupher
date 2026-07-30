@@ -15,6 +15,8 @@ type TMeta = {
 export type TModerator = {
   isRoot?: boolean
   passportItemCount: number
+  rules?: Record<string, boolean>
+  globalRules?: Record<string, boolean>
   user: TSimpleUser
   pending?: boolean
 }

@@ -84,12 +84,13 @@ token 由 Phoenix 针对具体服务和操作签发。两者不能混用。
 子应用的本地域名、HTTPS、Gateway 入口和端口映射约定见
 [`Portless 本地子应用域名`](./portless.md)。Portless 只负责本地寻址和生产域名
 形态模拟，不替代 Dev Hub 的进程管理，也不改变各子应用的部署边界。
+服务间 endpoint 的命名和注入约定见 [`子应用地址配置`](./service-endpoints.md)。
 
 ## 子应用清单
 
 | 子应用                                          | 运行形态                  | UI 所在位置            | 定位                               | 当前状态                         |
 | ----------------------------------------------- | ------------------------- | ---------------------- | ---------------------------------- | -------------------------------- |
-| [`content-import`](./content-import.md)         | Node/Hono + Workflow      | Dashboard              | 多来源内容导入和标准化             | 逻辑目前位于 Dashboard，计划迁出 |
+| [`content-import`](./content-import.md)         | Node/Hono + Workflow      | Dashboard              | 多来源内容导入和标准化             | 已独立承载 server implementation |
 | [`document-converter`](./document-converter.md) | Python/FastAPI            | 无独立 UI              | 单文件到 Markdown 的格式转换       | 已有独立服务                     |
 | [`assets-hub`](./assets-hub.md)                 | Node/Hono                 | Dashboard              | 上传、校验、媒体处理和多存储执行层 | 规划中                           |
 | [`apply`](./apply.md)                           | 独立 Next.js 前端         | 独立 UI                | 社区申请与创建流程                 | 规划中                           |

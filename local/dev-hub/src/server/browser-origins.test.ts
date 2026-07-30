@@ -10,7 +10,7 @@ import { SERVICE_DEFINITIONS } from './services.ts'
 
 const originsByService = buildBrowserOriginsByService(SERVICE_DEFINITIONS)
 
-test('browser metrics accept raw-port and Portless origins for each frontend', () => {
+test('browser metrics accept raw-port and Portless origins for browser-facing services', () => {
   assert.deepEqual(Array.from(originsByService.get('dashboard') || []).sort(), [
     'http://127.0.0.1:3001',
     'http://localhost:3001',

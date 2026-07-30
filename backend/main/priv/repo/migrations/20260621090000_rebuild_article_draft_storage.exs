@@ -38,7 +38,22 @@ defmodule GroupherServer.Repo.Migrations.RebuildArticleDraftStorage do
       unique_index(:article_drafts, [:community_id, :template_key], prefix: @prefix)
     )
 
-    create_if_not_exists(index(:doc_tree_node_drafts, [:article_draft_id], prefix: @prefix))
+    execute("""
+    DO $$
+    BEGIN
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = '#{@prefix}'
+          AND table_name = 'doc_tree_node_drafts'
+          AND column_name = 'article_draft_id'
+      ) THEN
+        CREATE INDEX IF NOT EXISTS doc_tree_node_drafts_article_draft_id_index
+          ON #{@prefix}.doc_tree_node_drafts (article_draft_id);
+      END IF;
+    END
+    $$;
+    """)
 
     execute("DELETE FROM cms.article_snapshots WHERE type = 'draft';")
 
@@ -90,8 +105,8 @@ defmodule GroupherServer.Repo.Migrations.RebuildArticleDraftStorage do
       remove_if_exists(:doc_draft_id, :bigint)
     end
 
-    drop_if_exists(table(:doc_content_drafts, prefix: @prefix))
-    drop_if_exists(table(:doc_drafts, prefix: @prefix))
+    execute("DROP TABLE IF EXISTS #{@prefix}.doc_content_drafts CASCADE;")
+    execute("DROP TABLE IF EXISTS #{@prefix}.doc_drafts CASCADE;")
   end
 
   def down do

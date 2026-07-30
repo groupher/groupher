@@ -248,7 +248,14 @@ defmodule GroupherServer.CMS.Articles.List do
   end
 
   defp normalize_article_entries(%{entries: entries} = articles, thread) do
-    entries = Enum.map(entries, &normalize_article_entry(&1, thread))
+    entries =
+      entries
+      |> Enum.map(&normalize_article_entry(&1, thread))
+      |> CMS.Snapshot.users_in([
+        [:meta, :latest_upvoted_users],
+        [:meta, :latest_collected_users]
+      ])
+
     Map.put(articles, :entries, entries)
   end
 

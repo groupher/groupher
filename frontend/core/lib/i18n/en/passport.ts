@@ -55,6 +55,7 @@ export default {
   'passport.rule.moderator.set': 'Add moderators',
   'passport.rule.moderator.unset': 'Remove moderators',
   'passport.rule.moderator.update': 'Update moderators',
+  'passport.rule.asset.upload': 'Upload assets',
   'passport.rule.edit': 'Edit',
   'passport.rule.pin': 'Pin',
   'passport.rule.undo_pin': 'Unpin',

@@ -6,6 +6,9 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Inspire Me | Feedback platform ideas',
   description: 'Explore public feedback posts from product feedback platforms.',
+  icons: {
+    icon: '/favicon.svg',
+  },
   openGraph: {
     title: 'Inspire Me | Feedback platform ideas',
     description: 'Explore public feedback posts from product feedback platforms.',

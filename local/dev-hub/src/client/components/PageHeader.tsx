@@ -11,6 +11,7 @@ type TProps = {
   connected: boolean
   viewMode: THubViewMode
   onOpenDiff: (scope: TGitDiffScope) => void
+  onOpenInfra: () => void
   onViewModeChange: (mode: THubViewMode) => void
 }
 
@@ -20,6 +21,7 @@ export function PageHeader({
   connected,
   viewMode,
   onOpenDiff,
+  onOpenInfra,
   onViewModeChange,
 }: TProps) {
   return (
@@ -29,7 +31,13 @@ export function PageHeader({
         <span>HUB</span>
       </a>
 
-      <HubStatusPanel services={services} git={git} connected={connected} onOpenDiff={onOpenDiff} />
+      <HubStatusPanel
+        services={services}
+        git={git}
+        connected={connected}
+        onOpenDiff={onOpenDiff}
+        onOpenInfra={onOpenInfra}
+      />
       <ViewModeSwitch value={viewMode} onChange={onViewModeChange} />
     </header>
   )

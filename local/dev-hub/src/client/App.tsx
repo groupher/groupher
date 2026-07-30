@@ -21,6 +21,9 @@ const DependencyDrawer = lazy(() =>
     default: module.DependencyDrawer,
   })),
 )
+const InfraDrawer = lazy(() =>
+  import('@/components/InfraDrawer').then((module) => ({ default: module.InfraDrawer })),
+)
 const FlowView = lazy(() =>
   import('@/components/FlowView').then((module) => ({ default: module.FlowView })),
 )
@@ -135,6 +138,7 @@ export function App() {
           connected={connected}
           viewMode={viewMode}
           onOpenDiff={(scope) => setActiveDrawer({ kind: 'git', scope })}
+          onOpenInfra={() => setActiveDrawer({ kind: 'infra' })}
           onViewModeChange={handleViewModeChange}
         />
         <MetricsNoticeBar notices={metricNotices} />
@@ -226,6 +230,11 @@ export function App() {
           onScopeChange={(scope) => setActiveDrawer({ kind: 'git', scope })}
           onClose={closeDrawer}
         />
+        {activeDrawer?.kind === 'infra' ? (
+          <Suspense fallback={null}>
+            <InfraDrawer onClose={closeDrawer} />
+          </Suspense>
+        ) : null}
         {metricsService ? (
           <Suspense fallback={null}>
             <MetricsDrawer

@@ -4,7 +4,9 @@ import type {
   TServiceMetricsSnapshot,
   TServiceStartMode,
 } from '@shared/contracts'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+
+import { buildServiceViewModel } from '@/lib/service-view-model'
 
 import { ServiceCard } from './ServiceCard'
 import { TerminalPanel } from './TerminalPanel'
@@ -34,7 +36,6 @@ const ACTIVE_SERVICE_STATUSES = new Set<TPublicService['status']>([
   'starting',
   'external',
 ])
-const STARTED_DEPENDENCY_STATUSES = new Set<TPublicService['status']>(['running', 'external'])
 
 const isCompactService = (service: TPublicService) =>
   service.status === 'stopped' || service.status === 'unavailable'
@@ -84,8 +85,8 @@ export function ServiceSection({
   onOpenDependencies,
 }: TProps) {
   const servicesPerRow = useServicesPerRow()
+  const serviceViewModel = useMemo(() => buildServiceViewModel(services), [services])
   const groupedServices = services.filter((service) => service.group === group)
-  const serviceById = new Map(services.map((service) => [service.id, service]))
   const activeCount = groupedServices.filter((service) =>
     ACTIVE_SERVICE_STATUSES.has(service.status),
   ).length
@@ -122,17 +123,9 @@ export function ServiceSection({
             <div className='service-grid'>
               {row.map((service) =>
                 (() => {
-                  const requiredDependencies = service.startPolicy.requiredDependencies
-                  const hasRequiredDependencyIssue = requiredDependencies.some((dependencyId) => {
-                    const dependency = serviceById.get(dependencyId)
-                    return !dependency || !STARTED_DEPENDENCY_STATUSES.has(dependency.status)
-                  })
-                  const hasOptionalDependencyIssue =
-                    !hasRequiredDependencyIssue &&
-                    service.startPolicy.optionalDependencies.some((dependencyId) => {
-                      const dependency = serviceById.get(dependencyId)
-                      return !dependency || !STARTED_DEPENDENCY_STATUSES.has(dependency.status)
-                    })
+                  const dependencyState = serviceViewModel.dependencyStateByServiceId.get(
+                    service.id,
+                  )
 
                   return (
                     <ServiceCard
@@ -141,11 +134,15 @@ export function ServiceSection({
                       metrics={metricsByService[service.id]}
                       expanded={!isCompactService(service) && expandedIds.has(service.id)}
                       pending={pendingIds.has(service.id)}
-                      hasRequiredDependencyIssue={hasRequiredDependencyIssue}
-                      hasStartedRequiredDependencies={
-                        requiredDependencies.length > 0 && !hasRequiredDependencyIssue
+                      hasRequiredDependencyIssue={
+                        dependencyState?.hasRequiredDependencyIssue || false
                       }
-                      hasOptionalDependencyIssue={hasOptionalDependencyIssue}
+                      hasStartedRequiredDependencies={
+                        dependencyState?.hasStartedRequiredDependencies || false
+                      }
+                      hasOptionalDependencyIssue={
+                        dependencyState?.hasOptionalDependencyIssue || false
+                      }
                       onToggleService={onToggleService}
                       onStartService={onStartService}
                       onRestartService={onRestartService}

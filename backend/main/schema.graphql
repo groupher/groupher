@@ -113,13 +113,19 @@ type RootQueryType {
   community(slug: String!, incViews: Boolean): Community
 
   "paged assets owned by a community"
-  pagedCommunityAssets(community: String!, filter: PagiFilter): PagedCommunityAssets
+  pagedCommunityAssets(community: String!, filter: CommunityAssetFilter): PagedCommunityAssets
+
+  "community asset filter stats and storage quota"
+  communityAssetStats(community: String!, filter: CommunityAssetFilter): CommunityAssetStats
 
   "community asset storage usage"
   communityAssetUsage(community: String!): CommunityAssetUsage
 
   "paged article references for one community asset"
   communityAssetRefs(community: String!, assetId: ID!, filter: PagiFilter): PagedArticleDocumentAssetRefs
+
+  "server-trusted public-read origin metadata for one community asset"
+  communityAssetOriginInfo(publicRef: String!): CommunityAssetOriginInfo
 
   "Get all passport rules available to the current user."
   allPassportRules: AllRules
@@ -278,6 +284,12 @@ type RootMutationType {
 
   "register an uploaded asset into the community asset library"
   registerCommunityAsset(community: String!, asset: CommunityAssetInput!): CommunityAsset
+
+  "create a short-lived assets-hub upload intent"
+  createCommunityAssetUploadIntent(community: String!, file: CommunityAssetUploadFileInput!): CommunityAssetUploadIntent
+
+  "complete a verified assets-hub upload"
+  completeCommunityAssetUpload(input: CommunityAssetUploadCompletionInput!): CommunityAsset
 
   "delete an unreferenced community asset from the asset library"
   deleteCommunityAsset(community: String!, id: ID!): CommunityAsset
@@ -1418,6 +1430,8 @@ type CommonComment {
 
 type CommunityAsset {
   id: ID
+  publicRef: String
+  thread: Thread
   assetType: CommunityAssetType
   status: CommunityAssetStatus
   title: String
@@ -1460,7 +1474,47 @@ type CommunityAssetUsage {
   storageBytes: BigInt
 }
 
+type CommunityAssetThreadStat {
+  thread: Thread!
+  count: Int!
+}
+
+type CommunityAssetSubtypeStat {
+  key: String!
+  label: String!
+  count: Int!
+}
+
+type CommunityAssetTypeStat {
+  assetType: CommunityAssetType!
+  count: Int!
+  subtypes: [CommunityAssetSubtypeStat!]!
+}
+
+type CommunityAssetStats {
+  totalCount: Int!
+  storageBytes: BigInt!
+  storageLimitBytes: BigInt!
+  byThread: [CommunityAssetThreadStat!]!
+  byAssetType: [CommunityAssetTypeStat!]!
+}
+
+type CommunityAssetOriginInfo {
+  publicRef: String!
+  status: CommunityAssetStatus!
+  deletedAt: DateTime
+  filename: String
+  storage: String
+  storageKey: String
+  mimeType: String
+  sizeBytes: BigInt
+  width: Int
+  height: Int
+  meta: Json
+}
+
 input CommunityAssetInput {
+  thread: Thread
   assetType: CommunityAssetType
   title: String
   filename: String
@@ -1470,6 +1524,53 @@ input CommunityAssetInput {
   storageKey: String
   contentHash: String
   sizeBytes: BigInt!
+  width: Int
+  height: Int
+  meta: Json
+}
+
+type CommunityAssetUploadIntent {
+  uploadRef: String!
+  assetPublicRef: String!
+  objectKey: String!
+  capability: String!
+  expiresAt: DateTime!
+  maxSizeBytes: BigInt!
+  allowedMimeTypes: [String!]!
+}
+
+input CommunityAssetUploadFileInput {
+  filename: String!
+  mimeType: String!
+  sizeBytes: BigInt!
+  checksumSha256: String
+  thread: Thread
+  assetType: CommunityAssetType
+}
+
+input CommunityAssetFilter {
+  page: Int
+  size: Int
+  query: String
+  thread: Thread
+  assetType: CommunityAssetType
+  subtypes: [String!]
+}
+
+input CommunityAssetUploadCompletionInput {
+  idempotencyKey: String!
+  communityId: ID!
+  uploaderId: ID
+  assetPublicRef: String!
+  url: String!
+  storage: String!
+  storageKey: String!
+  contentHash: String!
+  sizeBytes: BigInt!
+  filename: String
+  mimeType: String
+  thread: Thread
+  assetType: CommunityAssetType
   width: Int
   height: Int
   meta: Json

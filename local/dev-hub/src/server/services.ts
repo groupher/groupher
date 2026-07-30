@@ -9,6 +9,7 @@ import type {
   TServiceStartPolicy,
   TTechnologyStack,
 } from '../shared/contracts.ts'
+import { LOCAL_SERVICE_ENDPOINTS, LOCAL_SERVICE_GRAPHQL_ENDPOINTS } from './service-endpoints.ts'
 
 export type TServiceConfigDefinition =
   | {
@@ -51,14 +52,25 @@ export type TServiceDefinition = {
   portlessName?: string
   portlessUrl?: string
   portlessAppUrl?: string
+  endpoints?: Array<{
+    id: string
+    label: string
+    port?: number
+    url?: string
+    appUrl?: string
+    portlessName?: string
+    portlessUrl?: string
+    portlessAppUrl?: string
+  }>
   unavailableReason?: string
   metrics: TMetricThresholds
+  browserMetrics?: boolean
   startPolicy?: Partial<TServiceStartPolicy>
 }
 
 export const REPO_ROOT = fileURLToPath(new URL('../../../../', import.meta.url))
 const fromRoot = (...parts: string[]): string => path.join(REPO_ROOT, ...parts)
-const converterExecutable = fromRoot('services/document-converter/.venv/bin/uvicorn')
+const converterPythonExecutable = fromRoot('backend/document-converter/.venv/bin/python')
 const MB = 1024 * 1024
 const FRONTEND_METRICS: TMetricThresholds = {
   serverCpuPercent: 90,
@@ -79,30 +91,35 @@ const APP_CHAIN_POLICY = {
   optionalDependencies: ['document-converter'],
 } satisfies TServiceStartPolicy
 
+const DASHBOARD_CHAIN_POLICY = {
+  ...APP_CHAIN_POLICY,
+  optionalDependencies: ['assets-hub', 'content-import', 'document-converter'],
+} satisfies TServiceStartPolicy
+
 export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
   {
     id: 'gateway',
     name: 'Gateway',
     description: 'Routing and edge application',
-    group: 'frontend',
+    group: 'backend',
     monogram: 'GW',
     technologies: ['hono', 'nodejs', 'typescript', 'routing'],
     cwd: REPO_ROOT,
     config: {
       kind: 'env-files',
-      root: fromRoot('frontend/gateway'),
+      root: fromRoot('backend/gateway'),
       environment: 'development',
     },
-    command: 'yarn',
-    args: ['run', 'dev:gateway'],
+    command: 'make',
+    args: ['be.gateway.start'],
     env: {
       PORT: '3003',
       NEXT_PUBLIC_SITE_URL: 'https://groupher.localhost',
-      LANDING_SITE: 'http://127.0.0.1:3002',
-      MAIN_SITE: 'http://127.0.0.1:3000',
-      DASHBOARD_SITE: 'http://127.0.0.1:3001',
-      AUTH_SITE: 'http://127.0.0.1:3004',
-      API_SITE: 'http://127.0.0.1:4001',
+      LANDING_SITE: LOCAL_SERVICE_ENDPOINTS.landing,
+      MAIN_SITE: LOCAL_SERVICE_ENDPOINTS.main,
+      DASHBOARD_SITE: LOCAL_SERVICE_ENDPOINTS.dashboard,
+      AUTH_SITE: LOCAL_SERVICE_ENDPOINTS.auth,
+      API_SITE: LOCAL_SERVICE_ENDPOINTS.phoenix,
     },
     port: 3003,
     url: 'http://127.0.0.1:3003/health',
@@ -110,34 +127,36 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     portlessName: 'groupher',
     portlessUrl: 'https://groupher.localhost/health',
     portlessAppUrl: 'https://groupher.localhost/',
-    metrics: FRONTEND_METRICS,
+    metrics: BACKEND_METRICS,
+    browserMetrics: true,
   },
   {
     id: 'auth',
     name: 'Auth',
     description: 'OAuth and browser session boundary',
-    group: 'frontend',
+    group: 'backend',
     monogram: 'AU',
     technologies: ['hono', 'authjs', 'typescript', 'oauth'],
     cwd: REPO_ROOT,
     config: {
       kind: 'env-files',
-      root: fromRoot('frontend/auth'),
+      root: fromRoot('backend/auth'),
       environment: 'development',
     },
     command: 'make',
-    args: ['fe.dev.auth'],
+    args: ['be.auth.start'],
     env: {
       PORT: '3004',
       AUTH_URL: 'https://groupher.localhost',
-      PHOENIX_GRAPHQL_ENDPOINT: 'http://127.0.0.1:4001/graphiql',
+      PHOENIX_GRAPHQL_ENDPOINT: LOCAL_SERVICE_GRAPHQL_ENDPOINTS.phoenix,
       AUTH_COOKIE_DOMAIN: '.groupher.localhost',
     },
     port: 3004,
     url: 'http://127.0.0.1:3004/health',
     portlessName: 'auth',
     portlessUrl: 'https://auth.groupher.localhost/health',
-    metrics: FRONTEND_METRICS,
+    metrics: BACKEND_METRICS,
+    browserMetrics: true,
   },
   {
     id: 'landing',
@@ -201,6 +220,11 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     },
     command: 'make',
     args: ['fe.dev.dsb'],
+    env: {
+      NEXT_PUBLIC_ASSETS_HUB_ENDPOINT: 'https://assets-hub.groupher.localhost',
+      NEXT_PUBLIC_ASSETS_HUB_READ_ENDPOINT: 'https://assets.groupher.localhost',
+      CONTENT_IMPORT_APP_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.contentImport,
+    },
     port: 3001,
     url: 'http://127.0.0.1:3001/health',
     appUrl: 'http://127.0.0.1:3001/home/dashboard',
@@ -208,7 +232,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     portlessUrl: 'https://dashboard.groupher.localhost/health',
     portlessAppUrl: 'https://dashboard.groupher.localhost/home/dashboard',
     metrics: FRONTEND_METRICS,
-    startPolicy: APP_CHAIN_POLICY,
+    startPolicy: DASHBOARD_CHAIN_POLICY,
   },
   {
     id: 'inspire-me',
@@ -255,16 +279,89 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     metrics: BACKEND_METRICS,
   },
   {
+    id: 'content-import',
+    name: 'Content Import',
+    description: 'External source import orchestration',
+    group: 'backend',
+    monogram: 'CI',
+    technologies: ['hono', 'nodejs', 'typescript', 'graphql'],
+    cwd: REPO_ROOT,
+    config: {
+      kind: 'env-files',
+      root: fromRoot('backend/content-import'),
+      environment: 'development',
+    },
+    command: 'make',
+    args: ['be.content-import.start'],
+    env: {
+      DOCUMENT_CONVERTER_APP_ENDPOINT: LOCAL_SERVICE_ENDPOINTS.documentConverter,
+      PHOENIX_GRAPHQL_ENDPOINT: LOCAL_SERVICE_GRAPHQL_ENDPOINTS.phoenix,
+      PORT: '8001',
+    },
+    port: 8001,
+    url: 'http://127.0.0.1:8001/health',
+    portlessName: 'content-import',
+    portlessUrl: 'https://content-import.groupher.localhost/health',
+    metrics: BACKEND_METRICS,
+  },
+  {
+    id: 'assets-hub',
+    name: 'Assets Hub',
+    description: 'S3-compatible asset upload and public read service',
+    group: 'backend',
+    monogram: 'AH',
+    technologies: ['hono', 'nodejs', 'typescript', 'graphql'],
+    cwd: REPO_ROOT,
+    config: {
+      kind: 'env-files',
+      root: fromRoot('backend/assets-hub'),
+      environment: 'development',
+    },
+    command: 'yarn',
+    args: ['dev:assets-hub'],
+    env: {
+      ASSETS_HUB_CORS_ORIGIN:
+        'http://localhost:3003,http://dashboard.groupher.localhost,https://dashboard.groupher.localhost',
+      PORT: '8002',
+    },
+    port: 8002,
+    url: 'http://127.0.0.1:8002/health',
+    portlessName: 'assets-hub',
+    portlessUrl: 'https://assets-hub.groupher.localhost/health',
+    endpoints: [
+      {
+        id: 'upload-api',
+        label: 'Upload API',
+        port: 8002,
+        url: 'http://127.0.0.1:8002/health',
+        portlessName: 'assets-hub',
+        portlessUrl: 'https://assets-hub.groupher.localhost/health',
+        portlessAppUrl: 'https://assets-hub.groupher.localhost/',
+      },
+      {
+        id: 'read-worker',
+        label: 'Read Worker',
+        port: 8787,
+        url: 'http://127.0.0.1:8787/health',
+        appUrl: 'http://127.0.0.1:8787/',
+        portlessName: 'assets',
+        portlessUrl: 'https://assets.groupher.localhost/health',
+        portlessAppUrl: 'https://assets.groupher.localhost/',
+      },
+    ],
+    metrics: BACKEND_METRICS,
+  },
+  {
     id: 'document-converter',
-    name: 'Converter',
+    name: 'Document-converter',
     description: 'Documents to Markdown service',
     group: 'backend',
     monogram: 'CV',
     technologies: ['python', 'fastapi', 'markitdown', 'uvicorn'],
-    cwd: fromRoot('services/document-converter'),
+    cwd: REPO_ROOT,
     config: {
       kind: 'python-settings',
-      root: fromRoot('services/document-converter'),
+      root: fromRoot('backend/document-converter'),
       files: ['settings.py'],
       environmentKeys: [
         'DOCUMENT_CONVERTER_MAX_BYTES',
@@ -274,29 +371,19 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
         'DOCUMENT_CONVERTER_ALLOWED_ORIGINS',
       ],
     },
-    command: existsSync(converterExecutable) ? converterExecutable : undefined,
-    args: ['app:app', '--reload', '--port', '8000'],
+    command: existsSync(converterPythonExecutable) ? 'make' : undefined,
+    args: ['be.document-converter.start'],
     port: 8000,
     url: 'http://127.0.0.1:8000/health',
     portlessName: 'converter',
     portlessUrl: 'https://converter.groupher.localhost/health',
-    unavailableReason: existsSync(converterExecutable)
+    unavailableReason: existsSync(converterPythonExecutable)
       ? undefined
-      : 'Python 3.12 environment is not installed at services/document-converter/.venv.',
+      : 'Python 3.12 environment is not installed at backend/document-converter/.venv.',
     metrics: {
       ...BACKEND_METRICS,
       serverRssBytes: 1_024 * MB,
     },
-  },
-  {
-    id: 'comment-importer',
-    name: 'Comment Importer',
-    description: 'Future standalone comment import worker',
-    group: 'backend',
-    monogram: 'CI',
-    cwd: REPO_ROOT,
-    unavailableReason: 'This capability has not been split into a standalone service yet.',
-    metrics: BACKEND_METRICS,
   },
 ]
 
@@ -349,5 +436,54 @@ export const SERVICE_RELATIONS: TServiceRelation[] = [
     target: 'phoenix',
     kind: 'api',
     label: 'GraphQL',
+  },
+  {
+    id: 'dashboard-content-import',
+    source: 'dashboard',
+    target: 'content-import',
+    kind: 'api',
+    label: '/api/docs/import/*',
+  },
+  {
+    id: 'dashboard-assets-hub',
+    source: 'dashboard',
+    target: 'assets-hub',
+    kind: 'api',
+    label: 'asset upload flow',
+  },
+  {
+    id: 'assets-hub-phoenix',
+    source: 'assets-hub',
+    target: 'phoenix',
+    kind: 'api',
+    label: 'trusted GraphQL',
+  },
+  {
+    id: 'phoenix-assets-hub',
+    source: 'phoenix',
+    target: 'assets-hub',
+    kind: 'api',
+    label: 'asset callbacks',
+  },
+  {
+    id: 'content-import-phoenix',
+    source: 'content-import',
+    target: 'phoenix',
+    kind: 'api',
+    label: 'trusted GraphQL',
+  },
+  {
+    id: 'content-import-document-converter',
+    source: 'content-import',
+    target: 'document-converter',
+    kind: 'api',
+    label: 'file conversion',
+  },
+  {
+    id: 'dashboard-document-converter',
+    source: 'dashboard',
+    target: 'document-converter',
+    kind: 'api',
+    label: '/api/artiment/import -> /convert',
   },
 ]

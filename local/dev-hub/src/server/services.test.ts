@@ -1,14 +1,11 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { SERVICE_DEFINITIONS, SERVICE_RELATIONS } from './services.ts'
+import { LOCAL_SERVICE_ENDPOINTS, LOCAL_SERVICE_GRAPHQL_ENDPOINTS } from './service-endpoints.ts'
+import { REPO_ROOT, SERVICE_DEFINITIONS, SERVICE_RELATIONS } from './services.ts'
 
 test('standalone services declare a four-item technology stack', () => {
-  const standaloneServices = SERVICE_DEFINITIONS.filter(
-    (service) => service.id !== 'comment-importer',
-  )
-
-  for (const service of standaloneServices) {
+  for (const service of SERVICE_DEFINITIONS) {
     assert.equal(service.technologies?.length, 4, service.name)
   }
 })
@@ -36,15 +33,17 @@ test('frontend services keep the intended list order', () => {
     SERVICE_DEFINITIONS.filter((definition) => definition.group === 'frontend').map(
       (definition) => definition.id,
     ),
-    ['gateway', 'auth', 'landing', 'main', 'dashboard', 'inspire-me'],
+    ['landing', 'main', 'dashboard', 'inspire-me'],
   )
 })
 
-test('the not-yet-split comment importer keeps its monogram fallback', () => {
-  const importer = SERVICE_DEFINITIONS.find((definition) => definition.id === 'comment-importer')
-
-  assert.equal(importer?.monogram, 'CI')
-  assert.equal(importer?.technologies, undefined)
+test('backend services keep the intended list order', () => {
+  assert.deepEqual(
+    SERVICE_DEFINITIONS.filter((definition) => definition.group === 'backend').map(
+      (definition) => definition.id,
+    ),
+    ['gateway', 'auth', 'phoenix', 'content-import', 'assets-hub', 'document-converter'],
+  )
 })
 
 test('service relations only reference declared services', () => {
@@ -67,6 +66,17 @@ test('the request flow documents gateway routing and GraphQL dependencies', () =
       { source: 'gateway', target: 'main', label: 'all other routes' },
       { source: 'main', target: 'phoenix', label: 'GraphQL' },
       { source: 'dashboard', target: 'phoenix', label: 'GraphQL' },
+      { source: 'dashboard', target: 'content-import', label: '/api/docs/import/*' },
+      { source: 'dashboard', target: 'assets-hub', label: 'asset upload flow' },
+      { source: 'assets-hub', target: 'phoenix', label: 'trusted GraphQL' },
+      { source: 'phoenix', target: 'assets-hub', label: 'asset callbacks' },
+      { source: 'content-import', target: 'phoenix', label: 'trusted GraphQL' },
+      { source: 'content-import', target: 'document-converter', label: 'file conversion' },
+      {
+        source: 'dashboard',
+        target: 'document-converter',
+        label: '/api/artiment/import -> /convert',
+      },
     ],
   )
 })
@@ -81,9 +91,22 @@ test('only main and dashboard default to a configured start chain', () => {
     requiredDependencies: ['gateway', 'auth', 'phoenix'],
     optionalDependencies: ['document-converter'],
   })
-  assert.deepEqual(startPolicies.dashboard, startPolicies.main)
+  assert.deepEqual(startPolicies.dashboard, {
+    defaultMode: 'chain',
+    requiredDependencies: ['gateway', 'auth', 'phoenix'],
+    optionalDependencies: ['assets-hub', 'content-import', 'document-converter'],
+  })
 
-  for (const id of ['gateway', 'auth', 'landing', 'inspire-me', 'phoenix', 'document-converter']) {
+  for (const id of [
+    'gateway',
+    'auth',
+    'landing',
+    'inspire-me',
+    'phoenix',
+    'assets-hub',
+    'content-import',
+    'document-converter',
+  ]) {
     assert.equal(startPolicies[id], undefined, id)
   }
 })
@@ -99,10 +122,10 @@ test('the managed gateway routes to local frontend ports', () => {
       AUTH_SITE: gateway?.env?.AUTH_SITE,
     },
     {
-      LANDING_SITE: 'http://127.0.0.1:3002',
-      MAIN_SITE: 'http://127.0.0.1:3000',
-      DASHBOARD_SITE: 'http://127.0.0.1:3001',
-      AUTH_SITE: 'http://127.0.0.1:3004',
+      LANDING_SITE: LOCAL_SERVICE_ENDPOINTS.landing,
+      MAIN_SITE: LOCAL_SERVICE_ENDPOINTS.main,
+      DASHBOARD_SITE: LOCAL_SERVICE_ENDPOINTS.dashboard,
+      AUTH_SITE: LOCAL_SERVICE_ENDPOINTS.auth,
     },
   )
 })
@@ -123,13 +146,61 @@ test('service configuration roots stay scoped to each runtime', () => {
   assert.match(configByService.main?.root || '', /frontend\/main$/)
   assert.match(configByService.dashboard?.root || '', /frontend\/dashboard$/)
   assert.match(configByService.landing?.root || '', /frontend\/landing$/)
-  assert.match(configByService.gateway?.root || '', /frontend\/gateway$/)
-  assert.match(configByService.auth?.root || '', /frontend\/auth$/)
+  assert.match(configByService.gateway?.root || '', /backend\/gateway$/)
+  assert.match(configByService.auth?.root || '', /backend\/auth$/)
   assert.match(configByService['inspire-me']?.root || '', /local\/inspire-me$/)
+  assert.match(configByService['content-import']?.root || '', /backend\/content-import$/)
   assert.equal(configByService.phoenix?.kind, 'elixir-config')
   assert.match(configByService.phoenix?.root || '', /backend\/main\/config$/)
-  assert.match(configByService['document-converter']?.root || '', /services\/document-converter$/)
-  assert.equal(configByService['comment-importer'], null)
+  assert.match(configByService['document-converter']?.root || '', /backend\/document-converter$/)
+})
+
+test('gateway and auth start through backend Makefile entrypoints', () => {
+  const gateway = SERVICE_DEFINITIONS.find((definition) => definition.id === 'gateway')
+  const auth = SERVICE_DEFINITIONS.find((definition) => definition.id === 'auth')
+
+  assert.deepEqual(gateway?.args, ['be.gateway.start'])
+  assert.deepEqual(auth?.args, ['be.auth.start'])
+})
+
+test('document converter starts through the repository Makefile entrypoint', () => {
+  const converter = SERVICE_DEFINITIONS.find((definition) => definition.id === 'document-converter')
+
+  assert.equal(converter?.name, 'Document-converter')
+  assert.equal(converter?.cwd, REPO_ROOT)
+  assert.deepEqual(converter?.args, ['be.document-converter.start'])
+})
+
+test('content import runs as a standalone Node service', () => {
+  const contentImport = SERVICE_DEFINITIONS.find((definition) => definition.id === 'content-import')
+
+  assert.equal(contentImport?.cwd, REPO_ROOT)
+  assert.equal(contentImport?.port, 8001)
+  assert.deepEqual(contentImport?.technologies, ['hono', 'nodejs', 'typescript', 'graphql'])
+  assert.deepEqual(contentImport?.args, ['be.content-import.start'])
+})
+
+test('dashboard bulk import routes through the standalone content import service', () => {
+  const dashboard = SERVICE_DEFINITIONS.find((definition) => definition.id === 'dashboard')
+  const contentImport = SERVICE_DEFINITIONS.find((definition) => definition.id === 'content-import')
+
+  assert.equal(
+    dashboard?.env?.NEXT_PUBLIC_ASSETS_HUB_ENDPOINT,
+    'https://assets-hub.groupher.localhost',
+  )
+  assert.equal(
+    dashboard?.env?.NEXT_PUBLIC_ASSETS_HUB_READ_ENDPOINT,
+    'https://assets.groupher.localhost',
+  )
+  assert.equal(dashboard?.env?.CONTENT_IMPORT_APP_ENDPOINT, LOCAL_SERVICE_ENDPOINTS.contentImport)
+  assert.equal(
+    contentImport?.env?.PHOENIX_GRAPHQL_ENDPOINT,
+    LOCAL_SERVICE_GRAPHQL_ENDPOINTS.phoenix,
+  )
+  assert.equal(
+    contentImport?.env?.DOCUMENT_CONVERTER_APP_ENDPOINT,
+    LOCAL_SERVICE_ENDPOINTS.documentConverter,
+  )
 })
 
 test('managed services expose stable Portless names and keep the API under the cookie parent', () => {
@@ -149,7 +220,35 @@ test('managed services expose stable Portless names and keep the API under the c
   assert.equal(dashboard?.portlessUrl, 'https://dashboard.groupher.localhost/health')
   assert.equal(dashboard?.portlessAppUrl, 'https://dashboard.groupher.localhost/home/dashboard')
 
-  for (const id of ['auth', 'landing', 'dashboard', 'inspire-me', 'document-converter']) {
+  const assetsHub = SERVICE_DEFINITIONS.find((definition) => definition.id === 'assets-hub')
+  assert.deepEqual(
+    assetsHub?.endpoints?.map((endpoint) => ({
+      id: endpoint.id,
+      port: endpoint.port,
+      portlessUrl: endpoint.portlessUrl,
+    })),
+    [
+      {
+        id: 'upload-api',
+        port: 8002,
+        portlessUrl: 'https://assets-hub.groupher.localhost/health',
+      },
+      {
+        id: 'read-worker',
+        port: 8787,
+        portlessUrl: 'https://assets.groupher.localhost/health',
+      },
+    ],
+  )
+
+  for (const id of [
+    'auth',
+    'landing',
+    'dashboard',
+    'inspire-me',
+    'content-import',
+    'document-converter',
+  ]) {
     const service = SERVICE_DEFINITIONS.find((definition) => definition.id === id)
     assert.equal(
       new URL(service?.portlessUrl || '').hostname.endsWith('.groupher.localhost'),

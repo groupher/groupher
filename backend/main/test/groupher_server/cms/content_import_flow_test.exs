@@ -121,6 +121,35 @@ defmodule GroupherServer.CMS.ContentImportFlowTest do
     assert completed.counts.pages == 1
   end
 
+  test "applies multiple ready Docs with complete source mappings" do
+    documents = Enum.map(1..6, &document("docs/page-#{&1}.md", "/page-#{&1}"))
+    %{community: community, job: job} = create_job(documents)
+
+    Enum.each(1..6, fn index ->
+      assert {:ok, _job} =
+               Staging.stage(community, job.job_ref, [
+                 %{
+                   external_ref: "docs/page-#{index}.md",
+                   body_bag: body_bag("Published body content #{index}", "#{index}")
+                 }
+               ])
+    end)
+
+    assert {:ok, completed} = Writer.apply(community, job.job_ref)
+    assert completed.status == :completed
+    assert completed.counts.pages == 6
+    assert Repo.aggregate(ImportSourceMapping, :count) == 6
+
+    mappings = Repo.all(from(mapping in ImportSourceMapping, order_by: mapping.external_ref))
+    assert Enum.map(mappings, & &1.external_ref) == Enum.map(1..6, &"docs/page-#{&1}.md")
+    assert Enum.all?(mappings, &String.starts_with?(&1.groupher_hash, "doc-sync-v1:"))
+
+    assert {:ok, tree} = DocTree.read(community)
+    [tab] = tree.tabs
+    [group] = tab.groups
+    assert length(Enum.filter(group.pages, &(&1.type == :page))) == 6
+  end
+
   test "preserves recursive source sections as nested TargetTree groups" do
     {:ok, community} = db_insert(:community)
 

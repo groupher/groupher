@@ -62,13 +62,34 @@ defmodule GroupherServerWeb.Schema.CMS.Mutations.Community do
       resolve(&R.CMS.register_community_asset/3)
     end
 
+    @desc "create a short-lived assets-hub upload intent"
+    field :create_community_asset_upload_intent, :community_asset_upload_intent do
+      arg(:community, non_null(:string))
+      arg(:file, non_null(:community_asset_upload_file_input))
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "asset.upload")
+      middleware(M.FrontDesk, :community)
+
+      resolve(&R.CMS.create_community_asset_upload_intent/3)
+    end
+
+    @desc "complete a verified assets-hub upload"
+    field :complete_community_asset_upload, :community_asset do
+      arg(:input, non_null(:community_asset_upload_completion_input))
+
+      middleware(M.ServerTrust)
+
+      resolve(&R.CMS.complete_community_asset_upload/3)
+    end
+
     @desc "delete an unreferenced community asset from the asset library"
     field :delete_community_asset, :community_asset do
       arg(:community, non_null(:string))
       arg(:id, non_null(:id))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "community.update")
+      middleware(M.Passport, action: "asset.upload")
       middleware(M.FrontDesk, :community)
 
       resolve(&R.CMS.delete_community_asset/3)

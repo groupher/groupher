@@ -1,14 +1,18 @@
-name: Build frontend gateway
+name: Build backend gateway
 
 on:
   push:
     paths:
-      - 'frontend/gateway/**' # only trigger when this dir changes
-      - '!frontend/gateway/vercel.json'
+      - 'backend/gateway/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - 'Makefile'
   pull_request:
     paths:
-      - 'frontend/gateway/**'
-      - '!frontend/gateway/vercel.json'
+      - 'backend/gateway/**'
+      - 'package.json'
+      - 'yarn.lock'
+      - 'Makefile'
 
 jobs:
   build:
@@ -33,16 +37,8 @@ jobs:
           corepack enable
           yarn install --immutable
 
-      - name: Restore Turbopack build cache
-        uses: actions/cache@v4
-        with:
-          path: frontend/gateway/.next/cache
-          key: ${{ runner.os }}-next-gateway-${{ hashFiles('yarn.lock', 'frontend/gateway/**') }}
-          restore-keys: |
-            ${{ runner.os }}-next-gateway-
-
       - name: Run Gateway Tests
-        run: make fe.test.gateway
+        run: make be.gateway.test
 
       - name: Build Project
-        run: yarn run build:prod:gateway
+        run: make be.gateway.build

@@ -7,16 +7,21 @@ import react from '@vitejs/plugin-react'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { defineConfig } from 'vitest/config'
 
-// This config is shared by all `frontend/*` apps.
+// This config is shared by frontend apps and Hono backend apps.
 // Run with: `vitest --config frontend/core/vitest.config.mts`
 const configDir = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(configDir, '../..')
 
-const tsconfigProjects = fs
-  .readdirSync(path.join(repoRoot, 'frontend'), { withFileTypes: true })
-  .filter((d) => d.isDirectory())
-  .map((d) => path.join('frontend', d.name, 'tsconfig.json'))
-  .filter((p) => fs.existsSync(path.join(repoRoot, p)))
+const workspaceTsconfigProjects = (workspaceRoot: string) =>
+  fs
+    .readdirSync(path.join(repoRoot, workspaceRoot), { withFileTypes: true })
+    .filter((d) => d.isDirectory())
+    .map((d) => path.join(workspaceRoot, d.name, 'tsconfig.json'))
+    .filter((p) => fs.existsSync(path.join(repoRoot, p)))
+
+const tsconfigProjects = ['frontend', 'backend'].flatMap((workspaceRoot) =>
+  workspaceTsconfigProjects(workspaceRoot),
+)
 
 export default defineConfig({
   root: repoRoot,
@@ -33,7 +38,11 @@ export default defineConfig({
     // Colocated tests convention for this monorepo.
     // - legacy: `frontend/**/tests/**/*.test.{ts,tsx}`
     // - new: colocate beside modules (e.g. `hooks/useX/index.test.tsx`)
-    include: ['frontend/**/*.test.{ts,tsx}'],
+    include: [
+      'frontend/**/*.test.{ts,tsx}',
+      'backend/auth/**/*.test.{ts,tsx}',
+      'backend/gateway/**/*.test.{ts,tsx}',
+    ],
     exclude: ['**/node_modules/**', '**/.next/**', '**/dist/**', '**/build/**'],
 
     globals: true,

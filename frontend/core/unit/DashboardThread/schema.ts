@@ -1012,6 +1012,14 @@ const updateModerators = gql`
   }
 `
 
+const userPassport = gql`
+  query ($login: String!) {
+    user(login: $login) {
+      passportString
+    }
+  }
+`
+
 const searchUsers = gql`
   query ($name: String!) {
     searchUsers(name: $name) {
@@ -1121,6 +1129,111 @@ const openGraphInfo = gql`
   }
 `
 
+const createCommunityAssetUploadIntent = gql`
+  mutation ($community: String!, $file: CommunityAssetUploadFileInput!) {
+    createCommunityAssetUploadIntent(community: $community, file: $file) {
+      uploadRef
+      assetPublicRef
+      objectKey
+      capability
+      expiresAt
+      maxSizeBytes
+      allowedMimeTypes
+    }
+  }
+`
+
+const pagedCommunityAssets = gql`
+  query ($community: String!, $filter: CommunityAssetFilter) {
+    pagedCommunityAssets(community: $community, filter: $filter) {
+      entries {
+        id
+        publicRef
+        thread
+        assetType
+        status
+        filename
+        mimeType
+        sizeBytes
+        storage
+        storageKey
+        contentHash
+        width
+        height
+        url
+        uploader {
+          login
+          nickname
+        }
+        deletedAt
+        insertedAt
+      }
+      pageNumber
+      pageSize
+      totalCount
+      totalPages
+    }
+  }
+`
+
+const communityAssetStats = gql`
+  query ($community: String!, $filter: CommunityAssetFilter) {
+    communityAssetStats(community: $community, filter: $filter) {
+      totalCount
+      storageBytes
+      storageLimitBytes
+      byThread {
+        thread
+        count
+      }
+      byAssetType {
+        assetType
+        count
+        subtypes {
+          key
+          label
+          count
+        }
+      }
+    }
+  }
+`
+
+const communityAssetRefs = gql`
+  query ($community: String!, $assetId: ID!, $filter: PagiFilter) {
+    communityAssetRefs(community: $community, assetId: $assetId, filter: $filter) {
+      entries {
+        id
+        thread
+        articleId
+        usage
+        blockId
+        blockType
+        position
+        title
+        alt
+        source
+        insertedAt
+      }
+      pageNumber
+      pageSize
+      totalCount
+      totalPages
+    }
+  }
+`
+
+const deleteCommunityAsset = gql`
+  mutation ($community: String!, $id: ID!) {
+    deleteCommunityAsset(community: $community, id: $id) {
+      id
+      publicRef
+      status
+      deletedAt
+    }
+  }
+`
+
 const schema = {
   communityBaseInfo,
   communitySocialLinks,
@@ -1172,11 +1285,17 @@ const schema = {
   updateDocCoverCardAppearance,
   updatePinnedDocAppearance,
   updateModerators,
+  userPassport,
   searchUsers,
   addModerator,
   addModerators,
   communityOverview,
   openGraphInfo,
+  createCommunityAssetUploadIntent,
+  pagedCommunityAssets,
+  communityAssetStats,
+  communityAssetRefs,
+  deleteCommunityAsset,
   updateDashboardHeaderLinks,
   updateDashboardFooterLinks,
   updateDashboardFooterOnelineLinks,

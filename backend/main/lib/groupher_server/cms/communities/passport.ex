@@ -51,8 +51,7 @@ defmodule GroupherServer.CMS.Communities.Passport do
   """
   @spec stamp_passport(term(), User.t()) :: T.domain_res(term())
   def stamp_passport(rules, %User{id: user_id}) do
-    with {:ok, rules} <- validate_shape(rules),
-         true <- PermissionRegistry.valid_rules?(rules) do
+    with {:ok, rules} <- validate_shape(rules) do
       case ORM.find_by(UserPassport, user_id: user_id) do
         {:ok, passport} ->
           merged_rules =
@@ -70,23 +69,25 @@ defmodule GroupherServer.CMS.Communities.Passport do
     else
       {:error, :invalid_passport_shape} ->
         {:error, {:invalid_passport_shape, "passport rules must contain global"}}
-
-      false ->
-        {:error, {:invalid_passport_permission, "contains invalid permission key"}}
     end
   end
 
   @spec erase_passport(term(), User.t()) :: T.domain_res(term())
   def erase_passport(rules_path, %User{id: user_id}) when is_list(rules_path) do
-    with {:ok, passport} <- ORM.find_by(UserPassport, user_id: user_id),
-         {:ok, rules_path} <- validate_erase_path(rules_path) do
-      case pop_in(passport.rules, rules_path) do
-        {nil, _} ->
-          {:ok, passport}
+    with {:ok, rules_path} <- validate_erase_path(rules_path) do
+      case ORM.find_by(UserPassport, user_id: user_id) do
+        {:ok, passport} ->
+          case pop_in(passport.rules, rules_path) do
+            {nil, _} ->
+              {:ok, passport}
 
-        {_, lefts} ->
-          lefts = lefts |> PermissionRegistry.normalize_rules() |> reject_invalid_rules()
-          passport |> ORM.update(%{rules: lefts})
+            {_, lefts} ->
+              lefts = lefts |> PermissionRegistry.normalize_rules() |> reject_invalid_rules()
+              passport |> ORM.update(%{rules: lefts})
+          end
+
+        {:error, _} ->
+          {:ok, :pass}
       end
     end
   end
@@ -128,10 +129,40 @@ defmodule GroupherServer.CMS.Communities.Passport do
     cleaned =
       rules
       |> NestedFilter.drop_by_value([false])
+      |> drop_invalid_permission_keys()
       |> reject_empty_values()
 
     Map.put(cleaned, "global", Map.get(cleaned, "global", %{}))
   end
+
+  defp drop_invalid_permission_keys(%{"global" => global} = rules) do
+    rules
+    |> Enum.reduce(%{"global" => valid_rule_map("global", global)}, fn
+      {"global", _global}, acc ->
+        acc
+
+      {community_slug, %{"root" => true} = community_rules}, acc ->
+        Map.put(acc, community_slug, Map.take(community_rules, ["root"]))
+
+      {community_slug, %{"cms" => cms_rules}}, acc ->
+        Map.put(acc, community_slug, %{"cms" => valid_rule_map("cms", cms_rules)})
+
+      {_community_slug, _community_rules}, acc ->
+        acc
+    end)
+  end
+
+  defp drop_invalid_permission_keys(_), do: %{"global" => %{}}
+
+  defp valid_rule_map(context, rules) when is_map(rules) do
+    rules
+    |> Enum.filter(fn {permission, enabled} ->
+      enabled == true and PermissionRegistry.valid_context_permission?(context, permission)
+    end)
+    |> Map.new()
+  end
+
+  defp valid_rule_map(_context, _rules), do: %{}
 
   defp reject_empty_values(map) when is_map(map) do
     map

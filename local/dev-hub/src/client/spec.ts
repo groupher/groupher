@@ -4,6 +4,7 @@ export type THubViewMode = 'list' | 'flow'
 
 export type THubDrawer =
   | { kind: 'git'; scope: TGitDiffScope }
+  | { kind: 'infra' }
   | { kind: 'metrics'; serviceId: string }
   | { kind: 'config'; serviceId: string }
   | { kind: 'dependencies'; serviceId: string }

@@ -33,7 +33,7 @@ defmodule GroupherServer.CMS.FrontDesk do
     Community
     |> where([c], c.slug == ^slug or c.aka == ^slug)
     |> preload(:dashboard)
-    |> preload(moderators: :user)
+    |> preload(moderators: [:community, :user])
     |> Repo.one()
     |> done()
     |> case do

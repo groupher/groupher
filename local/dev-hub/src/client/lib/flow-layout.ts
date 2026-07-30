@@ -23,9 +23,11 @@ const CORE_TOP_TO_APP_GAP = 136
 const CORE_APP_TO_BACKEND_GAP = 96
 const CORE_COLUMN_X = {
   left: 24,
-  center: 432,
-  right: 888,
+  center: 564,
+  right: 1104,
+  farRight: 1644,
 } as const
+const CORE_DETACHED_SERVICE_IDS = new Set(['inspire-me'])
 
 const getNodeHeight = (service: Pick<TPublicService, 'status'>): number =>
   service.status === 'stopped' || service.status === 'unavailable'
@@ -52,7 +54,10 @@ const getCoreServicePositions = (
     landing: { x: CORE_COLUMN_X.left, y: appRowY },
     main: { x: CORE_COLUMN_X.center, y: appRowY },
     dashboard: { x: CORE_COLUMN_X.right, y: appRowY },
+    'assets-hub': { x: CORE_COLUMN_X.left, y: backendRowY },
     phoenix: { x: CORE_COLUMN_X.center, y: backendRowY },
+    'content-import': { x: CORE_COLUMN_X.right, y: backendRowY },
+    'document-converter': { x: CORE_COLUMN_X.farRight, y: backendRowY },
   }
 }
 
@@ -68,7 +73,9 @@ export async function layoutServiceFlow(
     graphRelations.flatMap((relation) => [relation.source, relation.target]),
   )
   const connectedServices = services.filter((service) => connectedIds.has(service.id))
-  const standaloneServices = services.filter((service) => !connectedIds.has(service.id))
+  const standaloneServices = services.filter(
+    (service) => !connectedIds.has(service.id) && !CORE_DETACHED_SERVICE_IDS.has(service.id),
+  )
 
   const graphDefinition: ElkNode = {
     id: 'service-flow',
@@ -136,6 +143,10 @@ export async function layoutServiceFlow(
     for (const service of connectedServices) {
       const position = corePositions[service.id]
       if (position) positions[service.id] = position
+    }
+
+    if (serviceIds.has('inspire-me')) {
+      positions['inspire-me'] = { x: CORE_COLUMN_X.farRight, y: CORE_TOP_ROW_Y }
     }
   }
 

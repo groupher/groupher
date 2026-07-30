@@ -1,4 +1,4 @@
-const REPORT_INTERVAL_MS = 2_000
+const REPORT_INTERVAL_MS = 8_000
 const INITIAL_REPORT_DELAY_MS = 500
 const DEFAULT_DEV_HUB_URL = 'http://127.0.0.1:4311'
 const PAGE_ID_KEY = 'groupher.dev-hub.page-id'

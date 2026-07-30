@@ -3,6 +3,7 @@
 import { DSB_ROUTE } from '~/const/route'
 import useTrans from '~/hooks/useTrans'
 import BindSVG from '~/icons/Bind'
+import ContentSVG from '~/icons/dsb/Content'
 import KanbanSVG from '~/icons/Kanban'
 import PostSVG from '~/icons/Post'
 import ThemeSVG from '~/icons/Theme'
@@ -20,6 +21,12 @@ export default function CMSCoversPage() {
           {
             groupTitle: t('dsb.covers.group.content'),
             items: [
+              {
+                title: t('dsb.menu.assets'),
+                desc: t('dsb.covers.item.assets.desc'),
+                seg: DSB_ROUTE.ASSETS,
+                Icon: ContentSVG,
+              },
               {
                 title: t('dsb.menu.post'),
                 desc: t('dsb.covers.item.posts.desc'),

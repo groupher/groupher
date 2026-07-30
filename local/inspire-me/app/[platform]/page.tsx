@@ -1,23 +1,17 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
-import { getFeedbackPlatforms } from '../lib/feedback'
+import { getFeedbackPlatform, getFeedbackPlatforms } from '../lib/feedback'
 import { clampPage } from '../lib/pagination'
 import { FeedbackPage, POSTS_PER_PAGE } from '../widgets/FeedbackPage'
-
-export async function generateStaticParams() {
-  const platforms = await getFeedbackPlatforms()
-
-  return platforms.map((platform) => ({ platform: platform.id }))
-}
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ platform: string }>
 }): Promise<Metadata> {
-  const [{ platform: platformId }, platforms] = await Promise.all([params, getFeedbackPlatforms()])
-  const selected = platforms.find((platform) => platform.id === platformId)
+  const { platform: platformId } = await params
+  const selected = await getFeedbackPlatform(platformId)
 
   if (!selected) return {}
 
@@ -52,7 +46,7 @@ export default async function Page({
     searchParams,
     getFeedbackPlatforms(),
   ])
-  const selected = platforms.find((platform) => platform.id === platformId)
+  const selected = await getFeedbackPlatform(platformId)
 
   if (!selected) notFound()
 

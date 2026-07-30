@@ -18,6 +18,8 @@ defmodule GroupherServer.Repo.Migrations.MergeDocTreeDraftStateIntoDocsSiteState
     DO $$
     DECLARE
       has_base_snapshot boolean;
+      has_staged_event_count boolean;
+      staged_event_count_value text;
     BEGIN
       IF to_regclass('cms.doc_tree_draft_states') IS NOT NULL
         AND EXISTS (
@@ -36,6 +38,20 @@ defmodule GroupherServer.Repo.Migrations.MergeDocTreeDraftStateIntoDocsSiteState
             AND column_name = 'base_snapshot_id'
         ) INTO has_base_snapshot;
 
+        SELECT EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = 'cms'
+            AND table_name = 'doc_tree_draft_states'
+            AND column_name = 'staged_event_count'
+        ) INTO has_staged_event_count;
+
+        IF has_staged_event_count THEN
+          staged_event_count_value = 'COALESCE(tree.staged_event_count, site.staged_event_count, 0)';
+        ELSE
+          staged_event_count_value = 'COALESCE(site.staged_event_count, 0)';
+        END IF;
+
         IF has_base_snapshot THEN
           EXECUTE '
             UPDATE cms.docs_site_states AS site
@@ -48,11 +64,7 @@ defmodule GroupherServer.Repo.Migrations.MergeDocTreeDraftStateIntoDocsSiteState
                 0
               ),
               base_snapshot_id = COALESCE(tree.base_snapshot_id, site.base_snapshot_id),
-              staged_event_count = COALESCE(
-                tree.staged_event_count,
-                site.staged_event_count,
-                0
-              )
+              staged_event_count = ' || staged_event_count_value || '
             FROM cms.doc_tree_draft_states AS tree
             WHERE site.community_id = tree.community_id
           ';
@@ -67,11 +79,7 @@ defmodule GroupherServer.Repo.Migrations.MergeDocTreeDraftStateIntoDocsSiteState
                 site.published_version,
                 0
               ),
-              staged_event_count = COALESCE(
-                tree.staged_event_count,
-                site.staged_event_count,
-                0
-              )
+              staged_event_count = ' || staged_event_count_value || '
             FROM cms.doc_tree_draft_states AS tree
             WHERE site.community_id = tree.community_id
           ';

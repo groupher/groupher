@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" fill="#262626" />
+  <rect x="5" y="5" width="54" height="54" rx="11" fill="none" stroke="#fff" stroke-width="3" />
+  <text x="32" y="27" fill="#fff" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="700" text-anchor="middle" letter-spacing="3">IN</text>
+  <text x="32" y="43" fill="#fff" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12" font-weight="700" text-anchor="middle" letter-spacing="3">ME</text>
+</svg>

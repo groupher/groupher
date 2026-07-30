@@ -6,7 +6,7 @@
 >
 > 重构范围：七类 Docs framework adapter 已在 Dashboard Node/TS 落地并通过现有 basic golden fixtures；目录、PreviewStore/Files SDK、PostgreSQL staging 和 Phoenix 旧链路已完成直接切换，不恢复生产双路径。
 >
-> Source of truth：本文负责 GitHub Docs Bulk Import 的产品步骤与 UI。跨来源架构、`ThreadDataset`、Node/Phoenix 边界和公共命名以 [`content-import-architecture.md`](./content-import-architecture.md) 为准；Files SDK/staging 以 [`import-file-sdk.md`](./import-file-sdk.md) 为准；实施清单以 [`content-import-refactor-plan.md`](./content-import-refactor-plan.md) 为准；共享 Import Content/BodyBag 以 [`article-publish-import-refactor.md`](./article-publish-import-refactor.md) 为准；本轮联调错误与恢复边界见 [`import-error-handling.md`](./import-error-handling.md)。
+> Source of truth：本文负责 GitHub Docs Bulk Import 的产品步骤与 UI。跨来源架构、`ThreadDataset`、Node/Phoenix 边界和公共命名以 [`content-import-architecture.md`](./backend-content-import-architecture.md) 为准；Files SDK/staging 以 [`import-file-sdk.md`](./import-file-sdk.md) 为准；实施清单以 [`content-import-refactor-plan.md`](./backend-content-import-refactor-plan.md) 为准；共享 Import Content/BodyBag 以 [`article-publish-import-refactor.md`](./article-publish-import-refactor.md) 为准；本轮联调错误与恢复边界见 [`import-error-handling.md`](./import-error-handling.md)。
 >
 > 本文先定义目标产品规格，再单列当前实现快照、目标验收标准和迁移步骤。
 
@@ -646,7 +646,7 @@ Browser ── POST /previews/:previewRef/apply ──► Dashboard Next.js API
 - Phoenix 负责创建正式 ContentImport Job、重新检查目标状态、持久化导入事实、BodyBag staging、幂等和原子 apply；Bulk v1 不进入 AssetStager lifecycle。
 - 用户确认前，archive 只存在于 `analyzeSource` Step 的流和临时工作区；筛选后的候选正文与 Preview 结果写入 Private Blob，不发送给 Phoenix。SourceTree 是允许跨 Step/服务边界的结构化小对象。
 - 首版不引入 URL crawler，也不需要为 GitHub Bulk Import 新增 Python 抓取流程。
-- `services/document-converter` 只服务 PDF/Office 等“外部文件 → Markdown”来源；GitHub Repo 已提供 Markdown/MDX，它的 Vercel 部署状态不是本文链路的 release blocker。
+- `backend/document-converter` 只服务 PDF/Office 等“外部文件 → Markdown”来源；GitHub Repo 已提供 Markdown/MDX，它的 Vercel 部署状态不是本文链路的 release blocker。
 - 七类 Docs framework analyzer 已在 Node/TS 生产入口落地，旧 Elixir analyzer 不再是目标链路。Node 只理解“来源仓库是什么”；Phoenix 只决定“它能如何进入 Groupher”，两端通过 versioned SourceTree contract 连接。
 - 后续 URL 全站导入应作为独立来源适配器研究，不进入本次 archive downloader。
 
@@ -990,18 +990,18 @@ npx workflow inspect runs --web
 
 ```text
 frontend/dashboard/src/
-├── lib/content-import/
+├── lib/backend-content-import/
 │   ├── core/contracts/
 │   ├── core/preview-store/
 │   ├── platforms/github/repo/
 │   ├── threads/docs/
 │   └── transport/phoenix/docsImport.ts
-└── workflows/content-import/docs/
+└── workflows/backend-content-import/docs/
     ├── analyzeGitHubRepo.ts
     └── applyDocsDataset.ts
 ```
 
-详细文件树见 [`content-import-architecture.md`](./content-import-architecture.md#9-node-目录结构)。
+详细文件树见 [`content-import-architecture.md`](./backend-content-import-architecture.md#9-node-目录结构)。
 
 #### 19.5.2 收敛共享解析基础设施
 

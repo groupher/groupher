@@ -10,6 +10,7 @@ import { type CSSProperties, useCallback, useEffect, useMemo, useState } from 'r
 
 import { layoutServiceFlow } from '@/lib/flow-layout'
 import { FLOW_NODE_WIDTH, FLOW_USERS_TO_GATEWAY_OFFSET } from '@/lib/flow-metrics'
+import { buildServiceViewModel } from '@/lib/service-view-model'
 
 import type { TFlowEdge, TFlowLayout, TFlowNode } from './flow-spec'
 import { FlowCanvasSizer } from './FlowCanvasSizer'
@@ -54,7 +55,6 @@ const isCompactService = (service: TPublicService): boolean =>
 
 const isLiveService = (service: TPublicService | undefined): boolean =>
   Boolean(service && ['running', 'external'].includes(service.status))
-const STARTED_DEPENDENCY_STATUSES = new Set<TPublicService['status']>(['running', 'external'])
 
 const getFlowLayoutKey = (
   services: Pick<TPublicService, 'id' | 'status'>[],
@@ -134,10 +134,8 @@ export function FlowView({
     }
   }, [layoutKey, layoutServices, relations])
 
-  const serviceById = useMemo(
-    () => new Map(services.map((service) => [service.id, service])),
-    [services],
-  )
+  const serviceViewModel = useMemo(() => buildServiceViewModel(services), [services])
+  const { dependencyStateByServiceId, serviceById } = serviceViewModel
   const relationIdsByService = useMemo(() => {
     const incoming = new Map<string, string[]>()
     const outgoing = new Map<string, string[]>()
@@ -244,18 +242,6 @@ export function FlowView({
     setCanvasContentHeight(height)
   }, [])
   const handleViewportReady = useCallback(() => setViewportReady(true), [])
-  const standaloneIds = useMemo(
-    () =>
-      services
-        .filter(
-          (service) =>
-            !relationIdsByService.incoming.has(service.id) &&
-            !relationIdsByService.outgoing.has(service.id),
-        )
-        .map((service) => service.id),
-    [relationIdsByService, services],
-  )
-
   const nodes = useMemo<TFlowNode[]>(() => {
     if (!layout) return []
 
@@ -281,17 +267,7 @@ export function FlowView({
     }
 
     const flowServiceNodes: TFlowNode[] = services.map((service) => {
-      const requiredDependencies = service.startPolicy.requiredDependencies
-      const hasRequiredDependencyIssue = requiredDependencies.some((dependencyId) => {
-        const dependency = serviceById.get(dependencyId)
-        return !dependency || !STARTED_DEPENDENCY_STATUSES.has(dependency.status)
-      })
-      const hasOptionalDependencyIssue =
-        !hasRequiredDependencyIssue &&
-        service.startPolicy.optionalDependencies.some((dependencyId) => {
-          const dependency = serviceById.get(dependencyId)
-          return !dependency || !STARTED_DEPENDENCY_STATUSES.has(dependency.status)
-        })
+      const dependencyState = dependencyStateByServiceId.get(service.id)
 
       return {
         id: service.id,
@@ -308,10 +284,9 @@ export function FlowView({
           expanded: !isCompactService(service) && expandedIds.has(service.id),
           compact: false,
           pending: pendingIds.has(service.id),
-          hasRequiredDependencyIssue,
-          hasStartedRequiredDependencies:
-            requiredDependencies.length > 0 && !hasRequiredDependencyIssue,
-          hasOptionalDependencyIssue,
+          hasRequiredDependencyIssue: dependencyState?.hasRequiredDependencyIssue || false,
+          hasStartedRequiredDependencies: dependencyState?.hasStartedRequiredDependencies || false,
+          hasOptionalDependencyIssue: dependencyState?.hasOptionalDependencyIssue || false,
           incomingRelationIds:
             service.id === 'gateway'
               ? [
@@ -352,6 +327,7 @@ export function FlowView({
   }, [
     expandedIds,
     layout,
+    dependencyStateByServiceId,
     metricsByService,
     onOpenConfig,
     onOpenDependencies,
@@ -472,7 +448,7 @@ export function FlowView({
             onHeightChange={handleCanvasHeightChange}
           />
           <FlowInitialViewport requestPathIds={requestPathIds} onReady={handleViewportReady} />
-          <FlowNavigator requestPathIds={requestPathIds} standaloneIds={standaloneIds} />
+          <FlowNavigator requestPathIds={requestPathIds} />
           <Background
             variant={BackgroundVariant.Dots}
             gap={22}

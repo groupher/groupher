@@ -145,13 +145,25 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     @desc "paged assets owned by a community"
     field :paged_community_assets, :paged_community_assets do
       arg(:community, non_null(:string))
-      arg(:filter, :pagi_filter)
+      arg(:filter, :community_asset_filter)
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "community.update")
+      middleware(M.Passport, action: "asset.upload")
       middleware(M.FrontDesk, :community)
       middleware(M.PageSizeProof)
       resolve(&R.CMS.paged_community_assets/3)
+    end
+
+    @desc "community asset filter stats and storage quota"
+    field :community_asset_stats, :community_asset_stats do
+      arg(:community, non_null(:string))
+      arg(:filter, :community_asset_filter)
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "asset.upload")
+      middleware(M.FrontDesk, :community)
+      middleware(M.PageSizeProof)
+      resolve(&R.CMS.community_asset_stats/3)
     end
 
     @desc "community asset storage usage"
@@ -159,7 +171,7 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:community, non_null(:string))
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "community.update")
+      middleware(M.Passport, action: "asset.upload")
       middleware(M.FrontDesk, :community)
       resolve(&R.CMS.community_asset_usage/3)
     end
@@ -171,10 +183,18 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
       arg(:filter, :pagi_filter)
 
       middleware(M.Authorize, :login)
-      middleware(M.Passport, action: "community.update")
+      middleware(M.Passport, action: "asset.upload")
       middleware(M.FrontDesk, :community)
       middleware(M.PageSizeProof)
       resolve(&R.CMS.community_asset_refs/3)
+    end
+
+    @desc "server-trusted public-read origin metadata for one community asset"
+    field :community_asset_origin_info, :community_asset_origin_info do
+      arg(:public_ref, non_null(:string))
+
+      middleware(M.ServerTrust)
+      resolve(&R.CMS.community_asset_origin_info/3)
     end
 
     @desc "Get all passport rules available to the current user."

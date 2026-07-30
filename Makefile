@@ -18,6 +18,10 @@ fe.dev.inspire:
 	(sleep 2 && open http://localhost:3010/canny) &
 	yarn workspace @groupher/local-inspire-me dev -p 3010
 
+fe.inspire-me.deploy:
+	@yarn workspace @groupher/local-inspire-me exec wrangler whoami >/dev/null 2>&1 || yarn workspace @groupher/local-inspire-me exec wrangler login
+	yarn workspace @groupher/local-inspire-me deploy:vinext
+
 inspire: fe.dev.inspire
 
 # local development hub
@@ -50,9 +54,6 @@ fe.build.dashboard:
 fe.serve.dashboard: 
 	yarn run serve:prod:dashboard
 
-fe.build.gateway:
-	yarn run build:prod:gateway
-
 fe.test.dashboard:
 	yarn run test:dashboard
 
@@ -61,9 +62,6 @@ fe.test.main:
 
 fe.test.landing:
 	yarn run test:landing
-
-fe.test.gateway:
-	yarn vitest --config frontend/core/vitest.config.mts run frontend/gateway
 
 fe.e2e.dashboard:
 	yarn run test:e2e:dashboard
@@ -80,12 +78,49 @@ fe.serve.dsb: fe.serve.dashboard
 fe.test.dsb: fe.test.dashboard
 fe.e2e.dsb: fe.e2e.dashboard
 
+# gateway
+be.gateway.start:
+	yarn run dev:gateway
+
+be.gateway.build:
+	yarn run build:prod:gateway
+
+be.gateway.test:
+	yarn workspace @groupher/backend-gateway test
+
 # auth
-fe.dev.auth:
+be.auth.start:
 	PORT=3004 AUTH_URL=https://groupher.localhost yarn run dev:auth
 
-fe.build.auth:
+be.auth.build:
 	yarn run build:prod:auth
+
+be.auth.test:
+	yarn workspace @groupher/backend-auth test
+
+# content import
+be.content-import.start:
+	yarn run dev:content-import
+
+be.content-import.build:
+	yarn run build:prod:content-import
+
+be.content-import.test:
+	yarn workspace @groupher/backend-content-import test
+
+# assets hub
+fe.assets-hub.deploy:
+	yarn workspace @groupher/assets-hub deploy:worker
+
+# document converter
+be.document-converter.install:
+	yarn run document-converter:install
+
+be.document-converter.start:
+	yarn run dev:document-converter
+
+be.document-converter.test:
+	yarn run test:document-converter
 
 # backend
 # mix ecto.setup

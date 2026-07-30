@@ -5,7 +5,7 @@
 build
 frontend/**/out/
 local/**/dist/
-frontend/auth/dist/
+backend/**/dist/
 local/**/.data/
 **/target/
 **/*.app/
@@ -35,6 +35,8 @@ yarn-error.log
 # Python build and test artifacts
 **/__pycache__/
 *.egg-info/
+.pytest_cache/
+.venv/
 
 # =====================
 # Yarn Berry
@@ -53,6 +55,12 @@ yarn-error.log
 **/.env.*.local
 .env
 .env.*
+.dev.vars
+**/.dev.vars
+.wrangler/
+**/.wrangler/
+output/
+backend/assets-hub/src/worker-configuration.d.ts
 !.env.development
 !**/.env.development
 !.env.example

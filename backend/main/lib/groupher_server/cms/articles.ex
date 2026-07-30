@@ -268,6 +268,16 @@ defmodule GroupherServer.CMS.Articles do
           keyword()
         ) :: T.domain_res(map())
   def permanently_delete_trashed(item_or_ref, actor, opts \\ []) do
+    permanently_delete(item_or_ref, actor, opts)
+  end
+
+  @doc "Permanently removes one standalone trashed Article aggregate."
+  @spec permanently_delete(
+          Ecto.UUID.t() | CMS.Model.TrashedArticle.t(),
+          User.t() | nil,
+          keyword()
+        ) :: T.domain_res(map())
+  def permanently_delete(item_or_ref, actor, opts \\ []) do
     Trash.permanently_delete(item_or_ref, actor, opts)
   end
 

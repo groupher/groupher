@@ -1,30 +1,44 @@
-import { signIn as authSignIn, signOut as authSignOut } from 'next-auth/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { signIn, signOut } from './oauth'
 
-vi.mock('next-auth/react', () => ({
-  signIn: vi.fn(),
-  signOut: vi.fn(),
-}))
-
 describe('signIn', () => {
   afterEach(() => {
+    document.body.innerHTML = ''
+    vi.clearAllMocks()
     vi.unstubAllGlobals()
   })
 
-  it('preserves the current subdomain in the OAuth callback URL', () => {
+  it('preserves the current subdomain in the OAuth callback URL', async () => {
+    const submit = vi.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => undefined)
+    const fetchMock = vi.fn(async () => Response.json({ csrfToken: 'csrf-token' }))
+    vi.stubGlobal('fetch', fetchMock)
     vi.stubGlobal('window', {
       location: {
         href: 'https://dashboard.groupher.localhost/home/dashboard',
       },
     })
 
-    signIn('github')
+    await signIn('github')
 
-    expect(authSignIn).toHaveBeenCalledWith('github', {
-      callbackUrl: 'https://dashboard.groupher.localhost/home/dashboard',
-    })
+    const form = document.querySelector('form')
+    expect(fetchMock).toHaveBeenCalledWith('/api/auth/csrf')
+    expect(form?.getAttribute('action')).toBe('/api/auth/signin/github')
+    expect(form?.getAttribute('method')).toBe('POST')
+    expect(form?.querySelector<HTMLInputElement>('input[name="csrfToken"]')?.value).toBe(
+      'csrf-token',
+    )
+    expect(form?.querySelector<HTMLInputElement>('input[name="callbackUrl"]')?.value).toBe(
+      'https://dashboard.groupher.localhost/home/dashboard',
+    )
+    expect(submit).toHaveBeenCalledTimes(1)
+  })
+
+  it('throws when the CSRF token is unavailable', async () => {
+    const fetchMock = vi.fn(async () => Response.json({}))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(signIn('github')).rejects.toThrow('Auth CSRF request returned an invalid token.')
   })
 })
 
@@ -34,12 +48,19 @@ describe('signOut', () => {
     vi.unstubAllGlobals()
   })
 
-  it('clears Auth.js and Phoenix cookies independently', async () => {
-    vi.mocked(authSignOut).mockRejectedValueOnce(new Error('Auth.js unavailable'))
+  it('clears Auth and Phoenix cookies through the unified endpoint', async () => {
     const fetchMock = vi.fn(async () => Response.json({ ok: true }))
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(signOut()).rejects.toThrow('Auth.js unavailable')
+    await signOut()
+
     expect(fetchMock).toHaveBeenCalledWith('/api/auth/logout', { method: 'POST' })
+  })
+
+  it('throws when unified logout fails', async () => {
+    const fetchMock = vi.fn(async () => new Response('failed', { status: 500 }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(signOut()).rejects.toThrow('Auth logout failed with status 500.')
   })
 })

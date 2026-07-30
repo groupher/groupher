@@ -14,6 +14,14 @@ export const ASSETS_ENDPOINT = readPublicEnv(
   'NEXT_PUBLIC_ASSETS_ENDPOINT',
   'https://static.groupher.com',
 )
+export const ASSETS_HUB_ENDPOINT = readPublicEnv(
+  'NEXT_PUBLIC_ASSETS_HUB_ENDPOINT',
+  'http://127.0.0.1:8002',
+)
+export const ASSETS_HUB_READ_ENDPOINT = readPublicEnv(
+  'NEXT_PUBLIC_ASSETS_HUB_READ_ENDPOINT',
+  'https://assets.groupher.localhost',
+)
 export const ICON = readPublicEnv('NEXT_PUBLIC_ICON', 'https://static.groupher.com/icons/static')
 export const ICON_BASE = readPublicEnv('NEXT_PUBLIC_ICON_BASE', 'https://static.groupher.com/icons')
 export const GRAPHQL_ENDPOINT =

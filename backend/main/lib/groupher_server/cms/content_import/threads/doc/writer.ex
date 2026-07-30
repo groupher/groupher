@@ -22,7 +22,7 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
 
   import Ecto.Query, warn: false
 
-  alias GroupherServer.Repo
+  alias GroupherServer.{CMS, Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Articles.{Branch, Draft}
   alias GroupherServer.CMS.ContentImport.{ImportSourceMapping, Jobs}
@@ -35,6 +35,8 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
   alias GroupherServer.CMS.DocTree.Read, as: DocTreeRead
   alias GroupherServer.CMS.Model.{Community, TrashAction, TrashedArticle}
   alias Helper.Transaction
+
+  require CMS.Const
 
   @doc "Atomically applies all ready items for one community Job."
   @spec apply(Community.t(), Ecto.UUID.t()) :: {:ok, map()} | {:error, term()}
@@ -87,7 +89,9 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
          ready_refs <- MapSet.new(ready_items, & &1.external_ref),
          tree <- Validator.filter_target_tree(job.target_tree, ready_refs),
          :ok <- restore_trashed_targets(community, branch, actor, ready_items),
-         {:ok, written_items} <- write_items(community, branch, actor, ready_items, bodies),
+         {:ok, target_states} <- load_target_states(community, branch, ready_items),
+         {:ok, written_items} <-
+           write_items(community, branch, actor, ready_items, bodies, target_states),
          {:ok, _tree} <- DocTreeImport.apply(community, branch, tree, written_items),
          :ok <- upsert_mappings(job, ready_items, bodies),
          result <- build_result(job, items, tree, ready_items),
@@ -171,7 +175,50 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
     |> Enum.uniq()
   end
 
-  defp write_items(community, branch, actor, items, bodies) do
+  defp load_target_states(_community, _branch, []), do: {:ok, %{}}
+
+  defp load_target_states(community, branch, items) do
+    target_refs = items |> Enum.map(& &1.target_ref) |> Enum.uniq()
+
+    with {:ok, %{model: model}} <- CMS.Artiment.Matcher.match(:doc) do
+      draft_refs =
+        target_refs
+        |> target_refs_by_stage(model, community, branch, CMS.Const.stage(:draft))
+        |> MapSet.new()
+
+      public_refs =
+        target_refs
+        |> target_refs_by_stage(model, community, branch, CMS.Const.stage(:public))
+        |> MapSet.new()
+
+      states =
+        Map.new(target_refs, fn target_ref ->
+          state =
+            cond do
+              MapSet.member?(draft_refs, target_ref) -> :draft
+              MapSet.member?(public_refs, target_ref) -> :public
+              true -> :missing
+            end
+
+          {target_ref, state}
+        end)
+
+      {:ok, states}
+    end
+  end
+
+  defp target_refs_by_stage(target_refs, model, community, branch, stage) do
+    model
+    |> CMS.Articles.active_scope(:doc)
+    |> where([article], article.article_hash_id in ^target_refs)
+    |> where([article], article.community_id == ^community.id)
+    |> where([article], article.branch_id == ^branch.id)
+    |> where([article], article.stage == ^stage)
+    |> select([article], article.article_hash_id)
+    |> Repo.all()
+  end
+
+  defp write_items(community, branch, actor, items, bodies, target_states) do
     Enum.reduce_while(items, {:ok, %{}}, fn item, {:ok, written} ->
       body = Map.fetch!(bodies, item.external_ref)
 
@@ -183,60 +230,51 @@ defmodule GroupherServer.CMS.ContentImport.Threads.Doc.Writer do
         title: item.title
       }
 
-      case write_item(community, item.target_ref, attrs, actor) do
+      case write_item(
+             community,
+             item.target_ref,
+             attrs,
+             actor,
+             Map.fetch!(target_states, item.target_ref)
+           ) do
         {:ok, _draft} -> {:cont, {:ok, Map.put(written, item.target_ref, item)}}
         {:error, reason} -> {:halt, {:error, reason}}
       end
     end)
   end
 
-  defp write_item(community, target_ref, attrs, actor) do
-    case Draft.read(community, :doc, target_ref, attrs) do
-      {:ok, _draft} ->
-        Draft.update(community, :doc, target_ref, attrs)
+  defp write_item(community, target_ref, attrs, _actor, :draft),
+    do: Draft.update(community, :doc, target_ref, attrs)
 
-      {:error, {:not_exist, _model}} ->
-        case Draft.read_public(community, :doc, target_ref, attrs) do
-          {:ok, _public} ->
-            Draft.update_or_create_from_public(community, :doc, target_ref, attrs, actor)
+  defp write_item(community, target_ref, attrs, actor, :public),
+    do: Draft.update_or_create_from_public(community, :doc, target_ref, attrs, actor)
 
-          {:error, {:not_exist, _model}} ->
-            Draft.create(community, :doc, attrs, actor)
-
-          {:error, reason} ->
-            {:error, reason}
-        end
-
-      {:error, reason} ->
-        {:error, reason}
-    end
-  end
+  defp write_item(community, _target_ref, attrs, actor, :missing),
+    do: Draft.create(community, :doc, attrs, actor)
 
   defp upsert_mappings(job, items, bodies) do
-    now = DateTime.utc_now()
+    now = DateTime.utc_now() |> DateTime.truncate(:second)
 
-    Enum.reduce_while(items, :ok, fn item, :ok ->
-      body = Map.fetch!(bodies, item.external_ref)
+    attrs =
+      Enum.map(items, fn item ->
+        body = Map.fetch!(bodies, item.external_ref)
 
-      attrs = %{
-        connection_id: job.connection_id,
-        external_ref: item.external_ref,
-        groupher_hash: ImportSourceMapping.groupher_hash(body.body_hash, item.title, item.slug),
-        last_checked_at: now,
-        last_imported_at: now,
-        source_hash: item.source_hash,
-        source_revision: item.source_revision,
-        source_updated_at: item.source_updated_at,
-        source_version: item.source_version,
-        thread: :doc,
-        thread_ref: item.target_ref
-      }
+        %{
+          connection_id: job.connection_id,
+          external_ref: item.external_ref,
+          groupher_hash: ImportSourceMapping.groupher_hash(body.body_hash, item.title, item.slug),
+          last_checked_at: now,
+          last_imported_at: now,
+          source_hash: item.source_hash,
+          source_revision: item.source_revision,
+          source_updated_at: item.source_updated_at,
+          source_version: item.source_version,
+          thread: :doc,
+          thread_ref: item.target_ref
+        }
+      end)
 
-      case ImportSourceMapping.upsert(attrs) do
-        {:ok, _mapping} -> {:cont, :ok}
-        {:error, changeset} -> {:halt, {:error, changeset}}
-      end
-    end)
+    ImportSourceMapping.upsert_all(attrs)
   end
 
   defp build_result(job, items, tree, ready_items) do

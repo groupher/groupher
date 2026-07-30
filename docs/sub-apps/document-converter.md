@@ -4,7 +4,7 @@
 >
 > UI：无独立 UI
 >
-> 当前状态：已存在于 `services/document-converter`
+> 当前状态：已存在于 `backend/document-converter`，并已接入 Dev Hub / Portless
 
 ## 定位
 
@@ -21,6 +21,8 @@
 - 支持 PDF、DOCX、PPTX、XLSX、HTML 和 HTM。
 - 使用 MarkItDown 的 stream API 转换，不把用户输入当作本地路径或 URI。
 - 返回 Markdown、原文件元数据和有界 diagnostics。
+- 本地由 Dev Hub 作为 `document-converter` 管理，固定端口 `8000`；Portless alias 为
+  `https://converter.groupher.localhost`。
 
 当前成功响应：
 
@@ -76,8 +78,23 @@ Groupher。批量导入由 `content-import` 编排；直接上传单篇文档也
 
 ## 部署与演进
 
+本地首次启动前先安装 Python 3.12 virtualenv：
+
+```sh
+make be.document-converter.install
+```
+
+之后可以直接运行：
+
+```sh
+make be.document-converter.start
+```
+
+Dev Hub 使用同一个 Makefile 入口；如果 `backend/document-converter/.venv` 不存在，
+服务会显示为不可启动，避免把缺少依赖误判为运行时故障。
+
 该服务作为独立 Vercel project 部署，Root Directory 为
-`services/document-converter`，不修改 Groupher 其他前端项目的根部署配置。
+`backend/document-converter`，不修改 Groupher 其他前端项目的根部署配置。
 
 未来若加入 URL-to-Markdown，仍应保持“单输入到 Markdown”的纯转换边界。网页抓取
 策略、登录态、来源同步和动态页面识别若逐渐变成复杂来源逻辑，应由

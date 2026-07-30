@@ -47,7 +47,7 @@ describe('/api/artiment/import', () => {
   beforeEach(() => {
     mockedGetPhoenixToken.mockReset()
     mocks.importDocumentationUrl.mockReset()
-    vi.stubEnv('DOCUMENT_CONVERTER_URL', 'https://converter.example.test')
+    vi.stubEnv('DOCUMENT_CONVERTER_APP_ENDPOINT', 'https://converter.example.test')
     vi.stubGlobal(
       'FormData',
       class {
@@ -100,7 +100,7 @@ describe('/api/artiment/import', () => {
     })
   })
 
-  it('does not silently drop table nodes before editor support lands', async () => {
+  it('preserves table nodes after editor support landed', async () => {
     mockedGetPhoenixToken.mockReturnValue('backend-token')
     vi.stubGlobal(
       'fetch',
@@ -110,15 +110,12 @@ describe('/api/artiment/import', () => {
     const response = await POST(request())
     const payload = await response.json()
 
-    expect(response.status).toBe(422)
+    expect(response.status).toBe(200)
     expect(payload).toMatchObject({
-      error: {
-        code: 'unsupported_markdown',
-        diagnostics: expect.arrayContaining([
-          expect.objectContaining({ code: 'unknown_node', nodeType: 'table' }),
-        ]),
+      ok: true,
+      result: {
+        value: expect.arrayContaining([expect.objectContaining({ type: 'table' })]),
       },
-      ok: false,
     })
   })
 

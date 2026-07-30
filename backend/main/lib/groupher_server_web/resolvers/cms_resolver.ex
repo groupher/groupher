@@ -66,10 +66,34 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Assets.usage(community)
   end
 
+  def community_asset_stats(_root, %{community: %Community{} = community} = args, _info) do
+    CMS.Assets.stats(community, Map.get(args, :filter))
+  end
+
+  def community_asset_origin_info(_root, %{public_ref: public_ref}, _info) do
+    case CMS.Assets.origin_info(public_ref) do
+      {:ok, asset} -> {:ok, asset}
+      {:error, {:not_exist, _}} -> {:ok, nil}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   def register_community_asset(_root, %{community: %Community{} = community, asset: asset}, %{
         context: %{cur_user: user}
       }) do
-    CMS.Assets.register(community, asset, user)
+    CMS.Assets.register_to_community(community, asset, user)
+  end
+
+  def create_community_asset_upload_intent(
+        _root,
+        %{community: %Community{} = community, file: file},
+        %{context: %{cur_user: user}}
+      ) do
+    CMS.Assets.create_upload_intent(community, file, user)
+  end
+
+  def complete_community_asset_upload(_root, %{input: input}, _info) do
+    CMS.Assets.complete_upload(input)
   end
 
   def delete_community_asset(_root, %{community: %Community{} = community, id: id}, _info) do

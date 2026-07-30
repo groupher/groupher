@@ -4,7 +4,8 @@
 >
 > UI：Dashboard
 >
-> 当前状态：导入逻辑主要位于 Dashboard，目标是迁移为独立子应用
+> 当前状态：`backend/content-import` 已承载 server implementation；Dashboard 原 URL
+> 只保留稳定 proxy 和产品 UI。
 
 ## 定位
 
@@ -13,8 +14,17 @@
 Phoenix 数据库。
 
 详细的 Dataset、PreviewStore 和 Phoenix 写入约束继续以
-[`../bulk-import/content-import-architecture.md`](../bulk-import/content-import-architecture.md)
+[`../bulk-import/backend-content-import-architecture.md`](../bulk-import/backend-content-import-architecture.md)
 为准；本文只描述独立部署后的子应用边界。
+
+## 本地入口
+
+```bash
+make be.content-import.start
+```
+
+本地固定端口为 `8001`，健康检查为 `GET /health`。Portless alias 为
+`https://content-import.groupher.localhost/health`。
 
 ## 提供的服务
 
@@ -52,6 +62,7 @@ Phoenix 数据库。
 ### Dashboard 负责
 
 - 来源配置、进度、Preview、Review 和 Apply UI。
+- 通过 `CONTENT_IMPORT_APP_ENDPOINT` 调用 content-import，不执行导入 handler。
 - 对覆盖范围和风险进行明确提示。
 - 同来源映射冲突时允许用户确认后继续覆盖；无法映射的目标冲突才阻止 Apply。
 
