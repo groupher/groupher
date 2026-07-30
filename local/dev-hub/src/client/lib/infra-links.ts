@@ -111,6 +111,10 @@ export const INFRA_LINK_GROUPS: TInfraLinkGroup[] = [
             url: 'https://dash.cloudflare.com/4e2e8db91d21e325d9b540ca7abf4d99/workers-and-pages',
           },
           {
+            label: 'Queue',
+            url: 'https://dash.cloudflare.com/4e2e8db91d21e325d9b540ca7abf4d99/workers/queues',
+          },
+          {
             label: 'Policies',
             url: 'https://dash.cloudflare.com/4e2e8db91d21e325d9b540ca7abf4d99/one/access-controls/policies',
           },
