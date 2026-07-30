@@ -54,6 +54,15 @@ defmodule GroupherServer.CMS.Assets do
   def usage(%Community{} = community), do: Read.usage(community)
 
   @doc """
+  Returns asset filter stats and community storage quota.
+
+  Thread stats are based on `community_assets.thread` ownership. Article refs
+  remain only the delete/detail usage projection.
+  """
+  @spec stats(Community.t(), map() | nil) :: T.domain_res(map())
+  def stats(%Community{} = community, filter \\ nil), do: Read.stats(community, filter)
+
+  @doc """
   Lists article document refs for one community asset.
 
   This is the paged lookup used by the asset-library detail view. The asset must

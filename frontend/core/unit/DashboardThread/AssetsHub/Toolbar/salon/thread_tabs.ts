@@ -1,5 +1,5 @@
 export default function useSalon() {
   return {
-    wrapper: 'column w-full',
+    wrapper: 'min-w-0 -mb-px',
   }
 }

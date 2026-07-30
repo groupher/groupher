@@ -7,6 +7,7 @@ import List from './List'
 import useSalon from './salon'
 import type { TAssetListViewMode } from './spec'
 import Toolbar from './Toolbar'
+import UploadButton from './Toolbar/UploadButton'
 import UploadStatus from './UploadStatus'
 import useAssetsHub from './useAssetsHub'
 
@@ -18,11 +19,17 @@ export default function AssetsHub() {
   return (
     <section className={s.wrapper}>
       <Toolbar
-        busy={logic.busy}
+        activeThread={logic.activeThread}
+        searchQuery={logic.searchQuery}
         viewMode={viewMode}
-        onUpload={logic.uploadFile}
+        onSearchQueryChange={logic.changeSearchQuery}
+        onThreadChange={logic.changeThread}
         onViewModeChange={setViewMode}
       />
+
+      <div className={s.utilityRow}>
+        <UploadButton busy={logic.busy} onUpload={logic.uploadFile} />
+      </div>
 
       <UploadStatus
         status={logic.status}

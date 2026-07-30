@@ -21,6 +21,8 @@ export type TUploadCapability = {
   declaredMimeType: string
   /** Browser-supplied byte size validated by Phoenix and rechecked against R2 HeadObject. */
   declaredSizeBytes: number
+  /** Article thread that owns the asset in the community library. */
+  declaredThread: 'blog' | 'changelog' | 'doc' | 'post'
   /** ISO timestamp after which assets-hub rejects the capability. */
   expiresAt: string
   /** Phoenix policy cap for this upload intent. */

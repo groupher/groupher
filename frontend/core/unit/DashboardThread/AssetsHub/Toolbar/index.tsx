@@ -1,29 +1,41 @@
 'use client'
 
 import type { TAssetListViewMode } from '../spec'
+import type { TAssetThreadFilter } from '../spec'
+import FilterButton from './FilterButton'
 import LayoutSwitcher from './LayoutSwitcher'
 import useSalon from './salon'
 import SearchBar from './SearchBar'
-import UploadButton from './UploadButton'
+import ThreadTabs from './ThreadTabs'
 
 type TProps = {
-  busy: boolean
+  activeThread: TAssetThreadFilter
+  searchQuery: string
   viewMode: TAssetListViewMode
-  onUpload: (file: File) => Promise<void>
+  onSearchQueryChange: (query: string) => void
+  onThreadChange: (thread: TAssetThreadFilter) => void
   onViewModeChange: (mode: TAssetListViewMode) => void
 }
 
-export default function Toolbar({ busy, viewMode, onUpload, onViewModeChange }: TProps) {
+export default function Toolbar({
+  activeThread,
+  searchQuery,
+  viewMode,
+  onSearchQueryChange,
+  onThreadChange,
+  onViewModeChange,
+}: TProps) {
   const s = useSalon()
 
   return (
     <div className={s.wrapper}>
-      <div className={s.left}>
-        <SearchBar />
-        <UploadButton busy={busy} onUpload={onUpload} />
-      </div>
+      <ThreadTabs activeThread={activeThread} onThreadChange={onThreadChange} />
 
-      <LayoutSwitcher viewMode={viewMode} onViewModeChange={onViewModeChange} />
+      <div className={s.actions}>
+        <SearchBar query={searchQuery} onQueryChange={onSearchQueryChange} />
+        <FilterButton />
+        <LayoutSwitcher viewMode={viewMode} onViewModeChange={onViewModeChange} />
+      </div>
     </div>
   )
 }

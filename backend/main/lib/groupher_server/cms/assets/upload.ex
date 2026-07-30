@@ -8,6 +8,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
   """
 
   alias GroupherServer.Accounts.Model.User
+  alias GroupherServer.CMS.Artiment.Threads
   alias GroupherServer.CMS.Assets.Write
   alias GroupherServer.CMS.Model.{Community, CommunityAsset}
   alias Helper.{T, Utils}
@@ -49,6 +50,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
         "declaredMimeType" => attrs.mime_type,
         "declaredSizeBytes" => attrs.size_bytes,
         "declaredAssetType" => attrs.asset_type,
+        "declaredThread" => attrs.thread,
         "checksumSha256" => attrs.checksum_sha256,
         "allowedMimeTypes" => @allowed_mime_types,
         "maxSizeBytes" => @max_size_bytes,
@@ -79,6 +81,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
       size_bytes: get(input, :size_bytes),
       filename: get(input, :filename),
       mime_type: get(input, :mime_type),
+      thread: get(input, :thread) || :post,
       asset_type: get(input, :asset_type) || :file,
       width: get(input, :width),
       height: get(input, :height),
@@ -97,6 +100,7 @@ defmodule GroupherServer.CMS.Assets.Upload do
     size_bytes = get(file, :size_bytes)
     checksum_sha256 = file |> get(:checksum_sha256) |> normalize_string()
     asset_type = get(file, :asset_type) || asset_type_from_mime(mime_type)
+    thread = get(file, :thread) || :post
 
     cond do
       filename == nil ->
@@ -114,6 +118,9 @@ defmodule GroupherServer.CMS.Assets.Upload do
       checksum_sha256 != nil and not base64_sha256?(checksum_sha256) ->
         {:error, {:custom, "checksum_sha256 must be a base64 SHA-256 digest"}}
 
+      not valid_thread?(thread) ->
+        {:error, {:custom, "asset thread is invalid"}}
+
       true ->
         {:ok,
          %{
@@ -121,7 +128,8 @@ defmodule GroupherServer.CMS.Assets.Upload do
            mime_type: mime_type,
            size_bytes: size_bytes,
            checksum_sha256: checksum_sha256,
-           asset_type: asset_type
+           asset_type: asset_type,
+           thread: normalize_thread(thread)
          }}
     end
   end
@@ -174,6 +182,13 @@ defmodule GroupherServer.CMS.Assets.Upload do
 
   defp asset_type_from_mime("image/" <> _), do: :image
   defp asset_type_from_mime(_), do: :file
+
+  defp valid_thread?(thread), do: match?({:ok, _}, Threads.to_atom(thread))
+
+  defp normalize_thread(thread) do
+    {:ok, thread} = Threads.to_atom(thread)
+    thread
+  end
 
   defp base64_sha256?(value) do
     case Base.decode64(value) do

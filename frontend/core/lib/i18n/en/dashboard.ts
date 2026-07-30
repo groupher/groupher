@@ -416,7 +416,7 @@ export default {
   'dsb.covers.item.admins.desc': 'Admin management and permissions.',
   'dsb.covers.cms.title': 'Content management',
   'dsb.covers.cms.desc': 'Community content, users, import, and export management.',
-  'dsb.covers.item.assets.desc': 'Manage uploaded files, previews, URLs, and deletion guards.',
+  'dsb.covers.item.assets.desc': 'Manage all media assets used across this community.',
   'dsb.covers.item.posts.desc': 'Post content management and status settings.',
   'dsb.covers.item.changelog_manage.desc': 'Changelog content management and status settings.',
   'dsb.covers.item.docs.desc': 'Doc content, navigation, and status settings.',

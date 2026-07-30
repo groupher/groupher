@@ -6,6 +6,7 @@ import { DSB_COVERS, DSB_ROUTE } from '~/const/route'
 import useDsbCrumbItems from '~/hooks/useDsbCrumbItems'
 import useTrans from '~/hooks/useTrans'
 import type { TCrumbConfig } from '~/spec'
+import StorageUsageRing from '~/unit/DashboardThread/AssetsHub/StorageUsageRing'
 import Portal from '~/unit/DashboardThread/Portal'
 import useSalon, { cnMerge } from '~/unit/DashboardThread/salon'
 
@@ -28,6 +29,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         title={t('dsb.menu.assets')}
         desc={t('dsb.covers.item.assets.desc')}
         crumbItems={crumbItems}
+        addon={<StorageUsageRing />}
         withDivider={false}
       />
 

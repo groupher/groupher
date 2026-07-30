@@ -28,6 +28,7 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
 
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS
+  alias CMS.Artiment.Threads
   alias CMS.Hash
   alias CMS.Model.{ArticleDocumentAssetRef, Community}
   alias Helper.Constant.DBPrefix
@@ -40,18 +41,20 @@ defmodule GroupherServer.CMS.Model.CommunityAsset do
 
   @required_fields ~w(community_id url size_bytes)a
   @optional_fields ~w(
-    uploader_id asset_type status title filename mime_type url_hash storage storage_key
+    uploader_id thread asset_type status title filename mime_type url_hash storage storage_key
     public_ref content_hash width height meta deleted_at
   )a
 
   @type asset_type :: :image | :video | :audio | :file
   @type status :: :active | :deleted
+  @type thread :: atom() | nil
   @type t :: %CommunityAsset{}
 
   schema "community_assets" do
     belongs_to(:community, Community)
     belongs_to(:uploader, User, foreign_key: :uploader_id)
 
+    field(:thread, Ecto.Enum, values: Threads.article_enums())
     field(:asset_type, Ecto.Enum, values: @asset_types, default: :file)
     field(:status, Ecto.Enum, values: @statuses, default: :active)
 

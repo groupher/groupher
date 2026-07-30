@@ -68,6 +68,8 @@ export class PhoenixGraphQLError extends Error {
 const assetTypeInput = (assetType: TUploadCapability['declaredAssetType']) =>
   assetType.toUpperCase()
 
+const threadInput = (thread: TUploadCapability['declaredThread']) => thread.toUpperCase()
+
 const completeUploadMutation = `
   mutation completeCommunityAssetUpload($input: CommunityAssetUploadCompletionInput!) {
     completeCommunityAssetUpload(input: $input) {
@@ -182,6 +184,7 @@ export const completePhoenixUpload = async ({
         sizeBytes: input.sizeBytes,
         storage: input.storage,
         storageKey: capability.objectKey,
+        thread: threadInput(capability.declaredThread),
         uploaderId: capability.uploaderId,
         url: capability.canonicalUrl,
         width: input.width,

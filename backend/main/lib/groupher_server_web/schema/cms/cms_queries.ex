@@ -145,13 +145,25 @@ defmodule GroupherServerWeb.Schema.CMS.Queries do
     @desc "paged assets owned by a community"
     field :paged_community_assets, :paged_community_assets do
       arg(:community, non_null(:string))
-      arg(:filter, :pagi_filter)
+      arg(:filter, :community_asset_filter)
 
       middleware(M.Authorize, :login)
       middleware(M.Passport, action: "asset.upload")
       middleware(M.FrontDesk, :community)
       middleware(M.PageSizeProof)
       resolve(&R.CMS.paged_community_assets/3)
+    end
+
+    @desc "community asset filter stats and storage quota"
+    field :community_asset_stats, :community_asset_stats do
+      arg(:community, non_null(:string))
+      arg(:filter, :community_asset_filter)
+
+      middleware(M.Authorize, :login)
+      middleware(M.Passport, action: "asset.upload")
+      middleware(M.FrontDesk, :community)
+      middleware(M.PageSizeProof)
+      resolve(&R.CMS.community_asset_stats/3)
     end
 
     @desc "community asset storage usage"

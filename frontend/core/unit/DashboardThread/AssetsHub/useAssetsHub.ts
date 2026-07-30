@@ -10,9 +10,11 @@ import S from '~/unit/DashboardThread/schema'
 import { toast } from '~/widgets/Toaster'
 
 import {
+  ASSETS_HUB_DEBUG_UPLOAD_THREAD,
   ASSETS_HUB_MESSAGE,
   ASSETS_HUB_PAGE_SIZE,
   ASSETS_HUB_REFS_PAGE_SIZE,
+  ASSETS_HUB_THREAD_FILTER,
   ASSETS_HUB_UPLOAD_STATUS,
 } from './constant'
 import {
@@ -24,6 +26,8 @@ import {
 } from './helper'
 import type {
   TAsset,
+  TAssetStats,
+  TAssetThreadFilter,
   TAssetsHubLogic,
   TDeleteResult,
   TFinalizeResult,
@@ -52,22 +56,47 @@ export default function useAssetsHub(): TAssetsHubLogic {
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null)
   const [deletingAssetId, setDeletingAssetId] = useState<string | null>(null)
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null)
+  const [activeThread, setActiveThread] = useState<TAssetThreadFilter>(ASSETS_HUB_THREAD_FILTER.ALL)
+  const [searchQuery, setSearchQuery] = useState('')
   const [timings, setTimings] = useState<TTiming[]>([])
   const [uploadProgress, setUploadProgress] = useState<TUploadProgress | null>(null)
   const [references, setReferences] = useState<TReferencesState>(EMPTY_REFS_STATE)
   const refsRequestId = useRef(0)
 
+  const assetFilter = useMemo(() => {
+    const filter: { page: number; query?: string; size: number; thread?: TAssetThreadFilter } = {
+      page: 1,
+      size: ASSETS_HUB_PAGE_SIZE,
+    }
+    const query = searchQuery.trim()
+
+    if (activeThread !== ASSETS_HUB_THREAD_FILTER.ALL) filter.thread = activeThread
+    if (query) filter.query = query
+
+    return filter
+  }, [activeThread, searchQuery])
+
   const { data, error, loading, reload } = useQuery<{ pagedCommunityAssets: TPagedAssets }>(
     S.pagedCommunityAssets,
     {
       community,
-      filter: { page: 1, size: ASSETS_HUB_PAGE_SIZE },
+      filter: assetFilter,
     },
   )
+  const {
+    data: statsData,
+    error: statsError,
+    reload: reloadStats,
+  } = useQuery<{ communityAssetStats: TAssetStats }>(S.communityAssetStats, {
+    community,
+    filter: assetFilter,
+  })
 
   const assets = useMemo(() => data?.pagedCommunityAssets?.entries ?? [], [data])
   const totalCount = data?.pagedCommunityAssets?.totalCount ?? 0
   const assetsErrorMessage = error ? extractErrorMessage(error) : null
+  const stats = statsData?.communityAssetStats ?? null
+  const statsErrorMessage = statsError ? extractErrorMessage(statsError) : null
 
   const selectedAsset = useMemo<TAsset | null>(
     () => (selectedAssetId ? (assets.find((asset) => asset.id === selectedAssetId) ?? null) : null),
@@ -179,6 +208,7 @@ export default function useAssetsHub(): TAssetsHubLogic {
               filename: file.name,
               mimeType: file.type,
               sizeBytes: file.size,
+              thread: ASSETS_HUB_DEBUG_UPLOAD_THREAD,
             },
           }),
         )
@@ -238,6 +268,7 @@ export default function useAssetsHub(): TAssetsHubLogic {
         setStatus(ASSETS_HUB_UPLOAD_STATUS.DONE)
         toast(ASSETS_HUB_MESSAGE.UPLOAD_COMPLETED, 'success')
         reload()
+        reloadStats()
       } catch (error) {
         setStatus(ASSETS_HUB_UPLOAD_STATUS.FAILED)
         toast(extractErrorMessage(error), 'error')
@@ -245,7 +276,7 @@ export default function useAssetsHub(): TAssetsHubLogic {
         setBusy(false)
       }
     },
-    [community, mutate, reload],
+    [community, mutate, reload, reloadStats],
   )
 
   const openPublicReadPreview = useCallback((asset: TAsset): void => {
@@ -304,13 +335,14 @@ export default function useAssetsHub(): TAssetsHubLogic {
         setConfirmingDeleteId(null)
         toast(ASSETS_HUB_MESSAGE.ASSET_DELETED, 'success')
         reload()
+        reloadStats()
       } catch (error) {
         toast(extractErrorMessage(error), 'error')
       } finally {
         setDeletingAssetId(null)
       }
     },
-    [community, confirmingDeleteId, loadReferences, mutate, reload, selectedAssetId],
+    [community, confirmingDeleteId, loadReferences, mutate, reload, reloadStats, selectedAssetId],
   )
 
   const selectAsset = useCallback((assetId: string): void => {
@@ -318,10 +350,25 @@ export default function useAssetsHub(): TAssetsHubLogic {
     setConfirmingDeleteId(null)
   }, [])
 
+  const changeThread = useCallback((thread: TAssetThreadFilter): void => {
+    setActiveThread(thread)
+    setSelectedAssetId(null)
+    setConfirmingDeleteId(null)
+  }, [])
+
+  const changeSearchQuery = useCallback((query: string): void => {
+    setSearchQuery(query)
+    setSelectedAssetId(null)
+    setConfirmingDeleteId(null)
+  }, [])
+
   return {
+    activeThread,
     assets,
     assetsErrorMessage,
     busy,
+    changeSearchQuery,
+    changeThread,
     community,
     confirmingDeleteId,
     copyPublicReadUrl,
@@ -333,6 +380,9 @@ export default function useAssetsHub(): TAssetsHubLogic {
     selectAsset,
     selectedAsset,
     selectedAssetUrl,
+    searchQuery,
+    stats,
+    statsErrorMessage,
     status,
     timings,
     totalCount,

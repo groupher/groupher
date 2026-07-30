@@ -1,6 +1,16 @@
+import { THREAD } from '~/const/thread'
+
 export const ASSETS_HUB_PAGE_SIZE = 12
 export const ASSETS_HUB_REFS_PAGE_SIZE = 5
 export const ASSETS_HUB_ACCEPT_MIME = 'image/png,image/jpeg,image/webp,image/gif'
+export const ASSETS_HUB_DEBUG_UPLOAD_THREAD = THREAD.POST
+
+export const ASSETS_HUB_THREAD_FILTER = {
+  ALL: 'ALL',
+  CHANGELOG: THREAD.CHANGELOG,
+  DOC: THREAD.DOC,
+  POST: THREAD.POST,
+} as const
 
 export const ASSETS_HUB_LIST_VIEW = {
   DOUBLE: 'double',
@@ -42,6 +52,7 @@ export const ASSETS_HUB_LABEL = {
   DELETE_CONFIRMING: 'Confirm delete',
   EMPTY: 'No assets yet',
   FILE_INPUT: 'Upload asset',
+  FILTER: 'Filter assets',
   LOADING_ASSETS: 'Loading assets',
   NO_DIMENSIONS: 'no dimensions',
   OPEN_URL: 'Open original',
@@ -52,6 +63,7 @@ export const ASSETS_HUB_LABEL = {
   REFERENCES_LOADING: 'Checking references',
   REFERENCES_TITLE: 'References',
   SEARCH: 'Search assets',
+  SEARCH_SHORT: 'Search',
   TITLE: 'Assets Hub',
   UNKNOWN: 'unknown',
   UPLOAD: 'Upload',

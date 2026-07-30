@@ -488,6 +488,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   object :community_asset do
     field(:id, :id)
     field(:public_ref, :string)
+    field(:thread, :thread)
     field(:asset_type, :community_asset_type)
     field(:status, :community_asset_status)
     field(:title, :string)
@@ -530,6 +531,31 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:storage_bytes, :big_int)
   end
 
+  object :community_asset_thread_stat do
+    field(:thread, non_null(:thread))
+    field(:count, non_null(:integer))
+  end
+
+  object :community_asset_subtype_stat do
+    field(:key, non_null(:string))
+    field(:label, non_null(:string))
+    field(:count, non_null(:integer))
+  end
+
+  object :community_asset_type_stat do
+    field(:asset_type, non_null(:community_asset_type))
+    field(:count, non_null(:integer))
+    field(:subtypes, non_null(list_of(non_null(:community_asset_subtype_stat))))
+  end
+
+  object :community_asset_stats do
+    field(:total_count, non_null(:integer))
+    field(:storage_bytes, non_null(:big_int))
+    field(:storage_limit_bytes, non_null(:big_int))
+    field(:by_thread, non_null(list_of(non_null(:community_asset_thread_stat))))
+    field(:by_asset_type, non_null(list_of(non_null(:community_asset_type_stat))))
+  end
+
   object :community_asset_origin_info do
     field(:public_ref, non_null(:string))
     field(:status, non_null(:community_asset_status))
@@ -545,6 +571,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
   end
 
   input_object :community_asset_input do
+    field(:thread, :thread)
     field(:asset_type, :community_asset_type)
     field(:title, :string)
     field(:filename, :string)
@@ -574,7 +601,17 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:mime_type, non_null(:string))
     field(:size_bytes, non_null(:big_int))
     field(:checksum_sha256, :string)
+    field(:thread, :thread)
     field(:asset_type, :community_asset_type)
+  end
+
+  input_object :community_asset_filter do
+    field(:page, :integer)
+    field(:size, :integer)
+    field(:query, :string)
+    field(:thread, :thread)
+    field(:asset_type, :community_asset_type)
+    field(:subtypes, list_of(non_null(:string)))
   end
 
   input_object :community_asset_upload_completion_input do
@@ -589,6 +626,7 @@ defmodule GroupherServerWeb.Schema.CMS.Types do
     field(:size_bytes, non_null(:big_int))
     field(:filename, :string)
     field(:mime_type, :string)
+    field(:thread, :thread)
     field(:asset_type, :community_asset_type)
     field(:width, :integer)
     field(:height, :integer)

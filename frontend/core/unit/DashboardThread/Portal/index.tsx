@@ -49,16 +49,21 @@ const Portal: FC<TProps> = ({
         </div>
       )}
 
-      {!hideTitle && (
-        <div className={s.header}>
-          <h3 className={s.title} data-testid={testid || undefined}>
-            {title}
-          </h3>
-          {addon}
+      {(!hideTitle || desc || addon) && (
+        <div className={s.body}>
+          {!hideTitle && (
+            <div className={s.header}>
+              <h3 className={s.title} data-testid={testid || undefined}>
+                {title}
+              </h3>
+            </div>
+          )}
+
+          {desc && <p className={s.desc}>{desc}</p>}
+          {addon && <div className={s.addon}>{addon}</div>}
         </div>
       )}
 
-      {desc && <p className={s.desc}>{desc}</p>}
       {withDivider && <div className={s.divider} />}
     </div>
   )

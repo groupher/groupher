@@ -400,7 +400,7 @@ export default {
   'dsb.covers.item.admins.desc': '管理员管理，权限设置。',
   'dsb.covers.cms.title': '内容管理',
   'dsb.covers.cms.desc': '社区内容，用户以及导入导出管理。',
-  'dsb.covers.item.assets.desc': '管理上传素材，预览，URL 与删除保护。',
+  'dsb.covers.item.assets.desc': '管理社区内使用的所有多媒体素材。',
   'dsb.covers.item.posts.desc': '帖子内容管理，状态设置等。',
   'dsb.covers.item.changelog_manage.desc': '更新日志内容管理，状态设置等。',
   'dsb.covers.item.docs.desc': '文档内容，目录管理，状态设置等。',

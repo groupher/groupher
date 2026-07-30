@@ -66,6 +66,10 @@ defmodule GroupherServerWeb.Resolvers.CMS do
     CMS.Assets.usage(community)
   end
 
+  def community_asset_stats(_root, %{community: %Community{} = community} = args, _info) do
+    CMS.Assets.stats(community, Map.get(args, :filter))
+  end
+
   def community_asset_origin_info(_root, %{public_ref: public_ref}, _info) do
     case CMS.Assets.origin_info(public_ref) do
       {:ok, asset} -> {:ok, asset}

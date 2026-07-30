@@ -1,8 +1,10 @@
 import type { TSimpleUser } from '~/spec'
+import type { TThread } from '~/spec/thread'
 
 export type TAssetType = 'IMAGE' | 'VIDEO' | 'AUDIO' | 'FILE'
 export type TAssetStatus = 'ACTIVE' | 'DELETED'
 export type TAssetListViewMode = 'single' | 'double' | 'masonry'
+export type TAssetThreadFilter = 'ALL' | TThread
 
 export type TAsset = {
   assetType?: TAssetType
@@ -18,9 +20,35 @@ export type TAsset = {
   status?: TAssetStatus
   storage?: string
   storageKey?: string
+  thread?: TThread | null
   uploader?: TSimpleUser | null
   url?: string
   width?: number
+}
+
+export type TAssetThreadStat = {
+  count: number
+  thread: TThread
+}
+
+export type TAssetSubtypeStat = {
+  count: number
+  key: string
+  label: string
+}
+
+export type TAssetTypeStat = {
+  assetType: TAssetType
+  count: number
+  subtypes: TAssetSubtypeStat[]
+}
+
+export type TAssetStats = {
+  byAssetType: TAssetTypeStat[]
+  byThread: TAssetThreadStat[]
+  storageBytes: number
+  storageLimitBytes: number
+  totalCount: number
 }
 
 export type TAssetRef = {
@@ -113,6 +141,7 @@ export type TReferencesState = {
 export type TAssetsHubLogic = {
   assets: TAsset[]
   assetsErrorMessage: string | null
+  activeThread: TAssetThreadFilter
   busy: boolean
   community: string
   confirmingDeleteId: string | null
@@ -121,10 +150,15 @@ export type TAssetsHubLogic = {
   references: TReferencesState
   selectedAsset: TAsset | null
   selectedAssetUrl: string
+  searchQuery: string
+  stats: TAssetStats | null
+  statsErrorMessage: string | null
   status: string
   timings: TTiming[]
   totalCount: number
   uploadProgress: TUploadProgress | null
+  changeSearchQuery: (query: string) => void
+  changeThread: (thread: TAssetThreadFilter) => void
   copyPublicReadUrl: (asset: TAsset) => Promise<void>
   deleteAsset: (asset: TAsset) => Promise<void>
   openPublicReadPreview: (asset: TAsset) => void
