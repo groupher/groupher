@@ -1,3 +1,5 @@
+import { GROUPHER_SERVER_TRUST_HEADER } from '@groupher/contracts/headers'
+
 const CONTENT_IMPORT_BACKEND_TOKEN_HEADER = 'x-groupher-backend-token'
 const CONTENT_IMPORT_USER_REF_HEADER = 'x-groupher-user-ref'
 
@@ -47,6 +49,9 @@ export const proxyContentImportRequest = async (
   headers.set('Authorization', `Bearer ${backendToken}`)
   headers.set(CONTENT_IMPORT_BACKEND_TOKEN_HEADER, backendToken)
   headers.set(CONTENT_IMPORT_USER_REF_HEADER, userRef)
+
+  const serverTrustSecret = process.env.GROUPHER_SERVER_TRUST_SECRET?.trim()
+  if (serverTrustSecret) headers.set(GROUPHER_SERVER_TRUST_HEADER, serverTrustSecret)
 
   return fetcher(targetUrl, {
     body: await requestBody(request),

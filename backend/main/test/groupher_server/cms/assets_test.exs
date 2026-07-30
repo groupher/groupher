@@ -120,7 +120,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                      }
                    ],
                    cover_asset: cover_asset
-                 }, community: community)
+                 },
+                 community: community
+               )
 
       refs = article_refs(:post, post.id)
       assert refs |> Enum.map(& &1.usage) |> Enum.sort() == [:cover, :inline]
@@ -136,7 +138,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  %{
                    asset_refs: [],
                    cover_edit_info: nil
-                 }, community: community)
+                 },
+                 community: community
+               )
 
       assert article_refs(:post, post.id) == []
 
@@ -165,7 +169,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                      %{asset_id: asset_a.id, block_id: "asset-a"},
                      %{asset_id: asset_b.id, block_id: "asset-b"}
                    ]
-                 }, community: community)
+                 },
+                 community: community
+               )
 
       assert refs |> Enum.map(& &1.asset_id) |> Enum.sort() == [asset_a.id, asset_b.id]
       assert asset_ref_count(asset_a.id) == 1
@@ -181,7 +187,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                      %{asset_id: asset_b.id, block_id: "asset-b"},
                      %{asset_id: asset_c.id, block_id: "asset-c"}
                    ]
-                 }, community: community)
+                 },
+                 community: community
+               )
 
       assert refs |> Enum.map(& &1.asset_id) |> Enum.sort() == [asset_b.id, asset_c.id]
 
@@ -210,7 +218,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                        asset: image_asset_attrs("ignored.png", 60)
                      }
                    ]
-                 }, community: community)
+                 },
+                 community: community
+               )
 
       assert article_refs(:post, post.id) == []
     end
@@ -225,7 +235,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  %{
                    cur_user: user,
                    cover_asset: cover_asset
-                 }, community: community)
+                 },
+                 community: community
+               )
 
       for usage <- [:cover, "cover_dark"] do
         assert {:error, {:custom, "asset usage is invalid"}} =
@@ -239,7 +251,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                          usage: usage
                        }
                      ]
-                   }, community: community)
+                   },
+                   community: community
+                 )
 
         assert [%ArticleDocumentAssetRef{id: ref_id, usage: :cover}] =
                  article_refs(:post, post.id)
@@ -270,7 +284,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                         source: filename
                       }
                     ]
-                  }, community: community)
+                  },
+                  community: community
+                )
             end
           end)
         end)
@@ -308,7 +324,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  %{
                    cur_user: user,
                    asset_refs: asset_refs
-                 }, community: community)
+                 },
+                 community: community
+               )
 
       assert length(refs) == 105
 
@@ -362,6 +380,45 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
       assert payload["declaredSizeBytes"] == 80
     end
 
+    test "rejects upload intent when community quota is exhausted", ~m(community user)a do
+      {:ok, _asset} =
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("quota-full.png", 100 * 1024 * 1024),
+          user
+        )
+
+      assert {:error, {:custom, "community asset storage quota exceeded"}} =
+               CMS.Assets.create_upload_intent(
+                 community,
+                 image_asset_attrs("quota-next.png", 1),
+                 user
+               )
+    end
+
+    test "rejects upload completion when community quota is exhausted", ~m(community user)a do
+      {:ok, _asset} =
+        CMS.Assets.register_to_community(
+          community,
+          image_asset_attrs("quota-complete-full.png", 100 * 1024 * 1024),
+          user
+        )
+
+      assert {:error, {:custom, "community asset storage quota exceeded"}} =
+               CMS.Assets.complete_upload(%{
+                 asset_public_ref: "asset_quota_complete",
+                 community_id: community.id,
+                 content_hash: "sha256:quota-complete",
+                 filename: "quota-complete-next.png",
+                 mime_type: "image/png",
+                 size_bytes: 1,
+                 storage: "r2",
+                 storage_key: "communities/#{community.slug}/assets/2026_07/30_quota/original",
+                 url: "https://assets.groupher.test/a/asset_quota_complete/original",
+                 uploader_id: user.id
+               })
+    end
+
     test "returns origin info only for active public refs", ~m(community user)a do
       attrs =
         "origin.png"
@@ -408,7 +465,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           %{
             cur_user: user,
             asset_refs: [%{asset: asset_attrs, block_id: "referenced"}]
-          }, community: community)
+          },
+          community: community
+        )
 
       assert {:error, {:custom, "asset is still referenced"}} =
                CMS.Assets.delete(community, ref.asset_id)
@@ -425,7 +484,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           %{
             cur_user: user,
             asset_refs: [%{asset: asset_attrs, block_id: "soft-delete-keeps-refs"}]
-          }, community: community)
+          },
+          community: community
+        )
 
       assert asset_ref_count(ref.asset_id) == 1
 
@@ -445,7 +506,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
           %{
             cur_user: user,
             asset_refs: [%{asset: asset_attrs, block_id: "delete-cleanup"}]
-          }, community: community)
+          },
+          community: community
+        )
 
       assert [_] = article_refs(:post, post.id)
 
@@ -472,7 +535,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  %{
                    cur_user: user,
                    asset_refs: [%{asset_id: asset.id, block_id: "shared-one"}]
-                 }, community: community)
+                 },
+                 community: community
+               )
 
       assert {:ok, %{body: [_]}} =
                CMS.Assets.link_refs(
@@ -480,7 +545,9 @@ defmodule GroupherServer.Test.CMS.AssetsTest do
                  %{
                    cur_user: user,
                    asset_refs: [%{asset_id: asset.id, block_id: "shared-two"}]
-                 }, community: community)
+                 },
+                 community: community
+               )
 
       assert asset_ref_count(asset.id) == 2
 

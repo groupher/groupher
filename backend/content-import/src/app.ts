@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 
+import { GROUPHER_SERVER_TRUST_HEADER } from '@groupher/contracts/headers'
 import { createHealthResponse } from '@groupher/service/health'
 import { hasCronSecret, jsonResponse, readBearerToken } from '@groupher/service/http'
 import { Hono } from 'hono'
@@ -60,6 +61,12 @@ const defaultHandlers = {
 
 const json = jsonResponse
 
+const tokenUserRef = (backendToken: string) =>
+  createHash('sha256').update(backendToken).digest('base64url').slice(0, 32)
+
+const hasTrustedProxyHeader = (request: Request, serverTrustSecret: string): boolean =>
+  request.headers.get(GROUPHER_SERVER_TRUST_HEADER)?.trim() === serverTrustSecret
+
 const resolveAuthOptions = (
   request: Request,
   environment: Record<string, string | undefined>,
@@ -89,8 +96,8 @@ const resolveAuthOptions = (
   }
 
   const configuredUserRef = request.headers.get('x-groupher-user-ref')?.trim()
-  const userRef =
-    configuredUserRef || createHash('sha256').update(backendToken).digest('base64url').slice(0, 32)
+  const trustedProxy = hasTrustedProxyHeader(request, serverTrustSecret.trim())
+  const userRef = trustedProxy && configuredUserRef ? configuredUserRef : tokenUserRef(backendToken)
 
   return {
     backendToken: backendToken.trim(),

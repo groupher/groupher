@@ -182,6 +182,9 @@ export const createApp = ({ environment = process.env }: TOptions = {}) => {
           upload: {
             headers: {
               'content-type': capability.declaredMimeType,
+              ...(capability.checksumSha256
+                ? { 'x-amz-checksum-sha256': capability.checksumSha256 }
+                : {}),
             },
             method: 'PUT',
             url: uploadUrl,

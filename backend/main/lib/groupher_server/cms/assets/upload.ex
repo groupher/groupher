@@ -7,6 +7,9 @@ defmodule GroupherServer.CMS.Assets.Upload do
   object verification, then calls back through a server-trusted mutation.
   """
 
+  import Ecto.Query, warn: false
+
+  alias GroupherServer.{Repo}
   alias GroupherServer.Accounts.Model.User
   alias GroupherServer.CMS.Artiment.Threads
   alias GroupherServer.CMS.Assets.Write
@@ -15,11 +18,13 @@ defmodule GroupherServer.CMS.Assets.Upload do
 
   @allowed_mime_types ~w(image/jpeg image/png image/webp image/gif)
   @max_size_bytes 10 * 1024 * 1024
+  @storage_limit_bytes 100 * 1024 * 1024
   @capability_ttl_seconds 15 * 60
 
   @spec create_intent(Community.t(), map(), User.t()) :: T.domain_res(map())
   def create_intent(%Community{} = community, file, %User{} = user) when is_map(file) do
-    with {:ok, attrs} <- validate_file(file) do
+    with {:ok, attrs} <- validate_file(file),
+         :ok <- ensure_capacity(community.id, attrs.size_bytes) do
       issued_at = DateTime.utc_now(:second)
       upload_ref = "upload_" <> Utils.uid(18)
       asset_uid = Utils.uid(18)
@@ -90,7 +95,22 @@ defmodule GroupherServer.CMS.Assets.Upload do
     }
 
     with :ok <- validate_completion(attrs) do
-      Write.register(%Community{id: get(input, :community_id)}, attrs, nil)
+      Repo.transaction(fn ->
+        case input |> get(:community_id) |> normalize_id() do
+          nil ->
+            Repo.rollback({:custom, "community asset storage quota exceeded"})
+
+          community_id ->
+            lock_community!(community_id)
+
+            with :ok <- ensure_capacity(community_id, attrs.size_bytes),
+                 {:ok, asset} <- Write.register(%Community{id: community_id}, attrs, nil) do
+              asset
+            else
+              {:error, reason} -> Repo.rollback(reason)
+            end
+        end
+      end)
     end
   end
 
@@ -142,9 +162,56 @@ defmodule GroupherServer.CMS.Assets.Upload do
       not is_binary(attrs.content_hash) or not String.starts_with?(attrs.content_hash, "sha256:") ->
         {:error, {:custom, "content_hash must use sha256:<hex>"}}
 
+      not is_integer(attrs.size_bytes) or attrs.size_bytes <= 0 ->
+        {:error, {:custom, "size_bytes must be positive"}}
+
       true ->
         :ok
     end
+  end
+
+  defp ensure_capacity(community_id, incoming_size_bytes)
+       when is_integer(incoming_size_bytes) do
+    case normalize_id(community_id) do
+      nil ->
+        {:error, {:custom, "community asset storage quota exceeded"}}
+
+      community_id ->
+        used_bytes =
+          community_id
+          |> CommunityAsset.active_query()
+          |> select([asset], coalesce(sum(asset.size_bytes), 0))
+          |> Repo.one()
+
+        if storage_bytes_to_integer(used_bytes) + incoming_size_bytes <= @storage_limit_bytes do
+          :ok
+        else
+          {:error, {:custom, "community asset storage quota exceeded"}}
+        end
+    end
+  end
+
+  defp ensure_capacity(_, _), do: {:error, {:custom, "community asset storage quota exceeded"}}
+
+  defp normalize_id(value) when is_integer(value), do: value
+
+  defp normalize_id(value) when is_binary(value) do
+    case Integer.parse(value) do
+      {id, ""} -> id
+      _ -> nil
+    end
+  end
+
+  defp normalize_id(_), do: nil
+
+  defp storage_bytes_to_integer(%Decimal{} = value), do: Decimal.to_integer(value)
+  defp storage_bytes_to_integer(value) when is_integer(value), do: value
+
+  defp lock_community!(community_id) do
+    Community
+    |> where([community], community.id == ^community_id)
+    |> lock("FOR UPDATE")
+    |> Repo.one!()
   end
 
   defp sign_capability(payload) do

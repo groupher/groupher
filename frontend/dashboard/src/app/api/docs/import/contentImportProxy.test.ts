@@ -29,6 +29,7 @@ describe('proxyContentImportRequest', () => {
 
   it('forwards auth scope without browser cookies', async () => {
     vi.stubEnv('CONTENT_IMPORT_APP_ENDPOINT', 'https://content-import.groupher.localhost')
+    vi.stubEnv('GROUPHER_SERVER_TRUST_SECRET', 'server-trust-secret')
     const fetcher = vi.fn().mockResolvedValue(Response.json({ ok: true }))
     const request = new Request('https://dashboard.test/api/docs/import/previews?community=home', {
       body: JSON.stringify({ community: 'home' }),
@@ -52,6 +53,7 @@ describe('proxyContentImportRequest', () => {
     expect(init.method).toBe('POST')
     expect(init.headers.get('authorization')).toBe('Bearer backend-token')
     expect(init.headers.get('x-groupher-backend-token')).toBe('backend-token')
+    expect(init.headers.get('x-groupher-server-trust')).toBe('server-trust-secret')
     expect(init.headers.get('x-groupher-user-ref')).toBe('u')
     expect(init.headers.has('cookie')).toBe(false)
     await expect(new Response(init.body).json()).resolves.toEqual({ community: 'home' })

@@ -45,6 +45,7 @@ test('preview creation passes stable auth options to the migrated handler', asyn
     headers: {
       Authorization: 'Bearer backend-token',
       'Content-Type': 'application/json',
+      'X-Groupher-Server-Trust': 'server-trust',
       'x-groupher-user-ref': 'user-1',
     },
     method: 'POST',
@@ -59,6 +60,32 @@ test('preview creation passes stable auth options to the migrated handler', asyn
       userRef: 'user-1',
     },
   ])
+})
+
+test('direct preview requests cannot spoof owner with the user-ref header', async () => {
+  const calls: unknown[] = []
+  const app = createApp({
+    environment,
+    handlers: {
+      createPreview: async (_request, options) => {
+        calls.push(options)
+        return Response.json({ ok: true, status: 'queued' }, { status: 202 })
+      },
+    },
+  })
+
+  const response = await app.request('/api/docs/import/previews', {
+    body: JSON.stringify({ community: 'home', repoUrl: 'https://github.com/acme/docs' }),
+    headers: {
+      Authorization: 'Bearer backend-token',
+      'Content-Type': 'application/json',
+      'x-groupher-user-ref': 'spoofed-user',
+    },
+    method: 'POST',
+  })
+
+  assert.equal(response.status, 202)
+  assert.notEqual((calls[0] as { userRef: string }).userRef, 'spoofed-user')
 })
 
 test('preview read and delete pass path params and owner scope', async () => {
@@ -76,7 +103,11 @@ test('preview read and delete pass path params and owner scope', async () => {
       },
     },
   })
-  const headers = { Authorization: 'Bearer backend-token', 'x-groupher-user-ref': 'user-1' }
+  const headers = {
+    Authorization: 'Bearer backend-token',
+    'X-Groupher-Server-Trust': 'server-trust',
+    'x-groupher-user-ref': 'user-1',
+  }
 
   assert.equal(
     (
@@ -120,6 +151,7 @@ test('apply route passes the preview ref and full auth options', async () => {
     headers: {
       Authorization: 'Bearer backend-token',
       'Content-Type': 'application/json',
+      'X-Groupher-Server-Trust': 'server-trust',
       'x-groupher-user-ref': 'user-1',
     },
     method: 'POST',

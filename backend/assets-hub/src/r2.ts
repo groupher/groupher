@@ -73,6 +73,7 @@ const assertHeadObject = (
 }
 
 export const createPresignedPutUrl = async ({
+  checksumSha256,
   contentType,
   expiresInSeconds = 300,
   key,
@@ -89,6 +90,7 @@ export const createPresignedPutUrl = async ({
     client,
     new PutObjectCommand({
       Bucket: config.bucket,
+      ChecksumSHA256: checksumSha256 || undefined,
       ContentType: contentType,
       Key: key,
     }),
