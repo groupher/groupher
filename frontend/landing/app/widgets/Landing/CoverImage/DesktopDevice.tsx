@@ -1,15 +1,13 @@
 import Typewriter from 'typewriter-effect'
 
-import { fmt2CompStyle } from '~/fmt'
-import useWallpaper from '~/hooks/useWallpaper'
 import LockSVG from '~/icons/Lock'
+import WallpaperRenderer from '~/widgets/WallpaperRenderer'
 
 import useSalon from '../salon/cover_image/desktop_device'
 import ImageSlider from './ImageSlider'
 
 export default function DesktopDevice() {
   const s = useSalon()
-  const { background, effect } = useWallpaper()
 
   return (
     <div className={s.wrapper}>
@@ -39,7 +37,7 @@ export default function DesktopDevice() {
         <ImageSlider />
       </div>
 
-      <div className={s.background} style={{ background, ...fmt2CompStyle(effect) }} />
+      <WallpaperRenderer className={s.background} positioned={false} />
     </div>
   )
 }

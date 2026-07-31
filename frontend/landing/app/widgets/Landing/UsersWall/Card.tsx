@@ -1,4 +1,3 @@
-import Image from 'next/image'
 import type { FC, ReactNode } from 'react'
 
 import type { TColorName, TUser } from '~/spec'
@@ -17,7 +16,7 @@ const Card: FC<TProps> = ({ content, user, color }) => {
   return (
     <div className={s.wrapper}>
       <div className={s.header}>
-        <Image className={s.avatar} src={user.avatar} width={40} height={40} alt='user' />
+        <img className={s.avatar} src={user.avatar} width={40} height={40} alt='user' />
         <div className={s.nickname}>{user.nickname}</div>
       </div>
       <div className={s.content}>{content}</div>

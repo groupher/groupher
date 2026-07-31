@@ -12,6 +12,7 @@ import { AnimatePresence, motion, MotionConfig } from 'motion/react'
 
 import { SERVICE_DEPLOYMENT_TARGETS } from '@/lib/infra-links'
 import { openExternalUrl } from '@/lib/open-external-url'
+import { getServiceOpenUrl } from '@/lib/service-open-url'
 
 import { ServiceActionButton } from './ServiceActionButton'
 import { ServiceAddress } from './ServiceAddress'
@@ -102,13 +103,7 @@ export function ServiceCard({
           ? 'External'
           : 'Start'
   const browserUrl = metrics?.browser?.url
-  const openUrl =
-    browserUrl ||
-    service.portlessAppUrl ||
-    service.appUrl ||
-    service.portlessUrl ||
-    service.url ||
-    undefined
+  const openUrl = getServiceOpenUrl(service, metrics)
   const showAddress = service.status === 'running' || Boolean(browserUrl)
   const deploymentTarget = SERVICE_DEPLOYMENT_TARGETS[service.id]
 
