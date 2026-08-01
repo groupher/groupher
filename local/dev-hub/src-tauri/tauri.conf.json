@@ -66,6 +66,9 @@
                 },
                 {
                   "url": "https://fly.io/*"
+                },
+                {
+                  "url": "https://dashboard.algolia.com/*"
                 }
               ]
             }
