@@ -54,6 +54,18 @@
                 },
                 {
                   "url": "https://*.localhost/*"
+                },
+                {
+                  "url": "https://vercel.com/*"
+                },
+                {
+                  "url": "https://*.vercel.com/*"
+                },
+                {
+                  "url": "https://dash.cloudflare.com/*"
+                },
+                {
+                  "url": "https://fly.io/*"
                 }
               ]
             }
