@@ -96,17 +96,22 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   defp seed_articles(%Community{} = community, thread, titles)
        when thread in [:post, :changelog] do
     schema = schema_for(thread)
-    existing_titles = existing_article_titles(schema, community.id, titles)
+    existing_articles = existing_articles_by_title(schema, community.id, titles)
 
     with {:ok, author} <- SeedHelper.seed_bot() do
       titles
-      |> Enum.reject(&MapSet.member?(existing_titles, &1))
       |> Enum.reduce_while({:ok, []}, fn title, {:ok, acc} ->
-        attrs = mock_attrs(thread, %{community_id: community.id, title: title})
+        case Map.fetch(existing_articles, title) do
+          {:ok, article} ->
+            {:cont, {:ok, [article | acc]}}
 
-        case CMS.Articles.create(community, thread, attrs, author) do
-          {:ok, article} -> {:cont, {:ok, [article | acc]}}
-          {:error, reason} -> {:halt, {:error, reason}}
+          :error ->
+            attrs = mock_attrs(thread, %{community_id: community.id, title: title})
+
+            case CMS.Articles.create(community, thread, attrs, author) do
+              {:ok, article} -> {:cont, {:ok, [article | acc]}}
+              {:error, reason} -> {:halt, {:error, reason}}
+            end
         end
       end)
       |> case do
@@ -119,13 +124,12 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   defp schema_for(:post), do: Post
   defp schema_for(:changelog), do: Changelog
 
-  defp existing_article_titles(schema, community_id, titles) do
+  defp existing_articles_by_title(schema, community_id, titles) do
     schema
     |> join(:inner, [item], community in assoc(item, :communities))
     |> where([item, community], community.id == ^community_id and item.title in ^titles)
-    |> select([item], item.title)
     |> Repo.all()
-    |> MapSet.new()
+    |> Map.new(&{&1.title, &1})
   end
 
   defp set_kanban_statuses(posts) do
@@ -147,10 +151,20 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
     %{
       slug: @slug,
       posts: count(Post, community_id),
-      kanban_posts: count(Post, community_id),
+      kanban_posts: count_kanban_posts(community_id),
       changelogs: count(Changelog, community_id),
       docs: count(Doc, community_id)
     }
+  end
+
+  defp count_kanban_posts(community_id) do
+    Repo.aggregate(
+      from(post in Post,
+        join: community in assoc(post, :communities),
+        where: community.id == ^community_id and not is_nil(post.status)
+      ),
+      :count
+    )
   end
 
   defp count(schema, community_id) do
