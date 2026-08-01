@@ -70,7 +70,7 @@ config :groupher_server, GroupherServerWeb.Endpoint,
 
 config :groupher_server, Helper.Guardian,
   issuer: "groupher_server",
-  secret_key: System.get_env("GUARDIAN_KEY")
+  secret_key: System.get_env("PHX_JWT_SECRET")
 
 config :groupher_server, :github_oauth,
   client_id: System.get_env("OAUTH_GITHUB_CLIENT_ID"),

@@ -7,7 +7,7 @@ import { getPhoenixToken } from './phoenix-token'
 const base64UrlEncode = (value: unknown): string =>
   Buffer.from(typeof value === 'string' ? value : JSON.stringify(value)).toString('base64url')
 
-const signedToken = (payload: Record<string, unknown> = {}, secret = 'guardian-secret'): string => {
+const signedToken = (payload: Record<string, unknown> = {}, secret = 'phoenix-jwt-secret'): string => {
   const header = base64UrlEncode({ alg: 'HS512', typ: 'JWT' })
   const body = base64UrlEncode({
     exp: Math.floor(Date.now() / 1000) + 60,
@@ -22,7 +22,7 @@ const signedToken = (payload: Record<string, unknown> = {}, secret = 'guardian-s
 
 describe('getPhoenixToken', () => {
   beforeEach(() => {
-    vi.stubEnv('GUARDIAN_KEY', 'guardian-secret')
+    vi.stubEnv('PHX_JWT_SECRET', 'phoenix-jwt-secret')
   })
 
   afterEach(() => {
@@ -70,7 +70,7 @@ describe('getPhoenixToken', () => {
     expect(getPhoenixToken(request)).toBeNull()
   })
 
-  it('rejects Phoenix token cookies when the Guardian secret is not configured', () => {
+  it('rejects Phoenix token cookies when the Phoenix JWT secret is not configured', () => {
     vi.unstubAllEnvs()
     const request = new Request('https://dashboard.groupher.localhost', {
       headers: {
