@@ -22,6 +22,17 @@ const HOP_BY_HOP_HEADERS = [
 
 const LANDING_PATHS = ['/', '/pricing', '/book-demo']
 const DASHBOARD_ASSET_PREFIX = '/dashboard/_next/'
+const LANDING_STATIC_ASSET_PREFIXES = [
+  '/landing/_next/static/',
+  '/avatars/',
+  '/icons/',
+  '/locales/',
+  '/pattern/',
+  '/pwa/',
+]
+const LANDING_ROOT_STATIC_ASSET_RE = /^\/[^/]+\.(?:ico|json|png|txt|webp|xml)$/
+const DASHBOARD_API_PREFIXES = ['/api/artiment/', '/api/docs/import/', '/api/internal/docs-import/']
+const DASHBOARD_API_PATHS = ['/api/revalidate/community', '/api/utils/slugify']
 
 const json = (body, init = {}) =>
   Response.json(body, {
@@ -64,9 +75,17 @@ const normalizeExplicitPath = (pathname) => {
 
 export const isLandingPath = (pathname) => LANDING_PATHS.includes(normalizeExplicitPath(pathname))
 
+const isLandingStaticAssetPath = (pathname) =>
+  LANDING_STATIC_ASSET_PREFIXES.some((prefix) => pathname.startsWith(prefix)) ||
+  LANDING_ROOT_STATIC_ASSET_RE.test(pathname)
+
 const isAuthRoute = (pathname) => pathname === '/api/auth' || pathname.startsWith('/api/auth/')
 
 const isGraphqlRoute = (pathname) => pathname === '/api/graphql'
+
+const isDashboardApiRoute = (pathname) =>
+  DASHBOARD_API_PATHS.includes(pathname) ||
+  DASHBOARD_API_PREFIXES.some((prefix) => pathname.startsWith(prefix))
 
 const isDashboardRoute = (pathname) => {
   if (pathname.startsWith(DASHBOARD_ASSET_PREFIX)) return true
@@ -75,7 +94,12 @@ const isDashboardRoute = (pathname) => {
   return parts.length >= 2 && parts[1] === 'dashboard'
 }
 
-const targetUrl = (base, pathname, search = '') => new URL(`${pathname}${search}`, base)
+const targetUrl = (base, pathname, search = '') => {
+  const url = new URL(base)
+  url.pathname = pathname
+  url.search = search
+  return url
+}
 
 export const resolveCloudflareTarget = ({ pathname, search = '' }, env) => {
   if (isGraphqlRoute(pathname)) {
@@ -90,6 +114,14 @@ export const resolveCloudflareTarget = ({ pathname, search = '' }, env) => {
     return {
       kind: 'auth',
       url: targetUrl(siteUrl(env, 'AUTH'), pathname, search),
+      requestHeaderPolicy: 'pass-through',
+    }
+  }
+
+  if (isDashboardApiRoute(pathname)) {
+    return {
+      kind: 'dashboard',
+      url: targetUrl(siteUrl(env, 'DASHBOARD'), pathname, search),
       requestHeaderPolicy: 'pass-through',
     }
   }
@@ -120,8 +152,14 @@ export const buildProxyHeaders = (request, target) => {
   headers.delete('forwarded')
   headers.delete('x-forwarded-host')
   headers.delete('x-forwarded-proto')
+  headers.delete('x-forwarded-for')
   headers.set('x-forwarded-host', requestUrl.host)
   headers.set('x-forwarded-proto', requestUrl.protocol.replace(':', ''))
+
+  const connectingIp = request.headers.get('cf-connecting-ip')
+  if (connectingIp) {
+    headers.set('x-forwarded-for', connectingIp)
+  }
 
   if (target.requestHeaderPolicy === 'graphql-browser-clean') {
     const authToken = readCookie(request.headers, GROUPHER_AUTH_TOKEN_COOKIE)
@@ -163,7 +201,7 @@ export default {
       })
     }
 
-    if (isLandingPath(url.pathname)) {
+    if (isLandingPath(url.pathname) || isLandingStaticAssetPath(url.pathname)) {
       return env.ASSETS.fetch(request)
     }
 

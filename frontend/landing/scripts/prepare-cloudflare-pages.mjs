@@ -11,5 +11,6 @@ const prefixedNextDir = path.join(outDir, 'landing', '_next')
 await mkdir(path.dirname(prefixedNextDir), { recursive: true })
 await rm(prefixedNextDir, { force: true, recursive: true })
 await cp(sourceNextDir, prefixedNextDir, { recursive: true })
+await rm(sourceNextDir, { force: true, recursive: true })
 
 console.log('Prepared Cloudflare Pages assets at out/landing/_next')

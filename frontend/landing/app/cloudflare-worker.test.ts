@@ -56,6 +56,18 @@ describe('landing Cloudflare worker', () => {
     )
   })
 
+  it('routes dashboard-owned API routes to the dashboard origin', () => {
+    const target = resolveCloudflareTarget(
+      { pathname: '/api/docs/import/previews', search: '?community=home' },
+      env,
+    )
+
+    expect(target.kind).toBe('dashboard')
+    expect(target.url.toString()).toBe(
+      'https://dashboard.test/api/docs/import/previews?community=home',
+    )
+  })
+
   it('routes the Auth.js base path to the auth origin', () => {
     const target = resolveCloudflareTarget({ pathname: '/api/auth' }, env)
 
@@ -103,6 +115,57 @@ describe('landing Cloudflare worker', () => {
     expect(headers.has('forwarded')).toBe(false)
     expect(headers.get('x-forwarded-host')).toBe('groupher.test')
     expect(headers.get('x-forwarded-proto')).toBe('https')
+  })
+
+  it('rebuilds x-forwarded-for from the Cloudflare connecting IP', () => {
+    const request = new Request('https://groupher.test/home', {
+      headers: {
+        'cf-connecting-ip': '203.0.113.12',
+        'x-forwarded-for': '198.51.100.99',
+      },
+    })
+    const target = resolveCloudflareTarget({ pathname: '/home' }, env)
+    const headers = buildProxyHeaders(request, target)
+
+    expect(headers.get('x-forwarded-for')).toBe('203.0.113.12')
+  })
+
+  it('does not forward a spoofed x-forwarded-for without a Cloudflare connecting IP', () => {
+    const request = new Request('https://groupher.test/home', {
+      headers: {
+        'x-forwarded-for': '198.51.100.99',
+      },
+    })
+    const target = resolveCloudflareTarget({ pathname: '/home' }, env)
+    const headers = buildProxyHeaders(request, target)
+
+    expect(headers.has('x-forwarded-for')).toBe(false)
+  })
+
+  it('serves landing static assets from Pages assets in advanced worker mode', async () => {
+    const response = await worker.fetch(
+      new Request('https://groupher.test/locales/en/base.json'),
+      env,
+    )
+
+    expect(await response.text()).toBe('asset')
+    expect(env.ASSETS.fetch).toHaveBeenCalledOnce()
+    expect(env.fetcher).not.toHaveBeenCalled()
+  })
+
+  it('keeps product paths under /landing routed through the product router', () => {
+    const target = resolveCloudflareTarget({ pathname: '/landing/community/guide' }, env)
+
+    expect(target.kind).toBe('main')
+    expect(target.url.toString()).toBe('https://main.test/landing/community/guide')
+  })
+
+  it('keeps double-slash paths on the configured Groupher origin', () => {
+    const target = resolveCloudflareTarget({ pathname: '//evil.example/session' }, env)
+
+    expect(target.kind).toBe('main')
+    expect(target.url.origin).toBe('https://main.test')
+    expect(target.url.pathname).toBe('//evil.example/session')
   })
 
   it('proxies non-landing product paths with a single origin fetch', async () => {
