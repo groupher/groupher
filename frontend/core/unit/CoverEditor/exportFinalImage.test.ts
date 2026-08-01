@@ -1,7 +1,7 @@
 import { createCoverBgConfig } from './background'
 import { COVER_IMAGE_WHICH } from './constant'
 import { createCoverImageConfig } from './coverImageModel'
-import { getCoverExportLayers } from './exportFinalImage'
+import { getCoverExportLayers, resolveCoverExportFilename } from './exportFinalImage'
 import type { TCoverConfig } from './spec'
 
 const activeBackground = createCoverBgConfig()
@@ -50,5 +50,12 @@ describe('cover final image export helpers', () => {
       COVER_IMAGE_WHICH.SECONDARY,
       COVER_IMAGE_WHICH.PRIMARY,
     ])
+  })
+
+  it('matches the default export filename to the mime type', () => {
+    expect(resolveCoverExportFilename('image/png')).toBe('cover.png')
+    expect(resolveCoverExportFilename('image/jpeg')).toBe('cover.jpg')
+    expect(resolveCoverExportFilename('image/webp')).toBe('cover.webp')
+    expect(resolveCoverExportFilename('image/jpeg', 'custom.png')).toBe('custom.png')
   })
 })

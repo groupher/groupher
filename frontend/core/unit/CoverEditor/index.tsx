@@ -88,7 +88,7 @@ const CoverEditor = forwardRef<TCoverEditorHandle, TProps>(
 
     const downloadExportedImage = async (): Promise<void> => {
       try {
-        const exported = await exportFinalImage({ filename: 'cover-export-demo.png' })
+        const exported = await exportFinalImage()
         const objectUrl = URL.createObjectURL(exported.blob)
         const link = document.createElement('a')
 
@@ -135,7 +135,11 @@ const CoverEditor = forwardRef<TCoverEditorHandle, TProps>(
           className={s.exportButton}
           type='button'
           disabled={!hasAnyImage}
-          onClick={() => void downloadExportedImage()}
+          onClick={(event) => {
+            event.stopPropagation()
+            void downloadExportedImage()
+          }}
+          onKeyDown={(event) => event.stopPropagation()}
         >
           Download
         </button>

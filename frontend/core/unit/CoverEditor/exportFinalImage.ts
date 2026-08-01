@@ -32,6 +32,11 @@ type TCoverExportLayer = {
 
 const DEFAULT_EXPORT_FILENAME = 'cover.png'
 const DEFAULT_EXPORT_MIME_TYPE: TCoverExportMimeType = 'image/png'
+const EXPORT_FILENAME_BY_MIME_TYPE: Record<TCoverExportMimeType, string> = {
+  'image/jpeg': 'cover.jpg',
+  'image/png': DEFAULT_EXPORT_FILENAME,
+  'image/webp': 'cover.webp',
+}
 
 const parsePx = (value: string): number => Number.parseFloat(value) || 0
 
@@ -95,6 +100,11 @@ const canvasToBlob = (
       quality,
     )
   })
+
+export const resolveCoverExportFilename = (
+  mimeType: TCoverExportMimeType,
+  filename?: string,
+): string => filename ?? EXPORT_FILENAME_BY_MIME_TYPE[mimeType]
 
 const drawImageLayer = (
   ctx: CanvasRenderingContext2D,
@@ -349,7 +359,7 @@ export const exportFinalImage = async (
 
   return {
     blob,
-    filename: options.filename ?? DEFAULT_EXPORT_FILENAME,
+    filename: resolveCoverExportFilename(mimeType, options.filename),
     height: canvas.height,
     mimeType,
     width: canvas.width,
