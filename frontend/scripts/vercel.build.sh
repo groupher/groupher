@@ -31,8 +31,21 @@ APP_NAME="${APP_NAME:-$CURRENT_APP}"
 
 echo "🔹 Current building app: $APP_NAME"
 
+case "$APP_NAME" in
+  gateway)
+    WORKSPACE_NAME="@groupher/gateway"
+    ;;
+  main | dashboard | landing)
+    WORKSPACE_NAME="@groupher/frontend-$APP_NAME"
+    ;;
+  *)
+    echo "❌ Unknown Vercel app: $APP_NAME"
+    exit 1
+    ;;
+esac
+
 echo "🏗️ Running build..."
-yarn workspace @groupher/frontend-$APP_NAME build || {
+yarn workspace "$WORKSPACE_NAME" build || {
   echo "❌ Build failed for $APP_NAME"
   exit 1
 }

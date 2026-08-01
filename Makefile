@@ -86,7 +86,7 @@ be.gateway.build:
 	yarn run build:prod:gateway
 
 be.gateway.test:
-	yarn workspace @groupher/backend-gateway test
+	yarn workspace @groupher/gateway test
 
 # auth
 be.auth.start:

@@ -2145,23 +2145,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@groupher/backend-gateway@workspace:backend/gateway":
-  version: 0.0.0-use.local
-  resolution: "@groupher/backend-gateway@workspace:backend/gateway"
-  dependencies:
-    "@groupher/contracts": "npm:1.0.0"
-    "@groupher/service": "npm:1.0.0"
-    "@hono/node-server": "npm:^2.0.11"
-    "@types/node": "npm:^24.0.0"
-    cross-env: "npm:^10.1.0"
-    dotenv: "npm:^17.4.2"
-    esbuild: "npm:^0.28.1"
-    hono: "npm:^4.12.31"
-    rimraf: "npm:^6.1.3"
-    tsx: "npm:^4.23.1"
-  languageName: unknown
-  linkType: soft
-
 "@groupher/contracts@npm:1.0.0, @groupher/contracts@workspace:packages/contracts":
   version: 0.0.0-use.local
   resolution: "@groupher/contracts@workspace:packages/contracts"
@@ -2225,6 +2208,24 @@ __metadata:
     next: "npm:16.3.0-preview.6"
     react: "npm:^19.2.5"
     react-dom: "npm:^19.2.5"
+  languageName: unknown
+  linkType: soft
+
+"@groupher/gateway@workspace:backend/gateway":
+  version: 0.0.0-use.local
+  resolution: "@groupher/gateway@workspace:backend/gateway"
+  dependencies:
+    "@groupher/contracts": "npm:1.0.0"
+    "@groupher/service": "npm:1.0.0"
+    "@hono/node-server": "npm:^2.0.11"
+    "@types/node": "npm:^24.0.0"
+    cross-env: "npm:^10.1.0"
+    dotenv: "npm:^17.4.2"
+    esbuild: "npm:^0.28.1"
+    hono: "npm:^4.12.31"
+    rimraf: "npm:^6.1.3"
+    tsx: "npm:^4.23.1"
+    typescript: "npm:5.9.3"
   languageName: unknown
   linkType: soft
 
@@ -22023,6 +22024,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typescript@npm:5.9.3, typescript@npm:>=5.0.4 <6, typescript@npm:^4.6.4 || ^5.2.2":
+  version: 5.9.3
+  resolution: "typescript@npm:5.9.3"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 10c0/6bd7552ce39f97e711db5aa048f6f9995b53f1c52f7d8667c1abdc1700c68a76a308f579cd309ce6b53646deb4e9a1be7c813a93baaf0a28ccd536a30270e1c5
+  languageName: node
+  linkType: hard
+
 "typescript@npm:7.0.2":
   version: 7.0.2
   resolution: "typescript@npm:7.0.2"
@@ -22094,13 +22105,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:>=5.0.4 <6, typescript@npm:^4.6.4 || ^5.2.2":
+"typescript@patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A>=5.0.4 <6#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^4.6.4 || ^5.2.2#optional!builtin<compat/typescript>":
   version: 5.9.3
-  resolution: "typescript@npm:5.9.3"
+  resolution: "typescript@patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10c0/6bd7552ce39f97e711db5aa048f6f9995b53f1c52f7d8667c1abdc1700c68a76a308f579cd309ce6b53646deb4e9a1be7c813a93baaf0a28ccd536a30270e1c5
+  checksum: 10c0/ad09fdf7a756814dce65bc60c1657b40d44451346858eea230e10f2e95a289d9183b6e32e5c11e95acc0ccc214b4f36289dcad4bf1886b0adb84d711d336a430
   languageName: node
   linkType: hard
 
@@ -22172,16 +22183,6 @@ __metadata:
   bin:
     tsc: bin/tsc
   checksum: 10c0/6b3cdc369cd829d46e00734ea64233ee84419c2825ad8fe408915adde77abced4b7a2401f7eed517d54a7a4f5d1c1869753cb99018df1c2159c761d9f33483a6
-  languageName: node
-  linkType: hard
-
-"typescript@patch:typescript@npm%3A>=5.0.4 <6#optional!builtin<compat/typescript>, typescript@patch:typescript@npm%3A^4.6.4 || ^5.2.2#optional!builtin<compat/typescript>":
-  version: 5.9.3
-  resolution: "typescript@patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"
-  bin:
-    tsc: bin/tsc
-    tsserver: bin/tsserver
-  checksum: 10c0/ad09fdf7a756814dce65bc60c1657b40d44451346858eea230e10f2e95a289d9183b6e32e5c11e95acc0ccc214b4f36289dcad4bf1886b0adb84d711d336a430
   languageName: node
   linkType: hard
 

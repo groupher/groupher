@@ -1,5 +1,3 @@
-import { GROUPHER_AUTH_TOKEN_COOKIE } from '@groupher/contracts/auth'
-
 import type { TGatewayTarget } from './routing'
 
 type TFetch = typeof fetch
@@ -23,6 +21,7 @@ const HOP_BY_HOP_HEADERS = [
 ]
 
 const AUTO_DECODED_RESPONSE_HEADERS = ['content-encoding', 'content-length']
+const GROUPHER_AUTH_TOKEN_COOKIE = 'groupher-auth.token'
 
 const firstHeaderValue = (value: string | null): string | null =>
   value?.split(',')[0]?.trim() || null
