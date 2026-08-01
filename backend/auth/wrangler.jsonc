@@ -1,0 +1,31 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "auth",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-07-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "auth.groupher.com/*",
+      "zone_id": "bd0b41b1b0c3775bd45228dda8567d93"
+    }
+  ],
+  "vars": {
+    "AUTH_URL": "https://auth.groupher.com",
+    "AUTH_COOKIE_DOMAIN": ".groupher.com",
+    "PHOENIX_GRAPHQL_ENDPOINT": "https://api.groupher.com/graphiql",
+    "NODE_ENV": "production"
+  },
+  "secrets": {
+    "required": [
+      "AUTH_GITHUB_ID",
+      "AUTH_GITHUB_SECRET",
+      "NEXTAUTH_SECRET",
+      "GROUPHER_SERVER_TRUST_SECRET"
+    ]
+  },
+  "observability": {
+    "enabled": true
+  }
+}

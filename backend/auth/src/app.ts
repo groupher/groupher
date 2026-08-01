@@ -1,5 +1,6 @@
 import { createHealthResponse } from '@groupher/service/health'
 import { Hono } from 'hono'
+import { cors } from 'hono/cors'
 
 import { buildAuthCookieClearingHeaders, handleAuthRequest } from './auth'
 
@@ -7,8 +8,32 @@ type TOptions = {
   authHandler?: (request: Request) => Promise<Response>
 }
 
+const isAllowedAuthOrigin = (origin: string): boolean => {
+  try {
+    const url = new URL(origin)
+    return (
+      url.protocol === 'https:' &&
+      (url.hostname === 'groupher.com' ||
+        url.hostname === 'www.groupher.com' ||
+        url.hostname.endsWith('.groupher.com'))
+    )
+  } catch {
+    return false
+  }
+}
+
 export const createApp = ({ authHandler = handleAuthRequest }: TOptions = {}) => {
   const app = new Hono()
+
+  app.use(
+    '/api/auth/*',
+    cors({
+      allowHeaders: ['content-type'],
+      allowMethods: ['GET', 'POST', 'OPTIONS'],
+      credentials: true,
+      origin: (origin) => (isAllowedAuthOrigin(origin) ? origin : null),
+    }),
+  )
 
   app.get('/health', (context) => context.json(createHealthResponse({ service: 'auth' })))
 
