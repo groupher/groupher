@@ -40,7 +40,7 @@ const isAllowedAuthOrigin = (origin: string): boolean => {
 export const createApp = ({ authHandler = handleAuthRequest }: TOptions = {}) => {
   const app = new Hono()
   const authCors = cors({
-    allowHeaders: ['content-type'],
+    allowHeaders: ['content-type', 'x-auth-return-redirect'],
     allowMethods: ['GET', 'POST', 'OPTIONS'],
     credentials: true,
     origin: (origin) => (isAllowedAuthOrigin(origin) ? origin : null),

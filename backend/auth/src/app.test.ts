@@ -36,6 +36,7 @@ describe('Auth Hono application', () => {
       method: 'OPTIONS',
       headers: {
         origin: 'https://dashboard.groupher.com',
+        'access-control-request-headers': 'content-type, x-auth-return-redirect',
         'access-control-request-method': 'POST',
       },
     })
@@ -44,6 +45,7 @@ describe('Auth Hono application', () => {
       'https://dashboard.groupher.com',
     )
     expect(response.headers.get('access-control-allow-credentials')).toBe('true')
+    expect(response.headers.get('access-control-allow-headers')).toContain('x-auth-return-redirect')
   })
 
   it('rejects credentialed Auth CORS from community subdomains', async () => {

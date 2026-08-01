@@ -172,6 +172,7 @@ describe('landing Cloudflare worker', () => {
     const response = await worker.fetch(new Request('https://groupher.test/home/post/1'), env)
 
     expect(await response.text()).toBe('origin')
+    expect(env.ASSETS.fetch).not.toHaveBeenCalled()
     expect(env.fetcher).toHaveBeenCalledOnce()
     const [url] = env.fetcher.mock.calls[0]
     expect(url.toString()).toBe('https://main.test/home/post/1')
