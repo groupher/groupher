@@ -73,8 +73,13 @@ describe('injectThemeFirstPaintVars', () => {
   })
 
   it('snapshots computed CSS vars into a temporary style tag', () => {
-    document.documentElement.style.setProperty('--color-title', '#f5f5f5')
-    document.documentElement.style.setProperty('--color-card', 'rgb(37, 37, 37)')
+    vi.spyOn(globalThis, 'getComputedStyle').mockReturnValue({
+      getPropertyValue: (name: string) =>
+        ({
+          '--color-title': '#f5f5f5',
+          '--color-card': 'rgb(37, 37, 37)',
+        })[name] || '',
+    } as CSSStyleDeclaration)
 
     runInlineScript(injectThemeFirstPaintVars())
 

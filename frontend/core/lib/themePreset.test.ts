@@ -212,4 +212,31 @@ describe('serializeCommunityThemePresetCss', () => {
     expect(styleText).not.toContain('var(--malicious)')
     expect(styleText).not.toContain('var(--bad-bg)')
   })
+
+  it('keeps valid theme vars while filtering unsafe sibling vars', () => {
+    const styleText = serializeCommunityThemePresetCss({
+      ...tokens,
+      light: {
+        ...tokens.light,
+        primaryColor: 'red;}</style><script>alert(1)</script>',
+        accentColor: '#0066ff',
+        pageBg: '#ffffff',
+        textTitle: 'url(javascript:evil)',
+      },
+      dark: {
+        ...tokens.dark,
+        primaryColor: '#1f8fff',
+        accentColor: '#9dd6ff',
+        pageBg: '#101318',
+        gaussBlur: 32,
+      },
+    })
+
+    expect(styleText).toContain('--color-accent-custom: #0066ff;')
+    expect(styleText).toContain('--color-page-custom: #ffffff;')
+    expect(styleText).toContain('--color-primary-custom: #1f8fff;')
+    expect(styleText).not.toContain('--color-primary-custom: red;')
+    expect(styleText).not.toContain('alert(1)')
+    expect(styleText).not.toContain('url(javascript:evil)')
+  })
 })

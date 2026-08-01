@@ -350,16 +350,15 @@ Community layouts should emit long-lived community preset CSS:
 <CommunityThemePresetStyle cssText={serializeCommunityThemePresetCss(dashboard.themeTokens)} />
 ```
 
-`CommunityThemePresetStyle` intentionally emits both pieces in one server-inserted
-fragment:
+`CommunityThemePresetStyle` intentionally emits only the long-lived community
+preset CSS:
 
 ```text
 <style>community preset CSS</style>
-<script>injectThemeFirstPaintVars()</script>
 ```
 
 This is the CSS-in-JS-style helper used here. It is not runtime client CSS-in-JS.
-It uses Next `useServerInsertedHTML()` to place HTML in `<head>` during server
+It uses Next `useServerInsertedHTML()` to place CSS in `<head>` during server
 rendering:
 
 ```text
@@ -371,19 +370,18 @@ RootLayoutShell
       [community layout]
         CommunityThemePresetStyle
           useServerInsertedHTML:
-            1. <style>community preset CSS</style>
-            2. <script>community preset snapshot</script>
+            <style>community preset CSS</style>
 
     ThemeFirstPaintScript
       useServerInsertedHTML:
-        1. <script>fallback snapshot</script>
+        <script>injectThemeFirstPaintVars()</script>
 
 Rendered HTML
 
 head
   prePaintThemeDetectScript
-  ThemeFirstPaintScript output
   CommunityThemePresetStyle output
+  ThemeFirstPaintScript output
 body
   React content
 ```
@@ -395,27 +393,20 @@ This ordering was validated in the rendered dashboard HTML:
 
 ```text
 prePaintThemeDetectScript()
-ThemeFirstPaintScript fallback snapshot
 CommunityThemePresetStyle community preset CSS
-CommunityThemePresetStyle community preset snapshot
+ThemeFirstPaintScript first-paint snapshot
 <body>
 ThemePresetScope runtime style
 ```
 
-The first snapshot protects pages that do not have community preset CSS. The
-second snapshot overwrites the same temporary style after community preset CSS is
-in the cascade, still before body content is parsed. Because both scripts run
-while the browser is parsing `<head>`, there is no visible intermediate frame
-between the fallback snapshot and the community preset snapshot.
+The single snapshot runs after community preset CSS is in the cascade, but still
+before body content is parsed. It also protects pages that do not have community
+preset CSS, because the computed values fall back to the global theme variables.
 
 The snapshot script itself stays simple:
 
 - it reads computed custom properties once;
-- if a fallback snapshot already exists, it disables that temporary style while
-  reading so the community preset snapshot sees the underlying cascade;
 - it writes them to `style#groupher-theme-first-paint`;
-- it updates the existing style if a previous fallback snapshot already created
-  it;
 - it writes `!important` temporary custom properties so later SSR/runtime styles
   cannot expose a light-frame fallback while React reconciles `html[data-theme]`.
 
