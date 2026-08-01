@@ -8,7 +8,7 @@ export default function WallpaperCard() {
 
   return (
     <div className={s.wrapper}>
-      <WallpaperRenderer className={s.background} positioned={false} />
+      <WallpaperRenderer className={s.background} />
       <div className={s.edittool}>
         <WallpaperBar />
       </div>

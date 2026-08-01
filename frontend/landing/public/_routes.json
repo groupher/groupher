@@ -2,7 +2,6 @@
   "version": 1,
   "include": ["/*"],
   "exclude": [
-    "/landing/_next/static/*",
     "/landing/*",
     "/avatars/*",
     "/icons/*",

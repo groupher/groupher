@@ -14,7 +14,7 @@ const LANDING_WIDTH_VAR = '--container-landing-width'
 const DEFAULT_CONTAINER_WIDTH = 1420
 const LANDING_WRAPPER_CLASS = cn(
   'container-landing-wrapper column relative isolate s-full min-h-fit',
-  'transition-transform transition-shadow',
+  'transition-all',
   'bg-pageBg',
 )
 

@@ -39,7 +39,7 @@ export default {
   emoji: '表情',
   'team.member': '团队成员',
   'login.with.social': '使用你的社交账号登入',
-  'login.oauth.loading.title': '正在使用',
+  'login.oauth.loading.title': '正在使用以下账号登入：',
   'login.oauth.loading.desc': '完成后会自动跳转，请不要刷新页面',
   'login.bind.hint': '登入后可绑定其他账号',
   'need.help': '遇到问题?',
