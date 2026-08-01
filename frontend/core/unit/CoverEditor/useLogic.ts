@@ -23,10 +23,12 @@ import {
   getNextActiveImageWhich,
   getRaisedImages,
 } from './coverImageModel'
+import { exportFinalImage } from './exportFinalImage'
 import type {
   TBorderHighlight,
   TCoverBackgroundPatch,
   TCoverConfig,
+  TCoverExportOptions,
   TCoverImageConfig,
   TCoverImagePatch,
   TCoverImages,
@@ -34,6 +36,7 @@ import type {
   TCoverMagnifier,
   TCoverPoint,
   TCoverShadow,
+  TExportedImageAsset,
   TImageSize,
   TStore,
   TTuningSetting,
@@ -78,6 +81,7 @@ type TRet = {
   glassBorderOnChange: (which: TCoverImageWhich, enabled: boolean) => void
   magnifierSettingsOnChange: (which: TCoverImageWhich, magnifier: Partial<TCoverMagnifier>) => void
   magnifierOnChange: (which: TCoverImageWhich, enabled: boolean) => void
+  exportFinalImage: (options?: TCoverExportOptions) => Promise<TExportedImageAsset>
 } & TStore
 
 const store = proxy<TStore>({
@@ -133,6 +137,7 @@ export default function useLogic(): TRet {
     canvasHeight: snap.canvasHeight,
     images,
     background: snap.background as TStore['background'],
+    activeBackground,
   }
 
   const commitImages = (
@@ -368,5 +373,6 @@ export default function useLogic(): TRet {
     glassBorderOnChange,
     magnifierSettingsOnChange,
     magnifierOnChange,
+    exportFinalImage: (options?: TCoverExportOptions) => exportFinalImage(coverConfig, options),
   }
 }
