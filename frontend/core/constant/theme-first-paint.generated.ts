@@ -89,4 +89,11 @@ export const THEME_FIRST_PAINT_VAR_NAMES = [
   '--gradient-black',
   '--gradient-cyan',
   '--gradient-yellow',
+  '--shadow-sm',
+  '--shadow-md',
+  '--shadow-lg',
+  '--shadow-card',
+  '--shadow-xl',
+  '--shadow-drawer',
+  '--shadow-modal',
 ] as const

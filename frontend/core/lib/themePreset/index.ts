@@ -1,3 +1,4 @@
+import { blurRGB } from '~/fmt'
 import type { TResolvedThemePreset } from '~/spec'
 
 import type { TThemePresetCssVars } from './spec'
@@ -44,10 +45,7 @@ export const composeThemePresetCssVars = (
   const normalizedPageBgBlur = Number.isNaN(pageBgBlur)
     ? 100
     : Math.min(Math.max(pageBgBlur, 0), 100)
-  const pageBg =
-    normalizedPageBgBlur === 100
-      ? active.pageBg
-      : `color-mix(in srgb, ${active.pageBg} ${normalizedPageBgBlur}%, transparent)`
+  const pageBg = blurRGB(active.pageBg, normalizedPageBgBlur)
 
   return {
     '--color-primary-custom': active.primaryColor,
@@ -63,9 +61,12 @@ export const composeThemePresetCssVars = (
 
 type TCSSVarMap = Record<string, string>
 
-const HEX_COLOR_RE = /^#[0-9a-f]{6}$/i
-const COLOR_MIX_RE =
-  /^color-mix\(in srgb, #[0-9a-f]{6} (?:100|[1-9]?\d)(?:\.\d+)?%, transparent\)$/i
+const HEX_COLOR_PATTERN = '#(?:[0-9a-f]{3}|[0-9a-f]{4}|[0-9a-f]{6}|[0-9a-f]{8})'
+const HEX_COLOR_RE = new RegExp(`^${HEX_COLOR_PATTERN}$`, 'i')
+const COLOR_MIX_RE = new RegExp(
+  `^color-mix\\(in srgb, ${HEX_COLOR_PATTERN} (?:100|[1-9]?\\d)(?:\\.\\d+)?%, transparent\\)$`,
+  'i',
+)
 
 const sanitizeCSSVars = (vars: TCSSVarMap): TCSSVarMap => {
   const sanitized: TCSSVarMap = {}

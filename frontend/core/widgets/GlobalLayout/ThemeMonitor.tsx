@@ -6,7 +6,10 @@ import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
 import useMount from '~/hooks/useMount'
 import useTheme from '~/hooks/useTheme'
 import type { TThemeMode, TThemeName } from '~/spec'
-import { scheduleRemoveThemeFirstPaintVars } from '~/utils/themeFirstPaint'
+import {
+  removeThemeFirstPaintVars,
+  scheduleRemoveThemeFirstPaintVars,
+} from '~/utils/themeFirstPaint'
 
 const resolveRuntimeTheme = (mode: TThemeMode): TThemeName => {
   if (mode === THEME_MODE.LIGHT) return THEME.LIGHT
@@ -20,13 +23,26 @@ export default function ThemeMonitor() {
   const { theme, changeMode } = useTheme()
   const cleanupRef = useRef<(() => void) | null>(null)
   const pendingRuntimeThemeRef = useRef<TThemeName | null>(null)
+  const themeRef = useRef<TThemeName>(theme)
+
+  const cancelCleanup = () => {
+    cleanupRef.current?.()
+    cleanupRef.current = null
+  }
 
   const scheduleCleanup = () => {
-    cleanupRef.current?.()
+    cancelCleanup()
     cleanupRef.current = scheduleRemoveThemeFirstPaintVars()
   }
 
+  const disposeCleanup = () => {
+    cancelCleanup()
+    removeThemeFirstPaintVars()
+  }
+
   useEffect(() => {
+    themeRef.current = theme
+
     if (pendingRuntimeThemeRef.current !== theme) return
 
     pendingRuntimeThemeRef.current = null
@@ -40,7 +56,7 @@ export default function ThemeMonitor() {
       pendingRuntimeThemeRef.current = runtimeTheme
       changeMode(mode, { keepFirstPaintVars: true })
 
-      if (theme === runtimeTheme) {
+      if (themeRef.current === runtimeTheme) {
         pendingRuntimeThemeRef.current = null
         scheduleCleanup()
       }
@@ -67,7 +83,7 @@ export default function ThemeMonitor() {
         media.addEventListener('change', listener)
 
         return () => {
-          cleanupRef.current?.()
+          disposeCleanup()
           media.removeEventListener('change', listener)
         }
       }
@@ -76,7 +92,7 @@ export default function ThemeMonitor() {
     }
 
     return () => {
-      cleanupRef.current?.()
+      disposeCleanup()
     }
   })
 

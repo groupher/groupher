@@ -61,6 +61,7 @@ describe('injectThemeFirstPaintVars', () => {
 
     expect(script).toContain(THEME_FIRST_PAINT_STYLE_ID)
     expect(script).toContain(THEME_FIRST_PAINT_VAR_NAMES[0])
+    expect(script).toContain('--shadow-card')
     expect(script).toContain('!important')
     expect(script).not.toContain('MutationObserver')
     expect(script).not.toContain('setTimeout')
@@ -84,29 +85,23 @@ describe('injectThemeFirstPaintVars', () => {
     expect(style?.textContent).toContain('--color-card:rgb(37, 37, 37) !important;')
   })
 
-  it('snapshots resolved dark vars from the current cascade', () => {
-    const source = document.createElement('style')
+  it('snapshots values returned by computed style for the active theme', () => {
+    vi.spyOn(globalThis, 'getComputedStyle').mockReturnValue({
+      getPropertyValue: (name: string) =>
+        ({
+          '--color-title': '#eeeeee',
+          '--color-card': '#222222',
+          '--shadow-card': '0 8px 24px rgb(0 0 0 / 20%)',
+        })[name] || '',
+    } as CSSStyleDeclaration)
 
-    try {
-      source.textContent = `
-        :root { --color-title: #111111; }
-        [data-theme='dark'] {
-          --color-title: #eeeeee;
-          --color-card: #222222;
-        }
-      `
-      document.head.appendChild(source)
-      document.documentElement.setAttribute('data-theme', THEME_MODE.DARK)
+    runInlineScript(injectThemeFirstPaintVars())
 
-      runInlineScript(injectThemeFirstPaintVars())
+    const style = document.getElementById(THEME_FIRST_PAINT_STYLE_ID)
 
-      const style = document.getElementById(THEME_FIRST_PAINT_STYLE_ID)
-
-      expect(style?.textContent).toContain('--color-title:#eeeeee !important;')
-      expect(style?.textContent).toContain('--color-card:#222222 !important;')
-    } finally {
-      source.remove()
-    }
+    expect(style?.textContent).toContain('--color-title:#eeeeee !important;')
+    expect(style?.textContent).toContain('--color-card:#222222 !important;')
+    expect(style?.textContent).toContain('--shadow-card:0 8px 24px rgb(0 0 0 / 20%) !important;')
   })
 
   it('overwrites an existing fallback snapshot with later route vars', () => {
@@ -134,5 +129,19 @@ describe('injectThemeFirstPaintVars', () => {
     expect(style?.textContent).toContain('--color-page-custom-bg:#333333 !important;')
 
     routeStyle.remove()
+  })
+
+  it('removes a stale snapshot when no computed vars are available', () => {
+    const fallbackStyle = document.createElement('style')
+    fallbackStyle.id = THEME_FIRST_PAINT_STYLE_ID
+    fallbackStyle.textContent = ':root{--color-title:#aaaaaa !important;}'
+    document.head.appendChild(fallbackStyle)
+    vi.spyOn(globalThis, 'getComputedStyle').mockReturnValue({
+      getPropertyValue: () => '',
+    } as unknown as CSSStyleDeclaration)
+
+    runInlineScript(injectThemeFirstPaintVars())
+
+    expect(document.getElementById(THEME_FIRST_PAINT_STYLE_ID)).toBeNull()
   })
 })

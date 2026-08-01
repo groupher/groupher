@@ -83,6 +83,18 @@ describe('composeThemePresetCssVars', () => {
     expect(lightVars['--color-page-custom']).toBe('#ffffff')
     expect(lightVars['--color-page-custom-bg']).toBe('color-mix(in srgb, #ffffff 45%, transparent)')
   })
+
+  it('keeps zero gauss blur as the solid page background', () => {
+    const lightVars = composeThemePresetCssVars(
+      {
+        ...tokens,
+        light: { ...tokens.light, gaussBlur: 0 },
+      },
+      'light',
+    )
+
+    expect(lightVars['--color-page-custom-bg']).toBe('#ffffff')
+  })
 })
 
 describe('serializeCommunityThemePresetCss', () => {
@@ -127,6 +139,26 @@ describe('serializeCommunityThemePresetCss', () => {
     )
   })
 
+  it('allows shorthand hex colors at the raw style boundary', () => {
+    const styleText = serializeCommunityThemePresetCss({
+      ...tokens,
+      light: {
+        ...tokens.light,
+        primaryColor: '#123',
+        accentColor: '#abcd',
+        pageBg: '#fff',
+        gaussBlur: 45,
+      },
+    })
+
+    expect(styleText).toContain('--color-primary-custom: #123;')
+    expect(styleText).toContain('--color-accent-custom: #abcd;')
+    expect(styleText).toContain('--color-page-custom: #fff;')
+    expect(styleText).toContain(
+      '--color-page-custom-bg: color-mix(in srgb, #fff 45%, transparent);',
+    )
+  })
+
   it('omits invalid community theme preset colors at the raw style boundary', () => {
     const styleText = serializeCommunityThemePresetCss({
       ...tokens,
@@ -142,13 +174,13 @@ describe('serializeCommunityThemePresetCss', () => {
       },
       dark: {
         ...tokens.dark,
-        primaryColor: '#fff',
+        primaryColor: '#ggg',
         accentColor: '',
         pageBg: 'var(--bad-bg)',
         gaussBlur: 40,
-        textTitle: '#fff',
+        textTitle: '#ff',
         textDigest: '',
-        cardColor: '#222',
+        cardColor: '#22222',
         dividerColor: null as unknown as string,
       },
     })

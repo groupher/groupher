@@ -67,7 +67,12 @@ export const injectThemeFirstPaintVars = (): string => {
       style.disabled = wasDisabled;
     }
 
-    if (css === ':root{}') return;
+    if (css === ':root{}') {
+      if (style) {
+        style.remove();
+      }
+      return;
+    }
 
     if (!style) {
       style = document.createElement('style');

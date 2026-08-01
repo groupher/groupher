@@ -10,23 +10,30 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const repoRoot = path.resolve(__dirname, '..')
 
-const sourceFile = path.join(repoRoot, 'frontend/core/tailwind/tokens/color.css')
+const sourceFiles = [
+  path.join(repoRoot, 'frontend/core/tailwind/tokens/color.css'),
+  path.join(repoRoot, 'frontend/core/tailwind/tokens/shadow.css'),
+]
 const generatedFile = path.join(repoRoot, 'frontend/core/constant/theme-first-paint.generated.ts')
 const args = new Set(process.argv.slice(2))
 
-const extractVarNames = (css) => {
-  const root = postcss.parse(css, { from: sourceFile })
+const extractVarNames = (files) => {
   const names = []
   const seen = new Set()
 
-  root.walkDecls(/^--/, (decl) => {
-    const name = decl.prop.trim()
+  for (const file of files) {
+    const css = readFileSync(file, 'utf8')
+    const root = postcss.parse(css, { from: file })
 
-    if (seen.has(name)) return
+    root.walkDecls(/^--/, (decl) => {
+      const name = decl.prop.trim()
 
-    seen.add(name)
-    names.push(name)
-  })
+      if (seen.has(name)) return
+
+      seen.add(name)
+      names.push(name)
+    })
+  }
 
   return names
 }
@@ -43,11 +50,10 @@ ${entries}
 `
 }
 
-const sourceCss = readFileSync(sourceFile, 'utf8')
-const names = extractVarNames(sourceCss)
+const names = extractVarNames(sourceFiles)
 
 if (names.length === 0) {
-  throw new Error(`No CSS custom properties found in ${sourceFile}`)
+  throw new Error(`No CSS custom properties found in ${sourceFiles.join(', ')}`)
 }
 
 const nextContent = formatGeneratedFile(names)
@@ -60,7 +66,7 @@ if (args.has('--check')) {
       [
         'theme-first-paint generated file is stale.',
         'Run: yarn gen:theme-first-paint-vars',
-        `Source: ${path.relative(repoRoot, sourceFile)}`,
+        `Sources: ${sourceFiles.map((file) => path.relative(repoRoot, file)).join(', ')}`,
         `Target: ${path.relative(repoRoot, generatedFile)}`,
       ].join('\n'),
     )
