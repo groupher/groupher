@@ -29,6 +29,9 @@ const Loading: FC<TProps> = ({ provider }) => {
   const Icon = SocialIcon[provider || 'Github']
   const providerName = provider || 'Github'
   const providerTransKey = providerName.toUpperCase() as TTransKey
+  const translatedProviderName = t(providerTransKey)
+  const displayProviderName =
+    translatedProviderName === '--' ? providerName : translatedProviderName
 
   return (
     <div className={s.wrapper}>
@@ -42,7 +45,7 @@ const Loading: FC<TProps> = ({ provider }) => {
       </div>
       <div className={s.title}>
         {t('login.oauth.loading.title')}
-        <div className={s.providerName}>[{t(providerTransKey)}]</div>
+        <div className={s.providerName}>[{displayProviderName}]</div>
       </div>
       <div className={s.desc}>{t('login.oauth.loading.desc')}</div>
       <div className={s.footer}>
