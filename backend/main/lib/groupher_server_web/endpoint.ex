@@ -78,6 +78,7 @@ defmodule GroupherServerWeb.Endpoint do
       "origin",
       "x-requested-with"
     ],
+    allow_methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_credentials: true,
     max_age: 600
   )

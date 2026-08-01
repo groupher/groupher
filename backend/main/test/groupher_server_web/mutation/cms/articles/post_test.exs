@@ -152,11 +152,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       assert result["communityTags"] |> length == 2
 
-      assert result["communityTags"] |> List.first() |> get_in(["id"]) ==
-               to_string(community_tag.id)
-
-      assert result["communityTags"] |> List.last() |> get_in(["id"]) ==
-               to_string(community_tag2.id)
+      assert result["communityTags"] |> Enum.map(& &1["id"]) |> MapSet.new() ==
+               MapSet.new([to_string(community_tag.id), to_string(community_tag2.id)])
 
       variables = %{
         article: %{inner_id: post.inner_id, community: community.slug, thread: "POST"},
@@ -167,11 +164,8 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
 
       assert result["communityTags"] |> length == 2
 
-      assert result["communityTags"] |> List.first() |> get_in(["id"]) ==
-               to_string(community_tag2.id)
-
-      assert result["communityTags"] |> List.last() |> get_in(["id"]) ==
-               to_string(community_tag3.id)
+      assert result["communityTags"] |> Enum.map(& &1["id"]) |> MapSet.new() ==
+               MapSet.new([to_string(community_tag2.id), to_string(community_tag3.id)])
     end
 
     test "update post with valid attrs should have is_edited meta info update",
@@ -256,6 +250,5 @@ defmodule GroupherServer.Test.Mutation.Articles.Post do
       {:ok, found} = CMS.FrontDesk.article(community_b, :post, post_b.inner_id)
       refute found.title == "cross-community-update-#{unique_num}"
     end
-
   end
 end

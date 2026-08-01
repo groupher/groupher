@@ -93,7 +93,7 @@ jobs:
           fi
 
           if [ "$SHARED_CHANGED" = "true" ] || [ "$GATEWAY_CHANGED" = "true" ]; then
-            targets+=('{"target":"gateway","workspace":"@groupher/backend-gateway"}')
+            targets+=('{"target":"gateway","workspace":"@groupher/gateway"}')
           fi
 
           if [ ${#targets[@]} -eq 0 ]; then

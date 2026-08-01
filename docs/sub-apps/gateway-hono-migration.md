@@ -43,11 +43,9 @@ GraphQL 入口还有一个安全边界：浏览器请求当前域 `/api/graphql`
 传入的 `authorization` 和原始 `cookie`，只把 HttpOnly `groupher-auth.token`
 以同名 Cookie 转发给 Phoenix。这个行为必须逐字保留。
 
-`groupher-auth.token` 必须来自共享 auth contract，即
-`frontend/core/constant/auth-contract.ts` 的 `GROUPHER_AUTH_TOKEN_COOKIE`。迁移时可以像
-`backend/auth` 一样让 gateway workspace 依赖 `@groupher/frontend-core`；如果后续需要
-减小依赖面，再把 auth contract 提到更小的共享包。首期不要在 gateway 内复制 cookie
-字符串。
+`groupher-auth.token` 必须保持和共享 auth contract 一致。当前 gateway 运行时代码
+和测试都从 `@groupher/contracts/auth` 读取 `GROUPHER_AUTH_TOKEN_COOKIE`，避免
+`src/proxy.ts` 内部手写 cookie 名后与 Auth/Phoenix 共享契约漂移。
 
 ## 为什么适合迁移
 
@@ -140,11 +138,12 @@ Node server 的 `upgrade` 事件，并按同一套 routing 规则把 socket 反�
 
 ## 目标代码结构
 
-建议保留 workspace 名称 `@groupher/backend-gateway`，但移除 Next 运行时。
+workspace 名称为 `@groupher/gateway`，移除 Next 运行时。
 
 ```text
 backend/gateway/
-  index.ts
+  app.js
+  index.js
   package.json
   tsconfig.json
   src/
@@ -169,7 +168,42 @@ backend/gateway/
 - `src/upgrade.ts`：处理本地 dev WebSocket upgrade，例如 Next HMR。
 - `src/app.ts`：Hono routes，包括 `/health`、静态文件和 `app.all('*')`。
 - `src/server.ts`：本地 Dev Hub 或独立 Node server 入口，使用 `@hono/node-server`。
-- `index.ts`：Vercel Hono 部署入口，`export { default } from './src/app'`。
+- `app.js`：兼容需要根部 JS 入口的 host，导出 build 后的 `dist/app.js`。
+- `index.js`：兼容性入口，同样导出 build 后的 `dist/app.js`。
+
+## Vercel Serverless 部署记录
+
+Gateway 当前在 Vercel 使用 Hono preset 部署，项目设置为：
+
+```text
+Framework Preset: Hono
+Root Directory: backend/gateway
+Install Command: cd ../.. && yarn install --immutable
+Build Command: yarn build
+Output Directory: N/A
+```
+
+这是 Vercel serverless/function 形态，不是长期运行 `node dist/server.js` 的常驻 Node
+进程。`src/server.ts` 和 `dist/server.js` 保留给本地 Dev Hub 或普通 Node host；
+Vercel Hono preset 以 `src/app.ts` 为应用入口；根部 `app.js` / `index.js` 只是 build
+后 ESM 的兼容 shim，不是需要手写业务逻辑的第二套入口。
+
+Vercel Hono builder 当前不能使用仓库根部的 TypeScript 7 preview。失败日志为：
+
+```text
+Using TypeScript 7.0.2 (local user-provided)
+Cannot read properties of undefined (reading 'readFile')
+```
+
+因此 `@groupher/gateway` workspace 显式依赖 `typescript@5.9.3`。这只是 Vercel Hono
+builder 的兼容性约束，不代表全仓库放弃 TypeScript 7 preview。
+
+Vercel Hono preset 会处理 `src/app.ts` 并在运行时执行转译后的 ESM 文件。为兼容 Node
+ESM runtime：
+
+- `src/app.ts` 的相对运行时 import 使用 `.js` 后缀。
+- gateway serverless 运行路径避免 import 指向 workspace package 的 `.ts` export。
+- `/health` 响应生成逻辑保留在 `src/health.ts`，维持 `health.v1` contract。
 
 ## 实施步骤
 
@@ -258,7 +292,7 @@ export type GatewayTargetKind = 'main' | 'dashboard' | 'landing' | 'auth' | 'pho
 默认入口模型，保留独立 gateway 项目，不修改 root-level 多项目部署脚本语义。
 
 Root 级 `frontend/scripts/vercel.build.sh` 仍然按
-`yarn workspace @groupher/backend-gateway build` 触发，因此 Gateway 的 `build`
+`yarn workspace @groupher/gateway build` 触发，因此 Gateway 的 `build`
 脚本必须继续存在，即使 Vercel Hono 部署本身可以零配置。
 
 ### 5. 验证
@@ -266,9 +300,9 @@ Root 级 `frontend/scripts/vercel.build.sh` 仍然按
 单元测试：
 
 ```bash
-yarn workspace @groupher/backend-gateway test
-yarn workspace @groupher/backend-gateway type-check
-yarn workspace @groupher/backend-gateway build
+yarn workspace @groupher/gateway test
+yarn workspace @groupher/gateway type-check
+yarn workspace @groupher/gateway build
 ```
 
 本地 smoke：

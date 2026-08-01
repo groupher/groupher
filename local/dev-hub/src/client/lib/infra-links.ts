@@ -150,6 +150,12 @@ export const INFRA_LINK_GROUPS: TInfraLinkGroup[] = [
 export const INFRA_PLATFORMS: TInfraPlatform[] = INFRA_LINK_GROUPS[0].platforms
 
 export const SERVICE_DEPLOYMENT_TARGETS: Partial<Record<string, TServiceDeploymentTarget>> = {
+  gateway: deploymentTarget('gateway', 'vercel', 'https://vercel.com/groupher/gateway'),
+  auth: deploymentTarget(
+    'auth',
+    'cloudflare',
+    'https://dash.cloudflare.com/4e2e8db91d21e325d9b540ca7abf4d99/workers-and-pages',
+  ),
   landing: deploymentTarget('landing', 'vercel', 'https://vercel.com/groupher/landing'),
   main: deploymentTarget('main', 'vercel', 'https://vercel.com/groupher/main'),
   dashboard: deploymentTarget('dashboard', 'vercel', 'https://vercel.com/groupher/dashboard'),
@@ -159,4 +165,19 @@ export const SERVICE_DEPLOYMENT_TARGETS: Partial<Record<string, TServiceDeployme
     'https://dash.cloudflare.com/groupher/workers',
   ),
   phoenix: deploymentTarget('phoenix', 'fly', 'https://fly.io/apps/groupher-api'),
+  'content-import': deploymentTarget(
+    'content-import',
+    'vercel',
+    'https://vercel.com/groupher/content-import',
+  ),
+  'assets-hub': deploymentTarget(
+    'assets-hub',
+    'cloudflare',
+    'https://dash.cloudflare.com/4e2e8db91d21e325d9b540ca7abf4d99/workers-and-pages',
+  ),
+  'document-converter': deploymentTarget(
+    'document-converter',
+    'vercel',
+    'https://vercel.com/groupher/document-converter',
+  ),
 }

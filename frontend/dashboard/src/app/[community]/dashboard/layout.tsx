@@ -5,10 +5,11 @@ import { getCachedInitialNow, getCommunityInfo, getLocaleData } from '~/app/ssr'
 import { LOCALE } from '~/const/i18n'
 import METRIC from '~/const/metric'
 import { I18N_NS } from '~/i18n/namespaces'
+import { serializeCommunityThemePresetCss } from '~/lib/themePreset'
 import MainProvider from '~/stores/provider'
 import { isDsbDemoMode } from '~/utils/dsb-demo'
 import { getMetadata } from '~/utils/ssr'
-import { injectDsbColors } from '~/utils/ssr/script'
+import CommunityThemePresetStyle from '~/widgets/CommunityThemePresetStyle'
 
 import Client from './Client'
 
@@ -38,11 +39,8 @@ export default async ({ children, params, searchParams }) => {
 
   return (
     <>
-      <style
-        // oxlint-disable-next-line react/no-danger -- Dashboard theme tokens must be injected before render to avoid flash.
-        dangerouslySetInnerHTML={{
-          __html: injectDsbColors(dashboard),
-        }}
+      <CommunityThemePresetStyle
+        cssText={serializeCommunityThemePresetCss(dashboard.themeTokens)}
       />
 
       <MainProvider

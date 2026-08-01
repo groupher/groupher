@@ -11,7 +11,7 @@
     "desktop:build": "tauri build --bundles app",
     "desktop:icon": "tauri icon public/favicon.svg",
     "build": "vite build",
-    "test": "node --import tsx --test src/server/*.test.ts",
+    "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "type-check": "tsc --noEmit --project ./tsconfig.json",
     "format": "oxfmt -c ./oxfmt.json ./src ./*.json ./*.ts",
     "format:check": "oxfmt -c ./oxfmt.json --check ./src ./*.json ./*.ts"

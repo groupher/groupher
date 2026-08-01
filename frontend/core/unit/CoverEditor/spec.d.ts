@@ -116,6 +116,28 @@ export type TCoverConfig = {
   canvasHeight: number
   images: TCoverImages
   background: TBgThemeConfig
+  activeBackground: TBgConfig
+}
+
+export type TCoverExportMimeType = 'image/png' | 'image/jpeg' | 'image/webp'
+
+export type TCoverExportOptions = {
+  backgroundColor?: string
+  filename?: string
+  mimeType?: TCoverExportMimeType
+  quality?: number
+}
+
+export type TExportedImageAsset = {
+  blob: Blob
+  filename: string
+  height: number
+  mimeType: TCoverExportMimeType
+  width: number
+}
+
+export type TCoverEditorHandle = {
+  exportFinalImage: (options?: TCoverExportOptions) => Promise<TExportedImageAsset>
 }
 
 export type TStore = {

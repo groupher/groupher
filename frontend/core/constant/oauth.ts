@@ -3,4 +3,9 @@ export const SOCIAL = {
   // GOOGLE: 'google'
 } as const
 
-export const LOGOUT_ENDPOINT = '/api/auth/logout'
+export const AUTH_ENDPOINT = (process.env.NEXT_PUBLIC_AUTH_ENDPOINT || '/api/auth').replace(
+  /\/$/,
+  '',
+)
+
+export const LOGOUT_ENDPOINT = `${AUTH_ENDPOINT}/logout`

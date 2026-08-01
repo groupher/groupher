@@ -8,6 +8,8 @@
     "test": "../../node_modules/.bin/vitest --root ../.. --config frontend/core/vitest.config.mts run backend/auth",
     "type-check": "../../node_modules/.bin/tsc --noEmit --project ./tsconfig.json",
     "build": "rimraf dist && esbuild src/server.ts --bundle --platform=node --format=esm --external:@auth/core --external:'@auth/core/*' --external:@hono/node-server --external:dotenv --external:hono --external:'hono/*' --outfile=dist/server.js",
+    "deploy:worker": "npm exec --yes wrangler -- deploy --config wrangler.jsonc",
+    "deploy:worker:dry-run": "npm exec --yes wrangler -- deploy --dry-run --config wrangler.jsonc",
     "start": "cross-env NODE_ENV=production node dist/server.js",
     "lint": "../../node_modules/.bin/oxlint . --threads=1",
     "format": "../../node_modules/.bin/oxfmt -c ../../frontend/core/config/oxfmt.json src *.ts *.json",

@@ -46,7 +46,7 @@ const isTimeClaimValid = (claim: unknown, nowSeconds: number, compare: 'after' |
 }
 
 const isVerifiedPhoenixToken = (token: string, now = new Date()): boolean => {
-  const secret = process.env.GUARDIAN_KEY?.trim()
+  const secret = process.env.PHX_JWT_SECRET?.trim()
   if (!secret) return false
 
   const parts = token.split('.')

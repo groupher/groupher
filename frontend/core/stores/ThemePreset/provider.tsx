@@ -1,10 +1,9 @@
 'use client'
 
-import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef } from 'react'
+import { type ReactNode, useEffect, useMemo, useRef } from 'react'
 import { useSnapshot } from 'valtio'
 
-import useTheme from '~/hooks/useTheme'
-import { composeThemePresetCssVars } from '~/lib/themePreset'
+import { serializeCommunityThemePresetCss } from '~/lib/themePreset'
 import type { TResolvedThemePreset } from '~/spec'
 import useDashboard from '~/stores/dashboard/hooks'
 
@@ -19,18 +18,6 @@ type TProps = {
 
 const EMPTY_INIT_DATA: TInit = {}
 
-// Keep this list in sync with the CSS variables written by ThemePresetScope so
-// unmounting the preset provider does not leave stale theme values on <html>.
-const PRESET_CSS_VAR_KEYS = [
-  '--color-primary-custom',
-  '--color-accent-custom',
-  '--color-page-custom',
-  '--color-title',
-  '--color-digest',
-  '--color-card',
-  '--color-divider',
-] as const
-
 type TScopeProps = {
   children: ReactNode
   store: TStore
@@ -38,32 +25,25 @@ type TScopeProps = {
 
 const ThemePresetScope = ({ children, store }: TScopeProps) => {
   const preset$ = useSnapshot(store)
-  const { theme } = useTheme()
-  const cssVars = useMemo(
+  const cssText = useMemo(
     () =>
       preset$.themeTokens?.light && preset$.themeTokens?.dark
-        ? composeThemePresetCssVars(preset$.themeTokens as TResolvedThemePreset, theme)
-        : {},
-    [preset$.themeTokens, theme],
+        ? serializeCommunityThemePresetCss(preset$.themeTokens as TResolvedThemePreset)
+        : '',
+    [preset$.themeTokens],
   )
 
-  useEffect(() => {
-    const root = document.documentElement
-
-    for (const [key, value] of Object.entries(cssVars)) {
-      root.style.setProperty(key, value)
-    }
-
-    return () => {
-      for (const key of PRESET_CSS_VAR_KEYS) {
-        root.style.removeProperty(key)
-      }
-    }
-  }, [cssVars])
-
-  const style = cssVars as CSSProperties
-
-  return <div style={style}>{children}</div>
+  return (
+    <>
+      {cssText && (
+        <style
+          // oxlint-disable-next-line react/no-danger -- Preset variables need both theme branches before hydration.
+          dangerouslySetInnerHTML={{ __html: cssText }}
+        />
+      )}
+      {children}
+    </>
+  )
 }
 
 export default function Provider({ children, initData = EMPTY_INIT_DATA }: TProps) {

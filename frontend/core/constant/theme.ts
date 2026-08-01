@@ -12,3 +12,4 @@ const THEME = {
 export default THEME
 
 export const LOCAL_THEME_KEY = 'theme'
+export const THEME_FIRST_PAINT_STYLE_ID = 'groupher-theme-first-paint'

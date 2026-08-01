@@ -1,9 +1,9 @@
 import { Hono } from 'hono'
 
-import { buildHealthResponse } from './health'
-import { proxyRequest } from './proxy'
-import { resolveGatewayTarget } from './routing'
-import { getPublicFile, readPublicFile } from './static'
+import { buildHealthResponse } from './health.js'
+import { proxyRequest } from './proxy.js'
+import { resolveGatewayTarget } from './routing.js'
+import { getPublicFile, readPublicFile } from './static.js'
 
 type TOptions = {
   fetcher?: typeof fetch

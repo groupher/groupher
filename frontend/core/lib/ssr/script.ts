@@ -1,97 +1,92 @@
-import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
-import { composeThemePresetCssVars } from '~/lib/themePreset'
-import type { TParseDashboard, TResolvedThemePreset } from '~/spec'
+import { LOCAL_THEME_KEY, THEME_FIRST_PAINT_STYLE_ID, THEME_MODE } from '~/const/theme'
+import { THEME_FIRST_PAINT_VAR_NAMES } from '~/const/theme-first-paint.generated'
 
-export const ssrThemeInitScript = () => `
+const serializeForInlineScript = (value: unknown): string =>
+  JSON.stringify(value).replace(/</g, '\\u003c')
+
+export const prePaintThemeDetectScript = () => `
 (function() {
   try {
     var stored = localStorage.getItem('${LOCAL_THEME_KEY}');
-    
+    var theme = '${THEME_MODE.LIGHT}';
+
     if (stored === '${THEME_MODE.DARK}' || stored === '${THEME_MODE.LIGHT}') {
-      document.documentElement.setAttribute('data-theme', stored);
+      theme = stored;
     } else {
       var media = window.matchMedia('(prefers-color-scheme: dark)');
-      document.documentElement.setAttribute(
-        'data-theme',
-        media.matches ? '${THEME_MODE.DARK}' : '${THEME_MODE.LIGHT}'
-      );
+      theme = media.matches ? '${THEME_MODE.DARK}' : '${THEME_MODE.LIGHT}';
     }
+
+    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.style.colorScheme = theme;
   } catch (e) {}
 })();
 `
 
-type TCSSVarMap = Record<string, string>
-const HEX_COLOR_RE = /^#[0-9a-f]{6}$/i
-
 /**
- * Keep dashboard color variables restricted to hex values before SSR injection.
+ * Build a hydration-safe first-paint CSS variable snapshot.
  *
- * Problem scenario: SSR renders this map into a raw `<style>` tag; any unexpected
- * token value must not leak into CSS without going through another escape path.
+ * React may briefly reconcile `<html data-theme>` back to the server default
+ * before ThemeMonitor applies the persisted mode. This script freezes computed
+ * theme variables for the currently selected theme until ThemeMonitor removes
+ * the temporary style.
  */
-const sanitizeCSSVars = (vars: TCSSVarMap): TCSSVarMap => {
-  const sanitized: TCSSVarMap = {}
+export const injectThemeFirstPaintVars = (): string => {
+  const names = serializeForInlineScript(THEME_FIRST_PAINT_VAR_NAMES)
+  const styleId = serializeForInlineScript(THEME_FIRST_PAINT_STYLE_ID)
 
-  for (const [key, value] of Object.entries(vars)) {
-    // SSR writes these values into a raw <style> tag. Keep this as an
-    // injection-boundary guard only; preset resolution still belongs to the
-    // backend and is not repeated on the client.
-    if (HEX_COLOR_RE.test(value)) {
-      sanitized[key] = value
+  return `
+(function() {
+  try {
+    var names = ${names};
+    var styleId = ${styleId};
+    var root = document.documentElement;
+    var style = document.getElementById(styleId);
+    var wasDisabled = false;
+
+    if (style) {
+      wasDisabled = style.disabled;
+      style.disabled = true;
     }
-  }
 
-  return sanitized
+    var computed = getComputedStyle(root);
+    var css = ':root{';
+
+    for (var i = 0; i < names.length; i += 1) {
+      var name = names[i];
+      var value = computed.getPropertyValue(name).trim();
+
+      if (value) {
+        css += name + ':' + value + ' !important;';
+      }
+    }
+
+    css += '}';
+
+    if (style) {
+      style.disabled = wasDisabled;
+    }
+
+    if (css === ':root{}') {
+      if (style) {
+        style.remove();
+      }
+      return;
+    }
+
+    if (!style) {
+      style = document.createElement('style');
+      style.id = styleId;
+    }
+
+    if (!style.parentNode) {
+      document.head.appendChild(style);
+    }
+
+    style.textContent = css;
+  } catch (e) {}
+})();
+`
 }
 
-const serializeCSSVars = (selector: string, vars: TCSSVarMap): string => {
-  const entries = Object.entries(vars)
-
-  if (entries.length === 0) return ''
-
-  const body = entries.map(([key, value]) => `  ${key}: ${value};`).join('\n')
-  return `${selector} {\n${body}\n}`
-}
-
-/**
- * Build first-paint dashboard color variables on the server side.
- *
- * Problem scenario: custom color overrides should be visible immediately on first
- * render, before hydration.
- *
- * Example:
- *   resolveDsbColorVars({ themeTokens: { ... } })
- *   // => [[':root', {'--color-page-custom': '#fff'}], ["[data-theme='dark']", ...]]
- */
-const resolveDsbColorVars = (dashboard: Partial<TParseDashboard>): Array<[string, TCSSVarMap]> => {
-  if (!dashboard.themeTokens?.light?.primaryColor || !dashboard.themeTokens?.dark?.primaryColor) {
-    return []
-  }
-
-  const themeTokens = dashboard.themeTokens as TResolvedThemePreset
-  const lightVars = composeThemePresetCssVars(themeTokens, THEME.LIGHT)
-  const darkVars = composeThemePresetCssVars(themeTokens, THEME.DARK)
-
-  return [
-    [':root', sanitizeCSSVars(lightVars)],
-    ["[data-theme='dark']", sanitizeCSSVars(darkVars)],
-  ]
-}
-
-/**
- * Build the first-paint theme CSS string for the dashboard payload.
- *
- * Problem scenario: each app layout consumes dashboard theme tokens differently,
- * but first-paint style generation should stay in one place and match the
- * existing `composeThemePresetCssVars` semantics.
- *
- * Example:
- *   injectDsbColors(dashboard)
- *   // => ':root { --color-page-custom: #fff; }\n[data-theme='dark'] { --color-page-custom: #111; }'
- */
-export const injectDsbColors = (dashboard: Partial<TParseDashboard>): string => {
-  return resolveDsbColorVars(dashboard)
-    .map(([selector, vars]) => serializeCSSVars(selector, vars))
-    .filter(Boolean)
-    .join('\n')
-}
+export const THEME_FIRST_PAINT_VARS_SCRIPT = injectThemeFirstPaintVars()

@@ -96,6 +96,12 @@ const DASHBOARD_CHAIN_POLICY = {
   optionalDependencies: ['assets-hub', 'content-import', 'document-converter'],
 } satisfies TServiceStartPolicy
 
+const LANDING_CHAIN_POLICY = {
+  defaultMode: 'chain',
+  requiredDependencies: ['gateway'],
+  optionalDependencies: [],
+} satisfies TServiceStartPolicy
+
 export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
   {
     id: 'gateway',
@@ -180,6 +186,7 @@ export const SERVICE_DEFINITIONS: TServiceDefinition[] = [
     portlessUrl: 'https://landing.groupher.localhost/health',
     portlessAppUrl: 'https://landing.groupher.localhost/',
     metrics: FRONTEND_METRICS,
+    startPolicy: LANDING_CHAIN_POLICY,
   },
   {
     id: 'main',

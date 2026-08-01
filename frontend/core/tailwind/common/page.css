@@ -1,3 +1,3 @@
 @utility page-custom {
-  --color-pageBg: var(--color-page-custom);
+  --color-pageBg: var(--color-page-custom-bg, var(--color-page-custom));
 }

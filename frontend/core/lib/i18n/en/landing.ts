@@ -1,15 +1,11 @@
 export default {
-  'landing.meta.title': 'Groupher | Let Your Product Hear Users',
+  'landing.meta.title': 'Groupher | Keep your team and users aligned',
   'landing.meta.description':
-    'Discussion forum, roadmap board, changelog, and docs in one place. Capture and organize user feedback to build a better product.',
-  'landing.hero.title': 'Let Your Product Hear Users',
-  'landing.hero.desc.prefix':
-    'Discussion forum, roadmap board, changelog, and docs in one place to capture and organize',
+    'Bring feedback, roadmap, changelog, docs, and blog together so teams and users stay aligned.',
+  'landing.hero.title': 'Keep your team and users aligned',
+  'landing.hero.desc.prefix': 'Bring forum, roadmap, changelog, docs, and blog together to collect',
   'landing.hero.desc.feedback': 'feedback',
-  'landing.hero.subline.prefix': 'Build a better product with your',
-  'landing.hero.subline.team': 'team',
-  'landing.hero.subline.user': 'users',
-  'landing.hero.subline.suffix': 'together',
+  'landing.hero.subline': 'Keep every conversation, plan, and update on the same page',
   'landing.hero.cta.start': 'Get Started',
   'landing.hero.cta.demo': 'Live Demo',
   'landing.hero.demo.official': 'Official Community',

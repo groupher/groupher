@@ -1,9 +1,7 @@
-import { LOGOUT_ENDPOINT } from '~/const/oauth'
+import { AUTH_ENDPOINT, LOGOUT_ENDPOINT } from '~/const/oauth'
 import type { TOauthProvider } from '~/spec'
 
 import { logout } from './signal'
-
-const AUTH_ENDPOINT = '/api/auth'
 
 type TCsrfResponse = {
   csrfToken?: unknown
@@ -22,7 +20,7 @@ export const signOut = async (onComplete?: () => void) => {
   // while Auth and backend cookies are being revoked.
   logout()
 
-  const response = await fetch(LOGOUT_ENDPOINT, { method: 'POST' })
+  const response = await fetch(LOGOUT_ENDPOINT, { credentials: 'include', method: 'POST' })
   if (!response.ok) throw new Error(`Auth logout failed with status ${response.status}.`)
 
   onComplete?.()
@@ -35,7 +33,7 @@ export const signIn = async (
   },
 ) => {
   const callbackUrl = options?.callbackUrl ?? window.location.href
-  const response = await fetch(`${AUTH_ENDPOINT}/csrf`)
+  const response = await fetch(`${AUTH_ENDPOINT}/csrf`, { credentials: 'include' })
   if (!response.ok) throw new Error(`Auth CSRF request failed with status ${response.status}.`)
 
   const payload = (await response.json()) as TCsrfResponse

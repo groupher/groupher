@@ -81,7 +81,7 @@ test('the request flow documents gateway routing and GraphQL dependencies', () =
   )
 })
 
-test('only main and dashboard default to a configured start chain', () => {
+test('frontend app start chains match their local routing boundaries', () => {
   const startPolicies = Object.fromEntries(
     SERVICE_DEFINITIONS.map((definition) => [definition.id, definition.startPolicy]),
   )
@@ -96,11 +96,15 @@ test('only main and dashboard default to a configured start chain', () => {
     requiredDependencies: ['gateway', 'auth', 'phoenix'],
     optionalDependencies: ['assets-hub', 'content-import', 'document-converter'],
   })
+  assert.deepEqual(startPolicies.landing, {
+    defaultMode: 'chain',
+    requiredDependencies: ['gateway'],
+    optionalDependencies: [],
+  })
 
   for (const id of [
     'gateway',
     'auth',
-    'landing',
     'inspire-me',
     'phoenix',
     'assets-hub',

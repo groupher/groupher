@@ -43,7 +43,7 @@ config :groupher_server, GroupherServerWeb.Endpoint,
 
 config :groupher_server, Helper.Guardian,
   issuer: "groupher_server",
-  secret_key: System.get_env("GUARDIAN_KEY")
+  secret_key: System.get_env("PHX_JWT_SECRET")
 
 # should use RDS 内网地址
 config :groupher_server, GroupherServer.Repo,

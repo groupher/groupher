@@ -2,6 +2,7 @@
 
 import { type FC, type ReactNode, useEffect, useRef } from 'react'
 
+import { cn } from '~/css'
 import useTopbar from '~/hooks/useTopbar'
 import useTrans from '~/hooks/useTrans'
 import HomeHeader from '~/unit/HomeHeader'
@@ -11,6 +12,11 @@ import useSalon from '~/widgets/GlobalLayout/salon/main'
 
 const LANDING_WIDTH_VAR = '--container-landing-width'
 const DEFAULT_CONTAINER_WIDTH = 1420
+const LANDING_WRAPPER_CLASS = cn(
+  'container-landing-wrapper column relative isolate s-full min-h-fit',
+  'transition-all',
+  'bg-pageBg',
+)
 
 type TProps = {
   children: ReactNode
@@ -98,7 +104,7 @@ const Main: FC<TProps> = ({ children }) => {
   }, [])
 
   return (
-    <main key={locale} className={s.wrapper}>
+    <main key={locale} className={LANDING_WRAPPER_CLASS}>
       <HomeHeader />
       {hasTopbar && <div className={s.topBar} />}
       <div className={s.body}>{children}</div>

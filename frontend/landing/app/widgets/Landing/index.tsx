@@ -88,12 +88,7 @@ export default function Landing() {
             </div>
             {t('landing.hero.desc.feedback')}
           </div>
-          <div className={cn(s.desc, 'mt-2')}>
-            {t('landing.hero.subline.prefix')}
-            <span className='px-0.5 line-through'>{t('landing.hero.subline.team')}</span>
-            <span className={s.focus}>{t('landing.hero.subline.user')}</span>
-            {t('landing.hero.subline.suffix')}
-          </div>
+          <div className={cn(s.desc, 'mt-2')}>{t('landing.hero.subline')}</div>
 
           <div className={s.buttonGroup}>
             <a href={ROUTE.APPLY_COMMUNITY} className={s.linkable}>

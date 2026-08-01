@@ -6,5 +6,7 @@ export default function useSalon() {
     wrapperStyle: {
       maxWidth: IMAGE_CONTAINER_SIZE.WIDTH,
     },
+    exportButton:
+      'absolute right-2 top-2 z-50 rounded-sm bg-black/65 px-2.5 py-1 text-xs text-white shadow-sm backdrop-blur-sm transition hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-40',
   }
 }

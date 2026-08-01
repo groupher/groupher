@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "include": ["/*"],
+  "exclude": [
+    "/landing/*",
+    "/avatars/*",
+    "/icons/*",
+    "/locales/*",
+    "/pattern/*",
+    "/pwa/*",
+    "/*.ico",
+    "/*.json",
+    "/*.png",
+    "/*.txt",
+    "/*.webp",
+    "/*.xml"
+  ]
+}
