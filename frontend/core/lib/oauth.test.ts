@@ -22,7 +22,7 @@ describe('signIn', () => {
     await signIn('github')
 
     const form = document.querySelector('form')
-    expect(fetchMock).toHaveBeenCalledWith('/api/auth/csrf')
+    expect(fetchMock).toHaveBeenCalledWith('/api/auth/csrf', { credentials: 'include' })
     expect(form?.getAttribute('action')).toBe('/api/auth/signin/github')
     expect(form?.getAttribute('method')).toBe('POST')
     expect(form?.querySelector<HTMLInputElement>('input[name="csrfToken"]')?.value).toBe(
@@ -54,7 +54,10 @@ describe('signOut', () => {
 
     await signOut()
 
-    expect(fetchMock).toHaveBeenCalledWith('/api/auth/logout', { method: 'POST' })
+    expect(fetchMock).toHaveBeenCalledWith('/api/auth/logout', {
+      credentials: 'include',
+      method: 'POST',
+    })
   })
 
   it('throws when unified logout fails', async () => {
