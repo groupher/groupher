@@ -32,8 +32,6 @@ const json = (body, init = {}) =>
     },
   })
 
-const firstHeaderValue = (value) => value?.split(',')[0]?.trim() || null
-
 const safeDecode = (value) => {
   try {
     return decodeURIComponent(value)
@@ -114,13 +112,15 @@ export const resolveCloudflareTarget = ({ pathname, search = '' }, env) => {
 export const buildProxyHeaders = (request, target) => {
   const headers = new Headers(request.headers)
   const requestUrl = new URL(request.url)
-  const forwardedHost = firstHeaderValue(headers.get('x-forwarded-host')) || requestUrl.host
 
   for (const header of HOP_BY_HOP_HEADERS) {
     headers.delete(header)
   }
 
-  headers.set('x-forwarded-host', forwardedHost)
+  headers.delete('forwarded')
+  headers.delete('x-forwarded-host')
+  headers.delete('x-forwarded-proto')
+  headers.set('x-forwarded-host', requestUrl.host)
   headers.set('x-forwarded-proto', requestUrl.protocol.replace(':', ''))
 
   if (target.requestHeaderPolicy === 'graphql-browser-clean') {

@@ -89,6 +89,22 @@ describe('landing Cloudflare worker', () => {
     expect(headers.get('cookie')).toBe('groupher-auth.token=phoenix%20token')
   })
 
+  it('overwrites client-controlled forwarded host metadata', () => {
+    const request = new Request('https://groupher.test/home', {
+      headers: {
+        forwarded: 'host=evil.test;proto=http',
+        'x-forwarded-host': 'evil.test',
+        'x-forwarded-proto': 'http',
+      },
+    })
+    const target = resolveCloudflareTarget({ pathname: '/home' }, env)
+    const headers = buildProxyHeaders(request, target)
+
+    expect(headers.has('forwarded')).toBe(false)
+    expect(headers.get('x-forwarded-host')).toBe('groupher.test')
+    expect(headers.get('x-forwarded-proto')).toBe('https')
+  })
+
   it('proxies non-landing product paths with a single origin fetch', async () => {
     const response = await worker.fetch(new Request('https://groupher.test/home/post/1'), env)
 
