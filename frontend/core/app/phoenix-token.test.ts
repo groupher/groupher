@@ -7,7 +7,10 @@ import { getPhoenixToken } from './phoenix-token'
 const base64UrlEncode = (value: unknown): string =>
   Buffer.from(typeof value === 'string' ? value : JSON.stringify(value)).toString('base64url')
 
-const signedToken = (payload: Record<string, unknown> = {}, secret = 'phoenix-jwt-secret'): string => {
+const signedToken = (
+  payload: Record<string, unknown> = {},
+  secret = 'phoenix-jwt-secret',
+): string => {
   const header = base64UrlEncode({ alg: 'HS512', typ: 'JWT' })
   const body = base64UrlEncode({
     exp: Math.floor(Date.now() / 1000) + 60,
