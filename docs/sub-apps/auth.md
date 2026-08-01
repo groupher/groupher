@@ -116,6 +116,10 @@ OAuth App 的 callback allowlist 校验发生在 provider 侧，必须与发起�
 GitHub 的 `redirect_uri` 完全一致。线上发起授权时使用 `auth.groupher.com`，因此
 GitHub App 也必须登记 `auth.groupher.com` 的 callback。
 
+生产 Auth 部署的 `AUTH_URL` 必须固定为 `https://auth.groupher.com`。这和
+`https://groupher.com/api/auth/*` 的用户可见入口是两层边界：前者决定 Auth.js
+生成的 provider `redirect_uri`，后者只是浏览器进入 Gateway 的稳定 path。
+
 本地开发使用单独的 GitHub OAuth App，不复用线上 credential。本地 callback 应填写
 本地 Auth/Gateway 实际承载的 callback URL；生产 app 和 local app 的
 `AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` 必须分别通过对应环境变量或平台 secret 注入。

@@ -43,12 +43,9 @@ GraphQL 入口还有一个安全边界：浏览器请求当前域 `/api/graphql`
 传入的 `authorization` 和原始 `cookie`，只把 HttpOnly `groupher-auth.token`
 以同名 Cookie 转发给 Phoenix。这个行为必须逐字保留。
 
-`groupher-auth.token` 必须保持和共享 auth contract 一致。Vercel Hono serverless
-runtime 不能直接加载 monorepo workspace package 导出的 `.ts` 源文件，因此 gateway
-运行时代码暂时在 `src/proxy.ts` 内部定义这个 cookie 名。对应测试仍从
-`@groupher/contracts/auth` 读取共享常量，确保两边没有漂移。后续如果
-`@groupher/contracts` 提供可直接被 Node runtime 加载的 JS export，再把 gateway
-运行时 import 收回共享包。
+`groupher-auth.token` 必须保持和共享 auth contract 一致。当前 gateway 运行时代码
+和测试都从 `@groupher/contracts/auth` 读取 `GROUPHER_AUTH_TOKEN_COOKIE`，避免
+`src/proxy.ts` 内部手写 cookie 名后与 Auth/Phoenix 共享契约漂移。
 
 ## 为什么适合迁移
 

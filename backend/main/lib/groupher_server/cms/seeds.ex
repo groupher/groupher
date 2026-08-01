@@ -35,10 +35,10 @@ defmodule GroupherServer.CMS.Seeds do
   def delete_full_community(slug), do: FullCommunity.delete(slug)
 
   @spec lite_home(keyword()) :: T.domain_res(Community.t())
-  def lite_home(opts \\ []), do: LiteHome.seed(opts)
+  def lite_home(opts \\ []) when is_list(opts), do: LiteHome.seed(opts)
 
   @spec reset_lite_home(keyword()) :: T.domain_res(Community.t())
-  def reset_lite_home(opts \\ []), do: LiteHome.reset_and_seed(opts)
+  def reset_lite_home(opts \\ []) when is_list(opts), do: LiteHome.reset_and_seed(opts)
 
   # Article seeds
 

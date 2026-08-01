@@ -4,7 +4,7 @@
   "main": "src/worker.ts",
   "compatibility_date": "2026-07-31",
   "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": true,
+  "workers_dev": false,
   "routes": [
     {
       "pattern": "auth.groupher.com/*",
