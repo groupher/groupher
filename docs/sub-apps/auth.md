@@ -101,6 +101,25 @@ https://groupher.com/api/auth/*
 Gateway 把这些路径 rewrite 到独立 `auth` 部署。OAuth provider 只配置一组 canonical
 callback，不感知 Main、Dashboard 和 Apply 的实际部署地址。
 
+### GitHub OAuth App callback
+
+生产 GitHub OAuth App 的 `Authorization callback URL` 必须指向真实承载 Auth.js
+callback handler 的 Auth 子应用，而不是 Landing/Main 的公开入口：
+
+```text
+https://auth.groupher.com/api/auth/callback/github
+```
+
+这是当前架构的正式配置，不是 workaround。`https://groupher.com/api/auth/*` 是用户
+可见的稳定登录入口，由 Gateway 或 Cloudflare path router 转发到 Auth；但 GitHub
+OAuth App 的 callback allowlist 校验发生在 provider 侧，必须与发起授权时传给
+GitHub 的 `redirect_uri` 完全一致。线上发起授权时使用 `auth.groupher.com`，因此
+GitHub App 也必须登记 `auth.groupher.com` 的 callback。
+
+本地开发使用单独的 GitHub OAuth App，不复用线上 credential。本地 callback 应填写
+本地 Auth/Gateway 实际承载的 callback URL；生产 app 和 local app 的
+`AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` 必须分别通过对应环境变量或平台 secret 注入。
+
 本地开发沿用同一边界。`main.groupher.localhost`、
 `dashboard.groupher.localhost` 和 `landing.groupher.localhost` 都先进入 Gateway，
 由 Gateway 把 `/api/auth/*` 转发到 Auth。Auth.js 的 Session、CSRF、callback、
