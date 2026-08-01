@@ -8,7 +8,7 @@ defmodule GroupherServer.CMS.Seeds do
 
   alias CMS.Model.{Comment, Community}
 
-  alias __MODULE__.{Articles, CleanUp, Comments, Communities, FullCommunity}
+  alias __MODULE__.{Articles, CleanUp, Comments, Communities, FullCommunity, LiteHome}
 
   # Community seeds
 
@@ -33,6 +33,12 @@ defmodule GroupherServer.CMS.Seeds do
 
   @spec delete_full_community(String.t() | atom()) :: T.domain_res(:ok)
   def delete_full_community(slug), do: FullCommunity.delete(slug)
+
+  @spec lite_home(keyword()) :: T.domain_res(Community.t())
+  def lite_home(opts \\ []), do: LiteHome.seed(opts)
+
+  @spec reset_lite_home(keyword()) :: T.domain_res(Community.t())
+  def reset_lite_home(opts \\ []), do: LiteHome.reset_and_seed(opts)
 
   # Article seeds
 

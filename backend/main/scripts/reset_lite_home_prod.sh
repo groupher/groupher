@@ -1,0 +1,47 @@
+#!/bin/bash
+set -e
+
+DATABASE_URL="${DATABASE_URL:?DATABASE_URL is required}"
+SECRET_KEY_BASE="for-test-only"
+PHX_JWT_SECRET="for-test-only"
+DB_POOL_SIZE="${DB_POOL_SIZE:-10}"
+
+if [ "${FORCE_RESET_DATABASE:-}" != "I_UNDERSTAND_DATABASE_WILL_BE_DROPPED" ]; then
+  echo "Refusing to reset database."
+  echo "Set FORCE_RESET_DATABASE=I_UNDERSTAND_DATABASE_WILL_BE_DROPPED to continue."
+  exit 1
+fi
+
+cd "$(dirname "$0")/.."
+
+PGHOST='' \
+MIX_ENV=seed_prod \
+DATABASE_URL="$DATABASE_URL" \
+SECRET_KEY_BASE="$SECRET_KEY_BASE" \
+PHX_JWT_SECRET="$PHX_JWT_SECRET" \
+DB_POOL_SIZE="$DB_POOL_SIZE" \
+mix ecto.drop
+
+PGHOST='' \
+MIX_ENV=seed_prod \
+DATABASE_URL="$DATABASE_URL" \
+SECRET_KEY_BASE="$SECRET_KEY_BASE" \
+PHX_JWT_SECRET="$PHX_JWT_SECRET" \
+DB_POOL_SIZE="$DB_POOL_SIZE" \
+mix ecto.create
+
+PGHOST='' \
+MIX_ENV=seed_prod \
+DATABASE_URL="$DATABASE_URL" \
+SECRET_KEY_BASE="$SECRET_KEY_BASE" \
+PHX_JWT_SECRET="$PHX_JWT_SECRET" \
+DB_POOL_SIZE="$DB_POOL_SIZE" \
+mix ecto.migrate
+
+PGHOST='' \
+MIX_ENV=seed_prod \
+DATABASE_URL="$DATABASE_URL" \
+SECRET_KEY_BASE="$SECRET_KEY_BASE" \
+PHX_JWT_SECRET="$PHX_JWT_SECRET" \
+DB_POOL_SIZE="$DB_POOL_SIZE" \
+mix run scripts/seed_lite_home.exs
