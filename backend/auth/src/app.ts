@@ -29,9 +29,9 @@ const isAllowedLocalAuthOrigin = (url: URL): boolean => {
 const isAllowedAuthOrigin = (origin: string): boolean => {
   try {
     const url = new URL(origin)
-    if (isAllowedLocalAuthOrigin(url)) return true
+    if (process.env.NODE_ENV !== 'production' && isAllowedLocalAuthOrigin(url)) return true
 
-    return url.protocol === 'https:' && FIRST_PARTY_AUTH_HOSTS.has(url.hostname)
+    return url.protocol === 'https:' && url.port === '' && FIRST_PARTY_AUTH_HOSTS.has(url.hostname)
   } catch {
     return false
   }

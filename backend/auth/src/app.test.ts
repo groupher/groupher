@@ -1,8 +1,19 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { createApp } from './app'
 
+const originalNodeEnv = process.env.NODE_ENV
+
 describe('Auth Hono application', () => {
+  afterEach(() => {
+    if (originalNodeEnv === undefined) {
+      delete process.env.NODE_ENV
+      return
+    }
+
+    process.env.NODE_ENV = originalNodeEnv
+  })
+
   it('exposes the service health contract', async () => {
     const response = await createApp().request('/health')
 
@@ -72,6 +83,32 @@ describe('Auth Hono application', () => {
     expect(response.headers.get('access-control-allow-origin')).toBe(
       'https://dashboard.groupher.localhost',
     )
+  })
+
+  it('rejects local Auth CORS origins in production', async () => {
+    process.env.NODE_ENV = 'production'
+
+    const response = await createApp().request('/api/auth/session', {
+      method: 'OPTIONS',
+      headers: {
+        origin: 'https://dashboard.groupher.localhost',
+        'access-control-request-method': 'GET',
+      },
+    })
+
+    expect(response.headers.get('access-control-allow-origin')).toBeNull()
+  })
+
+  it('rejects first-party Auth CORS origins on non-default HTTPS ports', async () => {
+    const response = await createApp().request('/api/auth/session', {
+      method: 'OPTIONS',
+      headers: {
+        origin: 'https://dashboard.groupher.com:444',
+        'access-control-request-method': 'GET',
+      },
+    })
+
+    expect(response.headers.get('access-control-allow-origin')).toBeNull()
   })
 
   it('clears Phoenix and Auth cookies through the custom logout endpoint', async () => {

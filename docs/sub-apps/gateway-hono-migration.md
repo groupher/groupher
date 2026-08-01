@@ -171,7 +171,7 @@ backend/gateway/
 - `src/upgrade.ts`：处理本地 dev WebSocket upgrade，例如 Next HMR。
 - `src/app.ts`：Hono routes，包括 `/health`、静态文件和 `app.all('*')`。
 - `src/server.ts`：本地 Dev Hub 或独立 Node server 入口，使用 `@hono/node-server`。
-- `app.js`：Vercel Hono 部署入口，导出 build 后的 `dist/app.js`。
+- `app.js`：兼容需要根部 JS 入口的 host，导出 build 后的 `dist/app.js`。
 - `index.js`：兼容性入口，同样导出 build 后的 `dist/app.js`。
 
 ## Vercel Serverless 部署记录
@@ -188,7 +188,8 @@ Output Directory: N/A
 
 这是 Vercel serverless/function 形态，不是长期运行 `node dist/server.js` 的常驻 Node
 进程。`src/server.ts` 和 `dist/server.js` 保留给本地 Dev Hub 或普通 Node host；
-Vercel 入口由 Hono preset 处理。
+Vercel Hono preset 以 `src/app.ts` 为应用入口；根部 `app.js` / `index.js` 只是 build
+后 ESM 的兼容 shim，不是需要手写业务逻辑的第二套入口。
 
 Vercel Hono builder 当前不能使用仓库根部的 TypeScript 7 preview。失败日志为：
 

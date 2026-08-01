@@ -54,12 +54,29 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
       assert count(Post, community.id) == community.seed_summary.posts
       assert kanban_count(community.id) == 4
       assert community.seed_summary.kanban_posts == 4
+
+      post =
+        Repo.one!(
+          from(p in Post,
+            join: community in assoc(p, :communities),
+            where: community.id == ^community.id and p.title == "一次线上故障复盘记录"
+          )
+        )
+
+      assert {:ok, _trash_item} = CMS.Articles.trash(post, nil)
+      assert count(Post, community.id) == 3
+
+      {:ok, community} = LiteHome.seed()
+
+      assert count(Post, community.id) == 4
+      assert community.seed_summary.posts == 4
     end
   end
 
   defp kanban_count(community_id) do
     {:ok, total_count} =
       Post
+      |> CMS.Articles.active_scope(:post)
       |> join(:inner, [post], community in assoc(post, :communities))
       |> where([post, community], community.id == ^community_id and not is_nil(post.status))
       |> ORM.count()
@@ -68,8 +85,16 @@ defmodule GroupherServer.Test.Seeds.LiteHomeTest do
   end
 
   defp count(schema, community_id) do
+    thread =
+      case schema do
+        Post -> :post
+        Changelog -> :changelog
+        Doc -> :doc
+      end
+
     {:ok, total_count} =
       schema
+      |> CMS.Articles.active_scope(thread)
       |> join(:inner, [item], community in assoc(item, :communities))
       |> where([_item, community], community.id == ^community_id)
       |> ORM.count()

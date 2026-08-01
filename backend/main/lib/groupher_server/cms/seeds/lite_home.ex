@@ -96,7 +96,7 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   defp seed_articles(%Community{} = community, thread, titles)
        when thread in [:post, :changelog] do
     schema = schema_for(thread)
-    existing_articles = existing_articles_by_title(schema, community.id, titles)
+    existing_articles = existing_articles_by_title(schema, thread, community.id, titles)
 
     with {:ok, author} <- SeedHelper.seed_bot() do
       titles
@@ -124,8 +124,9 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   defp schema_for(:post), do: Post
   defp schema_for(:changelog), do: Changelog
 
-  defp existing_articles_by_title(schema, community_id, titles) do
+  defp existing_articles_by_title(schema, thread, community_id, titles) do
     schema
+    |> CMS.Articles.active_scope(thread)
     |> join(:inner, [item], community in assoc(item, :communities))
     |> where([item, community], community.id == ^community_id and item.title in ^titles)
     |> Repo.all()
@@ -134,7 +135,7 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
 
   defp set_kanban_statuses(posts) do
     posts
-    |> Enum.zip(@post_statuses)
+    |> Enum.zip(Stream.cycle(@post_statuses))
     |> Enum.reduce_while({:ok, []}, fn {post, status}, {:ok, acc} ->
       case CMS.Articles.set_status(post, status) do
         {:ok, post} -> {:cont, {:ok, [post | acc]}}
@@ -150,16 +151,18 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
   defp summary(%Community{id: community_id}) do
     %{
       slug: @slug,
-      posts: count(Post, community_id),
+      posts: count(Post, :post, community_id),
       kanban_posts: count_kanban_posts(community_id),
-      changelogs: count(Changelog, community_id),
-      docs: count(Doc, community_id)
+      changelogs: count(Changelog, :changelog, community_id),
+      docs: count(Doc, :doc, community_id)
     }
   end
 
   defp count_kanban_posts(community_id) do
+    active_posts = CMS.Articles.active_scope(Post, :post)
+
     Repo.aggregate(
-      from(post in Post,
+      from(post in active_posts,
         join: community in assoc(post, :communities),
         where: community.id == ^community_id and not is_nil(post.status)
       ),
@@ -167,9 +170,11 @@ defmodule GroupherServer.CMS.Seeds.LiteHome do
     )
   end
 
-  defp count(schema, community_id) do
+  defp count(schema, thread, community_id) do
+    active_articles = CMS.Articles.active_scope(schema, thread)
+
     Repo.aggregate(
-      from(item in schema,
+      from(item in active_articles,
         join: community in assoc(item, :communities),
         where: community.id == ^community_id
       ),
