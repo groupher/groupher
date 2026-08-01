@@ -50,6 +50,11 @@ Cloudflare Pages project: landing
 This keeps Landing assets and the public entry in one Cloudflare project, while
 still allowing programmable routing for non-Landing paths.
 
+Treat static asset bypass as a validation gate for this target. Before relying
+on `_routes.json` or equivalent Pages routing controls for cost assumptions,
+verify against the final Pages deployment that hashed Landing assets bypass the
+router path and that product, API, and Auth requests still reach `_worker.js`.
+
 ## Migration Principles
 
 - Move hosting and routing first; evaluate frontend framework changes later.
