@@ -90,6 +90,8 @@
 
   --color-primary-custom: #333333;
   --color-accent-custom: #333333;
+  --color-page-custom: #fff;
+  --color-page-custom-bg: var(--color-page-custom);
   --color-rainbow-custom: var(--color-primary-custom);
   /*
    * Derived soft tokens for custom theme colors.
@@ -275,6 +277,8 @@
     --color-rainbow-pink: #b36976;
     --color-rainbow-pinkLite: #73526159;
 
+    --color-page-custom: #212121;
+    --color-page-custom-bg: var(--color-page-custom);
     --color-rainbow-custom: var(--color-primary-custom);
     /*
      * Dark surfaces need a stronger mix to read as a tint instead of a shadow.

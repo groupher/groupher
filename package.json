@@ -14,6 +14,8 @@
   "scripts": {
     "generate:icons": "node scripts/generate-fa-regular-icons.mjs",
     "generate:fa-icons": "yarn generate:icons",
+    "gen:theme-first-paint-vars": "node scripts/generate-theme-first-paint-vars.mjs",
+    "check:theme-first-paint-vars": "node scripts/generate-theme-first-paint-vars.mjs --check",
     "sync:icons": "node scripts/sync-fa-icons.mjs",
     "sync:icons:main": "node scripts/sync-fa-icons.mjs main",
     "sync:icons:dashboard": "node scripts/sync-fa-icons.mjs dashboard",

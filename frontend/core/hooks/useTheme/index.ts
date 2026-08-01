@@ -1,6 +1,7 @@
 import THEME, { LOCAL_THEME_KEY, THEME_MODE } from '~/const/theme'
 import type { TThemeMode, TThemeName } from '~/spec'
 import useThemeDomain from '~/stores/theme/hooks'
+import { removeThemeFirstPaintVars } from '~/utils/themeFirstPaint'
 
 type TRet = {
   theme: TThemeName
@@ -8,9 +9,13 @@ type TRet = {
   isLightTheme: boolean
   isDarkTheme: boolean
   change: (name: TThemeName) => void
-  changeMode: (name: TThemeMode) => void
+  changeMode: (name: TThemeMode, options?: TApplyRuntimeThemeOptions) => void
   preview: (name: TThemeName) => void
   toggle: () => void
+}
+
+type TApplyRuntimeThemeOptions = {
+  keepFirstPaintVars?: boolean
 }
 
 export default function useTheme(): TRet {
@@ -24,27 +29,36 @@ export default function useTheme(): TRet {
   const applyTheme = (t: TThemeName) => {
     changeTheme(t)
     document.documentElement.setAttribute('data-theme', t)
+    document.documentElement.style.colorScheme = t
   }
 
-  const changeMode = (mode: TThemeMode) => {
+  const applyRuntimeTheme = (t: TThemeName, options: TApplyRuntimeThemeOptions = {}) => {
+    applyTheme(t)
+
+    if (!options.keepFirstPaintVars) {
+      removeThemeFirstPaintVars()
+    }
+  }
+
+  const changeMode = (mode: TThemeMode, options?: TApplyRuntimeThemeOptions) => {
     doChangeMode(mode)
 
     try {
       localStorage.setItem(LOCAL_THEME_KEY, mode)
     } catch {}
 
-    if (mode === THEME_MODE.LIGHT) applyTheme(THEME.LIGHT)
-    else if (mode === THEME_MODE.DARK) applyTheme(THEME.DARK)
-    else applyTheme(resolveSystemTheme()) // SYSTEM 模式
+    if (mode === THEME_MODE.LIGHT) applyRuntimeTheme(THEME.LIGHT, options)
+    else if (mode === THEME_MODE.DARK) applyRuntimeTheme(THEME.DARK, options)
+    else applyRuntimeTheme(resolveSystemTheme(), options) // SYSTEM 模式
   }
 
   const toggle = () => {
     if (theme === THEME.DARK) {
-      applyTheme(THEME.LIGHT)
+      applyRuntimeTheme(THEME.LIGHT)
       return
     }
 
-    applyTheme(THEME.DARK)
+    applyRuntimeTheme(THEME.DARK)
   }
 
   return {
@@ -54,7 +68,7 @@ export default function useTheme(): TRet {
     isDarkTheme: theme === THEME.DARK,
     change: changeTheme,
     changeMode,
-    preview: applyTheme,
+    preview: applyRuntimeTheme,
     toggle,
   }
 }

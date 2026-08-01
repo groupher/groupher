@@ -1,134 +1,138 @@
-import { THEME_PRESET } from '~/const/theme_preset'
-import type { TParseDashboard, TResolvedThemePreset } from '~/spec'
+import { LOCAL_THEME_KEY, THEME_FIRST_PAINT_STYLE_ID, THEME_MODE } from '~/const/theme'
+import { THEME_FIRST_PAINT_VAR_NAMES } from '~/const/theme-first-paint.generated'
 
-import { injectDsbColors } from './script'
+import {
+  injectThemeFirstPaintVars,
+  prePaintThemeDetectScript,
+  THEME_FIRST_PAINT_VARS_SCRIPT,
+} from './script'
 
-type TResolvedThemePresetPatch = {
-  shared?: Partial<TResolvedThemePreset['shared']>
-  light?: Partial<TResolvedThemePreset['light']>
-  dark?: Partial<TResolvedThemePreset['dark']>
+const runInlineScript = (script: string) => {
+  Function(script)()
 }
 
-const makeTokens = (tokens: TResolvedThemePresetPatch): TResolvedThemePreset => ({
-  shared: { glowFixed: true, ...tokens.shared },
-  light: {
-    pageBg: '#ffffff',
-    pageBgHue: 0,
-    pageBgIntensity: 0,
-    primaryColor: '#112233',
-    accentColor: '#334455',
-    textTitle: '#102030',
-    textDigest: '#405060',
-    cardColor: '#f8f9fa',
-    dividerColor: '#dadce0',
-    gaussBlur: 100,
-    glowType: '',
-    glowOpacity: 100,
-    ...tokens.light,
-  },
-  dark: {
-    pageBg: '#101010',
-    pageBgHue: 0,
-    pageBgIntensity: 0,
-    primaryColor: '#223344',
-    accentColor: '#445566',
-    textTitle: '#ddeeff',
-    textDigest: '#aabbcc',
-    cardColor: '#202124',
-    dividerColor: '#3c4043',
-    gaussBlur: 100,
-    glowType: '',
-    glowOpacity: 100,
-    ...tokens.dark,
-  },
-})
+describe('prePaintThemeDetectScript', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    document.documentElement.removeAttribute('data-theme')
+    document.documentElement.style.colorScheme = ''
 
-describe('injectDsbColors', () => {
-  it('injects primary and accent custom vars for both themes', () => {
-    const styleText = injectDsbColors({
-      themePreset: THEME_PRESET.CUSTOM,
-      themeTokens: makeTokens({
-        light: {
-          primaryColor: '#112233',
-          accentColor: '#334455',
-          pageBg: '#ecfbfe',
-          textTitle: '#102030',
-          textDigest: '#405060',
-          cardColor: '#f8f9fa',
-          dividerColor: '#dadce0',
-        },
-        dark: {
-          primaryColor: '#223344',
-          accentColor: '#445566',
-          pageBg: '#3d2121',
-          textTitle: '#ddeeff',
-          textDigest: '#aabbcc',
-          cardColor: '#202124',
-          dividerColor: '#3c4043',
-        },
-      }),
-    } satisfies Partial<TParseDashboard>)
-
-    expect(styleText).toContain('--color-primary-custom: #112233;')
-    expect(styleText).toContain('--color-primary-custom: #223344;')
-    expect(styleText).toContain('--color-accent-custom: #334455;')
-    expect(styleText).toContain('--color-accent-custom: #445566;')
-    expect(styleText).toContain('--color-page-custom: #ecfbfe;')
-    expect(styleText).toContain('--color-page-custom: #3d2121;')
-    expect(styleText).toContain('--color-title: #102030;')
-    expect(styleText).toContain('--color-title: #ddeeff;')
-    expect(styleText).toContain('--color-digest: #405060;')
-    expect(styleText).toContain('--color-digest: #aabbcc;')
-    expect(styleText).toContain('--color-card: #f8f9fa;')
-    expect(styleText).toContain('--color-card: #202124;')
-    expect(styleText).toContain('--color-divider: #dadce0;')
-    expect(styleText).toContain('--color-divider: #3c4043;')
-
-    expect(styleText).not.toContain('--color-primary-custom-dark:')
-    expect(styleText).not.toContain('--color-accent-custom-dark:')
-    expect(styleText).not.toContain('--color-page-custom-dark:')
-    expect(styleText).not.toContain('--color-title-dark:')
-    expect(styleText).not.toContain('--color-digest-dark:')
-    expect(styleText).not.toContain('--color-card-dark:')
-    expect(styleText).not.toContain('--color-divider-dark:')
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn(() => ({
+        matches: false,
+        media: '(prefers-color-scheme: dark)',
+      })),
+    })
   })
 
-  it('omits invalid dashboard colors at the raw SSR injection boundary', () => {
-    const styleText = injectDsbColors({
-      themePreset: THEME_PRESET.CUSTOM,
-      themeTokens: makeTokens({
-        light: {
-          primaryColor: 'red;}</style><script>alert(1)</script>',
-          accentColor: 'var(--malicious)',
-          pageBg: '</style><script>alert(2)</script>',
-          textTitle: 'expression(evil)',
-          textDigest: 'red',
-          cardColor: 'url(javascript:evil)',
-          dividerColor: 'currentColor',
-        },
-        dark: {
-          primaryColor: '#fff',
-          accentColor: '',
-          pageBg: 'var(--bad-bg)',
-          textTitle: '#fff',
-          textDigest: '',
-          cardColor: '#222',
-          dividerColor: null as unknown as string,
-        },
-      }),
-    } satisfies Partial<TParseDashboard>)
+  it('applies persisted theme before paint', () => {
+    localStorage.setItem(LOCAL_THEME_KEY, THEME_MODE.DARK)
 
-    expect(styleText).not.toContain('--color-primary-custom:')
-    expect(styleText).not.toContain('--color-accent-custom:')
-    expect(styleText).not.toContain('--color-page-custom:')
-    expect(styleText).not.toContain('--color-title:')
-    expect(styleText).not.toContain('--color-digest:')
-    expect(styleText).not.toContain('--color-card:')
-    expect(styleText).not.toContain('--color-divider:')
-    expect(styleText).not.toContain('</style>')
-    expect(styleText).not.toContain('alert(1)')
-    expect(styleText).not.toContain('alert(2)')
-    expect(styleText).not.toContain('var(--malicious)')
-    expect(styleText).not.toContain('var(--bad-bg)')
+    runInlineScript(prePaintThemeDetectScript())
+
+    expect(document.documentElement.getAttribute('data-theme')).toBe(THEME_MODE.DARK)
+    expect(document.documentElement.style.colorScheme).toBe(THEME_MODE.DARK)
+  })
+
+  it('falls back to system preference when persisted mode is not concrete', () => {
+    localStorage.setItem(LOCAL_THEME_KEY, THEME_MODE.SYSTEM)
+    vi.mocked(window.matchMedia).mockReturnValue({
+      matches: true,
+      media: '(prefers-color-scheme: dark)',
+    } as MediaQueryList)
+
+    runInlineScript(prePaintThemeDetectScript())
+
+    expect(document.documentElement.getAttribute('data-theme')).toBe(THEME_MODE.DARK)
+    expect(document.documentElement.style.colorScheme).toBe(THEME_MODE.DARK)
+  })
+})
+
+describe('injectThemeFirstPaintVars', () => {
+  beforeEach(() => {
+    document.getElementById(THEME_FIRST_PAINT_STYLE_ID)?.remove()
+    document.documentElement.removeAttribute('data-theme')
+    document.documentElement.removeAttribute('style')
+  })
+
+  it('serializes generated CSS var names into the inline script', () => {
+    const script = THEME_FIRST_PAINT_VARS_SCRIPT
+
+    expect(script).toContain(THEME_FIRST_PAINT_STYLE_ID)
+    expect(script).toContain(THEME_FIRST_PAINT_VAR_NAMES[0])
+    expect(script).toContain('!important')
+    expect(script).not.toContain('MutationObserver')
+    expect(script).not.toContain('setTimeout')
+    expect(script).not.toContain('requestAnimationFrame')
+    expect(script).not.toContain('DOMContentLoaded')
+    expect(script).not.toContain('__groupherThemeFirstPaintDone')
+    expect(script).toContain('style.disabled = true')
+    expect(script).toBe(injectThemeFirstPaintVars())
+  })
+
+  it('snapshots computed CSS vars into a temporary style tag', () => {
+    document.documentElement.style.setProperty('--color-title', '#f5f5f5')
+    document.documentElement.style.setProperty('--color-card', 'rgb(37, 37, 37)')
+
+    runInlineScript(injectThemeFirstPaintVars())
+
+    const style = document.getElementById(THEME_FIRST_PAINT_STYLE_ID)
+
+    expect(style).not.toBeNull()
+    expect(style?.textContent).toContain('--color-title:#f5f5f5 !important;')
+    expect(style?.textContent).toContain('--color-card:rgb(37, 37, 37) !important;')
+  })
+
+  it('snapshots resolved dark vars from the current cascade', () => {
+    const source = document.createElement('style')
+
+    try {
+      source.textContent = `
+        :root { --color-title: #111111; }
+        [data-theme='dark'] {
+          --color-title: #eeeeee;
+          --color-card: #222222;
+        }
+      `
+      document.head.appendChild(source)
+      document.documentElement.setAttribute('data-theme', THEME_MODE.DARK)
+
+      runInlineScript(injectThemeFirstPaintVars())
+
+      const style = document.getElementById(THEME_FIRST_PAINT_STYLE_ID)
+
+      expect(style?.textContent).toContain('--color-title:#eeeeee !important;')
+      expect(style?.textContent).toContain('--color-card:#222222 !important;')
+    } finally {
+      source.remove()
+    }
+  })
+
+  it('overwrites an existing fallback snapshot with later route vars', () => {
+    document.documentElement.setAttribute('data-theme', THEME_MODE.DARK)
+    const fallbackStyle = document.createElement('style')
+    fallbackStyle.id = THEME_FIRST_PAINT_STYLE_ID
+    fallbackStyle.textContent = ':root{--color-title:#aaaaaa !important;}'
+    document.head.appendChild(fallbackStyle)
+
+    const routeStyle = document.createElement('style')
+    routeStyle.textContent = `
+      :root { --color-title: #111111; }
+      [data-theme='dark'] {
+        --color-title: #eeeeee;
+        --color-page-custom-bg: #333333;
+      }
+    `
+    document.head.appendChild(routeStyle)
+
+    runInlineScript(injectThemeFirstPaintVars())
+
+    const style = document.getElementById(THEME_FIRST_PAINT_STYLE_ID)
+
+    expect(style).toBe(fallbackStyle)
+    expect(style?.textContent).toContain('--color-page-custom-bg:#333333 !important;')
+
+    routeStyle.remove()
   })
 })

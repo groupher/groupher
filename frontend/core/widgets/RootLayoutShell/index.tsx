@@ -1,6 +1,7 @@
 import { type ReactNode, Suspense } from 'react'
 
-import { ssrThemeInitScript } from '~/utils/ssr/script'
+import { prePaintThemeDetectScript } from '~/utils/ssr/script'
+import ThemeFirstPaintScript from '~/widgets/ThemeFirstPaintScript'
 
 // import { Analytics } from '@vercel/analytics/react'
 // import { SpeedInsights } from '@vercel/speed-insights/next'
@@ -19,15 +20,17 @@ export default function RootLayoutShell({ children, lang = 'en' }: TProps) {
     <html lang={lang} suppressHydrationWarning>
       <Suspense fallback={null}>
         <head>
+          <meta name='color-scheme' content='light dark' />
           <script
-            // oxlint-disable-next-line react/no-danger -- Inline boot script is required before hydration to avoid theme flicker.
+            // oxlint-disable-next-line react/no-danger -- Inline pre-paint script is required before hydration to avoid theme flicker.
             dangerouslySetInnerHTML={{
-              __html: ssrThemeInitScript(),
+              __html: prePaintThemeDetectScript(),
             }}
           />
         </head>
         <body>
           {children}
+          <ThemeFirstPaintScript />
 
           {/* <Analytics />
           <SpeedInsights /> */}

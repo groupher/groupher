@@ -40,14 +40,88 @@ export const composeThemePresetCssVars = (
   theme: 'light' | 'dark',
 ): TThemePresetCssVars => {
   const active = tokens[theme]
+  const pageBgBlur = Number(active.gaussBlur)
+  const normalizedPageBgBlur = Number.isNaN(pageBgBlur)
+    ? 100
+    : Math.min(Math.max(pageBgBlur, 0), 100)
+  const pageBg =
+    normalizedPageBgBlur === 100
+      ? active.pageBg
+      : `color-mix(in srgb, ${active.pageBg} ${normalizedPageBgBlur}%, transparent)`
 
   return {
     '--color-primary-custom': active.primaryColor,
     '--color-accent-custom': active.accentColor,
     '--color-page-custom': active.pageBg,
+    '--color-page-custom-bg': pageBg,
     '--color-title': active.textTitle,
     '--color-digest': active.textDigest,
     '--color-card': active.cardColor,
     '--color-divider': active.dividerColor,
   }
+}
+
+type TCSSVarMap = Record<string, string>
+
+const HEX_COLOR_RE = /^#[0-9a-f]{6}$/i
+const COLOR_MIX_RE =
+  /^color-mix\(in srgb, #[0-9a-f]{6} (?:100|[1-9]?\d)(?:\.\d+)?%, transparent\)$/i
+
+const sanitizeCSSVars = (vars: TCSSVarMap): TCSSVarMap => {
+  const sanitized: TCSSVarMap = {}
+
+  for (const [key, value] of Object.entries(vars)) {
+    if (HEX_COLOR_RE.test(value) || COLOR_MIX_RE.test(value)) {
+      sanitized[key] = value
+    }
+  }
+
+  return sanitized
+}
+
+const serializeThemeCssRule = (selector: string, vars: TCSSVarMap): string => {
+  const entries = Object.entries(vars)
+
+  if (entries.length === 0) return ''
+
+  const body = entries.map(([key, value]) => `  ${key}: ${value};`).join('\n')
+  return `${selector} {\n${body}\n}`
+}
+
+const composeCommunityThemePresetCssRules = (
+  themeTokens?: Partial<TResolvedThemePreset> | null,
+): Array<[string, TCSSVarMap]> => {
+  if (!themeTokens?.light?.primaryColor || !themeTokens.dark?.primaryColor) {
+    return []
+  }
+
+  const resolvedThemeTokens = themeTokens as TResolvedThemePreset
+  const lightVars = composeThemePresetCssVars(resolvedThemeTokens, 'light')
+  const darkVars = composeThemePresetCssVars(resolvedThemeTokens, 'dark')
+
+  return [
+    [':root', sanitizeCSSVars(lightVars)],
+    ["[data-theme='dark']", sanitizeCSSVars(darkVars)],
+  ]
+}
+
+/**
+ * Serialize long-lived CSS for the current community's ThemePreset tokens.
+ *
+ * Problem scenario: SSR and runtime preview both need to write the same global
+ * CSS var names from the community's resolved preset/custom theme tokens, while
+ * raw `<style>` injection must keep backend-provided values inside a narrow
+ * safe-color boundary.
+ *
+ * Example:
+ *   serializeCommunityThemePresetCss(themeTokens)
+ *   // => ':root { --color-page-custom: #fff; }\n[data-theme='dark'] { --color-page-custom: #111; }'
+ */
+export const serializeCommunityThemePresetCss = (
+  themeTokens?: Partial<TResolvedThemePreset> | null,
+): string => {
+  return composeCommunityThemePresetCssRules(themeTokens)
+    .map(([selector, vars]) => serializeThemeCssRule(selector, vars))
+    .filter(Boolean)
+    .join('\n')
 }

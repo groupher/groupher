@@ -7,7 +7,6 @@
 import { usePathname } from 'next/navigation'
 import type { FC, ReactNode } from 'react'
 
-import usePageBg from '~/hooks/usePageBg'
 import useTopbar from '~/hooks/useTopbar'
 import useTrans from '~/hooks/useTrans'
 import type { TContainerMetric } from '~/hooks/useTwBelt/spec'
@@ -35,7 +34,6 @@ const Main: FC<TProps> = ({ children }) => {
   const { locale } = useTrans()
 
   const { hasTopbar } = useTopbar()
-  const { background } = usePageBg()
   // const [showDashboardAlertUI, setShowDashboardAlertUI] = useState(false)
   // style={{ background }}
 
@@ -47,12 +45,12 @@ const Main: FC<TProps> = ({ children }) => {
        * poorly with backdrop blur. This isolated layer keeps realtime preview
        * cheap while still letting transparent glass colors reveal the page base.
        */}
-      {background && (
-        <div
-          className={s.background}
-          style={{ backgroundColor: `var(--preview-page-bg, ${background})` }}
-        />
-      )}
+      <div
+        className={s.background}
+        style={{
+          backgroundColor: 'var(--preview-page-bg, var(--color-pageBg))',
+        }}
+      />
       {hasTopbar && <div className={s.topBar} />}
       {/* <Broadcast /> */}
       <GlowBackground />
