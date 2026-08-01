@@ -39,6 +39,8 @@ export default {
   emoji: 'Emojis',
   'team.member': 'team members',
   'login.with.social': 'Login with your social account',
+  'login.oauth.loading.title': 'Login with',
+  'login.oauth.loading.desc': 'You will be redirected automatically. Do not refresh this page.',
   'login.bind.hint': 'can bind other account later',
   'need.help': 'Need help?',
   theme: 'theme',

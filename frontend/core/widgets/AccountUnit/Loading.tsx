@@ -1,5 +1,7 @@
 import type { FC } from 'react'
 
+import useTrans from '~/hooks/useTrans'
+import type { TTransKey } from '~/spec'
 import HomeLogo from '~/widgets/HomeLogo'
 import LavaLampLoading from '~/widgets/Loading/LavaLampLoading'
 
@@ -23,7 +25,10 @@ export const LoadingMask = () => {
 
 const Loading: FC<TProps> = ({ provider }) => {
   const s = useSalon()
+  const { t } = useTrans()
   const Icon = SocialIcon[provider || 'Github']
+  const providerName = provider || 'Github'
+  const providerTransKey = providerName.toUpperCase() as TTransKey
 
   return (
     <div className={s.wrapper}>
@@ -36,9 +41,10 @@ const Loading: FC<TProps> = ({ provider }) => {
         </div>
       </div>
       <div className={s.title}>
-        Login with <div className={s.providerName}>[{provider}]</div>
+        {t('login.oauth.loading.title')}
+        <div className={s.providerName}>[{t(providerTransKey)}]</div>
       </div>
-      <div className={s.desc}>完成后会自动跳转，请不要刷新页面</div>
+      <div className={s.desc}>{t('login.oauth.loading.desc')}</div>
       <div className={s.footer}>
         <LavaLampLoading />
       </div>
