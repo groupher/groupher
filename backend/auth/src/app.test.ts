@@ -46,6 +46,32 @@ describe('Auth Hono application', () => {
     expect(response.headers.get('access-control-allow-credentials')).toBe('true')
   })
 
+  it('rejects credentialed Auth CORS from community subdomains', async () => {
+    const response = await createApp().request('/api/auth/session', {
+      method: 'OPTIONS',
+      headers: {
+        origin: 'https://home.groupher.com',
+        'access-control-request-method': 'GET',
+      },
+    })
+
+    expect(response.headers.get('access-control-allow-origin')).toBeNull()
+  })
+
+  it('allows local development Auth CORS origins', async () => {
+    const response = await createApp().request('/api/auth/session', {
+      method: 'OPTIONS',
+      headers: {
+        origin: 'https://dashboard.groupher.localhost',
+        'access-control-request-method': 'GET',
+      },
+    })
+
+    expect(response.headers.get('access-control-allow-origin')).toBe(
+      'https://dashboard.groupher.localhost',
+    )
+  })
+
   it('clears Phoenix and Auth cookies through the custom logout endpoint', async () => {
     const response = await createApp().request('/api/auth/logout', {
       method: 'POST',

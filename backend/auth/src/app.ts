@@ -8,15 +8,30 @@ type TOptions = {
   authHandler?: (request: Request) => Promise<Response>
 }
 
+const FIRST_PARTY_AUTH_HOSTS = new Set([
+  'groupher.com',
+  'www.groupher.com',
+  'main.groupher.com',
+  'dashboard.groupher.com',
+  'landing.groupher.com',
+])
+
+const isAllowedLocalAuthOrigin = (url: URL): boolean => {
+  if (!['http:', 'https:'].includes(url.protocol)) return false
+
+  return (
+    url.hostname === 'localhost' ||
+    url.hostname === '127.0.0.1' ||
+    url.hostname.endsWith('.localhost')
+  )
+}
+
 const isAllowedAuthOrigin = (origin: string): boolean => {
   try {
     const url = new URL(origin)
-    return (
-      url.protocol === 'https:' &&
-      (url.hostname === 'groupher.com' ||
-        url.hostname === 'www.groupher.com' ||
-        url.hostname.endsWith('.groupher.com'))
-    )
+    if (isAllowedLocalAuthOrigin(url)) return true
+
+    return url.protocol === 'https:' && FIRST_PARTY_AUTH_HOSTS.has(url.hostname)
   } catch {
     return false
   }
